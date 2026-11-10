@@ -7,6 +7,7 @@
 | Build              | A character's professions, eight skills, attributes and equipment         |
 | Called foe         | The foe your team was told to attack; **T** targets it                    |
 | Condition          | A harmful effect such as Bleeding or Crippled; it wears off or is removed |
+| Deep water         | Water you cannot walk into; shots and spells still cross it               |
 | Easily interrupted | Any hit that lands while you use it interrupts it, as setting a trap      |
 | Elite              | A strong skill with a gold frame; one per bar                             |
 | Enchantment        | A good effect cast by you or an ally                                      |
@@ -22,6 +23,7 @@
 | Recharge           | The time before a used skill can be used again                            |
 | Resurrect          | To bring a dead ally back                                                 |
 | Rune               | An armor upgrade: attribute ranks, Health, Energy or shorter conditions   |
+| Shallow water      | Water you walk through as on dry ground                                   |
 | Signet (shield)    | Your mark, a small shield from your browser's identity, before your name  |
 | Spawn              | Where your team starts the match                                          |
 | Touch skill        | A skill used by touching the target; some shouts make foes' touches fail  |

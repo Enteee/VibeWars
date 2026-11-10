@@ -7,8 +7,7 @@ import { t, type MessageKey } from "../i18n/index.js";
 import { keySignet } from "../identity/key-signet.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
 import { ASCENT_PROGRESSION, isHallsMap, mapMatchRules } from "../net/maps.js";
-import { button, h, readyButton, toast, type ShareLine } from "./kit.js";
-import { relayLine, relaySharedByLine, relaySharingText } from "./relay-section.js";
+import { button, findMatchButton, h, readyButton, toast, type ShareLine } from "./kit.js";
 import {
   SIGNET_ROW_PX,
   playerLabelElement,
@@ -40,7 +39,6 @@ export interface LobbyMatchmaking {
   /** The map of the group the queue formed (#2687); `undefined` until it has. */
   readonly groupMapId: string | undefined;
   readonly onFindMatch: () => void;
-  readonly onLeaveQueue: () => void;
   /** `undefined` where bots are not offered: Heroes' Ascent waits for a side (#1996). */
   readonly onPlayBots: (() => void) | undefined;
 }
@@ -212,18 +210,11 @@ export function mapLabel(map: LobbyMap): string {
   return t("lobby.mapLabel", { name: mapName(map.id), size: qualifier });
 }
 
-/** What the lobby says about relays (#2531), from `lobbyRelayStatus`. */
-export interface LobbyRelay {
-  /** The holder whose relay this page reaches its host through, by peer id: `undefined` direct. */
-  readonly relayedVia: string | undefined;
-  /** How many players this page's shared relay holds a login for: 0 when it shares none. */
-  readonly sharingWith: number;
-}
-
 /** The lobby's part of a mode screen (#1526): the bar's map and buttons, and what goes under them. */
 export interface LobbyPanel {
   readonly status: readonly HTMLElement[];
   readonly actions: readonly HTMLElement[];
+  readonly queueAction: HTMLElement | undefined;
   readonly body: HTMLElement;
 }
 
@@ -239,7 +230,6 @@ export function lobbyPanel(
   notice: string | undefined,
   availableMaps: readonly LobbyMap[] = [],
   matchmaking?: LobbyMatchmaking,
-  relay?: LobbyRelay,
 ): LobbyPanel {
   const panel = h("div", "lobby-panel");
   const controls = lobbyControls(snapshot);
@@ -300,9 +290,12 @@ export function lobbyPanel(
     : matchmaking === undefined
       ? [readyToggle]
       : [];
+  let queueAction: HTMLElement | undefined;
   if (matchmaking !== undefined) {
     if (snapshot.isHost) {
-      actions.push(...matchmakingButtons(matchmaking, controls));
+      const buttons = matchmakingButtons(matchmaking, controls);
+      queueAction = buttons.queueAction;
+      actions.push(...buttons.actions);
     }
   } else if (snapshot.isHost) {
     const start = button(t("lobby.startMatch"), ready ? "primary" : "", callbacks.onStart);
@@ -320,19 +313,6 @@ export function lobbyPanel(
 
   if (notice !== undefined) {
     panel.appendChild(h("div", "screen-problem", notice));
-  }
-
-  const ownRelay = relayLine();
-  if (ownRelay !== undefined) {
-    panel.appendChild(ownRelay);
-  }
-  // Whose relay this page reaches its host through: a holder no longer
-  // seated has no lobby name to show.
-  const holder = snapshot.players.find(
-    (p) => relay?.relayedVia !== undefined && p.sessionId === relay.relayedVia,
-  );
-  if (holder !== undefined) {
-    panel.appendChild(relaySharedByLine(holder));
   }
 
   if (matchmaking !== undefined && !snapshot.isHost && matchmaking.queuedMs === null) {
@@ -354,10 +334,6 @@ export function lobbyPanel(
   }
   panel.appendChild(teams);
 
-  if (relay !== undefined && relay.sharingWith > 0) {
-    panel.appendChild(h("div", "screen-info relay-sharing", relaySharingText(relay.sharingWith)));
-  }
-
   const spectators = snapshot.players.filter((p) => p.team === null);
   if (spectators.length > 0) {
     panel.appendChild(signedNamesLine("lobby-spectators", "lobby.spectating", "names", spectators));
@@ -368,27 +344,31 @@ export function lobbyPanel(
     panel.appendChild(h("div", "screen-info lobby-running", controls.running));
   }
 
-  return { status: [mapPart], actions, body: panel };
+  return { status: [mapPart], actions, queueAction, body: panel };
 }
 
 /**
- * The host's matchmaking buttons (#1766): Find a match, and once queued,
- * Leave the queue, and after a minute alone also Play against bots.
+ * The host's matchmaking buttons (#1766): Find a match, and once queued
+ * (#2980), whose way out is the spinner's flyout, after a minute alone
+ * Play against bots.
  */
 export function matchmakingButtons(
   matchmaking: LobbyMatchmaking,
   controls: LobbyControls,
-): HTMLElement[] {
+): { readonly queueAction: HTMLElement | undefined; readonly actions: HTMLElement[] } {
   if (matchmaking.queuedMs === null) {
-    const find = button(t("lobby.findMatch"), "primary lobby-find", matchmaking.onFindMatch);
+    const find = findMatchButton(matchmaking.onFindMatch);
     find.disabled = controls.mapDisabled;
-    return [find];
+    return { queueAction: find, actions: [] };
   }
-  const leave = button(t("lobby.leaveQueue"), "lobby-leave-queue", matchmaking.onLeaveQueue);
   const { onPlayBots } = matchmaking;
-  return matchmaking.queuedMs < PLAY_BOTS_AFTER_MS || onPlayBots === undefined
-    ? [leave]
-    : [button(t("lobby.playBots"), "primary lobby-play-bots", onPlayBots), leave];
+  return {
+    queueAction: undefined,
+    actions:
+      matchmaking.queuedMs < PLAY_BOTS_AFTER_MS || onPlayBots === undefined
+        ? []
+        : [button(t("lobby.playBots"), "primary lobby-play-bots", onPlayBots)],
+  };
 }
 
 /**

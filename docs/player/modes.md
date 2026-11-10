@@ -160,8 +160,10 @@ home.
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
 **Ghostly Hero** in its base, a ghost that fights with an axe and that
 nobody plays. The **altar** is in the centre, the same walk from both
-bases. On **The Courtyard** it stands in an open court ringed by four
-clusters of pillars, entered from the four corners. The **Hall of
+bases. On **Threefold Keep**, three teams (two when no third is free) fight for it
+inside a walled keep. Its doors open only from within, by a plate inside: walk
+round to an open corner to get in. At most 12 points a team, and if every foe
+stands at -60% morale you win at once. The **Hall of
 Heroes**, the King of the Hill map that ends the Heroes' Ascent, raises
 it on a dais walled to the west and east, up a north or a south approach
 lined with pillars. Target your ghost with a
@@ -174,7 +176,7 @@ whenever that changes, and its name over its head shows its leader.
 
 Your ghost has 640 Health, and swings its axe with **Cyclone Axe**,
 **Disrupting Chop** and **Swift Chop**, following or staying. It is
-stronger the higher up the Ascent you are: level 24 on The Courtyard,
+stronger the higher up the Ascent you are: level 24 on Threefold Keep,
 28 in the Hall of Heroes. **Kill the other team's ghost** and every
 member of your team gets a **+10% morale boost**, which first wipes out
 a death penalty and never goes above +10%. Kill it again after it rises
@@ -216,7 +218,7 @@ spell range. While your team does not hold the altar, every bot kills the other
 team's Ghostly Hero first once it stands on the altar in their range:
 it is the one foe that keeps your ghost from claiming it.
 
-The Courtyard plays it.
+Threefold Keep plays it.
 
 ## Capture Points
 
@@ -329,8 +331,7 @@ Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
 (The Vault,) then the Hall of Heroes. Only the maps built so far are in
 it, so today it is nine rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Barrow Field (Priest Annihilation), Cinder Sanctum (Relic Run, in Unholy
 Temples' place), Mosslit Cairns (Capture Points, in Forgotten Shrines'),
-The Brazen Causeway (Priest Annihilation), The Courtyard (King of the Hill), The Warden's Gallery (Capture Points, in Antechamber's), then the Hall of Heroes. The Lobby window says where
-you are while you look for a team: `Round 2 of 9 · Blackwater Ford`.
+The Brazen Causeway (Priest Annihilation), Threefold Keep (King of the Hill), The Warden's Gallery (Capture Points, in Antechamber's), then the Hall of Heroes. While you look for a team, the queue icon in the top bar says where you are, `Heroes' Ascent · round 2`, and the Lobby window shows that round's map.
 You only ever meet a team at the same round, and you wait for one as
 long as it takes: no bots fill in. The one exception: from round 2 on, a team
 alone at its round for 60 seconds may skip ahead. It meets a team waiting at
@@ -343,7 +344,9 @@ seconds; win in the Hall, and you stay to defend it. Lose, or leave a match befo
 starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round.
 
-The Hall draws one of three modes for each match: King of the Hill, Relic Run or Capture Points, for two or three teams. With two, the third base stays closed, and with it its capture point. A Hall match runs 12 minutes and the most points win; Capture Points also ends early on a lead of 20. Death costs no morale. The dead return together at their base on every full minute of the match clock, so a wiped team is not beaten, but a team whose players have all left is out. In King of the Hill, the team holding the altar keeps scoring after its ghost dies, until another team claims it, and its dead return on the altar. A tie goes to the team that scored last, or in Capture Points to the team with the most recent kill.
+The Hall draws one of three modes for each match: King of the Hill, Relic Run or Capture Points, for two or three teams. With two, the third base stays closed, and with it its capture point. A Hall match runs 11 minutes and the most points win; Capture Points also ends early on a lead of 20. Death costs no morale. The dead return together at their base on every full minute of the match clock, so a wiped team is not beaten, but a team whose players have all left is out. In King of the Hill, the team holding the altar keeps scoring after its ghost dies, until another team claims it, and its dead return on the altar. A tie goes to the team that scored last, or in Capture Points to the team with the most recent kill.
+
+**The Vault.** The Hall forms only every 12 minutes on the UTC clock, at :00, :12, :24, :36 and :48. Until then your party waits in the Vault: the queue icon shows the time to the next opening and who holds the Hall. At each opening the holder meets up to two challengers, or up to three challengers meet if nobody holds it. Only parties waiting before the opening take part, and any beyond those seats wait for the next one. A holder with nobody to fight keeps the Hall and waits, with no win counted, and a lone challenger waits too. When a party wins the Hall, every open game says who holds it now: its leader, or its guild tag when more than half the party shares one.
 
 Every run starts with the **Elite Zaishen Battle**, with no queue: your party against six Zaishen played by bots (2 Monks, an Elementalist and 3 others). The clock starts when one of you crosses the start line or the first Zaishen dies, whichever comes first. Kill all six in under 30 seconds and the party starts the run at +10% morale; under 60, +8%; under 80, +6%; under 100, +4%; under 120, +2%; slower, nothing. Win and your party queues for its first map on its own. Wipe, or still have a Zaishen alive when the 8-minute limit is reached, and the run is over.
 
@@ -431,3 +434,5 @@ press any number, and a match shows if it fits one pressed kind and one
 pressed size; a group with none pressed lets all through. Size is the
 largest team, bots included, so a 3v2 Hosted Game fits no size. The
 chips stay as you left them until the page reloads.
+
+Above the chips, the **Hall of Heroes** strip lists the last 20 holds, newest first: the holder (a guild tag or the leader's name), the winning team's people, when the newest win ended and, from two wins on, how many in a row. A hold is an unbroken run of Hall wins by one holder. The strip reads the records on this page, ignores the chips, and is hidden when none of them is a Hall win. Like every record, it is what each match's host reported, and nothing checks it.

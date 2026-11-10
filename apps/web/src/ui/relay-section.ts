@@ -15,13 +15,14 @@ import { MAX_RELAYED_PER_HOLDER } from "../net/transport/relay-offer.js";
 import { button, h, shareLine, toast } from "./kit.js";
 import { signedNamesLine, type KeyedPlayer } from "./player-label.js";
 import type { OptionsSection } from "./options-sections.js";
+import { onRelayStatus, relayStatus } from "./relay-status.js";
 
 /**
  * The Relay (TURN) section of Options (#972, #2240): the one relay the
  * player keeps, from a friend's invite link or entered by hand, whether
  * their lobbies share it, and the link to pass it on. A link's secret is
- * never shown; a hand-entered credential is a password field; the rest
- * of the app shows only the host.
+ * never shown; a hand-entered credential is a password field. Whose
+ * relay carries this page, and how many it carries, show here too (#2981).
  */
 export const relaySection: OptionsSection = {
   id: "relay",
@@ -31,7 +32,7 @@ export const relaySection: OptionsSection = {
   mount: mountRelay,
 };
 
-/** What Options says of a relay; also how the lobby and queue screens name it. */
+/** What Options says of a relay. */
 export function relayLabel(relay: Relay | undefined): string {
   return relay === undefined ? t("relay.none") : relayHosts(relay);
 }
@@ -70,6 +71,8 @@ function mountRelay(container: HTMLElement): () => void {
   const panel = h("div", "relay-section");
   container.appendChild(panel);
   const current = h("div", "relay-current");
+  const sharedBy = h("div", "relay-shared-by-holder");
+  const sharing = h("div", "screen-info relay-sharing");
   const urls = input("relay-urls", "text");
   urls.placeholder = t("relay.urlsPlaceholder");
   const username = input("relay-username", "text");
@@ -126,6 +129,8 @@ function mountRelay(container: HTMLElement): () => void {
   panel.append(
     h("div", "screen-info relay-shared-explanation", sharedRelayExplanation()),
     current,
+    sharedBy,
+    sharing,
     field(t("relay.urls"), urls),
     usernameField,
     credentialField,
@@ -158,22 +163,23 @@ function mountRelay(container: HTMLElement): () => void {
     forget.disabled = relay === undefined;
     link.hide();
   };
+  // The lobby's part alone: the fields keep what is being typed in them.
+  const paintStatus = (): void => {
+    const status = relayStatus();
+    sharedBy.replaceChildren(
+      ...(status.sharedBy === undefined ? [] : [relaySharedByLine(status.sharedBy)]),
+    );
+    sharedBy.hidden = status.sharedBy === undefined;
+    sharing.textContent = status.sharingWith > 0 ? relaySharingText(status.sharingWith) : "";
+    sharing.hidden = status.sharingWith === 0;
+  };
   paint();
+  paintStatus();
+  const offStatus = onRelayStatus(paintStatus);
   return () => {
+    offStatus();
     link.hide();
   };
-}
-
-/**
- * "Relay: host" while a relay is saved, for the lobby and queue screens
- * (#972): a link from someone else never routes the player's traffic
- * without it showing.
- */
-export function relayLine(): HTMLElement | undefined {
-  const relay = loadRelay();
-  return relay === undefined
-    ? undefined
-    : h("div", "screen-info relay-line", t("relay.current", { relay: relayLabel(relay) }));
 }
 
 /**
@@ -184,7 +190,7 @@ export function relaySharedByLine(holder: KeyedPlayer): HTMLElement {
   return signedNamesLine("screen-info relay-shared-by", "relay.sharedBy", "name", [holder]);
 }
 
-/** What a holder's lobby says under the roster while it shares its relay with `count` players (#2531). */
+/** What Options says while this page's lobby shares its relay with `count` players (#2531). */
 export function relaySharingText(count: number): string {
   return count >= MAX_RELAYED_PER_HOLDER
     ? t("relay.sharingFull", { count })

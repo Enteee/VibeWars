@@ -22,6 +22,8 @@
   --scaled: #7ee787;
   /* Enchantment markers (art direction palette). */
   --enchantment: #56d4dd;
+  /* An environment effect's border in the effects monitor, green as GW1's (#3027). */
+  --environment: #3fb950;
   /* A shrine raise's invulnerability (art direction palette, #1233). */
   --invulnerable: #f5e6b8;
   /* A match's kind on the Matches page (#2741), from the art direction
@@ -257,6 +259,15 @@ body {
     display: none;
   }
 
+  /* Queued, the spinner stands where Find a match was, outside the ⋯ (#2980). */
+  #topbar.has-more .topbar-actions:has(> .topbar-queue:not([hidden])) {
+    display: flex;
+  }
+
+  #topbar.has-more:not(.is-more-open) .topbar-actions > :not(.topbar-queue) {
+    display: none;
+  }
+
   #topbar.has-more .topbar-screen-actions {
     padding-inline-start: 0;
     border-inline-start: 0;
@@ -284,6 +295,13 @@ body {
 
   #topbar.has-more.is-more-open .topbar-actions {
     display: flex;
+    margin-inline-start: 0;
+  }
+
+  #topbar.has-more.is-more-open .topbar-queue-action:not(:empty) {
+    display: flex;
+    flex-direction: column;
+    margin-inline-start: 0;
   }
 
   /* The lobby's code and Join fold into the ⋯ too (#1526). */
@@ -363,8 +381,27 @@ body {
   display: none;
 }
 
-.topbar-join:not([hidden]) ~ .topbar-actions {
+.topbar-join:not([hidden]) ~ .topbar-actions,
+.topbar-join:not([hidden]) ~ .topbar-queue-action {
   margin-inline-start: 0;
+}
+
+/* Find a match (#2980), right before the global icons, where the queue's
+   spinner comes: on the icons' 0.3rem, not the tools' 0.8rem gap. */
+.topbar-queue-action {
+  flex: 0 0 auto;
+}
+
+.topbar-queue-action:empty {
+  display: none;
+}
+
+.topbar-queue-action:not(:empty) {
+  margin-inline-start: auto;
+}
+
+.topbar-queue-action:not(:empty) + .topbar-actions {
+  margin-inline-start: -0.5rem;
 }
 
 /* The lobby this tab is in (#1526): Copy invite link, the host's
@@ -1129,6 +1166,12 @@ body {
   height: var(--effect-size);
 }
 
+/* Ground you stand in (#3027): nothing removes it, so it is framed apart. */
+.effect.is-environment .effect-icon {
+  outline: 1px solid var(--environment);
+  outline-offset: -1px;
+}
+
 .effect-bar {
   height: 3px;
   background: var(--bg);
@@ -1420,13 +1463,6 @@ body {
   border-inline-start: 3px solid var(--accent);
   background: rgb(89 194 255 / 8%);
   color: var(--ink);
-}
-
-/* A lobby screen's Find a match and Leave Queue, while in the Random Arena queue (#2781). */
-.screen-queued {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.6rem;
 }
 
 /* What a lobby screen plays, to look at while in the Random Arena queue (#2781). */
@@ -1869,6 +1905,92 @@ body {
 /* The Matches page (#2532): one row a record, newest first. */
 .matches-note {
   margin: 0;
+  color: var(--ink-dim);
+}
+
+/* The Hall of Heroes holders (#2703), above the filter chips. */
+.matches-hall {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.matches-hall[hidden] {
+  display: none;
+}
+
+.matches-hall-title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.matches-hall-reported {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
+.matches-hall-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.matches-hall-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.6rem;
+  min-width: 0;
+  padding: 0.25rem 0.6rem;
+  background: var(--panel);
+}
+
+.matches-hall-who {
+  display: flex;
+  flex: 1 1 14rem;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.matches-hall-meta {
+  display: flex;
+  flex: none;
+  gap: 0.6rem;
+  margin-inline-start: auto;
+}
+
+.matches-hall-holder,
+.matches-hall-people {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.matches-hall-holder {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 40%;
+  font-weight: 600;
+}
+
+.matches-hall-people {
+  flex: 1 1 0;
+  min-width: 0;
+  color: var(--ink-dim);
+}
+
+.matches-hall-streak,
+.matches-hall-when {
+  flex: none;
+  white-space: nowrap;
+}
+
+.matches-hall-when {
   color: var(--ink-dim);
 }
 
@@ -2864,6 +2986,7 @@ body {
 #topbar .topbar-back button,
 #topbar .topbar-status button,
 #topbar .topbar-screen-actions button,
+#topbar .topbar-queue-action button,
 .inline-confirm button,
 .toast button {
   padding: 0.25rem 0.7rem;
@@ -2877,6 +3000,7 @@ body {
 #topbar .topbar-back button:hover:not(:disabled),
 #topbar .topbar-status button:hover:not(:disabled),
 #topbar .topbar-screen-actions button:hover:not(:disabled),
+#topbar .topbar-queue-action button:hover:not(:disabled),
 .inline-confirm button:hover,
 .toast button:hover {
   border-color: var(--accent);
@@ -2887,7 +3011,8 @@ body {
   cursor: not-allowed;
 }
 
-#topbar .topbar-screen-actions button.primary:not(:disabled) {
+#topbar .topbar-screen-actions button.primary:not(:disabled),
+#topbar .topbar-queue-action button.primary:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent);
 }

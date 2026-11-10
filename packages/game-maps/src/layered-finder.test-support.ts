@@ -3,27 +3,23 @@ import {
   createLayeredPathFinder,
   navGraphFor,
   type LayeredPathFinder,
+  rampRims,
   type NavLayer,
+  walkableAreas,
 } from "@vibewars/game-core";
 
-import { allWallSegments, shapeVertices } from "./geometry.js";
+import { matchLayers } from "./layers.js";
 import type { MapData } from "./schema.js";
 
-/** `map`'s walls, decks and ramps as the path finder reads them, every gate open. */
+/** `map`'s walls, deep water, floors and ramps as the path finder reads them, every gate open. */
 export function layeredFinder(map: MapData, clearance: number): LayeredPathFinder {
-  const layers: NavLayer[] = Array.from({ length: map.layers }, (_, layer) => ({
-    walls: allWallSegments(map.walls.filter((wall) => wall.layer === layer)),
-    walkable:
-      layer === 0
-        ? []
-        : [
-            ...map.decks
-              .filter((deck) => deck.layer === layer)
-              .map((deck) => shapeVertices(deck.footprint)),
-            ...map.transitions
-              .filter((transition) => transition.from === layer || transition.to === layer)
-              .map((transition) => shapeVertices(transition.area)),
-          ],
+  const match = matchLayers(map);
+  const rims = rampRims(match);
+  const walkable = walkableAreas(match);
+  const layers: NavLayer[] = match.walls.map((walls, layer) => ({
+    walls: [...walls, ...(match.deepWater[layer] ?? [])],
+    walkable: walkable[layer] ?? [],
+    open: rims[layer] ?? [],
   }));
   const graphs = buildLayeredNavGraph(
     layers,
@@ -31,8 +27,5 @@ export function layeredFinder(map: MapData, clearance: number): LayeredPathFinde
     { width: map.width, height: map.height },
     clearance,
   ).map((gated) => navGraphFor(gated, 0));
-  return createLayeredPathFinder(
-    graphs,
-    map.transitions.map((transition) => ({ ...transition, area: shapeVertices(transition.area) })),
-  );
+  return createLayeredPathFinder(graphs, match.transitions);
 }

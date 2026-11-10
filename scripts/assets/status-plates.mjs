@@ -27,4 +27,6 @@ export const PLATES = {
   item: `<path d="M7 1h10v3l3 4v11l-3 4H7l-3-4V8l3-4z" fill="${C.ink}"/>`,
   form: `<path d="M7.5 1h9L23 7.5v9L16.5 23h-9L1 16.5v-9z" fill="${C.dervish}"/>`,
   "skill-effect": `<rect x="0.5" y="4" width="23" height="16" rx="8" fill="${C.inkDim}"/>`,
+  // A patch of ground seen at a slant: what you stand in (#3027).
+  environment: `<path d="M5.5 2h13l5 20H0.5z" fill="${C.environment}" stroke="${C.environment}" stroke-width="1" stroke-linejoin="round"/>`,
 };

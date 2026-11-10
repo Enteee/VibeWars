@@ -115,6 +115,7 @@ const CATEGORY_NAME: Record<
   item: ["objet", "objets", "un"],
   form: ["forme", "formes", "une"],
   "skill-effect": ["effet", "effets", "un"],
+  environment: ["effet d'environnement", "effets d'environnement", "un"],
 };
 
 function categoryOne(category: Category): string {

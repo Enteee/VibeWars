@@ -428,8 +428,8 @@ function isWeaponSetNumber(value: unknown): value is 0 | 1 | 2 | 3 {
   return value === 0 || value === 1 || value === 2 || value === 3;
 }
 
-/** A body's highest layer: a map has at most three (ADR-0051). */
-const MAX_WIRE_LAYER = 2;
+/** A body's highest layer: a map has at most four (ADR-0051, #2973). */
+const MAX_WIRE_LAYER = 3;
 
 export function isWireLayer(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= MAX_WIRE_LAYER;
@@ -488,14 +488,31 @@ export interface MapDescriptor {
   readonly walls: readonly WallDescriptor[];
   /** Its gates (#2691), in the order the snapshot's `gates` says how each stands. */
   readonly gates: readonly GateDescriptor[];
+  /** Its switches (#3025), in the order the snapshot's `switches` says how each points. */
+  readonly switches: readonly SwitchDescriptor[];
 }
 
-/** A wall a pressure plate opens (#2691). */
+/** What opens a gate (#3025): a pressure plate (#2691), or a switch. */
+export type GateOpenerDescriptor =
+  | {
+      readonly kind: "plate";
+      readonly plate: { readonly x: number; readonly y: number };
+      /** Whose plate it is; `null` for anyone's. */
+      readonly team: 0 | 1 | 2 | null;
+    }
+  | { readonly kind: "switch" };
+
+/** A wall its opener opens (#2691, #3025). */
 export interface GateDescriptor {
   readonly wall: WallDescriptor;
-  readonly plate: { readonly x: number; readonly y: number };
-  /** Whose plate it is; `null` for anyone's. */
-  readonly team: 0 | 1 | 2 | null;
+  readonly opener: GateOpenerDescriptor;
+}
+
+/** A lever (#3025): clicked, as `switch-<id>`, it is walked to and flipped. */
+export interface SwitchDescriptor {
+  readonly id: string;
+  readonly layer: number;
+  readonly position: { readonly x: number; readonly y: number };
 }
 
 /** One slot of a `SkillBarMessage`: what the HUD needs to draw it. */

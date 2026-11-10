@@ -45,6 +45,7 @@ Estas teclas son fijas:
 - **Clic derecho** en una bandera o en la base de bandera, en una Batalla
   de gremios o en Barrow Field, para seleccionarla; **Space** camina hasta allí y coge la
   bandera o la planta.
+- **Clic derecho** en una palanca para fijarla como objetivo; **Space** camina hasta ella y la acciona, abriendo o cerrando las puertas que controla.
 - **Clic con la rueda** en un enemigo para marcarlo para tu equipo: su **T**
   lo selecciona. En el suelo o en un aliado, señala ese punto. O haz clic en
   la barra de objetivo de arriba para marcar al enemigo que tienes
@@ -72,7 +73,7 @@ botones, menos Sala, están arriba a la derecha de la pantalla. En una ventana
 estrecha, estos iconos y los demás botones de la pantalla se pliegan en
 **⋯**; solo su botón principal se queda fuera. ⚙ abre Opciones como una
 ventana bajo la barra, con la pantalla aún detrás; Esc, × o un clic fuera la
-cierran. La Ayuda se cierra con la × de arriba a la derecha, Esc u otra
+cierran. En **Pantalla**, **Iluminación** enciende o apaga la luz y la sombra de un mapa iluminado, al instante, incluso en una partida. La Ayuda se cierra con la × de arriba a la derecha, Esc u otra
 pulsación de [?].
 
 **Comparte un ritmo con tu sala.** En el editor de ritmos (♪, luego

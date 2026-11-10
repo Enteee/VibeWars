@@ -192,6 +192,10 @@ describe("objectTargetName (#1225)", () => {
     expect(objectTargetName("flag-stand", 0, red, true)).toBe(t("hud.stormBeaconTheirs"));
     expect(objectTargetName("flag-stand", 1, red, true)).toBe(t("hud.stormBeaconOurs"));
   });
+
+  it("names a switch a lever (#3025)", () => {
+    expect(objectTargetName("switch-west", 0, NOBODY)).toBe(t("hud.switch"));
+  });
 });
 
 describe("renderTargetSignet (#2819)", () => {
@@ -318,6 +322,7 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
     altar: undefined,
     capturePoints: [],
     gates: [],
+    switches: [],
   });
   const ours = { text: t("hud.relicScoredOurs"), side: "ours" };
   const theirs = { text: t("hud.relicScoredTheirs"), side: "theirs" };
@@ -359,6 +364,7 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
       altar: undefined,
       capturePoints: [],
       gates: [],
+      switches: [],
     };
     expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
   });
@@ -372,6 +378,7 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
     altar,
     capturePoints: [],
     gates: [],
+    switches: [],
   });
   const ours = { text: t("hud.altarPointOurs"), side: "ours" };
   const theirs = { text: t("hud.altarPointTheirs"), side: "theirs" };
@@ -406,6 +413,7 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
       altar: undefined,
       capturePoints: [],
       gates: [],
+      switches: [],
     };
     expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
   });
@@ -555,6 +563,7 @@ describe("carriedBundle (#1225, #1374)", () => {
     altarHeldSeconds: 0,
     capturePoints: [],
     gates: [],
+    switches: [],
     summary: undefined,
   });
 

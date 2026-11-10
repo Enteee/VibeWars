@@ -300,6 +300,7 @@ export default {
   "combat.sourceShrine": "Svatyně",
   "combat.sourceSkill": "dovednost",
   "combat.sourceWeapon": "zbraň",
+  "combat.sourceZone": "Nebezpečí",
   "combat.spellFailed": "{skill} ({target}) selhává",
   "combat.statusApplied": "{target} získává {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} získává {status} (udržováno)",
@@ -365,6 +366,7 @@ export default {
   "effects.categoryChant": "Popěvek",
   "effects.categoryCondition": "Stav",
   "effects.categoryEcho": "Ozvěna",
+  "effects.categoryEnvironment": "Prostředí",
   "effects.categoryEffect": "Efekt",
   "effects.categoryEnchantment": "Očarování",
   "effects.categoryForm": "Podoba",
@@ -419,6 +421,7 @@ export default {
   "gearEditor.statusChant": "popěvek",
   "gearEditor.statusCondition": "se stavem",
   "gearEditor.statusEcho": "pod ozvěnou",
+  "gearEditor.statusEnvironment": "pod účinkem prostředí",
   "gearEditor.statusEnchantment": "pod očarováním",
   "gearEditor.statusForm": "v podobě",
   "gearEditor.statusGlyph": "pod glyfem",
@@ -607,6 +610,7 @@ export default {
   "hud.stormBeacon": "Bouřný maják",
   "hud.stormBeaconOurs": "Bouřný maják: drží tvůj tým",
   "hud.stormBeaconTheirs": "Bouřný maják: drží nepřítel",
+  "hud.switch": "Páka",
   "hud.targetDead": "mrtvý",
   "hud.targetEffects": "efekty tvého cíle",
   "hud.versus": "{ours} : {theirs}",
@@ -682,7 +686,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Hledání zápasu spouští hostitel",
   "lobby.joinTeam": "Přidat se",
   "lobby.joinTeamLabel": "Přidat se k týmu {team}",
-  "lobby.leaveQueue": "Opustit frontu",
   "lobby.leaveTeam": "Opustit",
   "lobby.leaveTeamLabel": "Opustit tým {team}",
   "lobby.map": "Mapa",
@@ -747,6 +750,14 @@ export default {
   "matches.endTime": "Vypršel čas",
   "matches.filterKind": "Druh",
   "matches.filterSize": "Velikost",
+  "matches.hallReported": "Hlášeno hostitelem každého zápasu, neověřeno.",
+  "matches.hallStreak": {
+    one: "{count} výhra v řadě",
+    few: "{count} výhry v řadě",
+    many: "{count} výhry v řadě",
+    other: "{count} výher v řadě",
+  },
+  "matches.hallTitle": "Síň hrdinů",
   "matches.hostReported": "od hostitele",
   "matches.hostReportedTitle": "Zveřejnil hostitel zápasu; nikdo jiný to neověřil.",
   "matches.hoursAgo": {
@@ -827,10 +838,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "ovládání",
+  "options.display": "zobrazení",
   "options.label": "Možnosti",
   "options.language": "jazyk",
   "options.languageBusy": "Nejdřív opusť lobby nebo zápas: změna jazyka znovu načte stránku.",
   "options.languageLabel": "Jazyk",
+  "options.lightingLabel": "Osvětlení",
   "options.player": "hráč",
   "options.relay": "relay (TURN)",
   "options.sections": "sekce možností",
@@ -925,6 +938,8 @@ export default {
   "queue.defending": "Držíš {map} · obrana za {seconds} s",
   "queue.fellThrough": "Zápas se rozpadl, hledám znovu",
   "queue.guildVsGuild": "Cech proti cechu",
+  "queue.hallHeldBy": "{holder} drží Síň hrdinů",
+  "queue.hallUnheld": "Síň hrdinů nikdo nedrží",
   "queue.heroesAscent": "Výstup hrdinů · kolo {round}",
   "queue.hostLeft": "Hostitel odešel",
   "queue.hostOnly": "Frontu může opustit jen hostitel.",
@@ -958,6 +973,8 @@ export default {
   "queue.theirTeam": "Jejich tým",
   "queue.title": "Náhodná aréna {mode} · {character}",
   "queue.unreachable": "Lobby servery nejsou dostupné",
+  "queue.vault": "Trezor",
+  "queue.vaultOpensIn": "Síň se otevře za {time}",
   "queue.versus": "vs",
   "queue.waitingForEveryone": "Čeká se, až dorazí všichni",
   "queue.waitingForTeam": "Čeká se na tvůj tým ({seconds})",
@@ -1418,6 +1435,73 @@ export default {
   "training.reset": "reset",
   "training.resetDivider": "reset",
   "training.scenario": "scénář",
+  "training.scenario.target-dummy.label": "Cvičná figurína",
+  "training.scenario.target-dummy.teaches":
+    "Co jedno seslání skutečně udělá: při 60 brnění přesně číslo z popisku.",
+  "training.scenario.time-to-kill.label": "Čas do zabití",
+  "training.scenario.time-to-kill.teaches":
+    "Tvůj trvalý výkon: jak dlouho vydrží sesílatel s 500 zdraví, znovu a znovu.",
+  "training.scenario.physical-vs-elemental.label": "Fyzické vs. živelné",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Že brnění odpovídá typu poškození: Válečník a Neochvějná insignie tlumí meč, ne Ohnivou kouli; Hraničář tlumí Ohnivou kouli, ne meč.",
+  "training.scenario.condition-pressure.label": "Tlak stavů",
+  "training.scenario.condition-pressure.teaches":
+    "Že stavy jsou odpočet ke smrti: Krvácení, Otrava a Hoření ubírají 20 zdraví za sekundu, víc nejde, a další je jen obnoví, nesčítají se.",
+  "training.scenario.condition-removal.label": "Odstranění stavů",
+  "training.scenario.condition-removal.teaches":
+    "Že odstranění stavu sundá jen to, co slibuje: spojenec na 200 z 500 nese pět stavů a Hluboká rána mezi nimi při dopadu ubere 100 a omezí tvé léčení na 400.",
+  "training.scenario.armor-ladder.label": "Žebříček brnění",
+  "training.scenario.armor-ladder.teaches":
+    "Křivka zmírnění: stejný zásah proti 40 až 104 brnění, vedle sebe.",
+  "training.scenario.healing-throughput.label": "Výkon léčení",
+  "training.scenario.healing-throughput.teaches":
+    "Kolik tvé léčení zmůže proti skutečnému tlaku, a že brnění je léčitelův přítel: stejná Ohnivá koule ubere Mnichovi 91 a Válečníkovi 64.",
+  "training.scenario.interrupt-timing.label": "Načasování přerušení",
+  "training.scenario.interrupt-timing.teaches":
+    "Že přerušení je o načasování: chyť 3sekundové seslání, než dopadne. Sesílateli s Omámením trvají kouzla dvakrát déle a každý zásah je zastaví.",
+  "training.scenario.blind-denial.label": "Slepota",
+  "training.scenario.blind-denial.teaches":
+    "Že oslepený útočník mine devět ran z deseti: dva lučištníci, jeden z nich slepý.",
+  "training.scenario.kiting-and-cripple.label": "Kiting a Ochromení",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Mířit s předstihem na pohyblivý cíl, a že ochromený cíl jde polovičním tempem.",
+  "training.scenario.weapon-dps.label": "DPS zbraně",
+  "training.scenario.weapon-dps.teaches":
+    "Co tvá zbraň udělá za sekundu: stiskni Space a přečti řádek zbraně.",
+  "training.scenario.dodge-drill.label": "Cvičení úhybu",
+  "training.scenario.dodge-drill.teaches": "Že šíp dopadne tam, kde bys byl: uhni, až opustí luk.",
+  "training.scenario.obstacles-and-los.label": "Výhled a dosah",
+  "training.scenario.obstacles-and-los.teaches":
+    "Že vidět nepřítele neznamená na něj dosáhnout: dovednost na cíl za sloupem ho obejde, na cíl mimo dosah dojde blíž.",
+  "training.scenario.fireball-dodge.label": "Uhni Ohnivé kouli",
+  "training.scenario.fireball-dodge.teaches":
+    "Že Ohnivá koule letí jako šíp: ukroč stranou, když vyletí, a nic nehoří (#535).",
+  "training.scenario.block.label": "Blok",
+  "training.scenario.block.teaches":
+    "Že Strážce odrazí polovinu tvých ran a kouzlo jím projde (#534).",
+  "training.scenario.survivability.label": "Odolnost",
+  "training.scenario.survivability.teaches":
+    "Jak dlouho vydržíš proti třem sesílatelům, a že brnění je tvá největší páka: při 80 ubere Ohnivá koule o 30 % méně než při 60.",
+  "training.scenario.aoe-cluster.label": "Plocha: shluk",
+  "training.scenario.aoe-cluster.teaches":
+    "Že plošný zásah má střed v cíli: Ohnivá koule doprostřed spálí všech pět a ani jednoho z opozdilců.",
+  "training.scenario.aoe-cap.label": "Plocha: strop",
+  "training.scenario.aoe-cap.teaches": "Že Salva končí u šesti: sedm natěsno a jeden vždy vyvázne.",
+  "training.scenario.aoe-friendly-fire.label": "Plocha: přátelská palba",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Že plošný zásah nikdy nezraní tvou stranu: spojenec ve shluku neutrpí nic.",
+  "training.scenario.aoe-line-of-sight.label": "Plocha: přímá viditelnost",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Že plošný zásah se zastaví o zdi: tři před sloupem hoří, dva za ním ne.",
+  "training.scenario.moving-targets.label": "Pohyblivé cíle",
+  "training.scenario.moving-targets.teaches":
+    "Zasáhnout, co se hýbe: miř před běžce, dostihni prchajícího a otoč se na toho, kdo tě honí.",
+  "training.scenario.heights.label": "Výšky",
+  "training.scenario.heights.teaches":
+    "Že výška je místo, odkud bojovat: plošiny skrývají, kdo je pod nimi, rampy jsou jediná cesta mezi patry a tvůj výstřel z luku shora zasáhne silněji.",
+  "training.scenario.wilds.label": "Divočina",
+  "training.scenario.wilds.teaches":
+    "Že i samotná zem může zraňovat: spálená zem pálí každého, kdo na ní stojí, a hoření trvá i po odchodu, tak ji obejdi.",
   "training.soundOff": "Zvuk vypnut.",
   "training.soundOn": "Zvuk zapnut.",
   "training.you": "Ty",

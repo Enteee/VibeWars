@@ -104,6 +104,7 @@ const WIRE_STATUS_RANK: Readonly<Record<StatusCategory, number>> = {
   echo: 10,
   "skill-effect": 11,
   item: 12,
+  environment: 13,
 };
 
 function wireStatusRank(id: StatusId): number {
@@ -214,6 +215,7 @@ export function groundEffectSnapshot(
     team: effect.team,
     x: effect.position.x,
     y: effect.position.y,
+    layer: effect.layer,
     radius: groundRadius(effect.act),
     endsAt: tenths(elapsedSeconds + effect.remainingSeconds),
     durationSeconds: Math.max(0.1, tenths(effect.durationSeconds)),
@@ -841,6 +843,7 @@ export function observedSnapshot(
     altarHolder: absent(snapshot.altarHolder),
     altarHeldSeconds: snapshot.altarHeldSeconds,
     gates: snapshot.gates,
+    switches: snapshot.switches,
     capturePoints: snapshot.capturePoints.map(({ x, y, layer, owner, capturer, progress }) => ({
       position: { x, y },
       layer,

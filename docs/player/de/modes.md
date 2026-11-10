@@ -135,8 +135,7 @@ Hier läuft der Reliktlauf des Aufstiegs der Helden andersherum. Jede Basis hat 
 
 **Führe deinen Geisterhelden auf den Altar und halte ihn.** Jedes Team hat einen **Geisterhelden** in
 seiner Basis, einen Geist, der mit einer Axt kämpft und den niemand spielt. Der **Altar** ist in der
-Mitte, von beiden Basen gleich weit. In **The Courtyard** steht er in einem offenen Hof, umringt von vier
-Säulengruppen, und wird von den vier Ecken aus betreten. Die **Hall of Heroes**, die King-of-the-Hill-Karte
+Mitte, von beiden Basen gleich weit. In **Threefold Keep** kämpfen drei Teams (zwei, wenn kein drittes frei ist) in einer ummauerten Feste um ihn. Ihre Tore öffnen sich nur von innen, über eine Platte: Der Weg hinein führt um die Feste zu einer offenen Ecke. Höchstens 12 Punkte pro Team, und stehen alle Gegner bei -60 % Moral, gewinnst du sofort. Die **Hall of Heroes**, die King-of-the-Hill-Karte
 am Ende des Aufstiegs der Helden, hebt ihn auf ein Podest mit Mauern im Westen und Osten, über einen von
 Säulen gesäumten Aufgang im Norden oder Süden. Visiere deinen Geist mit **Rechtsklick** an und drück
 **Space**, damit er dir folgt: Er läuft mit dir und kämpft gegen das, was du bekämpfst. Drück noch einmal
@@ -146,8 +145,8 @@ Einblendung sagt, wem dein Geisterheld folgt, wann immer sich das ändert, und s
 seinen Anführer.
 
 Dein Geist hat 640 Leben und schwingt seine Axt mit **Cyclone Axe**, **Disrupting Chop** und **Swift
-Chop**, ob er folgt oder bleibt. Er wird stärker, je weiter oben im Aufstieg du bist: Stufe 24 in The
-Courtyard, 28 in der Hall of Heroes. **Töte den Geist des anderen Teams**, und jedes Mitglied deines Teams
+Chop**, ob er folgt oder bleibt. Er wird stärker, je weiter oben im Aufstieg du bist: Stufe 24 in Threefold
+Keep, 28 in der Hall of Heroes. **Töte den Geist des anderen Teams**, und jedes Mitglied deines Teams
 bekommt einen **Moralschub von +10 %**, der zuerst eine Todesstrafe aufhebt und nie über +10 % geht. Töte
 ihn noch einmal, nachdem er aufersteht, und du bekommst ihn erneut.
 
@@ -181,7 +180,7 @@ Zauberreichweite zu kämpfen. Solange dein Team den Altar nicht hält, tötet je
 anderen Teams, sobald er auf dem Altar in ihrer Reichweite steht: Er ist der einzige Gegner, der deinen Geist am
 Einnehmen hindert.
 
-The Courtyard spielt es.
+Threefold Keep spielt es.
 
 ## Punkte erobern
 
@@ -268,8 +267,7 @@ zurück. Ein Knopf unter dem Ergebnis überspringt die Wartezeit oder geht für 
 ## Aufstieg der Helden
 
 Ein Aufstieg der Helden aus der Warteschlange hat neun Runden, immer in dieser Reihenfolge: The Hollow Deep (Vernichtung), Blackwater Ford (Priestervernichtung), Barrow Field (Priestervernichtung), Cinder Sanctum (Reliktlauf),
-Mosslit Cairns (Punkte erobern), The Brazen Causeway (Priestervernichtung), The Courtyard (King of the Hill), The Warden's Gallery (Punkte erobern), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
-wo du bist, während du ein Team suchst: `Runde 2 von 9 · Blackwater Ford`. Du triffst immer nur ein Team in derselben Runde
+Mosslit Cairns (Punkte erobern), The Brazen Causeway (Priestervernichtung), Threefold Keep (King of the Hill), The Warden's Gallery (Punkte erobern), dann die Hall of Heroes. Während du ein Team suchst, sagt dir das Warteschlangen-Symbol in der oberen Leiste, wo du bist, `Aufstieg der Helden · Runde 2`, und das Lobby-Fenster zeigt die Karte dieser Runde. Du triffst immer nur ein Team in derselben Runde
 und wartest so lange wie nötig: Keine Bots springen ein. Die einzige Ausnahme: Ab Runde 2 darf ein Team, das 60 Sekunden allein in seiner Runde wartet, vorrücken. Es trifft auf ein Team, das in einer beliebigen späteren Runde vor der Hall wartet, beide spielen die Karte des weiter fortgeschrittenen Teams, und der Sieger macht von dort aus weiter. Eine Runde auf einer Karte für drei Teams wartet auf drei; zwei
 Teams, die 30 Sekunden auf ein drittes gewartet haben, spielen stattdessen gegeneinander, ebenso zwei, deren drittes nie
 in der Lobby erscheint. Gewinnst du, steigt deine Gruppe nach 20 Sekunden von selbst zur nächsten Karte auf; gewinnst du
@@ -277,7 +275,9 @@ in der Hall, bleibst du, um sie zu verteidigen. Verlierst du oder verlässt ein 
 Aufstieg wieder bei Runde 1; das Gleiche gilt, wenn du die Warteschlange oder die Gruppe verlässt. Ein Match, das verloren
 geht, weil sein Host gegangen ist, behält deine Runde.
 
-Die Hall lost für jedes Match einen von drei Modi aus: King of the Hill, Reliktlauf oder Punkte erobern, für zwei oder drei Teams. Bei zwei Teams bleibt die dritte Basis geschlossen und mit ihr ihr Eroberungspunkt. Ein Match in der Hall dauert 12 Minuten, und die meisten Punkte gewinnen; Punkte erobern endet außerdem vorzeitig bei 20 Punkten Vorsprung. Der Tod kostet keine Moral. Die Toten kehren gemeinsam zu jeder vollen Minute der Matchuhr in ihre Basis zurück, ein ausgelöschtes Team ist also nicht geschlagen, ein Team, dessen Spieler alle gegangen sind, aber schon. Bei King of the Hill punktet das Team, das den Altar hält, auch nach dem Tod seines Geists weiter, bis ein anderes Team ihn beansprucht, und seine Toten kehren auf dem Altar zurück. Ein Gleichstand geht an das Team, das zuletzt gepunktet hat, bei Punkte erobern an das Team mit dem letzten Kill.
+Die Hall lost für jedes Match einen von drei Modi aus: King of the Hill, Reliktlauf oder Punkte erobern, für zwei oder drei Teams. Bei zwei Teams bleibt die dritte Basis geschlossen und mit ihr ihr Eroberungspunkt. Ein Match in der Hall dauert 11 Minuten, und die meisten Punkte gewinnen; Punkte erobern endet außerdem vorzeitig bei 20 Punkten Vorsprung. Der Tod kostet keine Moral. Die Toten kehren gemeinsam zu jeder vollen Minute der Matchuhr in ihre Basis zurück, ein ausgelöschtes Team ist also nicht geschlagen, ein Team, dessen Spieler alle gegangen sind, aber schon. Bei King of the Hill punktet das Team, das den Altar hält, auch nach dem Tod seines Geists weiter, bis ein anderes Team ihn beansprucht, und seine Toten kehren auf dem Altar zurück. Ein Gleichstand geht an das Team, das zuletzt gepunktet hat, bei Punkte erobern an das Team mit dem letzten Kill.
+
+**Das Gewölbe.** Die Hall bildet sich nur alle 12 Minuten nach UTC, zu :00, :12, :24, :36 und :48. Bis dahin wartet deine Gruppe im Gewölbe: Das Warteschlangen-Symbol zeigt die Zeit bis zur nächsten Öffnung und wer die Hall hält. Bei jeder Öffnung trifft der Halter auf bis zu zwei Herausforderer, oder bis zu drei Herausforderer treffen aufeinander, wenn niemand sie hält. Nur Gruppen, die schon vor der Öffnung warten, sind dabei, und wer keinen Platz bekommt, wartet auf die nächste. Ein Halter ohne Gegner behält die Hall und wartet, ohne dass ein Sieg zählt; ein einzelner Herausforderer wartet ebenfalls. Gewinnt eine Gruppe die Hall, sagt jedes geöffnete Spiel, wer sie nun hält: ihr Anführer oder ihr Gildenkürzel, wenn mehr als die Hälfte der Gruppe es teilt.
 
 Jeder Lauf beginnt mit der **Elite-Zaishen-Schlacht**, ohne Warteschlange: Deine Gruppe gegen sechs von Bots gespielte Zaishen (2 Mönche, ein Elementarmagier und 3 weitere). Die Uhr startet, sobald jemand von euch die Startlinie überquert oder der erste Zaishen stirbt, je nachdem, was zuerst geschieht. Tötet ihr alle sechs in unter 30 Sekunden, startet die Gruppe mit +10 % Moral; unter 60 mit +8 %, unter 80 mit +6 %, unter 100 mit +4 %, unter 120 mit +2 %; langsamer gibt es nichts. Nach einem Sieg stellt sich die Gruppe von selbst für die erste Karte an. Fällt die ganze Gruppe oder lebt nach Ablauf der 8 Minuten noch ein Zaishen, ist der Lauf vorbei.
 
@@ -340,3 +340,5 @@ Blau Team, Gold Aufstieg, Violett GvG, Grün Gehostet. Über der Liste filtern C
 **Größe** (1v1, 2v2, 4v4, 8v8): Drück beliebig viele, und ein Match erscheint, wenn es zu einer gedrückten Art und einer gedrückten Größe
 passt; eine Gruppe ohne gedrückten Chip lässt alles durch. Die Größe ist das größte Team, Bots eingeschlossen, ein 3v2 Gehostetes Spiel
 passt also zu keiner Größe. Die Chips bleiben, wie du sie gelassen hast, bis die Seite neu lädt.
+
+Über den Chips listet der Streifen **Halle der Helden** die letzten 20 Haltephasen auf, die neueste zuerst: den Halter (ein Gildenkürzel oder den Namen des Anführers), die Spieler des Siegerteams, wann der neueste Sieg endete und ab zwei Siegen, wie viele in Folge. Eine Haltephase ist eine ununterbrochene Reihe von Hallen-Siegen desselben Halters. Der Streifen liest die Berichte auf dieser Seite, ignoriert die Chips und bleibt verborgen, wenn keiner davon ein Hallen-Sieg ist. Wie jeder Bericht zeigt er, was der Host des jeweiligen Matches gemeldet hat, und nichts überprüft das.

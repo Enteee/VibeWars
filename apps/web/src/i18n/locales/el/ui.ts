@@ -276,6 +276,7 @@ export default {
   "combat.sourceShrine": "Το ιερό",
   "combat.sourceSkill": "ικανότητα",
   "combat.sourceWeapon": "όπλο",
+  "combat.sourceZone": "Κίνδυνος",
   "combat.spellFailed": "{target}: αποτυχία {skill}",
   "combat.statusApplied": "{target} αποκτά {status} ({seconds} δ)",
   "combat.statusAppliedMaintained": "{target} αποκτά {status} (συντηρείται)",
@@ -336,6 +337,7 @@ export default {
   "effects.categoryChant": "Ψαλμωδία",
   "effects.categoryCondition": "Πάθηση",
   "effects.categoryEcho": "Ηχώ",
+  "effects.categoryEnvironment": "Περιβάλλον",
   "effects.categoryEffect": "Επίδραση",
   "effects.categoryEnchantment": "Μάγεμα",
   "effects.categoryForm": "Μορφή",
@@ -385,6 +387,7 @@ export default {
   "gearEditor.statusChant": "ψαλμωδία",
   "gearEditor.statusCondition": "έχεις πάθηση",
   "gearEditor.statusEcho": "έχεις ηχώ",
+  "gearEditor.statusEnvironment": "υπό επίδραση περιβάλλοντος",
   "gearEditor.statusEnchantment": "έχεις μάγεμα",
   "gearEditor.statusForm": "είσαι σε μορφή",
   "gearEditor.statusGlyph": "έχεις γλύφο",
@@ -564,6 +567,7 @@ export default {
   "hud.stormBeacon": "Φάρος της Καταιγίδας",
   "hud.stormBeaconOurs": "Φάρος της Καταιγίδας: στα χέρια της ομάδας σου",
   "hud.stormBeaconTheirs": "Φάρος της Καταιγίδας: στα χέρια του εχθρού",
+  "hud.switch": "Μοχλός",
   "hud.targetDead": "νεκρός",
   "hud.targetEffects": "επιδράσεις στόχου",
   "hud.versus": "{ours} κατά {theirs}",
@@ -630,7 +634,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Ο οικοδεσπότης ξεκινά την αναζήτηση",
   "lobby.joinTeam": "Είσοδος",
   "lobby.joinTeamLabel": "Είσοδος στην ομάδα {team}",
-  "lobby.leaveQueue": "Έξοδος από την ουρά",
   "lobby.leaveTeam": "Έξοδος",
   "lobby.leaveTeamLabel": "Έξοδος από την ομάδα {team}",
   "lobby.map": "Χάρτης",
@@ -690,6 +693,9 @@ export default {
   "matches.endTime": "Έληξε ο χρόνος",
   "matches.filterKind": "Τύπος",
   "matches.filterSize": "Μέγεθος",
+  "matches.hallReported": "Αναφέρθηκε από τον οικοδεσπότη κάθε αγώνα, χωρίς επαλήθευση.",
+  "matches.hallStreak": { one: "{count} νίκη στη σειρά", other: "{count} νίκες στη σειρά" },
+  "matches.hallTitle": "Αίθουσα των Ηρώων",
   "matches.hostReported": "από οικοδεσπότη",
   "matches.hostReportedTitle":
     "Δημοσιεύτηκε από τον οικοδεσπότη του αγώνα· δεν επαληθεύτηκε από κανέναν άλλον.",
@@ -761,11 +767,13 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "χειρισμός",
+  "options.display": "οθόνη",
   "options.label": "Επιλογές",
   "options.language": "γλώσσα",
   "options.languageBusy":
     "Βγες πρώτα από το λόμπι ή τον αγώνα: η αλλαγή γλώσσας επαναφορτώνει τη σελίδα.",
   "options.languageLabel": "Γλώσσα",
+  "options.lightingLabel": "Φωτισμός",
   "options.player": "παίκτης",
   "options.relay": "αναμεταδότης (TURN)",
   "options.sections": "ενότητες επιλογών",
@@ -853,6 +861,8 @@ export default {
   "queue.defending": "Κρατάς το {map} · άμυνα σε {seconds} δ",
   "queue.fellThrough": "Ο αγώνας ναυάγησε, νέα αναζήτηση",
   "queue.guildVsGuild": "Συντεχνία κατά Συντεχνίας",
+  "queue.hallHeldBy": "{holder} κρατά την Αίθουσα των Ηρώων",
+  "queue.hallUnheld": "Κανείς δεν κρατά την Αίθουσα των Ηρώων",
   "queue.heroesAscent": "Ανάβαση των Ηρώων · γύρος {round}",
   "queue.hostLeft": "Ο οικοδεσπότης αποχώρησε",
   "queue.hostOnly": "Μόνο ο οικοδεσπότης μπορεί να βγει από την ουρά.",
@@ -879,6 +889,8 @@ export default {
   "queue.theirTeam": "Αντίπαλοι",
   "queue.title": "Τυχαία Αρένα {mode} · {character}",
   "queue.unreachable": "Δεν υπάρχει πρόσβαση στους διακομιστές λόμπι",
+  "queue.vault": "Το Θησαυροφυλάκιο",
+  "queue.vaultOpensIn": "Η Αίθουσα ανοίγει σε {time}",
   "queue.versus": "κατά",
   "queue.waitingForEveryone": "Αναμονή για όλους",
   "queue.waitingForTeam": "Αναμονή για την ομάδα σου ({seconds})",
@@ -1326,6 +1338,75 @@ export default {
   "training.reset": "επαναφορά",
   "training.resetDivider": "επαναφορά",
   "training.scenario": "σενάριο",
+  "training.scenario.target-dummy.label": "Ομοίωμα στόχου",
+  "training.scenario.target-dummy.teaches":
+    "Τι κάνει πραγματικά μία εκτέλεση: με 60 πανοπλία, ακριβώς τον αριθμό της επεξήγησης.",
+  "training.scenario.time-to-kill.label": "Χρόνος εξόντωσης",
+  "training.scenario.time-to-kill.teaches":
+    "Η σταθερή σου απόδοση: πόσο αντέχει ένας μάγος με 500 υγεία, ξανά και ξανά.",
+  "training.scenario.physical-vs-elemental.label": "Φυσική έναντι στοιχειακής",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Ότι η πανοπλία απαντά σε τύπο ζημιάς: ένας Warrior και το Stalwart Insignia μετριάζουν ένα σπαθί και όχι ένα Fireball, ένας Ranger μετριάζει ένα Fireball και όχι ένα σπαθί.",
+  "training.scenario.condition-pressure.label": "Πίεση παθήσεων",
+  "training.scenario.condition-pressure.teaches":
+    "Ότι οι παθήσεις είναι ρολόι θανάτου: Bleeding, Poison και Burning αφαιρούν 20 υγεία το δευτερόλεπτο, το μέγιστο που υπάρχει, και οι επιπλέον ανανεώνουν αντί να στοιβάζονται.",
+  "training.scenario.condition-removal.label": "Αφαίρεση παθήσεων",
+  "training.scenario.condition-removal.teaches":
+    "Ότι μια αφαίρεση πάθησης βγάζει μόνο ό,τι λέει: ένας σύμμαχος στα 200 από 500 έχει πέντε παθήσεις, και το Deep Wound ανάμεσά τους αφαιρεί 100 μόλις πέσει και περιορίζει τις θεραπείες σου στα 400.",
+  "training.scenario.armor-ladder.label": "Κλίμακα πανοπλίας",
+  "training.scenario.armor-ladder.teaches":
+    "Η καμπύλη μετριασμού: το ίδιο χτύπημα σε πανοπλία 40 έως 104, δίπλα δίπλα.",
+  "training.scenario.healing-throughput.label": "Απόδοση θεραπείας",
+  "training.scenario.healing-throughput.teaches":
+    "Πόσο αξίζουν οι θεραπείες σου απέναντι σε πραγματική πίεση, και ότι η πανοπλία είναι φίλη του θεραπευτή: το ίδιο Fireball αφαιρεί 91 από έναν Monk και 64 από έναν Warrior.",
+  "training.scenario.interrupt-timing.label": "Συγχρονισμός διακοπής",
+  "training.scenario.interrupt-timing.teaches":
+    "Ότι η διακοπή είναι θέμα συγχρονισμού: πρόλαβε μια εκτέλεση 3 δευτερολέπτων πριν ολοκληρωθεί. Με Dazed, τα ξόρκια ενός μάγου κρατούν τα διπλά, και κάθε χτύπημα τα σταματά.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Ότι ένας τυφλωμένος επιτιθέμενος αστοχεί σε εννέα χτυπήματα στα δέκα: δύο τοξότες, ο ένας τυφλός.",
+  "training.scenario.kiting-and-cripple.label": "Kiting και Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Σημάδεμα μπροστά από κινούμενο στόχο, και ότι ένας στόχος με Crippled περπατά με μισή ταχύτητα.",
+  "training.scenario.weapon-dps.label": "DPS όπλου",
+  "training.scenario.weapon-dps.teaches":
+    "Τι κάνει το όπλο σου ανά δευτερόλεπτο: πάτα Space και διάβασε τη γραμμή του όπλου.",
+  "training.scenario.dodge-drill.label": "Άσκηση αποφυγής",
+  "training.scenario.dodge-drill.teaches":
+    "Ότι ένα βέλος πέφτει εκεί που θα ήσουν: στρίψε αφού φύγει από το τόξο.",
+  "training.scenario.obstacles-and-los.label": "Ορατότητα και εμβέλεια",
+  "training.scenario.obstacles-and-los.teaches":
+    "Ότι το να βλέπεις έναν εχθρό δεν σημαίνει ότι τον φτάνεις: μια ικανότητα σε κάποιον πίσω από την κολόνα την παρακάμπτει, και σε κάποιον εκτός εμβέλειας πλησιάζει.",
+  "training.scenario.fireball-dodge.label": "Απόφυγε το Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "Ότι ένα Fireball πετά σαν βέλος: κάνε στην άκρη μόλις φύγει και τίποτα δεν καίγεται (#535).",
+  "training.scenario.block.label": "Απόκρουση",
+  "training.scenario.block.teaches":
+    "Ότι το Guardian αποκρούει τα μισά σου χτυπήματα, ενώ ένα ξόρκι περνά (#534).",
+  "training.scenario.survivability.label": "Αντοχή",
+  "training.scenario.survivability.teaches":
+    "Πόσο αντέχεις απέναντι σε τρεις μάγους, και ότι η πανοπλία είναι ο μεγαλύτερος μοχλός σου: στα 80 ένα Fireball αφαιρεί 30% λιγότερα απ' ό,τι στα 60.",
+  "training.scenario.aoe-cluster.label": "Περιοχή: η ομάδα",
+  "training.scenario.aoe-cluster.teaches":
+    "Ότι η ζημιά περιοχής κεντράρεται στον στόχο της: ένα Fireball στο κέντρο καίει και τους πέντε και κανέναν από τους δύο ουραγούς.",
+  "training.scenario.aoe-cap.label": "Περιοχή: το όριο",
+  "training.scenario.aoe-cap.teaches":
+    "Ότι το Barrage σταματά στους έξι: επτά στριμωγμένοι, και ένας γλιτώνει πάντα.",
+  "training.scenario.aoe-friendly-fire.label": "Περιοχή: φίλια πυρά",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Ότι η ζημιά περιοχής δεν πληγώνει ποτέ τη δική σου πλευρά: ο σύμμαχος μέσα στην ομάδα δεν παθαίνει τίποτα.",
+  "training.scenario.aoe-line-of-sight.label": "Περιοχή: οπτική επαφή",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Ότι η ζημιά περιοχής σταματά στους τοίχους: οι τρεις μπροστά από την κολόνα καίγονται, οι δύο πίσω της όχι.",
+  "training.scenario.moving-targets.label": "Κινούμενοι στόχοι",
+  "training.scenario.moving-targets.teaches":
+    "Να χτυπάς ό,τι κινείται: σημάδεψε μπροστά από έναν δρομέα, πρόλαβε κάποιον που φεύγει και γύρνα σε όποιον σε κυνηγά.",
+  "training.scenario.heights.label": "Ύψη",
+  "training.scenario.heights.teaches":
+    "Ότι το ύψος είναι θέση μάχης: οι εξέδρες κρύβουν ποιος είναι από κάτω, οι ράμπες είναι ο μόνος δρόμος ανάμεσα στα επίπεδα, και η δική σου βολή με τόξο από ψηλά χτυπά πιο δυνατά.",
+  "training.scenario.wilds.label": "Άγρια γη",
+  "training.scenario.wilds.teaches":
+    "Ότι το ίδιο το έδαφος μπορεί να πληγώσει: το καμένο έδαφος καίει όποιον στέκεται πάνω του, και το κάψιμο συνεχίζεται αφού βγεις, οπότε πήγαινε γύρω του.",
   "training.soundOff": "Ήχος κλειστός.",
   "training.soundOn": "Ήχος ανοιχτός.",
   "training.you": "Εσύ",

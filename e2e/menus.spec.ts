@@ -123,7 +123,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(host.locator("#topbar .topbar-lobby-button .topbar-badge")).toHaveText("2");
     await expect((await lobbyWindow(host)).locator(".party-member")).toHaveCount(2);
     // A party queues in card 4: alone only.
-    await expect(guest.locator("#topbar .screen-ready")).toBeDisabled();
+    await expect(guest.locator("#topbar .lobby-find")).toBeDisabled();
 
     // The host picks the mode; the guest's rail and screen follow, its modes locked.
     await openRail(host, "GvG");
@@ -168,7 +168,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await debugger_.send("Debugger.enable");
     await debugger_.send("Debugger.pause");
     await joinByCode(guest, hostInvite);
-    await guest.locator("#topbar .screen-ready").click();
+    await guest.locator("#topbar .lobby-find").click();
     await expect(guest.locator("#topbar .topbar-queue")).toBeVisible();
 
     // The host answers: the join lands late, and is let go.
@@ -198,7 +198,7 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   const card = page.locator(".character-card");
   await expect(card).toHaveCount(1);
   await expect(card).toHaveClass(/is-selected/);
-  await expect(page.locator("#topbar .screen-ready")).toBeEnabled();
+  await expect(page.locator("#topbar .lobby-find")).toBeEnabled();
   const name = card.locator(".play-card-name");
   const first = await name.innerText();
   expect(ROLLED_NAMES).toContain(first);
@@ -291,9 +291,10 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   // Random Arena only chooses: nothing to edit there.
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
 
-  // Random Arena's one button is Ready (#2022); Options is its ⚙ (#1272), Music its ♪ (#1453).
-  const own = page.locator("#topbar .topbar-screen-actions").getByRole("button");
-  await expect(own).toHaveText(["Ready"]);
+  // Random Arena's one button is Find a match (#2980); Options is its ⚙ (#1272), Music its ♪ (#1453).
+  const own = page.locator("#topbar .topbar-queue-action").getByRole("button");
+  await expect(own).toHaveText(["Find a match"]);
+  await expect(page.locator("#topbar .topbar-screen-actions").getByRole("button")).toHaveCount(0);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
   // Lobby sits between Options and Music (#2385); the queue icon, before
@@ -404,7 +405,7 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   );
   await openRail(page, "GvG");
   // No Record or Music in the bar: GvG's button is its party's (#1526, #1766).
-  await expect(page.locator("#topbar .topbar-screen-actions").getByRole("button")).toHaveText([
+  await expect(page.locator("#topbar .topbar-queue-action").getByRole("button")).toHaveText([
     "Find a match",
   ]);
   await page.reload();

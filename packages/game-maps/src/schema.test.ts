@@ -7,8 +7,18 @@ import { describe, expect, it } from "vitest";
 import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/game-core";
 
 import { allWallSegments } from "./geometry.js";
-import { MapValidationError, mapDataSchema, validateMapData, type Wall } from "./schema.js";
+import {
+  MAX_LIGHTS,
+  MAX_WATER_BODIES,
+  MAX_WATER_POINTS,
+  MAX_ZONES,
+  MapValidationError,
+  mapDataSchema,
+  validateMapData,
+  type Wall,
+} from "./schema.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
+import heights from "../training/training-heights/map.json" with { type: "json" };
 
 const validMap = {
   id: "arena-test",
@@ -19,6 +29,9 @@ const validMap = {
   width: 100,
   height: 100,
   layers: 1,
+  groundLayer: 0,
+  pits: [],
+  tunnels: [],
   decks: [],
   transitions: [],
   walls: [
@@ -196,20 +209,22 @@ describe("every training map", () => {
   // RANGE_SPELL in game-core's skill catalog.
   const RANGE_SPELL = 420;
 
-  it("ships the open hall, the pillared one and the open field", () => {
+  it("ships the open hall, the pillared one, the open field, the heights and the wilds", () => {
     expect(maps.map(({ map }) => map.id).sort()).toEqual([
       "training-field",
       "training-hall",
       "training-heights",
       "training-pillars",
+      "training-wilds",
     ]);
   });
 
   it("is named for its directory, compact, and spawns one player against dummy slots", () => {
     for (const { dir, map } of maps) {
       expect(map.id).toBe(dir);
-      // The field (#497) is big enough to run in, the heights (#2937) to climb in.
-      const roomy = map.id === "training-field" || map.id === "training-heights";
+      // The field (#497) is big enough to run in, the heights (#2937) to climb in,
+      // the wilds (#3024) to walk between its zones.
+      const roomy = ["training-field", "training-heights", "training-wilds"].includes(map.id);
       expect(map.width, map.id).toBeLessThanOrEqual(roomy ? 1400 : 600);
       expect(map.height, map.id).toBeLessThanOrEqual(roomy ? 900 : 450);
       expect(
@@ -220,16 +235,31 @@ describe("every training map", () => {
     }
   });
 
-  it("training-heights has decks on layers 1 and 2, and a ramp joining each pair (#2937)", () => {
+  it("training-heights has decks on layers 2 and 3 over its ground on 1, and a ramp joining each pair (#2937, #2973)", () => {
     const heights = maps.find(({ map }) => map.id === "training-heights")?.map;
     if (heights === undefined) throw new Error("no training-heights");
-    expect(heights.decks.map(({ layer }) => layer).sort()).toEqual([1, 2]);
+    expect(heights.groundLayer).toBe(1);
+    expect(heights.decks.map(({ layer }) => layer).sort()).toEqual([2, 3]);
     expect(heights.transitions.map(({ from, to }) => [from, to])).toEqual(
       expect.arrayContaining([
         [0, 1],
         [1, 2],
+        [2, 3],
       ]),
     );
+  });
+
+  it("training-heights' pit ramps are each at least 110 long, climbing, for their route cache (#2972, #2973)", () => {
+    const heights = maps.find(({ map }) => map.id === "training-heights")?.map;
+    if (heights === undefined) throw new Error("no training-heights");
+    const pitRamps = heights.transitions.filter(({ to }) => to === heights.groundLayer);
+    expect(pitRamps).toHaveLength(2);
+    for (const { area, uphill } of pitRamps) {
+      if (area.kind !== "rect") throw new Error("a pit ramp is a rect");
+      expect(uphill === "e" || uphill === "w" ? area.width : area.height).toBeGreaterThanOrEqual(
+        110,
+      );
+    }
   });
 
   it("keeps every spawn inside the bounds and out of the walls", () => {
@@ -859,12 +889,22 @@ describe("ghost maps (#2689)", () => {
   });
 
   describe("gates (#2691)", () => {
+    const opener = { kind: "plate", plate: { x: 50, y: 50 }, team: null };
     const gate = {
       id: "north",
       wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
-      plate: { x: 50, y: 50 },
-      team: null,
+      opener,
     };
+
+    it("rejects a one-way gate whose plate is outside, or with no altar to be inside of", () => {
+      const altar = { kind: "altar", layer: 0, position: { x: 50, y: 60 } };
+      const oneWay = { ...gate, opener: { ...opener, oneWay: true } };
+      const outside = { ...gate, opener: { ...opener, oneWay: true, plate: { x: 150, y: 60 } } };
+      expect(() => validateMapData({ ...validMap, gates: [oneWay] })).toThrow(/altar/);
+      expect(() => validateMapData({ ...validMap, objectives: [altar], gates: [outside] })).toThrow(
+        /altar/,
+      );
+    });
 
     it("accepts a neutral gate with its plate clear of every wall", () => {
       expect(validateMapData({ ...validMap, gates: [gate] }).gates).toHaveLength(1);
@@ -872,10 +912,78 @@ describe("ghost maps (#2689)", () => {
 
     it("refuses a plate off the map, and a team that does not spawn", () => {
       expect(() =>
-        validateMapData({ ...validMap, gates: [{ ...gate, plate: { x: -5, y: 0 } }] }),
+        validateMapData({
+          ...validMap,
+          gates: [{ ...gate, opener: { ...opener, plate: { x: -5, y: 0 } } }],
+        }),
       ).toThrow(/gate north/);
-      expect(() => validateMapData({ ...validMap, gates: [{ ...gate, team: 7 }] })).toThrow(
-        /gate north/,
+      expect(() =>
+        validateMapData({ ...validMap, gates: [{ ...gate, opener: { ...opener, team: 7 } }] }),
+      ).toThrow(/gate north/);
+    });
+  });
+
+  describe("switches (#3025)", () => {
+    const door = {
+      id: "door",
+      wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
+      opener: { kind: "switch" },
+    };
+    const plated = {
+      id: "plated",
+      wall: { kind: "rect", layer: 0, x: 120, y: 40, width: 8, height: 40 },
+      opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
+    };
+    const lever = { id: "lever", layer: 0, position: { x: 50, y: 50 }, targets: ["door"] };
+
+    it("accepts a switch that names a switch's gate", () => {
+      const map = validateMapData({ ...validMap, gates: [door], switches: [lever] });
+      expect(map.switches).toEqual([lever]);
+    });
+
+    it("refuses a target that is no gate, and one that is a plate's gate", () => {
+      expect(() =>
+        validateMapData({
+          ...validMap,
+          gates: [door],
+          switches: [{ ...lever, targets: ["door", "nowhere"] }],
+        }),
+      ).toThrow(/switch lever names nowhere, which is no gate/);
+      expect(() =>
+        validateMapData({
+          ...validMap,
+          gates: [door, plated],
+          switches: [{ ...lever, targets: ["door", "plated"] }],
+        }),
+      ).toThrow(/switch lever names plated, a plate's gate/);
+    });
+
+    it("refuses a switch's gate that no switch names", () => {
+      expect(() => validateMapData({ ...validMap, gates: [door] })).toThrow(
+        /gate door opens by switch, and no switch names it/,
+      );
+    });
+
+    it("refuses a switch off its layer's ground, on a missing layer, or twice by id", () => {
+      expect(() =>
+        validateMapData({
+          ...validMap,
+          gates: [door],
+          switches: [{ ...lever, position: { x: -20, y: 50 } }],
+        }),
+      ).toThrow(/switch lever needs a body clear/);
+      expect(() =>
+        validateMapData({ ...validMap, gates: [door], switches: [{ ...lever, layer: 3 }] }),
+      ).toThrow(/switches.0.layer/);
+      expect(() =>
+        validateMapData({ ...validMap, gates: [door], switches: [lever, lever] }),
+      ).toThrow(/switch id lever is used twice/);
+    });
+
+    it("refuses more than six", () => {
+      const many = Array.from({ length: 7 }, (_, at) => ({ ...lever, id: `lever-${String(at)}` }));
+      expect(() => validateMapData({ ...validMap, gates: [door], switches: many })).toThrow(
+        /switches/,
       );
     });
   });
@@ -886,6 +994,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     from,
     to,
     area: { kind: "rect", x, y: 300, width: 170, height: 200 },
+    uphill: "e",
   });
   const deck = (id: string, layer: number) => ({
     id,
@@ -914,6 +1023,11 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     const [first, ...rest] = layerTest.spawnPoints;
     const { layer: _layer, ...unlayered } = first ?? { layer: 0 };
     refuses({ spawnPoints: [unlayered, ...rest] }, /spawnPoints\.0\.layer/);
+    const { groundLayer: _ground, ...noGround } = layerTest;
+    expect(() => validateMapData(noGround)).toThrow(/groundLayer/);
+    const [ramp0, ...ramps] = layerTest.transitions;
+    const { uphill: _uphill, ...noUphill } = ramp0 ?? { uphill: "e" };
+    refuses({ transitions: [noUphill, ...ramps] }, /transitions\.0\.uphill/);
   });
 
   it("refuses a layer outside the map's, naming the field", () => {
@@ -966,6 +1080,23 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     );
   });
 
+  it("refuses a ramp too short uphill for a route over it, and keeps one long enough (#2995)", () => {
+    const [, far] = layerTest.transitions;
+    const uphillBy = (width: number) => ({
+      transitions: [
+        {
+          from: 0,
+          to: 1,
+          area: { kind: "rect", x: 520 - width, y: 300, width, height: 200 },
+          uphill: "e",
+        },
+        ...(far === undefined ? [] : [far]),
+      ],
+    });
+    refuses(uphillBy(100), /transitions\.0: transition 0 is 100\.0 long uphill/);
+    accepts(uphillBy(140));
+  });
+
   it("refuses a transition from a deck that touches none", () => {
     refuses(
       {
@@ -973,7 +1104,12 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
         decks: [...layerTest.decks, deck("upper", 2)],
         transitions: [
           ...layerTest.transitions,
-          { from: 1, to: 2, area: { kind: "rect", x: 100, y: 100, width: 50, height: 50 } },
+          {
+            from: 1,
+            to: 2,
+            area: { kind: "rect", x: 100, y: 100, width: 50, height: 50 },
+            uphill: "n",
+          },
         ],
       },
       /transitions\.2\.from: transition 2 touches no deck on layer 1/,
@@ -987,7 +1123,12 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     refuses(
       {
         transitions: [
-          { from: 0, to: 1, area: { kind: "rect", x: 10, y: 10, width: 50, height: 50 } },
+          {
+            from: 0,
+            to: 1,
+            area: { kind: "rect", x: 10, y: 10, width: 50, height: 50 },
+            uphill: "e",
+          },
         ],
       },
       /decks\.0: deck bridge has no transition/,
@@ -1028,8 +1169,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
       gates: [
         {
           id: "g",
-          team: null,
-          plate: { x, y },
+          opener: { kind: "plate", plate: { x, y }, team: null },
           wall: { kind: "rect", layer, x: 950, y: 320, width: 20, height: 20 },
         },
       ],
@@ -1050,5 +1190,265 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
       spawnPoints: layerTest.spawnPoints,
     });
     refuses({ spawnPoints: spawnAt(1, 782, 420) }, /spawnPoints\.4/);
+  });
+});
+
+describe("lighting (#2986, ADR-0052)", () => {
+  const ambient = { colour: 0x8090a0, intensity: 0.8 };
+  const light = {
+    id: "torch",
+    position: { x: 10, y: 10 },
+    layer: 0,
+    radius: 30,
+    colour: 0xffaa55,
+    intensity: 1,
+    flicker: 0.3,
+  };
+  const lighting = {
+    ambient,
+    indoorAmbient: ambient,
+    indoor: [{ kind: "rect", x: 0, y: 0, width: 20, height: 20 }],
+    sun: { directionDeg: 135, elevationDeg: 45, colour: 0xfff0d0, intensity: 0.5 },
+    lights: [light],
+  };
+  const accepts = (value: unknown): boolean =>
+    mapDataSchema.safeParse({ ...validMap, lighting: value }).success;
+  const withLights = (lights: unknown[]): boolean => accepts({ ...lighting, lights });
+
+  it("is optional", () => {
+    expect(mapDataSchema.safeParse(validMap).success).toBe(true);
+  });
+
+  it("accepts a whole lighting, and one with no sun", () => {
+    expect(accepts(lighting)).toBe(true);
+    expect(accepts({ ...lighting, sun: undefined })).toBe(true);
+  });
+
+  it("refuses a light off the map, or on a layer it does not have", () => {
+    expect(withLights([{ ...light, position: { x: 101, y: 10 } }])).toBe(false);
+    expect(withLights([{ ...light, position: { x: 10, y: -1 } }])).toBe(false);
+    expect(withLights([{ ...light, layer: 1 }])).toBe(false);
+  });
+
+  it("refuses a radius of zero, a flicker over 1 and a colour out of range", () => {
+    expect(withLights([{ ...light, radius: 0 }])).toBe(false);
+    expect(withLights([{ ...light, flicker: 1.1 }])).toBe(false);
+    expect(withLights([{ ...light, colour: 0x1000000 }])).toBe(false);
+  });
+
+  it("refuses two lights with one id", () => {
+    expect(withLights([light, light])).toBe(false);
+  });
+
+  it("holds at most MAX_LIGHTS", () => {
+    const many = (count: number): unknown[] =>
+      Array.from({ length: count }, (_, index) => ({ ...light, id: `torch-${String(index)}` }));
+    expect(withLights(many(MAX_LIGHTS))).toBe(true);
+    expect(withLights(many(MAX_LIGHTS + 1))).toBe(false);
+  });
+});
+
+describe("water (#2983)", () => {
+  const pond = (overrides: object = {}) => ({
+    id: "pond",
+    layer: 0,
+    depth: "deep",
+    area: { kind: "rect", x: 200, y: 600, width: 200, height: 100 },
+    ...overrides,
+  });
+  const accepts = (water: unknown[], overrides: object = {}): void => {
+    expect(() => validateMapData({ ...layerTest, ...overrides, water })).not.toThrow();
+  };
+  const refuses = (water: unknown[], message: RegExp, overrides: object = {}): void => {
+    expect(() => validateMapData({ ...layerTest, ...overrides, water })).toThrow(message);
+  };
+  /** A polygon of `count` points round a circle at (800, 650). */
+  const round = (count: number) => ({
+    kind: "polygon",
+    points: Array.from({ length: count }, (_, at) => ({
+      x: 800 + 60 * Math.cos((at / count) * 2 * Math.PI),
+      y: 650 + 60 * Math.sin((at / count) * 2 * Math.PI),
+    })),
+  });
+
+  it("is optional, and may be deep or shallow, a rectangle or a polygon", () => {
+    expect(validateMapData(layerTest).water).toBeUndefined();
+    accepts([pond(), pond({ id: "ford", depth: "shallow", area: round(MAX_WATER_POINTS) })]);
+  });
+
+  it("refuses more points than a curved shore needs, and more bodies than a map draws", () => {
+    refuses([pond({ area: round(MAX_WATER_POINTS + 1) })], /water\.0\.area\.points/);
+    const many = Array.from({ length: MAX_WATER_BODIES + 1 }, (_, at) =>
+      pond({
+        id: `pool-${String(at)}`,
+        area: { kind: "rect", x: at * 40, y: 750, width: 30, height: 30 },
+      }),
+    );
+    refuses(many, /water: /);
+  });
+
+  it("refuses a layer the map has not, and a used id", () => {
+    refuses([pond({ layer: 2 })], /water\.0\.layer: layer 2/);
+    refuses(
+      [pond(), pond({ area: { kind: "rect", x: 900, y: 600, width: 50, height: 50 } })],
+      /water\.1\.id: water id pond is used twice/,
+    );
+  });
+
+  it("puts water above the ground on a deck of its layer", () => {
+    accepts([pond({ layer: 1, area: { kind: "rect", x: 700, y: 320, width: 60, height: 60 } })]);
+    refuses([pond({ layer: 1 })], /water pond on layer 1 is not on a deck/);
+  });
+
+  it("refuses two bodies of water overlapping on one layer, not on two", () => {
+    const under = { kind: "rect", x: 700, y: 320, width: 60, height: 60 };
+    refuses(
+      [pond(), pond({ id: "other", depth: "shallow", area: { ...pond().area, x: 300 } })],
+      /water other overlaps water pond/,
+    );
+    accepts([pond({ area: under }), pond({ id: "above", layer: 1, area: under })]);
+  });
+
+  it("keeps deep water off a spawn, an objective, a gate and a ramp", () => {
+    const onSpawn = { kind: "rect", x: 150, y: 350, width: 100, height: 100 };
+    refuses([pond({ area: onSpawn })], /deep water pond covers a spawn \(spawnPoints\.0\)/);
+    refuses([pond()], /deep water pond covers an objective, start line \(objectives\.0\)/, {
+      objectives: [
+        {
+          kind: "start-line",
+          layer: 0,
+          area: { kind: "rect", x: 350, y: 650, width: 100, height: 20 },
+        },
+      ],
+    });
+    const gate = {
+      id: "sluice",
+      wall: { kind: "rect", layer: 0, x: 250, y: 580, width: 8, height: 30 },
+      opener: { kind: "plate", plate: { x: 300, y: 500 }, team: null },
+    };
+    refuses([pond()], /deep water pond covers a gate \(gates\.0\)/, { gates: [gate] });
+    const atRamp = { kind: "rect", x: 300, y: 450, width: 100, height: 100 };
+    refuses([pond({ area: atRamp })], /deep water pond covers a transition \(transitions\.0\)/);
+  });
+
+  it("lets shallow water run into a ramp, and under a spawn", () => {
+    const atRamp = { kind: "rect", x: 300, y: 450, width: 100, height: 100 };
+    const onSpawn = { kind: "rect", x: 150, y: 350, width: 100, height: 40 };
+    accepts([
+      pond({ depth: "shallow", area: atRamp }),
+      pond({ id: "puddle", depth: "shallow", area: onSpawn }),
+    ]);
+  });
+});
+
+describe("below the ground: pits and tunnels (#2973)", () => {
+  const accepts = (overrides: object): void => {
+    expect(() => validateMapData({ ...heights, ...overrides })).not.toThrow();
+  };
+  const refuses = (overrides: object, message: RegExp): void => {
+    expect(() => validateMapData({ ...heights, ...overrides })).toThrow(message);
+  };
+  const [westPit, eastPit] = heights.pits;
+  const tunnel = {
+    id: "tunnel",
+    footprint: { kind: "rect", x: 700, y: 550, width: 280, height: 70 },
+  };
+
+  it("validates Heights, whose layer 0 is its pits and tunnel under the ground on 1", () => {
+    accepts({});
+  });
+
+  it("refuses a ground on 1 with no pit, and pits under a ground on 0", () => {
+    refuses({ pits: [], tunnels: [] }, /groundLayer: the ground is layer 1/);
+    refuses({ groundLayer: 0 }, /groundLayer: pits and tunnels are below the ground/);
+  });
+
+  it("refuses a tunnel that touches no pit", () => {
+    refuses(
+      { pits: [westPit], tunnels: [{ ...tunnel, footprint: { ...tunnel.footprint, x: 720 } }] },
+      /tunnels\.0: tunnel tunnel touches no pit/,
+    );
+    accepts({ pits: [westPit, eastPit], tunnels: [tunnel] });
+  });
+
+  it("refuses a pit ramp whose high edge is off its pit's edge, or that climbs the wrong way", () => {
+    const pitRamp = (x: number, uphill: string) => ({
+      transitions: heights.transitions.map((transition) =>
+        transition.to === 1 &&
+        transition.from === 0 &&
+        transition.area.kind === "rect" &&
+        transition.area.x === 500
+          ? { ...transition, area: { ...transition.area, x }, uphill }
+          : transition,
+      ),
+    });
+    refuses(pitRamp(510, "w"), /transitions\.3\.area: transition 3 goes up to the ground/);
+    refuses(pitRamp(500, "e"), /transitions\.3\.area: transition 3 goes up to the ground/);
+  });
+
+  it("refuses a ramp too narrow for a body", () => {
+    refuses(
+      {
+        transitions: heights.transitions.map((transition, index) =>
+          index === 3 && transition.area.kind === "rect"
+            ? { ...transition, area: { ...transition.area, height: 30 } }
+            : transition,
+        ),
+      },
+      /transitions\.3\.area: transition 3 is 30\.0 wide/,
+    );
+  });
+});
+
+describe("effect zones (ADR-0053, #3024)", () => {
+  const strip = (overrides: object = {}) => ({
+    id: "strip",
+    kind: "scorched",
+    layer: 0,
+    area: { kind: "rect", x: 200, y: 600, width: 60, height: 100 },
+    ...overrides,
+  });
+  const accepts = (zones: unknown[]): void => {
+    expect(() => validateMapData({ ...layerTest, zones })).not.toThrow();
+  };
+  const refuses = (zones: unknown[], message: RegExp): void => {
+    expect(() => validateMapData({ ...layerTest, zones })).toThrow(message);
+  };
+
+  it("is optional, and may be a rectangle or a polygon on any of the map's layers", () => {
+    expect(validateMapData(layerTest).zones).toBeUndefined();
+    accepts([
+      strip(),
+      strip({
+        id: "wedge",
+        layer: 1,
+        area: {
+          kind: "polygon",
+          points: [
+            { x: 0, y: 0 },
+            { x: 80, y: 0 },
+            { x: 0, y: 80 },
+          ],
+        },
+      }),
+    ]);
+  });
+
+  it("refuses a layer the map has not, and a used id", () => {
+    refuses([strip({ layer: 2 })], /zones\.0\.layer: layer 2/);
+    refuses([strip(), strip()], /zones\.1\.id: zone id strip is used twice/);
+  });
+
+  it("refuses a kind game-core has no rule for, and an area off the map", () => {
+    refuses([strip({ kind: "lava" })], /zones\.0\.kind/);
+    refuses(
+      [strip({ area: { kind: "rect", x: -10, y: 0, width: 50, height: 50 } })],
+      /zone strip is outside the map/,
+    );
+  });
+
+  it("holds at most MAX_ZONES", () => {
+    const many = Array.from({ length: MAX_ZONES + 1 }, (_, at) => strip({ id: `z-${String(at)}` }));
+    refuses(many, /zones: /);
   });
 });

@@ -3,6 +3,7 @@ import { ASCENT_ROUNDS, MAX_WIRE_CAPTURE_POINTS, teamSizeOf } from "@vibewars/ga
 import { describe, expect, it } from "vitest";
 
 import { mapName } from "../i18n/game-names.js";
+import { TRAINING_MAPS } from "../training/maps.js";
 import {
   ARENA_MAPS,
   arenaIds,
@@ -21,6 +22,7 @@ import {
   modeMapIds,
   queueMapPool,
   queueSkipping,
+  structureOf,
   randomArenaMapPool,
   teamArenaMapIds,
 } from "./maps.js";
@@ -91,7 +93,7 @@ describe("randomArenaMapPool", () => {
               "guild-hall-isle",
               "broken-tower",
               "cinder-sanctum",
-              "the-courtyard",
+              "threefold-keep",
               "hall-of-heroes-king",
               "hall-of-heroes-relic",
               "hall-of-heroes-capture",
@@ -153,7 +155,7 @@ describe("team sizes (#2108)", () => {
       "cinder-sanctum",
       "mosslit-cairns",
       "brazen-causeway",
-      "the-courtyard",
+      "threefold-keep",
       "wardens-gallery",
     ]);
   });
@@ -259,7 +261,7 @@ describe("team sizes (#2108)", () => {
       "guild-hall-isle",
       "cinder-sanctum",
       "broken-tower",
-      "the-courtyard",
+      "threefold-keep",
       "hall-of-heroes-king",
       "hall-of-heroes-relic",
       "hall-of-heroes-capture",
@@ -352,7 +354,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       ["cinder-sanctum", "relic-run"],
       ["mosslit-cairns", "capture-points"],
       ["brazen-causeway", "priest-annihilation"],
-      ["the-courtyard", "king-of-the-hill"],
+      ["threefold-keep", "king-of-the-hill"],
       ["wardens-gallery", "capture-points"],
       ["hall-of-heroes-king", "king-of-the-hill"],
     ]);
@@ -363,7 +365,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       "Cinder Sanctum",
       "Mosslit Cairns",
       "The Brazen Causeway",
-      "The Courtyard",
+      "Threefold Keep",
       "The Warden's Gallery",
       "Hall of Heroes",
     ]);
@@ -392,7 +394,7 @@ describe("hostMap (#476)", () => {
     expect(hostMap("jungle-ruins")?.mode).toBe("priest-annihilation");
     expect(hostMap("guild-hall-isle")?.mode).toBe("guild-battle");
     expect(hostMap("broken-tower")?.mode).toBe("relic-run");
-    expect(hostMap("the-courtyard")?.mode).toBe("king-of-the-hill");
+    expect(hostMap("threefold-keep")?.mode).toBe("king-of-the-hill");
     expect(hostMap("scarred-earth")?.mode).toBe("capture-points");
     expect(hostMap("scarred-earth")?.capturePoints).toHaveLength(5);
     for (const map of ARENA_MAPS.filter(
@@ -408,7 +410,7 @@ describe("hostMap (#476)", () => {
           "guild-hall-isle",
           "broken-tower",
           "cinder-sanctum",
-          "the-courtyard",
+          "threefold-keep",
           "hall-of-heroes-king",
           "hall-of-heroes-relic",
           "hall-of-heroes-capture",
@@ -417,6 +419,14 @@ describe("hostMap (#476)", () => {
     )) {
       expect(hostMap(map.id)?.capturePoints).toEqual([]);
       expect(hostMap(map.id)?.mode).toBe("annihilation");
+    }
+  });
+
+  it("carries a flat arena's one layer, its walls all on the ground (#3017)", () => {
+    for (const map of ARENA_MAPS.filter((candidate) => candidate.layers === 1)) {
+      const host = hostMap(map.id);
+      expect(host?.layers.count).toBe(1);
+      expect(host?.layers.walls[0]).toEqual(host?.walls);
     }
   });
 
@@ -461,19 +471,20 @@ describe("hostMap (#476)", () => {
     });
     expect(mapRelicField("broken-tower", 2)).toEqual(hostMap("broken-tower")?.relicField);
     expect(hostMap("guild-hall-isle")?.relicField).toBeUndefined();
-    expect(hostMap("the-courtyard")?.relicField).toBeUndefined();
+    expect(hostMap("threefold-keep")?.relicField).toBeUndefined();
     expect(mapRelicField("training-hall", 2)).toBeUndefined();
   });
 
   it("carries a ghost map's level and ghost spawns, King of the Hill's altar, and none elsewhere (#1377, #2689)", () => {
     expect(hostMap("hall-of-heroes-king")?.ghostField?.level).toBe(28);
-    expect(hostMap("the-courtyard")?.ghostField).toEqual({
+    expect(hostMap("threefold-keep")?.ghostField).toEqual({
       level: 24,
-      altar: { x: 1500, y: 900 },
+      altar: { x: 1600, y: 1100 },
       altarLayer: 0,
       spawns: [
-        { team: 0, position: { x: 120, y: 900 }, layer: 0 },
-        { team: 1, position: { x: 2880, y: 900 }, layer: 0 },
+        { team: 0, position: { x: 120, y: 1100 }, layer: 0 },
+        { team: 1, position: { x: 3080, y: 1100 }, layer: 0 },
+        { team: 2, position: { x: 1600, y: 120 }, layer: 0 },
       ],
     });
     expect(hostMap("broken-tower")?.ghostField).toBeUndefined();
@@ -541,5 +552,56 @@ describe("mapShrines (#1199)", () => {
   it("gives none on a map without them or one this build does not have", () => {
     expect(mapShrines("arena-crossroads", 2)).toEqual([]);
     expect(mapShrines("arena-nowhere", 2)).toEqual([]);
+  });
+});
+
+describe("structureOf's water (#2984)", () => {
+  const area = { kind: "rect", x: 10, y: 10, width: 20, height: 20 } as const;
+  const water = [
+    { id: "pond", layer: 0, depth: "deep", area },
+    { id: "ford", layer: 0, depth: "shallow", area: { ...area, x: 50 } },
+  ] as const;
+
+  it("hands the renderer every body of water, deep and shallow, on a map of one layer", () => {
+    const [flat] = ARENA_MAPS.filter((map) => map.layers === 1);
+    if (flat === undefined) throw new Error("no flat arena");
+    expect(structureOf(flat).structure.water).toEqual([]);
+    expect(structureOf({ ...flat, water: [...water] }).structure).toMatchObject({
+      layerCount: 1,
+      water: [
+        { layer: 0, depth: "deep", area },
+        { layer: 0, depth: "shallow", area: { ...area, x: 50 } },
+      ],
+    });
+  });
+
+  it("and on a layered one, next to its decks", () => {
+    const layered = TRAINING_MAPS.get("training-heights");
+    if (layered === undefined) throw new Error("no training-heights");
+    const { structure } = structureOf({ ...layered, water: [...water] });
+    expect(structure.decks).toBe(layered.decks);
+    expect(structure.water).toHaveLength(2);
+  });
+
+  it("hands it the ground's layer and the pits and tunnels under it (#2973)", () => {
+    const layered = TRAINING_MAPS.get("training-heights");
+    if (layered === undefined) throw new Error("no training-heights");
+    const { structure } = structureOf(layered);
+    expect(structure.ground).toBe(1);
+    expect(structure.pits).toBe(layered.pits);
+    expect(structure.tunnels).toBe(layered.tunnels);
+    expect(structure.transitions.map(({ uphill }) => uphill)).toEqual(
+      layered.transitions.map(({ uphill }) => uphill),
+    );
+  });
+  it("hands it a flat map's effect zones, so a map of one layer with a zone is not flat (#3024)", () => {
+    const wilds = TRAINING_MAPS.get("training-wilds");
+    if (wilds === undefined) throw new Error("no training-wilds");
+    const { structure } = structureOf(wilds);
+    expect(structure.layerCount).toBe(1);
+    expect(structure.zones).toEqual(
+      (wilds.zones ?? []).map(({ kind, layer, area }) => ({ kind, layer, area })),
+    );
+    expect(structure.zones).toHaveLength(5);
   });
 });

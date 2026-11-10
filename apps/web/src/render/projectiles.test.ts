@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 
 import { IMPLEMENTED_SKILLS, vec2 } from "@vibewars/game-core";
 
+import { FLAT_STRUCTURE, type MapStructure } from "./arena-snapshot.js";
+import { elevationOf } from "./render-order.js";
 import {
   MatchClock,
   SHOT_FADE_SECONDS,
@@ -78,22 +80,24 @@ describe("projectilePosition", () => {
     to: vec2(100, 50),
     launchedAt: 10,
     flightSeconds: 2,
+    fromLayer: 0,
+    toLayer: 0,
     colour: 0,
   };
 
   it("flies from its release to its aim point over its flight", () => {
-    expect(projectilePosition(shot, 10)).toEqual({ x: 0, y: 0 });
-    expect(projectilePosition(shot, 11)).toEqual({ x: 50, y: 25 });
-    expect(projectilePosition(shot, 12)).toEqual({ x: 100, y: 50 });
+    expect(projectilePosition(shot, 10, FLAT_STRUCTURE)).toEqual({ x: 0, y: 0 });
+    expect(projectilePosition(shot, 11, FLAT_STRUCTURE)).toEqual({ x: 50, y: 25 });
+    expect(projectilePosition(shot, 12, FLAT_STRUCTURE)).toEqual({ x: 100, y: 50 });
   });
 
   it("is not drawn once it has landed, and waits at its release before", () => {
-    expect(projectilePosition(shot, 12.01)).toBeUndefined();
-    expect(projectilePosition(shot, 9)).toEqual({ x: 0, y: 0 });
+    expect(projectilePosition(shot, 12.01, FLAT_STRUCTURE)).toBeUndefined();
+    expect(projectilePosition(shot, 9, FLAT_STRUCTURE)).toEqual({ x: 0, y: 0 });
   });
 
   it("points the way it flies", () => {
-    expect(projectileHeading(shot)).toBeCloseTo(Math.atan2(50, 100), 9);
+    expect(projectileHeading(shot, FLAT_STRUCTURE)).toBeCloseTo(Math.atan2(50, 100), 9);
   });
 });
 
@@ -123,5 +127,41 @@ describe("MatchClock", () => {
     expect(clock.read(100.05)).toBeCloseTo(5.05, 9);
     clock.observe(5.05, 100.06);
     expect(clock.read(100.06)).toBeCloseTo(5.05, 9);
+  });
+});
+
+describe("a shot between layers (#2972)", () => {
+  const decked: MapStructure = {
+    layerCount: 2,
+    ground: 0,
+    pits: [],
+    tunnels: [],
+    decks: [
+      {
+        layer: 1,
+        footprint: { kind: "rect", x: 80, y: -50, width: 100, height: 100 },
+      },
+    ],
+    transitions: [],
+    water: [],
+    zones: [],
+  };
+  const shot = {
+    id: 1,
+    sprite: "bolt",
+    from: vec2(0, 0),
+    to: vec2(100, 0),
+    fromLayer: 0,
+    toLayer: 1,
+    launchedAt: 10,
+    flightSeconds: 2,
+    colour: 0xffffff,
+  } as const;
+
+  it("starts at the shooter's height and rises evenly to the target's", () => {
+    const lift = elevationOf(1, 0);
+    expect(projectilePosition(shot, 10, decked)).toEqual({ x: 0, y: 0 });
+    expect(projectilePosition(shot, 11, decked)).toEqual({ x: 50, y: -lift / 2 });
+    expect(projectilePosition(shot, 12, decked)).toEqual({ x: 100, y: -lift });
   });
 });

@@ -66,14 +66,13 @@ própria Build de Equipe e a abre, para você mudar como quiser.
 O jeito mais rápido de entrar em uma luta. Em **Arena Aleatória**, clique
 no cartão do personagem com que vai jogar, escolha um tamanho de equipe,
 **1v1**, **2v2** ou **4v4**, com as setas do **Tamanho** da barra, depois
-pressione **Pronto** na barra de título e espere: você entra em uma
+pressione **Buscar partida** na barra de título e espere: você entra em uma
 equipe com outros jogadores, contra outra equipe, em um mapa aleatório. A
 fila espera em segundo plano: você fica em Arena Aleatória e pode ir a
 qualquer lugar enquanto isso, suas builds, equipamento, Opções, Ajuda ou
 o editor de música, mas não pode trocar de personagem, hospedar ou entrar
 em uma sala, nem mudar o tamanho de equipe de um modo. Arena de Equipes e
-as outras telas de sala dizem que você está em uma fila e listam os
-mapas, com **Buscar partida** desativado, ao lado de **Sair da fila**; o
+as outras telas de sala dizem que você está em uma fila e listam os mapas; o
 tamanho mostra aquele com que você entrou na fila, em todos os modos. Um
 anel girando à esquerda de **Ajuda** na barra superior mostra que você
 está na fila; clique nele para ver a fila, o tempo de espera, quantos
@@ -120,9 +119,10 @@ uma lista de quem está nela; o selo conta as pessoas.
   jogador que não alcança o host diretamente entra por ele depois de
   alguns segundos, sem configurar nada. Cada jogador recebe seu próprio
   login, válido por 1 hora e renovado enquanto ele ficar, no máximo 8
-  jogadores por sala. Um jogador nesse relay vê **Relay compartilhado
-  por** e o nome de quem compartilha na sala; enquanto você compartilha, a
-  sala diz **Compartilhando seu relay com** quantos jogadores. Para parar,
+  jogadores por sala. **Opções → relay (TURN)** mostra isso: um jogador
+  nesse relay lê ali **Relay compartilhado por** e o nome de quem
+  compartilha; enquanto você compartilha, ali diz **Compartilhando seu
+  relay com** quantos jogadores. Para parar,
   desmarque **Compartilhar meu relay com minhas salas** em **Opções → relay (TURN)**.
   Um relay que você digita ali à mão é só seu.
 - **Seu grupo vai junto:** se você tinha amigos na sua sala, a barra
@@ -169,8 +169,7 @@ incluindo a sua: `2 equipes
 buscando`. Só o host tem **Sair da fila** ali. Fechar a aba do host tira
 o grupo da fila na hora. Quando aparece outra equipe na fila do mesmo
 modo, vocês jogam em um dos mapas do modo, cada lado com suas builds, e
-voltam à sua sala depois. O host pode pressionar **Sair da fila** a
-qualquer momento; um convidado que sai tira todo o grupo dela. Se depois
+voltam à sua sala depois. O host pode sair da fila pela janela do anel a qualquer momento; um convidado que sai tira todo o grupo dela. Se depois
 de um minuto não houver outra equipe, o host também pode pressionar
 **Jogar contra bots**: uma partida na sua própria sala contra uma equipe
 predefinida aleatória de bots, exceto em

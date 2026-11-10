@@ -8,6 +8,9 @@
   "width": 3200,
   "height": 2200,
   "layers": 1,
+  "groundLayer": 0,
+  "pits": [],
+  "tunnels": [],
   "decks": [],
   "transitions": [],
   "walls": [

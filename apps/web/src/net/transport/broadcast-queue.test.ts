@@ -23,6 +23,7 @@ function ticket(ticketId: string, mode: QueueTicket["mode"] = "random-arena-1v1"
     party: null,
     ascentRound: null,
     hardNat: false,
+    holdsHallSince: null,
   };
 }
 

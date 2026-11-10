@@ -188,6 +188,12 @@ export interface QueueTicket {
    * hosting, and a group of only hard tickets from forming.
    */
   readonly hardNat: boolean;
+  /**
+   * When this party won the Hall of Heroes it still holds, ms since the
+   * epoch (#2701), as its owner claims; `null` for any other. Of several
+   * claims the latest is the holder.
+   */
+  readonly holdsHallSince: number | null;
 }
 
 /** How a party ticket proves every member is in it (#1078). */
@@ -209,7 +215,7 @@ const TICKET_ID = /^[0-9a-f]{64}$/;
 /** A group id is a sha256, as hex. */
 const GROUP_ID = TICKET_ID;
 const CONSENT = /^[0-9a-f]{128}$/;
-const TICKET_FIELDS = 10;
+const TICKET_FIELDS = 11;
 const PARTY_FIELDS = 2;
 /** Longer than any `PROTOCOL_VERSION`, short enough to cost nothing. */
 const MAX_PROTOCOL_LENGTH = 64;
@@ -340,6 +346,7 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
     party,
     ascentRound,
     hardNat,
+    holdsHallSince,
   } = raw as Record<string, unknown>;
   if (
     typeof ticketId !== "string" ||
@@ -354,7 +361,8 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
     !isTime(enteredAt) ||
     !isTime(heartbeatAt) ||
     !isAscentRoundOf(ascentRound, mode) ||
-    typeof hardNat !== "boolean"
+    typeof hardNat !== "boolean" ||
+    !(holdsHallSince === null || isTime(holdsHallSince))
   ) {
     return undefined;
   }
@@ -373,5 +381,6 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
         party: proof,
         ascentRound,
         hardNat,
+        holdsHallSince,
       };
 }

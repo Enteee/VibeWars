@@ -57,3 +57,5 @@ rewriting history.
 | [0049](0049-lobby-shared-turn.md)             | A lobby host shares its TURN relay through the invite link      |
 | [0050](0050-localization.md)                  | Player-facing text goes through t() and TypeScript tables       |
 | [0051](0051-discrete-layers.md)               | 2.5D is a 2D simulation with discrete layers                    |
+| [0052](0052-map-lighting.md)                  | Maps are lit per layer, by the renderer alone                   |
+| [0053](0053-map-effect-zones.md)              | Map effect zones name a kind; game-core holds what it does      |

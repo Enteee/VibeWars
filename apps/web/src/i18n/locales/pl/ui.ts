@@ -302,6 +302,7 @@ export default {
   "combat.sourceShrine": "Kapliczka",
   "combat.sourceSkill": "umiejętność",
   "combat.sourceWeapon": "broń",
+  "combat.sourceZone": "Zagrożenie",
   "combat.spellFailed": "{skill} celu {target} zawodzi",
   "combat.statusApplied": "{target} zyskuje: {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} zyskuje: {status} (podtrzymywane)",
@@ -367,6 +368,7 @@ export default {
   "effects.categoryChant": "Pieśń",
   "effects.categoryCondition": "Dolegliwość",
   "effects.categoryEcho": "Echo",
+  "effects.categoryEnvironment": "Otoczenie",
   "effects.categoryEffect": "Efekt",
   "effects.categoryEnchantment": "Zaczarowanie",
   "effects.categoryForm": "Forma",
@@ -421,6 +423,7 @@ export default {
   "gearEditor.statusChant": "pieśń",
   "gearEditor.statusCondition": "gdy masz dolegliwość",
   "gearEditor.statusEcho": "pod wpływem echa",
+  "gearEditor.statusEnvironment": "pod efektem otoczenia",
   "gearEditor.statusEnchantment": "zaczarowany",
   "gearEditor.statusForm": "w formie",
   "gearEditor.statusGlyph": "pod wpływem glifu",
@@ -609,6 +612,7 @@ export default {
   "hud.stormBeacon": "Latarnia Burzy",
   "hud.stormBeaconOurs": "Latarnia Burzy: w rękach twojej drużyny",
   "hud.stormBeaconTheirs": "Latarnia Burzy: w rękach wroga",
+  "hud.switch": "Dźwignia",
   "hud.targetDead": "martwy",
   "hud.targetEffects": "efekty twojego celu",
   "hud.versus": "{ours} v {theirs}",
@@ -685,7 +689,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Host rozpoczyna szukanie meczu",
   "lobby.joinTeam": "Dołącz",
   "lobby.joinTeamLabel": "Dołącz do drużyny {team}",
-  "lobby.leaveQueue": "Opuść kolejkę",
   "lobby.leaveTeam": "Opuść",
   "lobby.leaveTeamLabel": "Opuść drużynę {team}",
   "lobby.map": "Mapa",
@@ -750,6 +753,14 @@ export default {
   "matches.endTime": "Koniec czasu",
   "matches.filterKind": "Rodzaj",
   "matches.filterSize": "Rozmiar",
+  "matches.hallReported": "Zgłoszone przez hosta każdego meczu, niezweryfikowane.",
+  "matches.hallStreak": {
+    one: "{count} wygrana z rzędu",
+    few: "{count} wygrane z rzędu",
+    many: "{count} wygranych z rzędu",
+    other: "{count} wygranej z rzędu",
+  },
+  "matches.hallTitle": "Sala Bohaterów",
   "matches.hostReported": "zgłoszone przez hosta",
   "matches.hostReportedTitle": "Opublikowane przez hosta meczu; nikt inny tego nie zweryfikował.",
   "matches.hoursAgo": {
@@ -831,10 +842,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "sterowanie",
+  "options.display": "wyświetlanie",
   "options.label": "Opcje",
   "options.language": "język",
   "options.languageBusy": "Najpierw opuść lobby lub mecz: zmiana języka przeładowuje stronę.",
   "options.languageLabel": "Język",
+  "options.lightingLabel": "Oświetlenie",
   "options.player": "gracz",
   "options.relay": "przekaźnik (TURN)",
   "options.sections": "sekcje opcji",
@@ -929,6 +942,8 @@ export default {
   "queue.defending": "Trzymasz: {map} · obrona za {seconds} s",
   "queue.fellThrough": "Mecz nie doszedł do skutku, szukamy dalej",
   "queue.guildVsGuild": "Gildia kontra gildia",
+  "queue.hallHeldBy": "{holder} utrzymuje Salę Bohaterów",
+  "queue.hallUnheld": "Nikt nie utrzymuje Sali Bohaterów",
   "queue.heroesAscent": "Szczyt Bohaterów · runda {round}",
   "queue.hostLeft": "Host wyszedł",
   "queue.hostOnly": "Tylko host może opuścić kolejkę.",
@@ -962,6 +977,8 @@ export default {
   "queue.theirTeam": "Drużyna wroga",
   "queue.title": "Arena losowa {mode} · {character}",
   "queue.unreachable": "Brak połączenia z serwerami lobby",
+  "queue.vault": "Skarbiec",
+  "queue.vaultOpensIn": "Sala otworzy się za {time}",
   "queue.versus": "vs",
   "queue.waitingForEveryone": "Czekamy, aż wszyscy dotrą",
   "queue.waitingForTeam": "Czekamy na twoją drużynę ({seconds})",
@@ -1428,6 +1445,75 @@ export default {
   "training.reset": "reset",
   "training.resetDivider": "reset",
   "training.scenario": "scenariusz",
+  "training.scenario.target-dummy.label": "Manekin treningowy",
+  "training.scenario.target-dummy.teaches":
+    "Co naprawdę robi jedno rzucenie: przy 60 pancerza dokładnie liczba z podpowiedzi.",
+  "training.scenario.time-to-kill.label": "Czas zabicia",
+  "training.scenario.time-to-kill.teaches":
+    "Twoje stałe obrażenia: ile wytrzymuje czarodziej z 500 zdrowia, raz za razem.",
+  "training.scenario.physical-vs-elemental.label": "Fizyczne a żywiołowe",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Że pancerz odpowiada na rodzaj obrażeń: Wojownik z Niezłomną Insygnią tłumi miecz, ale nie Kulę Ognia, a Łowca tłumi Kulę Ognia, ale nie miecz.",
+  "training.scenario.condition-pressure.label": "Presja dolegliwości",
+  "training.scenario.condition-pressure.teaches":
+    "Że dolegliwości to zegar śmierci: Krwawienie, Zatrucie i Podpalenie zabierają 20 zdrowia na sekundę, najwięcej, ile się da, a ponowne nałożenie odświeża je zamiast kumulować.",
+  "training.scenario.condition-removal.label": "Usuwanie dolegliwości",
+  "training.scenario.condition-removal.teaches":
+    "Że usunięcie dolegliwości zdejmuje tylko to, co obiecuje: sojusznik z 200 z 500 zdrowia ma pięć dolegliwości, a Głęboka Rana wśród nich zabiera 100 przy nałożeniu i ogranicza twoje leczenie do 400.",
+  "training.scenario.armor-ladder.label": "Drabina pancerza",
+  "training.scenario.armor-ladder.teaches":
+    "Krzywa redukcji: to samo trafienie przeciw pancerzowi od 40 do 104, obok siebie.",
+  "training.scenario.healing-throughput.label": "Wydajność leczenia",
+  "training.scenario.healing-throughput.teaches":
+    "Ile warte jest twoje leczenie pod prawdziwą presją i że pancerz to przyjaciel uzdrowiciela: ta sama Kula Ognia zabiera Mnichowi 91, a Wojownikowi 64.",
+  "training.scenario.interrupt-timing.label": "Wyczucie przerwania",
+  "training.scenario.interrupt-timing.teaches":
+    "Że przerwanie to kwestia wyczucia: złap 3-sekundowe rzucenie, zanim się skończy. Czarodziej z Oszołomieniem rzuca zaklęcia dwa razy dłużej, a każde trafienie je przerywa.",
+  "training.scenario.blind-denial.label": "Oślepienie",
+  "training.scenario.blind-denial.teaches":
+    "Że napastnik z Oślepieniem chybia dziewięć ciosów na dziesięć: dwóch łuczników, jeden z nich oślepiony.",
+  "training.scenario.kiting-and-cripple.label": "Kiting i Okaleczenie",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Celowanie z wyprzedzeniem w ruchomy cel i to, że cel z Okaleczeniem idzie o połowę wolniej.",
+  "training.scenario.weapon-dps.label": "DPS broni",
+  "training.scenario.weapon-dps.teaches":
+    "Ile twoja broń zadaje na sekundę: naciśnij Space i odczytaj wiersz broni.",
+  "training.scenario.dodge-drill.label": "Ćwiczenie uników",
+  "training.scenario.dodge-drill.teaches":
+    "Że strzała ląduje tam, gdzie byłbyś: skręć, gdy opuści łuk.",
+  "training.scenario.obstacles-and-los.label": "Wzrok i zasięg",
+  "training.scenario.obstacles-and-los.teaches":
+    "Że widzieć wroga to nie to samo, co go dosięgnąć: z umiejętnością na cel za filarem obchodzisz filar, a na cel poza zasięgiem podchodzisz bliżej.",
+  "training.scenario.fireball-dodge.label": "Unik przed Kulą Ognia",
+  "training.scenario.fireball-dodge.teaches":
+    "Że Kula Ognia leci jak strzała: odsuń się, gdy wylatuje, a nic nie zapłonie (#535).",
+  "training.scenario.block.label": "Blok",
+  "training.scenario.block.teaches":
+    "Że Strażnik odbija połowę twoich ciosów, a zaklęcie przez niego przechodzi (#534).",
+  "training.scenario.survivability.label": "Przetrwanie",
+  "training.scenario.survivability.teaches":
+    "Jak długo wytrzymasz przeciw trzem czarodziejom i że pancerz to twoja największa dźwignia: przy 80 Kula Ognia zabiera o 30% mniej niż przy 60.",
+  "training.scenario.aoe-cluster.label": "Obszar: skupisko",
+  "training.scenario.aoe-cluster.teaches":
+    "Że rozprysk ma środek w celu: Kula Ognia w środek pali całą piątkę, ale żadnego z maruderów.",
+  "training.scenario.aoe-cap.label": "Obszar: limit",
+  "training.scenario.aoe-cap.teaches":
+    "Że Grad Strzał zatrzymuje się na sześciu: siedmiu stoi ciasno, a jeden zawsze ocaleje.",
+  "training.scenario.aoe-friendly-fire.label": "Obszar: ogień sojuszniczy",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Że rozprysk nigdy nie rani twojej strony: sojusznik w skupisku nie traci nic.",
+  "training.scenario.aoe-line-of-sight.label": "Obszar: linia wzroku",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Że rozprysk zatrzymuje się na ścianach: trzech przed filarem płonie, dwóch za nim nie.",
+  "training.scenario.moving-targets.label": "Ruchome cele",
+  "training.scenario.moving-targets.teaches":
+    "Trafianie w ruchu: celuj przed biegnącym, dogoń uciekającego i odwróć się do goniącego.",
+  "training.scenario.heights.label": "Wysokości",
+  "training.scenario.heights.teaches":
+    "Że wysokość to miejsce do walki: pomosty kryją tych pod nimi, rampy to jedyne przejście między poziomami, a twój strzał z łuku z góry trafia mocniej.",
+  "training.scenario.wilds.label": "Dzicz",
+  "training.scenario.wilds.teaches":
+    "Że sama ziemia może ranić: spalona ziemia podpala każdego, kto na niej stoi, a podpalenie trwa jeszcze po zejściu, więc ją omijaj.",
   "training.soundOff": "Dźwięk wył.",
   "training.soundOn": "Dźwięk wł.",
   "training.you": "Ty",

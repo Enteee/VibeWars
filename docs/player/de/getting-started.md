@@ -62,15 +62,14 @@ eigenen Team-Build und öffnet sie, damit du sie nach Belieben ändern kannst.
 
 Der schnellste Weg in einen Kampf. Klick in der **Zufallsarena** auf die Karte des
 Charakters, den du spielst, wähle mit den Pfeilen der **Teamgröße** in der Leiste
-eine Größe, **1v1**, **2v2** oder **4v4**, drück dann **Bereit** in der Titelleiste
+eine Größe, **1v1**, **2v2** oder **4v4**, drück dann **Match suchen** in der Titelleiste
 und warte: Du kommst in ein Team mit anderen Spielern, gegen ein anderes Team, auf
 einer zufälligen Karte. Die Warteschlange läuft im Hintergrund: Du bleibst in der
 Zufallsarena und kannst währenddessen überallhin, zu deinen Builds, deiner
 Ausrüstung, den Optionen, der Hilfe oder dem Musik-Editor, aber du kannst weder den
 Charakter wechseln noch eine Lobby hosten oder ihr beitreten oder die Teamgröße eines
 Modus ändern. Teamarena und die anderen Lobby-Bildschirme sagen dir, dass du in einer
-Warteschlange bist, und listen ihre Karten auf, ihr **Match suchen** ist aus, daneben
-steht **Abmelden**; die Teamgröße zeigt in jedem Modus die Größe, mit der du dich
+Warteschlange bist, und listen ihre Karten auf; die Teamgröße zeigt in jedem Modus die Größe, mit der du dich
 angemeldet hast. Ein Ring, der sich links von **Hilfe** in der oberen Leiste dreht,
 zeigt, dass du in der Warteschlange bist; klick darauf für die Warteschlange, die
 Wartezeit, wie viele suchen und **Abmelden**. Wird ein Match gefunden, kommst du von
@@ -112,10 +111,10 @@ Liste, wer drin ist; das Abzeichen zählt sie.
   zu deinem Relay und wird in jeder Lobby angeboten, in der du bist, nicht nur in denen, die
   du hostest. Ein Spieler, der den Host nicht direkt erreicht, tritt dann nach ein paar
   Sekunden darüber bei, ohne etwas einzurichten. Jeder Spieler bekommt seinen eigenen
-  Login, 1 Stunde gültig und erneuert, solange er bleibt, höchstens 8 Spieler pro Lobby. Ein
-  Spieler, der so verbunden ist, sieht in der Lobby **Relay geteilt von** und den Namen
-  dessen, der teilt; während du teilst, steht in der Lobby **Dein Relay wird mit … Spielern
-  geteilt**. Zum Beenden nimm das Häkchen bei **Mein Relay mit meinen Lobbys teilen** unter
+  Login, 1 Stunde gültig und erneuert, solange er bleibt, höchstens 8 Spieler pro Lobby.
+  **Optionen → Relay (TURN)** zeigt es: Ein Spieler, der so verbunden ist, liest dort
+  **Relay geteilt von** und den Namen dessen, der teilt; während du teilst, steht dort
+  **Dein Relay wird mit … Spielern geteilt**. Zum Beenden nimm das Häkchen bei **Mein Relay mit meinen Lobbys teilen** unter
   **Optionen → Relay (TURN)** heraus. Ein Relay, das du dort von Hand einträgst, gehört
   immer nur dir.
 - **Deine Gruppe kommt mit:** Hattest du Freunde in deiner Lobby, fragt die obere Leiste
@@ -153,8 +152,7 @@ Runde 3**, **Gilde gegen Gilde**) mit der Wartezeit und in der Teamarena, wie vi
 suchen, deines eingeschlossen: `2 Teams suchen`. Nur der Host hat dort **Abmelden**. Schließt
 der Host den Tab, ist die Gruppe sofort aus der Warteschlange. Taucht ein anderes wartendes
 Team desselben Modus auf, spielt ihr auf einer der Karten des Modus gegeneinander, jede Seite
-mit ihren eigenen Builds, und kommt danach in eure Lobby zurück. Der Host kann jederzeit
-**Warteschlange verlassen** drücken; ein Gast, der geht, nimmt die ganze Gruppe aus der
+mit ihren eigenen Builds, und kommt danach in eure Lobby zurück. Der Host kann die Warteschlange jederzeit im Fenster des Rings verlassen; ein Gast, der geht, nimmt die ganze Gruppe aus der
 Warteschlange. Ist nach einer Minute kein anderes Team da, kann der Host auch **Gegen Bots
 spielen** drücken: ein Match in deiner eigenen Lobby gegen ein zufälliges vorgefertigtes
 Team aus Bots, außer im [Aufstieg der Helden](modes.md#aufstieg-der-helden), der auf ein Team

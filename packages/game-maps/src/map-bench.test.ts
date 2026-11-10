@@ -5,12 +5,16 @@ import {
   type BenchField,
   type Vec2,
 } from "@vibewars/game-core";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
-import type { MapData } from "./schema.js";
+import { validateMapData, type MapData } from "./schema.js";
 
 /**
  * The tick bench (#542) on an arena (#444): `BENCH_MAP=arena-long-hall
@@ -89,11 +93,21 @@ describe("the tick bench on an arena (#444)", () => {
   });
 });
 
+/** The training arenas, which `loadAllMaps` does not see (#2985). */
+function trainingMaps(): MapData[] {
+  const root = fileURLToPath(new URL("../training/", import.meta.url));
+  return readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) =>
+      validateMapData(JSON.parse(readFileSync(join(root, entry.name, "map.json"), "utf8"))),
+    );
+}
+
 describe("the nav graph on every map (#2544)", () => {
   /** The most wall corners a map's graph may have: what pathing stays cheap at. */
   const MAX_NODES = 600;
 
-  it.each(loadAllMaps().map((map) => [map.id, map] as const))(
+  it.each([...loadAllMaps(), ...trainingMaps()].map((map) => [map.id, map] as const))(
     "%s has at most 600 nav nodes",
     (_, map) => {
       const finder = layeredFinder(map, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);

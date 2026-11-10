@@ -7,6 +7,7 @@
 | Build                | Die Klassen, acht Skills, Attribute und Ausrüstung eines Charakters                  |
 | Angesagter Gegner    | Der Gegner, den dein Team angreifen soll; **T** visiert ihn an                       |
 | Zustand              | Eine schädliche Wirkung wie Bleeding oder Crippled; sie läuft aus oder wird entfernt |
+| Tiefes Wasser        | Wasser, in das du nicht hineinlaufen kannst; Schüsse und Zauber gehen darüber        |
 | Leicht unterbrechbar | Jeder Treffer während der Nutzung unterbricht sie, etwa beim Legen einer Falle       |
 | Elite                | Ein starker Skill mit goldenem Rahmen; einer pro Leiste                              |
 | Verzauberung         | Eine gute Wirkung, von dir oder einem Verbündeten gewirkt                            |
@@ -22,6 +23,7 @@
 | Aufladung            | Die Zeit, bis ein benutzter Skill wieder nutzbar ist                                 |
 | Wiederbeleben        | Einen toten Verbündeten zurückholen                                                  |
 | Rune                 | Ein Rüstungs-Upgrade: Attributränge, Leben, Energie oder kürzere Zustände            |
+| Seichtes Wasser      | Wasser, durch das du läufst wie über trockenen Boden                                 |
 | Siegel (Schild)      | Dein Zeichen, ein kleines Schild aus deiner Browser-Identität, vor deinem Namen      |
 | Spawn                | Wo dein Team das Match beginnt                                                       |
 | Berührungs-Skill     | Ein Skill, der das Ziel berühren muss; manche Schreie lassen Berührungen scheitern   |

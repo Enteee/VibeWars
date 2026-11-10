@@ -3,6 +3,7 @@ import {
   Vec,
   flagId,
   relicId,
+  switchTargetId,
   type CapturePoint,
   type CarriedSpawn,
   type FlagField,
@@ -13,7 +14,7 @@ import {
   type StandState,
   type Vec2,
 } from "@vibewars/game-core";
-import type { GateDescriptor } from "@vibewars/game-protocol";
+import type { GateDescriptor, SwitchDescriptor } from "@vibewars/game-protocol";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 import type { RenderableShape } from "./arena-snapshot.js";
 
@@ -189,27 +190,71 @@ export interface RenderableCapturePoint {
   readonly ring: { readonly side: FlagSide; readonly fraction: number } | undefined;
 }
 
-/** A gate's pressure plate (#2691), in your side's colour, or none for anyone's. */
-export interface RenderableGatePlate {
-  readonly position: Vec2;
-  readonly side: FlagSide | undefined;
+/** A gate (#2691): its pressure plate in your side's colour, or none for anyone's. */
+export interface RenderableGate {
+  /** A switch's gate (#3025) has no plate. */
+  readonly plate: { readonly position: Vec2; readonly side: FlagSide | undefined } | undefined;
   readonly open: boolean;
   /** The wall it opens: an open gate leaves its outline on the ground. */
   readonly wall: RenderableShape;
 }
 
-/** Every gate's plate, from your side's view; `[]` on a map without them. */
-export function renderableGatePlates(
+/** Every gate, from your side's view; `[]` on a map without them. */
+export function renderableGates(
   gates: readonly GateDescriptor[],
   open: readonly boolean[],
   selfTeam: number | undefined,
-): RenderableGatePlate[] {
-  return gates.map((gate, at) => ({
-    position: gate.plate,
-    side: gate.team === null ? undefined : sideOf(gate.team, selfTeam),
+): RenderableGate[] {
+  return gates.map(({ opener, wall }, at) => ({
+    plate:
+      opener.kind === "plate"
+        ? {
+            position: opener.plate,
+            side: opener.team === null ? undefined : sideOf(opener.team, selfTeam),
+          }
+        : undefined,
     open: open[at] === true,
-    wall: gate.wall,
+    wall,
   }));
+}
+
+/** A switch (#3025) as the arena draws it: its lever, raised or thrown. */
+export interface RenderableSwitch {
+  /** What a click on it targets: `switch-<id>`. */
+  readonly id: string;
+  /** Its id on the map, which names its mark. */
+  readonly mark: string;
+  readonly position: Vec2;
+  readonly layer: number;
+  readonly up: boolean;
+}
+
+/** How near a click comes to a switch to pick it. */
+export const SWITCH_PICK_RADIUS = 18;
+
+/** Every switch, pointing as `up` says; `[]` on a map without them. */
+export function renderableSwitches(
+  switches: readonly SwitchDescriptor[],
+  up: readonly boolean[],
+): RenderableSwitch[] {
+  return switches.map(({ id, position, layer }, at) => ({
+    id: switchTargetId(id),
+    mark: id,
+    position,
+    layer,
+    up: up[at] !== false,
+  }));
+}
+
+/** The switch under `point`, for a right click to target as a bundle is (#3025). */
+export function switchAtPoint(
+  switches: readonly RenderableSwitch[],
+  point: Vec2,
+): string | undefined {
+  return switches
+    .map((lever) => ({ id: lever.id, d: Vec.distance(lever.position, point) }))
+    .filter(({ d }) => d <= SWITCH_PICK_RADIUS)
+    .sort((a, b) => a.d - b.d)[0]?.id;
 }
 
 /** Every shrine, from your side's view; `[]` on a map without them. */

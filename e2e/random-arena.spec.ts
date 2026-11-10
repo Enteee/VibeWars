@@ -53,7 +53,7 @@ async function queue1v1(page: Page, name: string): Promise<void> {
   await namePlayer(page, name);
   await openRail(page, "Random Arena");
   await setTeamSize(page, 1);
-  await page.locator("#topbar .screen-ready").click();
+  await page.locator("#topbar .lobby-find").click();
   // The queue waits in the background (#2743): the screen stays, the icon says so.
   await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
   await expect(page.locator(".screen-random-arena")).toBeVisible();
@@ -72,13 +72,13 @@ test("Random Arena's Ready is greyed out without a character to queue with, or a
 }) => {
   await page.goto("./");
   const screen = page.locator(".screen-random-arena");
-  const ready = page.locator("#topbar .screen-ready");
+  const ready = page.locator("#topbar .lobby-find");
   const hint = screen.locator(".random-arena-hint");
   // The first start's rolled character (#853) queues; gone, it does not
   // come back, and nothing is left to queue with. The menu cannot delete
   // it (#1147), so the store is emptied under the page. Source text, as
   // the e2e tsconfig has no DOM lib (see builds.spec.ts).
-  await expect(ready).toHaveText("Ready");
+  await expect(ready).toHaveText("Find a match");
   await expect(ready).toBeEnabled();
   await expect(hint).toBeHidden();
   // 8v8 is no Random Arena: offered, but not to pick.
@@ -157,12 +157,20 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     const pip = alice.locator(".hud-enemy-pip");
     await expect(pip).toHaveAttribute("title", "Bob");
     await expect(pip).not.toHaveClass(/is-dead/);
-
     // Alice beats Bob, who stands still, with the starter build's spells.
+    // The result is up for QUEUED_RESULT_SECONDS only, and a pass of
+    // presses can take longer than that on a loaded runner (#3002): each
+    // page reads its HUD the frame the result shows, while Alice casts.
     await alice.keyboard.press(key("target-next"));
     await alice.keyboard.press(key("attack"));
-    const result = alice.locator(".hud-result");
-    await expect(async () => {
+    const aliceSaw = resultShown(alice);
+    const bobSaw = resultShown(bob);
+    const fight = { on: true };
+    const stop = (): void => {
+      fight.on = false;
+    };
+    aliceSaw.then(stop, stop);
+    while (fight.on) {
       for (const skill of [
         "elementalist.glyph-of-lesser-energy",
         "elementalist.fireball",
@@ -171,12 +179,12 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
       ]) {
         await alice.keyboard.press(starterKey(BUILD, skill));
       }
-      await expect(result).toBeVisible({ timeout: 1_000 });
-    }).toPass({ timeout: 90_000 });
-    await expect(result).toHaveText(/victory/i);
-    await expect(bob.locator(".hud-result")).toHaveText(/defeat/i);
-    await expect(alice.locator(".hud-scoreboard")).toContainText("1 v 0");
-    await expect(pip).toHaveClass(/is-dead/);
+    }
+    const [aliceHud, bobHud] = await Promise.all([aliceSaw, bobSaw]);
+    expect(aliceHud.result).toMatch(/victory/i);
+    expect(bobHud.result).toMatch(/defeat/i);
+    expect(aliceHud.scoreboard).toContain("1 v 0");
+    expect(aliceHud.pip).toMatch(/\bis-dead\b/);
 
     // Four seconds on, the queue screen says how it went.
     await expect(alice.locator(".queue-status")).toHaveText("Victory", { timeout: 10_000 });
@@ -196,6 +204,38 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     await context.close();
   }
 });
+
+/** What a page's HUD said on the frame its match result first showed. */
+interface ResultHud {
+  readonly result: string;
+  readonly scoreboard: string;
+  readonly pip: string;
+}
+
+/**
+ * The HUD the moment `page`'s match result shows, read in the page every
+ * 100 ms: the result leaves with the HUD QUEUED_RESULT_SECONDS later
+ * (#3002), sooner than a loaded runner may come back to look.
+ */
+async function resultShown(page: Page): Promise<ResultHud> {
+  const shown = await page.waitForFunction(
+    () => {
+      const result = document.querySelector<HTMLElement>(".hud-result");
+      if (result === null || result.style.display === "none") return undefined;
+      return {
+        result: result.textContent,
+        scoreboard: document.querySelector(".hud-scoreboard")?.textContent ?? "",
+        pip: document.querySelector(".hud-enemy-pip")?.className ?? "",
+      };
+    },
+    undefined,
+    // Bob's page is a background tab, where frames may not come: poll on a timer.
+    { timeout: 90_000, polling: 100 },
+  );
+  const hud = await shown.jsonValue();
+  if (hud === undefined) throw new Error("the result showed with no HUD to read");
+  return hud;
+}
 
 /** Queue seeds 1 and 2, which make Alice the host, into a match, both in the arena. */
 async function meetInMatch(alice: Page, bob: Page): Promise<void> {
@@ -259,9 +299,9 @@ test("Random Arena queues in the background: the icon sits left of Help, and Lea
   await queue1v1(page, "Alice");
   // Immediately left of Help.
   await expect(page.locator("#topbar .topbar-queue + .topbar-help")).toHaveCount(1);
-  const ready = page.locator("#topbar .screen-ready");
-  await expect(ready).toBeDisabled();
-  await expect(ready).toHaveAttribute("title", "You are in a queue.");
+  const find = page.locator("#topbar .lobby-find");
+  await expect(find).toHaveCount(0);
+  await expect(page.locator(".lobby-leave-queue")).toHaveCount(0);
   // Anywhere a lobby member may go: Character Builder, and back.
   await openRail(page, "Character Builder");
   await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
@@ -271,10 +311,51 @@ test("Random Arena queues in the background: the icon sits left of Help, and Lea
   await expect(flyout).toBeHidden();
   await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
   await expect(page.locator(".screen-random-arena")).toBeVisible();
-  await expect(ready).toBeEnabled();
+  await expect(find).toBeEnabled();
 });
 
-test("queued, Team Arena stays browsable: Find a match waits, saying why, until its Leave Queue (#2781)", async ({
+test("Find a match stands left of the icons, and the spinner takes its place once queued (#2980)", async ({
+  page,
+}) => {
+  await makeCharacter(page);
+  await namePlayer(page, "Alice");
+  const icons = page.locator("#topbar .topbar-actions");
+  const find = page.locator("#topbar .lobby-find");
+  const spinner = page.locator("#topbar .topbar-queue");
+  /** Find a match's right edge touches the icons, with only the icons' own gap between. */
+  const expectBesideIcons = async (): Promise<void> => {
+    await expect(find).toHaveText("Find a match");
+    const button = await find.boundingBox();
+    const group = await icons.boundingBox();
+    expect(button).not.toBeNull();
+    expect(group).not.toBeNull();
+    if (button !== null && group !== null) {
+      expect(group.x - (button.x + button.width)).toBeGreaterThanOrEqual(0);
+      expect(group.x - (button.x + button.width)).toBeLessThan(8);
+    }
+  };
+  await openRail(page, "Team Arena");
+  await expect(page.locator(".screen-team-arena")).toBeVisible();
+  await expectBesideIcons();
+  await expect(page.locator(".lobby-leave-queue")).toHaveCount(0);
+  await openRail(page, "Random Arena");
+  await setTeamSize(page, 1);
+  await expectBesideIcons();
+  await find.click();
+  await expect(find).toHaveCount(0);
+  await expect(spinner).toBeVisible();
+  const ring = await spinner.boundingBox();
+  const group = await icons.boundingBox();
+  expect(ring?.x).toBe(group?.x);
+  await expect(page.locator(".lobby-leave-queue")).toHaveCount(0);
+  // On a phone the other icons fold into the ⋯, the spinner stays out.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator("#topbar")).toHaveClass(/has-more/);
+  await expect(spinner).toBeVisible();
+  await expect(page.locator("#topbar .topbar-help")).toBeHidden();
+});
+
+test("queued, Team Arena stays browsable with no Find a match, and the flyout's Leave Queue brings it back (#2781, #2980)", async ({
   page,
 }) => {
   await makeCharacter(page);
@@ -283,8 +364,7 @@ test("queued, Team Arena stays browsable: Find a match waits, saying why, until 
   const screen = page.locator(".screen-team-arena");
   await expect(screen).toContainText("You are in a queue.");
   const find = page.getByRole("button", { name: "Find a match", exact: true });
-  await expect(find).toBeDisabled();
-  await expect(find).toHaveAttribute("title", "You are in a queue.");
+  await expect(find).toHaveCount(0);
   // The queue is for the size it has: no mode's size changes under it.
   const size = page.locator(".mode-rail-size");
   await expect(size).toHaveAttribute("title", "Leave the queue to change the team size");
@@ -293,7 +373,8 @@ test("queued, Team Arena stays browsable: Find a match waits, saying why, until 
   await expect(screen.locator(".screen-queued-maps li").first()).toBeVisible();
   await expect(screen.locator("select")).toHaveCount(0);
 
-  await screen.getByRole("button", { name: "Leave Queue", exact: true }).click();
+  const flyout = await queueWindow(page);
+  await flyout.getByRole("button", { name: "Leave Queue", exact: true }).click();
   await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
   // Out of it, the player's own lobby opens here, and finds a match.
   await expect(find).toBeEnabled();

@@ -598,6 +598,24 @@ describe("the Matches page (#2532)", () => {
     expect(note.hidden).toBe(true);
   });
 
+  it("hides the Hall strip with no Hall win (#2703)", () => {
+    const { root } = render();
+    hear("a");
+    expect(root.one("matches-hall").hidden).toBe(true);
+  });
+
+  it("shows a Hall win as heard, whatever the filter chips say (#2703)", () => {
+    const { root } = render();
+    const hallWin: MatchRecord = { ...RECORD, mode: "heroes-ascent", map: "hall-of-heroes-king" };
+    hear("a");
+    hear("hall", hallWin);
+    chip(root, "kind", t("matches.kindTeam")).click();
+    expect(root.one("matches-hall").hidden).toBe(false);
+    expect(root.all("matches-hall-row")).toHaveLength(1);
+    expect(root.one("matches-hall-holder").textContent).toBe("VIBE");
+    expect(root.one("matches-hall-people").textContent).toBe("Ann");
+  });
+
   it("filters a record heard live, and closes an open row it hides (#2741)", () => {
     const { root } = render();
     hear("a");

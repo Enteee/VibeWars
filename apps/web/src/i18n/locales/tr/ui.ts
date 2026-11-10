@@ -268,6 +268,7 @@ export default {
   "combat.sourceShrine": "Tapınak",
   "combat.sourceSkill": "bir beceri",
   "combat.sourceWeapon": "bir silah",
+  "combat.sourceZone": "Tehlike",
   "combat.spellFailed": "{target}: {skill} başarısız",
   "combat.statusApplied": "{target}, {status} kazanıyor ({seconds} sn)",
   "combat.statusAppliedMaintained": "{target}, {status} kazanıyor (sürdürülüyor)",
@@ -331,6 +332,7 @@ export default {
   "effects.categoryChant": "İlahi",
   "effects.categoryCondition": "Rahatsızlık",
   "effects.categoryEcho": "Yankı",
+  "effects.categoryEnvironment": "Çevre",
   "effects.categoryEffect": "Etki",
   "effects.categoryEnchantment": "Tılsım",
   "effects.categoryForm": "Biçim",
@@ -380,6 +382,7 @@ export default {
   "gearEditor.statusChant": "ilahi",
   "gearEditor.statusCondition": "rahatsızlıklı",
   "gearEditor.statusEcho": "yankı etkisinde",
+  "gearEditor.statusEnvironment": "çevre etkisinde",
   "gearEditor.statusEnchantment": "tılsımlı",
   "gearEditor.statusForm": "biçim etkisinde",
   "gearEditor.statusGlyph": "glif etkisinde",
@@ -558,6 +561,7 @@ export default {
   "hud.stormBeacon": "Fırtına İşareti",
   "hud.stormBeaconOurs": "Fırtına İşareti: takımının elinde",
   "hud.stormBeaconTheirs": "Fırtına İşareti: düşmanın elinde",
+  "hud.switch": "Kol",
   "hud.targetDead": "ölü",
   "hud.targetEffects": "hedefinin etkileri",
   "hud.versus": "{ours} - {theirs}",
@@ -623,7 +627,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Eşleştirmeyi kurucu başlatır",
   "lobby.joinTeam": "Katıl",
   "lobby.joinTeamLabel": "{team} takımına katıl",
-  "lobby.leaveQueue": "Sıradan çık",
   "lobby.leaveTeam": "Ayrıl",
   "lobby.leaveTeamLabel": "{team} takımından ayrıl",
   "lobby.map": "Harita",
@@ -683,6 +686,9 @@ export default {
   "matches.endTime": "Süre doldu",
   "matches.filterKind": "Tür",
   "matches.filterSize": "Boyut",
+  "matches.hallReported": "Her maçın sunucusu bildirdi, doğrulanmadı.",
+  "matches.hallStreak": { one: "Üst üste {count} galibiyet", other: "Üst üste {count} galibiyet" },
+  "matches.hallTitle": "Kahramanlar Salonu",
   "matches.hostReported": "kurucu bildirdi",
   "matches.hostReportedTitle": "Maçın kurucusu yayınladı; başka kimse doğrulamadı.",
   "matches.hoursAgo": { one: "{count} sa önce", other: "{count} sa önce" },
@@ -753,10 +759,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "kontroller",
+  "options.display": "görüntü",
   "options.label": "Ayarlar",
   "options.language": "dil",
   "options.languageBusy": "Önce lobiden ya da maçtan çık: dili değiştirmek sayfayı yeniler.",
   "options.languageLabel": "Dil",
+  "options.lightingLabel": "Aydınlatma",
   "options.player": "oyuncu",
   "options.relay": "relay (TURN)",
   "options.sections": "ayar bölümleri",
@@ -844,6 +852,8 @@ export default {
   "queue.defending": "{map} sende · {seconds} sn sonra savunma",
   "queue.fellThrough": "Maç iptal oldu, yeniden aranıyor",
   "queue.guildVsGuild": "Lonca vs Lonca",
+  "queue.hallHeldBy": "{holder} Kahramanlar Salonu'nu elinde tutuyor",
+  "queue.hallUnheld": "Kahramanlar Salonu kimsenin elinde değil",
   "queue.heroesAscent": "Kahramanların Yükselişi · {round}. tur",
   "queue.hostLeft": "Kurucu ayrıldı",
   "queue.hostOnly": "Sıradan yalnızca kurucu çıkabilir.",
@@ -870,6 +880,8 @@ export default {
   "queue.theirTeam": "Rakip takım",
   "queue.title": "Rastgele Arena {mode} · {character}",
   "queue.unreachable": "Lobi sunucularına ulaşılamadı",
+  "queue.vault": "Mahzen",
+  "queue.vaultOpensIn": "Salon {time} sonra açılıyor",
   "queue.versus": "vs",
   "queue.waitingForEveryone": "Herkesin gelmesi bekleniyor",
   "queue.waitingForTeam": "Takımın bekleniyor ({seconds})",
@@ -1307,6 +1319,75 @@ export default {
   "training.reset": "sıfırla",
   "training.resetDivider": "sıfırlandı",
   "training.scenario": "senaryo",
+  "training.scenario.target-dummy.label": "Hedef kukla",
+  "training.scenario.target-dummy.teaches":
+    "Tek bir büyünün gerçekte ne yaptığı: 60 zırhta, ipucundaki sayının tam kendisi.",
+  "training.scenario.time-to-kill.label": "Öldürme süresi",
+  "training.scenario.time-to-kill.teaches":
+    "Sürekli hasarın: 500 canlı bir büyücü ne kadar dayanıyor, tekrar tekrar.",
+  "training.scenario.physical-vs-elemental.label": "Fiziksel ve elementel",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Zırhın hasar türüne göre işlediği: Warrior ve Stalwart kılıcı yumuşatır ama Fireball'u değil, Ranger Fireball'u yumuşatır ama kılıcı değil.",
+  "training.scenario.condition-pressure.label": "Rahatsızlık baskısı",
+  "training.scenario.condition-pressure.teaches":
+    "Rahatsızlıkların bir ölüm saati olduğu: Bleeding, Poison ve Burning saniyede 20 can eritir, bu en yüksek değerdir; yenisini eklemek üst üste binmez, süreyi tazeler.",
+  "training.scenario.condition-removal.label": "Rahatsızlık kaldırma",
+  "training.scenario.condition-removal.teaches":
+    "Rahatsızlık kaldırmanın yalnızca yazdığını kaldırdığı: 500 canın 200'ündeki bir müttefikte beş rahatsızlık var; aralarındaki Deep Wound bindiği anda 100 can alır ve iyileştirmelerini 400'de sınırlar.",
+  "training.scenario.armor-ladder.label": "Zırh merdiveni",
+  "training.scenario.armor-ladder.teaches":
+    "Hafifletme eğrisi: aynı vuruş 40 ile 104 arası zırha karşı, yan yana.",
+  "training.scenario.healing-throughput.label": "İyileştirme gücü",
+  "training.scenario.healing-throughput.teaches":
+    "İyileştirmelerinin gerçek baskıya karşı ne ettiği ve zırhın şifacının dostu olduğu: aynı Fireball bir Monk'tan 91, bir Warrior'dan 64 can alır.",
+  "training.scenario.interrupt-timing.label": "Kesme zamanlaması",
+  "training.scenario.interrupt-timing.teaches":
+    "Kesmenin bir zamanlama becerisi olduğu: 3 saniyelik bir büyüyü tamamlanmadan yakala. Dazed bir büyücünün büyüleri iki kat uzun sürer ve her vuruş onları keser.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Blind bir saldırganın on vuruştan dokuzunu ıskaladığı: iki okçu, biri Blind.",
+  "training.scenario.kiting-and-cripple.label": "Kaçarak vurma ve Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Hareket eden bir hedefin önüne nişan almak ve Crippled bir hedefin yarı hızda yürüdüğü.",
+  "training.scenario.weapon-dps.label": "Silah DPS",
+  "training.scenario.weapon-dps.teaches":
+    "Silahının saniyede ne yaptığı: Space'e bas ve silah satırını oku.",
+  "training.scenario.dodge-drill.label": "Kaçınma alıştırması",
+  "training.scenario.dodge-drill.teaches":
+    "Okun, olacağın yere düştüğü: ok yaydan çıktıktan sonra dön.",
+  "training.scenario.obstacles-and-los.label": "Görüş ve menzil",
+  "training.scenario.obstacles-and-los.teaches":
+    "Bir düşmanı görmenin ona ulaşmak olmadığı: sütunun arkasındakine kullanılan beceri etrafından dolaşır, menzil dışındakine kullanılan yaklaşır.",
+  "training.scenario.fireball-dodge.label": "Fireball'dan kaç",
+  "training.scenario.fireball-dodge.teaches":
+    "Fireball'un bir ok gibi uçtuğu: çıkarken yana adım at, hiçbir şey yanmaz (#535).",
+  "training.scenario.block.label": "Engel",
+  "training.scenario.block.teaches":
+    "Guardian'ın vuruşlarının yarısını savuşturduğu, ama büyünün içinden geçtiği (#534).",
+  "training.scenario.survivability.label": "Dayanıklılık",
+  "training.scenario.survivability.teaches":
+    "Üç büyücüye karşı ne kadar dayandığın ve zırhın en büyük kozun olduğu: 80'de bir Fireball, 60'takinden %30 daha az can alır.",
+  "training.scenario.aoe-cluster.label": "Alan: küme",
+  "training.scenario.aoe-cluster.teaches":
+    "Sıçrayan hasarın hedefini merkez aldığı: ortadakine atılan Fireball beşini de yakar, geride kalan iki kişiden hiçbirini değil.",
+  "training.scenario.aoe-cap.label": "Alan: sınır",
+  "training.scenario.aoe-cap.teaches":
+    "Barrage'ın altıda durduğu: yedisi sıkışık durur ve biri hep kurtulur.",
+  "training.scenario.aoe-friendly-fire.label": "Alan: dost ateşi",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Sıçrayan hasarın kendi tarafına asla zarar vermediği: kümedeki müttefik hiçbir şey almaz.",
+  "training.scenario.aoe-line-of-sight.label": "Alan: görüş hattı",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Sıçrayan hasarın duvarlarda durduğu: sütunun önündeki üçü yanar, arkasındaki ikisi yanmaz.",
+  "training.scenario.moving-targets.label": "Hareketli hedefler",
+  "training.scenario.moving-targets.teaches":
+    "Hareket edeni vurmak: koşanın önüne nişan al, kaçanı yakala, seni kovalayana dön.",
+  "training.scenario.heights.label": "Yükseklikler",
+  "training.scenario.heights.teaches":
+    "Yüksekliğin savaşılacak bir yer olduğu: platformlar altındakileri gizler, rampalar katlar arasındaki tek yoldur ve yukarıdan attığın ok daha sert vurur.",
+  "training.scenario.wilds.label": "Yaban",
+  "training.scenario.wilds.teaches":
+    "Zeminin kendisinin de can yakabileceğini: kavrulmuş zemin üzerinde duran herkesi yakar ve yanma sen çıktıktan sonra da sürer, bu yüzden etrafından dolaş.",
   "training.soundOff": "Ses kapalı.",
   "training.soundOn": "Ses açık.",
   "training.you": "Sen",

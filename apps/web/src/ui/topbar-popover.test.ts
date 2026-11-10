@@ -460,6 +460,7 @@ describe("the top bar's queue icon (#2743)", () => {
       since: Date.now(),
       teams: undefined,
       isHost: false,
+      hallHolder: undefined,
     });
     button.fire("click");
     expect(shown(parent.children[0])).toEqual([

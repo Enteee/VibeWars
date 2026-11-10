@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { TRAINING_SCENARIOS } from "@vibewars/game-core";
+import { matchLayers } from "@vibewars/game-maps/layers";
 
 import { newCharacter, setProfessions, setSkill } from "../ui/build-editor.js";
 import { TRAINING_MAPS } from "./maps.js";
@@ -58,7 +59,7 @@ describe("the heights scenario (#2937)", () => {
     for (const dummy of scenario.dummies) {
       expect(layerOf(dummy.id), dummy.id).toBe(dummy.layer);
     }
-    expect(new Set(scenario.dummies.map(({ layer }) => layer))).toEqual(new Set([0, 1, 2]));
+    expect(new Set(scenario.dummies.map(({ layer }) => layer))).toEqual(new Set([0, 1, 2, 3]));
   });
 });
 
@@ -98,5 +99,24 @@ describe("playerArming", () => {
     const arming = playerArming(illegal);
     expect(arming.problem).toBeDefined();
     expect(arming.skillBar).toEqual([]);
+  });
+});
+
+describe("matchLayers' water (#2983)", () => {
+  it("hands the simulation deep water as an outline on its layer, and no shallow water", () => {
+    const map = TRAINING_MAPS.get("training-heights");
+    if (map === undefined) throw new Error("no training-heights");
+    const area = { kind: "rect", x: 10, y: 10, width: 20, height: 20 } as const;
+    const layers = matchLayers({
+      ...map,
+      water: [
+        { id: "pond", layer: 0, depth: "deep", area },
+        { id: "ford", layer: 0, depth: "shallow", area: { ...area, x: 50 } },
+      ],
+    });
+    expect(layers.deepWater).toHaveLength(map.layers);
+    expect(layers.deepWater[0]).toHaveLength(4);
+    expect(layers.deepWater[0]?.every(({ a }) => a.x <= 30)).toBe(true);
+    expect(layers.deepWater.slice(1).flat()).toEqual([]);
   });
 });

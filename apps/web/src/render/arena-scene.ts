@@ -1,11 +1,12 @@
 import Phaser from "phaser";
 
+import type { MapLighting } from "@vibewars/game-maps/schema";
+
 import {
   ALTAR_REACH_UNITS,
   CAPTURE_REACH_UNITS,
   GATE_PLATE_REACH_UNITS,
   isStatusId,
-  pointInPolygon,
   isWeaponId,
   type CreatureLook,
   type StatusId,
@@ -54,13 +55,35 @@ import {
   type RenderItem,
 } from "./render-order.js";
 import {
-  altHeld,
+  DECK_LIP,
+  PIT_FLOOR,
+  PIT_WALL,
+  TUNNEL_INLAY,
+  TUNNEL_MOUTH,
+  WALL_STROKE,
+  arenaPalette,
+  type ArenaPalette,
+} from "./arena-palette.js";
+import {
+  trackAlt,
+  type AltTracker,
   CREATURE_PATH,
+  WALL_HEIGHT,
+  deckHeldBy,
+  deckSideLow,
+  plankLines,
+  southFacingEdges,
+  drawnLayerAt,
+  hiddenCrop,
+  liftAt,
   occludersOf,
   pickSurface,
+  pitDrawing,
+  rampDrawing,
   RING_PATH,
-  shapeOutline,
   traceHiddenOutline,
+  tunnelCover,
+  traceHiddenPolyline,
   type Occluder,
 } from "./layer-surfaces.js";
 import {
@@ -75,7 +98,13 @@ import {
   statusFrame,
   type AtlasMap,
 } from "./arena-atlas.js";
-import { MatchClock, projectileHeading, projectilePosition, shotFadeAlpha } from "./projectiles.js";
+import {
+  MatchClock,
+  projectileHeading,
+  projectileLanding,
+  projectilePosition,
+  shotFadeAlpha,
+} from "./projectiles.js";
 import { NO_COVER, snapView, type CameraView, type Cover } from "./camera-rig.js";
 import { edgeMarkers, type EdgeMarker, type EdgeThing } from "./edge-markers.js";
 import { statusRowLayout } from "./status-icons.js";
@@ -86,6 +115,7 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
+import { weaponMarkLayout } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
@@ -121,11 +151,28 @@ import {
   FLAG_PICK_RADIUS,
   STAND_RADIUS,
   type RenderableCapturePoint,
-  type RenderableGatePlate,
+  type RenderableGate,
+  type RenderableSwitch,
   type RenderableFlag,
 } from "./flag-objects.js";
 import { lyingPose } from "./lying-pose.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
+import { LightingPass, litStructurePalette } from "./lighting-pass.js";
+import { paintDeckShadows } from "./shadow-geometry.js";
+import { lightingOn } from "./lighting-preference.js";
+import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
+import { SWITCH_MARK_ART, switchMarkKey } from "./switch-mark.js";
+import {
+  BODY_LIGHT_FLOOR,
+  bodyTintOf,
+  lightAt,
+  multiplyColour,
+  steadyLighting,
+  type LightSample,
+} from "./lighting-model.js";
+import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
+import { waterShapeOf, type WaterShape } from "./water-shape.js";
+import { ZONE_EDGE_WIDTH, ZONE_LOOK, zoneFillAlpha } from "./zone-look.js";
 import { screenPx, screenSized } from "./screen-text.js";
 import {
   BODY_EDGE_WIDTH,
@@ -157,27 +204,19 @@ import type {
 
 const BEACON_BOLT_GLOW = 0x79c0ff;
 const BEACON_BOLT_CORE = 0xf0f6ff;
-const WALL_FILL = 0x202836;
-const DECK_FILL = 0x2c3648;
-const DECK_SIDE_FILL = 0x151b26;
-const RAMP_FILL = 0x262f3f;
+const RAMP_CHEVRON_WIDTH = 2;
 /** How far apart the side face's stacked outlines lie, in world units. */
 const SIDE_FACE_SLICE = 2;
+/** How far apart a deck's planks are, in world units. */
+const DECK_PLANK = 48;
+/** Line widths, in CSS px: a deck's lip and a wall's lit edge. */
+const DECK_LIP_WIDTH = 3;
+const WALL_LIT_WIDTH = 2;
 /** The hover marker on a layered map (#2831), its dashes on the ground. */
 const HOVER_RING = 0xd7dee8;
 const HOVER_RADIUS = 12;
 const HOVER_DASHES = 8;
 
-/** Whether `wall`'s middle lies inside `shape`: a wall under a deck is a support. */
-function shapeHoldsCentre(shape: RenderableShape, wall: RenderableShape): boolean {
-  const corners = shapeOutline(wall);
-  const sum = corners.reduce((at, c) => ({ x: at.x + c.x, y: at.y + c.y }), { x: 0, y: 0 });
-  return pointInPolygon(
-    { x: sum.x / corners.length, y: sum.y / corners.length },
-    shapeOutline(shape),
-  );
-}
-const WALL_STROKE = 0x3b4759;
 const TARGET_RING = 0xffd866;
 /** The `condition` orange: your team's called foe wears its chevron (#443). */
 const CALL_CHEVRON = 0xffa657;
@@ -199,7 +238,6 @@ const STAND_NEUTRAL = 0x8b949e;
 /** The altar on an edge marker (#1413): the palette's `altar` gold, as the compass draws it (#1388). */
 const ALTAR_GOLD = 0xc8a45a;
 const FLAG_POLE_COLOUR = 0xd8dee9;
-const GRID = 0x1a212c;
 const HEALTH_BAR_BG = 0x11161d;
 const HEALTH_BAR_FILL = 0x7ee787;
 const HEALTH_BAR_LOW = 0xff7b72;
@@ -252,13 +290,19 @@ const IMPACT_LINE_WIDTH = 1.5;
  * numbers, which were over the bodies before the split, so a long name may
  * cover a badge's top edge.
  */
-const GROUND_DEPTH = -1;
+const GROUND_DEPTH = renderOrder({ kind: "ground-effect", layer: 0 });
+/** A layered map's opaque floor and the grid: under the water and the ward and trap circles on it. */
+const FLOOR_DEPTH = renderOrder({ kind: "floor" });
+/** The wards on a lit map: over its light, which never darkens them (ADR-0052). */
+const LIT_GROUND_DEPTH = renderOrder({ kind: "lit-ground-effect" });
 const MAP_DEPTH = renderOrder({ kind: "terrain" });
 const EFFECT_DEPTH = renderOrder({ kind: "effect" });
 const CAST_BADGE_DEPTH = renderOrder({ kind: "cast-badge" });
 const OVERLAY_DEPTH = renderOrder({ kind: "ui" });
 /** Over every world object, names and numbers included. */
 const EDGE_MARKER_DEPTH = renderOrder({ kind: "edge-marker" });
+/** How far apart the floor's grid lines are, world units. */
+const GRID_STEP = 64;
 /** The arena's icon sheet (#1671) and its frame map, as Phaser keys them. */
 const ATLAS = "arena-atlas";
 const ATLAS_MAP = "arena-atlas-map";
@@ -277,6 +321,12 @@ export class ArenaScene extends Phaser.Scene {
   private groundGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Each ward's icon, by ground effect id (#1087). */
   private groundIcons = new Map<number, Phaser.GameObjects.Image>();
+  /** Wards on decks (#2979), one `Graphics` per layer above the ground, made when first needed. */
+  private deckGroundGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** Each deck ward's icon, by ground effect id; its depth is its layer's, for life. */
+  private deckGroundIcons = new Map<number, Phaser.GameObjects.Image>();
+  /** The opaque floor of a layered map, under the wards. */
+  private floorGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The grid, the arena's edge and the walls (#1353), over the wards; drawn when they change. */
   private mapGraphics: Phaser.GameObjects.Graphics | undefined;
   /** What `mapGraphics` shows; `undefined` until it is first drawn. */
@@ -284,6 +334,8 @@ export class ArenaScene extends Phaser.Scene {
   /** What hides a body on the drawn map (#2831). */
   private occluders: readonly Occluder[] = [];
   private hiddenOutlines: Phaser.GameObjects.Graphics | undefined;
+  /** Each body's symbol where a structure covers it (#2972). */
+  private hiddenGlyphs = new Map<string, Phaser.GameObjects.Image>();
   private readonly strokeHiddenSegment = (ax: number, ay: number, bx: number, by: number): void => {
     this.hiddenOutlines?.lineBetween(ax, ay, bx, by);
   };
@@ -294,10 +346,21 @@ export class ArenaScene extends Phaser.Scene {
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** The map's water (#2984), built when the map changes. */
+  private waterShapes: readonly WaterShape[] = [];
+  /** The ripples on each layer's water, drawn every frame. */
+  private readonly rippleGraphics = new Map<
+    number,
+    { readonly graphics: Phaser.GameObjects.Graphics; readonly painter: WaterPainter }
+  >();
+  /** Each layer's effect zones (ADR-0053), drawn every frame as they breathe. */
+  private readonly zoneGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** `snapshot.actors` where they draw this frame: lifted by their layers. */
   private drawnActors: readonly RenderableActor[] = [];
   /** Each body's lift now, while it eases to its layer's. */
   private readonly elevations = new Map<string, number>();
+  /** `snapshot.actors` by id, where they stand: what their light is sampled at. */
+  private readonly standing = new Map<string, RenderableActor>();
   /** Every mark on a body, over the body glyphs (#1037). */
   private markGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The off-screen markers, drawn in screen px over everything (#440). */
@@ -361,6 +424,14 @@ export class ArenaScene extends Phaser.Scene {
   private readonly attackClocks = new Map<string, AttackClock>();
   /** The scene clock at the last frame, seconds, which the match clock runs on from. */
   private now = 0;
+  /** The light maps (ADR-0052); `undefined` until `create`. */
+  private lightingPass: LightingPass | undefined;
+  /** Whether Alt is held, for the hover ring (#3020); a key does not wait for the mouse to move. */
+  private alt: AltTracker | undefined;
+  /** Where the wards draw: under the grid, or over the light. */
+  private groundDepth = GROUND_DEPTH;
+  /** Reused every body, every frame: the lighting allocates nothing per frame. */
+  private readonly lightSample: LightSample = { colour: 0xffffff, intensity: 1 };
   /** Read once a frame: under reduced motion every mark stays at rest. */
   private reducedMotion = false;
 
@@ -459,6 +530,15 @@ export class ArenaScene extends Phaser.Scene {
       sheet.add(frame, 0, x, y, w, h);
     }
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
+    this.lightingPass = new LightingPass(this);
+    this.alt = trackAlt(window);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.lightingPass?.destroy();
+      this.lightingPass = undefined;
+      this.alt?.dispose();
+      this.alt = undefined;
+    });
+    this.floorGraphics = this.add.graphics().setDepth(FLOOR_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
@@ -471,7 +551,7 @@ export class ArenaScene extends Phaser.Scene {
 
   public override update(time: number, deltaMs: number): void {
     const effects = this.markGraphics;
-    const floor = this.bandOf(0);
+    const floor = this.bandOf(this.snapshot.structure.ground);
     if (effects === undefined || floor === undefined) {
       return;
     }
@@ -486,8 +566,11 @@ export class ArenaScene extends Phaser.Scene {
     this.drawnActors = this.liftActors(deltaMs / 1000);
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
+    this.updateLighting(time);
     this.updateGroundEffects();
     this.drawMap();
+    this.drawRipples();
+    this.drawZones();
     // Over the grid and walls, under the actors: a flash never hides a
     // health bar, a status or the target ring.
     this.areaFlashes = decayAreaFlashes(this.areaFlashes, deltaMs / 1000);
@@ -510,8 +593,11 @@ export class ArenaScene extends Phaser.Scene {
     for (const point of this.snapshot.capturePoints) {
       this.drawCapturePoint(g, point);
     }
-    for (const plate of this.snapshot.gatePlates) {
-      this.drawGatePlate(g, plate);
+    for (const gate of this.snapshot.gates) {
+      this.drawGate(g, gate);
+    }
+    for (const lever of this.snapshot.switches) {
+      this.drawSwitch(g, lever);
     }
     this.stepCapes(deltaMs / 1000);
     for (const actor of this.drawnActors) {
@@ -560,6 +646,10 @@ export class ArenaScene extends Phaser.Scene {
    */
   private liftActors(dt: number): readonly RenderableActor[] {
     const { actors, structure } = this.snapshot;
+    this.standing.clear();
+    for (const actor of actors) {
+      this.standing.set(actor.id, actor);
+    }
     if (structure.layerCount === 1) {
       this.elevations.clear();
       return actors;
@@ -567,12 +657,16 @@ export class ArenaScene extends Phaser.Scene {
     const seen = new Set<string>();
     const lifted = actors.map((actor) => {
       seen.add(actor.id);
-      const target = elevationOf(actor.layer);
+      const target = liftAt(structure, actor.position, actor.layer);
       const known = this.elevations.get(actor.id);
       const lift =
         known === undefined || this.reducedMotion ? target : easeElevation(known, target, dt);
       this.elevations.set(actor.id, lift);
-      return { ...actor, position: { x: actor.position.x, y: actor.position.y - lift } };
+      return {
+        ...actor,
+        layer: drawnLayerAt(structure, actor.position, actor.layer, actor.radius),
+        position: { x: actor.position.x, y: actor.position.y - lift },
+      };
     });
     for (const id of this.elevations.keys()) {
       if (!seen.has(id)) {
@@ -646,26 +740,37 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** A gate's plate (#2691), lit while held; an open gate's wall is only its outline. */
-  private drawGatePlate(g: Phaser.GameObjects.Graphics, plate: RenderableGatePlate): void {
-    const { x, y } = plate.position;
-    const colour = plate.side === undefined ? STAND_NEUTRAL : teamColour(plate.side);
-    g.fillStyle(colour, plate.open ? 0.55 : 0.18);
-    g.fillCircle(x, y, GATE_PLATE_REACH_UNITS);
-    g.lineStyle(2, colour, 0.9);
-    g.strokeCircle(x, y, GATE_PLATE_REACH_UNITS);
-    if (plate.open) {
+  private drawGate(g: Phaser.GameObjects.Graphics, gate: RenderableGate): void {
+    const plate = gate.plate;
+    if (plate !== undefined) {
+      const { x, y } = plate.position;
+      const colour = plate.side === undefined ? STAND_NEUTRAL : teamColour(plate.side);
+      g.fillStyle(colour, gate.open ? 0.55 : 0.18);
+      g.fillCircle(x, y, GATE_PLATE_REACH_UNITS);
+      g.lineStyle(2, colour, 0.9);
+      g.strokeCircle(x, y, GATE_PLATE_REACH_UNITS);
+    }
+    if (gate.open) {
       g.lineStyle(2, WALL_STROKE, 0.5);
-      if (plate.wall.kind === "rect") {
-        g.strokeRect(plate.wall.x, plate.wall.y, plate.wall.width, plate.wall.height);
+      if (gate.wall.kind === "rect") {
+        g.strokeRect(gate.wall.x, gate.wall.y, gate.wall.width, gate.wall.height);
       } else {
         g.beginPath();
-        for (const point of plate.wall.points) {
+        for (const point of gate.wall.points) {
           g.lineTo(point.x, point.y);
         }
         g.closePath();
         g.strokePath();
       }
     }
+  }
+
+  /** A switch (#3025): its mark on its layer, the lever raised or thrown. */
+  private drawSwitch(g: Phaser.GameObjects.Graphics, lever: RenderableSwitch): void {
+    g.save();
+    g.translateCanvas(0, -elevationOf(lever.layer, this.snapshot.structure.ground));
+    SWITCH_MARK_ART[switchMarkKey(lever.mark)](g, lever.position, lever.up);
+    g.restore();
   }
 
   /**
@@ -887,7 +992,7 @@ export class ArenaScene extends Phaser.Scene {
   ): void {
     const { x, y } = actor.position;
     const pose = lyingPose(x, y, actor.radius, actor.facing);
-    g.fillStyle(teamColour(actor.team), 1);
+    g.fillStyle(this.lit(teamColour(actor.team), actor), 1);
     tracePath(g, pose.body);
     g.fillPath();
     g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
@@ -1059,7 +1164,7 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     for (const shot of this.snapshot.projectiles) {
-      const position = projectilePosition(shot, clock);
+      const position = projectilePosition(shot, clock, this.snapshot.structure);
       const shown = this.projectileImages.get(shot.id);
       // An ended shot never flies again, even while its id is still sent.
       if (position === undefined || this.endedShots.has(shot.id)) {
@@ -1070,9 +1175,13 @@ export class ArenaScene extends Phaser.Scene {
         const image = this.add
           .image(position.x, position.y, ATLAS, projectileFrame(shot.sprite))
           .setDepth(OVERLAY_DEPTH);
-        image.setRotation(projectileHeading(shot));
+        image.setRotation(projectileHeading(shot, this.snapshot.structure));
         image.setTint(shot.colour);
-        this.projectileImages.set(shot.id, { image, to: shot.to, endedAt: undefined });
+        this.projectileImages.set(shot.id, {
+          image,
+          to: projectileLanding(shot, this.snapshot.structure),
+          endedAt: undefined,
+        });
       } else {
         shown.image.setPosition(position.x, position.y);
       }
@@ -1146,6 +1255,7 @@ export class ArenaScene extends Phaser.Scene {
           offhandId: actor.offhandId,
           frame: this.weaponFrame(actor),
           cape: this.wornCape(actor),
+          tint: this.bodyTint(actor),
         },
         phaserPainter(marks),
       );
@@ -1182,7 +1292,7 @@ export class ArenaScene extends Phaser.Scene {
     look: CreatureLook,
   ): void {
     const { x, y } = actor.position;
-    const team = teamColour(actor.team);
+    const team = this.lit(teamColour(actor.team), actor);
     const colourOf = (colour: OrnamentColour): number =>
       colour === "team" ? team : colour === "ink" ? SELF_RIM : colour;
     for (const ornament of creatureOrnament(look, x, y, actor.radius)) {
@@ -1519,6 +1629,57 @@ export class ArenaScene extends Phaser.Scene {
    * whoever stands in it; a trap (#1105) the same, with no disc. One that
    * ended takes its icon with it.
    */
+  /** The map's lighting, as Options and the frame budget allow (ADR-0052). */
+  private activeLighting(): MapLighting | undefined {
+    const lighting = lightingOn() ? this.snapshot.structure.lighting : undefined;
+    return this.lightingPass?.allowed(lighting);
+  }
+
+  /** The light maps, and the wards moved over them while there are any. */
+  private updateLighting(timeMs: number): void {
+    const pass = this.lightingPass;
+    if (pass === undefined) {
+      return;
+    }
+    const lighting = this.activeLighting();
+    pass.show(
+      lighting,
+      this.snapshot.structure,
+      this.snapshot.walls,
+      this.arena.width,
+      this.arena.height,
+      this.reducedMotion,
+    );
+    pass.update(timeMs);
+    const depth = lighting === undefined ? GROUND_DEPTH : LIT_GROUND_DEPTH;
+    if (depth !== this.groundDepth) {
+      this.groundDepth = depth;
+      this.groundGraphics?.setDepth(depth);
+      for (const icon of this.groundIcons.values()) {
+        icon.setDepth(depth);
+      }
+    }
+  }
+
+  /** What the light at a body's feet multiplies it by; `undefined` on a map lit flat. */
+  private bodyTint(actor: RenderableActor): number | undefined {
+    const lighting = this.drawnMap?.lighting;
+    if (lighting === undefined) {
+      return undefined;
+    }
+    // Drawn lifted and eased; the light is where it stands, on its own layer.
+    const { position, layer } = this.standing.get(actor.id) ?? actor;
+    const shown = this.lightingPass?.flickers === true ? lighting : steadyLighting(lighting);
+    const timeMs = this.now * 1000;
+    return bodyTintOf(lightAt(shown, position, layer, timeMs, BODY_LIGHT_FLOOR, this.lightSample));
+  }
+
+  /** `colour` in the light at `actor`'s feet. */
+  private lit(colour: number, actor: RenderableActor): number {
+    const tint = this.bodyTint(actor);
+    return tint === undefined ? colour : multiplyColour(colour, tint);
+  }
+
   private updateGroundEffects(): void {
     const g = this.groundGraphics;
     if (g === undefined) {
@@ -1531,36 +1692,66 @@ export class ArenaScene extends Phaser.Scene {
       g.lineStyle(2, teamColour(shrine.side), 0.7);
       g.strokeCircle(shrine.position.x, shrine.position.y, SHRINE_RADIUS);
     }
+    for (const deck of this.deckGroundGraphics.values()) {
+      deck.clear();
+    }
+    const structure = this.snapshot.structure;
     const seen = new Set<number>();
     for (const effect of this.snapshot.groundEffects) {
       seen.add(effect.id);
-      const { x, y } = effect.position;
+      // A ward on a deck (#2979) draws flat at that deck's height, on its
+      // own layer's graphics: over the deck, under whoever stands there.
+      // Layer 0 is the bottom of the stack: the ground, or a pit's floor
+      // drawn a step down (#2973); the ground over a pit stacks as a deck.
+      const onDeck = effect.layer > 0;
+      const drawn = onDeck ? this.deckGroundGraphicsOf(effect.layer) : g;
+      const x = effect.position.x;
+      const y = onDeck
+        ? effect.position.y - liftAt(structure, effect.position, effect.layer)
+        : effect.position.y - elevationOf(effect.layer, structure.ground);
       if (effect.filled) {
-        g.fillStyle(effect.colour, 0.15);
-        g.fillCircle(x, y, effect.radius);
+        drawn.fillStyle(effect.colour, 0.15);
+        drawn.fillCircle(x, y, effect.radius);
       }
-      g.lineStyle(1.5, effect.colour, 0.6);
-      g.strokeCircle(x, y, effect.radius);
+      drawn.lineStyle(1.5, effect.colour, 0.6);
+      drawn.strokeCircle(x, y, effect.radius);
       const frame = groundFrame(effect.skillId);
       if (!this.textures.get(ATLAS).has(frame)) {
         continue;
       }
-      let icon = this.groundIcons.get(effect.id);
-      if (icon === undefined) {
-        icon = this.add
-          .image(x, y, ATLAS, frame)
-          .setDisplaySize(GROUND_ICON_SIZE, GROUND_ICON_SIZE)
-          .setAlpha(GROUND_ICON_ALPHA)
-          .setDepth(GROUND_DEPTH);
-        this.groundIcons.set(effect.id, icon);
+      const icons = onDeck ? this.deckGroundIcons : this.groundIcons;
+      if (!icons.has(effect.id)) {
+        const depth = onDeck
+          ? renderOrder({ kind: "ground-effect", layer: effect.layer }) + 0.1
+          : this.groundDepth;
+        icons.set(
+          effect.id,
+          this.add
+            .image(x, y, ATLAS, frame)
+            .setDisplaySize(GROUND_ICON_SIZE, GROUND_ICON_SIZE)
+            .setAlpha(GROUND_ICON_ALPHA)
+            .setDepth(depth),
+        );
       }
     }
-    for (const [id, icon] of this.groundIcons) {
-      if (!seen.has(id)) {
-        icon.destroy();
-        this.groundIcons.delete(id);
+    for (const icons of [this.groundIcons, this.deckGroundIcons]) {
+      for (const [id, icon] of icons) {
+        if (!seen.has(id)) {
+          icon.destroy();
+          icons.delete(id);
+        }
       }
     }
+  }
+
+  /** The graphics the wards on `layer`'s decks draw to, made the first time one does. */
+  private deckGroundGraphicsOf(layer: number): Phaser.GameObjects.Graphics {
+    let graphics = this.deckGroundGraphics.get(layer);
+    if (graphics === undefined) {
+      graphics = this.add.graphics().setDepth(renderOrder({ kind: "ground-effect", layer }));
+      this.deckGroundGraphics.set(layer, graphics);
+    }
+    return graphics;
   }
 
   /**
@@ -1749,6 +1940,8 @@ export class ArenaScene extends Phaser.Scene {
       walls: this.snapshot.walls,
       structure: this.snapshot.structure,
       zoom: this.view?.zoom ?? 1,
+      lighting: this.activeLighting(),
+      lightShadows: this.lightingPass?.shadows === true,
     };
     if (g === undefined || !mapLayerChanged(this.drawnMap, next)) {
       return;
@@ -1757,61 +1950,181 @@ export class ArenaScene extends Phaser.Scene {
     // A line 1 world unit wide is under a pixel when zoomed out, and
     // flickers as the camera moves (#2393): 1 CSS px, as the edge markers.
     const line = 1 / next.zoom;
-    this.drawGrid(g, line);
-    g.fillStyle(RAMP_FILL, 1);
-    for (const transition of next.structure.transitions) {
-      this.fillShape(g, transition.area);
-    }
+    const palette = arenaPalette(next.structure.layerCount);
+    const { ground } = next.structure;
+    this.drawFloor(palette, line);
+    paintDeckShadows(
+      {
+        save: () => g.save(),
+        restore: () => g.restore(),
+        translateCanvas: (x, y) => g.translateCanvas(x, y),
+        fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
+        fillShape: (shape) => {
+          this.fillShape(g, shape);
+        },
+      },
+      next.structure,
+      next.lightShadows,
+    );
     for (const graphics of this.structureGraphics.values()) {
       graphics.clear();
     }
+    if (next.structure.water !== this.drawnMap?.structure.water) {
+      this.waterShapes = next.structure.water.map(waterShapeOf);
+    }
+    for (const shape of this.waterShapes) {
+      const surface = this.structureAt({ kind: "water", layer: shape.layer, part: "surface" });
+      surface.save();
+      surface.translateCanvas(0, -elevationOf(shape.layer, ground));
+      WATER_ART[waterArtKey(shape.depth)].surface(this.waterPainter(surface), shape, line);
+      surface.restore();
+    }
+    this.drawPits(next.structure, line, palette);
+    for (const transition of next.structure.transitions) {
+      const lit = litStructurePalette(palette, next.lighting, transition.area, transition.from);
+      this.drawRamp(next.structure, transition, line, lit);
+    }
     for (const wall of next.walls) {
-      const deckLayer = next.structure.decks.find(
-        (deck) => deck.layer > wall.layer && shapeHoldsCentre(deck.footprint, wall),
-      )?.layer;
-      this.drawWall(
-        this.structureAt(
-          deckLayer === undefined
-            ? { kind: "wall", layer: wall.layer }
-            : { kind: "support", deckLayer },
-        ),
-        wall,
-        line,
+      const held = deckHeldBy(wall, next.structure);
+      const g = this.structureAt(
+        held === undefined
+          ? { kind: "wall", layer: wall.layer }
+          : { kind: "support", deckLayer: held.layer },
       );
+      const lit = litStructurePalette(palette, next.lighting, wall, wall.layer);
+      if (next.structure.layerCount === 1) {
+        this.drawFlatWall(g, wall, line, lit);
+      } else if (held === undefined) {
+        this.drawWallBox(g, wall, elevationOf(wall.layer, ground), line, lit);
+      } else {
+        const low = elevationOf(wall.layer, ground);
+        this.drawColumn(g, wall, low, deckSideLow(held, next.walls, ground), lit.support);
+      }
+    }
+    // A torch stands with lighting off too: it is on the map, its light is not.
+    for (const light of next.structure.lighting?.lights ?? []) {
+      const key = lightMarkKey(light.id);
+      if (key !== undefined) {
+        const g = this.structureAt({ kind: "light-mark", layer: light.layer });
+        g.save();
+        g.translateCanvas(0, -elevationOf(light.layer, ground));
+        LIGHT_MARK_ART[key](g, light.position);
+        g.restore();
+      }
     }
     for (const deck of next.structure.decks) {
-      this.drawDeck(deck, line);
+      this.drawDeck(
+        deck,
+        next.walls,
+        ground,
+        line,
+        litStructurePalette(palette, next.lighting, deck.footprint, deck.layer),
+      );
     }
     this.occluders = occludersOf(next.walls, next.structure);
     this.drawnMap = next;
   }
 
-  /** What a structure covers of each body (#2831): its team's outline, no fill. */
+  /** What a structure covers of each body (#2831, #2972): its team's outline, weapon and symbol, no fill. */
   private drawHiddenOutlines(): void {
     this.hiddenOutlines ??= this.add.graphics().setDepth(renderOrder({ kind: "hidden-outline" }));
     const g = this.hiddenOutlines;
     g.clear();
-    if (this.occluders.length === 0) {
-      return;
-    }
-    for (const actor of this.drawnActors) {
-      if (actor.dead) {
-        continue;
+    const shownGlyphs = new Set<string>();
+    if (this.occluders.length > 0) {
+      for (const actor of this.drawnActors) {
+        if (!actor.dead) {
+          this.drawHiddenBody(g, actor, shownGlyphs);
+        }
       }
-      g.lineStyle(BODY_EDGE_WIDTH, teamColour(actor.team), 1);
-      traceHiddenOutline(
-        actor.creatureLook === undefined ? RING_PATH : CREATURE_PATH,
-        actor.position.x,
-        actor.position.y,
-        actor.radius,
-        actor.layer,
-        this.occluders,
-        this.strokeHiddenSegment,
-      );
+    }
+    for (const [id, glyph] of this.hiddenGlyphs) {
+      if (!shownGlyphs.has(id)) {
+        glyph.setVisible(false);
+      }
+      if (!this.drawnActors.some((actor) => actor.id === id)) {
+        glyph.destroy();
+        this.hiddenGlyphs.delete(id);
+      }
     }
   }
 
-  /** Where a click would go, before it does (#2831): a ring on a deck, dashed on the ground. */
+  private drawHiddenBody(
+    g: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+    shownGlyphs: Set<string>,
+  ): void {
+    g.lineStyle(BODY_EDGE_WIDTH, teamColour(actor.team), 1);
+    traceHiddenOutline(
+      actor.creatureLook === undefined ? RING_PATH : CREATURE_PATH,
+      actor.position.x,
+      actor.position.y,
+      actor.radius,
+      actor.layer,
+      this.occluders,
+      this.strokeHiddenSegment,
+    );
+    if (actor.creatureLook === undefined) {
+      const { x, y } = actor.position;
+      const { strokes, fills, strings, alpha } = weaponMarkLayout(
+        x,
+        y,
+        actor.radius,
+        actor.facing,
+        actor.weaponId,
+        this.weaponFrame(actor),
+      );
+      const outlines = fills.map((fill) => [...fill, ...fill.slice(0, 1)]);
+      for (const line of alpha > 0 ? [...strokes, ...outlines, ...strings] : []) {
+        for (const { ax, ay, bx, by } of traceHiddenPolyline(line, actor.layer, this.occluders)) {
+          this.strokeHiddenSegment(ax, ay, bx, by);
+        }
+      }
+    }
+    this.showHiddenGlyph(actor, shownGlyphs);
+  }
+
+  /** The covered part of `actor`'s symbol, in its team's colour: the atlas image has no line path. */
+  private showHiddenGlyph(actor: RenderableActor, shownGlyphs: Set<string>): void {
+    const layout = bodyGlyphLayout(actor);
+    const crop =
+      layout === undefined
+        ? undefined
+        : hiddenCrop(layout.x, layout.y, layout.size, actor.layer, this.occluders);
+    if (layout === undefined || crop === undefined) {
+      return;
+    }
+    const frame =
+      layout.glyph.kind === "creature"
+        ? creatureFrame(layout.glyph.look)
+        : bodyProfessionFrame(layout.glyph.profession);
+    let glyph = this.hiddenGlyphs.get(actor.id);
+    if (glyph === undefined) {
+      glyph = this.add
+        .image(0, 0, ATLAS, frame)
+        .setTintMode(Phaser.TintModes.FILL)
+        .setDepth(renderOrder({ kind: "hidden-outline" }));
+      this.hiddenGlyphs.set(actor.id, glyph);
+    }
+    if (glyph.frame.name !== frame) {
+      glyph.setFrame(frame);
+    }
+    const { realWidth, realHeight } = glyph.frame;
+    glyph
+      .setTint(teamColour(actor.team))
+      .setDisplaySize(layout.size, layout.size)
+      .setPosition(layout.x, layout.y)
+      .setCrop(
+        crop.x * realWidth,
+        crop.y * realHeight,
+        crop.width * realWidth,
+        crop.height * realHeight,
+      )
+      .setVisible(true);
+    shownGlyphs.add(actor.id);
+  }
+
+  /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */
   private drawHoverMarker(g: Phaser.GameObjects.Graphics): void {
     const { structure } = this.snapshot;
     const pointer = this.input.activePointer;
@@ -1819,9 +2132,9 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    const { layer } = pickSurface(structure, world, altHeld(pointer));
+    const { layer } = pickSurface(structure, world, this.alt?.held() === true);
     g.lineStyle(1.5, HOVER_RING, 0.8);
-    if (layer > 0) {
+    if (layer !== structure.ground) {
       g.strokeCircle(world.x, world.y, HOVER_RADIUS);
       return;
     }
@@ -1844,34 +2157,183 @@ export class ArenaScene extends Phaser.Scene {
     return graphics;
   }
 
-  /** A deck at its layer's height, its side face reaching down one layer. */
-  private drawDeck(deck: MapStructure["decks"][number], line: number): void {
-    const top = elevationOf(deck.layer);
-    const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
-    side.fillStyle(DECK_SIDE_FILL, 1);
-    for (let lift = elevationOf(deck.layer - 1); lift < top; lift += SIDE_FACE_SLICE) {
-      side.save();
-      side.translateCanvas(0, -lift);
-      this.fillShape(side, deck.footprint);
-      side.restore();
+  /** A ramp sloping from its lower layer's height to its upper's, chevrons pointing uphill. */
+  private drawRamp(
+    structure: MapStructure,
+    ramp: MapStructure["transitions"][number],
+    line: number,
+    palette: ArenaPalette,
+  ): void {
+    const upperLayer = Math.max(ramp.from, ramp.to);
+    // A ramp up out of a pit draws in it, under the ground's near lip (#2973).
+    const g = this.structureAt(
+      upperLayer > structure.ground ? { kind: "ramp", upperLayer } : { kind: "pit" },
+    );
+    const drawing = rampDrawing(structure, ramp);
+    g.fillStyle(palette.slab, 1);
+    this.fillFan(g, drawing.side);
+    g.fillStyle(palette.rampTop, 1);
+    this.fillFan(g, drawing.slope);
+    g.lineStyle(line, palette.rampPanel, 1);
+    for (const [from, to] of drawing.panels) {
+      if (from !== undefined && to !== undefined) {
+        g.lineBetween(from.x, from.y, to.x, to.y);
+      }
     }
+    g.lineStyle(line * RAMP_CHEVRON_WIDTH, palette.rampChevron, 1);
+    for (const chevron of drawing.chevrons) {
+      g.strokePoints(
+        chevron.map(({ x, y }) => new Phaser.Math.Vector2(x, y)),
+        false,
+        false,
+      );
+    }
+  }
+
+  /** Fills the convex outline `points`, as triangles from its first. */
+  private fillFan(g: Phaser.GameObjects.Graphics, points: readonly Vec2[]): void {
+    const [first] = points;
+    if (first === undefined) {
+      return;
+    }
+    for (let i = 1; i + 1 < points.length; i += 1) {
+      const [b, c] = [points[i], points[i + 1]];
+      if (b !== undefined && c !== undefined) {
+        g.fillTriangle(first.x, first.y, b.x, b.y, c.x, c.y);
+      }
+    }
+  }
+
+  /** A deck at its layer's height, its side face reaching down one layer. */
+  private drawDeck(
+    deck: MapStructure["decks"][number],
+    walls: readonly RenderableWall[],
+    ground: number,
+    line: number,
+    palette: ArenaPalette,
+  ): void {
+    const top = elevationOf(deck.layer, ground);
+    const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
+    this.drawColumn(side, deck.footprint, deckSideLow(deck, walls, ground), top, palette.slab);
     const face = this.structureAt({ kind: "deck", deckLayer: deck.layer });
     face.save();
     face.translateCanvas(0, -top);
-    face.fillStyle(DECK_FILL, 1);
-    face.lineStyle(line, WALL_STROKE, 1);
+    face.fillStyle(palette.deckTop, 1);
     this.fillShape(face, deck.footprint);
+    face.lineStyle(line, palette.plank, 1);
+    for (const { from, to } of plankLines(deck.footprint, DECK_PLANK)) {
+      face.lineBetween(from.x, from.y, to.x, to.y);
+    }
+    face.lineStyle(line, palette.wallStroke, 1);
     this.strokeShape(face, deck.footprint);
+    face.lineStyle(line * DECK_LIP_WIDTH, DECK_LIP, 1);
+    for (const { from, to } of southFacingEdges(deck.footprint)) {
+      face.lineBetween(from.x, from.y, to.x, to.y);
+    }
     face.restore();
   }
 
-  private drawWall(g: Phaser.GameObjects.Graphics, wall: RenderableWall, line: number): void {
-    g.save();
-    g.translateCanvas(0, -elevationOf(wall.layer));
-    g.fillStyle(WALL_FILL, 1);
-    g.lineStyle(line, WALL_STROKE, 1);
+  /**
+   * Each pit sunk a step (#2973): its floor, its far wall with the mouths
+   * of the tunnels leaving it, under whoever is in it. The ground in front
+   * of it and over each tunnel then draws as a deck of the ground's layer,
+   * so it covers them, the tunnel's outline inlaid faintly in it.
+   */
+  private drawPits(structure: MapStructure, line: number, palette: ArenaPalette): void {
+    if (structure.pits.length === 0 && structure.tunnels.length === 0) {
+      return;
+    }
+    const pit = this.structureAt({ kind: "pit" });
+    const cover = this.structureAt({ kind: "deck", deckLayer: structure.ground });
+    for (const each of structure.pits) {
+      const drawing = pitDrawing(structure, each);
+      pit.fillStyle(PIT_FLOOR, 1);
+      this.fillFan(pit, drawing.floor);
+      pit.fillStyle(PIT_WALL, 1);
+      this.fillFan(pit, drawing.farWall);
+      pit.fillStyle(TUNNEL_MOUTH, 1);
+      for (const mouth of drawing.mouths) {
+        this.fillFan(pit, mouth);
+      }
+      this.drawGroundPatch(cover, drawing.lip, line, palette);
+      cover.lineStyle(line, palette.wallStroke, 1);
+      this.strokeShape(cover, each.footprint);
+    }
+    for (const tunnel of structure.tunnels) {
+      this.drawGroundPatch(cover, tunnelCover(structure, tunnel), line, palette);
+      cover.lineStyle(line, TUNNEL_INLAY.colour, TUNNEL_INLAY.alpha);
+      this.strokeShape(cover, tunnel.footprint);
+    }
+  }
+
+  /** The floor and its grid over the box `outline`, as `drawFloor` draws them there. */
+  private drawGroundPatch(
+    g: Phaser.GameObjects.Graphics,
+    outline: readonly Vec2[],
+    line: number,
+    palette: ArenaPalette,
+  ): void {
+    const xs = outline.map(({ x }) => x);
+    const ys = outline.map(({ y }) => y);
+    const [left, right] = [Math.min(...xs), Math.max(...xs)];
+    const [top, bottom] = [Math.min(...ys), Math.max(...ys)];
+    g.fillStyle(palette.floor ?? 0, 1);
+    g.fillRect(left, top, right - left, bottom - top);
+    g.lineStyle(line, palette.grid, 1);
+    for (let x = Math.ceil(left / GRID_STEP) * GRID_STEP; x <= right; x += GRID_STEP) {
+      g.lineBetween(x, top, x, bottom);
+    }
+    for (let y = Math.ceil(top / GRID_STEP) * GRID_STEP; y <= bottom; y += GRID_STEP) {
+      g.lineBetween(left, y, right, y);
+    }
+  }
+
+  /** `shape` stacked from lift `low` up to `high`: a side face, or a pillar. */
+  private drawColumn(
+    g: Phaser.GameObjects.Graphics,
+    shape: RenderableShape,
+    low: number,
+    high: number,
+    colour: number,
+  ): void {
+    g.fillStyle(colour, 1);
+    for (let lift = low; lift < high; lift += SIDE_FACE_SLICE) {
+      g.save();
+      g.translateCanvas(0, -lift);
+      this.fillShape(g, shape);
+      g.restore();
+    }
+  }
+
+  private drawFlatWall(
+    g: Phaser.GameObjects.Graphics,
+    wall: RenderableWall,
+    line: number,
+    palette: ArenaPalette,
+  ): void {
+    g.fillStyle(palette.wallTop, 1);
+    g.lineStyle(line, palette.wallStroke, 1);
     this.fillShape(g, wall);
     this.strokeShape(g, wall);
+  }
+
+  /** A wall with height: its front face, its top, and a lit edge along the top's front. */
+  private drawWallBox(
+    g: Phaser.GameObjects.Graphics,
+    wall: RenderableWall,
+    base: number,
+    line: number,
+    palette: ArenaPalette,
+  ): void {
+    const top = base + WALL_HEIGHT;
+    this.drawColumn(g, wall, base, top, palette.wallFace);
+    g.save();
+    g.translateCanvas(0, -top);
+    this.drawFlatWall(g, wall, line, palette);
+    g.lineStyle(line * WALL_LIT_WIDTH, palette.wallLit, 1);
+    for (const { from, to } of southFacingEdges(wall)) {
+      g.lineBetween(from.x, from.y, to.x, to.y);
+    }
     g.restore();
   }
 
@@ -1901,15 +2363,103 @@ export class ArenaScene extends Phaser.Scene {
     g.strokePoints(points, true);
   }
 
+  /** The floor and its grid, under the water and the ward circles on it (#2984). */
+  private drawFloor(palette: ArenaPalette, line: number): void {
+    const g = this.floorGraphics;
+    if (g === undefined) {
+      return;
+    }
+    g.clear();
+    if (palette.floor !== undefined) {
+      g.fillStyle(palette.floor, 1);
+      g.fillRect(0, 0, this.arena.width, this.arena.height);
+    }
+    this.drawGrid(g, line, palette);
+  }
+
+  /** The water's ripples (#2984), at render time; still under reduced motion. */
+  private drawRipples(): void {
+    for (const { graphics } of this.rippleGraphics.values()) {
+      graphics.clear();
+    }
+    const line = 1 / (this.view?.zoom ?? 1);
+    for (const shape of this.waterShapes) {
+      const { graphics, painter } = this.ripplesAt(shape.layer);
+      graphics.save();
+      graphics.translateCanvas(0, -elevationOf(shape.layer, this.snapshot.structure.ground));
+      WATER_ART[waterArtKey(shape.depth)].ripples(
+        painter,
+        shape,
+        line,
+        this.now,
+        this.reducedMotion,
+      );
+      graphics.restore();
+    }
+  }
+
+  /** The map's effect zones, lighting on or off: they are on the ground, as its water is. */
+  private drawZones(): void {
+    for (const graphics of this.zoneGraphics.values()) {
+      graphics.clear();
+    }
+    const line = 1 / (this.view?.zoom ?? 1);
+    const { zones, ground } = this.snapshot.structure;
+    for (const zone of zones) {
+      let g = this.zoneGraphics.get(zone.layer);
+      if (g === undefined) {
+        g = this.add.graphics().setDepth(renderOrder({ kind: "zone", layer: zone.layer }));
+        this.zoneGraphics.set(zone.layer, g);
+      }
+      const look = ZONE_LOOK[zone.kind];
+      g.save();
+      g.translateCanvas(0, -elevationOf(zone.layer, ground));
+      g.fillStyle(look.fill, zoneFillAlpha(look, this.now, this.reducedMotion));
+      this.fillShape(g, zone.area);
+      g.lineStyle(ZONE_EDGE_WIDTH * line, look.edge, 1);
+      this.strokeShape(g, zone.area);
+      g.restore();
+    }
+  }
+
+  private ripplesAt(layer: number): {
+    readonly graphics: Phaser.GameObjects.Graphics;
+    readonly painter: WaterPainter;
+  } {
+    let ripples = this.rippleGraphics.get(layer);
+    if (ripples === undefined) {
+      const graphics = this.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "water", layer, part: "ripples" }));
+      ripples = { graphics, painter: this.waterPainter(graphics) };
+      this.rippleGraphics.set(layer, ripples);
+    }
+    return ripples;
+  }
+
+  /** `g` as water draws through it: outlines filled as triangles, as a wall's are. */
+  private waterPainter(g: Phaser.GameObjects.Graphics): WaterPainter {
+    return {
+      fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
+      lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
+      fillOutline: (outline) => {
+        this.fillShape(g, { kind: "polygon", points: outline });
+      },
+      strokeOutline: (outline) => {
+        this.strokeShape(g, { kind: "polygon", points: outline });
+      },
+      lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
+    };
+  }
+
   /** The grid over the arena's bounds, not the screen, and its edge in `wall-stroke`; outside is `bg`. */
-  private drawGrid(g: Phaser.GameObjects.Graphics, line: number): void {
+  private drawGrid(g: Phaser.GameObjects.Graphics, line: number, palette: ArenaPalette): void {
     const { width, height } = this.arena;
-    const step = 64;
-    g.lineStyle(line, GRID, 1);
-    for (let x = 0; x <= width; x += step) {
+    g.lineStyle(line, palette.grid, 1);
+    for (let x = 0; x <= width; x += GRID_STEP) {
       g.lineBetween(x, 0, x, height);
     }
-    for (let y = 0; y <= height; y += step) {
+    for (let y = 0; y <= height; y += GRID_STEP) {
       g.lineBetween(0, y, width, y);
     }
     g.lineStyle(line, WALL_STROKE, 1);

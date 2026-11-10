@@ -23,6 +23,9 @@ import {
   type PlayerBuild,
   type ProfessionId,
   type GateField,
+  type SwitchField,
+  type MatchLayers,
+  type MatchZone,
   type Segment,
   type FlagField,
   type RelicField,
@@ -136,8 +139,14 @@ export interface HostMap {
   /** The mode its matches play (#476): the caller builds `matchRules` from it. */
   readonly mode: MatchMode;
   readonly walls: readonly Segment[];
+  /** Its layers (ADR-0051, #3017): each one's walls and deep water, its decks, pits and ramps. */
+  readonly layers: MatchLayers;
+  /** Its effect zones (ADR-0053, #3024), in its order. */
+  readonly zones: readonly MatchZone[];
   /** Its gates (#2691), in the descriptor's order. */
   readonly gates: readonly GateField[];
+  /** Its switches (#3025), in the descriptor's order, naming gates by index. */
+  readonly switches: readonly SwitchField[];
   readonly bounds: { readonly width: number; readonly height: number };
   readonly spawns: readonly SpawnPoint[];
   /** Its resurrection shrines (#1186), `[]` but on a Priest Annihilation or Guild Battle map. */
@@ -335,7 +344,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     teamCount: map.descriptor.teamCount,
     walls: map.walls,
     gates: map.gates,
+    switches: map.switches,
     bounds: map.bounds,
+    layers: map.layers,
+    zones: map.zones,
     shrines: map.shrines,
     guildLords: map.guildLords,
     flagField: map.flagField,
@@ -1218,6 +1230,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       skillId: shot.skillHit?.kind === "spell" ? shot.skillHit.skill.id : null,
       from: shot.from,
       to: shot.aimPoint,
+      fromLayer: shot.fromLayer,
+      toLayer: shot.toLayer,
       launchedAt: sim.elapsedSeconds - shot.elapsed,
       flightSeconds: shot.flightSeconds,
     })),
@@ -1241,6 +1255,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     altarHolder: wireTeam(sim.altarState.holder),
     altarHeldSeconds: sim.altarState.heldSeconds,
     gates: sim.gates.map((gate) => gate.open),
+    switches: sim.switches.map((lever) => lever.up),
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,

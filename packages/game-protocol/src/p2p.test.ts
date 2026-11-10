@@ -156,6 +156,7 @@ const welcome: PeerWelcome = {
     teamCount: 2,
     height: 1200,
     gates: [],
+    switches: [],
     walls: [
       { kind: "rect", x: 10, y: 20, width: 30, height: 40 },
       {
@@ -260,6 +261,8 @@ const snapshot: WireSnapshotPart = {
       skillId: null,
       from: { x: 10, y: 20 },
       to: { x: 300, y: 20 },
+      fromLayer: 0,
+      toLayer: 0,
       launchedAt: 1.9,
       flightSeconds: 0.6,
     },
@@ -269,6 +272,8 @@ const snapshot: WireSnapshotPart = {
       skillId: "elementalist.fireball",
       from: { x: 300, y: 20 },
       to: { x: 10, y: 20 },
+      fromLayer: 0,
+      toLayer: 0,
       launchedAt: 2,
       flightSeconds: 0.7,
     },
@@ -280,6 +285,7 @@ const snapshot: WireSnapshotPart = {
       team: 0,
       x: 120,
       y: 80,
+      layer: 1,
       radius: 109,
       endsAt: 19.1,
       durationSeconds: 17,
@@ -294,6 +300,7 @@ const snapshot: WireSnapshotPart = {
   altarHeldSeconds: 0,
   capturePoints: [],
   gates: [],
+  switches: [],
 };
 
 /** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */
@@ -616,6 +623,7 @@ const trap = {
   team: 1,
   x: 40,
   y: -20,
+  layer: 0,
   radius: 81,
   endsAt: 92.5,
   durationSeconds: 90,
@@ -811,12 +819,30 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
         gates: [
           {
             wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
-            plate: { x: 50, y: 50 },
-            team: null,
+            opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
           },
         ],
       },
     },
+  ],
+  [
+    "welcome with a switch and its gate (#3025)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        gates: [
+          { wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 }, opener: { kind: "switch" } },
+        ],
+        switches: [{ id: "lever", layer: 0, position: { x: 50, y: 50 } }],
+      },
+    },
+  ],
+  [
+    "snapshot with switches (#3025)",
+    parseWireSnapshotPart,
+    { ...snapshot, switches: [true, false] },
   ],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
@@ -1462,8 +1488,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
         ...welcome.map,
         gates: Array.from({ length: 7 }, () => ({
           wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
-          plate: { x: 50, y: 50 },
-          team: null,
+          opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
         })),
       },
     },
@@ -1472,6 +1497,32 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a gate that is not a boolean (#2691)",
     parseWireSnapshotPart,
     { ...snapshot, gates: [1] },
+  ],
+  [
+    "welcome with a gate whose opener is no kind (#3025)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        gates: [
+          { wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 }, opener: { kind: "lever" } },
+        ],
+      },
+    },
+  ],
+  [
+    "welcome with a switch off every layer (#3025)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: { ...welcome.map, switches: [{ id: "lever", layer: -1, position: { x: 50, y: 50 } }] },
+    },
+  ],
+  [
+    "snapshot without switches (#3025)",
+    parseWireSnapshotPart,
+    { ...snapshot, switches: undefined },
   ],
   [
     "snapshot without capture points (#1378)",
@@ -1658,7 +1709,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a layer past the highest",
     parseWireSnapshotPart,
-    { ...snapshot, players: [{ ...player, layer: 3 }] },
+    { ...snapshot, players: [{ ...player, layer: 4 }] },
   ],
   [
     "snapshot with a negative layer",
@@ -1857,6 +1908,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a ground effect on a third team",
     parseWireSnapshotPart,
     { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], team: 2 }] },
+  ],
+  [
+    "snapshot with a ground effect on no layer (#2979)",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], layer: undefined }] },
+  ],
+  [
+    "snapshot with a ground effect above the highest layer (#2979)",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], layer: 4 }] },
   ],
   ["combat that is one entry, not a batch", parseWireCombatBatch, combat],
   [

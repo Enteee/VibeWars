@@ -94,7 +94,8 @@ import {
 } from "./net/maps.js";
 import {
   renderableCapturePoints,
-  renderableGatePlates,
+  renderableGates,
+  renderableSwitches,
   renderableFlags,
   renderableRelics,
   renderableStand,
@@ -252,7 +253,7 @@ export function toRenderableWall(wall: WallDescriptor, layer: number): Renderabl
  * the map's walls and every closed gate's, one array per combination, so
  * the map layer redraws only when a gate moves.
  */
-function gateWalls(
+export function gateWalls(
   gates: readonly GateDescriptor[],
   walls: readonly RenderableWall[],
   segments: readonly Segment[],
@@ -284,6 +285,9 @@ function playerNames(match: MatchSnapshot): ReadonlyMap<string, string> {
   return new Map(match.players.map((player) => [player.sessionId, player.name]));
 }
 
+/** A map's gates and switches where it has none. */
+const UNGATED: Pick<MapDescriptor, "gates" | "switches"> = { gates: [], switches: [] };
+
 /** Project the wire snapshot onto the renderer's own shape (ADR-0001). */
 export function toArenaSnapshot(
   match: MatchSnapshot,
@@ -291,7 +295,7 @@ export function toArenaSnapshot(
   shrines: readonly MapShrine[],
   flagField: FlagField | undefined,
   relicField: RelicField | undefined,
-  gates: readonly GateDescriptor[] = [],
+  gated: Pick<MapDescriptor, "gates" | "switches"> = UNGATED,
   structure: MapStructure = FLAT_STRUCTURE,
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
@@ -310,7 +314,8 @@ export function toArenaSnapshot(
     stand: renderableStand(match.stand, flagField, self?.team),
     altar: match.altar,
     capturePoints: renderableCapturePoints(match.capturePoints, self?.team),
-    gatePlates: renderableGatePlates(gates, match.gates, self?.team),
+    gates: renderableGates(gated.gates, match.gates, self?.team),
+    switches: renderableSwitches(gated.switches, match.switches),
     shrines: shrines.map((shrine) => ({
       position: shrine.position,
       side: shrine.team === side ? "ally" : "enemy",
@@ -323,6 +328,8 @@ export function toArenaSnapshot(
         sprite: projectileSprite(shooter?.weaponId, shot.skillId),
         from: shot.from,
         to: shot.to,
+        fromLayer: shot.fromLayer,
+        toLayer: shot.toLayer,
         launchedAt: shot.launchedAt,
         flightSeconds: shot.flightSeconds,
         // Tinted by side; a shooter who has left counts as the other side.
@@ -900,7 +907,7 @@ export async function startMatchView(
       return;
     }
     if (viewport !== undefined) {
-      showCombatFeedback(viewport.scene, message, latestMatch);
+      showCombatFeedback(viewport.scene, message, latestMatch, structure.ground);
     }
     // A cast of ours that never went off flashes its slot (#300).
     const buttons = hud.skillBar.querySelectorAll("button");
@@ -1019,7 +1026,7 @@ export async function startMatchView(
         shrines,
         flagField,
         relicField,
-        viewed.map.gates,
+        viewed.map,
         structure,
       ),
       viewport?.pointerWorld(),

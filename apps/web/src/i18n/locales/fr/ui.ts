@@ -291,6 +291,7 @@ export default {
   "combat.sourceShrine": "Le sanctuaire",
   "combat.sourceSkill": "une compétence",
   "combat.sourceWeapon": "une arme",
+  "combat.sourceZone": "Danger",
   "combat.spellFailed": "{skill} de {target} échoue",
   "combat.statusApplied": "{target} subit {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} subit {status} (maintenu)",
@@ -355,6 +356,7 @@ export default {
   "effects.categoryChant": "Chant",
   "effects.categoryCondition": "Altération",
   "effects.categoryEcho": "Écho",
+  "effects.categoryEnvironment": "Environnement",
   "effects.categoryEffect": "Effet",
   "effects.categoryEnchantment": "Enchantement",
   "effects.categoryForm": "Forme",
@@ -408,6 +410,7 @@ export default {
   "gearEditor.statusChant": "chant",
   "gearEditor.statusCondition": "affecté par une altération",
   "gearEditor.statusEcho": "sous un écho",
+  "gearEditor.statusEnvironment": "sous un effet d'environnement",
   "gearEditor.statusEnchantment": "enchanté",
   "gearEditor.statusForm": "sous une forme",
   "gearEditor.statusGlyph": "sous un glyphe",
@@ -591,6 +594,7 @@ export default {
   "hud.stormBeacon": "Balise des Tempêtes",
   "hud.stormBeaconOurs": "Balise des Tempêtes : tenue par votre équipe",
   "hud.stormBeaconTheirs": "Balise des Tempêtes : tenue par l’ennemi",
+  "hud.switch": "Levier",
   "hud.targetDead": "mort",
   "hud.targetEffects": "effets de ta cible",
   "hud.versus": "{ours} vs {theirs}",
@@ -660,7 +664,6 @@ export default {
   "lobby.hostStartsMatchmaking": "L'hôte lance la recherche",
   "lobby.joinTeam": "Entrer",
   "lobby.joinTeamLabel": "Rejoindre l'équipe {team}",
-  "lobby.leaveQueue": "Quitter la file",
   "lobby.leaveTeam": "Quitter",
   "lobby.leaveTeamLabel": "Quitter l'équipe {team}",
   "lobby.map": "Carte",
@@ -725,6 +728,13 @@ export default {
   "matches.endTime": "Temps écoulé",
   "matches.filterKind": "Type",
   "matches.filterSize": "Taille",
+  "matches.hallReported": "Signalé par l'hôte de chaque match, non vérifié.",
+  "matches.hallStreak": {
+    one: "{count} victoire d'affilée",
+    many: "{count} de victoires d'affilée",
+    other: "{count} victoires d'affilée",
+  },
+  "matches.hallTitle": "Hall des héros",
   "matches.hostReported": "déclaré par l'hôte",
   "matches.hostReportedTitle": "Publié par l'hôte du match ; vérifié par personne d'autre.",
   "matches.hoursAgo": {
@@ -803,11 +813,13 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "commandes",
+  "options.display": "affichage",
   "options.label": "Options",
   "options.language": "langue",
   "options.languageBusy":
     "Quitte d'abord le salon ou le match : changer de langue recharge la page.",
   "options.languageLabel": "Langue",
+  "options.lightingLabel": "Éclairage",
   "options.player": "joueur",
   "options.relay": "relais (TURN)",
   "options.sections": "sections des options",
@@ -900,6 +912,8 @@ export default {
   "queue.defending": "Tu tiens {map} · défense dans {seconds} s",
   "queue.fellThrough": "Match annulé, nouvelle recherche",
   "queue.guildVsGuild": "Guilde contre guilde",
+  "queue.hallHeldBy": "{holder} tient le Hall des héros",
+  "queue.hallUnheld": "Personne ne tient le Hall des héros",
   "queue.heroesAscent": "Ascension des héros · manche {round}",
   "queue.hostLeft": "L'hôte est parti",
   "queue.hostOnly": "Seul l'hôte peut quitter la file.",
@@ -931,6 +945,8 @@ export default {
   "queue.theirTeam": "Équipe adverse",
   "queue.title": "Arène aléatoire {mode} · {character}",
   "queue.unreachable": "Serveurs de salons injoignables",
+  "queue.vault": "La Chambre forte",
+  "queue.vaultOpensIn": "Le Hall ouvre dans {time}",
   "queue.versus": "vs",
   "queue.waitingForEveryone": "En attente de tout le monde",
   "queue.waitingForTeam": "En attente de ton équipe ({seconds})",
@@ -1392,6 +1408,75 @@ export default {
   "training.reset": "réinit.",
   "training.resetDivider": "réinit.",
   "training.scenario": "scénario",
+  "training.scenario.target-dummy.label": "Mannequin d'entraînement",
+  "training.scenario.target-dummy.teaches":
+    "Ce que fait vraiment une incantation : à 60 d'armure, exactement le chiffre de l'infobulle.",
+  "training.scenario.time-to-kill.label": "Temps pour tuer",
+  "training.scenario.time-to-kill.teaches":
+    "Tes dégâts soutenus : combien de temps tient un lanceur de sorts à 500 de santé, encore et encore.",
+  "training.scenario.physical-vs-elemental.label": "Physique contre élémentaire",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Que l'armure répond à un type de dégâts : un Guerrier avec l'Insigne vaillant amortit une épée et pas une Boule de feu, un Rôdeur amortit une Boule de feu et pas une épée.",
+  "training.scenario.condition-pressure.label": "Pression d'altérations",
+  "training.scenario.condition-pressure.teaches":
+    "Que les altérations sont un compte à rebours : Saignement, Poison et Brûlure drainent 20 de santé par seconde, le maximum possible, et en ajouter rafraîchit au lieu de cumuler.",
+  "training.scenario.condition-removal.label": "Retrait d'altérations",
+  "training.scenario.condition-removal.teaches":
+    "Qu'un retrait d'altération n'enlève que ce qu'il annonce : un allié à 200 sur 500 porte cinq altérations, dont Blessure profonde, qui retire 100 à l'application et plafonne tes soins à 400.",
+  "training.scenario.armor-ladder.label": "Échelle d'armure",
+  "training.scenario.armor-ladder.teaches":
+    "La courbe d'atténuation : le même coup contre 40 à 104 d'armure, côte à côte.",
+  "training.scenario.healing-throughput.label": "Débit de soins",
+  "training.scenario.healing-throughput.teaches":
+    "Ce que valent tes soins sous une vraie pression, et que l'armure est l'amie du soigneur : la même Boule de feu retire 91 à un Moine et 64 à un Guerrier.",
+  "training.scenario.interrupt-timing.label": "Timing d'interruption",
+  "training.scenario.interrupt-timing.teaches":
+    "Qu'interrompre est une question de timing : coupe une incantation de 3 secondes avant qu'elle n'aboutisse. Un lanceur en Hébétude met deux fois plus de temps à lancer ses sorts, et le moindre coup l'interrompt.",
+  "training.scenario.blind-denial.label": "Cécité",
+  "training.scenario.blind-denial.teaches":
+    "Qu'un attaquant en Cécité rate neuf coups sur dix : deux archers, dont un aveuglé.",
+  "training.scenario.kiting-and-cripple.label": "Kiting et Infirmité",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Anticiper une cible en mouvement, et qu'une cible en Infirmité marche à mi-vitesse.",
+  "training.scenario.weapon-dps.label": "DPS de l'arme",
+  "training.scenario.weapon-dps.teaches":
+    "Ce que fait ton arme par seconde : appuie sur Space et lis la ligne de l'arme.",
+  "training.scenario.dodge-drill.label": "Exercice d'esquive",
+  "training.scenario.dodge-drill.teaches":
+    "Qu'une flèche tombe là où tu aurais été : tourne une fois qu'elle a quitté l'arc.",
+  "training.scenario.obstacles-and-los.label": "Vue et portée",
+  "training.scenario.obstacles-and-los.teaches":
+    "Que voir un ennemi n'est pas l'atteindre : une compétence lancée sur un ennemi derrière le pilier te le fait contourner, et sur un ennemi hors de portée te fait avancer.",
+  "training.scenario.fireball-dodge.label": "Esquiver la Boule de feu",
+  "training.scenario.fireball-dodge.teaches":
+    "Qu'une Boule de feu vole comme une flèche : écarte-toi quand elle part et rien ne brûle (#535).",
+  "training.scenario.block.label": "Blocage",
+  "training.scenario.block.teaches":
+    "Que Gardien détourne la moitié de tes coups, et qu'un sort passe à travers (#534).",
+  "training.scenario.survivability.label": "Survie",
+  "training.scenario.survivability.teaches":
+    "Combien de temps tu tiens contre trois lanceurs, et que l'armure est ton meilleur levier : à 80, une Boule de feu inflige 30% de moins qu'à 60.",
+  "training.scenario.aoe-cluster.label": "Zone : le groupe",
+  "training.scenario.aoe-cluster.teaches":
+    "Qu'un effet de zone se centre sur sa cible : une Boule de feu au centre brûle les cinq, et aucun des retardataires.",
+  "training.scenario.aoe-cap.label": "Zone : le plafond",
+  "training.scenario.aoe-cap.teaches":
+    "Que Barrage s'arrête à six : sept serrés les uns contre les autres, et un est toujours épargné.",
+  "training.scenario.aoe-friendly-fire.label": "Zone : tir ami",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Qu'un effet de zone ne blesse jamais ton camp : l'allié dans le groupe ne subit rien.",
+  "training.scenario.aoe-line-of-sight.label": "Zone : ligne de vue",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Qu'un effet de zone s'arrête aux murs : les trois devant le pilier brûlent, les deux derrière non.",
+  "training.scenario.moving-targets.label": "Cibles mobiles",
+  "training.scenario.moving-targets.teaches":
+    "Toucher ce qui bouge : anticipe un coureur, rattrape celui qui fuit et retourne-toi contre celui qui te poursuit.",
+  "training.scenario.heights.label": "Hauteurs",
+  "training.scenario.heights.teaches":
+    "Que la hauteur est une position de combat : les plateformes cachent qui se trouve dessous, les rampes sont le seul passage entre niveaux, et ton tir à l'arc d'en haut frappe plus fort.",
+  "training.scenario.wilds.label": "Terres sauvages",
+  "training.scenario.wilds.teaches":
+    "Que le sol lui-même peut blesser : un sol calciné brûle quiconque s'y tient, et la brûlure continue après en être sorti, alors contourne-le.",
   "training.soundOff": "Son coupé.",
   "training.soundOn": "Son activé.",
   "training.you": "Toi",

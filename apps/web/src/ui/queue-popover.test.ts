@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { FormedGroup } from "@vibewars/game-session";
 
+import { ASCENT_PROGRESSION } from "../net/maps.js";
 import { queueStatus, type QueueStatusInput } from "./queue-popover.js";
 
 const NOW = 1_000_000;
@@ -54,6 +55,7 @@ describe("queueStatus (#2743)", () => {
           since: NOW - 9_999,
           teams,
           isHost,
+          hallHolder: undefined,
         },
         NOW,
       );
@@ -68,8 +70,37 @@ describe("queueStatus (#2743)", () => {
     expect(team(0, false)).toEqual({ title: "Team Arena 2v2", waited: "0:09", leave: "host-only" });
   });
 
+  it("shows the Vault instead of the search while a party waits for the Hall (#2701)", () => {
+    const status = queueStatus(
+      {
+        kind: "team",
+        mode: "heroes-ascent",
+        teamSize: 8,
+        ascentRound: ASCENT_PROGRESSION.length - 1,
+        since: 0,
+        teams: 1,
+        isHost: false,
+        hallHolder: "Ana",
+      },
+      720_000 - 90_000,
+    );
+    expect(status).toEqual({
+      title: "The Vault",
+      waited: "The Hall opens in 1:30",
+      detail: "Ana holds the Hall of Heroes",
+      leave: "host-only",
+    });
+  });
+
   it("says Heroes' Ascent's round and Guild vs Guild, with no detail", () => {
-    const base = { kind: "team", teamSize: 4, since: NOW, teams: 3, isHost: true } as const;
+    const base = {
+      kind: "team",
+      teamSize: 4,
+      since: NOW,
+      teams: 3,
+      isHost: true,
+      hallHolder: undefined,
+    } as const;
     expect(queueStatus({ ...base, mode: "heroes-ascent", ascentRound: 2 }, NOW)).toEqual({
       title: "Heroes' Ascent · round 3",
       waited: "0:00",

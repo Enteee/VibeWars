@@ -7,6 +7,8 @@ import {
   createPathFinder,
   Vec,
   distancePointToSegment,
+  firstHit,
+  GATE_PLATE_REACH_UNITS,
   hasLineOfSight,
   loadoutOf,
   nearestStandable,
@@ -17,11 +19,12 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { allWallSegments } from "./geometry.js";
+import { allWallSegments, wallToSegments } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
-import { mapDataSchema, type MapData } from "./schema.js";
+import heightsData from "../training/training-heights/map.json" with { type: "json" };
+import { mapDataSchema, type Gate, type GateOpener, type MapData } from "./schema.js";
 
 /**
  * Every arena, old and new (#444): valid, fair by a half turn about its
@@ -49,6 +52,14 @@ const ofThirdBase = (objective: MapData["objectives"][number]): boolean =>
   ("team" in objective && objective.team === 2) || ("base" in objective && objective.base === 2);
 
 const near = (a: Vec2, b: Vec2): boolean => Vec.distance(a, b) <= TOLERANCE;
+
+/** `gate`'s plate opener (#3025): every gate on the arena maps has one. */
+function plated(gate: Gate): Extract<GateOpener, { kind: "plate" }> {
+  if (gate.opener.kind !== "plate") {
+    throw new Error(`gate ${gate.id} opens by switch`);
+  }
+  return gate.opener;
+}
 
 const sameSegment = (a: Segment, b: Segment): boolean =>
   (near(a.a, b.a) && near(a.b, b.b)) || (near(a.a, b.b) && near(a.b, b.a));
@@ -202,7 +213,7 @@ describe("the arena set (#444)", () => {
         "guild-hall-isle",
         "broken-tower",
         "cinder-sanctum",
-        "the-courtyard",
+        "threefold-keep",
         "hall-of-heroes-king",
         "hall-of-heroes-relic",
         "hall-of-heroes-capture",
@@ -247,7 +258,7 @@ describe("the arena set (#444)", () => {
     ]);
     expect(MAPS.filter((map) => map.mode === "king-of-the-hill").map((map) => map.id)).toEqual([
       "hall-of-heroes-king",
-      "the-courtyard",
+      "threefold-keep",
     ]);
     expect(MAPS.filter((map) => map.mode === "capture-points").map((map) => map.id)).toEqual([
       "hall-of-heroes-capture",
@@ -546,7 +557,7 @@ function hill(id: string) {
   const altar = map.objectives.find((objective) => objective.kind === "altar");
   if (altar === undefined) throw new Error(`no altar on ${id}`);
   const ghosts = map.objectives.filter((objective) => objective.kind === "ghost-spawn");
-  const walls = allWallSegments(map.walls);
+  const walls = allWallSegments([...map.walls, ...map.gates.map((gate) => gate.wall)]);
   const finder = createPathFinder(
     buildNavGraph(walls, { width: map.width, height: map.height }, RADIUS),
   );
@@ -624,7 +635,7 @@ function holdsTheHill(id: string, seats: readonly number[]): void {
       };
       const blocked = createPathFinder(
         buildNavGraph(
-          allWallSegments([...map.walls, cut]),
+          allWallSegments([...map.walls, ...map.gates.map((gate) => gate.wall), cut]),
           { width: map.width, height: map.height },
           RADIUS,
         ),
@@ -647,12 +658,30 @@ function holdsTheHill(id: string, seats: readonly number[]): void {
   });
 }
 
-describe("The Courtyard (#2552)", () => {
-  holdsTheHill("the-courtyard", [4, 8]);
-  const { altar, walls } = hill("the-courtyard");
+describe("Threefold Keep (#2699)", () => {
+  holdsTheHill("threefold-keep", [4, 8]);
+  const { map, altar, walls } = hill("threefold-keep");
 
-  it("rings the altar with four pillar clusters, entered from the four diagonals", () => {
-    expect(sightLines(altar, CARDINALS, walls)).toEqual([false, false, false, false]);
+  it("seats three teams, each with a ghost, and plays the Keep's rules", () => {
+    expect(map).toMatchObject({ teams: 3, keep: true });
+    expect(map.spawnPoints.filter((spawn) => spawn.team === 2)).toHaveLength(8);
+  });
+
+  it("opens every door only from inside: its plate is out of reach from the far side", () => {
+    expect(map.gates).toHaveLength(4);
+    for (const gate of map.gates) {
+      const opener = plated(gate);
+      expect(opener.oneWay, gate.id).toBe(true);
+      expect(opener.team, gate.id).toBeNull();
+      expect(firstHit(opener.plate, altar, wallToSegments(gate.wall)), gate.id).toBeUndefined();
+      const nearest = Math.min(
+        ...wallToSegments(gate.wall).map((side) => distancePointToSegment(opener.plate, side)),
+      );
+      expect(nearest, gate.id).toBeGreaterThan(GATE_PLATE_REACH_UNITS);
+    }
+  });
+
+  it("leaves the keep's four corners open: with every door shut the altar is reachable", () => {
     expect(sightLines(altar, DIAGONALS, walls)).toEqual([true, true, true, true]);
   });
 });
@@ -823,15 +852,16 @@ describe("The Warden's Gallery (#2698)", () => {
   });
 
   it("gives each team its own gates, each the other's twin", () => {
-    const turned = map.gates.map((gate) => ({
-      x: map.width - gate.plate.x,
-      y: map.height - gate.plate.y,
-      team: gate.team === null ? null : 1 - gate.team,
+    const openers = map.gates.map(plated);
+    const turned = openers.map(({ plate, team }) => ({
+      x: map.width - plate.x,
+      y: map.height - plate.y,
+      team: team === null ? null : 1 - team,
     }));
-    expect(map.gates.filter((gate) => gate.team === 0)).toHaveLength(2);
-    expect(map.gates.filter((gate) => gate.team === 1)).toHaveLength(2);
+    expect(openers.filter(({ team }) => team === 0)).toHaveLength(2);
+    expect(openers.filter(({ team }) => team === 1)).toHaveLength(2);
     for (const twin of turned) {
-      expect(map.gates).toContainEqual(
+      expect(openers).toContainEqual(
         expect.objectContaining({ plate: { x: twin.x, y: twin.y }, team: twin.team }),
       );
     }
@@ -850,5 +880,23 @@ describe("The Warden's Gallery (#2698)", () => {
         expect(finder.find(spawn.position, point), String(spawn.team)).toBeDefined();
       }
     }
+  });
+});
+
+describe("Training Heights' layers by route (#2973)", () => {
+  const heights = mapDataSchema.parse(heightsData);
+  const finder = layeredFinder(heights, RADIUS);
+  const spawn = { x: 120, y: 450 };
+
+  it.each([
+    ["the west pit's floor", { x: 640, y: 590 }, 0],
+    ["the tunnel", { x: 840, y: 585 }, 0],
+    ["the east pit's floor", { x: 1060, y: 520 + 110 }, 0],
+    ["the bridge", { x: 600, y: 450 }, 2],
+    ["the platform", { x: 600, y: 210 }, 3],
+  ] as const)("reaches %s from the ground", (_, to, layer) => {
+    const route = finder.find(spawn, heights.groundLayer, to, layer);
+    expect(route).toBeDefined();
+    expect(route?.at(-1)).toMatchObject({ ...to, layer });
   });
 });

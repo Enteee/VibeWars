@@ -169,7 +169,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await expect(flyout).toContainText("Team Arena 4v4");
     await expect(flyout).toContainText("Only the host can leave the queue.");
     await bea.keyboard.press("Escape");
-    await expect(ann.getByRole("button", { name: "Leave the queue" })).toBeVisible();
+    await expect(ann.getByRole("button", { name: "Find a match", exact: true })).toHaveCount(0);
 
     // The other party votes for the Quad too, so no stage runs its clock (#2872).
     await formParty([cid, dot], ["Cid", "Dot"]);

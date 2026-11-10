@@ -270,6 +270,7 @@ export default {
   "combat.sourceShrine": "Helgedomen",
   "combat.sourceSkill": "en förmåga",
   "combat.sourceWeapon": "ett vapen",
+  "combat.sourceZone": "Fara",
   "combat.spellFailed": "{skill} hos {target} misslyckas",
   "combat.statusApplied": "{target} får {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} får {status} (underhållen)",
@@ -330,6 +331,7 @@ export default {
   "effects.categoryChant": "Mässning",
   "effects.categoryCondition": "Åkomma",
   "effects.categoryEcho": "Eko",
+  "effects.categoryEnvironment": "Miljö",
   "effects.categoryEffect": "Effekt",
   "effects.categoryEnchantment": "Förtrollning",
   "effects.categoryForm": "Form",
@@ -379,6 +381,7 @@ export default {
   "gearEditor.statusChant": "mässning",
   "gearEditor.statusCondition": "du har en åkomma",
   "gearEditor.statusEcho": "under ett eko",
+  "gearEditor.statusEnvironment": "under en miljöeffekt",
   "gearEditor.statusEnchantment": "förtrollad",
   "gearEditor.statusForm": "i en form",
   "gearEditor.statusGlyph": "under en glyf",
@@ -557,6 +560,7 @@ export default {
   "hud.stormBeacon": "Stormfyr",
   "hud.stormBeaconOurs": "Stormfyr: hålls av ditt lag",
   "hud.stormBeaconTheirs": "Stormfyr: hålls av fienden",
+  "hud.switch": "Spak",
   "hud.targetDead": "död",
   "hud.targetEffects": "ditt måls effekter",
   "hud.versus": "{ours} mot {theirs}",
@@ -622,7 +626,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Värden startar matchningen",
   "lobby.joinTeam": "Gå med",
   "lobby.joinTeamLabel": "Gå med i lag {team}",
-  "lobby.leaveQueue": "Lämna kön",
   "lobby.leaveTeam": "Lämna",
   "lobby.leaveTeamLabel": "Lämna lag {team}",
   "lobby.map": "Karta",
@@ -682,6 +685,9 @@ export default {
   "matches.endTime": "Tiden tog slut",
   "matches.filterKind": "Typ",
   "matches.filterSize": "Storlek",
+  "matches.hallReported": "Rapporterat av varje matchs värd, inte bekräftat.",
+  "matches.hallStreak": { one: "{count} vinst i rad", other: "{count} vinster i rad" },
+  "matches.hallTitle": "Hjältarnas sal",
   "matches.hostReported": "värdrapporterad",
   "matches.hostReportedTitle": "Publicerad av matchens värd; inte bekräftad av någon annan.",
   "matches.hoursAgo": { one: "{count} h sedan", other: "{count} h sedan" },
@@ -752,10 +758,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "kontroller",
+  "options.display": "visning",
   "options.label": "Alternativ",
   "options.language": "språk",
   "options.languageBusy": "Lämna lobbyn eller matchen först: språkbyte laddar om sidan.",
   "options.languageLabel": "Språk",
+  "options.lightingLabel": "Belysning",
   "options.player": "spelare",
   "options.relay": "relä (TURN)",
   "options.sections": "alternativsektioner",
@@ -843,6 +851,8 @@ export default {
   "queue.defending": "Du håller {map} · försvarar om {seconds} s",
   "queue.fellThrough": "Matchen föll bort, söker igen",
   "queue.guildVsGuild": "Gille mot gille",
+  "queue.hallHeldBy": "{holder} håller Hjältarnas sal",
+  "queue.hallUnheld": "Ingen håller Hjältarnas sal",
   "queue.heroesAscent": "Heroes' Ascent · runda {round}",
   "queue.hostLeft": "Värden lämnade",
   "queue.hostOnly": "Bara värden kan lämna kön.",
@@ -869,6 +879,8 @@ export default {
   "queue.theirTeam": "Deras lag",
   "queue.title": "Slumparena {mode} · {character}",
   "queue.unreachable": "Nådde inte lobbyservrarna",
+  "queue.vault": "Valvet",
+  "queue.vaultOpensIn": "Salen öppnar om {time}",
   "queue.versus": "mot",
   "queue.waitingForEveryone": "Väntar på att alla ska komma",
   "queue.waitingForTeam": "Väntar på ditt lag ({seconds})",
@@ -1303,6 +1315,75 @@ export default {
   "training.reset": "återställ",
   "training.resetDivider": "återställd",
   "training.scenario": "scenario",
+  "training.scenario.target-dummy.label": "Träningsdocka",
+  "training.scenario.target-dummy.teaches":
+    "Vad ett enda kast faktiskt gör: vid 60 i rustning exakt siffran i beskrivningen.",
+  "training.scenario.time-to-kill.label": "Tid till död",
+  "training.scenario.time-to-kill.teaches":
+    "Din uthålliga skada: hur länge en besvärjare med 500 hälsa håller, om och om igen.",
+  "training.scenario.physical-vs-elemental.label": "Fysisk mot elementär",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Att rustning svarar mot en skadetyp: en Warrior med Stalwart dämpar ett svärd men inte en Fireball, en Ranger dämpar en Fireball men inte ett svärd.",
+  "training.scenario.condition-pressure.label": "Åkommetryck",
+  "training.scenario.condition-pressure.teaches":
+    "Att åkommor är en dödsklocka: Bleeding, Poison och Burning dränerar 20 hälsa i sekunden, mer går inte, och fler förnyar i stället för att staplas.",
+  "training.scenario.condition-removal.label": "Borttagning av åkommor",
+  "training.scenario.condition-removal.teaches":
+    "Att en borttagning tar bort bara det den säger: en allierad på 200 av 500 bär fem åkommor, och Deep Wound bland dem tar 100 när den landar och begränsar dina läkningar till 400.",
+  "training.scenario.armor-ladder.label": "Rustningsstege",
+  "training.scenario.armor-ladder.teaches":
+    "Mildringskurvan: samma träff mot 40 till 104 i rustning, sida vid sida.",
+  "training.scenario.healing-throughput.label": "Läkningskapacitet",
+  "training.scenario.healing-throughput.teaches":
+    "Vad dina läkningar är värda mot verkligt tryck, och att rustning är helarens vän: samma Fireball tar 91 från en Monk och 64 från en Warrior.",
+  "training.scenario.interrupt-timing.label": "Avbrottstajming",
+  "training.scenario.interrupt-timing.teaches":
+    "Att avbrott handlar om tajming: fånga ett kast på 3 sekunder innan det landar. En besvärjare med Dazed tar dubbelt så lång tid på sina formler, och varje träff stoppar dem.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Att en anfallare med Blind missar nio slag av tio: två bågskyttar, den ena med Blind.",
+  "training.scenario.kiting-and-cripple.label": "Kiting och Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Att sikta framför ett rörligt mål, och att ett mål med Crippled går i halv fart.",
+  "training.scenario.weapon-dps.label": "Vapen-DPS",
+  "training.scenario.weapon-dps.teaches":
+    "Vad ditt vapen gör per sekund: tryck Space och läs vapenraden.",
+  "training.scenario.dodge-drill.label": "Undvikandeövning",
+  "training.scenario.dodge-drill.teaches":
+    "Att en pil landar där du skulle ha varit: vänd när den lämnat bågen.",
+  "training.scenario.obstacles-and-los.label": "Sikt och räckvidd",
+  "training.scenario.obstacles-and-los.teaches":
+    "Att se en fiende är inte att nå den: en förmåga mot en bakom pelaren går runt den, och mot en utom räckhåll går närmare.",
+  "training.scenario.fireball-dodge.label": "Undvik Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "Att en Fireball flyger som en pil: kliv åt sidan när den lämnar och inget brinner (#535).",
+  "training.scenario.block.label": "Blockering",
+  "training.scenario.block.teaches":
+    "Att Guardian vänder bort hälften av dina slag, och att en formel går rakt igenom (#534).",
+  "training.scenario.survivability.label": "Överlevnad",
+  "training.scenario.survivability.teaches":
+    "Hur länge du håller mot tre besvärjare, och att rustning är din största hävstång: vid 80 tar en Fireball 30% mindre än vid 60.",
+  "training.scenario.aoe-cluster.label": "Område: klungan",
+  "training.scenario.aoe-cluster.teaches":
+    "Att områdesskada centreras på sitt mål: en Fireball i mitten bränner alla fem och ingen av eftersläntrarna.",
+  "training.scenario.aoe-cap.label": "Område: taket",
+  "training.scenario.aoe-cap.teaches":
+    "Att Barrage stannar vid sex: sju tätt packade, och en klarar sig alltid.",
+  "training.scenario.aoe-friendly-fire.label": "Område: egen eld",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Att områdesskada aldrig skadar din egen sida: den allierade i klungan tar ingenting.",
+  "training.scenario.aoe-line-of-sight.label": "Område: siktlinje",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Att områdesskada stannar vid väggar: de tre framför pelaren brinner, de två bakom den gör det inte.",
+  "training.scenario.moving-targets.label": "Rörliga mål",
+  "training.scenario.moving-targets.teaches":
+    "Att träffa det som rör sig: sikta framför en löpare, fånga en som flyr och vänd dig mot en som jagar dig.",
+  "training.scenario.heights.label": "Höjder",
+  "training.scenario.heights.teaches":
+    "Att höjd är en plats att slåss från: däck döljer dem som står under, ramper är enda vägen mellan lagren, och ditt eget bågskott uppifrån träffar hårdare.",
+  "training.scenario.wilds.label": "Vildmark",
+  "training.scenario.wilds.teaches":
+    "Att marken själv kan skada: svedd mark bränner den som står på den, och brännandet fortsätter efter att du klivit ut, så gå runt den.",
   "training.soundOff": "Ljud av.",
   "training.soundOn": "Ljud på.",
   "training.you": "Du",

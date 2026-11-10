@@ -7,6 +7,7 @@
 | Build                | Las profesiones, ocho habilidades, atributos y equipo de un personaje               |
 | Enemigo marcado      | El enemigo que tu equipo debe atacar; **T** lo selecciona                           |
 | Condición            | Un efecto dañino como Bleeding o Crippled; se agota o se elimina                    |
+| Agua profunda        | Agua en la que no puedes entrar; los disparos y hechizos la cruzan                  |
 | Fácil de interrumpir | Cualquier golpe que conecte mientras la usas la interrumpe, como al poner trampas   |
 | Élite                | Una habilidad fuerte con marco dorado; una por barra                                |
 | Encantamiento        | Un efecto bueno lanzado por ti o por un aliado                                      |
@@ -22,6 +23,7 @@
 | Recarga              | El tiempo hasta que una habilidad usada se puede usar de nuevo                      |
 | Resucitar            | Devolver a la vida a un aliado muerto                                               |
 | Runa                 | Una mejora de armadura: rangos de atributo, salud, energía o condiciones más cortas |
+| Agua poco profunda   | Agua que cruzas como si fuera tierra firme                                          |
 | Sello (escudo)       | Tu marca, un pequeño escudo de la identidad de tu navegador, antes de tu nombre     |
 | Punto de inicio      | Donde tu equipo empieza la partida                                                  |
 | Habilidad de toque   | Se usa tocando al objetivo; algunos gritos hacen fallar los toques enemigos         |

@@ -166,8 +166,10 @@ Aqui a Corrida da Relíquia da Ascensão dos Heróis é jogada ao contrário. Ca
 **Leve seu Herói Fantasmagórico até o altar e controle-o.** Cada equipe
 tem um **Herói Fantasmagórico** na base, um fantasma que luta com um
 machado e que ninguém joga. O **altar** fica no centro, a mesma caminhada
-das duas bases. Em **The Courtyard**, ele fica em um pátio aberto cercado
-por quatro grupos de pilares, com entrada pelos quatro cantos. O **Hall of
+das duas bases. Em **Threefold Keep**, três equipes (duas se não houver uma terceira livre) o
+disputam dentro de uma fortaleza murada. As portas só abrem por dentro, com uma
+placa: para entrar, contorne até um canto aberto. No máximo 12 pontos por
+equipe, e se todos os rivais estiverem a -60% de moral, você vence na hora. O **Hall of
 Heroes**, o mapa de Rei da Colina que encerra a Ascensão dos Heróis, o
 ergue em um estrado murado a oeste e a leste, com subida ao norte ou ao
 sul ladeada de pilares. Mire no seu fantasma com o **botão direito** e
@@ -180,8 +182,8 @@ muda, e o nome sobre a cabeça dele mostra seu líder.
 
 Seu fantasma tem 640 de vida e golpeia com o machado usando **Cyclone
 Axe**, **Disrupting Chop** e **Swift Chop**, seguindo ou parado. Ele fica
-mais forte quanto mais alto você estiver na Ascensão: nível 24 em The
-Courtyard, 28 no Hall of Heroes. **Mate o fantasma da outra equipe** e
+mais forte quanto mais alto você estiver na Ascensão: nível 24 em Threefold
+Keep, 28 no Hall of Heroes. **Mate o fantasma da outra equipe** e
 todo membro da sua equipe ganha um **bônus de moral de +10%**, que primeiro
 apaga a penalidade de morte e nunca passa de +10%. Mate-o de novo depois
 que ele levantar e você ganha de novo.
@@ -225,7 +227,7 @@ altar, todo bot mata primeiro o Herói Fantasmagórico da outra equipe assim
 que ele estiver no altar ao alcance deles: é o único inimigo que impede
 seu fantasma de tomá-lo.
 
-The Courtyard joga esse modo.
+Threefold Keep joga esse modo.
 
 ## Captura de Pontos
 
@@ -337,9 +339,8 @@ na fila.
 ## Ascensão dos Heróis
 
 Uma Ascensão dos Heróis na fila tem nove rodadas, sempre nesta ordem:
-The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Barrow Field (Aniquilação de Sacerdotes), Cinder Sanctum (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The Brazen Causeway (Aniquilação de Sacerdotes), The
-Courtyard (Rei da Colina), The Warden's Gallery (Captura de Pontos) e depois o Hall of Heroes. A janela da Sala diz
-onde você está enquanto procura uma equipe: `Round 2 of 9 · Blackwater Ford`.
+The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Barrow Field (Aniquilação de Sacerdotes), Cinder Sanctum (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The Brazen Causeway (Aniquilação de Sacerdotes), Threefold
+Keep (Rei da Colina), The Warden's Gallery (Captura de Pontos) e depois o Hall of Heroes. Enquanto você procura uma equipe, o ícone da fila na barra superior diz onde você está, `Ascensão dos Heróis · rodada 2`, e a janela da Sala mostra o mapa dessa rodada.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for
 preciso: nenhum bot completa. A única exceção: a partir da rodada 2, uma equipe sozinha na sua rodada por 60 segundos pode avançar. Ela enfrenta uma equipe que espera em qualquer rodada posterior antes do Hall, as duas jogam o mapa da equipe mais adiantada e a vencedora segue a partir dali. Uma rodada em um mapa feito para três
 equipes espera três; duas equipes que esperaram 30 segundos pela terceira
@@ -350,7 +351,9 @@ do fim, e sua próxima Ascensão recomeça na rodada 1; o mesmo vale para
 sair da fila ou do grupo. Uma partida perdida porque o host saiu mantém
 sua rodada.
 
-O Hall sorteia um de três modos para cada partida: Rei da Colina, Corrida da Relíquia ou Captura de Pontos, para duas ou três equipes. Com duas, a terceira base fica fechada, e com ela seu ponto de captura. Uma partida no Hall dura 12 minutos e vence quem tiver mais pontos; a Captura de Pontos também termina antes com uma vantagem de 20. Morrer não custa moral. Os mortos voltam juntos à sua base a cada minuto cheio do relógio da partida, então uma equipe eliminada não está derrotada, mas uma equipe cujos jogadores saíram todos está fora. No Rei da Colina, a equipe que controla o altar continua pontuando depois que seu fantasma morre, até outra equipe tomá-lo, e seus mortos voltam no altar. Um empate vai para a equipe que pontuou por último ou, na Captura de Pontos, para a que fez a eliminação mais recente.
+O Hall sorteia um de três modos para cada partida: Rei da Colina, Corrida da Relíquia ou Captura de Pontos, para duas ou três equipes. Com duas, a terceira base fica fechada, e com ela seu ponto de captura. Uma partida no Hall dura 11 minutos e vence quem tiver mais pontos; a Captura de Pontos também termina antes com uma vantagem de 20. Morrer não custa moral. Os mortos voltam juntos à sua base a cada minuto cheio do relógio da partida, então uma equipe eliminada não está derrotada, mas uma equipe cujos jogadores saíram todos está fora. No Rei da Colina, a equipe que controla o altar continua pontuando depois que seu fantasma morre, até outra equipe tomá-lo, e seus mortos voltam no altar. Um empate vai para a equipe que pontuou por último ou, na Captura de Pontos, para a que fez a eliminação mais recente.
+
+**A Câmara.** O Hall só se forma a cada 12 minutos no horário UTC, às :00, :12, :24, :36 e :48. Até lá, seu grupo espera na Câmara: o ícone da fila mostra o tempo até a próxima abertura e quem domina o Hall. Em cada abertura, quem o domina enfrenta até dois desafiantes, ou até três desafiantes se enfrentam se ninguém o dominar. Só participam os grupos que já esperavam antes da abertura, e os que ficarem sem vaga esperam a seguinte. Quem domina sem adversário mantém o Hall e espera, sem contar vitória, e um desafiante sozinho também espera. Quando um grupo vence o Hall, todos os jogos abertos dizem quem o domina: seu líder, ou a sigla da guilda se mais da metade do grupo a compartilhar.
 
 Sua moral acompanha você por toda a campanha: a penalidade de morte ou o
 bônus com que você termina um mapa vencido é o que você leva para o
@@ -439,3 +442,5 @@ sem nenhum pressionado deixa tudo passar. O tamanho é o da maior equipe,
 com bots incluídos, então uma Partida Hospedada 3v2 não se encaixa em
 nenhum tamanho. Os chips ficam como você os deixou até a página
 recarregar.
+
+Acima dos filtros, a faixa **Salão dos Heróis** lista os últimos 20 domínios, do mais recente ao mais antigo: quem domina (uma tag de guilda ou o nome do líder), as pessoas da equipe vencedora, quando a vitória mais recente terminou e, a partir de duas vitórias, quantas seguidas. Um domínio é uma sequência ininterrupta de vitórias no Salão de quem domina. A faixa lê os registros desta página, ignora os filtros e fica oculta se nenhum for uma vitória no Salão. Como todo registro, é o que o host de cada partida informou, e nada o verifica.

@@ -15,7 +15,7 @@ const SYMMETRIC = [
   "broken-tower",
   "cinder-sanctum",
   "scarred-earth",
-  "the-courtyard",
+  "threefold-keep",
   "hall-of-heroes-king",
   "hall-of-heroes-relic",
   "hall-of-heroes-capture",

@@ -269,6 +269,7 @@ export default {
   "combat.sourceShrine": "Het schrijn",
   "combat.sourceSkill": "een skill",
   "combat.sourceWeapon": "een wapen",
+  "combat.sourceZone": "Gevaar",
   "combat.spellFailed": "{skill} van {target} mislukt",
   "combat.statusApplied": "{target} krijgt {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} krijgt {status} (onderhouden)",
@@ -329,6 +330,7 @@ export default {
   "effects.categoryChant": "Gezang",
   "effects.categoryCondition": "Conditie",
   "effects.categoryEcho": "Echo",
+  "effects.categoryEnvironment": "Omgeving",
   "effects.categoryEffect": "Effect",
   "effects.categoryEnchantment": "Betovering",
   "effects.categoryForm": "Gedaante",
@@ -378,6 +380,7 @@ export default {
   "gearEditor.statusChant": "gezang",
   "gearEditor.statusCondition": "je een conditie hebt",
   "gearEditor.statusEcho": "onder een echo",
+  "gearEditor.statusEnvironment": "onder een omgevingseffect",
   "gearEditor.statusEnchantment": "betoverd",
   "gearEditor.statusForm": "in een gedaante",
   "gearEditor.statusGlyph": "onder een glief",
@@ -556,6 +559,7 @@ export default {
   "hud.stormBeacon": "Stormbaken",
   "hud.stormBeaconOurs": "Stormbaken: in handen van je team",
   "hud.stormBeaconTheirs": "Stormbaken: in handen van de vijand",
+  "hud.switch": "Hendel",
   "hud.targetDead": "dood",
   "hud.targetEffects": "effecten op je doelwit",
   "hud.versus": "{ours} v {theirs}",
@@ -621,7 +625,6 @@ export default {
   "lobby.hostStartsMatchmaking": "De host start het matchmaken",
   "lobby.joinTeam": "Meedoen",
   "lobby.joinTeamLabel": "Team {team} joinen",
-  "lobby.leaveQueue": "Wachtrij verlaten",
   "lobby.leaveTeam": "Weg",
   "lobby.leaveTeamLabel": "Team {team} verlaten",
   "lobby.map": "Map",
@@ -681,6 +684,9 @@ export default {
   "matches.endTime": "Tijd om",
   "matches.filterKind": "Soort",
   "matches.filterSize": "Grootte",
+  "matches.hallReported": "Gemeld door de host van elke match, niet geverifieerd.",
+  "matches.hallStreak": { one: "{count} zege op rij", other: "{count} zeges op rij" },
+  "matches.hallTitle": "Hal der Helden",
   "matches.hostReported": "door host gemeld",
   "matches.hostReportedTitle":
     "Gepubliceerd door de host van de match; door niemand anders geverifieerd.",
@@ -753,10 +759,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "besturing",
+  "options.display": "weergave",
   "options.label": "Opties",
   "options.language": "taal",
   "options.languageBusy": "Verlaat eerst de lobby of match: de taal wijzigen herlaadt de pagina.",
   "options.languageLabel": "Taal",
+  "options.lightingLabel": "Belichting",
   "options.player": "speler",
   "options.relay": "relay (TURN)",
   "options.sections": "optiesecties",
@@ -845,6 +853,8 @@ export default {
   "queue.defending": "Jij houdt {map} · verdedigen over {seconds} s",
   "queue.fellThrough": "Match ging niet door, we zoeken opnieuw",
   "queue.guildVsGuild": "Guild vs Guild",
+  "queue.hallHeldBy": "{holder} houdt de Hal der Helden",
+  "queue.hallUnheld": "Niemand houdt de Hal der Helden",
   "queue.heroesAscent": "Heroes' Ascent · ronde {round}",
   "queue.hostLeft": "De host is vertrokken",
   "queue.hostOnly": "Alleen de host kan de wachtrij verlaten.",
@@ -871,6 +881,8 @@ export default {
   "queue.theirTeam": "Hun team",
   "queue.title": "Random Arena {mode} · {character}",
   "queue.unreachable": "Lobbyservers niet bereikbaar",
+  "queue.vault": "De Kluis",
+  "queue.vaultOpensIn": "De Hal opent over {time}",
   "queue.versus": "vs",
   "queue.waitingForEveryone": "Wachten tot iedereen er is",
   "queue.waitingForTeam": "Wachten op je team ({seconds})",
@@ -1312,6 +1324,75 @@ export default {
   "training.reset": "reset",
   "training.resetDivider": "reset",
   "training.scenario": "scenario",
+  "training.scenario.target-dummy.label": "Oefenpop",
+  "training.scenario.target-dummy.teaches":
+    "Wat één cast echt doet: bij 60 pantser precies het getal uit de tooltip.",
+  "training.scenario.time-to-kill.label": "Tijd tot doden",
+  "training.scenario.time-to-kill.teaches":
+    "Je volgehouden schade: hoe lang een caster met 500 gezondheid het uithoudt, keer op keer.",
+  "training.scenario.physical-vs-elemental.label": "Fysiek tegen elementair",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Dat pantser hoort bij een schadesoort: een Krijger met Standvastig insigne vangt een zwaard op maar geen Vuurbal, een Jager vangt een Vuurbal op maar geen zwaard.",
+  "training.scenario.condition-pressure.label": "Conditiedruk",
+  "training.scenario.condition-pressure.teaches":
+    "Dat condities een doodsklok zijn: Bloeding, Vergif en Brandend kosten 20 gezondheid per seconde, het maximum, en meer toevoegen ververst in plaats van stapelt.",
+  "training.scenario.condition-removal.label": "Condities verwijderen",
+  "training.scenario.condition-removal.teaches":
+    "Dat een conditieverwijdering alleen weghaalt wat erop staat: een bondgenoot op 200 van 500 heeft vijf condities, en Diepe wond daartussen kost 100 bij het landen en beperkt je genezing tot 400.",
+  "training.scenario.armor-ladder.label": "Pantserladder",
+  "training.scenario.armor-ladder.teaches":
+    "De mitigatiecurve: dezelfde klap tegen 40 tot 104 pantser, naast elkaar.",
+  "training.scenario.healing-throughput.label": "Genezingsdoorvoer",
+  "training.scenario.healing-throughput.teaches":
+    "Wat je genezing waard is onder echte druk, en dat pantser de vriend van een genezer is: dezelfde Vuurbal haalt 91 van een Monnik en 64 van een Krijger.",
+  "training.scenario.interrupt-timing.label": "Timing van onderbrekingen",
+  "training.scenario.interrupt-timing.teaches":
+    "Dat onderbreken om timing draait: vang een cast van 3 seconden voor hij landt. Een versufte caster doet twee keer zo lang over zijn spreuken, en elke klap onderbreekt ze.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Dat een verblinde aanvaller negen van de tien klappen mist: twee boogschutters, één van hen blind.",
+  "training.scenario.kiting-and-cripple.label": "Kiten en Verlamd",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Voor een bewegend doelwit uit mikken, en dat een verlamd doelwit op halve snelheid loopt.",
+  "training.scenario.weapon-dps.label": "Wapen-DPS",
+  "training.scenario.weapon-dps.teaches":
+    "Wat je wapen per seconde doet: druk op Space en lees de wapenrij.",
+  "training.scenario.dodge-drill.label": "Ontwijkoefening",
+  "training.scenario.dodge-drill.teaches":
+    "Dat een pijl landt waar je zou zijn geweest: draai af nadat hij de boog verlaat.",
+  "training.scenario.obstacles-and-los.label": "Zicht en bereik",
+  "training.scenario.obstacles-and-los.teaches":
+    "Dat een vijand zien niet hetzelfde is als hem bereiken: een skill op een vijand achter de pilaar loopt eromheen, en op een vijand buiten bereik loopt ernaartoe.",
+  "training.scenario.fireball-dodge.label": "Ontwijk de Vuurbal",
+  "training.scenario.fireball-dodge.teaches":
+    "Dat een Vuurbal vliegt als een pijl: stap opzij als hij vertrekt en er brandt niets (#535).",
+  "training.scenario.block.label": "Blokkeren",
+  "training.scenario.block.teaches":
+    "Dat Hoeder de helft van je klappen afweert, en een spreuk er dwars doorheen gaat (#534).",
+  "training.scenario.survivability.label": "Overlevingskracht",
+  "training.scenario.survivability.teaches":
+    "Hoe lang je het volhoudt tegen drie casters, en dat pantser je grootste hefboom is: bij 80 doet een Vuurbal 30% minder dan bij 60.",
+  "training.scenario.aoe-cluster.label": "Gebied: de groep",
+  "training.scenario.aoe-cluster.teaches":
+    "Dat een gebiedsaanval rond zijn doelwit valt: een Vuurbal in het midden raakt alle vijf, en geen van de achterblijvers.",
+  "training.scenario.aoe-cap.label": "Gebied: de limiet",
+  "training.scenario.aoe-cap.teaches":
+    "Dat Spervuur bij zes stopt: zeven dicht op elkaar, en er blijft er altijd één gespaard.",
+  "training.scenario.aoe-friendly-fire.label": "Gebied: eigen vuur",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Dat een gebiedsaanval nooit je eigen kant raakt: de bondgenoot in de groep krijgt niets.",
+  "training.scenario.aoe-line-of-sight.label": "Gebied: zichtlijn",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Dat een gebiedsaanval bij muren stopt: de drie voor de pilaar branden, de twee erachter niet.",
+  "training.scenario.moving-targets.label": "Bewegende doelwitten",
+  "training.scenario.moving-targets.teaches":
+    "Raken wat beweegt: mik voor een renner uit, haal er een in die vlucht, en draai je om naar een die je achtervolgt.",
+  "training.scenario.heights.label": "Hoogtes",
+  "training.scenario.heights.teaches":
+    "Dat hoogte een plek is om vanaf te vechten: dekken verbergen wie eronder staat, hellingen zijn de enige weg tussen lagen, en je eigen boogschot van bovenaf raakt harder.",
+  "training.scenario.wilds.label": "Wildernis",
+  "training.scenario.wilds.teaches":
+    "Dat de grond zelf pijn kan doen: verschroeide grond verbrandt wie erop staat, en het branden gaat door nadat je eraf stapt, dus loop eromheen.",
   "training.soundOff": "Geluid uit.",
   "training.soundOn": "Geluid aan.",
   "training.you": "Jij",

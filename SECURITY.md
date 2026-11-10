@@ -146,6 +146,9 @@ channels, as often as they like.
   one. Do not build anything that relies on a name meaning a person.
   The same holds for guild tags (#1406): any peer may wear any tag, and
   nobody claims or owns one, or its cape. A tag is not a guild membership.
+  Hero rank and fame (#2702) are kept on the player's own device and
+  self-reported: the wire checks only that a rank is 0 to 15, so any peer
+  can show any rank. It is a badge. Do not gate anything on it.
 - **The character a lobby lists** (#580). Each peer says what character it
   brings, by name and professions, and the lobby shows that. Nothing ties it
   to the build the peer then sends in its match `hello`, so a peer can be

@@ -46,6 +46,7 @@ Ces touches sont fixes :
   même ennemi à nouveau, rapidement, pour l'attaquer.
 - **Clic droit** sur un drapeau ou le Socle du drapeau, en Bataille de guilde ou sur Barrow Field,
   pour le cibler ; **Space** y marche et prend le drapeau ou le plante.
+- **Clic droit** sur un levier pour le cibler ; **Space** s'y rend et l'actionne, ce qui ouvre ou ferme les portes qu'il commande.
 - **Clic molette** sur un ennemi pour l'annoncer à ton équipe : leur **T** le
   cible. Au sol ou sur un allié, il signale cet endroit. Ou clique sur la
   barre de cible en haut pour annoncer l'ennemi que tu cibles.
@@ -71,7 +72,7 @@ volume), la coupure du son et le plein écran. En match, les mêmes boutons,
 sauf Salon, sont en haut à droite de l'écran. Dans une fenêtre étroite, ces
 icônes et les autres boutons de l'écran se replient dans **⋯** ; seul son
 bouton principal reste visible. ⚙ ouvre les Options dans une fenêtre sous la
-barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme.
+barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme. Sous **Affichage**, **Éclairage** active ou coupe la lumière et l'ombre d'une carte éclairée, aussitôt, même en match.
 L'Aide se ferme avec le × en haut à droite, Esc, ou un nouvel appui sur [?].
 
 **Partage un beat avec ton salon.** Dans l'éditeur de beat (♪, puis

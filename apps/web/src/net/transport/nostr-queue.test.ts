@@ -75,6 +75,7 @@ function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket
     party: null,
     ascentRound: null,
     hardNat: false,
+    holdsHallSince: null,
     ...extra,
   };
 }
@@ -451,7 +452,7 @@ describe("party consents on the Nostr queue board (#1078)", () => {
       now: NOW,
       mode: "random-arena-2v2",
       ignored: new Set(),
-      round: () => ({ mapPool: ["arena"], teamCount: 2, skipping: false }),
+      round: () => ({ mapPool: ["arena"], teamCount: 2, skipping: false, slotted: false }),
     });
     expect(groups.map((group) => group.parties)).toEqual([[realTicket.members]]);
   });

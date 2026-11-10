@@ -272,6 +272,7 @@ export default {
   "combat.sourceShrine": "Der Schrein",
   "combat.sourceSkill": "ein Skill",
   "combat.sourceWeapon": "eine Waffe",
+  "combat.sourceZone": "Gefahr",
   "combat.spellFailed": "{skill} von {target} schlägt fehl",
   "combat.statusApplied": "{target} erhält {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} erhält {status} (aufrechterhalten)",
@@ -333,6 +334,7 @@ export default {
   "effects.categoryChant": "Gesang",
   "effects.categoryCondition": "Zustand",
   "effects.categoryEcho": "Echo",
+  "effects.categoryEnvironment": "Umgebung",
   "effects.categoryEffect": "Effekt",
   "effects.categoryEnchantment": "Verzauberung",
   "effects.categoryForm": "Gestalt",
@@ -382,6 +384,7 @@ export default {
   "gearEditor.statusChant": "Gesang",
   "gearEditor.statusCondition": "du einen Zustand hast",
   "gearEditor.statusEcho": "unter einem Echo",
+  "gearEditor.statusEnvironment": "unter einem Umgebungseffekt",
   "gearEditor.statusEnchantment": "verzaubert",
   "gearEditor.statusForm": "in einer Gestalt",
   "gearEditor.statusGlyph": "unter einer Glyphe",
@@ -561,6 +564,7 @@ export default {
   "hud.stormBeacon": "Sturmfeuer",
   "hud.stormBeaconOurs": "Sturmfeuer: von deinem Team gehalten",
   "hud.stormBeaconTheirs": "Sturmfeuer: vom Feind gehalten",
+  "hud.switch": "Hebel",
   "hud.targetDead": "tot",
   "hud.targetEffects": "Effekte deines Ziels",
   "hud.versus": "{ours} : {theirs}",
@@ -627,7 +631,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Der Host startet das Matchmaking",
   "lobby.joinTeam": "Beitreten",
   "lobby.joinTeamLabel": "Team {team} beitreten",
-  "lobby.leaveQueue": "Warteschlange verlassen",
   "lobby.leaveTeam": "Verlassen",
   "lobby.leaveTeamLabel": "Team {team} verlassen",
   "lobby.map": "Karte",
@@ -687,6 +690,9 @@ export default {
   "matches.endTime": "Zeit abgelaufen",
   "matches.filterKind": "Art",
   "matches.filterSize": "Größe",
+  "matches.hallReported": "Vom Host des jeweiligen Matches gemeldet, nicht überprüft.",
+  "matches.hallStreak": { one: "{count} Sieg in Folge", other: "{count} Siege in Folge" },
+  "matches.hallTitle": "Halle der Helden",
   "matches.hostReported": "vom Host gemeldet",
   "matches.hostReportedTitle":
     "Vom Host des Matches veröffentlicht; von niemandem sonst bestätigt.",
@@ -759,11 +765,13 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "Steuerung",
+  "options.display": "Anzeige",
   "options.label": "Optionen",
   "options.language": "Sprache",
   "options.languageBusy":
     "Verlasse zuerst die Lobby oder das Match: Beim Sprachwechsel wird die Seite neu geladen.",
   "options.languageLabel": "Sprache",
+  "options.lightingLabel": "Beleuchtung",
   "options.player": "Spieler",
   "options.relay": "Relay (TURN)",
   "options.sections": "Optionsbereiche",
@@ -852,6 +860,8 @@ export default {
   "queue.defending": "Du hältst {map} · Verteidigung in {seconds} s",
   "queue.fellThrough": "Match geplatzt, neue Suche läuft",
   "queue.guildVsGuild": "Gilde gegen Gilde",
+  "queue.hallHeldBy": "{holder} hält die Halle der Helden",
+  "queue.hallUnheld": "Niemand hält die Halle der Helden",
   "queue.heroesAscent": "Aufstieg der Helden · Runde {round}",
   "queue.hostLeft": "Der Host ist gegangen",
   "queue.hostOnly": "Nur der Host kann die Warteschlange verlassen.",
@@ -878,6 +888,8 @@ export default {
   "queue.theirTeam": "Gegnerteam",
   "queue.title": "Zufallsarena {mode} · {character}",
   "queue.unreachable": "Lobby-Server nicht erreichbar",
+  "queue.vault": "Das Gewölbe",
+  "queue.vaultOpensIn": "Die Halle öffnet in {time}",
   "queue.versus": "vs",
   "queue.waitingForEveryone": "Warte, bis alle da sind",
   "queue.waitingForTeam": "Warte auf dein Team ({seconds})",
@@ -1324,6 +1336,75 @@ export default {
   "training.reset": "Reset",
   "training.resetDivider": "Reset",
   "training.scenario": "Szenario",
+  "training.scenario.target-dummy.label": "Trainingspuppe",
+  "training.scenario.target-dummy.teaches":
+    "Was ein Wirken wirklich bewirkt: bei 60 Rüstung genau die Zahl aus dem Tooltip.",
+  "training.scenario.time-to-kill.label": "Zeit bis zum Kill",
+  "training.scenario.time-to-kill.teaches":
+    "Dein Dauerschaden: wie lange ein Zauberwirker mit 500 Leben durchhält, immer wieder.",
+  "training.scenario.physical-vs-elemental.label": "Physisch gegen elementar",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Dass Rüstung auf eine Schadensart antwortet: Krieger und Unerschütterliche Insignie dämpfen ein Schwert, aber keinen Feuerball; ein Waldläufer dämpft einen Feuerball, aber kein Schwert.",
+  "training.scenario.condition-pressure.label": "Zustandsdruck",
+  "training.scenario.condition-pressure.teaches":
+    "Dass Zustände eine Todesuhr sind: Blutung, Vergiftung und Brennen ziehen 20 Leben pro Sekunde ab, mehr geht nicht, und weitere frischen auf, statt sich zu stapeln.",
+  "training.scenario.condition-removal.label": "Zustandsentfernung",
+  "training.scenario.condition-removal.teaches":
+    "Dass eine Zustandsentfernung nur nimmt, was sie verspricht: Ein Verbündeter bei 200 von 500 trägt fünf Zustände, und Tiefe Wunde darunter nimmt beim Auftreffen 100 und deckelt deine Heilung bei 400.",
+  "training.scenario.armor-ladder.label": "Rüstungsleiter",
+  "training.scenario.armor-ladder.teaches":
+    "Die Schadensminderungskurve: derselbe Treffer gegen 40 bis 104 Rüstung, nebeneinander.",
+  "training.scenario.healing-throughput.label": "Heilleistung",
+  "training.scenario.healing-throughput.teaches":
+    "Was deine Heilungen gegen echten Druck wert sind, und dass Rüstung die Freundin des Heilers ist: Derselbe Feuerball nimmt einem Mönch 91 und einem Krieger 64.",
+  "training.scenario.interrupt-timing.label": "Timing beim Unterbrechen",
+  "training.scenario.interrupt-timing.teaches":
+    "Dass Unterbrechen eine Frage des Timings ist: Erwisch ein 3-Sekunden-Wirken, bevor es trifft. Ist ein Zauberwirker Benommen, dauern seine Zauber doppelt so lange, und jeder Treffer stoppt sie.",
+  "training.scenario.blind-denial.label": "Blindheit",
+  "training.scenario.blind-denial.teaches":
+    "Dass ein geblendeter Angreifer neun von zehn Schlägen verfehlt: zwei Bogenschützen, einer davon blind.",
+  "training.scenario.kiting-and-cripple.label": "Kiten und Verkrüppelt",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Vorhalten auf ein bewegtes Ziel, und dass ein verkrüppeltes nur halb so schnell läuft.",
+  "training.scenario.weapon-dps.label": "Waffen-DPS",
+  "training.scenario.weapon-dps.teaches":
+    "Was deine Waffe pro Sekunde macht: Drück Space und lies die Waffenzeile.",
+  "training.scenario.dodge-drill.label": "Ausweichübung",
+  "training.scenario.dodge-drill.teaches":
+    "Dass ein Pfeil dort landet, wo du gewesen wärst: Dreh ab, nachdem er den Bogen verlassen hat.",
+  "training.scenario.obstacles-and-los.label": "Sicht und Reichweite",
+  "training.scenario.obstacles-and-los.teaches":
+    "Dass einen Gegner sehen nicht heißt, ihn zu erreichen: Ein Skill auf einen hinter der Säule läuft um sie herum, einer auf einen außer Reichweite läuft heran.",
+  "training.scenario.fireball-dodge.label": "Dem Feuerball ausweichen",
+  "training.scenario.fireball-dodge.teaches":
+    "Dass ein Feuerball wie ein Pfeil fliegt: Tritt beim Abschuss zur Seite, und nichts brennt (#535).",
+  "training.scenario.block.label": "Blocken",
+  "training.scenario.block.teaches":
+    "Dass Wächter die Hälfte deiner Schläge abwehrt und ein Zauber hindurchgeht (#534).",
+  "training.scenario.survivability.label": "Überlebensfähigkeit",
+  "training.scenario.survivability.teaches":
+    "Wie lange du gegen drei Zauberwirker durchhältst, und dass Rüstung dein größter Hebel ist: Bei 80 nimmt ein Feuerball 30 % weniger als bei 60.",
+  "training.scenario.aoe-cluster.label": "Fläche: die Gruppe",
+  "training.scenario.aoe-cluster.teaches":
+    "Dass Flächenschaden um sein Ziel herum wirkt: Ein Feuerball in die Mitte verbrennt alle fünf und keinen der beiden Nachzügler.",
+  "training.scenario.aoe-cap.label": "Fläche: die Obergrenze",
+  "training.scenario.aoe-cap.teaches":
+    "Dass Sperrfeuer bei sechs aufhört: sieben dicht beisammen, und einer bleibt immer verschont.",
+  "training.scenario.aoe-friendly-fire.label": "Fläche: Eigenbeschuss",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Dass Flächenschaden nie die eigene Seite trifft: Der Verbündete in der Gruppe bekommt nichts ab.",
+  "training.scenario.aoe-line-of-sight.label": "Fläche: Sichtlinie",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Dass Flächenschaden an Wänden endet: Die drei vor der Säule brennen, die zwei dahinter nicht.",
+  "training.scenario.moving-targets.label": "Bewegte Ziele",
+  "training.scenario.moving-targets.teaches":
+    "Treffen, was sich bewegt: Halte bei einem Läufer vor, erwisch einen Fliehenden und dreh dich zu einem, der dich jagt.",
+  "training.scenario.heights.label": "Höhen",
+  "training.scenario.heights.teaches":
+    "Dass Höhe ein Ort zum Kämpfen ist: Plattformen verbergen, wer darunter steht, Rampen sind der einzige Weg zwischen den Ebenen, und dein eigener Bogenschuss von oben trifft härter.",
+  "training.scenario.wilds.label": "Wildnis",
+  "training.scenario.wilds.teaches":
+    "Dass der Boden selbst verletzen kann: Versengter Boden verbrennt jeden, der darauf steht, und das Brennen hält an, nachdem du ihn verlassen hast – also geh außen herum.",
   "training.soundOff": "Ton aus.",
   "training.soundOn": "Ton an.",
   "training.you": "Du",

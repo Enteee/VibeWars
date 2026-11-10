@@ -1,9 +1,15 @@
-import { MatchSimulation, TRAINING_SCENARIOS, scenarioParticipants } from "@vibewars/game-core";
-import { allWallSegments } from "@vibewars/game-maps/geometry";
+import {
+  MatchSimulation,
+  applyIntent,
+  TRAINING_SCENARIOS,
+  baseEnergyPipsFor,
+  scenarioParticipants,
+} from "@vibewars/game-core";
+import { allWallSegments, pointInShape } from "@vibewars/game-maps/geometry";
 import { describe, expect, it } from "vitest";
 
 import { TRAINING_MAPS } from "./maps.js";
-import { matchLayers } from "./scenario-setup.js";
+import { matchLayers } from "@vibewars/game-maps/layers";
 
 function loaded<T>(value: T | undefined, what: string): T {
   if (value === undefined) throw new Error(`no ${what}`);
@@ -30,17 +36,13 @@ function inside(
   return x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height;
 }
 
-/** The hunter at `from`, the player standing at `to`; every step it takes until it stops. */
-function chase(from: Spot, to: Spot): readonly Spot[] {
+/** A chasing fireball dummy at `from`, the player standing at `to`; every step it takes until it stops. */
+function chase(from: Spot, to: Spot, casts = true): readonly Spot[] {
   const [template] = scenarioParticipants(
     { ...scenario, dummies: scenario.dummies.filter(({ id }) => id === "under-bridge") },
     to,
   );
-  const [hunter] = scenarioParticipants(
-    { ...scenario, dummies: scenario.dummies.filter(({ id }) => id === "hunter") },
-    to,
-  );
-  if (template === undefined || hunter === undefined) throw new Error("no dummies");
+  if (template === undefined) throw new Error("no dummies");
   const simulation = new MatchSimulation({
     seed: "heights",
     teamCount: map.teams,
@@ -49,7 +51,33 @@ function chase(from: Spot, to: Spot): readonly Spot[] {
     layers: matchLayers(map),
     participants: [
       { ...template, id: "you", team: 0, spawn: { x: to.x, y: to.y }, layer: to.layer },
-      { ...hunter, spawn: { x: from.x, y: from.y }, layer: from.layer },
+      {
+        ...template,
+        id: "hunter",
+        team: 1,
+        spawn: { x: from.x, y: from.y },
+        layer: from.layer,
+        skillBar: ["elementalist.fireball"],
+        attributeRanks: new Map([["elementalist.fire-magic", 12]]),
+        baseEnergyPips: baseEnergyPipsFor("elementalist"),
+        behaviour: {
+          kind: "parallel",
+          behaviours: [
+            { kind: "chase", targeting: { kind: "nearest-enemy" }, standOffUnits: 250 },
+            ...(casts
+              ? [
+                  {
+                    kind: "cast-loop" as const,
+                    skillIds: ["elementalist.fireball"],
+                    targeting: { kind: "nearest-enemy" as const },
+                    gapSeconds: 0,
+                    firstLegal: true,
+                  },
+                ]
+              : []),
+          ],
+        },
+      },
     ],
   });
   const steps: Spot[] = [];
@@ -84,10 +112,352 @@ function expectClimbed(steps: readonly Spot[], layer: number): void {
 
 describe("the hunter on Training Heights (#2937)", () => {
   it("comes down a ramp after a player on the ground", () => {
-    expectClimbed(chase({ x: 450, y: 350, layer: 1 }, { x: 1180, y: 350, layer: 0 }), 0);
+    expectClimbed(chase({ x: 450, y: 450, layer: 2 }, { x: 1180, y: 450, layer: 1 }, false), 1);
   });
 
   it("goes up a ramp after a player on the bridge", () => {
-    expectClimbed(chase({ x: 1100, y: 350, layer: 0 }, { x: 450, y: 350, layer: 1 }), 1);
+    expectClimbed(chase({ x: 1100, y: 450, layer: 1 }, { x: 450, y: 450, layer: 2 }, false), 2);
+  });
+});
+
+/** A body at `from` ordered to walk to `to`; every step until it arrives. */
+function walk(from: Spot, to: Spot): readonly Spot[] {
+  const [template] = scenarioParticipants(scenario, to);
+  if (template === undefined) throw new Error("no dummies");
+  const simulation = new MatchSimulation({
+    seed: "heights",
+    teamCount: map.teams,
+    walls: allWallSegments(map.walls),
+    bounds: { width: map.width, height: map.height },
+    layers: matchLayers(map),
+    participants: [
+      {
+        ...template,
+        id: "you",
+        team: 0,
+        spawn: { x: from.x, y: from.y },
+        layer: from.layer,
+        behaviour: undefined,
+      },
+    ],
+  });
+  applyIntent(simulation, "you", { kind: "walk-to", x: to.x, y: to.y, layer: to.layer });
+  const steps: Spot[] = [];
+  for (let tick = 0; tick < 1800; tick += 1) {
+    simulation.step(1 / 30);
+    const { position, layer } = loaded(simulation.get("you"), "you");
+    steps.push({ x: position.x, y: position.y, layer });
+    if (Math.hypot(position.x - to.x, position.y - to.y) < 5 && layer === to.layer) break;
+  }
+  return steps;
+}
+
+describe("walking a ramp on Training Heights (#2972)", () => {
+  const bridge = { x: 420, y: 250, width: 360, height: 200 };
+  const onBridge = { x: 600, y: 350, layer: 2 };
+  // Clear of the ramp's south rim (#2975) by more than a body's radius.
+  const south = { x: 430, y: 580, layer: 1 };
+
+  const expectOutFromUnder = (steps: readonly Spot[], end: Spot): void => {
+    for (const step of steps) {
+      if (step.layer === 1) expect(inside(bridge, step)).toBe(false);
+    }
+    const last = loaded(steps.at(-1), "a step");
+    expect(Math.hypot(last.x - end.x, last.y - end.y)).toBeLessThan(5);
+    expect(last.layer).toBe(end.layer);
+    expect(steps.some((step) => step.x <= 321 || step.x >= 879)).toBe(true);
+  };
+
+  it("walks the whole ramp down from the bridge, never under its deck", () => {
+    expectOutFromUnder(walk(onBridge, south), south);
+  });
+
+  it("walks the whole ramp up to the bridge, never under its deck", () => {
+    expectOutFromUnder(walk(south, onBridge), onBridge);
+  });
+});
+
+describe("the Heights scenario (#2958)", () => {
+  it("has nothing that attacks: every dummy is idle", () => {
+    expect(scenario.dummies.length).toBeGreaterThan(0);
+    for (const dummy of scenario.dummies) {
+      expect(dummy.behaviour.kind).toBe("idle");
+    }
+  });
+});
+
+describe("the water on Training Heights (#2985)", () => {
+  const deep = map.water?.filter(({ depth }) => depth === "deep") ?? [];
+
+  /** It arrived at `end`, and no step of the way stood in deep water. */
+  const expectDry = (steps: readonly Spot[], end: Spot): void => {
+    for (const step of steps) {
+      for (const water of deep) {
+        if (water.layer === step.layer) expect(pointInShape(step, water.area)).toBe(false);
+      }
+    }
+    const last = loaded(steps.at(-1), "a step");
+    expect(Math.hypot(last.x - end.x, last.y - end.y)).toBeLessThan(5);
+    expect(last.layer).toBe(end.layer);
+  };
+
+  it("has one deep pond, a shallow ford at a ramp's foot and two puddles", () => {
+    expect(deep).toHaveLength(1);
+    expect(map.water?.filter(({ depth }) => depth === "shallow")).toHaveLength(3);
+  });
+
+  it("walks from one team's spawn to the other's", () => {
+    const [west, east] = map.spawnPoints.filter(({ layer }) => layer === 1);
+    const from = { ...loaded(west, "a spawn").position, layer: 1 };
+    const to = { ...loaded(east, "a spawn").position, layer: 1 };
+    expectDry(walk(from, to), to);
+  });
+
+  it("walks round the deep pond, never through it", () => {
+    const end = { x: 1080, y: 200, layer: 1 };
+    expectDry(walk({ x: 750, y: 200, layer: 1 }, end), end);
+  });
+});
+
+/** A body at `from` holding `direction` for two seconds; every step it takes. */
+function steer(from: Spot, direction: { readonly x: number; readonly y: number }): readonly Spot[] {
+  const [template] = scenarioParticipants(scenario, from);
+  if (template === undefined) throw new Error("no dummies");
+  const simulation = new MatchSimulation({
+    seed: "heights",
+    teamCount: map.teams,
+    walls: allWallSegments(map.walls),
+    bounds: { width: map.width, height: map.height },
+    layers: matchLayers(map),
+    participants: [
+      {
+        ...template,
+        id: "you",
+        team: 0,
+        spawn: { x: from.x, y: from.y },
+        layer: from.layer,
+        behaviour: undefined,
+      },
+    ],
+  });
+  applyIntent(simulation, "you", { kind: "move", dirX: direction.x, dirY: direction.y });
+  const steps: Spot[] = [];
+  for (let tick = 0; tick < 60; tick += 1) {
+    simulation.step(1 / 30);
+    const { position, layer } = loaded(simulation.get("you"), "you");
+    steps.push({ x: position.x, y: position.y, layer });
+  }
+  return steps;
+}
+
+describe("a ramp from the ground has a solid rim (#2975)", () => {
+  const [west, east] = map.transitions.filter(({ from }) => from === map.groundLayer);
+  if (west?.area.kind !== "rect" || east?.area.kind !== "rect") throw new Error("no rect ramps");
+  const westRamp = west.area;
+  const eastRamp = east.area;
+  const radius = 14;
+  const neverOn = (steps: readonly Spot[], ramp: typeof westRamp): void => {
+    for (const step of steps)
+      expect(inside(ramp, step), `${String(step.x)},${String(step.y)}`).toBe(false);
+  };
+
+  it("stops a ground body at a ramp's sides, from north and south, on both ramps", () => {
+    for (const ramp of [westRamp, eastRamp]) {
+      const x = ramp.x + ramp.width / 2;
+      const fromNorth = steer({ x, y: ramp.y - 60, layer: 1 }, { x: 0, y: 1 });
+      neverOn(fromNorth, ramp);
+      expect(fromNorth.at(-1)?.y).toBeCloseTo(ramp.y - radius, 0);
+      const fromSouth = steer({ x, y: ramp.y + ramp.height + 60, layer: 1 }, { x: 0, y: -1 });
+      neverOn(fromSouth, ramp);
+      expect(fromSouth.at(-1)?.y).toBeCloseTo(ramp.y + ramp.height + radius, 0);
+    }
+  });
+
+  it("keeps a body under the bridge from walking out through a ramp's high end", () => {
+    const steps = steer({ x: 500, y: 450, layer: 1 }, { x: -1, y: 0 });
+    neverOn(steps, westRamp);
+    expect(steps.every((step) => step.layer === 1)).toBe(true);
+    expect(steps.at(-1)?.x).toBeGreaterThanOrEqual(westRamp.x + westRamp.width + radius - 0.5);
+  });
+
+  it("still stops a deck body at a ramp's side, as before", () => {
+    const x = westRamp.x + westRamp.width / 2;
+    const up = steer({ x, y: 450, layer: 2 }, { x: 0, y: -1 });
+    expect(up.at(-1)?.y).toBeGreaterThanOrEqual(westRamp.y);
+    const down = steer({ x, y: 450, layer: 2 }, { x: 0, y: 1 });
+    expect(down.at(-1)?.y).toBeLessThanOrEqual(westRamp.y + westRamp.height);
+  });
+
+  it("walks onto the bridge from the west through the ramp's low end", () => {
+    const from = { x: 200, y: westRamp.y - 60, layer: 1 };
+    const steps = walk(from, { x: 600, y: 450, layer: 2 });
+    expect(steps.at(-1)?.layer).toBe(2);
+    const entered = steps.find((step) => inside(westRamp, step));
+    expect(entered?.x).toBeLessThan(westRamp.x + 20);
+  });
+
+  it("walks round a ramp from its north to its south, never onto it on the ground", () => {
+    const x = westRamp.x + westRamp.width / 2;
+    const to = { x, y: westRamp.y + westRamp.height + 20, layer: 1 };
+    const steps = walk({ x, y: westRamp.y - 20, layer: 1 }, to);
+    const last = loaded(steps.at(-1), "a step");
+    expect(Math.hypot(last.x - to.x, last.y - to.y)).toBeLessThan(5);
+    for (const step of steps) {
+      if (step.layer === 1)
+        expect(inside(westRamp, step), `${String(step.x)},${String(step.y)}`).toBe(false);
+    }
+  });
+});
+
+describe("the pits and the tunnel under Training Heights (#2973)", () => {
+  const ground = map.groundLayer;
+  const below = ground - 1;
+  const [westPit, eastPit] = map.pits.map(({ footprint }) => footprint);
+  const [tunnel] = map.tunnels.map(({ footprint }) => footprint);
+  const pitRamps = map.transitions
+    .filter(({ to }) => to === ground)
+    .map(({ area }) => {
+      if (area.kind !== "rect") throw new Error("a pit ramp is a rect");
+      return area;
+    });
+  const radius = 14;
+  const inPit = (step: Spot): boolean =>
+    [westPit, eastPit].some((pit) => pit !== undefined && inside(pit, step));
+  const onPitRamp = (step: Spot): boolean => pitRamps.some((ramp) => inside(ramp, step));
+  const underground = (step: Spot): boolean =>
+    inPit(step) || (tunnel !== undefined && inside(tunnel, step));
+
+  it("sits one level below the ground: Heights' ground is layer 1", () => {
+    expect(ground).toBe(1);
+    expect(map.pits).toHaveLength(2);
+    expect(map.tunnels).toHaveLength(1);
+    expect(pitRamps).toHaveLength(2);
+  });
+
+  it("walks a ground body into the west pit by its ramp only", () => {
+    const end = { x: 650, y: 590, layer: below };
+    const steps = walk({ x: 420, y: 585, layer: ground }, end);
+    const last = loaded(steps.at(-1), "a step");
+    expect(last.layer).toBe(below);
+    expect(Math.hypot(last.x - end.x, last.y - end.y)).toBeLessThan(5);
+    for (const step of steps) {
+      const where = `${String(step.x)},${String(step.y)}`;
+      if (step.layer === ground && inPit(step)) expect(onPitRamp(step), where).toBe(true);
+      if (step.layer === below) expect(underground(step), where).toBe(true);
+    }
+  });
+
+  it("walks from the west pit to the east one through the tunnel, below the ground throughout", () => {
+    const end = { x: 1000, y: 590, layer: below };
+    const steps = walk({ x: 650, y: 590, layer: below }, end);
+    const last = loaded(steps.at(-1), "a step");
+    expect(Math.hypot(last.x - end.x, last.y - end.y)).toBeLessThan(5);
+    for (const step of steps) {
+      expect(step.layer).toBe(below);
+      expect(underground(step), `${String(step.x)},${String(step.y)}`).toBe(true);
+    }
+  });
+
+  it("stops a ground body steered at a pit's edge, as at a wall", () => {
+    const pit = loaded(westPit, "the west pit");
+    const steps = steer({ x: 650, y: pit.y - 60, layer: ground }, { x: 0, y: 1 });
+    const last = loaded(steps.at(-1), "a step");
+    expect(steps.every((step) => step.layer === ground && !inPit(step))).toBe(true);
+    expect(last.y).toBeCloseTo(pit.y - radius, 0);
+  });
+
+  it("walks a ground body over the tunnel, unaffected", () => {
+    const end = { x: 940, y: 700, layer: ground };
+    const steps = walk({ x: 940, y: 480, layer: ground }, end);
+    const last = loaded(steps.at(-1), "a step");
+    expect(Math.hypot(last.x - end.x, last.y - end.y)).toBeLessThan(5);
+    expect(steps.every((step) => step.layer === ground && Math.abs(step.x - 940) < 1)).toBe(true);
+  });
+
+  it("does not walk a ground body to a point in a pit on the ground", () => {
+    const from = { x: 650, y: 480, layer: ground };
+    const steps = walk(from, { x: 650, y: 590, layer: ground });
+    expect(steps.every((step) => step.layer === ground && !inPit(step))).toBe(true);
+  });
+});
+
+describe("the hearth rooms on Training Heights (#3021)", () => {
+  const ground = map.groundLayer;
+  const rooms = (map.lighting?.indoor ?? []).flatMap((shape) =>
+    shape.kind === "rect" ? [shape] : [],
+  );
+  const groundWalls = map.walls.flatMap((wall) =>
+    wall.kind === "rect" && wall.layer === ground ? [wall] : [],
+  );
+  const covered = (point: { readonly x: number; readonly y: number }): boolean =>
+    groundWalls.some((wall) => inside(wall, point));
+  const hearth = (id: string): Spot => ({
+    ...loaded(
+      map.lighting?.lights.find((light) => light.id === id),
+      id,
+    ).position,
+    layer: ground,
+  });
+  const spawn = (team: number): Spot => ({
+    ...loaded(
+      map.spawnPoints.find((point) => point.team === team && point.layer === ground),
+      "a spawn",
+    ).position,
+    layer: ground,
+  });
+  const arrived = (steps: readonly Spot[], end: Spot): void => {
+    const last = loaded(steps.at(-1), "a step");
+    expect(Math.hypot(last.x - end.x, last.y - end.y)).toBeLessThan(5);
+    expect(last.layer).toBe(end.layer);
+  };
+
+  it("walls every inner edge of both rooms but for one door at least 64 wide", () => {
+    expect(rooms).toHaveLength(2);
+    for (const room of rooms) {
+      const edges = [
+        { from: { x: room.x, y: room.y }, along: { x: 1, y: 0 }, length: room.width },
+        { from: { x: room.x, y: room.y + room.height }, along: { x: 1, y: 0 }, length: room.width },
+        { from: { x: room.x, y: room.y }, along: { x: 0, y: 1 }, length: room.height },
+        { from: { x: room.x + room.width, y: room.y }, along: { x: 0, y: 1 }, length: room.height },
+      ].filter(({ from, along }) =>
+        along.x === 1 ? from.y > 0 && from.y < map.height : from.x > 0 && from.x < map.width,
+      );
+      const gaps: number[] = [];
+      for (const { from, along, length } of edges) {
+        let run = 0;
+        for (let at = 0; at <= length; at += 1) {
+          if (covered({ x: from.x + along.x * at, y: from.y + along.y * at })) {
+            if (run > 0) gaps.push(run);
+            run = 0;
+          } else {
+            run += 1;
+          }
+        }
+        if (run > 0) gaps.push(run);
+      }
+      expect(gaps).toHaveLength(1);
+      expect(gaps[0]).toBeGreaterThanOrEqual(64);
+    }
+  });
+
+  it("walks from team 0's spawn to the west hearth, and from team 1's to the east one", () => {
+    const west = hearth("fire-west-hearth");
+    arrived(walk(spawn(0), west), west);
+    const east = hearth("fire-east-hearth");
+    arrived(walk(spawn(1), east), east);
+  });
+
+  it("walks the lane between the east room's wall and the north pond", () => {
+    const west = { x: 860, y: 150, layer: ground };
+    const steps = walk({ x: 1100, y: 157, layer: ground }, west);
+    arrived(steps, west);
+    expect(Math.max(...steps.map(({ y }) => y))).toBeLessThan(200);
+  });
+
+  it("stops a ground body steered at a room wall away from the door, outside", () => {
+    const west = steer({ x: 100, y: 560, layer: ground }, { x: 0, y: 1 });
+    expect(Math.max(...west.map(({ y }) => y))).toBeLessThan(620);
+    const east = steer({ x: 860, y: 20, layer: ground }, { x: 1, y: 0 });
+    expect(Math.max(...east.map(({ x }) => x))).toBeLessThan(940);
   });
 });

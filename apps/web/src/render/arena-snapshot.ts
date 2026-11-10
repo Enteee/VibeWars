@@ -4,10 +4,13 @@ import {
   type OffhandId,
   type ProfessionId,
   type SkillType,
+  type Uphill,
   type Vec2,
+  type ZoneKind,
 } from "@vibewars/game-core";
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
+import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import type { AttackCast } from "./attack-clock.js";
@@ -16,13 +19,14 @@ import type { CapeLook } from "./cape-shape.js";
 import type { RenderablePing } from "./call-marks.js";
 import type {
   RenderableCapturePoint,
-  RenderableGatePlate,
+  RenderableGate,
+  RenderableSwitch,
   RenderableFlag,
   RenderableStand,
 } from "./flag-objects.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
-import { elevationOf } from "./render-order.js";
+import { liftAt } from "./layer-surfaces.js";
 import { screenPx } from "./screen-text.js";
 
 /**
@@ -116,19 +120,53 @@ export type RenderableWall = (RectRenderableWall | PolygonRenderableWall) & {
 /** A deck's or ramp's outline, as a wall's without a layer. */
 export type RenderableShape = RectRenderableWall | PolygonRenderableWall;
 
-/** A map's floors above the ground (ADR-0051), from its file: never per tick. */
+/** A body of water on one layer (#2983, #2984): how deep, and its shore. */
+export interface MapWater {
+  readonly layer: number;
+  readonly depth: "deep" | "shallow";
+  readonly area: RenderableShape;
+}
+
+/** An effect zone on one layer (ADR-0053, #3024): its kind and its area. */
+export interface MapZone {
+  readonly kind: ZoneKind;
+  readonly layer: number;
+  readonly area: RenderableShape;
+}
+
+/** A map's floors above and below the ground (ADR-0051), its water and zones, from its file: never per tick. */
 export interface MapStructure {
   readonly layerCount: number;
+  /** The ground's layer: 1 on a map with pits and tunnels under it (#2973). */
+  readonly ground: number;
+  /** How it is lit (ADR-0052); a map without it is lit flat. */
+  readonly lighting?: MapLighting;
   readonly decks: readonly { readonly layer: number; readonly footprint: RenderableShape }[];
+  /** Holes in the ground, their floor on `ground - 1` (#2973). */
+  readonly pits: readonly { readonly footprint: RenderableShape }[];
+  /** Floors under the ground, on `ground - 1`, the ground over them (#2973). */
+  readonly tunnels: readonly { readonly footprint: RenderableShape }[];
   readonly transitions: readonly {
     readonly from: number;
     readonly to: number;
     readonly area: RenderableShape;
+    readonly uphill: Uphill;
   }[];
+  readonly water: readonly MapWater[];
+  readonly zones: readonly MapZone[];
 }
 
-/** A map with one layer: no deck, no ramp. */
-export const FLAT_STRUCTURE: MapStructure = { layerCount: 1, decks: [], transitions: [] };
+/** A map with one layer: no deck, no pit, no ramp, no water, no zone. */
+export const FLAT_STRUCTURE: MapStructure = {
+  layerCount: 1,
+  ground: 0,
+  decks: [],
+  pits: [],
+  tunnels: [],
+  transitions: [],
+  water: [],
+  zones: [],
+};
 
 /** A short-lived floating number or label above an actor. */
 export interface FloatingText {
@@ -345,6 +383,8 @@ export interface RenderableGroundEffect {
   readonly id: number;
   readonly skillId: string;
   readonly position: Vec2;
+  /** The layer it lies on (ADR-0051): drawn on that layer's deck. */
+  readonly layer: number;
   readonly radius: number;
   readonly colour: number;
   readonly filled: boolean;
@@ -364,6 +404,7 @@ export function toRenderableGroundEffect(
     id: effect.id,
     skillId: effect.skillId,
     position: { x: effect.x, y: effect.y },
+    layer: effect.layer,
     radius: effect.radius,
     colour: teamColour(selfTeam === undefined ? "enemy" : teamSide(effect.team, selfTeam)),
     filled: kind === "ward",
@@ -396,8 +437,10 @@ export interface ArenaSnapshot {
   readonly altar: Vec2 | undefined;
   /** Capture Points' shrines (#1378); `[]` on any other map. */
   readonly capturePoints: readonly RenderableCapturePoint[];
-  /** The plates of the map's gates (#2691); `[]` on a map without them. */
-  readonly gatePlates: readonly RenderableGatePlate[];
+  /** The map's gates and their plates (#2691); `[]` on a map without them. */
+  readonly gates: readonly RenderableGate[];
+  /** The map's switches (#3025); `[]` on a map without them. */
+  readonly switches: readonly RenderableSwitch[];
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
@@ -438,7 +481,8 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   stand: undefined,
   altar: undefined,
   capturePoints: [],
-  gatePlates: [],
+  gates: [],
+  switches: [],
   targetId: undefined,
   projectiles: [],
   groundEffects: [],
@@ -543,7 +587,10 @@ export function actorAtPoint(
       ? snapshot.actors
       : snapshot.actors.map((actor) => ({
           ...actor,
-          position: { x: actor.position.x, y: actor.position.y - elevationOf(actor.layer) },
+          position: {
+            x: actor.position.x,
+            y: actor.position.y - liftAt(snapshot.structure, actor.position, actor.layer),
+          },
         }));
   return (
     nearestUnder(actors, point, living) ??

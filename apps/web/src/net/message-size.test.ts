@@ -189,6 +189,8 @@ function projectile(index: number): WireProjectile {
     skillId: FLYING_SKILL_ID,
     from: { x: FLOAT, y: FLOAT },
     to: { x: FLOAT, y: FLOAT },
+    fromLayer: 0,
+    toLayer: 0,
     launchedAt: FLOAT,
     flightSeconds: FLOAT,
   };
@@ -313,6 +315,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         team: 1,
         x: FLOAT,
         y: FLOAT,
+        layer: 2,
         radius: FLOAT,
         endsAt: FLOAT,
         durationSeconds: FLOAT,
@@ -334,6 +337,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       altarHeldSeconds: 0,
       capturePoints: [],
       gates: [],
+      switches: [],
     };
   }
 
@@ -424,7 +428,16 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       tickIntervalMs: 50,
       elapsedSeconds: FLOAT,
       timeLimitSeconds: FLOAT,
-      map: biggest ?? { id: "", name: "", width: 0, height: 0, teamCount: 2, walls: [], gates: [] },
+      map: biggest ?? {
+        id: "",
+        name: "",
+        width: 0,
+        height: 0,
+        teamCount: 2,
+        walls: [],
+        gates: [],
+        switches: [],
+      },
     };
     const longestSkills = [...IMPLEMENTED_SKILLS]
       .sort((a, b) => b.id.length + b.name.length - (a.id.length + a.name.length))

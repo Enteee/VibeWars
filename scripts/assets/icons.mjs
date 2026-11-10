@@ -161,7 +161,8 @@ const skillType = {
 // category by colour *and* outline (condition = circle, hex = diamond,
 // enchantment = rounded square, stance = pentagon, preparation = triangle
 // point up, glyph = triangle point down, shout = hexagon, chant = banner,
-// weapon spell = shield, form = octagon, skill effect = wide capsule), and the glyph gives
+// weapon spell = shield, form = octagon, skill effect = wide capsule,
+// environment = slanted patch of ground), and the glyph gives
 // the status.
 // ---------------------------------------------------------------------------
 

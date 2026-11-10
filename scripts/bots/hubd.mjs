@@ -3086,6 +3086,22 @@ function readReboot() {
 }
 
 /**
+ * When `kpis.json` projects the 7-day Claude budget to run out before it
+ * resets (#2992). No reading, or a failed section, is null: no refusal.
+ *
+ * @returns {number | null} unix seconds
+ */
+function readSevenDayProjectedAt() {
+  try {
+    const kpis = obj(JSON.parse(fs.readFileSync(KPIS, "utf8")));
+    const projectedAt = obj(obj(kpis.claude).sevenDay).projectedAt;
+    return typeof projectedAt === "number" ? projectedAt : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The proposal waiting for the operator, if any (#960).
  *
  * @returns {import("./reboot.mjs").RebootProposal | null}
@@ -3461,6 +3477,7 @@ function recordStaff(role, argv, cfg) {
     rebootPending: readReboot() !== null,
     now,
     history: current.recent,
+    sevenDayProjectedAt: readSevenDayProjectedAt(),
   });
   if (!allowed.ok) {
     return refuse(allowed.reason);

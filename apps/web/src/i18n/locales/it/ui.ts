@@ -290,6 +290,7 @@ export default {
   "combat.sourceShrine": "Il santuario",
   "combat.sourceSkill": "un'abilità",
   "combat.sourceWeapon": "un'arma",
+  "combat.sourceZone": "Pericolo",
   "combat.spellFailed": "{skill} di {target} fallisce",
   "combat.statusApplied": "{target} ottiene {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} ottiene {status} (mantenuto)",
@@ -355,6 +356,7 @@ export default {
   "effects.categoryChant": "Canto",
   "effects.categoryCondition": "Condizione",
   "effects.categoryEcho": "Eco",
+  "effects.categoryEnvironment": "Ambiente",
   "effects.categoryEffect": "Effetto",
   "effects.categoryEnchantment": "Incantamento",
   "effects.categoryForm": "Forma",
@@ -408,6 +410,7 @@ export default {
   "gearEditor.statusChant": "canto",
   "gearEditor.statusCondition": "hai una condizione",
   "gearEditor.statusEcho": "sotto un'eco",
+  "gearEditor.statusEnvironment": "sotto un effetto ambientale",
   "gearEditor.statusEnchantment": "sotto un incantamento",
   "gearEditor.statusForm": "in una forma",
   "gearEditor.statusGlyph": "sotto un glifo",
@@ -591,6 +594,7 @@ export default {
   "hud.stormBeacon": "Faro della Tempesta",
   "hud.stormBeaconOurs": "Faro della Tempesta: in mano alla tua squadra",
   "hud.stormBeaconTheirs": "Faro della Tempesta: in mano al nemico",
+  "hud.switch": "Leva",
   "hud.targetDead": "morto",
   "hud.targetEffects": "effetti del bersaglio",
   "hud.versus": "{ours} v {theirs}",
@@ -664,7 +668,6 @@ export default {
   "lobby.hostStartsMatchmaking": "L'host avvia il matchmaking",
   "lobby.joinTeam": "Entra",
   "lobby.joinTeamLabel": "Entra nella squadra {team}",
-  "lobby.leaveQueue": "Esci dalla coda",
   "lobby.leaveTeam": "Esci",
   "lobby.leaveTeamLabel": "Esci dalla squadra {team}",
   "lobby.map": "Mappa",
@@ -725,6 +728,13 @@ export default {
   "matches.endTime": "Tempo scaduto",
   "matches.filterKind": "Tipo",
   "matches.filterSize": "Dimens.",
+  "matches.hallReported": "Segnalato dall'host di ogni partita, non verificato.",
+  "matches.hallStreak": {
+    one: "{count} vittoria di fila",
+    many: "{count} di vittorie di fila",
+    other: "{count} vittorie di fila",
+  },
+  "matches.hallTitle": "Sala degli eroi",
   "matches.hostReported": "dati dell'host",
   "matches.hostReportedTitle": "Pubblicato dall'host della partita; non verificato da altri.",
   "matches.hoursAgo": { one: "{count} h fa", many: "{count} h fa", other: "{count} h fa" },
@@ -796,11 +806,13 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "comandi",
+  "options.display": "schermo",
   "options.label": "Opzioni",
   "options.language": "lingua",
   "options.languageBusy":
     "Prima esci dalla lobby o dalla partita: cambiare lingua ricarica la pagina.",
   "options.languageLabel": "Lingua",
+  "options.lightingLabel": "Illuminazione",
   "options.player": "giocatore",
   "options.relay": "relay (TURN)",
   "options.sections": "sezioni delle opzioni",
@@ -894,6 +906,8 @@ export default {
   "queue.defending": "Controlli {map} · difesa tra {seconds} s",
   "queue.fellThrough": "Partita saltata, nuova ricerca in corso",
   "queue.guildVsGuild": "Gilda contro Gilda",
+  "queue.hallHeldBy": "{holder} detiene la Sala degli eroi",
+  "queue.hallUnheld": "Nessuno detiene la Sala degli eroi",
   "queue.heroesAscent": "Ascesa degli Eroi · turno {round}",
   "queue.hostLeft": "L'host è uscito",
   "queue.hostOnly": "Solo l'host può uscire dalla coda.",
@@ -925,6 +939,8 @@ export default {
   "queue.theirTeam": "Squadra nemica",
   "queue.title": "Arena casuale {mode} · {character}",
   "queue.unreachable": "Server delle lobby non raggiungibili",
+  "queue.vault": "La Cripta",
+  "queue.vaultOpensIn": "La Sala apre tra {time}",
   "queue.versus": "vs",
   "queue.waitingForEveryone": "In attesa di tutti i giocatori",
   "queue.waitingForTeam": "In attesa della squadra ({seconds})",
@@ -1382,6 +1398,75 @@ export default {
   "training.reset": "reset",
   "training.resetDivider": "reset",
   "training.scenario": "scenario",
+  "training.scenario.target-dummy.label": "Manichino",
+  "training.scenario.target-dummy.teaches":
+    "Cosa fa davvero un lancio: con 60 di armatura, esattamente il numero del tooltip.",
+  "training.scenario.time-to-kill.label": "Tempo per uccidere",
+  "training.scenario.time-to-kill.teaches":
+    "Il tuo danno sostenuto: quanto dura un incantatore con 500 di Salute, ancora e ancora.",
+  "training.scenario.physical-vs-elemental.label": "Fisico contro elementale",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Che l'armatura risponde a un tipo di danno: un Guerriero con Insegna robusta attutisce una spada ma non una Palla di fuoco, un Ranger attutisce una Palla di fuoco ma non una spada.",
+  "training.scenario.condition-pressure.label": "Pressione delle condizioni",
+  "training.scenario.condition-pressure.teaches":
+    "Che le condizioni sono un conto alla rovescia: Sanguinamento, Veleno e Bruciatura tolgono 20 di Salute al secondo, il massimo possibile, e aggiungerne altre rinnova invece di sommare.",
+  "training.scenario.condition-removal.label": "Rimozione delle condizioni",
+  "training.scenario.condition-removal.teaches":
+    "Che una rimozione toglie solo quello che dice: un alleato a 200 su 500 ha cinque condizioni, e tra queste Ferita profonda toglie 100 quando arriva e limita le tue cure a 400.",
+  "training.scenario.armor-ladder.label": "Scala dell'armatura",
+  "training.scenario.armor-ladder.teaches":
+    "La curva di mitigazione: lo stesso colpo contro armatura da 40 a 104, fianco a fianco.",
+  "training.scenario.healing-throughput.label": "Resa delle cure",
+  "training.scenario.healing-throughput.teaches":
+    "Quanto valgono le tue cure sotto vera pressione, e che l'armatura è amica del guaritore: la stessa Palla di fuoco toglie 91 a un Monaco e 64 a un Guerriero.",
+  "training.scenario.interrupt-timing.label": "Tempismo d'interruzione",
+  "training.scenario.interrupt-timing.teaches":
+    "Che interrompere è questione di tempismo: blocca un lancio di 3 secondi prima che arrivi. Un incantatore con Stordimento impiega il doppio per i suoi incantesimi, e qualsiasi colpo li ferma.",
+  "training.scenario.blind-denial.label": "Cecità",
+  "training.scenario.blind-denial.teaches":
+    "Che un attaccante con Cecità manca nove colpi su dieci: due arcieri, uno dei due accecato.",
+  "training.scenario.kiting-and-cripple.label": "Kiting e Azzoppato",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Anticipare un bersaglio in movimento, e che uno azzoppato cammina a metà velocità.",
+  "training.scenario.weapon-dps.label": "DPS dell'arma",
+  "training.scenario.weapon-dps.teaches":
+    "Cosa fa la tua arma al secondo: premi Space e leggi la riga dell'arma.",
+  "training.scenario.dodge-drill.label": "Esercizio di schivata",
+  "training.scenario.dodge-drill.teaches":
+    "Che una freccia arriva dove saresti stato: gira dopo che ha lasciato l'arco.",
+  "training.scenario.obstacles-and-los.label": "Vista e portata",
+  "training.scenario.obstacles-and-los.teaches":
+    "Che vedere un nemico non è raggiungerlo: un'abilità su uno dietro la colonna la aggira, e su uno fuori portata si avvicina.",
+  "training.scenario.fireball-dodge.label": "Schiva la Palla di fuoco",
+  "training.scenario.fireball-dodge.teaches":
+    "Che una Palla di fuoco vola come una freccia: spostati quando parte e niente brucia (#535).",
+  "training.scenario.block.label": "Parata",
+  "training.scenario.block.teaches":
+    "Che Guardiano devia metà dei tuoi colpi, e un incantesimo lo attraversa (#534).",
+  "training.scenario.survivability.label": "Sopravvivenza",
+  "training.scenario.survivability.teaches":
+    "Quanto resisti contro tre incantatori, e che l'armatura è la tua leva più grande: a 80 una Palla di fuoco toglie il 30% in meno che a 60.",
+  "training.scenario.aoe-cluster.label": "Area: il gruppo",
+  "training.scenario.aoe-cluster.teaches":
+    "Che un'esplosione si centra sul bersaglio: una Palla di fuoco al centro brucia tutti e cinque, e nessuno dei due isolati.",
+  "training.scenario.aoe-cap.label": "Area: il limite",
+  "training.scenario.aoe-cap.teaches":
+    "Che Sbarramento si ferma a sei: sette ammassati, e uno è sempre risparmiato.",
+  "training.scenario.aoe-friendly-fire.label": "Area: fuoco amico",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Che un'esplosione non ferisce mai la tua squadra: l'alleato nel gruppo non subisce nulla.",
+  "training.scenario.aoe-line-of-sight.label": "Area: linea di vista",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Che un'esplosione si ferma ai muri: i tre davanti alla colonna bruciano, i due dietro no.",
+  "training.scenario.moving-targets.label": "Bersagli in movimento",
+  "training.scenario.moving-targets.teaches":
+    "Colpire ciò che si muove: anticipa chi corre, raggiungi chi fugge e girati verso chi ti insegue.",
+  "training.scenario.heights.label": "Alture",
+  "training.scenario.heights.teaches":
+    "Che l'altezza è un posto da cui combattere: le piattaforme nascondono chi sta sotto, le rampe sono l'unico passaggio tra i livelli, e il tuo tiro con l'arco dall'alto colpisce più forte.",
+  "training.scenario.wilds.label": "Terre selvagge",
+  "training.scenario.wilds.teaches":
+    "Che il terreno stesso può ferire: il terreno bruciato brucia chiunque ci stia sopra, e la bruciatura continua dopo che ne esci, quindi giraci intorno.",
   "training.soundOff": "Audio spento.",
   "training.soundOn": "Audio attivo.",
   "training.you": "Tu",

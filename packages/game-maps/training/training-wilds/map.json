@@ -1,0 +1,74 @@
+{
+  "id": "training-wilds",
+  "name": "Training Wilds",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "teams": 2,
+  "width": 1200,
+  "height": 800,
+  "layers": 1,
+  "groundLayer": 0,
+  "pits": [],
+  "tunnels": [],
+  "decks": [],
+  "transitions": [],
+  "walls": [
+    { "kind": "rect", "x": 420, "y": 220, "width": 360, "height": 30, "layer": 0 },
+    { "kind": "rect", "x": 420, "y": 550, "width": 360, "height": 30, "layer": 0 },
+    { "kind": "rect", "x": 0, "y": 620, "width": 260, "height": 16, "layer": 0 },
+    { "kind": "rect", "x": 244, "y": 636, "width": 16, "height": 44, "layer": 0 },
+    { "kind": "rect", "x": 244, "y": 760, "width": 16, "height": 40, "layer": 0 }
+  ],
+  "zones": [
+    {
+      "id": "lane-embers",
+      "kind": "scorched",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 560, "y": 250, "width": 80, "height": 300 }
+    },
+    {
+      "id": "north-lava",
+      "kind": "molten",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 320, "y": 90, "width": 80, "height": 80 }
+    },
+    {
+      "id": "north-fog",
+      "kind": "toxic-fog",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 460, "y": 90, "width": 80, "height": 80 }
+    },
+    {
+      "id": "south-mire",
+      "kind": "mire",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 460, "y": 630, "width": 80, "height": 80 }
+    },
+    {
+      "id": "south-swamp",
+      "kind": "foul-water",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 340, "y": 710, "width": 80, "height": 80 }
+    }
+  ],
+  "gates": [
+    {
+      "id": "side-room-door",
+      "wall": { "kind": "rect", "x": 244, "y": 680, "width": 16, "height": 80, "layer": 0 },
+      "opener": { "kind": "switch" }
+    }
+  ],
+  "switches": [
+    {
+      "id": "side-room-lever",
+      "layer": 0,
+      "position": { "x": 330, "y": 640 },
+      "targets": ["side-room-door"]
+    }
+  ],
+  "objectives": [],
+  "spawnPoints": [
+    { "team": 0, "layer": 0, "position": { "x": 200, "y": 400 } },
+    { "team": 1, "layer": 0, "position": { "x": 1000, "y": 400 } }
+  ]
+}

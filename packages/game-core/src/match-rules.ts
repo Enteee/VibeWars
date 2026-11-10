@@ -46,6 +46,10 @@ export interface MatchRules {
   readonly deathPenalty: boolean;
   /** A Relic Run won at once by this many points ahead (#2695); without it, only at time. */
   readonly leadToWin?: number | undefined;
+  /** King of the Hill stops scoring a team at this many points (#2699); without it, no cap. */
+  readonly pointCap?: number | undefined;
+  /** A team wins at once when every foe stands at `MORALE_FLOOR` (#2699); without it, it plays on. */
+  readonly floorWins?: boolean | undefined;
   /** Of Relic Run teams tied at time, the last to score wins (#2695); without it, a draw. */
   readonly lastScorerBreaksTie?: boolean | undefined;
   /** A team all dead is not beaten: its base raises it on the wave (#2695); without it, a wipe loses. */
@@ -144,6 +148,18 @@ export const KING_OF_THE_HILL_MATCH_RULES: MatchRules = Object.freeze({
 });
 
 /**
+ * Threefold Keep (#2699, GW1): King of the Hill, at most 12 points a team,
+ * of teams tied at time the last to score wins, and every foe at
+ * `MORALE_FLOOR` is a win at once.
+ */
+export const THREEFOLD_KEEP_MATCH_RULES: MatchRules = Object.freeze({
+  ...KING_OF_THE_HILL_MATCH_RULES,
+  pointCap: 12,
+  lastScorerBreaksTie: true,
+  floorWins: true,
+});
+
+/**
  * Heroes' Ascent's Capture Points (#1378, #2690): stand on a shrine to
  * take it, and every `POINT_TICK_SECONDS` each one a team owns scores it
  * a point. `CAPTURE_LEAD_TO_WIN` points ahead wins at once; a wipe ends
@@ -165,9 +181,30 @@ export function isHallsMode(mode: MatchMode): mode is HallsMode {
   return mode === "king-of-the-hill" || mode === "relic-run" || mode === "capture-points";
 }
 
-/** A Hall of Heroes match (#2700, GW1): no death penalty, the dead return every full minute, 12 minutes. */
+/** How often the Hall of Heroes forms (#2701): every 12 minutes on the UTC clock, :00, :12 and so on. */
+export const HALL_SLOT_SECONDS = 720;
+
+/** How long after its start a Hall slot can still form (#2701): clients' clocks differ by less than this. */
+export const HALL_SLOT_WINDOW_SECONDS = 30;
+
+/** Whether a Hall slot is open at `nowMs` (#2701). On the epoch, so an hour or a day is no special case. */
+export function hallSlotOpen(nowMs: number): boolean {
+  return nowMs % (HALL_SLOT_SECONDS * 1000) < HALL_SLOT_WINDOW_SECONDS * 1000;
+}
+
+/** When the next Hall slot starts, strictly after `nowMs` (#2701). */
+export function nextHallSlotMs(nowMs: number): number {
+  const slot = HALL_SLOT_SECONDS * 1000;
+  return nowMs - (nowMs % slot) + slot;
+}
+
+/**
+ * A Hall of Heroes match (#2700, GW1): no death penalty, the dead return
+ * every full minute, 11 minutes, so that a full-length one is over before
+ * the next 12-minute slot (#2701).
+ */
 const HALLS_RULES = {
-  timeLimitSeconds: 720,
+  timeLimitSeconds: 660,
   deathRule: "respawn",
   respawnSeconds: 60,
   respawnOnWave: true,
@@ -588,6 +625,7 @@ function evaluateRelicRun(
   }
   return (
     evaluateWipe(standing, rules) ??
+    evaluateFloorWin(standing, rules) ??
     evaluateRelicLead(inGame, rules) ??
     evaluateRelicTie(inGame, elapsedSeconds, rules) ??
     evaluateScoreAtTime(inGame, elapsedSeconds, rules)
@@ -612,6 +650,18 @@ function evaluateHallsAtTime(
   const tied = [...score.byTeam].filter(([, points]) => points === best).map(([team]) => team);
   const winner = tied.length === 1 ? tied[0] : recent.find((team) => tied.includes(team));
   return { phase: "finished", winningTeam: winner, reason: "time" };
+}
+
+/** The one team in play not at `MORALE_FLOOR` to the last member, with every foe that is (#2699). */
+function evaluateFloorWin(standing: MatchStanding, rules: MatchRules): MatchOutcome | undefined {
+  if (rules.floorWins !== true) {
+    return undefined;
+  }
+  const living = inPlay(standing, rules);
+  const above = living.filter(([, team]) => team.morale > MORALE_FLOOR * team.members);
+  return living.length > 1 && above.length === 1
+    ? { phase: "finished", winningTeam: above[0]?.[0], reason: "morale" }
+    : undefined;
 }
 
 /** The last team in play wins once the others are out; `undefined` while two are in. */

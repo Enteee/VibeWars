@@ -56,7 +56,7 @@ Code: `scripts/p2p-smoke.mjs` (#707). Needs the internet; not in CI.
 
 `node scripts/p2p-smoke.mjs` builds the client with the Trystero
 transport, serves it on `127.0.0.1`, and for each pair opens its lobby in one
-browser context, reads the key in the title bar, and joins that key from
+browser context, copies its invite link, and opens that link from
 another, as a second window does:
 Firefox↔Firefox, Firefox↔Firefox with a private window's strict tracking
 protection, Chromium↔Chromium and Firefox↔Chromium. For each side it prints

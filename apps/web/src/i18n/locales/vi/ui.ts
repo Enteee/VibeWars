@@ -239,6 +239,7 @@ export default {
   "combat.sourceShrine": "Đền",
   "combat.sourceSkill": "một kỹ năng",
   "combat.sourceWeapon": "một vũ khí",
+  "combat.sourceZone": "Hiểm họa",
   "combat.spellFailed": "{skill} của {target} thất bại",
   "combat.statusApplied": "{target} nhận {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} nhận {status} (duy trì)",
@@ -299,6 +300,7 @@ export default {
   "effects.categoryChant": "Thánh ca",
   "effects.categoryCondition": "Dị trạng",
   "effects.categoryEcho": "Vang vọng",
+  "effects.categoryEnvironment": "Môi trường",
   "effects.categoryEffect": "Hiệu ứng",
   "effects.categoryEnchantment": "Phù phép",
   "effects.categoryForm": "Hình thái",
@@ -348,6 +350,7 @@ export default {
   "gearEditor.statusChant": "thánh ca",
   "gearEditor.statusCondition": "bạn đang có dị trạng",
   "gearEditor.statusEcho": "dưới vang vọng",
+  "gearEditor.statusEnvironment": "dưới hiệu ứng môi trường",
   "gearEditor.statusEnchantment": "được phù phép",
   "gearEditor.statusForm": "trong hình thái",
   "gearEditor.statusGlyph": "dưới ấn chú",
@@ -511,6 +514,7 @@ export default {
   "hud.stormBeacon": "Đèn Hiệu Bão Tố",
   "hud.stormBeaconOurs": "Đèn Hiệu Bão Tố: đội bạn đang giữ",
   "hud.stormBeaconTheirs": "Đèn Hiệu Bão Tố: kẻ địch đang giữ",
+  "hud.switch": "Cần gạt",
   "hud.targetDead": "đã chết",
   "hud.targetEffects": "hiệu ứng của mục tiêu",
   "hud.versus": "{ours} vs {theirs}",
@@ -576,7 +580,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Chủ phòng bắt đầu tìm trận",
   "lobby.joinTeam": "Vào",
   "lobby.joinTeamLabel": "Vào đội {team}",
-  "lobby.leaveQueue": "Rời hàng chờ",
   "lobby.leaveTeam": "Rời",
   "lobby.leaveTeamLabel": "Rời đội {team}",
   "lobby.map": "Bản đồ",
@@ -636,6 +639,9 @@ export default {
   "matches.endTime": "Hết giờ",
   "matches.filterKind": "Loại",
   "matches.filterSize": "Cỡ",
+  "matches.hallReported": "Do chủ phòng của mỗi trận báo cáo, chưa được xác minh.",
+  "matches.hallStreak": { other: "{count} trận thắng liên tiếp" },
+  "matches.hallTitle": "Đại sảnh Anh hùng",
   "matches.hostReported": "chủ phòng báo",
   "matches.hostReportedTitle": "Do chủ phòng công bố; chưa ai khác xác minh.",
   "matches.hoursAgo": { other: "{count} giờ trước" },
@@ -706,10 +712,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "điều khiển",
+  "options.display": "hiển thị",
   "options.label": "Tùy chọn",
   "options.language": "ngôn ngữ",
   "options.languageBusy": "Hãy rời sảnh hoặc trận trước: đổi ngôn ngữ sẽ tải lại trang.",
   "options.languageLabel": "Ngôn ngữ",
+  "options.lightingLabel": "Ánh sáng",
   "options.player": "người chơi",
   "options.relay": "relay (TURN)",
   "options.sections": "mục tùy chọn",
@@ -794,6 +802,8 @@ export default {
   "queue.defending": "Bạn đang giữ {map} · phòng thủ sau {seconds} s",
   "queue.fellThrough": "Trận đã hủy, đang tìm lại",
   "queue.guildVsGuild": "Bang đấu Bang",
+  "queue.hallHeldBy": "{holder} đang giữ Đại sảnh Anh hùng",
+  "queue.hallUnheld": "Chưa ai giữ Đại sảnh Anh hùng",
   "queue.heroesAscent": "Đỉnh Anh Hùng · vòng {round}",
   "queue.hostLeft": "Chủ phòng đã rời",
   "queue.hostOnly": "Chỉ chủ phòng mới được rời hàng chờ.",
@@ -817,6 +827,8 @@ export default {
   "queue.theirTeam": "Đội địch",
   "queue.title": "Đấu trường ngẫu nhiên {mode} · {character}",
   "queue.unreachable": "Không kết nối được máy chủ sảnh",
+  "queue.vault": "Hầm chờ",
+  "queue.vaultOpensIn": "Đại sảnh mở sau {time}",
   "queue.versus": "vs",
   "queue.waitingForEveryone": "Đang chờ mọi người vào",
   "queue.waitingForTeam": "Đang chờ đội của bạn ({seconds})",
@@ -1220,6 +1232,75 @@ export default {
   "training.reset": "đặt lại",
   "training.resetDivider": "đặt lại",
   "training.scenario": "kịch bản",
+  "training.scenario.target-dummy.label": "Hình nộm",
+  "training.scenario.target-dummy.teaches":
+    "Một lần dùng phép thực sự gây ra gì: ở 60 giáp, đúng bằng con số trong chú giải.",
+  "training.scenario.time-to-kill.label": "Thời gian hạ gục",
+  "training.scenario.time-to-kill.teaches":
+    "Sát thương duy trì của bạn: một pháp sư 500 máu trụ được bao lâu, lặp đi lặp lại.",
+  "training.scenario.physical-vs-elemental.label": "Vật lý và nguyên tố",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Giáp ứng với từng loại sát thương: Warrior và Stalwart giảm đòn kiếm chứ không giảm Fireball, Ranger giảm Fireball chứ không giảm đòn kiếm.",
+  "training.scenario.condition-pressure.label": "Áp lực dị trạng",
+  "training.scenario.condition-pressure.teaches":
+    "Dị trạng là đồng hồ đếm ngược tới cái chết: Bleeding, Poison và Burning rút 20 máu mỗi giây, mức cao nhất có thể, và thêm nữa chỉ làm mới thời gian chứ không cộng dồn.",
+  "training.scenario.condition-removal.label": "Gỡ dị trạng",
+  "training.scenario.condition-removal.teaches":
+    "Gỡ dị trạng chỉ gỡ đúng thứ nó ghi: một đồng minh còn 200 trên 500 máu mang năm dị trạng, trong đó Deep Wound lấy 100 máu ngay khi dính và giới hạn lượng hồi máu của bạn ở 400.",
+  "training.scenario.armor-ladder.label": "Thang giáp",
+  "training.scenario.armor-ladder.teaches":
+    "Đường cong giảm sát thương: cùng một đòn đánh vào 40 đến 104 giáp, đặt cạnh nhau.",
+  "training.scenario.healing-throughput.label": "Hiệu suất hồi máu",
+  "training.scenario.healing-throughput.teaches":
+    "Lượng hồi máu của bạn đáng giá bao nhiêu trước áp lực thật, và giáp là bạn của người hồi máu: cùng một Fireball lấy 91 máu của Monk và 64 máu của Warrior.",
+  "training.scenario.interrupt-timing.label": "Canh thời điểm ngắt",
+  "training.scenario.interrupt-timing.teaches":
+    "Ngắt là kỹ năng canh thời điểm: chặn một phép 3 giây trước khi nó hoàn tất. Phép của pháp sư bị Dazed lâu gấp đôi, và đòn đánh nào cũng làm gián đoạn.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Kẻ tấn công bị Blind trượt chín đòn trên mười: hai cung thủ, một người bị Blind.",
+  "training.scenario.kiting-and-cripple.label": "Thả diều và Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Bắn đón đầu mục tiêu đang di chuyển, và mục tiêu bị Crippled chỉ đi được nửa tốc độ.",
+  "training.scenario.weapon-dps.label": "DPS vũ khí",
+  "training.scenario.weapon-dps.teaches":
+    "Vũ khí của bạn gây bao nhiêu mỗi giây: nhấn Space và xem dòng vũ khí.",
+  "training.scenario.dodge-drill.label": "Luyện né",
+  "training.scenario.dodge-drill.teaches":
+    "Mũi tên rơi vào chỗ lẽ ra bạn sẽ đứng: đổi hướng sau khi nó rời cung.",
+  "training.scenario.obstacles-and-los.label": "Tầm nhìn và tầm đánh",
+  "training.scenario.obstacles-and-los.teaches":
+    "Thấy kẻ địch chưa phải là với tới: kỹ năng nhắm kẻ sau cột sẽ đi vòng qua cột, nhắm kẻ ngoài tầm sẽ đi lại gần.",
+  "training.scenario.fireball-dodge.label": "Né Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "Fireball bay như mũi tên: bước sang bên khi nó vừa bay ra và không gì bị cháy (#535).",
+  "training.scenario.block.label": "Đỡ",
+  "training.scenario.block.teaches":
+    "Guardian gạt đi một nửa đòn đánh của bạn, còn phép thì xuyên qua (#534).",
+  "training.scenario.survivability.label": "Khả năng sống sót",
+  "training.scenario.survivability.teaches":
+    "Bạn trụ được bao lâu trước ba pháp sư, và giáp là đòn bẩy lớn nhất: ở 80 giáp, Fireball gây ít hơn 30% so với ở 60.",
+  "training.scenario.aoe-cluster.label": "Diện rộng: cụm",
+  "training.scenario.aoe-cluster.teaches":
+    "Sát thương lan lấy mục tiêu làm tâm: Fireball vào kẻ ở giữa đốt cả năm, nhưng không trúng hai kẻ lạc đàn.",
+  "training.scenario.aoe-cap.label": "Diện rộng: giới hạn",
+  "training.scenario.aoe-cap.teaches":
+    "Barrage dừng ở sáu mục tiêu: bảy kẻ đứng sát nhau, và luôn có một kẻ thoát.",
+  "training.scenario.aoe-friendly-fire.label": "Diện rộng: bắn nhầm đồng đội",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Sát thương lan không bao giờ gây hại phe mình: đồng minh trong cụm không mất gì.",
+  "training.scenario.aoe-line-of-sight.label": "Diện rộng: tầm nhìn",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Sát thương lan dừng ở tường: ba kẻ trước cột bị cháy, hai kẻ sau cột thì không.",
+  "training.scenario.moving-targets.label": "Mục tiêu di động",
+  "training.scenario.moving-targets.teaches":
+    "Đánh trúng thứ đang di chuyển: bắn đón đầu kẻ chạy, đuổi kịp kẻ bỏ trốn, và quay lại đánh kẻ đang đuổi bạn.",
+  "training.scenario.heights.label": "Độ cao",
+  "training.scenario.heights.teaches":
+    "Độ cao là chỗ để chiến đấu: sàn cao che khuất ai ở bên dưới, dốc là lối duy nhất giữa các tầng, và phát cung bạn bắn từ trên cao mạnh hơn.",
+  "training.scenario.wilds.label": "Hoang dã",
+  "training.scenario.wilds.teaches":
+    "Rằng chính mặt đất cũng có thể gây hại: đất cháy xém thiêu đốt bất kỳ ai đứng trên đó, và vết bỏng vẫn tiếp tục sau khi bạn bước ra, nên hãy đi vòng qua.",
   "training.soundOff": "Tắt âm thanh.",
   "training.soundOn": "Bật âm thanh.",
   "training.you": "Bạn",

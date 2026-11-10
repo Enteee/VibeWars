@@ -1,3 +1,4 @@
+import { ASCENT_PROGRESSION } from "../net/maps.js";
 import { describe, expect, it, vi } from "vitest";
 
 import type { LobbySnapshot } from "@vibewars/game-session";
@@ -9,6 +10,7 @@ import {
   endedLines,
   modeLabel,
   nextAscentMorale,
+  nextHallHold,
   nextAscentRound,
   nextAscentWins,
   nextStreak,
@@ -293,5 +295,24 @@ describe("versusTeams (#880)", () => {
   it("counts down once everyone is seated, and says it is waiting before", () => {
     expect(versusTeams(snapshot(0, 4)).countdown).toBe("Starting in 4");
     expect(versusTeams(snapshot(0, null)).countdown).toBe("Waiting for everyone to arrive");
+  });
+});
+
+describe("nextHallHold (#2701)", () => {
+  const HALL = ASCENT_PROGRESSION.length - 1;
+
+  it("starts on a win in the Hall, and a defended Hall is held from the newer win", () => {
+    expect(nextHallHold(null, HALL, "win", 9_000)).toBe(9_000);
+    expect(nextHallHold(5_000, HALL, "win", 9_000)).toBe(9_000);
+  });
+
+  it("does not start on a win anywhere else", () => {
+    expect(nextHallHold(null, HALL - 1, "win", 9_000)).toBeNull();
+  });
+
+  it("goes on a defeat or leaving, and stands when the host left", () => {
+    expect(nextHallHold(5_000, HALL, "loss", 9_000)).toBeNull();
+    expect(nextHallHold(5_000, HALL, "forfeit", 9_000)).toBeNull();
+    expect(nextHallHold(5_000, HALL, "host-left", 9_000)).toBe(5_000);
   });
 });

@@ -72,6 +72,8 @@ function projectile(index: number): WireProjectile {
     skillId: "elementalist.fireball",
     from: { x: 1000 / 3, y: 1000 / 3 },
     to: { x: 1000 / 3, y: 1000 / 3 },
+    fromLayer: 0,
+    toLayer: 0,
     launchedAt: 1000 / 3,
     flightSeconds: 1000 / 3,
   };
@@ -84,6 +86,7 @@ function groundEffect(index: number): WireGroundEffect {
     team: 1,
     x: 1000 / 3,
     y: 1000 / 3,
+    layer: 2,
     radius: 109,
     endsAt: 1000 / 3,
     durationSeconds: 1000 / 3,
@@ -115,6 +118,7 @@ function snapshot(
     altarHeldSeconds: 0,
     capturePoints: [],
     gates: [],
+    switches: [],
   };
 }
 

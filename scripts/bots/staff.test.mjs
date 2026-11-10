@@ -65,15 +65,20 @@ function company(ids, recent = []) {
 /**
  * @param {import("./staff.mjs").Staff} staff
  * @param {import("./staff.mjs").StaffRequest} request
- * @param {{ maxAgents?: number, rebootPending?: boolean }} [options]
+ * @param {{ maxAgents?: number, rebootPending?: boolean, sevenDayProjectedAt?: number | null }} [options]
  */
-function decide(staff, request, { maxAgents = 20, rebootPending = false } = {}) {
+function decide(
+  staff,
+  request,
+  { maxAgents = 20, rebootPending = false, sevenDayProjectedAt = null } = {},
+) {
   return staffAllowed(staff, request, {
     roster: ROLES,
     maxAgents,
     rebootPending,
     now: NOW,
     history: staff.recent,
+    sevenDayProjectedAt,
   });
 }
 
@@ -185,6 +190,40 @@ describe("staffAllowed", () => {
       refusal(decide(busy, { ...hire("qa-tester"), overCap: true }, { maxAgents: 2 })),
     ).toMatch(/maxAgents is 2/);
     expect(refusal(decide(busy, { ...hireAs, role: "manager" }))).toMatch(/exactly one/);
+  });
+
+  it("refuses the manager's hire while the 7-day budget is projected to run out (#2992)", () => {
+    const team = company(["manager", "qa-tester"]);
+    const projectedAt = NOW / 1000 + 3600;
+    const run = new Date(projectedAt * 1000);
+    const pad = (/** @type {number} */ n) => String(n).padStart(2, "0");
+    const on = `${String(run.getFullYear())}-${pad(run.getMonth() + 1)}-${pad(run.getDate())} ${pad(run.getHours())}:${pad(run.getMinutes())}`;
+    expect(refusal(decide(team, hire("developer"), { sevenDayProjectedAt: projectedAt }))).toBe(
+      `the 7-day budget runs out on ${on}, before it resets; no hires until the burn falls`,
+    );
+    expect(decide(team, hire("developer"), { sevenDayProjectedAt: null })).toEqual({
+      ok: true,
+      employee: "developer",
+    });
+    expect(
+      decide(
+        team,
+        { verb: "hire", role: "developer", reason: "r", by: "operator" },
+        { sevenDayProjectedAt: projectedAt },
+      ),
+    ).toEqual({ ok: true, employee: "developer" });
+    expect(decide(team, fire("qa-tester"), { sevenDayProjectedAt: projectedAt })).toEqual({
+      ok: true,
+      employee: "qa-tester",
+    });
+    // A projection already past refuses too.
+    expect(
+      refusal(decide(team, hire("developer"), { sevenDayProjectedAt: NOW / 1000 - 60 })),
+    ).toMatch(/budget runs out/);
+    // The headcount's reason comes first.
+    expect(
+      refusal(decide(team, hire("developer"), { maxAgents: 2, sevenDayProjectedAt: projectedAt })),
+    ).toMatch(/maxAgents is 2/);
   });
 
   it("refuses a role that is not in the roster", () => {

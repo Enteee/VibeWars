@@ -122,6 +122,7 @@ import {
   flashTitle,
   mountQueueScreen,
   nextAscentMorale,
+  nextHallHold,
   nextAscentRound,
   nextAscentWins,
   nextStreak,
@@ -138,9 +139,9 @@ import {
   lobbyPanel,
   type LobbyMap,
   type LobbyMatchmaking,
-  type LobbyRelay,
   type LobbyPanel,
 } from "./ui/lobby-screen.js";
+import { setRelayStatus } from "./ui/relay-status.js";
 import {
   renderTeamLobbyScreen,
   soloCharacterKey,
@@ -201,6 +202,7 @@ import { toPlayerBuild } from "./storage/build-validation.js";
 import { recordAscentWin } from "./storage/fame.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import { startSplashFight } from "./ui/splash-fight.js";
+import { watchHall } from "./ui/vault-screen.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
 import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
 import {
@@ -563,6 +565,17 @@ async function main(): Promise<void> {
   let ascentRound = 0;
   /** The Heroes' Ascent run's wins so far, which set each win's fame (#2702). */
   let ascentWins = 0;
+  /** Since when this party holds the Hall of Heroes (#2701), on its next ticket; `null` for not. */
+  let holdsHallSince: number | null = null;
+  /** Who holds the Hall (#2701), for the Vault; a new win is a toast in every open tab. */
+  const hallWatch = watchHall(
+    watchRecords,
+    () => Date.now(),
+    toast,
+    () => {
+      paintQueue();
+    },
+  );
   /**
    * This player's morale in its Heroes' Ascent run (#2686), from the end
    * of the last map won, which it starts the next at. Page memory like
@@ -691,6 +704,7 @@ async function main(): Promise<void> {
       since: team.since,
       teams: team.teams,
       isHost: snapshot.isHost,
+      hallHolder: hallWatch.holder(),
     };
   };
 
@@ -716,6 +730,7 @@ async function main(): Promise<void> {
       // Out of the queue, its Heroes' Ascent run is over (#1996).
       ascentRound = 0;
       ascentWins = 0;
+      holdsHallSince = null;
       ascentMorale = 0;
       lobby.leaveQueue();
     }
@@ -1149,10 +1164,12 @@ async function main(): Promise<void> {
     // Out of the party, its Heroes' Ascent run is over (#1996).
     ascentRound = 0;
     ascentWins = 0;
+    holdsHallSince = null;
     ascentMorale = 0;
     const leaving = lobby;
     const ending = hosted;
     lobby = undefined;
+    publishRelayStatus();
     syncShares();
     hosted = undefined;
     lobbyEntrant = undefined;
@@ -1185,6 +1202,7 @@ async function main(): Promise<void> {
     // A new host cannot vouch for the old one's Heroes' Ascent run (#2539).
     ascentRound = 0;
     ascentWins = 0;
+    holdsHallSince = null;
     ascentMorale = 0;
     setRailParty(undefined);
     topbarView.setParty(undefined);
@@ -1283,12 +1301,24 @@ async function main(): Promise<void> {
     })();
   };
 
-  /** What `joined`'s screen says about relays (#2531), if anything. */
-  const relayFor = (joined: LobbyConnection): LobbyRelay | undefined => {
-    const status = lobbyRelayStatus(joined);
-    return status === undefined
-      ? undefined
-      : { relayedVia: status.relayedVia(), sharingWith: status.sharingWith() };
+  /**
+   * What Options → Relay says of the current lobby's relays (#2531, #2981).
+   * A holder no longer seated has no lobby name to show.
+   */
+  const publishRelayStatus = (): void => {
+    const status = lobby === undefined ? undefined : lobbyRelayStatus(lobby);
+    if (lobby === undefined || status === undefined) {
+      setRelayStatus({ sharedBy: undefined, sharingWith: 0 });
+      return;
+    }
+    const via = status.relayedVia();
+    setRelayStatus({
+      sharedBy:
+        via === undefined
+          ? undefined
+          : lobby.getSnapshot().players.find((p) => p.sessionId === via),
+      sharingWith: status.sharingWith(),
+    });
   };
 
   /**
@@ -1333,7 +1363,6 @@ async function main(): Promise<void> {
       lobbyNotice,
       mapsFor(entry),
       matchmakingFor(entry),
-      relayFor(lobby),
     );
   };
 
@@ -1353,13 +1382,6 @@ async function main(): Promise<void> {
       groupMapId: teamQueue?.groupMapId,
       onFindMatch: () => {
         lobby?.findMatch(roundFor(entry));
-      },
-      onLeaveQueue: () => {
-        // Out of the queue, its Heroes' Ascent run is over (#1996).
-        ascentRound = 0;
-        ascentWins = 0;
-        ascentMorale = 0;
-        lobby?.leaveQueue();
       },
       // Heroes' Ascent waits for a side at its round, never for bots (#1996).
       onPlayBots:
@@ -1401,9 +1423,6 @@ async function main(): Promise<void> {
             showTeamEditor(openedTeam(team, true), characterList.characters);
           }
         })();
-      },
-      onLeaveQueue: () => {
-        leaveAnyQueue();
       },
       onPasteTeam: (text) => {
         const result = importTeam(text, () => crypto.randomUUID(), Date.now());
@@ -1672,6 +1691,7 @@ async function main(): Promise<void> {
       mode,
       null,
       0,
+      null,
       name,
       entrant.guild,
       playerKey,
@@ -2013,6 +2033,7 @@ async function main(): Promise<void> {
       mode,
       current.ascentRound,
       ascentStartMorale(current.ascentRound, ascentMorale),
+      holdsHallSince,
       name,
       entrant.guild,
       playerKey,
@@ -2045,6 +2066,7 @@ async function main(): Promise<void> {
           }
           current.parked = { hosted, entrant, name };
           lobby = undefined;
+          publishRelayStatus();
           closeChat();
           hosted = host;
           seatLobby(name, joined, entrant, true);
@@ -2094,6 +2116,7 @@ async function main(): Promise<void> {
     const matchRoom = lobby;
     const matchHost = hosted;
     lobby = undefined;
+    publishRelayStatus();
     syncShares();
     hosted = undefined;
     closeChat();
@@ -2110,6 +2133,7 @@ async function main(): Promise<void> {
       return;
     }
     lobby = current.party;
+    publishRelayStatus();
     hosted = parked.hosted;
     lobbyEntrant = parked.entrant;
     lobbyName = parked.name;
@@ -2453,6 +2477,7 @@ async function main(): Promise<void> {
     matchmade: boolean,
   ): void => {
     lobby = joined;
+    publishRelayStatus();
     lobbyEntrant = entrant;
     lobbyName = name;
     lobbyNotice = undefined;
@@ -2498,10 +2523,10 @@ async function main(): Promise<void> {
         chat?.notice(t("app.chatThrottled"));
       }
     });
-    // Whose relay it goes through, and how many it shares with, redraw it (#2531).
+    // Whose relay it goes through, and how many it shares with, for Options (#2531, #2981).
     lobbyRelayStatus(joined)?.onChange(() => {
       if (lobby === joined) {
-        lobbyChanged();
+        publishRelayStatus();
       }
     });
     // A lobby this tab has left says nothing more to it; a party lobby
@@ -2509,6 +2534,7 @@ async function main(): Promise<void> {
     joined.onChange(() => {
       if (lobby === joined) {
         syncShares();
+        publishRelayStatus();
       }
       if (lobby === joined || teamQueue?.party === joined) {
         syncTeamQueue(joined);
@@ -2575,6 +2601,7 @@ async function main(): Promise<void> {
       }
       // From the lobby or from its match: either way, it is over.
       lobby = undefined;
+      publishRelayStatus();
       syncShares();
       hosted = undefined;
       lobbyEntrant = undefined;
@@ -2627,6 +2654,7 @@ async function main(): Promise<void> {
       return;
     }
     match = undefined;
+    hallWatch.resume();
     // Read before the view goes: the table moves with the player (#1057).
     const summary = leaving.summary();
     await leaving.dispose();
@@ -2634,6 +2662,7 @@ async function main(): Promise<void> {
     const leavingLobby = lobby;
     const ending = hosted;
     lobby = undefined;
+    publishRelayStatus();
     syncShares();
     hosted = undefined;
     closeChat();
@@ -2690,6 +2719,7 @@ async function main(): Promise<void> {
     }
     const leaving = match;
     match = undefined;
+    hallWatch.resume();
     await leaving.dispose();
     leaveScreen();
     enteringMatch = false;
@@ -2708,6 +2738,12 @@ async function main(): Promise<void> {
           result,
         );
         ascentWins = nextAscentWins(ascentWins, team.ascentRound, result);
+        holdsHallSince = nextHallHold(
+          holdsHallSince,
+          team.playedRound ?? team.ascentRound,
+          result,
+          Date.now(),
+        );
         ascentMorale = nextAscentMorale(ascentMorale, ascentMorale, result);
       }
       endTeamQueue();
@@ -2834,6 +2870,7 @@ async function main(): Promise<void> {
           connect: () => observeMatchFor(from, watch),
         },
       );
+      hallWatch.pause();
       setStatus("", "online");
     } catch (error) {
       console.error("[web] could not watch the match", error);
@@ -2906,6 +2943,12 @@ async function main(): Promise<void> {
                     won ? "win" : "loss",
                   );
                   ascentWins = nextAscentWins(ascentWins, team.ascentRound, won ? "win" : "loss");
+                  holdsHallSince = nextHallHold(
+                    holdsHallSince,
+                    team.playedRound ?? team.ascentRound,
+                    won ? "win" : "loss",
+                    Date.now(),
+                  );
                   if (won) {
                     recordAscentWin(ascentWins);
                   }
@@ -2939,6 +2982,7 @@ async function main(): Promise<void> {
           connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build),
         },
       );
+      hallWatch.pause();
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");
       // Said once, on the match screen: the lobby's went with it.

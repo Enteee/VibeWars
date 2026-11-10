@@ -7,6 +7,7 @@
 | Build                | As profissões, as oito habilidades, os atributos e o equipamento de um personagem          |
 | Inimigo anunciado    | O inimigo que sua equipe foi avisada para atacar; **T** mira nele                          |
 | Condição             | Um efeito nocivo, como Bleeding ou Crippled; acaba sozinho ou é removido                   |
+| Água funda           | Água em que você não consegue entrar; disparos e feitiços a atravessam                     |
 | Fácil de interromper | Qualquer golpe que acerte enquanto você a usa a interrompe, como armar uma armadilha       |
 | Elite                | Uma habilidade forte com moldura dourada; uma por barra                                    |
 | Encantamento         | Um efeito bom conjurado por você ou por um aliado                                          |
@@ -22,6 +23,7 @@
 | Recarga              | O tempo até uma habilidade usada poder ser usada de novo                                   |
 | Ressuscitar          | Trazer de volta um aliado morto                                                            |
 | Runa                 | Uma melhoria de armadura: níveis de atributo, vida, energia ou condições mais curtas       |
+| Água rasa            | Água que você atravessa como terra firme                                                   |
 | Sinete (escudo)      | Sua marca, um pequeno escudo gerado pela identidade do seu navegador, antes do seu nome    |
 | Ponto de início      | Onde sua equipe começa a partida                                                           |
 | Habilidade de toque  | Uma habilidade usada tocando o alvo; alguns gritos fazem os toques inimigos falharem       |

@@ -5,7 +5,8 @@ import type { Projectile } from "../skills/projectile.js";
 /**
  * Gates (#2691): a wall with a pressure plate. A player standing on the
  * plate holds the gate open; it closes when the last one steps off, and
- * then cannot open again for `GATE_REOPEN_SECONDS`.
+ * then cannot open again for `GATE_REOPEN_SECONDS`. A switch's gate
+ * (#3025) has no plate: it stays as its last flip left it.
  *
  * Pure: the simulation says who stands on each plate; this decides how
  * the gate stands, and what a closing one does to a shot in flight.
@@ -17,15 +18,23 @@ export const GATE_REOPEN_SECONDS = 8;
 /** How near a player stands to a plate to count on it. */
 export const GATE_PLATE_REACH_UNITS = 30;
 
+/** What opens a gate: a plate held, or a switch flipped (#3025). */
+export type GateOpener =
+  | {
+      readonly kind: "plate";
+      readonly plate: Vec2;
+      /** The team whose players its plate answers to; `null` for anyone's. */
+      readonly team: number | null;
+    }
+  | { readonly kind: "switch" };
+
 /** A gate as the map lays it out. */
 export interface GateField {
   /** The wall it is while closed. */
   readonly segments: readonly Segment[];
   /** The layer it stands on (ADR-0051). Omitted: the ground. */
   readonly layer?: number;
-  readonly plate: Vec2;
-  /** The team whose players its plate answers to; `null` for anyone's. */
-  readonly team: number | null;
+  readonly opener: GateOpener;
 }
 
 /** One gate as it stands. */
@@ -43,16 +52,24 @@ export function initialGates(fields: readonly GateField[]): Gate[] {
   return fields.map((field) => ({ ...field, open: false, reopenSeconds: 0 }));
 }
 
-/** Whether a player of `team` at `position` holds down `gate`'s plate. */
+/** Whether a player of `team` at `position` holds down `gate`'s plate; never a switch's gate. */
 export function holdsPlate(gate: GateField, team: number, position: Vec2): boolean {
+  const opener = gate.opener;
   return (
-    (gate.team === null || gate.team === team) &&
-    distance(gate.plate, position) <= GATE_PLATE_REACH_UNITS
+    opener.kind === "plate" &&
+    (opener.team === null || opener.team === team) &&
+    distance(opener.plate, position) <= GATE_PLATE_REACH_UNITS
   );
 }
 
-/** `gate`, `dt` seconds on, with its plate `held` or not. */
-export function stepGate(gate: Gate, held: boolean, dt: number): Gate {
+/**
+ * `gate`, `dt` seconds on, with its plate `held` or not; a switch's
+ * gate toggled if `flipped`, and otherwise as it was.
+ */
+export function stepGate(gate: Gate, held: boolean, flipped: boolean, dt: number): Gate {
+  if (gate.opener.kind === "switch") {
+    return flipped ? { ...gate, open: !gate.open } : gate;
+  }
   if (gate.open) {
     return held ? gate : { ...gate, open: false, reopenSeconds: GATE_REOPEN_SECONDS };
   }

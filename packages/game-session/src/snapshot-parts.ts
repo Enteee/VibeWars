@@ -184,6 +184,7 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
       altarHeldSeconds: part.altarHeldSeconds,
       capturePoints: part.capturePoints,
       gates: part.gates,
+      switches: part.switches,
     };
   };
 }

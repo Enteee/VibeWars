@@ -17,16 +17,20 @@ export { clampInputDirection, integrateMovement } from "./movement.js";
 
 export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
 export { beaconStrikeArea } from "./match/beacon.js";
+export { isZoneSourceId, ZONE_KINDS, ZONE_RULES, zonesHolding } from "./match/zones.js";
+export type { MatchZone, ZoneKind, ZoneRule } from "./match/zones.js";
 
 export type { Polygon, Segment } from "./geometry.js";
-export { pointInPolygon } from "./geometry.js";
+export { pointInPolygon, progressAlong } from "./geometry.js";
 export {
   buildLayeredNavGraph,
   buildNavGraph,
   createLayeredPathFinder,
   createPathFinder,
   navGraphFor,
+  minRampLength,
   nearestStandable,
+  rampLength,
   type LayeredPathFinder,
   type NavGraph,
   type NavLayer,
@@ -156,8 +160,13 @@ export {
   KILL_COUNT_MATCH_RULES,
   KILL_MORALE_PERCENT,
   KING_OF_THE_HILL_MATCH_RULES,
+  THREEFOLD_KEEP_MATCH_RULES,
   MATCH_IN_PROGRESS,
   HALLS_MATCH_RULES,
+  HALL_SLOT_SECONDS,
+  HALL_SLOT_WINDOW_SECONDS,
+  hallSlotOpen,
+  nextHallSlotMs,
   isHallsMode,
   MATCH_MODES,
   type HallsMode,
@@ -211,7 +220,9 @@ export {
   companionMode,
   MAX_GROUND_EFFECTS,
   MatchSimulation,
+  walkableAreas,
 } from "./match/simulation.js";
+export { rampRims, UPHILL, type Uphill } from "./match/layer-rules.js";
 export type { CorpseCandidate } from "./match/corpses.js";
 export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
 export {
@@ -238,8 +249,10 @@ export {
   flagTeamOf,
 } from "./match/flags.js";
 export type { RelicCarry, RelicField, RelicState, RelicTarget } from "./match/relics.js";
-export type { Gate, GateField } from "./match/gates.js";
+export type { Gate, GateField, GateOpener } from "./match/gates.js";
 export { GATE_PLATE_REACH_UNITS, GATE_REOPEN_SECONDS } from "./match/gates.js";
+export type { Switch, SwitchField, SwitchState } from "./match/switches.js";
+export { SWITCH_COOLDOWN_SECONDS, switchIdOf, switchTargetId } from "./match/switches.js";
 export type { CapturePoint, CapturePointSite } from "./match/capture-points.js";
 export {
   CAPTURE_REACH_UNITS,

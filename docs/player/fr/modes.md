@@ -163,8 +163,10 @@ Ici, la Course aux reliques de l'Ascension des Héros se joue à l'envers. Chaqu
 **Mène ton Héros fantomatique sur l'autel, et tiens-le.** Chaque équipe a un
 **Héros fantomatique** dans sa base, un fantôme qui se bat à la hache et que
 personne ne joue. L'**autel** est au centre, à la même distance des deux bases.
-Sur **The Courtyard**, il se trouve dans une cour ouverte entourée de quatre
-groupes de piliers, accessible par les quatre coins. Le **Hall of Heroes**, la
+Sur **Threefold Keep**, trois équipes (deux si aucune troisième n'est libre) se le
+disputent dans un donjon muré. Ses portes ne s'ouvrent que de l'intérieur, par
+une plaque : pour entrer, contourne-le jusqu'à un coin ouvert. Au plus 12 points
+par équipe, et si tous les adversaires sont à -60 % de moral, tu gagnes aussitôt. Le **Hall of Heroes**, la
 carte de Roi de la colline qui clôt l'Ascension des héros, le dresse sur une
 estrade murée à l'ouest et à l'est, par une approche nord ou sud bordée de
 piliers. Cible ton fantôme avec un **clic droit** et appuie sur **Space** pour
@@ -177,7 +179,7 @@ son meneur.
 
 Ton fantôme a 640 de santé, et frappe de sa hache avec **Cyclone Axe**,
 **Disrupting Chop** et **Swift Chop**, qu'il suive ou reste. Il est d'autant plus
-fort que tu es haut dans l'Ascension : niveau 24 sur The Courtyard, 28 dans le
+fort que tu es haut dans l'Ascension : niveau 24 sur Threefold Keep, 28 dans le
 Hall of Heroes. **Tue le fantôme de l'autre équipe** et chaque membre de ton
 équipe reçoit un **bonus de moral de +10%**, qui efface d'abord une pénalité de
 mort et ne dépasse jamais +10%. Tue-le de nouveau après sa résurrection et tu
@@ -221,7 +223,7 @@ qui arrive à portée de sort. Tant que ton équipe ne tient pas l'autel, chaque
 tue d'abord le Héros fantomatique adverse dès qu'il se tient sur l'autel à sa
 portée : c'est le seul ennemi qui empêche ton fantôme de le prendre.
 
-The Courtyard le joue.
+Threefold Keep le joue.
 
 ## Points de capture
 
@@ -338,9 +340,8 @@ l'attente, ou, pour les gagnants, part sans repartir en file.
 ## Ascension des héros
 
 Une Ascension des héros en file se joue en neuf manches, toujours dans cet
-ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The Brazen Causeway (Annihilation de prêtre), The
-Courtyard (Roi de la colline), The Warden's Gallery (Points de capture), puis le Hall of Heroes. La fenêtre Salon dit où tu
-en es pendant que tu cherches une équipe : `Round 2 of 9 · Blackwater Ford`.
+ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The Brazen Causeway (Annihilation de prêtre), Threefold
+Keep (Roi de la colline), The Warden's Gallery (Points de capture), puis le Hall of Heroes. Pendant que tu cherches une équipe, l'icône de file dans la barre du haut dit où tu en es, `Ascension des héros · manche 2`, et la fenêtre Salon montre la carte de cette manche.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi
 longtemps qu'il faut : aucun bot ne comble. Seule exception : à partir de la manche 2, une équipe seule à sa manche pendant 60 secondes peut prendre de l'avance. Elle rencontre une équipe qui attend à n'importe quelle manche ultérieure avant le Hall, les deux jouent la carte de l'équipe la plus avancée, et la gagnante continue à partir de là. Une manche sur une carte faite pour
 trois équipes en attend trois ; deux équipes qui ont attendu une troisième pendant
@@ -351,7 +352,9 @@ défendre. Perds, ou quitte un match avant sa fin, et ta prochaine Ascension
 recommence à la manche 1 ; pareil si tu quittes la file ou le groupe. Un match
 perdu parce que son hôte est parti garde ta manche.
 
-Le Hall tire au sort un de trois modes pour chaque match : Roi de la colline, Course aux reliques ou Points de capture, pour deux ou trois équipes. À deux, la troisième base reste fermée, et son point de capture avec elle. Un match dans le Hall dure 12 minutes et le plus de points gagne ; les Points de capture se terminent aussi plus tôt sur une avance de 20. La mort ne coûte pas de moral. Les morts reviennent ensemble à leur base à chaque minute pleine de l'horloge du match : une équipe décimée n'est donc pas battue, mais une équipe dont tous les joueurs sont partis est éliminée. Au Roi de la colline, l'équipe qui tient l'autel continue de marquer après la mort de son fantôme, jusqu'à ce qu'une autre équipe le prenne, et ses morts reviennent sur l'autel. Une égalité va à l'équipe qui a marqué en dernier ou, aux Points de capture, à celle qui a fait le dernier kill.
+Le Hall tire au sort un de trois modes pour chaque match : Roi de la colline, Course aux reliques ou Points de capture, pour deux ou trois équipes. À deux, la troisième base reste fermée, et son point de capture avec elle. Un match dans le Hall dure 11 minutes et le plus de points gagne ; les Points de capture se terminent aussi plus tôt sur une avance de 20. La mort ne coûte pas de moral. Les morts reviennent ensemble à leur base à chaque minute pleine de l'horloge du match : une équipe décimée n'est donc pas battue, mais une équipe dont tous les joueurs sont partis est éliminée. Au Roi de la colline, l'équipe qui tient l'autel continue de marquer après la mort de son fantôme, jusqu'à ce qu'une autre équipe le prenne, et ses morts reviennent sur l'autel. Une égalité va à l'équipe qui a marqué en dernier ou, aux Points de capture, à celle qui a fait le dernier kill.
+
+**La Chambre forte.** Le Hall ne se forme que toutes les 12 minutes à l'heure UTC, à :00, :12, :24, :36 et :48. D'ici là, votre groupe attend dans la Chambre forte : l'icône de file indique le temps avant la prochaine ouverture et qui tient le Hall. À chaque ouverture, le détenteur affronte jusqu'à deux prétendants, ou jusqu'à trois prétendants s'affrontent si personne ne le tient. Seuls les groupes qui attendaient avant l'ouverture participent, et ceux qui restent sans place attendent la suivante. Un détenteur sans adversaire garde le Hall et attend, sans victoire comptée, et un prétendant seul attend aussi. Quand un groupe gagne le Hall, chaque jeu ouvert annonce qui le tient : son chef, ou son tag de guilde si plus de la moitié du groupe le partage.
 
 Ton moral te suit tout au long de la course : la pénalité de mort ou le bonus
 avec lequel tu termines une carte gagnée est celui avec lequel tu commences la
@@ -437,3 +440,5 @@ et à une taille activée ; un groupe sans rien d'activé laisse tout passer. La
 est celle de la plus grande équipe, bots compris : une Partie hébergée en 3v2 ne
 correspond donc à aucune taille. Les pastilles restent comme tu les as laissées
 jusqu'au rechargement de la page.
+
+Au-dessus des filtres, le bandeau **Hall des héros** liste les 20 dernières tenues, de la plus récente à la plus ancienne : le détenteur (un tag de guilde ou le nom du chef), les personnes de l'équipe gagnante, la fin de la victoire la plus récente et, à partir de deux victoires, le nombre d'affilée. Une tenue est une suite ininterrompue de victoires au Hall par le même détenteur. Le bandeau lit les enregistrements de cette page, ignore les filtres et reste masqué si aucun n'est une victoire au Hall. Comme tout enregistrement, c'est ce qu'a signalé l'hôte de chaque match, et rien ne le vérifie.

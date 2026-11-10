@@ -7,7 +7,14 @@
  * own; the settle window and the publishing are the caller's.
  */
 
-import { createRng, seedFromString, type TeamCount } from "@vibewars/game-core";
+import {
+  HALL_SLOT_SECONDS,
+  createRng,
+  hallSlotOpen,
+  nextHallSlotMs,
+  seedFromString,
+  type TeamCount,
+} from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   TICKET_TTL_MS,
@@ -58,6 +65,8 @@ export interface QueueRound {
    * plays, nor the Hall.
    */
   readonly skipping: boolean;
+  /** Whether it forms only in a Hall slot, one group a slot (#2701): true only for the Hall. */
+  readonly slotted: boolean;
 }
 
 export interface FormGroupsInput {
@@ -346,6 +355,38 @@ function skipPairs(
 }
 
 /**
+ * The one group of a slotted round at `now` (#2701): none outside a slot's
+ * window. Whoever was waiting before the slot started is seated at once,
+ * with no wait for a third side: the holder, the latest claim, then
+ * first queued first. One side alone plays nobody and waits for the next
+ * slot. A group of only `hardNat` tickets is passed over, as in `reachable`.
+ */
+function hallGroup(
+  queue: readonly QueueTicket[],
+  teamCount: TeamCount,
+  now: number,
+): QueueTicket[][] {
+  if (!hallSlotOpen(now)) {
+    return [];
+  }
+  const slotStart = nextHallSlotMs(now) - HALL_SLOT_SECONDS * 1000;
+  const waiting = queue.filter((ticket) => ticket.enteredAt < slotStart);
+  // Sorted stably, so of two equal claims the first queued holds.
+  const [holder] = waiting
+    .filter((ticket) => ticket.holdsHallSince !== null)
+    .sort((a, b) => (b.holdsHallSince ?? 0) - (a.holdsHallSince ?? 0));
+  const seated = [
+    ...(holder === undefined ? [] : [holder]),
+    ...waiting.filter((ticket) => ticket !== holder),
+  ].map((ticket, place) => ({ ticket, place }));
+  if (seated.length < 2) {
+    return [];
+  }
+  const [group] = reachable(seated.slice(0, teamCount), [seated]);
+  return group === undefined ? [] : [group.map((queued) => queued.ticket)];
+}
+
+/**
  * Every group of `queue`, each with the round it plays: each round's
  * own (#1996), lowest first, then the sides left over skipping ahead,
  * which play the later side's round (#2687).
@@ -359,14 +400,15 @@ function roundGroups(
   const rounds = [...new Set(queue.map((ticket) => ticket.ascentRound))].sort(
     (a, b) => (a ?? 0) - (b ?? 0),
   );
-  const groups = rounds.flatMap((ascentRound) =>
-    takeGroups(
-      queue.filter((ticket) => ticket.ascentRound === ascentRound),
-      mode,
-      round(ascentRound)?.teamCount ?? 2,
-      now,
-    ).map((group) => ({ group, ascentRound })),
-  );
+  const groups = rounds.flatMap((ascentRound) => {
+    const atRound = queue.filter((ticket) => ticket.ascentRound === ascentRound);
+    const teamCount = round(ascentRound)?.teamCount ?? 2;
+    return (
+      round(ascentRound)?.slotted === true
+        ? hallGroup(atRound, teamCount, now)
+        : takeGroups(atRound, mode, teamCount, now)
+    ).map((group) => ({ group, ascentRound }));
+  });
   const grouped = new Set(groups.flatMap(({ group }) => group));
   const waiting = queue.filter((ticket) => !grouped.has(ticket));
   return [

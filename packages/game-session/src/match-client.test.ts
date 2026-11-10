@@ -167,6 +167,7 @@ describe("connectMatch", () => {
           altarHeldSeconds: 0,
           capturePoints: [],
           gates: [],
+          switches: [],
         },
         transport.selfId,
       );

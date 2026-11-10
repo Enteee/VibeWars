@@ -60,6 +60,7 @@ import { ASSASSIN_STATUSES, type AssassinStatusId } from "./statuses/assassin.js
 import { RITUALIST_STATUSES, type RitualistStatusId } from "./statuses/ritualist.js";
 import { PARAGON_STATUSES, type ParagonStatusId } from "./statuses/paragon.js";
 import { DERVISH_STATUSES, type DervishStatusId } from "./statuses/dervish.js";
+import { ENVIRONMENT_STATUSES, type EnvironmentStatusId } from "./statuses/environment.js";
 
 export type StatusCategory =
   | "condition"
@@ -79,7 +80,12 @@ export type StatusCategory =
    */
   | "item"
   | "form"
-  | "skill-effect";
+  | "skill-effect"
+  /**
+   * Ground the bearer stands in (#3027), GW1's environment effects. No
+   * removal touches one; only its end or a death does, as an echo's.
+   */
+  | "environment";
 
 /**
  * Categories of which a combatant has at most one at a time (GW1): a new
@@ -106,7 +112,8 @@ export type StatusId =
   | AssassinStatusId
   | RitualistStatusId
   | ParagonStatusId
-  | DervishStatusId;
+  | DervishStatusId
+  | EnvironmentStatusId;
 
 /**
  * What renews a status (`StatusDefinition.renewsOn`, #2501):
@@ -1459,6 +1466,12 @@ export interface StatusDefinition {
    * Expertise, a glyph or a chant takes anything off. 1: unaffected.
    */
   readonly energyCostMultiplier: number;
+  /**
+   * Energy the bearer loses each time it pays for a skill or starts a
+   * plain swing (#3027), never below 0: quicksand's "lose 1 Energy each
+   * time you attack or use a skill". 0: none.
+   */
+  readonly energyLossOnAction: number;
   /**
    * The share taken off the recharge of each binding ritual the bearer
    * finishes (#1064): Weapon of Quickening's 0.33, read as
@@ -2912,6 +2925,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   ...RITUALIST_STATUSES,
   ...PARAGON_STATUSES,
   ...DERVISH_STATUSES,
+  ...ENVIRONMENT_STATUSES,
 };
 
 /**

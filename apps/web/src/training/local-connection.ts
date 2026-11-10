@@ -294,6 +294,8 @@ export function createLocalConnection(options: {
           skillId: shot.skillHit?.kind === "spell" ? shot.skillHit.skill.id : undefined,
           from: shot.from,
           to: shot.aimPoint,
+          fromLayer: shot.fromLayer,
+          toLayer: shot.toLayer,
           launchedAt: simulation.elapsedSeconds - shot.elapsed,
           flightSeconds: shot.flightSeconds,
         })),
@@ -312,7 +314,8 @@ export function createLocalConnection(options: {
         altarHolder: simulation.altarState.holder ?? undefined,
         altarHeldSeconds: simulation.altarState.heldSeconds,
         capturePoints: simulation.capturePoints,
-        gates: [],
+        gates: simulation.gates.map((gate) => gate.open),
+        switches: simulation.switches.map((lever) => lever.up),
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

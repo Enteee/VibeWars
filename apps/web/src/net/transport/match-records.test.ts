@@ -16,6 +16,7 @@ import {
   publishMatchRecord,
   watchMatchRecords,
   type HeardMatchRecord,
+  type MatchRecordFilter,
 } from "./match-records.js";
 import { eventId, signEvent, type NostrEvent, type RelaySocketHandlers } from "./nostr-relays.js";
 import { newTicketKey, verifyTicketSig } from "./ticket-key.js";
@@ -193,13 +194,14 @@ describe("match records on Nostr (#2528)", () => {
 });
 
 /** Watch the records on fake relays: the test plays the relays. */
-function watch(now = NOW) {
+function watch(now = NOW, filter?: MatchRecordFilter) {
   const sockets: FakeSocket[] = [];
   const heard: HeardMatchRecord[] = [];
   const verified: string[] = [];
   let noRelay = 0;
   const watching = watchMatchRecords(
     {
+      ...(filter === undefined ? {} : { filter }),
       record: (record) => heard.push(record),
       noRelay: () => {
         noRelay += 1;
@@ -272,6 +274,29 @@ describe("watching match records on Nostr (#2532)", () => {
     deliver(event, 1);
     expect(heard).toEqual([{ id: event?.tags[0]?.[1], record: RECORD }]);
     expect(verified).toHaveLength(1);
+  });
+
+  it("checks no signature for a record the filter does not want (#2701)", () => {
+    const { heard, verified, deliver } = watch(NOW, {
+      wants: () => false,
+      verifyPerSecond: 1,
+      verifyBurst: 1,
+    });
+    deliver(matchRecordEvent(RECORD, NOW));
+    expect(verified).toEqual([]);
+    expect(heard).toEqual([]);
+  });
+
+  it("spends a filter's own budget, and no more (#2701)", () => {
+    const { heard, verified, deliver } = watch(NOW, {
+      wants: () => true,
+      verifyPerSecond: 0,
+      verifyBurst: 1,
+    });
+    deliver(signedRecord(JSON.stringify(RECORD), "vibewars-match/a"));
+    deliver(signedRecord(JSON.stringify(RECORD), "vibewars-match/b"));
+    expect(verified).toHaveLength(1);
+    expect(heard).toHaveLength(1);
   });
 
   it("keeps the first record under a d tag, and drops a second one", () => {

@@ -10,7 +10,7 @@ The game cannot show a bridge, a platform or anyone standing on one, and the ope
 
 ## Decision
 
-**A position is `x`, `y` and a discrete `layer`.** Layer 0 is the ground, 1 a deck, and 2 exists only on a map that needs it. There is no Z anywhere: no height on a body, no height on a wall, no interpolation along a ramp, no 3D collision or navigation. Range is always the 2D distance.
+**A position is `x`, `y` and a discrete `layer`.** Layer 0 is the ground, 1 a deck, and 2 exists only on a map that needs it; a map with a pit puts its ground one index up (see "Below the ground"). There is no Z anywhere: no height on a body, no height on a wall, no interpolation along a ramp, no 3D collision or navigation. Range is always the 2D distance.
 
 **A body is on exactly one layer, always.** Only the simulation changes it, on the tick a body inside a map-defined transition area (a ramp, stairs) moves towards the other layer. A move command names a target layer and the simulation validates it; an illegal one is refused and the body stands. Knockback and teleports keep the layer: a destination that is not walkable on the body's layer is clamped to the nearest point that is, so a knockback stops at a deck's edge and a step beside someone on another layer lands on the stepper's own. A respawn takes its spawn's layer.
 
@@ -45,6 +45,16 @@ Everything else is a plain 2D line-of-sight check. Heights are never computed: n
 
 The simulation alone decides a body's layer and what is valid. `game-core` stays free of Phaser and of anything visual. The renderer reads layers from the snapshot and turns them into elevation offsets, draw order and occlusion; a visual offset never reaches a rule. Gameplay geometry and decoration are separate fields of the map, and decoration never becomes collision.
 
+### Below the ground
+
+Added 2026-11-10 (#2973, operator's choice of a pit plus a covered tunnel). Layers are indices, and a map's `groundLayer` names the ground: 0 on a map with nothing below it, 1 on one with a pit. "Level -1" is index `groundLayer - 1`, so no layer is ever negative. Everything above that called layer 0 the ground now reads `groundLayer`.
+
+A **pit** is a hole in the ground's walkable area, open to the sky, with a floor on the layer below. Its edge is a movement-only rim, as a ground ramp's sides are (#2975): it stops walking and is never in a line-of-sight set, so the ground and the pit fight across it with the height modifier. A pit is entered by a ramp whose high edge lies on the pit's edge, and the rim has a gap there. A knockback or a teleport on the ground stops at the pit's edge.
+
+A **tunnel** is a deck of the ground layer: its footprint is walkable on the layer below and hides what is in it from the ground, both ways, by the deck rule above. The ground walks over it unchanged. Every tunnel touches a pit.
+
+A ramp names its `uphill` side in the map, as a pit's ramp has no deck to climb towards.
+
 ### Old maps are replaced
 
 The maps as they are today get no converter and no migration (ADR-0016). The schema changes, a map document is edited by hand to match, and the old maps are deleted and replaced by new multi-layer maps. Stored data naming a removed map is discarded.
@@ -61,6 +71,11 @@ The model itself, from #2810:
 - **Continuous Z or 3D physics.** Every system pays for a question only ramps ask, and determinism gets harder to keep.
 - **Height along a shot's line (interpolated through a deck's edge).** The footprint rule gives the same cover without computing a height, and a player can learn it at a glance.
 - **Keeping elevation in the renderer only.** It would look right and mean nothing: a player under a bridge would collide with one on it.
+
+Below the ground, from #2973:
+
+- **Negative layer numbers.** Every array, bit mask (`1 << layer`) and wire check indexes by layer, and each would need an offset.
+- **Layer order with a separate elevation table.** `from < to` and every height comparison read layer order as height; a second table would make two answers to "which is higher".
 
 ## Consequences
 

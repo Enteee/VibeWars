@@ -15,7 +15,7 @@ import {
   hasLineOfSight,
   closestPointOnPolygon,
   pointInPolygon,
-  polygonCentre,
+  progressAlong,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
   type Polygon,
@@ -67,7 +67,9 @@ import {
   heightDamageMultiplier,
   heightRange,
   heightStep,
+  rampRims,
   sharesFloor,
+  type FloorTransition,
 } from "./layer-rules.js";
 import {
   buildLayeredNavGraph,
@@ -100,6 +102,7 @@ import {
   isAllyOrSelfRule,
   isCompanionRule,
   isSummonedCreature,
+  loseActionEnergy,
   payCost,
   type ActivationCheck,
   type ActivationRejection,
@@ -336,6 +339,13 @@ import {
   type GateField,
 } from "./gates.js";
 import {
+  flipSwitch,
+  initialSwitches,
+  switchIdOf,
+  type Switch,
+  type SwitchField,
+} from "./switches.js";
+import {
   carriedRelic,
   initialRelics,
   ALTAR_REACH_UNITS,
@@ -357,6 +367,7 @@ import {
   stepBeacon,
   type BeaconState,
 } from "./beacon.js";
+import { ZONE_RULES, zoneSourceId, zonesHolding, type MatchZone } from "./zones.js";
 import { UNCLAIMED_ALTAR, claimant, mayClaim, stepAltar, type AltarState } from "./altar.js";
 import {
   CLAIM_SKILL_ID,
@@ -636,18 +647,26 @@ function hasMorale(participant: Participant): boolean {
   return participant.creature === undefined || participant.creature.onDeath === "lie";
 }
 
-/** A map's discrete layers (ADR-0051): layer 0 is the ground, and needs no area. */
+/**
+ * A map's discrete layers (ADR-0051): `ground` is the ground, everywhere but
+ * its pits; the layer under it is its pits and tunnels (#2973).
+ */
 export interface MatchLayers {
   readonly count: number;
+  readonly ground: number;
   /** Each layer's walls, indexed by layer, and without any gate's. */
   readonly walls: readonly (readonly Segment[])[];
+  /** Floors over a layer, a tunnel being one of the ground's: they hide and cover what is under them. */
   readonly decks: readonly { readonly layer: number; readonly footprint: Polygon }[];
-  /** Ramps and stairs: inside `area`, a body moves between `from` and `to`, one above it. */
-  readonly transitions: readonly {
-    readonly from: number;
-    readonly to: number;
-    readonly area: Polygon;
-  }[];
+  /** Holes in the ground, open to the sky, on the layer under it. */
+  readonly pits: readonly Polygon[];
+  /** Ramps and stairs: inside `area`, a body moves between `from` and `to`, one above, towards `uphill`. */
+  readonly transitions: readonly FloorTransition[];
+  /**
+   * Each layer's deep water (#2983), indexed by layer, as its outline: it
+   * stops bodies and paths as a wall does, but never sight or shots.
+   */
+  readonly deepWater: readonly (readonly Segment[])[];
 }
 
 export interface ParticipantSpec {
@@ -870,6 +889,10 @@ export interface MatchSimulationOptions {
   readonly startLine?: StartLine | undefined;
   /** The map's gates (#2691); none if omitted. */
   readonly gates?: readonly GateField[];
+  /** The map's switches (#3025), each naming gates by index; none if omitted. */
+  readonly switches?: readonly SwitchField[];
+  /** The map's effect zones (ADR-0053, #3024), in its order; none if omitted. */
+  readonly zones?: readonly MatchZone[];
   /**
    * The Guild Battle's base guards (#1223), each at its post from the
    * start; a team's Bodyguard cuts the damage to its Guild Lord while it
@@ -1024,16 +1047,23 @@ const NO_TRANSITIONS: MatchLayers["transitions"] = [];
 /** The decks of a map without any: the deck rule is then nothing to look up. */
 const NO_DECKS: MatchLayers["decks"] = [];
 
-/** Each layer's decks and ramps, indexed by layer; the ground's stays empty. */
-function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Polygon[])[] {
+/**
+ * Each layer's floors and ramps, indexed by layer; the ground's stays
+ * empty, being everywhere its rims leave it. Under the ground, its pits
+ * and tunnels, the ground's own decks (#2973).
+ */
+export function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Polygon[])[] {
   if (layers === undefined) {
     return [];
   }
   return Array.from({ length: layers.count }, (_, layer) =>
-    layer === 0
+    layer === layers.ground
       ? []
       : [
-          ...layers.decks.filter((deck) => deck.layer === layer).map((deck) => deck.footprint),
+          ...(layer === layers.ground - 1 ? layers.pits : []),
+          ...layers.decks
+            .filter((deck) => deck.layer === (layer < layers.ground ? layers.ground : layer))
+            .map((deck) => deck.footprint),
           ...layers.transitions
             .filter((transition) => transition.from === layer || transition.to === layer)
             .map((transition) => transition.area),
@@ -1041,22 +1071,12 @@ function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Poly
   );
 }
 
-/** From each ramp towards the nearest edge of a deck it climbs to. */
-function uphillDirections(layers: MatchLayers | undefined): readonly Vec2[] {
-  return (layers?.transitions ?? []).map((transition) => {
-    const foot = polygonCentre(transition.area);
-    let nearest = foot;
-    let least = Number.POSITIVE_INFINITY;
-    for (const deck of layers?.decks ?? []) {
-      const edge = closestPointOnPolygon(foot, deck.footprint);
-      if (deck.layer === transition.to && distance(foot, edge) < least) {
-        least = distance(foot, edge);
-        nearest = edge;
-      }
-    }
-    return normalize(sub(nearest, foot));
-  });
-}
+/** How far along a ramp a body must walk before it is on the other layer (#2972). */
+const RAMP_CLIMBS_FROM = 0.85;
+const RAMP_DESCENDS_FROM = 0.15;
+
+/** How near a route's waypoint at a ramp's foot counts as there, in units. */
+const RAMP_FOOT_REACHED_UNITS = 8;
 
 /** At most this many push-out passes per move; see `advanceMovement`. */
 const MOVEMENT_RELAX_PASSES = 4;
@@ -1182,12 +1202,18 @@ export class MatchSimulation {
   #walls: readonly Segment[];
   /** Omitted on a map of one layer. */
   readonly #layers: MatchLayers | undefined;
+  readonly #zones: readonly MatchZone[];
   /** Where a body may stand on each layer above the ground: its decks and ramps. */
   readonly #walkable: readonly (readonly Polygon[])[];
   /** Each ramp's way up, as a direction, in `#layers.transitions`' order. */
-  readonly #uphill: readonly Vec2[];
-  /** `#walls` for each layer: what collision reads, swapped as a gate moves. */
+  /** Each layer's ramp rims (#2975): they stop walking, never sight. */
+  readonly #rampRims: readonly (readonly Segment[])[];
+  /** The ground's layer (#2973): 0 on a map with nothing under it. */
+  readonly #ground: number;
+  /** `#walls` for each layer: what sight and shots read, swapped as a gate moves. */
   #layerWalls: readonly (readonly Segment[])[];
+  /** `#layerWalls` with each layer's deep water (#2983): what collision reads. */
+  #layerBlockers: readonly (readonly Segment[])[];
   readonly #gatedGraphs: readonly GatedNavGraph[];
   /** The map's walls, without any gate's; what `#walls` builds on. */
   readonly #mapWalls: readonly Segment[];
@@ -1200,6 +1226,9 @@ export class MatchSimulation {
   readonly #wallSets = new Map<number, WallSet>();
   /** Filled in place, so a bot's objectives see each change (#2691). */
   readonly #gates: Gate[];
+  readonly #switches: Switch[];
+  /** Who reached a switch this step (#3025), in simulation order. */
+  #switchArrivals: CarriedArrival[] = [];
   /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
@@ -1345,17 +1374,22 @@ export class MatchSimulation {
     this.#score = emptyScore(teamIds(this.#teamCount));
     this.#bounds = options.bounds;
     this.#gates = initialGates(options.gates ?? []);
+    this.#switches = initialSwitches(options.switches ?? []);
     this.#layers = options.layers;
+    this.#zones = options.zones ?? [];
+    this.#ground = this.#layers?.ground ?? 0;
     this.#walkable = walkableAreas(this.#layers);
     this.#mapWalls = options.walls ?? [];
+    this.#rampRims = this.#layers === undefined ? [] : rampRims(this.#layers);
     this.#gatedGraphs = buildLayeredNavGraph(
       this.#layers === undefined
-        ? [{ walls: this.#mapWalls, walkable: [] }]
+        ? [{ walls: this.#mapWalls, walkable: [], open: [] }]
         : this.#layers.walls.map((walls, layer) => ({
-            walls,
+            walls: [...walls, ...(this.#layers?.deepWater[layer] ?? [])],
             walkable: this.#walkable[layer] ?? [],
+            open: this.#rampRims[layer] ?? [],
           })),
-      this.#gates.map((gate) => ({ layer: gate.layer ?? 0, segments: gate.segments })),
+      this.#gates.map((gate) => ({ layer: gate.layer ?? this.#ground, segments: gate.segments })),
       this.#bounds,
       this.#ruleset.collision.playerRadius,
     );
@@ -1363,8 +1397,8 @@ export class MatchSimulation {
     this.#walls = walls.walls;
     this.#graphs = walls.graphs;
     this.#paths = walls.paths;
-    this.#uphill = uphillDirections(this.#layers);
     this.#layerWalls = this.#wallsByLayer();
+    this.#layerBlockers = this.#blockersByLayer();
     this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
     this.#rng = createRng(this.#seed);
     this.#flagField = options.flagField;
@@ -1536,6 +1570,11 @@ export class MatchSimulation {
     return this.#gates;
   }
 
+  /** Every switch (#3025), which way it points and when it may move again; `[]` on a map without them. */
+  public get switches(): readonly Switch[] {
+    return this.#switches;
+  }
+
   /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
   public get capturePoints(): readonly CapturePoint[] {
     return this.#capturePoints;
@@ -1625,7 +1664,7 @@ export class MatchSimulation {
     if (reset?.kind === "on-interval" && !(reset.everySeconds > 0)) {
       throw new Error(`participant ${spec.id}: on-interval needs everySeconds above 0`);
     }
-    const layer = spec.layer ?? 0;
+    const layer = spec.layer ?? this.#ground;
     if (!this.#isLayer(layer)) {
       throw new Error(`participant ${spec.id}: layer ${String(layer)} is not one of the map's`);
     }
@@ -3162,7 +3201,11 @@ export class MatchSimulation {
     if (record === undefined) {
       return undefined;
     }
-    if (isCarriedObjectId(targetId) || this.#isAllyGhost(record, targetId)) {
+    if (
+      isCarriedObjectId(targetId) ||
+      switchIdOf(targetId) !== undefined ||
+      this.#isAllyGhost(record, targetId)
+    ) {
       return this.#requestInteract(record, targetId);
     }
     const check = this.#attackCheck(record, targetId);
@@ -3231,7 +3274,8 @@ export class MatchSimulation {
       (this.#flagField !== undefined &&
         (targetId === FLAG_STAND_ID ||
           this.flags.some(({ team }) => team === flagTeamOf(targetId)))) ||
-      this.relics.some(({ team }) => team === relicTeamOf(targetId));
+      this.relics.some(({ team }) => team === relicTeamOf(targetId)) ||
+      this.#switchOf(targetId) !== undefined;
     if (!bundle && !this.#participants.has(targetId)) {
       return false;
     }
@@ -3856,6 +3900,8 @@ export class MatchSimulation {
         this.#advanceWalk(record, dt);
         this.#advanceFollow(record, dt);
       }
+      // Where it stands now, before its statuses run (ADR-0053).
+      this.#applyZones(record);
 
       // Degeneration its statuses' own regeneration does not cancel is
       // health lost, so natural regeneration stops before it would.
@@ -5669,10 +5715,13 @@ export class MatchSimulation {
       const graph = this.#graphOn(record.layer);
       const next = waypoints[0];
       if (next !== undefined && walkIsClear(graph, record.position, next)) {
-        // A waypoint on another layer stays, however clear the line past it.
+        // A waypoint on another layer stays, however clear the line past it,
+        // and so does the one before it, the way onto a ramp, until the body is at it.
         for (
           let after = waypoints[1];
           after !== undefined &&
+          (after.layer === record.layer ||
+            distance(record.position, waypoints[0] ?? after) <= RAMP_FOOT_REACHED_UNITS) &&
           waypoints[0]?.layer === record.layer &&
           walkIsClear(graph, record.position, after);
           after = waypoints[1]
@@ -6064,6 +6113,13 @@ export class MatchSimulation {
     record.interact = undefined;
     if (approach === "arrived" && ghost !== undefined) {
       this.#toggleGhost(record, ghost);
+    } else if (approach === "arrived" && switchIdOf(interact.targetId) !== undefined) {
+      this.#switchArrivals.push({
+        kind: "interact",
+        playerId: record.id,
+        team: record.combatant.team,
+        targetId: interact.targetId,
+      });
     } else if (approach === "arrived") {
       // One bundle at a time: the ashes fall before a flag or relic is taken (#1434).
       this.#dropAshes(record);
@@ -6089,6 +6145,9 @@ export class MatchSimulation {
         ? undefined
         : "invalid-target-dead";
     }
+    if (switchIdOf(targetId) !== undefined) {
+      return this.#switchOf(targetId) === undefined ? "no-target" : undefined;
+    }
     if (relicTeamOf(targetId) !== undefined) {
       return this.#relicField === undefined || this.#relicsState === undefined
         ? "no-target"
@@ -6108,6 +6167,12 @@ export class MatchSimulation {
       return ghost === undefined || ghost.combatant.dead
         ? undefined
         : { position: ghost.position, layer: ghost.layer, floors: ghost.floors };
+    }
+    if (switchIdOf(targetId) !== undefined) {
+      const lever = this.#switchOf(targetId);
+      return lever === undefined
+        ? undefined
+        : { position: lever.position, layer: lever.layer, floors: floorOf(lever.layer) };
     }
     let point: CarriedPoint | undefined;
     if (relicTeamOf(targetId) !== undefined) {
@@ -6129,6 +6194,39 @@ export class MatchSimulation {
         ? { position: carrier.position, layer: carrier.layer }
         : undefined;
     });
+  }
+
+  /** The switch `targetId` names (#3025), or `undefined` if the map has none by that id. */
+  #switchOf(targetId: string): Switch | undefined {
+    const id = switchIdOf(targetId);
+    return id === undefined ? undefined : this.#switches.find((lever) => lever.id === id);
+  }
+
+  /**
+   * The step's switch flips (#3025), in arrival order, of those still
+   * alive: each lever that moves toggles its gates. Returns how many
+   * times each gate was toggled, by index.
+   */
+  #flipSwitches(): Map<number, number> {
+    const arrivals = this.#livingArrivals(this.#switchArrivals);
+    this.#switchArrivals = [];
+    const toggles = new Map<number, number>();
+    for (const arrival of arrivals) {
+      const at = this.#switches.findIndex((lever) => lever.id === switchIdOf(arrival.targetId));
+      const lever = this.#switches[at];
+      if (lever === undefined) {
+        continue;
+      }
+      const next = flipSwitch(lever, this.#elapsedSeconds);
+      if (next === lever) {
+        continue;
+      }
+      this.#switches[at] = next;
+      for (const target of next.targets) {
+        toggles.set(target, (toggles.get(target) ?? 0) + 1);
+      }
+    }
+    return toggles;
   }
 
   /** The arrivals of those still alive: one who arrived and was killed later in the step takes nothing. */
@@ -6325,7 +6423,10 @@ export class MatchSimulation {
     if (taken) {
       this.#refreshBotObjectives();
     }
-    if (scored !== null) {
+    if (
+      scored !== null &&
+      (this.#score.byTeam.get(scored) ?? 0) < (this.#matchRules?.pointCap ?? Infinity)
+    ) {
       this.#score = addPoint(this.#score, scored);
       this.#recentScoringTeams = withLatestTeam(this.#recentScoringTeams, scored);
     }
@@ -6368,14 +6469,28 @@ export class MatchSimulation {
     return (this.#layers?.walls ?? []).map((walls, layer) => [
       ...walls,
       ...this.#gates
-        .filter((gate) => !gate.open && (gate.layer ?? 0) === layer)
+        .filter((gate) => !gate.open && (gate.layer ?? this.#ground) === layer)
         .flatMap((gate) => gate.segments),
     ]);
   }
 
-  /** The walls a body on `layer` collides with. */
+  /** Each layer's walls, its deep water (#2983) and its ramp rims (#2975), indexed by layer. */
+  #blockersByLayer(): readonly (readonly Segment[])[] {
+    return this.#layerWalls.map((walls, layer) => [
+      ...walls,
+      ...(this.#layers?.deepWater[layer] ?? []),
+      ...(this.#rampRims[layer] ?? []),
+    ]);
+  }
+
+  /** The walls on `layer`: what stops sight and shots there. */
   #wallsOn(layer: number): readonly Segment[] {
     return this.#layerWalls[layer] ?? this.#walls;
+  }
+
+  /** What a body on `layer` collides with: its walls, deep water (#2983) and ramp rims (#2975). */
+  #blockersOn(layer: number): readonly Segment[] {
+    return this.#layerBlockers[layer] ?? this.#walls;
   }
 
   /** The floors a body at `position` on `layer` stands on (ADR-0051). */
@@ -6440,12 +6555,28 @@ export class MatchSimulation {
     return Number.isInteger(layer) && layer >= 0 && layer < (this.#layers?.count ?? 1);
   }
 
-  /** Whether `point` is a place to stand on `layer`: the ground is everywhere. */
+  /** Whether `point` is a place to stand on `layer`: the ground is everywhere but its pits. */
   #isOnLayer(point: Vec2, layer: number): boolean {
-    return (
-      this.#isLayer(layer) &&
-      (layer === 0 || (this.#walkable[layer] ?? []).some((area) => pointInPolygon(point, area)))
+    if (!this.#isLayer(layer)) {
+      return false;
+    }
+    if (layer === this.#ground) {
+      return this.#pitAt(point) === undefined;
+    }
+    return (this.#walkable[layer] ?? []).some((area) => pointInPolygon(point, area));
+  }
+
+  /** The pit `point` is in, off any ramp down into it (#2973). */
+  #pitAt(point: Vec2): Polygon | undefined {
+    const layers = this.#layers;
+    if (layers === undefined || layers.pits.length === 0) {
+      return undefined;
+    }
+    const pit = layers.pits.find((each) => pointInPolygon(point, each));
+    const onRamp = layers.transitions.some(
+      (ramp) => ramp.to === this.#ground && pointInPolygon(point, ramp.area),
     );
+    return onRamp ? undefined : pit;
   }
 
   /**
@@ -6453,7 +6584,11 @@ export class MatchSimulation {
    * a walk, a step or a teleport stops at a deck's edge.
    */
   #clampToLayer(position: Vec2, layer: number): Vec2 {
-    if (layer === 0 || this.#isOnLayer(position, layer)) {
+    if (layer === this.#ground) {
+      const pit = this.#pitAt(position);
+      return pit === undefined ? position : closestPointOnPolygon(position, pit);
+    }
+    if (this.#isOnLayer(position, layer)) {
       return position;
     }
     let nearest = position;
@@ -6473,13 +6608,15 @@ export class MatchSimulation {
    * A body inside a ramp that walked towards its other layer is on it
    * from this tick (ADR-0051): with a route, only if its next waypoint
    * is this ramp's, on that layer; steered, uphill or downhill as
-   * `direction` points.
+   * `direction` points. Only near the far end (#2972): a ramp's top
+   * overlaps its deck, so a body turned to the ground there would walk
+   * off under it.
    */
   #climb(record: ParticipantRecord, direction: Vec2): void {
     const transitions = this.#layers?.transitions ?? NO_TRANSITIONS;
     const steered = record.inputDirection.x !== 0 || record.inputDirection.y !== 0;
     const next = steered ? undefined : record.route?.waypoints[0];
-    for (const [at, transition] of transitions.entries()) {
+    for (const transition of transitions) {
       if (
         (record.layer !== transition.from && record.layer !== transition.to) ||
         !pointInPolygon(record.position, transition.area)
@@ -6487,13 +6624,15 @@ export class MatchSimulation {
         continue;
       }
       const upward = record.layer === transition.from;
-      const uphill = this.#uphill[at] ?? ZERO;
+      const { uphill } = transition;
       const wants =
         next === undefined
           ? (direction.x * uphill.x + direction.y * uphill.y) * (upward ? 1 : -1) > 0
           : next.layer === (upward ? transition.to : transition.from) &&
             pointInPolygon(next, transition.area);
-      if (wants) {
+      const t = progressAlong(transition.area, uphill, record.position);
+      const nearFarEnd = upward ? t >= RAMP_CLIMBS_FROM : t <= RAMP_DESCENDS_FROM;
+      if (wants && nearFarEnd) {
         record.layer = upward ? transition.to : transition.from;
         this.#refreshFloors(record);
         return;
@@ -6523,13 +6662,16 @@ export class MatchSimulation {
 
   /**
    * The step's gates (#2691), once every death is in, so a player killed
-   * this tick holds no plate. One that closes stops the shots crossing
-   * it and moves anybody in its way to the nearest ground clear of it.
+   * this tick holds no plate and flips no switch (#3025). One that closes
+   * stops the shots crossing it and moves anybody in its way to the
+   * nearest ground clear of it.
    */
   #advanceGates(dt: number): void {
     if (this.#gates.length === 0 || this.phase !== "active") {
+      this.#switchArrivals = [];
       return;
     }
+    const toggles = this.#flipSwitches();
     let moved = false;
     const closing: Gate[] = [];
     for (const [at, gate] of this.#gates.entries()) {
@@ -6539,7 +6681,9 @@ export class MatchSimulation {
           !record.combatant.dead &&
           holdsPlate(gate, record.combatant.team, record.position),
       );
-      const next = stepGate(gate, held, dt);
+      // Two levers flipped in one step on the same gate leave it as it was.
+      const flipped = (toggles.get(at) ?? 0) % 2 === 1;
+      const next = stepGate(gate, held, flipped, dt);
       this.#gates[at] = next;
       if (next.open !== gate.open) {
         moved = true;
@@ -6554,13 +6698,14 @@ export class MatchSimulation {
     const set = this.#currentWallSet();
     this.#walls = set.walls;
     this.#layerWalls = this.#wallsByLayer();
+    this.#layerBlockers = this.#blockersByLayer();
     this.#graphs = set.graphs;
     this.#paths = set.paths;
     for (const record of this.#participants.values()) {
       record.route = undefined;
       const graph = this.#graphOn(record.layer);
       if (
-        closing.some((gate) => (gate.layer ?? 0) === record.layer) &&
+        closing.some((gate) => (gate.layer ?? this.#ground) === record.layer) &&
         !isStandable(graph, record.position)
       ) {
         this.#placeAt(record, nearestStandable(graph, record.position));
@@ -6816,6 +6961,8 @@ export class MatchSimulation {
     }
     record.outOfCombatSeconds = 0;
     this.#blowStarted(record, target);
+    // A swing is an attack, as a skill is paid for: the mire takes its Energy (#3027).
+    loseActionEnergy(record.combatant);
     // Read as the swing begins (#2282), before its blow lands.
     const aimedAt: AimedAt = {
       id: target.id,
@@ -7135,6 +7282,8 @@ export class MatchSimulation {
       targetId: target.id,
       from,
       aimPoint,
+      fromLayer: record.layer,
+      toLayer: target.layer,
       obstructed: impact !== undefined,
       speed,
       flightSeconds: distance(from, aimPoint) / speed,
@@ -7662,6 +7811,24 @@ export class MatchSimulation {
         this.#elapsedSeconds,
         false,
       );
+    }
+  }
+
+  /**
+   * Each zone `record` stands in, on its layer, puts its kind's statuses on
+   * it again for the kind's linger (ADR-0053), in the map's order. A spirit
+   * stands where it was raised and is spared; the dead were skipped already.
+   * The source is the zone: no player is credited with what it does.
+   */
+  #applyZones(record: ParticipantRecord): void {
+    if (this.#zones.length === 0 || record.creature?.kind === "spirit") {
+      return;
+    }
+    for (const zone of zonesHolding(this.#zones, record.position, record.layer)) {
+      const rule = ZONE_RULES[zone.kind];
+      for (const status of rule.statuses) {
+        applyStatus(record.combatant, status, rule.lingerSeconds, zoneSourceId(zone), NO_RANKS);
+      }
     }
   }
 
@@ -8226,7 +8393,7 @@ export class MatchSimulation {
     const beside = add(target.position, scale(away, 2 * radius));
     this.#placeAt(
       record,
-      hasLineOfSight(target.position, beside, this.#wallsOn(record.layer))
+      hasLineOfSight(target.position, beside, this.#blockersOn(record.layer))
         ? beside
         : target.position,
     );
@@ -8391,7 +8558,7 @@ export class MatchSimulation {
     const from = record.position;
     const away = normalize(sub(from, selection.position));
     const goal = add(from, scale(away, SHADOW_STEP_AWAY_DISTANCE));
-    const impact = firstHit(from, goal, this.#wallsOn(record.layer));
+    const impact = firstHit(from, goal, this.#blockersOn(record.layer));
     const position =
       impact === undefined
         ? goal
@@ -8970,7 +9137,7 @@ export class MatchSimulation {
     combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
-    record.layer = shrine.layer ?? 0;
+    record.layer = shrine.layer ?? this.#ground;
     let position = nearestStandable(this.#graphOn(record.layer), shrine.position);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
       position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);
@@ -9142,7 +9309,7 @@ export class MatchSimulation {
     // and a wall ends up outside the wall rather than inside it — being
     // pushed through level geometry is far worse than overlapping a
     // teammate for one tick.
-    for (const wallSegment of this.#wallsOn(mover.layer)) {
+    for (const wallSegment of this.#blockersOn(mover.layer)) {
       position = resolveCircleSegmentCollision(position, radius, wallSegment);
     }
 
@@ -9201,7 +9368,7 @@ export class MatchSimulation {
     record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
     record.position = returnsTo;
-    record.layer = record.spec.layer ?? 0;
+    record.layer = record.spec.layer ?? this.#ground;
     this.#refreshFloors(record);
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;

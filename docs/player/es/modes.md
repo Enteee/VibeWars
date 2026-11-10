@@ -157,9 +157,11 @@ Aquí la Carrera de reliquias del Ascenso de los Héroes se juega al revés. Cad
 
 **Lleva a tu Héroe Fantasmal al altar y mantenlo.** Cada equipo tiene un **Héroe
 Fantasmal** en su base, un fantasma que lucha con un hacha y que nadie juega. El
-**altar** está en el centro, a la misma distancia de ambas bases. En **The
-Courtyard** está en un patio abierto rodeado por cuatro grupos de pilares, con
-entrada por las cuatro esquinas. **Hall of Heroes**, el mapa de Rey de la colina
+**altar** está en el centro, a la misma distancia de ambas bases. En **Threefold
+Keep**, tres equipos (dos si no hay un tercero libre) luchan por él dentro de un
+recinto amurallado. Sus puertas solo se abren desde dentro, con una placa: para
+entrar, rodéalo hasta una esquina abierta. Como máximo 12 puntos por equipo, y si
+todos los rivales están a -60 % de moral, ganas al instante. **Hall of Heroes**, el mapa de Rey de la colina
 que cierra el Ascenso de los Héroes, lo eleva sobre un estrado amurallado al
 oeste y al este, con una subida norte y otra sur flanqueadas de pilares.
 Selecciona a tu fantasma con un **clic derecho** y pulsa **Space** para decirle
@@ -171,7 +173,7 @@ cada vez que cambia, y el nombre sobre su cabeza muestra a su líder.
 
 Tu fantasma tiene 640 de salud, y blande su hacha con **Cyclone Axe**,
 **Disrupting Chop** y **Swift Chop**, tanto si sigue como si se queda. Es más
-fuerte cuanto más alto estés en el Ascenso: nivel 24 en The Courtyard, 28 en Hall
+fuerte cuanto más alto estés en el Ascenso: nivel 24 en Threefold Keep, 28 en Hall
 of Heroes. **Mata al fantasma del otro equipo** y cada miembro de tu equipo
 obtiene un **bonus de moral de +10%**, que primero elimina una penalización por
 muerte y nunca pasa de +10%. Mátalo otra vez cuando se levante y lo obtienes de
@@ -213,7 +215,7 @@ tu equipo no controla el altar, cada bot mata primero al Héroe Fantasmal del ot
 equipo en cuanto esté sobre el altar a su alcance: es el único enemigo que impide
 que tu fantasma lo reclame.
 
-Se juega en The Courtyard.
+Se juega en Threefold Keep.
 
 ## Puntos de captura
 
@@ -321,9 +323,8 @@ espera o, para los ganadores, sale sin volver a la cola.
 ## Ascenso de los Héroes
 
 Un Ascenso de los Héroes en cola son nueve rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
-Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Brazen Causeway (Aniquilación de sacerdote), The Courtyard (Rey
-de la colina), The Warden's Gallery (Puntos de captura) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
-buscas un equipo: `Round 2 of 9 · Blackwater Ford`. Solo te enfrentas a un equipo de
+Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Brazen Causeway (Aniquilación de sacerdote), Threefold Keep (Rey
+de la colina), The Warden's Gallery (Puntos de captura) y luego Hall of Heroes. Mientras buscas un equipo, el icono de la cola en la barra superior dice dónde estás, `Ascenso de los Héroes · ronda 2`, y la ventana de Sala muestra el mapa de esa ronda. Solo te enfrentas a un equipo de
 tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. La única excepción: desde la ronda 2, un equipo solo en su ronda durante 60 segundos puede adelantarse. Se enfrenta a un equipo que espere en cualquier ronda posterior antes de la Hall, ambos juegan el mapa del equipo más avanzado y el ganador sigue desde allí. Una ronda en
 un mapa hecho para tres equipos espera a tres; dos equipos que hayan esperado 30
 segundos a un tercero juegan entre ellos, y también dos cuyo tercero nunca aparece
@@ -333,7 +334,9 @@ de que termine, tu próximo Ascenso empieza otra vez en la ronda 1; también si 
 de la cola o del grupo. Una partida perdida porque se fue su anfitrión conserva tu
 ronda.
 
-El Hall sortea uno de tres modos en cada partida: Rey de la colina, Carrera de reliquias o Puntos de captura, para dos o tres equipos. Con dos, la tercera base queda cerrada, y con ella su punto de captura. Una partida en el Hall dura 12 minutos y ganan los puntos; Puntos de captura también termina antes con una ventaja de 20. Morir no cuesta moral. Los muertos vuelven juntos a su base en cada minuto completo del reloj de la partida, así que un equipo aniquilado no está vencido, pero un equipo cuyos jugadores se han ido todos queda fuera. En Rey de la colina, el equipo que tiene el altar sigue puntuando tras morir su fantasma, hasta que otro equipo lo reclame, y sus muertos vuelven en el altar. Un empate es para el equipo que puntuó por última vez o, en Puntos de captura, para el que logró la última baja.
+El Hall sortea uno de tres modos en cada partida: Rey de la colina, Carrera de reliquias o Puntos de captura, para dos o tres equipos. Con dos, la tercera base queda cerrada, y con ella su punto de captura. Una partida en el Hall dura 11 minutos y ganan los puntos; Puntos de captura también termina antes con una ventaja de 20. Morir no cuesta moral. Los muertos vuelven juntos a su base en cada minuto completo del reloj de la partida, así que un equipo aniquilado no está vencido, pero un equipo cuyos jugadores se han ido todos queda fuera. En Rey de la colina, el equipo que tiene el altar sigue puntuando tras morir su fantasma, hasta que otro equipo lo reclame, y sus muertos vuelven en el altar. Un empate es para el equipo que puntuó por última vez o, en Puntos de captura, para el que logró la última baja.
+
+**La Cámara.** El Hall solo se forma cada 12 minutos según la hora UTC, a las :00, :12, :24, :36 y :48. Hasta entonces tu grupo espera en la Cámara: el icono de la cola muestra el tiempo hasta la próxima apertura y quién controla el Hall. En cada apertura, quien lo controla se enfrenta a un máximo de dos aspirantes, o se enfrentan hasta tres aspirantes si nadie lo controla. Solo participan los grupos que esperaban antes de la apertura, y los que no tengan plaza esperan a la siguiente. Quien lo controla sin rival conserva el Hall y espera, sin que cuente ninguna victoria, y un aspirante solo también espera. Cuando un grupo gana el Hall, todas las partidas abiertas dicen quién lo controla: su líder, o su etiqueta de hermandad si la comparte más de la mitad del grupo.
 
 Tu moral se mantiene durante todo el recorrido: la penalización por muerte o la
 bonificación con la que terminas un mapa ganado es con la que empiezas el siguiente,
@@ -414,3 +417,5 @@ quieras, y una partida aparece si encaja con un tipo pulsado y un tamaño pulsad
 grupo sin ninguno pulsado deja pasar todo. El tamaño es el del equipo más grande, con
 bots incluidos, así que una Partida alojada de 3v2 no encaja con ningún tamaño. Los
 chips se quedan como los dejaste hasta que se recarga la página.
+
+Encima de los filtros, la franja **Salón de los héroes** muestra los últimos 20 dominios, del más reciente al más antiguo: quien domina (una etiqueta de gremio o el nombre del líder), las personas del equipo ganador, cuándo terminó la victoria más reciente y, desde dos victorias, cuántas seguidas. Un dominio es una racha ininterrumpida de victorias en el Salón de quien domina. La franja lee los registros de esta página, ignora los filtros y se oculta si ninguno es una victoria en el Salón. Como todo registro, es lo que informó el anfitrión de cada partida, y nada lo comprueba.

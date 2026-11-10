@@ -1,4 +1,5 @@
-import { allWallSegments, wallToSegments } from "@vibewars/game-maps/geometry";
+import { allWallSegments } from "@vibewars/game-maps/geometry";
+import { matchGates, matchLayers, matchSwitches, matchZones } from "@vibewars/game-maps/layers";
 import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
@@ -27,9 +28,10 @@ import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with 
 import mosslitCairns from "@vibewars/game-maps/maps/mosslit-cairns/map.json" with { type: "json" };
 import wardensGallery from "@vibewars/game-maps/maps/wardens-gallery/map.json" with { type: "json" };
 import hollowDeep from "@vibewars/game-maps/maps/hollow-deep/map.json" with { type: "json" };
-import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
+import threefoldKeep from "@vibewars/game-maps/maps/threefold-keep/map.json" with { type: "json" };
 import {
   FOE_RELIC_RUN_MATCH_RULES,
+  THREEFOLD_KEEP_MATCH_RULES,
   HALLS_MATCH_RULES,
   MATCH_MODES,
   isHallsMode,
@@ -53,6 +55,7 @@ import {
   type QueueMode,
   type WireTeamCount,
   type GateDescriptor,
+  type SwitchDescriptor,
 } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { FLAT_STRUCTURE, type MapStructure } from "../render/arena-snapshot.js";
@@ -89,7 +92,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   cinderSanctum,
   brokenTower,
   // King of the Hill's (#1377, #2552).
-  theCourtyard,
+  threefoldKeep,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroesKing,
   hallOfHeroesRelic,
@@ -244,7 +247,7 @@ export const ASCENT_PROGRESSION: readonly string[] = [
   "mosslit-cairns",
   // Golden Gates' slot.
   "brazen-causeway",
-  "the-courtyard",
+  "threefold-keep",
   "wardens-gallery",
   "hall-of-heroes-king",
 ];
@@ -314,6 +317,11 @@ export function queueSkipping(mode: QueueMode, round: number | null): boolean {
   );
 }
 
+/** Whether `round` forms only in a Hall slot (#2701): Heroes' Ascent's last, the Hall. */
+export function queueSlotted(mode: QueueMode, round: number | null): boolean {
+  return mode === "heroes-ascent" && round === ASCENT_PROGRESSION.length - 1;
+}
+
 /** The modes a Random Arena never plays. */
 const NOT_RANDOM: readonly MatchMode[] = [
   "guild-battle",
@@ -350,13 +358,25 @@ export interface LoadedStructure {
   readonly wallLayers: readonly number[];
 }
 
-/** What the renderer needs of a map's layers, from its file. */
+/** What the renderer needs of a map's layers, its water and its zones, from its file. */
 export function structureOf(map: MapData): LoadedStructure {
+  const water = (map.water ?? []).map(({ layer, depth, area }) => ({ layer, depth, area }));
+  const zones = (map.zones ?? []).map(({ kind, layer, area }) => ({ kind, layer, area }));
   return {
     structure:
-      map.layers === 1
+      map.layers === 1 && map.lighting === undefined && water.length === 0 && zones.length === 0
         ? FLAT_STRUCTURE
-        : { layerCount: map.layers, decks: map.decks, transitions: map.transitions },
+        : {
+            layerCount: map.layers,
+            ground: map.groundLayer,
+            decks: map.decks,
+            pits: map.pits,
+            tunnels: map.tunnels,
+            transitions: map.transitions,
+            water,
+            zones,
+            ...(map.lighting === undefined ? {} : { lighting: map.lighting }),
+          },
     wallLayers: map.walls.map((wall) => wall.layer),
   };
 }
@@ -376,16 +396,28 @@ export function mapStructure(mapId: string): LoadedStructure {
   return known;
 }
 
-function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
-  const { wall, plate, team } = gate;
+/** `gate` as the wire carries it (#2691, #3025). */
+export function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
+  const { wall, opener } = gate;
   return {
     wall:
       wall.kind === "rect"
         ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
         : { kind: "polygon", points: wall.points },
-    plate,
-    team: team === 0 || team === 1 || team === 2 ? team : null,
+    opener:
+      opener.kind === "plate"
+        ? {
+            kind: "plate",
+            plate: opener.plate,
+            team: opener.team === 0 || opener.team === 1 || opener.team === 2 ? opener.team : null,
+          }
+        : { kind: "switch" },
   };
+}
+
+/** `map`'s switches as the wire carries them (#3025), in its order. */
+export function switchDescriptors(map: MapData): SwitchDescriptor[] {
+  return (map.switches ?? []).map(({ id, layer, position }) => ({ id, layer, position }));
 }
 
 /** The resurrection shrines among a map's objectives. */
@@ -539,6 +571,9 @@ export function mapMatchRules(mapId: string, mode: MatchMode): MatchRules {
   if (map?.halls === true && isHallsMode(mode)) {
     return HALLS_MATCH_RULES[mode];
   }
+  if (map?.keep === true) {
+    return THREEFOLD_KEEP_MATCH_RULES;
+  }
   return map?.relicCarry === "foe" ? FOE_RELIC_RUN_MATCH_RULES : MATCH_MODES[mode];
 }
 
@@ -566,14 +601,14 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
           : { kind: "polygon", points: wall.points },
       ),
       gates: map.gates.map(gateDescriptor),
+      switches: switchDescriptors(map),
     },
     mode: map.mode,
     walls: allWallSegments(map.walls),
-    gates: map.gates.map((gate) => ({
-      segments: wallToSegments(gate.wall),
-      plate: gate.plate,
-      team: gate.team,
-    })),
+    layers: matchLayers(map),
+    zones: matchZones(map),
+    gates: matchGates(map),
+    switches: matchSwitches(map),
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints.filter((spawn) => spawn.team < seated),
     shrines: shrinesOf(objectives),

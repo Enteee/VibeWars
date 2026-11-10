@@ -5,6 +5,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { segment, type Segment } from "../geometry.js";
 import {
   KING_OF_THE_HILL_MATCH_RULES,
+  THREEFOLD_KEEP_MATCH_RULES,
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   SHRINE_INVULNERABLE_SECONDS,
@@ -20,7 +21,7 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
 
 /**
- * King of the Hill in the simulation (#1377), on The Courtyard (#2552): each
+ * King of the Hill in the simulation (#1377), on a small court: each
  * team's Ghostly Hero follows or stays at Space, claims the altar by
  * itself in 5 s through the cast path, and its team scores for holding
  * it; at 8 minutes the most points win, and a wipe ends it before.
@@ -44,7 +45,7 @@ function polygon(points: readonly Vec2[]): Segment[] {
   return points.map((point, index) => segment(point, points[(index + 1) % points.length] ?? point));
 }
 
-/** The Courtyard's walls (packages/game-maps/maps/the-courtyard). */
+/** A small court's walls: the arena of these tests. */
 const WALLS = [
   ...rect(60, 520, 260, 40),
   ...rect(2680, 1240, 260, 40),
@@ -96,10 +97,10 @@ function fighter(id: string, team: number, spawn: Vec2): ParticipantSpec {
 }
 
 /** Two players a team at the map's spawns, and each team's ghost at its own. */
-function kingOfTheHill(): MatchSimulation {
+function kingOfTheHill(rules = KING_OF_THE_HILL_MATCH_RULES): MatchSimulation {
   return new MatchSimulation({
     seed: "king-of-the-hill",
-    matchRules: KING_OF_THE_HILL_MATCH_RULES,
+    matchRules: rules,
     walls: WALLS,
     bounds: BOUNDS,
     ghostField: FIELD,
@@ -155,8 +156,8 @@ function onAltar(sim: MatchSimulation, team: number, offsetX = 0): void {
 }
 
 /** Team 0's ghost claims the altar, and walks back to its post. */
-function held(): MatchSimulation {
-  const sim = kingOfTheHill();
+function held(rules = KING_OF_THE_HILL_MATCH_RULES): MatchSimulation {
+  const sim = kingOfTheHill(rules);
   onAltar(sim, 0);
   stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);
   return sim;
@@ -391,15 +392,23 @@ describe("a King of the Hill match (#1377)", () => {
   });
 
   it("is won at time by the team with more points", () => {
-    const sim = held();
-    stepUntil(sim, () => sim.phase === "finished", KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds);
-    expect(sim.elapsedSeconds).toBeCloseTo(KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds, 3);
+    // One scoring tick. The clock is a running sum of DT: at 60 s it is still a hair short.
+    const SHORT = { ...KING_OF_THE_HILL_MATCH_RULES, timeLimitSeconds: 36 };
+    const sim = held(SHORT);
+    stepUntil(sim, () => sim.phase === "finished", SHORT.timeLimitSeconds);
+    expect(sim.elapsedSeconds).toBeCloseTo(SHORT.timeLimitSeconds, 3);
     expect(points(sim)[0]).toBe(
-      Math.floor(
-        (KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds - CLAIM_SECONDS) / POINT_TICK_SECONDS,
-      ),
+      Math.floor((SHORT.timeLimitSeconds - CLAIM_SECONDS) / POINT_TICK_SECONDS),
     );
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "time" });
+  });
+
+  it("stops scoring a team at the cap, and the clock runs on (#2699)", () => {
+    const CAPPED = { ...THREEFOLD_KEEP_MATCH_RULES, pointCap: 1, timeLimitSeconds: 70 };
+    const sim = held(CAPPED);
+    stepUntil(sim, () => sim.elapsedSeconds >= 66, 66);
+    expect(points(sim)[0]).toBe(1);
+    expect(sim.phase).toBe("active");
   });
 
   it("is ended at once by a wipe: a living ghost is no player", () => {
@@ -538,8 +547,8 @@ describe("King of the Hill with three teams (#2682)", () => {
   });
 
   it("wipes a team out only once its priest is dead too, and an out team's points win nothing", () => {
-    // Five minutes: past the first wave, without eight minutes of steps.
-    const SHORT = { ...KING_OF_THE_HILL_MATCH_RULES, timeLimitSeconds: 300 };
+    // Past the first wave, at 120 s of match clock, and before the second at 240 s.
+    const SHORT = { ...KING_OF_THE_HILL_MATCH_RULES, timeLimitSeconds: 135 };
     const sim = threeWay(
       [
         { team: 0, position: vec2(240, 600) },

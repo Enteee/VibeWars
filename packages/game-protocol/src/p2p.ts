@@ -21,6 +21,8 @@ import type {
   RechargeSlot,
   SkillBarSlot,
   GateDescriptor,
+  GateOpenerDescriptor,
+  SwitchDescriptor,
   WallDescriptor,
 } from "./protocol.js";
 import {
@@ -289,6 +291,9 @@ export const MAX_WIRE_POINTS = 256;
 
 /** The most gates a map holds (#2691), as `MAX_GATES` in game-maps; a peer keeps walls per combination. */
 export const MAX_WIRE_GATES = 6;
+
+/** The most switches a map holds (#3025), as `MAX_SWITCHES` in game-maps. */
+export const MAX_WIRE_SWITCHES = 6;
 
 /** The widest area a combat message may draw. */
 export const MAX_WIRE_RADIUS = 200;
@@ -610,6 +615,9 @@ export interface WireProjectile {
   readonly skillId: string | null;
   readonly from: { readonly x: number; readonly y: number };
   readonly to: { readonly x: number; readonly y: number };
+  /** The shooter's layer at release, and the target's (#2972). */
+  readonly fromLayer: number;
+  readonly toLayer: number;
   /** The match clock (`elapsedSeconds`) at release. */
   readonly launchedAt: number;
   readonly flightSeconds: number;
@@ -626,6 +634,8 @@ export interface WireGroundEffect {
   readonly team: WireTeam;
   readonly x: number;
   readonly y: number;
+  /** The discrete layer it lies on (ADR-0051), 0 to `MAX_WIRE_LAYER`. */
+  readonly layer: number;
   /** In (0, `MAX_WIRE_RADIUS`]. */
   readonly radius: number;
   /** Match clock (`elapsedSeconds`) at which it ends, rounded to 0.1 s. */
@@ -731,6 +741,8 @@ export interface WireSnapshot {
   readonly capturePoints: readonly WireCapturePoint[];
   /** Whether each of the map's gates is open (#2691), in its descriptor's order. */
   readonly gates: readonly boolean[];
+  /** Whether each of the map's switches points up (#3025), in its descriptor's order. */
+  readonly switches: readonly boolean[];
 }
 
 /**
@@ -1995,7 +2007,8 @@ function parseMap(value: unknown): MapDescriptor | undefined {
   }
   const walls = parseArray(raw.walls, MAX_WIRE_WALLS, parseWall);
   const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseGate);
-  return walls === undefined || gates === undefined
+  const switches = parseArray(raw.switches, MAX_WIRE_SWITCHES, parseSwitch);
+  return walls === undefined || gates === undefined || switches === undefined
     ? undefined
     : {
         id: raw.id,
@@ -2005,22 +2018,44 @@ function parseMap(value: unknown): MapDescriptor | undefined {
         teamCount: raw.teamCount,
         walls,
         gates,
+        switches,
       };
 }
 
 function parseGate(value: unknown): GateDescriptor | undefined {
   const raw = fields(value);
   const wall = raw === undefined ? undefined : parseWall(raw.wall);
-  const plate = raw === undefined ? undefined : parsePoint(raw.plate);
+  const opener = raw === undefined ? undefined : parseGateOpener(raw.opener);
+  return wall === undefined || opener === undefined ? undefined : { wall, opener };
+}
+
+function parseGateOpener(value: unknown): GateOpenerDescriptor | undefined {
+  const raw = fields(value);
+  if (raw?.kind === "switch") {
+    return { kind: "switch" };
+  }
+  const plate = raw?.kind === "plate" ? parsePoint(raw.plate) : undefined;
   return raw !== undefined &&
-    wall !== undefined &&
     plate !== undefined &&
     (raw.team === null || raw.team === 0 || raw.team === 1 || raw.team === 2)
-    ? { wall, plate, team: raw.team }
+    ? { kind: "plate", plate, team: raw.team }
     : undefined;
 }
 
-function parseGateOpen(value: unknown): boolean | undefined {
+function parseSwitch(value: unknown): SwitchDescriptor | undefined {
+  const raw = fields(value);
+  const position = raw === undefined ? undefined : parsePoint(raw.position);
+  return raw !== undefined &&
+    isString(raw.id) &&
+    Number.isInteger(raw.layer) &&
+    isNumber(raw.layer) &&
+    raw.layer >= 0 &&
+    position !== undefined
+    ? { id: raw.id, layer: raw.layer, position }
+    : undefined;
+}
+
+function parseBoolean(value: unknown): boolean | undefined {
   return typeof value === "boolean" ? value : undefined;
 }
 
@@ -2219,6 +2254,8 @@ function parseProjectile(value: unknown): WireProjectile | undefined {
     !isCount(raw.id) ||
     !isString(raw.attackerId) ||
     !isNullableString(raw.skillId) ||
+    !isCount(raw.fromLayer) ||
+    !isCount(raw.toLayer) ||
     !isNumber(raw.launchedAt) ||
     !isNumber(raw.flightSeconds) ||
     raw.flightSeconds <= 0
@@ -2235,6 +2272,8 @@ function parseProjectile(value: unknown): WireProjectile | undefined {
         skillId: raw.skillId,
         from,
         to,
+        fromLayer: raw.fromLayer,
+        toLayer: raw.toLayer,
         launchedAt: raw.launchedAt,
         flightSeconds: raw.flightSeconds,
       };
@@ -2248,6 +2287,7 @@ function parseGroundEffect(value: unknown): WireGroundEffect | undefined {
     isTeam(raw.team) &&
     isNumber(raw.x) &&
     isNumber(raw.y) &&
+    isWireLayer(raw.layer) &&
     isNumber(raw.radius) &&
     raw.radius > 0 &&
     raw.radius <= MAX_WIRE_RADIUS &&
@@ -2260,6 +2300,7 @@ function parseGroundEffect(value: unknown): WireGroundEffect | undefined {
         team: raw.team,
         x: raw.x,
         y: raw.y,
+        layer: raw.layer,
         radius: raw.radius,
         endsAt: raw.endsAt,
         durationSeconds: raw.durationSeconds,
@@ -2306,7 +2347,8 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const aggression = parseArray(raw.aggression, MAX_WIRE_TEAMS, parseScore);
   const relics = parseArray(raw.relics, MAX_WIRE_TEAMS, parseCarried(RELIC_PLACES));
   const altar = raw.altar === null ? null : parsePoint(raw.altar);
-  const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseGateOpen);
+  const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseBoolean);
+  const switches = parseArray(raw.switches, MAX_WIRE_SWITCHES, parseBoolean);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
@@ -2321,7 +2363,8 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     relics === undefined ||
     altar === undefined ||
     capturePoints === undefined ||
-    gates === undefined
+    gates === undefined ||
+    switches === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -2342,6 +2385,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         altarHeldSeconds,
         capturePoints,
         gates,
+        switches,
       };
 }
 

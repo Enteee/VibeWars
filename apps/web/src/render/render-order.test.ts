@@ -50,6 +50,40 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     expect(marks).toBeLessThan(renderOrder({ kind: "wall", layer: 0 }));
   });
 
+  it("lights a layer over its surfaces and under whoever stands on it (#2987)", () => {
+    const ground = renderOrder({ kind: "lighting", layer: 0 });
+    const groundEffect = renderOrder({ kind: "lit-ground-effect" });
+    expect(renderOrder({ kind: "terrain" })).toBeLessThan(ground);
+    expect(ground).toBeLessThan(groundEffect);
+    expect(groundEffect).toBeLessThan(renderOrder(character(0)));
+    const deck = renderOrder({ kind: "lighting", layer: 1 });
+    expect(renderOrder({ kind: "ramp", upperLayer: 1 })).toBeLessThan(deck);
+    expect(renderOrder({ kind: "deck", deckLayer: 1 })).toBeLessThan(deck);
+    expect(deck).toBeLessThan(renderOrder(character(1)));
+  });
+
+  it("draws a ward on a deck over that deck, under whoever stands there and the deck above (#2979)", () => {
+    const ward = renderOrder({ kind: "ground-effect", layer: 1 });
+    expect(renderOrder({ kind: "deck", deckLayer: 1 })).toBeLessThan(ward);
+    expect(renderOrder({ kind: "ramp", upperLayer: 1 })).toBeLessThan(ward);
+    expect(renderOrder({ kind: "lighting", layer: 1 })).toBeLessThan(ward);
+    expect(ward + 0.1).toBeLessThan(renderOrder(character(1)));
+    expect(ward).toBeLessThan(renderOrder({ kind: "deck", deckLayer: 2 }));
+  });
+
+  it("draws a torch or hearth over its layer's light and wards, under whoever stands there (#2989)", () => {
+    for (const layer of [0, 1, 2]) {
+      const mark = renderOrder({ kind: "light-mark", layer });
+      expect(renderOrder({ kind: "lighting", layer })).toBeLessThan(mark);
+      expect(renderOrder({ kind: "ground-effect", layer })).toBeLessThan(mark);
+      expect(mark).toBeLessThan(renderOrder(character(layer)));
+      expect(mark).toBeLessThan(renderOrder({ kind: "wall", layer }));
+    }
+    expect(renderOrder({ kind: "lit-ground-effect" })).toBeLessThan(
+      renderOrder({ kind: "light-mark", layer: 0 }),
+    );
+  });
+
   it("leaves everyone in front of the walls on a map of one layer", () => {
     expect(renderOrder(character(characterBand(0, 1)))).toBeGreaterThan(
       renderOrder({ kind: "wall", layer: 0 }),
@@ -61,7 +95,30 @@ describe("renderOrder (#2810, section 8: 12)", () => {
 
 describe("the elevation offset (ADR-0051)", () => {
   it("is a step per layer, and none on the ground", () => {
-    expect([0, 1, 2].map(elevationOf)).toEqual([0, ELEVATION_STEP, 2 * ELEVATION_STEP]);
+    expect([0, 1, 2].map((layer) => elevationOf(layer, 0))).toEqual([
+      0,
+      ELEVATION_STEP,
+      2 * ELEVATION_STEP,
+    ]);
+  });
+
+  it("is negative below the ground (#2973)", () => {
+    expect([0, 1, 2].map((layer) => elevationOf(layer, 1))).toEqual([
+      -ELEVATION_STEP,
+      0,
+      ELEVATION_STEP,
+    ]);
+  });
+
+  it("draws a pit's floor over the floor and under whoever is in it (#2973)", () => {
+    expect(renderOrder({ kind: "pit" })).toBeGreaterThan(renderOrder({ kind: "floor" }));
+    expect(renderOrder({ kind: "pit" })).toBeLessThan(
+      renderOrder({ kind: "character", band: 0, part: "body" }),
+    );
+    // The ground over a tunnel or a pit's lip covers the pit's bodies.
+    expect(renderOrder({ kind: "deck", deckLayer: 1 })).toBeGreaterThan(
+      renderOrder({ kind: "character", band: 0, part: "marks" }),
+    );
   });
 
   it("eases a change of layer over about 150 ms, either way", () => {
@@ -77,5 +134,98 @@ describe("the elevation offset (ADR-0051)", () => {
   it("never overshoots", () => {
     expect(easeElevation(0, ELEVATION_STEP, 1)).toBe(ELEVATION_STEP);
     expect(easeElevation(ELEVATION_STEP, 0, 1)).toBe(0);
+  });
+});
+
+describe("water's place in the order (#2984)", () => {
+  const water = (layer: number, part: "surface" | "ripples"): RenderItem => ({
+    kind: "water",
+    layer,
+    part,
+  });
+
+  it("draws ground water over the floor, its ripples over it, both under the ward circles, the terrain and the light", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "floor" },
+      water(0, "surface"),
+      water(0, "ripples"),
+      { kind: "ground-effect", layer: 0 },
+      { kind: "terrain" },
+      { kind: "lighting", layer: 0 },
+      character(0),
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
+  });
+
+  it("draws a deck's water on the deck and its ramp, under its light, whoever stands there and the next deck up", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "deck", deckLayer: 1 },
+      { kind: "ramp", upperLayer: 1 },
+      water(1, "surface"),
+      water(1, "ripples"),
+      { kind: "lighting", layer: 1 },
+      character(1),
+      { kind: "wall", layer: 1 },
+      { kind: "deck", deckLayer: 2 },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+  });
+});
+
+describe("a ground over pits (#2973)", () => {
+  it("draws the pit, then the ground's cover, water, light and wards, then whoever stands on it and its marks", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "floor" },
+      { kind: "pit" },
+      { kind: "character", band: characterBand(0, 3), part: "marks" },
+      { kind: "deck", deckLayer: 1 },
+      { kind: "ramp", upperLayer: 1 },
+      { kind: "water", layer: 1, part: "surface" },
+      { kind: "water", layer: 1, part: "ripples" },
+      { kind: "lighting", layer: 1 },
+      { kind: "ground-effect", layer: 1 },
+      { kind: "character", band: characterBand(1, 3), part: "body" },
+      { kind: "character", band: characterBand(1, 3), part: "marks" },
+      { kind: "wall", layer: 1 },
+      { kind: "deck", deckLayer: 2 },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
+  });
+});
+
+describe("an effect zone's place in the order (ADR-0053, #3024)", () => {
+  it("draws a ground zone over the ground's water and light, under its torches and bodies", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "floor" },
+      { kind: "water", layer: 0, part: "ripples" },
+      { kind: "lighting", layer: 0 },
+      { kind: "zone", layer: 0 },
+      { kind: "lit-ground-effect" },
+      { kind: "light-mark", layer: 0 },
+      { kind: "character", band: characterBand(0, 1), part: "body" },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
+  });
+
+  it("draws a deck's zone over its water and light, under its wards, torches and whoever stands there", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "deck", deckLayer: 1 },
+      { kind: "water", layer: 1, part: "ripples" },
+      { kind: "lighting", layer: 1 },
+      { kind: "zone", layer: 1 },
+      { kind: "ground-effect", layer: 1 },
+      { kind: "light-mark", layer: 1 },
+      { kind: "character", band: 1, part: "body" },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
   });
 });

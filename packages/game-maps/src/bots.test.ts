@@ -6,6 +6,7 @@ import {
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
   PRIEST_ANNIHILATION_MATCH_RULES,
+  THREEFOLD_KEEP_MATCH_RULES,
   PRIEST_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
@@ -18,7 +19,8 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { allWallSegments, wallToSegments } from "./geometry.js";
+import { allWallSegments } from "./geometry.js";
+import { matchGates } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import type { MapData } from "./schema.js";
@@ -142,14 +144,23 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
     return { hits: hits.length, together: together.length };
   };
 
-  it("lands more of the bots' big hits together than bots that don't hold them, the same for the same seed", () => {
-    const runs = (spikeHold: boolean) =>
-      ["a", "b", "c", "d"].map((seed) => spikes(seed, spikeHold));
-    const share = (of: readonly { hits: number; together: number }[]) =>
-      of.reduce((sum, run) => sum + run.together, 0) / of.reduce((sum, run) => sum + run.hits, 0);
-    const holding = runs(true);
-    expect(share(holding) - share(runs(false))).toBeGreaterThanOrEqual(SPIKE_GAIN);
-    expect(spikes("a", true)).toEqual(holding[0]);
+  // The gain check is bot tuning, not a unit: eight 60 s runs, about 55 s, so
+  // it runs nightly (e2e-soak.yml, #2898) and when BOTS_NIGHTLY=1 is set by
+  // hand on this file.
+  it.runIf(process.env.BOTS_NIGHTLY === "1")(
+    "lands more of the bots' big hits together than bots that don't hold them",
+    () => {
+      const runs = (spikeHold: boolean) =>
+        ["a", "b", "c", "d"].map((seed) => spikes(seed, spikeHold));
+      const share = (of: readonly { hits: number; together: number }[]) =>
+        of.reduce((sum, run) => sum + run.together, 0) / of.reduce((sum, run) => sum + run.hits, 0);
+      expect(share(runs(true)) - share(runs(false))).toBeGreaterThanOrEqual(SPIKE_GAIN);
+    },
+    120_000,
+  );
+
+  it("plays the same for the same seed", () => {
+    expect(spikes("a", true)).toEqual(spikes("a", true));
   }, 120_000);
 });
 
@@ -195,9 +206,7 @@ describe("Relic Run bots (#2581)", () => {
 });
 
 describe("King of the Hill bots (#2582)", () => {
-  const map = loadAllMaps().find(
-    (candidate) => candidate.mode === "king-of-the-hill" && candidate.teams === 2,
-  );
+  const map = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
 
   const hill = (arena: MapData, seed: string, participants: readonly ParticipantSpec[]) => {
     const altar = arena.objectives.find((objective) => objective.kind === "altar");
@@ -212,7 +221,7 @@ describe("King of the Hill bots (#2582)", () => {
         level: 24,
         altar: altar.position,
         spawns: arena.objectives.flatMap((objective) =>
-          objective.kind === "ghost-spawn"
+          objective.kind === "ghost-spawn" && objective.team < 2
             ? [{ team: objective.team, position: objective.position }]
             : [],
         ),
@@ -274,9 +283,9 @@ describe("King of the Hill bots (#2582)", () => {
    * first point (#2628), its damage dealers spiking (#2631).
    */
   const mirror = (seed: string) => {
-    const courtyard = loadAllMaps().find((candidate) => candidate.id === "the-courtyard");
-    if (courtyard === undefined) throw new Error("no map the-courtyard");
-    const sim = hill(courtyard, seed, casterBots(courtyard, 2));
+    const keep = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
+    if (keep === undefined) throw new Error("no map threefold-keep");
+    const sim = hill(keep, seed, casterBots(keep, 2));
     let ghostDiedAt: number | undefined;
     let decidedAt: number | undefined;
     for (let t = 0; t < 90 && decidedAt === undefined; t += DT) {
@@ -319,9 +328,9 @@ describe("King of the Hill bots (#2582)", () => {
    * team that wiped the other, else the one with more points, else none.
    */
   const winner = (seed: string) => {
-    const courtyard = loadAllMaps().find((candidate) => candidate.id === "the-courtyard");
-    if (courtyard === undefined) throw new Error("no map the-courtyard");
-    const sim = hill(courtyard, seed, casterBots(courtyard, 4));
+    const keep = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
+    if (keep === undefined) throw new Error("no map threefold-keep");
+    const sim = hill(keep, seed, casterBots(keep, 4));
     for (let t = 0; t < 120 && sim.outcome.winningTeam === undefined; t += DT) {
       sim.step(DT);
     }
@@ -404,6 +413,37 @@ describe("Capture Points bots (#2580)", () => {
     expect(sim.phase).toBe("finished");
   });
 
+  it("three teams of bots play Threefold Keep to time, doors and all (#2699)", () => {
+    const keep = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
+    if (keep === undefined) throw new Error("no map threefold-keep");
+    const altar = keep.objectives.find((objective) => objective.kind === "altar");
+    if (altar === undefined) throw new Error("no altar");
+    const rules = { ...THREEFOLD_KEEP_MATCH_RULES, timeLimitSeconds: 60 };
+    const sim = new MatchSimulation({
+      seed: "keep",
+      ruleset: RULESET,
+      teamCount: 3,
+      walls: allWallSegments(keep.walls),
+      gates: matchGates(keep),
+      bounds: { width: keep.width, height: keep.height },
+      matchRules: rules,
+      ghostField: {
+        level: 24,
+        altar: altar.position,
+        spawns: keep.objectives.flatMap((objective) =>
+          objective.kind === "ghost-spawn"
+            ? [{ team: objective.team, position: objective.position }]
+            : [],
+        ),
+      },
+      participants: casterBots(keep, 2, 0, [0, 1, 2]),
+    });
+    for (let t = 0; t <= rules.timeLimitSeconds + 1 && sim.phase !== "finished"; t += DT) {
+      sim.step(DT);
+    }
+    expect(sim.phase).toBe("finished");
+  });
+
   it("bots finish a match on The Warden's Gallery (#2698)", () => {
     const gallery = loadAllMaps().find((candidate) => candidate.id === "wardens-gallery");
     if (gallery === undefined) throw new Error("no map wardens-gallery");
@@ -411,11 +451,7 @@ describe("Capture Points bots (#2580)", () => {
       seed: "gallery",
       ruleset: RULESET,
       walls: allWallSegments(gallery.walls),
-      gates: gallery.gates.map((gate) => ({
-        segments: wallToSegments(gate.wall),
-        plate: gate.plate,
-        team: gate.team,
-      })),
+      gates: matchGates(gallery),
       bounds: { width: gallery.width, height: gallery.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       capturePoints: gallery.objectives.flatMap((objective) =>
@@ -439,7 +475,7 @@ describe("The Brazen Causeway (#2697)", () => {
   if (map === undefined) throw new Error("no map brazen-causeway");
 
   it("guards each base with its own gate", () => {
-    expect(map.gates.map(({ team }) => team)).toEqual([0, 1]);
+    expect(map.gates.map(({ opener }) => opener)).toMatchObject([{ team: 0 }, { team: 1 }]);
   });
 
   it("keeps its nav graph to 600 nodes", () => {
@@ -466,11 +502,7 @@ describe("The Brazen Causeway (#2697)", () => {
       seed: "causeway",
       ruleset: RULESET,
       walls: allWallSegments(map.walls),
-      gates: map.gates.map((gate) => ({
-        segments: wallToSegments(gate.wall),
-        plate: gate.plate,
-        team: gate.team,
-      })),
+      gates: matchGates(map),
       bounds: { width: map.width, height: map.height },
       matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
       shrines: map.objectives.flatMap((objective) =>
@@ -504,8 +536,13 @@ describe("The Brazen Causeway (#2697)", () => {
  * them: one would rightly leave an objective for a hurt ally. Team 1's
  * builds are team 0's moved on by `shift`.
  */
-function casterBots(map: MapData, perTeam: number, shift = 0): ParticipantSpec[] {
-  return [0, 1].flatMap((team) =>
+function casterBots(
+  map: MapData,
+  perTeam: number,
+  shift = 0,
+  teams: readonly number[] = [0, 1],
+): ParticipantSpec[] {
+  return teams.flatMap((team) =>
     map.spawnPoints
       .filter((spawn) => spawn.team === team)
       .slice(0, perTeam)

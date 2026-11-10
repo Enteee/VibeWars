@@ -431,7 +431,13 @@ class FakeInput {
 describe("screenBar in the top bar (#578, #1272)", () => {
   let page: FakeNode;
   let topbar: FakeNode;
-  let slots: { crumbs: FakeNode; back: FakeNode; status: FakeNode; actions: FakeNode };
+  let slots: {
+    crumbs: FakeNode;
+    back: FakeNode;
+    status: FakeNode;
+    actions: FakeNode;
+    queueAction: FakeNode;
+  };
   let shown: ShownBar[];
   let overflowOpen: boolean;
   beforeEach(() => {
@@ -444,8 +450,9 @@ describe("screenBar in the top bar (#578, #1272)", () => {
       back: new FakeNode(),
       status: new FakeNode(),
       actions: new FakeNode(),
+      queueAction: new FakeNode(),
     };
-    topbar.append(slots.crumbs, slots.back, slots.status, slots.actions);
+    topbar.append(slots.crumbs, slots.back, slots.status, slots.actions, slots.queueAction);
     shown = [];
     overflowOpen = false;
     vi.stubGlobal("document", { createElement, body: new FakeNode() });
@@ -457,7 +464,10 @@ describe("screenBar in the top bar (#578, #1272)", () => {
     vi.stubGlobal("HTMLTextAreaElement", FakeTextArea);
     vi.stubGlobal("HTMLInputElement", FakeInput);
     setTopbarSlots({
-      ...(slots as unknown as Pick<TopbarSlots, "crumbs" | "back" | "status" | "actions">),
+      ...(slots as unknown as Pick<
+        TopbarSlots,
+        "crumbs" | "back" | "status" | "actions" | "queueAction"
+      >),
       onShow: (next) => {
         shown.push(next);
       },
@@ -522,6 +532,18 @@ describe("screenBar in the top bar (#578, #1272)", () => {
     expect(slots.actions.children).toEqual([save]);
     // Where it is, as text, so a repaint in place can be told from a move.
     expect(shown.at(-1)?.place).toBe("VibeWars / Teams / ");
+  });
+
+  it("fills the queue action's slot, and empties it for a bar without one (#2980)", () => {
+    const find = new FakeNode();
+    screenBar({
+      crumbs: ["Random Arena"],
+      actions: [],
+      queueAction: find as unknown as HTMLElement,
+    });
+    expect(slots.queueAction.children).toEqual([find]);
+    screenBar({ crumbs: ["Options"], actions: [] });
+    expect(slots.queueAction.children).toEqual([]);
   });
 
   it("tells a repaint in place from a move by its place (#1305)", () => {

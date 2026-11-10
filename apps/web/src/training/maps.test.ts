@@ -9,6 +9,7 @@ describe("TRAINING_MAPS", () => {
       "training-hall",
       "training-heights",
       "training-pillars",
+      "training-wilds",
     ]);
     for (const [id, map] of TRAINING_MAPS) {
       expect(map.id).toBe(id);

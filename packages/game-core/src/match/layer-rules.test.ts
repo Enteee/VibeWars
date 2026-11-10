@@ -10,7 +10,10 @@ import {
   heightDamageMultiplier,
   heightRange,
   heightStep,
+  rampRims,
   sharesFloor,
+  UPHILL,
+  type FloorTransition,
 } from "./layer-rules.js";
 
 const rect = (x: number, y: number, width: number, height: number): Polygon => [
@@ -21,7 +24,7 @@ const rect = (x: number, y: number, width: number, height: number): Polygon => [
 ];
 
 const DECKS = [{ layer: 1, footprint: rect(100, 0, 100, 100) }];
-const RAMP = [{ from: 0, to: 1, area: rect(50, 0, 50, 100) }];
+const RAMP = [{ from: 0, to: 1, area: rect(50, 0, 50, 100), uphill: UPHILL.e }];
 const ON = floorOf(1);
 const GROUND = floorOf(0);
 
@@ -95,5 +98,83 @@ describe("the height modifier (ADR-0051)", () => {
     expect(heightDamageMultiplier(1)).toBeCloseTo(1.1, 9);
     expect(heightDamageMultiplier(-1)).toBeCloseTo(0.9, 9);
     expect(heightDamageMultiplier(0)).toBe(1);
+  });
+});
+
+describe("ramp rims (#2975)", () => {
+  const ends = (
+    segments: readonly { a: { x: number; y: number }; b: { x: number; y: number } }[],
+  ) => segments.map(({ a, b }) => [a.x, a.y, b.x, b.y]);
+  const layers = (transitions: readonly FloorTransition[], count: number) => ({
+    count,
+    ground: 0,
+    transitions,
+    pits: [],
+  });
+
+  it("is a ground ramp's edges but its low end, going +x", () => {
+    const rims = rampRims(
+      layers([{ from: 0, to: 1, area: rect(0, 0, 100, 50), uphill: UPHILL.e }], 2),
+    );
+    expect(ends(rims[0] ?? [])).toEqual([
+      [0, 0, 100, 0],
+      [100, 0, 100, 50],
+      [100, 50, 0, 50],
+    ]);
+    expect(rims[1]).toEqual([]);
+  });
+
+  it("is a ground ramp's edges but its low end, going -y", () => {
+    const rims = rampRims(
+      layers([{ from: 0, to: 1, area: rect(0, 100, 50, 100), uphill: UPHILL.n }], 2),
+    );
+    expect(ends(rims[0] ?? [])).toEqual([
+      [0, 100, 50, 100],
+      [50, 100, 50, 200],
+      [0, 200, 0, 100],
+    ]);
+  });
+
+  it("gives a ramp from a deck none", () => {
+    const rims = rampRims(
+      layers([{ from: 1, to: 2, area: rect(0, 100, 50, 100), uphill: UPHILL.n }], 3),
+    );
+    expect(rims.flat()).toEqual([]);
+  });
+
+  it("rims a pit on the ground, with a gap exactly at its ramp's high end (#2973)", () => {
+    // A pit on layer 0 under the ground on 1, its ramp climbing west to its west edge.
+    const rims = rampRims({
+      count: 2,
+      ground: 1,
+      transitions: [{ from: 0, to: 1, area: rect(0, 20, 110, 80), uphill: UPHILL.w }],
+      pits: [rect(0, 0, 200, 130)],
+    });
+    expect(rims[0]).toEqual([]);
+    const ground = ends(rims[1] ?? []);
+    // The ramp's edges, its high (west) end left open.
+    expect(ground).toEqual(
+      expect.arrayContaining([
+        [0, 20, 110, 20],
+        [110, 20, 110, 100],
+        [110, 100, 0, 100],
+      ]),
+    );
+    expect(ground).not.toContainEqual([0, 100, 0, 20]);
+    // The pit's west edge, from its south-west corner up to its north-west one, cut round the ramp.
+    expect(ground).toEqual(
+      expect.arrayContaining([
+        [0, 130, 0, 100],
+        [0, 20, 0, 0],
+      ]),
+    );
+    expect(ground).toEqual(
+      expect.arrayContaining([
+        [0, 0, 200, 0],
+        [200, 0, 200, 130],
+        [200, 130, 0, 130],
+      ]),
+    );
+    expect(ground).toHaveLength(8);
   });
 });

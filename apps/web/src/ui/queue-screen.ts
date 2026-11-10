@@ -10,7 +10,6 @@ import { RANDOM_ARENA_MODES } from "./menu.js";
 import { button, h, screenBar } from "./kit.js";
 import { SIGNET_ROW_PX, playerLabelElement, signetElement, signetOf } from "./player-label.js";
 import { renderSummary, type SummaryTable } from "./match-summary.js";
-import { relayLine } from "./relay-section.js";
 
 /**
  * The Random Arena queue screen (#880, #854 B3–B4): mounted once a match
@@ -120,6 +119,28 @@ export function nextAscentMorale(carried: number, ended: number, result: QueuedR
  */
 export function ascentStartMorale(round: number | null, carried: number): number {
   return round === null ? 0 : carried;
+}
+
+/**
+ * Since when a party holds the Hall after `result` of a match it played
+ * at round `played` (#2701): from `now` on a win in the Hall; a defeat or
+ * leaving before the end loses it; a match lost to its host leaving keeps it.
+ */
+export function nextHallHold(
+  held: number | null,
+  played: number,
+  result: QueuedResult,
+  now: number,
+): number | null {
+  switch (result) {
+    case "win":
+      return played === ASCENT_PROGRESSION.length - 1 ? now : held;
+    case "loss":
+    case "forfeit":
+      return null;
+    case "host-left":
+      return held;
+  }
 }
 
 /** "3 wins in a row this visit (not a rating)"; nothing at 0. */
@@ -395,10 +416,6 @@ export function mountQueueScreen(
   const summaryHost = h("div", "queue-summary");
   const body = h("div", "queue-body");
   body.append(status, problem, streak, summaryHost);
-  const relay = relayLine();
-  if (relay !== undefined) {
-    body.append(relay);
-  }
   const splashHost = h("div", "queue-splash");
   const stay = button(t("queue.stayTogether"), "primary", callbacks.onStayTogether);
   const again = button(t("queue.queueAgain"), "primary", callbacks.onQueueAgain);

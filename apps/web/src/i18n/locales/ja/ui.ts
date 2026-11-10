@@ -245,6 +245,7 @@ export default {
   "combat.sourceShrine": "祠",
   "combat.sourceSkill": "スキル",
   "combat.sourceWeapon": "武器",
+  "combat.sourceZone": "危険地帯",
   "combat.spellFailed": "{target}の{skill}は失敗",
   "combat.statusApplied": "{target}に{status} ({seconds}秒)",
   "combat.statusAppliedMaintained": "{target}に{status} (維持)",
@@ -305,6 +306,7 @@ export default {
   "effects.categoryChant": "チャント",
   "effects.categoryCondition": "状態異常",
   "effects.categoryEcho": "エコー",
+  "effects.categoryEnvironment": "環境",
   "effects.categoryEffect": "効果",
   "effects.categoryEnchantment": "エンチャント",
   "effects.categoryForm": "フォーム",
@@ -354,6 +356,7 @@ export default {
   "gearEditor.statusChant": "チャント",
   "gearEditor.statusCondition": "状態異常中",
   "gearEditor.statusEcho": "エコー中",
+  "gearEditor.statusEnvironment": "環境効果中",
   "gearEditor.statusEnchantment": "エンチャント中",
   "gearEditor.statusForm": "フォーム中",
   "gearEditor.statusGlyph": "グリフ中",
@@ -518,6 +521,7 @@ export default {
   "hud.stormBeacon": "嵐のビーコン",
   "hud.stormBeaconOurs": "嵐のビーコン:味方チームが保持",
   "hud.stormBeaconTheirs": "嵐のビーコン:敵が保持",
+  "hud.switch": "レバー",
   "hud.targetDead": "死亡",
   "hud.targetEffects": "ターゲットの効果",
   "hud.versus": "{ours} 対 {theirs}",
@@ -583,7 +587,6 @@ export default {
   "lobby.hostStartsMatchmaking": "ホストがマッチングを開始します",
   "lobby.joinTeam": "参加",
   "lobby.joinTeamLabel": "チーム{team}に参加",
-  "lobby.leaveQueue": "キューを離れる",
   "lobby.leaveTeam": "離脱",
   "lobby.leaveTeamLabel": "チーム{team}を離脱",
   "lobby.map": "マップ",
@@ -643,6 +646,9 @@ export default {
   "matches.endTime": "時間切れ",
   "matches.filterKind": "種類",
   "matches.filterSize": "人数",
+  "matches.hallReported": "各マッチのホストによる報告で、検証されていません。",
+  "matches.hallStreak": { other: "{count}連勝" },
+  "matches.hallTitle": "英雄の間",
   "matches.hostReported": "ホスト報告",
   "matches.hostReportedTitle": "マッチのホストが公開したもので、他者による検証はされていません。",
   "matches.hoursAgo": { other: "{count}時間前" },
@@ -713,11 +719,13 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "操作",
+  "options.display": "表示",
   "options.label": "オプション",
   "options.language": "言語",
   "options.languageBusy":
     "先にロビーまたはマッチを離れてください。言語を変更するとページが再読み込みされます。",
   "options.languageLabel": "言語",
+  "options.lightingLabel": "ライティング",
   "options.player": "プレイヤー",
   "options.relay": "リレー (TURN)",
   "options.sections": "オプションの項目",
@@ -802,6 +810,8 @@ export default {
   "queue.defending": "{map}を確保中 · {seconds}秒後に防衛戦",
   "queue.fellThrough": "マッチが成立しませんでした。再度検索します",
   "queue.guildVsGuild": "ギルド対ギルド",
+  "queue.hallHeldBy": "{holder} が英雄の間を保持中",
+  "queue.hallUnheld": "英雄の間の保持者なし",
   "queue.heroesAscent": "ヒーローズアセント · ラウンド{round}",
   "queue.hostLeft": "ホストが退出しました",
   "queue.hostOnly": "キューを離れられるのはホストだけです。",
@@ -825,6 +835,8 @@ export default {
   "queue.theirTeam": "相手チーム",
   "queue.title": "ランダムアリーナ {mode} · {character}",
   "queue.unreachable": "ロビーサーバーに接続できませんでした",
+  "queue.vault": "宝物庫",
+  "queue.vaultOpensIn": "英雄の間の開放まで {time}",
   "queue.versus": "vs",
   "queue.waitingForEveryone": "全員の到着を待っています",
   "queue.waitingForTeam": "チームを待っています ({seconds})",
@@ -1238,6 +1250,72 @@ export default {
   "training.reset": "リセット",
   "training.resetDivider": "リセット",
   "training.scenario": "シナリオ",
+  "training.scenario.target-dummy.label": "練習用カカシ",
+  "training.scenario.target-dummy.teaches":
+    "1回の詠唱が実際に与えるもの: 防御力60なら、ツールチップの数値そのまま。",
+  "training.scenario.time-to-kill.label": "撃破時間",
+  "training.scenario.time-to-kill.teaches":
+    "持続火力: ヘルス500のキャスターが何秒もつか、何度でも。",
+  "training.scenario.physical-vs-elemental.label": "物理 対 属性",
+  "training.scenario.physical-vs-elemental.teaches":
+    "防御力はダメージの種類ごとに効く: WarriorとStalwart Insigniaは剣を軽減してもFireballは軽減せず、RangerはFireballを軽減しても剣は軽減しない。",
+  "training.scenario.condition-pressure.label": "状態異常の圧力",
+  "training.scenario.condition-pressure.teaches":
+    "状態異常は死へのカウントダウン: Bleeding、Poison、Burningで毎秒20ヘルスが削れ、これが上限。重ねても累積せず、効果時間が更新されるだけ。",
+  "training.scenario.condition-removal.label": "状態異常の解除",
+  "training.scenario.condition-removal.teaches":
+    "状態異常の解除は書かれたものしか取り除かない: 500中200の味方が状態異常を5つ抱え、その中のDeep Woundはかかった瞬間に100を奪い、回復の上限を400にする。",
+  "training.scenario.armor-ladder.label": "防御力の段階",
+  "training.scenario.armor-ladder.teaches":
+    "軽減カーブ: 同じ一撃を防御力40から104まで並べて比べる。",
+  "training.scenario.healing-throughput.label": "回復量",
+  "training.scenario.healing-throughput.teaches":
+    "本物の圧力に対して回復がどれだけ効くか、そして防御力はヒーラーの味方であること: 同じFireballでもMonkには91、Warriorには64。",
+  "training.scenario.interrupt-timing.label": "中断のタイミング",
+  "training.scenario.interrupt-timing.teaches":
+    "中断はタイミングの技: 3秒の詠唱を完了前に止める。Dazed状態のキャスターはスペルに2倍の時間がかかり、どんな一撃でも止まる。",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Blind状態の攻撃者は10回中9回外す: 2人の弓兵、そのうち1人がBlind。",
+  "training.scenario.kiting-and-cripple.label": "引き撃ちとCrippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "動く標的への偏差撃ち、そしてCrippled状態の標的は半分の速さで歩くこと。",
+  "training.scenario.weapon-dps.label": "武器のDPS",
+  "training.scenario.weapon-dps.teaches": "武器の毎秒ダメージ: Spaceを押して武器の行を読む。",
+  "training.scenario.dodge-drill.label": "回避練習",
+  "training.scenario.dodge-drill.teaches":
+    "矢はあなたがいたはずの場所に着く: 弓から放たれた後に向きを変えよう。",
+  "training.scenario.obstacles-and-los.label": "視界と射程",
+  "training.scenario.obstacles-and-los.teaches":
+    "敵が見えても届くとは限らない: 柱の向こうの敵へのスキルは回り込んで歩き、射程外の敵へは近づいて歩く。",
+  "training.scenario.fireball-dodge.label": "Fireballを避ける",
+  "training.scenario.fireball-dodge.teaches":
+    "Fireballは矢のように飛ぶ: 放たれた瞬間に横へ動けば何も燃えない (#535)。",
+  "training.scenario.block.label": "ブロック",
+  "training.scenario.block.teaches": "Guardianは攻撃の半分をそらすが、スペルは素通りする (#534)。",
+  "training.scenario.survivability.label": "生存力",
+  "training.scenario.survivability.teaches":
+    "3人のキャスター相手にどれだけ耐えられるか、そして防御力が最大の手段であること: 80ならFireballのダメージは60のときより30%少ない。",
+  "training.scenario.aoe-cluster.label": "範囲: 密集",
+  "training.scenario.aoe-cluster.teaches":
+    "範囲攻撃は標的を中心にする: 中心へのFireballは5人全員を焼き、はぐれた2人には当たらない。",
+  "training.scenario.aoe-cap.label": "範囲: 上限",
+  "training.scenario.aoe-cap.teaches": "Barrageは6人で止まる: 7人が密集していても、必ず1人は無傷。",
+  "training.scenario.aoe-friendly-fire.label": "範囲: 味方への被弾",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "範囲攻撃は自軍を傷つけない: 密集の中の味方はダメージを受けない。",
+  "training.scenario.aoe-line-of-sight.label": "範囲: 視線",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "範囲攻撃は壁で止まる: 柱の手前の3人は燃え、奥の2人は燃えない。",
+  "training.scenario.moving-targets.label": "動く標的",
+  "training.scenario.moving-targets.teaches":
+    "動くものを当てる: 走る者には偏差を取り、逃げる者は追いつき、追ってくる者には向き直る。",
+  "training.scenario.heights.label": "高所",
+  "training.scenario.heights.teaches":
+    "高さは戦う場所: デッキは下にいる者を隠し、スロープだけが階層をつなぎ、上から撃つ弓は威力が増す。",
+  "training.scenario.wilds.label": "荒野",
+  "training.scenario.wilds.teaches":
+    "地面そのものが傷つけることがある：焦げた地面は上に立つ者を燃やし、離れた後も燃焼が続くので、迂回しよう。",
   "training.soundOff": "サウンドオフ。",
   "training.soundOn": "サウンドオン。",
   "training.you": "自分",

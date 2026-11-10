@@ -42,6 +42,7 @@ Diese Tasten sind fest:
   Gegner kurz danach noch einmal rechts, um ihn anzugreifen.
 - **Rechtsklick** auf eine Flagge oder den Flaggenstand in einer Gildenschlacht oder auf dem Barrow Field
   visiert sie an; **Space** läuft hin und nimmt die Flagge auf oder setzt sie.
+- **Rechtsklick** auf einen Hebel visiert ihn an; **Space** läuft hin und legt ihn um, sodass sich die Tore, die er steuert, öffnen oder schließen.
 - **Mausrad-Klick** auf einen Gegner sagt ihn für dein Team an: Ihr **T** visiert
   ihn an. Auf den Boden oder einen Verbündeten pingt er diese Stelle. Oder klick
   auf die Zielleiste oben, um den Gegner anzusagen, den du im Visier hast.
@@ -65,7 +66,7 @@ Außerhalb eines Matches liegen oben **[?]** (diese Hilfe), **⚙** (Optionen),
 **♪** (Musik: was läuft und wie laut), Ton aus und Vollbild. Im Match liegen dieselben Knöpfe,
 außer Lobby, oben rechts am Bildschirm. In einem schmalen Fenster klappen diese Symbole und die
 übrigen Knöpfe des Bildschirms unter **⋯** ein; nur sein Hauptknopf bleibt draußen.
-⚙ öffnet die Optionen als Fenster unter der Leiste, mit dem Bildschirm dahinter; Esc, × oder ein Klick daneben schließt es.
+⚙ öffnet die Optionen als Fenster unter der Leiste, mit dem Bildschirm dahinter; Esc, × oder ein Klick daneben schließt es. Unter **Anzeige** schaltet **Beleuchtung** Licht und Schatten einer beleuchteten Karte ein oder aus, sofort, auch im Match.
 Die Hilfe schließt mit dem × oben rechts, Esc oder einem weiteren Druck auf [?].
 
 **Teile einen Beat mit deiner Lobby.** Im Beat-Editor (♪, dann **Ändern**) sendet

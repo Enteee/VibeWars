@@ -12,7 +12,9 @@ import {
   STARTER_BUILDS,
   STARTER_TEAMS,
   segment,
+  type MatchLayers,
   type MatchRules,
+  type Segment,
   type PlayerBuild,
 } from "@vibewars/game-core";
 import { TEST_BUILDS } from "@vibewars/game-core/testing";
@@ -43,6 +45,26 @@ import type { Transport } from "./transport.js";
 
 export const TICK_SECONDS = 1 / RULESET.tickRateHz;
 
+/** A flat map's layers (#3017): one, the ground, with `walls` on it and nothing else. */
+export function flatLayers(walls: readonly Segment[]): MatchLayers {
+  return {
+    count: 1,
+    ground: 0,
+    walls: [walls],
+    decks: [],
+    pits: [],
+    transitions: [],
+    deepWater: [[]],
+  };
+}
+
+const ARENA_WALLS: readonly Segment[] = [
+  segment({ x: 990, y: 900 }, { x: 1010, y: 900 }),
+  segment({ x: 1010, y: 900 }, { x: 1010, y: 1100 }),
+  segment({ x: 1010, y: 1100 }, { x: 990, y: 1100 }),
+  segment({ x: 990, y: 1100 }, { x: 990, y: 900 }),
+];
+
 /**
  * A plain arena: 2000 by 1200, two spawns a side, one wall in the middle
  * well away from both, so a test can walk into it on purpose.
@@ -55,15 +77,13 @@ export const ARENA: HostMap = {
     width: 2000,
     height: 1200,
     gates: [],
+    switches: [],
     walls: [{ kind: "rect", x: 990, y: 900, width: 20, height: 200 }],
   },
   mode: "annihilation",
-  walls: [
-    segment({ x: 990, y: 900 }, { x: 1010, y: 900 }),
-    segment({ x: 1010, y: 900 }, { x: 1010, y: 1100 }),
-    segment({ x: 1010, y: 1100 }, { x: 990, y: 1100 }),
-    segment({ x: 990, y: 1100 }, { x: 990, y: 900 }),
-  ],
+  walls: ARENA_WALLS,
+  layers: flatLayers(ARENA_WALLS),
+  zones: [],
   bounds: { width: 2000, height: 1200 },
   spawns: [
     { team: 0, position: { x: 400, y: 500 } },
@@ -79,6 +99,7 @@ export const ARENA: HostMap = {
   capturePoints: [],
   startLine: undefined,
   gates: [],
+  switches: [],
   guards: [],
 };
 

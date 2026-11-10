@@ -4,6 +4,7 @@ import {
   distancePointToSegment,
   distanceSegmentToSegmentXY,
   pointInPolygon,
+  pointAlong,
   polygonCentre,
   type Polygon,
   type Segment,
@@ -23,9 +24,12 @@ import { add, distance, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
 /** The corners a body can stand on, and which of them see each other. Built once per map. */
 export interface NavGraph {
-  /** The walkable areas' outline (`outlineWalls` of them) first, then the real walls. */
+  /** The walls that enclose nothing (`outlineWalls` of them) first, then the real walls. */
   readonly walls: readonly Segment[];
-  /** How many of `walls` are outline: they keep a body on its layer, and enclose no wall. */
+  /**
+   * How many of `walls` enclose nothing: the walkable areas' outline, which
+   * keeps a body on its layer, and its open walls, such as ramp rims (#2975).
+   */
   readonly outlineWalls: number;
   /** Where a body can be (ADR-0051); empty: everywhere, the ground. */
   readonly walkable: readonly Polygon[];
@@ -317,10 +321,15 @@ function sidesOf(area: Polygon): Segment[] {
   });
 }
 
+/** How far either side of a shared side `walkableOutline` looks for floor. */
+const ABUT_PROBE = 0.01;
+
 /**
  * The edge of a layer's walkable `areas`: each area's sides, split where
  * they meet another area's, keeping the parts not inside another area.
- * A deck and its ramp overlap, so the opening between them is no edge.
+ * A deck and its ramp overlap, so the opening between them is no edge;
+ * nor is a side two areas share end to end, a pit's and its tunnel's
+ * (#2973), with floor on both sides of it.
  */
 export function walkableOutline(areas: readonly Polygon[]): Segment[] {
   const outline: Segment[] = [];
@@ -341,7 +350,11 @@ export function walkableOutline(areas: readonly Polygon[]): Segment[] {
           return;
         }
         const middle = add(edge.a, scale(along, (from + to) / 2));
-        if (!others.some((other) => insideArea(middle, other))) {
+        const length = Math.hypot(along.x, along.y);
+        const across = scale({ x: -along.y, y: along.x }, ABUT_PROBE / length);
+        const floor = (point: Vec2): boolean => areas.some((each) => pointInPolygon(point, each));
+        const abutted = floor(add(middle, across)) && floor(sub(middle, across));
+        if (!others.some((other) => insideArea(middle, other)) && !abutted) {
           outline.push({
             a: add(edge.a, scale(along, from)),
             b: add(edge.a, scale(along, to)),
@@ -360,7 +373,7 @@ export function walkableOutline(areas: readonly Polygon[]): Segment[] {
  * off it, so a gate moving mid-match costs a filter and no line of sight.
  */
 export interface GatedNavGraph {
-  /** As `NavGraph`'s: the outline first, then the walls. */
+  /** As `NavGraph`'s: the walls that enclose nothing first, then the others. */
   readonly walls: readonly Segment[];
   readonly outlineWalls: number;
   readonly walkable: readonly Polygon[];
@@ -384,9 +397,10 @@ export function buildGatedNavGraph(
   bounds: NavGraph["bounds"],
   clearance: number,
   walkable: readonly Polygon[] = [],
+  open: readonly Segment[] = [],
 ): GatedNavGraph {
   const outline = walkableOutline(walkable);
-  const walls = [...outline, ...mapWalls];
+  const walls = [...outline, ...open, ...mapWalls];
   const offset = clearance + 1;
   const inside = (point: Vec2): boolean =>
     (walkable.length === 0 || walkable.some((area) => pointInPolygon(point, area))) &&
@@ -464,7 +478,7 @@ export function buildGatedNavGraph(
   });
   return {
     walls,
-    outlineWalls: outline.length,
+    outlineWalls: outline.length + open.length,
     walkable,
     gates,
     bounds,
@@ -655,6 +669,31 @@ export interface NavTransition {
   readonly from: number;
   readonly to: number;
   readonly area: Polygon;
+  /** The way it climbs, a unit vector; none: its portal waypoint is its centre. */
+  readonly uphill?: Vec2;
+}
+
+/**
+ * How far in from the end a body leaves a ramp by its waypoint sits, as a
+ * share of its length: a body's clearance in, or the walk to it would run
+ * along that end's outline wall and no route would ever be kept (#1157).
+ * At most this much, still inside the band where a body changes layer.
+ */
+const RAMP_WAYPOINT_LEAST_INSET = 0.05;
+export const RAMP_WAYPOINT_MOST_INSET = 0.14;
+
+/**
+ * The shortest a ramp may be, going uphill, for a body of `clearance` to
+ * route over it: any shorter and `RAMP_WAYPOINT_MOST_INSET` holds its
+ * waypoints on its outline wall (#2995).
+ */
+export function minRampLength(clearance: number): number {
+  return (clearance + 1) / RAMP_WAYPOINT_MOST_INSET;
+}
+
+/** How long a ramp's `area` is, going `uphill`. */
+export function rampLength(area: Polygon, uphill: Vec2): number {
+  return distance(pointAlong(area, uphill, 0), pointAlong(area, uphill, 1));
 }
 
 /** Finds paths over a map's layers, reusing its own scratch from one query to the next. */
@@ -664,8 +703,9 @@ export interface LayeredPathFinder {
   /**
    * The shortest way for a body from `from` on `fromLayer` to `to` on
    * `toLayer`: the waypoints after `from`, ending at `to`, or `undefined`
-   * if there is none. A ramp is one waypoint, its centre, carrying the
-   * far layer. A fresh array the caller may keep.
+   * if there is none. A ramp is one waypoint, at the end a body
+   * leaves it by, carrying the far layer; going up, a waypoint at its
+   * foot comes first, so a body does not cut in under the deck it tops. A fresh array the caller may keep.
    */
   find(from: Vec2, fromLayer: number, to: Vec2, toLayer: number): RouteWaypoint[] | undefined;
 }
@@ -675,6 +715,8 @@ export interface NavLayer {
   readonly walls: readonly Segment[];
   /** Its decks and ramps; empty: everywhere, the ground. */
   readonly walkable: readonly Polygon[];
+  /** Walls that stop a body but enclose nothing: its ramp rims (#2975). */
+  readonly open: readonly Segment[];
 }
 
 /** A gate, with the layer it stands on. */
@@ -700,6 +742,7 @@ export function buildLayeredNavGraph(
       bounds,
       clearance,
       layer.walkable,
+      layer.open,
     ),
   );
 }
@@ -749,6 +792,10 @@ class AStar implements LayeredPathFinder {
   readonly #points: Vec2[] = [];
   readonly #layerOf: Uint8Array;
   readonly #isPortal: Uint8Array;
+  /** Where a route crossing a ramp to this portal vertex is sent. */
+  readonly #exits = new Map<number, Vec2>();
+  /** The ramp's area and foot, for a portal vertex a route climbs to. */
+  readonly #climbs = new Map<number, { readonly area: Polygon; readonly foot: Vec2 }>();
   readonly #edges: number[][] = [];
   /** The first vertex of each layer, and one past the last's. */
   readonly #firstOf: Int32Array;
@@ -781,7 +828,7 @@ class AStar implements LayeredPathFinder {
         far !== undefined &&
         isStandable(near, point) &&
         isStandable(far, point)
-        ? [{ point, from: transition.from, to: transition.to, near: -1, far: -1 }]
+        ? [{ ...transition, point, near: -1, far: -1 }]
         : [];
     });
     const layers: number[] = [];
@@ -816,9 +863,21 @@ class AStar implements LayeredPathFinder {
     });
     firsts.push(this.#points.length);
     this.#joinPortals(portalsOn, firsts);
-    for (const { near, far } of links) {
+    const clearance = graphs[0]?.clearance ?? 0;
+    for (const { near, far, area, uphill } of links) {
       this.#edges[near]?.push(far);
       this.#edges[far]?.push(near);
+      if (uphill !== undefined) {
+        const length = rampLength(area, uphill);
+        const inset = Math.min(
+          Math.max(RAMP_WAYPOINT_LEAST_INSET, (clearance + 1) / length),
+          RAMP_WAYPOINT_MOST_INSET,
+        );
+        const foot = pointAlong(area, uphill, inset);
+        this.#exits.set(near, foot);
+        this.#exits.set(far, pointAlong(area, uphill, 1 - inset));
+        this.#climbs.set(far, { area, foot });
+      }
     }
     this.#layerOf = Uint8Array.from(layers);
     this.#isPortal = Uint8Array.from(portals, Number);
@@ -1024,10 +1083,15 @@ class AStar implements LayeredPathFinder {
     const path: RouteWaypoint[] = [];
     let at = this.#goal;
     while (at !== -1 && at !== this.#start) {
-      const { x, y } = this.#point(at);
-      path.push({ x, y, layer: at === this.#goal ? this.#toLayer : (this.#layerOf[at] ?? 0) });
       const before = this.#cameFrom[at] ?? -1;
-      at = at !== this.#goal && this.#isLink(at, before) ? (this.#cameFrom[before] ?? -1) : before;
+      const crossed = at !== this.#goal && this.#isLink(at, before);
+      const { x, y } = (crossed ? this.#exits.get(at) : undefined) ?? this.#point(at);
+      path.push({ x, y, layer: at === this.#goal ? this.#toLayer : (this.#layerOf[at] ?? 0) });
+      const climb = crossed ? this.#climbs.get(at) : undefined;
+      if (climb !== undefined && !pointInPolygon(from, climb.area)) {
+        path.push({ ...climb.foot, layer: this.#layerOf[before] ?? 0 });
+      }
+      at = crossed ? (this.#cameFrom[before] ?? -1) : before;
     }
     path.reverse();
     const first = path[0];

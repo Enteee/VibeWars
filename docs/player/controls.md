@@ -42,6 +42,7 @@ These keys are fixed:
   again, quickly, to attack it.
 - **Right click** a flag or the flag stand, in a Guild Battle or on Barrow Field, to target
   it; **Space** walks there and takes the flag up or plants it.
+- **Right click** a lever to target it; **Space** walks there and flips it, opening or closing the gates it works.
 - **Wheel click** a foe to call it for your team: their **T** targets it.
   On the ground or an ally, it pings that spot. Or click the target bar
   at the top to call the foe you have targeted.
@@ -65,7 +66,7 @@ Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
 **♪** (music: what plays, and how loud), the sound mute and fullscreen. In a match the same buttons,
 but Lobby, sit at the top right of the screen. In a narrow window, these icons and
 the screen's other buttons fold into **⋯**; only its main button stays out.
-⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it.
+⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it. Under **Display**, **Lighting** turns a lit map's light and shade on or off, at once, even in a match.
 Help closes with the × at its top right, Esc, or another press of [?].
 
 **Share a beat with your lobby.** In the beat editor (♪, then **Edit**),
