@@ -331,8 +331,7 @@ Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
 (The Vault,) zatim Hall of Heroes. Unutra su samo dosad izgrađene karte,
 pa danas ima devet rundi: The Hollow Deep (Uništenje), Blackwater Ford (Uništenje sa svećenikom), Barrow Field (Uništenje sa svećenikom), Cinder Sanctum (Utrka za relikvijom, umjesto Unholy
 Temples), Mosslit Cairns (Zauzimanje točaka, umjesto Forgotten Shrines),
-The Brazen Causeway (Uništenje sa svećenikom), Threefold Keep (Kralj brda), The Warden's Gallery (Zauzimanje točaka, umjesto Antechamber), zatim Hall of Heroes. Prozor Sobe kaže gdje
-si dok tražiš tim: `Runda 2 od 9 · Blackwater Ford`.
+The Brazen Causeway (Uništenje sa svećenikom), Threefold Keep (Kralj brda), The Warden's Gallery (Zauzimanje točaka, umjesto Antechamber), zatim Hall of Heroes. Dok tražiš tim, ikona reda u gornjoj traci kaže gdje si, `Uspon heroja · runda 2`, a prozor Sobe prikazuje kartu te runde.
 Uvijek susrećeš tim u istoj rundi, a čekaš ga koliko god
 treba: botovi ne popunjavaju. Jedina iznimka: od runde 2 nadalje tim
 sam u svojoj rundi 60 sekundi može preskočiti naprijed. Susreće tim koji čeka u

@@ -292,8 +292,7 @@ Shrines, Golden Gates, The Courtyard, Antechamber, (금고,) 그리고 영웅의
 Blackwater Ford(사제 전멸전), Barrow Field(사제 전멸전), Cinder Sanctum(유물 쟁탈,
 Unholy Temples 자리), Mosslit Cairns(거점 점령, Forgotten Shrines 자리), The Brazen
 Causeway(사제 전멸전), Threefold Keep(King of the Hill), The Warden's Gallery(거점
-점령, Antechamber 자리), 그리고 영웅의 전당이에요. 팀을 찾는 동안 로비 창에 현재
-위치가 나와요: `Round 2 of 9 · Blackwater Ford`. 항상 같은 라운드의 팀하고만 만나고,
+점령, Antechamber 자리), 그리고 영웅의 전당이에요. 팀을 찾는 동안 상단 바의 대기열 아이콘에 현재 위치 `영웅의 승천 · 2라운드`가 나오고, 로비 창에는 그 라운드의 맵이 나와요. 항상 같은 라운드의 팀하고만 만나고,
 얼마가 걸리든 기다려요. 봇이 채워 주지 않아요. 단 하나의 예외가 있어요. 2라운드부터,
 자기 라운드에 60초 동안 혼자인 팀은 건너뛸 수 있어요. 전당 전의 더 높은 라운드에서
 기다리는 팀과 만나서, 둘 다 더 높은 쪽 팀의 맵에서 플레이하고, 이긴 팀은 거기서부터

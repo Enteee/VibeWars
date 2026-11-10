@@ -386,8 +386,7 @@ megépített pályák vannak benne, így ma kilenc kör: The Hollow Deep
 Cinder Sanctum (Ereklyefutam, az Unholy Temples helyén), Mosslit Cairns
 (Pontfoglalás, a Forgotten Shrines helyén), The Brazen Causeway
 (Papirtás), Threefold Keep (A domb ura), The Warden's Gallery
-(Pontfoglalás, az Antechamber helyén), aztán a Hősök Csarnoka. A Lobbi
-ablak kiírja, hol tartasz, amíg csapatot keresel: `2. kör a 9-ből · Blackwater Ford`.
+(Pontfoglalás, az Antechamber helyén), aztán a Hősök Csarnoka. Amíg csapatot keresel, a felső sávban a sor ikonja kiírja, hol tartasz, `Hősök Útja · 2. kör`, a Lobbi ablak pedig annak a körnek a pályáját mutatja.
 Csak azonos körben lévő csapattal találkozol, és addig vársz rá, amíg
 kell: botok nem ugranak be. Az egyetlen kivétel: a 2. körtől kezdve az a
 csapat, amelyik 60 másodpercig egyedül van a körében, előreugorhat. A

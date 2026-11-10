@@ -354,8 +354,7 @@ Field (Rahip İmhası), Cinder Sanctum (Kalıntı Koşusu, Unholy Temples'ın
 yerinde), Mosslit Cairns (Nokta Ele Geçirme, Forgotten Shrines'ın
 yerinde), The Brazen Causeway (Rahip İmhası), Threefold Keep (Tepenin
 Kralı), The Warden's Gallery (Nokta Ele Geçirme, Antechamber'ın
-yerinde), sonra Kahramanlar Salonu. Bir takım ararken Lobi penceresi
-nerede olduğunu söyler: `Round 2 of 9 · Blackwater Ford`. Yalnızca aynı
+yerinde), sonra Kahramanlar Salonu. Bir takım ararken üst çubuktaki sıra simgesi nerede olduğunu söyler: `Kahramanların Yükselişi · 2. tur`. Lobi penceresi de o turun haritasını gösterir. Yalnızca aynı
 turdaki bir takımla karşılaşırsın ve ne kadar sürerse sürsün beklersin:
 botlar boşluğu doldurmaz. Tek istisna: 2. turdan itibaren, kendi
 turunda 60 saniye tek kalan bir takım öne atlayabilir. Salon'dan önceki

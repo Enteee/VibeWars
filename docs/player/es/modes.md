@@ -324,8 +324,7 @@ espera o, para los ganadores, sale sin volver a la cola.
 
 Un Ascenso de los Héroes en cola son nueve rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
 Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Brazen Causeway (Aniquilación de sacerdote), Threefold Keep (Rey
-de la colina), The Warden's Gallery (Puntos de captura) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
-buscas un equipo: `Round 2 of 9 · Blackwater Ford`. Solo te enfrentas a un equipo de
+de la colina), The Warden's Gallery (Puntos de captura) y luego Hall of Heroes. Mientras buscas un equipo, el icono de la cola en la barra superior dice dónde estás, `Ascenso de los Héroes · ronda 2`, y la ventana de Sala muestra el mapa de esa ronda. Solo te enfrentas a un equipo de
 tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. La única excepción: desde la ronda 2, un equipo solo en su ronda durante 60 segundos puede adelantarse. Se enfrenta a un equipo que espere en cualquier ronda posterior antes de la Hall, ambos juegan el mapa del equipo más avanzado y el ganador sigue desde allí. Una ronda en
 un mapa hecho para tres equipos espera a tres; dos equipos que hayan esperado 30
 segundos a un tercero juegan entre ellos, y también dos cuyo tercero nunca aparece

@@ -326,8 +326,7 @@ Hollow Deep (Anihilare), Blackwater Ford (Anihilare cu preot), Barrow Field (Ani
 preot), Cinder Sanctum (Cursa relicvelor, în locul lui Unholy Temples), Mosslit Cairns
 (Capturare de puncte, în locul lui Forgotten Shrines), The Brazen Causeway (Anihilare cu
 preot), Threefold Keep (Regele dealului), The Warden's Gallery (Capturare de puncte, în
-locul lui Antechamber), apoi Sala Eroilor. Fereastra Lobby spune unde ești cât timp
-cauți o echipă: `Runda 2 din 9 · Blackwater Ford`. Te întâlnești mereu doar cu o echipă
+locul lui Antechamber), apoi Sala Eroilor. Cât timp cauți o echipă, pictograma de coadă din bara de sus spune unde ești, `Ascensiunea Eroilor · runda 2`, iar fereastra Lobby arată harta acelei runde. Te întâlnești mereu doar cu o echipă
 de la aceeași rundă și aștepți una oricât durează: nu completează boții. Singura excepție:
 de la runda 2 încolo, o echipă singură la runda ei timp de 60 de secunde poate sări
 înainte. Se întâlnește cu o echipă care așteaptă la orice rundă ulterioară dinaintea

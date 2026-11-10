@@ -360,8 +360,7 @@ Mounds, Unholy Temples, Forgotten Shrines, Golden Gates, The Courtyard,
 Antechamber, (The Vault,) og så Heltenes Hal. Kun de baner, der er bygget
 indtil videre, er med, så i dag er det ni runder: The Hollow Deep (Udslettelse), Blackwater Ford (Præsteudslettelse), Barrow Field (Præsteudslettelse), Cinder Sanctum (Relikvieløb, i stedet for Unholy
 Temples), Mosslit Cairns (Erobring, i stedet for Forgotten Shrines),
-The Brazen Causeway (Præsteudslettelse), Threefold Keep (Kongen af bakken), The Warden's Gallery (Erobring, i stedet for Antechamber), og så Heltenes Hal. Lobby-vinduet siger, hvor
-du er, mens du leder efter et hold: `Runde 2 af 9 · Blackwater Ford`.
+The Brazen Causeway (Præsteudslettelse), Threefold Keep (Kongen af bakken), The Warden's Gallery (Erobring, i stedet for Antechamber), og så Heltenes Hal. Mens du leder efter et hold, siger køikonet i topbjælken, hvor du er, `Heltenes opstigning · runde 2`, og Lobby-vinduet viser den rundes bane.
 Du møder kun et hold i samme runde, og du venter på et så længe, det
 tager: ingen bots springer ind. Den ene undtagelse: fra runde 2 og frem
 må et hold, der har været alene i sin runde i 60 sekunder, springe frem.

@@ -331,8 +331,7 @@ Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
 (The Vault,) lalu Aula Pahlawan. Hanya peta yang sudah dibangun yang ada di
 dalamnya, jadi saat ini ada sembilan ronde: The Hollow Deep (Pemusnahan), Blackwater Ford (Pemusnahan Pendeta), Barrow Field (Pemusnahan Pendeta), Cinder Sanctum (Lari Relik, menggantikan Unholy
 Temples), Mosslit Cairns (Rebut Titik, menggantikan Forgotten Shrines),
-The Brazen Causeway (Pemusnahan Pendeta), Threefold Keep (Raja Bukit), The Warden's Gallery (Rebut Titik, menggantikan Antechamber), lalu Aula Pahlawan. Jendela Lobi menyebutkan posisimu
-selagi kamu mencari tim: `Round 2 of 9 · Blackwater Ford`.
+The Brazen Causeway (Pemusnahan Pendeta), Threefold Keep (Raja Bukit), The Warden's Gallery (Rebut Titik, menggantikan Antechamber), lalu Aula Pahlawan. Selagi kamu mencari tim, ikon antrean di bilah atas menyebutkan posisimu, `Pendakian Pahlawan · ronde 2`, dan jendela Lobi menampilkan peta ronde itu.
 Kamu hanya bertemu tim di ronde yang sama, dan kamu menunggu tim itu
 selama apa pun: tidak ada bot yang mengisi. Satu-satunya pengecualian: mulai ronde 2, tim
 yang sendirian di rondenya selama 60 detik boleh melompat ke depan. Tim itu bertemu tim yang menunggu di

@@ -341,8 +341,7 @@ l'attente, ou, pour les gagnants, part sans repartir en file.
 
 Une Ascension des héros en file se joue en neuf manches, toujours dans cet
 ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The Brazen Causeway (Annihilation de prêtre), Threefold
-Keep (Roi de la colline), The Warden's Gallery (Points de capture), puis le Hall of Heroes. La fenêtre Salon dit où tu
-en es pendant que tu cherches une équipe : `Round 2 of 9 · Blackwater Ford`.
+Keep (Roi de la colline), The Warden's Gallery (Points de capture), puis le Hall of Heroes. Pendant que tu cherches une équipe, l'icône de file dans la barre du haut dit où tu en es, `Ascension des héros · manche 2`, et la fenêtre Salon montre la carte de cette manche.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi
 longtemps qu'il faut : aucun bot ne comble. Seule exception : à partir de la manche 2, une équipe seule à sa manche pendant 60 secondes peut prendre de l'avance. Elle rencontre une équipe qui attend à n'importe quelle manche ultérieure avant le Hall, les deux jouent la carte de l'équipe la plus avancée, et la gagnante continue à partir de là. Une manche sur une carte faite pour
 trois équipes en attend trois ; deux équipes qui ont attendu une troisième pendant

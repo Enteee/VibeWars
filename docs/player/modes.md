@@ -331,8 +331,7 @@ Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
 (The Vault,) then the Hall of Heroes. Only the maps built so far are in
 it, so today it is nine rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Barrow Field (Priest Annihilation), Cinder Sanctum (Relic Run, in Unholy
 Temples' place), Mosslit Cairns (Capture Points, in Forgotten Shrines'),
-The Brazen Causeway (Priest Annihilation), Threefold Keep (King of the Hill), The Warden's Gallery (Capture Points, in Antechamber's), then the Hall of Heroes. The Lobby window says where
-you are while you look for a team: `Round 2 of 9 · Blackwater Ford`.
+The Brazen Causeway (Priest Annihilation), Threefold Keep (King of the Hill), The Warden's Gallery (Capture Points, in Antechamber's), then the Hall of Heroes. While you look for a team, the queue icon in the top bar says where you are, `Heroes' Ascent · round 2`, and the Lobby window shows that round's map.
 You only ever meet a team at the same round, and you wait for one as
 long as it takes: no bots fill in. The one exception: from round 2 on, a team
 alone at its round for 60 seconds may skip ahead. It meets a team waiting at
