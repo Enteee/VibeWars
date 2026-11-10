@@ -1,0 +1,2 @@
+import{D as e}from"./dist-CbmlIxRT.js";var t=e;export{t as default};
+//# sourceMappingURL=describe-DP36nhF7.js.map
