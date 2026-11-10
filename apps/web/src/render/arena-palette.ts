@@ -107,3 +107,14 @@ export const WATER_LOOK: Record<"deep" | "shallow", WaterLook> = {
     rippleAlpha: 0.5,
   },
 };
+
+/**
+ * A torch's or fire's mark (#2989): a dark stand under a bright flame, so
+ * the flame reads by value against the floor and the light pool around it.
+ */
+export const LIGHT_MARK_LOOK = {
+  stand: 0x2a2018,
+  stone: 0x5a5650,
+  flame: 0xffb347,
+  core: 0xfff1c4,
+};

@@ -71,6 +71,19 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     expect(ward).toBeLessThan(renderOrder({ kind: "deck", deckLayer: 2 }));
   });
 
+  it("draws a torch or hearth over its layer's light and wards, under whoever stands there (#2989)", () => {
+    for (const layer of [0, 1, 2]) {
+      const mark = renderOrder({ kind: "light-mark", layer });
+      expect(renderOrder({ kind: "lighting", layer })).toBeLessThan(mark);
+      expect(renderOrder({ kind: "ground-effect", layer })).toBeLessThan(mark);
+      expect(mark).toBeLessThan(renderOrder(character(layer)));
+      expect(mark).toBeLessThan(renderOrder({ kind: "wall", layer }));
+    }
+    expect(renderOrder({ kind: "lit-ground-effect" })).toBeLessThan(
+      renderOrder({ kind: "light-mark", layer: 0 }),
+    );
+  });
+
   it("leaves everyone in front of the walls on a map of one layer", () => {
     expect(renderOrder(character(characterBand(0, 1)))).toBeGreaterThan(
       renderOrder({ kind: "wall", layer: 0 }),
