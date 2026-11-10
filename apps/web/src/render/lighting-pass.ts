@@ -363,6 +363,8 @@ export class LightingPass {
     const casters = stageShadows(this.stage) ? shadowCasters(this.walls, structure, layer) : [];
 
     base.fill(baseTint(lighting, false), 1);
+    // A draw is queued until `base.render()`, so its painters live until then.
+    const painters: Phaser.GameObjects.Graphics[] = [];
     // The sun's shadows, then the indoors over them: indoors has no sun to lose.
     const sunShadows = layerSunShadows(lighting, casters);
     if (sunShadows.length > 0) {
@@ -373,7 +375,7 @@ export class LightingPass {
       }
       painter.setScale(LIGHT_MAP_SCALE);
       base.draw(painter);
-      painter.destroy();
+      painters.push(painter);
     }
     if (lighting.indoor.length > 0) {
       const painter = this.scene.make.graphics({}, false);
@@ -383,7 +385,7 @@ export class LightingPass {
       }
       painter.setScale(LIGHT_MAP_SCALE);
       base.draw(painter);
-      painter.destroy();
+      painters.push(painter);
     }
     const shadowed = new Map<string, string>();
     for (const light of [...steady, ...flickering]) {
@@ -400,6 +402,9 @@ export class LightingPass {
       base.erase(outsideKey, base.width / 2, base.height / 2);
     }
     base.render();
+    for (const painter of painters) {
+      painter.destroy();
+    }
 
     const image = this.scene.add
       .image(0, -elevationOf(layer), shownKey)

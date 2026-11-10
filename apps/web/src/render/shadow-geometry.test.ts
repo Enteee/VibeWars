@@ -7,6 +7,7 @@ import type { MapStructure, RenderableShape } from "./arena-snapshot.js";
 import {
   CASTER_HEIGHT,
   layerLightShadows,
+  layerSunShadows,
   lightShadow,
   paintDeckShadows,
   shadowCasters,
@@ -65,6 +66,20 @@ describe("the sun's shadow (#2988)", () => {
 
   it("throws none from a sun overhead", () => {
     expect(sunShadow(SQUARE, sunShadowOffset(sun(0, 90), CASTER_HEIGHT))).toEqual([]);
+  });
+
+  it("throws none from a caster standing wholly indoors, where it does not reach", () => {
+    const dark = { colour: 0xffffff, intensity: 0 };
+    const roofed = (x: number) => ({
+      ambient: dark,
+      indoorAmbient: dark,
+      indoor: [{ kind: "rect" as const, x, y: 80, width: 40, height: 40 }],
+      sun: sun(0, 45),
+      lights: [],
+    });
+    expect(layerSunShadows(roofed(90), [SQUARE])).toEqual([]);
+    // Half under the roof, it still stands in the sun.
+    expect(layerSunShadows(roofed(110), [SQUARE])).not.toEqual([]);
   });
 });
 

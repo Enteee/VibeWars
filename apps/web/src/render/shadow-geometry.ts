@@ -4,6 +4,7 @@ import type { MapLighting } from "@vibewars/game-maps/schema";
 import { DECK_SHADOW, DECK_TINT } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { shapeOutline } from "./layer-surfaces.js";
+import { isIndoors } from "./lighting-model.js";
 import { ELEVATION_STEP } from "./render-order.js";
 
 /**
@@ -112,7 +113,10 @@ export function shadowCasters(
   ];
 }
 
-/** The sun's shadows on `layer`; none without a sun. */
+/**
+ * The sun's shadows on `layer`; none without a sun. A caster standing
+ * wholly indoors throws none: the sun does not reach it.
+ */
 export function layerSunShadows(
   lighting: MapLighting,
   casters: readonly Outline[],
@@ -121,7 +125,9 @@ export function layerSunShadows(
     return [];
   }
   const offset = sunShadowOffset(lighting.sun, CASTER_HEIGHT);
-  return casters.flatMap((caster) => sunShadow(caster, offset));
+  return casters
+    .filter((caster) => !caster.every((point) => isIndoors(lighting, point)))
+    .flatMap((caster) => sunShadow(caster, offset));
 }
 
 /**
