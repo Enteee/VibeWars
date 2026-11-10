@@ -8,7 +8,6 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import {
   flipSwitch,
   initialSwitches,
-  SWITCH_COOLDOWN_SECONDS,
   switchIdOf,
   switchTargetId,
   type SwitchField,
@@ -35,17 +34,12 @@ function lever(): ReturnType<typeof initialSwitches>[number] {
 }
 
 describe("flipSwitch (#3025)", () => {
-  it("starts up, and each flip turns it", () => {
+  it("starts up, and each flip turns it, with no rest between (#3054)", () => {
     const start = lever();
-    expect(start).toMatchObject({ up: true, readyAt: 0 });
-    const down = flipSwitch(start, 1);
-    expect(down).toMatchObject({ up: false, readyAt: 1 + SWITCH_COOLDOWN_SECONDS });
-    expect(flipSwitch(down, 1 + SWITCH_COOLDOWN_SECONDS).up).toBe(true);
-  });
-
-  it("rests for its cooldown: a flip in it leaves the very same lever", () => {
-    const down = flipSwitch(lever(), 1);
-    expect(flipSwitch(down, 1 + SWITCH_COOLDOWN_SECONDS - DT)).toBe(down);
+    expect(start.up).toBe(true);
+    const down = flipSwitch(start);
+    expect(down.up).toBe(false);
+    expect(flipSwitch(down).up).toBe(true);
   });
 
   it("names its target id with the switch- prefix, and reads it back", () => {
@@ -109,21 +103,36 @@ describe("switches in a match (#3025)", () => {
     sim.requestAttack("puller", LEVER_ID);
     run(sim, 2);
     expect(open(sim)).toEqual([true, true]);
-    run(sim, SWITCH_COOLDOWN_SECONDS);
     sim.requestAttack("puller", LEVER_ID);
     run(sim, DT * 3);
     expect(open(sim)).toEqual([false, false]);
   });
 
-  it("ignores an arrival in its cooldown, silently", () => {
+  it("flips again on the next tick when ordered by one standing at it, with no rest (#3054)", () => {
     const sim = arena([body("puller", 0, vec2(100, 300)), foe]);
     sim.requestAttack("puller", LEVER_ID);
     run(sim, 2);
     expect(open(sim)).toEqual([true, false]);
     expect(sim.requestAttack("puller", LEVER_ID)).toEqual({ ok: true });
-    run(sim, DT * 3);
+    sim.step(DT);
+    expect(open(sim)).toEqual([false, false]);
+    expect(sim.switches[0]?.up).toBe(true);
+    sim.requestAttack("puller", LEVER_ID);
+    sim.step(DT);
     expect(open(sim)).toEqual([true, false]);
-    expect(sim.switches[0]?.up).toBe(false);
+  });
+
+  it("leaves its gate as it was when two arrive on one tick (#3054)", () => {
+    const sim = arena([body("one", 0, vec2(190, 400)), body("two", 0, vec2(210, 400)), foe]);
+    sim.requestAttack("one", LEVER_ID);
+    sim.requestAttack("two", LEVER_ID);
+    sim.step(DT);
+    expect(open(sim)).toEqual([false, false]);
+    expect(sim.switches[0]?.up).toBe(true);
+    // Both stood in reach: either alone flips it on the next tick.
+    sim.requestAttack("one", LEVER_ID);
+    sim.step(DT);
+    expect(open(sim)).toEqual([true, false]);
   });
 
   it("refuses the dead, and a switch the map does not have", () => {
@@ -143,7 +152,7 @@ describe("switches in a match (#3025)", () => {
     sim.requestAttack("puller", LEVER_ID);
     run(sim, 2);
     sim.walkTo("door", vec2(402, 400));
-    run(sim, SWITCH_COOLDOWN_SECONDS);
+    run(sim, 3);
     sim.requestAttack("puller", LEVER_ID);
     run(sim, DT * 3);
     expect(open(sim)).toEqual([false, false]);
