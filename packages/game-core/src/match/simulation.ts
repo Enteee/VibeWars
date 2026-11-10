@@ -6273,7 +6273,7 @@ export class MatchSimulation {
 
   /**
    * The step's switch flips (#3025), in arrival order, of those still
-   * alive: each flips its lever, which toggles its gates. Returns how many
+   * alive: each lever that moves toggles its gates. Returns how many
    * times each gate was toggled, by index.
    */
   #flipSwitches(): Map<number, number> {
@@ -6286,7 +6286,10 @@ export class MatchSimulation {
       if (lever === undefined) {
         continue;
       }
-      const next = flipSwitch(lever);
+      const next = flipSwitch(lever, this.#elapsedSeconds);
+      if (next === lever) {
+        continue;
+      }
       this.#switches[at] = next;
       for (const target of next.targets) {
         toggles.set(target, (toggles.get(target) ?? 0) + 1);
