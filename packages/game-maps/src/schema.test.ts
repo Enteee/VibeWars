@@ -209,20 +209,22 @@ describe("every training map", () => {
   // RANGE_SPELL in game-core's skill catalog.
   const RANGE_SPELL = 420;
 
-  it("ships the open hall, the pillared one and the open field", () => {
+  it("ships the open hall, the pillared one, the open field, the heights and the wilds", () => {
     expect(maps.map(({ map }) => map.id).sort()).toEqual([
       "training-field",
       "training-hall",
       "training-heights",
       "training-pillars",
+      "training-wilds",
     ]);
   });
 
   it("is named for its directory, compact, and spawns one player against dummy slots", () => {
     for (const { dir, map } of maps) {
       expect(map.id).toBe(dir);
-      // The field (#497) is big enough to run in, the heights (#2937) to climb in.
-      const roomy = map.id === "training-field" || map.id === "training-heights";
+      // The field (#497) is big enough to run in, the heights (#2937) to climb in,
+      // the wilds (#3024) to walk between its zones.
+      const roomy = ["training-field", "training-heights", "training-wilds"].includes(map.id);
       expect(map.width, map.id).toBeLessThanOrEqual(roomy ? 1400 : 600);
       expect(map.height, map.id).toBeLessThanOrEqual(roomy ? 900 : 450);
       expect(
