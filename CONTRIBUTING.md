@@ -127,7 +127,7 @@ Two audiences, kept apart:
   `docs/product/`, like everything else outside `docs/player/`, are for
   developers. They are never shown in Help.
 
-Any map or world art follows [`docs/art/visual-style.md`](docs/art/visual-style.md); its review checklist is the one to tick.
+Any map or world art follows [`docs/art/visual-style.md`](docs/art/visual-style.md); its "tick now" checklist is the one to tick.
 
 ## Commit style
 

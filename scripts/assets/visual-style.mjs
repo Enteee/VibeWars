@@ -145,4 +145,144 @@ ${body(190, 170)}
 <g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="62" y="40">up: handle stands</text><text x="215" y="40">down: handle lies</text></g>`,
 );
 
+// ---- the scene sheets: 2.5D as it should look, lit, with height, walls and materials ----
+const SW = 720;
+const SH = 440;
+/** @param {string} defs @param {string} bodySvg */
+const sheet = (defs, bodySvg) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${String(SW)}" height="${String(SH)}" viewBox="0 0 ${String(SW)} ${String(SH)}"><defs>${defs}</defs>${bodySvg}</svg>\n`;
+const label = (/** @type {number} */ x, /** @type {number} */ y, /** @type {string} */ s) =>
+  `<text x="${String(x)}" y="${String(y)}" font-family="DejaVu Sans, sans-serif" font-size="12" fill="#d7dee8">${s}</text>`;
+const grid = () => {
+  let g = `<rect width="${String(SW)}" height="${String(SH)}" fill="#26303f"/>`;
+  for (let x = 0; x <= SW; x += 80)
+    g += `<rect x="${String(x)}" width="1" height="${String(SH)}" fill="#34415a"/>`;
+  for (let y = 0; y <= SH; y += 80)
+    g += `<rect y="${String(y)}" width="${String(SW)}" height="1" fill="#34415a"/>`;
+  return g;
+};
+const stone = noise("s", 0.06, 5, "0 0 0 0 0.6  0 0 0 0 0.65  0 0 0 0 0.72  0 0 0 0.9 -0.3");
+const plank = noise("w", 0.02, 2, "0 0 0 0 0.35  0 0 0 0 0.24  0 0 0 0 0.12  0 0 0 1.3 -0.3");
+
+// A deck, a ramp, a wall and a pit under one dusk sun: height read by lip, face and shadow.
+files["lit-scene.svg"] = sheet(
+  `${stone}
+<radialGradient id="t"><stop offset="0" stop-color="#ffb060" stop-opacity="0.7"/><stop offset="0.5" stop-color="#ffb060" stop-opacity="0.25"/><stop offset="1" stop-color="#ffb060" stop-opacity="0"/></radialGradient>
+<radialGradient id="f"><stop offset="0" stop-color="#ff8a2a" stop-opacity="0.65"/><stop offset="1" stop-color="#ff8a2a" stop-opacity="0"/></radialGradient>
+<linearGradient id="r" x1="0" x2="1"><stop offset="0" stop-color="#a9bbd0"/><stop offset="1" stop-color="#8fa4bd"/></linearGradient>`,
+  `${grid()}
+<!-- the pit: a darker floor, the far wall darker still, a lip on the near rim -->
+<rect x="440" y="250" width="220" height="130" fill="#10151c"/>
+<rect x="440" y="250" width="220" height="30" fill="#0c1016"/>
+<rect x="440" y="378" width="220" height="3" fill="#a9bbd0"/>
+<!-- the deck's shadow on the ground, hard, south-east -->
+<rect x="150" y="90" width="260" height="140" fill="#080b10" fill-opacity="0.55" transform="translate(30,30)"/>
+<rect x="60" y="150" width="90" height="70" fill="#080b10" fill-opacity="0.2"/>
+<!-- the ramp, panel lines and chevrons -->
+<path d="M70,125 L150,100 V210 L70,185Z" fill="url(#r)" stroke="#3b4759" stroke-width="2"/>
+<g stroke="#8fa4bd" stroke-width="2"><path d="M94,118V196M118,110V204"/></g>
+<g fill="none" stroke="#4b5a70" stroke-width="2.5"><path d="M86,160 l12,-8 v0 M110,162 l12,-8"/></g>
+<!-- the deck: lit top, white lip, a shaded face -->
+<rect x="150" y="100" width="260" height="110" fill="#a0b2c7"/>
+<g stroke="#8fa4bd" stroke-width="1.5"><path d="M150,128H410M150,156H410M150,184H410"/></g>
+<rect x="150" y="210" width="260" height="22" fill="#6f8099"/>
+<rect x="150" y="207" width="260" height="3.5" fill="#fff"/>
+<rect x="150" y="100" width="260" height="110" fill="none" stroke="#3b4759" stroke-width="2"/>
+<!-- a wall on the deck: lit edge, shaded face -->
+<rect x="250" y="130" width="120" height="30" fill="#4b5a70" stroke="#0b0f14" stroke-width="2"/>
+<rect x="250" y="160" width="120" height="14" fill="#2d3642" stroke="#0b0f14" stroke-width="2"/>
+<path d="M250,130 H370" stroke="#a9bbd0" stroke-width="3"/>
+<rect x="258" y="174" width="120" height="10" fill="#080b10" fill-opacity="0.45"/>
+<!-- a rock outcrop on the ground, with shadow -->
+<path d="M470,60 L520,40 L590,52 L610,95 L560,120 L490,110Z" fill="#000" fill-opacity="0.35" transform="translate(16,18)"/>
+<path d="M470,60 L520,40 L590,52 L610,95 L560,120 L490,110Z" fill="#3b4759" stroke="#0b0f14" stroke-width="2"/>
+<path d="M470,60 L520,40 L590,52" fill="none" stroke="#a9bbd0" stroke-width="3" stroke-linejoin="round"/>
+<!-- a torch pool and a fire pool, additive over everything below -->
+<circle cx="170" cy="92" r="150" fill="url(#t)" style="mix-blend-mode:screen"/>
+<circle cx="560" cy="300" r="170" fill="url(#f)" style="mix-blend-mode:screen"/>
+<rect x="164" y="84" width="9" height="22" rx="2" fill="#4b3a2a" stroke="#0b0f14" stroke-width="1.5"/>
+<ellipse cx="168" cy="80" rx="7" ry="11" fill="#ffd27a" stroke="#0b0f14" stroke-width="1.2"/>
+<ellipse cx="560" cy="320" rx="18" ry="22" fill="#ffd27a" stroke="#0b0f14" stroke-width="2"/>
+<!-- bodies: on the deck, at the pit edge, in the shadow -->
+<g><circle cx="330" cy="200" r="15" fill="#59c2ff" stroke="#fff" stroke-width="2"/><circle cx="330" cy="200" r="5" fill="none" stroke="#fff" stroke-width="2"/>
+<circle cx="520" cy="330" r="15" fill="none" stroke="#ff7b72" stroke-width="2" stroke-dasharray="4 3"/><circle cx="470" cy="230" r="15" fill="#ff7b72" stroke="#fff" stroke-width="2"/></g>
+${label(14, 24, "dusk, one sun from the north-west: every shadow falls south-east")}
+${label(250, 252, "deck: lightest plane, white lip")}
+${label(444, 400, "pit: darker floor, lip on its rim")}
+${label(444, 24, "rock: lit edge, dark face")}
+${label(444, 424, "fire: warm pool on every layer")}`,
+);
+
+// Three heights side by side, from a pit to a deck: the same four cues each time.
+files["height-steps.svg"] = sheet(
+  "",
+  `${grid()}
+<g stroke="#0b0f14" stroke-width="2">
+<rect x="40" y="80" width="170" height="180" fill="#10151c"/><rect x="40" y="80" width="170" height="36" fill="#0c1016"/>
+<rect x="40" y="258" width="170" height="3.5" fill="#a9bbd0" stroke="none"/>
+<rect x="275" y="140" width="170" height="130" fill="#26303f" stroke="#34415a"/>
+<rect x="490" y="60" width="170" height="130" fill="#080b10" fill-opacity="0.55" stroke="none" transform="translate(26,26)"/>
+<rect x="490" y="60" width="170" height="130" fill="#a0b2c7"/><rect x="490" y="190" width="170" height="26" fill="#6f8099"/></g>
+<rect x="490" y="187" width="170" height="4" fill="#fff"/>
+<g stroke="#8fa4bd" stroke-width="1.5"><path d="M490,92H660M490,124H660M490,156H660"/></g>
+<g fill="#59c2ff" stroke="#fff" stroke-width="2"><circle cx="125" cy="190" r="15"/><circle cx="360" cy="200" r="15"/><circle cx="595" cy="140" r="15"/></g>
+${label(40, 300, "pit  (-1 step)")}${label(40, 322, "floor 45% darker, far wall darker")}${label(40, 342, "lip on the near rim, no shadow out")}
+${label(275, 300, "ground  (0)")}${label(275, 322, "the base tone, the grid")}
+${label(490, 300, "deck  (+1 step = 56 units)")}${label(490, 322, "lightest top, planks, white lip,")}${label(490, 342, "shaded face, hard shadow to the SE")}
+${label(14, 24, "one step is 56 units; no in-between height except on a ramp")}`,
+);
+
+// Walls: a straight wall, a rock outcrop, a door wall; each a lit top edge over a darker face.
+files["walls.svg"] = sheet(
+  `${stone}${plank}<clipPath id="c1"><rect x="40" y="110" width="200" height="50"/></clipPath><clipPath id="c2"><path d="M300,170 L320,110 L390,95 L450,108 L470,150 L450,175Z"/></clipPath><clipPath id="c3"><rect x="520" y="110" width="160" height="50"/></clipPath>`,
+  `${grid()}
+<!-- stone wall: blocks -->
+<rect x="40" y="110" width="200" height="50" fill="#4b5a70"/><g clip-path="url(#c1)"><rect width="${String(SW)}" height="${String(SH)}" filter="url(#s)" opacity="0.45"/></g>
+<g stroke="#34415a" stroke-width="2"><path d="M40,135H240M90,110V135M170,110V135M65,135V160M140,135V160M215,135V160"/></g>
+<rect x="40" y="160" width="200" height="22" fill="#2d3642"/><path d="M40,110H240" stroke="#a9bbd0" stroke-width="3"/>
+<rect x="40" y="110" width="200" height="72" fill="none" stroke="#0b0f14" stroke-width="2"/>
+<rect x="52" y="182" width="200" height="14" fill="#080b10" fill-opacity="0.5"/>
+<!-- rock outcrop -->
+<path d="M300,170 L320,110 L390,95 L450,108 L470,150 L450,175Z" fill="#000" fill-opacity="0.35" transform="translate(14,20)"/>
+<path d="M300,170 L320,110 L390,95 L450,108 L470,150 L450,175Z" fill="#4b5a70"/><g clip-path="url(#c2)"><rect width="${String(SW)}" height="${String(SH)}" filter="url(#s)" opacity="0.6"/></g>
+<path d="M300,170 L320,110 L390,95 L450,108" fill="none" stroke="#a9bbd0" stroke-width="3" stroke-linejoin="round"/>
+<path d="M300,170 L320,110 L390,95 L450,108 L470,150 L450,175Z" fill="none" stroke="#0b0f14" stroke-width="2"/>
+<path d="M360,120 L372,150 L364,168" fill="none" stroke="#10151c" stroke-width="2.5" stroke-linecap="round"/>
+<!-- wooden palisade with a door -->
+<rect x="520" y="110" width="160" height="50" fill="#6b4a26"/><g clip-path="url(#c3)"><rect width="${String(SW)}" height="${String(SH)}" filter="url(#w)" opacity="0.7"/></g>
+<g stroke="#3a2a14" stroke-width="2"><path d="M552,110V160M584,110V160M616,110V160M648,110V160"/></g>
+<rect x="520" y="160" width="160" height="22" fill="#3d2a14"/><path d="M520,110H680" stroke="#c9a46a" stroke-width="3"/>
+<rect x="520" y="110" width="160" height="72" fill="none" stroke="#0b0f14" stroke-width="2"/>
+<rect x="584" y="120" width="32" height="62" rx="3" fill="#c98a3a" stroke="#0b0f14" stroke-width="2.5"/>
+<g fill="#59c2ff" stroke="#fff" stroke-width="2"><circle cx="170" cy="310" r="15"/></g>
+${label(40, 240, "stone: blocks")}${label(300, 240, "rock: irregular, cracked")}${label(520, 240, "wood: planks, a door")}
+${label(14, 24, "every wall: lit top edge, darker face, outline, a shadow to the SE")}`,
+);
+
+// Materials: one swatch each, so a map author picks from a shared set.
+{
+  /** @type {[string, string, string, string][]} */
+  const mats = [
+    ["rock", "#4b5a70", "s", "lit grey-blue, cracked"],
+    ["moss", "#3f5a35", "s", "matte, never signal green"],
+    ["earth", "#5a4630", "w", "dry, warm brown"],
+    ["wood", "#6b4a26", "w", "planks, long grain"],
+    ["metal", "#62748c", "s", "cold, thin lit edge"],
+    ["sand", "#8a7a5a", "s", "pale, fine grain"],
+  ];
+  let m = "";
+  mats.forEach(([name, col, fl, note], i) => {
+    const x = 30 + (i % 3) * 230;
+    const y = 50 + Math.floor(i / 3) * 190;
+    m += `<rect x="${String(x)}" y="${String(y)}" width="200" height="130" rx="4" fill="${col}"/><rect x="${String(x)}" y="${String(y)}" width="200" height="130" rx="4" filter="url(#${fl})" opacity="0.55"/>`;
+    m += `<path d="M${String(x)},${String(y)}H${String(x + 200)}" stroke="#fff" stroke-opacity="0.45" stroke-width="3"/><rect x="${String(x)}" y="${String(y)}" width="200" height="130" rx="4" fill="none" stroke="#0b0f14" stroke-width="2"/>`;
+    m += label(x, y + 152, name);
+    m += `<text x="${String(x)}" y="${String(y + 170)}" font-family="DejaVu Sans, sans-serif" font-size="11" fill="#7d8899">${note} · ${col}</text>`;
+  });
+  files["materials.svg"] = sheet(
+    `${stone}${plank}`,
+    `${grid()}${m}${label(14, 24, "materials: a base tone, noise at about one feature per body, a lit top edge, an outline")}`,
+  );
+}
+
 for (const [name, text] of Object.entries(files)) writeFileSync(join(outDir, name), text);

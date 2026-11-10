@@ -51,7 +51,7 @@ wall and ground stay desaturated, so every signal colour is the loudest thing
 on screen. Shallow water is `#8fb8d6` at 30 %, paler and greyer than a spring.
 
 Colour never decides alone: danger is also **warm and pulsing**, help is
-**cool and still**, and each zone kind has its own outline pattern (below).
+**cool and still**, and each zone kind should have its own outline pattern (target, see §6).
 
 ## 2. Light
 
@@ -187,6 +187,41 @@ alpha: 0.32, pulse: 0.14 }`. The puffs (radial gradients, alpha 0.55 to 0) are
 
 ## 7. Worked examples
 
+The scene sheets come first: they show the 2.5D look this page asks for, as a
+whole, before the single elements. Textures (noise, planks, blocks) are
+**target**: today the renderer fills walls and ground flat, so a sheet shows
+where #3052 and #3053 are heading, and a recipe line says "now" only where a
+developer can copy the value from main.
+
+### A lit scene
+
+A deck with a ramp and a wall, a pit, a rock outcrop, a torch and a fire, one
+sun. Read the height by the lip, the face and the shadow; the light by its
+pools, which add on every layer.
+
+![a lit scene](visual-style/lit-scene.svg)
+
+### Heights
+
+Pit, ground and deck at the same scale, with the four cues each time: tone,
+lip, face, shadow. Numbers (PIT_FLOOR, ELEVATION_STEP) are now.
+
+![heights](visual-style/height-steps.svg)
+
+### Walls
+
+Stone, rock and wood: always a lit top edge over a darker face, an outline and
+a shadow to the south-east. The blocks, planks and cracks are target.
+
+![walls](visual-style/walls.svg)
+
+### Materials
+
+Six swatches, each a base tone, noise and a lit top edge. The base colours are
+the palette (§1); the noise is target.
+
+![materials](visual-style/materials.svg)
+
 ### Lava
 
 Hot core `#ffd23d`, body `#ff5a1f`, crust `#b8401a`, dark cracks, a bright
@@ -258,14 +293,22 @@ Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
 
 A reviewer or QA ticks these on a map or world-art PR, from a screenshot.
 
-- [ ] The map uses a biome's tones; no signal colour is used as scenery.
+**Tick now** (the renderer does these today):
+
+- [ ] No signal colour is used as scenery.
 - [ ] One sun, from the north-west; shadows fall south-east.
 - [ ] 16 lights or fewer; fire is warm, magic is cold.
 - [ ] Every height step reads: lit top, lip, darker face, shadow or pit.
-- [ ] Every zone has a visible hard edge, over water and light.
+- [ ] Every zone has a visible edge, over water and light.
 - [ ] Danger is warm and pulsing, help is cool and calm.
 - [ ] Hazards telegraph by edge width within 0.3 s.
 - [ ] Nothing hides a body, projectile or telegraph.
-- [ ] No fill is flat; texture is about one feature per body.
 - [ ] The screenshot still reads in grey and at 16 px.
 - [ ] Reduced motion holds idle loops still and keeps strike states.
+
+**Target** (engine work first; do not fail a map on these until it lands):
+
+- [ ] No fill is flat; texture is about one feature per body.
+- [ ] Zone edges differ by pattern (dashed harmful, solid help).
+- [ ] The map names its biome.
+- [ ] Contact shadows under bodies and props.
