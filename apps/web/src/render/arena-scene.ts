@@ -274,7 +274,7 @@ const IMPACT_LINE_WIDTH = 1.5;
  * numbers, which were over the bodies before the split, so a long name may
  * cover a badge's top edge.
  */
-const GROUND_DEPTH = renderOrder({ kind: "ground-effect" });
+const GROUND_DEPTH = renderOrder({ kind: "ground-effect", layer: 0 });
 /** A layered map's opaque floor and the grid: under the water and the ward and trap circles on it. */
 const FLOOR_DEPTH = renderOrder({ kind: "floor" });
 /** The wards on a lit map: over its light, which never darkens them (ADR-0052). */
@@ -303,6 +303,10 @@ export class ArenaScene extends Phaser.Scene {
   private groundGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Each ward's icon, by ground effect id (#1087). */
   private groundIcons = new Map<number, Phaser.GameObjects.Image>();
+  /** Wards on decks (#2979), one `Graphics` per layer above the ground, made when first needed. */
+  private deckGroundGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** Each deck ward's icon, by ground effect id; its depth is its layer's, for life. */
+  private deckGroundIcons = new Map<number, Phaser.GameObjects.Image>();
   /** The opaque floor of a layered map, under the wards. */
   private floorGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The grid, the arena's edge and the walls (#1353), over the wards; drawn when they change. */
@@ -1648,36 +1652,64 @@ export class ArenaScene extends Phaser.Scene {
       g.lineStyle(2, teamColour(shrine.side), 0.7);
       g.strokeCircle(shrine.position.x, shrine.position.y, SHRINE_RADIUS);
     }
+    for (const deck of this.deckGroundGraphics.values()) {
+      deck.clear();
+    }
+    const structure = this.snapshot.structure;
     const seen = new Set<number>();
     for (const effect of this.snapshot.groundEffects) {
       seen.add(effect.id);
-      const { x, y } = effect.position;
+      // A ward on a deck (#2979) draws flat at that deck's height, on its
+      // own layer's graphics: over the deck, under whoever stands there.
+      const onDeck = effect.layer > 0;
+      const drawn = onDeck ? this.deckGroundGraphicsOf(effect.layer) : g;
+      const x = effect.position.x;
+      const y = onDeck
+        ? effect.position.y - liftAt(structure, effect.position, effect.layer)
+        : effect.position.y;
       if (effect.filled) {
-        g.fillStyle(effect.colour, 0.15);
-        g.fillCircle(x, y, effect.radius);
+        drawn.fillStyle(effect.colour, 0.15);
+        drawn.fillCircle(x, y, effect.radius);
       }
-      g.lineStyle(1.5, effect.colour, 0.6);
-      g.strokeCircle(x, y, effect.radius);
+      drawn.lineStyle(1.5, effect.colour, 0.6);
+      drawn.strokeCircle(x, y, effect.radius);
       const frame = groundFrame(effect.skillId);
       if (!this.textures.get(ATLAS).has(frame)) {
         continue;
       }
-      let icon = this.groundIcons.get(effect.id);
-      if (icon === undefined) {
-        icon = this.add
-          .image(x, y, ATLAS, frame)
-          .setDisplaySize(GROUND_ICON_SIZE, GROUND_ICON_SIZE)
-          .setAlpha(GROUND_ICON_ALPHA)
-          .setDepth(this.groundDepth);
-        this.groundIcons.set(effect.id, icon);
+      const icons = onDeck ? this.deckGroundIcons : this.groundIcons;
+      if (!icons.has(effect.id)) {
+        const depth = onDeck
+          ? renderOrder({ kind: "ground-effect", layer: effect.layer }) + 0.1
+          : this.groundDepth;
+        icons.set(
+          effect.id,
+          this.add
+            .image(x, y, ATLAS, frame)
+            .setDisplaySize(GROUND_ICON_SIZE, GROUND_ICON_SIZE)
+            .setAlpha(GROUND_ICON_ALPHA)
+            .setDepth(depth),
+        );
       }
     }
-    for (const [id, icon] of this.groundIcons) {
-      if (!seen.has(id)) {
-        icon.destroy();
-        this.groundIcons.delete(id);
+    for (const icons of [this.groundIcons, this.deckGroundIcons]) {
+      for (const [id, icon] of icons) {
+        if (!seen.has(id)) {
+          icon.destroy();
+          icons.delete(id);
+        }
       }
     }
+  }
+
+  /** The graphics the wards on `layer`'s decks draw to, made the first time one does. */
+  private deckGroundGraphicsOf(layer: number): Phaser.GameObjects.Graphics {
+    let graphics = this.deckGroundGraphics.get(layer);
+    if (graphics === undefined) {
+      graphics = this.add.graphics().setDepth(renderOrder({ kind: "ground-effect", layer }));
+      this.deckGroundGraphics.set(layer, graphics);
+    }
+    return graphics;
   }
 
   /**

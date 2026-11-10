@@ -458,9 +458,24 @@ export const RING_PATH = closedPath(
 export const CREATURE_PATH = closedPath(creatureOutline(0, 0, 1), 8);
 
 /**
+ * A hidden outline is dashed (#2979), as in `docs/art/2811-occlusion-d1.png`:
+ * this long a dash, then this long a gap, in world units, measured along
+ * the outline from its start, so the dashes keep to the body as it moves.
+ */
+export const HIDDEN_DASH = 5;
+export const HIDDEN_GAP = 4;
+const DASH_PERIOD = HIDDEN_DASH + HIDDEN_GAP;
+
+/** Whether the point `along` an outline from its start is on a dash. */
+function onDash(along: number): boolean {
+  return along % DASH_PERIOD < HIDDEN_DASH;
+}
+
+/**
  * Calls `segment` for each piece of the outline `path`, scaled to `r` at
- * (`x`, `y`), that a structure covers a body on `layer` at. A body clear
- * of every structure costs one box test each. Allocates nothing.
+ * (`x`, `y`), that a structure covers a body on `layer` at and that lies
+ * on a dash. A body clear of every structure costs one box test each.
+ * Allocates nothing.
  */
 export function traceHiddenOutline(
   path: Float64Array,
@@ -481,14 +496,17 @@ export function traceHiddenOutline(
     ) {
       continue;
     }
+    let along = 0;
     for (let i = 0; i + 3 < path.length; i += 2) {
       const ax = x + (path[i] ?? 0) * r;
       const ay = y + (path[i + 1] ?? 0) * r;
       const bx = x + (path[i + 2] ?? 0) * r;
       const by = y + (path[i + 3] ?? 0) * r;
-      if (hides(each, (ax + bx) / 2, (ay + by) / 2)) {
+      const length = Math.hypot(bx - ax, by - ay);
+      if (onDash(along + length / 2) && hides(each, (ax + bx) / 2, (ay + by) / 2)) {
         segment(ax, ay, bx, by);
       }
+      along += length;
     }
   }
 }
@@ -509,28 +527,39 @@ function hiddenAt(occluders: readonly Occluder[], layer: number, x: number, y: n
   return occluders.some((each) => layer <= each.hidesThrough && hides(each, x, y));
 }
 
-/** The pieces of the world-space `points` that a structure covers on a body on `layer`. */
+/**
+ * The pieces of the world-space `points` that a structure covers on a body
+ * on `layer`, dashed as `traceHiddenOutline`'s: every piece is cut at the
+ * dash boundaries, so a long straight shaft dashes too.
+ */
 export function traceHiddenPolyline(
   points: readonly Vec2[],
   layer: number,
   occluders: readonly Occluder[],
 ): readonly HiddenPiece[] {
   const pieces: HiddenPiece[] = [];
+  let start = 0;
   points.forEach((from, at) => {
     const to = points[at + 1];
     if (to === undefined) {
       return;
     }
-    const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / POLYLINE_STEP));
-    for (let step = 0; step < steps; step += 1) {
-      const ax = from.x + ((to.x - from.x) * step) / steps;
-      const ay = from.y + ((to.y - from.y) * step) / steps;
-      const bx = from.x + ((to.x - from.x) * (step + 1)) / steps;
-      const by = from.y + ((to.y - from.y) * (step + 1)) / steps;
-      if (hiddenAt(occluders, layer, (ax + bx) / 2, (ay + by) / 2)) {
-        pieces.push({ ax, ay, bx, by });
+    const length = Math.hypot(to.x - from.x, to.y - from.y);
+    // Each dash this piece of the line crosses, as distances along it.
+    for (let k = Math.floor(start / DASH_PERIOD); k * DASH_PERIOD < start + length; k += 1) {
+      const dashTo = Math.min(length, k * DASH_PERIOD + HIDDEN_DASH - start);
+      for (let done = Math.max(0, k * DASH_PERIOD - start); done < dashTo; done += POLYLINE_STEP) {
+        const next = Math.min(dashTo, done + POLYLINE_STEP);
+        const ax = from.x + ((to.x - from.x) * done) / length;
+        const ay = from.y + ((to.y - from.y) * done) / length;
+        const bx = from.x + ((to.x - from.x) * next) / length;
+        const by = from.y + ((to.y - from.y) * next) / length;
+        if (hiddenAt(occluders, layer, (ax + bx) / 2, (ay + by) / 2)) {
+          pieces.push({ ax, ay, bx, by });
+        }
       }
     }
+    start += length;
   });
   return pieces;
 }
