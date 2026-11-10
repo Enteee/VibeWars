@@ -82,7 +82,8 @@ What you do:
   `company load` prints the dashboard's numbers: each column's depth,
   what every employee is doing and since when, and each role's tokens.
   `company hire` where a column is backing up, `company fire` an employee
-  idle the whole window, within `maxAgents`. Then one line to the operator
+  idle the whole window, within `maxAgents`. hub refuses a hire while the
+  7-day budget is projected to run out before it resets. Then one line to the operator
   (`tg send operator`): what you changed and why, or "no change" and why.
 - **Company CI runners.** `company runners` shows them; `company runners <n>`
   scales them, up to the operator's max (0 means they are off). Scale up

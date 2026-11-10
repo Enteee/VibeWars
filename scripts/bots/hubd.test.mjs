@@ -2898,6 +2898,26 @@ describe("hubd hiring and firing", () => {
     expect(String(over.reason)).toBe("the company has 4 employees, maxAgents is 4");
   }, 20_000);
 
+  it("refuses a hire while kpis.json projects the 7-day budget to run out (#2992)", async () => {
+    const hubd = await startHubd(5000);
+    employ(hubd, 9);
+    const kpis = path.join(hubd.hub, "kpis.json");
+    // hubd writes its own on the first tick, then not for 5 min.
+    await until(() => fs.existsSync(kpis), "kpis.json");
+    const projectedAt = Math.floor(Date.now() / 1000) + 3600;
+    const sevenDay = { utilization: 0.9, resetsAt: projectedAt + 86_400, projectedAt };
+    writeAtomic(hubd.hub, "kpis.json", JSON.stringify({ claude: { sevenDay } }));
+    const refused = await hubd.request("manager", "staff", ["hire", "qa-tester", "x"]);
+    expect(refused.allow).toBe(false);
+    expect(String(refused.reason)).toMatch(
+      /^the 7-day budget runs out at \d\d:\d\d, before it resets; no hires until the burn falls$/,
+    );
+
+    writeAtomic(hubd.hub, "kpis.json", JSON.stringify({ claude: null }));
+    const hired = await hubd.request("manager", "staff", ["hire", "qa-tester", "x"]);
+    expect(hired.code, String(hired.reason)).toBe(0);
+  }, 20_000);
+
   it("tells a fired employee alone to wrap up, and records its company ready (#383)", async () => {
     const hubd = await startHubd(5000);
     employ(hubd, 4);

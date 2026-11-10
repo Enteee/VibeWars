@@ -216,11 +216,16 @@ export function nextEmployeeId(role, staff) {
  * @param {StaffRequest} request
  * @param {{
  *   roster: readonly string[], maxAgents: number, rebootPending: boolean, now: number,
- *   history: readonly Change[],
- * }} context `history` is `staff.recent`
+ *   history: readonly Change[], sevenDayProjectedAt: number | null,
+ * }} context `history` is `staff.recent`; `sevenDayProjectedAt` is the unix
+ *   second `kpis.json` projects the 7-day budget to run out, null if it won't
  * @returns {{ ok: true, employee: string } | { ok: false, reason: string }}
  */
-export function staffAllowed(staff, request, { roster, maxAgents, rebootPending, now, history }) {
+export function staffAllowed(
+  staff,
+  request,
+  { roster, maxAgents, rebootPending, now, history, sevenDayProjectedAt },
+) {
   const hiring = request.verb === "hire";
   const role = hiring ? request.role : roleOf(request.employee);
   if (role === null || !roster.includes(role)) {
@@ -275,6 +280,13 @@ export function staffAllowed(staff, request, { roster, maxAgents, rebootPending,
     return {
       ok: false,
       reason: `${employee} changed at ${clock(last.at)}; the next change is possible at ${clock(last.at + COOLDOWN_MS)}`,
+    };
+  }
+  // A hire while the burn outruns the 7-day budget only hastens the stop (#2992).
+  if (hiring && !operator && sevenDayProjectedAt !== null) {
+    return {
+      ok: false,
+      reason: `the 7-day budget runs out at ${clock(sevenDayProjectedAt * 1000)}, before it resets; no hires until the burn falls`,
     };
   }
   return { ok: true, employee };
