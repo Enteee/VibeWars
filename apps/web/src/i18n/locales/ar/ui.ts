@@ -323,6 +323,7 @@ export default {
   "combat.sourceShrine": "المزار",
   "combat.sourceSkill": "مهارة",
   "combat.sourceWeapon": "سلاح",
+  "combat.sourceZone": "خطر",
   "combat.spellFailed": "فشلت {skill} لدى {target}",
   "combat.statusApplied": "{target} يتأثر بـ {status} ({seconds} ث)",
   "combat.statusAppliedMaintained": "{target} يتأثر بـ {status} (مستمر)",
@@ -389,6 +390,7 @@ export default {
   "effects.categoryChant": "ترتيلة",
   "effects.categoryCondition": "علّة",
   "effects.categoryEcho": "صدى",
+  "effects.categoryEnvironment": "بيئة",
   "effects.categoryEffect": "تأثير",
   "effects.categoryEnchantment": "طلسم",
   "effects.categoryForm": "هيئة",
@@ -445,6 +447,7 @@ export default {
   "gearEditor.statusChant": "ترتيلة",
   "gearEditor.statusCondition": "مصاب بعلّة",
   "gearEditor.statusEcho": "تحت تأثير صدى",
+  "gearEditor.statusEnvironment": "تحت تأثير بيئي",
   "gearEditor.statusEnchantment": "تحت طلسم",
   "gearEditor.statusForm": "في هيئة",
   "gearEditor.statusGlyph": "تحت تأثير نقش",
@@ -643,6 +646,7 @@ export default {
   "hud.stormBeacon": "منارة العاصفة",
   "hud.stormBeaconOurs": "منارة العاصفة: بيد فريقك",
   "hud.stormBeaconTheirs": "منارة العاصفة: بيد العدو",
+  "hud.switch": "رافعة",
   "hud.targetDead": "ميت",
   "hud.targetEffects": "تأثيرات هدفك",
   "hud.versus": "{ours} ضد {theirs}",
@@ -722,7 +726,6 @@ export default {
   "lobby.hostStartsMatchmaking": "يبدأ المضيف البحث عن مباراة",
   "lobby.joinTeam": "انضمام",
   "lobby.joinTeamLabel": "الانضمام إلى الفريق {team}",
-  "lobby.leaveQueue": "مغادرة الطابور",
   "lobby.leaveTeam": "مغادرة",
   "lobby.leaveTeamLabel": "مغادرة الفريق {team}",
   "lobby.map": "الخريطة",
@@ -789,6 +792,16 @@ export default {
   "matches.endTime": "انتهى الوقت",
   "matches.filterKind": "النوع",
   "matches.filterSize": "الحجم",
+  "matches.hallReported": "يبلّغ عنها مضيف كل مباراة، دون تحقق.",
+  "matches.hallStreak": {
+    zero: "{count} انتصار على التوالي",
+    one: "{count} انتصار على التوالي",
+    two: "{count} انتصاران على التوالي",
+    few: "{count} انتصارات على التوالي",
+    many: "{count} انتصارًا على التوالي",
+    other: "{count} انتصار على التوالي",
+  },
+  "matches.hallTitle": "قاعة الأبطال",
   "matches.hostReported": "بلاغ المضيف",
   "matches.hostReportedTitle": "نشرها مضيف المباراة؛ لم يتحقق منها أحد آخر.",
   "matches.hoursAgo": {
@@ -873,10 +886,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "التحكم",
+  "options.display": "العرض",
   "options.label": "الخيارات",
   "options.language": "اللغة",
   "options.languageBusy": "غادر الردهة أو المباراة أولًا: تغيير اللغة يعيد تحميل الصفحة.",
   "options.languageLabel": "اللغة",
+  "options.lightingLabel": "الإضاءة",
   "options.player": "اللاعب",
   "options.relay": "المرحّل (TURN)",
   "options.sections": "أقسام الخيارات",
@@ -975,6 +990,8 @@ export default {
   "queue.defending": "أنت تسيطر على {map} · الدفاع بعد {seconds} ث",
   "queue.fellThrough": "ألغيت المباراة، جارٍ البحث مجددًا",
   "queue.guildVsGuild": "نقابة ضد نقابة",
+  "queue.hallHeldBy": "قاعة الأبطال بيد {holder}",
+  "queue.hallUnheld": "قاعة الأبطال ليست بيد أحد",
   "queue.heroesAscent": "صعود الأبطال · الجولة {round}",
   "queue.hostLeft": "غادر المضيف",
   "queue.hostOnly": "وحده المضيف يستطيع مغادرة الطابور.",
@@ -1012,6 +1029,8 @@ export default {
   "queue.theirTeam": "فريقهم",
   "queue.title": "الساحة العشوائية {mode} · {character}",
   "queue.unreachable": "تعذّر الوصول إلى خوادم الردهات",
+  "queue.vault": "القبو",
+  "queue.vaultOpensIn": "تُفتح القاعة بعد {time}",
   "queue.versus": "ضد",
   "queue.waitingForEveryone": "بانتظار وصول الجميع",
   "queue.waitingForTeam": "بانتظار فريقك ({seconds})",
@@ -1492,6 +1511,72 @@ export default {
   "training.reset": "إعادة ضبط",
   "training.resetDivider": "إعادة ضبط",
   "training.scenario": "السيناريو",
+  "training.scenario.target-dummy.label": "دمية التدريب",
+  "training.scenario.target-dummy.teaches":
+    "ما تفعله رمية واحدة فعلًا: عند درع 60، الرقم الذي في التلميح تمامًا.",
+  "training.scenario.time-to-kill.label": "زمن القتل",
+  "training.scenario.time-to-kill.teaches": "ناتجك المستمر: كم يصمد ساحر بصحة 500، مرة بعد مرة.",
+  "training.scenario.physical-vs-elemental.label": "مادي مقابل عنصري",
+  "training.scenario.physical-vs-elemental.teaches":
+    "أن الدرع يستجيب لنوع الضرر: Warrior و Stalwart يخففان السيف لا Fireball، و Ranger يخفف Fireball لا السيف.",
+  "training.scenario.condition-pressure.label": "ضغط العلل",
+  "training.scenario.condition-pressure.teaches":
+    "أن العلل ساعة قتل: النزيف والسم والحرق تستنزف معًا 20 صحة في الثانية، وهو الحد الأقصى، وإضافة المزيد تجدّدها ولا تراكمها.",
+  "training.scenario.condition-removal.label": "إزالة العلل",
+  "training.scenario.condition-removal.teaches":
+    "أن إزالة العلّة لا تزيل إلا ما تذكره: حليف عند 200 من 500 يحمل خمس علل، والجرح العميق بينها يأخذ 100 لحظة وقوعه ويحدّ علاجك عند 400.",
+  "training.scenario.armor-ladder.label": "سلّم الدروع",
+  "training.scenario.armor-ladder.teaches":
+    "منحنى التخفيف: الضربة نفسها على درع من 40 إلى 104، جنبًا إلى جنب.",
+  "training.scenario.healing-throughput.label": "معدل العلاج",
+  "training.scenario.healing-throughput.teaches":
+    "قيمة علاجك أمام ضغط حقيقي، وأن الدرع صديق المعالج: Fireball نفسها تنزع 91 من راهب و64 من محارب.",
+  "training.scenario.interrupt-timing.label": "توقيت المقاطعة",
+  "training.scenario.interrupt-timing.teaches":
+    "أن المقاطعة مهارة توقيت: التقط إلقاءً مدته 3 ثوانٍ قبل أن يقع. تعاويذ الساحر المترنّح تستغرق ضعف الوقت، وأي ضربة توقفها.",
+  "training.scenario.blind-denial.label": "العمى",
+  "training.scenario.blind-denial.teaches":
+    "أن المهاجم الأعمى يخطئ تسع ضربات من عشر: راميان، أحدهما أعمى.",
+  "training.scenario.kiting-and-cripple.label": "المراوغة والإعاقة",
+  "training.scenario.kiting-and-cripple.teaches":
+    "التصويب أمام الهدف المتحرك، وأن الهدف المُعاق يمشي بنصف السرعة.",
+  "training.scenario.weapon-dps.label": "ضرر السلاح في الثانية",
+  "training.scenario.weapon-dps.teaches": "ما يفعله سلاحك في الثانية: اضغط Space واقرأ صف السلاح.",
+  "training.scenario.dodge-drill.label": "تمرين التفادي",
+  "training.scenario.dodge-drill.teaches": "أن السهم يقع حيث كنت ستكون: استدر بعد أن يغادر القوس.",
+  "training.scenario.obstacles-and-los.label": "الرؤية والمدى",
+  "training.scenario.obstacles-and-los.teaches":
+    "أن رؤية الخصم ليست بلوغه: مهارة على من خلف العمود تدور حوله، وعلى من هو خارج المدى تتقدم إليه.",
+  "training.scenario.fireball-dodge.label": "تفادَ Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "أن Fireball تطير كالسهم: تنحَّ جانبًا لحظة انطلاقها ولن يحترق شيء (#535).",
+  "training.scenario.block.label": "الصد",
+  "training.scenario.block.teaches":
+    "أن Guardian يصدّ نصف ضرباتك، وأن التعويذة تنفذ من خلاله (#534).",
+  "training.scenario.survivability.label": "الصمود",
+  "training.scenario.survivability.teaches":
+    "كم تصمد أمام ثلاثة سحرة، وأن الدرع أكبر روافعك: عند 80 تنزع Fireball أقل بـ30% مما عند 60.",
+  "training.scenario.aoe-cluster.label": "المنطقة: التجمّع",
+  "training.scenario.aoe-cluster.teaches":
+    "أن الرشقة تتمركز على هدفها: Fireball على الوسط تحرق الخمسة كلهم، ولا أحد من المتخلفَين.",
+  "training.scenario.aoe-cap.label": "المنطقة: الحد الأقصى",
+  "training.scenario.aoe-cap.teaches":
+    "أن Barrage يتوقف عند ستة: سبعة متلاصقون، وواحد ينجو دائمًا.",
+  "training.scenario.aoe-friendly-fire.label": "المنطقة: النيران الصديقة",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "أن الرشقة لا تؤذي جانبك أبدًا: الحليف في التجمّع لا يصيبه شيء.",
+  "training.scenario.aoe-line-of-sight.label": "المنطقة: خط الرؤية",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "أن الرشقة تتوقف عند الجدران: الثلاثة أمام العمود يحترقون، والاثنان خلفه لا.",
+  "training.scenario.moving-targets.label": "أهداف متحركة",
+  "training.scenario.moving-targets.teaches":
+    "إصابة ما يتحرك: صوّب أمام العدّاء، والحق بمن يهرب، واستدر على من يطاردك.",
+  "training.scenario.heights.label": "المرتفعات",
+  "training.scenario.heights.teaches":
+    "أن الارتفاع مكان تقاتل منه: الأسطح تخفي من تحتها، والمنحدرات هي الطريق الوحيد بين الطبقات، وقوسك نفسه يصيب أقوى من الأعلى.",
+  "training.scenario.wilds.label": "البرية",
+  "training.scenario.wilds.teaches":
+    "أن الأرض نفسها قد تؤذي: الأرض المحروقة تحرق كل من يقف فيها، ويستمر الحرق بعد أن تخرج منها، فدُر حولها.",
   "training.soundOff": "الصوت معطّل.",
   "training.soundOn": "الصوت مفعّل.",
   "training.you": "أنت",

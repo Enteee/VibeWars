@@ -269,6 +269,7 @@ export default {
   "combat.sourceShrine": "زیارتگاه",
   "combat.sourceSkill": "یک مهارت",
   "combat.sourceWeapon": "یک سلاح",
+  "combat.sourceZone": "خطر محیطی",
   "combat.spellFailed": "{skill} {target} ناموفق بود",
   "combat.statusApplied": "{target} {status} گرفت ({seconds} ثانیه)",
   "combat.statusAppliedMaintained": "{target} {status} گرفت (پایدار)",
@@ -330,6 +331,7 @@ export default {
   "effects.categoryChant": "سرود",
   "effects.categoryCondition": "عارضه",
   "effects.categoryEcho": "پژواک",
+  "effects.categoryEnvironment": "محیط",
   "effects.categoryEffect": "اثر",
   "effects.categoryEnchantment": "افسون",
   "effects.categoryForm": "کالبد",
@@ -379,6 +381,7 @@ export default {
   "gearEditor.statusChant": "سرود",
   "gearEditor.statusCondition": "عارضه داری",
   "gearEditor.statusEcho": "تحت پژواک",
+  "gearEditor.statusEnvironment": "تحت اثر محیطی",
   "gearEditor.statusEnchantment": "افسون‌شده",
   "gearEditor.statusForm": "در یک کالبد",
   "gearEditor.statusGlyph": "تحت نگاره",
@@ -557,6 +560,7 @@ export default {
   "hud.stormBeacon": "فانوس طوفان",
   "hud.stormBeaconOurs": "فانوس طوفان: در دست تیم تو",
   "hud.stormBeaconTheirs": "فانوس طوفان: در دست دشمن",
+  "hud.switch": "اهرم",
   "hud.targetDead": "مرده",
   "hud.targetEffects": "اثرهای هدفت",
   "hud.versus": "{ours} مقابل {theirs}",
@@ -622,7 +626,6 @@ export default {
   "lobby.hostStartsMatchmaking": "میزبان جستجوی مسابقه را آغاز می‌کند",
   "lobby.joinTeam": "پیوستن",
   "lobby.joinTeamLabel": "پیوستن به تیم {team}",
-  "lobby.leaveQueue": "خروج از صف",
   "lobby.leaveTeam": "خروج",
   "lobby.leaveTeamLabel": "خروج از تیم {team}",
   "lobby.map": "نقشه",
@@ -682,6 +685,12 @@ export default {
   "matches.endTime": "زمان تمام شد",
   "matches.filterKind": "نوع",
   "matches.filterSize": "اندازه",
+  "matches.hallReported": "گزارش‌شده از سوی میزبان هر مسابقه، تأییدنشده.",
+  "matches.hallStreak": {
+    one: "{count} برد پیاپی",
+    other: "{count} برد پیاپی",
+  },
+  "matches.hallTitle": "تالار قهرمانان",
   "matches.hostReported": "گزارش میزبان",
   "matches.hostReportedTitle": "منتشرشده توسط میزبان مسابقه؛ کس دیگری آن را تأیید نکرده است.",
   "matches.hoursAgo": { one: "{count} ساعت پیش", other: "{count} ساعت پیش" },
@@ -752,11 +761,13 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "کنترل‌ها",
+  "options.display": "نمایش",
   "options.label": "تنظیمات",
   "options.language": "زبان",
   "options.languageBusy":
     "اول از لابی یا مسابقه خارج شو: تغییر زبان صفحه را دوباره بارگذاری می‌کند.",
   "options.languageLabel": "زبان",
+  "options.lightingLabel": "نورپردازی",
   "options.player": "بازیکن",
   "options.relay": "رله (TURN)",
   "options.sections": "بخش‌های تنظیمات",
@@ -844,6 +855,8 @@ export default {
   "queue.defending": "{map} در دست توست · دفاع تا {seconds} ثانیه دیگر",
   "queue.fellThrough": "مسابقه لغو شد، جستجوی دوباره",
   "queue.guildVsGuild": "انجمن علیه انجمن",
+  "queue.hallHeldBy": "تالار قهرمانان در دست {holder} است",
+  "queue.hallUnheld": "تالار قهرمانان در دست هیچ‌کس نیست",
   "queue.heroesAscent": "عروج قهرمانان · دور {round}",
   "queue.hostLeft": "میزبان رفت",
   "queue.hostOnly": "فقط میزبان می‌تواند از صف خارج شود.",
@@ -870,6 +883,8 @@ export default {
   "queue.theirTeam": "تیم آن‌ها",
   "queue.title": "آرنای تصادفی {mode} · {character}",
   "queue.unreachable": "دسترسی به سرورهای لابی ممکن نشد",
+  "queue.vault": "سرداب",
+  "queue.vaultOpensIn": "تالار تا {time} دیگر باز می‌شود",
   "queue.versus": "مقابل",
   "queue.waitingForEveryone": "در انتظار رسیدن همه",
   "queue.waitingForTeam": "در انتظار تیمت ({seconds})",
@@ -1300,6 +1315,75 @@ export default {
   "training.reset": "بازنشانی",
   "training.resetDivider": "بازنشانی",
   "training.scenario": "سناریو",
+  "training.scenario.target-dummy.label": "آدمک تمرینی",
+  "training.scenario.target-dummy.teaches":
+    "یک اجرا واقعاً چه می‌کند: در زره 60، دقیقاً همان عدد راهنما.",
+  "training.scenario.time-to-kill.label": "زمان کشتن",
+  "training.scenario.time-to-kill.teaches":
+    "خروجی پایدارت: یک جادوگر با 500 سلامت چقدر دوام می‌آورد، بارها و بارها.",
+  "training.scenario.physical-vs-elemental.label": "فیزیکی در برابر عنصری",
+  "training.scenario.physical-vs-elemental.teaches":
+    "اینکه زره به نوع آسیب پاسخ می‌دهد: Warrior و Stalwart شمشیر را کند می‌کنند نه Fireball را، Ranger Fireball را کند می‌کند نه شمشیر را.",
+  "training.scenario.condition-pressure.label": "فشار عارضه‌ها",
+  "training.scenario.condition-pressure.teaches":
+    "اینکه عارضه‌ها ساعت مرگ‌اند: خونریزی، مسمومیت و سوختن با هم 20 سلامت در ثانیه می‌کاهند، بیشترین مقدار ممکن، و افزودن بیشتر تازه‌شان می‌کند نه انباشته.",
+  "training.scenario.condition-removal.label": "برداشتن عارضه",
+  "training.scenario.condition-removal.teaches":
+    "اینکه برداشتن عارضه فقط همان را برمی‌دارد که می‌گوید: هم‌تیمی‌ای با 200 از 500 پنج عارضه دارد، و زخم عمیق میانشان هنگام نشستن 100 می‌گیرد و درمان‌هایت را در 400 سقف می‌زند.",
+  "training.scenario.armor-ladder.label": "نردبان زره",
+  "training.scenario.armor-ladder.teaches":
+    "منحنی کاهش آسیب: همان ضربه در برابر زره 40 تا 104، کنار هم.",
+  "training.scenario.healing-throughput.label": "بازده درمان",
+  "training.scenario.healing-throughput.teaches":
+    "درمان‌هایت در برابر فشار واقعی چه ارزشی دارند، و اینکه زره دوست درمانگر است: همان Fireball از یک راهب 91 و از یک جنگجو 64 کم می‌کند.",
+  "training.scenario.interrupt-timing.label": "زمان‌بندی قطع",
+  "training.scenario.interrupt-timing.teaches":
+    "اینکه قطع کردن مهارتِ زمان‌بندی است: یک اجرای 3 ثانیه‌ای را پیش از نشستن بگیر. طلسم‌های جادوگرِ گیج دو برابر طول می‌کشند، و هر ضربه‌ای متوقفشان می‌کند.",
+  "training.scenario.blind-denial.label": "کوری",
+  "training.scenario.blind-denial.teaches":
+    "اینکه مهاجم کور از هر ده ضربه نُه تا را خطا می‌زند: دو کماندار، یکی‌شان کور.",
+  "training.scenario.kiting-and-cripple.label": "عقب‌کشی و لنگی",
+  "training.scenario.kiting-and-cripple.teaches":
+    "نشانه‌گیری جلوتر از هدف متحرک، و اینکه هدف لنگ با نصف سرعت راه می‌رود.",
+  "training.scenario.weapon-dps.label": "آسیب سلاح در ثانیه",
+  "training.scenario.weapon-dps.teaches":
+    "سلاحت در هر ثانیه چه می‌کند: Space را بزن و ردیف سلاح را بخوان.",
+  "training.scenario.dodge-drill.label": "تمرین جاخالی",
+  "training.scenario.dodge-drill.teaches":
+    "اینکه تیر جایی فرود می‌آید که تو می‌بودی: بعد از رها شدنش از کمان بچرخ.",
+  "training.scenario.obstacles-and-los.label": "دید و برد",
+  "training.scenario.obstacles-and-los.teaches":
+    "اینکه دیدن دشمن رسیدن به او نیست: مهارتی روی کسی پشت ستون، دور ستون راه می‌رود، و روی کسی بیرون از برد، جلو می‌رود.",
+  "training.scenario.fireball-dodge.label": "جاخالی از Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "اینکه Fireball مثل تیر پرواز می‌کند: هنگام رها شدنش کنار برو و هیچ چیز نمی‌سوزد (#535).",
+  "training.scenario.block.label": "دفع",
+  "training.scenario.block.teaches":
+    "اینکه Guardian نیمی از ضربه‌هایت را دفع می‌کند، و طلسم از آن می‌گذرد (#534).",
+  "training.scenario.survivability.label": "دوام",
+  "training.scenario.survivability.teaches":
+    "در برابر سه جادوگر چقدر دوام می‌آوری، و اینکه زره بزرگ‌ترین اهرم توست: در 80 یک Fireball 30% کمتر از 60 کم می‌کند.",
+  "training.scenario.aoe-cluster.label": "ناحیه: خوشه",
+  "training.scenario.aoe-cluster.teaches":
+    "اینکه پاشش روی هدفش متمرکز است: یک Fireball روی مرکز هر پنج نفر را می‌سوزاند، و هیچ‌یک از دو جامانده را نه.",
+  "training.scenario.aoe-cap.label": "ناحیه: سقف",
+  "training.scenario.aoe-cap.teaches":
+    "اینکه Barrage در شش نفر می‌ایستد: هفت نفر فشرده کنار هم، و همیشه یکی در امان می‌ماند.",
+  "training.scenario.aoe-friendly-fire.label": "ناحیه: آتش خودی",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "اینکه پاشش هرگز به طرف خودت آسیب نمی‌زند: هم‌تیمی درون خوشه هیچ آسیبی نمی‌بیند.",
+  "training.scenario.aoe-line-of-sight.label": "ناحیه: خط دید",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "اینکه پاشش پشت دیوار می‌ایستد: سه نفر جلوی ستون می‌سوزند، دو نفر پشت آن نه.",
+  "training.scenario.moving-targets.label": "هدف‌های متحرک",
+  "training.scenario.moving-targets.teaches":
+    "زدن چیزی که حرکت می‌کند: جلوتر از دونده نشانه بگیر، فراری را بگیر، و به سوی کسی که دنبالت می‌کند برگرد.",
+  "training.scenario.heights.label": "ارتفاعات",
+  "training.scenario.heights.teaches":
+    "اینکه ارتفاع جایی برای جنگیدن است: سکوها کسانی را که زیرشان هستند پنهان می‌کنند، شیب‌ها تنها راه میان لایه‌ها هستند، و تیر کمان خودت از بالا محکم‌تر می‌خورد.",
+  "training.scenario.wilds.label": "طبیعت وحشی",
+  "training.scenario.wilds.teaches":
+    "اینکه خود زمین هم می‌تواند آسیب بزند: زمین سوخته هر کسی را که در آن بایستد می‌سوزاند، و سوختن پس از بیرون آمدن ادامه دارد، پس دورش بزن.",
   "training.soundOff": "صدا خاموش شد.",
   "training.soundOn": "صدا روشن شد.",
   "training.you": "تو",

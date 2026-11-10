@@ -287,6 +287,7 @@ export default {
   "combat.sourceShrine": "המקדש",
   "combat.sourceSkill": "מיומנות",
   "combat.sourceWeapon": "נשק",
+  "combat.sourceZone": "סכנה",
   "combat.spellFailed": "{skill} של {target} נכשל",
   "combat.statusApplied": "{target} מקבל {status} ({seconds} שנ׳)",
   "combat.statusAppliedMaintained": "{target} מקבל {status} (מתמשך)",
@@ -350,6 +351,7 @@ export default {
   "effects.categoryChant": "מזמור",
   "effects.categoryCondition": "פגע",
   "effects.categoryEcho": "הד",
+  "effects.categoryEnvironment": "סביבה",
   "effects.categoryEffect": "השפעה",
   "effects.categoryEnchantment": "הקסם",
   "effects.categoryForm": "צורה",
@@ -403,6 +405,7 @@ export default {
   "gearEditor.statusChant": "מזמור",
   "gearEditor.statusCondition": "יש עליך פגע",
   "gearEditor.statusEcho": "תחת הד",
+  "gearEditor.statusEnvironment": "תחת השפעה סביבתית",
   "gearEditor.statusEnchantment": "תחת הקסם",
   "gearEditor.statusForm": "בצורה",
   "gearEditor.statusGlyph": "תחת גליף",
@@ -586,6 +589,7 @@ export default {
   "hud.stormBeacon": "מגדלור הסערה",
   "hud.stormBeaconOurs": "מגדלור הסערה: בידי הקבוצה שלך",
   "hud.stormBeaconTheirs": "מגדלור הסערה: בידי האויב",
+  "hud.switch": "ידית",
   "hud.targetDead": "מת",
   "hud.targetEffects": "ההשפעות על המטרה שלך",
   "hud.versus": "{ours} מול {theirs}",
@@ -659,7 +663,6 @@ export default {
   "lobby.hostStartsMatchmaking": "המארח מתחיל את החיפוש",
   "lobby.joinTeam": "הצטרף",
   "lobby.joinTeamLabel": "הצטרף לקבוצה {team}",
-  "lobby.leaveQueue": "עזוב את התור",
   "lobby.leaveTeam": "עזוב",
   "lobby.leaveTeamLabel": "עזוב את קבוצה {team}",
   "lobby.map": "מפה",
@@ -723,6 +726,13 @@ export default {
   "matches.endTime": "הזמן נגמר",
   "matches.filterKind": "סוג",
   "matches.filterSize": "גודל",
+  "matches.hallReported": "מדווח על ידי המארח של כל משחק, לא מאומת.",
+  "matches.hallStreak": {
+    one: "ניצחון {count} ברצף",
+    two: "{count} ניצחונות ברצף",
+    other: "{count} ניצחונות ברצף",
+  },
+  "matches.hallTitle": "היכל הגיבורים",
   "matches.hostReported": "דיווח מארח",
   "matches.hostReportedTitle": "פורסם על ידי מארח המשחק; לא אומת על ידי אף אחד אחר.",
   "matches.hoursAgo": {
@@ -801,10 +811,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "שליטה",
+  "options.display": "תצוגה",
   "options.label": "אפשרויות",
   "options.language": "שפה",
   "options.languageBusy": "עזוב קודם את הלובי או המשחק: החלפת השפה טוענת מחדש את הדף.",
   "options.languageLabel": "שפה",
+  "options.lightingLabel": "תאורה",
   "options.player": "שחקן",
   "options.relay": "ממסר (TURN)",
   "options.sections": "מקטעי אפשרויות",
@@ -897,6 +909,8 @@ export default {
   "queue.defending": "אתה מחזיק את {map} · הגנה בעוד {seconds} שנ׳",
   "queue.fellThrough": "המשחק התבטל, מחפש שוב",
   "queue.guildVsGuild": "גילדה מול גילדה",
+  "queue.hallHeldBy": "היכל הגיבורים בידי {holder}",
+  "queue.hallUnheld": "היכל הגיבורים אינו בידי איש",
   "queue.heroesAscent": "עליית הגיבורים · סיבוב {round}",
   "queue.hostLeft": "המארח עזב",
   "queue.hostOnly": "רק המארח יכול לעזוב את התור.",
@@ -928,6 +942,8 @@ export default {
   "queue.theirTeam": "הקבוצה שלהם",
   "queue.title": "זירה אקראית {mode} · {character}",
   "queue.unreachable": "אין גישה לשרתי הלובי",
+  "queue.vault": "הכספת",
+  "queue.vaultOpensIn": "ההיכל נפתח בעוד {time}",
   "queue.versus": "מול",
   "queue.waitingForEveryone": "ממתין שכולם יגיעו",
   "queue.waitingForTeam": "ממתין לקבוצה שלך ({seconds})",
@@ -1368,6 +1384,72 @@ export default {
   "training.reset": "איפוס",
   "training.resetDivider": "איפוס",
   "training.scenario": "תרחיש",
+  "training.scenario.target-dummy.label": "בובת אימון",
+  "training.scenario.target-dummy.teaches":
+    "מה הטלה אחת עושה באמת: בשריון 60, בדיוק המספר שבחלונית.",
+  "training.scenario.time-to-kill.label": "זמן להריגה",
+  "training.scenario.time-to-kill.teaches":
+    "התפוקה המתמשכת שלך: כמה זמן מטיל עם 500 בריאות שורד, שוב ושוב.",
+  "training.scenario.physical-vs-elemental.label": "פיזי מול יסודי",
+  "training.scenario.physical-vs-elemental.teaches":
+    "ששריון עונה לסוג נזק: Warrior ו-Stalwart מקהים חרב ולא Fireball, Ranger מקהה Fireball ולא חרב.",
+  "training.scenario.condition-pressure.label": "לחץ פגעים",
+  "training.scenario.condition-pressure.teaches":
+    "שפגעים הם שעון מוות: דימום, רעל ובעירה מנקזים יחד 20 בריאות בשנייה, המקסימום שיש, והוספת עוד מרעננת אותם ולא נערמת.",
+  "training.scenario.condition-removal.label": "הסרת פגעים",
+  "training.scenario.condition-removal.teaches":
+    "שהסרת פגע מסירה רק את מה שכתוב בה: בן ברית ב-200 מתוך 500 נושא חמישה פגעים, ופצע עמוק ביניהם לוקח 100 כשהוא נוחת ומגביל את הריפויים שלך ל-400.",
+  "training.scenario.armor-ladder.label": "סולם שריון",
+  "training.scenario.armor-ladder.teaches":
+    "עקומת ההפחתה: אותה מכה מול שריון 40 עד 104, זו לצד זו.",
+  "training.scenario.healing-throughput.label": "תפוקת ריפוי",
+  "training.scenario.healing-throughput.teaches":
+    "כמה שווים הריפויים שלך מול לחץ אמיתי, ושהשריון הוא חבר של המרפא: אותו Fireball מוריד 91 מנזיר ו-64 מלוחם.",
+  "training.scenario.interrupt-timing.label": "תזמון קטיעה",
+  "training.scenario.interrupt-timing.teaches":
+    "שקטיעה היא מיומנות של תזמון: תפוס הטלה של 3 שניות לפני שהיא נוחתת. לחשים של מטיל המום לוקחים פי שניים זמן, וכל פגיעה עוצרת אותם.",
+  "training.scenario.blind-denial.label": "עיוורון",
+  "training.scenario.blind-denial.teaches":
+    "שתוקף עיוור מחטיא תשע מכות מעשר: שני קשתים, אחד מהם עיוור.",
+  "training.scenario.kiting-and-cripple.label": "נסיגה ונכות",
+  "training.scenario.kiting-and-cripple.teaches":
+    "לכוון לפני מטרה נעה, ושמטרה נכה הולכת בחצי מהירות.",
+  "training.scenario.weapon-dps.label": "נזק נשק לשנייה",
+  "training.scenario.weapon-dps.teaches": "מה הנשק שלך עושה בשנייה: לחץ Space וקרא את שורת הנשק.",
+  "training.scenario.dodge-drill.label": "תרגיל התחמקות",
+  "training.scenario.dodge-drill.teaches":
+    "שחץ נוחת איפה שהיית אמור להיות: פנה אחרי שהוא עוזב את הקשת.",
+  "training.scenario.obstacles-and-los.label": "ראייה וטווח",
+  "training.scenario.obstacles-and-los.teaches":
+    "שלראות אויב זה לא להגיע אליו: מיומנות על מי שמאחורי העמוד מקיפה אותו, ועל מי שמחוץ לטווח נכנסת פנימה.",
+  "training.scenario.fireball-dodge.label": "התחמק מ-Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "ש-Fireball עף כמו חץ: זוז הצידה כשהוא יוצא ושום דבר לא בוער (#535).",
+  "training.scenario.block.label": "חסימה",
+  "training.scenario.block.teaches": "ש-Guardian מסיט חצי מהמכות שלך, ולחש עובר דרכו (#534).",
+  "training.scenario.survivability.label": "שרידות",
+  "training.scenario.survivability.teaches":
+    "כמה זמן אתה שורד מול שלושה מטילים, ושהשריון הוא המנוף הגדול ביותר שלך: ב-80 Fireball מוריד 30% פחות מאשר ב-60.",
+  "training.scenario.aoe-cluster.label": "שטח: הגוש",
+  "training.scenario.aoe-cluster.teaches":
+    "שהתזה מתמקדת במטרה שלה: Fireball במרכז שורף את כל החמישה, ואף לא אחד משני המאחרים.",
+  "training.scenario.aoe-cap.label": "שטח: התקרה",
+  "training.scenario.aoe-cap.teaches": "ש-Barrage נעצר בשישה: שבעה צפופים יחד, ותמיד אחד ניצל.",
+  "training.scenario.aoe-friendly-fire.label": "שטח: אש ידידותית",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "שהתזה אף פעם לא פוגעת בצד שלך: בן הברית שבגוש לא סופג כלום.",
+  "training.scenario.aoe-line-of-sight.label": "שטח: קו ראייה",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "שהתזה נעצרת בקירות: השלושה שלפני העמוד בוערים, השניים שמאחוריו לא.",
+  "training.scenario.moving-targets.label": "מטרות נעות",
+  "training.scenario.moving-targets.teaches":
+    "לפגוע במה שזז: כוון לפני רץ, תפוס את מי שבורח, והסתובב אל מי שרודף אחריך.",
+  "training.scenario.heights.label": "גבהים",
+  "training.scenario.heights.teaches":
+    "שגובה הוא מקום להילחם ממנו: סיפונים מסתירים את מי שמתחתם, רמפות הן הדרך היחידה בין שכבות, והקשת שלך יורה מלמעלה חזק יותר.",
+  "training.scenario.wilds.label": "שטח פרא",
+  "training.scenario.wilds.teaches":
+    "שהאדמה עצמה יכולה לפגוע: אדמה חרוכה שורפת את כל מי שעומד בה, והבעירה נמשכת גם אחרי שיצאת, אז עקוף אותה.",
   "training.soundOff": "הצליל כבוי.",
   "training.soundOn": "הצליל פועל.",
   "training.you": "אתה",
