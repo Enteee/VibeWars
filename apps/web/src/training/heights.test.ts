@@ -213,7 +213,7 @@ describe("the water on Training Heights (#2985)", () => {
   });
 
   it("walks round the deep pond, never through it", () => {
-    const end = { x: 760, y: 80, layer: 0 };
-    expectDry(walk({ x: 440, y: 80, layer: 0 }, end), end);
+    const end = { x: 1080, y: 200, layer: 0 };
+    expectDry(walk({ x: 750, y: 200, layer: 0 }, end), end);
   });
 });

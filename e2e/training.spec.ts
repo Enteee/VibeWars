@@ -227,8 +227,8 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
   await expect(page.locator(".training-log")).toContainText("── Heights ──");
   await takeControl(page);
   await wholeMap(page);
-  // The view follows you (#721): near the pond, it and a puddle are on the stage.
-  await walkTo(page, canvas, { x: 400, y: 260 });
+  // The view follows you (#721): from here, the pond and the east puddle are on the stage.
+  await walkTo(page, canvas, { x: 940, y: 400 });
   await page.mouse.move(1, 1);
   const view = await trainingView(page, canvas);
   /** The mean of R, G and B in an 8 px square round `world` on the ground. */
@@ -248,11 +248,10 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
       return rgb.reduce((sum, value) => sum + value, 0) / rgb.length;
     }, shot.toString("base64"));
   };
-  // Map coordinates from training-heights/map.json: the pond's west end,
-  // clear of the platform drawn over its middle, and the west puddle.
-  const floor = await brightness({ x: 380, y: 110 });
-  expect(await brightness({ x: 500, y: 85 })).toBeLessThan(floor);
-  expect(await brightness({ x: 240, y: 190 })).toBeGreaterThan(floor);
+  // Map coordinates from training-heights/map.json: the pond's middle and the east puddle.
+  const floor = await brightness({ x: 1060, y: 300 });
+  expect(await brightness({ x: 910, y: 200 })).toBeLessThan(floor);
+  expect(await brightness({ x: 970, y: 640 })).toBeGreaterThan(floor);
 });
 
 test("(5) the chosen scenario survives a reload", async ({ page }) => {
