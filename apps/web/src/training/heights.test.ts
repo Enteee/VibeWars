@@ -447,6 +447,13 @@ describe("the hearth rooms on Training Heights (#3021)", () => {
     arrived(walk(spawn(1), east), east);
   });
 
+  it("walks the lane between the east room's wall and the north pond", () => {
+    const west = { x: 860, y: 150, layer: ground };
+    const steps = walk({ x: 1100, y: 157, layer: ground }, west);
+    arrived(steps, west);
+    expect(Math.max(...steps.map(({ y }) => y))).toBeLessThan(200);
+  });
+
   it("stops a ground body steered at a room wall away from the door, outside", () => {
     const west = steer({ x: 100, y: 560, layer: ground }, { x: 0, y: 1 });
     expect(Math.max(...west.map(({ y }) => y))).toBeLessThan(620);
