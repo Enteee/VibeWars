@@ -119,9 +119,10 @@ uma lista de quem está nela; o selo conta as pessoas.
   jogador que não alcança o host diretamente entra por ele depois de
   alguns segundos, sem configurar nada. Cada jogador recebe seu próprio
   login, válido por 1 hora e renovado enquanto ele ficar, no máximo 8
-  jogadores por sala. Um jogador nesse relay vê **Relay compartilhado
-  por** e o nome de quem compartilha na sala; enquanto você compartilha, a
-  sala diz **Compartilhando seu relay com** quantos jogadores. Para parar,
+  jogadores por sala. **Opções → relay (TURN)** mostra isso: um jogador
+  nesse relay lê ali **Relay compartilhado por** e o nome de quem
+  compartilha; enquanto você compartilha, ali diz **Compartilhando seu
+  relay com** quantos jogadores. Para parar,
   desmarque **Compartilhar meu relay com minhas salas** em **Opções → relay (TURN)**.
   Um relay que você digita ali à mão é só seu.
 - **Seu grupo vai junto:** se você tinha amigos na sua sala, a barra

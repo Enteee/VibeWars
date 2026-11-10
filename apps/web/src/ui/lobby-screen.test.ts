@@ -15,9 +15,8 @@ import {
   teamColumn,
   waitingFor,
   waitingLine,
-  type LobbyRelay,
 } from "./lobby-screen.js";
-import { MAX_RELAYED_PER_HOLDER } from "../net/transport/relay-offer.js";
+import { saveRelay } from "../net/transport/turn-config.js";
 import { sharedRelayExplanation } from "./relay-section.js";
 
 function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
@@ -761,7 +760,7 @@ describe("lobbyPanel: the map (#1994)", () => {
   });
 });
 
-describe("lobbyPanel: shared relays (#2531)", () => {
+describe("lobbyPanel: relay status lives in Options (#2981)", () => {
   const callbacks = {
     onSelectMap: () => undefined,
     onChooseTeam: () => undefined,
@@ -769,15 +768,17 @@ describe("lobbyPanel: shared relays (#2531)", () => {
     onStart: () => undefined,
     onWatch: () => undefined,
   };
-  /** The panel's lines of `className` for a guest whose relay status is `relay`. */
-  const lines = (className: string, relay?: LobbyRelay, shown = snapshot("waiting")): string[] => {
-    const { body } = lobbyPanel(shown, callbacks, undefined, [], undefined, relay);
-    return (body as unknown as FakeElement).all(className).map((line) => line.text());
-  };
+  const stored = new Map<string, string>();
 
   beforeEach(() => {
+    stored.clear();
     vi.stubGlobal("document", {
       createElement: (tagName: string) => Object.assign(new FakeElement(), { tagName }),
+    });
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => stored.set(key, value),
+      removeItem: (key: string) => stored.delete(key),
     });
   });
 
@@ -785,55 +786,13 @@ describe("lobbyPanel: shared relays (#2531)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("names the member whose relay a relayed member goes through", () => {
-    expect(lines("relay-shared-by", { relayedVia: "guest", sharingWith: 0 })).toEqual([
-      "Relay shared by Guest",
-    ]);
-  });
-
-  it("follows an in-place switch to another holder", () => {
-    expect(lines("relay-shared-by", { relayedVia: "host", sharingWith: 0 })).toEqual([
-      "Relay shared by Host",
-    ]);
-  });
-
-  it("says nothing connected directly, through its own relay, or via a holder who left", () => {
-    expect(lines("relay-shared-by", { relayedVia: undefined, sharingWith: 0 })).toEqual([]);
-    expect(lines("relay-shared-by")).toEqual([]);
-    expect(lines("relay-shared-by", { relayedVia: "gone", sharingWith: 0 })).toEqual([]);
-  });
-
-  it("shows a name as text, whatever it holds", () => {
-    const base = snapshot("waiting");
-    const shown = {
-      ...base,
-      players: base.players.map((p) =>
-        p.sessionId === "guest" ? { ...p, name: "<b>Ann</b>" } : p,
-      ),
-    };
-    expect(lines("relay-shared-by", { relayedVia: "guest", sharingWith: 0 }, shown)).toEqual([
-      "Relay shared by <b>Ann</b>",
-    ]);
-  });
-
-  it("tells a holder how many players it shares with, and when it is at the limit", () => {
-    const sharing = (count: number): string[] =>
-      lines("relay-sharing", { relayedVia: undefined, sharingWith: count });
-    expect(sharing(0)).toEqual([]);
-    expect(sharing(1)).toEqual(["Sharing your relay with 1 player"]);
-    expect(sharing(3)).toEqual(["Sharing your relay with 3 players"]);
-    expect(sharing(MAX_RELAYED_PER_HOLDER)).toEqual([
-      "Sharing your relay with 8 players (limit reached)",
-    ]);
-  });
-
-  it("puts the holder's line under the roster", () => {
-    const { body } = lobbyPanel(snapshot("waiting"), callbacks, undefined, [], undefined, {
-      relayedVia: undefined,
-      sharingWith: 2,
-    });
-    const classes = (body as unknown as FakeElement).children.map((child) => child.className);
-    expect(classes.indexOf("screen-info relay-sharing")).toBe(classes.indexOf("lobby-teams") + 1);
+  it("never shows a relay line, with a relay saved", () => {
+    saveRelay({ kind: "static", urls: ["turn:turn.example:3478"], username: "u", credential: "c" });
+    const { body } = lobbyPanel(snapshot("waiting"), callbacks, undefined);
+    const shown = body as unknown as FakeElement;
+    for (const name of ["relay-line", "relay-shared-by", "relay-sharing"]) {
+      expect(shown.all(name)).toEqual([]);
+    }
   });
 });
 

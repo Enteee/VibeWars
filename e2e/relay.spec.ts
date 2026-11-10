@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
+import { awaitLobby, openRail } from "./helpers/menu.js";
 
 /**
  * A TURN relay by invite link (#972): what only a browser can tell is that
@@ -198,4 +199,24 @@ test("(8) a relay typed into Options is used as is and never shared", async ({ p
   await page.getByRole("button", { name: "Forget relay" }).click();
   await expect(page.locator(".relay-current")).toHaveText("Relay: None");
   expect(await savedRelay(page)).toBeNull();
+});
+
+test("(9) a lobby says nothing of the relay: Options does (#2981)", async ({ page }) => {
+  await page.addInitScript(
+    ([key, value]) => {
+      localStorage.setItem(key, value);
+    },
+    [RELAY_KEY, JSON.stringify({ kind: "static", ...LOGIN })] as const,
+  );
+  await page.goto("./");
+  await openRail(page, "Hosted Game");
+  await expect(page.locator(".lobby-panel")).toBeVisible();
+  await awaitLobby(page);
+  await expect(page.locator(".relay-line, .relay-shared-by, .relay-sharing")).toHaveCount(0);
+
+  await openRelayOptions(page);
+  await expect(page.locator(".relay-current")).toHaveText("Relay: turn.example");
+  // Connected directly, sharing with nobody: neither line.
+  await expect(page.locator(".relay-shared-by")).toHaveCount(0);
+  await expect(page.locator(".relay-sharing")).toBeHidden();
 });

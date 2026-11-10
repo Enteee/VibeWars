@@ -120,10 +120,10 @@ Quitter, et la liste de qui s'y trouve ; sa pastille les compte.
   où tu es, pas seulement ceux que tu héberges. Un joueur qui ne peut pas
   joindre l'hôte directement passe alors par lui après quelques secondes, sans
   rien configurer. Chaque joueur reçoit son propre accès, valable 1 heure et
-  renouvelé tant qu'il reste, 8 joueurs au plus par salon. Un joueur relayé
-  ainsi voit **Relais partagé par** et le nom de celui qui partage dans le
-  salon ; pendant que tu partages, le salon indique **Relais partagé avec** et
-  le nombre de joueurs. Pour arrêter, décoche **Partager mon relais avec mes
+  renouvelé tant qu'il reste, 8 joueurs au plus par salon. **Options → relais
+  (TURN)** l'affiche : un joueur relayé ainsi y lit **Relais partagé par** et
+  le nom de celui qui partage ; pendant que tu partages, il y est indiqué
+  **Relais partagé avec** et le nombre de joueurs. Pour arrêter, décoche **Partager mon relais avec mes
   salons** dans **Options → relais (TURN)**. Un relais que tu y saisis à la main
   reste toujours le tien.
 - **Ton groupe te suit :** si tu avais des amis dans ton salon, la barre du

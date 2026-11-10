@@ -111,10 +111,10 @@ Liste, wer drin ist; das Abzeichen zählt sie.
   zu deinem Relay und wird in jeder Lobby angeboten, in der du bist, nicht nur in denen, die
   du hostest. Ein Spieler, der den Host nicht direkt erreicht, tritt dann nach ein paar
   Sekunden darüber bei, ohne etwas einzurichten. Jeder Spieler bekommt seinen eigenen
-  Login, 1 Stunde gültig und erneuert, solange er bleibt, höchstens 8 Spieler pro Lobby. Ein
-  Spieler, der so verbunden ist, sieht in der Lobby **Relay geteilt von** und den Namen
-  dessen, der teilt; während du teilst, steht in der Lobby **Dein Relay wird mit … Spielern
-  geteilt**. Zum Beenden nimm das Häkchen bei **Mein Relay mit meinen Lobbys teilen** unter
+  Login, 1 Stunde gültig und erneuert, solange er bleibt, höchstens 8 Spieler pro Lobby.
+  **Optionen → Relay (TURN)** zeigt es: Ein Spieler, der so verbunden ist, liest dort
+  **Relay geteilt von** und den Namen dessen, der teilt; während du teilst, steht dort
+  **Dein Relay wird mit … Spielern geteilt**. Zum Beenden nimm das Häkchen bei **Mein Relay mit meinen Lobbys teilen** unter
   **Optionen → Relay (TURN)** heraus. Ein Relay, das du dort von Hand einträgst, gehört
   immer nur dir.
 - **Deine Gruppe kommt mit:** Hattest du Freunde in deiner Lobby, fragt die obere Leiste

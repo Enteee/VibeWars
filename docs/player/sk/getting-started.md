@@ -115,9 +115,10 @@ spočíta.
   lobby, v ktorom si, nielen v tých, ktoré hostíš. Hráč, ktorý sa k hostiteľovi
   nedostane priamo, sa potom po niekoľkých sekundách pripojí cez neho, bez
   akéhokoľvek nastavovania. Každý hráč dostane vlastné prihlásenie, platné
-  1 hodinu a obnovované, kým zostáva, najviac 8 hráčov na lobby. Hráč
-  pripojený týmto spôsobom vidí v lobby **Relé zdieľa** a meno toho, kto ho
-  zdieľa; kým zdieľaš, lobby ukazuje **Zdieľaš svoje relé s** a počet hráčov.
+  1 hodinu a obnovované, kým zostáva, najviac 8 hráčov na lobby. Ukazuje to
+  **Nastavenia → relé (TURN)**: hráč pripojený týmto spôsobom tam číta **Relé
+  zdieľa** a meno toho, kto ho zdieľa; kým zdieľaš, píše sa tam **Zdieľaš
+  svoje relé s** a počet hráčov.
   Ak chceš prestať, zruš zaškrtnutie **Zdieľať moje relé v mojich lobby** v
   **Nastavenia → relé (TURN)**. Relé, ktoré tam zadáš ručne, je vždy len tvoje.
 - **Družina ide s tebou:** ak si mal v lobby priateľov, horná lišta sa najprv
