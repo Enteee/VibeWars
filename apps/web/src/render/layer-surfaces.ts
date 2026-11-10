@@ -399,9 +399,41 @@ export function surfacesAt(structure: MapStructure, world: Vec2): readonly Surfa
     .map(({ layer, point }) => ({ layer, point }));
 }
 
-/** Whether Alt is held, as of a pointer's last event: a pointer that has had none has no event. */
-export function altHeld(pointer: { readonly event?: { readonly altKey: boolean } }): boolean {
-  return pointer.event?.altKey === true;
+/** Whether Alt is held, from the latest key or pointer event. */
+export interface AltTracker {
+  held(): boolean;
+  dispose(): void;
+}
+
+/**
+ * Tracks Alt on `target` (#3020): a key event as well as a pointer's, so
+ * pressing it with the mouse still counts at once. A blurred window gets
+ * no keyup, so it is not held after the window loses focus.
+ */
+export function trackAlt(
+  target: Pick<Window, "addEventListener" | "removeEventListener">,
+): AltTracker {
+  let held = false;
+  const follow = (event: Event): void => {
+    held = "altKey" in event && event.altKey === true;
+  };
+  const release = (): void => {
+    held = false;
+  };
+  const followed = ["keydown", "keyup", "pointermove", "pointerdown"] as const;
+  for (const type of followed) {
+    target.addEventListener(type, follow);
+  }
+  target.addEventListener("blur", release);
+  return {
+    held: () => held,
+    dispose: () => {
+      for (const type of followed) {
+        target.removeEventListener(type, follow);
+      }
+      target.removeEventListener("blur", release);
+    },
+  };
 }
 
 /** Where a click at `world` goes: the visible surface, or with `below` the one under it, if any. */

@@ -10,7 +10,7 @@ import {
   type RenderableActor,
 } from "./arena-snapshot.js";
 import {
-  altHeld,
+  trackAlt,
   deckSideLow,
   hiddenCrop,
   DECK_SLAB,
@@ -125,17 +125,6 @@ describe("a click on a ramp (#2972)", () => {
   it("gives the surface beneath with Alt", () => {
     const at = drawnAt({ x: 180, y: 150 }, 1);
     expect(pickSurface(STAIRS, at, true)).toEqual({ layer: 0, point: at });
-  });
-});
-
-describe("Alt on the pointer (#2831)", () => {
-  it("is not held before the pointer's first event", () => {
-    expect(altHeld({})).toBe(false);
-  });
-
-  it("follows the pointer's last event", () => {
-    expect(altHeld({ event: { altKey: true } })).toBe(true);
-    expect(altHeld({ event: { altKey: false } })).toBe(false);
   });
 });
 
@@ -646,5 +635,46 @@ describe("a level under the ground (#2973)", () => {
     expect(liftAt(withRamp, { x: 610, y: 580 }, 0)).toBeCloseTo(-STEP);
     expect(liftAt(withRamp, { x: 555, y: 580 }, 1)).toBeCloseTo(-STEP / 2);
     expect(liftAt(SUNK, { x: 600, y: 580 }, 0)).toBe(-STEP);
+  });
+});
+
+describe("trackAlt (#3020)", () => {
+  /** An event of `type`, with Alt as given, as a key or pointer event carries it. */
+  const event = (type: string, altKey: boolean): Event =>
+    Object.assign(new Event(type), { altKey });
+
+  it("follows Alt's own key events, with no pointer event between", () => {
+    const target = new EventTarget();
+    const alt = trackAlt(target);
+    expect(alt.held()).toBe(false);
+    target.dispatchEvent(event("keydown", true));
+    expect(alt.held()).toBe(true);
+    target.dispatchEvent(event("keyup", false));
+    expect(alt.held()).toBe(false);
+  });
+
+  it("is not held after the window loses focus", () => {
+    const target = new EventTarget();
+    const alt = trackAlt(target);
+    target.dispatchEvent(event("keydown", true));
+    target.dispatchEvent(new Event("blur"));
+    expect(alt.held()).toBe(false);
+  });
+
+  it("follows a pointer event, for Alt pressed outside the page", () => {
+    const target = new EventTarget();
+    const alt = trackAlt(target);
+    target.dispatchEvent(event("pointermove", true));
+    expect(alt.held()).toBe(true);
+    target.dispatchEvent(event("pointerdown", false));
+    expect(alt.held()).toBe(false);
+  });
+
+  it("follows nothing once disposed", () => {
+    const target = new EventTarget();
+    const alt = trackAlt(target);
+    alt.dispose();
+    target.dispatchEvent(event("keydown", true));
+    expect(alt.held()).toBe(false);
   });
 });
