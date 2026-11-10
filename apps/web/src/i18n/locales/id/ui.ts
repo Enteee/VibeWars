@@ -1242,6 +1242,72 @@ export default {
   "training.reset": "reset",
   "training.resetDivider": "reset",
   "training.scenario": "skenario",
+  "training.scenario.target-dummy.label": "Boneka sasaran",
+  "training.scenario.target-dummy.teaches":
+    "Apa yang sebenarnya dilakukan satu cast: pada armor 60, tepat angka di tooltip.",
+  "training.scenario.time-to-kill.label": "Waktu membunuh",
+  "training.scenario.time-to-kill.teaches":
+    "Damage berkelanjutanmu: berapa lama caster dengan 500 Darah bertahan, lagi dan lagi.",
+  "training.scenario.physical-vs-elemental.label": "Fisik vs elemental",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Bahwa armor menjawab jenis damage: Warrior dengan Stalwart Insignia meredam pedang tapi tidak Fireball, Ranger meredam Fireball tapi tidak pedang.",
+  "training.scenario.condition-pressure.label": "Tekanan kondisi",
+  "training.scenario.condition-pressure.teaches":
+    "Bahwa Kondisi adalah jam kematian: Bleeding, Poison, dan Burning menguras 20 Darah per detik, batas tertingginya, dan menambah lagi hanya menyegarkan, tidak menumpuk.",
+  "training.scenario.condition-removal.label": "Menghapus kondisi",
+  "training.scenario.condition-removal.teaches":
+    "Bahwa penghapus Kondisi hanya mengangkat yang disebutkannya: sekutu di 200 dari 500 membawa lima Kondisi, dan Deep Wound di antaranya mengambil 100 saat kena dan membatasi heal-mu di 400.",
+  "training.scenario.armor-ladder.label": "Tangga armor",
+  "training.scenario.armor-ladder.teaches":
+    "Kurva mitigasi: pukulan yang sama terhadap armor 40 sampai 104, berdampingan.",
+  "training.scenario.healing-throughput.label": "Daya heal",
+  "training.scenario.healing-throughput.teaches":
+    "Seberapa berharga heal-mu melawan tekanan nyata, dan bahwa armor adalah teman healer: Fireball yang sama mengambil 91 dari Monk dan 64 dari Warrior.",
+  "training.scenario.interrupt-timing.label": "Waktu interupsi",
+  "training.scenario.interrupt-timing.teaches":
+    "Bahwa interupsi soal timing: tangkap cast 3 detik sebelum mendarat. Mantra caster yang Dazed butuh waktu dua kali lipat, dan pukulan apa pun menghentikannya.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Bahwa penyerang yang Blind meleset sembilan dari sepuluh pukulan: dua pemanah, satu di antaranya Blind.",
+  "training.scenario.kiting-and-cripple.label": "Kiting dan Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Membidik di depan sasaran yang bergerak, dan bahwa sasaran yang Crippled berjalan setengah kecepatan.",
+  "training.scenario.weapon-dps.label": "DPS senjata",
+  "training.scenario.weapon-dps.teaches":
+    "Apa yang dilakukan senjatamu per detik: tekan Space dan baca baris senjata.",
+  "training.scenario.dodge-drill.label": "Latihan menghindar",
+  "training.scenario.dodge-drill.teaches":
+    "Bahwa panah mendarat di tempat kamu tadinya berada: berbelok setelah panah lepas dari busur.",
+  "training.scenario.obstacles-and-los.label": "Pandangan dan jangkauan",
+  "training.scenario.obstacles-and-los.teaches":
+    "Bahwa melihat Musuh tidak sama dengan mencapainya: Skill pada Musuh di balik pilar berjalan memutarinya, dan pada Musuh di luar jangkauan berjalan mendekat.",
+  "training.scenario.fireball-dodge.label": "Hindari Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "Bahwa Fireball terbang seperti panah: melangkah ke samping saat dilepaskan dan tidak ada yang terbakar (#535).",
+  "training.scenario.block.label": "Tangkis",
+  "training.scenario.block.teaches":
+    "Bahwa Guardian menangkis separuh pukulanmu, dan Mantra menembusnya (#534).",
+  "training.scenario.survivability.label": "Daya tahan",
+  "training.scenario.survivability.teaches":
+    "Berapa lama kamu bertahan melawan tiga caster, dan bahwa armor adalah tuas terbesarmu: pada 80, Fireball mengambil 30% lebih sedikit daripada pada 60.",
+  "training.scenario.aoe-cluster.label": "Area: kerumunan",
+  "training.scenario.aoe-cluster.teaches":
+    "Bahwa serangan area berpusat pada sasarannya: Fireball di tengah membakar kelima-limanya, dan tidak satu pun yang tercecer.",
+  "training.scenario.aoe-cap.label": "Area: batas",
+  "training.scenario.aoe-cap.teaches":
+    "Bahwa Barrage berhenti di enam: tujuh berdesakan, dan satu selalu selamat.",
+  "training.scenario.aoe-friendly-fire.label": "Area: tembakan kawan",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Bahwa serangan area tidak pernah melukai pihakmu sendiri: sekutu di kerumunan tidak kena apa-apa.",
+  "training.scenario.aoe-line-of-sight.label": "Area: garis pandang",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Bahwa serangan area berhenti di dinding: tiga di depan pilar terbakar, dua di belakangnya tidak.",
+  "training.scenario.moving-targets.label": "Sasaran bergerak",
+  "training.scenario.moving-targets.teaches":
+    "Mengenai yang bergerak: bidik di depan pelari, kejar yang kabur, dan berbalik pada yang mengejarmu.",
+  "training.scenario.heights.label": "Ketinggian",
+  "training.scenario.heights.teaches":
+    "Bahwa ketinggian adalah tempat untuk bertarung: dek menyembunyikan siapa yang di bawahnya, tanjakan satu-satunya jalan antar lapisan, dan tembakan busurmu dari atas lebih kuat.",
   "training.soundOff": "Suara mati.",
   "training.soundOn": "Suara nyala.",
   "training.you": "Kamu",

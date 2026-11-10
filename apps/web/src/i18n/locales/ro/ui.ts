@@ -1393,6 +1393,72 @@ export default {
   "training.reset": "resetare",
   "training.resetDivider": "resetare",
   "training.scenario": "scenariu",
+  "training.scenario.target-dummy.label": "Manechin de antrenament",
+  "training.scenario.target-dummy.teaches":
+    "Ce face de fapt o singură lansare: la 60 armură, exact numărul din descriere.",
+  "training.scenario.time-to-kill.label": "Timp de ucidere",
+  "training.scenario.time-to-kill.teaches":
+    "Daunele tale susținute: cât rezistă un vrăjitor cu 500 viață, iar și iar.",
+  "training.scenario.physical-vs-elemental.label": "Fizic vs elemental",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Că armura răspunde unui tip de daune: un Warrior cu Stalwart atenuează o sabie, nu un Fireball; un Ranger atenuează un Fireball, nu o sabie.",
+  "training.scenario.condition-pressure.label": "Presiunea afecțiunilor",
+  "training.scenario.condition-pressure.teaches":
+    "Că afecțiunile sunt un ceas al morții: Bleeding, Poison și Burning scurg 20 viață pe secundă, maximul posibil, iar aplicarea altora le reîmprospătează, nu le cumulează.",
+  "training.scenario.condition-removal.label": "Eliminarea afecțiunilor",
+  "training.scenario.condition-removal.teaches":
+    "Că o eliminare de afecțiune scoate doar ce spune: un aliat la 200 din 500 poartă cinci afecțiuni, iar Deep Wound printre ele ia 100 când se aplică și îți limitează vindecările la 400.",
+  "training.scenario.armor-ladder.label": "Scara armurii",
+  "training.scenario.armor-ladder.teaches":
+    "Curba de atenuare: aceeași lovitură contra 40 până la 104 armură, una lângă alta.",
+  "training.scenario.healing-throughput.label": "Randamentul vindecării",
+  "training.scenario.healing-throughput.teaches":
+    "Cât valorează vindecările tale sub presiune reală și că armura e prietena vindecătorului: același Fireball ia 91 unui Monk și 64 unui Warrior.",
+  "training.scenario.interrupt-timing.label": "Momentul întreruperii",
+  "training.scenario.interrupt-timing.teaches":
+    "Că întreruperea ține de sincronizare: prinde o lansare de 3 secunde înainte să se încheie. Unui vrăjitor Dazed vrăjile îi durează de două ori mai mult, iar orice lovitură le oprește.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Că un atacator Blind ratează nouă lovituri din zece: doi arcași, unul dintre ei Blind.",
+  "training.scenario.kiting-and-cripple.label": "Kiting și Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Ochitul înaintea unei ținte în mișcare și că una Crippled merge cu jumătate din viteză.",
+  "training.scenario.weapon-dps.label": "DPS-ul armei",
+  "training.scenario.weapon-dps.teaches":
+    "Cât face arma ta pe secundă: apasă Space și citește rândul armei.",
+  "training.scenario.dodge-drill.label": "Exercițiu de eschivă",
+  "training.scenario.dodge-drill.teaches":
+    "Că o săgeată aterizează unde ai fi fost: întoarce-te după ce pleacă din arc.",
+  "training.scenario.obstacles-and-los.label": "Vedere și rază",
+  "training.scenario.obstacles-and-los.teaches":
+    "Că a vedea un inamic nu înseamnă a-l ajunge: o abilitate pe unul din spatele stâlpului te duce în jurul lui, iar pe unul în afara razei te apropie.",
+  "training.scenario.fireball-dodge.label": "Eschivează Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "Că un Fireball zboară ca o săgeată: fă un pas lateral când pleacă și nu arde nimic (#535).",
+  "training.scenario.block.label": "Blocare",
+  "training.scenario.block.teaches":
+    "Că Guardian abate jumătate din loviturile tale, iar o vrajă trece prin el (#534).",
+  "training.scenario.survivability.label": "Supraviețuire",
+  "training.scenario.survivability.teaches":
+    "Cât reziști contra a trei vrăjitori și că armura e cea mai mare pârghie a ta: la 80, un Fireball ia cu 30% mai puțin decât la 60.",
+  "training.scenario.aoe-cluster.label": "Zonă: grupul",
+  "training.scenario.aoe-cluster.teaches":
+    "Că daunele în zonă se centrează pe țintă: un Fireball în centru îi arde pe toți cinci și pe niciunul dintre rătăciți.",
+  "training.scenario.aoe-cap.label": "Zonă: plafonul",
+  "training.scenario.aoe-cap.teaches":
+    "Că Barrage se oprește la șase: șapte înghesuiți, iar unul scapă mereu.",
+  "training.scenario.aoe-friendly-fire.label": "Zonă: foc prietenesc",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Că daunele în zonă nu-ți rănesc niciodată tabăra: aliatul din grup nu primește nimic.",
+  "training.scenario.aoe-line-of-sight.label": "Zonă: câmp vizual",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Că daunele în zonă se opresc la ziduri: cei trei din fața stâlpului ard, cei doi din spatele lui nu.",
+  "training.scenario.moving-targets.label": "Ținte în mișcare",
+  "training.scenario.moving-targets.teaches":
+    "Să lovești ce se mișcă: ochește înaintea celui care aleargă, prinde-l pe cel care fuge și întoarce-te spre cel care te urmărește.",
+  "training.scenario.heights.label": "Înălțimi",
+  "training.scenario.heights.teaches":
+    "Că înălțimea e un loc din care lupți: platformele îi ascund pe cei de dedesubt, rampele sunt singura cale între niveluri, iar săgeata ta trasă de sus lovește mai tare.",
   "training.soundOff": "Sunet oprit.",
   "training.soundOn": "Sunet pornit.",
   "training.you": "Tu",

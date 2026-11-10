@@ -1328,6 +1328,72 @@ export default {
   "training.reset": "nollaa",
   "training.resetDivider": "nollattu",
   "training.scenario": "skenaario",
+  "training.scenario.target-dummy.label": "Harjoitusnukke",
+  "training.scenario.target-dummy.teaches":
+    "Mitä yksi loitsu oikeasti tekee: 60 panssarilla täsmälleen työkaluvihjeen luku.",
+  "training.scenario.time-to-kill.label": "Aika tappoon",
+  "training.scenario.time-to-kill.teaches":
+    "Jatkuva vahinkotehosi: kuinka kauan 500 terveyden loitsija kestää, yhä uudelleen.",
+  "training.scenario.physical-vs-elemental.label": "Fyysinen vai elementaalinen",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Että panssari vastaa vahinkotyyppiin: Warrior ja Stalwart Insignia vaimentavat miekkaa mutta eivät Fireballia, Ranger vaimentaa Fireballia mutta ei miekkaa.",
+  "training.scenario.condition-pressure.label": "Vaivapaine",
+  "training.scenario.condition-pressure.teaches":
+    "Että vaivat ovat tappokello: Bleeding, Poison ja Burning vievät 20 terveyttä sekunnissa, enemmän ei ole, ja uusi lisäys uusii keston eikä kasaannu.",
+  "training.scenario.condition-removal.label": "Vaivojen poisto",
+  "training.scenario.condition-removal.teaches":
+    "Että vaivanpoisto vie vain sen, minkä se lupaa: liittolaisella, jolla on 200 terveyttä 500:sta, on viisi vaivaa, ja niiden joukossa Deep Wound vie osuessaan 100 ja rajaa parannuksesi 400:aan.",
+  "training.scenario.armor-ladder.label": "Panssaritikkaat",
+  "training.scenario.armor-ladder.teaches":
+    "Lieventämiskäyrä: sama isku 40:stä 104:ään panssaria vastaan rinnakkain.",
+  "training.scenario.healing-throughput.label": "Parannusteho",
+  "training.scenario.healing-throughput.teaches":
+    "Mitä parannuksesi ovat arvoisia todellista painetta vastaan, ja että panssari on parantajan ystävä: sama Fireball vie Monkilta 91 ja Warriorilta 64.",
+  "training.scenario.interrupt-timing.label": "Keskeytyksen ajoitus",
+  "training.scenario.interrupt-timing.teaches":
+    "Että keskeyttäminen on ajoitustaito: nappaa 3 sekunnin loitsu ennen kuin se laukeaa. Dazed-tilassa olevan loitsijan loitsut kestävät kaksi kertaa kauemmin, ja mikä tahansa osuma pysäyttää ne.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Että Blind-tilassa oleva hyökkääjä ohittaa yhdeksän iskua kymmenestä: kaksi jousiampujaa, joista toinen sokaistu.",
+  "training.scenario.kiting-and-cripple.label": "Etäisyyden pito ja Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Liikkuvan kohteen ennakointi, ja että Crippled-tilassa oleva kävelee puolella nopeudella.",
+  "training.scenario.weapon-dps.label": "Aseen DPS",
+  "training.scenario.weapon-dps.teaches":
+    "Mitä aseesi tekee sekunnissa: paina Space ja lue aserivi.",
+  "training.scenario.dodge-drill.label": "Väistöharjoitus",
+  "training.scenario.dodge-drill.teaches":
+    "Että nuoli osuu sinne, missä olisit ollut: käänny, kun se on lähtenyt jousesta.",
+  "training.scenario.obstacles-and-los.label": "Näkö ja kantama",
+  "training.scenario.obstacles-and-los.teaches":
+    "Että vihollisen näkeminen ei ole sen tavoittamista: taito pilarin takana olevaan kiertää pilarin, ja kantaman ulkopuolella olevaan kävelee lähemmäs.",
+  "training.scenario.fireball-dodge.label": "Väistä Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "Että Fireball lentää kuin nuoli: astu sivuun sen lähtiessä, eikä mikään pala (#535).",
+  "training.scenario.block.label": "Torjunta",
+  "training.scenario.block.teaches":
+    "Että Guardian torjuu puolet iskuistasi, ja loitsu menee sen läpi (#534).",
+  "training.scenario.survivability.label": "Kestävyys",
+  "training.scenario.survivability.teaches":
+    "Kuinka kauan kestät kolmea loitsijaa vastaan, ja että panssari on suurin vipusi: 80:llä Fireball vie 30% vähemmän kuin 60:llä.",
+  "training.scenario.aoe-cluster.label": "Alue: rykelmä",
+  "training.scenario.aoe-cluster.teaches":
+    "Että aluevahinko keskittyy kohteeseensa: keskelle osuva Fireball polttaa kaikki viisi, eikä kumpaakaan jälkeen jäänyttä.",
+  "training.scenario.aoe-cap.label": "Alue: katto",
+  "training.scenario.aoe-cap.teaches":
+    "Että Barrage pysähtyy kuuteen: seitsemän tiiviisti yhdessä, ja yksi säästyy aina.",
+  "training.scenario.aoe-friendly-fire.label": "Alue: oma tuli",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Että aluevahinko ei koskaan satuta omaa puoltasi: rykelmässä oleva liittolainen ei ota mitään.",
+  "training.scenario.aoe-line-of-sight.label": "Alue: näkölinja",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Että aluevahinko pysähtyy seiniin: pilarin edessä olevat kolme palavat, sen takana olevat kaksi eivät.",
+  "training.scenario.moving-targets.label": "Liikkuvat kohteet",
+  "training.scenario.moving-targets.teaches":
+    "Liikkuvaan osuminen: ennakoi juoksijaa, saavuta pakenija ja käänny jahtaajaasi vastaan.",
+  "training.scenario.heights.label": "Korkeudet",
+  "training.scenario.heights.teaches":
+    "Että korkeus on paikka, josta taistella: tasanteet kätkevät alla olevat, rampit ovat ainoa reitti kerrosten välillä, ja oma jousilaukauksesi ylhäältä osuu kovemmin.",
   "training.soundOff": "Ääni pois.",
   "training.soundOn": "Ääni päällä.",
   "training.you": "Sinä",

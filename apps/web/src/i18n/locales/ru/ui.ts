@@ -1432,6 +1432,72 @@ export default {
   "training.reset": "сброс",
   "training.resetDivider": "сброс",
   "training.scenario": "сценарий",
+  "training.scenario.target-dummy.label": "Манекен",
+  "training.scenario.target-dummy.teaches":
+    "Что на самом деле делает одно применение: при броне 60 — ровно число из подсказки.",
+  "training.scenario.time-to-kill.label": "Время убийства",
+  "training.scenario.time-to-kill.teaches":
+    "Твой постоянный урон: сколько живёт заклинатель с 500 здоровья, раз за разом.",
+  "training.scenario.physical-vs-elemental.label": "Физический и стихийный",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Что броня отвечает типу урона: Warrior со Stalwart гасит меч, но не Fireball, а Ranger гасит Fireball, но не меч.",
+  "training.scenario.condition-pressure.label": "Давление состояний",
+  "training.scenario.condition-pressure.teaches":
+    "Что состояния — это таймер смерти: Bleeding, Poison и Burning отнимают 20 здоровья в секунду, больше не бывает, а новые обновляют длительность, а не складываются.",
+  "training.scenario.condition-removal.label": "Снятие состояний",
+  "training.scenario.condition-removal.teaches":
+    "Что снятие состояния убирает только то, что написано: у союзника 200 из 500 и пять состояний, а Deep Wound среди них отнимает 100 при наложении и ограничивает твоё лечение до 400.",
+  "training.scenario.armor-ladder.label": "Лестница брони",
+  "training.scenario.armor-ladder.teaches":
+    "Кривая смягчения: один и тот же удар по броне от 40 до 104, бок о бок.",
+  "training.scenario.healing-throughput.label": "Эффективность лечения",
+  "training.scenario.healing-throughput.teaches":
+    "Чего стоит твоё лечение под настоящим давлением и что броня — друг лекаря: один и тот же Fireball снимает 91 с Monk и 64 с Warrior.",
+  "training.scenario.interrupt-timing.label": "Тайминг прерывания",
+  "training.scenario.interrupt-timing.teaches":
+    "Что прерывание — это навык тайминга: поймай 3-секундное применение, пока оно не сработало. У заклинателя с Dazed заклинания идут вдвое дольше, и любой удар их сбивает.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Что атакующий с Blind промахивается девять раз из десяти: два лучника, один из них с Blind.",
+  "training.scenario.kiting-and-cripple.label": "Кайтинг и Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Упреждение по движущейся цели и то, что цель с Crippled идёт вдвое медленнее.",
+  "training.scenario.weapon-dps.label": "DPS оружия",
+  "training.scenario.weapon-dps.teaches":
+    "Сколько урона в секунду наносит твоё оружие: нажми Space и посмотри строку оружия.",
+  "training.scenario.dodge-drill.label": "Уклонение",
+  "training.scenario.dodge-drill.teaches":
+    "Что стрела летит туда, где ты был бы: поворачивай после того, как она слетит с тетивы.",
+  "training.scenario.obstacles-and-los.label": "Видимость и дальность",
+  "training.scenario.obstacles-and-los.teaches":
+    "Что видеть врага — не значит достать его: навык по цели за колонной ведёт тебя в обход, а по цели вне дальности — ближе.",
+  "training.scenario.fireball-dodge.label": "Уклонись от Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "Что Fireball летит как стрела: шагни в сторону, когда он вылетает, и ничего не загорится (#535).",
+  "training.scenario.block.label": "Блок",
+  "training.scenario.block.teaches":
+    "Что Guardian отводит половину твоих ударов, а заклинание проходит сквозь него (#534).",
+  "training.scenario.survivability.label": "Живучесть",
+  "training.scenario.survivability.teaches":
+    "Сколько ты продержишься против трёх заклинателей и что броня — твой главный рычаг: при 80 Fireball снимает на 30% меньше, чем при 60.",
+  "training.scenario.aoe-cluster.label": "Область: группа",
+  "training.scenario.aoe-cluster.teaches":
+    "Что удар по области центрируется на цели: Fireball в центр жжёт всех пятерых и ни одного из отставших.",
+  "training.scenario.aoe-cap.label": "Область: предел",
+  "training.scenario.aoe-cap.teaches":
+    "Что Barrage останавливается на шести: семеро стоят плотно, и один всегда уцелеет.",
+  "training.scenario.aoe-friendly-fire.label": "Область: огонь по своим",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Что удар по области никогда не ранит своих: союзник в группе не получает ничего.",
+  "training.scenario.aoe-line-of-sight.label": "Область: прямая видимость",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Что удар по области останавливается у стен: трое перед колонной горят, двое за ней — нет.",
+  "training.scenario.moving-targets.label": "Движущиеся цели",
+  "training.scenario.moving-targets.teaches":
+    "Попадать по тому, что движется: бери упреждение на бегущего, догоняй убегающего и разворачивайся к преследователю.",
+  "training.scenario.heights.label": "Высоты",
+  "training.scenario.heights.teaches":
+    "Что высота — это позиция для боя: настилы скрывают тех, кто под ними, пандусы — единственный путь между уровнями, а твой выстрел из лука сверху бьёт сильнее.",
   "training.soundOff": "Звук выключен.",
   "training.soundOn": "Звук включён.",
   "training.you": "Ты",

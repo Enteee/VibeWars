@@ -1321,6 +1321,72 @@ export default {
   "training.reset": "alaphelyzet",
   "training.resetDivider": "alaphelyzet",
   "training.scenario": "forgatókönyv",
+  "training.scenario.target-dummy.label": "Gyakorlóbábu",
+  "training.scenario.target-dummy.teaches":
+    "Mit tesz valójában egy varázslás: 60 páncélnál pontosan a leírásban álló szám.",
+  "training.scenario.time-to-kill.label": "Ölési idő",
+  "training.scenario.time-to-kill.teaches":
+    "A folyamatos sebzésed: meddig bír ki egy 500 életerejű varázsló, újra és újra.",
+  "training.scenario.physical-vs-elemental.label": "Fizikai kontra elemi",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Hogy a páncél sebzéstípusra felel: egy Warrior Stalwart Insigniával tompítja a kardot, de a Fireballt nem, egy Ranger tompítja a Fireballt, de a kardot nem.",
+  "training.scenario.condition-pressure.label": "Kórnyomás",
+  "training.scenario.condition-pressure.teaches":
+    "Hogy a kórok visszaszámlálást indítanak: a Bleeding, a Poison és a Burning másodpercenként 20 életerőt szív el, ennél több nincs, és újabbak hozzáadása frissít, nem halmoz.",
+  "training.scenario.condition-removal.label": "Kóreltávolítás",
+  "training.scenario.condition-removal.teaches":
+    "Hogy egy kóreltávolítás csak azt veszi le, amit ír: egy 500-ból 200 életerejű szövetségesen öt kór van, köztük Deep Wound, amely felkerülésekor 100-at levesz, és 400-ban korlátozza a gyógyításaidat.",
+  "training.scenario.armor-ladder.label": "Páncéllétra",
+  "training.scenario.armor-ladder.teaches":
+    "A csillapítási görbe: ugyanaz a találat 40-től 104 páncélig, egymás mellett.",
+  "training.scenario.healing-throughput.label": "Gyógyítási teljesítmény",
+  "training.scenario.healing-throughput.teaches":
+    "Mennyit érnek a gyógyításaid valódi nyomás alatt, és hogy a páncél a gyógyító barátja: ugyanaz a Fireball 91-et visz le egy Monkról és 64-et egy Warriorról.",
+  "training.scenario.interrupt-timing.label": "Megszakítás időzítése",
+  "training.scenario.interrupt-timing.teaches":
+    "Hogy a megszakítás időzítés kérdése: kapd el a 3 másodperces varázslást, mielőtt befejeződik. Egy Dazed varázsló varázslatai kétszer annyi ideig tartanak, és bármely találat megállítja őket.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Hogy egy Blind támadó tízből kilenc csapást elhibáz: két íjász, egyikük vak.",
+  "training.scenario.kiting-and-cripple.label": "Távolságtartás és Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Mozgó célpont elé célzás, és hogy egy Crippled célpont fél sebességgel jár.",
+  "training.scenario.weapon-dps.label": "Fegyver DPS",
+  "training.scenario.weapon-dps.teaches":
+    "Mit tesz a fegyvered másodpercenként: nyomd meg a Space-t, és olvasd le a fegyver sorát.",
+  "training.scenario.dodge-drill.label": "Kitérési gyakorlat",
+  "training.scenario.dodge-drill.teaches":
+    "Hogy a nyílvessző oda érkezik, ahol lettél volna: fordulj el, miután elhagyta az íjat.",
+  "training.scenario.obstacles-and-los.label": "Látás és hatótáv",
+  "training.scenario.obstacles-and-los.teaches":
+    "Hogy látni egy ellenfelet még nem elérni: az oszlop mögötti ellenfélre használt készséggel megkerülöd az oszlopot, a hatótávon kívülire használttal közelebb sétálsz.",
+  "training.scenario.fireball-dodge.label": "Térj ki a Fireball elől",
+  "training.scenario.fireball-dodge.teaches":
+    "Hogy a Fireball úgy repül, mint egy nyíl: lépj félre, amikor elindul, és semmi sem ég (#535).",
+  "training.scenario.block.label": "Blokkolás",
+  "training.scenario.block.teaches":
+    "Hogy a Guardian a csapásaid felét hárítja, egy varázslat viszont átmegy rajta (#534).",
+  "training.scenario.survivability.label": "Túlélőképesség",
+  "training.scenario.survivability.teaches":
+    "Meddig bírod három varázsló ellen, és hogy a páncél a legnagyobb emelőd: 80-nál egy Fireball 30%-kal kevesebbet sebez, mint 60-nál.",
+  "training.scenario.aoe-cluster.label": "Terület: a csoport",
+  "training.scenario.aoe-cluster.teaches":
+    "Hogy a területi sebzés a célpontjára összpontosul: a középre lőtt Fireball mind az ötöt megégeti, a két lemaradót egyiket sem.",
+  "training.scenario.aoe-cap.label": "Terület: a felső határ",
+  "training.scenario.aoe-cap.teaches":
+    "Hogy a Barrage hatnál megáll: heten szorosan egymás mellett, és egy mindig megmenekül.",
+  "training.scenario.aoe-friendly-fire.label": "Terület: baráti tűz",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Hogy a területi sebzés soha nem sebzi a saját oldaladat: a csoportban álló szövetséges semmit sem kap.",
+  "training.scenario.aoe-line-of-sight.label": "Terület: látóvonal",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Hogy a területi sebzést megállítják a falak: az oszlop előtti három ég, a mögötte álló kettő nem.",
+  "training.scenario.moving-targets.label": "Mozgó célpontok",
+  "training.scenario.moving-targets.teaches":
+    "Eltalálni, ami mozog: célozz a futó elé, kapd el a menekülőt, és fordulj szembe azzal, aki üldöz.",
+  "training.scenario.heights.label": "Magaslatok",
+  "training.scenario.heights.teaches":
+    "Hogy a magaslat harci pozíció: az emelvények elrejtik, ki van alattuk, a rámpák az egyetlen út a szintek között, és a saját íjlövésed fentről nagyobbat üt.",
   "training.soundOff": "Hang kikapcsolva.",
   "training.soundOn": "Hang bekapcsolva.",
   "training.you": "Te",

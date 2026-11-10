@@ -1246,6 +1246,69 @@ export default {
   "training.reset": "リセット",
   "training.resetDivider": "リセット",
   "training.scenario": "シナリオ",
+  "training.scenario.target-dummy.label": "練習用カカシ",
+  "training.scenario.target-dummy.teaches":
+    "1回の詠唱が実際に与えるもの: 防御力60なら、ツールチップの数値そのまま。",
+  "training.scenario.time-to-kill.label": "撃破時間",
+  "training.scenario.time-to-kill.teaches":
+    "持続火力: ヘルス500のキャスターが何秒もつか、何度でも。",
+  "training.scenario.physical-vs-elemental.label": "物理 対 属性",
+  "training.scenario.physical-vs-elemental.teaches":
+    "防御力はダメージの種類ごとに効く: WarriorとStalwart Insigniaは剣を軽減してもFireballは軽減せず、RangerはFireballを軽減しても剣は軽減しない。",
+  "training.scenario.condition-pressure.label": "状態異常の圧力",
+  "training.scenario.condition-pressure.teaches":
+    "状態異常は死へのカウントダウン: Bleeding、Poison、Burningで毎秒20ヘルスが削れ、これが上限。重ねても累積せず、効果時間が更新されるだけ。",
+  "training.scenario.condition-removal.label": "状態異常の解除",
+  "training.scenario.condition-removal.teaches":
+    "状態異常の解除は書かれたものしか取り除かない: 500中200の味方が状態異常を5つ抱え、その中のDeep Woundはかかった瞬間に100を奪い、回復の上限を400にする。",
+  "training.scenario.armor-ladder.label": "防御力の段階",
+  "training.scenario.armor-ladder.teaches":
+    "軽減カーブ: 同じ一撃を防御力40から104まで並べて比べる。",
+  "training.scenario.healing-throughput.label": "回復量",
+  "training.scenario.healing-throughput.teaches":
+    "本物の圧力に対して回復がどれだけ効くか、そして防御力はヒーラーの味方であること: 同じFireballでもMonkには91、Warriorには64。",
+  "training.scenario.interrupt-timing.label": "中断のタイミング",
+  "training.scenario.interrupt-timing.teaches":
+    "中断はタイミングの技: 3秒の詠唱を完了前に止める。Dazed状態のキャスターはスペルに2倍の時間がかかり、どんな一撃でも止まる。",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Blind状態の攻撃者は10回中9回外す: 2人の弓兵、そのうち1人がBlind。",
+  "training.scenario.kiting-and-cripple.label": "引き撃ちとCrippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "動く標的への偏差撃ち、そしてCrippled状態の標的は半分の速さで歩くこと。",
+  "training.scenario.weapon-dps.label": "武器のDPS",
+  "training.scenario.weapon-dps.teaches": "武器の毎秒ダメージ: Spaceを押して武器の行を読む。",
+  "training.scenario.dodge-drill.label": "回避練習",
+  "training.scenario.dodge-drill.teaches":
+    "矢はあなたがいたはずの場所に着く: 弓から放たれた後に向きを変えよう。",
+  "training.scenario.obstacles-and-los.label": "視界と射程",
+  "training.scenario.obstacles-and-los.teaches":
+    "敵が見えても届くとは限らない: 柱の向こうの敵へのスキルは回り込んで歩き、射程外の敵へは近づいて歩く。",
+  "training.scenario.fireball-dodge.label": "Fireballを避ける",
+  "training.scenario.fireball-dodge.teaches":
+    "Fireballは矢のように飛ぶ: 放たれた瞬間に横へ動けば何も燃えない (#535)。",
+  "training.scenario.block.label": "ブロック",
+  "training.scenario.block.teaches": "Guardianは攻撃の半分をそらすが、スペルは素通りする (#534)。",
+  "training.scenario.survivability.label": "生存力",
+  "training.scenario.survivability.teaches":
+    "3人のキャスター相手にどれだけ耐えられるか、そして防御力が最大の手段であること: 80ならFireballのダメージは60のときより30%少ない。",
+  "training.scenario.aoe-cluster.label": "範囲: 密集",
+  "training.scenario.aoe-cluster.teaches":
+    "範囲攻撃は標的を中心にする: 中心へのFireballは5人全員を焼き、はぐれた2人には当たらない。",
+  "training.scenario.aoe-cap.label": "範囲: 上限",
+  "training.scenario.aoe-cap.teaches": "Barrageは6人で止まる: 7人が密集していても、必ず1人は無傷。",
+  "training.scenario.aoe-friendly-fire.label": "範囲: 味方への被弾",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "範囲攻撃は自軍を傷つけない: 密集の中の味方はダメージを受けない。",
+  "training.scenario.aoe-line-of-sight.label": "範囲: 視線",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "範囲攻撃は壁で止まる: 柱の手前の3人は燃え、奥の2人は燃えない。",
+  "training.scenario.moving-targets.label": "動く標的",
+  "training.scenario.moving-targets.teaches":
+    "動くものを当てる: 走る者には偏差を取り、逃げる者は追いつき、追ってくる者には向き直る。",
+  "training.scenario.heights.label": "高所",
+  "training.scenario.heights.teaches":
+    "高さは戦う場所: デッキは下にいる者を隠し、スロープだけが階層をつなぎ、上から撃つ弓は威力が増す。",
   "training.soundOff": "サウンドオフ。",
   "training.soundOn": "サウンドオン。",
   "training.you": "自分",

@@ -1211,6 +1211,66 @@ export default {
   "training.reset": "重置",
   "training.resetDivider": "重置",
   "training.scenario": "场景",
+  "training.scenario.target-dummy.label": "训练假人",
+  "training.scenario.target-dummy.teaches":
+    "一次施法的真实效果：在 60 护甲下，正好是提示中的数字。",
+  "training.scenario.time-to-kill.label": "击杀时间",
+  "training.scenario.time-to-kill.teaches":
+    "你的持续输出：一个 500 生命的施法者能撑多久，一次又一次。",
+  "training.scenario.physical-vs-elemental.label": "物理与元素",
+  "training.scenario.physical-vs-elemental.teaches":
+    "护甲针对伤害类型：Warrior 和 Stalwart 能减轻剑击而不能减轻 Fireball，Ranger 能减轻 Fireball 而不能减轻剑击。",
+  "training.scenario.condition-pressure.label": "异常状态压制",
+  "training.scenario.condition-pressure.teaches":
+    "异常状态是死亡倒计时：Bleeding、Poison 和 Burning 每秒流失 20 点生命，这已是上限，再次施加只会刷新时间而不会叠加。",
+  "training.scenario.condition-removal.label": "移除异常状态",
+  "training.scenario.condition-removal.teaches":
+    "移除异常状态只移除它写明的那些：一名生命 200/500 的队友身上有五种异常状态，其中的 Deep Wound 生效时立即扣除 100 点生命，并将你的治疗上限压到 400。",
+  "training.scenario.armor-ladder.label": "护甲阶梯",
+  "training.scenario.armor-ladder.teaches": "减伤曲线：同一击分别打在 40 到 104 护甲上，并排对比。",
+  "training.scenario.healing-throughput.label": "治疗量",
+  "training.scenario.healing-throughput.teaches":
+    "你的治疗在真实压力下价值几何，以及护甲是治疗者的朋友：同一个 Fireball 对 Monk 造成 91 点伤害，对 Warrior 只有 64 点。",
+  "training.scenario.interrupt-timing.label": "打断时机",
+  "training.scenario.interrupt-timing.teaches":
+    "打断是关于时机的技巧：在 3 秒的施法完成前打断它。处于 Dazed 的施法者施法时间翻倍，且任何攻击都能打断。",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "处于 Blind 的攻击者十次攻击会落空九次：两名弓箭手，其中一名处于 Blind。",
+  "training.scenario.kiting-and-cripple.label": "风筝与 Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "对移动目标提前瞄准，以及处于 Crippled 的目标只能以一半速度行走。",
+  "training.scenario.weapon-dps.label": "武器 DPS",
+  "training.scenario.weapon-dps.teaches": "你的武器每秒造成多少伤害：按 Space，查看武器那一行。",
+  "training.scenario.dodge-drill.label": "闪避训练",
+  "training.scenario.dodge-drill.teaches": "箭会落在你本该在的位置：在箭离弦后转向。",
+  "training.scenario.obstacles-and-los.label": "视线与射程",
+  "training.scenario.obstacles-and-los.teaches":
+    "看得见敌人不等于够得着：对柱子后的敌人使用技能会绕过柱子，对射程外的敌人使用会走近。",
+  "training.scenario.fireball-dodge.label": "闪避 Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "Fireball 像箭一样飞行：在它出手时侧身一步，便什么也不会燃烧 (#535)。",
+  "training.scenario.block.label": "格挡",
+  "training.scenario.block.teaches": "Guardian 能挡开你一半的攻击，而法术可以穿透它 (#534)。",
+  "training.scenario.survivability.label": "生存能力",
+  "training.scenario.survivability.teaches":
+    "面对三名施法者你能撑多久，以及护甲是你最大的杠杆：80 护甲时 Fireball 造成的伤害比 60 时少 30%。",
+  "training.scenario.aoe-cluster.label": "范围：密集",
+  "training.scenario.aoe-cluster.teaches":
+    "溅射以目标为中心：命中中间的 Fireball 会烧到全部五个，而两个掉队的都不会。",
+  "training.scenario.aoe-cap.label": "范围：上限",
+  "training.scenario.aoe-cap.teaches": "Barrage 最多命中六个：七个挤在一起，总有一个幸免。",
+  "training.scenario.aoe-friendly-fire.label": "范围：友军误伤",
+  "training.scenario.aoe-friendly-fire.teaches": "溅射永远不会伤到己方：群中的队友毫发无伤。",
+  "training.scenario.aoe-line-of-sight.label": "范围：视线",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "溅射会被墙挡住：柱子前的三个被烧到，柱子后的两个不会。",
+  "training.scenario.moving-targets.label": "移动目标",
+  "training.scenario.moving-targets.teaches":
+    "命中移动中的目标：对奔跑者提前瞄准，追上逃跑者，转身迎击追你的人。",
+  "training.scenario.heights.label": "高处",
+  "training.scenario.heights.teaches":
+    "高处是作战的位置：平台会遮住下方的人，坡道是层与层之间唯一的通路，从上方射出的弓箭伤害更高。",
   "training.soundOff": "声音已关闭。",
   "training.soundOn": "声音已开启。",
   "training.you": "你",

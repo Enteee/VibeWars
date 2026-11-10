@@ -71,6 +71,7 @@ import {
   type Professions,
 } from "../training/local-connection.js";
 import { playerArming, setupScenario, SELF_ID, trainingMap } from "../training/scenario-setup.js";
+import { scenarioText } from "../training/scenario-text.js";
 import {
   EMPTY_TOTALS,
   accumulate,
@@ -229,7 +230,7 @@ export function createTrainingPanel(): TrainingPanel {
   for (const scenario of TRAINING_SCENARIOS) {
     const option = document.createElement("option");
     option.value = scenario.id;
-    option.textContent = scenario.label;
+    option.textContent = scenarioText(scenario, "label");
     picker.appendChild(option);
   }
   const resetButton = document.createElement("button");
@@ -710,13 +711,13 @@ export function createTrainingPanel(): TrainingPanel {
     });
 
     picker.value = scenario.id;
-    teaches.textContent = scenario.teaches;
+    teaches.textContent = scenarioText(scenario, "teaches");
     const map = trainingMap(scenario);
     stage.style.setProperty("--training-aspect", `${String(map.width)} / ${String(map.height)}`);
     camera?.restart(map);
     paintSkills(connection.skillBar);
     paintOverlay(setup.arming.problem);
-    restartMeter(scenario.label);
+    restartMeter(scenarioText(scenario, "label"));
   };
 
   const rearm = (build: StoredCharacter): void => {

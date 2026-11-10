@@ -94,9 +94,6 @@ export interface TrainingDummy {
 
 export interface TrainingScenario {
   readonly id: string;
-  readonly label: string;
-  /** One sentence: what the player should come away knowing. */
-  readonly teaches: string;
   readonly mapId: string;
   readonly exercises: readonly TrainingMechanic[];
   readonly knobs: readonly TrainingKnob[];
@@ -267,8 +264,6 @@ function lane(x: number): Behaviour {
 export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: "target-dummy",
-    label: "Target dummy",
-    teaches: "What one cast actually does: at 60 armor, the tooltip's number exactly.",
     mapId: "training-hall",
     exercises: ["spell-damage"],
     knobs: [],
@@ -276,8 +271,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "time-to-kill",
-    label: "Time to kill",
-    teaches: "Your sustained output: how long a 500-health caster lasts, again and again.",
     mapId: "training-hall",
     exercises: ["spell-damage", "auto-attacks"],
     knobs: [],
@@ -293,9 +286,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "physical-vs-elemental",
-    label: "Physical vs elemental",
-    teaches:
-      "That armor answers to a damage type: a Warrior and Stalwart blunt a sword and not a Fireball, a Ranger blunts a Fireball and not a sword.",
     mapId: "training-hall",
     exercises: ["armor", "auto-attacks", "spell-damage"],
     knobs: [],
@@ -328,9 +318,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "condition-pressure",
-    label: "Condition pressure",
-    teaches:
-      "That conditions are a kill clock: bleeding, poison and burning drain 20 health a second, the most there is, and adding more refreshes rather than stacks.",
     mapId: "training-hall",
     exercises: ["conditions"],
     knobs: [],
@@ -363,9 +350,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "condition-removal",
-    label: "Condition removal",
-    teaches:
-      "That a condition removal takes off only what it says: an ally at 200 of 500 carries five conditions, and deep wound among them takes 100 as it lands and caps your heals at 400.",
     mapId: "training-hall",
     exercises: ["conditions"],
     knobs: [],
@@ -397,8 +381,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "armor-ladder",
-    label: "Armor ladder",
-    teaches: "The mitigation curve: the same hit against 40 to 104 armor, side by side.",
     mapId: "training-hall",
     exercises: ["spell-damage", "armor"],
     knobs: [],
@@ -418,9 +400,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "healing-throughput",
-    label: "Healing throughput",
-    teaches:
-      "What your heals are worth against real pressure, and that armor is a healer's friend: the same Fireball takes 91 off a monk and 64 off a warrior.",
     mapId: "training-hall",
     exercises: ["spell-damage", "armor"],
     knobs: [],
@@ -435,9 +414,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "interrupt-timing",
-    label: "Interrupt timing",
-    teaches:
-      "That an interrupt is a timing skill: catch a 3 second cast before it lands. A dazed caster's spells take twice as long, and any hit stops them.",
     mapId: "training-hall",
     exercises: ["interrupts", "conditions"],
     knobs: [],
@@ -494,8 +470,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "blind-denial",
-    label: "Blind",
-    teaches: "That a blinded attacker misses nine blows in ten: two archers, one of them blind.",
     mapId: "training-hall",
     exercises: ["auto-attacks", "conditions"],
     knobs: [],
@@ -523,8 +497,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "kiting-and-cripple",
-    label: "Kiting and Cripple",
-    teaches: "Leading a moving target, and that a crippled one walks at half speed.",
     mapId: "training-hall",
     exercises: ["movement", "conditions"],
     knobs: [],
@@ -555,8 +527,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "weapon-dps",
-    label: "Weapon DPS",
-    teaches: "What your weapon does per second: press Space and read the weapon row.",
     mapId: "training-hall",
     exercises: ["auto-attacks"],
     knobs: [],
@@ -569,8 +539,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "dodge-drill",
-    label: "Dodge drill",
-    teaches: "That an arrow lands where you would have been: turn after it leaves the bow.",
     mapId: "training-hall",
     exercises: ["dodging"],
     knobs: [],
@@ -593,9 +561,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "obstacles-and-los",
-    label: "Sight and range",
-    teaches:
-      "That seeing a foe is not reaching it: a skill at one behind the pillar walks round it, and at one out of range walks in.",
     mapId: "training-pillars",
     exercises: ["spell-damage", "line-of-sight", "range"],
     knobs: [],
@@ -609,9 +574,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "fireball-dodge",
-    label: "Dodge the Fireball",
-    teaches:
-      "That a Fireball flies like an arrow: step aside as it leaves and nothing burns (#535).",
     mapId: "training-hall",
     exercises: ["dodging", "spell-damage"],
     knobs: [],
@@ -642,8 +604,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "block",
-    label: "Block",
-    teaches: "That Guardian turns half your blows aside, and a spell goes through it (#534).",
     mapId: "training-hall",
     exercises: ["auto-attacks", "blocking"],
     knobs: [],
@@ -674,9 +634,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "survivability",
-    label: "Survivability",
-    teaches:
-      "How long you last against three casters, and that armor is your biggest lever: at 80 a Fireball takes 30% less than at 60.",
     mapId: "training-hall",
     exercises: ["spell-damage", "armor", "movement"],
     knobs: [],
@@ -692,9 +649,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "aoe-cluster",
-    label: "Area: the cluster",
-    teaches:
-      "That a splash centres on its target: a Fireball at the centre burns all five, and neither straggler.",
     mapId: "training-hall",
     exercises: ["spell-damage", "area-damage"],
     knobs: [],
@@ -707,8 +661,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "aoe-cap",
-    label: "Area: the cap",
-    teaches: "That Barrage stops at six: seven packed together, and one is always spared.",
     mapId: "training-hall",
     exercises: ["auto-attacks", "area-damage"],
     knobs: [],
@@ -716,8 +668,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "aoe-friendly-fire",
-    label: "Area: friendly fire",
-    teaches: "That a splash never hurts your own side: the ally in the cluster takes nothing.",
     mapId: "training-hall",
     exercises: ["spell-damage", "area-damage"],
     knobs: [],
@@ -730,9 +680,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "aoe-line-of-sight",
-    label: "Area: line of sight",
-    teaches:
-      "That a splash stops at walls: the three in front of the pillar burn, the two behind it do not.",
     mapId: "training-pillars",
     exercises: ["spell-damage", "area-damage", "line-of-sight"],
     knobs: [],
@@ -749,9 +696,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "moving-targets",
-    label: "Moving targets",
-    teaches:
-      "Hitting what moves: lead a runner, catch one that flees, and turn on one that chases you.",
     mapId: "training-field",
     // Range too: catching the runner, out past spell range, is the lesson.
     exercises: ["movement", "auto-attacks", "range"],
@@ -782,9 +726,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "heights",
-    label: "Heights",
-    teaches:
-      "That height is a place to fight from: decks hide who is under them, ramps are the only way between layers, and your own bow shot from above hits harder.",
     mapId: "training-heights",
     exercises: ["auto-attacks", "movement", "range"],
     knobs: [],

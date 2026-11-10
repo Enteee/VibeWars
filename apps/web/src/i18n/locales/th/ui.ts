@@ -1221,6 +1221,72 @@ export default {
   "training.reset": "รีเซ็ต",
   "training.resetDivider": "รีเซ็ต",
   "training.scenario": "สถานการณ์",
+  "training.scenario.target-dummy.label": "หุ่นเป้า",
+  "training.scenario.target-dummy.teaches":
+    "การร่ายหนึ่งครั้งทำอะไรได้จริง: ที่เกราะ 60 ได้ตัวเลขตรงกับในคำอธิบายพอดี",
+  "training.scenario.time-to-kill.label": "เวลาสังหาร",
+  "training.scenario.time-to-kill.teaches":
+    "ดาเมจต่อเนื่องของคุณ: ผู้ร่ายเวทพลังชีวิต 500 อยู่ได้นานแค่ไหน ซ้ำแล้วซ้ำเล่า",
+  "training.scenario.physical-vs-elemental.label": "กายภาพกับธาตุ",
+  "training.scenario.physical-vs-elemental.teaches":
+    "เกราะตอบสนองต่อประเภทดาเมจ: Warrior และ Stalwart ลดดาเมจดาบแต่ไม่ลด Fireball ส่วน Ranger ลด Fireball แต่ไม่ลดดาบ",
+  "training.scenario.condition-pressure.label": "แรงกดดันจากสภาวะผิดปกติ",
+  "training.scenario.condition-pressure.teaches":
+    "สภาวะผิดปกติคือนาฬิกานับถอยหลังสู่ความตาย: Bleeding, Poison และ Burning ลดพลังชีวิต 20 ต่อวินาที ซึ่งมากที่สุดแล้ว และการใส่เพิ่มจะต่อเวลาแทนที่จะซ้อนกัน",
+  "training.scenario.condition-removal.label": "การลบสภาวะผิดปกติ",
+  "training.scenario.condition-removal.teaches":
+    "การลบสภาวะผิดปกติจะลบเฉพาะสิ่งที่ระบุไว้: พันธมิตรที่มีพลังชีวิต 200 จาก 500 ติดสภาวะผิดปกติห้าอย่าง และ Deep Wound ในนั้นลดพลังชีวิต 100 ทันทีที่ติด และจำกัดการฮีลของคุณไว้ที่ 400",
+  "training.scenario.armor-ladder.label": "ขั้นบันไดเกราะ",
+  "training.scenario.armor-ladder.teaches":
+    "เส้นโค้งการลดดาเมจ: การโจมตีเดียวกันต่อเกราะ 40 ถึง 104 เทียบกันแบบเคียงข้าง",
+  "training.scenario.healing-throughput.label": "ปริมาณการฮีล",
+  "training.scenario.healing-throughput.teaches":
+    "การฮีลของคุณมีค่าแค่ไหนเมื่อเจอแรงกดดันจริง และเกราะคือเพื่อนของผู้ฮีล: Fireball ลูกเดียวกันลดพลังชีวิต Monk 91 แต่ลด Warrior แค่ 64",
+  "training.scenario.interrupt-timing.label": "จังหวะการขัดจังหวะ",
+  "training.scenario.interrupt-timing.teaches":
+    "การขัดจังหวะคือทักษะเรื่องจังหวะ: หยุดการร่าย 3 วินาทีก่อนที่จะสำเร็จ ผู้ร่ายที่ติด Dazed ร่ายเวทนานขึ้นสองเท่า และการโจมตีใด ๆ ก็หยุดได้",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "ผู้โจมตีที่ติด Blind พลาดเก้าในสิบครั้ง: นักธนูสองคน หนึ่งในนั้นติด Blind",
+  "training.scenario.kiting-and-cripple.label": "การล่อและ Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "ยิงดักหน้าเป้าที่เคลื่อนที่ และเป้าที่ติด Crippled จะเดินด้วยความเร็วครึ่งเดียว",
+  "training.scenario.weapon-dps.label": "DPS อาวุธ",
+  "training.scenario.weapon-dps.teaches":
+    "อาวุธของคุณทำดาเมจได้เท่าไรต่อวินาที: กด Space แล้วดูแถวอาวุธ",
+  "training.scenario.dodge-drill.label": "ฝึกหลบ",
+  "training.scenario.dodge-drill.teaches":
+    "ลูกธนูตกตรงที่ที่คุณกำลังจะไปอยู่: เลี้ยวหลังจากมันออกจากคันธนู",
+  "training.scenario.obstacles-and-los.label": "การมองเห็นและระยะ",
+  "training.scenario.obstacles-and-los.teaches":
+    "มองเห็นศัตรูไม่ได้แปลว่าถึงตัว: สกิลใส่ศัตรูที่อยู่หลังเสาจะเดินอ้อมเสา และใส่ศัตรูที่อยู่นอกระยะจะเดินเข้าไป",
+  "training.scenario.fireball-dodge.label": "หลบ Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "Fireball บินเหมือนลูกธนู: ก้าวหลบตอนที่มันถูกปล่อยแล้วจะไม่มีอะไรไหม้ (#535)",
+  "training.scenario.block.label": "บล็อก",
+  "training.scenario.block.teaches":
+    "Guardian ปัดการโจมตีของคุณออกไปครึ่งหนึ่ง แต่เวทผ่านไปได้ (#534)",
+  "training.scenario.survivability.label": "ความอึด",
+  "training.scenario.survivability.teaches":
+    "คุณอยู่ได้นานแค่ไหนเมื่อเจอผู้ร่ายสามคน และเกราะคือปัจจัยที่สำคัญที่สุด: ที่เกราะ 80 Fireball ลดพลังชีวิตน้อยกว่าที่ 60 อยู่ 30%",
+  "training.scenario.aoe-cluster.label": "พื้นที่: กลุ่มก้อน",
+  "training.scenario.aoe-cluster.teaches":
+    "ดาเมจกระจายมีศูนย์กลางที่เป้าหมาย: Fireball ที่ตัวกลางเผาทั้งห้าตัว แต่ไม่โดนสองตัวที่อยู่ห่างออกไป",
+  "training.scenario.aoe-cap.label": "พื้นที่: เพดาน",
+  "training.scenario.aoe-cap.teaches":
+    "Barrage หยุดที่หกเป้า: เจ็ดตัวอยู่ชิดกัน และจะมีหนึ่งตัวรอดเสมอ",
+  "training.scenario.aoe-friendly-fire.label": "พื้นที่: ยิงโดนพวกเดียวกัน",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "ดาเมจกระจายไม่ทำร้ายฝ่ายเดียวกัน: พันธมิตรในกลุ่มไม่โดนอะไรเลย",
+  "training.scenario.aoe-line-of-sight.label": "พื้นที่: แนวสายตา",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "ดาเมจกระจายหยุดที่กำแพง: สามตัวหน้าเสาถูกเผา สองตัวหลังเสาไม่โดน",
+  "training.scenario.moving-targets.label": "เป้าเคลื่อนที่",
+  "training.scenario.moving-targets.teaches":
+    "การโจมตีเป้าที่เคลื่อนที่: ยิงดักหน้าคนที่วิ่ง ไล่ให้ทันคนที่หนี และหันกลับไปสู้คนที่ไล่คุณ",
+  "training.scenario.heights.label": "ที่สูง",
+  "training.scenario.heights.teaches":
+    "ที่สูงคือที่สำหรับสู้: พื้นยกบังคนที่อยู่ข้างใต้ ทางลาดคือทางเดียวระหว่างชั้น และธนูของคุณที่ยิงจากที่สูงจะแรงกว่า",
   "training.soundOff": "ปิดเสียงแล้ว",
   "training.soundOn": "เปิดเสียงแล้ว",
   "training.you": "คุณ",

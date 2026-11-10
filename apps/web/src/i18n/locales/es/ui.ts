@@ -1402,6 +1402,72 @@ export default {
   "training.reset": "reiniciar",
   "training.resetDivider": "reinicio",
   "training.scenario": "escenario",
+  "training.scenario.target-dummy.label": "Muñeco de entrenamiento",
+  "training.scenario.target-dummy.teaches":
+    "Lo que hace de verdad un lanzamiento: con 60 de armadura, justo el número de la descripción.",
+  "training.scenario.time-to-kill.label": "Tiempo para matar",
+  "training.scenario.time-to-kill.teaches":
+    "Tu daño sostenido: cuánto aguanta un lanzador de 500 de salud, una y otra vez.",
+  "training.scenario.physical-vs-elemental.label": "Físico contra elemental",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Que la armadura responde a un tipo de daño: un Guerrero con Insignia incondicional amortigua una espada y no una Bola de fuego; un Guardabosques amortigua una Bola de fuego y no una espada.",
+  "training.scenario.condition-pressure.label": "Presión de condiciones",
+  "training.scenario.condition-pressure.teaches":
+    "Que las condiciones son una cuenta atrás: Sangrado, Veneno y Quemadura drenan 20 de salud por segundo, el máximo posible, y añadir más renueva en vez de acumular.",
+  "training.scenario.condition-removal.label": "Eliminación de condiciones",
+  "training.scenario.condition-removal.teaches":
+    "Que una eliminación de condiciones quita solo lo que dice: un aliado con 200 de 500 lleva cinco condiciones, entre ellas Herida profunda, que quita 100 al aplicarse y limita tus curaciones a 400.",
+  "training.scenario.armor-ladder.label": "Escalera de armadura",
+  "training.scenario.armor-ladder.teaches":
+    "La curva de mitigación: el mismo golpe contra 40 a 104 de armadura, lado a lado.",
+  "training.scenario.healing-throughput.label": "Rendimiento de curación",
+  "training.scenario.healing-throughput.teaches":
+    "Lo que valen tus curaciones bajo presión real, y que la armadura es amiga del sanador: la misma Bola de fuego quita 91 a un Monje y 64 a un Guerrero.",
+  "training.scenario.interrupt-timing.label": "Momento de interrupción",
+  "training.scenario.interrupt-timing.teaches":
+    "Que interrumpir es cuestión de tiempo: corta un lanzamiento de 3 segundos antes de que se complete. Un lanzador Aturdido tarda el doble en sus hechizos, y cualquier golpe lo detiene.",
+  "training.scenario.blind-denial.label": "Ceguera",
+  "training.scenario.blind-denial.teaches":
+    "Que un atacante con Ceguera falla nueve golpes de cada diez: dos arqueros, uno de ellos cegado.",
+  "training.scenario.kiting-and-cripple.label": "Kiteo y Lisiado",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Anticipar a un objetivo en movimiento, y que uno Lisiado camina a media velocidad.",
+  "training.scenario.weapon-dps.label": "DPS del arma",
+  "training.scenario.weapon-dps.teaches":
+    "Lo que hace tu arma por segundo: pulsa Space y lee la fila del arma.",
+  "training.scenario.dodge-drill.label": "Ejercicio de esquiva",
+  "training.scenario.dodge-drill.teaches":
+    "Que una flecha cae donde habrías estado: gira después de que salga del arco.",
+  "training.scenario.obstacles-and-los.label": "Visión y alcance",
+  "training.scenario.obstacles-and-los.teaches":
+    "Que ver a un enemigo no es alcanzarlo: una habilidad contra uno tras el pilar te hace rodearlo, y contra uno fuera de alcance te hace acercarte.",
+  "training.scenario.fireball-dodge.label": "Esquiva la Bola de fuego",
+  "training.scenario.fireball-dodge.teaches":
+    "Que una Bola de fuego vuela como una flecha: apártate cuando sale y nada arde (#535).",
+  "training.scenario.block.label": "Bloqueo",
+  "training.scenario.block.teaches":
+    "Que Guardián desvía la mitad de tus golpes, y un hechizo lo atraviesa (#534).",
+  "training.scenario.survivability.label": "Supervivencia",
+  "training.scenario.survivability.teaches":
+    "Cuánto aguantas contra tres lanzadores, y que la armadura es tu mayor palanca: con 80, una Bola de fuego quita un 30% menos que con 60.",
+  "training.scenario.aoe-cluster.label": "Área: el grupo",
+  "training.scenario.aoe-cluster.teaches":
+    "Que el daño en área se centra en su objetivo: una Bola de fuego en el centro quema a los cinco, y a ninguno de los rezagados.",
+  "training.scenario.aoe-cap.label": "Área: el límite",
+  "training.scenario.aoe-cap.teaches":
+    "Que Andanada se detiene en seis: siete apiñados, y uno siempre se salva.",
+  "training.scenario.aoe-friendly-fire.label": "Área: fuego amigo",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Que el daño en área nunca daña a tu bando: el aliado del grupo no recibe nada.",
+  "training.scenario.aoe-line-of-sight.label": "Área: línea de visión",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Que el daño en área se detiene en los muros: los tres delante del pilar arden, los dos detrás no.",
+  "training.scenario.moving-targets.label": "Objetivos móviles",
+  "training.scenario.moving-targets.teaches":
+    "Acertar a lo que se mueve: anticipa a un corredor, alcanza a uno que huye y gírate contra uno que te persigue.",
+  "training.scenario.heights.label": "Alturas",
+  "training.scenario.heights.teaches":
+    "Que la altura es un lugar desde el que luchar: las plataformas ocultan a quien está debajo, las rampas son el único paso entre niveles y tu propio disparo de arco desde arriba golpea más fuerte.",
   "training.soundOff": "Sin sonido.",
   "training.soundOn": "Con sonido.",
   "training.you": "Tú",
