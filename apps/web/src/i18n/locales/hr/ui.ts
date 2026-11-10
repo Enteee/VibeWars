@@ -655,7 +655,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Domaćin pokreće traženje meča",
   "lobby.joinTeam": "Uđi",
   "lobby.joinTeamLabel": "Uđi u tim {team}",
-  "lobby.leaveQueue": "Napusti red",
   "lobby.leaveTeam": "Izađi",
   "lobby.leaveTeamLabel": "Izađi iz tima {team}",
   "lobby.map": "Karta",

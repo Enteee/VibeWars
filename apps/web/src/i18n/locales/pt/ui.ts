@@ -659,7 +659,6 @@ export default {
   "lobby.hostStartsMatchmaking": "O host inicia a busca de partida",
   "lobby.joinTeam": "Entrar",
   "lobby.joinTeamLabel": "Entrar na equipe {team}",
-  "lobby.leaveQueue": "Sair da fila",
   "lobby.leaveTeam": "Sair",
   "lobby.leaveTeamLabel": "Sair da equipe {team}",
   "lobby.map": "Mapa",

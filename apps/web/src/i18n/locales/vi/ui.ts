@@ -576,7 +576,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Chủ phòng bắt đầu tìm trận",
   "lobby.joinTeam": "Vào",
   "lobby.joinTeamLabel": "Vào đội {team}",
-  "lobby.leaveQueue": "Rời hàng chờ",
   "lobby.leaveTeam": "Rời",
   "lobby.leaveTeamLabel": "Rời đội {team}",
   "lobby.map": "Bản đồ",

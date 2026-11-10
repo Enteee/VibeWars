@@ -64,7 +64,6 @@ export interface TeamPlayCallbacks {
   /** A team code was pasted on the screen (#577). */
   readonly onPasteTeam: (text: string) => void;
   /** Leave Queue on a lobby's screen, while in the Random Arena queue (#2781). */
-  readonly onLeaveQueue: () => void;
 }
 
 /**
@@ -226,6 +225,7 @@ function teamScreen(
     crumbs: ["VibeWars"],
     status: panel?.status ?? [],
     actions: panel?.actions ?? [],
+    ...(panel?.queueAction === undefined ? {} : { queueAction: panel.queueAction }),
     join: true,
   });
   const body = railScreen(root, entry, callbacks.onSwitch);
@@ -259,11 +259,7 @@ export function renderHostScreen(
   if (panel !== undefined) {
     body.appendChild(panel.body);
   } else if (queuedMaps !== undefined) {
-    body.append(
-      h("p", "screen-info", t("queue.busy")),
-      mapPreview(queuedMaps),
-      queuedButtons(entry, callbacks),
-    );
+    body.append(h("p", "screen-info", t("queue.busy")), mapPreview(queuedMaps));
   } else {
     body.appendChild(h("p", "screen-info", t("teamPlay.openingLobby")));
   }
@@ -279,23 +275,6 @@ function mapPreview(maps: readonly LobbyMap[]): HTMLElement {
   list.append(...maps.map((map) => h("li", undefined, mapLabel(map))));
   preview.append(h("span", "field-label", t("teamPlay.queuedMaps")), list);
   return preview;
-}
-
-/**
- * A lobby's screen in the Random Arena queue (#2781): no lobby of its own
- * until the queue is left, so its Find a match waits, saying why, beside
- * the Leave Queue that frees it. A Hosted Game finds no match.
- */
-function queuedButtons(entry: HostEntry, callbacks: TeamPlayCallbacks): HTMLElement {
-  const row = h("div", "screen-queued");
-  if (entry !== "hosted-game") {
-    const find = button(t("lobby.findMatch"), "primary lobby-find", () => undefined);
-    find.disabled = true;
-    find.title = t("queue.busy");
-    row.appendChild(find);
-  }
-  row.appendChild(button(t("queue.leaveQueue"), "lobby-leave-queue", callbacks.onLeaveQueue));
-  return row;
 }
 
 /** Render Team Builder (#1525): the Team Build cards, to make and edit them. */

@@ -63,14 +63,13 @@ s-o schimbi cum vrei.
 
 Cea mai rapidă cale spre o luptă. La **Arenă aleatorie**, dă clic pe cartea
 personajului cu care joci, alege o mărime de echipă, **1v1**, **2v2** sau **4v4**,
-cu săgețile de la **Mărime echipă** din bară, apoi apasă **Gata** în bara de
+cu săgețile de la **Mărime echipă** din bară, apoi apasă **Caută meci** în bara de
 titlu și așteaptă: ești pus într-o echipă cu alți jucători, contra altei echipe,
 pe o hartă aleatorie. Coada așteaptă în fundal: rămâi la Arenă aleatorie și poți
 merge oriunde între timp, la builduri, echipament, Opțiuni, Ajutor sau editorul
 de muzică, dar nu poți schimba personajul, găzdui sau intra într-un lobby și nici
 schimba mărimea echipei unui mod. Arenă de echipe și celelalte ecrane de lobby
-spun că ești la coadă și își listează hărțile, cu **Caută meci** oprit, lângă un
-**Ieși din coadă**; mărimea echipei arată mărimea cu care ai intrat la coadă, în
+spun că ești la coadă și își listează hărțile; mărimea echipei arată mărimea cu care ai intrat la coadă, în
 fiecare mod. Un cerc care se învârte în stânga lui **Ajutor** din bara de sus
 arată că ești la coadă; dă clic pe el pentru coadă, timpul de așteptare, câți
 caută și **Ieși din coadă**. Când se găsește un meci, ești dus la ecranul lui de
@@ -155,7 +154,7 @@ breaslă**) cu timpul de așteptare, iar la Arenă de echipe câte echipe caută
 a ta: `2 echipe caută`. Doar gazda are acolo **Ieși din coadă**. Dacă închide gazda
 fila, grupul iese imediat din coadă. Când apare altă echipă la coada aceluiași mod,
 joci cu ea pe una dintre hărțile modului, fiecare parte cu buildurile ei, și te
-întorci apoi în lobby. Gazda poate apăsa **Ieși din coadă** oricând; un invitat care
+întorci apoi în lobby. Gazda poate ieși oricând din coadă, din fereastra cercului; un invitat care
 pleacă scoate tot grupul din ea. Dacă după un minut nu apare altă echipă, gazda poate
 apăsa și **Joacă contra boților**: un meci în propriul lobby contra unei echipe
 presetate aleatorii de boți, cu excepția [Ascensiunii Eroilor](modes.md#ascensiunea-eroilor),

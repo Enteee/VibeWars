@@ -65,14 +65,13 @@ propia build de equipo y la abre, para que la cambies como quieras.
 La forma más rápida de entrar en combate. En **Arena aleatoria**, haz clic en
 la carta del personaje con el que juegas, elige un tamaño de equipo, **1v1**,
 **2v2** o **4v4**, con las flechas del **Tamaño del equipo** de la barra,
-luego pulsa **Listo** en la barra de título y espera: entras en un equipo con
+luego pulsa **Buscar partida** en la barra de título y espera: entras en un equipo con
 otros jugadores, contra otro equipo, en un mapa aleatorio. La cola espera en
 segundo plano: sigues en Arena aleatoria y mientras puedes ir a cualquier
 sitio, tus builds, equipo, Opciones, Ayuda o el editor de música, pero no
 cambiar de personaje, alojar o unirte a una sala, ni cambiar el tamaño de
 equipo de un modo. Arena por equipos y las demás pantallas de sala indican que
-estás en una cola y muestran sus mapas, con su **Buscar partida** desactivado,
-junto a un **Salir de la cola**; el tamaño del equipo muestra el tamaño con el
+estás en una cola y muestran sus mapas; el tamaño del equipo muestra el tamaño con el
 que entraste en la cola, en todos los modos. Un anillo que gira a la izquierda
 de **Ayuda** en la barra superior indica que estás en cola; haz clic en él para
 ver la cola, el tiempo esperado, cuántos buscan y **Salir de la cola**. Cuando
@@ -164,8 +163,7 @@ Arena por equipos cuántos equipos buscan, incluido el tuyo: `2 equipos
 buscando`. Ahí solo el anfitrión tiene **Salir de la cola**. Si se cierra la
 pestaña del anfitrión, el grupo sale de la cola al instante. Cuando aparece
 otro equipo en cola del mismo modo, jugáis contra él en uno de los mapas del
-modo, cada bando con sus builds, y luego volvéis a tu sala. El anfitrión puede
-pulsar **Salir de la cola** en cualquier momento; un invitado que se va saca
+modo, cada bando con sus builds, y luego volvéis a tu sala. El anfitrión puede salir desde la ventana del anillo en cualquier momento; un invitado que se va saca
 de la cola a todo el grupo. Si tras un minuto no hay otro equipo, el anfitrión
 también puede pulsar **Jugar contra bots**: una partida en tu propia sala
 contra un equipo predefinido de bots al azar, excepto en

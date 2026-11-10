@@ -574,7 +574,6 @@ export default {
   "lobby.hostStartsMatchmaking": "由房主开始匹配",
   "lobby.joinTeam": "加入",
   "lobby.joinTeamLabel": "加入 {team} 队",
-  "lobby.leaveQueue": "退出队列",
   "lobby.leaveTeam": "离开",
   "lobby.leaveTeamLabel": "离开 {team} 队",
   "lobby.map": "地图",

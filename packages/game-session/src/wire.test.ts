@@ -219,7 +219,7 @@ describe("groundEffectSnapshot (#1087)", () => {
     ownerId: "ele",
     team: 1,
     position: { x: 120.5, y: 80 },
-    layer: 0,
+    layer: 1,
     act: {
       kind: "aura",
       aura: { statusId: "ward-against-melee", affects: "allies", radius: 109 },
@@ -229,13 +229,14 @@ describe("groundEffectSnapshot (#1087)", () => {
     pulsed: 0,
   };
 
-  it("sits where it was placed, at its aura's radius, ending on the match clock to 0.1 s", () => {
+  it("sits where it was placed, on its layer, at its aura's radius, ending on the match clock to 0.1 s", () => {
     expect(groundEffectSnapshot(ward, 10.01)).toEqual({
       id: 3,
       skillId: "elementalist.ward-against-melee",
       team: 1,
       x: 120.5,
       y: 80,
+      layer: 1,
       radius: 109,
       endsAt: 16.4,
       durationSeconds: 17,

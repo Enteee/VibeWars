@@ -214,6 +214,7 @@ export function groundEffectSnapshot(
     team: effect.team,
     x: effect.position.x,
     y: effect.position.y,
+    layer: effect.layer,
     radius: groundRadius(effect.act),
     endsAt: tenths(elapsedSeconds + effect.remainingSeconds),
     durationSeconds: Math.max(0.1, tenths(effect.durationSeconds)),

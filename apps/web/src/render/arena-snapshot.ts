@@ -361,6 +361,8 @@ export interface RenderableGroundEffect {
   readonly id: number;
   readonly skillId: string;
   readonly position: Vec2;
+  /** The layer it lies on (ADR-0051): drawn on that layer's deck. */
+  readonly layer: number;
   readonly radius: number;
   readonly colour: number;
   readonly filled: boolean;
@@ -380,6 +382,7 @@ export function toRenderableGroundEffect(
     id: effect.id,
     skillId: effect.skillId,
     position: { x: effect.x, y: effect.y },
+    layer: effect.layer,
     radius: effect.radius,
     colour: teamColour(selfTeam === undefined ? "enemy" : teamSide(effect.team, selfTeam)),
     filled: kind === "ward",

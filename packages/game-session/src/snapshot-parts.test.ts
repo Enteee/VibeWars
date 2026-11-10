@@ -86,6 +86,7 @@ function groundEffect(index: number): WireGroundEffect {
     team: 1,
     x: 1000 / 3,
     y: 1000 / 3,
+    layer: 2,
     radius: 109,
     endsAt: 1000 / 3,
     durationSeconds: 1000 / 3,

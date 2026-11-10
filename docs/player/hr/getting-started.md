@@ -63,14 +63,13 @@ prikazanog tima kao tvoj timski sastav i otvara ga, da ga mijenjaš po volji.
 
 Najbrži put do borbe. Na **Nasumičnoj areni** klikni karticu
 lika kojeg igraš, odaberi veličinu tima, **1v1**, **2v2** ili
-**4v4**, strelicama **Veličine tima** na traci, zatim pritisni **Spreman** na naslovnoj
+**4v4**, strelicama **Veličine tima** na traci, zatim pritisni **Pronađi meč** na naslovnoj
 traci i čekaj: bit ćeš stavljen u tim s drugim igračima, protiv
 drugog tima, na nasumičnoj karti. Red čeka u pozadini: ostaješ
 na Nasumičnoj areni i u međuvremenu možeš bilo kamo, na svoje sastave,
 opremu, Opcije, Pomoć ili uređivač glazbe, ali ne možeš promijeniti lika,
 voditi ili ući u sobu, ni promijeniti veličinu tima u nekom načinu. Timska arena i
-ostali zasloni soba kažu da si u redu i navode svoje karte, s isključenim
-gumbom **Pronađi meč**, pokraj **Napusti red**; veličina tima prikazuje
+ostali zasloni soba kažu da si u redu i navode svoje karte; veličina tima prikazuje
 veličinu s kojom si ušao u red, u svakom načinu. Prsten koji se vrti lijevo od **Pomoć** na gornjoj traci
 pokazuje da si u redu; klikni ga za red, vrijeme čekanja, broj onih koji
 traže i **Napusti red**. Kad se meč pronađe, odvede te na njegov
@@ -160,8 +159,7 @@ traže`. Samo domaćin tamo ima **Napusti red**. Zatvaranje
 kartice domaćina odmah izbacuje grupu iz reda. Kad se pojavi drugi
 tim istog načina u redu, igraš protiv njega na jednoj od
 karata tog načina, svaka strana sa svojim sastavima, a poslije se vraćaš u svoju
-sobu. Domaćin može pritisnuti
-**Napusti red** u bilo kojem trenutku; gost koji ode izvodi cijelu
+sobu. Domaćin može napustiti red iz prozora prstena u bilo kojem trenutku; gost koji ode izvodi cijelu
 grupu iz njega. Ako nakon minute nema drugog tima, domaćin može
 pritisnuti i **Igraj protiv botova**: meč u tvojoj vlastitoj sobi protiv
 nasumičnog unaprijed zadanog tima botova,

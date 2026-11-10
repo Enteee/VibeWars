@@ -315,6 +315,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         team: 1,
         x: FLOAT,
         y: FLOAT,
+        layer: 2,
         radius: FLOAT,
         endsAt: FLOAT,
         durationSeconds: FLOAT,

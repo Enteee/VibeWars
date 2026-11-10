@@ -64,14 +64,13 @@ vlastný tímový build a otvorí ju, aby si ju mohol zmeniť podľa seba.
 
 Najrýchlejšia cesta do boja. Na obrazovke **Náhodná aréna** klikni na kartu
 postavy, za ktorú hráš, vyber veľkosť tímu, **1v1**, **2v2** alebo
-**4v4**, šípkami **Veľkosti tímu** v lište, potom stlač **Pripravený** v
+**4v4**, šípkami **Veľkosti tímu** v lište, potom stlač **Nájsť zápas** v
 záhlaví a čakaj: dostaneš sa do tímu s inými hráčmi, proti inému tímu, na
 náhodnej mape. Fronta čaká na pozadí: zostávaš v Náhodnej aréne a medzitým
 môžeš ísť kamkoľvek, k svojim buildom, výbave, do Nastavení, Pomoci alebo
 hudobného editora, ale nemôžeš zmeniť postavu, hostiť lobby ani sa k nejakému
 pripojiť, ani zmeniť veľkosť tímu režimu. Tímová aréna a ostatné obrazovky
-lobby povedia, že si vo fronte, a zobrazia svoje mapy, tlačidlo **Nájsť
-zápas** majú vypnuté a vedľa neho je **Opustiť frontu**; veľkosť tímu
+lobby povedia, že si vo fronte, a zobrazia svoje mapy; veľkosť tímu
 ukazuje vo všetkých režimoch veľkosť, s ktorou si vo fronte. Točiaci sa
 krúžok vľavo od **Pomoc** v hornej lište ukazuje, že si vo fronte; kliknutím
 naň uvidíš frontu, čas čakania, koľko hráčov hľadá a **Opustiť frontu**.
@@ -160,8 +159,7 @@ Tímovej aréne aj počtom hľadajúcich tímov vrátane tvojho: `2 tímy hľada
 **Opustiť frontu** tam má len hostiteľ. Zatvorením karty hostiteľa družina
 okamžite opustí frontu. Keď sa objaví iný tím vo fronte toho istého režimu,
 hráte proti nemu na jednej z máp režimu, každá strana so svojimi buildmi, a
-potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek stlačiť
-**Opustiť frontu**; hosť, ktorý odíde, vyradí z fronty celú družinu. Ak sa
+potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek opustiť frontu v okne krúžku; hosť, ktorý odíde, vyradí z fronty celú družinu. Ak sa
 do minúty neobjaví žiadny iný tím, hostiteľ môže stlačiť aj
 **Hrať proti botom**: zápas vo vlastnom lobby proti náhodnému
 prednastavenému tímu botov,

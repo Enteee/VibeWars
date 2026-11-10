@@ -579,7 +579,6 @@ export default {
   "lobby.hostStartsMatchmaking": "호스트가 매치메이킹을 시작해요",
   "lobby.joinTeam": "참가",
   "lobby.joinTeamLabel": "{team} 팀 참가",
-  "lobby.leaveQueue": "대기열 나가기",
   "lobby.leaveTeam": "나가기",
   "lobby.leaveTeamLabel": "{team} 팀 나가기",
   "lobby.map": "맵",

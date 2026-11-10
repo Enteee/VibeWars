@@ -627,7 +627,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Der Host startet das Matchmaking",
   "lobby.joinTeam": "Beitreten",
   "lobby.joinTeamLabel": "Team {team} beitreten",
-  "lobby.leaveQueue": "Warteschlange verlassen",
   "lobby.leaveTeam": "Verlassen",
   "lobby.leaveTeamLabel": "Team {team} verlassen",
   "lobby.map": "Karte",

@@ -41,7 +41,7 @@ export function overlayClose(onClose: () => void): HTMLButtonElement {
 }
 
 /**
- * Every mode screen's Ready (#2022): the title bar's primary action, the
+ * A Hosted Game's Ready (#2022): the ready check's primary action, the
  * one a phone keeps out of the ⋯ (#1272), until `ready` makes it Not ready.
  */
 export function readyButton(ready: boolean, onClick: () => void): HTMLButtonElement {
@@ -50,6 +50,11 @@ export function readyButton(ready: boolean, onClick: () => void): HTMLButtonElem
     ready ? "screen-ready" : "primary screen-ready",
     onClick,
   );
+}
+
+/** What puts you in a queue, in every mode (#2980): `ScreenBarOptions.queueAction`. */
+export function findMatchButton(onClick: () => void): HTMLButtonElement {
+  return button(t("lobby.findMatch"), "primary lobby-find", onClick);
 }
 
 /**
@@ -155,6 +160,8 @@ export interface ScreenBarOptions {
   readonly status?: readonly HTMLElement[];
   /** The screen's own buttons, after a divider. */
   readonly actions: readonly HTMLElement[];
+  /** Find a match (#2980), left of the global icons, where the queue's spinner comes. */
+  readonly queueAction?: HTMLElement;
   /**
    * Esc puts away what the screen has open before it goes back: a menu,
    * a list, a pick. True when it put something away, so Esc stops there.
@@ -190,6 +197,7 @@ export interface TopbarSlots {
   readonly back: HTMLElement;
   readonly status: HTMLElement;
   readonly actions: HTMLElement;
+  readonly queueAction: HTMLElement;
   /** Told which bar shows after every change. */
   readonly onShow: (shown: ShownBar) => void;
   /** Puts away the bar's ⋯ overflow when it is open; true when it was. */
@@ -229,6 +237,9 @@ function showBar(): void {
   slots.back.replaceChildren(...(bar.back === undefined ? [] : [bar.back]));
   slots.status.replaceChildren(...(bar.options.status ?? []));
   slots.actions.replaceChildren(...bar.options.actions);
+  slots.queueAction.replaceChildren(
+    ...(bar.options.queueAction === undefined ? [] : [bar.options.queueAction]),
+  );
   slots.onShow({
     place: bar.options.crumbs
       .map((crumb) => (typeof crumb === "string" ? crumb : crumb.textContent))

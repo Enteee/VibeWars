@@ -663,7 +663,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Gazda pornește căutarea de meci",
   "lobby.joinTeam": "Intră",
   "lobby.joinTeamLabel": "Intră în echipa {team}",
-  "lobby.leaveQueue": "Ieși din coadă",
   "lobby.leaveTeam": "Ieși",
   "lobby.leaveTeamLabel": "Ieși din echipa {team}",
   "lobby.map": "Hartă",

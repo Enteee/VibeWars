@@ -62,6 +62,15 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     expect(deck).toBeLessThan(renderOrder(character(1)));
   });
 
+  it("draws a ward on a deck over that deck, under whoever stands there and the deck above (#2979)", () => {
+    const ward = renderOrder({ kind: "ground-effect", layer: 1 });
+    expect(renderOrder({ kind: "deck", deckLayer: 1 })).toBeLessThan(ward);
+    expect(renderOrder({ kind: "ramp", upperLayer: 1 })).toBeLessThan(ward);
+    expect(renderOrder({ kind: "lighting", layer: 1 })).toBeLessThan(ward);
+    expect(ward + 0.1).toBeLessThan(renderOrder(character(1)));
+    expect(ward).toBeLessThan(renderOrder({ kind: "deck", deckLayer: 2 }));
+  });
+
   it("leaves everyone in front of the walls on a map of one layer", () => {
     expect(renderOrder(character(characterBand(0, 1)))).toBeGreaterThan(
       renderOrder({ kind: "wall", layer: 0 }),
@@ -104,7 +113,7 @@ describe("water's place in the order (#2984)", () => {
       { kind: "floor" },
       water(0, "surface"),
       water(0, "ripples"),
-      { kind: "ground-effect" },
+      { kind: "ground-effect", layer: 0 },
       { kind: "terrain" },
       { kind: "lighting", layer: 0 },
       character(0),

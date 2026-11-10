@@ -625,7 +625,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Домакинът пуска търсенето",
   "lobby.joinTeam": "Влез",
   "lobby.joinTeamLabel": "Влез в отбор {team}",
-  "lobby.leaveQueue": "Напусни опашката",
   "lobby.leaveTeam": "Напусни",
   "lobby.leaveTeamLabel": "Напусни отбор {team}",
   "lobby.map": "Карта",

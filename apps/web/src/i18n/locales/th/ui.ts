@@ -577,7 +577,6 @@ export default {
   "lobby.hostStartsMatchmaking": "โฮสต์เป็นคนเริ่มจับคู่",
   "lobby.joinTeam": "เข้าร่วม",
   "lobby.joinTeamLabel": "เข้าร่วมทีม {team}",
-  "lobby.leaveQueue": "ออกจากคิว",
   "lobby.leaveTeam": "ออก",
   "lobby.leaveTeamLabel": "ออกจากทีม {team}",
   "lobby.map": "แมป",

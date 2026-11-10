@@ -2004,9 +2004,9 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
   await expect(outlaw).toHaveClass(/is-invalid/);
   await expect(outlaw.locator(".roster-invalid-tag")).toHaveText("Invalid");
   await expect(outlaw.locator(".play-card-open")).toHaveAttribute("aria-disabled", "true");
-  // Kept, but no choice: nothing is chosen, so Random Arena's Ready waits.
+  // Kept, but no choice: nothing is chosen, so Random Arena's Find a match waits.
   await expect(page.locator(".character-card.is-selected")).toHaveCount(0);
-  const queue = page.locator("#topbar .screen-ready");
+  const queue = page.locator("#topbar .lobby-find");
   await expect(queue).toBeDisabled();
 
   // Clicking it anyway chooses nothing; the rolled character still can be.
