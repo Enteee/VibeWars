@@ -750,15 +750,19 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     // it sees each skill cost Health; then one in the gas spout (#3029), the
     // middle of the three timed hazards in the north-west corner, with the
     // rolling rocks' lane across it. Seven at most (ADR-0020): the spring, grove, spire, vent and
-    // rockfall have none.
+    // rockfall have none. The ground is layer 1 (#3049): the mire, the swamp
+    // and the tainted water are down in the basin, layer 0.
     dummies: [
-      target("in-embers", "In the embers (60 armor)", vec2(600, 400), 60),
-      target("in-lava", "In the lava (60 armor)", vec2(360, 130), 60),
-      target("in-fog", "In the fog (60 armor)", vec2(500, 130), 60),
-      target("in-mire", "In the mire (60 armor)", vec2(500, 670), 60),
-      target("in-swamp", "In the swamp (60 armor)", vec2(380, 750), 60),
-      target("in-tainted-water", "In the tainted water (60 armor)", vec2(370, 300), 60),
-      target("in-gas-spout", "In the gas spout (60 armor)", vec2(155, 55), 60),
+      { ...target("in-embers", "In the embers (60 armor)", vec2(600, 400), 60), layer: 1 },
+      { ...target("in-lava", "In the lava (60 armor)", vec2(360, 130), 60), layer: 1 },
+      { ...target("in-fog", "In the fog (60 armor)", vec2(465, 85), 60), layer: 1 },
+      { ...target("in-mire", "In the mire (60 armor)", vec2(435, 684), 60), layer: 0 },
+      { ...target("in-swamp", "In the swamp (60 armor)", vec2(520, 625), 60), layer: 0 },
+      {
+        ...target("in-tainted-water", "In the tainted water (60 armor)", vec2(420, 740), 60),
+        layer: 0,
+      },
+      { ...target("in-gas-spout", "In the gas spout (60 armor)", vec2(155, 55), 60), layer: 1 },
     ],
   },
 ];
