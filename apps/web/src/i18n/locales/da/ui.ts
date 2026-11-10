@@ -1392,11 +1392,14 @@ export default {
 
   "zone.draining-spire": "Drænende spir",
   "zone.foul-water": "Rådden vand",
+  "zone.gas-spout": "Gasgejser",
   "zone.grove": "Lund",
   "zone.mire": "Mose",
   "zone.molten": "Lava",
+  "zone.rockfall": "Stenskred",
   "zone.scorched": "Svedet jord",
   "zone.spring": "Kilde",
   "zone.tainted-water": "Forurenet vand",
   "zone.toxic-fog": "Giftig tåge",
+  "zone.vent": "Ildspalte",
 } satisfies Catalog;

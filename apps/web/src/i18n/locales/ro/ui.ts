@@ -1475,11 +1475,14 @@ export default {
 
   "zone.draining-spire": "Turn care absoarbe",
   "zone.foul-water": "Apă stătută",
+  "zone.gas-spout": "Jet de gaz",
   "zone.grove": "Crâng",
   "zone.mire": "Mlaștină",
   "zone.molten": "Lavă",
+  "zone.rockfall": "Cădere de pietre",
   "zone.scorched": "Pământ pârjolit",
   "zone.spring": "Izvor",
   "zone.tainted-water": "Apă contaminată",
   "zone.toxic-fog": "Ceață toxică",
+  "zone.vent": "Gură de foc",
 } satisfies Catalog;

@@ -1410,11 +1410,14 @@ export default {
 
   "zone.draining-spire": "Imevä torni",
   "zone.foul-water": "Likainen vesi",
+  "zone.gas-spout": "Kaasusuihku",
   "zone.grove": "Lehto",
   "zone.mire": "Suo",
   "zone.molten": "Laava",
+  "zone.rockfall": "Kivivyöry",
   "zone.scorched": "Kärventynyt maa",
   "zone.spring": "Lähde",
   "zone.tainted-water": "Saastunut vesi",
   "zone.toxic-fog": "Myrkkysumu",
+  "zone.vent": "Tuliaukko",
 } satisfies Catalog;

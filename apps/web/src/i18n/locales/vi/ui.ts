@@ -1310,11 +1310,14 @@ export default {
 
   "zone.draining-spire": "Tháp hút năng lượng",
   "zone.foul-water": "Nước bẩn",
+  "zone.gas-spout": "Mạch phun khí",
   "zone.grove": "Lùm cây",
   "zone.mire": "Đầm lầy",
   "zone.molten": "Dung nham",
+  "zone.rockfall": "Đá lở",
   "zone.scorched": "Đất cháy xém",
   "zone.spring": "Suối",
   "zone.tainted-water": "Nước nhiễm độc",
   "zone.toxic-fog": "Sương độc",
+  "zone.vent": "Khe lửa",
 } satisfies Catalog;

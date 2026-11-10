@@ -1397,13 +1397,16 @@ export const en = {
 
   "zone.draining-spire": "Draining spire",
   "zone.foul-water": "Foul water",
+  "zone.gas-spout": "Gas spout",
   "zone.grove": "Grove",
   "zone.mire": "Mire",
   "zone.molten": "Lava",
+  "zone.rockfall": "Rockfall",
   "zone.scorched": "Scorched ground",
   "zone.spring": "Spring",
   "zone.tainted-water": "Tainted water",
   "zone.toxic-fog": "Toxic fog",
+  "zone.vent": "Fire vent",
 } as const satisfies Readonly<Record<string, Message>>;
 
 export type MessageKey = keyof typeof en;

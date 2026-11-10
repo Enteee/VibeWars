@@ -1400,11 +1400,14 @@ export default {
 
   "zone.draining-spire": "Изсмукваща кула",
   "zone.foul-water": "Мътна вода",
+  "zone.gas-spout": "Газов гейзер",
   "zone.grove": "Горичка",
   "zone.mire": "Тресавище",
   "zone.molten": "Лава",
+  "zone.rockfall": "Скалопад",
   "zone.scorched": "Опожарена земя",
   "zone.spring": "Извор",
   "zone.tainted-water": "Заразена вода",
   "zone.toxic-fog": "Отровна мъгла",
+  "zone.vent": "Огнен отдушник",
 } satisfies Catalog;

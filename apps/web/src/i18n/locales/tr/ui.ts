@@ -1397,11 +1397,14 @@ export default {
 
   "zone.draining-spire": "Emici kule",
   "zone.foul-water": "Pis su",
+  "zone.gas-spout": "Gaz fıskiyesi",
   "zone.grove": "Koru",
   "zone.mire": "Bataklık",
   "zone.molten": "Lav",
+  "zone.rockfall": "Kaya düşmesi",
   "zone.scorched": "Kavrulmuş zemin",
   "zone.spring": "Pınar",
   "zone.tainted-water": "Kirli su",
   "zone.toxic-fog": "Zehirli sis",
+  "zone.vent": "Ateş bacası",
 } satisfies Catalog;

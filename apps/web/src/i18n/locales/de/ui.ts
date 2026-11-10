@@ -1414,11 +1414,14 @@ export default {
 
   "zone.draining-spire": "Zehrende Spitze",
   "zone.foul-water": "Fauliges Wasser",
+  "zone.gas-spout": "Gasfontäne",
   "zone.grove": "Hain",
   "zone.mire": "Morast",
   "zone.molten": "Lava",
+  "zone.rockfall": "Steinschlag",
   "zone.scorched": "Versengter Boden",
   "zone.spring": "Quelle",
   "zone.tainted-water": "Verseuchtes Wasser",
   "zone.toxic-fog": "Giftnebel",
+  "zone.vent": "Feuerschlot",
 } satisfies Catalog;

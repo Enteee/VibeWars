@@ -369,7 +369,18 @@ import {
   stepBeacon,
   type BeaconState,
 } from "./beacon.js";
-import { ZONE_RULES, zoneSourceId, zonesHolding, type MatchZone } from "./zones.js";
+import { zoneStrike } from "./zone-strike.js";
+import {
+  ZONE_REHIT_SECONDS,
+  ZONE_RULES,
+  zonePhaseAt,
+  zonePolygonAt,
+  zoneReach,
+  zoneSourceId,
+  zonesHolding,
+  zoneWindowAt,
+  type MatchZone,
+} from "./zones.js";
 import { UNCLAIMED_ALTAR, claimant, mayClaim, stepAltar, type AltarState } from "./altar.js";
 import {
   CLAIM_SKILL_ID,
@@ -1205,8 +1216,20 @@ export class MatchSimulation {
   /** Omitted on a map of one layer. */
   readonly #layers: MatchLayers | undefined;
   readonly #zones: readonly MatchZone[];
-  /** `#zones` that harm (#3026): what paths cost more through, and bots step out of. */
+  /**
+   * `#zones` that harm (#3026), each over all the ground it may cover
+   * (#3029): what paths cost more through.
+   */
   readonly #harmfulZones: readonly MatchZone[];
+  /**
+   * Each timed or moving zone's blows (#3029), by zone id: the window they
+   * fell in, who is in its polygon having been struck, and when each body
+   * was last struck.
+   */
+  readonly #zoneStrikes = new Map<
+    string,
+    { window: number; struck: Set<string>; lastHit: Map<string, number> }
+  >();
   /** Where a body may stand on each layer above the ground: its decks and ramps. */
   readonly #walkable: readonly (readonly Polygon[])[];
   /** Each ramp's way up, as a direction, in `#layers.transitions`' order. */
@@ -1381,7 +1404,9 @@ export class MatchSimulation {
     this.#switches = initialSwitches(options.switches ?? []);
     this.#layers = options.layers;
     this.#zones = options.zones ?? [];
-    this.#harmfulZones = this.#zones.filter((zone) => ZONE_RULES[zone.kind].harmful);
+    this.#harmfulZones = this.#zones
+      .filter((zone) => ZONE_RULES[zone.kind].harmful)
+      .map((zone) => ({ ...zone, polygon: zoneReach(zone.polygon, zone.path) }));
     this.#ground = this.#layers?.ground ?? 0;
     this.#walkable = walkableAreas(this.#layers);
     this.#mapWalls = options.walls ?? [];
@@ -4111,6 +4136,7 @@ export class MatchSimulation {
     // After the match end: a lord slain as a boost falls due ends it first.
     this.#advanceFlags(dt);
     this.#advanceBeacon(dt);
+    this.#advanceZoneStrikes();
 
     const log = this.#log.concat(this.#reaped);
     this.#log = [];
@@ -6506,7 +6532,7 @@ export class MatchSimulation {
       this.#botObjectives = { ...this.#botObjectives, gates: this.#gates };
     }
     if (this.#harmfulZones.length > 0) {
-      this.#botObjectives = { ...this.#botObjectives, harmfulZones: this.#harmfulZones };
+      this.#botObjectives = { ...this.#botObjectives, harmfulZones: this.#harmfulZonesNow() };
     }
   }
 
@@ -7872,8 +7898,107 @@ export class MatchSimulation {
     }
     for (const zone of zonesHolding(this.#zones, record.position, record.layer)) {
       const rule = ZONE_RULES[zone.kind];
+      // A strike lands once a window, in #advanceZoneStrikes (#3029).
+      if (rule.trigger !== "while-inside") {
+        continue;
+      }
       for (const status of rule.statuses) {
         applyStatus(record.combatant, status, rule.lingerSeconds, zoneSourceId(zone), NO_RANKS);
+      }
+    }
+  }
+
+  /**
+   * The harmful ground a bot steps out of this tick (#3029): every
+   * standing zone, a timed one only while it telegraphs or strikes, and a
+   * moving one where it is now.
+   */
+  #harmfulZonesNow(): readonly MatchZone[] {
+    return this.#zones.flatMap((zone) => {
+      const rule = ZONE_RULES[zone.kind];
+      if (!rule.harmful) {
+        return [];
+      }
+      if (rule.trigger === "while-inside") {
+        return [zone];
+      }
+      return zonePhaseAt(zone, this.#elapsedSeconds) === "idle"
+        ? []
+        : [{ ...zone, polygon: zonePolygonAt(zone, this.#elapsedSeconds) }];
+    });
+  }
+
+  /**
+   * Timed and moving hazards (#3029), once every body has moved. A timed
+   * zone strikes each living body in it once per active window, whether it
+   * stood there as the window opened or walked in during it. A moving one
+   * is always active and strikes a body once each time it passes over it,
+   * and never twice within `ZONE_REHIT_SECONDS`. A spirit is spared, as it
+   * is by standing ground; nobody is credited.
+   */
+  #advanceZoneStrikes(): void {
+    const now = this.#elapsedSeconds;
+    for (const zone of this.#zones) {
+      const rule = ZONE_RULES[zone.kind];
+      if (rule.trigger !== "strike") {
+        continue;
+      }
+      const window = zoneWindowAt(zone, now);
+      let state = this.#zoneStrikes.get(zone.id);
+      if (state === undefined || (zone.path === undefined && state.window !== window)) {
+        state = { window, struck: new Set(), lastHit: new Map() };
+        this.#zoneStrikes.set(zone.id, state);
+      }
+      if (zonePhaseAt(zone, now) !== "active") {
+        continue;
+      }
+      const polygon = zonePolygonAt(zone, now);
+      const inside = new Set<string>();
+      for (const record of this.#participants.values()) {
+        if (
+          record.combatant.dead ||
+          record.creature?.kind === "spirit" ||
+          record.layer !== zone.layer ||
+          !pointInPolygon(record.position, polygon)
+        ) {
+          continue;
+        }
+        inside.add(record.id);
+        if (state.struck.has(record.id)) {
+          continue;
+        }
+        const last = state.lastHit.get(record.id);
+        if (last !== undefined && now - last < ZONE_REHIT_SECONDS - SWING_EPSILON) {
+          continue;
+        }
+        state.struck.add(record.id);
+        state.lastHit.set(record.id, now);
+        const events = zoneStrike(record.combatant, rule, zoneSourceId(zone), {
+          rng: this.#rng,
+          rules: this.#ruleset.combat,
+          surroundings: this.#participants,
+        });
+        this.#log.push({
+          tick: this.#tick,
+          atSeconds: now,
+          cause: "zone",
+          sourceId: zoneSourceId(zone),
+          skillId: undefined,
+          weaponId: undefined,
+          attributeId: undefined,
+          area: undefined,
+          doubleStrike: false,
+          events,
+        });
+        this.#recordDeaths(events);
+      }
+      // A moving zone that has passed on lets a body be struck on its next pass.
+      if (zone.path !== undefined) {
+        for (const id of state.struck) {
+          if (!inside.has(id)) {
+            state.struck.delete(id);
+          }
+        }
       }
     }
   }

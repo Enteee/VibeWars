@@ -1325,11 +1325,14 @@ export default {
 
   "zone.draining-spire": "吸い取る尖塔",
   "zone.foul-water": "汚れた水",
+  "zone.gas-spout": "ガスの噴出口",
   "zone.grove": "林",
   "zone.mire": "泥沼",
   "zone.molten": "溶岩",
+  "zone.rockfall": "落石",
   "zone.scorched": "焦げた地面",
   "zone.spring": "泉",
   "zone.tainted-water": "汚染された水",
   "zone.toxic-fog": "毒霧",
+  "zone.vent": "火の噴出口",
 } satisfies Catalog;

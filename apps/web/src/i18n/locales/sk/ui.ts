@@ -1515,11 +1515,14 @@ export default {
 
   "zone.draining-spire": "Vysávajúca veža",
   "zone.foul-water": "Kalná voda",
+  "zone.gas-spout": "Plynový gejzír",
   "zone.grove": "Háj",
   "zone.mire": "Močiar",
   "zone.molten": "Láva",
+  "zone.rockfall": "Padajúce kamene",
   "zone.scorched": "Spálená zem",
   "zone.spring": "Prameň",
   "zone.tainted-water": "Otrávená voda",
   "zone.toxic-fog": "Jedovatá hmla",
+  "zone.vent": "Ohnivý prieduch",
 } satisfies Catalog;

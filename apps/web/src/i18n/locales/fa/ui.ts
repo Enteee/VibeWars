@@ -1393,11 +1393,14 @@ export default {
 
   "zone.draining-spire": "مناره‌ی مکنده",
   "zone.foul-water": "آب گندیده",
+  "zone.gas-spout": "فوران گاز",
   "zone.grove": "بیشه",
   "zone.mire": "باتلاق",
   "zone.molten": "گدازه",
+  "zone.rockfall": "ریزش سنگ",
   "zone.scorched": "زمین سوخته",
   "zone.spring": "چشمه",
   "zone.tainted-water": "آب آلوده",
   "zone.toxic-fog": "مه سمی",
+  "zone.vent": "دهانه‌ی آتش",
 } satisfies Catalog;

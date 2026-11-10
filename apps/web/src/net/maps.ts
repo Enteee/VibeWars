@@ -361,7 +361,13 @@ export interface LoadedStructure {
 /** What the renderer needs of a map's layers, its water and its zones, from its file. */
 export function structureOf(map: MapData): LoadedStructure {
   const water = (map.water ?? []).map(({ layer, depth, area }) => ({ layer, depth, area }));
-  const zones = (map.zones ?? []).map(({ kind, layer, area }) => ({ kind, layer, area }));
+  const zones = (map.zones ?? []).map(({ kind, layer, area, schedule, path }) => ({
+    kind,
+    layer,
+    area,
+    ...(schedule === undefined ? {} : { schedule }),
+    ...(path === undefined ? {} : { path }),
+  }));
   return {
     structure:
       map.layers === 1 && map.lighting === undefined && water.length === 0 && zones.length === 0

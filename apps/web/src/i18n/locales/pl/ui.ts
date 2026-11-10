@@ -1523,11 +1523,14 @@ export default {
 
   "zone.draining-spire": "Wysysająca iglica",
   "zone.foul-water": "Brudna woda",
+  "zone.gas-spout": "Gazowy gejzer",
   "zone.grove": "Gaj",
   "zone.mire": "Grzęzawisko",
   "zone.molten": "Lawa",
+  "zone.rockfall": "Obryw skalny",
   "zone.scorched": "Spalona ziemia",
   "zone.spring": "Źródło",
   "zone.tainted-water": "Skażona woda",
   "zone.toxic-fog": "Trująca mgła",
+  "zone.vent": "Ognisty komin",
 } satisfies Catalog;

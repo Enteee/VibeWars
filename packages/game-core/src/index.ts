@@ -22,9 +22,20 @@ export {
   ZONE_KINDS,
   ZONE_RULES,
   zoneKindOfSource,
+  zoneOffsetAt,
+  zonePhaseAt,
+  ZONE_TELEGRAPH_SECONDS,
+  zoneReach,
   zonesHolding,
 } from "./match/zones.js";
-export type { MatchZone, ZoneKind, ZoneRule } from "./match/zones.js";
+export type {
+  MatchZone,
+  ZoneKind,
+  ZonePath,
+  ZonePhase,
+  ZoneRule,
+  ZoneSchedule,
+} from "./match/zones.js";
 
 export type { Polygon, Segment } from "./geometry.js";
 export { pointInPolygon, progressAlong } from "./geometry.js";

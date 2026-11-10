@@ -1416,11 +1416,14 @@ export default {
 
   "zone.draining-spire": "Οβελός που απορροφά",
   "zone.foul-water": "Βρόμικο νερό",
+  "zone.gas-spout": "Πίδακας αερίου",
   "zone.grove": "Άλσος",
   "zone.mire": "Βάλτος",
   "zone.molten": "Λάβα",
+  "zone.rockfall": "Κατολίσθηση",
   "zone.scorched": "Καμένο έδαφος",
   "zone.spring": "Πηγή",
   "zone.tainted-water": "Μολυσμένο νερό",
   "zone.toxic-fog": "Τοξική ομίχλη",
+  "zone.vent": "Πύρινη οπή",
 } satisfies Catalog;

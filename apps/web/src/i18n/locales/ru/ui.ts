@@ -1514,11 +1514,14 @@ export default {
 
   "zone.draining-spire": "Иссушающий шпиль",
   "zone.foul-water": "Мутная вода",
+  "zone.gas-spout": "Газовый гейзер",
   "zone.grove": "Роща",
   "zone.mire": "Трясина",
   "zone.molten": "Лава",
+  "zone.rockfall": "Камнепад",
   "zone.scorched": "Выжженная земля",
   "zone.spring": "Родник",
   "zone.tainted-water": "Отравленная вода",
   "zone.toxic-fog": "Ядовитый туман",
+  "zone.vent": "Огненная расщелина",
 } satisfies Catalog;

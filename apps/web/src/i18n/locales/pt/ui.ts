@@ -1468,11 +1468,14 @@ export default {
 
   "zone.draining-spire": "Torre drenante",
   "zone.foul-water": "Água fétida",
+  "zone.gas-spout": "Jato de gás",
   "zone.grove": "Bosque",
   "zone.mire": "Lamaçal",
   "zone.molten": "Lava",
+  "zone.rockfall": "Desabamento",
   "zone.scorched": "Chão queimado",
   "zone.spring": "Nascente",
   "zone.tainted-water": "Água contaminada",
   "zone.toxic-fog": "Névoa tóxica",
+  "zone.vent": "Respiradouro de fogo",
 } satisfies Catalog;

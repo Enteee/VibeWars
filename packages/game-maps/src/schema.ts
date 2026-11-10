@@ -9,6 +9,8 @@ import {
   UPHILL,
   ZONE_KINDS,
   ZONE_RULES,
+  ZONE_TELEGRAPH_SECONDS,
+  zoneReach,
   type MatchMode,
   type Segment,
 } from "@vibewars/game-core";
@@ -129,7 +131,53 @@ const zoneSchema = z.object({
   kind: z.enum(ZONE_KINDS),
   layer: layerSchema,
   area: waterSchema.shape.area,
+  /** A timed zone's beat (#3029); only a strike kind has one. */
+  schedule: z
+    .object({
+      periodSeconds: z.number().positive(),
+      activeSeconds: z.number().positive(),
+      offsetSeconds: z.number().min(0),
+    })
+    .optional(),
+  /** A moving zone's way (#3029), its area drawn at the first point; only a strike kind has one. */
+  path: z
+    .object({ points: z.array(vec2Schema).min(2), speed: z.number().positive() })
+    .optional(),
 });
+
+/**
+ * What is wrong with a zone's timing (#3029): a strike kind needs a
+ * schedule or a path, not both; a standing kind may have neither. A
+ * schedule leaves room for its telegraph, and starts within its period.
+ */
+function zoneTimingIssues(
+  zone: z.infer<typeof zoneSchema>,
+): { readonly at: readonly string[]; readonly message: string }[] {
+  const strikes = ZONE_RULES[zone.kind].trigger === "strike";
+  const issues: { at: readonly string[]; message: string }[] = [];
+  if (strikes && (zone.schedule === undefined) === (zone.path === undefined)) {
+    issues.push({ at: [], message: `zone ${zone.id} strikes: it needs a schedule or a path, not both` });
+  }
+  if (!strikes && (zone.schedule !== undefined || zone.path !== undefined)) {
+    issues.push({ at: [], message: `zone ${zone.id} stands: it has no schedule or path` });
+  }
+  const schedule = zone.schedule;
+  if (schedule !== undefined) {
+    if (schedule.periodSeconds < schedule.activeSeconds + ZONE_TELEGRAPH_SECONDS) {
+      issues.push({
+        at: ["schedule", "periodSeconds"],
+        message: `zone ${zone.id}'s period is shorter than its active window and telegraph`,
+      });
+    }
+    if (schedule.offsetSeconds >= schedule.periodSeconds) {
+      issues.push({
+        at: ["schedule", "offsetSeconds"],
+        message: `zone ${zone.id}'s offset is not within its period`,
+      });
+    }
+  }
+  return issues;
+}
 
 /** A colour as `0xRRGGBB`. */
 const colourSchema = z.number().int().min(0).max(0xffffff);
@@ -944,7 +992,7 @@ export const mapDataSchema = z
 
     const harmfulPoints = (map.zones ?? [])
       .filter((zone) => ZONE_RULES[zone.kind].harmful)
-      .reduce((sum, zone) => sum + shapeVertices(zone.area).length, 0);
+      .reduce((sum, zone) => sum + zoneReach(shapeVertices(zone.area), zone.path).length, 0);
     if (harmfulPoints > MAX_HARMFUL_ZONE_POINTS) {
       context.addIssue({
         code: "custom",
@@ -968,6 +1016,20 @@ export const mapDataSchema = z
           code: "custom",
           path: ["zones", index, "area"],
           message: `zone ${zone.id} is outside the map`,
+        });
+      }
+      zoneTimingIssues(zone).forEach(({ at, message }) =>
+        context.addIssue({ code: "custom", path: ["zones", index, ...at], message }),
+      );
+      const reach = zoneReach(shapeVertices(zone.area), zone.path);
+      if (
+        zone.path !== undefined &&
+        !reach.every(({ x, y }) => x >= 0 && y >= 0 && x <= map.width && y <= map.height)
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["zones", index, "path"],
+          message: `zone ${zone.id} moves outside the map`,
         });
       }
     });

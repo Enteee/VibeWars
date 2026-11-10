@@ -794,7 +794,7 @@ export interface WireCombatEvent {
 /** One cast, swing or status tick, and what it did. */
 export interface WireCombat {
   readonly casterId: string;
-  readonly cause: "skill" | "weapon" | "degeneration" | "attribute" | "beacon";
+  readonly cause: "skill" | "weapon" | "degeneration" | "attribute" | "beacon" | "zone";
   /** The skill, when `cause` is `"skill"`; `""` otherwise. */
   readonly skillId: string;
   /** The weapon, when `cause` is `"weapon"`; `""` otherwise. */
@@ -2532,7 +2532,7 @@ function parseWireCombat(value: unknown): WireCombat | undefined {
   if (
     raw === undefined ||
     !isString(raw.casterId) ||
-    !isOneOf(raw.cause, ["skill", "weapon", "degeneration", "attribute", "beacon"] as const) ||
+    !isOneOf(raw.cause, ["skill", "weapon", "degeneration", "attribute", "beacon", "zone"] as const) ||
     !isString(raw.skillId) ||
     !isString(raw.weaponId) ||
     !isString(raw.attributeId) ||

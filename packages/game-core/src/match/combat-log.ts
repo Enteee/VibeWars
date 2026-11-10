@@ -16,7 +16,7 @@ import type { CombatEvent } from "../skills/effects.js";
  * something a primary attribute did by itself, with no skill or swing
  * behind it (#633): Soul Reaping's energy.
  */
-export type CombatCause = "skill" | "degeneration" | "weapon" | "attribute" | "beacon";
+export type CombatCause = "skill" | "degeneration" | "weapon" | "attribute" | "beacon" | "zone";
 
 /** One *resolution*: a cast, one participant's status tick, one swing, or an attribute's gain. */
 export interface CombatLogEntry {

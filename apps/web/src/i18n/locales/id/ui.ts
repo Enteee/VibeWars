@@ -1324,11 +1324,14 @@ export default {
 
   "zone.draining-spire": "Menara penyedot",
   "zone.foul-water": "Air busuk",
+  "zone.gas-spout": "Semburan gas",
   "zone.grove": "Hutan kecil",
   "zone.mire": "Rawa",
   "zone.molten": "Lava",
+  "zone.rockfall": "Longsoran batu",
   "zone.scorched": "Tanah hangus",
   "zone.spring": "Mata air",
   "zone.tainted-water": "Air tercemar",
   "zone.toxic-fog": "Kabut beracun",
+  "zone.vent": "Lubang api",
 } satisfies Catalog;
