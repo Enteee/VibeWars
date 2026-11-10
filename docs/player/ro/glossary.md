@@ -7,6 +7,7 @@
 | Build                 | Clasele unui personaj, cele opt abilități, atributele și echipamentul                       |
 | Inamic anunțat        | Inamicul pe care echipa ta a fost anunțată să-l atace; **T** îl țintește                    |
 | Afecțiune             | Un efect dăunător, precum Bleeding sau Crippled; expiră sau este eliminat                   |
+| Apă adâncă            | Apă în care nu poți intra; loviturile și vrăjile trec peste ea                              |
 | Ușor de întrerupt     | Orice lovitură primită în timpul folosirii o întrerupe, de exemplu la plasarea unei capcane |
 | Elită                 | O abilitate puternică, cu chenar auriu; una pe bară                                         |
 | Farmec                | Un efect bun lansat de tine sau de un aliat                                                 |
@@ -22,6 +23,7 @@
 | Reîncărcare           | Timpul până când o abilitate folosită poate fi folosită din nou                             |
 | Înviere               | Readucerea la viață a unui aliat mort                                                       |
 | Rună                  | O îmbunătățire de armură: ranguri de atribut, Viață, Energie sau afecțiuni mai scurte       |
+| Apă mică              | Apă prin care mergi ca pe uscat                                                             |
 | Sigiliu (scut)        | Semnul tău, un mic scut derivat din identitatea browserului, înaintea numelui               |
 | Punct de start        | Locul în care echipa ta începe meciul                                                       |
 | Abilitate de atingere | O abilitate folosită atingând ținta; unele strigăte fac atingerile inamicilor să eșueze     |

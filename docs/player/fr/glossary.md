@@ -7,6 +7,7 @@
 | Build                 | Les professions d'un personnage, ses huit compétences, ses attributs et son équipement           |
 | Ennemi annoncé        | L'ennemi que ton équipe doit attaquer ; **T** le cible                                           |
 | Altération            | Un effet néfaste comme Bleeding ou Crippled ; il s'estompe ou est retiré                         |
+| Eau profonde          | De l'eau où tu ne peux pas entrer ; tirs et sorts la traversent                                  |
 | Facilement interrompu | Tout coup reçu pendant l'utilisation l'interrompt, comme quand tu poses un piège                 |
 | Élite                 | Une compétence puissante au cadre doré ; une par barre                                           |
 | Enchantement          | Un effet bénéfique lancé par toi ou un allié                                                     |
@@ -22,6 +23,7 @@
 | Recharge              | Le temps avant qu'une compétence utilisée soit de nouveau disponible                             |
 | Ressusciter           | Ramener un allié mort                                                                            |
 | Rune                  | Une amélioration d'armure : rangs d'attribut, santé, énergie ou altérations plus courtes         |
+| Eau peu profonde      | De l'eau que tu traverses comme la terre ferme                                                   |
 | Sceau (bouclier)      | Ta marque, un petit bouclier issu de l'identité de ton navigateur, devant ton nom                |
 | Point de départ       | L'endroit où ton équipe commence le match                                                        |
 | Compétence de contact | Une compétence utilisée en touchant la cible ; certains cris font échouer les touchers ennemis   |

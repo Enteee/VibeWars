@@ -211,22 +211,51 @@ describe("a body under a raised ramp (#2975)", () => {
     x: slope.reduce((sum, { x }) => sum + x, 0) / slope.length,
     y: slope.reduce((sum, { y }) => sum + y, 0) / slope.length,
   };
-  const hidden = (layer: number): number => {
+  const hidden = (
+    layer: number,
+    at: { readonly x: number; readonly y: number } = middle,
+  ): number => {
     let count = 0;
-    traceHiddenOutline(RING_PATH, middle.x, middle.y, 10, layer, occluders, () => {
+    traceHiddenOutline(RING_PATH, at.x, at.y, 10, layer, occluders, () => {
       count += 1;
     });
     return count;
   };
 
-  it("has an occluder for the raised ramp, drawn as its slope, and none for the ground one", () => {
-    expect(occluders).toHaveLength(3);
-    expect(occluders[2]).toMatchObject({ outline: slope, hidesThrough: 0, lowLift: 0 });
+  it("has an occluder for each ramp, drawn as its slope", () => {
+    expect(occluders).toHaveLength(4);
+    expect(occluders[3]).toMatchObject({
+      outline: slope,
+      hidesThrough: 0,
+      lowLift: 0,
+      exempt: null,
+    });
   });
 
   it("hides a ground body under the slope, not a body on the deck it starts from", () => {
     expect(hidden(0)).toBeGreaterThan(0);
     expect(hidden(1)).toBe(0);
+  });
+
+  // West of the bridge's deck, north of the ground ramp, where its lifted slope is drawn (#3000).
+  const behind = { x: 400, y: 335 };
+
+  it("hides a ground body behind the ground ramp's lifted slope (#3000)", () => {
+    expect(hidden(0, behind)).toBeGreaterThan(0);
+  });
+
+  it("hides neither a ground body on the ground ramp nor a body above it (#3000)", () => {
+    expect(hidden(0, { x: 330, y: 450 })).toBe(0);
+    expect(hidden(1, behind)).toBe(0);
+  });
+
+  it("covers a polyline behind the ground ramp, not one on it (#3000)", () => {
+    const across = (y: number, from: number, to: number) => [
+      { x: from, y },
+      { x: to, y },
+    ];
+    expect(traceHiddenPolyline(across(behind.y, 390, 410), 0, occluders)).not.toHaveLength(0);
+    expect(traceHiddenPolyline(across(450, 310, 360), 0, occluders)).toHaveLength(0);
   });
 });
 

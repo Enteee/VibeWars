@@ -5,7 +5,7 @@ import {
   baseEnergyPipsFor,
   scenarioParticipants,
 } from "@vibewars/game-core";
-import { allWallSegments } from "@vibewars/game-maps/geometry";
+import { allWallSegments, pointInShape } from "@vibewars/game-maps/geometry";
 import { describe, expect, it } from "vitest";
 
 import { TRAINING_MAPS } from "./maps.js";
@@ -183,6 +183,39 @@ describe("the Heights scenario (#2958)", () => {
     for (const dummy of scenario.dummies) {
       expect(dummy.behaviour.kind).toBe("idle");
     }
+  });
+});
+
+describe("the water on Training Heights (#2985)", () => {
+  const deep = map.water?.filter(({ depth }) => depth === "deep") ?? [];
+
+  /** It arrived at `end`, and no step of the way stood in deep water. */
+  const expectDry = (steps: readonly Spot[], end: Spot): void => {
+    for (const step of steps) {
+      for (const water of deep) {
+        if (water.layer === step.layer) expect(pointInShape(step, water.area)).toBe(false);
+      }
+    }
+    const last = loaded(steps.at(-1), "a step");
+    expect(Math.hypot(last.x - end.x, last.y - end.y)).toBeLessThan(5);
+    expect(last.layer).toBe(end.layer);
+  };
+
+  it("has one deep pond, a shallow ford at a ramp's foot and two puddles", () => {
+    expect(deep).toHaveLength(1);
+    expect(map.water?.filter(({ depth }) => depth === "shallow")).toHaveLength(3);
+  });
+
+  it("walks from one team's spawn to the other's", () => {
+    const [west, east] = map.spawnPoints.filter(({ layer }) => layer === 0);
+    const from = { ...loaded(west, "a spawn").position, layer: 0 };
+    const to = { ...loaded(east, "a spawn").position, layer: 0 };
+    expectDry(walk(from, to), to);
+  });
+
+  it("walks round the deep pond, never through it", () => {
+    const end = { x: 1080, y: 200, layer: 0 };
+    expectDry(walk({ x: 750, y: 200, layer: 0 }, end), end);
   });
 });
 
