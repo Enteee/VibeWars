@@ -79,7 +79,10 @@ describe("Training Wilds (#3024)", () => {
         id,
       );
       if (zone.area.kind !== "rect") throw new Error(`${id} is no rect`);
-      return { x: zone.area.x + zone.area.width / 2, y: zone.area.y + zone.area.height / 2 };
+      return {
+        spawn: { x: zone.area.x + zone.area.width / 2, y: zone.area.y + zone.area.height / 2 },
+        layer: zone.layer,
+      };
     };
     const simulation = new MatchSimulation({
       seed: "wilds",
@@ -89,12 +92,12 @@ describe("Training Wilds (#3024)", () => {
       layers: matchLayers(map),
       zones: matchZones(map),
       participants: [
-        { ...template, id: "you", team: 0, spawn, behaviour: undefined },
+        { ...template, id: "you", team: 0, spawn, layer: 1, behaviour: undefined },
         ...patches.map(([id]) => ({
           ...template,
+          ...centre(id),
           id,
           team: 0,
-          spawn: centre(id),
           behaviour: undefined,
         })),
       ],
@@ -153,12 +156,86 @@ describe("Training Wilds (#3024)", () => {
       zones: matchZones(map),
       participants: [{ ...template, id: "you", team: 0, spawn: from, behaviour: undefined }],
     });
-    applyIntent(simulation, "you", { kind: "walk-to", x: to.x, y: to.y, layer: 0 });
+    applyIntent(simulation, "you", { kind: "walk-to", x: to.x, y: to.y, layer: 1 });
     for (let tick = 0; tick < 1800; tick += 1) {
       simulation.step(1 / 30);
     }
     const { position } = loaded(simulation.get("you"), "you");
     expect(Math.hypot(position.x - to.x, position.y - to.y)).toBeLessThan(5);
+  });
+
+  it("is a lit valley of three heights: a basin below the ground, a ridge above it (#3049)", () => {
+    expect(map.layers).toBeGreaterThanOrEqual(3);
+    expect(map.pits.length).toBeGreaterThan(0);
+    expect(map.decks.length).toBeGreaterThan(0);
+    expect(map.water?.length).toBeGreaterThan(0);
+    expect(map.lighting?.sun).toBeDefined();
+    expect(map.lighting?.lights.length).toBeLessThanOrEqual(16);
+  });
+
+  describe("reaches every element on foot from the spawn (#3049)", () => {
+    const [west] = map.spawnPoints;
+    const spawn = loaded(west, "a spawn");
+    const middle = (points: readonly { x: number; y: number }[]) => ({
+      x: points.reduce((sum, { x }) => sum + x, 0) / points.length,
+      y: points.reduce((sum, { y }) => sum + y, 0) / points.length,
+    });
+    const goals = [
+      ...(map.zones ?? []).map((zone) => ({
+        what: `zone ${zone.id}`,
+        layer: zone.layer,
+        goal:
+          zone.area.kind === "rect"
+            ? { x: zone.area.x + zone.area.width / 2, y: zone.area.y + zone.area.height / 2 }
+            : middle(zone.area.points),
+      })),
+      ...scenario.dummies.map((dummy) => ({
+        what: `dummy ${dummy.id}`,
+        layer: dummy.layer,
+        goal: dummy.position,
+      })),
+      ...(map.switches ?? []).map((lever) => ({
+        what: `lever ${lever.id}`,
+        layer: lever.layer,
+        goal: lever.position,
+      })),
+      // The side-room door, from outside it; the room behind is the lever test's.
+      { what: "gate side-room-door", layer: 1, goal: { x: 290, y: 720 } },
+    ];
+    const [template] = scenarioParticipants(scenario, spawn.position);
+
+    it.each(goals.map((goal) => [goal.what, goal] as const))("%s", (_what, { layer, goal }) => {
+      if (template === undefined) throw new Error("no dummies");
+      const simulation = new MatchSimulation({
+        seed: "wilds",
+        teamCount: map.teams,
+        walls: allWallSegments(map.walls),
+        bounds: { width: map.width, height: map.height },
+        layers: matchLayers(map),
+        zones: matchZones(map),
+        participants: [
+          {
+            ...template,
+            id: "you",
+            team: 0,
+            spawn: spawn.position,
+            layer: spawn.layer,
+            behaviour: undefined,
+          },
+        ],
+      });
+      applyIntent(simulation, "you", { kind: "walk-to", ...goal, layer });
+      const there = (): boolean => {
+        const body = loaded(simulation.get("you"), "you");
+        return (
+          body.layer === layer && Math.hypot(body.position.x - goal.x, body.position.y - goal.y) < 5
+        );
+      };
+      for (let tick = 0; tick < 1200 && !there(); tick += 1) {
+        simulation.step(1 / 30);
+      }
+      expect(there()).toBe(true);
+    });
   });
 
   it("burns the dummy standing in the strip within a second, and not you at your spawn", () => {
@@ -174,7 +251,7 @@ describe("Training Wilds (#3024)", () => {
     const { simulation } = setupScenario(scenario, newCharacter("c1"));
     const room = { x: 130, y: 720 };
     const walkIn = (): { x: number; y: number } => {
-      applyIntent(simulation, SELF_ID, { kind: "walk-to", ...room, layer: 0 });
+      applyIntent(simulation, SELF_ID, { kind: "walk-to", ...room, layer: 1 });
       for (let tick = 0; tick < 300; tick += 1) {
         simulation.step(1 / 30);
       }

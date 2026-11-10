@@ -595,12 +595,29 @@ describe("structureOf's water (#2984)", () => {
     );
   });
   it("hands it a flat map's effect zones, so a map of one layer with a zone is not flat (#3024)", () => {
-    const wilds = TRAINING_MAPS.get("training-wilds");
-    if (wilds === undefined) throw new Error("no training-wilds");
+    const layered = TRAINING_MAPS.get("training-wilds");
+    if (layered === undefined) throw new Error("no training-wilds");
+    // Wilds flattened (#3049): one layer, its zones and nothing else.
+    const wilds = {
+      ...layered,
+      layers: 1 as const,
+      groundLayer: 0 as const,
+      pits: [],
+      tunnels: [],
+      decks: [],
+      transitions: [],
+      walls: [],
+      gates: [],
+      switches: [],
+      spawnPoints: layered.spawnPoints.map((spawn) => ({ ...spawn, layer: 0 })),
+      water: undefined,
+      lighting: undefined,
+      zones: (layered.zones ?? []).map((zone) => ({ ...zone, layer: 0 })),
+    };
     const { structure } = structureOf(wilds);
     expect(structure.layerCount).toBe(1);
     expect(structure.zones).toEqual(
-      (wilds.zones ?? []).map(({ kind, layer, area, schedule, path }) => ({
+      wilds.zones.map(({ kind, layer, area, schedule, path }) => ({
         kind,
         layer,
         area,
