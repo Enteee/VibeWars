@@ -15,6 +15,8 @@ import {
   lightsByStability,
   litStructurePalette,
   shownStage,
+  stageShadows,
+  sunShadowTint,
 } from "./lighting-pass.js";
 import { ELEVATION_STEP } from "./render-order.js";
 
@@ -35,7 +37,7 @@ const BASE: MapLighting = { ambient: DARK, indoorAmbient: DARK, indoor: [], ligh
 const WALL = { kind: "rect", x: 90, y: 90, width: 20, height: 20 } as const;
 
 describe("the lighting budget (ADR-0052)", () => {
-  it("gives up flicker, then the light maps, after a run of slow rebuilds", () => {
+  it("gives up flicker, then shadows, then the light maps, after runs of slow rebuilds (#2988)", () => {
     const budget = new LightingBudget();
     for (let i = 0; i < OVER_BUDGET_LIMIT - 1; i++) {
       budget.record(LIGHTING_BUDGET_MS + 1);
@@ -46,7 +48,18 @@ describe("the lighting budget (ADR-0052)", () => {
     for (let i = 0; i < OVER_BUDGET_LIMIT; i++) {
       budget.record(LIGHTING_BUDGET_MS + 1);
     }
+    expect(budget.stage).toBe("no-shadows");
+    for (let i = 0; i < OVER_BUDGET_LIMIT; i++) {
+      budget.record(LIGHTING_BUDGET_MS + 1);
+    }
     expect(budget.stage).toBe("flat");
+  });
+
+  it("draws shadows until they are given up (#2988)", () => {
+    expect(stageShadows("full")).toBe(true);
+    expect(stageShadows("no-flicker")).toBe(true);
+    expect(stageShadows("no-shadows")).toBe(false);
+    expect(stageShadows("flat")).toBe(false);
   });
 
   it("forgives a slow frame that a fast one follows", () => {
@@ -112,6 +125,10 @@ describe("baseTint", () => {
 
   it("is the indoor ambient indoors, held to the surface floor", () => {
     expect(baseTint(lit, true)).toBe(0x737373);
+  });
+
+  it("is the ambient alone in the sun's shadow (#2988)", () => {
+    expect(sunShadowTint(lit)).toBe(0x999999);
   });
 });
 
