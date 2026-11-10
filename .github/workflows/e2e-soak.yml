@@ -74,6 +74,9 @@ jobs:
 
       - uses: ./.github/actions/devenv
 
+      - name: Build
+        run: devenv shell -- pnpm run build
+
       - name: Check the spike gain
         run: >-
           devenv shell --
