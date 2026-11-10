@@ -44,6 +44,7 @@ Tieto klávesy sú pevné:
 - **Pravým kliknutím** na vlajku alebo na stojan na vlajku, v Cechovej bitke
   alebo na Barrow Field, ich zameriaš; **Space** tam dôjde a vlajku zdvihne
   alebo zapichne.
+- **Pravým kliknutím** na páku ju zameriaš; **Space** k nej dôjde a prepne ju, čím otvorí alebo zatvorí brány, ktoré ovláda.
 - **Kliknutím kolieskom** na nepriateľa ho určíš svojmu tímu: ich **T** ho
   zameria. Na zemi alebo spojencovi to miesto označí signálom. Alebo klikni
   na lištu cieľa hore, aby si určil nepriateľa, ktorého máš zameraného.

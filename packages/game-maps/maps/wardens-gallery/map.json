@@ -23,11 +23,11 @@
         "width": 40,
         "height": 240
       },
-      "plate": {
-        "x": 430,
-        "y": 500
-      },
-      "team": 0
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 430, "y": 500 },
+        "team": 0
+      }
     },
     {
       "id": "door-east",
@@ -39,11 +39,11 @@
         "width": 40,
         "height": 240
       },
-      "plate": {
-        "x": 2770,
-        "y": 900
-      },
-      "team": 1
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 2770, "y": 900 },
+        "team": 1
+      }
     },
     {
       "id": "walk-west",
@@ -55,11 +55,11 @@
         "width": 40,
         "height": 340
       },
-      "plate": {
-        "x": 1480,
-        "y": 170
-      },
-      "team": 0
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 1480, "y": 170 },
+        "team": 0
+      }
     },
     {
       "id": "walk-east",
@@ -71,11 +71,11 @@
         "width": 40,
         "height": 340
       },
-      "plate": {
-        "x": 1720,
-        "y": 1230
-      },
-      "team": 1
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 1720, "y": 1230 },
+        "team": 1
+      }
     }
   ],
   "objectives": [

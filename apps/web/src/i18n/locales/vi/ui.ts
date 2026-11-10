@@ -512,6 +512,7 @@ export default {
   "hud.stormBeacon": "Đèn Hiệu Bão Tố",
   "hud.stormBeaconOurs": "Đèn Hiệu Bão Tố: đội bạn đang giữ",
   "hud.stormBeaconTheirs": "Đèn Hiệu Bão Tố: kẻ địch đang giữ",
+  "hud.switch": "Cần gạt",
   "hud.targetDead": "đã chết",
   "hud.targetEffects": "hiệu ứng của mục tiêu",
   "hud.versus": "{ours} vs {theirs}",

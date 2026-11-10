@@ -557,6 +557,7 @@ export default {
   "hud.stormBeacon": "Stormbaken",
   "hud.stormBeaconOurs": "Stormbaken: in handen van je team",
   "hud.stormBeaconTheirs": "Stormbaken: in handen van de vijand",
+  "hud.switch": "Hendel",
   "hud.targetDead": "dood",
   "hud.targetEffects": "effecten op je doelwit",
   "hud.versus": "{ours} v {theirs}",

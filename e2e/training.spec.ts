@@ -232,6 +232,35 @@ test("Wilds' scorched strip burns the dummy in it, logged as a hazard (#3024)", 
   expect(errors).toEqual([]);
 });
 
+test("Wilds: a double right click on the lever opens the side room's door, and you walk in (#3025)", async ({
+  page,
+}) => {
+  // Two walks, in game time, which runs slower than wall time under load (#327).
+  test.setTimeout(60_000);
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("wilds");
+  await expect(page.locator(".training-log")).toContainText("── Wilds ──");
+  await takeControl(page);
+  await wholeMap(page);
+  const near = async (world: { readonly x: number; readonly y: number }, reach: number) => {
+    const [x = Number.NaN, y = Number.NaN] = ((await shownAt(page, "you")) ?? "")
+      .split(",")
+      .map(Number);
+    return Math.hypot(x - world.x, y - world.y) <= reach;
+  };
+
+  const lever = { x: 330, y: 640 };
+  const at = (await trainingView(page, canvas)).onPage(lever);
+  await page.mouse.dblclick(at.x, at.y, { button: "right" });
+  // FLAG_REACH_UNITS: a switch is reached as a flag is.
+  await expect.poll(() => near(lever, 60), { timeout: 20_000 }).toBe(true);
+  await stillArena(page, canvas);
+
+  const room = { x: 130, y: 720 };
+  await walkTo(page, canvas, room);
+  await expect.poll(() => near(room, 5), { timeout: 20_000 }).toBe(true);
+});
+
 test("Heights draws its water: the deep pond darker than the floor, a puddle paler (#2985)", async ({
   page,
 }) => {

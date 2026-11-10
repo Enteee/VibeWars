@@ -558,6 +558,7 @@ export default {
   "hud.stormBeacon": "Stormfyr",
   "hud.stormBeaconOurs": "Stormfyr: hålls av ditt lag",
   "hud.stormBeaconTheirs": "Stormfyr: hålls av fienden",
+  "hud.switch": "Spak",
   "hud.targetDead": "död",
   "hud.targetEffects": "ditt måls effekter",
   "hud.versus": "{ours} mot {theirs}",

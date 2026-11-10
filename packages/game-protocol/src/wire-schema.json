@@ -5456,19 +5456,39 @@
     "GateDescriptor": {
       "properties": [
         {
-          "name": "plate",
+          "name": "opener",
           "optional": false,
           "type": {
-            "properties": [
-              { "name": "x", "optional": false, "type": "number" },
-              { "name": "y", "optional": false, "type": "number" }
+            "union": [
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "plate" } },
+                  {
+                    "name": "plate",
+                    "optional": false,
+                    "type": {
+                      "properties": [
+                        { "name": "x", "optional": false, "type": "number" },
+                        { "name": "y", "optional": false, "type": "number" }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "team",
+                    "optional": false,
+                    "type": {
+                      "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                    }
+                  }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "switch" } }
+                ]
+              }
             ]
           }
-        },
-        {
-          "name": "team",
-          "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         {
           "name": "wall",
@@ -5504,6 +5524,31 @@
             ]
           }
         }
+      ]
+    },
+    "GateOpenerDescriptor": {
+      "union": [
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "plate" } },
+            {
+              "name": "plate",
+              "optional": false,
+              "type": {
+                "properties": [
+                  { "name": "x", "optional": false, "type": "number" },
+                  { "name": "y", "optional": false, "type": "number" }
+                ]
+              }
+            },
+            {
+              "name": "team",
+              "optional": false,
+              "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
+            }
+          ]
+        },
+        { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "switch" } }] }
       ]
     },
     "JsonValue": {
@@ -5570,20 +5615,43 @@
             "array": {
               "properties": [
                 {
-                  "name": "plate",
+                  "name": "opener",
                   "optional": false,
                   "type": {
-                    "properties": [
-                      { "name": "x", "optional": false, "type": "number" },
-                      { "name": "y", "optional": false, "type": "number" }
+                    "union": [
+                      {
+                        "properties": [
+                          { "name": "kind", "optional": false, "type": { "literal": "plate" } },
+                          {
+                            "name": "plate",
+                            "optional": false,
+                            "type": {
+                              "properties": [
+                                { "name": "x", "optional": false, "type": "number" },
+                                { "name": "y", "optional": false, "type": "number" }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "team",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                "null",
+                                { "literal": 0 },
+                                { "literal": 1 },
+                                { "literal": 2 }
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "properties": [
+                          { "name": "kind", "optional": false, "type": { "literal": "switch" } }
+                        ]
+                      }
                     ]
-                  }
-                },
-                {
-                  "name": "team",
-                  "optional": false,
-                  "type": {
-                    "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
                   }
                 },
                 {
@@ -5627,6 +5695,28 @@
         { "name": "height", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "name", "optional": false, "type": "string" },
+        {
+          "name": "switches",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "layer", "optional": false, "type": "number" },
+                {
+                  "name": "position",
+                  "optional": false,
+                  "type": {
+                    "properties": [
+                      { "name": "x", "optional": false, "type": "number" },
+                      { "name": "y", "optional": false, "type": "number" }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
         {
           "name": "teamCount",
           "optional": false,
@@ -5929,20 +6019,51 @@
                   "array": {
                     "properties": [
                       {
-                        "name": "plate",
+                        "name": "opener",
                         "optional": false,
                         "type": {
-                          "properties": [
-                            { "name": "x", "optional": false, "type": "number" },
-                            { "name": "y", "optional": false, "type": "number" }
+                          "union": [
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "plate" }
+                                },
+                                {
+                                  "name": "plate",
+                                  "optional": false,
+                                  "type": {
+                                    "properties": [
+                                      { "name": "x", "optional": false, "type": "number" },
+                                      { "name": "y", "optional": false, "type": "number" }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "name": "team",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      "null",
+                                      { "literal": 0 },
+                                      { "literal": 1 },
+                                      { "literal": 2 }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "switch" }
+                                }
+                              ]
+                            }
                           ]
-                        }
-                      },
-                      {
-                        "name": "team",
-                        "optional": false,
-                        "type": {
-                          "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
                         }
                       },
                       {
@@ -5994,6 +6115,28 @@
               { "name": "height", "optional": false, "type": "number" },
               { "name": "id", "optional": false, "type": "string" },
               { "name": "name", "optional": false, "type": "string" },
+              {
+                "name": "switches",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      { "name": "id", "optional": false, "type": "string" },
+                      { "name": "layer", "optional": false, "type": "number" },
+                      {
+                        "name": "position",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
               {
                 "name": "teamCount",
                 "optional": false,
@@ -6135,20 +6278,51 @@
                   "array": {
                     "properties": [
                       {
-                        "name": "plate",
+                        "name": "opener",
                         "optional": false,
                         "type": {
-                          "properties": [
-                            { "name": "x", "optional": false, "type": "number" },
-                            { "name": "y", "optional": false, "type": "number" }
+                          "union": [
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "plate" }
+                                },
+                                {
+                                  "name": "plate",
+                                  "optional": false,
+                                  "type": {
+                                    "properties": [
+                                      { "name": "x", "optional": false, "type": "number" },
+                                      { "name": "y", "optional": false, "type": "number" }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "name": "team",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      "null",
+                                      { "literal": 0 },
+                                      { "literal": 1 },
+                                      { "literal": 2 }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "switch" }
+                                }
+                              ]
+                            }
                           ]
-                        }
-                      },
-                      {
-                        "name": "team",
-                        "optional": false,
-                        "type": {
-                          "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
                         }
                       },
                       {
@@ -6200,6 +6374,28 @@
               { "name": "height", "optional": false, "type": "number" },
               { "name": "id", "optional": false, "type": "string" },
               { "name": "name", "optional": false, "type": "string" },
+              {
+                "name": "switches",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      { "name": "id", "optional": false, "type": "string" },
+                      { "name": "layer", "optional": false, "type": "number" },
+                      {
+                        "name": "position",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
               {
                 "name": "teamCount",
                 "optional": false,
@@ -6373,6 +6569,22 @@
     },
     "StopIntent": {
       "properties": [{ "name": "kind", "optional": false, "type": { "literal": "stop" } }]
+    },
+    "SwitchDescriptor": {
+      "properties": [
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "layer", "optional": false, "type": "number" },
+        {
+          "name": "position",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "x", "optional": false, "type": "number" },
+              { "name": "y", "optional": false, "type": "number" }
+            ]
+          }
+        }
+      ]
     },
     "TargetIntent": {
       "properties": [
@@ -8446,6 +8658,7 @@
             ]
           }
         },
+        { "name": "switches", "optional": false, "type": { "array": "boolean" } },
         { "name": "tick", "optional": false, "type": "number" },
         {
           "name": "winningTeam",
@@ -8915,6 +9128,7 @@
             ]
           }
         },
+        { "name": "switches", "optional": false, "type": { "array": "boolean" } },
         { "name": "tick", "optional": false, "type": "number" },
         {
           "name": "winningTeam",

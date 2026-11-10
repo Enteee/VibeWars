@@ -591,6 +591,7 @@ export default {
   "hud.stormBeacon": "Olujni svjetionik",
   "hud.stormBeaconOurs": "Olujni svjetionik: drži tvoj tim",
   "hud.stormBeaconTheirs": "Olujni svjetionik: drži neprijatelj",
+  "hud.switch": "Poluga",
   "hud.targetDead": "mrtav",
   "hud.targetEffects": "učinci tvoje mete",
   "hud.versus": "{ours} : {theirs}",

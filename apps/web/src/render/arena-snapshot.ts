@@ -19,7 +19,8 @@ import type { CapeLook } from "./cape-shape.js";
 import type { RenderablePing } from "./call-marks.js";
 import type {
   RenderableCapturePoint,
-  RenderableGatePlate,
+  RenderableGate,
+  RenderableSwitch,
   RenderableFlag,
   RenderableStand,
 } from "./flag-objects.js";
@@ -436,8 +437,10 @@ export interface ArenaSnapshot {
   readonly altar: Vec2 | undefined;
   /** Capture Points' shrines (#1378); `[]` on any other map. */
   readonly capturePoints: readonly RenderableCapturePoint[];
-  /** The plates of the map's gates (#2691); `[]` on a map without them. */
-  readonly gatePlates: readonly RenderableGatePlate[];
+  /** The map's gates and their plates (#2691); `[]` on a map without them. */
+  readonly gates: readonly RenderableGate[];
+  /** The map's switches (#3025); `[]` on a map without them. */
+  readonly switches: readonly RenderableSwitch[];
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
@@ -478,7 +481,8 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   stand: undefined,
   altar: undefined,
   capturePoints: [],
-  gatePlates: [],
+  gates: [],
+  switches: [],
   targetId: undefined,
   projectiles: [],
   groundEffects: [],

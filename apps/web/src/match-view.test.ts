@@ -70,6 +70,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     altarHeldSeconds: 0,
     capturePoints: [],
     gates: [],
+    switches: [],
     summary: undefined,
   };
 }

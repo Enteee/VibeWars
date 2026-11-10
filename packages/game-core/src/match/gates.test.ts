@@ -33,7 +33,10 @@ const SEGMENTS: readonly Segment[] = CORNERS.map((a, at) => ({
   b: CORNERS[(at + 1) % CORNERS.length] ?? a,
 }));
 const PLATE = vec2(100, 400);
-const FIELD: GateField = { segments: SEGMENTS, plate: PLATE, team: null };
+const FIELD: GateField = {
+  segments: SEGMENTS,
+  opener: { kind: "plate", plate: PLATE, team: null },
+};
 
 function closedGate(): Gate {
   const [gate] = initialGates([FIELD]);
@@ -67,24 +70,24 @@ const OFF_PLATE = vec2(40, 400);
 
 describe("stepGate (#2691)", () => {
   it("opens while its plate is held, and closes when left", () => {
-    const opened = stepGate(closedGate(), true, DT);
+    const opened = stepGate(closedGate(), true, false, DT);
     expect(opened.open).toBe(true);
-    expect(stepGate(opened, true, DT).open).toBe(true);
-    const closed = stepGate(opened, false, DT);
+    expect(stepGate(opened, true, false, DT).open).toBe(true);
+    const closed = stepGate(opened, false, false, DT);
     expect(closed).toMatchObject({ open: false, reopenSeconds: GATE_REOPEN_SECONDS });
   });
 
   it("refuses to reopen until the wait is over", () => {
-    let gate = stepGate(stepGate(closedGate(), true, DT), false, DT);
-    gate = stepGate(gate, true, GATE_REOPEN_SECONDS - 1);
+    let gate = stepGate(stepGate(closedGate(), true, false, DT), false, false, DT);
+    gate = stepGate(gate, true, false, GATE_REOPEN_SECONDS - 1);
     expect(gate.open).toBe(false);
-    expect(stepGate(gate, true, 1).open).toBe(true);
+    expect(stepGate(gate, true, false, 1).open).toBe(true);
   });
 });
 
 describe("holdsPlate (#2691)", () => {
   it("answers only to its team, within reach", () => {
-    const owned: GateField = { ...FIELD, team: 1 };
+    const owned: GateField = { ...FIELD, opener: { kind: "plate", plate: PLATE, team: 1 } };
     expect(holdsPlate(owned, 1, PLATE)).toBe(true);
     expect(holdsPlate(owned, 0, PLATE)).toBe(false);
     expect(holdsPlate(FIELD, 0, PLATE)).toBe(true);
@@ -179,7 +182,10 @@ describe("gates in a match (#2691)", () => {
 
   it("has a bot walk to its own team's plate, and not to a foe's", () => {
     const sim = arena([body("bot", 0, vec2(300, 400), { behaviour: BOT }), foe]);
-    const gate = (team: number): Gate => ({ ...closedGate(), team });
+    const gate = (team: number): Gate => ({
+      ...closedGate(),
+      opener: { kind: "plate", plate: PLATE, team },
+    });
     const objectives = (team: number) => ({ ...NO_OBJECTIVES, gates: [gate(team)] });
     expect(askBot(sim, "bot", objectives(0)).moveTo).toEqual(PLATE);
     expect(askBot(sim, "bot", objectives(1)).moveTo).not.toEqual(PLATE);

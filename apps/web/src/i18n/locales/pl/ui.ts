@@ -610,6 +610,7 @@ export default {
   "hud.stormBeacon": "Latarnia Burzy",
   "hud.stormBeaconOurs": "Latarnia Burzy: w rękach twojej drużyny",
   "hud.stormBeaconTheirs": "Latarnia Burzy: w rękach wroga",
+  "hud.switch": "Dźwignia",
   "hud.targetDead": "martwy",
   "hud.targetEffects": "efekty twojego celu",
   "hud.versus": "{ours} v {theirs}",

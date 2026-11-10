@@ -562,6 +562,7 @@ export default {
   "hud.stormBeacon": "Sturmfeuer",
   "hud.stormBeaconOurs": "Sturmfeuer: von deinem Team gehalten",
   "hud.stormBeaconTheirs": "Sturmfeuer: vom Feind gehalten",
+  "hud.switch": "Hebel",
   "hud.targetDead": "tot",
   "hud.targetEffects": "Effekte deines Ziels",
   "hud.versus": "{ours} : {theirs}",

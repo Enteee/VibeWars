@@ -1,5 +1,5 @@
-import { allWallSegments, wallToSegments } from "@vibewars/game-maps/geometry";
-import { matchLayers, matchZones } from "@vibewars/game-maps/layers";
+import { allWallSegments } from "@vibewars/game-maps/geometry";
+import { matchGates, matchLayers, matchSwitches, matchZones } from "@vibewars/game-maps/layers";
 import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
@@ -55,6 +55,7 @@ import {
   type QueueMode,
   type WireTeamCount,
   type GateDescriptor,
+  type SwitchDescriptor,
 } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { FLAT_STRUCTURE, type MapStructure } from "../render/arena-snapshot.js";
@@ -395,16 +396,28 @@ export function mapStructure(mapId: string): LoadedStructure {
   return known;
 }
 
-function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
-  const { wall, plate, team } = gate;
+/** `gate` as the wire carries it (#2691, #3025). */
+export function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
+  const { wall, opener } = gate;
   return {
     wall:
       wall.kind === "rect"
         ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
         : { kind: "polygon", points: wall.points },
-    plate,
-    team: team === 0 || team === 1 || team === 2 ? team : null,
+    opener:
+      opener.kind === "plate"
+        ? {
+            kind: "plate",
+            plate: opener.plate,
+            team: opener.team === 0 || opener.team === 1 || opener.team === 2 ? opener.team : null,
+          }
+        : { kind: "switch" },
   };
+}
+
+/** `map`'s switches as the wire carries them (#3025), in its order. */
+export function switchDescriptors(map: MapData): SwitchDescriptor[] {
+  return (map.switches ?? []).map(({ id, layer, position }) => ({ id, layer, position }));
 }
 
 /** The resurrection shrines among a map's objectives. */
@@ -588,16 +601,14 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
           : { kind: "polygon", points: wall.points },
       ),
       gates: map.gates.map(gateDescriptor),
+      switches: switchDescriptors(map),
     },
     mode: map.mode,
     walls: allWallSegments(map.walls),
     layers: matchLayers(map),
     zones: matchZones(map),
-    gates: map.gates.map((gate) => ({
-      segments: wallToSegments(gate.wall),
-      plate: gate.plate,
-      team: gate.team,
-    })),
+    gates: matchGates(map),
+    switches: matchSwitches(map),
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints.filter((spawn) => spawn.team < seated),
     shrines: shrinesOf(objectives),

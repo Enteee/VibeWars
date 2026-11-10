@@ -560,6 +560,7 @@ export const en = {
   "hud.stormBeacon": "Storm Beacon",
   "hud.stormBeaconOurs": "Storm Beacon: held by your team",
   "hud.stormBeaconTheirs": "Storm Beacon: held by the enemy",
+  "hud.switch": "Lever",
   "hud.targetDead": "dead",
   "hud.targetEffects": "your target's effects",
   "hud.versus": "{ours} v {theirs}",

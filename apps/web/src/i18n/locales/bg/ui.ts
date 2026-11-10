@@ -561,6 +561,7 @@ export default {
   "hud.stormBeacon": "Бурен фар",
   "hud.stormBeaconOurs": "Бурен фар: държан от твоя отбор",
   "hud.stormBeaconTheirs": "Бурен фар: държан от врага",
+  "hud.switch": "Лост",
   "hud.targetDead": "мъртъв",
   "hud.targetEffects": "ефекти на целта ти",
   "hud.versus": "{ours} с/у {theirs}",

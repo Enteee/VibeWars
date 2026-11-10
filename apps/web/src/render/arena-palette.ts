@@ -118,3 +118,13 @@ export const LIGHT_MARK_LOOK = {
   flame: 0xffb347,
   core: 0xfff1c4,
 };
+
+/**
+ * A switch's lever (#3025): an iron base and a wooden handle with a pale
+ * knob, which reads by its angle: raised, or thrown down to the side.
+ */
+export const SWITCH_MARK_LOOK = {
+  base: 0x3a3a40,
+  handle: 0x8a6a42,
+  knob: 0xe8dcc0,
+};

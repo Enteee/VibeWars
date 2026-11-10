@@ -842,6 +842,7 @@ export function observedSnapshot(
     altarHolder: absent(snapshot.altarHolder),
     altarHeldSeconds: snapshot.altarHeldSeconds,
     gates: snapshot.gates,
+    switches: snapshot.switches,
     capturePoints: snapshot.capturePoints.map(({ x, y, layer, owner, capturer, progress }) => ({
       position: { x, y },
       layer,

@@ -42,6 +42,7 @@ Ove su tipke fiksne:
   desni klik na istog neprijatelja da ga napadneš.
 - **Desni klik** na zastavu ili stalak za zastavu, u Bitki cehova ili na Barrow Fieldu, da
   ih ciljaš; **Space** te odvede onamo i podigne ili postavi zastavu.
+- **Desni klik** na polugu odabire je kao metu; **Space** hoda do nje i povlači je, otvarajući ili zatvarajući vrata kojima upravlja.
 - **Klik kotačićem** na neprijatelja da ga označiš svom timu: njihov **T** ga cilja.
   Na tlu ili savezniku postavlja oznaku na to mjesto. Ili klikni traku mete
   na vrhu da označiš neprijatelja kojeg ciljaš.

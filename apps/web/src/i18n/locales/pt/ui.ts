@@ -590,6 +590,7 @@ export default {
   "hud.stormBeacon": "Farol da Tempestade",
   "hud.stormBeaconOurs": "Farol da Tempestade: controlado pela sua equipe",
   "hud.stormBeaconTheirs": "Farol da Tempestade: controlado pelo inimigo",
+  "hud.switch": "Alavanca",
   "hud.targetDead": "morto",
   "hud.targetEffects": "efeitos do seu alvo",
   "hud.versus": "{ours} x {theirs}",

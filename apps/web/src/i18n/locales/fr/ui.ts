@@ -592,6 +592,7 @@ export default {
   "hud.stormBeacon": "Balise des Tempêtes",
   "hud.stormBeaconOurs": "Balise des Tempêtes : tenue par votre équipe",
   "hud.stormBeaconTheirs": "Balise des Tempêtes : tenue par l’ennemi",
+  "hud.switch": "Levier",
   "hud.targetDead": "mort",
   "hud.targetEffects": "effets de ta cible",
   "hud.versus": "{ours} vs {theirs}",

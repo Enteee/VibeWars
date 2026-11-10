@@ -1,4 +1,10 @@
-import { UPHILL, type MatchLayers, type MatchZone } from "@vibewars/game-core";
+import {
+  UPHILL,
+  type GateField,
+  type MatchLayers,
+  type MatchZone,
+  type SwitchField,
+} from "@vibewars/game-core";
 
 import { shapeVertices, wallToSegments } from "./geometry.js";
 import type { MapData } from "./schema.js";
@@ -44,5 +50,28 @@ export function matchZones(map: MapData): MatchZone[] {
     kind,
     layer,
     polygon: shapeVertices(area),
+  }));
+}
+
+/** `map`'s gates, as the simulation takes them (#2691, #3025), in its order, each on its wall's layer. */
+export function matchGates(map: MapData): GateField[] {
+  return map.gates.map(({ wall, opener }) => ({
+    segments: wallToSegments(wall),
+    layer: wall.layer,
+    opener:
+      opener.kind === "plate"
+        ? { kind: "plate", plate: opener.plate, team: opener.team }
+        : { kind: "switch" },
+  }));
+}
+
+/** `map`'s switches, as the simulation takes them (#3025): each target as its gate's index. */
+export function matchSwitches(map: MapData): SwitchField[] {
+  const gates = map.gates.map(({ id }) => id);
+  return (map.switches ?? []).map(({ id, layer, position, targets }) => ({
+    id,
+    layer,
+    position,
+    targets: targets.map((target) => gates.indexOf(target)),
   }));
 }

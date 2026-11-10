@@ -42,6 +42,7 @@ Deze toetsen liggen vast:
   nog eens op dezelfde vijand om hem aan te vallen.
 - **Rechtsklik** op een vlag of de vlaggenstandaard, in een Guild Battle of op Barrow Field, om
   die te kiezen; **Space** loopt erheen en pakt de vlag op of plant hem.
+- **Rechtsklik** op een hendel om hem als doel te kiezen; **Space** loopt erheen en haalt hem over, zodat de poorten die hij bedient open- of dichtgaan.
 - **Wielklik** op een vijand om hem voor je team aan te wijzen: hun **T** kiest
   hem. Op de grond of een bondgenoot pingt het die plek. Of klik op de
   doelwitbalk bovenaan om de vijand aan te wijzen die je gekozen hebt.

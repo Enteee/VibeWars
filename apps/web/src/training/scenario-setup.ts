@@ -9,10 +9,15 @@ import {
   type TrainingScenario,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import { matchLayers, matchZones } from "@vibewars/game-maps/layers";
+import { matchGates, matchLayers, matchSwitches, matchZones } from "@vibewars/game-maps/layers";
 import type { MapData } from "@vibewars/game-maps/schema";
 import type { MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
-import { structureOf, type LoadedStructure } from "../net/maps.js";
+import {
+  gateDescriptor,
+  structureOf,
+  switchDescriptors,
+  type LoadedStructure,
+} from "../net/maps.js";
 
 import { validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
@@ -79,7 +84,8 @@ function toMapDescriptor(map: MapData): MapDescriptor {
     height: map.height,
     teamCount: map.teams,
     walls,
-    gates: [],
+    gates: map.gates.map(gateDescriptor),
+    switches: switchDescriptors(map),
   };
 }
 
@@ -117,6 +123,8 @@ export function setupScenario(
     bounds: { width: map.width, height: map.height },
     layers: matchLayers(map),
     zones: matchZones(map),
+    gates: matchGates(map),
+    switches: matchSwitches(map),
     participants: [
       {
         id: SELF_ID,

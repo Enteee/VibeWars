@@ -47,6 +47,7 @@ Nämä näppäimet ovat kiinteitä:
 - **Oikea napsautus** lippuun tai lipputelineeseen kiltataistelussa tai
   Barrow Fieldillä kohdistaa siihen; **Space** kävelee sinne ja nostaa
   lipun tai pystyttää sen.
+- **Oikealla klikkauksella** valitset vivun kohteeksi; **Space** kävelee sen luo ja kääntää sen, jolloin sen ohjaamat portit aukeavat tai sulkeutuvat.
 - **Rullan napsautus** viholliseen ilmoittaa sen tiimillesi: heidän
   **T**-näppäimensä kohdistaa siihen. Maassa tai liittolaisessa se
   merkitsee sen kohdan. Tai napsauta ylhäällä olevaa kohdepalkkia

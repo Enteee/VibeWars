@@ -77,6 +77,7 @@ export const ARENA: HostMap = {
     width: 2000,
     height: 1200,
     gates: [],
+    switches: [],
     walls: [{ kind: "rect", x: 990, y: 900, width: 20, height: 200 }],
   },
   mode: "annihilation",
@@ -98,6 +99,7 @@ export const ARENA: HostMap = {
   capturePoints: [],
   startLine: undefined,
   gates: [],
+  switches: [],
   guards: [],
 };
 

@@ -338,6 +338,13 @@ import {
   type GateField,
 } from "./gates.js";
 import {
+  flipSwitch,
+  initialSwitches,
+  switchIdOf,
+  type Switch,
+  type SwitchField,
+} from "./switches.js";
+import {
   carriedRelic,
   initialRelics,
   ALTAR_REACH_UNITS,
@@ -881,6 +888,8 @@ export interface MatchSimulationOptions {
   readonly startLine?: StartLine | undefined;
   /** The map's gates (#2691); none if omitted. */
   readonly gates?: readonly GateField[];
+  /** The map's switches (#3025), each naming gates by index; none if omitted. */
+  readonly switches?: readonly SwitchField[];
   /** The map's effect zones (ADR-0053, #3024), in its order; none if omitted. */
   readonly zones?: readonly MatchZone[];
   /**
@@ -1216,6 +1225,9 @@ export class MatchSimulation {
   readonly #wallSets = new Map<number, WallSet>();
   /** Filled in place, so a bot's objectives see each change (#2691). */
   readonly #gates: Gate[];
+  readonly #switches: Switch[];
+  /** Who reached a switch this step (#3025), in simulation order. */
+  #switchArrivals: CarriedArrival[] = [];
   /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
@@ -1361,6 +1373,7 @@ export class MatchSimulation {
     this.#score = emptyScore(teamIds(this.#teamCount));
     this.#bounds = options.bounds;
     this.#gates = initialGates(options.gates ?? []);
+    this.#switches = initialSwitches(options.switches ?? []);
     this.#layers = options.layers;
     this.#zones = options.zones ?? [];
     this.#ground = this.#layers?.ground ?? 0;
@@ -1554,6 +1567,11 @@ export class MatchSimulation {
 
   public get gates(): readonly Gate[] {
     return this.#gates;
+  }
+
+  /** Every switch (#3025), which way it points and when it may move again; `[]` on a map without them. */
+  public get switches(): readonly Switch[] {
+    return this.#switches;
   }
 
   /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
@@ -3182,7 +3200,11 @@ export class MatchSimulation {
     if (record === undefined) {
       return undefined;
     }
-    if (isCarriedObjectId(targetId) || this.#isAllyGhost(record, targetId)) {
+    if (
+      isCarriedObjectId(targetId) ||
+      switchIdOf(targetId) !== undefined ||
+      this.#isAllyGhost(record, targetId)
+    ) {
       return this.#requestInteract(record, targetId);
     }
     const check = this.#attackCheck(record, targetId);
@@ -3251,7 +3273,8 @@ export class MatchSimulation {
       (this.#flagField !== undefined &&
         (targetId === FLAG_STAND_ID ||
           this.flags.some(({ team }) => team === flagTeamOf(targetId)))) ||
-      this.relics.some(({ team }) => team === relicTeamOf(targetId));
+      this.relics.some(({ team }) => team === relicTeamOf(targetId)) ||
+      this.#switchOf(targetId) !== undefined;
     if (!bundle && !this.#participants.has(targetId)) {
       return false;
     }
@@ -6089,6 +6112,13 @@ export class MatchSimulation {
     record.interact = undefined;
     if (approach === "arrived" && ghost !== undefined) {
       this.#toggleGhost(record, ghost);
+    } else if (approach === "arrived" && switchIdOf(interact.targetId) !== undefined) {
+      this.#switchArrivals.push({
+        kind: "interact",
+        playerId: record.id,
+        team: record.combatant.team,
+        targetId: interact.targetId,
+      });
     } else if (approach === "arrived") {
       // One bundle at a time: the ashes fall before a flag or relic is taken (#1434).
       this.#dropAshes(record);
@@ -6114,6 +6144,9 @@ export class MatchSimulation {
         ? undefined
         : "invalid-target-dead";
     }
+    if (switchIdOf(targetId) !== undefined) {
+      return this.#switchOf(targetId) === undefined ? "no-target" : undefined;
+    }
     if (relicTeamOf(targetId) !== undefined) {
       return this.#relicField === undefined || this.#relicsState === undefined
         ? "no-target"
@@ -6133,6 +6166,12 @@ export class MatchSimulation {
       return ghost === undefined || ghost.combatant.dead
         ? undefined
         : { position: ghost.position, layer: ghost.layer, floors: ghost.floors };
+    }
+    if (switchIdOf(targetId) !== undefined) {
+      const lever = this.#switchOf(targetId);
+      return lever === undefined
+        ? undefined
+        : { position: lever.position, layer: lever.layer, floors: floorOf(lever.layer) };
     }
     let point: CarriedPoint | undefined;
     if (relicTeamOf(targetId) !== undefined) {
@@ -6154,6 +6193,39 @@ export class MatchSimulation {
         ? { position: carrier.position, layer: carrier.layer }
         : undefined;
     });
+  }
+
+  /** The switch `targetId` names (#3025), or `undefined` if the map has none by that id. */
+  #switchOf(targetId: string): Switch | undefined {
+    const id = switchIdOf(targetId);
+    return id === undefined ? undefined : this.#switches.find((lever) => lever.id === id);
+  }
+
+  /**
+   * The step's switch flips (#3025), in arrival order, of those still
+   * alive: each lever that moves toggles its gates. Returns how many
+   * times each gate was toggled, by index.
+   */
+  #flipSwitches(): Map<number, number> {
+    const arrivals = this.#livingArrivals(this.#switchArrivals);
+    this.#switchArrivals = [];
+    const toggles = new Map<number, number>();
+    for (const arrival of arrivals) {
+      const at = this.#switches.findIndex((lever) => lever.id === switchIdOf(arrival.targetId));
+      const lever = this.#switches[at];
+      if (lever === undefined) {
+        continue;
+      }
+      const next = flipSwitch(lever, this.#elapsedSeconds);
+      if (next === lever) {
+        continue;
+      }
+      this.#switches[at] = next;
+      for (const target of next.targets) {
+        toggles.set(target, (toggles.get(target) ?? 0) + 1);
+      }
+    }
+    return toggles;
   }
 
   /** The arrivals of those still alive: one who arrived and was killed later in the step takes nothing. */
@@ -6589,13 +6661,16 @@ export class MatchSimulation {
 
   /**
    * The step's gates (#2691), once every death is in, so a player killed
-   * this tick holds no plate. One that closes stops the shots crossing
-   * it and moves anybody in its way to the nearest ground clear of it.
+   * this tick holds no plate and flips no switch (#3025). One that closes
+   * stops the shots crossing it and moves anybody in its way to the
+   * nearest ground clear of it.
    */
   #advanceGates(dt: number): void {
     if (this.#gates.length === 0 || this.phase !== "active") {
+      this.#switchArrivals = [];
       return;
     }
+    const toggles = this.#flipSwitches();
     let moved = false;
     const closing: Gate[] = [];
     for (const [at, gate] of this.#gates.entries()) {
@@ -6605,7 +6680,9 @@ export class MatchSimulation {
           !record.combatant.dead &&
           holdsPlate(gate, record.combatant.team, record.position),
       );
-      const next = stepGate(gate, held, dt);
+      // Two levers flipped in one step on the same gate leave it as it was.
+      const flipped = (toggles.get(at) ?? 0) % 2 === 1;
+      const next = stepGate(gate, held, flipped, dt);
       this.#gates[at] = next;
       if (next.open !== gate.open) {
         moved = true;

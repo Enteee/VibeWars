@@ -43,6 +43,7 @@ Aceste taste sunt fixe:
   nou, rapid, pe același inamic ca să-l ataci.
 - **Clic dreapta** pe un steag sau pe suportul de steag, într-o Bătălie de bresle sau pe Barrow Field, ca să-l
   țintești; **Space** te duce acolo și ridică sau plantează steagul.
+- **Click dreapta** pe o manetă o ia ca țintă; **Space** merge până la ea și o trage, deschizând sau închizând porțile pe care le acționează.
 - **Clic pe rotiță** pe un inamic ca să-l anunți echipei tale: tasta lor **T** îl țintește.
   Pe sol sau pe un aliat, semnalează acel loc cu un ping. Sau dă clic pe bara de
   țintă de sus ca să anunți inamicul pe care l-ai țintit.

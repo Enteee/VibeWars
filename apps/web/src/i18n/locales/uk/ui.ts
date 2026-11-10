@@ -610,6 +610,7 @@ export default {
   "hud.stormBeacon": "Грозовий маяк",
   "hud.stormBeaconOurs": "Грозовий маяк: у вашої команди",
   "hud.stormBeaconTheirs": "Грозовий маяк: у ворога",
+  "hud.switch": "Важіль",
   "hud.targetDead": "мертвий",
   "hud.targetEffects": "ефекти цілі",
   "hud.versus": "{ours} проти {theirs}",
