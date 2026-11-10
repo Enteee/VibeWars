@@ -252,9 +252,20 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
    */
   const waterAndFloor = async (x: number, y: number, off: number): Promise<[number, number]> => {
     await walkTo(page, canvas, { x, y });
+    // A click off the canvas releases the arena and walks nowhere.
+    await expect(page.locator(".training")).toHaveClass(/is-armed/);
     await page.mouse.move(1, 1);
     return [await brightness({ x, y: y + off }), await brightness({ x, y: y - off })];
   };
+  // The stage shows less than the map's width: from the spawn, walk east in hops.
+  for (const hop of [
+    { x: 350, y: 650 },
+    { x: 600, y: 680 },
+    { x: 850, y: 650 },
+    { x: 940, y: 420 },
+  ]) {
+    await walkTo(page, canvas, hop);
+  }
   // Map coordinates from training-heights/map.json: the pond's middle, the east puddle's.
   const [pond, northFloor] = await waterAndFloor(930, 330, -130);
   expect(pond).toBeLessThan(northFloor);
