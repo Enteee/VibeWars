@@ -8,6 +8,7 @@ import {
   TWO_TEAM_MODES,
   UPHILL,
   ZONE_KINDS,
+  ZONE_RULES,
   type MatchMode,
   type Segment,
 } from "@vibewars/game-core";
@@ -110,6 +111,13 @@ const waterSchema = z.object({
 
 /** The most effect zones on a map (#3024). */
 export const MAX_ZONES = 32;
+
+/**
+ * The most corners all of a map's harmful zones have together, a
+ * rectangle's four included (#3026): each is a node of the bots' walk
+ * graph, whose build grows about with the cube of its nodes.
+ */
+export const MAX_HARMFUL_ZONE_POINTS = 64;
 
 /**
  * An effect zone on one layer (ADR-0053, #3024): ground that puts its
@@ -934,6 +942,16 @@ export const mapDataSchema = z
       });
     });
 
+    const harmfulPoints = (map.zones ?? [])
+      .filter((zone) => ZONE_RULES[zone.kind].harmful)
+      .reduce((sum, zone) => sum + shapeVertices(zone.area).length, 0);
+    if (harmfulPoints > MAX_HARMFUL_ZONE_POINTS) {
+      context.addIssue({
+        code: "custom",
+        path: ["zones"],
+        message: `harmful zones have ${String(harmfulPoints)} corners, more than ${String(MAX_HARMFUL_ZONE_POINTS)}`,
+      });
+    }
     const zoneIds = new Set<string>();
     (map.zones ?? []).forEach((zone, index) => {
       layerInRange(zone.layer, ["zones", index, "layer"]);

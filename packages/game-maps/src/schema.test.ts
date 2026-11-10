@@ -11,6 +11,7 @@ import {
   MAX_LIGHTS,
   MAX_WATER_BODIES,
   MAX_WATER_POINTS,
+  MAX_HARMFUL_ZONE_POINTS,
   MAX_ZONES,
   MapValidationError,
   mapDataSchema,
@@ -1450,5 +1451,26 @@ describe("effect zones (ADR-0053, #3024)", () => {
   it("holds at most MAX_ZONES", () => {
     const many = Array.from({ length: MAX_ZONES + 1 }, (_, at) => strip({ id: `z-${String(at)}` }));
     refuses(many, /zones: /);
+  });
+
+  it("holds the harmful zones' corners at MAX_HARMFUL_ZONE_POINTS, a rectangle's four counted", () => {
+    const rects = (count: number) =>
+      Array.from({ length: count }, (_, at) =>
+        strip({
+          id: `z-${String(at)}`,
+          area: {
+            kind: "rect",
+            x: 10 + (at % 8) * 70,
+            y: 10 + Math.floor(at / 8) * 70,
+            width: 20,
+            height: 20,
+          },
+        }),
+      );
+    accepts(rects(MAX_HARMFUL_ZONE_POINTS / 4));
+    refuses(
+      rects(MAX_HARMFUL_ZONE_POINTS / 4 + 1),
+      new RegExp(`zones: harmful zones have ${String(MAX_HARMFUL_ZONE_POINTS + 4)} corners`),
+    );
   });
 });
