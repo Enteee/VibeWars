@@ -6,7 +6,6 @@ import {
   type TrainingScenario,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import type { MapDescriptor } from "@vibewars/game-protocol";
 import { NO_GUILD, type MatchSnapshot, type SkillSlot } from "@vibewars/game-session";
 
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
@@ -39,7 +38,7 @@ import { skillSlotForKeyDown } from "../input/skill-keys.js";
 import { weaponSetIntent } from "../input/weapon-set-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
 import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-target.js";
-import { gateWalls, toArenaSnapshot, toRenderableWall } from "../match-view.js";
+import { gateWalls, toArenaSnapshot, toRenderableWall, type GatedMap } from "../match-view.js";
 import { MENU_DEPTH } from "../music/fixed-tracks.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
@@ -199,7 +198,7 @@ interface Session {
   readonly connection: LocalMatchConnection;
   readonly names: ReadonlyMap<string, string>;
   /** Its gates and switches (#3025), as a match's map has them. */
-  readonly gated: Pick<MapDescriptor, "gates" | "switches">;
+  readonly gated: GatedMap;
   /** The walls, and every closed gate's, as the gates stand (#3025). */
   readonly blocking: ReturnType<typeof gateWalls>;
   readonly structure: MapStructure;
@@ -674,9 +673,10 @@ export function createTrainingPanel(): TrainingPanel {
       scenario,
       connection,
       names: setup.names,
-      gated: setup.map,
+      gated: { ...setup.map, gateLayers: setup.structure.gateLayers },
       blocking: gateWalls(
         setup.map.gates,
+        setup.structure.gateLayers,
         setup.map.walls.map((wall, at) =>
           toRenderableWall(wall, setup.structure.wallLayers[at] ?? 0),
         ),

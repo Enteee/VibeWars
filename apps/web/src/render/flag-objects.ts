@@ -197,11 +197,14 @@ export interface RenderableGate {
   readonly open: boolean;
   /** The wall it opens: an open gate leaves its outline on the ground. */
   readonly wall: RenderableShape;
+  /** The layer its wall stands on (ADR-0051): its ghost lies on that layer's ground. */
+  readonly layer: number;
 }
 
 /** Every gate, from your side's view; `[]` on a map without them. */
 export function renderableGates(
   gates: readonly GateDescriptor[],
+  layers: readonly number[],
   open: readonly boolean[],
   selfTeam: number | undefined,
 ): RenderableGate[] {
@@ -215,6 +218,7 @@ export function renderableGates(
         : undefined,
     open: open[at] === true,
     wall,
+    layer: layers[at] ?? 0,
   }));
 }
 

@@ -274,9 +274,10 @@ so a player sees where it will close. Shape differs, not only colour.
 
 ![door](visual-style/door.svg)
 
-Recipe (now): `drawGate` strokes an open gate's wall as a faint outline
-(`WALL_STROKE`, 50 %), which is the ghost. **Target**: the amber door body
-(`#c98a3a`) and its knob line, replacing the plain wall in #3053.
+Recipe (#3061): `gate-mark.ts` `GATE_ART`. Shut, the wall pass draws the
+door as a wall box in `GATE_DOOR_LOOK` (body `#c98a3a`, a dark knob line
+across a rect), lit by `litStructurePalette` like a wall. Open, `drawGate`
+lays a dashed amber ghost, 18 % fill, on its layer's ground.
 
 ### Lever, up and down
 

@@ -48,6 +48,7 @@ import {
   type Rect,
   type BeaconBolt,
   type SwingFlash,
+  isDoor,
 } from "./arena-snapshot.js";
 import {
   CHARACTER_BANDS,
@@ -165,6 +166,7 @@ import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
 import { SWITCH_MARK_ART, switchMarkKey } from "./switch-mark.js";
+import { doorPalette, GATE_ART, type GatePainter } from "./gate-mark.js";
 import {
   BODY_LIGHT_FLOOR,
   bodyTintOf,
@@ -750,7 +752,7 @@ export class ArenaScene extends Phaser.Scene {
     g.fillRect(altar.x - 9, altar.y - 9, 18, 18);
   }
 
-  /** A gate's plate (#2691), lit while held; an open gate's wall is only its outline. */
+  /** A gate's plate (#2691), lit while held; an open gate's ghost on its layer's ground (#3061). */
   private drawGate(g: Phaser.GameObjects.Graphics, gate: RenderableGate): void {
     const plate = gate.plate;
     if (plate !== undefined) {
@@ -761,19 +763,39 @@ export class ArenaScene extends Phaser.Scene {
       g.lineStyle(2, colour, 0.9);
       g.strokeCircle(x, y, GATE_PLATE_REACH_UNITS);
     }
+    // A shut gate is a wall of the map, and draws with them (#3061).
     if (gate.open) {
-      g.lineStyle(2, WALL_STROKE, 0.5);
-      if (gate.wall.kind === "rect") {
-        g.strokeRect(gate.wall.x, gate.wall.y, gate.wall.width, gate.wall.height);
-      } else {
-        g.beginPath();
-        for (const point of gate.wall.points) {
-          g.lineTo(point.x, point.y);
-        }
-        g.closePath();
-        g.strokePath();
-      }
+      const palette = arenaPalette(this.snapshot.structure.layerCount);
+      g.save();
+      g.translateCanvas(0, -elevationOf(gate.layer, this.snapshot.structure.ground));
+      GATE_ART.open(this.gatePainter(g), gate.wall, {
+        height: 0,
+        line: 1 / (this.view?.zoom ?? 1),
+        palette: doorPalette(palette),
+      });
+      g.restore();
     }
+  }
+
+  /** `g` as a door draws on it. */
+  private gatePainter(g: Phaser.GameObjects.Graphics): GatePainter {
+    return {
+      save: () => g.save(),
+      restore: () => g.restore(),
+      translateCanvas: (x, y) => g.translateCanvas(x, y),
+      fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
+      lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
+      fillShape: (shape) => {
+        this.fillShape(g, shape);
+      },
+      strokeShape: (shape) => {
+        this.strokeShape(g, shape);
+      },
+      fillColumn: (shape, height, colour) => {
+        this.drawColumn(g, shape, 0, height, colour);
+      },
+      lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
+    };
   }
 
   /** A switch (#3025): its mark on its layer, the lever raised or thrown. */
@@ -2002,6 +2024,18 @@ export class ArenaScene extends Phaser.Scene {
           ? { kind: "wall", layer: wall.layer }
           : { kind: "support", deckLayer: held.layer },
       );
+      if (isDoor(wall)) {
+        const flat = next.structure.layerCount === 1;
+        g.save();
+        g.translateCanvas(0, -elevationOf(wall.layer, ground));
+        GATE_ART.shut(this.gatePainter(g), wall, {
+          height: flat ? 0 : WALL_HEIGHT,
+          line,
+          palette: litStructurePalette(doorPalette(palette), next.lighting, wall, wall.layer),
+        });
+        g.restore();
+        continue;
+      }
       const lit = litStructurePalette(palette, next.lighting, wall, wall.layer);
       if (next.structure.layerCount === 1) {
         this.drawFlatWall(g, wall, line, lit);
