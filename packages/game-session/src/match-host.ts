@@ -23,6 +23,7 @@ import {
   type PlayerBuild,
   type ProfessionId,
   type GateField,
+  type MatchLayers,
   type Segment,
   type FlagField,
   type RelicField,
@@ -136,6 +137,8 @@ export interface HostMap {
   /** The mode its matches play (#476): the caller builds `matchRules` from it. */
   readonly mode: MatchMode;
   readonly walls: readonly Segment[];
+  /** Its layers (ADR-0051, #3017): each one's walls and deep water, its decks, pits and ramps. */
+  readonly layers: MatchLayers;
   /** Its gates (#2691), in the descriptor's order. */
   readonly gates: readonly GateField[];
   readonly bounds: { readonly width: number; readonly height: number };
@@ -336,6 +339,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     walls: map.walls,
     gates: map.gates,
     bounds: map.bounds,
+    layers: map.layers,
     shrines: map.shrines,
     guildLords: map.guildLords,
     flagField: map.flagField,

@@ -5,7 +5,9 @@ import {
   MatchSimulation,
   NO_RANKS,
   StatusSet,
+  segment,
   type ActiveStatus,
+  type MatchLayers,
   type Participant,
 } from "@vibewars/game-core";
 import {
@@ -31,6 +33,7 @@ import type { MatchRecord } from "./match-record.js";
 import {
   ARENA,
   answerChallenges,
+  flatLayers,
   hello,
   helloAs,
   playerIn,
@@ -799,5 +802,44 @@ describe("a lobby's bots (#1193)", () => {
       await match.step(0.1);
     }
     expect(targetOf()).toBe(warrior);
+  });
+});
+
+describe("a map's layers (#3017)", () => {
+  /** A strip from top to bottom at x 900..920, east of team 1's spawn at x 700. */
+  const STRIP = [
+    segment({ x: 900, y: 0 }, { x: 920, y: 0 }),
+    segment({ x: 920, y: 0 }, { x: 920, y: 1200 }),
+    segment({ x: 920, y: 1200 }, { x: 900, y: 1200 }),
+    segment({ x: 900, y: 1200 }, { x: 900, y: 0 }),
+  ];
+
+  /** How far east a team 1 player gets walking east for 2 s. */
+  const walkEast = async (layers: MatchLayers): Promise<number> => {
+    const match = startMatch({
+      map: { ...ARENA, walls: layers.walls.flat(), layers },
+    });
+    await match.joinLocal();
+    const { connection: remote } = await match.join();
+    await match.step(0.05);
+    remote.sendIntent({ kind: "move", dirX: 1, dirY: 0 });
+    await match.step(2);
+    return self(remote)?.x ?? 0;
+  };
+
+  it("stops a ground player at deep water", async () => {
+    const x = await walkEast({ ...flatLayers(ARENA.walls), deepWater: [STRIP] });
+    expect(x).toBeLessThan(900);
+    expect(x).toBeGreaterThan(850);
+  });
+
+  it("walks a ground player under a wall on the layer above", async () => {
+    const x = await walkEast({
+      ...flatLayers(ARENA.walls),
+      count: 2,
+      walls: [ARENA.walls, STRIP],
+      deepWater: [[], []],
+    });
+    expect(x).toBeGreaterThan(920);
   });
 });
