@@ -100,7 +100,7 @@ cell(
     ventBase(0.8) +
     `<g fill="#ff5a1f" opacity=".85">${flame(125, 100, 26, 9)}</g><g fill="#ffd23d">${flame(125, 100, 14, 5)}</g>` +
     sparks(125, 80, 9, 3) +
-    ring(125, 104, 56, 24, "#ffd23d", 3, 0.9),
+    ring(125, 104, 56, 24, "#ffb03d", 3, 0.9),
 );
 cell(
   "fire vent: active (column of flame)",
@@ -109,7 +109,7 @@ cell(
     ventBase(1) +
     `<g fill="#ff3a0a" opacity=".9">${flame(125, 100, 96, 22)}</g><g fill="#ff9a20">${flame(125, 100, 78, 15)}</g><g fill="#ffe27a">${flame(125, 100, 52, 8)}</g><g fill="#ff5a1f" opacity=".8">${flame(100, 98, 40, 7)}${flame(150, 98, 44, 7)}</g>` +
     sparks(125, 40, 16, 8) +
-    ring(125, 104, 56, 24, "#ffd23d", 3),
+    ring(125, 104, 56, 24, "#ffb03d", 3),
 );
 
 // ---- gas spout: mossy fissure
@@ -133,12 +133,12 @@ cell(
   "gas spout: active (green-yellow burst)",
   null,
   gasBase +
-    puff(125, 96, 24, "#9ad62a", 0.7) +
-    puff(100, 78, 26, "#a8d84a", 0.6) +
-    puff(150, 74, 28, "#b8e04a", 0.55) +
-    puff(125, 56, 30, "#c8f05a", 0.5) +
-    puff(95, 48, 20, "#d8f58a", 0.4) +
-    puff(158, 44, 22, "#d8f58a", 0.4) +
+    puff(125, 98, 20, "#9ad62a", 0.7) +
+    puff(106, 84, 20, "#a8d84a", 0.6) +
+    puff(144, 84, 20, "#b8e04a", 0.55) +
+    puff(125, 72, 22, "#c8f05a", 0.5) +
+    puff(112, 60, 14, "#d8f58a", 0.4) +
+    puff(140, 60, 14, "#d8f58a", 0.4) +
     `<g fill="#e6ff6a" opacity=".8"><circle cx="110" cy="64" r="3"/><circle cx="140" cy="86" r="2.5"/><circle cx="128" cy="40" r="2.5"/></g>` +
     ring(125, 106, 56, 22, "#e6ff6a", 3),
 );
@@ -164,10 +164,10 @@ cell(
   `<ellipse cx="128" cy="108" rx="70" ry="28" fill="#8a8378" opacity=".3"/>` +
     stones +
     `<g opacity=".85">${rock(108, 106, 24, 51)}${rock(152, 98, 19, 52)}${rock(128, 126, 15, 53)}${rock(172, 116, 12, 54)}</g>` +
-    puff(90, 100, 18, "#c9c0b0", 0.5) +
-    puff(172, 96, 20, "#c9c0b0", 0.45) +
-    puff(130, 82, 22, "#d8d0c0", 0.4) +
-    puff(126, 128, 16, "#c9c0b0", 0.45) +
+    puff(96, 106, 14, "#c9c0b0", 0.5) +
+    puff(164, 104, 15, "#c9c0b0", 0.45) +
+    puff(128, 92, 18, "#d8d0c0", 0.4) +
+    puff(126, 122, 13, "#c9c0b0", 0.45) +
     ring(128, 108, 70, 28, "#d8d0c0", 3),
 );
 
@@ -194,8 +194,8 @@ const leverBase = `
   <circle cx="125" cy="106" r="6" fill="#3a3834" stroke="#14120f" stroke-width="1.5"/>`;
 /** @type {(dx: number, up: boolean) => string} */
 const lever = (dx, up) =>
-  `<path d="M125,106 L${125 + dx},${up ? 58 : 100}" stroke="#14120f" stroke-width="9" stroke-linecap="round"/><path d="M125,106 L${125 + dx},${up ? 58 : 100}" stroke="#8a5a2a" stroke-width="6" stroke-linecap="round"/><path d="M124,105 L${124 + dx},${up ? 60 : 99}" stroke="#c28a4a" stroke-width="1.6" stroke-linecap="round"/><circle cx="${125 + dx}" cy="${up ? 56 : 100}" r="8" fill="#${up ? "ffd23d" : "6a6560"}" stroke="#14120f" stroke-width="2"/>`;
-cell("lever: up (on)", null, glow(125, 66, 38, "#ffd23d", 0.25) + leverBase + lever(-20, true));
+  `<path d="M125,106 L${125 + dx},${up ? 58 : 100}" stroke="#14120f" stroke-width="9" stroke-linecap="round"/><path d="M125,106 L${125 + dx},${up ? 58 : 100}" stroke="#8a5a2a" stroke-width="6" stroke-linecap="round"/><path d="M124,105 L${124 + dx},${up ? 60 : 99}" stroke="#c28a4a" stroke-width="1.6" stroke-linecap="round"/><circle cx="${125 + dx}" cy="${up ? 56 : 100}" r="8" fill="#${up ? "e8c27a" : "6a6560"}" stroke="#14120f" stroke-width="2"/>`;
+cell("lever: up (on)", null, glow(125, 66, 38, "#e8c27a", 0.25) + leverBase + lever(-20, true));
 cell("lever: down (off)", null, leverBase + lever(26, false));
 // ---- door
 const door = (open) => `
@@ -215,7 +215,7 @@ const plate = (down) => `
   ${down ? "" : `<path d="M86,106 L86,114 Q125,132 164,114 L164,106Z" fill="#4a463f" stroke="#2a2723" stroke-width="1.5"/>`}
   <ellipse cx="125" cy="${down ? 110 : 104}" rx="38" ry="14" fill="${down ? "#5e584f" : "#827b70"}" stroke="#2a2723" stroke-width="1.5"/>
   <path d="M90,${down ? 108 : 102} Q105,${down ? 99 : 93} 125,${down ? 97 : 91}" fill="none" stroke="#c4bdb0" stroke-width="2"/>
-  <ellipse cx="125" cy="${down ? 110 : 104}" rx="16" ry="6" fill="none" stroke="${down ? "#ffd23d" : "#6a6560"}" stroke-width="2.5"/>`;
+  <ellipse cx="125" cy="${down ? 110 : 104}" rx="16" ry="6" fill="none" stroke="${down ? "#e8c27a" : "#6a6560"}" stroke-width="2.5"/>`;
 cell("pressure plate: up", null, plate(false));
 cell("pressure plate: held (sunk)", null, plate(true));
 

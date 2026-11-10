@@ -276,19 +276,19 @@ so a player sees where it will close. Shape differs, not only colour.
 
 Recipe (now): `drawGate` strokes an open gate's wall as a faint outline
 (`WALL_STROKE`, 50 %), which is the ghost. **Target**: the amber door body
-(`#c98a3a`) and its knob line, replacing the plain wall in #3053.
+(oak `#7a4e26` with two iron bands `#2a2a30` and a brass knob; open, the leaves swing flat against the jambs), replacing the plain wall in #3053. Study: `3053-hazards.png`.
 
 ### Lever, up and down
 
 The handle **stands** when up and **lies** when down, so the state reads by
-shape; a pip on the base is dim then bright. Handle `#e8c27a`, base `#4b5a70`.
+shape; the knob is brass `#e8c27a` when up and dull grey `#6a6560` when down. Wooden arm `#8a5a2a`, stone base `#827b70`.
 
 ![lever](visual-style/lever.svg)
 
 Recipe (now): `switch-mark.ts` draws a base and a handle, upright when up and
 thrown to the right when down, in `SWITCH_MARK_LOOK` (base `0x3a3a40`, handle
-`0x8a6a42`, knob `0xe8dcc0`). **Target**: the colours shown here (handle
-`#e8c27a`, base `#4b5a70`) and the pip replace those in #3053.
+`0x8a6a42`, knob `0xe8dcc0`). **Target**: the colours shown here (wooden
+arm `#8a5a2a`, stone base `#827b70`, brass or grey knob) replace those in #3053.
 
 Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
 `node scripts/assets/visual-style.mjs`.
