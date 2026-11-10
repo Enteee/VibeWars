@@ -50,7 +50,7 @@ a harmless ground may never use danger orange or acid green. A map's rock,
 wall and ground stay desaturated, so every signal colour is the loudest thing
 on screen. Shallow water is `#8fb8d6` at 30 %, paler and greyer than a spring.
 
-Colour never decides alone: danger is also **warm and pulsing**, help is
+Colour never decides alone: danger is also **warm** (damage; poison and drain have their own hues, §6), help is
 **cool and still**, and each zone kind should have its own outline pattern (target, see §6).
 
 ## 2. Light
@@ -121,7 +121,8 @@ shaded 40 %, lit edge `#a9bbd0`, stroke `#3b4759`. **Target**: the noise fill
   zoom 1, coarser reads as a blotch. Keep it at 50 to 80 % opacity over the
   base tone, so the base still names the material.
 - **Line weights**, in world units at zoom 1 (`line` = one CSS px): hairline
-  1, outline 2, edge 3, shore of deep water 4.
+  1, outline 2, zone edge 2 (`ZONE_EDGE_WIDTH`), shore of deep water 3
+  (`WATER_LOOK.deep.shoreWidth`). Heavier edges (3 and 4) are target.
 - **Small things stay legible at 16 px.** A prop under 16 px across is a
   mark, not a drawing: one shape, one colour, one outline.
 
@@ -162,8 +163,11 @@ Every rule below can be checked from one screenshot.
 
 1. **A zone's edge is always visible**: a hard rim, 2 lines wide, over
    water, fog and light.
-2. **Danger is warm and pulsing; help is cool and calm.** A harmless thing
-   may not be warm; a harmful one may not be cool.
+2. **Signal class sets the hue.** Damage is warm (fire, lava, strike); poison
+   is acid green or olive (foul and tainted water); drain is violet (draining
+   spire); rockfall is grey. Help is cool blue or green. A harmful thing never
+   uses the help blue or green; a harmless thing may not be warm. Pulsing is
+   target: vents, gas spouts and rockfall do not pulse today.
 3. **Art never hides a body, a projectile or a telegraph.** Decoration sits
    under bodies, and tall props are drawn beside, not on, a lane.
 4. **Zone tint stays above water and light** in render order.
@@ -300,7 +304,7 @@ A reviewer or QA ticks these on a map or world-art PR, from a screenshot.
 - [ ] 16 lights or fewer; fire is warm, magic is cold.
 - [ ] Every height step reads: lit top, lip, darker face, shadow or pit.
 - [ ] Every zone has a visible edge, over water and light.
-- [ ] Danger is warm and pulsing, help is cool and calm.
+- [ ] Hue follows signal class (§6 rule 2): harmful never wears help blue or green.
 - [ ] Hazards telegraph by edge width within 0.3 s.
 - [ ] Nothing hides a body, projectile or telegraph.
 - [ ] The screenshot still reads in grey and at 16 px.
