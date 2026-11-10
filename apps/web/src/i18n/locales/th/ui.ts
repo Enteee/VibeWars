@@ -241,6 +241,7 @@ export default {
   "combat.sourceShrine": "ศาลเจ้า",
   "combat.sourceSkill": "สกิล",
   "combat.sourceWeapon": "อาวุธ",
+  "combat.sourceZone": "อันตราย",
   "combat.spellFailed": "{skill} ของ {target} ล้มเหลว",
   "combat.statusApplied": "{target} ได้รับ {status} ({seconds} วิ)",
   "combat.statusAppliedMaintained": "{target} ได้รับ {status} (คงไว้)",

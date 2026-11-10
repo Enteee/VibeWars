@@ -738,6 +738,18 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
       { ...target("in-tunnel", "In the tunnel (60 armor)", vec2(840, 585), 60), layer: 0 },
     ],
   },
+  {
+    id: "wilds",
+    label: "Wilds",
+    teaches:
+      "That the ground itself can hurt: scorched ground burns whoever stands in it, and the burn runs on after you step out, so go round it.",
+    mapId: "training-wilds",
+    exercises: ["conditions", "movement"],
+    knobs: [],
+    // In the middle of the scorched strip across the lane (ADR-0053, #3024),
+    // so the burn shows on someone else first.
+    dummies: [target("in-embers", "In the embers (60 armor)", vec2(600, 400), 60)],
+  },
 ];
 
 export function getTrainingScenario(id: string): TrainingScenario | undefined {

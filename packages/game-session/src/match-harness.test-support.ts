@@ -82,6 +82,7 @@ export const ARENA: HostMap = {
   mode: "annihilation",
   walls: ARENA_WALLS,
   layers: flatLayers(ARENA_WALLS),
+  zones: [],
   bounds: { width: 2000, height: 1200 },
   spawns: [
     { team: 0, position: { x: 400, y: 500 } },

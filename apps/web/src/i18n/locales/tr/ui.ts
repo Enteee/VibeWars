@@ -268,6 +268,7 @@ export default {
   "combat.sourceShrine": "Tapınak",
   "combat.sourceSkill": "bir beceri",
   "combat.sourceWeapon": "bir silah",
+  "combat.sourceZone": "Tehlike",
   "combat.spellFailed": "{target}: {skill} başarısız",
   "combat.statusApplied": "{target}, {status} kazanıyor ({seconds} sn)",
   "combat.statusAppliedMaintained": "{target}, {status} kazanıyor (sürdürülüyor)",

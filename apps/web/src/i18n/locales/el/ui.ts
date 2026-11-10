@@ -276,6 +276,7 @@ export default {
   "combat.sourceShrine": "Το ιερό",
   "combat.sourceSkill": "ικανότητα",
   "combat.sourceWeapon": "όπλο",
+  "combat.sourceZone": "Κίνδυνος",
   "combat.spellFailed": "{target}: αποτυχία {skill}",
   "combat.statusApplied": "{target} αποκτά {status} ({seconds} δ)",
   "combat.statusAppliedMaintained": "{target} αποκτά {status} (συντηρείται)",

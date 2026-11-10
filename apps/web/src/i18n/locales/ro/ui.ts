@@ -289,6 +289,7 @@ export default {
   "combat.sourceShrine": "Sanctuarul",
   "combat.sourceSkill": "o abilitate",
   "combat.sourceWeapon": "o armă",
+  "combat.sourceZone": "Pericol",
   "combat.spellFailed": "{skill} eșuează la {target}",
   "combat.statusApplied": "{target} primește {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} primește {status} (menținut)",

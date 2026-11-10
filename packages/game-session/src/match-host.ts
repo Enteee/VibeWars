@@ -24,6 +24,7 @@ import {
   type ProfessionId,
   type GateField,
   type MatchLayers,
+  type MatchZone,
   type Segment,
   type FlagField,
   type RelicField,
@@ -139,6 +140,8 @@ export interface HostMap {
   readonly walls: readonly Segment[];
   /** Its layers (ADR-0051, #3017): each one's walls and deep water, its decks, pits and ramps. */
   readonly layers: MatchLayers;
+  /** Its effect zones (ADR-0053, #3024), in its order. */
+  readonly zones: readonly MatchZone[];
   /** Its gates (#2691), in the descriptor's order. */
   readonly gates: readonly GateField[];
   readonly bounds: { readonly width: number; readonly height: number };
@@ -340,6 +343,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     gates: map.gates,
     bounds: map.bounds,
     layers: map.layers,
+    zones: map.zones,
     shrines: map.shrines,
     guildLords: map.guildLords,
     flagField: map.flagField,

@@ -269,6 +269,7 @@ export default {
   "combat.sourceShrine": "Het schrijn",
   "combat.sourceSkill": "een skill",
   "combat.sourceWeapon": "een wapen",
+  "combat.sourceZone": "Gevaar",
   "combat.spellFailed": "{skill} van {target} mislukt",
   "combat.statusApplied": "{target} krijgt {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} krijgt {status} (onderhouden)",

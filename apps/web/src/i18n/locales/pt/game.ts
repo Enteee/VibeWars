@@ -2147,6 +2147,7 @@ export default {
     "training-hall": "Salão de Treino",
     "training-pillars": "Pilares de Treino",
     "training-heights": "Alturas de treino",
+    "training-wilds": "Ermos de treino",
     "training-field": "Campo de Treino",
   },
 } satisfies GameNames;

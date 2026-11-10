@@ -184,6 +184,7 @@ describe("layerSurfaces", () => {
     tunnels: [],
     transitions: [ramp(0, 1, [300, 250, 140, 200], "e"), ramp(1, 2, [540, 150, 120, 120], "n")],
     water: [],
+    zones: [],
   };
 
   it("is a layer's decks and the ramps up to it", () => {
@@ -314,6 +315,7 @@ describe("LightingPass", () => {
     decks: [],
     transitions: [],
     water: [],
+    zones: [],
   };
   const SUNLIT: MapLighting = {
     ...BASE,

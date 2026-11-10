@@ -1,5 +1,5 @@
 import { allWallSegments, wallToSegments } from "@vibewars/game-maps/geometry";
-import { matchLayers } from "@vibewars/game-maps/layers";
+import { matchLayers, matchZones } from "@vibewars/game-maps/layers";
 import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
@@ -357,12 +357,13 @@ export interface LoadedStructure {
   readonly wallLayers: readonly number[];
 }
 
-/** What the renderer needs of a map's layers and its water, from its file. */
+/** What the renderer needs of a map's layers, its water and its zones, from its file. */
 export function structureOf(map: MapData): LoadedStructure {
   const water = (map.water ?? []).map(({ layer, depth, area }) => ({ layer, depth, area }));
+  const zones = (map.zones ?? []).map(({ kind, layer, area }) => ({ kind, layer, area }));
   return {
     structure:
-      map.layers === 1 && map.lighting === undefined && water.length === 0
+      map.layers === 1 && map.lighting === undefined && water.length === 0 && zones.length === 0
         ? FLAT_STRUCTURE
         : {
             layerCount: map.layers,
@@ -372,6 +373,7 @@ export function structureOf(map: MapData): LoadedStructure {
             tunnels: map.tunnels,
             transitions: map.transitions,
             water,
+            zones,
             ...(map.lighting === undefined ? {} : { lighting: map.lighting }),
           },
     wallLayers: map.walls.map((wall) => wall.layer),
@@ -590,6 +592,7 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
     mode: map.mode,
     walls: allWallSegments(map.walls),
     layers: matchLayers(map),
+    zones: matchZones(map),
     gates: map.gates.map((gate) => ({
       segments: wallToSegments(gate.wall),
       plate: gate.plate,

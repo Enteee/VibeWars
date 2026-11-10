@@ -238,6 +238,7 @@ export default {
   "combat.sourceShrine": "神殿",
   "combat.sourceSkill": "技能",
   "combat.sourceWeapon": "武器",
+  "combat.sourceZone": "危险区域",
   "combat.spellFailed": "{target} 的 {skill} 失败",
   "combat.statusApplied": "{target} 获得 {status}（{seconds} 秒）",
   "combat.statusAppliedMaintained": "{target} 获得 {status}（维持）",

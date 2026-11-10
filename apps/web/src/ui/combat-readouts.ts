@@ -3,6 +3,7 @@ import {
   MAINTAINED_STATUSES,
   chainRequirementText,
   getSkill,
+  isZoneSourceId,
   type CombatEvent,
   type CombatLogEntry,
   type SkillEffect,
@@ -165,7 +166,13 @@ function sourceOf(
   nameOf: (id: string) => string,
   isCreature: (id: string) => boolean,
 ): { readonly by: string; readonly attribute: string | undefined } {
-  const source = entry.sourceId === undefined ? undefined : nameOf(entry.sourceId);
+  // Burning ground is the map's, nobody's (ADR-0053): named as such, never by its id.
+  const source =
+    entry.sourceId === undefined
+      ? undefined
+      : isZoneSourceId(entry.sourceId)
+        ? t("combat.sourceZone")
+        : nameOf(entry.sourceId);
   const attribute =
     entry.cause === "attribute"
       ? entry.attributeId === undefined

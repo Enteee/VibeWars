@@ -205,6 +205,22 @@ describe("describeCombatEvent", () => {
     );
   });
 
+  it("names burning ground's tick as a hazard, never by its zone's id (ADR-0053)", () => {
+    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 14, critical: false };
+    const tick = entry([hurt], {
+      cause: "degeneration",
+      sourceId: "zone:lane-embers",
+      skillId: undefined,
+    });
+    expect(describeCombatEvent(tick, hurt, nameOf, isCreature)).toBe(
+      t("combat.hit", {
+        by: by(t("combat.sourceDegeneration"), t("combat.sourceZone")),
+        target: "Caster dummy",
+        amount: "14",
+      }),
+    );
+  });
+
   it("names a weapon swing for its weapon and attacker, and an unknown weapon plainly", () => {
     const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 18, critical: false };
     const swing = entry([event], { cause: "weapon", skillId: undefined, weaponId: "sword" });

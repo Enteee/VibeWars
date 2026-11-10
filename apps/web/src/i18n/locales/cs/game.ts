@@ -2147,6 +2147,7 @@ export default {
     "training-hall": "Výcviková síň",
     "training-pillars": "Výcvikové sloupy",
     "training-heights": "Výcvikové výšiny",
+    "training-wilds": "Výcviková divočina",
     "training-field": "Výcvikové pole",
   },
 } satisfies GameNames;

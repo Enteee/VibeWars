@@ -290,6 +290,7 @@ export default {
   "combat.sourceShrine": "Svetište",
   "combat.sourceSkill": "vještina",
   "combat.sourceWeapon": "oružje",
+  "combat.sourceZone": "Opasnost",
   "combat.spellFailed": "Vještina {skill} lika {target} ne uspijeva",
   "combat.statusApplied": "{target} dobiva {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} dobiva {status} (održavano)",

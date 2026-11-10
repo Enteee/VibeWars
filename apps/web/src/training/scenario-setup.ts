@@ -9,7 +9,7 @@ import {
   type TrainingScenario,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import { matchLayers } from "@vibewars/game-maps/layers";
+import { matchLayers, matchZones } from "@vibewars/game-maps/layers";
 import type { MapData } from "@vibewars/game-maps/schema";
 import type { MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
 import { structureOf, type LoadedStructure } from "../net/maps.js";
@@ -116,6 +116,7 @@ export function setupScenario(
     walls: allWallSegments(map.walls),
     bounds: { width: map.width, height: map.height },
     layers: matchLayers(map),
+    zones: matchZones(map),
     participants: [
       {
         id: SELF_ID,
