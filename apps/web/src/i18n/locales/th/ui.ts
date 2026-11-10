@@ -513,6 +513,7 @@ export default {
   "hud.stormBeacon": "ประภาคารพายุ",
   "hud.stormBeaconOurs": "ประภาคารพายุ: ทีมของคุณยึดครอง",
   "hud.stormBeaconTheirs": "ประภาคารพายุ: ศัตรูยึดครอง",
+  "hud.switch": "คันโยก",
   "hud.targetDead": "ตาย",
   "hud.targetEffects": "เอฟเฟกต์ของเป้าหมาย",
   "hud.versus": "{ours} : {theirs}",

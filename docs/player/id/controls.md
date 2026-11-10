@@ -42,6 +42,7 @@ Tombol-tombol ini tetap:
   lagi, dengan cepat, untuk menyerangnya.
 - **Klik kanan** bendera atau tiang bendera, di Perang Guild atau di Barrow Field, untuk menjadikannya
   target; **Space** berjalan ke sana lalu mengangkat bendera atau menancapkannya.
+- **Klik kanan** pada tuas untuk menargetkannya; **Space** berjalan ke sana dan menariknya, membuka atau menutup gerbang yang dikendalikannya.
 - **Klik roda** pada musuh untuk mengumumkannya ke timmu: tombol **T** mereka menargetkannya.
   Di tanah atau pada sekutu, klik roda memberi ping di titik itu. Atau klik bar target
   di atas untuk mengumumkan musuh yang sedang kamu targetkan.

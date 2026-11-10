@@ -7,7 +7,10 @@ import {
   STAND_RADIUS,
   flagObjectAtPoint,
   renderableCapturePoints,
-  renderableGatePlates,
+  renderableGates,
+  renderableSwitches,
+  SWITCH_PICK_RADIUS,
+  switchAtPoint,
   renderableFlags,
   renderableRelics,
   renderableStand,
@@ -174,17 +177,20 @@ describe("Capture Points' shrines as the arena draws them (#1378)", () => {
   });
 });
 
-describe("renderableGatePlates (#2691)", () => {
+describe("renderableGates (#2691)", () => {
   const wall = { kind: "rect", x: 0, y: 0, width: 8, height: 90 } as const;
   const plate = { x: 50, y: 50 };
 
   it("says whose plate it is from your side, and whether its gate is open", () => {
     const gates = [
-      { wall, plate, team: 1 },
-      { wall, plate, team: null },
+      { wall, opener: { kind: "plate", plate, team: 1 } },
+      { wall, opener: { kind: "plate", plate, team: null } },
     ] as const;
     expect(
-      renderableGatePlates(gates, [true, false], 1).map(({ side, open }) => ({ side, open })),
+      renderableGates(gates, [true, false], 1).map(({ plate, open }) => ({
+        side: plate?.side,
+        open,
+      })),
     ).toEqual([
       { side: "ally", open: true },
       { side: undefined, open: false },
@@ -192,6 +198,33 @@ describe("renderableGatePlates (#2691)", () => {
   });
 
   it("draws a gate closed before the first snapshot says otherwise", () => {
-    expect(renderableGatePlates([{ wall, plate, team: null }], [], 0)[0]?.open).toBe(false);
+    const gate = { wall, opener: { kind: "plate", plate, team: null } } as const;
+    expect(renderableGates([gate], [], 0)[0]?.open).toBe(false);
+  });
+
+  it("gives a switch's gate no plate (#3025)", () => {
+    expect(renderableGates([{ wall, opener: { kind: "switch" } }], [true], 0)).toEqual([
+      { plate: undefined, open: true, wall },
+    ]);
+  });
+});
+
+describe("renderableSwitches and switchAtPoint (#3025)", () => {
+  const switches = [
+    { id: "west", layer: 0, position: { x: 100, y: 100 } },
+    { id: "east", layer: 1, position: { x: 400, y: 100 } },
+  ];
+
+  it("targets each by its switch- id, up until a snapshot says thrown", () => {
+    expect(renderableSwitches(switches, [false])).toEqual([
+      { id: "switch-west", mark: "west", position: { x: 100, y: 100 }, layer: 0, up: false },
+      { id: "switch-east", mark: "east", position: { x: 400, y: 100 }, layer: 1, up: true },
+    ]);
+  });
+
+  it("picks the switch under a click, and nothing beside it", () => {
+    const drawn = renderableSwitches(switches, []);
+    expect(switchAtPoint(drawn, { x: 105, y: 96 })).toBe("switch-west");
+    expect(switchAtPoint(drawn, { x: 100, y: 100 + SWITCH_PICK_RADIUS + 1 })).toBeUndefined();
   });
 });

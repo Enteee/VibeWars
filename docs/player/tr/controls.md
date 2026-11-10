@@ -46,6 +46,7 @@ Bu tuşlar sabittir:
 - Lonca Savaşı'nda ya da Barrow Field'da bir bayrağı ya da bayrak
   direğini hedef almak için ona **sağ tıkla**; **Space** oraya yürür ve
   bayrağı alır ya da diker.
+- Bir kola **sağ tıklamak** onu hedef alır; **Space** oraya yürür ve kolu çevirir, kolun bağlı olduğu kapıları açar ya da kapatır.
 - Takımına bildirmek için bir düşmana **teker tıkla**: onların **T**'si
   onu hedef alır. Zemine ya da bir müttefike yapılırsa o noktayı
   işaretler. Ya da hedef aldığın düşmanı bildirmek için üstteki hedef

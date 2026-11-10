@@ -560,6 +560,7 @@ export default {
   "hud.stormBeacon": "Viharjelző",
   "hud.stormBeaconOurs": "Viharjelző: a csapatodé",
   "hud.stormBeaconTheirs": "Viharjelző: az ellenségé",
+  "hud.switch": "Kar",
   "hud.targetDead": "halott",
   "hud.targetEffects": "a célpontod hatásai",
   "hud.versus": "{ours} vs {theirs}",

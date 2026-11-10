@@ -151,7 +151,8 @@ import {
   FLAG_PICK_RADIUS,
   STAND_RADIUS,
   type RenderableCapturePoint,
-  type RenderableGatePlate,
+  type RenderableGate,
+  type RenderableSwitch,
   type RenderableFlag,
 } from "./flag-objects.js";
 import { lyingPose } from "./lying-pose.js";
@@ -160,6 +161,7 @@ import { LightingPass, litStructurePalette } from "./lighting-pass.js";
 import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
+import { SWITCH_MARK_ART, switchMarkKey } from "./switch-mark.js";
 import {
   BODY_LIGHT_FLOOR,
   bodyTintOf,
@@ -591,8 +593,11 @@ export class ArenaScene extends Phaser.Scene {
     for (const point of this.snapshot.capturePoints) {
       this.drawCapturePoint(g, point);
     }
-    for (const plate of this.snapshot.gatePlates) {
-      this.drawGatePlate(g, plate);
+    for (const gate of this.snapshot.gates) {
+      this.drawGate(g, gate);
+    }
+    for (const lever of this.snapshot.switches) {
+      this.drawSwitch(g, lever);
     }
     this.stepCapes(deltaMs / 1000);
     for (const actor of this.drawnActors) {
@@ -735,26 +740,37 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** A gate's plate (#2691), lit while held; an open gate's wall is only its outline. */
-  private drawGatePlate(g: Phaser.GameObjects.Graphics, plate: RenderableGatePlate): void {
-    const { x, y } = plate.position;
-    const colour = plate.side === undefined ? STAND_NEUTRAL : teamColour(plate.side);
-    g.fillStyle(colour, plate.open ? 0.55 : 0.18);
-    g.fillCircle(x, y, GATE_PLATE_REACH_UNITS);
-    g.lineStyle(2, colour, 0.9);
-    g.strokeCircle(x, y, GATE_PLATE_REACH_UNITS);
-    if (plate.open) {
+  private drawGate(g: Phaser.GameObjects.Graphics, gate: RenderableGate): void {
+    const plate = gate.plate;
+    if (plate !== undefined) {
+      const { x, y } = plate.position;
+      const colour = plate.side === undefined ? STAND_NEUTRAL : teamColour(plate.side);
+      g.fillStyle(colour, gate.open ? 0.55 : 0.18);
+      g.fillCircle(x, y, GATE_PLATE_REACH_UNITS);
+      g.lineStyle(2, colour, 0.9);
+      g.strokeCircle(x, y, GATE_PLATE_REACH_UNITS);
+    }
+    if (gate.open) {
       g.lineStyle(2, WALL_STROKE, 0.5);
-      if (plate.wall.kind === "rect") {
-        g.strokeRect(plate.wall.x, plate.wall.y, plate.wall.width, plate.wall.height);
+      if (gate.wall.kind === "rect") {
+        g.strokeRect(gate.wall.x, gate.wall.y, gate.wall.width, gate.wall.height);
       } else {
         g.beginPath();
-        for (const point of plate.wall.points) {
+        for (const point of gate.wall.points) {
           g.lineTo(point.x, point.y);
         }
         g.closePath();
         g.strokePath();
       }
     }
+  }
+
+  /** A switch (#3025): its mark on its layer, the lever raised or thrown. */
+  private drawSwitch(g: Phaser.GameObjects.Graphics, lever: RenderableSwitch): void {
+    g.save();
+    g.translateCanvas(0, -elevationOf(lever.layer, this.snapshot.structure.ground));
+    SWITCH_MARK_ART[switchMarkKey(lever.mark)](g, lever.position, lever.up);
+    g.restore();
   }
 
   /**

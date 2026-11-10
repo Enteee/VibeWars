@@ -19,7 +19,8 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { allWallSegments, wallToSegments } from "./geometry.js";
+import { allWallSegments } from "./geometry.js";
+import { matchGates } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import type { MapData } from "./schema.js";
@@ -414,11 +415,7 @@ describe("Capture Points bots (#2580)", () => {
       ruleset: RULESET,
       teamCount: 3,
       walls: allWallSegments(keep.walls),
-      gates: keep.gates.map((gate) => ({
-        segments: wallToSegments(gate.wall),
-        plate: gate.plate,
-        team: gate.team,
-      })),
+      gates: matchGates(keep),
       bounds: { width: keep.width, height: keep.height },
       matchRules: rules,
       ghostField: {
@@ -445,11 +442,7 @@ describe("Capture Points bots (#2580)", () => {
       seed: "gallery",
       ruleset: RULESET,
       walls: allWallSegments(gallery.walls),
-      gates: gallery.gates.map((gate) => ({
-        segments: wallToSegments(gate.wall),
-        plate: gate.plate,
-        team: gate.team,
-      })),
+      gates: matchGates(gallery),
       bounds: { width: gallery.width, height: gallery.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       capturePoints: gallery.objectives.flatMap((objective) =>
@@ -473,7 +466,7 @@ describe("The Brazen Causeway (#2697)", () => {
   if (map === undefined) throw new Error("no map brazen-causeway");
 
   it("guards each base with its own gate", () => {
-    expect(map.gates.map(({ team }) => team)).toEqual([0, 1]);
+    expect(map.gates.map(({ opener }) => opener)).toMatchObject([{ team: 0 }, { team: 1 }]);
   });
 
   it("keeps its nav graph to 600 nodes", () => {
@@ -500,11 +493,7 @@ describe("The Brazen Causeway (#2697)", () => {
       seed: "causeway",
       ruleset: RULESET,
       walls: allWallSegments(map.walls),
-      gates: map.gates.map((gate) => ({
-        segments: wallToSegments(gate.wall),
-        plate: gate.plate,
-        team: gate.team,
-      })),
+      gates: matchGates(map),
       bounds: { width: map.width, height: map.height },
       matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
       shrines: map.objectives.flatMap((objective) =>

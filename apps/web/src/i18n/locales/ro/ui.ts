@@ -591,6 +591,7 @@ export default {
   "hud.stormBeacon": "Farul Furtunii",
   "hud.stormBeaconOurs": "Farul Furtunii: deținut de echipa ta",
   "hud.stormBeaconTheirs": "Farul Furtunii: deținut de inamic",
+  "hud.switch": "Manetă",
   "hud.targetDead": "mort",
   "hud.targetEffects": "efectele țintei tale",
   "hud.versus": "{ours} v {theirs}",

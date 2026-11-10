@@ -336,11 +336,11 @@
         "width": 305,
         "height": 30
       },
-      "plate": {
-        "x": 290,
-        "y": 650
-      },
-      "team": 0
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 290, "y": 650 },
+        "team": 0
+      }
     },
     {
       "id": "east-gate",
@@ -352,11 +352,11 @@
         "width": 305,
         "height": 30
       },
-      "plate": {
-        "x": 1710,
-        "y": 950
-      },
-      "team": 1
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 1710, "y": 950 },
+        "team": 1
+      }
     }
   ]
 }

@@ -8,6 +8,7 @@ import { CAPTURE_SECONDS, MAX_PIPS } from "./capture-points.js";
 import { flagId, FLAG_REACH_UNITS, type FlagField } from "./flags.js";
 import type { GateField } from "./gates.js";
 import { guildLordId } from "./guild-lord.js";
+import { switchTargetId } from "./switches.js";
 import { BOUNDS, DT, fighter, RANGER, RULESET, WARRIOR } from "./bot/rules/test-support.js";
 import { UPHILL } from "./layer-rules.js";
 import {
@@ -322,8 +323,7 @@ describe("a body's layer (ADR-0051)", () => {
     const SPANS = wall(796, 300, 4, 200);
     const field = (layer: number): GateField => ({
       segments: SPANS,
-      plate: vec2(100, 700),
-      team: null,
+      opener: { kind: "plate", plate: vec2(100, 700), team: null },
       layer,
     });
 
@@ -345,6 +345,29 @@ describe("a body's layer (ADR-0051)", () => {
     it("on the deck moves a body on the deck", () => {
       expect(get(closed(1), "deck").position).not.toEqual(vec2(800, 400));
     });
+  });
+
+  const DECK_SWITCH: Partial<MatchSimulationOptions> = {
+    gates: [{ segments: wall(1396, 0, 8, 800), opener: { kind: "switch" } }],
+    switches: [{ id: "lever", layer: 1, position: ON_DECK, targets: [0] }],
+  };
+
+  it("a switch on a deck is not flipped from beneath it, however near (#3025)", () => {
+    const sim = arena([spec("a", 0, ON_DECK, 0)], DECK_SWITCH);
+    sim.requestAttack("a", switchTargetId("lever"));
+    sim.step(DT);
+    sim.step(DT);
+    expect(sim.switches[0]?.up).toBe(true);
+    expect(sim.gates[0]?.open).toBe(false);
+  });
+
+  it("a switch on a deck is flipped from the deck (#3025)", () => {
+    const sim = arena([spec("a", 0, vec2(ON_DECK.x + 20, ON_DECK.y), 1)], DECK_SWITCH);
+    sim.requestAttack("a", switchTargetId("lever"));
+    sim.step(DT);
+    sim.step(DT);
+    expect(sim.switches[0]?.up).toBe(false);
+    expect(sim.gates[0]?.open).toBe(true);
   });
 
   it("refuses a participant on a layer the map does not have", () => {

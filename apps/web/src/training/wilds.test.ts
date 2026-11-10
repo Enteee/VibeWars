@@ -3,6 +3,7 @@ import {
   TRAINING_SCENARIOS,
   applyIntent,
   scenarioParticipants,
+  switchTargetId,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import { matchLayers, matchZones } from "@vibewars/game-maps/layers";
@@ -63,5 +64,32 @@ describe("Training Wilds (#3024)", () => {
     }
     expect(burning(simulation, "in-embers")).toBe(true);
     expect(burning(simulation, SELF_ID)).toBe(false);
+  });
+
+  it("opens the side room's door from the lever outside it, and walks you in (#3025)", () => {
+    const { simulation } = setupScenario(scenario, newCharacter("c1"));
+    const room = { x: 130, y: 720 };
+    const walkIn = (): { x: number; y: number } => {
+      applyIntent(simulation, SELF_ID, { kind: "walk-to", ...room, layer: 0 });
+      for (let tick = 0; tick < 300; tick += 1) {
+        simulation.step(1 / 30);
+      }
+      return loaded(simulation.get(SELF_ID), SELF_ID).position;
+    };
+    const shut = walkIn();
+    expect(shut.y).toBeLessThan(620);
+    expect(simulation.gates.map(({ open }) => open)).toEqual([false]);
+
+    applyIntent(simulation, SELF_ID, {
+      kind: "attack",
+      targetId: switchTargetId("side-room-lever"),
+    });
+    for (let tick = 0; tick < 300 && simulation.gates[0]?.open !== true; tick += 1) {
+      simulation.step(1 / 30);
+    }
+    expect(simulation.switches.map(({ up }) => up)).toEqual([false]);
+    expect(simulation.gates.map(({ open }) => open)).toEqual([true]);
+    const inside = walkIn();
+    expect(Math.hypot(inside.x - room.x, inside.y - room.y)).toBeLessThan(5);
   });
 });

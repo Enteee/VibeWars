@@ -565,6 +565,7 @@ export default {
   "hud.stormBeacon": "Φάρος της Καταιγίδας",
   "hud.stormBeaconOurs": "Φάρος της Καταιγίδας: στα χέρια της ομάδας σου",
   "hud.stormBeaconTheirs": "Φάρος της Καταιγίδας: στα χέρια του εχθρού",
+  "hud.switch": "Μοχλός",
   "hud.targetDead": "νεκρός",
   "hud.targetEffects": "επιδράσεις στόχου",
   "hud.versus": "{ours} κατά {theirs}",

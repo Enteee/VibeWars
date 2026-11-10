@@ -132,7 +132,15 @@ export async function startSplashFight(parent: HTMLElement): Promise<() => void>
       NO_COVER,
     );
     viewport.scene.setSnapshot(
-      toArenaSnapshot(connection.getSnapshot(), walls, [], undefined, undefined, [], structure),
+      toArenaSnapshot(
+        connection.getSnapshot(),
+        walls,
+        [],
+        undefined,
+        undefined,
+        undefined,
+        structure,
+      ),
     );
   });
   return () => {

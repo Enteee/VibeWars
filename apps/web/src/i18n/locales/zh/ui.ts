@@ -510,6 +510,7 @@ export default {
   "hud.stormBeacon": "风暴信标",
   "hud.stormBeaconOurs": "风暴信标:由己方队伍控制",
   "hud.stormBeaconTheirs": "风暴信标:由敌方控制",
+  "hud.switch": "拉杆",
   "hud.targetDead": "阵亡",
   "hud.targetEffects": "目标的效果",
   "hud.versus": "{ours} : {theirs}",

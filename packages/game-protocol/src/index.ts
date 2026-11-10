@@ -52,6 +52,8 @@ export type {
   MapDescriptor,
   WireTeamCount,
   GateDescriptor,
+  GateOpenerDescriptor,
+  SwitchDescriptor,
   WallDescriptor,
   RectWallDescriptor,
   PolygonWallDescriptor,

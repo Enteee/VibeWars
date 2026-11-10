@@ -590,6 +590,7 @@ export default {
   "hud.stormBeacon": "Baliza de Tormenta",
   "hud.stormBeaconOurs": "Baliza de Tormenta: en manos de tu equipo",
   "hud.stormBeaconTheirs": "Baliza de Tormenta: en manos del enemigo",
+  "hud.switch": "Palanca",
   "hud.targetDead": "muerto",
   "hud.targetEffects": "efectos de tu objetivo",
   "hud.versus": "{ours} v {theirs}",

@@ -1,4 +1,4 @@
-import { isCarriedObjectId, isGhostId } from "@vibewars/game-core";
+import { isCarriedObjectId, isGhostId, switchIdOf } from "@vibewars/game-core";
 import type { ClientIntent } from "@vibewars/game-protocol";
 import type { MatchSnapshot } from "@vibewars/game-session";
 
@@ -53,7 +53,7 @@ export function isAttacking(snapshot: MatchSnapshot): boolean {
 /**
  * What a double-click on `hitId` sends (#298): the mouse twin of
  * `attackKeyIntents`. An attack, when it is a living enemy, or a flag,
- * the flag stand (#1225) or a relic (#1374) to walk to, or your living
+ * the flag stand (#1225), a relic (#1374) or a switch (#3025) to walk to, or your living
  * Ghostly Hero to tell to follow or stay (#1377); nothing for another
  * ally, yourself, a corpse or empty ground, whose double-click is just
  * the target its single click already set.
@@ -62,7 +62,7 @@ export function attackClickIntents(
   snapshot: MatchSnapshot,
   hitId: string | undefined,
 ): ClientIntent[] {
-  if (hitId !== undefined && isCarriedObjectId(hitId)) {
+  if (hitId !== undefined && (isCarriedObjectId(hitId) || switchIdOf(hitId) !== undefined)) {
     return [{ kind: "attack", targetId: hitId }];
   }
   const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);

@@ -46,6 +46,7 @@ Các phím sau là cố định:
   cùng địch đó lần nữa, thật nhanh, để tấn công nó.
 - **Chuột phải** vào một lá cờ hoặc bệ cờ, trong Chiến Bang hoặc trên Barrow
   Field, để nhắm nó; **Space** đi tới đó và nhặt cờ lên hoặc cắm cờ.
+- **Nhấp chuột phải** vào cần gạt để chọn nó làm mục tiêu; **Space** đi tới đó và gạt nó, mở hoặc đóng các cổng mà nó điều khiển.
 - **Nhấn con lăn** vào một địch để gọi nó cho đội: phím **T** của họ sẽ nhắm
   vào nó. Trên mặt đất hoặc một đồng minh, nó ping vị trí đó. Hoặc nhấn vào
   thanh mục tiêu ở phía trên để gọi địch bạn đang nhắm.

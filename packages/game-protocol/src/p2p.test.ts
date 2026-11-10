@@ -156,6 +156,7 @@ const welcome: PeerWelcome = {
     teamCount: 2,
     height: 1200,
     gates: [],
+    switches: [],
     walls: [
       { kind: "rect", x: 10, y: 20, width: 30, height: 40 },
       {
@@ -299,6 +300,7 @@ const snapshot: WireSnapshotPart = {
   altarHeldSeconds: 0,
   capturePoints: [],
   gates: [],
+  switches: [],
 };
 
 /** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */
@@ -817,12 +819,30 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
         gates: [
           {
             wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
-            plate: { x: 50, y: 50 },
-            team: null,
+            opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
           },
         ],
       },
     },
+  ],
+  [
+    "welcome with a switch and its gate (#3025)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        gates: [
+          { wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 }, opener: { kind: "switch" } },
+        ],
+        switches: [{ id: "lever", layer: 0, position: { x: 50, y: 50 } }],
+      },
+    },
+  ],
+  [
+    "snapshot with switches (#3025)",
+    parseWireSnapshotPart,
+    { ...snapshot, switches: [true, false] },
   ],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
@@ -1468,8 +1488,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
         ...welcome.map,
         gates: Array.from({ length: 7 }, () => ({
           wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
-          plate: { x: 50, y: 50 },
-          team: null,
+          opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
         })),
       },
     },
@@ -1478,6 +1497,32 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a gate that is not a boolean (#2691)",
     parseWireSnapshotPart,
     { ...snapshot, gates: [1] },
+  ],
+  [
+    "welcome with a gate whose opener is no kind (#3025)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        gates: [
+          { wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 }, opener: { kind: "lever" } },
+        ],
+      },
+    },
+  ],
+  [
+    "welcome with a switch off every layer (#3025)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: { ...welcome.map, switches: [{ id: "lever", layer: -1, position: { x: 50, y: 50 } }] },
+    },
+  ],
+  [
+    "snapshot without switches (#3025)",
+    parseWireSnapshotPart,
+    { ...snapshot, switches: undefined },
   ],
   [
     "snapshot without capture points (#1378)",

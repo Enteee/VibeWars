@@ -516,6 +516,7 @@ export default {
   "hud.stormBeacon": "Suar Badai",
   "hud.stormBeaconOurs": "Suar Badai: dikuasai timmu",
   "hud.stormBeaconTheirs": "Suar Badai: dikuasai musuh",
+  "hud.switch": "Tuas",
   "hud.targetDead": "tewas",
   "hud.targetEffects": "efek targetmu",
   "hud.versus": "{ours} vs {theirs}",

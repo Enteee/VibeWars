@@ -22,10 +22,14 @@ const gates: BotRule = {
     }
     const team = self.combatant.team;
     const bots = allies.filter((ally) => countsForTeam(ally) && context.isBot(ally.id));
-    const mine = context.objectives.gates.find(
-      (gate) => gate.team === team && nearestTo(gate.plate, bots) === self,
-    );
-    if (mine === undefined) {
+    // A switch's gate (#3025) is no bot's to open yet.
+    const mine = context.objectives.gates
+      .map(({ opener }) => opener)
+      .find(
+        (opener) =>
+          opener.kind === "plate" && opener.team === team && nearestTo(opener.plate, bots) === self,
+      );
+    if (mine?.kind !== "plate") {
       return undefined;
     }
     return distance(mine.plate, self.position) <= GATE_PLATE_REACH_UNITS

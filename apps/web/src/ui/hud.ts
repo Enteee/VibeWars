@@ -3,6 +3,7 @@ import {
   FLAG_STAND_ID,
   flagTeamOf,
   relicTeamOf,
+  switchIdOf,
   getSkill,
   POINT_TICK_SECONDS,
   maxHealthLossOfStatusIds,
@@ -703,8 +704,8 @@ function setBar(
 
 /**
  * The target frame's name for a flag or the stand selected (#1225),
- * which are no body, the stand with its holder (#1226), or a relic
- * (#1374); `undefined` for any other id.
+ * which are no body, the stand with its holder (#1226), a relic
+ * (#1374) or a switch (#3025); `undefined` for any other id.
  */
 export function objectTargetName(
   targetId: string | undefined,
@@ -721,6 +722,9 @@ export function objectTargetName(
       return t(stand.holder === selfTeam ? "hud.stormBeaconOurs" : "hud.stormBeaconTheirs");
     }
     return stand.holder === selfTeam ? t("hud.flagStandOurs") : t("hud.flagStandTheirs");
+  }
+  if (targetId !== undefined && switchIdOf(targetId) !== undefined) {
+    return t("hud.switch");
   }
   const relic = targetId === undefined ? undefined : relicTeamOf(targetId);
   if (relic !== undefined) {

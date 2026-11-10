@@ -74,6 +74,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     altarHeldSeconds: 0,
     capturePoints: [],
     gates: [],
+    switches: [],
     summary: undefined,
   };
 }

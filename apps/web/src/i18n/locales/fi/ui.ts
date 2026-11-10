@@ -568,6 +568,7 @@ export default {
   "hud.stormBeacon": "Myrskymajakka",
   "hud.stormBeaconOurs": "Myrskymajakka: joukkueesi hallussa",
   "hud.stormBeaconTheirs": "Myrskymajakka: vihollisen hallussa",
+  "hud.switch": "Vipu",
   "hud.targetDead": "kuollut",
   "hud.targetEffects": "kohteesi vaikutukset",
   "hud.versus": "{ours} – {theirs}",

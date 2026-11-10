@@ -314,7 +314,8 @@ export function createLocalConnection(options: {
         altarHolder: simulation.altarState.holder ?? undefined,
         altarHeldSeconds: simulation.altarState.heldSeconds,
         capturePoints: simulation.capturePoints,
-        gates: [],
+        gates: simulation.gates.map((gate) => gate.open),
+        switches: simulation.switches.map((lever) => lever.up),
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

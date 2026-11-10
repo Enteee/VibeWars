@@ -219,12 +219,12 @@
         "width": 40,
         "height": 200
       },
-      "plate": {
-        "x": 1320,
-        "y": 1100
-      },
-      "team": null,
-      "oneWay": true
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 1320, "y": 1100 },
+        "team": null,
+        "oneWay": true
+      }
     },
     {
       "id": "door-east",
@@ -236,12 +236,12 @@
         "width": 40,
         "height": 200
       },
-      "plate": {
-        "x": 1880,
-        "y": 1100
-      },
-      "team": null,
-      "oneWay": true
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 1880, "y": 1100 },
+        "team": null,
+        "oneWay": true
+      }
     },
     {
       "id": "door-north",
@@ -253,12 +253,12 @@
         "width": 200,
         "height": 40
       },
-      "plate": {
-        "x": 1600,
-        "y": 820
-      },
-      "team": null,
-      "oneWay": true
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 1600, "y": 820 },
+        "team": null,
+        "oneWay": true
+      }
     },
     {
       "id": "door-south",
@@ -270,12 +270,12 @@
         "width": 200,
         "height": 40
       },
-      "plate": {
-        "x": 1600,
-        "y": 1380
-      },
-      "team": null,
-      "oneWay": true
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 1600, "y": 1380 },
+        "team": null,
+        "oneWay": true
+      }
     }
   ],
   "objectives": [

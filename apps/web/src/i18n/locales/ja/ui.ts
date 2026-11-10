@@ -519,6 +519,7 @@ export default {
   "hud.stormBeacon": "嵐のビーコン",
   "hud.stormBeaconOurs": "嵐のビーコン:味方チームが保持",
   "hud.stormBeaconTheirs": "嵐のビーコン:敵が保持",
+  "hud.switch": "レバー",
   "hud.targetDead": "死亡",
   "hud.targetEffects": "ターゲットの効果",
   "hud.versus": "{ours} 対 {theirs}",

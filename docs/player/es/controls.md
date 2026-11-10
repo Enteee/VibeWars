@@ -45,6 +45,7 @@ Estas teclas son fijas:
 - **Clic derecho** en una bandera o en la base de bandera, en una Batalla
   de gremios o en Barrow Field, para seleccionarla; **Space** camina hasta allí y coge la
   bandera o la planta.
+- **Clic derecho** en una palanca para fijarla como objetivo; **Space** camina hasta ella y la acciona, abriendo o cerrando las puertas que controla.
 - **Clic con la rueda** en un enemigo para marcarlo para tu equipo: su **T**
   lo selecciona. En el suelo o en un aliado, señala ese punto. O haz clic en
   la barra de objetivo de arriba para marcar al enemigo que tienes

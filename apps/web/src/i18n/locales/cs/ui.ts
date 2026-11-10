@@ -608,6 +608,7 @@ export default {
   "hud.stormBeacon": "Bouřný maják",
   "hud.stormBeaconOurs": "Bouřný maják: drží tvůj tým",
   "hud.stormBeaconTheirs": "Bouřný maják: drží nepřítel",
+  "hud.switch": "Páka",
   "hud.targetDead": "mrtvý",
   "hud.targetEffects": "efekty tvého cíle",
   "hud.versus": "{ours} : {theirs}",

@@ -23,6 +23,7 @@ import {
   type PlayerBuild,
   type ProfessionId,
   type GateField,
+  type SwitchField,
   type MatchLayers,
   type MatchZone,
   type Segment,
@@ -144,6 +145,8 @@ export interface HostMap {
   readonly zones: readonly MatchZone[];
   /** Its gates (#2691), in the descriptor's order. */
   readonly gates: readonly GateField[];
+  /** Its switches (#3025), in the descriptor's order, naming gates by index. */
+  readonly switches: readonly SwitchField[];
   readonly bounds: { readonly width: number; readonly height: number };
   readonly spawns: readonly SpawnPoint[];
   /** Its resurrection shrines (#1186), `[]` but on a Priest Annihilation or Guild Battle map. */
@@ -341,6 +344,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     teamCount: map.descriptor.teamCount,
     walls: map.walls,
     gates: map.gates,
+    switches: map.switches,
     bounds: map.bounds,
     layers: map.layers,
     zones: map.zones,
@@ -1251,6 +1255,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     altarHolder: wireTeam(sim.altarState.holder),
     altarHeldSeconds: sim.altarState.heldSeconds,
     gates: sim.gates.map((gate) => gate.open),
+    switches: sim.switches.map((lever) => lever.up),
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,

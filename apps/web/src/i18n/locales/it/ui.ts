@@ -592,6 +592,7 @@ export default {
   "hud.stormBeacon": "Faro della Tempesta",
   "hud.stormBeaconOurs": "Faro della Tempesta: in mano alla tua squadra",
   "hud.stormBeaconTheirs": "Faro della Tempesta: in mano al nemico",
+  "hud.switch": "Leva",
   "hud.targetDead": "morto",
   "hud.targetEffects": "effetti del bersaglio",
   "hud.versus": "{ours} v {theirs}",

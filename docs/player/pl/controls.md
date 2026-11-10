@@ -44,6 +44,7 @@ Te klawisze są stałe:
 - **Kliknięcie prawym przyciskiem** flagi lub stojaka flagi, w Bitwie gildii albo
   na Barrow Field, obiera je na cel; **Space** podchodzi tam i podnosi lub
   stawia flagę.
+- **Prawy klik** na dźwigni wybiera ją jako cel; **Space** podchodzi do niej i ją przestawia, otwierając lub zamykając bramy, którymi steruje.
 - **Kliknięcie kółkiem** wroga wskazuje go twojej drużynie: ich **T** obiera go
   na cel. Na ziemi lub na sojuszniku oznacza to miejsce pingiem. Możesz też
   kliknąć pasek celu u góry, aby wskazać wroga, którego masz na celu.

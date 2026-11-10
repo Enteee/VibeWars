@@ -45,6 +45,7 @@ Estas teclas são fixas:
 - **Clique direito** em uma bandeira ou no suporte da bandeira, em uma
   Batalha de Guildas ou em Barrow Field, para mirar nela; **Space** anda até lá e pega ou
   finca a bandeira.
+- **Clique direito** numa alavanca para a selecionar; **Space** caminha até ela e aciona-a, abrindo ou fechando os portões que controla.
 - **Clique na roda** em um inimigo para anunciá-lo à sua equipe: a tecla
   **T** deles mira nele. No chão ou em um aliado, marca aquele ponto com
   um ping. Ou clique na barra de alvo no topo para anunciar o inimigo que

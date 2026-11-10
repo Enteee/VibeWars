@@ -515,6 +515,7 @@ export default {
   "hud.stormBeacon": "폭풍 봉화",
   "hud.stormBeaconOurs": "폭풍 봉화: 아군 팀 점령",
   "hud.stormBeaconTheirs": "폭풍 봉화: 적 점령",
+  "hud.switch": "레버",
   "hud.targetDead": "사망",
   "hud.targetEffects": "대상의 효과",
   "hud.versus": "{ours} : {theirs}",

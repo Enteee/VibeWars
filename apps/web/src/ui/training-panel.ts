@@ -3,10 +3,10 @@ import {
   creatureSummonerOf,
   getTrainingScenario,
   type StepResult,
-  type Segment,
   type TrainingScenario,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
+import type { MapDescriptor } from "@vibewars/game-protocol";
 import { NO_GUILD, type MatchSnapshot, type SkillSlot } from "@vibewars/game-session";
 
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
@@ -39,7 +39,7 @@ import { skillSlotForKeyDown } from "../input/skill-keys.js";
 import { weaponSetIntent } from "../input/weapon-set-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
 import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-target.js";
-import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
+import { gateWalls, toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import { MENU_DEPTH } from "../music/fixed-tracks.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
@@ -52,7 +52,6 @@ import {
   withNames,
   type ArenaSnapshot,
   type MapStructure,
-  type RenderableWall,
 } from "../render/arena-snapshot.js";
 import {
   NoWebGlError,
@@ -199,12 +198,13 @@ interface Session {
   readonly scenario: TrainingScenario;
   readonly connection: LocalMatchConnection;
   readonly names: ReadonlyMap<string, string>;
-  readonly walls: readonly RenderableWall[];
+  /** Its gates and switches (#3025), as a match's map has them. */
+  readonly gated: Pick<MapDescriptor, "gates" | "switches">;
+  /** The walls, and every closed gate's, as the gates stand (#3025). */
+  readonly blocking: ReturnType<typeof gateWalls>;
   readonly structure: MapStructure;
   /** The map's resurrection shrines (#1199), as a match's. */
   readonly shrines: readonly MapShrine[];
-  /** The same walls as segments, for the skill bar's line-of-sight hint (#485). */
-  readonly wallSegments: readonly Segment[];
   readonly sounds: MatchSounds;
   readonly music: MatchMusic;
   parked: boolean;
@@ -598,7 +598,7 @@ export function createTrainingPanel(): TrainingPanel {
       self,
       target,
       ownCompanion(match.players, self),
-      session?.wallSegments ?? [],
+      session?.blocking(match.gates).segments ?? [],
     );
     const unwielded = wrongWeapon(slots, self);
     const barred = silenced(slots, self);
@@ -674,12 +674,16 @@ export function createTrainingPanel(): TrainingPanel {
       scenario,
       connection,
       names: setup.names,
-      walls: setup.map.walls.map((wall, at) =>
-        toRenderableWall(wall, setup.structure.wallLayers[at] ?? 0),
+      gated: setup.map,
+      blocking: gateWalls(
+        setup.map.gates,
+        setup.map.walls.map((wall, at) =>
+          toRenderableWall(wall, setup.structure.wallLayers[at] ?? 0),
+        ),
+        allWallSegments(setup.map.walls),
       ),
       structure: setup.structure.structure,
       shrines: mapShrines(setup.map.id, setup.map.teamCount),
-      wallSegments: allWallSegments(setup.map.walls),
       // The same sounds as a match (#112), muted by the same M.
       sounds: attachMatchSounds(connection, soundPlayer()),
       music: attachMatchMusic(connection, {
@@ -1041,11 +1045,11 @@ export function createTrainingPanel(): TrainingPanel {
           // The Training Ground has no flags (#1225) or relics (#1374).
           toArenaSnapshot(
             latestMatch,
-            session.walls,
+            session.blocking(latestMatch.gates).walls,
             session.shrines,
             undefined,
             undefined,
-            [],
+            session.gated,
             session.structure,
           ),
           created.pointerWorld(),

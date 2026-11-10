@@ -559,6 +559,7 @@ export default {
   "hud.stormBeacon": "Fırtına İşareti",
   "hud.stormBeaconOurs": "Fırtına İşareti: takımının elinde",
   "hud.stormBeaconTheirs": "Fırtına İşareti: düşmanın elinde",
+  "hud.switch": "Kol",
   "hud.targetDead": "ölü",
   "hud.targetEffects": "hedefinin etkileri",
   "hud.versus": "{ours} - {theirs}",

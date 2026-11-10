@@ -82,6 +82,7 @@ const MATCH: MatchSnapshot = {
   altarHeldSeconds: 0,
   capturePoints: [],
   gates: [],
+  switches: [],
   summary: undefined,
 };
 

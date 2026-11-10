@@ -42,6 +42,7 @@ These keys are fixed:
   again, quickly, to attack it.
 - **Right click** a flag or the flag stand, in a Guild Battle or on Barrow Field, to target
   it; **Space** walks there and takes the flag up or plants it.
+- **Right click** a lever to target it; **Space** walks there and flips it, opening or closing the gates it works.
 - **Wheel click** a foe to call it for your team: their **T** targets it.
   On the ground or an ally, it pings that spot. Or click the target bar
   at the top to call the foe you have targeted.

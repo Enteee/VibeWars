@@ -193,6 +193,8 @@ export interface MatchSnapshot {
   readonly capturePoints: readonly CapturePoint[];
   /** Whether each of the map's gates is open (#2691); `[]` on a map without them. */
   readonly gates: readonly boolean[];
+  /** Whether each of the map's switches points up (#3025); `[]` on a map without them. */
+  readonly switches: readonly boolean[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

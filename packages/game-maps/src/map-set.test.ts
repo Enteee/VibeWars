@@ -24,7 +24,7 @@ import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import heightsData from "../training/training-heights/map.json" with { type: "json" };
-import { mapDataSchema, type MapData } from "./schema.js";
+import { mapDataSchema, type Gate, type GateOpener, type MapData } from "./schema.js";
 
 /**
  * Every arena, old and new (#444): valid, fair by a half turn about its
@@ -52,6 +52,14 @@ const ofThirdBase = (objective: MapData["objectives"][number]): boolean =>
   ("team" in objective && objective.team === 2) || ("base" in objective && objective.base === 2);
 
 const near = (a: Vec2, b: Vec2): boolean => Vec.distance(a, b) <= TOLERANCE;
+
+/** `gate`'s plate opener (#3025): every gate on the arena maps has one. */
+function plated(gate: Gate): Extract<GateOpener, { kind: "plate" }> {
+  if (gate.opener.kind !== "plate") {
+    throw new Error(`gate ${gate.id} opens by switch`);
+  }
+  return gate.opener;
+}
 
 const sameSegment = (a: Segment, b: Segment): boolean =>
   (near(a.a, b.a) && near(a.b, b.b)) || (near(a.a, b.b) && near(a.b, b.a));
@@ -662,11 +670,12 @@ describe("Threefold Keep (#2699)", () => {
   it("opens every door only from inside: its plate is out of reach from the far side", () => {
     expect(map.gates).toHaveLength(4);
     for (const gate of map.gates) {
-      expect(gate.oneWay, gate.id).toBe(true);
-      expect(gate.team, gate.id).toBeNull();
-      expect(firstHit(gate.plate, altar, wallToSegments(gate.wall)), gate.id).toBeUndefined();
+      const opener = plated(gate);
+      expect(opener.oneWay, gate.id).toBe(true);
+      expect(opener.team, gate.id).toBeNull();
+      expect(firstHit(opener.plate, altar, wallToSegments(gate.wall)), gate.id).toBeUndefined();
       const nearest = Math.min(
-        ...wallToSegments(gate.wall).map((side) => distancePointToSegment(gate.plate, side)),
+        ...wallToSegments(gate.wall).map((side) => distancePointToSegment(opener.plate, side)),
       );
       expect(nearest, gate.id).toBeGreaterThan(GATE_PLATE_REACH_UNITS);
     }
@@ -843,15 +852,16 @@ describe("The Warden's Gallery (#2698)", () => {
   });
 
   it("gives each team its own gates, each the other's twin", () => {
-    const turned = map.gates.map((gate) => ({
-      x: map.width - gate.plate.x,
-      y: map.height - gate.plate.y,
-      team: gate.team === null ? null : 1 - gate.team,
+    const openers = map.gates.map(plated);
+    const turned = openers.map(({ plate, team }) => ({
+      x: map.width - plate.x,
+      y: map.height - plate.y,
+      team: team === null ? null : 1 - team,
     }));
-    expect(map.gates.filter((gate) => gate.team === 0)).toHaveLength(2);
-    expect(map.gates.filter((gate) => gate.team === 1)).toHaveLength(2);
+    expect(openers.filter(({ team }) => team === 0)).toHaveLength(2);
+    expect(openers.filter(({ team }) => team === 1)).toHaveLength(2);
     for (const twin of turned) {
-      expect(map.gates).toContainEqual(
+      expect(openers).toContainEqual(
         expect.objectContaining({ plate: { x: twin.x, y: twin.y }, team: twin.team }),
       );
     }

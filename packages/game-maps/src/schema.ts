@@ -168,14 +168,37 @@ const lightingSchema = z.object({
 /** The most gates on a map (#2691): the match keeps paths for each way they can stand. */
 const MAX_GATES = 6;
 
-/** A wall that a pressure plate opens (#2691); `team` is whose plate it is, `null` for anyone's. */
-const gateSchema = z.object({
-  id: z.string().min(1),
-  wall: wallSchema,
+/** A pressure plate (#2691); `team` is whose plate it is, `null` for anyone's. */
+const plateOpenerSchema = z.object({
+  kind: z.literal("plate"),
   plate: vec2Schema,
   team: z.number().int().nonnegative().nullable(),
   /** Its plate stands on the altar's side (#2699): only from inside does it open. */
   oneWay: z.literal(true).optional(),
+});
+
+/** What opens a gate: a plate held, or a switch flipped (#3025). */
+const openerSchema = z.discriminatedUnion("kind", [
+  plateOpenerSchema,
+  z.object({ kind: z.literal("switch") }),
+]);
+
+/** A wall that its opener opens (#2691, #3025). */
+const gateSchema = z.object({
+  id: z.string().min(1),
+  wall: wallSchema,
+  opener: openerSchema,
+});
+
+/** The most switches on a map (#3025). */
+export const MAX_SWITCHES = 6;
+
+/** A lever (#3025): flipping it toggles every gate it names in `targets`. */
+const switchSchema = z.object({
+  id: z.string().min(1),
+  layer: layerSchema,
+  position: vec2Schema,
+  targets: z.array(z.string().min(1)).min(1),
 });
 
 const spawnPointSchema = z.object({
@@ -473,6 +496,7 @@ export const mapDataSchema = z
     objectives: z.array(objectiveSchema),
     /** Required, may be empty, as `objectives` (#2691). */
     gates: z.array(gateSchema).max(MAX_GATES),
+    switches: z.array(switchSchema).max(MAX_SWITCHES).optional(),
     /**
      * The level of its Ghostly Heroes (#2689): 20, 24 or 28, by where in
      * Heroes' Ascent it stands. With it, the map has one `ghost-spawn` per
@@ -766,21 +790,27 @@ export const mapDataSchema = z
     });
     const altar = map.objectives.find((objective) => objective.kind === "altar")?.position;
     map.gates.forEach((gate, index) => {
+      const opener = gate.opener;
       if (
-        gate.oneWay === true &&
+        opener.kind === "plate" &&
+        opener.oneWay === true &&
         (altar === undefined ||
-          firstHit(gate.plate, altar, wallToSegments(gate.wall)) !== undefined)
+          firstHit(opener.plate, altar, wallToSegments(gate.wall)) !== undefined)
       ) {
         context.addIssue({
           code: "custom",
-          path: ["gates", index, "plate"],
+          path: ["gates", index, "opener", "plate"],
           message: `one-way gate ${gate.id} needs its plate on the altar's side`,
         });
       }
     });
     map.gates.forEach((gate, index) => {
-      const clear = standsClear(map, gate.plate, gate.wall.layer, wallToSegments(gate.wall));
-      if (!clear || (gate.team !== null && !teams.has(gate.team))) {
+      const opener = gate.opener;
+      if (opener.kind !== "plate") {
+        return;
+      }
+      const clear = standsClear(map, opener.plate, gate.wall.layer, wallToSegments(gate.wall));
+      if (!clear || (opener.team !== null && !teams.has(opener.team))) {
         context.addIssue({
           code: "custom",
           path: ["gates", index],
@@ -883,9 +913,15 @@ export const mapDataSchema = z
       map.gates.forEach((gate, at) => {
         if (
           gate.wall.layer === body.layer &&
-          (shapesOverlap(gate.wall, body.area) || bodyIn(gate.plate, body.area))
+          (shapesOverlap(gate.wall, body.area) ||
+            (gate.opener.kind === "plate" && bodyIn(gate.opener.plate, body.area)))
         ) {
           blocked(["gates", at], "a gate");
+        }
+      });
+      (map.switches ?? []).forEach((lever, at) => {
+        if (lever.layer === body.layer && bodyIn(lever.position, body.area)) {
+          blocked(["switches", at], "a switch");
         }
       });
       map.transitions.forEach((transition, at) => {
@@ -914,6 +950,51 @@ export const mapDataSchema = z
           code: "custom",
           path: ["zones", index, "area"],
           message: `zone ${zone.id} is outside the map`,
+        });
+      }
+    });
+
+    const gateKinds = new Map(map.gates.map((gate) => [gate.id, gate.opener.kind]));
+    const switched = new Set<string>();
+    const switchIds = new Set<string>();
+    (map.switches ?? []).forEach((lever, index) => {
+      layerInRange(lever.layer, ["switches", index, "layer"]);
+      if (switchIds.has(lever.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["switches", index, "id"],
+          message: `switch id ${lever.id} is used twice`,
+        });
+      }
+      switchIds.add(lever.id);
+      if (!standsClear(map, lever.position, lever.layer)) {
+        context.addIssue({
+          code: "custom",
+          path: ["switches", index, "position"],
+          message: `switch ${lever.id} needs a body clear of every wall, on its layer's ground`,
+        });
+      }
+      lever.targets.forEach((target, at) => {
+        switched.add(target);
+        const kind = gateKinds.get(target);
+        if (kind !== "switch") {
+          context.addIssue({
+            code: "custom",
+            path: ["switches", index, "targets", at],
+            message:
+              kind === undefined
+                ? `switch ${lever.id} names ${target}, which is no gate`
+                : `switch ${lever.id} names ${target}, a plate's gate`,
+          });
+        }
+      });
+    });
+    map.gates.forEach((gate, index) => {
+      if (gate.opener.kind === "switch" && !switched.has(gate.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["gates", index, "opener"],
+          message: `gate ${gate.id} opens by switch, and no switch names it`,
         });
       }
     });
@@ -952,6 +1033,9 @@ export type Objective = z.infer<typeof objectiveSchema>;
 export type MapLighting = z.infer<typeof lightingSchema>;
 export type Water = z.infer<typeof waterSchema>;
 export type Zone = z.infer<typeof zoneSchema>;
+export type Gate = z.infer<typeof gateSchema>;
+export type GateOpener = z.infer<typeof openerSchema>;
+export type Switch = z.infer<typeof switchSchema>;
 export type MapData = z.infer<typeof mapDataSchema>;
 
 export class MapValidationError extends Error {
