@@ -135,6 +135,21 @@ export const LOCALES: Readonly<Partial<Record<LanguageCode, () => Promise<Locale
     game: (await import("./locales/th/game.js")).default,
     describe: (await import("./locales/th/describe.js")).default,
   }),
+  he: async () => ({
+    ui: (await import("./locales/he/ui.js")).default,
+    game: (await import("./locales/he/game.js")).default,
+    describe: (await import("./locales/he/describe.js")).default,
+  }),
+  fa: async () => ({
+    ui: (await import("./locales/fa/ui.js")).default,
+    game: (await import("./locales/fa/game.js")).default,
+    describe: (await import("./locales/fa/describe.js")).default,
+  }),
+  ar: async () => ({
+    ui: (await import("./locales/ar/ui.js")).default,
+    game: (await import("./locales/ar/game.js")).default,
+    describe: (await import("./locales/ar/describe.js")).default,
+  }),
   tr: async () => ({
     ui: (await import("./locales/tr/ui.js")).default,
     game: (await import("./locales/tr/game.js")).default,
