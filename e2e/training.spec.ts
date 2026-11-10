@@ -237,6 +237,8 @@ test("Wilds: a double right click on the lever opens the side room's door, and y
 }) => {
   // Two walks, in game time, which runs slower than wall time under load (#327).
   test.setTimeout(60_000);
+  // Scorched ground breathes, and never settles unless motion is reduced.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await openTraining(page);
   await page.locator("select.training-scenario").selectOption("wilds");
   await expect(page.locator(".training-log")).toContainText("── Wilds ──");
