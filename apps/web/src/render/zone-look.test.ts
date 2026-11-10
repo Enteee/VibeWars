@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   ZONE_LOOK,
   obeliskOutline,
-  strikeZoneLook,
+  strikeEdgeScale,
   zoneCentroid,
   zoneFillAlpha,
 } from "./zone-look.js";
@@ -26,20 +26,20 @@ describe("ZONE_LOOK (ADR-0053, #3024)", () => {
     expect(new Set(fills).size).toBe(fills.length);
   });
 
-  it("paints every lasting kind as its own real thing, and leaves the timed ones flat (#3052)", () => {
+  it("paints every lasting kind as its own real thing, and the timed ones as their marks (#3053)", () => {
     const painters = ZONE_KINDS.filter((kind) => ZONE_RULES[kind].trigger === "while-inside").map(
       (kind) => ZONE_LOOK[kind].painter,
     );
-    expect(painters).not.toContain("flat");
+    expect(painters).not.toContain("hazard");
     expect(new Set(painters).size).toBe(painters.length);
     for (const kind of ZONE_KINDS.filter((each) => ZONE_RULES[each].trigger === "strike")) {
-      expect(ZONE_LOOK[kind].painter).toBe("flat");
+      expect(ZONE_LOOK[kind].painter).toBe("hazard");
     }
   });
 
-  it("lights only fire, the spring and the spire (#3052)", () => {
+  it("lights only fire, a vent's smoulder, the spring and the spire (#3052, #3053)", () => {
     const lit = ZONE_KINDS.filter((kind) => ZONE_LOOK[kind].light !== undefined);
-    expect(lit.sort()).toEqual(["draining-spire", "molten", "scorched", "spring"]);
+    expect(lit.sort()).toEqual(["draining-spire", "molten", "scorched", "spring", "vent"]);
     // Warm is fire and flickers; water and magic hold steady.
     expect(ZONE_LOOK.molten.light?.flicker).toBeGreaterThan(0);
     expect(ZONE_LOOK.spring.light?.flicker).toBe(0);
@@ -80,18 +80,9 @@ describe("the draining spire's obelisk (#3028)", () => {
   });
 });
 
-describe("a timed hazard's look (#3029)", () => {
-  it("shows faintly idle, brightens its edge and fills in as it telegraphs, then strikes full", () => {
-    for (const kind of ["vent", "gas-spout", "rockfall"] as const) {
-      const look = ZONE_LOOK[kind];
-      const idle = strikeZoneLook(look, "idle");
-      const telegraph = strikeZoneLook(look, "telegraph");
-      const active = strikeZoneLook(look, "active");
-      expect(idle.fillAlpha).toBeGreaterThan(0);
-      expect(telegraph.fillAlpha).toBeGreaterThan(idle.fillAlpha);
-      expect(telegraph.edgeScale).toBeGreaterThan(idle.edgeScale);
-      expect(active.fillAlpha).toBeGreaterThan(telegraph.fillAlpha);
-      expect(active.fillAlpha).toBe(look.alpha);
-    }
+describe("a timed hazard's edge (#3029)", () => {
+  it("widens its ring as it telegraphs, and keeps it wide while it strikes", () => {
+    expect(strikeEdgeScale("telegraph")).toBeGreaterThan(strikeEdgeScale("idle"));
+    expect(strikeEdgeScale("active")).toBe(strikeEdgeScale("telegraph"));
   });
 });

@@ -1,14 +1,15 @@
 import type { ArenaPalette } from "./arena-palette.js";
 import { GATE_DOOR_LOOK } from "./arena-palette.js";
 import type { RenderableShape } from "./arena-snapshot.js";
-import { shapeOutline, southFacingEdges } from "./layer-surfaces.js";
+import { southFacingEdges } from "./layer-surfaces.js";
 
 /**
- * A gate's door (#3061), drawn through one lookup keyed by whether it is
- * open, as a switch's mark is (`switch-mark.ts`). They differ in shape,
- * not only in colour (docs/art/visual-style.md, "Door, open and closed"):
- * shut, a solid amber box at wall height between its wall's stubs; open,
- * no body, only a faint dashed ghost of it on the ground, where it closes.
+ * A gate's door (#3061, #3053), drawn through one lookup keyed by whether
+ * it is open, as a switch's mark is (`switch-mark.ts`). They differ in
+ * shape, not only in colour (docs/art/visual-style.md, "Door, open and
+ * closed"): shut, an oak door at wall height in an iron frame, banded and
+ * knobbed; open, its two leaves swung back flat against the walls either
+ * side, over a dark sill where it closes.
  */
 
 /** The few drawing calls a door needs, in Phaser `Graphics` terms: colours are 0xRRGGBB. */
@@ -48,25 +49,62 @@ export function doorPalette(palette: ArenaPalette): ArenaPalette {
   };
 }
 
-/** How wide a door's lit top edge and its knob line are, in CSS pixels. */
+/** How wide a door's lit top edge and its iron frame are, in CSS pixels. */
 const LIT_WIDTH = 2;
-const KNOB_WIDTH = 3;
-/** The ghost's dashes and gaps, in world units, as the manifest's door. */
-const DASH = 5;
-const GAP = 4;
-const GHOST_FILL_ALPHA = 0.18;
-const GHOST_STROKE_ALPHA = 0.9;
+const FRAME_WIDTH = 2;
+/** How thick a swung leaf is, and how tall against the wall's height. */
+const LEAF_THICKNESS = 3;
+const LEAF_RISE = 0.9;
+const SILL_ALPHA = 0.55;
 
-/** The solid door: front face, amber top, its lit edge, and a knob line across a rect. */
+/** `wall`'s long side, as a rect's two ends and its width across: `undefined` for a polygon. */
+function doorAxis(
+  wall: RenderableShape,
+): { readonly along: "x" | "y"; readonly length: number; readonly across: number } | undefined {
+  if (wall.kind !== "rect") {
+    return undefined;
+  }
+  return wall.height >= wall.width
+    ? { along: "y", length: wall.height, across: wall.width }
+    : { along: "x", length: wall.width, across: wall.height };
+}
+
+/** Lines across `wall`'s top at `shares` of its length: the iron bands, or the planks' seams. */
+function across(painter: GatePainter, wall: RenderableShape, shares: readonly number[]): void {
+  if (wall.kind !== "rect") {
+    return;
+  }
+  const { x, y, width, height } = wall;
+  for (const share of shares) {
+    if (height >= width) {
+      painter.lineBetween(x, y + height * share, x + width, y + height * share);
+    } else {
+      painter.lineBetween(x + width * share, y, x + width * share, y + height);
+    }
+  }
+}
+
+/** The solid door: oak front and top, iron bands and frame, its lit edge, a brass knob. */
 const shut: GateArt = (painter, wall, { height, line, palette }) => {
   if (height > 0) {
     painter.fillColumn(wall, height, palette.wallFace);
+    // Its bands run on round the front face too.
+    painter.lineStyle(line * FRAME_WIDTH, GATE_DOOR_LOOK.band, 1);
+    for (const { from, to } of southFacingEdges(wall)) {
+      for (const share of [0.25, 0.75]) {
+        painter.lineBetween(from.x, from.y - height * share, to.x, to.y - height * share);
+      }
+    }
   }
   painter.save();
   painter.translateCanvas(0, -height);
   painter.fillStyle(palette.wallTop, 1);
   painter.fillShape(wall);
-  painter.lineStyle(line, palette.wallStroke, 1);
+  painter.lineStyle(line, GATE_DOOR_LOOK.face, 1);
+  across(painter, wall, [0.5]);
+  painter.lineStyle(line * FRAME_WIDTH, GATE_DOOR_LOOK.band, 1);
+  across(painter, wall, [0.12, 0.88]);
+  painter.lineStyle(line * FRAME_WIDTH, palette.wallStroke, 1);
   painter.strokeShape(wall);
   if (height > 0) {
     painter.lineStyle(line * LIT_WIDTH, palette.wallLit, 1);
@@ -75,37 +113,125 @@ const shut: GateArt = (painter, wall, { height, line, palette }) => {
     }
   }
   if (wall.kind === "rect") {
-    painter.lineStyle(line * KNOB_WIDTH, GATE_DOOR_LOOK.knob, 1);
-    const { x, y, width, height: depth } = wall;
-    if (depth >= width) {
-      painter.lineBetween(x + width / 4, y + depth / 2, x + (width * 3) / 4, y + depth / 2);
-    } else {
-      painter.lineBetween(x + width / 2, y + depth / 4, x + width / 2, y + (depth * 3) / 4);
-    }
+    painter.fillStyle(GATE_DOOR_LOOK.knob, 1);
+    painter.fillShape(knobOf(wall));
   }
   painter.restore();
 };
 
-/** No body: a faint amber fill and a dashed outline on the ground, where it closes. */
-const open: GateArt = (painter, wall, { line }) => {
-  painter.fillStyle(GATE_DOOR_LOOK.body, GHOST_FILL_ALPHA);
+/** The knob, a small brass square beside the leaves' meeting line. */
+function knobOf(wall: RenderableShape & { kind: "rect" }): RenderableShape {
+  const size = Math.min(wall.width, wall.height) * 0.3;
+  const { x, y } = { x: wall.x + wall.width / 2, y: wall.y + wall.height / 2 };
+  return wall.height >= wall.width
+    ? { kind: "rect", x: x - size / 2, y: y + size * 0.4, width: size, height: size }
+    : { kind: "rect", x: x + size * 0.4, y: y - size / 2, width: size, height: size };
+}
+
+/** Where the two leaves lie swung open: thin slabs flat along the walls beyond each end. */
+export function openLeaves(wall: RenderableShape): readonly RenderableShape[] {
+  const axis = doorAxis(wall);
+  if (axis === undefined || wall.kind !== "rect") {
+    return [];
+  }
+  const leaf = axis.length / 2;
+  // On the camera's side of the wall line, so the leaves are seen.
+  return axis.along === "y"
+    ? [
+        {
+          kind: "rect",
+          x: wall.x + wall.width,
+          y: wall.y - leaf,
+          width: LEAF_THICKNESS,
+          height: leaf,
+        },
+        {
+          kind: "rect",
+          x: wall.x + wall.width,
+          y: wall.y + wall.height,
+          width: LEAF_THICKNESS,
+          height: leaf,
+        },
+      ]
+    : [
+        {
+          kind: "rect",
+          x: wall.x - leaf,
+          y: wall.y + wall.height,
+          width: leaf,
+          height: LEAF_THICKNESS,
+        },
+        {
+          kind: "rect",
+          x: wall.x + wall.width,
+          y: wall.y + wall.height,
+          width: leaf,
+          height: LEAF_THICKNESS,
+        },
+      ];
+}
+
+/** Swung aside: a dark sill where it closes, iron jambs at its ends, and its leaves against the walls. */
+const open: GateArt = (painter, wall, { height, line, palette }) => {
+  painter.fillStyle(GATE_DOOR_LOOK.sill, SILL_ALPHA);
   painter.fillShape(wall);
-  painter.lineStyle(line * 2, GATE_DOOR_LOOK.body, GHOST_STROKE_ALPHA);
-  const outline = shapeOutline(wall);
-  outline.forEach((from, k) => {
-    const to = outline[(k + 1) % outline.length] ?? from;
-    const length = Math.hypot(to.x - from.x, to.y - from.y);
-    for (let at = 0; at < length; at += DASH + GAP) {
-      const end = Math.min(at + DASH, length);
-      painter.lineBetween(
-        from.x + ((to.x - from.x) * at) / length,
-        from.y + ((to.y - from.y) * at) / length,
-        from.x + ((to.x - from.x) * end) / length,
-        from.y + ((to.y - from.y) * end) / length,
-      );
+  painter.lineStyle(line * FRAME_WIDTH, palette.wallStroke, 1);
+  across(painter, wall, [0, 1]);
+  const rise = height * LEAF_RISE;
+  for (const leaf of openLeaves(wall)) {
+    if (rise > 0) {
+      painter.fillColumn(leaf, rise, palette.wallFace);
     }
-  });
+    painter.save();
+    painter.translateCanvas(0, -rise);
+    painter.fillStyle(palette.wallTop, 1);
+    painter.fillShape(leaf);
+    painter.lineStyle(line, palette.wallStroke, 1);
+    painter.strokeShape(leaf);
+    painter.restore();
+  }
 };
 
 /** A gate's look, by whether it stands open. */
 export const GATE_ART: { readonly shut: GateArt; readonly open: GateArt } = { shut, open };
+
+/** The few drawing calls a pressure plate needs, in Phaser `Graphics` terms. */
+export interface PlatePainter {
+  fillStyle(colour: number, alpha: number): void;
+  lineStyle(width: number, colour: number, alpha: number): void;
+  fillEllipse(x: number, y: number, width: number, height: number): void;
+  strokeEllipse(x: number, y: number, width: number, height: number): void;
+}
+
+/** A plate's stone disc, in world units, and how far it sinks held. */
+const PLATE_WIDTH = 30;
+const PLATE_DEPTH = 12;
+const PLATE_LIFT = 3;
+
+/**
+ * A gate's pressure plate (#3053): a stone disc with a front face, standing
+ * proud; held, it sinks flush, its face gone, and its ring turns brass.
+ */
+export function paintPlate(
+  painter: PlatePainter,
+  at: { x: number; y: number },
+  held: boolean,
+  line: number,
+): void {
+  const { x, y } = at;
+  if (!held) {
+    painter.fillStyle(GATE_DOOR_LOOK.plateFace, 1);
+    painter.fillEllipse(x, y, PLATE_WIDTH, PLATE_DEPTH);
+  }
+  const top = held ? y : y - PLATE_LIFT;
+  painter.fillStyle(held ? GATE_DOOR_LOOK.plateHeld : GATE_DOOR_LOOK.plate, 1);
+  painter.fillEllipse(x, top, PLATE_WIDTH, PLATE_DEPTH);
+  painter.lineStyle(line, GATE_DOOR_LOOK.plateOutline, 1);
+  painter.strokeEllipse(x, top, PLATE_WIDTH, PLATE_DEPTH);
+  painter.lineStyle(
+    line * (held ? 2 : 1),
+    held ? GATE_DOOR_LOOK.knob : GATE_DOOR_LOOK.plateFace,
+    1,
+  );
+  painter.strokeEllipse(x, top, PLATE_WIDTH * 0.55, PLATE_DEPTH * 0.55);
+}

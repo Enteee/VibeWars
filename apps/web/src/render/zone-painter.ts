@@ -30,7 +30,7 @@ interface ZonePalette {
   readonly accent: string;
 }
 
-const PALETTE: Record<Exclude<ZonePainterId, "flat">, ZonePalette> = {
+const PALETTE: Record<Exclude<ZonePainterId, "hazard">, ZonePalette> = {
   lava: { base: "#2a1410", mid: "#7a2a10", accent: "#ffb03d" },
   embers: { base: "#1c1614", mid: "#3a2a22", accent: "#ff6a2a" },
   fog: { base: "#7fbf2a", mid: "#a8d84a", accent: "#e0f58a" },
@@ -47,7 +47,7 @@ const PALETTE: Record<Exclude<ZonePainterId, "flat">, ZonePalette> = {
  * shows a little floor; fog and the spire's wash are translucent in
  * their own paint, so bodies and floor show through.
  */
-const GROUND_ALPHA: Record<Exclude<ZonePainterId, "flat">, number> = {
+const GROUND_ALPHA: Record<Exclude<ZonePainterId, "hazard">, number> = {
   lava: 1,
   embers: 1,
   fog: 1,
@@ -77,7 +77,7 @@ export interface ZonePuff {
 
 /** Everything a zone's ground needs, worked out once per map. */
 export interface ZoneArt {
-  readonly painter: Exclude<ZonePainterId, "flat">;
+  readonly painter: Exclude<ZonePainterId, "hazard">;
   readonly outline: readonly Vec2[];
   readonly bounds: {
     readonly left: number;
@@ -159,10 +159,10 @@ function crack(random: () => number, outline: readonly Vec2[], start: Vec2): Vec
   return points;
 }
 
-/** `zone`'s art, the `index`th on its map; `undefined` for a kind still drawn flat. */
+/** `zone`'s art, the `index`th on its map; `undefined` for a hazard, which is its mark. */
 export function zoneArtOf(zone: MapZone, index: number): ZoneArt | undefined {
   const painter = ZONE_LOOK[zone.kind].painter;
-  if (painter === "flat") {
+  if (painter === "hazard") {
     return undefined;
   }
   const outline = shapeOutline(zone.area);

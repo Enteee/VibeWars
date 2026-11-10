@@ -266,9 +266,9 @@ test("Wilds: a double right click on the lever opens the side room's door, and y
     return Math.hypot(x - world.x, y - world.y) <= reach;
   };
 
-  // A shut door is an amber box at wall height; an open one only a faint
-  // ghost (#3061). Its top face, a wall's height up: of its 244..260 x 680..760,
-  // a point north of the knob line across its middle, read with the camera by
+  // A shut door is an oak box at wall height; an open one swung aside over
+  // a dark sill (#3061, #3053). Its top face, a wall's height up: of its
+  // 244..260 x 680..760, a point between its iron bands, north of its seam, read with the camera by
   // the lever, clear of the HUD.
   const doorTop = { x: 252, y: 700 - 28 };
   const amber = async (): Promise<boolean> => {

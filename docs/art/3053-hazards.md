@@ -12,7 +12,7 @@ Rules the study holds:
   `#4d4943`, `#34312c` in shade), a lit top plane `#b4ad9f`, a pale rim `#e6dfd0`
   on the NW edge, a cast shadow to the SE. Stone outline `#23211d`. Rocks of
   one map share these tones.
-- **Telegraph = the 2.5 x edge ring** (`strikeZoneLook`), in the kind's
+- **Telegraph = the 2.5 x edge ring** (`strikeEdgeScale`), in the kind's
   `ZONE_LOOK` edge colour (vent `#ffb03d`, spout `#e6ff6a`, rockfall `#d8d0c0`), plus one extra cue that is not colour: sparks (vent), wisps (spout),
   a darkening shadow (rockfall). It reads on lava because the ring is the
   brightest thing and the cue moves.
