@@ -269,7 +269,7 @@ export default {
   "combat.sourceShrine": "زیارتگاه",
   "combat.sourceSkill": "یک مهارت",
   "combat.sourceWeapon": "یک سلاح",
-  "combat.sourceZone": "خطر محیطی",
+  "combat.sourceZone": "زمین",
   "combat.spellFailed": "{skill} {target} ناموفق بود",
   "combat.statusApplied": "{target} {status} گرفت ({seconds} ثانیه)",
   "combat.statusAppliedMaintained": "{target} {status} گرفت (پایدار)",
@@ -1383,11 +1383,21 @@ export default {
     "اینکه ارتفاع جایی برای جنگیدن است: سکوها کسانی را که زیرشان هستند پنهان می‌کنند، شیب‌ها تنها راه میان لایه‌ها هستند، و تیر کمان خودت از بالا محکم‌تر می‌خورد.",
   "training.scenario.wilds.label": "طبیعت وحشی",
   "training.scenario.wilds.teaches":
-    "اینکه خود زمین هم می‌تواند آسیب بزند: زمین سوخته هر کسی را که در آن بایستد می‌سوزاند، و سوختن پس از بیرون آمدن ادامه دارد، پس دورش بزن.",
+    "اینکه خود زمین مهم است: زمین سوخته، گدازه، مه سمی، باتلاق، آب گندیده و آلوده و مناره‌هایی که انرژی را می‌مکند به تو آسیب می‌زنند یا کندت می‌کنند، اما چشمه‌ها درمان می‌کنند و بیشه‌ها سریع‌ترت می‌کنند. اهرم‌ها دروازه‌ها را باز می‌کنند.",
   "training.soundOff": "صدا خاموش شد.",
   "training.soundOn": "صدا روشن شد.",
   "training.you": "تو",
 
   "weaponSets.empty": "ست سلاح {number}: خالی",
   "weaponSets.holds": "ست سلاح {number}: {gear}",
+
+  "zone.draining-spire": "مناره‌ی مکنده",
+  "zone.foul-water": "آب گندیده",
+  "zone.grove": "بیشه",
+  "zone.mire": "باتلاق",
+  "zone.molten": "گدازه",
+  "zone.scorched": "زمین سوخته",
+  "zone.spring": "چشمه",
+  "zone.tainted-water": "آب آلوده",
+  "zone.toxic-fog": "مه سمی",
 } satisfies Catalog;

@@ -243,7 +243,7 @@ export default {
   "combat.sourceShrine": "성소",
   "combat.sourceSkill": "스킬",
   "combat.sourceWeapon": "무기",
-  "combat.sourceZone": "위험 지대",
+  "combat.sourceZone": "땅",
   "combat.spellFailed": "{target}의 {skill} 실패",
   "combat.statusApplied": "{target}에게 {status} 적용 ({seconds}초)",
   "combat.statusAppliedMaintained": "{target}에게 {status} 적용 (유지)",
@@ -1305,11 +1305,21 @@ export default {
     "높이는 싸움의 거점이에요: 데크는 아래에 있는 자를 숨기고, 경사로만이 층 사이를 잇고, 위에서 쏜 활은 더 세게 맞아요.",
   "training.scenario.wilds.label": "황야",
   "training.scenario.wilds.teaches":
-    "땅 자체가 해를 줄 수 있다는 것: 그을린 땅은 그 위에 선 누구든 불태우고, 벗어난 뒤에도 화상이 이어지니 돌아서 가세요.",
+    "땅 자체가 중요하다는 것: 그을린 땅, 용암, 독안개, 수렁, 더러운 물과 오염된 물, 에너지를 빨아들이는 첨탑은 해를 주거나 느리게 하고, 샘은 치유하며 숲은 빠르게 해 줍니다. 레버는 문을 엽니다.",
   "training.soundOff": "소리 꺼짐.",
   "training.soundOn": "소리 켜짐.",
   "training.you": "나",
 
   "weaponSets.empty": "무기 세트 {number}: 비어 있음",
   "weaponSets.holds": "무기 세트 {number}: {gear}",
+
+  "zone.draining-spire": "흡수의 첨탑",
+  "zone.foul-water": "더러운 물",
+  "zone.grove": "숲",
+  "zone.mire": "수렁",
+  "zone.molten": "용암",
+  "zone.scorched": "그을린 땅",
+  "zone.spring": "샘",
+  "zone.tainted-water": "오염된 물",
+  "zone.toxic-fog": "독안개",
 } satisfies Catalog;

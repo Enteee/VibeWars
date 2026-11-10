@@ -289,7 +289,7 @@ export default {
   "combat.sourceShrine": "O santuário",
   "combat.sourceSkill": "uma habilidade",
   "combat.sourceWeapon": "uma arma",
-  "combat.sourceZone": "Perigo",
+  "combat.sourceZone": "Chão",
   "combat.spellFailed": "{skill} de {target} falha",
   "combat.statusApplied": "{target} recebe {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} recebe {status} (mantido)",
@@ -1458,11 +1458,21 @@ export default {
     "Que a altura é um lugar de onde lutar: plataformas escondem quem está embaixo, rampas são o único caminho entre camadas, e seu próprio tiro de arco lá de cima acerta mais forte.",
   "training.scenario.wilds.label": "Ermos",
   "training.scenario.wilds.teaches":
-    "Que o próprio chão pode ferir: o chão queimado queima quem estiver nele, e a queimadura continua depois de sair, por isso contorne-o.",
+    "Que o próprio chão importa: o chão queimado, a lava, a névoa tóxica, o lamaçal, a água fétida e a contaminada e as torres que drenam energia ferem-te ou abrandam-te, enquanto as nascentes curam e os bosques te tornam mais rápido. As alavancas abrem portões.",
   "training.soundOff": "Som desligado.",
   "training.soundOn": "Som ligado.",
   "training.you": "Você",
 
   "weaponSets.empty": "Conjunto de armas {number}: vazio",
   "weaponSets.holds": "Conjunto de armas {number}: {gear}",
+
+  "zone.draining-spire": "Torre drenante",
+  "zone.foul-water": "Água fétida",
+  "zone.grove": "Bosque",
+  "zone.mire": "Lamaçal",
+  "zone.molten": "Lava",
+  "zone.scorched": "Chão queimado",
+  "zone.spring": "Nascente",
+  "zone.tainted-water": "Água contaminada",
+  "zone.toxic-fog": "Névoa tóxica",
 } satisfies Catalog;

@@ -289,7 +289,7 @@ export default {
   "combat.sourceShrine": "El santuario",
   "combat.sourceSkill": "una habilidad",
   "combat.sourceWeapon": "un arma",
-  "combat.sourceZone": "Peligro",
+  "combat.sourceZone": "Suelo",
   "combat.spellFailed": "{skill} de {target} falla",
   "combat.statusApplied": "{target} obtiene {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} obtiene {status} (mantenido)",
@@ -1474,11 +1474,21 @@ export default {
     "Que la altura es un lugar desde el que luchar: las plataformas ocultan a quien está debajo, las rampas son el único paso entre niveles y tu propio disparo de arco desde arriba golpea más fuerte.",
   "training.scenario.wilds.label": "Tierras salvajes",
   "training.scenario.wilds.teaches":
-    "Que el propio suelo puede herir: el suelo abrasado quema a quien lo pisa, y la quemadura sigue después de salir, así que rodéalo.",
+    "Que el propio suelo importa: el suelo abrasado, la lava, la niebla tóxica, el lodazal, el agua fétida y la contaminada, y las agujas que drenan energía te hieren o te frenan, mientras que los manantiales curan y las arboledas te dan velocidad. Las palancas abren puertas.",
   "training.soundOff": "Sin sonido.",
   "training.soundOn": "Con sonido.",
   "training.you": "Tú",
 
   "weaponSets.empty": "Set de armas {number}: vacío",
   "weaponSets.holds": "Set de armas {number}: {gear}",
+
+  "zone.draining-spire": "Aguja drenadora",
+  "zone.foul-water": "Agua fétida",
+  "zone.grove": "Arboleda",
+  "zone.mire": "Lodazal",
+  "zone.molten": "Lava",
+  "zone.scorched": "Suelo abrasado",
+  "zone.spring": "Manantial",
+  "zone.tainted-water": "Agua contaminada",
+  "zone.toxic-fog": "Niebla tóxica",
 } satisfies Catalog;

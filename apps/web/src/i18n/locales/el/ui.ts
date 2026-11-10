@@ -276,7 +276,7 @@ export default {
   "combat.sourceShrine": "Το ιερό",
   "combat.sourceSkill": "ικανότητα",
   "combat.sourceWeapon": "όπλο",
-  "combat.sourceZone": "Κίνδυνος",
+  "combat.sourceZone": "Έδαφος",
   "combat.spellFailed": "{target}: αποτυχία {skill}",
   "combat.statusApplied": "{target} αποκτά {status} ({seconds} δ)",
   "combat.statusAppliedMaintained": "{target} αποκτά {status} (συντηρείται)",
@@ -1406,11 +1406,21 @@ export default {
     "Ότι το ύψος είναι θέση μάχης: οι εξέδρες κρύβουν ποιος είναι από κάτω, οι ράμπες είναι ο μόνος δρόμος ανάμεσα στα επίπεδα, και η δική σου βολή με τόξο από ψηλά χτυπά πιο δυνατά.",
   "training.scenario.wilds.label": "Άγρια γη",
   "training.scenario.wilds.teaches":
-    "Ότι το ίδιο το έδαφος μπορεί να πληγώσει: το καμένο έδαφος καίει όποιον στέκεται πάνω του, και το κάψιμο συνεχίζεται αφού βγεις, οπότε πήγαινε γύρω του.",
+    "Ότι το ίδιο το έδαφος μετράει: το καμένο έδαφος, η λάβα, η τοξική ομίχλη, ο βάλτος, το βρόμικο και το μολυσμένο νερό και οι οβελοί που απορροφούν ενέργεια σε πληγώνουν ή σε επιβραδύνουν, ενώ οι πηγές θεραπεύουν και τα άλση σε επιταχύνουν. Οι μοχλοί ανοίγουν πύλες.",
   "training.soundOff": "Ήχος κλειστός.",
   "training.soundOn": "Ήχος ανοιχτός.",
   "training.you": "Εσύ",
 
   "weaponSets.empty": "Σετ όπλων {number}: άδειο",
   "weaponSets.holds": "Σετ όπλων {number}: {gear}",
+
+  "zone.draining-spire": "Οβελός που απορροφά",
+  "zone.foul-water": "Βρόμικο νερό",
+  "zone.grove": "Άλσος",
+  "zone.mire": "Βάλτος",
+  "zone.molten": "Λάβα",
+  "zone.scorched": "Καμένο έδαφος",
+  "zone.spring": "Πηγή",
+  "zone.tainted-water": "Μολυσμένο νερό",
+  "zone.toxic-fog": "Τοξική ομίχλη",
 } satisfies Catalog;

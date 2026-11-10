@@ -241,7 +241,7 @@ export default {
   "combat.sourceShrine": "ศาลเจ้า",
   "combat.sourceSkill": "สกิล",
   "combat.sourceWeapon": "อาวุธ",
-  "combat.sourceZone": "อันตราย",
+  "combat.sourceZone": "พื้นดิน",
   "combat.spellFailed": "{skill} ของ {target} ล้มเหลว",
   "combat.statusApplied": "{target} ได้รับ {status} ({seconds} วิ)",
   "combat.statusAppliedMaintained": "{target} ได้รับ {status} (คงไว้)",
@@ -1293,11 +1293,21 @@ export default {
     "ที่สูงคือที่สำหรับสู้: พื้นยกบังคนที่อยู่ข้างใต้ ทางลาดคือทางเดียวระหว่างชั้น และธนูของคุณที่ยิงจากที่สูงจะแรงกว่า",
   "training.scenario.wilds.label": "ป่าเถื่อน",
   "training.scenario.wilds.teaches":
-    "ว่าพื้นดินเองก็ทำร้ายได้: พื้นที่ไหม้เกรียมเผาทุกคนที่ยืนอยู่บนนั้น และการเผาไหม้ยังคงอยู่หลังจากที่คุณก้าวออกมา จงเดินอ้อม",
+    "ว่าพื้นดินเองก็สำคัญ: พื้นที่ไหม้เกรียม ลาวา หมอกพิษ หล่มโคลน น้ำเน่าและน้ำปนเปื้อน และหอที่ดูดพลังงาน ทำร้ายหรือทำให้คุณช้าลง ส่วนน้ำพุรักษาและป่าละเมาะทำให้คุณเร็วขึ้น คันโยกเปิดประตู",
   "training.soundOff": "ปิดเสียงแล้ว",
   "training.soundOn": "เปิดเสียงแล้ว",
   "training.you": "คุณ",
 
   "weaponSets.empty": "ชุดอาวุธ {number}: ว่าง",
   "weaponSets.holds": "ชุดอาวุธ {number}: {gear}",
+
+  "zone.draining-spire": "หอดูดพลัง",
+  "zone.foul-water": "น้ำเน่า",
+  "zone.grove": "ป่าละเมาะ",
+  "zone.mire": "หล่มโคลน",
+  "zone.molten": "ลาวา",
+  "zone.scorched": "พื้นที่ไหม้เกรียม",
+  "zone.spring": "น้ำพุ",
+  "zone.tainted-water": "น้ำปนเปื้อน",
+  "zone.toxic-fog": "หมอกพิษ",
 } satisfies Catalog;

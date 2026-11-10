@@ -301,7 +301,7 @@ export default {
   "combat.sourceShrine": "Святилище",
   "combat.sourceSkill": "вміння",
   "combat.sourceWeapon": "зброя",
-  "combat.sourceZone": "Небезпека",
+  "combat.sourceZone": "Земля",
   "combat.spellFailed": "{skill} у {target} не спрацьовує",
   "combat.statusApplied": "{target} отримує {status} ({seconds} с)",
   "combat.statusAppliedMaintained": "{target} отримує {status} (підтримується)",
@@ -1508,11 +1508,21 @@ export default {
     "Що висота — це місце, звідки варто битися: настили ховають тих, хто під ними, пандуси — єдиний шлях між рівнями, а ваш постріл з лука згори б'є сильніше.",
   "training.scenario.wilds.label": "Дикі землі",
   "training.scenario.wilds.teaches":
-    "Що сама земля може ранити: випалена земля підпалює кожного, хто на ній стоїть, і горіння триває після того, як ти з неї зійшов, тож обходь її.",
+    "Що сама земля має значення: випалена земля, лава, отруйний туман, трясовина, каламутна й отруєна вода та шпилі, що висмоктують енергію, ранять або сповільнюють тебе, а джерела лікують і гаї пришвидшують. Важелі відчиняють ворота.",
   "training.soundOff": "Звук вимкнено.",
   "training.soundOn": "Звук увімкнено.",
   "training.you": "Ти",
 
   "weaponSets.empty": "Набір зброї {number}: порожньо",
   "weaponSets.holds": "Набір зброї {number}: {gear}",
+
+  "zone.draining-spire": "Висмоктувальний шпиль",
+  "zone.foul-water": "Каламутна вода",
+  "zone.grove": "Гай",
+  "zone.mire": "Трясовина",
+  "zone.molten": "Лава",
+  "zone.scorched": "Випалена земля",
+  "zone.spring": "Джерело",
+  "zone.tainted-water": "Отруєна вода",
+  "zone.toxic-fog": "Отруйний туман",
 } satisfies Catalog;

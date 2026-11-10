@@ -4,6 +4,7 @@ import {
   chainRequirementText,
   getSkill,
   isZoneSourceId,
+  zoneKindOfSource,
   type CombatEvent,
   type CombatLogEntry,
   type SkillEffect,
@@ -153,6 +154,12 @@ function withLanded(effect: SkillEffect): readonly SkillEffect[] {
   }
 }
 
+/** A zone source as the log names it: "Spring", "Lava"; "Ground" when its kind is unreadable. */
+function zoneName(sourceId: string): string {
+  const kind = zoneKindOfSource(sourceId);
+  return kind === undefined ? t("combat.sourceZone") : t(`zone.${kind}`);
+}
+
 /**
  * Who or what an entry's event came from, as a row names it: "Fireball
  * (You)", "Longbow (You)" for a weapon swing (#162), "Soul Reaping (You)"
@@ -166,12 +173,12 @@ function sourceOf(
   nameOf: (id: string) => string,
   isCreature: (id: string) => boolean,
 ): { readonly by: string; readonly attribute: string | undefined } {
-  // Burning ground is the map's, nobody's (ADR-0053): named as such, never by its id.
+  // A zone is the map's, nobody's (ADR-0053): named by its kind (#3046), never by its id.
   const source =
     entry.sourceId === undefined
       ? undefined
       : isZoneSourceId(entry.sourceId)
-        ? t("combat.sourceZone")
+        ? zoneName(entry.sourceId)
         : nameOf(entry.sourceId);
   const attribute =
     entry.cause === "attribute"

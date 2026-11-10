@@ -270,7 +270,7 @@ export default {
   "combat.sourceShrine": "Helgedomen",
   "combat.sourceSkill": "en förmåga",
   "combat.sourceWeapon": "ett vapen",
-  "combat.sourceZone": "Fara",
+  "combat.sourceZone": "Mark",
   "combat.spellFailed": "{skill} hos {target} misslyckas",
   "combat.statusApplied": "{target} får {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} får {status} (underhållen)",
@@ -1383,11 +1383,21 @@ export default {
     "Att höjd är en plats att slåss från: däck döljer dem som står under, ramper är enda vägen mellan lagren, och ditt eget bågskott uppifrån träffar hårdare.",
   "training.scenario.wilds.label": "Vildmark",
   "training.scenario.wilds.teaches":
-    "Att marken själv kan skada: svedd mark bränner den som står på den, och brännandet fortsätter efter att du klivit ut, så gå runt den.",
+    "Att marken själv spelar roll: svedd mark, lava, giftig dimma, myr, smutsigt och förorenat vatten och spiror som dränerar energi skadar eller saktar ner dig, medan källor helar och lundar gör dig snabbare. Spakar öppnar portar.",
   "training.soundOff": "Ljud av.",
   "training.soundOn": "Ljud på.",
   "training.you": "Du",
 
   "weaponSets.empty": "Vapenset {number}: tomt",
   "weaponSets.holds": "Vapenset {number}: {gear}",
+
+  "zone.draining-spire": "Dränerande spira",
+  "zone.foul-water": "Smutsigt vatten",
+  "zone.grove": "Lund",
+  "zone.mire": "Myr",
+  "zone.molten": "Lava",
+  "zone.scorched": "Svedd mark",
+  "zone.spring": "Källa",
+  "zone.tainted-water": "Förorenat vatten",
+  "zone.toxic-fog": "Giftig dimma",
 } satisfies Catalog;

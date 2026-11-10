@@ -302,7 +302,7 @@ export default {
   "combat.sourceShrine": "Kapliczka",
   "combat.sourceSkill": "umiejętność",
   "combat.sourceWeapon": "broń",
-  "combat.sourceZone": "Zagrożenie",
+  "combat.sourceZone": "Ziemia",
   "combat.spellFailed": "{skill} celu {target} zawodzi",
   "combat.statusApplied": "{target} zyskuje: {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} zyskuje: {status} (podtrzymywane)",
@@ -1513,11 +1513,21 @@ export default {
     "Że wysokość to miejsce do walki: pomosty kryją tych pod nimi, rampy to jedyne przejście między poziomami, a twój strzał z łuku z góry trafia mocniej.",
   "training.scenario.wilds.label": "Dzicz",
   "training.scenario.wilds.teaches":
-    "Że sama ziemia może ranić: spalona ziemia podpala każdego, kto na niej stoi, a podpalenie trwa jeszcze po zejściu, więc ją omijaj.",
+    "Że sama ziemia ma znaczenie: spalona ziemia, lawa, trująca mgła, grzęzawisko, brudna i skażona woda oraz iglice wysysające energię ranią cię lub spowalniają, a źródła leczą i gaje cię przyspieszają. Dźwignie otwierają bramy.",
   "training.soundOff": "Dźwięk wył.",
   "training.soundOn": "Dźwięk wł.",
   "training.you": "Ty",
 
   "weaponSets.empty": "Zestaw broni {number}: pusty",
   "weaponSets.holds": "Zestaw broni {number}: {gear}",
+
+  "zone.draining-spire": "Wysysająca iglica",
+  "zone.foul-water": "Brudna woda",
+  "zone.grove": "Gaj",
+  "zone.mire": "Grzęzawisko",
+  "zone.molten": "Lawa",
+  "zone.scorched": "Spalona ziemia",
+  "zone.spring": "Źródło",
+  "zone.tainted-water": "Skażona woda",
+  "zone.toxic-fog": "Trująca mgła",
 } satisfies Catalog;

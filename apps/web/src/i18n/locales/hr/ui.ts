@@ -290,7 +290,7 @@ export default {
   "combat.sourceShrine": "Svetište",
   "combat.sourceSkill": "vještina",
   "combat.sourceWeapon": "oružje",
-  "combat.sourceZone": "Opasnost",
+  "combat.sourceZone": "Tlo",
   "combat.spellFailed": "Vještina {skill} lika {target} ne uspijeva",
   "combat.statusApplied": "{target} dobiva {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} dobiva {status} (održavano)",
@@ -1460,11 +1460,21 @@ export default {
     "Da je visina mjesto s kojeg se bori: platforme skrivaju one ispod sebe, rampe su jedini put između razina, a tvoj hitac lukom odozgo jače pogađa.",
   "training.scenario.wilds.label": "Divljina",
   "training.scenario.wilds.teaches":
-    "Da i samo tlo može ozlijediti: spaljeno tlo pali svakoga tko stoji na njemu, a gorenje traje i nakon što izađeš, pa ga zaobiđi.",
+    "Da je i samo tlo važno: spaljeno tlo, lava, otrovna magla, glib, mutna i zatrovana voda te tornjevi koji isisavaju energiju ozljeđuju te ili usporavaju, dok izvori liječe, a gajevi te ubrzavaju. Poluge otvaraju vrata.",
   "training.soundOff": "Zvuk isključen.",
   "training.soundOn": "Zvuk uključen.",
   "training.you": "Ti",
 
   "weaponSets.empty": "Komplet oružja {number}: prazan",
   "weaponSets.holds": "Komplet oružja {number}: {gear}",
+
+  "zone.draining-spire": "Isisavajući toranj",
+  "zone.foul-water": "Mutna voda",
+  "zone.grove": "Gaj",
+  "zone.mire": "Glib",
+  "zone.molten": "Lava",
+  "zone.scorched": "Spaljeno tlo",
+  "zone.spring": "Izvor",
+  "zone.tainted-water": "Zatrovana voda",
+  "zone.toxic-fog": "Otrovna magla",
 } satisfies Catalog;

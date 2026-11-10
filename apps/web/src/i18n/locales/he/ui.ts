@@ -287,7 +287,7 @@ export default {
   "combat.sourceShrine": "המקדש",
   "combat.sourceSkill": "מיומנות",
   "combat.sourceWeapon": "נשק",
-  "combat.sourceZone": "סכנה",
+  "combat.sourceZone": "קרקע",
   "combat.spellFailed": "{skill} של {target} נכשל",
   "combat.statusApplied": "{target} מקבל {status} ({seconds} שנ׳)",
   "combat.statusAppliedMaintained": "{target} מקבל {status} (מתמשך)",
@@ -1449,11 +1449,21 @@ export default {
     "שגובה הוא מקום להילחם ממנו: סיפונים מסתירים את מי שמתחתם, רמפות הן הדרך היחידה בין שכבות, והקשת שלך יורה מלמעלה חזק יותר.",
   "training.scenario.wilds.label": "שטח פרא",
   "training.scenario.wilds.teaches":
-    "שהאדמה עצמה יכולה לפגוע: אדמה חרוכה שורפת את כל מי שעומד בה, והבעירה נמשכת גם אחרי שיצאת, אז עקוף אותה.",
+    "שהאדמה עצמה חשובה: אדמה חרוכה, לבה, ערפל רעיל, ביצה, מים עכורים ומזוהמים וצריחים ששואבים אנרגיה פוגעים בך או מאטים אותך, ואילו מעיינות מרפאים וחורשות מאיצות אותך. ידיות פותחות שערים.",
   "training.soundOff": "הצליל כבוי.",
   "training.soundOn": "הצליל פועל.",
   "training.you": "אתה",
 
   "weaponSets.empty": "סט נשק {number}: ריק",
   "weaponSets.holds": "סט נשק {number}: {gear}",
+
+  "zone.draining-spire": "צריח שואב",
+  "zone.foul-water": "מים עכורים",
+  "zone.grove": "חורשה",
+  "zone.mire": "ביצה",
+  "zone.molten": "לבה",
+  "zone.scorched": "אדמה חרוכה",
+  "zone.spring": "מעיין",
+  "zone.tainted-water": "מים מזוהמים",
+  "zone.toxic-fog": "ערפל רעיל",
 } satisfies Catalog;
