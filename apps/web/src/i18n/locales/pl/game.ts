@@ -1854,6 +1854,8 @@ export default {
     "find-their-weakness": "Znajdźcie ich słabość!",
     "we-shall-return": '"Powrócimy!"',
     "burning-shield": "Płonąca Tarcza",
+    mired: "Ugrzęźnięcie",
+    fouled: "Skażenie",
     "angelic-protection": "Anielska Ochrona",
     "mystic-regeneration": "Mistyczna Regeneracja",
     "fleeting-stability": "Przelotna Stabilność",

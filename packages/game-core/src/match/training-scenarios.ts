@@ -744,8 +744,15 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     exercises: ["conditions", "movement"],
     knobs: [],
     // In the middle of the scorched strip across the lane (ADR-0053, #3024),
-    // so the burn shows on someone else first.
-    dummies: [target("in-embers", "In the embers (60 armor)", vec2(600, 400), 60)],
+    // so the burn shows on someone else first; then one in each harmful
+    // patch north and south of the lane (#3027), each with open ground round it.
+    dummies: [
+      target("in-embers", "In the embers (60 armor)", vec2(600, 400), 60),
+      target("in-lava", "In the lava (60 armor)", vec2(480, 120), 60),
+      target("in-fog", "In the fog (60 armor)", vec2(720, 120), 60),
+      target("in-mire", "In the mire (60 armor)", vec2(480, 680), 60),
+      target("in-swamp", "In the swamp (60 armor)", vec2(720, 680), 60),
+    ],
   },
 ];
 

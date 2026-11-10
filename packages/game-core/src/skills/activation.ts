@@ -528,6 +528,20 @@ function raisedBaseCost(base: number, caster: RankHolder): number {
 }
 
 /**
+ * Take what the bearer's statuses cost it per action (#3027), as a skill
+ * is paid for or a plain swing begins, never below 0: the mire's Energy.
+ */
+export function loseActionEnergy(combatant: Combatant): void {
+  const lost = combatant.statuses.active.reduce(
+    (sum, { id }) => sum + getStatusDefinition(id).energyLossOnAction,
+    0,
+  );
+  if (lost > 0) {
+    combatant.energy = Math.max(0, combatant.energy - lost);
+  }
+}
+
+/**
  * Deduct a skill's cost from the caster. Call only after `canActivate`
  * returned ok — this deliberately does not re-check affordability, so a
  * caller that skips validation produces an obviously-wrong negative
@@ -543,6 +557,7 @@ export function payCost(
   target?: Pick<Combatant, "statuses">,
 ): boolean {
   caster.energy -= energyCostOf(skill, caster, target);
+  loseActionEnergy(caster);
   if (skill.cost?.kind === "adrenaline" || losesAllAdrenaline(skill)) {
     spendAdrenaline(caster, skill, key);
   }

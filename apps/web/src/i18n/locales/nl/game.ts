@@ -1854,6 +1854,8 @@ export default {
     "find-their-weakness": "Zoek hun zwakte!",
     "we-shall-return": '"We keren terug!"',
     "burning-shield": "Brandend schild",
+    mired: "Vastgezogen",
+    fouled: "Bezoedeld",
     "angelic-protection": "Engelachtige bescherming",
     "mystic-regeneration": "Mystieke regeneratie",
     "fleeting-stability": "Vluchtige stabiliteit",

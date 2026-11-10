@@ -14,6 +14,11 @@ describe("ZONE_LOOK (ADR-0053, #3024)", () => {
     }
   });
 
+  it("gives every kind its own fill, so each is told apart (#3027)", () => {
+    const fills = ZONE_KINDS.map((kind) => ZONE_LOOK[kind].fill);
+    expect(new Set(fills).size).toBe(fills.length);
+  });
+
   it("holds still when the player asks for less motion", () => {
     const look = ZONE_LOOK.scorched;
     expect(zoneFillAlpha(look, 0.4, true)).toBe(look.alpha);

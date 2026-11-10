@@ -1854,6 +1854,8 @@ export default {
     "find-their-weakness": "Trouvez leur faiblesse !",
     "we-shall-return": '"Nous reviendrons !"',
     "burning-shield": "Bouclier ardent",
+    mired: "Enlisé",
+    fouled: "Souillé",
     "angelic-protection": "Protection angélique",
     "mystic-regeneration": "Régénération mystique",
     "fleeting-stability": "Stabilité fugace",

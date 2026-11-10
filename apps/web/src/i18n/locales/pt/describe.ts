@@ -92,6 +92,7 @@ const CATEGORY: Record<StatusCategory, readonly [string, string]> = {
   item: ["item", "itens"],
   form: ["forma", "formas"],
   "skill-effect": ["efeito de habilidade", "efeitos de habilidade"],
+  environment: ["efeito ambiental", "efeitos ambientais"],
 };
 
 function categoryOne(category: StatusCategory): string {

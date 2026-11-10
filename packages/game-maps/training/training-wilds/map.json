@@ -25,6 +25,30 @@
       "kind": "scorched",
       "layer": 0,
       "area": { "kind": "rect", "x": 560, "y": 250, "width": 80, "height": 300 }
+    },
+    {
+      "id": "north-lava",
+      "kind": "molten",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 440, "y": 80, "width": 80, "height": 80 }
+    },
+    {
+      "id": "north-fog",
+      "kind": "toxic-fog",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 680, "y": 80, "width": 80, "height": 80 }
+    },
+    {
+      "id": "south-mire",
+      "kind": "mire",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 440, "y": 640, "width": 80, "height": 80 }
+    },
+    {
+      "id": "south-swamp",
+      "kind": "foul-water",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 680, "y": 640, "width": 80, "height": 80 }
     }
   ],
   "gates": [

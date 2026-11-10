@@ -8,22 +8,27 @@ import type { Vec2 } from "../vec2.js";
  * so balance stays in one place and maps stay data.
  */
 
-/** Every kind of zone a map may name: burning ground first, more card by card (#3022). */
-export const ZONE_KINDS = ["scorched"] as const;
+/** Every kind of zone a map may name: harmful ground (#3024, #3027), more card by card (#3022). */
+export const ZONE_KINDS = ["scorched", "molten", "toxic-fog", "mire", "foul-water"] as const;
 
 export type ZoneKind = (typeof ZONE_KINDS)[number];
 
 /**
- * What a kind does: a body in it bears `status`, refreshed every tick to
- * `lingerSeconds`, so it runs on that long once the body steps out.
+ * What a kind does: a body in it bears each of `statuses`, refreshed every
+ * tick to `lingerSeconds`, so they run on that long once the body steps out.
  */
 export interface ZoneRule {
-  readonly status: StatusId;
+  readonly statuses: readonly StatusId[];
   readonly lingerSeconds: number;
 }
 
 export const ZONE_RULES: Readonly<Record<ZoneKind, ZoneRule>> = {
-  scorched: { status: "burning", lingerSeconds: 3 },
+  scorched: { statuses: ["burning"], lingerSeconds: 3 },
+  // GW1's environment effects: Lava, Acid Trap's gas, Quicksand, Swamp Water.
+  molten: { statuses: ["burning", "crippled"], lingerSeconds: 3 },
+  "toxic-fog": { statuses: ["poison"], lingerSeconds: 5 },
+  mire: { statuses: ["mired"], lingerSeconds: 1 },
+  "foul-water": { statuses: ["fouled"], lingerSeconds: 1 },
 };
 
 /** A zone as the simulation takes it: its area as one polygon, on one layer. */

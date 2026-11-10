@@ -27,6 +27,7 @@ const CATEGORY: Record<Category, Noun> = {
   item: { one: "oggetto", many: "oggetti", feminine: false },
   form: { one: "forma", many: "forme", feminine: true },
   "skill-effect": { one: "effetto di abilità", many: "effetti di abilità", feminine: false },
+  environment: { one: "effetto ambientale", many: "effetti ambientali", feminine: false },
 };
 
 /** The plural of each head noun a description pluralizes; stops at a preposition. */

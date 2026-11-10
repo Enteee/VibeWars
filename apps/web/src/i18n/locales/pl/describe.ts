@@ -183,6 +183,15 @@ const CATEGORY: Record<Category, CategoryForms> = {
     many: "efektów umiejętności",
     gender: "m",
   },
+  environment: {
+    one: "efekt otoczenia",
+    acc: "efekt otoczenia",
+    gen: "efektu otoczenia",
+    loc: "efekcie otoczenia",
+    few: "efekty otoczenia",
+    many: "efektów otoczenia",
+    gender: "m",
+  },
 };
 
 const CATEGORY_ID =

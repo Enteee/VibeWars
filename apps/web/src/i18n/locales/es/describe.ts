@@ -51,6 +51,7 @@ const CATEGORY: Record<Category, readonly [string, string, "un" | "una"]> = {
   item: ["objeto", "objetos", "un"],
   form: ["forma", "formas", "una"],
   "skill-effect": ["efecto de habilidad", "efectos de habilidad", "un"],
+  environment: ["efecto ambiental", "efectos ambientales", "un"],
 };
 
 function isCategory(word: string): word is Category {

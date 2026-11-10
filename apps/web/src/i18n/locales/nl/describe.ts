@@ -39,6 +39,7 @@ const CATEGORY: Record<Category, { readonly one: string; readonly many: string }
   item: { one: "voorwerp", many: "voorwerpen" },
   form: { one: "gedaante", many: "gedaanten" },
   "skill-effect": { one: "skilleffect", many: "skilleffecten" },
+  environment: { one: "omgevingseffect", many: "omgevingseffecten" },
 };
 
 /** Category ids that reach a sentence raw, joined with this file's own "of". */

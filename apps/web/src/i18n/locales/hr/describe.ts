@@ -156,6 +156,15 @@ const CATEGORY: Record<Category, CategoryForms> = {
     pl: "učinke vještina",
     gender: "m",
   },
+  environment: {
+    one: "učinak okoliša",
+    acc: "učinak okoliša",
+    loc: "učinku okoliša",
+    few: "učinka okoliša",
+    many: "učinaka okoliša",
+    pl: "učinke okoliša",
+    gender: "m",
+  },
 };
 
 /** Which form a count takes: 1 the singular, 2 to 4 the paucal, others the genitive plural. */
