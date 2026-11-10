@@ -237,6 +237,7 @@ describe("status definitions", () => {
       disease: -4,
       faintheartedness: -2,
       "parasitic-bond": -1,
+      fouled: -1,
       mending: 3,
       regeneration: 4,
       "weapon-of-warding": 4,

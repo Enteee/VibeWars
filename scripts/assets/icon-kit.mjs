@@ -16,6 +16,7 @@ export const C = {
   preparation: "#e3b341",
   glyph: "#c3e88d",
   weaponSpell: "#8b9cff",
+  environment: "#3fb950",
   warrior: "#e3b341",
   ranger: "#8fd36b",
   monk: "#9ecbff",
@@ -67,7 +68,7 @@ export const germ = (c) =>
     .join("");
 
 /** @typedef {(colour: string) => string} Glyph */
-/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "echo" | "weapon-spell" | "item" | "form" | "skill-effect"} Category */
+/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "echo" | "weapon-spell" | "item" | "form" | "skill-effect" | "environment"} Category */
 
 const BOLT = "M0 0L-4.5 7H-1L-2.5 13L4 4.5H0.5L2.5 0Z";
 

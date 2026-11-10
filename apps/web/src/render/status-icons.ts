@@ -8,7 +8,7 @@ import { STATUS_ICON_SIZE } from "./arena-atlas.js";
  * An icon's plate shape says its category (condition: circle, hex: diamond,
  * enchantment: rounded square, stance: pentagon, preparation: triangle
  * point up, glyph: triangle point down, shout: hexagon, chant: banner,
- * weapon spell: shield, skill effect: wide capsule, environment: octagon)
+ * weapon spell: shield, skill effect: wide capsule, environment: slanted patch of ground)
  * and is baked into the SVG, so the scene
  * draws no plates of its own. Shape and glyph carry the meaning; colour
  * only backs them up, which is the point for a colour-blind player.
