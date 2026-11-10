@@ -7735,12 +7735,6 @@ export class MatchSimulation {
   }
 
   /**
-   * Every death in `events` drops the victim's cast, so a resurrection
-   * (#812) never finishes it, scores for the other side and starts its
-   * respawn; a creature's does neither, and it leaves (#1052). Read from the emitted events so every death routes through
-   * one place, whether a skill, a swing or degeneration caused it.
-   */
-  /**
    * Each zone `record` stands in, on its layer, puts its kind's status on
    * it again for the kind's linger (ADR-0053), in the map's order. A spirit
    * stands where it was raised and is spared; the dead were skipped already.
@@ -7756,6 +7750,12 @@ export class MatchSimulation {
     }
   }
 
+  /**
+   * Every death in `events` drops the victim's cast, so a resurrection
+   * (#812) never finishes it, scores for the other side and starts its
+   * respawn; a creature's does neither, and it leaves (#1052). Read from the emitted events so every death routes through
+   * one place, whether a skill, a swing or degeneration caused it.
+   */
   #recordDeaths(events: readonly CombatEvent[]): void {
     const fallen: { victim: ParticipantRecord; conditions: ActiveStatus[] }[] = [];
     const pacts: { sourceId: string; skillId: string | undefined }[] = [];
