@@ -17,6 +17,8 @@ export { clampInputDirection, integrateMovement } from "./movement.js";
 
 export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
 export { beaconStrikeArea } from "./match/beacon.js";
+export { isZoneSourceId, ZONE_KINDS, ZONE_RULES, zonesHolding } from "./match/zones.js";
+export type { MatchZone, ZoneKind, ZoneRule } from "./match/zones.js";
 
 export type { Polygon, Segment } from "./geometry.js";
 export { pointInPolygon, progressAlong } from "./geometry.js";

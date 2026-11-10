@@ -300,6 +300,7 @@ export default {
   "combat.sourceShrine": "Svätyňa",
   "combat.sourceSkill": "schopnosť",
   "combat.sourceWeapon": "zbraň",
+  "combat.sourceZone": "Nebezpečenstvo",
   "combat.spellFailed": "{skill} cieľa {target} zlyháva",
   "combat.statusApplied": "{target} získava {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} získava {status} (udržiavané)",

@@ -269,6 +269,7 @@ export default {
   "combat.sourceShrine": "Helligdommen",
   "combat.sourceSkill": "en evne",
   "combat.sourceWeapon": "et våben",
+  "combat.sourceZone": "Fare",
   "combat.spellFailed": "{skill} hos {target} mislykkes",
   "combat.statusApplied": "{target} får {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} får {status} (vedligeholdt)",

@@ -242,6 +242,7 @@ export default {
   "combat.sourceShrine": "Kuil",
   "combat.sourceSkill": "sebuah skill",
   "combat.sourceWeapon": "sebuah senjata",
+  "combat.sourceZone": "Bahaya",
   "combat.spellFailed": "{skill} milik {target} gagal",
   "combat.statusApplied": "{target} mendapat {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} mendapat {status} (dipertahankan)",

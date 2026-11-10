@@ -272,6 +272,7 @@ export const en = {
   "combat.sourceShrine": "The shrine",
   "combat.sourceSkill": "a skill",
   "combat.sourceWeapon": "a weapon",
+  "combat.sourceZone": "Hazard",
   "combat.spellFailed": "{target}'s {skill} fails",
   "combat.statusApplied": "{target} gains {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} gains {status} (maintained)",

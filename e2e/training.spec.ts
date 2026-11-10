@@ -215,6 +215,23 @@ test("picking Heights loads its arena with no console error (#2937)", async ({ p
   expect(errors).toEqual([]);
 });
 
+test("Wilds' scorched strip burns the dummy in it, logged as a hazard (#3024)", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+  await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("wilds");
+  await expect(page.locator(".training-log")).toContainText("── Wilds ──");
+  await expect(page.locator(".training-log")).toContainText(
+    "degeneration (Hazard) hits In the embers (60 armor)",
+  );
+  expect(errors).toEqual([]);
+});
+
 test("Heights draws its water: the deep pond darker than the floor, a puddle paler (#2985)", async ({
   page,
 }) => {

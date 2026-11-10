@@ -301,6 +301,7 @@ export default {
   "combat.sourceShrine": "Святилище",
   "combat.sourceSkill": "вміння",
   "combat.sourceWeapon": "зброя",
+  "combat.sourceZone": "Небезпека",
   "combat.spellFailed": "{skill} у {target} не спрацьовує",
   "combat.statusApplied": "{target} отримує {status} ({seconds} с)",
   "combat.statusAppliedMaintained": "{target} отримує {status} (підтримується)",

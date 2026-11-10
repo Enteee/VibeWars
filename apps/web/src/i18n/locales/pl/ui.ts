@@ -302,6 +302,7 @@ export default {
   "combat.sourceShrine": "Kapliczka",
   "combat.sourceSkill": "umiejętność",
   "combat.sourceWeapon": "broń",
+  "combat.sourceZone": "Zagrożenie",
   "combat.spellFailed": "{skill} celu {target} zawodzi",
   "combat.statusApplied": "{target} zyskuje: {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} zyskuje: {status} (podtrzymywane)",

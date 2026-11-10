@@ -20,6 +20,7 @@ export type RenderItem =
   | { readonly kind: "floor" }
   | { readonly kind: "pit" }
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
+  | { readonly kind: "zone"; readonly layer: number }
   | { readonly kind: "ground-effect"; readonly layer: number }
   | { readonly kind: "terrain" }
   | { readonly kind: "lighting"; readonly layer: number }
@@ -67,6 +68,13 @@ const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, mar
  */
 const GROUND_WATER: Record<WaterPart, number> = { surface: -1.6, ripples: -1.5 };
 const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
+/**
+ * An effect zone (ADR-0053): over its layer's water and lighting, which
+ * never darkens it (ADR-0052: what matters to the fight is drawn unlit),
+ * and under its torches and whoever stands in it.
+ */
+const GROUND_ZONE = 0.55;
+const DECK_ZONE = 5.85;
 const WALL = 2;
 const SUPPORT = 3;
 const SIDE_FACE = 4;
@@ -89,6 +97,8 @@ export function renderOrder(item: RenderItem): number {
       return item.layer === 0
         ? GROUND_WATER[item.part]
         : (item.layer - 1) * LAYER_STACK + DECK_WATER[item.part];
+    case "zone":
+      return item.layer === 0 ? GROUND_ZONE : (item.layer - 1) * LAYER_STACK + DECK_ZONE;
     case "ground-effect":
       return item.layer === 0 ? -1 : item.layer * LAYER_STACK + DECK_GROUND_EFFECT;
     case "lighting":

@@ -289,6 +289,7 @@ export default {
   "combat.sourceShrine": "El santuario",
   "combat.sourceSkill": "una habilidad",
   "combat.sourceWeapon": "un arma",
+  "combat.sourceZone": "Peligro",
   "combat.spellFailed": "{skill} de {target} falla",
   "combat.statusApplied": "{target} obtiene {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} obtiene {status} (mantenido)",

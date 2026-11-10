@@ -2147,6 +2147,7 @@ export default {
     "training-hall": "Sala Treningowa",
     "training-pillars": "Filary Treningowe",
     "training-heights": "Wzgórza Treningowe",
+    "training-wilds": "Dzicz Treningowa",
     "training-field": "Pole Treningowe",
   },
 } satisfies GameNames;

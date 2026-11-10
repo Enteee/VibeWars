@@ -197,3 +197,35 @@ describe("a ground over pits (#2973)", () => {
     expect(new Set(orders).size).toBe(items.length);
   });
 });
+
+describe("an effect zone's place in the order (ADR-0053, #3024)", () => {
+  it("draws a ground zone over the ground's water and light, under its torches and bodies", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "floor" },
+      { kind: "water", layer: 0, part: "ripples" },
+      { kind: "lighting", layer: 0 },
+      { kind: "zone", layer: 0 },
+      { kind: "lit-ground-effect" },
+      { kind: "light-mark", layer: 0 },
+      { kind: "character", band: characterBand(0, 1), part: "body" },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
+  });
+
+  it("draws a deck's zone over its water and light, under its wards, torches and whoever stands there", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "deck", deckLayer: 1 },
+      { kind: "water", layer: 1, part: "ripples" },
+      { kind: "lighting", layer: 1 },
+      { kind: "zone", layer: 1 },
+      { kind: "ground-effect", layer: 1 },
+      { kind: "light-mark", layer: 1 },
+      { kind: "character", band: 1, part: "body" },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
+  });
+});

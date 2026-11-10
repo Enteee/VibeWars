@@ -299,6 +299,7 @@ export default {
   "combat.sourceShrine": "Святилище",
   "combat.sourceSkill": "навык",
   "combat.sourceWeapon": "оружие",
+  "combat.sourceZone": "Опасность",
   "combat.spellFailed": "{skill} ({target}): неудача",
   "combat.statusApplied": "{target} получает {status} ({seconds} с)",
   "combat.statusAppliedMaintained": "{target} получает {status} (поддерживается)",

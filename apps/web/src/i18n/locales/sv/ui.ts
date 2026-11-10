@@ -270,6 +270,7 @@ export default {
   "combat.sourceShrine": "Helgedomen",
   "combat.sourceSkill": "en förmåga",
   "combat.sourceWeapon": "ett vapen",
+  "combat.sourceZone": "Fara",
   "combat.spellFailed": "{skill} hos {target} misslyckas",
   "combat.statusApplied": "{target} får {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} får {status} (underhållen)",

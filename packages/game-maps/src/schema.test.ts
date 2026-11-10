@@ -11,6 +11,7 @@ import {
   MAX_LIGHTS,
   MAX_WATER_BODIES,
   MAX_WATER_POINTS,
+  MAX_ZONES,
   MapValidationError,
   mapDataSchema,
   validateMapData,
@@ -208,20 +209,22 @@ describe("every training map", () => {
   // RANGE_SPELL in game-core's skill catalog.
   const RANGE_SPELL = 420;
 
-  it("ships the open hall, the pillared one and the open field", () => {
+  it("ships the open hall, the pillared one, the open field, the heights and the wilds", () => {
     expect(maps.map(({ map }) => map.id).sort()).toEqual([
       "training-field",
       "training-hall",
       "training-heights",
       "training-pillars",
+      "training-wilds",
     ]);
   });
 
   it("is named for its directory, compact, and spawns one player against dummy slots", () => {
     for (const { dir, map } of maps) {
       expect(map.id).toBe(dir);
-      // The field (#497) is big enough to run in, the heights (#2937) to climb in.
-      const roomy = map.id === "training-field" || map.id === "training-heights";
+      // The field (#497) is big enough to run in, the heights (#2937) to climb in,
+      // the wilds (#3024) to walk between its zones.
+      const roomy = ["training-field", "training-heights", "training-wilds"].includes(map.id);
       expect(map.width, map.id).toBeLessThanOrEqual(roomy ? 1400 : 600);
       expect(map.height, map.id).toBeLessThanOrEqual(roomy ? 900 : 450);
       expect(
@@ -1328,5 +1331,58 @@ describe("below the ground: pits and tunnels (#2973)", () => {
       },
       /transitions\.3\.area: transition 3 is 30\.0 wide/,
     );
+  });
+});
+
+describe("effect zones (ADR-0053, #3024)", () => {
+  const strip = (overrides: object = {}) => ({
+    id: "strip",
+    kind: "scorched",
+    layer: 0,
+    area: { kind: "rect", x: 200, y: 600, width: 60, height: 100 },
+    ...overrides,
+  });
+  const accepts = (zones: unknown[]): void => {
+    expect(() => validateMapData({ ...layerTest, zones })).not.toThrow();
+  };
+  const refuses = (zones: unknown[], message: RegExp): void => {
+    expect(() => validateMapData({ ...layerTest, zones })).toThrow(message);
+  };
+
+  it("is optional, and may be a rectangle or a polygon on any of the map's layers", () => {
+    expect(validateMapData(layerTest).zones).toBeUndefined();
+    accepts([
+      strip(),
+      strip({
+        id: "wedge",
+        layer: 1,
+        area: {
+          kind: "polygon",
+          points: [
+            { x: 0, y: 0 },
+            { x: 80, y: 0 },
+            { x: 0, y: 80 },
+          ],
+        },
+      }),
+    ]);
+  });
+
+  it("refuses a layer the map has not, and a used id", () => {
+    refuses([strip({ layer: 2 })], /zones\.0\.layer: layer 2/);
+    refuses([strip(), strip()], /zones\.1\.id: zone id strip is used twice/);
+  });
+
+  it("refuses a kind game-core has no rule for, and an area off the map", () => {
+    refuses([strip({ kind: "lava" })], /zones\.0\.kind/);
+    refuses(
+      [strip({ area: { kind: "rect", x: -10, y: 0, width: 50, height: 50 } })],
+      /zone strip is outside the map/,
+    );
+  });
+
+  it("holds at most MAX_ZONES", () => {
+    const many = Array.from({ length: MAX_ZONES + 1 }, (_, at) => strip({ id: `z-${String(at)}` }));
+    refuses(many, /zones: /);
   });
 });

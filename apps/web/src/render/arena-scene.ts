@@ -170,6 +170,7 @@ import {
 } from "./lighting-model.js";
 import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
 import { waterShapeOf, type WaterShape } from "./water-shape.js";
+import { ZONE_EDGE_WIDTH, ZONE_LOOK, zoneFillAlpha } from "./zone-look.js";
 import { screenPx, screenSized } from "./screen-text.js";
 import {
   BODY_EDGE_WIDTH,
@@ -350,6 +351,8 @@ export class ArenaScene extends Phaser.Scene {
     number,
     { readonly graphics: Phaser.GameObjects.Graphics; readonly painter: WaterPainter }
   >();
+  /** Each layer's effect zones (ADR-0053), drawn every frame as they breathe. */
+  private readonly zoneGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** `snapshot.actors` where they draw this frame: lifted by their layers. */
   private drawnActors: readonly RenderableActor[] = [];
   /** Each body's lift now, while it eases to its layer's. */
@@ -565,6 +568,7 @@ export class ArenaScene extends Phaser.Scene {
     this.updateGroundEffects();
     this.drawMap();
     this.drawRipples();
+    this.drawZones();
     // Over the grid and walls, under the actors: a flash never hides a
     // health bar, a status or the target ring.
     this.areaFlashes = decayAreaFlashes(this.areaFlashes, deltaMs / 1000);
@@ -2375,6 +2379,30 @@ export class ArenaScene extends Phaser.Scene {
         this.reducedMotion,
       );
       graphics.restore();
+    }
+  }
+
+  /** The map's effect zones, lighting on or off: they are on the ground, as its water is. */
+  private drawZones(): void {
+    for (const graphics of this.zoneGraphics.values()) {
+      graphics.clear();
+    }
+    const line = 1 / (this.view?.zoom ?? 1);
+    const { zones, ground } = this.snapshot.structure;
+    for (const zone of zones) {
+      let g = this.zoneGraphics.get(zone.layer);
+      if (g === undefined) {
+        g = this.add.graphics().setDepth(renderOrder({ kind: "zone", layer: zone.layer }));
+        this.zoneGraphics.set(zone.layer, g);
+      }
+      const look = ZONE_LOOK[zone.kind];
+      g.save();
+      g.translateCanvas(0, -elevationOf(zone.layer, ground));
+      g.fillStyle(look.fill, zoneFillAlpha(look, this.now, this.reducedMotion));
+      this.fillShape(g, zone.area);
+      g.lineStyle(ZONE_EDGE_WIDTH * line, look.edge, 1);
+      this.strokeShape(g, zone.area);
+      g.restore();
     }
   }
 

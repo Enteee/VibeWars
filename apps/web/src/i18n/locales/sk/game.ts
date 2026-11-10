@@ -2148,5 +2148,6 @@ export default {
     "training-pillars": "Tréningové stĺpy",
     "training-field": "Tréningové pole",
     "training-heights": "Tréningové výšiny",
+    "training-wilds": "Tréningová divočina",
   },
 } satisfies GameNames;

@@ -6,6 +6,7 @@ import {
   type SkillType,
   type Uphill,
   type Vec2,
+  type ZoneKind,
 } from "@vibewars/game-core";
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
@@ -125,7 +126,14 @@ export interface MapWater {
   readonly area: RenderableShape;
 }
 
-/** A map's floors above and below the ground (ADR-0051) and its water, from its file: never per tick. */
+/** An effect zone on one layer (ADR-0053, #3024): its kind and its area. */
+export interface MapZone {
+  readonly kind: ZoneKind;
+  readonly layer: number;
+  readonly area: RenderableShape;
+}
+
+/** A map's floors above and below the ground (ADR-0051), its water and zones, from its file: never per tick. */
 export interface MapStructure {
   readonly layerCount: number;
   /** The ground's layer: 1 on a map with pits and tunnels under it (#2973). */
@@ -144,9 +152,10 @@ export interface MapStructure {
     readonly uphill: Uphill;
   }[];
   readonly water: readonly MapWater[];
+  readonly zones: readonly MapZone[];
 }
 
-/** A map with one layer: no deck, no pit, no ramp, no water. */
+/** A map with one layer: no deck, no pit, no ramp, no water, no zone. */
 export const FLAT_STRUCTURE: MapStructure = {
   layerCount: 1,
   ground: 0,
@@ -155,6 +164,7 @@ export const FLAT_STRUCTURE: MapStructure = {
   tunnels: [],
   transitions: [],
   water: [],
+  zones: [],
 };
 
 /** A short-lived floating number or label above an actor. */
