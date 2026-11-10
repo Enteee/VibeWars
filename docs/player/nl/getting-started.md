@@ -117,9 +117,9 @@ Verlaten, en een lijst van wie erin zit; de badge telt ze.
   die de host niet rechtstreeks kan bereiken, komt er dan na een paar seconden
   doorheen binnen, zonder iets in te stellen. Elke speler krijgt een eigen
   login, 1 uur geldig en vernieuwd zolang hij blijft, maximaal 8 spelers per
-  lobby. Een speler die zo via een relay gaat, ziet **Relay gedeeld door** en de
-  naam van de deler in de lobby; zolang jij deelt, zegt de lobby **Je relay
-  wordt gedeeld met** hoeveel spelers. Om te stoppen, zet je **Mijn relay delen
+  lobby. **Opties → relay (TURN)** toont het: een speler die zo via een relay
+  gaat, leest daar **Relay gedeeld door** en de naam van de deler; zolang jij
+  deelt, staat daar **Je relay wordt gedeeld met** hoeveel spelers. Om te stoppen, zet je **Mijn relay delen
   met mijn lobby's** uit in **Opties → relay (TURN)**. Een relay die je daar
   zelf intypt, is altijd alleen van jou.
 - **Je groep gaat mee:** als je vrienden in je lobby had, vraagt de bovenste

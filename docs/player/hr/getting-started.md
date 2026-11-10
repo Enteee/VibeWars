@@ -113,9 +113,9 @@ Izađi te popisom tko je u njoj; značka ih broji.
   si, ne samo u onima koje vodiš. Igrač koji ne može dosegnuti domaćina
   izravno tada ulazi preko njega nakon nekoliko sekundi, bez ikakvog
   podešavanja. Svaki igrač dobiva svoju prijavu, valjanu 1 sat i obnavljanu dok
-  ostaje, najviše 8 igrača po sobi. Igrač spojen na taj način u sobi vidi
-  **Relej dijeli** i ime onoga tko dijeli; dok dijeliš,
-  soba kaže **Dijeliš relej s** koliko igrača. Da prestaneš,
+  ostaje, najviše 8 igrača po sobi. **Opcije → relej (TURN)** to
+  prikazuje: igrač spojen na taj način ondje čita **Relej dijeli** i ime onoga
+  tko dijeli; dok dijeliš, ondje piše **Dijeliš relej s** koliko igrača. Da prestaneš,
   odznači **Dijeli moj relej sa svojim sobama** u **Opcije → relej (TURN)**. Relej koji tamo
   sam upišeš uvijek je samo tvoj.
 - **Tvoja grupa ide s tobom:** ako si imao prijatelje u svojoj sobi, gornja

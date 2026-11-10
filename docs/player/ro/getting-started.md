@@ -112,9 +112,10 @@ cu cine e în el; insigna îi numără.
   nu doar în cele pe care le găzduiești. Un jucător care nu poate ajunge direct la
   gazdă intră apoi prin el după câteva secunde, fără nimic de configurat. Fiecare
   jucător primește propria autentificare, valabilă 1 oră și reînnoită cât timp rămâne,
-  cel mult 8 jucători pe lobby. Un jucător conectat astfel prin releu vede **Releu
-  partajat de** și numele celui care partajează în lobby; cât timp partajezi, lobby-ul
-  spune **Îți partajezi releul cu** câți jucători. Ca să oprești, debifează
+  cel mult 8 jucători pe lobby. **Opțiuni → Releu (TURN)** arată asta: un
+  jucător conectat astfel prin releu citește acolo **Releu partajat de** și numele
+  celui care partajează; cât timp partajezi, acolo scrie **Îți partajezi releul cu**
+  câți jucători. Ca să oprești, debifează
   **Partajează releul meu cu lobby-urile mele** în **Opțiuni → Releu (TURN)**. Un
   releu pe care îl introduci manual acolo rămâne doar al tău.
 - **Grupul tău vine cu tine:** dacă aveai prieteni în lobby, bara de sus întreabă
