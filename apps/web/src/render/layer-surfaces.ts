@@ -356,6 +356,8 @@ export interface Occluder {
   readonly highLift: number;
   /** The highest layer it covers: it draws over bodies up to this one. */
   readonly hidesThrough: number;
+  /** A ground outline where a body's feet clear it: a ground ramp's own area (#3000). */
+  readonly exempt: readonly Vec2[] | null;
 }
 
 function occluder(
@@ -363,6 +365,7 @@ function occluder(
   lowLift: number,
   highLift: number,
   hidesThrough: number,
+  exempt: readonly Vec2[] | null,
 ): Occluder {
   const xs = outline.map((p) => p.x);
   const ys = outline.map((p) => p.y);
@@ -375,6 +378,7 @@ function occluder(
     lowLift,
     highLift,
     hidesThrough,
+    exempt,
   };
 }
 
@@ -391,7 +395,7 @@ export function occludersOf(
       const base = elevationOf(wall.layer);
       const held = deckHeldBy(wall, structure);
       const high = held === undefined ? base + WALL_HEIGHT : deckSideLow(held, walls);
-      return occluder(shapeOutline(wall), base, high, wall.layer);
+      return occluder(shapeOutline(wall), base, high, wall.layer, null);
     }),
     ...structure.decks.map((deck) =>
       occluder(
@@ -399,13 +403,24 @@ export function occludersOf(
         deckSideLow(deck, walls),
         elevationOf(deck.layer),
         deck.layer - 1,
+        null,
       ),
     ),
     // A raised ramp covers the ground under it as a deck does (#2975); its
-    // slope is drawn already lifted, so it hides at no further lift.
+    // slope is drawn already lifted, so it hides at no further lift. A ramp
+    // up from the ground covers the ground behind it, but not a body on it
+    // (#3000): on its upper half that body is on the layer above already.
     ...structure.transitions.flatMap((ramp) => {
-      const drawing = ramp.from >= 1 ? rampDrawing(structure, ramp) : undefined;
-      return drawing === undefined ? [] : [occluder(drawing.slope, 0, 0, ramp.from - 1)];
+      const drawing =
+        ramp.from >= 1 || (ramp.from === 0 && ramp.to > ramp.from)
+          ? rampDrawing(structure, ramp)
+          : undefined;
+      if (drawing === undefined) {
+        return [];
+      }
+      return ramp.from === 0
+        ? [occluder(drawing.slope, 0, 0, 0, shapeOutline(ramp.area))]
+        : [occluder(drawing.slope, 0, 0, ramp.from - 1, null)];
     }),
   ];
 }
@@ -413,6 +428,17 @@ export function occludersOf(
 /** How finely a deck's side face is tested, in world units. */
 const LIFT_SLICE = ELEVATION_STEP / 4;
 const probe = { x: 0, y: 0 };
+const feet = { x: 0, y: 0 };
+
+/** Whether a body's feet at (`x`, `y`) stand where `each` cannot cover them. */
+function exempted(each: Occluder, x: number, y: number): boolean {
+  if (each.exempt === null) {
+    return false;
+  }
+  feet.x = x;
+  feet.y = y;
+  return pointInPolygon(feet, each.exempt);
+}
 
 function hides(each: Occluder, x: number, y: number): boolean {
   if (x < each.left || x > each.right || y < each.top || y > each.bottom) {
@@ -481,6 +507,9 @@ export function traceHiddenOutline(
     ) {
       continue;
     }
+    if (exempted(each, x, y)) {
+      continue;
+    }
     for (let i = 0; i + 3 < path.length; i += 2) {
       const ax = x + (path[i] ?? 0) * r;
       const ay = y + (path[i + 1] ?? 0) * r;
@@ -506,7 +535,9 @@ const POLYLINE_STEP = 2;
 
 /** Whether a structure covers a body on `layer` at this point. */
 function hiddenAt(occluders: readonly Occluder[], layer: number, x: number, y: number): boolean {
-  return occluders.some((each) => layer <= each.hidesThrough && hides(each, x, y));
+  return occluders.some(
+    (each) => layer <= each.hidesThrough && hides(each, x, y) && !exempted(each, x, y),
+  );
 }
 
 /** The pieces of the world-space `points` that a structure covers on a body on `layer`. */
