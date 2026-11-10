@@ -58,3 +58,25 @@ jobs:
             playwright-report/
             test-results/
           if-no-files-found: ignore
+
+  # The bots' spike-gain check (#2898): eight 60 s simulations, too slow and
+  # too load-sensitive for the per-pull-request suite. A red night means a bot
+  # change moved the result; cicd-engineer files it as `Bot tuning: spike gain`
+  # and nothing is blocked. Do not lower SPIKE_GAIN to turn it green.
+  spike-gain:
+    name: bots spike gain
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/devenv
+
+      - name: Check the spike gain
+        run: >-
+          devenv shell --
+          env BOTS_NIGHTLY=1
+          pnpm exec vitest run packages/game-maps/src/bots.test.ts
+          -t "bots spike on Ashen Courtyard"
