@@ -1,0 +1,2 @@
+import{D as e}from"./dist-oOPNCUjE.js";var t=e;export{t as default};
+//# sourceMappingURL=describe-C_UDP3cX.js.map
