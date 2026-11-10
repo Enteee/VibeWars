@@ -147,6 +147,7 @@ import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import { LightingPass, litStructurePalette } from "./lighting-pass.js";
 import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
+import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
 import {
   BODY_LIGHT_FLOOR,
   bodyTintOf,
@@ -1955,6 +1956,17 @@ export class ArenaScene extends Phaser.Scene {
       } else {
         const low = elevationOf(wall.layer);
         this.drawColumn(g, wall, low, deckSideLow(held, next.walls), lit.support);
+      }
+    }
+    // A torch stands with lighting off too: it is on the map, its light is not.
+    for (const light of next.structure.lighting?.lights ?? []) {
+      const key = lightMarkKey(light.id);
+      if (key !== undefined) {
+        const g = this.structureAt({ kind: "wall", layer: light.layer });
+        g.save();
+        g.translateCanvas(0, -elevationOf(light.layer));
+        LIGHT_MARK_ART[key](g, light.position);
+        g.restore();
       }
     }
     for (const deck of next.structure.decks) {

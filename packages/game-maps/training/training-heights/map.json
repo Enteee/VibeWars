@@ -125,5 +125,79 @@
         ]
       }
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": { "colour": 11582676, "intensity": 0.45 },
+    "indoorAmbient": { "colour": 5924488, "intensity": 0.3 },
+    "indoor": [
+      { "kind": "rect", "x": 0, "y": 620, "width": 260, "height": 180 },
+      { "kind": "rect", "x": 940, "y": 0, "width": 260, "height": 140 }
+    ],
+    "sun": { "directionDeg": 315, "elevationDeg": 50, "colour": 16773590, "intensity": 0.55 },
+    "lights": [
+      {
+        "id": "fire-west-hearth",
+        "position": { "x": 110, "y": 720 },
+        "layer": 0,
+        "radius": 260,
+        "colour": 16748608,
+        "intensity": 1,
+        "flicker": 0.35
+      },
+      {
+        "id": "torch-west-door",
+        "position": { "x": 250, "y": 630 },
+        "layer": 0,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.6,
+        "flicker": 0.2
+      },
+      {
+        "id": "fire-east-hearth",
+        "position": { "x": 1090, "y": 70 },
+        "layer": 0,
+        "radius": 260,
+        "colour": 16748608,
+        "intensity": 1,
+        "flicker": 0.35
+      },
+      {
+        "id": "torch-east-door",
+        "position": { "x": 920, "y": 120 },
+        "layer": 0,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.6,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-bridge-west",
+        "position": { "x": 460, "y": 362 },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.6,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-bridge-east",
+        "position": { "x": 740, "y": 538 },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.6,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-platform",
+        "position": { "x": 530, "y": 170 },
+        "layer": 2,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.6,
+        "flicker": 0.2
+      }
+    ]
+  }
 }
