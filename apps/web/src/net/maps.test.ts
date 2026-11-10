@@ -602,6 +602,6 @@ describe("structureOf's water (#2984)", () => {
     expect(structure.zones).toEqual(
       (wilds.zones ?? []).map(({ kind, layer, area }) => ({ kind, layer, area })),
     );
-    expect(structure.zones).toHaveLength(5);
+    expect(structure.zones).toHaveLength(9);
   });
 });

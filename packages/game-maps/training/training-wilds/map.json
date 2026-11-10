@@ -49,6 +49,30 @@
       "kind": "foul-water",
       "layer": 0,
       "area": { "kind": "rect", "x": 340, "y": 710, "width": 80, "height": 80 }
+    },
+    {
+      "id": "west-spring",
+      "kind": "spring",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 80, "y": 150, "width": 80, "height": 80 }
+    },
+    {
+      "id": "west-grove",
+      "kind": "grove",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 60, "y": 500, "width": 80, "height": 80 }
+    },
+    {
+      "id": "east-tainted-water",
+      "kind": "tainted-water",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 300, "y": 260, "width": 80, "height": 80 }
+    },
+    {
+      "id": "east-spire",
+      "kind": "draining-spire",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 300, "y": 460, "width": 80, "height": 80 }
     }
   ],
   "gates": [

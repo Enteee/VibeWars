@@ -719,6 +719,7 @@ export default {
     `+${p.pips} Lebensregeneration je Verzauberung auf dir (höchstens ${p.max})`,
   energyDegeneration: (p) => `−${p.energyPips} Energiedegeneration`,
   energyRegeneration: (p) => `+${p.energyPips} Energieregeneration`,
+  healthLostPerSkill: (p) => `−${p.amount} Leben je genutztem Skill`,
   healthRegenerationForEachConditionOnYou: (p) =>
     `${p.healthPipsPerCondition} Lebensregeneration je Zustand auf dir`,
   health: () => "Lebens",

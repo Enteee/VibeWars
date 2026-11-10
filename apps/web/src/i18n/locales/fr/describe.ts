@@ -712,6 +712,7 @@ export default {
     `+${p.pips} de régénération de santé pour chaque enchantement sur toi (au plus ${p.max})`,
   energyDegeneration: (p) => `−${p.energyPips} de dégénérescence d'énergie`,
   energyRegeneration: (p) => `+${p.energyPips} de régénération d'énergie`,
+  healthLostPerSkill: (p) => `−${p.amount} de santé par compétence utilisée`,
   healthRegenerationForEachConditionOnYou: (p) =>
     `${p.healthPipsPerCondition} de régénération de santé pour chaque altération sur toi`,
   health: () => "santé",

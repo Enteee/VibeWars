@@ -769,6 +769,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "burning-shield": icon("burning-shield"),
   mired: icon("mired"),
   fouled: icon("fouled"),
+  refreshed: icon("refreshed"),
+  fleet: icon("fleet"),
+  tainted: icon("tainted"),
+  drained: icon("drained"),
 };
 
 const GAP = 2;

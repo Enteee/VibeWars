@@ -719,6 +719,7 @@ export default {
     `+${p.pips} gezondheidsregeneratie per betovering op jou (hoogstens ${p.max})`,
   energyDegeneration: (p) => `−${p.energyPips} energiedegeneratie`,
   energyRegeneration: (p) => `+${p.energyPips} energieregeneratie`,
+  healthLostPerSkill: (p) => `−${p.amount} gezondheid per gebruikte skill`,
   healthRegenerationForEachConditionOnYou: (p) =>
     `${p.healthPipsPerCondition} gezondheidsregeneratie per conditie op jou`,
   health: () => "gezondheids",

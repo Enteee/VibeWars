@@ -513,6 +513,10 @@ function statusText(
       say.words.energyRegeneration({ energyPips: statText(definition.energyPips, ranks, whole) }),
     );
   }
+  // Tainted water's (#3028).
+  if (definition.healthLossOnSkill > 0) {
+    parts.push(say.words.healthLostPerSkill({ amount: String(definition.healthLossOnSkill) }));
+  }
   // Melandru's Resilience's (#2189), Conviction's scaled (#2217).
   if (statAtTwelve(definition.healthPipsPerCondition) !== 0) {
     parts.push(
