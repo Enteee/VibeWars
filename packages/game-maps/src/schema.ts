@@ -122,6 +122,12 @@ export const MAX_ZONES = 32;
 export const MAX_HARMFUL_ZONE_POINTS = 64;
 
 /**
+ * The most points on a moving zone's path (#3029): the simulation walks
+ * all of it every tick, and its hull does not count them.
+ */
+export const MAX_ZONE_PATH_POINTS = 16;
+
+/**
  * An effect zone on one layer (ADR-0053, #3024): ground that puts its
  * kind's status on whoever stands in it. The map names the kind only; what
  * it does is game-core's `ZONE_RULES`.
@@ -140,7 +146,12 @@ const zoneSchema = z.object({
     })
     .optional(),
   /** A moving zone's way (#3029), its area drawn at the first point; only a strike kind has one. */
-  path: z.object({ points: z.array(vec2Schema).min(2), speed: z.number().positive() }).optional(),
+  path: z
+    .object({
+      points: z.array(vec2Schema).min(2).max(MAX_ZONE_PATH_POINTS),
+      speed: z.number().positive(),
+    })
+    .optional(),
 });
 
 /**

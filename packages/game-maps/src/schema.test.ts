@@ -13,6 +13,7 @@ import {
   MAX_WATER_POINTS,
   MAX_HARMFUL_ZONE_POINTS,
   MAX_ZONES,
+  MAX_ZONE_PATH_POINTS,
   MapValidationError,
   mapDataSchema,
   validateMapData,
@@ -1526,6 +1527,15 @@ describe("effect zones (ADR-0053, #3024)", () => {
         ],
         /zones\.0\.path: zone strip moves outside the map/,
       );
+    });
+
+    it("holds a path at MAX_ZONE_PATH_POINTS", () => {
+      const toAndFro = (count: number) =>
+        Array.from({ length: count }, (_, at) => path.points[at % 2] ?? path.points[0]);
+      const rolling = (count: number) =>
+        strip({ kind: "rockfall", path: { ...path, points: toAndFro(count) } });
+      accepts([rolling(MAX_ZONE_PATH_POINTS)]);
+      refuses([rolling(MAX_ZONE_PATH_POINTS + 1)], /zones\.0\.path\.points/);
     });
   });
 });
