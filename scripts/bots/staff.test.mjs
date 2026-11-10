@@ -195,9 +195,11 @@ describe("staffAllowed", () => {
   it("refuses the manager's hire while the 7-day budget is projected to run out (#2992)", () => {
     const team = company(["manager", "qa-tester"]);
     const projectedAt = NOW / 1000 + 3600;
-    const at = new Date(projectedAt * 1000).toTimeString().slice(0, 5);
+    const run = new Date(projectedAt * 1000);
+    const pad = (/** @type {number} */ n) => String(n).padStart(2, "0");
+    const on = `${String(run.getFullYear())}-${pad(run.getMonth() + 1)}-${pad(run.getDate())} ${pad(run.getHours())}:${pad(run.getMinutes())}`;
     expect(refusal(decide(team, hire("developer"), { sevenDayProjectedAt: projectedAt }))).toBe(
-      `the 7-day budget runs out at ${at}, before it resets; no hires until the burn falls`,
+      `the 7-day budget runs out on ${on}, before it resets; no hires until the burn falls`,
     );
     expect(decide(team, hire("developer"), { sevenDayProjectedAt: null })).toEqual({
       ok: true,
