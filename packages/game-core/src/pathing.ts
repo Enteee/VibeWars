@@ -9,7 +9,7 @@ import {
   type Polygon,
   type Segment,
 } from "./geometry.js";
-import { add, distance, scale, sub, vec2, type Vec2 } from "./vec2.js";
+import { add, distance, normalize, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
 /**
  * Paths around walls, for the weapon attack's approach (#211, ADR-0026).
@@ -24,9 +24,12 @@ import { add, distance, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
 /** The corners a body can stand on, and which of them see each other. Built once per map. */
 export interface NavGraph {
-  /** The walkable areas' outline (`outlineWalls` of them) first, then the real walls. */
+  /** The walls that enclose nothing (`outlineWalls` of them) first, then the real walls. */
   readonly walls: readonly Segment[];
-  /** How many of `walls` are outline: they keep a body on its layer, and enclose no wall. */
+  /**
+   * How many of `walls` enclose nothing: the walkable areas' outline, which
+   * keeps a body on its layer, and its open walls, such as ramp rims (#2975).
+   */
   readonly outlineWalls: number;
   /** Where a body can be (ADR-0051); empty: everywhere, the ground. */
   readonly walkable: readonly Polygon[];
@@ -361,7 +364,7 @@ export function walkableOutline(areas: readonly Polygon[]): Segment[] {
  * off it, so a gate moving mid-match costs a filter and no line of sight.
  */
 export interface GatedNavGraph {
-  /** As `NavGraph`'s: the outline first, then the walls. */
+  /** As `NavGraph`'s: the walls that enclose nothing first, then the others. */
   readonly walls: readonly Segment[];
   readonly outlineWalls: number;
   readonly walkable: readonly Polygon[];
@@ -385,9 +388,10 @@ export function buildGatedNavGraph(
   bounds: NavGraph["bounds"],
   clearance: number,
   walkable: readonly Polygon[] = [],
+  open: readonly Segment[] = [],
 ): GatedNavGraph {
   const outline = walkableOutline(walkable);
-  const walls = [...outline, ...mapWalls];
+  const walls = [...outline, ...open, ...mapWalls];
   const offset = clearance + 1;
   const inside = (point: Vec2): boolean =>
     (walkable.length === 0 || walkable.some((area) => pointInPolygon(point, area))) &&
@@ -465,7 +469,7 @@ export function buildGatedNavGraph(
   });
   return {
     walls,
-    outlineWalls: outline.length,
+    outlineWalls: outline.length + open.length,
     walkable,
     gates,
     bounds,
@@ -667,7 +671,36 @@ export interface NavTransition {
  * At most this much, still inside the band where a body changes layer.
  */
 const RAMP_WAYPOINT_LEAST_INSET = 0.05;
-const RAMP_WAYPOINT_MOST_INSET = 0.14;
+export const RAMP_WAYPOINT_MOST_INSET = 0.14;
+
+/**
+ * The shortest a ramp may be, going uphill, for a body of `clearance` to
+ * route over it: any shorter and `RAMP_WAYPOINT_MOST_INSET` holds its
+ * waypoints on its outline wall (#2995).
+ */
+export function minRampLength(clearance: number): number {
+  return (clearance + 1) / RAMP_WAYPOINT_MOST_INSET;
+}
+
+/** From a ramp's `area` towards the nearest edge of any of `decks`, the ones it climbs to. */
+export function rampUphill(area: Polygon, decks: readonly Polygon[]): Vec2 {
+  const foot = polygonCentre(area);
+  let nearest = foot;
+  let least = Number.POSITIVE_INFINITY;
+  for (const deck of decks) {
+    const edge = closestPointOnPolygon(foot, deck);
+    if (distance(foot, edge) < least) {
+      least = distance(foot, edge);
+      nearest = edge;
+    }
+  }
+  return normalize(sub(nearest, foot));
+}
+
+/** How long a ramp's `area` is, going `uphill`. */
+export function rampLength(area: Polygon, uphill: Vec2): number {
+  return distance(pointAlong(area, uphill, 0), pointAlong(area, uphill, 1));
+}
 
 /** Finds paths over a map's layers, reusing its own scratch from one query to the next. */
 export interface LayeredPathFinder {
@@ -688,6 +721,8 @@ export interface NavLayer {
   readonly walls: readonly Segment[];
   /** Its decks and ramps; empty: everywhere, the ground. */
   readonly walkable: readonly Polygon[];
+  /** Walls that stop a body but enclose nothing: its ramp rims (#2975). */
+  readonly open: readonly Segment[];
 }
 
 /** A gate, with the layer it stands on. */
@@ -713,6 +748,7 @@ export function buildLayeredNavGraph(
       bounds,
       clearance,
       layer.walkable,
+      layer.open,
     ),
   );
 }
@@ -838,7 +874,7 @@ class AStar implements LayeredPathFinder {
       this.#edges[near]?.push(far);
       this.#edges[far]?.push(near);
       if (uphill !== undefined) {
-        const length = distance(pointAlong(area, uphill, 0), pointAlong(area, uphill, 1));
+        const length = rampLength(area, uphill);
         const inset = Math.min(
           Math.max(RAMP_WAYPOINT_LEAST_INSET, (clearance + 1) / length),
           RAMP_WAYPOINT_MOST_INSET,

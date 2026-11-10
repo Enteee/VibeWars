@@ -26,7 +26,10 @@ export {
   createLayeredPathFinder,
   createPathFinder,
   navGraphFor,
+  minRampLength,
   nearestStandable,
+  rampLength,
+  rampUphill,
   type LayeredPathFinder,
   type NavGraph,
   type NavLayer,
@@ -217,6 +220,7 @@ export {
   MAX_GROUND_EFFECTS,
   MatchSimulation,
 } from "./match/simulation.js";
+export { rampRims, uphillDirections } from "./match/layer-rules.js";
 export type { CorpseCandidate } from "./match/corpses.js";
 export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
 export {

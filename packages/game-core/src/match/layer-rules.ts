@@ -1,7 +1,8 @@
-import { pointInPolygon, type Polygon } from "../geometry.js";
+import { pointInPolygon, segment, type Polygon, type Segment } from "../geometry.js";
 import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
 import { HEIGHT_DAMAGE_PERCENT, HEIGHT_RANGE_PERCENT } from "../match-rules.js";
-import { distance, type Vec2 } from "../vec2.js";
+import { rampUphill } from "../pathing.js";
+import { add, distance, dot, scale, type Vec2 } from "../vec2.js";
 
 /**
  * The rule table of ADR-0051, as plain questions about a position and a
@@ -127,4 +128,45 @@ export function heightRange(range: number, step: number): number {
 /** What a shot's height step multiplies its non-critical damage by. */
 export function heightDamageMultiplier(step: number): number {
   return (100 + step * HEIGHT_DAMAGE_PERCENT) / 100;
+}
+
+/** From each ramp towards the nearest edge of a deck it climbs to, in `transitions`' order. */
+export function uphillDirections(
+  transitions: readonly FloorTransition[],
+  decks: readonly DeckFootprint[],
+): readonly Vec2[] {
+  return transitions.map((transition) =>
+    rampUphill(
+      transition.area,
+      decks.filter((deck) => deck.layer === transition.to).map((deck) => deck.footprint),
+    ),
+  );
+}
+
+/**
+ * Each layer's ramp rims (#2975), indexed by layer: every edge of a ramp
+ * from the ground but its low end, the one edge a body on the ground may
+ * walk into it by. They stop walking only, never sight. A ramp from a
+ * deck needs none: its layer already holds a body to its decks and ramps.
+ */
+export function rampRims(
+  transitions: readonly FloorTransition[],
+  decks: readonly DeckFootprint[],
+  layerCount: number,
+): readonly (readonly Segment[])[] {
+  const rims: Segment[][] = Array.from({ length: layerCount }, () => []);
+  const uphill = uphillDirections(transitions, decks);
+  transitions.forEach((transition, at) => {
+    const way = uphill[at];
+    if (transition.from !== 0 || way === undefined) {
+      return;
+    }
+    const edges = transition.area.map((corner, index) =>
+      segment(corner, transition.area[(index + 1) % transition.area.length] ?? corner),
+    );
+    const along = (edge: Segment): number => dot(scale(add(edge.a, edge.b), 0.5), way);
+    const low = edges.reduce((lowest, edge) => (along(edge) < along(lowest) ? edge : lowest));
+    rims[0]?.push(...edges.filter((edge) => edge !== low));
+  });
+  return rims;
 }
