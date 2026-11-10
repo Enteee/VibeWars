@@ -235,8 +235,8 @@ Az online játék peer to peer: a meccsed többi játékosa látja az IP-címede
 - Kattints jobb gombbal egy ellenségre, hogy célba vedd, vagy nyomd meg
   a **Tab** billentyűt a következőért. Nyomd meg a **Space** billentyűt,
   vagy kattints újra jobb gombbal az ellenségre, hogy megtámadd.
-- A nyolc készséged a **Q W E R** és az **A S D F** billentyűkön van, az
-  1. hellyel kezdve. A sávon lévő készségre kattintva is használhatod.
+- A nyolc készséged a **Q W E R** és az **A S D F** billentyűkön van, az első
+  hellyel kezdve. A sávon lévő készségre kattintva is használhatod.
 - Az **Esc** megszakítja, amit éppen csinálsz. Minden billentyű
   átállítható az **Opciók** között, az irányítás részben; a Klasszikus
   előbeállítás az 1–8 billentyűkre teszi a készségeket, és WASD-vel
