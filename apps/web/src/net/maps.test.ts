@@ -422,6 +422,14 @@ describe("hostMap (#476)", () => {
     }
   });
 
+  it("carries a flat arena's one layer, its walls all on the ground (#3017)", () => {
+    for (const map of ARENA_MAPS.filter((candidate) => candidate.layers === 1)) {
+      const host = hostMap(map.id);
+      expect(host?.layers.count).toBe(1);
+      expect(host?.layers.walls[0]).toEqual(host?.walls);
+    }
+  });
+
   it("carries a Guild Battle map's Guild Lords and shrines apart, and none elsewhere (#1222)", () => {
     expect(hostMap("guild-hall-isle")?.guildLords).toEqual([
       { team: 0, position: { x: 80, y: 1000 }, layer: 0 },

@@ -1,4 +1,5 @@
 import { allWallSegments, wallToSegments } from "@vibewars/game-maps/geometry";
+import { matchLayers } from "@vibewars/game-maps/layers";
 import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
@@ -588,6 +589,7 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
     },
     mode: map.mode,
     walls: allWallSegments(map.walls),
+    layers: matchLayers(map),
     gates: map.gates.map((gate) => ({
       segments: wallToSegments(gate.wall),
       plate: gate.plate,
