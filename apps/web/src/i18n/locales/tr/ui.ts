@@ -1316,6 +1316,75 @@ export default {
   "training.reset": "sıfırla",
   "training.resetDivider": "sıfırlandı",
   "training.scenario": "senaryo",
+  "training.scenario.target-dummy.label": "Hedef kukla",
+  "training.scenario.target-dummy.teaches":
+    "Tek bir büyünün gerçekte ne yaptığı: 60 zırhta, ipucundaki sayının tam kendisi.",
+  "training.scenario.time-to-kill.label": "Öldürme süresi",
+  "training.scenario.time-to-kill.teaches":
+    "Sürekli hasarın: 500 canlı bir büyücü ne kadar dayanıyor, tekrar tekrar.",
+  "training.scenario.physical-vs-elemental.label": "Fiziksel ve elementel",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Zırhın hasar türüne göre işlediği: Warrior ve Stalwart kılıcı yumuşatır ama Fireball'u değil, Ranger Fireball'u yumuşatır ama kılıcı değil.",
+  "training.scenario.condition-pressure.label": "Rahatsızlık baskısı",
+  "training.scenario.condition-pressure.teaches":
+    "Rahatsızlıkların bir ölüm saati olduğu: Bleeding, Poison ve Burning saniyede 20 can eritir, bu en yüksek değerdir; yenisini eklemek üst üste binmez, süreyi tazeler.",
+  "training.scenario.condition-removal.label": "Rahatsızlık kaldırma",
+  "training.scenario.condition-removal.teaches":
+    "Rahatsızlık kaldırmanın yalnızca yazdığını kaldırdığı: 500 canın 200'ündeki bir müttefikte beş rahatsızlık var; aralarındaki Deep Wound bindiği anda 100 can alır ve iyileştirmelerini 400'de sınırlar.",
+  "training.scenario.armor-ladder.label": "Zırh merdiveni",
+  "training.scenario.armor-ladder.teaches":
+    "Hafifletme eğrisi: aynı vuruş 40 ile 104 arası zırha karşı, yan yana.",
+  "training.scenario.healing-throughput.label": "İyileştirme gücü",
+  "training.scenario.healing-throughput.teaches":
+    "İyileştirmelerinin gerçek baskıya karşı ne ettiği ve zırhın şifacının dostu olduğu: aynı Fireball bir Monk'tan 91, bir Warrior'dan 64 can alır.",
+  "training.scenario.interrupt-timing.label": "Kesme zamanlaması",
+  "training.scenario.interrupt-timing.teaches":
+    "Kesmenin bir zamanlama becerisi olduğu: 3 saniyelik bir büyüyü tamamlanmadan yakala. Dazed bir büyücünün büyüleri iki kat uzun sürer ve her vuruş onları keser.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Blind bir saldırganın on vuruştan dokuzunu ıskaladığı: iki okçu, biri Blind.",
+  "training.scenario.kiting-and-cripple.label": "Kaçarak vurma ve Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Hareket eden bir hedefin önüne nişan almak ve Crippled bir hedefin yarı hızda yürüdüğü.",
+  "training.scenario.weapon-dps.label": "Silah DPS",
+  "training.scenario.weapon-dps.teaches":
+    "Silahının saniyede ne yaptığı: Space'e bas ve silah satırını oku.",
+  "training.scenario.dodge-drill.label": "Kaçınma alıştırması",
+  "training.scenario.dodge-drill.teaches":
+    "Okun, olacağın yere düştüğü: ok yaydan çıktıktan sonra dön.",
+  "training.scenario.obstacles-and-los.label": "Görüş ve menzil",
+  "training.scenario.obstacles-and-los.teaches":
+    "Bir düşmanı görmenin ona ulaşmak olmadığı: sütunun arkasındakine kullanılan beceri etrafından dolaşır, menzil dışındakine kullanılan yaklaşır.",
+  "training.scenario.fireball-dodge.label": "Fireball'dan kaç",
+  "training.scenario.fireball-dodge.teaches":
+    "Fireball'un bir ok gibi uçtuğu: çıkarken yana adım at, hiçbir şey yanmaz (#535).",
+  "training.scenario.block.label": "Engel",
+  "training.scenario.block.teaches":
+    "Guardian'ın vuruşlarının yarısını savuşturduğu, ama büyünün içinden geçtiği (#534).",
+  "training.scenario.survivability.label": "Dayanıklılık",
+  "training.scenario.survivability.teaches":
+    "Üç büyücüye karşı ne kadar dayandığın ve zırhın en büyük kozun olduğu: 80'de bir Fireball, 60'takinden %30 daha az can alır.",
+  "training.scenario.aoe-cluster.label": "Alan: küme",
+  "training.scenario.aoe-cluster.teaches":
+    "Sıçrayan hasarın hedefini merkez aldığı: ortadakine atılan Fireball beşini de yakar, geride kalan iki kişiden hiçbirini değil.",
+  "training.scenario.aoe-cap.label": "Alan: sınır",
+  "training.scenario.aoe-cap.teaches":
+    "Barrage'ın altıda durduğu: yedisi sıkışık durur ve biri hep kurtulur.",
+  "training.scenario.aoe-friendly-fire.label": "Alan: dost ateşi",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Sıçrayan hasarın kendi tarafına asla zarar vermediği: kümedeki müttefik hiçbir şey almaz.",
+  "training.scenario.aoe-line-of-sight.label": "Alan: görüş hattı",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Sıçrayan hasarın duvarlarda durduğu: sütunun önündeki üçü yanar, arkasındaki ikisi yanmaz.",
+  "training.scenario.moving-targets.label": "Hareketli hedefler",
+  "training.scenario.moving-targets.teaches":
+    "Hareket edeni vurmak: koşanın önüne nişan al, kaçanı yakala, seni kovalayana dön.",
+  "training.scenario.heights.label": "Yükseklikler",
+  "training.scenario.heights.teaches":
+    "Yüksekliğin savaşılacak bir yer olduğu: platformlar altındakileri gizler, rampalar katlar arasındaki tek yoldur ve yukarıdan attığın ok daha sert vurur.",
+  "training.scenario.wilds.label": "Yaban",
+  "training.scenario.wilds.teaches":
+    "Zeminin kendisinin de can yakabileceğini: kavrulmuş zemin üzerinde duran herkesi yakar ve yanma sen çıktıktan sonra da sürer, bu yüzden etrafından dolaş.",
   "training.soundOff": "Ses kapalı.",
   "training.soundOn": "Ses açık.",
   "training.you": "Sen",

@@ -1235,6 +1235,74 @@ export default {
   "training.reset": "초기화",
   "training.resetDivider": "초기화",
   "training.scenario": "시나리오",
+  "training.scenario.target-dummy.label": "훈련용 허수아비",
+  "training.scenario.target-dummy.teaches":
+    "시전 한 번이 실제로 하는 일: 방어력 60에서 툴팁의 숫자 그대로.",
+  "training.scenario.time-to-kill.label": "처치 시간",
+  "training.scenario.time-to-kill.teaches":
+    "지속 화력: 체력 500의 캐스터가 얼마나 버티는지, 몇 번이고.",
+  "training.scenario.physical-vs-elemental.label": "물리 대 원소",
+  "training.scenario.physical-vs-elemental.teaches":
+    "방어력은 피해 유형에 따라 작용해요: Warrior와 Stalwart Insignia는 검을 막지만 Fireball은 못 막고, Ranger는 Fireball을 막지만 검은 못 막아요.",
+  "training.scenario.condition-pressure.label": "상태이상 압박",
+  "training.scenario.condition-pressure.teaches":
+    "상태이상은 죽음의 시계예요: Bleeding, Poison, Burning이 초당 체력 20을 깎는데 이게 최대치이고, 더 걸어도 쌓이지 않고 갱신돼요.",
+  "training.scenario.condition-removal.label": "상태이상 제거",
+  "training.scenario.condition-removal.teaches":
+    "상태이상 제거는 적힌 것만 없애요: 500 중 200인 아군이 상태이상 다섯 개를 지니고 있고, 그중 Deep Wound는 걸릴 때 100을 깎고 치유를 400으로 제한해요.",
+  "training.scenario.armor-ladder.label": "방어력 단계",
+  "training.scenario.armor-ladder.teaches":
+    "경감 곡선: 같은 공격을 방어력 40부터 104까지 나란히 비교해요.",
+  "training.scenario.healing-throughput.label": "치유량",
+  "training.scenario.healing-throughput.teaches":
+    "실제 압박 속에서 치유가 얼마나 가치 있는지, 그리고 방어력이 힐러의 친구라는 것: 같은 Fireball이 Monk에게는 91, Warrior에게는 64를 입혀요.",
+  "training.scenario.interrupt-timing.label": "차단 타이밍",
+  "training.scenario.interrupt-timing.teaches":
+    "차단은 타이밍 기술이에요: 3초 시전을 완료 전에 끊으세요. Dazed 상태의 캐스터는 주문 시전이 두 배로 걸리고, 어떤 공격에도 끊겨요.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Blind 상태의 공격자는 열 번 중 아홉 번 빗나가요: 궁수 둘, 그중 하나가 Blind.",
+  "training.scenario.kiting-and-cripple.label": "카이팅과 Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "움직이는 대상을 앞서 노리기, 그리고 Crippled 상태의 대상은 절반 속도로 걷는다는 것.",
+  "training.scenario.weapon-dps.label": "무기 DPS",
+  "training.scenario.weapon-dps.teaches": "무기의 초당 피해: Space를 누르고 무기 줄을 읽어요.",
+  "training.scenario.dodge-drill.label": "회피 훈련",
+  "training.scenario.dodge-drill.teaches":
+    "화살은 당신이 있었을 자리에 떨어져요: 활을 떠난 뒤에 방향을 트세요.",
+  "training.scenario.obstacles-and-los.label": "시야와 사거리",
+  "training.scenario.obstacles-and-los.teaches":
+    "적이 보인다고 닿는 건 아니에요: 기둥 뒤의 적에게 쓴 스킬은 돌아서 걸어가고, 사거리 밖의 적에게는 다가가요.",
+  "training.scenario.fireball-dodge.label": "Fireball 피하기",
+  "training.scenario.fireball-dodge.teaches":
+    "Fireball은 화살처럼 날아가요: 날아올 때 옆으로 비키면 아무것도 타지 않아요 (#535).",
+  "training.scenario.block.label": "방어",
+  "training.scenario.block.teaches":
+    "Guardian은 공격의 절반을 막아내지만, 주문은 그대로 통과해요 (#534).",
+  "training.scenario.survivability.label": "생존력",
+  "training.scenario.survivability.teaches":
+    "캐스터 셋을 상대로 얼마나 버티는지, 그리고 방어력이 가장 큰 지렛대라는 것: 80이면 Fireball 피해가 60일 때보다 30% 적어요.",
+  "training.scenario.aoe-cluster.label": "범위: 밀집",
+  "training.scenario.aoe-cluster.teaches":
+    "범위 공격은 대상을 중심으로 터져요: 중앙에 쏜 Fireball은 다섯 모두를 태우고, 떨어진 둘은 맞지 않아요.",
+  "training.scenario.aoe-cap.label": "범위: 상한",
+  "training.scenario.aoe-cap.teaches":
+    "Barrage는 여섯에서 멈춰요: 일곱이 뭉쳐 있어도 하나는 늘 무사해요.",
+  "training.scenario.aoe-friendly-fire.label": "범위: 아군 피해",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "범위 공격은 절대 아군을 해치지 않아요: 무리 속의 아군은 아무 피해도 받지 않아요.",
+  "training.scenario.aoe-line-of-sight.label": "범위: 시야",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "범위 공격은 벽에서 멈춰요: 기둥 앞의 셋은 타고, 뒤의 둘은 타지 않아요.",
+  "training.scenario.moving-targets.label": "움직이는 대상",
+  "training.scenario.moving-targets.teaches":
+    "움직이는 것 맞히기: 달리는 대상은 앞서 노리고, 도망치는 대상은 따라잡고, 쫓아오는 대상에게는 돌아서세요.",
+  "training.scenario.heights.label": "고지대",
+  "training.scenario.heights.teaches":
+    "높이는 싸움의 거점이에요: 데크는 아래에 있는 자를 숨기고, 경사로만이 층 사이를 잇고, 위에서 쏜 활은 더 세게 맞아요.",
+  "training.scenario.wilds.label": "황야",
+  "training.scenario.wilds.teaches":
+    "땅 자체가 해를 줄 수 있다는 것: 그을린 땅은 그 위에 선 누구든 불태우고, 벗어난 뒤에도 화상이 이어지니 돌아서 가세요.",
   "training.soundOff": "소리 꺼짐.",
   "training.soundOn": "소리 켜짐.",
   "training.you": "나",

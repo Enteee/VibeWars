@@ -1434,6 +1434,75 @@ export default {
   "training.reset": "obnoviť",
   "training.resetDivider": "obnovené",
   "training.scenario": "scenár",
+  "training.scenario.target-dummy.label": "Cvičná figurína",
+  "training.scenario.target-dummy.teaches":
+    "Čo naozaj urobí jedno zoslanie: pri brnení 60 presne číslo z popisu.",
+  "training.scenario.time-to-kill.label": "Čas na zabitie",
+  "training.scenario.time-to-kill.teaches":
+    "Tvoje trvalé poškodenie: ako dlho vydrží kúzelník s 500 zdravia, znova a znova.",
+  "training.scenario.physical-vs-elemental.label": "Fyzické vs. živelné",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Že brnenie odpovedá na typ poškodenia: Bojovník s Vytrvalou insígniou tlmí meč, no nie Ohnivú guľu, Hraničiar tlmí Ohnivú guľu, no nie meč.",
+  "training.scenario.condition-pressure.label": "Tlak neduhov",
+  "training.scenario.condition-pressure.teaches":
+    "Že neduhy sú hodiny smrti: Krvácanie, Jed a Horenie uberajú 20 zdravia za sekundu, viac sa nedá, a ďalšie ich obnovia namiesto sčítania.",
+  "training.scenario.condition-removal.label": "Odstraňovanie neduhov",
+  "training.scenario.condition-removal.teaches":
+    "Že odstránenie neduhu zoberie len to, čo hovorí: spojenec na 200 z 500 nesie päť neduhov a Hlboká rana medzi nimi zoberie 100 pri dopade a obmedzí tvoje liečenie na 400.",
+  "training.scenario.armor-ladder.label": "Rebríček brnenia",
+  "training.scenario.armor-ladder.teaches":
+    "Krivka zmiernenia: ten istý zásah proti brneniu 40 až 104, vedľa seba.",
+  "training.scenario.healing-throughput.label": "Výkon liečenia",
+  "training.scenario.healing-throughput.teaches":
+    "Akú cenu má tvoje liečenie pod skutočným tlakom a že brnenie je priateľ liečiteľa: tá istá Ohnivá guľa vezme Mníchovi 91 a Bojovníkovi 64.",
+  "training.scenario.interrupt-timing.label": "Načasovanie prerušenia",
+  "training.scenario.interrupt-timing.teaches":
+    "Že prerušenie je o načasovaní: chyť 3-sekundové zoslanie skôr, než dopadne. Kúzelníkovi s Omámením trvajú kúzla dvakrát dlhšie a každý zásah ich zastaví.",
+  "training.scenario.blind-denial.label": "Oslepenie",
+  "training.scenario.blind-denial.teaches":
+    "Že útočník s Oslepením minie deväť úderov z desiatich: dvaja lukostrelci, jeden z nich oslepený.",
+  "training.scenario.kiting-and-cripple.label": "Kiting a Ochromenie",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Mierenie pred pohybujúci sa cieľ a to, že cieľ s Ochromením ide polovičnou rýchlosťou.",
+  "training.scenario.weapon-dps.label": "DPS zbrane",
+  "training.scenario.weapon-dps.teaches":
+    "Čo tvoja zbraň urobí za sekundu: stlač Space a prečítaj riadok zbrane.",
+  "training.scenario.dodge-drill.label": "Cvičenie úhybov",
+  "training.scenario.dodge-drill.teaches":
+    "Že šíp dopadne tam, kde by si bol: otoč sa, keď opustí luk.",
+  "training.scenario.obstacles-and-los.label": "Výhľad a dosah",
+  "training.scenario.obstacles-and-los.teaches":
+    "Že vidieť nepriateľa ešte neznamená dosiahnuť ho: schopnosť na cieľ za stĺpom ťa vedie okolo neho a na cieľ mimo dosahu bližšie.",
+  "training.scenario.fireball-dodge.label": "Uhni Ohnivej guli",
+  "training.scenario.fireball-dodge.teaches":
+    "Že Ohnivá guľa letí ako šíp: ukroč nabok, keď vyletí, a nič nezhorí (#535).",
+  "training.scenario.block.label": "Blok",
+  "training.scenario.block.teaches":
+    "Že Strážca odrazí polovicu tvojich úderov a kúzlo ním prejde (#534).",
+  "training.scenario.survivability.label": "Odolnosť",
+  "training.scenario.survivability.teaches":
+    "Ako dlho vydržíš proti trom kúzelníkom a že brnenie je tvoja najväčšia páka: pri 80 vezme Ohnivá guľa o 30% menej než pri 60.",
+  "training.scenario.aoe-cluster.label": "Plocha: zhluk",
+  "training.scenario.aoe-cluster.teaches":
+    "Že plošný účinok sa sústredí na cieľ: Ohnivá guľa do stredu spáli všetkých päť a ani jedného opozdilca.",
+  "training.scenario.aoe-cap.label": "Plocha: strop",
+  "training.scenario.aoe-cap.teaches":
+    "Že Záplava šípov skončí pri šiestich: sedem natlačených a jeden vždy vyviazne.",
+  "training.scenario.aoe-friendly-fire.label": "Plocha: priateľská paľba",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Že plošný účinok nikdy nezraní tvoju stranu: spojenec v zhluku neutrpí nič.",
+  "training.scenario.aoe-line-of-sight.label": "Plocha: zorné pole",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Že plošný účinok sa zastaví o steny: traja pred stĺpom horia, dvaja za ním nie.",
+  "training.scenario.moving-targets.label": "Pohyblivé ciele",
+  "training.scenario.moving-targets.teaches":
+    "Zasahovať, čo sa hýbe: mier pred bežca, dobehni utekajúceho a otoč sa k tomu, kto ťa prenasleduje.",
+  "training.scenario.heights.label": "Výšky",
+  "training.scenario.heights.teaches":
+    "Že výška je miesto na boj: plošiny skrývajú tých pod nimi, rampy sú jediná cesta medzi úrovňami a tvoj výstrel z luku zhora udrie silnejšie.",
+  "training.scenario.wilds.label": "Divočina",
+  "training.scenario.wilds.teaches":
+    "Že aj samotná zem môže zraňovať: spálená zem páli každého, kto na nej stojí, a horenie trvá aj po odchode, tak ju obíď.",
   "training.soundOff": "Zvuk vypnutý.",
   "training.soundOn": "Zvuk zapnutý.",
   "training.you": "Ty",

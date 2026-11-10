@@ -1389,6 +1389,75 @@ export default {
   "training.reset": "reset",
   "training.resetDivider": "reset",
   "training.scenario": "scenarij",
+  "training.scenario.target-dummy.label": "Lutka za vježbu",
+  "training.scenario.target-dummy.teaches":
+    "Što jedno bacanje stvarno čini: uz 60 oklopa, točno broj iz opisa.",
+  "training.scenario.time-to-kill.label": "Vrijeme do ubojstva",
+  "training.scenario.time-to-kill.teaches":
+    "Tvoja trajna šteta: koliko dugo izdrži bacač sa 500 zdravlja, iznova i iznova.",
+  "training.scenario.physical-vs-elemental.label": "Fizičko protiv elementalnog",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Da oklop odgovara na vrstu štete: Ratnik s Oznakom postojanih ublažava mač, a ne Vatrenu loptu; Lovac ublažava Vatrenu loptu, a ne mač.",
+  "training.scenario.condition-pressure.label": "Pritisak stanja",
+  "training.scenario.condition-pressure.teaches":
+    "Da su stanja odbrojavanje do smrti: Krvarenje, Otrov i Gorenje odnose 20 zdravlja u sekundi, najviše što postoji, a dodavanje novih osvježava umjesto da se zbraja.",
+  "training.scenario.condition-removal.label": "Uklanjanje stanja",
+  "training.scenario.condition-removal.teaches":
+    "Da uklanjanje stanja skida samo ono što piše: saveznik na 200 od 500 nosi pet stanja, među njima Duboku ranu, koja pri nanošenju odnosi 100 i ograničava tvoja liječenja na 400.",
+  "training.scenario.armor-ladder.label": "Ljestvica oklopa",
+  "training.scenario.armor-ladder.teaches":
+    "Krivulja ublažavanja: isti udarac protiv 40 do 104 oklopa, jedan uz drugi.",
+  "training.scenario.healing-throughput.label": "Učinak liječenja",
+  "training.scenario.healing-throughput.teaches":
+    "Koliko vrijede tvoja liječenja pod pravim pritiskom, i da je oklop iscjeliteljev prijatelj: ista Vatrena lopta odnosi 91 Redovniku i 64 Ratniku.",
+  "training.scenario.interrupt-timing.label": "Tajming prekida",
+  "training.scenario.interrupt-timing.teaches":
+    "Da je prekid vještina tajminga: uhvati bacanje od 3 sekunde prije nego što završi. Bacaču u Omamljenosti čarolije traju dvostruko dulje, a svaki ga udarac prekida.",
+  "training.scenario.blind-denial.label": "Zaslijepljenost",
+  "training.scenario.blind-denial.teaches":
+    "Da zaslijepljeni napadač promaši devet udaraca od deset: dva strijelca, jedan od njih zaslijepljen.",
+  "training.scenario.kiting-and-cripple.label": "Kiting i Osakaćenost",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Gađanje pokretne mete s predujmom, i da osakaćena meta hoda upola sporije.",
+  "training.scenario.weapon-dps.label": "DPS oružja",
+  "training.scenario.weapon-dps.teaches":
+    "Što tvoje oružje čini u sekundi: pritisni Space i pročitaj redak oružja.",
+  "training.scenario.dodge-drill.label": "Vježba izmicanja",
+  "training.scenario.dodge-drill.teaches":
+    "Da strijela pada tamo gdje bi bio: skreni nakon što napusti luk.",
+  "training.scenario.obstacles-and-los.label": "Vid i domet",
+  "training.scenario.obstacles-and-los.teaches":
+    "Da vidjeti neprijatelja ne znači dosegnuti ga: vještina na onoga iza stupa vodi te oko stupa, a na onoga izvan dometa vodi te bliže.",
+  "training.scenario.fireball-dodge.label": "Izmakni Vatrenoj lopti",
+  "training.scenario.fireball-dodge.teaches":
+    "Da Vatrena lopta leti kao strijela: makni se u stranu kad krene i ništa ne gori (#535).",
+  "training.scenario.block.label": "Blokiranje",
+  "training.scenario.block.teaches":
+    "Da Čuvar odbija polovicu tvojih udaraca, a čarolija prolazi kroz njega (#534).",
+  "training.scenario.survivability.label": "Izdržljivost",
+  "training.scenario.survivability.teaches":
+    "Koliko dugo izdržiš protiv tri bacača, i da je oklop tvoja najveća poluga: uz 80 Vatrena lopta odnosi 30% manje nego uz 60.",
+  "training.scenario.aoe-cluster.label": "Područje: skupina",
+  "training.scenario.aoe-cluster.teaches":
+    "Da je učinak po području usredišten na metu: Vatrena lopta u središtu pali svih pet, a nijednog zaostalog.",
+  "training.scenario.aoe-cap.label": "Područje: granica",
+  "training.scenario.aoe-cap.teaches":
+    "Da Plotun staje na šest: sedam zbijenih, i jedan je uvijek pošteđen.",
+  "training.scenario.aoe-friendly-fire.label": "Područje: prijateljska vatra",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Da učinak po području nikad ne šteti tvojoj strani: saveznik u skupini ne prima ništa.",
+  "training.scenario.aoe-line-of-sight.label": "Područje: linija vida",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Da učinak po području staje kod zidova: troje ispred stupa gori, dvoje iza njega ne.",
+  "training.scenario.moving-targets.label": "Pokretne mete",
+  "training.scenario.moving-targets.teaches":
+    "Pogađanje onoga što se kreće: gađaj trkača s predujmom, uhvati onoga koji bježi i okreni se prema onome koji te progoni.",
+  "training.scenario.heights.label": "Visine",
+  "training.scenario.heights.teaches":
+    "Da je visina mjesto s kojeg se bori: platforme skrivaju one ispod sebe, rampe su jedini put između razina, a tvoj hitac lukom odozgo jače pogađa.",
+  "training.scenario.wilds.label": "Divljina",
+  "training.scenario.wilds.teaches":
+    "Da i samo tlo može ozlijediti: spaljeno tlo pali svakoga tko stoji na njemu, a gorenje traje i nakon što izađeš, pa ga zaobiđi.",
   "training.soundOff": "Zvuk isključen.",
   "training.soundOn": "Zvuk uključen.",
   "training.you": "Ti",

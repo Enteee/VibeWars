@@ -1319,6 +1319,75 @@ export default {
   "training.reset": "нулирай",
   "training.resetDivider": "нулиране",
   "training.scenario": "сценарий",
+  "training.scenario.target-dummy.label": "Тренировъчна кукла",
+  "training.scenario.target-dummy.teaches":
+    "Какво всъщност прави едно изричане: при 60 броня точно числото от подсказката.",
+  "training.scenario.time-to-kill.label": "Време за убийство",
+  "training.scenario.time-to-kill.teaches":
+    "Твоите постоянни щети: колко издържа заклинател с 500 здраве, отново и отново.",
+  "training.scenario.physical-vs-elemental.label": "Физически срещу стихийни",
+  "training.scenario.physical-vs-elemental.teaches":
+    "Че бронята отговаря на вид щети: Warrior и Stalwart Insignia омекотяват меч, но не Fireball, а Ranger омекотява Fireball, но не меч.",
+  "training.scenario.condition-pressure.label": "Натиск със състояния",
+  "training.scenario.condition-pressure.teaches":
+    "Че състоянията са часовник към смъртта: Bleeding, Poison и Burning отнемат по 20 здраве в секунда, повече не може, а нови само ги подновяват, без да се натрупват.",
+  "training.scenario.condition-removal.label": "Премахване на състояния",
+  "training.scenario.condition-removal.teaches":
+    "Че премахването на състояние маха само каквото пише: съюзник на 200 от 500 носи пет състояния, а Deep Wound сред тях отнема 100 при поставянето си и ограничава лекуването ти до 400.",
+  "training.scenario.armor-ladder.label": "Стълба на бронята",
+  "training.scenario.armor-ladder.teaches":
+    "Кривата на смекчаване: един и същ удар срещу броня от 40 до 104, един до друг.",
+  "training.scenario.healing-throughput.label": "Лекуване под натиск",
+  "training.scenario.healing-throughput.teaches":
+    "Колко струва лекуването ти срещу истински натиск и че бронята е приятел на лечителя: същият Fireball отнема 91 от Monk и 64 от Warrior.",
+  "training.scenario.interrupt-timing.label": "Момент за прекъсване",
+  "training.scenario.interrupt-timing.teaches":
+    "Че прекъсването е въпрос на момент: хвани 3-секундно изричане, преди да е завършило. Заклинанията на заклинател с Dazed траят двойно, а всеки удар ги спира.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "Че ослепен нападател пропуска девет удара от десет: двама стрелци, единият сляп.",
+  "training.scenario.kiting-and-cripple.label": "Кайтване и Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Стрелба с изпреварване по движеща се цел и че цел с Crippled върви с половин скорост.",
+  "training.scenario.weapon-dps.label": "DPS на оръжието",
+  "training.scenario.weapon-dps.teaches":
+    "Какво прави оръжието ти за секунда: натисни Space и прочети реда на оръжието.",
+  "training.scenario.dodge-drill.label": "Упражнение по избягване",
+  "training.scenario.dodge-drill.teaches":
+    "Че стрелата пада там, където щеше да си: завий, след като напусне лъка.",
+  "training.scenario.obstacles-and-los.label": "Видимост и обхват",
+  "training.scenario.obstacles-and-los.teaches":
+    "Че да видиш враг не значи да го достигнеш: умение срещу някой зад колоната я заобикаля, а срещу някой извън обхват се приближава.",
+  "training.scenario.fireball-dodge.label": "Избегни Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "Че Fireball лети като стрела: отстъпи встрани, щом излети, и нищо не гори (#535).",
+  "training.scenario.block.label": "Блокиране",
+  "training.scenario.block.teaches":
+    "Че Guardian отклонява половината ти удари, а заклинание минава през него (#534).",
+  "training.scenario.survivability.label": "Издръжливост",
+  "training.scenario.survivability.teaches":
+    "Колко издържаш срещу трима заклинатели и че бронята е най-големият ти лост: при 80 Fireball отнема с 30% по-малко, отколкото при 60.",
+  "training.scenario.aoe-cluster.label": "Област: групата",
+  "training.scenario.aoe-cluster.teaches":
+    "Че ударът по площ е центриран в целта си: Fireball в центъра изгаря всичките петима и нито един от двамата изостанали.",
+  "training.scenario.aoe-cap.label": "Област: таванът",
+  "training.scenario.aoe-cap.teaches":
+    "Че Barrage спира на шест: седем един до друг и един винаги е пощаден.",
+  "training.scenario.aoe-friendly-fire.label": "Област: приятелски огън",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "Че ударът по площ никога не наранява твоите: съюзникът в групата не поема нищо.",
+  "training.scenario.aoe-line-of-sight.label": "Област: полезрение",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "Че ударът по площ спира в стените: тримата пред колоната горят, двамата зад нея — не.",
+  "training.scenario.moving-targets.label": "Движещи се цели",
+  "training.scenario.moving-targets.teaches":
+    "Да уцелиш движещото се: изпревари бегач, догони бягащ и се обърни към преследвача си.",
+  "training.scenario.heights.label": "Височини",
+  "training.scenario.heights.teaches":
+    "Че височината е място, от което да се биеш: платформите крият кой е под тях, рампите са единственият път между нивата, а твоят изстрел с лък отгоре удря по-силно.",
+  "training.scenario.wilds.label": "Пущинак",
+  "training.scenario.wilds.teaches":
+    "Че самата земя може да наранява: опожарената земя изгаря всеки, който стои на нея, а горенето продължава и след като излезеш, така че я заобикаляй.",
   "training.soundOff": "Звукът е изключен.",
   "training.soundOn": "Звукът е включен.",
   "training.you": "Ти",

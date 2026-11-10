@@ -1311,6 +1311,75 @@ export default {
   "training.reset": "nulstil",
   "training.resetDivider": "nulstillet",
   "training.scenario": "scenarie",
+  "training.scenario.target-dummy.label": "Træningsdukke",
+  "training.scenario.target-dummy.teaches":
+    "Hvad én kastning faktisk gør: ved 60 rustning præcis tallet i værktøjstippet.",
+  "training.scenario.time-to-kill.label": "Tid til drab",
+  "training.scenario.time-to-kill.teaches":
+    "Din vedvarende skade: hvor længe en caster med 500 liv holder, igen og igen.",
+  "training.scenario.physical-vs-elemental.label": "Fysisk mod elementar",
+  "training.scenario.physical-vs-elemental.teaches":
+    "At rustning svarer til en skadetype: en Warrior og Stalwart Insignia dæmper et sværd og ikke en Fireball, en Ranger dæmper en Fireball og ikke et sværd.",
+  "training.scenario.condition-pressure.label": "Tilstandspres",
+  "training.scenario.condition-pressure.teaches":
+    "At tilstande er et dødsur: Bleeding, Poison og Burning dræner 20 liv i sekundet, det højeste der findes, og flere fornyer i stedet for at stable.",
+  "training.scenario.condition-removal.label": "Fjernelse af tilstande",
+  "training.scenario.condition-removal.teaches":
+    "At en tilstandsfjernelse kun tager det, den siger: en allieret på 200 af 500 bærer fem tilstande, og Deep Wound blandt dem tager 100, når den rammer, og sætter loftet for dine helbredelser til 400.",
+  "training.scenario.armor-ladder.label": "Rustningsstige",
+  "training.scenario.armor-ladder.teaches":
+    "Afbødningskurven: det samme slag mod 40 til 104 rustning, side om side.",
+  "training.scenario.healing-throughput.label": "Helbredelse under pres",
+  "training.scenario.healing-throughput.teaches":
+    "Hvad dine helbredelser er værd mod ægte pres, og at rustning er helbrederens ven: den samme Fireball tager 91 fra en Monk og 64 fra en Warrior.",
+  "training.scenario.interrupt-timing.label": "Timing af afbrydelser",
+  "training.scenario.interrupt-timing.teaches":
+    "At afbrydelse handler om timing: fang en kastning på 3 sekunder, før den lander. En caster med Dazed bruger dobbelt så lang tid på besværgelser, og ethvert slag stopper dem.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "At en blindet angriber misser ni slag ud af ti: to bueskytter, den ene blind.",
+  "training.scenario.kiting-and-cripple.label": "Kiting og Crippled",
+  "training.scenario.kiting-and-cripple.teaches":
+    "At sigte foran et mål i bevægelse, og at et mål med Crippled går med halv fart.",
+  "training.scenario.weapon-dps.label": "Våben-DPS",
+  "training.scenario.weapon-dps.teaches":
+    "Hvad dit våben gør i sekundet: tryk Space og læs våbenrækken.",
+  "training.scenario.dodge-drill.label": "Undvigeøvelse",
+  "training.scenario.dodge-drill.teaches":
+    "At en pil lander, hvor du ville have været: drej, når den har forladt buen.",
+  "training.scenario.obstacles-and-los.label": "Syn og rækkevidde",
+  "training.scenario.obstacles-and-los.teaches":
+    "At se en fjende er ikke at nå den: en evne mod én bag søjlen går uden om den, og mod én uden for rækkevidde går tættere på.",
+  "training.scenario.fireball-dodge.label": "Undvig Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "At en Fireball flyver som en pil: træd til siden, når den affyres, og intet brænder (#535).",
+  "training.scenario.block.label": "Blokering",
+  "training.scenario.block.teaches":
+    "At Guardian afværger halvdelen af dine slag, og at en besværgelse går igennem (#534).",
+  "training.scenario.survivability.label": "Overlevelse",
+  "training.scenario.survivability.teaches":
+    "Hvor længe du holder mod tre castere, og at rustning er din største løftestang: ved 80 tager en Fireball 30 % mindre end ved 60.",
+  "training.scenario.aoe-cluster.label": "Område: klyngen",
+  "training.scenario.aoe-cluster.teaches":
+    "At områdeskade centreres på sit mål: en Fireball i midten brænder alle fem og ingen af de to efternølere.",
+  "training.scenario.aoe-cap.label": "Område: loftet",
+  "training.scenario.aoe-cap.teaches":
+    "At Barrage stopper ved seks: syv tæt samlet, og én går altid fri.",
+  "training.scenario.aoe-friendly-fire.label": "Område: egen ild",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "At områdeskade aldrig rammer din egen side: den allierede i klyngen tager intet.",
+  "training.scenario.aoe-line-of-sight.label": "Område: synslinje",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "At områdeskade stopper ved vægge: de tre foran søjlen brænder, de to bag den gør ikke.",
+  "training.scenario.moving-targets.label": "Mål i bevægelse",
+  "training.scenario.moving-targets.teaches":
+    "At ramme det, der bevæger sig: sigt foran en løber, fang én, der flygter, og vend dig mod én, der jagter dig.",
+  "training.scenario.heights.label": "Højder",
+  "training.scenario.heights.teaches":
+    "At højde er et sted at kæmpe fra: dæk skjuler, hvem der er under dem, ramper er eneste vej mellem lagene, og dit eget bueskud oppefra rammer hårdere.",
+  "training.scenario.wilds.label": "Vildmark",
+  "training.scenario.wilds.teaches":
+    "At selve jorden kan gøre ondt: svedet jord brænder alle, der står på den, og brændingen fortsætter, efter du er gået ud, så gå uden om.",
   "training.soundOff": "Lyd fra.",
   "training.soundOn": "Lyd til.",
   "training.you": "Dig",

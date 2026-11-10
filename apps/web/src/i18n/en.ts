@@ -1316,6 +1316,75 @@ export const en = {
   "training.reset": "reset",
   "training.resetDivider": "reset",
   "training.scenario": "scenario",
+  "training.scenario.target-dummy.label": "Target dummy",
+  "training.scenario.target-dummy.teaches":
+    "What one cast actually does: at 60 armor, the tooltip's number exactly.",
+  "training.scenario.time-to-kill.label": "Time to kill",
+  "training.scenario.time-to-kill.teaches":
+    "Your sustained output: how long a 500-health caster lasts, again and again.",
+  "training.scenario.physical-vs-elemental.label": "Physical vs elemental",
+  "training.scenario.physical-vs-elemental.teaches":
+    "That armor answers to a damage type: a Warrior and Stalwart blunt a sword and not a Fireball, a Ranger blunts a Fireball and not a sword.",
+  "training.scenario.condition-pressure.label": "Condition pressure",
+  "training.scenario.condition-pressure.teaches":
+    "That conditions are a kill clock: bleeding, poison and burning drain 20 health a second, the most there is, and adding more refreshes rather than stacks.",
+  "training.scenario.condition-removal.label": "Condition removal",
+  "training.scenario.condition-removal.teaches":
+    "That a condition removal takes off only what it says: an ally at 200 of 500 carries five conditions, and deep wound among them takes 100 as it lands and caps your heals at 400.",
+  "training.scenario.armor-ladder.label": "Armor ladder",
+  "training.scenario.armor-ladder.teaches":
+    "The mitigation curve: the same hit against 40 to 104 armor, side by side.",
+  "training.scenario.healing-throughput.label": "Healing throughput",
+  "training.scenario.healing-throughput.teaches":
+    "What your heals are worth against real pressure, and that armor is a healer's friend: the same Fireball takes 91 off a monk and 64 off a warrior.",
+  "training.scenario.interrupt-timing.label": "Interrupt timing",
+  "training.scenario.interrupt-timing.teaches":
+    "That an interrupt is a timing skill: catch a 3 second cast before it lands. A dazed caster's spells take twice as long, and any hit stops them.",
+  "training.scenario.blind-denial.label": "Blind",
+  "training.scenario.blind-denial.teaches":
+    "That a blinded attacker misses nine blows in ten: two archers, one of them blind.",
+  "training.scenario.kiting-and-cripple.label": "Kiting and Cripple",
+  "training.scenario.kiting-and-cripple.teaches":
+    "Leading a moving target, and that a crippled one walks at half speed.",
+  "training.scenario.weapon-dps.label": "Weapon DPS",
+  "training.scenario.weapon-dps.teaches":
+    "What your weapon does per second: press Space and read the weapon row.",
+  "training.scenario.dodge-drill.label": "Dodge drill",
+  "training.scenario.dodge-drill.teaches":
+    "That an arrow lands where you would have been: turn after it leaves the bow.",
+  "training.scenario.obstacles-and-los.label": "Sight and range",
+  "training.scenario.obstacles-and-los.teaches":
+    "That seeing a foe is not reaching it: a skill at one behind the pillar walks round it, and at one out of range walks in.",
+  "training.scenario.fireball-dodge.label": "Dodge the Fireball",
+  "training.scenario.fireball-dodge.teaches":
+    "That a Fireball flies like an arrow: step aside as it leaves and nothing burns (#535).",
+  "training.scenario.block.label": "Block",
+  "training.scenario.block.teaches":
+    "That Guardian turns half your blows aside, and a spell goes through it (#534).",
+  "training.scenario.survivability.label": "Survivability",
+  "training.scenario.survivability.teaches":
+    "How long you last against three casters, and that armor is your biggest lever: at 80 a Fireball takes 30% less than at 60.",
+  "training.scenario.aoe-cluster.label": "Area: the cluster",
+  "training.scenario.aoe-cluster.teaches":
+    "That a splash centres on its target: a Fireball at the centre burns all five, and neither straggler.",
+  "training.scenario.aoe-cap.label": "Area: the cap",
+  "training.scenario.aoe-cap.teaches":
+    "That Barrage stops at six: seven packed together, and one is always spared.",
+  "training.scenario.aoe-friendly-fire.label": "Area: friendly fire",
+  "training.scenario.aoe-friendly-fire.teaches":
+    "That a splash never hurts your own side: the ally in the cluster takes nothing.",
+  "training.scenario.aoe-line-of-sight.label": "Area: line of sight",
+  "training.scenario.aoe-line-of-sight.teaches":
+    "That a splash stops at walls: the three in front of the pillar burn, the two behind it do not.",
+  "training.scenario.moving-targets.label": "Moving targets",
+  "training.scenario.moving-targets.teaches":
+    "Hitting what moves: lead a runner, catch one that flees, and turn on one that chases you.",
+  "training.scenario.heights.label": "Heights",
+  "training.scenario.heights.teaches":
+    "That height is a place to fight from: decks hide who is under them, ramps are the only way between layers, and your own bow shot from above hits harder.",
+  "training.scenario.wilds.label": "Wilds",
+  "training.scenario.wilds.teaches":
+    "That the ground itself can hurt: scorched ground burns whoever stands in it, and the burn runs on after you step out, so go round it.",
   "training.soundOff": "Sound off.",
   "training.soundOn": "Sound on.",
   "training.you": "You",
