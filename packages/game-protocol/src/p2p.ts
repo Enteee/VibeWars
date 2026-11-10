@@ -629,6 +629,8 @@ export interface WireGroundEffect {
   readonly team: WireTeam;
   readonly x: number;
   readonly y: number;
+  /** The discrete layer it lies on (ADR-0051), 0 to `MAX_WIRE_LAYER`. */
+  readonly layer: number;
   /** In (0, `MAX_WIRE_RADIUS`]. */
   readonly radius: number;
   /** Match clock (`elapsedSeconds`) at which it ends, rounded to 0.1 s. */
@@ -2255,6 +2257,7 @@ function parseGroundEffect(value: unknown): WireGroundEffect | undefined {
     isTeam(raw.team) &&
     isNumber(raw.x) &&
     isNumber(raw.y) &&
+    isWireLayer(raw.layer) &&
     isNumber(raw.radius) &&
     raw.radius > 0 &&
     raw.radius <= MAX_WIRE_RADIUS &&
@@ -2267,6 +2270,7 @@ function parseGroundEffect(value: unknown): WireGroundEffect | undefined {
         team: raw.team,
         x: raw.x,
         y: raw.y,
+        layer: raw.layer,
         radius: raw.radius,
         endsAt: raw.endsAt,
         durationSeconds: raw.durationSeconds,

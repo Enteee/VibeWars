@@ -211,6 +211,8 @@ export interface GroundEffectSnapshot {
   readonly team: number;
   readonly x: number;
   readonly y: number;
+  /** The layer it lies on (ADR-0051). */
+  readonly layer: number;
   readonly radius: number;
   /** Match clock (`elapsedSeconds`) at which it ends. */
   readonly endsAt: number;

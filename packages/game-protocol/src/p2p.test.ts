@@ -284,6 +284,7 @@ const snapshot: WireSnapshotPart = {
       team: 0,
       x: 120,
       y: 80,
+      layer: 1,
       radius: 109,
       endsAt: 19.1,
       durationSeconds: 17,
@@ -620,6 +621,7 @@ const trap = {
   team: 1,
   x: 40,
   y: -20,
+  layer: 0,
   radius: 81,
   endsAt: 92.5,
   durationSeconds: 90,
@@ -1861,6 +1863,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a ground effect on a third team",
     parseWireSnapshotPart,
     { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], team: 2 }] },
+  ],
+  [
+    "snapshot with a ground effect on no layer (#2979)",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], layer: undefined }] },
+  ],
+  [
+    "snapshot with a ground effect above the highest layer (#2979)",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], layer: 3 }] },
   ],
   ["combat that is one entry, not a batch", parseWireCombatBatch, combat],
   [
