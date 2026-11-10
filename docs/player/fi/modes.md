@@ -368,8 +368,7 @@ Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
 (The Vault,) ja sitten Sankarien sali. Siinä ovat vain tähän mennessä
 rakennetut kartat, joten nykyään se on yhdeksän kierrosta: The Hollow Deep (Tuho), Blackwater Ford (Pappituho), Barrow Field (Pappituho), Cinder Sanctum (Reliikkijuoksu, Unholy
 Templesin paikalla), Mosslit Cairns (Valtauspisteet, Forgotten Shrinesin paikalla),
-The Brazen Causeway (Pappituho), Threefold Keep (Kukkulan kuningas), The Warden's Gallery (Valtauspisteet, Antechamberin paikalla), ja sitten Sankarien sali. Aula-ikkuna kertoo, missä
-olet, kun etsit tiimiä: `Kierros 2/9 · Blackwater Ford`.
+The Brazen Causeway (Pappituho), Threefold Keep (Kukkulan kuningas), The Warden's Gallery (Valtauspisteet, Antechamberin paikalla), ja sitten Sankarien sali. Kun etsit tiimiä, yläpalkin jonokuvake kertoo, missä olet, `Sankarien nousu · kierros 2`, ja Aula-ikkuna näyttää sen kierroksen kartan.
 Kohtaat aina vain saman kierroksen tiimin, ja odotat sellaista niin
 kauan kuin tarvitaan: botit eivät täytä paikkaa. Ainoa poikkeus: kierroksesta 2 alkaen tiimi,
 joka on ollut kierroksellaan yksin 60 sekuntia, voi hypätä eteenpäin. Se kohtaa tiimin,

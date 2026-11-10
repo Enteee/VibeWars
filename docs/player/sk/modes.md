@@ -335,8 +335,7 @@ Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
 (The Vault,) potom Hall of Heroes. Sú v ňom len doteraz postavené mapy,
 takže dnes má deväť kôl: The Hollow Deep (Anihilácia), Blackwater Ford (Anihilácia kňaza), Barrow Field (Anihilácia kňaza), Cinder Sanctum (Beh s relikviou, namiesto Unholy
 Temples), Mosslit Cairns (Dobývanie bodov, namiesto Forgotten Shrines),
-The Brazen Causeway (Anihilácia kňaza), Threefold Keep (Kráľ kopca), The Warden's Gallery (Dobývanie bodov, namiesto Antechamber), potom Hall of Heroes. Okno Lobby ukazuje, kde
-si, kým hľadáš tím: `Kolo 2 z 9 · Blackwater Ford`.
+The Brazen Causeway (Anihilácia kňaza), Threefold Keep (Kráľ kopca), The Warden's Gallery (Dobývanie bodov, namiesto Antechamber), potom Hall of Heroes. Kým hľadáš tím, ikona fronty v hornej lište ukazuje, kde si, `Výstup hrdinov · kolo 2`, a okno Lobby ukazuje mapu toho kola.
 Stretneš vždy len tím v rovnakom kole a čakáš naň, ako
 dlho treba: žiadni boti to nevyplnia. Jediná výnimka: od kola 2 môže tím,
 ktorý je vo svojom kole 60 sekúnd sám, preskočiť dopredu. Stretne tím čakajúci v

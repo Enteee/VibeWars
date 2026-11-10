@@ -348,8 +348,7 @@ Mounds, Unholy Temples, Forgotten Shrines, Golden Gates, The Courtyard,
 Antechamber, (The Vault,) och sedan Hjältarnas sal. Bara kartorna som
 byggts hittills är med, så i dag är det nio rundor: The Hollow Deep (Förintelse), Blackwater Ford (Prästförintelse), Barrow Field (Prästförintelse), Cinder Sanctum (Reliklöpning, i Unholy
 Temples ställe), Mosslit Cairns (Erövringspunkter, i Forgotten Shrines),
-The Brazen Causeway (Prästförintelse), Threefold Keep (King of the Hill), The Warden's Gallery (Erövringspunkter, i Antechambers), och sedan Hjältarnas sal. Lobbyfönstret säger var
-du är medan du letar efter ett lag: `Runda 2 av 9 · Blackwater Ford`.
+The Brazen Causeway (Prästförintelse), Threefold Keep (King of the Hill), The Warden's Gallery (Erövringspunkter, i Antechambers), och sedan Hjältarnas sal. Medan du letar efter ett lag säger köikonen i den övre raden var du är, `Heroes' Ascent · runda 2`, och Lobbyfönstret visar den rundans karta.
 Du möter bara ett lag i samma runda, och du väntar på ett så länge
 det tar: inga bottar fyller i. Det enda undantaget: från runda 2 och
 framåt får ett lag som varit ensamt i sin runda i 60 sekunder hoppa

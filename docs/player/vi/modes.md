@@ -332,8 +332,7 @@ diệt), Blackwater Ford (Diệt tư tế), Barrow Field (Diệt tư tế), Cind
 Sanctum (Vận chuyển thánh tích, thay chỗ Unholy Temples), Mosslit Cairns
 (Chiếm điểm, thay chỗ Forgotten Shrines), The Brazen Causeway (Diệt tư tế),
 Threefold Keep (Vua đồi), The Warden's Gallery (Chiếm điểm, thay chỗ
-Antechamber), rồi Đại sảnh Anh hùng. Cửa sổ Sảnh cho biết bạn đang ở đâu
-trong lúc tìm đội: `Vòng 2/9 · Blackwater Ford`. Bạn chỉ gặp đội ở cùng
+Antechamber), rồi Đại sảnh Anh hùng. Trong lúc tìm đội, biểu tượng hàng chờ trên thanh trên cùng cho biết bạn đang ở đâu, `Đỉnh Anh Hùng · vòng 2`, và cửa sổ Sảnh hiển thị bản đồ của vòng đó. Bạn chỉ gặp đội ở cùng
 vòng, và bạn chờ bao lâu cũng được: không có bot lấp vào. Ngoại lệ duy nhất:
 từ vòng 2 trở đi, đội ở một mình tại vòng của mình trong 60 giây có thể nhảy
 vượt lên. Đội đó gặp một đội đang chờ ở bất kỳ vòng sau nào trước Đại sảnh,

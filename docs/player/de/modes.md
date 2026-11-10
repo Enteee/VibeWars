@@ -267,8 +267,7 @@ zurück. Ein Knopf unter dem Ergebnis überspringt die Wartezeit oder geht für 
 ## Aufstieg der Helden
 
 Ein Aufstieg der Helden aus der Warteschlange hat neun Runden, immer in dieser Reihenfolge: The Hollow Deep (Vernichtung), Blackwater Ford (Priestervernichtung), Barrow Field (Priestervernichtung), Cinder Sanctum (Reliktlauf),
-Mosslit Cairns (Punkte erobern), The Brazen Causeway (Priestervernichtung), Threefold Keep (King of the Hill), The Warden's Gallery (Punkte erobern), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
-wo du bist, während du ein Team suchst: `Runde 2 von 9 · Blackwater Ford`. Du triffst immer nur ein Team in derselben Runde
+Mosslit Cairns (Punkte erobern), The Brazen Causeway (Priestervernichtung), Threefold Keep (King of the Hill), The Warden's Gallery (Punkte erobern), dann die Hall of Heroes. Während du ein Team suchst, sagt dir das Warteschlangen-Symbol in der oberen Leiste, wo du bist, `Aufstieg der Helden · Runde 2`, und das Lobby-Fenster zeigt die Karte dieser Runde. Du triffst immer nur ein Team in derselben Runde
 und wartest so lange wie nötig: Keine Bots springen ein. Die einzige Ausnahme: Ab Runde 2 darf ein Team, das 60 Sekunden allein in seiner Runde wartet, vorrücken. Es trifft auf ein Team, das in einer beliebigen späteren Runde vor der Hall wartet, beide spielen die Karte des weiter fortgeschrittenen Teams, und der Sieger macht von dort aus weiter. Eine Runde auf einer Karte für drei Teams wartet auf drei; zwei
 Teams, die 30 Sekunden auf ein drittes gewartet haben, spielen stattdessen gegeneinander, ebenso zwei, deren drittes nie
 in der Lobby erscheint. Gewinnst du, steigt deine Gruppe nach 20 Sekunden von selbst zur nächsten Karte auf; gewinnst du
