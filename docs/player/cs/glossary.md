@@ -7,6 +7,7 @@
 | Build                | Povolání postavy, osm dovedností, atributy a vybavení                              |
 | Nahlášený nepřítel   | Nepřítel, na kterého má tvůj tým útočit; **T** ho zaměří                           |
 | Stav                 | Škodlivý účinek jako Bleeding nebo Crippled; vyprší nebo se odstraní               |
+| Hluboká voda         | Voda, do které nevejdeš; střely a kouzla přes ni projdou                           |
 | Snadno přerušitelná  | Každý zásah během použití ji přeruší, například kladení pasti                      |
 | Elitní               | Silná dovednost se zlatým rámečkem; jedna na lištu                                 |
 | Očarování            | Dobrý účinek seslaný tebou nebo spojencem                                          |
@@ -22,6 +23,7 @@
 | Obnova               | Doba, než lze použitou dovednost znovu použít                                      |
 | Oživení              | Vrácení mrtvého spojence zpět                                                      |
 | Runa                 | Vylepšení brnění: hodnosti atributů, zdraví, energie nebo kratší stavy             |
+| Mělká voda           | Voda, kterou projdeš jako po suchu                                                 |
 | Pečeť (štít)         | Tvoje značka, malý štít z identity tvého prohlížeče, před tvým jménem              |
 | Startovní místo      | Kde tvůj tým začíná zápas                                                          |
 | Dotyková dovednost   | Dovednost použitá dotykem cíle; některé pokřiky způsobí, že dotyky nepřátel selžou |

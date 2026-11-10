@@ -7,6 +7,7 @@
 | Build                | Profesje postaci, osiem umiejętności, atrybuty i ekwipunek                                   |
 | Wskazany wróg        | Wróg, którego drużyna ma atakować; **T** obiera go na cel                                    |
 | Dolegliwość          | Szkodliwy efekt, np. Bleeding lub Crippled; mija z czasem lub zostaje usunięty               |
+| Głęboka woda         | Woda, w którą nie wejdziesz; pociski i czary nad nią przelatują                              |
 | Łatwo przerywana     | Każde trafienie w trakcie jej użycia ją przerywa, np. przy zakładaniu pułapki                |
 | Elitarna             | Silna umiejętność w złotej ramce; jedna na pasek                                             |
 | Zaczarowanie         | Korzystny efekt rzucony przez ciebie lub sojusznika                                          |
@@ -22,6 +23,7 @@
 | Odnowienie           | Czas, zanim użytej umiejętności można użyć ponownie                                          |
 | Wskrzeszenie         | Przywrócenie poległego sojusznika                                                            |
 | Runa                 | Ulepszenie pancerza: rangi atrybutu, Zdrowie, Energia lub krótsze dolegliwości               |
+| Płytka woda          | Woda, przez którą idziesz jak po suchym lądzie                                               |
 | Sygnet (tarcza)      | Twój znak, mała tarcza z tożsamości twojej przeglądarki, przed twoją nazwą                   |
 | Spawn                | Miejsce, w którym twoja drużyna zaczyna mecz                                                 |
 | Umiejętność dotykowa | Umiejętność użyta przez dotknięcie celu; niektóre okrzyki sprawiają, że dotyk wrogów zawodzi |

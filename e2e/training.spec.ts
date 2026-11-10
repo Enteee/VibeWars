@@ -215,6 +215,64 @@ test("picking Heights loads its arena with no console error (#2937)", async ({ p
   expect(errors).toEqual([]);
 });
 
+test("Heights draws its water: the deep pond darker than the floor, a puddle paler (#2985)", async ({
+  page,
+}) => {
+  // A walk and a wait for a still camera (#721).
+  test.setTimeout(60_000);
+  // Water ripples never settle unless motion is reduced (#2984).
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("heights");
+  await expect(page.locator(".training-log")).toContainText("── Heights ──");
+  await takeControl(page);
+  await wholeMap(page);
+  /** The mean of R, G and B in an 8 px square round `world` on the ground. */
+  const brightness = async (world: { readonly x: number; readonly y: number }): Promise<number> => {
+    const at = (await trainingView(page, canvas)).onPage(world);
+    const shot = await page.screenshot({ clip: { x: at.x - 4, y: at.y - 4, width: 8, height: 8 } });
+    return page.evaluate(async (png) => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${png}`;
+      await image.decode();
+      const context = new OffscreenCanvas(image.width, image.height).getContext("2d");
+      if (context === null) throw new Error("no 2d context");
+      context.drawImage(image, 0, 0);
+      const { data } = context.getImageData(0, 0, image.width, image.height);
+      // Every fourth byte is alpha, always opaque on a screenshot.
+      const rgb = Array.from(data).filter((_, at) => at % 4 !== 3);
+      return rgb.reduce((sum, value) => sum + value, 0) / rgb.length;
+    }, shot.toString("base64"));
+  };
+  /**
+   * Standing at `x, y`: the water `off` units south of you (north when
+   * negative) and the floor as far the other way. The view follows you
+   * (#721) and darkens towards its edges, so only samples as far from its
+   * centre compare.
+   */
+  const waterAndFloor = async (x: number, y: number, off: number): Promise<[number, number]> => {
+    await walkTo(page, canvas, { x, y });
+    // A click off the canvas releases the arena and walks nowhere.
+    await expect(page.locator(".training")).toHaveClass(/is-armed/);
+    await page.mouse.move(1, 1);
+    return [await brightness({ x, y: y + off }), await brightness({ x, y: y - off })];
+  };
+  // The stage shows less than the map's width: from the spawn, walk east in hops.
+  for (const hop of [
+    { x: 350, y: 650 },
+    { x: 600, y: 680 },
+    { x: 850, y: 650 },
+    { x: 940, y: 420 },
+  ]) {
+    await walkTo(page, canvas, hop);
+  }
+  // Map coordinates from training-heights/map.json: the pond's middle, the east puddle's.
+  const [pond, northFloor] = await waterAndFloor(930, 330, -130);
+  expect(pond).toBeLessThan(northFloor);
+  const [puddle, southFloor] = await waterAndFloor(970, 560, 80);
+  expect(puddle).toBeGreaterThan(southFloor);
+});
+
 test("(5) the chosen scenario survives a reload", async ({ page }) => {
   await openTraining(page);
   await page.locator("select.training-scenario").selectOption("armor-ladder");
