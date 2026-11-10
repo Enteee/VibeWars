@@ -1399,6 +1399,9 @@ export default {
   "training.scenario.heights.label": "Höhen",
   "training.scenario.heights.teaches":
     "Dass Höhe ein Ort zum Kämpfen ist: Plattformen verbergen, wer darunter steht, Rampen sind der einzige Weg zwischen den Ebenen, und dein eigener Bogenschuss von oben trifft härter.",
+  "training.scenario.wilds.label": "Wildnis",
+  "training.scenario.wilds.teaches":
+    "Dass der Boden selbst verletzen kann: Versengter Boden verbrennt jeden, der darauf steht, und das Brennen hält an, nachdem du ihn verlassen hast – also geh außen herum.",
   "training.soundOff": "Ton aus.",
   "training.soundOn": "Ton an.",
   "training.you": "Du",

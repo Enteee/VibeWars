@@ -1272,6 +1272,9 @@ export default {
   "training.scenario.heights.label": "高处",
   "training.scenario.heights.teaches":
     "高处是作战的位置：平台会遮住下方的人，坡道是层与层之间唯一的通路，从上方射出的弓箭伤害更高。",
+  "training.scenario.wilds.label": "荒野",
+  "training.scenario.wilds.teaches":
+    "地面本身也会伤人：焦土会灼烧站在上面的任何人，离开后灼烧仍会持续，所以绕开它。",
   "training.soundOff": "声音已关闭。",
   "training.soundOn": "声音已开启。",
   "training.you": "你",

@@ -1469,6 +1469,9 @@ export default {
   "training.scenario.heights.label": "Alturas",
   "training.scenario.heights.teaches":
     "Que la altura es un lugar desde el que luchar: las plataformas ocultan a quien está debajo, las rampas son el único paso entre niveles y tu propio disparo de arco desde arriba golpea más fuerte.",
+  "training.scenario.wilds.label": "Tierras salvajes",
+  "training.scenario.wilds.teaches":
+    "Que el propio suelo puede herir: el suelo abrasado quema a quien lo pisa, y la quemadura sigue después de salir, así que rodéalo.",
   "training.soundOff": "Sin sonido.",
   "training.soundOn": "Con sonido.",
   "training.you": "Tú",

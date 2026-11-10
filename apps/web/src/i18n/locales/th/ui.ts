@@ -1288,6 +1288,9 @@ export default {
   "training.scenario.heights.label": "ที่สูง",
   "training.scenario.heights.teaches":
     "ที่สูงคือที่สำหรับสู้: พื้นยกบังคนที่อยู่ข้างใต้ ทางลาดคือทางเดียวระหว่างชั้น และธนูของคุณที่ยิงจากที่สูงจะแรงกว่า",
+  "training.scenario.wilds.label": "ป่าเถื่อน",
+  "training.scenario.wilds.teaches":
+    "ว่าพื้นดินเองก็ทำร้ายได้: พื้นที่ไหม้เกรียมเผาทุกคนที่ยืนอยู่บนนั้น และการเผาไหม้ยังคงอยู่หลังจากที่คุณก้าวออกมา จงเดินอ้อม",
   "training.soundOff": "ปิดเสียงแล้ว",
   "training.soundOn": "เปิดเสียงแล้ว",
   "training.you": "คุณ",

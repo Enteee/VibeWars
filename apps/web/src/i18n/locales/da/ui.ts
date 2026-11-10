@@ -1377,6 +1377,9 @@ export default {
   "training.scenario.heights.label": "Højder",
   "training.scenario.heights.teaches":
     "At højde er et sted at kæmpe fra: dæk skjuler, hvem der er under dem, ramper er eneste vej mellem lagene, og dit eget bueskud oppefra rammer hårdere.",
+  "training.scenario.wilds.label": "Vildmark",
+  "training.scenario.wilds.teaches":
+    "At selve jorden kan gøre ondt: svedet jord brænder alle, der står på den, og brændingen fortsætter, efter du er gået ud, så gå uden om.",
   "training.soundOff": "Lyd fra.",
   "training.soundOn": "Lyd til.",
   "training.you": "Dig",

@@ -1385,6 +1385,9 @@ export default {
   "training.scenario.heights.label": "Височини",
   "training.scenario.heights.teaches":
     "Че височината е място, от което да се биеш: платформите крият кой е под тях, рампите са единственият път между нивата, а твоят изстрел с лък отгоре удря по-силно.",
+  "training.scenario.wilds.label": "Пущинак",
+  "training.scenario.wilds.teaches":
+    "Че самата земя може да наранява: опожарената земя изгаря всеки, който стои на нея, а горенето продължава и след като излезеш, така че я заобикаляй.",
   "training.soundOff": "Звукът е изключен.",
   "training.soundOn": "Звукът е включен.",
   "training.you": "Ти",

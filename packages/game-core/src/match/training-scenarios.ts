@@ -740,9 +740,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   },
   {
     id: "wilds",
-    label: "Wilds",
-    teaches:
-      "That the ground itself can hurt: scorched ground burns whoever stands in it, and the burn runs on after you step out, so go round it.",
     mapId: "training-wilds",
     exercises: ["conditions", "movement"],
     knobs: [],

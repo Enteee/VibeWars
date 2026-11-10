@@ -1309,6 +1309,9 @@ export default {
   "training.scenario.heights.label": "Ketinggian",
   "training.scenario.heights.teaches":
     "Bahwa ketinggian adalah tempat untuk bertarung: dek menyembunyikan siapa yang di bawahnya, tanjakan satu-satunya jalan antar lapisan, dan tembakan busurmu dari atas lebih kuat.",
+  "training.scenario.wilds.label": "Alam liar",
+  "training.scenario.wilds.teaches":
+    "Bahwa tanah itu sendiri bisa melukai: tanah hangus membakar siapa pun yang berdiri di atasnya, dan bakarannya berlanjut setelah kamu keluar, jadi kelilingi saja.",
   "training.soundOff": "Suara mati.",
   "training.soundOn": "Suara nyala.",
   "training.you": "Kamu",

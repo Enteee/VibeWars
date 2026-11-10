@@ -1453,6 +1453,9 @@ export default {
   "training.scenario.heights.label": "Alturas",
   "training.scenario.heights.teaches":
     "Que a altura é um lugar de onde lutar: plataformas escondem quem está embaixo, rampas são o único caminho entre camadas, e seu próprio tiro de arco lá de cima acerta mais forte.",
+  "training.scenario.wilds.label": "Ermos",
+  "training.scenario.wilds.teaches":
+    "Que o próprio chão pode ferir: o chão queimado queima quem estiver nele, e a queimadura continua depois de sair, por isso contorne-o.",
   "training.soundOff": "Som desligado.",
   "training.soundOn": "Som ligado.",
   "training.you": "Você",

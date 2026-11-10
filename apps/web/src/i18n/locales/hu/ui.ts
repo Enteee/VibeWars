@@ -1388,6 +1388,9 @@ export default {
   "training.scenario.heights.label": "Magaslatok",
   "training.scenario.heights.teaches":
     "Hogy a magaslat harci pozíció: az emelvények elrejtik, ki van alattuk, a rámpák az egyetlen út a szintek között, és a saját íjlövésed fentről nagyobbat üt.",
+  "training.scenario.wilds.label": "Vadon",
+  "training.scenario.wilds.teaches":
+    "Hogy maga a talaj is sebezhet: a felperzselt talaj megégeti, aki rajta áll, és az égés azután is tart, hogy lelépsz róla, ezért kerüld meg.",
   "training.soundOff": "Hang kikapcsolva.",
   "training.soundOn": "Hang bekapcsolva.",
   "training.you": "Te",

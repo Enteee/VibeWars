@@ -1295,6 +1295,9 @@ export default {
   "training.scenario.heights.label": "Độ cao",
   "training.scenario.heights.teaches":
     "Độ cao là chỗ để chiến đấu: sàn cao che khuất ai ở bên dưới, dốc là lối duy nhất giữa các tầng, và phát cung bạn bắn từ trên cao mạnh hơn.",
+  "training.scenario.wilds.label": "Hoang dã",
+  "training.scenario.wilds.teaches":
+    "Rằng chính mặt đất cũng có thể gây hại: đất cháy xém thiêu đốt bất kỳ ai đứng trên đó, và vết bỏng vẫn tiếp tục sau khi bạn bước ra, nên hãy đi vòng qua.",
   "training.soundOff": "Tắt âm thanh.",
   "training.soundOn": "Bật âm thanh.",
   "training.you": "Bạn",

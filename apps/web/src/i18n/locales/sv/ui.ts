@@ -1378,6 +1378,9 @@ export default {
   "training.scenario.heights.label": "Höjder",
   "training.scenario.heights.teaches":
     "Att höjd är en plats att slåss från: däck döljer dem som står under, ramper är enda vägen mellan lagren, och ditt eget bågskott uppifrån träffar hårdare.",
+  "training.scenario.wilds.label": "Vildmark",
+  "training.scenario.wilds.teaches":
+    "Att marken själv kan skada: svedd mark bränner den som står på den, och brännandet fortsätter efter att du klivit ut, så gå runt den.",
   "training.soundOff": "Ljud av.",
   "training.soundOn": "Ljud på.",
   "training.you": "Du",

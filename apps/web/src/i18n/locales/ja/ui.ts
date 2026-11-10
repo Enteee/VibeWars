@@ -1310,6 +1310,9 @@ export default {
   "training.scenario.heights.label": "高所",
   "training.scenario.heights.teaches":
     "高さは戦う場所: デッキは下にいる者を隠し、スロープだけが階層をつなぎ、上から撃つ弓は威力が増す。",
+  "training.scenario.wilds.label": "荒野",
+  "training.scenario.wilds.teaches":
+    "地面そのものが傷つけることがある：焦げた地面は上に立つ者を燃やし、離れた後も燃焼が続くので、迂回しよう。",
   "training.soundOff": "サウンドオフ。",
   "training.soundOn": "サウンドオン。",
   "training.you": "自分",

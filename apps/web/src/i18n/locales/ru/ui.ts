@@ -1499,6 +1499,9 @@ export default {
   "training.scenario.heights.label": "Высоты",
   "training.scenario.heights.teaches":
     "Что высота — это позиция для боя: настилы скрывают тех, кто под ними, пандусы — единственный путь между уровнями, а твой выстрел из лука сверху бьёт сильнее.",
+  "training.scenario.wilds.label": "Дикие земли",
+  "training.scenario.wilds.teaches":
+    "Что сама земля может ранить: выжженная земля поджигает всякого, кто на ней стоит, и горение продолжается после того, как ты с неё сошёл, так что обходи её.",
   "training.soundOff": "Звук выключен.",
   "training.soundOn": "Звук включён.",
   "training.you": "Ты",

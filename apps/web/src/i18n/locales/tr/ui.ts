@@ -1382,6 +1382,9 @@ export default {
   "training.scenario.heights.label": "Yükseklikler",
   "training.scenario.heights.teaches":
     "Yüksekliğin savaşılacak bir yer olduğu: platformlar altındakileri gizler, rampalar katlar arasındaki tek yoldur ve yukarıdan attığın ok daha sert vurur.",
+  "training.scenario.wilds.label": "Yaban",
+  "training.scenario.wilds.teaches":
+    "Zeminin kendisinin de can yakabileceğini: kavrulmuş zemin üzerinde duran herkesi yakar ve yanma sen çıktıktan sonra da sürer, bu yüzden etrafından dolaş.",
   "training.soundOff": "Ses kapalı.",
   "training.soundOn": "Ses açık.",
   "training.you": "Sen",

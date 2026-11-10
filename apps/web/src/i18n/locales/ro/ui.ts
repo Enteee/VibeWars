@@ -1460,6 +1460,9 @@ export default {
   "training.scenario.heights.label": "Înălțimi",
   "training.scenario.heights.teaches":
     "Că înălțimea e un loc din care lupți: platformele îi ascund pe cei de dedesubt, rampele sunt singura cale între niveluri, iar săgeata ta trasă de sus lovește mai tare.",
+  "training.scenario.wilds.label": "Sălbăticie",
+  "training.scenario.wilds.teaches":
+    "Că pământul însuși poate răni: pământul pârjolit arde pe oricine stă pe el, iar arsura continuă și după ce ieși, așa că ocolește-l.",
   "training.soundOff": "Sunet oprit.",
   "training.soundOn": "Sunet pornit.",
   "training.you": "Tu",

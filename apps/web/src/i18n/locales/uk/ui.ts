@@ -1503,6 +1503,9 @@ export default {
   "training.scenario.heights.label": "Висоти",
   "training.scenario.heights.teaches":
     "Що висота — це місце, звідки варто битися: настили ховають тих, хто під ними, пандуси — єдиний шлях між рівнями, а ваш постріл з лука згори б'є сильніше.",
+  "training.scenario.wilds.label": "Дикі землі",
+  "training.scenario.wilds.teaches":
+    "Що сама земля може ранити: випалена земля підпалює кожного, хто на ній стоїть, і горіння триває після того, як ти з неї зійшов, тож обходь її.",
   "training.soundOff": "Звук вимкнено.",
   "training.soundOn": "Звук увімкнено.",
   "training.you": "Ти",

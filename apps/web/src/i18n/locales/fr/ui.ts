@@ -1471,6 +1471,9 @@ export default {
   "training.scenario.heights.label": "Hauteurs",
   "training.scenario.heights.teaches":
     "Que la hauteur est une position de combat : les plateformes cachent qui se trouve dessous, les rampes sont le seul passage entre niveaux, et ton tir à l'arc d'en haut frappe plus fort.",
+  "training.scenario.wilds.label": "Terres sauvages",
+  "training.scenario.wilds.teaches":
+    "Que le sol lui-même peut blesser : un sol calciné brûle quiconque s'y tient, et la brûlure continue après en être sorti, alors contourne-le.",
   "training.soundOff": "Son coupé.",
   "training.soundOn": "Son activé.",
   "training.you": "Toi",

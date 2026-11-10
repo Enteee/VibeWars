@@ -1382,6 +1382,9 @@ export const en = {
   "training.scenario.heights.label": "Heights",
   "training.scenario.heights.teaches":
     "That height is a place to fight from: decks hide who is under them, ramps are the only way between layers, and your own bow shot from above hits harder.",
+  "training.scenario.wilds.label": "Wilds",
+  "training.scenario.wilds.teaches":
+    "That the ground itself can hurt: scorched ground burns whoever stands in it, and the burn runs on after you step out, so go round it.",
   "training.soundOff": "Sound off.",
   "training.soundOn": "Sound on.",
   "training.you": "You",

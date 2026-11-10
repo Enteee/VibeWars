@@ -1387,6 +1387,9 @@ export default {
   "training.scenario.heights.label": "Hoogtes",
   "training.scenario.heights.teaches":
     "Dat hoogte een plek is om vanaf te vechten: dekken verbergen wie eronder staat, hellingen zijn de enige weg tussen lagen, en je eigen boogschot van bovenaf raakt harder.",
+  "training.scenario.wilds.label": "Wildernis",
+  "training.scenario.wilds.teaches":
+    "Dat de grond zelf pijn kan doen: verschroeide grond verbrandt wie erop staat, en het branden gaat door nadat je eraf stapt, dus loop eromheen.",
   "training.soundOff": "Geluid uit.",
   "training.soundOn": "Geluid aan.",
   "training.you": "Jij",

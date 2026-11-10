@@ -1508,6 +1508,9 @@ export default {
   "training.scenario.heights.label": "Wysokości",
   "training.scenario.heights.teaches":
     "Że wysokość to miejsce do walki: pomosty kryją tych pod nimi, rampy to jedyne przejście między poziomami, a twój strzał z łuku z góry trafia mocniej.",
+  "training.scenario.wilds.label": "Dzicz",
+  "training.scenario.wilds.teaches":
+    "Że sama ziemia może ranić: spalona ziemia podpala każdego, kto na niej stoi, a podpalenie trwa jeszcze po zejściu, więc ją omijaj.",
   "training.soundOff": "Dźwięk wył.",
   "training.soundOn": "Dźwięk wł.",
   "training.you": "Ty",

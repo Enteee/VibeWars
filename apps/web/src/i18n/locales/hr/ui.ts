@@ -1455,6 +1455,9 @@ export default {
   "training.scenario.heights.label": "Visine",
   "training.scenario.heights.teaches":
     "Da je visina mjesto s kojeg se bori: platforme skrivaju one ispod sebe, rampe su jedini put između razina, a tvoj hitac lukom odozgo jače pogađa.",
+  "training.scenario.wilds.label": "Divljina",
+  "training.scenario.wilds.teaches":
+    "Da i samo tlo može ozlijediti: spaljeno tlo pali svakoga tko stoji na njemu, a gorenje traje i nakon što izađeš, pa ga zaobiđi.",
   "training.soundOff": "Zvuk isključen.",
   "training.soundOn": "Zvuk uključen.",
   "training.you": "Ti",

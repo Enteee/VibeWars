@@ -1461,6 +1461,9 @@ export default {
   "training.scenario.heights.label": "Alture",
   "training.scenario.heights.teaches":
     "Che l'altezza è un posto da cui combattere: le piattaforme nascondono chi sta sotto, le rampe sono l'unico passaggio tra i livelli, e il tuo tiro con l'arco dall'alto colpisce più forte.",
+  "training.scenario.wilds.label": "Terre selvagge",
+  "training.scenario.wilds.teaches":
+    "Che il terreno stesso può ferire: il terreno bruciato brucia chiunque ci stia sopra, e la bruciatura continua dopo che ne esci, quindi giraci intorno.",
   "training.soundOff": "Audio spento.",
   "training.soundOn": "Audio attivo.",
   "training.you": "Tu",

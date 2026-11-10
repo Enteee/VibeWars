@@ -1395,6 +1395,9 @@ export default {
   "training.scenario.heights.label": "Korkeudet",
   "training.scenario.heights.teaches":
     "Että korkeus on paikka, josta taistella: tasanteet kätkevät alla olevat, rampit ovat ainoa reitti kerrosten välillä, ja oma jousilaukauksesi ylhäältä osuu kovemmin.",
+  "training.scenario.wilds.label": "Erämaa",
+  "training.scenario.wilds.teaches":
+    "Että maa itse voi satuttaa: kärventynyt maa polttaa jokaista sillä seisovaa, ja palaminen jatkuu vielä poistuttuasi, joten kierrä se.",
   "training.soundOff": "Ääni pois.",
   "training.soundOn": "Ääni päällä.",
   "training.you": "Sinä",

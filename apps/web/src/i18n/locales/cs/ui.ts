@@ -1496,6 +1496,9 @@ export default {
   "training.scenario.heights.label": "Výšky",
   "training.scenario.heights.teaches":
     "Že výška je místo, odkud bojovat: plošiny skrývají, kdo je pod nimi, rampy jsou jediná cesta mezi patry a tvůj výstřel z luku shora zasáhne silněji.",
+  "training.scenario.wilds.label": "Divočina",
+  "training.scenario.wilds.teaches":
+    "Že i samotná zem může zraňovat: spálená zem pálí každého, kdo na ní stojí, a hoření trvá i po odchodu, tak ji obejdi.",
   "training.soundOff": "Zvuk vypnut.",
   "training.soundOn": "Zvuk zapnut.",
   "training.you": "Ty",
