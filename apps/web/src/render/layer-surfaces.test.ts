@@ -11,6 +11,9 @@ import {
   deckSideLow,
   hiddenCrop,
   DECK_SLAB,
+  HIDDEN_DASH,
+  HIDDEN_GAP,
+  type HiddenPiece,
   drawnLayerAt,
   liftAt,
   occludersOf,
@@ -32,6 +35,14 @@ const BRIDGE: MapStructure = {
   transitions: [],
   water: [],
 };
+
+function hiddenPieces(x: number, y: number): HiddenPiece[] {
+  const pieces: HiddenPiece[] = [];
+  traceHiddenOutline(RING_PATH, x, y, 14, 0, occludersOf([], BRIDGE), (ax, ay, bx, by) => {
+    pieces.push({ ax, ay, bx, by });
+  });
+  return pieces;
+}
 
 function hiddenSegments(y: number, layer: number): { x: number; y: number }[] {
   const seen: { x: number; y: number }[] = [];
@@ -117,8 +128,42 @@ describe("Alt on the pointer (#2831)", () => {
 });
 
 describe("the hidden part of a body (#2831)", () => {
-  it("is all of a body well under the deck", () => {
-    expect(hiddenSegments(150, 0)).toHaveLength(48);
+  it("is all of a body well under the deck, dashed (#2979)", () => {
+    const shown = hiddenSegments(150, 0).length;
+    expect(shown / 48).toBeCloseTo(HIDDEN_DASH / (HIDDEN_DASH + HIDDEN_GAP), 1);
+  });
+
+  it("is dashes no longer than a dash and a piece, with gaps between (#2979)", () => {
+    const pieces = hiddenPieces(200, 150);
+    const lengthOf = ({ ax, ay, bx, by }: HiddenPiece): number => Math.hypot(bx - ax, by - ay);
+    const piece = Math.max(...pieces.map(lengthOf));
+    const dashes: number[] = [];
+    pieces.forEach((each, at) => {
+      const before = pieces[at - 1];
+      const joined = before?.bx === each.ax && before.by === each.ay;
+      const length = lengthOf(each);
+      if (joined) {
+        dashes[dashes.length - 1] = (dashes.at(-1) ?? 0) + length;
+      } else {
+        dashes.push(length);
+      }
+    });
+    expect(dashes.length).toBeGreaterThan(1);
+    expect(dashes.every((dash) => dash <= HIDDEN_DASH + piece + 1e-9)).toBe(true);
+  });
+
+  it("keeps its dashes to a body that moves, not crawling round it (#2979)", () => {
+    const moved = hiddenPieces(201, 150).map(({ ax, ay, bx, by }) => ({
+      ax: ax - 1,
+      ay,
+      bx: bx - 1,
+      by,
+    }));
+    const here = hiddenPieces(200, 150);
+    expect(moved).toHaveLength(here.length);
+    const rounded = (pieces: readonly HiddenPiece[]): string[] =>
+      pieces.map(({ ax, ay, bx, by }) => [ax, ay, bx, by].map((n) => n.toFixed(6)).join(","));
+    expect(rounded(moved)).toEqual(rounded(here));
   });
 
   it("is only the part under the deck's edge", () => {
@@ -149,13 +194,32 @@ describe("the hidden part of a weapon and symbol (#2972)", () => {
   });
 
   it("covers only the part of a polyline under a deck", () => {
+    // 136 is 76 along the line, inside its dash from 72 to 77.
     const line = [
       { x: 60, y: under },
-      { x: 140, y: under },
+      { x: 136, y: under },
     ];
     const { left, right } = span(traceHiddenPolyline(line, 0, occluders));
     expect(left).toBeCloseTo(100, 0);
-    expect(right).toBeCloseTo(140, 0);
+    expect(right).toBeCloseTo(136, 0);
+  });
+
+  it("dashes one long straight segment, measured from the line's start (#2979)", () => {
+    const line = [
+      { x: 150, y: under },
+      { x: 190, y: under },
+    ];
+    const pieces = traceHiddenPolyline(line, 0, occluders);
+    const along = (x: number): number => x - 150;
+    expect(pieces.length).toBeGreaterThan(0);
+    for (const { ax, bx } of pieces) {
+      const from = along(Math.min(ax, bx)) % (HIDDEN_DASH + HIDDEN_GAP);
+      expect(from).toBeLessThan(HIDDEN_DASH);
+      expect(from + Math.abs(bx - ax)).toBeLessThanOrEqual(HIDDEN_DASH + 1e-9);
+    }
+    const covered = pieces.reduce((sum, { ax, bx }) => sum + Math.abs(bx - ax), 0);
+    // 40 long: dashes at 0, 9, 18, 27 and 36, the last cut at 40.
+    expect(covered).toBeCloseTo(4 * HIDDEN_DASH + 4, 9);
   });
 
   it("covers a polyline wholly under a deck", () => {
