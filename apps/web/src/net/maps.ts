@@ -356,6 +356,8 @@ export function mapShrines(mapId: string, teamCount: number): readonly MapShrine
 export interface LoadedStructure {
   readonly structure: MapStructure;
   readonly wallLayers: readonly number[];
+  /** Each gate's layer, in the map's order: the wire's gates carry none. */
+  readonly gateLayers: readonly number[];
 }
 
 /** What the renderer needs of a map's layers, its water and its zones, from its file. */
@@ -384,11 +386,12 @@ export function structureOf(map: MapData): LoadedStructure {
             ...(map.lighting === undefined ? {} : { lighting: map.lighting }),
           },
     wallLayers: map.walls.map((wall) => wall.layer),
+    gateLayers: map.gates.map((gate) => gate.wall.layer),
   };
 }
 
 /** A map the client has no file for has one layer, as the rest of this file assumes. */
-const NO_STRUCTURE: LoadedStructure = { structure: FLAT_STRUCTURE, wallLayers: [] };
+const NO_STRUCTURE: LoadedStructure = { structure: FLAT_STRUCTURE, wallLayers: [], gateLayers: [] };
 const structures = new Map<string, LoadedStructure>();
 
 /** `structureOf` by map id, one object per map: the scene redraws when it changes. */

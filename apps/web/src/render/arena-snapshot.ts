@@ -119,6 +119,13 @@ export type RenderableWall = (RectRenderableWall | PolygonRenderableWall) & {
   readonly layer: number;
 };
 
+/** A shut gate's door (#3061): it blocks as a wall does, and draws as a door. */
+export type RenderableDoor = RenderableWall & { readonly door: true };
+
+export function isDoor(wall: RenderableWall): wall is RenderableDoor {
+  return "door" in wall;
+}
+
 /** A deck's or ramp's outline, as a wall's without a layer. */
 export type RenderableShape = RectRenderableWall | PolygonRenderableWall;
 

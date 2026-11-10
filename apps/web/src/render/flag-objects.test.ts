@@ -187,7 +187,7 @@ describe("renderableGates (#2691)", () => {
       { wall, opener: { kind: "plate", plate, team: null } },
     ] as const;
     expect(
-      renderableGates(gates, [true, false], 1).map(({ plate, open }) => ({
+      renderableGates(gates, [0, 0], [true, false], 1).map(({ plate, open }) => ({
         side: plate?.side,
         open,
       })),
@@ -199,12 +199,12 @@ describe("renderableGates (#2691)", () => {
 
   it("draws a gate closed before the first snapshot says otherwise", () => {
     const gate = { wall, opener: { kind: "plate", plate, team: null } } as const;
-    expect(renderableGates([gate], [], 0)[0]?.open).toBe(false);
+    expect(renderableGates([gate], [0], [], 0)[0]?.open).toBe(false);
   });
 
-  it("gives a switch's gate no plate (#3025)", () => {
-    expect(renderableGates([{ wall, opener: { kind: "switch" } }], [true], 0)).toEqual([
-      { plate: undefined, open: true, wall },
+  it("gives a switch's gate no plate (#3025), and its wall's layer (#3061)", () => {
+    expect(renderableGates([{ wall, opener: { kind: "switch" } }], [2], [true], 0)).toEqual([
+      { plate: undefined, open: true, wall, layer: 2 },
     ]);
   });
 });

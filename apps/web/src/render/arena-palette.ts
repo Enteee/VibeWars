@@ -128,3 +128,15 @@ export const SWITCH_MARK_LOOK = {
   handle: 0x8a6a42,
   knob: 0xe8dcc0,
 };
+
+/**
+ * A gate's door (#3061, docs/art/visual-style.md "Door, open and closed"):
+ * amber wood with a dark edge and knob line; open, a dashed amber ghost.
+ */
+export const GATE_DOOR_LOOK = {
+  body: 0xc98a3a,
+  face: shade(0xc98a3a, 0.4),
+  lit: 0xe8b46a,
+  edge: 0x0b0f14,
+  knob: 0x0b0f14,
+};

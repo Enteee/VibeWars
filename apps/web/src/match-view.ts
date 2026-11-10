@@ -50,6 +50,7 @@ import {
   teamSide,
   toRenderableGroundEffect,
   type ArenaSnapshot,
+  type RenderableDoor,
   type RenderableWall,
   type MapStructure,
   FLAT_STRUCTURE,
@@ -255,6 +256,7 @@ export function toRenderableWall(wall: WallDescriptor, layer: number): Renderabl
  */
 export function gateWalls(
   gates: readonly GateDescriptor[],
+  gateLayers: readonly number[],
   walls: readonly RenderableWall[],
   segments: readonly Segment[],
 ): (open: readonly boolean[]) => {
@@ -269,10 +271,14 @@ export function gateWalls(
     });
     let set = known.get(closed);
     if (set === undefined) {
-      const shut = gates.filter((_, at) => open[at] !== true).map((gate) => gate.wall);
+      const shut = gates.flatMap((gate, at) => (open[at] === true ? [] : [{ gate, at }]));
+      const doors: RenderableDoor[] = shut.map(({ gate, at }) => ({
+        ...toRenderableWall(gate.wall, gateLayers[at] ?? 0),
+        door: true,
+      }));
       set = {
-        walls: [...walls, ...shut.map((wall) => toRenderableWall(wall, 0))],
-        segments: [...segments, ...allWallSegments(shut)],
+        walls: [...walls, ...doors],
+        segments: [...segments, ...allWallSegments(shut.map(({ gate }) => gate.wall))],
       };
       known.set(closed, set);
     }
@@ -285,8 +291,13 @@ function playerNames(match: MatchSnapshot): ReadonlyMap<string, string> {
   return new Map(match.players.map((player) => [player.sessionId, player.name]));
 }
 
+/** A map's gates and switches, and each gate's layer, which the wire does not carry. */
+export interface GatedMap extends Pick<MapDescriptor, "gates" | "switches"> {
+  readonly gateLayers: readonly number[];
+}
+
 /** A map's gates and switches where it has none. */
-const UNGATED: Pick<MapDescriptor, "gates" | "switches"> = { gates: [], switches: [] };
+const UNGATED: GatedMap = { gates: [], switches: [], gateLayers: [] };
 
 /** Project the wire snapshot onto the renderer's own shape (ADR-0001). */
 export function toArenaSnapshot(
@@ -295,7 +306,7 @@ export function toArenaSnapshot(
   shrines: readonly MapShrine[],
   flagField: FlagField | undefined,
   relicField: RelicField | undefined,
-  gated: Pick<MapDescriptor, "gates" | "switches"> = UNGATED,
+  gated: GatedMap = UNGATED,
   structure: MapStructure = FLAT_STRUCTURE,
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
@@ -314,7 +325,7 @@ export function toArenaSnapshot(
     stand: renderableStand(match.stand, flagField, self?.team),
     altar: match.altar,
     capturePoints: renderableCapturePoints(match.capturePoints, self?.team),
-    gates: renderableGates(gated.gates, match.gates, self?.team),
+    gates: renderableGates(gated.gates, gated.gateLayers, match.gates, self?.team),
     switches: renderableSwitches(gated.switches, match.switches),
     shrines: shrines.map((shrine) => ({
       position: shrine.position,
@@ -475,11 +486,11 @@ export async function startMatchView(
   }
   // A watcher has none (#480): nothing below sends an intent without it.
   const { seat } = viewed;
-  const { structure, wallLayers } = mapStructure(viewed.map.id);
+  const { structure, wallLayers, gateLayers } = mapStructure(viewed.map.id);
   const walls = viewed.map.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(viewed.map.walls);
-  const blocking = gateWalls(viewed.map.gates, walls, wallSegments);
+  const blocking = gateWalls(viewed.map.gates, gateLayers, walls, wallSegments);
   const mode = mapMode(viewed.map.id);
   const shrines = mapShrines(viewed.map.id, viewed.map.teamCount);
   const flagField = mapFlagField(viewed.map.id);
@@ -1026,7 +1037,7 @@ export async function startMatchView(
         shrines,
         flagField,
         relicField,
-        viewed.map,
+        { ...viewed.map, gateLayers },
         structure,
       ),
       viewport?.pointerWorld(),

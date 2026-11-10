@@ -247,11 +247,11 @@ test("Wilds' gas spout strikes the dummy in it, logged by its kind (#3029)", asy
   expect(errors).toEqual([]);
 });
 
-test("Wilds: a double right click on the lever opens the side room's door, and you walk in (#3025)", async ({
+test("Wilds: a double right click on the lever opens the side room's door, and you walk in (#3025, #3061)", async ({
   page,
 }) => {
-  // Two walks, in game time, which runs slower than wall time under load (#327).
-  test.setTimeout(60_000);
+  // Three walks, in game time, which runs slower than wall time under load (#327).
+  test.setTimeout(90_000);
   // Scorched ground breathes, and never settles unless motion is reduced.
   await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await openTraining(page);
@@ -266,16 +266,34 @@ test("Wilds: a double right click on the lever opens the side room's door, and y
     return Math.hypot(x - world.x, y - world.y) <= reach;
   };
 
+  // A shut door is an amber box at wall height; an open one only a faint
+  // ghost (#3061). Its top face, a wall's height up: of its 244..260 x 680..760,
+  // a point north of the knob line across its middle, read with the camera by
+  // the lever, clear of the HUD.
+  const doorTop = { x: 252, y: 700 - 28 };
+  const amber = async (): Promise<boolean> => {
+    const [r, g, b] = await meanColour(page, (await trainingView(page, canvas)).onPage(doorTop));
+    return r > g && g > b && r - b > 40;
+  };
   const lever = { x: 330, y: 640 };
-  const at = (await trainingView(page, canvas)).onPage(lever);
-  await page.mouse.dblclick(at.x, at.y, { button: "right" });
-  // FLAG_REACH_UNITS: a switch is reached as a flag is.
-  await expect.poll(() => near(lever, 60), { timeout: 20_000 }).toBe(true);
-  await stillArena(page, canvas);
+  const pull = async (): Promise<void> => {
+    const at = (await trainingView(page, canvas)).onPage(lever);
+    await page.mouse.dblclick(at.x, at.y, { button: "right" });
+    // FLAG_REACH_UNITS: a switch is reached as a flag is.
+    await expect.poll(() => near(lever, 60), { timeout: 20_000 }).toBe(true);
+    await stillArena(page, canvas);
+  };
+
+  await pull();
+  expect(await amber()).toBe(false);
 
   const room = { x: 130, y: 720 };
   await walkTo(page, canvas, room);
   await expect.poll(() => near(room, 5), { timeout: 20_000 }).toBe(true);
+
+  // Back out through it, and shut it behind you.
+  await pull();
+  expect(await amber()).toBe(true);
 });
 
 test("Heights draws its water: the deep pond darker than the floor, a puddle paler (#2985)", async ({
@@ -830,6 +848,31 @@ test("(22) a stored Classic keymap casts on the number row (#302)", async ({ pag
  * than wall time under load (#327), so this polls rather than waits once.
  * Armed or not, as long as both shots are taken the same way.
  */
+/** The mean red, green and blue of a 4 px square round `at` on the page. */
+async function meanColour(
+  page: Page,
+  at: { readonly x: number; readonly y: number },
+): Promise<[number, number, number]> {
+  const shot = await page.screenshot({ clip: { x: at.x - 2, y: at.y - 2, width: 4, height: 4 } });
+  return page.evaluate(async (png) => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${png}`;
+    await image.decode();
+    const context = new OffscreenCanvas(image.width, image.height).getContext("2d");
+    if (context === null) throw new Error("no 2d context");
+    context.drawImage(image, 0, 0);
+    const { data } = context.getImageData(0, 0, image.width, image.height);
+    let [r, g, b] = [0, 0, 0];
+    for (let at = 0; at < data.length; at += 4) {
+      r += data[at] ?? 0;
+      g += data[at + 1] ?? 0;
+      b += data[at + 2] ?? 0;
+    }
+    const pixels = data.length / 4;
+    return [r / pixels, g / pixels, b / pixels] as [number, number, number];
+  }, shot.toString("base64"));
+}
+
 async function stillArena(page: Page, canvas: Locator): Promise<Buffer> {
   const shot = (): Promise<Buffer> =>
     canvas.screenshot({ mask: [page.locator(".training-overlay")] });
