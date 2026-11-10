@@ -213,8 +213,8 @@ interface ResultHud {
 }
 
 /**
- * The HUD the frame `page`'s match result shows, read in the page every
- * frame: the result leaves with the HUD QUEUED_RESULT_SECONDS later
+ * The HUD the moment `page`'s match result shows, read in the page every
+ * 100 ms: the result leaves with the HUD QUEUED_RESULT_SECONDS later
  * (#3002), sooner than a loaded runner may come back to look.
  */
 async function resultShown(page: Page): Promise<ResultHud> {
@@ -229,7 +229,8 @@ async function resultShown(page: Page): Promise<ResultHud> {
       };
     },
     undefined,
-    { timeout: 90_000 },
+    // Bob's page is a background tab, where frames may not come: poll on a timer.
+    { timeout: 90_000, polling: 100 },
   );
   const hud = await shown.jsonValue();
   if (hud === undefined) throw new Error("the result showed with no HUD to read");
