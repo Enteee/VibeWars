@@ -367,11 +367,11 @@ glow("torch", 40, 110, 90, "torch-vents");
 glow("torch", 295, 60, 80, "torch-rocks");
 glow("cold", 700, 200, 150, "cold-spire");
 glow("spring", 120, 190, 120, "spring glow (#3052)");
-// sun: low, from the west; arrows show the way shadows fall (east and a little south)
-text(16, 790, "sun · low, W, dusk", 8, "#f2d49b");
+// sun: low, from the north-west (315 deg, one sun for every map); arrows show shadows falling south-east
+text(16, 790, "sun · NW, low, dusk", 8, "#f2d49b");
 for (const y of [380, 500]) {
   o.push(
-    `<path d="M${f(20 * K)},${f(y * K)} l${f(70 * K)},${f(14 * K)}" stroke="#f2d49b" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#ar)"/>`,
+    `<path d="M${f(20 * K)},${f(y * K)} l${f(50 * K)},${f(50 * K)}" stroke="#f2d49b" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#ar)"/>`,
   );
 }
 defs.push(
