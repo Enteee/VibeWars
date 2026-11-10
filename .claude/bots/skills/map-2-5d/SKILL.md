@@ -8,6 +8,7 @@ description: Any map or map element you touch must be fully 2.5D, lit and good t
 The operator played Training Wilds and called it terrible: working ground
 effects drawn as flat placeholders. Working is not done.
 
+- Read `docs/art/visual-style.md` (palette, light, SVG examples) first.
 - A map you touch follows the 2.5D style (#2810): heights, walls, light
   sources and shadow, like the best existing 2.5D maps.
 - Each element looks like what it is: lava glows and flows and casts light,
