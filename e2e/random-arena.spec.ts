@@ -157,12 +157,20 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     const pip = alice.locator(".hud-enemy-pip");
     await expect(pip).toHaveAttribute("title", "Bob");
     await expect(pip).not.toHaveClass(/is-dead/);
-
     // Alice beats Bob, who stands still, with the starter build's spells.
+    // The result is up for QUEUED_RESULT_SECONDS only, and a pass of
+    // presses can take longer than that on a loaded runner (#3002): each
+    // page reads its HUD the frame the result shows, while Alice casts.
     await alice.keyboard.press(key("target-next"));
     await alice.keyboard.press(key("attack"));
-    const result = alice.locator(".hud-result");
-    await expect(async () => {
+    const aliceSaw = resultShown(alice);
+    const bobSaw = resultShown(bob);
+    const fight = { on: true };
+    const stop = (): void => {
+      fight.on = false;
+    };
+    aliceSaw.then(stop, stop);
+    while (fight.on) {
       for (const skill of [
         "elementalist.glyph-of-lesser-energy",
         "elementalist.fireball",
@@ -171,12 +179,12 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
       ]) {
         await alice.keyboard.press(starterKey(BUILD, skill));
       }
-      await expect(result).toBeVisible({ timeout: 1_000 });
-    }).toPass({ timeout: 90_000 });
-    await expect(result).toHaveText(/victory/i);
-    await expect(bob.locator(".hud-result")).toHaveText(/defeat/i);
-    await expect(alice.locator(".hud-scoreboard")).toContainText("1 v 0");
-    await expect(pip).toHaveClass(/is-dead/);
+    }
+    const [aliceHud, bobHud] = await Promise.all([aliceSaw, bobSaw]);
+    expect(aliceHud.result).toMatch(/victory/i);
+    expect(bobHud.result).toMatch(/defeat/i);
+    expect(aliceHud.scoreboard).toContain("1 v 0");
+    expect(aliceHud.pip).toMatch(/\bis-dead\b/);
 
     // Four seconds on, the queue screen says how it went.
     await expect(alice.locator(".queue-status")).toHaveText("Victory", { timeout: 10_000 });
@@ -196,6 +204,38 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     await context.close();
   }
 });
+
+/** What a page's HUD said on the frame its match result first showed. */
+interface ResultHud {
+  readonly result: string;
+  readonly scoreboard: string;
+  readonly pip: string;
+}
+
+/**
+ * The HUD the moment `page`'s match result shows, read in the page every
+ * 100 ms: the result leaves with the HUD QUEUED_RESULT_SECONDS later
+ * (#3002), sooner than a loaded runner may come back to look.
+ */
+async function resultShown(page: Page): Promise<ResultHud> {
+  const shown = await page.waitForFunction(
+    () => {
+      const result = document.querySelector<HTMLElement>(".hud-result");
+      if (result === null || result.style.display === "none") return undefined;
+      return {
+        result: result.textContent,
+        scoreboard: document.querySelector(".hud-scoreboard")?.textContent ?? "",
+        pip: document.querySelector(".hud-enemy-pip")?.className ?? "",
+      };
+    },
+    undefined,
+    // Bob's page is a background tab, where frames may not come: poll on a timer.
+    { timeout: 90_000, polling: 100 },
+  );
+  const hud = await shown.jsonValue();
+  if (hud === undefined) throw new Error("the result showed with no HUD to read");
+  return hud;
+}
 
 /** Queue seeds 1 and 2, which make Alice the host, into a match, both in the arena. */
 async function meetInMatch(alice: Page, bob: Page): Promise<void> {
