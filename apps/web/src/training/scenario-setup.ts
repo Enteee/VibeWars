@@ -4,12 +4,12 @@ import {
   loadoutSpec,
   PLAYER_TEAM,
   scenarioParticipants,
-  type MatchLayers,
   type ResolvedLoadout,
   type SkillBar,
   type TrainingScenario,
 } from "@vibewars/game-core";
-import { allWallSegments, shapeVertices, wallToSegments } from "@vibewars/game-maps/geometry";
+import { allWallSegments } from "@vibewars/game-maps/geometry";
+import { matchLayers } from "@vibewars/game-maps/layers";
 import type { MapData } from "@vibewars/game-maps/schema";
 import type { MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
 import { structureOf, type LoadedStructure } from "../net/maps.js";
@@ -80,30 +80,6 @@ function toMapDescriptor(map: MapData): MapDescriptor {
     teamCount: map.teams,
     walls,
     gates: [],
-  };
-}
-
-/** `map`'s layers, as the simulation takes them (ADR-0051). */
-export function matchLayers(map: MapData): MatchLayers {
-  return {
-    count: map.layers,
-    walls: Array.from({ length: map.layers }, (_, layer) =>
-      map.walls.filter((wall) => wall.layer === layer).flatMap(wallToSegments),
-    ),
-    decks: map.decks.map((deck) => ({
-      layer: deck.layer,
-      footprint: shapeVertices(deck.footprint),
-    })),
-    transitions: map.transitions.map((transition) => ({
-      from: transition.from,
-      to: transition.to,
-      area: shapeVertices(transition.area),
-    })),
-    deepWater: Array.from({ length: map.layers }, (_, layer) =>
-      (map.water ?? [])
-        .filter((water) => water.layer === layer && water.depth === "deep")
-        .flatMap((water) => wallToSegments(water.area)),
-    ),
   };
 }
 

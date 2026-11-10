@@ -16,6 +16,7 @@ import {
   RULESET,
   WARRIOR,
 } from "./bot/rules/test-support.js";
+import { UPHILL } from "./layer-rules.js";
 import {
   MatchSimulation,
   type Creature,
@@ -45,9 +46,11 @@ const WALL_ON_DECK = wall(698, 300, 4, 200);
 const WALL_ON_GROUND = wall(238, 300, 4, 200);
 const LAYERS: MatchLayers = {
   count: 2,
+  ground: 0,
+  pits: [],
   walls: [WALL_ON_GROUND, WALL_ON_DECK],
   decks: [{ layer: 1, footprint: rect(500, 300, 600, 200) }],
-  transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200) }],
+  transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200), uphill: UPHILL.e }],
   deepWater: [[], []],
 };
 

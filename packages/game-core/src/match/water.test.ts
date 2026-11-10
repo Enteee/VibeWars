@@ -5,6 +5,7 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import type { Polygon, Segment } from "../geometry.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { BOUNDS, DT, ELEMENTALIST, fighter, RANGER, RULESET } from "./bot/rules/test-support.js";
+import { UPHILL } from "./layer-rules.js";
 import {
   MatchSimulation,
   type MatchLayers,
@@ -38,9 +39,11 @@ const POND = outline(700, 100, 100, 600);
 const POOL_ON_DECK = outline(1300, 320, 60, 160);
 const LAYERS: MatchLayers = {
   count: 2,
+  ground: 0,
+  pits: [],
   walls: [[], []],
   decks: [{ layer: 1, footprint: rect(1100, 300, 400, 200) }],
-  transitions: [{ from: 0, to: 1, area: rect(950, 300, 170, 200) }],
+  transitions: [{ from: 0, to: 1, area: rect(950, 300, 170, 200), uphill: UPHILL.e }],
   deepWater: [POND, POOL_ON_DECK],
 };
 

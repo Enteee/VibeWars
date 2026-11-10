@@ -69,7 +69,7 @@ import {
   heightStep,
   rampRims,
   sharesFloor,
-  uphillDirections,
+  type FloorTransition,
 } from "./layer-rules.js";
 import {
   buildLayeredNavGraph,
@@ -638,18 +638,21 @@ function hasMorale(participant: Participant): boolean {
   return participant.creature === undefined || participant.creature.onDeath === "lie";
 }
 
-/** A map's discrete layers (ADR-0051): layer 0 is the ground, and needs no area. */
+/**
+ * A map's discrete layers (ADR-0051): `ground` is the ground, everywhere but
+ * its pits; the layer under it is its pits and tunnels (#2973).
+ */
 export interface MatchLayers {
   readonly count: number;
+  readonly ground: number;
   /** Each layer's walls, indexed by layer, and without any gate's. */
   readonly walls: readonly (readonly Segment[])[];
+  /** Floors over a layer, a tunnel being one of the ground's: they hide and cover what is under them. */
   readonly decks: readonly { readonly layer: number; readonly footprint: Polygon }[];
-  /** Ramps and stairs: inside `area`, a body moves between `from` and `to`, one above it. */
-  readonly transitions: readonly {
-    readonly from: number;
-    readonly to: number;
-    readonly area: Polygon;
-  }[];
+  /** Holes in the ground, open to the sky, on the layer under it. */
+  readonly pits: readonly Polygon[];
+  /** Ramps and stairs: inside `area`, a body moves between `from` and `to`, one above, towards `uphill`. */
+  readonly transitions: readonly FloorTransition[];
   /**
    * Each layer's deep water (#2983), indexed by layer, as its outline: it
    * stops bodies and paths as a wall does, but never sight or shots.
@@ -1031,16 +1034,23 @@ const NO_TRANSITIONS: MatchLayers["transitions"] = [];
 /** The decks of a map without any: the deck rule is then nothing to look up. */
 const NO_DECKS: MatchLayers["decks"] = [];
 
-/** Each layer's decks and ramps, indexed by layer; the ground's stays empty. */
-function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Polygon[])[] {
+/**
+ * Each layer's floors and ramps, indexed by layer; the ground's stays
+ * empty, being everywhere its rims leave it. Under the ground, its pits
+ * and tunnels, the ground's own decks (#2973).
+ */
+export function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Polygon[])[] {
   if (layers === undefined) {
     return [];
   }
   return Array.from({ length: layers.count }, (_, layer) =>
-    layer === 0
+    layer === layers.ground
       ? []
       : [
-          ...layers.decks.filter((deck) => deck.layer === layer).map((deck) => deck.footprint),
+          ...(layer === layers.ground - 1 ? layers.pits : []),
+          ...layers.decks
+            .filter((deck) => deck.layer === (layer < layers.ground ? layers.ground : layer))
+            .map((deck) => deck.footprint),
           ...layers.transitions
             .filter((transition) => transition.from === layer || transition.to === layer)
             .map((transition) => transition.area),
@@ -1182,9 +1192,10 @@ export class MatchSimulation {
   /** Where a body may stand on each layer above the ground: its decks and ramps. */
   readonly #walkable: readonly (readonly Polygon[])[];
   /** Each ramp's way up, as a direction, in `#layers.transitions`' order. */
-  readonly #uphill: readonly Vec2[];
   /** Each layer's ramp rims (#2975): they stop walking, never sight. */
   readonly #rampRims: readonly (readonly Segment[])[];
+  /** The ground's layer (#2973): 0 on a map with nothing under it. */
+  readonly #ground: number;
   /** `#walls` for each layer: what sight and shots read, swapped as a gate moves. */
   #layerWalls: readonly (readonly Segment[])[];
   /** `#layerWalls` with each layer's deep water (#2983): what collision reads. */
@@ -1347,13 +1358,10 @@ export class MatchSimulation {
     this.#bounds = options.bounds;
     this.#gates = initialGates(options.gates ?? []);
     this.#layers = options.layers;
+    this.#ground = this.#layers?.ground ?? 0;
     this.#walkable = walkableAreas(this.#layers);
     this.#mapWalls = options.walls ?? [];
-    this.#rampRims = rampRims(
-      this.#layers?.transitions ?? [],
-      this.#layers?.decks ?? [],
-      this.#layers?.count ?? 1,
-    );
+    this.#rampRims = this.#layers === undefined ? [] : rampRims(this.#layers);
     this.#gatedGraphs = buildLayeredNavGraph(
       this.#layers === undefined
         ? [{ walls: this.#mapWalls, walkable: [], open: [] }]
@@ -1362,11 +1370,10 @@ export class MatchSimulation {
             walkable: this.#walkable[layer] ?? [],
             open: this.#rampRims[layer] ?? [],
           })),
-      this.#gates.map((gate) => ({ layer: gate.layer ?? 0, segments: gate.segments })),
+      this.#gates.map((gate) => ({ layer: gate.layer ?? this.#ground, segments: gate.segments })),
       this.#bounds,
       this.#ruleset.collision.playerRadius,
     );
-    this.#uphill = uphillDirections(this.#layers?.transitions ?? [], this.#layers?.decks ?? []);
     const walls = this.#currentWallSet();
     this.#walls = walls.walls;
     this.#graphs = walls.graphs;
@@ -1633,7 +1640,7 @@ export class MatchSimulation {
     if (reset?.kind === "on-interval" && !(reset.everySeconds > 0)) {
       throw new Error(`participant ${spec.id}: on-interval needs everySeconds above 0`);
     }
-    const layer = spec.layer ?? 0;
+    const layer = spec.layer ?? this.#ground;
     if (!this.#isLayer(layer)) {
       throw new Error(`participant ${spec.id}: layer ${String(layer)} is not one of the map's`);
     }
@@ -6382,7 +6389,7 @@ export class MatchSimulation {
     return (this.#layers?.walls ?? []).map((walls, layer) => [
       ...walls,
       ...this.#gates
-        .filter((gate) => !gate.open && (gate.layer ?? 0) === layer)
+        .filter((gate) => !gate.open && (gate.layer ?? this.#ground) === layer)
         .flatMap((gate) => gate.segments),
     ]);
   }
@@ -6468,12 +6475,28 @@ export class MatchSimulation {
     return Number.isInteger(layer) && layer >= 0 && layer < (this.#layers?.count ?? 1);
   }
 
-  /** Whether `point` is a place to stand on `layer`: the ground is everywhere. */
+  /** Whether `point` is a place to stand on `layer`: the ground is everywhere but its pits. */
   #isOnLayer(point: Vec2, layer: number): boolean {
-    return (
-      this.#isLayer(layer) &&
-      (layer === 0 || (this.#walkable[layer] ?? []).some((area) => pointInPolygon(point, area)))
+    if (!this.#isLayer(layer)) {
+      return false;
+    }
+    if (layer === this.#ground) {
+      return this.#pitAt(point) === undefined;
+    }
+    return (this.#walkable[layer] ?? []).some((area) => pointInPolygon(point, area));
+  }
+
+  /** The pit `point` is in, off any ramp down into it (#2973). */
+  #pitAt(point: Vec2): Polygon | undefined {
+    const layers = this.#layers;
+    if (layers === undefined || layers.pits.length === 0) {
+      return undefined;
+    }
+    const pit = layers.pits.find((each) => pointInPolygon(point, each));
+    const onRamp = layers.transitions.some(
+      (ramp) => ramp.to === this.#ground && pointInPolygon(point, ramp.area),
     );
+    return onRamp ? undefined : pit;
   }
 
   /**
@@ -6481,7 +6504,11 @@ export class MatchSimulation {
    * a walk, a step or a teleport stops at a deck's edge.
    */
   #clampToLayer(position: Vec2, layer: number): Vec2 {
-    if (layer === 0 || this.#isOnLayer(position, layer)) {
+    if (layer === this.#ground) {
+      const pit = this.#pitAt(position);
+      return pit === undefined ? position : closestPointOnPolygon(position, pit);
+    }
+    if (this.#isOnLayer(position, layer)) {
       return position;
     }
     let nearest = position;
@@ -6509,7 +6536,7 @@ export class MatchSimulation {
     const transitions = this.#layers?.transitions ?? NO_TRANSITIONS;
     const steered = record.inputDirection.x !== 0 || record.inputDirection.y !== 0;
     const next = steered ? undefined : record.route?.waypoints[0];
-    for (const [at, transition] of transitions.entries()) {
+    for (const transition of transitions) {
       if (
         (record.layer !== transition.from && record.layer !== transition.to) ||
         !pointInPolygon(record.position, transition.area)
@@ -6517,16 +6544,14 @@ export class MatchSimulation {
         continue;
       }
       const upward = record.layer === transition.from;
-      const uphill = this.#uphill[at] ?? ZERO;
+      const { uphill } = transition;
       const wants =
         next === undefined
           ? (direction.x * uphill.x + direction.y * uphill.y) * (upward ? 1 : -1) > 0
           : next.layer === (upward ? transition.to : transition.from) &&
             pointInPolygon(next, transition.area);
       const t = progressAlong(transition.area, uphill, record.position);
-      const nearFarEnd =
-        (uphill.x === 0 && uphill.y === 0) ||
-        (upward ? t >= RAMP_CLIMBS_FROM : t <= RAMP_DESCENDS_FROM);
+      const nearFarEnd = upward ? t >= RAMP_CLIMBS_FROM : t <= RAMP_DESCENDS_FROM;
       if (wants && nearFarEnd) {
         record.layer = upward ? transition.to : transition.from;
         this.#refreshFloors(record);
@@ -6544,13 +6569,7 @@ export class MatchSimulation {
     let set = this.#wallSets.get(closed);
     if (set === undefined) {
       const graphs = this.#gatedGraphs.map((gated) => navGraphFor(gated, closed));
-      const paths = createLayeredPathFinder(
-        graphs,
-        (this.#layers?.transitions ?? []).map((transition, at) => ({
-          ...transition,
-          uphill: this.#uphill[at] ?? ZERO,
-        })),
-      );
+      const paths = createLayeredPathFinder(graphs, this.#layers?.transitions ?? []);
       const walls = [
         ...this.#mapWalls,
         ...this.#gates.flatMap((gate) => (gate.open ? [] : gate.segments)),
@@ -6601,7 +6620,7 @@ export class MatchSimulation {
       record.route = undefined;
       const graph = this.#graphOn(record.layer);
       if (
-        closing.some((gate) => (gate.layer ?? 0) === record.layer) &&
+        closing.some((gate) => (gate.layer ?? this.#ground) === record.layer) &&
         !isStandable(graph, record.position)
       ) {
         this.#placeAt(record, nearestStandable(graph, record.position));
@@ -9013,7 +9032,7 @@ export class MatchSimulation {
     combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
-    record.layer = shrine.layer ?? 0;
+    record.layer = shrine.layer ?? this.#ground;
     let position = nearestStandable(this.#graphOn(record.layer), shrine.position);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
       position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);
@@ -9244,7 +9263,7 @@ export class MatchSimulation {
     record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
     record.position = returnsTo;
-    record.layer = record.spec.layer ?? 0;
+    record.layer = record.spec.layer ?? this.#ground;
     this.#refreshFloors(record);
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;

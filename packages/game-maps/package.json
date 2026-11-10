@@ -18,6 +18,10 @@
       "types": "./dist/geometry.d.ts",
       "default": "./dist/geometry.js"
     },
+    "./layers": {
+      "types": "./dist/layers.d.ts",
+      "default": "./dist/layers.js"
+    },
     "./size-class": {
       "types": "./dist/size-class.d.ts",
       "default": "./dist/size-class.js"

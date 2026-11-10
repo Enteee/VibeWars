@@ -9,7 +9,7 @@ import { allWallSegments, pointInShape } from "@vibewars/game-maps/geometry";
 import { describe, expect, it } from "vitest";
 
 import { TRAINING_MAPS } from "./maps.js";
-import { matchLayers } from "./scenario-setup.js";
+import { matchLayers } from "@vibewars/game-maps/layers";
 
 function loaded<T>(value: T | undefined, what: string): T {
   if (value === undefined) throw new Error(`no ${what}`);

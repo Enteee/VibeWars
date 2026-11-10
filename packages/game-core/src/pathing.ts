@@ -9,7 +9,7 @@ import {
   type Polygon,
   type Segment,
 } from "./geometry.js";
-import { add, distance, normalize, scale, sub, vec2, type Vec2 } from "./vec2.js";
+import { add, distance, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
 /**
  * Paths around walls, for the weapon attack's approach (#211, ADR-0026).
@@ -321,10 +321,15 @@ function sidesOf(area: Polygon): Segment[] {
   });
 }
 
+/** How far either side of a shared side `walkableOutline` looks for floor. */
+const ABUT_PROBE = 0.01;
+
 /**
  * The edge of a layer's walkable `areas`: each area's sides, split where
  * they meet another area's, keeping the parts not inside another area.
- * A deck and its ramp overlap, so the opening between them is no edge.
+ * A deck and its ramp overlap, so the opening between them is no edge;
+ * nor is a side two areas share end to end, a pit's and its tunnel's
+ * (#2973), with floor on both sides of it.
  */
 export function walkableOutline(areas: readonly Polygon[]): Segment[] {
   const outline: Segment[] = [];
@@ -345,7 +350,11 @@ export function walkableOutline(areas: readonly Polygon[]): Segment[] {
           return;
         }
         const middle = add(edge.a, scale(along, (from + to) / 2));
-        if (!others.some((other) => insideArea(middle, other))) {
+        const length = Math.hypot(along.x, along.y);
+        const across = scale({ x: -along.y, y: along.x }, ABUT_PROBE / length);
+        const floor = (point: Vec2): boolean => areas.some((each) => pointInPolygon(point, each));
+        const abutted = floor(add(middle, across)) && floor(sub(middle, across));
+        if (!others.some((other) => insideArea(middle, other)) && !abutted) {
           outline.push({
             a: add(edge.a, scale(along, from)),
             b: add(edge.a, scale(along, to)),
@@ -680,21 +689,6 @@ export const RAMP_WAYPOINT_MOST_INSET = 0.14;
  */
 export function minRampLength(clearance: number): number {
   return (clearance + 1) / RAMP_WAYPOINT_MOST_INSET;
-}
-
-/** From a ramp's `area` towards the nearest edge of any of `decks`, the ones it climbs to. */
-export function rampUphill(area: Polygon, decks: readonly Polygon[]): Vec2 {
-  const foot = polygonCentre(area);
-  let nearest = foot;
-  let least = Number.POSITIVE_INFINITY;
-  for (const deck of decks) {
-    const edge = closestPointOnPolygon(foot, deck);
-    if (distance(foot, edge) < least) {
-      least = distance(foot, edge);
-      nearest = edge;
-    }
-  }
-  return normalize(sub(nearest, foot));
 }
 
 /** How long a ramp's `area` is, going `uphill`. */

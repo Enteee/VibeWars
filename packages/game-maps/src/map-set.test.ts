@@ -23,6 +23,7 @@ import { allWallSegments, wallToSegments } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
+import heightsData from "../training/training-heights/map.json" with { type: "json" };
 import { mapDataSchema, type MapData } from "./schema.js";
 
 /**
@@ -869,5 +870,23 @@ describe("The Warden's Gallery (#2698)", () => {
         expect(finder.find(spawn.position, point), String(spawn.team)).toBeDefined();
       }
     }
+  });
+});
+
+describe("Training Heights' layers by route (#2973)", () => {
+  const heights = mapDataSchema.parse(heightsData);
+  const finder = layeredFinder(heights, RADIUS);
+  const spawn = { x: 120, y: 450 };
+
+  it.each([
+    ["the west pit's floor", { x: 640, y: 590 }, 0],
+    ["the tunnel", { x: 840, y: 585 }, 0],
+    ["the east pit's floor", { x: 1060, y: 520 + 110 }, 0],
+    ["the bridge", { x: 600, y: 450 }, 2],
+    ["the platform", { x: 600, y: 210 }, 3],
+  ] as const)("reaches %s from the ground", (_, to, layer) => {
+    const route = finder.find(spawn, heights.groundLayer, to, layer);
+    expect(route).toBeDefined();
+    expect(route?.at(-1)).toMatchObject({ ...to, layer });
   });
 });

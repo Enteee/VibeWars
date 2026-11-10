@@ -1,16 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { TRAINING_SCENARIOS } from "@vibewars/game-core";
+import { matchLayers } from "@vibewars/game-maps/layers";
 
 import { newCharacter, setProfessions, setSkill } from "../ui/build-editor.js";
 import { TRAINING_MAPS } from "./maps.js";
-import {
-  SELF_ID,
-  matchLayers,
-  playerArming,
-  playerSpawn,
-  setupScenario,
-} from "./scenario-setup.js";
+import { SELF_ID, playerArming, playerSpawn, setupScenario } from "./scenario-setup.js";
 
 describe("every training scenario", () => {
   it.each(TRAINING_SCENARIOS.map((scenario) => [scenario.id, scenario] as const))(
