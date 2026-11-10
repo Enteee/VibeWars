@@ -1854,6 +1854,8 @@ export default {
     "find-their-weakness": "Najdi jejich slabinu!",
     "we-shall-return": "Vrátíme se!",
     "burning-shield": "Hořící štít",
+    mired: "Uvíznutí",
+    fouled: "Znečištění",
     "angelic-protection": "Andělská ochrana",
     "mystic-regeneration": "Mystická regenerace",
     "fleeting-stability": "Prchavá stabilita",

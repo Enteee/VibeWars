@@ -192,6 +192,7 @@ export function define(
     doubleStrikeChanceBonusWeapon: undefined,
     skillRechargeFaster: 0,
     energyCostMultiplier: 1,
+    energyLossOnAction: 0,
     bindingRitualRechargeFaster: 0,
     enchantmentRechargeFaster: undefined,
     ownSkillModifiers: [],

@@ -1854,6 +1854,8 @@ export default {
     "find-their-weakness": "Achem o ponto fraco!",
     "we-shall-return": '"Voltaremos!"',
     "burning-shield": "Escudo Ardente",
+    mired: "Atolado",
+    fouled: "Contaminado",
     "angelic-protection": "Proteção Angelical",
     "mystic-regeneration": "Regeneração Mística",
     "fleeting-stability": "Estabilidade Fugaz",

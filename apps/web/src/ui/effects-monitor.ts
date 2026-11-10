@@ -40,6 +40,7 @@ export const STATUS_CATEGORY_NAME: Readonly<Record<StatusCategory, MessageKey>> 
   item: "effects.categoryItemSpell",
   form: "effects.categoryForm",
   "skill-effect": "effects.categoryEffect",
+  environment: "effects.categoryEnvironment",
 };
 
 /** Who put a status on, as the rows name them (#2819). */
@@ -343,6 +344,7 @@ export function createEffectsMonitor(
           root.insertBefore(icon.item, root.children[index] ?? null);
         }
         icon.item.classList.toggle("is-yours", row.yours);
+        icon.item.classList.toggle("is-environment", row.category === "environment");
         setHidden(icon.bar, row.fraction === undefined);
         // Only a whole pixel's change touches the DOM.
         const px = Math.round((row.fraction ?? 0) * size);

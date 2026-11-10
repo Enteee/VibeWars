@@ -127,6 +127,14 @@ const CATEGORY: Record<Category, CategoryForms> = {
     gen: "efektů dovedností",
     gender: "m",
   },
+  environment: {
+    one: "účinek prostředí",
+    acc: "účinek prostředí",
+    instr: "účinkem prostředí",
+    many: "účinky prostředí",
+    gen: "účinků prostředí",
+    gender: "m",
+  },
 };
 
 /** Category ids that reach a sentence raw, joined with this file's own "nebo". */

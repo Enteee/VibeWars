@@ -56,6 +56,7 @@ const CATEGORY: Record<
   item: { one: "Gegenstand", many: "Gegenstände", a: "einen", nominative: "ein" },
   form: { one: "Gestalt", many: "Gestalten", a: "eine", nominative: "eine" },
   "skill-effect": { one: "Skilleffekt", many: "Skilleffekte", a: "einen", nominative: "ein" },
+  environment: { one: "Umgebungseffekt", many: "Umgebungseffekte", a: "einen", nominative: "ein" },
 };
 
 /** Category ids that reach a sentence raw, joined with this file's own "oder". */

@@ -349,6 +349,12 @@ describe("createEffectsMonitor (#834)", () => {
     expect(root.children[0]?.classes.has("is-yours")).toBe(false);
   });
 
+  it("frames an environment effect apart from the rest (#3027)", () => {
+    const { monitor, root } = mount();
+    monitor.update([row("mired", 1, false, { category: "environment" }), row("bleeding", 1)]);
+    expect(root.children.map((item) => item.classes.has("is-environment"))).toEqual([true, false]);
+  });
+
   it("draws the target frame's icons and bars at its own size (#835)", () => {
     const { monitor, root, fill } = mount(16);
     monitor.update([row("bleeding", 0.5), row("crippled", 1)]);

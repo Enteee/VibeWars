@@ -22,6 +22,8 @@
   --scaled: #7ee787;
   /* Enchantment markers (art direction palette). */
   --enchantment: #56d4dd;
+  /* An environment effect's border in the effects monitor, green as GW1's (#3027). */
+  --environment: #3fb950;
   /* A shrine raise's invulnerability (art direction palette, #1233). */
   --invulnerable: #f5e6b8;
   /* A match's kind on the Matches page (#2741), from the art direction
@@ -1162,6 +1164,12 @@ body {
   display: block;
   width: var(--effect-size);
   height: var(--effect-size);
+}
+
+/* Ground you stand in (#3027): nothing removes it, so it is framed apart. */
+.effect.is-environment .effect-icon {
+  outline: 1px solid var(--environment);
+  outline-offset: -1px;
 }
 
 .effect-bar {

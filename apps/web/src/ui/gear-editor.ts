@@ -588,6 +588,8 @@ function categoryPhrase(category: StatusCategory, index: number): string {
       return t("gearEditor.statusItem");
     case "echo":
       return t("gearEditor.statusEcho");
+    case "environment":
+      return t("gearEditor.statusEnvironment");
     case "shout":
       return t(index === 0 ? "gearEditor.statusUnderShout" : "gearEditor.statusShout");
     case "chant":

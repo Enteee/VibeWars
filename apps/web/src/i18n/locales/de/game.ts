@@ -1854,6 +1854,8 @@ export default {
     "find-their-weakness": "Findet ihre Schwäche!",
     "we-shall-return": '"Wir kehren zurück!"',
     "burning-shield": "Brennender Schild",
+    mired: "Versunken",
+    fouled: "Verseucht",
     "angelic-protection": "Engelsschutz",
     "mystic-regeneration": "Mystische Regeneration",
     "fleeting-stability": "Flüchtige Stabilität",

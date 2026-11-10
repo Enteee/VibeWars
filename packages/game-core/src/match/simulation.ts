@@ -102,6 +102,7 @@ import {
   isAllyOrSelfRule,
   isCompanionRule,
   isSummonedCreature,
+  loseActionEnergy,
   payCost,
   type ActivationCheck,
   type ActivationRejection,
@@ -6960,6 +6961,8 @@ export class MatchSimulation {
     }
     record.outOfCombatSeconds = 0;
     this.#blowStarted(record, target);
+    // A swing is an attack, as a skill is paid for: the mire takes its Energy (#3027).
+    loseActionEnergy(record.combatant);
     // Read as the swing begins (#2282), before its blow lands.
     const aimedAt: AimedAt = {
       id: target.id,
@@ -7812,7 +7815,7 @@ export class MatchSimulation {
   }
 
   /**
-   * Each zone `record` stands in, on its layer, puts its kind's status on
+   * Each zone `record` stands in, on its layer, puts its kind's statuses on
    * it again for the kind's linger (ADR-0053), in the map's order. A spirit
    * stands where it was raised and is spared; the dead were skipped already.
    * The source is the zone: no player is credited with what it does.
@@ -7823,7 +7826,9 @@ export class MatchSimulation {
     }
     for (const zone of zonesHolding(this.#zones, record.position, record.layer)) {
       const rule = ZONE_RULES[zone.kind];
-      applyStatus(record.combatant, rule.status, rule.lingerSeconds, zoneSourceId(zone), NO_RANKS);
+      for (const status of rule.statuses) {
+        applyStatus(record.combatant, status, rule.lingerSeconds, zoneSourceId(zone), NO_RANKS);
+      }
     }
   }
 

@@ -1854,6 +1854,8 @@ export default {
     "find-their-weakness": '"Nađi im slabost!"',
     "we-shall-return": '"Vratit ćemo se!"',
     "burning-shield": "Goreći štit",
+    mired: "Zaglavljenost",
+    fouled: "Zagađenost",
     "angelic-protection": "Anđeoska zaštita",
     "mystic-regeneration": "Mistična regeneracija",
     "fleeting-stability": "Prolazna stabilnost",

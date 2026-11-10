@@ -118,6 +118,14 @@ const CATEGORY: Record<Category, CategoryWords> = {
     many: "efektov schopnosti",
     gender: "m",
   },
+  environment: {
+    one: "efekt prostredia",
+    acc: "efekt prostredia",
+    gen: "efektu prostredia",
+    few: "efekty prostredia",
+    many: "efektov prostredia",
+    gender: "m",
+  },
 };
 
 /** Category ids that reach a sentence raw, joined with this file's own "alebo". */

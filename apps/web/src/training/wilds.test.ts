@@ -30,8 +30,28 @@ const burning = (simulation: MatchSimulation, id: string): boolean =>
   );
 
 describe("Training Wilds (#3024)", () => {
-  it("has one scorched strip across its lane", () => {
-    expect(matchZones(map).map(({ kind }) => kind)).toEqual(["scorched"]);
+  it("has a scorched strip across its lane, and a patch of each other harmful kind (#3027)", () => {
+    expect(matchZones(map).map(({ kind }) => kind)).toEqual([
+      "scorched",
+      "molten",
+      "toxic-fog",
+      "mire",
+      "foul-water",
+    ]);
+  });
+
+  it("puts each patch's status on the dummy standing in it (#3027)", () => {
+    const { simulation } = setupScenario(scenario, newCharacter("c1"));
+    for (let tick = 0; tick < 30; tick += 1) {
+      simulation.step(1 / 30);
+    }
+    const bears = (id: string, status: string): boolean =>
+      loaded(simulation.get(id), id).combatant.statuses.active.some(({ id }) => id === status);
+    expect(bears("in-lava", "burning") && bears("in-lava", "crippled")).toBe(true);
+    expect(bears("in-fog", "poison")).toBe(true);
+    expect(bears("in-mire", "mired")).toBe(true);
+    expect(bears("in-swamp", "fouled")).toBe(true);
+    expect(bears(SELF_ID, "mired")).toBe(false);
   });
 
   it("walks from one team's spawn to the other's", () => {
