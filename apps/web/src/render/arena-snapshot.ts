@@ -7,6 +7,8 @@ import {
   type Uphill,
   type Vec2,
   type ZoneKind,
+  type ZonePath,
+  type ZoneSchedule,
 } from "@vibewars/game-core";
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
@@ -127,11 +129,16 @@ export interface MapWater {
   readonly area: RenderableShape;
 }
 
-/** An effect zone on one layer (ADR-0053, #3024): its kind and its area. */
+/**
+ * An effect zone on one layer (ADR-0053, #3024): its kind and its area,
+ * and a timed one's beat or a moving one's way (#3029), drawn off the match clock.
+ */
 export interface MapZone {
   readonly kind: ZoneKind;
   readonly layer: number;
   readonly area: RenderableShape;
+  readonly schedule?: ZoneSchedule;
+  readonly path?: ZonePath;
 }
 
 /** A map's floors above and below the ground (ADR-0051), its water and zones, from its file: never per tick. */

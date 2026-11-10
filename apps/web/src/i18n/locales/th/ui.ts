@@ -1303,11 +1303,14 @@ export default {
 
   "zone.draining-spire": "หอดูดพลัง",
   "zone.foul-water": "น้ำเน่า",
+  "zone.gas-spout": "ปล่องแก๊ส",
   "zone.grove": "ป่าละเมาะ",
   "zone.mire": "หล่มโคลน",
   "zone.molten": "ลาวา",
+  "zone.rockfall": "หินถล่ม",
   "zone.scorched": "พื้นที่ไหม้เกรียม",
   "zone.spring": "น้ำพุ",
   "zone.tainted-water": "น้ำปนเปื้อน",
   "zone.toxic-fog": "หมอกพิษ",
+  "zone.vent": "ช่องไฟ",
 } satisfies Catalog;

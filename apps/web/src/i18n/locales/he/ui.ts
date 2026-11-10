@@ -1459,11 +1459,14 @@ export default {
 
   "zone.draining-spire": "צריח שואב",
   "zone.foul-water": "מים עכורים",
+  "zone.gas-spout": "מזרקת גז",
   "zone.grove": "חורשה",
   "zone.mire": "ביצה",
   "zone.molten": "לבה",
+  "zone.rockfall": "מפולת סלעים",
   "zone.scorched": "אדמה חרוכה",
   "zone.spring": "מעיין",
   "zone.tainted-water": "מים מזוהמים",
   "zone.toxic-fog": "ערפל רעיל",
+  "zone.vent": "פתח אש",
 } satisfies Catalog;

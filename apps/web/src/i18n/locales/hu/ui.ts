@@ -1403,11 +1403,14 @@ export default {
 
   "zone.draining-spire": "Elszívó torony",
   "zone.foul-water": "Poshadt víz",
+  "zone.gas-spout": "Gázkitörés",
   "zone.grove": "Liget",
   "zone.mire": "Ingovány",
   "zone.molten": "Láva",
+  "zone.rockfall": "Kőomlás",
   "zone.scorched": "Felperzselt talaj",
   "zone.spring": "Forrás",
   "zone.tainted-water": "Szennyezett víz",
   "zone.toxic-fog": "Mérgező köd",
+  "zone.vent": "Tűzkürtő",
 } satisfies Catalog;

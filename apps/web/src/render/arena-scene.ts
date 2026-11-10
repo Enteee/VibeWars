@@ -8,6 +8,9 @@ import {
   GATE_PLATE_REACH_UNITS,
   isStatusId,
   isWeaponId,
+  ZONE_RULES,
+  zoneOffsetAt,
+  zonePhaseAt,
   type CreatureLook,
   type StatusId,
   type Vec2,
@@ -177,6 +180,7 @@ import {
   ZONE_EDGE_WIDTH,
   ZONE_LOOK,
   obeliskOutline,
+  strikeZoneLook,
   zoneCentroid,
   zoneFillAlpha,
 } from "./zone-look.js";
@@ -2419,11 +2423,21 @@ export class ArenaScene extends Phaser.Scene {
         this.zoneGraphics.set(zone.layer, g);
       }
       const look = ZONE_LOOK[zone.kind];
+      // A timed or moving hazard (#3029) is drawn by its phase on the match
+      // clock, where its path has taken it: the host strikes by the same.
+      const strike =
+        ZONE_RULES[zone.kind].trigger === "strike"
+          ? strikeZoneLook(look, zonePhaseAt(zone, this.snapshot.clock))
+          : undefined;
+      const moved = zoneOffsetAt(zone.path, this.snapshot.clock);
       g.save();
-      g.translateCanvas(0, -elevationOf(zone.layer, ground));
-      g.fillStyle(look.fill, zoneFillAlpha(look, this.now, this.reducedMotion));
+      g.translateCanvas(moved.x, moved.y - elevationOf(zone.layer, ground));
+      g.fillStyle(
+        look.fill,
+        strike?.fillAlpha ?? zoneFillAlpha(look, this.now, this.reducedMotion),
+      );
       this.fillShape(g, zone.area);
-      g.lineStyle(ZONE_EDGE_WIDTH * line, look.edge, 1);
+      g.lineStyle(ZONE_EDGE_WIDTH * (strike?.edgeScale ?? 1) * line, look.edge, 1);
       this.strokeShape(g, zone.area);
       if (zone.kind === "draining-spire") {
         this.drawSpire(g, zone.area, line);

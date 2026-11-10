@@ -1476,11 +1476,14 @@ export default {
 
   "zone.draining-spire": "Guglia prosciugante",
   "zone.foul-water": "Acqua putrida",
+  "zone.gas-spout": "Getto di gas",
   "zone.grove": "Boschetto",
   "zone.mire": "Pantano",
   "zone.molten": "Lava",
+  "zone.rockfall": "Frana",
   "zone.scorched": "Terreno bruciato",
   "zone.spring": "Sorgente",
   "zone.tainted-water": "Acqua contaminata",
   "zone.toxic-fog": "Nebbia tossica",
+  "zone.vent": "Bocca di fuoco",
 } satisfies Catalog;

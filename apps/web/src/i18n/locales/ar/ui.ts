@@ -1586,11 +1586,14 @@ export default {
 
   "zone.draining-spire": "برج مستنزف",
   "zone.foul-water": "ماء آسن",
+  "zone.gas-spout": "نافورة غاز",
   "zone.grove": "بستان",
   "zone.mire": "وحل",
   "zone.molten": "حمم",
+  "zone.rockfall": "انهيار صخري",
   "zone.scorched": "أرض محروقة",
   "zone.spring": "نبع",
   "zone.tainted-water": "ماء ملوث",
   "zone.toxic-fog": "ضباب سام",
+  "zone.vent": "فوهة نار",
 } satisfies Catalog;

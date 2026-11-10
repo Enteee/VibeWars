@@ -1,4 +1,4 @@
-import type { Vec2, ZoneKind } from "@vibewars/game-core";
+import type { Vec2, ZoneKind, ZonePhase } from "@vibewars/game-core";
 
 import type { RenderableShape } from "./arena-snapshot.js";
 import { shapeOutline } from "./layer-surfaces.js";
@@ -39,7 +39,37 @@ export const ZONE_LOOK: Record<ZoneKind, ZoneLook> = {
   "tainted-water": { fill: 0x66662a, edge: 0x9a9a4c, alpha: 0.45, pulse: 0.04 },
   // A draining spire: a faint violet wash under a violet rim; the obelisk is drawn apart.
   "draining-spire": { fill: 0x6a4a9c, edge: 0xa77bff, alpha: 0.18, pulse: 0.05 },
+  // Timed and moving hazards (#3029): drawn by their phase, see `strikeZoneLook`.
+  // A fire vent: hot orange-red, a flame jet.
+  vent: { fill: 0xff4a12, edge: 0xffb03d, alpha: 0.6, pulse: 0 },
+  // A gas spout: a poison green puff, yellower than the fog.
+  "gas-spout": { fill: 0x9ad62a, edge: 0xe6ff6a, alpha: 0.55, pulse: 0 },
+  // Rockfall and rolling rocks: grey stone under a pale rim.
+  rockfall: { fill: 0x8a8378, edge: 0xd8d0c0, alpha: 0.65, pulse: 0 },
 };
+
+/** How a strike zone is drawn in a phase: its fill's alpha, and its edge's width as a multiple of `ZONE_EDGE_WIDTH`. */
+export interface StrikeZoneLook {
+  readonly fillAlpha: number;
+  readonly edgeScale: number;
+}
+
+/**
+ * A timed or moving hazard's look by phase (#3029): idle, a faint wash
+ * under its edge, so it is seen before it fires; telegraphing, its outline
+ * brightens and its fill comes in; active, full and bright. A matter of
+ * play, not decoration, so still motion changes nothing.
+ */
+export function strikeZoneLook(look: ZoneLook, phase: ZonePhase): StrikeZoneLook {
+  switch (phase) {
+    case "idle":
+      return { fillAlpha: look.alpha * 0.2, edgeScale: 1 };
+    case "telegraph":
+      return { fillAlpha: look.alpha * 0.6, edgeScale: 2.5 };
+    case "active":
+      return { fillAlpha: look.alpha, edgeScale: 2.5 };
+  }
+}
 
 /**
  * A draining spire's obelisk (#3028): a stone needle standing on its zone's

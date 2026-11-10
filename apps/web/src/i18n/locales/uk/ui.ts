@@ -1518,11 +1518,14 @@ export default {
 
   "zone.draining-spire": "Висмоктувальний шпиль",
   "zone.foul-water": "Каламутна вода",
+  "zone.gas-spout": "Газовий гейзер",
   "zone.grove": "Гай",
   "zone.mire": "Трясовина",
   "zone.molten": "Лава",
+  "zone.rockfall": "Каменепад",
   "zone.scorched": "Випалена земля",
   "zone.spring": "Джерело",
   "zone.tainted-water": "Отруєна вода",
   "zone.toxic-fog": "Отруйний туман",
+  "zone.vent": "Вогняна розщілина",
 } satisfies Catalog;

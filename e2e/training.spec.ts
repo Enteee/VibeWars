@@ -232,6 +232,21 @@ test("Wilds' scorched strip burns the dummy in it, logged by its kind (#3024, #3
   expect(errors).toEqual([]);
 });
 
+test("Wilds' gas spout strikes the dummy in it, logged by its kind (#3029)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+  await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("wilds");
+  await expect(page.locator(".training-log")).toContainText("── Wilds ──");
+  await expect(page.locator(".training-log")).toContainText(
+    "Gas spout hits In the gas spout (60 armor)",
+  );
+  expect(errors).toEqual([]);
+});
+
 test("Wilds: a double right click on the lever opens the side room's door, and you walk in (#3025)", async ({
   page,
 }) => {

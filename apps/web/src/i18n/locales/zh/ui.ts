@@ -1287,11 +1287,14 @@ export default {
 
   "zone.draining-spire": "汲取尖塔",
   "zone.foul-water": "污水",
+  "zone.gas-spout": "毒气喷口",
   "zone.grove": "树林",
   "zone.mire": "泥沼",
   "zone.molten": "熔岩",
+  "zone.rockfall": "落石",
   "zone.scorched": "焦土",
   "zone.spring": "泉水",
   "zone.tainted-water": "受污染的水",
   "zone.toxic-fog": "毒雾",
+  "zone.vent": "火焰喷口",
 } satisfies Catalog;

@@ -1315,11 +1315,14 @@ export default {
 
   "zone.draining-spire": "흡수의 첨탑",
   "zone.foul-water": "더러운 물",
+  "zone.gas-spout": "가스 분출구",
   "zone.grove": "숲",
   "zone.mire": "수렁",
   "zone.molten": "용암",
+  "zone.rockfall": "낙석",
   "zone.scorched": "그을린 땅",
   "zone.spring": "샘",
   "zone.tainted-water": "오염된 물",
   "zone.toxic-fog": "독안개",
+  "zone.vent": "화염 분출구",
 } satisfies Catalog;

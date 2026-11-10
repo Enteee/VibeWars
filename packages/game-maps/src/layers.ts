@@ -43,13 +43,18 @@ export function matchLayers(map: MapData): MatchLayers {
   };
 }
 
-/** `map`'s effect zones, as the simulation takes them (ADR-0053): each area as one polygon. */
+/**
+ * `map`'s effect zones, as the simulation takes them (ADR-0053): each area
+ * as one polygon, with its schedule or path if it has one (#3029).
+ */
 export function matchZones(map: MapData): MatchZone[] {
-  return (map.zones ?? []).map(({ id, kind, layer, area }) => ({
+  return (map.zones ?? []).map(({ id, kind, layer, area, schedule, path }) => ({
     id,
     kind,
     layer,
     polygon: shapeVertices(area),
+    ...(schedule === undefined ? {} : { schedule }),
+    ...(path === undefined ? {} : { path }),
   }));
 }
 

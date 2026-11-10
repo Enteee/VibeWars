@@ -180,6 +180,10 @@ function sourceOf(
       : isZoneSourceId(entry.sourceId)
         ? zoneName(entry.sourceId)
         : nameOf(entry.sourceId);
+  // A hazard's blow (#3029) is the ground's own: "Vent hits Bob", no skill behind it.
+  if (entry.cause === "zone") {
+    return { by: source ?? t("combat.sourceZone"), attribute: undefined };
+  }
   const attribute =
     entry.cause === "attribute"
       ? entry.attributeId === undefined

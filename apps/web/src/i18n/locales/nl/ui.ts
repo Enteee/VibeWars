@@ -1402,11 +1402,14 @@ export default {
 
   "zone.draining-spire": "Zuigende spits",
   "zone.foul-water": "Vuil water",
+  "zone.gas-spout": "Gasfontein",
   "zone.grove": "Bosje",
   "zone.mire": "Moeras",
   "zone.molten": "Lava",
+  "zone.rockfall": "Steenslag",
   "zone.scorched": "Verschroeide grond",
   "zone.spring": "Bron",
   "zone.tainted-water": "Besmet water",
   "zone.toxic-fog": "Giftige mist",
+  "zone.vent": "Vuurschacht",
 } satisfies Catalog;

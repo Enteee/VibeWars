@@ -1470,11 +1470,14 @@ export default {
 
   "zone.draining-spire": "Isisavajući toranj",
   "zone.foul-water": "Mutna voda",
+  "zone.gas-spout": "Plinski gejzir",
   "zone.grove": "Gaj",
   "zone.mire": "Glib",
   "zone.molten": "Lava",
+  "zone.rockfall": "Odron",
   "zone.scorched": "Spaljeno tlo",
   "zone.spring": "Izvor",
   "zone.tainted-water": "Zatrovana voda",
   "zone.toxic-fog": "Otrovna magla",
+  "zone.vent": "Vatreni otvor",
 } satisfies Catalog;

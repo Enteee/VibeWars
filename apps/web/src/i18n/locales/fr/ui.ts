@@ -1486,11 +1486,14 @@ export default {
 
   "zone.draining-spire": "Flèche drainante",
   "zone.foul-water": "Eau croupie",
+  "zone.gas-spout": "Jet de gaz",
   "zone.grove": "Bosquet",
   "zone.mire": "Bourbier",
   "zone.molten": "Lave",
+  "zone.rockfall": "Éboulement",
   "zone.scorched": "Sol calciné",
   "zone.spring": "Source",
   "zone.tainted-water": "Eau viciée",
   "zone.toxic-fog": "Brume toxique",
+  "zone.vent": "Évent de feu",
 } satisfies Catalog;

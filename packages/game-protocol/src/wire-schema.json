@@ -1016,7 +1016,8 @@
                       { "literal": "beacon" },
                       { "literal": "degeneration" },
                       { "literal": "skill" },
-                      { "literal": "weapon" }
+                      { "literal": "weapon" },
+                      { "literal": "zone" }
                     ]
                   }
                 },
@@ -5438,7 +5439,8 @@
               { "literal": "beacon" },
               { "literal": "degeneration" },
               { "literal": "skill" },
-              { "literal": "weapon" }
+              { "literal": "weapon" },
+              { "literal": "zone" }
             ]
           }
         },
@@ -6905,7 +6907,8 @@
               { "literal": "beacon" },
               { "literal": "degeneration" },
               { "literal": "skill" },
-              { "literal": "weapon" }
+              { "literal": "weapon" },
+              { "literal": "zone" }
             ]
           }
         },
@@ -6971,7 +6974,8 @@
                 { "literal": "beacon" },
                 { "literal": "degeneration" },
                 { "literal": "skill" },
-                { "literal": "weapon" }
+                { "literal": "weapon" },
+                { "literal": "zone" }
               ]
             }
           },

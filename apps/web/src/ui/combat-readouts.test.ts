@@ -221,6 +221,18 @@ describe("describeCombatEvent", () => {
     );
   });
 
+  it("names a hazard's blow for its kind alone, 'Gas spout hits' (#3029)", () => {
+    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 50, critical: false };
+    const blow = entry([hurt], {
+      cause: "zone",
+      sourceId: "zone:gas-spout:north-gas-spout",
+      skillId: undefined,
+    });
+    expect(describeCombatEvent(blow, hurt, nameOf, isCreature)).toBe(
+      t("combat.hit", { by: "Gas spout", target: "Caster dummy", amount: "50" }),
+    );
+  });
+
   it("names a spring's heal tick 'Regeneration (Spring)' (#3046)", () => {
     const heal: CombatEvent = { kind: "heal", targetId: "dummy", amount: 4 };
     const tick = entry([heal], {

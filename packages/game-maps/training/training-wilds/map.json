@@ -73,6 +73,52 @@
       "kind": "draining-spire",
       "layer": 0,
       "area": { "kind": "rect", "x": 300, "y": 460, "width": 80, "height": 80 }
+    },
+    {
+      "id": "north-vent",
+      "kind": "vent",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 20, "y": 20, "width": 70, "height": 70 },
+      "schedule": { "periodSeconds": 4, "activeSeconds": 1, "offsetSeconds": 0 }
+    },
+    {
+      "id": "north-gas-spout",
+      "kind": "gas-spout",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 120, "y": 20, "width": 70, "height": 70 },
+      "schedule": { "periodSeconds": 5, "activeSeconds": 1, "offsetSeconds": 2 }
+    },
+    {
+      "id": "north-rockfall",
+      "kind": "rockfall",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 220, "y": 20, "width": 70, "height": 70 },
+      "schedule": { "periodSeconds": 6, "activeSeconds": 1, "offsetSeconds": 3 }
+    },
+    {
+      "id": "north-rolling-rocks",
+      "kind": "rockfall",
+      "layer": 0,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 164, "y": 8 },
+          { "x": 177, "y": 21 },
+          { "x": 177, "y": 39 },
+          { "x": 164, "y": 52 },
+          { "x": 146, "y": 52 },
+          { "x": 133, "y": 39 },
+          { "x": 133, "y": 21 },
+          { "x": 146, "y": 8 }
+        ]
+      },
+      "path": {
+        "points": [
+          { "x": 155, "y": 30 },
+          { "x": 155, "y": 120 }
+        ],
+        "speed": 120
+      }
     }
   ],
   "gates": [
