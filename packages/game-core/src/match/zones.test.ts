@@ -16,9 +16,12 @@ import {
   ZONE_KINDS,
   ZONE_RULES,
   zoneKindOfSource,
+  zonePhaseAt,
+  zonePolygonAt,
   zoneSourceId,
   zonesHolding,
   type MatchZone,
+  type ZoneKind,
 } from "./zones.js";
 
 const rect = (x: number, y: number, width: number, height: number): Polygon => [
@@ -77,6 +80,13 @@ function get(sim: MatchSimulation, id: string): Participant {
 /** `id`'s Burning, if it bears it. */
 function burning(sim: MatchSimulation, id: string) {
   return get(sim, id).combatant.statuses.active.find((status) => status.id === "burning");
+}
+
+/** The while-inside rule of `kind`; a strike kind has no linger. */
+function lingering(kind: ZoneKind) {
+  const rule = ZONE_RULES[kind];
+  if (rule.trigger !== "while-inside") throw new Error(`${kind} strikes`);
+  return rule;
 }
 
 function run(sim: MatchSimulation, seconds: number): void {
@@ -145,13 +155,13 @@ describe("a scorched zone in a match (ADR-0053)", () => {
     expect(inside).toBe(true);
     // Put on as it stands there, then aged by the same step.
     expect(burning(sim, "a")?.remainingSeconds).toBeCloseTo(
-      ZONE_RULES.scorched.lingerSeconds - DT,
+      lingering("scorched").lingerSeconds - DT,
       5,
     );
     while (zonesHolding([STRIP], get(sim, "a").position, 0).length > 0) {
       sim.step(DT);
     }
-    run(sim, ZONE_RULES.scorched.lingerSeconds - 0.5);
+    run(sim, lingering("scorched").lingerSeconds - 0.5);
     expect(burning(sim, "a")).toBeDefined();
     run(sim, 1);
     expect(burning(sim, "a")).toBeUndefined();
@@ -230,7 +240,7 @@ describe("harmful ground (#3027)", () => {
 
   for (const kind of ["molten", "toxic-fog", "mire", "foul-water"] as const) {
     it(`${kind}: puts its statuses on inside, keeps them its linger out, then they end`, () => {
-      const rule = ZONE_RULES[kind];
+      const rule = lingering(kind);
       const zone = { ...STRIP, kind };
       const sim = arena([spec("a", 0, vec2(400, 400), { layer: 0 })], [zone]);
       run(sim, 0.5);
@@ -335,7 +345,7 @@ describe("springs, groves, tainted water and draining spires (#3028)", () => {
     ["draining-spire", "drained"],
   ] as const) {
     it(`${kind}: puts ${status} on inside, keeps it its linger out, then it ends`, () => {
-      const rule = ZONE_RULES[kind];
+      const rule = lingering(kind);
       expect(rule.statuses).toEqual([status]);
       expect(rule.lingerSeconds).toBe(1);
       const zone = { ...STRIP, kind };
@@ -478,5 +488,119 @@ describe("springs, groves, tainted water and draining spires (#3028)", () => {
     sim.requestSkill("a", 0);
     sim.step(DT);
     expect(get(sim, "a").combatant.dead).toBe(true);
+  });
+});
+
+describe("zonePhaseAt (#3029)", () => {
+  const zone = { schedule: { periodSeconds: 4, activeSeconds: 1, offsetSeconds: 3 } };
+
+  it("telegraphs from its offset, strikes for its window, then idles out the period", () => {
+    expect(zonePhaseAt(zone, 2.99)).toBe("idle");
+    expect(zonePhaseAt(zone, 3)).toBe("telegraph");
+    expect(zonePhaseAt(zone, 3.99)).toBe("telegraph");
+    expect(zonePhaseAt(zone, 4)).toBe("active");
+    expect(zonePhaseAt(zone, 4.99)).toBe("active");
+    expect(zonePhaseAt(zone, 5)).toBe("idle");
+    expect(zonePhaseAt(zone, 7)).toBe("telegraph");
+  });
+
+  it("is already in its last period's beat before its offset", () => {
+    expect(zonePhaseAt(zone, 0)).toBe("active");
+    expect(zonePhaseAt(zone, 1)).toBe("idle");
+  });
+
+  it("is always active with no schedule", () => {
+    expect(zonePhaseAt({}, 0)).toBe("active");
+    expect(zonePhaseAt({}, 123.4)).toBe("active");
+  });
+});
+
+describe("zonePolygonAt (#3029)", () => {
+  const zone: MatchZone = {
+    id: "rock",
+    kind: "rockfall",
+    layer: 0,
+    polygon: rect(0, 0, 10, 10),
+    path: { points: [vec2(5, 5), vec2(105, 5)], speed: 50 },
+  };
+  const left = (seconds: number) => zonePolygonAt(zone, seconds)[0]?.x;
+
+  it("slides along its path at its speed, and back from the far end", () => {
+    expect(left(0)).toBeCloseTo(0);
+    expect(left(1)).toBeCloseTo(50);
+    expect(left(2)).toBeCloseTo(100);
+    expect(left(3)).toBeCloseTo(50);
+    expect(left(4)).toBeCloseTo(0);
+    expect(left(5)).toBeCloseTo(50);
+  });
+
+  it("stands where it is drawn with no path", () => {
+    const { path: _path, ...still } = zone;
+    expect(zonePolygonAt(still, 3)).toBe(still.polygon);
+  });
+});
+
+describe("timed and moving hazards in a match (#3029)", () => {
+  /** The strip as a vent: telegraph [0, 1), active [1, 2), idle [2, 4). */
+  const VENT: MatchZone = {
+    ...STRIP,
+    id: "vent",
+    kind: "vent",
+    schedule: { periodSeconds: 4, activeSeconds: 1, offsetSeconds: 0 },
+  };
+
+  /** Strikes on `id` by `zone` over `seconds`. */
+  function strikes(sim: MatchSimulation, zone: MatchZone, id: string, seconds: number): number {
+    let count = 0;
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      count += sim
+        .step(DT)
+        .log.filter(
+          (entry) =>
+            entry.cause === "zone" &&
+            entry.sourceId === zoneSourceId(zone) &&
+            entry.events.some((event) => event.kind === "damage" && event.targetId === id),
+        ).length;
+    }
+    return count;
+  }
+
+  it("strikes nobody while it telegraphs", () => {
+    const sim = arena([spec("a", 0, vec2(400, 400), { layer: 0 })], [VENT]);
+    expect(strikes(sim, VENT, "a", 0.9)).toBe(0);
+    expect(burning(sim, "a")).toBeUndefined();
+  });
+
+  it("strikes a body standing in it once per window, and burns it", () => {
+    const sim = arena([spec("a", 0, vec2(400, 400), { layer: 0 })], [VENT]);
+    expect(strikes(sim, VENT, "a", 1.5)).toBe(1);
+    expect(burning(sim, "a")).toBeDefined();
+    expect(strikes(sim, VENT, "a", 2.4)).toBe(0);
+    expect(strikes(sim, VENT, "a", 4)).toBe(1);
+  });
+
+  it("strikes a body that walks in mid-window, once", () => {
+    const sim = arena([spec("a", 0, vec2(450, 400), { layer: 0 })], [VENT]);
+    expect(strikes(sim, VENT, "a", 1.4)).toBe(0);
+    sim.walkTo("a", vec2(400, 400), 0);
+    expect(strikes(sim, VENT, "a", 0.6)).toBe(1);
+    expect(zonesHolding([VENT], get(sim, "a").position, 0)).toHaveLength(1);
+  });
+
+  it("strikes a body standing on a moving hazard's path once each pass", () => {
+    // Centred on (400, 400), down to (400, 600) and back in 4 s: over the body at 1 s and 3 s.
+    const rock: MatchZone = {
+      id: "rock",
+      kind: "rockfall",
+      layer: 0,
+      polygon: rect(390, 390, 20, 20),
+      path: { points: [vec2(400, 400), vec2(400, 600)], speed: 100 },
+    };
+    const sim = arena([spec("a", 0, vec2(400, 500), { layer: 0 })], [rock]);
+    expect(strikes(sim, rock, "a", 0.8)).toBe(0);
+    expect(strikes(sim, rock, "a", 0.4)).toBe(1);
+    expect(strikes(sim, rock, "a", 1.6)).toBe(0);
+    expect(strikes(sim, rock, "a", 0.4)).toBe(1);
+    expect(strikes(sim, rock, "a", 4)).toBe(2);
   });
 });

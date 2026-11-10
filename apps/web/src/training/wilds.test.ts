@@ -41,6 +41,10 @@ describe("Training Wilds (#3024)", () => {
       "grove",
       "tainted-water",
       "draining-spire",
+      "vent",
+      "gas-spout",
+      "rockfall",
+      "rockfall",
     ]);
   });
 
@@ -115,6 +119,23 @@ describe("Training Wilds (#3024)", () => {
       loaded(simulation.get(id), id).combatant.statuses.active.some(({ id }) => id === status);
     expect(bears("in-tainted-water", "tainted")).toBe(true);
     expect(bears(SELF_ID, "tainted")).toBe(false);
+  });
+
+  it("poisons the dummy in the gas spout as it strikes, and rolls rocks over it first (#3029)", () => {
+    const { simulation } = setupScenario(scenario, newCharacter("c1"));
+    const bears = (id: string, status: string): boolean =>
+      loaded(simulation.get(id), id).combatant.statuses.active.some(({ id }) => id === status);
+    // The rocks pass over it before the spout's first window, at 3 s.
+    for (let tick = 0; tick < 30; tick += 1) {
+      simulation.step(1 / 30);
+    }
+    expect(bears("in-gas-spout", "crippled")).toBe(true);
+    expect(bears("in-gas-spout", "poison")).toBe(false);
+    for (let tick = 0; tick < 3 * 30; tick += 1) {
+      simulation.step(1 / 30);
+    }
+    expect(bears("in-gas-spout", "poison")).toBe(true);
+    expect(bears(SELF_ID, "poison")).toBe(false);
   });
 
   it("walks from one team's spawn to the other's", () => {

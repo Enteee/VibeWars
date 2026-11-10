@@ -600,8 +600,15 @@ describe("structureOf's water (#2984)", () => {
     const { structure } = structureOf(wilds);
     expect(structure.layerCount).toBe(1);
     expect(structure.zones).toEqual(
-      (wilds.zones ?? []).map(({ kind, layer, area }) => ({ kind, layer, area })),
+      (wilds.zones ?? []).map(({ kind, layer, area, schedule, path }) => ({
+        kind,
+        layer,
+        area,
+        ...(schedule === undefined ? {} : { schedule }),
+        ...(path === undefined ? {} : { path }),
+      })),
     );
-    expect(structure.zones).toHaveLength(9);
+    expect(structure.zones).toHaveLength(13);
+    expect(structure.zones.filter((zone) => "path" in zone)).toHaveLength(1);
   });
 });

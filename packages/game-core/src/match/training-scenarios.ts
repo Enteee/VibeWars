@@ -747,8 +747,10 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     // so the burn shows on someone else first; then one in each harmful
     // patch north and south of the spawn (#3027), each in a spell's reach of it;
     // then one at the edge of the tainted water (#3028), so a player beside
-    // it sees each skill cost Health. Seven at most (ADR-0020): the spring,
-    // grove and spire have none.
+    // it sees each skill cost Health; then one in the gas spout (#3029), the
+    // middle of the three timed hazards, with the rolling rocks' lane across
+    // it. Seven at most (ADR-0020): the spring, grove, spire, vent and
+    // rockfall have none.
     dummies: [
       target("in-embers", "In the embers (60 armor)", vec2(600, 400), 60),
       target("in-lava", "In the lava (60 armor)", vec2(360, 130), 60),
@@ -756,6 +758,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
       target("in-mire", "In the mire (60 armor)", vec2(500, 670), 60),
       target("in-swamp", "In the swamp (60 armor)", vec2(380, 750), 60),
       target("in-tainted-water", "In the tainted water (60 armor)", vec2(370, 300), 60),
+      target("in-gas-spout", "In the gas spout (60 armor)", vec2(1000, 120), 60),
     ],
   },
 ];

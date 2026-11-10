@@ -2532,7 +2532,14 @@ function parseWireCombat(value: unknown): WireCombat | undefined {
   if (
     raw === undefined ||
     !isString(raw.casterId) ||
-    !isOneOf(raw.cause, ["skill", "weapon", "degeneration", "attribute", "beacon", "zone"] as const) ||
+    !isOneOf(raw.cause, [
+      "skill",
+      "weapon",
+      "degeneration",
+      "attribute",
+      "beacon",
+      "zone",
+    ] as const) ||
     !isString(raw.skillId) ||
     !isString(raw.weaponId) ||
     !isString(raw.attributeId) ||

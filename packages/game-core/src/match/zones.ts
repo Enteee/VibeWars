@@ -57,7 +57,12 @@ export type ZoneRule =
 export const ZONE_RULES: Readonly<Record<ZoneKind, ZoneRule>> = {
   scorched: { trigger: "while-inside", statuses: ["burning"], lingerSeconds: 3, harmful: true },
   // GW1's environment effects: Lava, Acid Trap's gas, Quicksand, Swamp Water.
-  molten: { trigger: "while-inside", statuses: ["burning", "crippled"], lingerSeconds: 3, harmful: true },
+  molten: {
+    trigger: "while-inside",
+    statuses: ["burning", "crippled"],
+    lingerSeconds: 3,
+    harmful: true,
+  },
   "toxic-fog": { trigger: "while-inside", statuses: ["poison"], lingerSeconds: 5, harmful: true },
   mire: { trigger: "while-inside", statuses: ["mired"], lingerSeconds: 1, harmful: true },
   "foul-water": { trigger: "while-inside", statuses: ["fouled"], lingerSeconds: 1, harmful: true },
@@ -65,8 +70,18 @@ export const ZONE_RULES: Readonly<Record<ZoneKind, ZoneRule>> = {
   // the two that tax them, and do not seek out the two that help.
   spring: { trigger: "while-inside", statuses: ["refreshed"], lingerSeconds: 1, harmful: false },
   grove: { trigger: "while-inside", statuses: ["fleet"], lingerSeconds: 1, harmful: false },
-  "tainted-water": { trigger: "while-inside", statuses: ["tainted"], lingerSeconds: 1, harmful: true },
-  "draining-spire": { trigger: "while-inside", statuses: ["drained"], lingerSeconds: 1, harmful: true },
+  "tainted-water": {
+    trigger: "while-inside",
+    statuses: ["tainted"],
+    lingerSeconds: 1,
+    harmful: true,
+  },
+  "draining-spire": {
+    trigger: "while-inside",
+    statuses: ["drained"],
+    lingerSeconds: 1,
+    harmful: true,
+  },
   // Timed and moving hazards (#3029): GW1's fire jets, Poison Spout ("50
   // damage and Poisoning target for 12 seconds") and falling rocks.
   vent: {
@@ -119,7 +134,6 @@ export interface ZonePath {
 }
 
 export type ZonePhase = "idle" | "telegraph" | "active";
-
 
 /**
  * A zone as the simulation takes it: its area as one polygon, on one layer.
@@ -186,7 +200,10 @@ export function zoneOffsetAt(path: ZonePath | undefined, seconds: number): Vec2 
   let along = travelled <= length ? travelled : 2 * length - travelled;
   for (const leg of legs) {
     if (along <= leg.length) {
-      const at = leg.length === 0 ? leg.from : add(leg.from, scale(sub(leg.to, leg.from), along / leg.length));
+      const at =
+        leg.length === 0
+          ? leg.from
+          : add(leg.from, scale(sub(leg.to, leg.from), along / leg.length));
       return sub(at, start);
     }
     along -= leg.length;

@@ -140,9 +140,7 @@ const zoneSchema = z.object({
     })
     .optional(),
   /** A moving zone's way (#3029), its area drawn at the first point; only a strike kind has one. */
-  path: z
-    .object({ points: z.array(vec2Schema).min(2), speed: z.number().positive() })
-    .optional(),
+  path: z.object({ points: z.array(vec2Schema).min(2), speed: z.number().positive() }).optional(),
 });
 
 /**
@@ -156,7 +154,10 @@ function zoneTimingIssues(
   const strikes = ZONE_RULES[zone.kind].trigger === "strike";
   const issues: { at: readonly string[]; message: string }[] = [];
   if (strikes && (zone.schedule === undefined) === (zone.path === undefined)) {
-    issues.push({ at: [], message: `zone ${zone.id} strikes: it needs a schedule or a path, not both` });
+    issues.push({
+      at: [],
+      message: `zone ${zone.id} strikes: it needs a schedule or a path, not both`,
+    });
   }
   if (!strikes && (zone.schedule !== undefined || zone.path !== undefined)) {
     issues.push({ at: [], message: `zone ${zone.id} stands: it has no schedule or path` });
@@ -1018,9 +1019,9 @@ export const mapDataSchema = z
           message: `zone ${zone.id} is outside the map`,
         });
       }
-      zoneTimingIssues(zone).forEach(({ at, message }) =>
-        context.addIssue({ code: "custom", path: ["zones", index, ...at], message }),
-      );
+      for (const { at, message } of zoneTimingIssues(zone)) {
+        context.addIssue({ code: "custom", path: ["zones", index, ...at], message });
+      }
       const reach = zoneReach(shapeVertices(zone.area), zone.path);
       if (
         zone.path !== undefined &&

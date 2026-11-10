@@ -1473,4 +1473,59 @@ describe("effect zones (ADR-0053, #3024)", () => {
       new RegExp(`zones: harmful zones have ${String(MAX_HARMFUL_ZONE_POINTS + 4)} corners`),
     );
   });
+
+  describe("timed and moving hazards (#3029)", () => {
+    const schedule = { periodSeconds: 4, activeSeconds: 1, offsetSeconds: 0 };
+    const path = {
+      points: [
+        { x: 230, y: 650 },
+        { x: 530, y: 650 },
+      ],
+      speed: 120,
+    };
+
+    it("takes a strike kind with a schedule or a path", () => {
+      accepts([strip({ kind: "vent", schedule }), strip({ id: "rocks", kind: "rockfall", path })]);
+    });
+
+    it("refuses a strike kind with neither, or both", () => {
+      refuses([strip({ kind: "gas-spout" })], /zone strip strikes: it needs a schedule or a path/);
+      refuses(
+        [strip({ kind: "rockfall", schedule, path })],
+        /zone strip strikes: it needs a schedule or a path, not both/,
+      );
+    });
+
+    it("refuses a schedule or a path on standing ground", () => {
+      refuses([strip({ schedule })], /zone strip stands: it has no schedule or path/);
+      refuses([strip({ path })], /zone strip stands: it has no schedule or path/);
+    });
+
+    it("refuses a period with no room for the telegraph, and an offset outside it", () => {
+      refuses(
+        [strip({ kind: "vent", schedule: { ...schedule, periodSeconds: 1.5 } })],
+        /zones\.0\.schedule\.periodSeconds: zone strip's period is shorter/,
+      );
+      refuses(
+        [strip({ kind: "vent", schedule: { ...schedule, offsetSeconds: 4 } })],
+        /zones\.0\.schedule\.offsetSeconds: zone strip's offset is not within its period/,
+      );
+    });
+
+    it("refuses a path of one point, and one that rolls off the map", () => {
+      refuses(
+        [strip({ kind: "rockfall", path: { ...path, points: [path.points[0]] } })],
+        /zones\.0\.path\.points/,
+      );
+      refuses(
+        [
+          strip({
+            kind: "rockfall",
+            path: { ...path, points: [path.points[0], { x: 1590, y: 650 }] },
+          }),
+        ],
+        /zones\.0\.path: zone strip moves outside the map/,
+      );
+    });
+  });
 });
