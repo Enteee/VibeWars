@@ -268,14 +268,14 @@ See §3.
 
 ### Door, open and closed
 
-**Shut** is a solid amber bar across the gap, set between two wall stubs.
+**Shut** is a solid oak bar across the gap, set between two wall stubs.
 **Open** is the stubs and a clear gap with a faint dashed ghost of the door,
 so a player sees where it will close. Shape differs, not only colour.
 
 ![door](visual-style/door.svg)
 
 Recipe (now): `drawGate` strokes an open gate's wall as a faint outline
-(`WALL_STROKE`, 50 %), which is the ghost. **Target**: the amber door body
+(`WALL_STROKE`, 50 %), which is the ghost. **Target**: the oak door body
 (oak `#7a4e26` with two iron bands `#2a2a30` and a brass knob; open, the leaves swing flat against the jambs), replacing the plain wall in #3053. Study: `3053-hazards.png`.
 
 ### Lever, up and down
