@@ -58,6 +58,10 @@ import {
   DECK_LIP,
   DECK_SHADOW,
   DECK_TINT,
+  PIT_FLOOR,
+  PIT_WALL,
+  TUNNEL_INLAY,
+  TUNNEL_MOUTH,
   WALL_STROKE,
   arenaPalette,
   type ArenaPalette,
@@ -75,8 +79,10 @@ import {
   liftAt,
   occludersOf,
   pickSurface,
+  pitDrawing,
   rampDrawing,
   RING_PATH,
+  shapeOutline,
   traceHiddenOutline,
   traceHiddenPolyline,
   type Occluder,
@@ -291,6 +297,8 @@ const CAST_BADGE_DEPTH = renderOrder({ kind: "cast-badge" });
 const OVERLAY_DEPTH = renderOrder({ kind: "ui" });
 /** Over every world object, names and numbers included. */
 const EDGE_MARKER_DEPTH = renderOrder({ kind: "edge-marker" });
+/** How far apart the floor's grid lines are, world units. */
+const GRID_STEP = 64;
 /** The arena's icon sheet (#1671) and its frame map, as Phaser keys them. */
 const ATLAS = "arena-atlas";
 const ATLAS_MAP = "arena-atlas-map";
@@ -1666,12 +1674,14 @@ export class ArenaScene extends Phaser.Scene {
       seen.add(effect.id);
       // A ward on a deck (#2979) draws flat at that deck's height, on its
       // own layer's graphics: over the deck, under whoever stands there.
+      // Layer 0 is the bottom of the stack: the ground, or a pit's floor
+      // drawn a step down (#2973); the ground over a pit stacks as a deck.
       const onDeck = effect.layer > 0;
       const drawn = onDeck ? this.deckGroundGraphicsOf(effect.layer) : g;
       const x = effect.position.x;
       const y = onDeck
         ? effect.position.y - liftAt(structure, effect.position, effect.layer)
-        : effect.position.y;
+        : effect.position.y - elevationOf(effect.layer, structure.ground);
       if (effect.filled) {
         drawn.fillStyle(effect.colour, 0.15);
         drawn.fillCircle(x, y, effect.radius);
@@ -1913,6 +1923,7 @@ export class ArenaScene extends Phaser.Scene {
     // flickers as the camera moves (#2393): 1 CSS px, as the edge markers.
     const line = 1 / next.zoom;
     const palette = arenaPalette(next.structure.layerCount);
+    const { ground } = next.structure;
     this.drawFloor(palette, line);
     this.drawDeckShadows(g, next.structure);
     for (const graphics of this.structureGraphics.values()) {
@@ -1924,10 +1935,11 @@ export class ArenaScene extends Phaser.Scene {
     for (const shape of this.waterShapes) {
       const surface = this.structureAt({ kind: "water", layer: shape.layer, part: "surface" });
       surface.save();
-      surface.translateCanvas(0, -elevationOf(shape.layer));
+      surface.translateCanvas(0, -elevationOf(shape.layer, ground));
       WATER_ART[waterArtKey(shape.depth)].surface(this.waterPainter(surface), shape, line);
       surface.restore();
     }
+    this.drawPits(next.structure, line, palette);
     for (const transition of next.structure.transitions) {
       const lit = litStructurePalette(palette, next.lighting, transition.area, transition.from);
       this.drawRamp(next.structure, transition, line, lit);
@@ -1943,16 +1955,17 @@ export class ArenaScene extends Phaser.Scene {
       if (next.structure.layerCount === 1) {
         this.drawFlatWall(g, wall, line, lit);
       } else if (held === undefined) {
-        this.drawWallBox(g, wall, line, lit);
+        this.drawWallBox(g, wall, elevationOf(wall.layer, ground), line, lit);
       } else {
-        const low = elevationOf(wall.layer);
-        this.drawColumn(g, wall, low, deckSideLow(held, next.walls), lit.support);
+        const low = elevationOf(wall.layer, ground);
+        this.drawColumn(g, wall, low, deckSideLow(held, next.walls, ground), lit.support);
       }
     }
     for (const deck of next.structure.decks) {
       this.drawDeck(
         deck,
         next.walls,
+        ground,
         line,
         litStructurePalette(palette, next.lighting, deck.footprint, deck.layer),
       );
@@ -2060,7 +2073,7 @@ export class ArenaScene extends Phaser.Scene {
     shownGlyphs.add(actor.id);
   }
 
-  /** Where a click would go, before it does (#2831): a ring on a deck, dashed on the ground. */
+  /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */
   private drawHoverMarker(g: Phaser.GameObjects.Graphics): void {
     const { structure } = this.snapshot;
     const pointer = this.input.activePointer;
@@ -2070,7 +2083,7 @@ export class ArenaScene extends Phaser.Scene {
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
     const { layer } = pickSurface(structure, world, altHeld(pointer));
     g.lineStyle(1.5, HOVER_RING, 0.8);
-    if (layer > 0) {
+    if (layer !== structure.ground) {
       g.strokeCircle(world.x, world.y, HOVER_RADIUS);
       return;
     }
@@ -2100,13 +2113,12 @@ export class ArenaScene extends Phaser.Scene {
     line: number,
     palette: ArenaPalette,
   ): void {
-    const g = this.structureAt({ kind: "ramp", upperLayer: Math.max(ramp.from, ramp.to) });
+    const upperLayer = Math.max(ramp.from, ramp.to);
+    // A ramp up out of a pit draws in it, under the ground's near lip (#2973).
+    const g = this.structureAt(
+      upperLayer > structure.ground ? { kind: "ramp", upperLayer } : { kind: "pit" },
+    );
     const drawing = rampDrawing(structure, ramp);
-    if (drawing === undefined) {
-      g.fillStyle(palette.rampTop, 1);
-      this.fillShape(g, ramp.area);
-      return;
-    }
     g.fillStyle(palette.slab, 1);
     this.fillFan(g, drawing.side);
     g.fillStyle(palette.rampTop, 1);
@@ -2145,12 +2157,13 @@ export class ArenaScene extends Phaser.Scene {
   private drawDeck(
     deck: MapStructure["decks"][number],
     walls: readonly RenderableWall[],
+    ground: number,
     line: number,
     palette: ArenaPalette,
   ): void {
-    const top = elevationOf(deck.layer);
+    const top = elevationOf(deck.layer, ground);
     const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
-    this.drawColumn(side, deck.footprint, deckSideLow(deck, walls), top, palette.slab);
+    this.drawColumn(side, deck.footprint, deckSideLow(deck, walls, ground), top, palette.slab);
     const face = this.structureAt({ kind: "deck", deckLayer: deck.layer });
     face.save();
     face.translateCanvas(0, -top);
@@ -2172,7 +2185,7 @@ export class ArenaScene extends Phaser.Scene {
   /** What each bridge throws on the ground: a hard shadow, and the ground under it a step darker. */
   private drawDeckShadows(g: Phaser.GameObjects.Graphics, structure: MapStructure): void {
     for (const deck of structure.decks) {
-      if (deck.layer !== 1) {
+      if (deck.layer !== structure.ground + 1) {
         continue;
       }
       g.save();
@@ -2182,6 +2195,61 @@ export class ArenaScene extends Phaser.Scene {
       g.restore();
       g.fillStyle(DECK_TINT.colour, DECK_TINT.alpha);
       this.fillShape(g, deck.footprint);
+    }
+  }
+
+  /**
+   * Each pit sunk a step (#2973): its floor, its far wall with the mouths
+   * of the tunnels leaving it, under whoever is in it. The ground in front
+   * of it and over each tunnel then draws as a deck of the ground's layer,
+   * so it covers them, the tunnel's outline inlaid faintly in it.
+   */
+  private drawPits(structure: MapStructure, line: number, palette: ArenaPalette): void {
+    if (structure.pits.length === 0 && structure.tunnels.length === 0) {
+      return;
+    }
+    const pit = this.structureAt({ kind: "pit" });
+    const cover = this.structureAt({ kind: "deck", deckLayer: structure.ground });
+    for (const each of structure.pits) {
+      const drawing = pitDrawing(structure, each);
+      pit.fillStyle(PIT_FLOOR, 1);
+      this.fillFan(pit, drawing.floor);
+      pit.fillStyle(PIT_WALL, 1);
+      this.fillFan(pit, drawing.farWall);
+      pit.fillStyle(TUNNEL_MOUTH, 1);
+      for (const mouth of drawing.mouths) {
+        this.fillFan(pit, mouth);
+      }
+      this.drawGroundPatch(cover, drawing.lip, line, palette);
+      cover.lineStyle(line, palette.wallStroke, 1);
+      this.strokeShape(cover, each.footprint);
+    }
+    for (const tunnel of structure.tunnels) {
+      this.drawGroundPatch(cover, shapeOutline(tunnel.footprint), line, palette);
+      cover.lineStyle(line, TUNNEL_INLAY.colour, TUNNEL_INLAY.alpha);
+      this.strokeShape(cover, tunnel.footprint);
+    }
+  }
+
+  /** The floor and its grid over the box `outline`, as `drawFloor` draws them there. */
+  private drawGroundPatch(
+    g: Phaser.GameObjects.Graphics,
+    outline: readonly Vec2[],
+    line: number,
+    palette: ArenaPalette,
+  ): void {
+    const xs = outline.map(({ x }) => x);
+    const ys = outline.map(({ y }) => y);
+    const [left, right] = [Math.min(...xs), Math.max(...xs)];
+    const [top, bottom] = [Math.min(...ys), Math.max(...ys)];
+    g.fillStyle(palette.floor ?? 0, 1);
+    g.fillRect(left, top, right - left, bottom - top);
+    g.lineStyle(line, palette.grid, 1);
+    for (let x = Math.ceil(left / GRID_STEP) * GRID_STEP; x <= right; x += GRID_STEP) {
+      g.lineBetween(x, top, x, bottom);
+    }
+    for (let y = Math.ceil(top / GRID_STEP) * GRID_STEP; y <= bottom; y += GRID_STEP) {
+      g.lineBetween(left, y, right, y);
     }
   }
 
@@ -2218,10 +2286,10 @@ export class ArenaScene extends Phaser.Scene {
   private drawWallBox(
     g: Phaser.GameObjects.Graphics,
     wall: RenderableWall,
+    base: number,
     line: number,
     palette: ArenaPalette,
   ): void {
-    const base = elevationOf(wall.layer);
     const top = base + WALL_HEIGHT;
     this.drawColumn(g, wall, base, top, palette.wallFace);
     g.save();
@@ -2283,7 +2351,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const shape of this.waterShapes) {
       const { graphics, painter } = this.ripplesAt(shape.layer);
       graphics.save();
-      graphics.translateCanvas(0, -elevationOf(shape.layer));
+      graphics.translateCanvas(0, -elevationOf(shape.layer, this.snapshot.structure.ground));
       WATER_ART[waterArtKey(shape.depth)].ripples(
         painter,
         shape,
@@ -2328,12 +2396,11 @@ export class ArenaScene extends Phaser.Scene {
   /** The grid over the arena's bounds, not the screen, and its edge in `wall-stroke`; outside is `bg`. */
   private drawGrid(g: Phaser.GameObjects.Graphics, line: number, palette: ArenaPalette): void {
     const { width, height } = this.arena;
-    const step = 64;
     g.lineStyle(line, palette.grid, 1);
-    for (let x = 0; x <= width; x += step) {
+    for (let x = 0; x <= width; x += GRID_STEP) {
       g.lineBetween(x, 0, x, height);
     }
-    for (let y = 0; y <= height; y += step) {
+    for (let y = 0; y <= height; y += GRID_STEP) {
       g.lineBetween(0, y, width, y);
     }
     g.lineStyle(line, WALL_STROKE, 1);

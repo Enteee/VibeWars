@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import type { Uphill } from "@vibewars/game-core";
+
 import {
   actorAtPoint,
   EMPTY_SNAPSHOT,
+  FLAT_STRUCTURE,
   type MapStructure,
   type RenderableActor,
 } from "./arena-snapshot.js";
@@ -19,8 +22,10 @@ import {
   occludersOf,
   plankLines,
   southFacingEdges,
+  surfacesAt,
   WALL_HEIGHT,
   pickSurface,
+  pitDrawing,
   rampDrawing,
   RING_PATH,
   traceHiddenOutline,
@@ -31,6 +36,9 @@ import { ELEVATION_STEP } from "./render-order.js";
 const bridge = { kind: "rect", x: 100, y: 100, width: 200, height: 100 } as const;
 const BRIDGE: MapStructure = {
   layerCount: 2,
+  ground: 0,
+  pits: [],
+  tunnels: [],
   decks: [{ layer: 1, footprint: bridge }],
   transitions: [],
   water: [],
@@ -75,13 +83,16 @@ describe("a click on a ramp (#2972)", () => {
     ({ kind: "rect", x, y, width, height }) as const;
   const STAIRS: MapStructure = {
     layerCount: 3,
+    ground: 0,
+    pits: [],
+    tunnels: [],
     decks: [
       { layer: 1, footprint: rect(200, 100, 200, 100) },
       { layer: 2, footprint: rect(260, -100, 80, 100) },
     ],
     transitions: [
-      { from: 0, to: 1, area: rect(100, 100, 120, 100) },
-      { from: 1, to: 2, area: rect(280, 0, 40, 120) },
+      { from: 0, to: 1, area: rect(100, 100, 120, 100), uphill: "e" },
+      { from: 1, to: 2, area: rect(280, 0, 40, 120), uphill: "n" },
     ],
     water: [],
   };
@@ -180,7 +191,7 @@ describe("the hidden part of a body (#2831)", () => {
   });
 
   it("is nothing on a map of one layer", () => {
-    expect(occludersOf([], { layerCount: 1, decks: [], transitions: [], water: [] })).toEqual([]);
+    expect(occludersOf([], FLAT_STRUCTURE)).toEqual([]);
   });
 });
 
@@ -190,14 +201,19 @@ describe("a body under a raised ramp (#2975)", () => {
     from: 0,
     to: 1,
     area: { kind: "rect", x: 300, y: 350, width: 140, height: 200 },
+    uphill: "e",
   } as const;
   const upper = {
     from: 1,
     to: 2,
     area: { kind: "rect", x: 540, y: 250, width: 120, height: 120 },
+    uphill: "n",
   } as const;
   const HEIGHTS: MapStructure = {
     layerCount: 3,
+    ground: 0,
+    pits: [],
+    tunnels: [],
     decks: [
       { layer: 1, footprint: { kind: "rect", x: 420, y: 350, width: 360, height: 200 } },
       { layer: 2, footprint: { kind: "rect", x: 520, y: 160, width: 160, height: 110 } },
@@ -206,7 +222,7 @@ describe("a body under a raised ramp (#2975)", () => {
     water: [],
   };
   const occluders = occludersOf([], HEIGHTS);
-  const slope = rampDrawing(HEIGHTS, upper)?.slope ?? [];
+  const slope = rampDrawing(HEIGHTS, upper).slope;
   const middle = {
     x: slope.reduce((sum, { x }) => sum + x, 0) / slope.length,
     y: slope.reduce((sum, { y }) => sum + y, 0) / slope.length,
@@ -357,18 +373,27 @@ describe("liftAt (#2958)", () => {
     layer,
     footprint: { kind: "rect" as const, x, y, width, height },
   });
-  const ramp = (from: number, to: number, x: number, y: number, width: number, height: number) => ({
+  const ramp = (
+    from: number,
+    to: number,
+    [x, y, width, height]: readonly [number, number, number, number],
+    uphill: Uphill,
+  ) => ({
     from,
     to,
     area: { kind: "rect" as const, x, y, width, height },
+    uphill,
   });
   const HEIGHTS: MapStructure = {
     layerCount: 3,
+    ground: 0,
+    pits: [],
+    tunnels: [],
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
     transitions: [
-      ramp(0, 1, 300, 250, 140, 200),
-      ramp(0, 1, 760, 250, 140, 200),
-      ramp(1, 2, 540, 150, 120, 120),
+      ramp(0, 1, [300, 250, 140, 200], "e"),
+      ramp(0, 1, [760, 250, 140, 200], "w"),
+      ramp(1, 2, [540, 150, 120, 120], "n"),
     ],
     water: [],
   };
@@ -432,23 +457,23 @@ describe("liftAt (#2958)", () => {
     const [west] = HEIGHTS.transitions;
     if (west === undefined) throw new Error("no ramp");
     const drawn = rampDrawing(HEIGHTS, west);
-    expect(drawn?.slope).toEqual([
+    expect(drawn.slope).toEqual([
       { x: 300, y: 250 },
       { x: 440, y: 250 - STEP },
       { x: 440, y: 450 - STEP },
       { x: 300, y: 450 },
     ]);
-    expect(drawn?.side[2]).toEqual({ x: 440, y: 450 });
-    expect(drawn?.chevrons).toHaveLength(3);
+    expect(drawn.side[2]).toEqual({ x: 440, y: 450 });
+    expect(drawn.chevrons).toHaveLength(3);
   });
 
   it("makes a deck on a ground wall a slab, and leaves other decks solid", () => {
     const [bridge, platform] = HEIGHTS.decks;
     if (bridge === undefined || platform === undefined) throw new Error("no decks");
     const pillar = { kind: "rect" as const, layer: 0, x: 450, y: 420, width: 24, height: 24 };
-    expect(deckSideLow(bridge, [pillar])).toBe(STEP - DECK_SLAB);
-    expect(deckSideLow(bridge, [])).toBe(0);
-    expect(deckSideLow(platform, [pillar])).toBe(STEP);
+    expect(deckSideLow(bridge, [pillar], 0)).toBe(STEP - DECK_SLAB);
+    expect(deckSideLow(bridge, [], 0)).toBe(0);
+    expect(deckSideLow(platform, [pillar], 0)).toBe(STEP);
   });
 });
 
@@ -459,7 +484,7 @@ describe("structures with height", () => {
     footprint: { kind: "rect" as const, x: 420, y: 250, width: 360, height: 200 },
   };
   const pillar = { kind: "rect" as const, layer: 0, x: 450, y: 420, width: 24, height: 24 };
-  const structure: MapStructure = { layerCount: 2, decks: [deck], transitions: [], water: [] };
+  const structure: MapStructure = { ...FLAT_STRUCTURE, layerCount: 2, decks: [deck] };
   const hiddenAt = (y: number): number => {
     let pieces = 0;
     traceHiddenOutline(RING_PATH, 200, y, 10, 0, occludersOf([wall], structure), () => {
@@ -510,5 +535,78 @@ describe("structures with height", () => {
     expect(plankLines({ kind: "polygon", points }, 48)).toEqual([
       { from: { x: 48, y: 0 }, to: { x: 48, y: 48 } },
     ]);
+  });
+});
+
+describe("a level under the ground (#2973)", () => {
+  const rect = (x: number, y: number, width: number, height: number) =>
+    ({ kind: "rect", x, y, width, height }) as const;
+  // Training Heights' pit and tunnel: the ground is layer 1, they are layer 0.
+  const SUNK: MapStructure = {
+    ...FLAT_STRUCTURE,
+    layerCount: 3,
+    ground: 1,
+    pits: [{ footprint: rect(500, 520, 200, 130) }],
+    tunnels: [{ footprint: rect(700, 550, 280, 70) }],
+  };
+  const STEP = ELEVATION_STEP;
+  const occluders = occludersOf([], SUNK);
+  // A body on layer 0 draws a step down.
+  const hidden = (x: number, y: number, layer: number): number => {
+    let count = 0;
+    const drawnY = layer === 0 ? y + STEP : y;
+    traceHiddenOutline(RING_PATH, x, drawnY, 10, layer, occluders, () => {
+      count += 1;
+    });
+    return count;
+  };
+
+  it("hides a body in the tunnel, not one on the ground over it", () => {
+    expect(hidden(840, 585, 0)).toBeGreaterThan(0);
+    expect(hidden(840, 585, 1)).toBe(0);
+  });
+
+  it("hides a pit's body behind the near lip, and shows it in the open pit", () => {
+    expect(hidden(600, 640, 0)).toBeGreaterThan(0);
+    expect(hidden(600, 560, 0)).toBe(0);
+  });
+
+  it("names the pit's floor where it is drawn, and nothing above it", () => {
+    const world = { x: 650, y: 600 };
+    expect(surfacesAt(SUNK, world)).toEqual([{ layer: 0, point: { x: 650, y: 600 - STEP } }]);
+    expect(pickSurface(SUNK, world, true)).toEqual({ layer: 0, point: { x: 650, y: 600 - STEP } });
+  });
+
+  it("names the ground over the tunnel, and the tunnel's floor with Alt", () => {
+    const world = { x: 840, y: 610 };
+    expect(pickSurface(SUNK, world, false)).toEqual({ layer: 1, point: world });
+    expect(pickSurface(SUNK, world, true)).toEqual({ layer: 0, point: { x: 840, y: 610 - STEP } });
+  });
+
+  it("names the ground on the near lip, and the pit's floor behind it with Alt", () => {
+    const world = { x: 600, y: 680 };
+    expect(surfacesAt(SUNK, world)).toEqual([
+      { layer: 1, point: world },
+      { layer: 0, point: { x: 600, y: 680 - STEP } },
+    ]);
+  });
+
+  it("draws the pit a step down, the tunnel's mouth at the foot of its east wall", () => {
+    const [pit] = SUNK.pits;
+    if (pit === undefined) throw new Error("no pit");
+    const drawn = pitDrawing(SUNK, pit);
+    expect(drawn.floor[0]).toEqual({ x: 500, y: 520 + STEP });
+    expect(drawn.farWall[2]).toEqual({ x: 700, y: 520 + STEP });
+    expect(drawn.mouths).toHaveLength(1);
+    expect(drawn.mouths[0]?.[1]).toEqual({ x: 700, y: 550 + STEP });
+    expect(drawn.mouths[0]?.[2]).toEqual({ x: 700, y: 620 + STEP });
+  });
+
+  it("lifts a ramp out of the pit from its floor to the ground", () => {
+    const ramp = { from: 0, to: 1, area: rect(500, 545, 110, 80), uphill: "w" } as const;
+    const withRamp = { ...SUNK, transitions: [ramp] };
+    expect(liftAt(withRamp, { x: 610, y: 580 }, 0)).toBeCloseTo(-STEP);
+    expect(liftAt(withRamp, { x: 555, y: 580 }, 1)).toBeCloseTo(-STEP / 2);
+    expect(liftAt(SUNK, { x: 600, y: 580 }, 0)).toBe(-STEP);
   });
 });

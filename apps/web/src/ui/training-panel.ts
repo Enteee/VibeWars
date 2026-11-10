@@ -696,7 +696,7 @@ export function createTrainingPanel(): TrainingPanel {
     connection.onStep(onStep);
     connection.onCombat((combat) => {
       if (viewport !== undefined && latestMatch !== undefined) {
-        showCombatFeedback(viewport.scene, combat, latestMatch);
+        showCombatFeedback(viewport.scene, combat, latestMatch, setup.structure.structure.ground);
       }
       for (const failed of slotFlashes(combat.events, SELF_ID, connection.skillBar)) {
         const button = skillButtons[failed.slot];

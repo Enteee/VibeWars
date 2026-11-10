@@ -133,6 +133,9 @@ describe("MatchClock", () => {
 describe("a shot between layers (#2972)", () => {
   const decked: MapStructure = {
     layerCount: 2,
+    ground: 0,
+    pits: [],
+    tunnels: [],
     decks: [
       {
         layer: 1,
@@ -155,7 +158,7 @@ describe("a shot between layers (#2972)", () => {
   } as const;
 
   it("starts at the shooter's height and rises evenly to the target's", () => {
-    const lift = elevationOf(1);
+    const lift = elevationOf(1, 0);
     expect(projectilePosition(shot, 10, decked)).toEqual({ x: 0, y: 0 });
     expect(projectilePosition(shot, 11, decked)).toEqual({ x: 50, y: -lift / 2 });
     expect(projectilePosition(shot, 12, decked)).toEqual({ x: 100, y: -lift });

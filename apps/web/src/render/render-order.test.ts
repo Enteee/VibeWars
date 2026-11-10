@@ -82,7 +82,30 @@ describe("renderOrder (#2810, section 8: 12)", () => {
 
 describe("the elevation offset (ADR-0051)", () => {
   it("is a step per layer, and none on the ground", () => {
-    expect([0, 1, 2].map(elevationOf)).toEqual([0, ELEVATION_STEP, 2 * ELEVATION_STEP]);
+    expect([0, 1, 2].map((layer) => elevationOf(layer, 0))).toEqual([
+      0,
+      ELEVATION_STEP,
+      2 * ELEVATION_STEP,
+    ]);
+  });
+
+  it("is negative below the ground (#2973)", () => {
+    expect([0, 1, 2].map((layer) => elevationOf(layer, 1))).toEqual([
+      -ELEVATION_STEP,
+      0,
+      ELEVATION_STEP,
+    ]);
+  });
+
+  it("draws a pit's floor over the floor and under whoever is in it (#2973)", () => {
+    expect(renderOrder({ kind: "pit" })).toBeGreaterThan(renderOrder({ kind: "floor" }));
+    expect(renderOrder({ kind: "pit" })).toBeLessThan(
+      renderOrder({ kind: "character", band: 0, part: "body" }),
+    );
+    // The ground over a tunnel or a pit's lip covers the pit's bodies.
+    expect(renderOrder({ kind: "deck", deckLayer: 1 })).toBeGreaterThan(
+      renderOrder({ kind: "character", band: 0, part: "marks" }),
+    );
   });
 
   it("eases a change of layer over about 150 ms, either way", () => {

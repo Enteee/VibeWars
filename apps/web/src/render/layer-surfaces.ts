@@ -1,4 +1,4 @@
-import { pointInPolygon, progressAlong, type Vec2 } from "@vibewars/game-core";
+import { pointInPolygon, progressAlong, UPHILL, type Vec2 } from "@vibewars/game-core";
 
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { creatureOutline } from "./creature-shape.js";
@@ -50,33 +50,15 @@ function rampAt(structure: MapStructure, position: Vec2, layer: number): Transit
   );
 }
 
-/** The cardinal direction `ramp` climbs: toward the nearest deck of its `to` layer. */
-function uphillOf(structure: MapStructure, ramp: Transition): Vec2 | undefined {
-  const box = boxOf(ramp.area);
-  const centre = { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2 };
-  let nearest: Vec2 | undefined;
-  for (const deck of structure.decks) {
-    if (deck.layer !== ramp.to) {
-      continue;
-    }
-    const footprint = boxOf(deck.footprint);
-    const x = Math.min(Math.max(centre.x, footprint.left), footprint.right) - centre.x;
-    const y = Math.min(Math.max(centre.y, footprint.top), footprint.bottom) - centre.y;
-    if (nearest === undefined || x * x + y * y < nearest.x * nearest.x + nearest.y * nearest.y) {
-      nearest = { x, y };
-    }
-  }
-  if (nearest === undefined) {
-    return undefined;
-  }
-  return Math.abs(nearest.x) >= Math.abs(nearest.y)
-    ? { x: Math.sign(nearest.x), y: 0 }
-    : { x: 0, y: Math.sign(nearest.y) };
+/** The lift of `layer` on `structure`'s map. */
+function liftOf(structure: MapStructure, layer: number): number {
+  return elevationOf(layer, structure.ground);
 }
 
 /** The height a ramp draws at `t` of the way up. */
-function rampLift(ramp: Transition, t: number): number {
-  return elevationOf(ramp.from) + t * (elevationOf(ramp.to) - elevationOf(ramp.from));
+function rampLift(structure: MapStructure, ramp: Transition, t: number): number {
+  const from = liftOf(structure, ramp.from);
+  return from + t * (liftOf(structure, ramp.to) - from);
 }
 
 /**
@@ -86,11 +68,14 @@ function rampLift(ramp: Transition, t: number): number {
  */
 export function liftAt(structure: MapStructure, position: Vec2, layer: number): number {
   const ramp = rampAt(structure, position, layer);
-  const uphill = ramp === undefined ? undefined : uphillOf(structure, ramp);
-  if (ramp === undefined || uphill === undefined) {
-    return elevationOf(layer);
+  if (ramp === undefined) {
+    return liftOf(structure, layer);
   }
-  return rampLift(ramp, progressAlong(shapeOutline(ramp.area), uphill, position));
+  return rampLift(
+    structure,
+    ramp,
+    progressAlong(shapeOutline(ramp.area), UPHILL[ramp.uphill], position),
+  );
 }
 
 /** Whether a disc of `radius` at `position` reaches into `box`. */
@@ -144,16 +129,13 @@ const CHEVRON_WIDE = 0.28;
 /** How far apart a ramp's panel lines are, in world units. */
 const RAMP_PANEL = 24;
 
-/** The slope, south side face and uphill chevrons of `ramp`; none if no deck tops it. */
-export function rampDrawing(structure: MapStructure, ramp: Transition): RampDrawing | undefined {
-  const uphill = uphillOf(structure, ramp);
-  if (uphill === undefined) {
-    return undefined;
-  }
+/** The slope, south side face and uphill chevrons of `ramp`. */
+export function rampDrawing(structure: MapStructure, ramp: Transition): RampDrawing {
+  const uphill = UPHILL[ramp.uphill];
   const box = boxOf(ramp.area);
   const lifted = (point: Vec2): Vec2 => ({
     x: point.x,
-    y: point.y - rampLift(ramp, progressAlong(shapeOutline(ramp.area), uphill, point)),
+    y: point.y - rampLift(structure, ramp, progressAlong(shapeOutline(ramp.area), uphill, point)),
   });
   const width = box.right - box.left;
   const height = box.bottom - box.top;
@@ -167,7 +149,7 @@ export function rampDrawing(structure: MapStructure, ramp: Transition): RampDraw
     });
   const southWest = { x: box.left, y: box.bottom };
   const southEast = { x: box.right, y: box.bottom };
-  const ground = elevationOf(ramp.from);
+  const foot = liftOf(structure, ramp.from);
   return {
     slope: [
       lifted({ x: box.left, y: box.top }),
@@ -178,8 +160,8 @@ export function rampDrawing(structure: MapStructure, ramp: Transition): RampDraw
     side: [
       lifted(southWest),
       lifted(southEast),
-      { x: southEast.x, y: southEast.y - ground },
-      { x: southWest.x, y: southWest.y - ground },
+      { x: southEast.x, y: southEast.y - foot },
+      { x: southWest.x, y: southWest.y - foot },
     ],
     chevrons: CHEVRON_AT.map((t) => [
       onRamp(t - CHEVRON_BACK, -CHEVRON_WIDE),
@@ -256,17 +238,76 @@ export function deckHeldBy(
 }
 
 /**
- * The lowest lift of `deck`'s side face: a layer-1 deck standing on a
- * ground wall is a slab, every other deck is solid down to the layer below.
+ * The lowest lift of `deck`'s side face: a deck one layer over the
+ * `ground` standing on a ground wall is a slab, every other deck is solid
+ * down to the layer below.
  */
 export function deckSideLow(
   deck: MapStructure["decks"][number],
   walls: readonly RenderableWall[],
+  ground: number,
 ): number {
   const onPillars =
-    deck.layer === 1 &&
-    walls.some((wall) => wall.layer === 0 && shapeHoldsCentre(deck.footprint, wall));
-  return onPillars ? elevationOf(deck.layer) - DECK_SLAB : elevationOf(deck.layer - 1);
+    deck.layer === ground + 1 &&
+    walls.some((wall) => wall.layer === ground && shapeHoldsCentre(deck.footprint, wall));
+  return onPillars
+    ? elevationOf(deck.layer, ground) - DECK_SLAB
+    : elevationOf(deck.layer - 1, ground);
+}
+
+/** A box's corners, clockwise from its north-west. */
+function boxOutline(left: number, top: number, right: number, bottom: number): readonly Vec2[] {
+  return [
+    { x: left, y: top },
+    { x: right, y: top },
+    { x: right, y: bottom },
+    { x: left, y: bottom },
+  ];
+}
+
+/** A pit as it draws (#2973), every point already sunk. */
+export interface PitDrawing {
+  /** Its floor, a step down; the ground's near lip covers its south strip. */
+  readonly floor: readonly Vec2[];
+  /** Its far (north) wall, from the rim down to the floor. */
+  readonly farWall: readonly Vec2[];
+  /** Where each tunnel leaves it: a dark opening at the foot of its wall. */
+  readonly mouths: readonly (readonly Vec2[])[];
+  /** The ground's near lip: the strip south of it that hides its floor's south edge. */
+  readonly lip: readonly Vec2[];
+}
+
+/** How far a tunnel's mouth reaches into a pit's floor, in world units. */
+const MOUTH_DEPTH = 14;
+
+/** The floor, far wall, tunnel mouths and near lip of `pit`. */
+export function pitDrawing(structure: MapStructure, pit: MapStructure["pits"][number]): PitDrawing {
+  const step = -liftOf(structure, structure.ground - 1);
+  const box = boxOf(pit.footprint);
+  const mouths = structure.tunnels.flatMap(({ footprint }) => {
+    const tunnel = boxOf(footprint);
+    const top = Math.max(box.top, tunnel.top) + step;
+    const bottom = Math.min(box.bottom, tunnel.bottom) + step;
+    const left = Math.max(box.left, tunnel.left);
+    const right = Math.min(box.right, tunnel.right);
+    if (bottom > top && tunnel.left <= box.right && tunnel.right > box.right) {
+      return [boxOutline(box.right - MOUTH_DEPTH, top, box.right, bottom)];
+    }
+    if (bottom > top && tunnel.right >= box.left && tunnel.left < box.left) {
+      return [boxOutline(box.left, top, box.left + MOUTH_DEPTH, bottom)];
+    }
+    // Through the far wall, the whole of its height.
+    if (right > left && tunnel.bottom >= box.top && tunnel.top < box.top) {
+      return [boxOutline(left, box.top, right, box.top + step)];
+    }
+    return [];
+  });
+  return {
+    floor: boxOutline(box.left, box.top + step, box.right, box.bottom + step),
+    farWall: boxOutline(box.left, box.top, box.right, box.top + step),
+    mouths,
+    lip: boxOutline(box.left, box.bottom, box.right, box.bottom + step),
+  };
 }
 
 /** A place a click can name: the layer, and the point on it in the simulation's terms. */
@@ -281,43 +322,45 @@ function rampSurface(
   ramp: Transition,
   world: Vec2,
 ): (Surface & { readonly lift: number }) | undefined {
-  const uphill = uphillOf(structure, ramp);
-  if (uphill === undefined) {
-    return undefined;
-  }
+  const uphill = UPHILL[ramp.uphill];
   const outline = shapeOutline(ramp.area);
   // The lift rises linearly along the ramp, so the point drawn at `world`
   // solves y = world.y + lift(y) exactly; its slope is under 1.
   const along = outline.map((corner) => corner.x * uphill.x + corner.y * uphill.y);
   const low = Math.min(...along);
-  const rise = (elevationOf(ramp.to) - elevationOf(ramp.from)) / (Math.max(...along) - low);
+  const foot = liftOf(structure, ramp.from);
+  const rise = (liftOf(structure, ramp.to) - foot) / (Math.max(...along) - low);
   const point = {
     x: world.x,
-    y:
-      (world.y + elevationOf(ramp.from) + rise * (world.x * uphill.x - low)) /
-      (1 - rise * uphill.y),
+    y: (world.y + foot + rise * (world.x * uphill.x - low)) / (1 - rise * uphill.y),
   };
   if (!pointInPolygon(point, outline)) {
     return undefined;
   }
   const t = progressAlong(outline, uphill, point);
-  return { layer: t >= 0.5 ? ramp.to : ramp.from, point, lift: rampLift(ramp, t) };
+  return { layer: t >= 0.5 ? ramp.to : ramp.from, point, lift: rampLift(structure, ramp, t) };
+}
+
+/** Whether `point` lies in one of `shapes`' footprints. */
+function inAny(shapes: readonly { readonly footprint: RenderableShape }[], point: Vec2): boolean {
+  return shapes.some(({ footprint }) => pointInPolygon(point, shapeOutline(footprint)));
 }
 
 /**
- * The surfaces drawn at `world`, the visible one first and the ground
- * last, one per layer. A deck or ramp draws lifted, so the point on it
- * lies below the cursor.
+ * The surfaces drawn at `world`, the visible one first, one per layer. A
+ * deck or ramp draws lifted, so the point on it lies below the cursor; a
+ * pit or tunnel draws sunk (#2973), so the point on its floor lies above.
  */
 export function surfacesAt(structure: MapStructure, world: Vec2): readonly Surface[] {
+  const { ground } = structure;
   const surfaces: (Surface & { readonly lift: number })[] = [];
-  for (let layer = structure.layerCount - 1; layer > 0; layer -= 1) {
-    const point = { x: world.x, y: world.y + elevationOf(layer) };
+  for (let layer = structure.layerCount - 1; layer > ground; layer -= 1) {
+    const point = { x: world.x, y: world.y + liftOf(structure, layer) };
     const here = structure.decks.some(
       (deck) => deck.layer === layer && pointInPolygon(point, shapeOutline(deck.footprint)),
     );
     if (here) {
-      surfaces.push({ layer, point, lift: elevationOf(layer) });
+      surfaces.push({ layer, point, lift: liftOf(structure, layer) });
     }
   }
   for (const ramp of structure.transitions) {
@@ -326,7 +369,16 @@ export function surfacesAt(structure: MapStructure, world: Vec2): readonly Surfa
       surfaces.push(surface);
     }
   }
-  surfaces.push({ layer: 0, point: world, lift: 0 });
+  // A pit's floor shows through its hole, under the ground's near lip; a
+  // tunnel's only under the ground over it.
+  const below = { x: world.x, y: world.y + liftOf(structure, ground - 1) };
+  const inPit = inAny(structure.pits, below);
+  if (inPit || inAny(structure.tunnels, below)) {
+    surfaces.push({ layer: ground - 1, point: below, lift: liftOf(structure, ground - 1) });
+  }
+  if (!inPit || !inAny(structure.pits, world)) {
+    surfaces.push({ layer: ground, point: world, lift: 0 });
+  }
   const seen = new Set<number>();
   return surfaces
     .sort((a, b) => b.lift - a.lift)
@@ -342,7 +394,9 @@ export function altHeld(pointer: { readonly event?: { readonly altKey: boolean }
 /** Where a click at `world` goes: the visible surface, or with `below` the one under it, if any. */
 export function pickSurface(structure: MapStructure, world: Vec2, below: boolean): Surface {
   const surfaces = surfacesAt(structure, world);
-  return surfaces[below ? 1 : 0] ?? { layer: 0, point: world };
+  return (
+    (below ? surfaces[1] : undefined) ?? surfaces[0] ?? { layer: structure.ground, point: world }
+  );
 }
 
 /** A structure as it hides bodies: its outline, the lifts it is drawn at, whom it covers. */
@@ -386,26 +440,43 @@ export function occludersOf(
   if (structure.layerCount === 1) {
     return [];
   }
+  const { ground } = structure;
+  const sunk = liftOf(structure, ground - 1);
   return [
     ...walls.map((wall) => {
-      const base = elevationOf(wall.layer);
+      const base = liftOf(structure, wall.layer);
       const held = deckHeldBy(wall, structure);
-      const high = held === undefined ? base + WALL_HEIGHT : deckSideLow(held, walls);
+      const high = held === undefined ? base + WALL_HEIGHT : deckSideLow(held, walls, ground);
       return occluder(shapeOutline(wall), base, high, wall.layer);
     }),
     ...structure.decks.map((deck) =>
       occluder(
         shapeOutline(deck.footprint),
-        deckSideLow(deck, walls),
-        elevationOf(deck.layer),
+        deckSideLow(deck, walls, ground),
+        liftOf(structure, deck.layer),
         deck.layer - 1,
       ),
     ),
     // A raised ramp covers the ground under it as a deck does (#2975); its
     // slope is drawn already lifted, so it hides at no further lift.
-    ...structure.transitions.flatMap((ramp) => {
-      const drawing = ramp.from >= 1 ? rampDrawing(structure, ramp) : undefined;
-      return drawing === undefined ? [] : [occluder(drawing.slope, 0, 0, ramp.from - 1)];
+    ...structure.transitions.flatMap((ramp) =>
+      ramp.from > ground ? [occluder(rampDrawing(structure, ramp).slope, 0, 0, ramp.from - 1)] : [],
+    ),
+    // The ground over a tunnel covers it whole, from its sunk floor up (#2973).
+    ...structure.tunnels.map((tunnel) =>
+      occluder(shapeOutline(tunnel.footprint), sunk, 0, ground - 1),
+    ),
+    // A pit draws a step down: the strip along its south edge then falls
+    // behind the ground's near lip (#2973).
+    ...structure.pits.map((pit) => {
+      const box = boxOf(pit.footprint);
+      const strip = boxOutline(
+        box.left,
+        Math.max(box.top, box.bottom + sunk),
+        box.right,
+        box.bottom,
+      );
+      return occluder(strip, sunk, sunk, ground - 1);
     }),
   ];
 }

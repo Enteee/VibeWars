@@ -365,7 +365,10 @@ export function structureOf(map: MapData): LoadedStructure {
         ? FLAT_STRUCTURE
         : {
             layerCount: map.layers,
+            ground: map.groundLayer,
             decks: map.decks,
+            pits: map.pits,
+            tunnels: map.tunnels,
             transitions: map.transitions,
             water,
             ...(map.lighting === undefined ? {} : { lighting: map.lighting }),

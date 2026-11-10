@@ -4,6 +4,10 @@
  * characters, effects, UI, as plain numbers. One stack per layer: a deck
  * of layer `n` closes the stack below it, so whoever stands under it
  * draws beneath it and whoever stands on it draws above.
+ *
+ * Layers here are indices from the bottom, not from the ground (#2973):
+ * on a map with pits, layer 0 is the pits' floor, and the ground over a
+ * tunnel or a pit's near lip draws as a deck of the ground's layer.
  */
 
 /** A body's parts on one character band, in the order they draw. */
@@ -14,6 +18,7 @@ export type WaterPart = "surface" | "ripples";
 
 export type RenderItem =
   | { readonly kind: "floor" }
+  | { readonly kind: "pit" }
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
   | { readonly kind: "ground-effect"; readonly layer: number }
   | { readonly kind: "terrain" }
@@ -32,6 +37,11 @@ export type RenderItem =
   | { readonly kind: "edge-marker" };
 
 const LAYER_STACK = 10;
+/**
+ * A pit's sunk floor, far wall and ramp (#2973): over the floor, under the
+ * water, wards and bodies in it, and under the ground's lip in front of it.
+ */
+const PIT = -1.8;
 /** Over the grid and deck shadows, under the first body; the wards draw just over it. */
 const GROUND_LIGHTING = 0.5;
 const LIT_GROUND_EFFECT = 0.6;
@@ -67,6 +77,8 @@ export function renderOrder(item: RenderItem): number {
   switch (item.kind) {
     case "floor":
       return -2;
+    case "pit":
+      return PIT;
     case "water":
       return item.layer === 0
         ? GROUND_WATER[item.part]
@@ -105,7 +117,7 @@ export function renderOrder(item: RenderItem): number {
 }
 
 /** How many character bands a scene keeps: one per layer a map can have. */
-export const CHARACTER_BANDS = 3;
+export const CHARACTER_BANDS = 4;
 
 /**
  * The character band a body on `layer` draws in. On a map of one layer
@@ -122,9 +134,9 @@ export const ELEVATION_STEP = 56;
 /** How long a body takes to settle at a new layer's height, in seconds. */
 export const ELEVATION_EASE_SECONDS = 0.15;
 
-/** The drawn lift of `layer`. */
-export function elevationOf(layer: number): number {
-  return layer * ELEVATION_STEP;
+/** The drawn lift of `layer` on a map whose ground is `ground`: below it, negative (#2973). */
+export function elevationOf(layer: number, ground: number): number {
+  return (layer - ground) * ELEVATION_STEP;
 }
 
 /**

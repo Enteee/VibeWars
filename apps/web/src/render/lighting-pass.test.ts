@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { Uphill } from "@vibewars/game-core";
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import { arenaPalette } from "./arena-palette.js";
@@ -137,15 +138,24 @@ describe("layerSurfaces", () => {
     layer,
     footprint: { kind: "rect" as const, x, y, width, height },
   });
-  const ramp = (from: number, to: number, x: number, y: number, width: number, height: number) => ({
+  const ramp = (
+    from: number,
+    to: number,
+    [x, y, width, height]: readonly [number, number, number, number],
+    uphill: Uphill,
+  ) => ({
     from,
     to,
     area: { kind: "rect" as const, x, y, width, height },
+    uphill,
   });
   const HEIGHTS: MapStructure = {
     layerCount: 3,
+    ground: 0,
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
-    transitions: [ramp(0, 1, 300, 250, 140, 200), ramp(1, 2, 540, 150, 120, 120)],
+    pits: [],
+    tunnels: [],
+    transitions: [ramp(0, 1, [300, 250, 140, 200], "e"), ramp(1, 2, [540, 150, 120, 120], "n")],
     water: [],
   };
 
@@ -153,6 +163,25 @@ describe("layerSurfaces", () => {
     expect(layerSurfaces(HEIGHTS, 0)).toEqual([]);
     expect(layerSurfaces(HEIGHTS, 1)).toHaveLength(2);
     expect(layerSurfaces(HEIGHTS, 2)).toHaveLength(2);
+  });
+
+  it("is a pit's floor on the layer under the ground (#2973)", () => {
+    const pit = { kind: "rect" as const, x: 500, y: 520, width: 200, height: 130 };
+    const sunk: MapStructure = {
+      ...HEIGHTS,
+      ground: 1,
+      decks: [],
+      pits: [{ footprint: pit }],
+      transitions: [],
+    };
+    expect(layerSurfaces(sunk, 0)).toEqual([
+      [
+        { x: 500, y: 520 },
+        { x: 700, y: 520 },
+        { x: 700, y: 650 },
+        { x: 500, y: 650 },
+      ],
+    ]);
   });
 
   it("outlines a deck by its footprint", () => {

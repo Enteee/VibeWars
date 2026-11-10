@@ -245,32 +245,39 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
     }, shot.toString("base64"));
   };
   /**
-   * Standing at `x, y`: the water `off` units south of you (north when
-   * negative) and the floor as far the other way. The view follows you
+   * Standing at `x, y`: the water `dx, dy` away from you and the floor as
+   * far the other way. The view follows you
    * (#721) and darkens towards its edges, so only samples as far from its
    * centre compare.
    */
-  const waterAndFloor = async (x: number, y: number, off: number): Promise<[number, number]> => {
+  const waterAndFloor = async (
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+  ): Promise<[number, number]> => {
     await walkTo(page, canvas, { x, y });
     // A click off the canvas releases the arena and walks nowhere.
     await expect(page.locator(".training")).toHaveClass(/is-armed/);
     await page.mouse.move(1, 1);
-    return [await brightness({ x, y: y + off }), await brightness({ x, y: y - off })];
+    return [await brightness({ x: x + dx, y: y + dy }), await brightness({ x: x - dx, y: y - dy })];
   };
   // The stage shows less than the map's width: from the spawn, walk east in hops.
+  // South of the pits, as drawn one step down (#2973).
   for (const hop of [
     { x: 350, y: 650 },
-    { x: 600, y: 680 },
+    { x: 600, y: 740 },
     { x: 850, y: 650 },
     { x: 940, y: 420 },
   ]) {
     await walkTo(page, canvas, hop);
   }
   // Map coordinates from training-heights/map.json: the pond's middle, the east puddle's.
-  const [pond, northFloor] = await waterAndFloor(930, 330, -130);
+  const [pond, northFloor] = await waterAndFloor(930, 330, 0, -130);
   expect(pond).toBeLessThan(northFloor);
-  const [puddle, southFloor] = await waterAndFloor(970, 560, 80);
-  expect(puddle).toBeGreaterThan(southFloor);
+  // West of the puddle: south of it is the east pit, sunk and darker (#2973).
+  const [puddle, westFloor] = await waterAndFloor(990, 715, 80, 0);
+  expect(puddle).toBeGreaterThan(westFloor);
 });
 
 test("(5) the chosen scenario survives a reload", async ({ page }) => {

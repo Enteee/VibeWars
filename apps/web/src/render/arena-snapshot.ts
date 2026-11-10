@@ -4,6 +4,7 @@ import {
   type OffhandId,
   type ProfessionId,
   type SkillType,
+  type Uphill,
   type Vec2,
 } from "@vibewars/game-core";
 
@@ -124,24 +125,34 @@ export interface MapWater {
   readonly area: RenderableShape;
 }
 
-/** A map's floors above the ground (ADR-0051) and its water, from its file: never per tick. */
+/** A map's floors above and below the ground (ADR-0051) and its water, from its file: never per tick. */
 export interface MapStructure {
   readonly layerCount: number;
+  /** The ground's layer: 1 on a map with pits and tunnels under it (#2973). */
+  readonly ground: number;
   /** How it is lit (ADR-0052); a map without it is lit flat. */
   readonly lighting?: MapLighting;
   readonly decks: readonly { readonly layer: number; readonly footprint: RenderableShape }[];
+  /** Holes in the ground, their floor on `ground - 1` (#2973). */
+  readonly pits: readonly { readonly footprint: RenderableShape }[];
+  /** Floors under the ground, on `ground - 1`, the ground over them (#2973). */
+  readonly tunnels: readonly { readonly footprint: RenderableShape }[];
   readonly transitions: readonly {
     readonly from: number;
     readonly to: number;
     readonly area: RenderableShape;
+    readonly uphill: Uphill;
   }[];
   readonly water: readonly MapWater[];
 }
 
-/** A map with one layer: no deck, no ramp, no water. */
+/** A map with one layer: no deck, no pit, no ramp, no water. */
 export const FLAT_STRUCTURE: MapStructure = {
   layerCount: 1,
+  ground: 0,
   decks: [],
+  pits: [],
+  tunnels: [],
   transitions: [],
   water: [],
 };

@@ -66,6 +66,14 @@ export const DECK_SHADOW = { colour: 0x080b10, alpha: 0.55, offset: 32 };
 export const DECK_TINT = { colour: 0x0d131c, alpha: 0.55 };
 export const DECK_LIP = 0xffffff;
 
+/** A pit (#2973): its floor a step darker than the ground, its far wall darker still. */
+export const PIT_FLOOR = shade(0x26303f, 0.45);
+export const PIT_WALL = shade(0x4b5a70, 0.6);
+/** Where a tunnel leaves a pit: near black, so it reads as a way in. */
+export const TUNNEL_MOUTH = 0x05070a;
+/** A tunnel's outline, inlaid faintly in the ground over it. */
+export const TUNNEL_INLAY = { colour: 0x8fa4bd, alpha: 0.3 };
+
 /** How a depth of water looks (#2984): line widths are CSS px. */
 export interface WaterLook {
   readonly fill: number;

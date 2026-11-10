@@ -137,7 +137,7 @@ export function litStructurePalette(
   };
 }
 
-/** The outlines a layer above the ground has to light, in that layer's own coordinates. */
+/** The outlines a layer other than the ground has to light, in that layer's own coordinates. */
 export function layerSurfaces(
   structure: MapStructure,
   layer: number,
@@ -154,16 +154,19 @@ export function layerSurfaces(
   const decks = structure.decks
     .filter((deck) => deck.layer === layer)
     .map((deck) => outline(deck.footprint));
+  // A pit's floor is the layer under the ground's, seen through its hole (#2973).
+  const pits =
+    layer === structure.ground - 1 ? structure.pits.map((pit) => outline(pit.footprint)) : [];
   // A ramp's drawn slope is already lifted; the light map is lifted whole.
   const ramps = structure.transitions
     .filter((ramp) => ramp.to === layer)
-    .flatMap((ramp) => {
-      const drawing = rampDrawing(structure, ramp);
-      return drawing === undefined
-        ? []
-        : [drawing.slope.map((p) => ({ x: p.x, y: p.y + elevationOf(layer) }))];
-    });
-  return [...decks, ...ramps];
+    .map((ramp) =>
+      rampDrawing(structure, ramp).slope.map((p) => ({
+        x: p.x,
+        y: p.y + elevationOf(layer, structure.ground),
+      })),
+    );
+  return [...decks, ...pits, ...ramps];
 }
 
 interface LayerMap {
@@ -310,7 +313,7 @@ export class LightingPass {
       throw new Error("lighting: could not create a light map");
     }
     const outsideKey =
-      layer === 0
+      layer === structure.ground
         ? undefined
         : this.buildOutside(
             `lighting-${String(nextLightingId)}-outside`,
@@ -342,7 +345,7 @@ export class LightingPass {
     base.render();
 
     const image = this.scene.add
-      .image(0, -elevationOf(layer), shownKey)
+      .image(0, -elevationOf(layer, structure.ground), shownKey)
       .setOrigin(0, 0)
       .setScale(1 / LIGHT_MAP_SCALE)
       .setBlendMode(Phaser.BlendModes.MULTIPLY)
