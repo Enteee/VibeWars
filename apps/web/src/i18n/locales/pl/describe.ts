@@ -942,6 +942,7 @@ export default {
     `+${p.pips} regeneracji zdrowia na każde zaczarowanie na tobie (najwyżej ${p.max})`,
   energyDegeneration: (p) => `−${p.energyPips} degeneracji energii`,
   energyRegeneration: (p) => `+${p.energyPips} regeneracji energii`,
+  healthLostPerSkill: (p) => `−${p.amount} zdrowia za każdą użytą umiejętność`,
   healthRegenerationForEachConditionOnYou: (p) =>
     `${p.healthPipsPerCondition} regeneracji zdrowia na każdą dolegliwość na tobie`,
   health: () => "zdrowia",

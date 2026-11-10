@@ -104,6 +104,7 @@ import {
   isSummonedCreature,
   loseActionEnergy,
   payCost,
+  skillHealthLoss,
   type ActivationCheck,
   type ActivationRejection,
 } from "../skills/activation.js";
@@ -139,6 +140,7 @@ import {
   disableOwnSkills,
   gainEnergy,
   landCaughtCondition,
+  loseHealth,
   resolveSkillEffects,
   stateHolds,
   type CombatEvent,
@@ -3454,6 +3456,7 @@ export class MatchSimulation {
       doubleStrike: false,
       events: [],
     });
+    this.#loseSkillHealth(record);
   }
 
   /**
@@ -3487,6 +3490,7 @@ export class MatchSimulation {
       },
       0,
     );
+    this.#loseSkillHealth(record);
   }
 
   /**
@@ -3617,7 +3621,42 @@ export class MatchSimulation {
       record.inputDirection = ZERO;
       record.walkGoal = undefined;
     }
+    this.#loseSkillHealth(record);
     return { skillId: skill.id, check };
+  }
+
+  /**
+   * Tainted water's price for a skill paid for (#3028): health loss, once
+   * the use has begun, so a death it causes ends the cast as any death
+   * does. Logged as a status tick, from the ground that put it on.
+   */
+  #loseSkillHealth(record: ParticipantRecord): void {
+    const { combatant } = record;
+    const amount = skillHealthLoss(combatant);
+    if (amount <= 0) {
+      return;
+    }
+    const events: CombatEvent[] = [];
+    loseHealth(combatant, amount, "health-loss", events);
+    if (events.length === 0) {
+      return;
+    }
+    const taint = combatant.statuses.active.find(
+      ({ id }) => getStatusDefinition(id).healthLossOnSkill > 0,
+    );
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "degeneration",
+      sourceId: taint?.sourceId,
+      skillId: undefined,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
   }
 
   /**

@@ -73,6 +73,7 @@ describe("status definitions", () => {
         def.healthPipsPerEnchantment !== undefined ||
         statAtTwelve(def.healthPipsPerCondition) !== 0 ||
         def.healthPipsPerHex !== 0 ||
+        def.healthLossOnSkill !== 0 ||
         def.energyPipsPerCondition !== 0 ||
         def.energyPipsPerHex !== 0 ||
         def.preventsKnockdown ||
@@ -238,6 +239,7 @@ describe("status definitions", () => {
       faintheartedness: -2,
       "parasitic-bond": -1,
       fouled: -1,
+      refreshed: 3,
       mending: 3,
       regeneration: 4,
       "weapon-of-warding": 4,
@@ -324,6 +326,7 @@ describe("status definitions", () => {
       succor: 1,
       "signet-of-recall": -4,
       "spirit-channeling": 5,
+      drained: -3,
     });
   });
 

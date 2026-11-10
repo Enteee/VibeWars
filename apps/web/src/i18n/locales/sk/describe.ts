@@ -940,6 +940,7 @@ export default {
     `+${p.pips} regenerácie zdravia za každé očarovanie na tebe (najviac ${p.max})`,
   energyDegeneration: (p) => `−${p.energyPips} degenerácie energie`,
   energyRegeneration: (p) => `+${p.energyPips} regenerácie energie`,
+  healthLostPerSkill: (p) => `−${p.amount} zdravia za každú použitú schopnosť`,
   healthRegenerationForEachConditionOnYou: (p) =>
     `${p.healthPipsPerCondition} regenerácie zdravia za každý neduh na tebe`,
   health: () => "zdravia",

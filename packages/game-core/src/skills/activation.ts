@@ -542,6 +542,18 @@ export function loseActionEnergy(combatant: Combatant): void {
 }
 
 /**
+ * Health the bearer's statuses take for a skill paid for (#3028), a cost
+ * of 0 too, never for a plain swing: tainted water's. The caller takes it
+ * as health loss, which can kill.
+ */
+export function skillHealthLoss(combatant: Pick<Combatant, "statuses">): number {
+  return combatant.statuses.active.reduce(
+    (sum, { id }) => sum + getStatusDefinition(id).healthLossOnSkill,
+    0,
+  );
+}
+
+/**
  * Deduct a skill's cost from the caster. Call only after `canActivate`
  * returned ok — this deliberately does not re-check affordability, so a
  * caller that skips validation produces an obviously-wrong negative

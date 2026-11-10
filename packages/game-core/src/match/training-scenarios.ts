@@ -745,13 +745,17 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     knobs: [],
     // In the middle of the scorched strip across the lane (ADR-0053, #3024),
     // so the burn shows on someone else first; then one in each harmful
-    // patch north and south of the spawn (#3027), each in a spell's reach of it.
+    // patch north and south of the spawn (#3027), each in a spell's reach of it;
+    // then one at the edge of the tainted water (#3028), so a player beside
+    // it sees each skill cost Health. Seven at most (ADR-0020): the spring,
+    // grove and spire have none.
     dummies: [
       target("in-embers", "In the embers (60 armor)", vec2(600, 400), 60),
       target("in-lava", "In the lava (60 armor)", vec2(360, 130), 60),
       target("in-fog", "In the fog (60 armor)", vec2(500, 130), 60),
       target("in-mire", "In the mire (60 armor)", vec2(500, 670), 60),
       target("in-swamp", "In the swamp (60 armor)", vec2(380, 750), 60),
+      target("in-tainted-water", "In the tainted water (60 armor)", vec2(370, 300), 60),
     ],
   },
 ];

@@ -37,6 +37,10 @@ describe("Training Wilds (#3024)", () => {
       "toxic-fog",
       "mire",
       "foul-water",
+      "spring",
+      "grove",
+      "tainted-water",
+      "draining-spire",
     ]);
   });
 
@@ -52,6 +56,65 @@ describe("Training Wilds (#3024)", () => {
     expect(bears("in-mire", "mired")).toBe(true);
     expect(bears("in-swamp", "fouled")).toBe(true);
     expect(bears(SELF_ID, "mired")).toBe(false);
+  });
+
+  it("puts each #3028 patch's status on a body standing in it, not on you at your spawn", () => {
+    const [west] = map.spawnPoints;
+    const spawn = loaded(west, "a spawn").position;
+    const [template] = scenarioParticipants(scenario, spawn);
+    if (template === undefined) throw new Error("no dummies");
+    const patches = [
+      ["west-spring", "refreshed"],
+      ["west-grove", "fleet"],
+      ["east-tainted-water", "tainted"],
+      ["east-spire", "drained"],
+    ] as const;
+    const centre = (id: string) => {
+      const zone = loaded(
+        (map.zones ?? []).find((each) => each.id === id),
+        id,
+      );
+      if (zone.area.kind !== "rect") throw new Error(`${id} is no rect`);
+      return { x: zone.area.x + zone.area.width / 2, y: zone.area.y + zone.area.height / 2 };
+    };
+    const simulation = new MatchSimulation({
+      seed: "wilds",
+      teamCount: map.teams,
+      walls: allWallSegments(map.walls),
+      bounds: { width: map.width, height: map.height },
+      layers: matchLayers(map),
+      zones: matchZones(map),
+      participants: [
+        { ...template, id: "you", team: 0, spawn, behaviour: undefined },
+        ...patches.map(([id]) => ({
+          ...template,
+          id,
+          team: 0,
+          spawn: centre(id),
+          behaviour: undefined,
+        })),
+      ],
+    });
+    for (let tick = 0; tick < 30; tick += 1) {
+      simulation.step(1 / 30);
+    }
+    const bears = (id: string, status: string): boolean =>
+      loaded(simulation.get(id), id).combatant.statuses.active.some(({ id }) => id === status);
+    for (const [id, status] of patches) {
+      expect(bears(id, status), id).toBe(true);
+      expect(bears("you", status)).toBe(false);
+    }
+  });
+
+  it("stands a dummy in the tainted water, so a skill's Health shows beside it (#3028)", () => {
+    const { simulation } = setupScenario(scenario, newCharacter("c1"));
+    for (let tick = 0; tick < 30; tick += 1) {
+      simulation.step(1 / 30);
+    }
+    const bears = (id: string, status: string): boolean =>
+      loaded(simulation.get(id), id).combatant.statuses.active.some(({ id }) => id === status);
+    expect(bears("in-tainted-water", "tainted")).toBe(true);
+    expect(bears(SELF_ID, "tainted")).toBe(false);
   });
 
   it("walks from one team's spawn to the other's", () => {
