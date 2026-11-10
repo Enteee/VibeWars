@@ -1,2 +1,0 @@
-import{K as e}from"./main-wa8a5uD2.js";var t=e;export{t as default};
-//# sourceMappingURL=game-C_NUB8fS.js.map
