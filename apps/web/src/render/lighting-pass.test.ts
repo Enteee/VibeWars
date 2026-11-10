@@ -4,10 +4,13 @@ import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import { arenaPalette } from "./arena-palette.js";
 import type { MapStructure } from "./arena-snapshot.js";
+import type Phaser from "phaser";
+
 import {
   FLICKER_INTERVAL_MS,
   LIGHTING_BUDGET_MS,
   LightingBudget,
+  LightingPass,
   OVER_BUDGET_LIMIT,
   baseTint,
   flickerRedrawDue,
@@ -15,11 +18,19 @@ import {
   lightsByStability,
   litStructurePalette,
   shownStage,
+  stageShadows,
+  sunShadowTint,
 } from "./lighting-pass.js";
 import { ELEVATION_STEP } from "./render-order.js";
 
-// Phaser probes for a browser when it loads: these functions never touch it.
-vi.mock("phaser", () => ({ default: {} }));
+// Phaser probes for a browser when it loads: only its constants are read here.
+vi.mock("phaser", () => ({
+  default: {
+    Renderer: { Events: { RESTORE_WEBGL: "restorewebgl" } },
+    BlendModes: { ADD: 1, MULTIPLY: 2 },
+    Math: { Vector2: Object },
+  },
+}));
 
 const DARK = { colour: 0xffffff, intensity: 0 };
 const light = (id: string, layer: number, flicker: number) => ({
@@ -35,7 +46,7 @@ const BASE: MapLighting = { ambient: DARK, indoorAmbient: DARK, indoor: [], ligh
 const WALL = { kind: "rect", x: 90, y: 90, width: 20, height: 20 } as const;
 
 describe("the lighting budget (ADR-0052)", () => {
-  it("gives up flicker, then the light maps, after a run of slow rebuilds", () => {
+  it("gives up flicker, then shadows, then the light maps, after runs of slow rebuilds (#2988)", () => {
     const budget = new LightingBudget();
     for (let i = 0; i < OVER_BUDGET_LIMIT - 1; i++) {
       budget.record(LIGHTING_BUDGET_MS + 1);
@@ -46,7 +57,18 @@ describe("the lighting budget (ADR-0052)", () => {
     for (let i = 0; i < OVER_BUDGET_LIMIT; i++) {
       budget.record(LIGHTING_BUDGET_MS + 1);
     }
+    expect(budget.stage).toBe("no-shadows");
+    for (let i = 0; i < OVER_BUDGET_LIMIT; i++) {
+      budget.record(LIGHTING_BUDGET_MS + 1);
+    }
     expect(budget.stage).toBe("flat");
+  });
+
+  it("draws shadows until they are given up (#2988)", () => {
+    expect(stageShadows("full")).toBe(true);
+    expect(stageShadows("no-flicker")).toBe(true);
+    expect(stageShadows("no-shadows")).toBe(false);
+    expect(stageShadows("flat")).toBe(false);
   });
 
   it("forgives a slow frame that a fast one follows", () => {
@@ -113,6 +135,10 @@ describe("baseTint", () => {
   it("is the indoor ambient indoors, held to the surface floor", () => {
     expect(baseTint(lit, true)).toBe(0x737373);
   });
+
+  it("is the ambient alone in the sun's shadow (#2988)", () => {
+    expect(sunShadowTint(lit)).toBe(0x999999);
+  });
 });
 
 describe("litStructurePalette", () => {
@@ -170,5 +196,90 @@ describe("layerSurfaces", () => {
     const foot = slope.filter((p) => p.x === 300).map((p) => p.y);
     expect(top.sort()).toEqual([250, 450]);
     expect(foot.sort()).toEqual([250 + ELEVATION_STEP, 450 + ELEVATION_STEP]);
+  });
+});
+
+describe("LightingPass", () => {
+  /** Something whose every method does nothing and returns it, as a Phaser chain. */
+  function inert(): unknown {
+    const self: object = new Proxy(() => self, { get: () => () => self });
+    return self;
+  }
+
+  /**
+   * A scene whose light maps, as Phaser 4's DynamicTexture does, queue a
+   * draw and run it only at `render()`: what each painted then, and
+   * whether its painter was still alive to paint it.
+   */
+  function fakeScene() {
+    const destroyed = new Set<object>();
+    const drawn: { colour: number; alive: boolean }[] = [];
+    const graphics = () => {
+      const painter = {
+        colour: -1,
+        fillStyle(colour: number) {
+          painter.colour = colour;
+          return painter;
+        },
+        fillPoints: () => painter,
+        fillRect: () => painter,
+        setScale: () => painter,
+        destroy: () => destroyed.add(painter),
+      };
+      return painter;
+    };
+    const texture = (width: number, height: number) => {
+      const queued: ReturnType<typeof graphics>[] = [];
+      const self = {
+        width,
+        height,
+        fill: () => self,
+        stamp: () => self,
+        erase: () => self,
+        clear: () => self,
+        draw(source: unknown) {
+          if (typeof source === "object" && source !== null && "colour" in source) {
+            queued.push(source as ReturnType<typeof graphics>);
+          }
+          return self;
+        },
+        render() {
+          for (const painter of queued.splice(0)) {
+            drawn.push({ colour: painter.colour, alive: !destroyed.has(painter) });
+          }
+          return self;
+        },
+      };
+      return self;
+    };
+    const scene = {
+      game: { renderer: { on: () => undefined, off: () => undefined } },
+      textures: {
+        exists: () => true,
+        remove: () => undefined,
+        addDynamicTexture: (_key: string, width: number, height: number) => texture(width, height),
+      },
+      make: { graphics },
+      add: { image: inert },
+    };
+    return { scene: scene as unknown as Phaser.Scene, drawn };
+  }
+
+  const STRUCTURE: MapStructure = { layerCount: 1, decks: [], transitions: [], water: [] };
+  const SUNLIT: MapLighting = {
+    ...BASE,
+    ambient: { colour: 0xffffff, intensity: 0.6 },
+    indoorAmbient: { colour: 0xffffff, intensity: 0.1 },
+    indoor: [{ kind: "rect", x: 0, y: 0, width: 50, height: 50 }],
+    sun: { directionDeg: 90, elevationDeg: 30, colour: 0xffffff, intensity: 0.4 },
+  };
+
+  it("paints the sun's shadows and the indoors into the light map (#2988)", () => {
+    const { scene, drawn } = fakeScene();
+    new LightingPass(scene).show(SUNLIT, STRUCTURE, [{ ...WALL, layer: 0 }], 400, 400, false);
+    expect(drawn).toEqual([
+      { colour: sunShadowTint(SUNLIT), alive: true },
+      { colour: baseTint(SUNLIT, true), alive: true },
+    ]);
   });
 });

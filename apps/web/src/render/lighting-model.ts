@@ -57,7 +57,7 @@ function add(colour: number, amount: number): void {
 }
 
 /** Whether `point` is in an indoor shape; allocates nothing, polygons included. */
-function isIndoors(lighting: MapLighting, point: Vec2): boolean {
+export function isIndoors(lighting: MapLighting, point: Vec2): boolean {
   for (const shape of lighting.indoor) {
     const inside =
       shape.kind === "rect"
