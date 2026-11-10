@@ -65,7 +65,8 @@ import {
   type ArenaPalette,
 } from "./arena-palette.js";
 import {
-  altHeld,
+  trackAlt,
+  type AltTracker,
   CREATURE_PATH,
   WALL_HEIGHT,
   deckHeldBy,
@@ -423,6 +424,8 @@ export class ArenaScene extends Phaser.Scene {
   private now = 0;
   /** The light maps (ADR-0052); `undefined` until `create`. */
   private lightingPass: LightingPass | undefined;
+  /** Whether Alt is held, for the hover ring (#3020); a key does not wait for the mouse to move. */
+  private alt: AltTracker | undefined;
   /** Where the wards draw: under the grid, or over the light. */
   private groundDepth = GROUND_DEPTH;
   /** Reused every body, every frame: the lighting allocates nothing per frame. */
@@ -526,9 +529,12 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
     this.lightingPass = new LightingPass(this);
+    this.alt = trackAlt(window);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.lightingPass?.destroy();
       this.lightingPass = undefined;
+      this.alt?.dispose();
+      this.alt = undefined;
     });
     this.floorGraphics = this.add.graphics().setDepth(FLOOR_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
@@ -2110,7 +2116,7 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    const { layer } = pickSurface(structure, world, altHeld(pointer));
+    const { layer } = pickSurface(structure, world, this.alt?.held() === true);
     g.lineStyle(1.5, HOVER_RING, 0.8);
     if (layer !== structure.ground) {
       g.strokeCircle(world.x, world.y, HOVER_RADIUS);
