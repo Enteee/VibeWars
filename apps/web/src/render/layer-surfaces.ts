@@ -359,12 +359,11 @@ export interface Occluder {
 }
 
 function occluder(
-  shape: RenderableShape,
+  outline: readonly Vec2[],
   lowLift: number,
   highLift: number,
   hidesThrough: number,
 ): Occluder {
-  const outline = shapeOutline(shape);
   const xs = outline.map((p) => p.x);
   const ys = outline.map((p) => p.y);
   return {
@@ -392,11 +391,22 @@ export function occludersOf(
       const base = elevationOf(wall.layer);
       const held = deckHeldBy(wall, structure);
       const high = held === undefined ? base + WALL_HEIGHT : deckSideLow(held, walls);
-      return occluder(wall, base, high, wall.layer);
+      return occluder(shapeOutline(wall), base, high, wall.layer);
     }),
     ...structure.decks.map((deck) =>
-      occluder(deck.footprint, deckSideLow(deck, walls), elevationOf(deck.layer), deck.layer - 1),
+      occluder(
+        shapeOutline(deck.footprint),
+        deckSideLow(deck, walls),
+        elevationOf(deck.layer),
+        deck.layer - 1,
+      ),
     ),
+    // A raised ramp covers the ground under it as a deck does (#2975); its
+    // slope is drawn already lifted, so it hides at no further lift.
+    ...structure.transitions.flatMap((ramp) => {
+      const drawing = ramp.from >= 1 ? rampDrawing(structure, ramp) : undefined;
+      return drawing === undefined ? [] : [occluder(drawing.slope, 0, 0, ramp.from - 1)];
+    }),
   ];
 }
 

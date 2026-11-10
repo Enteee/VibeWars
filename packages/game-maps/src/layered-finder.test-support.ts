@@ -3,6 +3,7 @@ import {
   createLayeredPathFinder,
   navGraphFor,
   type LayeredPathFinder,
+  rampRims,
   type NavLayer,
 } from "@vibewars/game-core";
 
@@ -11,6 +12,11 @@ import type { MapData } from "./schema.js";
 
 /** `map`'s walls, decks and ramps as the path finder reads them, every gate open. */
 export function layeredFinder(map: MapData, clearance: number): LayeredPathFinder {
+  const rims = rampRims(
+    map.transitions.map((transition) => ({ ...transition, area: shapeVertices(transition.area) })),
+    map.decks.map((deck) => ({ layer: deck.layer, footprint: shapeVertices(deck.footprint) })),
+    map.layers,
+  );
   const layers: NavLayer[] = Array.from({ length: map.layers }, (_, layer) => ({
     walls: allWallSegments(map.walls.filter((wall) => wall.layer === layer)),
     walkable:
@@ -24,6 +30,7 @@ export function layeredFinder(map: MapData, clearance: number): LayeredPathFinde
               .filter((transition) => transition.from === layer || transition.to === layer)
               .map((transition) => shapeVertices(transition.area)),
           ],
+    open: rims[layer] ?? [],
   }));
   const graphs = buildLayeredNavGraph(
     layers,

@@ -24,9 +24,12 @@ import { add, distance, normalize, scale, sub, vec2, type Vec2 } from "./vec2.js
 
 /** The corners a body can stand on, and which of them see each other. Built once per map. */
 export interface NavGraph {
-  /** The walkable areas' outline (`outlineWalls` of them) first, then the real walls. */
+  /** The walls that enclose nothing (`outlineWalls` of them) first, then the real walls. */
   readonly walls: readonly Segment[];
-  /** How many of `walls` are outline: they keep a body on its layer, and enclose no wall. */
+  /**
+   * How many of `walls` enclose nothing: the walkable areas' outline, which
+   * keeps a body on its layer, and its open walls, such as ramp rims (#2975).
+   */
   readonly outlineWalls: number;
   /** Where a body can be (ADR-0051); empty: everywhere, the ground. */
   readonly walkable: readonly Polygon[];
@@ -361,7 +364,7 @@ export function walkableOutline(areas: readonly Polygon[]): Segment[] {
  * off it, so a gate moving mid-match costs a filter and no line of sight.
  */
 export interface GatedNavGraph {
-  /** As `NavGraph`'s: the outline first, then the walls. */
+  /** As `NavGraph`'s: the walls that enclose nothing first, then the others. */
   readonly walls: readonly Segment[];
   readonly outlineWalls: number;
   readonly walkable: readonly Polygon[];
@@ -385,9 +388,10 @@ export function buildGatedNavGraph(
   bounds: NavGraph["bounds"],
   clearance: number,
   walkable: readonly Polygon[] = [],
+  open: readonly Segment[] = [],
 ): GatedNavGraph {
   const outline = walkableOutline(walkable);
-  const walls = [...outline, ...mapWalls];
+  const walls = [...outline, ...open, ...mapWalls];
   const offset = clearance + 1;
   const inside = (point: Vec2): boolean =>
     (walkable.length === 0 || walkable.some((area) => pointInPolygon(point, area))) &&
@@ -465,7 +469,7 @@ export function buildGatedNavGraph(
   });
   return {
     walls,
-    outlineWalls: outline.length,
+    outlineWalls: outline.length + open.length,
     walkable,
     gates,
     bounds,
@@ -717,6 +721,8 @@ export interface NavLayer {
   readonly walls: readonly Segment[];
   /** Its decks and ramps; empty: everywhere, the ground. */
   readonly walkable: readonly Polygon[];
+  /** Walls that stop a body but enclose nothing: its ramp rims (#2975). */
+  readonly open: readonly Segment[];
 }
 
 /** A gate, with the layer it stands on. */
@@ -742,6 +748,7 @@ export function buildLayeredNavGraph(
       bounds,
       clearance,
       layer.walkable,
+      layer.open,
     ),
   );
 }

@@ -10,6 +10,7 @@ import {
   heightDamageMultiplier,
   heightRange,
   heightStep,
+  rampRims,
   sharesFloor,
 } from "./layer-rules.js";
 
@@ -95,5 +96,50 @@ describe("the height modifier (ADR-0051)", () => {
     expect(heightDamageMultiplier(1)).toBeCloseTo(1.1, 9);
     expect(heightDamageMultiplier(-1)).toBeCloseTo(0.9, 9);
     expect(heightDamageMultiplier(0)).toBe(1);
+  });
+});
+
+describe("ramp rims (#2975)", () => {
+  const ends = (
+    segments: readonly { a: { x: number; y: number }; b: { x: number; y: number } }[],
+  ) => segments.map(({ a, b }) => [a.x, a.y, b.x, b.y]);
+
+  it("is a ground ramp's edges but its low end, going +x", () => {
+    const rims = rampRims(
+      [{ from: 0, to: 1, area: rect(0, 0, 100, 50) }],
+      [{ layer: 1, footprint: rect(100, 0, 200, 50) }],
+      2,
+    );
+    expect(ends(rims[0] ?? [])).toEqual([
+      [0, 0, 100, 0],
+      [100, 0, 100, 50],
+      [100, 50, 0, 50],
+    ]);
+    expect(rims[1]).toEqual([]);
+  });
+
+  it("is a ground ramp's edges but its low end, going -y", () => {
+    const rims = rampRims(
+      [{ from: 0, to: 1, area: rect(0, 100, 50, 100) }],
+      [{ layer: 1, footprint: rect(0, 0, 50, 100) }],
+      2,
+    );
+    expect(ends(rims[0] ?? [])).toEqual([
+      [0, 100, 50, 100],
+      [50, 100, 50, 200],
+      [0, 200, 0, 100],
+    ]);
+  });
+
+  it("gives a ramp from a deck none", () => {
+    const rims = rampRims(
+      [{ from: 1, to: 2, area: rect(0, 100, 50, 100) }],
+      [
+        { layer: 1, footprint: rect(0, 100, 50, 200) },
+        { layer: 2, footprint: rect(0, 0, 50, 100) },
+      ],
+      3,
+    );
+    expect(rims.flat()).toEqual([]);
   });
 });

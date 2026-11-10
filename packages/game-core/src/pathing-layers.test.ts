@@ -44,8 +44,8 @@ const EAST_PORTAL = vec2(1165, 400);
 
 function graphs(groundWalls: readonly Segment[] = []): readonly NavGraph[] {
   const layers: readonly NavLayer[] = [
-    { walls: groundWalls, walkable: [] },
-    { walls: [], walkable: [DECK, WEST, EAST] },
+    { walls: groundWalls, walkable: [], open: [] },
+    { walls: [], walkable: [DECK, WEST, EAST], open: [] },
   ];
   return buildLayeredNavGraph(layers, [], BOUNDS, RADIUS).map((gated) => navGraphFor(gated, 0));
 }
@@ -68,7 +68,7 @@ describe("a ramp's waypoints (#2972)", () => {
 
   const navOf = (walkable: readonly (readonly Polygon[])[]): readonly NavGraph[] =>
     buildLayeredNavGraph(
-      walkable.map((areas) => ({ walls: [], walkable: areas })),
+      walkable.map((areas) => ({ walls: [], walkable: areas, open: [] })),
       [],
       BOUNDS,
       RADIUS,
@@ -166,14 +166,37 @@ describe("paths across layers (ADR-0051)", () => {
   it("gives a ramp no link where a body does not fit on both layers", () => {
     const narrow = rect(350, 300, 170, 10);
     const layers: readonly NavLayer[] = [
-      { walls: [], walkable: [] },
-      { walls: [], walkable: [DECK, narrow] },
+      { walls: [], walkable: [], open: [] },
+      { walls: [], walkable: [DECK, narrow], open: [] },
     ];
     const built = buildLayeredNavGraph(layers, [], BOUNDS, RADIUS).map((gated) =>
       navGraphFor(gated, 0),
     );
     const none = createLayeredPathFinder(built, [{ from: 0, to: 1, area: narrow }]);
     expect(none.find(vec2(300, 400), 0, vec2(800, 400), 1)).toBeUndefined();
+  });
+
+  it("routes in through a ramp's open low end, its rim enclosing nothing (#2975)", () => {
+    // The west ramp's rim: every edge but its low one, at x = 350.
+    const rim: Segment[] = [
+      { a: vec2(350, 300), b: vec2(520, 300) },
+      { a: vec2(520, 300), b: vec2(520, 500) },
+      { a: vec2(520, 500), b: vec2(350, 500) },
+    ];
+    const layers: readonly NavLayer[] = [
+      { walls: [], walkable: [], open: rim },
+      { walls: [], walkable: [DECK, WEST], open: [] },
+    ];
+    const built = buildLayeredNavGraph(layers, [], BOUNDS, RADIUS).map((gated) =>
+      navGraphFor(gated, 0),
+    );
+    const [ground] = built;
+    const [west] = TRANSITIONS;
+    if (ground === undefined || west === undefined) throw new Error("no ground or ramp");
+    expect(isStandable(ground, WEST_PORTAL)).toBe(true);
+    const path = createLayeredPathFinder(built, [west]).find(vec2(435, 200), 0, vec2(800, 400), 1);
+    expect(path?.at(-1)).toEqual({ x: 800, y: 400, layer: 1 });
+    expect(path?.some(({ x, layer }) => layer === 0 && x < 350)).toBe(true);
   });
 
   it("counts every layer's nodes and both sides of each portal", () => {

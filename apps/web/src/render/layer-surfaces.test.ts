@@ -139,6 +139,52 @@ describe("the hidden part of a body (#2831)", () => {
   });
 });
 
+describe("a body under a raised ramp (#2975)", () => {
+  // Training Heights' shape: a ground ramp up to the bridge, a raised one up to the platform.
+  const lower = {
+    from: 0,
+    to: 1,
+    area: { kind: "rect", x: 300, y: 350, width: 140, height: 200 },
+  } as const;
+  const upper = {
+    from: 1,
+    to: 2,
+    area: { kind: "rect", x: 540, y: 250, width: 120, height: 120 },
+  } as const;
+  const HEIGHTS: MapStructure = {
+    layerCount: 3,
+    decks: [
+      { layer: 1, footprint: { kind: "rect", x: 420, y: 350, width: 360, height: 200 } },
+      { layer: 2, footprint: { kind: "rect", x: 520, y: 160, width: 160, height: 110 } },
+    ],
+    transitions: [lower, upper],
+    water: [],
+  };
+  const occluders = occludersOf([], HEIGHTS);
+  const slope = rampDrawing(HEIGHTS, upper)?.slope ?? [];
+  const middle = {
+    x: slope.reduce((sum, { x }) => sum + x, 0) / slope.length,
+    y: slope.reduce((sum, { y }) => sum + y, 0) / slope.length,
+  };
+  const hidden = (layer: number): number => {
+    let count = 0;
+    traceHiddenOutline(RING_PATH, middle.x, middle.y, 10, layer, occluders, () => {
+      count += 1;
+    });
+    return count;
+  };
+
+  it("has an occluder for the raised ramp, drawn as its slope, and none for the ground one", () => {
+    expect(occluders).toHaveLength(3);
+    expect(occluders[2]).toMatchObject({ outline: slope, hidesThrough: 0, lowLift: 0 });
+  });
+
+  it("hides a ground body under the slope, not a body on the deck it starts from", () => {
+    expect(hidden(0)).toBeGreaterThan(0);
+    expect(hidden(1)).toBe(0);
+  });
+});
+
 describe("the hidden part of a weapon and symbol (#2972)", () => {
   // The deck draws ELEVATION_STEP above its footprint.
   const under = 150 - ELEVATION_STEP;
