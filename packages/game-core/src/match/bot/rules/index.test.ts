@@ -29,6 +29,7 @@ describe("BOT_RULES (#2042)", () => {
       "flee",
       "dodge",
       "lead-ghost",
+      "clear-ground",
       "ward-touch",
       "cleanse",
       "raise",
@@ -51,6 +52,7 @@ describe("BOT_RULES (#2042)", () => {
       "mimic-elite",
       "pick-up-ghost",
       "fetch-relic",
+      "leave-zone",
       "regroup",
       "close-in",
     ]);

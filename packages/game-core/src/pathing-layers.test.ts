@@ -47,7 +47,7 @@ function graphs(groundWalls: readonly Segment[] = []): readonly NavGraph[] {
     { walls: groundWalls, walkable: [], open: [] },
     { walls: [], walkable: [DECK, WEST, EAST], open: [] },
   ];
-  return buildLayeredNavGraph(layers, [], BOUNDS, RADIUS).map((gated) => navGraphFor(gated, 0));
+  return buildLayeredNavGraph(layers, [], BOUNDS, RADIUS, []).map((gated) => navGraphFor(gated, 0));
 }
 
 function finder(groundWalls: readonly Segment[] = []) {
@@ -72,6 +72,7 @@ describe("a ramp's waypoints (#2972)", () => {
       [],
       BOUNDS,
       RADIUS,
+      [],
     ).map((gated) => navGraphFor(gated, 0));
   const ramp = navOf([[], [DECK, RAMP]]);
   const storeys = navOf([[], [DECK, UPPER_RAMP], [UPPER_DECK, UPPER_RAMP]]);
@@ -169,7 +170,7 @@ describe("paths across layers (ADR-0051)", () => {
       { walls: [], walkable: [], open: [] },
       { walls: [], walkable: [DECK, narrow], open: [] },
     ];
-    const built = buildLayeredNavGraph(layers, [], BOUNDS, RADIUS).map((gated) =>
+    const built = buildLayeredNavGraph(layers, [], BOUNDS, RADIUS, []).map((gated) =>
       navGraphFor(gated, 0),
     );
     const none = createLayeredPathFinder(built, [{ from: 0, to: 1, area: narrow }]);
@@ -187,7 +188,7 @@ describe("paths across layers (ADR-0051)", () => {
       { walls: [], walkable: [], open: rim },
       { walls: [], walkable: [DECK, WEST], open: [] },
     ];
-    const built = buildLayeredNavGraph(layers, [], BOUNDS, RADIUS).map((gated) =>
+    const built = buildLayeredNavGraph(layers, [], BOUNDS, RADIUS, []).map((gated) =>
       navGraphFor(gated, 0),
     );
     const [ground] = built;
@@ -207,7 +208,7 @@ describe("paths across layers (ADR-0051)", () => {
 
   it("finds on one layer exactly the path the plain finder does", () => {
     const pillar = wall(rect(700, 300, 100, 200));
-    const graph = buildNavGraph(pillar, BOUNDS, RADIUS);
+    const graph = buildNavGraph(pillar, BOUNDS, RADIUS, []);
     const from = vec2(300, 400);
     const to = vec2(1200, 400);
     const plain = createPathFinder(graph).find(from, to);

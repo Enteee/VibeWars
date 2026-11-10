@@ -59,6 +59,9 @@ Bots weichen etwa der Hälfte der auf sie gezielten Geschosse aus, etwa einem
 Fireball oder dem Pfeil eines Angriffs-Skills. Anhalten oder Abdrehen klappt bei
 ihnen also genauso wie bei dir.
 
+Bots gehen um brennenden Boden und andere schädliche Flächen herum, wenn der
+Umweg nicht viel länger ist, und treten aus einer heraus, in der sie stehen.
+
 Ein Bot mit einer Unterbrechung spart sie für die Skills auf, die zählen: zuerst
 eine Wiederbelebung oder einen Geisterhelden, der den Altar einnimmt, dann eine
 Heilung oder einen Schutz, einen Elite-Skill oder einen großen Treffer wie einen

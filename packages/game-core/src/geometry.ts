@@ -325,6 +325,45 @@ export function pointInPolygon(point: Vec2, polygon: Polygon): boolean {
   return inside;
 }
 
+/**
+ * How much of the segment from `a` to `b` lies inside `polygon`: cut at
+ * every side it crosses, each piece is wholly in or out, as its middle is.
+ */
+export function lengthInPolygon(a: Vec2, b: Vec2, polygon: Polygon): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const cuts = [0, 1];
+  let previous = polygon[polygon.length - 1];
+  for (const corner of polygon) {
+    if (previous !== undefined) {
+      const ex = corner.x - previous.x;
+      const ey = corner.y - previous.y;
+      const denominator = dx * ey - dy * ex;
+      if (denominator !== 0) {
+        const wx = previous.x - a.x;
+        const wy = previous.y - a.y;
+        const t = (wx * ey - wy * ex) / denominator;
+        const u = (wx * dy - wy * dx) / denominator;
+        if (t > 0 && t < 1 && u >= 0 && u <= 1) {
+          cuts.push(t);
+        }
+      }
+    }
+    previous = corner;
+  }
+  cuts.sort((p, q) => p - q);
+  let inside = 0;
+  for (let k = 1; k < cuts.length; k += 1) {
+    const from = cuts[k - 1] ?? 0;
+    const to = cuts[k] ?? 0;
+    const middle = (from + to) / 2;
+    if (to > from && pointInPolygon({ x: a.x + dx * middle, y: a.y + dy * middle }, polygon)) {
+      inside += to - from;
+    }
+  }
+  return inside * Math.hypot(dx, dy);
+}
+
 /** The point on `polygon`'s outline nearest to `point`. */
 export function closestPointOnPolygon(point: Vec2, polygon: Polygon): Vec2 {
   let nearest = point;

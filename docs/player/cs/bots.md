@@ -22,6 +22,9 @@ Bot oživí padlého spojence, jen když nepřátelé nejsou přímo na těle, p
 
 Boti uhýbají asi polovině dovedností letících na ně, jako je Fireball nebo šíp útočné dovednosti, takže zastavení nebo otočení na ně funguje stejně jako na tebe.
 
+Boti obcházejí hořící zem a jiná škodlivá místa, když cesta kolem není o moc
+delší, a z takového místa vystoupí, když v něm stojí.
+
 Bot s přerušením si ho schovává na sesílání, na kterých záleží: nejdřív oživení nebo Přízračného hrdinu nárokujícího si oltář, pak léčení nebo ochranu, elitní dovednost nebo velký zásah, jako útočnou dovednost nebo poškozující kouzlo. Všechno ostatní a obyčejný úder zbraní nechá projít. Stejně jako hráč mine asi jedno ze čtyř takových sesílání.
 
 Botovi trvá lidský okamžik, zlomek sekundy, než na událost zareaguje, takže ho rychlé přerušení nebo pozdní úskok může přelstít.

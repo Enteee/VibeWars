@@ -69,7 +69,12 @@ export function splashSpawn(graph: NavGraph, map: SplashMap, team: number, index
 }
 
 function splashParticipants(map: SplashMap): ParticipantSpec[] {
-  const graph = buildNavGraph(allWallSegments(map.descriptor.walls), map.bounds, SPAWN_CLEARANCE);
+  const graph = buildNavGraph(
+    allWallSegments(map.descriptor.walls),
+    map.bounds,
+    SPAWN_CLEARANCE,
+    [],
+  );
   return [0, 1].flatMap((team) =>
     Array.from({ length: TEAM_SIZE }, (_, index) => {
       const loadout = loadoutOf(pick(STARTER_BUILDS));

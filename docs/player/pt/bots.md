@@ -59,6 +59,9 @@ Os bots desviam de cerca de metade dos disparos mirados neles, como um
 Fireball ou a flecha de uma habilidade de ataque, então parar ou virar
 funciona com eles como funciona com você.
 
+Os bots contornam o chão em chamas e outras zonas nocivas quando o desvio
+não é muito mais longo, e saem de qualquer uma em que estejam.
+
 Um bot com interrupção a guarda para as conjurações que importam: uma
 ressurreição ou um Herói Fantasmagórico tomando o altar primeiro, depois
 uma cura ou proteção, uma habilidade de elite ou um golpe grande, como

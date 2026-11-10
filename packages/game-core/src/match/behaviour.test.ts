@@ -565,7 +565,7 @@ describe("follow-and-attack (#467)", () => {
       // Square across the straight line, which only pushes into it.
       const walls = rect(440, 120, 24, 400);
       const path = createPathFinder(
-        buildNavGraph(walls, BOUNDS, RULES.collision.playerRadius),
+        buildNavGraph(walls, BOUNDS, RULES.collision.playerRadius, []),
       ).find(vec2(700, 320), vec2(200, 320));
       if (path === undefined) {
         throw new Error("no way round");

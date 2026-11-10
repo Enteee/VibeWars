@@ -64,6 +64,9 @@ A botok a rájuk célzott készséglövések nagyjából felét kikerülik, pél
 egy Fireballt vagy egy támadókészség nyilát, így a megállás vagy a
 fordulás náluk is ugyanúgy működik, mint nálad.
 
+A botok megkerülik az égő talajt és a többi ártalmas foltot, ha a kerülő nem
+sokkal hosszabb, és kilépnek abból, amelyikben állnak.
+
 A megszakítással rendelkező bot a fontos varázslásokra tartogatja: elsőként
 egy feltámasztásra vagy egy oltárt elfoglaló Kísértethősre, aztán egy
 gyógyításra vagy védelemre, egy elit készségre vagy egy nagy

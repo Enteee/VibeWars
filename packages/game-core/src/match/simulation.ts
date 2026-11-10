@@ -1205,6 +1205,8 @@ export class MatchSimulation {
   /** Omitted on a map of one layer. */
   readonly #layers: MatchLayers | undefined;
   readonly #zones: readonly MatchZone[];
+  /** `#zones` that harm (#3026): what paths cost more through, and bots step out of. */
+  readonly #harmfulZones: readonly MatchZone[];
   /** Where a body may stand on each layer above the ground: its decks and ramps. */
   readonly #walkable: readonly (readonly Polygon[])[];
   /** Each ramp's way up, as a direction, in `#layers.transitions`' order. */
@@ -1379,6 +1381,7 @@ export class MatchSimulation {
     this.#switches = initialSwitches(options.switches ?? []);
     this.#layers = options.layers;
     this.#zones = options.zones ?? [];
+    this.#harmfulZones = this.#zones.filter((zone) => ZONE_RULES[zone.kind].harmful);
     this.#ground = this.#layers?.ground ?? 0;
     this.#walkable = walkableAreas(this.#layers);
     this.#mapWalls = options.walls ?? [];
@@ -1394,6 +1397,7 @@ export class MatchSimulation {
       this.#gates.map((gate) => ({ layer: gate.layer ?? this.#ground, segments: gate.segments })),
       this.#bounds,
       this.#ruleset.collision.playerRadius,
+      this.#harmfulZones,
     );
     const walls = this.#currentWallSet();
     this.#walls = walls.walls;
@@ -6500,6 +6504,9 @@ export class MatchSimulation {
     }
     if (this.#gates.length > 0) {
       this.#botObjectives = { ...this.#botObjectives, gates: this.#gates };
+    }
+    if (this.#harmfulZones.length > 0) {
+      this.#botObjectives = { ...this.#botObjectives, harmfulZones: this.#harmfulZones };
     }
   }
 

@@ -60,6 +60,9 @@ Boții se feresc de aproximativ jumătate din abilitățile-proiectil îndreptat
 spre ei, precum un Fireball sau săgeata unei abilități de atac, așa că oprirea
 sau schimbarea direcției funcționează pentru ei ca și pentru tine.
 
+Boții ocolesc pământul în flăcări și alte zone dăunătoare când ocolul nu e
+mult mai lung și ies din cea în care stau.
+
 Un bot cu o întrerupere o păstrează pentru lansările care contează: mai întâi o
 înviere sau un Erou Fantomatic care revendică altarul, apoi o vindecare sau o
 protecție, o abilitate de elită sau o lovitură mare, precum o abilitate de atac

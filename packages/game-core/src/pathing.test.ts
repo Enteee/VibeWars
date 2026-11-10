@@ -4,6 +4,7 @@ import {
   closestPointOnSegment,
   distancePointToSegment,
   distanceSegmentToSegment,
+  lengthInPolygon,
   segment,
   type Segment,
 } from "./geometry.js";
@@ -11,10 +12,13 @@ import {
   buildGatedNavGraph,
   buildNavGraph,
   createPathFinder,
+  HARMFUL_ZONE_COST,
   navGraphFor,
   minRampLength,
   nearestStandable,
   RAMP_WAYPOINT_MOST_INSET,
+  costZone,
+  walkCost,
   walkIsClear,
   type NavGraph,
 } from "./pathing.js";
@@ -65,13 +69,13 @@ function everyLegClear(walls: readonly Segment[], from: Vec2, path: readonly Vec
 
 describe("createPathFinder", () => {
   it("goes straight when nothing is in the way", () => {
-    const graph = buildNavGraph([], undefined, CLEARANCE);
+    const graph = buildNavGraph([], undefined, CLEARANCE, []);
     expect(createPathFinder(graph).find(vec2(0, 0), vec2(300, 40))).toEqual([vec2(300, 40)]);
   });
 
   it("goes round a wall by its two outward corners, on the shorter side", () => {
     const walls = rect(200, 100, 40, 200);
-    const graph = buildNavGraph(walls, undefined, CLEARANCE);
+    const graph = buildNavGraph(walls, undefined, CLEARANCE, []);
     // 180 is nearer the top (100) than the bottom (300).
     expect(createPathFinder(graph).find(vec2(100, 180), vec2(340, 180))).toEqual([
       vec2(185, 85),
@@ -81,7 +85,7 @@ describe("createPathFinder", () => {
   });
 
   it("crosses Arena Alpha from spawn to spawn, round the low wall and through the gap", () => {
-    const graph = buildNavGraph(ARENA_ALPHA, ARENA_BOUNDS, CLEARANCE);
+    const graph = buildNavGraph(ARENA_ALPHA, ARENA_BOUNDS, CLEARANCE, []);
     const from = vec2(80, 320);
     const to = vec2(880, 320);
     const path = createPathFinder(graph).find(from, to);
@@ -96,7 +100,7 @@ describe("createPathFinder", () => {
   });
 
   it("never routes outside the map's edge", () => {
-    const graph = buildNavGraph(ARENA_ALPHA, ARENA_BOUNDS, CLEARANCE);
+    const graph = buildNavGraph(ARENA_ALPHA, ARENA_BOUNDS, CLEARANCE, []);
     for (const node of graph.nodes) {
       expect(node.x).toBeGreaterThanOrEqual(CLEARANCE);
       expect(node.y).toBeGreaterThanOrEqual(CLEARANCE);
@@ -107,13 +111,13 @@ describe("createPathFinder", () => {
 
   it("finds nothing when the goal is walled in", () => {
     const walls = rect(400, 400, 200, 200);
-    const graph = buildNavGraph(walls, undefined, CLEARANCE);
+    const graph = buildNavGraph(walls, undefined, CLEARANCE, []);
     expect(createPathFinder(graph).find(vec2(100, 100), vec2(500, 500))).toBeUndefined();
   });
 
   it("lets a body pressed against a wall step away round it", () => {
     const walls = [segment(vec2(100, 0), vec2(100, 200))];
-    const graph = buildNavGraph(walls, undefined, CLEARANCE);
+    const graph = buildNavGraph(walls, undefined, CLEARANCE, []);
     const from = vec2(100 + CLEARANCE, 100);
     const path = createPathFinder(graph).find(from, vec2(40, 100));
     expect(path).toBeDefined();
@@ -122,7 +126,7 @@ describe("createPathFinder", () => {
 
   it("finds nothing, and ends, for an end that is not a number (#2735)", () => {
     const walls = rect(200, 100, 40, 200);
-    const finder = createPathFinder(buildNavGraph(walls, undefined, CLEARANCE));
+    const finder = createPathFinder(buildNavGraph(walls, undefined, CLEARANCE, []));
     expect(finder.find(vec2(100, 180), vec2(Number.NaN, 180))).toBeUndefined();
     expect(finder.find(vec2(Number.NaN, Number.NaN), vec2(340, 180))).toBeUndefined();
     expect(finder.find(vec2(100, 180), vec2(Number.POSITIVE_INFINITY, 180))).toBeUndefined();
@@ -132,7 +136,7 @@ describe("createPathFinder", () => {
 
   it("does not hand back the spot a body already stands on", () => {
     const walls = rect(200, 100, 40, 200);
-    const graph = buildNavGraph(walls, undefined, CLEARANCE);
+    const graph = buildNavGraph(walls, undefined, CLEARANCE, []);
     const corner = vec2(185, 85);
     const path = createPathFinder(graph).find(corner, vec2(340, 280)) ?? [];
     expect(path.length).toBeGreaterThan(0);
@@ -146,18 +150,18 @@ describe("gated graphs (#2691)", () => {
   const bounds = { width: 600, height: 500 };
 
   it("reads each combination off as a full build would make it", () => {
-    const gated = buildGatedNavGraph(walls, gates, bounds, CLEARANCE);
+    const gated = buildGatedNavGraph(walls, gates, bounds, CLEARANCE, []);
     for (let closed = 0; closed < 1 << gates.length; closed += 1) {
       const shut = gates.flatMap((gate, at) => ((closed & (1 << at)) === 0 ? [] : gate));
       const { nodes, edges } = navGraphFor(gated, closed);
-      const built = buildNavGraph([...walls, ...shut], bounds, CLEARANCE);
+      const built = buildNavGraph([...walls, ...shut], bounds, CLEARANCE, []);
       expect(nodes).toEqual(built.nodes);
       expect(edges).toEqual(built.edges);
     }
   });
 
   it("knows the combination's walls", () => {
-    const gated = buildGatedNavGraph(walls, gates, bounds, CLEARANCE);
+    const gated = buildGatedNavGraph(walls, gates, bounds, CLEARANCE, []);
     expect(walkIsClear(navGraphFor(gated, 0), vec2(150, 200), vec2(260, 200))).toBe(true);
     expect(walkIsClear(navGraphFor(gated, 1), vec2(150, 200), vec2(260, 200))).toBe(false);
   });
@@ -171,7 +175,7 @@ describe("minRampLength (#2995)", () => {
 });
 
 describe("nearestStandable (#310)", () => {
-  const graph = buildNavGraph(ARENA_ALPHA, ARENA_BOUNDS, CLEARANCE);
+  const graph = buildNavGraph(ARENA_ALPHA, ARENA_BOUNDS, CLEARANCE, []);
 
   it("returns a free point unchanged", () => {
     expect(nearestStandable(graph, vec2(200, 150))).toEqual(vec2(200, 150));
@@ -362,7 +366,20 @@ function referenceBuildNavGraph(
   const edges = nodes.map((node, i) =>
     nodes.flatMap((other, j) => (i !== j && refIsClear(graph, node, other) ? [j] : [])),
   );
-  return { walls, outlineWalls: 0, walkable: [], bounds, clearance, nodes, edges };
+  const costs = edges.map((seen, i) =>
+    seen.map((j) => distance(nodes[i] ?? vec2(0, 0), nodes[j] ?? vec2(0, 0))),
+  );
+  return {
+    walls,
+    outlineWalls: 0,
+    walkable: [],
+    bounds,
+    clearance,
+    nodes,
+    edges,
+    costs,
+    zones: [],
+  };
 }
 
 /**
@@ -538,7 +555,7 @@ describe("the path finder against the reference (#267)", () => {
   it("builds the same graph, nodes and edges, as the reference", () => {
     for (const map of MAPS) {
       const bounds = "edgeless" in map ? undefined : map.bounds;
-      expect(buildNavGraph(map.walls, bounds, CLEARANCE), map.name).toEqual(
+      expect(buildNavGraph(map.walls, bounds, CLEARANCE, []), map.name).toEqual(
         referenceBuildNavGraph(map.walls, bounds, CLEARANCE),
       );
     }
@@ -549,7 +566,7 @@ describe("the path finder against the reference (#267)", () => {
     let routed = 0;
     for (const map of MAPS) {
       const bounds = "edgeless" in map ? undefined : map.bounds;
-      const graph = buildNavGraph(map.walls, bounds, CLEARANCE);
+      const graph = buildNavGraph(map.walls, bounds, CLEARANCE, []);
       const reference = referenceBuildNavGraph(map.walls, bounds, CLEARANCE);
       const finder = createPathFinder(graph);
       const rng = createRng(0x267 + map.name.length);
@@ -568,7 +585,7 @@ describe("the path finder against the reference (#267)", () => {
   });
 
   it("keeps nothing from one query to the next, and two finders agree", () => {
-    const graph = buildNavGraph(ARENA_ALPHA, ARENA_BOUNDS, CLEARANCE);
+    const graph = buildNavGraph(ARENA_ALPHA, ARENA_BOUNDS, CLEARANCE, []);
     const finder = createPathFinder(graph);
     const a = [vec2(80, 320), vec2(880, 320)] as const;
     const b = [vec2(450, 100), vec2(450, 500)] as const;
@@ -662,7 +679,7 @@ describe("the wall grid against a scan of every wall (#542)", () => {
     let blocked = 0;
     for (const map of FIELDS) {
       const bounds = "edgeless" in map ? undefined : map.bounds;
-      const graph = buildNavGraph(map.walls, bounds, CLEARANCE);
+      const graph = buildNavGraph(map.walls, bounds, CLEARANCE, []);
       const rng = createRng(0x542 + map.name.length);
       for (let i = 0; i < QUERIES; i += 1) {
         const from = samplePoint(rng, graph, map.walls, map.bounds);
@@ -687,7 +704,7 @@ describe("the wall grid against a scan of every wall (#542)", () => {
     let moved = 0;
     for (const map of FIELDS) {
       const bounds = "edgeless" in map ? undefined : map.bounds;
-      const graph = buildNavGraph(map.walls, bounds, CLEARANCE);
+      const graph = buildNavGraph(map.walls, bounds, CLEARANCE, []);
       const rng = createRng(0x5420 + map.name.length);
       for (let i = 0; i < QUERIES; i += 1) {
         const point = samplePoint(rng, graph, map.walls, map.bounds);
@@ -705,10 +722,10 @@ describe("the wall grid against a scan of every wall (#542)", () => {
   });
 
   it("answers a field with no walls, and a walk or point off the grid, as the scan does", () => {
-    const empty = buildNavGraph([], undefined, CLEARANCE);
+    const empty = buildNavGraph([], undefined, CLEARANCE, []);
     expect(createPathFinder(empty).find(vec2(-5000, 3), vec2(9000, -7))).toEqual([vec2(9000, -7)]);
     expect(nearestStandable(empty, vec2(-1e6, 1e6))).toEqual(vec2(-1e6, 1e6));
-    const pillar = buildNavGraph(rect(100, 100, 50, 50), undefined, CLEARANCE);
+    const pillar = buildNavGraph(rect(100, 100, 50, 50), undefined, CLEARANCE, []);
     // Left of the grid, level with the pillar: the ray crosses both its sides.
     expect(nearestStandable(pillar, vec2(-500, 125))).toEqual(vec2(-500, 125));
     // Inside it, further than the clearance from every side, so only the
@@ -720,7 +737,7 @@ describe("the wall grid against a scan of every wall (#542)", () => {
   });
 
   it("finds every dense-field pillar's middle inside it, by the ray alone", () => {
-    const graph = buildNavGraph(DENSE_FIELD.walls, DENSE_FIELD.bounds, CLEARANCE);
+    const graph = buildNavGraph(DENSE_FIELD.walls, DENSE_FIELD.bounds, CLEARANCE, []);
     // Each pillar's four sides, top side first: its middle is 40 in from (a.x, a.y).
     for (let i = 0; i < DENSE_FIELD.walls.length; i += 4) {
       const top = DENSE_FIELD.walls[i];
@@ -732,5 +749,59 @@ describe("the wall grid against a scan of every wall (#542)", () => {
       expect(spot, JSON.stringify(middle)).not.toEqual(middle);
       expect(spot, JSON.stringify(middle)).toEqual(scanNearestStandable(graph, middle));
     }
+  });
+});
+
+describe("harmful zones (#3026)", () => {
+  const FIELD = { width: 1000, height: 1000 };
+  /** A 100-wide strip across x 250..350, from `top` to `bottom`. */
+  const strip = (top: number, bottom: number) => [
+    vec2(250, top),
+    vec2(350, top),
+    vec2(350, bottom),
+    vec2(250, bottom),
+  ];
+  const from = vec2(100, 500);
+  const to = vec2(500, 500);
+  const length = (path: readonly Vec2[]): number =>
+    path.reduce((sum, point, at) => sum + distance(path[at - 1] ?? from, point), 0);
+
+  it("measures the part of a walk inside a zone", () => {
+    expect(lengthInPolygon(from, to, strip(0, 1000))).toBeCloseTo(100);
+    expect(lengthInPolygon(vec2(300, 500), to, strip(0, 1000))).toBeCloseTo(50);
+    expect(lengthInPolygon(from, vec2(200, 500), strip(0, 1000))).toBe(0);
+    expect(walkCost([costZone(strip(0, 1000))], from, to)).toBeCloseTo(
+      400 + (HARMFUL_ZONE_COST - 1) * 100,
+    );
+  });
+
+  it("goes round a strip when the way round is not much longer", () => {
+    const zone = strip(400, 600);
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, [zone])).find(from, to);
+    if (path === undefined) throw new Error("no path");
+    expect(path.at(-1)).toEqual(to);
+    // Round, not through: no part of it in the strip, and under 200 longer.
+    let at = from;
+    for (const point of path) {
+      expect(lengthInPolygon(at, point, zone)).toBe(0);
+      at = point;
+    }
+    expect(length(path)).toBeLessThan(400 + 200);
+  });
+
+  it("crosses a strip when the way round is far longer, at its cost", () => {
+    const zone = strip(100, 900);
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, [zone])).find(from, to);
+    expect(path).toEqual([to]);
+  });
+
+  it("finds the same paths as before on a map with no zones", () => {
+    const walls = [segment(vec2(300, 300), vec2(300, 700))];
+    const plain = createPathFinder(buildNavGraph(walls, FIELD, 14, [])).find(from, to);
+    const elsewhere = createPathFinder(
+      buildNavGraph(walls, FIELD, 14, [strip(940, 990).map(({ x, y }) => vec2(x + 600, y))]),
+    ).find(from, to);
+    expect(plain).toBeDefined();
+    expect(elsewhere).toEqual(plain);
   });
 });

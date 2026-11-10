@@ -299,6 +299,13 @@ describe("springs, groves, tainted water and draining spires (#3028)", () => {
   const holds = (sim: MatchSimulation, id: string, status: StatusId) =>
     get(sim, id).combatant.statuses.active.some((active) => active.id === status);
 
+  it("has bots shun tainted water and spires, not springs or groves (#3026)", () => {
+    expect(ZONE_RULES["tainted-water"].harmful).toBe(true);
+    expect(ZONE_RULES["draining-spire"].harmful).toBe(true);
+    expect(ZONE_RULES.spring.harmful).toBe(false);
+    expect(ZONE_RULES.grove.harmful).toBe(false);
+  });
+
   for (const [kind, status] of [
     ["spring", "refreshed"],
     ["grove", "fleet"],

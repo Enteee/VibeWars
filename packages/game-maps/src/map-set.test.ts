@@ -108,7 +108,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
         3,
       );
     }
-    const graph = buildNavGraph(walls, bounds, RADIUS);
+    const graph = buildNavGraph(walls, bounds, RADIUS, []);
     for (const { position } of map.spawnPoints) {
       for (const wall of walls) {
         expect(
@@ -122,7 +122,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
   });
 
   it("lets every spawn walk to every other", () => {
-    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
+    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS, []));
     for (const from of map.spawnPoints) {
       for (const to of map.spawnPoints) {
         if (from !== to) {
@@ -297,7 +297,7 @@ describe("Guild Hall Isle (#1222)", () => {
 
   it("lets every spawn walk to the enemy Guild Lord", () => {
     const finder = createPathFinder(
-      buildNavGraph(walls, { width: isle.width, height: isle.height }, RADIUS),
+      buildNavGraph(walls, { width: isle.width, height: isle.height }, RADIUS, []),
     );
     for (const spawn of isle.spawnPoints) {
       const lord = isle.objectives.find(
@@ -383,7 +383,7 @@ describe("Guild Hall Isle (#1222)", () => {
     const stand = isle.objectives.find((objective) => objective.kind === "flag-stand");
     expect(stand?.position).toEqual({ x: isle.width / 2, y: isle.height / 2 });
     const finder = createPathFinder(
-      buildNavGraph(walls, { width: isle.width, height: isle.height }, RADIUS),
+      buildNavGraph(walls, { width: isle.width, height: isle.height }, RADIUS, []),
     );
     const spawns = isle.objectives.filter((objective) => objective.kind === "flag-spawn");
     expect(spawns.map((spawn) => spawn.team).sort()).toEqual([0, 1]);
@@ -461,7 +461,7 @@ describe("Broken Tower (#2551)", () => {
   });
 
   it("runs each relic to the altar the same length, at least 1300", () => {
-    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
+    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS, []));
     const lengths = relics.map((relic) => {
       const path = finder.find(relic.position, altar.position);
       if (path === undefined) throw new Error(`no run for team ${String(relic.team)}`);
@@ -473,7 +473,7 @@ describe("Broken Tower (#2551)", () => {
 
   it("has two routes from each base: walled off the one, the run goes round the other way", () => {
     for (const relic of relics) {
-      const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
+      const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS, []));
       const path = finder.find(relic.position, altar.position) ?? [];
       const north = path.some((point) => point.y < altar.position.y - 50);
       // A wall across the half of the map the run took, from the centre line to the edge.
@@ -485,7 +485,7 @@ describe("Broken Tower (#2551)", () => {
         height: altar.position.y,
       };
       const blocked = createPathFinder(
-        buildNavGraph(allWallSegments([...tower.walls, cut]), bounds, RADIUS),
+        buildNavGraph(allWallSegments([...tower.walls, cut]), bounds, RADIUS, []),
       );
       const detour = blocked.find(relic.position, altar.position);
       expect(detour, JSON.stringify(relic)).toBeDefined();
@@ -541,7 +541,7 @@ describe("Scarred Earth (#2551)", () => {
   });
 
   it("lets every spawn walk to every shrine", () => {
-    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
+    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS, []));
     for (const spawn of earth.spawnPoints) {
       for (const point of points) {
         expect(finder.find(spawn.position, point), JSON.stringify([spawn, point])).toBeDefined();
@@ -559,7 +559,7 @@ function hill(id: string) {
   const ghosts = map.objectives.filter((objective) => objective.kind === "ghost-spawn");
   const walls = allWallSegments([...map.walls, ...map.gates.map((gate) => gate.wall)]);
   const finder = createPathFinder(
-    buildNavGraph(walls, { width: map.width, height: map.height }, RADIUS),
+    buildNavGraph(walls, { width: map.width, height: map.height }, RADIUS, []),
   );
   return { map, altar: altar.position, ghosts, walls, finder };
 }
@@ -638,6 +638,7 @@ function holdsTheHill(id: string, seats: readonly number[]): void {
           allWallSegments([...map.walls, ...map.gates.map((gate) => gate.wall), cut]),
           { width: map.width, height: map.height },
           RADIUS,
+          [],
         ),
       );
       const detour = blocked.find(ghost.position, altar);
@@ -786,7 +787,7 @@ describe.each([
           height: band,
         }));
       const finder = createPathFinder(
-        buildNavGraph(allWallSegments([...map.walls, ...cuts]), bounds, ROUTE_HALF_GAP),
+        buildNavGraph(allWallSegments([...map.walls, ...cuts]), bounds, ROUTE_HALF_GAP, []),
       );
       expect(finder.find(from, to), `lane ${String(lane)}`).toBeDefined();
     }
@@ -812,7 +813,7 @@ describe("Cinder Sanctum (#2695)", () => {
 
   it("keeps its nav graph to 600 nodes", () => {
     const bounds = { width: sanctum.width, height: sanctum.height };
-    const graph = buildNavGraph(allWallSegments(sanctum.walls), bounds, RADIUS);
+    const graph = buildNavGraph(allWallSegments(sanctum.walls), bounds, RADIUS, []);
     expect(graph.nodes.length).toBeLessThanOrEqual(600);
   });
 });
@@ -873,6 +874,7 @@ describe("The Warden's Gallery (#2698)", () => {
         allWallSegments([...map.walls, ...map.gates.map((gate) => gate.wall)]),
         { width: map.width, height: map.height },
         ROUTE_HALF_GAP,
+        [],
       ),
     );
     for (const spawn of map.spawnPoints) {
