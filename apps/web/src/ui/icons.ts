@@ -19,6 +19,8 @@ import { itemName, runeName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { CREATURE_GLYPH } from "../render/arena-atlas.js";
 
+import { escapeAttribute } from "./html.js";
+
 /**
  * Icon URLs for menus and the HUD (#75, docs/art/art-direction.md).
  *
@@ -188,7 +190,7 @@ export function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | unde
  * icon is.
  */
 export function skillTypeBadgeHtml(type: SkillType): string {
-  const name = skillTypeName(type);
+  const name = escapeAttribute(skillTypeName(type));
   return `<img class="skill-type-badge" src="${skillTypeIcon(type)}" alt="${name}" title="${name}" loading="lazy">`;
 }
 

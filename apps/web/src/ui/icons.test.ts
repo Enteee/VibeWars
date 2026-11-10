@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   ALL_INSIGNIAS,
@@ -16,6 +16,9 @@ import {
   type ProfessionId,
   type SkillType,
 } from "@vibewars/game-core";
+
+import { en } from "../i18n/en.js";
+import { setLocale } from "../i18n/index.js";
 
 import {
   SKILL_TYPE_KEY,
@@ -158,6 +161,38 @@ describe("icons", () => {
   it("gives a known skill its type badge, and an unknown one none", () => {
     expect(skillBadgeHtml("elementalist.fireball")).toBe(skillTypeBadgeHtml("spell"));
     expect(skillBadgeHtml("nobody.unknown")).toBe("");
+  });
+
+  describe("a skill-type name with markup in it (#3043)", () => {
+    afterEach(() => {
+      setLocale("en", en);
+    });
+
+    it("stays text in alt and title, and adds no attribute or element", () => {
+      const hostile = `x" onerror="y"><b>z`;
+      setLocale("en", { ...en, [SKILL_TYPE_KEY.spell]: hostile });
+      const html = skillTypeBadgeHtml("spell");
+      // The client's tests run without a DOM, so the markup is read as an
+      // HTML parser would: one `<img>`, every attribute a quoted value.
+      const match = /^<img((?: [a-z-]+="[^"]*")*)>$/.exec(html);
+      expect(match, html).not.toBeNull();
+      const attributes = new Map(
+        [...(match?.[1] ?? "").matchAll(/ ([a-z-]+)="([^"]*)"/g)].map(
+          ([, name = "", value = ""]) => [
+            name,
+            value
+              .replaceAll("&quot;", '"')
+              .replaceAll("&#39;", "'")
+              .replaceAll("&lt;", "<")
+              .replaceAll("&gt;", ">")
+              .replaceAll("&amp;", "&"),
+          ],
+        ),
+      );
+      expect([...attributes.keys()]).toEqual(["class", "src", "alt", "title", "loading"]);
+      expect(attributes.get("alt")).toBe(hostile);
+      expect(attributes.get("title")).toBe(hostile);
+    });
   });
 });
 
