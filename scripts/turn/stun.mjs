@@ -12,6 +12,8 @@ import dgram from "node:dgram";
 import net from "node:net";
 
 const MAGIC = 0x2112a442;
+/** The wait before a request's first retransmit, doubled for each next (RFC 5389 §7.2.1). */
+const RETRANSMIT_MS = 500;
 
 const TYPE = { binding: 0x0001, allocate: 0x0003, refresh: 0x0004, createPermission: 0x0008 };
 const SUCCESS = 0x0100;
@@ -175,16 +177,30 @@ async function exchange(host, port, timeoutMs, body) {
     new Promise((resolve, reject) => {
       const txid = crypto.randomBytes(12);
       const id = txid.toString("hex");
+      const request = encode(type, txid, attrs, key);
+      /** @type {NodeJS.Timeout | undefined} */
+      let retransmit;
+      /** @type {(sent: number, wait: number) => void} Send again after `wait` ms, `sent` ms in, unless that is the deadline or past it. */
+      const scheduleRetransmit = (sent, wait) => {
+        if (sent + wait >= timeoutMs) return;
+        retransmit = setTimeout(() => {
+          socket.send(request, port, host);
+          scheduleRetransmit(sent + wait, wait * 2);
+        }, wait);
+      };
       const timer = setTimeout(() => {
+        clearTimeout(retransmit);
         waiting.delete(id);
         reject(new Error(`no answer from ${host}:${String(port)} in ${String(timeoutMs)} ms`));
       }, timeoutMs);
       waiting.set(id, (msg) => {
         clearTimeout(timer);
+        clearTimeout(retransmit);
         waiting.delete(id);
         resolve(msg);
       });
-      socket.send(encode(type, txid, attrs, key), port, host);
+      socket.send(request, port, host);
+      scheduleRetransmit(0, RETRANSMIT_MS);
     });
   try {
     return await body(ask);

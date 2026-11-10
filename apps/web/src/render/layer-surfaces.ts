@@ -410,6 +410,8 @@ export interface Occluder {
   readonly highLift: number;
   /** The highest layer it covers: it draws over bodies up to this one. */
   readonly hidesThrough: number;
+  /** A ground outline where a body's feet clear it: a ground ramp's own area (#3000). */
+  readonly exempt: readonly Vec2[] | null;
 }
 
 function occluder(
@@ -417,6 +419,7 @@ function occluder(
   lowLift: number,
   highLift: number,
   hidesThrough: number,
+  exempt: readonly Vec2[] | null,
 ): Occluder {
   const xs = outline.map((p) => p.x);
   const ys = outline.map((p) => p.y);
@@ -429,6 +432,7 @@ function occluder(
     lowLift,
     highLift,
     hidesThrough,
+    exempt,
   };
 }
 
@@ -447,7 +451,7 @@ export function occludersOf(
       const base = liftOf(structure, wall.layer);
       const held = deckHeldBy(wall, structure);
       const high = held === undefined ? base + WALL_HEIGHT : deckSideLow(held, walls, ground);
-      return occluder(shapeOutline(wall), base, high, wall.layer);
+      return occluder(shapeOutline(wall), base, high, wall.layer, null);
     }),
     ...structure.decks.map((deck) =>
       occluder(
@@ -455,16 +459,25 @@ export function occludersOf(
         deckSideLow(deck, walls, ground),
         liftOf(structure, deck.layer),
         deck.layer - 1,
+        null,
       ),
     ),
     // A raised ramp covers the ground under it as a deck does (#2975); its
-    // slope is drawn already lifted, so it hides at no further lift.
-    ...structure.transitions.flatMap((ramp) =>
-      ramp.from > ground ? [occluder(rampDrawing(structure, ramp).slope, 0, 0, ramp.from - 1)] : [],
-    ),
+    // slope is drawn already lifted, so it hides at no further lift. A ramp
+    // up from the ground covers the ground behind it, but not a body on it
+    // (#3000): on its upper half that body is on the layer above already.
+    ...structure.transitions.flatMap((ramp) => {
+      if (ramp.from < ground) {
+        return [];
+      }
+      const { slope } = rampDrawing(structure, ramp);
+      return ramp.from === ground
+        ? [occluder(slope, 0, 0, ground, shapeOutline(ramp.area))]
+        : [occluder(slope, 0, 0, ramp.from - 1, null)];
+    }),
     // The ground over a tunnel covers it whole, from its sunk floor up (#2973).
     ...structure.tunnels.map((tunnel) =>
-      occluder(shapeOutline(tunnel.footprint), sunk, 0, ground - 1),
+      occluder(shapeOutline(tunnel.footprint), sunk, 0, ground - 1, null),
     ),
     // A pit draws a step down: the strip along its south edge then falls
     // behind the ground's near lip (#2973).
@@ -476,7 +489,7 @@ export function occludersOf(
         box.right,
         box.bottom,
       );
-      return occluder(strip, sunk, sunk, ground - 1);
+      return occluder(strip, sunk, sunk, ground - 1, null);
     }),
   ];
 }
@@ -484,6 +497,17 @@ export function occludersOf(
 /** How finely a deck's side face is tested, in world units. */
 const LIFT_SLICE = ELEVATION_STEP / 4;
 const probe = { x: 0, y: 0 };
+const feet = { x: 0, y: 0 };
+
+/** Whether a body's feet at (`x`, `y`) stand where `each` cannot cover them. */
+function exempted(each: Occluder, x: number, y: number): boolean {
+  if (each.exempt === null) {
+    return false;
+  }
+  feet.x = x;
+  feet.y = y;
+  return pointInPolygon(feet, each.exempt);
+}
 
 function hides(each: Occluder, x: number, y: number): boolean {
   if (x < each.left || x > each.right || y < each.top || y > each.bottom) {
@@ -567,6 +591,9 @@ export function traceHiddenOutline(
     ) {
       continue;
     }
+    if (exempted(each, x, y)) {
+      continue;
+    }
     let along = 0;
     for (let i = 0; i + 3 < path.length; i += 2) {
       const ax = x + (path[i] ?? 0) * r;
@@ -595,7 +622,9 @@ const POLYLINE_STEP = 2;
 
 /** Whether a structure covers a body on `layer` at this point. */
 function hiddenAt(occluders: readonly Occluder[], layer: number, x: number, y: number): boolean {
-  return occluders.some((each) => layer <= each.hidesThrough && hides(each, x, y));
+  return occluders.some(
+    (each) => layer <= each.hidesThrough && hides(each, x, y) && !exempted(each, x, y),
+  );
 }
 
 /**
