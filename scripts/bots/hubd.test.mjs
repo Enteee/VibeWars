@@ -2910,7 +2910,7 @@ describe("hubd hiring and firing", () => {
     const refused = await hubd.request("manager", "staff", ["hire", "qa-tester", "x"]);
     expect(refused.allow).toBe(false);
     expect(String(refused.reason)).toMatch(
-      /^the 7-day budget runs out at \d\d:\d\d, before it resets; no hires until the burn falls$/,
+      /^the 7-day budget runs out on \d{4}-\d\d-\d\d \d\d:\d\d, before it resets; no hires until the burn falls$/,
     );
 
     writeAtomic(hubd.hub, "kpis.json", JSON.stringify({ claude: null }));

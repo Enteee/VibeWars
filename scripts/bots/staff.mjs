@@ -286,7 +286,7 @@ export function staffAllowed(
   if (hiring && !operator && sevenDayProjectedAt !== null) {
     return {
       ok: false,
-      reason: `the 7-day budget runs out at ${clock(sevenDayProjectedAt * 1000)}, before it resets; no hires until the burn falls`,
+      reason: `the 7-day budget runs out on ${dateClock(sevenDayProjectedAt * 1000)}, before it resets; no hires until the burn falls`,
     };
   }
   return { ok: true, employee };
@@ -579,6 +579,16 @@ export function writeAtomic(dir, name, text) {
  */
 function clock(ms) {
   return new Date(ms).toTimeString().slice(0, 5);
+}
+
+/**
+ * @param {number} ms epoch milliseconds
+ * @returns {string} `YYYY-MM-DD HH:MM`, local time as `clock`: a run-out can be days away (#3011)
+ */
+function dateClock(ms) {
+  const date = new Date(ms);
+  const pad = (/** @type {number} */ n) => String(n).padStart(2, "0");
+  return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${clock(ms)}`;
 }
 
 if (
