@@ -380,3 +380,84 @@ describe("the pits and the tunnel under Training Heights (#2973)", () => {
     expect(steps.every((step) => step.layer === ground && !inPit(step))).toBe(true);
   });
 });
+
+describe("the hearth rooms on Training Heights (#3021)", () => {
+  const ground = map.groundLayer;
+  const rooms = (map.lighting?.indoor ?? []).flatMap((shape) =>
+    shape.kind === "rect" ? [shape] : [],
+  );
+  const groundWalls = map.walls.flatMap((wall) =>
+    wall.kind === "rect" && wall.layer === ground ? [wall] : [],
+  );
+  const covered = (point: { readonly x: number; readonly y: number }): boolean =>
+    groundWalls.some((wall) => inside(wall, point));
+  const hearth = (id: string): Spot => ({
+    ...loaded(
+      map.lighting?.lights.find((light) => light.id === id),
+      id,
+    ).position,
+    layer: ground,
+  });
+  const spawn = (team: number): Spot => ({
+    ...loaded(
+      map.spawnPoints.find((point) => point.team === team && point.layer === ground),
+      "a spawn",
+    ).position,
+    layer: ground,
+  });
+  const arrived = (steps: readonly Spot[], end: Spot): void => {
+    const last = loaded(steps.at(-1), "a step");
+    expect(Math.hypot(last.x - end.x, last.y - end.y)).toBeLessThan(5);
+    expect(last.layer).toBe(end.layer);
+  };
+
+  it("walls every inner edge of both rooms but for one door at least 64 wide", () => {
+    expect(rooms).toHaveLength(2);
+    for (const room of rooms) {
+      const edges = [
+        { from: { x: room.x, y: room.y }, along: { x: 1, y: 0 }, length: room.width },
+        { from: { x: room.x, y: room.y + room.height }, along: { x: 1, y: 0 }, length: room.width },
+        { from: { x: room.x, y: room.y }, along: { x: 0, y: 1 }, length: room.height },
+        { from: { x: room.x + room.width, y: room.y }, along: { x: 0, y: 1 }, length: room.height },
+      ].filter(({ from, along }) =>
+        along.x === 1 ? from.y > 0 && from.y < map.height : from.x > 0 && from.x < map.width,
+      );
+      const gaps: number[] = [];
+      for (const { from, along, length } of edges) {
+        let run = 0;
+        for (let at = 0; at <= length; at += 1) {
+          if (covered({ x: from.x + along.x * at, y: from.y + along.y * at })) {
+            if (run > 0) gaps.push(run);
+            run = 0;
+          } else {
+            run += 1;
+          }
+        }
+        if (run > 0) gaps.push(run);
+      }
+      expect(gaps).toHaveLength(1);
+      expect(gaps[0]).toBeGreaterThanOrEqual(64);
+    }
+  });
+
+  it("walks from team 0's spawn to the west hearth, and from team 1's to the east one", () => {
+    const west = hearth("fire-west-hearth");
+    arrived(walk(spawn(0), west), west);
+    const east = hearth("fire-east-hearth");
+    arrived(walk(spawn(1), east), east);
+  });
+
+  it("walks the lane between the east room's wall and the north pond", () => {
+    const west = { x: 860, y: 150, layer: ground };
+    const steps = walk({ x: 1100, y: 157, layer: ground }, west);
+    arrived(steps, west);
+    expect(Math.max(...steps.map(({ y }) => y))).toBeLessThan(200);
+  });
+
+  it("stops a ground body steered at a room wall away from the door, outside", () => {
+    const west = steer({ x: 100, y: 560, layer: ground }, { x: 0, y: 1 });
+    expect(Math.max(...west.map(({ y }) => y))).toBeLessThan(620);
+    const east = steer({ x: 860, y: 20, layer: ground }, { x: 1, y: 0 });
+    expect(Math.max(...east.map(({ x }) => x))).toBeLessThan(940);
+  });
+});
