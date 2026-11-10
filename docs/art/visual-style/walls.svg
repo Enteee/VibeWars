@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="440" viewBox="0 0 720 440"><defs><filter id="s" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="5"/><feColorMatrix values="0 0 0 0 0.6  0 0 0 0 0.65  0 0 0 0 0.72  0 0 0 0.9 -0.3"/></filter><filter id="w" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="2"/><feColorMatrix values="0 0 0 0 0.35  0 0 0 0 0.24  0 0 0 0 0.12  0 0 0 1.3 -0.3"/></filter><clipPath id="c1"><rect x="40" y="110" width="200" height="50"/></clipPath><clipPath id="c2"><path d="M300,170 L320,110 L390,95 L450,108 L470,150 L450,175Z"/></clipPath><clipPath id="c3"><rect x="520" y="110" width="160" height="50"/></clipPath></defs><rect width="720" height="440" fill="#26303f"/><rect x="0" width="1" height="440" fill="#34415a"/><rect x="80" width="1" height="440" fill="#34415a"/><rect x="160" width="1" height="440" fill="#34415a"/><rect x="240" width="1" height="440" fill="#34415a"/><rect x="320" width="1" height="440" fill="#34415a"/><rect x="400" width="1" height="440" fill="#34415a"/><rect x="480" width="1" height="440" fill="#34415a"/><rect x="560" width="1" height="440" fill="#34415a"/><rect x="640" width="1" height="440" fill="#34415a"/><rect x="720" width="1" height="440" fill="#34415a"/><rect y="0" width="720" height="1" fill="#34415a"/><rect y="80" width="720" height="1" fill="#34415a"/><rect y="160" width="720" height="1" fill="#34415a"/><rect y="240" width="720" height="1" fill="#34415a"/><rect y="320" width="720" height="1" fill="#34415a"/><rect y="400" width="720" height="1" fill="#34415a"/>
+<!-- stone wall: blocks -->
+<rect x="40" y="110" width="200" height="50" fill="#4b5a70"/><g clip-path="url(#c1)"><rect width="720" height="440" filter="url(#s)" opacity="0.45"/></g>
+<g stroke="#34415a" stroke-width="2"><path d="M40,135H240M90,110V135M170,110V135M65,135V160M140,135V160M215,135V160"/></g>
+<rect x="40" y="160" width="200" height="22" fill="#2d3642"/><path d="M40,110H240" stroke="#a9bbd0" stroke-width="3"/>
+<rect x="40" y="110" width="200" height="72" fill="none" stroke="#0b0f14" stroke-width="2"/>
+<rect x="52" y="182" width="200" height="14" fill="#080b10" fill-opacity="0.5"/>
+<!-- rock outcrop -->
+<path d="M300,170 L320,110 L390,95 L450,108 L470,150 L450,175Z" fill="#000" fill-opacity="0.35" transform="translate(14,20)"/>
+<path d="M300,170 L320,110 L390,95 L450,108 L470,150 L450,175Z" fill="#4b5a70"/><g clip-path="url(#c2)"><rect width="720" height="440" filter="url(#s)" opacity="0.6"/></g>
+<path d="M300,170 L320,110 L390,95 L450,108" fill="none" stroke="#a9bbd0" stroke-width="3" stroke-linejoin="round"/>
+<path d="M300,170 L320,110 L390,95 L450,108 L470,150 L450,175Z" fill="none" stroke="#0b0f14" stroke-width="2"/>
+<path d="M360,120 L372,150 L364,168" fill="none" stroke="#10151c" stroke-width="2.5" stroke-linecap="round"/>
+<!-- wooden palisade with a door -->
+<rect x="520" y="110" width="160" height="50" fill="#6b4a26"/><g clip-path="url(#c3)"><rect width="720" height="440" filter="url(#w)" opacity="0.7"/></g>
+<g stroke="#3a2a14" stroke-width="2"><path d="M552,110V160M584,110V160M616,110V160M648,110V160"/></g>
+<rect x="520" y="160" width="160" height="22" fill="#3d2a14"/><path d="M520,110H680" stroke="#c9a46a" stroke-width="3"/>
+<rect x="520" y="110" width="160" height="72" fill="none" stroke="#0b0f14" stroke-width="2"/>
+<rect x="584" y="120" width="32" height="62" rx="3" fill="#c98a3a" stroke="#0b0f14" stroke-width="2.5"/>
+<g fill="#59c2ff" stroke="#fff" stroke-width="2"><circle cx="170" cy="310" r="15"/></g>
+<text x="40" y="240" font-family="DejaVu Sans, sans-serif" font-size="12" fill="#d7dee8">stone: blocks</text><text x="300" y="240" font-family="DejaVu Sans, sans-serif" font-size="12" fill="#d7dee8">rock: irregular, cracked</text><text x="520" y="240" font-family="DejaVu Sans, sans-serif" font-size="12" fill="#d7dee8">wood: planks, a door</text>
+<text x="14" y="24" font-family="DejaVu Sans, sans-serif" font-size="12" fill="#d7dee8">every wall: lit top edge, darker face, outline, a shadow to the SE</text></svg>

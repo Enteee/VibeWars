@@ -1227,6 +1227,8 @@ still 10. Ornaments are in `creature-shape.ts`, arms in `creature-arms.ts`.
 
 ## 2.5D: Graphic layers (direction D)
 
+> This section owns the planes. What sits on them (world palette, light, texture, animation, readability, element recipes) is in [`visual-style.md`](visual-style.md).
+
 Picked by the operator on #2811, for the 2.5D epic #2810. Gameplay height is
 a discrete layer, 0 for the ground and 1 for a bridge or platform, so the art
 only has to answer one question: **which layer is this on?** The reference is

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="220" viewBox="0 0 360 220"><defs></defs><rect width="360" height="220" fill="#26303f"/><rect x="0" width="1" height="220" fill="#34415a"/><rect x="100" width="1" height="220" fill="#34415a"/><rect x="200" width="1" height="220" fill="#34415a"/><rect x="300" width="1" height="220" fill="#34415a"/><rect y="0" width="360" height="1" fill="#34415a"/><rect y="100" width="360" height="1" fill="#34415a"/><rect y="200" width="360" height="1" fill="#34415a"/>
+<g stroke="#0b0f14" stroke-width="2.5">
+<rect x="70" y="120" width="60" height="26" rx="4" fill="#4b5a70"/>
+<path d="M100,124 L84,76" stroke="#e8c27a" stroke-width="9" stroke-linecap="round" fill="none"/>
+<circle cx="84" cy="74" r="9" fill="#e8c27a"/>
+<rect x="230" y="120" width="60" height="26" rx="4" fill="#4b5a70"/>
+<path d="M260,124 L304,108" stroke="#e8c27a" stroke-width="9" stroke-linecap="round" fill="none"/>
+<circle cx="306" cy="107" r="9" fill="#e8c27a"/></g>
+<circle cx="100" cy="133" r="4" fill="#fff" fill-opacity="0.35"/><circle cx="260" cy="133" r="4" fill="#fff" fill-opacity="0.9"/>
+<ellipse cx="195" cy="176" rx="30" ry="30" fill="#000" fill-opacity="0.35"/><circle cx="190" cy="170" r="30" fill="#59c2ff" stroke="#fff" stroke-width="2.5"/><circle cx="190" cy="170" r="10" fill="none" stroke="#fff" stroke-width="2.5"/>
+<g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="62" y="40">up: handle stands</text><text x="215" y="40">down: handle lies</text></g></svg>
