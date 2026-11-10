@@ -571,3 +571,74 @@ describe("bots and decks (ADR-0051)", () => {
     expect(get(sim, "a").targetId).toBe("foe");
   });
 });
+
+describe("a pit and a tunnel below the ground (#2973)", () => {
+  // The ground is layer 1; the pit and the tunnel east of it are layer 0.
+  const PIT: MatchLayers = {
+    count: 2,
+    ground: 1,
+    pits: [rect(800, 300, 200, 200)],
+    walls: [[], []],
+    decks: [{ layer: 1, footprint: rect(1000, 350, 200, 100) }],
+    transitions: [{ from: 0, to: 1, area: rect(800, 350, 60, 100), uphill: UPHILL.w }],
+    deepWater: [[], []],
+  };
+  const below = (participants: readonly ParticipantSpec[]): MatchSimulation =>
+    arena(participants, { layers: PIT });
+
+  /** Damage dealt by one 80-a-shot arrow over 90 units, from `from` to `to`. */
+  function shot(from: Spot, to: Spot): number {
+    const sim = below([spec("a", 0, from.at, from.layer, bow()), spec("foe", 1, to.at, to.layer)]);
+    sim.requestAttack("a", "foe");
+    const before = health(sim, "foe");
+    run(sim, 3);
+    return before - health(sim, "foe");
+  }
+  interface Spot {
+    readonly at: Vec2;
+    readonly layer: number;
+  }
+  const rim = { at: vec2(900, 290), layer: 1 };
+  const floor = { at: vec2(900, 380), layer: 0 };
+
+  it("lets the ground shoot into the pit harder, and the pit shoot back softer", () => {
+    const level = shot({ at: vec2(300, 400), layer: 1 }, { at: vec2(390, 400), layer: 1 });
+    expect(level).toBeGreaterThan(0);
+    expect(shot(rim, floor) / level).toBeCloseTo(1.1, 1);
+    expect(shot(floor, rim) / level).toBeCloseTo(0.9, 1);
+  });
+
+  /** Whether a Fireball goes off at once, in range and in sight. */
+  const casts = (from: Spot, to: Spot): boolean => {
+    const sim = below([
+      caster("a", 0, from.at, from.layer, FIREBALL),
+      spec("foe", 1, to.at, to.layer),
+    ]);
+    sim.setTarget("a", "foe");
+    sim.requestSkill("a", 0);
+    return get(sim, "a").combatant.cast.activeCast !== undefined;
+  };
+
+  it("hides the tunnel from the ground, both ways, as a deck hides what is under it", () => {
+    const over = { at: vec2(1100, 250), layer: 1 };
+    const inside = { at: vec2(1100, 400), layer: 0 };
+    expect(casts(over, inside)).toBe(false);
+    expect(casts(inside, over)).toBe(false);
+    expect(casts(rim, floor)).toBe(true);
+  });
+
+  it("bursts on the pit floor, sparing the ground at its edge", () => {
+    const sim = below([
+      caster("a", 0, vec2(900, 650), 1, FIREBALL),
+      spec("foe", 1, vec2(900, 310), 0),
+      spec("beside", 1, vec2(924, 310), 0),
+      spec("above", 1, vec2(900, 286), 1),
+    ]);
+    sim.setTarget("a", "foe");
+    sim.requestSkill("a", 0);
+    run(sim, 3);
+    expect(health(sim, "foe")).toBeLessThan(get(sim, "foe").combatant.maxHealth);
+    expect(health(sim, "beside")).toBeLessThan(get(sim, "beside").combatant.maxHealth);
+    expect(health(sim, "above")).toBe(get(sim, "above").combatant.maxHealth);
+  });
+});
