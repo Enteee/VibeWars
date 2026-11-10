@@ -323,7 +323,7 @@ export default {
   "combat.sourceShrine": "المزار",
   "combat.sourceSkill": "مهارة",
   "combat.sourceWeapon": "سلاح",
-  "combat.sourceZone": "خطر",
+  "combat.sourceZone": "الأرض",
   "combat.spellFailed": "فشلت {skill} لدى {target}",
   "combat.statusApplied": "{target} يتأثر بـ {status} ({seconds} ث)",
   "combat.statusAppliedMaintained": "{target} يتأثر بـ {status} (مستمر)",
@@ -1576,11 +1576,21 @@ export default {
     "أن الارتفاع مكان تقاتل منه: الأسطح تخفي من تحتها، والمنحدرات هي الطريق الوحيد بين الطبقات، وقوسك نفسه يصيب أقوى من الأعلى.",
   "training.scenario.wilds.label": "البرية",
   "training.scenario.wilds.teaches":
-    "أن الأرض نفسها قد تؤذي: الأرض المحروقة تحرق كل من يقف فيها، ويستمر الحرق بعد أن تخرج منها، فدُر حولها.",
+    "أن الأرض نفسها مهمة: الأرض المحروقة والحمم والضباب السام والوحل والماء الآسن والملوث والأبراج التي تستنزف الطاقة تؤذيك أو تبطئك، أما الينابيع فتشفي والبساتين تسرّعك. والرافعات تفتح البوابات.",
   "training.soundOff": "الصوت معطّل.",
   "training.soundOn": "الصوت مفعّل.",
   "training.you": "أنت",
 
   "weaponSets.empty": "مجموعة الأسلحة {number}: فارغة",
   "weaponSets.holds": "مجموعة الأسلحة {number}: {gear}",
+
+  "zone.draining-spire": "برج مستنزف",
+  "zone.foul-water": "ماء آسن",
+  "zone.grove": "بستان",
+  "zone.mire": "وحل",
+  "zone.molten": "حمم",
+  "zone.scorched": "أرض محروقة",
+  "zone.spring": "نبع",
+  "zone.tainted-water": "ماء ملوث",
+  "zone.toxic-fog": "ضباب سام",
 } satisfies Catalog;

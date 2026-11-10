@@ -269,7 +269,7 @@ export default {
   "combat.sourceShrine": "A szentély",
   "combat.sourceSkill": "egy készség",
   "combat.sourceWeapon": "egy fegyver",
-  "combat.sourceZone": "Veszély",
+  "combat.sourceZone": "Talaj",
   "combat.spellFailed": "{target}, {skill}: sikertelen",
   "combat.statusApplied": "{target} hatás alá került: {status} ({seconds} mp)",
   "combat.statusAppliedMaintained": "{target} hatás alá került: {status} (fenntartott)",
@@ -1393,11 +1393,21 @@ export default {
     "Hogy a magaslat harci pozíció: az emelvények elrejtik, ki van alattuk, a rámpák az egyetlen út a szintek között, és a saját íjlövésed fentről nagyobbat üt.",
   "training.scenario.wilds.label": "Vadon",
   "training.scenario.wilds.teaches":
-    "Hogy maga a talaj is sebezhet: a felperzselt talaj megégeti, aki rajta áll, és az égés azután is tart, hogy lelépsz róla, ezért kerüld meg.",
+    "Hogy maga a talaj is számít: a felperzselt talaj, a láva, a mérgező köd, az ingovány, a poshadt és a szennyezett víz, valamint az energiát elszívó tornyok sebeznek vagy lassítanak, a források viszont gyógyítanak, a ligetek pedig gyorsítanak. A karok kapukat nyitnak.",
   "training.soundOff": "Hang kikapcsolva.",
   "training.soundOn": "Hang bekapcsolva.",
   "training.you": "Te",
 
   "weaponSets.empty": "{number}. fegyverkészlet: üres",
   "weaponSets.holds": "{number}. fegyverkészlet: {gear}",
+
+  "zone.draining-spire": "Elszívó torony",
+  "zone.foul-water": "Poshadt víz",
+  "zone.grove": "Liget",
+  "zone.mire": "Ingovány",
+  "zone.molten": "Láva",
+  "zone.scorched": "Felperzselt talaj",
+  "zone.spring": "Forrás",
+  "zone.tainted-water": "Szennyezett víz",
+  "zone.toxic-fog": "Mérgező köd",
 } satisfies Catalog;

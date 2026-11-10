@@ -269,7 +269,7 @@ export default {
   "combat.sourceShrine": "Helligdommen",
   "combat.sourceSkill": "en evne",
   "combat.sourceWeapon": "et våben",
-  "combat.sourceZone": "Fare",
+  "combat.sourceZone": "Jord",
   "combat.spellFailed": "{skill} hos {target} mislykkes",
   "combat.statusApplied": "{target} får {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} får {status} (vedligeholdt)",
@@ -1382,11 +1382,21 @@ export default {
     "At højde er et sted at kæmpe fra: dæk skjuler, hvem der er under dem, ramper er eneste vej mellem lagene, og dit eget bueskud oppefra rammer hårdere.",
   "training.scenario.wilds.label": "Vildmark",
   "training.scenario.wilds.teaches":
-    "At selve jorden kan gøre ondt: svedet jord brænder alle, der står på den, og brændingen fortsætter, efter du er gået ud, så gå uden om.",
+    "At selve jorden betyder noget: svedet jord, lava, giftig tåge, mose, rådden og forurenet vand og spir, der dræner energi, gør ondt eller bremser dig, mens kilder heler og lunde gør dig hurtigere. Håndtag åbner porte.",
   "training.soundOff": "Lyd fra.",
   "training.soundOn": "Lyd til.",
   "training.you": "Dig",
 
   "weaponSets.empty": "Våbensæt {number}: tomt",
   "weaponSets.holds": "Våbensæt {number}: {gear}",
+
+  "zone.draining-spire": "Drænende spir",
+  "zone.foul-water": "Rådden vand",
+  "zone.grove": "Lund",
+  "zone.mire": "Mose",
+  "zone.molten": "Lava",
+  "zone.scorched": "Svedet jord",
+  "zone.spring": "Kilde",
+  "zone.tainted-water": "Forurenet vand",
+  "zone.toxic-fog": "Giftig tåge",
 } satisfies Catalog;

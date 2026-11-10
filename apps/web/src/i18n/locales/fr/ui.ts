@@ -291,7 +291,7 @@ export default {
   "combat.sourceShrine": "Le sanctuaire",
   "combat.sourceSkill": "une compétence",
   "combat.sourceWeapon": "une arme",
-  "combat.sourceZone": "Danger",
+  "combat.sourceZone": "Sol",
   "combat.spellFailed": "{skill} de {target} échoue",
   "combat.statusApplied": "{target} subit {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} subit {status} (maintenu)",
@@ -1476,11 +1476,21 @@ export default {
     "Que la hauteur est une position de combat : les plateformes cachent qui se trouve dessous, les rampes sont le seul passage entre niveaux, et ton tir à l'arc d'en haut frappe plus fort.",
   "training.scenario.wilds.label": "Terres sauvages",
   "training.scenario.wilds.teaches":
-    "Que le sol lui-même peut blesser : un sol calciné brûle quiconque s'y tient, et la brûlure continue après en être sorti, alors contourne-le.",
+    "Que le sol lui-même compte : le sol calciné, la lave, la brume toxique, le bourbier, l'eau croupie ou viciée et les flèches qui drainent l'énergie te blessent ou te ralentissent, tandis que les sources soignent et les bosquets te rendent plus rapide. Les leviers ouvrent les portes.",
   "training.soundOff": "Son coupé.",
   "training.soundOn": "Son activé.",
   "training.you": "Toi",
 
   "weaponSets.empty": "Set d'armes {number} : vide",
   "weaponSets.holds": "Set d'armes {number} : {gear}",
+
+  "zone.draining-spire": "Flèche drainante",
+  "zone.foul-water": "Eau croupie",
+  "zone.grove": "Bosquet",
+  "zone.mire": "Bourbier",
+  "zone.molten": "Lave",
+  "zone.scorched": "Sol calciné",
+  "zone.spring": "Source",
+  "zone.tainted-water": "Eau viciée",
+  "zone.toxic-fog": "Brume toxique",
 } satisfies Catalog;

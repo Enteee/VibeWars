@@ -273,7 +273,7 @@ export default {
   "combat.sourceShrine": "Светилището",
   "combat.sourceSkill": "умение",
   "combat.sourceWeapon": "оръжие",
-  "combat.sourceZone": "Опасност",
+  "combat.sourceZone": "Земя",
   "combat.spellFailed": "{skill} на {target} се проваля",
   "combat.statusApplied": "{target} получава {status} ({seconds} с)",
   "combat.statusAppliedMaintained": "{target} получава {status} (поддържано)",
@@ -1390,11 +1390,21 @@ export default {
     "Че височината е място, от което да се биеш: платформите крият кой е под тях, рампите са единственият път между нивата, а твоят изстрел с лък отгоре удря по-силно.",
   "training.scenario.wilds.label": "Пущинак",
   "training.scenario.wilds.teaches":
-    "Че самата земя може да наранява: опожарената земя изгаря всеки, който стои на нея, а горенето продължава и след като излезеш, така че я заобикаляй.",
+    "Че самата земя има значение: опожарената земя, лавата, отровната мъгла, тресавището, мътната и заразената вода и кулите, които изсмукват енергия, те нараняват или забавят, а изворите лекуват и горичките те ускоряват. Лостовете отварят портите.",
   "training.soundOff": "Звукът е изключен.",
   "training.soundOn": "Звукът е включен.",
   "training.you": "Ти",
 
   "weaponSets.empty": "Оръжеен комплект {number}: празен",
   "weaponSets.holds": "Оръжеен комплект {number}: {gear}",
+
+  "zone.draining-spire": "Изсмукваща кула",
+  "zone.foul-water": "Мътна вода",
+  "zone.grove": "Горичка",
+  "zone.mire": "Тресавище",
+  "zone.molten": "Лава",
+  "zone.scorched": "Опожарена земя",
+  "zone.spring": "Извор",
+  "zone.tainted-water": "Заразена вода",
+  "zone.toxic-fog": "Отровна мъгла",
 } satisfies Catalog;

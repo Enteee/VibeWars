@@ -268,7 +268,7 @@ export default {
   "combat.sourceShrine": "Tapınak",
   "combat.sourceSkill": "bir beceri",
   "combat.sourceWeapon": "bir silah",
-  "combat.sourceZone": "Tehlike",
+  "combat.sourceZone": "Zemin",
   "combat.spellFailed": "{target}: {skill} başarısız",
   "combat.statusApplied": "{target}, {status} kazanıyor ({seconds} sn)",
   "combat.statusAppliedMaintained": "{target}, {status} kazanıyor (sürdürülüyor)",
@@ -1387,11 +1387,21 @@ export default {
     "Yüksekliğin savaşılacak bir yer olduğu: platformlar altındakileri gizler, rampalar katlar arasındaki tek yoldur ve yukarıdan attığın ok daha sert vurur.",
   "training.scenario.wilds.label": "Yaban",
   "training.scenario.wilds.teaches":
-    "Zeminin kendisinin de can yakabileceğini: kavrulmuş zemin üzerinde duran herkesi yakar ve yanma sen çıktıktan sonra da sürer, bu yüzden etrafından dolaş.",
+    "Zeminin kendisinin önemli olduğunu: kavrulmuş zemin, lav, zehirli sis, bataklık, pis ve kirli su ile enerji emen kuleler canını yakar ya da seni yavaşlatır; pınarlar ise iyileştirir, korular seni hızlandırır. Kollar kapıları açar.",
   "training.soundOff": "Ses kapalı.",
   "training.soundOn": "Ses açık.",
   "training.you": "Sen",
 
   "weaponSets.empty": "Silah seti {number}: boş",
   "weaponSets.holds": "Silah seti {number}: {gear}",
+
+  "zone.draining-spire": "Emici kule",
+  "zone.foul-water": "Pis su",
+  "zone.grove": "Koru",
+  "zone.mire": "Bataklık",
+  "zone.molten": "Lav",
+  "zone.scorched": "Kavrulmuş zemin",
+  "zone.spring": "Pınar",
+  "zone.tainted-water": "Kirli su",
+  "zone.toxic-fog": "Zehirli sis",
 } satisfies Catalog;

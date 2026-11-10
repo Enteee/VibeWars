@@ -299,7 +299,7 @@ export default {
   "combat.sourceShrine": "Святилище",
   "combat.sourceSkill": "навык",
   "combat.sourceWeapon": "оружие",
-  "combat.sourceZone": "Опасность",
+  "combat.sourceZone": "Земля",
   "combat.spellFailed": "{skill} ({target}): неудача",
   "combat.statusApplied": "{target} получает {status} ({seconds} с)",
   "combat.statusAppliedMaintained": "{target} получает {status} (поддерживается)",
@@ -1504,11 +1504,21 @@ export default {
     "Что высота — это позиция для боя: настилы скрывают тех, кто под ними, пандусы — единственный путь между уровнями, а твой выстрел из лука сверху бьёт сильнее.",
   "training.scenario.wilds.label": "Дикие земли",
   "training.scenario.wilds.teaches":
-    "Что сама земля может ранить: выжженная земля поджигает всякого, кто на ней стоит, и горение продолжается после того, как ты с неё сошёл, так что обходи её.",
+    "Что сама земля имеет значение: выжженная земля, лава, ядовитый туман, трясина, мутная и отравленная вода и шпили, иссушающие энергию, ранят или замедляют тебя, а родники лечат и рощи ускоряют. Рычаги открывают ворота.",
   "training.soundOff": "Звук выключен.",
   "training.soundOn": "Звук включён.",
   "training.you": "Ты",
 
   "weaponSets.empty": "Набор оружия {number}: пусто",
   "weaponSets.holds": "Набор оружия {number}: {gear}",
+
+  "zone.draining-spire": "Иссушающий шпиль",
+  "zone.foul-water": "Мутная вода",
+  "zone.grove": "Роща",
+  "zone.mire": "Трясина",
+  "zone.molten": "Лава",
+  "zone.scorched": "Выжженная земля",
+  "zone.spring": "Родник",
+  "zone.tainted-water": "Отравленная вода",
+  "zone.toxic-fog": "Ядовитый туман",
 } satisfies Catalog;

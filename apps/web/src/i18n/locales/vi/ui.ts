@@ -239,7 +239,7 @@ export default {
   "combat.sourceShrine": "Đền",
   "combat.sourceSkill": "một kỹ năng",
   "combat.sourceWeapon": "một vũ khí",
-  "combat.sourceZone": "Hiểm họa",
+  "combat.sourceZone": "Mặt đất",
   "combat.spellFailed": "{skill} của {target} thất bại",
   "combat.statusApplied": "{target} nhận {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} nhận {status} (duy trì)",
@@ -1300,11 +1300,21 @@ export default {
     "Độ cao là chỗ để chiến đấu: sàn cao che khuất ai ở bên dưới, dốc là lối duy nhất giữa các tầng, và phát cung bạn bắn từ trên cao mạnh hơn.",
   "training.scenario.wilds.label": "Hoang dã",
   "training.scenario.wilds.teaches":
-    "Rằng chính mặt đất cũng có thể gây hại: đất cháy xém thiêu đốt bất kỳ ai đứng trên đó, và vết bỏng vẫn tiếp tục sau khi bạn bước ra, nên hãy đi vòng qua.",
+    "Rằng chính mặt đất cũng quan trọng: đất cháy xém, dung nham, sương độc, đầm lầy, nước bẩn và nước nhiễm độc, cùng các tháp hút năng lượng làm bạn bị thương hoặc chậm lại, còn suối thì hồi máu và lùm cây giúp bạn nhanh hơn. Cần gạt mở cổng.",
   "training.soundOff": "Tắt âm thanh.",
   "training.soundOn": "Bật âm thanh.",
   "training.you": "Bạn",
 
   "weaponSets.empty": "Bộ vũ khí {number}: trống",
   "weaponSets.holds": "Bộ vũ khí {number}: {gear}",
+
+  "zone.draining-spire": "Tháp hút năng lượng",
+  "zone.foul-water": "Nước bẩn",
+  "zone.grove": "Lùm cây",
+  "zone.mire": "Đầm lầy",
+  "zone.molten": "Dung nham",
+  "zone.scorched": "Đất cháy xém",
+  "zone.spring": "Suối",
+  "zone.tainted-water": "Nước nhiễm độc",
+  "zone.toxic-fog": "Sương độc",
 } satisfies Catalog;

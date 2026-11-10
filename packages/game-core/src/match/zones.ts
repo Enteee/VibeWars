@@ -59,14 +59,27 @@ export interface MatchZone {
 
 const ZONE_SOURCE_PREFIX = "zone:";
 
-/** The status source a zone's status carries: the environment, never a player. */
+/**
+ * The status source a zone's status carries: the environment, never a player.
+ * The kind travels in it, so the log names the ground without the map (#3046).
+ */
 export function zoneSourceId(zone: MatchZone): string {
-  return `${ZONE_SOURCE_PREFIX}${zone.id}`;
+  return `${ZONE_SOURCE_PREFIX}${zone.kind}:${zone.id}`;
 }
 
 /** Whether a status or log source is a zone's: the log names it as the environment. */
 export function isZoneSourceId(sourceId: string): boolean {
   return sourceId.startsWith(ZONE_SOURCE_PREFIX);
+}
+
+/** The kind a zone's source names; `undefined` for any other or a malformed source. */
+export function zoneKindOfSource(sourceId: string): ZoneKind | undefined {
+  if (!isZoneSourceId(sourceId)) return undefined;
+  const rest = sourceId.slice(ZONE_SOURCE_PREFIX.length);
+  const end = rest.indexOf(":");
+  if (end < 0) return undefined;
+  const kind = rest.slice(0, end);
+  return ZONE_KINDS.find((known) => known === kind);
 }
 
 /** The zones a body at `position` on `layer` stands in, in the map's order. */

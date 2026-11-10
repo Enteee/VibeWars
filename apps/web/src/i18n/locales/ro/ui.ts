@@ -289,7 +289,7 @@ export default {
   "combat.sourceShrine": "Sanctuarul",
   "combat.sourceSkill": "o abilitate",
   "combat.sourceWeapon": "o armă",
-  "combat.sourceZone": "Pericol",
+  "combat.sourceZone": "Pământ",
   "combat.spellFailed": "{skill} eșuează la {target}",
   "combat.statusApplied": "{target} primește {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} primește {status} (menținut)",
@@ -1465,11 +1465,21 @@ export default {
     "Că înălțimea e un loc din care lupți: platformele îi ascund pe cei de dedesubt, rampele sunt singura cale între niveluri, iar săgeata ta trasă de sus lovește mai tare.",
   "training.scenario.wilds.label": "Sălbăticie",
   "training.scenario.wilds.teaches":
-    "Că pământul însuși poate răni: pământul pârjolit arde pe oricine stă pe el, iar arsura continuă și după ce ieși, așa că ocolește-l.",
+    "Că pământul însuși contează: pământul pârjolit, lava, ceața toxică, mlaștina, apa stătută și cea contaminată și turnurile care absorb energie te rănesc sau te încetinesc, iar izvoarele vindecă și crângurile te fac mai rapid. Manetele deschid porțile.",
   "training.soundOff": "Sunet oprit.",
   "training.soundOn": "Sunet pornit.",
   "training.you": "Tu",
 
   "weaponSets.empty": "Set de arme {number}: gol",
   "weaponSets.holds": "Set de arme {number}: {gear}",
+
+  "zone.draining-spire": "Turn care absoarbe",
+  "zone.foul-water": "Apă stătută",
+  "zone.grove": "Crâng",
+  "zone.mire": "Mlaștină",
+  "zone.molten": "Lavă",
+  "zone.scorched": "Pământ pârjolit",
+  "zone.spring": "Izvor",
+  "zone.tainted-water": "Apă contaminată",
+  "zone.toxic-fog": "Ceață toxică",
 } satisfies Catalog;

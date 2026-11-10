@@ -245,7 +245,7 @@ export default {
   "combat.sourceShrine": "祠",
   "combat.sourceSkill": "スキル",
   "combat.sourceWeapon": "武器",
-  "combat.sourceZone": "危険地帯",
+  "combat.sourceZone": "地面",
   "combat.spellFailed": "{target}の{skill}は失敗",
   "combat.statusApplied": "{target}に{status} ({seconds}秒)",
   "combat.statusAppliedMaintained": "{target}に{status} (維持)",
@@ -1315,11 +1315,21 @@ export default {
     "高さは戦う場所: デッキは下にいる者を隠し、スロープだけが階層をつなぎ、上から撃つ弓は威力が増す。",
   "training.scenario.wilds.label": "荒野",
   "training.scenario.wilds.teaches":
-    "地面そのものが傷つけることがある：焦げた地面は上に立つ者を燃やし、離れた後も燃焼が続くので、迂回しよう。",
+    "地面そのものが大事だということ：焦げた地面、溶岩、毒霧、泥沼、汚れた水や汚染された水、エナジーを吸い取る尖塔は傷つけたり足を鈍らせたりし、泉は回復させ、林は足を速める。レバーは門を開く。",
   "training.soundOff": "サウンドオフ。",
   "training.soundOn": "サウンドオン。",
   "training.you": "自分",
 
   "weaponSets.empty": "武器セット{number}: 空",
   "weaponSets.holds": "武器セット{number}: {gear}",
+
+  "zone.draining-spire": "吸い取る尖塔",
+  "zone.foul-water": "汚れた水",
+  "zone.grove": "林",
+  "zone.mire": "泥沼",
+  "zone.molten": "溶岩",
+  "zone.scorched": "焦げた地面",
+  "zone.spring": "泉",
+  "zone.tainted-water": "汚染された水",
+  "zone.toxic-fog": "毒霧",
 } satisfies Catalog;

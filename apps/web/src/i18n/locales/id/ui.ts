@@ -242,7 +242,7 @@ export default {
   "combat.sourceShrine": "Kuil",
   "combat.sourceSkill": "sebuah skill",
   "combat.sourceWeapon": "sebuah senjata",
-  "combat.sourceZone": "Bahaya",
+  "combat.sourceZone": "Tanah",
   "combat.spellFailed": "{skill} milik {target} gagal",
   "combat.statusApplied": "{target} mendapat {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} mendapat {status} (dipertahankan)",
@@ -1314,11 +1314,21 @@ export default {
     "Bahwa ketinggian adalah tempat untuk bertarung: dek menyembunyikan siapa yang di bawahnya, tanjakan satu-satunya jalan antar lapisan, dan tembakan busurmu dari atas lebih kuat.",
   "training.scenario.wilds.label": "Alam liar",
   "training.scenario.wilds.teaches":
-    "Bahwa tanah itu sendiri bisa melukai: tanah hangus membakar siapa pun yang berdiri di atasnya, dan bakarannya berlanjut setelah kamu keluar, jadi kelilingi saja.",
+    "Bahwa tanah itu sendiri penting: tanah hangus, lava, kabut beracun, rawa, air busuk dan tercemar, serta menara yang menyedot energi melukai atau memperlambatmu, sedangkan mata air menyembuhkan dan hutan kecil mempercepatmu. Tuas membuka gerbang.",
   "training.soundOff": "Suara mati.",
   "training.soundOn": "Suara nyala.",
   "training.you": "Kamu",
 
   "weaponSets.empty": "Set senjata {number}: kosong",
   "weaponSets.holds": "Set senjata {number}: {gear}",
+
+  "zone.draining-spire": "Menara penyedot",
+  "zone.foul-water": "Air busuk",
+  "zone.grove": "Hutan kecil",
+  "zone.mire": "Rawa",
+  "zone.molten": "Lava",
+  "zone.scorched": "Tanah hangus",
+  "zone.spring": "Mata air",
+  "zone.tainted-water": "Air tercemar",
+  "zone.toxic-fog": "Kabut beracun",
 } satisfies Catalog;

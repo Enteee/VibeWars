@@ -272,7 +272,7 @@ export default {
   "combat.sourceShrine": "Der Schrein",
   "combat.sourceSkill": "ein Skill",
   "combat.sourceWeapon": "eine Waffe",
-  "combat.sourceZone": "Gefahr",
+  "combat.sourceZone": "Boden",
   "combat.spellFailed": "{skill} von {target} schlägt fehl",
   "combat.statusApplied": "{target} erhält {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} erhält {status} (aufrechterhalten)",
@@ -1404,11 +1404,21 @@ export default {
     "Dass Höhe ein Ort zum Kämpfen ist: Plattformen verbergen, wer darunter steht, Rampen sind der einzige Weg zwischen den Ebenen, und dein eigener Bogenschuss von oben trifft härter.",
   "training.scenario.wilds.label": "Wildnis",
   "training.scenario.wilds.teaches":
-    "Dass der Boden selbst verletzen kann: Versengter Boden verbrennt jeden, der darauf steht, und das Brennen hält an, nachdem du ihn verlassen hast – also geh außen herum.",
+    "Dass der Boden selbst zählt: Versengter Boden, Lava, Giftnebel, Morast, fauliges und verseuchtes Wasser und Spitzen, die Energie entziehen, verletzen oder bremsen dich, während Quellen heilen und Haine dich schneller machen. Hebel öffnen Tore.",
   "training.soundOff": "Ton aus.",
   "training.soundOn": "Ton an.",
   "training.you": "Du",
 
   "weaponSets.empty": "Waffenset {number}: leer",
   "weaponSets.holds": "Waffenset {number}: {gear}",
+
+  "zone.draining-spire": "Zehrende Spitze",
+  "zone.foul-water": "Fauliges Wasser",
+  "zone.grove": "Hain",
+  "zone.mire": "Morast",
+  "zone.molten": "Lava",
+  "zone.scorched": "Versengter Boden",
+  "zone.spring": "Quelle",
+  "zone.tainted-water": "Verseuchtes Wasser",
+  "zone.toxic-fog": "Giftnebel",
 } satisfies Catalog;

@@ -12,7 +12,14 @@ import {
   type Participant,
   type ParticipantSpec,
 } from "./simulation.js";
-import { ZONE_RULES, zonesHolding, type MatchZone } from "./zones.js";
+import {
+  ZONE_KINDS,
+  ZONE_RULES,
+  zoneKindOfSource,
+  zoneSourceId,
+  zonesHolding,
+  type MatchZone,
+} from "./zones.js";
 
 const rect = (x: number, y: number, width: number, height: number): Polygon => [
   vec2(x, y),
@@ -78,6 +85,21 @@ function run(sim: MatchSimulation, seconds: number): void {
   }
 }
 
+describe("zoneKindOfSource (#3046)", () => {
+  it("reads back the kind of every zone's source, an id with ':' in it too", () => {
+    for (const kind of ZONE_KINDS) {
+      const zone: MatchZone = { ...STRIP, id: "pool:north", kind };
+      expect(zoneKindOfSource(zoneSourceId(zone))).toBe(kind);
+    }
+  });
+
+  it("is undefined for an unknown kind, a kind with no id, and a player", () => {
+    expect(zoneKindOfSource("zone:nope:x")).toBeUndefined();
+    expect(zoneKindOfSource("zone:spring")).toBeUndefined();
+    expect(zoneKindOfSource("a")).toBeUndefined();
+  });
+});
+
 describe("zonesHolding (ADR-0053)", () => {
   const polygon: MatchZone = {
     id: "wedge",
@@ -138,7 +160,7 @@ describe("a scorched zone in a match (ADR-0053)", () => {
   it("names the zone as the source, so no player is credited", () => {
     const sim = arena([spec("a", 0, vec2(400, 400), { layer: 0 }), spec("b", 1, vec2(900, 400))]);
     run(sim, 1);
-    expect(burning(sim, "a")?.sourceId).toBe("zone:strip");
+    expect(burning(sim, "a")?.sourceId).toBe("zone:scorched:strip");
     expect(get(sim, "a").combatant.lastFoeTeam).toBeUndefined();
   });
 

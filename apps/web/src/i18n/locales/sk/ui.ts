@@ -300,7 +300,7 @@ export default {
   "combat.sourceShrine": "Svätyňa",
   "combat.sourceSkill": "schopnosť",
   "combat.sourceWeapon": "zbraň",
-  "combat.sourceZone": "Nebezpečenstvo",
+  "combat.sourceZone": "Zem",
   "combat.spellFailed": "{skill} cieľa {target} zlyháva",
   "combat.statusApplied": "{target} získava {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} získava {status} (udržiavané)",
@@ -1505,11 +1505,21 @@ export default {
     "Že výška je miesto na boj: plošiny skrývajú tých pod nimi, rampy sú jediná cesta medzi úrovňami a tvoj výstrel z luku zhora udrie silnejšie.",
   "training.scenario.wilds.label": "Divočina",
   "training.scenario.wilds.teaches":
-    "Že aj samotná zem môže zraňovať: spálená zem páli každého, kto na nej stojí, a horenie trvá aj po odchode, tak ju obíď.",
+    "Že na samotnej zemi záleží: spálená zem, láva, jedovatá hmla, močiar, kalná a otrávená voda a veže, ktoré vysávajú energiu, ťa zraňujú alebo spomaľujú, kým pramene liečia a háje ťa zrýchlia. Páky otvárajú brány.",
   "training.soundOff": "Zvuk vypnutý.",
   "training.soundOn": "Zvuk zapnutý.",
   "training.you": "Ty",
 
   "weaponSets.empty": "Sada zbraní {number}: prázdna",
   "weaponSets.holds": "Sada zbraní {number}: {gear}",
+
+  "zone.draining-spire": "Vysávajúca veža",
+  "zone.foul-water": "Kalná voda",
+  "zone.grove": "Háj",
+  "zone.mire": "Močiar",
+  "zone.molten": "Láva",
+  "zone.scorched": "Spálená zem",
+  "zone.spring": "Prameň",
+  "zone.tainted-water": "Otrávená voda",
+  "zone.toxic-fog": "Jedovatá hmla",
 } satisfies Catalog;

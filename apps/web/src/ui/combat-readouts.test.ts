@@ -205,18 +205,50 @@ describe("describeCombatEvent", () => {
     );
   });
 
-  it("names burning ground's tick as a hazard, never by its zone's id (ADR-0053)", () => {
+  it("names a lava tick by its zone's kind, never by its id (ADR-0053, #3046)", () => {
     const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 14, critical: false };
     const tick = entry([hurt], {
       cause: "degeneration",
-      sourceId: "zone:lane-embers",
+      sourceId: "zone:molten:lane-embers",
       skillId: undefined,
     });
     expect(describeCombatEvent(tick, hurt, nameOf, isCreature)).toBe(
       t("combat.hit", {
-        by: by(t("combat.sourceDegeneration"), t("combat.sourceZone")),
+        by: by(t("combat.sourceDegeneration"), "Lava"),
         target: "Caster dummy",
         amount: "14",
+      }),
+    );
+  });
+
+  it("names a spring's heal tick 'Regeneration (Spring)' (#3046)", () => {
+    const heal: CombatEvent = { kind: "heal", targetId: "dummy", amount: 4 };
+    const tick = entry([heal], {
+      cause: "degeneration",
+      sourceId: "zone:spring:pool",
+      skillId: undefined,
+    });
+    expect(describeCombatEvent(tick, heal, nameOf, isCreature)).toBe(
+      t("combat.heal", {
+        by: by(t("combat.sourceRegeneration"), "Spring"),
+        target: "Caster dummy",
+        amount: "4",
+      }),
+    );
+  });
+
+  it("names a malformed zone source plainly as the ground (#3046)", () => {
+    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 2, critical: false };
+    const tick = entry([hurt], {
+      cause: "degeneration",
+      sourceId: "zone:nope:x",
+      skillId: undefined,
+    });
+    expect(describeCombatEvent(tick, hurt, nameOf, isCreature)).toBe(
+      t("combat.hit", {
+        by: by(t("combat.sourceDegeneration"), "Ground"),
+        target: "Caster dummy",
+        amount: "2",
       }),
     );
   });

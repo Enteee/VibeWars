@@ -272,7 +272,7 @@ export const en = {
   "combat.sourceShrine": "The shrine",
   "combat.sourceSkill": "a skill",
   "combat.sourceWeapon": "a weapon",
-  "combat.sourceZone": "Hazard",
+  "combat.sourceZone": "Ground",
   "combat.spellFailed": "{target}'s {skill} fails",
   "combat.statusApplied": "{target} gains {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} gains {status} (maintained)",
@@ -1387,13 +1387,23 @@ export const en = {
     "That height is a place to fight from: decks hide who is under them, ramps are the only way between layers, and your own bow shot from above hits harder.",
   "training.scenario.wilds.label": "Wilds",
   "training.scenario.wilds.teaches":
-    "That the ground itself can hurt: scorched ground burns whoever stands in it, and the burn runs on after you step out, so go round it.",
+    "That the ground itself matters: scorched ground, lava, toxic fog, mire, foul and tainted water, and spires that drain energy hurt or slow you, while springs heal and groves speed you up. Levers open gates.",
   "training.soundOff": "Sound off.",
   "training.soundOn": "Sound on.",
   "training.you": "You",
 
   "weaponSets.empty": "Weapon set {number}: empty",
   "weaponSets.holds": "Weapon set {number}: {gear}",
+
+  "zone.draining-spire": "Draining spire",
+  "zone.foul-water": "Foul water",
+  "zone.grove": "Grove",
+  "zone.mire": "Mire",
+  "zone.molten": "Lava",
+  "zone.scorched": "Scorched ground",
+  "zone.spring": "Spring",
+  "zone.tainted-water": "Tainted water",
+  "zone.toxic-fog": "Toxic fog",
 } as const satisfies Readonly<Record<string, Message>>;
 
 export type MessageKey = keyof typeof en;

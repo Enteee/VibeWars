@@ -238,7 +238,7 @@ export default {
   "combat.sourceShrine": "神殿",
   "combat.sourceSkill": "技能",
   "combat.sourceWeapon": "武器",
-  "combat.sourceZone": "危险区域",
+  "combat.sourceZone": "地面",
   "combat.spellFailed": "{target} 的 {skill} 失败",
   "combat.statusApplied": "{target} 获得 {status}（{seconds} 秒）",
   "combat.statusAppliedMaintained": "{target} 获得 {status}（维持）",
@@ -1277,11 +1277,21 @@ export default {
     "高处是作战的位置：平台会遮住下方的人，坡道是层与层之间唯一的通路，从上方射出的弓箭伤害更高。",
   "training.scenario.wilds.label": "荒野",
   "training.scenario.wilds.teaches":
-    "地面本身也会伤人：焦土会灼烧站在上面的任何人，离开后灼烧仍会持续，所以绕开它。",
+    "地面本身很重要：焦土、熔岩、毒雾、泥沼、污水和受污染的水，以及汲取能量的尖塔会伤害你或让你减速，而泉水能治疗，树林能让你加速。拉杆能打开大门。",
   "training.soundOff": "声音已关闭。",
   "training.soundOn": "声音已开启。",
   "training.you": "你",
 
   "weaponSets.empty": "武器组 {number}：空",
   "weaponSets.holds": "武器组 {number}：{gear}",
+
+  "zone.draining-spire": "汲取尖塔",
+  "zone.foul-water": "污水",
+  "zone.grove": "树林",
+  "zone.mire": "泥沼",
+  "zone.molten": "熔岩",
+  "zone.scorched": "焦土",
+  "zone.spring": "泉水",
+  "zone.tainted-water": "受污染的水",
+  "zone.toxic-fog": "毒雾",
 } satisfies Catalog;

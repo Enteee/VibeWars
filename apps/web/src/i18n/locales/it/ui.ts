@@ -290,7 +290,7 @@ export default {
   "combat.sourceShrine": "Il santuario",
   "combat.sourceSkill": "un'abilità",
   "combat.sourceWeapon": "un'arma",
-  "combat.sourceZone": "Pericolo",
+  "combat.sourceZone": "Terreno",
   "combat.spellFailed": "{skill} di {target} fallisce",
   "combat.statusApplied": "{target} ottiene {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} ottiene {status} (mantenuto)",
@@ -1466,11 +1466,21 @@ export default {
     "Che l'altezza è un posto da cui combattere: le piattaforme nascondono chi sta sotto, le rampe sono l'unico passaggio tra i livelli, e il tuo tiro con l'arco dall'alto colpisce più forte.",
   "training.scenario.wilds.label": "Terre selvagge",
   "training.scenario.wilds.teaches":
-    "Che il terreno stesso può ferire: il terreno bruciato brucia chiunque ci stia sopra, e la bruciatura continua dopo che ne esci, quindi giraci intorno.",
+    "Che il terreno stesso conta: il terreno bruciato, la lava, la nebbia tossica, il pantano, l'acqua putrida e quella contaminata e le guglie che prosciugano l'energia ti feriscono o ti rallentano, mentre le sorgenti curano e i boschetti ti rendono più veloce. Le leve aprono i cancelli.",
   "training.soundOff": "Audio spento.",
   "training.soundOn": "Audio attivo.",
   "training.you": "Tu",
 
   "weaponSets.empty": "Set di armi {number}: vuoto",
   "weaponSets.holds": "Set di armi {number}: {gear}",
+
+  "zone.draining-spire": "Guglia prosciugante",
+  "zone.foul-water": "Acqua putrida",
+  "zone.grove": "Boschetto",
+  "zone.mire": "Pantano",
+  "zone.molten": "Lava",
+  "zone.scorched": "Terreno bruciato",
+  "zone.spring": "Sorgente",
+  "zone.tainted-water": "Acqua contaminata",
+  "zone.toxic-fog": "Nebbia tossica",
 } satisfies Catalog;

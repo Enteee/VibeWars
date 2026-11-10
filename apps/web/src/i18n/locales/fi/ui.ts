@@ -277,7 +277,7 @@ export default {
   "combat.sourceShrine": "Pyhäkkö",
   "combat.sourceSkill": "taito",
   "combat.sourceWeapon": "ase",
-  "combat.sourceZone": "Vaara",
+  "combat.sourceZone": "Maa",
   "combat.spellFailed": "Kohteen {target} taito {skill} epäonnistuu",
   "combat.statusApplied": "{target} saa tilan {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} saa tilan {status} (ylläpidetty)",
@@ -1400,11 +1400,21 @@ export default {
     "Että korkeus on paikka, josta taistella: tasanteet kätkevät alla olevat, rampit ovat ainoa reitti kerrosten välillä, ja oma jousilaukauksesi ylhäältä osuu kovemmin.",
   "training.scenario.wilds.label": "Erämaa",
   "training.scenario.wilds.teaches":
-    "Että maa itse voi satuttaa: kärventynyt maa polttaa jokaista sillä seisovaa, ja palaminen jatkuu vielä poistuttuasi, joten kierrä se.",
+    "Että maalla itsellään on väliä: kärventynyt maa, laava, myrkkysumu, suo, likainen ja saastunut vesi sekä energiaa imevät tornit satuttavat tai hidastavat sinua, kun taas lähteet parantavat ja lehdot nopeuttavat. Vivut avaavat portit.",
   "training.soundOff": "Ääni pois.",
   "training.soundOn": "Ääni päällä.",
   "training.you": "Sinä",
 
   "weaponSets.empty": "Asesarja {number}: tyhjä",
   "weaponSets.holds": "Asesarja {number}: {gear}",
+
+  "zone.draining-spire": "Imevä torni",
+  "zone.foul-water": "Likainen vesi",
+  "zone.grove": "Lehto",
+  "zone.mire": "Suo",
+  "zone.molten": "Laava",
+  "zone.scorched": "Kärventynyt maa",
+  "zone.spring": "Lähde",
+  "zone.tainted-water": "Saastunut vesi",
+  "zone.toxic-fog": "Myrkkysumu",
 } satisfies Catalog;

@@ -269,7 +269,7 @@ export default {
   "combat.sourceShrine": "Het schrijn",
   "combat.sourceSkill": "een skill",
   "combat.sourceWeapon": "een wapen",
-  "combat.sourceZone": "Gevaar",
+  "combat.sourceZone": "Grond",
   "combat.spellFailed": "{skill} van {target} mislukt",
   "combat.statusApplied": "{target} krijgt {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} krijgt {status} (onderhouden)",
@@ -1392,11 +1392,21 @@ export default {
     "Dat hoogte een plek is om vanaf te vechten: dekken verbergen wie eronder staat, hellingen zijn de enige weg tussen lagen, en je eigen boogschot van bovenaf raakt harder.",
   "training.scenario.wilds.label": "Wildernis",
   "training.scenario.wilds.teaches":
-    "Dat de grond zelf pijn kan doen: verschroeide grond verbrandt wie erop staat, en het branden gaat door nadat je eraf stapt, dus loop eromheen.",
+    "Dat de grond zelf ertoe doet: verschroeide grond, lava, giftige mist, moeras, vuil en besmet water en spitsen die energie wegzuigen doen je pijn of vertragen je, terwijl bronnen genezen en bosjes je sneller maken. Hendels openen poorten.",
   "training.soundOff": "Geluid uit.",
   "training.soundOn": "Geluid aan.",
   "training.you": "Jij",
 
   "weaponSets.empty": "Wapenset {number}: leeg",
   "weaponSets.holds": "Wapenset {number}: {gear}",
+
+  "zone.draining-spire": "Zuigende spits",
+  "zone.foul-water": "Vuil water",
+  "zone.grove": "Bosje",
+  "zone.mire": "Moeras",
+  "zone.molten": "Lava",
+  "zone.scorched": "Verschroeide grond",
+  "zone.spring": "Bron",
+  "zone.tainted-water": "Besmet water",
+  "zone.toxic-fog": "Giftige mist",
 } satisfies Catalog;
