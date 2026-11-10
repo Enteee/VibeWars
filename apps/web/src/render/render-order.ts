@@ -19,6 +19,7 @@ export type RenderItem =
   | { readonly kind: "terrain" }
   | { readonly kind: "lighting"; readonly layer: number }
   | { readonly kind: "lit-ground-effect" }
+  | { readonly kind: "light-mark"; readonly layer: number }
   | { readonly kind: "character"; readonly band: number; readonly part: CharacterPart }
   | { readonly kind: "wall"; readonly layer: number }
   | { readonly kind: "support"; readonly deckLayer: number }
@@ -42,6 +43,11 @@ const LIT_GROUND_EFFECT = 0.6;
 const DECK_GROUND_EFFECT = 0.5;
 /** A deck layer's lighting: over its side faces, deck and ramp, under whoever stands there. */
 const DECK_LIGHTING = 5.8;
+/**
+ * A torch or hearth (#2989): over its layer's lighting and wards, under
+ * whoever stands on it, so a body crossing a hearth stays in sight.
+ */
+const LIGHT_MARK = 0.8;
 const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, marks: 1.4 };
 /**
  * Ground water sits on the floor and under the ward and trap circles
@@ -77,6 +83,8 @@ export function renderOrder(item: RenderItem): number {
       return item.layer === 0 ? GROUND_LIGHTING : (item.layer - 1) * LAYER_STACK + DECK_LIGHTING;
     case "lit-ground-effect":
       return LIT_GROUND_EFFECT;
+    case "light-mark":
+      return item.layer * LAYER_STACK + LIGHT_MARK;
     case "terrain":
       return 0;
     case "character":
