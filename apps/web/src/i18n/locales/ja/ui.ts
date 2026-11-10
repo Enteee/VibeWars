@@ -583,7 +583,6 @@ export default {
   "lobby.hostStartsMatchmaking": "ホストがマッチングを開始します",
   "lobby.joinTeam": "参加",
   "lobby.joinTeamLabel": "チーム{team}に参加",
-  "lobby.leaveQueue": "キューを離れる",
   "lobby.leaveTeam": "離脱",
   "lobby.leaveTeamLabel": "チーム{team}を離脱",
   "lobby.map": "マップ",

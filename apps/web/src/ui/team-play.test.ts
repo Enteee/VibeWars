@@ -172,7 +172,6 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
   let added: number;
   let cloned: string[];
   let rerolled: string[];
-  let leftQueue: number;
   /** The starter team ids by size (#2147). */
   let starterIds: Map<string, string>;
   const callbacks: TeamPlayCallbacks = {
@@ -189,9 +188,6 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     },
     onRerollTeam: (id) => {
       rerolled.push(id);
-    },
-    onLeaveQueue: () => {
-      leftQueue += 1;
     },
   };
   const render = (teams: readonly StoredTeam[]): FakeElement => {
@@ -218,7 +214,6 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     added = 0;
     cloned = [];
     rerolled = [];
-    leftQueue = 0;
     starterIds = new Map();
     vi.stubGlobal("localStorage", {
       getItem: (key: string) =>
@@ -341,14 +336,12 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     { id: "b", size: "large", mode: "kill-count", teamSizes: [8] },
   ];
 
-  it("in the Random Arena queue, says so, its Find a match off with why, beside Leave Queue (#2781)", () => {
+  it("in the Random Arena queue, says so, with no Find a match and no way out but the flyout (#2781, #2980)", () => {
     for (const entry of ["team-arena", "heroes-ascent", "gvg"] as const) {
       const root = host(entry, maps);
       expect(root.everything().some((node) => node.textContent === t("queue.busy"))).toBe(true);
-      const [find] = root.all("lobby-find");
-      expect(find?.textContent).toBe(t("lobby.findMatch"));
-      expect(find?.disabled).toBe(true);
-      expect(find?.title).toBe(t("queue.busy"));
+      expect(root.all("lobby-find")).toEqual([]);
+      expect(root.all("lobby-leave-queue")).toEqual([]);
     }
     const hosted = host("hosted-game", maps);
     // The maps to look at, not to pick: a list.
@@ -356,10 +349,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
       hosted.all("lobby-map").flatMap((list) => list.children.map((item) => item.textContent)),
     ).toEqual(maps.map(mapLabel));
     expect(hosted.all("lobby-find")).toEqual([]);
-    const [leave] = hosted.all("lobby-leave-queue");
-    expect(leave?.textContent).toBe(t("queue.leaveQueue"));
-    leave?.click();
-    expect(leftQueue).toBe(1);
+    expect(hosted.all("lobby-leave-queue")).toEqual([]);
   });
 
   it("names an unnamed team and says why a team is not playable (#2110)", () => {

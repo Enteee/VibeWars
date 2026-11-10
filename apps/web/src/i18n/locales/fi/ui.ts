@@ -632,7 +632,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Isäntä aloittaa ottelunhaun",
   "lobby.joinTeam": "Liity",
   "lobby.joinTeamLabel": "Liity tiimiin {team}",
-  "lobby.leaveQueue": "Poistu jonosta",
   "lobby.leaveTeam": "Poistu",
   "lobby.leaveTeamLabel": "Poistu tiimistä {team}",
   "lobby.map": "Kartta",

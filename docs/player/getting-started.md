@@ -64,14 +64,13 @@ team shown as your own Team Build and opens it, to change as you like.
 
 The quickest way into a fight. On **Random Arena**, click the card of
 the character you play as, pick a team size, **1v1**, **2v2** or
-**4v4**, with the arrows of the rail's **Team size**, then press **Ready** in the title
+**4v4**, with the arrows of the rail's **Team size**, then press **Find a match** in the title
 bar, and wait: you are put in a team with other players, against
 another team, on a random map. The queue waits in the background: you
 stay on Random Arena and may go anywhere meanwhile, your builds,
 equipment, Options, Help or the music editor, but not change character,
 host or join a lobby, or change a mode's team size. Team Arena and the
-other lobby screens say you are in a queue and list their maps, their
-**Find a match** off, beside a **Leave Queue**; the team size reads the
+other lobby screens say you are in a queue and list their maps; the team size reads the
 size you queued at, on every mode. A turning ring left of **Help** in the top bar
 shows you are queued; click it for the queue, the time waited, how many
 are searching and **Leave Queue**. When a match is found you are taken
@@ -161,8 +160,7 @@ searching`. Only the host has **Leave Queue** there. Closing the
 host's tab takes the party out of the queue at once. When another
 queued team of the same mode turns up, you play them on one of the
 mode's maps, each side with its own builds, and come back to your lobby
-afterwards. The host can press
-**Leave the queue** at any time; a guest who leaves takes the whole
+afterwards. The host can leave from the ring's window at any time; a guest who leaves takes the whole
 party out of it. With no other team after a minute, the host can also
 press **Play against bots**: a match in your own lobby against a
 random preset team of bots,

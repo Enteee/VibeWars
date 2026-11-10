@@ -580,7 +580,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Host yang memulai matchmaking",
   "lobby.joinTeam": "Gabung",
   "lobby.joinTeamLabel": "Gabung ke tim {team}",
-  "lobby.leaveQueue": "Keluar antrean",
   "lobby.leaveTeam": "Keluar",
   "lobby.leaveTeamLabel": "Keluar dari tim {team}",
   "lobby.map": "Peta",

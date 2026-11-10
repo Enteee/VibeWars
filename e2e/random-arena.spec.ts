@@ -53,7 +53,7 @@ async function queue1v1(page: Page, name: string): Promise<void> {
   await namePlayer(page, name);
   await openRail(page, "Random Arena");
   await setTeamSize(page, 1);
-  await page.locator("#topbar .screen-ready").click();
+  await page.locator("#topbar .lobby-find").click();
   // The queue waits in the background (#2743): the screen stays, the icon says so.
   await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
   await expect(page.locator(".screen-random-arena")).toBeVisible();
@@ -72,13 +72,13 @@ test("Random Arena's Ready is greyed out without a character to queue with, or a
 }) => {
   await page.goto("./");
   const screen = page.locator(".screen-random-arena");
-  const ready = page.locator("#topbar .screen-ready");
+  const ready = page.locator("#topbar .lobby-find");
   const hint = screen.locator(".random-arena-hint");
   // The first start's rolled character (#853) queues; gone, it does not
   // come back, and nothing is left to queue with. The menu cannot delete
   // it (#1147), so the store is emptied under the page. Source text, as
   // the e2e tsconfig has no DOM lib (see builds.spec.ts).
-  await expect(ready).toHaveText("Ready");
+  await expect(ready).toHaveText("Find a match");
   await expect(ready).toBeEnabled();
   await expect(hint).toBeHidden();
   // 8v8 is no Random Arena: offered, but not to pick.
@@ -259,9 +259,9 @@ test("Random Arena queues in the background: the icon sits left of Help, and Lea
   await queue1v1(page, "Alice");
   // Immediately left of Help.
   await expect(page.locator("#topbar .topbar-queue + .topbar-help")).toHaveCount(1);
-  const ready = page.locator("#topbar .screen-ready");
-  await expect(ready).toBeDisabled();
-  await expect(ready).toHaveAttribute("title", "You are in a queue.");
+  const find = page.locator("#topbar .lobby-find");
+  await expect(find).toHaveCount(0);
+  await expect(page.locator(".lobby-leave-queue")).toHaveCount(0);
   // Anywhere a lobby member may go: Character Builder, and back.
   await openRail(page, "Character Builder");
   await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
@@ -271,10 +271,51 @@ test("Random Arena queues in the background: the icon sits left of Help, and Lea
   await expect(flyout).toBeHidden();
   await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
   await expect(page.locator(".screen-random-arena")).toBeVisible();
-  await expect(ready).toBeEnabled();
+  await expect(find).toBeEnabled();
 });
 
-test("queued, Team Arena stays browsable: Find a match waits, saying why, until its Leave Queue (#2781)", async ({
+test("Find a match stands left of the icons, and the spinner takes its place once queued (#2980)", async ({
+  page,
+}) => {
+  await makeCharacter(page);
+  await namePlayer(page, "Alice");
+  const icons = page.locator("#topbar .topbar-actions");
+  const find = page.locator("#topbar .lobby-find");
+  const spinner = page.locator("#topbar .topbar-queue");
+  /** Find a match's right edge touches the icons, with only the icons' own gap between. */
+  const expectBesideIcons = async (): Promise<void> => {
+    await expect(find).toHaveText("Find a match");
+    const button = await find.boundingBox();
+    const group = await icons.boundingBox();
+    expect(button).not.toBeNull();
+    expect(group).not.toBeNull();
+    if (button !== null && group !== null) {
+      expect(group.x - (button.x + button.width)).toBeGreaterThanOrEqual(0);
+      expect(group.x - (button.x + button.width)).toBeLessThan(8);
+    }
+  };
+  await openRail(page, "Team Arena");
+  await expect(page.locator(".screen-team-arena")).toBeVisible();
+  await expectBesideIcons();
+  await expect(page.locator(".lobby-leave-queue")).toHaveCount(0);
+  await openRail(page, "Random Arena");
+  await setTeamSize(page, 1);
+  await expectBesideIcons();
+  await find.click();
+  await expect(find).toHaveCount(0);
+  await expect(spinner).toBeVisible();
+  const ring = await spinner.boundingBox();
+  const group = await icons.boundingBox();
+  expect(ring?.x).toBe(group?.x);
+  await expect(page.locator(".lobby-leave-queue")).toHaveCount(0);
+  // On a phone the other icons fold into the ⋯, the spinner stays out.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator("#topbar")).toHaveClass(/has-more/);
+  await expect(spinner).toBeVisible();
+  await expect(page.locator("#topbar .topbar-help")).toBeHidden();
+});
+
+test("queued, Team Arena stays browsable with no Find a match, and the flyout's Leave Queue brings it back (#2781, #2980)", async ({
   page,
 }) => {
   await makeCharacter(page);
@@ -283,8 +324,7 @@ test("queued, Team Arena stays browsable: Find a match waits, saying why, until 
   const screen = page.locator(".screen-team-arena");
   await expect(screen).toContainText("You are in a queue.");
   const find = page.getByRole("button", { name: "Find a match", exact: true });
-  await expect(find).toBeDisabled();
-  await expect(find).toHaveAttribute("title", "You are in a queue.");
+  await expect(find).toHaveCount(0);
   // The queue is for the size it has: no mode's size changes under it.
   const size = page.locator(".mode-rail-size");
   await expect(size).toHaveAttribute("title", "Leave the queue to change the team size");
@@ -293,7 +333,8 @@ test("queued, Team Arena stays browsable: Find a match waits, saying why, until 
   await expect(screen.locator(".screen-queued-maps li").first()).toBeVisible();
   await expect(screen.locator("select")).toHaveCount(0);
 
-  await screen.getByRole("button", { name: "Leave Queue", exact: true }).click();
+  const flyout = await queueWindow(page);
+  await flyout.getByRole("button", { name: "Leave Queue", exact: true }).click();
   await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
   // Out of it, the player's own lobby opens here, and finds a match.
   await expect(find).toBeEnabled();

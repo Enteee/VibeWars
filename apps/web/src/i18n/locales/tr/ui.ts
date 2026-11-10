@@ -623,7 +623,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Eşleştirmeyi kurucu başlatır",
   "lobby.joinTeam": "Katıl",
   "lobby.joinTeamLabel": "{team} takımına katıl",
-  "lobby.leaveQueue": "Sıradan çık",
   "lobby.leaveTeam": "Ayrıl",
   "lobby.leaveTeamLabel": "{team} takımından ayrıl",
   "lobby.map": "Harita",

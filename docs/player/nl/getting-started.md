@@ -63,14 +63,13 @@ jouw eigen Teambuild en opent die, om naar wens te wijzigen.
 
 De snelste weg naar een gevecht. Klik op **Random Arena** op de kaart van het
 personage waarmee je speelt, kies een teamgrootte, **1v1**, **2v2** of
-**4v4**, met de pijlen van de **Teamgrootte** in de balk, druk dan op **Klaar**
+**4v4**, met de pijlen van de **Teamgrootte** in de balk, druk dan op **Match zoeken**
 in de titelbalk en wacht: je komt in een team met andere spelers, tegen een
 ander team, op een willekeurige map. De wachtrij wacht op de achtergrond: je
 blijft op Random Arena en mag intussen overal heen, je builds, uitrusting,
 Opties, Help of de muziekeditor, maar niet van personage wisselen, een lobby
 hosten of binnengaan, of de teamgrootte van een modus wijzigen. Team Arena en
-de andere lobbyschermen zeggen dat je in een wachtrij staat en tonen hun maps,
-hun **Match zoeken** uit, naast een **Uit wachtrij**; de teamgrootte toont de
+de andere lobbyschermen zeggen dat je in een wachtrij staat en tonen hun maps; de teamgrootte toont de
 grootte waarmee je in de rij staat, in elke modus. Een draaiende ring links van
 **Help** in de bovenste balk laat zien dat je in de rij staat; klik erop voor
 de wachtrij, de gewachte tijd, hoeveel er zoeken en **Uit wachtrij**. Als er
@@ -163,7 +162,7 @@ gewachte tijd, en in Team Arena hoeveel teams er zoeken, het jouwe meegeteld:
 tabblad, dan gaat de groep meteen uit de wachtrij. Als er een ander team van
 dezelfde modus in de wachtrij opduikt, speel je tegen hen op een van de maps
 van de modus, elke kant met zijn eigen builds, en kom je daarna terug in je
-lobby. De host kan op elk moment op **Wachtrij verlaten** drukken; een gast die
+lobby. De host kan op elk moment de wachtrij verlaten via het venster van de ring; een gast die
 vertrekt, haalt de hele groep eruit. Is er na een minuut geen ander team, dan
 kan de host ook op **Tegen bots spelen** drukken: een match in je eigen lobby
 tegen een willekeurig kant-en-klaar team van bots, behalve in

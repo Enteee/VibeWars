@@ -17,13 +17,20 @@ import {
   type MenuCallbacks,
 } from "./menu.js";
 
-/** The title bar's actions, as the last screen drawn put them there. */
-const bar = vi.hoisted(() => ({ actions: [] as readonly unknown[] }));
+/** The title bar's actions and queue action, as the last screen drawn put them there. */
+const bar = vi.hoisted((): { actions: readonly unknown[]; queueAction: unknown } => ({
+  actions: [],
+  queueAction: undefined,
+}));
 
 vi.mock("./kit.js", async (original) => ({
   ...(await original<typeof Kit>()),
-  screenBar: (options: { readonly actions?: readonly unknown[] }) => {
+  screenBar: (options: {
+    readonly actions?: readonly unknown[];
+    readonly queueAction?: unknown;
+  }) => {
     bar.actions = options.actions ?? [];
+    bar.queueAction = options.queueAction;
     return { back: undefined, release: () => undefined };
   },
 }));
@@ -247,36 +254,36 @@ describe("the character screens (#1525)", () => {
     expect(stored.get(`${STORAGE_NAMESPACE}.activeCharacterId`)).toBe("rolled");
   });
 
-  /** Random Arena's Ready, from the title bar. */
-  const ready = (): FakeElement => {
-    const [button] = bar.actions;
+  /** Random Arena's Find a match, from the title bar. */
+  const find = (): FakeElement => {
+    const button = bar.queueAction;
     if (!(button instanceof FakeElement)) {
-      throw new Error("no Ready in the bar");
+      throw new Error("no Find a match in the bar");
     }
     return button;
   };
 
-  it("Random Arena's Ready queues the sidebar's size as the saved name, once a character is picked (#2022)", () => {
+  it("Random Arena's Find a match queues the sidebar's size as the saved name, once a character is picked (#2022)", () => {
     let nodes = shown(renderRandomArena);
-    expect(ready().textContent).toBe("Ready");
-    expect(ready().disabled).toBe(true);
-    expect(ready().title).toBe(t("menu.noCharacterForQueue"));
+    expect(find().textContent).toBe(t("lobby.findMatch"));
+    expect(find().disabled).toBe(true);
+    expect(find().title).toBe(t("menu.noCharacterForQueue"));
     expect(nodes.some((node) => node.textContent === t("menu.noCharacterForQueue"))).toBe(true);
 
     stored.set(`${STORAGE_NAMESPACE}.activeCharacterId`, "mine");
     nodes = shown(renderRandomArena);
-    expect(ready().disabled).toBe(false);
+    expect(find().disabled).toBe(false);
     expect(nodes.some((node) => node.textContent === t("menu.noCharacterForQueue"))).toBe(false);
-    ready().click();
+    find().click();
     expect(queued).toEqual(["random-arena-4v4 Rurik"]);
 
     stored.set(`${STORAGE_NAMESPACE}.teamSizeByEntry`, JSON.stringify({ "random-arena": 2 }));
     shown(renderRandomArena);
-    ready().click();
+    find().click();
     expect(queued).toEqual(["random-arena-4v4 Rurik", "random-arena-2v2 Rurik"]);
   });
 
-  it("Random Arena's Ready queues at the size the sidebar steps to (#2141)", () => {
+  it("Random Arena's Find a match queues at the size the sidebar steps to (#2141)", () => {
     stored.set(`${STORAGE_NAMESPACE}.activeCharacterId`, "mine");
     const nodes = shown(renderRandomArena);
     const smaller = nodes.find((node) => node.attributes.get("aria-label") === "Smaller team");
@@ -286,8 +293,8 @@ describe("the character screens (#1525)", () => {
     smaller.listeners.get("click")?.();
     smaller.listeners.get("click")?.();
     expect(smaller.disabled).toBe(true);
-    expect(ready().disabled).toBe(false);
-    ready().click();
+    expect(find().disabled).toBe(false);
+    find().click();
     expect(queued).toEqual(["random-arena-1v1 Rurik"]);
   });
 

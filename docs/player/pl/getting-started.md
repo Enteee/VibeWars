@@ -59,13 +59,12 @@ pokazanej drużyny jako twój build drużyny i otwiera ją do dowolnych zmian.
 
 Najszybsza droga do walki. Na **Arenie losowej** kliknij kartę postaci, którą grasz,
 wybierz rozmiar drużyny, **1v1**, **2v2** lub **4v4**, strzałkami **Rozmiaru drużyny**
-na pasku, potem naciśnij **Gotowe** na pasku tytułu i czekaj: trafisz do drużyny
+na pasku, potem naciśnij **Znajdź mecz** na pasku tytułu i czekaj: trafisz do drużyny
 z innymi graczami, przeciw innej drużynie, na losowej mapie. Kolejka działa w tle:
 zostajesz na Arenie losowej i możesz w tym czasie iść gdziekolwiek, do buildów,
 ekwipunku, Opcji, Pomocy czy edytora muzyki, ale nie możesz zmienić postaci,
 hostować lobby, dołączyć do lobby ani zmienić rozmiaru drużyny trybu. Arena drużynowa
-i inne ekrany lobby mówią, że jesteś w kolejce, i wymieniają swoje mapy, z wyłączonym
-**Znajdź mecz** obok **Opuść kolejkę**; rozmiar drużyny pokazuje rozmiar, z którym
+i inne ekrany lobby mówią, że jesteś w kolejce, i wymieniają swoje mapy; rozmiar drużyny pokazuje rozmiar, z którym
 stanąłeś w kolejce, w każdym trybie. Obracający się pierścień po lewej od **Pomoc** na górnym pasku
 pokazuje, że czekasz w kolejce; kliknij go, aby zobaczyć kolejkę, czas oczekiwania,
 liczbę szukających i **Opuść kolejkę**. Gdy mecz zostanie znaleziony, trafiasz na jego
@@ -149,8 +148,7 @@ jego okno nazywa kolejkę (**Arena drużynowa 2v2**, **Szczyt Bohaterów · rund
 szukających drużyn, wliczając twoją: `2 drużyny szukają`. Tylko host ma tam
 **Opuść kolejkę**. Zamknięcie karty hosta natychmiast usuwa grupę z kolejki. Gdy
 pojawi się inna drużyna w kolejce tego samego trybu, gracie przeciw niej na jednej
-z map trybu, każda strona ze swoimi buildami, a potem wracacie do lobby. Host może
-nacisnąć **Opuść kolejkę** w dowolnej chwili; gość, który wychodzi, zabiera z niej
+z map trybu, każda strona ze swoimi buildami, a potem wracacie do lobby. Host może opuścić kolejkę w oknie pierścienia w dowolnej chwili; gość, który wychodzi, zabiera z niej
 całą grupę. Jeśli po minucie nie ma innej drużyny, host może też nacisnąć **Graj z
 botami**: mecz we własnym lobby przeciw losowej gotowej drużynie botów,
 oprócz [Szczytu Bohaterów](modes.md#szczyt-bohaterów), który czeka na drużynę na twojej

@@ -622,7 +622,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Värden startar matchningen",
   "lobby.joinTeam": "Gå med",
   "lobby.joinTeamLabel": "Gå med i lag {team}",
-  "lobby.leaveQueue": "Lämna kön",
   "lobby.leaveTeam": "Lämna",
   "lobby.leaveTeamLabel": "Lämna lag {team}",
   "lobby.map": "Karta",
