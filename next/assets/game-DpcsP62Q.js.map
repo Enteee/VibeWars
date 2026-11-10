@@ -1,1 +1,0 @@
-{"version":3,"file":"game-DpcsP62Q.js","names":["ENGLISH_NAMES","game_default"],"sources":["../../src/i18n/locales/sv/game.ts"],"sourcesContent":["import { ENGLISH_NAMES } from \"../../game-names.js\";\n\nexport default ENGLISH_NAMES;\n"],"mappings":"A,uCAEA,IAAAC,EAAeD,E"}
