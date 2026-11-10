@@ -294,3 +294,160 @@ describe("harmful ground (#3027)", () => {
     expect(ids).toContain("fouled");
   });
 });
+
+describe("springs, groves, tainted water and draining spires (#3028)", () => {
+  const holds = (sim: MatchSimulation, id: string, status: StatusId) =>
+    get(sim, id).combatant.statuses.active.some((active) => active.id === status);
+
+  for (const [kind, status] of [
+    ["spring", "refreshed"],
+    ["grove", "fleet"],
+    ["tainted-water", "tainted"],
+    ["draining-spire", "drained"],
+  ] as const) {
+    it(`${kind}: puts ${status} on inside, keeps it its linger out, then it ends`, () => {
+      const rule = ZONE_RULES[kind];
+      expect(rule.statuses).toEqual([status]);
+      expect(rule.lingerSeconds).toBe(1);
+      const zone = { ...STRIP, kind };
+      const sim = arena([spec("a", 0, vec2(400, 400), { layer: 0 })], [zone]);
+      run(sim, 0.5);
+      expect(holds(sim, "a", status)).toBe(true);
+      sim.walkTo("a", vec2(560, 400), 0);
+      while (zonesHolding([zone], get(sim, "a").position, 0).length > 0) {
+        sim.step(DT);
+      }
+      run(sim, rule.lingerSeconds - 0.2);
+      expect(holds(sim, "a", status)).toBe(true);
+      run(sim, 0.5);
+      expect(holds(sim, "a", status)).toBe(false);
+    });
+  }
+
+  /** Health `a` has after a second, from half, standing at `spawn` among `zones`. */
+  const healthAfter = (spawn: Vec2, zones: readonly MatchZone[]): number => {
+    const sim = arena([spec("a", 0, spawn, { layer: 0 })], zones);
+    run(sim, 0.5);
+    const combatant = get(sim, "a").combatant;
+    combatant.health = 240;
+    run(sim, 1);
+    return combatant.health;
+  };
+
+  it("spring: Refreshed heals 6 Health a second more than outside", () => {
+    const spring = { ...STRIP, kind: "spring" } as const;
+    expect(
+      healthAfter(vec2(400, 400), [spring]) - healthAfter(vec2(900, 400), [spring]),
+    ).toBeCloseTo(6, 0);
+  });
+
+  it("spring in scorched ground: the pips sum, Burning's -7 and Refreshed's +3", () => {
+    const both = [STRIP, { ...STRIP, id: "spring", kind: "spring" } as const];
+    expect(healthAfter(vec2(900, 400), both) - healthAfter(vec2(400, 400), both)).toBeCloseTo(8, 0);
+  });
+
+  it("draining spire: Drained takes 1 Energy a second", () => {
+    const after = (spawn: Vec2): number => {
+      const sim = arena(
+        [spec("a", 0, spawn, { layer: 0 })],
+        [{ ...STRIP, kind: "draining-spire" }],
+      );
+      run(sim, 0.5);
+      const combatant = get(sim, "a").combatant;
+      combatant.energy = 10;
+      run(sim, 3);
+      return combatant.energy;
+    };
+    expect(after(vec2(900, 400)) - after(vec2(400, 400))).toBeCloseTo(3, 1);
+  });
+
+  it("draining spire: never takes Energy below 0", () => {
+    const sim = arena(
+      [spec("a", 0, vec2(400, 400), { layer: 0, baseEnergyPips: 0 })],
+      [{ ...STRIP, kind: "draining-spire" }],
+    );
+    run(sim, 0.5);
+    get(sim, "a").combatant.energy = 0.5;
+    run(sim, 2);
+    expect(get(sim, "a").combatant.energy).toBe(0);
+  });
+
+  it("grove: one Fleet under two overlapping groves", () => {
+    const sim = arena(
+      [spec("a", 0, vec2(400, 400), { layer: 0 })],
+      [
+        { ...STRIP, kind: "grove" },
+        { ...STRIP, id: "again", kind: "grove" },
+      ],
+    );
+    run(sim, 0.5);
+    const ids = get(sim, "a").combatant.statuses.active.map((status) => status.id);
+    expect(ids.filter((id) => id === "fleet")).toHaveLength(1);
+  });
+
+  /** Health `a` loses using its first skill, standing at `spawn` by tainted water. */
+  const lostToSkill = (spawn: Vec2, skillId: string): number => {
+    const sim = arena(
+      [spec("a", 0, spawn, { layer: 0, skillBar: [skillId] })],
+      [{ ...STRIP, kind: "tainted-water" }],
+    );
+    run(sim, 0.5);
+    const combatant = get(sim, "a").combatant;
+    const before = combatant.health;
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    sim.step(DT);
+    return before - combatant.health;
+  };
+
+  it("tainted water: a skill paid for inside costs 15 Health, outside nothing", () => {
+    expect(lostToSkill(vec2(400, 400), "warrior.sprint")).toBeCloseTo(15, 0);
+    expect(lostToSkill(vec2(900, 400), "warrior.sprint")).toBe(0);
+  });
+
+  it("tainted water: a skill that costs nothing still costs 15 Health", () => {
+    expect(getSkill("warrior.signet-of-strength")?.cost).toBeUndefined();
+    expect(lostToSkill(vec2(400, 400), "warrior.signet-of-strength")).toBeCloseTo(15, 0);
+  });
+
+  it("tainted water: a cast cancelled after it began keeps its price", () => {
+    const sim = arena(
+      [spec("a", 0, vec2(400, 400), { layer: 0, skillBar: ["warrior.signet-of-strength"] })],
+      [{ ...STRIP, kind: "tainted-water" }],
+    );
+    run(sim, 0.5);
+    const combatant = get(sim, "a").combatant;
+    const before = combatant.health;
+    sim.requestSkill("a", 0);
+    sim.step(DT);
+    sim.cancelAction("a");
+    sim.step(DT);
+    expect(before - combatant.health).toBeCloseTo(15, 0);
+  });
+
+  it("tainted water: a plain attack costs nothing", () => {
+    const sim = arena(
+      [spec("a", 0, vec2(400, 400), { layer: 0 }), spec("b", 1, vec2(560, 400), { layer: 0 })],
+      [{ ...STRIP, kind: "tainted-water" }],
+    );
+    run(sim, 0.5);
+    const attacker = get(sim, "a").combatant;
+    const foe = get(sim, "b").combatant;
+    const [before, foeBefore] = [attacker.health, foe.health];
+    expect(sim.requestAttack("a", "b")).toEqual({ ok: true });
+    run(sim, 4);
+    expect(foe.health).toBeLessThan(foeBefore);
+    expect(attacker.health).toBe(before);
+  });
+
+  it("tainted water: its health loss can kill", () => {
+    const sim = arena(
+      [spec("a", 0, vec2(400, 400), { layer: 0, skillBar: ["warrior.sprint"] })],
+      [{ ...STRIP, kind: "tainted-water" }],
+    );
+    run(sim, 0.5);
+    get(sim, "a").combatant.health = 10;
+    sim.requestSkill("a", 0);
+    sim.step(DT);
+    expect(get(sim, "a").combatant.dead).toBe(true);
+  });
+});

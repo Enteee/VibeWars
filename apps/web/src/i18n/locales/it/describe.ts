@@ -778,6 +778,7 @@ export default {
     `+${p.pips} di rigenerazione della Salute per ogni incantamento su di te (al massimo ${p.max})`,
   energyDegeneration: (p) => `−${p.energyPips} di degenerazione dell'Energia`,
   energyRegeneration: (p) => `+${p.energyPips} di rigenerazione dell'Energia`,
+  healthLostPerSkill: (p) => `−${p.amount} Salute per ogni abilità usata`,
   healthRegenerationForEachConditionOnYou: (p) =>
     `${p.healthPipsPerCondition} di rigenerazione della Salute per ogni condizione su di te`,
   health: () => "Salute",

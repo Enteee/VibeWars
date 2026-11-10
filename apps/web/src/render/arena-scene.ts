@@ -172,7 +172,14 @@ import {
 } from "./lighting-model.js";
 import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
 import { waterShapeOf, type WaterShape } from "./water-shape.js";
-import { ZONE_EDGE_WIDTH, ZONE_LOOK, zoneFillAlpha } from "./zone-look.js";
+import {
+  SPIRE_LOOK,
+  ZONE_EDGE_WIDTH,
+  ZONE_LOOK,
+  obeliskOutline,
+  zoneCentroid,
+  zoneFillAlpha,
+} from "./zone-look.js";
 import { screenPx, screenSized } from "./screen-text.js";
 import {
   BODY_EDGE_WIDTH,
@@ -2418,8 +2425,31 @@ export class ArenaScene extends Phaser.Scene {
       this.fillShape(g, zone.area);
       g.lineStyle(ZONE_EDGE_WIDTH * line, look.edge, 1);
       this.strokeShape(g, zone.area);
+      if (zone.kind === "draining-spire") {
+        this.drawSpire(g, zone.area, line);
+      }
       g.restore();
     }
+  }
+
+  /** A draining spire (#3028): a faint violet ring on its edge, an obelisk on its centroid. */
+  private drawSpire(g: Phaser.GameObjects.Graphics, area: RenderableShape, line: number): void {
+    g.lineStyle(ZONE_EDGE_WIDTH * 3 * line, SPIRE_LOOK.ring, SPIRE_LOOK.ringAlpha);
+    this.strokeShape(g, area);
+    const foot = zoneCentroid(area);
+    const outline = obeliskOutline(foot);
+    g.fillStyle(SPIRE_LOOK.stone, 1);
+    this.fillShape(g, { kind: "polygon", points: outline });
+    g.lineStyle(line, SPIRE_LOOK.outline, 1);
+    this.strokeShape(g, { kind: "polygon", points: outline });
+    // A rune down the shaft, the violet the spire drains into.
+    g.lineStyle(1.5 * line, SPIRE_LOOK.rune, 0.9);
+    g.lineBetween(
+      foot.x,
+      foot.y - SPIRE_LOOK.height * 0.25,
+      foot.x,
+      foot.y - SPIRE_LOOK.height * 0.65,
+    );
   }
 
   private ripplesAt(layer: number): {

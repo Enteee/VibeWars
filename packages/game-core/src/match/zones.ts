@@ -8,8 +8,21 @@ import type { Vec2 } from "../vec2.js";
  * so balance stays in one place and maps stay data.
  */
 
-/** Every kind of zone a map may name: harmful ground (#3024, #3027), more card by card (#3022). */
-export const ZONE_KINDS = ["scorched", "molten", "toxic-fog", "mire", "foul-water"] as const;
+/**
+ * Every kind of zone a map may name: harmful ground (#3024, #3027), ground
+ * that helps or taxes (#3028), more card by card (#3022).
+ */
+export const ZONE_KINDS = [
+  "scorched",
+  "molten",
+  "toxic-fog",
+  "mire",
+  "foul-water",
+  "spring",
+  "grove",
+  "tainted-water",
+  "draining-spire",
+] as const;
 
 export type ZoneKind = (typeof ZONE_KINDS)[number];
 
@@ -29,6 +42,11 @@ export const ZONE_RULES: Readonly<Record<ZoneKind, ZoneRule>> = {
   "toxic-fog": { statuses: ["poison"], lingerSeconds: 5 },
   mire: { statuses: ["mired"], lingerSeconds: 1 },
   "foul-water": { statuses: ["fouled"], lingerSeconds: 1 },
+  // Springs, groves, tainted water and draining spires (#3028).
+  spring: { statuses: ["refreshed"], lingerSeconds: 1 },
+  grove: { statuses: ["fleet"], lingerSeconds: 1 },
+  "tainted-water": { statuses: ["tainted"], lingerSeconds: 1 },
+  "draining-spire": { statuses: ["drained"], lingerSeconds: 1 },
 };
 
 /** A zone as the simulation takes it: its area as one polygon, on one layer. */

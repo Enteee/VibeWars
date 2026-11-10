@@ -665,6 +665,8 @@ export interface DescribeWords {
   }) => string;
   readonly energyDegeneration: (p: { readonly energyPips: string }) => string;
   readonly energyRegeneration: (p: { readonly energyPips: string }) => string;
+  /** Tainted water's price (#3028): Health lost for each skill used. */
+  readonly healthLostPerSkill: (p: { readonly amount: string }) => string;
   readonly healthRegenerationForEachConditionOnYou: (p: {
     readonly healthPipsPerCondition: string;
   }) => string;
@@ -2459,6 +2461,7 @@ export const EN_WORDS: DescribeWords = {
     `+${p.pips} Health regeneration for each enchantment on you (at most ${p.max})`,
   energyDegeneration: (p) => `−${p.energyPips} Energy degeneration`,
   energyRegeneration: (p) => `+${p.energyPips} Energy regeneration`,
+  healthLostPerSkill: (p) => `−${p.amount} Health for each skill used`,
   healthRegenerationForEachConditionOnYou: (p) =>
     `${p.healthPipsPerCondition} Health regeneration for each condition on you`,
   health: () => "Health",

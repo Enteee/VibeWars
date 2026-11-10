@@ -1473,6 +1473,12 @@ export interface StatusDefinition {
    */
   readonly energyLossOnAction: number;
   /**
+   * Health the bearer loses each time it pays for a skill (#3028), one
+   * costing nothing too, but not for a plain swing: tainted water's 15.
+   * Health loss, not damage nor sacrifice, so it can kill. 0: none.
+   */
+  readonly healthLossOnSkill: number;
+  /**
    * The share taken off the recharge of each binding ritual the bearer
    * finishes (#1064): Weapon of Quickening's 0.33, read as
    * `spellRechargeFaster` is.

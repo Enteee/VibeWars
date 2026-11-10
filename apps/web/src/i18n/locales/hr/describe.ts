@@ -926,6 +926,7 @@ export default {
     `+${p.pips} regeneracije zdravlja po začaranju na tebi (najviše ${p.max})`,
   energyDegeneration: (p) => `−${p.energyPips} degeneracije energije`,
   energyRegeneration: (p) => `+${p.energyPips} regeneracije energije`,
+  healthLostPerSkill: (p) => `−${p.amount} zdravlja za svaku upotrijebljenu vještinu`,
   healthRegenerationForEachConditionOnYou: (p) =>
     `${p.healthPipsPerCondition} regeneracije zdravlja po stanju na tebi`,
   health: () => "zdravlja",
