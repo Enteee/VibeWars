@@ -56,8 +56,6 @@ import {
 } from "./render-order.js";
 import {
   DECK_LIP,
-  DECK_SHADOW,
-  DECK_TINT,
   PIT_FLOOR,
   PIT_WALL,
   TUNNEL_INLAY,
@@ -158,6 +156,7 @@ import {
 import { lyingPose } from "./lying-pose.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import { LightingPass, litStructurePalette } from "./lighting-pass.js";
+import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import {
   BODY_LIGHT_FLOOR,
@@ -1619,6 +1618,7 @@ export class ArenaScene extends Phaser.Scene {
     pass.show(
       lighting,
       this.snapshot.structure,
+      this.snapshot.walls,
       this.arena.width,
       this.arena.height,
       this.reducedMotion,
@@ -1914,6 +1914,7 @@ export class ArenaScene extends Phaser.Scene {
       structure: this.snapshot.structure,
       zoom: this.view?.zoom ?? 1,
       lighting: this.activeLighting(),
+      lightShadows: this.lightingPass?.shadows === true,
     };
     if (g === undefined || !mapLayerChanged(this.drawnMap, next)) {
       return;
@@ -1925,7 +1926,19 @@ export class ArenaScene extends Phaser.Scene {
     const palette = arenaPalette(next.structure.layerCount);
     const { ground } = next.structure;
     this.drawFloor(palette, line);
-    this.drawDeckShadows(g, next.structure);
+    paintDeckShadows(
+      {
+        save: () => g.save(),
+        restore: () => g.restore(),
+        translateCanvas: (x, y) => g.translateCanvas(x, y),
+        fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
+        fillShape: (shape) => {
+          this.fillShape(g, shape);
+        },
+      },
+      next.structure,
+      next.lightShadows,
+    );
     for (const graphics of this.structureGraphics.values()) {
       graphics.clear();
     }
@@ -2180,22 +2193,6 @@ export class ArenaScene extends Phaser.Scene {
       face.lineBetween(from.x, from.y, to.x, to.y);
     }
     face.restore();
-  }
-
-  /** What each bridge throws on the ground: a hard shadow, and the ground under it a step darker. */
-  private drawDeckShadows(g: Phaser.GameObjects.Graphics, structure: MapStructure): void {
-    for (const deck of structure.decks) {
-      if (deck.layer !== structure.ground + 1) {
-        continue;
-      }
-      g.save();
-      g.translateCanvas(DECK_SHADOW.offset, DECK_SHADOW.offset);
-      g.fillStyle(DECK_SHADOW.colour, DECK_SHADOW.alpha);
-      this.fillShape(g, deck.footprint);
-      g.restore();
-      g.fillStyle(DECK_TINT.colour, DECK_TINT.alpha);
-      this.fillShape(g, deck.footprint);
-    }
   }
 
   /**

@@ -14,6 +14,7 @@ const LAYER: MapLayer = {
   walls: WALLS,
   structure: FLAT_STRUCTURE,
   zoom: 0.65,
+  lightShadows: false,
 };
 
 describe("the arena's map layer (#1353)", () => {
@@ -35,6 +36,7 @@ describe("the arena's map layer (#1353)", () => {
         walls: WALLS,
         structure: FLAT_STRUCTURE,
         zoom: 0.65,
+        lightShadows: false,
       }),
     ).toBe(false);
   });
@@ -48,6 +50,11 @@ describe("the arena's map layer (#1353)", () => {
     expect(mapLayerChanged(LAYER, lit)).toBe(true);
     expect(mapLayerChanged(lit, { ...lit })).toBe(false);
     expect(mapLayerChanged(lit, { ...lit, lighting: { ...LIGHTING } })).toBe(true);
+  });
+
+  it("is drawn again when the light maps start or stop casting shadows (#2988)", () => {
+    const lit = { ...LAYER, lighting: LIGHTING };
+    expect(mapLayerChanged(lit, { ...lit, lightShadows: true })).toBe(true);
   });
 
   it("is drawn again for new bounds", () => {

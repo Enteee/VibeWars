@@ -4,7 +4,7 @@ import type { Vec2 } from "@vibewars/game-core";
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import type { ArenaPalette } from "./arena-palette.js";
-import type { MapStructure, RenderableShape } from "./arena-snapshot.js";
+import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { rampDrawing } from "./layer-surfaces.js";
 import {
   SURFACE_LIGHT_FLOOR,
@@ -14,6 +14,12 @@ import {
   tintOf,
 } from "./lighting-model.js";
 import { elevationOf, renderOrder } from "./render-order.js";
+import {
+  layerLightShadows,
+  layerSunShadows,
+  shadowCasters,
+  type Outline,
+} from "./shadow-geometry.js";
 
 /**
  * The light maps of a lit arena (ADR-0052): per layer, half resolution,
@@ -34,14 +40,22 @@ export const LIGHTING_BUDGET_MS = 2;
 /** Rebuilds in a row over budget before giving something up: one slow frame is no trend. */
 export const OVER_BUDGET_LIMIT = 30;
 
-/** What the budget still allows, best first; #2988 puts its shadows between these. */
-export type LightingStage = "full" | "no-flicker" | "flat";
+/** What the budget still allows, best first. */
+export type LightingStage = "full" | "no-flicker" | "no-shadows" | "flat";
 
 export type LightsOf = MapLighting["lights"][number];
 
 /** The next stage down the ADR's degrade order. */
 function degraded(stage: LightingStage): LightingStage {
-  return stage === "full" ? "no-flicker" : "flat";
+  switch (stage) {
+    case "full":
+      return "no-flicker";
+    case "no-flicker":
+      return "no-shadows";
+    case "no-shadows":
+    case "flat":
+      return "flat";
+  }
 }
 
 /** What is shown: reduced motion holds every light steady, as the budget's no-flicker does. */
@@ -50,9 +64,10 @@ export function shownStage(budget: LightingStage, reducedMotion: boolean): Light
 }
 
 /**
- * Steps down the degrade order when the pass stays over budget. Only a
- * flicker redraw is timed, so today it stops at no-flicker, which redraws
- * nothing per frame; flat waits for #2988's shadows, which are timed too.
+ * Steps down the degrade order when the pass stays over budget. A
+ * flicker redraw is timed, and so is a shadow rebuild (#2988): a map
+ * rebuilt slowly again and again, as on a context lost and restored, ends
+ * without its shadows, then flat.
  */
 export class LightingBudget {
   public stage: LightingStage = "full";
@@ -90,6 +105,16 @@ export function flickerRedrawDue(
   nowMs: number,
 ): boolean {
   return flickering.length > 0 && nowMs - lastMs >= FLICKER_INTERVAL_MS;
+}
+
+/** Whether `stage` draws shadows (#2988). */
+export function stageShadows(stage: LightingStage): boolean {
+  return stage === "full" || stage === "no-flicker";
+}
+
+/** What the ambient alone leaves outdoors, where a sun shadow falls (#2988). */
+export function sunShadowTint(lighting: MapLighting): number {
+  return baseTint({ ...lighting, sun: undefined }, false);
 }
 
 /** What the ambient and the sun leave on a surface, indoors or out, as a colour to multiply by. */
@@ -178,6 +203,8 @@ interface LayerMap {
   readonly image: Phaser.GameObjects.Image;
   readonly outsideKey: string | undefined;
   readonly flickering: readonly LightsOf[];
+  /** Each light whose shadows were cut from its own texture, by light id (#2988). */
+  readonly shadowed: ReadonlyMap<string, string>;
   drawnAt: number;
 }
 
@@ -187,6 +214,7 @@ let nextLightingId = 0;
 export class LightingPass {
   private lighting: MapLighting | undefined;
   private structure: MapStructure | undefined;
+  private walls: readonly RenderableWall[] = [];
   private layers: LayerMap[] = [];
   private width = 0;
   private height = 0;
@@ -212,6 +240,7 @@ export class LightingPass {
   public show(
     lighting: MapLighting | undefined,
     structure: MapStructure,
+    walls: readonly RenderableWall[],
     width: number,
     height: number,
     reducedMotion: boolean,
@@ -220,6 +249,7 @@ export class LightingPass {
     if (
       lighting === this.lighting &&
       structure === this.structure &&
+      walls === this.walls &&
       width === this.width &&
       height === this.height &&
       stage === this.stage
@@ -228,6 +258,7 @@ export class LightingPass {
     }
     this.lighting = lighting;
     this.structure = structure;
+    this.walls = walls;
     this.width = width;
     this.height = height;
     this.stage = stage;
@@ -237,6 +268,11 @@ export class LightingPass {
   /** Whether the lights shown flicker: bodies are lit the same way as the maps. */
   public get flickers(): boolean {
     return this.stage === "full";
+  }
+
+  /** Whether the maps shown carry shadows: the scene drops its fixed deck shadow when they do. */
+  public get shadows(): boolean {
+    return this.lighting !== undefined && stageShadows(this.stage);
   }
 
   /** Redraws what flickers, when it is due. */
@@ -259,7 +295,7 @@ export class LightingPass {
     const textures = this.scene.textures;
     for (const map of this.layers) {
       map.image.destroy();
-      for (const key of [map.baseKey, map.shownKey, map.outsideKey]) {
+      for (const key of [map.baseKey, map.shownKey, map.outsideKey, ...map.shadowed.values()]) {
         if (key !== undefined && textures.exists(key)) {
           textures.remove(key);
         }
@@ -275,8 +311,12 @@ export class LightingPass {
       return;
     }
     this.ensureFalloff();
+    const started = performance.now();
     for (let layer = 0; layer < structure.layerCount; layer += 1) {
       this.layers.push(this.buildLayer(lighting, structure, layer));
+    }
+    if (stageShadows(this.stage)) {
+      this.budget.record(performance.now() - started);
     }
   }
 
@@ -323,8 +363,23 @@ export class LightingPass {
             height,
           );
     const { steady, flickering } = lightsByStability(lighting, layer, this.stage);
+    const casters = stageShadows(this.stage) ? shadowCasters(this.walls, structure, layer) : [];
 
     base.fill(baseTint(lighting, false), 1);
+    // A draw is queued until `base.render()`, so its painters live until then.
+    const painters: Phaser.GameObjects.Graphics[] = [];
+    // The sun's shadows, then the indoors over them: indoors has no sun to lose.
+    const sunShadows = layerSunShadows(lighting, casters);
+    if (sunShadows.length > 0) {
+      const painter = this.scene.make.graphics({}, false);
+      painter.fillStyle(sunShadowTint(lighting), 1);
+      for (const outline of sunShadows) {
+        fillOutline(painter, outline, 0, 0);
+      }
+      painter.setScale(LIGHT_MAP_SCALE);
+      base.draw(painter);
+      painters.push(painter);
+    }
     if (lighting.indoor.length > 0) {
       const painter = this.scene.make.graphics({}, false);
       painter.fillStyle(baseTint(lighting, true), 1);
@@ -333,16 +388,26 @@ export class LightingPass {
       }
       painter.setScale(LIGHT_MAP_SCALE);
       base.draw(painter);
-      painter.destroy();
+      painters.push(painter);
+    }
+    const shadowed = new Map<string, string>();
+    for (const light of [...steady, ...flickering]) {
+      const shadows = layerLightShadows(light, casters);
+      if (shadows.length > 0) {
+        shadowed.set(light.id, this.buildShadowedLight(`${baseKey}-${light.id}`, light, shadows));
+      }
     }
     for (const light of steady) {
-      this.stampLight(base, light, light.intensity);
+      this.stampLight(base, light, light.intensity, shadowed.get(light.id));
     }
     if (outsideKey !== undefined) {
       // A texture drawn by key is centred on the point given.
       base.erase(outsideKey, base.width / 2, base.height / 2);
     }
     base.render();
+    for (const painter of painters) {
+      painter.destroy();
+    }
 
     const image = this.scene.add
       .image(0, -elevationOf(layer, structure.ground), shownKey)
@@ -359,6 +424,7 @@ export class LightingPass {
       image,
       outsideKey,
       flickering,
+      shadowed,
       drawnAt: Number.NEGATIVE_INFINITY,
     };
     this.drawFlicker(map, 0);
@@ -399,23 +465,57 @@ export class LightingPass {
     return key;
   }
 
+  /**
+   * `light` at full intensity on a texture of its own, its `shadows` cut
+   * out (#2988): built once per map, stamped as the plain falloff is.
+   */
+  private buildShadowedLight(key: string, light: LightsOf, shadows: readonly Outline[]): string {
+    const size = Math.ceil(light.radius * 2 * LIGHT_MAP_SCALE);
+    const texture = this.scene.textures.addDynamicTexture(key, size, size);
+    if (texture === null) {
+      throw new Error("lighting: could not create a shadowed light");
+    }
+    texture.stamp(FALLOFF_TEXTURE, undefined, size / 2, size / 2, {
+      tint: light.colour,
+      scale: size / FALLOFF_SIZE,
+    });
+    const painter = this.scene.make.graphics({}, false);
+    painter.fillStyle(0xffffff, 1);
+    // World units round the light, then scaled: its centre is the texture's.
+    const dx = size / 2 / LIGHT_MAP_SCALE - light.position.x;
+    const dy = size / 2 / LIGHT_MAP_SCALE - light.position.y;
+    for (const outline of shadows) {
+      fillOutline(painter, outline, dx, dy);
+    }
+    painter.setScale(LIGHT_MAP_SCALE);
+    texture.erase(painter);
+    texture.render();
+    painter.destroy();
+    return key;
+  }
+
+  /** `light` added to `target`: its shadowed texture when it has one, the plain falloff when not. */
   private stampLight(
     target: Phaser.Textures.DynamicTexture,
     light: LightsOf,
     intensity: number,
+    shadowedKey: string | undefined,
   ): void {
-    target.stamp(
-      FALLOFF_TEXTURE,
-      undefined,
-      light.position.x * LIGHT_MAP_SCALE,
-      light.position.y * LIGHT_MAP_SCALE,
-      {
+    const x = light.position.x * LIGHT_MAP_SCALE;
+    const y = light.position.y * LIGHT_MAP_SCALE;
+    if (shadowedKey !== undefined) {
+      target.stamp(shadowedKey, undefined, x, y, {
         alpha: intensity,
-        tint: light.colour,
-        scale: (light.radius * 2 * LIGHT_MAP_SCALE) / FALLOFF_SIZE,
         blendMode: Phaser.BlendModes.ADD,
-      },
-    );
+      });
+      return;
+    }
+    target.stamp(FALLOFF_TEXTURE, undefined, x, y, {
+      alpha: intensity,
+      tint: light.colour,
+      scale: (light.radius * 2 * LIGHT_MAP_SCALE) / FALLOFF_SIZE,
+      blendMode: Phaser.BlendModes.ADD,
+    });
   }
 
   /** The steady map, plus each flickering light as it is now. */
@@ -427,6 +527,7 @@ export class LightingPass {
         map.shown,
         light,
         light.intensity * flickerAt(light.id, light.flicker, nowMs),
+        map.shadowed.get(light.id),
       );
     }
     if (map.outsideKey !== undefined && map.flickering.length > 0) {
@@ -435,6 +536,18 @@ export class LightingPass {
     map.shown.render();
     map.drawnAt = nowMs;
   }
+}
+
+function fillOutline(
+  painter: Phaser.GameObjects.Graphics,
+  outline: Outline,
+  dx: number,
+  dy: number,
+): void {
+  painter.fillPoints(
+    outline.map((p) => new Phaser.Math.Vector2(p.x + dx, p.y + dy)),
+    true,
+  );
 }
 
 function fillShape(painter: Phaser.GameObjects.Graphics, shape: RenderableShape): void {
