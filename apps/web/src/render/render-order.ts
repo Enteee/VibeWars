@@ -15,7 +15,7 @@ export type WaterPart = "surface" | "ripples";
 export type RenderItem =
   | { readonly kind: "floor" }
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
-  | { readonly kind: "ground-effect" }
+  | { readonly kind: "ground-effect"; readonly layer: number }
   | { readonly kind: "terrain" }
   | { readonly kind: "lighting"; readonly layer: number }
   | { readonly kind: "lit-ground-effect" }
@@ -35,6 +35,11 @@ const LAYER_STACK = 10;
 /** Over the grid and deck shadows, under the first body; the wards draw just over it. */
 const GROUND_LIGHTING = 0.5;
 const LIT_GROUND_EFFECT = 0.6;
+/**
+ * A ward or trap on a deck (#2979): over its layer's deck, ramp, water and
+ * lighting, which never darkens it, under whoever stands there.
+ */
+const DECK_GROUND_EFFECT = 0.5;
 /** A deck layer's lighting: over its side faces, deck and ramp, under whoever stands there. */
 const DECK_LIGHTING = 5.8;
 const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, marks: 1.4 };
@@ -67,7 +72,7 @@ export function renderOrder(item: RenderItem): number {
         ? GROUND_WATER[item.part]
         : (item.layer - 1) * LAYER_STACK + DECK_WATER[item.part];
     case "ground-effect":
-      return -1;
+      return item.layer === 0 ? -1 : item.layer * LAYER_STACK + DECK_GROUND_EFFECT;
     case "lighting":
       return item.layer === 0 ? GROUND_LIGHTING : (item.layer - 1) * LAYER_STACK + DECK_LIGHTING;
     case "lit-ground-effect":
