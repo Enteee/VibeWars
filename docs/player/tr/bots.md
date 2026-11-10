@@ -60,6 +60,9 @@ Botlar kendilerine yöneltilen, Fireball ya da bir saldırı becerisinin
 oku gibi beceri atışlarının yaklaşık yarısından yana kaçar; yani durmak
 ya da dönmek onlara karşı da sana karşı olduğu gibi işe yarar.
 
+Botlar, dolaşmak çok daha uzun değilse yanan zeminin ve diğer zararlı
+alanların çevresinden dolaşır, içinde durdukları alandan da çıkarlar.
+
 Kesintisi olan bir bot onu önemli yapımlar için saklar: önce bir
 diriliş ya da sunağı ele geçiren bir Ghostly Hero, sonra bir
 iyileştirme ya da koruma, elit bir beceri ya da saldırı becerisi veya

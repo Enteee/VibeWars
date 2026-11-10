@@ -33,6 +33,7 @@ export {
   rampLength,
   type LayeredPathFinder,
   type NavGraph,
+  type NavZone,
   type NavLayer,
   type NavTransition,
   type PathFinder,

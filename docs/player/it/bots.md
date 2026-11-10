@@ -22,6 +22,9 @@ Un bot resuscita un alleato caduto solo se i nemici non sono addosso al corpo e 
 
 I bot schivano circa la metà dei colpi mirati diretti contro di loro, come una Fireball o la freccia di un'abilità d'attacco: fermarsi o girarsi funziona per loro come per te.
 
+I bot aggirano il terreno in fiamme e le altre zone dannose quando il giro
+non è molto più lungo, ed escono da quella in cui si trovano.
+
 Un bot con un'interruzione la conserva per i lanci che contano: prima una resurrezione o un Eroe spettrale che conquista l'altare, poi una cura o una protezione, un'abilità élite o un colpo forte come un'abilità d'attacco o un incantesimo di danno. Tutto il resto, e un semplice colpo d'arma, lo lascia passare. Come un giocatore, manca circa uno di questi lanci su quattro.
 
 Un bot impiega un attimo umano, una frazione di secondo, a reagire a ciò che succede: un'interruzione rapida o una schivata all'ultimo possono batterlo.

@@ -26,6 +26,7 @@ export function layeredFinder(map: MapData, clearance: number): LayeredPathFinde
     [],
     { width: map.width, height: map.height },
     clearance,
+    [],
   ).map((gated) => navGraphFor(gated, 0));
   return createLayeredPathFinder(graphs, match.transitions);
 }

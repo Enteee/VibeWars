@@ -57,6 +57,9 @@ Boti sa vyhnú asi polovici mierených striel, ako je
 Fireball alebo šíp útočnej schopnosti, takže zastavenie alebo otočenie na nich
 funguje rovnako ako na teba.
 
+Boti obchádzajú horiacu zem a iné škodlivé miesta, keď cesta okolo nie je o
+veľa dlhšia, a z takého miesta vystúpia, keď v ňom stoja.
+
 Bot s prerušením si ho šetrí na zosielania, na ktorých záleží: najprv
 oživenie alebo Prízračný hrdina, ktorý si nárokuje oltár, potom liečenie alebo
 ochrana, elitná schopnosť alebo veľký

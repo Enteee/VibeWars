@@ -60,6 +60,9 @@ Bots ontwijken ongeveer de helft van de skillshots op hen gericht, zoals een
 Fireball of de pijl van een aanvalsskill, dus stoppen of draaien werkt voor hen
 net als voor jou.
 
+Bots lopen om brandende grond en andere schadelijke plekken heen als de
+omweg niet veel langer is, en stappen uit een plek waar ze in staan.
+
 Een bot met een onderbreking bewaart die voor de casts die ertoe doen: eerst
 een reanimatie of een Spookheld die het altaar claimt, dan een genezing of een
 bescherming, een eliteskill, of een grote klap zoals een aanvalsskill of een

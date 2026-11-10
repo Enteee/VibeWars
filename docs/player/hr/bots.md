@@ -57,6 +57,9 @@ Botovi se izmiču otprilike polovici projektila usmjerenih na njih, poput
 Fireball ili strijele vještine napada, pa zaustavljanje ili okret djeluju
 na njih kao i na tebe.
 
+Botovi zaobilaze zapaljeno tlo i druga štetna mjesta kad zaobilazak nije
+puno duži, i izlaze iz onog u kojem stoje.
+
 Bot s prekidom čuva ga za bacanja koja su važna: najprije
 uskrsnuće ili Sablasnog heroja koji zauzima oltar, zatim liječenje ili
 zaštitu, elitnu vještinu ili velik

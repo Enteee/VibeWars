@@ -60,6 +60,9 @@ Los bots esquivan cerca de la mitad de los disparos de habilidad dirigidos
 a ellos, como un Fireball o la flecha de una habilidad de ataque, así que
 detenerse o girar les funciona igual que a ti.
 
+Los bots rodean el suelo en llamas y otras zonas dañinas cuando el rodeo no
+es mucho más largo, y salen de cualquiera en la que se encuentren.
+
 Un bot con una interrupción la reserva para los lanzamientos que importan:
 primero una resurrección o un Héroe Fantasmal reclamando el altar, después
 una curación o una protección, una habilidad de élite o un golpe fuerte,

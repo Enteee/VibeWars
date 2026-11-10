@@ -57,6 +57,9 @@ Bots side-step about half the skill shots aimed at them, such as a
 Fireball or an attack skill's arrow, so stopping or turning works for
 them as it does for you.
 
+Bots walk round burning ground and other harmful patches when the way round
+is not much longer, and step out of any they find themselves standing in.
+
 A bot with an interrupt saves it for the casts that matter: a
 resurrection or a Ghostly Hero claiming the altar first, then a heal or a
 protection, an elite skill, or a big

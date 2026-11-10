@@ -28,6 +28,7 @@ describe("BOT_RULES (#2042)", () => {
       "carry-relic",
       "flee",
       "dodge",
+      "leave-zone",
       "lead-ghost",
       "ward-touch",
       "cleanse",

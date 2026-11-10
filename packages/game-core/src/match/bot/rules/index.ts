@@ -12,6 +12,7 @@ import fight from "./fight.js";
 import heal from "./heal.js";
 import interrupt from "./interrupt.js";
 import leadGhost from "./lead-ghost.js";
+import leaveZone from "./leave-zone.js";
 import mantra from "./mantra.js";
 import mimicElite from "./mimic-elite.js";
 import minionCare from "./minion-care.js";
@@ -50,6 +51,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   heal,
   interrupt,
   leadGhost,
+  leaveZone,
   mantra,
   mimicElite,
   minionCare,

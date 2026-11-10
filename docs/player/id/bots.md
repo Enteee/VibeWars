@@ -57,6 +57,10 @@ Bot menghindar ke samping dari sekitar separuh skill shot yang diarahkan kepadan
 Fireball atau anak panah skill serangan, jadi berhenti atau berbelok bekerja untuk
 mereka seperti halnya untukmu.
 
+Bot memutari tanah yang terbakar dan petak berbahaya lain bila jalan
+memutarnya tidak jauh lebih panjang, dan keluar dari petak yang mereka
+injak.
+
 Bot yang punya interupsi menyimpannya untuk rapalan yang penting: kebangkitan
 atau Ghostly Hero yang sedang merebut altar lebih dulu, lalu penyembuhan atau
 perlindungan, skill elite, atau pukulan

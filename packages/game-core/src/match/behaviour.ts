@@ -11,6 +11,7 @@ import type { Gate } from "./gates.js";
 import type { CarriedSpawn } from "./carried.js";
 import { MASTERLESS_TEAM } from "./minions.js";
 import type { RelicCarry, RelicState } from "./relics.js";
+import type { MatchZone } from "./zones.js";
 import type { Participant } from "./simulation.js";
 
 /**
@@ -324,6 +325,8 @@ export interface BotObjectives {
   readonly altarHolder: number | null;
   /** The map's gates (#2691), kept current; `[]` on a map without any. */
   readonly gates: readonly Gate[];
+  /** The map's harmful ground (#3026), which a bot steps out of; `[]` on a map without any. */
+  readonly harmfulZones: readonly MatchZone[];
 }
 
 /** No objectives: every mode but those with one. */
@@ -336,6 +339,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   altarLayer: 0,
   altarHolder: null,
   gates: [],
+  harmfulZones: [],
 };
 
 export function createCursor(): BehaviourCursor {

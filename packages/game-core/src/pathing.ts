@@ -3,6 +3,7 @@ import {
   closestPointOnSegment,
   distancePointToSegment,
   distanceSegmentToSegmentXY,
+  lengthInPolygon,
   pointInPolygon,
   pointAlong,
   polygonCentre,
@@ -39,6 +40,50 @@ export interface NavGraph {
   readonly nodes: readonly Vec2[];
   /** For each node, the nodes a body can walk to in a straight line. */
   readonly edges: readonly (readonly number[])[];
+  /** Beside `edges`: what each walk costs, its length with harmful ground counted `HARMFUL_ZONE_COST` times. */
+  readonly costs: readonly (readonly number[])[];
+  /** The harmful ground on this layer (#3026): walks through it cost more. */
+  readonly zones: readonly Polygon[];
+}
+
+/** Harmful ground on a layer, as paths read it (#3026). */
+export interface NavZone {
+  readonly layer: number;
+  readonly polygon: Polygon;
+}
+
+/**
+ * What a unit walked inside harmful ground costs a route (#3026): a bot
+ * takes a detour round a 100-wide strip if it is at most 200 longer, and
+ * crosses otherwise. Zones cost, they never block.
+ */
+export const HARMFUL_ZONE_COST = 3;
+
+/** What the walk from `a` to `b` costs a route: its length, and twice more for each unit of it in `zones`. */
+export function walkCost(zones: readonly Polygon[], a: Vec2, b: Vec2): number {
+  let inside = 0;
+  for (const zone of zones) {
+    // Nowhere near: the box test settles most walks.
+    let left = Number.POSITIVE_INFINITY;
+    let right = Number.NEGATIVE_INFINITY;
+    let top = Number.POSITIVE_INFINITY;
+    let bottom = Number.NEGATIVE_INFINITY;
+    for (const corner of zone) {
+      left = Math.min(left, corner.x);
+      right = Math.max(right, corner.x);
+      top = Math.min(top, corner.y);
+      bottom = Math.max(bottom, corner.y);
+    }
+    if (
+      Math.max(a.x, b.x) > left &&
+      Math.min(a.x, b.x) < right &&
+      Math.max(a.y, b.y) > top &&
+      Math.min(a.y, b.y) < bottom
+    ) {
+      inside += lengthInPolygon(a, b, zone);
+    }
+  }
+  return distance(a, b) + (HARMFUL_ZONE_COST - 1) * inside;
 }
 
 /**
@@ -269,13 +314,18 @@ function clearOf(
   return near >= least;
 }
 
-/** The graph for `walls` in a `bounds`-sized map, for bodies of radius `clearance`. Without `bounds` the field has no edge. */
+/**
+ * The graph for `walls` in a `bounds`-sized map, for bodies of radius
+ * `clearance`, routing round harmful `zones` where that is shorter. Without
+ * `bounds` the field has no edge.
+ */
 export function buildNavGraph(
   walls: readonly Segment[],
   bounds: NavGraph["bounds"],
   clearance: number,
+  zones: readonly Polygon[],
 ): NavGraph {
-  return navGraphFor(buildGatedNavGraph(walls, [], bounds, clearance), 0);
+  return navGraphFor(buildGatedNavGraph(walls, [], bounds, clearance, zones), 0);
 }
 
 /** How far a point must be from another area's side to count as inside it. */
@@ -388,6 +438,9 @@ export interface GatedNavGraph {
   readonly edges: readonly (readonly number[])[];
   /** Beside `edges`: the gates each edge crosses. */
   readonly edgeBlockedBy: readonly (readonly number[])[];
+  /** Beside `edges`: what each walk costs, as `NavGraph`'s. */
+  readonly costs: readonly (readonly number[])[];
+  readonly zones: readonly Polygon[];
 }
 
 /** See `GatedNavGraph`; each of `gates` is one gate's segments. */
@@ -396,6 +449,7 @@ export function buildGatedNavGraph(
   gates: readonly (readonly Segment[])[],
   bounds: NavGraph["bounds"],
   clearance: number,
+  zones: readonly Polygon[],
   walkable: readonly Polygon[] = [],
   open: readonly Segment[] = [],
 ): GatedNavGraph {
@@ -432,6 +486,19 @@ export function buildGatedNavGraph(
   const nodes: Vec2[] = [];
   const cornerOf: number[] = [];
   const nodeBlockedBy: number[] = [];
+  const addNode = (node: Vec2, gateBits: number): void => {
+    if (inside(node) && walls.every((wall) => distancePointToSegment(node, wall) >= clearance)) {
+      let blockedBy = 0;
+      gates.forEach((segments, at) => {
+        if (segments.some((wall) => distancePointToSegment(node, wall) < clearance)) {
+          blockedBy |= 1 << at;
+        }
+      });
+      nodes.push(node);
+      cornerOf.push(gateBits);
+      nodeBlockedBy.push(blockedBy);
+    }
+  };
   for (const corner of corners.values()) {
     for (const [dx, dy] of [
       [-1, -1],
@@ -439,17 +506,16 @@ export function buildGatedNavGraph(
       [-1, 1],
       [1, 1],
     ] as const) {
-      const node = vec2(corner.at.x + dx * offset, corner.at.y + dy * offset);
-      if (inside(node) && walls.every((wall) => distancePointToSegment(node, wall) >= clearance)) {
-        let blockedBy = 0;
-        gates.forEach((segments, at) => {
-          if (segments.some((wall) => distancePointToSegment(node, wall) < clearance)) {
-            blockedBy |= 1 << at;
-          }
-        });
-        nodes.push(node);
-        cornerOf.push(corner.gates);
-        nodeBlockedBy.push(blockedBy);
+      addNode(vec2(corner.at.x + dx * offset, corner.at.y + dy * offset), corner.gates);
+    }
+  }
+  // A corner off each harmful zone's, outside every zone, or no route
+  // could go round one (#3026). Zone order, then corner order (#267).
+  for (const zone of zones) {
+    for (let at = 0; at < zone.length; at += 1) {
+      const node = offZoneCorner(zone, at, offset);
+      if (node !== undefined && !zones.some((other) => pointInPolygon(node, other))) {
+        addNode(node, 0);
       }
     }
   }
@@ -458,9 +524,11 @@ export function buildGatedNavGraph(
   const gateGrids = gates.map((segments) => buildWallGrid(segments, clearance));
   const edges: number[][] = [];
   const edgeBlockedBy: number[][] = [];
+  const costs: number[][] = [];
   nodes.forEach((node, i) => {
     const seen: number[] = [];
     const crossed: number[] = [];
+    const cost: number[] = [];
     nodes.forEach((other, j) => {
       if (i !== j && isClear(grid, node, other)) {
         let blockedBy = 0;
@@ -471,10 +539,12 @@ export function buildGatedNavGraph(
         });
         seen.push(j);
         crossed.push(blockedBy);
+        cost.push(walkCost(zones, node, other));
       }
     });
     edges.push(seen);
     edgeBlockedBy.push(crossed);
+    costs.push(cost);
   });
   return {
     walls,
@@ -488,7 +558,46 @@ export function buildGatedNavGraph(
     nodeBlockedBy,
     edges,
     edgeBlockedBy,
+    costs,
+    zones,
   };
+}
+
+/**
+ * The spot `offset` out from `zone`'s corner `at` on each side's line, along
+ * the corner's bisector, away from the zone; `undefined` for a corner with
+ * no outside to it.
+ */
+function offZoneCorner(zone: Polygon, at: number, offset: number): Vec2 | undefined {
+  const corner = zone[at];
+  const before = zone[(at + zone.length - 1) % zone.length];
+  const after = zone[(at + 1) % zone.length];
+  if (corner === undefined || before === undefined || after === undefined) {
+    return undefined;
+  }
+  const inward = sub(before, corner);
+  const onward = sub(after, corner);
+  const a = Math.hypot(inward.x, inward.y);
+  const b = Math.hypot(onward.x, onward.y);
+  if (a === 0 || b === 0) {
+    return undefined;
+  }
+  // The sum of the two sides' unit vectors points into the corner's angle;
+  // the far side of it, out of the zone at a convex corner.
+  const bisector = add(scale(inward, 1 / a), scale(onward, 1 / b));
+  const length = Math.hypot(bisector.x, bisector.y);
+  const out = length < 1e-9 ? vec2(-inward.y / a, inward.x / a) : scale(bisector, -1 / length);
+  // `offset` from both sides' lines: `offset` over the sine of half the
+  // corner's angle along the bisector, a wall corner node's spot at a
+  // square corner, and at most three times `offset` at a sharp one.
+  const sinHalf = length < 1e-9 ? 1 : Math.sqrt(Math.max(0, 1 - (length / 2) ** 2));
+  const reach = offset / Math.max(sinHalf, 1 / 3);
+  const outside = add(corner, scale(out, reach));
+  if (!pointInPolygon(outside, zone)) {
+    return outside;
+  }
+  const flipped = add(corner, scale(out, -reach));
+  return pointInPolygon(flipped, zone) ? undefined : flipped;
 }
 
 /** The graph for the gates in `closed`, a bit each, as `buildNavGraph` would build it. */
@@ -508,22 +617,37 @@ export function navGraphFor(gated: GatedNavGraph, closed: number): NavGraph {
     }
   });
   const edges: number[][] = [];
+  const costs: number[][] = [];
   gated.edges.forEach((seen, i) => {
     if (renumbered[i] === -1) {
       return;
     }
     const crossed = edgeBlockedBy[i] ?? [];
+    const walk = gated.costs[i] ?? [];
     const kept: number[] = [];
+    const keptCosts: number[] = [];
     seen.forEach((j, at) => {
       const to = renumbered[j] ?? -1;
       if (to !== -1 && ((crossed[at] ?? 0) & closed) === 0) {
         kept.push(to);
+        keptCosts.push(walk[at] ?? Number.POSITIVE_INFINITY);
       }
     });
     edges.push(kept);
+    costs.push(keptCosts);
   });
-  const { outlineWalls, walkable } = gated;
-  const graph: NavGraph = { walls, outlineWalls, walkable, bounds, clearance, nodes, edges };
+  const { outlineWalls, walkable, zones } = gated;
+  const graph: NavGraph = {
+    walls,
+    outlineWalls,
+    walkable,
+    bounds,
+    clearance,
+    nodes,
+    edges,
+    costs,
+    zones,
+  };
   GRIDS.set(graph, buildWallGrid(walls, clearance));
   return graph;
 }
@@ -734,6 +858,7 @@ export function buildLayeredNavGraph(
   gates: readonly NavGate[],
   bounds: NavGraph["bounds"],
   clearance: number,
+  zones: readonly NavZone[],
 ): readonly GatedNavGraph[] {
   return layers.map((layer, at) =>
     buildGatedNavGraph(
@@ -741,6 +866,7 @@ export function buildLayeredNavGraph(
       gates.map((gate) => (gate.layer === at ? gate.segments : [])),
       bounds,
       clearance,
+      zones.filter((zone) => zone.layer === at).map(({ polygon }) => polygon),
       layer.walkable,
       layer.open,
     ),
@@ -797,6 +923,8 @@ class AStar implements LayeredPathFinder {
   /** The ramp's area and foot, for a portal vertex a route climbs to. */
   readonly #climbs = new Map<number, { readonly area: Polygon; readonly foot: Vec2 }>();
   readonly #edges: number[][] = [];
+  /** Beside `#edges`: what each walk costs (#3026). */
+  readonly #costs: number[][] = [];
   /** The first vertex of each layer, and one past the last's. */
   readonly #firstOf: Int32Array;
   readonly #start: number;
@@ -843,8 +971,9 @@ class AStar implements LayeredPathFinder {
         layers.push(layer);
         portals.push(false);
       });
-      graph.edges.forEach((seen) => {
+      graph.edges.forEach((seen, i) => {
         this.#edges.push(seen.map((j) => base + j));
+        this.#costs.push([...(graph.costs[i] ?? [])]);
       });
       for (const link of links) {
         if (link.from === layer || link.to === layer) {
@@ -858,6 +987,7 @@ class AStar implements LayeredPathFinder {
           layers.push(layer);
           portals.push(true);
           this.#edges.push([]);
+          this.#costs.push([]);
         }
       }
     });
@@ -865,8 +995,11 @@ class AStar implements LayeredPathFinder {
     this.#joinPortals(portalsOn, firsts);
     const clearance = graphs[0]?.clearance ?? 0;
     for (const { near, far, area, uphill } of links) {
+      // One point on two layers: no way to walk between them.
       this.#edges[near]?.push(far);
+      this.#costs[near]?.push(0);
       this.#edges[far]?.push(near);
+      this.#costs[far]?.push(0);
       if (uphill !== undefined) {
         const length = rampLength(area, uphill);
         const inset = Math.min(
@@ -898,6 +1031,7 @@ class AStar implements LayeredPathFinder {
       const grid = this.#grids[layer];
       const first = firsts[layer] ?? 0;
       const last = firsts[layer + 1] ?? first;
+      const zones = this.#graphs[layer]?.zones ?? [];
       if (grid === undefined) {
         return;
       }
@@ -906,9 +1040,12 @@ class AStar implements LayeredPathFinder {
         for (let vertex = first; vertex < last; vertex += 1) {
           const other = this.#points[vertex];
           if (vertex !== portal && other !== undefined && isClear(grid, point, other)) {
+            const cost = walkCost(zones, point, other);
             this.#edges[portal]?.push(vertex);
+            this.#costs[portal]?.push(cost);
             if (!portals.includes(vertex)) {
               this.#edges[vertex]?.push(portal);
+              this.#costs[vertex]?.push(cost);
             }
           }
         }
@@ -955,7 +1092,12 @@ class AStar implements LayeredPathFinder {
     if (fromGrid === undefined) {
       return undefined;
     }
-    if (fromLayer === toLayer && isClear(fromGrid, from, to)) {
+    const fromZones = this.#graphs[fromLayer]?.zones ?? [];
+    const straight =
+      fromLayer === toLayer && isClear(fromGrid, from, to)
+        ? walkCost(fromZones, from, to)
+        : Number.POSITIVE_INFINITY;
+    if (straight <= distance(from, to)) {
       return [{ x: to.x, y: to.y, layer: toLayer }];
     }
 
@@ -1009,15 +1151,23 @@ class AStar implements LayeredPathFinder {
             (this.#isPortal[j] === 1 || distance(node, from) > ARRIVED) &&
             isClear(fromGrid, from, node)
           ) {
-            this.#relax(current, j, here);
+            this.#relax(current, j, here + walkCost(fromZones, from, node));
           }
         }
+        // Clear, but through harmful ground: still a way, at its cost.
+        if (Number.isFinite(straight)) {
+          this.#relax(current, goal, here + straight);
+        }
       } else {
-        for (const next of this.#edges[current] ?? NO_EDGES) {
-          this.#relax(current, next, here);
+        const edges = this.#edges[current] ?? NO_EDGES;
+        const costs = this.#costs[current] ?? NO_EDGES;
+        for (let at = 0; at < edges.length; at += 1) {
+          const next = edges[at] ?? current;
+          this.#relax(current, next, here + (costs[at] ?? Number.POSITIVE_INFINITY));
         }
         if (this.#nodeSeesGoal(current)) {
-          this.#relax(current, goal, here);
+          const toZones = this.#graphs[toLayer]?.zones ?? [];
+          this.#relax(current, goal, here + walkCost(toZones, this.#point(current), to));
         }
       }
     }
@@ -1038,11 +1188,11 @@ class AStar implements LayeredPathFinder {
     this.#openCount += 1;
   }
 
-  #relax(current: number, next: number, here: number): void {
+  /** Reaches `next` from `current` at a cost of `through` from the start, if that is cheaper. */
+  #relax(current: number, next: number, through: number): void {
     if (this.#state[next] === CLOSED) {
       return;
     }
-    const through = here + distance(this.#point(current), this.#point(next));
     if (through < (this.#cost[next] ?? Number.POSITIVE_INFINITY)) {
       this.#cost[next] = through;
       this.#cameFrom[next] = current;

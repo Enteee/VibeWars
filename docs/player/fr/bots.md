@@ -61,6 +61,9 @@ Les bots esquivent environ la moitié des projectiles qui les visent, comme
 une Fireball ou la flèche d'une compétence d'attaque : s'arrêter ou tourner
 marche pour eux comme pour toi.
 
+Les bots contournent le sol en feu et les autres zones nocives quand le
+détour n'est pas beaucoup plus long, et sortent de celle où ils se trouvent.
+
 Un bot avec une interruption la garde pour les incantations qui comptent :
 d'abord une résurrection ou un Héros fantomatique qui prend l'autel, puis un
 soin ou une protection, une compétence d'élite, ou un gros coup comme une

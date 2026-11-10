@@ -55,6 +55,9 @@ Boty robią unik przed mniej więcej połową wymierzonych w nie pocisków, taki
 Fireball czy strzała z umiejętności ataku, więc zatrzymanie się lub skręt działają
 na nie tak samo jak na ciebie.
 
+Boty omijają płonącą ziemię i inne szkodliwe miejsca, gdy obejście nie jest
+dużo dłuższe, i wychodzą z takiego, w którym stoją.
+
 Bot z przerwaniem zachowuje je na rzucania, które mają znaczenie: najpierw
 wskrzeszenie albo Upiornego Bohatera przejmującego ołtarz, potem leczenie lub
 osłonę, umiejętność elitarną albo mocny cios, taki jak umiejętność ataku lub czar

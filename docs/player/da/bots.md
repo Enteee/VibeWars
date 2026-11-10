@@ -60,6 +60,9 @@ Bots træder til side for omkring halvdelen af de evneskud, der rettes mod
 dem, såsom en Fireball eller en angrebsevnes pil, så det at stoppe eller
 vende virker på dem, som det gør på dig.
 
+Bots går uden om brændende jord og andre skadelige områder, når vejen udenom
+ikke er meget længere, og træder ud af et, de står i.
+
 En bot med en afbrydelse gemmer den til de kast, der betyder noget: en
 genoplivning eller en Spøgelseshelt, der tager alteret, først, derefter
 en helbredelse eller en beskyttelse, en eliteevne eller et stort slag

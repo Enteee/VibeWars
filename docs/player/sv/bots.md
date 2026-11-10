@@ -61,6 +61,9 @@ Bottar kliver undan ungefär hälften av de projektiler som riktas mot dem,
 som en Fireball eller en attackförmågas pil, så att stanna eller vända
 fungerar för dem som för dig.
 
+Bottar går runt brinnande mark och andra skadliga områden när omvägen inte
+är mycket längre, och kliver ut ur ett de står i.
+
 En bot med ett avbrott sparar det till de kastningar som spelar roll: en
 återupplivning eller en spökhjälte som tar altaret först, sedan en
 helning eller ett skydd, en elitförmåga, eller en stor

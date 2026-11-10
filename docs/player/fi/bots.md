@@ -63,6 +63,9 @@ Botit väistävät noin puolet niihin tähdätyistä taitoammuksista, kuten
 Fireballin tai hyökkäystaidon nuolen, joten pysähtyminen tai kääntyminen
 toimii niille kuten sinullekin.
 
+Botit kiertävät palavan maan ja muut haitalliset alueet, kun kiertotie ei
+ole paljon pidempi, ja astuvat pois alueelta, jolla seisovat.
+
 Keskeytystaidolla varustettu botti säästää sen tärkeitä käyttöjä varten:
 ensin henkiin herättäminen tai alttaria valtaava aavesankari, sitten
 parannus tai suojaus, eliittitaito tai iso isku, kuten hyökkäystaito tai
