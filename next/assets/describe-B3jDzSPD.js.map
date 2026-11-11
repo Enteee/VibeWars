@@ -1,0 +1,1 @@
+{"version":3,"file":"describe-B3jDzSPD.js","names":["EN_WORDS","describe_default"],"sources":["../../src/i18n/locales/hu/describe.ts"],"sourcesContent":["import { EN_WORDS } from \"@vibewars/game-core\";\n\nexport default EN_WORDS;\n"],"mappings":"A,uCAEA,IAAAC,EAAeD,E"}
