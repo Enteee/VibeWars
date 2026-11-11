@@ -1238,6 +1238,32 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     );
   });
 
+  it("lets a wall-walk span a stone gate below it, never an energy barrier or a gap (#3104)", () => {
+    const [bridge] = layerTest.decks;
+    const walk = { kind: "rect", x: 516, y: 300, width: 568, height: 200 };
+    const westWall = { kind: "rect", layer: 0, x: 524, y: 300, width: 176, height: 200 };
+    const eastWall = { kind: "rect", layer: 0, x: 900, y: 300, width: 176, height: 200 };
+    const gate = {
+      id: "gatehouse",
+      wall: { kind: "rect", layer: 0, x: 700, y: 300, width: 200, height: 200 },
+      opener: { kind: "plate", plate: { x: 450, y: 400 }, team: null },
+      blocks: "all",
+    };
+    const walls = [...layerTest.walls, westWall, eastWall];
+    const decks = [{ ...bridge, footprint: walk, look: "wall-walk" }];
+    accepts({ walls, decks, gates: [gate] });
+    refuses(
+      { walls, decks, gates: [{ ...gate, blocks: "bodies-and-shots" }] },
+      /wall-walk bridge does not lie over walls on layer 0, energy barrier gatehouse is no floor/,
+    );
+    refuses({ walls, decks }, /wall-walk bridge does not lie over walls on layer 0$/m);
+    // A gate on another layer is no floor for this walk.
+    refuses(
+      { walls, decks, gates: [{ ...gate, wall: { ...gate.wall, layer: 1 } }] },
+      /wall-walk bridge does not lie over walls on layer 0/,
+    );
+  });
+
   it("validates the structures test map, every look on it once (#3067)", () => {
     const map = validateMapData(structures);
     expect(new Set(map.decks.map(({ look }) => look))).toEqual(new Set(DECK_LOOKS));
