@@ -483,6 +483,7 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
       name: map.name,
       width: map.width,
       height: map.height,
+      bounds: map.bounds,
       teamCount: seated,
       walls: map.walls.map((wall) =>
         wall.kind === "rect"

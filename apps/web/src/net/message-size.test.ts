@@ -19,6 +19,7 @@ import {
   MAX_TEAM_LOBBY_SIDE,
   MAX_WIRE_CHAT_TEXT,
   MAX_SHARED_SOURCE_BYTES,
+  MAX_WIRE_OUTLINE_POINTS,
   MAX_WIRE_STRING,
   sharedSourceBytes,
   type WireSharedTrack,
@@ -431,17 +432,25 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       tickIntervalMs: 50,
       elapsedSeconds: FLOAT,
       timeLimitSeconds: FLOAT,
-      map: biggest ?? {
-        id: "",
-        name: "",
-        width: 0,
-        height: 0,
-        teamCount: 2,
-        walls: [],
-        gates: [],
-        switches: [],
-        teleports: [],
-        breakables: [],
+      map: {
+        ...(biggest ?? {
+          id: "",
+          name: "",
+          width: 0,
+          height: 0,
+          teamCount: 2,
+          walls: [],
+          gates: [],
+          switches: [],
+          teleports: [],
+          breakables: [],
+        }),
+        // Whatever ground it has, the largest an outline can be (#3066).
+        bounds: {
+          kind: "outline",
+          outline: Array.from({ length: MAX_WIRE_OUTLINE_POINTS }, () => ({ x: FLOAT, y: FLOAT })),
+          outside: "deep-water",
+        },
       },
     };
     const longestSkills = [...IMPLEMENTED_SKILLS]

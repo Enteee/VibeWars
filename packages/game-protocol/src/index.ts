@@ -50,6 +50,8 @@ export type {
   RechargeMessage,
   RechargeSlot,
   MapDescriptor,
+  MapBoundsDescriptor,
+  OutsideKind,
   WireTeamCount,
   GateDescriptor,
   GateOpenerDescriptor,
@@ -69,6 +71,7 @@ export type {
 
 export {
   CHANNELS,
+  MAX_WIRE_OUTLINE_POINTS,
   MAX_WIRE_STRING,
   MAX_HERO_RANK,
   MAX_WIRE_TEXT,

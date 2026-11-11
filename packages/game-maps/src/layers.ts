@@ -42,6 +42,14 @@ export function matchLayers(map: MapData): MatchLayers {
         .filter((water) => water.layer === layer && water.depth === "deep")
         .flatMap((water) => wallToSegments(water.area)),
     ),
+    outline:
+      map.bounds.kind === "rect"
+        ? undefined
+        : {
+            polygon: map.bounds.outline,
+            // A cliff or deep water is seen and shot across; rock and forest are not.
+            blocksSight: map.bounds.outside === "rock" || map.bounds.outside === "forest",
+          },
   };
 }
 

@@ -44,6 +44,7 @@ const LAYERS: MatchLayers = {
   walls: [[], []],
   decks: [{ layer: 1, footprint: rect(1100, 300, 400, 200) }],
   transitions: [{ from: 0, to: 1, area: rect(950, 300, 170, 200), uphill: UPHILL.e }],
+  outline: undefined,
   deepWater: [POND, POOL_ON_DECK],
 };
 

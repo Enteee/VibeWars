@@ -838,6 +838,7 @@ describe("a map's layers (#3017)", () => {
       ...flatLayers(ARENA.walls),
       count: 2,
       walls: [ARENA.walls, STRIP],
+      outline: undefined,
       deepWater: [[], []],
     });
     expect(x).toBeGreaterThan(920);

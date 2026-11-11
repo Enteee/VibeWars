@@ -32,6 +32,7 @@ const validMap = {
   teams: 2,
   width: 100,
   height: 100,
+  bounds: { kind: "rect" },
   layers: 1,
   groundLayer: 0,
   pits: [],
