@@ -15,6 +15,7 @@
   "tunnels": [],
   "decks": [],
   "transitions": [],
+  "dropOffs": [],
   "walls": [
     {
       "kind": "polygon",

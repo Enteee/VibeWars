@@ -86,15 +86,19 @@ naarmate hij verzwakt, en hij valt uiteen tot puin.
 ## Hoogtes
 
 Sommige grond ligt hoger, en je kunt alleen via de hellingen, trappen,
-ruwe treden of ladders omhoog of omlaag: de rand van een verhoogd dek
-houdt je tegen als een muur. Een **toren** is een klein stenen platform
-op een gemetselde romp, met ruimte voor een paar spelers, bereikbaar via
-een smalle trap of een ladder. Een **weergang** loopt over de top van
-een dikke muur, met een borstwering en trappen aan de uiteinden. Een
-ladder is breed genoeg voor één speler tegelijk. Een **brug** van steen,
-planken of een omgevallen boomstam overspant een kloof, en spelers
-eronder kunnen eronderdoor lopen. Hoger staan verandert niets aan je
-bereik of je schade.
+ruwe treden of ladders omhoog: de rand van een verhoogd dek houdt je
+tegen als een muur. Waar de rand kapot is, kun je er echter af stappen
+en meteen op de grond eronder vallen, maar daar nooit meer terug omhoog
+klimmen. Hellingen en trappen neem je op volle snelheid, ruwe treden
+iets langzamer en een ladder op halve snelheid: naar beneden springen
+gaat snel, terug omhoog klimmen langzaam. Een **toren** is een klein
+stenen platform op een gemetselde romp, met ruimte voor een paar
+spelers, bereikbaar via een smalle trap of een ladder. Een **weergang**
+loopt over de top van een dikke muur, met een borstwering en trappen aan
+de uiteinden. Een ladder is breed genoeg voor één speler tegelijk. Een
+**brug** van steen, planken of een omgevallen boomstam overspant een
+kloof, en spelers eronder kunnen eronderdoor lopen. Hoger staan
+verandert niets aan je bereik of je schade.
 
 ## Ophaalbruggen, touwbruggen en geheime doorgangen
 

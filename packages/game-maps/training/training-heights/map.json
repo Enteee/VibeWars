@@ -150,6 +150,7 @@
       "lift": null
     }
   ],
+  "dropOffs": [{ "layer": 2, "from": { "x": 440, "y": 350 }, "to": { "x": 520, "y": 350 } }],
   "walls": [
     {
       "kind": "rect",

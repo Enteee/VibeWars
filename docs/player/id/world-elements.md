@@ -88,16 +88,21 @@ menyebar saat ia melemah, dan akhirnya ia runtuh menjadi puing.
 
 ## Ketinggian
 
-Sebagian tanah lebih tinggi, dan kamu hanya bisa naik atau turun lewat
-landaian, tangga, undakan kasar, atau tangga panjatnya: tepi dek yang
-ditinggikan menghentikanmu seperti tembok. **Menara** adalah panggung
-batu kecil di atas badan pasangan batu, muat untuk beberapa pemain, dan
-dicapai lewat tangga sempit atau tangga panjat. **Jalan benteng**
-membentang di puncak tembok tebal, dengan pagar pelindung dan tangga di
-kedua ujungnya. Tangga panjat hanya muat untuk satu pemain sekaligus.
-**Jembatan** dari batu, papan, atau batang pohon tumbang membentang di
-atas celah, dan pemain di bawahnya bisa lewat di kolongnya. Berada lebih
-tinggi tidak mengubah jangkauan atau damage-mu.
+Sebagian tanah lebih tinggi, dan kamu hanya bisa naik lewat landaian,
+tangga, undakan kasar, atau tangga panjatnya: tepi dek yang ditinggikan
+menghentikanmu seperti tembok. Namun, di tempat tepinya rusak, kamu bisa
+melangkah turun darinya dan langsung jatuh ke tanah di bawah, tetapi
+tidak pernah bisa memanjat kembali ke atas di sana. Landaian dan tangga
+dilewati dengan kecepatan penuh, undakan kasar sedikit lebih lambat, dan
+tangga panjat dengan setengah kecepatan: melompat turun itu cepat,
+memanjat kembali itu lambat. **Menara** adalah panggung batu kecil di
+atas badan pasangan batu, muat untuk beberapa pemain, dan dicapai lewat
+tangga sempit atau tangga panjat. **Jalan benteng** membentang di puncak
+tembok tebal, dengan pagar pelindung dan tangga di kedua ujungnya.
+Tangga panjat hanya muat untuk satu pemain sekaligus. **Jembatan** dari
+batu, papan, atau batang pohon tumbang membentang di atas celah, dan
+pemain di bawahnya bisa lewat di kolongnya. Berada lebih tinggi tidak
+mengubah jangkauan atau damage-mu.
 
 ## Cuaca dan suasana
 

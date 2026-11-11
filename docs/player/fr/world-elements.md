@@ -92,16 +92,21 @@ s'étendent à mesure qu'il faiblit, et il finit en gravats.
 
 ## Hauteurs
 
-Certains sols sont surélevés, et tu ne peux monter ou descendre que par
-leurs rampes, escaliers, marches grossières ou échelles : le bord d'une
-plate-forme surélevée t'arrête comme un mur. Une **tour** est une petite
-plate-forme de pierre sur un corps maçonné, avec de la place pour
-quelques joueurs, à laquelle on accède par un escalier étroit ou une
-échelle. Un **chemin de ronde** court au sommet d'un mur épais, avec un
-parapet et des escaliers à ses extrémités. Une échelle ne laisse passer
-qu'un joueur à la fois. Un **pont** de pierre, de planches ou fait d'un
-tronc d'arbre tombé enjambe un vide, et les joueurs d'en bas peuvent
-passer sous lui. Être plus haut ne change ni ta portée ni tes dégâts.
+Certains sols sont surélevés, et tu ne peux monter que par leurs rampes,
+escaliers, marches grossières ou échelles : le bord d'une plate-forme
+surélevée t'arrête comme un mur. Là où son bord est brisé, en revanche,
+tu peux en descendre d'un pas et tomber aussitôt au sol en contrebas,
+mais jamais y remonter par là. Les rampes et les escaliers se
+franchissent à pleine vitesse, les marches grossières un peu plus
+lentement et une échelle à demi-vitesse : sauter en bas est rapide,
+remonter est lent. Une **tour** est une petite plate-forme de pierre sur
+un corps maçonné, avec de la place pour quelques joueurs, à laquelle on
+accède par un escalier étroit ou une échelle. Un **chemin de ronde**
+court au sommet d'un mur épais, avec un parapet et des escaliers à ses
+extrémités. Une échelle ne laisse passer qu'un joueur à la fois. Un
+**pont** de pierre, de planches ou fait d'un tronc d'arbre tombé enjambe
+un vide, et les joueurs d'en bas peuvent passer sous lui. Être plus haut
+ne change ni ta portée ni tes dégâts.
 
 ## Météo et ambiance
 

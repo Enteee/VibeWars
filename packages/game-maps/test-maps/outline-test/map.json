@@ -26,6 +26,7 @@
   "tunnels": [],
   "decks": [],
   "transitions": [],
+  "dropOffs": [],
   "walls": [{ "kind": "rect", "layer": 0, "x": 380, "y": 500, "width": 60, "height": 60 }],
   "spawnPoints": [
     { "team": 0, "layer": 0, "position": { "x": 300, "y": 1000 } },

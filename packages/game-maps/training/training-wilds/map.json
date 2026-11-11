@@ -101,6 +101,7 @@
       "lift": null
     }
   ],
+  "dropOffs": [],
   "walls": [
     {
       "kind": "rect",

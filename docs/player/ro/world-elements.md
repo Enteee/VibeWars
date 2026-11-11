@@ -84,16 +84,20 @@ ce slăbește, până se prăbușește în dărâmături.
 
 ## Înălțimi
 
-Unele porțiuni de teren sunt înălțate, și poți urca sau coborî doar pe
-rampele, scările, treptele grosolane sau scările de mână ale lor: marginea
-unei platforme înălțate te oprește ca un zid. Un **turn** e o mică
-platformă de piatră pe un corp de zidărie, cu loc pentru câțiva jucători,
-la care ajungi pe o scară îngustă sau pe o scară de mână. Un **drum de
-strajă** merge pe creasta unui zid gros, cu un parapet și scări la capete.
-O scară de mână e destul de lată pentru un singur jucător odată. Un
-**pod** de piatră, de scânduri sau dintr-un buștean căzut trece peste un
-gol, iar jucătorii de dedesubt pot merge pe sub el. Dacă stai mai sus, nu
-ți se schimbă nici raza, nici daunele.
+Unele porțiuni de teren sunt înălțate, și poți urca doar pe rampele,
+scările, treptele grosolane sau scările de mână ale lor: marginea unei
+platforme înălțate te oprește ca un zid. Acolo unde marginea ei e spartă,
+însă, poți păși peste ea și cădea imediat pe pământul de dedesubt, dar nu
+poți urca niciodată înapoi pe acolo. Rampele și scările se străbat cu
+viteză maximă, treptele grosolane puțin mai încet, iar o scară de mână cu
+jumătate de viteză: săritul în jos e rapid, urcatul înapoi e lent. Un
+**turn** e o mică platformă de piatră pe un corp de zidărie, cu loc pentru
+câțiva jucători, la care ajungi pe o scară îngustă sau pe o scară de mână.
+Un **drum de strajă** merge pe creasta unui zid gros, cu un parapet și
+scări la capete. O scară de mână e destul de lată pentru un singur jucător
+odată. Un **pod** de piatră, de scânduri sau dintr-un buștean căzut trece
+peste un gol, iar jucătorii de dedesubt pot merge pe sub el. Dacă stai mai
+sus, nu ți se schimbă nici raza, nici daunele.
 
 ## Poduri mobile, poduri de frânghie și pasaje ascunse
 

@@ -194,9 +194,12 @@ describe("teleports in a match (#3030)", () => {
         pits: [],
         walls: [[], []],
         decks: [{ layer: 1, footprint: deck }],
-        transitions: [{ from: 0, to: 1, area: square(vec2(650, 400), 50), uphill: UPHILL.e }],
+        transitions: [
+          { from: 0, to: 1, area: square(vec2(650, 400), 50), uphill: UPHILL.e, pace: 1 },
+        ],
         outline: undefined,
         deepWater: [[], []],
+        dropOffs: [],
       },
       teleports: [{ ...OUT, to: { layer: 1, position: vec2(800, 400) } }],
     });

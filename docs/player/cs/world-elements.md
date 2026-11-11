@@ -49,7 +49,7 @@ Vejdeš-li do **portálu**, okamžitě se objevíš u jeho výstupu. Portál ved
 
 ## Výšky
 
-Část terénu je vyvýšená a nahoru nebo dolů se dostaneš jen po jejích rampách, schodech, hrubých stupních nebo žebřících: okraj vyvýšené plošiny tě zastaví jako zeď. **Věž** je malá kamenná plošina na zděném těle, s místem pro pár hráčů, na kterou vede úzké schodiště nebo žebřík. **Ochoz** vede po vrcholu silné zdi, s poprsní zídkou a schody na obou koncích. Žebřík je dost široký jen pro jednoho hráče najednou. **Most** z kamene, prken nebo padlého kmene překlenuje mezeru a hráči pod ním mohou procházet. Výška nemění tvůj dosah ani zranění.
+Část terénu je vyvýšená a nahoru se dostaneš jen po jejích rampách, schodech, hrubých stupních nebo žebřících: okraj vyvýšené plošiny tě zastaví jako zeď. Kde je ale její okraj rozbitý, můžeš z ní sestoupit a hned spadnout na zem pod ní, ale nikdy se tam nevyšplháš zpátky nahoru. Rampy a schody přejdeš plnou rychlostí, hrubé stupně o něco pomaleji a žebřík poloviční rychlostí: seskočit dolů je rychlé, vyšplhat zpátky pomalé. **Věž** je malá kamenná plošina na zděném těle, s místem pro pár hráčů, na kterou vede úzké schodiště nebo žebřík. **Ochoz** vede po vrcholu silné zdi, s poprsní zídkou a schody na obou koncích. Žebřík je dost široký jen pro jednoho hráče najednou. **Most** z kamene, prken nebo padlého kmene překlenuje mezeru a hráči pod ním mohou procházet. Výška nemění tvůj dosah ani zranění.
 
 ## Padací mosty, provazové mosty a skryté průchody
 
