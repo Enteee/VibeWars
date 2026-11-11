@@ -48,6 +48,7 @@ import { RELEASE_AT, diskHold, freeBytes, gib } from "./disk.mjs";
 import { answerBoard, arrivals, readBoardState } from "./hub-board.mjs";
 import { obj, readInbox, SYSTEM, wakes } from "./protocol.mjs";
 import { roleOf, WORK_COLUMN } from "./staff.mjs";
+import { IDLING_FILE } from "./wake-idle.mjs";
 import { appendWait, idleWaitsDir } from "./waits.mjs";
 
 /** Never less: an agent that ends turns instead of waiting cannot spin. */
@@ -375,7 +376,8 @@ export function hasWaking(dir, employee) {
 /**
  * Wait, idle, for what an idle agent has work in (#1694): mail, a card
  * arriving in `column`, or a reboot, for at most `seconds`. A card already
- * in the column when the wait starts wakes nobody, as in `board wait`.
+ * in the column when the wait starts wakes nobody, as in `board wait`; hubd's
+ * sweep (`wake-idle.mjs`) messages the idle for those (#3100).
  * `changes` answers `board changes --since <token>` (null: the whole
  * board), or `null` while there is no board to read; with none at the
  * start, the wait is on mail alone.
@@ -599,13 +601,22 @@ async function main() {
     const root = env("VIBEWARS_BOT_ROOT");
     const dir = path.join(root, "bus", employee);
     const start = Date.now();
-    const woken = await idleWait({
-      seconds: IDLE_PAUSE,
-      column: WORK_COLUMN[roleOf(employee) ?? ""] ?? null,
-      mail: () => hasWaking(dir, employee),
-      rebooting: () => fs.existsSync(path.join(root, "reboot.json")),
-      changes: boardChanges(root),
-    });
+    // hubd wakes an employee that sits here beside a waiting card (#3100).
+    const idling = path.join(dir, IDLING_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(idling, String(start));
+    let woken;
+    try {
+      woken = await idleWait({
+        seconds: IDLE_PAUSE,
+        column: WORK_COLUMN[roleOf(employee) ?? ""] ?? null,
+        mail: () => hasWaking(dir, employee),
+        rebooting: () => fs.existsSync(path.join(root, "reboot.json")),
+        changes: boardChanges(root),
+      });
+    } finally {
+      fs.rmSync(idling, { force: true });
+    }
     writeWoke(root, employee, wokeText(woken));
     fs.mkdirSync(idleWaitsDir(root, employee), { recursive: true });
     appendWait(idleWaitsDir(root, employee), {
