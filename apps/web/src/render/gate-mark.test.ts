@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { arenaPalette, GATE_DOOR_LOOK } from "./arena-palette.js";
+import { arenaPalette, GATE_DOOR_LOOK, GATE_PORTCULLIS_LOOK } from "./arena-palette.js";
 import type { RenderableShape } from "./arena-snapshot.js";
 import {
   doorPalette,
   GATE_ART,
   openLeaves,
   paintPlate,
+  type GateArt,
   type GateFrame,
   type GatePainter,
   type PlatePainter,
@@ -23,7 +24,7 @@ interface Drawn {
   readonly lines: number;
 }
 
-function draw(art: keyof typeof GATE_ART, wall: RenderableShape, frame: GateFrame): Drawn {
+function draw(art: GateArt, wall: RenderableShape, frame: GateFrame): Drawn {
   let fill = { colour: 0, alpha: 0 };
   const fills: Drawn["fills"] = [];
   const columns: Drawn["columns"] = [];
@@ -44,7 +45,7 @@ function draw(art: keyof typeof GATE_ART, wall: RenderableShape, frame: GateFram
       lines += 1;
     },
   };
-  GATE_ART[art](painter, wall, frame);
+  art(painter, wall, frame);
   return { fills, columns, strokes, lines };
 }
 
@@ -53,7 +54,7 @@ const FRAME: GateFrame = { height: 28, line: 1, palette: doorPalette(arenaPalett
 
 describe("gate doors (#3061, #3053)", () => {
   it("draws a shut door as an oak box over its wall, framed, with a brass knob", () => {
-    const shut = draw("shut", DOOR, FRAME);
+    const shut = draw(GATE_ART.shut.door, DOOR, FRAME);
     expect(shut.fills[0]).toEqual({ shape: DOOR, colour: GATE_DOOR_LOOK.body, alpha: 1 });
     expect(shut.fills[1]?.colour).toBe(GATE_DOOR_LOOK.knob);
     expect(shut.columns).toEqual([{ height: 28, colour: GATE_DOOR_LOOK.face }]);
@@ -63,13 +64,13 @@ describe("gate doors (#3061, #3053)", () => {
   });
 
   it("draws a shut door flat, without a front face, on a one-layer map", () => {
-    const flat = draw("shut", DOOR, { ...FRAME, height: 0 });
+    const flat = draw(GATE_ART.shut.door, DOOR, { ...FRAME, height: 0 });
     expect(flat.columns).toEqual([]);
     expect(flat.fills[0]?.shape).toEqual(DOOR);
   });
 
   it("swings an open door's leaves aside: a dark sill where it closes, a leaf beyond each end", () => {
-    const open = draw("open", DOOR, FRAME);
+    const open = draw(GATE_ART.open.door, DOOR, FRAME);
     expect(open.fills[0]).toEqual({ shape: DOOR, colour: GATE_DOOR_LOOK.sill, alpha: 0.55 });
     expect(open.strokes).not.toContainEqual(DOOR);
     const leaves = openLeaves(DOOR);
@@ -95,13 +96,39 @@ describe("gate doors (#3061, #3053)", () => {
         { x: 20, y: 30 },
       ],
     };
-    const shut = draw("shut", wedge, FRAME);
+    const shut = draw(GATE_ART.shut.door, wedge, FRAME);
     expect(shut.columns).toHaveLength(1);
     expect(shut.fills).toEqual([{ shape: wedge, colour: GATE_DOOR_LOOK.body, alpha: 1 }]);
     expect(openLeaves(wedge)).toEqual([]);
-    expect(draw("open", wedge, FRAME).fills).toEqual([
+    expect(draw(GATE_ART.open.door, wedge, FRAME).fills).toEqual([
       { shape: wedge, colour: GATE_DOOR_LOOK.sill, alpha: 0.55 },
     ]);
+  });
+});
+
+describe("portcullis and secret passage (#3068)", () => {
+  const STONE: GateFrame = { height: 28, line: 1, palette: arenaPalette(3) };
+
+  it("draws a shut portcullis as the dark of its arch behind an iron grid", () => {
+    const shut = draw(GATE_ART.shut.portcullis, DOOR, STONE);
+    expect(shut.columns).toEqual([{ height: 28, colour: GATE_PORTCULLIS_LOOK.dark }]);
+    expect(shut.fills).toEqual([{ shape: DOOR, colour: GATE_PORTCULLIS_LOOK.dark, alpha: 1 }]);
+    expect(shut.strokes).toEqual([DOOR]);
+    expect(shut.lines).toBeGreaterThan(10);
+  });
+
+  it("raises an open portcullis' grid over a dark opening, nothing of it in the gap", () => {
+    const open = draw(GATE_ART.open.portcullis, DOOR, STONE);
+    expect(open.fills).toEqual([{ shape: DOOR, colour: GATE_PORTCULLIS_LOOK.dark, alpha: 1 }]);
+    expect(open.columns).toEqual([]);
+    expect(open.strokes).toEqual([DOOR]);
+  });
+
+  it("has no shut art for a secret passage, which is drawn as its wall, and opens it dark", () => {
+    expect(Object.keys(GATE_ART.shut)).not.toContain("secret");
+    const open = draw(GATE_ART.open.secret, DOOR, STONE);
+    expect(open.fills).toEqual([{ shape: DOOR, colour: GATE_PORTCULLIS_LOOK.dark, alpha: 1 }]);
+    expect(open.columns).toEqual([]);
   });
 });
 

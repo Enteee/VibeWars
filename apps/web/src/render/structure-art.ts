@@ -1,7 +1,12 @@
 import type { Vec2 } from "@vibewars/game-core";
 import type { DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
 
-import { DECK_LOOK, TRANSITION_LOOK, type ArenaPalette } from "./arena-palette.js";
+import {
+  DECK_LOOK,
+  SWITCHED_DECK_LOOK,
+  TRANSITION_LOOK,
+  type ArenaPalette,
+} from "./arena-palette.js";
 import type { RenderableShape } from "./arena-snapshot.js";
 import {
   plankLines,
@@ -427,5 +432,180 @@ export const TRANSITION_ART: Record<TransitionLook, TransitionArt> = {
     }
     painter.lineStyle(line * 2, palette.rampChevron, 1);
     strokeSegments(painter, edges);
+  },
+};
+
+/** A shape's bounding box: a switched deck's span. */
+function boxOf(shape: RenderableShape): {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+} {
+  if (shape.kind === "rect") {
+    return { x0: shape.x, y0: shape.y, x1: shape.x + shape.width, y1: shape.y + shape.height };
+  }
+  const xs = shape.points.map(({ x }) => x);
+  const ys = shape.points.map(({ y }) => y);
+  return { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
+}
+
+/** A box `height` tall standing on the rect `x, y, width, depth`: its south face, then its top. */
+function standingBox(
+  painter: StructurePainter,
+  [x, y, width, depth]: readonly [number, number, number, number],
+  height: number,
+  face: number,
+  top: number,
+): void {
+  painter.fillStyle(face, 1);
+  painter.fillRect(x, y + depth - height, width, height);
+  painter.fillStyle(top, 1);
+  painter.fillRect(x, y - height, width, depth);
+}
+
+/** How thick a raised drawbridge's slab is, and how far up it stands as a share of its span. */
+const SLAB_THICKNESS = 8;
+const SLAB_RISE = 0.45;
+/** A cut bridge's halves: how much of the span each keeps, how far it hangs. */
+const HALF_SHARE = 0.18;
+const HALF_DROP = 22;
+/** A crack's zig-zag: how many legs, how far each strays. */
+const CRACK_LEGS = 5;
+const CRACK_STRAY = 0.18;
+
+/**
+ * Where a crack runs on a deck, the `k`th of them: a zig-zag across its
+ * short side at a fixed share of its long one, so the same deck cracks the
+ * same way every redraw and on every client.
+ */
+function crackPath(footprint: RenderableShape, k: number): readonly Vec2[] {
+  const { x0, y0, x1, y1 } = boxOf(footprint);
+  const alongX = longAxis(footprint) === "x";
+  const at = (0.2 + 0.6 * ((k * 0.618) % 1)) % 1;
+  return Array.from({ length: CRACK_LEGS + 1 }, (_, leg) => {
+    const t = leg / CRACK_LEGS;
+    const stray = (leg % 2 === 0 ? 1 : -1) * CRACK_STRAY * (leg === 0 ? 0 : 1);
+    const u = Math.min(1, Math.max(0, at + stray * 0.3));
+    return alongX
+      ? { x: x0 + (x1 - x0) * u, y: y0 + (y1 - y0) * t }
+      : { x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * u };
+  });
+}
+
+/**
+ * A switched deck (#3068) as it is drawn down or giving way, in its top's
+ * frame, over or instead of its look's art: they differ in shape, not
+ * only in colour (docs/art/3068-switched.md).
+ */
+export const SWITCHED_DECK_ART = {
+  /** A drawbridge raised: its slab standing up at its hinge, chains taut, the span open. */
+  raised(painter: StructurePainter, deck: DeckFrame, hinge: "n" | "e" | "s" | "w"): void {
+    const { x0, y0, x1, y1 } = boxOf(deck.footprint);
+    const span = hinge === "n" || hinge === "s" ? y1 - y0 : x1 - x0;
+    const rise = span * SLAB_RISE;
+    const slab: Record<typeof hinge, readonly [number, number, number, number]> = {
+      n: [x0, y0, x1 - x0, SLAB_THICKNESS],
+      s: [x0, y1 - SLAB_THICKNESS, x1 - x0, SLAB_THICKNESS],
+      w: [x0, y0, SLAB_THICKNESS, y1 - y0],
+      e: [x1 - SLAB_THICKNESS, y0, SLAB_THICKNESS, y1 - y0],
+    };
+    const [x, y, width, depth] = slab[hinge];
+    standingBox(painter, slab[hinge], rise, deck.palette.slab, deck.palette.deckTop);
+    painter.lineStyle(deck.line * 1.5, deck.palette.plank, 1);
+    for (const share of [0.25, 0.75]) {
+      painter.lineBetween(x, y + depth - rise * share, x + width, y + depth - rise * share);
+    }
+    painter.lineStyle(deck.line, SWITCHED_DECK_LOOK.chain, 1);
+    painter.lineBetween(x, y - rise, x - width * 0.1, y);
+    painter.lineBetween(x + width, y - rise, x + width * 1.1, y);
+  },
+  /** A rope bridge cut: each half hangs from its anchor, a frayed end on each. */
+  cut(painter: StructurePainter, deck: DeckFrame): void {
+    const { x0, y0, x1, y1 } = boxOf(deck.footprint);
+    const alongX = longAxis(deck.footprint) === "x";
+    const keep = (alongX ? x1 - x0 : y1 - y0) * HALF_SHARE;
+    const halves: readonly (readonly [Vec2, Vec2, Vec2, Vec2])[] = alongX
+      ? [
+          [
+            { x: x0, y: y0 },
+            { x: x0 + keep, y: y0 + HALF_DROP },
+            { x: x0 + keep, y: y1 + HALF_DROP },
+            { x: x0, y: y1 },
+          ],
+          [
+            { x: x1, y: y0 },
+            { x: x1 - keep, y: y0 + HALF_DROP },
+            { x: x1 - keep, y: y1 + HALF_DROP },
+            { x: x1, y: y1 },
+          ],
+        ]
+      : [
+          [
+            { x: x0, y: y0 },
+            { x: x1, y: y0 },
+            { x: x1, y: y0 + keep },
+            { x: x0, y: y0 + keep },
+          ],
+          [
+            { x: x0, y: y1 - keep + HALF_DROP },
+            { x: x1, y: y1 - keep + HALF_DROP },
+            { x: x1, y: y1 + HALF_DROP },
+            { x: x0, y: y1 + HALF_DROP },
+          ],
+        ];
+    for (const [a, b, c, d] of halves) {
+      painter.fillStyle(deck.palette.deckTop, 1);
+      fillQuad(painter, a, b, c, d);
+      painter.lineStyle(deck.line * 1.5, deck.palette.plank, 1);
+      for (const t of [0.33, 0.66]) {
+        const from = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+        const to = { x: d.x + (c.x - d.x) * t, y: d.y + (c.y - d.y) * t };
+        painter.lineBetween(from.x, from.y, to.x, to.y);
+      }
+      painter.lineStyle(deck.line * 2, SWITCHED_DECK_LOOK.fray, 1);
+      painter.lineBetween(b.x, b.y, c.x, c.y);
+    }
+  },
+  /** A floor fallen in: a dark gap, broken stubs at its corners. */
+  fallen(painter: StructurePainter, deck: DeckFrame): void {
+    const { x0, y0, x1, y1 } = boxOf(deck.footprint);
+    const stub = Math.min(x1 - x0, y1 - y0) * 0.25;
+    painter.fillStyle(deck.palette.deckTop, 1);
+    for (const [x, y, dx, dy] of [
+      [x0, y0, 1, 1],
+      [x1, y0, -1, 1],
+      [x1, y1, -1, -1],
+      [x0, y1, 1, -1],
+    ] as const) {
+      painter.fillTriangle(x, y, x + dx * stub, y, x, y + dy * stub);
+    }
+  },
+  /**
+   * A floor giving way: a crack for each body that has stepped on it, and
+   * a chipped-out hole each once it is two thirds of the way down.
+   */
+  cracks(painter: StructurePainter, deck: DeckFrame, cracks: number, afterCrossings: number): void {
+    painter.lineStyle(deck.line * 2.2, SWITCHED_DECK_LOOK.crack, 1);
+    for (let k = 0; k < cracks; k += 1) {
+      const path = crackPath(deck.footprint, k);
+      for (let leg = 0; leg + 1 < path.length; leg += 1) {
+        const [from, to] = [path[leg], path[leg + 1]];
+        if (from !== undefined && to !== undefined) {
+          painter.lineBetween(from.x, from.y, to.x, to.y);
+        }
+      }
+    }
+    if (cracks * 3 < afterCrossings * 2) {
+      return;
+    }
+    painter.fillStyle(SWITCHED_DECK_LOOK.hole, 1);
+    for (let k = 0; k < cracks; k += 1) {
+      const mid = crackPath(deck.footprint, k)[Math.floor(CRACK_LEGS / 2)];
+      if (mid !== undefined) {
+        const size = Math.max(4, deck.line * 6);
+        painter.fillTriangle(mid.x - size, mid.y, mid.x + size, mid.y - size, mid.x, mid.y + size);
+      }
+    }
   },
 };

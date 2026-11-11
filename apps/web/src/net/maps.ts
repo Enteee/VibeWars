@@ -6,7 +6,7 @@ import {
   shrinesOf,
   type MapShrine,
 } from "@vibewars/game-maps/match-fields";
-import { validateMapData, type MapData } from "@vibewars/game-maps/schema";
+import { validateMapData, type GateLook, type MapData } from "@vibewars/game-maps/schema";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
 import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
@@ -50,7 +50,12 @@ import {
   type WallDescriptor,
 } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
-import { FLAT_STRUCTURE, type MapStructure } from "../render/arena-snapshot.js";
+import {
+  FLAT_STRUCTURE,
+  placedDecks,
+  type MapDeck,
+  type MapStructure,
+} from "../render/arena-snapshot.js";
 import { TRAINING_MAPS } from "../training/maps.js";
 
 /**
@@ -355,6 +360,28 @@ export interface LoadedStructure {
   readonly wallLayers: readonly number[];
   /** Each gate's layer, in the map's order: the wire's gates carry none. */
   readonly gateLayers: readonly number[];
+  /** Each gate's look while shut (#3068), in the map's order. */
+  readonly gateLooks: readonly GateLook[];
+}
+
+/** `map`'s decks, each switched one (#3068) as it starts, uncracked. */
+function mapDecks(map: MapData): MapDeck[] {
+  return map.decks.map(({ layer, footprint, look, switched }, index) => ({
+    layer,
+    footprint,
+    look,
+    switched:
+      switched === null
+        ? null
+        : {
+            at: map.decks.slice(0, index).filter((deck) => deck.switched !== null).length,
+            whenDown: switched.whenDown,
+            hinge: switched.hinge,
+            afterCrossings: switched.afterCrossings,
+            up: switched.startsUp,
+            cracks: 0,
+          },
+  }));
 }
 
 /** What the renderer needs of a map's layers, its water and its zones, from its file. */
@@ -380,7 +407,7 @@ export function structureOf(map: MapData): LoadedStructure {
             layerCount: map.layers,
             bounds: map.bounds,
             ground: map.groundLayer,
-            decks: map.decks,
+            ...placedDecks(mapDecks(map)),
             pits: map.pits,
             tunnels: map.tunnels,
             transitions: map.transitions,
@@ -391,11 +418,17 @@ export function structureOf(map: MapData): LoadedStructure {
           },
     wallLayers: map.walls.map((wall) => wall.layer),
     gateLayers: map.gates.map((gate) => gate.wall.layer),
+    gateLooks: map.gates.map((gate) => gate.look),
   };
 }
 
 /** A map the client has no file for has one layer, as the rest of this file assumes. */
-const NO_STRUCTURE: LoadedStructure = { structure: FLAT_STRUCTURE, wallLayers: [], gateLayers: [] };
+const NO_STRUCTURE: LoadedStructure = {
+  structure: FLAT_STRUCTURE,
+  wallLayers: [],
+  gateLayers: [],
+  gateLooks: [],
+};
 const structures = new Map<string, LoadedStructure>();
 
 /** `structureOf` by map id, one object per map: the scene redraws when it changes. */

@@ -154,7 +154,8 @@ const STRUCTURE: MapStructure = {
   ground: 0,
   pits: [],
   tunnels: [],
-  decks: [{ layer: 1, footprint: BRIDGE, look: "platform" }],
+  downDecks: [],
+  decks: [{ layer: 1, footprint: BRIDGE, look: "platform", switched: null }],
   transitions: [],
   water: [],
   zones: [],
@@ -166,7 +167,7 @@ const SUNK: MapStructure = {
   layerCount: 3,
   bounds: { kind: "rect" },
   ground: 1,
-  decks: [{ layer: 2, footprint: BRIDGE, look: "platform" }],
+  decks: [{ layer: 2, footprint: BRIDGE, look: "platform", switched: null }],
 };
 
 describe("what casts a shadow on a layer (#2988)", () => {

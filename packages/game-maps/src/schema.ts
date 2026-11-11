@@ -1655,6 +1655,9 @@ export type MapAtmosphere = z.infer<typeof atmosphereSchema>;
 export type Water = z.infer<typeof waterSchema>;
 export type Zone = z.infer<typeof zoneSchema>;
 export type Gate = z.infer<typeof gateSchema>;
+export type GateLook = Gate["look"];
+/** How a switched deck (#3068) comes and goes, as the map lays it out. */
+export type SwitchedDeckData = NonNullable<Deck["switched"]>;
 export type GateOpener = z.infer<typeof openerSchema>;
 export type Switch = z.infer<typeof switchSchema>;
 export type Teleport = z.infer<typeof teleportSchema>;

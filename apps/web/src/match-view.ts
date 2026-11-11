@@ -2,11 +2,13 @@ import type { FlagField, RelicField, Segment } from "@vibewars/game-core";
 import { ELITE_ZAISHEN_MAP } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import type { MapShrine } from "@vibewars/game-maps/match-fields";
+import type { GateLook } from "@vibewars/game-maps/schema";
 import type {
   BreakableDescriptor,
   GateDescriptor,
   MapDescriptor,
   WallDescriptor,
+  WireDeck,
 } from "@vibewars/game-protocol";
 import type {
   CombatMessage,
@@ -60,6 +62,7 @@ import {
   type RenderableDoor,
   type RenderableWall,
   type MapStructure,
+  placedDecks,
   FLAT_STRUCTURE,
 } from "./render/arena-snapshot.js";
 import { attackCastOf } from "./render/attack-clock.js";
@@ -252,6 +255,37 @@ export function toRenderableWall(wall: WallDescriptor, layer: number): Renderabl
 }
 
 /**
+ * The map's structure with its switched decks (#3068) as `decks` say
+ * they stand, one object per combination, so the map layer redraws only
+ * when a deck goes down or a floor cracks further.
+ */
+export function switchedStructure(
+  structure: MapStructure,
+): (decks: readonly WireDeck[]) => MapStructure {
+  const known = new Map<string, MapStructure>();
+  return (decks) => {
+    const key = decks.map(({ up, cracks }) => `${up ? "u" : "d"}${String(cracks)}`).join("/");
+    let set = known.get(key);
+    if (set === undefined) {
+      const all = [...structure.decks, ...structure.downDecks];
+      set = {
+        ...structure,
+        ...placedDecks(
+          all.map((deck) => {
+            const state = deck.switched === null ? undefined : decks[deck.switched.at];
+            return deck.switched === null || state === undefined
+              ? deck
+              : { ...deck, switched: { ...deck.switched, ...state } };
+          }),
+        ),
+      };
+      known.set(key, set);
+    }
+    return set;
+  };
+}
+
+/**
  * What blocks the eye and the compass for how the gates and breakable
  * walls stand (#2691, #3031): the map's walls, every closed stone gate's
  * and every standing breakable wall's, one array per combination, so the
@@ -262,6 +296,7 @@ export function toRenderableWall(wall: WallDescriptor, layer: number): Renderabl
 export function gateWalls(
   gates: readonly GateDescriptor[],
   gateLayers: readonly number[],
+  gateLooks: readonly GateLook[],
   walls: readonly RenderableWall[],
   segments: readonly Segment[],
   breakables: readonly BreakableDescriptor[],
@@ -286,6 +321,7 @@ export function gateWalls(
       const doors: RenderableDoor[] = shut.map(({ gate, at }) => ({
         ...toRenderableWall(gate.wall, gateLayers[at] ?? 0),
         door: true,
+        look: gateLooks[at] ?? "door",
       }));
       const standing = breakables.flatMap((breakable, at) => {
         const cracks = stages[at];
@@ -325,6 +361,7 @@ export interface GatedMap extends Pick<
   "gates" | "switches" | "teleports" | "breakables"
 > {
   readonly gateLayers: readonly number[];
+  readonly gateLooks: readonly GateLook[];
 }
 
 /** A map's gates and switches where it has none. */
@@ -334,6 +371,7 @@ const UNGATED: GatedMap = {
   teleports: [],
   breakables: [],
   gateLayers: [],
+  gateLooks: [],
 };
 
 /** Project the wire snapshot onto the renderer's own shape (ADR-0001). */
@@ -362,7 +400,7 @@ export function toArenaSnapshot(
     stand: renderableStand(match.stand, flagField, self?.team),
     altar: match.altar,
     capturePoints: renderableCapturePoints(match.capturePoints, self?.team),
-    gates: renderableGates(gated.gates, gated.gateLayers, match.gates, self?.team),
+    gates: renderableGates(gated.gates, gated.gateLayers, gated.gateLooks, match.gates, self?.team),
     switches: renderableSwitches(gated.switches, match.switches),
     teleports: renderableTeleports(gated.teleports, match.teleports),
     breakables: renderableBreakables(gated.breakables, match.breakables),
@@ -526,17 +564,19 @@ export async function startMatchView(
   }
   // A watcher has none (#480): nothing below sends an intent without it.
   const { seat } = viewed;
-  const { structure, wallLayers, gateLayers } = mapStructure(viewed.map.id);
+  const { structure, wallLayers, gateLayers, gateLooks } = mapStructure(viewed.map.id);
   const walls = viewed.map.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(viewed.map.walls);
   const blocking = gateWalls(
     viewed.map.gates,
     gateLayers,
+    gateLooks,
     walls,
     wallSegments,
     viewed.map.breakables,
   );
+  const standing = switchedStructure(structure);
   const mode = mapMode(viewed.map.id);
   const shrines = mapShrines(viewed.map.id, viewed.map.teamCount);
   const flagField = mapFlagField(viewed.map.id);
@@ -1083,8 +1123,8 @@ export async function startMatchView(
         shrines,
         flagField,
         relicField,
-        { ...viewed.map, gateLayers },
-        structure,
+        { ...viewed.map, gateLayers, gateLooks },
+        standing(match.decks),
       ),
       viewport?.pointerWorld(),
       nameReveal.held(),

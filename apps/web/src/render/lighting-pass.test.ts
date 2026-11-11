@@ -165,6 +165,7 @@ describe("layerSurfaces", () => {
     layer,
     footprint: { kind: "rect" as const, x, y, width, height },
     look: "platform" as const,
+    switched: null,
   });
   const ramp = (
     from: number,
@@ -185,6 +186,7 @@ describe("layerSurfaces", () => {
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
     pits: [],
     tunnels: [],
+    downDecks: [],
     transitions: [ramp(0, 1, [300, 250, 140, 200], "e"), ramp(1, 2, [540, 150, 120, 120], "n")],
     water: [],
     zones: [],
@@ -316,6 +318,7 @@ describe("LightingPass", () => {
     ground: 0,
     pits: [],
     tunnels: [],
+    downDecks: [],
     decks: [],
     transitions: [],
     water: [],
