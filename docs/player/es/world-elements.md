@@ -85,16 +85,21 @@ debilita, y acaba hecho escombros.
 
 ## Alturas
 
-Parte del suelo está elevada, y solo puedes subir o bajar por sus rampas,
+Parte del suelo está elevada, y solo puedes subir por sus rampas,
 escaleras, escalones toscos o escaleras de mano: el borde de una
-plataforma elevada te detiene como un muro. Una **torre** es una pequeña
-plataforma de piedra sobre un cuerpo de mampostería, con sitio para unos
-pocos jugadores, a la que se llega por una escalera estrecha o una
-escalera de mano. Un **adarve** recorre lo alto de un muro grueso, con un
-parapeto y escaleras en sus extremos. Por una escalera de mano solo cabe
-un jugador a la vez. Un **puente** de piedra, de tablones o de un tronco
-caído cruza un hueco, y los jugadores de abajo pueden pasar por debajo.
-Estar más alto no cambia tu alcance ni tu daño.
+plataforma elevada te detiene como un muro. Sin embargo, donde su borde
+está roto, puedes bajar de ella de un paso y caer al suelo de abajo al
+instante, pero nunca volver a subir por ahí. Las rampas y las escaleras
+se cruzan a toda velocidad, los escalones toscos algo más despacio y una
+escalera de mano a media velocidad: saltar abajo es rápido, volver a
+subir es lento. Una **torre** es una pequeña plataforma de piedra sobre
+un cuerpo de mampostería, con sitio para unos pocos jugadores, a la que
+se llega por una escalera estrecha o una escalera de mano. Un **adarve**
+recorre lo alto de un muro grueso, con un parapeto y escaleras en sus
+extremos. Por una escalera de mano solo cabe un jugador a la vez. Un
+**puente** de piedra, de tablones o de un tronco caído cruza un hueco, y
+los jugadores de abajo pueden pasar por debajo. Estar más alto no cambia
+tu alcance ni tu daño.
 
 ## Puentes levadizos, puentes de cuerda y pasadizos ocultos
 

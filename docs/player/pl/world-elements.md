@@ -84,12 +84,16 @@ rozchodzą się po nim pęknięcia, aż rozpada się w gruz.
 
 ## Wysokości
 
-Część terenu jest podniesiona i można na nią wejść lub z niej zejść tylko
-po rampach, schodach, nierównych stopniach albo drabinach: krawędź
-podwyższonego pomostu zatrzymuje cię jak mur. **Wieża** to mała kamienna
-platforma na murowanym korpusie, z miejscem dla kilku graczy, na którą
-prowadzą wąskie schody albo drabina. **Chodnik na murach** biegnie po
-szczycie grubego muru, z przedpiersiem i schodami na końcach. Drabina
+Część terenu jest podniesiona i można na nią wejść tylko po rampach,
+schodach, nierównych stopniach albo drabinach: krawędź podwyższonego
+pomostu zatrzymuje cię jak mur. Tam jednak, gdzie jego krawędź jest
+wyłamana, możesz z niego zejść i od razu spaść na ziemię poniżej, ale
+nigdy nie wejdziesz tamtędy z powrotem. Rampy i schody pokonujesz z pełną
+prędkością, nierówne stopnie nieco wolniej, a drabinę z połową prędkości:
+zeskok w dół jest szybki, wspinaczka z powrotem powolna. **Wieża** to mała
+kamienna platforma na murowanym korpusie, z miejscem dla kilku graczy, na
+którą prowadzą wąskie schody albo drabina. **Chodnik na murach** biegnie
+po szczycie grubego muru, z przedpiersiem i schodami na końcach. Drabina
 jest na tyle szeroka, że mieści naraz jednego gracza. **Most** z kamienia,
 desek albo powalonego pnia przerzucony jest nad szczeliną, a gracze na
 dole mogą przejść pod nim. Przebywanie wyżej nie zmienia twojego zasięgu

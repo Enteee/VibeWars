@@ -82,15 +82,20 @@ sortuu raunioiksi.
 
 ## Korkeudet
 
-Osa maasta on korotettua, ja pääset ylös tai alas vain sen luiskia,
-portaita, karkeita askelmia tai tikkaita pitkin: korotetun tasanteen reuna
-pysäyttää sinut kuin muuri. **Torni** on pieni kivitasanne muuratun rungon
-päällä, ja siinä on tilaa muutamalle pelaajalle. Sinne noustaan kapeita
-portaita tai tikkaita. **Vallikäytävä** kulkee paksun muurin harjalla, ja
-siinä on rintavarustus ja portaat molemmissa päissä. Tikkaille mahtuu vain
-yksi pelaaja kerrallaan. Kivestä, lankuista tai kaatuneesta puunrungosta
-tehty **silta** ylittää aukon, ja alapuolella olevat pelaajat voivat kulkea
-sen ali. Korkeammalla oleminen ei muuta kantamaasi eikä vahinkoasi.
+Osa maasta on korotettua, ja pääset ylös vain sen luiskia, portaita,
+karkeita askelmia tai tikkaita pitkin: korotetun tasanteen reuna pysäyttää
+sinut kuin muuri. Missä sen reuna on rikkoutunut, voit kuitenkin astua
+siitä alas ja pudota heti alla olevaan maahan, mutta et voi koskaan kiivetä
+samasta kohdasta takaisin ylös. Luiskat ja portaat ylitetään täydellä
+vauhdilla, karkeat askelmat hieman hitaammin ja tikkaat puolella vauhdilla:
+alas hyppääminen on nopeaa, takaisin kiipeäminen hidasta. **Torni** on
+pieni kivitasanne muuratun rungon päällä, ja siinä on tilaa muutamalle
+pelaajalle. Sinne noustaan kapeita portaita tai tikkaita. **Vallikäytävä**
+kulkee paksun muurin harjalla, ja siinä on rintavarustus ja portaat
+molemmissa päissä. Tikkaille mahtuu vain yksi pelaaja kerrallaan. Kivestä,
+lankuista tai kaatuneesta puunrungosta tehty **silta** ylittää aukon, ja
+alapuolella olevat pelaajat voivat kulkea sen ali. Korkeammalla oleminen ei
+muuta kantamaasi eikä vahinkoasi.
 
 ## Sää ja tunnelma
 

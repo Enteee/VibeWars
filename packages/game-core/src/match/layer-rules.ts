@@ -26,12 +26,14 @@ export const UPHILL: Readonly<Record<Uphill, Vec2>> = {
   w: { x: -1, y: 0 },
 };
 
-/** A ramp's area, the two layers it connects, and which way it climbs. */
+/** A ramp's area, the two layers it connects, which way it climbs, and how fast (#3069). */
 export interface FloorTransition {
   readonly from: number;
   readonly to: number;
   readonly area: Polygon;
   readonly uphill: Vec2;
+  /** Its `CLIMB_PACE`: a body inside it walks at this share of its speed. */
+  readonly pace: number;
 }
 
 /** The one floor of `layer`: what an area fixed to a layer reaches. */

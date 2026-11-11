@@ -11,6 +11,7 @@ import {
   walkIsClear,
   walkableOutline,
   type NavGraph,
+  type NavDropOff,
   type NavLayer,
   type NavTeleport,
   type NavTransition,
@@ -37,8 +38,8 @@ const DECK = rect(500, 300, 600, 200);
 const WEST = rect(350, 300, 170, 200);
 const EAST = rect(1080, 300, 170, 200);
 const TRANSITIONS: readonly NavTransition[] = [
-  { from: 0, to: 1, area: WEST },
-  { from: 0, to: 1, area: EAST },
+  { from: 0, to: 1, area: WEST, pace: 1 },
+  { from: 0, to: 1, area: EAST, pace: 1 },
 ];
 const WEST_PORTAL = vec2(435, 400);
 const EAST_PORTAL = vec2(1165, 400);
@@ -58,13 +59,15 @@ function finder(groundWalls: readonly Segment[] = []) {
 describe("a ramp's waypoints (#2972)", () => {
   // A ramp with a way up, reaching onto the deck: 140 long, Training Heights' length.
   const RAMP = rect(380, 300, 140, 200);
-  const CLIMBS: readonly NavTransition[] = [{ from: 0, to: 1, area: RAMP, uphill: vec2(1, 0) }];
+  const CLIMBS: readonly NavTransition[] = [
+    { from: 0, to: 1, area: RAMP, uphill: vec2(1, 0), pace: 1 },
+  ];
 
   // A second storey: its ramp ends past the deck, so the deck's outline runs across its top.
   const UPPER_RAMP = rect(1000, 300, 140, 200);
   const UPPER_DECK = rect(1120, 300, 400, 200);
   const UPPER_CLIMBS: readonly NavTransition[] = [
-    { from: 1, to: 2, area: UPPER_RAMP, uphill: vec2(1, 0) },
+    { from: 1, to: 2, area: UPPER_RAMP, uphill: vec2(1, 0), pace: 1 },
   ];
 
   const navOf = (walkable: readonly (readonly Polygon[])[]): readonly NavGraph[] =>
@@ -174,7 +177,7 @@ describe("paths across layers (ADR-0051)", () => {
     const built = buildLayeredNavGraph(layers, [], BOUNDS, RADIUS, []).map((gated) =>
       navGraphFor(gated, 0),
     );
-    const none = createLayeredPathFinder(built, [{ from: 0, to: 1, area: narrow }]);
+    const none = createLayeredPathFinder(built, [{ from: 0, to: 1, area: narrow, pace: 1 }]);
     expect(none.find(vec2(300, 400), 0, vec2(800, 400), 1)).toBeUndefined();
   });
 
@@ -367,5 +370,67 @@ describe("a teleport's way (#3030)", () => {
       { x: 700, y: 400, layer: 1 },
       { x: 800, y: 400, layer: 1 },
     ]);
+  });
+});
+
+describe("drop-offs and climbing pace (#3069)", () => {
+  /** The deck's north edge, mid-span: stepped off northwards onto the ground. */
+  const NORTH: NavDropOff = {
+    layer: 1,
+    edge: { a: vec2(700, 300), b: vec2(900, 300) },
+    outward: vec2(0, -1),
+  };
+  const viaRamp = (route: readonly { readonly x: number }[] | undefined): boolean =>
+    (route ?? []).some(({ x }) => x < 520 || x > 1080);
+
+  it("paths down a drop-off, and never up it", () => {
+    const down = createLayeredPathFinder(graphs(), TRANSITIONS, [], [NORTH]);
+    const off = down.find(vec2(800, 400), 1, vec2(800, 150), 0);
+    expect(off).toBeDefined();
+    expect(viaRamp(off)).toBe(false);
+    expect(off?.find(({ layer }) => layer === 0)).toMatchObject({ x: 800, y: 285 });
+    const up = down.find(vec2(800, 150), 0, vec2(800, 400), 1);
+    expect(up).toBeDefined();
+    expect(viaRamp(up)).toBe(true);
+    expect(viaRamp(finder().find(vec2(800, 400), 1, vec2(800, 150), 0))).toBe(true);
+  });
+
+  // Two ways up the deck's east end side by side: a north half and a south half.
+  const NORTH_HALF = rect(1080, 300, 170, 100);
+  const SOUTH_HALF = rect(1080, 400, 170, 100);
+  const sideBySide = (northPace: number, southPace: number) =>
+    createLayeredPathFinder(
+      buildLayeredNavGraph(
+        [
+          { walls: [], walkable: [], open: [] },
+          { walls: [], walkable: [DECK, NORTH_HALF, SOUTH_HALF], open: [] },
+        ],
+        [],
+        BOUNDS,
+        RADIUS,
+        [],
+      ).map((gated) => navGraphFor(gated, 0)),
+      [
+        { from: 0, to: 1, area: NORTH_HALF, uphill: vec2(-1, 0), pace: northPace },
+        { from: 0, to: 1, area: SOUTH_HALF, uphill: vec2(-1, 0), pace: southPace },
+      ],
+    );
+  const southward = (route: readonly { readonly y: number }[] | undefined): boolean =>
+    (route ?? []).some(({ y }) => y > 400);
+
+  it("takes a ramp over a ladder when the detour is shorter than the ladder", () => {
+    // Lined up with the north half: straight up it, unless it is a ladder.
+    const from = vec2(1320, 340);
+    const to = vec2(900, 340);
+    expect(southward(sideBySide(1, 1).find(from, 0, to, 1))).toBe(false);
+    expect(southward(sideBySide(0.5, 1).find(from, 0, to, 1))).toBe(true);
+    // Far from the deck's west ramp, a ladder still beats the long way round.
+    const far = createLayeredPathFinder(graphs(), [
+      { from: 0, to: 1, area: WEST, uphill: vec2(1, 0), pace: 1 },
+      { from: 0, to: 1, area: EAST, uphill: vec2(-1, 0), pace: 0.5 },
+    ]);
+    const route = far.find(vec2(1320, 400), 0, vec2(1000, 400), 1);
+    expect(route).toBeDefined();
+    expect((route ?? []).some(({ x }) => x < 520)).toBe(false);
   });
 });

@@ -81,15 +81,19 @@ slabne, šíria sa po ňom praskliny, až sa zrúti na sutiny.
 
 ## Výšky
 
-Niektorá zem je vyvýšená a hore alebo dole sa dostaneš len po jej
-rampách, schodoch, hrubých stupňoch alebo rebríkoch: okraj vyvýšenej
-plošiny ťa zastaví ako múr. **Veža** je malá kamenná plošina na
-murovanom tele, s miestom pre pár hráčov, na ktorú vedú úzke schody
-alebo rebrík. **Ochodza** vedie po vrchu hrubého múru, s parapetom
-a schodmi na koncoch. Rebrík je dosť široký len pre jedného hráča
-naraz. **Most** z kameňa, dosiek alebo spadnutého kmeňa sa klenie ponad
-priepasť a hráči pod ním môžu prejsť popod neho. Byť vyššie nemení tvoj
-dosah ani tvoje zranenie.
+Niektorá zem je vyvýšená a hore sa dostaneš len po jej rampách,
+schodoch, hrubých stupňoch alebo rebríkoch: okraj vyvýšenej plošiny ťa
+zastaví ako múr. Kde je však jej okraj rozbitý, môžeš z nej zostúpiť a
+hneď spadnúť na zem pod ňou, ale nikdy sa tam nevyšplháš späť hore.
+Rampy a schody prejdeš plnou rýchlosťou, hrubé stupne o niečo pomalšie
+a rebrík polovičnou rýchlosťou: zoskočiť dole je rýchle, vyšplhať sa
+späť pomalé. **Veža** je malá kamenná plošina na murovanom tele, s
+miestom pre pár hráčov, na ktorú vedú úzke schody alebo rebrík.
+**Ochodza** vedie po vrchu hrubého múru, s parapetom a schodmi na
+koncoch. Rebrík je dosť široký len pre jedného hráča naraz. **Most** z
+kameňa, dosiek alebo spadnutého kmeňa sa klenie ponad priepasť a hráči
+pod ním môžu prejsť popod neho. Byť vyššie nemení tvoj dosah ani tvoje
+zranenie.
 
 ## Padacie mosty, lanové mosty a skryté chodby
 

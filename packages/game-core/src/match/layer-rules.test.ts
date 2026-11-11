@@ -24,7 +24,7 @@ const rect = (x: number, y: number, width: number, height: number): Polygon => [
 ];
 
 const DECKS = [{ layer: 1, footprint: rect(100, 0, 100, 100) }];
-const RAMP = [{ from: 0, to: 1, area: rect(50, 0, 50, 100), uphill: UPHILL.e }];
+const RAMP = [{ from: 0, to: 1, area: rect(50, 0, 50, 100), uphill: UPHILL.e, pace: 1 }];
 const ON = floorOf(1);
 const GROUND = floorOf(0);
 
@@ -114,7 +114,7 @@ describe("ramp rims (#2975)", () => {
 
   it("is a ground ramp's edges but its low end, going +x", () => {
     const rims = rampRims(
-      layers([{ from: 0, to: 1, area: rect(0, 0, 100, 50), uphill: UPHILL.e }], 2),
+      layers([{ from: 0, to: 1, area: rect(0, 0, 100, 50), uphill: UPHILL.e, pace: 1 }], 2),
     );
     expect(ends(rims[0] ?? [])).toEqual([
       [0, 0, 100, 0],
@@ -126,7 +126,7 @@ describe("ramp rims (#2975)", () => {
 
   it("is a ground ramp's edges but its low end, going -y", () => {
     const rims = rampRims(
-      layers([{ from: 0, to: 1, area: rect(0, 100, 50, 100), uphill: UPHILL.n }], 2),
+      layers([{ from: 0, to: 1, area: rect(0, 100, 50, 100), uphill: UPHILL.n, pace: 1 }], 2),
     );
     expect(ends(rims[0] ?? [])).toEqual([
       [0, 100, 50, 100],
@@ -137,7 +137,7 @@ describe("ramp rims (#2975)", () => {
 
   it("gives a ramp from a deck none", () => {
     const rims = rampRims(
-      layers([{ from: 1, to: 2, area: rect(0, 100, 50, 100), uphill: UPHILL.n }], 3),
+      layers([{ from: 1, to: 2, area: rect(0, 100, 50, 100), uphill: UPHILL.n, pace: 1 }], 3),
     );
     expect(rims.flat()).toEqual([]);
   });
@@ -147,7 +147,7 @@ describe("ramp rims (#2975)", () => {
     const rims = rampRims({
       count: 2,
       ground: 1,
-      transitions: [{ from: 0, to: 1, area: rect(0, 20, 110, 80), uphill: UPHILL.w }],
+      transitions: [{ from: 0, to: 1, area: rect(0, 20, 110, 80), uphill: UPHILL.w, pace: 1 }],
       pits: [rect(0, 0, 200, 130)],
     });
     expect(rims[0]).toEqual([]);

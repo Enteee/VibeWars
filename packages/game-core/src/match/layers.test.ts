@@ -42,9 +42,10 @@ const LAYERS: MatchLayers = {
   pits: [],
   walls: [WALL_ON_GROUND, WALL_ON_DECK],
   decks: [{ layer: 1, footprint: rect(500, 300, 600, 200) }],
-  transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200), uphill: UPHILL.e }],
+  transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200), uphill: UPHILL.e, pace: 1 }],
   outline: undefined,
   deepWater: [[], []],
+  dropOffs: [],
 };
 
 const WIRE = "assassin.scorpion-wire";
@@ -143,9 +144,12 @@ describe("a body's layer (ADR-0051)", () => {
           { layer: 1, footprint: rect(100, 300, 1000, 200) },
           { layer: 1, footprint: rect(490, 640, 80, 60) },
         ],
-        transitions: [{ from: 0, to: 1, area: rect(480, 500, 100, 100), uphill: UPHILL.n }],
+        transitions: [
+          { from: 0, to: 1, area: rect(480, 500, 100, 100), uphill: UPHILL.n, pace: 1 },
+        ],
         outline: undefined,
         deepWater: [[], []],
+        dropOffs: [],
       },
     });
     sim.setInputDirection("a", vec2(0, -1));
@@ -271,8 +275,8 @@ describe("a body's layer (ADR-0051)", () => {
           { layer: 1, footprint: rect(900, 300, 300, 200) },
         ],
         transitions: [
-          { from: 0, to: 1, area: rect(290, 300, 130, 200), uphill: UPHILL.e },
-          { from: 0, to: 1, area: rect(790, 300, 130, 200), uphill: UPHILL.e },
+          { from: 0, to: 1, area: rect(290, 300, 130, 200), uphill: UPHILL.e, pace: 1 },
+          { from: 0, to: 1, area: rect(790, 300, 130, 200), uphill: UPHILL.e, pace: 1 },
         ],
       },
     });

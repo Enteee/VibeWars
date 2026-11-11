@@ -30,6 +30,25 @@ export function integrateMovement(
 }
 
 /**
+ * How fast a body crosses each look of ramp or stairs (#3069), as a share
+ * of its speed, up or down alike: a ramp or stairs at full speed, rough
+ * steps a little slower, a ladder at half. A lift's platform is flat and
+ * carries you itself (#3079), so you walk it at full speed. "Jump down fast, climb back
+ * slowly" is a drop-off beside a ladder.
+ */
+export const CLIMB_PACE = {
+  ramp: 1,
+  stairs: 1,
+  "stairs-landing": 1,
+  "rough-steps": 0.8,
+  ladder: 0.5,
+  lift: 1,
+} as const satisfies Readonly<Record<string, number>>;
+
+/** A look a transition is climbed by (#3069): what sets its pace. */
+export type ClimbLook = keyof typeof CLIMB_PACE;
+
+/**
  * Clamp a client-supplied direction vector to a unit disc before it is
  * trusted anywhere. A malicious or buggy client could otherwise send
  * `{dirX: 1e9, dirY: 1e9}` and move at an arbitrary multiple of the ruleset's

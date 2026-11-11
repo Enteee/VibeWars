@@ -87,9 +87,13 @@ allargano man mano che cede, e alla fine crolla in macerie.
 
 ## Altezze
 
-Alcuni terreni sono rialzati, e puoi salire o scendere solo per le loro
-rampe, scale, gradini grezzi o scale a pioli: il bordo di una piattaforma
-rialzata ti ferma come un muro. Una **torre** è una piccola piattaforma di
+Alcuni terreni sono rialzati, e puoi salire solo per le loro rampe, scale,
+gradini grezzi o scale a pioli: il bordo di una piattaforma rialzata ti
+ferma come un muro. Dove il suo bordo è interrotto, però, puoi scenderne
+con un passo e cadere subito sul terreno sottostante, ma mai risalire da
+lì. Rampe e scale si attraversano a piena velocità, i gradini grezzi un
+po' più lentamente e una scala a pioli a metà velocità: saltare giù è
+rapido, risalire è lento. Una **torre** è una piccola piattaforma di
 pietra su un corpo in muratura, con spazio per pochi giocatori, raggiunta
 da una scala stretta o da una scala a pioli. Un **camminamento** corre
 lungo la cima di un muro spesso, con un parapetto e scale alle estremità.

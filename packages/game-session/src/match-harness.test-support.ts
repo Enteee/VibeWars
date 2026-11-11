@@ -54,6 +54,7 @@ export function flatLayers(walls: readonly Segment[]): MatchLayers {
     decks: [],
     pits: [],
     transitions: [],
+    dropOffs: [],
     outline: undefined,
     deepWater: [[]],
   };

@@ -50,9 +50,10 @@ const LAYERS: MatchLayers = {
   pits: [],
   walls: [WALL_ON_GROUND, WALL_ON_DECK],
   decks: [{ layer: 1, footprint: rect(500, 300, 600, 200) }],
-  transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200), uphill: UPHILL.e }],
+  transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200), uphill: UPHILL.e, pace: 1 }],
   outline: undefined,
   deepWater: [[], []],
+  dropOffs: [],
 };
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
@@ -581,9 +582,10 @@ describe("a pit and a tunnel below the ground (#2973)", () => {
     pits: [rect(800, 300, 200, 200)],
     walls: [[], []],
     decks: [{ layer: 1, footprint: rect(1000, 350, 200, 100) }],
-    transitions: [{ from: 0, to: 1, area: rect(800, 350, 60, 100), uphill: UPHILL.w }],
+    transitions: [{ from: 0, to: 1, area: rect(800, 350, 60, 100), uphill: UPHILL.w, pace: 1 }],
     outline: undefined,
     deepWater: [[], []],
+    dropOffs: [],
   };
   const below = (participants: readonly ParticipantSpec[]): MatchSimulation =>
     arena(participants, { layers: PIT });

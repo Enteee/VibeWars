@@ -56,7 +56,9 @@ import {
 import {
   CHARACTER_BANDS,
   characterBand,
+  DROP_FALL_SECONDS,
   easeElevation,
+  fallLift,
   elevationOf,
   renderOrder,
   type RenderItem,
@@ -88,6 +90,8 @@ import {
   pickSurface,
   pitDrawing,
   openEdges,
+  besideDropOff,
+  brokenLip,
   rampDrawing,
   rampFrame,
   RING_PATH,
@@ -272,6 +276,8 @@ const BEACON_BOLT_CORE = 0xf0f6ff;
 const SIDE_FACE_SLICE = 2;
 /** Line widths, in CSS px: a deck's lip and a wall's lit edge. */
 const DECK_LIP_WIDTH = 3;
+/** The dark of a drop-off's broken lip, under its pale crumbled edge (#3069). */
+const DROP_OFF_CRACK = 0x2a2420;
 const WALL_LIT_WIDTH = 2;
 /** Pixels per world unit of a zone's painted ground (#3052): sharp at a close zoom. */
 const ZONE_TEXTURE_SCALE = 2;
@@ -481,6 +487,10 @@ export class ArenaScene extends Phaser.Scene {
   private drawnActors: readonly RenderableActor[] = [];
   /** Each body's lift now, while it eases to its layer's. */
   private readonly elevations = new Map<string, number>();
+  /** Each body's layer last frame: a step down beside a drop-off is a fall (#3069). */
+  private readonly lastLayers = new Map<string, number>();
+  /** Each body falling off a drop-off: the lift it fell from, and for how long. */
+  private readonly falls = new Map<string, { readonly from: number; readonly elapsed: number }>();
   /** `snapshot.actors` by id, where they stand: what their light is sampled at. */
   private readonly standing = new Map<string, RenderableActor>();
   /** Every mark on a body, over the body glyphs (#1037). */
@@ -789,6 +799,8 @@ export class ArenaScene extends Phaser.Scene {
     }
     if (structure.layerCount === 1) {
       this.elevations.clear();
+      this.lastLayers.clear();
+      this.falls.clear();
       return actors;
     }
     const seen = new Set<string>();
@@ -796,8 +808,30 @@ export class ArenaScene extends Phaser.Scene {
       seen.add(actor.id);
       const target = liftAt(structure, this.snapshot.lifts, actor.position, actor.layer);
       const known = this.elevations.get(actor.id);
+      const was = this.lastLayers.get(actor.id);
+      this.lastLayers.set(actor.id, actor.layer);
+      if (
+        known !== undefined &&
+        was === actor.layer + 1 &&
+        besideDropOff(structure, actor.position, was)
+      ) {
+        this.falls.set(actor.id, { from: known, elapsed: 0 });
+      }
+      const fall = this.falls.get(actor.id);
+      const elapsed = (fall?.elapsed ?? 0) + dt;
+      if (fall !== undefined) {
+        if (elapsed >= DROP_FALL_SECONDS) {
+          this.falls.delete(actor.id);
+        } else {
+          this.falls.set(actor.id, { from: fall.from, elapsed });
+        }
+      }
       const lift =
-        known === undefined || this.reducedMotion ? target : easeElevation(known, target, dt);
+        known === undefined || this.reducedMotion
+          ? target
+          : fall !== undefined
+            ? fallLift(fall.from, target, elapsed)
+            : easeElevation(known, target, dt);
       this.elevations.set(actor.id, lift);
       return {
         ...actor,
@@ -808,6 +842,8 @@ export class ArenaScene extends Phaser.Scene {
     for (const id of this.elevations.keys()) {
       if (!seen.has(id)) {
         this.elevations.delete(id);
+        this.lastLayers.delete(id);
+        this.falls.delete(id);
       }
     }
     return lifted;
@@ -2403,6 +2439,9 @@ export class ArenaScene extends Phaser.Scene {
         ),
       );
     }
+    for (const dropOff of next.structure.dropOffs) {
+      this.drawDropOff(dropOff, ground, line);
+    }
     this.occluders = occludersOf(next.walls, next.structure);
     this.drawnMap = next;
   }
@@ -2654,6 +2693,26 @@ export class ArenaScene extends Phaser.Scene {
     if (switched !== null && switched.afterCrossings !== null && switched.cracks > 0) {
       SWITCHED_DECK_ART.cracks(face, frame, switched.cracks, switched.afterCrossings);
     }
+    face.restore();
+  }
+
+  /**
+   * A drop-off (#3069) as a broken lip on its deck's edge: the crumbled
+   * stretch you can step off, where the rest of the edge is whole.
+   */
+  private drawDropOff(
+    dropOff: MapStructure["dropOffs"][number],
+    ground: number,
+    line: number,
+  ): void {
+    const face = this.structureAt({ kind: "deck", deckLayer: dropOff.layer });
+    const lip = brokenLip(dropOff.from, dropOff.to);
+    face.save();
+    face.translateCanvas(0, -elevationOf(dropOff.layer, ground));
+    face.lineStyle(line * DECK_LIP_WIDTH, DROP_OFF_CRACK, 1);
+    face.strokePoints(lip.map((point) => new Phaser.Math.Vector2(point.x, point.y)));
+    face.lineStyle(line, DECK_LIP, 1);
+    face.strokePoints(lip.map((point) => new Phaser.Math.Vector2(point.x, point.y)));
     face.restore();
   }
 

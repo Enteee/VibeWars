@@ -46,9 +46,10 @@ const LAYERS: MatchLayers = {
   pits: [],
   walls: [[], []],
   decks: [{ layer: 1, footprint: rect(300, 300, 200, 200) }],
-  transitions: [{ from: 0, to: 1, area: rect(150, 300, 170, 200), uphill: UPHILL.e }],
+  transitions: [{ from: 0, to: 1, area: rect(150, 300, 170, 200), uphill: UPHILL.e, pace: 1 }],
   outline: undefined,
   deepWater: [[], []],
+  dropOffs: [],
 };
 
 function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) {
