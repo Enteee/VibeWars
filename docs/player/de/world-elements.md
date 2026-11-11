@@ -117,6 +117,18 @@ Hebel oder eine Platte hochzieht. Ein **verborgener Durchgang** sieht
 genau aus wie die Felswand um ihn herum, bis er sich zu einer dunklen
 Lücke öffnet.
 
+## Aufzüge
+
+Ein **Aufzug** ist eine Plattform aus Planken in einem Eisenrahmen, die
+dich zwischen einem tieferen und einem erhöhten Boden trägt. Steig auf,
+während er auf deiner Höhe steht. Manche Aufzüge fahren von selbst auf
+und ab und halten an jedem Ende ein paar Sekunden; andere fahren jedes
+Mal zur anderen Ebene, wenn ihr Hebel umgelegt wird, und ein Umlegen
+während der Fahrt bewirkt nichts. Während ein Aufzug fährt, schließen
+Eisenstäbe beide Enden, und ein Messingpfeil zeigt die Richtung: Niemand
+kann auf- oder absteigen, und nichts kann dich herunterstoßen. Wenn er
+hält, steig ab.
+
 ## Wetter und Atmosphäre
 
 Nebelbänke, Rauch, Dampf, Regen und Schnee sind nur fürs Auge. Sie schaden dir

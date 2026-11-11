@@ -1,6 +1,6 @@
 import { isWeaponId, type Vec2, type WeaponId } from "@vibewars/game-core";
 
-import type { MapStructure } from "./arena-snapshot.js";
+import type { MapStructure, RenderableLift } from "./arena-snapshot.js";
 import { liftAt } from "./layer-surfaces.js";
 
 /**
@@ -105,23 +105,28 @@ export interface RenderableProjectile {
   readonly colour: number;
 }
 
-/** Where `shot` leaves from and lands, as drawn: each end lifted to its own layer (#2972). */
+/** Where `shot` leaves from and lands, as drawn: each end lifted to its own layer (#2972), or its lift's platform (#3079). */
 function drawnEnds(
   shot: RenderableProjectile,
   structure: MapStructure,
+  lifts: readonly RenderableLift[],
 ): { readonly from: Vec2; readonly to: Vec2 } {
   return {
     from: {
       x: shot.from.x,
-      y: shot.from.y - liftAt(structure, shot.from, shot.fromLayer),
+      y: shot.from.y - liftAt(structure, lifts, shot.from, shot.fromLayer),
     },
-    to: { x: shot.to.x, y: shot.to.y - liftAt(structure, shot.to, shot.toLayer) },
+    to: { x: shot.to.x, y: shot.to.y - liftAt(structure, lifts, shot.to, shot.toLayer) },
   };
 }
 
 /** Where `shot` is drawn when it lands. */
-export function projectileLanding(shot: RenderableProjectile, structure: MapStructure): Vec2 {
-  return drawnEnds(shot, structure).to;
+export function projectileLanding(
+  shot: RenderableProjectile,
+  structure: MapStructure,
+  lifts: readonly RenderableLift[],
+): Vec2 {
+  return drawnEnds(shot, structure, lifts).to;
 }
 
 /**
@@ -132,19 +137,24 @@ export function projectilePosition(
   shot: RenderableProjectile,
   clock: number,
   structure: MapStructure,
+  lifts: readonly RenderableLift[],
 ): Vec2 | undefined {
   const t =
     shot.flightSeconds > 0 ? Math.max(0, (clock - shot.launchedAt) / shot.flightSeconds) : 1;
   if (t > 1) {
     return undefined;
   }
-  const { from, to } = drawnEnds(shot, structure);
+  const { from, to } = drawnEnds(shot, structure, lifts);
   return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
 }
 
 /** The way a shot points, in radians, for the sprite's rotation. */
-export function projectileHeading(shot: RenderableProjectile, structure: MapStructure): number {
-  const { from, to } = drawnEnds(shot, structure);
+export function projectileHeading(
+  shot: RenderableProjectile,
+  structure: MapStructure,
+  lifts: readonly RenderableLift[],
+): number {
+  const { from, to } = drawnEnds(shot, structure, lifts);
   return Math.atan2(to.y - from.y, to.x - from.x);
 }
 

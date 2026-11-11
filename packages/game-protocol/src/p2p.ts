@@ -294,7 +294,7 @@ export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
 
 /**
- * The most gates a map holds (#2691), or switched decks (#3068), as
+ * The most gates a map holds (#2691), switched decks (#3068) or lifts (#3079), as
  * `MAX_TOGGLES` in game-maps; a peer keeps walls per combination.
  */
 export const MAX_WIRE_TOGGLES = 6;
@@ -712,6 +712,15 @@ export interface WireDeck {
   readonly cracks: number;
 }
 
+/** Where a lift is (#3079): resting at its bottom or top, or on its way to one. */
+export const WIRE_LIFT_PHASES = ["low", "rising", "high", "sinking"] as const;
+
+/** A lift (#3079): where it is, and how high its platform, 0 at its bottom and 1 at its top. */
+export interface WireLift {
+  readonly phase: (typeof WIRE_LIFT_PHASES)[number];
+  readonly progress: number;
+}
+
 /** The most shrines a map has (#1378); the map schema's `MAX_CAPTURE_POINTS`. */
 export const MAX_WIRE_CAPTURE_POINTS = 7;
 
@@ -780,6 +789,8 @@ export interface WireSnapshot {
   readonly breakables: readonly number[];
   /** Each of the map's switched decks (#3068), in its map file's order. */
   readonly decks: readonly WireDeck[];
+  /** Each of the map's lifts (#3079), in its map file's order of transitions. */
+  readonly lifts: readonly WireLift[];
 }
 
 /**
@@ -2460,6 +2471,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const teleports = parseArray(raw.teleports, MAX_WIRE_TELEPORTS, parseBoolean);
   const breakables = parseArray(raw.breakables, MAX_WIRE_BREAKABLES, parseHealth);
   const decks = parseArray(raw.decks, MAX_WIRE_TOGGLES, parseDeck);
+  const lifts = parseArray(raw.lifts, MAX_WIRE_TOGGLES, parseLift);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
@@ -2478,7 +2490,8 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     switches === undefined ||
     teleports === undefined ||
     breakables === undefined ||
-    decks === undefined
+    decks === undefined ||
+    lifts === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -2503,6 +2516,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         teleports,
         breakables,
         decks,
+        lifts,
       };
 }
 
@@ -2543,6 +2557,18 @@ function parseDeck(value: unknown): WireDeck | undefined {
     cracks !== undefined &&
     cracks <= MAX_WIRE_CRACKS
     ? { up: raw.up, cracks }
+    : undefined;
+}
+
+function parseLift(value: unknown): WireLift | undefined {
+  const raw = fields(value);
+  const phase = WIRE_LIFT_PHASES.find((each) => each === raw?.phase);
+  return raw !== undefined &&
+    phase !== undefined &&
+    isNumber(raw.progress) &&
+    raw.progress >= 0 &&
+    raw.progress <= 1
+    ? { phase, progress: raw.progress }
     : undefined;
 }
 

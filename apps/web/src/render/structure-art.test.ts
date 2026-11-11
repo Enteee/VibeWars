@@ -59,8 +59,8 @@ const STRUCTURE: MapStructure = {
     { layer: 3, footprint: TOWER, look: "tower", switched: null },
   ],
   transitions: [
-    { from: 1, to: 2, area: rect(64, 200, 146, 100), uphill: "e", look: "ramp" },
-    { from: 2, to: 3, area: rect(415, 225, 40, 150), uphill: "n", look: "ladder" },
+    { from: 1, to: 2, area: rect(64, 200, 146, 100), uphill: "e", look: "ramp", lift: null },
+    { from: 2, to: 3, area: rect(415, 225, 40, 150), uphill: "n", look: "ladder", lift: null },
   ],
 };
 const [platformDeck, towerDeck] = STRUCTURE.decks;
@@ -179,18 +179,22 @@ describe("DECK_ART (#3067)", () => {
 });
 
 describe("TRANSITION_ART (#3067)", () => {
-  it.each(TRANSITION_LOOKS.map((look) => [look] as const))("draws a %s", (look) => {
-    if (rampUp === undefined) throw new Error("no ramp");
-    const ramp = { ...rampUp, look };
-    const painter = recorder();
-    TRANSITION_ART[look](painter, {
-      drawing: rampDrawing(STRUCTURE, ramp),
-      frame: rampFrame(STRUCTURE, ramp),
-      line: 1,
-      palette: transitionPalette(arenaPalette(4), look),
-    });
-    expect(painter.calls.length).toBeGreaterThan(0);
-  });
+  // A lift draws as its shaft and platform instead (#3079, lift-art.test.ts).
+  it.each(TRANSITION_LOOKS.filter((look) => look !== "lift").map((look) => [look] as const))(
+    "draws a %s",
+    (look) => {
+      if (rampUp === undefined) throw new Error("no ramp");
+      const ramp = { ...rampUp, look };
+      const painter = recorder();
+      TRANSITION_ART[look](painter, {
+        drawing: rampDrawing(STRUCTURE, ramp),
+        frame: rampFrame(STRUCTURE, ramp),
+        line: 1,
+        palette: transitionPalette(arenaPalette(4), look),
+      });
+      expect(painter.calls.length).toBeGreaterThan(0);
+    },
+  );
 
   it("rungs a ladder across its climb, by the uphill game-core gives it", () => {
     if (ladderUp === undefined) throw new Error("no ladder");

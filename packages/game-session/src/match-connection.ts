@@ -24,6 +24,7 @@ import type {
   WireCalls,
   WireCape,
   WireDeck,
+  WireLift,
   WirePing,
   WireStroke,
   WireWeaponSets,
@@ -204,6 +205,8 @@ export interface MatchSnapshot {
   readonly breakables: readonly number[];
   /** Each of the map's switched decks (#3068), up or down and its cracks; `[]` on a map without them. */
   readonly decks: readonly WireDeck[];
+  /** Each of the map's lifts (#3079), where it is and how high; `[]` on a map without them. */
+  readonly lifts: readonly WireLift[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

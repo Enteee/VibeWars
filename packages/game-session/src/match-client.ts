@@ -454,6 +454,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 teleports: [],
                 breakables: [],
                 decks: [],
+                lifts: [],
                 traps,
                 summary,
               }

@@ -178,6 +178,7 @@ describe("layerSurfaces", () => {
     area: { kind: "rect" as const, x, y, width, height },
     uphill,
     look: "ramp" as const,
+    lift: null,
   });
   const HEIGHTS: MapStructure = {
     layerCount: 3,

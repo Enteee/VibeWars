@@ -123,6 +123,7 @@ function snapshot(
     teleports: [],
     breakables: [],
     decks: [],
+    lifts: [],
   };
 }
 

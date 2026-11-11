@@ -381,4 +381,6 @@ export const TRANSITION_LOOK: Record<TransitionLook, TransitionLookColours> = {
   "stairs-landing": { top: 0xa8b4c3, step: 0xccd6e2, riser: 0x56637a, side: GRAPHIC_LAYERS.slab },
   ladder: { top: 0x2c3442, step: 0xa07a4c, riser: 0x6a4a2a, side: shade(0x2c3442, 0.3) },
   "rough-steps": { top: 0x6f6a58, step: 0x8f8a72, riser: 0x433e30, side: 0x4a4436 },
+  /** Plank platform, brass chains and chevrons, an iron frame (#3079, docs/art/3079-lift.md). */
+  lift: { top: 0xa07a48, step: 0xd4a843, riser: 0x7a8aa4, side: 0x4a3320 },
 };

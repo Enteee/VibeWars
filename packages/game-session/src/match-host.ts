@@ -1273,6 +1273,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     teleports: sim.teleports.map((teleport) => teleport.on),
     breakables: sim.breakables.map((breakable) => breakable.health),
     decks: sim.switchedDecks.map(({ up, crossings }) => ({ up, cracks: crossings })),
+    lifts: sim.lifts.map(({ phase, progress }) => ({ phase, progress })),
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,

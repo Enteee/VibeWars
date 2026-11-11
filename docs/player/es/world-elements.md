@@ -112,6 +112,17 @@ Un **rastrillo** es una reja de hierro en un arco de piedra que una
 palanca o una placa levanta. Un **pasadizo oculto** parece exactamente
 el muro de roca que lo rodea hasta que se abre a un hueco oscuro.
 
+## Ascensores
+
+Un **ascensor** es una plataforma de tablones en un marco de hierro que
+te lleva entre un suelo más bajo y uno elevado. Súbete mientras está
+parado a tu nivel. Algunos ascensores suben y bajan solos y se detienen
+unos segundos en cada extremo; otros van al otro nivel cada vez que se
+tira de su palanca, y tirar mientras se mueve no hace nada. Mientras un
+ascensor se mueve, unas barras de hierro cierran sus dos extremos y una
+flecha de latón señala hacia dónde va: nadie puede subir ni bajar, y
+nada puede sacarte de él. Cuando se detenga, bájate.
+
 ## Clima y ambiente
 
 Los bancos de niebla, el humo, el vapor, la lluvia y la nieve son solo para la

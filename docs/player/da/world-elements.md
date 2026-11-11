@@ -109,6 +109,17 @@ Et **faldgitter** er et jerngitter i en stenbue, som et håndtag eller en
 plade hæver. En **skjult gang** ligner præcis klippevæggen omkring den,
 indtil den åbner sig mod en mørk åbning.
 
+## Elevatorer
+
+En **elevator** er en planke-platform i en jernramme, der bærer dig
+mellem et lavere gulv og et hævet. Gå ombord, mens den holder på dit
+niveau. Nogle elevatorer kører op og ned af sig selv og holder et par
+sekunder i hver ende; andre kører til det andet niveau, hver gang deres
+håndtag trækkes, og et træk, mens den kører, gør intet. Mens en elevator
+kører, lukker jernstænger begge dens ender, og en messingpil viser
+vejen: ingen kan komme på eller af, og intet kan slå dig af den. Når den
+stopper, så gå af.
+
 ## Vejr og stemning
 
 Tågebanker, røg, damp, regn og sne er kun for øjet. De skader dig aldrig,

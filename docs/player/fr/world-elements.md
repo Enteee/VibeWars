@@ -128,6 +128,18 @@ levier ou une plaque relève. Un **passage dérobé** ressemble exactement
 à la paroi rocheuse qui l'entoure, jusqu'à ce qu'il s'ouvre sur une
 brèche sombre.
 
+## Monte-charges
+
+Un **monte-charge** est une plateforme de planches dans un cadre de fer
+qui te transporte entre un sol plus bas et un sol surélevé. Monte dessus
+quand il est arrêté à ton niveau. Certains montent et descendent tout
+seuls et s'arrêtent quelques secondes à chaque bout ; d'autres vont à
+l'autre niveau chaque fois qu'on actionne leur levier, et l'actionner
+pendant qu'il bouge ne fait rien. Pendant qu'un monte-charge bouge, des
+barreaux de fer ferment ses deux bouts et une flèche de laiton indique
+où il va : personne ne peut monter ni descendre, et rien ne peut t'en
+faire tomber. Quand il s'arrête, descends.
+
 ## Essaie-les
 
 Dans le **terrain d'entraînement** de l'éditeur de build, choisis le

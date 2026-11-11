@@ -42,6 +42,7 @@ const LEVER: SwitchField = {
   gates: [],
   teleports: [0],
   decks: [],
+  lifts: [],
 };
 
 describe("teleportTaken (#3030)", () => {

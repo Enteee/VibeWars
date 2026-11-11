@@ -609,6 +609,7 @@ describe("structureOf's water (#2984)", () => {
       tunnels: [],
       downDecks: [],
       decks: [],
+      lifts: [],
       transitions: [],
       walls: [],
       gates: [],

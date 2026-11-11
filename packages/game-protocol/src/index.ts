@@ -213,6 +213,7 @@ export type {
   WireFlag,
   WireCapturePoint,
   WireDeck,
+  WireLift,
   WireRelic,
   WireStand,
   JsonValue,

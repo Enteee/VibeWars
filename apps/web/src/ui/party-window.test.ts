@@ -79,6 +79,7 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     teleports: [],
     breakables: [],
     decks: [],
+    lifts: [],
     summary: undefined,
   };
 }

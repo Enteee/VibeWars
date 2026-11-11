@@ -4,6 +4,7 @@ import {
   type GateField,
   type MatchLayers,
   type MatchZone,
+  type LiftField,
   type SwitchedDeckField,
   type SwitchField,
   type TeleportField,
@@ -84,12 +85,14 @@ export function matchGates(map: MapData): GateField[] {
 
 /**
  * `map`'s switches, as the simulation takes them (#3025): each target as
- * its gate's index, its teleport's (#3030) or its switched deck's (#3068).
+ * its gate's index, its teleport's (#3030), its switched deck's (#3068) or
+ * its lift's (#3079).
  */
 export function matchSwitches(map: MapData): SwitchField[] {
   const gates = map.gates.map(({ id }) => id);
   const teleports = (map.teleports ?? []).map(({ id }) => id);
   const decks = matchSwitchedDecks(map).map(({ id }) => id);
+  const lifts = matchLifts(map).map(({ id }) => id);
   return (map.switches ?? []).map(({ id, layer, position, targets }) => ({
     id,
     layer,
@@ -99,6 +102,7 @@ export function matchSwitches(map: MapData): SwitchField[] {
       teleports.includes(target) ? [teleports.indexOf(target)] : [],
     ),
     decks: targets.flatMap((target) => (decks.includes(target) ? [decks.indexOf(target)] : [])),
+    lifts: targets.flatMap((target) => (lifts.includes(target) ? [lifts.indexOf(target)] : [])),
   }));
 }
 
@@ -111,6 +115,16 @@ export function matchSwitchedDecks(map: MapData): SwitchedDeckField[] {
     switched === null
       ? []
       : [{ id, deck, layer, footprint: shapeVertices(footprint), ...switched }],
+  );
+}
+
+/**
+ * `map`'s lifts, as the simulation takes them (#3079), in its order, each
+ * with its index among the match's transitions (`matchLayers`).
+ */
+export function matchLifts(map: MapData): LiftField[] {
+  return map.transitions.flatMap(({ id, from, to, area, lift }, transition) =>
+    lift === null ? [] : [{ id, transition, from, to, area: shapeVertices(area), run: lift }],
   );
 }
 

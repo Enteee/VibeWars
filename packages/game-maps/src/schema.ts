@@ -93,6 +93,7 @@ export const TRANSITION_LOOKS = [
   "stairs-landing",
   "ladder",
   "rough-steps",
+  "lift",
 ] as const;
 
 /**
@@ -137,15 +138,37 @@ const deckSchema = z.object({
 });
 
 /**
+ * A lift (#3079): a platform that carries whoever stands on it between a
+ * transition's two layers, resting at each in turn. A `timer` lift rests
+ * `restSeconds` at the bottom, travels `travelSeconds`, rests at the top
+ * and travels down, over and over; a `lever` lift travels to the other
+ * layer each time a switch naming it is flipped while it rests. A rest
+ * lasts half a second at least, longer than any step, so a lift always
+ * stops at each end.
+ */
+const liftSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("timer"),
+    restSeconds: z.number().min(0.5).max(60),
+    travelSeconds: z.number().positive().max(10),
+  }),
+  z.object({ kind: z.literal("lever") }),
+]);
+
+/**
  * A ramp or stairs (ADR-0051): inside `area`, a body moves between `from`
- * and `to`, one above, climbing towards `uphill` (#2973).
+ * and `to`, one above, climbing towards `uphill` (#2973). A lift (#3079)
+ * is not climbed: it carries.
  */
 const transitionSchema = z.object({
+  id: z.string().min(1),
   from: layerSchema,
   to: layerSchema,
   area: shapeSchema,
   uphill: z.enum(["n", "e", "s", "w"]),
   look: z.enum(TRANSITION_LOOKS),
+  /** `null` for a transition walked up and down. */
+  lift: liftSchema.nullable(),
 });
 
 /**
@@ -354,7 +377,8 @@ const atmosphereSchema = z.object({
 
 /**
  * The most things on a map that change how it is walked (#2691, #3068):
- * gates, breakable walls, switched teleports and switched decks together.
+ * gates, breakable walls, switched teleports, switched decks and lifts
+ * (#3079) together.
  * The match keeps paths for each way they can stand.
  */
 const MAX_TOGGLES = 6;
@@ -1231,6 +1255,23 @@ export const mapDataSchema = z
           message: `ladder ${String(index)} is ${width.toFixed(1)} wide, wider than the ${String(MAX_LADDER_WIDTH)} a ladder may be`,
         });
       }
+      if (map.transitions.findIndex(({ id }) => id === transition.id) < index) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index, "id"],
+          message: `transition id ${transition.id} is used twice`,
+        });
+      }
+      if ((transition.look === "lift") !== (transition.lift !== null)) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index, "lift"],
+          message:
+            transition.lift === null
+              ? `transition ${transition.id} looks a lift but does not run as one`
+              : `lift ${transition.id} must look a lift`,
+        });
+      }
       if (transition.to === map.groundLayer && !inPitUpToItsEdge(transition, map.pits)) {
         context.addIssue({
           code: "custom",
@@ -1495,6 +1536,24 @@ export const mapDataSchema = z
     const switchedDeckIds = new Set(
       map.decks.flatMap((deck) => (deck.switched === null ? [] : [deck.id])),
     );
+    const leverLiftIds = new Set(
+      map.transitions.flatMap(({ id, lift }) => (lift?.kind === "lever" ? [id] : [])),
+    );
+    const liftCount = map.transitions.filter(({ lift }) => lift !== null).length;
+    map.transitions.forEach((transition, index) => {
+      if (
+        transition.lift !== null &&
+        (map.gates.some(({ id }) => id === transition.id) ||
+          map.decks.some(({ id }) => id === transition.id) ||
+          (map.teleports ?? []).some(({ id }) => id === transition.id))
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index, "id"],
+          message: `lift id ${transition.id} is also a gate's, deck's or teleport's`,
+        });
+      }
+    });
     map.gates.forEach((gate, index) => {
       if (
         map.gates.findIndex(({ id }) => id === gate.id) < index ||
@@ -1531,17 +1590,31 @@ export const mapDataSchema = z
       lever.targets.forEach((target, at) => {
         switched.add(target);
         const kind = gateKinds.get(target);
-        if (kind !== "switch" && !teleportIds.has(target) && !switchedDeckIds.has(target)) {
+        if (
+          kind !== "switch" &&
+          !teleportIds.has(target) &&
+          !switchedDeckIds.has(target) &&
+          !leverLiftIds.has(target)
+        ) {
           context.addIssue({
             code: "custom",
             path: ["switches", index, "targets", at],
             message:
               kind === undefined
-                ? `switch ${lever.id} names ${target}, which is no gate, teleport or switched deck`
+                ? `switch ${lever.id} names ${target}, which is no gate, teleport, switched deck or lever lift`
                 : `switch ${lever.id} names ${target}, a plate's gate`,
           });
         }
       });
+    });
+    map.transitions.forEach((transition, index) => {
+      if (leverLiftIds.has(transition.id) && !switched.has(transition.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index, "lift"],
+          message: `lever lift ${transition.id} is named by no switch`,
+        });
+      }
     });
     map.gates.forEach((gate, index) => {
       if (gate.opener.kind === "switch" && !switched.has(gate.id)) {
@@ -1624,17 +1697,18 @@ export const mapDataSchema = z
         }
       });
     });
-    // Each gate, breakable, switched teleport and switched deck doubles the match's pre-built paths.
+    // Each gate, breakable, switched teleport, switched deck and lift doubles the match's pre-built paths.
     const toggles =
       map.gates.length +
       breakables.length +
       teleports.filter(({ id }) => switched.has(id)).length +
-      switchedDeckIds.size;
+      switchedDeckIds.size +
+      liftCount;
     if (toggles > MAX_TOGGLES) {
       context.addIssue({
         code: "custom",
         path: ["gates"],
-        message: `${String(toggles)} gates, breakables, switched teleports and switched decks, more than ${String(MAX_TOGGLES)}`,
+        message: `${String(toggles)} gates, breakables, switched teleports, switched decks and lifts, more than ${String(MAX_TOGGLES)}`,
       });
     }
 
@@ -1710,6 +1784,8 @@ export type Gate = z.infer<typeof gateSchema>;
 export type GateLook = Gate["look"];
 /** How a switched deck (#3068) comes and goes, as the map lays it out. */
 export type SwitchedDeckData = NonNullable<Deck["switched"]>;
+/** How a lift (#3079) runs, as the map lays it out. */
+export type TransitionLift = NonNullable<Transition["lift"]>;
 export type GateOpener = z.infer<typeof openerSchema>;
 export type Switch = z.infer<typeof switchSchema>;
 export type Teleport = z.infer<typeof teleportSchema>;
