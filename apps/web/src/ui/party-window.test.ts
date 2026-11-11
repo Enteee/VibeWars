@@ -77,6 +77,7 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     gates: [],
     switches: [],
     teleports: [],
+    breakables: [],
     summary: undefined,
   };
 }

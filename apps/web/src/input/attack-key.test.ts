@@ -80,6 +80,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     gates: [],
     switches: [],
     teleports: [],
+    breakables: [],
     summary: undefined,
   };
 }

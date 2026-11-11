@@ -452,6 +452,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 gates: [],
                 switches: [],
                 teleports: [],
+                breakables: [],
                 traps,
                 summary,
               }

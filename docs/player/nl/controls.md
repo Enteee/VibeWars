@@ -44,6 +44,7 @@ Deze toetsen liggen vast:
   die te kiezen; **Space** loopt erheen en pakt de vlag op of plant hem.
 - **Rechtsklik** op een hendel om hem als doel te kiezen; **Space** loopt erheen en haalt hem over, zodat de poorten die hij bedient open- of dichtgaan.
 - Loop je een **portaal** in, dan brengt het je naar zijn uitgang. Een hendel kan het aan- of uitzetten; na een reis rust het 5 s voordat het je weer meeneemt.
+- Een **glinsterende poort** houdt pijlen en lichamen tegen, maar geen spreuken. Een **gebarsten muur** kun je kapotmaken: klik erop en val hem aan of raak hem met een schadevaardigheid.
 - **Wielklik** op een vijand om hem voor je team aan te wijzen: hun **T** kiest
   hem. Op de grond of een bondgenoot pingt het die plek. Of klik op de
   doelwitbalk bovenaan om de vijand aan te wijzen die je gekozen hebt.

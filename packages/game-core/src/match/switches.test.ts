@@ -20,8 +20,8 @@ function across(x: number): readonly Segment[] {
   return corners.map((a, at) => ({ a, b: corners[(at + 1) % corners.length] ?? a }));
 }
 
-const WEST: GateField = { segments: across(400), opener: { kind: "switch" } };
-const EAST: GateField = { segments: across(1000), opener: { kind: "switch" } };
+const WEST: GateField = { segments: across(400), opener: { kind: "switch" }, blocks: "all" };
+const EAST: GateField = { segments: across(1000), opener: { kind: "switch" }, blocks: "all" };
 const LEVER_AT = vec2(200, 400);
 const LEVER: SwitchField = { id: "lever", layer: 0, position: LEVER_AT, gates: [0], teleports: [] };
 const LEVER_ID = switchTargetId("lever");

@@ -121,6 +121,7 @@ function snapshot(
     gates: [],
     switches: [],
     teleports: [],
+    breakables: [],
   };
 }
 

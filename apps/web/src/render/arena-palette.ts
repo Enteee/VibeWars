@@ -172,3 +172,36 @@ export const GATE_DOOR_LOOK = {
   plateOutline: 0x23211d,
   plateHeld: 0x6f695f,
 };
+
+/**
+ * A breakable wall (#3031, docs/art/3030-world-elements.md): chiselled
+ * stone, warmer than a map wall's blue-grey, so it reads as one that can
+ * break; dark cracks as it is struck, and rubble and dust once it falls.
+ */
+export const BREAKABLE_WALL_LOOK = {
+  top: 0xa69f92,
+  face: 0x6f695f,
+  lit: 0xc4bdb0,
+  mortar: 0x4d4943,
+  edge: 0x23211d,
+  crack: 0x17150f,
+  rubble: 0x8f887b,
+  rubbleFace: 0x5e5850,
+  dust: 0x9a948a,
+  shadow: 0x0b0a08,
+};
+
+/**
+ * An energy barrier (#3031, docs/art/3030-world-elements.md): two slate
+ * posts with aqua lamps and, closed, a shimmering aqua curtain between
+ * them with bright edges; open, the posts and a faint dashed ghost.
+ */
+export const BARRIER_LOOK = {
+  post: 0x4b5a70,
+  postTop: 0x6a7c96,
+  postEdge: 0x1c222b,
+  lamp: 0x5fe0d0,
+  curtain: 0x5fe0d0,
+  edge: 0xc8fff6,
+  ghost: 0x5fe0d0,
+};

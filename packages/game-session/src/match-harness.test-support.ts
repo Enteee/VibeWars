@@ -79,6 +79,7 @@ export const ARENA: HostMap = {
     gates: [],
     switches: [],
     teleports: [],
+    breakables: [],
     walls: [{ kind: "rect", x: 990, y: 900, width: 20, height: 200 }],
   },
   mode: "annihilation",
@@ -102,6 +103,7 @@ export const ARENA: HostMap = {
   gates: [],
   switches: [],
   teleports: [],
+  breakables: [],
   guards: [],
 };
 

@@ -14,6 +14,7 @@ import {
   matchLayers,
   matchSwitches,
   matchTeleports,
+  matchBreakables,
   matchZones,
 } from "@vibewars/game-maps/layers";
 import type { MapData } from "@vibewars/game-maps/schema";
@@ -23,6 +24,7 @@ import {
   structureOf,
   switchDescriptors,
   teleportDescriptors,
+  breakableDescriptors,
   type LoadedStructure,
 } from "../net/maps.js";
 
@@ -94,6 +96,7 @@ function toMapDescriptor(map: MapData): MapDescriptor {
     gates: map.gates.map(gateDescriptor),
     switches: switchDescriptors(map),
     teleports: teleportDescriptors(map),
+    breakables: breakableDescriptors(map),
   };
 }
 
@@ -134,6 +137,7 @@ export function setupScenario(
     gates: matchGates(map),
     switches: matchSwitches(map),
     teleports: matchTeleports(map),
+    breakables: matchBreakables(map),
     participants: [
       {
         id: SELF_ID,

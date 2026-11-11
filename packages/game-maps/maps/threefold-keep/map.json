@@ -224,7 +224,8 @@
         "plate": { "x": 1320, "y": 1100 },
         "team": null,
         "oneWay": true
-      }
+      },
+      "blocks": "all"
     },
     {
       "id": "door-east",
@@ -241,7 +242,8 @@
         "plate": { "x": 1880, "y": 1100 },
         "team": null,
         "oneWay": true
-      }
+      },
+      "blocks": "all"
     },
     {
       "id": "door-north",
@@ -258,7 +260,8 @@
         "plate": { "x": 1600, "y": 820 },
         "team": null,
         "oneWay": true
-      }
+      },
+      "blocks": "all"
     },
     {
       "id": "door-south",
@@ -275,7 +278,8 @@
         "plate": { "x": 1600, "y": 1380 },
         "team": null,
         "oneWay": true
-      }
+      },
+      "blocks": "all"
     }
   ],
   "objectives": [

@@ -17,6 +17,11 @@ import type { MapLighting } from "@vibewars/game-maps/schema";
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import type { AttackCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
+import {
+  breakableAtPoint,
+  type CrackStage,
+  type RenderableBreakable,
+} from "./breakable-objects.js";
 import type { CapeLook } from "./cape-shape.js";
 import type { RenderablePing } from "./call-marks.js";
 import type {
@@ -127,6 +132,13 @@ export type RenderableDoor = RenderableWall & { readonly door: true };
 
 export function isDoor(wall: RenderableWall): wall is RenderableDoor {
   return "door" in wall;
+}
+
+/** A standing breakable wall (#3031): it blocks as a wall does, and draws as stone with its cracks. */
+export type RenderableCrackedWall = RenderableWall & { readonly cracks: CrackStage };
+
+export function isCrackedWall(wall: RenderableWall): wall is RenderableCrackedWall {
+  return "cracks" in wall;
 }
 
 /** A deck's or ramp's outline, as a wall's without a layer. */
@@ -460,6 +472,11 @@ export interface ArenaSnapshot {
   readonly switches: readonly RenderableSwitch[];
   /** The map's portals (#3030), on or off; `[]` on a map without them. */
   readonly teleports: readonly RenderableTeleport[];
+  /**
+   * The map's breakable walls (#3031), standing or crumbled; `[]` on a map
+   * without them. A standing one is also among `walls`, which draw it.
+   */
+  readonly breakables: readonly RenderableBreakable[];
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
@@ -467,7 +484,10 @@ export interface ArenaSnapshot {
   readonly groundEffects: readonly RenderableGroundEffect[];
   /** The match clock (`elapsedSeconds`), which projectiles fly against. */
   readonly clock: number;
-  /** The living body under the mouse cursor, whose name shows (#253). */
+  /**
+   * The living body under the mouse cursor, whose name shows (#253), or
+   * else the standing breakable wall (#3031), whose health bar shows.
+   */
   readonly hoverId: string | undefined;
   /** The names key is held (Shift by default, #302): every name shows (#253). */
   readonly showAllNames: boolean;
@@ -503,6 +523,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   gates: [],
   switches: [],
   teleports: [],
+  breakables: [],
   targetId: undefined,
   projectiles: [],
   groundEffects: [],
@@ -702,7 +723,8 @@ export function withNames(
   const hoverId =
     pointer === undefined
       ? undefined
-      : actorAtPoint(snapshot, pointer, showAllNames ? nameBoxes : undefined)?.id;
+      : (actorAtPoint(snapshot, pointer, showAllNames ? nameBoxes : undefined)?.id ??
+        breakableAtPoint(snapshot.breakables, pointer, snapshot.structure));
   return { ...snapshot, hoverId, showAllNames, nameBoxes };
 }
 

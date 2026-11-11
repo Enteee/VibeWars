@@ -199,6 +199,8 @@ export interface MatchSnapshot {
   readonly switches: readonly boolean[];
   /** Whether each of the map's teleports is on (#3030); `[]` on a map without them. */
   readonly teleports: readonly boolean[];
+  /** Each of the map's breakable walls' health (#3031); `[]` on a map without them. */
+  readonly breakables: readonly number[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

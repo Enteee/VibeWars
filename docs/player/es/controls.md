@@ -47,6 +47,7 @@ Estas teclas son fijas:
   bandera o la planta.
 - **Clic derecho** en una palanca para fijarla como objetivo; **Space** camina hasta ella y la acciona, abriendo o cerrando las puertas que controla.
 - Si entras en un **portal**, te lleva a su salida. Una palanca puede encenderlo o apagarlo; tras un viaje descansa 5 s antes de llevarte otra vez.
+- Una **puerta reluciente** detiene flechas y cuerpos, pero no hechizos. Un **muro agrietado** se puede romper: haz clic en él y luego atácalo o golpéalo con una habilidad de daño.
 - **Clic con la rueda** en un enemigo para marcarlo para tu equipo: su **T**
   lo selecciona. En el suelo o en un aliado, señala ese punto. O haz clic en
   la barra de objetivo de arriba para marcar al enemigo que tienes

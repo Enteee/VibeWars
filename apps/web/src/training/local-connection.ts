@@ -318,6 +318,7 @@ export function createLocalConnection(options: {
         gates: simulation.gates.map((gate) => gate.open),
         switches: simulation.switches.map((lever) => lever.up),
         teleports: simulation.teleports.map((teleport) => teleport.on),
+        breakables: simulation.breakables.map((breakable) => breakable.health),
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

@@ -251,10 +251,13 @@ import {
   releasedStrikes,
   strikeCount,
   unblockableNow,
+  wallBlow,
   weaponSnapshotOf,
   blowKind,
   withEndedStatuses,
+  type AttackState,
 } from "../skills/weapon-attack.js";
+import { skillDamage, wallDamage } from "../skills/damage.js";
 import {
   breakHex,
   fireChangeTriggers,
@@ -332,6 +335,16 @@ import {
   type CapturePoint,
   type CapturePointSite,
 } from "./capture-points.js";
+import {
+  breakableIdOf,
+  breakableTargetId,
+  damageBreakable,
+  initialBreakables,
+  standing,
+  strikePointOf,
+  type Breakable,
+  type BreakableField,
+} from "./breakables.js";
 import {
   cutShotAtGate,
   holdsPlate,
@@ -916,6 +929,8 @@ export interface MatchSimulationOptions {
   readonly switches?: readonly SwitchField[];
   /** The map's teleports (#3030), in its order; none if omitted. */
   readonly teleports?: readonly TeleportField[];
+  /** The map's breakable walls (#3031), in its order; none if omitted. */
+  readonly breakables?: readonly BreakableField[];
   /** The map's effect zones (ADR-0053, #3024), in its order; none if omitted. */
   readonly zones?: readonly MatchZone[];
   /**
@@ -1212,9 +1227,15 @@ function faceToward(record: Participant, point: Vec2): void {
   }
 }
 
+/** What an approach, a reach or a sight line measures to: a body, or a breakable wall's nearest point (#3031). */
+type Aim = Pick<ParticipantRecord, "id" | "position" | "layer" | "floors">;
+
 /** The walls of one combination of gates, and the paths round them (#2691). */
 interface WallSet {
+  /** What stops bodies and shots. */
   readonly walls: readonly Segment[];
+  /** `walls` less every closed energy barrier's (#3031): what stops sight. */
+  readonly sight: readonly Segment[];
   /** One a layer. */
   readonly graphs: readonly NavGraph[];
   readonly paths: LayeredPathFinder;
@@ -1223,8 +1244,13 @@ interface WallSet {
 export class MatchSimulation {
   readonly #ruleset: Ruleset;
   readonly #matchRules: MatchRules | undefined;
-  /** The map's walls and every closed gate's (#2691); swapped as a gate moves. */
+  /**
+   * The map's walls, every closed gate's (#2691) and every standing
+   * breakable's (#3031); swapped as one moves. What stops bodies and shots.
+   */
   #walls: readonly Segment[];
+  /** `#walls` less every closed energy barrier's (#3031): what stops sight. */
+  #sightWalls: readonly Segment[];
   /** Omitted on a map of one layer. */
   readonly #layers: MatchLayers | undefined;
   readonly #zones: readonly MatchZone[];
@@ -1249,8 +1275,10 @@ export class MatchSimulation {
   readonly #rampRims: readonly (readonly Segment[])[];
   /** The ground's layer (#2973): 0 on a map with nothing under it. */
   readonly #ground: number;
-  /** `#walls` for each layer: what sight and shots read, swapped as a gate moves. */
+  /** `#walls` for each layer: what shots read, swapped as a gate moves. */
   #layerWalls: readonly (readonly Segment[])[];
+  /** `#sightWalls` for each layer (#3031): what sight reads. */
+  #layerSight: readonly (readonly Segment[])[];
   /** `#layerWalls` with each layer's deep water (#2983): what collision reads. */
   #layerBlockers: readonly (readonly Segment[])[];
   readonly #gatedGraphs: readonly GatedNavGraph[];
@@ -1268,6 +1296,8 @@ export class MatchSimulation {
   readonly #switches: Switch[];
   /** Filled in place, as `#gates` (#3030). */
   readonly #teleports: Teleport[];
+  /** Filled in place, as `#gates` (#3031): each a bit of a wall set's key past the gates'. */
+  readonly #breakables: Breakable[];
   /** The teleports some switch names, by index: each a bit of a wall set's key past the gates'. */
   readonly #switchedTeleports: readonly number[];
   /** Who reached a switch this step (#3025), in simulation order. */
@@ -1300,6 +1330,8 @@ export class MatchSimulation {
   #centroidsTick = -1;
   #projectiles: Projectile[] = [];
   #nextProjectileId = 1;
+  /** What each shot in flight at a breakable wall (#3031) takes off it, by its id: rolled as it left. */
+  readonly #wallShots = new Map<number, number>();
 
   #tick = 0;
   #elapsedSeconds = 0;
@@ -1419,6 +1451,7 @@ export class MatchSimulation {
     this.#gates = initialGates(options.gates ?? []);
     this.#switches = initialSwitches(options.switches ?? []);
     this.#teleports = initialTeleports(options.teleports ?? []);
+    this.#breakables = initialBreakables(options.breakables ?? []);
     this.#switchedTeleports = this.#teleports.flatMap((_, at) =>
       this.#switches.some((lever) => lever.teleports.includes(at)) ? [at] : [],
     );
@@ -1439,16 +1472,24 @@ export class MatchSimulation {
             walkable: this.#walkable[layer] ?? [],
             open: this.#rampRims[layer] ?? [],
           })),
-      this.#gates.map((gate) => ({ layer: gate.layer ?? this.#ground, segments: gate.segments })),
+      [
+        ...this.#gates.map((gate) => ({
+          layer: gate.layer ?? this.#ground,
+          segments: gate.segments,
+        })),
+        ...this.#breakables.map(({ layer, segments }) => ({ layer, segments })),
+      ],
       this.#bounds,
       this.#ruleset.collision.playerRadius,
       this.#harmfulZones,
     );
     const walls = this.#currentWallSet();
     this.#walls = walls.walls;
+    this.#sightWalls = walls.sight;
     this.#graphs = walls.graphs;
     this.#paths = walls.paths;
-    this.#layerWalls = this.#wallsByLayer();
+    this.#layerWalls = this.#wallsByLayer(false);
+    this.#layerSight = this.#wallsByLayer(true);
     this.#layerBlockers = this.#blockersByLayer();
     this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
     this.#rng = createRng(this.#seed);
@@ -1629,6 +1670,11 @@ export class MatchSimulation {
   /** Every teleport (#3030), and whether it is on; `[]` on a map without them. */
   public get teleports(): readonly Teleport[] {
     return this.#teleports;
+  }
+
+  /** Every breakable wall (#3031), and its health; `[]` on a map without them. */
+  public get breakables(): readonly Breakable[] {
+    return this.#breakables;
   }
 
   /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
@@ -2641,7 +2687,7 @@ export class MatchSimulation {
         casterLayer: layer,
         primary: undefined,
         candidates: [...this.#participants.values()],
-        losBlockers: this.#wallsOn(layer),
+        losBlockers: this.#sightOn(layer),
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
@@ -3332,7 +3378,8 @@ export class MatchSimulation {
         (targetId === FLAG_STAND_ID ||
           this.flags.some(({ team }) => team === flagTeamOf(targetId)))) ||
       this.relics.some(({ team }) => team === relicTeamOf(targetId)) ||
-      this.#switchOf(targetId) !== undefined;
+      this.#switchOf(targetId) !== undefined ||
+      this.#standingWall(targetId) >= 0;
     if (!bundle && !this.#participants.has(targetId)) {
       return false;
     }
@@ -4419,13 +4466,19 @@ export class MatchSimulation {
     // A pet skill acts on the pet, whatever was asked (#1046).
     const targetedId = isCompanionRule(skill.target) ? this.#companionOf(record)?.id : targetId;
     const target = targetedId === undefined ? undefined : this.#participants.get(targetedId);
-    const aimed = skill.target === "self" ? record : target;
+    // A breakable wall (#3031), aimed at where it is nearest.
+    const wall =
+      target === undefined && targetedId !== undefined && skill.target !== "self"
+        ? this.#wallAim(record, targetedId)
+        : undefined;
+    const aimed = skill.target === "self" ? record : (target ?? wall);
     const check = canActivate({
       skill,
       caster: record.combatant,
       casterPosition: record.position,
       target: skill.target === "self" ? record.combatant : target?.combatant,
-      targetPosition: skill.target === "self" ? record.position : target?.position,
+      targetPosition: skill.target === "self" ? record.position : aimed?.position,
+      targetWall: wall !== undefined,
       targetCreatureKind: skill.target === "self" ? record.creature?.kind : target?.creature?.kind,
       targetCreatureOwnerId:
         skill.target === "self" ? record.creature?.ownerId : target?.creature?.ownerId,
@@ -4436,7 +4489,7 @@ export class MatchSimulation {
       skillBar: resolvedBar(record.skillBar, record.combatant.cast).map(
         (slot) => slot?.key ?? null,
       ),
-      losBlockers: this.#wallsOn(record.layer),
+      losBlockers: this.#sightOn(record.layer),
       deckBlocked: aimed !== undefined && this.#deckBlocks(record, aimed),
       sharesFloorWithTarget: aimed === undefined || sharesFloor(record.floors, aimed.floors),
       heightStep:
@@ -4694,6 +4747,8 @@ export class MatchSimulation {
     }
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
+    // A breakable wall (#3031) takes the skill's damage and nothing else.
+    const wall = targetId === undefined ? -1 : this.#standingWall(targetId);
     if (
       this.#failsSpell(record, skill, targetRecord, cast.key) ||
       this.#failsTouch(record, skill, targetRecord, cast.key) ||
@@ -4769,24 +4824,34 @@ export class MatchSimulation {
     // What the caster's statuses add to its hits, each logged apart (#939).
     const riders: FiredTrigger[] = [];
     const resolve =
-      flight !== undefined
-        ? (resolution: SkillResolution) =>
+      wall >= 0
+        ? () =>
             only(
-              this.#releaseSpell(
+              this.#skillAtWall(
                 record,
-                resolution,
-                flight.speed * cast.rule.projectileSpeedMultiplier,
-                dt,
-                loan,
+                skill,
+                targetId ?? "",
+                flight === undefined ? speed : flight.speed * cast.rule.projectileSpeedMultiplier,
               ),
             )
-        : skill.attack === undefined
-          ? (resolution: SkillResolution) => resolveSkillEffects(resolution)
-          : speed === undefined
-            ? (resolution: SkillResolution) =>
-                resolveAttackSkillOutcome(resolution, exposed, riders)
-            : (resolution: SkillResolution) =>
-                only(this.#releaseSkill(record, resolution, speed, dt));
+        : flight !== undefined
+          ? (resolution: SkillResolution) =>
+              only(
+                this.#releaseSpell(
+                  record,
+                  resolution,
+                  flight.speed * cast.rule.projectileSpeedMultiplier,
+                  dt,
+                  loan,
+                ),
+              )
+          : skill.attack === undefined
+            ? (resolution: SkillResolution) => resolveSkillEffects(resolution)
+            : speed === undefined
+              ? (resolution: SkillResolution) =>
+                  resolveAttackSkillOutcome(resolution, exposed, riders)
+              : (resolution: SkillResolution) =>
+                  only(this.#releaseSkill(record, resolution, speed, dt));
     const targets = resolveTargets({
       skill,
       caster: record.combatant,
@@ -4800,7 +4865,7 @@ export class MatchSimulation {
         skill.area === undefined || (flight !== undefined && flight.spread !== true)
           ? []
           : [...this.#participants.values()],
-      losBlockers: this.#wallsOn(
+      losBlockers: this.#sightOn(
         skill.area?.origin === "target" && primary !== undefined ? primary.layer : record.layer,
       ),
     });
@@ -6114,7 +6179,8 @@ export class MatchSimulation {
     }
     const used = slotSkill(record.skillBar, record.combatant.cast, pending.slot);
     const skill = used === undefined ? undefined : getSkill(used.skillId);
-    const target = this.#participants.get(pending.targetId);
+    const target =
+      this.#participants.get(pending.targetId) ?? this.#wallAim(record, pending.targetId);
     const moving =
       record.inputDirection.x !== 0 ||
       record.inputDirection.y !== 0 ||
@@ -6570,13 +6636,24 @@ export class MatchSimulation {
     }
   }
 
-  /** Each layer's walls with the gates as they stand now; `[]` on a map of one layer. */
-  #wallsByLayer(): readonly (readonly Segment[])[] {
+  /**
+   * Each layer's walls with the gates and breakables (#3031) as they
+   * stand now, for `sight` without the barriers; `[]` on a map of one layer.
+   */
+  #wallsByLayer(sight: boolean): readonly (readonly Segment[])[] {
     return (this.#layers?.walls ?? []).map((walls, layer) => [
       ...walls,
       ...this.#gates
-        .filter((gate) => !gate.open && (gate.layer ?? this.#ground) === layer)
+        .filter(
+          (gate) =>
+            !gate.open &&
+            (gate.layer ?? this.#ground) === layer &&
+            !(sight && gate.blocks === "bodies-and-shots"),
+        )
         .flatMap((gate) => gate.segments),
+      ...this.#breakables
+        .filter((breakable) => standing(breakable) && breakable.layer === layer)
+        .flatMap((breakable) => breakable.segments),
     ]);
   }
 
@@ -6589,9 +6666,14 @@ export class MatchSimulation {
     ]);
   }
 
-  /** The walls on `layer`: what stops sight and shots there. */
+  /** The walls on `layer`: what stops bodies' blows and shots there. */
   #wallsOn(layer: number): readonly Segment[] {
     return this.#layerWalls[layer] ?? this.#walls;
+  }
+
+  /** What stops sight on `layer`: its walls, less a closed energy barrier (#3031). */
+  #sightOn(layer: number): readonly Segment[] {
+    return this.#layerSight[layer] ?? this.#sightWalls;
   }
 
   /** What a body on `layer` collides with: its walls, deep water (#2983) and ramp rims (#2975). */
@@ -6609,7 +6691,7 @@ export class MatchSimulation {
   }
 
   /** Whether a deck stands between `from` and `target` (ADR-0051's footprint rule). */
-  #deckBlocks(from: ParticipantRecord, target: ParticipantRecord): boolean {
+  #deckBlocks(from: ParticipantRecord, target: Aim): boolean {
     return deckBlocksSight(
       this.#layers?.decks ?? NO_DECKS,
       from.position,
@@ -6622,7 +6704,7 @@ export class MatchSimulation {
   /** ADR-0051's sight: the shooter's layer's walls and the footprint rule. */
   #seesAcross(from: Vec2, fromLayer: number, to: Vec2, toLayer: number): boolean {
     return (
-      hasLineOfSight(from, to, this.#wallsOn(fromLayer)) &&
+      hasLineOfSight(from, to, this.#sightOn(fromLayer)) &&
       !deckBlocksSight(this.#layers?.decks ?? NO_DECKS, from, fromLayer, to, toLayer)
     );
   }
@@ -6644,14 +6726,14 @@ export class MatchSimulation {
   }
 
   /** `range` as a bow or spear in `record`'s hands has it at `target`; other weapons keep it. */
-  #heightReach(record: ParticipantRecord, target: ParticipantRecord, range: number): number {
+  #heightReach(record: ParticipantRecord, target: Aim, range: number): number {
     return feelsHeight(record.combatant.equipment.mainHand.weapon.id)
       ? heightRange(range, heightStep(record.floors, record.layer, target.floors, target.layer))
       : range;
   }
 
   /** The range a skill reaches `target` from: an attack skill's fires the weapon, so it feels height. */
-  #skillReach(record: ParticipantRecord, skill: Skill, target: ParticipantRecord): number {
+  #skillReach(record: ParticipantRecord, skill: Skill, target: Aim): number {
     return skill.attack === undefined
       ? skill.range
       : this.#heightReach(record, target, skill.range);
@@ -6749,17 +6831,22 @@ export class MatchSimulation {
   /**
    * The walls and paths for how the gates stand now, read off the graph
    * built up front, with a way through each teleport that is on (#3030).
-   * Keyed by the closed gates' bits, then a bit for each switched
-   * teleport that is on: one no switch names never changes.
+   * Keyed by the closed gates' bits, then each standing breakable's
+   * (#3031), then a bit for each switched teleport that is on: one no
+   * switch names never changes.
    */
   #currentWallSet(): WallSet {
     let closed = 0;
     this.#gates.forEach((gate, at) => {
       closed |= gate.open ? 0 : 1 << at;
     });
+    this.#breakables.forEach((breakable, at) => {
+      closed |= standing(breakable) ? 1 << (this.#gates.length + at) : 0;
+    });
     let key = closed;
+    const teleportBits = this.#gates.length + this.#breakables.length;
     this.#switchedTeleports.forEach((teleport, bit) => {
-      key |= this.#teleports[teleport]?.on === true ? 1 << (this.#gates.length + bit) : 0;
+      key |= this.#teleports[teleport]?.on === true ? 1 << (teleportBits + bit) : 0;
     });
     let set = this.#wallSets.get(key);
     if (set === undefined) {
@@ -6776,11 +6863,17 @@ export class MatchSimulation {
             exit: to.position,
           })),
       );
-      const walls = [
+      const barriers = this.#gates.flatMap((gate) =>
+        gate.open || gate.blocks !== "bodies-and-shots" ? [] : gate.segments,
+      );
+      const sight = [
         ...this.#mapWalls,
-        ...this.#gates.flatMap((gate) => (gate.open ? [] : gate.segments)),
+        ...this.#gates.flatMap((gate) =>
+          gate.open || gate.blocks === "bodies-and-shots" ? [] : gate.segments,
+        ),
+        ...this.#breakables.flatMap((breakable) => (standing(breakable) ? breakable.segments : [])),
       ];
-      set = { walls, graphs, paths };
+      set = { walls: [...sight, ...barriers], sight, graphs, paths };
       this.#wallSets.set(key, set);
     }
     return set;
@@ -6828,9 +6921,216 @@ export class MatchSimulation {
     if (!moved) {
       return;
     }
+    this.#refreshWalls(closing);
+  }
+
+  /** The index of the standing breakable wall (#3031) `targetId` names; -1 for none. */
+  #standingWall(targetId: string): number {
+    const id = breakableIdOf(targetId);
+    return id === undefined
+      ? -1
+      : this.#breakables.findIndex((breakable) => breakable.id === id && standing(breakable));
+  }
+
+  /**
+   * Where `record` aims at the breakable wall (#3031) `targetId` names:
+   * a body's breadth out from its nearest point, as though a body stood
+   * there; none if it names no standing one.
+   */
+  #wallAim(record: ParticipantRecord, targetId: string): Aim | undefined {
+    const wall = this.#breakables[this.#standingWall(targetId)];
+    if (wall === undefined) {
+      return undefined;
+    }
+    const position = strikePointOf(wall, record.position, this.#ruleset.collision.playerRadius + 1);
+    return {
+      id: targetId,
+      position,
+      layer: wall.layer,
+      floors: this.#floorsFor(position, wall.layer),
+    };
+  }
+
+  /**
+   * `amount` off the breakable wall `at` (#3031), told in `events`. At 0
+   * it crumbles: the walls, sight and paths change, and nobody pressed
+   * against it moves.
+   */
+  #strikeWall(at: number, amount: number, events: CombatEvent[]): void {
+    const wall = this.#breakables[at];
+    if (wall === undefined || !standing(wall)) {
+      return;
+    }
+    const next = damageBreakable(wall, amount);
+    this.#breakables[at] = next;
+    events.push({
+      kind: "damage",
+      targetId: breakableTargetId(wall.id),
+      amount: wall.health - next.health,
+      critical: false,
+    });
+    if (!standing(next)) {
+      this.#refreshWalls([]);
+    }
+  }
+
+  /**
+   * An auto-attack on a breakable wall (#3031): walked in and swung as at
+   * a body, each blow the weapon's roll at no armor, and nothing that
+   * rides on a blow. A bow's arrow flies, and lands as `#landOnWall` says.
+   */
+  #advanceWallAttack(record: ParticipantRecord, attack: AttackState, dt: number): void {
+    const check = this.#attackCheck(record, attack.targetId);
+    const target = this.#wallAim(record, attack.targetId);
+    const moving =
+      record.inputDirection.x !== 0 ||
+      record.inputDirection.y !== 0 ||
+      record.walkGoal !== undefined;
+    if (!check.ok || target === undefined || moving) {
+      record.combatant.attack = undefined;
+      return;
+    }
+    if (
+      record.combatant.cast.isCasting ||
+      record.combatant.cast.inAftercast ||
+      record.pendingSkill !== undefined
+    ) {
+      return;
+    }
+    const { weapon } = record.combatant.equipment.mainHand;
+    const melee = weapon.projectileSpeed === undefined;
+    const approach = this.#approach(
+      record,
+      target,
+      this.#heightReach(record, target, weapon.range),
+      melee,
+      attack,
+      dt,
+    );
+    if (approach === "unreachable") {
+      record.combatant.attack = undefined;
+      this.#logWeapon(record.id, weapon.id, [{ kind: "attack-unreachable", targetId: target.id }]);
+    }
+    if (approach !== "arrived") {
+      return;
+    }
+    attack.swingElapsed += dt;
+    const interval = swingIntervalSeconds(record.combatant);
+    if (attack.swingElapsed < interval - SWING_EPSILON) {
+      return;
+    }
+    attack.swingElapsed = Math.max(0, attack.swingElapsed - interval);
+    record.outOfCombatSeconds = 0;
+    loseActionEnergy(record.combatant);
+    const rules = this.#ruleset.combat;
+    const amount = wallDamage(
+      wallBlow(weaponSnapshotOf(record.combatant), this.#rng, rules),
+      rules,
+    );
+    if (weapon.projectileSpeed !== undefined) {
+      this.#shootWall(record, target, weapon.projectileSpeed, amount);
+      return;
+    }
+    const events: CombatEvent[] = [];
+    this.#strikeWall(this.#standingWall(target.id), amount, events);
+    this.#logWeapon(record.id, weapon.id, events);
+  }
+
+  /**
+   * `skill` landing on the breakable wall `targetId` names (#3031): its damage, and an
+   * attack skill's blow, at no armor; no condition, hex or anything else.
+   * With a `speed`, it flies there first, as an arrow at a wall does.
+   */
+  #skillAtWall(
+    record: ParticipantRecord,
+    skill: Skill,
+    targetId: string,
+    speed: number | undefined,
+  ): CombatEvent[] {
+    const rules = this.#ruleset.combat;
+    let amount = 0;
+    for (const effect of skill.effects) {
+      if (effect.kind === "damage") {
+        amount += wallDamage(
+          skillDamage(resolveMagnitude(effect.amount, record.combatant), effect.type, 0),
+          rules,
+        );
+      }
+    }
+    if (skill.attack !== undefined) {
+      amount += wallDamage(wallBlow(weaponSnapshotOf(record.combatant), this.#rng, rules), rules);
+    }
+    const events: CombatEvent[] = [];
+    const target = this.#wallAim(record, targetId);
+    if (speed === undefined || target === undefined) {
+      this.#strikeWall(this.#standingWall(targetId), amount, events);
+    } else {
+      this.#shootWall(record, target, speed, amount);
+    }
+    return events;
+  }
+
+  /** A shot from `record` at a breakable wall (#3031), stopped short by any other wall. */
+  #shootWall(record: ParticipantRecord, target: Aim, speed: number, amount: number): void {
+    const from = record.position;
+    const impact = firstHit(from, target.position, this.#wallsOn(record.layer));
+    const aimPoint =
+      impact === undefined
+        ? target.position
+        : distance(from, impact) <= 1
+          ? from
+          : add(impact, scale(normalize(sub(from, impact)), 1));
+    this.#wallShots.set(this.#nextProjectileId, amount);
+    this.#projectiles.push({
+      id: this.#nextProjectileId,
+      attackerId: record.id,
+      targetId: target.id,
+      from,
+      aimPoint,
+      fromLayer: record.layer,
+      toLayer: target.layer,
+      obstructed: impact !== undefined,
+      speed,
+      flightSeconds: distance(from, aimPoint) / speed,
+      elapsed: 0,
+      weaponSnapshot: weaponSnapshotOf(record.combatant),
+      skillHit: undefined,
+      unblockable: false,
+      spent: [],
+      heightDamage: 1,
+    });
+    this.#nextProjectileId += 1;
+  }
+
+  /**
+   * A shot at a breakable wall (#3031) lands: it takes what the shot
+   * rolled as it left, unless another wall stopped it first. One that
+   * crumbled while it flew is not there: the shot flies on through.
+   */
+  #landOnWall(projectile: Projectile): void {
+    const amount = this.#wallShots.get(projectile.id) ?? 0;
+    this.#wallShots.delete(projectile.id);
+    const events: CombatEvent[] = [];
+    if (projectile.obstructed) {
+      events.push({ kind: "attack-obstructed", targetId: projectile.targetId });
+    } else {
+      this.#strikeWall(this.#standingWall(projectile.targetId), amount, events);
+    }
+    this.#logShot(projectile, events);
+  }
+
+  /**
+   * The walls, sight and paths swapped for how the gates, breakables
+   * (#3031) and teleports stand now. Every route is walked afresh; a
+   * `closing` gate moves anybody in its way to the nearest ground clear
+   * of it, and stops the shots crossing it.
+   */
+  #refreshWalls(closing: readonly Gate[]): void {
     const set = this.#currentWallSet();
     this.#walls = set.walls;
-    this.#layerWalls = this.#wallsByLayer();
+    this.#sightWalls = set.sight;
+    this.#layerWalls = this.#wallsByLayer(false);
+    this.#layerSight = this.#wallsByLayer(true);
     this.#layerBlockers = this.#blockersByLayer();
     this.#graphs = set.graphs;
     this.#paths = set.paths;
@@ -7050,6 +7350,10 @@ export class MatchSimulation {
   #advanceAttack(record: ParticipantRecord, dt: number): void {
     const attack = record.combatant.attack;
     if (attack === undefined) {
+      return;
+    }
+    if (breakableIdOf(attack.targetId) !== undefined) {
+      this.#advanceWallAttack(record, attack, dt);
       return;
     }
     const check = this.#attackCheck(record, attack.targetId);
@@ -7507,6 +7811,10 @@ export class MatchSimulation {
    * the skill's own.
    */
   #land(projectile: Projectile): void {
+    if (breakableIdOf(projectile.targetId) !== undefined) {
+      this.#landOnWall(projectile);
+      return;
+    }
     const target = this.#participants.get(projectile.targetId);
     const { skillHit } = projectile;
     const attacker = this.#participants.get(projectile.attackerId);
@@ -7783,7 +8091,7 @@ export class MatchSimulation {
           casterLayer: this.#participants.get(caster.id)?.layer ?? target.layer,
           primary: target,
           candidates: skill.area === undefined ? [] : [...this.#participants.values()],
-          losBlockers: this.#wallsOn(target.layer),
+          losBlockers: this.#sightOn(target.layer),
         }),
         rng: this.#rng,
         rules: this.#ruleset.combat,
@@ -7887,6 +8195,10 @@ export class MatchSimulation {
     // Obsidian Flesh (#1575): a queued attack stops with it.
     if (preventsAttacks(record.combatant.statuses.active)) {
       return { ok: false, reason: "cannot-attack" };
+    }
+    // A breakable wall (#3031) is anybody's foe while it stands.
+    if (target === undefined && this.#standingWall(targetId) >= 0) {
+      return { ok: true };
     }
     if (target === undefined) {
       return { ok: false, reason: "no-target" };

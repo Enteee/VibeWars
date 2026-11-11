@@ -158,6 +158,7 @@ const welcome: PeerWelcome = {
     gates: [],
     switches: [],
     teleports: [],
+    breakables: [],
     walls: [
       { kind: "rect", x: 10, y: 20, width: 30, height: 40 },
       {
@@ -304,6 +305,7 @@ const snapshot: WireSnapshotPart = {
   gates: [],
   switches: [],
   teleports: [],
+  breakables: [],
 };
 
 /** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */
@@ -823,6 +825,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
           {
             wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
             opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
+            blocks: "all",
           },
         ],
       },
@@ -836,7 +839,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
       map: {
         ...welcome.map,
         gates: [
-          { wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 }, opener: { kind: "switch" } },
+          {
+            wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
+            opener: { kind: "switch" },
+            blocks: "all",
+          },
         ],
         switches: [{ id: "lever", layer: 0, position: { x: 50, y: 50 } }],
       },
@@ -878,6 +885,36 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with teleports (#3030)",
     parseWireSnapshotPart,
     { ...snapshot, teleports: [true, false] },
+  ],
+  [
+    "welcome with a barrier and a breakable wall (#3031)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        gates: [
+          {
+            wall: { kind: "rect", x: 0, y: 0, width: 10, height: 100 },
+            opener: { kind: "switch" },
+            blocks: "bodies-and-shots",
+          },
+        ],
+        breakables: [
+          {
+            id: "crack",
+            layer: 0,
+            wall: { kind: "rect", x: 100, y: 100, width: 20, height: 200 },
+            maxHealth: 800,
+          },
+        ],
+      },
+    },
+  ],
+  [
+    "snapshot with breakables (#3031)",
+    parseWireSnapshotPart,
+    { ...snapshot, breakables: [800, 0] },
   ],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
@@ -1524,6 +1561,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
         gates: Array.from({ length: 7 }, () => ({
           wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
           opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
+          blocks: "all",
         })),
       },
     },
@@ -1541,7 +1579,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
       map: {
         ...welcome.map,
         gates: [
-          { wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 }, opener: { kind: "lever" } },
+          {
+            wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
+            opener: { kind: "lever" },
+            blocks: "all",
+          },
         ],
       },
     },
@@ -1558,6 +1600,55 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot without switches (#3025)",
     parseWireSnapshotPart,
     { ...snapshot, switches: undefined },
+  ],
+  [
+    "welcome without breakables (#3031)",
+    parsePeerWelcome,
+    { ...welcome, map: { ...welcome.map, breakables: undefined } },
+  ],
+  [
+    "welcome with a gate that says not what it blocks (#3031)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        gates: [
+          {
+            wall: { kind: "rect", x: 0, y: 0, width: 10, height: 100 },
+            opener: { kind: "switch" },
+          },
+        ],
+      },
+    },
+  ],
+  [
+    "welcome with a breakable wall of no health (#3031)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        breakables: [
+          {
+            id: "crack",
+            layer: 0,
+            wall: { kind: "rect", x: 1, y: 1, width: 2, height: 2 },
+            maxHealth: 0,
+          },
+        ],
+      },
+    },
+  ],
+  [
+    "snapshot without breakables (#3031)",
+    parseWireSnapshotPart,
+    { ...snapshot, breakables: undefined },
+  ],
+  [
+    "snapshot with a breakable below 0 (#3031)",
+    parseWireSnapshotPart,
+    { ...snapshot, breakables: [-1] },
   ],
   [
     "welcome without teleports (#3030)",

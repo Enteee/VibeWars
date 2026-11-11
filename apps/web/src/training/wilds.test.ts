@@ -2,6 +2,7 @@ import {
   MatchSimulation,
   TRAINING_SCENARIOS,
   applyIntent,
+  breakableTargetId,
   scenarioParticipants,
   switchTargetId,
 } from "@vibewars/game-core";
@@ -263,7 +264,7 @@ describe("Training Wilds (#3024)", () => {
     };
     const shut = walkIn();
     expect(shut.y).toBeLessThan(620);
-    expect(simulation.gates.map(({ open }) => open)).toEqual([false]);
+    expect(simulation.gates.map(({ open }) => open)).toEqual([false, false]);
 
     applyIntent(simulation, SELF_ID, {
       kind: "attack",
@@ -273,9 +274,36 @@ describe("Training Wilds (#3024)", () => {
       simulation.step(1 / 30);
     }
     expect(simulation.switches.find(({ id }) => id === "side-room-lever")?.up).toBe(false);
-    expect(simulation.gates.map(({ open }) => open)).toEqual([true]);
+    expect(simulation.gates.map(({ open }) => open)).toEqual([true, false]);
     const inside = walkIn();
     expect(Math.hypot(inside.x - room.x, inside.y - room.y)).toBeLessThan(5);
+  });
+
+  it("breaks the side room's cracked wall, and walks you in through the gap (#3031)", () => {
+    const { simulation } = setupScenario(scenario, newCharacter("c1"));
+    const room = { x: 80, y: 700 };
+    const walkIn = (): { x: number; y: number } => {
+      applyIntent(simulation, SELF_ID, { kind: "walk-to", ...room, layer: 1 });
+      for (let tick = 0; tick < 300; tick += 1) {
+        simulation.step(1 / 30);
+      }
+      return loaded(simulation.get(SELF_ID), SELF_ID).position;
+    };
+    expect(walkIn().y).toBeLessThan(620);
+
+    const crack = breakableTargetId("side-room-crack");
+    applyIntent(simulation, SELF_ID, { kind: "attack", targetId: crack });
+    for (let tick = 0; tick < 30 * 120 && simulation.breakables[0]?.health !== 0; tick += 1) {
+      simulation.step(1 / 30);
+    }
+    expect(simulation.breakables.map(({ health }) => health)).toEqual([0]);
+    const inside = walkIn();
+    expect(Math.hypot(inside.x - room.x, inside.y - room.y)).toBeLessThan(5);
+  });
+
+  it("stands a shimmering barrier on a plate inside the side room (#3031)", () => {
+    const { simulation } = setupScenario(scenario, newCharacter("c1"));
+    expect(simulation.gates.map(({ blocks }) => blocks)).toEqual(["all", "bodies-and-shots"]);
   });
 });
 

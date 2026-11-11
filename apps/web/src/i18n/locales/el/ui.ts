@@ -537,6 +537,7 @@ export default {
   "hud.refusalInvalidTargetSelf": "Δεν μπορείς να στοχεύσεις τον εαυτό σου με αυτό.",
   "hud.refusalInvalidTargetSpirit": "Δεν γίνεται να στοχεύσεις πνεύμα.",
   "hud.refusalInvalidTargetUnenchantable": "Αυτός ο στόχος δεν δέχεται μάγεμα.",
+  "hud.refusalInvalidTargetWall": "Μόνο μια ικανότητα που προκαλεί ζημιά μπορεί να χτυπήσει τοίχο.",
   "hud.refusalInvalidTargetUntargetable":
     "Τα ξόρκια σου δεν μπορούν να στοχεύσουν αυτόν τον εχθρό.",
   "hud.refusalNeedsWeapon": "Χρειάζεται: {weapon}.",
@@ -568,6 +569,7 @@ export default {
   "hud.stormBeaconOurs": "Φάρος της Καταιγίδας: στα χέρια της ομάδας σου",
   "hud.stormBeaconTheirs": "Φάρος της Καταιγίδας: στα χέρια του εχθρού",
   "hud.switch": "Μοχλός",
+  "hud.breakableWall": "Ραγισμένος τοίχος",
   "hud.targetDead": "νεκρός",
   "hud.targetEffects": "επιδράσεις στόχου",
   "hud.versus": "{ours} κατά {theirs}",

@@ -492,6 +492,8 @@ export interface MapDescriptor {
   readonly switches: readonly SwitchDescriptor[];
   /** Its teleports (#3030), in the order the snapshot's `teleports` says whether each is on. */
   readonly teleports: readonly TeleportDescriptor[];
+  /** Its breakable walls (#3031), in the order the snapshot's `breakables` gives each one's health. */
+  readonly breakables: readonly BreakableDescriptor[];
 }
 
 /** What opens a gate (#3025): a pressure plate (#2691), or a switch. */
@@ -508,6 +510,16 @@ export type GateOpenerDescriptor =
 export interface GateDescriptor {
   readonly wall: WallDescriptor;
   readonly opener: GateOpenerDescriptor;
+  /** What it stops while closed (#3031): stone stops all; an energy barrier, bodies and shots. */
+  readonly blocks: "all" | "bodies-and-shots";
+}
+
+/** A wall with health (#3031): clicked, as `breakable-<id>`, it is struck; at 0 it is gone. */
+export interface BreakableDescriptor {
+  readonly id: string;
+  readonly layer: number;
+  readonly wall: WallDescriptor;
+  readonly maxHealth: number;
 }
 
 /** A lever (#3025): clicked, as `switch-<id>`, it is walked to and flipped. */

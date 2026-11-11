@@ -45,6 +45,7 @@ Disse taster er faste:
   vælge det som mål; **Mellemrum** går derhen og tager flaget op eller planter det.
 - **Højreklik** på et håndtag for at vælge det som mål; **Mellemrum** går derhen og slår det om, så de porte, det styrer, åbner eller lukker.
 - Gå ind i en **portal**, og den flytter dig til sin udgang. Et håndtag kan tænde og slukke den; efter en tur hviler den i 5 s, før den tager dig igen.
+- En **glitrende port** stopper pile og kroppe, men ikke besværgelser. En **revnet mur** kan slås i stykker: klik på den, og angrib den eller ram den med en skadesevne.
 - **Hjulklik** på en fjende for at udpege den for dit hold: deres **T** vælger den.
   På jorden eller en allieret pinger det stedet. Eller klik på målbjælken
   øverst for at udpege den fjende, du har valgt som mål.

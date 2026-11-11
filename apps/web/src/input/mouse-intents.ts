@@ -3,6 +3,7 @@ import type { ClientIntent, PeerCall } from "@vibewars/game-protocol";
 import type { CallsSnapshot, MatchSnapshot } from "@vibewars/game-session";
 
 import { actorAtPoint, type ArenaSnapshot } from "../render/arena-snapshot.js";
+import { breakableAtPoint } from "../render/breakable-objects.js";
 import { flagObjectAtPoint, switchAtPoint } from "../render/flag-objects.js";
 import { pickSurface } from "../render/layer-surfaces.js";
 import { attackClickIntents } from "./attack-key.js";
@@ -17,7 +18,8 @@ import type { DoubleClick } from "./double-click.js";
  * enemy within the double-click window attacks it, as Space would (#298).
  * With no body there, or only your own (#1299: you stand on the stand
  * to plant), a flag or the flag stand is (#1225), or a switch (#3025),
- * and a double click walks to it as Space does.
+ * and a double click walks to it as Space does; or a standing breakable
+ * wall (#3031), and a double click attacks it.
  * The ground sends nothing: a missed right click costs nothing, and keeps
  * the target. `doubleClick` is pressed either way, so a click on the
  * ground breaks a double.
@@ -36,7 +38,9 @@ export function secondaryClickIntents(
 ): ClientIntent[] {
   const body = actorAtPoint(arena, world, shift ? arena.nameBoxes : undefined)?.id;
   const flagObject =
-    flagObjectAtPoint(arena.flags, arena.stand, world) ?? switchAtPoint(arena.switches, world);
+    flagObjectAtPoint(arena.flags, arena.stand, world) ??
+    switchAtPoint(arena.switches, world) ??
+    breakableAtPoint(arena.breakables, world, arena.structure);
   // #1299: your own body never hides the flag or stand you stand on.
   const hit = body === undefined || body === snapshot.selfSessionId ? (flagObject ?? body) : body;
   const double = doubleClick.press(hit, nowMs);

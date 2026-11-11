@@ -809,6 +809,31 @@ export function landBlow(
 }
 
 /**
+ * A blow of `snapshot`'s weapon at a breakable wall (#3031): its roll,
+ * scaled as any blow's, and no critical, inscription or rider; the
+ * wall takes it as `wallDamage` says.
+ */
+export function wallBlow(
+  snapshot: WeaponSnapshot,
+  rng: SimulationRng,
+  rules: CombatRules,
+): Pick<DamagePacket, "armored" | "armorIgnoring"> {
+  const { weapon } = snapshot.mainHand;
+  const base = rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
+  return {
+    armored: Math.max(
+      0,
+      base *
+        snapshot.damageMultiplier *
+        (snapshot.mainHand.creatureDamageScale ?? weaponAttributeMultiplier(snapshot.rank, rules)) *
+        (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier) +
+        snapshot.damageDelta,
+    ),
+    armorIgnoring: 0,
+  };
+}
+
+/**
  * Calculated Risk (#2471): if `attacker` bears a status that may turn its
  * blow back, roll it, drawn only then so no other fight's stream moves.
  * On success `attacker` takes `damage`, the victim's mitigated share, up

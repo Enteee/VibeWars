@@ -36,6 +36,7 @@ const PLATE = vec2(100, 400);
 const FIELD: GateField = {
   segments: SEGMENTS,
   opener: { kind: "plate", plate: PLATE, team: null },
+  blocks: "all",
 };
 
 function closedGate(): Gate {
@@ -189,5 +190,55 @@ describe("gates in a match (#2691)", () => {
     const objectives = (team: number) => ({ ...NO_OBJECTIVES, gates: [gate(team)] });
     expect(askBot(sim, "bot", objectives(0)).moveTo).toEqual(PLATE);
     expect(askBot(sim, "bot", objectives(1)).moveTo).not.toEqual(PLATE);
+  });
+});
+
+describe("energy barriers (#3031)", () => {
+  /** A barrier no plate opens: a switch's, left closed. */
+  const BARRIER: GateField = {
+    segments: SEGMENTS,
+    opener: { kind: "switch" },
+    blocks: "bodies-and-shots",
+  };
+  const foe = body("foe", 1, vec2(500, 400));
+  const hurt = (sim: MatchSimulation): boolean => {
+    run(sim, 6);
+    const { health, maxHealth } = sim.get("foe")?.combatant ?? { health: 0, maxHealth: 0 };
+    return health < maxHealth;
+  };
+
+  it("stops an arrow while closed", () => {
+    const sim = arena(
+      [fighter("ranger", 0, RANGER, vec2(300, 400), { behaviour: undefined }), foe],
+      BARRIER,
+    );
+    expect(sim.requestAttack("ranger", "foe")?.ok).toBe(true);
+    let stopped = 0;
+    for (let t = 0; t < 6; t += DT) {
+      for (const entry of sim.step(DT).log) {
+        stopped += entry.events.filter(({ kind }) => kind === "attack-obstructed").length;
+      }
+    }
+    expect(stopped).toBeGreaterThan(0);
+    expect(hurt(sim)).toBe(false);
+  });
+
+  it("lets a targeted spell through, and the walk stays blocked", () => {
+    const sim = arena(
+      [
+        body("monk", 0, vec2(300, 400), {
+          skillBar: ["monk.smite"],
+          attributeRanks: new Map([["monk.smiting-prayers", 12]]),
+        }),
+        foe,
+      ],
+      BARRIER,
+    );
+    sim.setTarget("monk", "foe");
+    expect(sim.requestSkill("monk", 0)?.check.ok).toBe(true);
+    expect(hurt(sim)).toBe(true);
+    sim.walkTo("monk", vec2(600, 400));
+    run(sim, 3);
+    expect(sim.get("monk")?.position.x).toBeLessThan(396);
   });
 });

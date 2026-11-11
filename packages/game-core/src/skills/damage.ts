@@ -103,6 +103,17 @@ export function skillDamage(
     : { armored: amount, armorIgnoring: 0, type, source: "skill", armorPenetration };
 }
 
+/**
+ * What `packet` takes off a breakable wall (#3031): it wears no armor,
+ * and nothing else stands between them.
+ */
+export function wallDamage(
+  packet: Pick<DamagePacket, "armored" | "armorIgnoring">,
+  rules: CombatRules,
+): number {
+  return Math.round(packet.armored * armorMultiplier(0, rules) + packet.armorIgnoring);
+}
+
 /** Degeneration and life steal: armor never helps. */
 export function unmitigatedDamage(amount: number, source: DamageSource): DamagePacket {
   return { armored: 0, armorIgnoring: amount, type: "typeless", source, armorPenetration: 0 };
