@@ -367,6 +367,7 @@ import {
   initialLifts,
   liftClosedOn,
   liftSegments,
+  liftWalledOn,
   restingLayer,
   routesOver,
   stepLift,
@@ -6958,10 +6959,11 @@ export class MatchSimulation {
    * built up front, with a way through each teleport that is on (#3030).
    * Keyed by the closed gates' bits, then each standing breakable's
    * (#3031), then each switched deck's that is down (#3068), then two for
-   * each lever lift on its way (#3079), then a bit for each switched
-   * teleport that is on: one no switch names never changes. A lever lift
-   * on its way is no way between its layers; a timer lift always is, and
-   * a walk over it waits for it.
+   * each lift, its bottom's and its top's, set where a lever lift is
+   * closed (#3079, #3117), then a bit for each switched teleport that is
+   * on: one no switch names never changes. A lever lift is never a way
+   * between its layers, only floor on the layer it rests at; a timer lift
+   * always is, and a walk over it waits for it.
    */
   #currentWallSet(): WallSet {
     let closed = 0;
@@ -6977,7 +6979,8 @@ export class MatchSimulation {
     });
     const liftBits = deckBits + this.#switchedDecks.length;
     this.#lifts.forEach((lift, at) => {
-      closed |= routesOver(lift) ? 0 : 0b11 << (liftBits + 2 * at);
+      closed |= liftWalledOn(lift, lift.from) ? 1 << (liftBits + 2 * at) : 0;
+      closed |= liftWalledOn(lift, lift.to) ? 1 << (liftBits + 2 * at + 1) : 0;
     });
     let key = closed;
     const teleportBits = liftBits + 2 * this.#lifts.length;

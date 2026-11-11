@@ -59,11 +59,21 @@ export function restingLayer(lift: LiftField & LiftState): number | null {
 }
 
 /**
- * Whether a route may cross `lift`: a timer lift always comes round, so a
- * walk over it waits for it; a lever lift only while it rests.
+ * Whether a route may go between layers by `lift`: a timer lift always
+ * comes round, so a walk over it waits for it; a lever lift never, for a
+ * walk cannot count on anybody pulling its lever (#3117).
  */
 export function routesOver(lift: Lift): boolean {
-  return lift.run.kind === "timer" || !travelling(lift.phase);
+  return lift.run.kind === "timer";
+}
+
+/**
+ * Whether a route goes round `lift`'s shaft on `layer`: a lever lift's,
+ * where it is closed (#3117). A timer lift's never does, for a walk waits
+ * for it.
+ */
+export function liftWalledOn(lift: Lift, layer: number): boolean {
+  return lift.run.kind === "lever" && liftClosedOn(lift, layer);
 }
 
 /** Whether `lift` will move with nobody at its lever: a timer lift, or a lever lift on its way. */

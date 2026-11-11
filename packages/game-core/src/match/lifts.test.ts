@@ -5,9 +5,12 @@ import {
   initialLifts,
   LEVER_LIFT_TRAVEL_SECONDS,
   liftClosedOn,
+  liftWalledOn,
   routesOver,
   stepLift,
   timerLiftAt,
+  type Lift,
+  type LiftPhase,
 } from "./lifts.js";
 
 const AREA = [
@@ -16,6 +19,8 @@ const AREA = [
   { x: 100, y: 100 },
   { x: 0, y: 100 },
 ];
+
+const PHASES: readonly LiftPhase[] = ["low", "rising", "high", "sinking"];
 
 describe("lifts (#3079)", () => {
   it("reads a timer lift off the clock: rest low, rise, rest high, sink, again", () => {
@@ -54,15 +59,35 @@ describe("lifts (#3079)", () => {
     expect([liftClosedOn(rising, 0), liftClosedOn(rising, 1)]).toEqual([true, true]);
   });
 
-  it("is routed over and comes round always on a timer, on a lever only resting and only on its way", () => {
+  it("is routed over always on a timer and never on a lever; comes round on a timer, or a lever on its way", () => {
     const [lever] = initialLifts([
       { id: "lift", transition: 0, from: 0, to: 1, area: AREA, run: { kind: "lever" } },
     ]);
     if (lever === undefined) throw new Error("no lift");
-    const rising = { ...lever, phase: "rising" as const };
-    expect([routesOver(lever), routesOver(rising)]).toEqual([true, false]);
-    expect([comesRound(lever), comesRound(rising)]).toEqual([false, true]);
-    const timer = { ...rising, run: { kind: "timer", restSeconds: 4, travelSeconds: 2 } } as const;
-    expect([routesOver(timer), comesRound({ ...timer, phase: "high" })]).toEqual([true, true]);
+    const timer = { ...lever, run: { kind: "timer", restSeconds: 4, travelSeconds: 2 } } as const;
+    for (const phase of PHASES) {
+      expect(routesOver({ ...lever, phase })).toBe(false);
+      expect(routesOver({ ...timer, phase })).toBe(true);
+      expect(comesRound({ ...lever, phase })).toBe(phase === "rising" || phase === "sinking");
+      expect(comesRound({ ...timer, phase })).toBe(true);
+    }
+  });
+
+  it("walls a lever lift's shaft on the layer it is closed on, and a timer lift's never (#3117)", () => {
+    const [lever] = initialLifts([
+      { id: "lift", transition: 0, from: 0, to: 1, area: AREA, run: { kind: "lever" } },
+    ]);
+    if (lever === undefined) throw new Error("no lift");
+    const timer = { ...lever, run: { kind: "timer", restSeconds: 4, travelSeconds: 2 } } as const;
+    const walled = (lift: Lift) => [0, 1, 2].map((layer) => liftWalledOn(lift, layer));
+    expect(PHASES.map((phase) => walled({ ...lever, phase }))).toEqual([
+      [false, true, false],
+      [true, true, false],
+      [true, false, false],
+      [true, true, false],
+    ]);
+    for (const phase of PHASES) {
+      expect(walled({ ...timer, phase })).toEqual([false, false, false]);
+    }
   });
 });
