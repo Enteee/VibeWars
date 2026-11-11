@@ -481,6 +481,14 @@ function occluder(
   };
 }
 
+/**
+ * The north edge of the strip along `pit`'s south edge that the ground's
+ * near lip hides: nothing on the pit's floor may reach further south (#3081).
+ */
+export function pitLipTop(structure: MapStructure, pit: MapStructure["pits"][number]): number {
+  return boxOf(pit.footprint).bottom + liftOf(structure, structure.ground - 1);
+}
+
 /** What can hide a body on this map; nothing on a map of one layer, where bodies draw in front. */
 export function occludersOf(
   walls: readonly RenderableWall[],
@@ -530,7 +538,7 @@ export function occludersOf(
       const box = boxOf(pit.footprint);
       const strip = boxOutline(
         box.left,
-        Math.max(box.top, box.bottom + sunk),
+        Math.max(box.top, pitLipTop(structure, pit)),
         box.right,
         box.bottom,
       );
