@@ -137,6 +137,7 @@ import {
   PLAY_BOTS_AFTER_MS,
   hostMaps,
   lobbyPanel,
+  lobbyShownMapId,
   type LobbyMap,
   type LobbyMatchmaking,
   type LobbyPanel,
@@ -202,6 +203,8 @@ import { toPlayerBuild } from "./storage/build-validation.js";
 import { recordAscentWin } from "./storage/fame.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import { startSplashFight } from "./ui/splash-fight.js";
+import { createMenuBackground } from "./ui/menu-background.js";
+import { RANDOM_MAP } from "./ui/menu-background-choice.js";
 import { watchHall } from "./ui/vault-screen.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
 import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
@@ -341,6 +344,7 @@ async function main(): Promise<void> {
     showNowPlaying(nowPlayingText(trackId, TRACKS, music().intensity));
   });
   const viewport = requireElement("#viewport");
+  const menuBackground = createMenuBackground(requireElement("#menu-background"), startSplashFight);
   const topbar = requireElement("#topbar");
   const app = requireElement("#app");
 
@@ -833,6 +837,12 @@ async function main(): Promise<void> {
     // In a match the viewport has the whole height; the HUD has the bar's
     // buttons (#454).
     topbarView.setInMatch(visible);
+    // Never a background fight alongside a match (#3119).
+    if (visible) {
+      menuBackground.suspend();
+    } else {
+      void menuBackground.resume();
+    }
     viewport.style.display = visible ? "block" : "none";
     screenRoot.style.display = visible ? "none" : "flex";
     if (chat !== undefined) {
@@ -2214,6 +2224,15 @@ async function main(): Promise<void> {
       return;
     }
     const snapshot = lobby.getSnapshot();
+    // The background fights on what the lobby shows (#3119), Team Arena's
+    // drawn by it; joiners see the host's choice.
+    menuBackground.setChoice({
+      mapId:
+        snapshot.mode === "team-arena"
+          ? RANDOM_MAP
+          : lobbyShownMapId(snapshot, teamQueue?.groupMapId),
+      teamSize: snapshot.teamSize,
+    });
     if (queue !== undefined) {
       // A queued lobby has nothing to choose: it is the versus splash.
       setStatus("match found", "online");
@@ -3097,7 +3116,7 @@ async function main(): Promise<void> {
     })
   ) {
     splash = showSplash(document.body, {
-      startFight: startSplashFight,
+      showFight: () => menuBackground.resume(),
       playTheme: (startAtEpochMs, onHeard) => music().splash(startAtEpochMs, onHeard),
       onDone: enterMenu,
     });

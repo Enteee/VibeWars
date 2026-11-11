@@ -73,12 +73,21 @@ export function hasWebGl(): boolean {
   }
 }
 
+/** How a viewport runs, where it differs from a match's. */
+export interface ArenaViewportOptions {
+  /** At most this many frames a second (#3119); a match's is not capped. */
+  readonly fpsLimit?: number;
+}
+
 /**
  * Start a Phaser game in `parent` with the arena scene, resolved once the
  * scene exists. Only this and `ArenaScene` touch Phaser (ADR-0010); the
  * callers wire a connection to it. Throws `NoWebGlError` without WebGL.
  */
-export async function createArenaViewport(parent: HTMLElement): Promise<ArenaViewport> {
+export async function createArenaViewport(
+  parent: HTMLElement,
+  options: ArenaViewportOptions = {},
+): Promise<ArenaViewport> {
   if (!hasWebGl()) {
     throw new NoWebGlError("no WebGL");
   }
@@ -97,6 +106,7 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
     // much world that shows (camera-rig.ts).
     scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [ArenaScene],
+    ...(options.fpsLimit === undefined ? {} : { fps: { limit: options.fpsLimit } }),
   });
 
   const scene = await new Promise<ArenaScene>((resolve) => {

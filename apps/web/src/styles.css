@@ -2,6 +2,8 @@
    no decorative imagery. Readability at a glance beats realism (brief §20). */
 :root {
   --bg: #0e1116;
+  /* Over the menu background's fight (#3119): --bg, most of the way. */
+  --menu-scrim: rgba(14, 17, 22, 0.78);
   --panel: #161b22;
   --line: #2b3440;
   --ink: #d7dee8;
@@ -1415,6 +1417,30 @@ body {
 
 #app {
   position: relative;
+}
+
+/* A live fight behind every menu screen (#3119), under #app in the same
+   stacking order, and a scrim over it that keeps the menu's text at its
+   contrast on the plain background. Where nothing draws, it is that plain
+   background. The splash has a scrim of its own. */
+#menu-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+#menu-background canvas {
+  display: block;
+}
+#menu-background[data-map]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--menu-scrim);
+}
+body:has(> .splash) #menu-background::after {
+  display: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -7799,21 +7825,21 @@ body:has(#screens[style*="none"]) .now-playing {
 }
 
 /* The splash screen (#2884): over everything until it ends. */
+/* Its fight is the menu background's (#3119), seen through it; the menu
+   waits underneath until it ends. */
 .splash {
   position: fixed;
   inset: 0;
   z-index: 90;
   overflow: hidden;
-  background: var(--bg);
 }
-.splash-stage,
+body:has(> .splash) #app {
+  visibility: hidden;
+}
 .splash-scrim,
 .splash-flash {
   position: absolute;
   inset: 0;
-}
-.splash-stage canvas {
-  display: block;
 }
 .splash-scrim {
   background: rgba(0, 0, 0, 0.3);

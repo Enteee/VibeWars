@@ -16,8 +16,12 @@ test.describe("the splash screen (#2884)", () => {
 
     await page.keyboard.press("Space");
     await expect(splash).toHaveCount(0);
-    // The menu draws its character figures on canvases of their own.
-    await expect(page.locator("canvas:not(.character-figure)")).toHaveCount(0);
+    // The fight goes on behind the menu (#3119), whose character figures
+    // draw on canvases of their own: no other canvas is left.
+    await expect(page.locator("#menu-background canvas")).toHaveCount(1);
+    await expect(
+      page.locator("canvas:not(.character-figure, #menu-background canvas)"),
+    ).toHaveCount(0);
   });
 
   test("the tab's second visit, without ?splash, goes straight to the menu", async ({ page }) => {
