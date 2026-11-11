@@ -9,6 +9,7 @@ Jokainen tämän kansion sivu on lueteltu tässä täsmälleen kerran.
 - [Taidot ja buildit](skills-and-builds.md)
 - [Varusteet](equipment.md)
 - [Pelitilat](modes.md)
+- [Maailman elementit](world-elements.md)
 - [Botit](bots.md)
 - [Sanasto](glossary.md)
 - [Tue VibeWarsia](support.md)

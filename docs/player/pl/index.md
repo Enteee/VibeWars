@@ -9,6 +9,7 @@ z tego katalogu jest tu wymieniona dokładnie raz.
 - [Umiejętności i buildy](skills-and-builds.md)
 - [Ekwipunek](equipment.md)
 - [Tryby](modes.md)
+- [Elementy świata](world-elements.md)
 - [Boty](bots.md)
 - [Słownik](glossary.md)
 - [Wesprzyj VibeWars](support.md)

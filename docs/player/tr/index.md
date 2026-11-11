@@ -9,6 +9,7 @@ dizindeki her sayfa burada tam olarak bir kez listelenir.
 - [Beceriler ve dizilimler](skills-and-builds.md)
 - [Ekipman](equipment.md)
 - [Modlar](modes.md)
+- [Dünya öğeleri](world-elements.md)
 - [Botlar](bots.md)
 - [Sözlük](glossary.md)
 - [VibeWars'ı destekle](support.md)

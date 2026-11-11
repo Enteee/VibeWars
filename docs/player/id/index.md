@@ -9,6 +9,7 @@ halaman di direktori ini tercantum di sini tepat satu kali.
 - [Skill dan build](skills-and-builds.md)
 - [Perlengkapan](equipment.md)
 - [Mode](modes.md)
+- [Elemen dunia](world-elements.md)
 - [Bot](bots.md)
 - [Glosarium](glossary.md)
 - [Dukung VibeWars](support.md)

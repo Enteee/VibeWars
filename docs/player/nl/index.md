@@ -9,6 +9,7 @@ toont. Elke pagina in deze map staat hier precies één keer.
 - [Skills en builds](skills-and-builds.md)
 - [Uitrusting](equipment.md)
 - [Modi](modes.md)
+- [Wereldelementen](world-elements.md)
 - [Bots](bots.md)
 - [Woordenlijst](glossary.md)
 - [Steun VibeWars](support.md)

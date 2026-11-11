@@ -9,6 +9,7 @@ Fiecare pagină din acest director apare aici exact o dată.
 - [Abilități și builduri](skills-and-builds.md)
 - [Echipament](equipment.md)
 - [Moduri](modes.md)
+- [Elementele lumii](world-elements.md)
 - [Boți](bots.md)
 - [Glosar](glossary.md)
 - [Susține VibeWars](support.md)

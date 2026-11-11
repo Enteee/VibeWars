@@ -9,6 +9,7 @@
 - [مهارت‌ها و بیلدها](skills-and-builds.md)
 - [تجهیزات](equipment.md)
 - [حالت‌ها](modes.md)
+- [عناصر جهان](world-elements.md)
 - [بات‌ها](bots.md)
 - [واژه‌نامه](glossary.md)
 - [حمایت از VibeWars](support.md)

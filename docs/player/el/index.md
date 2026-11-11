@@ -8,6 +8,7 @@
 - [Ικανότητες και συνθέσεις](skills-and-builds.md)
 - [Εξοπλισμός](equipment.md)
 - [Λειτουργίες](modes.md)
+- [Στοιχεία του κόσμου](world-elements.md)
 - [Bots](bots.md)
 - [Γλωσσάρι](glossary.md)
 - [Στήριξε το VibeWars](support.md)

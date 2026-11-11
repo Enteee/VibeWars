@@ -9,6 +9,7 @@ Jede Seite in diesem Verzeichnis ist hier genau einmal aufgeführt.
 - [Skills und Builds](skills-and-builds.md)
 - [Ausrüstung](equipment.md)
 - [Modi](modes.md)
+- [Welt-Elemente](world-elements.md)
 - [Bots](bots.md)
 - [Glossar](glossary.md)
 - [VibeWars unterstützen](support.md)

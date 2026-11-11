@@ -9,6 +9,7 @@ page in this directory is listed here exactly once.
 - [Skills and builds](skills-and-builds.md)
 - [Equipment](equipment.md)
 - [Modes](modes.md)
+- [World elements](world-elements.md)
 - [Bots](bots.md)
 - [Glossary](glossary.md)
 - [Support VibeWars](support.md)

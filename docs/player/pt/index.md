@@ -9,6 +9,7 @@ página desta pasta aparece aqui exatamente uma vez.
 - [Habilidades e builds](skills-and-builds.md)
 - [Equipamento](equipment.md)
 - [Modos](modes.md)
+- [Elementos do mundo](world-elements.md)
 - [Bots](bots.md)
 - [Glossário](glossary.md)
 - [Apoie o VibeWars](support.md)

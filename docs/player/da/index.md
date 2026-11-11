@@ -9,6 +9,7 @@ side i denne mappe står her præcis én gang.
 - [Evner og builds](skills-and-builds.md)
 - [Udstyr](equipment.md)
 - [Spiltilstande](modes.md)
+- [Verdenselementer](world-elements.md)
 - [Bots](bots.md)
 - [Ordliste](glossary.md)
 - [Støt VibeWars](support.md)

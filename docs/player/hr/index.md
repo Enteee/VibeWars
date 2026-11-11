@@ -9,6 +9,7 @@ stranica u ovoj mapi navedena je ovdje točno jednom.
 - [Vještine i sastavi](skills-and-builds.md)
 - [Oprema](equipment.md)
 - [Načini](modes.md)
+- [Elementi svijeta](world-elements.md)
 - [Botovi](bots.md)
 - [Pojmovnik](glossary.md)
 - [Podrži VibeWars](support.md)
