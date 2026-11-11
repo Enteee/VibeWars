@@ -108,6 +108,19 @@ const transitionSchema = z.object({
   look: z.enum(TRANSITION_LOOKS),
 });
 
+/** The most drop-offs on a map (#3069). */
+export const MAX_DROP_OFFS = 16;
+
+/**
+ * A drop-off (#3069): a stretch of `layer`'s edge from `from` to `to`
+ * that a body steps off onto the layer below, and never climbs.
+ */
+const dropOffSchema = z.object({
+  layer: layerSchema,
+  from: vec2Schema,
+  to: vec2Schema,
+});
+
 /**
  * A hole in the ground down to the layer under it (#2973): open to the sky,
  * entered only by a ramp. A tunnel is a floor of that layer under the ground.
@@ -704,6 +717,65 @@ function standsClear(
   );
 }
 
+/** How far off its layer's edge a drop-off may lie, and how far apart the points are that test it (#3069). */
+const DROP_OFF_SLACK = 4;
+const DROP_OFF_SAMPLE = 8;
+
+/** Whether `point` is on `layer`'s floor, ramps aside: its decks, the ground but its pits, or a pit (#3069). */
+function onFloor(map: LayeredMap, point: Vec2Data, layer: number): boolean {
+  if (layer === map.groundLayer) {
+    return onGround(map.bounds, point) && !map.pits.some((pit) => pointInShape(point, pit.footprint));
+  }
+  const floors =
+    layer < map.groundLayer
+      ? [...map.pits, ...map.tunnels].map((below) => below.footprint)
+      : map.decks.filter((deck) => deck.layer === layer).map((deck) => deck.footprint);
+  return floors.some((floor) => pointInShape(point, floor));
+}
+
+/**
+ * Why a drop-off (#3069) is wrong, or `undefined`: each point along it is
+ * on its layer's edge, its floor on one side and open on the other, and a
+ * body stands clear on the layer below just past it, all along it, out of
+ * `deep` water there.
+ */
+function dropOffFault(
+  map: LayeredMap,
+  dropOff: DropOff,
+  deep: (point: Vec2Data) => boolean,
+): string | undefined {
+  const { layer, from, to } = dropOff;
+  const length = Math.hypot(to.x - from.x, to.y - from.y);
+  if (layer < 1 || length === 0) {
+    return "is not a stretch of a raised edge";
+  }
+  const normal = { x: (from.y - to.y) / length, y: (to.x - from.x) / length };
+  const steps = Math.max(1, Math.ceil(length / DROP_OFF_SAMPLE));
+  const points = Array.from({ length: steps + 1 }, (_, k) => ({
+    x: from.x + ((to.x - from.x) * k) / steps,
+    y: from.y + ((to.y - from.y) * k) / steps,
+  }));
+  const side = (point: Vec2Data, sign: number, by: number): Vec2Data => ({
+    x: point.x + normal.x * sign * by,
+    y: point.y + normal.y * sign * by,
+  });
+  const outward = [1, -1].find((sign) =>
+    points.every(
+      (point) =>
+        !onFloor(map, side(point, sign, DROP_OFF_SLACK), layer) &&
+        onFloor(map, side(point, -sign, DROP_OFF_SLACK), layer),
+    ),
+  );
+  if (outward === undefined) {
+    return `is not on layer ${String(layer)}'s edge`;
+  }
+  const landings = points.map((point) => side(point, outward, BODY_RADIUS));
+  if (!landings.every((landing) => standsClear(map, landing, layer - 1) && !deep(landing))) {
+    return `lands where a body cannot stand on layer ${String(layer - 1)}`;
+  }
+  return undefined;
+}
+
 export const mapDataSchema = z
   .object({
     id: z
@@ -747,6 +819,8 @@ export const mapDataSchema = z
     decks: z.array(deckSchema),
     /** Required, may be empty, as `gates`. */
     transitions: z.array(transitionSchema),
+    /** Required, may be empty, as `gates` (#3069). */
+    dropOffs: z.array(dropOffSchema).max(MAX_DROP_OFFS),
     walls: z.array(wallSchema),
     /** Its water (#2983); without it, the map has none. */
     water: z.array(waterSchema).max(MAX_WATER_BODIES).optional(),
@@ -1193,6 +1267,22 @@ export const mapDataSchema = z
     const bodyIn = (point: Vec2Data, area: Shape): boolean =>
       pointInShape(point, area) ||
       wallToSegments(area).some((side) => distancePointToSegment(point, side) < BODY_RADIUS);
+    map.dropOffs.forEach((dropOff, index) => {
+      layerInRange(dropOff.layer, ["dropOffs", index, "layer"]);
+      const fault = dropOffFault(map, dropOff, (point) =>
+        water.some(
+          (body) =>
+            body.depth === "deep" && body.layer === dropOff.layer - 1 && bodyIn(point, body.area),
+        ),
+      );
+      if (fault !== undefined) {
+        context.addIssue({
+          code: "custom",
+          path: ["dropOffs", index],
+          message: `drop-off ${String(index)} ${fault}`,
+        });
+      }
+    });
     water.forEach((body, index) => {
       layerInRange(body.layer, ["water", index, "layer"]);
       if (waterIds.has(body.id)) {
@@ -1520,6 +1610,7 @@ export type DeckLook = Deck["look"];
 export type TransitionLook = Transition["look"];
 export type Transition = z.infer<typeof transitionSchema>;
 export type BelowGround = z.infer<typeof belowGroundSchema>;
+export type DropOff = z.infer<typeof dropOffSchema>;
 export type SpawnPoint = z.infer<typeof spawnPointSchema>;
 export type Objective = z.infer<typeof objectiveSchema>;
 export type MapLighting = z.infer<typeof lightingSchema>;

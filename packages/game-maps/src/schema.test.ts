@@ -44,6 +44,7 @@ const validMap = {
   tunnels: [],
   decks: [],
   transitions: [],
+  dropOffs: [],
   walls: [
     { kind: "rect", layer: 0, x: 10, y: 10, width: 5, height: 5 },
     {
@@ -1236,6 +1237,36 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
       },
       /wall-walk bridge does not lie over walls/,
     );
+  });
+
+  it("takes a drop-off on a raised edge onto standable ground, and no other (#3069)", () => {
+    // The bridge's north edge, y 300, well clear of the ramps at its ends.
+    const north = { layer: 1, from: { x: 600, y: 300 }, to: { x: 760, y: 300 } };
+    accepts({ dropOffs: [north] });
+    accepts({ dropOffs: [{ ...north, from: north.to, to: north.from }] });
+    refuses({ dropOffs: [{ ...north, layer: 0 }] }, /dropOffs\.0: drop-off 0 is not a stretch/);
+    refuses(
+      { dropOffs: [{ ...north, from: { x: 600, y: 400 }, to: { x: 760, y: 400 } }] },
+      /dropOffs\.0: drop-off 0 is not on layer 1's edge/,
+    );
+    const wallBelow = { kind: "rect", layer: 0, x: 640, y: 270, width: 40, height: 29 };
+    refuses(
+      { walls: [...layerTest.walls, wallBelow], dropOffs: [north] },
+      /drop-off 0 lands where a body cannot stand on layer 0/,
+    );
+    const pool = (depth: string) => ({
+      id: "moat",
+      layer: 0,
+      depth,
+      area: { kind: "rect", x: 560, y: 200, width: 240, height: 98 },
+    });
+    accepts({ water: [pool("shallow")], dropOffs: [north] });
+    refuses(
+      { water: [pool("deep")], dropOffs: [north] },
+      /drop-off 0 lands where a body cannot stand on layer 0/,
+    );
+    refuses({ dropOffs: Array.from({ length: 17 }, () => north) }, /dropOffs/);
+    refuses({ dropOffs: undefined }, /dropOffs/);
   });
 
   it("validates the structures test map, every look on it once (#3067)", () => {

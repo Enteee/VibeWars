@@ -266,6 +266,7 @@
       "look": "ramp"
     }
   ],
+  "dropOffs": [],
   "walls": [
     {
       "kind": "rect",

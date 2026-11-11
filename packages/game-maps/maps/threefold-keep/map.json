@@ -15,6 +15,7 @@
   "transitions": [],
   "keep": true,
   "ghostLevel": 24,
+  "dropOffs": [],
   "walls": [
     {
       "kind": "rect",

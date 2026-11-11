@@ -13,6 +13,7 @@
   "tunnels": [],
   "decks": [],
   "transitions": [],
+  "dropOffs": [],
   "walls": [
     { "kind": "rect", "layer": 0, "x": 1706, "y": 1000, "width": 90, "height": 90 },
     { "kind": "rect", "layer": 0, "x": 1004, "y": 710, "width": 90, "height": 90 },

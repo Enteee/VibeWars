@@ -35,6 +35,7 @@
       "look": "ramp"
     }
   ],
+  "dropOffs": [],
   "walls": [
     { "kind": "rect", "layer": 0, "x": 780, "y": 120, "width": 40, "height": 40 },
     { "kind": "rect", "layer": 1, "x": 780, "y": 400, "width": 40, "height": 40 }
