@@ -66,8 +66,9 @@ Läufst du in ein **Portal**, erscheinst du sofort an seinem Ausgang. Ein Portal
 führt nur in eine Richtung. Ein aktives Portal ist ein Ring aus Runensteinen um
 einen türkisen Wirbel; ein abgeschaltetes ist eine dunkle Schale mit einem
 gestrichelten grauen Ring, und ein Hebel kann es einschalten. Wenn du ankommst,
-markieren ein weißer Blitz und ein sich ausbreitender Ring den Moment, und das
-Portal ruht ein paar Sekunden, bevor es wieder jemanden mitnimmt.
+markieren ein weißer Blitz und ein sich ausbreitender Ring den Moment. Nach
+einem Sprung nimmt dich ein paar Sekunden lang kein Portal mit, sodass du
+nicht sofort zurückspringen kannst; alle anderen können weiterhin hindurch.
 
 ## Schimmernde Tore und rissige Mauern
 

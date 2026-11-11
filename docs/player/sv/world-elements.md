@@ -66,8 +66,9 @@ Gå in i en **portal** så dyker du genast upp vid dess utgång. En portal
 går bara åt ett håll. En portal som fungerar är en ring av runstenar runt
 en akvamarinblå virvel; en som är avslagen är en mörk skål med en
 streckad grå ring, och en spak kan slå på den. När du kommer fram markerar
-en vit blixt och en ring som breder ut sig ögonblicket, och portalen vilar
-några sekunder innan den tar någon igen.
+en vit blixt och en ring som breder ut sig ögonblicket. Efter ett hopp
+tar ingen portal dig igen på några sekunder, så du kan inte studsa rakt
+tillbaka; alla andra kan fortfarande gå igenom.
 
 ## Skimrande portar och spruckna murar
 

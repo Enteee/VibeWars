@@ -63,8 +63,9 @@ Walk into a **portal** and you appear at once at its exit. A portal only
 goes one way. A working portal is a ring of rune stones round an aqua
 swirl; one that is switched off is a dark dish with a dashed grey ring,
 and a lever may switch it on. When you arrive, a white burst and a
-spreading ring mark the moment, and the portal rests a few seconds
-before it takes anyone again.
+spreading ring mark the moment. After a jump, no portal takes you again
+for a few seconds, so you cannot bounce straight back; anyone else can
+still go through.
 
 ## Shimmering gates and cracked walls
 

@@ -64,8 +64,9 @@ Bước vào **cổng dịch chuyển** và bạn xuất hiện ngay tại lối
 Cổng dịch chuyển chỉ đi một chiều. Cổng đang hoạt động là một vòng đá
 rune quanh một vòng xoáy màu ngọc lam; cổng đang tắt là một cái đĩa tối
 với vòng tròn nét đứt màu xám, và cần gạt có thể bật nó lên. Khi bạn tới
-nơi, một tia sáng trắng và một vòng tròn lan rộng đánh dấu khoảnh khắc đó,
-và cổng nghỉ vài giây rồi mới đưa người khác đi tiếp.
+nơi, một tia sáng trắng và một vòng tròn lan rộng đánh dấu khoảnh khắc đó.
+Sau một lần dịch chuyển, không cổng nào đưa bạn đi lại trong vài giây, nên
+bạn không thể bật ngược về ngay; người khác vẫn đi qua được bình thường.
 
 ## Cổng lấp lánh và tường nứt
 

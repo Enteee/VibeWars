@@ -65,8 +65,8 @@ Lépj egy **portálba**, és azonnal a kijáratánál termsz. A portál csak egy
 irányba visz. A működő portál rúnakövek gyűrűje egy akvamarinszínű örvény
 körül; a kikapcsolt portál sötét tál szaggatott szürke gyűrűvel, és egy kar
 bekapcsolhatja. Érkezéskor fehér villanás és egy táguló gyűrű jelzi a
-pillanatot, és a portál néhány másodpercig pihen, mielőtt újra bárkit
-vinne.
+pillanatot. Ugrás után néhány másodpercig egyik portál sem visz újra,
+így nem pattanhatsz azonnal vissza; bárki más viszont továbbra is átmehet.
 
 ## Csillámló kapuk és repedt falak
 

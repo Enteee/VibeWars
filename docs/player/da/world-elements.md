@@ -64,8 +64,9 @@ Gå ind i en **portal**, og du dukker straks op ved dens udgang. En portal går
 kun én vej. En portal, der virker, er en ring af runesten omkring en
 akvablå hvirvel; en, der er slukket, er en mørk skål med en stiplet grå ring,
 og et håndtag kan tænde den. Når du ankommer, markerer et hvidt glimt og en
-ring, der breder sig, øjeblikket, og portalen hviler et par sekunder, før den
-tager nogen igen.
+ring, der breder sig, øjeblikket. Efter et hop tager ingen portal dig igen i
+et par sekunder, så du ikke kan springe direkte tilbage; alle andre kan
+stadig gå igennem.
 
 ## Glitrende porte og revnede mure
 

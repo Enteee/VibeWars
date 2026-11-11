@@ -65,8 +65,9 @@ Loop je een **portaal** in, dan sta je meteen bij zijn uitgang. Een portaal
 werkt maar één kant op. Een werkend portaal is een ring van runenstenen rond
 een aquakleurige draaikolk; een uitgeschakeld portaal is een donkere schaal
 met een gestippelde grijze ring, en een hendel kan het aanzetten. Kom je aan,
-dan markeren een witte flits en een uitdijende ring dat moment, en rust het
-portaal een paar seconden voordat het weer iemand meeneemt.
+dan markeren een witte flits en een uitdijende ring dat moment. Na een sprong
+neemt geen enkel portaal je een paar seconden lang opnieuw mee, zodat je niet
+meteen terug kunt stuiteren; iedereen anders kan er gewoon door.
 
 ## Glinsterende poorten en gebarsten muren
 

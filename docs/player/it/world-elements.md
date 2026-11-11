@@ -67,8 +67,9 @@ Entra in un **portale** e compari subito alla sua uscita. Un portale va in
 una sola direzione. Un portale attivo è un cerchio di pietre runiche
 intorno a un vortice color acqua; uno spento è una conca scura con un
 anello grigio tratteggiato, e una leva può accenderlo. Quando arrivi, un
-lampo bianco e un anello che si allarga segnano il momento, e il portale
-riposa qualche secondo prima di portare di nuovo qualcuno.
+lampo bianco e un anello che si allarga segnano il momento. Dopo un salto,
+nessun portale ti riprende per qualche secondo, così non puoi rimbalzare
+subito indietro; chiunque altro può comunque passare.
 
 ## Cancelli scintillanti e muri crepati
 

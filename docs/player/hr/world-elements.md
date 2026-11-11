@@ -64,8 +64,8 @@ Uđi u **portal** i odmah se pojaviš na njegovu izlazu. Portal vodi samo u
 jednom smjeru. Uključen portal je krug runskog kamenja oko akvamarinskog
 vrtloga; isključen je tamna zdjela s isprekidanim sivim krugom, a poluga ga
 može uključiti. Kad stigneš, bijeli bljesak i krug koji se širi označe taj
-trenutak, a portal odmara nekoliko sekundi prije nego što ponovno nekoga
-ponese.
+trenutak. Nakon skoka nijedan te portal ne ponese ponovno nekoliko sekundi,
+pa se ne možeš odmah odbiti natrag; svi ostali i dalje mogu proći.
 
 ## Svjetlucava vrata i napukli zidovi
 

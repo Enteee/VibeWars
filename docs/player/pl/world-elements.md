@@ -65,8 +65,9 @@ Wejdź w **portal**, a od razu znajdziesz się przy jego wyjściu. Portal dział
 tylko w jedną stronę. Działający portal to krąg kamieni runicznych wokół
 turkusowego wiru; wyłączony to ciemna misa z przerywanym szarym pierścieniem,
 a dźwignia może go włączyć. Gdy przybywasz, chwilę tę znaczą biały błysk
-i rozchodzący się pierścień, a portal odpoczywa kilka sekund, zanim znów
-kogoś przeniesie.
+i rozchodzący się pierścień. Po skoku przez kilka sekund żaden portal nie
+przeniesie cię ponownie, więc nie możesz od razu odbić się z powrotem;
+każdy inny wciąż może przejść.
 
 ## Migoczące bramy i popękane mury
 

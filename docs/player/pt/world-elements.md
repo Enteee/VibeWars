@@ -64,8 +64,9 @@ Entre num **portal** e você aparece na hora na saída dele. Um portal só vai
 num sentido. Um portal ativo é um círculo de pedras rúnicas em volta de um
 redemoinho azul-piscina; um desligado é um prato escuro com um anel cinza
 tracejado, e uma alavanca pode ligá-lo. Quando você chega, um clarão branco e
-um anel que se espalha marcam o momento, e o portal descansa alguns segundos
-antes de levar alguém de novo.
+um anel que se espalha marcam o momento. Depois de um salto, nenhum portal
+leva você de novo por alguns segundos, então você não consegue voltar na
+hora; qualquer outra pessoa ainda pode passar.
 
 ## Portões cintilantes e paredes rachadas
 

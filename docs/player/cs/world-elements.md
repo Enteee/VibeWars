@@ -34,7 +34,7 @@ Některé brány se místo toho otevírají **nášlapnou deskou**: kamenným ko
 
 ## Portály
 
-Vejdeš-li do **portálu**, okamžitě se objevíš u jeho výstupu. Portál vede jen jedním směrem. Funkční portál je kruh runových kamenů kolem tyrkysového víru; vypnutý je tmavá mísa s přerušovaným šedým kruhem a páka ho může zapnout. Když dorazíš, okamžik označí bílý záblesk a rozšiřující se kruh a portál pak pár sekund odpočívá, než vezme někoho dalšího.
+Vejdeš-li do **portálu**, okamžitě se objevíš u jeho výstupu. Portál vede jen jedním směrem. Funkční portál je kruh runových kamenů kolem tyrkysového víru; vypnutý je tmavá mísa s přerušovaným šedým kruhem a páka ho může zapnout. Když dorazíš, okamžik označí bílý záblesk a rozšiřující se kruh. Po skoku tě pár sekund žádný portál znovu nevezme, takže se nemůžeš hned odrazit zpátky; kdokoli jiný jím ale projít může.
 
 ## Třpytivé brány a popraskané zdi
 

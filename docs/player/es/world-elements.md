@@ -65,8 +65,9 @@ Si entras en un **portal**, apareces al instante en su salida. Un portal solo
 va en un sentido. Un portal activo es un anillo de piedras rúnicas alrededor de
 un remolino aguamarina; uno apagado es un cuenco oscuro con un anillo gris
 discontinuo, y una palanca puede encenderlo. Al llegar, un destello blanco y un
-anillo que se extiende marcan el momento, y el portal descansa unos segundos
-antes de llevar a nadie más.
+anillo que se extiende marcan el momento. Tras un salto, ningún portal te
+vuelve a llevar durante unos segundos, así que no puedes rebotar de vuelta al
+instante; cualquier otro sí puede pasar.
 
 ## Puertas relucientes y muros agrietados
 

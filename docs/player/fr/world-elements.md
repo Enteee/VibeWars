@@ -71,8 +71,10 @@ Entre dans un **portail** et tu apparais aussitôt à sa sortie. Un portail ne
 va que dans un sens. Un portail actif est un cercle de pierres runiques
 autour d'un tourbillon couleur aqua ; un portail éteint est une coupe sombre
 entourée d'un anneau gris en pointillés, et un levier peut l'allumer. À ton
-arrivée, un éclat blanc et un anneau qui s'élargit marquent le moment, et le
-portail se repose quelques secondes avant de reprendre quelqu'un.
+arrivée, un éclat blanc et un anneau qui s'élargit marquent le moment. Après
+un saut, aucun portail ne te reprend pendant quelques secondes : tu ne peux
+donc pas rebondir aussitôt en arrière ; n'importe qui d'autre peut toujours
+passer.
 
 ## Portes miroitantes et murs fissurés
 

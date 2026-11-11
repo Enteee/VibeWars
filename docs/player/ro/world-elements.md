@@ -64,8 +64,9 @@ Intră într-un **portal** și apari pe loc la ieșirea lui. Un portal merge doa
 într-un sens. Un portal activ este un cerc de pietre runice în jurul unui vârtej
 de culoarea apei; unul oprit este un taler întunecat cu un inel gri punctat, iar
 o manetă îl poate porni. Când ajungi, o explozie albă și un inel care se lărgește
-marchează momentul, iar portalul se odihnește câteva secunde înainte să mai ia pe
-cineva.
+marchează momentul. După un salt, niciun portal nu te mai ia câteva secunde,
+așa că nu poți sări imediat înapoi; oricine altcineva poate trece în
+continuare.
 
 ## Porți sclipitoare și ziduri crăpate
 

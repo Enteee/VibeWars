@@ -63,8 +63,9 @@ Kun kävelet **portaaliin**, ilmestyt heti sen uloskäynnille. Portaali vie vain
 yhteen suuntaan. Toimiva portaali on riimukivien rengas vedenvihreän pyörteen
 ympärillä; pois kytketty on tumma malja, jossa on katkoviivainen harmaa
 rengas, ja vipu voi kytkeä sen päälle. Kun saavut, valkoinen välähdys ja
-leviävä rengas merkitsevät hetken, ja portaali lepää muutaman sekunnin ennen
-kuin vie ketään uudelleen.
+leviävä rengas merkitsevät hetken. Hypyn jälkeen mikään portaali ei vie sinua
+uudelleen muutamaan sekuntiin, joten et voi pomppia heti takaisin; kuka
+tahansa muu pääsee silti läpi.
 
 ## Hohtavat portit ja halkeilleet muurit
 

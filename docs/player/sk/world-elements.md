@@ -62,8 +62,9 @@ Niektoré dosky reagujú len na jeden tím.
 Vojdi do **portálu** a hneď sa ocitneš pri jeho výstupe. Portál vedie len
 jedným smerom. Funkčný portál je kruh runových kameňov okolo tyrkysového víru;
 vypnutý je tmavá misa s prerušovaným sivým kruhom a páka ho môže zapnúť. Keď
-prídeš, ten okamih označí biely záblesk a rozbiehajúci sa kruh a portál potom
-niekoľko sekúnd odpočíva, kým znova niekoho vezme.
+prídeš, ten okamih označí biely záblesk a rozbiehajúci sa kruh. Po skoku ťa
+niekoľko sekúnd žiadny portál znova nevezme, takže sa nemôžeš hneď odraziť
+späť; ktokoľvek iný ním však prejsť môže.
 
 ## Trblietavé brány a popraskané múry
 

@@ -68,8 +68,9 @@ Masuk ke **portal** dan kamu langsung muncul di pintu keluarnya. Portal
 hanya berjalan satu arah. Portal yang aktif berupa lingkaran batu rune di
 sekeliling pusaran berwarna aqua; portal yang mati berupa cekungan gelap
 dengan cincin abu-abu putus-putus, dan tuas bisa menyalakannya. Saat kamu
-tiba, kilatan putih dan cincin yang melebar menandai saat itu, dan portal
-beristirahat beberapa detik sebelum membawa siapa pun lagi.
+tiba, kilatan putih dan cincin yang melebar menandai saat itu. Setelah
+melompat, tidak ada portal yang membawamu lagi selama beberapa detik, jadi
+kamu tidak bisa langsung memantul kembali; orang lain tetap bisa lewat.
 
 ## Gerbang berkilau dan tembok retak
 

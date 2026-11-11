@@ -68,8 +68,9 @@ Bir **portala** girersen anında çıkışında belirirsin. Bir portal yalnızca
 tek yöne gider. Çalışan bir portal, akuamarin bir girdabın çevresindeki
 rün taşlarından bir halkadır; kapalı olan ise kesik çizgili gri bir
 halkası olan karanlık bir çanaktır ve bir kol onu açabilir. Vardığında
-beyaz bir parlama ve yayılan bir halka o anı belirtir; portal birini
-yeniden taşımadan önce birkaç saniye dinlenir.
+beyaz bir parlama ve yayılan bir halka o anı belirtir. Bir geçişten
+sonra birkaç saniye hiçbir portal seni yeniden taşımaz, bu yüzden hemen
+geri sekemezsin; başka herkes yine de geçebilir.
 
 ## Parıldayan kapılar ve çatlak duvarlar
 
