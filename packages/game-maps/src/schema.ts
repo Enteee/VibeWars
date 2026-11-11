@@ -1086,18 +1086,29 @@ export const mapDataSchema = z
           message: `tower ${deck.id} is ${String(across("x"))} × ${String(across("y"))}, wider than the ${String(MAX_TOWER_SIZE)} a tower may be`,
         });
       }
-      if (
-        deck.look === "wall-walk" &&
-        !overWalls(
-          deck.footprint,
-          map.walls.filter((wall) => wall.layer === deck.layer - 1),
-        )
-      ) {
-        context.addIssue({
-          code: "custom",
-          path: ["decks", index, "footprint"],
-          message: `wall-walk ${deck.id} does not lie over walls on layer ${String(deck.layer - 1)}`,
-        });
+      if (deck.look === "wall-walk") {
+        // A stone gate is wall to stand on, open or shut; an energy barrier is no floor (#3104).
+        const gatesBelow = map.gates.filter(({ wall }) => wall.layer === deck.layer - 1);
+        const stone = gatesBelow.filter(({ blocks }) => blocks === "all").map(({ wall }) => wall);
+        const under = [...map.walls.filter((wall) => wall.layer === deck.layer - 1), ...stone];
+        if (!overWalls(deck.footprint, under)) {
+          const barriers = gatesBelow.filter(({ blocks }) => blocks === "bodies-and-shots");
+          const spanned = overWalls(deck.footprint, [...under, ...barriers.map(({ wall }) => wall)])
+            ? barriers.filter(
+                (barrier) =>
+                  !overWalls(deck.footprint, [
+                    ...under,
+                    ...barriers.filter((other) => other !== barrier).map(({ wall }) => wall),
+                  ]),
+              )
+            : [];
+          const gap = spanned.map(({ id }) => `, energy barrier ${id} is no floor`).join("");
+          context.addIssue({
+            code: "custom",
+            path: ["decks", index, "footprint"],
+            message: `wall-walk ${deck.id} does not lie over walls on layer ${String(deck.layer - 1)}${gap}`,
+          });
+        }
       }
       if (!shapeInBounds(deck.footprint, map.width, map.height)) {
         context.addIssue({

@@ -6,7 +6,9 @@
   "teams": 2,
   "width": 2000,
   "height": 1000,
-  "bounds": { "kind": "rect" },
+  "bounds": {
+    "kind": "rect"
+  },
   "layers": 4,
   "groundLayer": 1,
   "pits": [
@@ -273,7 +275,15 @@
       "layer": 1,
       "x": 760,
       "y": 120,
-      "width": 480,
+      "width": 180,
+      "height": 48
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 1060,
+      "y": 120,
+      "width": 180,
       "height": 48
     },
     {
@@ -328,7 +338,28 @@
     }
   ],
   "objectives": [],
-  "gates": [],
+  "gates": [
+    {
+      "id": "north-gatehouse",
+      "wall": {
+        "kind": "rect",
+        "layer": 1,
+        "x": 940,
+        "y": 120,
+        "width": 120,
+        "height": 48
+      },
+      "opener": {
+        "kind": "plate",
+        "plate": {
+          "x": 1000,
+          "y": 260
+        },
+        "team": null
+      },
+      "blocks": "all"
+    }
+  ],
   "lighting": {
     "ambient": {
       "colour": 11582676,
