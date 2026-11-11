@@ -244,14 +244,16 @@ test("on Heights you step off the bridge's broken north lip onto the ground (#30
   // Map coordinates from training-heights/map.json: up the west stairs onto
   // the bridge (layer 2, y 350 to 550), then north over its drop-off, x 440
   // to 520. Without it, the deck's edge would hold you at y 350. A slow
-  // page polls late and overshoots, so walk back until you stand in front
-  // of the drop-off.
+  // page polls late and overshoots a 60-unit window at 180 units a second,
+  // so walk to short of it, then nudge in with brief taps of the key.
   const inFront = ({ x }: { readonly x: number }): boolean => x >= 450 && x <= 510;
-  await walk("move-right", ({ x }) => x >= 450);
-  for (let tries = 0; tries < 4 && !inFront(await you()); tries += 1) {
-    await ((await you()).x > 510
-      ? walk("move-left", ({ x }) => x <= 500)
-      : walk("move-right", ({ x }) => x >= 460));
+  await walk("move-right", ({ x }) => x >= 400);
+  for (let tries = 0; tries < 30 && !inFront(await you()); tries += 1) {
+    await page.keyboard.down(key((await you()).x > 510 ? "move-left" : "move-right"));
+    await page.waitForTimeout(60);
+    await page.keyboard.up(key("move-left"));
+    await page.keyboard.up(key("move-right"));
+    await page.waitForTimeout(150);
   }
   expect(inFront(await you())).toBe(true);
   await walk("move-up", ({ y }) => y < 320);
