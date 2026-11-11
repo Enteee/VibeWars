@@ -1,4 +1,5 @@
 import type { Vec2 } from "@vibewars/game-core";
+import { pointInShape } from "@vibewars/game-maps/geometry";
 import type { DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
 
 import {
@@ -138,12 +139,33 @@ const DOOR_EVERY = 160;
 /** A pier's posts: how far apart, how thick. */
 const POST_EVERY_PIER = 60;
 const PIER_POST_WIDTH = 5;
-/** The stones fallen at a ruin's foot, per face: where along it, how big. */
-const RUBBLE = [
-  [0.15, 6],
-  [0.45, 4],
-  [0.8, 7],
+/**
+ * Where a ruin's brink has fallen in, per face: where along it, how wide,
+ * and how many courses down. Each bite steps: its middle half falls one
+ * course further than its shoulders.
+ */
+const RUIN_BITES = [
+  [0.12, 30, 1],
+  [0.38, 44, 2],
+  [0.63, 22, 1],
+  [0.86, 36, 2],
 ] as const;
+/** How far a bite reaches into a ruin's top, per course it falls, in world units. */
+const BITE_DEPTH = 6;
+/** The stones fallen at a ruin's foot, per face: where along it, how big; the biggest under its bites. */
+const RUBBLE = [
+  [0.05, 9],
+  [0.13, 16],
+  [0.21, 10],
+  [0.38, 18],
+  [0.5, 11],
+  [0.63, 14],
+  [0.75, 9],
+  [0.86, 17],
+] as const;
+/** One flagstone in this many is gone from a ruin's top, and one in this many cracked. */
+const STONE_MISSING_ONE_IN = 6;
+const STONE_CRACKED_ONE_IN = 4;
 /** How far a plinth's capture ring stands out past its base, in world units. */
 const RING_MARGIN = 14;
 const RING_SEGMENTS = 24;
@@ -375,21 +397,157 @@ function doors(painter: StructurePainter, deck: DeckFrame): void {
   }
 }
 
-/** Stones fallen at the foot of each south face, on the layer under it. */
+/** Stones fallen at the foot of each south face, on the layer under it: a dark heap, its top lit. */
 function rubble(painter: StructurePainter, deck: DeckFrame): void {
   const { footprint, low, palette } = deck;
-  painter.fillStyle(palette.wallFace, 1);
   for (const edge of southFacingEdges(footprint)) {
     for (const [t, size] of RUBBLE) {
+      if (size > lengthOf(edge) / 3) {
+        continue;
+      }
       const at = raised(along(edge, t), low);
+      painter.fillStyle(palette.wallFace, 1);
       painter.fillTriangle(
         at.x - size,
         at.y + size / 2,
         at.x + size,
         at.y + size / 2,
-        at.x,
+        at.x + size * 0.2,
         at.y - size / 2,
       );
+      painter.fillStyle(palette.slab, 1);
+      painter.fillTriangle(
+        at.x - size * 0.5,
+        at.y,
+        at.x + size * 0.6,
+        at.y - size * 0.1,
+        at.x + size * 0.2,
+        at.y - size / 2,
+      );
+    }
+  }
+}
+
+/** The bites fallen out of `edge`, as stretches of it and the courses each falls. */
+function bitesOf(edge: Segment): readonly { readonly way: Segment; readonly courses: number }[] {
+  const length = lengthOf(edge);
+  return RUIN_BITES.filter(([, width]) => width < length / 2).map(([t, width, courses]) => {
+    const half = width / 2 / length;
+    return { way: { from: along(edge, t - half), to: along(edge, t + half) }, courses };
+  });
+}
+
+/**
+ * Where each south face's top has fallen in: a dark gap stepping down its
+ * courses, the stones it bared lit along each step.
+ */
+function brokenFace(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, low, top, line, palette } = deck;
+  for (const edge of southFacingEdges(footprint)) {
+    for (const { way, courses } of bitesOf(edge)) {
+      const shoulder = Math.max(low, top - courses * COURSE_EVERY);
+      const deep = Math.max(low, shoulder - COURSE_EVERY);
+      const inner = { from: along(way, 0.25), to: along(way, 0.75) };
+      painter.fillStyle(palette.support, 1);
+      fillQuad(
+        painter,
+        raised(way.from, shoulder),
+        raised(way.to, shoulder),
+        raised(way.to, top),
+        raised(way.from, top),
+      );
+      fillQuad(
+        painter,
+        raised(inner.from, deep),
+        raised(inner.to, deep),
+        raised(inner.to, shoulder),
+        raised(inner.from, shoulder),
+      );
+      painter.lineStyle(line * 2, palette.wallLit, 1);
+      const steps: readonly Segment[] = [
+        { from: raised(way.from, shoulder), to: raised(inner.from, shoulder) },
+        { from: raised(inner.from, deep), to: raised(inner.to, deep) },
+        { from: raised(inner.to, shoulder), to: raised(way.to, shoulder) },
+      ];
+      strokeSegments(painter, steps);
+    }
+  }
+}
+
+/**
+ * Each bite seen from above, in the top's frame: a hole into the top behind
+ * the brink, as deep as it falls, its far lip lit.
+ */
+function brokenBrink(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, line, palette } = deck;
+  for (const edge of southFacingEdges(footprint)) {
+    for (const { way, courses } of bitesOf(edge)) {
+      const back = BITE_DEPTH * courses;
+      const inner = { from: along(way, 0.25), to: along(way, 0.75) };
+      const far = [
+        raised(way.from, back / 2),
+        raised(inner.from, back / 2),
+        raised(inner.from, back),
+        raised(inner.to, back),
+        raised(inner.to, back / 2),
+        raised(way.to, back / 2),
+      ] as const;
+      painter.fillStyle(palette.support, 1);
+      fillQuad(painter, way.from, way.to, far[5], far[0]);
+      fillQuad(painter, inner.from, inner.to, far[3], far[2]);
+      painter.lineStyle(line * 2, palette.wallLit, 1);
+      strokeSegments(
+        painter,
+        far.slice(1).map((to, k) => ({ from: far[k] ?? to, to })),
+      );
+    }
+  }
+}
+
+/** A small whole-number hash of a flagstone's place, the same on every client. */
+function stoneHash(column: number, row: number): number {
+  const mixed = Math.imul(column, 73856093) ^ Math.imul(row, 19349663);
+  return (mixed >>> 0) % 997;
+}
+
+/**
+ * A ruin's paving, in the top's frame: the flagstones' grid, with some gone
+ * (a dark hole, its far edge lit) and some cracked across.
+ */
+function brokenPaving(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, line, palette } = deck;
+  painter.lineStyle(line, palette.plank, 1);
+  strokeSegments(painter, plankLines(footprint, PAVING));
+  strokeSegments(painter, plankLines(footprint, PAVING, "y"));
+  const { middle, half } = boxMiddle(footprint);
+  const [left, top] = [middle.x - half.x, middle.y - half.y];
+  const [columns, rows] = [Math.ceil((half.x * 2) / PAVING), Math.ceil((half.y * 2) / PAVING)];
+  for (let column = 0; column < columns; column += 1) {
+    for (let row = 0; row < rows; row += 1) {
+      const [x, y] = [left + column * PAVING, top + row * PAVING];
+      const corners = [
+        { x: x + 1, y: y + 1 },
+        { x: x + PAVING - 1, y: y + 1 },
+        { x: x + 1, y: y + PAVING - 1 },
+        { x: x + PAVING - 1, y: y + PAVING - 1 },
+      ];
+      if (!corners.every((corner) => pointInShape(corner, footprint))) {
+        continue;
+      }
+      const hash = stoneHash(column, row);
+      if (hash % STONE_MISSING_ONE_IN === 0) {
+        painter.fillStyle(palette.support, 1);
+        painter.fillRect(x + 2, y + 2, PAVING - 4, PAVING - 4);
+        painter.lineStyle(line * 1.5, palette.wallLit, 1);
+        painter.lineBetween(x + 2, y + 2, x + PAVING - 2, y + 2);
+      } else if (hash % STONE_CRACKED_ONE_IN === 1) {
+        const lean = hash % 2 === 0 ? 1 : -1;
+        const [from, to] = lean > 0 ? [x, x + PAVING] : [x + PAVING, x];
+        const bend = { x: x + PAVING / 2, y: y + PAVING * (0.3 + (hash % 5) / 10) };
+        painter.lineStyle(line * 1.5, palette.support, 1);
+        painter.lineBetween(from, y + 3, bend.x, bend.y);
+        painter.lineBetween(bend.x, bend.y, to, y + PAVING - 3);
+      }
     }
   }
 }
@@ -557,17 +715,18 @@ export const DECK_ART: Record<DeckLook, DeckArt> = {
   },
   /**
    * Broken masonry: its gaps are notches in its footprint, so what is drawn
-   * is what walks; flagstones on what stands, stones fallen at its foot.
+   * is what walks; flagstones gone and cracked on what stands, its brink
+   * fallen in down its courses, and the stones of it heaped at its foot.
    */
   ruin: {
     side: (painter, deck) => {
       courses(painter, deck, true);
+      brokenFace(painter, deck);
       rubble(painter, deck);
     },
     top: (painter, deck) => {
-      painter.lineStyle(deck.line, deck.palette.plank, 1);
-      strokeSegments(painter, plankLines(deck.footprint, PAVING));
-      strokeSegments(painter, plankLines(deck.footprint, PAVING, "y"));
+      brokenPaving(painter, deck);
+      brokenBrink(painter, deck);
     },
   },
   /** A stone arch: a dark round opening in its face, a walkable top. */
