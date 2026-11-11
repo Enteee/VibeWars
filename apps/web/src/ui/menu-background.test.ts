@@ -40,7 +40,7 @@ describe("the menu background (#3119)", () => {
     const root = layer();
     const background = createMenuBackground(root, start);
     expect(log).toEqual([]);
-    expect(await background.resume()).toBe(true);
+    expect(await background.resume("away")).toBe(true);
     expect(log).toHaveLength(1);
     expect(root.dataset.teamSize).toBe("8");
   });
@@ -48,29 +48,29 @@ describe("the menu background (#3119)", () => {
   it("keeps the fight for the same choice, and restarts it for another map or size", async () => {
     const { log, start } = fights();
     const background = createMenuBackground(layer(), start);
-    await background.resume();
+    await background.resume("away");
     background.setChoice({ mapId: RANDOM_MAP, teamSize: 8 });
-    await background.resume();
+    await background.resume("away");
     expect(log).toHaveLength(1);
 
     background.setChoice({ mapId: "jungle-ruins", teamSize: 4 });
     background.setChoice({ mapId: "jungle-ruins", teamSize: 4 });
-    await background.resume();
+    await background.resume("away");
     expect(log.slice(1)).toEqual([expect.stringMatching(/^stop /), "start jungle-ruins@4"]);
 
     background.setChoice({ mapId: "jungle-ruins", teamSize: 8 });
-    await background.resume();
+    await background.resume("away");
     expect(log.slice(3)).toEqual(["stop jungle-ruins@4", "start jungle-ruins@8"]);
   });
 
   it("stops the old fight before the next starts, and starts only the last of a burst", async () => {
     const { log, start } = fights();
     const background = createMenuBackground(layer(), start);
-    await background.resume();
+    await background.resume("away");
     background.setChoice({ mapId: "jungle-ruins", teamSize: 1 });
     background.setChoice({ mapId: "jungle-ruins", teamSize: 2 });
     background.setChoice({ mapId: "jungle-ruins", teamSize: 4 });
-    await background.resume();
+    await background.resume("away");
     expect(log.slice(1)).toEqual([expect.stringMatching(/^stop /), "start jungle-ruins@4"]);
   });
 
@@ -79,14 +79,30 @@ describe("the menu background (#3119)", () => {
     const root = layer();
     const background = createMenuBackground(root, start);
     background.setChoice({ mapId: "jungle-ruins", teamSize: 4 });
-    await background.resume();
-    background.suspend();
+    await background.resume("away");
+    background.suspend("away");
     await vi.waitFor(() => {
       expect(root.dataset.map).toBeUndefined();
     });
-    expect(await background.resume()).toBe(true);
+    expect(await background.resume("away")).toBe(true);
     expect(log).toEqual(["start jungle-ruins@4", "stop jungle-ruins@4", "start jungle-ruins@4"]);
     expect(root.dataset.map).toBe("jungle-ruins");
+  });
+
+  it("stays gone until every reason is over, and a new fight has a new id", async () => {
+    const { log, start } = fights();
+    const root = layer();
+    const background = createMenuBackground(root, start);
+    background.setChoice({ mapId: "jungle-ruins", teamSize: 4 });
+    await background.resume("away");
+    expect(root.dataset.fight).toBe("1");
+    background.suspend("training");
+    background.suspend("away");
+    expect(await background.resume("away")).toBe(false);
+    expect(root.dataset.fight).toBeUndefined();
+    expect(await background.resume("training")).toBe(true);
+    expect(root.dataset.fight).toBe("2");
+    expect(log).toEqual(["start jungle-ruins@4", "stop jungle-ruins@4", "start jungle-ruins@4"]);
   });
 
   it("says nothing and draws nothing where the fight cannot start, and does not retry it", async () => {
@@ -94,8 +110,8 @@ describe("the menu background (#3119)", () => {
     const start = vi.fn(() => Promise.reject(new Error("no WebGL")));
     const root = layer();
     const background = createMenuBackground(root, start);
-    expect(await background.resume()).toBe(false);
-    expect(await background.resume()).toBe(false);
+    expect(await background.resume("away")).toBe(false);
+    expect(await background.resume("away")).toBe(false);
     expect(start).toHaveBeenCalledTimes(1);
     expect(root.dataset.map).toBeUndefined();
   });

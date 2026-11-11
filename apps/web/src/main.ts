@@ -104,7 +104,12 @@ import {
 import { importTeam, importedTeamSummary } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
-import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
+import {
+  mountBuildEditor,
+  newCharacter,
+  type BuildEditorCallbacks,
+  type BuildEditorView,
+} from "./ui/build-editor.js";
 import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
 import { setLanguageBusy } from "./ui/language-section.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
@@ -847,9 +852,9 @@ async function main(): Promise<void> {
     topbarView.setInMatch(visible);
     // Never a background fight alongside a match (#3119).
     if (visible) {
-      menuBackground.suspend();
+      menuBackground.suspend("away");
     } else {
-      void menuBackground.resume();
+      void menuBackground.resume("away");
     }
     viewport.style.display = visible ? "block" : "none";
     screenRoot.style.display = visible ? "none" : "flex";
@@ -901,6 +906,20 @@ async function main(): Promise<void> {
 
   /** The open build editor; every way out of it passes through `showMenu`. */
   let editor: BuildEditorView | undefined;
+  /**
+   * The build editor for `character`, instead of any open one. Its
+   * training arena is the only fight while it is open (#3119).
+   */
+  const openEditor = (character: StoredCharacter, callbacks: BuildEditorCallbacks): void => {
+    editor?.dispose();
+    menuBackground.suspend("training");
+    editor = mountBuildEditor(screenRoot, character, callbacks);
+  };
+  const closeEditor = (): void => {
+    editor?.dispose();
+    editor = undefined;
+    void menuBackground.resume("training");
+  };
 
   const showMenu = (): void => {
     const turn = leaveScreen();
@@ -914,8 +933,7 @@ async function main(): Promise<void> {
     if (queue?.screen !== undefined) {
       dropQueue();
     }
-    editor?.dispose();
-    editor = undefined;
+    closeEditor();
     teamEditor?.dispose();
     teamEditor = undefined;
     showViewport(false);
@@ -1101,8 +1119,7 @@ async function main(): Promise<void> {
     };
     teamEditor?.dispose();
     teamEditor = undefined;
-    editor?.dispose();
-    editor = mountBuildEditor(screenRoot, character, editorCallbacks);
+    openEditor(character, editorCallbacks);
   };
 
   /**
@@ -1534,9 +1551,7 @@ async function main(): Promise<void> {
     music().menu("member-editor");
     teamEditor?.dispose();
     teamEditor = undefined;
-    editor?.dispose();
-    editor = mountBuildEditor(
-      screenRoot,
+    openEditor(
       { ...member, schemaVersion: CHARACTER_SCHEMA_VERSION, updatedAt: Date.now() },
       {
         onSave: (saved) => {
@@ -1598,8 +1613,7 @@ async function main(): Promise<void> {
   const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
     leaveScreen();
     music().menu("team-builder");
-    editor?.dispose();
-    editor = undefined;
+    closeEditor();
     teamEditor?.dispose();
     // The sidebar comes back at the build's size, to its list (#2109).
     saveTeamSize("teams", state.team.size);
@@ -1779,8 +1793,7 @@ async function main(): Promise<void> {
    * Back would leave it, and onto the queue screen's splash.
    */
   const foundScreen = (mode: QueueMode, characterName: string, name: string): QueueScreen => {
-    editor?.dispose();
-    editor = undefined;
+    closeEditor();
     teamEditor?.dispose();
     teamEditor = undefined;
     leaveScreen();
@@ -3134,7 +3147,7 @@ async function main(): Promise<void> {
           firstChoice,
           new Promise<void>((resolve) => setTimeout(resolve, SPLASH_CHOICE_WAIT_MS)),
         ]);
-        return menuBackground.resume();
+        return menuBackground.resume("away");
       },
       playTheme: (startAtEpochMs, onHeard) => music().splash(startAtEpochMs, onHeard),
       onDone: enterMenu,

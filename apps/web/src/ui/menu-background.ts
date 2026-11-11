@@ -16,16 +16,25 @@ export type StartFight = (parent: HTMLElement, fight: SplashFightOptions) => Pro
  * starts. Phaser itself stops stepping and drawing while the tab is
  * hidden, and a long frame after is not caught up on (`splash-fight`).
  */
+/**
+ * Why the fight is not shown: `away` from the menu, before it and in a
+ * match, or a `training` arena of the build editor's beside it.
+ */
+export type SuspendReason = "away" | "training";
+
 export interface MenuBackground {
   /**
    * Fight on `choice` from now on: a new map or size restarts the fight,
    * walking in again; the same one leaves it running.
    */
   setChoice(choice: MenuBackgroundChoice): void;
-  /** For a match: the fight is stopped and its canvas gone. */
-  suspend(): void;
-  /** Back on the menu, the fight for the choice runs; resolves to whether it draws. */
-  resume(): Promise<boolean>;
+  /** The fight is stopped and its canvas gone until `reason` is resumed. */
+  suspend(reason: SuspendReason): void;
+  /**
+   * `reason` is over; with no other left, the fight for the choice runs.
+   * Resolves to whether it draws.
+   */
+  resume(reason: SuspendReason): Promise<boolean>;
 }
 
 interface Shown {
@@ -34,14 +43,16 @@ interface Shown {
 }
 
 /**
- * The menu background in `root`, a layer under the screens: suspended
- * until the first `resume`. Where it cannot draw, or loses its WebGL
+ * The menu background in `root`, a layer under the screens: `away`
+ * until it is first resumed. Each fight it starts has an id of its own,
+ * `data-fight`. Where it cannot draw, or loses its WebGL
  * context, `root` is left empty, the page's plain background, and the
  * player is told nothing.
  */
 export function createMenuBackground(root: HTMLElement, startFight: StartFight): MenuBackground {
   let wanted = FIRST_CHOICE;
-  let suspended = true;
+  const suspended = new Set<SuspendReason>(["away"]);
+  let fights = 0;
   /** The fight running, or the choice that could not draw one. */
   let shown: Shown | undefined;
   /**
@@ -56,6 +67,7 @@ export function createMenuBackground(root: HTMLElement, startFight: StartFight):
     shown = undefined;
     delete root.dataset.map;
     delete root.dataset.teamSize;
+    delete root.dataset.fight;
   };
   const start = async (choice: MenuBackgroundChoice): Promise<boolean> => {
     const fight = { ...menuBackgroundMap(choice, Math.random), still: prefersReducedMotion() };
@@ -76,6 +88,8 @@ export function createMenuBackground(root: HTMLElement, startFight: StartFight):
       shown = { choice, stop: stopFight };
       root.dataset.map = fight.mapId;
       root.dataset.teamSize = String(fight.teamSize);
+      fights += 1;
+      root.dataset.fight = String(fights);
       return true;
     } catch (error) {
       // Not tried again for the same choice: a lobby update would only fail again.
@@ -86,7 +100,7 @@ export function createMenuBackground(root: HTMLElement, startFight: StartFight):
   };
   const sync = (): Promise<boolean> => {
     queue = queue.then(async () => {
-      if (suspended) {
+      if (suspended.size > 0) {
         stopShown();
         return false;
       }
@@ -107,15 +121,15 @@ export function createMenuBackground(root: HTMLElement, startFight: StartFight):
       wanted = choice;
       void sync();
     },
-    suspend() {
-      if (suspended) {
+    suspend(reason) {
+      if (suspended.has(reason)) {
         return;
       }
-      suspended = true;
+      suspended.add(reason);
       void sync();
     },
-    resume() {
-      suspended = false;
+    resume(reason) {
+      suspended.delete(reason);
       return sync();
     },
   };
