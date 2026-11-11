@@ -487,8 +487,11 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
     await page.keyboard.press("Escape");
     await expect(page.locator(".screen-characters")).toBeVisible();
   }
-  // The cards' character figures are canvases too (#1250); no arena is.
-  await expect(page.locator("canvas:not(.character-figure)")).toHaveCount(0);
+  // The cards' character figures are canvases too (#1250), and the menu
+  // background's fight is back (#3119); no training arena is left.
+  await expect(page.locator("canvas:not(.character-figure, #menu-background canvas)")).toHaveCount(
+    0,
+  );
 
   const canvas = await openTraining(page);
   await expect(page.locator("canvas")).toHaveCount(1);

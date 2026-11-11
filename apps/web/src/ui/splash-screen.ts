@@ -49,8 +49,11 @@ export interface Splash {
 }
 
 export interface SplashOptions {
-  /** Draws the fight into the element; resolves to what stops it. */
-  readonly startFight: (stage: HTMLElement) => Promise<() => void>;
+  /**
+   * Shows the menu background's fight behind the splash, which hands it
+   * over to the menu still running (#3119); resolves to whether it draws.
+   */
+  readonly showFight: () => Promise<boolean>;
   /**
    * Once: on the first input, or at the prompt under reduced motion, with
    * `startAtEpochMs` `null`. `false` when nothing will play; otherwise
@@ -69,8 +72,6 @@ export function showSplash(parent: HTMLElement, options: SplashOptions): Splash 
   const root = document.createElement("div");
   root.className = "splash";
   root.dataset.testid = "splash";
-  const stage = document.createElement("div");
-  stage.className = "splash-stage";
   const scrim = document.createElement("div");
   scrim.className = "splash-scrim";
   const hint = document.createElement("p");
@@ -96,14 +97,13 @@ export function showSplash(parent: HTMLElement, options: SplashOptions): Splash 
   title.append(wordmark, rule, prompt);
   const flash = document.createElement("div");
   flash.className = "splash-flash";
-  root.append(stage, scrim, hint, title, flash);
+  root.append(scrim, hint, title, flash);
   parent.appendChild(root);
 
   let armedAtMs: number | undefined;
   let meetAtMs: number | undefined;
   let phase: SplashPhase = "waiting";
   let ended = false;
-  let stopFight: (() => void) | undefined;
   let frame = 0;
 
   const show = (next: SplashPhase): void => {
@@ -170,7 +170,6 @@ export function showSplash(parent: HTMLElement, options: SplashOptions): Splash 
     cancelAnimationFrame(frame);
     window.removeEventListener("keydown", onInput);
     window.removeEventListener("pointerdown", onInput);
-    stopFight?.();
     root.remove();
     options.onDone();
   };
@@ -179,19 +178,11 @@ export function showSplash(parent: HTMLElement, options: SplashOptions): Splash 
   window.addEventListener("pointerdown", onInput);
   show("waiting");
   frame = requestAnimationFrame(tick);
-  options.startFight(stage).then(
-    (stop) => {
-      if (ended) {
-        stop();
-      } else {
-        stopFight = stop;
-      }
-    },
-    (error: unknown) => {
-      // No arena to show: straight to the menu, and nothing said.
-      console.warn("[web] no splash fight", error);
+  void options.showFight().then((shown) => {
+    // No arena to show: straight to the menu, and nothing said.
+    if (!shown) {
       end();
-    },
-  );
+    }
+  });
   return { end };
 }

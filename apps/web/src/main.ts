@@ -104,7 +104,12 @@ import {
 import { importTeam, importedTeamSummary } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
-import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
+import {
+  mountBuildEditor,
+  newCharacter,
+  type BuildEditorCallbacks,
+  type BuildEditorView,
+} from "./ui/build-editor.js";
 import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
 import { setLanguageBusy } from "./ui/language-section.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
@@ -137,6 +142,7 @@ import {
   PLAY_BOTS_AFTER_MS,
   hostMaps,
   lobbyPanel,
+  lobbyShownMapId,
   type LobbyMap,
   type LobbyMatchmaking,
   type LobbyPanel,
@@ -202,6 +208,8 @@ import { toPlayerBuild } from "./storage/build-validation.js";
 import { recordAscentWin } from "./storage/fame.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import { startSplashFight } from "./ui/splash-fight.js";
+import { createMenuBackground } from "./ui/menu-background.js";
+import { RANDOM_MAP } from "./ui/menu-background-choice.js";
 import { watchHall } from "./ui/vault-screen.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
 import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
@@ -295,6 +303,9 @@ const playerKey = loadPlayerKey(localStorage);
 
 const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 
+/** How long the splash waits for the own lobby's choice before it fights on the first (#3119). */
+const SPLASH_CHOICE_WAIT_MS = 1500;
+
 /** A Team Lobby's saved Team Builds, read once as it begins, and the one proposed (#1460). */
 interface TeamPicks {
   teams: readonly StoredTeam[];
@@ -341,6 +352,12 @@ async function main(): Promise<void> {
     showNowPlaying(nowPlayingText(trackId, TRACKS, music().intensity));
   });
   const viewport = requireElement("#viewport");
+  const menuBackground = createMenuBackground(requireElement("#menu-background"), startSplashFight);
+  /** Resolves once a lobby has given the background its choice (#3119). */
+  let choiceMade: () => void = () => undefined;
+  const firstChoice = new Promise<void>((resolve) => {
+    choiceMade = resolve;
+  });
   const topbar = requireElement("#topbar");
   const app = requireElement("#app");
 
@@ -833,6 +850,12 @@ async function main(): Promise<void> {
     // In a match the viewport has the whole height; the HUD has the bar's
     // buttons (#454).
     topbarView.setInMatch(visible);
+    // Never a background fight alongside a match (#3119).
+    if (visible) {
+      menuBackground.suspend("away");
+    } else {
+      void menuBackground.resume("away");
+    }
     viewport.style.display = visible ? "block" : "none";
     screenRoot.style.display = visible ? "none" : "flex";
     if (chat !== undefined) {
@@ -883,6 +906,20 @@ async function main(): Promise<void> {
 
   /** The open build editor; every way out of it passes through `showMenu`. */
   let editor: BuildEditorView | undefined;
+  /**
+   * The build editor for `character`, instead of any open one. Its
+   * training arena is the only fight while it is open (#3119).
+   */
+  const openEditor = (character: StoredCharacter, callbacks: BuildEditorCallbacks): void => {
+    editor?.dispose();
+    menuBackground.suspend("training");
+    editor = mountBuildEditor(screenRoot, character, callbacks);
+  };
+  const closeEditor = (): void => {
+    editor?.dispose();
+    editor = undefined;
+    void menuBackground.resume("training");
+  };
 
   const showMenu = (): void => {
     const turn = leaveScreen();
@@ -896,8 +933,7 @@ async function main(): Promise<void> {
     if (queue?.screen !== undefined) {
       dropQueue();
     }
-    editor?.dispose();
-    editor = undefined;
+    closeEditor();
     teamEditor?.dispose();
     teamEditor = undefined;
     showViewport(false);
@@ -1083,8 +1119,7 @@ async function main(): Promise<void> {
     };
     teamEditor?.dispose();
     teamEditor = undefined;
-    editor?.dispose();
-    editor = mountBuildEditor(screenRoot, character, editorCallbacks);
+    openEditor(character, editorCallbacks);
   };
 
   /**
@@ -1516,9 +1551,7 @@ async function main(): Promise<void> {
     music().menu("member-editor");
     teamEditor?.dispose();
     teamEditor = undefined;
-    editor?.dispose();
-    editor = mountBuildEditor(
-      screenRoot,
+    openEditor(
       { ...member, schemaVersion: CHARACTER_SCHEMA_VERSION, updatedAt: Date.now() },
       {
         onSave: (saved) => {
@@ -1580,8 +1613,7 @@ async function main(): Promise<void> {
   const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
     leaveScreen();
     music().menu("team-builder");
-    editor?.dispose();
-    editor = undefined;
+    closeEditor();
     teamEditor?.dispose();
     // The sidebar comes back at the build's size, to its list (#2109).
     saveTeamSize("teams", state.team.size);
@@ -1761,8 +1793,7 @@ async function main(): Promise<void> {
    * Back would leave it, and onto the queue screen's splash.
    */
   const foundScreen = (mode: QueueMode, characterName: string, name: string): QueueScreen => {
-    editor?.dispose();
-    editor = undefined;
+    closeEditor();
     teamEditor?.dispose();
     teamEditor = undefined;
     leaveScreen();
@@ -2214,6 +2245,16 @@ async function main(): Promise<void> {
       return;
     }
     const snapshot = lobby.getSnapshot();
+    // The background fights on what the lobby shows (#3119), Team Arena's
+    // drawn by it; joiners see the host's choice.
+    menuBackground.setChoice({
+      mapId:
+        snapshot.mode === "team-arena"
+          ? RANDOM_MAP
+          : lobbyShownMapId(snapshot, teamQueue?.groupMapId),
+      teamSize: snapshot.teamSize,
+    });
+    choiceMade();
     if (queue !== undefined) {
       // A queued lobby has nothing to choose: it is the versus splash.
       setStatus("match found", "online");
@@ -3096,8 +3137,18 @@ async function main(): Promise<void> {
       disabled: import.meta.env.VITE_VIBEWARS_SPLASH === "off",
     })
   ) {
+    // The own lobby opens under the splash, so its fight is the menu's
+    // and nothing restarts when the menu appears (#3119). Where the lobby
+    // is slow, the splash fights on the first choice and follows it after.
+    openOwnLobby();
     splash = showSplash(document.body, {
-      startFight: startSplashFight,
+      showFight: async () => {
+        await Promise.race([
+          firstChoice,
+          new Promise<void>((resolve) => setTimeout(resolve, SPLASH_CHOICE_WAIT_MS)),
+        ]);
+        return menuBackground.resume("away");
+      },
       playTheme: (startAtEpochMs, onHeard) => music().splash(startAtEpochMs, onHeard),
       onDone: enterMenu,
     });

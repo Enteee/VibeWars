@@ -50,7 +50,7 @@ describe("the splash's meeting with the music (#2936)", () => {
     const parent = new FakeElement();
     const onDone = vi.fn();
     const splash = showSplash(parent as unknown as HTMLElement, {
-      startFight: () => new Promise(() => undefined),
+      showFight: () => new Promise(() => undefined),
       playTheme,
       onDone,
     });

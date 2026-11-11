@@ -1020,7 +1020,7 @@ export function createTrainingPanel(): TrainingPanel {
 
   void createArenaViewport(stage).then((created) => {
     if (disposed) {
-      created.destroy();
+      void created.destroy();
       return;
     }
     viewport = created;
@@ -1222,7 +1222,7 @@ export function createTrainingPanel(): TrainingPanel {
       session = undefined;
       root.remove();
       slotTips.dispose();
-      viewport?.destroy();
+      void viewport?.destroy();
       viewport = undefined;
     },
   };
