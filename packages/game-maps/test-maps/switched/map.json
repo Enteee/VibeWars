@@ -93,6 +93,7 @@
       }
     }
   ],
+  "dropOffs": [],
   "transitions": [
     {
       "from": 1,
