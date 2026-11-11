@@ -115,9 +115,10 @@ const waterSchema = z.object({
 export const MAX_ZONES = 32;
 
 /**
- * The most corners all of a map's harmful zones have together, a
- * rectangle's four included (#3026): each is a node of the bots' walk
- * graph, whose build grows about with the cube of its nodes.
+ * The most corners all of a map's harmful zones and teleport entries
+ * have together, a rectangle's four included (#3026, #3030): each is a
+ * node of the bots' walk graph, whose build grows about with the cube
+ * of its nodes.
  */
 export const MAX_HARMFUL_ZONE_POINTS = 64;
 
@@ -1019,14 +1020,17 @@ export const mapDataSchema = z
       });
     });
 
-    const harmfulPoints = (map.zones ?? [])
-      .filter((zone) => ZONE_RULES[zone.kind].harmful)
-      .reduce((sum, zone) => sum + zoneReach(shapeVertices(zone.area), zone.path).length, 0);
+    // A teleport's entry is ground routes go round as well (#3030).
+    const harmfulPoints =
+      (map.zones ?? [])
+        .filter((zone) => ZONE_RULES[zone.kind].harmful)
+        .reduce((sum, zone) => sum + zoneReach(shapeVertices(zone.area), zone.path).length, 0) +
+      (map.teleports ?? []).reduce((sum, { from }) => sum + shapeVertices(from.area).length, 0);
     if (harmfulPoints > MAX_HARMFUL_ZONE_POINTS) {
       context.addIssue({
         code: "custom",
         path: ["zones"],
-        message: `harmful zones have ${String(harmfulPoints)} corners, more than ${String(MAX_HARMFUL_ZONE_POINTS)}`,
+        message: `harmful zones and teleport entries have ${String(harmfulPoints)} corners, more than ${String(MAX_HARMFUL_ZONE_POINTS)}`,
       });
     }
     const zoneIds = new Set<string>();

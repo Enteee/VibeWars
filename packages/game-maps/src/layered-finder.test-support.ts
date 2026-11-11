@@ -24,14 +24,15 @@ export function layeredFinder(map: MapData, clearance: number): LayeredPathFinde
     walkable: walkable[layer] ?? [],
     open: rims[layer] ?? [],
   }));
+  const fields = matchTeleports(map);
   const graphs = buildLayeredNavGraph(
     layers,
     [],
     { width: map.width, height: map.height },
     clearance,
-    [],
+    fields.map(({ from }) => ({ layer: from.layer, polygon: from.area })),
   ).map((gated) => navGraphFor(gated, 0));
-  const teleports = matchTeleports(map).map(({ from, to }) => ({
+  const teleports = fields.map(({ from, to }) => ({
     from: from.layer,
     area: from.area,
     to: to.layer,

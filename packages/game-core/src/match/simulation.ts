@@ -1442,7 +1442,11 @@ export class MatchSimulation {
       this.#gates.map((gate) => ({ layer: gate.layer ?? this.#ground, segments: gate.segments })),
       this.#bounds,
       this.#ruleset.collision.playerRadius,
-      this.#harmfulZones,
+      [
+        ...this.#harmfulZones,
+        // An entry is ground a route goes round unless it means to go in.
+        ...this.#teleports.map(({ from }) => ({ layer: from.layer, polygon: from.area })),
+      ],
     );
     const walls = this.#currentWallSet();
     this.#walls = walls.walls;
