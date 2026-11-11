@@ -3,6 +3,7 @@ import type { DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
 
 import {
   DECK_LOOK,
+  GATE_DOOR_LOOK,
   SWITCHED_DECK_LOOK,
   TRANSITION_LOOK,
   type ArenaPalette,
@@ -465,14 +466,14 @@ function standingBox(
 }
 
 /** How thick a raised drawbridge's slab is, and how far up it stands as a share of its span. */
-const SLAB_THICKNESS = 8;
+const SLAB_THICKNESS = 16;
 const SLAB_RISE = 0.45;
 /** A cut bridge's halves: how much of the span each keeps, how far it hangs. */
 const HALF_SHARE = 0.18;
 const HALF_DROP = 22;
-/** A crack's zig-zag: how many legs, how far each strays. */
+/** A crack's zig-zag: how many legs, how far each strays off its line, in world units. */
 const CRACK_LEGS = 5;
-const CRACK_STRAY = 0.18;
+const CRACK_STRAY = 5;
 
 /**
  * Where a crack runs on a deck, the `k`th of them: a zig-zag across its
@@ -485,11 +486,11 @@ function crackPath(footprint: RenderableShape, k: number): readonly Vec2[] {
   const at = (0.2 + 0.6 * ((k * 0.618) % 1)) % 1;
   return Array.from({ length: CRACK_LEGS + 1 }, (_, leg) => {
     const t = leg / CRACK_LEGS;
-    const stray = (leg % 2 === 0 ? 1 : -1) * CRACK_STRAY * (leg === 0 ? 0 : 1);
-    const u = Math.min(1, Math.max(0, at + stray * 0.3));
+    // Uneven, but the same for the same crack: -1, -0.5, 0, 0.5 or 1 of its stray.
+    const stray = leg === 0 ? 0 : CRACK_STRAY * (((k * 7 + leg * 13) % 5) / 2 - 1);
     return alongX
-      ? { x: x0 + (x1 - x0) * u, y: y0 + (y1 - y0) * t }
-      : { x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * u };
+      ? { x: x0 + (x1 - x0) * at + stray, y: y0 + (y1 - y0) * t }
+      : { x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * at + stray };
   });
 }
 
@@ -499,7 +500,7 @@ function crackPath(footprint: RenderableShape, k: number): readonly Vec2[] {
  * only in colour (docs/art/3068-switched.md).
  */
 export const SWITCHED_DECK_ART = {
-  /** A drawbridge raised: its slab standing up at its hinge, chains taut, the span open. */
+  /** A drawbridge raised: its iron-banded oak slab standing at its hinge, chains taut, the span open. */
   raised(painter: StructurePainter, deck: DeckFrame, hinge: "n" | "e" | "s" | "w"): void {
     const { x0, y0, x1, y1 } = boxOf(deck.footprint);
     const span = hinge === "n" || hinge === "s" ? y1 - y0 : x1 - x0;
@@ -511,8 +512,8 @@ export const SWITCHED_DECK_ART = {
       e: [x1 - SLAB_THICKNESS, y0, SLAB_THICKNESS, y1 - y0],
     };
     const [x, y, width, depth] = slab[hinge];
-    standingBox(painter, slab[hinge], rise, deck.palette.slab, deck.palette.deckTop);
-    painter.lineStyle(deck.line * 1.5, deck.palette.plank, 1);
+    standingBox(painter, slab[hinge], rise, GATE_DOOR_LOOK.face, GATE_DOOR_LOOK.body);
+    painter.lineStyle(deck.line * 2, GATE_DOOR_LOOK.band, 1);
     for (const share of [0.25, 0.75]) {
       painter.lineBetween(x, y + depth - rise * share, x + width, y + depth - rise * share);
     }
