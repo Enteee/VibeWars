@@ -164,6 +164,7 @@ describe("layerSurfaces", () => {
   const deck = (layer: number, x: number, y: number, width: number, height: number) => ({
     layer,
     footprint: { kind: "rect" as const, x, y, width, height },
+    look: "platform" as const,
   });
   const ramp = (
     from: number,
@@ -175,6 +176,7 @@ describe("layerSurfaces", () => {
     to,
     area: { kind: "rect" as const, x, y, width, height },
     uphill,
+    look: "ramp" as const,
   });
   const HEIGHTS: MapStructure = {
     layerCount: 3,

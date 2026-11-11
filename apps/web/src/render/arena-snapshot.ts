@@ -10,6 +10,7 @@ import {
   type ZonePath,
   type ZoneSchedule,
 } from "@vibewars/game-core";
+import type { DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
 import type { MapAtmosphere, MapLighting } from "@vibewars/game-maps/schema";
@@ -172,7 +173,12 @@ export interface MapStructure {
   readonly lighting?: MapLighting;
   /** Its fog, smoke, steam and weather (#3032); a map without it has none. */
   readonly atmosphere?: MapAtmosphere;
-  readonly decks: readonly { readonly layer: number; readonly footprint: RenderableShape }[];
+  /** Each deck drawn as its `look` (#3067): a tower, a wall-walk, a bridge. */
+  readonly decks: readonly {
+    readonly layer: number;
+    readonly footprint: RenderableShape;
+    readonly look: DeckLook;
+  }[];
   /** Holes in the ground, their floor on `ground - 1` (#2973). */
   readonly pits: readonly { readonly footprint: RenderableShape }[];
   /** Floors under the ground, on `ground - 1`, the ground over them (#2973). */
@@ -182,6 +188,7 @@ export interface MapStructure {
     readonly to: number;
     readonly area: RenderableShape;
     readonly uphill: Uphill;
+    readonly look: TransitionLook;
   }[];
   readonly water: readonly MapWater[];
   readonly zones: readonly MapZone[];

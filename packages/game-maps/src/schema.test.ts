@@ -8,6 +8,7 @@ import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/
 
 import { allWallSegments } from "./geometry.js";
 import {
+  DECK_LOOKS,
   MAX_FOG_BANKS,
   MAX_LIGHTS,
   MAX_PLUMES,
@@ -17,12 +18,14 @@ import {
   MAX_ZONES,
   MAX_ZONE_PATH_POINTS,
   MapValidationError,
+  TRANSITION_LOOKS,
   mapDataSchema,
   validateMapData,
   type Wall,
 } from "./schema.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import heights from "../training/training-heights/map.json" with { type: "json" };
+import structures from "../test-maps/structures/map.json" with { type: "json" };
 
 const validMap = {
   id: "arena-test",
@@ -1157,11 +1160,13 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     to,
     area: { kind: "rect", x, y: 300, width: 170, height: 200 },
     uphill: "e",
+    look: "ramp",
   });
   const deck = (id: string, layer: number) => ({
     id,
     layer,
     footprint: { kind: "rect", x: 500, y: 300, width: 600, height: 200 },
+    look: "platform",
   });
   const accepts = (overrides: object): void => {
     expect(() => validateMapData({ ...layerTest, ...overrides })).not.toThrow();
@@ -1190,6 +1195,50 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     const [ramp0, ...ramps] = layerTest.transitions;
     const { uphill: _uphill, ...noUphill } = ramp0 ?? { uphill: "e" };
     refuses({ transitions: [noUphill, ...ramps] }, /transitions\.0\.uphill/);
+  });
+
+  it("requires a deck's and a transition's look (#3067)", () => {
+    const [bridge] = layerTest.decks;
+    const { look: _deckLook, ...plainDeck } = bridge ?? { look: "platform" };
+    refuses({ decks: [plainDeck] }, /decks\.0\.look/);
+    const [ramp0, ...ramps] = layerTest.transitions;
+    const { look: _rampLook, ...plainRamp } = ramp0 ?? { look: "ramp" };
+    refuses({ transitions: [plainRamp, ...ramps] }, /transitions\.0\.look/);
+    refuses({ transitions: [{ ...ramp0, look: "slide" }, ...ramps] }, /transitions\.0\.look/);
+  });
+
+  it("refuses a tower too big to rush, a ladder wide enough for two, a wall-walk over no wall (#3067)", () => {
+    const [bridge] = layerTest.decks;
+    refuses({ decks: [{ ...bridge, look: "tower" }] }, /decks\.0\.footprint: tower bridge is 600/);
+    const [ramp0, ...ramps] = layerTest.transitions;
+    refuses(
+      { transitions: [{ ...ramp0, look: "ladder" }, ...ramps] },
+      /transitions\.0\.area: ladder 0 is 200\.0 wide/,
+    );
+    refuses(
+      { decks: [{ ...bridge, look: "wall-walk" }] },
+      /decks\.0\.footprint: wall-walk bridge does not lie over walls on layer 0/,
+    );
+    // A wall-walk may stand out past its wall by 8, here over the ramps' heads.
+    const wallUnder = { kind: "rect", layer: 0, x: 524, y: 300, width: 552, height: 200 };
+    const walk = { kind: "rect", x: 516, y: 300, width: 568, height: 200 };
+    accepts({
+      walls: [...layerTest.walls, wallUnder],
+      decks: [{ ...bridge, footprint: walk, look: "wall-walk" }],
+    });
+    refuses(
+      {
+        walls: [...layerTest.walls, wallUnder],
+        decks: [{ ...bridge, footprint: { ...walk, x: 510, width: 580 }, look: "wall-walk" }],
+      },
+      /wall-walk bridge does not lie over walls/,
+    );
+  });
+
+  it("validates the structures test map, every look on it once (#3067)", () => {
+    const map = validateMapData(structures);
+    expect(new Set(map.decks.map(({ look }) => look))).toEqual(new Set(DECK_LOOKS));
+    expect(new Set(map.transitions.map(({ look }) => look))).toEqual(new Set(TRANSITION_LOOKS));
   });
 
   it("refuses a layer outside the map's, naming the field", () => {
@@ -1228,6 +1277,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
             id: "bridge",
             layer: 1,
             footprint: { kind: "rect", x: 500, y: 300, width: 1200, height: 200 },
+            look: "platform",
           },
         ],
       },
@@ -1251,6 +1301,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
           to: 1,
           area: { kind: "rect", x: 520 - width, y: 300, width, height: 200 },
           uphill: "e",
+          look: "ramp",
         },
         ...(far === undefined ? [] : [far]),
       ],
@@ -1271,6 +1322,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
             to: 2,
             area: { kind: "rect", x: 100, y: 100, width: 50, height: 50 },
             uphill: "n",
+            look: "ramp",
           },
         ],
       },
@@ -1290,6 +1342,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
             to: 1,
             area: { kind: "rect", x: 10, y: 10, width: 50, height: 50 },
             uphill: "e",
+            look: "ramp",
           },
         ],
       },

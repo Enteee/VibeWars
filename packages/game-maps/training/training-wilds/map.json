@@ -24,6 +24,7 @@
   "decks": [
     {
       "id": "ridge",
+      "look": "terrace",
       "layer": 2,
       "footprint": {
         "kind": "rect",
@@ -45,7 +46,8 @@
         "width": 110,
         "height": 110
       },
-      "uphill": "e"
+      "uphill": "e",
+      "look": "rough-steps"
     },
     {
       "from": 1,
@@ -57,7 +59,8 @@
         "width": 110,
         "height": 110
       },
-      "uphill": "w"
+      "uphill": "w",
+      "look": "rough-steps"
     },
     {
       "from": 0,
@@ -69,7 +72,8 @@
         "width": 110,
         "height": 60
       },
-      "uphill": "w"
+      "uphill": "w",
+      "look": "ramp"
     },
     {
       "from": 0,
@@ -81,7 +85,8 @@
         "width": 80,
         "height": 110
       },
-      "uphill": "n"
+      "uphill": "n",
+      "look": "ramp"
     }
   ],
   "walls": [

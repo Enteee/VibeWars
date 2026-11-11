@@ -27,11 +27,13 @@
   "decks": [
     {
       "id": "bridge",
+      "look": "bridge-stone",
       "layer": 2,
       "footprint": { "kind": "rect", "x": 420, "y": 350, "width": 360, "height": 200 }
     },
     {
       "id": "platform",
+      "look": "platform",
       "layer": 3,
       "footprint": { "kind": "rect", "x": 520, "y": 160, "width": 160, "height": 110 }
     }
@@ -41,31 +43,36 @@
       "from": 1,
       "to": 2,
       "area": { "kind": "rect", "x": 300, "y": 350, "width": 140, "height": 200 },
-      "uphill": "e"
+      "uphill": "e",
+      "look": "stairs"
     },
     {
       "from": 1,
       "to": 2,
       "area": { "kind": "rect", "x": 760, "y": 350, "width": 140, "height": 200 },
-      "uphill": "w"
+      "uphill": "w",
+      "look": "stairs"
     },
     {
       "from": 2,
       "to": 3,
       "area": { "kind": "rect", "x": 540, "y": 250, "width": 120, "height": 120 },
-      "uphill": "n"
+      "uphill": "n",
+      "look": "stairs"
     },
     {
       "from": 0,
       "to": 1,
       "area": { "kind": "rect", "x": 500, "y": 545, "width": 110, "height": 80 },
-      "uphill": "w"
+      "uphill": "w",
+      "look": "rough-steps"
     },
     {
       "from": 0,
       "to": 1,
       "area": { "kind": "rect", "x": 1010, "y": 545, "width": 110, "height": 80 },
-      "uphill": "e"
+      "uphill": "e",
+      "look": "rough-steps"
     }
   ],
   "walls": [

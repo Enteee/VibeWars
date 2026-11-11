@@ -40,7 +40,7 @@ const BRIDGE: MapStructure = {
   ground: 0,
   pits: [],
   tunnels: [],
-  decks: [{ layer: 1, footprint: bridge }],
+  decks: [{ layer: 1, footprint: bridge, look: "platform" }],
   transitions: [],
   water: [],
   zones: [],
@@ -89,12 +89,12 @@ describe("a click on a ramp (#2972)", () => {
     pits: [],
     tunnels: [],
     decks: [
-      { layer: 1, footprint: rect(200, 100, 200, 100) },
-      { layer: 2, footprint: rect(260, -100, 80, 100) },
+      { layer: 1, footprint: rect(200, 100, 200, 100), look: "platform" },
+      { layer: 2, footprint: rect(260, -100, 80, 100), look: "platform" },
     ],
     transitions: [
-      { from: 0, to: 1, area: rect(100, 100, 120, 100), uphill: "e" },
-      { from: 1, to: 2, area: rect(280, 0, 40, 120), uphill: "n" },
+      { from: 0, to: 1, area: rect(100, 100, 120, 100), uphill: "e", look: "ramp" },
+      { from: 1, to: 2, area: rect(280, 0, 40, 120), uphill: "n", look: "ramp" },
     ],
     water: [],
     zones: [],
@@ -194,12 +194,14 @@ describe("a body under a raised ramp (#2975)", () => {
     to: 1,
     area: { kind: "rect", x: 300, y: 350, width: 140, height: 200 },
     uphill: "e",
+    look: "ramp",
   } as const;
   const upper = {
     from: 1,
     to: 2,
     area: { kind: "rect", x: 540, y: 250, width: 120, height: 120 },
     uphill: "n",
+    look: "ramp",
   } as const;
   const HEIGHTS: MapStructure = {
     layerCount: 3,
@@ -207,8 +209,16 @@ describe("a body under a raised ramp (#2975)", () => {
     pits: [],
     tunnels: [],
     decks: [
-      { layer: 1, footprint: { kind: "rect", x: 420, y: 350, width: 360, height: 200 } },
-      { layer: 2, footprint: { kind: "rect", x: 520, y: 160, width: 160, height: 110 } },
+      {
+        layer: 1,
+        footprint: { kind: "rect", x: 420, y: 350, width: 360, height: 200 },
+        look: "platform",
+      },
+      {
+        layer: 2,
+        footprint: { kind: "rect", x: 520, y: 160, width: 160, height: 110 },
+        look: "platform",
+      },
     ],
     transitions: [lower, upper],
     water: [],
@@ -395,6 +405,7 @@ describe("liftAt (#2958)", () => {
   const deck = (layer: number, x: number, y: number, width: number, height: number) => ({
     layer,
     footprint: { kind: "rect" as const, x, y, width, height },
+    look: "platform" as const,
   });
   const ramp = (
     from: number,
@@ -406,6 +417,7 @@ describe("liftAt (#2958)", () => {
     to,
     area: { kind: "rect" as const, x, y, width, height },
     uphill,
+    look: "ramp" as const,
   });
   const HEIGHTS: MapStructure = {
     layerCount: 3,
@@ -506,6 +518,7 @@ describe("structures with height", () => {
   const deck = {
     layer: 1,
     footprint: { kind: "rect" as const, x: 420, y: 250, width: 360, height: 200 },
+    look: "platform" as const,
   };
   const pillar = { kind: "rect" as const, layer: 0, x: 450, y: 420, width: 24, height: 24 };
   const structure: MapStructure = { ...FLAT_STRUCTURE, layerCount: 2, decks: [deck] };
@@ -635,7 +648,13 @@ describe("a level under the ground (#2973)", () => {
   });
 
   it("lifts a ramp out of the pit from its floor to the ground", () => {
-    const ramp = { from: 0, to: 1, area: rect(500, 545, 110, 80), uphill: "w" } as const;
+    const ramp = {
+      from: 0,
+      to: 1,
+      area: rect(500, 545, 110, 80),
+      uphill: "w",
+      look: "ramp",
+    } as const;
     const withRamp = { ...SUNK, transitions: [ramp] };
     expect(liftAt(withRamp, { x: 610, y: 580 }, 0)).toBeCloseTo(-STEP);
     expect(liftAt(withRamp, { x: 555, y: 580 }, 1)).toBeCloseTo(-STEP / 2);
