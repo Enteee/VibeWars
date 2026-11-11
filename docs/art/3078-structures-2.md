@@ -18,8 +18,6 @@ lip, darker south face, hard SE shadow.
   with a mast and a pale flag.
 - **plinth**: a two-tier stone base under a statue, with a brass capture ring on the
   ground (`#e8c27a`, the same brass as levers).
-- **overhang shade**: a body under a deck is drawn with 40 % `#080b10` over it. It
-  is shape, not light, so it stays with lighting off. The cell shows the same body
-  in the open beside two shaded ones; the shade never goes below the body floor 0.7
-  (a 0.4 black overlay on a lit body gives about 0.6 of its tone, so use 0.3 to
-  stay at the floor).
+- **overhang shade**: a body under a deck is drawn with a 30 % `#080b10` overlay (opacity 0.3) over it,
+  which keeps it above the body floor of 0.7. It is shape, not light, so it stays with
+  lighting off. The cell shows the same body in the open beside two shaded ones.

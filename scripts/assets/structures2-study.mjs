@@ -53,7 +53,7 @@ const merlons = (x, y, w, top) => {
 
 /** @type {(x: number, y: number, r?: number, dim?: boolean) => string} A body; dim = under a deck. */
 const body = (x, y, r = 12, dim = false) =>
-  `<ellipse cx="${x + 4}" cy="${y + 6}" rx="${r}" ry="4" fill="#000" opacity=".35"/><circle cx="${x}" cy="${y}" r="${r}" fill="#59c2ff" stroke="#fff" stroke-width="2"/>${dim ? `<circle cx="${x}" cy="${y}" r="${r + 1}" fill="#080b10" opacity=".4"/>` : ""}`;
+  `<ellipse cx="${x + 4}" cy="${y + 6}" rx="${r}" ry="4" fill="#000" opacity=".35"/><circle cx="${x}" cy="${y}" r="${r}" fill="#59c2ff" stroke="#fff" stroke-width="2"/>${dim ? `<circle cx="${x}" cy="${y}" r="${r + 1}" fill="#080b10" opacity=".3"/>` : ""}`;
 
 const WATER = `<rect width="${CW}" height="${CH}" fill="#18304a"/><rect width="${CW}" height="${CH}" filter="url(#grain)" fill="#2f6a8c" opacity=".2"/>`;
 
