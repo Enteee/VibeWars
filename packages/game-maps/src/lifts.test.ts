@@ -183,3 +183,40 @@ describe("lifts in a match (#3079)", () => {
     expect(where(sim, "rider")).toMatchObject({ layer: 1 });
   });
 });
+
+describe("lever lifts are no walking route (#3117)", () => {
+  /** Whether `id` stands in the lever lift, x 680..800 and y 600..700. */
+  const onLeverLift = (sim: MatchSimulation, id: string): boolean => {
+    const { x, y = Number.NaN } = where(sim, id);
+    return x >= 680 && x <= 800 && y >= 600 && y <= 700;
+  };
+
+  it("goes down by the timer lift from beside a lever lift resting at the bottom", () => {
+    const sim = arena([body("walker", 850, 650, 1)]);
+    sim.walkTo("walker", { x: 600, y: 650 }, 0);
+    run(sim, 18);
+    expect(where(sim, "walker")).toMatchObject({ x: 600, y: 650, layer: 0 });
+  });
+
+  it("does not step on a lever lift to wait for it when it is the only way up", () => {
+    const [, leverLift] = liftsData.transitions;
+    const map = validateMapData({ ...liftsData, transitions: [leverLift] });
+    const sim = new MatchSimulation({
+      seed: "lifts",
+      ruleset: RULESET,
+      ...mapSimulationFields(map, 2),
+      participants: [body("walker", 600, 650, 0), body("foe", 1500, 900, 0, 1)],
+    });
+    sim.walkTo("walker", { x: 900, y: 650 }, 1);
+    run(sim, 3);
+    expect(onLeverLift(sim, "walker")).toBe(false);
+    expect(where(sim, "walker")).toMatchObject({ layer: 0 });
+  });
+
+  it("walks straight over a lever lift resting on its layer", () => {
+    const sim = arena([body("walker", 740, 560, 0)]);
+    sim.walkTo("walker", { x: 740, y: 740 }, 0);
+    run(sim, 2.5);
+    expect(where(sim, "walker")).toMatchObject({ x: 740, y: 740, layer: 0 });
+  });
+});
