@@ -218,7 +218,7 @@ test("picking Heights loads its arena with no console error (#2937)", async ({ p
 test("on Heights you step off the bridge's broken north lip onto the ground (#3069)", async ({
   page,
 }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(90_000);
   const canvas = await openTraining(page);
   await page.locator("select.training-scenario").selectOption("heights");
   await expect(page.locator(".training-log")).toContainText("── Heights ──");
@@ -230,23 +230,34 @@ test("on Heights you step off the bridge's broken north lip onto the ground (#30
       .map(Number);
     return { x, y };
   };
-  /** Hold `move` until `done` holds where you stand. */
-  const walk = async (
-    move: "move-left" | "move-right" | "move-up",
-    done: (at: { readonly x: number; readonly y: number }) => boolean,
+  /**
+   * Click `world` where it draws, `lift` world units up the screen, and
+   * wait until you stand on it.
+   */
+  const walkOnto = async (
+    world: { readonly x: number; readonly y: number },
+    lift: number,
   ): Promise<void> => {
-    await page.keyboard.down(key(move));
+    const onPage = (await trainingView(page, canvas)).onPage({ x: world.x, y: world.y - lift });
+    await page.mouse.click(onPage.x, onPage.y);
     await expect
-      .poll(async () => done(await you()), { intervals: [50], timeout: 15_000 })
+      .poll(
+        async () => {
+          const at = await you();
+          return Math.hypot(at.x - world.x, at.y - world.y) <= 5;
+        },
+        { intervals: [50], timeout: 20_000 },
+      )
       .toBe(true);
-    await page.keyboard.up(key(move));
   };
   // Map coordinates from training-heights/map.json: up the west stairs onto
   // the bridge (layer 2, y 350 to 550), then a click on the ground north of
   // it. The shortest way down is over its drop-off, x 440 to 520; without
-  // it, the walk would go back down the stairs. A click, not a timed key
-  // tap, so a slow page cannot overshoot the 80-unit lip.
-  await walk("move-right", ({ x }) => x >= 400);
+  // it, the walk would go back down the stairs. Both by click, not by held
+  // keys: game time runs slower than wall time under load (#327).
+  // A layer-2 deck draws one ELEVATION_STEP (56) up the screen; the click
+  // picks the topmost surface drawn under it, the bridge.
+  await walkOnto({ x: 470, y: 450 }, 56);
   const below = { x: 480, y: 250 };
   const onPage = (await trainingView(page, canvas)).onPage(below);
   await page.mouse.click(onPage.x, onPage.y);
