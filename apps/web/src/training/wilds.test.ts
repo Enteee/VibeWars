@@ -201,11 +201,22 @@ describe("Training Wilds (#3024)", () => {
         goal: lever.position,
       })),
       ...(map.teleports ?? []).flatMap((teleport) => [
-        { what: `portal `, layer: teleport.from.layer, goal: middle(teleport.from.area.points) },
-        { what: `portal  exit`, layer: teleport.to.layer, goal: teleport.to.position },
+        {
+          what: `portal ${teleport.id}`,
+          layer: teleport.from.layer,
+          goal: middle(teleport.from.area.points),
+        },
+        {
+          what: `portal ${teleport.id} exit`,
+          layer: teleport.to.layer,
+          goal: teleport.to.position,
+        },
       ]),
-      // The side-room door, from outside it; the room behind is the lever test's.
+      // The side room's three ways in, each from outside it; the room behind is
+      // the lever, cracked wall and barrier tests'.
       { what: "gate side-room-door", layer: 1, goal: { x: 290, y: 720 } },
+      { what: "breakable side-room-crack", layer: 1, goal: { x: 80, y: 600 } },
+      { what: "gate side-room-shimmer", layer: 1, goal: { x: 202, y: 600 } },
     ];
     const [template] = scenarioParticipants(scenario, spawn.position);
 
