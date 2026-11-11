@@ -77,7 +77,7 @@ cell(
 );
 cell(
   "carried: body at lift height",
-  `${frame}${platform(88)}${body(100, 83)}${gates(88)}<text x="40" y="164" ${TEXT} font-size="10" fill="#b8c4d6">shadow stays on the floor</text>`,
+  `${frame}${platform(88)}${body(100, 83)}${gates(88)}<text x="40" y="164" ${TEXT} font-size="10" fill="#b8c4d6">body rides the platform</text>`,
 );
 
 // timer drive: a strip of rest / travel segments
