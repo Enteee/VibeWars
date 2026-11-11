@@ -1288,6 +1288,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
       wall: { kind: "rect", layer: 0, x: 700, y: 300, width: 200, height: 200 },
       opener: { kind: "plate", plate: { x: 450, y: 400 }, team: null },
       blocks: "all",
+      look: "portcullis",
     };
     const walls = [...layerTest.walls, westWall, eastWall];
     const decks = [{ ...bridge, footprint: walk, look: "wall-walk" }];

@@ -387,7 +387,8 @@
         },
         "team": null
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "portcullis"
     }
   ],
   "lighting": {
