@@ -197,6 +197,10 @@ describe("logActorName", () => {
     expect(logActorName("you/c1", names, players)).toBe("Recuperation");
   });
 
+  it("names a cracked wall as the HUD does, never by its id (#3031)", () => {
+    expect(logActorName("breakable-side-room-crack", names, players)).toBe("Cracked wall");
+  });
+
   it("falls back to the id for someone neither knows", () => {
     expect(logActorName("gone", names, players)).toBe("gone");
     expect(logActorName("gone", undefined, undefined)).toBe("gone");

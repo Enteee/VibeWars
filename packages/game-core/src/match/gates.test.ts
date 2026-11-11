@@ -191,6 +191,31 @@ describe("gates in a match (#2691)", () => {
     expect(askBot(sim, "bot", objectives(0)).moveTo).toEqual(PLATE);
     expect(askBot(sim, "bot", objectives(1)).moveTo).not.toEqual(PLATE);
   });
+
+  it("keeps a walk going the long way round when the gate shuts behind its plate (#3031)", () => {
+    // A wall down the map with a gap at its foot; the gate shuts its middle.
+    const box = (top: number, bottom: number): Segment[] => {
+      const corners = [vec2(396, top), vec2(404, top), vec2(404, bottom), vec2(396, bottom)];
+      return corners.map((a, at) => ({ a, b: corners[(at + 1) % corners.length] ?? a }));
+    };
+    const plate = vec2(300, 400);
+    const sim = new MatchSimulation({
+      seed: "gates",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      participants: [body("walker", 0, plate), foe],
+      walls: [...box(-10, 300), ...box(500, 700)],
+      gates: [{ ...FIELD, segments: box(300, 500), opener: { kind: "plate", plate, team: null } }],
+    });
+    run(sim, DT);
+    expect(open(sim)).toBe(true);
+    sim.walkTo("walker", vec2(600, 400));
+    run(sim, 1);
+    expect(open(sim)).toBe(false);
+    run(sim, 20);
+    const walker = sim.get("walker")?.position ?? vec2(0, 0);
+    expect(Math.hypot(walker.x - 600, walker.y - 400)).toBeLessThan(5);
+  });
 });
 
 describe("energy barriers (#3031)", () => {

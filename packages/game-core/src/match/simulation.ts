@@ -7140,6 +7140,9 @@ export class MatchSimulation {
     this.#paths = set.paths;
     for (const record of this.#participants.values()) {
       record.route = undefined;
+      // A new way may be longer than the old: measure a walk's stall afresh.
+      record.walkLeast = Number.POSITIVE_INFINITY;
+      record.walkStalledSeconds = 0;
       const graph = this.#graphOn(record.layer);
       if (
         closing.some((gate) => (gate.layer ?? this.#ground) === record.layer) &&

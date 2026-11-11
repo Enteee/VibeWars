@@ -1,4 +1,4 @@
-import type { TrainingScenario } from "@vibewars/game-core";
+import { breakableIdOf, type TrainingScenario } from "@vibewars/game-core";
 
 import { t } from "../i18n/index.js";
 import type { EscapeIntent } from "../input/attack-key.js";
@@ -135,12 +135,17 @@ export function saveScenarioChoice(storage: () => Storage, id: string): void {
 /**
  * Who `id` is in the Training log: the scenario's name for a dummy,
  * else the name the match shows, a summoned spirit's "Recuperation"
- * (#1064), and only then the id.
+ * (#1064), a cracked wall as the HUD names it (#3031), and only then
+ * the id.
  */
 export function logActorName(
   id: string,
   names: ReadonlyMap<string, string> | undefined,
   players: readonly { readonly sessionId: string; readonly name: string }[] | undefined,
 ): string {
-  return names?.get(id) ?? players?.find((player) => player.sessionId === id)?.name ?? id;
+  return (
+    names?.get(id) ??
+    players?.find((player) => player.sessionId === id)?.name ??
+    (breakableIdOf(id) === undefined ? id : t("hud.breakableWall"))
+  );
 }
