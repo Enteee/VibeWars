@@ -8,7 +8,9 @@ import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/
 
 import { allWallSegments } from "./geometry.js";
 import {
+  MAX_FOG_BANKS,
   MAX_LIGHTS,
+  MAX_PLUMES,
   MAX_WATER_BODIES,
   MAX_WATER_POINTS,
   MAX_HARMFUL_ZONE_POINTS,
@@ -1406,6 +1408,52 @@ describe("lighting (#2986, ADR-0052)", () => {
       Array.from({ length: count }, (_, index) => ({ ...light, id: `torch-${String(index)}` }));
     expect(withLights(many(MAX_LIGHTS))).toBe(true);
     expect(withLights(many(MAX_LIGHTS + 1))).toBe(false);
+  });
+});
+
+describe("atmosphere (#3032)", () => {
+  const bank = { layer: 0, area: { kind: "rect", x: 10, y: 10, width: 40, height: 30 } };
+  const plume = { id: "vent", layer: 0, position: { x: 50, y: 50 }, kind: "steam" };
+  const atmosphere = { fog: [bank], plumes: [plume], weather: { kind: "rain", intensity: 0.5 } };
+  const accepts = (value: unknown): boolean =>
+    mapDataSchema.safeParse({ ...validMap, atmosphere: value }).success;
+
+  it("is optional, and may be empty", () => {
+    expect(mapDataSchema.safeParse(validMap).success).toBe(true);
+    expect(accepts({ fog: [], plumes: [], weather: null })).toBe(true);
+    expect(accepts(atmosphere)).toBe(true);
+  });
+
+  it("refuses a fog bank or a plume on a layer the map does not have", () => {
+    expect(accepts({ ...atmosphere, fog: [{ ...bank, layer: 1 }] })).toBe(false);
+    expect(accepts({ ...atmosphere, plumes: [{ ...plume, layer: 1 }] })).toBe(false);
+  });
+
+  it("refuses a fog bank or a plume off the map", () => {
+    const area = { kind: "rect", x: 80, y: 10, width: 40, height: 30 };
+    expect(accepts({ ...atmosphere, fog: [{ ...bank, area }] })).toBe(false);
+    expect(accepts({ ...atmosphere, plumes: [{ ...plume, position: { x: 101, y: 5 } }] })).toBe(
+      false,
+    );
+  });
+
+  it("refuses two plumes with one id, and an unknown kind", () => {
+    expect(accepts({ ...atmosphere, plumes: [plume, plume] })).toBe(false);
+    expect(accepts({ ...atmosphere, plumes: [{ ...plume, kind: "ash" }] })).toBe(false);
+  });
+
+  it("refuses an intensity outside 0 to 1", () => {
+    expect(accepts({ ...atmosphere, weather: { kind: "snow", intensity: 1.1 } })).toBe(false);
+    expect(accepts({ ...atmosphere, weather: { kind: "snow", intensity: -0.1 } })).toBe(false);
+  });
+
+  it(`holds at most ${String(MAX_FOG_BANKS)} fog banks and ${String(MAX_PLUMES)} plumes`, () => {
+    const plumes = (count: number): unknown[] =>
+      Array.from({ length: count }, (_, index) => ({ ...plume, id: `vent-${String(index)}` }));
+    expect(accepts({ ...atmosphere, fog: Array(MAX_FOG_BANKS).fill(bank) })).toBe(true);
+    expect(accepts({ ...atmosphere, fog: Array(MAX_FOG_BANKS + 1).fill(bank) })).toBe(false);
+    expect(accepts({ ...atmosphere, plumes: plumes(MAX_PLUMES) })).toBe(true);
+    expect(accepts({ ...atmosphere, plumes: plumes(MAX_PLUMES + 1) })).toBe(false);
   });
 });
 

@@ -231,3 +231,53 @@ describe("an effect zone's place in the order (ADR-0053, #3024)", () => {
     expect(new Set(orders).size).toBe(items.length);
   });
 });
+
+describe("atmosphere's place in the order (#3032)", () => {
+  it("draws a ground fog bank over its zones, under its wards, torches and bodies", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "water", layer: 0, part: "ripples" },
+      { kind: "lighting", layer: 0 },
+      { kind: "zone", layer: 0, part: "marks" },
+      { kind: "fog", layer: 0 },
+      { kind: "lit-ground-effect" },
+      { kind: "light-mark", layer: 0 },
+      { kind: "character", band: characterBand(0, 1), part: "body" },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+  });
+
+  it("draws a deck's fog over its zones, under its wards and whoever stands there", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "deck", deckLayer: 1 },
+      { kind: "zone", layer: 1, part: "marks" },
+      { kind: "fog", layer: 1 },
+      { kind: "ground-effect", layer: 1 },
+      { kind: "character", band: 1, part: "body" },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+  });
+
+  it("draws a plume over the bodies on its band, under its walls and the deck above", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "character", band: 0, part: "marks" },
+      { kind: "plume", band: 0 },
+      { kind: "wall", layer: 0 },
+      { kind: "deck", deckLayer: 1 },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+  });
+
+  it("draws the weather once, over the world and under effects and the HUD", () => {
+    const top = Math.max(
+      renderOrder({ kind: "plume", band: 3 }),
+      renderOrder({ kind: "deck", deckLayer: 3 }),
+      renderOrder({ kind: "character", band: 3, part: "marks" }),
+    );
+    expect(renderOrder({ kind: "weather" })).toBeGreaterThan(top);
+    expect(renderOrder({ kind: "weather" })).toBeLessThan(renderOrder({ kind: "hidden-outline" }));
+    expect(renderOrder({ kind: "weather" })).toBeLessThan(renderOrder({ kind: "ui" }));
+  });
+});

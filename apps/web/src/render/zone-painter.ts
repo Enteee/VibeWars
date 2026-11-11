@@ -110,7 +110,7 @@ const RUNE_SECONDS = 2.4;
 const PUFF_SECONDS = 7;
 
 /** A small seeded generator: the same zone scatters the same way on every client and every load. */
-function seeded(seed: number): () => number {
+export function seeded(seed: number): () => number {
   let state = seed >>> 0;
   return () => {
     state = (state + 0x6d2b79f5) >>> 0;

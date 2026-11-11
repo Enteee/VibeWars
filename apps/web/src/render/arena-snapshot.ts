@@ -12,7 +12,7 @@ import {
 } from "@vibewars/game-core";
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
-import type { MapLighting } from "@vibewars/game-maps/schema";
+import type { MapAtmosphere, MapLighting } from "@vibewars/game-maps/schema";
 
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import type { AttackCast } from "./attack-clock.js";
@@ -170,6 +170,8 @@ export interface MapStructure {
   readonly ground: number;
   /** How it is lit (ADR-0052); a map without it is lit flat. */
   readonly lighting?: MapLighting;
+  /** Its fog, smoke, steam and weather (#3032); a map without it has none. */
+  readonly atmosphere?: MapAtmosphere;
   readonly decks: readonly { readonly layer: number; readonly footprint: RenderableShape }[];
   /** Holes in the ground, their floor on `ground - 1` (#2973). */
   readonly pits: readonly { readonly footprint: RenderableShape }[];

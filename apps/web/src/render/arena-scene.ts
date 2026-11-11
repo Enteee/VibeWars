@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-import type { MapLighting } from "@vibewars/game-maps/schema";
+import type { MapAtmosphere, MapLighting } from "@vibewars/game-maps/schema";
 
 import {
   ALTAR_REACH_UNITS,
@@ -198,6 +198,15 @@ import { waterShapeOf, type WaterShape } from "./water-shape.js";
 import { SPIRE_LOOK, ZONE_EDGE_WIDTH, ZONE_LOOK, strikeEdgeScale } from "./zone-look.js";
 import { HAZARD_ART, hazardKindOf, pathMotionAt, phaseProgressAt } from "./hazard-marks.js";
 import { withZoneLights } from "./zone-light.js";
+import {
+  AtmosphereParticles,
+  fogArtOf,
+  paintFog,
+  paintParticle,
+  paintVent,
+  paintWeatherWash,
+  type FogArt,
+} from "./atmosphere.js";
 import {
   paintZoneGround,
   paintZoneMotion,
@@ -415,6 +424,18 @@ export class ArenaScene extends Phaser.Scene {
   >();
   /** Each layer's effect zones (ADR-0053), drawn every frame as they breathe. */
   private readonly zoneGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** Fog banks and vents by layer, plumes by band, and the weather over all (#3032). */
+  private readonly fogGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  private readonly plumeGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  private weatherGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** The map's atmosphere as drawn (#3032), made again when the map changes. */
+  private atmosphereDrawn:
+    | {
+        readonly atmosphere: MapAtmosphere;
+        readonly fog: readonly FogArt[];
+        readonly particles: AtmosphereParticles;
+      }
+    | undefined;
   /** Each painted zone's ground (#3052), one canvas texture per zone, made when the map changes. */
   private zoneGrounds:
     | { readonly zones: readonly MapZone[]; readonly grounds: readonly (ZoneGround | undefined)[] }
@@ -653,6 +674,7 @@ export class ArenaScene extends Phaser.Scene {
     this.drawMap();
     this.drawRipples();
     this.drawZones();
+    this.drawAtmosphere(deltaMs / 1000);
     // Over the grid and walls, under the actors: a flash never hides a
     // health bar, a status or the target ring.
     this.areaFlashes = decayAreaFlashes(this.areaFlashes, deltaMs / 1000);
@@ -2747,6 +2769,78 @@ export class ArenaScene extends Phaser.Scene {
       }
       g.restore();
     }
+  }
+
+  /**
+   * The map's fog, plumes and weather (#3032), only with lighting on. Its
+   * vents stand either way: they are stone on the ground, as torches are.
+   */
+  private drawAtmosphere(dt: number): void {
+    for (const graphics of [...this.fogGraphics.values(), ...this.plumeGraphics.values()]) {
+      graphics.clear();
+    }
+    this.weatherGraphics?.clear();
+    const { atmosphere, ground, layerCount } = this.snapshot.structure;
+    if (atmosphere === undefined) {
+      this.atmosphereDrawn = undefined;
+      return;
+    }
+    if (this.atmosphereDrawn?.atmosphere !== atmosphere) {
+      this.atmosphereDrawn = {
+        atmosphere,
+        fog: atmosphere.fog.map(fogArtOf),
+        particles: new AtmosphereParticles(atmosphere),
+      };
+    }
+    const { fog, particles } = this.atmosphereDrawn;
+    const line = 1 / (this.view?.zoom ?? 1);
+    const on = lightingOn();
+    const view = this.cameras.main.worldView;
+    particles.step(dt, view, { on, reducedMotion: this.reducedMotion });
+    for (const plume of atmosphere.plumes) {
+      paintVent(this.fogAt(plume.layer), plume, elevationOf(plume.layer, ground), line);
+    }
+    if (!on) {
+      return;
+    }
+    for (const art of fog) {
+      paintFog(
+        this.fogAt(art.layer),
+        art,
+        elevationOf(art.layer, ground),
+        this.now,
+        this.reducedMotion,
+      );
+    }
+    const weather = (this.weatherGraphics ??= this.add
+      .graphics()
+      .setDepth(renderOrder({ kind: "weather" })));
+    if (atmosphere.weather !== null) {
+      paintWeatherWash(weather, atmosphere.weather, view);
+    }
+    for (const particle of particles.particles) {
+      if (particle.kind === "smoke" || particle.kind === "steam") {
+        const band = characterBand(particle.layer, layerCount);
+        let g = this.plumeGraphics.get(band);
+        if (g === undefined) {
+          g = this.add.graphics().setDepth(renderOrder({ kind: "plume", band }));
+          this.plumeGraphics.set(band, g);
+        }
+        paintParticle(g, particle, elevationOf(particle.layer, ground), line);
+      } else {
+        paintParticle(weather, particle, 0, line);
+      }
+    }
+  }
+
+  /** The graphics `layer`'s fog banks and vents draw into. */
+  private fogAt(layer: number): Phaser.GameObjects.Graphics {
+    let g = this.fogGraphics.get(layer);
+    if (g === undefined) {
+      g = this.add.graphics().setDepth(renderOrder({ kind: "fog", layer }));
+      this.fogGraphics.set(layer, g);
+    }
+    return g;
   }
 
   /** A draining spire (#3028): a faint violet ring on its edge; its obelisk stands in its painted ground. */

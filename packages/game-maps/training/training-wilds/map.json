@@ -837,5 +837,34 @@
         "flicker": 0.2
       }
     ]
+  },
+  "atmosphere": {
+    "fog": [
+      {
+        "layer": 0,
+        "area": {
+          "kind": "rect",
+          "x": 560,
+          "y": 630,
+          "width": 170,
+          "height": 140
+        }
+      }
+    ],
+    "plumes": [
+      {
+        "id": "spring-steam",
+        "layer": 1,
+        "position": {
+          "x": 330,
+          "y": 300
+        },
+        "kind": "steam"
+      }
+    ],
+    "weather": {
+      "kind": "rain",
+      "intensity": 0.4
+    }
   }
 }
