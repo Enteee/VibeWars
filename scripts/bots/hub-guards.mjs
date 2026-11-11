@@ -482,6 +482,50 @@ export function boardMoveAllowed({ role, from, to, blockedFrom = null }) {
   return { ok: true };
 }
 
+/** The area lanes (#3124, skill area-lanes): one card per area in flight. */
+export const AREA_LABELS = [
+  "area:render",
+  "area:game-core",
+  "area:maps",
+  "area:ui",
+  "area:net",
+  "area:i18n",
+  "area:bots-ai",
+  "area:audio",
+  "area:tooling",
+];
+
+/**
+ * Why the architect may not sign this card off into Ready (#3124), or `null`.
+ * It needs at least one known area label, and no other card in Ready or In
+ * Progress may hold any of its areas: a card past them has finished editing.
+ * The first clash named is the lowest issue number.
+ *
+ * @param {{ number: number, labels: string[], onBoard: { number: number, column: string, labels: string[] }[] }} card
+ *   `onBoard` is the other issue cards that share a label with it
+ * @returns {string | null}
+ */
+export function signOffAreaRefusal({ number, labels, onBoard }) {
+  const areas = AREA_LABELS.filter((area) => labels.includes(area));
+  if (areas.length === 0) {
+    return `#${String(number)} has no area label: add one or more of ${AREA_LABELS.join(", ")} (skill area-lanes)`;
+  }
+  const others = onBoard
+    .filter(
+      (other) =>
+        other.number !== number && (other.column === "Ready" || other.column === "In Progress"),
+    )
+    .sort((a, b) => a.number - b.number);
+  for (const other of others) {
+    const area = areas.find((name) => other.labels.includes(name));
+    if (area !== undefined) {
+      const m = `#${String(other.number)}`;
+      return `${area} is taken by ${m} (${other.column}): one card per area in flight. Spec another area, or wait for ${m} (skill area-lanes)`;
+    }
+  }
+  return null;
+}
+
 /**
  * May `role` land a card, new to the board, in `to` (#517)? An issue is
  * judged as a move out of no column. A pull request is not signed off (its
