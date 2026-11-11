@@ -231,8 +231,8 @@ test("on Heights you step off the bridge's broken north lip onto the ground (#30
     return { x, y };
   };
   /**
-   * Click `world` where it draws, `lift` world units up the screen, and
-   * wait until you stand on it.
+   * Click `world` where it draws, `lift` world units up the screen, wait
+   * until you stand on it, and for the camera that follows you to settle.
    */
   const walkOnto = async (
     world: { readonly x: number; readonly y: number },
@@ -249,14 +249,18 @@ test("on Heights you step off the bridge's broken north lip onto the ground (#30
         { intervals: [50], timeout: 20_000 },
       )
       .toBe(true);
+    await settleCamera(page);
   };
   // Map coordinates from training-heights/map.json: up the west stairs onto
   // the bridge (layer 2, y 350 to 550), then a click on the ground north of
   // it. The shortest way down is over its drop-off, x 440 to 520; without
-  // it, the walk would go back down the stairs. Both by click, not by held
-  // keys: game time runs slower than wall time under load (#327).
-  // A layer-2 deck draws one ELEVATION_STEP (56) up the screen; the click
+  // it, the walk would go back down the stairs. All by click, not by held
+  // keys: game time runs slower than wall time under load (#327). Wide
+  // shows about 590 by 580 round you, so first to the stairs' foot. A
+  // layer-2 deck draws one ELEVATION_STEP (56) up the screen; the click
   // picks the topmost surface drawn under it, the bridge.
+  await wholeMap(page);
+  await walkOnto({ x: 260, y: 450 }, 0);
   await walkOnto({ x: 470, y: 450 }, 56);
   const below = { x: 480, y: 250 };
   const onPage = (await trainingView(page, canvas)).onPage(below);
