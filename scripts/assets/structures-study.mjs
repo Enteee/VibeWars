@@ -156,7 +156,7 @@ g += tile(
   "stairs-landing (wide)",
   (x, y) =>
     stairs(x + 30, y + 8, 80, 28, 3, STONE) +
-    stairs(x + 30, y + 50, 80, 28, 3, STONE).replace(`y="${y + 50}"`, `y="${y + 50}"`) +
+    stairs(x + 30, y + 50, 80, 28, 3, STONE) +
     `<rect x="${x + 26}" y="${y + 36}" width="88" height="14" fill="${STONE.top}" stroke="${INK}" stroke-width="2"/><rect x="${x + 27}" y="${y + 36}" width="86" height="3" fill="${STONE.lip}"/>`,
 );
 g += tile(3, "ladder (single file)", (x, y) => ladder(x + 62, y + 8, 16, 70));
