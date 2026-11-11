@@ -44,7 +44,7 @@ These keys are fixed:
   it; **Space** walks there and takes the flag up or plants it.
 - **Right click** a lever to target it; **Space** walks there and flips it, opening or closing the gates it works.
 - Walk into a **portal** and it moves you to its exit. A lever may switch it on or off; after a trip it rests 5 s before it takes you again.
-- A **shimmering gate** stops arrows and bodies, but not spells. A **cracked wall** can be broken: click it, then attack it or hit it with a damage skill.
+- A **shimmering gate** stops bodies, arrows and other projectiles; a spell cast straight at a target passes. A **cracked wall** can be broken: right-click it, then attack it or hit it with a damage skill.
 - **Wheel click** a foe to call it for your team: their **T** targets it.
   On the ground or an ally, it pings that spot. Or click the target bar
   at the top to call the foe you have targeted.

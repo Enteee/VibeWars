@@ -45,7 +45,7 @@ Dessa tangenter är fasta:
   välja det som mål; **Space** går dit och tar upp flaggan eller sätter ned den.
 - **Högerklicka** på en spak för att välja den som mål; **Space** går dit och drar i den, så att portarna den styr öppnas eller stängs.
 - Gå in i en **portal** så flyttar den dig till sin utgång. En spak kan slå på eller av den; efter en resa vilar den i 5 s innan den tar dig igen.
-- En **skimrande port** stoppar pilar och kroppar, men inte besvärjelser. En **sprucken mur** kan slås sönder: klicka på den och anfall den eller träffa den med en skadefärdighet.
+- En **skimrande port** stoppar kroppar, pilar och andra projektiler; en besvärjelse som kastas direkt på ett mål går igenom. En **sprucken mur** kan slås sönder: högerklicka på den och anfall den eller träffa den med en skadefärdighet.
 - **Klicka med hjulet** på en fiende för att utpeka den för ditt lag:
   deras **T** väljer den som mål. På marken eller en allierad pingar det
   den platsen. Eller klicka på målraden högst upp för att utpeka fienden

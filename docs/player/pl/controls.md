@@ -46,7 +46,7 @@ Te klawisze są stałe:
   stawia flagę.
 - **Prawy klik** na dźwigni wybiera ją jako cel; **Space** podchodzi do niej i ją przestawia, otwierając lub zamykając bramy, którymi steruje.
 - Wejdź w **portal**, a przeniesie cię do swojego wyjścia. Dźwignia może go włączać i wyłączać; po podróży odpoczywa 5 s, zanim znów cię przeniesie.
-- **Migocząca brama** zatrzymuje strzały i ciała, ale nie czary. **Popękany mur** da się rozbić: kliknij go, a potem zaatakuj albo traf umiejętnością zadającą obrażenia.
+- **Migocząca brama** zatrzymuje ciała, strzały i inne pociski; czar rzucony prosto na cel przechodzi. **Popękany mur** da się rozbić: kliknij go prawym przyciskiem, a potem zaatakuj albo traf umiejętnością zadającą obrażenia.
 - **Kliknięcie kółkiem** wroga wskazuje go twojej drużynie: ich **T** obiera go
   na cel. Na ziemi lub na sojuszniku oznacza to miejsce pingiem. Możesz też
   kliknąć pasek celu u góry, aby wskazać wroga, którego masz na celu.

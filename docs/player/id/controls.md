@@ -44,7 +44,7 @@ Tombol-tombol ini tetap:
   target; **Space** berjalan ke sana lalu mengangkat bendera atau menancapkannya.
 - **Klik kanan** pada tuas untuk menargetkannya; **Space** berjalan ke sana dan menariknya, membuka atau menutup gerbang yang dikendalikannya.
 - Masuk ke **portal** dan ia memindahkanmu ke pintu keluarnya. Tuas bisa menyalakan atau mematikannya; setelah satu perjalanan ia beristirahat 5 s sebelum membawamu lagi.
-- **Gerbang berkilau** menahan panah dan tubuh, tetapi tidak menahan mantra. **Tembok retak** bisa dihancurkan: klik tembok itu, lalu serang atau hantam dengan skill yang memberi damage.
+- **Gerbang berkilau** menahan tubuh, panah, dan proyektil lain; mantra yang dirapal langsung ke target tetap lewat. **Tembok retak** bisa dihancurkan: klik kanan tembok itu, lalu serang atau hantam dengan skill yang memberi damage.
 - **Klik roda** pada musuh untuk mengumumkannya ke timmu: tombol **T** mereka menargetkannya.
   Di tanah atau pada sekutu, klik roda memberi ping di titik itu. Atau klik bar target
   di atas untuk mengumumkan musuh yang sedang kamu targetkan.

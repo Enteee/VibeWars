@@ -46,7 +46,7 @@ Tieto klávesy sú pevné:
   alebo zapichne.
 - **Pravým kliknutím** na páku ju zameriaš; **Space** k nej dôjde a prepne ju, čím otvorí alebo zatvorí brány, ktoré ovláda.
 - Ak vojdeš do **portálu**, prenesie ťa k svojmu výstupu. Páka ho môže zapínať a vypínať; po prenose 5 s odpočíva, kým ťa vezme znova.
-- **Trblietavá brána** zastaví šípy aj telá, ale nie kúzla. **Popraskaný múr** sa dá rozbiť: klikni naň a potom naň zaútoč alebo ho zasiahni schopnosťou, ktorá spôsobuje zranenie.
+- **Trblietavá brána** zastaví telá, šípy aj iné strely; kúzlo zoslané priamo na cieľ prejde. **Popraskaný múr** sa dá rozbiť: klikni naň pravým tlačidlom a potom naň zaútoč alebo ho zasiahni schopnosťou, ktorá spôsobuje zranenie.
 - **Kliknutím kolieskom** na nepriateľa ho určíš svojmu tímu: ich **T** ho
   zameria. Na zemi alebo spojencovi to miesto označí signálom. Alebo klikni
   na lištu cieľa hore, aby si určil nepriateľa, ktorého máš zameraného.

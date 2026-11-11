@@ -44,7 +44,7 @@ Diese Tasten sind fest:
   visiert sie an; **Space** läuft hin und nimmt die Flagge auf oder setzt sie.
 - **Rechtsklick** auf einen Hebel visiert ihn an; **Space** läuft hin und legt ihn um, sodass sich die Tore, die er steuert, öffnen oder schließen.
 - Läufst du in ein **Portal**, versetzt es dich an seinen Ausgang. Ein Hebel kann es ein- oder ausschalten; nach einer Reise ruht es 5 s, bevor es dich wieder mitnimmt.
-- Ein **schimmerndes Tor** hält Pfeile und Körper auf, aber keine Zauber. Eine **rissige Mauer** lässt sich zerschlagen: Klick sie an, dann greif sie an oder triff sie mit einer Schadensfertigkeit.
+- Ein **schimmerndes Tor** hält Körper, Pfeile und andere Geschosse auf; ein Zauber, der direkt auf ein Ziel gewirkt wird, kommt durch. Eine **rissige Mauer** lässt sich zerschlagen: Rechtsklick auf sie, dann greif sie an oder triff sie mit einer Schadensfertigkeit.
 - **Mausrad-Klick** auf einen Gegner sagt ihn für dein Team an: Ihr **T** visiert
   ihn an. Auf den Boden oder einen Verbündeten pingt er diese Stelle. Oder klick
   auf die Zielleiste oben, um den Gegner anzusagen, den du im Visier hast.

@@ -124,6 +124,22 @@ describe("breakable walls (#3031)", () => {
     });
   });
 
+  it("logs a spell that flies at a wall as the spell, not the weapon", () => {
+    const sim = arena([caster("burner", "elementalist.fireball", "elementalist.fire-magic"), FOE]);
+    sim.setTarget("burner", TARGET);
+    expect(sim.requestSkill("burner", 0)?.check.ok).toBe(true);
+    const struck: (string | undefined)[] = [];
+    for (let t = 0; t < 4; t += DT) {
+      for (const entry of sim.step(DT).log) {
+        if (entry.events.some((event) => event.kind === "damage" && event.targetId === TARGET)) {
+          struck.push(entry.skillId);
+        }
+      }
+    }
+    expect(health(sim) ?? 300).toBeLessThan(300);
+    expect(struck).toEqual(["elementalist.fireball"]);
+  });
+
   it("makes a sacrifice skill's caster pay its health at a wall", () => {
     const sim = arena([
       caster("bleeder", "necromancer.touch-of-agony", "necromancer.blood-magic"),

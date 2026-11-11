@@ -1330,8 +1330,14 @@ export class MatchSimulation {
   #centroidsTick = -1;
   #projectiles: Projectile[] = [];
   #nextProjectileId = 1;
-  /** What each shot in flight at a breakable wall (#3031) takes off it, by its id: rolled as it left. */
-  readonly #wallShots = new Map<number, number>();
+  /**
+   * Each shot in flight at a breakable wall (#3031), by its id: what it takes off
+   * the wall, rolled as it left, and the skill that loosed it, if one did.
+   */
+  readonly #wallShots = new Map<
+    number,
+    { readonly amount: number; readonly skill: Skill | undefined }
+  >();
 
   #tick = 0;
   #elapsedSeconds = 0;
@@ -7032,7 +7038,7 @@ export class MatchSimulation {
       rules,
     );
     if (weapon.projectileSpeed !== undefined) {
-      this.#shootWall(record, target, weapon.projectileSpeed, amount);
+      this.#shootWall(record, target, weapon.projectileSpeed, amount, undefined);
       return;
     }
     const events: CombatEvent[] = [];
@@ -7078,13 +7084,19 @@ export class MatchSimulation {
     if (speed === undefined || target === undefined) {
       this.#strikeWall(this.#standingWall(targetId), amount, events);
     } else {
-      this.#shootWall(record, target, speed, amount);
+      this.#shootWall(record, target, speed, amount, skill);
     }
     return events;
   }
 
   /** A shot from `record` at a breakable wall (#3031), stopped short by any other wall. */
-  #shootWall(record: ParticipantRecord, target: Aim, speed: number, amount: number): void {
+  #shootWall(
+    record: ParticipantRecord,
+    target: Aim,
+    speed: number,
+    amount: number,
+    skill: Skill | undefined,
+  ): void {
     const from = record.position;
     const impact = firstHit(from, target.position, this.#wallsOn(record.layer));
     const aimPoint =
@@ -7093,7 +7105,7 @@ export class MatchSimulation {
         : distance(from, impact) <= 1
           ? from
           : add(impact, scale(normalize(sub(from, impact)), 1));
-    this.#wallShots.set(this.#nextProjectileId, amount);
+    this.#wallShots.set(this.#nextProjectileId, { amount, skill });
     this.#projectiles.push({
       id: this.#nextProjectileId,
       attackerId: record.id,
@@ -7121,15 +7133,15 @@ export class MatchSimulation {
    * crumbled while it flew is not there: the shot flies on through.
    */
   #landOnWall(projectile: Projectile): void {
-    const amount = this.#wallShots.get(projectile.id) ?? 0;
+    const shot = this.#wallShots.get(projectile.id);
     this.#wallShots.delete(projectile.id);
     const events: CombatEvent[] = [];
     if (projectile.obstructed) {
       events.push({ kind: "attack-obstructed", targetId: projectile.targetId });
     } else {
-      this.#strikeWall(this.#standingWall(projectile.targetId), amount, events);
+      this.#strikeWall(this.#standingWall(projectile.targetId), shot?.amount ?? 0, events);
     }
-    this.#logShot(projectile, events);
+    this.#logShot(projectile, events, undefined, shot?.skill);
   }
 
   /**
@@ -8147,16 +8159,16 @@ export class MatchSimulation {
   }
 
   /**
-   * A shot's entry: its skill's, if it carries one (#416, #535), else its
-   * weapon's; with the area a spell's landing caught.
+   * A shot's entry: its skill's, if it carries one (#416, #535) or loosed one at a
+   * wall (#3031), else its weapon's; with the area a spell's landing caught.
    */
   #logShot(
     projectile: Projectile,
     events: readonly CombatEvent[],
     area?: CombatLogEntry["area"],
+    skill = projectile.skillHit?.skill,
   ): void {
-    const { skillHit } = projectile;
-    if (skillHit === undefined) {
+    if (skill === undefined) {
       this.#logWeapon(projectile.attackerId, projectile.weaponSnapshot.mainHand.weapon.id, events);
       return;
     }
@@ -8165,7 +8177,7 @@ export class MatchSimulation {
       atSeconds: this.#elapsedSeconds,
       cause: "skill",
       sourceId: projectile.attackerId,
-      skillId: skillHit.skill.id,
+      skillId: skill.id,
       weaponId: undefined,
       attributeId: undefined,
       area,

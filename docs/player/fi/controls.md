@@ -49,7 +49,7 @@ Nämä näppäimet ovat kiinteitä:
   lipun tai pystyttää sen.
 - **Oikealla klikkauksella** valitset vivun kohteeksi; **Space** kävelee sen luo ja kääntää sen, jolloin sen ohjaamat portit aukeavat tai sulkeutuvat.
 - Kun kävelet **portaaliin**, se siirtää sinut uloskäynnilleen. Vipu voi kytkeä sen päälle tai pois; matkan jälkeen se lepää 5 s ennen kuin vie sinut uudelleen.
-- **Hohtava portti** pysäyttää nuolet ja ruumiit mutta ei loitsuja. **Halkeillut muuri** voidaan rikkoa: klikkaa sitä ja hyökkää sen kimppuun tai osu siihen vahinkotaidolla.
+- **Hohtava portti** pysäyttää ruumiit, nuolet ja muut ammukset; suoraan kohteeseen loitsittu loitsu menee läpi. **Halkeillut muuri** voidaan rikkoa: klikkaa sitä oikealla ja hyökkää sen kimppuun tai osu siihen vahinkotaidolla.
 - **Rullan napsautus** viholliseen ilmoittaa sen tiimillesi: heidän
   **T**-näppäimensä kohdistaa siihen. Maassa tai liittolaisessa se
   merkitsee sen kohdan. Tai napsauta ylhäällä olevaa kohdepalkkia
