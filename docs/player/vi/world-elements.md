@@ -83,13 +83,17 @@ và cuối cùng nó sụp thành đống đá vụn.
 
 ## Độ cao
 
-Một số nền đất được nâng cao, và bạn chỉ có thể lên hoặc xuống qua dốc,
-cầu thang, bậc thô hoặc thang leo của nó: mép của một sàn nâng chặn bạn
-lại như một bức tường. **Tháp** là một bệ đá nhỏ trên một thân xây gạch
-đá, đủ chỗ cho vài người chơi, lên bằng một cầu thang hẹp hoặc một
-thang leo. **Lối đi trên tường** chạy dọc đỉnh một bức tường dày, có lan
-can và cầu thang ở hai đầu. Một thang leo chỉ đủ rộng cho một người chơi
-mỗi lúc. Một **cây cầu** bằng đá, ván gỗ hoặc một khúc gỗ đổ bắc qua một
+Một số nền đất được nâng cao, và bạn chỉ có thể lên qua dốc, cầu thang,
+bậc thô hoặc thang leo của nó: mép của một sàn nâng chặn bạn lại như một
+bức tường. Tuy vậy, ở chỗ mép bị vỡ, bạn có thể bước ra khỏi nó và rơi
+ngay xuống mặt đất bên dưới, nhưng không bao giờ leo ngược lên lại ở đó
+được. Dốc và cầu thang được đi qua với tốc độ tối đa, bậc thô chậm hơn
+một chút, còn thang leo thì bằng nửa tốc độ: nhảy xuống thì nhanh, leo
+lên lại thì chậm. **Tháp** là một bệ đá nhỏ trên một thân xây gạch đá,
+đủ chỗ cho vài người chơi, lên bằng một cầu thang hẹp hoặc một thang
+leo. **Lối đi trên tường** chạy dọc đỉnh một bức tường dày, có lan can
+và cầu thang ở hai đầu. Một thang leo chỉ đủ rộng cho một người chơi mỗi
+lúc. Một **cây cầu** bằng đá, ván gỗ hoặc một khúc gỗ đổ bắc qua một
 khoảng trống, và người chơi bên dưới có thể đi qua bên dưới nó. Đứng cao
 hơn không thay đổi tầm đánh hay sát thương của bạn.
 

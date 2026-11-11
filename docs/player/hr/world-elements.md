@@ -83,15 +83,19 @@ slabi i na kraju se uruši u ruševine.
 
 ## Visine
 
-Dio tla je uzdignut i na njega se možeš popeti ili s njega sići samo
-njegovim rampama, stepenicama, grubim stubama ili ljestvama: rub
-uzdignute platforme zaustavlja te kao zid. **Kula** je mala kamena
-platforma na zidanom tijelu, s mjestom za nekoliko igrača, do koje se
-dolazi uskim stubištem ili ljestvama. **Obrambeni hodnik** prolazi
-vrhom debelog zida, s grudobranom i stubama na oba kraja. Ljestve su
-dovoljno široke samo za jednog igrača odjednom. **Most** od kamena,
-dasaka ili palog debla premošćuje procjep, a igrači ispod mogu proći
-ispod njega. To što si više ne mijenja ni tvoj domet ni štetu.
+Dio tla je uzdignut i na njega se možeš popeti samo njegovim rampama,
+stepenicama, grubim stubama ili ljestvama: rub uzdignute platforme
+zaustavlja te kao zid. Ipak, gdje je njezin rub slomljen, možeš sići
+s nje i odmah pasti na tlo ispod, ali se ondje nikad ne možeš popeti
+natrag. Rampe i stepenice prelaziš punom brzinom, grube stube malo
+sporije, a ljestve upola manjom brzinom: skočiti dolje je brzo,
+popeti se natrag sporo. **Kula** je mala kamena platforma na zidanom
+tijelu, s mjestom za nekoliko igrača, do koje se dolazi uskim
+stubištem ili ljestvama. **Obrambeni hodnik** prolazi vrhom debelog
+zida, s grudobranom i stubama na oba kraja. Ljestve su dovoljno
+široke samo za jednog igrača odjednom. **Most** od kamena, dasaka ili
+palog debla premošćuje procjep, a igrači ispod mogu proći ispod
+njega. To što si više ne mijenja ni tvoj domet ni štetu.
 
 ## Vrijeme i ugođaj
 

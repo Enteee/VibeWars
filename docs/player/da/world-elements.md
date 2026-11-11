@@ -83,11 +83,15 @@ falder sammen til murbrokker.
 
 ## Højder
 
-Noget jord er hævet, og du kan kun komme op eller ned ad dens ramper,
-trapper, grove trin eller stiger: kanten af et hævet dæk stopper dig som
-en mur. Et **tårn** er en lille stenplatform på en muret krop, med plads
-til nogle få spillere, og du kommer op ad en smal trappe eller en stige.
-En **skyttegang** løber langs toppen af en tyk mur, med et brystværn og
+Noget jord er hævet, og du kan kun komme op ad dens ramper, trapper,
+grove trin eller stiger: kanten af et hævet dæk stopper dig som en mur.
+Hvor kanten er brudt, kan du dog træde ud over den og falde ned på jorden
+nedenfor med det samme, men aldrig klatre op igen der. Ramper og trapper
+krydses i fuld fart, grove trin lidt langsommere og en stige i halv fart:
+det går hurtigt at hoppe ned og langsomt at klatre op igen. Et **tårn**
+er en lille stenplatform på en muret krop, med plads til nogle få
+spillere, og du kommer op ad en smal trappe eller en stige. En
+**skyttegang** løber langs toppen af en tyk mur, med et brystværn og
 trapper i begge ender. En stige er bred nok til én spiller ad gangen. En
 **bro** af sten, planker eller en væltet træstamme spænder over en kløft,
 og spillere nedenunder kan gå under den. At stå højere oppe ændrer

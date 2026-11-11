@@ -87,16 +87,20 @@ während sie schwächer wird, und sie zerfällt zu Schutt.
 ## Höhen
 
 Mancher Boden ist erhöht, und du kommst nur über seine Rampen, Treppen,
-groben Stufen oder Leitern hinauf oder hinunter: Die Kante eines erhöhten
-Decks hält dich auf wie eine Mauer. Ein **Turm** ist eine kleine
-Steinplattform auf einem gemauerten Körper, mit Platz für ein paar
-Spieler, erreichbar über eine schmale Treppe oder eine Leiter. Ein
-**Wehrgang** verläuft oben auf einer dicken Mauer, mit einer Brüstung und
-Treppen an beiden Enden. Eine Leiter ist breit genug für jeweils einen
-Spieler. Eine **Brücke** aus Stein, Planken oder einem umgestürzten
-Baumstamm überspannt eine Lücke, und Spieler darunter können unter ihr
-hindurchgehen. Weiter oben zu stehen ändert weder deine Reichweite noch
-deinen Schaden.
+groben Stufen oder Leitern hinauf: Die Kante eines erhöhten Decks hält
+dich auf wie eine Mauer. Wo die Kante aber gebrochen ist, kannst du davon
+heruntertreten und sofort auf den Boden darunter fallen, dort aber nie
+wieder hinaufklettern. Rampen und Treppen überquerst du mit voller
+Geschwindigkeit, grobe Stufen etwas langsamer und eine Leiter mit halber
+Geschwindigkeit: Hinunterspringen geht schnell, Zurückklettern langsam.
+Ein **Turm** ist eine kleine Steinplattform auf einem gemauerten Körper,
+mit Platz für ein paar Spieler, erreichbar über eine schmale Treppe oder
+eine Leiter. Ein **Wehrgang** verläuft oben auf einer dicken Mauer, mit
+einer Brüstung und Treppen an beiden Enden. Eine Leiter ist breit genug
+für jeweils einen Spieler. Eine **Brücke** aus Stein, Planken oder einem
+umgestürzten Baumstamm überspannt eine Lücke, und Spieler darunter können
+unter ihr hindurchgehen. Weiter oben zu stehen ändert weder deine
+Reichweite noch deinen Schaden.
 
 ## Wetter und Atmosphäre
 

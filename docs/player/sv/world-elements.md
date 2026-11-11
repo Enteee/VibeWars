@@ -86,15 +86,19 @@ sprider sig när den försvagas, och till sist rasar den till grus.
 
 ## Höjder
 
-En del mark ligger högre, och du kan bara ta dig upp eller ner via
-dess ramper, trappor, grova steg eller stegar: kanten på ett upphöjt
-däck stoppar dig som en mur. Ett **torn** är en liten stenplattform på
-en murad kropp, med plats för några spelare, som nås via en smal trappa
-eller en stege. En **vallgång** löper längs krönet på en tjock mur, med
-ett bröstvärn och trappor i ändarna. En stege är bred nog för en spelare
-i taget. En **bro** av sten, plankor eller en fallen stock spänner över
-en klyfta, och spelare nedanför kan gå under den. Att stå högre upp
-ändrar inte din räckvidd eller din skada.
+En del mark ligger högre, och du kan bara ta dig upp via dess ramper,
+trappor, grova steg eller stegar: kanten på ett upphöjt däck stoppar dig
+som en mur. Där kanten är bruten kan du däremot kliva av och genast
+falla ner till marken nedanför, men aldrig klättra upp igen där. Ramper
+och trappor tar du dig över i full fart, grova steg lite långsammare och
+en stege i halv fart: att hoppa ner går fort, att klättra tillbaka går
+långsamt. Ett **torn** är en liten stenplattform på en murad kropp, med
+plats för några spelare, som nås via en smal trappa eller en stege. En
+**vallgång** löper längs krönet på en tjock mur, med ett bröstvärn och
+trappor i ändarna. En stege är bred nog för en spelare i taget. En
+**bro** av sten, plankor eller en fallen stock spänner över en klyfta,
+och spelare nedanför kan gå under den. Att stå högre upp ändrar inte din
+räckvidd eller din skada.
 
 ## Väder och atmosfär
 

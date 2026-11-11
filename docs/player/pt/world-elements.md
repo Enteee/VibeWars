@@ -84,16 +84,21 @@ as rachaduras se espalham à medida que ela enfraquece, até virar entulho.
 
 ## Alturas
 
-Parte do terreno é elevada, e você só consegue subir ou descer pelas
-rampas, escadas, degraus rústicos ou escadas de mão: a borda de um deque
-elevado detém você como uma parede. Uma **torre** é uma pequena
-plataforma de pedra sobre um corpo de alvenaria, com espaço para alguns
-jogadores, acessada por uma escada estreita ou uma escada de mão. Um
-**adarve** corre pelo topo de uma parede grossa, com um parapeito e
-escadas nas pontas. Uma escada de mão é larga o bastante para um jogador
-por vez. Uma **ponte** de pedra, de tábuas ou de um tronco caído
-atravessa um vão, e os jogadores lá embaixo podem passar por baixo dela.
-Estar mais alto não muda seu alcance nem seu dano.
+Parte do terreno é elevada, e você só consegue subir pelas rampas,
+escadas, degraus rústicos ou escadas de mão: a borda de um deque elevado
+detém você como uma parede. Onde a borda dele está quebrada, porém, você
+pode sair dele com um passo e cair na hora no chão abaixo, mas nunca
+voltar a subir por ali. Rampas e escadas são atravessadas em velocidade
+total, degraus rústicos um pouco mais devagar e uma escada de mão na
+metade da velocidade: pular para baixo é rápido, voltar a subir é lento.
+Uma **torre** é uma pequena plataforma de pedra sobre um corpo de
+alvenaria, com espaço para alguns jogadores, acessada por uma escada
+estreita ou uma escada de mão. Um **adarve** corre pelo topo de uma
+parede grossa, com um parapeito e escadas nas pontas. Uma escada de mão
+é larga o bastante para um jogador por vez. Uma **ponte** de pedra, de
+tábuas ou de um tronco caído atravessa um vão, e os jogadores lá embaixo
+podem passar por baixo dela. Estar mais alto não muda seu alcance nem
+seu dano.
 
 ## Clima e atmosfera
 

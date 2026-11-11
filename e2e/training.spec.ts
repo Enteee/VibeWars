@@ -215,6 +215,40 @@ test("picking Heights loads its arena with no console error (#2937)", async ({ p
   expect(errors).toEqual([]);
 });
 
+test("on Heights you step off the bridge's broken north lip onto the ground (#3069)", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("heights");
+  await expect(page.locator(".training-log")).toContainText("── Heights ──");
+  await takeControl(page);
+  /** Where you stand, in world units, from the stage's `data-positions` hook. */
+  const you = async (): Promise<{ readonly x: number; readonly y: number }> => {
+    const [x = Number.NaN, y = Number.NaN] = ((await shownAt(page, "you")) ?? "")
+      .split(",")
+      .map(Number);
+    return { x, y };
+  };
+  /** Hold `move` until `done` holds where you stand. */
+  const walk = async (
+    move: "move-right" | "move-up",
+    done: (at: { readonly x: number; readonly y: number }) => boolean,
+  ): Promise<void> => {
+    await page.keyboard.down(key(move));
+    await expect
+      .poll(async () => done(await you()), { intervals: [50], timeout: 15_000 })
+      .toBe(true);
+    await page.keyboard.up(key(move));
+  };
+  // Map coordinates from training-heights/map.json: up the west stairs onto
+  // the bridge (layer 2, y 350 to 550), then north over its drop-off, x 440
+  // to 520. Without it, the deck's edge would hold you at y 350.
+  await walk("move-right", ({ x }) => x >= 455);
+  await walk("move-up", ({ y }) => y < 320);
+  expect((await you()).x).toBeLessThan(520);
+});
+
 test("Wilds' scorched strip burns the dummy in it, logged by its kind (#3024, #3046)", async ({
   page,
 }) => {

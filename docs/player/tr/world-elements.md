@@ -89,15 +89,19 @@ yıkılıp moloza döner.
 
 Bazı zeminler yükseltilmiştir ve oraya yalnızca rampalarından,
 merdivenlerinden, kaba basamaklarından ya da seyyar merdivenlerinden
-çıkıp inebilirsin: yükseltilmiş bir platformun kenarı seni bir duvar
-gibi durdurur. **Kule**, kâgir bir gövdenin üstünde, birkaç oyuncuya yer
-olan küçük bir taş platformdur; dar bir merdivenle ya da seyyar
-merdivenle çıkılır. **Sur yolu** kalın bir duvarın tepesi boyunca uzanır;
-bir korkuluğu ve iki ucunda merdivenleri vardır. Seyyar merdiven aynı
-anda yalnızca bir oyuncunun geçebileceği genişliktedir. Taştan,
-kalaslardan ya da devrilmiş bir kütükten bir **köprü** bir boşluğun
-üzerinden geçer ve aşağıdaki oyuncular altından yürüyebilir. Daha yüksekte
-olmak menzilini ya da hasarını değiştirmez.
+çıkabilirsin: yükseltilmiş bir platformun kenarı seni bir duvar gibi
+durdurur. Yine de kenarının kırık olduğu yerde oradan adım atıp hemen
+aşağıdaki zemine düşebilirsin, ama oradan asla geri çıkamazsın. Rampalar
+ve merdivenler tam hızla, kaba basamaklar biraz daha yavaş, seyyar
+merdiven ise yarı hızla geçilir: aşağı atlamak hızlı, geri tırmanmak
+yavaştır. **Kule**, kâgir bir gövdenin üstünde, birkaç oyuncuya yer olan
+küçük bir taş platformdur; dar bir merdivenle ya da seyyar merdivenle
+çıkılır. **Sur yolu** kalın bir duvarın tepesi boyunca uzanır; bir
+korkuluğu ve iki ucunda merdivenleri vardır. Seyyar merdiven aynı anda
+yalnızca bir oyuncunun geçebileceği genişliktedir. Taştan, kalaslardan ya
+da devrilmiş bir kütükten bir **köprü** bir boşluğun üzerinden geçer ve
+aşağıdaki oyuncular altından yürüyebilir. Daha yüksekte olmak menzilini ya
+da hasarını değiştirmez.
 
 ## Hava ve atmosfer
 

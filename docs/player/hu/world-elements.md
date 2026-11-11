@@ -85,14 +85,18 @@ repedések, végül törmelékké omlik.
 ## Magaslatok
 
 Némely talaj megemelt, és csak a rámpáin, lépcsőin, durva fokain vagy
-létráin juthatsz fel vagy le: egy megemelt terasz pereme falként állít
-meg. A **torony** kis kőemelvény falazott testen, néhány játékosnak van
-rajta hely, és keskeny lépcsőn vagy létrán lehet feljutni rá. A
-**gyilokjáró** egy vastag fal tetején fut, mellvéddel és a két végén
-lépcsővel. A létrán egyszerre csak egy játékos fér el. A **híd** kőből,
-pallókból vagy egy kidőlt fatörzsből ível át egy szakadékot, és az alatta
-lévő játékosok elsétálhatnak alatta. Attól, hogy magasabban vagy, nem
-változik sem a hatótávod, sem a sebzésed.
+létráin juthatsz fel: egy megemelt terasz pereme falként állít meg. Ahol
+viszont a pereme letört, ott lepithetsz róla, és azonnal a lenti talajra
+esel, de ott soha nem mászhatsz vissza. A rámpákon és lépcsőkön teljes
+sebességgel haladsz át, a durva fokokon kicsit lassabban, a létrán pedig
+fél sebességgel: leugrani gyors, visszamászni lassú. A **torony** kis
+kőemelvény falazott testen, néhány játékosnak van rajta hely, és keskeny
+lépcsőn vagy létrán lehet feljutni rá. A **gyilokjáró** egy vastag fal
+tetején fut, mellvéddel és a két végén lépcsővel. A létrán egyszerre csak
+egy játékos fér el. A **híd** kőből, pallókból vagy egy kidőlt fatörzsből
+ível át egy szakadékot, és az alatta lévő játékosok elsétálhatnak alatta.
+Attól, hogy magasabban vagy, nem változik sem a hatótávod, sem a
+sebzésed.
 
 ## Időjárás és hangulat
 
