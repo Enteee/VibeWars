@@ -28,6 +28,7 @@ import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
 import heights from "../training/training-heights/map.json" with { type: "json" };
 import structures from "../test-maps/structures/map.json" with { type: "json" };
+import switchedTest from "../test-maps/switched/map.json" with { type: "json" };
 
 const validMap = {
   id: "arena-test",
@@ -1909,6 +1910,100 @@ describe("a ground outline (#3066)", () => {
         ],
       },
       /spawn 2 must be on its layer's walkable area/,
+    );
+  });
+});
+
+describe("switched decks and gate looks (#3068)", () => {
+  const refuses = (overrides: object, message: RegExp): void => {
+    expect(() => validateMapData({ ...switchedTest, ...overrides })).toThrow(message);
+  };
+  const [ropeBridge, drawbridge, planks] = switchedTest.decks;
+  const withDrawbridge = (switched: object) => ({
+    decks: [
+      ropeBridge,
+      { ...drawbridge, switched: { ...drawbridge?.switched, ...switched } },
+      planks,
+    ],
+  });
+
+  it("validates the switched test map, every gate look on it", () => {
+    const map = validateMapData(switchedTest);
+    expect(map.decks.filter(({ switched }) => switched !== null)).toHaveLength(3);
+    expect(map.gates.map(({ look }) => look).sort()).toEqual(["portcullis", "secret"]);
+  });
+
+  it("refuses a switch naming a fixed deck, an unknown one, or a gate sharing a deck's id", () => {
+    refuses(
+      { switches: [{ id: "lever", layer: 1, position: { x: 660, y: 760 }, targets: ["nowhere"] }] },
+      /switch lever names nowhere, which is no gate, teleport or switched deck/,
+    );
+    refuses(
+      { decks: [ropeBridge, { ...drawbridge, switched: null }, planks] },
+      /switch drawbridge-lever names drawbridge, which is no gate, teleport or switched deck/,
+    );
+    refuses(
+      {
+        gates: switchedTest.gates.map((gate, at) =>
+          at === 0 ? { ...gate, id: "drawbridge" } : gate,
+        ),
+      },
+      /gate id drawbridge is used twice among gates and decks/,
+    );
+  });
+
+  it("counts switched decks in the toggle budget", () => {
+    const gate = switchedTest.gates[1];
+    refuses(
+      {
+        gates: [
+          ...switchedTest.gates,
+          { ...gate, id: "spare-a", wall: { ...gate?.wall, y: 100 } },
+          { ...gate, id: "spare-b", wall: { ...gate?.wall, y: 500 } },
+        ],
+      },
+      /7 gates, breakables, switched teleports and switched decks, more than 6/,
+    );
+  });
+
+  it("refuses a spawn or an objective standing on a switched deck", () => {
+    refuses(
+      {
+        spawnPoints: [
+          ...switchedTest.spawnPoints,
+          { team: 0, layer: 2, position: { x: 1550, y: 480 } },
+        ],
+      },
+      /spawnPoints\.2: spawn 2 stands on a switched deck/,
+    );
+  });
+
+  it("refuses a switched deck that cannot do what it says", () => {
+    refuses(withDrawbridge({ hinge: null }), /has a hinge only if it pushes off/);
+    refuses(withDrawbridge({ whenDown: "fall", once: true }), /bridge-stone, which cannot fall/);
+    refuses(
+      {
+        decks: [
+          { ...ropeBridge, switched: { ...ropeBridge?.switched, once: false } },
+          drawbridge,
+          planks,
+        ],
+      },
+      /deck rope-bridge falls, so it goes down once/,
+    );
+    refuses(
+      {
+        decks: [
+          ropeBridge,
+          drawbridge,
+          { ...planks, switched: { ...planks?.switched, startsUp: false } },
+        ],
+      },
+      /deck crumbling-planks collapses under crossings, so it starts up and falls/,
+    );
+    refuses(
+      { switches: switchedTest.switches.filter(({ id }) => id !== "rope-lever") },
+      /deck rope-bridge is switched, and no switch names it nor do crossings bring it down/,
     );
   });
 });

@@ -7328,7 +7328,13 @@ export class MatchSimulation {
     }
     let layer = deck.layer - 1;
     for (let under = deck.layer - 1; under >= 0; under -= 1) {
-      if (isStandable(this.#graphOn(under), record.position)) {
+      if (
+        this.#isOnLayer(record.position, under) &&
+        !this.#switchedDecks.some(
+          (each) =>
+            !each.up && each.layer === under && pointInPolygon(record.position, each.footprint),
+        )
+      ) {
         layer = under;
         break;
       }
