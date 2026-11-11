@@ -81,6 +81,18 @@ công hoặc đánh trúng nó bằng một kỹ năng gây sát thương. Thanh
 hiện ra khi bạn trỏ vào hoặc nhắm nó; các vết nứt lan ra khi nó yếu đi,
 và cuối cùng nó sụp thành đống đá vụn.
 
+## Độ cao
+
+Một số nền đất được nâng cao, và bạn chỉ có thể lên hoặc xuống qua dốc,
+cầu thang, bậc thô hoặc thang leo của nó: mép của một sàn nâng chặn bạn
+lại như một bức tường. **Tháp** là một bệ đá nhỏ trên một thân xây gạch
+đá, đủ chỗ cho vài người chơi, lên bằng một cầu thang hẹp hoặc một
+thang leo. **Lối đi trên tường** chạy dọc đỉnh một bức tường dày, có lan
+can và cầu thang ở hai đầu. Một thang leo chỉ đủ rộng cho một người chơi
+mỗi lúc. Một **cây cầu** bằng đá, ván gỗ hoặc một khúc gỗ đổ bắc qua một
+khoảng trống, và người chơi bên dưới có thể đi qua bên dưới nó. Đứng cao
+hơn không thay đổi tầm đánh hay sát thương của bạn.
+
 ## Thời tiết và bầu không khí
 
 Màn sương, khói, hơi nước, mưa và tuyết chỉ để ngắm. Chúng không bao giờ

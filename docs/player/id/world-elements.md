@@ -86,6 +86,19 @@ tembok itu, lalu serang atau hantam dengan skill yang memberi damage. Bar
 Darah-nya tampil selama kamu menunjuknya atau menargetkannya; retakannya
 menyebar saat ia melemah, dan akhirnya ia runtuh menjadi puing.
 
+## Ketinggian
+
+Sebagian tanah lebih tinggi, dan kamu hanya bisa naik atau turun lewat
+landaian, tangga, undakan kasar, atau tangga panjatnya: tepi dek yang
+ditinggikan menghentikanmu seperti tembok. **Menara** adalah panggung
+batu kecil di atas badan pasangan batu, muat untuk beberapa pemain, dan
+dicapai lewat tangga sempit atau tangga panjat. **Jalan benteng**
+membentang di puncak tembok tebal, dengan pagar pelindung dan tangga di
+kedua ujungnya. Tangga panjat hanya muat untuk satu pemain sekaligus.
+**Jembatan** dari batu, papan, atau batang pohon tumbang membentang di
+atas celah, dan pemain di bawahnya bisa lewat di kolongnya. Berada lebih
+tinggi tidak mengubah jangkauan atau damage-mu.
+
 ## Cuaca dan suasana
 
 Gumpalan kabut, asap, uap, hujan dan salju hanya untuk dilihat. Semuanya

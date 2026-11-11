@@ -24,6 +24,7 @@ import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
+import structuresData from "../test-maps/structures/map.json" with { type: "json" };
 import heightsData from "../training/training-heights/map.json" with { type: "json" };
 import {
   MAX_OUTLINE_POINTS,
@@ -826,9 +827,11 @@ describe("Cinder Sanctum (#2695)", () => {
 });
 
 describe("the ramps of every layered map (ADR-0051)", () => {
-  const layered = [...loadAllMaps(), mapDataSchema.parse(layerTest)].filter(
-    (map) => map.layers > 1,
-  );
+  const layered = [
+    ...loadAllMaps(),
+    mapDataSchema.parse(layerTest),
+    mapDataSchema.parse(structuresData),
+  ].filter((map) => map.layers > 1);
 
   it.each(layered.map((map) => [map.id, map] as const))(
     "%s links both layers at every ramp",
@@ -889,6 +892,28 @@ describe("The Warden's Gallery (#2698)", () => {
         expect(finder.find(spawn.position, point), String(spawn.team)).toBeDefined();
       }
     }
+  });
+});
+
+describe("the structures test map's looks by route (#3067)", () => {
+  const structures = mapDataSchema.parse(structuresData);
+  const finder = layeredFinder(structures, RADIUS);
+  const spawn = { x: 100, y: 500 };
+
+  it.each([
+    ["the platform", { x: 300, y: 380 }, 2],
+    ["the tower, up its ladder", { x: 435, y: 160 }, 3],
+    ["the wall-walk", { x: 1000, y: 144 }, 2],
+    ["the terrace", { x: 500, y: 780 }, 2],
+    ["the log over the gorge", { x: 1000, y: 670 }, 2],
+    ["the gorge's floor, under the log", { x: 1000, y: 560 }, 0],
+    ["the stone bridge", { x: 1550, y: 480 }, 2],
+    ["the plank bridge", { x: 1550, y: 785 }, 2],
+    ["under the stone bridge", { x: 1550, y: 480 }, 1],
+  ] as const)("reaches %s from the ground", (_, to, layer) => {
+    const route = finder.find(spawn, structures.groundLayer, to, layer);
+    expect(route).toBeDefined();
+    expect(route?.at(-1)).toMatchObject({ ...to, layer });
   });
 });
 

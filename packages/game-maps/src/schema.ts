@@ -65,11 +65,35 @@ const wallSchema = z.discriminatedUnion("kind", [
   polygonWallSchema.extend({ layer: layerSchema }),
 ]);
 
+/**
+ * What a deck is drawn as (#3067): the floor walks the same whatever its
+ * look, but a tower, a wall-walk and a bridge each have a role in play.
+ */
+export const DECK_LOOKS = [
+  "platform",
+  "tower",
+  "wall-walk",
+  "terrace",
+  "bridge-stone",
+  "bridge-plank",
+  "bridge-log",
+] as const;
+
+/** What a transition is drawn as (#3067); #3069 gives each its own climbing pace. */
+export const TRANSITION_LOOKS = [
+  "ramp",
+  "stairs",
+  "stairs-landing",
+  "ladder",
+  "rough-steps",
+] as const;
+
 /** A walkable floor above the ground (ADR-0051). */
 const deckSchema = z.object({
   id: z.string().min(1),
   layer: layerSchema,
   footprint: shapeSchema,
+  look: z.enum(DECK_LOOKS),
 });
 
 /**
@@ -81,6 +105,7 @@ const transitionSchema = z.object({
   to: layerSchema,
   area: shapeSchema,
   uphill: z.enum(["n", "e", "s", "w"]),
+  look: z.enum(TRANSITION_LOOKS),
 });
 
 /**
@@ -522,6 +547,48 @@ const BODY_RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
 /** The narrowest a ramp may be across (#2973): a body, and room either side. */
 const MIN_RAMP_WIDTH = 2 * BODY_RADIUS + 4;
 
+/** The widest a tower's top may be either way (#3067): room for two to four bodies, easy to rush. */
+export const MAX_TOWER_SIZE = 120;
+
+/** The widest a ladder may be across (#3067): under two bodies, so it is climbed single file. */
+export const MAX_LADDER_WIDTH = 48;
+
+/** How far a wall-walk may stand out past the walls under it (#3067). */
+export const WALL_WALK_OVERHANG = 8;
+
+/** How far apart the points are that test a wall-walk lies over walls. */
+const WALL_WALK_SAMPLE = 8;
+
+/**
+ * Whether all of `footprint` lies over `walls`, give or take
+ * `WALL_WALK_OVERHANG`: each point of a grid over it is in a wall, or
+ * that close to one's edge.
+ */
+function overWalls(footprint: Shape, walls: readonly Wall[]): boolean {
+  const corners = shapeVertices(footprint);
+  const xs = corners.map(({ x }) => x);
+  const ys = corners.map(({ y }) => y);
+  const edges = allWallSegments(walls);
+  const covered = (point: Vec2Data): boolean =>
+    walls.some((wall) => pointInShape(point, wall)) ||
+    edges.some((edge) => distancePointToSegment(point, edge) <= WALL_WALK_OVERHANG);
+  const along = (low: number, high: number): number[] => {
+    const steps = Math.max(1, Math.ceil((high - low) / WALL_WALK_SAMPLE));
+    return Array.from({ length: steps + 1 }, (_, k) => low + ((high - low) * k) / steps);
+  };
+  const [left, right, top, bottom] = [
+    Math.min(...xs),
+    Math.max(...xs),
+    Math.min(...ys),
+    Math.max(...ys),
+  ];
+  return (
+    along(left, right).every((x) =>
+      along(top, bottom).every((y) => !pointInShape({ x, y }, footprint) || covered({ x, y })),
+    ) && corners.every(covered)
+  );
+}
+
 /** Whether a ramp lies in one of `pits`, its high edge on that pit's edge (#2973). */
 function inPitUpToItsEdge(transition: Transition, pits: readonly BelowGround[]): boolean {
   const corners = shapeVertices(transition.area);
@@ -910,6 +977,30 @@ export const mapDataSchema = z
         });
       }
       deckIds.add(deck.id);
+      const corners = shapeVertices(deck.footprint);
+      const across = (axis: "x" | "y"): number =>
+        Math.max(...corners.map((corner) => corner[axis])) -
+        Math.min(...corners.map((corner) => corner[axis]));
+      if (deck.look === "tower" && Math.max(across("x"), across("y")) > MAX_TOWER_SIZE) {
+        context.addIssue({
+          code: "custom",
+          path: ["decks", index, "footprint"],
+          message: `tower ${deck.id} is ${String(across("x"))} × ${String(across("y"))}, wider than the ${String(MAX_TOWER_SIZE)} a tower may be`,
+        });
+      }
+      if (
+        deck.look === "wall-walk" &&
+        !overWalls(
+          deck.footprint,
+          map.walls.filter((wall) => wall.layer === deck.layer - 1),
+        )
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["decks", index, "footprint"],
+          message: `wall-walk ${deck.id} does not lie over walls on layer ${String(deck.layer - 1)}`,
+        });
+      }
       if (!shapeInBounds(deck.footprint, map.width, map.height)) {
         context.addIssue({
           code: "custom",
@@ -973,6 +1064,13 @@ export const mapDataSchema = z
           code: "custom",
           path: ["transitions", index, "area"],
           message: `transition ${String(index)} is ${width.toFixed(1)} wide, narrower than the ${String(MIN_RAMP_WIDTH)} a body needs`,
+        });
+      }
+      if (transition.look === "ladder" && width > MAX_LADDER_WIDTH) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index, "area"],
+          message: `ladder ${String(index)} is ${width.toFixed(1)} wide, wider than the ${String(MAX_LADDER_WIDTH)} a ladder may be`,
         });
       }
       if (transition.to === map.groundLayer && !inPitUpToItsEdge(transition, map.pits)) {
@@ -1418,6 +1516,8 @@ export type PolygonWall = z.infer<typeof polygonWallSchema>;
 export type Shape = z.infer<typeof shapeSchema>;
 export type Wall = z.infer<typeof wallSchema>;
 export type Deck = z.infer<typeof deckSchema>;
+export type DeckLook = Deck["look"];
+export type TransitionLook = Transition["look"];
 export type Transition = z.infer<typeof transitionSchema>;
 export type BelowGround = z.infer<typeof belowGroundSchema>;
 export type SpawnPoint = z.infer<typeof spawnPointSchema>;

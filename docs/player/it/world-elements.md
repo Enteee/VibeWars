@@ -85,6 +85,19 @@ di esso, poi attaccalo o colpiscilo con un'abilità che infligge danni. La
 sua barra della salute si vede mentre lo indichi o lo bersagli; le crepe si
 allargano man mano che cede, e alla fine crolla in macerie.
 
+## Altezze
+
+Alcuni terreni sono rialzati, e puoi salire o scendere solo per le loro
+rampe, scale, gradini grezzi o scale a pioli: il bordo di una piattaforma
+rialzata ti ferma come un muro. Una **torre** è una piccola piattaforma di
+pietra su un corpo in muratura, con spazio per pochi giocatori, raggiunta
+da una scala stretta o da una scala a pioli. Un **camminamento** corre
+lungo la cima di un muro spesso, con un parapetto e scale alle estremità.
+Una scala a pioli è larga abbastanza per un solo giocatore alla volta. Un
+**ponte** di pietra, di assi o fatto da un tronco caduto attraversa un
+vuoto, e i giocatori sotto possono camminarci al di sotto. Stare più in
+alto non cambia la tua gittata né i tuoi danni.
+
 ## Meteo e atmosfera
 
 Banchi di nebbia, fumo, vapore, pioggia e neve sono solo per l'occhio. Non

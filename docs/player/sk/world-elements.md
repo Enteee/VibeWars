@@ -79,6 +79,18 @@ a potom naň zaútoč alebo ho zasiahni schopnosťou, ktorá spôsobuje zranenie
 Jeho lišta zdravia sa ukazuje, kým naň ukazuješ alebo ho máš zameraný; ako
 slabne, šíria sa po ňom praskliny, až sa zrúti na sutiny.
 
+## Výšky
+
+Niektorá zem je vyvýšená a hore alebo dole sa dostaneš len po jej
+rampách, schodoch, hrubých stupňoch alebo rebríkoch: okraj vyvýšenej
+plošiny ťa zastaví ako múr. **Veža** je malá kamenná plošina na
+murovanom tele, s miestom pre pár hráčov, na ktorú vedú úzke schody
+alebo rebrík. **Ochodza** vedie po vrchu hrubého múru, s parapetom
+a schodmi na koncoch. Rebrík je dosť široký len pre jedného hráča
+naraz. **Most** z kameňa, dosiek alebo spadnutého kmeňa sa klenie ponad
+priepasť a hráči pod ním môžu prejsť popod neho. Byť vyššie nemení tvoj
+dosah ani tvoje zranenie.
+
 ## Počasie a atmosféra
 
 Hmlové pásy, dym, para, dážď a sneh sú len pre oko. Nikdy ťa nezrania,

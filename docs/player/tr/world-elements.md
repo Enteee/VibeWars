@@ -85,6 +85,20 @@ ya da hasar veren bir yetenekle vur. Üstüne geldiğinde ya da onu hedef
 aldığında can çubuğu görünür; zayıfladıkça çatlaklar yayılır ve sonunda
 yıkılıp moloza döner.
 
+## Yükseklikler
+
+Bazı zeminler yükseltilmiştir ve oraya yalnızca rampalarından,
+merdivenlerinden, kaba basamaklarından ya da seyyar merdivenlerinden
+çıkıp inebilirsin: yükseltilmiş bir platformun kenarı seni bir duvar
+gibi durdurur. **Kule**, kâgir bir gövdenin üstünde, birkaç oyuncuya yer
+olan küçük bir taş platformdur; dar bir merdivenle ya da seyyar
+merdivenle çıkılır. **Sur yolu** kalın bir duvarın tepesi boyunca uzanır;
+bir korkuluğu ve iki ucunda merdivenleri vardır. Seyyar merdiven aynı
+anda yalnızca bir oyuncunun geçebileceği genişliktedir. Taştan,
+kalaslardan ya da devrilmiş bir kütükten bir **köprü** bir boşluğun
+üzerinden geçer ve aşağıdaki oyuncular altından yürüyebilir. Daha yüksekte
+olmak menzilini ya da hasarını değiştirmez.
+
 ## Hava ve atmosfer
 
 Sis kümeleri, duman, buhar, yağmur ve kar yalnızca göz içindir. Seni

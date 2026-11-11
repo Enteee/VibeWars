@@ -42,6 +42,10 @@ Vejdeš-li do **portálu**, okamžitě se objevíš u jeho výstupu. Portál ved
 
 **Popraskanou zeď** jde rozbít. Je to teplý, tesaný kámen, na rozdíl od modrošedých zdí, které se nikdy nerozbijí. Klikni na ni pravým tlačítkem a pak na ni zaútoč nebo ji zasáhni dovedností, která způsobuje zranění. Její ukazatel zdraví je vidět, když na ni ukazuješ nebo ji máš zaměřenou; jak slábne, šíří se praskliny, až se rozpadne v suť.
 
+## Výšky
+
+Část terénu je vyvýšená a nahoru nebo dolů se dostaneš jen po jejích rampách, schodech, hrubých stupních nebo žebřících: okraj vyvýšené plošiny tě zastaví jako zeď. **Věž** je malá kamenná plošina na zděném těle, s místem pro pár hráčů, na kterou vede úzké schodiště nebo žebřík. **Ochoz** vede po vrcholu silné zdi, s poprsní zídkou a schody na obou koncích. Žebřík je dost široký jen pro jednoho hráče najednou. **Most** z kamene, prken nebo padlého kmene překlenuje mezeru a hráči pod ním mohou procházet. Výška nemění tvůj dosah ani zranění.
+
 ## Počasí a atmosféra
 
 Mlžné závoje, kouř, pára, déšť a sníh jsou jen pro oko. Nikdy ti neublíží, nezpomalí tě ani tě neskryjí. Mlha je vždy bledá a chladná, nikdy zelená, takže si ji nelze splést s jedovatou mlhou.

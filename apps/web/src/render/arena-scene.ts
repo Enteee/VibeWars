@@ -79,7 +79,6 @@ import {
   WALL_HEIGHT,
   deckHeldBy,
   deckSideLow,
-  plankLines,
   southFacingEdges,
   drawnLayerAt,
   hiddenCrop,
@@ -87,7 +86,9 @@ import {
   occludersOf,
   pickSurface,
   pitDrawing,
+  openEdges,
   rampDrawing,
+  rampFrame,
   RING_PATH,
   traceHiddenOutline,
   tunnelCover,
@@ -167,6 +168,13 @@ import {
 import { lyingPose } from "./lying-pose.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import { LightingPass, litStructurePalette, baseTint } from "./lighting-pass.js";
+import {
+  DECK_ART,
+  TRANSITION_ART,
+  deckPalette,
+  transitionPalette,
+  type DeckFrame,
+} from "./structure-art.js";
 import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
@@ -256,11 +264,8 @@ import type {
 
 const BEACON_BOLT_GLOW = 0x79c0ff;
 const BEACON_BOLT_CORE = 0xf0f6ff;
-const RAMP_CHEVRON_WIDTH = 2;
 /** How far apart the side face's stacked outlines lie, in world units. */
 const SIDE_FACE_SLICE = 2;
-/** How far apart a deck's planks are, in world units. */
-const DECK_PLANK = 48;
 /** Line widths, in CSS px: a deck's lip and a wall's lit edge. */
 const DECK_LIP_WIDTH = 3;
 const WALL_LIT_WIDTH = 2;
@@ -2273,7 +2278,12 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.drawPits(next.structure, line, palette);
     for (const transition of next.structure.transitions) {
-      const lit = litStructurePalette(palette, next.lighting, transition.area, transition.from);
+      const lit = litStructurePalette(
+        transitionPalette(palette, transition.look),
+        next.lighting,
+        transition.area,
+        transition.from,
+      );
       this.drawRamp(next.structure, transition, line, lit);
     }
     for (const wall of next.walls) {
@@ -2343,11 +2353,16 @@ export class ArenaScene extends Phaser.Scene {
     }
     for (const deck of next.structure.decks) {
       this.drawDeck(
+        next.structure,
         deck,
         next.walls,
-        ground,
         line,
-        litStructurePalette(palette, next.lighting, deck.footprint, deck.layer),
+        litStructurePalette(
+          deckPalette(palette, deck.look),
+          next.lighting,
+          deck.footprint,
+          deck.layer,
+        ),
       );
     }
     this.occluders = occludersOf(next.walls, next.structure);
@@ -2503,20 +2518,12 @@ export class ArenaScene extends Phaser.Scene {
     this.fillFan(g, drawing.side);
     g.fillStyle(palette.rampTop, 1);
     this.fillFan(g, drawing.slope);
-    g.lineStyle(line, palette.rampPanel, 1);
-    for (const [from, to] of drawing.panels) {
-      if (from !== undefined && to !== undefined) {
-        g.lineBetween(from.x, from.y, to.x, to.y);
-      }
-    }
-    g.lineStyle(line * RAMP_CHEVRON_WIDTH, palette.rampChevron, 1);
-    for (const chevron of drawing.chevrons) {
-      g.strokePoints(
-        chevron.map(({ x, y }) => new Phaser.Math.Vector2(x, y)),
-        false,
-        false,
-      );
-    }
+    TRANSITION_ART[ramp.look](g, {
+      drawing,
+      frame: rampFrame(structure, ramp),
+      line,
+      palette,
+    });
   }
 
   /** Fills the convex outline `points`, as triangles from its first. */
@@ -2533,32 +2540,43 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** A deck at its layer's height, its side face reaching down one layer. */
+  /**
+   * A deck at its layer's height, its side face reaching down one layer,
+   * drawn as its look (#3067).
+   */
   private drawDeck(
+    structure: MapStructure,
     deck: MapStructure["decks"][number],
     walls: readonly RenderableWall[],
-    ground: number,
     line: number,
     palette: ArenaPalette,
   ): void {
-    const top = elevationOf(deck.layer, ground);
+    const { ground } = structure;
+    const art = DECK_ART[deck.look];
+    const frame: DeckFrame = {
+      footprint: deck.footprint,
+      open: openEdges(structure, deck),
+      top: elevationOf(deck.layer, ground),
+      low: deckSideLow(deck, walls, ground),
+      base: elevationOf(deck.layer - 1, ground),
+      line,
+      palette,
+    };
     const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
-    this.drawColumn(side, deck.footprint, deckSideLow(deck, walls, ground), top, palette.slab);
+    this.drawColumn(side, deck.footprint, frame.low, frame.top, palette.slab);
+    art.side(side, frame);
     const face = this.structureAt({ kind: "deck", deckLayer: deck.layer });
     face.save();
-    face.translateCanvas(0, -top);
+    face.translateCanvas(0, -frame.top);
     face.fillStyle(palette.deckTop, 1);
     this.fillShape(face, deck.footprint);
-    face.lineStyle(line, palette.plank, 1);
-    for (const { from, to } of plankLines(deck.footprint, DECK_PLANK)) {
-      face.lineBetween(from.x, from.y, to.x, to.y);
-    }
     face.lineStyle(line, palette.wallStroke, 1);
     this.strokeShape(face, deck.footprint);
     face.lineStyle(line * DECK_LIP_WIDTH, DECK_LIP, 1);
     for (const { from, to } of southFacingEdges(deck.footprint)) {
       face.lineBetween(from.x, from.y, to.x, to.y);
     }
+    art.top(face, frame);
     face.restore();
   }
 

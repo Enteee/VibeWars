@@ -79,6 +79,18 @@ the blue-grey walls that never break. Right click it, then attack it or
 hit it with a damage skill. Its health bar shows while you point at it
 or target it; cracks spread as it weakens, and it falls to rubble.
 
+## Heights
+
+Some ground is raised, and you can only get up or down by its ramps,
+stairs, rough steps or ladders: the edge of a raised deck stops you like
+a wall. A **tower** is a small stone platform on a masonry body, with
+room for a few players, reached by a narrow stair or a ladder. A
+**wall-walk** runs along the top of a thick wall, with a parapet and
+stairs at its ends. A ladder is wide enough for one player at a time. A
+**bridge** of stone, planks or a fallen log spans a gap, and players
+below can walk underneath it. Being higher up does not change your
+range or your damage.
+
 ## Weather and atmosphere
 
 Fog banks, smoke, steam, rain and snow are only for the eye. They never

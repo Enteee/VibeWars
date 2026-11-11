@@ -1,0 +1,349 @@
+{
+  "id": "structures",
+  "name": "Structures",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "teams": 2,
+  "width": 2000,
+  "height": 1000,
+  "bounds": { "kind": "rect" },
+  "layers": 4,
+  "groundLayer": 1,
+  "pits": [
+    {
+      "id": "gorge",
+      "footprint": {
+        "kind": "rect",
+        "x": 900,
+        "y": 500,
+        "width": 200,
+        "height": 400
+      }
+    }
+  ],
+  "tunnels": [],
+  "decks": [
+    {
+      "id": "west-platform",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 200,
+        "y": 100,
+        "width": 320,
+        "height": 340
+      },
+      "look": "platform"
+    },
+    {
+      "id": "west-tower",
+      "layer": 3,
+      "footprint": {
+        "kind": "rect",
+        "x": 380,
+        "y": 120,
+        "width": 110,
+        "height": 110
+      },
+      "look": "tower"
+    },
+    {
+      "id": "north-wall-walk",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 756,
+        "y": 116,
+        "width": 488,
+        "height": 56
+      },
+      "look": "wall-walk"
+    },
+    {
+      "id": "south-terrace",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 300,
+        "y": 650,
+        "width": 400,
+        "height": 250
+      },
+      "look": "terrace"
+    },
+    {
+      "id": "gorge-log",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 860,
+        "y": 640,
+        "width": 280,
+        "height": 60
+      },
+      "look": "bridge-log"
+    },
+    {
+      "id": "east-bridge",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 1400,
+        "y": 400,
+        "width": 300,
+        "height": 160
+      },
+      "look": "bridge-stone"
+    },
+    {
+      "id": "east-planks",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 1400,
+        "y": 760,
+        "width": 300,
+        "height": 50
+      },
+      "look": "bridge-plank"
+    }
+  ],
+  "transitions": [
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 64,
+        "y": 200,
+        "width": 146,
+        "height": 100
+      },
+      "uphill": "e",
+      "look": "ramp"
+    },
+    {
+      "from": 2,
+      "to": 3,
+      "area": {
+        "kind": "rect",
+        "x": 415,
+        "y": 225,
+        "width": 40,
+        "height": 150
+      },
+      "uphill": "n",
+      "look": "ladder"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 610,
+        "y": 116,
+        "width": 150,
+        "height": 56
+      },
+      "uphill": "e",
+      "look": "stairs-landing"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1240,
+        "y": 116,
+        "width": 150,
+        "height": 56
+      },
+      "uphill": "w",
+      "look": "stairs"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 160,
+        "y": 720,
+        "width": 145,
+        "height": 100
+      },
+      "uphill": "e",
+      "look": "rough-steps"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 720,
+        "y": 640,
+        "width": 145,
+        "height": 60
+      },
+      "uphill": "e",
+      "look": "ramp"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1135,
+        "y": 640,
+        "width": 145,
+        "height": 60
+      },
+      "uphill": "w",
+      "look": "ramp"
+    },
+    {
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 960,
+        "y": 760,
+        "width": 80,
+        "height": 140
+      },
+      "uphill": "s",
+      "look": "rough-steps"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1260,
+        "y": 430,
+        "width": 145,
+        "height": 100
+      },
+      "uphill": "e",
+      "look": "ramp"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1695,
+        "y": 430,
+        "width": 145,
+        "height": 100
+      },
+      "uphill": "w",
+      "look": "ramp"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1260,
+        "y": 760,
+        "width": 145,
+        "height": 50
+      },
+      "uphill": "e",
+      "look": "ramp"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1695,
+        "y": 760,
+        "width": 145,
+        "height": 50
+      },
+      "uphill": "w",
+      "look": "ramp"
+    }
+  ],
+  "walls": [
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 760,
+      "y": 120,
+      "width": 480,
+      "height": 48
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 1430,
+      "y": 420,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 1646,
+      "y": 420,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 1430,
+      "y": 516,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 1646,
+      "y": 516,
+      "width": 24,
+      "height": 24
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 100,
+        "y": 500
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 1900,
+        "y": 500
+      }
+    }
+  ],
+  "objectives": [],
+  "gates": [],
+  "lighting": {
+    "ambient": {
+      "colour": 11582676,
+      "intensity": 0.45
+    },
+    "indoorAmbient": {
+      "colour": 5924488,
+      "intensity": 0.3
+    },
+    "indoor": [],
+    "sun": {
+      "directionDeg": 315,
+      "elevationDeg": 50,
+      "colour": 16773590,
+      "intensity": 0.55
+    },
+    "lights": []
+  }
+}

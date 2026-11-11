@@ -82,6 +82,19 @@ a potem zaatakuj albo traf umiejętnością zadającą obrażenia. Jego pasek
 zdrowia widać, gdy na niego wskazujesz lub masz go za cel; w miarę słabnięcia
 rozchodzą się po nim pęknięcia, aż rozpada się w gruz.
 
+## Wysokości
+
+Część terenu jest podniesiona i można na nią wejść lub z niej zejść tylko
+po rampach, schodach, nierównych stopniach albo drabinach: krawędź
+podwyższonego pomostu zatrzymuje cię jak mur. **Wieża** to mała kamienna
+platforma na murowanym korpusie, z miejscem dla kilku graczy, na którą
+prowadzą wąskie schody albo drabina. **Chodnik na murach** biegnie po
+szczycie grubego muru, z przedpiersiem i schodami na końcach. Drabina
+jest na tyle szeroka, że mieści naraz jednego gracza. **Most** z kamienia,
+desek albo powalonego pnia przerzucony jest nad szczeliną, a gracze na
+dole mogą przejść pod nim. Przebywanie wyżej nie zmienia twojego zasięgu
+ani obrażeń.
+
 ## Pogoda i atmosfera
 
 Ławice mgły, dym, para, deszcz i śnieg są tylko dla oka. Nigdy cię nie ranią,

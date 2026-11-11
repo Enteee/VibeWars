@@ -14,6 +14,7 @@
   "decks": [
     {
       "id": "bridge",
+      "look": "bridge-stone",
       "layer": 1,
       "footprint": { "kind": "rect", "x": 500, "y": 300, "width": 600, "height": 200 }
     }
@@ -23,13 +24,15 @@
       "from": 0,
       "to": 1,
       "area": { "kind": "rect", "x": 350, "y": 300, "width": 170, "height": 200 },
-      "uphill": "e"
+      "uphill": "e",
+      "look": "ramp"
     },
     {
       "from": 0,
       "to": 1,
       "area": { "kind": "rect", "x": 1080, "y": 300, "width": 170, "height": 200 },
-      "uphill": "w"
+      "uphill": "w",
+      "look": "ramp"
     }
   ],
   "walls": [
