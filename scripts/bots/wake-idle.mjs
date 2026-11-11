@@ -6,8 +6,18 @@
  * sweeps for those. Pure: no clock, no files.
  */
 
-import { WORK_COLUMN } from "./staff.mjs";
-
+/**
+ * The one role swept for each column. Roles that share a column keep the arrival
+ * wake and direct messages only: a card is usually one role's.
+ */
+export const SWEEP_ROLE = Object.freeze(
+  /** @type {Record<string, string>} */ ({
+    Backlog: "architect",
+    Ready: "developer",
+    "In Review": "lead-dev",
+    QA: "qa-tester",
+  }),
+);
 /** In `bus/<employee>/`: the time (ms) the employee went idle; there while it is. */
 export const IDLING_FILE = "idling";
 /** An employee must have been idle this long (ms): a turn that just ended is not woken back. */
@@ -70,13 +80,8 @@ export function wakeTargets({ cards, staff, idle, claims, sent, now }) {
   /** @type {WakeTarget[]} */
   const targets = [];
   const picked = new Set();
-  // A card shared by several roles' columns (Ready) wakes one employee in all.
-  const woken = new Set();
   const readyCount = cards.filter((card) => card.status === "Ready").length;
-  for (const [role, column] of Object.entries(WORK_COLUMN)) {
-    if (column === null) {
-      continue;
-    }
+  for (const [column, role] of Object.entries(SWEEP_ROLE)) {
     let waiting = cards.filter((card) => card.status === column && !claimed(card, claims, now));
     if (role === "architect") {
       // Backlog also holds epics, releases and held cards.
@@ -92,14 +97,13 @@ export function wakeTargets({ cards, staff, idle, claims, sent, now }) {
       })
       .map(([employee]) => employee)
       .sort();
-    for (const card of waiting.filter((c) => !woken.has(c.number))) {
+    for (const card of waiting) {
       const employee = sleepers.find((name) => {
         const last = sent.get(sentKey(name, card.number));
         return !picked.has(name) && (last === undefined || now - last >= REWAKE_MS);
       });
       if (employee !== undefined) {
         picked.add(employee);
-        woken.add(card.number);
         targets.push({ employee, issue: card.number, column, title: card.title });
       }
     }

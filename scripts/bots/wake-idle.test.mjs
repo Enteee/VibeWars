@@ -81,16 +81,31 @@ describe("wakeTargets (#3100)", () => {
     expect(run({ cards: [card(5, "Ready")] })).toHaveLength(1);
   });
 
-  it("wakes one employee for a card in a column several roles share", () => {
+  it("sweeps only developer for Ready, not the roles that share the column", () => {
     const staff = new Map([
       ["developer", "developer"],
       ["cicd-engineer", "cicd-engineer"],
+      ["asset-designer", "asset-designer"],
     ]);
     const idle = new Map([
       ["developer", LONG_AGO],
       ["cicd-engineer", LONG_AGO],
+      ["asset-designer", LONG_AGO],
     ]);
-    expect(run({ staff, idle, cards: [card(5, "Ready")] })).toHaveLength(1);
+    expect(run({ staff, idle, cards: [card(5, "Ready")] })).toEqual([
+      { employee: "developer", issue: 5, column: "Ready", title: "card 5" },
+    ]);
+  });
+
+  it("sweeps QA for qa-tester and In Review for lead-dev", () => {
+    const staff = new Map([
+      ["qa-tester", "qa-tester"],
+      ["perf-sec-qa", "perf-sec-qa"],
+      ["lead-dev", "lead-dev"],
+    ]);
+    const idle = new Map([...staff.keys()].map((name) => [name, LONG_AGO]));
+    const cards = [card(7, "QA"), card(8, "In Review")];
+    expect(run({ staff, idle, cards }).map((t) => t.employee)).toEqual(["lead-dev", "qa-tester"]);
   });
 
   it("skips a fired employee and ignores Blocked", () => {
