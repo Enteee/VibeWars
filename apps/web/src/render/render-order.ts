@@ -195,3 +195,16 @@ export function easeElevation(current: number, target: number, dt: number): numb
   const reach = (ELEVATION_STEP / ELEVATION_EASE_SECONDS) * dt;
   return current < target ? Math.min(current + reach, target) : Math.max(current - reach, target);
 }
+
+/** How long a body that stepped off a drop-off takes to fall to the layer below, in seconds (#3069). */
+export const DROP_FALL_SECONDS = 0.25;
+
+/**
+ * The lift `elapsed` seconds into a fall from `from` to `to`: slow off
+ * the lip and fastest at the landing, as a fall is, and there at
+ * `DROP_FALL_SECONDS`.
+ */
+export function fallLift(from: number, to: number, elapsed: number): number {
+  const t = Math.min(Math.max(elapsed / DROP_FALL_SECONDS, 0), 1);
+  return from + (to - from) * t * t;
+}

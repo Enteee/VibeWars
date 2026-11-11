@@ -312,6 +312,7 @@ describe("clicks with Show names held (#2738)", () => {
       ground: 0,
       pits: [],
       tunnels: [],
+      dropOffs: [],
       decks: [{ layer: 1, footprint: deck, look: "platform" as const }],
       transitions: [],
       water: [],

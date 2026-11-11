@@ -181,6 +181,12 @@ export interface MapStructure {
     readonly footprint: RenderableShape;
     readonly look: DeckLook;
   }[];
+  /** Stretches of a raised edge you step off onto `layer - 1`, never climb (#3069). */
+  readonly dropOffs: readonly {
+    readonly layer: number;
+    readonly from: Vec2;
+    readonly to: Vec2;
+  }[];
   /** Holes in the ground, their floor on `ground - 1` (#2973). */
   readonly pits: readonly { readonly footprint: RenderableShape }[];
   /** Floors under the ground, on `ground - 1`, the ground over them (#2973). */
@@ -202,6 +208,7 @@ export const FLAT_STRUCTURE: MapStructure = {
   bounds: { kind: "rect" },
   ground: 0,
   decks: [],
+  dropOffs: [],
   pits: [],
   tunnels: [],
   transitions: [],

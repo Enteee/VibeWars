@@ -1295,10 +1295,11 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     );
   });
 
-  it("validates the structures test map, every look on it once (#3067)", () => {
+  it("validates the structures test map, every look on it once (#3067) and its drop-offs (#3069)", () => {
     const map = validateMapData(structures);
     expect(new Set(map.decks.map(({ look }) => look))).toEqual(new Set(DECK_LOOKS));
     expect(new Set(map.transitions.map(({ look }) => look))).toEqual(new Set(TRANSITION_LOOKS));
+    expect(map.dropOffs).toHaveLength(2);
   });
 
   it("refuses a layer outside the map's, naming the field", () => {

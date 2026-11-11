@@ -76,7 +76,7 @@
       "look": "rough-steps"
     }
   ],
-  "dropOffs": [],
+  "dropOffs": [{ "layer": 2, "from": { "x": 440, "y": 350 }, "to": { "x": 520, "y": 350 } }],
   "walls": [
     { "kind": "rect", "layer": 1, "x": 450, "y": 370, "width": 24, "height": 24 },
     { "kind": "rect", "layer": 1, "x": 726, "y": 370, "width": 24, "height": 24 },

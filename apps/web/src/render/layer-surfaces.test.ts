@@ -11,6 +11,8 @@ import {
 } from "./arena-snapshot.js";
 import {
   trackAlt,
+  besideDropOff,
+  brokenLip,
   deckSideLow,
   hiddenCrop,
   DECK_SLAB,
@@ -41,6 +43,7 @@ const BRIDGE: MapStructure = {
   ground: 0,
   pits: [],
   tunnels: [],
+  dropOffs: [],
   decks: [{ layer: 1, footprint: bridge, look: "platform" }],
   transitions: [],
   water: [],
@@ -90,6 +93,7 @@ describe("a click on a ramp (#2972)", () => {
     ground: 0,
     pits: [],
     tunnels: [],
+    dropOffs: [],
     decks: [
       { layer: 1, footprint: rect(200, 100, 200, 100), look: "platform" },
       { layer: 2, footprint: rect(260, -100, 80, 100), look: "platform" },
@@ -211,6 +215,7 @@ describe("a body under a raised ramp (#2975)", () => {
     ground: 0,
     pits: [],
     tunnels: [],
+    dropOffs: [],
     decks: [
       {
         layer: 1,
@@ -428,6 +433,7 @@ describe("liftAt (#2958)", () => {
     ground: 0,
     pits: [],
     tunnels: [],
+    dropOffs: [],
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
     transitions: [
       ramp(0, 1, [300, 250, 140, 200], "e"),
@@ -705,5 +711,26 @@ describe("trackAlt (#3020)", () => {
     alt.dispose();
     target.dispatchEvent(event("keydown", true));
     expect(alt.held()).toBe(false);
+  });
+});
+
+describe("drop-offs (#3069)", () => {
+  const lip = { layer: 1, from: { x: 100, y: 200 }, to: { x: 200, y: 200 } };
+  const cliff: MapStructure = { ...BRIDGE, dropOffs: [lip] };
+
+  it("breaks the lip into notches either side of the edge, its ends on it", () => {
+    const points = brokenLip(lip.from, lip.to);
+    expect(points).toHaveLength(11);
+    expect(points[0]).toEqual(lip.from);
+    expect(points.at(-1)).toEqual(lip.to);
+    expect(points.every((point) => Math.abs(point.y - 200) <= 3)).toBe(true);
+    expect(new Set(points.map((point) => point.y)).size).toBe(3);
+  });
+
+  it("knows the ground just past a drop-off on its layer, and nowhere else", () => {
+    expect(besideDropOff(cliff, { x: 150, y: 216 }, 1)).toBe(true);
+    expect(besideDropOff(cliff, { x: 150, y: 216 }, 2)).toBe(false);
+    expect(besideDropOff(cliff, { x: 150, y: 300 }, 1)).toBe(false);
+    expect(besideDropOff(BRIDGE, { x: 150, y: 216 }, 1)).toBe(false);
   });
 });

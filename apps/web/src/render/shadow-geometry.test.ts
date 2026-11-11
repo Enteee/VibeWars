@@ -154,6 +154,7 @@ const STRUCTURE: MapStructure = {
   ground: 0,
   pits: [],
   tunnels: [],
+  dropOffs: [],
   decks: [{ layer: 1, footprint: BRIDGE, look: "platform" }],
   transitions: [],
   water: [],

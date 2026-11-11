@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   characterBand,
+  DROP_FALL_SECONDS,
   easeElevation,
+  fallLift,
   ELEVATION_EASE_SECONDS,
   ELEVATION_STEP,
   elevationOf,
@@ -134,6 +136,16 @@ describe("the elevation offset (ADR-0051)", () => {
   it("never overshoots", () => {
     expect(easeElevation(0, ELEVATION_STEP, 1)).toBe(ELEVATION_STEP);
     expect(easeElevation(ELEVATION_STEP, 0, 1)).toBe(0);
+  });
+});
+
+describe("a fall off a drop-off (#3069)", () => {
+  it("lands a layer down in 0.25 s, slow off the lip and fastest at the landing", () => {
+    expect(DROP_FALL_SECONDS).toBe(0.25);
+    expect(fallLift(ELEVATION_STEP, 0, 0)).toBe(ELEVATION_STEP);
+    expect(fallLift(ELEVATION_STEP, 0, DROP_FALL_SECONDS / 2)).toBeCloseTo(ELEVATION_STEP * 0.75);
+    expect(fallLift(ELEVATION_STEP, 0, DROP_FALL_SECONDS)).toBe(0);
+    expect(fallLift(ELEVATION_STEP, 0, 1)).toBe(0);
   });
 });
 

@@ -1,4 +1,10 @@
-import { pointInPolygon, progressAlong, UPHILL, type Vec2 } from "@vibewars/game-core";
+import {
+  distancePointToSegment,
+  pointInPolygon,
+  progressAlong,
+  UPHILL,
+  type Vec2,
+} from "@vibewars/game-core";
 
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { creatureOutline } from "./creature-shape.js";
@@ -226,6 +232,40 @@ export function southFacingEdges(shape: RenderableShape): readonly Segment[] {
   const pairs = outline.map((from, k) => ({ from, to: outline[(k + 1) % outline.length] ?? from }));
   const winding = pairs.reduce((sum, { from, to }) => sum + from.x * to.y - to.x * from.y, 0);
   return pairs.filter(({ from, to }) => Math.sign(winding) * (from.x - to.x) > 0);
+}
+
+/** How far apart a drop-off's broken lip notches its edge (#3069). */
+const LIP_NOTCH_EVERY = 10;
+/** How deep a notch bites into the edge, either side of it. */
+const LIP_NOTCH_DEPTH = 3;
+
+/**
+ * A drop-off's edge as a broken lip (#3069): a line that zigzags across
+ * it, one notch every `LIP_NOTCH_EVERY`, starting and ending on it.
+ */
+export function brokenLip(from: Vec2, to: Vec2): readonly Vec2[] {
+  const length = Math.hypot(to.x - from.x, to.y - from.y);
+  const notches = Math.max(1, Math.round(length / LIP_NOTCH_EVERY));
+  const across = length === 0 ? { x: 0, y: 0 } : { x: (from.y - to.y) / length, y: (to.x - from.x) / length };
+  return Array.from({ length: notches + 1 }, (_, k) => {
+    const bite = k === 0 || k === notches ? 0 : (k % 2 === 0 ? 1 : -1) * LIP_NOTCH_DEPTH;
+    return {
+      x: from.x + ((to.x - from.x) * k) / notches + across.x * bite,
+      y: from.y + ((to.y - from.y) * k) / notches + across.y * bite,
+    };
+  });
+}
+
+/** How near a drop-off a body that just changed layer is when it went over it. */
+const DROP_OFF_REACH = 40;
+
+/** Whether `position` is just past a drop-off on `layer`: where a body lands that stepped off it. */
+export function besideDropOff(structure: MapStructure, position: Vec2, layer: number): boolean {
+  return structure.dropOffs.some(
+    (dropOff) =>
+      dropOff.layer === layer &&
+      distancePointToSegment(position, { a: dropOff.from, b: dropOff.to }) <= DROP_OFF_REACH,
+  );
 }
 
 /**

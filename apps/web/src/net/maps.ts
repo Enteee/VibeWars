@@ -381,6 +381,7 @@ export function structureOf(map: MapData): LoadedStructure {
             bounds: map.bounds,
             ground: map.groundLayer,
             decks: map.decks,
+            dropOffs: map.dropOffs,
             pits: map.pits,
             tunnels: map.tunnels,
             transitions: map.transitions,
