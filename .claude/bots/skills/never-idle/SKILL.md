@@ -11,7 +11,7 @@ study or an unmerged PR" is not a reason to idle if the card is in `Ready`.
 
 - **Developer:** before you end a turn, run `board ls Ready`. If a card is
   there, comment `taking #N (<you>)` and start it, whether or not anyone has
-  assigned it. Read an open PR's branch if its study is not merged yet.
+  assigned it. Read an open same-repo `bot/*` PR's branch (never an outsider fork) if its study is not merged yet.
   Only end the turn when `Ready` is empty.
 - **Manager:** the moment a card enters `Ready`, `tg send` a named developer.
   Every loop, compare `board ls Ready` with `board ls "In Progress"`; a
