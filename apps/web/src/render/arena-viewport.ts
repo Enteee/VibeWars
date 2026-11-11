@@ -57,7 +57,8 @@ export interface ArenaViewport {
   refreshScale(): void;
   /**
    * Phaser destroys a game on its next loop step, not at once: resolves
-   * once it has, its WebGL context released and its canvas gone.
+   * once it has, its WebGL context released and its canvas gone, or after
+   * `DESTROY_WAIT_MS` if the loop does not step. Called again, the same.
    */
   destroy(): Promise<void>;
 }
@@ -84,6 +85,9 @@ export interface ArenaViewportOptions {
   /** At most this many frames a second (#3119); a match's is not capped. */
   readonly fpsLimit?: number;
 }
+
+/** The longest `destroy` waits for Phaser's next step to run it. */
+const DESTROY_WAIT_MS = 500;
 
 /**
  * Start a Phaser game in `parent` with the arena scene, resolved once the
@@ -135,6 +139,8 @@ export async function createArenaViewport(
   scene.input.on("pointermove", onMove);
   scene.input.on("gameout", onOut);
 
+  /** Set by the first `destroy`; a second returns it. */
+  let destroyed: Promise<void> | undefined;
   return {
     scene,
     canvas: game.canvas,
@@ -267,10 +273,17 @@ export async function createArenaViewport(
       game.scale.refresh();
     },
     destroy() {
+      if (destroyed !== undefined) {
+        return destroyed;
+      }
       scene.input.off("pointermove", onMove);
       scene.input.off("gameout", onOut);
-      const destroyed = new Promise<void>((resolve) => {
+      // A loop that does not step (a hidden tab draws no frames) never gets
+      // to the destroy: waiting is bounded, so nobody waits on it forever.
+      destroyed = new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, DESTROY_WAIT_MS);
         game.events.once(Phaser.Core.Events.DESTROY, () => {
+          clearTimeout(timer);
           resolve();
         });
       });
