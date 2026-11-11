@@ -956,6 +956,15 @@ class AStar implements LayeredPathFinder {
   readonly #climbs = new Map<number, { readonly area: Polygon; readonly foot: Vec2 }>();
   /** Each teleport's exit vertex, to its entry's (#3030): the one way between them. */
   readonly #teleports = new Map<number, number>();
+  /** Every teleport's entry and exit, for the estimate. */
+  readonly #entries: readonly Vec2[];
+  readonly #teleportExits: readonly Vec2[];
+  /** The step into a teleport: what its edge costs. */
+  readonly #jumpCost: number;
+  /** Each vertex's distance to the nearest teleport entry (#3030). */
+  readonly #toEntry: Float64Array;
+  /** Through any teleport, the least a route still costs past its nearest entry: set per search. */
+  #pastEntry = Number.POSITIVE_INFINITY;
   readonly #edges: number[][] = [];
   /** Beside `#edges`: what each walk costs (#3026). */
   readonly #costs: number[][] = [];
@@ -1058,10 +1067,14 @@ class AStar implements LayeredPathFinder {
     firsts.push(this.#points.length);
     this.#joinPortals(portalsOn, firsts);
     const clearance = graphs[0]?.clearance ?? 0;
+    this.#jumpCost = 2 * clearance;
+    this.#entries = jumps.map(({ entry }) => entry);
+    this.#teleportExits = jumps.map(({ exit }) => exit);
+    this.#toEntry = Float64Array.from(this.#points, (point) => this.#nearestEntry(point));
     for (const { near, far } of jumps) {
       // One way, for about a body's length: the step into it.
       this.#edges[near]?.push(far);
-      this.#costs[near]?.push(2 * clearance);
+      this.#costs[near]?.push(this.#jumpCost);
       this.#teleports.set(far, near);
     }
     for (const { near, far, area, uphill } of links) {
@@ -1167,8 +1180,14 @@ class AStar implements LayeredPathFinder {
       fromLayer === toLayer && isClear(fromGrid, from, to)
         ? walkCost(fromZones, from, to)
         : Number.POSITIVE_INFINITY;
-    // A teleport may beat even a clear straight line (#3030).
-    if (straight <= distance(from, to) && this.#teleports.size === 0) {
+    this.#pastEntry =
+      this.#jumpCost +
+      this.#teleportExits.reduce(
+        (least, exit) => Math.min(least, distance(exit, to)),
+        Number.POSITIVE_INFINITY,
+      );
+    // A clear straight line is the best, unless a teleport could beat it (#3030).
+    if (straight <= distance(from, to) && straight <= this.#nearestEntry(from) + this.#pastEntry) {
       return [{ x: to.x, y: to.y, layer: toLayer }];
     }
 
@@ -1191,7 +1210,7 @@ class AStar implements LayeredPathFinder {
       let best = Number.POSITIVE_INFINITY;
       for (let k = 0; k < this.#openCount; k += 1) {
         const i = this.#open[k] ?? start;
-        const estimate = (this.#cost[i] ?? Number.POSITIVE_INFINITY) + distance(this.#point(i), to);
+        const estimate = (this.#cost[i] ?? Number.POSITIVE_INFINITY) + this.#estimate(i);
         if (estimate < best) {
           best = estimate;
           current = i;
@@ -1243,6 +1262,29 @@ class AStar implements LayeredPathFinder {
       }
     }
     return undefined;
+  }
+
+  /**
+   * The least a route from vertex `i` to the goal can cost: straight
+   * there, or to the nearest entry and on from the nearest exit, however
+   * many teleports it takes (#3030). Never more than the real cost, and
+   * consistent, so A* closes no vertex too early.
+   */
+  #estimate(i: number): number {
+    const straight = distance(this.#point(i), this.#to);
+    if (this.#entries.length === 0 || i === this.#goal) {
+      return straight;
+    }
+    const toEntry = i === this.#start ? this.#nearestEntry(this.#from) : (this.#toEntry[i] ?? 0);
+    return Math.min(straight, toEntry + this.#pastEntry);
+  }
+
+  /** How far `point` is from the nearest teleport entry; none: infinitely. */
+  #nearestEntry(point: Vec2): number {
+    return this.#entries.reduce(
+      (least, entry) => Math.min(least, distance(point, entry)),
+      Number.POSITIVE_INFINITY,
+    );
   }
 
   #point(i: number): Vec2 {

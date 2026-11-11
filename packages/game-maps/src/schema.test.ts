@@ -1631,8 +1631,35 @@ describe("effect zones (ADR-0053, #3024)", () => {
     accepts(rects(MAX_HARMFUL_ZONE_POINTS / 4));
     refuses(
       rects(MAX_HARMFUL_ZONE_POINTS / 4 + 1),
-      new RegExp(`zones: harmful zones have ${String(MAX_HARMFUL_ZONE_POINTS + 4)} corners`),
+      new RegExp(
+        `zones: harmful zones and teleport entries have ${String(MAX_HARMFUL_ZONE_POINTS + 4)} corners`,
+      ),
     );
+    // A teleport's entry is ground routes go round too (#3030).
+    const portal = {
+      id: "portal",
+      from: {
+        layer: 0,
+        area: {
+          kind: "polygon",
+          points: [
+            { x: 1300, y: 600 },
+            { x: 1340, y: 600 },
+            { x: 1340, y: 640 },
+            { x: 1300, y: 640 },
+          ],
+        },
+      },
+      to: { layer: 0, position: { x: 1450, y: 620 } },
+      enabled: true,
+    };
+    expect(() =>
+      validateMapData({
+        ...layerTest,
+        zones: rects(MAX_HARMFUL_ZONE_POINTS / 4),
+        teleports: [portal],
+      }),
+    ).toThrow(/teleport entries have/);
   });
 
   describe("timed and moving hazards (#3029)", () => {

@@ -304,6 +304,59 @@ describe("a teleport's way (#3030)", () => {
     expect(path?.some(({ y }) => y > 700)).toBe(true);
   });
 
+  it("goes round an on entry it does not mean to take, its area given as a zone", () => {
+    const graph = buildNavGraph([], BOUNDS, RADIUS, [ENTRY]);
+    const path = createLayeredPathFinder([graph], [], [ACROSS]).find(
+      vec2(300, 100),
+      0,
+      vec2(500, 100),
+      0,
+    );
+    expect(path?.some(({ teleport }) => teleport === true)).toBe(false);
+    expect(path?.at(-1)).toEqual({ x: 500, y: 100, layer: 0 });
+    const route = [vec2(300, 100), ...(path ?? [])];
+    const inside = route.slice(1).some((point, at) =>
+      Array.from({ length: 21 }, (_, k) => k / 20).some((t) => {
+        const from = route[at] ?? point;
+        const x = from.x + (point.x - from.x) * t;
+        const y = from.y + (point.y - from.y) * t;
+        return x > 380 && x < 420 && y > 80 && y < 120;
+      }),
+    );
+    expect(inside).toBe(false);
+  });
+
+  it("takes a teleport whose entry lies away from the goal, when its exit is by it", () => {
+    // Clear straight on, but back into the entry and out by the goal is shorter.
+    const behind: NavTeleport = {
+      from: 0,
+      area: rect(180, 80, 40, 40),
+      to: 0,
+      exit: vec2(650, 300),
+    };
+    const path = createLayeredPathFinder(ground(), [], [behind]).find(
+      vec2(300, 100),
+      0,
+      vec2(700, 100),
+      0,
+    );
+    expect(path).toEqual([
+      { x: 200, y: 100, layer: 0, teleport: true },
+      { x: 650, y: 300, layer: 0 },
+      { x: 700, y: 100, layer: 0 },
+    ]);
+  });
+
+  it("still walks a clear straight line no teleport could beat", () => {
+    const path = createLayeredPathFinder(ground(), [], [ACROSS]).find(
+      vec2(1300, 300),
+      0,
+      vec2(1300, 500),
+      0,
+    );
+    expect(path).toEqual([{ x: 1300, y: 500, layer: 0 }]);
+  });
+
   it("takes a body onto another layer, past the ramps, and counts its two vertices", () => {
     const up: NavTeleport = { from: 0, area: rect(230, 80, 40, 40), to: 1, exit: vec2(700, 400) };
     const built = graphs();
