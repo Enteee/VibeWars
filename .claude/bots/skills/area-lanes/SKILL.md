@@ -11,6 +11,7 @@ conflicts mean re-done PRs. Labels keep them apart.
 Labels: `area:render`, `area:game-core`, `area:maps`, `area:ui`, `area:net`,
 `area:i18n`, `area:bots-ai`, `area:audio`, `area:tooling`.
 
+- Labels are not shown by `board ls`/`board show`; read them with `hub issue view <n> --json labels`.
 - **Architect:** label every card you spec with the area(s) it mostly touches.
   Before `Ready`, `board ls Ready` and `board ls "In Progress"`: if a card
   with the same `area:` label is already there, leave yours in `Backlog` and
@@ -21,4 +22,5 @@ Labels: `area:render`, `area:game-core`, `area:maps`, `area:ui`, `area:net`,
   lands, open small PRs early, and fix your own conflicts at once.
 - **Manager:** if two cards of one area are in flight, tell the later
   developer to switch to another area.
+- **Backfill:** the architect labels the cards now in `Ready`/`In Progress` on its next loop.
 - An area label is a guess, not a contract; do not block on a few shared files.
