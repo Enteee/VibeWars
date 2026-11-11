@@ -16,6 +16,7 @@ import {
   markReady,
   nextEmployeeId,
   parseStaff,
+  roleHired,
   roleOf,
   seedStaff,
   staffAllowed,
@@ -122,6 +123,23 @@ describe("roleOf", () => {
     for (const id of ["qa-tester@1", "qa-tester@0", "qa-tester@02", "qa-tester@", "@2", "QA"]) {
       expect(roleOf(id), id).toBeNull();
     }
+  });
+});
+
+describe("roleHired (#3090)", () => {
+  it("is true for a working employee and for one being fired", () => {
+    const staff = company(["perf-sec-qa", "lead-dev"]);
+    const firing = staff.employees["lead-dev"];
+    if (firing === undefined) {
+      throw new Error("lead-dev is not employed");
+    }
+    firing.state = "firing";
+    expect(roleHired(staff, "perf-sec-qa")).toBe(true);
+    expect(roleHired(staff, "lead-dev")).toBe(true);
+  });
+
+  it("is false for a role with no employee", () => {
+    expect(roleHired(company(["lead-dev"]), "perf-sec-qa")).toBe(false);
   });
 });
 
