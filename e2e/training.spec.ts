@@ -232,7 +232,7 @@ test("on Heights you step off the bridge's broken north lip onto the ground (#30
   };
   /** Hold `move` until `done` holds where you stand. */
   const walk = async (
-    move: "move-right" | "move-up",
+    move: "move-left" | "move-right" | "move-up",
     done: (at: { readonly x: number; readonly y: number }) => boolean,
   ): Promise<void> => {
     await page.keyboard.down(key(move));
@@ -243,8 +243,17 @@ test("on Heights you step off the bridge's broken north lip onto the ground (#30
   };
   // Map coordinates from training-heights/map.json: up the west stairs onto
   // the bridge (layer 2, y 350 to 550), then north over its drop-off, x 440
-  // to 520. Without it, the deck's edge would hold you at y 350.
-  await walk("move-right", ({ x }) => x >= 455);
+  // to 520. Without it, the deck's edge would hold you at y 350. A slow
+  // page polls late and overshoots, so walk back until you stand in front
+  // of the drop-off.
+  const inFront = ({ x }: { readonly x: number }): boolean => x >= 450 && x <= 510;
+  await walk("move-right", ({ x }) => x >= 450);
+  for (let tries = 0; tries < 4 && !inFront(await you()); tries += 1) {
+    await ((await you()).x > 510
+      ? walk("move-left", ({ x }) => x <= 500)
+      : walk("move-right", ({ x }) => x >= 460));
+  }
+  expect(inFront(await you())).toBe(true);
   await walk("move-up", ({ y }) => y < 320);
   expect((await you()).x).toBeLessThan(520);
 });
