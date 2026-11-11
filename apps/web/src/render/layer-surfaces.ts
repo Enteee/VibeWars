@@ -129,6 +129,43 @@ const CHEVRON_WIDE = 0.28;
 /** How far apart a ramp's panel lines are, in world units. */
 const RAMP_PANEL = 24;
 
+/** A ramp measured along its climb (#3067): its length, and a drawn point on it. */
+export interface RampFrame {
+  /** World units from its foot to its head. */
+  readonly length: number;
+  /** World units across it. */
+  readonly wide: number;
+  /** The drawn point `t` of the way up and `across` its width off its middle, -0.5 to 0.5. */
+  readonly onRamp: (t: number, across: number) => Vec2;
+}
+
+/** `ramp` measured by its `uphill`, the one direction game-core gives it. */
+export function rampFrame(structure: MapStructure, ramp: Transition): RampFrame {
+  const uphill = UPHILL[ramp.uphill];
+  const box = boxOf(ramp.area);
+  const width = box.right - box.left;
+  const height = box.bottom - box.top;
+  const length = uphill.x !== 0 ? width : height;
+  const wide = uphill.x !== 0 ? height : width;
+  const centre = { x: box.left + width / 2, y: box.top + height / 2 };
+  return {
+    length,
+    wide,
+    onRamp: (t, across) => {
+      const point = {
+        x: centre.x + uphill.x * (t - 0.5) * length - uphill.y * across * wide,
+        y: centre.y + uphill.y * (t - 0.5) * length + uphill.x * across * wide,
+      };
+      return {
+        x: point.x,
+        y:
+          point.y -
+          rampLift(structure, ramp, progressAlong(shapeOutline(ramp.area), uphill, point)),
+      };
+    },
+  };
+}
+
 /** The slope, south side face and uphill chevrons of `ramp`. */
 export function rampDrawing(structure: MapStructure, ramp: Transition): RampDrawing {
   const uphill = UPHILL[ramp.uphill];
@@ -137,16 +174,7 @@ export function rampDrawing(structure: MapStructure, ramp: Transition): RampDraw
     x: point.x,
     y: point.y - rampLift(structure, ramp, progressAlong(shapeOutline(ramp.area), uphill, point)),
   });
-  const width = box.right - box.left;
-  const height = box.bottom - box.top;
-  const length = uphill.x !== 0 ? width : height;
-  const wide = uphill.x !== 0 ? height : width;
-  const centre = { x: box.left + width / 2, y: box.top + height / 2 };
-  const onRamp = (t: number, across: number): Vec2 =>
-    lifted({
-      x: centre.x + uphill.x * (t - 0.5) * length - uphill.y * across * wide,
-      y: centre.y + uphill.y * (t - 0.5) * length + uphill.x * across * wide,
-    });
+  const { length, onRamp } = rampFrame(structure, ramp);
   const southWest = { x: box.left, y: box.bottom };
   const southEast = { x: box.right, y: box.bottom };
   const foot = liftOf(structure, ramp.from);
@@ -175,8 +203,13 @@ export function rampDrawing(structure: MapStructure, ramp: Transition): RampDraw
   };
 }
 
-/** How thick a deck on pillars draws: the rest of its height is open air. */
+/** How thick a deck on pillars or a bridge draws: the rest of its height is open air. */
 export const DECK_SLAB = 12;
+
+/** Whether a deck of `look` spans open air, drawn as a slab whatever stands under it (#3067). */
+export function isBridgeLook(look: MapStructure["decks"][number]["look"]): boolean {
+  return look === "bridge-stone" || look === "bridge-plank" || look === "bridge-log";
+}
 
 /** How high a wall that is not a support stands above its layer. */
 export const WALL_HEIGHT = 28;
@@ -195,12 +228,20 @@ export function southFacingEdges(shape: RenderableShape): readonly Segment[] {
   return pairs.filter(({ from, to }) => Math.sign(winding) * (from.x - to.x) > 0);
 }
 
-/** The north-south lines across `shape`, one every `every`, cut to its outline. */
-export function plankLines(shape: RenderableShape, every: number): readonly Segment[] {
-  const box = boxOf(shape);
-  const outline = shapeOutline(shape);
+/**
+ * The north-south lines across `shape`, one every `every`, cut to its
+ * outline; with `axis` "y", the east-west ones.
+ */
+export function plankLines(
+  shape: RenderableShape,
+  every: number,
+  axis: "x" | "y" = "x",
+): readonly Segment[] {
+  const flip = (p: Vec2): Vec2 => (axis === "x" ? p : { x: p.y, y: p.x });
+  const outline = shapeOutline(shape).map(flip);
+  const xs = outline.map(({ x }) => x);
   const lines: Segment[] = [];
-  for (let x = box.left + every; x < box.right; x += every) {
+  for (let x = Math.min(...xs) + every; x < Math.max(...xs); x += every) {
     const crossings = outline
       .flatMap((a, k) => {
         const b = outline[(k + 1) % outline.length] ?? a;
@@ -209,12 +250,88 @@ export function plankLines(shape: RenderableShape, every: number): readonly Segm
       .sort((a, b) => a - b);
     for (let i = 0; i + 1 < crossings.length; i += 2) {
       lines.push({
-        from: { x, y: crossings[i] ?? 0 },
-        to: { x, y: crossings[i + 1] ?? 0 },
+        from: flip({ x, y: crossings[i] ?? 0 }),
+        to: flip({ x, y: crossings[i + 1] ?? 0 }),
       });
     }
   }
   return lines;
+}
+
+/** How near a transition must come to a deck's edge to open it, in world units. */
+const OPEN_EDGE_REACH = 2;
+
+/** The share `[enter, leave]` of `from`-`to` inside `box`, if any (Liang-Barsky). */
+function clipToBox(from: Vec2, to: Vec2, box: Box): readonly [number, number] | undefined {
+  let enter = 0;
+  let leave = 1;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  for (const [p, q] of [
+    [-dx, from.x - box.left],
+    [dx, box.right - from.x],
+    [-dy, from.y - box.top],
+    [dy, box.bottom - from.y],
+  ] as const) {
+    if (p === 0) {
+      if (q < 0) {
+        return undefined;
+      }
+    } else if (p < 0) {
+      enter = Math.max(enter, q / p);
+    } else {
+      leave = Math.min(leave, q / p);
+    }
+  }
+  return enter < leave ? [enter, leave] : undefined;
+}
+
+/**
+ * The stretches of `deck`'s edge no transition of its layer meets (#3067):
+ * where a parapet or a railing stands. A ramp's head opens the edge it
+ * reaches; every other edge already stops a body (`walkableOutline`).
+ */
+export function openEdges(
+  structure: MapStructure,
+  deck: MapStructure["decks"][number],
+): readonly Segment[] {
+  const outline = shapeOutline(deck.footprint);
+  const gaps = structure.transitions
+    .filter(({ from, to }) => from === deck.layer || to === deck.layer)
+    .map(({ area }) => {
+      const box = boxOf(area);
+      return {
+        left: box.left - OPEN_EDGE_REACH,
+        top: box.top - OPEN_EDGE_REACH,
+        right: box.right + OPEN_EDGE_REACH,
+        bottom: box.bottom + OPEN_EDGE_REACH,
+      };
+    });
+  return outline.flatMap((from, k) => {
+    const to = outline[(k + 1) % outline.length] ?? from;
+    const cuts = gaps
+      .flatMap((box) => {
+        const cut = clipToBox(from, to, box);
+        return cut === undefined ? [] : [cut];
+      })
+      .sort((a, b) => a[0] - b[0]);
+    const at = (t: number): Vec2 => ({
+      x: from.x + (to.x - from.x) * t,
+      y: from.y + (to.y - from.y) * t,
+    });
+    const pieces: Segment[] = [];
+    let start = 0;
+    for (const [enter, leave] of cuts) {
+      if (enter > start) {
+        pieces.push({ from: at(start), to: at(enter) });
+      }
+      start = Math.max(start, leave);
+    }
+    if (start < 1) {
+      pieces.push({ from: at(start), to });
+    }
+    return pieces;
+  });
 }
 
 /** Whether `wall`'s middle lies inside `shape`: a wall under a deck is a support. */
@@ -239,8 +356,8 @@ export function deckHeldBy(
 
 /**
  * The lowest lift of `deck`'s side face: a deck one layer over the
- * `ground` standing on a ground wall is a slab, every other deck is solid
- * down to the layer below.
+ * `ground` standing on a ground wall is a slab, and so is a bridge
+ * (#3067); every other deck is solid down to the layer below.
  */
 export function deckSideLow(
   deck: MapStructure["decks"][number],
@@ -250,7 +367,7 @@ export function deckSideLow(
   const onPillars =
     deck.layer === ground + 1 &&
     walls.some((wall) => wall.layer === ground && shapeHoldsCentre(deck.footprint, wall));
-  return onPillars
+  return onPillars || isBridgeLook(deck.look)
     ? elevationOf(deck.layer, ground) - DECK_SLAB
     : elevationOf(deck.layer - 1, ground);
 }

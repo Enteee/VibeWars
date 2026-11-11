@@ -1,3 +1,5 @@
+import type { DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
+
 /** Shaded toward black by `share`, 0 to 1. */
 export function shade(colour: number, share: number): number {
   const channel = (at: number): number => Math.round(((colour >> at) & 0xff) * (1 - share)) << at;
@@ -204,4 +206,101 @@ export const BARRIER_LOOK = {
   curtain: 0x5fe0d0,
   edge: 0xc8fff6,
   ghost: 0x5fe0d0,
+};
+
+/** What a deck of one look is built of (#3067): its top, the lines on it, its face, its edge. */
+export interface DeckLookColours {
+  readonly top: number;
+  readonly detail: number;
+  readonly side: number;
+  /** A parapet's or a railing's top, or a terrace's grass lip. */
+  readonly edgeTop: number;
+  /** A parapet's face, or a railing's posts. */
+  readonly edgeFace: number;
+  /** Piers and posts down to the layer below. */
+  readonly support: number;
+}
+
+/** Each deck look's materials (#3067): stone and steel, earth and moss, wood. */
+export const DECK_LOOK: Record<DeckLook, DeckLookColours> = {
+  platform: {
+    top: GRAPHIC_LAYERS.deckTop,
+    detail: GRAPHIC_LAYERS.plank,
+    side: GRAPHIC_LAYERS.slab,
+    edgeTop: GRAPHIC_LAYERS.wallLit,
+    edgeFace: GRAPHIC_LAYERS.wallFace,
+    support: GRAPHIC_LAYERS.support,
+  },
+  tower: {
+    top: 0x9aa6b4,
+    detail: shade(0x9aa6b4, 0.22),
+    side: 0x5c6a7c,
+    edgeTop: 0xb8c5d4,
+    edgeFace: shade(0x5c6a7c, 0.25),
+    support: shade(0x5c6a7c, 0.35),
+  },
+  "wall-walk": {
+    top: 0x8e9cae,
+    detail: shade(0x8e9cae, 0.2),
+    side: shade(0x4b5a70, 0.4),
+    edgeTop: 0xa9bbd0,
+    edgeFace: 0x4b5a70,
+    support: shade(0x4b5a70, 0.4),
+  },
+  terrace: {
+    top: 0x6b6448,
+    detail: 0x4f5e3c,
+    side: 0x5a4630,
+    edgeTop: 0x6f8350,
+    edgeFace: shade(0x5a4630, 0.3),
+    support: shade(0x5a4630, 0.3),
+  },
+  "bridge-stone": {
+    top: 0xaeb2b4,
+    detail: shade(0xaeb2b4, 0.2),
+    side: 0x6f695f,
+    edgeTop: 0xc4bdb0,
+    edgeFace: 0x827b70,
+    support: shade(0x6f695f, 0.2),
+  },
+  "bridge-plank": {
+    top: 0x8a6a46,
+    detail: shade(0x8a6a46, 0.35),
+    side: shade(0x8a6a46, 0.5),
+    edgeTop: 0xc2ab7e,
+    edgeFace: 0x3a2a1a,
+    support: 0x3a2a1a,
+  },
+  "bridge-log": {
+    top: 0x7a5e40,
+    detail: shade(0x7a5e40, 0.3),
+    side: shade(0x7a5e40, 0.5),
+    edgeTop: 0x9d8160,
+    edgeFace: shade(0x7a5e40, 0.6),
+    support: shade(0x7a5e40, 0.6),
+  },
+};
+
+/** What a transition of one look is built of (#3067): its slope, its treads and risers. */
+export interface TransitionLookColours {
+  readonly top: number;
+  /** A ramp's panels, a stair's lit nosing, a ladder's rungs. */
+  readonly step: number;
+  /** A ramp's chevrons, a stair's riser, a ladder's rails. */
+  readonly riser: number;
+  readonly side: number;
+}
+
+/** Each transition look's materials (#3067). */
+export const TRANSITION_LOOK: Record<TransitionLook, TransitionLookColours> = {
+  ramp: {
+    top: GRAPHIC_LAYERS.rampTop,
+    step: GRAPHIC_LAYERS.rampPanel,
+    riser: GRAPHIC_LAYERS.rampChevron,
+    side: GRAPHIC_LAYERS.slab,
+  },
+  stairs: { top: 0xa2aebd, step: 0xccd6e2, riser: 0x56637a, side: GRAPHIC_LAYERS.slab },
+  "stairs-landing": { top: 0xa8b4c3, step: 0xccd6e2, riser: 0x56637a, side: GRAPHIC_LAYERS.slab },
+  ladder: { top: 0x2c3442, step: 0xa07a4c, riser: 0x6a4a2a, side: shade(0x2c3442, 0.3) },
+  "rough-steps": { top: 0x6f6a58, step: 0x8f8a72, riser: 0x433e30, side: 0x4a4436 },
 };
