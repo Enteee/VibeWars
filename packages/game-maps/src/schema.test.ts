@@ -950,7 +950,7 @@ describe("ghost maps (#2689)", () => {
           gates: [door],
           switches: [{ ...lever, targets: ["door", "nowhere"] }],
         }),
-      ).toThrow(/switch lever names nowhere, which is no gate/);
+      ).toThrow(/switch lever names nowhere, which is no gate or teleport/);
       expect(() =>
         validateMapData({
           ...validMap,
@@ -987,6 +987,94 @@ describe("ghost maps (#2689)", () => {
       expect(() => validateMapData({ ...validMap, gates: [door], switches: many })).toThrow(
         /switches/,
       );
+    });
+  });
+
+  describe("teleports (#3030)", () => {
+    const teleport = {
+      id: "portal",
+      from: {
+        layer: 0,
+        area: {
+          kind: "polygon",
+          points: [
+            { x: 60, y: 60 },
+            { x: 80, y: 60 },
+            { x: 80, y: 80 },
+            { x: 60, y: 80 },
+          ],
+        },
+      },
+      to: { layer: 0, position: { x: 30, y: 70 } },
+      enabled: true,
+    };
+    const lever = { id: "lever", layer: 0, position: { x: 50, y: 30 }, targets: ["portal"] };
+
+    it("accepts a portal, and a switch that names it", () => {
+      expect(validateMapData({ ...validMap, teleports: [teleport] }).teleports).toEqual([teleport]);
+      const off = { ...teleport, enabled: false };
+      expect(
+        validateMapData({ ...validMap, teleports: [off], switches: [lever] }).teleports,
+      ).toEqual([off]);
+    });
+
+    it("refuses an exit off its layer's ground, or in a portal's entry", () => {
+      expect(() =>
+        validateMapData({
+          ...validMap,
+          teleports: [{ ...teleport, to: { layer: 0, position: { x: -20, y: 70 } } }],
+        }),
+      ).toThrow(/teleport portal needs its exit clear/);
+      expect(() =>
+        validateMapData({
+          ...validMap,
+          teleports: [{ ...teleport, to: { layer: 0, position: { x: 70, y: 70 } } }],
+        }),
+      ).toThrow(/teleport portal has its exit in a teleport's entry/);
+    });
+
+    it("refuses an exit in deep water", () => {
+      const pool = {
+        id: "pool",
+        layer: 0,
+        depth: "deep",
+        area: { kind: "rect", x: 20, y: 60, width: 20, height: 20 },
+      };
+      expect(() => validateMapData({ ...validMap, water: [pool], teleports: [teleport] })).toThrow(
+        /teleport portal has its exit in deep water/,
+      );
+    });
+
+    it("refuses a portal that starts off with no switch to turn it on", () => {
+      expect(() =>
+        validateMapData({ ...validMap, teleports: [{ ...teleport, enabled: false }] }),
+      ).toThrow(/teleport portal starts off, and no switch names it/);
+    });
+
+    it("refuses an id a gate or another portal holds", () => {
+      const door = {
+        id: "portal",
+        wall: { kind: "rect", layer: 0, x: 80, y: 20, width: 8, height: 20 },
+        opener: { kind: "switch" },
+      };
+      expect(() =>
+        validateMapData({ ...validMap, gates: [door], teleports: [teleport], switches: [lever] }),
+      ).toThrow(/teleport id portal is used twice/);
+      expect(() => validateMapData({ ...validMap, teleports: [teleport, teleport] })).toThrow(
+        /teleport id portal is used twice/,
+      );
+    });
+
+    it("counts a switched portal against the gates' six", () => {
+      const gates = Array.from({ length: 6 }, (_, at) => ({
+        id: `gate-${String(at)}`,
+        wall: { kind: "rect", layer: 0, x: 90, y: 5 + at * 15, width: 4, height: 8 },
+        opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
+      }));
+      expect(validateMapData({ ...validMap, gates, teleports: [teleport] }).gates).toHaveLength(6);
+      expect(() =>
+        validateMapData({ ...validMap, gates, teleports: [teleport], switches: [lever] }),
+      ).toThrow(/7 gates and switched teleports, more than 6/);
     });
   });
 });
