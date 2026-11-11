@@ -96,6 +96,24 @@ planken of een omgevallen boomstam overspant een kloof, en spelers
 eronder kunnen eronderdoor lopen. Hoger staan verandert niets aan je
 bereik of je schade.
 
+## Ophaalbruggen, touwbruggen en geheime doorgangen
+
+Sommige oversteken veranderen tijdens een match, voor iedereen tegelijk.
+Een **ophaalbrug** gaat omhoog en omlaag met een hendel. Opgehaald
+staat hij rechtop bij zijn scharnier als een eikenhouten plaat en kan
+niemand erover; wie erop staat terwijl hij omhooggaat, wordt van het
+dichtstbijzijnde uiteinde geduwd. Een **touwbrug** kan door zijn hendel
+worden doorgehakt, één keer: de twee helften hangen aan hun ankers, en
+wie erop stond valt naar de grond of de kuil eronder. Een
+**afbrokkelende vloer** barst elke keer dat iemand erop stapt iets
+verder, en bezwijkt na een vast aantal stappen; wie er dan op staat,
+valt zoals van een doorgehakte brug.
+
+Een **valhek** is een ijzeren rooster in een stenen boog dat een hendel
+of plaat omhoogtrekt. Een **geheime doorgang** ziet er precies zo uit
+als de rotsmuur eromheen, totdat hij openschuift naar een donkere
+opening.
+
 ## Weer en sfeer
 
 Mistbanken, rook, stoom, regen en sneeuw zijn alleen voor het oog. Ze doen je
@@ -105,6 +123,7 @@ koel, nooit groen, zodat je hem niet kunt verwarren met giftige mist.
 ## Probeer ze uit
 
 Kies op het **trainingsveld** van de build-editor het scenario **Wildernis**:
-elke soort grond, elk gevaar, elke poort en elk portaal van deze pagina is er
-te vinden, met oefendoelen in de gevaarlijke plekken, zodat je ziet wat elk
-ervan doet voordat je het in een match tegenkomt.
+elke soort grond, elk gevaar en elk portaal van deze pagina is er te
+vinden, en ook een deur en een glinsterende poort, met oefendoelen in de
+gevaarlijke plekken, zodat je ziet wat elk ervan doet voordat je het in
+een match tegenkomt.

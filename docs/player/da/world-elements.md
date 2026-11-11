@@ -93,6 +93,22 @@ trapper i begge ender. En stige er bred nok til én spiller ad gangen. En
 og spillere nedenunder kan gå under den. At stå højere oppe ændrer
 hverken din rækkevidde eller din skade.
 
+## Vindebroer, rebbroer og skjulte gange
+
+Nogle veje over ændrer sig under en kamp, for alle på én gang. En
+**vindebro** hæves og sænkes af et håndtag. Hævet rejser den sig ved sit
+hængsel som en plade af egetræ, og ingen kan komme over; den, der står
+på den, mens den hæves, skubbes af ved dens nærmeste ende. En **rebbro**
+kan kappes af sit håndtag, én gang: dens to halvdele hænger ned fra
+deres ankre, og den, der var på den, falder ned på jorden eller i hullet
+nedenunder. Et **smuldrende gulv** revner lidt mere, hver gang nogen
+træder ud på det, og brister efter et bestemt antal skridt; den, der så
+står på det, falder som fra en kappet bro.
+
+Et **faldgitter** er et jerngitter i en stenbue, som et håndtag eller en
+plade hæver. En **skjult gang** ligner præcis klippevæggen omkring den,
+indtil den åbner sig mod en mørk åbning.
+
 ## Vejr og stemning
 
 Tågebanker, røg, damp, regn og sne er kun for øjet. De skader dig aldrig,
@@ -101,6 +117,7 @@ grøn, så den ikke kan forveksles med giftig tåge.
 
 ## Prøv dem
 
-På build-editorens **træningsbane** skal du vælge scenariet **Vildmark**: hver
-slags jord, fare, port og portal på denne side er der, med øvelsesmål, der står
-i de farlige, så du kan se, hvad hver af dem gør, før du møder den i en kamp.
+På build-editorens **træningsbane** skal du vælge scenariet
+**Vildmark**: hver slags jord, fare og portal på denne side er der, og
+en dør og en glitrende port, med øvelsesmål, der står i de farlige, så
+du kan se, hvad hver af dem gør, før du møder den i en kamp.
