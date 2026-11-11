@@ -559,7 +559,7 @@ export async function startMatchView(
     viewed = await viewedMatch(options);
   } catch (error) {
     // Refused, or the host never answered: no arena to leave behind.
-    viewport?.destroy();
+    void viewport?.destroy();
     notice?.remove();
     throw error;
   }
@@ -1318,7 +1318,7 @@ export async function startMatchView(
       closeHelpOverlay();
       detachFullscreen();
       hud.controls.remove();
-      viewport?.destroy();
+      void viewport?.destroy();
       notice?.remove();
       await viewed.disconnect();
     },

@@ -22,6 +22,8 @@ export interface ButtonEvent {
 /** A running Phaser host for one `ArenaScene`, whatever feeds it snapshots. */
 export interface ArenaViewport {
   readonly scene: ArenaScene;
+  /** The canvas the arena draws on, until it is destroyed. */
+  readonly canvas: HTMLCanvasElement;
   /** Called once per rendered frame; returns the unsubscribe. */
   onFrame(handler: (deltaSeconds: number) => void): () => void;
   /**
@@ -53,7 +55,11 @@ export interface ArenaViewport {
   setArenaBounds(width: number, height: number): void;
   /** Re-measure the parent, after the layout around it changed. */
   refreshScale(): void;
-  destroy(): void;
+  /**
+   * Phaser destroys a game on its next loop step, not at once: resolves
+   * once it has, its WebGL context released and its canvas gone.
+   */
+  destroy(): Promise<void>;
 }
 
 /**
@@ -131,6 +137,7 @@ export async function createArenaViewport(
 
   return {
     scene,
+    canvas: game.canvas,
     onFrame(handler) {
       // STEP passes the frame's delta in milliseconds.
       const onStep = (_time: number, deltaMs: number): void => {
@@ -262,7 +269,13 @@ export async function createArenaViewport(
     destroy() {
       scene.input.off("pointermove", onMove);
       scene.input.off("gameout", onOut);
+      const destroyed = new Promise<void>((resolve) => {
+        game.events.once(Phaser.Core.Events.DESTROY, () => {
+          resolve();
+        });
+      });
       game.destroy(true);
+      return destroyed;
     },
   };
 }

@@ -2,16 +2,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RANDOM_MAP } from "./menu-background-choice.js";
 import { createMenuBackground } from "./menu-background.js";
-import type { SplashFightOptions } from "./splash-fight.js";
+import type { SplashFight, SplashFightOptions } from "./splash-fight.js";
 
 /** The menu background's layer: only its test hooks are read. */
-const layer = (): HTMLElement =>
-  ({ dataset: {}, querySelector: () => null }) as unknown as HTMLElement;
+const layer = (): HTMLElement => ({ dataset: {} }) as unknown as HTMLElement;
+
+/** A canvas that is only listened to. */
+const canvas = (): HTMLCanvasElement =>
+  ({
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }) as unknown as HTMLCanvasElement;
 
 /** A fight that draws at once, logging every start and stop. */
 const fights = (): {
   readonly log: string[];
-  readonly start: (parent: HTMLElement, fight: SplashFightOptions) => Promise<() => void>;
+  readonly start: (parent: HTMLElement, fight: SplashFightOptions) => Promise<SplashFight>;
 } => {
   const log: string[] = [];
   return {
@@ -19,8 +25,12 @@ const fights = (): {
     start: (_parent, fight) => {
       const name = `${fight.mapId}@${String(fight.teamSize)}`;
       log.push(`start ${name}`);
-      return Promise.resolve(() => {
-        log.push(`stop ${name}`);
+      return Promise.resolve({
+        canvas: canvas(),
+        stop: () => {
+          log.push(`stop ${name}`);
+          return Promise.resolve();
+        },
       });
     },
   };
@@ -103,6 +113,35 @@ describe("the menu background (#3119)", () => {
     expect(await background.resume("training")).toBe(true);
     expect(root.dataset.fight).toBe("2");
     expect(log).toEqual(["start jungle-ruins@4", "stop jungle-ruins@4", "start jungle-ruins@4"]);
+  });
+
+  it("starts the next fight only once the old one's context is released", async () => {
+    const log: string[] = [];
+    let release: () => void = () => undefined;
+    const start = (_parent: HTMLElement, fight: SplashFightOptions): Promise<SplashFight> => {
+      log.push(`start ${fight.mapId}`);
+      return Promise.resolve({
+        canvas: canvas(),
+        stop: () =>
+          new Promise<void>((resolve) => {
+            release = () => {
+              log.push("released");
+              resolve();
+            };
+          }),
+      });
+    };
+    const background = createMenuBackground(layer(), start);
+    background.setChoice({ mapId: "jungle-ruins", teamSize: 4 });
+    await background.resume("away");
+    background.setChoice({ mapId: "ember-pits", teamSize: 4 });
+    const restarted = background.resume("away");
+    await vi.waitFor(() => {
+      expect(log).toEqual(["start jungle-ruins"]);
+    });
+    release();
+    expect(await restarted).toBe(true);
+    expect(log).toEqual(["start jungle-ruins", "released", "start ember-pits"]);
   });
 
   it("says nothing and draws nothing where the fight cannot start, and does not retry it", async () => {

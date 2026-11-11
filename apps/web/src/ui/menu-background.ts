@@ -5,15 +5,15 @@ import {
   type MenuBackgroundChoice,
 } from "./menu-background-choice.js";
 import { prefersReducedMotion } from "./recharge-overlay.js";
-import type { SplashFightOptions } from "./splash-fight.js";
+import type { SplashFight, SplashFightOptions } from "./splash-fight.js";
 
-/** Draws a fight into the element; resolves to what stops it. */
-export type StartFight = (parent: HTMLElement, fight: SplashFightOptions) => Promise<() => void>;
+/** Draws a fight into the element. */
+export type StartFight = (parent: HTMLElement, fight: SplashFightOptions) => Promise<SplashFight>;
 
 /**
  * The fight behind every menu screen (#3119). There is only ever one,
- * and never two WebGL contexts: the old one is stopped before the next
- * starts. Phaser itself stops stepping and drawing while the tab is
+ * and never two WebGL contexts: the next starts only once the old one's
+ * context is released. Phaser itself stops stepping and drawing while the tab is
  * hidden, and a long frame after is not caught up on (`splash-fight`).
  */
 /**
@@ -39,8 +39,10 @@ export interface MenuBackground {
 
 interface Shown {
   readonly choice: MenuBackgroundChoice;
-  readonly stop: () => void;
+  readonly stop: () => Promise<void>;
 }
+
+const NOTHING_TO_STOP = (): Promise<void> => Promise.resolve();
 
 /**
  * The menu background in `root`, a layer under the screens: `away`
@@ -62,29 +64,35 @@ export function createMenuBackground(root: HTMLElement, startFight: StartFight):
    */
   let queue: Promise<boolean> = Promise.resolve(false);
 
-  const stopShown = (): void => {
-    shown?.stop();
+  const stopShown = async (): Promise<void> => {
+    const stopping = shown?.stop();
     shown = undefined;
     delete root.dataset.map;
     delete root.dataset.teamSize;
     delete root.dataset.fight;
+    await stopping;
   };
   const start = async (choice: MenuBackgroundChoice): Promise<boolean> => {
     const fight = { ...menuBackgroundMap(choice, Math.random), still: prefersReducedMotion() };
     try {
-      const stop = await startFight(root, fight);
-      const canvas = root.querySelector("canvas");
+      const { canvas, stop } = await startFight(root, fight);
       const onLost = (): void => {
         if (shown?.stop === stopFight) {
-          stopShown();
-          shown = { choice, stop: () => undefined };
+          // Queued, so a sync already waiting does not overlap the stop.
+          queue = queue.then(async () => {
+            if (shown?.stop === stopFight) {
+              await stopShown();
+              shown = { choice, stop: NOTHING_TO_STOP };
+            }
+            return false;
+          });
         }
       };
-      const stopFight = (): void => {
-        canvas?.removeEventListener("webglcontextlost", onLost);
-        stop();
+      const stopFight = (): Promise<void> => {
+        canvas.removeEventListener("webglcontextlost", onLost);
+        return stop();
       };
-      canvas?.addEventListener("webglcontextlost", onLost);
+      canvas.addEventListener("webglcontextlost", onLost);
       shown = { choice, stop: stopFight };
       root.dataset.map = fight.mapId;
       root.dataset.teamSize = String(fight.teamSize);
@@ -94,20 +102,20 @@ export function createMenuBackground(root: HTMLElement, startFight: StartFight):
     } catch (error) {
       // Not tried again for the same choice: a lobby update would only fail again.
       console.warn("[web] no menu background", error);
-      shown = { choice, stop: () => undefined };
+      shown = { choice, stop: NOTHING_TO_STOP };
       return false;
     }
   };
   const sync = (): Promise<boolean> => {
     queue = queue.then(async () => {
       if (suspended.size > 0) {
-        stopShown();
+        await stopShown();
         return false;
       }
       if (shown !== undefined && sameChoice(shown.choice, wanted)) {
         return root.dataset.map !== undefined;
       }
-      stopShown();
+      await stopShown();
       return start(wanted);
     });
     return queue;

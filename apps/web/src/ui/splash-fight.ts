@@ -117,16 +117,23 @@ function splashParticipants(map: SplashMap, fight: SplashFightOptions): Particip
   );
 }
 
+/** A running splash fight. */
+export interface SplashFight {
+  /** What it draws on. */
+  readonly canvas: HTMLCanvasElement;
+  /** Stops everything; resolves once its WebGL context is released. */
+  readonly stop: () => Promise<void>;
+}
+
 /**
  * A silent fight of bots, `teamSize` a side on `mapId`, drawn into
  * `parent` at no more than 30 fps, seen from nobody, the camera still on
- * the map's centre. Rejects where the arena cannot be drawn; the function
- * it resolves to stops everything.
+ * the map's centre. Rejects where the arena cannot be drawn.
  */
 export async function startSplashFight(
   parent: HTMLElement,
   fight: SplashFightOptions,
-): Promise<() => void> {
+): Promise<SplashFight> {
   const map = hostMap(fight.mapId);
   if (map === undefined) {
     throw new Error(`no map ${fight.mapId} for the splash fight`);
@@ -171,9 +178,12 @@ export async function startSplashFight(
       ),
     );
   });
-  return () => {
-    offFrame();
-    void connection.disconnect();
-    viewport.destroy();
+  return {
+    canvas: viewport.canvas,
+    stop: () => {
+      offFrame();
+      void connection.disconnect();
+      return viewport.destroy();
+    },
   };
 }
