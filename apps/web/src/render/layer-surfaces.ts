@@ -246,7 +246,8 @@ const LIP_NOTCH_DEPTH = 3;
 export function brokenLip(from: Vec2, to: Vec2): readonly Vec2[] {
   const length = Math.hypot(to.x - from.x, to.y - from.y);
   const notches = Math.max(1, Math.round(length / LIP_NOTCH_EVERY));
-  const across = length === 0 ? { x: 0, y: 0 } : { x: (from.y - to.y) / length, y: (to.x - from.x) / length };
+  const across =
+    length === 0 ? { x: 0, y: 0 } : { x: (from.y - to.y) / length, y: (to.x - from.x) / length };
   return Array.from({ length: notches + 1 }, (_, k) => {
     const bite = k === 0 || k === notches ? 0 : (k % 2 === 0 ? 1 : -1) * LIP_NOTCH_DEPTH;
     return {
