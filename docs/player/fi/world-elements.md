@@ -114,6 +114,18 @@ päällä oleva putoaa silloin kuin katkaistulta sillalta.
 sen. **Salakäytävä** näyttää täsmälleen samalta kuin sitä ympäröivä
 kallioseinä, kunnes se aukeaa pimeäksi aukoksi.
 
+## Hissit
+
+**Hissi** on rautakehyksessä oleva lankkulava, joka kuljettaa sinut
+alemman ja korotetun lattian välillä. Astu kyytiin, kun se on
+pysähtyneenä sinun tasollasi. Jotkin hissit kulkevat ylös ja alas
+itsestään ja pysähtyvät kummassakin päässä muutamaksi sekunniksi; toiset
+menevät toiselle tasolle aina, kun niiden vivusta vedetään, eikä
+vetäminen liikkeen aikana tee mitään. Kun hissi liikkuu, rautasäleiköt
+sulkevat sen molemmat päät ja messinkinen nuoli näyttää suunnan: kukaan
+ei pääse kyytiin eikä pois, eikä mikään voi tönäistä sinua siltä. Kun se
+pysähtyy, astu pois.
+
 ## Kokeile niitä
 
 Valitse buildieditorin **Harjoituskentällä** skenaario **Erämaa**: jokainen

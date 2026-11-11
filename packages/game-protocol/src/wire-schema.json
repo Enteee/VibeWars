@@ -7838,6 +7838,23 @@
       ]
     },
     "WireKeyProven": { "properties": [{ "name": "mac", "optional": false, "type": "string" }] },
+    "WireLift": {
+      "properties": [
+        {
+          "name": "phase",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "high" },
+              { "literal": "low" },
+              { "literal": "rising" },
+              { "literal": "sinking" }
+            ]
+          }
+        },
+        { "name": "progress", "optional": false, "type": "number" }
+      ]
+    },
     "WireLobbyCharacter": {
       "properties": [
         { "name": "primary", "optional": false, "type": "string" },
@@ -9020,6 +9037,29 @@
           }
         },
         {
+          "name": "lifts",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "phase",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "high" },
+                      { "literal": "low" },
+                      { "literal": "rising" },
+                      { "literal": "sinking" }
+                    ]
+                  }
+                },
+                { "name": "progress", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
+        {
           "name": "phase",
           "optional": false,
           "type": { "union": [{ "literal": "active" }, { "literal": "finished" }] }
@@ -9498,6 +9538,29 @@
                 },
                 { "name": "x", "optional": false, "type": "number" },
                 { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "lifts",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "phase",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "high" },
+                      { "literal": "low" },
+                      { "literal": "rising" },
+                      { "literal": "sinking" }
+                    ]
+                  }
+                },
+                { "name": "progress", "optional": false, "type": "number" }
               ]
             }
           }

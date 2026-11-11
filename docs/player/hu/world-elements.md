@@ -116,6 +116,17 @@ A **csapórács** vasrács egy kőboltívben, amelyet kar vagy nyomólap emel
 fel. A **rejtett átjáró** pontosan olyan, mint a körülötte lévő
 sziklafal, amíg egy sötét résre nem nyílik.
 
+## Felvonók
+
+A **felvonó** egy vaskeretbe foglalt deszkaemelvény, amely egy
+alacsonyabb és egy megemelt padló között visz. Lépj rá, amíg a te
+szinteden áll. Egyes felvonók maguktól járnak fel és le, és mindkét
+végükön megállnak néhány másodpercre; mások minden alkalommal a másik
+szintre mennek, amikor meghúzzák a karjukat, és a meghúzás mozgás közben
+nem csinál semmit. Amíg egy felvonó mozog, vasrácsok zárják le mindkét
+végét, és egy sárgaréz nyíl mutatja az irányát: senki nem tud fel- vagy
+leszállni, és semmi nem tud lelökni róla. Amikor megáll, lépj le.
+
 ## Próbáld ki őket
 
 A buildszerkesztő **gyakorlóterén** válaszd a **Vadon** forgatókönyvet:

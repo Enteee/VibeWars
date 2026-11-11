@@ -111,6 +111,17 @@ kto wtedy na niej stoi, spada jak z przeciętego mostu.
 albo płyta. **Ukryte przejście** wygląda dokładnie jak skalny mur wokół,
 dopóki nie otworzy się na ciemną szczelinę.
 
+## Windy
+
+**Winda** to platforma z desek w żelaznej ramie, która przewozi cię
+między niższą a podwyższoną podłogą. Wejdź na nią, gdy stoi na twoim
+poziomie. Niektóre windy same jeżdżą w górę i w dół i zatrzymują się na
+kilka sekund na każdym końcu; inne jadą na drugi poziom za każdym
+pociągnięciem ich dźwigni, a pociągnięcie w trakcie jazdy nic nie robi.
+Gdy winda jedzie, żelazne kraty zamykają oba jej końce, a mosiężna
+strzałka wskazuje kierunek: nikt nie może wsiąść ani wysiąść i nic nie
+może cię z niej zrzucić. Gdy się zatrzyma, zejdź.
+
 ## Pogoda i atmosfera
 
 Ławice mgły, dym, para, deszcz i śnieg są tylko dla oka. Nigdy cię nie ranią,

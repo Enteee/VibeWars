@@ -124,6 +124,18 @@ dari jembatan yang putus.
 oleh tuas atau pelat. **Lorong rahasia** tampak persis seperti tembok
 batu karang di sekitarnya, sampai ia terbuka menjadi celah gelap.
 
+## Lift
+
+**Lift** adalah panggung papan dalam rangka besi yang membawamu di
+antara lantai yang lebih rendah dan lantai yang ditinggikan. Naiklah
+saat lift berhenti di tingkatmu. Beberapa lift naik turun sendiri dan
+berhenti beberapa detik di setiap ujung; yang lain pindah ke tingkat
+lainnya setiap kali tuasnya ditarik, dan menarik tuas saat lift bergerak
+tidak berpengaruh apa-apa. Selama lift bergerak, jeruji besi menutup
+kedua ujungnya dan panah kuningan menunjukkan arahnya: tidak ada yang
+bisa naik atau turun, dan tidak ada yang bisa menjatuhkanmu darinya.
+Saat berhenti, turunlah.
+
 ## Coba sendiri
 
 Di **area latihan** pada editor build, pilih skenario **Alam liar**: setiap

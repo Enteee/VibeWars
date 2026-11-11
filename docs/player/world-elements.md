@@ -106,6 +106,16 @@ A **portcullis** is an iron grid in a stone arch that a lever or plate
 raises. A **hidden passage** looks exactly like the rock wall around
 it until it opens onto a dark gap.
 
+## Lifts
+
+A **lift** is a plank platform in an iron frame that carries you between
+a lower floor and a raised one. Step on while it rests at your level.
+Some lifts go up and down on their own, resting a few seconds at each
+end; others go to the other level each time their lever is pulled, and a
+pull while one moves does nothing. While a lift moves, iron bars close
+both its ends and a brass chevron points the way it goes: nobody can get
+on or off, and nothing can knock you off it. When it stops, step off.
+
 ## Weather and atmosphere
 
 Fog banks, smoke, steam, rain and snow are only for the eye. They never

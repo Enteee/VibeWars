@@ -1,0 +1,128 @@
+{
+  "id": "lifts",
+  "name": "Lifts",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "teams": 2,
+  "width": 1600,
+  "height": 1000,
+  "bounds": {
+    "kind": "rect"
+  },
+  "layers": 2,
+  "groundLayer": 0,
+  "pits": [],
+  "tunnels": [],
+  "decks": [
+    {
+      "id": "upper",
+      "layer": 1,
+      "footprint": {
+        "kind": "rect",
+        "x": 800,
+        "y": 200,
+        "width": 600,
+        "height": 600
+      },
+      "look": "platform",
+      "switched": null
+    }
+  ],
+  "transitions": [
+    {
+      "id": "timer-lift",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 680,
+        "y": 300,
+        "width": 120,
+        "height": 100
+      },
+      "uphill": "e",
+      "look": "lift",
+      "lift": {
+        "kind": "timer",
+        "restSeconds": 4,
+        "travelSeconds": 2
+      }
+    },
+    {
+      "id": "lever-lift",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 680,
+        "y": 600,
+        "width": 120,
+        "height": 100
+      },
+      "uphill": "e",
+      "look": "lift",
+      "lift": {
+        "kind": "lever"
+      }
+    }
+  ],
+  "walls": [],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 100,
+        "y": 500
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1500,
+        "y": 900
+      }
+    }
+  ],
+  "objectives": [],
+  "gates": [],
+  "switches": [
+    {
+      "id": "lift-lever",
+      "layer": 0,
+      "position": {
+        "x": 600,
+        "y": 760
+      },
+      "targets": ["lever-lift"]
+    },
+    {
+      "id": "lift-lever-top",
+      "layer": 1,
+      "position": {
+        "x": 900,
+        "y": 740
+      },
+      "targets": ["lever-lift"]
+    }
+  ],
+  "lighting": {
+    "ambient": {
+      "colour": 11582676,
+      "intensity": 0.45
+    },
+    "indoorAmbient": {
+      "colour": 5924488,
+      "intensity": 0.3
+    },
+    "indoor": [],
+    "sun": {
+      "directionDeg": 315,
+      "elevationDeg": 50,
+      "colour": 16773590,
+      "intensity": 0.55
+    },
+    "lights": []
+  }
+}

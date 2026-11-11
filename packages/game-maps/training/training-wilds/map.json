@@ -6,7 +6,9 @@
   "teams": 2,
   "width": 1200,
   "height": 800,
-  "bounds": { "kind": "rect" },
+  "bounds": {
+    "kind": "rect"
+  },
   "layers": 3,
   "groundLayer": 1,
   "pits": [
@@ -39,6 +41,7 @@
   ],
   "transitions": [
     {
+      "id": "rough-steps-1",
       "from": 1,
       "to": 2,
       "area": {
@@ -49,9 +52,11 @@
         "height": 110
       },
       "uphill": "e",
-      "look": "rough-steps"
+      "look": "rough-steps",
+      "lift": null
     },
     {
+      "id": "rough-steps-2",
       "from": 1,
       "to": 2,
       "area": {
@@ -62,9 +67,11 @@
         "height": 110
       },
       "uphill": "w",
-      "look": "rough-steps"
+      "look": "rough-steps",
+      "lift": null
     },
     {
+      "id": "ramp-1",
       "from": 0,
       "to": 1,
       "area": {
@@ -75,9 +82,11 @@
         "height": 60
       },
       "uphill": "w",
-      "look": "ramp"
+      "look": "ramp",
+      "lift": null
     },
     {
+      "id": "ramp-2",
       "from": 0,
       "to": 1,
       "area": {
@@ -88,7 +97,8 @@
         "height": 110
       },
       "uphill": "n",
-      "look": "ramp"
+      "look": "ramp",
+      "lift": null
     }
   ],
   "walls": [
@@ -530,7 +540,10 @@
       },
       "opener": {
         "kind": "plate",
-        "plate": { "x": 200, "y": 700 },
+        "plate": {
+          "x": 200,
+          "y": 700
+        },
         "team": null
       },
       "blocks": "bodies-and-shots",

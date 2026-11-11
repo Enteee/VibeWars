@@ -404,6 +404,7 @@ export function toArenaSnapshot(
     switches: renderableSwitches(gated.switches, match.switches),
     teleports: renderableTeleports(gated.teleports, match.teleports),
     breakables: renderableBreakables(gated.breakables, match.breakables),
+    lifts: match.lifts,
     shrines: shrines.map((shrine) => ({
       position: shrine.position,
       side: shrine.team === side ? "ally" : "enemy",

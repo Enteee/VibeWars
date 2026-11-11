@@ -28,7 +28,12 @@ Každé tě varuje těsně předtím, než udeří: jeho okrajový kruh se nafou
 
 ## Páky a brány
 
-**Brána** je z dubových vrat pobitých železem. Zavřená blokuje cestu; když je otevřená, její křídla se rozevřou a odhalí tmavý průchod. **Páka** otevírá nebo zavírá brány, které ovládá: kamenný podstavec s dřevěným ramenem, jehož mosazná hlavice nahoře září a dole je šedá. Pravým kliknutím páku zaměříš a pak stiskni **Space**, abys k ní došel a přepnul ji.
+**Brána** je z dubových vrat pobitých železem. Zavřená blokuje cestu;
+když je otevřená, její křídla se rozevřou a odhalí tmavý průchod.
+**Páka** otevírá nebo zavírá brány, které ovládá: kamenný podstavec s
+dřevěným ramenem, jehož mosazná hlavice nahoře září a dole je šedá.
+Pravým kliknutím páku zaměříš a pak stiskni **Space**, abys k ní došel a
+přepnul ji.
 
 Některé brány se místo toho otevírají **nášlapnou deskou**: kamenným kotoučem, který se propadne a zbarví do mosazna, dokud na něm někdo stojí. Brána se zavře, když z ní sestoupí poslední, a její deska potřebuje pár sekund, než ji znovu otevře. Některé desky reagují jen na jeden tým.
 
@@ -51,6 +56,10 @@ Vejdeš-li do **portálu**, okamžitě se objevíš u jeho výstupu. Portál ved
 Některé přechody se během zápasu mění, pro všechny naráz. **Padací most** se zvedá a spouští pákou. Zvednutý stojí u svého závěsu vzpřímeně jako dubová deska a nikdo nemůže přejít; kdo na něm je, když se zvedá, je odstrčen z jeho bližšího konce. **Provazový most** může jeho páka přeseknout, jednou: jeho dvě poloviny visí ze svých kotev a kdo na něm byl, spadne na zem nebo do jámy pod ním. **Drolící se podlaha** popraská o něco víc pokaždé, když na ni někdo šlápne, a po daném počtu kroků se propadne; kdo na ní pak je, spadne jako z přeseknutého mostu.
 
 **Padací mříž** je železná mříž v kamenném oblouku, kterou zvedne páka nebo deska. **Skrytý průchod** vypadá přesně jako skalní stěna kolem něj, dokud se neotevře do tmavé mezery.
+
+## Výtahy
+
+**Výtah** je plošina z prken v železném rámu, která tě přenese mezi nižší a vyvýšenou podlahou. Nastup, když stojí ve tvé úrovni. Některé výtahy jezdí nahoru a dolů samy a na každém konci pár sekund stojí; jiné jedou do druhé úrovně pokaždé, když někdo zatáhne za jejich páku, a zatažení během jízdy nic nedělá. Když výtah jede, železné mříže uzavřou oba jeho konce a mosazná šipka ukazuje, kam jede: nikdo nemůže nastoupit ani vystoupit a nic tě z něj nemůže srazit. Až zastaví, vystup.
 
 ## Počasí a atmosféra
 

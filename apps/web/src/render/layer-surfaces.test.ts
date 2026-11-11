@@ -97,15 +97,15 @@ describe("a click on a ramp (#2972)", () => {
       { layer: 2, footprint: rect(260, -100, 80, 100), look: "platform", switched: null },
     ],
     transitions: [
-      { from: 0, to: 1, area: rect(100, 100, 120, 100), uphill: "e", look: "ramp" },
-      { from: 1, to: 2, area: rect(280, 0, 40, 120), uphill: "n", look: "ramp" },
+      { from: 0, to: 1, area: rect(100, 100, 120, 100), uphill: "e", look: "ramp", lift: null },
+      { from: 1, to: 2, area: rect(280, 0, 40, 120), uphill: "n", look: "ramp", lift: null },
     ],
     water: [],
     zones: [],
   };
   const drawnAt = (point: { x: number; y: number }, layer: number) => ({
     x: point.x,
-    y: point.y - liftAt(STAIRS, point, layer),
+    y: point.y - liftAt(STAIRS, [], point, layer),
   });
 
   it("lands where the 0→1 ramp is drawn, its upper half on the upper layer", () => {
@@ -199,6 +199,7 @@ describe("a body under a raised ramp (#2975)", () => {
     area: { kind: "rect", x: 300, y: 350, width: 140, height: 200 },
     uphill: "e",
     look: "ramp",
+    lift: null,
   } as const;
   const upper = {
     from: 1,
@@ -206,6 +207,7 @@ describe("a body under a raised ramp (#2975)", () => {
     area: { kind: "rect", x: 540, y: 250, width: 120, height: 120 },
     uphill: "n",
     look: "ramp",
+    lift: null,
   } as const;
   const HEIGHTS: MapStructure = {
     layerCount: 3,
@@ -427,6 +429,7 @@ describe("liftAt (#2958)", () => {
     area: { kind: "rect" as const, x, y, width, height },
     uphill,
     look: "ramp" as const,
+    lift: null,
   });
   const HEIGHTS: MapStructure = {
     layerCount: 3,
@@ -452,22 +455,24 @@ describe("liftAt (#2958)", () => {
     ["east ramp", { x: 900, y: 350 }, { x: 830, y: 350 }, { x: 760, y: 350 }, 0],
     ["1 to 2 ramp", { x: 600, y: 270 }, { x: 600, y: 210 }, { x: 600, y: 150 }, 1],
   ])("%s: low end, midpoint, high end", (_name, low, mid, high, base) => {
-    expect(liftAt(HEIGHTS, low, base)).toBeCloseTo(base * STEP);
-    expect(liftAt(HEIGHTS, mid, base)).toBeCloseTo((base + 0.5) * STEP);
-    expect(liftAt(HEIGHTS, high, base + 1)).toBeCloseTo((base + 1) * STEP);
+    expect(liftAt(HEIGHTS, [], low, base)).toBeCloseTo(base * STEP);
+    expect(liftAt(HEIGHTS, [], mid, base)).toBeCloseTo((base + 0.5) * STEP);
+    expect(liftAt(HEIGHTS, [], high, base + 1)).toBeCloseTo((base + 1) * STEP);
   });
 
   it("does not depend on which of the ramp's layers the body is on", () => {
-    expect(liftAt(HEIGHTS, { x: 370, y: 350 }, 1)).toBe(liftAt(HEIGHTS, { x: 370, y: 350 }, 0));
+    expect(liftAt(HEIGHTS, [], { x: 370, y: 350 }, 1)).toBe(
+      liftAt(HEIGHTS, [], { x: 370, y: 350 }, 0),
+    );
   });
 
   it("leaves a layer the ramp does not join at its own height", () => {
-    expect(liftAt(HEIGHTS, { x: 600, y: 260 }, 0)).toBe(0);
+    expect(liftAt(HEIGHTS, [], { x: 600, y: 260 }, 0)).toBe(0);
   });
 
   it("is the layer's height off every ramp", () => {
-    expect(liftAt(HEIGHTS, { x: 600, y: 400 }, 1)).toBe(STEP);
-    expect(liftAt(HEIGHTS, { x: 100, y: 100 }, 0)).toBe(0);
+    expect(liftAt(HEIGHTS, [], { x: 600, y: 400 }, 1)).toBe(STEP);
+    expect(liftAt(HEIGHTS, [], { x: 100, y: 100 }, 0)).toBe(0);
   });
 
   it("never steps on a walk from the ground to the deck", () => {
@@ -475,7 +480,7 @@ describe("liftAt (#2958)", () => {
     let last = 0;
     for (let x = 280; x <= 460; x += walked) {
       const layer = x < 300 ? 0 : 1;
-      const lift = liftAt(HEIGHTS, { x, y: 350 }, layer);
+      const lift = liftAt(HEIGHTS, [], { x, y: 350 }, layer);
       expect(Math.abs(lift - last)).toBeLessThanOrEqual((walked / 140) * STEP + 1e-9);
       last = lift;
     }
@@ -668,11 +673,12 @@ describe("a level under the ground (#2973)", () => {
       area: rect(500, 545, 110, 80),
       uphill: "w",
       look: "ramp",
+      lift: null,
     } as const;
     const withRamp = { ...SUNK, transitions: [ramp] };
-    expect(liftAt(withRamp, { x: 610, y: 580 }, 0)).toBeCloseTo(-STEP);
-    expect(liftAt(withRamp, { x: 555, y: 580 }, 1)).toBeCloseTo(-STEP / 2);
-    expect(liftAt(SUNK, { x: 600, y: 580 }, 0)).toBe(-STEP);
+    expect(liftAt(withRamp, [], { x: 610, y: 580 }, 0)).toBeCloseTo(-STEP);
+    expect(liftAt(withRamp, [], { x: 555, y: 580 }, 1)).toBeCloseTo(-STEP / 2);
+    expect(liftAt(SUNK, [], { x: 600, y: 580 }, 0)).toBe(-STEP);
   });
 });
 
@@ -714,5 +720,30 @@ describe("trackAlt (#3020)", () => {
     alt.dispose();
     target.dispatchEvent(event("keydown", true));
     expect(alt.held()).toBe(false);
+  });
+});
+
+describe("a lift (#3079)", () => {
+  const lift = {
+    from: 0,
+    to: 1,
+    area: { kind: "rect", x: 680, y: 300, width: 120, height: 100 },
+    uphill: "e",
+    look: "lift",
+    lift: { kind: "lever" },
+  } as const;
+  const structure: MapStructure = { ...FLAT_STRUCTURE, layerCount: 2, transitions: [lift] };
+
+  it("draws a body on it at its platform's height, wherever it stands on it", () => {
+    const halfway = [{ phase: "rising", progress: 0.5 }] as const;
+    expect(liftAt(structure, halfway, { x: 690, y: 350 }, 0)).toBeCloseTo(ELEVATION_STEP / 2);
+    expect(liftAt(structure, halfway, { x: 790, y: 350 }, 0)).toBeCloseTo(ELEVATION_STEP / 2);
+    expect(liftAt(structure, [{ phase: "high", progress: 1 }], { x: 690, y: 350 }, 1)).toBe(
+      ELEVATION_STEP,
+    );
+  });
+
+  it("hides nothing: its platform moves", () => {
+    expect(occludersOf([], structure)).toEqual([]);
   });
 });

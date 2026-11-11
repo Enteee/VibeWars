@@ -30,6 +30,7 @@ const LEVER: SwitchField = {
   gates: [0],
   teleports: [],
   decks: [],
+  lifts: [],
 };
 const LEVER_ID = switchTargetId("lever");
 

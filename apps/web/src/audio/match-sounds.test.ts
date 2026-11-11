@@ -79,6 +79,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     teleports: [],
     breakables: [],
     decks: [],
+    lifts: [],
     summary: undefined,
   };
 }

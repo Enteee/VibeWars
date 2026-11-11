@@ -1,6 +1,11 @@
 import { pointInPolygon, progressAlong, UPHILL, type Vec2 } from "@vibewars/game-core";
 
-import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
+import type {
+  MapStructure,
+  RenderableLift,
+  RenderableShape,
+  RenderableWall,
+} from "./arena-snapshot.js";
 import { creatureOutline } from "./creature-shape.js";
 import { ELEVATION_STEP, elevationOf } from "./render-order.js";
 
@@ -61,15 +66,29 @@ function rampLift(structure: MapStructure, ramp: Transition, t: number): number 
   return from + t * (liftOf(structure, ramp.to) - from);
 }
 
+/** The map's lifts (#3079), in its transitions' order: a snapshot's `lifts` index each. */
+export function liftsOf(structure: MapStructure): readonly Transition[] {
+  return structure.transitions.filter(({ lift }) => lift !== null);
+}
+
 /**
  * The drawn lift of a body on `layer` at `position`: its layer's height,
  * or on a ramp of its layer the ramp's height at that point, which does
- * not depend on which of the ramp's two layers the body is on.
+ * not depend on which of the ramp's two layers the body is on. On a lift
+ * (#3079) it is the platform's height, as `lifts` have it now.
  */
-export function liftAt(structure: MapStructure, position: Vec2, layer: number): number {
+export function liftAt(
+  structure: MapStructure,
+  lifts: readonly RenderableLift[],
+  position: Vec2,
+  layer: number,
+): number {
   const ramp = rampAt(structure, position, layer);
   if (ramp === undefined) {
     return liftOf(structure, layer);
+  }
+  if (ramp.lift !== null) {
+    return rampLift(structure, ramp, lifts[liftsOf(structure).indexOf(ramp)]?.progress ?? 0);
   }
   return rampLift(
     structure,
@@ -493,7 +512,8 @@ export function surfacesAt(structure: MapStructure, world: Vec2): readonly Surfa
       surfaces.push({ layer, point, lift: liftOf(structure, layer) });
     }
   }
-  for (const ramp of structure.transitions) {
+  // A lift (#3079) is no slope: a click on it names the floor under the cursor.
+  for (const ramp of structure.transitions.filter(({ lift }) => lift === null)) {
     const surface = rampSurface(structure, ramp, world);
     if (surface !== undefined) {
       surfaces.push(surface);
@@ -636,8 +656,9 @@ export function occludersOf(
     // slope is drawn already lifted, so it hides at no further lift. A ramp
     // up from the ground covers the ground behind it, but not a body on it
     // (#3000): on its upper half that body is on the layer above already.
+    // A lift (#3079) is a shaft, its platform drawn as it moves: it hides nothing.
     ...structure.transitions.flatMap((ramp) => {
-      if (ramp.from < ground) {
+      if (ramp.from < ground || ramp.lift !== null) {
         return [];
       }
       const { slope } = rampDrawing(structure, ramp);

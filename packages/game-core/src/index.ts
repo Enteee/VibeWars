@@ -279,6 +279,8 @@ export type {
   SwitchedDeckField,
   SwitchedDeckState,
 } from "./match/switched-decks.js";
+export type { Lift, LiftField, LiftPhase, LiftRun, LiftState } from "./match/lifts.js";
+export { LEVER_LIFT_TRAVEL_SECONDS } from "./match/lifts.js";
 export { SWITCH_COOLDOWN_SECONDS, switchIdOf, switchTargetId } from "./match/switches.js";
 export type { Teleport, TeleportField, TeleportState } from "./match/teleports.js";
 export { TELEPORT_COOLDOWN_SECONDS } from "./match/teleports.js";

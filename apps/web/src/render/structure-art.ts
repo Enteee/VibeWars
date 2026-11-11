@@ -415,6 +415,8 @@ export const TRANSITION_ART: Record<TransitionLook, TransitionArt> = {
     ]);
   },
   /** Steps cut into rock or earth: uneven depths, each edge wandering across. */
+  /** A lift (#3079): its shaft and platform are `lift-art.ts`'s, drawn instead of a slope. */
+  lift: () => undefined,
   "rough-steps": (painter, { frame, line, palette }) => {
     const edges: Segment[] = [];
     let depth = 0;

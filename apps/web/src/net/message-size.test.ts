@@ -343,6 +343,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       teleports: [],
       breakables: [],
       decks: [],
+      lifts: [],
     };
   }
 
@@ -446,6 +447,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
           teleports: [],
           breakables: [],
           decks: [],
+          lifts: [],
         }),
         // Whatever ground it has, the largest an outline can be (#3066).
         bounds: {

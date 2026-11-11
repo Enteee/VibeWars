@@ -112,6 +112,17 @@ Uma **grade levadiça** é uma grade de ferro num arco de pedra que uma
 alavanca ou placa levanta. Uma **passagem secreta** parece exatamente
 com a parede de rocha ao redor até se abrir para uma fenda escura.
 
+## Elevadores
+
+Um **elevador** é uma plataforma de tábuas numa armação de ferro que
+leva você entre um piso mais baixo e um elevado. Suba enquanto ele está
+parado no seu nível. Alguns elevadores sobem e descem sozinhos e param
+alguns segundos em cada ponta; outros vão para o outro nível cada vez
+que a alavanca deles é puxada, e puxá-la enquanto ele se move não faz
+nada. Enquanto um elevador se move, barras de ferro fecham as duas
+pontas e uma seta de latão aponta para onde ele vai: ninguém pode subir
+nem descer, e nada pode derrubar você dele. Quando ele parar, desça.
+
 ## Clima e atmosfera
 
 Bancos de névoa, fumaça, vapor, chuva e neve são só para os olhos. Nunca
