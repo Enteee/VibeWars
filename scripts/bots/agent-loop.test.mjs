@@ -5,7 +5,7 @@
  * loop itself, from nix/claude-llc.nix, against a stand-in for claude-bot.
  */
 
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -37,6 +37,7 @@ import {
 import { answerBoard, sweep } from "./hub-board.mjs";
 import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
 import { SYSTEM, obj } from "./protocol.mjs";
+import { IDLING_FILE } from "./wake-idle.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const AGENT_LOOP = path.join(HERE, "agent-loop.mjs");
@@ -388,6 +389,24 @@ describe("agent-loop.mjs", () => {
     expect(rest).toEqual([]);
     expect(line).toMatchObject({ cmd: "idle", woke: "reboot" });
     expect(line?.start).toBeGreaterThanOrEqual(before);
+  });
+
+  it("keeps bus/<employee>/idling while idle, and removes it after (#3100)", async () => {
+    const root = scratch();
+    const file = path.join(root, "bus", "developer@2", IDLING_FILE);
+    const child = spawn(process.execPath, [AGENT_LOOP, "idle", "developer@2"], {
+      env: { ...process.env, VIBEWARS_BOT_ROOT: root },
+      stdio: "ignore",
+    });
+    const exited = new Promise((resolve) => child.on("exit", resolve));
+    const before = Date.now();
+    while (!fs.existsSync(file) && Date.now() - before < 10_000) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(Number(fs.readFileSync(file, "utf8"))).toBeGreaterThanOrEqual(before);
+    fs.writeFileSync(path.join(root, "reboot.json"), "{}");
+    expect(await exited).toBe(0);
+    expect(fs.existsSync(file)).toBe(false);
   });
 
   it("prints the next pause", () => {

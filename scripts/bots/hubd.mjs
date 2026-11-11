@@ -112,6 +112,8 @@ import {
   WATCH_CAP_MS,
 } from "./hub-watch.mjs";
 import { SYSTEM, obj } from "./protocol.mjs";
+import { isTakingComment } from "./context.mjs";
+import { IDLING_FILE, WAKE_CHECK_MS, sentKey, wakeText, wakeTargets } from "./wake-idle.mjs";
 import {
   COMPANY_PATHSPECS,
   DRAIN_MS,
@@ -3030,6 +3032,10 @@ async function handleAs(request) {
     return limitedResponse();
   }
 
+  if (kind === "gh" && isTakingComment(argv)) {
+    noteClaim(employee, argv[2]);
+  }
+
   servingRole = role;
   /** @type {Record<string, unknown>} */
   let response;
@@ -5017,6 +5023,83 @@ async function writeKpis(cfg) {
 }
 
 /**
+ * Every `taking #N` comment this hubd has passed, for `sendWakes` (#3100).
+ * In memory: a restart forgets them, at worst one more wake per card.
+ *
+ * @type {import("./wake-idle.mjs").Claim[]}
+ */
+let claims = [];
+/** The last wake of each employee for each card, `sentKey` → ms. */
+const wokenFor = new Map();
+
+/**
+ * @param {string} employee
+ * @param {string | undefined} selector the issue the comment is on
+ * @returns {void}
+ */
+function noteClaim(employee, selector) {
+  const issue = selectorNumber(selector, company().repo);
+  if (issue === null) {
+    return;
+  }
+  const item = board?.cards.find(({ item: i }) => itemNumber(i, company().repo) === issue)?.item;
+  const status = typeof item?.status === "string" ? item.status : null;
+  claims = [
+    ...claims.filter((claim) => claim.issue !== issue),
+    { issue, employee, at: Date.now(), status },
+  ];
+}
+
+/**
+ * Message an idle employee for each card already waiting in its role's
+ * column (#3100). Reads the board copy and the `idling` files; asks GitHub
+ * nothing.
+ *
+ * @returns {void}
+ */
+function sendWakes() {
+  const now = Date.now();
+  if (board === null || fs.existsSync(REBOOT)) {
+    return;
+  }
+  const repo = company().repo;
+  claims = claims.filter((claim) => now - claim.at < 24 * 60 * 60_000);
+  /** @type {import("./wake-idle.mjs").WakeCard[]} */
+  const cards = board.cards.flatMap(({ item }) => {
+    const number = itemNumber(item, repo);
+    const content = obj(item.content);
+    return number === null || typeof item.status !== "string"
+      ? []
+      : [
+          {
+            number,
+            title: typeof content.title === "string" ? content.title : "",
+            status: item.status,
+          },
+        ];
+  });
+  /** @type {Map<string, number>} */
+  const idle = new Map();
+  for (const employee of staffed.keys()) {
+    try {
+      const since = Number(fs.readFileSync(path.join(ROOT, "bus", employee, IDLING_FILE), "utf8"));
+      if (Number.isFinite(since)) {
+        idle.set(employee, since);
+      }
+    } catch {
+      // not idle
+    }
+  }
+  for (const target of wakeTargets({ cards, staff: staffed, idle, claims, sent: wokenFor, now })) {
+    wokenFor.set(sentKey(target.employee, target.issue), now);
+    tellCompany(`wake-${String(target.issue)}`, wakeText(target), {
+      to: target.employee,
+      direct: true,
+    });
+  }
+}
+
+/**
  * Send the nudges that are due (#537). link decides per employee whether one
  * is still unread; hubd only keeps the clock.
  *
@@ -5410,6 +5493,7 @@ async function main() {
   await syncSkills(cfg);
   let lastBudgetCheck = Date.now();
   let lastNudgeCheck = 0;
+  let lastWakeCheck = 0;
   let lastProposalCheck = 0;
   /** @param {string} why */
   const stop = (why) => {
@@ -5471,6 +5555,10 @@ async function main() {
       sendNudges();
       relayRunnersAlert();
       considerSleep();
+    }
+    if (Date.now() - lastWakeCheck > WAKE_CHECK_MS) {
+      lastWakeCheck = Date.now();
+      sendWakes();
     }
     if (Date.now() - lastKpis >= KPI_EVERY_MS) {
       lastKpis = Date.now();
