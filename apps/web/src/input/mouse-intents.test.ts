@@ -85,6 +85,7 @@ const MATCH: MatchSnapshot = {
   gates: [],
   switches: [],
   teleports: [],
+  breakables: [],
   summary: undefined,
 };
 

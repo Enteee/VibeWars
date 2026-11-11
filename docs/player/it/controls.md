@@ -34,6 +34,7 @@ Questi tasti sono fissi:
 - **Clic destro** su una bandiera o sulla Base bandiera, in una Battaglia di gilda o su Barrow Field, per bersagliarla; **Space** ti ci porta e prende o pianta la bandiera.
 - **Clic destro** su una leva per selezionarla; **Space** ti porta lì e la aziona, aprendo o chiudendo i cancelli che comanda.
 - Entra in un **portale** e ti porta alla sua uscita. Una leva può accenderlo o spegnerlo; dopo un viaggio riposa 5 s prima di portarti di nuovo.
+- Un **cancello scintillante** ferma corpi, frecce e altri proiettili; un incantesimo lanciato direttamente su un bersaglio passa. Un **muro crepato** si può abbattere: fai clic destro su di esso, poi attaccalo o colpiscilo con un'abilità che infligge danni.
 - **Clic con la rotellina** su un nemico per segnalarlo alla tua squadra: il loro **T** lo bersaglia. Sul terreno o su un alleato fa un ping in quel punto. Oppure clicca sulla barra del bersaglio in alto per segnalare il nemico che hai bersagliato.
 - Clicca sulla bussola per fare un ping in quel punto alla tua squadra; trascina per tracciare una linea che vedranno per qualche secondo.
 - La **Rotellina** regola lo zoom. **Trascina col destro** per guardarti intorno; rilascia e la visuale torna su di te.

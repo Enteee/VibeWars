@@ -535,6 +535,8 @@ export default {
   "hud.refusalInvalidTargetSelf": "Das kannst du nicht auf dich selbst anwenden.",
   "hud.refusalInvalidTargetSpirit": "Geister können kein Ziel sein.",
   "hud.refusalInvalidTargetUnenchantable": "Dieses Ziel kann nicht verzaubert werden.",
+  "hud.refusalInvalidTargetWall":
+    "Nur eine Fertigkeit, die Schaden verursacht, kann eine Mauer treffen.",
   "hud.refusalInvalidTargetUntargetable": "Deine Zauber können diesen Gegner nicht treffen.",
   "hud.refusalNeedsWeapon": "Braucht {weapon}.",
   "hud.refusalNoAnimalToCharm": "Hier gibt es kein Tier zum Zähmen.",
@@ -565,6 +567,7 @@ export default {
   "hud.stormBeaconOurs": "Sturmfeuer: von deinem Team gehalten",
   "hud.stormBeaconTheirs": "Sturmfeuer: vom Feind gehalten",
   "hud.switch": "Hebel",
+  "hud.breakableWall": "Rissige Mauer",
   "hud.targetDead": "tot",
   "hud.targetEffects": "Effekte deines Ziels",
   "hud.versus": "{ours} : {theirs}",

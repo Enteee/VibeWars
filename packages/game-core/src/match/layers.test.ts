@@ -324,6 +324,7 @@ describe("a body's layer (ADR-0051)", () => {
     const field = (layer: number): GateField => ({
       segments: SPANS,
       opener: { kind: "plate", plate: vec2(100, 700), team: null },
+      blocks: "all",
       layer,
     });
 
@@ -348,7 +349,7 @@ describe("a body's layer (ADR-0051)", () => {
   });
 
   const DECK_SWITCH: Partial<MatchSimulationOptions> = {
-    gates: [{ segments: wall(1396, 0, 8, 800), opener: { kind: "switch" } }],
+    gates: [{ segments: wall(1396, 0, 8, 800), opener: { kind: "switch" }, blocks: "all" }],
     switches: [{ id: "lever", layer: 1, position: ON_DECK, gates: [0], teleports: [] }],
   };
 

@@ -199,7 +199,7 @@ interface Session {
   readonly names: ReadonlyMap<string, string>;
   /** Its gates and switches (#3025), as a match's map has them. */
   readonly gated: GatedMap;
-  /** The walls, and every closed gate's, as the gates stand (#3025). */
+  /** The walls, every closed gate's and every standing breakable wall's (#3025, #3031). */
   readonly blocking: ReturnType<typeof gateWalls>;
   readonly structure: MapStructure;
   /** The map's resurrection shrines (#1199), as a match's. */
@@ -597,7 +597,7 @@ export function createTrainingPanel(): TrainingPanel {
       self,
       target,
       ownCompanion(match.players, self),
-      session?.blocking(match.gates).segments ?? [],
+      session?.blocking(match.gates, match.breakables).segments ?? [],
     );
     const unwielded = wrongWeapon(slots, self);
     const barred = silenced(slots, self);
@@ -681,6 +681,7 @@ export function createTrainingPanel(): TrainingPanel {
           toRenderableWall(wall, setup.structure.wallLayers[at] ?? 0),
         ),
         allWallSegments(setup.map.walls),
+        setup.map.breakables,
       ),
       structure: setup.structure.structure,
       shrines: mapShrines(setup.map.id, setup.map.teamCount),
@@ -1045,7 +1046,7 @@ export function createTrainingPanel(): TrainingPanel {
           // The Training Ground has no flags (#1225) or relics (#1374).
           toArenaSnapshot(
             latestMatch,
-            session.blocking(latestMatch.gates).walls,
+            session.blocking(latestMatch.gates, latestMatch.breakables).walls,
             session.shrines,
             undefined,
             undefined,

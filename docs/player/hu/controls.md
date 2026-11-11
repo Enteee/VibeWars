@@ -49,6 +49,7 @@ Ezek a billentyűk rögzítettek:
   célba veszed; a **Space** odasétál, és felveszi vagy leszúrja a zászlót.
 - **Jobb kattintással** egy karon célba veszed; a **Space** odamegy és átbillenti, így kinyílnak vagy bezárulnak a kapuk, amelyeket működtet.
 - Ha belépsz egy **portálba**, a kijáratához visz. Egy kar be- vagy kikapcsolhatja; egy utazás után 5 s-ig pihen, mielőtt újra visz.
+- A **csillámló kapu** megállítja a testeket, a nyilakat és más lövedékeket; a közvetlenül célpontra mondott varázslat átjut. A **repedt fal** lerombolható: kattints rá jobb gombbal, aztán támadd meg, vagy találd el egy sebző képességgel.
 - **Görgőkattintás** egy ellenségen: bemondod a csapatodnak, és náluk a
   **T** azt veszi célba. A talajon vagy egy szövetségesen azt a pontot
   jelzi. Vagy kattints a felül lévő célpontsávra, hogy bemondd a célba

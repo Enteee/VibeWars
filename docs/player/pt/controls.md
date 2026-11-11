@@ -47,6 +47,7 @@ Estas teclas são fixas:
   finca a bandeira.
 - **Clique direito** numa alavanca para a selecionar; **Space** caminha até ela e aciona-a, abrindo ou fechando os portões que controla.
 - Entra num **portal** e ele leva-te à sua saída. Uma alavanca pode ligá-lo ou desligá-lo; depois de uma viagem descansa 5 s antes de te levar de novo.
+- Um **portão cintilante** trava corpos, flechas e outros projéteis; um feitiço lançado diretamente sobre um alvo passa. Uma **parede rachada** pode ser partida: clica nela com o botão direito e depois ataca-a ou atinge-a com uma perícia de dano.
 - **Clique na roda** em um inimigo para anunciá-lo à sua equipe: a tecla
   **T** deles mira nele. No chão ou em um aliado, marca aquele ponto com
   um ping. Ou clique na barra de alvo no topo para anunciar o inimigo que

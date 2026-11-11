@@ -340,6 +340,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       gates: [],
       switches: [],
       teleports: [],
+      breakables: [],
     };
   }
 
@@ -440,6 +441,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         gates: [],
         switches: [],
         teleports: [],
+        breakables: [],
       },
     };
     const longestSkills = [...IMPLEMENTED_SKILLS]

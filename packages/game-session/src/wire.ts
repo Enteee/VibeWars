@@ -846,6 +846,7 @@ export function observedSnapshot(
     gates: snapshot.gates,
     switches: snapshot.switches,
     teleports: snapshot.teleports,
+    breakables: snapshot.breakables,
     capturePoints: snapshot.capturePoints.map(({ x, y, layer, owner, capturer, progress }) => ({
       position: { x, y },
       layer,

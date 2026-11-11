@@ -89,7 +89,23 @@
       "kind": "rect",
       "x": 0,
       "y": 620,
-      "width": 260,
+      "width": 40,
+      "height": 16,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 120,
+      "y": 620,
+      "width": 40,
+      "height": 16,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 244,
+      "y": 620,
+      "width": 16,
       "height": 16,
       "layer": 1
     },
@@ -491,7 +507,39 @@
       },
       "opener": {
         "kind": "switch"
-      }
+      },
+      "blocks": "all"
+    },
+    {
+      "id": "side-room-shimmer",
+      "wall": {
+        "kind": "rect",
+        "x": 160,
+        "y": 620,
+        "width": 84,
+        "height": 16,
+        "layer": 1
+      },
+      "opener": {
+        "kind": "plate",
+        "plate": { "x": 200, "y": 700 },
+        "team": null
+      },
+      "blocks": "bodies-and-shots"
+    }
+  ],
+  "breakables": [
+    {
+      "id": "side-room-crack",
+      "wall": {
+        "kind": "rect",
+        "x": 40,
+        "y": 620,
+        "width": 80,
+        "height": 16,
+        "layer": 1
+      },
+      "health": 200
     }
   ],
   "switches": [

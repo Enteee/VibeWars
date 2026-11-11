@@ -70,6 +70,8 @@ export type ActivationRejection =
   | "invalid-target-not-allied-summoned-creature"
   // An echo on a spirit (#1423): GW1's "Cannot target spirits".
   | "invalid-target-spirit"
+  // Anything but a damage skill at a foe, aimed at a breakable wall (#3031).
+  | "invalid-target-wall"
   | "out-of-range"
   | "no-line-of-sight"
   // A corpse skill with no fresh corpse in reach (#466): checked by the
@@ -166,6 +168,8 @@ export interface ActivationRequest {
   readonly sharesFloorWithTarget?: boolean;
   /** Which way the layers tilt a bow or spear attack skill's range: `heightStep`. */
   readonly heightStep?: number;
+  /** The target is a breakable wall (#3031), at `targetPosition`, with no `target`. */
+  readonly targetWall?: boolean;
 }
 
 /**
@@ -281,6 +285,17 @@ export function isAllyOrSelfRule(rule: TargetRule): boolean {
   return rule === "single-ally" || rule === "single-ally-not-spirit";
 }
 
+/**
+ * Whether `skill` may be aimed at a breakable wall (#3031): one at a foe
+ * that deals damage, a spell's or an attack skill's blow.
+ */
+export function strikesWalls(skill: Skill): boolean {
+  return (
+    skill.target === "single-enemy" &&
+    (skill.attack !== undefined || skill.effects.some(({ kind }) => kind === "damage"))
+  );
+}
+
 /** Validate a target against a skill's targeting rule. */
 function checkTarget(request: ActivationRequest): ActivationCheck {
   const { skill, caster, target } = request;
@@ -288,6 +303,9 @@ function checkTarget(request: ActivationRequest): ActivationCheck {
   if (skill.target === "self") {
     // A self-targeted skill ignores whatever the client had selected.
     return OK;
+  }
+  if (request.targetWall) {
+    return strikesWalls(skill) ? OK : reject("invalid-target-wall");
   }
 
   if (target === undefined) {

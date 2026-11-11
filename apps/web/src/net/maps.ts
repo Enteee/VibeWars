@@ -3,6 +3,7 @@ import {
   matchGates,
   matchLayers,
   matchSwitches,
+  matchBreakables,
   matchTeleports,
   matchZones,
 } from "@vibewars/game-maps/layers";
@@ -63,6 +64,8 @@ import {
   type GateDescriptor,
   type SwitchDescriptor,
   type TeleportDescriptor,
+  type BreakableDescriptor,
+  type WallDescriptor,
 } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { FLAT_STRUCTURE, type MapStructure } from "../render/arena-snapshot.js";
@@ -414,12 +417,10 @@ export function mapStructure(mapId: string): LoadedStructure {
 
 /** `gate` as the wire carries it (#2691, #3025). */
 export function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
-  const { wall, opener } = gate;
+  const { wall, opener, blocks } = gate;
   return {
-    wall:
-      wall.kind === "rect"
-        ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
-        : { kind: "polygon", points: wall.points },
+    wall: wallDescriptor(wall),
+    blocks,
     opener:
       opener.kind === "plate"
         ? {
@@ -434,6 +435,23 @@ export function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
 /** `map`'s switches as the wire carries them (#3025), in its order. */
 export function switchDescriptors(map: MapData): SwitchDescriptor[] {
   return (map.switches ?? []).map(({ id, layer, position }) => ({ id, layer, position }));
+}
+
+/** `wall` as the wire carries it: its shape, without its layer. */
+function wallDescriptor(wall: MapData["walls"][number]): WallDescriptor {
+  return wall.kind === "rect"
+    ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
+    : { kind: "polygon", points: wall.points };
+}
+
+/** `map`'s breakable walls as the wire carries them (#3031), in its order. */
+export function breakableDescriptors(map: MapData): BreakableDescriptor[] {
+  return (map.breakables ?? []).map(({ id, wall, health }) => ({
+    id,
+    layer: wall.layer,
+    wall: wallDescriptor(wall),
+    maxHealth: health,
+  }));
 }
 
 /** `map`'s teleports as the wire carries them (#3030), in its order. */
@@ -628,6 +646,7 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
       gates: map.gates.map(gateDescriptor),
       switches: switchDescriptors(map),
       teleports: teleportDescriptors(map),
+      breakables: breakableDescriptors(map),
     },
     mode: map.mode,
     walls: allWallSegments(map.walls),
@@ -636,6 +655,7 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
     gates: matchGates(map),
     switches: matchSwitches(map),
     teleports: matchTeleports(map),
+    breakables: matchBreakables(map),
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints.filter((spawn) => spawn.team < seated),
     shrines: shrinesOf(objectives),

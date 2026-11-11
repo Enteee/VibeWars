@@ -257,6 +257,11 @@ const gateSchema = z.object({
   id: z.string().min(1),
   wall: wallSchema,
   opener: openerSchema,
+  /**
+   * What it stops while closed (#3031): `all` is stone; `bodies-and-shots`
+   * is an energy barrier, which sight and a targeted spell pass.
+   */
+  blocks: z.enum(["all", "bodies-and-shots"]),
 });
 
 /** The most switches on a map (#3025). */
@@ -283,6 +288,16 @@ const teleportSchema = z.object({
   from: z.object({ layer: layerSchema, area: polygonWallSchema }),
   to: z.object({ layer: layerSchema, position: vec2Schema }),
   enabled: z.boolean(),
+});
+
+/** The most breakable walls on a map (#3031). */
+export const MAX_BREAKABLES = 4;
+
+/** A wall with health (#3031): struck down, it is gone for the match. */
+const breakableSchema = z.object({
+  id: z.string().min(1),
+  wall: wallSchema,
+  health: z.number().int().min(100).max(5000),
 });
 
 const spawnPointSchema = z.object({
@@ -583,6 +598,8 @@ export const mapDataSchema = z
     switches: z.array(switchSchema).max(MAX_SWITCHES).optional(),
     /** Its portals (#3030); without it, the map has none. */
     teleports: z.array(teleportSchema).max(MAX_TELEPORTS).optional(),
+    /** Its breakable walls (#3031); without it, the map has none. */
+    breakables: z.array(breakableSchema).max(MAX_BREAKABLES).optional(),
     /**
      * The level of its Ghostly Heroes (#2689): 20, 24 or 28, by where in
      * Heroes' Ascent it stands. With it, the map has one `ghost-spawn` per
@@ -712,6 +729,9 @@ export const mapDataSchema = z
     });
     map.gates.forEach((gate, index) => {
       layerInRange(gate.wall.layer, ["gates", index, "wall", "layer"]);
+    });
+    (map.breakables ?? []).forEach((breakable, index) => {
+      layerInRange(breakable.wall.layer, ["breakables", index, "wall", "layer"]);
     });
     map.objectives.forEach((objective, index) => {
       layerInRange(objective.layer, ["objectives", index, "layer"]);
@@ -1005,6 +1025,11 @@ export const mapDataSchema = z
           blocked(["gates", at], "a gate");
         }
       });
+      (map.breakables ?? []).forEach((breakable, at) => {
+        if (breakable.wall.layer === body.layer && shapesOverlap(breakable.wall, body.area)) {
+          blocked(["breakables", at], "a breakable wall");
+        }
+      });
       (map.switches ?? []).forEach((lever, at) => {
         if (lever.layer === body.layer && bodyIn(lever.position, body.area)) {
           blocked(["switches", at], "a switch");
@@ -1154,13 +1179,41 @@ export const mapDataSchema = z
         issue(at("enabled"), `teleport ${teleport.id} starts off, and no switch names it`);
       }
     });
-    // Each gate and each switched teleport doubles the match's pre-built paths.
-    const toggles = map.gates.length + teleports.filter(({ id }) => switched.has(id)).length;
+    const breakables = map.breakables ?? [];
+    const breakableIds = new Set<string>();
+    breakables.forEach((breakable, index) => {
+      const issue = (message: string): void => {
+        context.addIssue({ code: "custom", path: ["breakables", index], message });
+      };
+      if (breakableIds.has(breakable.id)) {
+        issue(`breakable id ${breakable.id} is used twice`);
+      }
+      breakableIds.add(breakable.id);
+      const layer = breakable.wall.layer;
+      const sides = wallToSegments(breakable.wall);
+      const covers = (point: Vec2Data): boolean =>
+        pointInShape(point, breakable.wall) ||
+        sides.some((side) => distancePointToSegment(point, side) < BODY_RADIUS);
+      (map.switches ?? []).forEach((lever) => {
+        if (lever.layer === layer && covers(lever.position)) {
+          issue(`breakable ${breakable.id} covers switch ${lever.id}`);
+        }
+      });
+      map.gates.forEach((gate) => {
+        const opener = gate.opener;
+        if (opener.kind === "plate" && gate.wall.layer === layer && covers(opener.plate)) {
+          issue(`breakable ${breakable.id} covers gate ${gate.id}'s plate`);
+        }
+      });
+    });
+    // Each gate, breakable and switched teleport doubles the match's pre-built paths.
+    const toggles =
+      map.gates.length + breakables.length + teleports.filter(({ id }) => switched.has(id)).length;
     if (toggles > MAX_GATES) {
       context.addIssue({
         code: "custom",
-        path: ["teleports"],
-        message: `${String(toggles)} gates and switched teleports, more than ${String(MAX_GATES)}`,
+        path: ["gates"],
+        message: `${String(toggles)} gates, breakables and switched teleports, more than ${String(MAX_GATES)}`,
       });
     }
 

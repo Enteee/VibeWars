@@ -35,7 +35,16 @@ export interface GateField {
   /** The layer it stands on (ADR-0051). Omitted: the ground. */
   readonly layer?: number;
   readonly opener: GateOpener;
+  /**
+   * What it stops while closed (#3031): `all`, a stone gate; or
+   * `bodies-and-shots`, an energy barrier, which sight passes, and so
+   * a spell that needs no shot.
+   */
+  readonly blocks: GateBlocks;
 }
+
+/** What a closed gate stops (#3031). */
+export type GateBlocks = "all" | "bodies-and-shots";
 
 /** One gate as it stands. */
 export interface GateState {

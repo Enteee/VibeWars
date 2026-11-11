@@ -195,6 +195,11 @@ export interface RenderableGate {
   /** A switch's gate (#3025) has no plate. */
   readonly plate: { readonly position: Vec2; readonly side: FlagSide | undefined } | undefined;
   readonly open: boolean;
+  /**
+   * What it stops while closed (#3031): `all`, a door of the map's walls;
+   * `bodies-and-shots`, an energy barrier, drawn as a curtain sight passes.
+   */
+  readonly blocks: GateDescriptor["blocks"];
   /** The wall it opens: an open gate leaves its outline on the ground. */
   readonly wall: RenderableShape;
   /** The layer its wall stands on (ADR-0051): its ghost lies on that layer's ground. */
@@ -208,7 +213,7 @@ export function renderableGates(
   open: readonly boolean[],
   selfTeam: number | undefined,
 ): RenderableGate[] {
-  return gates.map(({ opener, wall }, at) => ({
+  return gates.map(({ opener, wall, blocks }, at) => ({
     plate:
       opener.kind === "plate"
         ? {
@@ -217,6 +222,7 @@ export function renderableGates(
           }
         : undefined,
     open: open[at] === true,
+    blocks,
     wall,
     layer: layers[at] ?? 0,
   }));

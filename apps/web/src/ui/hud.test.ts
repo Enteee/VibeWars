@@ -197,6 +197,10 @@ describe("objectTargetName (#1225)", () => {
   it("names a switch a lever (#3025)", () => {
     expect(objectTargetName("switch-west", 0, NOBODY)).toBe(t("hud.switch"));
   });
+
+  it("names a breakable wall a cracked wall (#3031)", () => {
+    expect(objectTargetName("breakable-gap", 0, NOBODY)).toBe(t("hud.breakableWall"));
+  });
 });
 
 describe("renderTargetSignet (#2819)", () => {
@@ -325,6 +329,7 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
     gates: [],
     switches: [],
     teleports: [],
+    breakables: [],
   });
   const ours = { text: t("hud.relicScoredOurs"), side: "ours" };
   const theirs = { text: t("hud.relicScoredTheirs"), side: "theirs" };
@@ -368,6 +373,7 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
       gates: [],
       switches: [],
       teleports: [],
+      breakables: [],
     };
     expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
   });
@@ -383,6 +389,7 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
     gates: [],
     switches: [],
     teleports: [],
+    breakables: [],
   });
   const ours = { text: t("hud.altarPointOurs"), side: "ours" };
   const theirs = { text: t("hud.altarPointTheirs"), side: "theirs" };
@@ -419,6 +426,7 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
       gates: [],
       switches: [],
       teleports: [],
+      breakables: [],
     };
     expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
   });
@@ -570,6 +578,7 @@ describe("carriedBundle (#1225, #1374)", () => {
     gates: [],
     switches: [],
     teleports: [],
+    breakables: [],
     summary: undefined,
   });
 

@@ -4,6 +4,7 @@ import {
   flagTeamOf,
   relicTeamOf,
   switchIdOf,
+  breakableIdOf,
   getSkill,
   POINT_TICK_SECONDS,
   maxHealthLossOfStatusIds,
@@ -490,6 +491,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, MessageKey>> = {
   "cannot-shout-or-chant": "hud.refusalCannotShoutOrChant",
   "cannot-use-signets": "hud.refusalCannotUseSignets",
   "invalid-target-untargetable": "hud.refusalInvalidTargetUntargetable",
+  "invalid-target-wall": "hud.refusalInvalidTargetWall",
   "invalid-target-unenchantable": "hud.refusalInvalidTargetUnenchantable",
   "no-spells": "hud.refusalNoSpells",
   "hands-full": "hud.refusalHandsFull",
@@ -705,7 +707,8 @@ function setBar(
 /**
  * The target frame's name for a flag or the stand selected (#1225),
  * which are no body, the stand with its holder (#1226), a relic
- * (#1374) or a switch (#3025); `undefined` for any other id.
+ * (#1374), a switch (#3025) or a breakable wall (#3031); `undefined`
+ * for any other id.
  */
 export function objectTargetName(
   targetId: string | undefined,
@@ -725,6 +728,9 @@ export function objectTargetName(
   }
   if (targetId !== undefined && switchIdOf(targetId) !== undefined) {
     return t("hud.switch");
+  }
+  if (targetId !== undefined && breakableIdOf(targetId) !== undefined) {
+    return t("hud.breakableWall");
   }
   const relic = targetId === undefined ? undefined : relicTeamOf(targetId);
   if (relic !== undefined) {

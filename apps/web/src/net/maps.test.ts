@@ -610,6 +610,7 @@ describe("structureOf's water (#2984)", () => {
       gates: [],
       switches: [],
       teleports: [],
+      breakables: [],
       spawnPoints: layered.spawnPoints.map((spawn) => ({ ...spawn, layer: 0 })),
       water: undefined,
       lighting: undefined,

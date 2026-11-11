@@ -24,6 +24,7 @@ import type {
   GateOpenerDescriptor,
   SwitchDescriptor,
   TeleportDescriptor,
+  BreakableDescriptor,
   WallDescriptor,
 } from "./protocol.js";
 import {
@@ -298,6 +299,9 @@ export const MAX_WIRE_SWITCHES = 6;
 
 /** The most teleports a map holds (#3030), as `MAX_TELEPORTS` in game-maps. */
 export const MAX_WIRE_TELEPORTS = 6;
+
+/** The most breakable walls a map holds (#3031), as `MAX_BREAKABLES` in game-maps. */
+export const MAX_WIRE_BREAKABLES = 4;
 
 /** The widest area a combat message may draw. */
 export const MAX_WIRE_RADIUS = 200;
@@ -751,6 +755,8 @@ export interface WireSnapshot {
   readonly switches: readonly boolean[];
   /** Whether each of the map's teleports is on (#3030), in its descriptor's order. */
   readonly teleports: readonly boolean[];
+  /** Each of the map's breakable walls' health (#3031), in its descriptor's order; 0 once crumbled. */
+  readonly breakables: readonly number[];
 }
 
 /**
@@ -2017,10 +2023,12 @@ function parseMap(value: unknown): MapDescriptor | undefined {
   const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseGate);
   const switches = parseArray(raw.switches, MAX_WIRE_SWITCHES, parseSwitch);
   const teleports = parseArray(raw.teleports, MAX_WIRE_TELEPORTS, parseTeleport);
+  const breakables = parseArray(raw.breakables, MAX_WIRE_BREAKABLES, parseBreakable);
   return walls === undefined ||
     gates === undefined ||
     switches === undefined ||
-    teleports === undefined
+    teleports === undefined ||
+    breakables === undefined
     ? undefined
     : {
         id: raw.id,
@@ -2032,6 +2040,7 @@ function parseMap(value: unknown): MapDescriptor | undefined {
         gates,
         switches,
         teleports,
+        breakables,
       };
 }
 
@@ -2039,7 +2048,25 @@ function parseGate(value: unknown): GateDescriptor | undefined {
   const raw = fields(value);
   const wall = raw === undefined ? undefined : parseWall(raw.wall);
   const opener = raw === undefined ? undefined : parseGateOpener(raw.opener);
-  return wall === undefined || opener === undefined ? undefined : { wall, opener };
+  const blocks = raw?.blocks;
+  return wall === undefined ||
+    opener === undefined ||
+    !(blocks === "all" || blocks === "bodies-and-shots")
+    ? undefined
+    : { wall, opener, blocks };
+}
+
+function parseBreakable(value: unknown): BreakableDescriptor | undefined {
+  const raw = fields(value);
+  const wall = raw === undefined ? undefined : parseWall(raw.wall);
+  return raw !== undefined &&
+    isString(raw.id) &&
+    isLayer(raw.layer) &&
+    wall !== undefined &&
+    isNumber(raw.maxHealth) &&
+    raw.maxHealth > 0
+    ? { id: raw.id, layer: raw.layer, wall, maxHealth: raw.maxHealth }
+    : undefined;
 }
 
 function parseGateOpener(value: unknown): GateOpenerDescriptor | undefined {
@@ -2388,6 +2415,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseBoolean);
   const switches = parseArray(raw.switches, MAX_WIRE_SWITCHES, parseBoolean);
   const teleports = parseArray(raw.teleports, MAX_WIRE_TELEPORTS, parseBoolean);
+  const breakables = parseArray(raw.breakables, MAX_WIRE_BREAKABLES, parseHealth);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
@@ -2404,7 +2432,8 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     capturePoints === undefined ||
     gates === undefined ||
     switches === undefined ||
-    teleports === undefined
+    teleports === undefined ||
+    breakables === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -2427,7 +2456,13 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         gates,
         switches,
         teleports,
+        breakables,
       };
+}
+
+/** A breakable wall's health (#3031): a whole number, 0 once it has crumbled. */
+function parseHealth(value: unknown): number | undefined {
+  return isNumber(value) && Number.isInteger(value) && value >= 0 ? value : undefined;
 }
 
 /**

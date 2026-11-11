@@ -789,6 +789,47 @@
         { "name": "targetId", "optional": false, "type": "string" }
       ]
     },
+    "BreakableDescriptor": {
+      "properties": [
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "layer", "optional": false, "type": "number" },
+        { "name": "maxHealth", "optional": false, "type": "number" },
+        {
+          "name": "wall",
+          "optional": false,
+          "type": {
+            "union": [
+              {
+                "properties": [
+                  { "name": "height", "optional": false, "type": "number" },
+                  { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                  { "name": "width", "optional": false, "type": "number" },
+                  { "name": "x", "optional": false, "type": "number" },
+                  { "name": "y", "optional": false, "type": "number" }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                  {
+                    "name": "points",
+                    "optional": false,
+                    "type": {
+                      "array": {
+                        "properties": [
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
     "CancelIntent": {
       "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }]
     },
@@ -5500,6 +5541,11 @@
     "GateDescriptor": {
       "properties": [
         {
+          "name": "blocks",
+          "optional": false,
+          "type": { "union": [{ "literal": "all" }, { "literal": "bodies-and-shots" }] }
+        },
+        {
           "name": "opener",
           "optional": false,
           "type": {
@@ -5653,11 +5699,63 @@
     "MapDescriptor": {
       "properties": [
         {
+          "name": "breakables",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "layer", "optional": false, "type": "number" },
+                { "name": "maxHealth", "optional": false, "type": "number" },
+                {
+                  "name": "wall",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      {
+                        "properties": [
+                          { "name": "height", "optional": false, "type": "number" },
+                          { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                          { "name": "width", "optional": false, "type": "number" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      },
+                      {
+                        "properties": [
+                          { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                          {
+                            "name": "points",
+                            "optional": false,
+                            "type": {
+                              "array": {
+                                "properties": [
+                                  { "name": "x", "optional": false, "type": "number" },
+                                  { "name": "y", "optional": false, "type": "number" }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "gates",
           "optional": false,
           "type": {
             "array": {
               "properties": [
+                {
+                  "name": "blocks",
+                  "optional": false,
+                  "type": { "union": [{ "literal": "all" }, { "literal": "bodies-and-shots" }] }
+                },
                 {
                   "name": "opener",
                   "optional": false,
@@ -6117,11 +6215,73 @@
           "type": {
             "properties": [
               {
+                "name": "breakables",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      { "name": "id", "optional": false, "type": "string" },
+                      { "name": "layer", "optional": false, "type": "number" },
+                      { "name": "maxHealth", "optional": false, "type": "number" },
+                      {
+                        "name": "wall",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            {
+                              "properties": [
+                                { "name": "height", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "rect" }
+                                },
+                                { "name": "width", "optional": false, "type": "number" },
+                                { "name": "x", "optional": false, "type": "number" },
+                                { "name": "y", "optional": false, "type": "number" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "polygon" }
+                                },
+                                {
+                                  "name": "points",
+                                  "optional": false,
+                                  "type": {
+                                    "array": {
+                                      "properties": [
+                                        { "name": "x", "optional": false, "type": "number" },
+                                        { "name": "y", "optional": false, "type": "number" }
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
                 "name": "gates",
                 "optional": false,
                 "type": {
                   "array": {
                     "properties": [
+                      {
+                        "name": "blocks",
+                        "optional": false,
+                        "type": {
+                          "union": [{ "literal": "all" }, { "literal": "bodies-and-shots" }]
+                        }
+                      },
                       {
                         "name": "opener",
                         "optional": false,
@@ -6440,11 +6600,73 @@
           "type": {
             "properties": [
               {
+                "name": "breakables",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      { "name": "id", "optional": false, "type": "string" },
+                      { "name": "layer", "optional": false, "type": "number" },
+                      { "name": "maxHealth", "optional": false, "type": "number" },
+                      {
+                        "name": "wall",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            {
+                              "properties": [
+                                { "name": "height", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "rect" }
+                                },
+                                { "name": "width", "optional": false, "type": "number" },
+                                { "name": "x", "optional": false, "type": "number" },
+                                { "name": "y", "optional": false, "type": "number" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "polygon" }
+                                },
+                                {
+                                  "name": "points",
+                                  "optional": false,
+                                  "type": {
+                                    "array": {
+                                      "properties": [
+                                        { "name": "x", "optional": false, "type": "number" },
+                                        { "name": "y", "optional": false, "type": "number" }
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
                 "name": "gates",
                 "optional": false,
                 "type": {
                   "array": {
                     "properties": [
+                      {
+                        "name": "blocks",
+                        "optional": false,
+                        "type": {
+                          "union": [{ "literal": "all" }, { "literal": "bodies-and-shots" }]
+                        }
+                      },
                       {
                         "name": "opener",
                         "optional": false,
@@ -8512,6 +8734,7 @@
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
+        { "name": "breakables", "optional": false, "type": { "array": "number" } },
         {
           "name": "capturePoints",
           "optional": false,
@@ -8982,6 +9205,7 @@
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
+        { "name": "breakables", "optional": false, "type": { "array": "number" } },
         {
           "name": "capturePoints",
           "optional": false,

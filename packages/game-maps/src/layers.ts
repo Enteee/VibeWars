@@ -1,5 +1,6 @@
 import {
   UPHILL,
+  type BreakableField,
   type GateField,
   type MatchLayers,
   type MatchZone,
@@ -61,9 +62,10 @@ export function matchZones(map: MapData): MatchZone[] {
 
 /** `map`'s gates, as the simulation takes them (#2691, #3025), in its order, each on its wall's layer. */
 export function matchGates(map: MapData): GateField[] {
-  return map.gates.map(({ wall, opener }) => ({
+  return map.gates.map(({ wall, opener, blocks }) => ({
     segments: wallToSegments(wall),
     layer: wall.layer,
+    blocks,
     opener:
       opener.kind === "plate"
         ? { kind: "plate", plate: opener.plate, team: opener.team }
@@ -96,5 +98,15 @@ export function matchTeleports(map: MapData): TeleportField[] {
     from: { layer: from.layer, area: shapeVertices(from.area) },
     to,
     enabled,
+  }));
+}
+
+/** `map`'s breakable walls, as the simulation takes them (#3031), in its order. */
+export function matchBreakables(map: MapData): BreakableField[] {
+  return (map.breakables ?? []).map(({ id, wall, health }) => ({
+    id,
+    segments: wallToSegments(wall),
+    layer: wall.layer,
+    maxHealth: health,
   }));
 }

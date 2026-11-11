@@ -1,7 +1,12 @@
 import type { FlagField, RelicField, Segment } from "@vibewars/game-core";
 import { ELITE_ZAISHEN_MAP } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import type { GateDescriptor, MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
+import type {
+  BreakableDescriptor,
+  GateDescriptor,
+  MapDescriptor,
+  WallDescriptor,
+} from "@vibewars/game-protocol";
 import type {
   CombatMessage,
   MatchConnection,
@@ -50,6 +55,7 @@ import {
   teamSide,
   toRenderableGroundEffect,
   type ArenaSnapshot,
+  type RenderableCrackedWall,
   type RenderableDoor,
   type RenderableWall,
   type MapStructure,
@@ -62,6 +68,7 @@ import { conditionCues } from "./render/body-conditions.js";
 import { bodyFlags } from "./render/body-rings.js";
 import { capeLook } from "./render/cape-shape.js";
 import { castBadgeType } from "./render/cast-badge.js";
+import { CRUMBLED, crackStage, renderableBreakables } from "./render/breakable-objects.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
@@ -251,37 +258,60 @@ export function toRenderableWall(wall: WallDescriptor, layer: number): Renderabl
 }
 
 /**
- * What blocks the eye and the compass for how the gates stand (#2691):
- * the map's walls and every closed gate's, one array per combination, so
- * the map layer redraws only when a gate moves.
+ * What blocks the eye and the compass for how the gates and breakable
+ * walls stand (#2691, #3031): the map's walls, every closed stone gate's
+ * and every standing breakable wall's, one array per combination, so the
+ * map layer redraws only when a gate moves or a wall cracks further. A
+ * closed energy barrier is none of them: sight passes it, and it draws
+ * as a curtain of its own.
  */
 export function gateWalls(
   gates: readonly GateDescriptor[],
   gateLayers: readonly number[],
   walls: readonly RenderableWall[],
   segments: readonly Segment[],
-): (open: readonly boolean[]) => {
+  breakables: readonly BreakableDescriptor[],
+): (
+  open: readonly boolean[],
+  health: readonly number[],
+) => {
   walls: readonly RenderableWall[];
   segments: readonly Segment[];
 } {
-  const known = new Map<number, ReturnType<ReturnType<typeof gateWalls>>>();
-  return (open) => {
-    let closed = 0;
-    gates.forEach((_, at) => {
-      closed |= open[at] === true ? 0 : 1 << at;
-    });
-    let set = known.get(closed);
+  const known = new Map<string, ReturnType<ReturnType<typeof gateWalls>>>();
+  return (open, health) => {
+    const stages = breakables.map(({ maxHealth }, at) =>
+      crackStage(health[at] ?? maxHealth, maxHealth),
+    );
+    const key = `${gates.map((_, at) => (open[at] === true ? "o" : "c")).join("")}/${stages.join("")}`;
+    let set = known.get(key);
     if (set === undefined) {
-      const shut = gates.flatMap((gate, at) => (open[at] === true ? [] : [{ gate, at }]));
+      const shut = gates.flatMap((gate, at) =>
+        open[at] === true || gate.blocks !== "all" ? [] : [{ gate, at }],
+      );
       const doors: RenderableDoor[] = shut.map(({ gate, at }) => ({
         ...toRenderableWall(gate.wall, gateLayers[at] ?? 0),
         door: true,
       }));
+      const standing = breakables.flatMap((breakable, at) => {
+        const cracks = stages[at];
+        return cracks === undefined || cracks === CRUMBLED ? [] : [{ breakable, cracks }];
+      });
+      const cracked: RenderableCrackedWall[] = standing.map(({ breakable, cracks }) => ({
+        ...toRenderableWall(breakable.wall, breakable.layer),
+        cracks,
+      }));
       set = {
-        walls: [...walls, ...doors],
-        segments: [...segments, ...allWallSegments(shut.map(({ gate }) => gate.wall))],
+        walls: [...walls, ...doors, ...cracked],
+        segments: [
+          ...segments,
+          ...allWallSegments([
+            ...shut.map(({ gate }) => gate.wall),
+            ...standing.map(({ breakable }) => breakable.wall),
+          ]),
+        ],
       };
-      known.set(closed, set);
+      known.set(key, set);
     }
     return set;
   };
@@ -292,13 +322,25 @@ function playerNames(match: MatchSnapshot): ReadonlyMap<string, string> {
   return new Map(match.players.map((player) => [player.sessionId, player.name]));
 }
 
-/** A map's gates, switches and teleports (#3030), and each gate's layer, which the wire does not carry. */
-export interface GatedMap extends Pick<MapDescriptor, "gates" | "switches" | "teleports"> {
+/**
+ * A map's gates, switches, teleports (#3030) and breakable walls (#3031),
+ * and each gate's layer, which the wire does not carry.
+ */
+export interface GatedMap extends Pick<
+  MapDescriptor,
+  "gates" | "switches" | "teleports" | "breakables"
+> {
   readonly gateLayers: readonly number[];
 }
 
 /** A map's gates and switches where it has none. */
-const UNGATED: GatedMap = { gates: [], switches: [], teleports: [], gateLayers: [] };
+const UNGATED: GatedMap = {
+  gates: [],
+  switches: [],
+  teleports: [],
+  breakables: [],
+  gateLayers: [],
+};
 
 /** Project the wire snapshot onto the renderer's own shape (ADR-0001). */
 export function toArenaSnapshot(
@@ -329,6 +371,7 @@ export function toArenaSnapshot(
     gates: renderableGates(gated.gates, gated.gateLayers, match.gates, self?.team),
     switches: renderableSwitches(gated.switches, match.switches),
     teleports: renderableTeleports(gated.teleports, match.teleports),
+    breakables: renderableBreakables(gated.breakables, match.breakables),
     shrines: shrines.map((shrine) => ({
       position: shrine.position,
       side: shrine.team === side ? "ally" : "enemy",
@@ -493,7 +536,13 @@ export async function startMatchView(
   const walls = viewed.map.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(viewed.map.walls);
-  const blocking = gateWalls(viewed.map.gates, gateLayers, walls, wallSegments);
+  const blocking = gateWalls(
+    viewed.map.gates,
+    gateLayers,
+    walls,
+    wallSegments,
+    viewed.map.breakables,
+  );
   const mode = mapMode(viewed.map.id);
   const shrines = mapShrines(viewed.map.id, viewed.map.teamCount);
   const flagField = mapFlagField(viewed.map.id);
@@ -1036,7 +1085,7 @@ export async function startMatchView(
     const arena = withNames(
       toArenaSnapshot(
         match,
-        blocking(match.gates).walls,
+        blocking(match.gates, match.breakables).walls,
         shrines,
         flagField,
         relicField,
@@ -1073,7 +1122,7 @@ export async function startMatchView(
         [],
         null,
         () => undefined,
-        blocking(match.gates).segments,
+        blocking(match.gates, match.breakables).segments,
         viewed.timeLimitSeconds,
         mode,
         flagField?.beacon === true,
@@ -1096,7 +1145,7 @@ export async function startMatchView(
       seat.getAdrenaline(),
       seat.getAdrenalineLossIn(),
       (targetId) => seat.getChainMark(targetId),
-      blocking(match.gates).segments,
+      blocking(match.gates, match.breakables).segments,
       seat.timeLimitSeconds,
       mode,
       flagField?.beacon === true,

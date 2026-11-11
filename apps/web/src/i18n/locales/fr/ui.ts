@@ -565,6 +565,8 @@ export default {
   "hud.refusalInvalidTargetSelf": "Tu ne peux pas te cibler avec ça.",
   "hud.refusalInvalidTargetSpirit": "Impossible de cibler un esprit.",
   "hud.refusalInvalidTargetUnenchantable": "Cette cible ne peut pas être enchantée.",
+  "hud.refusalInvalidTargetWall":
+    "Seule une compétence qui inflige des dégâts peut frapper un mur.",
   "hud.refusalInvalidTargetUntargetable": "Tes sorts ne peuvent pas cibler cet ennemi.",
   "hud.refusalNeedsWeapon": "Requiert : {weapon}.",
   "hud.refusalNoAnimalToCharm": "Aucun animal à charmer ici.",
@@ -595,6 +597,7 @@ export default {
   "hud.stormBeaconOurs": "Balise des Tempêtes : tenue par votre équipe",
   "hud.stormBeaconTheirs": "Balise des Tempêtes : tenue par l’ennemi",
   "hud.switch": "Levier",
+  "hud.breakableWall": "Mur fissuré",
   "hud.targetDead": "mort",
   "hud.targetEffects": "effets de ta cible",
   "hud.versus": "{ours} vs {theirs}",

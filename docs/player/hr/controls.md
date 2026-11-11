@@ -44,6 +44,7 @@ Ove su tipke fiksne:
   ih ciljaš; **Space** te odvede onamo i podigne ili postavi zastavu.
 - **Desni klik** na polugu odabire je kao metu; **Space** hoda do nje i povlači je, otvarajući ili zatvarajući vrata kojima upravlja.
 - Uđeš li u **portal**, prenese te do svog izlaza. Poluga ga može uključiti ili isključiti; nakon putovanja odmara 5 s prije nego što te ponovno ponese.
+- **Svjetlucava vrata** zaustavljaju tijela, strijele i druge projektile; čarolija bačena izravno na metu prolazi. **Napukli zid** može se srušiti: desni klik na njega, a zatim ga napadni ili pogodi vještinom koja nanosi štetu.
 - **Klik kotačićem** na neprijatelja da ga označiš svom timu: njihov **T** ga cilja.
   Na tlu ili savezniku postavlja oznaku na to mjesto. Ili klikni traku mete
   na vrhu da označiš neprijatelja kojeg ciljaš.

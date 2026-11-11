@@ -51,6 +51,7 @@ import {
   type BeaconBolt,
   type SwingFlash,
   isDoor,
+  isCrackedWall,
 } from "./arena-snapshot.js";
 import {
   CHARACTER_BANDS,
@@ -171,6 +172,19 @@ import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
 import { SWITCH_MARK_ART, leverThrown, switchMarkKey } from "./switch-mark.js";
 import { paintArrival, paintTeleportEntry, paintTeleportExit } from "./teleport-mark.js";
 import { doorPalette, GATE_ART, paintPlate, type GatePainter } from "./gate-mark.js";
+import {
+  BARRIER_ART,
+  BREAKABLE_ART,
+  breakablePalette,
+  DUST_SECONDS,
+  paintDust,
+  type StonePainter,
+} from "./breakable-mark.js";
+import {
+  breakableBarAnchor,
+  breakableHealthFraction,
+  type RenderableBreakable,
+} from "./breakable-objects.js";
 import {
   BODY_LIGHT_FLOOR,
   bodyTintOf,
@@ -425,6 +439,10 @@ export class ArenaScene extends Phaser.Scene {
   private readonly standing = new Map<string, RenderableActor>();
   /** Every mark on a body, over the body glyphs (#1037). */
   private markGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** Energy barriers' curtains (#3031), added over what is behind them. */
+  private barrierGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** Each breakable wall's last health seen, and when it fell, for its dust (#3031). */
+  private readonly wallFalls = new Map<string, { health: number; at: number | undefined }>();
   /** The off-screen markers, drawn in screen px over everything (#440). */
   private markerGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The hovered name's underline (#2738). */
@@ -603,6 +621,10 @@ export class ArenaScene extends Phaser.Scene {
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
       marks: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "marks" })),
     }));
+    this.barrierGraphics = this.add
+      .graphics()
+      .setDepth(EFFECT_DEPTH)
+      .setBlendMode(Phaser.BlendModes.ADD);
     this.markGraphics = this.add.graphics().setDepth(EFFECT_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
     this.nameUnderline = this.add.graphics().setDepth(OVERLAY_DEPTH);
@@ -619,6 +641,7 @@ export class ArenaScene extends Phaser.Scene {
       bandMarks.clear();
     }
     effects.clear();
+    this.barrierGraphics?.clear();
     const { body: g, marks } = floor;
     this.now = time / 1000;
     this.reducedMotion = prefersReducedMotion();
@@ -660,6 +683,9 @@ export class ArenaScene extends Phaser.Scene {
     }
     for (const teleport of this.snapshot.teleports) {
       this.drawTeleport(g, teleport);
+    }
+    for (const breakable of this.snapshot.breakables) {
+      this.drawBreakableOverlay(effects, breakable);
     }
     this.drawArrivals(g);
     this.stepCapes(deltaMs / 1000);
@@ -819,6 +845,10 @@ export class ArenaScene extends Phaser.Scene {
       g.strokeCircle(x, y, GATE_PLATE_REACH_UNITS);
       paintPlate(g, plate.position, gate.open, line);
     }
+    if (gate.blocks === "bodies-and-shots") {
+      this.drawBarrier(g, gate, line);
+      return;
+    }
     // A shut gate is a wall of the map, and draws with them (#3061).
     if (gate.open) {
       const { layerCount, ground } = this.snapshot.structure;
@@ -831,6 +861,74 @@ export class ArenaScene extends Phaser.Scene {
       });
       g.restore();
     }
+  }
+
+  /**
+   * An energy barrier (#3031): its posts, and closed its shimmering
+   * curtain on the additive layer; open, a ghost of it. Never among the
+   * walls: sight passes it.
+   */
+  private drawBarrier(g: Phaser.GameObjects.Graphics, gate: RenderableGate, line: number): void {
+    const { layerCount, ground } = this.snapshot.structure;
+    const height = layerCount === 1 ? 0 : WALL_HEIGHT;
+    const frame = { height, line, time: this.reducedMotion ? 0 : this.now };
+    const lift = -elevationOf(gate.layer, ground);
+    g.save();
+    g.translateCanvas(0, lift);
+    if (gate.open) {
+      BARRIER_ART.ghost(this.stonePainter(g), gate.wall, frame);
+    }
+    BARRIER_ART.posts(this.stonePainter(g), gate.wall, height, !gate.open);
+    g.restore();
+    const curtain = this.barrierGraphics;
+    if (!gate.open && curtain !== undefined) {
+      curtain.save();
+      curtain.translateCanvas(0, lift);
+      BARRIER_ART.curtain(this.stonePainter(curtain), gate.wall, frame);
+      curtain.restore();
+    }
+  }
+
+  /**
+   * Over a breakable wall (#3031): the dust of its fall, and its health
+   * bar while it is hovered or your target. The wall and its rubble draw
+   * with the map.
+   */
+  private drawBreakableOverlay(
+    g: Phaser.GameObjects.Graphics,
+    breakable: RenderableBreakable,
+  ): void {
+    const seen = this.wallFalls.get(breakable.id);
+    const fell = seen !== undefined && seen.health > 0 && breakable.health <= 0;
+    const at = fell ? this.now : seen?.at;
+    this.wallFalls.set(breakable.id, { health: breakable.health, at });
+    const { structure } = this.snapshot;
+    if (at !== undefined && this.now - at < DUST_SECONDS) {
+      g.save();
+      g.translateCanvas(0, -elevationOf(breakable.layer, structure.ground));
+      paintDust(this.stonePainter(g), breakable.wall, this.now - at);
+      g.restore();
+    }
+    const shown = breakable.id === this.snapshot.targetId || breakable.id === this.snapshot.hoverId;
+    if (breakable.health <= 0 || !shown) {
+      return;
+    }
+    const anchor = breakableBarAnchor(breakable, structure);
+    const fraction = breakableHealthFraction(breakable);
+    const left = anchor.x - HEALTH_BAR_WIDTH / 2;
+    const top = anchor.y - 8;
+    g.fillStyle(HEALTH_BAR_BG, 1);
+    g.fillRect(left, top, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
+    g.fillStyle(fraction < 0.35 ? HEALTH_BAR_LOW : HEALTH_BAR_FILL, 1);
+    g.fillRect(left, top, HEALTH_BAR_WIDTH * fraction, HEALTH_BAR_HEIGHT);
+  }
+
+  /** `g` as a breakable wall or a barrier draws on it. */
+  private stonePainter(g: Phaser.GameObjects.Graphics): StonePainter {
+    return {
+      ...this.gatePainter(g),
+      fillEllipse: (x, y, width, height) => g.fillEllipse(x, y, width, height),
+    };
   }
 
   /** `g` as a door draws on it. */
@@ -2150,6 +2248,17 @@ export class ArenaScene extends Phaser.Scene {
           ? { kind: "wall", layer: wall.layer }
           : { kind: "support", deckLayer: held.layer },
       );
+      if (isCrackedWall(wall)) {
+        g.save();
+        g.translateCanvas(0, -elevationOf(wall.layer, ground));
+        BREAKABLE_ART.standing(this.stonePainter(g), wall, wall.cracks, {
+          height: next.structure.layerCount === 1 ? 0 : WALL_HEIGHT,
+          line,
+          palette: litStructurePalette(breakablePalette(palette), next.lighting, wall, wall.layer),
+        });
+        g.restore();
+        continue;
+      }
       if (isDoor(wall)) {
         const flat = next.structure.layerCount === 1;
         g.save();
@@ -2170,6 +2279,20 @@ export class ArenaScene extends Phaser.Scene {
       } else {
         const low = elevationOf(wall.layer, ground);
         this.drawColumn(g, wall, low, deckSideLow(held, next.walls, ground), lit.support);
+      }
+    }
+    // A wall's fall always swaps the wall list, so its rubble is drawn here.
+    for (const breakable of this.snapshot.breakables) {
+      if (breakable.health <= 0) {
+        const g = this.structureAt({ kind: "wall", layer: breakable.layer });
+        g.save();
+        g.translateCanvas(0, -elevationOf(breakable.layer, ground));
+        BREAKABLE_ART.rubble(this.stonePainter(g), breakable.wall, {
+          height: 0,
+          line,
+          palette: breakablePalette(palette),
+        });
+        g.restore();
       }
     }
     // A torch stands with lighting off too: it is on the map, its light is not.

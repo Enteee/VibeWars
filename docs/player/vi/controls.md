@@ -48,6 +48,7 @@ Các phím sau là cố định:
   Field, để nhắm nó; **Space** đi tới đó và nhặt cờ lên hoặc cắm cờ.
 - **Nhấp chuột phải** vào cần gạt để chọn nó làm mục tiêu; **Space** đi tới đó và gạt nó, mở hoặc đóng các cổng mà nó điều khiển.
 - Bước vào **cổng dịch chuyển** và nó đưa bạn tới lối ra của nó. Cần gạt có thể bật hoặc tắt nó; sau một lần đi, nó nghỉ 5 s rồi mới đưa bạn đi tiếp.
+- **Cổng lấp lánh** chặn cơ thể, mũi tên và các loại đạn khác; phép thi triển thẳng vào mục tiêu vẫn đi qua. **Tường nứt** có thể phá được: nhấp chuột phải vào nó, rồi tấn công hoặc đánh trúng nó bằng một kỹ năng gây sát thương.
 - **Nhấn con lăn** vào một địch để gọi nó cho đội: phím **T** của họ sẽ nhắm
   vào nó. Trên mặt đất hoặc một đồng minh, nó ping vị trí đó. Hoặc nhấn vào
   thanh mục tiêu ở phía trên để gọi địch bạn đang nhắm.

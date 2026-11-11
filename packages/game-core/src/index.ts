@@ -268,7 +268,9 @@ export {
   flagTeamOf,
 } from "./match/flags.js";
 export type { RelicCarry, RelicField, RelicState, RelicTarget } from "./match/relics.js";
-export type { Gate, GateField, GateOpener } from "./match/gates.js";
+export type { Gate, GateBlocks, GateField, GateOpener } from "./match/gates.js";
+export type { Breakable, BreakableField, BreakableState } from "./match/breakables.js";
+export { breakableIdOf, breakableTargetId } from "./match/breakables.js";
 export { GATE_PLATE_REACH_UNITS, GATE_REOPEN_SECONDS } from "./match/gates.js";
 export type { Switch, SwitchField, SwitchState } from "./match/switches.js";
 export { SWITCH_COOLDOWN_SECONDS, switchIdOf, switchTargetId } from "./match/switches.js";

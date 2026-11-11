@@ -73,6 +73,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     gates: [],
     switches: [],
     teleports: [],
+    breakables: [],
     summary: undefined,
   };
 }
@@ -294,16 +295,22 @@ describe("toArenaSnapshot", () => {
 describe("gateWalls (#2691, #3061)", () => {
   const door = { kind: "rect", x: 244, y: 680, width: 16, height: 80 } as const;
   const stub = { kind: "rect", x: 244, y: 636, width: 16, height: 44, layer: 1 } as const;
-  const blocking = gateWalls([{ wall: door, opener: { kind: "switch" } }], [1], [stub], []);
+  const blocking = gateWalls(
+    [{ wall: door, blocks: "all", opener: { kind: "switch" } }],
+    [1],
+    [stub],
+    [],
+    [],
+  );
 
   it("adds a shut gate as a door on its own layer, which blocks as a wall", () => {
-    const { walls, segments } = blocking([false]);
+    const { walls, segments } = blocking([false], []);
     expect(walls).toEqual([stub, { ...door, layer: 1, door: true }]);
     expect(walls.filter(isDoor)).toHaveLength(1);
     expect(segments).toHaveLength(4);
   });
 
   it("leaves an open gate out of what blocks", () => {
-    expect(blocking([true])).toEqual({ walls: [stub], segments: [] });
+    expect(blocking([true], [])).toEqual({ walls: [stub], segments: [] });
   });
 });

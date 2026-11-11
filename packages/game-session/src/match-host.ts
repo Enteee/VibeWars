@@ -25,6 +25,7 @@ import {
   type GateField,
   type SwitchField,
   type TeleportField,
+  type BreakableField,
   type MatchLayers,
   type MatchZone,
   type Segment,
@@ -150,6 +151,8 @@ export interface HostMap {
   readonly switches: readonly SwitchField[];
   /** Its teleports (#3030), in the descriptor's order. */
   readonly teleports: readonly TeleportField[];
+  /** Its breakable walls (#3031), in the descriptor's order. */
+  readonly breakables: readonly BreakableField[];
   readonly bounds: { readonly width: number; readonly height: number };
   readonly spawns: readonly SpawnPoint[];
   /** Its resurrection shrines (#1186), `[]` but on a Priest Annihilation or Guild Battle map. */
@@ -349,6 +352,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     gates: map.gates,
     switches: map.switches,
     teleports: map.teleports,
+    breakables: map.breakables,
     bounds: map.bounds,
     layers: map.layers,
     zones: map.zones,
@@ -1263,6 +1267,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     gates: sim.gates.map((gate) => gate.open),
     switches: sim.switches.map((lever) => lever.up),
     teleports: sim.teleports.map((teleport) => teleport.on),
+    breakables: sim.breakables.map((breakable) => breakable.health),
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,

@@ -78,7 +78,7 @@ describe("regroup (#2621)", () => {
     const view = ruleFor(sim, "w", { cursor: createCursor() });
     expect(regroup.decide(view)).not.toBeUndefined();
     const [gate] = initialGates([
-      { segments: [], opener: { kind: "plate", plate: vec2(100, 400), team: 0 } },
+      { segments: [], opener: { kind: "plate", plate: vec2(100, 400), team: 0 }, blocks: "all" },
     ]);
     if (gate === undefined) throw new Error("no gate");
     const held = { ...view.context, objectives: { ...view.context.objectives, gates: [gate] } };

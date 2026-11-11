@@ -896,6 +896,7 @@ describe("ghost maps (#2689)", () => {
       id: "north",
       wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
       opener,
+      blocks: "all",
     };
 
     it("rejects a one-way gate whose plate is outside, or with no altar to be inside of", () => {
@@ -930,11 +931,13 @@ describe("ghost maps (#2689)", () => {
       id: "door",
       wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
       opener: { kind: "switch" },
+      blocks: "all",
     };
     const plated = {
       id: "plated",
       wall: { kind: "rect", layer: 0, x: 120, y: 40, width: 8, height: 40 },
       opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
+      blocks: "all",
     };
     const lever = { id: "lever", layer: 0, position: { x: 50, y: 50 }, targets: ["door"] };
 
@@ -1056,6 +1059,7 @@ describe("ghost maps (#2689)", () => {
         id: "portal",
         wall: { kind: "rect", layer: 0, x: 80, y: 20, width: 8, height: 20 },
         opener: { kind: "switch" },
+        blocks: "all",
       };
       expect(() =>
         validateMapData({ ...validMap, gates: [door], teleports: [teleport], switches: [lever] }),
@@ -1070,11 +1074,77 @@ describe("ghost maps (#2689)", () => {
         id: `gate-${String(at)}`,
         wall: { kind: "rect", layer: 0, x: 90, y: 5 + at * 15, width: 4, height: 8 },
         opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
+        blocks: "all",
       }));
       expect(validateMapData({ ...validMap, gates, teleports: [teleport] }).gates).toHaveLength(6);
       expect(() =>
         validateMapData({ ...validMap, gates, teleports: [teleport], switches: [lever] }),
-      ).toThrow(/7 gates and switched teleports, more than 6/);
+      ).toThrow(/7 gates, breakables and switched teleports, more than 6/);
+    });
+  });
+
+  describe("barriers and breakable walls (#3031)", () => {
+    const barrier = {
+      id: "shimmer",
+      wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
+      opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
+      blocks: "bodies-and-shots",
+    };
+    const crack = {
+      id: "crack",
+      wall: { kind: "rect", layer: 0, x: 120, y: 40, width: 8, height: 40 },
+      health: 800,
+    };
+
+    it("accepts a barrier gate and a breakable wall", () => {
+      const map = validateMapData({ ...validMap, gates: [barrier], breakables: [crack] });
+      expect(map.gates[0]?.blocks).toBe("bodies-and-shots");
+      expect(map.breakables).toEqual([crack]);
+    });
+
+    it("refuses a gate that says not what it blocks", () => {
+      const { blocks: _, ...silent } = barrier;
+      expect(() => validateMapData({ ...validMap, gates: [silent] })).toThrow(/blocks/);
+    });
+
+    it("refuses health outside 100 to 5000, and an id used twice", () => {
+      expect(() =>
+        validateMapData({ ...validMap, breakables: [{ ...crack, health: 99 }] }),
+      ).toThrow(/health/);
+      expect(() =>
+        validateMapData({ ...validMap, breakables: [{ ...crack, health: 5001 }] }),
+      ).toThrow(/health/);
+      expect(() => validateMapData({ ...validMap, breakables: [crack, crack] })).toThrow(
+        /breakable id crack is used twice/,
+      );
+    });
+
+    it("refuses one over a switch or a plate", () => {
+      const lever = { id: "lever", layer: 0, position: { x: 124, y: 60 }, targets: ["door"] };
+      const door = { ...barrier, id: "door", opener: { kind: "switch" } };
+      expect(() =>
+        validateMapData({ ...validMap, gates: [door], switches: [lever], breakables: [crack] }),
+      ).toThrow(/breakable crack covers switch lever/);
+      const plated = { ...barrier, opener: { ...barrier.opener, plate: { x: 135, y: 60 } } };
+      expect(() => validateMapData({ ...validMap, gates: [plated], breakables: [crack] })).toThrow(
+        /breakable crack covers gate shimmer's plate/,
+      );
+    });
+
+    it("counts each breakable against the gates' six", () => {
+      const gates = Array.from({ length: 5 }, (_, at) => ({
+        ...barrier,
+        id: `gate-${String(at)}`,
+        wall: { kind: "rect", layer: 0, x: 90, y: 5 + at * 15, width: 4, height: 8 },
+      }));
+      expect(validateMapData({ ...validMap, gates, breakables: [crack] }).gates).toHaveLength(5);
+      expect(() =>
+        validateMapData({
+          ...validMap,
+          gates,
+          breakables: [crack, { ...crack, id: "crack-2" }],
+        }),
+      ).toThrow(/7 gates, breakables and switched teleports, more than 6/);
     });
   });
 });
@@ -1260,6 +1330,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
         {
           id: "g",
           opener: { kind: "plate", plate: { x, y }, team: null },
+          blocks: "all",
           wall: { kind: "rect", layer, x: 950, y: 320, width: 20, height: 20 },
         },
       ],
@@ -1415,6 +1486,7 @@ describe("water (#2983)", () => {
       id: "sluice",
       wall: { kind: "rect", layer: 0, x: 250, y: 580, width: 8, height: 30 },
       opener: { kind: "plate", plate: { x: 300, y: 500 }, team: null },
+      blocks: "all",
     };
     refuses([pond()], /deep water pond covers a gate \(gates\.0\)/, { gates: [gate] });
     const atRamp = { kind: "rect", x: 300, y: 450, width: 100, height: 100 };

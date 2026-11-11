@@ -169,6 +169,7 @@ describe("connectMatch", () => {
           gates: [],
           switches: [],
           teleports: [],
+          breakables: [],
         },
         transport.selfId,
       );
