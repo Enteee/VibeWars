@@ -20,6 +20,7 @@ import {
   drawnLayerAt,
   liftAt,
   occludersOf,
+  overhangAt,
   plankLines,
   southFacingEdges,
   surfacesAt,
@@ -714,5 +715,24 @@ describe("trackAlt (#3020)", () => {
     alt.dispose();
     target.dispatchEvent(event("keydown", true));
     expect(alt.held()).toBe(false);
+  });
+});
+
+describe("the deck a body stands under (#3078)", () => {
+  it("is the deck over a point under it, and none beside it or on it", () => {
+    expect(overhangAt(BRIDGE, { x: 200, y: 150 }, 0)).toBe(BRIDGE.decks[0]);
+    expect(overhangAt(BRIDGE, { x: 200, y: 250 }, 0)).toBeUndefined();
+    expect(overhangAt(BRIDGE, { x: 200, y: 150 }, 1)).toBeUndefined();
+  });
+
+  it("is one deck under two stacked, so a body is shaded once", () => {
+    const tower = { layer: 2, footprint: bridge, look: "tower", switched: null } as const;
+    const stacked: MapStructure = { ...BRIDGE, layerCount: 3, decks: [...BRIDGE.decks, tower] };
+    expect(overhangAt(stacked, { x: 200, y: 150 }, 0)).toBe(BRIDGE.decks[0]);
+    expect(overhangAt(stacked, { x: 200, y: 150 }, 1)).toBe(tower);
+  });
+
+  it("is none on a map without decks", () => {
+    expect(overhangAt(FLAT_STRUCTURE, { x: 200, y: 150 }, 0)).toBeUndefined();
   });
 });

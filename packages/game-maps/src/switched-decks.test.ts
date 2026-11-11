@@ -117,18 +117,18 @@ describe("switched decks in a match (#3068)", () => {
   it("cracks the planks once per body stepping on, and drops them on the third", () => {
     const sim = arena([body("a", 1500, 785, 2), body("b", 1600, 785, 2)]);
     run(sim, 0.5);
-    expect(sim.switchedDecks.find(({ id }) => id === "crumbling-planks")).toMatchObject({
+    expect(sim.switchedDecks.find(({ id }) => id === "crumbling-floor")).toMatchObject({
       up: true,
       crossings: 2,
     });
     run(sim, 1);
-    expect(sim.switchedDecks.find(({ id }) => id === "crumbling-planks")?.crossings).toBe(2);
+    expect(sim.switchedDecks.find(({ id }) => id === "crumbling-floor")?.crossings).toBe(2);
     sim.walkTo("a", { x: 1300, y: 785 }, 2);
     run(sim, 3);
-    expect(up(sim, "crumbling-planks")).toBe(true);
+    expect(up(sim, "crumbling-floor")).toBe(true);
     sim.walkTo("a", { x: 1500, y: 785 }, 2);
     run(sim, 3);
-    expect(up(sim, "crumbling-planks")).toBe(false);
+    expect(up(sim, "crumbling-floor")).toBe(false);
     expect(where(sim, "a")).toMatchObject({ layer: 1 });
     expect(where(sim, "b")).toMatchObject({ layer: 1 });
   });
@@ -138,7 +138,7 @@ describe("switched decks in a match (#3068)", () => {
       [1440, 1500, 1560, 1620].map((x, at) => body(String.fromCharCode(97 + at), x, 785, 2)),
     );
     run(sim, 0.5);
-    expect(sim.switchedDecks.find(({ id }) => id === "crumbling-planks")).toMatchObject({
+    expect(sim.switchedDecks.find(({ id }) => id === "crumbling-floor")).toMatchObject({
       up: false,
       crossings: 3,
     });

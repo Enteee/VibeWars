@@ -7,6 +7,7 @@ import {
   BODY_LIGHT_FLOOR,
   SURFACE_LIGHT_FLOOR,
   bodyTintOf,
+  shadedBodyTint,
   flickerAt,
   lightAt,
   multiplyColour,
@@ -128,6 +129,18 @@ describe("a body's tint (#2987)", () => {
   it("is white in full white light", () => {
     const lit = { ...BASE, ambient: { colour: 0xffffff, intensity: 1 } };
     expect(bodyTintOf(lightAt(lit, at(0, 0), 0, 0))).toBe(0xffffff);
+  });
+});
+
+describe("a body in a deck's shade (#3078)", () => {
+  it("is darker than in the open, with lighting off too", () => {
+    expect(shadedBodyTint(0xffffff)).toBe(0xb3b3b3);
+  });
+
+  it("is never below the body floor, however dark the light", () => {
+    const floor = Math.round(BODY_LIGHT_FLOOR * 0xff);
+    const dark = bodyTintOf(lightAt(BASE, at(0, 0), 0, 0));
+    expect(shadedBodyTint(dark)).toBe((floor << 16) | (floor << 8) | floor);
   });
 });
 
