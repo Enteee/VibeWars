@@ -120,7 +120,7 @@ g += `<rect x="250" y="250" width="540" height="64" fill="#18304a"/><path d="M25
 g += `<rect x="250" y="250" width="540" height="64" filter="url(#grain)" fill="#2f6a8c" opacity=".2"/>`;
 // stone: deck on two piers, a parapet
 g += `<rect x="296" y="266" width="12" height="38" fill="#4a586c" stroke="${INK}" stroke-width="2"/><rect x="342" y="266" width="12" height="38" fill="#4a586c" stroke="${INK}" stroke-width="2"/>`;
-g += box(290, 236, 70, 80, 14, STONE, true).replace("rx", "rx");
+g += box(290, 236, 70, 80, 14, STONE, true);
 g += `<path d="M293,238 V314 M357,238 V314" stroke="${STONE.lip}" stroke-width="3"/>`;
 g += label(262, 340, "bridge-stone");
 // plank: posts, rope rails, one lane
