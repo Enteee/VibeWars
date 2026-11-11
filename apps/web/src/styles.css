@@ -3,7 +3,7 @@
 :root {
   --bg: #0e1116;
   /* Over the menu background's fight (#3119): --bg, most of the way. */
-  --menu-scrim: rgba(14, 17, 22, 0.78);
+  --menu-scrim: rgb(14 17 22 / 0.78);
   --panel: #161b22;
   --line: #2b3440;
   --ink: #d7dee8;

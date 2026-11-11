@@ -298,6 +298,9 @@ const playerKey = loadPlayerKey(localStorage);
 
 const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 
+/** How long the splash waits for the own lobby's choice before it fights on the first (#3119). */
+const SPLASH_CHOICE_WAIT_MS = 1500;
+
 /** A Team Lobby's saved Team Builds, read once as it begins, and the one proposed (#1460). */
 interface TeamPicks {
   teams: readonly StoredTeam[];
@@ -345,6 +348,11 @@ async function main(): Promise<void> {
   });
   const viewport = requireElement("#viewport");
   const menuBackground = createMenuBackground(requireElement("#menu-background"), startSplashFight);
+  /** Resolves once a lobby has given the background its choice (#3119). */
+  let choiceMade: () => void = () => undefined;
+  const firstChoice = new Promise<void>((resolve) => {
+    choiceMade = resolve;
+  });
   const topbar = requireElement("#topbar");
   const app = requireElement("#app");
 
@@ -2233,6 +2241,7 @@ async function main(): Promise<void> {
           : lobbyShownMapId(snapshot, teamQueue?.groupMapId),
       teamSize: snapshot.teamSize,
     });
+    choiceMade();
     if (queue !== undefined) {
       // A queued lobby has nothing to choose: it is the versus splash.
       setStatus("match found", "online");
@@ -3115,8 +3124,18 @@ async function main(): Promise<void> {
       disabled: import.meta.env.VITE_VIBEWARS_SPLASH === "off",
     })
   ) {
+    // The own lobby opens under the splash, so its fight is the menu's
+    // and nothing restarts when the menu appears (#3119). Where the lobby
+    // is slow, the splash fights on the first choice and follows it after.
+    openOwnLobby();
     splash = showSplash(document.body, {
-      showFight: () => menuBackground.resume(),
+      showFight: async () => {
+        await Promise.race([
+          firstChoice,
+          new Promise<void>((resolve) => setTimeout(resolve, SPLASH_CHOICE_WAIT_MS)),
+        ]);
+        return menuBackground.resume();
+      },
       playTheme: (startAtEpochMs, onHeard) => music().splash(startAtEpochMs, onHeard),
       onDone: enterMenu,
     });
