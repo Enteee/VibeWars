@@ -22,6 +22,10 @@
       "types": "./dist/layers.d.ts",
       "default": "./dist/layers.js"
     },
+    "./match-fields": {
+      "types": "./dist/match-fields.d.ts",
+      "default": "./dist/match-fields.js"
+    },
     "./size-class": {
       "types": "./dist/size-class.d.ts",
       "default": "./dist/size-class.js"

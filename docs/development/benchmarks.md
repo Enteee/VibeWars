@@ -119,6 +119,33 @@ above `main`'s are the bar. The counts are deterministic, so a
 difference is a real one, but a seed set is small: read a few deaths
 either way as noise.
 
+## The map balance bench
+
+`BENCH_MAP=<id> BENCH_SIZE=<n> pnpm run bench:balance` (#3065) plays
+all-bot matches on one real map: its walls, gates, switches, layers,
+zones and objectives, and its mode's own rules and time limit. Both
+teams field the same built-in builds, so the only difference between
+them is their spawn side. Each seed is played twice, the second time
+with the builds rotated by one, so no build keeps one spawn.
+`BENCH_MAP=all` (the default) runs every map, and without `BENCH_SIZE`
+every size a map seats is its own row. `BENCH_SEEDS` sets the seeds,
+100 by default; a 4v4 row of 100 seeds takes about twenty minutes. It is
+not in CI: it is a design tool, and every map PR pastes its table.
+
+A row gives the matches run, the wins of each team (by spawn side), the
+draws, the mean match length in simulated seconds, and a verdict. A
+match the mode does not decide by its time limit is a draw; a mode
+without a wipe is won by whoever its own outcome names. The verdict is
+PASS when every team's share of the decided matches is within 10 points
+of fair (40-60 % with two teams, 23-43 % with three; ±10 points is about
+the 95 % interval at 100 matches) and draws are at most a quarter of the
+matches. Otherwise it is FAIL, naming the favoured team, or the share of
+draws, or "no contact" when no match was decided at all.
+
+PASS is necessary, not sufficient. Bots do not yet value high ground or
+cover (#2542), so a map whose heights favour one side can still pass.
+The operator's playtest is the final word on every map.
+
 ## What is not measured
 
 **Client FPS.** It needs a real browser compositing real frames, which

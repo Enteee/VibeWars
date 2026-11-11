@@ -1,4 +1,5 @@
 import { createRng, type PlayerBuild } from "@vibewars/game-core";
+import { mapMatchRules } from "@vibewars/game-maps/match-fields";
 import {
   FORMATION_TIMEOUT_MS,
   MAX_LOBBY_PLAYERS,
@@ -53,10 +54,10 @@ import { t, type MessageKey } from "../i18n/index.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
 import {
   arenaIds,
+  arenaMap,
   hostMap,
   mapTeamSizes,
   modeMapIds,
-  mapMatchRules,
   ASCENT_PROGRESSION,
   queueMapPool,
   queueSkipping,
@@ -186,7 +187,7 @@ function startMatch(plan: MatchPlan) {
     // A match is reproducible from its seed; the lobby's match id is
     // unique only within the lobby, so the code goes in too.
     seed: `${plan.transport.selfId}:${plan.matchId}`,
-    matchRules: mapMatchRules(plan.mapId, map.mode),
+    matchRules: mapMatchRules(arenaMap(plan.mapId), map.mode),
     random: secureRandom,
     maxPlayers: MAX_LOBBY_PLAYERS,
     seats: plan.seats,

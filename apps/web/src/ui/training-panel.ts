@@ -6,6 +6,7 @@ import {
   type TrainingScenario,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
+import type { MapShrine } from "@vibewars/game-maps/match-fields";
 import { NO_GUILD, type MatchSnapshot, type SkillSlot } from "@vibewars/game-session";
 
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
@@ -42,7 +43,7 @@ import { gateWalls, toArenaSnapshot, toRenderableWall, type GatedMap } from "../
 import { MENU_DEPTH } from "../music/fixed-tracks.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
-import { mapShrines, type MapShrine } from "../net/maps.js";
+import { mapShrines } from "../net/maps.js";
 import { TRACKS } from "../music/tracks/index.js";
 import {
   EMPTY_SNAPSHOT,
