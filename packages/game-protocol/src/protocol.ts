@@ -478,6 +478,18 @@ export type WallDescriptor = RectWallDescriptor | PolygonWallDescriptor;
 /** How many teams a match has (#2682): two, or Heroes' Ascent's three. */
 export type WireTeamCount = 2 | 3;
 
+/** What lies beyond a ground outline (#3066), as game-maps' `OUTSIDE_KINDS`. */
+export type OutsideKind = "cliff" | "rock" | "forest" | "deep-water";
+
+/** A map's ground (#3066): its whole rectangle, or an outline inside it with land outside. */
+export type MapBoundsDescriptor =
+  | { readonly kind: "rect" }
+  | {
+      readonly kind: "outline";
+      readonly outline: readonly { readonly x: number; readonly y: number }[];
+      readonly outside: OutsideKind;
+    };
+
 export interface MapDescriptor {
   readonly id: string;
   readonly name: string;
@@ -485,6 +497,8 @@ export interface MapDescriptor {
   readonly teamCount: WireTeamCount;
   readonly width: number;
   readonly height: number;
+  /** Its ground (#3066): nobody stands off it. */
+  readonly bounds: MapBoundsDescriptor;
   readonly walls: readonly WallDescriptor[];
   /** Its gates (#2691), in the order the snapshot's `gates` says how each stands. */
   readonly gates: readonly GateDescriptor[];

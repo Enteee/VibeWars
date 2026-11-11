@@ -11,6 +11,7 @@ import {
   DECK_LOOKS,
   MAX_FOG_BANKS,
   MAX_LIGHTS,
+  MAX_OUTLINE_POINTS,
   MAX_PLUMES,
   MAX_WATER_BODIES,
   MAX_WATER_POINTS,
@@ -24,6 +25,7 @@ import {
   type Wall,
 } from "./schema.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
+import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
 import heights from "../training/training-heights/map.json" with { type: "json" };
 import structures from "../test-maps/structures/map.json" with { type: "json" };
 
@@ -35,6 +37,7 @@ const validMap = {
   teams: 2,
   width: 100,
   height: 100,
+  bounds: { kind: "rect" },
   layers: 1,
   groundLayer: 0,
   pits: [],
@@ -1825,5 +1828,77 @@ describe("effect zones (ADR-0053, #3024)", () => {
       accepts([rolling(MAX_ZONE_PATH_POINTS)]);
       refuses([rolling(MAX_ZONE_PATH_POINTS + 1)], /zones\.0\.path\.points/);
     });
+  });
+});
+
+describe("a ground outline (#3066)", () => {
+  const accepts = (overrides: object): void => {
+    expect(() => validateMapData({ ...outlineTest, ...overrides })).not.toThrow();
+  };
+  const refuses = (overrides: object, message: RegExp): void => {
+    expect(() => validateMapData({ ...outlineTest, ...overrides })).toThrow(message);
+  };
+  const outline = (points: readonly { x: number; y: number }[]) => ({
+    bounds: { kind: "outline", outline: points, outside: "rock" },
+  });
+
+  it("loads the L-shaped test map, and a map that is its rectangle", () => {
+    expect(validateMapData(outlineTest).bounds.kind).toBe("outline");
+    accepts({ bounds: { kind: "rect" } });
+  });
+
+  it("refuses a map without bounds: absent is not a rectangle", () => {
+    const { bounds: _bounds, ...noBounds } = outlineTest;
+    expect(() => validateMapData(noBounds)).toThrow(/bounds/);
+  });
+
+  it("refuses an outline off the map", () => {
+    refuses(
+      outline([
+        { x: -10, y: 0 },
+        { x: 1600, y: 0 },
+        { x: 1600, y: 1200 },
+      ]),
+      /outline must lie on the map/,
+    );
+  });
+
+  it("refuses an outline that crosses itself", () => {
+    refuses(
+      outline([
+        { x: 0, y: 0 },
+        { x: 1600, y: 1200 },
+        { x: 1600, y: 0 },
+        { x: 0, y: 1200 },
+      ]),
+      /must not cross itself/,
+    );
+  });
+
+  it("refuses an outline of too few or too many points", () => {
+    refuses(
+      outline([
+        { x: 0, y: 0 },
+        { x: 1600, y: 0 },
+      ]),
+      /bounds/,
+    );
+    const ring = Array.from({ length: MAX_OUTLINE_POINTS + 1 }, (_, k) => {
+      const angle = (k / (MAX_OUTLINE_POINTS + 1)) * 2 * Math.PI;
+      return { x: 800 + 590 * Math.cos(angle), y: 600 + 590 * Math.sin(angle) };
+    });
+    refuses(outline(ring), /bounds/);
+  });
+
+  it("refuses a spawn outside the outline, in the L's missing corner", () => {
+    refuses(
+      {
+        spawnPoints: [
+          ...outlineTest.spawnPoints,
+          { team: 0, layer: 0, position: { x: 1300, y: 1000 } },
+        ],
+      },
+      /spawn 2 must be on its layer's walkable area/,
+    );
   });
 });

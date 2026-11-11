@@ -383,6 +383,14 @@ export function closestPointOnPolygon(point: Vec2, polygon: Polygon): Vec2 {
   return nearest;
 }
 
+/** `polygon`'s sides, each corner to the next, the last back to the first. */
+export function polygonSides(polygon: Polygon): Segment[] {
+  return polygon.flatMap((corner, index) => {
+    const next = polygon[(index + 1) % polygon.length];
+    return next === undefined || polygon.length < 3 ? [] : [segment(corner, next)];
+  });
+}
+
 /** The average of `polygon`'s corners. */
 export function polygonCentre(polygon: Polygon): Vec2 {
   let x = 0;

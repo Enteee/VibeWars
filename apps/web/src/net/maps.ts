@@ -369,6 +369,7 @@ export function structureOf(map: MapData): LoadedStructure {
   }));
   return {
     structure:
+      map.bounds.kind === "rect" &&
       map.layers === 1 &&
       map.lighting === undefined &&
       map.atmosphere === undefined &&
@@ -377,6 +378,7 @@ export function structureOf(map: MapData): LoadedStructure {
         ? FLAT_STRUCTURE
         : {
             layerCount: map.layers,
+            bounds: map.bounds,
             ground: map.groundLayer,
             decks: map.decks,
             pits: map.pits,
@@ -483,6 +485,7 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
       name: map.name,
       width: map.width,
       height: map.height,
+      bounds: map.bounds,
       teamCount: seated,
       walls: map.walls.map((wall) =>
         wall.kind === "rect"

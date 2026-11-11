@@ -1,0 +1,36 @@
+{
+  "id": "outline-test",
+  "name": "Outline Test",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "teams": 2,
+  "width": 1600,
+  "height": 1200,
+  "bounds": {
+    "kind": "outline",
+    "outline": [
+      { "x": 40, "y": 60 },
+      { "x": 1540, "y": 40 },
+      { "x": 1560, "y": 560 },
+      { "x": 1100, "y": 600 },
+      { "x": 960, "y": 520 },
+      { "x": 820, "y": 640 },
+      { "x": 800, "y": 1160 },
+      { "x": 60, "y": 1140 }
+    ],
+    "outside": "cliff"
+  },
+  "layers": 1,
+  "groundLayer": 0,
+  "pits": [],
+  "tunnels": [],
+  "decks": [],
+  "transitions": [],
+  "walls": [{ "kind": "rect", "layer": 0, "x": 380, "y": 500, "width": 60, "height": 60 }],
+  "spawnPoints": [
+    { "team": 0, "layer": 0, "position": { "x": 300, "y": 1000 } },
+    { "team": 1, "layer": 0, "position": { "x": 1400, "y": 300 } }
+  ],
+  "objectives": [],
+  "gates": []
+}

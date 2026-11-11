@@ -180,6 +180,7 @@ describe("layerSurfaces", () => {
   });
   const HEIGHTS: MapStructure = {
     layerCount: 3,
+    bounds: { kind: "rect" },
     ground: 0,
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
     pits: [],
@@ -311,6 +312,7 @@ describe("LightingPass", () => {
 
   const STRUCTURE: MapStructure = {
     layerCount: 1,
+    bounds: { kind: "rect" },
     ground: 0,
     pits: [],
     tunnels: [],

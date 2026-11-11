@@ -20,6 +20,7 @@ export type WaterPart = "surface" | "ripples";
 export type ZonePart = "ground" | "marks";
 
 export type RenderItem =
+  | { readonly kind: "outside" }
   | { readonly kind: "floor" }
   | { readonly kind: "pit" }
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
@@ -45,6 +46,8 @@ export type RenderItem =
   | { readonly kind: "edge-marker" };
 
 const LAYER_STACK = 10;
+/** The land outside a ground outline (#3066): under the floor, which is the ground inside it. */
+const OUTSIDE = -3;
 /**
  * A pit's sunk floor, far wall and ramp (#2973): over the floor, under the
  * water, wards and bodies in it, and under the ground's lip in front of it.
@@ -106,6 +109,8 @@ const EDGE_MARKER = 120;
 /** Where `item` draws: higher is in front. */
 export function renderOrder(item: RenderItem): number {
   switch (item.kind) {
+    case "outside":
+      return OUTSIDE;
     case "floor":
       return -2;
     case "pit":

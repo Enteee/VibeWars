@@ -308,6 +308,7 @@ describe("clicks with Show names held (#2738)", () => {
     const deck = { kind: "rect", x: 100, y: 100, width: 100, height: 100 } as const;
     const structure = {
       layerCount: 2,
+      bounds: { kind: "rect" as const },
       ground: 0,
       pits: [],
       tunnels: [],

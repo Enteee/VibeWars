@@ -38,7 +38,7 @@ export type {
 } from "./match/zones.js";
 
 export type { Polygon, Segment } from "./geometry.js";
-export { pointInPolygon, polygonCentre, progressAlong } from "./geometry.js";
+export { closestPointOnPolygon, pointInPolygon, polygonCentre, progressAlong } from "./geometry.js";
 export {
   buildLayeredNavGraph,
   buildNavGraph,

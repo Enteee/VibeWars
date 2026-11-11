@@ -1,7 +1,9 @@
+import { closestPointOnPolygon, pointInPolygon } from "@vibewars/game-core";
 import {
   MAX_WIRE_PINGS,
   MAX_WIRE_STROKES,
   STROKE_SECONDS,
+  type MapBoundsDescriptor,
   type PeerCall,
   type WireCalls,
   type WirePoint,
@@ -93,9 +95,11 @@ interface TeamCalls {
 
 const TEAMS: readonly Team[] = [0, 1, 2];
 
-export function createCallBoard(bounds: {
+/** A board for a match on `map`: every ping and stroke point lands on its ground (#3066). */
+export function createCallBoard(map: {
   readonly width: number;
   readonly height: number;
+  readonly bounds: MapBoundsDescriptor;
 }): CallBoard {
   const teams: Record<Team, TeamCalls> = {
     0: { target: null, pings: [], nextPingId: 1, strokes: [], fresh: [], nextStrokeId: 1 },
@@ -106,6 +110,14 @@ export function createCallBoard(bounds: {
   const strokeBudget = new MessageBudget(STROKES_PER_SECOND, STROKES_PER_SECOND, () => undefined);
 
   const clamp = (value: number, max: number): number => Math.min(max, Math.max(0, value));
+  const onGround = (x: number, y: number): WirePoint => {
+    const point = { x: clamp(x, map.width), y: clamp(y, map.height) };
+    if (map.bounds.kind === "rect" || pointInPolygon(point, map.bounds.outline)) {
+      return [point.x, point.y];
+    }
+    const edge = closestPointOnPolygon(point, map.bounds.outline);
+    return [edge.x, edge.y];
+  };
   const live = (strokes: readonly Stroke[], now: number): Stroke[] =>
     strokes.filter((stroke) => now - stroke.at < STROKE_SECONDS);
   const wire = (strokes: readonly Stroke[], now: number): WireStroke[] =>
@@ -130,7 +142,7 @@ export function createCallBoard(bounds: {
       if (call.kind === "stroke") {
         const points = call.points
           .filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y))
-          .map(([x, y]): WirePoint => [clamp(x, bounds.width), clamp(y, bounds.height)]);
+          .map(([x, y]) => onGround(x, y));
         if (points.length < 2 || !strokeBudget.take(callerId, now * 1000)) {
           return false;
         }
@@ -149,10 +161,11 @@ export function createCallBoard(bounds: {
       if (!Number.isFinite(call.x) || !Number.isFinite(call.y)) {
         return false;
       }
+      const [x, y] = onGround(call.x, call.y);
       const ping: Ping = {
         id: calls.nextPingId,
-        x: clamp(call.x, bounds.width),
-        y: clamp(call.y, bounds.height),
+        x,
+        y,
         byId: callerId,
         at: now,
       };

@@ -15,6 +15,7 @@ import {
   hasLineOfSight,
   closestPointOnPolygon,
   pointInPolygon,
+  polygonSides,
   progressAlong,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
@@ -701,6 +702,12 @@ export interface MatchLayers {
    * stops bodies and paths as a wall does, but never sight or shots.
    */
   readonly deepWater: readonly (readonly Segment[])[];
+  /**
+   * The ground's outline (#3066), `undefined` for the whole rectangle:
+   * nobody stands, walks or paths off it. Its edge stops bodies, and sight
+   * and shots too where it `blocksSight` (rock, forest), as a wall does.
+   */
+  readonly outline: { readonly polygon: Polygon; readonly blocksSight: boolean } | undefined;
 }
 
 export interface ParticipantSpec {
@@ -1076,6 +1083,9 @@ function degenerationSources(combatant: Combatant): {
 /** How far short of its interval a swing or a flight may be and still land; see `#advanceAttack`. */
 const SWING_EPSILON = 1e-9;
 
+/** How far inside the ground's edge a body put back on it lands (#3066), so it is not on the line. */
+const OUTLINE_INSET = 1e-3;
+
 /** How close to zero a knockdown may be and count as over: 4 s in 0.05 s ticks leaves a float crumb. */
 const KNOCKDOWN_EPSILON = 1e-9;
 
@@ -1098,7 +1108,9 @@ export function walkableAreas(layers: MatchLayers | undefined): readonly (readon
   }
   return Array.from({ length: layers.count }, (_, layer) =>
     layer === layers.ground
-      ? []
+      ? layers.outline === undefined
+        ? []
+        : [layers.outline.polygon]
       : [
           ...(layer === layers.ground - 1 ? layers.pits : []),
           ...layers.decks
@@ -1270,6 +1282,8 @@ export class MatchSimulation {
   >();
   /** Where a body may stand on each layer above the ground: its decks and ramps. */
   readonly #walkable: readonly (readonly Polygon[])[];
+  /** The ground outline's sides (#3066), `[]` on a map of its whole rectangle. */
+  readonly #outlineEdge: readonly Segment[];
   /** Each ramp's way up, as a direction, in `#layers.transitions`' order. */
   /** Each layer's ramp rims (#2975): they stop walking, never sight. */
   readonly #rampRims: readonly (readonly Segment[])[];
@@ -1468,6 +1482,7 @@ export class MatchSimulation {
       .map((zone) => ({ ...zone, polygon: zoneReach(zone.polygon, zone.path) }));
     this.#ground = this.#layers?.ground ?? 0;
     this.#walkable = walkableAreas(this.#layers);
+    this.#outlineEdge = polygonSides(this.#layers?.outline?.polygon ?? []);
     this.#mapWalls = options.walls ?? [];
     this.#rampRims = this.#layers === undefined ? [] : rampRims(this.#layers);
     this.#gatedGraphs = buildLayeredNavGraph(
@@ -6653,6 +6668,9 @@ export class MatchSimulation {
   #wallsByLayer(sight: boolean): readonly (readonly Segment[])[] {
     return (this.#layers?.walls ?? []).map((walls, layer) => [
       ...walls,
+      ...(layer === this.#ground && this.#layers?.outline?.blocksSight === true
+        ? this.#outlineEdge
+        : []),
       ...this.#gates
         .filter(
           (gate) =>
@@ -6671,6 +6689,9 @@ export class MatchSimulation {
   #blockersByLayer(): readonly (readonly Segment[])[] {
     return this.#layerWalls.map((walls, layer) => [
       ...walls,
+      ...(layer === this.#ground && this.#layers?.outline?.blocksSight === false
+        ? this.#outlineEdge
+        : []),
       ...(this.#layers?.deepWater[layer] ?? []),
       ...(this.#rampRims[layer] ?? []),
     ]);
@@ -6759,7 +6780,11 @@ export class MatchSimulation {
       return false;
     }
     if (layer === this.#ground) {
-      return this.#pitAt(point) === undefined;
+      const outline = this.#layers?.outline;
+      return (
+        (outline === undefined || pointInPolygon(point, outline.polygon)) &&
+        this.#pitAt(point) === undefined
+      );
     }
     return (this.#walkable[layer] ?? []).some((area) => pointInPolygon(point, area));
   }
@@ -6783,6 +6808,13 @@ export class MatchSimulation {
    */
   #clampToLayer(position: Vec2, layer: number): Vec2 {
     if (layer === this.#ground) {
+      const outline = this.#layers?.outline;
+      if (outline !== undefined && !pointInPolygon(position, outline.polygon)) {
+        // A hair inside the edge, so its collision next tick pushes inward.
+        const edge = closestPointOnPolygon(position, outline.polygon);
+        const away = distance(position, edge);
+        return away === 0 ? edge : add(edge, scale(sub(edge, position), OUTLINE_INSET / away));
+      }
       const pit = this.#pitAt(position);
       return pit === undefined ? position : closestPointOnPolygon(position, pit);
     }

@@ -6,6 +6,7 @@
   "teams": 2,
   "width": 5200,
   "height": 2800,
+  "bounds": { "kind": "rect" },
   "layers": 1,
   "groundLayer": 0,
   "pits": [],

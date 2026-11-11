@@ -3,6 +3,7 @@ import type Phaser from "phaser";
 import { vec2, type Vec2 } from "@vibewars/game-core";
 
 import type { ArenaScene } from "./arena-scene.js";
+import { ARENA_BACKGROUND } from "./arena-palette.js";
 import { WHEEL_IDLE, feedWheel, type CameraView, type Cover, type Size } from "./camera-rig.js";
 import { buttonChanges, type MouseButton } from "./pointer-buttons.js";
 
@@ -91,7 +92,7 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
   const game = new Phaser.Game({
     type: Phaser.WEBGL,
     parent,
-    backgroundColor: "#0e1116",
+    backgroundColor: ARENA_BACKGROUND,
     // The canvas is its parent's size in CSS px; the camera decides how
     // much world that shows (camera-rig.ts).
     scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },

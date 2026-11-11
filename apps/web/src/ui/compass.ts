@@ -66,6 +66,8 @@ export interface CompassView {
   readonly altar: Vec2 | undefined;
   /** Wall outlines, already clipped to the disc. */
   readonly walls: readonly (readonly Vec2[])[];
+  /** The ground's outline (#3066), already clipped to the disc; none on a map that is its rectangle. */
+  readonly edge: readonly (readonly Vec2[])[];
 }
 
 /** A marker of one side on the compass (#1226). */
@@ -326,6 +328,10 @@ export function compassView(
         : { ...local(arena.stand.position), holder: arena.stand.holder },
     altar: arena.altar === undefined || !within(arena.altar) ? undefined : local(arena.altar),
     walls: arena.walls.flatMap((wall) => clipOutline(outline(wall).map(local), sizePx / 2)),
+    edge:
+      arena.structure.bounds.kind === "rect"
+        ? []
+        : clipOutline(arena.structure.bounds.outline.map(local), sizePx / 2),
   };
 }
 
@@ -475,16 +481,14 @@ export function createCompass(parent: HTMLElement, reach: number, calls: Compass
     context.lineWidth = 1;
     context.strokeStyle = WALL_STROKE;
     for (const wall of view.walls) {
-      context.beginPath();
-      wall.forEach((point, index) => {
-        if (index === 0) {
-          context.moveTo(point.x, point.y);
-        } else {
-          context.lineTo(point.x, point.y);
-        }
-      });
-      context.stroke();
+      strokeRun(context, wall);
     }
+    context.lineWidth = 1.5;
+    context.strokeStyle = INK_DIM;
+    for (const run of view.edge) {
+      strokeRun(context, run);
+    }
+    context.lineWidth = 1;
     context.strokeStyle = INK_DIM;
     for (const ring of view.rings) {
       context.setLineDash(ring.kind === "cast" ? [3, 3] : []);
@@ -652,4 +656,17 @@ export function createCompass(parent: HTMLElement, reach: number, calls: Compass
       canvas.remove();
     },
   };
+}
+
+/** Strokes the open line through `points`. */
+function strokeRun(context: CanvasRenderingContext2D, points: readonly Vec2[]): void {
+  context.beginPath();
+  points.forEach((point, index) => {
+    if (index === 0) {
+      context.moveTo(point.x, point.y);
+    } else {
+      context.lineTo(point.x, point.y);
+    }
+  });
+  context.stroke();
 }

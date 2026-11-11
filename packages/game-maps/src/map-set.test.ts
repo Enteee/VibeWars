@@ -23,9 +23,16 @@ import { allWallSegments, wallToSegments } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
+import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
 import structuresData from "../test-maps/structures/map.json" with { type: "json" };
 import heightsData from "../training/training-heights/map.json" with { type: "json" };
-import { mapDataSchema, type Gate, type GateOpener, type MapData } from "./schema.js";
+import {
+  MAX_OUTLINE_POINTS,
+  mapDataSchema,
+  type Gate,
+  type GateOpener,
+  type MapData,
+} from "./schema.js";
 
 /**
  * Every arena, old and new (#444): valid, fair by a half turn about its
@@ -925,5 +932,33 @@ describe("Training Heights' layers by route (#2973)", () => {
     const route = finder.find(spawn, heights.groundLayer, to, layer);
     expect(route).toBeDefined();
     expect(route?.at(-1)).toMatchObject({ ...to, layer });
+  });
+});
+
+describe("a ground outline's nav nodes (#3066)", () => {
+  it("keeps the L-shaped test map's ground graph small", () => {
+    const nodes = layeredFinder(mapDataSchema.parse(outlineTest), RADIUS).nodeCount;
+    expect(nodes).toBeLessThanOrEqual(600);
+  });
+
+  it("keeps a full outline on the largest map, round its walls, within the budget", () => {
+    const largest = MAPS.reduce((most, map) =>
+      map.width * map.height > most.width * most.height ? map : most,
+    );
+    // A jagged ring of the most points, in and out, hugging the map's edge.
+    const outline = Array.from({ length: MAX_OUTLINE_POINTS }, (_, k) => {
+      const angle = (k / MAX_OUTLINE_POINTS) * 2 * Math.PI;
+      const reach = k % 2 === 0 ? 0.5 : 0.47;
+      return {
+        x: largest.width / 2 + Math.cos(angle) * largest.width * reach,
+        y: largest.height / 2 + Math.sin(angle) * largest.height * reach,
+      };
+    });
+    const outlined: MapData = {
+      ...largest,
+      bounds: { kind: "outline", outline, outside: "rock" },
+    };
+    const nodes = layeredFinder(outlined, RADIUS).nodeCount;
+    expect(nodes).toBeLessThanOrEqual(600);
   });
 });

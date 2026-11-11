@@ -9,7 +9,7 @@ import {
 
 import { PING_SECONDS, STROKES_PER_SECOND, createCallBoard } from "./calls.js";
 
-const BOUNDS = { width: 960, height: 640 };
+const BOUNDS = { width: 960, height: 640, bounds: { kind: "rect" } } as const;
 /** b is team 0's living foe; everyone else is not. */
 const foeB = (id: string): boolean => id === "b";
 const alive = (): boolean => true;
@@ -35,6 +35,49 @@ describe("createCallBoard (#443)", () => {
     expect(board.call(0, "a", { kind: "target", targetId: "b" }, 0, foeB)).toBe(true);
     expect(board.view(0, 0).pings.map((ping) => ping.id)).toEqual([1, 2]);
     expect(board.view(0, 0).target).toEqual({ targetId: "b", callerId: "a" });
+  });
+
+  it("puts a ping or a stroke beyond the ground's outline on its edge (#3066)", () => {
+    // An L: the top-right quarter is cliff.
+    const board = createCallBoard({
+      ...BOUNDS,
+      bounds: {
+        kind: "outline",
+        outline: [
+          { x: 0, y: 0 },
+          { x: 480, y: 0 },
+          { x: 480, y: 320 },
+          { x: 960, y: 320 },
+          { x: 960, y: 640 },
+          { x: 0, y: 640 },
+        ],
+        outside: "cliff",
+      },
+    });
+    board.call(0, "a", { kind: "ping", x: 900, y: 100 }, 0, foeB);
+    board.call(0, "a", { kind: "ping", x: 100, y: 100 }, 0, foeB);
+    expect(board.view(0, 0).pings.map(({ x, y }) => [x, y])).toEqual([
+      [900, 320],
+      [100, 100],
+    ]);
+    board.call(
+      0,
+      "a",
+      {
+        kind: "stroke",
+        strokeId: 1,
+        points: [
+          [600, 50],
+          [600, 500],
+        ],
+      },
+      0,
+      foeB,
+    );
+    expect(board.freshStrokes(0, 0)[0]?.points).toEqual([
+      [480, 50],
+      [600, 500],
+    ]);
   });
 
   it("expires a ping after 2.6 s, counting it down on the way", () => {

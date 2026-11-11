@@ -137,6 +137,13 @@ describe("the elevation offset (ADR-0051)", () => {
   });
 });
 
+describe("the outside's place in the order (#3066)", () => {
+  it("draws the land outside a ground outline under the floor, which is the ground inside it", () => {
+    expect(renderOrder({ kind: "outside" })).toBeLessThan(renderOrder({ kind: "floor" }));
+    expect(renderOrder({ kind: "outside" })).toBeLessThan(renderOrder({ kind: "pit" }));
+  });
+});
+
 describe("water's place in the order (#2984)", () => {
   const water = (layer: number, part: "surface" | "ripples"): RenderItem => ({
     kind: "water",
