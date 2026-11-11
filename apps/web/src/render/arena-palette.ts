@@ -296,6 +296,67 @@ export const DECK_LOOK: Record<DeckLook, DeckLookColours> = {
     edgeFace: shade(0x7a5e40, 0.6),
     support: shade(0x7a5e40, 0.6),
   },
+  ledge: {
+    top: 0x6b7a90,
+    detail: shade(0x6b7a90, 0.2),
+    side: 0x3a4658,
+    edgeTop: 0x8e9db2,
+    edgeFace: shade(0x3a4658, 0.3),
+    support: shade(0x3a4658, 0.3),
+  },
+  /** Masonry fallen in: the same stone as a stone bridge, weathered darker. */
+  ruin: {
+    top: 0x9a9588,
+    detail: shade(0x9a9588, 0.25),
+    side: 0x5f5a50,
+    edgeTop: 0xb4ae9f,
+    edgeFace: shade(0x5f5a50, 0.3),
+    support: shade(0x5f5a50, 0.4),
+  },
+  /** Rock, its opening `support`: the dark under it. */
+  arch: {
+    top: 0x7e8796,
+    detail: shade(0x7e8796, 0.2),
+    side: 0x4a5262,
+    edgeTop: 0x9aa5b6,
+    edgeFace: shade(0x4a5262, 0.3),
+    support: 0x161a21,
+  },
+  /** Masonry with merlons; its passage `support`, its grid `edgeTop` iron. */
+  "gatehouse-roof": {
+    top: 0xa6b4c6,
+    detail: shade(0xa6b4c6, 0.2),
+    side: 0x5a6676,
+    edgeTop: 0x8c96a4,
+    edgeFace: shade(0x5a6676, 0.25),
+    support: 0x161a21,
+  },
+  /** Plaster: warm and desaturated, not danger orange; its door `support`. */
+  rooftop: {
+    top: 0xb5a98f,
+    detail: shade(0xb5a98f, 0.2),
+    side: 0x6a604f,
+    edgeTop: 0xcfc4aa,
+    edgeFace: shade(0x6a604f, 0.3),
+    support: 0x2a2219,
+  },
+  pier: {
+    top: 0x8f7150,
+    detail: shade(0x8f7150, 0.35),
+    side: shade(0x8f7150, 0.45),
+    edgeTop: 0xb39572,
+    edgeFace: 0x3a2a1a,
+    support: 0x3a2a1a,
+  },
+  /** Two tiers of stone; its capture ring `edgeTop`, the same brass as a lever's. */
+  plinth: {
+    top: 0xa9adb4,
+    detail: shade(0xa9adb4, 0.22),
+    side: 0x5d6470,
+    edgeTop: 0xe8c27a,
+    edgeFace: shade(0x5d6470, 0.25),
+    support: 0x7d8592,
+  },
 };
 
 /** What a transition of one look is built of (#3067): its slope, its treads and risers. */

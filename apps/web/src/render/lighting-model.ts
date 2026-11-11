@@ -137,7 +137,22 @@ export function tintOf(sample: LightSample): number {
  * body floor, so a saturated light never blacks out a team colour.
  */
 export function bodyTintOf(sample: LightSample): number {
-  const tint = tintOf(sample);
+  return aboveBodyFloor(tintOf(sample));
+}
+
+/**
+ * How much of its colour a body under a deck keeps (#3078): a 30 % dark
+ * overlay, as in the deck's shade. It is shape, not light, so it is drawn
+ * with lighting off too.
+ */
+export const OVERHANG_SHADE = 0.7;
+
+/** `tint`, white with lighting off, darkened for a body under a deck: never below the body floor. */
+export function shadedBodyTint(tint: number): number {
+  return aboveBodyFloor(scaleColour(tint, OVERHANG_SHADE));
+}
+
+function aboveBodyFloor(tint: number): number {
   const floor = Math.round(BODY_LIGHT_FLOOR * 0xff);
   const channel = (shift: number): number => Math.max(floor, (tint >> shift) & 0xff) << shift;
   return channel(16) | channel(8) | channel(0);

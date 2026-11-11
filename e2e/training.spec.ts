@@ -219,7 +219,7 @@ test("on Heights you step off the bridge's broken north lip onto the ground (#30
   page,
 }) => {
   test.setTimeout(60_000);
-  await openTraining(page);
+  const canvas = await openTraining(page);
   await page.locator("select.training-scenario").selectOption("heights");
   await expect(page.locator(".training-log")).toContainText("── Heights ──");
   await takeControl(page);
@@ -242,22 +242,27 @@ test("on Heights you step off the bridge's broken north lip onto the ground (#30
     await page.keyboard.up(key(move));
   };
   // Map coordinates from training-heights/map.json: up the west stairs onto
-  // the bridge (layer 2, y 350 to 550), then north over its drop-off, x 440
-  // to 520. Without it, the deck's edge would hold you at y 350. A slow
-  // page polls late and overshoots a 60-unit window at 180 units a second,
-  // so walk to short of it, then nudge in with brief taps of the key.
-  const inFront = ({ x }: { readonly x: number }): boolean => x >= 450 && x <= 510;
+  // the bridge (layer 2, y 350 to 550), then a click on the ground north of
+  // it. The shortest way down is over its drop-off, x 440 to 520; without
+  // it, the walk would go back down the stairs. A click, not a timed key
+  // tap, so a slow page cannot overshoot the 80-unit lip.
   await walk("move-right", ({ x }) => x >= 400);
-  for (let tries = 0; tries < 30 && !inFront(await you()); tries += 1) {
-    await page.keyboard.down(key((await you()).x > 510 ? "move-left" : "move-right"));
-    await page.waitForTimeout(60);
-    await page.keyboard.up(key("move-left"));
-    await page.keyboard.up(key("move-right"));
-    await page.waitForTimeout(150);
-  }
-  expect(inFront(await you())).toBe(true);
-  await walk("move-up", ({ y }) => y < 320);
-  expect((await you()).x).toBeLessThan(520);
+  const below = { x: 480, y: 250 };
+  const onPage = (await trainingView(page, canvas)).onPage(below);
+  await page.mouse.click(onPage.x, onPage.y);
+  let leftAt: { readonly x: number; readonly y: number } | undefined;
+  await expect
+    .poll(
+      async () => {
+        const at = await you();
+        if (leftAt === undefined && at.y < 345) leftAt = at;
+        return Math.hypot(at.x - below.x, at.y - below.y) <= 5;
+      },
+      { intervals: [50], timeout: 20_000 },
+    )
+    .toBe(true);
+  expect(leftAt?.x).toBeGreaterThan(430);
+  expect(leftAt?.x).toBeLessThan(530);
 });
 
 test("Wilds' scorched strip burns the dummy in it, logged by its kind (#3024, #3046)", async ({
