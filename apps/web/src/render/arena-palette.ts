@@ -177,6 +177,21 @@ export const GATE_DOOR_LOOK = {
   plateHeld: 0x6f695f,
 };
 
+/** A switched deck (#3068) gone down or giving way: its cracks, its holes, the chains and frayed rope. */
+export const SWITCHED_DECK_LOOK = {
+  crack: 0x1c2330,
+  hole: 0x0b0e14,
+  chain: 0x8a8f99,
+  fray: 0xd9a54a,
+};
+
+/** A portcullis (#3068): an iron grid in a stone arch, and the dark it closes. */
+export const GATE_PORTCULLIS_LOOK = {
+  iron: 0x7a8aa4,
+  ironShade: 0x4a5568,
+  dark: 0x0b0e14,
+};
+
 /**
  * A breakable wall (#3031, docs/art/3030-world-elements.md): chiselled
  * stone, warmer than a map wall's blue-grey, so it reads as one that can

@@ -46,10 +46,16 @@ Vejdeš-li do **portálu**, okamžitě se objevíš u jeho výstupu. Portál ved
 
 Část terénu je vyvýšená a nahoru nebo dolů se dostaneš jen po jejích rampách, schodech, hrubých stupních nebo žebřících: okraj vyvýšené plošiny tě zastaví jako zeď. **Věž** je malá kamenná plošina na zděném těle, s místem pro pár hráčů, na kterou vede úzké schodiště nebo žebřík. **Ochoz** vede po vrcholu silné zdi, s poprsní zídkou a schody na obou koncích. Žebřík je dost široký jen pro jednoho hráče najednou. **Most** z kamene, prken nebo padlého kmene překlenuje mezeru a hráči pod ním mohou procházet. Výška nemění tvůj dosah ani zranění.
 
+## Padací mosty, provazové mosty a skryté průchody
+
+Některé přechody se během zápasu mění, pro všechny naráz. **Padací most** se zvedá a spouští pákou. Zvednutý stojí u svého závěsu vzpřímeně jako dubová deska a nikdo nemůže přejít; kdo na něm je, když se zvedá, je odstrčen z jeho bližšího konce. **Provazový most** může jeho páka přeseknout, jednou: jeho dvě poloviny visí ze svých kotev a kdo na něm byl, spadne na zem nebo do jámy pod ním. **Drolící se podlaha** popraská o něco víc pokaždé, když na ni někdo šlápne, a po daném počtu kroků se propadne; kdo na ní pak je, spadne jako z přeseknutého mostu.
+
+**Padací mříž** je železná mříž v kamenném oblouku, kterou zvedne páka nebo deska. **Skrytý průchod** vypadá přesně jako skalní stěna kolem něj, dokud se neotevře do tmavé mezery.
+
 ## Počasí a atmosféra
 
 Mlžné závoje, kouř, pára, déšť a sníh jsou jen pro oko. Nikdy ti neublíží, nezpomalí tě ani tě neskryjí. Mlha je vždy bledá a chladná, nikdy zelená, takže si ji nelze splést s jedovatou mlhou.
 
 ## Vyzkoušej je
 
-Na **cvičišti** v editoru buildů vyber scénář **Divočina**: je tam každý druh země, nebezpečí, brány i portálu z této stránky a v těch nebezpečných stojí cvičné cíle, takže uvidíš, co každý dělá, než na něj narazíš v zápase.
+Na **cvičišti** v editoru buildů vyber scénář **Divočina**: je tam každý druh země, nebezpečí i portálu z této stránky, k tomu dveře a třpytivá brána a v těch nebezpečných stojí cvičné cíle, takže uvidíš, co každý dělá, než na něj narazíš v zápase.

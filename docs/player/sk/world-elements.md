@@ -91,6 +91,22 @@ naraz. **Most** z kameňa, dosiek alebo spadnutého kmeňa sa klenie ponad
 priepasť a hráči pod ním môžu prejsť popod neho. Byť vyššie nemení tvoj
 dosah ani tvoje zranenie.
 
+## Padacie mosty, lanové mosty a skryté chodby
+
+Niektoré cesty na druhú stranu sa počas zápasu menia, pre všetkých
+naraz. **Padací most** zdvíha a spúšťa páka. Zdvihnutý stojí na svojom
+závese ako dubová doska a nikto cezeň neprejde; kto na ňom stojí, keď
+sa zdvíha, toho zhodí z bližšieho konca. **Lanový most** sa dá jeho
+pákou raz preseknúť: jeho dve polovice visia z ukotvení a kto bol na
+ňom, spadne na zem alebo do priepasti pod ním. **Rozpadajúca sa
+podlaha** popraská o kúsok viac zakaždým, keď na ňu niekto stúpi,
+a po určitom počte krokov sa prepadne; kto na nej práve je, spadne ako
+z preseknutého mosta.
+
+**Padacia mreža** je železná mreža v kamennom oblúku, ktorú zdvíha
+páka alebo doska. **Skrytá chodba** vyzerá presne ako skalná stena
+okolo nej, kým sa neotvorí do tmavého otvoru.
+
 ## Počasie a atmosféra
 
 Hmlové pásy, dym, para, dážď a sneh sú len pre oko. Nikdy ťa nezrania,
@@ -100,6 +116,6 @@ si ju nemôžeš pomýliť s jedovatou hmlou.
 ## Vyskúšaj si ich
 
 Na **cvičisku** v editore buildov vyber scenár **Divočina**: nájdeš tam každý
-druh zeme, nástrahy, brány a portálu z tejto stránky a v nebezpečných miestach
-stoja cvičné ciele, takže uvidíš, čo každý z nich robí, skôr než ho stretneš
-v zápase.
+druh zeme, nástrahy a portálu z tejto stránky, aj dvere a trblietavú
+bránu, a v nebezpečných miestach stoja cvičné ciele, takže uvidíš, čo
+každý z nich robí, skôr než ho stretneš v zápase.

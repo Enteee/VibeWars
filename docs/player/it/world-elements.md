@@ -98,6 +98,23 @@ Una scala a pioli è larga abbastanza per un solo giocatore alla volta. Un
 vuoto, e i giocatori sotto possono camminarci al di sotto. Stare più in
 alto non cambia la tua gittata né i tuoi danni.
 
+## Ponti levatoi, ponti di corda e passaggi nascosti
+
+Alcuni attraversamenti cambiano durante una partita, per tutti insieme.
+Un **ponte levatoio** si alza e si abbassa con una leva. Alzato, sta
+dritto sul suo cardine come una lastra di quercia e nessuno può
+attraversarlo; chi ci si trova sopra mentre si alza viene spinto giù
+dall'estremità più vicina. Un **ponte di corda** può essere tagliato
+dalla sua leva, una volta sola: le due metà pendono dai loro ancoraggi,
+e chi ci stava sopra cade a terra o nella fossa sottostante. Un
+**pavimento cedevole** si crepa un po' di più ogni volta che qualcuno ci
+mette piede, e crolla dopo un certo numero di passi; chi ci si trova
+sopra in quel momento cade come da un ponte tagliato.
+
+Una **saracinesca** è una grata di ferro in un arco di pietra che una
+leva o una piastra solleva. Un **passaggio nascosto** sembra identico al
+muro di roccia intorno finché non si apre su un varco buio.
+
 ## Meteo e atmosfera
 
 Banchi di nebbia, fumo, vapore, pioggia e neve sono solo per l'occhio. Non
@@ -107,7 +124,7 @@ pallida e fredda, mai verde, così non si può scambiare per nebbia tossica.
 ## Provali
 
 Nel **campo di allenamento** dell'editor delle build, scegli lo scenario
-**Terre selvagge**: ogni tipo di terreno, pericolo, cancello e portale di
-questa pagina è lì, con bersagli di allenamento piazzati in quelli
-pericolosi, così puoi vedere cosa fa ognuno prima di incontrarlo in
-partita.
+**Terre selvagge**: ogni tipo di terreno, pericolo e portale di questa
+pagina è lì, e anche una porta e un cancello scintillante, con bersagli
+di allenamento piazzati in quelli pericolosi, così puoi vedere cosa fa
+ognuno prima di incontrarlo in partita.

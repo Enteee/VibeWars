@@ -15,6 +15,7 @@ import {
   matchSwitches,
   matchTeleports,
   matchBreakables,
+  matchSwitchedDecks,
   matchZones,
 } from "@vibewars/game-maps/layers";
 import type { MapData } from "@vibewars/game-maps/schema";
@@ -139,6 +140,7 @@ export function setupScenario(
     switches: matchSwitches(map),
     teleports: matchTeleports(map),
     breakables: matchBreakables(map),
+    switchedDecks: matchSwitchedDecks(map),
     participants: [
       {
         id: SELF_ID,

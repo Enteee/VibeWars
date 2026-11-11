@@ -96,6 +96,22 @@ un jugador a la vez. Un **puente** de piedra, de tablones o de un tronco
 caído cruza un hueco, y los jugadores de abajo pueden pasar por debajo.
 Estar más alto no cambia tu alcance ni tu daño.
 
+## Puentes levadizos, puentes de cuerda y pasadizos ocultos
+
+Algunos pasos cambian durante la partida, para todos a la vez. Un
+**puente levadizo** se sube y se baja con una palanca. Alzado, se yergue
+sobre su bisagra como una losa de roble y nadie puede cruzar; quien esté
+encima mientras se alza es empujado por su extremo más cercano. Un
+**puente de cuerda** puede cortarlo su palanca, una sola vez: sus dos
+mitades cuelgan de sus anclajes, y quien estuviera encima cae al suelo o
+al foso de abajo. Un **suelo que se desmorona** se agrieta un poco más
+cada vez que alguien lo pisa, y cede tras un número fijo de pasos; quien
+esté encima entonces cae como desde un puente cortado.
+
+Un **rastrillo** es una reja de hierro en un arco de piedra que una
+palanca o una placa levanta. Un **pasadizo oculto** parece exactamente
+el muro de roca que lo rodea hasta que se abre a un hueco oscuro.
+
 ## Clima y ambiente
 
 Los bancos de niebla, el humo, el vapor, la lluvia y la nieve son solo para la
@@ -104,7 +120,8 @@ fría, nunca verde, así que no se puede confundir con la niebla tóxica.
 
 ## Pruébalos
 
-En el **campo de entrenamiento** del editor de builds, elige el escenario
-**Tierras salvajes**: cada tipo de suelo, peligro, puerta y portal de esta
-página está allí, con objetivos de práctica colocados en los peligrosos, para
-que veas qué hace cada uno antes de encontrártelo en una partida.
+En el **campo de entrenamiento** del editor de builds, elige el
+escenario **Tierras salvajes**: cada tipo de suelo, peligro y portal de
+esta página está allí, y también una puerta y una puerta reluciente, con
+objetivos de práctica colocados en los peligrosos, para que veas qué
+hace cada uno antes de encontrártelo en una partida.

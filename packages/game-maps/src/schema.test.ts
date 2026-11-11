@@ -9,6 +9,7 @@ import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/
 import { allWallSegments } from "./geometry.js";
 import {
   DECK_LOOKS,
+  MAX_AFTER_CROSSINGS,
   MAX_FOG_BANKS,
   MAX_LIGHTS,
   MAX_OUTLINE_POINTS,
@@ -28,6 +29,7 @@ import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
 import heights from "../training/training-heights/map.json" with { type: "json" };
 import structures from "../test-maps/structures/map.json" with { type: "json" };
+import switchedTest from "../test-maps/switched/map.json" with { type: "json" };
 
 const validMap = {
   id: "arena-test",
@@ -905,6 +907,7 @@ describe("ghost maps (#2689)", () => {
       wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
       opener,
       blocks: "all",
+      look: "door",
     };
 
     it("rejects a one-way gate whose plate is outside, or with no altar to be inside of", () => {
@@ -940,12 +943,14 @@ describe("ghost maps (#2689)", () => {
       wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
       opener: { kind: "switch" },
       blocks: "all",
+      look: "door",
     };
     const plated = {
       id: "plated",
       wall: { kind: "rect", layer: 0, x: 120, y: 40, width: 8, height: 40 },
       opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
       blocks: "all",
+      look: "door",
     };
     const lever = { id: "lever", layer: 0, position: { x: 50, y: 50 }, targets: ["door"] };
 
@@ -961,7 +966,7 @@ describe("ghost maps (#2689)", () => {
           gates: [door],
           switches: [{ ...lever, targets: ["door", "nowhere"] }],
         }),
-      ).toThrow(/switch lever names nowhere, which is no gate or teleport/);
+      ).toThrow(/switch lever names nowhere, which is no gate, teleport or switched deck/);
       expect(() =>
         validateMapData({
           ...validMap,
@@ -1068,6 +1073,7 @@ describe("ghost maps (#2689)", () => {
         wall: { kind: "rect", layer: 0, x: 80, y: 20, width: 8, height: 20 },
         opener: { kind: "switch" },
         blocks: "all",
+        look: "door",
       };
       expect(() =>
         validateMapData({ ...validMap, gates: [door], teleports: [teleport], switches: [lever] }),
@@ -1083,11 +1089,12 @@ describe("ghost maps (#2689)", () => {
         wall: { kind: "rect", layer: 0, x: 90, y: 5 + at * 15, width: 4, height: 8 },
         opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
         blocks: "all",
+        look: "door",
       }));
       expect(validateMapData({ ...validMap, gates, teleports: [teleport] }).gates).toHaveLength(6);
       expect(() =>
         validateMapData({ ...validMap, gates, teleports: [teleport], switches: [lever] }),
-      ).toThrow(/7 gates, breakables and switched teleports, more than 6/);
+      ).toThrow(/7 gates, breakables, switched teleports and switched decks, more than 6/);
     });
   });
 
@@ -1097,6 +1104,7 @@ describe("ghost maps (#2689)", () => {
       wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
       opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
       blocks: "bodies-and-shots",
+      look: "door",
     };
     const crack = {
       id: "crack",
@@ -1152,7 +1160,7 @@ describe("ghost maps (#2689)", () => {
           gates,
           breakables: [crack, { ...crack, id: "crack-2" }],
         }),
-      ).toThrow(/7 gates, breakables and switched teleports, more than 6/);
+      ).toThrow(/7 gates, breakables, switched teleports and switched decks, more than 6/);
     });
   });
 });
@@ -1170,6 +1178,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     layer,
     footprint: { kind: "rect", x: 500, y: 300, width: 600, height: 200 },
     look: "platform",
+    switched: null,
   });
   const accepts = (overrides: object): void => {
     expect(() => validateMapData({ ...layerTest, ...overrides })).not.toThrow();
@@ -1307,6 +1316,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
             layer: 1,
             footprint: { kind: "rect", x: 500, y: 300, width: 1200, height: 200 },
             look: "platform",
+            switched: null,
           },
         ],
       },
@@ -1415,6 +1425,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
           id: "g",
           opener: { kind: "plate", plate: { x, y }, team: null },
           blocks: "all",
+          look: "door",
           wall: { kind: "rect", layer, x: 950, y: 320, width: 20, height: 20 },
         },
       ],
@@ -1617,6 +1628,7 @@ describe("water (#2983)", () => {
       wall: { kind: "rect", layer: 0, x: 250, y: 580, width: 8, height: 30 },
       opener: { kind: "plate", plate: { x: 300, y: 500 }, team: null },
       blocks: "all",
+      look: "door",
     };
     refuses([pond()], /deep water pond covers a gate \(gates\.0\)/, { gates: [gate] });
     const atRamp = { kind: "rect", x: 300, y: 450, width: 100, height: 100 };
@@ -1925,6 +1937,110 @@ describe("a ground outline (#3066)", () => {
         ],
       },
       /spawn 2 must be on its layer's walkable area/,
+    );
+  });
+});
+
+describe("switched decks and gate looks (#3068)", () => {
+  const refuses = (overrides: object, message: RegExp): void => {
+    expect(() => validateMapData({ ...switchedTest, ...overrides })).toThrow(message);
+  };
+  const [ropeBridge, drawbridge, planks] = switchedTest.decks;
+  const withDrawbridge = (switched: object) => ({
+    decks: [
+      ropeBridge,
+      { ...drawbridge, switched: { ...drawbridge?.switched, ...switched } },
+      planks,
+    ],
+  });
+
+  it("validates the switched test map, every gate look on it", () => {
+    const map = validateMapData(switchedTest);
+    expect(map.decks.filter(({ switched }) => switched !== null)).toHaveLength(3);
+    expect(map.gates.map(({ look }) => look).sort()).toEqual(["portcullis", "secret"]);
+  });
+
+  it("refuses a switch naming a fixed deck, an unknown one, or a gate sharing a deck's id", () => {
+    refuses(
+      { switches: [{ id: "lever", layer: 1, position: { x: 660, y: 760 }, targets: ["nowhere"] }] },
+      /switch lever names nowhere, which is no gate, teleport or switched deck/,
+    );
+    refuses(
+      { decks: [ropeBridge, { ...drawbridge, switched: null }, planks] },
+      /switch drawbridge-lever names drawbridge, which is no gate, teleport or switched deck/,
+    );
+    refuses(
+      {
+        gates: switchedTest.gates.map((gate, at) =>
+          at === 0 ? { ...gate, id: "drawbridge" } : gate,
+        ),
+      },
+      /gate id drawbridge is used twice among gates and decks/,
+    );
+  });
+
+  it("counts switched decks in the toggle budget", () => {
+    const gate = switchedTest.gates[1];
+    refuses(
+      {
+        gates: [
+          ...switchedTest.gates,
+          { ...gate, id: "spare-a", wall: { ...gate?.wall, y: 100 } },
+          { ...gate, id: "spare-b", wall: { ...gate?.wall, y: 500 } },
+        ],
+      },
+      /7 gates, breakables, switched teleports and switched decks, more than 6/,
+    );
+  });
+
+  it("refuses a spawn or an objective standing on a switched deck", () => {
+    refuses(
+      {
+        spawnPoints: [
+          ...switchedTest.spawnPoints,
+          { team: 0, layer: 2, position: { x: 1550, y: 480 } },
+        ],
+      },
+      /spawnPoints\.2: spawn 2 stands on a switched deck/,
+    );
+  });
+
+  it("refuses a switched deck that cannot do what it says", () => {
+    refuses(withDrawbridge({ hinge: null }), /has a hinge only if it pushes off/);
+    refuses(withDrawbridge({ whenDown: "fall", once: true }), /bridge-stone, which cannot fall/);
+    refuses(
+      {
+        decks: [
+          { ...ropeBridge, switched: { ...ropeBridge?.switched, once: false } },
+          drawbridge,
+          planks,
+        ],
+      },
+      /deck rope-bridge falls, so it goes down once/,
+    );
+    refuses(
+      {
+        decks: [
+          ropeBridge,
+          drawbridge,
+          { ...planks, switched: { ...planks?.switched, startsUp: false } },
+        ],
+      },
+      /deck crumbling-planks collapses under crossings, so it starts up and falls/,
+    );
+    refuses(
+      {
+        decks: [
+          ropeBridge,
+          drawbridge,
+          { ...planks, switched: { ...planks?.switched, afterCrossings: MAX_AFTER_CROSSINGS + 1 } },
+        ],
+      },
+      /decks\.2\.switched\.afterCrossings/,
+    );
+    refuses(
+      { switches: switchedTest.switches.filter(({ id }) => id !== "rope-lever") },
+      /deck rope-bridge is switched, and no switch names it nor do crossings bring it down/,
     );
   });
 });

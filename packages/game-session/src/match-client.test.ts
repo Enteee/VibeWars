@@ -170,6 +170,7 @@ describe("connectMatch", () => {
           switches: [],
           teleports: [],
           breakables: [],
+          decks: [],
         },
         transport.selfId,
       );

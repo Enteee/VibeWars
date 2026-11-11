@@ -4,7 +4,8 @@ import type { Vec2 } from "../vec2.js";
  * Switches (#3025): a lever on the map. A player walks to it as to a
  * bundle, and arriving flips it: every gate it names toggles, the open
  * ones closing and the closed ones opening, and every teleport it names
- * turns on or off (#3030). Then it rests for
+ * turns on or off (#3030), and every switched deck it names goes up or
+ * down (#3068). Then it rests for
  * `SWITCH_COOLDOWN_SECONDS`, half a second (#3054): short enough that
  * flipping it back feels immediate, long enough that a script cannot
  * strobe a gate every tick. An arrival in that time does nothing, and
@@ -27,6 +28,8 @@ export interface SwitchField {
   readonly gates: readonly number[];
   /** The teleports it turns on and off (#3030), as indices into the match's teleports. */
   readonly teleports: readonly number[];
+  /** The switched decks it toggles (#3068), as indices into the match's switched decks. */
+  readonly decks: readonly number[];
 }
 
 /** One switch as it stands. */

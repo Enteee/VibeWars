@@ -96,6 +96,22 @@ i taget. En **bro** av sten, plankor eller en fallen stock spänner över
 en klyfta, och spelare nedanför kan gå under den. Att stå högre upp
 ändrar inte din räckvidd eller din skada.
 
+## Vindbryggor, repbroar och dolda gångar
+
+Vissa vägar över ändras under en match, för alla på en gång. En
+**vindbrygga** hissas och sänks med en spak. Uppfälld står den rest vid
+sitt gångjärn som en ekplanka och ingen kan ta sig över; den som står
+på den när den reser sig knuffas av vid dess närmaste ände. En
+**repbro** kan kapas med sin spak, en gång: dess två halvor hänger från
+sina fästen, och den som var på den faller till marken eller ner
+i klyftan nedanför. Ett **smulande golv** spricker lite mer varje gång
+någon kliver upp på det, och ger vika efter ett visst antal steg; den
+som då står på det faller som från en kapad bro.
+
+Ett **fällgaller** är ett järngaller i en stenbåge som en spak eller
+platta hissar. En **dold gång** ser precis ut som klippväggen runt den
+tills den öppnar sig mot en mörk springa.
+
 ## Väder och atmosfär
 
 Dimbankar, rök, ånga, regn och snö är bara för ögat. De skadar dig
@@ -105,6 +121,6 @@ blek och kylig, aldrig grön, så den kan inte förväxlas med giftig dimma.
 ## Prova dem
 
 I build-redigerarens **träningsplats** väljer du scenariot **Vildmark**:
-varje sorts mark, fara, port och portal på den här sidan finns där, med
-övningsmål som står i de farliga, så att du kan se vad var och en gör
-innan du möter den i en match.
+varje sorts mark, fara och portal på den här sidan finns där, och en
+dörr och en skimrande port, med övningsmål som står i de farliga, så att
+du kan se vad var och en gör innan du möter den i en match.

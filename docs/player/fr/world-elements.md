@@ -110,10 +110,28 @@ que pour l'œil. Ils ne te blessent jamais, ne te ralentissent jamais et ne te
 cachent jamais. Le brouillard est toujours pâle et froid, jamais vert, pour
 qu'on ne puisse pas le confondre avec la brume toxique.
 
+## Ponts-levis, ponts de corde et passages dérobés
+
+Certains passages changent pendant un match, pour tout le monde à la
+fois. Un **pont-levis** se lève et s'abaisse avec un levier. Levé, il se
+dresse sur sa charnière comme une dalle de chêne et personne ne peut
+passer ; quiconque s'y trouve pendant qu'il se lève est repoussé par son
+extrémité la plus proche. Un **pont de corde** peut être coupé par son
+levier, une seule fois : ses deux moitiés pendent à leurs ancrages, et
+quiconque s'y trouvait tombe sur le sol ou dans le gouffre en dessous.
+Un **sol qui s'effrite** se fissure un peu plus chaque fois que
+quelqu'un y pose le pied, et cède après un certain nombre de pas ;
+quiconque s'y trouve alors tombe comme d'un pont coupé.
+
+Une **herse** est une grille de fer dans une arche de pierre, qu'un
+levier ou une plaque relève. Un **passage dérobé** ressemble exactement
+à la paroi rocheuse qui l'entoure, jusqu'à ce qu'il s'ouvre sur une
+brèche sombre.
+
 ## Essaie-les
 
 Dans le **terrain d'entraînement** de l'éditeur de build, choisis le
-scénario **Terres sauvages** : chaque sorte de sol, de danger, de porte et de
-portail de cette page s'y trouve, avec des cibles d'entraînement plantées
-dans les zones dangereuses, pour que tu voies ce que chacun fait avant de le
-rencontrer en match.
+scénario **Terres sauvages** : chaque sorte de sol, de danger et de portail
+de cette page s'y trouve, ainsi qu'une simple porte et une porte miroitante,
+avec des cibles d'entraînement plantées dans les zones dangereuses, pour que
+tu voies ce que chacun fait avant de le rencontrer en match.

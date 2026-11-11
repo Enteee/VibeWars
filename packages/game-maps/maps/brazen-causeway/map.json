@@ -342,7 +342,8 @@
         "plate": { "x": 290, "y": 650 },
         "team": 0
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     },
     {
       "id": "east-gate",
@@ -359,7 +360,8 @@
         "plate": { "x": 1710, "y": 950 },
         "team": 1
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     }
   ]
 }

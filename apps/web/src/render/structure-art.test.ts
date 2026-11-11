@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { DECK_LOOKS, TRANSITION_LOOKS } from "@vibewars/game-maps/schema";
 
-import { arenaPalette, DECK_LOOK, TRANSITION_LOOK } from "./arena-palette.js";
+import { arenaPalette, DECK_LOOK, SWITCHED_DECK_LOOK, TRANSITION_LOOK } from "./arena-palette.js";
 import { FLAT_STRUCTURE, type MapStructure } from "./arena-snapshot.js";
 import {
   DECK_SLAB,
@@ -15,6 +15,7 @@ import {
 import { elevationOf } from "./render-order.js";
 import {
   DECK_ART,
+  SWITCHED_DECK_ART,
   TRANSITION_ART,
   deckPalette,
   transitionPalette,
@@ -54,8 +55,8 @@ const STRUCTURE: MapStructure = {
   layerCount: 4,
   ground: 1,
   decks: [
-    { layer: 2, footprint: PLATFORM, look: "platform" },
-    { layer: 3, footprint: TOWER, look: "tower" },
+    { layer: 2, footprint: PLATFORM, look: "platform", switched: null },
+    { layer: 3, footprint: TOWER, look: "tower", switched: null },
   ],
   transitions: [
     { from: 1, to: 2, area: rect(64, 200, 146, 100), uphill: "e", look: "ramp" },
@@ -104,9 +105,9 @@ describe("a bridge's side face (#3067)", () => {
   it("is a slab whatever stands under it; a platform is solid down a layer", () => {
     if (platformDeck === undefined) throw new Error("no platform");
     const top = elevationOf(platformDeck.layer, STRUCTURE.ground);
-    expect(deckSideLow({ ...platformDeck, look: "bridge-log" }, [], STRUCTURE.ground)).toBe(
-      top - DECK_SLAB,
-    );
+    expect(
+      deckSideLow({ ...platformDeck, look: "bridge-log", switched: null }, [], STRUCTURE.ground),
+    ).toBe(top - DECK_SLAB);
     expect(deckSideLow(platformDeck, [], STRUCTURE.ground)).toBe(
       elevationOf(platformDeck.layer - 1, STRUCTURE.ground),
     );
@@ -153,7 +154,10 @@ describe("DECK_ART (#3067)", () => {
     DECK_ART.tower.side(tower, frameOf(towerDeck, []));
     expect(tower.calls.filter(({ name }) => name === "lineBetween").length).toBeGreaterThan(4);
     const bridge = recorder();
-    DECK_ART["bridge-stone"].side(bridge, frameOf({ ...towerDeck, look: "bridge-stone" }, []));
+    DECK_ART["bridge-stone"].side(
+      bridge,
+      frameOf({ ...towerDeck, look: "bridge-stone", switched: null }, []),
+    );
     expect(bridge.calls.filter(({ name }) => name === "fillRect").length).toBeGreaterThanOrEqual(2);
   });
 });
@@ -190,5 +194,48 @@ describe("TRANSITION_ART (#3067)", () => {
     const second = frame.onRamp(0.5, 0.4);
     expect(first.y).toBeCloseTo(second.y);
     expect(first.x).not.toBeCloseTo(second.x);
+  });
+});
+
+describe("switched decks gone down or giving way (#3068)", () => {
+  const span = frameOf(
+    { layer: 2, footprint: rect(0, 0, 300, 60), look: "bridge-plank", switched: null },
+    [],
+  );
+  const drawn = (paint: (painter: StructurePainter) => void) => {
+    const painter = recorder();
+    paint(painter);
+    return painter.calls;
+  };
+
+  it("stands a raised drawbridge up at its hinge, its chains taut", () => {
+    const calls = drawn((painter) => {
+      SWITCHED_DECK_ART.raised(painter, span, "w");
+    });
+    expect(calls.filter(({ name }) => name === "fillRect")).toHaveLength(2);
+    expect(calls.filter(({ colour }) => colour === SWITCHED_DECK_LOOK.chain)).toHaveLength(2);
+  });
+
+  it("hangs a cut bridge in two frayed halves, and leaves a fallen floor's corners", () => {
+    const cut = drawn((painter) => {
+      SWITCHED_DECK_ART.cut(painter, span);
+    });
+    expect(cut.filter(({ colour }) => colour === SWITCHED_DECK_LOOK.fray)).toHaveLength(2);
+    const fallen = drawn((painter) => {
+      SWITCHED_DECK_ART.fallen(painter, span);
+    });
+    expect(fallen.filter(({ name }) => name === "fillTriangle")).toHaveLength(4);
+  });
+
+  it("cracks a floor once per body, and chips holes in it near its end", () => {
+    const cracks = (count: number) =>
+      drawn((painter) => {
+        SWITCHED_DECK_ART.cracks(painter, span, count, 3);
+      });
+    const lines = (count: number) =>
+      cracks(count).filter(({ colour }) => colour === SWITCHED_DECK_LOOK.crack).length;
+    expect(lines(2)).toBe(2 * lines(1));
+    expect(cracks(1).filter(({ colour }) => colour === SWITCHED_DECK_LOOK.hole)).toEqual([]);
+    expect(cracks(2).filter(({ colour }) => colour === SWITCHED_DECK_LOOK.hole)).toHaveLength(2);
   });
 });

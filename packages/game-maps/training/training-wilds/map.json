@@ -26,6 +26,7 @@
     {
       "id": "ridge",
       "look": "terrace",
+      "switched": null,
       "layer": 2,
       "footprint": {
         "kind": "rect",
@@ -514,7 +515,8 @@
       "opener": {
         "kind": "switch"
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     },
     {
       "id": "side-room-shimmer",
@@ -531,7 +533,8 @@
         "plate": { "x": 200, "y": 700 },
         "team": null
       },
-      "blocks": "bodies-and-shots"
+      "blocks": "bodies-and-shots",
+      "look": "door"
     }
   ],
   "breakables": [

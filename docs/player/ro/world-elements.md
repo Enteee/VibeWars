@@ -95,6 +95,22 @@ O scară de mână e destul de lată pentru un singur jucător odată. Un
 gol, iar jucătorii de dedesubt pot merge pe sub el. Dacă stai mai sus, nu
 ți se schimbă nici raza, nici daunele.
 
+## Poduri mobile, poduri de frânghie și pasaje ascunse
+
+Unele treceri se schimbă în timpul unui meci, pentru toată lumea deodată.
+Un **pod mobil** se ridică și se coboară de la o manetă. Ridicat, stă
+drept în balamaua lui ca o lespede de stejar și nimeni nu poate trece;
+oricine e pe el când se ridică e împins jos pe la capătul mai apropiat.
+Un **pod de frânghie** poate fi tăiat de la maneta lui, o singură dată:
+cele două jumătăți atârnă de ancorele lor, iar cine era pe el cade pe
+pământ sau în groapa de dedesubt. O **podea șubredă** crapă tot mai mult
+de fiecare dată când calcă cineva pe ea și cedează după un număr
+anume de pași; cine e pe ea atunci cade ca de pe un pod tăiat.
+
+O **hersă** este un grilaj de fier într-un arc de piatră, pe care îl
+ridică o manetă sau o placă. Un **pasaj ascuns** arată exact ca zidul
+de stâncă din jur până când se deschide spre o deschizătură întunecată.
+
 ## Vreme și atmosferă
 
 Bancurile de ceață, fumul, aburul, ploaia și zăpada sunt doar de privit. Nu te
@@ -104,6 +120,7 @@ rece, niciodată verde, ca să nu poată fi confundată cu ceața toxică.
 ## Încearcă-le
 
 În **Teren de antrenament** din editorul de builduri, alege scenariul
-**Sălbăticie**: fiecare tip de teren, pericol, poartă și portal de pe această
-pagină se află acolo, cu ținte de antrenament așezate în cele periculoase, ca să
-vezi ce face fiecare înainte să-l întâlnești într-un meci.
+**Sălbăticie**: fiecare tip de teren, pericol și portal de pe această
+pagină se află acolo, plus o ușă și o poartă sclipitoare, cu ținte de
+antrenament așezate în cele periculoase, ca să vezi ce face fiecare
+înainte să-l întâlnești într-un meci.

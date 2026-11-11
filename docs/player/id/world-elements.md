@@ -106,9 +106,28 @@ tidak pernah melukaimu, memperlambatmu atau menyembunyikanmu. Kabut selalu
 pucat dan sejuk, tidak pernah hijau, jadi tidak mungkin tertukar dengan
 kabut beracun.
 
+## Jembatan angkat, jembatan tali, dan lorong rahasia
+
+Beberapa jalan penyeberangan berubah selama laga, untuk semua orang
+sekaligus. **Jembatan angkat** dinaikkan dan diturunkan dengan tuas.
+Saat terangkat, ia berdiri tegak di engselnya sebagai lempengan kayu ek
+dan tidak ada yang bisa menyeberang; siapa pun yang ada di atasnya saat
+ia naik terdorong keluar dari ujungnya yang lebih dekat. **Jembatan
+tali** bisa diputus dengan tuasnya, sekali saja: kedua belahannya
+tergantung dari jangkarnya, dan siapa pun yang ada di atasnya jatuh ke
+tanah atau lubang di bawahnya. **Lantai rapuh** retak sedikit lebih
+parah setiap kali ada yang menginjaknya, dan ambruk setelah sejumlah
+langkah tertentu; siapa pun yang ada di atasnya saat itu jatuh seperti
+dari jembatan yang putus.
+
+**Pintu teralis** adalah jeruji besi dalam lengkungan batu yang diangkat
+oleh tuas atau pelat. **Lorong rahasia** tampak persis seperti tembok
+batu karang di sekitarnya, sampai ia terbuka menjadi celah gelap.
+
 ## Coba sendiri
 
 Di **area latihan** pada editor build, pilih skenario **Alam liar**: setiap
-jenis tanah, bahaya, gerbang dan portal di halaman ini ada di sana, dengan
-target latihan berdiri di tempat-tempat berbahaya, jadi kamu bisa melihat
-apa yang dilakukan masing-masing sebelum menemuinya dalam laga.
+jenis tanah, bahaya dan portal di halaman ini ada di sana, juga sebuah pintu
+dan gerbang berkilau, dengan target latihan berdiri di tempat-tempat
+berbahaya, jadi kamu bisa melihat apa yang dilakukan masing-masing sebelum
+menemuinya dalam laga.

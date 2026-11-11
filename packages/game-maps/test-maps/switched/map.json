@@ -1,0 +1,328 @@
+{
+  "id": "switched",
+  "name": "Switched",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "teams": 2,
+  "width": 2000,
+  "height": 1000,
+  "bounds": {
+    "kind": "rect"
+  },
+  "layers": 3,
+  "groundLayer": 1,
+  "pits": [
+    {
+      "id": "gorge",
+      "footprint": {
+        "kind": "rect",
+        "x": 900,
+        "y": 500,
+        "width": 200,
+        "height": 400
+      }
+    },
+    {
+      "id": "moat",
+      "footprint": {
+        "kind": "rect",
+        "x": 1460,
+        "y": 380,
+        "width": 180,
+        "height": 200
+      }
+    }
+  ],
+  "tunnels": [],
+  "decks": [
+    {
+      "id": "rope-bridge",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 860,
+        "y": 640,
+        "width": 280,
+        "height": 60
+      },
+      "look": "bridge-plank",
+      "switched": {
+        "startsUp": true,
+        "whenDown": "fall",
+        "once": true,
+        "afterCrossings": null,
+        "hinge": null
+      }
+    },
+    {
+      "id": "drawbridge",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 1400,
+        "y": 400,
+        "width": 300,
+        "height": 160
+      },
+      "look": "bridge-stone",
+      "switched": {
+        "startsUp": true,
+        "whenDown": "push-off",
+        "once": false,
+        "afterCrossings": null,
+        "hinge": "w"
+      }
+    },
+    {
+      "id": "crumbling-planks",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 1400,
+        "y": 760,
+        "width": 300,
+        "height": 50
+      },
+      "look": "bridge-plank",
+      "switched": {
+        "startsUp": true,
+        "whenDown": "fall",
+        "once": true,
+        "afterCrossings": 3,
+        "hinge": null
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 720,
+        "y": 640,
+        "width": 145,
+        "height": 60
+      },
+      "uphill": "e",
+      "look": "ramp"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1135,
+        "y": 640,
+        "width": 145,
+        "height": 60
+      },
+      "uphill": "w",
+      "look": "ramp"
+    },
+    {
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 960,
+        "y": 760,
+        "width": 80,
+        "height": 140
+      },
+      "uphill": "s",
+      "look": "rough-steps"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1260,
+        "y": 400,
+        "width": 145,
+        "height": 160
+      },
+      "uphill": "e",
+      "look": "ramp"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1695,
+        "y": 400,
+        "width": 145,
+        "height": 160
+      },
+      "uphill": "w",
+      "look": "ramp"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1260,
+        "y": 760,
+        "width": 145,
+        "height": 50
+      },
+      "uphill": "e",
+      "look": "ramp"
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1695,
+        "y": 760,
+        "width": 145,
+        "height": 50
+      },
+      "uphill": "w",
+      "look": "ramp"
+    }
+  ],
+  "walls": [
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 1860,
+      "y": 60,
+      "width": 40,
+      "height": 220
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 1860,
+      "y": 360,
+      "width": 40,
+      "height": 20
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 400,
+      "y": 100,
+      "width": 40,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 400,
+      "y": 380,
+      "width": 40,
+      "height": 20
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 100,
+        "y": 500
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 1900,
+        "y": 500
+      }
+    }
+  ],
+  "objectives": [],
+  "gates": [
+    {
+      "id": "secret-door",
+      "wall": {
+        "kind": "rect",
+        "layer": 1,
+        "x": 1860,
+        "y": 280,
+        "width": 40,
+        "height": 80
+      },
+      "opener": {
+        "kind": "plate",
+        "plate": {
+          "x": 1780,
+          "y": 320
+        },
+        "team": null
+      },
+      "blocks": "all",
+      "look": "secret"
+    },
+    {
+      "id": "portcullis",
+      "wall": {
+        "kind": "rect",
+        "layer": 1,
+        "x": 400,
+        "y": 300,
+        "width": 40,
+        "height": 80
+      },
+      "opener": {
+        "kind": "switch"
+      },
+      "blocks": "all",
+      "look": "portcullis"
+    }
+  ],
+  "switches": [
+    {
+      "id": "rope-lever",
+      "layer": 1,
+      "position": {
+        "x": 660,
+        "y": 760
+      },
+      "targets": ["rope-bridge"]
+    },
+    {
+      "id": "drawbridge-lever",
+      "layer": 1,
+      "position": {
+        "x": 1300,
+        "y": 620
+      },
+      "targets": ["drawbridge"]
+    },
+    {
+      "id": "portcullis-lever",
+      "layer": 1,
+      "position": {
+        "x": 520,
+        "y": 340
+      },
+      "targets": ["portcullis"]
+    }
+  ],
+  "lighting": {
+    "ambient": {
+      "colour": 11582676,
+      "intensity": 0.45
+    },
+    "indoorAmbient": {
+      "colour": 5924488,
+      "intensity": 0.3
+    },
+    "indoor": [],
+    "sun": {
+      "directionDeg": 315,
+      "elevationDeg": 50,
+      "colour": 16773590,
+      "intensity": 0.55
+    },
+    "lights": []
+  }
+}

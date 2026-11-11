@@ -99,6 +99,23 @@ kalaslardan ya da devrilmiş bir kütükten bir **köprü** bir boşluğun
 üzerinden geçer ve aşağıdaki oyuncular altından yürüyebilir. Daha yüksekte
 olmak menzilini ya da hasarını değiştirmez.
 
+## Kaldırmalı köprüler, halat köprüler ve gizli geçitler
+
+Karşıya geçmenin bazı yolları maç sırasında, herkes için aynı anda
+değişir. Bir **kaldırmalı köprü** bir kolla kaldırılıp indirilir.
+Kalkıkken menteşesinin üstünde meşe bir levha gibi dikilir ve kimse
+geçemez; kalkarken üstünde olan herkes yakın ucundan dışarı itilir. Bir
+**halat köprü** kendi koluyla yalnızca bir kez kesilebilir: iki yarısı
+bağlantı noktalarından sarkar ve üstünde olan herkes aşağıdaki zemine
+ya da çukura düşer. **Ufalanan bir zemin**, biri üstüne her bastığında
+biraz daha çatlar ve belirli sayıda adımdan sonra çöker; o an üstünde
+olan, kesilmiş bir köprüden düşer gibi düşer.
+
+Bir **demir parmaklık**, taş bir kemerin içinde bir kolun ya da
+plakanın kaldırdığı demir bir ızgaradır. **Gizli bir geçit**, karanlık
+bir boşluğa açılana kadar çevresindeki kaya duvarın tıpatıp aynısı gibi
+görünür.
+
 ## Hava ve atmosfer
 
 Sis kümeleri, duman, buhar, yağmur ve kar yalnızca göz içindir. Seni
@@ -108,6 +125,7 @@ asla yeşil değildir; bu yüzden zehirli sisle karıştırılamaz.
 ## Dene
 
 Dizilim editörünün **eğitim alanında** **Yaban** senaryosunu seç: bu
-sayfadaki her tür zemin, tehlike, kapı ve portal oradadır; tehlikeli
-olanların içinde alıştırma hedefleri durur, böylece bir maçta
-karşılaşmadan önce her birinin ne yaptığını görebilirsin.
+sayfadaki her tür zemin, tehlike ve portal oradadır, ayrıca bir kapı ve
+parıldayan bir kapı da; tehlikeli olanların içinde alıştırma hedefleri
+durur, böylece bir maçta karşılaşmadan önce her birinin ne yaptığını
+görebilirsin.

@@ -7,6 +7,7 @@ import {
   MAX_SHARED_SOURCE_BYTES,
   sharedSourceBytes,
   MAX_WIRE_COMBATS,
+  MAX_WIRE_CRACKS,
   MAX_WIRE_EVENTS,
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_CAPTURE_POINTS,
@@ -307,6 +308,7 @@ const snapshot: WireSnapshotPart = {
   switches: [],
   teleports: [],
   breakables: [],
+  decks: [],
 };
 
 /** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */
@@ -815,6 +817,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["snapshot with a held altar (#1377)", parseWireSnapshotPart, hill],
   ["snapshot with capture points (#1378)", parseWireSnapshotPart, shrined],
   ["snapshot with gates (#2691)", parseWireSnapshotPart, { ...snapshot, gates: [true, false] }],
+  [
+    "snapshot with a floor cracked as far as it goes (#3068)",
+    parseWireSnapshotPart,
+    { ...snapshot, decks: [{ up: true, cracks: MAX_WIRE_CRACKS }] },
+  ],
   [
     "welcome with a gate (#2691)",
     parsePeerWelcome,
@@ -1566,6 +1573,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
         })),
       },
     },
+  ],
+  [
+    // A guest draws each crack: a hostile host's 1e9 would hang its tab.
+    "snapshot with a floor cracked past any floor's count (#3068)",
+    parseWireSnapshotPart,
+    { ...snapshot, decks: [{ up: true, cracks: MAX_WIRE_CRACKS + 1 }] },
   ],
   [
     "snapshot with a gate that is not a boolean (#2691)",

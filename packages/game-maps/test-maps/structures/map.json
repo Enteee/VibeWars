@@ -35,7 +35,8 @@
         "width": 320,
         "height": 340
       },
-      "look": "platform"
+      "look": "platform",
+      "switched": null
     },
     {
       "id": "west-tower",
@@ -47,7 +48,8 @@
         "width": 110,
         "height": 110
       },
-      "look": "tower"
+      "look": "tower",
+      "switched": null
     },
     {
       "id": "north-wall-walk",
@@ -59,7 +61,8 @@
         "width": 488,
         "height": 56
       },
-      "look": "wall-walk"
+      "look": "wall-walk",
+      "switched": null
     },
     {
       "id": "south-terrace",
@@ -71,7 +74,8 @@
         "width": 400,
         "height": 250
       },
-      "look": "terrace"
+      "look": "terrace",
+      "switched": null
     },
     {
       "id": "gorge-log",
@@ -83,7 +87,8 @@
         "width": 280,
         "height": 60
       },
-      "look": "bridge-log"
+      "look": "bridge-log",
+      "switched": null
     },
     {
       "id": "east-bridge",
@@ -95,7 +100,8 @@
         "width": 300,
         "height": 160
       },
-      "look": "bridge-stone"
+      "look": "bridge-stone",
+      "switched": null
     },
     {
       "id": "east-planks",
@@ -107,7 +113,8 @@
         "width": 300,
         "height": 50
       },
-      "look": "bridge-plank"
+      "look": "bridge-plank",
+      "switched": null
     }
   ],
   "transitions": [
