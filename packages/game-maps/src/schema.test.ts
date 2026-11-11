@@ -1274,6 +1274,46 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     );
   });
 
+  it("refuses a plinth too big or too high, a pier over no water (#3078)", () => {
+    const [bridge] = layerTest.decks;
+    refuses(
+      { decks: [{ ...bridge, look: "plinth" }] },
+      /decks\.0\.footprint: plinth bridge is 600/,
+    );
+    const base = { kind: "rect", x: 500, y: 300, width: 200, height: 200 };
+    const onPlinth = [
+      ...layerTest.spawnPoints.slice(0, 3),
+      { team: 1, layer: 1, position: { x: 650, y: 400 } },
+    ];
+    accepts({ decks: [{ ...bridge, footprint: base, look: "plinth" }], spawnPoints: onPlinth });
+    refuses(
+      {
+        layers: 3,
+        decks: [{ ...bridge, layer: 2, footprint: base, look: "plinth" }],
+        transitions: [ramp(1, 2)],
+      },
+      /decks\.0\.layer: plinth bridge is on layer 2, not one step above the ground/,
+    );
+    refuses(
+      { decks: [{ ...bridge, look: "pier" }] },
+      /decks\.0\.footprint: pier bridge stands over no water/,
+    );
+    const harbour = {
+      id: "harbour",
+      layer: 0,
+      depth: "deep",
+      area: { kind: "rect", x: 700, y: 520, width: 200, height: 100 },
+    };
+    refuses(
+      { decks: [{ ...bridge, look: "pier" }], water: [harbour] },
+      /pier bridge stands over no water/,
+    );
+    accepts({
+      decks: [{ ...bridge, look: "pier" }],
+      water: [{ ...harbour, area: { ...harbour.area, y: 400 } }],
+    });
+  });
+
   it("validates the structures test map, every look on it once (#3067)", () => {
     const map = validateMapData(structures);
     expect(new Set(map.decks.map(({ look }) => look))).toEqual(new Set(DECK_LOOKS));
@@ -2027,7 +2067,7 @@ describe("switched decks and gate looks (#3068)", () => {
           { ...planks, switched: { ...planks?.switched, startsUp: false } },
         ],
       },
-      /deck crumbling-planks collapses under crossings, so it starts up and falls/,
+      /deck crumbling-floor collapses under crossings, so it starts up and falls/,
     );
     refuses(
       {

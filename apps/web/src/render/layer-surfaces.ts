@@ -1,6 +1,6 @@
 import { pointInPolygon, progressAlong, UPHILL, type Vec2 } from "@vibewars/game-core";
 
-import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
+import type { MapDeck, MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { creatureOutline } from "./creature-shape.js";
 import { ELEVATION_STEP, elevationOf } from "./render-order.js";
 
@@ -110,6 +110,44 @@ export function drawnLayerAt(
     (deck) => deck.layer > layer && pointInPolygon(position, shapeOutline(deck.footprint)),
   );
   return near === undefined || underDeck ? layer : Math.max(near.from, near.to);
+}
+
+/**
+ * The deck a body at `position` on `layer` stands under (#3078), whose
+ * shade it is drawn in; `undefined` in the open. Under two, it is one:
+ * a body is shaded once.
+ */
+export function overhangAt(
+  structure: MapStructure,
+  position: Vec2,
+  layer: number,
+): MapDeck | undefined {
+  return structure.decks.find((deck) => {
+    if (deck.layer <= layer) {
+      return false;
+    }
+    const { box, outline } = overhangOf(deck);
+    return (
+      position.x >= box.left &&
+      position.x <= box.right &&
+      position.y >= box.top &&
+      position.y <= box.bottom &&
+      pointInPolygon(position, outline)
+    );
+  });
+}
+
+const overhangs = new WeakMap<MapDeck, { readonly box: Box; readonly outline: readonly Vec2[] }>();
+
+/** A deck's outline and its box, worked out once: `overhangAt` asks every body every frame. */
+function overhangOf(deck: MapDeck): { readonly box: Box; readonly outline: readonly Vec2[] } {
+  const known = overhangs.get(deck);
+  if (known !== undefined) {
+    return known;
+  }
+  const shape = { box: boxOf(deck.footprint), outline: shapeOutline(deck.footprint) };
+  overhangs.set(deck, shape);
+  return shape;
 }
 
 /** A ramp as it draws: all points already lifted. */
