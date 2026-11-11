@@ -9,6 +9,7 @@ import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/
 import { allWallSegments } from "./geometry.js";
 import {
   DECK_LOOKS,
+  MAX_AFTER_CROSSINGS,
   MAX_FOG_BANKS,
   MAX_LIGHTS,
   MAX_OUTLINE_POINTS,
@@ -2000,6 +2001,16 @@ describe("switched decks and gate looks (#3068)", () => {
         ],
       },
       /deck crumbling-planks collapses under crossings, so it starts up and falls/,
+    );
+    refuses(
+      {
+        decks: [
+          ropeBridge,
+          drawbridge,
+          { ...planks, switched: { ...planks?.switched, afterCrossings: MAX_AFTER_CROSSINGS + 1 } },
+        ],
+      },
+      /decks\.2\.switched\.afterCrossings/,
     );
     refuses(
       { switches: switchedTest.switches.filter(({ id }) => id !== "rope-lever") },

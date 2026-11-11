@@ -586,7 +586,9 @@ export const SWITCHED_DECK_ART = {
    * A floor giving way: a crack for each body that has stepped on it, and
    * a chipped-out hole each once it is two thirds of the way down.
    */
-  cracks(painter: StructurePainter, deck: DeckFrame, cracks: number, afterCrossings: number): void {
+  cracks(painter: StructurePainter, deck: DeckFrame, shown: number, afterCrossings: number): void {
+    // Never more than the floor takes, whatever a peer claims (#3068).
+    const cracks = Math.min(shown, afterCrossings);
     painter.lineStyle(deck.line * 2.2, SWITCHED_DECK_LOOK.crack, 1);
     for (let k = 0; k < cracks; k += 1) {
       const path = crackPath(deck.footprint, k);

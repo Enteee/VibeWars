@@ -133,6 +133,17 @@ describe("switched decks in a match (#3068)", () => {
     expect(where(sim, "b")).toMatchObject({ layer: 1 });
   });
 
+  it("counts no more cracks than the planks take, however many step on at once", () => {
+    const sim = arena(
+      [1440, 1500, 1560, 1620].map((x, at) => body(String.fromCharCode(97 + at), x, 785, 2)),
+    );
+    run(sim, 0.5);
+    expect(sim.switchedDecks.find(({ id }) => id === "crumbling-planks")).toMatchObject({
+      up: false,
+      crossings: 3,
+    });
+  });
+
   it("paths round a raised drawbridge, and across it lowered", () => {
     const onSpan = (sim: MatchSimulation): boolean => {
       const { x = 0, y = 0, layer } = where(sim, "walker");

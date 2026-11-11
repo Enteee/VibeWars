@@ -97,11 +97,14 @@ export const TRANSITION_LOOKS = [
  * and an `afterCrossings` one goes down by itself once that many bodies
  * have stepped onto it.
  */
+/** The most bodies a floor takes before it gives way (#3068), as `MAX_WIRE_CRACKS` in game-protocol. */
+export const MAX_AFTER_CROSSINGS = 16;
+
 const switchedDeckSchema = z.object({
   startsUp: z.boolean(),
   whenDown: z.enum(["push-off", "fall"]),
   once: z.boolean(),
-  afterCrossings: z.number().int().positive().nullable(),
+  afterCrossings: z.number().int().positive().max(MAX_AFTER_CROSSINGS).nullable(),
   hinge: z.enum(["n", "e", "s", "w"]).nullable(),
 });
 

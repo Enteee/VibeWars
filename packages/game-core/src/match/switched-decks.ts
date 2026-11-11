@@ -59,7 +59,8 @@ export function spent(deck: SwitchedDeck): boolean {
 
 /**
  * `deck` toggled if `flipped`, with `entered` more bodies stepped onto
- * it, going down once its crossings reach `afterCrossings`. A spent deck
+ * it, going down once its crossings reach `afterCrossings`, and counting
+ * no further than that, so its cracks stay few on the wire. A spent deck
  * stays as it is, so a lever still naming a collapsed floor does nothing.
  */
 export function stepSwitchedDeck(
@@ -71,7 +72,9 @@ export function stepSwitchedDeck(
     return deck;
   }
   const crossings =
-    deck.afterCrossings !== null && deck.up ? deck.crossings + entered : deck.crossings;
+    deck.afterCrossings !== null && deck.up
+      ? Math.min(deck.afterCrossings, deck.crossings + entered)
+      : deck.crossings;
   const toggled = flipped ? !deck.up : deck.up;
   const up = toggled && (deck.afterCrossings === null || crossings < deck.afterCrossings);
   return up === deck.up && crossings === deck.crossings ? deck : { ...deck, up, crossings };

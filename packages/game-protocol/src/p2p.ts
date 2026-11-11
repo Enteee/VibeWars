@@ -299,6 +299,12 @@ export const MAX_WIRE_POINTS = 256;
  */
 export const MAX_WIRE_TOGGLES = 6;
 
+/**
+ * The most cracks a switched deck shows (#3068), as `MAX_AFTER_CROSSINGS`
+ * in game-maps: a deck counts no further, and a guest draws each one.
+ */
+export const MAX_WIRE_CRACKS = 16;
+
 /** The most switches a map holds (#3025), as `MAX_SWITCHES` in game-maps. */
 export const MAX_WIRE_SWITCHES = 6;
 
@@ -2532,7 +2538,10 @@ function snapshotTeamsWithin(snapshot: WireSnapshot, teamCount: WireTeamCount): 
 function parseDeck(value: unknown): WireDeck | undefined {
   const raw = fields(value);
   const cracks = raw === undefined ? undefined : parseHealth(raw.cracks);
-  return raw !== undefined && typeof raw.up === "boolean" && cracks !== undefined
+  return raw !== undefined &&
+    typeof raw.up === "boolean" &&
+    cracks !== undefined &&
+    cracks <= MAX_WIRE_CRACKS
     ? { up: raw.up, cracks }
     : undefined;
 }
