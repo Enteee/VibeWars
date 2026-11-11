@@ -120,23 +120,37 @@ export const LIGHT_MARK_LOOK = {
 };
 
 /**
- * A switch's lever (#3025): an iron base and a wooden handle with a pale
- * knob, which reads by its angle: raised, or thrown down to the side.
+ * A switch's lever (#3025, #3053, docs/art/3053-hazards.md): a stone base
+ * and a wooden arm, which reads by its angle, standing or lying; its knob
+ * is brass while up, with a small brass glow, and dull grey once thrown.
  */
 export const SWITCH_MARK_LOOK = {
-  base: 0x3a3a40,
-  handle: 0x8a6a42,
-  knob: 0xe8dcc0,
+  base: 0x827b70,
+  baseFace: shade(0x827b70, 0.4),
+  outline: 0x23211d,
+  arm: 0x8a5a2a,
+  armEdge: 0x3a2412,
+  knobUp: 0xe8c27a,
+  knobDown: 0x6a6560,
+  shadow: 0x0b0a08,
 };
 
 /**
- * A gate's door (#3061, docs/art/visual-style.md "Door, open and closed"):
- * amber wood with a dark edge and knob line; open, a dashed amber ghost.
+ * A gate's door (#3061, #3053, docs/art/3053-hazards.md): oak leaves in an
+ * iron frame, with iron bands and a brass knob; open, the leaves stand
+ * swung back against the walls over a dark sill. Its pressure plate is
+ * stone, sinking when held, its ring brass.
  */
 export const GATE_DOOR_LOOK = {
-  body: 0xc98a3a,
-  face: shade(0xc98a3a, 0.4),
-  lit: 0xe8b46a,
-  edge: 0x0b0f14,
-  knob: 0x0b0f14,
+  body: 0x7a4e26,
+  face: shade(0x7a4e26, 0.4),
+  lit: 0xa8743e,
+  edge: 0x3b4759,
+  band: 0x2a2a30,
+  knob: 0xe8c27a,
+  sill: 0x14161a,
+  plate: 0x8f887b,
+  plateFace: 0x4d4943,
+  plateOutline: 0x23211d,
+  plateHeld: 0x6f695f,
 };

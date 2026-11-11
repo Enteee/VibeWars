@@ -21,8 +21,8 @@ export interface ZoneLook {
 
 /**
  * How a zone's ground is painted (#3052): each a real thing, lava, embers,
- * fog, mud, three waters, grass, the spire's wash; `flat` is the tinted
- * polygon a timed hazard keeps until #3053.
+ * fog, mud, three waters, grass, the spire's wash; `hazard` has no ground:
+ * a timed or moving hazard is its mark (`hazard-marks.ts`, #3053).
  */
 export type ZonePainterId =
   | "lava"
@@ -34,7 +34,7 @@ export type ZonePainterId =
   | "spring"
   | "grass"
   | "spire"
-  | "flat";
+  | "hazard";
 
 /**
  * A zone's own light (#3052), at its centroid: `radiusScale` times its
@@ -106,36 +106,33 @@ export const ZONE_LOOK: Record<ZoneKind, ZoneLook> = {
     painter: "spire",
     light: { colour: 0xa77bff, intensity: 0.7, radiusScale: 1.4, flicker: 0 },
   },
-  // Timed and moving hazards (#3029): drawn by their phase, see `strikeZoneLook`.
+  // Timed and moving hazards (#3029): drawn by their phase, see `strikeEdgeScale`.
   // A fire vent: hot orange-red, a flame jet.
-  vent: { fill: 0xff4a12, edge: 0xffb03d, alpha: 0.6, pulse: 0, painter: "flat" },
+  vent: {
+    fill: 0xff4a12,
+    edge: 0xffb03d,
+    alpha: 0.6,
+    pulse: 0,
+    painter: "hazard",
+    // A smoulder's light: its flare when it fires is drawn on the vent (#3053).
+    light: { colour: 0xff7a30, intensity: 0.3, radiusScale: 1.1, flicker: 0.35 },
+  },
   // A gas spout: a poison green puff, yellower than the fog.
-  "gas-spout": { fill: 0x9ad62a, edge: 0xe6ff6a, alpha: 0.55, pulse: 0, painter: "flat" },
+  "gas-spout": { fill: 0x9ad62a, edge: 0xe6ff6a, alpha: 0.55, pulse: 0, painter: "hazard" },
   // Rockfall and rolling rocks: grey stone under a pale rim.
-  rockfall: { fill: 0x8a8378, edge: 0xd8d0c0, alpha: 0.65, pulse: 0, painter: "flat" },
+  rockfall: { fill: 0x8a8378, edge: 0xd8d0c0, alpha: 0.65, pulse: 0, painter: "hazard" },
 };
 
-/** How a strike zone is drawn in a phase: its fill's alpha, and its edge's width as a multiple of `ZONE_EDGE_WIDTH`. */
-export interface StrikeZoneLook {
-  readonly fillAlpha: number;
-  readonly edgeScale: number;
-}
-
 /**
- * A timed or moving hazard's look by phase (#3029): idle, a faint wash
- * under its edge, so it is seen before it fires; telegraphing, its outline
- * brightens and its fill comes in; active, full and bright. A matter of
- * play, not decoration, so still motion changes nothing.
+ * A timed or moving hazard's edge by phase (#3029, #3053): its width as a
+ * multiple of `ZONE_EDGE_WIDTH`. Idle, a plain ring, so it is seen before
+ * it fires; telegraphing and active, two and a half times as wide, the
+ * brightest thing there, over any ground. Its mark (`hazard-marks.ts`)
+ * shows the rest. A matter of play, not decoration, so still motion
+ * changes nothing.
  */
-export function strikeZoneLook(look: ZoneLook, phase: ZonePhase): StrikeZoneLook {
-  switch (phase) {
-    case "idle":
-      return { fillAlpha: look.alpha * 0.2, edgeScale: 1 };
-    case "telegraph":
-      return { fillAlpha: look.alpha * 0.6, edgeScale: 2.5 };
-    case "active":
-      return { fillAlpha: look.alpha, edgeScale: 2.5 };
-  }
+export function strikeEdgeScale(phase: ZonePhase): number {
+  return phase === "idle" ? 1 : 2.5;
 }
 
 /**

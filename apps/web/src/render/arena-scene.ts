@@ -165,8 +165,8 @@ import { LightingPass, litStructurePalette } from "./lighting-pass.js";
 import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
-import { SWITCH_MARK_ART, switchMarkKey } from "./switch-mark.js";
-import { doorPalette, GATE_ART, type GatePainter } from "./gate-mark.js";
+import { SWITCH_MARK_ART, leverThrown, switchMarkKey } from "./switch-mark.js";
+import { doorPalette, GATE_ART, paintPlate, type GatePainter } from "./gate-mark.js";
 import {
   BODY_LIGHT_FLOOR,
   bodyTintOf,
@@ -177,13 +177,8 @@ import {
 } from "./lighting-model.js";
 import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
 import { waterShapeOf, type WaterShape } from "./water-shape.js";
-import {
-  SPIRE_LOOK,
-  ZONE_EDGE_WIDTH,
-  ZONE_LOOK,
-  strikeZoneLook,
-  zoneFillAlpha,
-} from "./zone-look.js";
+import { SPIRE_LOOK, ZONE_EDGE_WIDTH, ZONE_LOOK, strikeEdgeScale } from "./zone-look.js";
+import { HAZARD_ART, hazardKindOf, pathMotionAt, phaseProgressAt } from "./hazard-marks.js";
 import { withZoneLights } from "./zone-light.js";
 import {
   paintZoneGround,
@@ -386,6 +381,11 @@ export class ArenaScene extends Phaser.Scene {
   private readonly rippleGraphics = new Map<
     number,
     { readonly graphics: Phaser.GameObjects.Graphics; readonly painter: WaterPainter }
+  >();
+  /** Each lever's last state and when it flipped to it, in scene seconds: its throw plays from there (#3053). */
+  private readonly leverFlips = new Map<
+    string,
+    { readonly up: boolean; readonly at: number | undefined }
   >();
   /** Each layer's effect zones (ADR-0053), drawn every frame as they breathe. */
   private readonly zoneGraphics = new Map<number, Phaser.GameObjects.Graphics>();
@@ -786,26 +786,32 @@ export class ArenaScene extends Phaser.Scene {
     g.fillRect(altar.x - 9, altar.y - 9, 18, 18);
   }
 
-  /** A gate's plate (#2691), lit while held; an open gate's ghost on its layer's ground (#3061). */
+  /**
+   * A gate's plate (#2691): its reach in its side's colour, a stone plate
+   * that sinks while held (#3053); an open gate's door swung aside on its
+   * layer (#3061, #3053).
+   */
   private drawGate(g: Phaser.GameObjects.Graphics, gate: RenderableGate): void {
+    const line = 1 / (this.view?.zoom ?? 1);
     const plate = gate.plate;
     if (plate !== undefined) {
       const { x, y } = plate.position;
       const colour = plate.side === undefined ? STAND_NEUTRAL : teamColour(plate.side);
-      g.fillStyle(colour, gate.open ? 0.55 : 0.18);
+      g.fillStyle(colour, gate.open ? 0.3 : 0.12);
       g.fillCircle(x, y, GATE_PLATE_REACH_UNITS);
       g.lineStyle(2, colour, 0.9);
       g.strokeCircle(x, y, GATE_PLATE_REACH_UNITS);
+      paintPlate(g, plate.position, gate.open, line);
     }
     // A shut gate is a wall of the map, and draws with them (#3061).
     if (gate.open) {
-      const palette = arenaPalette(this.snapshot.structure.layerCount);
+      const { layerCount, ground } = this.snapshot.structure;
       g.save();
-      g.translateCanvas(0, -elevationOf(gate.layer, this.snapshot.structure.ground));
+      g.translateCanvas(0, -elevationOf(gate.layer, ground));
       GATE_ART.open(this.gatePainter(g), gate.wall, {
-        height: 0,
-        line: 1 / (this.view?.zoom ?? 1),
-        palette: doorPalette(palette),
+        height: layerCount === 1 ? 0 : WALL_HEIGHT,
+        line,
+        palette: doorPalette(arenaPalette(layerCount)),
       });
       g.restore();
     }
@@ -832,11 +838,24 @@ export class ArenaScene extends Phaser.Scene {
     };
   }
 
-  /** A switch (#3025): its mark on its layer, the lever raised or thrown. */
+  /** A switch (#3025): its mark on its layer, the lever raised or thrown, with a flick between (#3053). */
   private drawSwitch(g: Phaser.GameObjects.Graphics, lever: RenderableSwitch): void {
+    const seen = this.leverFlips.get(lever.id);
+    // The first sight of a lever is no flip: it rests where it is.
+    const flip =
+      seen?.up === lever.up
+        ? seen
+        : { up: lever.up, at: seen === undefined ? undefined : this.now };
+    this.leverFlips.set(lever.id, flip);
+    const { at } = flip;
+    const thrown = leverThrown(
+      lever.up,
+      at === undefined ? undefined : this.now - at,
+      this.reducedMotion,
+    );
     g.save();
     g.translateCanvas(0, -elevationOf(lever.layer, this.snapshot.structure.ground));
-    SWITCH_MARK_ART[switchMarkKey(lever.mark)](g, lever.position, lever.up);
+    SWITCH_MARK_ART[switchMarkKey(lever.mark)](g, lever.position, thrown);
     g.restore();
   }
 
@@ -2500,31 +2519,38 @@ export class ArenaScene extends Phaser.Scene {
         this.zoneGraphics.set(zone.layer, g);
       }
       const look = ZONE_LOOK[zone.kind];
-      // A timed or moving hazard (#3029) is drawn by its phase on the match
-      // clock, where its path has taken it: the host strikes by the same.
-      const strike =
-        ZONE_RULES[zone.kind].trigger === "strike"
-          ? strikeZoneLook(look, zonePhaseAt(zone, this.snapshot.clock))
-          : undefined;
-      const moved = zoneOffsetAt(zone.path, this.snapshot.clock);
+      const { clock } = this.snapshot;
+      const moved = zoneOffsetAt(zone.path, clock);
       const lift = elevationOf(zone.layer, ground);
       g.save();
       g.translateCanvas(moved.x, moved.y - lift);
       const painted = grounds[index];
-      if (painted === undefined) {
-        g.fillStyle(
-          look.fill,
-          strike?.fillAlpha ?? zoneFillAlpha(look, this.now, this.reducedMotion),
-        );
-        this.fillShape(g, zone.area);
-      } else {
+      if (painted !== undefined) {
         const { left, top } = painted.art.bounds;
         painted.image
           .setPosition(left + moved.x, top + moved.y - lift)
           .setAlpha(zoneGroundAlpha(painted.art, look, this.now, this.reducedMotion));
         paintZoneMotion(this.zoneMotionPainter(g), painted.art, line, this.now, this.reducedMotion);
       }
-      g.lineStyle(ZONE_EDGE_WIDTH * (strike?.edgeScale ?? 1) * line, look.edge, 1);
+      // A timed or moving hazard (#3029) is drawn by its phase on the match
+      // clock, where its path has taken it: the host strikes by the same.
+      // Its mark (#3053) stands under its ring, which tells its true reach.
+      const hazard = hazardKindOf(zone);
+      const phase = zonePhaseAt(zone, clock);
+      if (hazard !== undefined) {
+        HAZARD_ART[hazard](g, {
+          area: zone.area,
+          phase,
+          // Still motion holds each phase at its end: shown by state, not by motion.
+          progress: this.reducedMotion ? 1 : phaseProgressAt(zone.schedule, clock),
+          now: this.reducedMotion ? 0 : this.now,
+          line,
+          ...pathMotionAt(zone.path, clock),
+        });
+      }
+      const edgeScale = ZONE_RULES[zone.kind].trigger === "strike" ? strikeEdgeScale(phase) : 1;
+      // A boulder's edge stays faint: the rock is what is seen coming.
+      g.lineStyle(ZONE_EDGE_WIDTH * edgeScale * line, look.edge, hazard === "boulder" ? 0.4 : 1);
       this.strokeShape(g, zone.area);
       if (zone.kind === "draining-spire") {
         this.drawSpire(g, zone.area, line);

@@ -41,7 +41,7 @@ function recorder(): { readonly painter: ZoneMotionPainter; readonly calls: unkn
 }
 
 describe("a zone's painted ground (#3052)", () => {
-  it("leaves a timed hazard flat, for #3053", () => {
+  it("paints no ground under a timed hazard: its mark is drawn instead (#3053)", () => {
     expect(zoneArtOf(square("vent"), 0)).toBeUndefined();
     expect(zoneArtOf(square("rockfall"), 0)).toBeUndefined();
   });

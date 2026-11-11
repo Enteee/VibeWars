@@ -155,7 +155,8 @@ bubbles swell and pop every frame.
 - Idle motion is calm and low-contrast. The more a thing can hurt, the less
   it may distract from the fight: fog may breathe at 0.14, mire at 0.03.
 
-Now: `zone-look.ts` (`zoneFillAlpha`, `strikeZoneLook`), `water-shape.ts`,
+Now: `zone-look.ts` (`zoneFillAlpha`, `strikeEdgeScale`), `hazard-marks.ts`
+(`hazardVisual`), `water-shape.ts`,
 `lighting-model.ts` (`flickerAt`).
 
 ## 6. Gameplay readability
@@ -271,18 +272,21 @@ See §3.
 ### Door, open and closed
 
 **Shut** is a solid oak bar across the gap, set between two wall stubs.
-**Open** is the stubs and a clear gap with a faint dashed ghost of the door,
-so a player sees where it will close. Shape differs, not only colour.
+**Open** is the stubs and a clear gap over a dark sill, the leaves swung back
+flat against the walls, so a player sees where it will close. Shape differs,
+not only colour.
 
 ![door](visual-style/door.svg)
 
-Recipe (#3061): `gate-mark.ts` `GATE_ART`. Shut, the wall pass draws the
-door as a wall box in `GATE_DOOR_LOOK` (body `#c98a3a`, a dark knob line
-across a rect), lit by `litStructurePalette` like a wall. Open, `drawGate`
-lays a dashed amber ghost, 18 % fill, on its layer's ground.
-**Target**: the oak door body (oak `#7a4e26` with two iron bands `#2a2a30`
-and a brass knob; open, the leaves swing flat against the jambs), replacing
-the amber box in #3053. Study: `3053-hazards.png`.
+Recipe (#3061, #3053): `gate-mark.ts` `GATE_ART`. Shut, the wall pass draws
+the door as a wall box in `GATE_DOOR_LOOK`: oak `#7a4e26`, a seam and two
+iron bands `#2a2a30` across its top and round its front, an iron frame
+`#3b4759` and a brass knob, lit by `litStructurePalette` like a wall. Open,
+`drawGate` lays a dark sill on its layer's ground, iron jamb lines at its
+ends, and `openLeaves` stands its two leaves against the walls beyond them,
+on the camera's side. Its pressure plate, `paintPlate`, is a stone disc that
+stands proud and sinks flush, ringed brass, while held. Study:
+`3053-hazards.png`.
 
 ### Lever, up and down
 
@@ -291,10 +295,10 @@ shape; the knob is brass `#e8c27a` when up and dull grey `#6a6560` when down. Wo
 
 ![lever](visual-style/lever.svg)
 
-Recipe (now): `switch-mark.ts` draws a base and a handle, upright when up and
-thrown to the right when down, in `SWITCH_MARK_LOOK` (base `0x3a3a40`, handle
-`0x8a6a42`, knob `0xe8dcc0`). **Target**: the colours shown here (wooden
-arm `#8a5a2a`, stone base `#827b70`, brass or grey knob) replace those in #3053.
+Recipe (#3053): `switch-mark.ts` draws a stone base and a wooden arm,
+leaning back when up and lying right when thrown, in `SWITCH_MARK_LOOK`, a
+small brass glow round the knob while up. A flip plays a quarter-second
+throw (`leverThrown`); under reduced motion it snaps.
 
 Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
 `node scripts/assets/visual-style.mjs`.
