@@ -81,6 +81,18 @@ describe("wakeTargets (#3100)", () => {
     expect(run({ cards: [card(5, "Ready")] })).toHaveLength(1);
   });
 
+  it("wakes one employee for a card in a column several roles share", () => {
+    const staff = new Map([
+      ["developer", "developer"],
+      ["cicd-engineer", "cicd-engineer"],
+    ]);
+    const idle = new Map([
+      ["developer", LONG_AGO],
+      ["cicd-engineer", LONG_AGO],
+    ]);
+    expect(run({ staff, idle, cards: [card(5, "Ready")] })).toHaveLength(1);
+  });
+
   it("skips a fired employee and ignores Blocked", () => {
     const cards = [card(5, "Ready"), card(6, "Blocked")];
     const idle = new Map([["developer@3", LONG_AGO]]);

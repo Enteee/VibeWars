@@ -3032,10 +3032,6 @@ async function handleAs(request) {
     return limitedResponse();
   }
 
-  if (kind === "gh" && isTakingComment(argv)) {
-    noteClaim(employee, argv[2]);
-  }
-
   servingRole = role;
   /** @type {Record<string, unknown>} */
   let response;
@@ -3043,6 +3039,10 @@ async function handleAs(request) {
     response = await serve(request, verdict, acting);
   } finally {
     servingRole = "hubd";
+  }
+
+  if (kind === "gh" && response.code === 0 && isTakingComment(argv)) {
+    noteClaim(employee, argv[2]);
   }
 
   // GitHub's own error for an exhausted budget is often something else
@@ -5092,7 +5092,7 @@ function sendWakes() {
   }
   for (const target of wakeTargets({ cards, staff: staffed, idle, claims, sent: wokenFor, now })) {
     wokenFor.set(sentKey(target.employee, target.issue), now);
-    tellCompany(`wake-${String(target.issue)}`, wakeText(target), {
+    tellCompany(`wake-${target.employee}-${String(target.issue)}`, wakeText(target), {
       to: target.employee,
       direct: true,
     });

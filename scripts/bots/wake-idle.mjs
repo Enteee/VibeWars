@@ -70,6 +70,8 @@ export function wakeTargets({ cards, staff, idle, claims, sent, now }) {
   /** @type {WakeTarget[]} */
   const targets = [];
   const picked = new Set();
+  // A card shared by several roles' columns (Ready) wakes one employee in all.
+  const woken = new Set();
   const readyCount = cards.filter((card) => card.status === "Ready").length;
   for (const [role, column] of Object.entries(WORK_COLUMN)) {
     if (column === null) {
@@ -90,13 +92,14 @@ export function wakeTargets({ cards, staff, idle, claims, sent, now }) {
       })
       .map(([employee]) => employee)
       .sort();
-    for (const card of waiting) {
+    for (const card of waiting.filter((c) => !woken.has(c.number))) {
       const employee = sleepers.find((name) => {
         const last = sent.get(sentKey(name, card.number));
         return !picked.has(name) && (last === undefined || now - last >= REWAKE_MS);
       });
       if (employee !== undefined) {
         picked.add(employee);
+        woken.add(card.number);
         targets.push({ employee, issue: card.number, column, title: card.title });
       }
     }
