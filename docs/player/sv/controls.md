@@ -44,6 +44,7 @@ Dessa tangenter är fasta:
 - **Högerklicka** på en flagga eller flaggstället, i en gillestrid eller på Barrow Field, för att
   välja det som mål; **Space** går dit och tar upp flaggan eller sätter ned den.
 - **Högerklicka** på en spak för att välja den som mål; **Space** går dit och drar i den, så att portarna den styr öppnas eller stängs.
+- Gå in i en **portal** så flyttar den dig till sin utgång. En spak kan slå på eller av den; efter en resa vilar den i 5 s innan den tar dig igen.
 - **Klicka med hjulet** på en fiende för att utpeka den för ditt lag:
   deras **T** väljer den som mål. På marken eller en allierad pingar det
   den platsen. Eller klicka på målraden högst upp för att utpeka fienden

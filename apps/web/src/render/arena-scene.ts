@@ -11,6 +11,8 @@ import {
   ZONE_RULES,
   zoneOffsetAt,
   zonePhaseAt,
+  polygonCentre,
+  TELEPORT_COOLDOWN_SECONDS,
   type CreatureLook,
   type StatusId,
   type Vec2,
@@ -157,6 +159,7 @@ import {
   type RenderableCapturePoint,
   type RenderableGate,
   type RenderableSwitch,
+  type RenderableTeleport,
   type RenderableFlag,
 } from "./flag-objects.js";
 import { lyingPose } from "./lying-pose.js";
@@ -166,6 +169,7 @@ import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
 import { SWITCH_MARK_ART, leverThrown, switchMarkKey } from "./switch-mark.js";
+import { paintArrival, paintTeleportEntry, paintTeleportExit } from "./teleport-mark.js";
 import { doorPalette, GATE_ART, paintPlate, type GatePainter } from "./gate-mark.js";
 import {
   BODY_LIGHT_FLOOR,
@@ -387,17 +391,29 @@ export class ArenaScene extends Phaser.Scene {
     string,
     { readonly up: boolean; readonly at: number | undefined }
   >();
+  /**
+   * Where each body last came out of a portal (#3030), and the cooldown
+   * it came out with: its arrival ring stays there as the body walks on.
+   */
+  private readonly arrivals = new Map<
+    string,
+    { readonly readyAt: number; readonly at: Vec2; readonly layer: number }
+  >();
   /** Each layer's effect zones (ADR-0053), drawn every frame as they breathe. */
   private readonly zoneGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Each painted zone's ground (#3052), one canvas texture per zone, made when the map changes. */
   private zoneGrounds:
     | { readonly zones: readonly MapZone[]; readonly grounds: readonly (ZoneGround | undefined)[] }
     | undefined;
-  /** The map's lighting with its zones' lights (#3052), made when either changes. */
+  /**
+   * The map's lighting with its zones' lights (#3052) and its portals'
+   * (#3030), made when any of them changes: `portals` is which are on.
+   */
   private zoneLit:
     | {
         readonly lighting: MapLighting;
         readonly zones: readonly MapZone[];
+        readonly portals: string;
         readonly lit: MapLighting;
       }
     | undefined;
@@ -642,6 +658,10 @@ export class ArenaScene extends Phaser.Scene {
     for (const lever of this.snapshot.switches) {
       this.drawSwitch(g, lever);
     }
+    for (const teleport of this.snapshot.teleports) {
+      this.drawTeleport(g, teleport);
+    }
+    this.drawArrivals(g);
     this.stepCapes(deltaMs / 1000);
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
@@ -853,6 +873,51 @@ export class ArenaScene extends Phaser.Scene {
     g.translateCanvas(0, -elevationOf(lever.layer, this.snapshot.structure.ground));
     SWITCH_MARK_ART[switchMarkKey(lever.mark)](g, lever.position, thrown);
     g.restore();
+  }
+
+  /** A portal (#3030): its entry's swirl and its exit's ring, each on its own layer. */
+  private drawTeleport(g: Phaser.GameObjects.Graphics, teleport: RenderableTeleport): void {
+    const { ground } = this.snapshot.structure;
+    const time = this.reducedMotion ? 0 : this.now;
+    g.save();
+    g.translateCanvas(0, -elevationOf(teleport.from.layer, ground));
+    paintTeleportEntry(g, polygonCentre(teleport.from.area), teleport.on, time);
+    g.restore();
+    g.save();
+    g.translateCanvas(0, -elevationOf(teleport.to.layer, ground));
+    paintTeleportExit(g, teleport.to.position, teleport.on);
+    g.restore();
+  }
+
+  /**
+   * Each body's last arrival through a portal (#3030): a burst, then a
+   * ring that fades over the cooldown. A body first seen mid-cooldown
+   * shows its ring where it stands; one that left takes its ring along.
+   */
+  private drawArrivals(g: Phaser.GameObjects.Graphics): void {
+    const { actors, clock, structure } = this.snapshot;
+    const present = new Set<string>();
+    for (const actor of actors) {
+      present.add(actor.id);
+      if (actor.teleportReadyAt === 0) {
+        continue;
+      }
+      let arrival = this.arrivals.get(actor.id);
+      if (arrival?.readyAt !== actor.teleportReadyAt) {
+        arrival = { readyAt: actor.teleportReadyAt, at: actor.position, layer: actor.layer };
+        this.arrivals.set(actor.id, arrival);
+      }
+      const age = clock - (arrival.readyAt - TELEPORT_COOLDOWN_SECONDS);
+      g.save();
+      g.translateCanvas(0, -elevationOf(arrival.layer, structure.ground));
+      paintArrival(g, arrival.at, age, TELEPORT_COOLDOWN_SECONDS);
+      g.restore();
+    }
+    for (const id of this.arrivals.keys()) {
+      if (!present.has(id)) {
+        this.arrivals.delete(id);
+      }
+    }
   }
 
   /**
@@ -1717,8 +1782,14 @@ export class ArenaScene extends Phaser.Scene {
     if (lighting === undefined || !lightingOn()) {
       return this.lightingPass?.allowed(undefined);
     }
-    if (this.zoneLit?.lighting !== lighting || this.zoneLit.zones !== zones) {
-      this.zoneLit = { lighting, zones, lit: withZoneLights(lighting, zones) };
+    const { teleports } = this.snapshot;
+    const portals = teleports.map((teleport) => (teleport.on ? "1" : "0")).join("");
+    if (
+      this.zoneLit?.lighting !== lighting ||
+      this.zoneLit.zones !== zones ||
+      this.zoneLit.portals !== portals
+    ) {
+      this.zoneLit = { lighting, zones, portals, lit: withZoneLights(lighting, zones, teleports) };
     }
     return this.lightingPass?.allowed(this.zoneLit.lit);
   }

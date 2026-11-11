@@ -43,6 +43,7 @@ Diese Tasten sind fest:
 - **Rechtsklick** auf eine Flagge oder den Flaggenstand in einer Gildenschlacht oder auf dem Barrow Field
   visiert sie an; **Space** läuft hin und nimmt die Flagge auf oder setzt sie.
 - **Rechtsklick** auf einen Hebel visiert ihn an; **Space** läuft hin und legt ihn um, sodass sich die Tore, die er steuert, öffnen oder schließen.
+- Läufst du in ein **Portal**, versetzt es dich an seinen Ausgang. Ein Hebel kann es ein- oder ausschalten; nach einer Reise ruht es 5 s, bevor es dich wieder mitnimmt.
 - **Mausrad-Klick** auf einen Gegner sagt ihn für dein Team an: Ihr **T** visiert
   ihn an. Auf den Boden oder einen Verbündeten pingt er diese Stelle. Oder klick
   auf die Zielleiste oben, um den Gegner anzusagen, den du im Visier hast.

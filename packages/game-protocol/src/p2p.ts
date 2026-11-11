@@ -23,6 +23,7 @@ import type {
   GateDescriptor,
   GateOpenerDescriptor,
   SwitchDescriptor,
+  TeleportDescriptor,
   WallDescriptor,
 } from "./protocol.js";
 import {
@@ -295,6 +296,9 @@ export const MAX_WIRE_GATES = 6;
 /** The most switches a map holds (#3025), as `MAX_SWITCHES` in game-maps. */
 export const MAX_WIRE_SWITCHES = 6;
 
+/** The most teleports a map holds (#3030), as `MAX_TELEPORTS` in game-maps. */
+export const MAX_WIRE_TELEPORTS = 6;
+
 /** The widest area a combat message may draw. */
 export const MAX_WIRE_RADIUS = 200;
 
@@ -526,6 +530,8 @@ export interface WirePlayer {
   readonly knockdownRemaining: number;
   /** Seconds left of a shrine raise's invulnerability (#1208, #1233); 0 when not. */
   readonly invulnerableSeconds: number;
+  /** Match clock (`elapsedSeconds`) from which it may take a teleport again (#3030), rounded up to 0.1 s; 0 if it never took one. */
+  readonly teleportReadyAt: number;
   /**
    * Net health and energy regeneration (+) or degeneration (−), in pips,
    * as the host applies them (#504): integers in ±`MAX_WIRE_PIPS`, 0 dead.
@@ -743,6 +749,8 @@ export interface WireSnapshot {
   readonly gates: readonly boolean[];
   /** Whether each of the map's switches points up (#3025), in its descriptor's order. */
   readonly switches: readonly boolean[];
+  /** Whether each of the map's teleports is on (#3030), in its descriptor's order. */
+  readonly teleports: readonly boolean[];
 }
 
 /**
@@ -2008,7 +2016,11 @@ function parseMap(value: unknown): MapDescriptor | undefined {
   const walls = parseArray(raw.walls, MAX_WIRE_WALLS, parseWall);
   const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseGate);
   const switches = parseArray(raw.switches, MAX_WIRE_SWITCHES, parseSwitch);
-  return walls === undefined || gates === undefined || switches === undefined
+  const teleports = parseArray(raw.teleports, MAX_WIRE_TELEPORTS, parseTeleport);
+  return walls === undefined ||
+    gates === undefined ||
+    switches === undefined ||
+    teleports === undefined
     ? undefined
     : {
         id: raw.id,
@@ -2019,6 +2031,7 @@ function parseMap(value: unknown): MapDescriptor | undefined {
         walls,
         gates,
         switches,
+        teleports,
       };
 }
 
@@ -2053,6 +2066,29 @@ function parseSwitch(value: unknown): SwitchDescriptor | undefined {
     position !== undefined
     ? { id: raw.id, layer: raw.layer, position }
     : undefined;
+}
+
+function parseTeleport(value: unknown): TeleportDescriptor | undefined {
+  const raw = fields(value);
+  const from = raw === undefined ? undefined : fields(raw.from);
+  const to = raw === undefined ? undefined : fields(raw.to);
+  const area = from === undefined ? undefined : parseWall(from.area);
+  const position = to === undefined ? undefined : parsePoint(to.position);
+  return raw !== undefined &&
+    isString(raw.id) &&
+    from !== undefined &&
+    isLayer(from.layer) &&
+    area?.kind === "polygon" &&
+    to !== undefined &&
+    isLayer(to.layer) &&
+    position !== undefined
+    ? { id: raw.id, from: { layer: from.layer, area }, to: { layer: to.layer, position } }
+    : undefined;
+}
+
+/** Whether `value` is a layer's index (ADR-0051). */
+function isLayer(value: unknown): value is number {
+  return isNumber(value) && Number.isInteger(value) && value >= 0;
 }
 
 function parseBoolean(value: unknown): boolean | undefined {
@@ -2160,6 +2196,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.swingTotal) ||
     !isNumber(raw.knockdownRemaining) ||
     !isNumber(raw.invulnerableSeconds) ||
+    !isNumber(raw.teleportReadyAt) ||
     !isPips(raw.healthPips) ||
     !isPips(raw.energyPips) ||
     typeof raw.bot !== "boolean" ||
@@ -2206,6 +2243,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         swingTotal: raw.swingTotal,
         knockdownRemaining: raw.knockdownRemaining,
         invulnerableSeconds: raw.invulnerableSeconds,
+        teleportReadyAt: raw.teleportReadyAt,
         healthPips: raw.healthPips,
         energyPips: raw.energyPips,
         statuses,
@@ -2349,6 +2387,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const altar = raw.altar === null ? null : parsePoint(raw.altar);
   const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseBoolean);
   const switches = parseArray(raw.switches, MAX_WIRE_SWITCHES, parseBoolean);
+  const teleports = parseArray(raw.teleports, MAX_WIRE_TELEPORTS, parseBoolean);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
@@ -2364,7 +2403,8 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     altar === undefined ||
     capturePoints === undefined ||
     gates === undefined ||
-    switches === undefined
+    switches === undefined ||
+    teleports === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -2386,6 +2426,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         capturePoints,
         gates,
         switches,
+        teleports,
       };
 }
 

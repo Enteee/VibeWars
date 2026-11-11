@@ -51,6 +51,7 @@ function player(index: number): WirePlayer {
     swingTotal: 1.33,
     knockdownRemaining: 0,
     invulnerableSeconds: 0,
+    teleportReadyAt: 0,
     healthPips: 0,
     energyPips: 0,
     creature: null,
@@ -119,6 +120,7 @@ function snapshot(
     capturePoints: [],
     gates: [],
     switches: [],
+    teleports: [],
   };
 }
 

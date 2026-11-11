@@ -97,6 +97,7 @@ import {
   renderableCapturePoints,
   renderableGates,
   renderableSwitches,
+  renderableTeleports,
   renderableFlags,
   renderableRelics,
   renderableStand,
@@ -291,13 +292,13 @@ function playerNames(match: MatchSnapshot): ReadonlyMap<string, string> {
   return new Map(match.players.map((player) => [player.sessionId, player.name]));
 }
 
-/** A map's gates and switches, and each gate's layer, which the wire does not carry. */
-export interface GatedMap extends Pick<MapDescriptor, "gates" | "switches"> {
+/** A map's gates, switches and teleports (#3030), and each gate's layer, which the wire does not carry. */
+export interface GatedMap extends Pick<MapDescriptor, "gates" | "switches" | "teleports"> {
   readonly gateLayers: readonly number[];
 }
 
 /** A map's gates and switches where it has none. */
-const UNGATED: GatedMap = { gates: [], switches: [], gateLayers: [] };
+const UNGATED: GatedMap = { gates: [], switches: [], teleports: [], gateLayers: [] };
 
 /** Project the wire snapshot onto the renderer's own shape (ADR-0001). */
 export function toArenaSnapshot(
@@ -327,6 +328,7 @@ export function toArenaSnapshot(
     capturePoints: renderableCapturePoints(match.capturePoints, self?.team),
     gates: renderableGates(gated.gates, gated.gateLayers, match.gates, self?.team),
     switches: renderableSwitches(gated.switches, match.switches),
+    teleports: renderableTeleports(gated.teleports, match.teleports),
     shrines: shrines.map((shrine) => ({
       position: shrine.position,
       side: shrine.team === side ? "ally" : "enemy",
@@ -419,6 +421,7 @@ export function toArenaSnapshot(
         enchanted: rings.enchanted,
         hexed: rings.hexed,
         invulnerable: !player.dead && player.invulnerableSeconds > 0,
+        teleportReadyAt: player.teleportReadyAt,
         conditionCues: conditionCues(living),
       };
     }),

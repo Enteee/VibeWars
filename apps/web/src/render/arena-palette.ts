@@ -136,6 +136,24 @@ export const SWITCH_MARK_LOOK = {
 };
 
 /**
+ * A portal (#3030, docs/art/3030-world-elements.md): ten rune stones round
+ * a swirl dish. On, the dish swirls aqua round a white core, the runes
+ * glow and a wisp rises; off, the dish is dark under a dashed grey ring
+ * and the runes are dead. Aqua is help-class, never a harmful hue.
+ */
+export const TELEPORT_MARK_LOOK = {
+  stone: 0x827b70,
+  stoneFace: 0x6f695f,
+  stoneTop: 0xc4bdb0,
+  outline: 0x23211d,
+  dish: 0x12161d,
+  swirl: 0x5fe0d0,
+  core: 0xffffff,
+  offRing: 0x6a6f78,
+  shadow: 0x0b0a08,
+};
+
+/**
  * A gate's door (#3061, #3053, docs/art/3053-hazards.md): oak leaves in an
  * iron frame, with iron bands and a brass knob; open, the leaves stand
  * swung back against the walls over a dark sill. Its pressure plate is

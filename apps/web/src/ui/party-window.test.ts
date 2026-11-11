@@ -42,6 +42,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     swingTotal: 0,
     knockdownRemaining: 0,
     invulnerableSeconds: 0,
+    teleportReadyAt: 0,
     corpseExploited: false,
     healthPips: 0,
     energyPips: 0,
@@ -75,6 +76,7 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     capturePoints: [],
     gates: [],
     switches: [],
+    teleports: [],
     summary: undefined,
   };
 }

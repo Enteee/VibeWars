@@ -490,6 +490,8 @@ export interface MapDescriptor {
   readonly gates: readonly GateDescriptor[];
   /** Its switches (#3025), in the order the snapshot's `switches` says how each points. */
   readonly switches: readonly SwitchDescriptor[];
+  /** Its teleports (#3030), in the order the snapshot's `teleports` says whether each is on. */
+  readonly teleports: readonly TeleportDescriptor[];
 }
 
 /** What opens a gate (#3025): a pressure plate (#2691), or a switch. */
@@ -513,6 +515,16 @@ export interface SwitchDescriptor {
   readonly id: string;
   readonly layer: number;
   readonly position: { readonly x: number; readonly y: number };
+}
+
+/** A portal (#3030): a body in `from`'s area on its layer stands at `to`. One way. */
+export interface TeleportDescriptor {
+  readonly id: string;
+  readonly from: { readonly layer: number; readonly area: PolygonWallDescriptor };
+  readonly to: {
+    readonly layer: number;
+    readonly position: { readonly x: number; readonly y: number };
+  };
 }
 
 /** One slot of a `SkillBarMessage`: what the HUD needs to draw it. */

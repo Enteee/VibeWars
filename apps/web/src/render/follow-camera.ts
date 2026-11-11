@@ -26,9 +26,11 @@ import {
  * unit) and `data-camera="<x>,<y>"` for the e2e specs, written only when
  * they change.
  */
-/** Where you are, and whether you are dead. */
+/** Where you are, whether you are dead, and when you may next take a portal. */
 export interface Body extends Vec2 {
   readonly dead: boolean;
+  /** Changes on each teleport (#3030): the view snaps to the exit, with no glide. */
+  readonly teleportReadyAt: number;
 }
 
 export interface FollowCamera {
@@ -58,6 +60,7 @@ export function attachFollowCamera(
 ): FollowCamera {
   let rig = createCameraRig();
   let cover = NO_COVER;
+  let teleportReadyAt: number | undefined;
   viewport.setArenaBounds(arena.width, arena.height);
   const offWheel = viewport.onWheelNotch((direction) => {
     rig = wheelNotch(rig, direction);
@@ -107,6 +110,10 @@ export function attachFollowCamera(
       if (self.dead) {
         rig = dropPan(rig);
       }
+      if (teleportReadyAt !== undefined && self.teleportReadyAt !== teleportReadyAt) {
+        rig = { ...rig, last: undefined };
+      }
+      teleportReadyAt = self.teleportReadyAt;
       const stepped = stepCamera(
         rig,
         {
@@ -129,6 +136,7 @@ export function attachFollowCamera(
     restart(next) {
       viewport.setArenaBounds(next.width, next.height);
       rig = createCameraRig();
+      teleportReadyAt = undefined;
     },
     setCover(next) {
       cover = next;

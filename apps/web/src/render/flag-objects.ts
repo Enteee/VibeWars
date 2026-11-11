@@ -14,7 +14,7 @@ import {
   type StandState,
   type Vec2,
 } from "@vibewars/game-core";
-import type { GateDescriptor, SwitchDescriptor } from "@vibewars/game-protocol";
+import type { GateDescriptor, SwitchDescriptor, TeleportDescriptor } from "@vibewars/game-protocol";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 import type { RenderableShape } from "./arena-snapshot.js";
 
@@ -247,6 +247,30 @@ export function renderableSwitches(
     position,
     layer,
     up: up[at] !== false,
+  }));
+}
+
+/** A portal (#3030) as the arena draws it: its entry, its exit, and whether it is on. */
+export interface RenderableTeleport {
+  /** Its id on the map, which names its mark. */
+  readonly id: string;
+  /** Its entry: a body inside `area` on `layer` goes. */
+  readonly from: { readonly layer: number; readonly area: readonly Vec2[] };
+  /** Where a body that goes stands. */
+  readonly to: { readonly layer: number; readonly position: Vec2 };
+  readonly on: boolean;
+}
+
+/** Every teleport, on or off as `on` says; `[]` on a map without them. */
+export function renderableTeleports(
+  teleports: readonly TeleportDescriptor[],
+  on: readonly boolean[],
+): RenderableTeleport[] {
+  return teleports.map(({ id, from, to }, at) => ({
+    id,
+    from: { layer: from.layer, area: from.area.points },
+    to,
+    on: on[at] === true,
   }));
 }
 

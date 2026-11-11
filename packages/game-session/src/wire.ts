@@ -775,6 +775,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     swingTotal: player.swingTotal,
     knockdownRemaining: player.knockdownRemaining,
     invulnerableSeconds: player.invulnerableSeconds,
+    teleportReadyAt: player.teleportReadyAt,
     healthPips: player.healthPips,
     energyPips: player.energyPips,
     statuses,
@@ -844,6 +845,7 @@ export function observedSnapshot(
     altarHeldSeconds: snapshot.altarHeldSeconds,
     gates: snapshot.gates,
     switches: snapshot.switches,
+    teleports: snapshot.teleports,
     capturePoints: snapshot.capturePoints.map(({ x, y, layer, owner, capturer, progress }) => ({
       position: { x, y },
       layer,

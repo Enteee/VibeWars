@@ -48,6 +48,7 @@ Ezek a billentyűk rögzítettek:
 - **Jobb kattintás** egy zászlón vagy a zászlótartón, Céhcsatában vagy a Barrow Fielden:
   célba veszed; a **Space** odasétál, és felveszi vagy leszúrja a zászlót.
 - **Jobb kattintással** egy karon célba veszed; a **Space** odamegy és átbillenti, így kinyílnak vagy bezárulnak a kapuk, amelyeket működtet.
+- Ha belépsz egy **portálba**, a kijáratához visz. Egy kar be- vagy kikapcsolhatja; egy utazás után 5 s-ig pihen, mielőtt újra visz.
 - **Görgőkattintás** egy ellenségen: bemondod a csapatodnak, és náluk a
   **T** azt veszi célba. A talajon vagy egy szövetségesen azt a pontot
   jelzi. Vagy kattints a felül lévő célpontsávra, hogy bemondd a célba

@@ -115,9 +115,10 @@ const waterSchema = z.object({
 export const MAX_ZONES = 32;
 
 /**
- * The most corners all of a map's harmful zones have together, a
- * rectangle's four included (#3026): each is a node of the bots' walk
- * graph, whose build grows about with the cube of its nodes.
+ * The most corners all of a map's harmful zones and teleport entries
+ * have together, a rectangle's four included (#3026, #3030): each is a
+ * node of the bots' walk graph, whose build grows about with the cube
+ * of its nodes.
  */
 export const MAX_HARMFUL_ZONE_POINTS = 64;
 
@@ -267,6 +268,21 @@ const switchSchema = z.object({
   layer: layerSchema,
   position: vec2Schema,
   targets: z.array(z.string().min(1)).min(1),
+});
+
+/** The most teleports on a map (#3030). */
+export const MAX_TELEPORTS = 6;
+
+/**
+ * A portal (#3030): a body that walks into `from` stands at `to` on the
+ * same tick. One-way; a switch that names it turns it on and off, and
+ * `enabled: false` starts it off.
+ */
+const teleportSchema = z.object({
+  id: z.string().min(1),
+  from: z.object({ layer: layerSchema, area: polygonWallSchema }),
+  to: z.object({ layer: layerSchema, position: vec2Schema }),
+  enabled: z.boolean(),
 });
 
 const spawnPointSchema = z.object({
@@ -565,6 +581,8 @@ export const mapDataSchema = z
     /** Required, may be empty, as `objectives` (#2691). */
     gates: z.array(gateSchema).max(MAX_GATES),
     switches: z.array(switchSchema).max(MAX_SWITCHES).optional(),
+    /** Its portals (#3030); without it, the map has none. */
+    teleports: z.array(teleportSchema).max(MAX_TELEPORTS).optional(),
     /**
      * The level of its Ghostly Heroes (#2689): 20, 24 or 28, by where in
      * Heroes' Ascent it stands. With it, the map has one `ghost-spawn` per
@@ -1002,14 +1020,17 @@ export const mapDataSchema = z
       });
     });
 
-    const harmfulPoints = (map.zones ?? [])
-      .filter((zone) => ZONE_RULES[zone.kind].harmful)
-      .reduce((sum, zone) => sum + zoneReach(shapeVertices(zone.area), zone.path).length, 0);
+    // A teleport's entry is ground routes go round as well (#3030).
+    const harmfulPoints =
+      (map.zones ?? [])
+        .filter((zone) => ZONE_RULES[zone.kind].harmful)
+        .reduce((sum, zone) => sum + zoneReach(shapeVertices(zone.area), zone.path).length, 0) +
+      (map.teleports ?? []).reduce((sum, { from }) => sum + shapeVertices(from.area).length, 0);
     if (harmfulPoints > MAX_HARMFUL_ZONE_POINTS) {
       context.addIssue({
         code: "custom",
         path: ["zones"],
-        message: `harmful zones have ${String(harmfulPoints)} corners, more than ${String(MAX_HARMFUL_ZONE_POINTS)}`,
+        message: `harmful zones and teleport entries have ${String(harmfulPoints)} corners, more than ${String(MAX_HARMFUL_ZONE_POINTS)}`,
       });
     }
     const zoneIds = new Set<string>();
@@ -1047,6 +1068,8 @@ export const mapDataSchema = z
     });
 
     const gateKinds = new Map(map.gates.map((gate) => [gate.id, gate.opener.kind]));
+    const teleports = map.teleports ?? [];
+    const teleportIds = new Set(teleports.map((teleport) => teleport.id));
     const switched = new Set<string>();
     const switchIds = new Set<string>();
     (map.switches ?? []).forEach((lever, index) => {
@@ -1069,13 +1092,13 @@ export const mapDataSchema = z
       lever.targets.forEach((target, at) => {
         switched.add(target);
         const kind = gateKinds.get(target);
-        if (kind !== "switch") {
+        if (kind !== "switch" && !teleportIds.has(target)) {
           context.addIssue({
             code: "custom",
             path: ["switches", index, "targets", at],
             message:
               kind === undefined
-                ? `switch ${lever.id} names ${target}, which is no gate`
+                ? `switch ${lever.id} names ${target}, which is no gate or teleport`
                 : `switch ${lever.id} names ${target}, a plate's gate`,
           });
         }
@@ -1090,6 +1113,56 @@ export const mapDataSchema = z
         });
       }
     });
+    teleports.forEach((teleport, index) => {
+      const at = (...rest: (string | number)[]): (string | number)[] => [
+        "teleports",
+        index,
+        ...rest,
+      ];
+      const issue = (path: (string | number)[], message: string): void => {
+        context.addIssue({ code: "custom", path, message });
+      };
+      layerInRange(teleport.from.layer, at("from", "layer"));
+      layerInRange(teleport.to.layer, at("to", "layer"));
+      if (
+        gateKinds.has(teleport.id) ||
+        teleports.findIndex(({ id }) => id === teleport.id) < index
+      ) {
+        issue(at("id"), `teleport id ${teleport.id} is used twice among gates and teleports`);
+      }
+      const exit = teleport.to;
+      if (!standsClear(map, exit.position, exit.layer)) {
+        issue(
+          at("to"),
+          `teleport ${teleport.id} needs its exit clear of every wall, on its layer's ground`,
+        );
+      }
+      if (
+        teleports.some(({ from }) => from.layer === exit.layer && bodyIn(exit.position, from.area))
+      ) {
+        issue(at("to"), `teleport ${teleport.id} has its exit in a teleport's entry`);
+      }
+      if (
+        water.some(
+          (body) =>
+            body.depth === "deep" && body.layer === exit.layer && bodyIn(exit.position, body.area),
+        )
+      ) {
+        issue(at("to"), `teleport ${teleport.id} has its exit in deep water`);
+      }
+      if (!teleport.enabled && !switched.has(teleport.id)) {
+        issue(at("enabled"), `teleport ${teleport.id} starts off, and no switch names it`);
+      }
+    });
+    // Each gate and each switched teleport doubles the match's pre-built paths.
+    const toggles = map.gates.length + teleports.filter(({ id }) => switched.has(id)).length;
+    if (toggles > MAX_GATES) {
+      context.addIssue({
+        code: "custom",
+        path: ["teleports"],
+        message: `${String(toggles)} gates and switched teleports, more than ${String(MAX_GATES)}`,
+      });
+    }
 
     const lighting = map.lighting;
     if (lighting !== undefined) {
@@ -1128,6 +1201,7 @@ export type Zone = z.infer<typeof zoneSchema>;
 export type Gate = z.infer<typeof gateSchema>;
 export type GateOpener = z.infer<typeof openerSchema>;
 export type Switch = z.infer<typeof switchSchema>;
+export type Teleport = z.infer<typeof teleportSchema>;
 export type MapData = z.infer<typeof mapDataSchema>;
 
 export class MapValidationError extends Error {

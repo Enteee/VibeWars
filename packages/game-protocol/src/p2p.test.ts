@@ -157,6 +157,7 @@ const welcome: PeerWelcome = {
     height: 1200,
     gates: [],
     switches: [],
+    teleports: [],
     walls: [
       { kind: "rect", x: 10, y: 20, width: 30, height: 40 },
       {
@@ -219,6 +220,7 @@ const player: WirePlayer = {
   swingTotal: 1.75,
   knockdownRemaining: 2.5,
   invulnerableSeconds: 3.25,
+  teleportReadyAt: 17.5,
   healthPips: -3,
   energyPips: 4,
   statuses: [status],
@@ -301,6 +303,7 @@ const snapshot: WireSnapshotPart = {
   capturePoints: [],
   gates: [],
   switches: [],
+  teleports: [],
 };
 
 /** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */
@@ -843,6 +846,38 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with switches (#3025)",
     parseWireSnapshotPart,
     { ...snapshot, switches: [true, false] },
+  ],
+  [
+    "welcome with a teleport (#3030)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        teleports: [
+          {
+            id: "portal",
+            from: {
+              layer: 0,
+              area: {
+                kind: "polygon",
+                points: [
+                  { x: 10, y: 10 },
+                  { x: 50, y: 10 },
+                  { x: 50, y: 50 },
+                ],
+              },
+            },
+            to: { layer: 1, position: { x: 300, y: 300 } },
+          },
+        ],
+      },
+    },
+  ],
+  [
+    "snapshot with teleports (#3030)",
+    parseWireSnapshotPart,
+    { ...snapshot, teleports: [true, false] },
   ],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
@@ -1523,6 +1558,55 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot without switches (#3025)",
     parseWireSnapshotPart,
     { ...snapshot, switches: undefined },
+  ],
+  [
+    "welcome without teleports (#3030)",
+    parsePeerWelcome,
+    { ...welcome, map: { ...welcome.map, teleports: undefined } },
+  ],
+  [
+    "welcome with a teleport whose entry is a rect (#3030)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        teleports: [
+          {
+            id: "portal",
+            from: { layer: 0, area: { kind: "rect", x: 0, y: 0, width: 9, height: 9 } },
+            to: { layer: 0, position: { x: 300, y: 300 } },
+          },
+        ],
+      },
+    },
+  ],
+  [
+    "welcome with a teleport to no layer (#3030)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        teleports: [
+          {
+            id: "portal",
+            from: { layer: 0, area: { kind: "polygon", points: [{ x: 1, y: 1 }] } },
+            to: { layer: 0.5, position: { x: 300, y: 300 } },
+          },
+        ],
+      },
+    },
+  ],
+  [
+    "snapshot without teleports (#3030)",
+    parseWireSnapshotPart,
+    { ...snapshot, teleports: undefined },
+  ],
+  [
+    "snapshot with a player missing teleportReadyAt (#3030)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, teleportReadyAt: undefined }] },
   ],
   [
     "snapshot without capture points (#1378)",

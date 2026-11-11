@@ -185,6 +185,7 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
       capturePoints: part.capturePoints,
       gates: part.gates,
       switches: part.switches,
+      teleports: part.teleports,
     };
   };
 }

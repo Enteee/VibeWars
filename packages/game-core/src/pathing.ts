@@ -800,8 +800,23 @@ export interface PathFinder {
   find(from: Vec2, to: Vec2): readonly Vec2[] | undefined;
 }
 
-/** A point of a route, and the layer a body must be on while walking to it (ADR-0051). */
-export type RouteWaypoint = Vec2 & { readonly layer: number };
+/**
+ * A point of a route, and the layer a body must be on while walking to it
+ * (ADR-0051). `teleport` marks a teleport's entry (#3030): the body walks
+ * into it rather than past it, and the next waypoint is the exit.
+ */
+export type RouteWaypoint = Vec2 & { readonly layer: number; readonly teleport?: true };
+
+/**
+ * A teleport, as paths read it (#3030): one way, from its entry `area` on
+ * `from` to `exit` on `to`. Only an on one is given to a path finder.
+ */
+export interface NavTeleport {
+  readonly from: number;
+  readonly area: Polygon;
+  readonly to: number;
+  readonly exit: Vec2;
+}
 
 /** A ramp, as paths read it: inside `area` a body moves between `from` and `to`. */
 export interface NavTransition {
@@ -901,15 +916,17 @@ export function createPathFinder(graph: NavGraph): PathFinder {
 
 /**
  * A path finder over `graphs`, one a layer, joined at each of
- * `transitions`' centres where a body fits on both layers. It runs for
- * every approaching attacker on every tick, so it allocates its state
- * once, here, and only the path it returns per query (#267).
+ * `transitions`' centres where a body fits on both layers, and one way
+ * by each of `teleports` (#3030). It runs for every approaching attacker
+ * on every tick, so it allocates its state once, here, and only the path
+ * it returns per query (#267).
  */
 export function createLayeredPathFinder(
   graphs: readonly NavGraph[],
   transitions: readonly NavTransition[],
+  teleports: readonly NavTeleport[] = [],
 ): LayeredPathFinder {
-  return new AStar(graphs, transitions);
+  return new AStar(graphs, transitions, teleports);
 }
 
 /** Where a vertex stands in one search. */
@@ -937,6 +954,17 @@ class AStar implements LayeredPathFinder {
   readonly #exits = new Map<number, Vec2>();
   /** The ramp's area and foot, for a portal vertex a route climbs to. */
   readonly #climbs = new Map<number, { readonly area: Polygon; readonly foot: Vec2 }>();
+  /** Each teleport's exit vertex, to its entry's (#3030): the one way between them. */
+  readonly #teleports = new Map<number, number>();
+  /** Every teleport's entry and exit, for the estimate. */
+  readonly #entries: readonly Vec2[];
+  readonly #teleportExits: readonly Vec2[];
+  /** The step into a teleport: what its edge costs. */
+  readonly #jumpCost: number;
+  /** Each vertex's distance to the nearest teleport entry (#3030). */
+  readonly #toEntry: Float64Array;
+  /** Through any teleport, the least a route still costs past its nearest entry: set per search. */
+  #pastEntry = Number.POSITIVE_INFINITY;
   readonly #edges: number[][] = [];
   /** Beside `#edges`: what each walk costs (#3026). */
   readonly #costs: number[][] = [];
@@ -960,7 +988,11 @@ class AStar implements LayeredPathFinder {
   #to: Vec2 = { x: 0, y: 0 };
   #toLayer = 0;
 
-  public constructor(graphs: readonly NavGraph[], transitions: readonly NavTransition[]) {
+  public constructor(
+    graphs: readonly NavGraph[],
+    transitions: readonly NavTransition[],
+    teleports: readonly NavTeleport[],
+  ) {
     this.#graphs = graphs;
     this.#grids = graphs.map(gridOf);
     const links = transitions.flatMap((transition) => {
@@ -972,6 +1004,18 @@ class AStar implements LayeredPathFinder {
         isStandable(near, point) &&
         isStandable(far, point)
         ? [{ ...transition, point, near: -1, far: -1 }]
+        : [];
+    });
+    // A teleport is two vertices: its entry's centre, and its exit.
+    const jumps = teleports.flatMap((teleport) => {
+      const entry = polygonCentre(teleport.area);
+      const near = graphs[teleport.from];
+      const far = graphs[teleport.to];
+      return near !== undefined &&
+        far !== undefined &&
+        isStandable(near, entry) &&
+        isStandable(far, teleport.exit)
+        ? [{ ...teleport, entry, near: -1, far: -1 }]
         : [];
     });
     const layers: number[] = [];
@@ -1005,10 +1049,34 @@ class AStar implements LayeredPathFinder {
           this.#costs.push([]);
         }
       }
+      for (const jump of jumps) {
+        for (const end of ["near", "far"] as const) {
+          if ((end === "near" ? jump.from : jump.to) !== layer) {
+            continue;
+          }
+          jump[end] = this.#points.length;
+          portalsOn[layer]?.push(this.#points.length);
+          this.#points.push(end === "near" ? jump.entry : jump.exit);
+          layers.push(layer);
+          portals.push(true);
+          this.#edges.push([]);
+          this.#costs.push([]);
+        }
+      }
     });
     firsts.push(this.#points.length);
     this.#joinPortals(portalsOn, firsts);
     const clearance = graphs[0]?.clearance ?? 0;
+    this.#jumpCost = 2 * clearance;
+    this.#entries = jumps.map(({ entry }) => entry);
+    this.#teleportExits = jumps.map(({ exit }) => exit);
+    this.#toEntry = Float64Array.from(this.#points, (point) => this.#nearestEntry(point));
+    for (const { near, far } of jumps) {
+      // One way, for about a body's length: the step into it.
+      this.#edges[near]?.push(far);
+      this.#costs[near]?.push(this.#jumpCost);
+      this.#teleports.set(far, near);
+    }
     for (const { near, far, area, uphill } of links) {
       // One point on two layers: no way to walk between them.
       this.#edges[near]?.push(far);
@@ -1112,7 +1180,14 @@ class AStar implements LayeredPathFinder {
       fromLayer === toLayer && isClear(fromGrid, from, to)
         ? walkCost(fromZones, from, to)
         : Number.POSITIVE_INFINITY;
-    if (straight <= distance(from, to)) {
+    this.#pastEntry =
+      this.#jumpCost +
+      this.#teleportExits.reduce(
+        (least, exit) => Math.min(least, distance(exit, to)),
+        Number.POSITIVE_INFINITY,
+      );
+    // A clear straight line is the best, unless a teleport could beat it (#3030).
+    if (straight <= distance(from, to) && straight <= this.#nearestEntry(from) + this.#pastEntry) {
       return [{ x: to.x, y: to.y, layer: toLayer }];
     }
 
@@ -1135,7 +1210,7 @@ class AStar implements LayeredPathFinder {
       let best = Number.POSITIVE_INFINITY;
       for (let k = 0; k < this.#openCount; k += 1) {
         const i = this.#open[k] ?? start;
-        const estimate = (this.#cost[i] ?? Number.POSITIVE_INFINITY) + distance(this.#point(i), to);
+        const estimate = (this.#cost[i] ?? Number.POSITIVE_INFINITY) + this.#estimate(i);
         if (estimate < best) {
           best = estimate;
           current = i;
@@ -1187,6 +1262,29 @@ class AStar implements LayeredPathFinder {
       }
     }
     return undefined;
+  }
+
+  /**
+   * The least a route from vertex `i` to the goal can cost: straight
+   * there, or to the nearest entry and on from the nearest exit, however
+   * many teleports it takes (#3030). Never more than the real cost, and
+   * consistent, so A* closes no vertex too early.
+   */
+  #estimate(i: number): number {
+    const straight = distance(this.#point(i), this.#to);
+    if (this.#entries.length === 0 || i === this.#goal) {
+      return straight;
+    }
+    const toEntry = i === this.#start ? this.#nearestEntry(this.#from) : (this.#toEntry[i] ?? 0);
+    return Math.min(straight, toEntry + this.#pastEntry);
+  }
+
+  /** How far `point` is from the nearest teleport entry; none: infinitely. */
+  #nearestEntry(point: Vec2): number {
+    return this.#entries.reduce(
+      (least, entry) => Math.min(least, distance(point, entry)),
+      Number.POSITIVE_INFINITY,
+    );
   }
 
   #point(i: number): Vec2 {
@@ -1249,6 +1347,15 @@ class AStar implements LayeredPathFinder {
     let at = this.#goal;
     while (at !== -1 && at !== this.#start) {
       const before = this.#cameFrom[at] ?? -1;
+      if (before >= 0 && this.#teleports.get(at) === before) {
+        // Into the entry, and on from the exit (#3030).
+        const exit = this.#point(at);
+        const entry = this.#point(before);
+        path.push({ x: exit.x, y: exit.y, layer: this.#layerOf[at] ?? 0 });
+        path.push({ x: entry.x, y: entry.y, layer: this.#layerOf[before] ?? 0, teleport: true });
+        at = this.#cameFrom[before] ?? -1;
+        continue;
+      }
       const crossed = at !== this.#goal && this.#isLink(at, before);
       const { x, y } = (crossed ? this.#exits.get(at) : undefined) ?? this.#point(at);
       path.push({ x, y, layer: at === this.#goal ? this.#toLayer : (this.#layerOf[at] ?? 0) });
@@ -1260,7 +1367,12 @@ class AStar implements LayeredPathFinder {
     }
     path.reverse();
     const first = path[0];
-    if (path.length > 1 && first?.layer === fromLayer && distance(first, from) <= ARRIVED) {
+    if (
+      path.length > 1 &&
+      first?.layer === fromLayer &&
+      first.teleport !== true &&
+      distance(first, from) <= ARRIVED
+    ) {
       path.shift();
     }
     return path;

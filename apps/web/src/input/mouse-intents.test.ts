@@ -53,6 +53,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     swingTotal: 0,
     knockdownRemaining: 0,
     invulnerableSeconds: 0,
+    teleportReadyAt: 0,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
@@ -83,6 +84,7 @@ const MATCH: MatchSnapshot = {
   capturePoints: [],
   gates: [],
   switches: [],
+  teleports: [],
   summary: undefined,
 };
 
@@ -118,6 +120,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     enchanted: false,
     hexed: false,
     invulnerable: false,
+    teleportReadyAt: 0,
     conditionCues: [],
   };
 }

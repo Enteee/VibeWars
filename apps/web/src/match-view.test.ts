@@ -40,6 +40,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     swingTotal: 0,
     knockdownRemaining,
     invulnerableSeconds: 0,
+    teleportReadyAt: 0,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
@@ -71,6 +72,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     capturePoints: [],
     gates: [],
     switches: [],
+    teleports: [],
     summary: undefined,
   };
 }

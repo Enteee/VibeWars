@@ -38,6 +38,7 @@ const CALLED: RenderableActor = {
   enchanted: false,
   hexed: false,
   invulnerable: false,
+  teleportReadyAt: 0,
   conditionCues: [],
 };
 

@@ -33,6 +33,7 @@ Tyto klávesy jsou pevné:
 - **Kliknutím pravým** na nepřítele nebo spojence ho zaměříš. Dalším rychlým kliknutím pravým na stejného nepřítele na něj zaútočíš.
 - **Kliknutím pravým** na vlajku nebo stojan vlajky, v Bitvě cechů nebo na Barrow Field, je zaměříš; **Space** tě tam dovede a vlajku vezme nebo zasadí.
 - **Pravým kliknutím** na páku ji zaměříš; **Space** k ní dojde a přepne ji, čímž otevře nebo zavře brány, které ovládá.
+- Vejdeš-li do **portálu**, přenese tě k jeho výstupu. Páka ho může zapínat a vypínat; po přenosu 5 s odpočívá, než tě vezme znovu.
 - **Kliknutím kolečkem** na nepřítele ho nahlásíš svému týmu: jejich **T** ho zaměří. Na zemi nebo spojenci to označí dané místo. Nebo klikni na lištu cíle nahoře a nahlas nepřítele, kterého máš zaměřeného.
 - Kliknutím na kompas označíš dané místo pro svůj tým; tažením po něm nakreslíš čáru, kterou uvidí na několik sekund.
 - **Kolečko** přibližuje. **Tažením pravým** se rozhlížíš; po puštění se pohled plynule vrátí k tobě.
