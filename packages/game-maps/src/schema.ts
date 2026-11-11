@@ -66,8 +66,8 @@ const wallSchema = z.discriminatedUnion("kind", [
 ]);
 
 /**
- * What a deck is drawn as (#3067): the floor walks the same whatever its
- * look, but a tower, a wall-walk and a bridge each have a role in play.
+ * What a deck is drawn as (#3067, #3078): the floor walks the same whatever
+ * its look, but a tower, a wall-walk and a bridge each have a role in play.
  */
 export const DECK_LOOKS = [
   "platform",
@@ -77,6 +77,13 @@ export const DECK_LOOKS = [
   "bridge-stone",
   "bridge-plank",
   "bridge-log",
+  "ledge",
+  "ruin",
+  "arch",
+  "gatehouse-roof",
+  "rooftop",
+  "pier",
+  "plinth",
 ] as const;
 
 /** What a transition is drawn as (#3067); #3069 gives each its own climbing pace. */
@@ -111,13 +118,13 @@ const switchedDeckSchema = z.object({
 
 /**
  * The looks a switched deck may have, by what it does going down (#3068):
- * a drawbridge is a bridge; what gives way under you is planks.
+ * a drawbridge is a bridge; what gives way under you is planks or a ruin.
  */
 const SWITCHED_DECK_LOOKS: Readonly<
   Record<"push-off" | "fall", readonly (typeof DECK_LOOKS)[number][]>
 > = {
   "push-off": ["bridge-stone", "bridge-plank", "bridge-log"],
-  fall: ["bridge-plank"],
+  fall: ["bridge-plank", "ruin"],
 };
 
 /** A walkable floor above the ground (ADR-0051). */
@@ -614,6 +621,9 @@ const MIN_RAMP_WIDTH = 2 * BODY_RADIUS + 4;
 /** The widest a tower's top may be either way (#3067): room for two to four bodies, easy to rush. */
 export const MAX_TOWER_SIZE = 120;
 
+/** The widest a plinth may be either way (#3078): a statue's base, a capture spot one step up. */
+export const MAX_PLINTH_SIZE = 200;
+
 /** The widest a ladder may be across (#3067): under two bodies, so it is climbed single file. */
 export const MAX_LADDER_WIDTH = 48;
 
@@ -1050,6 +1060,34 @@ export const mapDataSchema = z
           code: "custom",
           path: ["decks", index, "footprint"],
           message: `tower ${deck.id} is ${String(across("x"))} × ${String(across("y"))}, wider than the ${String(MAX_TOWER_SIZE)} a tower may be`,
+        });
+      }
+      if (deck.look === "plinth") {
+        if (Math.max(across("x"), across("y")) > MAX_PLINTH_SIZE) {
+          context.addIssue({
+            code: "custom",
+            path: ["decks", index, "footprint"],
+            message: `plinth ${deck.id} is ${String(across("x"))} × ${String(across("y"))}, wider than the ${String(MAX_PLINTH_SIZE)} a plinth may be`,
+          });
+        }
+        if (deck.layer !== map.groundLayer + 1) {
+          context.addIssue({
+            code: "custom",
+            path: ["decks", index, "layer"],
+            message: `plinth ${deck.id} is on layer ${String(deck.layer)}, not one step above the ground`,
+          });
+        }
+      }
+      if (
+        deck.look === "pier" &&
+        !(map.water ?? []).some(
+          (body) => body.layer < deck.layer && shapesOverlap(body.area, deck.footprint),
+        )
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["decks", index, "footprint"],
+          message: `pier ${deck.id} stands over no water`,
         });
       }
       if (deck.look === "wall-walk") {

@@ -84,6 +84,7 @@ import {
   hiddenCrop,
   liftAt,
   occludersOf,
+  overhangAt,
   pickSurface,
   pitDrawing,
   openEdges,
@@ -201,6 +202,7 @@ import {
   bodyTintOf,
   lightAt,
   multiplyColour,
+  shadedBodyTint,
   steadyLighting,
   type LightSample,
 } from "./lighting-model.js";
@@ -1972,12 +1974,24 @@ export class ArenaScene extends Phaser.Scene {
 
   /** What the light at a body's feet multiplies it by; `undefined` on a map lit flat. */
   private bodyTint(actor: RenderableActor): number | undefined {
+    // Drawn lifted and eased; the light is where it stands, on its own layer.
+    const { position, layer } = this.standing.get(actor.id) ?? actor;
+    const lit = this.bodyLight(position, layer);
+    const structure = this.drawnMap?.structure;
+    // Under a deck, in its shade (#3078): shape, not light, so with lighting off too.
+    const shaded =
+      structure !== undefined &&
+      structure.decks.length > 0 &&
+      overhangAt(structure, position, layer) !== undefined;
+    return shaded ? shadedBodyTint(lit ?? 0xffffff) : lit;
+  }
+
+  /** The light on a body at `position` on `layer`; `undefined` with lighting off. */
+  private bodyLight(position: Vec2, layer: number): number | undefined {
     const lighting = this.drawnMap?.lighting;
     if (lighting === undefined) {
       return undefined;
     }
-    // Drawn lifted and eased; the light is where it stands, on its own layer.
-    const { position, layer } = this.standing.get(actor.id) ?? actor;
     const shown = this.lightingPass?.flickers === true ? lighting : steadyLighting(lighting);
     const timeMs = this.now * 1000;
     return bodyTintOf(lightAt(shown, position, layer, timeMs, BODY_LIGHT_FLOOR, this.lightSample));

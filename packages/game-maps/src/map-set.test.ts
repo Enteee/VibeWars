@@ -895,7 +895,7 @@ describe("The Warden's Gallery (#2698)", () => {
   });
 });
 
-describe("the structures test map's looks by route (#3067)", () => {
+describe("the structures test map's looks by route (#3067, #3078)", () => {
   const structures = mapDataSchema.parse(structuresData);
   const finder = layeredFinder(structures, RADIUS);
   const spawn = { x: 100, y: 500 };
@@ -910,6 +910,16 @@ describe("the structures test map's looks by route (#3067)", () => {
     ["the stone bridge", { x: 1550, y: 480 }, 2],
     ["the plank bridge", { x: 1550, y: 785 }, 2],
     ["under the stone bridge", { x: 1550, y: 480 }, 1],
+    ["the ledge", { x: 200, y: 1135 }, 2],
+    ["the ruin, round its gap", { x: 980, y: 1280 }, 2],
+    ["the ruin's gap, on the ground", { x: 910, y: 1280 }, 1],
+    ["the arch's top", { x: 1330, y: 1215 }, 2],
+    ["under the arch", { x: 1330, y: 1215 }, 1],
+    ["the gatehouse roof", { x: 1800, y: 1100 }, 2],
+    ["the passage under the gatehouse", { x: 1800, y: 1100 }, 1],
+    ["the rooftop", { x: 300, y: 1500 }, 2],
+    ["the end of the pier", { x: 1280, y: 1580 }, 2],
+    ["the plinth", { x: 1710, y: 1640 }, 2],
   ] as const)("reaches %s from the ground", (_, to, layer) => {
     const route = finder.find(spawn, structures.groundLayer, to, layer);
     expect(route).toBeDefined();

@@ -160,6 +160,22 @@ describe("DECK_ART (#3067)", () => {
     );
     expect(bridge.calls.filter(({ name }) => name === "fillRect").length).toBeGreaterThanOrEqual(2);
   });
+
+  it("breaks a ruin: stones gone from its top, its brink and face fallen in, where a tower has none (#3078)", () => {
+    if (platformDeck === undefined) throw new Error("no platform");
+    const dark = (look: "ruin" | "tower", part: "top" | "side"): number => {
+      const painter = recorder();
+      DECK_ART[look][part](painter, frameOf({ ...platformDeck, look }, []));
+      return painter.calls.filter(
+        ({ name, colour }) => name !== "lineBetween" && colour === DECK_LOOK[look].support,
+      ).length;
+    };
+    expect(dark("tower", "top")).toBe(0);
+    expect(dark("tower", "side")).toBe(0);
+    // 16 by 17 flagstones, one in six gone, and four bites in the brink.
+    expect(dark("ruin", "top")).toBeGreaterThan(30);
+    expect(dark("ruin", "side")).toBeGreaterThanOrEqual(16);
+  });
 });
 
 describe("TRANSITION_ART (#3067)", () => {

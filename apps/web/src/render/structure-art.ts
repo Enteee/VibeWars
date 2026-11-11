@@ -1,4 +1,5 @@
 import type { Vec2 } from "@vibewars/game-core";
+import { pointInShape } from "@vibewars/game-maps/geometry";
 import type { DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
 
 import {
@@ -20,7 +21,8 @@ import {
 /**
  * What each raised structure is drawn as (#3067), through one lookup
  * keyed by its map `look`, as `LIGHT_MARK_ART` and `SWITCH_MARK_ART`
- * are: a tower, a wall-walk, a terrace, a bridge; stairs, a ladder.
+ * are: a tower, a wall-walk, a terrace, a bridge; stairs, a ladder; and
+ * (#3078) a ledge, a ruin, an arch, a gatehouse, a rooftop, a pier, a plinth.
  * Parapets and railings are art only: a deck's edge already stops a body.
  */
 
@@ -123,6 +125,54 @@ const LADDER_RUNG = 8;
 const LADDER_RAIL = 0.4;
 /** Where a landing sits on its stairs, as shares of their length. */
 const LANDING = [0.42, 0.58] as const;
+/** An arch's opening and a gatehouse's passage, as shares of the face they are in. */
+const OPENING_WIDTH = 0.5;
+const PASSAGE_HEIGHT = 0.7;
+/** The segments an arch's round top is drawn in. */
+const ARCH_SEGMENTS = 8;
+/** How far apart a gatehouse grid's bars are, in world units. */
+const GRID_EVERY = 8;
+/** A rooftop's door, in world units, and how far apart a face has one. */
+const DOOR_WIDTH = 10;
+const DOOR_HEIGHT = 16;
+const DOOR_EVERY = 160;
+/** A pier's posts: how far apart, how thick. */
+const POST_EVERY_PIER = 60;
+const PIER_POST_WIDTH = 5;
+/**
+ * Where a ruin's brink has fallen in, per face: where along it, how wide,
+ * and how many courses down. Each bite steps: its middle half falls one
+ * course further than its shoulders.
+ */
+const RUIN_BITES = [
+  [0.12, 30, 1],
+  [0.38, 44, 2],
+  [0.63, 22, 1],
+  [0.86, 36, 2],
+] as const;
+/** How far a bite reaches into a ruin's top, per course it falls, in world units. */
+const BITE_DEPTH = 6;
+/** The stones fallen at a ruin's foot, per face: where along it, how big; the biggest under its bites. */
+const RUBBLE = [
+  [0.05, 9],
+  [0.13, 16],
+  [0.21, 10],
+  [0.38, 18],
+  [0.5, 11],
+  [0.63, 14],
+  [0.75, 9],
+  [0.86, 17],
+] as const;
+/** One flagstone in this many is gone from a ruin's top, and one in this many cracked. */
+const STONE_MISSING_ONE_IN = 6;
+const STONE_CRACKED_ONE_IN = 4;
+/** How far a plinth's capture ring stands out past its base, in world units. */
+const RING_MARGIN = 14;
+const RING_SEGMENTS = 24;
+/** A plinth's statue: its base's share of the top, its body and head in world units. */
+const STATUE_BASE = 0.4;
+const STATUE_HEIGHT = 22;
+const STATUE_HEAD = 5;
 /** A rough step's depths, in turn, in world units: cut by hand, never even. */
 const ROUGH_TREADS = [14, 19, 12, 17, 15];
 /** How far a rough step's edge wanders, as a share of its depth. */
@@ -264,6 +314,313 @@ function piers(painter: StructurePainter, deck: DeckFrame): void {
   }
 }
 
+/** Thin posts under each south face, every `POST_EVERY_PIER`, from the layer below to the planks. */
+function posts(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, low, base, palette } = deck;
+  painter.fillStyle(palette.support, 1);
+  for (const edge of southFacingEdges(footprint)) {
+    const count = Math.max(2, Math.round(lengthOf(edge) / POST_EVERY_PIER) + 1);
+    for (let k = 0; k < count; k += 1) {
+      const at = along(edge, k / (count - 1));
+      painter.fillRect(at.x - PIER_POST_WIDTH / 2, at.y - low, PIER_POST_WIDTH, low - base);
+    }
+  }
+}
+
+/** The middle `OPENING_WIDTH` of `edge`: where an arch opens or a passage runs. */
+function opening(edge: Segment): Segment {
+  const margin = (1 - OPENING_WIDTH) / 2;
+  return { from: along(edge, margin), to: along(edge, 1 - margin) };
+}
+
+/** A round-topped dark opening in each south face, from its foot: what passes under an arch. */
+function archway(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, low, top, palette } = deck;
+  painter.fillStyle(palette.support, 1);
+  for (const edge of southFacingEdges(footprint)) {
+    const { from, to } = opening(edge);
+    const middle = along({ from, to }, 0.5);
+    const radius = Math.min(lengthOf({ from, to }) / 2, (top - low) * 0.45);
+    const spring = low + Math.max(0, (top - low) * 0.85 - radius);
+    fillQuad(painter, raised(from, low), raised(to, low), raised(to, spring), raised(from, spring));
+    const centre = raised(middle, spring);
+    const round = Array.from({ length: ARCH_SEGMENTS + 1 }, (_, k) => {
+      const angle = (Math.PI * k) / ARCH_SEGMENTS;
+      const t = (1 - Math.cos(angle)) / 2;
+      return raised(along({ from, to }, t), spring + Math.sin(angle) * radius);
+    });
+    for (let k = 0; k < ARCH_SEGMENTS; k += 1) {
+      const [a, b] = [round[k], round[k + 1]];
+      if (a !== undefined && b !== undefined) {
+        painter.fillTriangle(centre.x, centre.y, a.x, a.y, b.x, b.y);
+      }
+    }
+  }
+}
+
+/** A square dark passage in each south face, from its foot, an iron grid across it. */
+function passage(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, low, top, line, palette } = deck;
+  const high = low + (top - low) * PASSAGE_HEIGHT;
+  for (const edge of southFacingEdges(footprint)) {
+    const way = opening(edge);
+    painter.fillStyle(palette.support, 1);
+    fillQuad(
+      painter,
+      raised(way.from, low),
+      raised(way.to, low),
+      raised(way.to, high),
+      raised(way.from, high),
+    );
+    painter.lineStyle(line * 1.5, palette.wallLit, 1);
+    const bars = Math.max(2, Math.round(lengthOf(way) / GRID_EVERY));
+    for (let k = 1; k < bars; k += 1) {
+      const at = along(way, k / bars);
+      painter.lineBetween(at.x, at.y - low, at.x, at.y - high);
+    }
+    const [a, b] = [raised(way.from, high), raised(way.to, high)];
+    painter.lineBetween(a.x, a.y, b.x, b.y);
+  }
+}
+
+/** A dark door in each south face, every `DOOR_EVERY`, at its foot. */
+function doors(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, low, top, palette } = deck;
+  const height = Math.min(DOOR_HEIGHT, (top - low) * 0.8);
+  painter.fillStyle(palette.support, 1);
+  for (const edge of southFacingEdges(footprint)) {
+    const count = Math.max(1, Math.floor(lengthOf(edge) / DOOR_EVERY));
+    for (let k = 0; k < count; k += 1) {
+      const at = along(edge, (k + 0.5) / count);
+      painter.fillRect(at.x - DOOR_WIDTH / 2, at.y - low - height, DOOR_WIDTH, height);
+    }
+  }
+}
+
+/** Stones fallen at the foot of each south face, on the layer under it: a dark heap, its top lit. */
+function rubble(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, low, palette } = deck;
+  for (const edge of southFacingEdges(footprint)) {
+    for (const [t, size] of RUBBLE) {
+      if (size > lengthOf(edge) / 3) {
+        continue;
+      }
+      const at = raised(along(edge, t), low);
+      painter.fillStyle(palette.wallFace, 1);
+      painter.fillTriangle(
+        at.x - size,
+        at.y + size / 2,
+        at.x + size,
+        at.y + size / 2,
+        at.x + size * 0.2,
+        at.y - size / 2,
+      );
+      painter.fillStyle(palette.slab, 1);
+      painter.fillTriangle(
+        at.x - size * 0.5,
+        at.y,
+        at.x + size * 0.6,
+        at.y - size * 0.1,
+        at.x + size * 0.2,
+        at.y - size / 2,
+      );
+    }
+  }
+}
+
+/** The bites fallen out of `edge`, as stretches of it and the courses each falls. */
+function bitesOf(edge: Segment): readonly { readonly way: Segment; readonly courses: number }[] {
+  const length = lengthOf(edge);
+  return RUIN_BITES.filter(([, width]) => width < length / 2).map(([t, width, courses]) => {
+    const half = width / 2 / length;
+    return { way: { from: along(edge, t - half), to: along(edge, t + half) }, courses };
+  });
+}
+
+/**
+ * Where each south face's top has fallen in: a dark gap stepping down its
+ * courses, the stones it bared lit along each step.
+ */
+function brokenFace(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, low, top, line, palette } = deck;
+  for (const edge of southFacingEdges(footprint)) {
+    for (const { way, courses } of bitesOf(edge)) {
+      const shoulder = Math.max(low, top - courses * COURSE_EVERY);
+      const deep = Math.max(low, shoulder - COURSE_EVERY);
+      const inner = { from: along(way, 0.25), to: along(way, 0.75) };
+      painter.fillStyle(palette.support, 1);
+      fillQuad(
+        painter,
+        raised(way.from, shoulder),
+        raised(way.to, shoulder),
+        raised(way.to, top),
+        raised(way.from, top),
+      );
+      fillQuad(
+        painter,
+        raised(inner.from, deep),
+        raised(inner.to, deep),
+        raised(inner.to, shoulder),
+        raised(inner.from, shoulder),
+      );
+      painter.lineStyle(line * 2, palette.wallLit, 1);
+      const steps: readonly Segment[] = [
+        { from: raised(way.from, shoulder), to: raised(inner.from, shoulder) },
+        { from: raised(inner.from, deep), to: raised(inner.to, deep) },
+        { from: raised(inner.to, shoulder), to: raised(way.to, shoulder) },
+      ];
+      strokeSegments(painter, steps);
+    }
+  }
+}
+
+/**
+ * Each bite seen from above, in the top's frame: a hole into the top behind
+ * the brink, as deep as it falls, its far lip lit.
+ */
+function brokenBrink(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, line, palette } = deck;
+  for (const edge of southFacingEdges(footprint)) {
+    for (const { way, courses } of bitesOf(edge)) {
+      const back = BITE_DEPTH * courses;
+      const inner = { from: along(way, 0.25), to: along(way, 0.75) };
+      const far = [
+        raised(way.from, back / 2),
+        raised(inner.from, back / 2),
+        raised(inner.from, back),
+        raised(inner.to, back),
+        raised(inner.to, back / 2),
+        raised(way.to, back / 2),
+      ] as const;
+      painter.fillStyle(palette.support, 1);
+      fillQuad(painter, way.from, way.to, far[5], far[0]);
+      fillQuad(painter, inner.from, inner.to, far[3], far[2]);
+      painter.lineStyle(line * 2, palette.wallLit, 1);
+      strokeSegments(
+        painter,
+        far.slice(1).map((to, k) => ({ from: far[k] ?? to, to })),
+      );
+    }
+  }
+}
+
+/** A small whole-number hash of a flagstone's place, the same on every client. */
+function stoneHash(column: number, row: number): number {
+  const mixed = Math.imul(column, 73856093) ^ Math.imul(row, 19349663);
+  return (mixed >>> 0) % 997;
+}
+
+/**
+ * A ruin's paving, in the top's frame: the flagstones' grid, with some gone
+ * (a dark hole, its far edge lit) and some cracked across.
+ */
+function brokenPaving(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, line, palette } = deck;
+  painter.lineStyle(line, palette.plank, 1);
+  strokeSegments(painter, plankLines(footprint, PAVING));
+  strokeSegments(painter, plankLines(footprint, PAVING, "y"));
+  const { middle, half } = boxMiddle(footprint);
+  const [left, top] = [middle.x - half.x, middle.y - half.y];
+  const [columns, rows] = [Math.ceil((half.x * 2) / PAVING), Math.ceil((half.y * 2) / PAVING)];
+  for (let column = 0; column < columns; column += 1) {
+    for (let row = 0; row < rows; row += 1) {
+      const [x, y] = [left + column * PAVING, top + row * PAVING];
+      const corners = [
+        { x: x + 1, y: y + 1 },
+        { x: x + PAVING - 1, y: y + 1 },
+        { x: x + 1, y: y + PAVING - 1 },
+        { x: x + PAVING - 1, y: y + PAVING - 1 },
+      ];
+      if (!corners.every((corner) => pointInShape(corner, footprint))) {
+        continue;
+      }
+      const hash = stoneHash(column, row);
+      if (hash % STONE_MISSING_ONE_IN === 0) {
+        painter.fillStyle(palette.support, 1);
+        painter.fillRect(x + 2, y + 2, PAVING - 4, PAVING - 4);
+        painter.lineStyle(line * 1.5, palette.wallLit, 1);
+        painter.lineBetween(x + 2, y + 2, x + PAVING - 2, y + 2);
+      } else if (hash % STONE_CRACKED_ONE_IN === 1) {
+        const lean = hash % 2 === 0 ? 1 : -1;
+        const [from, to] = lean > 0 ? [x, x + PAVING] : [x + PAVING, x];
+        const bend = { x: x + PAVING / 2, y: y + PAVING * (0.3 + (hash % 5) / 10) };
+        painter.lineStyle(line * 1.5, palette.support, 1);
+        painter.lineBetween(from, y + 3, bend.x, bend.y);
+        painter.lineBetween(bend.x, bend.y, to, y + PAVING - 3);
+      }
+    }
+  }
+}
+
+/** The middle of `shape`'s box, and its half-widths. */
+function boxMiddle(shape: RenderableShape): { readonly middle: Vec2; readonly half: Vec2 } {
+  const outline =
+    shape.kind === "rect"
+      ? [
+          { x: shape.x, y: shape.y },
+          { x: shape.x + shape.width, y: shape.y + shape.height },
+        ]
+      : shape.points;
+  const xs = outline.map(({ x }) => x);
+  const ys = outline.map(({ y }) => y);
+  const [left, right, top, bottom] = [
+    Math.min(...xs),
+    Math.max(...xs),
+    Math.min(...ys),
+    Math.max(...ys),
+  ];
+  return {
+    middle: { x: (left + right) / 2, y: (top + bottom) / 2 },
+    half: { x: (right - left) / 2, y: (bottom - top) / 2 },
+  };
+}
+
+/** A brass ring on the layer under a plinth, round it: its capture spot. */
+function captureRing(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, base, line, palette } = deck;
+  const { middle, half } = boxMiddle(footprint);
+  const ring = Array.from({ length: RING_SEGMENTS + 1 }, (_, k) => {
+    const angle = (2 * Math.PI * k) / RING_SEGMENTS;
+    return raised(
+      {
+        x: middle.x + Math.cos(angle) * (half.x + RING_MARGIN),
+        y: middle.y + Math.sin(angle) * (half.y + RING_MARGIN),
+      },
+      base,
+    );
+  });
+  painter.lineStyle(line * 2, palette.wallLit, 1);
+  strokeSegments(
+    painter,
+    ring.slice(1).map((to, k) => ({ from: ring[k] ?? to, to })),
+  );
+}
+
+/** A statue on a plinth's top, in the top's frame: a stepped base, a body, a head. */
+function statue(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, palette } = deck;
+  const { middle, half } = boxMiddle(footprint);
+  const [w, h] = [half.x * STATUE_BASE, half.y * STATUE_BASE];
+  painter.fillStyle(palette.slab, 1);
+  painter.fillRect(middle.x - w, middle.y - h, w * 2, h * 2);
+  painter.fillStyle(palette.support, 1);
+  painter.fillRect(middle.x - w / 2, middle.y - STATUE_HEIGHT, w, STATUE_HEIGHT);
+  painter.fillTriangle(
+    middle.x - w * 0.8,
+    middle.y - STATUE_HEIGHT * 0.55,
+    middle.x + w * 0.8,
+    middle.y - STATUE_HEIGHT * 0.55,
+    middle.x,
+    middle.y - STATUE_HEIGHT,
+  );
+  painter.fillRect(
+    middle.x - STATUE_HEAD / 2,
+    middle.y - STATUE_HEIGHT - STATUE_HEAD,
+    STATUE_HEAD,
+    STATUE_HEAD,
+  );
+}
+
 const nothing = (): void => undefined;
 
 export const DECK_ART: Record<DeckLook, DeckArt> = {
@@ -342,6 +699,97 @@ export const DECK_ART: Record<DeckLook, DeckArt> = {
         painter.lineStyle(deck.line * 3, deck.palette.wallLit, 1);
         strokeSegments(painter, [crown]);
       }
+    },
+  },
+  /** A stone shelf on a cliff face: paving along it, a bright lip, strata down the rock. */
+  ledge: {
+    side: (painter, deck) => {
+      courses(painter, deck, false);
+    },
+    top: (painter, deck) => {
+      painter.lineStyle(deck.line, deck.palette.plank, 1);
+      strokeSegments(painter, acrossLong(deck.footprint, PAVING));
+      painter.lineStyle(deck.line * 2, deck.palette.wallLit, 1);
+      strokeSegments(painter, southFacingEdges(deck.footprint));
+    },
+  },
+  /**
+   * Broken masonry: its gaps are notches in its footprint, so what is drawn
+   * is what walks; flagstones gone and cracked on what stands, its brink
+   * fallen in down its courses, and the stones of it heaped at its foot.
+   */
+  ruin: {
+    side: (painter, deck) => {
+      courses(painter, deck, true);
+      brokenFace(painter, deck);
+      rubble(painter, deck);
+    },
+    top: (painter, deck) => {
+      brokenPaving(painter, deck);
+      brokenBrink(painter, deck);
+    },
+  },
+  /** A stone arch: a dark round opening in its face, a walkable top. */
+  arch: {
+    side: (painter, deck) => {
+      courses(painter, deck, false);
+      archway(painter, deck);
+    },
+    top: (painter, deck) => {
+      painter.lineStyle(deck.line, deck.palette.plank, 1);
+      strokeSegments(painter, alongLong(deck.footprint, PAVING));
+      painter.lineStyle(deck.line * 2, deck.palette.wallLit, 1);
+      strokeSegments(painter, southFacingEdges(deck.footprint));
+    },
+  },
+  /** A gatehouse: merlons round its roof, a dark passage under it, an iron grid in it. */
+  "gatehouse-roof": {
+    side: (painter, deck) => {
+      courses(painter, deck, true);
+      passage(painter, deck);
+    },
+    top: (painter, deck) => {
+      painter.lineStyle(deck.line, deck.palette.plank, 1);
+      strokeSegments(painter, plankLines(deck.footprint, PAVING));
+      strokeSegments(painter, plankLines(deck.footprint, PAVING, "y"));
+      parapet(painter, deck, true);
+    },
+  },
+  /** A flat plaster roof over a coursed house wall with a door in it. */
+  rooftop: {
+    side: (painter, deck) => {
+      courses(painter, deck, true);
+      doors(painter, deck);
+    },
+    top: (painter, deck) => {
+      painter.lineStyle(deck.line, deck.palette.plank, 1);
+      strokeSegments(painter, alongLong(deck.footprint, PAVING));
+      painter.lineStyle(deck.line * 2, deck.palette.wallLit, 1);
+      strokeSegments(painter, southFacingEdges(deck.footprint));
+    },
+  },
+  /** Planks across, on thin posts down into the water. */
+  pier: {
+    side: (painter, deck) => {
+      posts(painter, deck);
+    },
+    top: (painter, deck) => {
+      painter.lineStyle(deck.line * 1.5, deck.palette.plank, 1);
+      strokeSegments(painter, acrossLong(deck.footprint, PAVING / 2));
+      painter.lineStyle(deck.line * 2, deck.palette.wallLit, 1);
+      strokeSegments(painter, southFacingEdges(deck.footprint));
+    },
+  },
+  /** A statue on a stone base one step up, a brass capture ring round it on the ground. */
+  plinth: {
+    side: (painter, deck) => {
+      captureRing(painter, deck);
+      courses(painter, deck, true);
+    },
+    top: (painter, deck) => {
+      painter.lineStyle(deck.line, deck.palette.plank, 1);
+      strokeSegments(painter, plankLines(deck.footprint, PAVING));
+      statue(painter, deck);
     },
   },
 };
