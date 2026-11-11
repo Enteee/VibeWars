@@ -280,7 +280,7 @@ Grupa mniejsza niż 8 staje w kolejce z botami na pustych miejscach, używając 
 
 Trzy areny Szczytu to także wybór Gry prywatnej: **The Hollow Deep** (8v8 Anihilacja, trzy kręte tunele wokół centralnej skały), **Blackwater Ford** (8v8 Anihilacja kapłana na małym brodzie, z bazami niemal w zasięgu wzroku, z kapłanem wskrzeszającym poległych co 2 minuty) i **Mosslit Cairns** (8v8 Punkty kontrolne, pięć kopców w płytkim zygzaku między bazami). Czwarta to **The Brazen Causeway** (8v8 Anihilacja kapłana na pierścieniu wokół zapadniętego dołu: wąska szczelina mija bramę każdej bazy, otwartą na oścież tylko wtedy, gdy ktoś z jej drużyny stoi na płycie Gate Lock).
 
-Mapa może mieć **bramy**: mury zatrzymujące ciała, pociski i wzrok, gdy są zamknięte. Stań na płycie naciskowej bramy, aby ją otworzyć. Zamyka się, gdy nikogo nie ma już na płycie, spychając każdego w przejściu na bliższą stronę i zatrzymując pociski w locie, i przez 8 sekund nie można jej znów otworzyć. Płyta w kolorze drużyny reaguje tylko na tę drużynę. Boty stają na płycie swojej drużyny, gdy w pobliżu nie ma wroga.
+Mapa może mieć **bramy**: mury zatrzymujące ciała, pociski i wzrok, gdy są zamknięte. Stań na płycie naciskowej bramy, aby ją otworzyć. Zamyka się, gdy nikogo nie ma już na płycie, spychając każdego w przejściu na bliższą stronę i zatrzymując pociski w locie, i przez pół sekundy nie można jej znów otworzyć. Płyta w kolorze drużyny reaguje tylko na tę drużynę. Boty stają na płycie swojej drużyny, gdy w pobliżu nie ma wroga.
 
 ## Trzy drużyny
 

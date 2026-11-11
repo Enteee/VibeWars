@@ -56,8 +56,8 @@ niej podejść i ją przestawić.
 
 Niektóre bramy otwiera zamiast tego **płyta naciskowa**: kamienny krąg, który
 zapada się i robi się mosiężny, dopóki ktoś na nim stoi. Brama zamyka się,
-gdy zejdzie z niej ostatnia osoba, a płyta potrzebuje kilku sekund, zanim
-znów ją otworzy. Niektóre płyty reagują tylko na jedną drużynę.
+gdy zejdzie z niej ostatnia osoba, a płyta znów ją otwiera pół sekundy
+później. Niektóre płyty reagują tylko na jedną drużynę.
 
 ## Portale
 

@@ -57,8 +57,8 @@ hinzulaufen und ihn umzulegen.
 
 Manche Tore öffnen sich stattdessen über eine **Druckplatte**: eine Steinscheibe,
 die einsinkt und messingfarben wird, solange jemand darauf steht. Das Tor
-schließt sich, wenn der Letzte heruntertritt, und seine Platte braucht ein paar
-Sekunden, bevor sie es wieder öffnet. Manche Platten reagieren nur auf ein Team.
+schließt sich, wenn der Letzte heruntertritt, und seine Platte öffnet es eine halbe
+Sekunde später wieder. Manche Platten reagieren nur auf ein Team.
 
 ## Portale
 

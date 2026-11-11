@@ -490,7 +490,7 @@ Egy pályán lehetnek **kapuk**: falak, amelyek zárva megállítják a
 testeket, a lövéseket és a látást. Állj egy kapu nyomólapjára, hogy
 kinyisd. Bezárul, amikor senki sem marad a lapon, a kapunyílásban
 állókat a közelebbi oldalra lökve, és megállítva a még áthaladó
-lövéseket, és 8 másodpercig nem nyitható újra. A csapatszínű lap csak
+lövéseket, és fél másodpercig nem nyitható újra. A csapatszínű lap csak
 annak a csapatnak engedelmeskedik. A botok a saját csapatuk lapjára
 állnak, amikor nincs ellenség a közelben.
 

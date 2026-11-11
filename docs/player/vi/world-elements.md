@@ -55,7 +55,7 @@ gạt để chọn nó làm mục tiêu, rồi nhấn **Space** để đi tới 
 
 Một số cổng lại mở bằng **tấm áp lực**: một đĩa đá lún xuống và chuyển
 sang màu đồng thau khi có người đứng trên đó. Cổng đóng lại khi người
-cuối cùng bước ra, và tấm cần vài giây mới mở được cổng lần nữa. Một số
+cuối cùng bước ra, và nửa giây sau tấm lại mở được cổng. Một số
 tấm chỉ phản ứng với một đội.
 
 ## Cổng dịch chuyển

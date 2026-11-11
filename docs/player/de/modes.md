@@ -305,7 +305,7 @@ Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in 
 
 Eine Karte kann **Tore** haben: Mauern, die im geschlossenen Zustand Körper, Schüsse und Sicht aufhalten. Stell dich auf die
 Druckplatte eines Tors, um es zu öffnen. Es schließt, wenn niemand mehr auf der Platte steht, schiebt jeden im Durchgang auf
-die nähere Seite, stoppt Schüsse, die noch unterwegs sind, und kann 8 Sekunden lang nicht wieder geöffnet werden. Eine Platte
+die nähere Seite, stoppt Schüsse, die noch unterwegs sind, und kann eine halbe Sekunde lang nicht wieder geöffnet werden. Eine Platte
 in der Farbe eines Teams reagiert nur auf dieses Team. Bots stellen sich auf die Platte ihres Teams, wenn kein Gegner in der
 Nähe ist.
 

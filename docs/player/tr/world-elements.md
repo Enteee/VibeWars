@@ -59,8 +59,8 @@ hedef almak için ona sağ tıkla, sonra oraya yürüyüp onu çevirmek için
 
 Bazı kapılar bunun yerine bir **basınç plakasıyla** açılır: üstünde biri
 durduğu sürece çöken ve pirinç rengine dönen taş bir disk. Son kişi
-indiğinde kapı kapanır ve plakanın kapıyı yeniden açabilmesi için birkaç
-saniye geçmesi gerekir. Bazı plakalar yalnızca tek bir takıma yanıt verir.
+indiğinde kapı kapanır ve plaka kapıyı yarım saniye sonra yeniden
+açar. Bazı plakalar yalnızca tek bir takıma yanıt verir.
 
 ## Portallar
 

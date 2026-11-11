@@ -62,7 +62,7 @@ cibler, puis appuie sur **Space** pour t'y rendre et l'actionner.
 Certaines portes s'ouvrent plutôt avec une **plaque de pression** : un
 disque de pierre qui s'enfonce et prend la couleur du laiton tant que
 quelqu'un se tient dessus. La porte se ferme quand le dernier en descend, et
-sa plaque a besoin de quelques secondes avant de pouvoir la rouvrir. Certaines
+sa plaque la rouvre une demi-seconde plus tard. Certaines
 plaques ne répondent qu'à une seule équipe.
 
 ## Portails

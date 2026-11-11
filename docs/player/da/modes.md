@@ -421,7 +421,7 @@ En bane kan have **porte**: mure, der stopper kroppe, skud og udsyn, mens
 de er lukkede. Stå på en ports trykplade for at åbne den. Den lukker, når
 ingen er tilbage på pladen, skubber alle i døråbningen til den nærmeste
 side og stopper skud, der stadig er på vej igennem, og kan ikke åbnes
-igen i 8 sekunder. En plade i et holds farve reagerer kun på det hold.
+igen i et halvt sekund. En plade i et holds farve reagerer kun på det hold.
 Bots står på deres eget holds plade, når ingen fjende er nær.
 
 ## Tre hold

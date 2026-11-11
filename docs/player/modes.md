@@ -389,7 +389,7 @@ A map may have **gates**: walls that stop bodies, shots and sight while
 closed. Stand on a gate's pressure plate to open it. It closes when
 nobody is left on the plate, shoving anyone in the doorway to the nearer
 side and stopping shots still on their way through, and cannot be opened
-again for 8 seconds. A plate in a team's colour answers only to that
+again for half a second. A plate in a team's colour answers only to that
 team. Bots stand on their own team's plate when no foe is near.
 
 ## Three teams

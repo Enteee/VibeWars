@@ -35,7 +35,7 @@ dřevěným ramenem, jehož mosazná hlavice nahoře září a dole je šedá.
 Pravým kliknutím páku zaměříš a pak stiskni **Space**, abys k ní došel a
 přepnul ji.
 
-Některé brány se místo toho otevírají **nášlapnou deskou**: kamenným kotoučem, který se propadne a zbarví do mosazna, dokud na něm někdo stojí. Brána se zavře, když z ní sestoupí poslední, a její deska potřebuje pár sekund, než ji znovu otevře. Některé desky reagují jen na jeden tým.
+Některé brány se místo toho otevírají **nášlapnou deskou**: kamenným kotoučem, který se propadne a zbarví do mosazna, dokud na něm někdo stojí. Brána se zavře, když z ní sestoupí poslední, a její deska ji znovu otevře o půl sekundy později. Některé desky reagují jen na jeden tým.
 
 ## Portály
 

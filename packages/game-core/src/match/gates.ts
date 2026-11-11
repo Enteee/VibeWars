@@ -1,11 +1,13 @@
 import { add, distance, normalize, scale, sub, type Vec2 } from "../vec2.js";
 import { firstHit, type Segment } from "../geometry.js";
 import type { Projectile } from "../skills/projectile.js";
+import { SWITCH_COOLDOWN_SECONDS } from "./switches.js";
 
 /**
  * Gates (#2691): a wall with a pressure plate. A player standing on the
  * plate holds the gate open; it closes when the last one steps off, and
- * then cannot open again for `GATE_REOPEN_SECONDS`. A switch's gate
+ * then cannot open again for `GATE_REOPEN_SECONDS` (#3127): the lever's
+ * half second, so hopping on and off cannot strobe it. A switch's gate
  * (#3025) has no plate: it stays as its last flip left it.
  *
  * Pure: the simulation says who stands on each plate; this decides how
@@ -13,7 +15,7 @@ import type { Projectile } from "../skills/projectile.js";
  */
 
 /** Seconds after a gate closes before its plate opens it again. */
-export const GATE_REOPEN_SECONDS = 8;
+export const GATE_REOPEN_SECONDS = SWITCH_COOLDOWN_SECONDS;
 
 /** How near a player stands to a plate to count on it. */
 export const GATE_PLATE_REACH_UNITS = 30;

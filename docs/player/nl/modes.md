@@ -289,7 +289,7 @@ Een groep met minder dan 8 spelers gaat in de wachtrij met bots op de lege stoel
 
 Drie Ascent-arena's zijn ook een keuze bij een Gehost spel: **The Hollow Deep** (8v8 Annihilation, drie kronkelende tunnels rond een centrale rots), **Blackwater Ford** (8v8 Priest Annihilation op een piepkleine doorwaadbare plek, de basissen bijna in zicht, de priester die zijn doden elke 2 minuten reanimeert) en **Mosslit Cairns** (8v8 Capture Points, vijf cairns in een ondiepe zigzag tussen de basissen). Een vierde is **The Brazen Causeway** (8v8 Priest Annihilation op een ring rond een verzonken put: een smalle doorgang loopt langs de poort van elke basis, die alleen wijd openstaat zolang iemand van zijn team de Gate Lock-plaat houdt).
 
-Een map kan **poorten** hebben: muren die lichamen, schoten en zicht tegenhouden als ze dicht zijn. Ga op de drukplaat van een poort staan om die te openen. Hij sluit als er niemand meer op de plaat staat, duwt iedereen in de deuropening naar de dichtstbijzijnde kant en stopt schoten die nog onderweg zijn, en kan 8 seconden niet opnieuw geopend worden. Een plaat in de kleur van een team reageert alleen op dat team. Bots staan op de plaat van hun eigen team als er geen vijand in de buurt is.
+Een map kan **poorten** hebben: muren die lichamen, schoten en zicht tegenhouden als ze dicht zijn. Ga op de drukplaat van een poort staan om die te openen. Hij sluit als er niemand meer op de plaat staat, duwt iedereen in de deuropening naar de dichtstbijzijnde kant en stopt schoten die nog onderweg zijn, en kan een halve seconde niet opnieuw geopend worden. Een plaat in de kleur van een team reageert alleen op dat team. Bots staan op de plaat van hun eigen team als er geen vijand in de buurt is.
 
 ## Drie teams
 

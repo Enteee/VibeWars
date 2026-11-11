@@ -390,7 +390,7 @@ cổng chỉ mở toang khi có một người trong đội đó giữ tấm né
 Bản đồ có thể có **cổng**: những bức tường chặn cơ thể, đạn và tầm nhìn khi
 đóng. Đứng trên tấm nén của cổng để mở nó. Cổng đóng lại khi không còn ai trên
 tấm nén, đẩy bất kỳ ai ở lối cửa sang phía gần hơn và chặn các phát bắn vẫn
-đang bay qua, và không thể mở lại trong 8 giây. Tấm nén mang màu của một đội
+đang bay qua, và không thể mở lại trong nửa giây. Tấm nén mang màu của một đội
 chỉ phản ứng với đội đó. Bot đứng trên tấm nén của đội mình khi không có địch
 ở gần.
 
