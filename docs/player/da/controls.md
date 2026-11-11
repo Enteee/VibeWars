@@ -44,6 +44,7 @@ Disse taster er faste:
 - **Højreklik** på et flag eller flagstanden, i en Laugskamp eller på Barrow Field, for at
   vælge det som mål; **Mellemrum** går derhen og tager flaget op eller planter det.
 - **Højreklik** på et håndtag for at vælge det som mål; **Mellemrum** går derhen og slår det om, så de porte, det styrer, åbner eller lukker.
+- Gå ind i en **portal**, og den flytter dig til sin udgang. Et håndtag kan tænde og slukke den; efter en tur hviler den i 5 s, før den tager dig igen.
 - **Hjulklik** på en fjende for at udpege den for dit hold: deres **T** vælger den.
   På jorden eller en allieret pinger det stedet. Eller klik på målbjælken
   øverst for at udpege den fjende, du har valgt som mål.

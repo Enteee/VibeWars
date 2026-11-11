@@ -47,6 +47,7 @@ Ces touches sont fixes :
 - **Clic droit** sur un drapeau ou le Socle du drapeau, en Bataille de guilde ou sur Barrow Field,
   pour le cibler ; **Space** y marche et prend le drapeau ou le plante.
 - **Clic droit** sur un levier pour le cibler ; **Space** s'y rend et l'actionne, ce qui ouvre ou ferme les portes qu'il commande.
+- Entre dans un **portail** et il te transporte à sa sortie. Un levier peut l'allumer ou l'éteindre ; après un voyage, il se repose 5 s avant de te reprendre.
 - **Clic molette** sur un ennemi pour l'annoncer à ton équipe : leur **T** le
   cible. Au sol ou sur un allié, il signale cet endroit. Ou clique sur la
   barre de cible en haut pour annoncer l'ennemi que tu cibles.

@@ -45,6 +45,7 @@ Te klawisze są stałe:
   na Barrow Field, obiera je na cel; **Space** podchodzi tam i podnosi lub
   stawia flagę.
 - **Prawy klik** na dźwigni wybiera ją jako cel; **Space** podchodzi do niej i ją przestawia, otwierając lub zamykając bramy, którymi steruje.
+- Wejdź w **portal**, a przeniesie cię do swojego wyjścia. Dźwignia może go włączać i wyłączać; po podróży odpoczywa 5 s, zanim znów cię przeniesie.
 - **Kliknięcie kółkiem** wroga wskazuje go twojej drużynie: ich **T** obiera go
   na cel. Na ziemi lub na sojuszniku oznacza to miejsce pingiem. Możesz też
   kliknąć pasek celu u góry, aby wskazać wroga, którego masz na celu.

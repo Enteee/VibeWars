@@ -47,6 +47,7 @@ Bu tuşlar sabittir:
   direğini hedef almak için ona **sağ tıkla**; **Space** oraya yürür ve
   bayrağı alır ya da diker.
 - Bir kola **sağ tıklamak** onu hedef alır; **Space** oraya yürür ve kolu çevirir, kolun bağlı olduğu kapıları açar ya da kapatır.
+- Bir **portala** girersen seni çıkışına taşır. Bir kol onu açıp kapatabilir; bir yolculuktan sonra seni yeniden taşımadan önce 5 s dinlenir.
 - Takımına bildirmek için bir düşmana **teker tıkla**: onların **T**'si
   onu hedef alır. Zemine ya da bir müttefike yapılırsa o noktayı
   işaretler. Ya da hedef aldığın düşmanı bildirmek için üstteki hedef

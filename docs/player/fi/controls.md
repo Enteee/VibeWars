@@ -48,6 +48,7 @@ Nämä näppäimet ovat kiinteitä:
   Barrow Fieldillä kohdistaa siihen; **Space** kävelee sinne ja nostaa
   lipun tai pystyttää sen.
 - **Oikealla klikkauksella** valitset vivun kohteeksi; **Space** kävelee sen luo ja kääntää sen, jolloin sen ohjaamat portit aukeavat tai sulkeutuvat.
+- Kun kävelet **portaaliin**, se siirtää sinut uloskäynnilleen. Vipu voi kytkeä sen päälle tai pois; matkan jälkeen se lepää 5 s ennen kuin vie sinut uudelleen.
 - **Rullan napsautus** viholliseen ilmoittaa sen tiimillesi: heidän
   **T**-näppäimensä kohdistaa siihen. Maassa tai liittolaisessa se
   merkitsee sen kohdan. Tai napsauta ylhäällä olevaa kohdepalkkia
