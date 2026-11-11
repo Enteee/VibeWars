@@ -80,6 +80,7 @@ import {
   nearestStandable,
   type GatedNavGraph,
   type LayeredPathFinder,
+  type NavDropOff,
   type NavGraph,
   type RouteWaypoint,
   walkIsClear,
@@ -275,7 +276,7 @@ import {
   type TriggerContext,
 } from "../skills/triggers.js";
 import { copiesSkill, isEchoStatus } from "../skills/stand-in.js";
-import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
+import { add, distance, dot, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
   decide,
@@ -697,6 +698,8 @@ export interface MatchLayers {
   readonly pits: readonly Polygon[];
   /** Ramps and stairs: inside `area`, a body moves between `from` and `to`, one above, towards `uphill`. */
   readonly transitions: readonly FloorTransition[];
+  /** Stretches of a raised edge a body steps off onto the layer below, never up (#3069). */
+  readonly dropOffs: readonly NavDropOff[];
   /**
    * Each layer's deep water (#2983), indexed by layer, as its outline: it
    * stops bodies and paths as a wall does, but never sight or shots.
@@ -1094,6 +1097,9 @@ const NONE_SPARED: ReadonlySet<StatusId> = new Set();
 
 /** The ramps of a map without any, shared so `#climb` allocates nothing per body. */
 const NO_TRANSITIONS: MatchLayers["transitions"] = [];
+const NO_DROP_OFFS: MatchLayers["dropOffs"] = [];
+/** How far past a drop-off a body may stand and still step off it: one held at the edge is on it. */
+const DROP_OFF_HAIR = 1e-6;
 /** The decks of a map without any: the deck rule is then nothing to look up. */
 const NO_DECKS: MatchLayers["decks"] = [];
 
@@ -5900,10 +5906,14 @@ export class MatchSimulation {
       const { waypoints } = route;
       const graph = this.#graphOn(record.layer);
       const next = waypoints[0];
-      if (next !== undefined && walkIsClear(graph, record.position, next)) {
+      if (
+        next !== undefined &&
+        (next.dropOff === true || walkIsClear(graph, record.position, next))
+      ) {
         // A waypoint on another layer stays, however clear the line past it,
         // and so does the one before it, the way onto a ramp, until the body is at it.
-        // A teleport's entry stays until the teleport takes the body (#3030).
+        // A teleport's entry stays until the teleport takes the body (#3030);
+        // a drop-off's top is left for its landing, off the edge (#3069).
         for (
           let after = waypoints[1];
           after !== undefined &&
@@ -5911,7 +5921,7 @@ export class MatchSimulation {
             distance(record.position, waypoints[0] ?? after) <= RAMP_FOOT_REACHED_UNITS) &&
           waypoints[0]?.layer === record.layer &&
           waypoints[0].teleport !== true &&
-          walkIsClear(graph, record.position, after);
+          (after.dropOff === true || walkIsClear(graph, record.position, after));
           after = waypoints[1]
         ) {
           waypoints.shift();
@@ -6089,7 +6099,41 @@ export class MatchSimulation {
   #speedOf(record: ParticipantRecord): number {
     const statuses = aggregateModifiers(record.combatant.statuses.active).moveSpeedMultiplier;
     const burden = this.#carriesFlagOrRelic(record.id) ? FLAG_CARRIER_SPEED_MULTIPLIER : 1;
-    return clampMoveSpeed(statuses / burden);
+    return clampMoveSpeed((statuses / burden) * this.#paceAt(record));
+  }
+
+  /** The pace of the ramp, stairs or ladder `record` is on (#3069), or 1 off any. */
+  #paceAt(record: ParticipantRecord): number {
+    const transition = (this.#layers?.transitions ?? NO_TRANSITIONS).find(
+      (each) =>
+        (record.layer === each.from || record.layer === each.to) &&
+        pointInPolygon(record.position, each.area),
+    );
+    return transition?.pace ?? 1;
+  }
+
+  /**
+   * Whether a step from `start` to `end` on `layer` goes off its edge
+   * over a drop-off (#3069): outward across it, and off that layer's floor.
+   */
+  #dropsOff(start: Vec2, end: Vec2, layer: number): boolean {
+    if (this.#isOnLayer(end, layer)) {
+      return false;
+    }
+    return (this.#layers?.dropOffs ?? NO_DROP_OFFS).some(({ layer: top, edge, outward }) => {
+      if (top !== layer) {
+        return false;
+      }
+      const before = dot(sub(start, edge.a), outward);
+      const after = dot(sub(end, edge.a), outward);
+      if (before > DROP_OFF_HAIR || after <= 0) {
+        return false;
+      }
+      const crossing = add(start, scale(sub(end, start), before / (before - after)));
+      const along = sub(edge.b, edge.a);
+      const t = dot(sub(crossing, edge.a), along) / dot(along, along);
+      return t >= 0 && t <= 1;
+    });
   }
 
   /**
@@ -6904,6 +6948,7 @@ export class MatchSimulation {
             to: to.layer,
             exit: to.position,
           })),
+        this.#layers?.dropOffs ?? [],
       );
       const barriers = this.#gates.flatMap((gate) =>
         gate.open || gate.blocks !== "bodies-and-shots" ? [] : gate.segments,
@@ -9830,6 +9875,12 @@ export class MatchSimulation {
       this.#ruleset.movement.maxSpeedUnitsPerSecond * this.#speedOf(record),
       dt,
     );
+    // Off a drop-off, it is on the layer below from this step (#3069),
+    // where it stepped: pushed out there, not held at the edge above.
+    if (this.#dropsOff(start, position, record.layer)) {
+      record.layer -= 1;
+      this.#refreshFloors(record);
+    }
 
     // A minion or pet of its own the body already stands in, as one
     // raised at its feet, lets it step off in any direction unshoved

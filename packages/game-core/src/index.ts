@@ -13,7 +13,7 @@ export type { Vec2 } from "./vec2.js";
 export * as Vec from "./vec2.js";
 export { ZERO, length, normalize, vec2 } from "./vec2.js";
 
-export { clampInputDirection, integrateMovement } from "./movement.js";
+export { CLIMB_PACE, clampInputDirection, integrateMovement, type ClimbLook } from "./movement.js";
 
 export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
 export { beaconStrikeArea } from "./match/beacon.js";
@@ -54,6 +54,7 @@ export {
   type NavLayer,
   type NavTransition,
   type NavTeleport,
+  type NavDropOff,
   type PathFinder,
   type RouteWaypoint,
 } from "./pathing.js";

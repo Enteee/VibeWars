@@ -1,4 +1,5 @@
 import {
+  CLIMB_PACE,
   UPHILL,
   type BreakableField,
   type GateField,
@@ -9,7 +10,7 @@ import {
 } from "@vibewars/game-core";
 
 import { shapeVertices, wallToSegments } from "./geometry.js";
-import type { MapData } from "./schema.js";
+import { dropOffOutward, type MapData } from "./schema.js";
 
 /**
  * `map`'s layers, as the simulation and its path finder take them
@@ -36,7 +37,14 @@ export function matchLayers(map: MapData): MatchLayers {
       to: transition.to,
       area: shapeVertices(transition.area),
       uphill: UPHILL[transition.uphill],
+      pace: CLIMB_PACE[transition.look],
     })),
+    dropOffs: map.dropOffs.flatMap((dropOff) => {
+      const outward = dropOffOutward(map, dropOff);
+      return outward === undefined
+        ? []
+        : [{ layer: dropOff.layer, edge: { a: dropOff.from, b: dropOff.to }, outward }];
+    }),
     deepWater: Array.from({ length: map.layers }, (_, layer) =>
       (map.water ?? [])
         .filter((water) => water.layer === layer && water.depth === "deep")

@@ -619,7 +619,7 @@ function inPitUpToItsEdge(transition: Transition, pits: readonly BelowGround[]):
 const RIM_SAMPLES = 32;
 
 /** What `standsClear` reads of a map. */
-interface LayeredMap {
+export interface LayeredMap {
   readonly width: number;
   readonly height: number;
   readonly bounds: MapBounds;
@@ -724,7 +724,9 @@ const DROP_OFF_SAMPLE = 8;
 /** Whether `point` is on `layer`'s floor, ramps aside: its decks, the ground but its pits, or a pit (#3069). */
 function onFloor(map: LayeredMap, point: Vec2Data, layer: number): boolean {
   if (layer === map.groundLayer) {
-    return onGround(map.bounds, point) && !map.pits.some((pit) => pointInShape(point, pit.footprint));
+    return (
+      onGround(map.bounds, point) && !map.pits.some((pit) => pointInShape(point, pit.footprint))
+    );
   }
   const floors =
     layer < map.groundLayer
@@ -733,47 +735,69 @@ function onFloor(map: LayeredMap, point: Vec2Data, layer: number): boolean {
   return floors.some((floor) => pointInShape(point, floor));
 }
 
+/** Points along a drop-off, `DROP_OFF_SAMPLE` apart, ends included. */
+function alongDropOff({ from, to }: DropOff): Vec2Data[] {
+  const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / DROP_OFF_SAMPLE));
+  return Array.from({ length: steps + 1 }, (_, k) => ({
+    x: from.x + ((to.x - from.x) * k) / steps,
+    y: from.y + ((to.y - from.y) * k) / steps,
+  }));
+}
+
 /**
- * Why a drop-off (#3069) is wrong, or `undefined`: each point along it is
- * on its layer's edge, its floor on one side and open on the other, and a
- * body stands clear on the layer below just past it, all along it, out of
- * `deep` water there.
+ * Which way a body steps off a drop-off (#3069), a unit vector, or
+ * `undefined` if it is no stretch of its layer's edge: all along it, its
+ * layer's floor on one side and open on the other.
+ */
+export function dropOffOutward(map: LayeredMap, dropOff: DropOff): Vec2Data | undefined {
+  const { layer, from, to } = dropOff;
+  const length = Math.hypot(to.x - from.x, to.y - from.y);
+  if (length === 0) {
+    return undefined;
+  }
+  const points = alongDropOff(dropOff);
+  return [
+    { x: (from.y - to.y) / length, y: (to.x - from.x) / length },
+    { x: (to.y - from.y) / length, y: (from.x - to.x) / length },
+  ].find((out) =>
+    points.every(
+      (point) =>
+        !onFloor(map, step(point, out, DROP_OFF_SLACK), layer) &&
+        onFloor(map, step(point, out, -DROP_OFF_SLACK), layer),
+    ),
+  );
+}
+
+/** `point` moved `by` along the unit vector `way`. */
+function step(point: Vec2Data, way: Vec2Data, by: number): Vec2Data {
+  return { x: point.x + way.x * by, y: point.y + way.y * by };
+}
+
+/**
+ * Why a drop-off (#3069) is wrong, or `undefined`: it is a stretch of a
+ * raised layer's edge, and a body stands clear on the layer below one
+ * radius and one diameter past it, all along it, out of `deep` water.
  */
 function dropOffFault(
   map: LayeredMap,
   dropOff: DropOff,
   deep: (point: Vec2Data) => boolean,
 ): string | undefined {
-  const { layer, from, to } = dropOff;
-  const length = Math.hypot(to.x - from.x, to.y - from.y);
-  if (layer < 1 || length === 0) {
+  if (dropOff.layer < 1) {
     return "is not a stretch of a raised edge";
   }
-  const normal = { x: (from.y - to.y) / length, y: (to.x - from.x) / length };
-  const steps = Math.max(1, Math.ceil(length / DROP_OFF_SAMPLE));
-  const points = Array.from({ length: steps + 1 }, (_, k) => ({
-    x: from.x + ((to.x - from.x) * k) / steps,
-    y: from.y + ((to.y - from.y) * k) / steps,
-  }));
-  const side = (point: Vec2Data, sign: number, by: number): Vec2Data => ({
-    x: point.x + normal.x * sign * by,
-    y: point.y + normal.y * sign * by,
-  });
-  const outward = [1, -1].find((sign) =>
-    points.every(
-      (point) =>
-        !onFloor(map, side(point, sign, DROP_OFF_SLACK), layer) &&
-        onFloor(map, side(point, -sign, DROP_OFF_SLACK), layer),
-    ),
+  const out = dropOffOutward(map, dropOff);
+  if (out === undefined) {
+    return `is not on layer ${String(dropOff.layer)}'s edge`;
+  }
+  const below = dropOff.layer - 1;
+  const lands = alongDropOff(dropOff).every((point) =>
+    [BODY_RADIUS, 2 * BODY_RADIUS].every((by) => {
+      const landing = step(point, out, by);
+      return standsClear(map, landing, below) && !deep(landing);
+    }),
   );
-  if (outward === undefined) {
-    return `is not on layer ${String(layer)}'s edge`;
-  }
-  const landings = points.map((point) => side(point, outward, BODY_RADIUS));
-  if (!landings.every((landing) => standsClear(map, landing, layer - 1) && !deep(landing))) {
-    return `lands where a body cannot stand on layer ${String(layer - 1)}`;
-  }
-  return undefined;
+  return lands ? undefined : `lands where a body cannot stand on layer ${String(below)}`;
 }
 
 export const mapDataSchema = z
