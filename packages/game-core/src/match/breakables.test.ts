@@ -124,6 +124,31 @@ describe("breakable walls (#3031)", () => {
     });
   });
 
+  it("makes a sacrifice skill's caster pay its health at a wall", () => {
+    const sim = arena([
+      caster("bleeder", "necromancer.touch-of-agony", "necromancer.blood-magic"),
+      FOE,
+    ]);
+    const bleeder = sim.get("bleeder");
+    const full = bleeder?.combatant.health ?? 0;
+    sim.setTarget("bleeder", TARGET);
+    expect(sim.requestSkill("bleeder", 0)?.check.ok).toBe(true);
+    const sacrificed: number[] = [];
+    for (let t = 0; t < 3; t += DT) {
+      for (const entry of sim.step(DT).log) {
+        for (const event of entry.events) {
+          if (event.kind === "sacrifice" && event.targetId === "bleeder") {
+            sacrificed.push(event.amount);
+          }
+        }
+      }
+    }
+    expect(health(sim) ?? 300).toBeLessThan(300);
+    expect(sacrificed).toHaveLength(1);
+    expect(bleeder?.combatant.health).toBe(full - (sacrificed[0] ?? 0));
+    expect(sacrificed[0]).toBeGreaterThan(0);
+  });
+
   it("blocks a walk while it stands, and opens the way once it crumbles", () => {
     const tough = arena([body("walker", 0, vec2(300, 400)), FOE]);
     tough.walkTo("walker", vec2(500, 400));

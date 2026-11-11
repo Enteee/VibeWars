@@ -4829,11 +4829,11 @@ export class MatchSimulation {
     const riders: FiredTrigger[] = [];
     const resolve =
       wall >= 0
-        ? () =>
+        ? (resolution: SkillResolution) =>
             only(
               this.#skillAtWall(
                 record,
-                skill,
+                resolution,
                 targetId ?? "",
                 flight === undefined ? speed : flight.speed * cast.rule.projectileSpeedMultiplier,
               ),
@@ -7041,17 +7041,27 @@ export class MatchSimulation {
   }
 
   /**
-   * `skill` landing on the breakable wall `targetId` names (#3031): its damage, and an
-   * attack skill's blow, at no armor; no condition, hex or anything else.
-   * With a `speed`, it flies there first, as an arrow at a wall does.
+   * `resolution`'s skill landing on the breakable wall `targetId` names (#3031): its
+   * damage, and an attack skill's blow, at no armor; no condition, hex or anything
+   * else. Its caster still pays the health it sacrifices, as a well finding no
+   * corpse does. With a `speed`, it flies there first, as an arrow at a wall does.
    */
   #skillAtWall(
     record: ParticipantRecord,
-    skill: Skill,
+    resolution: SkillResolution,
     targetId: string,
     speed: number | undefined,
   ): CombatEvent[] {
     const rules = this.#ruleset.combat;
+    const skill = resolution.skill;
+    const events = resolveSkillEffects({
+      ...resolution,
+      skill: {
+        ...skill,
+        effects: skill.effects.filter((effect) => effect.kind === "sacrifice-health"),
+      },
+      targets: [],
+    }).events;
     let amount = 0;
     for (const effect of skill.effects) {
       if (effect.kind === "damage") {
@@ -7064,7 +7074,6 @@ export class MatchSimulation {
     if (skill.attack !== undefined) {
       amount += wallDamage(wallBlow(weaponSnapshotOf(record.combatant), this.#rng, rules), rules);
     }
-    const events: CombatEvent[] = [];
     const target = this.#wallAim(record, targetId);
     if (speed === undefined || target === undefined) {
       this.#strikeWall(this.#standingWall(targetId), amount, events);
