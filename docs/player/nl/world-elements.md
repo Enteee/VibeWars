@@ -118,6 +118,18 @@ of plaat omhoogtrekt. Een **geheime doorgang** ziet er precies zo uit
 als de rotsmuur eromheen, totdat hij openschuift naar een donkere
 opening.
 
+## Liften
+
+Een **lift** is een platform van planken in een ijzeren frame dat je
+tussen een lagere en een verhoogde vloer vervoert. Stap op terwijl hij
+op jouw niveau stilstaat. Sommige liften gaan vanzelf op en neer en
+staan aan elk eind een paar seconden stil; andere gaan naar het andere
+niveau telkens als hun hendel wordt overgehaald, en overhalen terwijl
+hij beweegt doet niets. Terwijl een lift beweegt, sluiten ijzeren
+tralies beide uiteinden af en wijst een koperen pijl de richting:
+niemand kan op- of afstappen, en niets kan je eraf duwen. Als hij stopt,
+stap je af.
+
 ## Weer en sfeer
 
 Mistbanken, rook, stoom, regen en sneeuw zijn alleen voor het oog. Ze doen je

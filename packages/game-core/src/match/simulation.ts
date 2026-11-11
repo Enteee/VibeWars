@@ -364,6 +364,18 @@ import {
   type SwitchedDeckField,
 } from "./switched-decks.js";
 import {
+  comesRound,
+  initialLifts,
+  liftClosedOn,
+  liftSegments,
+  restingLayer,
+  routesOver,
+  stepLift,
+  travelling,
+  type Lift,
+  type LiftField,
+} from "./lifts.js";
+import {
   flipSwitch,
   initialSwitches,
   switchIdOf,
@@ -951,6 +963,8 @@ export interface MatchSimulationOptions {
   readonly breakables?: readonly BreakableField[];
   /** The map's switched decks (#3068), in its order; none if omitted. */
   readonly switchedDecks?: readonly SwitchedDeckField[];
+  /** The map's lifts (#3079), in its order; none if omitted. */
+  readonly lifts?: readonly LiftField[];
   /** The map's effect zones (ADR-0053, #3024), in its order; none if omitted. */
   readonly zones?: readonly MatchZone[];
   /**
@@ -1185,6 +1199,9 @@ const STALL_FRACTION = 0.1;
 /** A walk this close to its goal has arrived (#310). */
 const ARRIVE_UNITS = 1;
 
+/** How far past touching a closed lift a walker still waits at it (#3079). */
+const LIFT_WAIT_UNITS = 2;
+
 /** Replan once the goal is this far from the one the route was planned to (#1157): a body width. */
 export const REPLAN_GOAL_UNITS = 28;
 
@@ -1334,6 +1351,10 @@ export class MatchSimulation {
   readonly #switchedDecks: SwitchedDeck[];
   /** Who stands on each switched deck that crossings bring down (#3068), to count each step on once. */
   readonly #onSwitchedDecks: Set<string>[];
+  /** Filled in place, as `#gates` (#3079): each two bits of a wall set's key past the switched decks'. */
+  readonly #lifts: Lift[];
+  /** The transitions a body climbs: every one but a lift's (#3079), which carries. */
+  readonly #climbable: MatchLayers["transitions"];
   /** The decks there are now (#3068): every one but a switched deck that is down. */
   #standingDecks: MatchLayers["decks"] = NO_DECKS;
   /** Who reached a switch this step (#3025), in simulation order. */
@@ -1496,10 +1517,15 @@ export class MatchSimulation {
     this.#breakables = initialBreakables(options.breakables ?? []);
     this.#switchedDecks = initialSwitchedDecks(options.switchedDecks ?? []);
     this.#onSwitchedDecks = this.#switchedDecks.map(() => new Set<string>());
+    this.#lifts = initialLifts(options.lifts ?? []);
     this.#switchedTeleports = this.#teleports.flatMap((_, at) =>
       this.#switches.some((lever) => lever.teleports.includes(at)) ? [at] : [],
     );
     this.#layers = options.layers;
+    const liftTransitions = new Set(this.#lifts.map((lift) => lift.transition));
+    this.#climbable = (this.#layers?.transitions ?? NO_TRANSITIONS).filter(
+      (_, at) => !liftTransitions.has(at),
+    );
     this.#zones = options.zones ?? [];
     this.#harmfulZones = this.#zones
       .filter((zone) => ZONE_RULES[zone.kind].harmful)
@@ -1524,6 +1550,10 @@ export class MatchSimulation {
         })),
         ...this.#breakables.map(({ layer, segments }) => ({ layer, segments })),
         ...this.#switchedDecks.map((deck) => ({ layer: deck.layer, segments: deckSegments(deck) })),
+        ...this.#lifts.flatMap((lift) => [
+          { layer: lift.from, segments: liftSegments(lift) },
+          { layer: lift.to, segments: liftSegments(lift) },
+        ]),
       ],
       this.#bounds,
       this.#ruleset.collision.playerRadius,
@@ -1731,6 +1761,11 @@ export class MatchSimulation {
   /** Every switched deck (#3068), whether it is up and its cracks; `[]` on a map without them. */
   public get switchedDecks(): readonly SwitchedDeck[] {
     return this.#switchedDecks;
+  }
+
+  /** Every lift (#3079), where it is and how high; `[]` on a map without them. */
+  public get lifts(): readonly Lift[] {
+    return this.#lifts;
   }
 
   /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
@@ -6166,7 +6201,8 @@ export class MatchSimulation {
    * within `ARRIVE_UNITS` of it. A walk whose way there has got no
    * shorter for as long as an approach may get nowhere
    * (`unreachableAfterSeconds`, #218) ends where it is, without a word:
-   * the player sees the hero stop.
+   * the player sees the hero stop. A body on a lift (#3079) is waiting to
+   * be carried, not stuck: it never stalls there.
    *
    * Progress is the way left, not the step taken: a body in a doorway
    * leaves a walker sliding to and fro along the wall, a full step every
@@ -6199,7 +6235,7 @@ export class MatchSimulation {
     if (left < record.walkLeast - STALL_FRACTION * this.#stepUnits(record, dt)) {
       record.walkLeast = left;
       record.walkStalledSeconds = 0;
-    } else {
+    } else if (!this.#waitsForLift(record)) {
       record.walkStalledSeconds += dt;
       if (
         record.walkStalledSeconds >=
@@ -6469,6 +6505,7 @@ export class MatchSimulation {
     readonly gates: Map<number, number>;
     readonly teleports: Map<number, number>;
     readonly decks: Map<number, number>;
+    readonly lifts: Map<number, number>;
   } {
     const arrivals = this.#livingArrivals(this.#switchArrivals);
     this.#switchArrivals = [];
@@ -6476,6 +6513,7 @@ export class MatchSimulation {
       gates: new Map<number, number>(),
       teleports: new Map<number, number>(),
       decks: new Map<number, number>(),
+      lifts: new Map<number, number>(),
     };
     for (const arrival of arrivals) {
       const at = this.#switches.findIndex((lever) => lever.id === switchIdOf(arrival.targetId));
@@ -6488,7 +6526,7 @@ export class MatchSimulation {
         continue;
       }
       this.#switches[at] = next;
-      for (const kind of ["gates", "teleports", "decks"] as const) {
+      for (const kind of ["gates", "teleports", "decks", "lifts"] as const) {
         for (const target of next[kind]) {
           toggles[kind].set(target, (toggles[kind].get(target) ?? 0) + 1);
         }
@@ -6760,8 +6798,9 @@ export class MatchSimulation {
   }
 
   /**
-   * Each layer's walls, its deep water (#2983), its ramp rims (#2975) and
-   * each switched deck that is down (#3068), indexed by layer.
+   * Each layer's walls, its deep water (#2983), its ramp rims (#2975),
+   * each switched deck that is down (#3068) and each lift closed on it
+   * (#3079), indexed by layer.
    */
   #blockersByLayer(): readonly (readonly Segment[])[] {
     return this.#layerWalls.map((walls, layer) => [
@@ -6774,6 +6813,7 @@ export class MatchSimulation {
       ...this.#switchedDecks
         .filter((deck) => !deck.up && deck.layer === layer)
         .flatMap((deck) => deckSegments(deck)),
+      ...this.#lifts.filter((lift) => liftClosedOn(lift, layer)).flatMap(liftSegments),
     ]);
   }
 
@@ -6801,7 +6841,7 @@ export class MatchSimulation {
 
   /** The floors a body at `position` on `layer` stands on (ADR-0051). */
   #floorsFor(position: Vec2, layer: number): number {
-    return this.#layers === undefined ? 1 : floorsAt(position, layer, this.#layers.transitions);
+    return this.#layers === undefined ? 1 : floorsAt(position, layer, this.#climbable);
   }
 
   #refreshFloors(record: ParticipantRecord): void {
@@ -6930,7 +6970,7 @@ export class MatchSimulation {
    * off under it.
    */
   #climb(record: ParticipantRecord, direction: Vec2): void {
-    const transitions = this.#layers?.transitions ?? NO_TRANSITIONS;
+    const transitions = this.#climbable;
     const steered = record.inputDirection.x !== 0 || record.inputDirection.y !== 0;
     const next = steered ? undefined : record.route?.waypoints[0];
     for (const transition of transitions) {
@@ -6961,9 +7001,11 @@ export class MatchSimulation {
    * The walls and paths for how the gates stand now, read off the graph
    * built up front, with a way through each teleport that is on (#3030).
    * Keyed by the closed gates' bits, then each standing breakable's
-   * (#3031), then each switched deck's that is down (#3068), then a bit
-   * for each switched teleport that is on: one no switch names never
-   * changes.
+   * (#3031), then each switched deck's that is down (#3068), then two for
+   * each lever lift on its way (#3079), then a bit for each switched
+   * teleport that is on: one no switch names never changes. A lever lift
+   * on its way is no way between its layers; a timer lift always is, and
+   * a walk over it waits for it.
    */
   #currentWallSet(): WallSet {
     let closed = 0;
@@ -6977,8 +7019,12 @@ export class MatchSimulation {
     this.#switchedDecks.forEach((deck, at) => {
       closed |= deck.up ? 0 : 1 << (deckBits + at);
     });
+    const liftBits = deckBits + this.#switchedDecks.length;
+    this.#lifts.forEach((lift, at) => {
+      closed |= routesOver(lift) ? 0 : 0b11 << (liftBits + 2 * at);
+    });
     let key = closed;
-    const teleportBits = deckBits + this.#switchedDecks.length;
+    const teleportBits = liftBits + 2 * this.#lifts.length;
     this.#switchedTeleports.forEach((teleport, bit) => {
       key |= this.#teleports[teleport]?.on === true ? 1 << (teleportBits + bit) : 0;
     });
@@ -6987,7 +7033,9 @@ export class MatchSimulation {
       const graphs = this.#gatedGraphs.map((gated) => navGraphFor(gated, closed));
       const paths = createLayeredPathFinder(
         graphs,
-        this.#layers?.transitions ?? [],
+        (this.#layers?.transitions ?? []).filter(
+          (_, at) => !this.#lifts.some((lift) => lift.transition === at && !routesOver(lift)),
+        ),
         this.#teleports
           .filter((teleport) => teleport.on)
           .map(({ from, to }) => ({
@@ -7027,7 +7075,8 @@ export class MatchSimulation {
     if (
       (this.#gates.length === 0 &&
         this.#teleports.length === 0 &&
-        this.#switchedDecks.length === 0) ||
+        this.#switchedDecks.length === 0 &&
+        this.#lifts.length === 0) ||
       this.phase !== "active"
     ) {
       this.#switchArrivals = [];
@@ -7075,10 +7124,57 @@ export class MatchSimulation {
         }
       }
     }
+    for (const [at, lift] of this.#lifts.entries()) {
+      const next = stepLift(lift, (toggles.lifts.get(at) ?? 0) % 2 === 1, dt, this.#elapsedSeconds);
+      this.#lifts[at] = next;
+      if (travelling(next.phase) !== travelling(lift.phase)) {
+        moved = true;
+        this.#carry(next);
+      }
+    }
     if (!moved) {
       return;
     }
     this.#refreshWalls(closing, sinking);
+  }
+
+  /**
+   * Whether `record` waits for a lift (#3079) that will move with nobody
+   * at its lever: on it, or against it where it is closed on its layer. A
+   * walk routed over it waits there for it rather than giving up.
+   */
+  #waitsForLift(record: ParticipantRecord): boolean {
+    const reach = this.#ruleset.collision.playerRadius + LIFT_WAIT_UNITS;
+    return this.#lifts.some(
+      (lift) =>
+        comesRound(lift) &&
+        (record.layer === lift.from || record.layer === lift.to) &&
+        (pointInPolygon(record.position, lift.area) ||
+          (liftClosedOn(lift, record.layer) &&
+            distance(record.position, closestPointOnPolygon(record.position, lift.area)) <= reach)),
+    );
+  }
+
+  /**
+   * Whoever rode `lift` (#3079), on the layer it has arrived at: everybody
+   * in its area on either of its layers, for nobody got on or off on the way.
+   */
+  #carry(lift: Lift): void {
+    const layer = restingLayer(lift);
+    if (layer === null) {
+      return;
+    }
+    for (const record of this.#participants.values()) {
+      if (
+        record.layer !== layer &&
+        (record.layer === lift.from || record.layer === lift.to) &&
+        pointInPolygon(record.position, lift.area)
+      ) {
+        record.layer = layer;
+        record.walkLayer = undefined;
+        this.#refreshFloors(record);
+      }
+    }
   }
 
   /**

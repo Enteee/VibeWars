@@ -6,23 +6,43 @@
   "teams": 2,
   "width": 1200,
   "height": 800,
-  "bounds": { "kind": "rect" },
+  "bounds": {
+    "kind": "rect"
+  },
   "layers": 4,
   "groundLayer": 1,
   "pits": [
     {
       "id": "west-pit",
-      "footprint": { "kind": "rect", "x": 500, "y": 520, "width": 200, "height": 130 }
+      "footprint": {
+        "kind": "rect",
+        "x": 500,
+        "y": 520,
+        "width": 200,
+        "height": 130
+      }
     },
     {
       "id": "east-pit",
-      "footprint": { "kind": "rect", "x": 980, "y": 520, "width": 140, "height": 130 }
+      "footprint": {
+        "kind": "rect",
+        "x": 980,
+        "y": 520,
+        "width": 140,
+        "height": 130
+      }
     }
   ],
   "tunnels": [
     {
       "id": "tunnel",
-      "footprint": { "kind": "rect", "x": 700, "y": 550, "width": 280, "height": 70 }
+      "footprint": {
+        "kind": "rect",
+        "x": 700,
+        "y": 550,
+        "width": 280,
+        "height": 70
+      }
     }
   ],
   "decks": [
@@ -31,70 +51,213 @@
       "look": "bridge-stone",
       "switched": null,
       "layer": 2,
-      "footprint": { "kind": "rect", "x": 420, "y": 350, "width": 360, "height": 200 }
+      "footprint": {
+        "kind": "rect",
+        "x": 420,
+        "y": 350,
+        "width": 360,
+        "height": 200
+      }
     },
     {
       "id": "platform",
       "look": "platform",
       "switched": null,
       "layer": 3,
-      "footprint": { "kind": "rect", "x": 520, "y": 160, "width": 160, "height": 110 }
+      "footprint": {
+        "kind": "rect",
+        "x": 520,
+        "y": 160,
+        "width": 160,
+        "height": 110
+      }
     }
   ],
   "transitions": [
     {
+      "id": "stairs-1",
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 300, "y": 350, "width": 140, "height": 200 },
+      "area": {
+        "kind": "rect",
+        "x": 300,
+        "y": 350,
+        "width": 140,
+        "height": 200
+      },
       "uphill": "e",
-      "look": "stairs"
+      "look": "stairs",
+      "lift": null
     },
     {
+      "id": "stairs-2",
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 760, "y": 350, "width": 140, "height": 200 },
+      "area": {
+        "kind": "rect",
+        "x": 760,
+        "y": 350,
+        "width": 140,
+        "height": 200
+      },
       "uphill": "w",
-      "look": "stairs"
+      "look": "stairs",
+      "lift": null
     },
     {
+      "id": "stairs-3",
       "from": 2,
       "to": 3,
-      "area": { "kind": "rect", "x": 540, "y": 250, "width": 120, "height": 120 },
+      "area": {
+        "kind": "rect",
+        "x": 540,
+        "y": 250,
+        "width": 120,
+        "height": 120
+      },
       "uphill": "n",
-      "look": "stairs"
+      "look": "stairs",
+      "lift": null
     },
     {
+      "id": "rough-steps-1",
       "from": 0,
       "to": 1,
-      "area": { "kind": "rect", "x": 500, "y": 545, "width": 110, "height": 80 },
+      "area": {
+        "kind": "rect",
+        "x": 500,
+        "y": 545,
+        "width": 110,
+        "height": 80
+      },
       "uphill": "w",
-      "look": "rough-steps"
+      "look": "rough-steps",
+      "lift": null
     },
     {
+      "id": "rough-steps-2",
       "from": 0,
       "to": 1,
-      "area": { "kind": "rect", "x": 1010, "y": 545, "width": 110, "height": 80 },
+      "area": {
+        "kind": "rect",
+        "x": 1010,
+        "y": 545,
+        "width": 110,
+        "height": 80
+      },
       "uphill": "e",
-      "look": "rough-steps"
+      "look": "rough-steps",
+      "lift": null
     }
   ],
   "dropOffs": [{ "layer": 2, "from": { "x": 440, "y": 350 }, "to": { "x": 520, "y": 350 } }],
   "walls": [
-    { "kind": "rect", "layer": 1, "x": 450, "y": 370, "width": 24, "height": 24 },
-    { "kind": "rect", "layer": 1, "x": 726, "y": 370, "width": 24, "height": 24 },
-    { "kind": "rect", "layer": 1, "x": 450, "y": 520, "width": 24, "height": 24 },
-    { "kind": "rect", "layer": 1, "x": 726, "y": 520, "width": 24, "height": 24 },
-    { "kind": "rect", "layer": 1, "x": 0, "y": 620, "width": 164, "height": 16 },
-    { "kind": "rect", "layer": 1, "x": 244, "y": 620, "width": 16, "height": 180 },
-    { "kind": "rect", "layer": 1, "x": 940, "y": 0, "width": 16, "height": 44 },
-    { "kind": "rect", "layer": 1, "x": 940, "y": 124, "width": 260, "height": 16 },
-    { "kind": "rect", "layer": 2, "x": 700, "y": 470, "width": 40, "height": 40 }
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 450,
+      "y": 370,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 726,
+      "y": 370,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 450,
+      "y": 520,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 726,
+      "y": 520,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 0,
+      "y": 620,
+      "width": 164,
+      "height": 16
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 244,
+      "y": 620,
+      "width": 16,
+      "height": 180
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 940,
+      "y": 0,
+      "width": 16,
+      "height": 44
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 940,
+      "y": 124,
+      "width": 260,
+      "height": 16
+    },
+    {
+      "kind": "rect",
+      "layer": 2,
+      "x": 700,
+      "y": 470,
+      "width": 40,
+      "height": 40
+    }
   ],
   "spawnPoints": [
-    { "team": 0, "layer": 1, "position": { "x": 120, "y": 450 } },
-    { "team": 1, "layer": 1, "position": { "x": 1080, "y": 450 } },
-    { "team": 1, "layer": 2, "position": { "x": 640, "y": 500 } },
-    { "team": 1, "layer": 3, "position": { "x": 600, "y": 210 } }
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 120,
+        "y": 450
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 1080,
+        "y": 450
+      }
+    },
+    {
+      "team": 1,
+      "layer": 2,
+      "position": {
+        "x": 640,
+        "y": 500
+      }
+    },
+    {
+      "team": 1,
+      "layer": 3,
+      "position": {
+        "x": 600,
+        "y": 210
+      }
+    }
   ],
   "objectives": [],
   "gates": [],
@@ -106,16 +269,46 @@
       "area": {
         "kind": "polygon",
         "points": [
-          { "x": 1035, "y": 200 },
-          { "x": 1003, "y": 228 },
-          { "x": 951, "y": 252 },
-          { "x": 875, "y": 245 },
-          { "x": 809, "y": 231 },
-          { "x": 780, "y": 200 },
-          { "x": 819, "y": 172 },
-          { "x": 871, "y": 170 },
-          { "x": 946, "y": 174 },
-          { "x": 1011, "y": 189 }
+          {
+            "x": 1035,
+            "y": 200
+          },
+          {
+            "x": 1003,
+            "y": 228
+          },
+          {
+            "x": 951,
+            "y": 252
+          },
+          {
+            "x": 875,
+            "y": 245
+          },
+          {
+            "x": 809,
+            "y": 231
+          },
+          {
+            "x": 780,
+            "y": 200
+          },
+          {
+            "x": 819,
+            "y": 172
+          },
+          {
+            "x": 871,
+            "y": 170
+          },
+          {
+            "x": 946,
+            "y": 174
+          },
+          {
+            "x": 1011,
+            "y": 189
+          }
         ]
       }
     },
@@ -126,13 +319,34 @@
       "area": {
         "kind": "polygon",
         "points": [
-          { "x": 300, "y": 372 },
-          { "x": 300, "y": 528 },
-          { "x": 262, "y": 540 },
-          { "x": 222, "y": 518 },
-          { "x": 206, "y": 470 },
-          { "x": 214, "y": 414 },
-          { "x": 250, "y": 372 }
+          {
+            "x": 300,
+            "y": 372
+          },
+          {
+            "x": 300,
+            "y": 528
+          },
+          {
+            "x": 262,
+            "y": 540
+          },
+          {
+            "x": 222,
+            "y": 518
+          },
+          {
+            "x": 206,
+            "y": 470
+          },
+          {
+            "x": 214,
+            "y": 414
+          },
+          {
+            "x": 250,
+            "y": 372
+          }
         ]
       }
     },
@@ -143,14 +357,38 @@
       "area": {
         "kind": "polygon",
         "points": [
-          { "x": 278, "y": 190 },
-          { "x": 263, "y": 206 },
-          { "x": 240, "y": 219 },
-          { "x": 216, "y": 207 },
-          { "x": 202, "y": 190 },
-          { "x": 217, "y": 174 },
-          { "x": 240, "y": 161 },
-          { "x": 264, "y": 173 }
+          {
+            "x": 278,
+            "y": 190
+          },
+          {
+            "x": 263,
+            "y": 206
+          },
+          {
+            "x": 240,
+            "y": 219
+          },
+          {
+            "x": 216,
+            "y": 207
+          },
+          {
+            "x": 202,
+            "y": 190
+          },
+          {
+            "x": 217,
+            "y": 174
+          },
+          {
+            "x": 240,
+            "y": 161
+          },
+          {
+            "x": 264,
+            "y": 173
+          }
         ]
       }
     },
@@ -161,30 +399,80 @@
       "area": {
         "kind": "polygon",
         "points": [
-          { "x": 1102, "y": 715 },
-          { "x": 1090, "y": 729 },
-          { "x": 1070, "y": 739 },
-          { "x": 1051, "y": 728 },
-          { "x": 1038, "y": 715 },
-          { "x": 1050, "y": 701 },
-          { "x": 1070, "y": 691 },
-          { "x": 1089, "y": 702 }
+          {
+            "x": 1102,
+            "y": 715
+          },
+          {
+            "x": 1090,
+            "y": 729
+          },
+          {
+            "x": 1070,
+            "y": 739
+          },
+          {
+            "x": 1051,
+            "y": 728
+          },
+          {
+            "x": 1038,
+            "y": 715
+          },
+          {
+            "x": 1050,
+            "y": 701
+          },
+          {
+            "x": 1070,
+            "y": 691
+          },
+          {
+            "x": 1089,
+            "y": 702
+          }
         ]
       }
     }
   ],
   "lighting": {
-    "ambient": { "colour": 11582676, "intensity": 0.45 },
-    "indoorAmbient": { "colour": 5924488, "intensity": 0.3 },
+    "ambient": {
+      "colour": 11582676,
+      "intensity": 0.45
+    },
+    "indoorAmbient": {
+      "colour": 5924488,
+      "intensity": 0.3
+    },
     "indoor": [
-      { "kind": "rect", "x": 0, "y": 620, "width": 260, "height": 180 },
-      { "kind": "rect", "x": 940, "y": 0, "width": 260, "height": 140 }
+      {
+        "kind": "rect",
+        "x": 0,
+        "y": 620,
+        "width": 260,
+        "height": 180
+      },
+      {
+        "kind": "rect",
+        "x": 940,
+        "y": 0,
+        "width": 260,
+        "height": 140
+      }
     ],
-    "sun": { "directionDeg": 315, "elevationDeg": 50, "colour": 16773590, "intensity": 0.55 },
+    "sun": {
+      "directionDeg": 315,
+      "elevationDeg": 50,
+      "colour": 16773590,
+      "intensity": 0.55
+    },
     "lights": [
       {
         "id": "fire-west-hearth",
-        "position": { "x": 110, "y": 720 },
+        "position": {
+          "x": 110,
+          "y": 720
+        },
         "layer": 1,
         "radius": 260,
         "colour": 16748608,
@@ -193,7 +481,10 @@
       },
       {
         "id": "torch-west-door",
-        "position": { "x": 252, "y": 606 },
+        "position": {
+          "x": 252,
+          "y": 606
+        },
         "layer": 1,
         "radius": 150,
         "colour": 16756832,
@@ -202,7 +493,10 @@
       },
       {
         "id": "fire-east-hearth",
-        "position": { "x": 1090, "y": 70 },
+        "position": {
+          "x": 1090,
+          "y": 70
+        },
         "layer": 1,
         "radius": 260,
         "colour": 16748608,
@@ -211,7 +505,10 @@
       },
       {
         "id": "torch-east-door",
-        "position": { "x": 920, "y": 120 },
+        "position": {
+          "x": 920,
+          "y": 120
+        },
         "layer": 1,
         "radius": 150,
         "colour": 16756832,
@@ -220,7 +517,10 @@
       },
       {
         "id": "torch-bridge-west",
-        "position": { "x": 460, "y": 362 },
+        "position": {
+          "x": 460,
+          "y": 362
+        },
         "layer": 2,
         "radius": 150,
         "colour": 16756832,
@@ -229,7 +529,10 @@
       },
       {
         "id": "torch-bridge-east",
-        "position": { "x": 740, "y": 538 },
+        "position": {
+          "x": 740,
+          "y": 538
+        },
         "layer": 2,
         "radius": 150,
         "colour": 16756832,
@@ -238,7 +541,10 @@
       },
       {
         "id": "torch-platform",
-        "position": { "x": 530, "y": 170 },
+        "position": {
+          "x": 530,
+          "y": 170
+        },
         "layer": 3,
         "radius": 150,
         "colour": 16756832,

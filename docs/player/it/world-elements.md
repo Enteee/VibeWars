@@ -119,6 +119,17 @@ Una **saracinesca** è una grata di ferro in un arco di pietra che una
 leva o una piastra solleva. Un **passaggio nascosto** sembra identico al
 muro di roccia intorno finché non si apre su un varco buio.
 
+## Ascensori
+
+Un **ascensore** è una piattaforma di assi in un telaio di ferro che ti
+porta tra un pavimento più basso e uno rialzato. Sali mentre è fermo al
+tuo livello. Alcuni ascensori salgono e scendono da soli e si fermano
+qualche secondo a ogni estremità; altri vanno all'altro livello ogni
+volta che si tira la loro leva, e tirarla mentre si muove non fa nulla.
+Mentre un ascensore si muove, sbarre di ferro chiudono entrambe le
+estremità e una freccia d'ottone indica dove va: nessuno può salire o
+scendere, e niente può farti cadere. Quando si ferma, scendi.
+
 ## Meteo e atmosfera
 
 Banchi di nebbia, fumo, vapore, pioggia e neve sono solo per l'occhio. Non

@@ -120,6 +120,17 @@ plakanın kaldırdığı demir bir ızgaradır. **Gizli bir geçit**, karanlık
 bir boşluğa açılana kadar çevresindeki kaya duvarın tıpatıp aynısı gibi
 görünür.
 
+## Asansörler
+
+**Asansör**, seni alçak bir zeminle yükseltilmiş bir zemin arasında
+taşıyan, demir bir çerçeve içindeki tahta bir platformdur. Senin
+seviyende dururken bin. Bazı asansörler kendi kendine iner çıkar ve her
+uçta birkaç saniye bekler; diğerleri kolu her çekildiğinde öbür seviyeye
+gider, hareket hâlindeyken kolu çekmek hiçbir şey yapmaz. Asansör
+hareket ederken demir parmaklıklar iki ucunu da kapatır ve pirinç bir ok
+gittiği yönü gösterir: kimse binip inemez ve hiçbir şey seni üzerinden
+düşüremez. Durduğunda in.
+
 ## Hava ve atmosfer
 
 Sis kümeleri, duman, buhar, yağmur ve kar yalnızca göz içindir. Seni

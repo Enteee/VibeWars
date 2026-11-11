@@ -1,6 +1,7 @@
 import {
   Vec,
   type CreatureLook,
+  type LiftPhase,
   type OffhandId,
   type ProfessionId,
   type SkillType,
@@ -14,6 +15,7 @@ import type {
   DeckLook,
   GateLook,
   SwitchedDeckData,
+  TransitionLift,
   TransitionLook,
 } from "@vibewars/game-maps/schema";
 
@@ -184,6 +186,12 @@ export interface RenderableSwitchedDeck extends Pick<
   readonly cracks: number;
 }
 
+/** A lift (#3079) as it stands: resting at a layer or on its way, and how high, 0 to 1. */
+export interface RenderableLift {
+  readonly phase: LiftPhase;
+  readonly progress: number;
+}
+
 /** A deck of a map (#3067). */
 export interface MapDeck {
   readonly layer: number;
@@ -224,6 +232,8 @@ export interface MapStructure {
     readonly area: RenderableShape;
     readonly uphill: Uphill;
     readonly look: TransitionLook;
+    /** How it runs if it is a lift (#3079); `null` for one walked up and down. */
+    readonly lift: TransitionLift | null;
   }[];
   readonly water: readonly MapWater[];
   readonly zones: readonly MapZone[];
@@ -524,6 +534,11 @@ export interface ArenaSnapshot {
    * without them. A standing one is also among `walls`, which draw it.
    */
   readonly breakables: readonly RenderableBreakable[];
+  /**
+   * Each of the map's lifts (#3079), in its transitions' order: where it is
+   * and how high; `[]` on a map without them.
+   */
+  readonly lifts: readonly RenderableLift[];
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
@@ -571,6 +586,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   switches: [],
   teleports: [],
   breakables: [],
+  lifts: [],
   targetId: undefined,
   projectiles: [],
   groundEffects: [],
@@ -677,7 +693,9 @@ export function actorAtPoint(
           ...actor,
           position: {
             x: actor.position.x,
-            y: actor.position.y - liftAt(snapshot.structure, actor.position, actor.layer),
+            y:
+              actor.position.y -
+              liftAt(snapshot.structure, snapshot.lifts, actor.position, actor.layer),
           },
         }));
   return (

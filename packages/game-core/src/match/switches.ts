@@ -30,6 +30,8 @@ export interface SwitchField {
   readonly teleports: readonly number[];
   /** The switched decks it toggles (#3068), as indices into the match's switched decks. */
   readonly decks: readonly number[];
+  /** The lever lifts it sends off (#3079), as indices into the match's lifts. */
+  readonly lifts: readonly number[];
 }
 
 /** One switch as it stands. */

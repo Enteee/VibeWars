@@ -96,6 +96,7 @@
   "dropOffs": [],
   "transitions": [
     {
+      "id": "ramp-1",
       "from": 1,
       "to": 2,
       "area": {
@@ -106,9 +107,11 @@
         "height": 60
       },
       "uphill": "e",
-      "look": "ramp"
+      "look": "ramp",
+      "lift": null
     },
     {
+      "id": "ramp-2",
       "from": 1,
       "to": 2,
       "area": {
@@ -119,9 +122,11 @@
         "height": 60
       },
       "uphill": "w",
-      "look": "ramp"
+      "look": "ramp",
+      "lift": null
     },
     {
+      "id": "rough-steps-1",
       "from": 0,
       "to": 1,
       "area": {
@@ -132,9 +137,11 @@
         "height": 140
       },
       "uphill": "s",
-      "look": "rough-steps"
+      "look": "rough-steps",
+      "lift": null
     },
     {
+      "id": "ramp-3",
       "from": 1,
       "to": 2,
       "area": {
@@ -145,9 +152,11 @@
         "height": 160
       },
       "uphill": "e",
-      "look": "ramp"
+      "look": "ramp",
+      "lift": null
     },
     {
+      "id": "ramp-4",
       "from": 1,
       "to": 2,
       "area": {
@@ -158,9 +167,11 @@
         "height": 160
       },
       "uphill": "w",
-      "look": "ramp"
+      "look": "ramp",
+      "lift": null
     },
     {
+      "id": "ramp-5",
       "from": 1,
       "to": 2,
       "area": {
@@ -171,9 +182,11 @@
         "height": 50
       },
       "uphill": "e",
-      "look": "ramp"
+      "look": "ramp",
+      "lift": null
     },
     {
+      "id": "ramp-6",
       "from": 1,
       "to": 2,
       "area": {
@@ -184,7 +197,8 @@
         "height": 50
       },
       "uphill": "w",
-      "look": "ramp"
+      "look": "ramp",
+      "lift": null
     }
   ],
   "walls": [

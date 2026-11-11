@@ -87,6 +87,7 @@ const MATCH: MatchSnapshot = {
   teleports: [],
   breakables: [],
   decks: [],
+  lifts: [],
   summary: undefined,
 };
 

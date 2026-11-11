@@ -181,6 +181,7 @@ import {
   transitionPalette,
   type DeckFrame,
 } from "./structure-art.js";
+import { liftFrame, liftPlatform, liftShaft, type LiftFrame } from "./lift-art.js";
 import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
@@ -428,6 +429,10 @@ export class ArenaScene extends Phaser.Scene {
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
+  private readonly liftGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** Each lift as its art draws it, in the snapshot's `lifts` order; set when the map is drawn. */
+  private liftFrames: readonly { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
   /** The map's water (#2984), built when the map changes. */
   private waterShapes: readonly WaterShape[] = [];
   /** The ripples on each layer's water, drawn every frame. */
@@ -702,6 +707,7 @@ export class ArenaScene extends Phaser.Scene {
     this.updateLighting(time);
     this.updateGroundEffects();
     this.drawMap();
+    this.drawLifts();
     this.drawRipples();
     this.drawZones();
     this.drawAtmosphere(deltaMs / 1000);
@@ -800,7 +806,7 @@ export class ArenaScene extends Phaser.Scene {
     const seen = new Set<string>();
     const lifted = actors.map((actor) => {
       seen.add(actor.id);
-      const target = liftAt(structure, actor.position, actor.layer);
+      const target = liftAt(structure, this.snapshot.lifts, actor.position, actor.layer);
       const known = this.elevations.get(actor.id);
       const was = this.lastLayers.get(actor.id);
       this.lastLayers.set(actor.id, actor.layer);
@@ -1488,7 +1494,12 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     for (const shot of this.snapshot.projectiles) {
-      const position = projectilePosition(shot, clock, this.snapshot.structure);
+      const position = projectilePosition(
+        shot,
+        clock,
+        this.snapshot.structure,
+        this.snapshot.lifts,
+      );
       const shown = this.projectileImages.get(shot.id);
       // An ended shot never flies again, even while its id is still sent.
       if (position === undefined || this.endedShots.has(shot.id)) {
@@ -1499,11 +1510,11 @@ export class ArenaScene extends Phaser.Scene {
         const image = this.add
           .image(position.x, position.y, ATLAS, projectileFrame(shot.sprite))
           .setDepth(OVERLAY_DEPTH);
-        image.setRotation(projectileHeading(shot, this.snapshot.structure));
+        image.setRotation(projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts));
         image.setTint(shot.colour);
         this.projectileImages.set(shot.id, {
           image,
-          to: projectileLanding(shot, this.snapshot.structure),
+          to: projectileLanding(shot, this.snapshot.structure, this.snapshot.lifts),
           endedAt: undefined,
         });
       } else {
@@ -2055,7 +2066,7 @@ export class ArenaScene extends Phaser.Scene {
       const drawn = onDeck ? this.deckGroundGraphicsOf(effect.layer) : g;
       const x = effect.position.x;
       const y = onDeck
-        ? effect.position.y - liftAt(structure, effect.position, effect.layer)
+        ? effect.position.y - liftAt(structure, this.snapshot.lifts, effect.position, effect.layer)
         : effect.position.y - elevationOf(effect.layer, structure.ground);
       if (effect.filled) {
         drawn.fillStyle(effect.colour, 0.15);
@@ -2329,6 +2340,7 @@ export class ArenaScene extends Phaser.Scene {
       surface.restore();
     }
     this.drawPits(next.structure, line, palette);
+    const lifts: { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
     for (const transition of next.structure.transitions) {
       const lit = litStructurePalette(
         transitionPalette(palette, transition.look),
@@ -2336,8 +2348,16 @@ export class ArenaScene extends Phaser.Scene {
         transition.area,
         transition.from,
       );
-      this.drawRamp(next.structure, transition, line, lit);
+      if (transition.lift === null) {
+        this.drawRamp(next.structure, transition, line, lit);
+      } else {
+        const frame = liftFrame(next.structure, transition, line, lit);
+        const upperLayer = Math.max(transition.from, transition.to);
+        liftShaft(this.structureAt({ kind: "ramp", upperLayer }), frame);
+        lifts.push({ frame, upperLayer });
+      }
     }
+    this.liftFrames = lifts;
     for (const wall of next.walls) {
       const held = deckHeldBy(wall, next.structure);
       const g = this.structureAt(
@@ -2545,6 +2565,26 @@ export class ArenaScene extends Phaser.Scene {
       g.arc(world.x, world.y, HOVER_RADIUS, 2 * k * dash, (2 * k + 1) * dash);
       g.strokePath();
     }
+  }
+
+  /** Each lift's platform where the snapshot has it now (#3079), drawn afresh every frame. */
+  private drawLifts(): void {
+    for (const graphics of this.liftGraphics.values()) {
+      graphics.clear();
+    }
+    this.liftFrames.forEach(({ frame, upperLayer }, at) => {
+      const lift = this.snapshot.lifts[at];
+      if (lift === undefined) {
+        return;
+      }
+      const depth = renderOrder({ kind: "lift", upperLayer });
+      let graphics = this.liftGraphics.get(depth);
+      if (graphics === undefined) {
+        graphics = this.add.graphics().setDepth(depth);
+        this.liftGraphics.set(depth, graphics);
+      }
+      liftPlatform(graphics, frame, lift);
+    });
   }
 
   /** The static graphics at `item`'s place in the draw order. */

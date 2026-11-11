@@ -118,6 +118,17 @@ broja koraka; tko je tada na njemu padne kao s presječenog mosta.
 poluga ili ploča. **Skriveni prolaz** izgleda baš kao stjenoviti zid oko
 njega dok se ne otvori u mračan procjep.
 
+## Dizala
+
+**Dizalo** je platforma od dasaka u željeznom okviru koja te nosi između
+nižeg i povišenog poda. Stani na nju dok miruje na tvojoj razini. Neka
+dizala sama idu gore i dolje i na svakom kraju stanu na nekoliko
+sekundi; druga odlaze na drugu razinu svaki put kad se povuče njihova
+poluga, a povlačenje dok se kreću ne čini ništa. Dok se dizalo kreće,
+željezne rešetke zatvaraju oba njegova kraja, a mjedena strelica
+pokazuje kamo ide: nitko ne može ući ni izaći i ništa te ne može srušiti
+s njega. Kad stane, siđi.
+
 ## Isprobaj ih
 
 U **Poligonu za vježbu** uređivača sastava odaberi scenarij **Divljina**:

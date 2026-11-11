@@ -6,7 +6,9 @@
   "teams": 2,
   "width": 1600,
   "height": 800,
-  "bounds": { "kind": "rect" },
+  "bounds": {
+    "kind": "rect"
+  },
   "layers": 2,
   "groundLayer": 0,
   "pits": [],
@@ -17,35 +19,99 @@
       "look": "bridge-stone",
       "switched": null,
       "layer": 1,
-      "footprint": { "kind": "rect", "x": 500, "y": 300, "width": 600, "height": 200 }
+      "footprint": {
+        "kind": "rect",
+        "x": 500,
+        "y": 300,
+        "width": 600,
+        "height": 200
+      }
     }
   ],
   "transitions": [
     {
+      "id": "ramp-1",
       "from": 0,
       "to": 1,
-      "area": { "kind": "rect", "x": 350, "y": 300, "width": 170, "height": 200 },
+      "area": {
+        "kind": "rect",
+        "x": 350,
+        "y": 300,
+        "width": 170,
+        "height": 200
+      },
       "uphill": "e",
-      "look": "ramp"
+      "look": "ramp",
+      "lift": null
     },
     {
+      "id": "ramp-2",
       "from": 0,
       "to": 1,
-      "area": { "kind": "rect", "x": 1080, "y": 300, "width": 170, "height": 200 },
+      "area": {
+        "kind": "rect",
+        "x": 1080,
+        "y": 300,
+        "width": 170,
+        "height": 200
+      },
       "uphill": "w",
-      "look": "ramp"
+      "look": "ramp",
+      "lift": null
     }
   ],
   "dropOffs": [],
   "walls": [
-    { "kind": "rect", "layer": 0, "x": 780, "y": 120, "width": 40, "height": 40 },
-    { "kind": "rect", "layer": 1, "x": 780, "y": 400, "width": 40, "height": 40 }
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 780,
+      "y": 120,
+      "width": 40,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 780,
+      "y": 400,
+      "width": 40,
+      "height": 40
+    }
   ],
   "spawnPoints": [
-    { "team": 0, "layer": 0, "position": { "x": 200, "y": 400 } },
-    { "team": 1, "layer": 0, "position": { "x": 1400, "y": 400 } },
-    { "team": 0, "layer": 1, "position": { "x": 600, "y": 400 } },
-    { "team": 1, "layer": 1, "position": { "x": 1000, "y": 400 } }
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 200,
+        "y": 400
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1400,
+        "y": 400
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 600,
+        "y": 400
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 1000,
+        "y": 400
+      }
+    }
   ],
   "objectives": [],
   "gates": []

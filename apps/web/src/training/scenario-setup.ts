@@ -15,6 +15,7 @@ import {
   matchSwitches,
   matchTeleports,
   matchBreakables,
+  matchLifts,
   matchSwitchedDecks,
   matchZones,
 } from "@vibewars/game-maps/layers";
@@ -141,6 +142,7 @@ export function setupScenario(
     teleports: matchTeleports(map),
     breakables: matchBreakables(map),
     switchedDecks: matchSwitchedDecks(map),
+    lifts: matchLifts(map),
     participants: [
       {
         id: SELF_ID,

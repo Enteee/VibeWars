@@ -32,7 +32,8 @@ export function integrateMovement(
 /**
  * How fast a body crosses each look of ramp or stairs (#3069), as a share
  * of its speed, up or down alike: a ramp or stairs at full speed, rough
- * steps a little slower, a ladder at half. "Jump down fast, climb back
+ * steps a little slower, a ladder at half. A lift's platform is flat and
+ * carries you itself (#3079), so you walk it at full speed. "Jump down fast, climb back
  * slowly" is a drop-off beside a ladder.
  */
 export const CLIMB_PACE = {
@@ -41,6 +42,7 @@ export const CLIMB_PACE = {
   "stairs-landing": 1,
   "rough-steps": 0.8,
   ladder: 0.5,
+  lift: 1,
 } as const satisfies Readonly<Record<string, number>>;
 
 /** A look a transition is climbed by (#3069): what sets its pace. */

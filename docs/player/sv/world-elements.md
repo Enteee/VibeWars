@@ -116,6 +116,17 @@ Ett **fällgaller** är ett järngaller i en stenbåge som en spak eller
 platta hissar. En **dold gång** ser precis ut som klippväggen runt den
 tills den öppnar sig mot en mörk springa.
 
+## Hissar
+
+En **hiss** är en plankplattform i en järnram som bär dig mellan ett
+lägre golv och ett upphöjt. Kliv på medan den står still på din nivå.
+Vissa hissar åker upp och ner av sig själva och stannar några sekunder i
+varje ände; andra åker till den andra nivån varje gång deras spak dras,
+och ett drag medan den åker gör ingenting. Medan en hiss åker stänger
+järngaller båda dess ändar och en mässingspil visar vart den är på väg:
+ingen kan kliva på eller av, och ingenting kan knuffa dig av den. När
+den stannar, kliv av.
+
 ## Väder och atmosfär
 
 Dimbankar, rök, ånga, regn och snö är bara för ögat. De skadar dig

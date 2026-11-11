@@ -86,18 +86,18 @@ describe("projectilePosition", () => {
   };
 
   it("flies from its release to its aim point over its flight", () => {
-    expect(projectilePosition(shot, 10, FLAT_STRUCTURE)).toEqual({ x: 0, y: 0 });
-    expect(projectilePosition(shot, 11, FLAT_STRUCTURE)).toEqual({ x: 50, y: 25 });
-    expect(projectilePosition(shot, 12, FLAT_STRUCTURE)).toEqual({ x: 100, y: 50 });
+    expect(projectilePosition(shot, 10, FLAT_STRUCTURE, [])).toEqual({ x: 0, y: 0 });
+    expect(projectilePosition(shot, 11, FLAT_STRUCTURE, [])).toEqual({ x: 50, y: 25 });
+    expect(projectilePosition(shot, 12, FLAT_STRUCTURE, [])).toEqual({ x: 100, y: 50 });
   });
 
   it("is not drawn once it has landed, and waits at its release before", () => {
-    expect(projectilePosition(shot, 12.01, FLAT_STRUCTURE)).toBeUndefined();
-    expect(projectilePosition(shot, 9, FLAT_STRUCTURE)).toEqual({ x: 0, y: 0 });
+    expect(projectilePosition(shot, 12.01, FLAT_STRUCTURE, [])).toBeUndefined();
+    expect(projectilePosition(shot, 9, FLAT_STRUCTURE, [])).toEqual({ x: 0, y: 0 });
   });
 
   it("points the way it flies", () => {
-    expect(projectileHeading(shot, FLAT_STRUCTURE)).toBeCloseTo(Math.atan2(50, 100), 9);
+    expect(projectileHeading(shot, FLAT_STRUCTURE, [])).toBeCloseTo(Math.atan2(50, 100), 9);
   });
 });
 
@@ -165,8 +165,8 @@ describe("a shot between layers (#2972)", () => {
 
   it("starts at the shooter's height and rises evenly to the target's", () => {
     const lift = elevationOf(1, 0);
-    expect(projectilePosition(shot, 10, decked)).toEqual({ x: 0, y: 0 });
-    expect(projectilePosition(shot, 11, decked)).toEqual({ x: 50, y: -lift / 2 });
-    expect(projectilePosition(shot, 12, decked)).toEqual({ x: 100, y: -lift });
+    expect(projectilePosition(shot, 10, decked, [])).toEqual({ x: 0, y: 0 });
+    expect(projectilePosition(shot, 11, decked, [])).toEqual({ x: 50, y: -lift / 2 });
+    expect(projectilePosition(shot, 12, decked, [])).toEqual({ x: 100, y: -lift });
   });
 });

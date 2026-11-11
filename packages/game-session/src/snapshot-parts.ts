@@ -188,6 +188,7 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
       teleports: part.teleports,
       breakables: part.breakables,
       decks: part.decks,
+      lifts: part.lifts,
     };
   };
 }

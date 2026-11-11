@@ -82,6 +82,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     teleports: [],
     breakables: [],
     decks: [],
+    lifts: [],
     summary: undefined,
   };
 }

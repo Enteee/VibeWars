@@ -111,6 +111,17 @@ z preseknutého mosta.
 páka alebo doska. **Skrytá chodba** vyzerá presne ako skalná stena
 okolo nej, kým sa neotvorí do tmavého otvoru.
 
+## Výťahy
+
+**Výťah** je plošina z dosiek v železnom ráme, ktorá ťa prevezie medzi
+nižšou a vyvýšenou podlahou. Nastúp, keď stojí na tvojej úrovni.
+Niektoré výťahy jazdia hore a dole samy a na každom konci na pár sekúnd
+zastanú; iné idú na druhú úroveň zakaždým, keď niekto potiahne ich páku,
+a potiahnutie počas jazdy nič nerobí. Kým výťah ide, železné mreže
+uzavrú oba jeho konce a mosadzná šípka ukazuje, kam ide: nikto nemôže
+nastúpiť ani vystúpiť a nič ťa z neho nemôže zhodiť. Keď zastane,
+vystúp.
+
 ## Počasie a atmosféra
 
 Hmlové pásy, dym, para, dážď a sneh sú len pre oko. Nikdy ťa nezrania,

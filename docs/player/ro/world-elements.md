@@ -115,6 +115,18 @@ O **hersă** este un grilaj de fier într-un arc de piatră, pe care îl
 ridică o manetă sau o placă. Un **pasaj ascuns** arată exact ca zidul
 de stâncă din jur până când se deschide spre o deschizătură întunecată.
 
+## Ascensoare
+
+Un **ascensor** este o platformă de scânduri într-un cadru de fier care
+te duce între o podea mai joasă și una înălțată. Urcă-te când stă la
+nivelul tău. Unele ascensoare urcă și coboară singure și se opresc
+câteva secunde la fiecare capăt; altele merg la celălalt nivel de
+fiecare dată când li se trage maneta, iar trasul în timpul mersului nu
+face nimic. Cât timp un ascensor se mișcă, gratii de fier îi închid
+ambele capete și o săgeată de alamă arată încotro merge: nimeni nu poate
+urca sau coborî și nimic nu te poate arunca de pe el. Când se oprește,
+coboară.
+
 ## Vreme și atmosferă
 
 Bancurile de ceață, fumul, aburul, ploaia și zăpada sunt doar de privit. Nu te

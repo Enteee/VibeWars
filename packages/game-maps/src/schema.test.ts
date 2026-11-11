@@ -29,6 +29,7 @@ import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
 import heights from "../training/training-heights/map.json" with { type: "json" };
 import structures from "../test-maps/structures/map.json" with { type: "json" };
+import liftsTest from "../test-maps/lifts/map.json" with { type: "json" };
 import switchedTest from "../test-maps/switched/map.json" with { type: "json" };
 
 const validMap = {
@@ -967,7 +968,9 @@ describe("ghost maps (#2689)", () => {
           gates: [door],
           switches: [{ ...lever, targets: ["door", "nowhere"] }],
         }),
-      ).toThrow(/switch lever names nowhere, which is no gate, teleport or switched deck/);
+      ).toThrow(
+        /switch lever names nowhere, which is no gate, teleport, switched deck or lever lift/,
+      );
       expect(() =>
         validateMapData({
           ...validMap,
@@ -1095,7 +1098,7 @@ describe("ghost maps (#2689)", () => {
       expect(validateMapData({ ...validMap, gates, teleports: [teleport] }).gates).toHaveLength(6);
       expect(() =>
         validateMapData({ ...validMap, gates, teleports: [teleport], switches: [lever] }),
-      ).toThrow(/7 gates, breakables, switched teleports and switched decks, more than 6/);
+      ).toThrow(/7 gates, breakables, switched teleports, switched decks and lifts, more than 6/);
     });
   });
 
@@ -1161,18 +1164,20 @@ describe("ghost maps (#2689)", () => {
           gates,
           breakables: [crack, { ...crack, id: "crack-2" }],
         }),
-      ).toThrow(/7 gates, breakables, switched teleports and switched decks, more than 6/);
+      ).toThrow(/7 gates, breakables, switched teleports, switched decks and lifts, more than 6/);
     });
   });
 });
 
 describe("layers, decks and transitions (#2826, ADR-0051)", () => {
   const ramp = (from: number, to: number, x = 350) => ({
+    id: `ramp-${String(from)}-${String(x)}`,
     from,
     to,
     area: { kind: "rect", x, y: 300, width: 170, height: 200 },
     uphill: "e",
     look: "ramp",
+    lift: null,
   });
   const deck = (id: string, layer: number) => ({
     id,
@@ -1409,11 +1414,13 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     const uphillBy = (width: number) => ({
       transitions: [
         {
+          id: "ramp-new-1",
           from: 0,
           to: 1,
           area: { kind: "rect", x: 520 - width, y: 300, width, height: 200 },
           uphill: "e",
           look: "ramp",
+          lift: null,
         },
         ...(far === undefined ? [] : [far]),
       ],
@@ -1430,11 +1437,13 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
         transitions: [
           ...layerTest.transitions,
           {
+            id: "ramp-new-2",
             from: 1,
             to: 2,
             area: { kind: "rect", x: 100, y: 100, width: 50, height: 50 },
             uphill: "n",
             look: "ramp",
+            lift: null,
           },
         ],
       },
@@ -1450,11 +1459,13 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
       {
         transitions: [
           {
+            id: "ramp-new-3",
             from: 0,
             to: 1,
             area: { kind: "rect", x: 10, y: 10, width: 50, height: 50 },
             uphill: "e",
             look: "ramp",
+            lift: null,
           },
         ],
       },
@@ -2036,11 +2047,11 @@ describe("switched decks and gate looks (#3068)", () => {
   it("refuses a switch naming a fixed deck, an unknown one, or a gate sharing a deck's id", () => {
     refuses(
       { switches: [{ id: "lever", layer: 1, position: { x: 660, y: 760 }, targets: ["nowhere"] }] },
-      /switch lever names nowhere, which is no gate, teleport or switched deck/,
+      /switch lever names nowhere, which is no gate, teleport, switched deck or lever lift/,
     );
     refuses(
       { decks: [ropeBridge, { ...drawbridge, switched: null }, planks] },
-      /switch drawbridge-lever names drawbridge, which is no gate, teleport or switched deck/,
+      /switch drawbridge-lever names drawbridge, which is no gate, teleport, switched deck or lever lift/,
     );
     refuses(
       {
@@ -2062,7 +2073,7 @@ describe("switched decks and gate looks (#3068)", () => {
           { ...gate, id: "spare-b", wall: { ...gate?.wall, y: 500 } },
         ],
       },
-      /7 gates, breakables, switched teleports and switched decks, more than 6/,
+      /7 gates, breakables, switched teleports, switched decks and lifts, more than 6/,
     );
   });
 
@@ -2114,6 +2125,64 @@ describe("switched decks and gate looks (#3068)", () => {
     refuses(
       { switches: switchedTest.switches.filter(({ id }) => id !== "rope-lever") },
       /deck rope-bridge is switched, and no switch names it nor do crossings bring it down/,
+    );
+  });
+});
+
+describe("lifts (#3079)", () => {
+  const refuses = (overrides: object, message: RegExp): void => {
+    expect(() => validateMapData({ ...liftsTest, ...overrides })).toThrow(message);
+  };
+  const [timerLift, leverLift] = liftsTest.transitions;
+  const withTimerLift = (changes: object) => ({
+    transitions: [{ ...timerLift, ...changes }, leverLift],
+  });
+
+  it("validates the lifts test map, a timer lift and a lever lift on it", () => {
+    const map = validateMapData(liftsTest);
+    expect(map.transitions.map(({ lift }) => lift?.kind)).toEqual(["timer", "lever"]);
+  });
+
+  it("refuses a lift's look without a lift to run, and a lift that looks like a ramp", () => {
+    refuses(withTimerLift({ lift: null }), /transition timer-lift looks a lift but does not run/);
+    refuses(withTimerLift({ look: "ramp" }), /lift timer-lift must look a lift/);
+  });
+
+  it("refuses a lift that goes nowhere above its foot", () => {
+    refuses(withTimerLift({ to: 0 }), /transition 0 goes to 0, not one above 0/);
+  });
+
+  it("refuses a lever lift no switch names, and a switch naming a timer lift", () => {
+    refuses({ switches: [] }, /lever lift lever-lift is named by no switch/);
+    const [lever, ...levers] = liftsTest.switches;
+    refuses(
+      { switches: [{ ...lever, targets: ["timer-lift"] }, ...levers] },
+      /names timer-lift, which is no gate, teleport, switched deck or lever lift/,
+    );
+  });
+
+  it("refuses a timer lift that rests less than a tick at an end", () => {
+    refuses(
+      withTimerLift({ lift: { kind: "timer", restSeconds: 0.01, travelSeconds: 2 } }),
+      /restSeconds/,
+    );
+  });
+
+  it("refuses a transition id used twice", () => {
+    refuses(withTimerLift({ id: "lever-lift" }), /transition id lever-lift is used twice/);
+  });
+
+  it("counts lifts in the toggle budget", () => {
+    const spare = (at: number) => ({
+      id: `spare-${String(at)}`,
+      wall: { kind: "rect", layer: 0, x: 100 + at * 60, y: 900, width: 20, height: 60 },
+      opener: { kind: "plate", plate: { x: 110 + at * 60, y: 850 }, team: null },
+      blocks: "all",
+      look: "portcullis",
+    });
+    refuses(
+      { gates: [0, 1, 2, 3, 4].map(spare) },
+      /7 gates, breakables, switched teleports, switched decks and lifts, more than 6/,
     );
   });
 });

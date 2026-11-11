@@ -113,6 +113,17 @@ cầu bị cắt.
 cần gạt hoặc tấm áp lực. **Lối đi bí mật** trông y hệt vách đá xung
 quanh cho tới khi nó mở ra thành một khe tối.
 
+## Thang nâng
+
+**Thang nâng** là một sàn ván trong khung sắt, đưa bạn qua lại giữa một
+sàn thấp và một sàn nâng cao. Hãy bước lên khi nó đang dừng ở tầng của
+bạn. Có thang nâng tự lên xuống và dừng vài giây ở mỗi đầu; có thang
+nâng lại sang tầng kia mỗi lần cần gạt của nó được kéo, còn kéo khi nó
+đang chạy thì không có tác dụng gì. Khi thang nâng đang chạy, các song
+sắt đóng cả hai đầu và một mũi tên bằng đồng chỉ hướng nó đi: không ai
+lên hay xuống được, và không gì có thể hất bạn khỏi nó. Khi nó dừng, hãy
+bước xuống.
+
 ## Thời tiết và bầu không khí
 
 Màn sương, khói, hơi nước, mưa và tuyết chỉ để ngắm. Chúng không bao giờ
