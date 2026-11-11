@@ -503,6 +503,87 @@
         "y": 640
       },
       "targets": ["side-room-door"]
+    },
+    {
+      "id": "ridge-lever",
+      "layer": 1,
+      "position": {
+        "x": 1000,
+        "y": 420
+      },
+      "targets": ["ridge-up", "ridge-down"]
+    }
+  ],
+  "teleports": [
+    {
+      "id": "ridge-up",
+      "from": {
+        "layer": 1,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            {
+              "x": 950,
+              "y": 300
+            },
+            {
+              "x": 1010,
+              "y": 300
+            },
+            {
+              "x": 1010,
+              "y": 360
+            },
+            {
+              "x": 950,
+              "y": 360
+            }
+          ]
+        }
+      },
+      "to": {
+        "layer": 2,
+        "position": {
+          "x": 840,
+          "y": 220
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "ridge-down",
+      "from": {
+        "layer": 2,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            {
+              "x": 560,
+              "y": 230
+            },
+            {
+              "x": 620,
+              "y": 230
+            },
+            {
+              "x": 620,
+              "y": 290
+            },
+            {
+              "x": 560,
+              "y": 290
+            }
+          ]
+        }
+      },
+      "to": {
+        "layer": 1,
+        "position": {
+          "x": 700,
+          "y": 470
+        }
+      },
+      "enabled": false
     }
   ],
   "objectives": [],

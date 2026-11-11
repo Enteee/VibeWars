@@ -199,6 +199,10 @@ describe("Training Wilds (#3024)", () => {
         layer: lever.layer,
         goal: lever.position,
       })),
+      ...(map.teleports ?? []).flatMap((teleport) => [
+        { what: `portal `, layer: teleport.from.layer, goal: middle(teleport.from.area.points) },
+        { what: `portal  exit`, layer: teleport.to.layer, goal: teleport.to.position },
+      ]),
       // The side-room door, from outside it; the room behind is the lever test's.
       { what: "gate side-room-door", layer: 1, goal: { x: 290, y: 720 } },
     ];
@@ -268,9 +272,51 @@ describe("Training Wilds (#3024)", () => {
     for (let tick = 0; tick < 300 && simulation.gates[0]?.open !== true; tick += 1) {
       simulation.step(1 / 30);
     }
-    expect(simulation.switches.map(({ up }) => up)).toEqual([false]);
+    expect(simulation.switches.find(({ id }) => id === "side-room-lever")?.up).toBe(false);
     expect(simulation.gates.map(({ open }) => open)).toEqual([true]);
     const inside = walkIn();
     expect(Math.hypot(inside.x - room.x, inside.y - room.y)).toBeLessThan(5);
+  });
+});
+
+describe("Training Wilds' portals (#3030)", () => {
+  it("are off until the lever by them is thrown, then take you up onto the ridge", () => {
+    const { simulation } = setupScenario(scenario, newCharacter("c1"));
+    const portal = loaded(
+      map.teleports?.find(({ id }) => id === "ridge-up"),
+      "ridge-up",
+    );
+    const entry = {
+      x:
+        portal.from.area.points.reduce((sum, { x }) => sum + x, 0) / portal.from.area.points.length,
+      y:
+        portal.from.area.points.reduce((sum, { y }) => sum + y, 0) / portal.from.area.points.length,
+    };
+    const walkIn = (): void => {
+      applyIntent(simulation, SELF_ID, { kind: "walk-to", ...entry, layer: portal.from.layer });
+      for (let tick = 0; tick < 600; tick += 1) {
+        simulation.step(1 / 30);
+      }
+    };
+    walkIn();
+    const off = loaded(simulation.get(SELF_ID), SELF_ID);
+    expect(off.layer).toBe(portal.from.layer);
+    expect(Math.hypot(off.position.x - entry.x, off.position.y - entry.y)).toBeLessThan(5);
+    expect(simulation.teleports.map(({ on }) => on)).toEqual([false, false]);
+
+    applyIntent(simulation, SELF_ID, { kind: "attack", targetId: switchTargetId("ridge-lever") });
+    for (let tick = 0; tick < 300 && simulation.teleports[0]?.on !== true; tick += 1) {
+      simulation.step(1 / 30);
+    }
+    expect(simulation.teleports.map(({ on }) => on)).toEqual([true, true]);
+    walkIn();
+    const arrived = loaded(simulation.get(SELF_ID), SELF_ID);
+    expect(arrived.layer).toBe(portal.to.layer);
+    expect(
+      Math.hypot(
+        arrived.position.x - portal.to.position.x,
+        arrived.position.y - portal.to.position.y,
+      ),
+    ).toBeLessThan(5);
   });
 });

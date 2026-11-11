@@ -2,7 +2,8 @@ import { MAX_LIGHTS, type MapLighting } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
 import type { MapZone } from "./arena-snapshot.js";
-import { withZoneLights, zoneLights } from "./zone-light.js";
+import type { RenderableTeleport } from "./flag-objects.js";
+import { teleportLights, withZoneLights, zoneLights } from "./zone-light.js";
 
 const lava: MapZone = {
   kind: "molten",
@@ -35,6 +36,21 @@ const LIGHTING: MapLighting = {
   lights: [],
 };
 
+const portal = (id: string, on: boolean): RenderableTeleport => ({
+  id,
+  from: {
+    layer: 1,
+    area: [
+      { x: 100, y: 100 },
+      { x: 160, y: 100 },
+      { x: 160, y: 180 },
+      { x: 100, y: 180 },
+    ],
+  },
+  to: { layer: 0, position: { x: 900, y: 900 } },
+  on,
+});
+
 describe("a zone's own light (#3052)", () => {
   it("stands on its centroid, on its layer, reaching its scale times its half-diagonal", () => {
     const [light, ...rest] = zoneLights([lava], 0);
@@ -65,9 +81,32 @@ describe("a zone's own light (#3052)", () => {
   });
 
   it("adds them after the map's own, and leaves a map with none as it is", () => {
-    expect(withZoneLights(LIGHTING, [mire])).toBe(LIGHTING);
-    const lit = withZoneLights(LIGHTING, [lava]);
+    expect(withZoneLights(LIGHTING, [mire], [])).toBe(LIGHTING);
+    const lit = withZoneLights(LIGHTING, [lava], []);
     expect(lit.lights).toHaveLength(1);
     expect(lit.ambient).toBe(LIGHTING.ambient);
+  });
+});
+
+describe("a portal's own light (#3030)", () => {
+  it("glows aqua at an on portal's entry, on its layer, and not at an off one", () => {
+    const [light, ...rest] = teleportLights([portal("east", true), portal("west", false)], 0);
+    expect(rest).toEqual([]);
+    expect(light).toMatchObject({
+      id: "teleport-east",
+      position: { x: 130, y: 140 },
+      layer: 1,
+      colour: 0x5fe0d0,
+      intensity: 0.4,
+      flicker: 0,
+    });
+    expect(light?.radius).toBeCloseTo(1.4 * 50);
+  });
+
+  it("comes after the zones' lights, and stops at MAX_LIGHTS", () => {
+    const lit = withZoneLights(LIGHTING, [lava], [portal("east", true)]);
+    expect(lit.lights.map((light) => light.id)).toEqual(["zone-0", "teleport-east"]);
+    expect(teleportLights([portal("east", true)], MAX_LIGHTS)).toEqual([]);
+    expect(withZoneLights(LIGHTING, [], [portal("east", false)])).toBe(LIGHTING);
   });
 });
