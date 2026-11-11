@@ -19,3 +19,15 @@ describe("ArenaScene preload (#1671)", () => {
     expect(queued).toEqual([`/${ARENA_ATLAS_SVG}`, `/${ARENA_ATLAS_JSON}`]);
   });
 });
+
+describe("ArenaScene shutdown (#3087)", () => {
+  it("forgets every lever, so the next match's first sight of one throws nothing", () => {
+    const scene = new ArenaScene() as unknown as {
+      readonly leverFlips: Map<string, { readonly up: boolean; readonly at: number | undefined }>;
+      shutdown(): void;
+    };
+    scene.leverFlips.set("side-room-lever", { up: false, at: 12 });
+    scene.shutdown();
+    expect(scene.leverFlips.size).toBe(0);
+  });
+});

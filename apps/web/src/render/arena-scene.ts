@@ -579,11 +579,7 @@ export class ArenaScene extends Phaser.Scene {
     this.lightingPass = new LightingPass(this);
     this.alt = trackAlt(window);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.lightingPass?.destroy();
-      this.lightingPass = undefined;
-      this.dropZoneGrounds();
-      this.alt?.dispose();
-      this.alt = undefined;
+      this.shutdown();
     });
     this.floorGraphics = this.add.graphics().setDepth(FLOOR_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
@@ -2606,6 +2602,19 @@ export class ArenaScene extends Phaser.Scene {
     });
     this.zoneGrounds = { zones, grounds };
     return grounds;
+  }
+
+  /**
+   * What a scene start must not inherit: Phaser reuses this instance on
+   * restart, so a lever seen last match is first seen afresh (#3087).
+   */
+  private shutdown(): void {
+    this.lightingPass?.destroy();
+    this.lightingPass = undefined;
+    this.dropZoneGrounds();
+    this.leverFlips.clear();
+    this.alt?.dispose();
+    this.alt = undefined;
   }
 
   /** Drops the painted grounds of the zones drawn last, and their textures. */
