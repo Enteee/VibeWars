@@ -9,6 +9,7 @@
 - [المهارات والبنى](skills-and-builds.md)
 - [العتاد](equipment.md)
 - [الأنماط](modes.md)
+- [عناصر العالم](world-elements.md)
 - [البوتات](bots.md)
 - [المسرد](glossary.md)
 - [ادعم VibeWars](support.md)

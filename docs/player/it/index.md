@@ -9,6 +9,7 @@ pagina di questa cartella è elencata qui una sola volta.
 - [Abilità e build](skills-and-builds.md)
 - [Equipaggiamento](equipment.md)
 - [Modalità](modes.md)
+- [Elementi del mondo](world-elements.md)
 - [Bot](bots.md)
 - [Glossario](glossary.md)
 - [Sostieni VibeWars](support.md)

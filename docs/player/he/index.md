@@ -9,6 +9,7 @@
 - [מיומנויות ומבנים](skills-and-builds.md)
 - [ציוד](equipment.md)
 - [מצבים](modes.md)
+- [רכיבי העולם](world-elements.md)
 - [בוטים](bots.md)
 - [מילון מונחים](glossary.md)
 - [תמכו ב-VibeWars](support.md)

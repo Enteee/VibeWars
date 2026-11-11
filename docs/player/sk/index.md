@@ -9,6 +9,7 @@ stránka v tomto priečinku je tu uvedená práve raz.
 - [Schopnosti a buildy](skills-and-builds.md)
 - [Výbava](equipment.md)
 - [Režimy](modes.md)
+- [Prvky sveta](world-elements.md)
 - [Boti](bots.md)
 - [Slovník pojmov](glossary.md)
 - [Podpor VibeWars](support.md)

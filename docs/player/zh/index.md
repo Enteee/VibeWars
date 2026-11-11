@@ -8,6 +8,7 @@
 - [技能与配置](skills-and-builds.md)
 - [装备](equipment.md)
 - [模式](modes.md)
+- [世界元素](world-elements.md)
 - [机器人](bots.md)
 - [术语表](glossary.md)
 - [支持 VibeWars](support.md)

@@ -10,6 +10,7 @@ egyszer szerepel itt.
 - [Készségek és buildek](skills-and-builds.md)
 - [Felszerelés](equipment.md)
 - [Játékmódok](modes.md)
+- [A világ elemei](world-elements.md)
 - [Botok](bots.md)
 - [Szójegyzék](glossary.md)
 - [Támogasd a VibeWarst](support.md)
