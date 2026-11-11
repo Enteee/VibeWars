@@ -6,6 +6,7 @@ import { PING_SECONDS } from "@vibewars/game-session";
 import {
   ACTOR_RADIUS,
   EMPTY_SNAPSHOT,
+  FLAT_STRUCTURE,
   type ArenaSnapshot,
   type RenderableActor,
 } from "../render/arena-snapshot.js";
@@ -296,6 +297,25 @@ describe("compassView (#1056)", () => {
     // The triangle inside: one closed line, back to its first corner.
     expect(walls[1]).toHaveLength(4);
     expect(walls[1]?.[0]).toEqual(walls[1]?.[3]);
+  });
+
+  it("traces the ground's outline as its edge, and none on a map that is its rectangle (#3066)", () => {
+    const outlined = arena({
+      structure: {
+        ...FLAT_STRUCTURE,
+        bounds: {
+          kind: "outline",
+          outline: [vec2(0, 0), vec2(1850, 0), vec2(1850, 2000), vec2(0, 2000)],
+          outside: "cliff",
+        },
+      },
+    });
+    const edge = compassView(outlined, "me", SIZE, RANGE_COMPASS)?.edge ?? [];
+    expect(edge).toHaveLength(1);
+    // Its east side, 850 east: half the radius, on +x.
+    expect(edge[0]?.every((point) => point.x <= 40 + 1e-9)).toBe(true);
+    expect(edge[0]?.some((point) => Math.abs(point.x - 40) < 1e-9)).toBe(true);
+    expect(compassView(arena({}), "me", SIZE, RANGE_COMPASS)?.edge).toEqual([]);
   });
 
   it("is nothing without a self actor: a spectator has no compass", () => {

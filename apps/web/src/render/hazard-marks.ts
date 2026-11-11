@@ -151,7 +151,7 @@ function boundsOf(area: RenderableShape): { readonly centre: Vec2; readonly half
 }
 
 /** A repeatable 0..1 from `n`: the same scatter every frame and on every peer. */
-function hash(n: number): number {
+export function hash(n: number): number {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return s - Math.floor(s);
 }

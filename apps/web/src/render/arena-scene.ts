@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-import type { MapAtmosphere, MapLighting } from "@vibewars/game-maps/schema";
+import type { MapAtmosphere, MapBounds, MapLighting } from "@vibewars/game-maps/schema";
 
 import {
   ALTAR_REACH_UNITS,
@@ -62,6 +62,7 @@ import {
   type RenderItem,
 } from "./render-order.js";
 import {
+  ARENA_BACKGROUND,
   DECK_LIP,
   PIT_FLOOR,
   PIT_WALL,
@@ -165,7 +166,7 @@ import {
 } from "./flag-objects.js";
 import { lyingPose } from "./lying-pose.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
-import { LightingPass, litStructurePalette } from "./lighting-pass.js";
+import { LightingPass, litStructurePalette, baseTint } from "./lighting-pass.js";
 import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
@@ -197,6 +198,14 @@ import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
 import { waterShapeOf, type WaterShape } from "./water-shape.js";
 import { SPIRE_LOOK, ZONE_EDGE_WIDTH, ZONE_LOOK, strikeEdgeScale } from "./zone-look.js";
 import { HAZARD_ART, hazardKindOf, pathMotionAt, phaseProgressAt } from "./hazard-marks.js";
+import {
+  OUTSIDE_TILE,
+  insideRuns,
+  outsideFrame,
+  paintOutsideEdge,
+  paintOutsideTile,
+  type OutsidePainter,
+} from "./outside-land.js";
 import { withZoneLights } from "./zone-light.js";
 import {
   AtmosphereParticles,
@@ -348,6 +357,7 @@ const IMPACT_LINE_WIDTH = 1.5;
  */
 const GROUND_DEPTH = renderOrder({ kind: "ground-effect", layer: 0 });
 /** A layered map's opaque floor and the grid: under the water and the ward and trap circles on it. */
+const OUTSIDE_DEPTH = renderOrder({ kind: "outside" });
 const FLOOR_DEPTH = renderOrder({ kind: "floor" });
 /** The wards on a lit map: over its light, which never darkens them (ADR-0052). */
 const LIT_GROUND_DEPTH = renderOrder({ kind: "lit-ground-effect" });
@@ -385,6 +395,8 @@ export class ArenaScene extends Phaser.Scene {
   private floorGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The grid, the arena's edge and the walls (#1353), over the wards; drawn when they change. */
   private mapGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** The land outside a ground outline (#3066), while the map has one. */
+  private outside: OutsideLand | undefined;
   /** What `mapGraphics` shows; `undefined` until it is first drawn. */
   private drawnMap: MapLayer | undefined;
   /** What hides a body on the drawn map (#2831). */
@@ -2232,6 +2244,7 @@ export class ArenaScene extends Phaser.Scene {
     const palette = arenaPalette(next.structure.layerCount);
     const { ground } = next.structure;
     this.drawFloor(palette, line);
+    this.drawOutside(next.structure.bounds, next.lighting);
     paintDeckShadows(
       {
         save: () => g.save(),
@@ -2679,18 +2692,95 @@ export class ArenaScene extends Phaser.Scene {
     g.strokePoints(points, true);
   }
 
-  /** The floor and its grid, under the water and the ward circles on it (#2984). */
+  /**
+   * The floor and its grid, under the water and the ward circles on it
+   * (#2984). On a map with a ground outline (#3066) they are inside it,
+   * over the land outside, and its edge is traced over both.
+   */
   private drawFloor(palette: ArenaPalette, line: number): void {
     const g = this.floorGraphics;
     if (g === undefined) {
       return;
     }
     g.clear();
-    if (palette.floor !== undefined) {
+    const { bounds } = this.snapshot.structure;
+    if (bounds.kind === "outline") {
+      g.fillStyle(palette.floor ?? ARENA_BACKGROUND, 1);
+      this.fillShape(g, { kind: "polygon", points: bounds.outline });
+    } else if (palette.floor !== undefined) {
       g.fillStyle(palette.floor, 1);
       g.fillRect(0, 0, this.arena.width, this.arena.height);
     }
     this.drawGrid(g, line, palette);
+    if (bounds.kind === "outline") {
+      paintOutsideEdge(
+        {
+          lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
+          strokeOutline: (points) => {
+            this.strokeShape(g, { kind: "polygon", points });
+          },
+        },
+        bounds.outside,
+        bounds.outline,
+      );
+    }
+  }
+
+  /**
+   * The land outside the ground's outline (#3066), under the floor: one
+   * tiled sprite over the rectangle, lit there by the light map, and four
+   * round it, which no light map covers, so tinted by the map's ambient
+   * and sun instead. Built once per outline.
+   */
+  private drawOutside(bounds: MapBounds, lighting: MapLighting | undefined): void {
+    if (this.outside?.bounds !== bounds) {
+      this.dropOutside();
+      if (bounds.kind === "outline") {
+        this.outside = this.buildOutside(bounds);
+      }
+    }
+    const tint = lighting === undefined ? 0xffffff : baseTint(lighting, false);
+    for (const band of this.outside?.frame ?? []) {
+      band.setTint(tint);
+    }
+  }
+
+  private buildOutside(bounds: OutlineBounds): OutsideLand {
+    const key = `outside-${bounds.outside}`;
+    if (!this.textures.exists(key)) {
+      const painter = this.make.graphics({}, false);
+      paintOutsideTile(outsidePainter(painter), bounds.outside);
+      painter.generateTexture(key, OUTSIDE_TILE, OUTSIDE_TILE);
+      painter.destroy();
+    }
+    // Each tiled from the world's origin, so the four bands and the
+    // rectangle meet without a seam.
+    const tiled = (x: number, y: number, w: number, h: number): Phaser.GameObjects.TileSprite =>
+      this.add
+        .tileSprite(x, y, w, h, key)
+        .setOrigin(0, 0)
+        .setTilePosition(x, y)
+        .setDepth(OUTSIDE_DEPTH);
+    const { width, height } = this.arena;
+    return {
+      bounds,
+      inside: tiled(0, 0, width, height),
+      frame: outsideFrame(width, height).map((band) =>
+        tiled(band.x, band.y, band.width, band.height),
+      ),
+    };
+  }
+
+  /** Drops the land outside the outline drawn last, if any. */
+  private dropOutside(): void {
+    if (this.outside === undefined) {
+      return;
+    }
+    this.outside.inside.destroy();
+    for (const band of this.outside.frame) {
+      band.destroy();
+    }
+    this.outside = undefined;
   }
 
   /** The water's ripples (#2984), at render time; still under reduced motion. */
@@ -2899,6 +2989,7 @@ export class ArenaScene extends Phaser.Scene {
   private shutdown(): void {
     this.lightingPass?.destroy();
     this.lightingPass = undefined;
+    this.dropOutside();
     this.dropZoneGrounds();
     this.leverFlips.clear();
     this.alt?.dispose();
@@ -2963,10 +3054,28 @@ export class ArenaScene extends Phaser.Scene {
     };
   }
 
-  /** The grid over the arena's bounds, not the screen, and its edge in `wall-stroke`; outside is `bg`. */
+  /**
+   * The grid over the arena's bounds, not the screen: over its rectangle,
+   * edged in `wall-stroke`, or inside its outline (#3066), whose edge the
+   * outside draws. Past either is `bg` or the outside.
+   */
   private drawGrid(g: Phaser.GameObjects.Graphics, line: number, palette: ArenaPalette): void {
     const { width, height } = this.arena;
+    const { bounds } = this.snapshot.structure;
     g.lineStyle(line, palette.grid, 1);
+    if (bounds.kind === "outline") {
+      for (let x = 0; x <= width; x += GRID_STEP) {
+        for (const [from, to] of insideRuns(bounds.outline, "x", x)) {
+          g.lineBetween(x, from, x, to);
+        }
+      }
+      for (let y = 0; y <= height; y += GRID_STEP) {
+        for (const [from, to] of insideRuns(bounds.outline, "y", y)) {
+          g.lineBetween(from, y, to, y);
+        }
+      }
+      return;
+    }
     for (let x = 0; x <= width; x += GRID_STEP) {
       g.lineBetween(x, 0, x, height);
     }
@@ -2976,6 +3085,32 @@ export class ArenaScene extends Phaser.Scene {
     g.lineStyle(line, WALL_STROKE, 1);
     g.strokeRect(0, 0, width, height);
   }
+}
+
+/** A map's bounds when they are an outline. */
+type OutlineBounds = Extract<MapBounds, { readonly kind: "outline" }>;
+
+/** The land outside a ground outline (#3066), tiled. */
+interface OutsideLand {
+  readonly bounds: OutlineBounds;
+  /** Over the rectangle, under its floor. */
+  readonly inside: Phaser.GameObjects.TileSprite;
+  /** Round the rectangle, out to the margin. */
+  readonly frame: readonly Phaser.GameObjects.TileSprite[];
+}
+
+/** `g` as the painter an outside tile is drawn through. */
+function outsidePainter(g: Phaser.GameObjects.Graphics): OutsidePainter {
+  return {
+    fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
+    lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
+    fillRect: (x, y, width, height) => g.fillRect(x, y, width, height),
+    fillCircle: (x, y, radius) => g.fillCircle(x, y, radius),
+    fillEllipse: (x, y, width, height) => g.fillEllipse(x, y, width, height),
+    strokeEllipse: (x, y, width, height) => g.strokeEllipse(x, y, width, height),
+    fillTriangle: (x1, y1, x2, y2, x3, y3) => g.fillTriangle(x1, y1, x2, y2, x3, y3),
+    lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
+  };
 }
 
 /** Each layer's painter, made once: a body is painted every frame. */

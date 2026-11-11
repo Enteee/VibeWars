@@ -37,6 +37,7 @@ import { ELEVATION_STEP } from "./render-order.js";
 const bridge = { kind: "rect", x: 100, y: 100, width: 200, height: 100 } as const;
 const BRIDGE: MapStructure = {
   layerCount: 2,
+  bounds: { kind: "rect" },
   ground: 0,
   pits: [],
   tunnels: [],
@@ -85,6 +86,7 @@ describe("a click on a ramp (#2972)", () => {
     ({ kind: "rect", x, y, width, height }) as const;
   const STAIRS: MapStructure = {
     layerCount: 3,
+    bounds: { kind: "rect" },
     ground: 0,
     pits: [],
     tunnels: [],
@@ -203,6 +205,7 @@ describe("a body under a raised ramp (#2975)", () => {
   } as const;
   const HEIGHTS: MapStructure = {
     layerCount: 3,
+    bounds: { kind: "rect" },
     ground: 0,
     pits: [],
     tunnels: [],
@@ -409,6 +412,7 @@ describe("liftAt (#2958)", () => {
   });
   const HEIGHTS: MapStructure = {
     layerCount: 3,
+    bounds: { kind: "rect" },
     ground: 0,
     pits: [],
     tunnels: [],
@@ -569,6 +573,7 @@ describe("a level under the ground (#2973)", () => {
   const SUNK: MapStructure = {
     ...FLAT_STRUCTURE,
     layerCount: 3,
+    bounds: { kind: "rect" },
     ground: 1,
     pits: [{ footprint: rect(500, 520, 200, 130) }],
     tunnels: [{ footprint: rect(700, 550, 280, 70) }],
