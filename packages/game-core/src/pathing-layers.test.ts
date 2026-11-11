@@ -12,6 +12,7 @@ import {
   walkableOutline,
   type NavGraph,
   type NavLayer,
+  type NavTeleport,
   type NavTransition,
 } from "./pathing.js";
 import { vec2 } from "./vec2.js";
@@ -259,5 +260,59 @@ describe("a layer's walkable areas (ADR-0051)", () => {
       (x) => !south.some(({ a, b }) => Math.min(a.x, b.x) <= x && x <= Math.max(a.x, b.x)),
     );
     expect(uncovered).toEqual([]);
+  });
+});
+
+describe("a teleport's way (#3030)", () => {
+  // A wall right down the ground, but for a gap at its foot.
+  const DIVIDE = wall(rect(796, -10, 8, 770));
+  const ENTRY = rect(380, 80, 40, 40);
+  const ACROSS: NavTeleport = { from: 0, area: ENTRY, to: 0, exit: vec2(1200, 100) };
+
+  function ground(): readonly NavGraph[] {
+    return [buildNavGraph(DIVIDE, BOUNDS, RADIUS, [])];
+  }
+
+  it("routes through an on teleport when that is shorter: into its entry, on from its exit", () => {
+    const path = createLayeredPathFinder(ground(), [], [ACROSS]).find(
+      vec2(300, 100),
+      0,
+      vec2(1300, 100),
+      0,
+    );
+    expect(path).toEqual([
+      { x: 400, y: 100, layer: 0, teleport: true },
+      { x: 1200, y: 100, layer: 0 },
+      { x: 1300, y: 100, layer: 0 },
+    ]);
+  });
+
+  it("walks round when it is off, given to no finder", () => {
+    const path = createLayeredPathFinder(ground(), []).find(vec2(300, 100), 0, vec2(1300, 100), 0);
+    expect(path?.some(({ teleport }) => teleport === true)).toBe(false);
+    expect(path?.some(({ y }) => y > 700)).toBe(true);
+  });
+
+  it("goes one way only: never from the exit back to the entry", () => {
+    const path = createLayeredPathFinder(ground(), [], [ACROSS]).find(
+      vec2(1200, 150),
+      0,
+      vec2(400, 150),
+      0,
+    );
+    expect(path?.some(({ teleport }) => teleport === true)).toBe(false);
+    expect(path?.some(({ y }) => y > 700)).toBe(true);
+  });
+
+  it("takes a body onto another layer, past the ramps, and counts its two vertices", () => {
+    const up: NavTeleport = { from: 0, area: rect(230, 80, 40, 40), to: 1, exit: vec2(700, 400) };
+    const built = graphs();
+    const paths = createLayeredPathFinder(built, TRANSITIONS, [up]);
+    expect(paths.nodeCount).toBe(createLayeredPathFinder(built, TRANSITIONS).nodeCount + 2);
+    expect(paths.find(vec2(200, 100), 0, vec2(800, 400), 1)).toEqual([
+      { x: 250, y: 100, layer: 0, teleport: true },
+      { x: 700, y: 400, layer: 1 },
+      { x: 800, y: 400, layer: 1 },
+    ]);
   });
 });

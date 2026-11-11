@@ -126,6 +126,7 @@ function toPlayerSnapshot(
     swingTotal: swing.total,
     knockdownRemaining: combatant.knockdownRemaining,
     invulnerableSeconds: combatant.invulnerableRemaining,
+    teleportReadyAt: participant.teleportReadyAt,
     healthPips: pips.health,
     energyPips: pips.energy,
     statuses: wireStatuses(combatant.statuses.active).map((status) =>
@@ -316,6 +317,7 @@ export function createLocalConnection(options: {
         capturePoints: simulation.capturePoints,
         gates: simulation.gates.map((gate) => gate.open),
         switches: simulation.switches.map((lever) => lever.up),
+        teleports: simulation.teleports.map((teleport) => teleport.on),
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

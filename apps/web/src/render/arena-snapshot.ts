@@ -23,6 +23,7 @@ import type {
   RenderableCapturePoint,
   RenderableGate,
   RenderableSwitch,
+  RenderableTeleport,
   RenderableFlag,
   RenderableStand,
 } from "./flag-objects.js";
@@ -97,6 +98,8 @@ export interface RenderableActor {
   readonly hexed: boolean;
   /** Shimmers, a shrine raise's invulnerability (#1233); never a corpse. */
   readonly invulnerable: boolean;
+  /** The match clock (`clock`) from which it may take a teleport again (#3030); 0 if it never took one. */
+  readonly teleportReadyAt: number;
   /** Flames, drops or bubbles on the body (#1138), two at most; never a corpse. */
   readonly conditionCues: readonly ConditionCue[];
 }
@@ -455,6 +458,8 @@ export interface ArenaSnapshot {
   readonly gates: readonly RenderableGate[];
   /** The map's switches (#3025); `[]` on a map without them. */
   readonly switches: readonly RenderableSwitch[];
+  /** The map's portals (#3030), on or off; `[]` on a map without them. */
+  readonly teleports: readonly RenderableTeleport[];
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
@@ -497,6 +502,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   capturePoints: [],
   gates: [],
   switches: [],
+  teleports: [],
   targetId: undefined,
   projectiles: [],
   groundEffects: [],

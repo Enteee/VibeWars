@@ -54,6 +54,7 @@ export type {
   GateDescriptor,
   GateOpenerDescriptor,
   SwitchDescriptor,
+  TeleportDescriptor,
   WallDescriptor,
   RectWallDescriptor,
   PolygonWallDescriptor,

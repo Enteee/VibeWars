@@ -57,6 +57,7 @@ function actor(
     enchanted: false,
     hexed: false,
     invulnerable: false,
+    teleportReadyAt: 0,
     conditionCues: [],
     ...overrides,
   };

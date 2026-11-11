@@ -23,7 +23,7 @@ function across(x: number): readonly Segment[] {
 const WEST: GateField = { segments: across(400), opener: { kind: "switch" } };
 const EAST: GateField = { segments: across(1000), opener: { kind: "switch" } };
 const LEVER_AT = vec2(200, 400);
-const LEVER: SwitchField = { id: "lever", layer: 0, position: LEVER_AT, targets: [0] };
+const LEVER: SwitchField = { id: "lever", layer: 0, position: LEVER_AT, gates: [0], teleports: [] };
 const LEVER_ID = switchTargetId("lever");
 
 function lever(): ReturnType<typeof initialSwitches>[number] {
@@ -104,7 +104,7 @@ describe("switches in a match (#3025)", () => {
   });
 
   it("toggles every gate it names: an open one closes and a closed one opens", () => {
-    const both: SwitchField = { ...LEVER, targets: [0, 1] };
+    const both: SwitchField = { ...LEVER, gates: [0, 1] };
     const sim = arena([body("puller", 0, vec2(100, 300)), foe], [both]);
     sim.requestAttack("puller", LEVER_ID);
     run(sim, 2);

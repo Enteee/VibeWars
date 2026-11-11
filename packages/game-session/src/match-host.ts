@@ -24,6 +24,7 @@ import {
   type ProfessionId,
   type GateField,
   type SwitchField,
+  type TeleportField,
   type MatchLayers,
   type MatchZone,
   type Segment,
@@ -145,8 +146,10 @@ export interface HostMap {
   readonly zones: readonly MatchZone[];
   /** Its gates (#2691), in the descriptor's order. */
   readonly gates: readonly GateField[];
-  /** Its switches (#3025), in the descriptor's order, naming gates by index. */
+  /** Its switches (#3025), in the descriptor's order, naming gates and teleports by index. */
   readonly switches: readonly SwitchField[];
+  /** Its teleports (#3030), in the descriptor's order. */
+  readonly teleports: readonly TeleportField[];
   readonly bounds: { readonly width: number; readonly height: number };
   readonly spawns: readonly SpawnPoint[];
   /** Its resurrection shrines (#1186), `[]` but on a Priest Annihilation or Guild Battle map. */
@@ -345,6 +348,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     walls: map.walls,
     gates: map.gates,
     switches: map.switches,
+    teleports: map.teleports,
     bounds: map.bounds,
     layers: map.layers,
     zones: map.zones,
@@ -1202,6 +1206,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       swingTotal: round(swing.total, 3),
       knockdownRemaining: round(combatant.knockdownRemaining, 2),
       invulnerableSeconds: round(combatant.invulnerableRemaining, 2),
+      // Up, so a client never shows a teleport ready before the host has it.
+      teleportReadyAt: Math.ceil(participant.teleportReadyAt * 10) / 10,
       healthPips: pips.health,
       energyPips: pips.energy,
       statuses: wireStatuses(combatant.statuses.active).map((status) => {
@@ -1256,6 +1262,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     altarHeldSeconds: sim.altarState.heldSeconds,
     gates: sim.gates.map((gate) => gate.open),
     switches: sim.switches.map((lever) => lever.up),
+    teleports: sim.teleports.map((teleport) => teleport.on),
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,

@@ -9,13 +9,20 @@ import {
   type TrainingScenario,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import { matchGates, matchLayers, matchSwitches, matchZones } from "@vibewars/game-maps/layers";
+import {
+  matchGates,
+  matchLayers,
+  matchSwitches,
+  matchTeleports,
+  matchZones,
+} from "@vibewars/game-maps/layers";
 import type { MapData } from "@vibewars/game-maps/schema";
 import type { MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
 import {
   gateDescriptor,
   structureOf,
   switchDescriptors,
+  teleportDescriptors,
   type LoadedStructure,
 } from "../net/maps.js";
 
@@ -86,6 +93,7 @@ function toMapDescriptor(map: MapData): MapDescriptor {
     walls,
     gates: map.gates.map(gateDescriptor),
     switches: switchDescriptors(map),
+    teleports: teleportDescriptors(map),
   };
 }
 
@@ -125,6 +133,7 @@ export function setupScenario(
     zones: matchZones(map),
     gates: matchGates(map),
     switches: matchSwitches(map),
+    teleports: matchTeleports(map),
     participants: [
       {
         id: SELF_ID,

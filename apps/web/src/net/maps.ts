@@ -1,5 +1,11 @@
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import { matchGates, matchLayers, matchSwitches, matchZones } from "@vibewars/game-maps/layers";
+import {
+  matchGates,
+  matchLayers,
+  matchSwitches,
+  matchTeleports,
+  matchZones,
+} from "@vibewars/game-maps/layers";
 import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
@@ -56,6 +62,7 @@ import {
   type WireTeamCount,
   type GateDescriptor,
   type SwitchDescriptor,
+  type TeleportDescriptor,
 } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { FLAT_STRUCTURE, type MapStructure } from "../render/arena-snapshot.js";
@@ -429,6 +436,15 @@ export function switchDescriptors(map: MapData): SwitchDescriptor[] {
   return (map.switches ?? []).map(({ id, layer, position }) => ({ id, layer, position }));
 }
 
+/** `map`'s teleports as the wire carries them (#3030), in its order. */
+export function teleportDescriptors(map: MapData): TeleportDescriptor[] {
+  return (map.teleports ?? []).map(({ id, from, to }) => ({
+    id,
+    from: { layer: from.layer, area: { kind: "polygon", points: from.area.points } },
+    to,
+  }));
+}
+
 /** The resurrection shrines among a map's objectives. */
 function shrinesOf(objectives: readonly Objective[]): readonly MapShrine[] {
   return objectives.flatMap((objective) =>
@@ -611,6 +627,7 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
       ),
       gates: map.gates.map(gateDescriptor),
       switches: switchDescriptors(map),
+      teleports: teleportDescriptors(map),
     },
     mode: map.mode,
     walls: allWallSegments(map.walls),
@@ -618,6 +635,7 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
     zones: matchZones(map),
     gates: matchGates(map),
     switches: matchSwitches(map),
+    teleports: matchTeleports(map),
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints.filter((spawn) => spawn.team < seated),
     shrines: shrinesOf(objectives),

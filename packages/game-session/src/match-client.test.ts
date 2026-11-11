@@ -168,6 +168,7 @@ describe("connectMatch", () => {
           capturePoints: [],
           gates: [],
           switches: [],
+          teleports: [],
         },
         transport.selfId,
       );
@@ -387,6 +388,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     swingTotal: "swingTotal",
     knockdownRemaining: "knockdownRemaining",
     invulnerableSeconds: "invulnerableSeconds",
+    teleportReadyAt: "teleportReadyAt",
     healthPips: "healthPips",
     energyPips: "energyPips",
     statuses: "statuses",
@@ -521,6 +523,7 @@ const WIRE_PLAYER: WirePlayer = {
   swingTotal: 1.75,
   knockdownRemaining: 0,
   invulnerableSeconds: 0,
+  teleportReadyAt: 0,
   healthPips: 0,
   energyPips: 0,
   creature: null,

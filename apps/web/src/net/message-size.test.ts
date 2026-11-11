@@ -172,6 +172,7 @@ function player(index: number): WirePlayer {
     swingTotal: rounded(3),
     knockdownRemaining: rounded(2),
     invulnerableSeconds: 0,
+    teleportReadyAt: 0,
     // The longest a pip count is on the wire.
     healthPips: -MAX_WIRE_PIPS,
     energyPips: -MAX_WIRE_PIPS,
@@ -338,6 +339,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       capturePoints: [],
       gates: [],
       switches: [],
+      teleports: [],
     };
   }
 
@@ -437,6 +439,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         walls: [],
         gates: [],
         switches: [],
+        teleports: [],
       },
     };
     const longestSkills = [...IMPLEMENTED_SKILLS]

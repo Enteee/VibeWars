@@ -348,6 +348,14 @@ import {
   type SwitchField,
 } from "./switches.js";
 import {
+  initialTeleports,
+  stepTeleport,
+  teleportTaken,
+  TELEPORT_COOLDOWN_SECONDS,
+  type Teleport,
+  type TeleportField,
+} from "./teleports.js";
+import {
   carriedRelic,
   initialRelics,
   ALTAR_REACH_UNITS,
@@ -760,7 +768,7 @@ export interface Participant {
   readonly skillBar: SkillBar;
   readonly spawn: Vec2;
   position: Vec2;
-  /** The one layer it is on (ADR-0051): only a ramp changes it, and a respawn. */
+  /** The one layer it is on (ADR-0051): only a ramp changes it, a teleport (#3030) and a respawn. */
   layer: number;
   /**
    * The floors it stands on (ADR-0051): its layer's bit and, inside a ramp,
@@ -796,6 +804,8 @@ export interface Participant {
   interact: { readonly targetId: string; unreachableSeconds: number } | undefined;
   targetId: string | undefined;
   respawnInSeconds: number;
+  /** The match second from which it may take a teleport again (#3030). */
+  teleportReadyAt: number;
   /**
    * Seconds since it was last in combat, by GW1's list (#460): lost
    * health, swung or used an attack skill, began a cast at a foe, or was
@@ -902,8 +912,10 @@ export interface MatchSimulationOptions {
   readonly startLine?: StartLine | undefined;
   /** The map's gates (#2691); none if omitted. */
   readonly gates?: readonly GateField[];
-  /** The map's switches (#3025), each naming gates by index; none if omitted. */
+  /** The map's switches (#3025), each naming gates and teleports by index; none if omitted. */
   readonly switches?: readonly SwitchField[];
+  /** The map's teleports (#3030), in its order; none if omitted. */
+  readonly teleports?: readonly TeleportField[];
   /** The map's effect zones (ADR-0053, #3024), in its order; none if omitted. */
   readonly zones?: readonly MatchZone[];
   /**
@@ -1254,6 +1266,10 @@ export class MatchSimulation {
   /** Filled in place, so a bot's objectives see each change (#2691). */
   readonly #gates: Gate[];
   readonly #switches: Switch[];
+  /** Filled in place, as `#gates` (#3030). */
+  readonly #teleports: Teleport[];
+  /** The teleports some switch names, by index: each a bit of a wall set's key past the gates'. */
+  readonly #switchedTeleports: readonly number[];
   /** Who reached a switch this step (#3025), in simulation order. */
   #switchArrivals: CarriedArrival[] = [];
   /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
@@ -1402,6 +1418,10 @@ export class MatchSimulation {
     this.#bounds = options.bounds;
     this.#gates = initialGates(options.gates ?? []);
     this.#switches = initialSwitches(options.switches ?? []);
+    this.#teleports = initialTeleports(options.teleports ?? []);
+    this.#switchedTeleports = this.#teleports.flatMap((_, at) =>
+      this.#switches.some((lever) => lever.teleports.includes(at)) ? [at] : [],
+    );
     this.#layers = options.layers;
     this.#zones = options.zones ?? [];
     this.#harmfulZones = this.#zones
@@ -1606,6 +1626,11 @@ export class MatchSimulation {
     return this.#switches;
   }
 
+  /** Every teleport (#3030), and whether it is on; `[]` on a map without them. */
+  public get teleports(): readonly Teleport[] {
+    return this.#teleports;
+  }
+
   /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
   public get capturePoints(): readonly CapturePoint[] {
     return this.#capturePoints;
@@ -1725,6 +1750,7 @@ export class MatchSimulation {
       walkSettled: false,
       followGoal: undefined,
       route: undefined,
+      teleportReadyAt: 0,
       resolvedMaxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
       resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
@@ -4131,6 +4157,7 @@ export class MatchSimulation {
     this.#watchStartLine();
     this.#advanceCapturePoints(dt);
     this.#advanceGates(dt);
+    this.#advanceTeleports();
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
     // After the match end: a lord slain as a boost falls due ends it first.
@@ -5786,12 +5813,14 @@ export class MatchSimulation {
       if (next !== undefined && walkIsClear(graph, record.position, next)) {
         // A waypoint on another layer stays, however clear the line past it,
         // and so does the one before it, the way onto a ramp, until the body is at it.
+        // A teleport's entry stays until the teleport takes the body (#3030).
         for (
           let after = waypoints[1];
           after !== undefined &&
           (after.layer === record.layer ||
             distance(record.position, waypoints[0] ?? after) <= RAMP_FOOT_REACHED_UNITS) &&
           waypoints[0]?.layer === record.layer &&
+          waypoints[0].teleport !== true &&
           walkIsClear(graph, record.position, after);
           after = waypoints[1]
         ) {
@@ -6273,13 +6302,16 @@ export class MatchSimulation {
 
   /**
    * The step's switch flips (#3025), in arrival order, of those still
-   * alive: each lever that moves toggles its gates. Returns how many
-   * times each gate was toggled, by index.
+   * alive: each lever that moves toggles its gates and its teleports
+   * (#3030). Returns how many times each was toggled, by index.
    */
-  #flipSwitches(): Map<number, number> {
+  #flipSwitches(): {
+    readonly gates: Map<number, number>;
+    readonly teleports: Map<number, number>;
+  } {
     const arrivals = this.#livingArrivals(this.#switchArrivals);
     this.#switchArrivals = [];
-    const toggles = new Map<number, number>();
+    const toggles = { gates: new Map<number, number>(), teleports: new Map<number, number>() };
     for (const arrival of arrivals) {
       const at = this.#switches.findIndex((lever) => lever.id === switchIdOf(arrival.targetId));
       const lever = this.#switches[at];
@@ -6291,8 +6323,10 @@ export class MatchSimulation {
         continue;
       }
       this.#switches[at] = next;
-      for (const target of next.targets) {
-        toggles.set(target, (toggles.get(target) ?? 0) + 1);
+      for (const kind of ["gates", "teleports"] as const) {
+        for (const target of next[kind]) {
+          toggles[kind].set(target, (toggles[kind].get(target) ?? 0) + 1);
+        }
       }
     }
     return toggles;
@@ -6712,22 +6746,42 @@ export class MatchSimulation {
     }
   }
 
-  /** The walls and paths for how the gates stand now, read off the graph built up front. */
+  /**
+   * The walls and paths for how the gates stand now, read off the graph
+   * built up front, with a way through each teleport that is on (#3030).
+   * Keyed by the closed gates' bits, then a bit for each switched
+   * teleport that is on: one no switch names never changes.
+   */
   #currentWallSet(): WallSet {
     let closed = 0;
     this.#gates.forEach((gate, at) => {
       closed |= gate.open ? 0 : 1 << at;
     });
-    let set = this.#wallSets.get(closed);
+    let key = closed;
+    this.#switchedTeleports.forEach((teleport, bit) => {
+      key |= this.#teleports[teleport]?.on === true ? 1 << (this.#gates.length + bit) : 0;
+    });
+    let set = this.#wallSets.get(key);
     if (set === undefined) {
       const graphs = this.#gatedGraphs.map((gated) => navGraphFor(gated, closed));
-      const paths = createLayeredPathFinder(graphs, this.#layers?.transitions ?? []);
+      const paths = createLayeredPathFinder(
+        graphs,
+        this.#layers?.transitions ?? [],
+        this.#teleports
+          .filter((teleport) => teleport.on)
+          .map(({ from, to }) => ({
+            from: from.layer,
+            area: from.area,
+            to: to.layer,
+            exit: to.position,
+          })),
+      );
       const walls = [
         ...this.#mapWalls,
         ...this.#gates.flatMap((gate) => (gate.open ? [] : gate.segments)),
       ];
       set = { walls, graphs, paths };
-      this.#wallSets.set(closed, set);
+      this.#wallSets.set(key, set);
     }
     return set;
   }
@@ -6736,15 +6790,22 @@ export class MatchSimulation {
    * The step's gates (#2691), once every death is in, so a player killed
    * this tick holds no plate and flips no switch (#3025). One that closes
    * stops the shots crossing it and moves anybody in its way to the
-   * nearest ground clear of it.
+   * nearest ground clear of it. A switch's teleports (#3030) turn here
+   * too, and change the paths as a gate does.
    */
   #advanceGates(dt: number): void {
-    if (this.#gates.length === 0 || this.phase !== "active") {
+    if ((this.#gates.length === 0 && this.#teleports.length === 0) || this.phase !== "active") {
       this.#switchArrivals = [];
       return;
     }
     const toggles = this.#flipSwitches();
     let moved = false;
+    for (const [at, teleport] of this.#teleports.entries()) {
+      // As a gate: two flips in one step leave it as it was (#3030).
+      const next = stepTeleport(teleport, (toggles.teleports.get(at) ?? 0) % 2 === 1);
+      this.#teleports[at] = next;
+      moved ||= next !== teleport;
+    }
     const closing: Gate[] = [];
     for (const [at, gate] of this.#gates.entries()) {
       const held = [...this.#participants.values()].some(
@@ -6754,7 +6815,7 @@ export class MatchSimulation {
           holdsPlate(gate, record.combatant.team, record.position),
       );
       // Two levers flipped in one step on the same gate leave it as it was.
-      const flipped = (toggles.get(at) ?? 0) % 2 === 1;
+      const flipped = (toggles.gates.get(at) ?? 0) % 2 === 1;
       const next = stepGate(gate, held, flipped, dt);
       this.#gates[at] = next;
       if (next.open !== gate.open) {
@@ -6785,6 +6846,39 @@ export class MatchSimulation {
     }
     for (const gate of closing) {
       this.#projectiles = this.#projectiles.map((shot) => cutShotAtGate(shot, gate));
+    }
+  }
+
+  /**
+   * The step's teleports (#3030), after everyone moved and the switches
+   * turned: every living body in an on one's entry, walked or knocked
+   * there, stands at its exit, its move order over as on arriving, and
+   * takes none again for `TELEPORT_COOLDOWN_SECONDS`. A cast goes on;
+   * its own range and sight checks end it if they must. Two in one tick
+   * both go, the second pushed clear of the first.
+   */
+  #advanceTeleports(): void {
+    if (this.#teleports.length === 0 || this.phase !== "active") {
+      return;
+    }
+    for (const record of this.#participants.values()) {
+      if (record.combatant.dead) {
+        continue;
+      }
+      const teleport = teleportTaken(
+        this.#teleports,
+        record.position,
+        record.layer,
+        record.teleportReadyAt,
+        this.#elapsedSeconds,
+      );
+      if (teleport === undefined) {
+        continue;
+      }
+      record.layer = teleport.to.layer;
+      record.walkLayer = undefined;
+      this.#placeAt(record, teleport.to.position);
+      record.teleportReadyAt = this.#elapsedSeconds + TELEPORT_COOLDOWN_SECONDS;
     }
   }
 

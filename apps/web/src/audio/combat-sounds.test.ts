@@ -219,6 +219,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     swingTotal: 0,
     knockdownRemaining: 0,
     invulnerableSeconds: 0,
+    teleportReadyAt: 0,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
@@ -251,6 +252,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     capturePoints: [],
     gates: [],
     switches: [],
+    teleports: [],
     summary: undefined,
   };
 }

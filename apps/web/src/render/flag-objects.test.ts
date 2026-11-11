@@ -9,6 +9,7 @@ import {
   renderableCapturePoints,
   renderableGates,
   renderableSwitches,
+  renderableTeleports,
   SWITCH_PICK_RADIUS,
   switchAtPoint,
   renderableFlags,
@@ -226,5 +227,37 @@ describe("renderableSwitches and switchAtPoint (#3025)", () => {
     const drawn = renderableSwitches(switches, []);
     expect(switchAtPoint(drawn, { x: 105, y: 96 })).toBe("switch-west");
     expect(switchAtPoint(drawn, { x: 100, y: 100 + SWITCH_PICK_RADIUS + 1 })).toBeUndefined();
+  });
+});
+
+describe("renderableTeleports (#3030)", () => {
+  const area = {
+    kind: "polygon" as const,
+    points: [
+      { x: 0, y: 0 },
+      { x: 40, y: 0 },
+      { x: 40, y: 40 },
+    ],
+  };
+  const teleports = [
+    { id: "up", from: { layer: 0, area }, to: { layer: 1, position: { x: 500, y: 200 } } },
+    { id: "down", from: { layer: 1, area }, to: { layer: 0, position: { x: 90, y: 90 } } },
+  ];
+
+  it("draws each entry and exit, on only where the snapshot says so", () => {
+    expect(renderableTeleports(teleports, [true])).toEqual([
+      {
+        id: "up",
+        from: { layer: 0, area: area.points },
+        to: { layer: 1, position: { x: 500, y: 200 } },
+        on: true,
+      },
+      {
+        id: "down",
+        from: { layer: 1, area: area.points },
+        to: { layer: 0, position: { x: 90, y: 90 } },
+        on: false,
+      },
+    ]);
   });
 });

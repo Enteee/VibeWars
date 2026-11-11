@@ -4,6 +4,7 @@ import {
   type MatchLayers,
   type MatchZone,
   type SwitchField,
+  type TeleportField,
 } from "@vibewars/game-core";
 
 import { shapeVertices, wallToSegments } from "./geometry.js";
@@ -70,13 +71,30 @@ export function matchGates(map: MapData): GateField[] {
   }));
 }
 
-/** `map`'s switches, as the simulation takes them (#3025): each target as its gate's index. */
+/**
+ * `map`'s switches, as the simulation takes them (#3025): each target as
+ * its gate's index, or its teleport's (#3030).
+ */
 export function matchSwitches(map: MapData): SwitchField[] {
   const gates = map.gates.map(({ id }) => id);
+  const teleports = (map.teleports ?? []).map(({ id }) => id);
   return (map.switches ?? []).map(({ id, layer, position, targets }) => ({
     id,
     layer,
     position,
-    targets: targets.map((target) => gates.indexOf(target)),
+    gates: targets.flatMap((target) => (gates.includes(target) ? [gates.indexOf(target)] : [])),
+    teleports: targets.flatMap((target) =>
+      teleports.includes(target) ? [teleports.indexOf(target)] : [],
+    ),
+  }));
+}
+
+/** `map`'s teleports, as the simulation takes them (#3030), in its order, each entry one polygon. */
+export function matchTeleports(map: MapData): TeleportField[] {
+  return (map.teleports ?? []).map(({ id, from, to, enabled }) => ({
+    id,
+    from: { layer: from.layer, area: shapeVertices(from.area) },
+    to,
+    enabled,
   }));
 }

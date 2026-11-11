@@ -100,6 +100,8 @@ export interface PlayerSnapshot {
   readonly knockdownRemaining: number;
   /** Seconds left of a shrine raise's invulnerability (#1233); 0 when not. Drawn from this. */
   readonly invulnerableSeconds: number;
+  /** The match second from which it may take a teleport again (#3030); 0 if it never took one. */
+  readonly teleportReadyAt: number;
   /** Net health and energy pips as the host applies them (#504): ±10, 0 dead. Drawn, never derived. */
   readonly healthPips: number;
   readonly energyPips: number;
@@ -195,6 +197,8 @@ export interface MatchSnapshot {
   readonly gates: readonly boolean[];
   /** Whether each of the map's switches points up (#3025); `[]` on a map without them. */
   readonly switches: readonly boolean[];
+  /** Whether each of the map's teleports is on (#3030); `[]` on a map without them. */
+  readonly teleports: readonly boolean[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

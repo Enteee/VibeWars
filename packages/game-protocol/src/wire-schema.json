@@ -5767,6 +5767,66 @@
           "type": { "union": [{ "literal": 2 }, { "literal": 3 }] }
         },
         {
+          "name": "teleports",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "from",
+                  "optional": false,
+                  "type": {
+                    "properties": [
+                      {
+                        "name": "area",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                            {
+                              "name": "points",
+                              "optional": false,
+                              "type": {
+                                "array": {
+                                  "properties": [
+                                    { "name": "x", "optional": false, "type": "number" },
+                                    { "name": "y", "optional": false, "type": "number" }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      { "name": "layer", "optional": false, "type": "number" }
+                    ]
+                  }
+                },
+                { "name": "id", "optional": false, "type": "string" },
+                {
+                  "name": "to",
+                  "optional": false,
+                  "type": {
+                    "properties": [
+                      { "name": "layer", "optional": false, "type": "number" },
+                      {
+                        "name": "position",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "walls",
           "optional": false,
           "type": {
@@ -6187,6 +6247,70 @@
                 "type": { "union": [{ "literal": 2 }, { "literal": 3 }] }
               },
               {
+                "name": "teleports",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      {
+                        "name": "from",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            {
+                              "name": "area",
+                              "optional": false,
+                              "type": {
+                                "properties": [
+                                  {
+                                    "name": "kind",
+                                    "optional": false,
+                                    "type": { "literal": "polygon" }
+                                  },
+                                  {
+                                    "name": "points",
+                                    "optional": false,
+                                    "type": {
+                                      "array": {
+                                        "properties": [
+                                          { "name": "x", "optional": false, "type": "number" },
+                                          { "name": "y", "optional": false, "type": "number" }
+                                        ]
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            { "name": "layer", "optional": false, "type": "number" }
+                          ]
+                        }
+                      },
+                      { "name": "id", "optional": false, "type": "string" },
+                      {
+                        "name": "to",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            { "name": "layer", "optional": false, "type": "number" },
+                            {
+                              "name": "position",
+                              "optional": false,
+                              "type": {
+                                "properties": [
+                                  { "name": "x", "optional": false, "type": "number" },
+                                  { "name": "y", "optional": false, "type": "number" }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
                 "name": "walls",
                 "optional": false,
                 "type": {
@@ -6446,6 +6570,70 @@
                 "type": { "union": [{ "literal": 2 }, { "literal": 3 }] }
               },
               {
+                "name": "teleports",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      {
+                        "name": "from",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            {
+                              "name": "area",
+                              "optional": false,
+                              "type": {
+                                "properties": [
+                                  {
+                                    "name": "kind",
+                                    "optional": false,
+                                    "type": { "literal": "polygon" }
+                                  },
+                                  {
+                                    "name": "points",
+                                    "optional": false,
+                                    "type": {
+                                      "array": {
+                                        "properties": [
+                                          { "name": "x", "optional": false, "type": "number" },
+                                          { "name": "y", "optional": false, "type": "number" }
+                                        ]
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            { "name": "layer", "optional": false, "type": "number" }
+                          ]
+                        }
+                      },
+                      { "name": "id", "optional": false, "type": "string" },
+                      {
+                        "name": "to",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            { "name": "layer", "optional": false, "type": "number" },
+                            {
+                              "name": "position",
+                              "optional": false,
+                              "type": {
+                                "properties": [
+                                  { "name": "x", "optional": false, "type": "number" },
+                                  { "name": "y", "optional": false, "type": "number" }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
                 "name": "walls",
                 "optional": false,
                 "type": {
@@ -6637,6 +6825,60 @@
       ]
     },
     "TeamArenaSize": { "union": [{ "literal": 2 }, { "literal": 4 }, { "literal": 8 }] },
+    "TeleportDescriptor": {
+      "properties": [
+        {
+          "name": "from",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "area",
+                "optional": false,
+                "type": {
+                  "properties": [
+                    { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                    {
+                      "name": "points",
+                      "optional": false,
+                      "type": {
+                        "array": {
+                          "properties": [
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              { "name": "layer", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        { "name": "id", "optional": false, "type": "string" },
+        {
+          "name": "to",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "layer", "optional": false, "type": "number" },
+              {
+                "name": "position",
+                "optional": false,
+                "type": {
+                  "properties": [
+                    { "name": "x", "optional": false, "type": "number" },
+                    { "name": "y", "optional": false, "type": "number" }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
     "TicketParty": {
       "properties": [
         { "name": "consents", "optional": false, "type": { "array": "string" } },
@@ -8128,6 +8370,7 @@
             "union": [{ "literal": -1 }, { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
           }
         },
+        { "name": "teleportReadyAt", "optional": false, "type": "number" },
         { "name": "walking", "optional": false, "type": "boolean" },
         { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "x", "optional": false, "type": "number" },
@@ -8607,6 +8850,7 @@
                     ]
                   }
                 },
+                { "name": "teleportReadyAt", "optional": false, "type": "number" },
                 { "name": "walking", "optional": false, "type": "boolean" },
                 { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "x", "optional": false, "type": "number" },
@@ -8705,6 +8949,7 @@
           }
         },
         { "name": "switches", "optional": false, "type": { "array": "boolean" } },
+        { "name": "teleports", "optional": false, "type": { "array": "boolean" } },
         { "name": "tick", "optional": false, "type": "number" },
         {
           "name": "winningTeam",
@@ -9077,6 +9322,7 @@
                     ]
                   }
                 },
+                { "name": "teleportReadyAt", "optional": false, "type": "number" },
                 { "name": "walking", "optional": false, "type": "boolean" },
                 { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "x", "optional": false, "type": "number" },
@@ -9175,6 +9421,7 @@
           }
         },
         { "name": "switches", "optional": false, "type": { "array": "boolean" } },
+        { "name": "teleports", "optional": false, "type": { "array": "boolean" } },
         { "name": "tick", "optional": false, "type": "number" },
         {
           "name": "winningTeam",
