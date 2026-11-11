@@ -25,6 +25,9 @@ export type RenderItem =
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
   | { readonly kind: "zone"; readonly layer: number; readonly part: ZonePart }
   | { readonly kind: "ground-effect"; readonly layer: number }
+  | { readonly kind: "fog"; readonly layer: number }
+  | { readonly kind: "plume"; readonly band: number }
+  | { readonly kind: "weather" }
   | { readonly kind: "terrain" }
   | { readonly kind: "lighting"; readonly layer: number }
   | { readonly kind: "lit-ground-effect" }
@@ -78,6 +81,17 @@ const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
  */
 const GROUND_ZONE: Record<ZonePart, number> = { ground: 0.53, marks: 0.55 };
 const DECK_ZONE: Record<ZonePart, number> = { ground: 5.83, marks: 5.85 };
+/**
+ * A fog bank (#3032): over its layer's ground, water, light and zones,
+ * under its wards, torches and whoever stands in it, so the haze never
+ * hides a body, its ring or a telegraph.
+ */
+const GROUND_FOG = 0.57;
+const DECK_FOG = 5.9;
+/** Smoke or steam (#3032): over the bodies on its band, under its walls and any deck above. */
+const PLUME = 1.6;
+/** Rain or snow (#3032): over the whole world, under hidden outlines, effects and the HUD. */
+const WEATHER = 89;
 const WALL = 2;
 const SUPPORT = 3;
 const SIDE_FACE = 4;
@@ -104,6 +118,12 @@ export function renderOrder(item: RenderItem): number {
       return item.layer === 0
         ? GROUND_ZONE[item.part]
         : (item.layer - 1) * LAYER_STACK + DECK_ZONE[item.part];
+    case "fog":
+      return item.layer === 0 ? GROUND_FOG : (item.layer - 1) * LAYER_STACK + DECK_FOG;
+    case "plume":
+      return item.band * LAYER_STACK + PLUME;
+    case "weather":
+      return WEATHER;
     case "ground-effect":
       return item.layer === 0 ? -1 : item.layer * LAYER_STACK + DECK_GROUND_EFFECT;
     case "lighting":

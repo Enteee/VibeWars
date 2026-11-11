@@ -234,6 +234,36 @@ const lightingSchema = z.object({
   lights: z.array(lightSchema).max(MAX_LIGHTS),
 });
 
+/** The most fog banks on a map (#3032). */
+export const MAX_FOG_BANKS = 8;
+
+/** The most smoke or steam plumes on a map (#3032). */
+export const MAX_PLUMES = 12;
+
+/**
+ * A map's atmosphere (#3032): fog banks, plumes and weather. Only the
+ * renderer reads it, never the simulation, and it changes nothing in play.
+ */
+const atmosphereSchema = z.object({
+  /** Soft, slowly drifting haze over one layer's ground. */
+  fog: z.array(z.object({ layer: layerSchema, area: waterSchema.shape.area })).max(MAX_FOG_BANKS),
+  /** Smoke or steam rising from a point. */
+  plumes: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        layer: layerSchema,
+        position: vec2Schema,
+        kind: z.enum(["smoke", "steam"]),
+      }),
+    )
+    .max(MAX_PLUMES),
+  /** Rain or snow over the whole view, or none. */
+  weather: z
+    .object({ kind: z.enum(["rain", "snow"]), intensity: z.number().min(0).max(1) })
+    .nullable(),
+});
+
 /** The most gates on a map (#2691): the match keeps paths for each way they can stand. */
 const MAX_GATES = 6;
 
@@ -599,6 +629,8 @@ export const mapDataSchema = z
     relicCarry: z.enum(["own", "foe"]).optional(),
     /** How it is lit (ADR-0052); without it the map is lit flat. */
     lighting: lightingSchema.optional(),
+    /** Its fog, smoke, steam and weather (#3032); without it, the map has none. */
+    atmosphere: atmosphereSchema.optional(),
   })
   .superRefine((map, context) => {
     if (map.teams !== 2 && TWO_TEAM_MODES.includes(map.mode)) {
@@ -1183,6 +1215,37 @@ export const mapDataSchema = z
         lightIds.add(light.id);
       });
     }
+
+    const atmosphere = map.atmosphere;
+    if (atmosphere !== undefined) {
+      atmosphere.fog.forEach((bank, index) => {
+        layerInRange(bank.layer, ["atmosphere", "fog", index, "layer"]);
+        if (!shapeInBounds(bank.area, map.width, map.height)) {
+          context.addIssue({
+            code: "custom",
+            path: ["atmosphere", "fog", index, "area"],
+            message: `fog bank ${String(index)} is outside the map`,
+          });
+        }
+      });
+      const plumeIds = new Set<string>();
+      atmosphere.plumes.forEach((plume, index) => {
+        layerInRange(plume.layer, ["atmosphere", "plumes", index, "layer"]);
+        const onMap =
+          plume.position.x >= 0 &&
+          plume.position.y >= 0 &&
+          plume.position.x <= map.width &&
+          plume.position.y <= map.height;
+        if (!onMap || plumeIds.has(plume.id)) {
+          context.addIssue({
+            code: "custom",
+            path: ["atmosphere", "plumes", index],
+            message: `plume ${String(index)} must have its own id and be on the map`,
+          });
+        }
+        plumeIds.add(plume.id);
+      });
+    }
   });
 
 export type Vec2Data = z.infer<typeof vec2Schema>;
@@ -1196,6 +1259,7 @@ export type BelowGround = z.infer<typeof belowGroundSchema>;
 export type SpawnPoint = z.infer<typeof spawnPointSchema>;
 export type Objective = z.infer<typeof objectiveSchema>;
 export type MapLighting = z.infer<typeof lightingSchema>;
+export type MapAtmosphere = z.infer<typeof atmosphereSchema>;
 export type Water = z.infer<typeof waterSchema>;
 export type Zone = z.infer<typeof zoneSchema>;
 export type Gate = z.infer<typeof gateSchema>;
