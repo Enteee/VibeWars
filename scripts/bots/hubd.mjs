@@ -2362,7 +2362,11 @@ async function refuseSignOff(number, cfg) {
       labelled.set(issue.number, issue.labels);
     }
   }
-  const onBoard = (board?.cards ?? []).flatMap(({ item: other }) => {
+  // An unread board is no free lane.
+  if (board === null || board.stale) {
+    return "could not read the board; try again";
+  }
+  const onBoard = board.cards.flatMap(({ item: other }) => {
     const column = other.status;
     const n = itemNumber(other, cfg.repo);
     const issueLabels = n === null ? undefined : labelled.get(n);
@@ -4406,18 +4410,6 @@ async function serve(request, verdict, acting) {
     if (!decision.ok) {
       audit({ role, kind, argv, decision: "refused-by-guard", reason: decision.reason });
       return { allow: false, reason: decision.reason, code: 77 };
-    }
-    if (role === "architect" && named === "Ready") {
-      // Landing in Ready is a sign-off too (#3124).
-      const issue = selectorNumber(flagValue(argv, "--url") ?? undefined, cfg.repo);
-      const refused =
-        issue === null
-          ? "could not tell which issue that card is"
-          : await refuseSignOff(issue, cfg);
-      if (refused !== null) {
-        audit({ role, kind, argv, decision: "refused-by-guard", reason: refused });
-        return { allow: false, reason: refused, code: 77 };
-      }
     }
     if (!("error" in parsed)) {
       ghArgv = parsed.argv;

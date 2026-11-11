@@ -751,6 +751,23 @@ describe("hubd and the GraphQL budget", () => {
     expect((await hubd.request("architect", "gh", move("o_ready"))).code).toBe(0);
   }, 30_000);
 
+  it("has no sign-off by item-add: the architect may not add a card (#3124)", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("architect", "gh", [
+      "project",
+      "item-add",
+      "2",
+      "--url",
+      "https://github.com/Enteee/VibeWars/issues/8",
+      "--column",
+      "Ready",
+    ]);
+
+    expect(answer.code).not.toBe(0);
+    expect(hubd.calls("project item-add")).toBe(0);
+  }, 20_000);
+
   it("keeps the sign-off to the architect, refusing and auditing the rest (#349)", async () => {
     const hubd = await startHubd(5000);
     /** @param {string} option */
