@@ -84,6 +84,20 @@ greif sie an oder triff sie mit einer Schadensfertigkeit. Ihr Lebensbalken ist
 zu sehen, solange du auf sie zeigst oder sie anvisierst; Risse breiten sich aus,
 während sie schwächer wird, und sie zerfällt zu Schutt.
 
+## Höhen
+
+Mancher Boden ist erhöht, und du kommst nur über seine Rampen, Treppen,
+groben Stufen oder Leitern hinauf oder hinunter: Die Kante eines erhöhten
+Decks hält dich auf wie eine Mauer. Ein **Turm** ist eine kleine
+Steinplattform auf einem gemauerten Körper, mit Platz für ein paar
+Spieler, erreichbar über eine schmale Treppe oder eine Leiter. Ein
+**Wehrgang** verläuft oben auf einer dicken Mauer, mit einer Brüstung und
+Treppen an beiden Enden. Eine Leiter ist breit genug für jeweils einen
+Spieler. Eine **Brücke** aus Stein, Planken oder einem umgestürzten
+Baumstamm überspannt eine Lücke, und Spieler darunter können unter ihr
+hindurchgehen. Weiter oben zu stehen ändert weder deine Reichweite noch
+deinen Schaden.
+
 ## Wetter und Atmosphäre
 
 Nebelbänke, Rauch, Dampf, Regen und Schnee sind nur fürs Auge. Sie schaden dir

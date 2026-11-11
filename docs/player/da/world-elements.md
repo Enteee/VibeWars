@@ -81,6 +81,18 @@ eller ram den med en skadesevne. Dens livsbjælke vises, mens du peger på den
 eller har den som mål; revnerne breder sig, efterhånden som den svækkes, og den
 falder sammen til murbrokker.
 
+## Højder
+
+Noget jord er hævet, og du kan kun komme op eller ned ad dens ramper,
+trapper, grove trin eller stiger: kanten af et hævet dæk stopper dig som
+en mur. Et **tårn** er en lille stenplatform på en muret krop, med plads
+til nogle få spillere, og du kommer op ad en smal trappe eller en stige.
+En **skyttegang** løber langs toppen af en tyk mur, med et brystværn og
+trapper i begge ender. En stige er bred nok til én spiller ad gangen. En
+**bro** af sten, planker eller en væltet træstamme spænder over en kløft,
+og spillere nedenunder kan gå under den. At stå højere oppe ændrer
+hverken din rækkevidde eller din skade.
+
 ## Vejr og stemning
 
 Tågebanker, røg, damp, regn og sne er kun for øjet. De skader dig aldrig,

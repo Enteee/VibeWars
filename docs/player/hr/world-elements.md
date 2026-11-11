@@ -81,6 +81,18 @@ napadni ili pogodi vještinom koja nanosi štetu. Traka zdravlja mu se
 prikazuje dok pokazuješ na njega ili ga imaš kao metu; pukotine se šire kako
 slabi i na kraju se uruši u ruševine.
 
+## Visine
+
+Dio tla je uzdignut i na njega se možeš popeti ili s njega sići samo
+njegovim rampama, stepenicama, grubim stubama ili ljestvama: rub
+uzdignute platforme zaustavlja te kao zid. **Kula** je mala kamena
+platforma na zidanom tijelu, s mjestom za nekoliko igrača, do koje se
+dolazi uskim stubištem ili ljestvama. **Obrambeni hodnik** prolazi
+vrhom debelog zida, s grudobranom i stubama na oba kraja. Ljestve su
+dovoljno široke samo za jednog igrača odjednom. **Most** od kamena,
+dasaka ili palog debla premošćuje procjep, a igrači ispod mogu proći
+ispod njega. To što si više ne mijenja ni tvoj domet ni štetu.
+
 ## Vrijeme i ugođaj
 
 Pramenovi magle, dim, para, kiša i snijeg samo su za oko. Nikad te ne

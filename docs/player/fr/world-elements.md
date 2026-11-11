@@ -90,6 +90,19 @@ dessus, puis attaque-le ou frappe-le avec une compétence de dégâts. Sa barre
 de vie s'affiche tant que tu le pointes ou le cibles ; les fissures
 s'étendent à mesure qu'il faiblit, et il finit en gravats.
 
+## Hauteurs
+
+Certains sols sont surélevés, et tu ne peux monter ou descendre que par
+leurs rampes, escaliers, marches grossières ou échelles : le bord d'une
+plate-forme surélevée t'arrête comme un mur. Une **tour** est une petite
+plate-forme de pierre sur un corps maçonné, avec de la place pour
+quelques joueurs, à laquelle on accède par un escalier étroit ou une
+échelle. Un **chemin de ronde** court au sommet d'un mur épais, avec un
+parapet et des escaliers à ses extrémités. Une échelle ne laisse passer
+qu'un joueur à la fois. Un **pont** de pierre, de planches ou fait d'un
+tronc d'arbre tombé enjambe un vide, et les joueurs d'en bas peuvent
+passer sous lui. Être plus haut ne change ni ta portée ni tes dégâts.
+
 ## Météo et ambiance
 
 Les bancs de brouillard, la fumée, la vapeur, la pluie et la neige ne sont là

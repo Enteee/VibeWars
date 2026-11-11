@@ -83,6 +83,19 @@ aan of raak hem met een schadevaardigheid. Zijn gezondheidsbalk is te zien
 zolang je ernaar wijst of hem als doel hebt; scheuren verspreiden zich
 naarmate hij verzwakt, en hij valt uiteen tot puin.
 
+## Hoogtes
+
+Sommige grond ligt hoger, en je kunt alleen via de hellingen, trappen,
+ruwe treden of ladders omhoog of omlaag: de rand van een verhoogd dek
+houdt je tegen als een muur. Een **toren** is een klein stenen platform
+op een gemetselde romp, met ruimte voor een paar spelers, bereikbaar via
+een smalle trap of een ladder. Een **weergang** loopt over de top van
+een dikke muur, met een borstwering en trappen aan de uiteinden. Een
+ladder is breed genoeg voor één speler tegelijk. Een **brug** van steen,
+planken of een omgevallen boomstam overspant een kloof, en spelers
+eronder kunnen eronderdoor lopen. Hoger staan verandert niets aan je
+bereik of je schade.
+
 ## Weer en sfeer
 
 Mistbanken, rook, stoom, regen en sneeuw zijn alleen voor het oog. Ze doen je

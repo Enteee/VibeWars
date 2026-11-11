@@ -82,6 +82,19 @@ pe el, apoi atacă-l sau lovește-l cu o abilitate de daune. Bara lui de viață
 vede cât timp arăți spre el sau îl ai ca țintă; crăpăturile se întind pe măsură
 ce slăbește, până se prăbușește în dărâmături.
 
+## Înălțimi
+
+Unele porțiuni de teren sunt înălțate, și poți urca sau coborî doar pe
+rampele, scările, treptele grosolane sau scările de mână ale lor: marginea
+unei platforme înălțate te oprește ca un zid. Un **turn** e o mică
+platformă de piatră pe un corp de zidărie, cu loc pentru câțiva jucători,
+la care ajungi pe o scară îngustă sau pe o scară de mână. Un **drum de
+strajă** merge pe creasta unui zid gros, cu un parapet și scări la capete.
+O scară de mână e destul de lată pentru un singur jucător odată. Un
+**pod** de piatră, de scânduri sau dintr-un buștean căzut trece peste un
+gol, iar jucătorii de dedesubt pot merge pe sub el. Dacă stai mai sus, nu
+ți se schimbă nici raza, nici daunele.
+
 ## Vreme și atmosferă
 
 Bancurile de ceață, fumul, aburul, ploaia și zăpada sunt doar de privit. Nu te

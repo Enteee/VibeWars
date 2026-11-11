@@ -83,6 +83,19 @@ atácalo o golpéalo con una habilidad de daño. Su barra de salud se ve mientra
 lo señalas o lo tienes como objetivo; las grietas se extienden a medida que se
 debilita, y acaba hecho escombros.
 
+## Alturas
+
+Parte del suelo está elevada, y solo puedes subir o bajar por sus rampas,
+escaleras, escalones toscos o escaleras de mano: el borde de una
+plataforma elevada te detiene como un muro. Una **torre** es una pequeña
+plataforma de piedra sobre un cuerpo de mampostería, con sitio para unos
+pocos jugadores, a la que se llega por una escalera estrecha o una
+escalera de mano. Un **adarve** recorre lo alto de un muro grueso, con un
+parapeto y escaleras en sus extremos. Por una escalera de mano solo cabe
+un jugador a la vez. Un **puente** de piedra, de tablones o de un tronco
+caído cruza un hueco, y los jugadores de abajo pueden pasar por debajo.
+Estar más alto no cambia tu alcance ni tu daño.
+
 ## Clima y ambiente
 
 Los bancos de niebla, el humo, el vapor, la lluvia y la nieve son solo para la

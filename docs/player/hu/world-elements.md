@@ -82,6 +82,18 @@ támadd meg, vagy találd el egy sebző készséggel. Az életerősávja látszi
 amíg rámutatsz vagy célba veszed; ahogy gyengül, terjednek rajta a
 repedések, végül törmelékké omlik.
 
+## Magaslatok
+
+Némely talaj megemelt, és csak a rámpáin, lépcsőin, durva fokain vagy
+létráin juthatsz fel vagy le: egy megemelt terasz pereme falként állít
+meg. A **torony** kis kőemelvény falazott testen, néhány játékosnak van
+rajta hely, és keskeny lépcsőn vagy létrán lehet feljutni rá. A
+**gyilokjáró** egy vastag fal tetején fut, mellvéddel és a két végén
+lépcsővel. A létrán egyszerre csak egy játékos fér el. A **híd** kőből,
+pallókból vagy egy kidőlt fatörzsből ível át egy szakadékot, és az alatta
+lévő játékosok elsétálhatnak alatta. Attól, hogy magasabban vagy, nem
+változik sem a hatótávod, sem a sebzésed.
+
 ## Időjárás és hangulat
 
 A ködpadok, a füst, a gőz, az eső és a hó csak a szemnek szólnak. Soha nem
