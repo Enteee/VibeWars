@@ -2129,6 +2129,13 @@ describe("lifts (#3079)", () => {
     );
   });
 
+  it("refuses a timer lift that rests less than a tick at an end", () => {
+    refuses(
+      withTimerLift({ lift: { kind: "timer", restSeconds: 0.01, travelSeconds: 2 } }),
+      /restSeconds/,
+    );
+  });
+
   it("refuses a transition id used twice", () => {
     refuses(withTimerLift({ id: "lever-lift" }), /transition id lever-lift is used twice/);
   });

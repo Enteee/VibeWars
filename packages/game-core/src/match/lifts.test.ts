@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  comesRound,
   initialLifts,
   LEVER_LIFT_TRAVEL_SECONDS,
   liftClosedOn,
+  routesOver,
   stepLift,
   timerLiftAt,
 } from "./lifts.js";
@@ -50,5 +52,17 @@ describe("lifts (#3079)", () => {
     ]);
     const rising = { ...low, phase: "rising" as const };
     expect([liftClosedOn(rising, 0), liftClosedOn(rising, 1)]).toEqual([true, true]);
+  });
+
+  it("is routed over and comes round always on a timer, on a lever only resting and only on its way", () => {
+    const [lever] = initialLifts([
+      { id: "lift", transition: 0, from: 0, to: 1, area: AREA, run: { kind: "lever" } },
+    ]);
+    if (lever === undefined) throw new Error("no lift");
+    const rising = { ...lever, phase: "rising" as const };
+    expect([routesOver(lever), routesOver(rising)]).toEqual([true, false]);
+    expect([comesRound(lever), comesRound(rising)]).toEqual([false, true]);
+    const timer = { ...rising, run: { kind: "timer", restSeconds: 4, travelSeconds: 2 } } as const;
+    expect([routesOver(timer), comesRound({ ...timer, phase: "high" })]).toEqual([true, true]);
   });
 });

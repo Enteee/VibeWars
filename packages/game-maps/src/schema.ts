@@ -142,12 +142,14 @@ const deckSchema = z.object({
  * transition's two layers, resting at each in turn. A `timer` lift rests
  * `restSeconds` at the bottom, travels `travelSeconds`, rests at the top
  * and travels down, over and over; a `lever` lift travels to the other
- * layer each time a switch naming it is flipped while it rests.
+ * layer each time a switch naming it is flipped while it rests. A rest
+ * lasts half a second at least, longer than any step, so a lift always
+ * stops at each end.
  */
 const liftSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("timer"),
-    restSeconds: z.number().positive().max(60),
+    restSeconds: z.number().min(0.5).max(60),
     travelSeconds: z.number().positive().max(10),
   }),
   z.object({ kind: z.literal("lever") }),

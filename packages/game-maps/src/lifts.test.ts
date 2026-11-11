@@ -138,12 +138,38 @@ describe("lifts in a match (#3079)", () => {
     expect(where(sim, "walker")).toMatchObject({ x: 1000, layer: 1 });
   });
 
-  it("routes round a lift on its way", () => {
+  it("waits at a lift resting at the deck to come down for it, and rides it up", () => {
+    const sim = arena([body("walker", 600, 350, 0)]);
+    run(sim, 6.5);
+    expect(lift(sim, "timer-lift")?.phase).toBe("high");
+    sim.walkTo("walker", { x: 1000, y: 350 }, 1);
+    run(sim, 14);
+    expect(where(sim, "walker")).toMatchObject({ x: 1000, layer: 1 });
+  });
+
+  it("waits on the deck at a lift resting at the bottom to come up for it, and rides it down", () => {
+    const sim = arena([body("walker", 1000, 350, 1)]);
+    sim.walkTo("walker", { x: 600, y: 350 }, 0);
+    run(sim, 16);
+    expect(where(sim, "walker")).toMatchObject({ x: 600, layer: 0 });
+  });
+
+  it("waits for a timer lift on its way, and routes round a lever lift on its way", () => {
     const sim = arena([body("walker", 600, 350, 0)]);
     run(sim, 4.5);
     sim.walkTo("walker", { x: 1000, y: 350 }, 1);
-    run(sim, 1);
-    expect(onTimerLift(sim, "walker")).toBe(false);
+    // It rises past it, rests at the deck, and comes back down for it.
+    run(sim, 16);
+    expect(where(sim, "walker")).toMatchObject({ x: 1000, layer: 1 });
+
+    const lever = arena([body("puller", 560, 760, 0), body("walker", 600, 650, 0)]);
+    lever.requestAttack("puller", switchTargetId("lift-lever"));
+    run(lever, 0.5);
+    expect(lift(lever, "lever-lift")?.phase).toBe("rising");
+    lever.walkTo("walker", { x: 1000, y: 650 }, 1);
+    run(lever, 1);
+    const { x, y = Number.NaN } = where(lever, "walker");
+    expect(x >= 680 && x <= 800 && y >= 600 && y <= 700).toBe(false);
   });
 
   it("sends a lever lift to the other layer per flip, and ignores a flip on its way", () => {

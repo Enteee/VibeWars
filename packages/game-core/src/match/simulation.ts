@@ -363,10 +363,12 @@ import {
   type SwitchedDeckField,
 } from "./switched-decks.js";
 import {
+  comesRound,
   initialLifts,
   liftClosedOn,
   liftSegments,
   restingLayer,
+  routesOver,
   stepLift,
   travelling,
   type Lift,
@@ -1190,6 +1192,9 @@ const STALL_FRACTION = 0.1;
 
 /** A walk this close to its goal has arrived (#310). */
 const ARRIVE_UNITS = 1;
+
+/** How far past touching a closed lift a walker still waits at it (#3079). */
+const LIFT_WAIT_UNITS = 2;
 
 /** Replan once the goal is this far from the one the route was planned to (#1157): a body width. */
 export const REPLAN_GOAL_UNITS = 28;
@@ -6186,7 +6191,7 @@ export class MatchSimulation {
     if (left < record.walkLeast - STALL_FRACTION * this.#stepUnits(record, dt)) {
       record.walkLeast = left;
       record.walkStalledSeconds = 0;
-    } else if (!this.#onLift(record)) {
+    } else if (!this.#waitsForLift(record)) {
       record.walkStalledSeconds += dt;
       if (
         record.walkStalledSeconds >=
@@ -6953,9 +6958,10 @@ export class MatchSimulation {
    * built up front, with a way through each teleport that is on (#3030).
    * Keyed by the closed gates' bits, then each standing breakable's
    * (#3031), then each switched deck's that is down (#3068), then two for
-   * each lift on its way (#3079), then a bit for each switched teleport
-   * that is on: one no switch names never changes. A lift on its way is
-   * no way between its layers.
+   * each lever lift on its way (#3079), then a bit for each switched
+   * teleport that is on: one no switch names never changes. A lever lift
+   * on its way is no way between its layers; a timer lift always is, and
+   * a walk over it waits for it.
    */
   #currentWallSet(): WallSet {
     let closed = 0;
@@ -6971,7 +6977,7 @@ export class MatchSimulation {
     });
     const liftBits = deckBits + this.#switchedDecks.length;
     this.#lifts.forEach((lift, at) => {
-      closed |= travelling(lift.phase) ? 0b11 << (liftBits + 2 * at) : 0;
+      closed |= routesOver(lift) ? 0 : 0b11 << (liftBits + 2 * at);
     });
     let key = closed;
     const teleportBits = liftBits + 2 * this.#lifts.length;
@@ -6984,7 +6990,7 @@ export class MatchSimulation {
       const paths = createLayeredPathFinder(
         graphs,
         (this.#layers?.transitions ?? []).filter(
-          (_, at) => !this.#lifts.some((lift) => lift.transition === at && travelling(lift.phase)),
+          (_, at) => !this.#lifts.some((lift) => lift.transition === at && !routesOver(lift)),
         ),
         this.#teleports
           .filter((teleport) => teleport.on)
@@ -7087,12 +7093,20 @@ export class MatchSimulation {
     this.#refreshWalls(closing, sinking);
   }
 
-  /** Whether `record` stands on a lift (#3079), at rest or on its way. */
-  #onLift(record: ParticipantRecord): boolean {
+  /**
+   * Whether `record` waits for a lift (#3079) that will move with nobody
+   * at its lever: on it, or against it where it is closed on its layer. A
+   * walk routed over it waits there for it rather than giving up.
+   */
+  #waitsForLift(record: ParticipantRecord): boolean {
+    const reach = this.#ruleset.collision.playerRadius + LIFT_WAIT_UNITS;
     return this.#lifts.some(
       (lift) =>
+        comesRound(lift) &&
         (record.layer === lift.from || record.layer === lift.to) &&
-        pointInPolygon(record.position, lift.area),
+        (pointInPolygon(record.position, lift.area) ||
+          (liftClosedOn(lift, record.layer) &&
+            distance(record.position, closestPointOnPolygon(record.position, lift.area)) <= reach)),
     );
   }
 

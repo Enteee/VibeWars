@@ -58,6 +58,19 @@ export function restingLayer(lift: LiftField & LiftState): number | null {
   return lift.phase === "low" ? lift.from : lift.phase === "high" ? lift.to : null;
 }
 
+/**
+ * Whether a route may cross `lift`: a timer lift always comes round, so a
+ * walk over it waits for it; a lever lift only while it rests.
+ */
+export function routesOver(lift: Lift): boolean {
+  return lift.run.kind === "timer" || !travelling(lift.phase);
+}
+
+/** Whether `lift` will move with nobody at its lever: a timer lift, or a lever lift on its way. */
+export function comesRound(lift: Lift): boolean {
+  return lift.run.kind === "timer" || travelling(lift.phase);
+}
+
 /** Every lift as the map starts it: at rest at its bottom. */
 export function initialLifts(fields: readonly LiftField[]): Lift[] {
   return fields.map((field) => ({ ...field, phase: "low", progress: 0 }));
