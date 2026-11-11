@@ -16,7 +16,7 @@ when the PR's required checks are green, never because a local run was.
 - Still write the tests your change needs. Writing them is your job; executing them is the pipeline's.
 - Do run the thing (`pnpm dev`) and the cheap static checks: `pnpm run typecheck`, `lint`, `format`.
 - Allowed, not required: the one vitest file you are editing (`pnpm vitest run <file>`).
-- Push, then `hub watch ci <pr>` and carry on: the result arrives in your inbox (#736), failing e2e specs named. Never poll.
+- Push, then `hub watch ci <pr>` and carry on: the result arrives in your inbox (#736), failing e2e specs named. It fires only when the whole run ends (up to ~10 min) while shards fail earlier: do other work meanwhile and, every few minutes, run one `hub pr checks <pr>`; on the first `fail`, read that job log and fix at once. Never sit in `tg wait` with a red job on your PR.
 - `board move <n> "In Review"` is refused until CI on the PR that `Closes #<n>` is green.
 
 ## When CI goes red
