@@ -759,7 +759,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
       { ...target("in-mire", "In the mire (60 armor)", vec2(435, 684), 60), layer: 0 },
       { ...target("in-swamp", "In the swamp (60 armor)", vec2(520, 625), 60), layer: 0 },
       {
-        ...target("in-tainted-water", "In the tainted water (60 armor)", vec2(420, 740), 60),
+        ...target("in-tainted-water", "In the tainted water (60 armor)", vec2(500, 686), 60),
         layer: 0,
       },
       { ...target("in-gas-spout", "In the gas spout (60 armor)", vec2(155, 55), 60), layer: 1 },
