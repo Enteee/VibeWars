@@ -191,6 +191,18 @@ export function staffReader(file, complain) {
 }
 
 /**
+ * Whether `role` has an employee, working or being fired. Presence does not
+ * count: a stale or offline employee is still hired.
+ *
+ * @param {Staff} staff
+ * @param {string} role
+ * @returns {boolean}
+ */
+export function roleHired(staff, role) {
+  return Object.values(staff.employees).some((employee) => employee.role === role);
+}
+
+/**
  * The id the next employee of `role` gets: the bare role while that seat is
  * free, else `<role>@<n>` with the lowest free n from 2.
  *

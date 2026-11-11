@@ -178,6 +178,7 @@ if (argv[0] === "whoami") {
     console.log("  `hub approve 22 --sha <commit> --as perf-sec-qa` — and actually");
     console.log("  do that role's review rather than letting one glance count as two.");
     console.log("  You are self-certifying while this lasts. Be stricter, not looser.");
+    console.log("  A borrowed seat is refused while that role is hired: ask it to review.");
   }
   console.log("");
   console.log(`colleagues: ${ROLES.filter((r) => r !== ROLE).join(", ")}`);

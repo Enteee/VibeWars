@@ -196,6 +196,7 @@ import {
   applyStaff,
   markReady,
   parseStaff,
+  roleHired,
   roleOf,
   staffAllowed,
   staffReader,
@@ -4100,6 +4101,24 @@ async function serve(request, verdict, acting) {
       return { allow: false, reason, code: 77 };
     }
     const seat = named ?? as;
+    // A borrowed seat is only for a role nobody holds. Read on every verdict,
+    // so a hire between two PRs takes effect at once; an unreadable
+    // staff.json refuses (fails closed).
+    if (seat !== role) {
+      /** @type {string | null} */
+      let refusal = null;
+      try {
+        if (roleHired(parseStaff(fs.readFileSync(STAFF, "utf8")), seat)) {
+          refusal = `${seat} is hired (${seat}): ask it to review. A borrowed seat is only for a role nobody holds.`;
+        }
+      } catch (error) {
+        refusal = `could not read staff.json to check whether ${seat} is hired: ${error instanceof Error ? error.message : String(error)}`;
+      }
+      if (refusal !== null) {
+        audit({ role, kind, argv, decision: "refused", reason: refusal });
+        return { allow: false, reason: refusal, code: 77 };
+      }
+    }
     fs.appendFileSync(
       APPROVALS,
       `${JSON.stringify({

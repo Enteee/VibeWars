@@ -2130,6 +2130,85 @@ describe("hubd recording verdicts and merging", () => {
     });
   }, 20_000);
 
+  describe("a borrowed review seat (#3090)", () => {
+    /**
+     * lead-dev holds the perf-sec-qa hat; perf-sec-qa is hired unless
+     * `hired` is false, which removes it from staff.json.
+     *
+     * @param {boolean} hired
+     */
+    const lendHat = async (hired) => {
+      const hubd = await startHubd(5000);
+      const cfg = readJson(path.join(hubd.root, "company.json"));
+      writeAtomic(
+        hubd.root,
+        "company.json",
+        JSON.stringify({ ...cfg, acting: { "lead-dev": ["perf-sec-qa"] } }),
+      );
+      if (!hired) {
+        const staff = parseStaff(fs.readFileSync(path.join(hubd.root, "staff.json"), "utf8"));
+        delete staff.employees["perf-sec-qa"];
+        writeAtomic(hubd.root, "staff.json", JSON.stringify(staff));
+      }
+      return hubd;
+    };
+
+    it("is refused while that role is hired, for both verdicts", async () => {
+      const hubd = await lendHat(true);
+      const ledger = path.join(hubd.hub, "approvals.jsonl");
+
+      for (const verb of ["approve", "request-changes"]) {
+        const answer = await hubd.request("lead-dev", "review", [
+          verb,
+          "9",
+          "--sha",
+          "abc1234def",
+          "--as",
+          "perf-sec-qa",
+        ]);
+        expect(answer.allow, verb).toBe(false);
+        expect(String(answer.reason), verb).toContain(
+          "perf-sec-qa is hired (perf-sec-qa): ask it to review. A borrowed seat is only for a role nobody holds.",
+        );
+      }
+      expect(fs.existsSync(ledger) ? fs.readFileSync(ledger, "utf8") : "").toBe("");
+      expect(hubd.calls("pr comment")).toBe(0);
+    }, 20_000);
+
+    it("is recorded for a role nobody holds", async () => {
+      const hubd = await lendHat(false);
+
+      const answer = await hubd.request("lead-dev", "review", [
+        "approve",
+        "9",
+        "--sha",
+        "abc1234def",
+        "--as",
+        "perf-sec-qa",
+      ]);
+
+      expect(answer.allow, String(answer.reason)).toBe(true);
+      expect(readJson(path.join(hubd.hub, "approvals.jsonl"))).toMatchObject({
+        role: "perf-sec-qa",
+        by: "lead-dev",
+      });
+    }, 20_000);
+
+    it("leaves lead-dev's own verdict alone while perf-sec-qa is hired", async () => {
+      const hubd = await lendHat(true);
+
+      const answer = await hubd.request("lead-dev", "review", [
+        "approve",
+        "9",
+        "--sha",
+        "abc1234def",
+      ]);
+
+      expect(answer.allow, String(answer.reason)).toBe(true);
+      expect(readJson(path.join(hubd.hub, "approvals.jsonl"))).toMatchObject({ role: "lead-dev" });
+    }, 20_000);
+  });
+
   it("merges exactly the pull request the guards checked, squashed, pinned to its head", async () => {
     const hubd = await startHubd(5000);
     // Both sign-offs on the current head and CI green on it, so the gate is open.
