@@ -64,7 +64,7 @@ cell(
 );
 cell(
   "drawbridge: up (stands at its hinge)",
-  `${channel}<rect x="64" y="124" width="56" height="12" fill="#5f6f86" stroke="${INK}" stroke-width="2"/>${shadow(96, 80, 30, 50)}<path d="M70,124 V70 H114 V124Z" fill="#7a4e26" stroke="${INK}" stroke-width="2"/><path d="M70,70 H114" stroke="#c28a4a" stroke-width="3"/><path d="M82,70 V124 M92,70 V124 M102,70 V124" stroke="#4a2c12" stroke-width="2"/><path d="M70,88 H114 M70,112 H114" stroke="#2a2a30" stroke-width="5"/>${chains(74, 110, 70, 36)}<rect x="60" y="30" width="64" height="14" fill="#5f6f86" stroke="${INK}" stroke-width="2"/><text x="124" y="100" font-family="DejaVu Sans,sans-serif" font-size="10" fill="#b8c4d6">no crossing</text>`,
+  `${channel}<rect x="64" y="124" width="56" height="12" fill="#5f6f86" stroke="${INK}" stroke-width="2"/>${shadow(96, 104, 28, 20)}<path d="M70,124 V98 H114 V124Z" fill="#5a3a1c" stroke="${INK}" stroke-width="2"/><path d="M70,98 H114" stroke="#c28a4a" stroke-width="3"/><path d="M82,98 V124 M92,98 V124 M102,98 V124" stroke="#3a2210" stroke-width="2"/><path d="M70,108 H114 M70,118 H114" stroke="#2a2a30" stroke-width="4"/>${chains(74, 110, 98, 36)}<rect x="60" y="30" width="64" height="14" fill="#5f6f86" stroke="${INK}" stroke-width="2"/><text x="124" y="84" font-family="DejaVu Sans,sans-serif" font-size="10" fill="#b8c4d6">open water</text>`,
 );
 
 // ---- rope bridge: one lane of planks between two anchor posts
@@ -78,8 +78,8 @@ cell(
   const R = rng(4);
   /** @type {(dir: number, y0: number) => string} A half hanging from its anchor: planks swing down along the bank. */
   const half = (dir, y0) => {
-    let s = `<path d="M72,${y0} q${-6 * dir},${22 * dir} ${-2 * dir},${46 * dir}" fill="none" stroke="${ROPE}" stroke-width="2.5"/><path d="M108,${y0} q${6 * dir},${22 * dir} ${2 * dir},${46 * dir}" fill="none" stroke="${ROPE}" stroke-width="2.5"/>`;
-    for (let i = 0; i < 4; i++) {
+    let s = `<path d="M72,${y0} q${-6 * dir},${10 * dir} ${-2 * dir},${20 * dir}" fill="none" stroke="${ROPE}" stroke-width="2.5"/><path d="M108,${y0} q${6 * dir},${10 * dir} ${2 * dir},${20 * dir}" fill="none" stroke="${ROPE}" stroke-width="2.5"/>`;
+    for (let i = 0; i < 2; i++) {
       const yy = y0 + dir * (8 + i * 8);
       const wob = (R() - 0.5) * 6;
       s += `<rect x="${74 + wob + i * 0.8}" y="${yy - (dir < 0 ? 5 : 0)}" width="${32 - i * 1.5}" height="5" fill="${WOOD}" stroke="${INK}" stroke-width="1.3" transform="rotate(${(R() - 0.5) * 16} 90 ${yy})"/>`;
@@ -88,7 +88,7 @@ cell(
   };
   cell(
     "rope bridge: cut (two halves hang)",
-    `${channel}${half(1, 56)}${half(-1, 130)}<path d="M72,110 l-4,8 M108,76 l4,-8" stroke="#e8c27a" stroke-width="2"/>${anchor(72, 40)}${anchor(72, 134)}<text x="122" y="94" font-family="DejaVu Sans,sans-serif" font-size="10" fill="#b8c4d6">falls to below</text>`,
+    `${channel}${half(1, 56)}${half(-1, 130)}${anchor(72, 40)}${anchor(72, 134)}<text x="122" y="94" font-family="DejaVu Sans,sans-serif" font-size="10" fill="#b8c4d6">open water</text>`,
   );
 }
 
