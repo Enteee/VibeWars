@@ -11,6 +11,7 @@ import {
   ZONE_RULES,
   ZONE_TELEGRAPH_SECONDS,
   zoneReach,
+  segmentsIntersect,
   type MatchMode,
   type Segment,
 } from "@vibewars/game-core";
@@ -90,6 +91,28 @@ const belowGroundSchema = z.object({
   id: z.string().min(1),
   footprint: rectWallSchema,
 });
+
+/**
+ * The most corners of a ground outline (#3066): each one is a nav node on
+ * the ground, against the 600-node budget the bots path with.
+ */
+export const MAX_OUTLINE_POINTS = 32;
+
+/** What lies beyond a ground outline (#3066), each its own art; cliffs and deep water leave sight open. */
+export const OUTSIDE_KINDS = ["cliff", "rock", "forest", "deep-water"] as const;
+
+/**
+ * A map's ground (#3066): its whole rectangle, or a simple polygon inside
+ * it, natural impassable land outside. Required, as `gates`.
+ */
+const boundsSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("rect") }),
+  z.object({
+    kind: z.literal("outline"),
+    outline: z.array(vec2Schema).min(3).max(MAX_OUTLINE_POINTS),
+    outside: z.enum(OUTSIDE_KINDS),
+  }),
+]);
 
 /** The most points round one body of water (#2983): a curved shore is a polygon with more. */
 export const MAX_WATER_POINTS = 64;
@@ -519,6 +542,7 @@ const RIM_SAMPLES = 32;
 interface LayeredMap {
   readonly width: number;
   readonly height: number;
+  readonly bounds: MapBounds;
   readonly walls: readonly Wall[];
   readonly groundLayer: number;
   readonly decks: readonly Deck[];
@@ -546,7 +570,8 @@ function onWalkableArea(map: LayeredMap, position: Vec2Data, layer: number): boo
       y <= map.height - BODY_RADIUS &&
       [position, ...rim].every(
         (point) =>
-          !map.pits.some((pit) => pointInShape(point, pit.footprint)) ||
+          (onGround(map.bounds, point) &&
+            !map.pits.some((pit) => pointInShape(point, pit.footprint))) ||
           ramps.some((area) => pointInShape(point, area)),
       )
     );
@@ -558,6 +583,44 @@ function onWalkableArea(map: LayeredMap, position: Vec2Data, layer: number): boo
     ...ramps,
   ];
   return [position, ...rim].every((point) => areas.some((area) => pointInShape(point, area)));
+}
+
+/** Whether `point` is on a map's ground (#3066): inside its outline, if it has one. */
+function onGround(bounds: MapBounds, point: Vec2Data): boolean {
+  return bounds.kind === "rect" || pointInShape(point, { kind: "polygon", points: bounds.outline });
+}
+
+/** Whether all of `shape` is on a map's ground (#3066): no corner outside, no side crossing its edge. */
+function shapeOnGround(bounds: MapBounds, shape: Shape): boolean {
+  if (bounds.kind === "rect") {
+    return true;
+  }
+  const edge = wallToSegments({ kind: "polygon", points: bounds.outline });
+  return (
+    shapeVertices(shape).every((point) => onGround(bounds, point)) &&
+    !wallToSegments(shape).some((side) => edge.some((other) => segmentsCross(side, other)))
+  );
+}
+
+/** Whether two segments cross, touching at an end not counted: a ramp may run along the edge. */
+function segmentsCross(first: Segment, second: Segment): boolean {
+  const side = (point: Vec2Data, { a, b }: Segment): number =>
+    Math.sign((b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x));
+  return (
+    side(first.a, second) * side(first.b, second) < 0 &&
+    side(second.a, first) * side(second.b, first) < 0
+  );
+}
+
+/** Whether an outline is simple (#3066): no side crosses or touches another but its neighbours at a corner. */
+function outlineSimple(outline: readonly Vec2Data[]): boolean {
+  const sides = wallToSegments({ kind: "polygon", points: outline });
+  return sides.every((side, i) =>
+    sides.every((other, j) => {
+      const neighbours = Math.abs(i - j) <= 1 || Math.abs(i - j) === sides.length - 1;
+      return neighbours || !segmentsIntersect(side, other);
+    }),
+  );
 }
 
 /** A body at `position` is on `layer`'s walkable area and a radius from that layer's walls, and from `extra`. */
@@ -603,6 +666,8 @@ export const mapDataSchema = z
     teams: z.union([z.literal(2), z.literal(3)]),
     width: z.number().positive(),
     height: z.number().positive(),
+    /** Its ground (#3066): the whole rectangle, or an outline inside it. */
+    bounds: boundsSchema,
     /** How many layers it has (ADR-0051), the ground and what is below and above it. */
     layers: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
     /** Which layer is the ground (#2973): 1 only on a map with a pit, the layer under it. */
@@ -756,6 +821,52 @@ export const mapDataSchema = z
         });
       }
     };
+    if (map.bounds.kind === "outline") {
+      const { outline } = map.bounds;
+      if (outline.some(({ x, y }) => x < 0 || y < 0 || x > map.width || y > map.height)) {
+        context.addIssue({
+          code: "custom",
+          path: ["bounds", "outline"],
+          message: "the ground's outline must lie on the map",
+        });
+      }
+      if (!outlineSimple(outline)) {
+        context.addIssue({
+          code: "custom",
+          path: ["bounds", "outline"],
+          message: "the ground's outline must not cross itself",
+        });
+      }
+    }
+    // Spawns, objectives, levers and plates stand on the ground through
+    // `standsClear`; a deck may overhang the outside, it is a floor above.
+    const offGround = (shape: Shape, path: (string | number)[], what: string): void => {
+      if (!shapeOnGround(map.bounds, shape)) {
+        context.addIssue({
+          code: "custom",
+          path,
+          message: `${what} must be inside the ground's outline`,
+        });
+      }
+    };
+    map.transitions.forEach((transition, index) => {
+      offGround(transition.area, ["transitions", index, "area"], `transition ${String(index)}`);
+    });
+    map.gates.forEach((gate, index) => {
+      if (gate.wall.layer === map.groundLayer) {
+        offGround(gate.wall, ["gates", index, "wall"], `gate ${gate.id}`);
+      }
+    });
+    (map.zones ?? []).forEach((zone, index) => {
+      if (zone.layer === map.groundLayer) {
+        offGround(zone.area, ["zones", index, "area"], `zone ${zone.id}`);
+      }
+    });
+    map.objectives.forEach((objective, index) => {
+      if (objective.kind === "start-line") {
+        offGround(objective.area, ["objectives", index], "the start line");
+      }
+    });
     map.walls.forEach((wall, index) => {
       layerInRange(wall.layer, ["walls", index, "layer"]);
     });
@@ -1320,6 +1431,8 @@ export type GateOpener = z.infer<typeof openerSchema>;
 export type Switch = z.infer<typeof switchSchema>;
 export type Teleport = z.infer<typeof teleportSchema>;
 export type MapData = z.infer<typeof mapDataSchema>;
+export type MapBounds = z.infer<typeof boundsSchema>;
+export type OutsideKind = (typeof OUTSIDE_KINDS)[number];
 
 export class MapValidationError extends Error {
   public override readonly name = "MapValidationError";

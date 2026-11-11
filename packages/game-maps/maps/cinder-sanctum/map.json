@@ -7,6 +7,7 @@
   "ghostLevel": 20,
   "width": 3200,
   "height": 1800,
+  "bounds": { "kind": "rect" },
   "teams": 2,
   "teamSizes": [8],
   "layers": 1,

@@ -13,7 +13,9 @@
 
 import type {
   CastRefusedMessage,
+  MapBoundsDescriptor,
   MapDescriptor,
+  OutsideKind,
   WireTeamCount,
   AdrenalineMessage,
   ChainMarksMessage,
@@ -296,6 +298,9 @@ export const MAX_WIRE_GATES = 6;
 
 /** The most switches a map holds (#3025), as `MAX_SWITCHES` in game-maps. */
 export const MAX_WIRE_SWITCHES = 6;
+
+/** The most corners of a ground outline (#3066), as `MAX_OUTLINE_POINTS` in game-maps. */
+export const MAX_WIRE_OUTLINE_POINTS = 32;
 
 /** The most teleports a map holds (#3030), as `MAX_TELEPORTS` in game-maps. */
 export const MAX_WIRE_TELEPORTS = 6;
@@ -2024,7 +2029,9 @@ function parseMap(value: unknown): MapDescriptor | undefined {
   const switches = parseArray(raw.switches, MAX_WIRE_SWITCHES, parseSwitch);
   const teleports = parseArray(raw.teleports, MAX_WIRE_TELEPORTS, parseTeleport);
   const breakables = parseArray(raw.breakables, MAX_WIRE_BREAKABLES, parseBreakable);
-  return walls === undefined ||
+  const bounds = parseBounds(raw.bounds);
+  return bounds === undefined ||
+    walls === undefined ||
     gates === undefined ||
     switches === undefined ||
     teleports === undefined ||
@@ -2036,12 +2043,30 @@ function parseMap(value: unknown): MapDescriptor | undefined {
         width: raw.width,
         height: raw.height,
         teamCount: raw.teamCount,
+        bounds,
         walls,
         gates,
         switches,
         teleports,
         breakables,
       };
+}
+
+const OUTSIDE_KINDS: readonly OutsideKind[] = ["cliff", "rock", "forest", "deep-water"];
+
+function parseBounds(value: unknown): MapBoundsDescriptor | undefined {
+  const raw = fields(value);
+  if (raw?.kind === "rect") {
+    return { kind: "rect" };
+  }
+  if (raw?.kind !== "outline") {
+    return undefined;
+  }
+  const outline = parseArray(raw.outline, MAX_WIRE_OUTLINE_POINTS, parsePoint);
+  const outside = OUTSIDE_KINDS.find((kind) => kind === raw.outside);
+  return outline === undefined || outline.length < 3 || outside === undefined
+    ? undefined
+    : { kind: "outline", outline, outside };
 }
 
 function parseGate(value: unknown): GateDescriptor | undefined {

@@ -153,6 +153,7 @@ const welcome: PeerWelcome = {
     id: "isle",
     name: "Isle of the Nameless",
     width: 1600,
+    bounds: { kind: "rect" },
     teamCount: 2,
     height: 1200,
     gates: [],

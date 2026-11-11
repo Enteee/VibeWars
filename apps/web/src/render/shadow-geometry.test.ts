@@ -150,6 +150,7 @@ describe("a point light's shadow (#2988)", () => {
 const BRIDGE: RenderableShape = { kind: "rect", x: 100, y: 100, width: 200, height: 100 };
 const STRUCTURE: MapStructure = {
   layerCount: 2,
+  bounds: { kind: "rect" },
   ground: 0,
   pits: [],
   tunnels: [],
@@ -163,6 +164,7 @@ const STRUCTURE: MapStructure = {
 const SUNK: MapStructure = {
   ...STRUCTURE,
   layerCount: 3,
+  bounds: { kind: "rect" },
   ground: 1,
   decks: [{ layer: 2, footprint: BRIDGE }],
 };

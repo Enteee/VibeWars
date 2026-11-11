@@ -54,6 +54,7 @@ export function flatLayers(walls: readonly Segment[]): MatchLayers {
     decks: [],
     pits: [],
     transitions: [],
+    outline: undefined,
     deepWater: [[]],
   };
 }
@@ -76,6 +77,7 @@ export const ARENA: HostMap = {
     teamCount: 2,
     width: 2000,
     height: 1200,
+    bounds: { kind: "rect" },
     gates: [],
     switches: [],
     teleports: [],

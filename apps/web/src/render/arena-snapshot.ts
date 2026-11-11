@@ -12,7 +12,7 @@ import {
 } from "@vibewars/game-core";
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
-import type { MapAtmosphere, MapLighting } from "@vibewars/game-maps/schema";
+import type { MapAtmosphere, MapBounds, MapLighting } from "@vibewars/game-maps/schema";
 
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import type { AttackCast } from "./attack-clock.js";
@@ -166,6 +166,8 @@ export interface MapZone {
 /** A map's floors above and below the ground (ADR-0051), its water and zones, from its file: never per tick. */
 export interface MapStructure {
   readonly layerCount: number;
+  /** Its ground: its rectangle, or an outline with natural land outside (#3066). */
+  readonly bounds: MapBounds;
   /** The ground's layer: 1 on a map with pits and tunnels under it (#2973). */
   readonly ground: number;
   /** How it is lit (ADR-0052); a map without it is lit flat. */
@@ -187,9 +189,10 @@ export interface MapStructure {
   readonly zones: readonly MapZone[];
 }
 
-/** A map with one layer: no deck, no pit, no ramp, no water, no zone. */
+/** A rectangular map with one layer: no deck, no pit, no ramp, no water, no zone. */
 export const FLAT_STRUCTURE: MapStructure = {
   layerCount: 1,
+  bounds: { kind: "rect" },
   ground: 0,
   decks: [],
   pits: [],

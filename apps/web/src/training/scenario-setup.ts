@@ -91,6 +91,7 @@ function toMapDescriptor(map: MapData): MapDescriptor {
     name: map.name,
     width: map.width,
     height: map.height,
+    bounds: map.bounds,
     teamCount: map.teams,
     walls,
     gates: map.gates.map(gateDescriptor),

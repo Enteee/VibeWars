@@ -403,7 +403,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    */
   const proving = new Map<string, object>();
   /** Each team's called foe and pings (#443), shown to that team alone. */
-  const calls = createCallBoard(map.bounds);
+  const calls = createCallBoard(map.descriptor);
   /**
    * The teams a call changed since the last tick (#730). Their views go out
    * once, in `tick`, so a peer flooding calls costs one send per teammate

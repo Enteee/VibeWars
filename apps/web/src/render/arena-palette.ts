@@ -23,6 +23,8 @@ export interface ArenaPalette {
 }
 
 export const WALL_STROKE = 0x3b4759;
+/** The scene's background, past the arena: the ground of a flat map, which has no floor fill. */
+export const ARENA_BACKGROUND = 0x0e1116;
 
 const FLAT: ArenaPalette = {
   floor: undefined,
