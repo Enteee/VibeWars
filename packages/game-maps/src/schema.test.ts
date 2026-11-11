@@ -905,6 +905,7 @@ describe("ghost maps (#2689)", () => {
       wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
       opener,
       blocks: "all",
+      look: "door",
     };
 
     it("rejects a one-way gate whose plate is outside, or with no altar to be inside of", () => {
@@ -940,12 +941,14 @@ describe("ghost maps (#2689)", () => {
       wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
       opener: { kind: "switch" },
       blocks: "all",
+      look: "door",
     };
     const plated = {
       id: "plated",
       wall: { kind: "rect", layer: 0, x: 120, y: 40, width: 8, height: 40 },
       opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
       blocks: "all",
+      look: "door",
     };
     const lever = { id: "lever", layer: 0, position: { x: 50, y: 50 }, targets: ["door"] };
 
@@ -961,7 +964,7 @@ describe("ghost maps (#2689)", () => {
           gates: [door],
           switches: [{ ...lever, targets: ["door", "nowhere"] }],
         }),
-      ).toThrow(/switch lever names nowhere, which is no gate or teleport/);
+      ).toThrow(/switch lever names nowhere, which is no gate, teleport or switched deck/);
       expect(() =>
         validateMapData({
           ...validMap,
@@ -1068,6 +1071,7 @@ describe("ghost maps (#2689)", () => {
         wall: { kind: "rect", layer: 0, x: 80, y: 20, width: 8, height: 20 },
         opener: { kind: "switch" },
         blocks: "all",
+        look: "door",
       };
       expect(() =>
         validateMapData({ ...validMap, gates: [door], teleports: [teleport], switches: [lever] }),
@@ -1083,11 +1087,12 @@ describe("ghost maps (#2689)", () => {
         wall: { kind: "rect", layer: 0, x: 90, y: 5 + at * 15, width: 4, height: 8 },
         opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
         blocks: "all",
+        look: "door",
       }));
       expect(validateMapData({ ...validMap, gates, teleports: [teleport] }).gates).toHaveLength(6);
       expect(() =>
         validateMapData({ ...validMap, gates, teleports: [teleport], switches: [lever] }),
-      ).toThrow(/7 gates, breakables and switched teleports, more than 6/);
+      ).toThrow(/7 gates, breakables, switched teleports and switched decks, more than 6/);
     });
   });
 
@@ -1097,6 +1102,7 @@ describe("ghost maps (#2689)", () => {
       wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
       opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
       blocks: "bodies-and-shots",
+      look: "door",
     };
     const crack = {
       id: "crack",
@@ -1152,7 +1158,7 @@ describe("ghost maps (#2689)", () => {
           gates,
           breakables: [crack, { ...crack, id: "crack-2" }],
         }),
-      ).toThrow(/7 gates, breakables and switched teleports, more than 6/);
+      ).toThrow(/7 gates, breakables, switched teleports and switched decks, more than 6/);
     });
   });
 });
@@ -1170,6 +1176,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     layer,
     footprint: { kind: "rect", x: 500, y: 300, width: 600, height: 200 },
     look: "platform",
+    switched: null,
   });
   const accepts = (overrides: object): void => {
     expect(() => validateMapData({ ...layerTest, ...overrides })).not.toThrow();
@@ -1281,6 +1288,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
             layer: 1,
             footprint: { kind: "rect", x: 500, y: 300, width: 1200, height: 200 },
             look: "platform",
+            switched: null,
           },
         ],
       },
@@ -1389,6 +1397,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
           id: "g",
           opener: { kind: "plate", plate: { x, y }, team: null },
           blocks: "all",
+          look: "door",
           wall: { kind: "rect", layer, x: 950, y: 320, width: 20, height: 20 },
         },
       ],
@@ -1591,6 +1600,7 @@ describe("water (#2983)", () => {
       wall: { kind: "rect", layer: 0, x: 250, y: 580, width: 8, height: 30 },
       opener: { kind: "plate", plate: { x: 300, y: 500 }, team: null },
       blocks: "all",
+      look: "door",
     };
     refuses([pond()], /deep water pond covers a gate \(gates\.0\)/, { gates: [gate] });
     const atRamp = { kind: "rect", x: 300, y: 450, width: 100, height: 100 };

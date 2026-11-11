@@ -355,6 +355,14 @@ import {
   type GateField,
 } from "./gates.js";
 import {
+  deckSegments,
+  initialSwitchedDecks,
+  pushOffPoint,
+  stepSwitchedDeck,
+  type SwitchedDeck,
+  type SwitchedDeckField,
+} from "./switched-decks.js";
+import {
   flipSwitch,
   initialSwitches,
   switchIdOf,
@@ -938,6 +946,8 @@ export interface MatchSimulationOptions {
   readonly teleports?: readonly TeleportField[];
   /** The map's breakable walls (#3031), in its order; none if omitted. */
   readonly breakables?: readonly BreakableField[];
+  /** The map's switched decks (#3068), in its order; none if omitted. */
+  readonly switchedDecks?: readonly SwitchedDeckField[];
   /** The map's effect zones (ADR-0053, #3024), in its order; none if omitted. */
   readonly zones?: readonly MatchZone[];
   /**
@@ -1314,6 +1324,12 @@ export class MatchSimulation {
   readonly #breakables: Breakable[];
   /** The teleports some switch names, by index: each a bit of a wall set's key past the gates'. */
   readonly #switchedTeleports: readonly number[];
+  /** Filled in place, as `#gates` (#3068): each a bit of a wall set's key past the breakables'. */
+  readonly #switchedDecks: SwitchedDeck[];
+  /** Who stands on each switched deck that crossings bring down (#3068), to count each step on once. */
+  readonly #onSwitchedDecks: Set<string>[];
+  /** The decks there are now (#3068): every one but a switched deck that is down. */
+  #standingDecks: MatchLayers["decks"] = NO_DECKS;
   /** Who reached a switch this step (#3025), in simulation order. */
   #switchArrivals: CarriedArrival[] = [];
   /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
@@ -1472,6 +1488,8 @@ export class MatchSimulation {
     this.#switches = initialSwitches(options.switches ?? []);
     this.#teleports = initialTeleports(options.teleports ?? []);
     this.#breakables = initialBreakables(options.breakables ?? []);
+    this.#switchedDecks = initialSwitchedDecks(options.switchedDecks ?? []);
+    this.#onSwitchedDecks = this.#switchedDecks.map(() => new Set<string>());
     this.#switchedTeleports = this.#teleports.flatMap((_, at) =>
       this.#switches.some((lever) => lever.teleports.includes(at)) ? [at] : [],
     );
@@ -1499,6 +1517,7 @@ export class MatchSimulation {
           segments: gate.segments,
         })),
         ...this.#breakables.map(({ layer, segments }) => ({ layer, segments })),
+        ...this.#switchedDecks.map((deck) => ({ layer: deck.layer, segments: deckSegments(deck) })),
       ],
       this.#bounds,
       this.#ruleset.collision.playerRadius,
@@ -1516,6 +1535,7 @@ export class MatchSimulation {
     this.#layerWalls = this.#wallsByLayer(false);
     this.#layerSight = this.#wallsByLayer(true);
     this.#layerBlockers = this.#blockersByLayer();
+    this.#standingDecks = this.#decksStanding();
     this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
     this.#rng = createRng(this.#seed);
     this.#flagField = options.flagField;
@@ -1700,6 +1720,11 @@ export class MatchSimulation {
   /** Every breakable wall (#3031), and its health; `[]` on a map without them. */
   public get breakables(): readonly Breakable[] {
     return this.#breakables;
+  }
+
+  /** Every switched deck (#3068), whether it is up and its cracks; `[]` on a map without them. */
+  public get switchedDecks(): readonly SwitchedDeck[] {
+    return this.#switchedDecks;
   }
 
   /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
@@ -6399,10 +6424,15 @@ export class MatchSimulation {
   #flipSwitches(): {
     readonly gates: Map<number, number>;
     readonly teleports: Map<number, number>;
+    readonly decks: Map<number, number>;
   } {
     const arrivals = this.#livingArrivals(this.#switchArrivals);
     this.#switchArrivals = [];
-    const toggles = { gates: new Map<number, number>(), teleports: new Map<number, number>() };
+    const toggles = {
+      gates: new Map<number, number>(),
+      teleports: new Map<number, number>(),
+      decks: new Map<number, number>(),
+    };
     for (const arrival of arrivals) {
       const at = this.#switches.findIndex((lever) => lever.id === switchIdOf(arrival.targetId));
       const lever = this.#switches[at];
@@ -6414,7 +6444,7 @@ export class MatchSimulation {
         continue;
       }
       this.#switches[at] = next;
-      for (const kind of ["gates", "teleports"] as const) {
+      for (const kind of ["gates", "teleports", "decks"] as const) {
         for (const target of next[kind]) {
           toggles[kind].set(target, (toggles[kind].get(target) ?? 0) + 1);
         }
@@ -6685,7 +6715,10 @@ export class MatchSimulation {
     ]);
   }
 
-  /** Each layer's walls, its deep water (#2983) and its ramp rims (#2975), indexed by layer. */
+  /**
+   * Each layer's walls, its deep water (#2983), its ramp rims (#2975) and
+   * each switched deck that is down (#3068), indexed by layer.
+   */
   #blockersByLayer(): readonly (readonly Segment[])[] {
     return this.#layerWalls.map((walls, layer) => [
       ...walls,
@@ -6694,7 +6727,17 @@ export class MatchSimulation {
         : []),
       ...(this.#layers?.deepWater[layer] ?? []),
       ...(this.#rampRims[layer] ?? []),
+      ...this.#switchedDecks
+        .filter((deck) => !deck.up && deck.layer === layer)
+        .flatMap((deck) => deckSegments(deck)),
     ]);
+  }
+
+  /** The match's decks less each switched deck that is down (#3068). */
+  #decksStanding(): MatchLayers["decks"] {
+    const decks = this.#layers?.decks ?? NO_DECKS;
+    const down = new Set(this.#switchedDecks.filter((deck) => !deck.up).map((deck) => deck.deck));
+    return down.size === 0 ? decks : decks.filter((_, at) => !down.has(at));
   }
 
   /** The walls on `layer`: what stops bodies' blows and shots there. */
@@ -6724,7 +6767,7 @@ export class MatchSimulation {
   /** Whether a deck stands between `from` and `target` (ADR-0051's footprint rule). */
   #deckBlocks(from: ParticipantRecord, target: Aim): boolean {
     return deckBlocksSight(
-      this.#layers?.decks ?? NO_DECKS,
+      this.#standingDecks,
       from.position,
       from.layer,
       target.position,
@@ -6736,7 +6779,7 @@ export class MatchSimulation {
   #seesAcross(from: Vec2, fromLayer: number, to: Vec2, toLayer: number): boolean {
     return (
       hasLineOfSight(from, to, this.#sightOn(fromLayer)) &&
-      !deckBlocksSight(this.#layers?.decks ?? NO_DECKS, from, fromLayer, to, toLayer)
+      !deckBlocksSight(this.#standingDecks, from, fromLayer, to, toLayer)
     );
   }
 
@@ -6874,8 +6917,9 @@ export class MatchSimulation {
    * The walls and paths for how the gates stand now, read off the graph
    * built up front, with a way through each teleport that is on (#3030).
    * Keyed by the closed gates' bits, then each standing breakable's
-   * (#3031), then a bit for each switched teleport that is on: one no
-   * switch names never changes.
+   * (#3031), then each switched deck's that is down (#3068), then a bit
+   * for each switched teleport that is on: one no switch names never
+   * changes.
    */
   #currentWallSet(): WallSet {
     let closed = 0;
@@ -6885,8 +6929,12 @@ export class MatchSimulation {
     this.#breakables.forEach((breakable, at) => {
       closed |= standing(breakable) ? 1 << (this.#gates.length + at) : 0;
     });
+    const deckBits = this.#gates.length + this.#breakables.length;
+    this.#switchedDecks.forEach((deck, at) => {
+      closed |= deck.up ? 0 : 1 << (deckBits + at);
+    });
     let key = closed;
-    const teleportBits = this.#gates.length + this.#breakables.length;
+    const teleportBits = deckBits + this.#switchedDecks.length;
     this.#switchedTeleports.forEach((teleport, bit) => {
       key |= this.#teleports[teleport]?.on === true ? 1 << (teleportBits + bit) : 0;
     });
@@ -6926,10 +6974,17 @@ export class MatchSimulation {
    * this tick holds no plate and flips no switch (#3025). One that closes
    * stops the shots crossing it and moves anybody in its way to the
    * nearest ground clear of it. A switch's teleports (#3030) turn here
-   * too, and change the paths as a gate does.
+   * too, and change the paths as a gate does; so do switched decks
+   * (#3068), flipped or stepped on, which drop whoever stands on one going
+   * down.
    */
   #advanceGates(dt: number): void {
-    if ((this.#gates.length === 0 && this.#teleports.length === 0) || this.phase !== "active") {
+    if (
+      (this.#gates.length === 0 &&
+        this.#teleports.length === 0 &&
+        this.#switchedDecks.length === 0) ||
+      this.phase !== "active"
+    ) {
       this.#switchArrivals = [];
       return;
     }
@@ -6960,10 +7015,52 @@ export class MatchSimulation {
         }
       }
     }
+    const sinking: SwitchedDeck[] = [];
+    for (const [at, deck] of this.#switchedDecks.entries()) {
+      const next = stepSwitchedDeck(
+        deck,
+        (toggles.decks.get(at) ?? 0) % 2 === 1,
+        this.#stepsOnto(at, deck),
+      );
+      this.#switchedDecks[at] = next;
+      if (next.up !== deck.up) {
+        moved = true;
+        if (!next.up) {
+          sinking.push(next);
+        }
+      }
+    }
     if (!moved) {
       return;
     }
-    this.#refreshWalls(closing);
+    this.#refreshWalls(closing, sinking);
+  }
+
+  /**
+   * How many living bodies stepped onto the switched deck at `at` this
+   * step (#3068), each counted once until it steps off again; 0 for a deck
+   * no crossing brings down, or one that is down.
+   */
+  #stepsOnto(at: number, deck: SwitchedDeck): number {
+    const on = this.#onSwitchedDecks[at];
+    if (on === undefined || deck.afterCrossings === null || !deck.up) {
+      return 0;
+    }
+    let entered = 0;
+    for (const record of this.#participants.values()) {
+      const id = record.combatant.id;
+      if (
+        !record.combatant.dead &&
+        record.layer === deck.layer &&
+        pointInPolygon(record.position, deck.footprint)
+      ) {
+        entered += on.has(id) ? 0 : 1;
+        on.add(id);
+      } else {
+        on.delete(id);
+      }
+    }
+    return entered;
   }
 
   /** The index of the standing breakable wall (#3031) `targetId` names; -1 for none. */
@@ -7012,7 +7109,7 @@ export class MatchSimulation {
       critical: false,
     });
     if (!standing(next)) {
-      this.#refreshWalls([]);
+      this.#refreshWalls([], []);
     }
   }
 
@@ -7180,9 +7277,10 @@ export class MatchSimulation {
    * The walls, sight and paths swapped for how the gates, breakables
    * (#3031) and teleports stand now. Every route is walked afresh; a
    * `closing` gate moves anybody in its way to the nearest ground clear
-   * of it, and stops the shots crossing it.
+   * of it, and stops the shots crossing it. Anybody on a `sinking`
+   * switched deck (#3068) is pushed off its nearer end or falls.
    */
-  #refreshWalls(closing: readonly Gate[]): void {
+  #refreshWalls(closing: readonly Gate[], sinking: readonly SwitchedDeck[]): void {
     const set = this.#currentWallSet();
     this.#walls = set.walls;
     this.#sightWalls = set.sight;
@@ -7191,7 +7289,14 @@ export class MatchSimulation {
     this.#layerBlockers = this.#blockersByLayer();
     this.#graphs = set.graphs;
     this.#paths = set.paths;
+    this.#standingDecks = this.#decksStanding();
     for (const record of this.#participants.values()) {
+      const deck = sinking.find(
+        (each) => each.layer === record.layer && pointInPolygon(record.position, each.footprint),
+      );
+      if (deck !== undefined) {
+        this.#dropOff(record, deck);
+      }
       record.route = undefined;
       // A new way may be longer than the old: measure a walk's stall afresh.
       record.walkLeast = Number.POSITIVE_INFINITY;
@@ -7207,6 +7312,30 @@ export class MatchSimulation {
     for (const gate of closing) {
       this.#projectiles = this.#projectiles.map((shot) => cutShotAtGate(shot, gate));
     }
+  }
+
+  /**
+   * `record`, off `deck` as it goes down (#3068): pushed past its nearer
+   * end, or fallen to the first layer under it it can stand on at the
+   * same spot, else to the nearest spot on the layer just under it.
+   */
+  #dropOff(record: ParticipantRecord, deck: SwitchedDeck): void {
+    if (deck.whenDown === "push-off") {
+      const graph = this.#graphOn(record.layer);
+      const end = pushOffPoint(deck, record.position, this.#ruleset.collision.playerRadius);
+      this.#placeAt(record, nearestStandable(graph, end));
+      return;
+    }
+    let layer = deck.layer - 1;
+    for (let under = deck.layer - 1; under >= 0; under -= 1) {
+      if (isStandable(this.#graphOn(under), record.position)) {
+        layer = under;
+        break;
+      }
+    }
+    record.layer = layer;
+    record.walkLayer = undefined;
+    this.#placeAt(record, nearestStandable(this.#graphOn(layer), record.position));
   }
 
   /**

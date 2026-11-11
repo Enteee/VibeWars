@@ -23,6 +23,7 @@ import type {
   SkillBarSlot,
   WireCalls,
   WireCape,
+  WireDeck,
   WirePing,
   WireStroke,
   WireWeaponSets,
@@ -201,6 +202,8 @@ export interface MatchSnapshot {
   readonly teleports: readonly boolean[];
   /** Each of the map's breakable walls' health (#3031); `[]` on a map without them. */
   readonly breakables: readonly number[];
+  /** Each of the map's switched decks (#3068), up or down and its cracks; `[]` on a map without them. */
+  readonly decks: readonly WireDeck[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

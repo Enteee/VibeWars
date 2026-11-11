@@ -254,6 +254,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     switches: [],
     teleports: [],
     breakables: [],
+    decks: [],
     summary: undefined,
   };
 }

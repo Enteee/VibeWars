@@ -307,6 +307,7 @@ const snapshot: WireSnapshotPart = {
   switches: [],
   teleports: [],
   breakables: [],
+  decks: [],
 };
 
 /** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */

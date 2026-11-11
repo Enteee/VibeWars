@@ -88,12 +88,42 @@ export const TRANSITION_LOOKS = [
   "rough-steps",
 ] as const;
 
+/**
+ * A deck that comes and goes (#3068). Up, it is walked as any deck; down,
+ * nobody can step on it, and whoever stands on it is pushed off to its
+ * nearer end (`push-off`, a drawbridge raised at its `hinge`) or falls to
+ * the layer under it (`fall`, a rope bridge cut or a floor collapsed).
+ * A switch that names it toggles it; a `once` deck goes down only once,
+ * and an `afterCrossings` one goes down by itself once that many bodies
+ * have stepped onto it.
+ */
+const switchedDeckSchema = z.object({
+  startsUp: z.boolean(),
+  whenDown: z.enum(["push-off", "fall"]),
+  once: z.boolean(),
+  afterCrossings: z.number().int().positive().nullable(),
+  hinge: z.enum(["n", "e", "s", "w"]).nullable(),
+});
+
+/**
+ * The looks a switched deck may have, by what it does going down (#3068):
+ * a drawbridge is a bridge; what gives way under you is planks.
+ */
+const SWITCHED_DECK_LOOKS: Readonly<
+  Record<"push-off" | "fall", readonly (typeof DECK_LOOKS)[number][]>
+> = {
+  "push-off": ["bridge-stone", "bridge-plank", "bridge-log"],
+  fall: ["bridge-plank"],
+};
+
 /** A walkable floor above the ground (ADR-0051). */
 const deckSchema = z.object({
   id: z.string().min(1),
   layer: layerSchema,
   footprint: shapeSchema,
   look: z.enum(DECK_LOOKS),
+  /** `null` for a deck that is always there. */
+  switched: switchedDeckSchema.nullable(),
 });
 
 /**
@@ -312,8 +342,12 @@ const atmosphereSchema = z.object({
     .nullable(),
 });
 
-/** The most gates on a map (#2691): the match keeps paths for each way they can stand. */
-const MAX_GATES = 6;
+/**
+ * The most things on a map that change how it is walked (#2691, #3068):
+ * gates, breakable walls, switched teleports and switched decks together.
+ * The match keeps paths for each way they can stand.
+ */
+const MAX_TOGGLES = 6;
 
 /** A pressure plate (#2691); `team` is whose plate it is, `null` for anyone's. */
 const plateOpenerSchema = z.object({
@@ -340,12 +374,17 @@ const gateSchema = z.object({
    * is an energy barrier, which sight and a targeted spell pass.
    */
   blocks: z.enum(["all", "bodies-and-shots"]),
+  /**
+   * What it is drawn as while closed (#3068): a `door`, a `portcullis`,
+   * or a `secret` passage that looks like the rock wall round it.
+   */
+  look: z.enum(["door", "portcullis", "secret"]),
 });
 
 /** The most switches on a map (#3025). */
 export const MAX_SWITCHES = 6;
 
-/** A lever (#3025): flipping it toggles every gate it names in `targets`. */
+/** A lever (#3025): flipping it toggles every gate, teleport (#3030) or switched deck (#3068) it names in `targets`. */
 const switchSchema = z.object({
   id: z.string().min(1),
   layer: layerSchema,
@@ -756,7 +795,7 @@ export const mapDataSchema = z
     /** Required, may be empty: a map without objectives says so. */
     objectives: z.array(objectiveSchema),
     /** Required, may be empty, as `objectives` (#2691). */
-    gates: z.array(gateSchema).max(MAX_GATES),
+    gates: z.array(gateSchema).max(MAX_TOGGLES),
     switches: z.array(switchSchema).max(MAX_SWITCHES).optional(),
     /** Its portals (#3030); without it, the map has none. */
     teleports: z.array(teleportSchema).max(MAX_TELEPORTS).optional(),
@@ -1016,6 +1055,73 @@ export const mapDataSchema = z
           code: "custom",
           path: ["decks", index],
           message: `deck ${deck.id} has no transition up to it touching it`,
+        });
+      }
+      const switched = deck.switched;
+      if (switched !== null) {
+        const issue = (message: string): void => {
+          context.addIssue({ code: "custom", path: ["decks", index, "switched"], message });
+        };
+        if (!SWITCHED_DECK_LOOKS[switched.whenDown].includes(deck.look)) {
+          issue(`deck ${deck.id} is a ${deck.look}, which cannot ${switched.whenDown}`);
+        }
+        if ((switched.whenDown === "push-off") !== (switched.hinge !== null)) {
+          issue(`deck ${deck.id} has a hinge only if it pushes off, as a drawbridge does`);
+        }
+        if (switched.whenDown === "fall" && !switched.once) {
+          issue(`deck ${deck.id} falls, so it goes down once`);
+        }
+        if (
+          switched.afterCrossings !== null &&
+          (!switched.startsUp || switched.whenDown !== "fall")
+        ) {
+          issue(`deck ${deck.id} collapses under crossings, so it starts up and falls`);
+        }
+        if (
+          switched.afterCrossings === null &&
+          !(map.switches ?? []).some((lever) => lever.targets.includes(deck.id))
+        ) {
+          issue(
+            `deck ${deck.id} is switched, and no switch names it nor do crossings bring it down`,
+          );
+        }
+      }
+    });
+    /** Whether a body at `position` on `layer` would stand on a switched deck (#3068). */
+    const onSwitchedDeck = (position: Vec2Data, layer: number): boolean =>
+      map.decks.some(
+        (deck) =>
+          deck.switched !== null &&
+          deck.layer === layer &&
+          (pointInShape(position, deck.footprint) ||
+            wallToSegments(deck.footprint).some(
+              (side) => distancePointToSegment(position, side) < BODY_RADIUS,
+            )),
+      );
+    map.spawnPoints.forEach((spawn, index) => {
+      if (onSwitchedDeck(spawn.position, spawn.layer)) {
+        context.addIssue({
+          code: "custom",
+          path: ["spawnPoints", index],
+          message: `spawn ${String(index)} stands on a switched deck`,
+        });
+      }
+    });
+    map.objectives.forEach((objective, index) => {
+      if ("position" in objective && onSwitchedDeck(objective.position, objective.layer)) {
+        context.addIssue({
+          code: "custom",
+          path: ["objectives", index],
+          message: `objective ${String(index)} stands on a switched deck`,
+        });
+      }
+    });
+    (map.teleports ?? []).forEach((teleport, index) => {
+      if (onSwitchedDeck(teleport.to.position, teleport.to.layer)) {
+        context.addIssue({
+          code: "custom",
+          path: ["teleports", index, "to"],
+          message: `teleport ${teleport.id} has its exit on a switched deck`,
         });
       }
     });
@@ -1334,6 +1440,21 @@ export const mapDataSchema = z
     });
 
     const gateKinds = new Map(map.gates.map((gate) => [gate.id, gate.opener.kind]));
+    const switchedDeckIds = new Set(
+      map.decks.flatMap((deck) => (deck.switched === null ? [] : [deck.id])),
+    );
+    map.gates.forEach((gate, index) => {
+      if (
+        map.gates.findIndex(({ id }) => id === gate.id) < index ||
+        map.decks.some(({ id }) => id === gate.id)
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["gates", index, "id"],
+          message: `gate id ${gate.id} is used twice among gates and decks`,
+        });
+      }
+    });
     const teleports = map.teleports ?? [];
     const teleportIds = new Set(teleports.map((teleport) => teleport.id));
     const switched = new Set<string>();
@@ -1358,13 +1479,13 @@ export const mapDataSchema = z
       lever.targets.forEach((target, at) => {
         switched.add(target);
         const kind = gateKinds.get(target);
-        if (kind !== "switch" && !teleportIds.has(target)) {
+        if (kind !== "switch" && !teleportIds.has(target) && !switchedDeckIds.has(target)) {
           context.addIssue({
             code: "custom",
             path: ["switches", index, "targets", at],
             message:
               kind === undefined
-                ? `switch ${lever.id} names ${target}, which is no gate or teleport`
+                ? `switch ${lever.id} names ${target}, which is no gate, teleport or switched deck`
                 : `switch ${lever.id} names ${target}, a plate's gate`,
           });
         }
@@ -1392,9 +1513,13 @@ export const mapDataSchema = z
       layerInRange(teleport.to.layer, at("to", "layer"));
       if (
         gateKinds.has(teleport.id) ||
+        map.decks.some(({ id }) => id === teleport.id) ||
         teleports.findIndex(({ id }) => id === teleport.id) < index
       ) {
-        issue(at("id"), `teleport id ${teleport.id} is used twice among gates and teleports`);
+        issue(
+          at("id"),
+          `teleport id ${teleport.id} is used twice among gates, decks and teleports`,
+        );
       }
       const exit = teleport.to;
       if (!standsClear(map, exit.position, exit.layer)) {
@@ -1447,14 +1572,17 @@ export const mapDataSchema = z
         }
       });
     });
-    // Each gate, breakable and switched teleport doubles the match's pre-built paths.
+    // Each gate, breakable, switched teleport and switched deck doubles the match's pre-built paths.
     const toggles =
-      map.gates.length + breakables.length + teleports.filter(({ id }) => switched.has(id)).length;
-    if (toggles > MAX_GATES) {
+      map.gates.length +
+      breakables.length +
+      teleports.filter(({ id }) => switched.has(id)).length +
+      switchedDeckIds.size;
+    if (toggles > MAX_TOGGLES) {
       context.addIssue({
         code: "custom",
         path: ["gates"],
-        message: `${String(toggles)} gates, breakables and switched teleports, more than ${String(MAX_GATES)}`,
+        message: `${String(toggles)} gates, breakables, switched teleports and switched decks, more than ${String(MAX_TOGGLES)}`,
       });
     }
 

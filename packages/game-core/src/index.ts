@@ -273,6 +273,12 @@ export type { Breakable, BreakableField, BreakableState } from "./match/breakabl
 export { breakableIdOf, breakableTargetId } from "./match/breakables.js";
 export { GATE_PLATE_REACH_UNITS, GATE_REOPEN_SECONDS } from "./match/gates.js";
 export type { Switch, SwitchField, SwitchState } from "./match/switches.js";
+export type {
+  DeckHinge,
+  SwitchedDeck,
+  SwitchedDeckField,
+  SwitchedDeckState,
+} from "./match/switched-decks.js";
 export { SWITCH_COOLDOWN_SECONDS, switchIdOf, switchTargetId } from "./match/switches.js";
 export type { Teleport, TeleportField, TeleportState } from "./match/teleports.js";
 export { TELEPORT_COOLDOWN_SECONDS } from "./match/teleports.js";

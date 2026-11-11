@@ -7728,6 +7728,12 @@
         { "name": "ownerId", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
+    "WireDeck": {
+      "properties": [
+        { "name": "cracks", "optional": false, "type": "number" },
+        { "name": "up", "optional": false, "type": "boolean" }
+      ]
+    },
     "WireEnded": {
       "properties": [
         { "name": "clearSeconds", "optional": false, "type": { "union": ["null", "number"] } },
@@ -8930,6 +8936,18 @@
             }
           }
         },
+        {
+          "name": "decks",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "cracks", "optional": false, "type": "number" },
+                { "name": "up", "optional": false, "type": "boolean" }
+              ]
+            }
+          }
+        },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",
@@ -9397,6 +9415,18 @@
                 { "name": "progress", "optional": false, "type": "number" },
                 { "name": "x", "optional": false, "type": "number" },
                 { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "decks",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "cracks", "optional": false, "type": "number" },
+                { "name": "up", "optional": false, "type": "boolean" }
               ]
             }
           }
