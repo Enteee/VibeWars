@@ -29,12 +29,14 @@
     {
       "id": "bridge",
       "look": "bridge-stone",
+      "switched": null,
       "layer": 2,
       "footprint": { "kind": "rect", "x": 420, "y": 350, "width": 360, "height": 200 }
     },
     {
       "id": "platform",
       "look": "platform",
+      "switched": null,
       "layer": 3,
       "footprint": { "kind": "rect", "x": 520, "y": 160, "width": 160, "height": 110 }
     }

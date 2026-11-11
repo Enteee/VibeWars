@@ -86,6 +86,7 @@ const MATCH: MatchSnapshot = {
   switches: [],
   teleports: [],
   breakables: [],
+  decks: [],
   summary: undefined,
 };
 
@@ -313,7 +314,8 @@ describe("clicks with Show names held (#2738)", () => {
       pits: [],
       tunnels: [],
       dropOffs: [],
-      decks: [{ layer: 1, footprint: deck, look: "platform" as const }],
+      downDecks: [],
+      decks: [{ layer: 1, footprint: deck, look: "platform" as const, switched: null }],
       transitions: [],
       water: [],
       zones: [],

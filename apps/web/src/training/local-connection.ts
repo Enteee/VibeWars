@@ -319,6 +319,7 @@ export function createLocalConnection(options: {
         switches: simulation.switches.map((lever) => lever.up),
         teleports: simulation.teleports.map((teleport) => teleport.on),
         breakables: simulation.breakables.map((breakable) => breakable.health),
+        decks: simulation.switchedDecks.map(({ up, crossings }) => ({ up, cracks: crossings })),
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

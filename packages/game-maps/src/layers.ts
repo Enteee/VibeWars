@@ -5,6 +5,7 @@ import {
   type GateField,
   type MatchLayers,
   type MatchZone,
+  type SwitchedDeckField,
   type SwitchField,
   type TeleportField,
 } from "@vibewars/game-core";
@@ -91,11 +92,12 @@ export function matchGates(map: MapData): GateField[] {
 
 /**
  * `map`'s switches, as the simulation takes them (#3025): each target as
- * its gate's index, or its teleport's (#3030).
+ * its gate's index, its teleport's (#3030) or its switched deck's (#3068).
  */
 export function matchSwitches(map: MapData): SwitchField[] {
   const gates = map.gates.map(({ id }) => id);
   const teleports = (map.teleports ?? []).map(({ id }) => id);
+  const decks = matchSwitchedDecks(map).map(({ id }) => id);
   return (map.switches ?? []).map(({ id, layer, position, targets }) => ({
     id,
     layer,
@@ -104,7 +106,20 @@ export function matchSwitches(map: MapData): SwitchField[] {
     teleports: targets.flatMap((target) =>
       teleports.includes(target) ? [teleports.indexOf(target)] : [],
     ),
+    decks: targets.flatMap((target) => (decks.includes(target) ? [decks.indexOf(target)] : [])),
   }));
+}
+
+/**
+ * `map`'s switched decks, as the simulation takes them (#3068), in its
+ * order, each with its index among the match's decks (`matchLayers`).
+ */
+export function matchSwitchedDecks(map: MapData): SwitchedDeckField[] {
+  return map.decks.flatMap(({ id, layer, footprint, switched }, deck) =>
+    switched === null
+      ? []
+      : [{ id, deck, layer, footprint: shapeVertices(footprint), ...switched }],
+  );
 }
 
 /** `map`'s teleports, as the simulation takes them (#3030), in its order, each entry one polygon. */

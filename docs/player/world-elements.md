@@ -94,6 +94,21 @@ wide enough for one player at a time. A **bridge** of stone, planks or a
 fallen log spans a gap, and players below can walk underneath it. Being
 higher up does not change your range or your damage.
 
+## Drawbridges, rope bridges and hidden passages
+
+Some ways across change during a match, for everyone at once. A
+**drawbridge** is raised and lowered by a lever. Raised, it stands up
+at its hinge as an oak slab and nobody can cross; anyone on it as it
+rises is pushed off its nearer end. A **rope bridge** can be cut by its
+lever, once: its two halves hang from their anchors, and whoever was on
+it falls to the ground or pit below. A **crumbling floor** cracks a
+little more each time someone steps onto it, and gives way after a set
+number of steps; whoever is on it then falls as from a cut bridge.
+
+A **portcullis** is an iron grid in a stone arch that a lever or plate
+raises. A **hidden passage** looks exactly like the rock wall around
+it until it opens onto a dark gap.
+
 ## Weather and atmosphere
 
 Fog banks, smoke, steam, rain and snow are only for the eye. They never
@@ -103,6 +118,7 @@ green, so it cannot be mistaken for toxic fog.
 ## Try them
 
 In the build editor's **Training Ground**, pick the **Wilds** scenario:
-every kind of ground, hazard, gate and portal on this page is there,
-with practice targets standing in the dangerous ones, so you can see
-what each does before you meet it in a match.
+every kind of ground, hazard and portal on this page is there, and a
+door and a shimmering gate, with practice targets standing in the
+dangerous ones, so you can see what each does before you meet it in a
+match.

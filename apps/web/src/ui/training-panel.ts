@@ -39,7 +39,13 @@ import { skillSlotForKeyDown } from "../input/skill-keys.js";
 import { weaponSetIntent } from "../input/weapon-set-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
 import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-target.js";
-import { gateWalls, toArenaSnapshot, toRenderableWall, type GatedMap } from "../match-view.js";
+import {
+  gateWalls,
+  switchedStructure,
+  toArenaSnapshot,
+  toRenderableWall,
+  type GatedMap,
+} from "../match-view.js";
 import { MENU_DEPTH } from "../music/fixed-tracks.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
@@ -51,7 +57,6 @@ import {
   withCalls,
   withNames,
   type ArenaSnapshot,
-  type MapStructure,
 } from "../render/arena-snapshot.js";
 import {
   NoWebGlError,
@@ -202,7 +207,8 @@ interface Session {
   readonly gated: GatedMap;
   /** The walls, every closed gate's and every standing breakable wall's (#3025, #3031). */
   readonly blocking: ReturnType<typeof gateWalls>;
-  readonly structure: MapStructure;
+  /** Its structure, its switched decks (#3068) as a snapshot says they stand. */
+  readonly structure: ReturnType<typeof switchedStructure>;
   /** The map's resurrection shrines (#1199), as a match's. */
   readonly shrines: readonly MapShrine[];
   readonly sounds: MatchSounds;
@@ -674,17 +680,22 @@ export function createTrainingPanel(): TrainingPanel {
       scenario,
       connection,
       names: setup.names,
-      gated: { ...setup.map, gateLayers: setup.structure.gateLayers },
+      gated: {
+        ...setup.map,
+        gateLayers: setup.structure.gateLayers,
+        gateLooks: setup.structure.gateLooks,
+      },
       blocking: gateWalls(
         setup.map.gates,
         setup.structure.gateLayers,
+        setup.structure.gateLooks,
         setup.map.walls.map((wall, at) =>
           toRenderableWall(wall, setup.structure.wallLayers[at] ?? 0),
         ),
         allWallSegments(setup.map.walls),
         setup.map.breakables,
       ),
-      structure: setup.structure.structure,
+      structure: switchedStructure(setup.structure.structure),
       shrines: mapShrines(setup.map.id, setup.map.teamCount),
       // The same sounds as a match (#112), muted by the same M.
       sounds: attachMatchSounds(connection, soundPlayer()),
@@ -1052,7 +1063,7 @@ export function createTrainingPanel(): TrainingPanel {
             undefined,
             undefined,
             session.gated,
-            session.structure,
+            session.structure(latestMatch.decks),
           ),
           created.pointerWorld(),
           nameReveal.held(),

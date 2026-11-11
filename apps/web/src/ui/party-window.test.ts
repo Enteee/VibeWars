@@ -78,6 +78,7 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     switches: [],
     teleports: [],
     breakables: [],
+    decks: [],
     summary: undefined,
   };
 }

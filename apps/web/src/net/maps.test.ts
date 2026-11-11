@@ -580,7 +580,9 @@ describe("structureOf's water (#2984)", () => {
     const layered = TRAINING_MAPS.get("training-heights");
     if (layered === undefined) throw new Error("no training-heights");
     const { structure } = structureOf({ ...layered, water: [...water] });
-    expect(structure.decks).toBe(layered.decks);
+    expect(structure.decks.map(({ footprint }) => footprint)).toEqual(
+      layered.decks.map(({ footprint }) => footprint),
+    );
     expect(structure.water).toHaveLength(2);
   });
 
@@ -605,6 +607,7 @@ describe("structureOf's water (#2984)", () => {
       groundLayer: 0 as const,
       pits: [],
       tunnels: [],
+      downDecks: [],
       decks: [],
       transitions: [],
       walls: [],

@@ -2,8 +2,15 @@ import { describe, expect, it } from "vitest";
 import { CREATURE_LOOKS, MINIMAL_GW_INSPIRED_PVP_V1, type StatusId } from "@vibewars/game-core";
 import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 
-import { gateWalls, outcomeArrived, toArenaSnapshot } from "./match-view.js";
-import { ACTOR_RADIUS, CREATURE_RADIUS, actorAtPoint, isDoor } from "./render/arena-snapshot.js";
+import { gateWalls, outcomeArrived, switchedStructure, toArenaSnapshot } from "./match-view.js";
+import {
+  ACTOR_RADIUS,
+  CREATURE_RADIUS,
+  FLAT_STRUCTURE,
+  actorAtPoint,
+  isDoor,
+  type MapDeck,
+} from "./render/arena-snapshot.js";
 
 function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
   return {
@@ -74,6 +81,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     switches: [],
     teleports: [],
     breakables: [],
+    decks: [],
     summary: undefined,
   };
 }
@@ -298,6 +306,7 @@ describe("gateWalls (#2691, #3061)", () => {
   const blocking = gateWalls(
     [{ wall: door, blocks: "all", opener: { kind: "switch" } }],
     [1],
+    ["secret"],
     [stub],
     [],
     [],
@@ -305,12 +314,50 @@ describe("gateWalls (#2691, #3061)", () => {
 
   it("adds a shut gate as a door on its own layer, which blocks as a wall", () => {
     const { walls, segments } = blocking([false], []);
-    expect(walls).toEqual([stub, { ...door, layer: 1, door: true }]);
+    expect(walls).toEqual([stub, { ...door, layer: 1, door: true, look: "secret" }]);
     expect(walls.filter(isDoor)).toHaveLength(1);
     expect(segments).toHaveLength(4);
   });
 
   it("leaves an open gate out of what blocks", () => {
     expect(blocking([true], [])).toEqual({ walls: [stub], segments: [] });
+  });
+});
+
+describe("switchedStructure (#3068)", () => {
+  const footprint = { kind: "rect", x: 0, y: 0, width: 100, height: 40 } as const;
+  const fixed: MapDeck = { layer: 2, footprint, look: "platform", switched: null };
+  const bridge: MapDeck = {
+    layer: 2,
+    footprint,
+    look: "bridge-plank",
+    switched: { at: 0, whenDown: "fall", hinge: null, afterCrossings: null, up: true, cracks: 0 },
+  };
+  const floor: MapDeck = {
+    ...bridge,
+    switched: { at: 1, whenDown: "fall", hinge: null, afterCrossings: 3, up: true, cracks: 0 },
+  };
+  const standing = switchedStructure({
+    ...FLAT_STRUCTURE,
+    layerCount: 3,
+    decks: [fixed, bridge, floor],
+  });
+
+  it("moves a deck that is down out of the decks, and cracks a floor as the snapshot says", () => {
+    const structure = standing([
+      { up: false, cracks: 0 },
+      { up: true, cracks: 2 },
+    ]);
+    expect(structure.decks.map(({ switched }) => switched?.cracks)).toEqual([undefined, 2]);
+    expect(structure.downDecks.map(({ switched }) => switched?.at)).toEqual([0]);
+  });
+
+  it("hands back the very same structure while nothing changes, so the map is not redrawn", () => {
+    const states = [
+      { up: true, cracks: 0 },
+      { up: true, cracks: 1 },
+    ];
+    expect(standing(states)).toBe(standing([...states]));
+    expect(standing(states)).not.toBe(standing([states[0] ?? { up: true, cracks: 0 }]));
   });
 });

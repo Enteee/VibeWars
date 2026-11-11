@@ -138,11 +138,13 @@ describe("a shot between layers (#2972)", () => {
     pits: [],
     tunnels: [],
     dropOffs: [],
+    downDecks: [],
     decks: [
       {
         layer: 1,
         footprint: { kind: "rect", x: 80, y: -50, width: 100, height: 100 },
         look: "platform",
+        switched: null,
       },
     ],
     transitions: [],

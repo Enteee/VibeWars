@@ -100,6 +100,23 @@ tábuas ou de um tronco caído atravessa um vão, e os jogadores lá embaixo
 podem passar por baixo dela. Estar mais alto não muda seu alcance nem
 seu dano.
 
+## Pontes levadiças, pontes de corda e passagens secretas
+
+Algumas travessias mudam durante uma partida, para todos ao mesmo tempo.
+Uma **ponte levadiça** sobe e desce por uma alavanca. Erguida, ela fica
+de pé na sua dobradiça como uma laje de carvalho e ninguém consegue
+atravessar; quem estiver em cima dela enquanto sobe é empurrado para
+fora pela ponta mais próxima. Uma **ponte de corda** pode ser cortada
+pela sua alavanca, uma única vez: as duas metades ficam penduradas nas
+suas amarras, e quem estava nela cai no chão ou no fosso lá embaixo. Um
+**piso desmoronante** racha um pouco mais cada vez que alguém pisa nele,
+e cede depois de um número fixo de passos; quem estiver nele nessa hora
+cai como de uma ponte cortada.
+
+Uma **grade levadiça** é uma grade de ferro num arco de pedra que uma
+alavanca ou placa levanta. Uma **passagem secreta** parece exatamente
+com a parede de rocha ao redor até se abrir para uma fenda escura.
+
 ## Clima e atmosfera
 
 Bancos de névoa, fumaça, vapor, chuva e neve são só para os olhos. Nunca
@@ -110,6 +127,6 @@ tóxica.
 ## Experimente
 
 No **campo de treino** do editor de builds, escolha o cenário **Ermos**: todo
-tipo de chão, perigo, portão e portal desta página está lá, com alvos de
-treino parados nos perigosos, para você ver o que cada um faz antes de
-encontrá-lo numa partida.
+tipo de chão, perigo e portal desta página está lá, e também uma porta
+e um portão cintilante, com alvos de treino parados nos perigosos, para
+você ver o que cada um faz antes de encontrá-lo numa partida.

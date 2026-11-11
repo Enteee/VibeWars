@@ -107,6 +107,7 @@ export const ARENA: HostMap = {
   switches: [],
   teleports: [],
   breakables: [],
+  switchedDecks: [],
   guards: [],
 };
 

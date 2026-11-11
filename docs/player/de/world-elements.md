@@ -102,6 +102,25 @@ umgestürzten Baumstamm überspannt eine Lücke, und Spieler darunter können
 unter ihr hindurchgehen. Weiter oben zu stehen ändert weder deine
 Reichweite noch deinen Schaden.
 
+## Zugbrücken, Seilbrücken und verborgene Durchgänge
+
+Manche Wege hinüber ändern sich während eines Matches, für alle
+zugleich. Eine **Zugbrücke** wird von einem Hebel hochgezogen und
+herabgelassen. Hochgezogen steht sie an ihrem Scharnier als Eichenplatte
+aufrecht, und niemand kommt hinüber; wer auf ihr steht, während sie sich
+hebt, wird über ihr näheres Ende hinuntergeschoben. Eine **Seilbrücke**
+kann von ihrem Hebel gekappt werden, einmal: Ihre beiden Hälften hängen
+von ihren Ankern herab, und wer auf ihr war, fällt auf den Boden oder in
+die Grube darunter. Ein **bröckelnder Boden** reißt jedes Mal ein wenig
+weiter, wenn jemand ihn betritt, und bricht nach einer festen Zahl von
+Schritten ein; wer dann auf ihm steht, fällt wie von einer gekappten
+Brücke.
+
+Ein **Fallgitter** ist ein Eisengitter in einem Steinbogen, das ein
+Hebel oder eine Platte hochzieht. Ein **verborgener Durchgang** sieht
+genau aus wie die Felswand um ihn herum, bis er sich zu einer dunklen
+Lücke öffnet.
+
 ## Wetter und Atmosphäre
 
 Nebelbänke, Rauch, Dampf, Regen und Schnee sind nur fürs Auge. Sie schaden dir
@@ -110,7 +129,8 @@ kühl, nie grün, damit man ihn nicht mit Giftnebel verwechseln kann.
 
 ## Probier sie aus
 
-Wähle im **Trainingsplatz** des Build-Editors das Szenario **Wildnis**: Jede
-Art von Boden, Gefahr, Tor und Portal von dieser Seite ist dort, mit
-Übungszielen, die in den gefährlichen stehen, damit du siehst, was jedes tut,
-bevor du ihm in einem Match begegnest.
+Wähle im **Trainingsplatz** des Build-Editors das Szenario **Wildnis**:
+Jede Art von Boden, Gefahr und Portal von dieser Seite ist dort, dazu
+eine Tür und ein schimmerndes Tor, mit Übungszielen, die in den
+gefährlichen stehen, damit du siehst, was jedes tut, bevor du ihm in
+einem Match begegnest.

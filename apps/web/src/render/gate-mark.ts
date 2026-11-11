@@ -1,5 +1,7 @@
+import type { GateLook } from "@vibewars/game-maps/schema";
+
 import type { ArenaPalette } from "./arena-palette.js";
-import { GATE_DOOR_LOOK } from "./arena-palette.js";
+import { GATE_DOOR_LOOK, GATE_PORTCULLIS_LOOK } from "./arena-palette.js";
 import type { RenderableShape } from "./arena-snapshot.js";
 import { southFacingEdges } from "./layer-surfaces.js";
 
@@ -192,8 +194,92 @@ const open: GateArt = (painter, wall, { height, line, palette }) => {
   }
 };
 
-/** A gate's look, by whether it stands open. */
-export const GATE_ART: { readonly shut: GateArt; readonly open: GateArt } = { shut, open };
+/** How far apart a portcullis' bars stand, in world units; how high it hangs raised. */
+const BAR_EVERY = 6;
+const RAISED = 0.6;
+
+/** Shares of `wall`'s length a bar stands at, `BAR_EVERY` apart. */
+function bars(wall: RenderableShape): readonly number[] {
+  const length = doorAxis(wall)?.length ?? 0;
+  const count = Math.max(2, Math.floor(length / BAR_EVERY));
+  return Array.from({ length: count - 1 }, (_, at) => (at + 1) / count);
+}
+
+/** A portcullis' iron grid over `wall`'s top: bars across, a rail along, a stroke round. */
+function grid(painter: GatePainter, wall: RenderableShape, line: number): void {
+  painter.lineStyle(line * FRAME_WIDTH, GATE_PORTCULLIS_LOOK.iron, 1);
+  across(painter, wall, bars(wall));
+  painter.lineStyle(line, GATE_PORTCULLIS_LOOK.ironShade, 1);
+  painter.strokeShape(wall);
+}
+
+/**
+ * Down: the dark through the arch, and the iron grid in it, its bars
+ * running down the front face to spiked tips.
+ */
+const portcullisShut: GateArt = (painter, wall, { height, line, palette }) => {
+  if (height > 0) {
+    painter.fillColumn(wall, height, GATE_PORTCULLIS_LOOK.dark);
+    painter.lineStyle(line * FRAME_WIDTH, GATE_PORTCULLIS_LOOK.iron, 1);
+    for (const { from, to } of southFacingEdges(wall)) {
+      const length = Math.hypot(to.x - from.x, to.y - from.y);
+      const count = Math.max(2, Math.floor(length / BAR_EVERY));
+      for (let at = 1; at < count; at += 1) {
+        const x = from.x + ((to.x - from.x) * at) / count;
+        const y = from.y + ((to.y - from.y) * at) / count;
+        painter.lineBetween(x, y - height, x, y - line * 2);
+      }
+      for (const share of [0.3, 0.7]) {
+        painter.lineBetween(from.x, from.y - height * share, to.x, to.y - height * share);
+      }
+    }
+  }
+  painter.save();
+  painter.translateCanvas(0, -height);
+  painter.fillStyle(GATE_PORTCULLIS_LOOK.dark, 1);
+  painter.fillShape(wall);
+  grid(painter, wall, line);
+  if (height > 0) {
+    painter.lineStyle(line * LIT_WIDTH, palette.wallLit, 1);
+    for (const { from, to } of southFacingEdges(wall)) {
+      painter.lineBetween(from.x, from.y, to.x, to.y);
+    }
+  }
+  painter.restore();
+};
+
+/** Up: a dark opening, stone jambs at its ends, and the grid hung above the lintel. */
+const portcullisOpen: GateArt = (painter, wall, { height, line, palette }) => {
+  painter.fillStyle(GATE_PORTCULLIS_LOOK.dark, 1);
+  painter.fillShape(wall);
+  painter.lineStyle(line * FRAME_WIDTH, palette.wallStroke, 1);
+  across(painter, wall, [0, 1]);
+  painter.save();
+  painter.translateCanvas(0, -height * (1 + RAISED));
+  grid(painter, wall, line);
+  painter.restore();
+};
+
+/** Open, a secret passage is a dark opening in the rock, its jambs shaded. */
+const secretOpen: GateArt = (painter, wall, { line, palette }) => {
+  painter.fillStyle(GATE_PORTCULLIS_LOOK.dark, 1);
+  painter.fillShape(wall);
+  painter.lineStyle(line * FRAME_WIDTH, palette.wallFace, 1);
+  across(painter, wall, [0, 1]);
+};
+
+/**
+ * A gate's look (#3068), by whether it stands open. Shut, a secret
+ * passage is the very rock wall it hides in, so it has no art of its
+ * own: it draws as the map's walls do.
+ */
+export const GATE_ART: {
+  readonly shut: Readonly<Record<Exclude<GateLook, "secret">, GateArt>>;
+  readonly open: Readonly<Record<GateLook, GateArt>>;
+} = {
+  shut: { door: shut, portcullis: portcullisShut },
+  open: { door: open, portcullis: portcullisOpen, secret: secretOpen },
+};
 
 /** The few drawing calls a pressure plate needs, in Phaser `Graphics` terms. */
 export interface PlatePainter {

@@ -174,6 +174,7 @@ import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import { LightingPass, litStructurePalette, baseTint } from "./lighting-pass.js";
 import {
   DECK_ART,
+  SWITCHED_DECK_ART,
   TRANSITION_ART,
   deckPalette,
   transitionPalette,
@@ -929,10 +930,11 @@ export class ArenaScene extends Phaser.Scene {
       const { layerCount, ground } = this.snapshot.structure;
       g.save();
       g.translateCanvas(0, -elevationOf(gate.layer, ground));
-      GATE_ART.open(this.gatePainter(g), gate.wall, {
+      const palette = arenaPalette(layerCount);
+      GATE_ART.open[gate.look](this.gatePainter(g), gate.wall, {
         height: layerCount === 1 ? 0 : WALL_HEIGHT,
         line,
-        palette: doorPalette(arenaPalette(layerCount)),
+        palette: gate.look === "door" ? doorPalette(palette) : palette,
       });
       g.restore();
     }
@@ -2340,14 +2342,16 @@ export class ArenaScene extends Phaser.Scene {
         g.restore();
         continue;
       }
-      if (isDoor(wall)) {
+      // A shut secret passage (#3068) is the rock wall it hides in.
+      if (isDoor(wall) && wall.look !== "secret") {
         const flat = next.structure.layerCount === 1;
+        const look = wall.look === "door" ? doorPalette(palette) : palette;
         g.save();
         g.translateCanvas(0, -elevationOf(wall.layer, ground));
-        GATE_ART.shut(this.gatePainter(g), wall, {
+        GATE_ART.shut[wall.look](this.gatePainter(g), wall, {
           height: flat ? 0 : WALL_HEIGHT,
           line,
-          palette: litStructurePalette(doorPalette(palette), next.lighting, wall, wall.layer),
+          palette: litStructurePalette(look, next.lighting, wall, wall.layer),
         });
         g.restore();
         continue;
@@ -2387,7 +2391,7 @@ export class ArenaScene extends Phaser.Scene {
         g.restore();
       }
     }
-    for (const deck of next.structure.decks) {
+    for (const deck of [...next.structure.decks, ...next.structure.downDecks]) {
       this.drawDeck(
         next.structure,
         deck,
@@ -2601,6 +2605,22 @@ export class ArenaScene extends Phaser.Scene {
       line,
       palette,
     };
+    const switched = deck.switched;
+    if (switched !== null && !switched.up) {
+      // Gone down (#3068): nothing spans it but what is left of it.
+      const face = this.structureAt({ kind: "deck", deckLayer: deck.layer });
+      face.save();
+      face.translateCanvas(0, -frame.top);
+      if (switched.hinge !== null) {
+        SWITCHED_DECK_ART.raised(face, frame, switched.hinge);
+      } else if (deck.look === "bridge-plank" && switched.afterCrossings === null) {
+        SWITCHED_DECK_ART.cut(face, frame);
+      } else {
+        SWITCHED_DECK_ART.fallen(face, frame);
+      }
+      face.restore();
+      return;
+    }
     const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
     this.drawColumn(side, deck.footprint, frame.low, frame.top, palette.slab);
     art.side(side, frame);
@@ -2616,6 +2636,9 @@ export class ArenaScene extends Phaser.Scene {
       face.lineBetween(from.x, from.y, to.x, to.y);
     }
     art.top(face, frame);
+    if (switched !== null && switched.afterCrossings !== null && switched.cracks > 0) {
+      SWITCHED_DECK_ART.cracks(face, frame, switched.cracks, switched.afterCrossings);
+    }
     face.restore();
   }
 
@@ -2623,7 +2646,11 @@ export class ArenaScene extends Phaser.Scene {
    * A drop-off (#3069) as a broken lip on its deck's edge: the crumbled
    * stretch you can step off, where the rest of the edge is whole.
    */
-  private drawDropOff(dropOff: MapStructure["dropOffs"][number], ground: number, line: number): void {
+  private drawDropOff(
+    dropOff: MapStructure["dropOffs"][number],
+    ground: number,
+    line: number,
+  ): void {
     const face = this.structureAt({ kind: "deck", deckLayer: dropOff.layer });
     const lip = brokenLip(dropOff.from, dropOff.to);
     face.save();

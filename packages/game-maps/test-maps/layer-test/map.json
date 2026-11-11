@@ -15,6 +15,7 @@
     {
       "id": "bridge",
       "look": "bridge-stone",
+      "switched": null,
       "layer": 1,
       "footprint": { "kind": "rect", "x": 500, "y": 300, "width": 600, "height": 200 }
     }

@@ -15,6 +15,7 @@ import {
   type Vec2,
 } from "@vibewars/game-core";
 import type { GateDescriptor, SwitchDescriptor, TeleportDescriptor } from "@vibewars/game-protocol";
+import type { GateLook } from "@vibewars/game-maps/schema";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 import type { RenderableShape } from "./arena-snapshot.js";
 
@@ -204,12 +205,15 @@ export interface RenderableGate {
   readonly wall: RenderableShape;
   /** The layer its wall stands on (ADR-0051): its ghost lies on that layer's ground. */
   readonly layer: number;
+  /** What it is drawn as (#3068): a door, a portcullis, or a secret passage in the rock. */
+  readonly look: GateLook;
 }
 
 /** Every gate, from your side's view; `[]` on a map without them. */
 export function renderableGates(
   gates: readonly GateDescriptor[],
   layers: readonly number[],
+  looks: readonly GateLook[],
   open: readonly boolean[],
   selfTeam: number | undefined,
 ): RenderableGate[] {
@@ -225,6 +229,7 @@ export function renderableGates(
     blocks,
     wall,
     layer: layers[at] ?? 0,
+    look: looks[at] ?? "door",
   }));
 }
 

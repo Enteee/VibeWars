@@ -102,6 +102,7 @@ function snapshot(
     switches: [],
     teleports: [],
     breakables: [],
+    decks: [],
     summary: undefined,
   };
 }

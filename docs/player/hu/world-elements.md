@@ -104,9 +104,25 @@ A ködpadok, a füst, a gőz, az eső és a hó csak a szemnek szólnak. Soha ne
 sebeznek, nem lassítanak és nem rejtenek el. A köd mindig sápadt és hűvös,
 sosem zöld, így nem lehet összetéveszteni a mérgező köddel.
 
+## Felvonóhidak, kötélhidak és rejtett átjárók
+
+Néhány átkelő meccs közben megváltozik, mindenkinek egyszerre. A
+**felvonóhidat** egy kar emeli fel és engedi le. Felhúzva tölgyfa
+lapként áll fel a zsanérján, és senki sem kelhet át rajta; aki rajta
+van, amikor felemelkedik, azt a közelebbi végén lelöki. A **kötélhidat**
+a karja egyszer elvághatja: a két fele lóg a rögzítési pontjairól, és
+aki rajta volt, lezuhan az alatta lévő talajra vagy verembe. Az
+**omladozó padló** egy kicsit jobban megreped minden alkalommal, amikor
+valaki rálép, és adott számú lépés után beszakad; aki akkor rajta áll,
+úgy zuhan le, mint egy elvágott hídról.
+
+A **csapórács** vasrács egy kőboltívben, amelyet kar vagy nyomólap emel
+fel. A **rejtett átjáró** pontosan olyan, mint a körülötte lévő
+sziklafal, amíg egy sötét résre nem nyílik.
+
 ## Próbáld ki őket
 
 A buildszerkesztő **gyakorlóterén** válaszd a **Vadon** forgatókönyvet:
-az oldal minden talaja, veszélye, kapuja és portálja megtalálható ott, a
-veszélyes helyeken gyakorló célpontokkal, így láthatod, mit tesz
-mindegyik, mielőtt meccsen találkoznál vele.
+az oldal minden talaja, veszélye és portálja megtalálható ott, továbbá egy
+ajtó és egy csillámló kapu, a veszélyes helyeken gyakorló célpontokkal, így
+láthatod, mit tesz mindegyik, mielőtt meccsen találkoznál vele.

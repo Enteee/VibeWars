@@ -99,6 +99,22 @@ desek albo powalonego pnia przerzucony jest nad szczeliną, a gracze na
 dole mogą przejść pod nim. Przebywanie wyżej nie zmienia twojego zasięgu
 ani obrażeń.
 
+## Mosty zwodzone, mosty linowe i ukryte przejścia
+
+Niektóre przeprawy zmieniają się w trakcie meczu, dla wszystkich naraz.
+**Most zwodzony** podnosi się i opuszcza dźwignią. Podniesiony staje
+pionowo przy zawiasie jako dębowa płyta i nikt nie może przejść; kto
+na nim stoi, gdy się podnosi, zostaje zepchnięty z bliższego końca.
+**Most linowy** można przeciąć jego dźwignią, jeden raz: obie połowy
+zwisają z kotwic, a kto na nim był, spada na ziemię albo do dołu pod
+spodem. **Kruszejąca podłoga** pęka trochę bardziej za każdym razem,
+gdy ktoś na nią wejdzie, i zapada się po określonej liczbie kroków;
+kto wtedy na niej stoi, spada jak z przeciętego mostu.
+
+**Brona** to żelazna krata w kamiennym łuku, którą podnosi dźwignia
+albo płyta. **Ukryte przejście** wygląda dokładnie jak skalny mur wokół,
+dopóki nie otworzy się na ciemną szczelinę.
+
 ## Pogoda i atmosfera
 
 Ławice mgły, dym, para, deszcz i śnieg są tylko dla oka. Nigdy cię nie ranią,
@@ -108,6 +124,6 @@ zielona, więc nie da się jej pomylić z trującą mgłą.
 ## Wypróbuj je
 
 Na **poligonie** w edytorze buildów wybierz scenariusz **Dzicz**: jest tam
-każdy rodzaj gruntu, pułapki, bramy i portalu z tej strony, a w groźnych
-miejscach stoją cele treningowe, więc zobaczysz, co każdy z nich robi, zanim
-spotkasz go w meczu.
+każdy rodzaj gruntu, pułapki i portalu z tej strony, a także drzwi
+i migocząca brama, a w groźnych miejscach stoją cele treningowe, więc
+zobaczysz, co każdy z nich robi, zanim spotkasz go w meczu.

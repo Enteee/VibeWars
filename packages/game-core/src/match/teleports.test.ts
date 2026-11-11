@@ -35,7 +35,14 @@ const BACK: TeleportField = {
   enabled: true,
 };
 const LEVER_AT = vec2(200, 700);
-const LEVER: SwitchField = { id: "lever", layer: 0, position: LEVER_AT, gates: [], teleports: [0] };
+const LEVER: SwitchField = {
+  id: "lever",
+  layer: 0,
+  position: LEVER_AT,
+  gates: [],
+  teleports: [0],
+  decks: [],
+};
 
 describe("teleportTaken (#3030)", () => {
   const [out] = initialTeleports([OUT]);

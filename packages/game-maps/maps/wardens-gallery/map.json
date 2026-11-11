@@ -29,7 +29,8 @@
         "plate": { "x": 430, "y": 500 },
         "team": 0
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     },
     {
       "id": "door-east",
@@ -46,7 +47,8 @@
         "plate": { "x": 2770, "y": 900 },
         "team": 1
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     },
     {
       "id": "walk-west",
@@ -63,7 +65,8 @@
         "plate": { "x": 1480, "y": 170 },
         "team": 0
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     },
     {
       "id": "walk-east",
@@ -80,7 +83,8 @@
         "plate": { "x": 1720, "y": 1230 },
         "team": 1
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     }
   ],
   "objectives": [

@@ -10,7 +10,12 @@ import {
   type ZonePath,
   type ZoneSchedule,
 } from "@vibewars/game-core";
-import type { DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
+import type {
+  DeckLook,
+  GateLook,
+  SwitchedDeckData,
+  TransitionLook,
+} from "@vibewars/game-maps/schema";
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
 import type { MapAtmosphere, MapBounds, MapLighting } from "@vibewars/game-maps/schema";
@@ -129,7 +134,7 @@ export type RenderableWall = (RectRenderableWall | PolygonRenderableWall) & {
 };
 
 /** A shut gate's door (#3061): it blocks as a wall does, and draws as a door. */
-export type RenderableDoor = RenderableWall & { readonly door: true };
+export type RenderableDoor = RenderableWall & { readonly door: true; readonly look: GateLook };
 
 export function isDoor(wall: RenderableWall): wall is RenderableDoor {
   return "door" in wall;
@@ -164,6 +169,30 @@ export interface MapZone {
   readonly path?: ZonePath;
 }
 
+/**
+ * A switched deck (#3068) as it stands: up, it is walked; down, a
+ * drawbridge stands at its hinge, or what fell hangs or lies in pieces.
+ * `cracks` are the bodies that have stepped onto a collapsing floor.
+ */
+export interface RenderableSwitchedDeck extends Pick<
+  SwitchedDeckData,
+  "whenDown" | "hinge" | "afterCrossings"
+> {
+  /** Its place among the map's switched decks: the snapshot's `decks` index. */
+  readonly at: number;
+  readonly up: boolean;
+  readonly cracks: number;
+}
+
+/** A deck of a map (#3067). */
+export interface MapDeck {
+  readonly layer: number;
+  readonly footprint: RenderableShape;
+  readonly look: DeckLook;
+  /** How it comes and goes (#3068) and how it stands now; `null` for a deck always there. */
+  readonly switched: RenderableSwitchedDeck | null;
+}
+
 /** A map's floors above and below the ground (ADR-0051), its water and zones, from its file: never per tick. */
 export interface MapStructure {
   readonly layerCount: number;
@@ -175,12 +204,10 @@ export interface MapStructure {
   readonly lighting?: MapLighting;
   /** Its fog, smoke, steam and weather (#3032); a map without it has none. */
   readonly atmosphere?: MapAtmosphere;
-  /** Each deck drawn as its `look` (#3067): a tower, a wall-walk, a bridge. */
-  readonly decks: readonly {
-    readonly layer: number;
-    readonly footprint: RenderableShape;
-    readonly look: DeckLook;
-  }[];
+  /** Each deck there is now, drawn as its `look` (#3067): a tower, a wall-walk, a bridge. */
+  readonly decks: readonly MapDeck[];
+  /** Each switched deck that is down (#3068): drawn as what is left of it, and nothing more. */
+  readonly downDecks: readonly MapDeck[];
   /** Stretches of a raised edge you step off onto `layer - 1`, never climb (#3069). */
   readonly dropOffs: readonly {
     readonly layer: number;
@@ -209,6 +236,7 @@ export const FLAT_STRUCTURE: MapStructure = {
   ground: 0,
   decks: [],
   dropOffs: [],
+  downDecks: [],
   pits: [],
   tunnels: [],
   transitions: [],
@@ -1035,5 +1063,13 @@ export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undef
     size: actor.knockedDown && !creature ? size * LYING_WIDTH : size,
     tint: actor.creatureLook === "ghostly-hero" ? GHOST_GLYPH_TINT : BODY_EDGE,
     alpha: creature ? 1 : BODY_GLYPH_ALPHA,
+  };
+}
+
+/** `decks` as a structure holds them (#3068): those standing, and the switched ones that are down. */
+export function placedDecks(decks: readonly MapDeck[]): Pick<MapStructure, "decks" | "downDecks"> {
+  return {
+    decks: decks.filter(({ switched }) => switched === null || switched.up),
+    downDecks: decks.filter(({ switched }) => switched !== null && !switched.up),
   };
 }

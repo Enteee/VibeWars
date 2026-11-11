@@ -330,6 +330,7 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
     switches: [],
     teleports: [],
     breakables: [],
+    decks: [],
   });
   const ours = { text: t("hud.relicScoredOurs"), side: "ours" };
   const theirs = { text: t("hud.relicScoredTheirs"), side: "theirs" };
@@ -374,6 +375,7 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
       switches: [],
       teleports: [],
       breakables: [],
+      decks: [],
     };
     expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
   });
@@ -390,6 +392,7 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
     switches: [],
     teleports: [],
     breakables: [],
+    decks: [],
   });
   const ours = { text: t("hud.altarPointOurs"), side: "ours" };
   const theirs = { text: t("hud.altarPointTheirs"), side: "theirs" };
@@ -427,6 +430,7 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
       switches: [],
       teleports: [],
       breakables: [],
+      decks: [],
     };
     expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
   });
@@ -579,6 +583,7 @@ describe("carriedBundle (#1225, #1374)", () => {
     switches: [],
     teleports: [],
     breakables: [],
+    decks: [],
     summary: undefined,
   });
 

@@ -44,7 +44,8 @@ const BRIDGE: MapStructure = {
   pits: [],
   tunnels: [],
   dropOffs: [],
-  decks: [{ layer: 1, footprint: bridge, look: "platform" }],
+  downDecks: [],
+  decks: [{ layer: 1, footprint: bridge, look: "platform", switched: null }],
   transitions: [],
   water: [],
   zones: [],
@@ -94,9 +95,10 @@ describe("a click on a ramp (#2972)", () => {
     pits: [],
     tunnels: [],
     dropOffs: [],
+    downDecks: [],
     decks: [
-      { layer: 1, footprint: rect(200, 100, 200, 100), look: "platform" },
-      { layer: 2, footprint: rect(260, -100, 80, 100), look: "platform" },
+      { layer: 1, footprint: rect(200, 100, 200, 100), look: "platform", switched: null },
+      { layer: 2, footprint: rect(260, -100, 80, 100), look: "platform", switched: null },
     ],
     transitions: [
       { from: 0, to: 1, area: rect(100, 100, 120, 100), uphill: "e", look: "ramp" },
@@ -216,16 +218,19 @@ describe("a body under a raised ramp (#2975)", () => {
     pits: [],
     tunnels: [],
     dropOffs: [],
+    downDecks: [],
     decks: [
       {
         layer: 1,
         footprint: { kind: "rect", x: 420, y: 350, width: 360, height: 200 },
         look: "platform",
+        switched: null,
       },
       {
         layer: 2,
         footprint: { kind: "rect", x: 520, y: 160, width: 160, height: 110 },
         look: "platform",
+        switched: null,
       },
     ],
     transitions: [lower, upper],
@@ -414,6 +419,7 @@ describe("liftAt (#2958)", () => {
     layer,
     footprint: { kind: "rect" as const, x, y, width, height },
     look: "platform" as const,
+    switched: null,
   });
   const ramp = (
     from: number,
@@ -434,6 +440,7 @@ describe("liftAt (#2958)", () => {
     pits: [],
     tunnels: [],
     dropOffs: [],
+    downDecks: [],
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
     transitions: [
       ramp(0, 1, [300, 250, 140, 200], "e"),
@@ -529,6 +536,7 @@ describe("structures with height", () => {
     layer: 1,
     footprint: { kind: "rect" as const, x: 420, y: 250, width: 360, height: 200 },
     look: "platform" as const,
+    switched: null,
   };
   const pillar = { kind: "rect" as const, layer: 0, x: 450, y: 420, width: 24, height: 24 };
   const structure: MapStructure = { ...FLAT_STRUCTURE, layerCount: 2, decks: [deck] };
@@ -596,6 +604,7 @@ describe("a level under the ground (#2973)", () => {
     ground: 1,
     pits: [{ footprint: rect(500, 520, 200, 130) }],
     tunnels: [{ footprint: rect(700, 550, 280, 70) }],
+    downDecks: [],
   };
   const STEP = ELEVATION_STEP;
   const occluders = occludersOf([], SUNK);

@@ -82,6 +82,7 @@ const SNAPSHOT: MatchSnapshot = {
   switches: [],
   teleports: [],
   breakables: [],
+  decks: [],
   summary: undefined,
 };
 

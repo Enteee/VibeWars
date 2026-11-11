@@ -103,9 +103,25 @@ Sumuvallit, savu, höyry, sade ja lumi ovat vain silmälle. Ne eivät koskaan
 vahingoita sinua, hidasta sinua tai piilota sinua. Sumu on aina vaaleaa ja
 viileää, ei koskaan vihreää, joten sitä ei voi sekoittaa myrkkysumuun.
 
+## Laskusillat, köysisillat ja salakäytävät
+
+Jotkin reitit yli muuttuvat ottelun aikana, kaikille kerralla.
+**Laskusilta** nostetaan ja lasketaan vivulla. Nostettuna se seisoo
+saranansa varassa pystyssä tammilaattana, eikä kukaan pääse yli; sen
+päällä nousun hetkellä oleva työnnetään pois sen lähemmästä päästä.
+**Köysisillan** voi katkaista sen vivulla, kerran: sen puolikkaat
+riippuvat kiinnityksistään, ja kuka tahansa sillalla ollut putoaa alla
+olevaan maahan tai kuoppaan. **Mureneva lattia** halkeilee hieman lisää
+aina, kun joku astuu sille, ja pettää tietyn askelmäärän jälkeen; sen
+päällä oleva putoaa silloin kuin katkaistulta sillalta.
+
+**Laskuportti** on rautaristikko kivikaaressa, ja vipu tai laatta nostaa
+sen. **Salakäytävä** näyttää täsmälleen samalta kuin sitä ympäröivä
+kallioseinä, kunnes se aukeaa pimeäksi aukoksi.
+
 ## Kokeile niitä
 
 Valitse buildieditorin **Harjoituskentällä** skenaario **Erämaa**: jokainen
-tämän sivun maa, vaara, portti ja portaali on siellä, ja vaarallisissa seisoo
-harjoituskohteita, joten näet, mitä kukin tekee, ennen kuin kohtaat sen
-ottelussa.
+tämän sivun maa, vaara ja portaali on siellä, samoin ovi ja hohtava portti, ja
+vaarallisissa seisoo harjoituskohteita, joten näet, mitä kukin tekee, ennen
+kuin kohtaat sen ottelussa.

@@ -227,7 +227,8 @@
         "team": null,
         "oneWay": true
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     },
     {
       "id": "door-east",
@@ -245,7 +246,8 @@
         "team": null,
         "oneWay": true
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     },
     {
       "id": "door-north",
@@ -263,7 +265,8 @@
         "team": null,
         "oneWay": true
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     },
     {
       "id": "door-south",
@@ -281,7 +284,8 @@
         "team": null,
         "oneWay": true
       },
-      "blocks": "all"
+      "blocks": "all",
+      "look": "door"
     }
   ],
   "objectives": [

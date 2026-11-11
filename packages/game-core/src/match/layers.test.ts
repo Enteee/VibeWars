@@ -356,7 +356,7 @@ describe("a body's layer (ADR-0051)", () => {
 
   const DECK_SWITCH: Partial<MatchSimulationOptions> = {
     gates: [{ segments: wall(1396, 0, 8, 800), opener: { kind: "switch" }, blocks: "all" }],
-    switches: [{ id: "lever", layer: 1, position: ON_DECK, gates: [0], teleports: [] }],
+    switches: [{ id: "lever", layer: 1, position: ON_DECK, gates: [0], teleports: [], decks: [] }],
   };
 
   it("a switch on a deck is not flipped from beneath it, however near (#3025)", () => {

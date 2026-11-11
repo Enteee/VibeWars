@@ -293,8 +293,17 @@ export const MAX_WIRE_SIGNET = 0x1fff;
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
 
-/** The most gates a map holds (#2691), as `MAX_GATES` in game-maps; a peer keeps walls per combination. */
-export const MAX_WIRE_GATES = 6;
+/**
+ * The most gates a map holds (#2691), or switched decks (#3068), as
+ * `MAX_TOGGLES` in game-maps; a peer keeps walls per combination.
+ */
+export const MAX_WIRE_TOGGLES = 6;
+
+/**
+ * The most cracks a switched deck shows (#3068), as `MAX_AFTER_CROSSINGS`
+ * in game-maps: a deck counts no further, and a guest draws each one.
+ */
+export const MAX_WIRE_CRACKS = 16;
 
 /** The most switches a map holds (#3025), as `MAX_SWITCHES` in game-maps. */
 export const MAX_WIRE_SWITCHES = 6;
@@ -696,6 +705,13 @@ export interface WireCapturePoint {
   readonly progress: number;
 }
 
+/** A switched deck (#3068): whether it can be walked on, and how many bodies have stepped onto it. */
+export interface WireDeck {
+  readonly up: boolean;
+  /** Its cracks: steps onto it so far, for a floor that collapses under them. */
+  readonly cracks: number;
+}
+
 /** The most shrines a map has (#1378); the map schema's `MAX_CAPTURE_POINTS`. */
 export const MAX_WIRE_CAPTURE_POINTS = 7;
 
@@ -762,6 +778,8 @@ export interface WireSnapshot {
   readonly teleports: readonly boolean[];
   /** Each of the map's breakable walls' health (#3031), in its descriptor's order; 0 once crumbled. */
   readonly breakables: readonly number[];
+  /** Each of the map's switched decks (#3068), in its map file's order. */
+  readonly decks: readonly WireDeck[];
 }
 
 /**
@@ -2025,7 +2043,7 @@ function parseMap(value: unknown): MapDescriptor | undefined {
     return undefined;
   }
   const walls = parseArray(raw.walls, MAX_WIRE_WALLS, parseWall);
-  const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseGate);
+  const gates = parseArray(raw.gates, MAX_WIRE_TOGGLES, parseGate);
   const switches = parseArray(raw.switches, MAX_WIRE_SWITCHES, parseSwitch);
   const teleports = parseArray(raw.teleports, MAX_WIRE_TELEPORTS, parseTeleport);
   const breakables = parseArray(raw.breakables, MAX_WIRE_BREAKABLES, parseBreakable);
@@ -2437,10 +2455,11 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const aggression = parseArray(raw.aggression, MAX_WIRE_TEAMS, parseScore);
   const relics = parseArray(raw.relics, MAX_WIRE_TEAMS, parseCarried(RELIC_PLACES));
   const altar = raw.altar === null ? null : parsePoint(raw.altar);
-  const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseBoolean);
+  const gates = parseArray(raw.gates, MAX_WIRE_TOGGLES, parseBoolean);
   const switches = parseArray(raw.switches, MAX_WIRE_SWITCHES, parseBoolean);
   const teleports = parseArray(raw.teleports, MAX_WIRE_TELEPORTS, parseBoolean);
   const breakables = parseArray(raw.breakables, MAX_WIRE_BREAKABLES, parseHealth);
+  const decks = parseArray(raw.decks, MAX_WIRE_TOGGLES, parseDeck);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
@@ -2458,7 +2477,8 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     gates === undefined ||
     switches === undefined ||
     teleports === undefined ||
-    breakables === undefined
+    breakables === undefined ||
+    decks === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -2482,6 +2502,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         switches,
         teleports,
         breakables,
+        decks,
       };
 }
 
@@ -2512,6 +2533,17 @@ function snapshotTeamsWithin(snapshot: WireSnapshot, teamCount: WireTeamCount): 
     snapshot.relics.length <= teamCount &&
     teams.every((team) => team === null || team < teamCount)
   );
+}
+
+function parseDeck(value: unknown): WireDeck | undefined {
+  const raw = fields(value);
+  const cracks = raw === undefined ? undefined : parseHealth(raw.cracks);
+  return raw !== undefined &&
+    typeof raw.up === "boolean" &&
+    cracks !== undefined &&
+    cracks <= MAX_WIRE_CRACKS
+    ? { up: raw.up, cracks }
+    : undefined;
 }
 
 function parseCapturePoint(value: unknown): WireCapturePoint | undefined {

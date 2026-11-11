@@ -97,6 +97,22 @@ lúc. Một **cây cầu** bằng đá, ván gỗ hoặc một khúc gỗ đổ 
 khoảng trống, và người chơi bên dưới có thể đi qua bên dưới nó. Đứng cao
 hơn không thay đổi tầm đánh hay sát thương của bạn.
 
+## Cầu kéo, cầu dây và lối đi bí mật
+
+Một số lối băng qua thay đổi trong trận, cho mọi người cùng lúc.
+**Cầu kéo** được nâng lên và hạ xuống bằng cần gạt. Khi nâng lên, nó
+dựng đứng ở bản lề như một tấm gỗ sồi và không ai qua được; ai đang
+đứng trên nó lúc nó nâng lên sẽ bị đẩy ra khỏi đầu gần hơn. **Cầu dây**
+có thể bị cắt bằng cần gạt của nó, một lần: hai nửa cầu treo lủng lẳng
+từ chỗ neo, và ai đang ở trên đó rơi xuống mặt đất hoặc hố bên dưới.
+**Sàn mục** nứt thêm một chút mỗi lần có người bước lên, và sụp sau một
+số bước nhất định; ai đang đứng trên đó khi ấy sẽ rơi như từ một cây
+cầu bị cắt.
+
+**Cửa song sắt** là một tấm lưới sắt trong vòm đá, được nâng lên bằng
+cần gạt hoặc tấm áp lực. **Lối đi bí mật** trông y hệt vách đá xung
+quanh cho tới khi nó mở ra thành một khe tối.
+
 ## Thời tiết và bầu không khí
 
 Màn sương, khói, hơi nước, mưa và tuyết chỉ để ngắm. Chúng không bao giờ
@@ -106,6 +122,7 @@ bao giờ có màu xanh lá, nên không thể nhầm với sương độc.
 ## Thử chúng
 
 Trong **Sân tập** của trình sửa build, chọn kịch bản **Hoang dã**: mọi
-loại mặt đất, mối nguy, cổng và cổng dịch chuyển trên trang này đều có ở
-đó, với các mục tiêu luyện tập đứng trong những chỗ nguy hiểm, để bạn
-thấy mỗi thứ làm gì trước khi gặp nó trong trận.
+loại mặt đất, mối nguy và cổng dịch chuyển trên trang này đều có ở đó,
+cùng một cánh cửa và một cổng lấp lánh, với các mục tiêu luyện tập đứng
+trong những chỗ nguy hiểm, để bạn thấy mỗi thứ làm gì trước khi gặp nó
+trong trận.

@@ -20,6 +20,7 @@ import {
 import { allWallSegments } from "./geometry.js";
 import {
   matchBreakables,
+  matchSwitchedDecks,
   matchGates,
   matchLayers,
   matchSwitches,
@@ -52,6 +53,7 @@ export type MapSimulationFields = {
     | "switches"
     | "teleports"
     | "breakables"
+    | "switchedDecks"
     | "shrines"
     | "guildLords"
     | "flagField"
@@ -74,6 +76,7 @@ export function mapSimulationFields(map: MapData, teamCount: number): MapSimulat
     switches: matchSwitches(map),
     teleports: matchTeleports(map),
     breakables: matchBreakables(map),
+    switchedDecks: matchSwitchedDecks(map),
     bounds: { width: map.width, height: map.height },
     shrines: shrinesOf(objectives),
     guildLords: guildLordsOf(objectives),

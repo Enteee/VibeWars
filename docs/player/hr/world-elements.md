@@ -103,9 +103,24 @@ Pramenovi magle, dim, para, kiša i snijeg samo su za oko. Nikad te ne
 ozljeđuju, ne usporavaju i ne skrivaju. Magla je uvijek blijeda i hladna,
 nikad zelena, pa se ne može zamijeniti s otrovnom maglom.
 
+## Pokretni mostovi, viseći mostovi i skriveni prolazi
+
+Neki se prijelazi mijenjaju tijekom meča, za sve odjednom. **Pokretni
+most** podiže se i spušta polugom. Podignut stoji uspravno na svojoj
+šarki kao hrastova ploča i nitko ne može prijeći; tko je na njemu dok se
+diže, bude gurnut s njegova bližeg kraja. **Viseći most** može se
+jednom presjeći njegovom polugom: dvije mu polovice vise sa sidrišta, a
+tko je bio na njemu padne na tlo ili u jamu ispod. **Trošni pod** napukne
+malo više svaki put kad netko stane na njega i popusti nakon određenog
+broja koraka; tko je tada na njemu padne kao s presječenog mosta.
+
+**Rešetkasta vrata** su željezna rešetka u kamenom luku koju podiže
+poluga ili ploča. **Skriveni prolaz** izgleda baš kao stjenoviti zid oko
+njega dok se ne otvori u mračan procjep.
+
 ## Isprobaj ih
 
 U **Poligonu za vježbu** uređivača sastava odaberi scenarij **Divljina**:
-ondje je svaka vrsta tla, opasnosti, vrata i portala s ove stranice, a mete
-za vježbu stoje na opasnim mjestima, pa možeš vidjeti što koja radi prije
-nego što na nju naiđeš u meču.
+ondje je svaka vrsta tla, opasnosti i portala s ove stranice, te obična
+vrata i svjetlucava vrata, a mete za vježbu stoje na opasnim mjestima, pa
+možeš vidjeti što koja radi prije nego što na nju naiđeš u meču.
