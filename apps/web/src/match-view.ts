@@ -1,6 +1,7 @@
 import type { FlagField, RelicField, Segment } from "@vibewars/game-core";
 import { ELITE_ZAISHEN_MAP } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
+import type { MapShrine } from "@vibewars/game-maps/match-fields";
 import type {
   BreakableDescriptor,
   GateDescriptor,
@@ -92,14 +93,7 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
-import {
-  mapFlagField,
-  mapMode,
-  mapRelicField,
-  mapShrines,
-  mapStructure,
-  type MapShrine,
-} from "./net/maps.js";
+import { mapFlagField, mapMode, mapRelicField, mapShrines, mapStructure } from "./net/maps.js";
 import {
   renderableCapturePoints,
   renderableGates,

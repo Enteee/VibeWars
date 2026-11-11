@@ -1,4 +1,5 @@
 import type { MatchMode, RelicCarry } from "@vibewars/game-core";
+import { isHallsMap, mapMatchRules } from "@vibewars/game-maps/match-fields";
 import type { SizeClass } from "@vibewars/game-maps/size-class";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
@@ -6,7 +7,7 @@ import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { keySignet } from "../identity/key-signet.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
-import { ASCENT_PROGRESSION, isHallsMap, mapMatchRules } from "../net/maps.js";
+import { ASCENT_PROGRESSION, arenaMap } from "../net/maps.js";
 import { button, findMatchButton, h, readyButton, toast, type ShareLine } from "./kit.js";
 import {
   SIGNET_ROW_PX,
@@ -181,7 +182,7 @@ const MODE_LINES: Readonly<Record<MatchMode, MessageKey>> = {
 /** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */
 export function modeLine(map: LobbyMap): string {
   return t(map.relicCarry === "foe" ? "lobby.modeRelicRunFoe" : MODE_LINES[map.mode], {
-    minutes: mapMatchRules(map.id, map.mode).timeLimitSeconds / 60,
+    minutes: mapMatchRules(arenaMap(map.id), map.mode).timeLimitSeconds / 60,
   });
 }
 
@@ -205,7 +206,7 @@ const HALLS_MODE_NAMES: Readonly<Partial<Record<MatchMode, MessageKey>>> = {
  * one place (#2700).
  */
 export function mapLabel(map: LobbyMap): string {
-  const hallsMode = isHallsMap(map.id) ? HALLS_MODE_NAMES[map.mode] : undefined;
+  const hallsMode = isHallsMap(arenaMap(map.id)) ? HALLS_MODE_NAMES[map.mode] : undefined;
   const qualifier = hallsMode === undefined ? t(SIZE_NAMES[map.size]) : t(hallsMode);
   return t("lobby.mapLabel", { name: mapName(map.id), size: qualifier });
 }

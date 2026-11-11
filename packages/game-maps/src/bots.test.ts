@@ -12,9 +12,6 @@ import {
   STARTER_BUILDS,
   getSkill,
   isSpikeSkill,
-  loadoutOf,
-  loadoutSpec,
-  resolveLoadout,
   type ParticipantSpec,
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
@@ -23,6 +20,7 @@ import { allWallSegments } from "./geometry.js";
 import { matchGates } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
+import { playBuildBot } from "./tools/map-balance.js";
 import type { MapData } from "./schema.js";
 
 /**
@@ -83,23 +81,8 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
         .map((spawn, i): ParticipantSpec => {
           const build = STARTER_BUILDS[(i + seed.charCodeAt(0)) % STARTER_BUILDS.length];
           if (build === undefined) throw new Error("no built-in builds");
-          const loadout = loadoutOf(build);
-          const resolved = resolveLoadout(
-            {
-              primaryProfession: loadout.primaryProfession,
-              secondaryProfession: loadout.secondaryProfession,
-              allocatedRanks: loadout.attributeRanks,
-              equipment: loadout.equipment,
-            },
-            RULESET.combat,
-          );
           return {
-            id: `${String(team)}-${String(i)}`,
-            team,
-            skillBar: loadout.skillBar,
-            ...loadoutSpec(resolved),
-            spawn: spawn.position,
-            facing: 0,
+            ...playBuildBot(build, `${String(team)}-${String(i)}`, team, spawn.position, 0),
             behaviour: { kind: "play-build", reaction: BOT_REACTION, spikeHold },
           };
         }),
@@ -554,25 +537,7 @@ function casterBots(
           throw new Error(
             `no starter build ${String(CASTERS[(k + team * shift) % CASTERS.length])}`,
           );
-        const loadout = loadoutOf(build);
-        const resolved = resolveLoadout(
-          {
-            primaryProfession: loadout.primaryProfession,
-            secondaryProfession: loadout.secondaryProfession,
-            allocatedRanks: loadout.attributeRanks,
-            equipment: loadout.equipment,
-          },
-          RULESET.combat,
-        );
-        return {
-          id: `${String(team)}-${String(k)}`,
-          team,
-          skillBar: loadout.skillBar,
-          ...loadoutSpec(resolved),
-          spawn: spawn.position,
-          facing: 0,
-          behaviour: { kind: "play-build", reaction: BOT_REACTION },
-        };
+        return playBuildBot(build, `${String(team)}-${String(k)}`, team, spawn.position, 0);
       }),
   );
 }

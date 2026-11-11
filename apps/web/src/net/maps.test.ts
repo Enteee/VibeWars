@@ -1,3 +1,4 @@
+import { mapMatchRules } from "@vibewars/game-maps/match-fields";
 import { MAX_CAPTURE_POINTS } from "@vibewars/game-maps/schema";
 import { ASCENT_ROUNDS, MAX_WIRE_CAPTURE_POINTS, teamSizeOf } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
@@ -9,7 +10,7 @@ import {
   arenaIds,
   ascentMapId,
   HALL_OF_HEROES_MAPS,
-  mapMatchRules,
+  arenaMap,
   ascentRoundOf,
   ASCENT_PROGRESSION,
   LOBBY_MODE_MATCH_MODES,
@@ -535,9 +536,9 @@ describe("a Hall match of two teams (#2700)", () => {
   });
 
   it("plays the Halls' rules on the Halls' maps only", () => {
-    expect(mapMatchRules("hall-of-heroes-relic", "relic-run").respawnOnWave).toBe(true);
-    expect(mapMatchRules("broken-tower", "relic-run").respawnOnWave).toBe(false);
-    expect(mapMatchRules("cinder-sanctum", "relic-run").wipeSurvived).toBe(true);
+    expect(mapMatchRules(arenaMap("hall-of-heroes-relic"), "relic-run").respawnOnWave).toBe(true);
+    expect(mapMatchRules(arenaMap("broken-tower"), "relic-run").respawnOnWave).toBe(false);
+    expect(mapMatchRules(arenaMap("cinder-sanctum"), "relic-run").wipeSurvived).toBe(true);
   });
 });
 
