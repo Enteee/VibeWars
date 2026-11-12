@@ -1,13 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-import { RECORDS_CHANNEL, recordMessage } from "../apps/web/src/net/transport/broadcast-records.js";
-import { matchRecordEvent } from "../apps/web/src/net/transport/match-records.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import {
   MATCH_RECORD_VERSION,
   recordTemplate,
   type MatchRecord,
 } from "../packages/game-session/src/match-record.js";
+import { postMatchRecord } from "./helpers/match-records.js";
 import { openRail } from "./helpers/menu.js";
 
 const played = (index: number): string => {
@@ -45,22 +44,11 @@ test("Clone saves a finished match's team as a Team Build and opens it (#2585)",
       },
     ],
   };
-  const event = matchRecordEvent(record, now);
-  if (event === undefined) {
-    throw new Error("record too big");
-  }
 
   await page.goto("./");
   await openRail(page, "Matches");
   // Posted as a finished match's host does in this build: the Matches page hears it.
-  await page.evaluate(
-    ([channel, message]) => {
-      const post = new BroadcastChannel(channel);
-      post.postMessage(message);
-      post.close();
-    },
-    [RECORDS_CHANNEL, recordMessage(event)] as const,
-  );
+  await postMatchRecord(page, record);
   await page.locator(".match-row-head").click();
   const teams = page.locator(".match-detail .play-card");
   await expect(page.getByRole("tab")).toHaveText(["Team 1 · Won", "Team 2 · Lost"]);
@@ -102,21 +90,10 @@ test("Clone saves a finished 1v1's side as a character and opens it (#2885)", as
       },
     ],
   };
-  const event = matchRecordEvent(record, now);
-  if (event === undefined) {
-    throw new Error("record too big");
-  }
 
   await page.goto("./");
   await openRail(page, "Matches");
-  await page.evaluate(
-    ([channel, message]) => {
-      const post = new BroadcastChannel(channel);
-      post.postMessage(message);
-      post.close();
-    },
-    [RECORDS_CHANNEL, recordMessage(event)] as const,
-  );
+  await postMatchRecord(page, record);
   await page.locator(".match-row-head").click();
   await page
     .locator(".match-detail .play-card")
