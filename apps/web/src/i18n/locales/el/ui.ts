@@ -445,6 +445,7 @@ export default {
   "gearLibrary.weapons": "όπλα",
 
   "guildLink.broken": "Αυτός ο σύνδεσμος συντεχνίας είναι χαλασμένος.",
+  "guildLink.framed": "Άνοιξε τον σύνδεσμο συντεχνίας σε δική του καρτέλα. Δεν άλλαξε τίποτα.",
   "guildLink.decline": "Όχι",
   "guildLink.join": "Συμμετοχή",
   "guildLink.joined": "Τώρα φοράς την κάπα της [{tag}].",

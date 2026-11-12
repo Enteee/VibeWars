@@ -489,6 +489,7 @@ export default {
   "gearLibrary.weapons": "zbrane",
 
   "guildLink.broken": "Tento odkaz na cech je poškodený.",
+  "guildLink.framed": "Otvor odkaz na cech vo vlastnej karte. Nič sa nezmenilo.",
   "guildLink.decline": "Nie",
   "guildLink.join": "Pridať sa",
   "guildLink.joined": "Teraz nosíš plášť cechu [{tag}].",

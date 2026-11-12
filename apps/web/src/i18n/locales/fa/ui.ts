@@ -439,6 +439,7 @@ export default {
   "gearLibrary.weapons": "سلاح‌ها",
 
   "guildLink.broken": "این لینک انجمن خراب است.",
+  "guildLink.framed": "لینک انجمن را در زبانهٔ جداگانه باز کن. چیزی تغییر نکرد.",
   "guildLink.decline": "نه",
   "guildLink.join": "پیوستن",
   "guildLink.joined": "حالا شنل [{tag}] را پوشیده‌ای.",

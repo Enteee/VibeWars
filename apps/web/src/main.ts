@@ -420,6 +420,8 @@ async function main(): Promise<void> {
   const framed = window.top !== window.self;
   if (guildLink.kind === "invalid") {
     notices.add(t("guildLink.broken"));
+  } else if (guildLink.kind === "guild" && framed) {
+    notices.add(t("guildLink.framed"));
   }
   if (lobbyLink.kind === "malformed") {
     notices.add(t("session.notAKey"));
@@ -3157,10 +3159,12 @@ async function main(): Promise<void> {
    * Ask about a guild link (#3167), unless it is the guild the player
    * already wears, then `next`: a lobby or relay link opened with it
    * waits its turn. Joined over the menu, its characters wear the new cape.
+   * A framed page never asks, for the relay link's reason (#972).
    */
   const askGuild = (link: GuildFragment, next: () => void): void => {
     if (
       link.kind !== "guild" ||
+      framed ||
       (playerGuildTag() === link.tag &&
         JSON.stringify(loadGuildCape()) === JSON.stringify(link.cape))
     ) {
@@ -3243,6 +3247,8 @@ async function main(): Promise<void> {
     }
     if (guild.kind === "invalid") {
       toast(t("guildLink.broken"));
+    } else if (guild.kind === "guild" && framed) {
+      toast(t("guildLink.framed"));
     }
     askGuild(guild, () => {
       askLobbyAndRelay(invited, pasted);

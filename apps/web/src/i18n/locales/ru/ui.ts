@@ -488,6 +488,7 @@ export default {
   "gearLibrary.weapons": "оружие",
 
   "guildLink.broken": "Эта ссылка гильдии повреждена.",
+  "guildLink.framed": "Открой ссылку гильдии в отдельной вкладке. Ничего не изменилось.",
   "guildLink.decline": "Нет",
   "guildLink.join": "Вступить",
   "guildLink.joined": "Теперь на тебе плащ [{tag}].",

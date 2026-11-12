@@ -440,6 +440,7 @@ export default {
   "gearLibrary.weapons": "silahlar",
 
   "guildLink.broken": "Bu lonca bağlantısı bozuk.",
+  "guildLink.framed": "Lonca bağlantısını kendi sekmesinde aç. Hiçbir şey değişmedi.",
   "guildLink.decline": "Hayır",
   "guildLink.join": "Katıl",
   "guildLink.joined": "Artık [{tag}] pelerinini giyiyorsun.",

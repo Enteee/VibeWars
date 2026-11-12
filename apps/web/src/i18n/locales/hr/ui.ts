@@ -472,6 +472,7 @@ export default {
   "gearLibrary.weapons": "oružja",
 
   "guildLink.broken": "Ova poveznica ceha je neispravna.",
+  "guildLink.framed": "Otvori poveznicu ceha u zasebnoj kartici. Ništa nije promijenjeno.",
   "guildLink.decline": "Ne",
   "guildLink.join": "Pridruži se",
   "guildLink.joined": "Sad nosiš plašt ceha [{tag}].",

@@ -468,6 +468,7 @@ export default {
   "gearLibrary.weapons": "נשקים",
 
   "guildLink.broken": "קישור הגילדה הזה שבור.",
+  "guildLink.framed": "פתח את קישור הגילדה בכרטיסייה משלו. שום דבר לא השתנה.",
   "guildLink.decline": "לא",
   "guildLink.join": "הצטרף",
   "guildLink.joined": "עכשיו אתה לובש את הגלימה של [{tag}].",

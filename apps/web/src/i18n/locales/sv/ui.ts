@@ -439,6 +439,7 @@ export default {
   "gearLibrary.weapons": "vapen",
 
   "guildLink.broken": "Den gilleslänken är trasig.",
+  "guildLink.framed": "Öppna gilleslänken i en egen flik. Inget ändrades.",
   "guildLink.decline": "Nej",
   "guildLink.join": "Gå med",
   "guildLink.joined": "Du bär nu [{tag}]s mantel.",

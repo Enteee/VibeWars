@@ -396,6 +396,7 @@ export default {
   "gearLibrary.weapons": "무기",
 
   "guildLink.broken": "그 길드 링크는 깨졌어요.",
+  "guildLink.framed": "길드 링크를 별도 탭에서 여세요. 아무것도 바뀌지 않았어요.",
   "guildLink.decline": "아니요",
   "guildLink.join": "가입",
   "guildLink.joined": "이제 [{tag}]의 망토를 입었어요.",

@@ -442,6 +442,7 @@ export default {
   "gearLibrary.weapons": "оръжия",
 
   "guildLink.broken": "Този линк на гилдия е повреден.",
+  "guildLink.framed": "Отвори линка на гилдията в отделен раздел. Нищо не е променено.",
   "guildLink.decline": "Не",
   "guildLink.join": "Присъедини се",
   "guildLink.joined": "Вече носиш наметалото на [{tag}].",

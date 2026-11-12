@@ -393,6 +393,7 @@ export default {
   "gearLibrary.weapons": "vũ khí",
 
   "guildLink.broken": "Link Bang đó bị hỏng.",
+  "guildLink.framed": "Hãy mở link Bang trong tab riêng. Chưa có gì thay đổi.",
   "guildLink.decline": "Không",
   "guildLink.join": "Gia nhập",
   "guildLink.joined": "Giờ bạn mặc áo choàng của [{tag}].",

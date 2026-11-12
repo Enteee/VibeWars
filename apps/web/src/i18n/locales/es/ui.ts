@@ -471,6 +471,7 @@ export default {
   "gearLibrary.weapons": "armas",
 
   "guildLink.broken": "Ese enlace de gremio está roto.",
+  "guildLink.framed": "Abre el enlace de gremio en su propia pestaña. No se cambió nada.",
   "guildLink.decline": "No",
   "guildLink.join": "Unirme",
   "guildLink.joined": "Ahora llevas la capa de [{tag}].",

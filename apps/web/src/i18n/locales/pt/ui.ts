@@ -471,6 +471,7 @@ export default {
   "gearLibrary.weapons": "armas",
 
   "guildLink.broken": "Esse link de guilda está quebrado.",
+  "guildLink.framed": "Abra o link de guilda em uma aba própria. Nada foi alterado.",
   "guildLink.decline": "Não",
   "guildLink.join": "Entrar",
   "guildLink.joined": "Agora você veste a capa de [{tag}].",

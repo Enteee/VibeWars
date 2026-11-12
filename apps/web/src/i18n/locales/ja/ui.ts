@@ -399,6 +399,7 @@ export default {
   "gearLibrary.weapons": "武器",
 
   "guildLink.broken": "そのギルドリンクは壊れています。",
+  "guildLink.framed": "ギルドリンクは別のタブで開いてください。何も変更されていません。",
   "guildLink.decline": "いいえ",
   "guildLink.join": "参加",
   "guildLink.joined": "[{tag}] のケープを身につけました。",

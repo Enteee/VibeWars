@@ -441,6 +441,7 @@ export default {
   "gearLibrary.weapons": "fegyverek",
 
   "guildLink.broken": "Ez a céhlink hibás.",
+  "guildLink.framed": "Nyisd meg a céhlinket külön lapon. Semmi sem változott.",
   "guildLink.decline": "Nem",
   "guildLink.join": "Csatlakozás",
   "guildLink.joined": "Mostantól a(z) [{tag}] köpenyét viseled.",

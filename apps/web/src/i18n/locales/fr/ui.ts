@@ -473,6 +473,7 @@ export default {
   "gearLibrary.weapons": "armes",
 
   "guildLink.broken": "Ce lien de guilde est cassé.",
+  "guildLink.framed": "Ouvre le lien de guilde dans son propre onglet. Rien n'a changé.",
   "guildLink.decline": "Non",
   "guildLink.join": "Rejoindre",
   "guildLink.joined": "Tu portes maintenant la cape de [{tag}].",

@@ -391,6 +391,7 @@ export default {
   "gearLibrary.weapons": "武器",
 
   "guildLink.broken": "这个公会链接已损坏。",
+  "guildLink.framed": "请在单独的标签页中打开公会链接。没有任何更改。",
   "guildLink.decline": "否",
   "guildLink.join": "加入",
   "guildLink.joined": "你现在披着 [{tag}] 的披风。",

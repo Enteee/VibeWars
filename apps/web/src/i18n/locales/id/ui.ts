@@ -397,6 +397,7 @@ export default {
   "gearLibrary.weapons": "senjata",
 
   "guildLink.broken": "Link guild itu rusak.",
+  "guildLink.framed": "Buka link guild di tab tersendiri. Tidak ada yang berubah.",
   "guildLink.decline": "Tidak",
   "guildLink.join": "Gabung",
   "guildLink.joined": "Sekarang kamu memakai jubah [{tag}].",

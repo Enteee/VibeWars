@@ -438,6 +438,7 @@ export default {
   "gearLibrary.weapons": "wapens",
 
   "guildLink.broken": "Die gildelink is kapot.",
+  "guildLink.framed": "Open de gildelink in een eigen tabblad. Er is niets veranderd.",
   "guildLink.decline": "Nee",
   "guildLink.join": "Lid worden",
   "guildLink.joined": "Je draagt nu de cape van [{tag}].",

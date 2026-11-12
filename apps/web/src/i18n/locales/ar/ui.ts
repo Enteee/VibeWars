@@ -525,6 +525,7 @@ export default {
   "gearLibrary.weapons": "الأسلحة",
 
   "guildLink.broken": "رابط النقابة هذا معطوب.",
+  "guildLink.framed": "افتح رابط النقابة في علامة تبويب مستقلة. لم يتغير شيء.",
   "guildLink.decline": "لا",
   "guildLink.join": "انضمام",
   "guildLink.joined": "أنت الآن ترتدي عباءة [{tag}].",

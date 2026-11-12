@@ -438,6 +438,7 @@ export default {
   "gearLibrary.weapons": "våben",
 
   "guildLink.broken": "Det laugslink er ødelagt.",
+  "guildLink.framed": "Åbn laugslinket i sin egen fane. Intet blev ændret.",
   "guildLink.decline": "Nej",
   "guildLink.join": "Bliv medlem",
   "guildLink.joined": "Du bærer nu [{tag}]s kappe.",

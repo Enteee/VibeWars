@@ -449,6 +449,7 @@ export default {
   "gearLibrary.weapons": "aseet",
 
   "guildLink.broken": "Tämä kiltalinkki on rikki.",
+  "guildLink.framed": "Avaa kiltalinkki omassa välilehdessään. Mitään ei muutettu.",
   "guildLink.decline": "Ei",
   "guildLink.join": "Liity",
   "guildLink.joined": "Kannat nyt killan [{tag}] viittaa.",

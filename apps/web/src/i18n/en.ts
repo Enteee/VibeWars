@@ -441,6 +441,7 @@ export const en = {
   "gearLibrary.weapons": "weapons",
 
   "guildLink.broken": "That guild link is broken.",
+  "guildLink.framed": "Open the guild link in its own tab. Nothing was changed.",
   "guildLink.decline": "No",
   "guildLink.join": "Join",
   "guildLink.joined": "You now wear [{tag}]'s cape.",

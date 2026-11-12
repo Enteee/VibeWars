@@ -491,6 +491,7 @@ export default {
   "gearLibrary.weapons": "bronie",
 
   "guildLink.broken": "Ten link gildii jest uszkodzony.",
+  "guildLink.framed": "Otwórz link gildii w osobnej karcie. Nic nie zmieniono.",
   "guildLink.decline": "Nie",
   "guildLink.join": "Dołącz",
   "guildLink.joined": "Nosisz teraz pelerynę [{tag}].",

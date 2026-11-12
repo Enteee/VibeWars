@@ -473,6 +473,7 @@ export default {
   "gearLibrary.weapons": "armi",
 
   "guildLink.broken": "Quel link della gilda non è valido.",
+  "guildLink.framed": "Apri il link della gilda in una scheda separata. Non è cambiato nulla.",
   "guildLink.decline": "No",
   "guildLink.join": "Unisciti",
   "guildLink.joined": "Ora indossi il mantello di [{tag}].",

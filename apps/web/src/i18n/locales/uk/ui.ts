@@ -490,6 +490,7 @@ export default {
   "gearLibrary.weapons": "зброя",
 
   "guildLink.broken": "Це посилання гільдії пошкоджене.",
+  "guildLink.framed": "Відкрий посилання гільдії в окремій вкладці. Нічого не змінено.",
   "guildLink.decline": "Ні",
   "guildLink.join": "Вступити",
   "guildLink.joined": "Тепер на тобі плащ [{tag}].",

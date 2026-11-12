@@ -42,3 +42,17 @@ test("a guild link asks first: Join wears its tag and cape, No changes nothing",
   await expect(page.locator(".toast")).toHaveText("That guild link is broken.");
   await expect(prompt).toHaveCount(0);
 });
+
+test("framed by another page, a guild link asks nothing: it says to open it in its own tab", async ({
+  page,
+}) => {
+  // A framing page could lay a decoy over Join (#972).
+  await page.goto("./");
+  const src = new URL("./#guild=VW.gold.black.cross", page.url()).href;
+  await page.setContent(`<iframe src="${src}" width="1024" height="768"></iframe>`);
+  const game = page.frameLocator("iframe");
+  await expect(
+    game.locator(".screen-problem", { hasText: "Open the guild link in its own tab" }),
+  ).toBeVisible();
+  await expect(game.getByRole("dialog", { name: "Guild link" })).toHaveCount(0);
+});

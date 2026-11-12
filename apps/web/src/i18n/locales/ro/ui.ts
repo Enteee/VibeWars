@@ -472,6 +472,7 @@ export default {
   "gearLibrary.weapons": "arme",
 
   "guildLink.broken": "Linkul acesta de breaslă este stricat.",
+  "guildLink.framed": "Deschide linkul breslei într-o filă proprie. Nu s-a schimbat nimic.",
   "guildLink.decline": "Nu",
   "guildLink.join": "Alătură-te",
   "guildLink.joined": "Acum porți pelerina breslei [{tag}].",

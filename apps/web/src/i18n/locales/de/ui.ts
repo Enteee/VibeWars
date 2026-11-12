@@ -442,6 +442,7 @@ export default {
   "gearLibrary.weapons": "Waffen",
 
   "guildLink.broken": "Dieser Gildenlink ist kaputt.",
+  "guildLink.framed": "Öffne den Gildenlink in einem eigenen Tab. Es wurde nichts geändert.",
   "guildLink.decline": "Nein",
   "guildLink.join": "Beitreten",
   "guildLink.joined": "Du trägst jetzt den Umhang von [{tag}].",

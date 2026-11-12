@@ -394,6 +394,7 @@ export default {
   "gearLibrary.weapons": "อาวุธ",
 
   "guildLink.broken": "ลิงก์กิลด์นี้เสีย",
+  "guildLink.framed": "เปิดลิงก์กิลด์ในแท็บของมันเอง ไม่มีอะไรเปลี่ยนแปลง",
   "guildLink.decline": "ไม่",
   "guildLink.join": "เข้าร่วม",
   "guildLink.joined": "ตอนนี้คุณสวมผ้าคลุมของ [{tag}] แล้ว",
