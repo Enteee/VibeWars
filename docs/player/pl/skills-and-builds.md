@@ -141,14 +141,16 @@ nie ma, pojawia się jako puste miejsce. Build jest twój, gdy naciśniesz **Zap
 zapisywania, a jeśli coś zmieniłeś, najpierw pyta.
 **Udostępnij**, **Wczytaj kod GW1**, **Duplikuj** i **Usuń** są pod **⋯**.
 
-Kod drużyny wkleja się natomiast w **Kreatorze drużyn**.
+Kod drużyny wczytuje się natomiast w **Kreatorze drużyn**: naciśnij
+**Wczytaj drużynę**, wklej kod i naciśnij **Wczytaj** albo wklej go w dowolnym
+miejscu Kreatora drużyn.
 
 ## Buildy drużyn
 
 **Build drużyny** to drużyna z własnych postaci, tworzona w **Kreatorze drużyn**
 i przechowywana osobno od twoich postaci. Każda jest tam kartą, i tylko tam:
-**Nowy build drużyny** tworzy nowy, a kliknięcie karty albo jej **Edytuj** go
-otwiera. Proponujesz go w [Lobby drużyny](modes.md#lobby-drużyny).
+**Nowy build drużyny** tworzy nowy, **Wczytaj drużynę** wczytuje build
+udostępniony ci przez kogoś, a kliknięcie karty albo jej **Edytuj** go otwiera. Proponujesz go w [Lobby drużyny](modes.md#lobby-drużyny).
 
 Każdy build drużyny ma rozmiar, 2v2, 4v4 lub 8v8 (nie ma buildów drużyn 1v1):
 **Rozmiar drużyny** na pasku bocznym. Kreator drużyn wymienia buildy drużyn
@@ -189,7 +191,8 @@ Naciśnij nazwę członka lub **Otwórz na ekranie postaci**, aby edytować go w
 buildu;
 jego **Zapisz** umieszcza go z powrotem w drużynie, a **Zapisz** drużyny zachowuje wszystko
 i wraca do Kreatora drużyn. **Esc** wychodzi bez zapisywania, ale najpierw pyta.
-**Udostępnij**, **Duplikuj** i **Usuń** drużyny są pod **⋯**.
+**Udostępnij**, **Wczytaj drużynę**, **Duplikuj** i **Usuń** drużyny są pod **⋯**.
+**Wczytaj drużynę** otwiera tam wczytaną drużynę w miejsce tej.
 Drużynę możesz zapisać w dowolnej chwili, także z problemami, ale w Lobby drużyny można
 zaproponować tylko drużynę bez problemów: karta mówi **Nie można zagrać** i dlaczego,
 a drużyna bez nazwy widnieje jako **Drużyna bez nazwy**.

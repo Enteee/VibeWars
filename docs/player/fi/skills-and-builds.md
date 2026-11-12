@@ -158,14 +158,15 @@ tyhjänä paikkana. Buildi on sinun, kun painat **Tallenna**.
 **Esc** poistuu tallentamatta ja kysyy ensin, jos muutit jotain.
 **Jaa**, **Lataa GW1-koodi**, **Kopioi** ja **Poista** ovat **⋯**-valikossa.
 
-Tiimikoodi liitetään sen sijaan **Tiimieditoriin**.
+Tiimikoodi ladataan sen sijaan **Tiimieditorissa**: paina **Lataa tiimi**, liitä
+koodi ja paina **Lataa**, tai liitä se mihin tahansa Tiimieditorissa.
 
 ## Tiimibuildit
 
 **Tiimibuildi** on omista hahmoistaan koostuva tiimi, joka tehdään
 **Tiimieditorissa** ja pidetään erillään omista hahmoistasi. Jokainen on
-siellä kortti, ja vain siellä: **Uusi tiimibuildi** luo sellaisen, ja
-kortin napsautus tai sen **Muokkaa** avaa sen. Ehdotat sellaista
+siellä kortti, ja vain siellä: **Uusi tiimibuildi** luo sellaisen,
+**Lataa tiimi** lataa sinulle jaetun, ja kortin napsautus tai sen **Muokkaa** avaa sen. Ehdotat sellaista
 [tiimiaulassa](modes.md#tiimiaula).
 
 Jokaisella tiimibuildilla on koko, 2v2, 4v4 tai 8v8 (1v1-tiimibuildeja ei ole): sivupalkin
@@ -212,8 +213,9 @@ Paina jäsenen nimeä tai **Avaa hahmonäkymässä** muokataksesi sitä
 buildieditorissa;
 sen **Tallenna** palauttaa sen tiimiin, ja tiimin oma **Tallenna** säilyttää kaiken
 ja vie sinut takaisin Tiimieditoriin. **Esc** poistuu
-tallentamatta ja kysyy ensin. Tiimin **Jaa**, **Kopioi** ja
-**Poista** ovat **⋯**-valikossa.
+tallentamatta ja kysyy ensin. Tiimin **Jaa**, **Lataa tiimi**,
+**Kopioi** ja **Poista** ovat **⋯**-valikossa. Siellä **Lataa tiimi** avaa
+ladatun tiimin tämän tilalle.
 Voit tallentaa tiimin milloin tahansa ongelmineen kaikkineen, mutta vain
 ongelmaton tiimi voidaan ehdottaa tiimiaulassa: kortissa lukee
 **Ei pelattava** ja syy, ja nimetön tiimi näkyy nimellä **Nimetön tiimi**.
