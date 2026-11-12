@@ -384,12 +384,14 @@ describe("every map's walls", () => {
     expect(beside.some((p) => strictlyInside(p, a))).toBe(false);
   });
 
-  it("never overlaps two walls", () => {
+  // Walls on other layers do not meet (ADR-0051): a rim's pillar stands on the cliff below it.
+  it("never overlaps two walls on one layer", () => {
     expect(maps.length).toBeGreaterThan(4);
     for (const map of maps) {
       const outlines = map.walls.map(outline);
       outlines.forEach((a, i) => {
         outlines.slice(i + 1).forEach((b, k) => {
+          if (map.walls[i]?.layer !== map.walls[i + 1 + k]?.layer) return;
           const pair = `${map.id}: walls ${String(i)} and ${String(i + 1 + k)}`;
           expect(
             edges(a).some((e) => edges(b).some((f) => cross(e, f))),

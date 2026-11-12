@@ -6,266 +6,1399 @@
   "teams": 2,
   "width": 2800,
   "height": 1800,
-  "bounds": { "kind": "rect" },
-  "layers": 1,
+  "bounds": {
+    "kind": "outline",
+    "outside": "cliff",
+    "outline": [
+      {
+        "x": 50,
+        "y": 70
+      },
+      {
+        "x": 480,
+        "y": 30
+      },
+      {
+        "x": 950,
+        "y": 60
+      },
+      {
+        "x": 1450,
+        "y": 25
+      },
+      {
+        "x": 1950,
+        "y": 55
+      },
+      {
+        "x": 2400,
+        "y": 30
+      },
+      {
+        "x": 2760,
+        "y": 80
+      },
+      {
+        "x": 2775,
+        "y": 500
+      },
+      {
+        "x": 2750,
+        "y": 960
+      },
+      {
+        "x": 2780,
+        "y": 1350
+      },
+      {
+        "x": 2755,
+        "y": 1760
+      },
+      {
+        "x": 2300,
+        "y": 1775
+      },
+      {
+        "x": 1800,
+        "y": 1745
+      },
+      {
+        "x": 1300,
+        "y": 1780
+      },
+      {
+        "x": 800,
+        "y": 1750
+      },
+      {
+        "x": 350,
+        "y": 1775
+      },
+      {
+        "x": 40,
+        "y": 1740
+      },
+      {
+        "x": 25,
+        "y": 1300
+      },
+      {
+        "x": 55,
+        "y": 900
+      },
+      {
+        "x": 20,
+        "y": 450
+      }
+    ]
+  },
+  "layers": 4,
   "groundLayer": 0,
   "pits": [],
   "tunnels": [],
-  "decks": [],
-  "transitions": [],
-  "dropOffs": [],
+  "decks": [
+    {
+      "id": "north-rim",
+      "layer": 2,
+      "footprint": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 40,
+            "y": 875
+          },
+          {
+            "x": 260,
+            "y": 950
+          },
+          {
+            "x": 430,
+            "y": 900
+          },
+          {
+            "x": 430,
+            "y": 790
+          },
+          {
+            "x": 560,
+            "y": 790
+          },
+          {
+            "x": 560,
+            "y": 680
+          },
+          {
+            "x": 640,
+            "y": 680
+          },
+          {
+            "x": 640,
+            "y": 790
+          },
+          {
+            "x": 650,
+            "y": 790
+          },
+          {
+            "x": 650,
+            "y": 900
+          },
+          {
+            "x": 840,
+            "y": 700
+          },
+          {
+            "x": 1180,
+            "y": 700
+          },
+          {
+            "x": 1300,
+            "y": 680
+          },
+          {
+            "x": 1560,
+            "y": 680
+          },
+          {
+            "x": 1800,
+            "y": 620
+          },
+          {
+            "x": 2180,
+            "y": 730
+          },
+          {
+            "x": 2180,
+            "y": 620
+          },
+          {
+            "x": 2190,
+            "y": 620
+          },
+          {
+            "x": 2190,
+            "y": 510
+          },
+          {
+            "x": 2270,
+            "y": 510
+          },
+          {
+            "x": 2270,
+            "y": 620
+          },
+          {
+            "x": 2400,
+            "y": 620
+          },
+          {
+            "x": 2400,
+            "y": 730
+          },
+          {
+            "x": 2600,
+            "y": 800
+          },
+          {
+            "x": 2770,
+            "y": 825
+          },
+          {
+            "x": 2760,
+            "y": 80
+          },
+          {
+            "x": 2400,
+            "y": 30
+          },
+          {
+            "x": 1950,
+            "y": 55
+          },
+          {
+            "x": 1450,
+            "y": 25
+          },
+          {
+            "x": 950,
+            "y": 60
+          },
+          {
+            "x": 480,
+            "y": 30
+          },
+          {
+            "x": 50,
+            "y": 70
+          }
+        ]
+      },
+      "look": "terrace",
+      "switched": null
+    },
+    {
+      "id": "south-rim",
+      "layer": 2,
+      "footprint": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 40,
+            "y": 1335
+          },
+          {
+            "x": 260,
+            "y": 1420
+          },
+          {
+            "x": 560,
+            "y": 1400
+          },
+          {
+            "x": 560,
+            "y": 1510
+          },
+          {
+            "x": 580,
+            "y": 1510
+          },
+          {
+            "x": 580,
+            "y": 1610
+          },
+          {
+            "x": 660,
+            "y": 1610
+          },
+          {
+            "x": 660,
+            "y": 1510
+          },
+          {
+            "x": 780,
+            "y": 1510
+          },
+          {
+            "x": 780,
+            "y": 1400
+          },
+          {
+            "x": 820,
+            "y": 1200
+          },
+          {
+            "x": 1160,
+            "y": 1200
+          },
+          {
+            "x": 1330,
+            "y": 980
+          },
+          {
+            "x": 1330,
+            "y": 1140
+          },
+          {
+            "x": 1560,
+            "y": 1140
+          },
+          {
+            "x": 1560,
+            "y": 980
+          },
+          {
+            "x": 1680,
+            "y": 980
+          },
+          {
+            "x": 1720,
+            "y": 1040
+          },
+          {
+            "x": 1830,
+            "y": 1065
+          },
+          {
+            "x": 2120,
+            "y": 1150
+          },
+          {
+            "x": 2220,
+            "y": 1150
+          },
+          {
+            "x": 2300,
+            "y": 1160
+          },
+          {
+            "x": 2300,
+            "y": 1270
+          },
+          {
+            "x": 2420,
+            "y": 1270
+          },
+          {
+            "x": 2420,
+            "y": 1370
+          },
+          {
+            "x": 2500,
+            "y": 1370
+          },
+          {
+            "x": 2500,
+            "y": 1270
+          },
+          {
+            "x": 2520,
+            "y": 1270
+          },
+          {
+            "x": 2520,
+            "y": 1160
+          },
+          {
+            "x": 2770,
+            "y": 1195
+          },
+          {
+            "x": 2755,
+            "y": 1760
+          },
+          {
+            "x": 2300,
+            "y": 1775
+          },
+          {
+            "x": 1800,
+            "y": 1745
+          },
+          {
+            "x": 1300,
+            "y": 1780
+          },
+          {
+            "x": 800,
+            "y": 1750
+          },
+          {
+            "x": 350,
+            "y": 1775
+          },
+          {
+            "x": 40,
+            "y": 1740
+          }
+        ]
+      },
+      "look": "terrace",
+      "switched": null
+    },
+    {
+      "id": "west-ledges",
+      "layer": 1,
+      "footprint": {
+        "kind": "rect",
+        "x": 430,
+        "y": 790,
+        "width": 220,
+        "height": 130
+      },
+      "look": "ledge",
+      "switched": null
+    },
+    {
+      "id": "north-east-ledge",
+      "layer": 1,
+      "footprint": {
+        "kind": "rect",
+        "x": 2180,
+        "y": 620,
+        "width": 220,
+        "height": 130
+      },
+      "look": "ledge",
+      "switched": null
+    },
+    {
+      "id": "south-west-ledge",
+      "layer": 1,
+      "footprint": {
+        "kind": "rect",
+        "x": 560,
+        "y": 1380,
+        "width": 220,
+        "height": 130
+      },
+      "look": "ledge",
+      "switched": null
+    },
+    {
+      "id": "cliff-terraces",
+      "layer": 1,
+      "footprint": {
+        "kind": "rect",
+        "x": 2300,
+        "y": 1140,
+        "width": 220,
+        "height": 130
+      },
+      "look": "terrace",
+      "switched": null
+    },
+    {
+      "id": "bridge-ledge",
+      "layer": 1,
+      "footprint": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1330,
+            "y": 960
+          },
+          {
+            "x": 1390,
+            "y": 960
+          },
+          {
+            "x": 1390,
+            "y": 1090
+          },
+          {
+            "x": 1450,
+            "y": 1090
+          },
+          {
+            "x": 1450,
+            "y": 960
+          },
+          {
+            "x": 1560,
+            "y": 960
+          },
+          {
+            "x": 1560,
+            "y": 1140
+          },
+          {
+            "x": 1330,
+            "y": 1140
+          }
+        ]
+      },
+      "look": "ledge",
+      "switched": null
+    },
+    {
+      "id": "stone-arch",
+      "layer": 1,
+      "footprint": {
+        "kind": "rect",
+        "x": 960,
+        "y": 690,
+        "width": 80,
+        "height": 520
+      },
+      "look": "arch",
+      "switched": null
+    },
+    {
+      "id": "watchtower",
+      "layer": 3,
+      "footprint": {
+        "kind": "rect",
+        "x": 1900,
+        "y": 260,
+        "width": 110,
+        "height": 110
+      },
+      "look": "tower",
+      "switched": null
+    },
+    {
+      "id": "rope-bridge",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 1390,
+        "y": 640,
+        "width": 60,
+        "height": 350
+      },
+      "look": "bridge-plank",
+      "switched": {
+        "startsUp": true,
+        "whenDown": "fall",
+        "once": true,
+        "afterCrossings": null,
+        "hinge": null
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "id": "west-ledges-ramp",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 450,
+        "y": 910,
+        "width": 80,
+        "height": 120
+      },
+      "uphill": "n",
+      "look": "rough-steps",
+      "lift": null
+    },
+    {
+      "id": "west-ledges-stairs",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 560,
+        "y": 670,
+        "width": 80,
+        "height": 130
+      },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-east-ramp",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 2300,
+        "y": 740,
+        "width": 80,
+        "height": 120
+      },
+      "uphill": "n",
+      "look": "rough-steps",
+      "lift": null
+    },
+    {
+      "id": "north-east-steps",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 2190,
+        "y": 500,
+        "width": 80,
+        "height": 130
+      },
+      "uphill": "n",
+      "look": "rough-steps",
+      "lift": null
+    },
+    {
+      "id": "south-west-ramp",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 680,
+        "y": 1270,
+        "width": 80,
+        "height": 120
+      },
+      "uphill": "s",
+      "look": "rough-steps",
+      "lift": null
+    },
+    {
+      "id": "south-west-stairs",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 580,
+        "y": 1500,
+        "width": 80,
+        "height": 120
+      },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "terraces-ramp",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 2320,
+        "y": 1030,
+        "width": 80,
+        "height": 120
+      },
+      "uphill": "s",
+      "look": "stairs-landing",
+      "lift": null
+    },
+    {
+      "id": "terraces-stairs",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 2420,
+        "y": 1260,
+        "width": 80,
+        "height": 120
+      },
+      "uphill": "s",
+      "look": "stairs-landing",
+      "lift": null
+    },
+    {
+      "id": "bridge-ledge-ramp",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 1475,
+        "y": 850,
+        "width": 80,
+        "height": 120
+      },
+      "uphill": "s",
+      "look": "rough-steps",
+      "lift": null
+    },
+    {
+      "id": "bridge-stairs",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1390,
+        "y": 980,
+        "width": 60,
+        "height": 120
+      },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "arch-north-ramp",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 845,
+        "y": 710,
+        "width": 120,
+        "height": 80
+      },
+      "uphill": "e",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "arch-south-ramp",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 1035,
+        "y": 1110,
+        "width": 120,
+        "height": 80
+      },
+      "uphill": "w",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "watchtower-ladder",
+      "from": 2,
+      "to": 3,
+      "area": {
+        "kind": "rect",
+        "x": 1935,
+        "y": 360,
+        "width": 40,
+        "height": 130
+      },
+      "uphill": "n",
+      "look": "ladder",
+      "lift": null
+    }
+  ],
+  "dropOffs": [
+    {
+      "layer": 1,
+      "from": {
+        "x": 545,
+        "y": 920
+      },
+      "to": {
+        "x": 645,
+        "y": 920
+      }
+    },
+    {
+      "layer": 1,
+      "from": {
+        "x": 2185,
+        "y": 750
+      },
+      "to": {
+        "x": 2290,
+        "y": 750
+      }
+    },
+    {
+      "layer": 1,
+      "from": {
+        "x": 565,
+        "y": 1380
+      },
+      "to": {
+        "x": 670,
+        "y": 1380
+      }
+    },
+    {
+      "layer": 1,
+      "from": {
+        "x": 2410,
+        "y": 1140
+      },
+      "to": {
+        "x": 2515,
+        "y": 1140
+      }
+    }
+  ],
   "walls": [
     {
       "kind": "polygon",
-      "layer": 0,
       "points": [
         {
-          "x": 899,
-          "y": -228.3
+          "x": 0,
+          "y": 860
         },
         {
-          "x": 1165.9,
-          "y": 252.2
+          "x": 260,
+          "y": 950
         },
         {
-          "x": 973.6,
-          "y": 359
+          "x": 430,
+          "y": 900
         },
         {
-          "x": 706.7,
-          "y": -121.4
+          "x": 650,
+          "y": 900
+        },
+        {
+          "x": 840,
+          "y": 700
+        },
+        {
+          "x": 1180,
+          "y": 700
+        },
+        {
+          "x": 1300,
+          "y": 680
+        },
+        {
+          "x": 1560,
+          "y": 680
+        },
+        {
+          "x": 1800,
+          "y": 620
+        },
+        {
+          "x": 2180,
+          "y": 730
+        },
+        {
+          "x": 2400,
+          "y": 730
+        },
+        {
+          "x": 2600,
+          "y": 800
+        },
+        {
+          "x": 2800,
+          "y": 830
+        },
+        {
+          "x": 2800,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
         }
-      ]
+      ],
+      "layer": 0
     },
     {
       "kind": "polygon",
-      "layer": 0,
       "points": [
         {
-          "x": 1901,
-          "y": 2028.3
+          "x": 0,
+          "y": 1320
         },
         {
-          "x": 1634.1,
-          "y": 1547.8
+          "x": 260,
+          "y": 1420
         },
         {
-          "x": 1826.4,
-          "y": 1441
+          "x": 560,
+          "y": 1400
         },
         {
-          "x": 2093.3,
-          "y": 1921.4
+          "x": 780,
+          "y": 1400
+        },
+        {
+          "x": 820,
+          "y": 1200
+        },
+        {
+          "x": 1160,
+          "y": 1200
+        },
+        {
+          "x": 1330,
+          "y": 980
+        },
+        {
+          "x": 1680,
+          "y": 980
+        },
+        {
+          "x": 1720,
+          "y": 1040
+        },
+        {
+          "x": 1730,
+          "y": 1320
+        },
+        {
+          "x": 2230,
+          "y": 1340
+        },
+        {
+          "x": 2220,
+          "y": 1150
+        },
+        {
+          "x": 2300,
+          "y": 1160
+        },
+        {
+          "x": 2520,
+          "y": 1160
+        },
+        {
+          "x": 2800,
+          "y": 1200
+        },
+        {
+          "x": 2800,
+          "y": 1800
+        },
+        {
+          "x": 0,
+          "y": 1800
         }
-      ]
+      ],
+      "layer": 0
     },
     {
       "kind": "polygon",
-      "layer": 0,
       "points": [
         {
-          "x": 1224.2,
-          "y": 357.1
+          "x": 1830,
+          "y": 1065
         },
         {
-          "x": 1433,
-          "y": 732.9
+          "x": 2120,
+          "y": 1150
         },
         {
-          "x": 1240.7,
-          "y": 839.8
+          "x": 2110,
+          "y": 1230
         },
         {
-          "x": 1031.9,
-          "y": 463.9
+          "x": 1840,
+          "y": 1200
         }
-      ]
+      ],
+      "layer": 0
     },
     {
       "kind": "polygon",
-      "layer": 0,
       "points": [
         {
-          "x": 1575.8,
-          "y": 1442.9
+          "x": 1840,
+          "y": 400
         },
         {
-          "x": 1367,
-          "y": 1067.1
+          "x": 1880,
+          "y": 390
         },
         {
-          "x": 1559.3,
-          "y": 960.2
+          "x": 1895,
+          "y": 425
         },
         {
-          "x": 1768.1,
-          "y": 1336.1
+          "x": 1860,
+          "y": 440
         }
-      ]
+      ],
+      "layer": 2
     },
     {
-      "kind": "rect",
+      "kind": "polygon",
+      "points": [
+        {
+          "x": 2040,
+          "y": 330
+        },
+        {
+          "x": 2075,
+          "y": 320
+        },
+        {
+          "x": 2085,
+          "y": 350
+        },
+        {
+          "x": 2050,
+          "y": 362
+        }
+      ],
+      "layer": 2
+    }
+  ],
+  "water": [
+    {
+      "id": "seep",
       "layer": 0,
-      "x": 600,
-      "y": 300,
-      "width": 100,
-      "height": 100
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1800,
+            "y": 1265
+          },
+          {
+            "x": 1900,
+            "y": 1250
+          },
+          {
+            "x": 2020,
+            "y": 1265
+          },
+          {
+            "x": 2050,
+            "y": 1295
+          },
+          {
+            "x": 1950,
+            "y": 1310
+          },
+          {
+            "x": 1800,
+            "y": 1300
+          }
+        ]
+      }
+    }
+  ],
+  "zones": [
+    {
+      "id": "sunbaked-flats",
+      "kind": "scorched",
+      "layer": 2,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 700,
+            "y": 330
+          },
+          {
+            "x": 830,
+            "y": 290
+          },
+          {
+            "x": 960,
+            "y": 340
+          },
+          {
+            "x": 970,
+            "y": 460
+          },
+          {
+            "x": 860,
+            "y": 520
+          },
+          {
+            "x": 720,
+            "y": 470
+          }
+        ]
+      }
     },
     {
-      "kind": "rect",
+      "id": "river-mire",
+      "kind": "mire",
       "layer": 0,
-      "x": 2100,
-      "y": 1400,
-      "width": 100,
-      "height": 100
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 480,
-      "y": 1300,
-      "width": 140,
-      "height": 80
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2180,
-      "y": 420,
-      "width": 140,
-      "height": 80
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1760,
+            "y": 1250
+          },
+          {
+            "x": 1900,
+            "y": 1235
+          },
+          {
+            "x": 2050,
+            "y": 1250
+          },
+          {
+            "x": 2100,
+            "y": 1300
+          },
+          {
+            "x": 1950,
+            "y": 1320
+          },
+          {
+            "x": 1760,
+            "y": 1305
+          }
+        ]
+      }
     }
   ],
   "gates": [],
+  "switches": [
+    {
+      "id": "bridge-lever",
+      "layer": 2,
+      "position": {
+        "x": 1490,
+        "y": 610
+      },
+      "targets": ["rope-bridge"]
+    }
+  ],
   "objectives": [],
   "spawnPoints": [
     {
       "team": 0,
       "layer": 0,
       "position": {
-        "x": 220,
-        "y": 700
+        "x": 190,
+        "y": 1060
       }
     },
     {
       "team": 0,
       "layer": 0,
       "position": {
-        "x": 220,
-        "y": 900
+        "x": 190,
+        "y": 1160
       }
     },
     {
       "team": 0,
       "layer": 0,
       "position": {
-        "x": 220,
-        "y": 1100
+        "x": 190,
+        "y": 1250
       }
     },
     {
       "team": 0,
       "layer": 0,
       "position": {
-        "x": 350,
-        "y": 900
+        "x": 290,
+        "y": 1110
       }
     },
     {
       "team": 0,
       "layer": 0,
       "position": {
-        "x": 220,
-        "y": 500
+        "x": 270,
+        "y": 1010
       }
     },
     {
       "team": 0,
       "layer": 0,
       "position": {
-        "x": 220,
-        "y": 1300
+        "x": 290,
+        "y": 1210
       }
     },
     {
       "team": 0,
       "layer": 0,
       "position": {
-        "x": 350,
-        "y": 700
+        "x": 370,
+        "y": 1060
       }
     },
     {
       "team": 0,
       "layer": 0,
       "position": {
-        "x": 350,
-        "y": 1100
+        "x": 370,
+        "y": 1170
       }
     },
     {
       "team": 1,
       "layer": 0,
       "position": {
-        "x": 2580,
-        "y": 1100
+        "x": 2650,
+        "y": 920
       }
     },
     {
       "team": 1,
       "layer": 0,
       "position": {
-        "x": 2580,
-        "y": 900
+        "x": 2650,
+        "y": 1020
       }
     },
     {
       "team": 1,
       "layer": 0,
       "position": {
-        "x": 2580,
-        "y": 700
+        "x": 2650,
+        "y": 1110
       }
     },
     {
       "team": 1,
       "layer": 0,
       "position": {
-        "x": 2450,
-        "y": 900
+        "x": 2550,
+        "y": 970
       }
     },
     {
       "team": 1,
       "layer": 0,
       "position": {
-        "x": 2580,
-        "y": 1300
+        "x": 2560,
+        "y": 880
       }
     },
     {
       "team": 1,
       "layer": 0,
       "position": {
-        "x": 2580,
-        "y": 500
+        "x": 2550,
+        "y": 1070
       }
     },
     {
       "team": 1,
       "layer": 0,
       "position": {
-        "x": 2450,
-        "y": 1100
+        "x": 2470,
+        "y": 920
       }
     },
     {
       "team": 1,
       "layer": 0,
       "position": {
-        "x": 2450,
-        "y": 700
+        "x": 2470,
+        "y": 1030
       }
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": {
+      "colour": 8357544,
+      "intensity": 0.35
+    },
+    "indoorAmbient": {
+      "colour": 5924488,
+      "intensity": 0.3
+    },
+    "indoor": [
+      {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1720,
+            "y": 1040
+          },
+          {
+            "x": 1830,
+            "y": 1065
+          },
+          {
+            "x": 1840,
+            "y": 1200
+          },
+          {
+            "x": 2110,
+            "y": 1230
+          },
+          {
+            "x": 2120,
+            "y": 1150
+          },
+          {
+            "x": 2220,
+            "y": 1150
+          },
+          {
+            "x": 2230,
+            "y": 1340
+          },
+          {
+            "x": 1730,
+            "y": 1320
+          }
+        ]
+      }
+    ],
+    "sun": {
+      "directionDeg": 315,
+      "elevationDeg": 25,
+      "colour": 16758906,
+      "intensity": 0.5
+    },
+    "lights": [
+      {
+        "id": "cave-west-torch",
+        "position": {
+          "x": 1785,
+          "y": 1060
+        },
+        "layer": 0,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.4
+      },
+      {
+        "id": "cave-deep-torch",
+        "position": {
+          "x": 1980,
+          "y": 1285
+        },
+        "layer": 0,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.75,
+        "flicker": 0.4
+      },
+      {
+        "id": "cave-east-torch",
+        "position": {
+          "x": 2170,
+          "y": 1170
+        },
+        "layer": 0,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.4
+      },
+      {
+        "id": "watchtower-brazier",
+        "position": {
+          "x": 1955,
+          "y": 300
+        },
+        "layer": 3,
+        "radius": 170,
+        "colour": 16756832,
+        "intensity": 0.7,
+        "flicker": 0.3
+      },
+      {
+        "id": "bridge-lantern",
+        "position": {
+          "x": 1490,
+          "y": 640
+        },
+        "layer": 2,
+        "radius": 120,
+        "colour": 16756832,
+        "intensity": 0.6,
+        "flicker": 0.2
+      }
+    ]
+  },
+  "atmosphere": {
+    "fog": [
+      {
+        "layer": 0,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            {
+              "x": 1740,
+              "y": 1230
+            },
+            {
+              "x": 1900,
+              "y": 1215
+            },
+            {
+              "x": 2080,
+              "y": 1235
+            },
+            {
+              "x": 2120,
+              "y": 1310
+            },
+            {
+              "x": 1950,
+              "y": 1330
+            },
+            {
+              "x": 1740,
+              "y": 1315
+            }
+          ]
+        }
+      }
+    ],
+    "plumes": [
+      {
+        "id": "flats-smoke",
+        "layer": 2,
+        "position": {
+          "x": 840,
+          "y": 410
+        },
+        "kind": "smoke"
+      }
+    ],
+    "weather": null
+  }
 }

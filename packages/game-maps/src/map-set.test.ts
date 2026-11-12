@@ -21,6 +21,7 @@ import { describe, expect, it } from "vitest";
 
 import { allWallSegments, wallToSegments } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
+import { matchLayers } from "./layers.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
@@ -43,6 +44,11 @@ import {
 const RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
 /** The arenas #444 added: the spawn-distance rule is theirs (the two small mode arenas are small by design). */
 const NEW_ARENAS = new Set(["arena-crossroads", "arena-long-hall", "arena-canyon"]);
+/**
+ * The 2.5D rebuilds (#3064): asymmetric by design. Their fairness is the balance bench and the
+ * walk and high-ground checks (map-balance.test.ts), not a half turn.
+ */
+const REBUILT = new Set(["arena-canyon"]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
   ...map,
@@ -77,7 +83,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
   const bounds = { width: map.width, height: map.height };
 
   // The Elite Zaishen Battle (#2692) is a party's run at six NPCs, not a fair fight.
-  it.skipIf(map.id === "elite-zaishen-battle")(
+  it.skipIf(map.id === "elite-zaishen-battle" || REBUILT.has(map.id))(
     "is the same map turned half round its centre: walls, spawns and shrines, the teams swapped",
     () => {
       for (const wall of walls) {
@@ -162,11 +168,19 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
     );
     const team0 = map.spawnPoints.filter((spawn) => spawn.team === 0);
     for (const [k, spawn] of team0.entries()) {
-      const across = turned(map, spawn.position);
+      // The enemy spawn across from it: on a turned map, its image.
+      const image = turned(map, spawn.position);
+      const across = map.spawnPoints
+        .filter((other) => other.team === 1)
+        .map((other) => other.position)
+        .reduce((best, other) =>
+          Vec.distance(other, image) < Vec.distance(best, image) ? other : best,
+        );
       const sim = new MatchSimulation({
         seed: `reach-${String(k)}`,
         ruleset,
         walls,
+        layers: matchLayers(map),
         bounds,
         participants: [
           { id: "a", team: 0, at: spawn.position },
