@@ -7,10 +7,11 @@
  * on each map in headless Chromium at 1280×720, as e2e does: picked as a
  * Hosted Game's map, which the background then fights on. Each map draws
  * for `BENCH_SECONDS` (5) after a second to settle; the time between two
- * animation frames is a frame's cost. The frame rate is uncapped
- * (`--disable-gpu-vsync`, `--disable-frame-rate-limit`): headless Chromium
- * otherwise holds every frame to 60 Hz and a light map measures as the
- * cap, not its cost. The baseline is a calibration run the script owns,
+ * animation frames is a frame's cost. Headless Chromium holds every frame
+ * to 60 Hz whatever its flags, so a frame lighter than 16.7 ms measures as
+ * the cap, not its cost. The ratio is therefore only meaningful for work
+ * heavier than the cap, and the script enforces that: the calibration must
+ * itself take more than `MIN_CALIBRATION_MS`. The baseline is a calibration run the script owns,
  * not a game map: a fixed seeded WebGL workload drawn every frame on a
  * blank page in the same browser before the maps, so a slower runner moves the baseline with the maps and
  * a heavier Crossroads cannot loosen the gate. Prints p50 and p95 per map
@@ -41,9 +42,11 @@ import { chromium } from "@playwright/test";
 
 /* global document, requestAnimationFrame -- in page.evaluate, which runs in the page */
 
-/** A calibration p50 this close to a vsync interval means the cap is still on. */
+/** A map p50 this close to the menu's 30 fps limiter was measuring the limiter. */
 const CAP_TOLERANCE_MS = 0.5;
-const CAPS_MS = [1000 / 60, 1000 / 30];
+const LIMITER_MS = 1000 / 30;
+/** A calibration lighter than this is bound by the 60 Hz / 30 Hz caps, not by its cost. */
+const MIN_CALIBRATION_MS = 40;
 
 const PORT = 4322;
 const MAPS = path.join(import.meta.dirname, "..", "..", "packages", "game-maps", "maps");
@@ -288,7 +291,7 @@ let failed = false;
 try {
   browser = await chromium.launch({
     ...(executablePath === undefined ? {} : { executablePath }),
-    args: ["--no-sandbox", "--disable-gpu-vsync", "--disable-frame-rate-limit"],
+    args: ["--no-sandbox"],
   });
   const viewport = { width: 1280, height: 720 };
   const blank = await browser.newPage({ viewport });
@@ -298,8 +301,10 @@ try {
   await page.goto(url);
   const base = percentile(calibration, 50);
   console.log(`calibration p50 ${base.toFixed(1)} ms over ${String(calibration.length)} frames`);
-  if (CAPS_MS.some((cap) => Math.abs(base - cap) < CAP_TOLERANCE_MS)) {
-    throw new Error("the frame rate is still capped; the ratio would be meaningless");
+  if (!(base >= MIN_CALIBRATION_MS)) {
+    throw new Error(
+      `the calibration p50 is under ${String(MIN_CALIBRATION_MS)} ms, so it is bound by the frame-rate cap and the ratio would be meaningless`,
+    );
   }
   const rows = [];
   for (const mapId of mapsToMeasure()) {
@@ -325,7 +330,7 @@ try {
       failed = true;
     }
   }
-  if (rows.some((row) => Math.abs(row.p50 - CAPS_MS[1]) < CAP_TOLERANCE_MS)) {
+  if (rows.some((row) => Math.abs(row.p50 - LIMITER_MS) < CAP_TOLERANCE_MS)) {
     throw new Error("a map's p50 sits on 33.3 ms: the menu's own 30 fps limiter was measured");
   }
 } finally {
