@@ -1,22 +1,27 @@
 #!/usr/bin/env node
 /**
  * `pnpm bench:render` — how long a frame of a layered map takes to draw,
- * against Crossroads on the same run (#3157).
+ * against a fixed synthetic workload on the same run (#3157, #3190).
  *
  * Builds the static client, serves it, and opens the live menu background
  * on each map in headless Chromium at 1280×720, as e2e does: picked as a
  * Hosted Game's map, which the background then fights on. Each map draws
  * for `BENCH_SECONDS` (5) after a second to settle; the time between two
- * animation frames is a frame's cost. Prints p50 and p95 per map and the
- * ratio of each to Crossroads'. The percentiles weigh a frame by how long
+ * animation frames is a frame's cost. The frame rate is uncapped
+ * (`--disable-gpu-vsync`, `--disable-frame-rate-limit`): headless Chromium
+ * otherwise holds every frame to 60 Hz and a light map measures as the
+ * cap, not its cost. The baseline is a calibration run the script owns,
+ * not a game map: a fixed seeded canvas workload drawn every frame just
+ * before the maps, so a slower runner moves the baseline with the maps and
+ * a heavier Crossroads cannot loosen the gate. Prints p50 and p95 per map
+ * and the ratio of each to the calibration's. The percentiles weigh a frame by how long
  * it lasted: what a moment of the run is spent in, so a map that hangs
  * for a second between quick frames does not measure as quick.
  *
- *   BENCH_MAP=a,b      the maps, by id; Crossroads is always measured.
- *                      Default: Crossroads and every map of more than
- *                      one layer.
+ *   BENCH_MAP=a,b      the maps, by id. Default: every map of more
+ *                      than one layer.
  *   BENCH_MAX_RATIO=8 exit 1 when a map's p50 is more than this many
- *                      times Crossroads'. CI's regression gate.
+ *                      times the calibration's. CI's regression gate.
  *   --url <url>        measure a client already served there.
  *
  * The menu background never draws faster than 30 fps (#3119): a map
@@ -36,9 +41,12 @@ import { chromium } from "@playwright/test";
 
 /* global document, requestAnimationFrame -- in page.evaluate, which runs in the page */
 
+/** A calibration p50 this close to a vsync interval means the cap is still on. */
+const CAP_TOLERANCE_MS = 0.5;
+const CAPS_MS = [1000 / 60, 1000 / 30];
+
 const PORT = 4322;
 const MAPS = path.join(import.meta.dirname, "..", "..", "packages", "game-maps", "maps");
-const BASELINE = "arena-crossroads";
 const SETTLE_MS = 1000;
 const SECONDS = Number(process.env.BENCH_SECONDS ?? 5);
 const MAX_RATIO =
@@ -59,7 +67,7 @@ function layeredMaps() {
     .sort();
 }
 
-/** The maps to measure, Crossroads first. */
+/** The maps to measure. */
 function mapsToMeasure() {
   const asked = process.env.BENCH_MAP;
   const ids =
@@ -69,7 +77,7 @@ function mapsToMeasure() {
           .split(",")
           .map((id) => id.trim())
           .filter((id) => id !== "");
-  return [BASELINE, ...ids.filter((id) => id !== BASELINE)];
+  return ids;
 }
 
 /**
@@ -157,6 +165,16 @@ async function measure(page, mapId) {
     throw new Error(`${mapId}: the menu background has no canvas`);
   }
   await sleep(SETTLE_MS);
+  return frameTimes(page);
+}
+
+/**
+ * Frame intervals over `SECONDS` of animation frames, in ms, sorted.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @returns {Promise<number[]>}
+ */
+function frameTimes(page) {
   return page.evaluate(
     (ms) =>
       new Promise((resolve) => {
@@ -180,6 +198,76 @@ async function measure(page, mapId) {
   );
 }
 
+/**
+ * The calibration: a fixed workload, 2000 filled and stroked circles and
+ * 500 polygons at seeded positions on a canvas the size of the game's,
+ * redrawn every frame for `SECONDS`. The canvas is removed afterwards.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @returns {Promise<number[]>}
+ */
+async function calibrate(page) {
+  await page.evaluate(() => {
+    const canvas = document.createElement("canvas");
+    canvas.id = "bench-calibration";
+    canvas.width = 1280;
+    canvas.height = 720;
+    canvas.style.cssText = "position:fixed;inset:0;z-index:2147483647";
+    document.body.append(canvas);
+    const ctx = canvas.getContext("2d");
+    if (ctx === null) {
+      throw new Error("no 2D context for the calibration");
+    }
+    let seed = 12345;
+    const random = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    };
+    const circles = Array.from({ length: 2000 }, () => ({
+      x: random() * 1280,
+      y: random() * 720,
+      r: 4 + random() * 24,
+    }));
+    const polygons = Array.from({ length: 500 }, () => ({
+      x: random() * 1280,
+      y: random() * 720,
+      r: 8 + random() * 32,
+      sides: 3 + Math.floor(random() * 5),
+    }));
+    const draw = () => {
+      if (!canvas.isConnected) {
+        return;
+      }
+      ctx.clearRect(0, 0, 1280, 720);
+      ctx.fillStyle = "#3a6";
+      ctx.strokeStyle = "#162";
+      for (const c of circles) {
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      for (const p of polygons) {
+        ctx.beginPath();
+        for (let i = 0; i < p.sides; i += 1) {
+          const a = (i / p.sides) * Math.PI * 2;
+          ctx.lineTo(p.x + Math.cos(a) * p.r, p.y + Math.sin(a) * p.r);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+      requestAnimationFrame(draw);
+    };
+    draw();
+  });
+  const frames = await frameTimes(page);
+  await page.evaluate(() => {
+    document.querySelector("#bench-calibration")?.remove();
+  });
+  return frames;
+}
+
 const served = options.url === undefined ? await serve() : undefined;
 const url = options.url ?? served?.url ?? "";
 const executablePath = process.env.VIBEWARS_CHROMIUM;
@@ -188,10 +276,16 @@ let failed = false;
 try {
   browser = await chromium.launch({
     ...(executablePath === undefined ? {} : { executablePath }),
-    args: ["--no-sandbox"],
+    args: ["--no-sandbox", "--disable-gpu-vsync", "--disable-frame-rate-limit"],
   });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   await page.goto(url);
+  const calibration = await calibrate(page);
+  const base = percentile(calibration, 50);
+  console.log(`calibration p50 ${base.toFixed(1)} ms over ${String(calibration.length)} frames`);
+  if (CAPS_MS.some((cap) => Math.abs(base - cap) < CAP_TOLERANCE_MS)) {
+    throw new Error("the frame rate is still capped; the ratio would be meaningless");
+  }
   const rows = [];
   for (const mapId of mapsToMeasure()) {
     const frames = await measure(page, mapId);
@@ -202,8 +296,7 @@ try {
       p95: percentile(frames, 95),
     });
   }
-  const base = rows[0]?.p50 ?? NaN;
-  console.log("| map | frames | p50 ms | p95 ms | p50 / Crossroads |");
+  console.log("| map | frames | p50 ms | p95 ms | p50 / calibration |");
   console.log("|---|---|---|---|---|");
   for (const row of rows) {
     const ratio = row.p50 / base;
@@ -212,7 +305,7 @@ try {
     );
     if (MAX_RATIO !== undefined && !(ratio <= MAX_RATIO)) {
       console.error(
-        `${row.mapId}: p50 is ${ratio.toFixed(2)}× Crossroads', over ${String(MAX_RATIO)}×`,
+        `${row.mapId}: p50 is ${ratio.toFixed(2)}× the calibration's, over ${String(MAX_RATIO)}×`,
       );
       failed = true;
     }
