@@ -21,6 +21,7 @@ import {
   landingAllowed,
   pathsOutside,
   pathsWithin,
+  signOffAreaRefusal,
   workflowAuthorAllowed,
 } from "./hub-guards.mjs";
 import { RESTRICTED_PATHS } from "./hub-policy.mjs";
@@ -605,6 +606,63 @@ describe("boardMoveAllowed (#349)", () => {
       ok: false,
       reason:
         "only the architect moves a card from Backlog to Ready: that move is the sign-off. Ask the architect.",
+    });
+  });
+
+  describe("signOffAreaRefusal (#3124)", () => {
+    const noArea =
+      "#7 has no area label: add one or more of area:render, area:game-core, area:maps, area:ui, area:net, area:i18n, area:bots-ai, area:audio, area:tooling (skill area-lanes)";
+
+    it("refuses a card with no known area label", () => {
+      expect(signOffAreaRefusal({ number: 7, labels: [], onBoard: [] })).toBe(noArea);
+      expect(signOffAreaRefusal({ number: 7, labels: ["area:foo", "meta"], onBoard: [] })).toBe(
+        noArea,
+      );
+    });
+
+    it("refuses a lane another Ready or In Progress card holds, naming it", () => {
+      expect(
+        signOffAreaRefusal({
+          number: 7,
+          labels: ["area:maps"],
+          onBoard: [{ number: 5, column: "In Progress", labels: ["area:maps"] }],
+        }),
+      ).toBe(
+        "area:maps is taken by #5 (In Progress): one card per area in flight. Spec another area, or wait for #5 (skill area-lanes)",
+      );
+    });
+
+    it("lets a lane held only by a card past In Progress go", () => {
+      expect(
+        signOffAreaRefusal({
+          number: 7,
+          labels: ["area:maps", "area:foo"],
+          onBoard: [{ number: 5, column: "QA", labels: ["area:maps"] }],
+        }),
+      ).toBeNull();
+    });
+
+    it("checks every area of the card and names the lowest clash", () => {
+      expect(
+        signOffAreaRefusal({
+          number: 7,
+          labels: ["area:ui", "area:render"],
+          onBoard: [
+            { number: 9, column: "Ready", labels: ["area:render"] },
+            { number: 4, column: "In Progress", labels: ["area:net", "area:render"] },
+          ],
+        }),
+      ).toMatch(/^area:render is taken by #4 \(In Progress\)/);
+    });
+
+    it("ignores the card itself", () => {
+      expect(
+        signOffAreaRefusal({
+          number: 7,
+          labels: ["area:ui"],
+          onBoard: [{ number: 7, column: "Ready", labels: ["area:ui"] }],
+        }),
+      ).toBeNull();
     });
   });
 

@@ -220,6 +220,21 @@ export interface LobbyPanel {
 }
 
 /**
+ * The map a lobby shows, and the menu background fights on (#3119). A
+ * party queued in Heroes' Ascent is bound for its round's map, not the
+ * lobby's (#1996), until a group is formed: a party that skipped ahead
+ * plays the group's map, `groupMapId` (#2687). A host's round with no map
+ * yet is wrong data: the lobby's map is shown (#2686).
+ */
+export function lobbyShownMapId(snapshot: LobbySnapshot, groupMapId: string | undefined): string {
+  return (
+    groupMapId ??
+    (snapshot.ascentRound === null ? undefined : ASCENT_PROGRESSION[snapshot.ascentRound]) ??
+    snapshot.mapId
+  );
+}
+
+/**
  * The lobby on a mode screen (#1526, ADR-0041): the map and Ready and
  * Start for the bar, and below, both team rosters with each player's
  * character and ready state, and who Start is waiting for. The code is
@@ -240,14 +255,7 @@ export function lobbyPanel(
   // Only a Hosted Game's host may change the map (#1994), so everyone
   // else sees it as a label rather than a control they would be refused
   // on clicking. Team Arena draws its own at the start.
-  // A party queued in Heroes' Ascent is bound for its round's map, not
-  // the lobby's (#1996), until a group is formed: a party that skipped
-  // ahead plays the group's map (#2687). A host's round with no map yet is
-  // wrong data: the lobby's map is shown (#2686).
-  const shownMapId =
-    matchmaking?.groupMapId ??
-    (snapshot.ascentRound === null ? undefined : ASCENT_PROGRESSION[snapshot.ascentRound]) ??
-    snapshot.mapId;
+  const shownMapId = lobbyShownMapId(snapshot, matchmaking?.groupMapId);
   const current = availableMaps.find((map) => map.id === shownMapId);
   let mapPart: HTMLElement;
   // The host lists only the maps made for the lobby's team size (#2104).

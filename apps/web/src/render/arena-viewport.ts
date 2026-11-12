@@ -22,6 +22,8 @@ export interface ButtonEvent {
 /** A running Phaser host for one `ArenaScene`, whatever feeds it snapshots. */
 export interface ArenaViewport {
   readonly scene: ArenaScene;
+  /** The canvas the arena draws on, until it is destroyed. */
+  readonly canvas: HTMLCanvasElement;
   /** Called once per rendered frame; returns the unsubscribe. */
   onFrame(handler: (deltaSeconds: number) => void): () => void;
   /**
@@ -53,7 +55,12 @@ export interface ArenaViewport {
   setArenaBounds(width: number, height: number): void;
   /** Re-measure the parent, after the layout around it changed. */
   refreshScale(): void;
-  destroy(): void;
+  /**
+   * Phaser destroys a game on its next loop step, not at once: resolves
+   * once it has, its WebGL context released and its canvas gone, or after
+   * `DESTROY_WAIT_MS` if the loop does not step. Called again, the same.
+   */
+  destroy(): Promise<void>;
 }
 
 /**
@@ -73,12 +80,24 @@ export function hasWebGl(): boolean {
   }
 }
 
+/** How a viewport runs, where it differs from a match's. */
+export interface ArenaViewportOptions {
+  /** At most this many frames a second (#3119); a match's is not capped. */
+  readonly fpsLimit?: number;
+}
+
+/** The longest `destroy` waits for Phaser's next step to run it. */
+const DESTROY_WAIT_MS = 500;
+
 /**
  * Start a Phaser game in `parent` with the arena scene, resolved once the
  * scene exists. Only this and `ArenaScene` touch Phaser (ADR-0010); the
  * callers wire a connection to it. Throws `NoWebGlError` without WebGL.
  */
-export async function createArenaViewport(parent: HTMLElement): Promise<ArenaViewport> {
+export async function createArenaViewport(
+  parent: HTMLElement,
+  options: ArenaViewportOptions = {},
+): Promise<ArenaViewport> {
   if (!hasWebGl()) {
     throw new NoWebGlError("no WebGL");
   }
@@ -97,6 +116,7 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
     // much world that shows (camera-rig.ts).
     scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [ArenaScene],
+    ...(options.fpsLimit === undefined ? {} : { fps: { limit: options.fpsLimit } }),
   });
 
   const scene = await new Promise<ArenaScene>((resolve) => {
@@ -119,8 +139,11 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
   scene.input.on("pointermove", onMove);
   scene.input.on("gameout", onOut);
 
+  /** Set by the first `destroy`; a second returns it. */
+  let destroyed: Promise<void> | undefined;
   return {
     scene,
+    canvas: game.canvas,
     onFrame(handler) {
       // STEP passes the frame's delta in milliseconds.
       const onStep = (_time: number, deltaMs: number): void => {
@@ -250,9 +273,22 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
       game.scale.refresh();
     },
     destroy() {
+      if (destroyed !== undefined) {
+        return destroyed;
+      }
       scene.input.off("pointermove", onMove);
       scene.input.off("gameout", onOut);
+      // A loop that does not step (a hidden tab draws no frames) never gets
+      // to the destroy: waiting is bounded, so nobody waits on it forever.
+      destroyed = new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, DESTROY_WAIT_MS);
+        game.events.once(Phaser.Core.Events.DESTROY, () => {
+          clearTimeout(timer);
+          resolve();
+        });
+      });
       game.destroy(true);
+      return destroyed;
     },
   };
 }

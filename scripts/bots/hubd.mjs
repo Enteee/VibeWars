@@ -66,6 +66,7 @@ import { releaseLock, takeLock } from "./instance-lock.mjs";
 import { openJailDir, withJailDir } from "./jail-fs.mjs";
 import { hasFilter } from "./hub-filter.mjs";
 import {
+  AREA_LABELS,
   approvalsSatisfied,
   boardMoveAllowed,
   commitRuns,
@@ -76,6 +77,7 @@ import {
   explainGuard,
   pathsOutside,
   pathsWithin,
+  signOffAreaRefusal,
   workflowAuthorAllowed,
 } from "./hub-guards.mjs";
 import {
@@ -2317,16 +2319,117 @@ async function refuseCardEdit(role, argv, cfg) {
     return "could not tell which column that card is in; try again";
   }
   const status = card.item.status;
+  const from = typeof status === "string" ? status : "";
   const decision = boardMoveAllowed({
     role,
-    from: typeof status === "string" ? status : "",
+    from,
     to,
     blockedFrom: blockedOrigins[id] ?? null,
   });
   if (!decision.ok) {
     return decision.reason;
   }
+  if (role === "architect" && to === "Ready" && (from === "Backlog" || from === "")) {
+    const number = itemNumber(card.item, cfg.repo);
+    return number === null ? "could not tell which issue that card is" : refuseSignOff(number, cfg);
+  }
   return to === "In Review" ? refuseInReview(card.item, cfg) : null;
+}
+
+/**
+ * Why the architect may not sign this card off into Ready (#3124), or
+ * `null`: it needs an area label, and its areas must be free. Labels are
+ * read fresh over REST; the board copy holds none. Fails closed.
+ *
+ * @param {number} number the issue
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function refuseSignOff(number, cfg) {
+  const unreadable = `could not read the labels of #${String(number)}; try again`;
+  const labels = labelNames(obj(await rest(`issues/${String(number)}`, cfg)).labels);
+  if (labels === null) {
+    return unreadable;
+  }
+  /** @type {Map<number, string[]>} */
+  const labelled = new Map();
+  for (const area of AREA_LABELS.filter((name) => labels.includes(name))) {
+    const issues = await openIssuesLabelled(area, cfg);
+    if (issues === undefined) {
+      return unreadable;
+    }
+    for (const issue of issues) {
+      labelled.set(issue.number, issue.labels);
+    }
+  }
+  // An unread board is no free lane.
+  if (board === null || board.stale) {
+    return "could not read the board; try again";
+  }
+  const onBoard = board.cards.flatMap(({ item: other }) => {
+    const column = other.status;
+    const n = itemNumber(other, cfg.repo);
+    const issueLabels = n === null ? undefined : labelled.get(n);
+    return n !== null &&
+      issueLabels !== undefined &&
+      typeof column === "string" &&
+      obj(other.content).type !== "PullRequest"
+      ? [{ number: n, column, labels: issueLabels }]
+      : [];
+  });
+  return signOffAreaRefusal({ number, labels, onBoard });
+}
+
+/**
+ * The names of a REST `labels` array, or `null` if it is not one.
+ *
+ * @param {unknown} labels
+ * @returns {string[] | null}
+ */
+function labelNames(labels) {
+  if (!Array.isArray(labels)) {
+    return null;
+  }
+  /** @type {unknown[]} */
+  const rows = labels;
+  return rows.flatMap((label) => {
+    const name = obj(label).name;
+    return typeof name === "string" ? [name] : [];
+  });
+}
+
+/**
+ * Every open issue (no pull request) with this label, page by page.
+ *
+ * @param {string} label
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ number: number, labels: string[] }[] | undefined>} `undefined` if any page cannot be read
+ */
+async function openIssuesLabelled(label, cfg) {
+  /** @type {{ number: number, labels: string[] }[]} */
+  const issues = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const answer = await rest(
+      `issues?state=open&labels=${encodeURIComponent(label)}&per_page=100&page=${String(page)}`,
+      cfg,
+    );
+    if (!Array.isArray(answer)) {
+      return undefined;
+    }
+    /** @type {unknown[]} */
+    const got = answer;
+    for (const row of got) {
+      const issue = obj(row);
+      const labels = labelNames(issue.labels);
+      if (typeof issue.number === "number" && labels !== null && issue.pull_request === undefined) {
+        issues.push({ number: issue.number, labels });
+      }
+    }
+    if (got.length < 100) {
+      return issues;
+    }
+  }
+  return undefined;
 }
 
 /**
