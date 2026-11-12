@@ -25,7 +25,7 @@ test.describe("the splash screen (#2884)", () => {
   });
 
   test("the tab's second visit, without ?splash, goes straight to the menu", async ({ page }) => {
-    await page.goto("./?splash");
+    await page.goto("./?splash&menu-background");
     await expect(page.locator(".splash")).toBeVisible();
     await page.goto("./");
     await expect(page.locator(".splash")).toHaveCount(0);
