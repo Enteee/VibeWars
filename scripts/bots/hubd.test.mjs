@@ -3709,13 +3709,15 @@ describe("hubd serving hub wiki (#1380)", () => {
 
   it("answers a gh request queued behind a slow wiki request at once", async () => {
     const web = await fakeWeb({ "/wiki/Fireball": "hang" });
+    /** @type {Promise<unknown>} */
+    let wiki = Promise.resolve();
     try {
       const hubd = await startHubd(5000, undefined, () => ({
         HUBD_WIKI_LIVE_ORIGIN: web.origin,
         HUBD_WIKI_ARCHIVE_ORIGIN: web.origin,
       }));
       let wikiAnswered = false;
-      void hubd.request("developer", "wiki", ["get", "Fireball"]).finally(() => {
+      wiki = hubd.request("developer", "wiki", ["get", "Fireball"]).finally(() => {
         wikiAnswered = true;
       });
       await until(() => web.asked.length > 0, "the wiki fetch to start");
@@ -3727,6 +3729,9 @@ describe("hubd serving hub wiki (#1380)", () => {
       expect(hubd.alive()?.inflight).toBeGreaterThanOrEqual(1);
     } finally {
       web.close();
+      // Closing the web server fails hubd's hanging fetch, which settles the
+      // request now instead of rejecting inside a later test.
+      await wiki.catch(() => undefined);
     }
   }, 30_000);
 });
