@@ -820,6 +820,16 @@ let
           prompt="$kickoff"
         fi
 
+        # The role's notepad (#3129), one line of ids and keywords, appended
+        # here rather than written into woke, which is read to its first
+        # line only. A notepad that cannot be read is left out, not fatal.
+        notepad="$(${node} ${botScripts}/notes.mjs line "$role" "$DEVENV_ROOT/.bots/hub/notes.json" 2>/dev/null)" || notepad=""
+        if [ -n "$notepad" ]; then
+          prompt="$prompt
+
+        $notepad"
+        fi
+
         export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
         export VIBEWARS_BOT_EMPLOYEE="$employee"
         export VIBEWARS_BOT_ROLE="$role"

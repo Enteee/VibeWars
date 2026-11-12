@@ -814,7 +814,8 @@ export function authorize(role, request, options = {}) {
   // Hiring and firing is the manager's own; no hat lends it (#380), nor the
   // load it is decided on (#747), nor the company's runners (#1890) or
   // their logs (#2729). Nor
-  // does a hat lend a schedule (#678).
+  // does a hat lend a schedule (#678), nor a notepad (#3129): a note goes
+  // to the caller's real role.
   // Nor a release (#2707): the branch, the sign-off and the tag are three
   // roles' own, so that no one of them publishes alone.
   if (
@@ -824,6 +825,7 @@ export function authorize(role, request, options = {}) {
     request.kind === "runners" ||
     request.kind === "runner-logs" ||
     request.kind === "schedule" ||
+    request.kind === "note" ||
     request.kind === "release-ok" ||
     (request.kind === "push" && request.argv[0]?.startsWith("release/") === true) ||
     (request.kind === "gh" && request.argv[0] === "release")
@@ -884,6 +886,13 @@ function authorizeAs(role, request, acting, employee) {
           allow: false,
           reason: "schedule: only manager, architect, lead-dev and release-manager keep schedules",
         };
+  }
+  if (request.kind === "note") {
+    // Every role keeps a notepad (#3129); only the manager reads another
+    // role's. hubd checks the words, and that --role only lists and reads.
+    return argv.includes("--role") && role !== "manager"
+      ? { allow: false, reason: "note: only the manager reads another role's notes (--role)" }
+      : { allow: true };
   }
   if (request.kind === "board") {
     return authorizeBoard(argv);
