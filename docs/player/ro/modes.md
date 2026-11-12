@@ -441,7 +441,7 @@ de peer, niciun lobby. Un meci încheiat pentru că a plecat gazda sau pentru c�
 toți nu este publicat. Înregistrările sunt raportate de gazdă, așa că o gazdă poate greși
 una; nimic nu le verifică față de meci.
 
-Le vezi pe pagina **Meciuri**, sub Constructor de echipe: ultimele 100, cele mai noi
+Le vezi pe pagina **Meciuri**, sub Constructor de echipe: cele mai recente 50 din ultimele 7 zile, cele mai noi
 primele, iar cele noi apar pe măsură ce se joacă. Un rând înseamnă o linie: jucătorii
 fiecărei echipe ca pictograma clasei lor principale (ține cursorul pentru nume), două
 echipe sau trei, câștigătoarea subliniată, plus harta, durata și când. Fiecare rând este

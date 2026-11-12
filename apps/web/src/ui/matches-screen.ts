@@ -29,7 +29,13 @@ import { railIconUrl, railLabel, railScreen, type RailEntry } from "./rail.js";
 import { hallHolds, type HallHold } from "./vault-screen.js";
 
 /** The most records the page holds; the oldest goes first. */
-export const MATCHES_KEPT = 100;
+export const MATCHES_KEPT = 50;
+
+/** How long ago a match may have ended and still be on the page (#3133). */
+export const MATCHES_MAX_AGE_SECONDS = 7 * 24 * 3600;
+
+/** How often the page redraws its relative times, and lets aged-out matches go. */
+const MATCHES_REFRESH_MS = 60_000;
 
 const END_REASONS = {
   score: "matches.endScore",
@@ -53,6 +59,21 @@ export interface MatchesScreenOptions {
 export interface MatchesScreen {
   /** Stops listening: the page is gone. */
   close(): void;
+}
+
+/**
+ * The records the page shows (#3133): none that ended more than
+ * `MATCHES_MAX_AGE_SECONDS` before `nowSeconds`, newest first, at most
+ * `MATCHES_KEPT`.
+ */
+export function recentMatches(
+  records: readonly HeardMatchRecord[],
+  nowSeconds: number,
+): HeardMatchRecord[] {
+  return records
+    .filter((heard) => heard.record.endedAt >= nowSeconds - MATCHES_MAX_AGE_SECONDS)
+    .sort((a, b) => b.record.endedAt - a.record.endedAt)
+    .slice(0, MATCHES_KEPT);
 }
 
 /** `endedAt` (unix seconds) as how long before `nowSeconds` it was. */
@@ -359,8 +380,8 @@ function matchRow(
 
 /**
  * Render the Matches page into `root` and start listening for records.
- * The page holds `MATCHES_KEPT` at most, newest `endedAt` first; a record
- * older than all of a full page is not shown.
+ * The page holds `recentMatches`: a record older than all of a full page,
+ * or than `MATCHES_MAX_AGE_SECONDS`, is not shown.
  */
 export function renderMatchesScreen(
   root: HTMLElement,
@@ -380,6 +401,7 @@ export function renderMatchesScreen(
       draw();
     }),
   );
+  body.appendChild(h("p", "matches-recent", t("matches.recentNote")));
   const note = body.appendChild(h("p", "matches-note", t("matches.noMatches")));
   const list = body.appendChild(h("ol", "match-list"));
   let records: HeardMatchRecord[] = [];
@@ -413,15 +435,15 @@ export function renderMatchesScreen(
     );
   };
 
+  const secondsNow = (): number => Math.floor(options.now() / 1000);
   const watch = options.watch({
+    since: secondsNow() - MATCHES_MAX_AGE_SECONDS,
     record: (heard) => {
       offline = false;
       if (records.some((kept) => kept.id === heard.id)) {
         return;
       }
-      records = [...records, heard]
-        .sort((a, b) => b.record.endedAt - a.record.endedAt)
-        .slice(0, MATCHES_KEPT);
+      records = recentMatches([...records, heard], secondsNow());
       draw();
     },
     noRelay: () => {
@@ -429,9 +451,14 @@ export function renderMatchesScreen(
       draw();
     },
   });
+  const refresh = setInterval(() => {
+    records = recentMatches(records, secondsNow());
+    draw();
+  }, MATCHES_REFRESH_MS);
   draw();
   return {
     close: () => {
+      clearInterval(refresh);
       watch.close();
     },
   };

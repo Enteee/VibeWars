@@ -705,6 +705,7 @@ export default {
   "matches.minutesAgo": { one: "{count} perce", other: "{count} perce" },
   "matches.noMatches": "Még nincsenek meccsek.",
   "matches.noneFit": "Nincs meccs ezekkel a szűrőkkel.",
+  "matches.recentNote": "Az elmúlt 7 nap 50 legutóbbi meccse látható.",
   "matches.offline": "A meccsrelayek most nem érhetők el.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

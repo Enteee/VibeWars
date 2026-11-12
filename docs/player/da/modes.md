@@ -451,7 +451,7 @@ peer-id, ingen lobby. En kamp, der slutter, fordi dens vært gik, eller
 som alle forlod, offentliggøres ikke. Registreringer rapporteres af
 værten, så en vært kan få en forkert; intet tjekker dem mod kampen.
 
-Se dem på siden **Kampe**, under Holdeditor: de seneste 100, nyeste
+Se dem på siden **Kampe**, under Holdeditor: de 50 seneste fra de sidste 7 dage, nyeste
 først, med nye, der dukker op, efterhånden som de spilles. En række er én
 linje: hvert holds spillere som ikonet for deres primære klasse (hold
 musen over for navnet), to hold eller tre, vinderen understreget, og

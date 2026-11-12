@@ -11,7 +11,13 @@ import { t } from "../i18n/index.js";
 import { arenaIds } from "../net/maps.js";
 import type { MatchRecordWatchHandlers } from "../net/transport/match-records.js";
 import { sessionFilter } from "./matches-filter.js";
-import { MATCHES_KEPT, relativeTime, renderMatchesScreen } from "./matches-screen.js";
+import {
+  MATCHES_KEPT,
+  MATCHES_MAX_AGE_SECONDS,
+  recentMatches,
+  relativeTime,
+  renderMatchesScreen,
+} from "./matches-screen.js";
 
 const NOW = 1_800_000_000_000;
 
@@ -182,6 +188,7 @@ describe("the Matches page (#2532)", () => {
   let on: MatchRecordWatchHandlers | undefined;
   let closed: number;
   let cloned: MatchRecordTeam[];
+  let nowMs: number;
 
   const render = (): { root: FakeElement; close: () => void } => {
     const root = new FakeElement();
@@ -195,7 +202,7 @@ describe("the Matches page (#2532)", () => {
           },
         };
       },
-      now: () => NOW,
+      now: () => nowMs,
       onCloneTeam: (team) => {
         cloned.push(team);
       },
@@ -211,6 +218,7 @@ describe("the Matches page (#2532)", () => {
     on = undefined;
     closed = 0;
     cloned = [];
+    nowMs = NOW;
     sessionFilter.kinds.clear();
     sessionFilter.sizes.clear();
     vi.stubGlobal("localStorage", { getItem: () => null });
@@ -292,7 +300,7 @@ describe("the Matches page (#2532)", () => {
     expect(durations()).toHaveLength(MATCHES_KEPT);
     // The first heard ended earliest, and went; the newest is on top.
     expect(durations()).not.toContain("0:00");
-    expect(durations()[0]).toBe("1:40");
+    expect(durations()[0]).toBe(`0:${String(MATCHES_KEPT)}`);
     // One older than a full page is not shown at all.
     hear("older", { ...RECORD, endedAt: RECORD.endedAt - 1, durationSeconds: 7000 });
     expect(durations()).toHaveLength(MATCHES_KEPT);
@@ -644,6 +652,36 @@ describe("the Matches page (#2532)", () => {
     ]);
   });
 
+  it("always says it shows only the recent matches, empty or not (#3133)", () => {
+    const { root } = render();
+    const recent = root.one("matches-recent");
+    expect(recent.textContent).toBe(t("matches.recentNote"));
+    expect(recent.hidden).toBe(false);
+    hear("one");
+    expect(recent.hidden).toBe(false);
+  });
+
+  it("asks only for matches of the past week (#3133)", () => {
+    render();
+    expect(on?.since).toBe(NOW / 1000 - MATCHES_MAX_AGE_SECONDS);
+  });
+
+  it("lets a match go once it is over a week old, on its next refresh (#3133)", () => {
+    vi.useFakeTimers();
+    try {
+      const { root, close } = render();
+      hear("old", { ...RECORD, endedAt: NOW / 1000 - MATCHES_MAX_AGE_SECONDS + 30 });
+      hear("new");
+      expect(root.all("match-row")).toHaveLength(2);
+      nowMs = NOW + 60_000;
+      vi.advanceTimersByTime(60_000);
+      expect(root.all("match-row")).toHaveLength(1);
+      close();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("stops listening when the page closes", () => {
     const { close } = render();
     close();
@@ -659,5 +697,32 @@ describe("a match's relative time (#2532)", () => {
     expect(relativeTime(now - 2 * 3600, now)).toBe(t("matches.hoursAgo", { count: 2 }));
     expect(relativeTime(now - 3 * 86_400, now)).toBe(t("matches.daysAgo", { count: 3 }));
     expect(relativeTime(now + 60, now)).toBe(t("matches.justNow"));
+  });
+});
+
+describe("the matches the page shows (#3133)", () => {
+  const nowSeconds = NOW / 1000;
+  const heard = (id: string, endedAt: number) => ({ id, record: { ...RECORD, endedAt } });
+
+  it("drops a match over a week old, and keeps one exactly a week old", () => {
+    const shown = recentMatches(
+      [
+        heard("older", nowSeconds - MATCHES_MAX_AGE_SECONDS - 1),
+        heard("week", nowSeconds - MATCHES_MAX_AGE_SECONDS),
+        heard("future", nowSeconds + 60),
+      ],
+      nowSeconds,
+    );
+    expect(shown.map((one) => one.id)).toEqual(["future", "week"]);
+  });
+
+  it(`keeps the newest ${String(MATCHES_KEPT)} of more, newest first`, () => {
+    const many = Array.from({ length: MATCHES_KEPT + 10 }, (_, index) =>
+      heard(String(index), nowSeconds - 3600 + index),
+    );
+    const shown = recentMatches(many, nowSeconds);
+    expect(shown).toHaveLength(MATCHES_KEPT);
+    expect(shown[0]?.id).toBe(String(MATCHES_KEPT + 9));
+    expect(shown.at(-1)?.id).toBe("10");
   });
 });

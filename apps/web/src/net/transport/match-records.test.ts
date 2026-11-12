@@ -194,7 +194,7 @@ describe("match records on Nostr (#2528)", () => {
 });
 
 /** Watch the records on fake relays: the test plays the relays. */
-function watch(now = NOW, filter?: MatchRecordFilter) {
+function watch(now = NOW, filter?: MatchRecordFilter, since?: number) {
   const sockets: FakeSocket[] = [];
   const heard: HeardMatchRecord[] = [];
   const verified: string[] = [];
@@ -202,6 +202,7 @@ function watch(now = NOW, filter?: MatchRecordFilter) {
   const watching = watchMatchRecords(
     {
       ...(filter === undefined ? {} : { filter }),
+      ...(since === undefined ? {} : { since }),
       record: (record) => heard.push(record),
       noRelay: () => {
         noRelay += 1;
@@ -263,6 +264,23 @@ describe("watching match records on Nostr (#2532)", () => {
         "REQ",
         "vibewars-matches",
         { kinds: [MATCH_RECORD_EVENT_KIND], "#t": ["vibewars-matches"], limit: 100 },
+      ]);
+    }
+  });
+
+  it("asks for nothing published before `since`, when the watch sets one (#3133)", () => {
+    const { sockets } = watch(NOW, undefined, 1_700_000_000);
+    for (const socket of sockets) {
+      socket.handlers.open();
+      expect(JSON.parse(socket.sent[0] ?? "")).toEqual([
+        "REQ",
+        "vibewars-matches",
+        {
+          kinds: [MATCH_RECORD_EVENT_KIND],
+          "#t": ["vibewars-matches"],
+          limit: 100,
+          since: 1_700_000_000,
+        },
       ]);
     }
   });

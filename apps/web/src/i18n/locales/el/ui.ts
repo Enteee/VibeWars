@@ -712,6 +712,7 @@ export default {
   "matches.minutesAgo": { one: "πριν {count} λ.", other: "πριν {count} λ." },
   "matches.noMatches": "Δεν υπάρχουν αγώνες ακόμη.",
   "matches.noneFit": "Κανένας αγώνας δεν ταιριάζει στα φίλτρα.",
+  "matches.recentNote": "Εμφανίζονται οι 50 πιο πρόσφατοι αγώνες των τελευταίων 7 ημερών.",
   "matches.offline": "Δεν υπάρχει πρόσβαση στους αναμεταδότες αγώνων αυτή τη στιγμή.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

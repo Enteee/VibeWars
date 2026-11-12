@@ -703,6 +703,7 @@ export default {
   "matches.minutesAgo": { one: "{count} min sedan", other: "{count} min sedan" },
   "matches.noMatches": "Inga matcher än.",
   "matches.noneFit": "Inga matcher passar filtren.",
+  "matches.recentNote": "Visar de 50 senaste matcherna från de senaste 7 dagarna.",
   "matches.offline": "Når inte matchreläerna just nu.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

@@ -753,6 +753,7 @@ export default {
   },
   "matches.noMatches": "Još nema mečeva.",
   "matches.noneFit": "Nijedan meč ne odgovara filtrima.",
+  "matches.recentNote": "Prikazuje se 50 najnovijih mečeva iz posljednjih 7 dana.",
   "matches.offline": "Releji mečeva trenutno nisu dostupni.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

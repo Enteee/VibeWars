@@ -422,8 +422,8 @@ nenhum id de par, nenhuma sala. Uma partida que acaba porque o host saiu,
 ou da qual todos saíram, não é publicada. Os registros são informados pelo
 host, então um host pode errar; nada os confere com a partida.
 
-Veja-os na página **Partidas**, abaixo de Criador de Equipes: as últimas
-100, as mais novas primeiro, com as novas aparecendo conforme são
+Veja-os na página **Partidas**, abaixo de Criador de Equipes: as 50 mais
+recentes dos últimos 7 dias, as mais novas primeiro, com as novas aparecendo conforme são
 jogadas. Uma linha mostra os jogadores de cada equipe como o ícone da
 profissão primária (passe o mouse para ver o nome), duas ou três equipes,
 a vencedora sublinhada, e o mapa, a duração e quando. Toda linha é marcada

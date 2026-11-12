@@ -759,6 +759,7 @@ export default {
   },
   "matches.noMatches": "Aucun match pour l'instant.",
   "matches.noneFit": "Aucun match pour ces filtres.",
+  "matches.recentNote": "Affiche les 50 matchs les plus récents des 7 derniers jours.",
   "matches.offline": "Relais de matchs injoignables pour le moment.",
   "matches.playerBuild": "{player} : {build}",
   "matches.sizeChip": "{size}v{size}",

@@ -745,6 +745,7 @@ export default {
   "matches.minutesAgo": { one: "há {count} min", many: "há {count} min", other: "há {count} min" },
   "matches.noMatches": "Nenhuma partida ainda.",
   "matches.noneFit": "Nenhuma partida corresponde a estes filtros.",
+  "matches.recentNote": "Mostrando as 50 partidas mais recentes dos últimos 7 dias.",
   "matches.offline": "Não foi possível alcançar os relays de partidas agora.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

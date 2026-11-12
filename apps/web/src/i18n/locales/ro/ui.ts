@@ -752,6 +752,7 @@ export default {
   },
   "matches.noMatches": "Niciun meci încă.",
   "matches.noneFit": "Niciun meci nu corespunde filtrelor.",
+  "matches.recentNote": "Se afișează cele mai recente 50 de meciuri din ultimele 7 zile.",
   "matches.offline": "Releele de meciuri nu pot fi contactate acum.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

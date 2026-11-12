@@ -703,6 +703,7 @@ export default {
   "matches.minutesAgo": { one: "{count} min geleden", other: "{count} min geleden" },
   "matches.noMatches": "Nog geen matches.",
   "matches.noneFit": "Geen matches voor deze filters.",
+  "matches.recentNote": "Toont de 50 recentste matches van de afgelopen 7 dagen.",
   "matches.offline": "De matchrelays zijn nu niet bereikbaar.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
