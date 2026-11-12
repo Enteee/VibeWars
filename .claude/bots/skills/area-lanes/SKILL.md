@@ -23,4 +23,5 @@ Labels: `area:render`, `area:game-core`, `area:maps`, `area:ui`, `area:net`,
 - **Manager:** if two cards of one area are in flight, tell the later
   developer to switch to another area.
 - **Backfill:** the architect labels the cards now in `Ready`/`In Progress` on its next loop.
+- hub enforces the architect half: `board move <n> Ready` is refused without an `area:*` label or into a taken lane.
 - An area label is a guess, not a contract; do not block on a few shared files.
