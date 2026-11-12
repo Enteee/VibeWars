@@ -56,6 +56,12 @@ export interface ArenaViewport {
   /** Re-measure the parent, after the layout around it changed. */
   refreshScale(): void;
   /**
+   * Draw nothing more after this frame (#3157): a still picture costs
+   * nothing to keep. A resize clears the canvas, so it draws again from
+   * the next frame, until held again.
+   */
+  hold(): void;
+  /**
    * Phaser destroys a game on its next loop step, not at once: resolves
    * once it has, its WebGL context released and its canvas gone, or after
    * `DESTROY_WAIT_MS` if the loop does not step. Called again, the same.
@@ -138,6 +144,11 @@ export async function createArenaViewport(
   };
   scene.input.on("pointermove", onMove);
   scene.input.on("gameout", onOut);
+
+  const wake = (): void => {
+    game.loop.wake();
+  };
+  game.scale.on(Phaser.Scale.Events.RESIZE, wake);
 
   /** Set by the first `destroy`; a second returns it. */
   let destroyed: Promise<void> | undefined;
@@ -272,10 +283,14 @@ export async function createArenaViewport(
       game.scale.getParentBounds();
       game.scale.refresh();
     },
+    hold() {
+      game.loop.sleep();
+    },
     destroy() {
       if (destroyed !== undefined) {
         return destroyed;
       }
+      game.scale.off(Phaser.Scale.Events.RESIZE, wake);
       scene.input.off("pointermove", onMove);
       scene.input.off("gameout", onOut);
       // A loop that does not step (a hidden tab draws no frames) never gets
@@ -288,6 +303,8 @@ export async function createArenaViewport(
         });
       });
       game.destroy(true);
+      // A held loop steps again, so that it gets to the destroy.
+      wake();
       return destroyed;
     },
   };

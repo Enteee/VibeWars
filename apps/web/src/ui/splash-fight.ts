@@ -170,6 +170,10 @@ export async function startSplashFight(
   const offFrame = viewport.onFrame((deltaSeconds) => {
     if (snapshotSet) {
       drawn();
+      // Under reduced motion the fight is a still picture: drawn, then held (#3157).
+      if (fight.still) {
+        viewport.hold();
+      }
     }
     if (!fight.still) {
       connection.advance(Math.min(deltaSeconds, MAX_STEP_SECONDS));
