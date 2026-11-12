@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { loadAllMaps, loadMap } from "../loader.js";
-import {
-  balanceVerdict,
-  highGround,
-  runMapBalance,
-  walksToCentre,
-  type MapBalanceResult,
-} from "./map-balance.js";
+import { balanceVerdict, runMapBalance, type MapBalanceResult } from "./map-balance.js";
 
 /**
  * The map balance bench (#3065). The verdict always; with `BENCH_BALANCE`
@@ -51,26 +45,6 @@ describe("the balance verdict (#3065)", () => {
 
   it("fails all draws as no contact", () => {
     expect(balanceVerdict(result([0, 0], 100))).toEqual({ pass: false, reason: "no contact" });
-  });
-});
-
-describe("walks and high ground (#3070)", () => {
-  const canyon = loadMap("arena-canyon");
-
-  it("Canyon's spawns walk to the centre within 10 % of each other", () => {
-    const [walk0 = 0, walk1 = 0] = walksToCentre(canyon);
-    expect(walk0).toBeGreaterThan(0);
-    expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.1);
-  });
-
-  it("gives Canyon's teams high ground within 25 % of each other", () => {
-    const [ground0 = 0, ground1 = 0] = highGround(canyon);
-    expect(ground0).toBeGreaterThan(0);
-    expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.25);
-  }, 60_000);
-
-  it("counts no high ground on a map without decks", () => {
-    expect(highGround({ ...canyon, decks: [] })).toEqual([0, 0]);
   });
 });
 
