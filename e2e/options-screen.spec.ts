@@ -1,9 +1,16 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import {
+  DEFAULT_KEYMAP,
+  codeLabel,
+  presetOf,
+  type KeyAction,
+} from "../apps/web/src/input/keymap.js";
 import { openLibraryGroup } from "./helpers/library.js";
 import { openRail } from "./helpers/menu.js";
 import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
 import { chooseProfession } from "./helpers/professions.js";
+import { key } from "./keys.js";
 
 /**
  * The Options screen (#423) and its Controls section (#309): what only a
@@ -12,6 +19,9 @@ import { chooseProfession } from "./helpers/professions.js";
  */
 
 const WIDE = { width: 1500, height: 950 };
+
+/** What the Controls table shows for `action`'s default key. */
+const label = (action: KeyAction): string => codeLabel(key(action));
 
 const cell = (page: Page, action: string, index = 0): Locator =>
   page.locator(`.key-cell[data-action="${action}"][data-index="${String(index)}"]`);
@@ -25,13 +35,14 @@ async function openKeys(page: Page): Promise<void> {
   await expect(page.locator(".keys-screen")).toBeVisible();
 }
 
-test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reload", async ({
+test("(1) Skill 1 bound to Z in Controls casts on Z, not its default key, and survives a reload", async ({
   page,
 }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
   await openKeys(page);
-  await expect(cell(page, "skill-1")).toHaveText("Q");
+  await expect(page.locator(".keys-preset")).toHaveValue(String(presetOf(DEFAULT_KEYMAP)));
+  await expect(cell(page, "skill-1")).toHaveText(label("skill-1"));
 
   await cell(page, "skill-1").click();
   await expect(cell(page, "skill-1")).toHaveText("press a key...");
@@ -53,9 +64,9 @@ test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reloa
   await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
 
-  // Q is nobody's key now. Fireball is a 1 s cast; were Q still Skill 1,
-  // its hit would be in the log well inside this wait.
-  await page.keyboard.press("q");
+  // The default key is nobody's now. Fireball is a 1 s cast; were it still
+  // Skill 1, its hit would be in the log well inside this wait.
+  await page.keyboard.press(key("skill-1"));
   await page.waitForTimeout(2500);
   await expect(page.locator(".training-log-row", { hasText: "Fireball" })).toHaveCount(0);
 
@@ -73,11 +84,13 @@ test("(2) taking a key from another action empties its cell and says so", async 
   await page.goto("./");
   await openKeys(page);
   await cell(page, "skill-2").click();
-  await page.keyboard.press("q");
-  await expect(cell(page, "skill-2")).toHaveText("Q");
+  await page.keyboard.press(key("skill-1"));
+  await expect(cell(page, "skill-2")).toHaveText(label("skill-1"));
   await expect(cell(page, "skill-1")).toHaveText("-");
   await expect(cell(page, "skill-1")).toHaveClass(/is-flashing/);
-  await expect(page.locator(".keys-line")).toHaveText("Q was Skill 1; Skill 1 now has no key.");
+  await expect(page.locator(".keys-line")).toHaveText(
+    `${label("skill-1")} was Skill 1; Skill 1 now has no key.`,
+  );
   await expect(page.locator('tr:has(.key-cell[data-action="skill-1"]) .keys-warning')).toHaveText(
     "no key",
   );
@@ -85,7 +98,7 @@ test("(2) taking a key from another action empties its cell and says so", async 
   // Esc in a capture cancels it, and stays on the screen.
   await cell(page, "skill-3").click();
   await page.keyboard.press("Escape");
-  await expect(cell(page, "skill-3")).toHaveText("E");
+  await expect(cell(page, "skill-3")).toHaveText(label("skill-3"));
   await expect(page.locator(".keys-screen")).toBeVisible();
 
   await page.getByRole("button", { name: "reset to VibeWars" }).click();
@@ -274,7 +287,7 @@ test("a key still being rebound keeps Options open through a press outside; Esc 
   await expect(page.locator(".options-screen")).toBeVisible();
   await cell(page, "skill-1").focus();
   await page.keyboard.press("Escape");
-  await expect(cell(page, "skill-1")).toHaveText("Q");
+  await expect(cell(page, "skill-1")).toHaveText(label("skill-1"));
   await expect(page.locator(".options-screen")).toBeVisible();
 });
 

@@ -1,5 +1,5 @@
 import {
-  KEYMAP_PRESETS,
+  DEFAULT_KEYMAP,
   SKILL_ACTIONS,
   type KeyAction,
   type Keymap,
@@ -10,7 +10,7 @@ import {
  * first `KeyboardEvent.code` the keymap binds it to (#302). Specs press
  * keys through this, not literals, so a preset change moves them too.
  */
-export function key(action: KeyAction, keymap: Keymap = KEYMAP_PRESETS.vibewars): string {
+export function key(action: KeyAction, keymap: Keymap = DEFAULT_KEYMAP): string {
   const code = keymap[action][0];
   if (code === undefined) {
     throw new Error(`no key is bound to ${action}`);
@@ -19,7 +19,7 @@ export function key(action: KeyAction, keymap: Keymap = KEYMAP_PRESETS.vibewars)
 }
 
 /** The key that casts bar slot `slot` (0-7) under `keymap`. */
-export function skillKey(slot: number, keymap: Keymap = KEYMAP_PRESETS.vibewars): string {
+export function skillKey(slot: number, keymap: Keymap = DEFAULT_KEYMAP): string {
   const action = SKILL_ACTIONS[slot];
   if (action === undefined) {
     throw new Error(`there is no skill slot ${String(slot)}`);

@@ -6,6 +6,7 @@ import { joinFriend, openRail } from "./helpers/menu.js";
 import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
 import { hostLobby, openPeers, startSoloMatch } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
+import type { KeyAction } from "../apps/web/src/input/keymap.js";
 import { key } from "./keys.js";
 
 /**
@@ -396,8 +397,12 @@ test("keys typed in the beat editor reach no skill in a match (#373)", async ({ 
   await page.getByRole("button", { name: "Edit what plays" }).click();
   const editor = page.getByRole("dialog", { name: /^Beat editor: / });
   await editor.locator(".cm-content").click();
-  // Q is skill 1; skill 5 is a self-cast enchantment, which needs no target.
-  await page.keyboard.type(`q${key("skill-5").replace(/^Key/, "").toLowerCase()}`);
+  // Skill 1, and skill 5: a self-cast enchantment, which needs no target.
+  const typed = (action: KeyAction): string =>
+    key(action)
+      .replace(/^(Key|Digit)/, "")
+      .toLowerCase();
+  await page.keyboard.type(`${typed("skill-1")}${typed("skill-5")}`);
   await page.waitForTimeout(1000);
   await expect(effects).toHaveCount(0);
   await page.keyboard.press("Escape");
