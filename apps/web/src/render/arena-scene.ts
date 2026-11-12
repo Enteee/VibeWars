@@ -3229,7 +3229,6 @@ export class ArenaScene extends Phaser.Scene {
     this.zoneGrounds = undefined;
   }
 
-  /** `g` as a zone's moving marks draw through it. */
   /** `g` as fog is drawn through: its puffs with only the sides they need (#3162). */
   private atmospherePainter(g: Phaser.GameObjects.Graphics, line: number): AtmospherePainter {
     return {
@@ -3245,6 +3244,7 @@ export class ArenaScene extends Phaser.Scene {
     };
   }
 
+  /** `g` as a zone's moving marks draw through it. */
   private zoneMotionPainter(g: Phaser.GameObjects.Graphics): ZoneMotionPainter {
     const line = 1 / (this.view?.zoom ?? 1);
     return {
