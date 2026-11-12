@@ -7,7 +7,7 @@ import type { Combatant, Surroundings } from "../skills/types.js";
 import type { ZoneRule } from "./zones.js";
 
 /**
- * A timed or moving hazard's blow (#3029): pure, as `beacon.ts` is. The
+ * A timed or moving hazard's blow (#3029): pure, as `storm-stand.ts` is. The
  * simulation decides who is struck and when; this lands it.
  */
 

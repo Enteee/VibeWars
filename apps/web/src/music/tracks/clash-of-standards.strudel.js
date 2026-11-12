@@ -1,4 +1,4 @@
-// clash-of-banners - A dorian, 140 bpm. mood: action, epic.
+// clash-of-standards - A dorian, 140 bpm. mood: action, epic.
 // A 4v4 skirmish. Driving war drums, a string ostinato in sixteenths, short
 // brass stabs. Even the calm level keeps moving: this is a fight track.
 // Fourteen sections of eight cycles (3m12s before it repeats): four chord

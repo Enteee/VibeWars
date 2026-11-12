@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { STATS_INTERVAL_MS, createMeasurement, createMeter, type AudioReadings } from "./stats.js";
+import {
+  STATS_INTERVAL_MS,
+  createMeasurement,
+  createMeter,
+  type AudioReadings,
+} from "./audio-meter.js";
 
 const audio: AudioReadings = {
   baseLatencyMs: 10,

@@ -7,7 +7,7 @@
  * Ground with `?musicstats`: intensity forced (3 unless
  * `--intensity`) and one crossfade
  * halfway. Prints one row per second of what the music host counted
- * (apps/web/src/music/host/stats.ts), and the totals, for each load:
+ * (apps/web/src/music/host/audio-meter.ts), and the totals, for each load:
  *
  *   chromium  Pixel 7 landscape: no throttle, CPU 4x and 6x (CDP) in the
  *             Training Ground, the same three in `match`, and the menu at 4x

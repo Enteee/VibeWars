@@ -28,7 +28,7 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["arena-crossroads", "last-stand"],
   ["threefold-keep", "last-stand"],
   ["arena-canyon", "glass-dunes"],
-  ["sandstone-steps", "clash-of-banners"],
+  ["sandstone-steps", "clash-of-standards"],
   ["frozen-crossing", "ashen-fields"],
   ["ashen-courtyard", "ashen-fields"],
   ["moss-vale", "jungle-veil"],
@@ -44,7 +44,7 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["blackwater-ford", "jungle-veil"],
   ["mosslit-cairns", "jungle-veil"],
   ["wardens-gallery", "last-stand"],
-  ["brazen-causeway", "clash-of-banners"],
+  ["brazen-causeway", "clash-of-standards"],
   ["elite-zaishen-battle", "hall-of-champions"],
 ]);
 
