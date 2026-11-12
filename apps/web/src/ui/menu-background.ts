@@ -173,6 +173,10 @@ export function createMenuBackground(root: HTMLElement, startFight: StartFight):
         await after(fadeMs("out"));
       }
       await stopShown();
+      // Suspended during the fade or the stop: it stays stopped until resumed.
+      if (suspended.size > 0) {
+        return false;
+      }
       const drawing = await start(wanted);
       await reveal();
       return drawing;

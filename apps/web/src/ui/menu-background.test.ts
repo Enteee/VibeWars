@@ -250,6 +250,19 @@ describe("the menu background's fades (#3131)", () => {
     expect(root.dataset.shown).toBe("");
   });
 
+  it("starts nothing when suspended during the fade out", async () => {
+    const { log, start } = fights();
+    const root = layer();
+    const background = createMenuBackground(root, start);
+    await background.resume("away");
+    background.setChoice({ mapId: "jungle-ruins", teamSize: 4 });
+    await vi.advanceTimersByTimeAsync(MENU_FADE_MS.out - 1);
+    background.suspend("away");
+    await vi.advanceTimersByTimeAsync(MENU_FADE_MS.out);
+    expect(log).not.toContain("start jungle-ruins@4");
+    expect(root.dataset.map).toBeUndefined();
+  });
+
   it("starts only the last of a burst, each start after a stop", async () => {
     const { log, draw, start } = slowFights();
     const root = layer();
