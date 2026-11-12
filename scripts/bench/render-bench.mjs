@@ -15,7 +15,7 @@
  *   BENCH_MAP=a,b      the maps, by id; Crossroads is always measured.
  *                      Default: Crossroads and every map of more than
  *                      one layer.
- *   BENCH_MAX_RATIO=3  exit 1 when a map's p50 is more than this many
+ *   BENCH_MAX_RATIO=12 exit 1 when a map's p50 is more than this many
  *                      times Crossroads'. CI's regression gate.
  *   --url <url>        measure a client already served there.
  *
