@@ -109,7 +109,7 @@ export const MAX_FORM_CYCLES = 128;
  * this is the densest shipped track on 2026-10-25, rounded up. Measured at
  * the top level by `pnpm music:check`:
  *
- *   last-stand 30.94, clash-of-banners 30.04, hall-of-champions 19.73,
+ *   last-stand 30.94, clash-of-standards 30.04, hall-of-champions 19.73,
  *   ember-deep 16.25, victors-hymn 14.06, northern-pass 11.65,
  *   first-light 7.60, jungle-veil 6.00, glass-dunes 9.11, ashen-fields 2.41
  */

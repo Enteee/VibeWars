@@ -37,7 +37,7 @@ import { makeLayer, placedAt, type TrackClock } from "./layer.js";
 import { reverbPins } from "./reverb-pins.js";
 import { stingStart } from "./sting-start.js";
 import { startAudioStress } from "./audio-stress.js";
-import { createMeasurement, readAudio } from "./stats.js";
+import { createMeasurement, readAudio } from "./audio-meter.js";
 import { createUnderrunProbe } from "./underruns.js";
 import { suspendWhileHidden } from "./visibility.js";
 import { within } from "./within.js";

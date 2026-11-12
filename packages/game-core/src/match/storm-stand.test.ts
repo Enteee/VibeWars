@@ -10,7 +10,7 @@ import {
   BEACON_STRIKE_SECONDS,
   UNOWNED_BEACON,
   stepBeacon,
-} from "./beacon.js";
+} from "./storm-stand.js";
 import { flagId, type FlagField } from "./flags.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
