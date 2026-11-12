@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("the splash screen (#2884)", () => {
   test("a key brings the name, a further key the menu, and the fight is gone", async ({ page }) => {
-    await page.goto("./?splash");
+    await page.goto("./?splash&menu-background");
     const splash = page.locator(".splash");
     await expect(splash.locator(".splash-hint")).toBeVisible();
     await expect(splash.locator(".splash-wordmark")).toBeHidden();
