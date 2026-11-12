@@ -5,6 +5,7 @@ import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
+import type { BreakableField } from "./breakables.js";
 import type { CapturePoint } from "./capture-points.js";
 import { atObjective } from "./layer-rules.js";
 import type { Gate } from "./gates.js";
@@ -331,6 +332,8 @@ export interface BotObjectives {
   readonly harmfulZones: readonly MatchZone[];
   /** The map's levers (#3138), and what throwing each would win; `[]` on a map without any. */
   readonly levers: readonly BotLever[];
+  /** The map's standing breakable walls (#3140), and what each crumbling would win; `[]` on a map without any. */
+  readonly breakables: readonly BotBreakable[];
 }
 
 /** A lever as bots read it (#2542). */
@@ -347,6 +350,17 @@ export interface BotLever {
   readonly gain: readonly number[];
 }
 
+/** A standing breakable wall as bots read it (#3140). */
+export interface BotBreakable {
+  /** `breakableTargetId(id)`: what a bot strikes. */
+  readonly targetId: string;
+  /** For `strikePointOf`: where a bot stands to strike it. */
+  readonly field: BreakableField;
+  readonly layer: number;
+  /** Per team: units its way to the foes shortens if it crumbles; <= 0 helps nothing. */
+  readonly gain: readonly number[];
+}
+
 /** No objectives: every mode but those with one. */
 export const NO_OBJECTIVES: BotObjectives = {
   capturePoints: [],
@@ -359,6 +373,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   gates: [],
   harmfulZones: [],
   levers: [],
+  breakables: [],
 };
 
 export function createCursor(): BehaviourCursor {

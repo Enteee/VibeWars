@@ -37,7 +37,7 @@ mientras tu equipo no controla el altar, el Héroe Fantasmal del otro equipo
 sobre el altar va incluso antes. Un bot que se adelanta mucho a su equipo
 espera al resto antes de seguir.
 
-Si no hay ningún enemigo cerca, un bot acciona la palanca que abre un camino más corto hacia los enemigos.
+Si no hay ningún enemigo cerca, un bot acciona la palanca que abre un camino más corto hacia los enemigos. Dos bots también derriban un muro que oculta un camino mucho más corto, golpeándolo con sus armas.
 
 Los bots de daño guardan sus golpes fuertes, habilidades de ataque y
 hechizos de daño, y los lanzan a la vez contra el objetivo del equipo, para
