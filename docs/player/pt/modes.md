@@ -388,7 +388,7 @@ Um mapa pode ter **portões**: muros que param corpos, disparos e visão
 enquanto fechados. Fique sobre a placa de pressão de um portão para
 abri-lo. Ele fecha quando não sobra ninguém na placa, empurrando quem
 estiver na passagem para o lado mais próximo e parando disparos que ainda
-a atravessam, e não pode ser aberto de novo por 8 segundos. Uma placa na
+a atravessam, e não pode ser aberto de novo por meio segundo. Uma placa na
 cor de uma equipe só responde a essa equipe. Os bots ficam na placa da
 própria equipe quando não há inimigo por perto.
 

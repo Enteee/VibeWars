@@ -55,7 +55,7 @@ om.
 
 Nogle porte åbner i stedet fra en **trykplade**: en stenskive, der synker og
 bliver messingfarvet, mens nogen står på den. Porten lukker, når den sidste
-træder af, og dens plade skal bruge et par sekunder, før den åbner den igen.
+træder af, og dens plade åbner den igen et halvt sekund senere.
 Nogle plader svarer kun til ét hold.
 
 ## Portaler

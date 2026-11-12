@@ -55,8 +55,8 @@ până la ea și s-o tragi.
 
 Unele porți se deschid în schimb de la o **placă de presiune**: un disc de
 piatră care se lasă în jos și devine de alamă cât timp stă cineva pe el. Poarta
-se închide când coboară ultimul, iar placa are nevoie de câteva secunde până s-o
-deschidă din nou. Unele plăci răspund doar unei singure echipe.
+se închide când coboară ultimul, iar placa o deschide din nou o jumătate de
+secundă mai târziu. Unele plăci răspund doar unei singure echipe.
 
 ## Portaluri
 

@@ -454,7 +454,7 @@ Bir haritada **kapılar** olabilir: kapalıyken bedenleri, atışları ve
 görüşü durduran duvarlar. Bir kapıyı açmak için basınç plakasının
 üstünde dur. Plakada kimse kalmayınca kapanır, kapı aralığındaki herkesi
 daha yakın tarafa iter ve hâlâ içinden geçmekte olan atışları durdurur;
-8 saniye boyunca yeniden açılamaz. Bir takımın renginde olan plaka
+yarım saniye boyunca yeniden açılamaz. Bir takımın renginde olan plaka
 yalnızca o takıma yanıt verir. Botlar yakında düşman yokken kendi
 takımlarının plakasında durur.
 

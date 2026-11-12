@@ -80,9 +80,16 @@ describe("stepGate (#2691)", () => {
 
   it("refuses to reopen until the wait is over", () => {
     let gate = stepGate(stepGate(closedGate(), true, false, DT), false, false, DT);
-    gate = stepGate(gate, true, false, GATE_REOPEN_SECONDS - 1);
+    gate = stepGate(gate, true, false, GATE_REOPEN_SECONDS - 0.1);
     expect(gate.open).toBe(false);
-    expect(stepGate(gate, true, false, 1).open).toBe(true);
+    expect(stepGate(gate, true, false, 0.1).open).toBe(true);
+  });
+
+  it("waits half a second, so a plate stepped off and on stays shut until then (#3127)", () => {
+    expect(GATE_REOPEN_SECONDS).toBe(0.5);
+    const closed = stepGate(stepGate(closedGate(), true, false, DT), false, false, DT);
+    expect(stepGate(closed, true, false, 0.4).open).toBe(false);
+    expect(stepGate(closed, true, false, 0.5).open).toBe(true);
   });
 });
 
@@ -155,16 +162,14 @@ describe("gates in a match (#2691)", () => {
     expect(held.get("walker")?.position.x).toBeGreaterThan(450);
   });
 
-  it("closes when the plate is left, and a player back on it waits out the 8 s", () => {
+  it("closes when the plate is left, and opens again for a player back on it", () => {
     const sim = arena([holder, foe]);
     run(sim, DT);
     sim.walkTo("holder", OFF_PLATE);
     run(sim, 1.5);
     expect(open(sim)).toBe(false);
     sim.walkTo("holder", PLATE);
-    run(sim, 1.5);
-    expect(open(sim)).toBe(false);
-    run(sim, GATE_REOPEN_SECONDS);
+    run(sim, 1.5 + GATE_REOPEN_SECONDS);
     expect(open(sim)).toBe(true);
   });
 

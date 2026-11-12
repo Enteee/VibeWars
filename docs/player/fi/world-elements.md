@@ -54,8 +54,8 @@ ja paina sitten **Space**, niin kävelet sen luo ja käännät sen.
 
 Jotkin portit aukeavat sen sijaan **painelaatasta**: kivikiekko, joka painuu
 alas ja muuttuu messinginväriseksi, kun joku seisoo sen päällä. Portti sulkeutuu,
-kun viimeinen astuu pois, ja sen laatta tarvitsee muutaman sekunnin ennen kuin
-avaa sen uudelleen. Jotkin laatat vastaavat vain yhdelle joukkueelle.
+kun viimeinen astuu pois, ja sen laatta avaa sen uudelleen puoli sekuntia
+myöhemmin. Jotkin laatat vastaavat vain yhdelle joukkueelle.
 
 ## Portaalit
 

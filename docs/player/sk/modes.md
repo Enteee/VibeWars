@@ -392,7 +392,7 @@ medzi základňami). Štvrtá je **The Brazen Causeway** (8v8 Anihilácia kňaza
 Mapa môže mať **brány**: múry, ktoré zastavujú telá, strely a výhľad, kým sú
 zatvorené. Stoj na tlakovej doske brány, aby si ju otvoril. Zatvorí sa, keď na
 doske nikto nezostane, odtlačí každého v priechode na bližšiu
-stranu a zastaví strely, ktoré ešte letia skrz, a 8 sekúnd sa znova
+stranu a zastaví strely, ktoré ešte letia skrz, a pol sekundy sa znova
 nedá otvoriť. Doska vo farbe tímu reaguje len na ten
 tím. Boti stoja na doske svojho tímu, keď nablízku nie je nepriateľ.
 

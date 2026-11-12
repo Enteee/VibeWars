@@ -54,8 +54,8 @@ it, then press **Space** to walk there and throw it.
 
 Some gates open from a **pressure plate** instead: a stone disc that
 sinks and turns brass while someone stands on it. The gate closes when
-the last one steps off, and its plate needs a few seconds before it
-opens it again. Some plates answer only to one team.
+the last one steps off, and its plate opens it again half a second
+later. Some plates answer only to one team.
 
 ## Portals
 

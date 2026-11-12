@@ -389,7 +389,7 @@ Sebuah peta bisa punya **gerbang**: tembok yang menghentikan tubuh, tembakan dan
 tertutup. Berdirilah di pelat penekan sebuah gerbang untuk membukanya. Gerbang menutup saat
 tak ada lagi yang berdiri di pelat, mendorong siapa pun yang ada di ambang pintu ke sisi
 yang lebih dekat dan menghentikan tembakan yang masih melintas, dan tidak bisa dibuka
-lagi selama 8 detik. Pelat dalam warna sebuah tim hanya merespons
+lagi selama setengah detik. Pelat dalam warna sebuah tim hanya merespons
 tim itu. Bot berdiri di pelat timnya sendiri saat tak ada musuh di dekatnya.
 
 ## Tiga tim

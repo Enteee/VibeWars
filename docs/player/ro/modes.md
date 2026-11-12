@@ -414,7 +414,7 @@ O hartă poate avea **porți**: ziduri care opresc corpurile, proiectilele și v
 timp sunt închise. Stai pe placa de presiune a unei porți ca s-o deschizi. Se închide
 când nu mai rămâne nimeni pe placă, împingând pe oricine e în prag spre partea mai
 apropiată și oprind proiectilele aflate încă în trecere, și nu poate fi deschisă din nou
-timp de 8 secunde. O placă în culoarea unei echipe răspunde doar acelei echipe. Boții stau
+timp de o jumătate de secundă. O placă în culoarea unei echipe răspunde doar acelei echipe. Boții stau
 pe placa propriei echipe când nu e niciun inamic aproape.
 
 ## Trei echipe

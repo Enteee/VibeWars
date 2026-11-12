@@ -59,8 +59,8 @@ berjalan ke sana dan menariknya.
 
 Beberapa gerbang malah terbuka lewat **pelat tekan**: cakram batu yang
 turun dan berubah warna kuningan selama ada yang berdiri di atasnya. Gerbang
-menutup saat orang terakhir turun, dan pelatnya butuh beberapa detik sebelum
-bisa membukanya lagi. Beberapa pelat hanya merespons satu tim.
+menutup saat orang terakhir turun, dan pelatnya membukanya lagi setengah detik
+kemudian. Beberapa pelat hanya merespons satu tim.
 
 ## Portal
 

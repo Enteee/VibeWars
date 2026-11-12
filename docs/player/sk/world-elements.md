@@ -54,7 +54,7 @@ aby si ju zameral, a potom stlač **Space**, aby si k nej došiel a prepol ju.
 
 Niektoré brány namiesto toho otvára **nášľapná doska**: kamenný kotúč, ktorý
 sa prepadne a zmosadznie, kým na ňom niekto stojí. Brána sa zatvorí, keď
-z dosky zíde posledný, a doska potrebuje niekoľko sekúnd, kým ju znova otvorí.
+z dosky zíde posledný, a doska ju znova otvorí o pol sekundy neskôr.
 Niektoré dosky reagujú len na jeden tím.
 
 ## Portály
