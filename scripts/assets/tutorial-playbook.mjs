@@ -36,12 +36,8 @@ const scene = () => {
   s += `<path d="M60,120 L150,150 M860,380 L800,350 M100,400 L170,370" stroke="#ff8a3d" stroke-width="3" opacity=".4"/>`;
   return s;
 };
-const bubble = (cx = 480, cy = 290, rx = 330, ry = 190) =>
-  `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#dome)" stroke="#9fdcff" stroke-width="3"/><ellipse cx="${cx}" cy="${cy + 4}" rx="${rx - 6}" ry="${ry - 6}" fill="#26303f" opacity=".55"/>`;
 const body = (x, y, c, r = 16) =>
   `<ellipse cx="${x}" cy="${y + r * 0.9}" rx="${r}" ry="${r * 0.4}" fill="#080b10" opacity=".5"/><circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="#fff" stroke-width="2.5"/>`;
-const dummy = (x, y) =>
-  `<ellipse cx="${x}" cy="${y + 26}" rx="20" ry="8" fill="#080b10" opacity=".5"/><rect x="${x - 4}" y="${y - 4}" width="8" height="30" fill="#7a5a3a" stroke="${INK}" stroke-width="2"/><circle cx="${x}" cy="${y - 14}" r="17" fill="#c9a36a" stroke="${INK}" stroke-width="2.5"/><path d="M${x - 12},${y - 14} h24" stroke="${FOE}" stroke-width="3"/>`;
 const marker = (x, y, n) =>
   `<circle cx="${x}" cy="${y}" r="38" fill="url(#glow)"/><circle cx="${x}" cy="${y}" r="16" fill="none" stroke="${GLOW}" stroke-width="3" stroke-dasharray="6 4"/><text x="${x - 5}" y="${y + 6}" class="t" style="font-size:16px">${n}</text>`;
 const say = (t) =>
@@ -70,8 +66,6 @@ const hudBlock = (hl) =>
   bar(24, H - 120, 220, 0.8, "#c9423a", "health 80%") +
   bar(24, H - 98, 220, 0.6, "#3f6fe8", "energy") +
   (hl ?? "");
-const callout = (x, y, tx, ty, t) =>
-  `<path d="M${x},${y} L${tx},${ty}" stroke="${GLOW}" stroke-width="2"/><circle cx="${tx}" cy="${ty}" r="5" fill="${GLOW}"/><text x="${x - 4}" y="${y - 6}" class="n" text-anchor="end">${t}</text>`;
 const cursor = (x, y) =>
   `<circle cx="${x}" cy="${y}" r="20" fill="none" stroke="#fff" stroke-width="2.5"/><path d="M${x},${y} l0,26 l8,-7 l7,14 l5,-3 l-7,-13 l11,-1 Z" fill="#fff" stroke="${INK}" stroke-width="1.5"/>`;
 const effect = (x, y, c, f, t) =>
@@ -82,204 +76,282 @@ const shots = [];
 /** @type {(id: string, ttl: string, caption: string, svg: string) => void} */
 const add = (id, ttl, caption, svg) => void shots.push([id, ttl, caption, svg]);
 
+/* The tutorial world: a misty canyon with lava (operator brief on #3188). */
+const ROCK = "#3a2f2a",
+  LAVA = "#ff6a1f";
+const canyon = () =>
+  `<rect width="${W}" height="${H}" fill="#2a2320"/><rect width="${W}" height="${H}" filter="url(#grain)" fill="#fff" opacity=".12"/>` +
+  `<path d="M0,0 H${W} V70 C760,110 640,60 500,95 C360,130 220,70 0,100 Z" fill="${ROCK}"/>` +
+  `<path d="M0,${H} V440 C200,400 330,470 500,430 C650,400 780,460 ${W},420 V${H} Z" fill="${ROCK}"/>` +
+  `<path d="M-10,330 C150,290 260,380 420,350 C600,320 760,400 980,360" stroke="#7a2a0e" stroke-width="40" fill="none"/><path d="M-10,330 C150,290 260,380 420,350 C600,320 760,400 980,360" stroke="${LAVA}" stroke-width="26" fill="none"/><path d="M-10,330 C150,290 260,380 420,350 C600,320 760,400 980,360" stroke="#ffd23d" stroke-width="8" fill="none" opacity=".7"/>` +
+  `<ellipse cx="300" cy="250" rx="420" ry="90" fill="#cfd8e0" opacity=".1"/><ellipse cx="700" cy="440" rx="380" ry="70" fill="#cfd8e0" opacity=".12"/>`;
+const boulder = (x, y, r = 26) =>
+  `<circle cx="${x}" cy="${y}" r="${r}" fill="#8a7d72" stroke="${INK}" stroke-width="3"/><path d="M${x - r * 0.5},${y - r * 0.2} l${r * 0.4},${r * 0.5} M${x + r * 0.2},${y - r * 0.5} l${r * 0.3},${r * 0.3}" stroke="${INK}" stroke-width="2" opacity=".6"/>`;
+const shadowRing = (x, y, r = 34) =>
+  `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.45}" fill="${FOE}" opacity=".35" stroke="${FOE}" stroke-width="3" stroke-dasharray="6 4"/>`;
+const wall = (x, y, w, h, cracked = false) => {
+  let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#7d6a5c" stroke="${INK}" stroke-width="3"/>`;
+  for (let r = 0; r < h / 24; r++)
+    s += `<path d="M${x},${y + 24 * r} h${w}" stroke="${INK}" stroke-width="2" opacity=".6"/>`;
+  return (
+    s +
+    (cracked
+      ? `<path d="M${x + w / 2},${y} l-10,${h / 3} l14,${h / 3} l-8,${h / 3}" stroke="${INK}" stroke-width="4" fill="none"/>`
+      : "")
+  );
+};
+const rat = (x, y) =>
+  `<ellipse cx="${x}" cy="${y + 10}" rx="14" ry="5" fill="#080b10" opacity=".5"/><ellipse cx="${x}" cy="${y}" rx="15" ry="9" fill="#9a8a7a" stroke="${INK}" stroke-width="2"/><circle cx="${x + 13}" cy="${y - 2}" r="6" fill="#9a8a7a" stroke="${INK}" stroke-width="2"/><circle cx="${x + 11}" cy="${y - 9}" r="3" fill="#d49a9a"/><path d="M${x - 15},${y} q-12,-6 -20,4" stroke="#d49a9a" stroke-width="3" fill="none"/>`;
+const teleporter = (x, y) =>
+  `<ellipse cx="${x}" cy="${y}" rx="52" ry="24" fill="#6a3fe8" opacity=".35"/><ellipse cx="${x}" cy="${y}" rx="40" ry="18" fill="none" stroke="#c9a8ff" stroke-width="4"/><ellipse cx="${x}" cy="${y}" rx="24" ry="10" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="5 4"/><path d="M${x},${y - 14} v-70" stroke="#c9a8ff" stroke-width="10" opacity=".35"/>`;
+const tutor = (x, y) => body(x, y, "#a0d8ff", 15);
+const hit = (x, y, t) =>
+  `<text x="${x}" y="${y}" class="t" text-anchor="middle" style="font-size:16px">${t}</text>`;
+const tag = (x, y, t, anchor = "middle") =>
+  `<text x="${x}" y="${y}" class="n" text-anchor="${anchor}">${t}</text>`;
+const arrow = (x1, y1, x2, y2) =>
+  `<path d="M${x1},${y1} L${x2},${y2}" stroke="${GLOW}" stroke-width="3" stroke-dasharray="4 8" fill="none" stroke-linecap="round"/><circle cx="${x2}" cy="${y2}" r="6" fill="${GLOW}"/>`;
+const party = (hp) =>
+  `<rect x="24" y="60" width="170" height="52" rx="8" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="2"/><text x="34" y="82" class="n">Tutor</text>` +
+  bar(34, 90, 140, hp, "#c9423a");
+
+// A. The battlefield
 add(
   "1-walk",
-  "1 Walk",
-  "Walk to the glowing marks, in order.",
+  "1 Walk to the tutor",
+  "The tutor comes to you. Walk to the mark.",
   scene() +
-    bubble() +
-    marker(300, 340, 1) +
-    marker(520, 250, 2) +
-    marker(690, 350, 3) +
-    body(190, 290, FRIEND) +
-    cursor(300, 340) +
-    `<path d="M206,294 C240,320 270,330 290,336" stroke="#fff" stroke-width="2" stroke-dasharray="3 5" fill="none"/>` +
-    `<ellipse cx="760" cy="200" rx="22" ry="14" fill="none"/>` +
+    marker(560, 330, 1) +
+    tutor(600, 300) +
+    body(240, 300, FRIEND) +
+    cursor(560, 330) +
     key(402, 424, "W", 30) +
     key(436, 424, "A", 30) +
     key(470, 424, "S", 30) +
     key(504, 424, "D", 30) +
-    say("“There you are. First, show me you can stand… then walk.”") +
+    say("“This war never ends. Walk with me; I have an idea.”") +
     skip,
 );
 
 add(
-  "2-layers",
-  "2 Up and down",
-  "Up the ramp, then Alt + click under the platform.",
+  "2-look",
+  "2 Look north",
+  "Zoom out, right-drag north: find the teleporter.",
   scene() +
-    bubble() +
-    `<polygon points="560,330 640,350 640,372 560,352" fill="${DECK_F}" stroke="${INK}" stroke-width="2"/>` +
-    `<rect x="560" y="236" width="170" height="116" fill="${DECK_F}" stroke="${INK}" stroke-width="2"/><rect x="560" y="196" width="170" height="116" fill="${DECK}" stroke="${INK}" stroke-width="2"/>` +
-    `<path d="M440,300 L560,250 L560,310 L440,340 Z" fill="#7d8ea4" stroke="${INK}" stroke-width="2"/>` +
-    `<ellipse cx="645" cy="254" rx="30" ry="14" fill="none" stroke="#fff" stroke-width="3"/><ellipse cx="645" cy="346" rx="30" ry="14" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 5"/>` +
-    `<path d="M645,300 v20 m-5,-6 l5,6 l5,-6" stroke="#fff" stroke-width="2.5" fill="none"/>` +
-    body(645, 238, FRIEND) +
-    cursor(645, 346) +
-    key(386, 424, "Alt", 46) +
-    `<text x="440" y="445" class="n">+ click</text>` +
-    `<text x="660" y="392" class="n">dashed ring: the ground below</text><text x="660" y="180" class="n">solid ring: the platform</text>` +
-    say("“Up there. Now drop down, right beneath it.”") +
+    `<rect x="300" y="0" width="360" height="70" fill="#6a3fe8" opacity=".12"/>` +
+    teleporter(480, 56) +
+    arrow(480, 140, 480, 96) +
+    body(480, 330, FRIEND) +
+    tutor(540, 340) +
+    `<rect x="190" y="140" width="580" height="360" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="10 8" opacity=".6"/>` +
+    tag(480, 128, "outside your view") +
+    `<rect x="840" y="400" width="40" height="64" rx="18" fill="#dfe7f1" stroke="${INK}" stroke-width="2"/><path d="M860,400 v28 M840,428 h40" stroke="${INK}" stroke-width="2"/><rect x="860" y="400" width="20" height="28" fill="${GLOW}"/>` +
+    tag(832, 448, "right-drag", "end") +
+    say("“Maybe if we used this teleporter, we'd find a way around the battlefield.”") +
     skip,
 );
 
 add(
-  "3-look",
-  "3 Look around",
-  "Wheel to zoom, right-drag to look around.",
+  "3-teleport",
+  "3 Step in",
+  "Walk into the teleporter. Whoosh: the canyon.",
   scene() +
-    bubble() +
-    body(480, 290, FRIEND) +
-    `<rect x="300" y="170" width="360" height="240" rx="6" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="8 6"/><rect x="200" y="110" width="560" height="360" rx="6" fill="none" stroke="#fff" stroke-width="2" opacity=".6"/>` +
-    `<path d="M765,110 l30,0 m-8,-8 l8,8 l-8,8" stroke="${GLOW}" stroke-width="3" fill="none"/>` +
-    `<rect x="840" y="400" width="40" height="64" rx="18" fill="#dfe7f1" stroke="${INK}" stroke-width="2"/><path d="M860,400 v28 M840,428 h40" stroke="${INK}" stroke-width="2"/><rect x="860" y="400" width="20" height="28" rx="0" fill="${GLOW}" opacity=".9"/><text x="832" y="448" class="n" text-anchor="end">right-drag</text>` +
-    `<path d="M830,416 l-22,-12 m0,10 l0,-10 l10,0" stroke="${GLOW}" stroke-width="2.5" fill="none"/><text x="780" y="400" class="n">wheel</text>` +
-    say("“Zoom out. See the line? Now look around.”") +
+    teleporter(480, 200) +
+    body(480, 210, FRIEND, 12) +
+    `<rect x="0" y="0" width="${W}" height="${H}" fill="url(#glow)" opacity=".15"/>` +
+    tutor(560, 250) +
+    marker(480, 200, 1) +
+    `<path d="M600,220 C680,180 760,160 840,150" stroke="#cfd8e0" stroke-width="30" opacity=".25" fill="none"/>` +
+    say("“Together. Hold your breath.”") +
+    skip,
+);
+
+// B. The canyon
+add(
+  "4-boulders",
+  "4 Dodge the boulders",
+  "Red rings mark where rocks land. Step out of them.",
+  canyon() +
+    shadowRing(420, 300) +
+    boulder(420, 200) +
+    shadowRing(620, 400, 30) +
+    boulder(620, 330, 24) +
+    body(400, 320, FRIEND) +
+    tutor(470, 380) +
+    arrow(416, 326, 330, 400) +
+    key(402, 440, "W", 30) +
+    key(436, 440, "A", 30) +
+    key(470, 440, "S", 30) +
+    key(504, 440, "D", 30) +
+    say("“Rocks! Move, move, move!”") +
     skip,
 );
 
 add(
-  "4-target",
-  "4 Target and attack",
-  "Right click the dummy, right click again to attack.",
-  scene() +
-    bubble() +
+  "5-wall",
+  "5 Break the wall",
+  "Target the cracked wall and attack it.",
+  canyon() +
+    wall(560, 150, 70, 200, true) +
+    body(330, 290, FRIEND) +
+    tutor(390, 330) +
+    `<path d="M346,290 C440,250 500,240 556,256" stroke="#ff8a3d" stroke-width="5" fill="none" stroke-dasharray="2 8" stroke-linecap="round"/>` +
+    `<rect x="520" y="110" width="150" height="34" rx="8" fill="#0b0f14" opacity=".85" stroke="#7a8697" stroke-width="2"/><text x="530" y="132" class="n">Wall  100%</text>` +
+    pulse(514, 104, 162, 46) +
+    key(402, 440, "Space", 64) +
+    say("“That wall's in our way. Hit it until it falls.”") +
+    skip,
+);
+
+add(
+  "6-heal",
+  "6 Heal the tutor",
+  "A rock hits the tutor. Heal them.",
+  canyon() +
+    boulder(470, 280, 18) +
+    tutor(440, 310) +
+    hit(440, 270, "−60%") +
+    body(330, 320, FRIEND) +
+    party(0.35) +
+    pulse(18, 54, 182, 64) +
+    skillBar(250, H - 130, 0, false).replace(/fill="#b5532a"/, 'fill="#76c96f"') +
+    pulse(244, H - 136, 64, 64) +
+    key(262, H - 168, "2") +
+    tag(330, H - 144, "heal", "start") +
+    say("“Ow! The rock got me. A little help?”") +
+    skip,
+);
+
+add(
+  "7-ground",
+  "7 Cross the bad ground",
+  "Lava glows, mud slows. Find the safe way across.",
+  canyon() +
+    `<ellipse cx="480" cy="360" rx="70" ry="28" fill="#5a4a2a" opacity=".8" stroke="#8a7a4a" stroke-width="2"/>` +
+    tag(480, 400, "mud: Crippled") +
+    body(260, 300, FRIEND) +
+    tutor(310, 340) +
+    marker(700, 300, 1) +
+    `<path d="M276,300 C380,260 600,250 684,296" stroke="#fff" stroke-width="2" stroke-dasharray="3 9" fill="none"/>` +
+    `<rect x="${W - 130}" y="120" width="104" height="70" rx="8" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="2"/>` +
+    effect(W - 120, 130, "#6a5a2a", 0.6, "C") +
+    tag(W - 16, 108, "effects monitor", "end") +
+    say("“Mind the mud. It slows you down, but it wears off.”") +
+    skip,
+);
+
+add(
+  "8-rats",
+  "8 Rats!",
+  "Different skills for different rats.",
+  canyon() +
+    rat(560, 260) +
+    rat(640, 330) +
+    rat(500, 340) +
     body(340, 300, FRIEND) +
-    dummy(600, 290) +
-    `<circle cx="600" cy="300" r="34" fill="none" stroke="#ffffff" stroke-width="3"/>` +
-    cursor(600, 280) +
-    `<rect x="300" y="46" width="360" height="52" rx="8" fill="#0b0f14" opacity=".85" stroke="#7a8697" stroke-width="2"/><text x="316" y="68" class="n">Training Dummy</text>` +
-    bar(316, 74, 220, 1, "#c9423a", "100%") +
-    pulse(294, 40, 372, 64) +
-    key(60, 424, "Tab", 46) +
-    key(112, 424, "C") +
-    key(150, 424, "Space", 60) +
-    say("“Call it out, and hit it.”") +
-    skip,
-);
-
-add(
-  "5-bars",
-  "5 Your bars (taught in play)",
-  "No station of its own: pointed at when they move.",
-  scene() +
-    bubble() +
-    body(480, 290, FRIEND) +
+    tutor(400, 340) +
+    `<circle cx="560" cy="256" r="26" fill="none" stroke="${GLOW}" stroke-width="3"/>` +
     hudBlock() +
-    `<g>${[0, 1, 2].map((i) => `<path d="M${180 + i * 16},${H - 150} l6,12 l6,-12" fill="none" stroke="${FOE}" stroke-width="4"/>`).join("")}</g>` +
-    callout(400, H - 170, 192, H - 142, "pips: you are bleeding") +
-    pulse(18, H - 128, 320, 56) +
-    say("“Ouch. See the arrows? That's you bleeding.”") +
+    skillBar(250, H - 130, 0.4, true) +
+    key(262, H - 168, "1") +
+    key(320, H - 168, "2") +
+    key(378, H - 168, "3") +
+    say("“Rats! Try a different skill on each.”") +
     skip,
 );
 
 add(
-  "6-skill",
-  "6 Use a skill",
-  "Press 1: it costs energy, takes a moment, then recharges.",
-  scene() +
-    bubble() +
-    body(330, 300, FRIEND) +
-    dummy(620, 290) +
-    `<path d="M346,296 C440,250 540,250 598,284" stroke="#ff8a3d" stroke-width="5" fill="none" stroke-dasharray="2 8" stroke-linecap="round"/><circle cx="598" cy="284" r="9" fill="#ffd23d"/>` +
-    hudBlock() +
-    skillBar(250, H - 130, 0.55, true) +
-    key(262, 424, "1") +
-    callout(500, 360, 280, H - 120, "recharge wipe") +
-    `<text x="560" y="388" class="n">energy drops</text>` +
-    say("“Again, once it's ready.”") +
+  "9-climb",
+  "9 Climb a layer",
+  "Up the ledge, or Alt + click to drop below.",
+  canyon() +
+    `<rect x="560" y="236" width="190" height="110" fill="${DECK_F}" stroke="${INK}" stroke-width="2"/><rect x="560" y="196" width="190" height="110" fill="${DECK}" stroke="${INK}" stroke-width="2"/>` +
+    `<ellipse cx="655" cy="254" rx="30" ry="14" fill="none" stroke="#fff" stroke-width="3"/><ellipse cx="655" cy="346" rx="30" ry="14" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 5"/>` +
+    body(655, 238, FRIEND) +
+    tutor(600, 250) +
+    cursor(655, 346) +
+    key(386, 424, "Alt", 46) +
+    tag(440, 445, "+ click", "start") +
+    tag(770, 392, "dashed: the ground below", "end") +
+    tag(770, 184, "solid: the ledge", "end") +
+    say("“Up we go. Wait, what's down there?”") +
     skip,
 );
 
 add(
-  "7-heal",
-  "7 Damage and healing",
-  "Health is down; watch it come back.",
-  scene() +
-    bubble() +
-    body(330, 300, FRIEND) +
-    dummy(620, 290) +
-    `<circle cx="330" cy="300" r="30" fill="none" stroke="${FOE}" stroke-width="3" opacity=".6"/>` +
-    bar(24, H - 120, 220, 0.55, "#c9423a", "health 55%") +
-    bar(24, H - 98, 220, 0.7, "#3f6fe8", "energy") +
-    `<g>${[0, 1, 2].map((i) => `<path d="M${350 + i * 16},${H - 112} l6,-12 l6,12" fill="none" stroke="#76c96f" stroke-width="4"/>`).join("")}</g>` +
-    `<text x="340" y="${H - 136}" class="n">up-pips: healing</text>` +
-    pulse(18, H - 128, 320, 56) +
-    say("“That's a lot of red. Heal up. Or just breathe: five seconds.”") +
+  "10-ramp",
+  "10 Up the ramp",
+  "Walk up the ramp to reach the high ground.",
+  canyon() +
+    `<polygon points="520,330 600,350 600,372 520,352" fill="${DECK_F}" stroke="${INK}" stroke-width="2"/><rect x="600" y="226" width="200" height="126" fill="${DECK_F}" stroke="${INK}" stroke-width="2"/><rect x="600" y="186" width="200" height="126" fill="${DECK}" stroke="${INK}" stroke-width="2"/>` +
+    `<path d="M400,300 L600,250 L600,310 L400,340 Z" fill="#7d8ea4" stroke="${INK}" stroke-width="2"/>` +
+    body(430, 320, FRIEND) +
+    tutor(470, 340) +
+    arrow(446, 316, 600, 270) +
+    marker(700, 250, 1) +
+    say("“A ramp! Walk up it, it's easy.”") +
     skip,
 );
 
 add(
-  "8-conditions",
-  "8 Conditions",
-  "Walk to the mark while Crippled.",
-  scene() +
-    bubble() +
-    body(300, 320, FRIEND) +
-    dummy(620, 260) +
-    marker(700, 380, 1) +
-    `<rect x="${W - 130}" y="120" width="104" height="120" rx="8" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="2"/>` +
-    effect(W - 120, 130, "#8e2f2f", 0.7, "B") +
-    effect(W - 70, 130, "#6a5a2a", 0.4, "C") +
-    `<text x="${W - 16}" y="98" class="n" text-anchor="end">effects monitor</text><text x="${W - 250}" y="270" class="n">Crippled: slower</text>` +
-    pulse(W - 136, 112, 116, 134) +
-    `<path d="M316,324 C400,330 500,350 540,366" stroke="#fff" stroke-width="2" stroke-dasharray="3 9" fill="none"/>` +
-    say("“Slow, isn't it? It wears off. Walk it off.”") +
+  "11-tunnel",
+  "11 Sneak through the tunnel",
+  "Stay low and quiet through the tunnel.",
+  canyon() +
+    `<path d="M520,180 h200 v200 h-200 Z" fill="${ROCK}" stroke="${INK}" stroke-width="3"/><path d="M550,380 v-120 a70,70 0 0 1 140,0 v120 Z" fill="#0b0f14" stroke="${INK}" stroke-width="3"/>` +
+    `<circle cx="620" cy="320" r="12" fill="#e8c27a" opacity=".8"/>` +
+    body(400, 330, FRIEND) +
+    tutor(450, 360) +
+    arrow(416, 330, 560, 330) +
+    `<circle cx="620" cy="230" r="10" fill="${FOE}" opacity=".7"/><path d="M620,220 l30,-30 M620,220 l-30,-30" stroke="${FOE}" stroke-width="3" opacity=".5"/>` +
+    tag(660, 210, "sleeping guard") +
+    say("“Shh. Don't wake them.”") +
     skip,
 );
 
 add(
-  "9-calls",
-  "9 Calling targets and pings",
-  "Wheel-click the foe; click the compass to ping.",
-  scene() +
-    bubble() +
-    body(300, 320, FRIEND) +
-    body(380, 250, "#a0d8ff", 14) +
-    dummy(620, 280) +
-    `<circle cx="620" cy="290" r="38" fill="none" stroke="${GLOW}" stroke-width="4"/><path d="M620,238 v-26 m-8,8 l8,-8 l8,8" stroke="${GLOW}" stroke-width="3" fill="none"/>` +
-    `<circle cx="${W - 90}" cy="${H - 120}" r="70" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="3"/><circle cx="${W - 90}" cy="${H - 120}" r="4" fill="${FRIEND}"/><circle cx="${W - 60}" cy="${H - 150}" r="8" fill="none" stroke="${GLOW}" stroke-width="3"/><path d="M${W - 90},${H - 120} L${W - 60},${H - 150}" stroke="${GLOW}" stroke-width="2"/>` +
-    `<text x="${W - 16}" y="${H - 204}" class="n" text-anchor="end">compass: click to ping</text>` +
-    pulse(W - 166, H - 196, 152, 152) +
-    `<rect x="24" y="130" width="170" height="64" rx="8" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="2"/><text x="34" y="152" class="n">Guide</text>` +
-    bar(34, 160, 140, 1, "#c9423a") +
+  "12-call",
+  "12 Call a target",
+  "Wheel-click a foe to call it.",
+  canyon() +
+    rat(620, 280) +
+    rat(700, 330) +
+    body(320, 320, FRIEND) +
+    tutor(380, 350) +
+    `<circle cx="620" cy="280" r="34" fill="none" stroke="${GLOW}" stroke-width="4"/><path d="M620,236 v-24 m-8,8 l8,-8 l8,8" stroke="${GLOW}" stroke-width="3" fill="none"/>` +
+    party(1) +
     key(24, 424, "T") +
-    `<text x="62" y="445" class="n">targets the called foe</text>` +
+    tag(62, 445, "targets the called foe", "start") +
     say("“That one. Call it.”") +
     skip,
 );
 
 add(
-  "10-resurrect",
-  "10 Down, not out",
-  "Click the guide in the party window, then Resurrect.",
-  scene() +
-    bubble() +
-    body(330, 320, FRIEND) +
-    `<ellipse cx="560" cy="330" rx="30" ry="12" fill="#a0d8ff" opacity=".5"/><path d="M536,330 h48" stroke="#a0d8ff" stroke-width="10" stroke-linecap="round"/><circle cx="526" cy="330" r="12" fill="#6a8aa0" stroke="#fff" stroke-width="2"/>` +
-    `<text x="500" y="298" class="t" style="font-size:16px">“Help me up!”</text>` +
-    `<rect x="24" y="130" width="170" height="64" rx="8" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="2"/><text x="34" y="152" class="n">Guide (down)</text>` +
-    bar(34, 160, 140, 0, "#c9423a") +
-    pulse(18, 124, 182, 76) +
-    skillBar(250, H - 130, 0, false).replace(/fill="#b5532a"/, 'fill="#e8c27a"') +
-    pulse(244, H - 136, 64, 64) +
-    `<text x="250" y="${H - 138}" class="n">Resurrect (tutorial only)</text>` +
-    bar(24, H - 120, 220, 0.8, "#c9423a", "") +
-    `<text x="24" y="${H - 128}" class="n">morale −1%</text>` +
-    say("“Every fall costs us morale. Don't fall.”") +
+  "13-junction",
+  "13 Ping the way",
+  "A Y-junction: wheel-click the ground to ping.",
+  canyon() +
+    `<path d="M300,330 L520,330 L700,200 M520,330 L700,440" stroke="#4a3d36" stroke-width="70" fill="none" stroke-linejoin="round"/>` +
+    `<path d="M300,330 L520,330 L700,200 M520,330 L700,440" stroke="#6a5a4e" stroke-width="3" fill="none" stroke-dasharray="6 8"/>` +
+    `<circle cx="700" cy="200" r="16" fill="none" stroke="${GLOW}" stroke-width="4"/><circle cx="700" cy="200" r="30" fill="none" stroke="${GLOW}" stroke-width="2" opacity=".5"/>` +
+    tag(700, 170, "ping the way") +
+    tag(780, 440, "dead end?") +
+    body(380, 330, FRIEND) +
+    tutor(430, 350) +
+    cursor(700, 200) +
+    `<circle cx="${W - 90}" cy="${H - 150}" r="60" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="3"/><circle cx="${W - 70}" cy="${H - 175}" r="8" fill="none" stroke="${GLOW}" stroke-width="3"/>` +
+    say("“Left or right? You call it. Ping our way.”") +
     skip,
 );
 
 add(
-  "11-front",
-  "11 To the front",
-  "The bubble opens; you join the fight.",
+  "14-front",
+  "14 Back to the front",
+  "The canyon opens behind the lines. Follow the tutor.",
   scene() +
-    `<ellipse cx="480" cy="290" rx="330" ry="190" fill="none" stroke="#9fdcff" stroke-width="3" stroke-dasharray="14 12" opacity=".7"/>` +
     body(480, 290, FRIEND) +
-    body(560, 280, "#a0d8ff", 15) +
-    `<path d="M580,280 L760,230" stroke="#fff" stroke-width="3" stroke-dasharray="4 8" fill="none"/>` +
-    `<path d="M760,230 l-14,2 m6,-10 l8,8 l-10,8" stroke="#fff" stroke-width="3" fill="none"/>` +
+    tutor(550, 280) +
+    `<path d="M570,280 L760,230" stroke="#fff" stroke-width="3" stroke-dasharray="4 8" fill="none"/>` +
     [
       [800, 200],
       [840, 300],
@@ -293,7 +365,7 @@ add(
     ]
       .map(([x, y]) => body(x, y, FRIEND, 14))
       .join("") +
-    say("“You're ready. Follow me.”") +
+    say("“Now we have the high ground. Follow me.”") +
     skip,
 );
 
@@ -306,7 +378,7 @@ for (const [id, ttl, , svg] of shots) {
   execFileSync("magick", [
     join(out, `${id}.png`),
     "-colors",
-    "96",
+    "64",
     `PNG8:${join(out, `${id}.png`)}`,
   ]);
 }
