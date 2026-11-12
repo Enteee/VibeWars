@@ -1,8 +1,7 @@
-import { RANGE_SPELL } from "../../../distances.js";
 import { distance } from "../../../vec2.js";
 import { GATE_PLATE_REACH_UNITS } from "../../gates.js";
 import { countsForTeam } from "../../simulation.js";
-import { NOTHING, nearestTo } from "./shared.js";
+import { nearestTo, NOTHING, pressed } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -13,11 +12,9 @@ import type { BotRule } from "./types.js";
 const gates: BotRule = {
   order: 105,
   name: "gates",
-  decide: ({ context, self, foes, allies }) => {
-    if (
-      context.objectives.gates.length === 0 ||
-      foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL)
-    ) {
+  decide: (rule) => {
+    const { context, self, allies } = rule;
+    if (context.objectives.gates.length === 0 || pressed(rule)) {
       return undefined;
     }
     const team = self.combatant.team;

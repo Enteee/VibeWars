@@ -1,7 +1,5 @@
-import { RANGE_SPELL } from "../../../distances.js";
-import { distance } from "../../../vec2.js";
 import { ghostId, onHill } from "../../ghost.js";
-import { escort, NOTHING, sentTo } from "./shared.js";
+import { escort, NOTHING, pressed, sentTo } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -13,16 +11,13 @@ import type { BotRule } from "./types.js";
 const pickUpGhost: BotRule = {
   order: 114,
   name: "pick-up-ghost",
-  decide: ({ context, self, foes }) => {
+  decide: (rule) => {
+    const { context, self } = rule;
     const { altar, altarLayer, altarHolder } = context.objectives;
     const team = self.combatant.team;
     const id = ghostId(team);
     const ghost = context.participants.find((participant) => participant.id === id);
-    if (
-      altar === undefined ||
-      ghost === undefined ||
-      foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL)
-    ) {
+    if (altar === undefined || ghost === undefined || pressed(rule)) {
       return undefined;
     }
     if (

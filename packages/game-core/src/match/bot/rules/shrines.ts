@@ -2,7 +2,7 @@ import { RANGE_SPELL } from "../../../distances.js";
 import { distance, type Vec2 } from "../../../vec2.js";
 import { onCapturePoint, type CapturePoint } from "../../capture-points.js";
 import type { Participant } from "../../simulation.js";
-import { NOTHING } from "./shared.js";
+import { NOTHING, pressed } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -16,22 +16,23 @@ import type { BotRule } from "./types.js";
 const shrines: BotRule = {
   order: 99,
   name: "shrines",
-  decide: ({ context, self, foes, allies }) => {
+  decide: (rule) => {
+    const { context, self, allies } = rule;
     const points = context.objectives.capturePoints;
     const team = self.combatant.team;
     if (points.length === 0) {
       return undefined;
     }
-    const pressed = foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+    const isPressed = pressed(rule);
     if (
       points.some(
         (point) => onCapturePoint(point, self) && (point.owner !== team || point.progress < 1),
       )
     ) {
-      return pressed ? undefined : NOTHING;
+      return isPressed ? undefined : NOTHING;
     }
     const goal = goalShrine(points, team, self, allies);
-    if (goal === undefined || (pressed && distance(goal.position, self.position) > RANGE_SPELL)) {
+    if (goal === undefined || (isPressed && distance(goal.position, self.position) > RANGE_SPELL)) {
       return undefined;
     }
     return { ...NOTHING, moveTo: goal.position, moveToLayer: goal.layer };
