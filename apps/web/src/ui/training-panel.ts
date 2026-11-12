@@ -10,6 +10,7 @@ import type { MapShrine } from "@vibewars/game-maps/match-fields";
 import { NO_GUILD, type MatchSnapshot, type SkillSlot } from "@vibewars/game-session";
 
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
+import { worldPlacesOf } from "../audio/world-places.js";
 import { setGlobalMute } from "../audio/global-mute.js";
 import { soundPlayer } from "../audio/sound-player.js";
 import { skillName } from "../i18n/game-names.js";
@@ -698,7 +699,7 @@ export function createTrainingPanel(): TrainingPanel {
       structure: switchedStructure(setup.structure.structure),
       shrines: mapShrines(setup.map.id, setup.map.teamCount),
       // The same sounds as a match (#112), muted by the same M.
-      sounds: attachMatchSounds(connection, soundPlayer()),
+      sounds: attachMatchSounds(connection, soundPlayer(), worldPlacesOf(setup.map)),
       music: attachMatchMusic(connection, {
         screen: "training",
         // Every editor the panel sits in is as deep as the Character Builder.

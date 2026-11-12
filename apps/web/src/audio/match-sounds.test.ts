@@ -12,7 +12,7 @@ import type { SoundPlayer } from "./sound-player.js";
 
 const ME = "me";
 
-function snapshot(castingSkillId: string | undefined): MatchSnapshot {
+function snapshot(castingSkillId: string | undefined, switches: boolean[] = []): MatchSnapshot {
   const me: PlayerSnapshot = {
     sessionId: ME,
     name: ME,
@@ -75,7 +75,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     altarHeldSeconds: 0,
     capturePoints: [],
     gates: [],
-    switches: [],
+    switches,
     teleports: [],
     breakables: [],
     decks: [],
@@ -104,7 +104,11 @@ function setup() {
       refused = handler;
     },
   } as unknown as MatchConnection;
-  const sounds = attachMatchSounds(connection, player);
+  const sounds = attachMatchSounds(connection, player, {
+    gates: [],
+    switches: [{ x: 100, y: 0 }],
+    breakables: [],
+  });
   return { played, sounds, combat: (m: CombatMessage) => combat(m), refused: () => refused() };
 }
 
@@ -125,6 +129,13 @@ describe("attachMatchSounds", () => {
     });
     refused();
     expect(played).toEqual(["cast-self", "hit-taken", "refused"]);
+  });
+
+  it("plays a lever thrown near you", () => {
+    const { played, sounds } = setup();
+    sounds.snapshot(snapshot(undefined, [true]));
+    sounds.snapshot(snapshot(undefined, [false]));
+    expect(played).toEqual(["lever"]);
   });
 
   it("does not replay a cast that ran through a reconnect", () => {
