@@ -2,7 +2,7 @@ import { RANGE_SPELL } from "../../../distances.js";
 import { distance, type Vec2 } from "../../../vec2.js";
 import { onCapturePoint, type CapturePoint } from "../../capture-points.js";
 import type { Participant } from "../../simulation.js";
-import { NOTHING, pressed } from "./shared.js";
+import { NOTHING, pressed, shotAt } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -10,7 +10,8 @@ import type { BotRule } from "./types.js";
  * yet and fills it, else walks to its goal shrine. With a foe in spell
  * range (#2551), it steps onto that shrine only if it is in spell range
  * too, and once on it leaves the rest to `fight`: it fights from the
- * shrine rather than off it. Every shrine its team's, it leaves the rest
+ * shrine rather than off it. Shot at from beyond spell range (#3150), it
+ * walks to no shrine: `fight` goes for the shooter. Every shrine its team's, it leaves the rest
  * to `close-in`. Before `fight`, which answers whenever a foe is in reach.
  */
 const shrines: BotRule = {
@@ -32,7 +33,10 @@ const shrines: BotRule = {
       return isPressed ? undefined : NOTHING;
     }
     const goal = goalShrine(points, team, self, allies);
-    if (goal === undefined || (isPressed && distance(goal.position, self.position) > RANGE_SPELL)) {
+    if (
+      goal === undefined ||
+      (isPressed && (distance(goal.position, self.position) > RANGE_SPELL || shotAt(rule, self)))
+    ) {
       return undefined;
     }
     return { ...NOTHING, moveTo: goal.position, moveToLayer: goal.layer };

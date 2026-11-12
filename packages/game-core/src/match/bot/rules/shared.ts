@@ -200,17 +200,26 @@ export function escort(self: Participant, altar: Vec2, layer: number): Behaviour
 export const POSITION_SLACK = 40;
 
 /**
- * Whether a foe shoots at `body` (#3150): one targeting it, within its own
- * reach and `POSITION_SLACK`, and seeing it. Range first, so only a foe
- * in reach costs a line-of-sight ray.
+ * Whether `foe` shoots at `body` (#3150): it targets it, stands within its
+ * own reach of it and `POSITION_SLACK`, and sees it. Target and range
+ * first, so only a foe in reach costs a line-of-sight ray.
  */
-export function shotAt(rule: RuleContext, body: Participant): boolean {
-  return rule.foes.some(
-    (foe) =>
-      foe.targetId === body.id &&
-      distance(foe.position, body.position) <= rule.foeReach(foe) + POSITION_SLACK &&
-      rule.context.seesBetween(foe.position, body.position, foe.layer, body.layer),
+export function shoots(
+  context: BehaviourContext,
+  reach: (foe: Participant) => number,
+  foe: Participant,
+  body: Participant,
+): boolean {
+  return (
+    foe.targetId === body.id &&
+    distance(foe.position, body.position) <= reach(foe) + POSITION_SLACK &&
+    context.seesBetween(foe.position, body.position, foe.layer, body.layer)
   );
+}
+
+/** Whether a foe shoots at `body` (#3150). */
+export function shotAt(rule: RuleContext, body: Participant): boolean {
+  return rule.foes.some((foe) => shoots(rule.context, rule.foeReach, foe, body));
 }
 
 /**

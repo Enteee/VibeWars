@@ -9,7 +9,19 @@ import {
   type MatchRules,
 } from "../../../match-rules.js";
 import { MatchSimulation } from "../../simulation.js";
-import { askBot, body, BOT, BOUNDS, DT, match, RULESET } from "./test-support.js";
+import { foeReach } from "./shared.js";
+import {
+  askBot,
+  body,
+  BOT,
+  BOUNDS,
+  DT,
+  fighter,
+  match,
+  RANGER,
+  RULESET,
+  WARRIOR,
+} from "./test-support.js";
 
 /** A shrine at `position`, `owner`'s at `progress`; neutral and empty by default. */
 function shrine(position: Vec2, owner: number | null = null, progress = 0): CapturePoint {
@@ -139,5 +151,46 @@ describe("shrines: Capture Points bots take and hold shrines (#2580)", () => {
     };
     expect(heading(CAPTURE_POINTS_MATCH_RULES)).toBeLessThan(350);
     expect(heading(ANNIHILATION_MATCH_RULES)).toBeGreaterThan(400);
+  });
+});
+
+describe("shrines: a lone bot shot at from beyond spell range (#3150)", () => {
+  it("leaves its shrine to fight the shooter, and does not walk back to it", () => {
+    const sim = match([
+      fighter("bot", 0, WARRIOR, vec2(100, 100)),
+      fighter("foe", 1, RANGER, vec2(600, 100), { behaviour: undefined }),
+    ]);
+    const foe = sim.get("foe");
+    if (foe === undefined) throw new Error("no foe");
+    expect(foeReach(new Map(), foe)).toBeGreaterThan(500);
+    sim.setTarget("foe", "bot");
+    const objectives = playing(shrine(vec2(100, 100)));
+    expect(askBot(sim, "bot", objectives).targetId).toBe("foe");
+    // Stepped off towards the shooter, it does not turn back to the shrine.
+    const self = sim.get("bot");
+    if (self === undefined) throw new Error("no bot");
+    self.position = vec2(250, 100);
+    const intent = askBot(sim, "bot", objectives);
+    expect(intent.targetId).toBe("foe");
+    expect(intent.moveTo).not.toEqual(vec2(100, 100));
+  });
+
+  it("in a match, goes and hurts the shooter rather than hold the shrine", () => {
+    const sim = new MatchSimulation({
+      seed: "shrines",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      capturePoints: [vec2(100, 100)],
+      participants: [
+        fighter("bot", 0, WARRIOR, vec2(100, 100)),
+        fighter("foe", 1, RANGER, vec2(600, 100), { behaviour: undefined }),
+      ],
+    });
+    sim.setTarget("foe", "bot");
+    const full = sim.get("foe")?.combatant.health;
+    for (let t = 0; t < 8; t += DT) sim.step(DT);
+    expect(sim.get("bot")?.targetId).toBe("foe");
+    expect(sim.get("foe")?.combatant.health).toBeLessThan(full ?? 0);
   });
 });
