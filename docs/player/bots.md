@@ -37,7 +37,7 @@ A bot that gets far ahead of its team waits for the rest before it pushes
 on.
 
 Archers and spearmen take the high ground when it is safe.
-With no foe near, a bot throws a lever that opens a shorter way to the foes.
+With no foe near, a bot throws a lever that opens a shorter way to the foes. Two bots also break down a wall that hides a much shorter way, striking it with their weapons.
 
 Bot damage dealers hold their big hits, attack skills and damage spells,
 and fire them together on the team's target, so the damage lands at once

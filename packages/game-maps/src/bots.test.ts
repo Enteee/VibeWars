@@ -604,3 +604,55 @@ function casterBots(
       }),
   );
 }
+
+describe("a breakable wall the only way between the spawns (#3140)", () => {
+  /** A wall down `x` from `top` to `bottom`, 8 thick. */
+  const wall = (x: number, top: number, bottom: number) => {
+    const corners = [
+      { x: x - 4, y: top },
+      { x: x + 4, y: top },
+      { x: x + 4, y: bottom },
+      { x: x - 4, y: bottom },
+    ];
+    return corners.map((a, at) => ({ a, b: corners[(at + 1) % corners.length] ?? a }));
+  };
+
+  it("bots strike it down, then fight it out before the time limit", () => {
+    const build = (name: string) => {
+      const found = STARTER_BUILDS.find((candidate) => candidate.name === name);
+      if (found === undefined) throw new Error(`no starter build ${name}`);
+      return found;
+    };
+    const sim = new MatchSimulation({
+      seed: "breakable-wall",
+      ruleset: RULESET,
+      walls: [...wall(800, -10, 300), ...wall(800, 500, 810)],
+      breakables: [{ id: "crack", segments: wall(800, 300, 500), layer: 0, maxHealth: 600 }],
+      bounds: { width: 1600, height: 800 },
+      matchRules: ANNIHILATION_MATCH_RULES,
+      participants: [0, 1].flatMap((team) =>
+        CASTERS.slice(0, 2).map((name, k) =>
+          playBuildBot(
+            build(name),
+            `${String(team)}-${String(k)}`,
+            team,
+            { x: team === 0 ? 150 : 1450, y: 300 + 200 * k },
+            0,
+          ),
+        ),
+      ),
+    });
+    let broken = false;
+    let died = false;
+    let seconds = 0;
+    while (seconds <= ANNIHILATION_MATCH_RULES.timeLimitSeconds + 1 && !died) {
+      sim.step(DT);
+      seconds += DT;
+      broken ||= sim.breakables.every(({ health }) => health === 0);
+      died ||= [...sim.participants()].some(({ combatant }) => combatant.dead);
+    }
+    expect(broken).toBe(true);
+    expect(died).toBe(true);
+    expect(seconds).toBeLessThan(ANNIHILATION_MATCH_RULES.timeLimitSeconds);
+  }, 60_000);
+});

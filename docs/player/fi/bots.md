@@ -40,7 +40,7 @@ aavesankari menee jopa sen edelle. Botti, joka etenee kauas tiiminsä
 edelle, odottaa muita ennen kuin jatkaa.
 
 Jousiampujat ja keihäänheittäjät ottavat korkean maaston, kun se on turvallista.
-Kun yhtään vihollista ei ole lähellä, botti kääntää vivun, joka avaa lyhyemmän tien vihollisten luo.
+Kun yhtään vihollista ei ole lähellä, botti kääntää vivun, joka avaa lyhyemmän tien vihollisten luo. Kaksi bottia myös murtaa muurin, joka kätkee paljon lyhyemmän tien, lyömällä sitä aseillaan.
 
 Vahinkoa tekevät botit pidättävät isoja iskujaan, hyökkäystaitoja ja
 vahinkoloitsuja, ja laukaisevat ne yhdessä tiimin kohteeseen, jotta

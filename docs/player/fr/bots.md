@@ -38,7 +38,7 @@ adverse sur l'autel passe même avant. Un bot qui prend trop d'avance sur son
 équipe attend les autres avant de continuer.
 
 Les archers et les lanciers prennent les hauteurs quand c'est sans danger.
-Sans ennemi à proximité, un bot actionne le levier qui ouvre un chemin plus court vers les ennemis.
+Sans ennemi à proximité, un bot actionne le levier qui ouvre un chemin plus court vers les ennemis. Deux bots abattent aussi un mur qui cache un chemin bien plus court, en le frappant de leurs armes.
 
 Les bots attaquants gardent leurs gros coups, compétences d'attaque et sorts
 de dégâts, et les lancent ensemble sur la cible de l'équipe : les dégâts

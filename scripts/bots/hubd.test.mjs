@@ -126,6 +126,17 @@ if (group === "api" && sub !== "graphql") {
     if (answer.stdout) { console.log(answer.stdout); }
     process.exit(answer.code);
   }
+  // The open issues one author wrote, and the releases (#3125): what the test planted, or none.
+  if (rel.startsWith("issues?state=open&creator=")) {
+    const planted = path.join(state, "issues.json");
+    console.log(fs.existsSync(planted) && /[?&]page=1$/.test(rel) ? fs.readFileSync(planted, "utf8") : "[]");
+    process.exit(0);
+  }
+  if (rel.startsWith("releases?")) {
+    const planted = path.join(state, "releases.json");
+    console.log(fs.existsSync(planted) ? fs.readFileSync(planted, "utf8") : "[]");
+    process.exit(0);
+  }
   // The open issues with one label, as a test planted them (#3124).
   if (rel.startsWith("issues?") && rel.includes("labels=") && fs.existsSync(path.join(state, "labelled.json"))) { process.stdout.write(fs.readFileSync(path.join(state, "labelled.json"), "utf8")); process.exit(0); }
   if (rel.startsWith("issues?")) { console.log(JSON.stringify([issue7, { ...pull9, pull_request: {} }])); process.exit(0); }
@@ -3902,6 +3913,86 @@ describe("release branches (#2707)", () => {
     const published = await hubd.request("release-manager", "gh", create);
     expect(published.code, String(published.reason)).toBe(0);
   }, 60_000);
+
+  describe("tracking issues (#3125)", () => {
+    /**
+     * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+     * @param {{ number: number, title: string, login: string }[]} issues
+     */
+    const plantIssues = (hubd, issues) => {
+      fs.writeFileSync(
+        path.join(hubd.state, "issues.json"),
+        JSON.stringify(
+          issues.map((i) => ({ number: i.number, title: i.title, user: { login: i.login } })),
+        ),
+      );
+    };
+    const company = "vibewars-company";
+
+    /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
+    async function publish(hubd) {
+      const { repo } = hubd;
+      seed(hubd);
+      sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+      expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+      const ok = await hubd.request("qa-tester", "release-ok", [
+        "release/0.1.0",
+        "--sha",
+        remoteHead(hubd),
+        "played it",
+      ]);
+      expect(ok.code, String(ok.reason)).toBe(0);
+      const published = await hubd.request("release-manager", "gh", [
+        "release",
+        "create",
+        "v0.1.0",
+        "--target",
+        "release/0.1.0",
+        "--generate-notes",
+      ]);
+      expect(published.code, String(published.reason)).toBe(0);
+      return String(published.stderr);
+    }
+
+    it("closes the company's tracking issue when its release is published, and no stranger's", async () => {
+      const hubd = await startHubd(5000);
+      plantIssues(hubd, [
+        { number: 40, title: "Release 0.1.0", login: company },
+        { number: 41, title: "Release 0.1.0", login: "stranger" },
+      ]);
+      const said = await publish(hubd);
+      expect(said).toContain("closed tracking issue #40");
+      const log = hubd.callLog();
+      expect(log).toContain("issue close 40 --reason completed");
+      expect(log).toContain("issue comment 40 --body Published v0.1.0");
+      expect(log).not.toContain("issue close 41");
+      expect(log.indexOf("issue close 40")).toBeLessThan(log.indexOf("issue comment 40"));
+    }, 30_000);
+
+    it("says so when no tracking issue is open", async () => {
+      const hubd = await startHubd(5000);
+      plantIssues(hubd, [{ number: 41, title: "Release 0.2.0", login: company }]);
+      expect(await publish(hubd)).toContain('no open tracking issue "Release 0.1.0"');
+      expect(hubd.callLog()).not.toContain("issue close");
+    }, 30_000);
+
+    it("sweeps: closes one whose release is published, leaves a draft's", async () => {
+      const hubd = await startHubd(5000, undefined, () => ({ HUBD_TRACKING_SWEEP_MS: "300" }));
+      fs.writeFileSync(
+        path.join(hubd.state, "releases.json"),
+        JSON.stringify([
+          { tag_name: "v0.1.0", draft: false, prerelease: false, html_url: "u1" },
+          { tag_name: "v0.2.0", draft: true, prerelease: false, html_url: "u2" },
+        ]),
+      );
+      plantIssues(hubd, [
+        { number: 50, title: "Release 0.1.0", login: company },
+        { number: 51, title: "Release 0.2.0", login: company },
+      ]);
+      await until(() => hubd.callLog().includes("issue close 50"), "the sweep closing #50");
+      expect(hubd.callLog()).not.toContain("issue close 51");
+    }, 30_000);
+  });
 
   it("refuses a new branch that does not start on main", async () => {
     const hubd = await startHubd(5000);

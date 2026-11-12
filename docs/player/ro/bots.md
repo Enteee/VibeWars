@@ -38,7 +38,7 @@ Un bot care ajunge mult înaintea echipei îi așteaptă pe ceilalți înainte s
 înainteze.
 
 Arcașii și lăncierii ocupă înălțimile când e sigur.
-Când niciun inamic nu e aproape, un bot trage maneta care deschide un drum mai scurt spre inamici.
+Când niciun inamic nu e aproape, un bot trage maneta care deschide un drum mai scurt spre inamici. Doi boți dărâmă și un zid care ascunde un drum mult mai scurt, lovindu-l cu armele lor.
 
 Boții care fac daune își păstrează loviturile mari, abilitățile de atac și
 vrăjile de daune, și le dezlănțuie împreună asupra țintei echipei, ca daunele să

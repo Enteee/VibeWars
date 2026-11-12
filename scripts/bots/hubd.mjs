@@ -229,6 +229,7 @@ import {
   releaseCiVerdict,
   releaseFloor,
   releaseGapRefusal,
+  trackingToClose,
 } from "./hub-release.mjs";
 import {
   boardNumbers,
@@ -616,7 +617,10 @@ async function restPages(rel, cfg) {
   /** @type {unknown[]} */
   const rows = [];
   for (let page = 1; page <= MAX_PAGES; page += 1) {
-    const answer = await rest(`${rel}?per_page=100&page=${String(page)}`, cfg);
+    const answer = await rest(
+      `${rel}${rel.includes("?") ? "&" : "?"}per_page=100&page=${String(page)}`,
+      cfg,
+    );
     if (!Array.isArray(answer)) {
       return undefined;
     }
@@ -1542,6 +1546,131 @@ async function refuseTrackingIssue(number, cfg) {
     : `#${number} is not an open release's tracking issue, the only one you edit`;
 }
 
+/**
+ * The open tracking issues the company wrote (#3125), a stranger's of the
+ * same title left out.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ number: number, version: string }[] | null>} `null` if they cannot be read
+ */
+async function openTrackings(cfg) {
+  if (selfLogin === "") {
+    return null;
+  }
+  const rows = await restPages(`issues?state=open&creator=${selfLogin}`, cfg);
+  if (rows === undefined) {
+    return null;
+  }
+  return rows.flatMap((row) => {
+    const issue = obj(row);
+    const tracking =
+      issue.pull_request === undefined
+        ? parseTracking(
+            {
+              number: Number(issue.number),
+              title: String(issue.title),
+              author: String(obj(issue.user).login),
+              body: "",
+            },
+            selfLogin,
+          )
+        : null;
+    return tracking === null ? [] : [{ number: tracking.number, version: tracking.version }];
+  });
+}
+
+/**
+ * Close a tracking issue whose release is out, and say so on it.
+ *
+ * @param {{ number: number, version: string, url: string }} issue
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>} why it failed, or `null`
+ */
+async function closeTracking(issue, cfg) {
+  const number = String(issue.number);
+  // Closed first: a closed issue is never listed again, so a close that keeps
+  // failing cannot add a comment every sweep.
+  const closed = await gh(pinRepo(["issue", "close", number, "--reason", "completed"], cfg));
+  if (closed.code !== 0) {
+    return closed.stderr.trim();
+  }
+  await gh(
+    pinRepo(
+      ["issue", "comment", number, "--body", `Published v${issue.version}: ${issue.url}`],
+      cfg,
+    ),
+  );
+  return null;
+}
+
+/**
+ * After hubd ran `release create`: close that version's tracking issue.
+ * Never fails the publish; returns the line to print.
+ *
+ * @param {string} tag
+ * @param {string} url the release's address, as gh printed it
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string>}
+ */
+async function closeTrackingOfPublished(tag, url, cfg) {
+  const version = tag.replace(/^v/, "");
+  const open = await openTrackings(cfg);
+  if (open === null) {
+    return `hub: could not read the tracking issues; the hubd sweep will close "Release ${version}"`;
+  }
+  const mine = open.filter((tracking) => tracking.version === version);
+  if (mine.length === 0) {
+    return `hub: no open tracking issue "Release ${version}"`;
+  }
+  const lines = [];
+  for (const tracking of mine) {
+    const failed = await closeTracking({ ...tracking, url }, cfg);
+    lines.push(
+      failed === null
+        ? `hub: closed tracking issue #${String(tracking.number)}`
+        : `hub: could not close tracking issue #${String(tracking.number)}: ${failed}; the hubd sweep will retry`,
+    );
+  }
+  return lines.join("\n");
+}
+
+/**
+ * Close every open tracking issue whose release is published (#3125). Logged
+ * in hubd's log, told to no one. Skips a round when GitHub cannot be asked.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function sweepTracking(cfg) {
+  const open = await openTrackings(cfg);
+  const listed =
+    open === null || open.length === 0 ? undefined : await rest("releases?per_page=100", cfg);
+  if (!Array.isArray(listed)) {
+    return;
+  }
+  /** @type {unknown[]} */
+  const rows = listed;
+  const releases = rows.map((row) => {
+    const release = obj(row);
+    return {
+      tag: String(release.tag_name),
+      draft: release.draft === true,
+      prerelease: release.prerelease === true,
+      url: String(release.html_url),
+    };
+  });
+  for (const issue of trackingToClose(open ?? [], releases)) {
+    const failed = await closeTracking(issue, cfg);
+    console.error(
+      failed === null
+        ? `hubd: closed tracking issue #${String(issue.number)} (v${issue.version} is out)`
+        : `hubd: tracking issue #${String(issue.number)} not closed: ${failed}`,
+    );
+  }
+}
+
+/** How often the tracking issues of published releases are closed (#3125). */
+const TRACKING_SWEEP_MS = Number(process.env.HUBD_TRACKING_SWEEP_MS ?? 60 * 60_000);
 /** How often CI on an awaited release head is re-read. */
 const RELEASE_POLL_MS = Number(process.env.HUBD_RELEASE_POLL_MS ?? 60_000);
 /** A release head with no CI verdict this long after its push is given up on. */
@@ -4567,7 +4696,11 @@ async function serve(request, verdict, acting) {
   }
   noteHint(argv, result.code, cfg);
   const closed = await closeToDone(ghArgv, result.code, cfg);
-  const hint = [closed, await land(role, ghArgv, result, column, cfg, target)]
+  const published =
+    kind === "gh" && argv[0] === "release" && argv[1] === "create" && result.code === 0
+      ? await closeTrackingOfPublished(String(ghArgv[2]), result.stdout.trim(), cfg)
+      : "";
+  const hint = [closed, published, await land(role, ghArgv, result, column, cfg, target)]
     .filter((line) => line !== "")
     .join("\n");
   noteNewIssue(role, ghArgv, result, hint, cfg);
@@ -5759,6 +5892,7 @@ async function main() {
 
   writeNudges();
   let lastKpis = 0;
+  let lastTrackingSweep = 0;
   for (;;) {
     readStaffed();
     /** @type {[string, string | null][]} */
@@ -5801,6 +5935,14 @@ async function main() {
     if (Date.now() - lastKpis >= KPI_EVERY_MS) {
       lastKpis = Date.now();
       await writeKpis(cfg);
+    }
+    if (Date.now() - lastTrackingSweep >= TRACKING_SWEEP_MS && Date.now() >= limitedUntil) {
+      lastTrackingSweep = Date.now();
+      try {
+        await sweepTracking(cfg);
+      } catch (error) {
+        console.error(`hubd: tracking: ${error instanceof Error ? error.message : "failed"}`);
+      }
     }
     if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {
       await budgetExhausted();
