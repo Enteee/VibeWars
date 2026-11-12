@@ -32,7 +32,7 @@ import { boardItem, parseBudget } from "./hub-spend.mjs";
  * or otherwise, is discarded and the board read afresh: there is nothing to
  * be compatible with (ADR-0016).
  */
-export const BOARD_FORMAT_VERSION = 1;
+export const BOARD_FORMAT_VERSION = 2;
 
 /**
  * How long a full sweep stands. Ten minutes, because what it is still for is
@@ -597,8 +597,8 @@ const ITEM_FIELDS = `
   }
   content {
     __typename
-    ... on Issue { number title url repository { nameWithOwner } }
-    ... on PullRequest { number title url repository { nameWithOwner } }
+    ... on Issue { number title url state repository { nameWithOwner } }
+    ... on PullRequest { number title url state repository { nameWithOwner } }
     ... on DraftIssue { title }
   }`;
 
@@ -1185,6 +1185,35 @@ export function columnsPlan({ current, wanted, items }) {
 export function blockedAfterMove(origins, { id, before, after }) {
   const { [id]: _gone, ...rest } = origins;
   return after === "Blocked" && before !== "Blocked" ? { ...rest, [id]: before } : rest;
+}
+
+/**
+ * The cards whose issue is closed, or whose pull request is merged or
+ * closed, and that are not in Done (#3126): Blocked and no column too.
+ * Draft issues and items of other repositories have no state and are never
+ * listed. A reopened issue in Done is not listed either.
+ *
+ * @param {BoardState} state
+ * @param {string} repo
+ * @returns {{ id: string, number: number, column: string }[]}
+ */
+export function closedOutsideDone(state, repo) {
+  /** @type {{ id: string, number: number, column: string }[]} */
+  const found = [];
+  for (const { item } of state.cards) {
+    const content = obj(item.content);
+    const number = itemNumber(item, repo);
+    const closed =
+      content.type === "Issue"
+        ? content.state === "CLOSED"
+        : content.type === "PullRequest" &&
+          (content.state === "MERGED" || content.state === "CLOSED");
+    const column = typeof item.status === "string" ? item.status : "";
+    if (closed && number !== null && column !== "Done") {
+      found.push({ id: item.id, number, column });
+    }
+  }
+  return found;
 }
 
 /**

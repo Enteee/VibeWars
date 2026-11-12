@@ -17,6 +17,7 @@ import {
   arrivals,
   blockedAfterMove,
   blockedSwept,
+  closedOutsideDone,
   boardLines,
   columnsPlan,
   itemAddTarget,
@@ -816,5 +817,63 @@ describe("the record of Blocked origins (#639)", () => {
     expect(readBlocked({ A: 1 })).toBeNull();
     expect(readBlocked([])).toBeNull();
     expect(readBlocked(null)).toBeNull();
+  });
+});
+
+describe("closedOutsideDone (#3126)", () => {
+  /**
+   * @param {string} id
+   * @param {string} type
+   * @param {string} state
+   * @param {string | undefined} status
+   * @param {string} [repository]
+   */
+  const card = (id, type, state, status, repository = "o/r") => ({
+    item: {
+      id,
+      ...(status === undefined ? {} : { status }),
+      content: { type, number: Number(id.slice(1)), state, repository },
+    },
+  });
+  const state = (/** @type {ReturnType<typeof card>[]} */ ...cards) =>
+    /** @type {never} */ ({ cards });
+
+  it("lists a closed issue in Backlog and a merged pull request in QA", () => {
+    const found = closedOutsideDone(
+      state(card("I1", "Issue", "CLOSED", "Backlog"), card("P2", "PullRequest", "MERGED", "QA")),
+      "o/r",
+    );
+    expect(found).toEqual([
+      { id: "I1", number: 1, column: "Backlog" },
+      { id: "P2", number: 2, column: "QA" },
+    ]);
+  });
+
+  it("lists a closed pull request, a card in Blocked and a card with no column", () => {
+    const found = closedOutsideDone(
+      state(
+        card("P3", "PullRequest", "CLOSED", "Ready"),
+        card("I4", "Issue", "CLOSED", "Blocked"),
+        card("I5", "Issue", "CLOSED", undefined),
+      ),
+      "o/r",
+    );
+    expect(found.map((entry) => entry.number)).toEqual([3, 4, 5]);
+    expect(found[2]?.column).toBe("");
+  });
+
+  it("leaves open items, cards already in Done and other repositories alone", () => {
+    const found = closedOutsideDone(
+      state(
+        card("I1", "Issue", "OPEN", "Done"),
+        card("I2", "Issue", "OPEN", "Ready"),
+        card("I3", "Issue", "CLOSED", "Done"),
+        card("P4", "PullRequest", "OPEN", "QA"),
+        card("I5", "Issue", "CLOSED", "Ready", "x/y"),
+        card("D6", "DraftIssue", "", "Ready"),
+      ),
+      "o/r",
+    );
+    expect(found).toEqual([]);
   });
 });

@@ -318,6 +318,7 @@ async function startHubd(remaining, before, extra) {
           Ready: "o_ready",
           "In Review": "o_review",
           Done: "o_done",
+          Blocked: "o_blocked",
         },
       },
       columns: [],
@@ -1198,7 +1199,7 @@ describe("hubd and the GraphQL budget", () => {
 
     expect(printed(answer).totalCount).toBe(2);
     expect(hubd.calls("api graphql")).toBe(2);
-    expect(readJson(path.join(hubd.hub, "board.json")).format).toBe(1);
+    expect(readJson(path.join(hubd.hub, "board.json")).format).toBe(2);
   }, 20_000);
 
   it("keeps answering board reads from its copy while the budget is gone", async () => {
@@ -2293,6 +2294,111 @@ describe("hubd recording verdicts and merging", () => {
     expect(answer.code, String(answer.reason)).toBe(0);
     expect(hubd.calls(`pr merge 9 --squash --match-head-commit ${sha}`)).toBe(1);
   }, 20_000);
+
+  describe("closing moves the card to Done (#3126)", () => {
+    const DONE_7 =
+      "--id PVTI_7 --project-id PVT_2 --field-id F_status --single-select-option-id o_done";
+
+    it("moves the card of a closed pull request, once, and says so", async () => {
+      const hubd = await startHubd(5000);
+      fs.writeFileSync(path.join(hubd.state, "no-status-9"), "");
+      await hubd.request("developer", "board", ["ls"]);
+      fs.writeFileSync(path.join(hubd.state, "pull-9"), "");
+      await hubd.request("manager", "gh", [
+        "project",
+        "item-add",
+        "2",
+        "--url",
+        "https://github.com/Enteee/VibeWars/pull/9",
+      ]);
+      const before = hubd.calls("project item-edit");
+
+      const answer = await hubd.request("manager", "gh", ["pr", "close", "9"]);
+
+      expect(answer.code, String(answer.reason)).toBe(0);
+      expect(hubd.calls("project item-edit")).toBe(before + 1);
+      expect(hubd.callLog()).toContain(
+        "--id PVTI_9 --project-id PVT_2 --field-id F_status --single-select-option-id o_done",
+      );
+      expect(String(answer.stderr)).toContain("#9 moved to Done");
+    }, 20_000);
+
+    it("moves a closed issue's card out of Blocked and forgets where it came from", async () => {
+      const hubd = await startHubd(5000);
+      await hubd.request("developer", "board", ["ls"]);
+      await hubd.request("manager", "gh", [
+        "project",
+        "item-add",
+        "2",
+        "--url",
+        "https://github.com/Enteee/VibeWars/issues/7",
+      ]);
+      await hubd.request("manager", "gh", [
+        "project",
+        "item-edit",
+        "--id",
+        "PVTI_7",
+        "--project-id",
+        "PVT_2",
+        "--field-id",
+        "F_status",
+        "--single-select-option-id",
+        "o_blocked",
+      ]);
+      expect(readJson(path.join(hubd.hub, "blocked.json"))).toEqual({ PVTI_7: "Backlog" });
+
+      const answer = await hubd.request("manager", "gh", ["issue", "close", "7"]);
+
+      expect(answer.code, String(answer.reason)).toBe(0);
+      expect(hubd.callLog()).toContain(DONE_7);
+      expect(String(answer.stderr)).toContain("#7 moved to Done");
+      expect(readJson(path.join(hubd.hub, "blocked.json"))).toEqual({});
+      expect(printed(await hubd.request("developer", "board", ["show", "7"])).card).toMatchObject({
+        status: "Done",
+      });
+    }, 20_000);
+
+    it("still closes when the move fails, and says the sweep will move it", async () => {
+      const hubd = await startHubd(5000);
+      await hubd.request("developer", "board", ["ls"]);
+      await hubd.request("manager", "gh", [
+        "project",
+        "item-add",
+        "2",
+        "--url",
+        "https://github.com/Enteee/VibeWars/issues/7",
+      ]);
+      fs.writeFileSync(path.join(hubd.state, "edit-fails"), "");
+
+      const answer = await hubd.request("manager", "gh", ["issue", "close", "7"]);
+
+      expect(answer.code, String(answer.reason)).toBe(0);
+      expect(String(answer.stderr)).toContain("card not moved: edit boom; the sweep will");
+    }, 20_000);
+
+    it("does not move a card that is already in Done, or one that is not on the board", async () => {
+      const hubd = await startHubd(5000);
+      await hubd.request("developer", "board", ["ls"]);
+      await hubd.request("manager", "gh", [
+        "project",
+        "item-add",
+        "2",
+        "--url",
+        "https://github.com/Enteee/VibeWars/issues/7",
+      ]);
+      await hubd.request("manager", "gh", [
+        ...MOVE_8_TO_DONE.slice(0, 3),
+        "PVTI_7",
+        ...MOVE_8_TO_DONE.slice(4),
+      ]);
+      const before = hubd.calls("project item-edit");
+
+      await hubd.request("manager", "gh", ["issue", "close", "7"]);
+      await hubd.request("manager", "gh", ["issue", "close", "99"]);
+
+      expect(hubd.calls("project item-edit")).toBe(before);
+    }, 20_000);
+  });
 
   it("refuses a pull request into a release branch, which would skip the pick check (#2707)", async () => {
     const hubd = await startHubd(5000);
