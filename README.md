@@ -132,6 +132,7 @@ docs/
   adr/                      Architectural Decision Records
   player/                   The player's guide, also the in-game Help
   art/                      Art direction and asset studies
+  tutorial/                 The first-time tutorial playbook (build spec)
 ```
 
 `game-core` depends on nothing else in the workspace and never touches a
