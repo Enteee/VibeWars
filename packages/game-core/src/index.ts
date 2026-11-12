@@ -16,7 +16,7 @@ export { ZERO, length, normalize, vec2 } from "./vec2.js";
 export { CLIMB_PACE, clampInputDirection, integrateMovement, type ClimbLook } from "./movement.js";
 
 export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
-export { beaconStrikeArea } from "./match/beacon.js";
+export { beaconStrikeArea } from "./match/storm-stand.js";
 export {
   isZoneSourceId,
   ZONE_KINDS,

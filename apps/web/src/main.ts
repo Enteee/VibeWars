@@ -108,7 +108,7 @@ import {
 } from "./storage/starter-team.js";
 import { importTeam, importedTeamSummary } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
-import { mountBuildBanner } from "./ui/build-banner.js";
+import { mountBuildBanner } from "./ui/build-ribbon.js";
 import {
   mountBuildEditor,
   newCharacter,

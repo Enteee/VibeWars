@@ -419,7 +419,7 @@ that keep the character, in this order:
    ends at 90% of its chord (`.clip(.9)`) with a release inside the last
    10%; the reverb tail and the slow `attack` of the next chord cover the
    join. This alone took 15 levels under.
-2. `unison` of the pads: 3 to 2 on northern-pass and clash-of-banners; 2
+2. `unison` of the pads: 3 to 2 on northern-pass and clash-of-standards; 2
    to 1 on the strings of victors-hymn and hall-of-champions (one detuned-less
    saw, under a second saw voice).
 3. Shorter releases on lines that overlapped themselves (ember-deep's stabs,

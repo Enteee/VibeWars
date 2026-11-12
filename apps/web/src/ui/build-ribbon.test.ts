@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bannerSpaceWriter } from "./build-banner.js";
+import { bannerSpaceWriter } from "./build-ribbon.js";
 
 describe("bannerSpaceWriter (#1283)", () => {
   it("writes the banner's bottom edge while shown, and 0px once hidden", () => {

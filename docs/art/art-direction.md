@@ -1507,7 +1507,7 @@ slash): Strudel does not derive it from the map's URL.
 | adventurous | Horn call, striding bass, frame drum, tin whistle         | northern-pass, vibe-wars       |
 | mysterious  | Odd-length phrases, pizzicato, breathy flute, drones      | jungle-veil, glass-dunes       |
 | epic        | Choir, timpani, brass melody, big open voicings           | hall-of-champions, glass-dunes |
-| action      | Driving drums, string ostinato in sixteenths, short brass | clash-of-banners, ember-deep   |
+| action      | Driving drums, string ostinato in sixteenths, short brass | clash-of-standards, ember-deep |
 | tense       | Heartbeat sub, trembling strings, the filter opening      | last-stand                     |
 | dark        | Low brass, anvil, a grinding ostinato, phrygian colour    | ember-deep, last-stand         |
 | triumphant  | Brass chorale, choir, bells; noble, never cheesy          | victors-hymn                   |
