@@ -231,8 +231,10 @@ import {
   paintParticle,
   paintVent,
   paintWeatherWash,
+  type AtmospherePainter,
   type FogArt,
 } from "./atmosphere.js";
+import { fillDisc, strokeDisc } from "./disc.js";
 import {
   paintZoneGround,
   paintZoneMotion,
@@ -3062,7 +3064,7 @@ export class ArenaScene extends Phaser.Scene {
     }
     for (const art of fog) {
       paintFog(
-        this.fogAt(art.layer),
+        this.atmospherePainter(this.fogAt(art.layer), line),
         art,
         elevationOf(art.layer, ground),
         this.now,
@@ -3175,12 +3177,32 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** `g` as a zone's moving marks draw through it. */
-  private zoneMotionPainter(g: Phaser.GameObjects.Graphics): ZoneMotionPainter {
+  /** `g` as fog is drawn through: its puffs with only the sides they need (#3162). */
+  private atmospherePainter(g: Phaser.GameObjects.Graphics, line: number): AtmospherePainter {
     return {
       fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
       lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
-      fillCircle: (x, y, radius) => g.fillCircle(x, y, radius),
-      strokeCircle: (x, y, radius) => g.strokeCircle(x, y, radius),
+      fillCircle: (x, y, radius) => {
+        fillDisc(g, x, y, radius, line);
+      },
+      fillEllipse: (x, y, width, height) => g.fillEllipse(x, y, width, height),
+      strokeEllipse: (x, y, width, height) => g.strokeEllipse(x, y, width, height),
+      lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
+      fillRect: (x, y, width, height) => g.fillRect(x, y, width, height),
+    };
+  }
+
+  private zoneMotionPainter(g: Phaser.GameObjects.Graphics): ZoneMotionPainter {
+    const line = 1 / (this.view?.zoom ?? 1);
+    return {
+      fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
+      lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
+      fillCircle: (x, y, radius) => {
+        fillDisc(g, x, y, radius, line);
+      },
+      strokeCircle: (x, y, radius) => {
+        strokeDisc(g, x, y, radius, line);
+      },
       lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
       fillOutline: (outline) => {
         this.fillShape(g, { kind: "polygon", points: outline });
