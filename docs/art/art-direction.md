@@ -1385,21 +1385,25 @@ looking. So each event gets its own timbre, not just its own pitch, and the
 sounds that fire most often are the shortest and quietest. You hear only what
 concerns you, never the whole arena (#104).
 
-| id                 | Plays when                          | Length | Peak     | Character                            |
-| ------------------ | ----------------------------------- | ------ | -------- | ------------------------------------ |
-| `cast-self`        | you start a cast                    | 0.25 s | −16 dBFS | Soft rising sine shimmer             |
-| `cast-target`      | your target starts a cast           | 0.14 s | −4 dBFS  | Two sharp high ticks: interrupt now  |
-| `hit-dealt`        | you deal damage                     | 0.12 s | −6 dBFS  | Dry noise crack over a quick drop    |
-| `hit-taken`        | you take damage                     | 0.20 s | −5 dBFS  | Low, dull thud                       |
-| `heal`             | you are healed                      | 0.32 s | −12 dBFS | Soft bright two-note chime, a fifth  |
-| `interrupt`        | a cast is interrupted, by or on you | 0.25 s | −2 dBFS  | Broadband crack into a buzzy fall    |
-| `interrupt-missed` | your interrupt hit nothing          | 0.10 s | −14 dBFS | Muted low click: "wasted"            |
-| `death`            | anyone dies                         | 0.60 s | −6 dBFS  | Long low fall with a breath of noise |
-| `refused`          | the server refuses your cast        | 0.16 s | −12 dBFS | Tiny falling two-note blip           |
-| `weapon-swing`     | your weapon attack misses           | 0.16 s | −14 dBFS | Dry, pitchless airy whoosh           |
-| `bow-release`      | you fire a ranged weapon            | 0.18 s | −13 dBFS | Soft low string pluck, a tiny snap   |
-| `objective-ours`   | your team scores an objective       | 0.48 s | −8 dBFS  | Bright rising fifth, brass on a sine |
-| `objective-theirs` | the foe scores an objective         | 0.48 s | −9 dBFS  | The same fifth falling, darker       |
+| id                 | Plays when                          | Length | Peak     | Character                             |
+| ------------------ | ----------------------------------- | ------ | -------- | ------------------------------------- |
+| `cast-self`        | you start a cast                    | 0.25 s | −16 dBFS | Soft rising sine shimmer              |
+| `cast-target`      | your target starts a cast           | 0.14 s | −4 dBFS  | Two sharp high ticks: interrupt now   |
+| `hit-dealt`        | you deal damage                     | 0.12 s | −6 dBFS  | Dry noise crack over a quick drop     |
+| `hit-taken`        | you take damage                     | 0.20 s | −5 dBFS  | Low, dull thud                        |
+| `heal`             | you are healed                      | 0.32 s | −12 dBFS | Soft bright two-note chime, a fifth   |
+| `interrupt`        | a cast is interrupted, by or on you | 0.25 s | −2 dBFS  | Broadband crack into a buzzy fall     |
+| `interrupt-missed` | your interrupt hit nothing          | 0.10 s | −14 dBFS | Muted low click: "wasted"             |
+| `death`            | anyone dies                         | 0.60 s | −6 dBFS  | Long low fall with a breath of noise  |
+| `refused`          | the server refuses your cast        | 0.16 s | −12 dBFS | Tiny falling two-note blip            |
+| `weapon-swing`     | your weapon attack misses           | 0.16 s | −14 dBFS | Dry, pitchless airy whoosh            |
+| `bow-release`      | you fire a ranged weapon            | 0.18 s | −13 dBFS | Soft low string pluck, a tiny snap    |
+| `objective-ours`   | your team scores an objective       | 0.48 s | −8 dBFS  | Bright rising fifth, brass on a sine  |
+| `objective-theirs` | the foe scores an objective         | 0.48 s | −9 dBFS  | The same fifth falling, darker        |
+| `lever`            | a lever within 350 of you flips     | 0.18 s | −12 dBFS | Dry wooden clack, short metal ratchet |
+| `gate-stone`       | a stone gate within 700 moves       | 0.55 s | −10 dBFS | Low, slow grinding rumble, pitchless  |
+| `barrier`          | an energy barrier within 700 moves  | 0.35 s | −13 dBFS | Soft sine hum, rising                 |
+| `wall-crumble`     | a breakable wall within 700 falls   | 0.60 s | −7 dBFS  | Heavy low noise burst into rattles    |
 
 Rules:
 

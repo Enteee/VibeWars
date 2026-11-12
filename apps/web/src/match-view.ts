@@ -19,6 +19,7 @@ import type {
 } from "@vibewars/game-session";
 
 import { attachMatchSounds } from "./audio/match-sounds.js";
+import { worldPlacesOf } from "./audio/world-places.js";
 import { onGlobalMute, setGlobalMute } from "./audio/global-mute.js";
 import { soundPlayer } from "./audio/sound-player.js";
 import { t } from "./i18n/index.js";
@@ -734,7 +735,7 @@ export async function startMatchView(
 
   const sounds = soundPlayer();
   // A watcher has no cast to be refused.
-  const matchSounds = attachMatchSounds(seat ?? viewed, sounds);
+  const matchSounds = attachMatchSounds(seat ?? viewed, sounds, worldPlacesOf(viewed.map));
   const matchMusic = attachMatchMusic(viewed, {
     screen: "match",
     menuDepth: null,

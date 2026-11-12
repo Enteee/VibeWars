@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
-import { hitsForCombat, soundsForCombat, soundsForSnapshot } from "./combat-sounds.js";
+import {
+  hitsForCombat,
+  soundsForCombat,
+  soundsForSnapshot,
+  soundsForWorld,
+} from "./combat-sounds.js";
+import type { WorldPlaces } from "./world-places.js";
 
 const ME = "me";
 
@@ -355,5 +361,64 @@ describe("soundsForSnapshot", () => {
       player("foe", casting("heal")),
     ]);
     expect(soundsForSnapshot(undefined, busy)).toEqual([]);
+  });
+});
+
+describe("soundsForWorld", () => {
+  // A lever 300 away, gates and walls 600 away: each just inside its earshot.
+  const places: WorldPlaces = {
+    gates: [
+      { at: { x: 600, y: 0 }, blocks: "all" },
+      { at: { x: 0, y: 600 }, blocks: "all" },
+      { at: { x: -600, y: 0 }, blocks: "bodies-and-shots" },
+    ],
+    switches: [{ x: 300, y: 0 }],
+    breakables: [{ x: 0, y: -600 }],
+  };
+  const world = (
+    switches: boolean[],
+    gates: boolean[],
+    breakables: number[],
+    players = [player(ME)],
+  ): MatchSnapshot => ({ ...snapshot(players), switches, gates, breakables });
+  const still = world([true], [false, false, false], [40]);
+
+  it("plays a lever flipped within earshot, not one beyond it", () => {
+    const flipped = world([false], [false, false, false], [40]);
+    expect(soundsForWorld(still, flipped, ME, places)).toEqual(["lever"]);
+    const far = world([true], [false, false, false], [40], [player(ME, { x: -100 })]);
+    const farFlipped = world([false], [false, false, false], [40], [player(ME, { x: -100 })]);
+    expect(soundsForWorld(far, farFlipped, ME, places)).toEqual([]);
+  });
+
+  it("grinds once for two stone gates moving together, and hums for a barrier", () => {
+    const stones = world([true], [true, true, false], [40]);
+    expect(soundsForWorld(still, stones, ME, places)).toEqual(["gate-stone"]);
+    const barrier = world([true], [false, false, true], [40]);
+    expect(soundsForWorld(still, barrier, ME, places)).toEqual(["barrier"]);
+    expect(soundsForWorld(barrier, still, ME, places)).toEqual(["barrier"]);
+  });
+
+  it("crumbles a wall once, when it falls to 0", () => {
+    const fallen = world([true], [false, false, false], [0]);
+    expect(soundsForWorld(still, fallen, ME, places)).toEqual(["wall-crumble"]);
+    expect(soundsForWorld(fallen, fallen, ME, places)).toEqual([]);
+    const struck = world([true], [false, false, false], [20]);
+    expect(soundsForWorld(still, struck, ME, places)).toEqual([]);
+  });
+
+  it("is silent without a prev or without a player of your own", () => {
+    const moved = world([false], [true, true, true], [0]);
+    expect(soundsForWorld(undefined, moved, ME, places)).toEqual([]);
+    const watcher = world([true], [false, false, false], [40], [player("foe")]);
+    const watched = world([false], [true, true, true], [0], [player("foe")]);
+    expect(soundsForWorld(watcher, watched, ME, places)).toEqual([]);
+  });
+
+  it("does nothing on a map without elements", () => {
+    const empty = world([], [], []);
+    expect(soundsForWorld(empty, empty, ME, { gates: [], switches: [], breakables: [] })).toEqual(
+      [],
+    );
   });
 });
