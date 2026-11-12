@@ -1,4 +1,4 @@
-import type { DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
+import type { Biome, DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
 
 /** Shaded toward black by `share`, 0 to 1. */
 export function shade(colour: number, share: number): number {
@@ -61,9 +61,12 @@ const GRAPHIC_LAYERS: ArenaPalette = {
   rampChevron: 0x4b5a70,
 };
 
-/** The colours of a map of `layerCount` layers. */
-export function arenaPalette(layerCount: number): ArenaPalette {
-  return layerCount > 1 ? GRAPHIC_LAYERS : FLAT;
+/** The colours of a map: a map of one layer is drawn flat whatever its biome. */
+export function arenaPalette(map: {
+  readonly layerCount: number;
+  readonly biome: Biome;
+}): ArenaPalette {
+  return map.layerCount > 1 ? BIOME[map.biome].palette : FLAT;
 }
 
 export const DECK_SHADOW = { colour: 0x080b10, alpha: 0.55, offset: 32 };
@@ -238,8 +241,8 @@ export interface DeckLookColours {
   readonly support: number;
 }
 
-/** Each deck look's materials (#3067): stone and steel, earth and moss, wood. */
-export const DECK_LOOK: Record<DeckLook, DeckLookColours> = {
+/** Each deck look's materials in the hall (#3067): stone and steel, earth and moss, wood. */
+const DECK_LOOK: Record<DeckLook, DeckLookColours> = {
   platform: {
     top: GRAPHIC_LAYERS.deckTop,
     detail: GRAPHIC_LAYERS.plank,
@@ -369,8 +372,8 @@ export interface TransitionLookColours {
   readonly side: number;
 }
 
-/** Each transition look's materials (#3067). */
-export const TRANSITION_LOOK: Record<TransitionLook, TransitionLookColours> = {
+/** Each transition look's materials in the hall (#3067). */
+const TRANSITION_LOOK: Record<TransitionLook, TransitionLookColours> = {
   ramp: {
     top: GRAPHIC_LAYERS.rampTop,
     step: GRAPHIC_LAYERS.rampPanel,
@@ -383,4 +386,164 @@ export const TRANSITION_LOOK: Record<TransitionLook, TransitionLookColours> = {
   "rough-steps": { top: 0x6f6a58, step: 0x8f8a72, riser: 0x433e30, side: 0x4a4436 },
   /** Plank platform, brass chains and chevrons, an iron frame (#3079, docs/art/3079-lift.md). */
   lift: { top: 0xa07a48, step: 0xd4a843, riser: 0x7a8aa4, side: 0x4a3320 },
+};
+
+/** A biome's base tones (#3172, docs/art/visual-style.md §1). */
+interface BiomeTones {
+  readonly ground: number;
+  /** Walls, cliffs, ledges: rock as it stands. */
+  readonly rock: number;
+  /** Decks, stairs and masonry: dressed stone, and the light on its edges. */
+  readonly stone: number;
+  readonly wood: number;
+  readonly earth: number;
+  /** Moss and grass. */
+  readonly plant: number;
+}
+
+/** What one colour of the hall's is made of: `kept` is the same in every biome, as brass and iron are. */
+type Material = keyof BiomeTones | "kept";
+
+/** The hall's tones, which every other biome's colours are tinted from. */
+const HALL_TONES: BiomeTones = {
+  ground: GRAPHIC_LAYERS.floor ?? ARENA_BACKGROUND,
+  rock: GRAPHIC_LAYERS.wallTop,
+  stone: GRAPHIC_LAYERS.deckTop,
+  wood: 0x8a6a46,
+  earth: 0x5a4630,
+  plant: 0x4f5e3c,
+};
+
+/** Each biome's tones; the heights and the wilds are the hall's until their maps are rebuilt (#3064). */
+const BIOME_TONES: Record<Biome, BiomeTones> = {
+  hall: HALL_TONES,
+  heights: HALL_TONES,
+  wilds: HALL_TONES,
+  /** Warm sandstone, desaturated so danger orange and yellow stay the loudest warm things. */
+  desert: {
+    ground: 0x3b3226,
+    rock: 0x6e6252,
+    stone: 0xc2b296,
+    wood: 0x8a6a46,
+    earth: 0x6e5a40,
+    /** Dry scrub: green would be nature's. */
+    plant: 0x6a6448,
+  },
+};
+
+/** What each colour of the arena is made of. */
+const PALETTE_MATERIAL: Record<keyof ArenaPalette, Material> = {
+  floor: "ground",
+  grid: "ground",
+  wallTop: "rock",
+  wallFace: "rock",
+  wallLit: "rock",
+  wallStroke: "rock",
+  support: "rock",
+  deckTop: "stone",
+  plank: "stone",
+  slab: "stone",
+  rampTop: "stone",
+  rampPanel: "stone",
+  rampChevron: "rock",
+};
+
+/** What a look is made of, and the colours of it that are something else. */
+interface LookMaterial<Colours> {
+  readonly of: Material;
+  readonly but?: Partial<Record<keyof Colours, Material>>;
+}
+
+const DECK_MATERIAL: Record<DeckLook, LookMaterial<DeckLookColours>> = {
+  platform: { of: "stone", but: { edgeFace: "rock", support: "rock" } },
+  tower: { of: "stone" },
+  "wall-walk": { of: "stone", but: { side: "rock", edgeFace: "rock", support: "rock" } },
+  terrace: { of: "earth", but: { detail: "plant", edgeTop: "plant" } },
+  "bridge-stone": { of: "stone" },
+  "bridge-plank": { of: "wood" },
+  "bridge-log": { of: "wood" },
+  ledge: { of: "rock" },
+  ruin: { of: "stone" },
+  arch: { of: "rock" },
+  "gatehouse-roof": { of: "stone", but: { edgeTop: "kept" } },
+  rooftop: { of: "earth" },
+  pier: { of: "wood" },
+  plinth: { of: "stone", but: { edgeTop: "kept" } },
+};
+
+const TRANSITION_MATERIAL: Record<TransitionLook, LookMaterial<TransitionLookColours>> = {
+  ramp: { of: "stone", but: { riser: "rock" } },
+  stairs: { of: "stone" },
+  "stairs-landing": { of: "stone" },
+  ladder: { of: "wood", but: { top: "rock", side: "rock" } },
+  "rough-steps": { of: "earth" },
+  lift: { of: "wood", but: { step: "kept", riser: "kept" } },
+};
+
+/** `colour`, of the hall's `material`, in `tones`: each channel scaled as the tone's is to the hall's. */
+function tint(colour: number, material: Material, tones: BiomeTones): number {
+  if (material === "kept") {
+    return colour;
+  }
+  const to = tones[material];
+  const from = HALL_TONES[material];
+  const channel = (at: number): number =>
+    Math.min(
+      255,
+      Math.round((((colour >> at) & 0xff) * ((to >> at) & 0xff)) / ((from >> at) & 0xff)),
+    ) << at;
+  return channel(16) | channel(8) | channel(0);
+}
+
+/** `colours`, each tinted as what `made` says it is made of. */
+function tintAll<Colours extends { readonly [Slot in keyof Colours]: number | undefined }>(
+  colours: Colours,
+  made: (slot: keyof Colours) => Material,
+  tones: BiomeTones,
+): Colours {
+  return Object.fromEntries(
+    (Object.keys(colours) as (keyof Colours & string)[]).map((slot) => {
+      const colour = colours[slot];
+      return [slot, colour === undefined ? undefined : tint(colour, made(slot), tones)];
+    }),
+  ) as Colours;
+}
+
+/** A map's materials (#3172): its arena's colours, and each deck and transition look's. */
+export interface BiomeMaterials {
+  readonly palette: ArenaPalette;
+  readonly deck: Record<DeckLook, DeckLookColours>;
+  readonly transition: Record<TransitionLook, TransitionLookColours>;
+}
+
+function lookColours<
+  Look extends string,
+  Colours extends { readonly [Slot in keyof Colours]: number | undefined },
+>(
+  looks: Record<Look, Colours>,
+  materials: Record<Look, LookMaterial<Colours>>,
+  tones: BiomeTones,
+): Record<Look, Colours> {
+  return Object.fromEntries(
+    (Object.keys(looks) as Look[]).map((look) => {
+      const { of, but } = materials[look];
+      return [look, tintAll(looks[look], (slot) => but?.[slot] ?? of, tones)];
+    }),
+  ) as Record<Look, Colours>;
+}
+
+function biomeMaterials(tones: BiomeTones): BiomeMaterials {
+  return {
+    palette: tintAll(GRAPHIC_LAYERS, (slot) => PALETTE_MATERIAL[slot], tones),
+    deck: lookColours(DECK_LOOK, DECK_MATERIAL, tones),
+    transition: lookColours(TRANSITION_LOOK, TRANSITION_MATERIAL, tones),
+  };
+}
+
+/** Each biome's materials (#3172), tinted from the hall's by its tones. */
+export const BIOME: Record<Biome, BiomeMaterials> = {
+  hall: biomeMaterials(BIOME_TONES.hall),
+  heights: biomeMaterials(BIOME_TONES.heights),
+  wilds: biomeMaterials(BIOME_TONES.wilds),
+  desert: biomeMaterials(BIOME_TONES.desert),
 };

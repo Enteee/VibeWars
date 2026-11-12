@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { arenaPalette, TRANSITION_LOOK } from "./arena-palette.js";
+import { arenaPalette, BIOME } from "./arena-palette.js";
 import { FLAT_STRUCTURE, type MapStructure } from "./arena-snapshot.js";
 import { liftFrame, liftPlatform, liftShaft } from "./lift-art.js";
 import { elevationOf } from "./render-order.js";
@@ -39,8 +39,13 @@ const LIFT = {
   lift: { kind: "timer", restSeconds: 4, travelSeconds: 2 },
 } as const;
 const STRUCTURE: MapStructure = { ...FLAT_STRUCTURE, layerCount: 2, transitions: [LIFT] };
-const COLOURS = TRANSITION_LOOK.lift;
-const FRAME = liftFrame(STRUCTURE, LIFT, 1, transitionPalette(arenaPalette(2), "lift"));
+const COLOURS = BIOME.hall.transition.lift;
+const FRAME = liftFrame(
+  STRUCTURE,
+  LIFT,
+  1,
+  transitionPalette(arenaPalette({ layerCount: 2, biome: "hall" }), BIOME.hall.transition.lift),
+);
 const TOP = elevationOf(1, 0);
 
 describe("a lift's art (#3079)", () => {

@@ -147,7 +147,7 @@ describe("baseTint", () => {
 });
 
 describe("litStructurePalette", () => {
-  const palette = arenaPalette(2);
+  const palette = arenaPalette({ layerCount: 2, biome: "hall" });
 
   it("leaves an unlit map's colours alone", () => {
     expect(litStructurePalette(palette, undefined, WALL, 0)).toBe(palette);
@@ -185,6 +185,7 @@ describe("layerSurfaces", () => {
   });
   const HEIGHTS: MapStructure = {
     layerCount: 3,
+    biome: "hall",
     bounds: { kind: "rect" },
     ground: 0,
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
@@ -386,6 +387,7 @@ describe("LightingPass", () => {
 
   const STRUCTURE: MapStructure = {
     layerCount: 1,
+    biome: "hall",
     bounds: { kind: "rect" },
     ground: 0,
     pits: [],

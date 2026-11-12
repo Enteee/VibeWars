@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { DECK_LOOKS, TRANSITION_LOOKS } from "@vibewars/game-maps/schema";
 
-import { arenaPalette, DECK_LOOK, SWITCHED_DECK_LOOK, TRANSITION_LOOK } from "./arena-palette.js";
+import { arenaPalette, BIOME, SWITCHED_DECK_LOOK } from "./arena-palette.js";
 import { FLAT_STRUCTURE, type MapStructure } from "./arena-snapshot.js";
 import {
   DECK_SLAB,
@@ -74,7 +74,10 @@ function frameOf(deck: MapStructure["decks"][number], open: readonly Segment[]):
     low: elevationOf(deck.layer - 1, STRUCTURE.ground),
     base: elevationOf(deck.layer - 1, STRUCTURE.ground),
     line: 1,
-    palette: deckPalette(arenaPalette(4), deck.look),
+    palette: deckPalette(
+      arenaPalette({ layerCount: 4, biome: "hall" }),
+      BIOME.hall.deck[deck.look],
+    ),
   };
 }
 
@@ -129,7 +132,7 @@ describe("DECK_ART (#3067)", () => {
     (look) => {
       if (towerDeck === undefined) throw new Error("no tower");
       const deck = { ...towerDeck, look };
-      const edge = DECK_LOOK[look].edgeFace;
+      const edge = BIOME.hall.deck[look].edgeFace;
       const parapet = (open: readonly Segment[]): number => {
         const painter = recorder();
         DECK_ART[look].top(painter, frameOf(deck, open));
@@ -145,7 +148,9 @@ describe("DECK_ART (#3067)", () => {
     const deck = { ...towerDeck, look };
     const painter = recorder();
     DECK_ART[look].top(painter, frameOf(deck, openEdges(STRUCTURE, deck)));
-    expect(painter.calls.some(({ colour }) => colour === DECK_LOOK[look].edgeFace)).toBe(false);
+    expect(painter.calls.some(({ colour }) => colour === BIOME.hall.deck[look].edgeFace)).toBe(
+      false,
+    );
   });
 
   it("courses a tower's masonry down to the layer under it, piers a stone bridge's", () => {
@@ -167,7 +172,7 @@ describe("DECK_ART (#3067)", () => {
       const painter = recorder();
       DECK_ART[look][part](painter, frameOf({ ...platformDeck, look }, []));
       return painter.calls.filter(
-        ({ name, colour }) => name !== "lineBetween" && colour === DECK_LOOK[look].support,
+        ({ name, colour }) => name !== "lineBetween" && colour === BIOME.hall.deck[look].support,
       ).length;
     };
     expect(dark("tower", "top")).toBe(0);
@@ -190,7 +195,10 @@ describe("TRANSITION_ART (#3067)", () => {
         drawing: rampDrawing(STRUCTURE, ramp),
         frame: rampFrame(STRUCTURE, ramp),
         line: 1,
-        palette: transitionPalette(arenaPalette(4), look),
+        palette: transitionPalette(
+          arenaPalette({ layerCount: 4, biome: "hall" }),
+          BIOME.hall.transition[look],
+        ),
       });
       expect(painter.calls.length).toBeGreaterThan(0);
     },
@@ -204,9 +212,14 @@ describe("TRANSITION_ART (#3067)", () => {
       drawing: rampDrawing(STRUCTURE, ladderUp),
       frame,
       line: 1,
-      palette: transitionPalette(arenaPalette(4), "ladder"),
+      palette: transitionPalette(
+        arenaPalette({ layerCount: 4, biome: "hall" }),
+        BIOME.hall.transition.ladder,
+      ),
     });
-    const rungs = painter.calls.filter(({ colour }) => colour === TRANSITION_LOOK.ladder.step);
+    const rungs = painter.calls.filter(
+      ({ colour }) => colour === BIOME.hall.transition.ladder.step,
+    );
     // 150 long, a rung every 8: 19 shares, both ends left out.
     expect(rungs).toHaveLength(18);
     // Uphill north: a rung runs east to west, at one height.

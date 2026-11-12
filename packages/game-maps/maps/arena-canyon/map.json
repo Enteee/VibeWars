@@ -8,6 +8,7 @@
   "height": 1800,
   "bounds": { "kind": "rect" },
   "layers": 1,
+  "biome": "desert",
   "groundLayer": 0,
   "pits": [],
   "tunnels": [],

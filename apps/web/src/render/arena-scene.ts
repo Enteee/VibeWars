@@ -65,6 +65,7 @@ import {
 } from "./render-order.js";
 import {
   ARENA_BACKGROUND,
+  BIOME,
   DECK_LIP,
   PIT_FLOOR,
   PIT_WALL,
@@ -945,7 +946,7 @@ export class ArenaScene extends Phaser.Scene {
       const { layerCount, ground } = this.snapshot.structure;
       g.save();
       g.translateCanvas(0, -elevationOf(gate.layer, ground));
-      const palette = arenaPalette(layerCount);
+      const palette = arenaPalette(this.snapshot.structure);
       GATE_ART.open[gate.look](this.gatePainter(g), gate.wall, {
         height: layerCount === 1 ? 0 : WALL_HEIGHT,
         line,
@@ -2316,7 +2317,7 @@ export class ArenaScene extends Phaser.Scene {
     // A line 1 world unit wide is under a pixel when zoomed out, and
     // flickers as the camera moves (#2393): 1 CSS px, as the edge markers.
     const line = 1 / next.zoom;
-    const palette = arenaPalette(next.structure.layerCount);
+    const palette = arenaPalette(next.structure);
     const { ground } = next.structure;
     this.drawFloor(palette, line);
     this.drawOutside(next.structure.bounds, next.lighting);
@@ -2350,7 +2351,7 @@ export class ArenaScene extends Phaser.Scene {
     const lifts: { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
     for (const transition of next.structure.transitions) {
       const lit = litStructurePalette(
-        transitionPalette(palette, transition.look),
+        transitionPalette(palette, BIOME[next.structure.biome].transition[transition.look]),
         next.lighting,
         transition.area,
         transition.from,
@@ -2442,7 +2443,7 @@ export class ArenaScene extends Phaser.Scene {
         next.walls,
         line,
         litStructurePalette(
-          deckPalette(palette, deck.look),
+          deckPalette(palette, BIOME[next.structure.biome].deck[deck.look]),
           next.lighting,
           deck.footprint,
           deck.layer,
