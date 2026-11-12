@@ -1,7 +1,9 @@
-import { findStatusDefinition } from "@vibewars/game-core";
+import { AREA_EARSHOT, findStatusDefinition } from "@vibewars/game-core";
+import type { Vec2 } from "@vibewars/game-core";
 import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
 import type { SoundId } from "./sound-ids.js";
+import type { WorldPlaces } from "./world-places.js";
 
 /**
  * Which sound plays for what (#104, #112). You hear only what concerns
@@ -145,4 +147,60 @@ export function soundsForSnapshot(prev: MatchSnapshot | undefined, next: MatchSn
     sounds.push("cast-target");
   }
   return sounds;
+}
+
+/** How far a gate or a falling wall is heard; a lever is a small thing, heard to `AREA_EARSHOT`. */
+const LOUD_EARSHOT = 2 * AREA_EARSHOT;
+
+/**
+ * The world's cues between two snapshots (#3139): a lever flipping, a
+ * stone gate or an energy barrier moving, a breakable wall crumbling,
+ * each when near enough to `selfId`. Distance is on the ground, layers
+ * ignored: sound carries over a ledge. Each id plays at most once, so a
+ * lever that moves three gates grinds once. Without a `prev`, or
+ * without a player of your own, nothing plays.
+ */
+export function soundsForWorld(
+  prev: MatchSnapshot | undefined,
+  next: MatchSnapshot,
+  selfId: string,
+  places: WorldPlaces,
+): SoundId[] {
+  const self = playerById(next, selfId);
+  if (prev === undefined || self === undefined) {
+    return [];
+  }
+  const near = (at: Vec2 | undefined, radius: number): boolean =>
+    at !== undefined && Math.hypot(at.x - self.x, at.y - self.y) <= radius;
+  const sounds = new Set<SoundId>();
+  next.switches.forEach((up, at) => {
+    const before = prev.switches[at];
+    if (before !== undefined && before !== up && near(places.switches[at], AREA_EARSHOT)) {
+      sounds.add("lever");
+    }
+  });
+  next.gates.forEach((open, at) => {
+    const before = prev.gates[at];
+    const gate = places.gates[at];
+    if (
+      before !== undefined &&
+      before !== open &&
+      gate !== undefined &&
+      near(gate.at, LOUD_EARSHOT)
+    ) {
+      sounds.add(gate.blocks === "all" ? "gate-stone" : "barrier");
+    }
+  });
+  next.breakables.forEach((health, at) => {
+    const before = prev.breakables[at];
+    if (
+      before !== undefined &&
+      before > 0 &&
+      health <= 0 &&
+      near(places.breakables[at], LOUD_EARSHOT)
+    ) {
+      sounds.add("wall-crumble");
+    }
+  });
+  return [...sounds];
 }

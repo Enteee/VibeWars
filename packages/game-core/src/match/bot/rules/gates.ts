@@ -1,8 +1,8 @@
 import { RANGE_SPELL } from "../../../distances.js";
-import { distance, type Vec2 } from "../../../vec2.js";
+import { distance } from "../../../vec2.js";
 import { GATE_PLATE_REACH_UNITS } from "../../gates.js";
-import { countsForTeam, type Participant } from "../../simulation.js";
-import { NOTHING } from "./shared.js";
+import { countsForTeam } from "../../simulation.js";
+import { NOTHING, nearestTo } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -22,7 +22,6 @@ const gates: BotRule = {
     }
     const team = self.combatant.team;
     const bots = allies.filter((ally) => countsForTeam(ally) && context.isBot(ally.id));
-    // A switch's gate (#3025) is no bot's to open yet.
     const mine = context.objectives.gates
       .map(({ opener }) => opener)
       .find(
@@ -37,16 +36,5 @@ const gates: BotRule = {
       : { ...NOTHING, moveTo: mine.plate };
   },
 };
-
-/** The one of `bots` nearest to `point`, ties to the first. */
-function nearestTo(point: Vec2, bots: readonly Participant[]): Participant | undefined {
-  let best: Participant | undefined;
-  for (const bot of bots) {
-    if (best === undefined || distance(bot.position, point) < distance(best.position, point)) {
-      best = bot;
-    }
-  }
-  return best;
-}
 
 export default gates;

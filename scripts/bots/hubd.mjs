@@ -33,6 +33,7 @@ import {
   applyFacts,
   blockedAfterMove,
   blockedSwept,
+  closedOutsideDone,
   readBlocked,
   itemNumber,
   LANDING_COLUMN,
@@ -228,6 +229,7 @@ import {
   releaseCiVerdict,
   releaseFloor,
   releaseGapRefusal,
+  trackingToClose,
 } from "./hub-release.mjs";
 import {
   boardNumbers,
@@ -615,7 +617,10 @@ async function restPages(rel, cfg) {
   /** @type {unknown[]} */
   const rows = [];
   for (let page = 1; page <= MAX_PAGES; page += 1) {
-    const answer = await rest(`${rel}?per_page=100&page=${String(page)}`, cfg);
+    const answer = await rest(
+      `${rel}${rel.includes("?") ? "&" : "?"}per_page=100&page=${String(page)}`,
+      cfg,
+    );
     if (!Array.isArray(answer)) {
       return undefined;
     }
@@ -1541,6 +1546,131 @@ async function refuseTrackingIssue(number, cfg) {
     : `#${number} is not an open release's tracking issue, the only one you edit`;
 }
 
+/**
+ * The open tracking issues the company wrote (#3125), a stranger's of the
+ * same title left out.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ number: number, version: string }[] | null>} `null` if they cannot be read
+ */
+async function openTrackings(cfg) {
+  if (selfLogin === "") {
+    return null;
+  }
+  const rows = await restPages(`issues?state=open&creator=${selfLogin}`, cfg);
+  if (rows === undefined) {
+    return null;
+  }
+  return rows.flatMap((row) => {
+    const issue = obj(row);
+    const tracking =
+      issue.pull_request === undefined
+        ? parseTracking(
+            {
+              number: Number(issue.number),
+              title: String(issue.title),
+              author: String(obj(issue.user).login),
+              body: "",
+            },
+            selfLogin,
+          )
+        : null;
+    return tracking === null ? [] : [{ number: tracking.number, version: tracking.version }];
+  });
+}
+
+/**
+ * Close a tracking issue whose release is out, and say so on it.
+ *
+ * @param {{ number: number, version: string, url: string }} issue
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>} why it failed, or `null`
+ */
+async function closeTracking(issue, cfg) {
+  const number = String(issue.number);
+  // Closed first: a closed issue is never listed again, so a close that keeps
+  // failing cannot add a comment every sweep.
+  const closed = await gh(pinRepo(["issue", "close", number, "--reason", "completed"], cfg));
+  if (closed.code !== 0) {
+    return closed.stderr.trim();
+  }
+  await gh(
+    pinRepo(
+      ["issue", "comment", number, "--body", `Published v${issue.version}: ${issue.url}`],
+      cfg,
+    ),
+  );
+  return null;
+}
+
+/**
+ * After hubd ran `release create`: close that version's tracking issue.
+ * Never fails the publish; returns the line to print.
+ *
+ * @param {string} tag
+ * @param {string} url the release's address, as gh printed it
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string>}
+ */
+async function closeTrackingOfPublished(tag, url, cfg) {
+  const version = tag.replace(/^v/, "");
+  const open = await openTrackings(cfg);
+  if (open === null) {
+    return `hub: could not read the tracking issues; the hubd sweep will close "Release ${version}"`;
+  }
+  const mine = open.filter((tracking) => tracking.version === version);
+  if (mine.length === 0) {
+    return `hub: no open tracking issue "Release ${version}"`;
+  }
+  const lines = [];
+  for (const tracking of mine) {
+    const failed = await closeTracking({ ...tracking, url }, cfg);
+    lines.push(
+      failed === null
+        ? `hub: closed tracking issue #${String(tracking.number)}`
+        : `hub: could not close tracking issue #${String(tracking.number)}: ${failed}; the hubd sweep will retry`,
+    );
+  }
+  return lines.join("\n");
+}
+
+/**
+ * Close every open tracking issue whose release is published (#3125). Logged
+ * in hubd's log, told to no one. Skips a round when GitHub cannot be asked.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function sweepTracking(cfg) {
+  const open = await openTrackings(cfg);
+  const listed =
+    open === null || open.length === 0 ? undefined : await rest("releases?per_page=100", cfg);
+  if (!Array.isArray(listed)) {
+    return;
+  }
+  /** @type {unknown[]} */
+  const rows = listed;
+  const releases = rows.map((row) => {
+    const release = obj(row);
+    return {
+      tag: String(release.tag_name),
+      draft: release.draft === true,
+      prerelease: release.prerelease === true,
+      url: String(release.html_url),
+    };
+  });
+  for (const issue of trackingToClose(open ?? [], releases)) {
+    const failed = await closeTracking(issue, cfg);
+    console.error(
+      failed === null
+        ? `hubd: closed tracking issue #${String(issue.number)} (v${issue.version} is out)`
+        : `hubd: tracking issue #${String(issue.number)} not closed: ${failed}`,
+    );
+  }
+}
+
+/** How often the tracking issues of published releases are closed (#3125). */
+const TRACKING_SWEEP_MS = Number(process.env.HUBD_TRACKING_SWEEP_MS ?? 60 * 60_000);
 /** How often CI on an awaited release head is re-read. */
 const RELEASE_POLL_MS = Number(process.env.HUBD_RELEASE_POLL_MS ?? 60_000);
 /** A release head with no CI verdict this long after its push is given up on. */
@@ -2156,6 +2286,7 @@ async function freshBoard(cfg) {
     if (items !== null) {
       const epoch = `${Date.now().toString(36)}-${randomBytes(3).toString("hex")}`;
       keepBoard(sweep(board, items, Date.now(), epoch, cfg.repo), cfg);
+      await sweepClosedToDone(cfg);
     }
   }
   return board;
@@ -2566,11 +2697,34 @@ async function land(role, argv, result, column, cfg, target) {
     }
     id = String(card.item.id);
   }
+  const edited = await moveCardTo(role, String(id), optionId, cfg, { landing: true });
+  if (edited.code !== 0) {
+    return `hub: ${label} ${isNot} in ${column}: ${edited.stderr.trim()}. ${move}`;
+  }
+  return "";
+}
+
+/**
+ * Put the card `id` in the column whose option is `optionId`, as hubd's own
+ * move: no role's rights are judged, and the board copy follows.
+ *
+ * @param {string} role who it is audited for
+ * @param {string} id
+ * @param {string} optionId
+ * @param {ReturnType<typeof company>} cfg
+ * @param {Record<string, unknown>} extra more audit fields
+ * @returns {Promise<{ code: number, stderr: string }>}
+ */
+async function moveCardTo(role, id, optionId, cfg, extra) {
+  const ids = cfg.board;
+  if (ids === null) {
+    return { code: 1, stderr: "the board's Status field is not known" };
+  }
   const editArgv = [
     "project",
     "item-edit",
     "--id",
-    String(id),
+    id,
     "--project-id",
     ids.projectId,
     "--field-id",
@@ -2579,19 +2733,85 @@ async function land(role, argv, result, column, cfg, target) {
     optionId,
   ];
   const edited = await gh(pinRepo(editArgv, cfg));
-  audit({
-    role,
-    kind: "gh",
-    argv: editArgv,
-    decision: "allowed",
-    code: edited.code,
-    landing: true,
-  });
-  if (edited.code !== 0) {
-    return `hub: ${label} ${isNot} in ${column}: ${edited.stderr.trim()}. ${move}`;
+  audit({ role, kind: "gh", argv: editArgv, decision: "allowed", code: edited.code, ...extra });
+  if (edited.code === 0) {
+    await afterProjectCommand(editArgv, edited, cfg);
   }
-  await afterProjectCommand(editArgv, edited, cfg);
-  return "";
+  return edited;
+}
+
+/**
+ * Move to Done the card of an issue or pull request hubd just closed or
+ * merged (#3126). A failure never fails the command: it comes back as the
+ * one line to print, and the next sweep moves the card.
+ *
+ * @param {string[]} argv
+ * @param {number} code
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string>}
+ */
+async function closeToDone(argv, code, cfg) {
+  const [group, verb] = argv;
+  if (
+    code !== 0 ||
+    (group !== "issue" && group !== "pr") ||
+    !(verb === "close" || (group === "pr" && verb === "merge"))
+  ) {
+    return "";
+  }
+  const number = selectorNumber(argv[2], cfg.repo);
+  const card =
+    number === null
+      ? undefined
+      : board?.cards.find((candidate) => itemNumber(candidate.item, cfg.repo) === number);
+  if (card === undefined || card.item.status === "Done") {
+    return "";
+  }
+  const done = cfg.board?.options.get("Done");
+  if (done === undefined) {
+    return "hub: card not moved: the board's Status field is not known; the sweep will";
+  }
+  const moved = await moveCardTo("hubd", card.item.id, done, cfg, { closed: number });
+  if (moved.code !== 0) {
+    return `hub: card not moved: ${moved.stderr.trim()}; the sweep will`;
+  }
+  dropBlockedOrigin(card.item.id);
+  return `hub: #${String(number)} moved to Done`;
+}
+
+/**
+ * Move every closed issue and merged or closed pull request still outside
+ * Done to Done (#3126). Logged in hubd's log, told to no one.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function sweepClosedToDone(cfg) {
+  const done = cfg.board?.options.get("Done");
+  if (board === null || done === undefined) {
+    return;
+  }
+  for (const entry of closedOutsideDone(board, cfg.repo)) {
+    const moved = await moveCardTo("hubd", entry.id, done, cfg, { closed: entry.number });
+    if (moved.code === 0) {
+      dropBlockedOrigin(entry.id);
+      console.error(`hubd: moved #${String(entry.number)} to Done (closed)`);
+    } else {
+      console.error(`hubd: #${String(entry.number)} not moved to Done: ${moved.stderr.trim()}`);
+    }
+  }
+}
+
+/**
+ * Forget the column a card was in before Blocked, once it is in Done.
+ *
+ * @param {string} id
+ */
+function dropBlockedOrigin(id) {
+  if (id in blockedOrigins) {
+    const { [id]: _gone, ...rest } = blockedOrigins;
+    keepBlocked(rest);
+  }
 }
 
 /**
@@ -4196,6 +4416,10 @@ async function serve(request, verdict, acting) {
     ];
     const result = await gh(pinRepo(pinned, cfg));
     noteHint(pinned, result.code, cfg);
+    const moved = await closeToDone(pinned, result.code, cfg);
+    if (moved !== "") {
+      result.stderr = `${result.stderr}${moved}\n`;
+    }
     audit({ role, kind, argv, decision: "allowed", code: result.code, sha: guarded.sha });
     if (result.code === 0) {
       // Told on the side: a nudge that fails never fails the merge.
@@ -4471,7 +4695,14 @@ async function serve(request, verdict, acting) {
     }
   }
   noteHint(argv, result.code, cfg);
-  const hint = await land(role, ghArgv, result, column, cfg, target);
+  const closed = await closeToDone(ghArgv, result.code, cfg);
+  const published =
+    kind === "gh" && argv[0] === "release" && argv[1] === "create" && result.code === 0
+      ? await closeTrackingOfPublished(String(ghArgv[2]), result.stdout.trim(), cfg)
+      : "";
+  const hint = [closed, published, await land(role, ghArgv, result, column, cfg, target)]
+    .filter((line) => line !== "")
+    .join("\n");
   noteNewIssue(role, ghArgv, result, hint, cfg);
   if (hint !== "") {
     result = { ...result, stderr: `${result.stderr}${hint}\n` };
@@ -5661,6 +5892,7 @@ async function main() {
 
   writeNudges();
   let lastKpis = 0;
+  let lastTrackingSweep = 0;
   for (;;) {
     readStaffed();
     /** @type {[string, string | null][]} */
@@ -5703,6 +5935,14 @@ async function main() {
     if (Date.now() - lastKpis >= KPI_EVERY_MS) {
       lastKpis = Date.now();
       await writeKpis(cfg);
+    }
+    if (Date.now() - lastTrackingSweep >= TRACKING_SWEEP_MS && Date.now() >= limitedUntil) {
+      lastTrackingSweep = Date.now();
+      try {
+        await sweepTracking(cfg);
+      } catch (error) {
+        console.error(`hubd: tracking: ${error instanceof Error ? error.message : "failed"}`);
+      }
     }
     if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {
       await budgetExhausted();

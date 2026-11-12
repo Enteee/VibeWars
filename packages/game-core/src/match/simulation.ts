@@ -284,7 +284,10 @@ import {
   NO_OBJECTIVES,
   type Behaviour,
   type BehaviourCursor,
+  type BotBreakable,
+  type BotLever,
   type BotObjectives,
+  type HighGroundSpot,
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -379,7 +382,9 @@ import {
 import {
   flipSwitch,
   initialSwitches,
+  SWITCH_COOLDOWN_SECONDS,
   switchIdOf,
+  switchTargetId,
   type Switch,
   type SwitchField,
 } from "./switches.js";
@@ -1264,6 +1269,51 @@ function pathLength(from: Vec2, path: readonly Vec2[]): number {
   return total;
 }
 
+/** How far toward its deck's centroid `highGroundSpots` pulls each corner. */
+const HIGH_GROUND_INSET = 0.25;
+
+/**
+ * Where bots may stand above the ground (#3141): on each deck over it,
+ * its corners' average and each corner pulled `HIGH_GROUND_INSET` toward it,
+ * those a body could stand on, in map order. A tunnel, the ground's own
+ * deck, is no high ground.
+ */
+export function highGroundSpots(
+  layers: MatchLayers,
+  standable: (point: Vec2, layer: number) => boolean,
+): HighGroundSpot[] {
+  const spots: HighGroundSpot[] = [];
+  for (const { layer, footprint } of layers.decks) {
+    if (layer <= layers.ground || footprint.length === 0) {
+      continue;
+    }
+    const centre = scale(
+      footprint.reduce((sum, corner) => add(sum, corner), ZERO),
+      1 / footprint.length,
+    );
+    const inset = footprint.map((corner) =>
+      add(corner, scale(sub(centre, corner), HIGH_GROUND_INSET)),
+    );
+    for (const point of [centre, ...inset]) {
+      if (standable(point, layer)) {
+        spots.push({ point, layer });
+      }
+    }
+  }
+  return spots;
+}
+
+/** How far a body walks along `route` from `from`: a teleport's jump (#3030) costs nothing. */
+function walkLength(from: Vec2, route: readonly RouteWaypoint[]): number {
+  let total = 0;
+  let at: RouteWaypoint | undefined;
+  for (const next of route) {
+    total += at?.teleport === true ? 0 : distance(at ?? from, next);
+    at = next;
+  }
+  return total;
+}
+
 /** Turn to face `point`; one exactly underfoot has no direction, so facing stays. */
 function faceToward(record: Participant, point: Vec2): void {
   const dx = point.x - record.position.x;
@@ -1358,6 +1408,8 @@ export class MatchSimulation {
   readonly #climbable: MatchLayers["transitions"];
   /** The decks there are now (#3068): every one but a switched deck that is down. */
   #standingDecks: MatchLayers["decks"] = NO_DECKS;
+  /** Where bots may stand above the ground (#3141): see `highGroundSpots`. */
+  readonly #highGround: readonly HighGroundSpot[];
   /** Who reached a switch this step (#3025), in simulation order. */
   #switchArrivals: CarriedArrival[] = [];
   /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
@@ -1485,6 +1537,12 @@ export class MatchSimulation {
   #clearClockStartedAt: number | undefined;
   /** What bots play for (#2542), rebuilt when the shrines change. */
   #botObjectives: BotObjectives = NO_OBJECTIVES;
+  /** What bots read of the levers (#3138): refilled in place, at most once a match second. */
+  readonly #botLevers: BotLever[] = [];
+  /** What bots read of the standing breakable walls (#3140): refilled with `#botLevers`. */
+  readonly #botBreakables: BotBreakable[] = [];
+  /** The match second `#botLevers` and `#botBreakables` were last filled; -Infinity to refill on the next think. */
+  #botWaysAt = Number.NEGATIVE_INFINITY;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
   #pointTicks = 0;
   /** When each team last led every other alone on shrine points (#2690), match clock. */
@@ -1573,6 +1631,10 @@ export class MatchSimulation {
     this.#layerSight = this.#wallsByLayer(true);
     this.#layerBlockers = this.#blockersByLayer();
     this.#standingDecks = this.#decksStanding();
+    this.#highGround =
+      this.#layers === undefined
+        ? []
+        : highGroundSpots(this.#layers, (point, layer) => isStandable(this.#graphOn(layer), point));
     this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
     this.#rng = createRng(this.#seed);
     this.#flagField = options.flagField;
@@ -1747,6 +1809,16 @@ export class MatchSimulation {
   /** Every switch (#3025), which way it points and when it may move again; `[]` on a map without them. */
   public get switches(): readonly Switch[] {
     return this.#switches;
+  }
+
+  /** The levers as bots last read them (#3138), filled as a bot thinks; `[]` before. */
+  public get botLevers(): readonly BotLever[] {
+    return this.#botLevers;
+  }
+
+  /** The standing breakable walls as bots last read them (#3140), filled as a bot thinks; `[]` before. */
+  public get botBreakables(): readonly BotBreakable[] {
+    return this.#botBreakables;
   }
 
   /** Every teleport (#3030), and whether it is on; `[]` on a map without them. */
@@ -4671,11 +4743,120 @@ export class MatchSimulation {
     }
   }
 
+  /**
+   * Each lever (#3138) and standing breakable wall (#3140) as bots read
+   * it, and what throwing the lever or felling the wall now would win
+   * each team: how much shorter its way to the foes gets. A team's way
+   * runs from its living player nearest its centroid to the foe nearest
+   * the foes' centroid, each on its own layer, so both ends stand on
+   * ground. At most once a match second, and again after any flip or fall.
+   */
+  #refreshBotWays(): void {
+    if (
+      (this.#switches.length === 0 && this.#breakables.length === 0) ||
+      this.#elapsedSeconds - this.#botWaysAt < 1
+    ) {
+      return;
+    }
+    this.#botWaysAt = this.#elapsedSeconds;
+    const teams = Math.max(-1, ...this.#teams) + 1;
+    const ways = Array.from({ length: teams }, (_, team) => this.#wayToFoes(team));
+    const now = this.#currentWallSet();
+    const before = ways.map((way) =>
+      way === undefined ? Number.POSITIVE_INFINITY : this.#wayLength(now, way),
+    );
+    // What `after` wins each team, if it can walk to `reach` on `layer` now.
+    const gains = (after: WallSet, reach: (from: Vec2) => Vec2, layer: number): number[] =>
+      ways.map((way, team) => {
+        if (
+          way === undefined ||
+          now.paths.find(way.from.position, way.from.layer, reach(way.from.position), layer) ===
+            undefined
+        ) {
+          return 0;
+        }
+        const gain = (before[team] ?? Number.POSITIVE_INFINITY) - this.#wayLength(after, way);
+        // No way to the foes either way: nothing won.
+        return Number.isNaN(gain) ? 0 : gain;
+      });
+    this.#botLevers.length = 0;
+    for (const lever of this.#switches) {
+      this.#botLevers.push({
+        targetId: switchTargetId(lever.id),
+        position: lever.position,
+        layer: lever.layer,
+        flippedAt:
+          lever.readyAt === 0 ? Number.NEGATIVE_INFINITY : lever.readyAt - SWITCH_COOLDOWN_SECONDS,
+        readyAt: lever.readyAt,
+        gain: gains(this.#currentWallSet(lever), () => lever.position, lever.layer),
+      });
+    }
+    this.#botBreakables.length = 0;
+    const standoff = this.#ruleset.collision.playerRadius + 1;
+    this.#breakables.forEach((wall, at) => {
+      if (!standing(wall)) {
+        return;
+      }
+      this.#botBreakables.push({
+        targetId: breakableTargetId(wall.id),
+        field: wall,
+        layer: wall.layer,
+        gain: gains(
+          this.#currentWallSet(undefined, at),
+          (from) => strikePointOf(wall, from, standoff),
+          wall.layer,
+        ),
+      });
+    });
+  }
+
+  /** `team`'s two ends of its way to the foes (#3138); `undefined` when either side has nobody living. */
+  #wayToFoes(team: number): { readonly from: Participant; readonly to: Participant } | undefined {
+    if (this.#centroidsTick !== this.#tick) {
+      this.#placeCentroids();
+    }
+    const centroids = this.#centroids.get(team);
+    if (centroids === undefined || centroids.team.count === 0 || centroids.foes.count === 0) {
+      return undefined;
+    }
+    let from: Participant | undefined;
+    let to: Participant | undefined;
+    for (const record of this.#participants.values()) {
+      if (!countsForTeam(record) || record.combatant.dead) {
+        continue;
+      }
+      if (record.combatant.team === team) {
+        if (
+          from === undefined ||
+          distance(record.position, centroids.team) < distance(from.position, centroids.team)
+        ) {
+          from = record;
+        }
+      } else if (
+        to === undefined ||
+        distance(record.position, centroids.foes) < distance(to.position, centroids.foes)
+      ) {
+        to = record;
+      }
+    }
+    return from === undefined || to === undefined ? undefined : { from, to };
+  }
+
+  /** How far `way` walks under `walls` (#3138): Infinity with no route. */
+  #wayLength(
+    walls: WallSet,
+    { from, to }: { readonly from: Participant; readonly to: Participant },
+  ): number {
+    const route = walls.paths.find(from.position, from.layer, to.position, to.layer);
+    return route === undefined ? Number.POSITIVE_INFINITY : walkLength(from.position, route);
+  }
+
   /** Put a behaviour's intent through the same calls a player's messages make. */
   #act(record: ParticipantRecord, behaviour: Behaviour, dt: number): void {
     if (this.#centroidsTick !== this.#tick) {
       this.#placeCentroids();
     }
+    this.#refreshBotWays();
     const centroids = this.#centroids.get(record.combatant.team);
     const intent = decide(behaviour, record.cursor, {
       self: record,
@@ -4703,6 +4884,12 @@ export class MatchSimulation {
       objectives: this.#botObjectives,
       projectiles: this.#projectiles,
       seed: this.#seed,
+      now: this.#elapsedSeconds,
+      highGround: this.#highGround,
+      routeLength: (to, layer) => {
+        const route = this.#paths.find(record.position, record.layer, to, layer);
+        return route === undefined ? Number.POSITIVE_INFINITY : walkLength(record.position, route);
+      },
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;
@@ -6527,6 +6714,7 @@ export class MatchSimulation {
         continue;
       }
       this.#switches[at] = next;
+      this.#botWaysAt = Number.NEGATIVE_INFINITY;
       for (const kind of ["gates", "teleports", "decks", "lifts"] as const) {
         for (const target of next[kind]) {
           toggles[kind].set(target, (toggles[kind].get(target) ?? 0) + 1);
@@ -6772,6 +6960,12 @@ export class MatchSimulation {
     if (this.#harmfulZones.length > 0) {
       this.#botObjectives = { ...this.#botObjectives, harmfulZones: this.#harmfulZonesNow() };
     }
+    if (this.#switches.length > 0) {
+      this.#botObjectives = { ...this.#botObjectives, levers: this.#botLevers };
+    }
+    if (this.#breakables.length > 0) {
+      this.#botObjectives = { ...this.#botObjectives, breakables: this.#botBreakables };
+    }
   }
 
   /**
@@ -7007,21 +7201,38 @@ export class MatchSimulation {
    * closed (#3079, #3117), then a bit for each switched teleport that is
    * on: one no switch names never changes. A lever lift is never a way
    * between its layers, only floor on the layer it rests at; a timer lift
-   * always is, and a walk over it waits for it.
+   * always is, and a walk over it waits for it. With `flip`, as they
+   * would stand were that lever thrown now (#3138): its gates, decks and
+   * teleports toggled; with `broken`, as though that breakable wall
+   * (#3140) had crumbled.
    */
-  #currentWallSet(): WallSet {
+  #currentWallSet(flip?: SwitchField, broken?: number): WallSet {
+    const gates =
+      flip === undefined
+        ? this.#gates
+        : this.#gates.map((gate, at) => stepGate(gate, gate.open, flip.gates.includes(at), 0));
+    const switchedDecks =
+      flip === undefined
+        ? this.#switchedDecks
+        : this.#switchedDecks.map((deck, at) => stepSwitchedDeck(deck, flip.decks.includes(at), 0));
+    const teleports =
+      flip === undefined
+        ? this.#teleports
+        : this.#teleports.map((teleport, at) =>
+            stepTeleport(teleport, flip.teleports.includes(at)),
+          );
     let closed = 0;
-    this.#gates.forEach((gate, at) => {
+    gates.forEach((gate, at) => {
       closed |= gate.open ? 0 : 1 << at;
     });
     this.#breakables.forEach((breakable, at) => {
-      closed |= standing(breakable) ? 1 << (this.#gates.length + at) : 0;
+      closed |= standing(breakable) && at !== broken ? 1 << (gates.length + at) : 0;
     });
-    const deckBits = this.#gates.length + this.#breakables.length;
-    this.#switchedDecks.forEach((deck, at) => {
+    const deckBits = gates.length + this.#breakables.length;
+    switchedDecks.forEach((deck, at) => {
       closed |= deck.up ? 0 : 1 << (deckBits + at);
     });
-    const liftBits = deckBits + this.#switchedDecks.length;
+    const liftBits = deckBits + switchedDecks.length;
     this.#lifts.forEach((lift, at) => {
       closed |= liftWalledOn(lift, lift.from) ? 1 << (liftBits + 2 * at) : 0;
       closed |= liftWalledOn(lift, lift.to) ? 1 << (liftBits + 2 * at + 1) : 0;
@@ -7029,7 +7240,7 @@ export class MatchSimulation {
     let key = closed;
     const teleportBits = liftBits + 2 * this.#lifts.length;
     this.#switchedTeleports.forEach((teleport, bit) => {
-      key |= this.#teleports[teleport]?.on === true ? 1 << (teleportBits + bit) : 0;
+      key |= teleports[teleport]?.on === true ? 1 << (teleportBits + bit) : 0;
     });
     let set = this.#wallSets.get(key);
     if (set === undefined) {
@@ -7039,7 +7250,7 @@ export class MatchSimulation {
         (this.#layers?.transitions ?? []).filter(
           (_, at) => !this.#lifts.some((lift) => lift.transition === at && !routesOver(lift)),
         ),
-        this.#teleports
+        teleports
           .filter((teleport) => teleport.on)
           .map(({ from, to }) => ({
             from: from.layer,
@@ -7049,15 +7260,17 @@ export class MatchSimulation {
           })),
         this.#layers?.dropOffs ?? [],
       );
-      const barriers = this.#gates.flatMap((gate) =>
+      const barriers = gates.flatMap((gate) =>
         gate.open || gate.blocks !== "bodies-and-shots" ? [] : gate.segments,
       );
       const sight = [
         ...this.#mapWalls,
-        ...this.#gates.flatMap((gate) =>
+        ...gates.flatMap((gate) =>
           gate.open || gate.blocks === "bodies-and-shots" ? [] : gate.segments,
         ),
-        ...this.#breakables.flatMap((breakable) => (standing(breakable) ? breakable.segments : [])),
+        ...this.#breakables.flatMap((breakable, at) =>
+          standing(breakable) && at !== broken ? breakable.segments : [],
+        ),
       ];
       set = { walls: [...sight, ...barriers], sight, graphs, paths };
       this.#wallSets.set(key, set);
@@ -7253,6 +7466,7 @@ export class MatchSimulation {
       critical: false,
     });
     if (!standing(next)) {
+      this.#botWaysAt = Number.NEGATIVE_INFINITY;
       this.#refreshWalls([], []);
     }
   }

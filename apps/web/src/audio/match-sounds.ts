@@ -1,8 +1,9 @@
 import type { ConnectionState, MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 
-import { soundsForCombat, soundsForSnapshot } from "./combat-sounds.js";
+import { soundsForCombat, soundsForSnapshot, soundsForWorld } from "./combat-sounds.js";
 import type { SoundId } from "./sound-ids.js";
 import type { SoundPlayer } from "./sound-player.js";
+import type { WorldPlaces } from "./world-places.js";
 
 /**
  * One match's sounds (#112): listens to `connection` and plays what
@@ -27,7 +28,11 @@ export interface MatchSounds {
 export type MatchSoundSource = Pick<MatchConnection, "selfSessionId" | "onCombat"> &
   Partial<Pick<MatchConnection, "onCastRefused">>;
 
-export function attachMatchSounds(connection: MatchSoundSource, player: SoundPlayer): MatchSounds {
+export function attachMatchSounds(
+  connection: MatchSoundSource,
+  player: SoundPlayer,
+  places: WorldPlaces,
+): MatchSounds {
   let prev: MatchSnapshot | undefined;
   let online = true;
   let disposed = false;
@@ -54,6 +59,7 @@ export function attachMatchSounds(connection: MatchSoundSource, player: SoundPla
         return;
       }
       playAll(soundsForSnapshot(prev, next));
+      playAll(soundsForWorld(prev, next, connection.selfSessionId, places));
       prev = next;
     },
     connectionChanged(state) {

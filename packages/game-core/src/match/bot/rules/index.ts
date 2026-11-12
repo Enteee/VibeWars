@@ -1,5 +1,6 @@
 import bindSpirit from "./bind-spirit.js";
 import boost from "./boost.js";
+import breakWall from "./break-wall.js";
 import carryRelic from "./carry-relic.js";
 import cleanse from "./cleanse.js";
 import clearGround from "./clear-ground.js";
@@ -14,6 +15,7 @@ import heal from "./heal.js";
 import interrupt from "./interrupt.js";
 import leadGhost from "./lead-ghost.js";
 import leaveZone from "./leave-zone.js";
+import levers from "./levers.js";
 import mantra from "./mantra.js";
 import mimicElite from "./mimic-elite.js";
 import minionCare from "./minion-care.js";
@@ -40,6 +42,7 @@ import wayOut from "./way-out.js";
 export const BOT_RULES: readonly BotRule[] = inOrder([
   bindSpirit,
   boost,
+  breakWall,
   carryRelic,
   cleanse,
   clearGround,
@@ -54,6 +57,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   interrupt,
   leadGhost,
   leaveZone,
+  levers,
   mantra,
   mimicElite,
   minionCare,

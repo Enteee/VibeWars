@@ -36,6 +36,9 @@ Kongen af bakken, mens dit hold ikke holder alteret, går det andet holds
 Spøgelseshelt på alteret forud for selv det. En bot, der kommer langt
 foran sit hold, venter på resten, før den rykker videre.
 
+Bueskytter og spydkastere indtager det høje terræn, når det er sikkert.
+Når ingen fjende er nær, trækker en bot i et håndtag, der åbner en kortere vej til fjenderne. To bots slår også en mur ned, der skjuler en meget kortere vej, ved at slå på den med deres våben.
+
 Bots, der giver skade, holder deres store slag, angrebsevner og
 skadesbesværgelser tilbage og affyrer dem samlet mod holdets mål, så
 skaden lander på én gang i stedet for at sive ind, så en healer kan

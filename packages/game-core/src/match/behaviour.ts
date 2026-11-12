@@ -5,6 +5,7 @@ import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
+import type { BreakableField } from "./breakables.js";
 import type { CapturePoint } from "./capture-points.js";
 import { atObjective } from "./layer-rules.js";
 import type { Gate } from "./gates.js";
@@ -249,6 +250,8 @@ export interface BehaviourCursor {
   wardId: string | undefined;
   /** `play-build`, a healer: the spot it walks to, kept until a fresh one is clearly elsewhere (#2615). */
   coverSpot: Vec2 | undefined;
+  /** `play-build`, a bow or a spear: the high ground it walks to, kept until a fresh one is clearly elsewhere (#3141). */
+  highSpot: HighGroundSpot | undefined;
   /** `play-build`: waiting, ahead of its team, for the rest to catch up (#2621). */
   regrouping: boolean;
   /** `play-build`, foes of two teams or more: the team it fights, kept while that team still fights (#2685). */
@@ -298,6 +301,18 @@ export interface BehaviourContext {
   readonly projectiles: readonly Readonly<Projectile>[];
   /** The match's seed as a number, mixed into a bot's rolls (#2624). */
   readonly seed: number;
+  /** The match second this think happens at (#3138). */
+  readonly now: number;
+  /** Spots on the decks above the ground (#3141), in map order; `[]` on a flat map. */
+  readonly highGround: readonly HighGroundSpot[];
+  /** How far `self` walks to `to` on `layer` (#3141), stairs and ramps included: Infinity with no route. */
+  routeLength(to: Vec2, layer: number): number;
+}
+
+/** A spot a bot may stand on above the ground (#3141). */
+export interface HighGroundSpot {
+  readonly point: Vec2;
+  readonly layer: number;
 }
 
 /**
@@ -327,6 +342,35 @@ export interface BotObjectives {
   readonly gates: readonly Gate[];
   /** The map's harmful ground (#3026), which a bot steps out of; `[]` on a map without any. */
   readonly harmfulZones: readonly MatchZone[];
+  /** The map's levers (#3138), and what throwing each would win; `[]` on a map without any. */
+  readonly levers: readonly BotLever[];
+  /** The map's standing breakable walls (#3140), and what each crumbling would win; `[]` on a map without any. */
+  readonly breakables: readonly BotBreakable[];
+}
+
+/** A lever as bots read it (#2542). */
+export interface BotLever {
+  /** `switchTargetId(id)`: what a bot walks to, to throw it. */
+  readonly targetId: string;
+  readonly position: Vec2;
+  readonly layer: number;
+  /** Match second it was last flipped; -Infinity if never. */
+  readonly flippedAt: number;
+  /** Match second from which it may be flipped again. */
+  readonly readyAt: number;
+  /** Per team: units its way to the foes shortens if flipped now; <= 0 helps nothing. */
+  readonly gain: readonly number[];
+}
+
+/** A standing breakable wall as bots read it (#3140). */
+export interface BotBreakable {
+  /** `breakableTargetId(id)`: what a bot strikes. */
+  readonly targetId: string;
+  /** For `strikePointOf`: where a bot stands to strike it. */
+  readonly field: BreakableField;
+  readonly layer: number;
+  /** Per team: units its way to the foes shortens if it crumbles; <= 0 helps nothing. */
+  readonly gain: readonly number[];
 }
 
 /** No objectives: every mode but those with one. */
@@ -340,6 +384,8 @@ export const NO_OBJECTIVES: BotObjectives = {
   altarHolder: null,
   gates: [],
   harmfulZones: [],
+  levers: [],
+  breakables: [],
 };
 
 export function createCursor(): BehaviourCursor {
@@ -353,6 +399,7 @@ export function createCursor(): BehaviourCursor {
     upkeepDropSeconds: 0,
     wardId: undefined,
     coverSpot: undefined,
+    highSpot: undefined,
     regrouping: false,
     front: undefined,
     spikeTargetId: undefined,

@@ -126,6 +126,17 @@ if (group === "api" && sub !== "graphql") {
     if (answer.stdout) { console.log(answer.stdout); }
     process.exit(answer.code);
   }
+  // The open issues one author wrote, and the releases (#3125): what the test planted, or none.
+  if (rel.startsWith("issues?state=open&creator=")) {
+    const planted = path.join(state, "issues.json");
+    console.log(fs.existsSync(planted) && /[?&]page=1$/.test(rel) ? fs.readFileSync(planted, "utf8") : "[]");
+    process.exit(0);
+  }
+  if (rel.startsWith("releases?")) {
+    const planted = path.join(state, "releases.json");
+    console.log(fs.existsSync(planted) ? fs.readFileSync(planted, "utf8") : "[]");
+    process.exit(0);
+  }
   // The open issues with one label, as a test planted them (#3124).
   if (rel.startsWith("issues?") && rel.includes("labels=") && fs.existsSync(path.join(state, "labelled.json"))) { process.stdout.write(fs.readFileSync(path.join(state, "labelled.json"), "utf8")); process.exit(0); }
   if (rel.startsWith("issues?")) { console.log(JSON.stringify([issue7, { ...pull9, pull_request: {} }])); process.exit(0); }
@@ -318,6 +329,7 @@ async function startHubd(remaining, before, extra) {
           Ready: "o_ready",
           "In Review": "o_review",
           Done: "o_done",
+          Blocked: "o_blocked",
         },
       },
       columns: [],
@@ -1198,7 +1210,7 @@ describe("hubd and the GraphQL budget", () => {
 
     expect(printed(answer).totalCount).toBe(2);
     expect(hubd.calls("api graphql")).toBe(2);
-    expect(readJson(path.join(hubd.hub, "board.json")).format).toBe(1);
+    expect(readJson(path.join(hubd.hub, "board.json")).format).toBe(2);
   }, 20_000);
 
   it("keeps answering board reads from its copy while the budget is gone", async () => {
@@ -2293,6 +2305,111 @@ describe("hubd recording verdicts and merging", () => {
     expect(answer.code, String(answer.reason)).toBe(0);
     expect(hubd.calls(`pr merge 9 --squash --match-head-commit ${sha}`)).toBe(1);
   }, 20_000);
+
+  describe("closing moves the card to Done (#3126)", () => {
+    const DONE_7 =
+      "--id PVTI_7 --project-id PVT_2 --field-id F_status --single-select-option-id o_done";
+
+    it("moves the card of a closed pull request, once, and says so", async () => {
+      const hubd = await startHubd(5000);
+      fs.writeFileSync(path.join(hubd.state, "no-status-9"), "");
+      await hubd.request("developer", "board", ["ls"]);
+      fs.writeFileSync(path.join(hubd.state, "pull-9"), "");
+      await hubd.request("manager", "gh", [
+        "project",
+        "item-add",
+        "2",
+        "--url",
+        "https://github.com/Enteee/VibeWars/pull/9",
+      ]);
+      const before = hubd.calls("project item-edit");
+
+      const answer = await hubd.request("manager", "gh", ["pr", "close", "9"]);
+
+      expect(answer.code, String(answer.reason)).toBe(0);
+      expect(hubd.calls("project item-edit")).toBe(before + 1);
+      expect(hubd.callLog()).toContain(
+        "--id PVTI_9 --project-id PVT_2 --field-id F_status --single-select-option-id o_done",
+      );
+      expect(String(answer.stderr)).toContain("#9 moved to Done");
+    }, 20_000);
+
+    it("moves a closed issue's card out of Blocked and forgets where it came from", async () => {
+      const hubd = await startHubd(5000);
+      await hubd.request("developer", "board", ["ls"]);
+      await hubd.request("manager", "gh", [
+        "project",
+        "item-add",
+        "2",
+        "--url",
+        "https://github.com/Enteee/VibeWars/issues/7",
+      ]);
+      await hubd.request("manager", "gh", [
+        "project",
+        "item-edit",
+        "--id",
+        "PVTI_7",
+        "--project-id",
+        "PVT_2",
+        "--field-id",
+        "F_status",
+        "--single-select-option-id",
+        "o_blocked",
+      ]);
+      expect(readJson(path.join(hubd.hub, "blocked.json"))).toEqual({ PVTI_7: "Backlog" });
+
+      const answer = await hubd.request("manager", "gh", ["issue", "close", "7"]);
+
+      expect(answer.code, String(answer.reason)).toBe(0);
+      expect(hubd.callLog()).toContain(DONE_7);
+      expect(String(answer.stderr)).toContain("#7 moved to Done");
+      expect(readJson(path.join(hubd.hub, "blocked.json"))).toEqual({});
+      expect(printed(await hubd.request("developer", "board", ["show", "7"])).card).toMatchObject({
+        status: "Done",
+      });
+    }, 20_000);
+
+    it("still closes when the move fails, and says the sweep will move it", async () => {
+      const hubd = await startHubd(5000);
+      await hubd.request("developer", "board", ["ls"]);
+      await hubd.request("manager", "gh", [
+        "project",
+        "item-add",
+        "2",
+        "--url",
+        "https://github.com/Enteee/VibeWars/issues/7",
+      ]);
+      fs.writeFileSync(path.join(hubd.state, "edit-fails"), "");
+
+      const answer = await hubd.request("manager", "gh", ["issue", "close", "7"]);
+
+      expect(answer.code, String(answer.reason)).toBe(0);
+      expect(String(answer.stderr)).toContain("card not moved: edit boom; the sweep will");
+    }, 20_000);
+
+    it("does not move a card that is already in Done, or one that is not on the board", async () => {
+      const hubd = await startHubd(5000);
+      await hubd.request("developer", "board", ["ls"]);
+      await hubd.request("manager", "gh", [
+        "project",
+        "item-add",
+        "2",
+        "--url",
+        "https://github.com/Enteee/VibeWars/issues/7",
+      ]);
+      await hubd.request("manager", "gh", [
+        ...MOVE_8_TO_DONE.slice(0, 3),
+        "PVTI_7",
+        ...MOVE_8_TO_DONE.slice(4),
+      ]);
+      const before = hubd.calls("project item-edit");
+
+      await hubd.request("manager", "gh", ["issue", "close", "7"]);
+      await hubd.request("manager", "gh", ["issue", "close", "99"]);
+
+      expect(hubd.calls("project item-edit")).toBe(before);
+    }, 20_000);
+  });
 
   it("refuses a pull request into a release branch, which would skip the pick check (#2707)", async () => {
     const hubd = await startHubd(5000);
@@ -3796,6 +3913,86 @@ describe("release branches (#2707)", () => {
     const published = await hubd.request("release-manager", "gh", create);
     expect(published.code, String(published.reason)).toBe(0);
   }, 60_000);
+
+  describe("tracking issues (#3125)", () => {
+    /**
+     * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+     * @param {{ number: number, title: string, login: string }[]} issues
+     */
+    const plantIssues = (hubd, issues) => {
+      fs.writeFileSync(
+        path.join(hubd.state, "issues.json"),
+        JSON.stringify(
+          issues.map((i) => ({ number: i.number, title: i.title, user: { login: i.login } })),
+        ),
+      );
+    };
+    const company = "vibewars-company";
+
+    /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
+    async function publish(hubd) {
+      const { repo } = hubd;
+      seed(hubd);
+      sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+      expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+      const ok = await hubd.request("qa-tester", "release-ok", [
+        "release/0.1.0",
+        "--sha",
+        remoteHead(hubd),
+        "played it",
+      ]);
+      expect(ok.code, String(ok.reason)).toBe(0);
+      const published = await hubd.request("release-manager", "gh", [
+        "release",
+        "create",
+        "v0.1.0",
+        "--target",
+        "release/0.1.0",
+        "--generate-notes",
+      ]);
+      expect(published.code, String(published.reason)).toBe(0);
+      return String(published.stderr);
+    }
+
+    it("closes the company's tracking issue when its release is published, and no stranger's", async () => {
+      const hubd = await startHubd(5000);
+      plantIssues(hubd, [
+        { number: 40, title: "Release 0.1.0", login: company },
+        { number: 41, title: "Release 0.1.0", login: "stranger" },
+      ]);
+      const said = await publish(hubd);
+      expect(said).toContain("closed tracking issue #40");
+      const log = hubd.callLog();
+      expect(log).toContain("issue close 40 --reason completed");
+      expect(log).toContain("issue comment 40 --body Published v0.1.0");
+      expect(log).not.toContain("issue close 41");
+      expect(log.indexOf("issue close 40")).toBeLessThan(log.indexOf("issue comment 40"));
+    }, 30_000);
+
+    it("says so when no tracking issue is open", async () => {
+      const hubd = await startHubd(5000);
+      plantIssues(hubd, [{ number: 41, title: "Release 0.2.0", login: company }]);
+      expect(await publish(hubd)).toContain('no open tracking issue "Release 0.1.0"');
+      expect(hubd.callLog()).not.toContain("issue close");
+    }, 30_000);
+
+    it("sweeps: closes one whose release is published, leaves a draft's", async () => {
+      const hubd = await startHubd(5000, undefined, () => ({ HUBD_TRACKING_SWEEP_MS: "300" }));
+      fs.writeFileSync(
+        path.join(hubd.state, "releases.json"),
+        JSON.stringify([
+          { tag_name: "v0.1.0", draft: false, prerelease: false, html_url: "u1" },
+          { tag_name: "v0.2.0", draft: true, prerelease: false, html_url: "u2" },
+        ]),
+      );
+      plantIssues(hubd, [
+        { number: 50, title: "Release 0.1.0", login: company },
+        { number: 51, title: "Release 0.2.0", login: company },
+      ]);
+      await until(() => hubd.callLog().includes("issue close 50"), "the sweep closing #50");
+      expect(hubd.callLog()).not.toContain("issue close 51");
+    }, 30_000);
+  });
 
   it("refuses a new branch that does not start on main", async () => {
     const hubd = await startHubd(5000);

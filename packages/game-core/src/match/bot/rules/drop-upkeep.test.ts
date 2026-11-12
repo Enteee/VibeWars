@@ -49,6 +49,9 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       objectives: NO_OBJECTIVES,
       projectiles: [],
       seed: 0,
+      now: 0,
+      highGround: [],
+      routeLength: () => 0,
     });
   }
 
