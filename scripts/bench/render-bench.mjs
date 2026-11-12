@@ -11,8 +11,8 @@
  * (`--disable-gpu-vsync`, `--disable-frame-rate-limit`): headless Chromium
  * otherwise holds every frame to 60 Hz and a light map measures as the
  * cap, not its cost. The baseline is a calibration run the script owns,
- * not a game map: a fixed seeded canvas workload drawn every frame just
- * before the maps, so a slower runner moves the baseline with the maps and
+ * not a game map: a fixed seeded WebGL workload drawn every frame on a
+ * blank page in the same browser before the maps, so a slower runner moves the baseline with the maps and
  * a heavier Crossroads cannot loosen the gate. Prints p50 and p95 per map
  * and the ratio of each to the calibration's. The percentiles weigh a frame by how long
  * it lasted: what a moment of the run is spent in, so a map that hangs
@@ -199,73 +199,79 @@ function frameTimes(page) {
 }
 
 /**
- * The calibration: a fixed workload, 2000 filled and stroked circles and
- * 500 polygons at seeded positions on a canvas the size of the game's,
- * redrawn every frame for `SECONDS`. The canvas is removed afterwards.
+ * The calibration: a fixed WebGL workload, as the renderer's context is,
+ * on a blank page where no game runs. 3000 seeded translucent triangles
+ * (about 48 screens of overdraw) in one draw call, redrawn every frame
+ * for `SECONDS`.
  *
- * @param {import("@playwright/test").Page} page
+ * @param {import("@playwright/test").Page} page an about:blank page
  * @returns {Promise<number[]>}
  */
 async function calibrate(page) {
   await page.evaluate(() => {
     const canvas = document.createElement("canvas");
-    canvas.id = "bench-calibration";
     canvas.width = 1280;
     canvas.height = 720;
-    canvas.style.cssText = "position:fixed;inset:0;z-index:2147483647";
+    document.body.style.margin = "0";
     document.body.append(canvas);
-    const ctx = canvas.getContext("2d");
-    if (ctx === null) {
-      throw new Error("no 2D context for the calibration");
+    const gl = canvas.getContext("webgl");
+    if (gl === null) {
+      throw new Error("no WebGL for the calibration");
     }
     let seed = 12345;
     const random = () => {
       seed = (seed * 1664525 + 1013904223) % 4294967296;
       return seed / 4294967296;
     };
-    const circles = Array.from({ length: 2000 }, () => ({
-      x: random() * 1280,
-      y: random() * 720,
-      r: 4 + random() * 24,
-    }));
-    const polygons = Array.from({ length: 500 }, () => ({
-      x: random() * 1280,
-      y: random() * 720,
-      r: 8 + random() * 32,
-      sides: 3 + Math.floor(random() * 5),
-    }));
+    const vertices = new Float32Array(3000 * 3 * 2);
+    for (let t = 0; t < 3000; t += 1) {
+      const x = random() * 2 - 1;
+      const y = random() * 2 - 1;
+      const size = 0.1 + random() * 0.4;
+      for (let v = 0; v < 3; v += 1) {
+        vertices[t * 6 + v * 2] = x + (random() - 0.5) * size;
+        vertices[t * 6 + v * 2 + 1] = y + (random() - 0.5) * size;
+      }
+    }
+    /** @param {number} type @param {string} source */
+    const shader = (type, source) => {
+      const made = gl.createShader(type);
+      if (made === null) {
+        throw new Error("no shader");
+      }
+      gl.shaderSource(made, source);
+      gl.compileShader(made);
+      return made;
+    };
+    const program = gl.createProgram();
+    gl.attachShader(
+      program,
+      shader(gl.VERTEX_SHADER, "attribute vec2 p; void main(){gl_Position=vec4(p,0.,1.);}"),
+    );
+    gl.attachShader(
+      program,
+      shader(
+        gl.FRAGMENT_SHADER,
+        "precision mediump float; void main(){gl_FragColor=vec4(.2,.6,.3,.1);}",
+      ),
+    );
+    gl.linkProgram(program);
+    gl.useProgram(program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    const at = gl.getAttribLocation(program, "p");
+    gl.enableVertexAttribArray(at);
+    gl.vertexAttribPointer(at, 2, gl.FLOAT, false, 0, 0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     const draw = () => {
-      if (!canvas.isConnected) {
-        return;
-      }
-      ctx.clearRect(0, 0, 1280, 720);
-      ctx.fillStyle = "#3a6";
-      ctx.strokeStyle = "#162";
-      for (const c of circles) {
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      }
-      for (const p of polygons) {
-        ctx.beginPath();
-        for (let i = 0; i < p.sides; i += 1) {
-          const a = (i / p.sides) * Math.PI * 2;
-          ctx.lineTo(p.x + Math.cos(a) * p.r, p.y + Math.sin(a) * p.r);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-      }
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, 3000 * 3);
       requestAnimationFrame(draw);
     };
     draw();
   });
-  const frames = await frameTimes(page);
-  await page.evaluate(() => {
-    document.querySelector("#bench-calibration")?.remove();
-  });
-  return frames;
+  return frameTimes(page);
 }
 
 const served = options.url === undefined ? await serve() : undefined;
@@ -278,9 +284,12 @@ try {
     ...(executablePath === undefined ? {} : { executablePath }),
     args: ["--no-sandbox", "--disable-gpu-vsync", "--disable-frame-rate-limit"],
   });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  const viewport = { width: 1280, height: 720 };
+  const blank = await browser.newPage({ viewport });
+  const calibration = await calibrate(blank);
+  await blank.close();
+  const page = await browser.newPage({ viewport });
   await page.goto(url);
-  const calibration = await calibrate(page);
   const base = percentile(calibration, 50);
   console.log(`calibration p50 ${base.toFixed(1)} ms over ${String(calibration.length)} frames`);
   if (CAPS_MS.some((cap) => Math.abs(base - cap) < CAP_TOLERANCE_MS)) {
@@ -295,6 +304,9 @@ try {
       p50: percentile(frames, 50),
       p95: percentile(frames, 95),
     });
+  }
+  if (rows.some((row) => Math.abs(row.p50 - CAPS_MS[1]) < CAP_TOLERANCE_MS)) {
+    throw new Error("a map's p50 sits on 33.3 ms: the menu's own 30 fps limiter was measured");
   }
   console.log("| map | frames | p50 ms | p95 ms | p50 / calibration |");
   console.log("|---|---|---|---|---|");
