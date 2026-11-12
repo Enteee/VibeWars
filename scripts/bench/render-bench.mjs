@@ -241,6 +241,9 @@ async function calibrate(page) {
       }
       gl.shaderSource(made, source);
       gl.compileShader(made);
+      if (!gl.getShaderParameter(made, gl.COMPILE_STATUS)) {
+        throw new Error(`calibration shader: ${gl.getShaderInfoLog(made) ?? "failed"}`);
+      }
       return made;
     };
     const program = gl.createProgram();
@@ -256,6 +259,9 @@ async function calibrate(page) {
       ),
     );
     gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw new Error(`calibration program: ${gl.getProgramInfoLog(program) ?? "failed"}`);
+    }
     gl.useProgram(program);
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
@@ -305,9 +311,6 @@ try {
       p95: percentile(frames, 95),
     });
   }
-  if (rows.some((row) => Math.abs(row.p50 - CAPS_MS[1]) < CAP_TOLERANCE_MS)) {
-    throw new Error("a map's p50 sits on 33.3 ms: the menu's own 30 fps limiter was measured");
-  }
   console.log("| map | frames | p50 ms | p95 ms | p50 / calibration |");
   console.log("|---|---|---|---|---|");
   for (const row of rows) {
@@ -321,6 +324,9 @@ try {
       );
       failed = true;
     }
+  }
+  if (rows.some((row) => Math.abs(row.p50 - CAPS_MS[1]) < CAP_TOLERANCE_MS)) {
+    throw new Error("a map's p50 sits on 33.3 ms: the menu's own 30 fps limiter was measured");
   }
 } finally {
   await browser?.close();
