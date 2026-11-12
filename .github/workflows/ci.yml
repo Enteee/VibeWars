@@ -98,6 +98,24 @@ jobs:
       - name: Build
         run: devenv shell -- pnpm run build
 
+      # A layered map must draw within 12x Crossroads in software GL (#3157,
+      # #3164): a ratio on this runner, so a slow runner does not trip it.
+      # Pull requests that touch the renderer, the maps, the web build or its
+      # dependencies, or this file. The checkout is the merge commit, so its
+      # diff against the base tip is the PR.
+      - name: Render bench
+        if: github.event_name == 'pull_request'
+        timeout-minutes: 20
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          if git diff --name-only FETCH_HEAD HEAD | grep -qE '^(apps/web/src/render/|apps/web/package.json|apps/web/vite.config|packages/game-maps/|scripts/bench/|pnpm-lock.yaml|.github/workflows/ci.yml)'; then
+            BENCH_MAX_RATIO=12 devenv shell -- pnpm run bench:render
+          else
+            echo "no renderer or map change: render bench skipped"
+          fi
+
       # No package version younger than a week, and no git/tarball/URL
       # resolution, may enter pnpm-lock.yaml
       # (#107), even if the author overrode minimumReleaseAge or

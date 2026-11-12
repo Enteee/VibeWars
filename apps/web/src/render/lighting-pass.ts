@@ -194,6 +194,72 @@ export function layerSurfaces(
   return [...decks, ...pits, ...ramps];
 }
 
+/** A box of a light map, in its pixels. */
+export interface LightMapBox {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** The whole pixels round `points`, scaled to the light map and kept within `within`. */
+function pixelBox(points: readonly Vec2[], within: LightMapBox): LightMapBox {
+  if (points.length === 0) {
+    return { x: within.x, y: within.y, width: 1, height: 1 };
+  }
+  const xs = points.map(({ x }) => x * LIGHT_MAP_SCALE);
+  const ys = points.map(({ y }) => y * LIGHT_MAP_SCALE);
+  const left = Math.max(within.x, Math.floor(Math.min(...xs)));
+  const top = Math.max(within.y, Math.floor(Math.min(...ys)));
+  const right = Math.min(within.x + within.width, Math.ceil(Math.max(...xs)));
+  const bottom = Math.min(within.y + within.height, Math.ceil(Math.max(...ys)));
+  // A light map is never empty: Phaser makes no texture of no pixels.
+  return { x: left, y: top, width: Math.max(1, right - left), height: Math.max(1, bottom - top) };
+}
+
+/**
+ * What of an arena `width` by `height` the light map of `layer` covers
+ * (#3157): the ground all of it, any other layer only the box round its
+ * surfaces. Outside them it is erased, so a smaller map shows the same,
+ * and costs a frame only the pixels it covers.
+ */
+export function lightMapExtent(
+  structure: MapStructure,
+  layer: number,
+  width: number,
+  height: number,
+): LightMapBox {
+  const whole = {
+    x: 0,
+    y: 0,
+    width: Math.ceil(width * LIGHT_MAP_SCALE),
+    height: Math.ceil(height * LIGHT_MAP_SCALE),
+  };
+  return layer === structure.ground
+    ? whole
+    : pixelBox(layerSurfaces(structure, layer).flat(), whole);
+}
+
+/**
+ * What a flicker redraws of a light map with `extent` (#3157): the box
+ * round every flickering light, in the map's own pixels. The rest holds
+ * the steady lights, which never change.
+ */
+export function flickerBox(
+  flickering: readonly LightsOf[],
+  extent: LightMapBox,
+): LightMapBox | undefined {
+  if (flickering.length === 0) {
+    return undefined;
+  }
+  const reach = flickering.flatMap(({ position, radius }) => [
+    { x: position.x - radius, y: position.y - radius },
+    { x: position.x + radius, y: position.y + radius },
+  ]);
+  const box = pixelBox(reach, extent);
+  return { ...box, x: box.x - extent.x, y: box.y - extent.y };
+}
+
 /**
  * Where the ground's light never falls (#2973): each pit's hole, lit by
  * the layer under it, so a body in a pit is not lit twice.
@@ -210,7 +276,11 @@ interface LayerMap {
   readonly shown: Phaser.Textures.DynamicTexture;
   readonly image: Phaser.GameObjects.Image;
   readonly outsideKey: string | undefined;
+  /** What of the arena it covers, in light map pixels. */
+  readonly extent: LightMapBox;
   readonly flickering: readonly LightsOf[];
+  /** What a flicker redraws, in its own pixels; `undefined` when nothing flickers. */
+  readonly flickerBox: LightMapBox | undefined;
   /** Each light whose shadows were cut from its own texture, by light id (#2988). */
   readonly shadowed: ReadonlyMap<string, string>;
   drawnAt: number;
@@ -288,7 +358,7 @@ export class LightingPass {
     for (const map of this.layers) {
       if (flickerRedrawDue(map.flickering, map.drawnAt, nowMs)) {
         const started = performance.now();
-        this.drawFlicker(map, nowMs);
+        this.drawFlicker(map, nowMs, map.flickerBox);
         this.budget.record(performance.now() - started);
       }
     }
@@ -350,8 +420,8 @@ export class LightingPass {
 
   private buildLayer(lighting: MapLighting, structure: MapStructure, layer: number): LayerMap {
     const textures = this.scene.textures;
-    const width = Math.ceil(this.width * LIGHT_MAP_SCALE);
-    const height = Math.ceil(this.height * LIGHT_MAP_SCALE);
+    const extent = lightMapExtent(structure, layer, this.width, this.height);
+    const { width, height } = extent;
     nextLightingId += 1;
     const baseKey = `lighting-${String(nextLightingId)}-base`;
     const shownKey = `lighting-${String(nextLightingId)}-shown`;
@@ -364,8 +434,7 @@ export class LightingPass {
       `lighting-${String(nextLightingId)}-outside`,
       structure,
       layer,
-      width,
-      height,
+      extent,
     );
     const { steady, flickering } = lightsByStability(lighting, layer, this.stage);
     const casters = stageShadows(this.stage) ? shadowCasters(this.walls, structure, layer) : [];
@@ -382,7 +451,7 @@ export class LightingPass {
         fillOutline(painter, outline, 0, 0);
       }
       painter.setScale(LIGHT_MAP_SCALE);
-      base.draw(painter);
+      base.draw(painter, -extent.x, -extent.y);
       painters.push(painter);
     }
     if (lighting.indoor.length > 0) {
@@ -392,7 +461,7 @@ export class LightingPass {
         fillShape(painter, shape);
       }
       painter.setScale(LIGHT_MAP_SCALE);
-      base.draw(painter);
+      base.draw(painter, -extent.x, -extent.y);
       painters.push(painter);
     }
     const shadowed = new Map<string, string>();
@@ -403,7 +472,7 @@ export class LightingPass {
       }
     }
     for (const light of steady) {
-      this.stampLight(base, light, light.intensity, shadowed.get(light.id));
+      this.stampLight(base, extent, light, light.intensity, shadowed.get(light.id));
     }
     if (outsideKey !== undefined) {
       // A texture drawn by key is centred on the point given.
@@ -415,7 +484,11 @@ export class LightingPass {
     }
 
     const image = this.scene.add
-      .image(0, -elevationOf(layer, structure.ground), shownKey)
+      .image(
+        extent.x / LIGHT_MAP_SCALE,
+        extent.y / LIGHT_MAP_SCALE - elevationOf(layer, structure.ground),
+        shownKey,
+      )
       .setOrigin(0, 0)
       .setScale(1 / LIGHT_MAP_SCALE)
       .setBlendMode(Phaser.BlendModes.MULTIPLY)
@@ -428,7 +501,9 @@ export class LightingPass {
       shown,
       image,
       outsideKey,
+      extent,
       flickering,
+      flickerBox: flickerBox(flickering, extent),
       shadowed,
       drawnAt: Number.NEGATIVE_INFINITY,
     };
@@ -445,9 +520,9 @@ export class LightingPass {
     key: string,
     structure: MapStructure,
     layer: number,
-    width: number,
-    height: number,
+    extent: LightMapBox,
   ): string | undefined {
+    const { width, height } = extent;
     const ground = layer === structure.ground;
     const outlines = ground ? groundHoles(structure) : layerSurfaces(structure, layer);
     if (ground && outlines.length === 0) {
@@ -466,8 +541,8 @@ export class LightingPass {
     for (const outline of outlines) {
       context.beginPath();
       outline.forEach((point, index) => {
-        const x = point.x * LIGHT_MAP_SCALE;
-        const y = point.y * LIGHT_MAP_SCALE;
+        const x = point.x * LIGHT_MAP_SCALE - extent.x;
+        const y = point.y * LIGHT_MAP_SCALE - extent.y;
         if (index === 0) {
           context.moveTo(x, y);
         } else {
@@ -513,12 +588,13 @@ export class LightingPass {
   /** `light` added to `target`: its shadowed texture when it has one, the plain falloff when not. */
   private stampLight(
     target: Phaser.Textures.DynamicTexture,
+    extent: LightMapBox,
     light: LightsOf,
     intensity: number,
     shadowedKey: string | undefined,
   ): void {
-    const x = light.position.x * LIGHT_MAP_SCALE;
-    const y = light.position.y * LIGHT_MAP_SCALE;
+    const x = light.position.x * LIGHT_MAP_SCALE - extent.x;
+    const y = light.position.y * LIGHT_MAP_SCALE - extent.y;
     if (shadowedKey !== undefined) {
       target.stamp(shadowedKey, undefined, x, y, {
         alpha: intensity,
@@ -534,23 +610,47 @@ export class LightingPass {
     });
   }
 
-  /** The steady map, plus each flickering light as it is now. */
-  private drawFlicker(map: LayerMap, nowMs: number): void {
-    map.shown.clear();
-    map.shown.draw(map.baseKey, map.shown.width / 2, map.shown.height / 2);
+  /**
+   * The steady map, plus each flickering light as it is now: all of it the
+   * first time, then only `box`, where they reach (#3157).
+   */
+  private drawFlicker(map: LayerMap, nowMs: number, box?: LightMapBox): void {
+    const { x, y, width, height } = box ?? { ...map.extent, x: 0, y: 0 };
+    const centreX = x + width / 2;
+    const centreY = y + height / 2;
+    map.shown.clear(x, y, width, height);
+    map.shown.stamp(map.baseKey, this.region(map.baseKey, x, y, width, height), centreX, centreY);
     for (const light of map.flickering) {
       this.stampLight(
         map.shown,
+        map.extent,
         light,
         light.intensity * flickerAt(light.id, light.flicker, nowMs),
         map.shadowed.get(light.id),
       );
     }
     if (map.outsideKey !== undefined && map.flickering.length > 0) {
-      map.shown.erase(map.outsideKey, map.shown.width / 2, map.shown.height / 2);
+      map.shown.erase(
+        this.scene.textures.getFrame(
+          map.outsideKey,
+          this.region(map.outsideKey, x, y, width, height),
+        ),
+        centreX,
+        centreY,
+      );
     }
     map.shown.render();
     map.drawnAt = nowMs;
+  }
+
+  /** The frame of texture `key` that is the box given, made the first time it is asked for. */
+  private region(key: string, x: number, y: number, width: number, height: number): string {
+    const name = `${String(x)},${String(y)},${String(width)},${String(height)}`;
+    const texture = this.scene.textures.get(key);
+    if (!texture.has(name)) {
+      texture.add(name, 0, x, y, width, height);
+    }
+    return name;
   }
 }
 

@@ -8,21 +8,21 @@ la perdió. Los cambios se guardan al instante.
 
 ## Teclas
 
-El preajuste por defecto es **VibeWars**. **Clásico** es para manos de GW1.
+El preajuste por defecto es **Clásico**, para manos de GW1. **VibeWars** lanza con la mano izquierda y se mueve con las flechas.
 
-| Acción                              | VibeWars         | Clásico            |
-| ----------------------------------- | ---------------- | ------------------ |
-| Habilidades 1 a 8                   | Q W E R, A S D F | 1 a 8              |
-| Moverse                             | flechas          | W A S D, o flechas |
-| Sets de armas 1 a 4                 | 1 a 4            | F1 a F4            |
-| Atacar, o usar una bandera          | Space            | Space              |
-| Siguiente enemigo (Shift: anterior) | Tab              | Tab                |
-| Enemigo más cercano                 | C                | C                  |
-| Enemigo marcado por tu equipo       | T                | T                  |
-| Tú mismo                            | G                | G                  |
-| Ver nombres (mantener)              | Shift            | Shift              |
-| Silenciar                           | M                | M                  |
-| Soltar bandera, reliquia o cenizas  | ninguna          | ninguna            |
+| Acción                              | Clásico            | VibeWars         |
+| ----------------------------------- | ------------------ | ---------------- |
+| Habilidades 1 a 8                   | 1 a 8              | Q W E R, A S D F |
+| Moverse                             | W A S D, o flechas | flechas          |
+| Sets de armas 1 a 4                 | F1 a F4            | 1 a 4            |
+| Atacar, o usar una bandera          | Space              | Space            |
+| Siguiente enemigo (Shift: anterior) | Tab                | Tab              |
+| Enemigo más cercano                 | C                  | C                |
+| Enemigo marcado por tu equipo       | T                  | T                |
+| Tú mismo                            | G                  | G                |
+| Ver nombres (mantener)              | Shift              | Shift            |
+| Silenciar                           | M                  | M                |
+| Soltar bandera, reliquia o cenizas  | ninguna            | ninguna          |
 
 Estas teclas son fijas:
 

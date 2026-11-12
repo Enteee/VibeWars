@@ -14,9 +14,11 @@ import {
   LightingPass,
   OVER_BUDGET_LIMIT,
   baseTint,
+  flickerBox,
   flickerRedrawDue,
   groundHoles,
   layerSurfaces,
+  lightMapExtent,
   lightsByStability,
   litStructurePalette,
   shownStage,
@@ -246,6 +248,44 @@ describe("layerSurfaces", () => {
     expect(top.sort()).toEqual([250, 450]);
     expect(foot.sort()).toEqual([250 + ELEVATION_STEP, 450 + ELEVATION_STEP]);
   });
+
+  it("lights all of the ground and only the box round a raised layer's surfaces (#3157)", () => {
+    expect(lightMapExtent(HEIGHTS, 0, 1200, 800)).toEqual({ x: 0, y: 0, width: 600, height: 400 });
+    const raised = lightMapExtent(HEIGHTS, 1, 1200, 800);
+    expect(raised.x).toBe(150);
+    expect(raised.width).toBe(240);
+    expect(raised.y).toBeLessThanOrEqual(125);
+    expect(raised.y + raised.height).toBeGreaterThanOrEqual(225);
+    expect(raised.y + raised.height).toBeLessThanOrEqual(400);
+  });
+
+  it("keeps a layer with no surfaces a light map of one pixel", () => {
+    expect(lightMapExtent({ ...HEIGHTS, decks: [], transitions: [] }, 1, 1200, 800)).toEqual({
+      x: 0,
+      y: 0,
+      width: 1,
+      height: 1,
+    });
+  });
+});
+
+describe("flickerBox (#3157)", () => {
+  const extent = { x: 100, y: 50, width: 200, height: 100 };
+
+  it("is nothing to redraw when no light flickers", () => {
+    expect(flickerBox([], extent)).toBeUndefined();
+  });
+
+  it("is the reach of each flickering light, in the light map's own pixels", () => {
+    // Reach 300..400 by 150..250 in the arena: 150..200 by 75..125 at half scale.
+    const box = flickerBox([{ ...light("a", 1, 1), position: { x: 350, y: 200 } }], extent);
+    expect(box).toEqual({ x: 50, y: 25, width: 50, height: 50 });
+  });
+
+  it("is held within the light map", () => {
+    const box = flickerBox([{ ...light("a", 1, 1), position: { x: 190, y: 90 } }], extent);
+    expect(box).toEqual({ x: 0, y: 0, width: 20, height: 20 });
+  });
 });
 
 describe("LightingPass", () => {
@@ -307,6 +347,8 @@ describe("LightingPass", () => {
         exists: () => true,
         remove: () => undefined,
         addDynamicTexture: (_key: string, width: number, height: number) => texture(width, height),
+        get: () => ({ has: () => false, add: () => undefined }),
+        getFrame: () => undefined,
       },
       make: { graphics },
       add: { image: inert },

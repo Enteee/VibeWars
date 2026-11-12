@@ -217,15 +217,16 @@ IP-osoitteesi.
 
 ## Ottelussa
 
-- Napsauta maata kävelläksesi sinne, tai liiku nuolinäppäimillä.
+- Napsauta maata kävelläksesi sinne, tai liiku näppäimillä **W A S D** tai
+  nuolinäppäimillä.
 - Napsauta vihollista hiiren oikealla kohdistaaksesi siihen, tai paina
   **Tab** seuraavaa varten. Paina **Space** tai napsauta vihollista
   uudelleen oikealla hyökätäksesi sen kimppuun.
-- Kahdeksan taitoasi ovat näppäimissä **Q W E R** ja **A S D F**, paikka 1
-  ensin. Voit myös napsauttaa taitoa palkissa käyttääksesi sitä.
+- Kahdeksan taitoasi ovat näppäimissä **1**–**8**, paikka 1 ensin. Voit myös
+  napsauttaa taitoa palkissa käyttääksesi sitä.
 - **Esc** peruu sen, mitä olet tekemässä. Jokaisen näppäimen voi vaihtaa
-  **Asetuksissa** kohdassa ohjaus; Klassinen-esiasetus laittaa taidot
-  näppäimiin 1–8 ja liikkeen WASD-näppäimiin. Kaikki ne löytyvät sivulta
+  **Asetuksissa** kohdassa ohjaus; VibeWars-esiasetus laittaa taidot näppäimiin
+  Q W E R ja A S D F ja liikkeen nuolinäppäimiin. Kaikki ne löytyvät sivulta
   [Ohjaus](controls.md).
 
 [?]-painike oikeassa yläkulmassa avaa tämän Ohjeen uudelleen, myös

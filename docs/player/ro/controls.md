@@ -8,21 +8,21 @@ pierdut-o. Modificările se salvează imediat.
 
 ## Taste
 
-Presetarea implicită este **VibeWars**. **Clasic** este pentru mâinile obișnuite cu GW1.
+Presetarea implicită este **Clasic**, pentru mâinile obișnuite cu GW1. **VibeWars** folosește abilitățile cu mâna stângă și se mișcă cu săgețile.
 
-| Acțiune                             | VibeWars         | Clasic             |
-| ----------------------------------- | ---------------- | ------------------ |
-| Abilități 1 la 8                    | Q W E R, A S D F | 1 la 8             |
-| Mișcare                             | săgeți           | W A S D sau săgeți |
-| Seturi de arme 1 la 4               | 1 la 4           | F1 la F4           |
-| Atac sau folosirea unui steag       | Space            | Space              |
-| Ținta următoare (Shift: anterioara) | Tab              | Tab                |
-| Cel mai apropiat inamic             | C                | C                  |
-| Inamicul anunțat de echipa ta       | T                | T                  |
-| Tu însuți                           | G                | G                  |
-| Arată nume (ține)                   | Shift            | Shift              |
-| Fără sunet                          | M                | M                  |
-| Lasă steagul, relicva sau cenușa    | fără tastă       | fără tastă         |
+| Acțiune                             | Clasic             | VibeWars         |
+| ----------------------------------- | ------------------ | ---------------- |
+| Abilități 1 la 8                    | 1 la 8             | Q W E R, A S D F |
+| Mișcare                             | W A S D sau săgeți | săgeți           |
+| Seturi de arme 1 la 4               | F1 la F4           | 1 la 4           |
+| Atac sau folosirea unui steag       | Space              | Space            |
+| Ținta următoare (Shift: anterioara) | Tab                | Tab              |
+| Cel mai apropiat inamic             | C                  | C                |
+| Inamicul anunțat de echipa ta       | T                  | T                |
+| Tu însuți                           | G                  | G                |
+| Arată nume (ține)                   | Shift              | Shift            |
+| Fără sunet                          | M                  | M                |
+| Lasă steagul, relicva sau cenușa    | fără tastă         | fără tastă       |
 
 Aceste taste sunt fixe:
 

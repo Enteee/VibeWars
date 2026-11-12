@@ -200,13 +200,13 @@ Jocul online este peer-to-peer: ceilalți jucători din meciul tău îți văd a
 
 ## Într-un meci
 
-- Dă clic pe sol ca să mergi acolo sau mișcă-te cu săgețile.
+- Dă clic pe sol ca să mergi acolo sau mișcă-te cu **W A S D** sau cu săgețile.
 - Clic dreapta pe un inamic ca să-l țintești sau apasă **Tab** pentru următorul.
   Apasă **Space** sau dă din nou clic dreapta pe inamic ca să-l ataci.
-- Cele opt abilități ale tale sunt pe **Q W E R** și **A S D F**, începând cu locul 1.
-  Poți și să dai clic pe o abilitate de pe bară ca s-o folosești.
-- **Esc** anulează ce faci. Orice tastă poate fi schimbată în **Opțiuni**, la Comenzi;
-  presetarea Clasic pune abilitățile pe 1 la 8 și mișcarea pe WASD. Toate sunt în
-  [Comenzi](controls.md).
+- Cele opt abilități ale tale sunt pe **1** la **8**, începând cu locul 1. Poți
+  și să dai clic pe o abilitate de pe bară ca s-o folosești.
+- **Esc** anulează ce faci. Orice tastă poate fi schimbată în **Opțiuni**, la
+  Comenzi; presetarea VibeWars pune abilitățile pe Q W E R și A S D F și
+  mișcarea pe săgeți. Toate sunt în [Comenzi](controls.md).
 
 Butonul [?], din dreapta sus, deschide din nou acest Ajutor, și într-un meci.

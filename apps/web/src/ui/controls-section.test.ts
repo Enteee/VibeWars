@@ -9,7 +9,7 @@ function key(code: string, held: Partial<Omit<KeyPress, "code">> = {}): KeyPress
   return { code, ctrlKey: false, altKey: false, metaKey: false, ...held };
 }
 
-function editor(map: Keymap = DEFAULT_KEYMAP): {
+function editor(map: Keymap = KEYMAP_PRESETS.vibewars): {
   readonly editor: KeysEditor;
   readonly save: ReturnType<typeof vi.fn<(map: Keymap) => void>>;
 } {
@@ -38,7 +38,7 @@ describe("KeysEditor (#309)", () => {
     keys.startCapture(SKILL_1);
     expect(keys.press(key("Escape"))).toBe(true);
     expect(keys.capturing).toBeUndefined();
-    expect(keys.map).toBe(DEFAULT_KEYMAP);
+    expect(keys.map).toBe(KEYMAP_PRESETS.vibewars);
     expect(save).not.toHaveBeenCalled();
   });
 
@@ -122,20 +122,21 @@ describe("KeysEditor (#309)", () => {
   });
 
   it("replaces the whole map with a preset, and reads Custom once edited", () => {
-    const { editor: keys, save } = editor();
-    expect(keys.preset).toBe("vibewars");
-    keys.choosePreset("classic");
-    expect(keys.map).toBe(KEYMAP_PRESETS.classic);
+    const { editor: keys, save } = editor(DEFAULT_KEYMAP);
     expect(keys.preset).toBe("classic");
+    keys.choosePreset("vibewars");
+    expect(keys.map).toBe(KEYMAP_PRESETS.vibewars);
+    expect(keys.preset).toBe("vibewars");
 
     keys.startCapture(SKILL_1);
     keys.press(key("KeyZ"));
     expect(keys.preset).toBe("custom");
 
+    // "Reset to VibeWars" goes to that preset, not to the default.
     keys.reset();
     expect(keys.map).toBe(KEYMAP_PRESETS.vibewars);
     expect(save.mock.calls.map(([map]) => map)).toEqual([
-      KEYMAP_PRESETS.classic,
+      KEYMAP_PRESETS.vibewars,
       expect.objectContaining({ "skill-1": ["KeyZ"] }),
       KEYMAP_PRESETS.vibewars,
     ]);

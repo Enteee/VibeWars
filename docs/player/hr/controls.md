@@ -8,21 +8,21 @@ izgubila. Promjene se spremaju odmah.
 
 ## Tipke
 
-Zadani predložak je **VibeWars**. **Klasično** je za ruke naviknute na GW1.
+Zadani predložak je **Klasično**, za ruke naviknute na GW1. **VibeWars** baca vještine lijevom rukom i kreće se strelicama.
 
-| Radnja                                  | VibeWars         | Klasično             |
-| --------------------------------------- | ---------------- | -------------------- |
-| Vještine 1 do 8                         | Q W E R, A S D F | 1 do 8               |
-| Kretanje                                | strelice         | W A S D ili strelice |
-| Kompleti oružja 1 do 4                  | 1 do 4           | F1 do F4             |
-| Napad ili korištenje zastave            | Space            | Space                |
-| Sljedeći neprijatelj (Shift: prethodni) | Tab              | Tab                  |
-| Najbliži neprijatelj                    | C                | C                    |
-| Označeni neprijatelj tvog tima          | T                | T                    |
-| Ti sam                                  | G                | G                    |
-| Prikaži imena (drži)                    | Shift            | Shift                |
-| Utišaj                                  | M                | M                    |
-| Ispusti zastavu, relikviju ili pepeo    | bez tipke        | bez tipke            |
+| Radnja                                  | Klasično             | VibeWars         |
+| --------------------------------------- | -------------------- | ---------------- |
+| Vještine 1 do 8                         | 1 do 8               | Q W E R, A S D F |
+| Kretanje                                | W A S D ili strelice | strelice         |
+| Kompleti oružja 1 do 4                  | F1 do F4             | 1 do 4           |
+| Napad ili korištenje zastave            | Space                | Space            |
+| Sljedeći neprijatelj (Shift: prethodni) | Tab                  | Tab              |
+| Najbliži neprijatelj                    | C                    | C                |
+| Označeni neprijatelj tvog tima          | T                    | T                |
+| Ti sam                                  | G                    | G                |
+| Prikaži imena (drži)                    | Shift                | Shift            |
+| Utišaj                                  | M                    | M                |
+| Ispusti zastavu, relikviju ili pepeo    | bez tipke            | bez tipke        |
 
 Ove su tipke fiksne:
 

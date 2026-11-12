@@ -107,6 +107,27 @@ const SHARED = {
 } as const satisfies Partial<Keymap>;
 
 export const KEYMAP_PRESETS: Readonly<Record<"vibewars" | "classic", Keymap>> = {
+  // GW1 muscle memory: skills on the number row, WASD moves.
+  classic: {
+    "skill-1": ["Digit1"],
+    "skill-2": ["Digit2"],
+    "skill-3": ["Digit3"],
+    "skill-4": ["Digit4"],
+    "skill-5": ["Digit5"],
+    "skill-6": ["Digit6"],
+    "skill-7": ["Digit7"],
+    "skill-8": ["Digit8"],
+    "move-up": ["KeyW", "ArrowUp"],
+    "move-down": ["KeyS", "ArrowDown"],
+    "move-left": ["KeyA", "ArrowLeft"],
+    "move-right": ["KeyD", "ArrowRight"],
+    // GW1's own keys (#489): the browser's help and find give way in a match.
+    "weapon-set-1": ["F1"],
+    "weapon-set-2": ["F2"],
+    "weapon-set-3": ["F3"],
+    "weapon-set-4": ["F4"],
+    ...SHARED,
+  },
   // The left hand casts on two rows; the right moves, on the arrows (and,
   // with #310, the mouse).
   vibewars: {
@@ -129,30 +150,10 @@ export const KEYMAP_PRESETS: Readonly<Record<"vibewars" | "classic", Keymap>> = 
     "weapon-set-4": ["Digit4"],
     ...SHARED,
   },
-  // GW1 muscle memory: skills on the number row, WASD moves.
-  classic: {
-    "skill-1": ["Digit1"],
-    "skill-2": ["Digit2"],
-    "skill-3": ["Digit3"],
-    "skill-4": ["Digit4"],
-    "skill-5": ["Digit5"],
-    "skill-6": ["Digit6"],
-    "skill-7": ["Digit7"],
-    "skill-8": ["Digit8"],
-    "move-up": ["KeyW", "ArrowUp"],
-    "move-down": ["KeyS", "ArrowDown"],
-    "move-left": ["KeyA", "ArrowLeft"],
-    "move-right": ["KeyD", "ArrowRight"],
-    // GW1's own keys (#489): the browser's help and find give way in a match.
-    "weapon-set-1": ["F1"],
-    "weapon-set-2": ["F2"],
-    "weapon-set-3": ["F3"],
-    "weapon-set-4": ["F4"],
-    ...SHARED,
-  },
 };
 
-export const DEFAULT_KEYMAP: Keymap = KEYMAP_PRESETS.vibewars;
+// GW1 players start at home (#3134); VibeWars stays one pick away.
+export const DEFAULT_KEYMAP: Keymap = KEYMAP_PRESETS.classic;
 
 /** Keys the browser or the OS owns, and the game's fixed Esc and F10. */
 const UNBINDABLE = new Set([

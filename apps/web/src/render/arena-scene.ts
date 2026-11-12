@@ -82,6 +82,7 @@ import {
   deckHeldBy,
   deckSideLow,
   southFacingEdges,
+  sweptEdges,
   drawnLayerAt,
   hiddenCrop,
   liftAt,
@@ -272,7 +273,7 @@ import type {
 
 const BEACON_BOLT_GLOW = 0x79c0ff;
 const BEACON_BOLT_CORE = 0xf0f6ff;
-/** How far apart the side face's stacked outlines lie, in world units. */
+/** How far apart the side face's stacked outlines lay, in world units: where its top still ends. */
 const SIDE_FACE_SLICE = 2;
 /** Line widths, in CSS px: a deck's lip and a wall's lit edge. */
 const DECK_LIP_WIDTH = 3;
@@ -2779,12 +2780,24 @@ export class ArenaScene extends Phaser.Scene {
     high: number,
     colour: number,
   ): void {
+    if (high <= low) {
+      return;
+    }
+    // Up to the last of the outlines it once stacked, so nothing it shows moves.
+    const top = low + (Math.ceil((high - low) / SIDE_FACE_SLICE) - 1) * SIDE_FACE_SLICE;
     g.fillStyle(colour, 1);
-    for (let lift = low; lift < high; lift += SIDE_FACE_SLICE) {
+    for (const lift of [low, top]) {
       g.save();
       g.translateCanvas(0, -lift);
       this.fillShape(g, shape);
       g.restore();
+    }
+    // A parallelogram each: two triangles, never a path Phaser earcuts every frame.
+    for (const [a, b, c, d] of sweptEdges(shape, low, top)) {
+      if (a !== undefined && b !== undefined && c !== undefined && d !== undefined) {
+        g.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+        g.fillTriangle(a.x, a.y, c.x, c.y, d.x, d.y);
+      }
     }
   }
 

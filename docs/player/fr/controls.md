@@ -8,22 +8,22 @@ dit laquelle l'a perdue. Les changements sont enregistrés tout de suite.
 
 ## Touches
 
-Le profil par défaut est **VibeWars**. **Classique** est fait pour les mains
-habituées à GW1.
+Le profil par défaut est **Classique**, fait pour les mains habituées à GW1.
+**VibeWars** lance de la main gauche et se déplace avec les flèches.
 
-| Action                             | VibeWars         | Classique           |
-| ---------------------------------- | ---------------- | ------------------- |
-| Compétences 1 à 8                  | Q W E R, A S D F | 1 à 8               |
-| Déplacement                        | flèches          | W A S D, ou flèches |
-| Sets d'armes 1 à 4                 | 1 à 4            | F1 à F4             |
-| Attaque, ou utiliser un drapeau    | Space            | Space               |
-| Ennemi suivant (Shift : précédent) | Tab              | Tab                 |
-| Ennemi le plus proche              | C                | C                   |
-| Ennemi annoncé par ton équipe      | T                | T                   |
-| Toi-même                           | G                | G                   |
-| Noms (maintenir)                   | Shift            | Shift               |
-| Muet                               | M                | M                   |
-| Lâcher drapeau, relique ou cendres | aucune           | aucune              |
+| Action                             | Classique           | VibeWars         |
+| ---------------------------------- | ------------------- | ---------------- |
+| Compétences 1 à 8                  | 1 à 8               | Q W E R, A S D F |
+| Déplacement                        | W A S D, ou flèches | flèches          |
+| Sets d'armes 1 à 4                 | F1 à F4             | 1 à 4            |
+| Attaque, ou utiliser un drapeau    | Space               | Space            |
+| Ennemi suivant (Shift : précédent) | Tab                 | Tab              |
+| Ennemi le plus proche              | C                   | C                |
+| Ennemi annoncé par ton équipe      | T                   | T                |
+| Toi-même                           | G                   | G                |
+| Noms (maintenir)                   | Shift               | Shift            |
+| Muet                               | M                   | M                |
+| Lâcher drapeau, relique ou cendres | aucune              | aucune           |
 
 Ces touches sont fixes :
 

@@ -8,21 +8,22 @@ lost it. Changes save at once.
 
 ## Keys
 
-The default preset is **VibeWars**. **Classic** is for GW1 hands.
+The default preset is **Classic**, for GW1 hands. **VibeWars** casts with
+the left hand and moves on the arrow keys.
 
-| Action                     | VibeWars         | Classic                |
-| -------------------------- | ---------------- | ---------------------- |
-| Skills 1 to 8              | Q W E R, A S D F | 1 to 8                 |
-| Move                       | arrow keys       | W A S D, or arrow keys |
-| Weapon sets 1 to 4         | 1 to 4           | F1 to F4               |
-| Attack, or use a flag      | Space            | Space                  |
-| Next foe (Shift: previous) | Tab              | Tab                    |
-| Closest foe                | C                | C                      |
-| Your team's called foe     | T                | T                      |
-| Yourself                   | G                | G                      |
-| Show names (hold)          | Shift            | Shift                  |
-| Mute                       | M                | M                      |
-| Drop flag, relic or ashes  | none             | none                   |
+| Action                     | Classic                | VibeWars         |
+| -------------------------- | ---------------------- | ---------------- |
+| Skills 1 to 8              | 1 to 8                 | Q W E R, A S D F |
+| Move                       | W A S D, or arrow keys | arrow keys       |
+| Weapon sets 1 to 4         | F1 to F4               | 1 to 4           |
+| Attack, or use a flag      | Space                  | Space            |
+| Next foe (Shift: previous) | Tab                    | Tab              |
+| Closest foe                | C                      | C                |
+| Your team's called foe     | T                      | T                |
+| Yourself                   | G                      | G                |
+| Show names (hold)          | Shift                  | Shift            |
+| Mute                       | M                      | M                |
+| Drop flag, relic or ashes  | none                   | none             |
 
 These keys are fixed:
 
