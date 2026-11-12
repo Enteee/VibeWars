@@ -427,7 +427,7 @@ Kartalla voi olla **portteja**: muureja, jotka pysäyttävät vartalot,
 ammukset ja näkyvyyden suljettuina. Seiso portin painelaatalla avataksesi
 sen. Se sulkeutuu, kun laatalle ei jää ketään, työntää oviaukossa olevat
 lähemmälle puolelle ja pysäyttää vielä matkalla olevat ammukset, eikä
-sitä voi avata uudelleen 8 sekuntiin. Tiimin värinen laatta reagoi vain
+sitä voi avata uudelleen puoleen sekuntiin. Tiimin värinen laatta reagoi vain
 siihen tiimiin. Botit seisovat oman tiiminsä laatalla, kun vihollisia ei
 ole lähellä.
 

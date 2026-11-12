@@ -388,7 +388,7 @@ Une carte peut avoir des **portes** : des murs qui arrêtent les corps, les tirs
 la vue quand ils sont fermés. Tiens-toi sur la plaque de pression d'une porte pour
 l'ouvrir. Elle se ferme quand il n'y a plus personne sur la plaque, en poussant
 ceux qui sont dans l'embrasure vers le côté le plus proche et en arrêtant les tirs
-encore en route, et ne peut plus être ouverte pendant 8 secondes. Une plaque à la
+encore en route, et ne peut plus être ouverte pendant une demi-seconde. Une plaque à la
 couleur d'une équipe ne répond qu'à cette équipe. Les bots se tiennent sur la
 plaque de leur équipe quand aucun ennemi n'est proche.
 

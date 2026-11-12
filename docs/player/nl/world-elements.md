@@ -55,8 +55,8 @@ druk dan op **Space** om erheen te lopen en hem over te halen.
 
 Sommige poorten gaan in plaats daarvan open met een **drukplaat**: een
 stenen schijf die wegzakt en koperkleurig wordt zolang iemand erop staat. De
-poort gaat dicht als de laatste eraf stapt, en de plaat heeft een paar
-seconden nodig voordat hij hem weer opent. Sommige platen reageren maar op
+poort gaat dicht als de laatste eraf stapt, en de plaat opent hem een halve
+seconde later weer. Sommige platen reageren maar op
 één team.
 
 ## Portalen

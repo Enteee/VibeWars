@@ -22,6 +22,10 @@
  *                                    from Wayback, and its history (#1380)
  *   hub watch ci <pr> [--note <text>]  told in your inbox when CI on the PR's
  *                                    head ends (#736); hub watch ls, hub watch rm <id>
+ *   hub note add "<keywords>" <text...> | ls | read <id> | rm <id>
+ *                                    your role's notepad (#3129), kept across
+ *                                    restarts; the manager reads another's
+ *                                    with --role <role>
  *   hub board ls|show|changes ...    hubd's copy of the board, as JSON (what
  *                                    `board` reads; see hub-board.mjs)
  *   company reboot "<reason>"        manager only: proposes a reboot to the
@@ -158,6 +162,16 @@ if (argv[0] === "whoami") {
   console.log(
     `  ${schedules.allow ? "yes" : "no "}  keep recurring reminders to yourself (hub schedule)`,
   );
+  const notes = authorize(ROLE, { kind: "note", argv: ["ls"] }, { acting: ACTING });
+  console.log(`  ${notes.allow ? "yes" : "no "}  keep notes for your role (hub note)`);
+  const otherNotes = authorize(
+    ROLE,
+    { kind: "note", argv: ["ls", "--role", "developer"] },
+    { acting: ACTING },
+  );
+  console.log(
+    `  ${otherNotes.allow ? "yes" : "no "}  read another role's notes (hub note ls --role <role>)`,
+  );
   const watches = authorize(ROLE, { kind: "watch", argv: ["ls"] }, { acting: ACTING });
   console.log(
     `  ${watches.allow ? "yes" : "no "}  be told when CI on a PR ends (hub watch ci <pr>)`,
@@ -208,6 +222,9 @@ if (argv[0] === "push") {
 } else if (argv[0] === "schedule") {
   // Your own recurring reminders (#678): add, ls, rm. hubd checks the words.
   request = { kind: "schedule", argv: argv.slice(1) };
+} else if (argv[0] === "note") {
+  // Your role's notepad (#3129): add, ls, read, rm. hubd checks the words.
+  request = { kind: "note", argv: argv.slice(1) };
 } else if (argv[0] === "board" && argv[1] === "rank") {
   // The manager ordering the board (#351), for `board rank`.
   request = { kind: "rank", argv: argv.slice(2) };

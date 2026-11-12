@@ -1180,6 +1180,33 @@ describe("hub schedule (#678)", () => {
   });
 });
 
+describe("hub note (#3129)", () => {
+  it("is kept by every role, and only the manager reads another's with --role", () => {
+    for (const role of ROLES) {
+      expect(authorize(role, { kind: "note", argv: ["ls"] }), role).toMatchObject({ allow: true });
+    }
+    expect(
+      authorize("manager", { kind: "note", argv: ["ls", "--role", "developer"] }),
+    ).toMatchObject({ allow: true });
+    expect(
+      authorize("developer", { kind: "note", argv: ["read", "n1", "--role", "manager"] }),
+    ).toMatchObject({
+      allow: false,
+      reason: "note: only the manager reads another role's notes (--role)",
+    });
+  });
+
+  it("is not lent by a hat", () => {
+    expect(
+      authorize(
+        "lead-dev",
+        { kind: "note", argv: ["ls", "--role", "developer"] },
+        { acting: ["manager"] },
+      ),
+    ).toMatchObject({ allow: false });
+  });
+});
+
 describe("the business-analyst (#893)", () => {
   const ba = "business-analyst";
 

@@ -57,8 +57,8 @@ Högerklicka på en spak för att välja den som mål, och tryck sedan på
 
 Vissa portar öppnas i stället av en **tryckplatta**: en stenskiva som
 sjunker och blir mässingsfärgad medan någon står på den. Porten stängs
-när den sista kliver av, och plattan behöver några sekunder innan den
-öppnar porten igen. Vissa plattor svarar bara på ett lag.
+när den sista kliver av, och plattan öppnar porten igen en halv
+sekund senare. Vissa plattor svarar bara på ett lag.
 
 ## Portaler
 

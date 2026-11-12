@@ -56,8 +56,8 @@ y pulsa **Space** para ir hasta ella y accionarla.
 
 Algunas puertas se abren con una **placa de presión**: un disco de piedra que
 se hunde y se vuelve de latón mientras alguien está encima. La puerta se cierra
-cuando el último se baja, y su placa necesita unos segundos antes de volver a
-abrirla. Algunas placas solo responden a un equipo.
+cuando el último se baja, y su placa vuelve a abrirla medio segundo
+después. Algunas placas solo responden a un equipo.
 
 ## Portales
 

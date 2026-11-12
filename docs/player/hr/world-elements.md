@@ -55,8 +55,8 @@ povučeš je.
 
 Neka se vrata umjesto toga otvaraju **pločom na pritisak**: kamenim diskom
 koji se spusti i postane mjeden dok netko stoji na njemu. Vrata se zatvore
-kad posljednji siđe, a ploči treba nekoliko sekundi prije nego što ih
-ponovno otvori. Neke ploče odgovaraju samo jednom timu.
+kad posljednji siđe, a ploča ih
+ponovno otvori pola sekunde kasnije. Neke ploče odgovaraju samo jednom timu.
 
 ## Portali
 

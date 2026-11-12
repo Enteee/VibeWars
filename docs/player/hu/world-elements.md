@@ -56,8 +56,8 @@ odamenj és átbillentsd.
 
 Néhány kapu ehelyett **nyomólappal** nyílik: kőkoronggal, amely
 besüllyed és sárgarezessé válik, amíg valaki rajta áll. A kapu bezárul,
-amikor az utolsó is lelép, és a lapnak néhány másodperc kell, mielőtt újra
-kinyitná. Néhány lap csak az egyik csapatnak engedelmeskedik.
+amikor az utolsó is lelép, és a lap fél másodperccel később újra
+kinyitja. Néhány lap csak az egyik csapatnak engedelmeskedik.
 
 ## Portálok
 

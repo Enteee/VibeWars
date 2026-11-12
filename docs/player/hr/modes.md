@@ -389,7 +389,7 @@ Karta može imati **vrata**: zidove koji zaustavljaju tijela, hice i pogled dok 
 zatvoreni. Stani na ploču vrata da ih otvoriš. Zatvaraju se kad
 na ploči nitko ne ostane, gurajući svakoga na vratima na bližu
 stranu i zaustavljajući hice koji još prolaze kroz njih, a ne mogu se
-ponovno otvoriti 8 sekundi. Ploča u boji tima odgovara samo tom
+ponovno otvoriti pola sekunde. Ploča u boji tima odgovara samo tom
 timu. Botovi stoje na ploči svog tima kad nijedan neprijatelj nije blizu.
 
 ## Tri tima

@@ -126,7 +126,7 @@ Skupina s méně než 8 hráči jde do fronty s boty na prázdných místech, s 
 
 Tři arény Výstupu se dají vybrat i ve Vlastní hře: **The Hollow Deep** (Vyhlazení 8v8, tři klikaté tunely kolem centrální skály), **Blackwater Ford** (Vyhlazení s knězem 8v8 na malém brodu, základny skoro na dohled, kněz oživuje své mrtvé každé 2 minuty) a **Mosslit Cairns** (Dobývání bodů 8v8, pět mohyl v mělkém cik-caku mezi základnami). Čtvrtá je **The Brazen Causeway** (Vyhlazení s knězem 8v8 na kruhu kolem propadlé jámy: úzká mezera prochází branou každé základny, která stojí dokořán, jen dokud někdo z jejího týmu drží plošinu Gate Lock).
 
-Mapa může mít **brány**: zdi, které v zavřeném stavu zastaví těla, střely i výhled. Bránu otevřeš tím, že se postavíš na její nášlapnou plošinu. Zavře se, když na plošině nikdo nezůstane, odstrčí každého ve dveřích na bližší stranu, zastaví střely právě letící skrz a 8 sekund ji nelze znovu otevřít. Plošina v barvě týmu reaguje jen na daný tým. Boti stojí na plošině svého týmu, když poblíž není žádný nepřítel.
+Mapa může mít **brány**: zdi, které v zavřeném stavu zastaví těla, střely i výhled. Bránu otevřeš tím, že se postavíš na její nášlapnou plošinu. Zavře se, když na plošině nikdo nezůstane, odstrčí každého ve dveřích na bližší stranu, zastaví střely právě letící skrz a půl sekundy ji nelze znovu otevřít. Plošina v barvě týmu reaguje jen na daný tým. Boti stojí na plošině svého týmu, když poblíž není žádný nepřítel.
 
 ## Tři týmy
 

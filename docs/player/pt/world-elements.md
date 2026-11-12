@@ -55,8 +55,8 @@ acioná-la.
 
 Alguns portões abrem com uma **placa de pressão**: um disco de pedra que
 afunda e fica cor de latão enquanto alguém está sobre ele. O portão fecha
-quando o último sai, e a placa precisa de alguns segundos antes de abri-lo de
-novo. Algumas placas só respondem a uma equipe.
+quando o último sai, e a placa o abre de novo meio segundo
+depois. Algumas placas só respondem a uma equipe.
 
 ## Portais
 

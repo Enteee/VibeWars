@@ -195,6 +195,7 @@ import {
   scheduleReader,
   SEEDED_SCHEDULES,
 } from "./schedule.mjs";
+import { parseNotes, planNoteCommand } from "./notes.mjs";
 import { createIssueBatch, newIssueMessage, WINDOW_MS } from "./new-issues.mjs";
 import {
   applyStaff,
@@ -310,6 +311,8 @@ const STAFF = path.join(ROOT, "staff.json");
 const ALIVE = path.join(HUB, HUBD_ALIVE);
 /** `schedules.json`: the schedulers' own recurring reminders to themselves (#678). Host-only. */
 const SCHEDULES = path.join(HUB, "schedules.json");
+/** `notes.json`: every role's notepad (#3129). Host-only, so it outlives reboots and worktrees. */
+const NOTES = path.join(HUB, "notes.json");
 
 /** `nudges.json`: when hubd began counting and what it sent, for the dashboard (#547). */
 const NUDGES = path.join(HUB, "nudges.json");
@@ -3669,6 +3672,36 @@ function schedule(role, argv) {
   return { allow: true, code: 0, stdout: plan.stdout, stderr: "" };
 }
 
+/**
+ * `hub note add|ls|read|rm` (#3129): the role's notepad, read from the
+ * file on every request, since the briefing reads it too. Expired notes
+ * are dropped on the way; requests are served one at a time, so read,
+ * plan and write cannot interleave. A file of another shape starts empty.
+ *
+ * @param {string} employee
+ * @param {string} role
+ * @param {string[]} argv
+ * @returns {Record<string, unknown>}
+ */
+function note(employee, role, argv) {
+  const kind = "note";
+  /** @type {string} */
+  let json = "";
+  try {
+    json = fs.readFileSync(NOTES, "utf8");
+  } catch {
+    // No notes yet.
+  }
+  const plan = planNoteCommand(parseNotes(json), { role, employee, argv, now: Date.now() });
+  if ("refuse" in plan) {
+    audit({ role, kind, argv, decision: "refused", reason: plan.refuse });
+    return { allow: false, reason: plan.refuse, code: 77 };
+  }
+  writeAtomic(NOTES, JSON.stringify(plan.next));
+  audit({ role, kind, argv, decision: "allowed" });
+  return { allow: true, code: 0, stdout: plan.stdout, stderr: "" };
+}
+
 /* -------------------------------------------------------------------------- */
 /* Watches (#736)                                                             */
 /* -------------------------------------------------------------------------- */
@@ -4086,6 +4119,10 @@ async function serve(request, verdict, acting) {
 
   if (kind === "schedule") {
     return schedule(role, argv);
+  }
+
+  if (kind === "note") {
+    return note(employee, role, argv);
   }
 
   if (kind === "rank") {

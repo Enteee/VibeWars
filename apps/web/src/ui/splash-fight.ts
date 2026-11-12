@@ -123,6 +123,8 @@ export interface SplashFight {
   readonly canvas: HTMLCanvasElement;
   /** Stops everything; resolves once its WebGL context is released. */
   readonly stop: () => Promise<void>;
+  /** Resolves once its first snapshot has been drawn; never in a hidden tab. */
+  readonly firstFrame: Promise<void>;
 }
 
 /**
@@ -158,7 +160,17 @@ export async function startSplashFight(
   const walls = map.descriptor.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
   const { width, height } = map.descriptor;
   viewport.setArenaBounds(width, height);
+  let drawn = (): void => undefined;
+  const firstFrame = new Promise<void>((resolve) => {
+    drawn = resolve;
+  });
+  // A step comes before its frame is drawn, so the one after the first
+  // snapshot's is the first that finds it on screen.
+  let snapshotSet = false;
   const offFrame = viewport.onFrame((deltaSeconds) => {
+    if (snapshotSet) {
+      drawn();
+    }
     if (!fight.still) {
       connection.advance(Math.min(deltaSeconds, MAX_STEP_SECONDS));
     }
@@ -177,9 +189,11 @@ export async function startSplashFight(
         structure,
       ),
     );
+    snapshotSet = true;
   });
   return {
     canvas: viewport.canvas,
+    firstFrame,
     stop: () => {
       offFrame();
       void connection.disconnect();

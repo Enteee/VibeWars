@@ -57,8 +57,8 @@ premi **Space** per andarci e azionarla.
 
 Alcuni cancelli si aprono invece con una **piastra a pressione**: un disco
 di pietra che si abbassa e diventa d'ottone mentre qualcuno ci sta sopra.
-Il cancello si chiude quando scende l'ultimo, e la piastra ha bisogno di
-qualche secondo prima di poterlo riaprire. Alcune piastre rispondono a una
+Il cancello si chiude quando scende l'ultimo, e la piastra lo riapre mezzo
+secondo dopo. Alcune piastre rispondono a una
 sola squadra.
 
 ## Portali

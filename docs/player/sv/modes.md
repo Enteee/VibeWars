@@ -409,7 +409,7 @@ En karta kan ha **portar**: murar som stoppar kroppar, skott och sikt när
 de är stängda. Stå på en ports tryckplatta för att öppna den. Den stängs
 när ingen längre står på plattan, knuffar den som står i öppningen till
 närmaste sida och stoppar skott som fortfarande är på väg igenom, och
-kan inte öppnas igen på 8 sekunder. En platta i ett lags färg svarar
+kan inte öppnas igen på en halv sekund. En platta i ett lags färg svarar
 bara på det laget. Bottar står på sitt eget lags platta när ingen fiende
 är nära.
 
