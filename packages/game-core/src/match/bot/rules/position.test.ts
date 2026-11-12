@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { RANGE_MELEE, RANGE_SPELL } from "../../../distances.js";
 import { distance, vec2, type Vec2 } from "../../../vec2.js";
-import { createCursor } from "../../behaviour.js";
+import { createCursor, type BehaviourContext } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
 import position, { keptSpot } from "./position.js";
 import { POSITION_SLACK, foeReach } from "./shared.js";
-import { ELEMENTALIST, MONK, WARRIOR, fighter, match, ruleFor } from "./test-support.js";
+import { ELEMENTALIST, MONK, RANGER, WARRIOR, fighter, match, ruleFor } from "./test-support.js";
 
 describe("position (#2545)", () => {
   const FOE = vec2(1200, 400);
@@ -296,5 +296,81 @@ describe("foeReach (#2598)", () => {
     const cache = new Map<string, number>();
     const first = foeReach(cache, warrior);
     expect(foeReach(cache, withWeaponRange(1000))).toBe(first);
+  });
+});
+
+describe("the high ground (#3141)", () => {
+  const FOE = vec2(1200, 400);
+  const SECOND = vec2(900, 100);
+  const sides = (build: typeof RANGER, x = 100, second = false) =>
+    match([
+      fighter("r", 0, build, vec2(x, 400)),
+      fighter("foe", 1, WARRIOR, FOE),
+      ...(second ? [fighter("caster", 1, ELEMENTALIST, SECOND)] : []),
+    ]);
+  /** Where `r` holds on the floor, with no high ground about. */
+  const floorSpot = (build: typeof RANGER): Vec2 => {
+    const spot = position.decide(ruleFor(sides(build), "r", { targetId: "foe" }))?.moveTo;
+    if (spot === undefined) throw new Error("no spot");
+    return spot;
+  };
+  const ledge = (at: Vec2, layer = 1) => [{ point: vec2(at.x, at.y - 100), layer }];
+  const think = (
+    build: typeof RANGER,
+    extra: Partial<BehaviourContext>,
+    { x = 100, second = false } = {},
+  ) => position.decide(ruleFor(sides(build, x, second), "r", { targetId: "foe" }, extra));
+
+  it("takes a bow up onto a ledge over its target as safe as the floor", () => {
+    const spot = floorSpot(RANGER);
+    const highGround = ledge(spot);
+    const intent = think(RANGER, { highGround });
+    expect(intent?.moveTo).toEqual(highGround[0]?.point);
+    expect(intent?.moveToLayer).toBe(1);
+  });
+
+  it("takes it from within reach of its target too, and stays once up there", () => {
+    const spot = floorSpot(RANGER);
+    const highGround = ledge(spot);
+    expect(think(RANGER, { highGround }, { x: spot.x })?.moveToLayer).toBe(1);
+    const up = sides(RANGER, spot.x);
+    const bot = up.get("r");
+    const top = highGround[0];
+    if (bot === undefined || top === undefined) throw new Error("no bot");
+    bot.position = top.point;
+    bot.layer = top.layer;
+    bot.floors = 1 << top.layer;
+    expect(position.decide(ruleFor(up, "r", { targetId: "foe" }, { highGround }))).toBeUndefined();
+  });
+
+  it("stays on the floor when more foes can hit the ledge", () => {
+    const spot = floorSpot(RANGER);
+    const highGround = ledge(spot);
+    // The caster sees the ledge, never the floor.
+    const seesBetween = (from: Vec2, _to: Vec2, _fromLayer: number, toLayer: number) =>
+      !(from.x === SECOND.x && from.y === SECOND.y && toLayer === 0);
+    const intent = think(RANGER, { highGround, seesBetween }, { second: true });
+    expect(intent?.moveTo).toBeDefined();
+    expect(intent?.moveToLayer).toBeUndefined();
+  });
+
+  it("leaves a caster on the floor: spells do not feel height", () => {
+    const spot = floorSpot(ELEMENTALIST);
+    const intent = think(ELEMENTALIST, { highGround: ledge(spot) });
+    expect(intent?.moveTo).toEqual(spot);
+    expect(intent?.moveToLayer).toBeUndefined();
+  });
+
+  it("skips a ledge whose stairs are a trek", () => {
+    const spot = floorSpot(RANGER);
+    const intent = think(RANGER, { highGround: ledge(spot), routeLength: () => 1e6 });
+    expect(intent?.moveTo).toEqual(spot);
+    expect(intent?.moveToLayer).toBeUndefined();
+  });
+
+  it("chooses as on a flat map with no spot above its target", () => {
+    const spot = floorSpot(RANGER);
+    expect(think(RANGER, { highGround: ledge(spot, 0) })).toEqual(think(RANGER, {}));
+    expect(think(RANGER, { highGround: [] })?.moveTo).toEqual(spot);
   });
 });

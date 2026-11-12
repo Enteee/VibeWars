@@ -36,6 +36,7 @@ acabar com ele. Em Rei da Colina, enquanto sua equipe não controla o
 altar, o Herói Fantasmagórico da outra equipe no altar vem antes até
 disso. Um bot que se adianta demais espera os outros antes de seguir.
 
+Arqueiros e lanceiros tomam o terreno alto quando é seguro.
 Sem nenhum inimigo por perto, um bot puxa a alavanca que abre um caminho mais curto até os inimigos.
 
 Os bots de dano guardam os golpes grandes, habilidades de ataque e

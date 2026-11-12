@@ -286,6 +286,7 @@ import {
   type BehaviourCursor,
   type BotLever,
   type BotObjectives,
+  type HighGroundSpot,
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -1267,6 +1268,40 @@ function pathLength(from: Vec2, path: readonly Vec2[]): number {
   return total;
 }
 
+/** How far toward its deck's centroid `highGroundSpots` pulls each corner. */
+const HIGH_GROUND_INSET = 0.25;
+
+/**
+ * Where bots may stand above the ground (#3141): on each deck over it,
+ * its corners' average and each corner pulled `HIGH_GROUND_INSET` toward it,
+ * those a body could stand on, in map order. A tunnel, the ground's own
+ * deck, is no high ground.
+ */
+export function highGroundSpots(
+  layers: MatchLayers,
+  standable: (point: Vec2, layer: number) => boolean,
+): HighGroundSpot[] {
+  const spots: HighGroundSpot[] = [];
+  for (const { layer, footprint } of layers.decks) {
+    if (layer <= layers.ground || footprint.length === 0) {
+      continue;
+    }
+    const centre = scale(
+      footprint.reduce((sum, corner) => add(sum, corner), ZERO),
+      1 / footprint.length,
+    );
+    const inset = footprint.map((corner) =>
+      add(corner, scale(sub(centre, corner), HIGH_GROUND_INSET)),
+    );
+    for (const point of [centre, ...inset]) {
+      if (standable(point, layer)) {
+        spots.push({ point, layer });
+      }
+    }
+  }
+  return spots;
+}
+
 /** How far a body walks along `route` from `from`: a teleport's jump (#3030) costs nothing. */
 function walkLength(from: Vec2, route: readonly RouteWaypoint[]): number {
   let total = 0;
@@ -1372,6 +1407,8 @@ export class MatchSimulation {
   readonly #climbable: MatchLayers["transitions"];
   /** The decks there are now (#3068): every one but a switched deck that is down. */
   #standingDecks: MatchLayers["decks"] = NO_DECKS;
+  /** Where bots may stand above the ground (#3141): see `highGroundSpots`. */
+  readonly #highGround: readonly HighGroundSpot[];
   /** Who reached a switch this step (#3025), in simulation order. */
   #switchArrivals: CarriedArrival[] = [];
   /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
@@ -1591,6 +1628,10 @@ export class MatchSimulation {
     this.#layerSight = this.#wallsByLayer(true);
     this.#layerBlockers = this.#blockersByLayer();
     this.#standingDecks = this.#decksStanding();
+    this.#highGround =
+      this.#layers === undefined
+        ? []
+        : highGroundSpots(this.#layers, (point, layer) => isStandable(this.#graphOn(layer), point));
     this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
     this.#rng = createRng(this.#seed);
     this.#flagField = options.flagField;
@@ -4814,6 +4855,11 @@ export class MatchSimulation {
       projectiles: this.#projectiles,
       seed: this.#seed,
       now: this.#elapsedSeconds,
+      highGround: this.#highGround,
+      routeLength: (to, layer) => {
+        const route = this.#paths.find(record.position, record.layer, to, layer);
+        return route === undefined ? Number.POSITIVE_INFINITY : walkLength(record.position, route);
+      },
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;

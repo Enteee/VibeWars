@@ -37,6 +37,7 @@ sunağı elinde tutmuyorken, diğer takımın sunaktaki Ghostly Hero'su bundan
 bile önce gelir. Takımının çok önüne geçen bir bot, ilerlemeden önce
 diğerlerini bekler.
 
+Okçular ve mızrakçılar güvenli olduğunda yüksek yeri tutar.
 Yakında düşman yoksa bot, düşmanlara daha kısa bir yol açan kolu çeker.
 
 Hasar veren botlar büyük vuruşlarını, saldırı becerilerini ve hasar

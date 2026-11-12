@@ -37,6 +37,7 @@ mientras tu equipo no controla el altar, el Héroe Fantasmal del otro equipo
 sobre el altar va incluso antes. Un bot que se adelanta mucho a su equipo
 espera al resto antes de seguir.
 
+Los arqueros y lanceros toman el terreno elevado cuando es seguro.
 Si no hay ningún enemigo cerca, un bot acciona la palanca que abre un camino más corto hacia los enemigos.
 
 Los bots de daño guardan sus golpes fuertes, habilidades de ataque y

@@ -6,7 +6,7 @@ import { getSkill } from "../../../skills/catalog.js";
 import { STARTER_BUILDS } from "../../../starter-builds.js";
 import { STARTER_TEAMS } from "../../../starter-teams.js";
 import { TEST_BUILDS } from "../../../testing.js";
-import { add, scale, ZERO, type Vec2 } from "../../../vec2.js";
+import { add, distance, scale, ZERO, type Vec2 } from "../../../vec2.js";
 import {
   createCursor,
   decide,
@@ -141,6 +141,8 @@ export function contextFor(
     projectiles: sim.projectiles,
     seed: CONTEXT_SEED,
     now: sim.elapsedSeconds,
+    highGround: [],
+    routeLength: (to) => distance(self.position, to),
     ...extra,
   };
 }

@@ -36,6 +36,7 @@ altar, the other team's Ghostly Hero on the altar comes before even that.
 A bot that gets far ahead of its team waits for the rest before it pushes
 on.
 
+Archers and spearmen take the high ground when it is safe.
 With no foe near, a bot throws a lever that opens a shorter way to the foes.
 
 Bot damage dealers hold their big hits, attack skills and damage spells,

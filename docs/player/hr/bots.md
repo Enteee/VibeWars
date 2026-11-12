@@ -36,6 +36,7 @@ Sablasni heroj drugog tima na oltaru dolazi čak i prije toga.
 Bot koji jako odmakne od tima čeka ostale prije nego što krene
 dalje.
 
+Strijelci i kopljanici zauzmu uzvisinu kad je to sigurno.
 Kad nijedan neprijatelj nije blizu, bot povuče polugu koja otvara kraći put do neprijatelja.
 
 Botovi koji nanose štetu čuvaju velike udarce, vještine napada i čarolije štete,

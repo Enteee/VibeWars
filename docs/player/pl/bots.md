@@ -34,6 +34,7 @@ nie utrzymuje ołtarza, Upiorny Bohater drugiej drużyny na ołtarzu ma pierwsze
 nawet przed tym. Bot, który znacznie wysunie się przed drużynę, czeka na resztę,
 zanim ruszy dalej.
 
+Łucznicy i włócznicy zajmują wzniesienie, gdy jest to bezpieczne.
 Gdy w pobliżu nie ma wroga, bot przestawia dźwignię, która otwiera krótszą drogę do wrogów.
 
 Boty zadające obrażenia wstrzymują swoje mocne ciosy, umiejętności ataku i czary

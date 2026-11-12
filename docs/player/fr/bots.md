@@ -37,6 +37,7 @@ la colline, tant que ton équipe ne tient pas l'autel, le Héros fantomatique
 adverse sur l'autel passe même avant. Un bot qui prend trop d'avance sur son
 équipe attend les autres avant de continuer.
 
+Les archers et les lanciers prennent les hauteurs quand c'est sans danger.
 Sans ennemi à proximité, un bot actionne le levier qui ouvre un chemin plus court vers les ennemis.
 
 Les bots attaquants gardent leurs gros coups, compétences d'attaque et sorts
