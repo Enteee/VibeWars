@@ -212,14 +212,15 @@ IP-adress.
 
 ## I en match
 
-- Klicka på marken för att gå dit, eller rör dig med piltangenterna.
+- Klicka på marken för att gå dit, eller rör dig med **W A S D** eller
+  piltangenterna.
 - Högerklicka på en fiende för att välja den som mål, eller tryck på
   **Tab** för nästa. Tryck på **Space**, eller högerklicka på fienden
   igen, för att attackera den.
-- Dina åtta förmågor ligger på **Q W E R** och **A S D F**, plats 1
-  först. Du kan också klicka på en förmåga på raden för att använda den.
-- **Esc** avbryter det du gör. Varje tangent kan ändras under
-  **Alternativ**, under Kontroller; förvalet Klassisk lägger förmågorna på
-  1 till 8 och rörelsen på WASD. Alla finns i [Kontroller](controls.md).
+- Dina åtta förmågor ligger på **1** till **8**, plats 1 först. Du kan också
+  klicka på en förmåga på raden för att använda den.
+- **Esc** avbryter det du gör. Varje tangent kan ändras under **Alternativ**,
+  under Kontroller; förvalet VibeWars lägger förmågorna på Q W E R och A S D F
+  och rörelsen på piltangenterna. Alla finns i [Kontroller](controls.md).
 
 Knappen [?] uppe till höger öppnar den här Hjälpen igen, även i en match.

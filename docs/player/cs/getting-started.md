@@ -67,9 +67,9 @@ Online hra je peer to peer: ostatní hráči v tvém zápase vidí tvoji IP adre
 
 ## V zápase
 
-- Kliknutím na zem tam dojdeš, nebo se pohybuj šipkami.
+- Kliknutím na zem tam dojdeš, nebo se pohybuj **W A S D** nebo šipkami.
 - Kliknutím pravým na nepřítele ho zaměříš, nebo stiskni **Tab** pro dalšího. Stiskni **Space** nebo na nepřítele znovu klikni pravým a zaútočíš.
-- Tvých osm dovedností je na **Q W E R** a **A S D F**, první je pozice 1. Dovednost použiješ i kliknutím na liště.
-- **Esc** zruší, co právě děláš. Každou klávesu můžeš změnit v **Možnostech**, v sekci ovládání; klasická předvolba dá dovednosti na 1 až 8 a pohyb na WASD. Všechny jsou v [Ovládání](controls.md).
+- Tvých osm dovedností je na **1** až **8**, první je pozice 1. Dovednost použiješ i kliknutím na liště.
+- **Esc** zruší, co právě děláš. Každou klávesu můžeš změnit v **Možnostech**, v sekci ovládání; předvolba VibeWars dá dovednosti na Q W E R a A S D F a pohyb na šipky. Všechny jsou v [Ovládání](controls.md).
 
 Tlačítko [?] vpravo nahoře otevře tuto Nápovědu znovu, i v zápase.

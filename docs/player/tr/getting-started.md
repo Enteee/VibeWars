@@ -216,15 +216,15 @@ görür.
 
 ## Maçta
 
-- Oraya yürümek için yere tıkla ya da ok tuşlarıyla hareket et.
+- Oraya yürümek için yere tıkla ya da **W A S D** veya ok tuşlarıyla hareket et.
 - Bir düşmanı hedef almak için ona sağ tıkla ya da bir sonraki için
   **Tab**'a bas. Ona saldırmak için **Space**'e bas ya da düşmana tekrar
   sağ tıkla.
-- Sekiz becerin **Q W E R** ve **A S D F** üzerindedir, 1. yuva ilk.
-  Bir beceriyi kullanmak için çubuktaki beceriye tıklayabilirsin de.
-- **Esc** yaptığın şeyi iptal eder. Her tuş **Ayarlar**'da, kontroller
-  altında değiştirilebilir; Klasik hazır ayarı becerileri 1'den 8'e
-  koyar ve WASD ile hareket ettirir. Hepsi [Kontroller](controls.md)
+- Sekiz becerin **1** ile **8** arasındaki tuşlardadır, 1. yuva ilk. Bir
+  beceriyi kullanmak için çubuktaki beceriye tıklayabilirsin de.
+- **Esc** yaptığın şeyi iptal eder. Her tuş **Ayarlar**'da, kontroller altında
+  değiştirilebilir; VibeWars hazır ayarı becerileri Q W E R ve A S D F'ye koyar
+  ve ok tuşlarıyla hareket ettirir. Hepsi [Kontroller](controls.md)
   sayfasındadır.
 
 Sağ üstteki [?] düğmesi bu Yardım'ı yeniden açar, maçta da.

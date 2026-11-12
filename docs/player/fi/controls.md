@@ -8,22 +8,22 @@ näkymä kertoo, mikä toiminto menetti sen. Muutokset tallentuvat heti.
 
 ## Näppäimet
 
-Oletusesiasetus on **VibeWars**. **Klassinen** on GW1:een tottuneille
-käsille.
+Oletusesiasetus on **Klassinen**, GW1:een tottuneille käsille. **VibeWars**
+käyttää taitoja vasemmalla kädellä ja liikkuu nuolinäppäimillä.
 
-| Toiminto                               | VibeWars         | Klassinen                  |
-| -------------------------------------- | ---------------- | -------------------------- |
-| Taidot 1–8                             | Q W E R, A S D F | 1–8                        |
-| Liike                                  | nuolinäppäimet   | W A S D tai nuolinäppäimet |
-| Asesarjat 1–4                          | 1–4              | F1–F4                      |
-| Hyökkää tai käytä lippua               | Space            | Space                      |
-| Seuraava vihollinen (Shift: edellinen) | Tab              | Tab                        |
-| Lähin vihollinen                       | C                | C                          |
-| Tiimisi ilmoittama vihollinen          | T                | T                          |
-| Sinä itse                              | G                | G                          |
-| Näytä nimet (pidä pohjassa)            | Shift            | Shift                      |
-| Mykistä                                | M                | M                          |
-| Pudota lippu, reliikki tai tuhkat      | ei näppäintä     | ei näppäintä               |
+| Toiminto                               | Klassinen                  | VibeWars         |
+| -------------------------------------- | -------------------------- | ---------------- |
+| Taidot 1–8                             | 1–8                        | Q W E R, A S D F |
+| Liike                                  | W A S D tai nuolinäppäimet | nuolinäppäimet   |
+| Asesarjat 1–4                          | F1–F4                      | 1–4              |
+| Hyökkää tai käytä lippua               | Space                      | Space            |
+| Seuraava vihollinen (Shift: edellinen) | Tab                        | Tab              |
+| Lähin vihollinen                       | C                          | C                |
+| Tiimisi ilmoittama vihollinen          | T                          | T                |
+| Sinä itse                              | G                          | G                |
+| Näytä nimet (pidä pohjassa)            | Shift                      | Shift            |
+| Mykistä                                | M                          | M                |
+| Pudota lippu, reliikki tai tuhkat      | ei näppäintä               | ei näppäintä     |
 
 Nämä näppäimet ovat kiinteitä:
 

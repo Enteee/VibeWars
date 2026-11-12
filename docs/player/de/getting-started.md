@@ -196,13 +196,15 @@ Online spielst du Peer-to-Peer: Die anderen Spieler in deinem Match sehen deine 
 
 ## Im Match
 
-- Klick auf den Boden, um dorthin zu laufen, oder lauf mit den Pfeiltasten.
+- Klick auf den Boden, um dorthin zu laufen, oder lauf mit **W A S D** oder den
+  Pfeiltasten.
 - Klick einen Gegner rechts an, um ihn anzuvisieren, oder drück **Tab** für den nächsten.
   Drück **Space** oder klick den Gegner noch einmal rechts an, um ihn anzugreifen.
-- Deine acht Skills liegen auf **Q W E R** und **A S D F**, Feld 1 zuerst. Du kannst auch auf
-  einen Skill auf der Leiste klicken.
-- **Esc** bricht ab, was du gerade tust. Jede Taste kannst du in den **Optionen** unter Steuerung
-  ändern; die Vorlage Klassisch legt die Skills auf 1 bis 8 und läuft mit WASD. Alle stehen unter
+- Deine acht Skills liegen auf **1** bis **8**, Feld 1 zuerst. Du kannst auch
+  auf einen Skill auf der Leiste klicken.
+- **Esc** bricht ab, was du gerade tust. Jede Taste kannst du in den
+  **Optionen** unter Steuerung ändern; die Vorlage VibeWars legt die Skills auf
+  Q W E R und A S D F und läuft mit den Pfeiltasten. Alle stehen unter
   [Steuerung](controls.md).
 
 Der Knopf [?] oben rechts öffnet diese Hilfe wieder, auch im Match.

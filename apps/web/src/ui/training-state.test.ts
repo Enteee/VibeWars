@@ -81,20 +81,20 @@ describe("buildSignature", () => {
 });
 
 describe("armedHint (#302)", () => {
-  it("names the keymap's keys: arrows and Q–F by default, WASD and 1–8 in Classic", () => {
+  it("names the keymap's keys: WASD and 1–8 by default, arrows and Q–F in VibeWars", () => {
     const rest = [
       t("training.hintTarget", { key: t("keys.tab").toLowerCase() }),
       t("training.hintAttack", { key: t("keys.space").toLowerCase() }),
       t("training.hintRelease"),
     ];
-    expect(armedHint(DEFAULT_KEYMAP)).toBe(
+    expect(armedHint(KEYMAP_PRESETS.vibewars)).toBe(
       [
         t("training.hintMoveArrows"),
         t("training.hintCast", { first: "Q", last: "F" }),
         ...rest,
       ].join(" · "),
     );
-    expect(armedHint(KEYMAP_PRESETS.classic)).toBe(
+    expect(armedHint(DEFAULT_KEYMAP)).toBe(
       [
         t("training.hintMove", { keys: "WASD" }),
         t("training.hintCast", { first: "1", last: "8" }),

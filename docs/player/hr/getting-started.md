@@ -208,13 +208,13 @@ IP adresu.
 
 ## U meču
 
-- Klikni tlo da hodaš onamo ili se kreći strelicama.
+- Klikni tlo da hodaš onamo ili se kreći s **W A S D** ili strelicama.
 - Desni klik na neprijatelja da ga ciljaš ili pritisni **Tab** za sljedećeg.
   Pritisni **Space** ili ponovno desni klik na neprijatelja da ga napadneš.
-- Tvojih osam vještina nalazi se na **Q W E R** i **A S D F**, prvo mjesto 1.
-  Klikni i vještinu na traci da je upotrijebiš.
-- **Esc** prekida ono što radiš. Svaka se tipka može promijeniti u
-  **Opcijama**, pod kontrole; Klasični predložak stavlja vještine na 1 do 8
-  i kretanje na WASD. Sve su navedene u [Kontrolama](controls.md).
+- Tvojih osam vještina nalazi se na **1** do **8**, prvo mjesto 1. Klikni i
+  vještinu na traci da je upotrijebiš.
+- **Esc** prekida ono što radiš. Svaka se tipka može promijeniti u **Opcijama**,
+  pod kontrole; predložak VibeWars stavlja vještine na Q W E R i A S D F i
+  kretanje na strelice. Sve su navedene u [Kontrolama](controls.md).
 
 Gumb [?] gore desno ponovno otvara ovu Pomoć, i u meču.

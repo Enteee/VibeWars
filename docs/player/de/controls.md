@@ -8,21 +8,21 @@ hat. Änderungen werden sofort gespeichert.
 
 ## Tasten
 
-Die Standardvorlage heißt **VibeWars**. **Klassisch** ist für GW1-Hände.
+Die Standardvorlage heißt **Klassisch**, für GW1-Hände. **VibeWars** wirkt Skills mit der linken Hand und läuft mit den Pfeiltasten.
 
-| Aktion                                  | VibeWars         | Klassisch                |
-| --------------------------------------- | ---------------- | ------------------------ |
-| Skills 1 bis 8                          | Q W E R, A S D F | 1 bis 8                  |
-| Laufen                                  | Pfeiltasten      | W A S D oder Pfeiltasten |
-| Waffensets 1 bis 4                      | 1 bis 4          | F1 bis F4                |
-| Angriff oder Flagge nutzen              | Space            | Space                    |
-| Nächstes Ziel (Shift: vorheriges)       | Tab              | Tab                      |
-| Nächsten Gegner anvisieren              | C                | C                        |
-| Angesagten Gegner anvisieren            | T                | T                        |
-| Dich anvisieren                         | G                | G                        |
-| Namen zeigen (halten)                   | Shift            | Shift                    |
-| Stumm                                   | M                | M                        |
-| Flagge, Relikt oder Asche fallen lassen | keine Taste      | keine Taste              |
+| Aktion                                  | Klassisch                | VibeWars         |
+| --------------------------------------- | ------------------------ | ---------------- |
+| Skills 1 bis 8                          | 1 bis 8                  | Q W E R, A S D F |
+| Laufen                                  | W A S D oder Pfeiltasten | Pfeiltasten      |
+| Waffensets 1 bis 4                      | F1 bis F4                | 1 bis 4          |
+| Angriff oder Flagge nutzen              | Space                    | Space            |
+| Nächstes Ziel (Shift: vorheriges)       | Tab                      | Tab              |
+| Nächsten Gegner anvisieren              | C                        | C                |
+| Angesagten Gegner anvisieren            | T                        | T                |
+| Dich anvisieren                         | G                        | G                |
+| Namen zeigen (halten)                   | Shift                    | Shift            |
+| Stumm                                   | M                        | M                |
+| Flagge, Relikt oder Asche fallen lassen | keine Taste              | keine Taste      |
 
 Diese Tasten sind fest:
 

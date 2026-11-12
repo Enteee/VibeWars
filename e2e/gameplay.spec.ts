@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { expect, test, type Page, type Locator } from "@playwright/test";
 
-import type { KeyAction } from "../apps/web/src/input/keymap.js";
+import { KEYMAP_PRESETS, type KeyAction } from "../apps/web/src/input/keymap.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../packages/game-core/src/ruleset.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { projection } from "./camera.js";
@@ -343,12 +343,24 @@ test("holding a movement key moves the player on screen", async ({ page }) => {
   expect(moved.equals(idleAfter), "holding the up arrow should have moved the player").toBe(false);
 });
 
-test("the arrows move; A, once move-left, casts slot 5 and moves nobody (#302)", async ({
+test("a fresh player gets Classic: 1 casts slot 1 (#3134)", async ({ page }) => {
+  await startSoloMatch(page);
+  await expect(page.locator(".hud-skill-key").first()).toHaveText("1");
+});
+
+test("in VibeWars, the arrows move; A, once move-left, casts slot 5 and moves nobody (#302)", async ({
   page,
 }) => {
+  // Classic is the default (#3134): this is about the VibeWars layout, so pin it.
+  await page.addInitScript(
+    ({ key, vibewars }) => {
+      localStorage.setItem(key, JSON.stringify(vibewars));
+    },
+    { key: `${STORAGE_NAMESPACE}.keymap`, vibewars: KEYMAP_PRESETS.vibewars },
+  );
   const canvas = await startSoloMatch(page);
   await expect(page.locator(".hud-skill-key").first()).toHaveText("Q");
-  expect(key("skill-5")).toBe("KeyA");
+  expect(key("skill-5", KEYMAP_PRESETS.vibewars)).toBe("KeyA");
 
   // Slot 5 is Armor of Earth, a self-cast enchantment. Held, A casts it
   // once, and the player stays where they are while it is held.
@@ -362,9 +374,9 @@ test("the arrows move; A, once move-left, casts slot 5 and moves nobody (#302)",
   expect((await arenaShot(page, canvas)).equals(held), "A should not move the player").toBe(true);
   await page.keyboard.up("a");
 
-  await page.keyboard.down(key("move-right"));
+  await page.keyboard.down(key("move-right", KEYMAP_PRESETS.vibewars));
   await page.waitForTimeout(500);
-  await page.keyboard.up(key("move-right"));
+  await page.keyboard.up(key("move-right", KEYMAP_PRESETS.vibewars));
   await page.waitForTimeout(300);
   expect((await arenaShot(page, canvas)).equals(held), "the right arrow should move").toBe(false);
 });

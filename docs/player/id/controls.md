@@ -8,21 +8,21 @@ kehilangan tombolnya. Perubahan langsung tersimpan.
 
 ## Tombol
 
-Preset bawaan adalah **VibeWars**. **Klasik** untuk tangan yang terbiasa GW1.
+Preset bawaan adalah **Klasik**, untuk tangan yang terbiasa GW1. **VibeWars** memakai skill dengan tangan kiri dan bergerak dengan tombol panah.
 
-| Aksi                                 | VibeWars         | Klasik                     |
-| ------------------------------------ | ---------------- | -------------------------- |
-| Skill 1 sampai 8                     | Q W E R, A S D F | 1 sampai 8                 |
-| Bergerak                             | tombol panah     | W A S D, atau tombol panah |
-| Set senjata 1 sampai 4               | 1 sampai 4       | F1 sampai F4               |
-| Serang, atau pakai bendera           | Space            | Space                      |
-| Musuh berikutnya (Shift: sebelumnya) | Tab              | Tab                        |
-| Musuh terdekat                       | C                | C                          |
-| Musuh yang diumumkan timmu           | T                | T                          |
-| Diri sendiri                         | G                | G                          |
-| Tampilkan nama (tahan)               | Shift            | Shift                      |
-| Bisu                                 | M                | M                          |
-| Jatuhkan bendera, relik, atau abu    | tidak ada        | tidak ada                  |
+| Aksi                                 | Klasik                     | VibeWars         |
+| ------------------------------------ | -------------------------- | ---------------- |
+| Skill 1 sampai 8                     | 1 sampai 8                 | Q W E R, A S D F |
+| Bergerak                             | W A S D, atau tombol panah | tombol panah     |
+| Set senjata 1 sampai 4               | F1 sampai F4               | 1 sampai 4       |
+| Serang, atau pakai bendera           | Space                      | Space            |
+| Musuh berikutnya (Shift: sebelumnya) | Tab                        | Tab              |
+| Musuh terdekat                       | C                          | C                |
+| Musuh yang diumumkan timmu           | T                          | T                |
+| Diri sendiri                         | G                          | G                |
+| Tampilkan nama (tahan)               | Shift                      | Shift            |
+| Bisu                                 | M                          | M                |
+| Jatuhkan bendera, relik, atau abu    | tidak ada                  | tidak ada        |
 
 Tombol-tombol ini tetap:
 

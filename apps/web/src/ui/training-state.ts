@@ -37,8 +37,8 @@ export function buildSignature(character: StoredCharacter): string {
 const ARROW_CODES = ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"];
 
 /**
- * The hint under an armed arena, from the keymap (#302): "arrows move ·
- * Q–F cast · …" by default, "WASD move · 1–8 cast · …" in Classic.
+ * The hint under an armed arena, from the keymap (#302): "WASD move ·
+ * 1–8 cast · …" by default, Classic, "arrows move · Q–F cast · …" in VibeWars.
  */
 export function armedHint(keymap: Keymap, label: KeyLabeller = codeLabel): string {
   const moves = (["move-up", "move-left", "move-down", "move-right"] as const).map(
