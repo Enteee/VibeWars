@@ -236,6 +236,33 @@ async function refusePick(repo, sha, { main, old, picked: taken }) {
 /** A release's tracking issue: its title, whole. */
 const TRACKING_TITLE = /^Release (0\.[1-9][0-9]*\.0)$/;
 
+/**
+ * @typedef {object} PublishedRelease a GitHub release, as far as closing a tracking issue cares
+ * @property {string} tag
+ * @property {boolean} draft
+ * @property {boolean} prerelease
+ * @property {string} url
+ */
+
+/**
+ * The tracking issues whose version is out (#3125): a release counts only
+ * if its tag is `v<version>` and it is neither a draft nor a prerelease.
+ *
+ * @param {readonly { number: number, version: string }[]} trackings
+ * @param {readonly PublishedRelease[]} releases
+ * @returns {{ number: number, version: string, url: string }[]}
+ */
+export function trackingToClose(trackings, releases) {
+  return trackings.flatMap((tracking) => {
+    const out = releases.find(
+      (release) => release.tag === `v${tracking.version}` && !release.draft && !release.prerelease,
+    );
+    return out === undefined
+      ? []
+      : [{ number: tracking.number, version: tracking.version, url: out.url }];
+  });
+}
+
 /** At most this much of a tracking issue's body is read: agents edit it. */
 export const MAX_TRACKING_BODY = 64 * 1024;
 

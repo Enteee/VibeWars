@@ -18,6 +18,7 @@ import {
   releaseCiVerdict,
   releaseFloor,
   releaseGapRefusal,
+  trackingToClose,
   RELEASE_MIN_GAP_MS,
 } from "./hub-release.mjs";
 
@@ -367,5 +368,38 @@ describe("releaseGapRefusal (#2891)", () => {
     expect(releaseGapRefusal({ tag: "v0.6.0", publishedAt: "soon" }, at)).toContain(
       "could not read",
     );
+  });
+});
+
+describe("trackingToClose (#3125)", () => {
+  const out = (/** @type {string} */ tag, extra = {}) => ({
+    tag,
+    draft: false,
+    prerelease: false,
+    url: `https://github.com/o/r/releases/tag/${tag}`,
+    ...extra,
+  });
+  const issue = (/** @type {number} */ number, version = "0.7.0") => ({ number, version });
+
+  it("closes the tracking issue of a published release", () => {
+    expect(trackingToClose([issue(5)], [out("v0.7.0")])).toEqual([
+      { number: 5, version: "0.7.0", url: "https://github.com/o/r/releases/tag/v0.7.0" },
+    ]);
+  });
+
+  it("leaves a draft and a prerelease alone", () => {
+    expect(trackingToClose([issue(5)], [out("v0.7.0", { draft: true })])).toEqual([]);
+    expect(trackingToClose([issue(5)], [out("v0.7.0", { prerelease: true })])).toEqual([]);
+  });
+
+  it("closes nothing without a release, or with one for another version", () => {
+    expect(trackingToClose([issue(5)], [])).toEqual([]);
+    expect(trackingToClose([issue(6, "0.8.0")], [out("v0.7.0")])).toEqual([]);
+  });
+
+  it("closes both issues of one version", () => {
+    expect(trackingToClose([issue(5), issue(6)], [out("v0.7.0")]).map((c) => c.number)).toEqual([
+      5, 6,
+    ]);
   });
 });
