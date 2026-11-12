@@ -678,6 +678,12 @@ export class ArenaScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.shutdown();
     });
+    // A destroyed game drops its textures after its scenes: a light's
+    // texture still the stamp's then resets the stamp onto a dead scene,
+    // which throws and leaves the canvas behind (#3196). Dropped here first.
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => {
+      this.shutdown();
+    });
     this.floorGraphics = this.add.graphics().setDepth(FLOOR_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
