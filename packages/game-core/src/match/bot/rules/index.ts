@@ -1,5 +1,6 @@
 import bindSpirit from "./bind-spirit.js";
 import boost from "./boost.js";
+import breakWall from "./break-wall.js";
 import carryRelic from "./carry-relic.js";
 import cleanse from "./cleanse.js";
 import clearGround from "./clear-ground.js";
@@ -41,6 +42,7 @@ import wayOut from "./way-out.js";
 export const BOT_RULES: readonly BotRule[] = inOrder([
   bindSpirit,
   boost,
+  breakWall,
   carryRelic,
   cleanse,
   clearGround,

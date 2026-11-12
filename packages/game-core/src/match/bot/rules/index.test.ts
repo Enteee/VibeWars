@@ -47,6 +47,7 @@ describe("BOT_RULES (#2042)", () => {
       "boost",
       "position",
       "shrines",
+      "break-wall",
       "fight",
       "gates",
       "levers",
