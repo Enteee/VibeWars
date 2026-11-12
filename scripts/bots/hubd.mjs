@@ -617,7 +617,10 @@ async function restPages(rel, cfg) {
   /** @type {unknown[]} */
   const rows = [];
   for (let page = 1; page <= MAX_PAGES; page += 1) {
-    const answer = await rest(`${rel}?per_page=100&page=${String(page)}`, cfg);
+    const answer = await rest(
+      `${rel}${rel.includes("?") ? "&" : "?"}per_page=100&page=${String(page)}`,
+      cfg,
+    );
     if (!Array.isArray(answer)) {
       return undefined;
     }
@@ -1577,7 +1580,7 @@ async function openTrackings(cfg) {
 }
 
 /**
- * Comment on a tracking issue that its release is out, and close it.
+ * Close a tracking issue whose release is out, and say so on it.
  *
  * @param {{ number: number, version: string, url: string }} issue
  * @param {ReturnType<typeof company>} cfg
@@ -1585,17 +1588,19 @@ async function openTrackings(cfg) {
  */
 async function closeTracking(issue, cfg) {
   const number = String(issue.number);
-  const commented = await gh(
+  // Closed first: a closed issue is never listed again, so a close that keeps
+  // failing cannot add a comment every sweep.
+  const closed = await gh(pinRepo(["issue", "close", number, "--reason", "completed"], cfg));
+  if (closed.code !== 0) {
+    return closed.stderr.trim();
+  }
+  await gh(
     pinRepo(
       ["issue", "comment", number, "--body", `Published v${issue.version}: ${issue.url}`],
       cfg,
     ),
   );
-  if (commented.code !== 0) {
-    return commented.stderr.trim();
-  }
-  const closed = await gh(pinRepo(["issue", "close", number, "--reason", "completed"], cfg));
-  return closed.code === 0 ? null : closed.stderr.trim();
+  return null;
 }
 
 /**
@@ -1665,7 +1670,7 @@ async function sweepTracking(cfg) {
 }
 
 /** How often the tracking issues of published releases are closed (#3125). */
-const TRACKING_SWEEP_MS = 60 * 60_000;
+const TRACKING_SWEEP_MS = Number(process.env.HUBD_TRACKING_SWEEP_MS ?? 60 * 60_000);
 /** How often CI on an awaited release head is re-read. */
 const RELEASE_POLL_MS = Number(process.env.HUBD_RELEASE_POLL_MS ?? 60_000);
 /** A release head with no CI verdict this long after its push is given up on. */
