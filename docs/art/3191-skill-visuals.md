@@ -47,6 +47,46 @@ Rules the study holds:
 | None Shall Pass (`warrior`)      | a cool ring out in 0.3 s, chevron over allies                      | the ring is a still flash frame; the chevron stays         | `cast-badge.ts` for the chevron                       |
 | Mighty Blow (`warrior`)          | thick warm arc, impact star, nudge line                            | arc and star stay as a single frame; no smear              | `body-impacts.ts`                                     |
 
+### Glowstone
+
+![Glowstone](3191-glowstone.png)
+
+### Chaos Storm
+
+![Chaos Storm](3191-chaos-storm.png)
+
+### Well of Darkness
+
+![Well of Darkness](3191-well-of-darkness.png)
+
+### Favorable Winds
+
+![Favorable Winds](3191-favorable-winds.png)
+
+### Wail of Doom
+
+![Wail of Doom](3191-wail-of-doom.png)
+
+### Healer's Covenant
+
+![Healer's Covenant](3191-healers-covenant.png)
+
+### Soldier's Speed
+
+![Soldier's Speed](3191-soldiers-speed.png)
+
+### Avatar of Grenth
+
+![Avatar of Grenth](3191-avatar-of-grenth.png)
+
+### None Shall Pass
+
+![None Shall Pass](3191-none-shall-pass.png)
+
+### Mighty Blow
+
+![Mighty Blow](3191-mighty-blow.png)
+
 Images: ten boards of about 17 to 21 KB each and the team fight (18 KB).
 
 ![team fight](3191-team-fight.png)

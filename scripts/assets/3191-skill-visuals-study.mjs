@@ -57,7 +57,7 @@ const tx = (x, y, t, a = "middle") =>
 /** a burst of shards at an impact */
 /** @type {(x: number, y: number, r: number, c: string, n?: number) => string} */
 const burst = (x, y, r, c, n = 8) => {
-  let s = `<circle cx="${x}" cy="${y}" r="${r * 0.55}" fill="#fff" opacity=".9"/><circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${c}" stroke-width="3"/>`;
+  let s = `<circle cx="${x}" cy="${y}" r="${r * 0.55}" fill="${c}" opacity=".35"/><circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${c}" stroke-width="3"/>`;
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2;
     s += `<path d="M${x + Math.cos(a) * r * 0.8},${y + Math.sin(a) * r * 0.8 * 0.7} L${x + Math.cos(a) * r * 1.5},${y + Math.sin(a) * r * 1.5 * 0.7}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
@@ -77,7 +77,7 @@ const hexHalo = (x, y, o = 1, broken = 2) => {
   return s;
 };
 
-/** @typedef {{ label: string, svg: string, inset?: [number, number] }} Tile */
+/** @typedef {{ label: string, svg: string, inset?: [number, number, number?] }} Tile */
 /** @typedef {{ slug: string, name: string, id: string, type: string, line: string, cast: Tile[], fx: Tile[] }} Skill */
 
 const CX = 90,
@@ -135,14 +135,14 @@ const skills = [
         label: "impact (game size)",
         svg:
           body(CX, CY) +
+          burst(FX, CY - 4, 22, WARM) +
           body(FX, CY, FOE) +
           hpbar(FX, CY, 0.55) +
-          burst(FX, CY - 4, 22, WARM) +
           tx(FX + 4, CY - 38, "−45", "middle"),
       },
       {
         label: "impact, 3× inset",
-        svg: body(FX, CY, FOE) + burst(FX, CY - 4, 22, WARM) + tx(FX + 4, CY - 38, "−45"),
+        svg: burst(FX, CY - 4, 22, WARM) + body(FX, CY, FOE) + tx(FX + 4, CY - 38, "−45"),
         inset: [FX, CY - 4],
       },
     ],
@@ -361,13 +361,8 @@ const skills = [
         inset: [FX, CY - 34],
       },
       {
-        label: "the hexed foe's own team's view",
-        svg:
-          body(CX, CY, FOE) +
-          body(FX, CY, FRIEND) +
-          hpbar(FX, CY, 0.9) +
-          hexHalo(FX, CY - 44) +
-          tx(FX, CY + 44, "ends: halo cracks"),
+        label: "same halo for the hexed foe's team",
+        svg: body(CX, CY, FOE) + body(FX, CY, FRIEND) + hpbar(FX, CY, 0.9) + hexHalo(FX, CY - 44),
       },
     ],
   },
@@ -490,7 +485,7 @@ const skills = [
     name: "Avatar of Grenth",
     id: "dervish.avatar-of-grenth",
     type: "form",
-    line: "A form changes the body itself: 1.35× disc, ash cape with spikes, a cold violet-white aura. Foe-side the outline stays foe red.",
+    line: "A form changes the body itself: 1.35× disc, ash cape with spikes, a cold white aura. Foe-side the outline stays foe red.",
     cast: [
       { label: "start", svg: body(CX, CY, FRIEND, { weapon: -0.4 }) + castbar(CX, CY, 0.1) },
       {
@@ -516,14 +511,14 @@ const skills = [
           glow(150, CY, 48, "#d8e4ff", 0.35) +
           `<path d="M130,${CY - 6} l-8,-14 l10,4 M170,${CY - 6} l8,-14 l-10,4" stroke="#cfd8e8" stroke-width="3" fill="none"/>` +
           body(150, CY, FRIEND, { scale: 1.35, cape: "#cfd8e8" }) +
-          `<circle cx="150" cy="${CY}" r="28" fill="none" stroke="${VIOLET}" stroke-width="2" opacity=".7"/>`,
-        inset: [150, CY],
+          `<circle cx="150" cy="${CY}" r="28" fill="none" stroke="#d8e4ff" stroke-width="2" opacity=".8"/>`,
+        inset: [150, CY, 2],
       },
       {
         label: "ends: aura drops, cape reverts",
         svg:
           body(150, CY) +
-          `<circle cx="150" cy="${CY}" r="26" fill="none" stroke="${VIOLET}" stroke-width="1" stroke-dasharray="3 8" opacity=".4"/>`,
+          `<circle cx="150" cy="${CY}" r="26" fill="none" stroke="#d8e4ff" stroke-width="1" stroke-dasharray="3 8" opacity=".4"/>`,
       },
     ],
   },
@@ -624,8 +619,8 @@ const tile = (t, x, y) => {
   const id = `c${x}_${y}`;
   let inner = t.svg;
   if (t.inset) {
-    const [fx, fy] = t.inset;
-    inner = `<g transform="translate(150,100) scale(3) translate(${-fx},${-fy})">${t.svg}</g>`;
+    const [fx, fy, k = 3] = t.inset;
+    inner = `<g transform="translate(150,100) scale(${k}) translate(${-fx},${-fy})">${t.svg}</g>`;
   }
   return (
     `<clipPath id="${id}"><rect width="${TW}" height="${TH}"/></clipPath>` +
@@ -640,7 +635,7 @@ const render = (slug, svg, w, h) => {
   const png = join(out, `3191-${slug}.png`);
   writeFileSync(
     p,
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${DEFS}<rect width="${w}" height="${h}" fill="#0e1116"/>${svg}</svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${DEFS}<rect width="${w}" height="${h}" fill="#0e1116"/>${svg.replace(/fill="rgba\((\d+),(\d+),(\d+),([\d.]+)\)"/g, 'fill="rgb($1,$2,$3)" fill-opacity="$4"')}</svg>`,
   );
   execFileSync("inkscape", [p, "-w", String(w), "-o", png], { stdio: "ignore" });
   rmSync(p);
@@ -674,8 +669,8 @@ for (const s of skills) {
     // foes: one hexed, one in a form, two in the well
     body(640, 180, FOE) +
     hexHalo(640, 136) +
-    body(700, 300, FOE, { scale: 1.35, cape: "#cfd8e8" }) +
     glow(700, 300, 48, "#d8e4ff", 0.3) +
+    body(700, 300, FOE, { scale: 1.35, cape: "#cfd8e8" }) +
     body(410, 280, FOE) +
     body(470, 330, FOE) +
     `<path d="M402,246 l8,-6 l8,6" stroke="${VIOLET}" stroke-width="2" fill="none"/>` +
