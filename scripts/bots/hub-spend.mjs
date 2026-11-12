@@ -173,8 +173,8 @@ export const BOARD_QUERY = `query($project: ID!, $cursor: String) {
           }
           content {
             __typename
-            ... on Issue { number title url repository { nameWithOwner } }
-            ... on PullRequest { number title url repository { nameWithOwner } }
+            ... on Issue { number title url state repository { nameWithOwner } }
+            ... on PullRequest { number title url state repository { nameWithOwner } }
             ... on DraftIssue { title }
           }
         }
@@ -272,6 +272,9 @@ export function boardItem(node) {
   content.title = str(raw.title);
   if (typeof raw.url === "string") {
     content.url = raw.url;
+  }
+  if (typeof raw.state === "string") {
+    content.state = raw.state;
   }
   const repository = obj(raw.repository).nameWithOwner;
   if (typeof repository === "string") {

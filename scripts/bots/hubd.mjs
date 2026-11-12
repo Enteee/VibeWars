@@ -33,6 +33,7 @@ import {
   applyFacts,
   blockedAfterMove,
   blockedSwept,
+  closedOutsideDone,
   readBlocked,
   itemNumber,
   LANDING_COLUMN,
@@ -2156,6 +2157,7 @@ async function freshBoard(cfg) {
     if (items !== null) {
       const epoch = `${Date.now().toString(36)}-${randomBytes(3).toString("hex")}`;
       keepBoard(sweep(board, items, Date.now(), epoch, cfg.repo), cfg);
+      await sweepClosedToDone(cfg);
     }
   }
   return board;
@@ -2566,11 +2568,34 @@ async function land(role, argv, result, column, cfg, target) {
     }
     id = String(card.item.id);
   }
+  const edited = await moveCardTo(role, String(id), optionId, cfg, { landing: true });
+  if (edited.code !== 0) {
+    return `hub: ${label} ${isNot} in ${column}: ${edited.stderr.trim()}. ${move}`;
+  }
+  return "";
+}
+
+/**
+ * Put the card `id` in the column whose option is `optionId`, as hubd's own
+ * move: no role's rights are judged, and the board copy follows.
+ *
+ * @param {string} role who it is audited for
+ * @param {string} id
+ * @param {string} optionId
+ * @param {ReturnType<typeof company>} cfg
+ * @param {Record<string, unknown>} extra more audit fields
+ * @returns {Promise<{ code: number, stderr: string }>}
+ */
+async function moveCardTo(role, id, optionId, cfg, extra) {
+  const ids = cfg.board;
+  if (ids === null) {
+    return { code: 1, stderr: "the board's Status field is not known" };
+  }
   const editArgv = [
     "project",
     "item-edit",
     "--id",
-    String(id),
+    id,
     "--project-id",
     ids.projectId,
     "--field-id",
@@ -2579,19 +2604,85 @@ async function land(role, argv, result, column, cfg, target) {
     optionId,
   ];
   const edited = await gh(pinRepo(editArgv, cfg));
-  audit({
-    role,
-    kind: "gh",
-    argv: editArgv,
-    decision: "allowed",
-    code: edited.code,
-    landing: true,
-  });
-  if (edited.code !== 0) {
-    return `hub: ${label} ${isNot} in ${column}: ${edited.stderr.trim()}. ${move}`;
+  audit({ role, kind: "gh", argv: editArgv, decision: "allowed", code: edited.code, ...extra });
+  if (edited.code === 0) {
+    await afterProjectCommand(editArgv, edited, cfg);
   }
-  await afterProjectCommand(editArgv, edited, cfg);
-  return "";
+  return edited;
+}
+
+/**
+ * Move to Done the card of an issue or pull request hubd just closed or
+ * merged (#3126). A failure never fails the command: it comes back as the
+ * one line to print, and the next sweep moves the card.
+ *
+ * @param {string[]} argv
+ * @param {number} code
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string>}
+ */
+async function closeToDone(argv, code, cfg) {
+  const [group, verb] = argv;
+  if (
+    code !== 0 ||
+    (group !== "issue" && group !== "pr") ||
+    !(verb === "close" || (group === "pr" && verb === "merge"))
+  ) {
+    return "";
+  }
+  const number = selectorNumber(argv[2], cfg.repo);
+  const card =
+    number === null
+      ? undefined
+      : board?.cards.find((candidate) => itemNumber(candidate.item, cfg.repo) === number);
+  if (card === undefined || card.item.status === "Done") {
+    return "";
+  }
+  const done = cfg.board?.options.get("Done");
+  if (done === undefined) {
+    return "hub: card not moved: the board's Status field is not known; the sweep will";
+  }
+  const moved = await moveCardTo("hubd", card.item.id, done, cfg, { closed: number });
+  if (moved.code !== 0) {
+    return `hub: card not moved: ${moved.stderr.trim()}; the sweep will`;
+  }
+  dropBlockedOrigin(card.item.id);
+  return `hub: #${String(number)} moved to Done`;
+}
+
+/**
+ * Move every closed issue and merged or closed pull request still outside
+ * Done to Done (#3126). Logged in hubd's log, told to no one.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function sweepClosedToDone(cfg) {
+  const done = cfg.board?.options.get("Done");
+  if (board === null || done === undefined) {
+    return;
+  }
+  for (const entry of closedOutsideDone(board, cfg.repo)) {
+    const moved = await moveCardTo("hubd", entry.id, done, cfg, { closed: entry.number });
+    if (moved.code === 0) {
+      dropBlockedOrigin(entry.id);
+      console.error(`hubd: moved #${String(entry.number)} to Done (closed)`);
+    } else {
+      console.error(`hubd: #${String(entry.number)} not moved to Done: ${moved.stderr.trim()}`);
+    }
+  }
+}
+
+/**
+ * Forget the column a card was in before Blocked, once it is in Done.
+ *
+ * @param {string} id
+ */
+function dropBlockedOrigin(id) {
+  if (id in blockedOrigins) {
+    const { [id]: _gone, ...rest } = blockedOrigins;
+    keepBlocked(rest);
+  }
 }
 
 /**
@@ -4196,6 +4287,10 @@ async function serve(request, verdict, acting) {
     ];
     const result = await gh(pinRepo(pinned, cfg));
     noteHint(pinned, result.code, cfg);
+    const moved = await closeToDone(pinned, result.code, cfg);
+    if (moved !== "") {
+      result.stderr = `${result.stderr}${moved}\n`;
+    }
     audit({ role, kind, argv, decision: "allowed", code: result.code, sha: guarded.sha });
     if (result.code === 0) {
       // Told on the side: a nudge that fails never fails the merge.
@@ -4471,7 +4566,10 @@ async function serve(request, verdict, acting) {
     }
   }
   noteHint(argv, result.code, cfg);
-  const hint = await land(role, ghArgv, result, column, cfg, target);
+  const closed = await closeToDone(ghArgv, result.code, cfg);
+  const hint = [closed, await land(role, ghArgv, result, column, cfg, target)]
+    .filter((line) => line !== "")
+    .join("\n");
   noteNewIssue(role, ghArgv, result, hint, cfg);
   if (hint !== "") {
     result = { ...result, stderr: `${result.stderr}${hint}\n` };
