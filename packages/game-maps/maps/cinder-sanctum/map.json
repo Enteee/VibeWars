@@ -11,6 +11,7 @@
   "teams": 2,
   "teamSizes": [8],
   "layers": 1,
+  "biome": "hall",
   "groundLayer": 0,
   "pits": [],
   "tunnels": [],

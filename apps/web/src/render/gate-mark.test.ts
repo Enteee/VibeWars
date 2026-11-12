@@ -50,7 +50,11 @@ function draw(art: GateArt, wall: RenderableShape, frame: GateFrame): Drawn {
 }
 
 const DOOR: RenderableShape = { kind: "rect", x: 244, y: 680, width: 16, height: 80 };
-const FRAME: GateFrame = { height: 28, line: 1, palette: doorPalette(arenaPalette(3)) };
+const FRAME: GateFrame = {
+  height: 28,
+  line: 1,
+  palette: doorPalette(arenaPalette({ layerCount: 3, biome: "hall" })),
+};
 
 describe("gate doors (#3061, #3053)", () => {
   it("draws a shut door as an oak box over its wall, framed, with a brass knob", () => {
@@ -107,7 +111,11 @@ describe("gate doors (#3061, #3053)", () => {
 });
 
 describe("portcullis and secret passage (#3068)", () => {
-  const STONE: GateFrame = { height: 28, line: 1, palette: arenaPalette(3) };
+  const STONE: GateFrame = {
+    height: 28,
+    line: 1,
+    palette: arenaPalette({ layerCount: 3, biome: "hall" }),
+  };
 
   it("draws a shut portcullis as the dark of its arch behind an iron grid", () => {
     const shut = draw(GATE_ART.shut.portcullis, DOOR, STONE);

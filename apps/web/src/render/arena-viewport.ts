@@ -64,7 +64,9 @@ export interface ArenaViewport {
   /**
    * Phaser destroys a game on its next loop step, not at once: resolves
    * once it has, its WebGL context released and its canvas gone, or after
-   * `DESTROY_WAIT_MS` if the loop does not step. Called again, the same.
+   * `DESTROY_WAIT_MS` if the loop does not step, its canvas then removed
+   * here. Either way, once resolved the canvas is out of the DOM. Called
+   * again, the same.
    */
   destroy(): Promise<void>;
 }
@@ -295,8 +297,14 @@ export async function createArenaViewport(
       scene.input.off("gameout", onOut);
       // A loop that does not step (a hidden tab draws no frames) never gets
       // to the destroy: waiting is bounded, so nobody waits on it forever.
+      // Its canvas leaves the DOM then all the same, or the next viewport
+      // in the parent mounts beside it (#3196); Phaser's own removal, if
+      // it ever steps, finds it gone.
       destroyed = new Promise<void>((resolve) => {
-        const timer = setTimeout(resolve, DESTROY_WAIT_MS);
+        const timer = setTimeout(() => {
+          game.canvas.remove();
+          resolve();
+        }, DESTROY_WAIT_MS);
         game.events.once(Phaser.Core.Events.DESTROY, () => {
           clearTimeout(timer);
           resolve();

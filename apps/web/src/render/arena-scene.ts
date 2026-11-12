@@ -65,6 +65,7 @@ import {
 } from "./render-order.js";
 import {
   ARENA_BACKGROUND,
+  BIOME,
   DECK_LIP,
   PIT_FLOOR,
   PIT_WALL,
@@ -234,8 +235,10 @@ import {
   paintParticle,
   paintVent,
   paintWeatherWash,
+  type AtmospherePainter,
   type FogArt,
 } from "./atmosphere.js";
+import { fillDisc, strokeDisc } from "./disc.js";
 import {
   paintZoneGround,
   paintZoneMotion,
@@ -678,6 +681,12 @@ export class ArenaScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.shutdown();
     });
+    // A destroyed game drops its textures after its scenes: a light's
+    // texture still the stamp's then resets the stamp onto a dead scene,
+    // which throws and leaves the canvas behind (#3196). Dropped here first.
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => {
+      this.shutdown();
+    });
     this.floorGraphics = this.add.graphics().setDepth(FLOOR_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
@@ -945,7 +954,7 @@ export class ArenaScene extends Phaser.Scene {
       const { layerCount, ground } = this.snapshot.structure;
       g.save();
       g.translateCanvas(0, -elevationOf(gate.layer, ground));
-      const palette = arenaPalette(layerCount);
+      const palette = arenaPalette(this.snapshot.structure);
       GATE_ART.open[gate.look](this.gatePainter(g), gate.wall, {
         height: layerCount === 1 ? 0 : WALL_HEIGHT,
         line,
@@ -2316,7 +2325,7 @@ export class ArenaScene extends Phaser.Scene {
     // A line 1 world unit wide is under a pixel when zoomed out, and
     // flickers as the camera moves (#2393): 1 CSS px, as the edge markers.
     const line = 1 / next.zoom;
-    const palette = arenaPalette(next.structure.layerCount);
+    const palette = arenaPalette(next.structure);
     const { ground } = next.structure;
     this.drawFloor(palette, line);
     this.drawOutside(next.structure.bounds, next.lighting);
@@ -2350,7 +2359,7 @@ export class ArenaScene extends Phaser.Scene {
     const lifts: { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
     for (const transition of next.structure.transitions) {
       const lit = litStructurePalette(
-        transitionPalette(palette, transition.look),
+        transitionPalette(palette, BIOME[next.structure.biome].transition[transition.look]),
         next.lighting,
         transition.area,
         transition.from,
@@ -2442,7 +2451,7 @@ export class ArenaScene extends Phaser.Scene {
         next.walls,
         line,
         litStructurePalette(
-          deckPalette(palette, deck.look),
+          deckPalette(palette, BIOME[next.structure.biome].deck[deck.look]),
           next.lighting,
           deck.footprint,
           deck.layer,
@@ -3115,7 +3124,7 @@ export class ArenaScene extends Phaser.Scene {
     }
     for (const art of fog) {
       paintFog(
-        this.fogAt(art.layer),
+        this.atmospherePainter(this.fogAt(art.layer), line),
         art,
         elevationOf(art.layer, ground),
         this.now,
@@ -3227,13 +3236,33 @@ export class ArenaScene extends Phaser.Scene {
     this.zoneGrounds = undefined;
   }
 
-  /** `g` as a zone's moving marks draw through it. */
-  private zoneMotionPainter(g: Phaser.GameObjects.Graphics): ZoneMotionPainter {
+  /** `g` as fog is drawn through: its puffs with only the sides they need (#3162). */
+  private atmospherePainter(g: Phaser.GameObjects.Graphics, line: number): AtmospherePainter {
     return {
       fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
       lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
-      fillCircle: (x, y, radius) => g.fillCircle(x, y, radius),
-      strokeCircle: (x, y, radius) => g.strokeCircle(x, y, radius),
+      fillCircle: (x, y, radius) => {
+        fillDisc(g, x, y, radius, line);
+      },
+      fillEllipse: (x, y, width, height) => g.fillEllipse(x, y, width, height),
+      strokeEllipse: (x, y, width, height) => g.strokeEllipse(x, y, width, height),
+      lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
+      fillRect: (x, y, width, height) => g.fillRect(x, y, width, height),
+    };
+  }
+
+  /** `g` as a zone's moving marks draw through it. */
+  private zoneMotionPainter(g: Phaser.GameObjects.Graphics): ZoneMotionPainter {
+    const line = 1 / (this.view?.zoom ?? 1);
+    return {
+      fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
+      lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
+      fillCircle: (x, y, radius) => {
+        fillDisc(g, x, y, radius, line);
+      },
+      strokeCircle: (x, y, radius) => {
+        strokeDisc(g, x, y, radius, line);
+      },
       lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
       fillOutline: (outline) => {
         this.fillShape(g, { kind: "polygon", points: outline });
