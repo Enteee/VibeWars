@@ -14,7 +14,7 @@ import type {
   RenderableWall,
 } from "./arena-snapshot.js";
 import { creatureOutline } from "./creature-shape.js";
-import { ELEVATION_STEP, elevationOf } from "./render-order.js";
+import { ELEVATION_STEP, elevationOf, renderOrder } from "./render-order.js";
 
 /**
  * What a layered arena (ADR-0051) shows under the cursor, and which part
@@ -471,6 +471,32 @@ export function deckSideLow(
     : elevationOf(deck.layer - 1, ground);
 }
 
+/**
+ * What the decks that are up hide of something drawn at `depth` (#3162):
+ * each one drawn after it, its footprint lifted to the foot of its side
+ * and to its top. Its side and its top draw opaque over both, and over
+ * all between.
+ */
+export function deckCovers(
+  structure: MapStructure,
+  walls: readonly RenderableWall[],
+  depth: number,
+): readonly (readonly Vec2[])[] {
+  const { ground } = structure;
+  return structure.decks
+    .filter(
+      ({ layer, switched }) =>
+        (switched === null || switched.up) &&
+        renderOrder({ kind: "side-face", deckLayer: layer }) > depth,
+    )
+    .flatMap((deck) => {
+      const outline = shapeOutline(deck.footprint);
+      return [deckSideLow(deck, walls, ground), elevationOf(deck.layer, ground)].map((lift) =>
+        outline.map(({ x, y }) => ({ x, y: y - lift })),
+      );
+    });
+}
+
 /** A box's corners, clockwise from its north-west. */
 function boxOutline(left: number, top: number, right: number, bottom: number): readonly Vec2[] {
   return [
@@ -483,26 +509,22 @@ function boxOutline(left: number, top: number, right: number, bottom: number): r
 
 /**
  * The side of a column of `shape` raised from `low` to `high` (#3157):
- * each edge swept up between the two, as a quad. With the shape filled at
- * both ends, they cover all the shape covers at any height between, in a
- * fill per edge where a fill of the whole shape per slice of height drew
- * every pixel of a large deck dozens of times, every frame.
+ * each south-facing edge swept up between the two, as a quad. With the
+ * shape filled at `high`, they cover all the column covers (#3162): a
+ * point of it outside the top is where a south edge passed on its way up.
+ * Its foot and its north edges are under the rest, so are not drawn.
  */
 export function sweptEdges(
   shape: RenderableShape,
   low: number,
   high: number,
 ): readonly (readonly Vec2[])[] {
-  const outline = shapeOutline(shape);
-  return outline.map((from, index) => {
-    const to = outline[(index + 1) % outline.length] ?? from;
-    return [
-      { x: from.x, y: from.y - low },
-      { x: to.x, y: to.y - low },
-      { x: to.x, y: to.y - high },
-      { x: from.x, y: from.y - high },
-    ];
-  });
+  return southFacingEdges(shape).map(({ from, to }) => [
+    { x: from.x, y: from.y - low },
+    { x: to.x, y: to.y - low },
+    { x: to.x, y: to.y - high },
+    { x: from.x, y: from.y - high },
+  ]);
 }
 
 /** A pit as it draws (#2973), every point already sunk. */

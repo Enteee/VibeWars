@@ -5,7 +5,8 @@ import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import type { ArenaPalette } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
-import { rampDrawing, shapeOutline } from "./layer-surfaces.js";
+import { boxMeets, boxUnder, coverBoxes } from "./cell-cover.js";
+import { deckCovers, rampDrawing, shapeOutline } from "./layer-surfaces.js";
 import {
   SURFACE_LIGHT_FLOOR,
   flickerAt,
@@ -29,6 +30,8 @@ import {
 
 /** Half the arena's resolution: a soft falloff gains nothing from more. */
 const LIGHT_MAP_SCALE = 0.5;
+/** The side of a cell a light map shows in, in its pixels (#3162). */
+const LIGHT_MAP_CELL = 32;
 const FALLOFF_TEXTURE = "lighting-falloff";
 const FALLOFF_SIZE = 256;
 const FALLOFF_STOPS = 12;
@@ -241,6 +244,41 @@ export function lightMapExtent(
 }
 
 /**
+ * The boxes of a light map with `extent` that are shown (#3162), in its own
+ * pixels. Of the ground's, the cells no raised deck stands over: the deck
+ * draws over them opaque, so they would be lit for nothing. Of any other
+ * layer, only the cells its surfaces are in: elsewhere it is erased. Either
+ * way leaving the rest out shows the same, and a deck spread over the
+ * arena does not cost a light map a full screen.
+ */
+export function lightMapCover(
+  structure: MapStructure,
+  walls: readonly RenderableWall[],
+  layer: number,
+  extent: LightMapBox,
+): readonly LightMapBox[] {
+  const inMap = (outline: readonly Vec2[]): readonly Vec2[] =>
+    outline.map(({ x, y }) => ({
+      x: x * LIGHT_MAP_SCALE - extent.x,
+      y: y * LIGHT_MAP_SCALE - extent.y,
+    }));
+  if (layer === structure.ground) {
+    const decks = deckCovers(structure, walls, renderOrder({ kind: "lighting", layer })).map(inMap);
+    return coverBoxes(
+      extent.width,
+      extent.height,
+      LIGHT_MAP_CELL,
+      (box) => !decks.some((outline) => boxUnder(outline, box, 2)),
+    );
+  }
+  const surfaces = layerSurfaces(structure, layer).map(inMap);
+  // A few pixels past each surface, for its smoothed edge.
+  return coverBoxes(extent.width, extent.height, LIGHT_MAP_CELL, (box) =>
+    surfaces.some((outline) => boxMeets(outline, box, 3)),
+  );
+}
+
+/**
  * What a flicker redraws of a light map with `extent` (#3157): the box
  * round every flickering light, in the map's own pixels. The rest holds
  * the steady lights, which never change.
@@ -274,7 +312,8 @@ interface LayerMap {
   readonly base: Phaser.Textures.DynamicTexture;
   readonly shownKey: string;
   readonly shown: Phaser.Textures.DynamicTexture;
-  readonly image: Phaser.GameObjects.Image;
+  /** The map shown, one image per box of it a surface is in (#3162). */
+  readonly images: readonly Phaser.GameObjects.Image[];
   readonly outsideKey: string | undefined;
   /** What of the arena it covers, in light map pixels. */
   readonly extent: LightMapBox;
@@ -372,7 +411,9 @@ export class LightingPass {
   private drop(): void {
     const textures = this.scene.textures;
     for (const map of this.layers) {
-      map.image.destroy();
+      for (const image of map.images) {
+        image.destroy();
+      }
       for (const key of [map.baseKey, map.shownKey, map.outsideKey, ...map.shadowed.values()]) {
         if (key !== undefined && textures.exists(key)) {
           textures.remove(key);
@@ -483,23 +524,28 @@ export class LightingPass {
       painter.destroy();
     }
 
-    const image = this.scene.add
-      .image(
-        extent.x / LIGHT_MAP_SCALE,
-        extent.y / LIGHT_MAP_SCALE - elevationOf(layer, structure.ground),
-        shownKey,
-      )
-      .setOrigin(0, 0)
-      .setScale(1 / LIGHT_MAP_SCALE)
-      .setBlendMode(Phaser.BlendModes.MULTIPLY)
-      .setDepth(renderOrder({ kind: "lighting", layer }));
+    const lift = elevationOf(layer, structure.ground);
+    const images = lightMapCover(structure, this.walls, layer, extent).map(
+      ({ x, y, width, height }) =>
+        this.scene.add
+          .image(
+            (extent.x + x) / LIGHT_MAP_SCALE,
+            (extent.y + y) / LIGHT_MAP_SCALE - lift,
+            shownKey,
+            this.region(shownKey, x, y, width, height),
+          )
+          .setOrigin(0, 0)
+          .setScale(1 / LIGHT_MAP_SCALE)
+          .setBlendMode(Phaser.BlendModes.MULTIPLY)
+          .setDepth(renderOrder({ kind: "lighting", layer })),
+    );
     const map: LayerMap = {
       layer,
       baseKey,
       base,
       shownKey,
       shown,
-      image,
+      images,
       outsideKey,
       extent,
       flickering,

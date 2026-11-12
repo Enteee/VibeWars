@@ -11,8 +11,10 @@ import {
   paintOutsideEdge,
   paintOutsideTile,
   wrapped,
-  insideRuns,
+  OUTSIDE_CELL,
+  outsideCover,
 } from "./outside-land.js";
+import { insideRuns } from "./cell-cover.js";
 
 /** Every colour `kind`'s tile fills with, and how many shapes it draws. */
 function tile(kind: OutsideKind): { readonly fills: Set<number>; readonly shapes: number } {
@@ -102,41 +104,48 @@ describe("outside land", () => {
   });
 });
 
-describe("insideRuns", () => {
-  /** An L: the square 0..200 without its south-east quarter. */
-  const ell = [
-    { x: 0, y: 0 },
-    { x: 200, y: 0 },
-    { x: 200, y: 100 },
-    { x: 100, y: 100 },
-    { x: 100, y: 200 },
-    { x: 0, y: 200 },
+describe("outsideCover (#3162)", () => {
+  // A slanted, notched outline inside a 600 × 400 map, off the cell grid.
+  const outline = [
+    { x: 30, y: 20 },
+    { x: 570, y: 50 },
+    { x: 560, y: 370 },
+    { x: 330, y: 380 },
+    { x: 300, y: 210 },
+    { x: 270, y: 380 },
+    { x: 40, y: 360 },
   ];
+  const inside = ({ x, y }: { x: number; y: number }): boolean =>
+    insideRuns(outline, "y", y).some(([from, to]) => from <= x && x <= to);
+  const boxes = outsideCover(outline, 600, 400);
+  const covered = (point: { x: number; y: number }): number =>
+    boxes.filter(
+      ({ x, y, width, height }) =>
+        x <= point.x && point.x < x + width && y <= point.y && point.y < y + height,
+    ).length;
 
-  it("clips a grid line to the spans of it inside the outline", () => {
-    expect(insideRuns(ell, "y", 50)).toEqual([[0, 200]]);
-    expect(insideRuns(ell, "y", 150)).toEqual([[0, 100]]);
-    expect(insideRuns(ell, "x", 150)).toEqual([[0, 100]]);
+  it("covers every point of the map outside the outline, once", () => {
+    for (let y = 0.5; y < 400; y += 4) {
+      for (let x = 0.5; x < 600; x += 4) {
+        const times = covered({ x, y });
+        expect(times, `${String(x)},${String(y)}`).toBe(inside({ x, y }) ? Math.min(times, 1) : 1);
+      }
+    }
   });
 
-  it("gives a concave outline's line one span per stretch inside", () => {
-    const u = [
+  it("leaves out the cells wholly under the floor", () => {
+    expect(covered({ x: 200, y: 200 })).toBe(0);
+    const area = boxes.reduce((sum, { width, height }) => sum + width * height, 0);
+    expect(area).toBeLessThan(600 * 400 * 0.6);
+    expect(boxes.every(({ x, y }) => x % OUTSIDE_CELL === 0 && y % OUTSIDE_CELL === 0)).toBe(true);
+  });
+
+  it("is the whole map round an outline that leaves no cell under the floor", () => {
+    const sliver = [
       { x: 0, y: 0 },
-      { x: 300, y: 0 },
-      { x: 300, y: 200 },
-      { x: 200, y: 200 },
-      { x: 200, y: 100 },
-      { x: 100, y: 100 },
-      { x: 100, y: 200 },
-      { x: 0, y: 200 },
+      { x: 600, y: 0 },
+      { x: 600, y: 10 },
     ];
-    expect(insideRuns(u, "y", 150)).toEqual([
-      [0, 100],
-      [200, 300],
-    ]);
-  });
-
-  it("gives none for a line wholly outside", () => {
-    expect(insideRuns(ell, "y", 250)).toEqual([]);
+    expect(outsideCover(sliver, 600, 400)).toEqual([{ x: 0, y: 0, width: 600, height: 400 }]);
   });
 });
