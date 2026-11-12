@@ -148,14 +148,15 @@ je op **Opslaan** drukt.
 **Esc** vertrekt zonder op te slaan, en vraagt eerst als je iets gewijzigd hebt.
 **Delen**, **GW1-code laden**, **Kopiëren** en **Wissen** staan onder **⋯**.
 
-Een teamcode plak je in plaats daarvan op **Teambouwer**.
+Een teamcode laad je in plaats daarvan op **Teambouwer**: druk op **Team laden**,
+plak de code en druk op **Laden**, of plak hem ergens op Teambouwer.
 
 ## Teambuilds
 
 Een **teambuild** is een team met eigen personages, gemaakt op **Teambouwer** en
 apart gehouden van je eigen personages. Elk is daar een kaart, en alleen daar:
-**Nieuwe teambuild** maakt er een, en een klik op een kaart, of op **Bewerken**,
-opent die. Je stelt er een voor in de [Teamlobby](modes.md#teamlobby).
+**Nieuwe teambuild** maakt er een, **Team laden** laadt er een die met je is
+gedeeld, en een klik op een kaart, of op **Bewerken**, opent die. Je stelt er een voor in de [Teamlobby](modes.md#teamlobby).
 
 Elke teambuild heeft een grootte, 2v2, 4v4 of 8v8 (er zijn geen 1v1-teambuilds):
 de **Teamgrootte** in de zijbalk. Teambouwer toont de teambuilds van de daar
@@ -199,7 +200,8 @@ Druk op de naam van een lid, of **Openen in het personagescherm**, om het in de
 build-editor te bewerken; zijn **Opslaan** zet het terug in het team, en de eigen
 **Opslaan** van het team bewaart alles en brengt je terug naar Teambouwer.
 **Esc** vertrekt zonder op te slaan, en vraagt het eerst. **Delen**,
-**Kopiëren** en **Wissen** van het team staan onder **⋯**.
+**Team laden**, **Kopiëren** en **Wissen** van het team staan onder **⋯**.
+**Team laden** opent daar het geladen team in plaats van dit team.
 Je kunt een team op elk moment opslaan, problemen en al, maar alleen een team
 zonder problemen kan worden voorgesteld in een Teamlobby: een kaart zegt **Niet
 speelbaar** en waarom, en een team zonder naam staat als **Naamloos team**.

@@ -3,10 +3,11 @@ import type { LobbyMode } from "@vibewars/game-protocol";
 import { t } from "../i18n/index.js";
 import { isTeamBuildSize, type StoredTeam, type TeamBuildSize } from "../storage/schema.js";
 import { loadStarterTeamId } from "../storage/starter-team.js";
-import { looksLikeTeam } from "../storage/team-transfer.js";
+import { looksLikeBuild } from "../storage/build-transfer.js";
+import { importTeam, looksLikeTeam, type TeamImportResult } from "../storage/team-transfer.js";
 import { lookOfCharacter, teamFigureCard } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
-import { button, h, listenForPaste, screenBar } from "./kit.js";
+import { button, h, listenForPaste, loadLine, screenBar, toast } from "./kit.js";
 import { mapLabel, type LobbyMap, type LobbyPanel } from "./lobby-screen.js";
 import {
   loadTeamBuildSize,
@@ -61,9 +62,43 @@ export interface TeamPlayCallbacks {
   readonly onCloneStarterTeam: (id: string) => void;
   /** The random starter team's Reroll (#2036): another curated team in its place. */
   readonly onRerollTeam: (id: string) => void;
-  /** A team code was pasted on the screen (#577). */
-  readonly onPasteTeam: (text: string) => void;
+  /** A team code was pasted on the screen (#577) or loaded with Load team (#3181). */
+  readonly onLoadTeam: (team: StoredTeam) => void;
   /** Leave Queue on a lobby's screen, while in the Random Arena queue (#2781). */
+}
+
+/**
+ * The team in `text` (#3181), for Load team and a paste alike, its
+ * members' ids from `newId`, saved at `now`: a team line (#577), trimmed.
+ * A team line holds build lines too, so a single build is told apart
+ * second, and told where it loads.
+ */
+export function loadTeamCode(text: string, newId: () => string, now: number): TeamImportResult {
+  const code = text.trim();
+  if (code === "") {
+    return { ok: false, problems: [t("buildEditor.pasteFirst")] };
+  }
+  if (!looksLikeTeam(code) && looksLikeBuild(code)) {
+    return { ok: false, problems: [t("teamPlay.buildCodeLoad")] };
+  }
+  return importTeam(code, newId, now);
+}
+
+/**
+ * A team pasted where it opens (#577): `onTeam` with it, or a toast of
+ * why not. Anything but a team line is not taken.
+ */
+export function pasteTeam(text: string, onTeam: (team: StoredTeam) => void): boolean {
+  if (!looksLikeTeam(text)) {
+    return false;
+  }
+  const result = loadTeamCode(text, () => crypto.randomUUID(), Date.now());
+  if (result.ok) {
+    onTeam(result.team);
+  } else {
+    toast(t("app.couldNotImport"), { problems: result.problems });
+  }
+  return true;
 }
 
 /**
@@ -167,6 +202,24 @@ function teamCards(
   cards.appendChild(
     button(t("teamPlay.newTeamBuild"), "play-card play-card-new", callbacks.onNewTeam),
   );
+  // Load team (#3181): a shared team line, typed or pasted, opens as a
+  // paste on the screen does.
+  const load = loadLine(t("teamPlay.loadLine"), t("teamPlay.loadPlaceholder"), (text) => {
+    const result = loadTeamCode(text, () => crypto.randomUUID(), Date.now());
+    if (!result.ok) {
+      return result.problems;
+    }
+    callbacks.onLoadTeam(result.team);
+    return [];
+  });
+  const loadCard = h("div", "team-play-load");
+  loadCard.append(
+    button(t("teamPlay.loadTeam"), "play-card play-card-load", () => {
+      load.show();
+    }),
+    load.element,
+  );
+  cards.appendChild(loadCard);
   section.appendChild(cards);
   if (shown.length === 0) {
     section.appendChild(h("p", "team-play-hint", noTeamBuilds(size)));
@@ -204,11 +257,7 @@ function teamBuilderBody(
       stopPaste();
       return false;
     }
-    if (!looksLikeTeam(text)) {
-      return false;
-    }
-    callbacks.onPasteTeam(text);
-    return true;
+    return pasteTeam(text, callbacks.onLoadTeam);
   });
 }
 
