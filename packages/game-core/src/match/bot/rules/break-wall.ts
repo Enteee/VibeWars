@@ -5,7 +5,7 @@ import type { BotBreakable } from "../../behaviour.js";
 import { strikePointOf } from "../../breakables.js";
 import { carriedRelic } from "../../relics.js";
 import { countsForTeam, type Participant } from "../../simulation.js";
-import { NOTHING } from "./shared.js";
+import { NOTHING, shotAt } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /** How much shorter a wall's fall must make the team's way to the foes: more than a lever's, as felling it takes time. */
@@ -32,14 +32,16 @@ function reachOf(wall: BotBreakable, body: Participant): number {
 const breakWall: BotRule = {
   order: 99.5,
   name: "break-wall",
-  decide: ({ context, self, foes, allies }) => {
-    // A foe in reach it can see: one behind the wall is no fight yet.
+  decide: (rule) => {
+    const { context, self, foes, allies } = rule;
+    // A foe in reach it can see, or one shooting at it from further (#3150):
+    // one behind the wall is no fight yet.
     const threatens = (breaker: Participant): boolean =>
       foes.some(
         (foe) =>
           distance(foe.position, breaker.position) <= RANGE_SPELL &&
           context.seesBetween(breaker.position, foe.position, breaker.layer, foe.layer),
-      );
+      ) || shotAt(rule, breaker);
     if (context.objectives.breakables.length === 0 || threatens(self)) {
       return undefined;
     }

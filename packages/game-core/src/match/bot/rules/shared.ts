@@ -22,6 +22,7 @@ import {
   stripsEnchantment,
   summonAura,
 } from "../skill-intent.js";
+import type { RuleContext } from "./types.js";
 
 export const NOTHING: BehaviourIntent = {
   moveDirection: ZERO,
@@ -197,6 +198,43 @@ export function escort(self: Participant, altar: Vec2, layer: number): Behaviour
 
 /** A ranged bot or healer this far from its spot walks back to it (#2545). */
 export const POSITION_SLACK = 40;
+
+/**
+ * Whether `foe` shoots at `body` (#3150): it targets it, stands within its
+ * own reach of it and `POSITION_SLACK`, and sees it. Target and range
+ * first, so only a foe in reach costs a line-of-sight ray.
+ */
+export function shoots(
+  context: BehaviourContext,
+  reach: (foe: Participant) => number,
+  foe: Participant,
+  body: Participant,
+): boolean {
+  return (
+    foe.targetId === body.id &&
+    distance(foe.position, body.position) <= reach(foe) + POSITION_SLACK &&
+    context.seesBetween(foe.position, body.position, foe.layer, body.layer)
+  );
+}
+
+/** Whether a foe shoots at `body` (#3150). */
+export function shotAt(rule: RuleContext, body: Participant): boolean {
+  return rule.foes.some((foe) => shoots(rule.context, rule.foeReach, foe, body));
+}
+
+/** Whether a foe stands within `RANGE_SPELL` of the bot. */
+export function foeNear(rule: RuleContext): boolean {
+  const { self, foes } = rule;
+  return foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+}
+
+/**
+ * Whether the bot is pressed (#3150): a foe within `RANGE_SPELL`, or one
+ * shooting at it from further. A pressed bot drops its errand and fights.
+ */
+export function pressed(rule: RuleContext): boolean {
+  return foeNear(rule) || shotAt(rule, rule.self);
+}
 
 /** A ranged bot or healer with a melee foe this close stands and fights it (#2545). */
 export const ELBOW_DISTANCE = 100;

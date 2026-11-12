@@ -235,3 +235,19 @@ describe("bots and a lever gate (#3138)", () => {
     expect(crossed).toBe(true);
   });
 });
+
+describe("levers, shot at from afar (#3150)", () => {
+  it("drops the lever for a foe shooting at it from beyond 420", () => {
+    const sim = match([
+      fighter("near", 0, WARRIOR, vec2(200, 400)),
+      fighter("foe", 1, RANGER, vec2(700, 400)),
+    ]);
+    const objectives = { ...NO_OBJECTIVES, levers: [lever(LEVER_WORTH_UNITS)] };
+    const shot = () => ruleFor(sim, "near", { foeReach: () => 600 }, { objectives, now: 10 });
+    expect(levers.decide(shot())?.attackTargetId).toBe(LEVER_ID);
+    const foe = sim.get("foe");
+    if (foe === undefined) throw new Error("no foe");
+    foe.targetId = "near";
+    expect(levers.decide(shot())).toBeUndefined();
+  });
+});

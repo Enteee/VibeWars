@@ -1,8 +1,6 @@
-import { RANGE_SPELL } from "../../../distances.js";
-import { distance } from "../../../vec2.js";
 import { lyingPosition } from "../../carried.js";
 import { carriesRelic, relicId } from "../../relics.js";
-import { heldBack, NOTHING, sentTo } from "./shared.js";
+import { heldBack, NOTHING, pressed, sentTo } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -15,13 +13,10 @@ import type { BotRule } from "./types.js";
 const runRelic: BotRule = {
   order: 96,
   name: "run-relic",
-  decide: ({ context, self, foes }) => {
+  decide: (rule) => {
+    const { context, self } = rule;
     const { relics, relicSpawns, relicCarry } = context.objectives;
-    if (
-      relics.length === 0 ||
-      heldBack(self) ||
-      !foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL)
-    ) {
+    if (relics.length === 0 || heldBack(self) || !pressed(rule)) {
       return undefined;
     }
     const team = self.combatant.team;
