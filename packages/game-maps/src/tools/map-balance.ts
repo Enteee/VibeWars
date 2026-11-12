@@ -12,6 +12,8 @@ import {
   type Vec2,
 } from "@vibewars/game-core";
 
+import { pointInShape } from "../geometry.js";
+import { layeredFinder } from "../layered-finder.test-support.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
 import type { MapData } from "../schema.js";
 
@@ -171,4 +173,80 @@ function playMatch(
 
 function percent(share: number): string {
   return `${String(Math.round(share * 100))} %`;
+}
+
+/** How far apart the points are that `highGround` measures a map's decks by. */
+const HIGH_GROUND_STEP = 20;
+
+/** The spawn of `team` nearest the middle of its spawns: where its walks start. */
+function homeSpawn(map: MapData, team: number): Vec2 {
+  const own = map.spawnPoints.filter((spawn) => spawn.team === team);
+  const centre = {
+    x: own.reduce((sum, { position }) => sum + position.x, 0) / own.length,
+    y: own.reduce((sum, { position }) => sum + position.y, 0) / own.length,
+  };
+  const away = (point: Vec2): number => Math.hypot(point.x - centre.x, point.y - centre.y);
+  const [home] = own.map(({ position }) => position).sort((a, b) => away(a) - away(b));
+  if (home === undefined) throw new Error(`${map.id} has no spawn for team ${String(team)}`);
+  return home;
+}
+
+/**
+ * How far each team walks from its spawn to the map's centre on the ground
+ * (#3070), by team: an asymmetric map keeps them within 10 % of each other.
+ */
+export function walksToCentre(map: MapData): number[] {
+  const finder = layeredFinder(map, RULESET.collision.playerRadius);
+  const centre = { x: map.width / 2, y: map.height / 2 };
+  return Array.from({ length: map.teams }, (_, team) => {
+    const start = homeSpawn(map, team);
+    const route = finder.find(start, map.groundLayer, centre, map.groundLayer);
+    if (route === undefined)
+      throw new Error(`${map.id}: team ${String(team)} cannot walk to the centre`);
+    return route.reduce((walked, point, index) => {
+      const from = route[index - 1] ?? start;
+      return walked + Math.hypot(point.x - from.x, point.y - from.y);
+    }, 0);
+  });
+}
+
+/**
+ * The area of the decks each team walks onto from its spawn without
+ * crossing the middle (#3070), by team, of a two-team map: the line half
+ * way between the teams' spawns cuts every layer, so high ground counts
+ * for a team only when it climbs it on its own side. An asymmetric map
+ * keeps them within 25 % of each other.
+ */
+export function highGround(map: MapData): number[] {
+  const [home0, home1] = [homeSpawn(map, 0), homeSpawn(map, 1)];
+  const across = Math.abs(home1.x - home0.x) >= Math.abs(home1.y - home0.y);
+  const middle = across
+    ? { kind: "rect" as const, x: map.width / 2 - 1, y: 0, width: 2, height: map.height }
+    : { kind: "rect" as const, x: 0, y: map.height / 2 - 1, width: map.width, height: 2 };
+  const halved: MapData = {
+    ...map,
+    walls: [
+      ...map.walls,
+      ...Array.from({ length: map.layers }, (_, layer) => ({ ...middle, layer })),
+    ],
+  };
+  const finder = layeredFinder(halved, RULESET.collision.playerRadius);
+  const cell = HIGH_GROUND_STEP * HIGH_GROUND_STEP;
+  return [home0, home1].map((home) => {
+    let area = 0;
+    for (let x = HIGH_GROUND_STEP / 2; x < map.width; x += HIGH_GROUND_STEP) {
+      for (let y = HIGH_GROUND_STEP / 2; y < map.height; y += HIGH_GROUND_STEP) {
+        const point = { x, y };
+        const layers = new Set(
+          map.decks
+            .filter((deck) => deck.switched === null && pointInShape(point, deck.footprint))
+            .map(({ layer }) => layer),
+        );
+        for (const layer of layers) {
+          if (finder.find(home, map.groundLayer, point, layer) !== undefined) area += cell;
+        }
+      }
+    }
+    return area;
+  });
 }
