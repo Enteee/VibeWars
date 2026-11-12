@@ -351,7 +351,17 @@ async function main(): Promise<void> {
     showNowPlaying(nowPlayingText(trackId, TRACKS, music().intensity));
   });
   const viewport = requireElement("#viewport");
-  const menuBackground = createMenuBackground(requireElement("#menu-background"), startSplashFight);
+  // The e2e build draws no menu fight unless the URL asks (#3156): the
+  // module takes a rejected start as a choice that could not draw.
+  const menuFightOff =
+    import.meta.env.VITE_VIBEWARS_MENU_BACKGROUND === "off" &&
+    !new URLSearchParams(window.location.search).has("menu-background");
+  const menuBackground = createMenuBackground(
+    requireElement("#menu-background"),
+    menuFightOff
+      ? () => Promise.reject(new Error("the menu background is off in this build"))
+      : startSplashFight,
+  );
   /** Resolves once a lobby has given the background its choice (#3119). */
   let choiceMade: () => void = () => undefined;
   const firstChoice = new Promise<void>((resolve) => {
