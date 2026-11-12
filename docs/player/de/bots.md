@@ -37,6 +37,7 @@ Altar sogar noch vor. Ein Bot, der seinem Team weit voraus ist, wartet auf die
 anderen, bevor er weitergeht.
 
 Ist kein Gegner in der Nähe, legt ein Bot einen Hebel um, der einen kürzeren Weg zu den Gegnern öffnet.
+Zwei Bots schlagen eine bröckelnde Mauer ein, hinter der ein viel kürzerer Weg liegt, außer ein Gegner, den sie sehen, kommt nahe.
 
 Bots, die Schaden machen, halten ihre großen Treffer zurück, also Angriffs-Skills
 und Schadenszauber, und lösen sie gemeinsam auf das Ziel des Teams aus. So kommt

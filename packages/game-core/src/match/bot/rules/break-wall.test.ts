@@ -27,7 +27,12 @@ function wall(x: number, top: number, bottom: number): Segment[] {
   return corners.map((a, at) => ({ a, b: corners[(at + 1) % corners.length] ?? a }));
 }
 
-const FIELD: BreakableField = { id: "wall", segments: wall(800, 300, 500), layer: 0, maxHealth: 120 };
+const FIELD: BreakableField = {
+  id: "wall",
+  segments: wall(800, 300, 500),
+  layer: 0,
+  maxHealth: 120,
+};
 
 /** The breakable wall down the middle, winning team 0 `gain`. */
 function breakable(gain: number): BotBreakable {
@@ -146,6 +151,22 @@ describe("a wall's gain (#3140)", () => {
 });
 
 describe("bots and a breakable wall (#3140)", () => {
+  it("keep striking it with a foe just behind it, within spell range", () => {
+    const sim = walled([
+      fighter("a", 0, WARRIOR, vec2(700, 400)),
+      fighter("a2", 0, RANGER, vec2(650, 350)),
+      fighter("b", 1, WARRIOR, vec2(900, 400)),
+    ]);
+    sim.step(DT);
+    const objectives = { ...NO_OBJECTIVES, breakables: sim.botBreakables };
+    // The wall hides the foe from both strikers.
+    const view = { objectives, now: 10, seesBetween: () => false };
+    const intent = decide(BOT, createCursor(), contextFor(sim, "a", view));
+    expect(intent.attackTargetId).toBe(WALL_ID);
+    run(sim, 30, () => sim.breakables[0]?.health === 0);
+    expect(sim.breakables[0]?.health).toBe(0);
+  });
+
   it("break it when it is the only way to the foes, and meet them", () => {
     const sim = walled([
       fighter("a", 0, WARRIOR, vec2(200, 400)),

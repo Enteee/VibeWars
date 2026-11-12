@@ -38,6 +38,7 @@ bile önce gelir. Takımının çok önüne geçen bir bot, ilerlemeden önce
 diğerlerini bekler.
 
 Yakında düşman yoksa bot, düşmanlara daha kısa bir yol açan kolu çeker.
+Çok daha kısa bir yolu gizleyen çöken bir duvarı, görebildikleri bir düşman yaklaşmadıkça iki bot yıkar.
 
 Hasar veren botlar büyük vuruşlarını, saldırı becerilerini ve hasar
 büyülerini bekletir ve hepsini birlikte takımın hedefine ateşler; böylece

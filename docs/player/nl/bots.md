@@ -38,6 +38,7 @@ daar zelfs voor. Een bot die ver voor zijn team uit loopt, wacht op de rest
 voordat hij doorduwt.
 
 Is er geen vijand in de buurt, dan haalt een bot een hendel over die een kortere weg naar de vijanden opent.
+Twee bots slaan een afbrokkelende muur neer die een veel kortere weg verbergt, tenzij een vijand die ze zien dichtbij komt.
 
 Schadebots bewaren hun grote klappen, aanvalsskills en schadespreuken, en
 vuren ze samen af op het doelwit van het team, zodat de schade tegelijk

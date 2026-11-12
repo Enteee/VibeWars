@@ -575,6 +575,45 @@ describe("a lever gate the only way between the spawns (#3138)", () => {
     expect(died).toBe(true);
     expect(seconds).toBeLessThan(ANNIHILATION_MATCH_RULES.timeLimitSeconds);
   }, 60_000);
+
+  it("bots break a wall the only way, then fight it out before the time limit (#3140)", () => {
+    const build = (name: string) => {
+      const found = STARTER_BUILDS.find((candidate) => candidate.name === name);
+      if (found === undefined) throw new Error(`no starter build ${name}`);
+      return found;
+    };
+    const sim = new MatchSimulation({
+      seed: "break-wall",
+      ruleset: RULESET,
+      walls: [...wall(800, -10, 300), ...wall(800, 500, 810)],
+      breakables: [{ id: "wall", segments: wall(800, 300, 500), layer: 0, maxHealth: 120 }],
+      bounds: { width: 1600, height: 800 },
+      matchRules: ANNIHILATION_MATCH_RULES,
+      participants: [0, 1].flatMap((team) =>
+        CASTERS.slice(0, 2).map((name, k) =>
+          playBuildBot(
+            build(name),
+            `${String(team)}-${String(k)}`,
+            team,
+            { x: team === 0 ? 150 : 1450, y: 300 + 200 * k },
+            0,
+          ),
+        ),
+      ),
+    });
+    let broken = false;
+    let died = false;
+    let seconds = 0;
+    while (seconds <= ANNIHILATION_MATCH_RULES.timeLimitSeconds + 1 && !died) {
+      sim.step(DT);
+      seconds += DT;
+      broken ||= sim.breakables.every(({ health }) => health === 0);
+      died ||= [...sim.participants()].some(({ combatant }) => combatant.dead);
+    }
+    expect(broken).toBe(true);
+    expect(died).toBe(true);
+    expect(seconds).toBeLessThan(ANNIHILATION_MATCH_RULES.timeLimitSeconds);
+  }, 60_000);
 });
 
 /**

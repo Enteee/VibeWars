@@ -38,6 +38,7 @@ Un bot care ajunge mult înaintea echipei îi așteaptă pe ceilalți înainte s
 înainteze.
 
 Când niciun inamic nu e aproape, un bot trage maneta care deschide un drum mai scurt spre inamici.
+Doi boți dărâmă un zid care se surpă și ascunde un drum mult mai scurt, dacă nu se apropie un inamic pe care îl văd.
 
 Boții care fac daune își păstrează loviturile mari, abilitățile de atac și
 vrăjile de daune, și le dezlănțuie împreună asupra țintei echipei, ca daunele să

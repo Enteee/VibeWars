@@ -35,6 +35,7 @@ kia trên tế đàn còn được ưu tiên hơn cả điều đó. Bot đi qu�
 chờ những người còn lại rồi mới tiến tiếp.
 
 Khi không có kẻ địch nào ở gần, bot sẽ kéo cần gạt mở ra lối đi ngắn hơn tới kẻ địch.
+Hai bot đập đổ bức tường mục che một lối đi ngắn hơn nhiều, trừ khi có kẻ địch mà chúng thấy tiến lại gần.
 
 Bot gây sát thương giữ lại các đòn lớn, kỹ năng Tấn công và Phép sát thương,
 rồi tung chúng cùng lúc vào mục tiêu của đội, để sát thương dồn về một lúc

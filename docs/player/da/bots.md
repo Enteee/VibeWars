@@ -37,6 +37,7 @@ Spøgelseshelt på alteret forud for selv det. En bot, der kommer langt
 foran sit hold, venter på resten, før den rykker videre.
 
 Når ingen fjende er nær, trækker en bot i et håndtag, der åbner en kortere vej til fjenderne.
+To botter slår en smuldrende mur ned, der skjuler en meget kortere vej, medmindre en fjende, de kan se, kommer nær.
 
 Bots, der giver skade, holder deres store slag, angrebsevner og
 skadesbesværgelser tilbage og affyrer dem samlet mod holdets mål, så

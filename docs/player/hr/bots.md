@@ -37,6 +37,7 @@ Bot koji jako odmakne od tima čeka ostale prije nego što krene
 dalje.
 
 Kad nijedan neprijatelj nije blizu, bot povuče polugu koja otvara kraći put do neprijatelja.
+Dva bota sruše zid koji se mrvi i skriva mnogo kraći put, osim ako se ne približi neprijatelj kojeg vide.
 
 Botovi koji nanose štetu čuvaju velike udarce, vještine napada i čarolije štete,
 i ispaljuju ih zajedno na metu tima, tako da šteta padne odjednom

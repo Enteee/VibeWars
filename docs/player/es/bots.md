@@ -38,6 +38,7 @@ sobre el altar va incluso antes. Un bot que se adelanta mucho a su equipo
 espera al resto antes de seguir.
 
 Si no hay ningún enemigo cerca, un bot acciona la palanca que abre un camino más corto hacia los enemigos.
+Dos bots derriban un muro que se desmorona y oculta un camino mucho más corto, salvo que se acerque un enemigo que puedan ver.
 
 Los bots de daño guardan sus golpes fuertes, habilidades de ataque y
 hechizos de daño, y los lanzan a la vez contra el objetivo del equipo, para

@@ -38,6 +38,7 @@ lagets spökhjälte på altaret före till och med det. En bot som kommer
 långt före sitt lag väntar på resten innan den trycker på vidare.
 
 När ingen fiende är nära drar en bot i en spak som öppnar en kortare väg till fienderna.
+Två bottar slår ner en smulande mur som döljer en mycket kortare väg, om inte en fiende de ser kommer nära.
 
 Bottar som gör skada håller inne sina stora träffar, attackförmågor och
 skadebesvärjelser, och avfyrar dem samtidigt mot lagets mål, så att

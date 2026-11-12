@@ -35,6 +35,7 @@ nawet przed tym. Bot, który znacznie wysunie się przed drużynę, czeka na res
 zanim ruszy dalej.
 
 Gdy w pobliżu nie ma wroga, bot przestawia dźwignię, która otwiera krótszą drogę do wrogów.
+Dwa boty burzą kruszący się mur, który zasłania znacznie krótszą drogę, chyba że zbliży się wróg, którego widzą.
 
 Boty zadające obrażenia wstrzymują swoje mocne ciosy, umiejętności ataku i czary
 obrażeń, i odpalają je razem na cel drużyny, by obrażenia spadły naraz, a nie

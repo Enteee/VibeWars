@@ -37,6 +37,7 @@ Bot, ktorý sa dostane ďaleko pred svoj tím, počká na ostatných, kým pôjd
 ďalej.
 
 Keď nie je nablízku žiadny nepriateľ, bot prehodí páku, ktorá otvorí kratšiu cestu k nepriateľom.
+Dvaja boti zbúrajú drobiaci sa múr, ktorý skrýva oveľa kratšiu cestu, ak sa nepriblíži nepriateľ, ktorého vidia.
 
 Útočiaci boti si šetria svoje veľké zásahy, útočné schopnosti a poškodzujúce
 kúzla a spúšťajú ich spoločne na cieľ tímu, takže poškodenie dopadne naraz,

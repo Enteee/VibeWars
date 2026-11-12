@@ -37,6 +37,7 @@ altar, o Herói Fantasmagórico da outra equipe no altar vem antes até
 disso. Um bot que se adianta demais espera os outros antes de seguir.
 
 Sem nenhum inimigo por perto, um bot puxa a alavanca que abre um caminho mais curto até os inimigos.
+Dois bots derrubam um muro que se desfaz e esconde um caminho muito mais curto, a menos que se aproxime um inimigo que eles vejam.
 
 Os bots de dano guardam os golpes grandes, habilidades de ataque e
 feitiços de dano, e os soltam juntos no alvo da equipe, para que o dano

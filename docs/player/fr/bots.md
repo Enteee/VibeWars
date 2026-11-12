@@ -38,6 +38,7 @@ adverse sur l'autel passe même avant. Un bot qui prend trop d'avance sur son
 équipe attend les autres avant de continuer.
 
 Sans ennemi à proximité, un bot actionne le levier qui ouvre un chemin plus court vers les ennemis.
+Deux bots abattent un mur friable qui cache un chemin bien plus court, sauf si un ennemi qu'ils voient s'approche.
 
 Les bots attaquants gardent leurs gros coups, compétences d'attaque et sorts
 de dégâts, et les lancent ensemble sur la cible de l'équipe : les dégâts
