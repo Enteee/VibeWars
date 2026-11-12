@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   DEFAULT_KEYMAP,
   KEYMAP_PRESETS,
+  WEAPON_SET_ACTIONS,
   codeLabel,
   type Keymap,
 } from "../apps/web/src/input/keymap.js";
@@ -1721,7 +1722,7 @@ test("(43) Esc stops the attack and keeps the target, then a second Esc clears i
   await releaseControl(page);
 });
 
-test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swaps back (#489)", async ({
+test("set 2's key swaps to weapon set 2, the empty set 3's does nothing, and a slot's click swaps back (#489)", async ({
   page,
 }) => {
   await page.setViewportSize(WIDE);
@@ -1734,7 +1735,8 @@ test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swap
   await page.locator(".gear-box").filter({ hasText: "Recurve Bow" }).first().click();
   await expect(page.locator(".training canvas")).toBeVisible();
   const slots = page.locator(".training .weapon-set");
-  await expect(slots).toHaveText(["1", "2", "3", "4"]);
+  // Each slot shows its key: F1 to F4 in Classic, the default (#3134).
+  await expect(slots).toHaveText(WEAPON_SET_ACTIONS.map((action) => codeLabel(key(action))));
   await expect(slots.nth(0)).toHaveClass(/is-active/);
   await expect(slots.nth(1)).toHaveAccessibleName("Weapon set 2: Recurve Bow");
   await expect(slots.nth(2)).toHaveClass(/is-empty/);
