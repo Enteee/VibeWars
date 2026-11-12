@@ -22,18 +22,26 @@ it.
 
 ## 1. Palette
 
-A map uses a **biome**: a small set of base tones for ground and rock. Biomes
-may vary the ground, never the signals. **Target**: no code or map field
-selects a biome yet; today these are a palette for map authors.
+A map names its **biome** (`biome` in its JSON, #3172): a small set of base
+tones for ground, rock, stone, wood, earth and plants. Its floor, walls, decks,
+ramps and stairs draw in them, tinted from the hall's materials
+(`BIOME` in `apps/web/src/render/arena-palette.ts`). Biomes may vary the
+ground, never the signals, and brass and iron stay as they are. A map of one
+layer draws flat whatever its biome, until its family card rebuilds it.
 
-| Biome   | Ground    | Rock      | Plant / earth                   |
-| ------- | --------- | --------- | ------------------------------- |
-| Hall    | `#26303f` | `#4b5a70` | none (stone and steel)          |
-| Wilds   | `#2a3328` | `#5b5f58` | moss `#3f5a35`, earth `#5a4630` |
-| Heights | `#26303f` | `#4b5a70` | none, decks `#a0b2c7`           |
+| Biome   | Ground    | Rock      | Plant / earth                    |
+| ------- | --------- | --------- | -------------------------------- |
+| Hall    | `#26303f` | `#4b5a70` | none (stone and steel)           |
+| Wilds   | `#2a3328` | `#5b5f58` | moss `#3f5a35`, earth `#5a4630`  |
+| Heights | `#26303f` | `#4b5a70` | none, decks `#a0b2c7`            |
+| Desert  | `#3b3226` | `#6e6252` | earth `#6e5a40`, scrub `#6a6448` |
+
+The wilds and the heights still draw in the hall's tones; the wilds row is for
+its family card (#3064). The desert's stone decks are `#c2b296`.
 
 **Signals are reserved for the fight** and no biome tone may sit within a
-hand's width of them on the colour wheel:
+hand's width of them on the colour wheel (a quarter of its radius, the
+radius being chroma; `arena-palette.test.ts` checks the biome tones):
 
 | Meaning             | Hex                  | Where                                  |
 | ------------------- | -------------------- | -------------------------------------- |
@@ -313,6 +321,7 @@ A reviewer or QA ticks these on a map or world-art PR, from a screenshot.
 - [ ] One sun, from the north-west; shadows fall south-east.
 - [ ] 16 lights or fewer; fire is warm, magic is cold.
 - [ ] Every height step reads: lit top, lip, darker face, shadow or pit.
+- [ ] The map names its biome.
 - [ ] Every zone has a visible edge, over water and light.
 - [ ] Hue follows signal class (§6 rule 2): harmful never wears help blue or green.
 - [ ] Hazards telegraph by edge width within 0.3 s.
@@ -324,5 +333,4 @@ A reviewer or QA ticks these on a map or world-art PR, from a screenshot.
 
 - [ ] No fill is flat; texture is about one feature per body.
 - [ ] Zone edges differ by pattern (dashed harmful, solid help).
-- [ ] The map names its biome.
 - [ ] Contact shadows under bodies and props.

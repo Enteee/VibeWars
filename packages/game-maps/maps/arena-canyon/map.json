@@ -93,6 +93,7 @@
     ]
   },
   "layers": 4,
+  "biome": "desert",
   "groundLayer": 0,
   "pits": [],
   "tunnels": [],

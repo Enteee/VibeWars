@@ -8,6 +8,7 @@
   "height": 1160,
   "bounds": { "kind": "rect" },
   "layers": 1,
+  "biome": "hall",
   "groundLayer": 0,
   "pits": [],
   "tunnels": [],
