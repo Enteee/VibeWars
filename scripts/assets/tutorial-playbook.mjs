@@ -132,7 +132,7 @@ add(
     body(480, 290, FRIEND) +
     `<rect x="300" y="170" width="360" height="240" rx="6" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="8 6"/><rect x="200" y="110" width="560" height="360" rx="6" fill="none" stroke="#fff" stroke-width="2" opacity=".6"/>` +
     `<path d="M765,110 l30,0 m-8,-8 l8,8 l-8,8" stroke="${GLOW}" stroke-width="3" fill="none"/>` +
-    `<rect x="840" y="400" width="40" height="64" rx="18" fill="#dfe7f1" stroke="${INK}" stroke-width="2"/><path d="M860,400 v28 M840,428 h40" stroke="${INK}" stroke-width="2"/><rect x="860" y="400" width="20" height="28" rx="0" fill="${GLOW}" opacity=".9"/><text x="824" y="490" class="n">right-drag</text>` +
+    `<rect x="840" y="400" width="40" height="64" rx="18" fill="#dfe7f1" stroke="${INK}" stroke-width="2"/><path d="M860,400 v28 M840,428 h40" stroke="${INK}" stroke-width="2"/><rect x="860" y="400" width="20" height="28" rx="0" fill="${GLOW}" opacity=".9"/><text x="832" y="448" class="n" text-anchor="end">right-drag</text>` +
     `<path d="M830,416 l-22,-12 m0,10 l0,-10 l10,0" stroke="${GLOW}" stroke-width="2.5" fill="none"/><text x="780" y="400" class="n">wheel</text>` +
     say("“Zoom out. See the line? Now look around.”") +
     skip,
@@ -167,10 +167,8 @@ add(
     body(480, 290, FRIEND) +
     hudBlock() +
     `<g>${[0, 1, 2].map((i) => `<path d="M${180 + i * 16},${H - 150} l6,12 l6,-12" fill="none" stroke="${FOE}" stroke-width="4"/>`).join("")}</g>` +
-    callout(120, H - 170, 120, H - 114, "health") +
-    callout(300, H - 60, 120, H - 92, "energy") +
-    callout(330, H - 160, 192, H - 142, "pips: you are bleeding") +
-    pulse(18, H - 128, 232, 56) +
+    callout(400, H - 170, 192, H - 142, "pips: you are bleeding") +
+    pulse(18, H - 128, 320, 56) +
     say("“Ouch. See the arrows? That's you bleeding.”") +
     skip,
 );
@@ -188,7 +186,7 @@ add(
     skillBar(250, H - 130, 0.55, true) +
     key(262, 424, "1") +
     callout(500, 360, 280, H - 120, "recharge wipe") +
-    `<text x="600" y="420" class="n">energy drops</text>` +
+    `<text x="560" y="388" class="n">energy drops</text>` +
     say("“Again, once it's ready.”") +
     skip,
 );
@@ -204,9 +202,9 @@ add(
     `<circle cx="330" cy="300" r="30" fill="none" stroke="${FOE}" stroke-width="3" opacity=".6"/>` +
     bar(24, H - 120, 220, 0.55, "#c9423a", "health 55%") +
     bar(24, H - 98, 220, 0.7, "#3f6fe8", "energy") +
-    `<g>${[0, 1, 2].map((i) => `<path d="M${260 + i * 16},${H - 112} l6,-12 l6,12" fill="none" stroke="#76c96f" stroke-width="4"/>`).join("")}</g>` +
-    `<text x="322" y="${H - 108}" class="n">up-pips: healing</text>` +
-    pulse(18, H - 128, 232, 56) +
+    `<g>${[0, 1, 2].map((i) => `<path d="M${350 + i * 16},${H - 112} l6,-12 l6,12" fill="none" stroke="#76c96f" stroke-width="4"/>`).join("")}</g>` +
+    `<text x="340" y="${H - 136}" class="n">up-pips: healing</text>` +
+    pulse(18, H - 128, 320, 56) +
     say("“That's a lot of red. Heal up. Or just breathe: five seconds.”") +
     skip,
 );
@@ -223,7 +221,7 @@ add(
     `<rect x="${W - 130}" y="120" width="104" height="120" rx="8" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="2"/>` +
     effect(W - 120, 130, "#8e2f2f", 0.7, "B") +
     effect(W - 70, 130, "#6a5a2a", 0.4, "C") +
-    `<text x="${W - 200}" y="116" class="n">effects monitor</text><text x="${W - 250}" y="270" class="n">Crippled: slower</text>` +
+    `<text x="${W - 16}" y="98" class="n" text-anchor="end">effects monitor</text><text x="${W - 250}" y="270" class="n">Crippled: slower</text>` +
     pulse(W - 136, 112, 116, 134) +
     `<path d="M316,324 C400,330 500,350 540,366" stroke="#fff" stroke-width="2" stroke-dasharray="3 9" fill="none"/>` +
     say("“Slow, isn't it? It wears off. Walk it off.”") +
@@ -241,7 +239,7 @@ add(
     dummy(620, 280) +
     `<circle cx="620" cy="290" r="38" fill="none" stroke="${GLOW}" stroke-width="4"/><path d="M620,238 v-26 m-8,8 l8,-8 l8,8" stroke="${GLOW}" stroke-width="3" fill="none"/>` +
     `<circle cx="${W - 90}" cy="${H - 120}" r="70" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="3"/><circle cx="${W - 90}" cy="${H - 120}" r="4" fill="${FRIEND}"/><circle cx="${W - 60}" cy="${H - 150}" r="8" fill="none" stroke="${GLOW}" stroke-width="3"/><path d="M${W - 90},${H - 120} L${W - 60},${H - 150}" stroke="${GLOW}" stroke-width="2"/>` +
-    `<text x="${W - 150}" y="${H - 200}" class="n">compass: click to ping</text>` +
+    `<text x="${W - 16}" y="${H - 204}" class="n" text-anchor="end">compass: click to ping</text>` +
     pulse(W - 166, H - 196, 152, 152) +
     `<rect x="24" y="130" width="170" height="64" rx="8" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="2"/><text x="34" y="152" class="n">Guide</text>` +
     bar(34, 160, 140, 1, "#c9423a") +
@@ -268,7 +266,7 @@ add(
     `<text x="250" y="${H - 138}" class="n">Resurrect (tutorial only)</text>` +
     bar(24, H - 120, 220, 0.8, "#c9423a", "") +
     `<text x="24" y="${H - 128}" class="n">morale −1%</text>` +
-    say("“Every fall costs us. Don't fall.”") +
+    say("“Every fall costs us morale. Don't fall.”") +
     skip,
 );
 
