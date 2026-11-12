@@ -1280,7 +1280,6 @@ export default {
   "teamPlay.queuedMaps": "Карти в този режим",
   "teamPlay.random": "Случаен",
   "teamPlay.reroll": "Нов избор",
-  "teamPlay.teamBuilds": "Отборни билдове",
   "teamPlay.unnamedTeam": "Отбор без име",
 
   "topbar.closed": "Затворено",

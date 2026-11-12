@@ -1291,7 +1291,6 @@ export default {
   "teamPlay.queuedMaps": "Tämän tilan kartat",
   "teamPlay.random": "Arvottu",
   "teamPlay.reroll": "Arvo uusi",
-  "teamPlay.teamBuilds": "Tiimibuildit",
   "teamPlay.unnamedTeam": "Nimetön tiimi",
 
   "topbar.closed": "Suljettu",

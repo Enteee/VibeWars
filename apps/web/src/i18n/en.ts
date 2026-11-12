@@ -1278,7 +1278,6 @@ export const en = {
   "teamPlay.queuedMaps": "Maps in this mode",
   "teamPlay.random": "Random",
   "teamPlay.reroll": "Reroll",
-  "teamPlay.teamBuilds": "Team Builds",
   "teamPlay.unnamedTeam": "Unnamed team",
 
   "topbar.closed": "Closed",

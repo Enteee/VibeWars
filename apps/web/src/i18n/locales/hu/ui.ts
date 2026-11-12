@@ -1282,7 +1282,6 @@ export default {
   "teamPlay.queuedMaps": "Pályák ebben a módban",
   "teamPlay.random": "Véletlen",
   "teamPlay.reroll": "Újra",
-  "teamPlay.teamBuilds": "Csapatbuildek",
   "teamPlay.unnamedTeam": "Névtelen csapat",
 
   "topbar.closed": "Zárva",

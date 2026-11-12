@@ -1191,7 +1191,6 @@ export default {
   "teamPlay.queuedMaps": "แมปในโหมดนี้",
   "teamPlay.random": "สุ่ม",
   "teamPlay.reroll": "สุ่มใหม่",
-  "teamPlay.teamBuilds": "ทีมบิลด์",
   "teamPlay.unnamedTeam": "ทีมไม่มีชื่อ",
 
   "topbar.closed": "ปิด",

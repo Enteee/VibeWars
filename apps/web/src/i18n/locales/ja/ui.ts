@@ -1216,7 +1216,6 @@ export default {
   "teamPlay.queuedMaps": "このモードのマップ",
   "teamPlay.random": "ランダム",
   "teamPlay.reroll": "リロール",
-  "teamPlay.teamBuilds": "チームビルド",
   "teamPlay.unnamedTeam": "名前なしチーム",
 
   "topbar.closed": "閉鎖中",

@@ -1278,7 +1278,6 @@ export default {
   "teamPlay.queuedMaps": "Bu moddaki haritalar",
   "teamPlay.random": "Rastgele",
   "teamPlay.reroll": "Yenile",
-  "teamPlay.teamBuilds": "Takım Dizilimleri",
   "teamPlay.unnamedTeam": "Adsız takım",
 
   "topbar.closed": "Kapalı",

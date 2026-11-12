@@ -1463,7 +1463,6 @@ export default {
   "teamPlay.queuedMaps": "خرائط هذا النمط",
   "teamPlay.random": "عشوائية",
   "teamPlay.reroll": "إعادة اختيار",
-  "teamPlay.teamBuilds": "بنى الفرق",
   "teamPlay.unnamedTeam": "فريق بلا اسم",
 
   "topbar.closed": "مغلقة",
