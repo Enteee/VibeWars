@@ -49,6 +49,7 @@ describe("BOT_RULES (#2042)", () => {
       "shrines",
       "fight",
       "gates",
+      "levers",
       "mimic-elite",
       "pick-up-ghost",
       "fetch-relic",

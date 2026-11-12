@@ -36,6 +36,8 @@ altar, Ghostly Hero tim lawan di altar didahulukan bahkan dari itu.
 Bot yang terlalu jauh di depan timnya menunggu sisanya sebelum terus
 maju.
 
+Saat tidak ada lawan di dekatnya, bot menarik tuas yang membuka jalan lebih pendek ke arah lawan.
+
 Bot penyerang menahan pukulan besarnya, skill serangan dan mantra damage,
 lalu melepaskannya bersamaan ke target tim, jadi damage-nya mendarat sekaligus
 alih-alih menetes sedikit demi sedikit untuk dipulihkan penyembuh: mantra paling lambat jalan

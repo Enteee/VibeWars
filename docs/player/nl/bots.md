@@ -37,6 +37,8 @@ je team het altaar niet heeft, de Spookheld van het andere team op het altaar
 daar zelfs voor. Een bot die ver voor zijn team uit loopt, wacht op de rest
 voordat hij doorduwt.
 
+Is er geen vijand in de buurt, dan haalt een bot een hendel over die een kortere weg naar de vijanden opent.
+
 Schadebots bewaren hun grote klappen, aanvalsskills en schadespreuken, en
 vuren ze samen af op het doelwit van het team, zodat de schade tegelijk
 aankomt in plaats van druppelsgewijs, zodat een healer het niet ongedaan kan

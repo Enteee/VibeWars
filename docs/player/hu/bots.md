@@ -39,6 +39,8 @@ domb urában, amíg a csapatod nem tartja az oltárt, a másik csapat
 oltáron álló Kísértethőse még ennél is előbbre való. Az a bot, amelyik
 messze a csapata elé kerül, megvárja a többieket, mielőtt továbbnyomul.
 
+Ha nincs ellenfél a közelben, a bot meghúzza azt a kart, amely rövidebb utat nyit az ellenfelekhez.
+
 A sebzést osztó botok visszatartják a nagy ütéseiket, a
 támadókészségeket és a sebző varázslatokat, és együtt sütik el őket a
 csapat célpontjára, így a sebzés egyszerre ér be, ahelyett hogy

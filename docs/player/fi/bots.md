@@ -39,6 +39,8 @@ kun tiimisi ei hallitse alttaria, toisen tiimin alttarilla oleva
 aavesankari menee jopa sen edelle. Botti, joka etenee kauas tiiminsä
 edelle, odottaa muita ennen kuin jatkaa.
 
+Kun yhtään vihollista ei ole lähellä, botti kääntää vivun, joka avaa lyhyemmän tien vihollisten luo.
+
 Vahinkoa tekevät botit pidättävät isoja iskujaan, hyökkäystaitoja ja
 vahinkoloitsuja, ja laukaisevat ne yhdessä tiimin kohteeseen, jotta
 vahinko osuu kerralla eikä tihku vähitellen parantajan korjattavaksi:

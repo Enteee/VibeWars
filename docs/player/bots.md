@@ -36,6 +36,8 @@ altar, the other team's Ghostly Hero on the altar comes before even that.
 A bot that gets far ahead of its team waits for the rest before it pushes
 on.
 
+With no foe near, a bot throws a lever that opens a shorter way to the foes.
+
 Bot damage dealers hold their big hits, attack skills and damage spells,
 and fire them together on the team's target, so the damage lands at once
 rather than trickling in for a healer to undo: the slowest spell goes
