@@ -1,5 +1,5 @@
 import type { MatchMode, RelicCarry } from "@vibewars/game-core";
-import { isHallsMap, mapMatchRules } from "@vibewars/game-maps/match-fields";
+import { isHallsMap } from "@vibewars/game-maps/match-fields";
 import type { SizeClass } from "@vibewars/game-maps/size-class";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
@@ -168,24 +168,6 @@ export function hostMaps(
   return maps.filter((map) => modes === undefined || modes.includes(map.mode));
 }
 
-/** What each mode is, in a line, as the lobby shows it under the map (#476). */
-const MODE_LINES: Readonly<Record<MatchMode, MessageKey>> = {
-  annihilation: "lobby.modeAnnihilation",
-  "kill-count": "lobby.modeKillCount",
-  "priest-annihilation": "lobby.modePriestAnnihilation",
-  "guild-battle": "lobby.modeGuildBattle",
-  "relic-run": "lobby.modeRelicRun",
-  "king-of-the-hill": "lobby.modeKingOfTheHill",
-  "capture-points": "lobby.modeCapturePoints",
-};
-
-/** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */
-export function modeLine(map: LobbyMap): string {
-  return t(map.relicCarry === "foe" ? "lobby.modeRelicRunFoe" : MODE_LINES[map.mode], {
-    minutes: mapMatchRules(arenaMap(map.id), map.mode).timeLimitSeconds / 60,
-  });
-}
-
 /** Each size class as the picker writes it. */
 const SIZE_NAMES: Readonly<Record<SizeClass, MessageKey>> = {
   small: "lobby.sizeSmall",
@@ -310,14 +292,6 @@ export function lobbyPanel(
     const start = button(t("lobby.startMatch"), ready ? "primary" : "", callbacks.onStart);
     start.disabled = controls.startDisabled;
     actions.push(start);
-  }
-
-  // The mode follows from the map (#476). It is the only place a player
-  // learns it before Start, so it gets a row of its own under the bar
-  // rather than being shortened in it (#1272). Team Arena's map is a
-  // placeholder until its draw, so it has no line until then (#2642).
-  if (snapshot.mode !== "team-arena" && current !== undefined) {
-    panel.appendChild(h("div", "lobby-mode", modeLine(current)));
   }
 
   if (notice !== undefined) {

@@ -746,21 +746,9 @@ export default {
   "lobby.mapRandom": "الخريطة: عشوائية (ساحة الفرق)",
   "lobby.mapShown": "الخريطة: {map}",
   "lobby.matchRunning": "ما زالت هناك مباراة جارية. تُفتح الردهة مجددًا عند انتهائها.",
-  "lobby.modeAnnihilation": "الإبادة: اهزم كل عدو",
-  "lobby.modeCapturePoints":
-    "نقاط السيطرة: قف على المزارات للسيطرة عليها. يسجّل كل مزار تملكه نقاطًا كل 30 ث.",
-  "lobby.modeGuildBattle": "معركة النقابات: اقتل سيد نقابة العدو",
-  "lobby.modeKillCount": "عدد القتلى: أكثر قتلى في 3 دقائق",
-  "lobby.modeKingOfTheHill":
-    "ملك التل: قُد بطلك الشبحي إلى المذبح. احتفظ به لتسجيل النقاط؛ يفوز صاحب أكثر النقاط خلال {minutes} دقيقة.",
   "lobby.modeNameCapturePoints": "نقاط السيطرة",
   "lobby.modeNameKingOfTheHill": "ملك التل",
   "lobby.modeNameRelicRun": "سباق الآثار",
-  "lobby.modePriestAnnihilation": "إبادة الكهنة: اهزم كل عدو وكاهنه",
-  "lobby.modeRelicRun":
-    "سباق الآثار: احمل أثرك إلى المذبح. يفوز صاحب أكثر النقاط خلال {minutes} دقيقة.",
-  "lobby.modeRelicRunFoe":
-    "سباق الآثار: احمل أثر العدو إلى بطلك الشبحي. يفوز المتقدم بـ 3 نقاط؛ وبعد {minutes} دقيقة، صاحب أكثر النقاط.",
   "lobby.notReady": "غير جاهز",
   "lobby.playBots": "العب ضد البوتات",
   "lobby.ready": "جاهز",
@@ -842,7 +830,6 @@ export default {
   },
   "matches.noMatches": "لا مباريات بعد.",
   "matches.noneFit": "لا مباريات تطابق هذه المرشحات.",
-  "matches.recentNote": "تُعرض آخر 50 مباراة من الأيام السبعة الماضية.",
   "matches.offline": "يتعذّر الوصول إلى مرحّلات المباريات الآن.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size} ضد {size}",

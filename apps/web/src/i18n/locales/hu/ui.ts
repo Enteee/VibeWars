@@ -648,21 +648,9 @@ export default {
   "lobby.mapRandom": "Pálya: véletlen (Csapataréna)",
   "lobby.mapShown": "Pálya: {map}",
   "lobby.matchRunning": "Még tart egy meccs. A lobbi a vége után nyílik meg újra.",
-  "lobby.modeAnnihilation": "Megsemmisítés: győzz le minden ellenséget",
-  "lobby.modeCapturePoints":
-    "Pontfoglalás: állj a szentélyekre, hogy elfoglald őket. Minden birtokolt szentély 30 mp-enként pontot ér.",
-  "lobby.modeGuildBattle": "Céhcsata: öld meg az ellenséges Céhurat",
-  "lobby.modeKillCount": "Ölésverseny: legtöbb ölés 3 perc alatt",
-  "lobby.modeKingOfTheHill":
-    "A domb ura: vezesd a Kísértethősödet az oltárra. Tartsd meg a pontokért; {minutes} perc után a legtöbb pont nyer.",
   "lobby.modeNameCapturePoints": "Pontfoglalás",
   "lobby.modeNameKingOfTheHill": "A domb ura",
   "lobby.modeNameRelicRun": "Ereklyefutam",
-  "lobby.modePriestAnnihilation": "Papirtás: győzz le minden ellenséget és a papjukat",
-  "lobby.modeRelicRun":
-    "Ereklyefutam: vidd az ereklyédet az oltárhoz. {minutes} perc után a legtöbb pont nyer.",
-  "lobby.modeRelicRunFoe":
-    "Ereklyefutam: vidd az ellenség ereklyéjét a Kísértethősödhöz. 3 pont előny nyer; {minutes} perc után a legtöbb pont.",
   "lobby.notReady": "Nem kész",
   "lobby.playBots": "Játék botok ellen",
   "lobby.ready": "Kész",
@@ -716,7 +704,6 @@ export default {
   "matches.minutesAgo": { one: "{count} perce", other: "{count} perce" },
   "matches.noMatches": "Még nincsenek meccsek.",
   "matches.noneFit": "Nincs meccs ezekkel a szűrőkkel.",
-  "matches.recentNote": "Az elmúlt 7 nap 50 legutóbbi meccse látható.",
   "matches.offline": "A meccsrelayek most nem érhetők el.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

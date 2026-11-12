@@ -1975,8 +1975,7 @@ body:has(> .splash) #menu-background::after {
 }
 
 /* The Matches page (#2532): one row a record, newest first. */
-.matches-note,
-.matches-recent {
+.matches-note {
   margin: 0;
   color: var(--ink-dim);
 }
@@ -3736,11 +3735,6 @@ body:has(> .splash) #menu-background::after {
 .lobby-map,
 .lobby-spectators {
   color: var(--ink-dim);
-}
-
-.lobby-mode {
-  color: var(--ink-dim);
-  font-size: 0.85rem;
 }
 
 .lobby-teams {

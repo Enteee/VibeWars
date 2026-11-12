@@ -645,21 +645,9 @@ export default {
   "lobby.mapRandom": "Map: willekeurig (Team Arena)",
   "lobby.mapShown": "Map: {map}",
   "lobby.matchRunning": "Er loopt nog een match. De lobby gaat weer open als die voorbij is.",
-  "lobby.modeAnnihilation": "Annihilation: versla alle vijanden",
-  "lobby.modeCapturePoints":
-    "Capture Points: ga op schrijnen staan om ze te veroveren. Elk schrijn van jou scoort elke 30 s.",
-  "lobby.modeGuildBattle": "Guild Battle: dood de vijandelijke Gildeheer",
-  "lobby.modeKillCount": "Kill Count: de meeste kills in 3 minuten",
-  "lobby.modeKingOfTheHill":
-    "King of the Hill: leid je Spookheld naar het altaar. Houd het vast om te scoren; de meeste punten in {minutes} minuten wint.",
   "lobby.modeNameCapturePoints": "Capture Points",
   "lobby.modeNameKingOfTheHill": "King of the Hill",
   "lobby.modeNameRelicRun": "Relic Run",
-  "lobby.modePriestAnnihilation": "Priest Annihilation: versla alle vijanden en hun priester",
-  "lobby.modeRelicRun":
-    "Relic Run: breng je relikwie naar het altaar. De meeste punten in {minutes} minuten wint.",
-  "lobby.modeRelicRunFoe":
-    "Relic Run: breng het relikwie van de vijand naar je Spookheld. 3 punten voorsprong wint; na {minutes} minuten de meeste punten.",
   "lobby.notReady": "Niet klaar",
   "lobby.playBots": "Tegen bots spelen",
   "lobby.ready": "Klaar",
@@ -714,7 +702,6 @@ export default {
   "matches.minutesAgo": { one: "{count} min geleden", other: "{count} min geleden" },
   "matches.noMatches": "Nog geen matches.",
   "matches.noneFit": "Geen matches voor deze filters.",
-  "matches.recentNote": "Toont de 50 recentste matches van de afgelopen 7 dagen.",
   "matches.offline": "De matchrelays zijn nu niet bereikbaar.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

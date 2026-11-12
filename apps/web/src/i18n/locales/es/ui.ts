@@ -686,22 +686,9 @@ export default {
   "lobby.mapRandom": "Mapa: aleatorio (Arena por equipos)",
   "lobby.mapShown": "Mapa: {map}",
   "lobby.matchRunning": "Aún hay una partida en curso. La sala se abrirá de nuevo cuando termine.",
-  "lobby.modeAnnihilation": "Aniquilación: derrota a todos los enemigos",
-  "lobby.modeCapturePoints":
-    "Puntos de captura: colócate en los santuarios para tomarlos. Cada santuario tuyo puntúa cada 30 s.",
-  "lobby.modeGuildBattle": "Batalla de gremios: mata al Señor del Gremio enemigo",
-  "lobby.modeKillCount": "Recuento de bajas: más bajas en 3 minutos",
-  "lobby.modeKingOfTheHill":
-    "Rey de la colina: lleva a tu Héroe Fantasmal al altar. Mantenlo para puntuar; gana quien más puntos tenga en {minutes} minutos.",
   "lobby.modeNameCapturePoints": "Puntos de captura",
   "lobby.modeNameKingOfTheHill": "Rey de la colina",
   "lobby.modeNameRelicRun": "Carrera de reliquias",
-  "lobby.modePriestAnnihilation":
-    "Aniquilación de sacerdote: derrota a todos los enemigos y a su sacerdote",
-  "lobby.modeRelicRun":
-    "Carrera de reliquias: lleva tu reliquia al altar. Gana quien más puntos tenga en {minutes} minutos.",
-  "lobby.modeRelicRunFoe":
-    "Carrera de reliquias: lleva la reliquia enemiga a tu Héroe Fantasmal. 3 puntos de ventaja ganan; a los {minutes} minutos, quien más puntos tenga.",
   "lobby.notReady": "No listo",
   "lobby.playBots": "Jugar contra bots",
   "lobby.ready": "Listo",
@@ -772,7 +759,6 @@ export default {
   },
   "matches.noMatches": "Aún no hay partidas.",
   "matches.noneFit": "Ninguna partida coincide con estos filtros.",
-  "matches.recentNote": "Se muestran las 50 partidas más recientes de los últimos 7 días.",
   "matches.offline": "Ahora mismo no se puede conectar con los relays de partidas.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
