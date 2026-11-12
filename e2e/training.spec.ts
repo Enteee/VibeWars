@@ -1,6 +1,12 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { KEYMAP_PRESETS, codeLabel, type Keymap } from "../apps/web/src/input/keymap.js";
+import {
+  DEFAULT_KEYMAP,
+  KEYMAP_PRESETS,
+  WEAPON_SET_ACTIONS,
+  codeLabel,
+  type Keymap,
+} from "../apps/web/src/input/keymap.js";
 import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
@@ -37,10 +43,7 @@ async function expectFilledSlots(page: Page, names: readonly string[]): Promise<
 }
 
 /** A new elementalist, holding its Wand (#614), with Fireball on the bar, in a wide editor. */
-async function openTraining(
-  page: Page,
-  keymap: Keymap = KEYMAP_PRESETS.vibewars,
-): Promise<Locator> {
+async function openTraining(page: Page, keymap: Keymap = DEFAULT_KEYMAP): Promise<Locator> {
   await page.setViewportSize(WIDE);
   await page.goto("./");
   await openRail(page, "Character Builder");
@@ -125,13 +128,24 @@ async function holdKey(page: Page, key: string, ms: number): Promise<void> {
 const logRows = (page: Page): Locator => page.locator(".training-log-row");
 const meter = (page: Page, name: string): Locator => page.locator(`[data-meter="${name}"]`);
 
+/**
+ * The hit arrives once the cast completes, as a damage row naming the skill.
+ * The cast takes 1.75 s of game time, and game time runs slower than wall
+ * time when the machine is busy (#327): at four workers it has been seen
+ * 8 s short of it after 15 s (#3168). Nothing re-arms meanwhile; the log shows
+ * the cast under way.
+ */
+async function expectFireballLanded(page: Page): Promise<void> {
+  await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
+    "Fireball",
+    { timeout: 45_000 },
+  );
+}
+
 async function castFireballAndLand(page: Page): Promise<void> {
   await takeControl(page);
   await page.keyboard.press(skillKey(0));
-  // The hit arrives once the cast completes, as a damage row naming the skill.
-  await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
-    "Fireball",
-  );
+  await expectFireballLanded(page);
 }
 
 test("(1) the arena is a third column, left of the editor and the library", async ({ page }) => {
@@ -890,24 +904,25 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   await releaseControl(page);
 });
 
-test("(22) a stored Classic keymap casts on the number row (#302)", async ({ page }) => {
+test("(22) a stored VibeWars keymap casts on Q to F, whatever the default (#302, #3134)", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
   await page.addInitScript(
-    ({ key, classic }) => {
-      localStorage.setItem(key, JSON.stringify(classic));
+    ({ key, vibewars }) => {
+      localStorage.setItem(key, JSON.stringify(vibewars));
     },
-    { key: `${STORAGE_NAMESPACE}.keymap`, classic: KEYMAP_PRESETS.classic },
+    { key: `${STORAGE_NAMESPACE}.keymap`, vibewars: KEYMAP_PRESETS.vibewars },
   );
-  await openTraining(page, KEYMAP_PRESETS.classic);
-  await expect(page.locator(".training-skill-key").first()).toHaveText("1");
+  await openTraining(page, KEYMAP_PRESETS.vibewars);
+  await expect(page.locator(".training-skill-key").first()).toHaveText("Q");
   await takeControl(page);
   await expect(page.locator(".training-hint")).toHaveText(
-    "WASD move · 1–8 cast · tab/right-click to target · space/double right-click attack · esc to release",
+    "arrows move · Q–F cast · tab/right-click to target · space/double right-click attack · esc to release",
   );
 
-  await page.keyboard.press(skillKey(0, KEYMAP_PRESETS.classic));
-  await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
-    "Fireball",
-  );
+  await page.keyboard.press(skillKey(0, KEYMAP_PRESETS.vibewars));
+  await expectFireballLanded(page);
 });
 
 /**
@@ -1717,7 +1732,7 @@ test("(43) Esc stops the attack and keeps the target, then a second Esc clears i
   await releaseControl(page);
 });
 
-test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swaps back (#489)", async ({
+test("set 2's key swaps to weapon set 2, the empty set 3's does nothing, and a slot's click swaps back (#489)", async ({
   page,
 }) => {
   await page.setViewportSize(WIDE);
@@ -1730,7 +1745,8 @@ test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swap
   await page.locator(".gear-box").filter({ hasText: "Recurve Bow" }).first().click();
   await expect(page.locator(".training canvas")).toBeVisible();
   const slots = page.locator(".training .weapon-set");
-  await expect(slots).toHaveText(["1", "2", "3", "4"]);
+  // Each slot shows its key: F1 to F4 in Classic, the default (#3134).
+  await expect(slots).toHaveText(WEAPON_SET_ACTIONS.map((action) => codeLabel(key(action))));
   await expect(slots.nth(0)).toHaveClass(/is-active/);
   await expect(slots.nth(1)).toHaveAccessibleName("Weapon set 2: Recurve Bow");
   await expect(slots.nth(2)).toHaveClass(/is-empty/);

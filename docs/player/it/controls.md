@@ -4,21 +4,21 @@ Ogni tasto della tabella qui sotto si può cambiare in **Opzioni**, nella sezion
 
 ## Tasti
 
-Il preset predefinito è **VibeWars**. **Classico** è per chi viene da GW1.
+Il preset predefinito è **Classico**, per chi viene da GW1. **VibeWars** lancia con la mano sinistra e si muove con i tasti freccia.
 
-| Azione                              | VibeWars         | Classico                 |
-| ----------------------------------- | ---------------- | ------------------------ |
-| Abilità da 1 a 8                    | Q W E R, A S D F | da 1 a 8                 |
-| Movimento                           | tasti freccia    | W A S D, o tasti freccia |
-| Set di armi da 1 a 4                | da 1 a 4         | da F1 a F4               |
-| Attacco, o usa una bandiera         | Space            | Space                    |
-| Prossimo nemico (Shift: precedente) | Tab              | Tab                      |
-| Nemico più vicino                   | C                | C                        |
-| Nemico segnalato dalla tua squadra  | T                | T                        |
-| Te stesso                           | G                | G                        |
-| Nomi (tieni premuto)                | Shift            | Shift                    |
-| Silenzia                            | M                | M                        |
-| Lascia bandiera, reliquia o ceneri  | nessun tasto     | nessun tasto             |
+| Azione                              | Classico                 | VibeWars         |
+| ----------------------------------- | ------------------------ | ---------------- |
+| Abilità da 1 a 8                    | da 1 a 8                 | Q W E R, A S D F |
+| Movimento                           | W A S D, o tasti freccia | tasti freccia    |
+| Set di armi da 1 a 4                | da F1 a F4               | da 1 a 4         |
+| Attacco, o usa una bandiera         | Space                    | Space            |
+| Prossimo nemico (Shift: precedente) | Tab                      | Tab              |
+| Nemico più vicino                   | C                        | C                |
+| Nemico segnalato dalla tua squadra  | T                        | T                |
+| Te stesso                           | G                        | G                |
+| Nomi (tieni premuto)                | Shift                    | Shift            |
+| Silenzia                            | M                        | M                |
+| Lascia bandiera, reliquia o ceneri  | nessun tasto             | nessun tasto     |
 
 Questi tasti sono fissi:
 

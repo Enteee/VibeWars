@@ -19,11 +19,12 @@ describe("the keymap preference (#302)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("is the default until one is saved, and survives a reload once it is", () => {
+  it("is the default, Classic, until one is saved, and survives a reload once it is", () => {
     vi.stubGlobal("localStorage", memoryStorage());
     expect(loadKeymap()).toBe(DEFAULT_KEYMAP);
-    saveKeymap(KEYMAP_PRESETS.classic);
-    expect(loadKeymap()).toEqual(KEYMAP_PRESETS.classic);
+    expect(loadKeymap()).toBe(KEYMAP_PRESETS.classic);
+    saveKeymap(KEYMAP_PRESETS.vibewars);
+    expect(loadKeymap()).toEqual(KEYMAP_PRESETS.vibewars);
   });
 
   it("is the default, whole, when the stored value is not JSON or not a keymap", () => {

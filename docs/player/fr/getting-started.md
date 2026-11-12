@@ -219,14 +219,14 @@ adresse IP.
 
 ## En match
 
-- Clique au sol pour y marcher, ou bouge avec les flèches.
+- Clique au sol pour y marcher, ou bouge avec **W A S D** ou les flèches.
 - Clic droit sur un ennemi pour le cibler, ou appuie sur **Tab** pour le
   suivant. Appuie sur **Space**, ou clic droit à nouveau sur l'ennemi, pour
   l'attaquer.
-- Tes huit compétences sont sur **Q W E R** et **A S D F**, emplacement 1 en
-  premier. Tu peux aussi cliquer sur une compétence de la barre pour l'utiliser.
+- Tes huit compétences sont sur **1** à **8**, emplacement 1 en premier. Tu peux
+  aussi cliquer sur une compétence de la barre pour l'utiliser.
 - **Esc** annule ce que tu fais. Chaque touche se change dans **Options**, sous
-  **commandes** ; le profil Classique met les compétences sur 1 à 8 et le
-  déplacement sur WASD. Tout est dans [Commandes](controls.md).
+  **commandes** ; le profil VibeWars met les compétences sur Q W E R et A S D F
+  et le déplacement sur les flèches. Tout est dans [Commandes](controls.md).
 
 Le bouton [?], en haut à droite, rouvre cette Aide, en match aussi.

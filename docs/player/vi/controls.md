@@ -8,21 +8,21 @@ mất phím đó. Thay đổi được lưu ngay lập tức.
 
 ## Phím
 
-Mẫu mặc định là **VibeWars**. **Classic** dành cho tay chơi GW1.
+Mẫu mặc định là **Classic**, dành cho tay chơi GW1. **VibeWars** dùng kỹ năng bằng tay trái và di chuyển bằng các phím mũi tên.
 
-| Hành động                      | VibeWars         | Classic                    |
-| ------------------------------ | ---------------- | -------------------------- |
-| Kỹ năng 1 đến 8                | Q W E R, A S D F | 1 đến 8                    |
-| Di chuyển                      | phím mũi tên     | W A S D, hoặc phím mũi tên |
-| Bộ vũ khí 1 đến 4              | 1 đến 4          | F1 đến F4                  |
-| Tấn công, hoặc dùng cờ         | Space            | Space                      |
-| Địch kế tiếp (Shift: trước đó) | Tab              | Tab                        |
-| Địch gần nhất                  | C                | C                          |
-| Địch được đội bạn gọi          | T                | T                          |
-| Bản thân                       | G                | G                          |
-| Hiện tên (giữ)                 | Shift            | Shift                      |
-| Tắt tiếng                      | M                | M                          |
-| Thả cờ, thánh tích hoặc tro    | không có         | không có                   |
+| Hành động                      | Classic                    | VibeWars         |
+| ------------------------------ | -------------------------- | ---------------- |
+| Kỹ năng 1 đến 8                | 1 đến 8                    | Q W E R, A S D F |
+| Di chuyển                      | W A S D, hoặc phím mũi tên | phím mũi tên     |
+| Bộ vũ khí 1 đến 4              | F1 đến F4                  | 1 đến 4          |
+| Tấn công, hoặc dùng cờ         | Space                      | Space            |
+| Địch kế tiếp (Shift: trước đó) | Tab                        | Tab              |
+| Địch gần nhất                  | C                          | C                |
+| Địch được đội bạn gọi          | T                          | T                |
+| Bản thân                       | G                          | G                |
+| Hiện tên (giữ)                 | Shift                      | Shift            |
+| Tắt tiếng                      | M                          | M                |
+| Thả cờ, thánh tích hoặc tro    | không có                   | không có         |
 
 Các phím sau là cố định:
 

@@ -213,14 +213,15 @@ IP-adresse.
 
 ## I en kamp
 
-- Klik på jorden for at gå derhen, eller bevæg dig med piletasterne.
+- Klik på jorden for at gå derhen, eller bevæg dig med **W A S D** eller
+  piletasterne.
 - Højreklik på en fjende for at vælge den som mål, eller tryk på **Tab**
   for den næste. Tryk på **Mellemrum**, eller højreklik på fjenden igen,
   for at angribe den.
-- Dine otte evner ligger på **Q W E R** og **A S D F**, plads 1 først.
-  Du kan også klikke på en evne på bjælken for at bruge den.
-- **Esc** annullerer det, du er i gang med. Hver tast kan ændres under
-  **Valg**, i Styring; forvalget Klassisk lægger evner på 1 til 8 og
-  bevæger dig med WASD. De står alle under [Styring](controls.md).
+- Dine otte evner ligger på **1** til **8**, plads 1 først. Du kan også klikke
+  på en evne på bjælken for at bruge den.
+- **Esc** annullerer det, du er i gang med. Hver tast kan ændres under **Valg**,
+  i Styring; forvalget VibeWars lægger evner på Q W E R og A S D F og bevæger
+  dig med piletasterne. De står alle under [Styring](controls.md).
 
 Knappen [?] øverst til højre åbner denne Hjælp igen, også i en kamp.

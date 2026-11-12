@@ -193,14 +193,14 @@ Gra online jest peer-to-peer: inni gracze w twoim meczu widzą twój adres IP.
 
 ## W meczu
 
-- Kliknij ziemię, aby tam pójść, albo poruszaj się strzałkami.
+- Kliknij ziemię, aby tam pójść, albo poruszaj się **W A S D** lub strzałkami.
 - Kliknij wroga prawym przyciskiem, aby obrać go na cel, albo naciśnij **Tab**, aby
   przejść do następnego. Naciśnij **Space** albo kliknij wroga prawym przyciskiem
   jeszcze raz, aby go zaatakować.
-- Twoje osiem umiejętności jest na **Q W E R** i **A S D F**, od miejsca 1.
-  Możesz też kliknąć umiejętność na pasku, aby jej użyć.
-- **Esc** anuluje to, co robisz. Każdy klawisz można zmienić w **Opcjach**, w sekcji
-  sterowanie; układ Klasyczny umieszcza umiejętności na 1 do 8 i ruch na WASD.
-  Wszystkie są w [Sterowaniu](controls.md).
+- Twoje osiem umiejętności jest na **1** do **8**, od miejsca 1. Możesz też
+  kliknąć umiejętność na pasku, aby jej użyć.
+- **Esc** anuluje to, co robisz. Każdy klawisz można zmienić w **Opcjach**, w
+  sekcji sterowanie; układ VibeWars umieszcza umiejętności na Q W E R i A S D F,
+  a ruch na strzałkach. Wszystkie są w [Sterowaniu](controls.md).
 
 Przycisk [?] w prawym górnym rogu ponownie otwiera tę Pomoc, także w meczu.

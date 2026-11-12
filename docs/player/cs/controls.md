@@ -4,21 +4,21 @@ Každou klávesu z tabulky níže můžeš změnit v **Možnostech**, v sekci **
 
 ## Klávesy
 
-Výchozí předvolba je **VibeWars**. **Klasické** je pro ruce zvyklé na GW1.
+Výchozí předvolba je **Klasické**, pro ruce zvyklé na GW1. **VibeWars** sesílá levou rukou a pohybuje se šipkami.
 
-| Akce                                | VibeWars         | Klasické           |
-| ----------------------------------- | ---------------- | ------------------ |
-| Dovednosti 1 až 8                   | Q W E R, A S D F | 1 až 8             |
-| Pohyb                               | šipky            | W A S D nebo šipky |
-| Sady zbraní 1 až 4                  | 1 až 4           | F1 až F4           |
-| Útok nebo použití vlajky            | Space            | Space              |
-| Další nepřítel (Shift: předchozí)   | Tab              | Tab                |
-| Nejbližší nepřítel                  | C                | C                  |
-| Nepřítel nahlášený tvým týmem       | T                | T                  |
-| Ty sám                              | G                | G                  |
-| Ukázat jména (držet)                | Shift            | Shift              |
-| Ztlumit                             | M                | M                  |
-| Odhodit vlajku, relikvii nebo popel | žádná            | žádná              |
+| Akce                                | Klasické           | VibeWars         |
+| ----------------------------------- | ------------------ | ---------------- |
+| Dovednosti 1 až 8                   | 1 až 8             | Q W E R, A S D F |
+| Pohyb                               | W A S D nebo šipky | šipky            |
+| Sady zbraní 1 až 4                  | F1 až F4           | 1 až 4           |
+| Útok nebo použití vlajky            | Space              | Space            |
+| Další nepřítel (Shift: předchozí)   | Tab                | Tab              |
+| Nejbližší nepřítel                  | C                  | C                |
+| Nepřítel nahlášený tvým týmem       | T                  | T                |
+| Ty sám                              | G                  | G                |
+| Ukázat jména (držet)                | Shift              | Shift            |
+| Ztlumit                             | M                  | M                |
+| Odhodit vlajku, relikvii nebo popel | žádná              | žádná            |
 
 Tyto klávesy jsou pevné:
 

@@ -109,10 +109,10 @@ describe("attachKeyboardMoveInput", () => {
     expect(onChange).toHaveBeenLastCalledWith(ZERO);
   });
 
-  it("does not move on a skill key: W casts in the default keymap (#302)", () => {
+  it("does not move on a skill key: W casts in VibeWars (#302)", () => {
     const { target, dispatch } = createFakeTarget();
     const onChange = vi.fn();
-    attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
+    attachKeyboardMoveInput(target, KEYMAP_PRESETS.vibewars, onChange);
 
     dispatch("keydown", "KeyW");
     dispatch("keydown", "ShiftLeft");

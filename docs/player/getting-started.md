@@ -210,13 +210,14 @@ IP address.
 
 ## In a match
 
-- Click the ground to walk there, or move with the arrow keys.
+- Click the ground to walk there, or move with **W A S D** or the arrow keys.
 - Right click a foe to target it, or press **Tab** for the next one.
   Press **Space**, or right click the foe again, to attack it.
-- Your eight skills are on **Q W E R** and **A S D F**, slot 1 first.
+- Your eight skills are on **1** to **8**, slot 1 first.
   Click a skill on the bar to use it too.
 - **Esc** cancels what you are doing. Every key can be changed in
-  **Options**, under Controls; the Classic preset puts skills on 1 to 8
-  and moves with WASD. All of them are in [Controls](controls.md).
+  **Options**, under Controls; the VibeWars preset puts skills on Q W E R
+  and A S D F and moves with the arrow keys. All of them are in
+  [Controls](controls.md).
 
 The [?] button, top right, opens this Help again, in a match too.

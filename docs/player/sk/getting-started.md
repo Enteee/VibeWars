@@ -208,13 +208,13 @@ IP adresu.
 
 ## V zápase
 
-- Klikni na zem, aby si tam došiel, alebo sa pohybuj šípkami.
+- Klikni na zem, aby si tam došiel, alebo sa pohybuj **W A S D** alebo šípkami.
 - Pravým kliknutím na nepriateľa ho zameriaš alebo stlač **Tab** pre
   ďalšieho. Stlačením **Space** alebo ďalším pravým kliknutím naňho zaútočíš.
-- Tvojich osem schopností je na **Q W E R** a **A S D F**, od pozície 1.
-  Schopnosť použiješ aj kliknutím na ňu na lište.
-- **Esc** zruší to, čo práve robíš. Každý kláves sa dá zmeniť v
-  **Nastaveniach** v sekcii ovládanie; predvoľba Klasické dáva schopnosti na
-  1 až 8 a pohyb na WASD. Všetky sú v [Ovládaní](controls.md).
+- Tvojich osem schopností je na **1** až **8**, od pozície 1. Schopnosť použiješ
+  aj kliknutím na ňu na lište.
+- **Esc** zruší to, čo práve robíš. Každý kláves sa dá zmeniť v **Nastaveniach**
+  v sekcii ovládanie; predvoľba VibeWars dáva schopnosti na Q W E R a A S D F a
+  pohyb na šípky. Všetky sú v [Ovládaní](controls.md).
 
 Tlačidlo [?] vpravo hore znova otvorí túto Pomoc, aj v zápase.

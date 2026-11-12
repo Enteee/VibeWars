@@ -19,6 +19,7 @@ import {
 import { layoutLabeller, loadLayoutLabeller } from "./key-labels.js";
 
 const presets = Object.entries(KEYMAP_PRESETS);
+const VIBEWARS = KEYMAP_PRESETS.vibewars;
 
 describe("the keymap presets (#302)", () => {
   it.each(presets)(
@@ -48,10 +49,13 @@ describe("the keymap presets (#302)", () => {
     }
   });
 
-  it("defaults to VibeWars: skills on Q-F, arrows move, Shift shows names", () => {
-    expect(DEFAULT_KEYMAP).toBe(KEYMAP_PRESETS.vibewars);
+  it("defaults to Classic: skills on 1-8, WASD and the arrows move (#3134)", () => {
+    expect(DEFAULT_KEYMAP).toBe(KEYMAP_PRESETS.classic);
+    expect(presetOf(DEFAULT_KEYMAP)).toBe("classic");
     const action = (code: string): string | undefined => actionForCode(DEFAULT_KEYMAP, code);
-    expect(["KeyQ", "KeyW", "KeyE", "KeyR", "KeyA", "KeyS", "KeyD", "KeyF"].map(action)).toEqual([
+    expect(
+      ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8"].map(action),
+    ).toEqual([
       "skill-1",
       "skill-2",
       "skill-3",
@@ -67,6 +71,12 @@ describe("the keymap presets (#302)", () => {
       "move-left",
       "move-right",
     ]);
+    expect(["KeyW", "KeyS", "KeyA", "KeyD"].map(action)).toEqual([
+      "move-up",
+      "move-down",
+      "move-left",
+      "move-right",
+    ]);
     expect(action("Tab")).toBe("target-next");
     expect(action("KeyC")).toBe("target-closest");
     expect(action("KeyT")).toBe("target-called");
@@ -75,8 +85,8 @@ describe("the keymap presets (#302)", () => {
     expect(action("ShiftLeft")).toBe("show-names");
     expect(action("ShiftRight")).toBe("show-names");
     expect(action("KeyM")).toBe("mute");
-    expect(action("Digit1")).toBe("weapon-set-1");
-    expect(action("Digit5")).toBeUndefined();
+    expect(action("F1")).toBe("weapon-set-1");
+    expect(action("Digit9")).toBeUndefined();
     expect(action("ControlLeft")).toBeUndefined();
   });
 
@@ -193,9 +203,9 @@ describe("key labels", () => {
   });
 
   it("labels an action by its first key, and an unbound one as nothing", () => {
-    expect(actionLabel(DEFAULT_KEYMAP, "skill-1")).toBe("Q");
+    expect(actionLabel(VIBEWARS, "skill-1")).toBe("Q");
     expect(actionLabel(KEYMAP_PRESETS.classic, "move-up")).toBe("W");
-    expect(actionLabel({ ...DEFAULT_KEYMAP, mute: [] }, "mute")).toBe("");
+    expect(actionLabel({ ...VIBEWARS, mute: [] }, "mute")).toBe("");
   });
 
   it("prefers the keyboard layout's character, uppercased, where it has one", () => {
@@ -206,7 +216,7 @@ describe("key labels", () => {
         ["Space", " "],
       ]),
     );
-    expect(actionLabel(DEFAULT_KEYMAP, "skill-1", azerty)).toBe("A");
+    expect(actionLabel(VIBEWARS, "skill-1", azerty)).toBe("A");
     expect(azerty("Space")).toBe(t("keys.space"));
     expect(azerty("ArrowUp")).toBe("↑");
   });
@@ -227,20 +237,20 @@ describe("key labels", () => {
 
 describe("rebind (#309)", () => {
   it("binds a free key to the cell asked for", () => {
-    const { map, displaced } = rebind(DEFAULT_KEYMAP, "skill-1", 1, "KeyZ");
+    const { map, displaced } = rebind(VIBEWARS, "skill-1", 1, "KeyZ");
     expect(map["skill-1"]).toEqual(["KeyQ", "KeyZ"]);
     expect(displaced).toBeUndefined();
     expect(parseKeymap(map)).toEqual(map);
   });
 
   it("replaces the key a cell held", () => {
-    const { map } = rebind(DEFAULT_KEYMAP, "skill-1", 0, "KeyZ");
+    const { map } = rebind(VIBEWARS, "skill-1", 0, "KeyZ");
     expect(map["skill-1"]).toEqual(["KeyZ"]);
     expect(actionForCode(map, "KeyQ")).toBeUndefined();
   });
 
   it("moves a taken key off the action that had it, and says which", () => {
-    const { map, displaced } = rebind(DEFAULT_KEYMAP, "skill-2", 0, "KeyQ");
+    const { map, displaced } = rebind(VIBEWARS, "skill-2", 0, "KeyQ");
     expect(map["skill-2"]).toEqual(["KeyQ"]);
     expect(map["skill-1"]).toEqual([]);
     expect(displaced).toEqual({ action: "skill-1", code: "KeyQ" });
@@ -254,7 +264,7 @@ describe("rebind (#309)", () => {
   });
 
   it("clears a cell", () => {
-    const { map, displaced } = rebind(DEFAULT_KEYMAP, "mute", 0, null);
+    const { map, displaced } = rebind(VIBEWARS, "mute", 0, null);
     expect(map.mute).toEqual([]);
     expect(displaced).toBeUndefined();
     expect(parseKeymap(map)).toEqual(map);
@@ -262,7 +272,7 @@ describe("rebind (#309)", () => {
 
   it("promotes the secondary when the primary is cleared", () => {
     expect(rebind(KEYMAP_PRESETS.classic, "move-up", 0, null).map["move-up"]).toEqual(["ArrowUp"]);
-    expect(rebind({ ...DEFAULT_KEYMAP, mute: [] }, "mute", 1, "KeyN").map.mute).toEqual(["KeyN"]);
+    expect(rebind({ ...VIBEWARS, mute: [] }, "mute", 1, "KeyN").map.mute).toEqual(["KeyN"]);
   });
 
   it("promotes the other action's secondary when its primary is taken", () => {
@@ -272,7 +282,7 @@ describe("rebind (#309)", () => {
   });
 
   it("throws on a key the game never binds", () => {
-    expect(() => rebind(DEFAULT_KEYMAP, "skill-1", 0, "ControlLeft")).toThrow();
+    expect(() => rebind(VIBEWARS, "skill-1", 0, "ControlLeft")).toThrow();
   });
 });
 
@@ -280,8 +290,8 @@ describe("presetOf (#309)", () => {
   it("names either preset, and nothing for a custom map", () => {
     expect(presetOf(KEYMAP_PRESETS.vibewars)).toBe("vibewars");
     expect(presetOf(KEYMAP_PRESETS.classic)).toBe("classic");
-    expect(presetOf(rebind(DEFAULT_KEYMAP, "skill-1", 0, "KeyZ").map)).toBeUndefined();
-    expect(presetOf(rebind(DEFAULT_KEYMAP, "mute", 1, "KeyN").map)).toBeUndefined();
+    expect(presetOf(rebind(VIBEWARS, "skill-1", 0, "KeyZ").map)).toBeUndefined();
+    expect(presetOf(rebind(VIBEWARS, "mute", 1, "KeyN").map)).toBeUndefined();
   });
 });
 

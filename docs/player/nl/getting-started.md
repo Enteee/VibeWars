@@ -209,14 +209,16 @@ Online spelen is peer-to-peer: de andere spelers in je match zien je IP-adres.
 
 ## In een match
 
-- Klik op de grond om erheen te lopen, of beweeg met de pijltjestoetsen.
+- Klik op de grond om erheen te lopen, of beweeg met **W A S D** of de
+  pijltjestoetsen.
 - Rechtsklik op een vijand om hem te kiezen, of druk op **Tab** voor de
   volgende. Druk op **Space**, of rechtsklik nog eens op de vijand, om aan te
   vallen.
-- Je acht skills staan op **Q W E R** en **A S D F**, vak 1 eerst. Je kunt ook
-  op een skill op de balk klikken om hem te gebruiken.
+- Je acht skills staan op **1** tot **8**, vak 1 eerst. Je kunt ook op een skill
+  op de balk klikken om hem te gebruiken.
 - **Esc** annuleert wat je aan het doen bent. Elke toets kun je wijzigen in
-  **Opties**, onder besturing; de Klassiek-preset zet skills op 1 tot 8 en
-  beweegt met WASD. Ze staan allemaal in [Besturing](controls.md).
+  **Opties**, onder besturing; de VibeWars-preset zet skills op Q W E R en
+  A S D F en beweegt met de pijltjestoetsen. Ze staan allemaal in
+  [Besturing](controls.md).
 
 De knop [?], rechtsboven, opent deze Help opnieuw, ook in een match.

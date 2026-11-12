@@ -9,22 +9,22 @@ vette el. A módosítások azonnal mentődnek.
 
 ## Billentyűk
 
-Az alapértelmezett előbeállítás a **VibeWars**. A **Klasszikus** a GW1-hez
-szokott kezeknek való.
+Az alapértelmezett előbeállítás a **Klasszikus**, a GW1-hez szokott kezeknek. A
+**VibeWars** bal kézzel használja a készségeket, és a nyílbillentyűkkel mozog.
 
-| Művelet                              | VibeWars         | Klasszikus                   |
-| ------------------------------------ | ---------------- | ---------------------------- |
-| Készség 1–8                          | Q W E R, A S D F | 1–8                          |
-| Mozgás                               | nyílbillentyűk   | W A S D, vagy nyílbillentyűk |
-| 1–4. fegyverkészlet                  | 1–4              | F1–F4                        |
-| Támadás, vagy zászló használata      | Space            | Space                        |
-| Következő ellenség (Shift: előző)    | Tab              | Tab                          |
-| Legközelebbi ellenség                | C                | C                            |
-| A csapatod bemondott ellensége       | T                | T                            |
-| Saját magad                          | G                | G                            |
-| Nevek mutatása (nyomva tartva)       | Shift            | Shift                        |
-| Némítás                              | M                | M                            |
-| Zászló, ereklye vagy hamvak eldobása | nincs            | nincs                        |
+| Művelet                              | Klasszikus                   | VibeWars         |
+| ------------------------------------ | ---------------------------- | ---------------- |
+| Készség 1–8                          | 1–8                          | Q W E R, A S D F |
+| Mozgás                               | W A S D, vagy nyílbillentyűk | nyílbillentyűk   |
+| 1–4. fegyverkészlet                  | F1–F4                        | 1–4              |
+| Támadás, vagy zászló használata      | Space                        | Space            |
+| Következő ellenség (Shift: előző)    | Tab                          | Tab              |
+| Legközelebbi ellenség                | C                            | C                |
+| A csapatod bemondott ellensége       | T                            | T                |
+| Saját magad                          | G                            | G                |
+| Nevek mutatása (nyomva tartva)       | Shift                        | Shift            |
+| Némítás                              | M                            | M                |
+| Zászló, ereklye vagy hamvak eldobása | nincs                        | nincs            |
 
 Ezek a billentyűk rögzítettek:
 
