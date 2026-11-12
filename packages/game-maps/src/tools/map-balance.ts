@@ -232,11 +232,15 @@ export function highGround(map: MapData): number[] {
   };
   const finder = layeredFinder(halved, RULESET.collision.playerRadius);
   const cell = HIGH_GROUND_STEP * HIGH_GROUND_STEP;
+  const side = (point: Vec2): boolean =>
+    across ? point.x < map.width / 2 : point.y < map.height / 2;
   return [home0, home1].map((home) => {
     let area = 0;
     for (let x = HIGH_GROUND_STEP / 2; x < map.width; x += HIGH_GROUND_STEP) {
       for (let y = HIGH_GROUND_STEP / 2; y < map.height; y += HIGH_GROUND_STEP) {
         const point = { x, y };
+        // Beyond the middle is walled off: no walk gets there.
+        if (side(point) !== side(home)) continue;
         const layers = new Set(
           map.decks
             .filter((deck) => deck.switched === null && pointInShape(point, deck.footprint))
