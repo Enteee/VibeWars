@@ -163,7 +163,10 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     vi.unstubAllGlobals();
   });
 
-  const mount = (): {
+  /** `ends` is when each join ends: never, unless a test says. */
+  const mount = (
+    ends: () => Promise<void> = () => new Promise(() => undefined),
+  ): {
     joined: string[];
     left: number[];
     opened: boolean[];
@@ -179,7 +182,10 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     const opened: boolean[] = [];
     const join = joinControls(
       () => "Rurik",
-      (code, name) => joined.push(`${code} ${name}`),
+      (code, name) => {
+        joined.push(`${code} ${name}`);
+        return ends();
+      },
       () => left.push(1),
       (open) => opened.push(open),
     );
@@ -402,6 +408,42 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     join.invite(FRIEND);
     join.settle();
     vi.advanceTimersByTime(CONNECTING_NOTICE_MS);
+    expect(connecting.hidden).toBe(true);
+  });
+
+  it("ends Connecting… when a join ends with no new bar, as joining your own lobby does (#3183)", async () => {
+    vi.useFakeTimers();
+    const { join, connecting } = mount(() => Promise.resolve());
+    join.invite(FRIEND);
+    await vi.advanceTimersByTimeAsync(CONNECTING_NOTICE_MS);
+    expect(connecting.hidden).toBe(true);
+  });
+
+  it("hides Connecting… once a slow join fails, but not while a newer join runs (#3183)", async () => {
+    vi.useFakeTimers();
+    const ending: (() => void)[] = [];
+    const { join, connecting } = mount(
+      () =>
+        new Promise((resolve) => {
+          ending.push(resolve);
+        }),
+    );
+    join.invite(FRIEND);
+    await vi.advanceTimersByTimeAsync(CONNECTING_NOTICE_MS);
+    expect(connecting.hidden).toBe(false);
+    ending[0]?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(connecting.hidden).toBe(true);
+    // The first join ends while a second runs: the second's notice stays.
+    join.invite(FRIEND);
+    join.invite(FRIEND);
+    await vi.advanceTimersByTimeAsync(CONNECTING_NOTICE_MS);
+    expect(connecting.hidden).toBe(false);
+    ending[1]?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(connecting.hidden).toBe(false);
+    ending[2]?.();
+    await vi.advanceTimersByTimeAsync(0);
     expect(connecting.hidden).toBe(true);
   });
 });
