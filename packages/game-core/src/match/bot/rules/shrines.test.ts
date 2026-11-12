@@ -108,6 +108,15 @@ describe("shrines: Capture Points bots take and hold shrines (#2580)", () => {
     expect(askBot(sim, "bot", playing(shrine(vec2(100, 400)))).moveTo).toEqual(vec2(100, 400));
   });
 
+  it("with a foe in spell range shooting at it, still steps onto a shrine in spell range (#2551, #3150)", () => {
+    const sim = match([
+      body("bot", 0, vec2(100, 100), { behaviour: BOT }),
+      fighter("foe", 1, RANGER, vec2(400, 100), { behaviour: undefined }),
+    ]);
+    sim.setTarget("foe", "bot");
+    expect(askBot(sim, "bot", playing(shrine(vec2(100, 400)))).moveTo).toEqual(vec2(100, 400));
+  });
+
   it("with a foe in spell range, fights from the shrine it stands on (#2551)", () => {
     const sim = match([
       body("bot", 0, vec2(100, 100), { behaviour: BOT }),

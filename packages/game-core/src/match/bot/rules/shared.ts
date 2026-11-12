@@ -222,15 +222,18 @@ export function shotAt(rule: RuleContext, body: Participant): boolean {
   return rule.foes.some((foe) => shoots(rule.context, rule.foeReach, foe, body));
 }
 
+/** Whether a foe stands within `RANGE_SPELL` of the bot. */
+export function foeNear(rule: RuleContext): boolean {
+  const { self, foes } = rule;
+  return foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+}
+
 /**
  * Whether the bot is pressed (#3150): a foe within `RANGE_SPELL`, or one
  * shooting at it from further. A pressed bot drops its errand and fights.
  */
 export function pressed(rule: RuleContext): boolean {
-  const { self, foes } = rule;
-  return (
-    foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL) || shotAt(rule, self)
-  );
+  return foeNear(rule) || shotAt(rule, rule.self);
 }
 
 /** A ranged bot or healer with a melee foe this close stands and fights it (#2545). */
