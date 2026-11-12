@@ -514,6 +514,69 @@ describe("The Brazen Causeway (#2697)", () => {
   });
 });
 
+describe("a lever gate the only way between the spawns (#3138)", () => {
+  /** A wall down `x` from `top` to `bottom`, 8 thick. */
+  const wall = (x: number, top: number, bottom: number) => {
+    const corners = [
+      { x: x - 4, y: top },
+      { x: x + 4, y: top },
+      { x: x + 4, y: bottom },
+      { x: x - 4, y: bottom },
+    ];
+    return corners.map((a, at) => ({ a, b: corners[(at + 1) % corners.length] ?? a }));
+  };
+
+  it("bots throw the lever, then fight it out before the time limit", () => {
+    const build = (name: string) => {
+      const found = STARTER_BUILDS.find((candidate) => candidate.name === name);
+      if (found === undefined) throw new Error(`no starter build ${name}`);
+      return found;
+    };
+    const sim = new MatchSimulation({
+      seed: "lever-gate",
+      ruleset: RULESET,
+      walls: [...wall(800, -10, 300), ...wall(800, 500, 810)],
+      gates: [{ segments: wall(800, 300, 500), opener: { kind: "switch" }, blocks: "all" }],
+      switches: [
+        {
+          id: "lever",
+          layer: 0,
+          position: { x: 600, y: 650 },
+          gates: [0],
+          teleports: [],
+          decks: [],
+          lifts: [],
+        },
+      ],
+      bounds: { width: 1600, height: 800 },
+      matchRules: ANNIHILATION_MATCH_RULES,
+      participants: [0, 1].flatMap((team) =>
+        CASTERS.slice(0, 2).map((name, k) =>
+          playBuildBot(
+            build(name),
+            `${String(team)}-${String(k)}`,
+            team,
+            { x: team === 0 ? 150 : 1450, y: 300 + 200 * k },
+            0,
+          ),
+        ),
+      ),
+    });
+    let opened = false;
+    let died = false;
+    let seconds = 0;
+    while (seconds <= ANNIHILATION_MATCH_RULES.timeLimitSeconds + 1 && !died) {
+      sim.step(DT);
+      seconds += DT;
+      opened ||= sim.gates.some(({ open }) => open);
+      died ||= [...sim.participants()].some(({ combatant }) => combatant.dead);
+    }
+    expect(opened).toBe(true);
+    expect(died).toBe(true);
+    expect(seconds).toBeLessThan(ANNIHILATION_MATCH_RULES.timeLimitSeconds);
+  }, 60_000);
+});
+
 /**
  * `perTeam` caster bots a team on `map`'s first spawns, no healer among
  * them: one would rightly leave an objective for a hurt ally. Team 1's

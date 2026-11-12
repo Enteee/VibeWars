@@ -140,6 +140,7 @@ export function contextFor(
     objectives: NO_OBJECTIVES,
     projectiles: sim.projectiles,
     seed: CONTEXT_SEED,
+    now: sim.elapsedSeconds,
     ...extra,
   };
 }

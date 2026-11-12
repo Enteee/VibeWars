@@ -298,6 +298,8 @@ export interface BehaviourContext {
   readonly projectiles: readonly Readonly<Projectile>[];
   /** The match's seed as a number, mixed into a bot's rolls (#2624). */
   readonly seed: number;
+  /** The match second this think happens at (#3138). */
+  readonly now: number;
 }
 
 /**
@@ -327,6 +329,22 @@ export interface BotObjectives {
   readonly gates: readonly Gate[];
   /** The map's harmful ground (#3026), which a bot steps out of; `[]` on a map without any. */
   readonly harmfulZones: readonly MatchZone[];
+  /** The map's levers (#3138), and what throwing each would win; `[]` on a map without any. */
+  readonly levers: readonly BotLever[];
+}
+
+/** A lever as bots read it (#2542). */
+export interface BotLever {
+  /** `switchTargetId(id)`: what a bot walks to, to throw it. */
+  readonly targetId: string;
+  readonly position: Vec2;
+  readonly layer: number;
+  /** Match second it was last flipped; -Infinity if never. */
+  readonly flippedAt: number;
+  /** Match second from which it may be flipped again. */
+  readonly readyAt: number;
+  /** Per team: units its way to the foes shortens if flipped now; <= 0 helps nothing. */
+  readonly gain: readonly number[];
 }
 
 /** No objectives: every mode but those with one. */
@@ -340,6 +358,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   altarHolder: null,
   gates: [],
   harmfulZones: [],
+  levers: [],
 };
 
 export function createCursor(): BehaviourCursor {

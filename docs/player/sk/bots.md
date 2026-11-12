@@ -36,6 +36,8 @@ oltár, má ešte pred tým prednosť Prízračný hrdina druhého tímu na olt�
 Bot, ktorý sa dostane ďaleko pred svoj tím, počká na ostatných, kým pôjde
 ďalej.
 
+Keď nie je nablízku žiadny nepriateľ, bot prehodí páku, ktorá otvorí kratšiu cestu k nepriateľom.
+
 Útočiaci boti si šetria svoje veľké zásahy, útočné schopnosti a poškodzujúce
 kúzla a spúšťajú ich spoločne na cieľ tímu, takže poškodenie dopadne naraz,
 namiesto aby prichádzalo po troškách, ktoré liečiteľ stihne vyliečiť: najpomalšie
