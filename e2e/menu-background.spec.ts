@@ -34,6 +34,29 @@ test.describe("the live menu background (#3119)", () => {
     await expect(background).toHaveAttribute("data-fight", /.+/);
   });
 
+  test("only Hosted Game picks the map: other modes' lobbies leave the fight running (#3131)", async ({
+    page,
+  }) => {
+    await page.goto("./");
+    await hostLobby(page, { size: 1 });
+    const background = page.locator("#menu-background");
+    await expect(background).toHaveAttribute("data-shown", "");
+    const fight = await background.getAttribute("data-fight");
+
+    for (const screen of ["Team Arena", "Random Arena"] as const) {
+      await openRail(page, screen);
+      await expect(background).toHaveAttribute("data-fight", fight ?? "");
+      await expect(background).toHaveAttribute("data-map", "ember-pits");
+    }
+
+    await openRail(page, "Hosted Game");
+    const maps = page.locator(".lobby-map select");
+    await maps.selectOption("arena-crossroads");
+    await expect(background).toHaveAttribute("data-map", "arena-crossroads");
+    await expect(background).toHaveAttribute("data-shown", "");
+    await expect(background.locator("canvas")).toHaveCount(1);
+  });
+
   test("is gone for a match", async ({ page }) => {
     await page.goto("./");
     await startSoloMatch(page);

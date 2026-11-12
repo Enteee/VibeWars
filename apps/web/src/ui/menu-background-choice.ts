@@ -1,10 +1,11 @@
+import type { LobbySnapshot } from "@vibewars/game-session";
 import { arenaMap, teamArenaMapIds } from "../net/maps.js";
 
 /** A choice of `"random"`: Team Arena's, drawn from the maps that seat its size. */
 export const RANDOM_MAP = "random";
 
 /**
- * What the menu background fights on (#3119): the last lobby's map, or
+ * What the menu background fights on (#3119): the last Hosted lobby's map, or
  * `RANDOM_MAP`, and its team size. In memory only, never stored.
  */
 export interface MenuBackgroundChoice {
@@ -14,6 +15,18 @@ export interface MenuBackgroundChoice {
 
 /** Before any lobby of this session: Random at 8v8, as the splash always was. */
 export const FIRST_CHOICE: MenuBackgroundChoice = { mapId: RANDOM_MAP, teamSize: 8 };
+
+/**
+ * What a lobby makes the background fight on: a Hosted lobby its map and
+ * size (#3131), every other mode nothing, leaving the fight as it is.
+ */
+export function hostedChoice(
+  snapshot: Pick<LobbySnapshot, "mode" | "mapId" | "teamSize">,
+): MenuBackgroundChoice | undefined {
+  return snapshot.mode === "hosted-game"
+    ? { mapId: snapshot.mapId, teamSize: snapshot.teamSize }
+    : undefined;
+}
 
 /** The size every Team Arena seats, for a size none does. */
 const FALLBACK_SIZE = 8;
