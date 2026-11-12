@@ -1,6 +1,7 @@
 import type { Vec2 } from "@vibewars/game-core";
 import type { OutsideKind } from "@vibewars/game-maps/schema";
 
+import { boxUnder, type CellBox, coverBoxes } from "./cell-cover.js";
 import { type HazardPainter, hash, paintRock } from "./hazard-marks.js";
 
 /**
@@ -282,33 +283,21 @@ export function outsideFrame(
   ];
 }
 
+/** The side of a cell `outsideCover` splits a map into: a box under the floor costs little. */
+export const OUTSIDE_CELL = 64;
+/** How far inside the outline a cell must be to count as under the floor: past its smoothed edge. */
+const UNDER_FLOOR_MARGIN = 2;
+
 /**
- * Where the line `axis = at` runs inside `outline`: its spans along the
- * other axis, west to east or north to south, for the grid to draw
- * inside the ground and nowhere else.
+ * Where the land outside `outline` shows within the `width` × `height`
+ * map (#3162): the cells of the map not wholly under the floor, merged
+ * into boxes, so the outside costs a frame only the pixels it can show.
+ * A cell in doubt is drawn, under the floor, never left a hole.
  */
-export function insideRuns(
+export function outsideCover(
   outline: readonly Vec2[],
-  axis: "x" | "y",
-  at: number,
-): readonly (readonly [number, number])[] {
-  const across = axis === "x" ? "y" : "x";
-  const crossings: number[] = [];
-  outline.forEach((a, k) => {
-    const b = outline[(k + 1) % outline.length] ?? a;
-    // Half-open, so a line through a corner counts it once.
-    if (a[axis] <= at !== b[axis] <= at) {
-      crossings.push(a[across] + ((at - a[axis]) / (b[axis] - a[axis])) * (b[across] - a[across]));
-    }
-  });
-  crossings.sort((p, q) => p - q);
-  const runs: (readonly [number, number])[] = [];
-  for (let k = 0; k + 1 < crossings.length; k += 2) {
-    const from = crossings[k];
-    const to = crossings[k + 1];
-    if (from !== undefined && to !== undefined) {
-      runs.push([from, to]);
-    }
-  }
-  return runs;
+  width: number,
+  height: number,
+): readonly CellBox[] {
+  return coverBoxes(width, height, OUTSIDE_CELL, (box) => !boxUnder(outline, box, UNDER_FLOOR_MARGIN));
 }
