@@ -1198,7 +1198,7 @@ describe("hubd and the GraphQL budget", () => {
 
     expect(printed(answer).totalCount).toBe(2);
     expect(hubd.calls("api graphql")).toBe(2);
-    expect(readJson(path.join(hubd.hub, "board.json")).format).toBe(1);
+    expect(readJson(path.join(hubd.hub, "board.json")).format).toBe(2);
   }, 20_000);
 
   it("keeps answering board reads from its copy while the budget is gone", async () => {
