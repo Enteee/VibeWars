@@ -146,14 +146,15 @@ hat, kommt als leeres Feld an. Der Build gehört dir, sobald du **Speichern** dr
 **Esc** geht ohne Speichern und fragt vorher, wenn du etwas geändert hast.
 **Teilen**, **GW1-Code laden**, **Duplizieren** und **Löschen** liegen unter **⋯**.
 
-Einen Team-Code fügst du stattdessen im **Team-Editor** ein.
+Einen Team-Code lädst du stattdessen im **Team-Editor**: drück **Team laden**, füge
+den Code ein und drück **Laden**, oder füge ihn irgendwo im Team-Editor ein.
 
 ## Team-Builds
 
 Ein **Team-Build** ist ein Team mit eigenen Charakteren, erstellt im **Team-Editor**
 und getrennt von deinen eigenen Charakteren. Jeder ist dort eine Karte, und nur dort:
-**Neuer Team-Build** erstellt einen, und ein Klick auf eine Karte oder ihr **Ändern**
-öffnet ihn. Du schlägst einen in der [Team-Lobby](modes.md#team-lobby) vor.
+**Neuer Team-Build** erstellt einen, **Team laden** lädt einen, der mit dir geteilt
+wurde, und ein Klick auf eine Karte oder ihr **Ändern** öffnet ihn. Du schlägst einen in der [Team-Lobby](modes.md#team-lobby) vor.
 
 Jeder Team-Build hat eine Größe, 2v2, 4v4 oder 8v8 (es gibt keine 1v1-Team-Builds):
 die **Teamgröße** in der Seitenleiste. Der Team-Editor zeigt die Team-Builds der dort
@@ -196,8 +197,9 @@ neue Klasse verwirft die Skills und Ränge, die sie nicht nutzen kann, mit einem
 Drück auf den Namen eines Mitglieds oder auf **Im Charakter-Editor öffnen**, um es im
 Build-Editor zu bearbeiten; sein **Speichern** legt es zurück ins Team, und das
 eigene **Speichern** des Teams behält alles und bringt dich zum Team-Editor zurück.
-**Esc** geht ohne Speichern und fragt vorher. **Teilen**, **Duplizieren** und
-**Löschen** des Teams liegen unter **⋯**.
+**Esc** geht ohne Speichern und fragt vorher. **Teilen**, **Team laden**,
+**Duplizieren** und **Löschen** des Teams liegen unter **⋯**. **Team laden** öffnet dort
+das geladene Team anstelle von diesem.
 Du kannst ein Team jederzeit speichern, auch mit Problemen, aber nur ein Team ohne
 Probleme kann in einer Team-Lobby vorgeschlagen werden: Auf der Karte steht **Nicht
 spielbar** und warum, und ein Team ohne Namen erscheint als **Unbenanntes Team**.

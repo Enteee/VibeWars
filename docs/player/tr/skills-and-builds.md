@@ -158,14 +158,17 @@ Dizilim, **Kaydet**'e bastığında senin olur.
 **Esc** kaydetmeden çıkar, bir şey değiştirdiysen önce sorar.
 **Paylaş**, **GW1 kodu yükle**, **Çoğalt** ve **Sil** **⋯** altındadır.
 
-Takım kodu ise **Takım Oluşturucu**'ya yapıştırılır.
+Takım kodu ise **Takım Oluşturucu**'da yüklenir: **Takım yükle**'ye bas, kodu
+yapıştır ve **Yükle**'ye bas ya da kodu Takım Oluşturucu'da herhangi bir yere
+yapıştır.
 
 ## Takım Dizilimleri
 
 Bir **takım dizilimi**, kendi karakterlerinden oluşan, **Takım
 Oluşturucu**'da yapılan ve senin karakterlerinden ayrı tutulan bir
 takımdır. Her biri orada, yalnızca orada, bir karttır: **Yeni takım
-dizilimi** bir tane yapar, bir karta ya da onun **Düzenle**'sine tıklamak
+dizilimi** bir tane yapar, **Takım yükle** seninle paylaşılan birini
+yükler, bir karta ya da onun **Düzenle**'sine tıklamak
 onu açar. Birini [Takım Lobisi](modes.md#takım-lobisi)'nde önerirsin.
 
 Her takım diziliminin bir boyutu vardır, 2v2, 4v4 ya da 8v8 (1v1 takım
@@ -212,7 +215,8 @@ Dizilim editöründe düzenlemek için bir üyenin adına ya da **Karakter
 ekranında aç**'a bas; onun **Kaydet**'i onu takıma geri koyar, takımın
 kendi **Kaydet**'i ise her şeyi saklar ve seni Takım Oluşturucu'ya geri
 götürür. **Esc** kaydetmeden çıkar ve önce sorar. Takımın **Paylaş**,
-**Çoğalt** ve **Sil**'i **⋯** altındadır.
+**Takım yükle**, **Çoğalt** ve **Sil**'i **⋯** altındadır. Oradaki **Takım yükle**
+yüklenen takımı bunun yerine açar.
 Bir takımı sorunlarıyla birlikte istediğin an kaydedebilirsin, ama bir
 Takım Lobisi'nde yalnızca sorunsuz bir takım önerilebilir: kart
 **Oynanamaz** ve nedenini söyler, adı olmayan bir takım da **Adsız

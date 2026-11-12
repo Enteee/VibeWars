@@ -146,14 +146,16 @@ de cod funcționează în ambele feluri. O abilitate GW1 pe care VibeWars nu o a
 iese fără să salveze și întreabă mai întâi dacă ai schimbat ceva. **Trimite**,
 **Încarcă cod GW1**, **Duplică** și **Șterge** sunt în **⋯**.
 
-Un cod de echipă se lipește în schimb în **Constructor de echipe**.
+Un cod de echipă se încarcă în schimb în **Constructor de echipe**: apasă
+**Încarcă echipa**, lipește codul și apasă **Încarcă**, sau lipește-l oriunde în
+Constructor de echipe.
 
 ## Builduri de echipă
 
 Un **build de echipă** este o echipă cu personaje proprii, făcută în **Constructor
 de echipe** și ținută separat de personajele tale. Fiecare este o carte acolo și
-numai acolo: **Build de echipă nou** creează unul, iar un clic pe o carte sau pe
-**Editează** o deschide. Propui unul în
+numai acolo: **Build de echipă nou** creează unul, **Încarcă echipa** încarcă unul
+partajat cu tine, iar un clic pe o carte sau pe **Editează** o deschide. Propui unul în
 [Lobby-ul de echipă](modes.md#lobby-de-echipă).
 
 Fiecare build de echipă are o mărime, 2v2, 4v4 sau 8v8 (nu există builduri de
@@ -194,8 +196,9 @@ membru e deschis odată; **Esc** îl închide. O clasă nouă renunță la abili
 membru sau **Deschide în ecranul Personaj** ca să-l editezi în editorul de build;
 **Salvează** de acolo îl pune înapoi în echipă, iar **Salvează** al echipei păstrează
 totul și te duce înapoi la Constructor de echipe. **Esc** iese fără să salveze și
-întreabă mai întâi. **Trimite**, **Duplică** și **Șterge** ale echipei sunt în
-**⋯**. Poți salva o echipă oricând, cu tot cu probleme, dar doar o echipă fără
+întreabă mai întâi. **Trimite**, **Încarcă echipa**, **Duplică** și **Șterge** ale
+echipei sunt în **⋯**. Acolo, **Încarcă echipa** deschide echipa încărcată în
+locul acesteia. Poți salva o echipă oricând, cu tot cu probleme, dar doar o echipă fără
 probleme poate fi propusă într-un Lobby de echipă: o carte spune **Nu se poate
 juca** și motivul, iar o echipă fără nume apare ca **Echipă fără nume**. Primul
 tău start generează o echipă gata făcută la mărimea aleasă, 4v4 dacă nu ai

@@ -147,14 +147,15 @@ press **Save**.
 **Esc** leaves without saving, and asks first if you changed anything.
 **Share**, **Load GW1 code**, **Duplicate** and **Delete** are under **⋯**.
 
-A team code is pasted on **Team Builder** instead.
+A team code loads on **Team Builder** instead: press **Load team**, paste
+the code and press **Load**, or paste it anywhere on Team Builder.
 
 ## Team Builds
 
 A **team build** is a team of its own characters, made on **Team
 Builder** and kept apart from your own characters. Each one is a card
-there, and only there: **New team build** makes one, and a click
-on a card, or its **Edit**, opens it. You propose one in the
+there, and only there: **New team build** makes one, **Load team**
+loads one shared with you, and a click on a card, or its **Edit**, opens it. You propose one in the
 [Team Lobby](modes.md#team-lobby).
 
 Every team build has a size, 2v2, 4v4 or 8v8 (there are no 1v1 team builds): the **Team size** in
@@ -196,8 +197,9 @@ Press a member's name, or **Open in the Character screen**, to edit it in
 the build editor;
 its **Save** puts it back in the team, and the team's own **Save** keeps it all
 and takes you back to Team Builder. **Esc** leaves
-without saving, and asks first. The team's **Share**, **Duplicate** and
-**Delete** are under **⋯**.
+without saving, and asks first. The team's **Share**, **Load team**,
+**Duplicate** and **Delete** are under **⋯**. **Load team** there opens the
+loaded team in place of this one.
 You can save a team at any time, problems and all, but only a team
 without problems can be proposed in a Team Lobby: a card says
 **Not playable** and why, and a team with no name shows as **Unnamed team**.

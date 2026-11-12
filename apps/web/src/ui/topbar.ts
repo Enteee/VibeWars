@@ -55,8 +55,11 @@ export interface TopbarCallbacks {
   readonly onHelp: () => void;
   /** ⚙'s Options window, over whatever screen shows, closed (#2386). */
   readonly onOptionsClosed: () => void;
-  /** Join the lobby `code` as `name` (#1525): an invite link opened (#2100). */
-  readonly onJoin: (code: string, name: string) => void;
+  /**
+   * Join the lobby `code` as `name` (#1525): an invite link opened (#2100).
+   * Settles once the attempt has ended, whichever way (#3183).
+   */
+  readonly onJoin: (code: string, name: string) => Promise<void>;
   /** A guest's Leave (#1526): back to a fresh lobby of its own. */
   readonly onLeave: () => void;
   /** The host's Closed / Open toggle (#1682): let friends with the invite link join, or stop them. */
@@ -119,12 +122,13 @@ export interface JoinControls {
 /**
  * The lobby this tab is in, its Copy invite link (#2100), its host's
  * Closed / Open (#1682) and a guest's Leave (#1526), in the Lobby window
- * (#2385); in the bar, "Connecting…" once a join has run a while (#707).
+ * (#2385); in the bar, "Connecting…" once a join has run a while (#707),
+ * until it ends (#3183).
  * The page has one. The key itself is never shown. `name` is read at the join.
  */
 export function joinControls(
   name: () => string,
-  onJoin: (code: string, name: string) => void,
+  onJoin: (code: string, name: string) => Promise<void>,
   onLeave: () => void,
   onSetOpen: (open: boolean) => void,
 ): JoinControls {
@@ -230,12 +234,26 @@ export function joinControls(
   dismiss();
   /** The host's party, when this tab hosts one; 0 for a guest. */
   let party = 0;
-  /** Bumped by every new bar, so a join's timer knows it has ended. */
+  /**
+   * Bumped by every new bar and every join, so a join's timer knows it
+   * has ended or been followed by another.
+   */
   let shown = 0;
+  const settle = (): void => {
+    shown += 1;
+    connecting.hidden = true;
+  };
   const join = (invited: string): void => {
     dismiss();
-    onJoin(invited, name());
+    shown += 1;
     const pressed = shown;
+    // An attempt that ends without a new bar (own lobby, a failure)
+    // still ends its notice; a newer join's stays (#3183).
+    void onJoin(invited, name()).finally(() => {
+      if (pressed === shown) {
+        settle();
+      }
+    });
     setTimeout(() => {
       if (pressed === shown) {
         connecting.hidden = false;
@@ -260,10 +278,7 @@ export function joinControls(
     element: group,
     controls,
     closeJoinField,
-    settle: () => {
-      shown += 1;
-      connecting.hidden = true;
-    },
+    settle,
     invite: (invited) => {
       if (group.hidden) {
         return false;
