@@ -128,13 +128,24 @@ async function holdKey(page: Page, key: string, ms: number): Promise<void> {
 const logRows = (page: Page): Locator => page.locator(".training-log-row");
 const meter = (page: Page, name: string): Locator => page.locator(`[data-meter="${name}"]`);
 
+/**
+ * The hit arrives once the cast completes, as a damage row naming the skill.
+ * The cast takes 1.75 s of game time, and game time runs slower than wall
+ * time when the machine is busy (#327): at four workers it has been seen
+ * 8 s short of it after 15 s (#3168). Nothing re-arms meanwhile; the log shows
+ * the cast under way.
+ */
+async function expectFireballLanded(page: Page): Promise<void> {
+  await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
+    "Fireball",
+    { timeout: 45_000 },
+  );
+}
+
 async function castFireballAndLand(page: Page): Promise<void> {
   await takeControl(page);
   await page.keyboard.press(skillKey(0));
-  // The hit arrives once the cast completes, as a damage row naming the skill.
-  await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
-    "Fireball",
-  );
+  await expectFireballLanded(page);
 }
 
 test("(1) the arena is a third column, left of the editor and the library", async ({ page }) => {
@@ -896,6 +907,7 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
 test("(22) a stored VibeWars keymap casts on Q to F, whatever the default (#302, #3134)", async ({
   page,
 }) => {
+  test.setTimeout(120_000);
   await page.addInitScript(
     ({ key, vibewars }) => {
       localStorage.setItem(key, JSON.stringify(vibewars));
@@ -910,9 +922,7 @@ test("(22) a stored VibeWars keymap casts on Q to F, whatever the default (#302,
   );
 
   await page.keyboard.press(skillKey(0, KEYMAP_PRESETS.vibewars));
-  await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
-    "Fireball",
-  );
+  await expectFireballLanded(page);
 });
 
 /**
