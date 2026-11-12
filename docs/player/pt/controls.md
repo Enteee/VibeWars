@@ -8,21 +8,21 @@ ação ficou sem ela. As alterações são salvas na hora.
 
 ## Teclas
 
-O perfil padrão é **VibeWars**. **Clássico** é para mãos acostumadas ao GW1.
+O perfil padrão é **Clássico**, para mãos acostumadas ao GW1. **VibeWars** usa habilidades com a mão esquerda e anda com as setas.
 
-| Ação                                | VibeWars         | Clássico          |
-| ----------------------------------- | ---------------- | ----------------- |
-| Habilidades 1 a 8                   | Q W E R, A S D F | 1 a 8             |
-| Andar                               | setas            | W A S D, ou setas |
-| Conjuntos de armas 1 a 4            | 1 a 4            | F1 a F4           |
-| Atacar, ou usar uma bandeira        | Space            | Space             |
-| Próximo inimigo (Shift: anterior)   | Tab              | Tab               |
-| Inimigo mais próximo                | C                | C                 |
-| Inimigo anunciado da equipe         | T                | T                 |
-| Você mesmo                          | G                | G                 |
-| Mostrar nomes (segurar)             | Shift            | Shift             |
-| Mudo                                | M                | M                 |
-| Largar bandeira, relíquia ou cinzas | sem tecla        | sem tecla         |
+| Ação                                | Clássico          | VibeWars         |
+| ----------------------------------- | ----------------- | ---------------- |
+| Habilidades 1 a 8                   | 1 a 8             | Q W E R, A S D F |
+| Andar                               | W A S D, ou setas | setas            |
+| Conjuntos de armas 1 a 4            | F1 a F4           | 1 a 4            |
+| Atacar, ou usar uma bandeira        | Space             | Space            |
+| Próximo inimigo (Shift: anterior)   | Tab               | Tab              |
+| Inimigo mais próximo                | C                 | C                |
+| Inimigo anunciado da equipe         | T                 | T                |
+| Você mesmo                          | G                 | G                |
+| Mostrar nomes (segurar)             | Shift             | Shift            |
+| Mudo                                | M                 | M                |
+| Largar bandeira, relíquia ou cinzas | sem tecla         | sem tecla        |
 
 Estas teclas são fixas:
 

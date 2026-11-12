@@ -210,13 +210,15 @@ alamat IP-mu.
 
 ## Di dalam laga
 
-- Klik tanah untuk berjalan ke sana, atau bergerak dengan tombol panah.
+- Klik tanah untuk berjalan ke sana, atau bergerak dengan **W A S D** atau
+  tombol panah.
 - Klik kanan musuh untuk menjadikannya target, atau tekan **Tab** untuk musuh berikutnya.
   Tekan **Space**, atau klik kanan musuh itu lagi, untuk menyerangnya.
-- Delapan skill-mu ada di **Q W E R** dan **A S D F**, slot 1 lebih dulu.
-  Klik skill di bar untuk memakainya juga.
+- Delapan skill-mu ada di **1** sampai **8**, slot 1 lebih dulu. Klik skill di
+  bar untuk memakainya juga.
 - **Esc** membatalkan apa yang sedang kamu lakukan. Setiap tombol bisa diubah di
-  **Opsi**, di bagian kontrol; preset Klasik menaruh skill di 1 sampai 8
-  dan bergerak dengan WASD. Semuanya ada di [Kontrol](controls.md).
+  **Opsi**, di bagian kontrol; preset VibeWars menaruh skill di Q W E R dan
+  A S D F dan bergerak dengan tombol panah. Semuanya ada di
+  [Kontrol](controls.md).
 
 Tombol [?], di kanan atas, membuka Bantuan ini lagi, juga di dalam laga.

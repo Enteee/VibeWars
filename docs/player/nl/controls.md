@@ -8,21 +8,21 @@ actie hem kwijt is. Wijzigingen worden meteen opgeslagen.
 
 ## Toetsen
 
-De standaardpreset is **VibeWars**. **Klassiek** is voor GW1-handen.
+De standaardpreset is **Klassiek**, voor GW1-handen. **VibeWars** cast met de linkerhand en beweegt met de pijltjestoetsen.
 
-| Actie                           | VibeWars         | Klassiek                    |
-| ------------------------------- | ---------------- | --------------------------- |
-| Skills 1 tot 8                  | Q W E R, A S D F | 1 tot 8                     |
-| Bewegen                         | pijltjestoetsen  | W A S D, of pijltjestoetsen |
-| Wapensets 1 tot 4               | 1 tot 4          | F1 tot F4                   |
-| Aanval, of een vlag gebruiken   | Space            | Space                       |
-| Volgende vijand (Shift: vorige) | Tab              | Tab                         |
-| Dichtstbijzijnde vijand         | C                | C                           |
-| Aangewezen vijand van je team   | T                | T                           |
-| Jezelf                          | G                | G                           |
-| Namen tonen (ingedrukt)         | Shift            | Shift                       |
-| Dempen                          | M                | M                           |
-| Vlag, relikwie of as neerleggen | geen toets       | geen toets                  |
+| Actie                           | Klassiek                    | VibeWars         |
+| ------------------------------- | --------------------------- | ---------------- |
+| Skills 1 tot 8                  | 1 tot 8                     | Q W E R, A S D F |
+| Bewegen                         | W A S D, of pijltjestoetsen | pijltjestoetsen  |
+| Wapensets 1 tot 4               | F1 tot F4                   | 1 tot 4          |
+| Aanval, of een vlag gebruiken   | Space                       | Space            |
+| Volgende vijand (Shift: vorige) | Tab                         | Tab              |
+| Dichtstbijzijnde vijand         | C                           | C                |
+| Aangewezen vijand van je team   | T                           | T                |
+| Jezelf                          | G                           | G                |
+| Namen tonen (ingedrukt)         | Shift                       | Shift            |
+| Dempen                          | M                           | M                |
+| Vlag, relikwie of as neerleggen | geen toets                  | geen toets       |
 
 Deze toetsen liggen vast:
 

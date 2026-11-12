@@ -221,15 +221,15 @@ seu endereço IP.
 
 ## Em uma partida
 
-- Clique no chão para andar até lá, ou ande com as setas.
+- Clique no chão para andar até lá, ou ande com **W A S D** ou as setas.
 - Clique com o botão direito em um inimigo para mirar nele, ou pressione
   **Tab** para o próximo. Pressione **Space**, ou clique com o botão
   direito nele de novo, para atacar.
-- Suas oito habilidades ficam em **Q W E R** e **A S D F**, com o espaço 1
-  primeiro. Você também pode clicar em uma habilidade na barra para usá-la.
+- Suas oito habilidades ficam em **1** a **8**, com o espaço 1 primeiro. Você
+  também pode clicar em uma habilidade na barra para usá-la.
 - **Esc** cancela o que você está fazendo. Toda tecla pode ser trocada em
-  **Opções**, em controles; o perfil Clássico coloca as habilidades em 1 a
-  8 e anda com WASD. Todas estão em [Controles](controls.md).
+  **Opções**, em controles; o perfil VibeWars coloca as habilidades em Q W E R e
+  A S D F e anda com as setas. Todas estão em [Controles](controls.md).
 
 O botão [?], no canto superior direito, abre esta Ajuda de novo, também
 em uma partida.

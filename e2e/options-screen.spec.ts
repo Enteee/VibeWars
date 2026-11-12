@@ -25,13 +25,15 @@ async function openKeys(page: Page): Promise<void> {
   await expect(page.locator(".keys-screen")).toBeVisible();
 }
 
-test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reload", async ({
+test("(1) Skill 1 bound to Z in Controls casts on Z, not 1, and survives a reload", async ({
   page,
 }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
   await openKeys(page);
-  await expect(cell(page, "skill-1")).toHaveText("Q");
+  // A fresh player has Classic (#3134).
+  await expect(page.locator(".keys-preset")).toHaveValue("classic");
+  await expect(cell(page, "skill-1")).toHaveText("1");
 
   await cell(page, "skill-1").click();
   await expect(cell(page, "skill-1")).toHaveText("press a key...");
@@ -53,9 +55,9 @@ test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reloa
   await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
 
-  // Q is nobody's key now. Fireball is a 1 s cast; were Q still Skill 1,
+  // 1 is nobody's key now. Fireball is a 1 s cast; were 1 still Skill 1,
   // its hit would be in the log well inside this wait.
-  await page.keyboard.press("q");
+  await page.keyboard.press("1");
   await page.waitForTimeout(2500);
   await expect(page.locator(".training-log-row", { hasText: "Fireball" })).toHaveCount(0);
 
@@ -73,11 +75,11 @@ test("(2) taking a key from another action empties its cell and says so", async 
   await page.goto("./");
   await openKeys(page);
   await cell(page, "skill-2").click();
-  await page.keyboard.press("q");
-  await expect(cell(page, "skill-2")).toHaveText("Q");
+  await page.keyboard.press("1");
+  await expect(cell(page, "skill-2")).toHaveText("1");
   await expect(cell(page, "skill-1")).toHaveText("-");
   await expect(cell(page, "skill-1")).toHaveClass(/is-flashing/);
-  await expect(page.locator(".keys-line")).toHaveText("Q was Skill 1; Skill 1 now has no key.");
+  await expect(page.locator(".keys-line")).toHaveText("1 was Skill 1; Skill 1 now has no key.");
   await expect(page.locator('tr:has(.key-cell[data-action="skill-1"]) .keys-warning')).toHaveText(
     "no key",
   );
@@ -85,7 +87,7 @@ test("(2) taking a key from another action empties its cell and says so", async 
   // Esc in a capture cancels it, and stays on the screen.
   await cell(page, "skill-3").click();
   await page.keyboard.press("Escape");
-  await expect(cell(page, "skill-3")).toHaveText("E");
+  await expect(cell(page, "skill-3")).toHaveText("3");
   await expect(page.locator(".keys-screen")).toBeVisible();
 
   await page.getByRole("button", { name: "reset to VibeWars" }).click();
@@ -274,7 +276,7 @@ test("a key still being rebound keeps Options open through a press outside; Esc 
   await expect(page.locator(".options-screen")).toBeVisible();
   await cell(page, "skill-1").focus();
   await page.keyboard.press("Escape");
-  await expect(cell(page, "skill-1")).toHaveText("Q");
+  await expect(cell(page, "skill-1")).toHaveText("1");
   await expect(page.locator(".options-screen")).toBeVisible();
 });
 

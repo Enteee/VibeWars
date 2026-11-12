@@ -8,22 +8,22 @@ kaybettiğini söyler. Değişiklikler hemen kaydedilir.
 
 ## Tuşlar
 
-Varsayılan hazır ayar **VibeWars**'tır. **Klasik**, GW1'e alışkın eller
-içindir.
+Varsayılan hazır ayar **Klasik**'tir, GW1'e alışkın eller içindir. **VibeWars**
+becerileri sol elle kullanır ve ok tuşlarıyla hareket eder.
 
-| Eylem                                  | VibeWars         | Klasik                   |
-| -------------------------------------- | ---------------- | ------------------------ |
-| Beceri 1'den 8'e                       | Q W E R, A S D F | 1'den 8'e                |
-| Hareket                                | ok tuşları       | W A S D ya da ok tuşları |
-| Silah seti 1'den 4'e                   | 1'den 4'e        | F1'den F4'e              |
-| Saldırı ya da bayrak kullan            | Space            | Space                    |
-| Sonraki düşman (Shift: önceki)         | Tab              | Tab                      |
-| En yakın düşman                        | C                | C                        |
-| Takımının bildirdiği düşman            | T                | T                        |
-| Kendin                                 | G                | G                        |
-| Adları göster (basılı tut)             | Shift            | Shift                    |
-| Sesi kapat                             | M                | M                        |
-| Bayrağı, kalıntıyı ya da külleri bırak | yok              | yok                      |
+| Eylem                                  | Klasik                   | VibeWars         |
+| -------------------------------------- | ------------------------ | ---------------- |
+| Beceri 1'den 8'e                       | 1'den 8'e                | Q W E R, A S D F |
+| Hareket                                | W A S D ya da ok tuşları | ok tuşları       |
+| Silah seti 1'den 4'e                   | F1'den F4'e              | 1'den 4'e        |
+| Saldırı ya da bayrak kullan            | Space                    | Space            |
+| Sonraki düşman (Shift: önceki)         | Tab                      | Tab              |
+| En yakın düşman                        | C                        | C                |
+| Takımının bildirdiği düşman            | T                        | T                |
+| Kendin                                 | G                        | G                |
+| Adları göster (basılı tut)             | Shift                    | Shift            |
+| Sesi kapat                             | M                        | M                |
+| Bayrağı, kalıntıyı ya da külleri bırak | yok                      | yok              |
 
 Bu tuşlar sabittir:
 

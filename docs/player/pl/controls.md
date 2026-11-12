@@ -8,21 +8,21 @@ razu.
 
 ## Klawisze
 
-Domyślny układ to **VibeWars**. **Klasyczny** jest dla rąk przyzwyczajonych do GW1.
+Domyślny układ to **Klasyczny**, dla rąk przyzwyczajonych do GW1. **VibeWars** rzuca umiejętności lewą ręką i porusza się strzałkami.
 
-| Akcja                            | VibeWars         | Klasyczny            |
-| -------------------------------- | ---------------- | -------------------- |
-| Umiejętności 1 do 8              | Q W E R, A S D F | 1 do 8               |
-| Ruch                             | strzałki         | W A S D lub strzałki |
-| Zestawy broni 1 do 4             | 1 do 4           | F1 do F4             |
-| Atak lub użycie flagi            | Space            | Space                |
-| Następny wróg (Shift: poprzedni) | Tab              | Tab                  |
-| Najbliższy wróg                  | C                | C                    |
-| Wróg wskazany przez drużynę      | T                | T                    |
-| Ty                               | G                | G                    |
-| Pokaż nazwy (przytrzymaj)        | Shift            | Shift                |
-| Wycisz                           | M                | M                    |
-| Upuść flagę, relikwię lub prochy | brak             | brak                 |
+| Akcja                            | Klasyczny            | VibeWars         |
+| -------------------------------- | -------------------- | ---------------- |
+| Umiejętności 1 do 8              | 1 do 8               | Q W E R, A S D F |
+| Ruch                             | W A S D lub strzałki | strzałki         |
+| Zestawy broni 1 do 4             | F1 do F4             | 1 do 4           |
+| Atak lub użycie flagi            | Space                | Space            |
+| Następny wróg (Shift: poprzedni) | Tab                  | Tab              |
+| Najbliższy wróg                  | C                    | C                |
+| Wróg wskazany przez drużynę      | T                    | T                |
+| Ty                               | G                    | G                |
+| Pokaż nazwy (przytrzymaj)        | Shift                | Shift            |
+| Wycisz                           | M                    | M                |
+| Upuść flagę, relikwię lub prochy | brak                 | brak             |
 
 Te klawisze są stałe:
 

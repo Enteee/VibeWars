@@ -8,21 +8,21 @@ och skärmen säger vilken som förlorade den. Ändringar sparas direkt.
 
 ## Tangenter
 
-Standardförvalet är **VibeWars**. **Klassisk** är för GW1-händer.
+Standardförvalet är **Klassisk**, för GW1-händer. **VibeWars** kastar med vänster hand och rör sig med piltangenterna.
 
-| Handling                          | VibeWars         | Klassisk                    |
-| --------------------------------- | ---------------- | --------------------------- |
-| Förmåga 1 till 8                  | Q W E R, A S D F | 1 till 8                    |
-| Gå                                | piltangenter     | W A S D, eller piltangenter |
-| Vapenset 1 till 4                 | 1 till 4         | F1 till F4                  |
-| Attackera, eller använd en flagga | Space            | Space                       |
-| Nästa fiende (Shift: föregående)  | Tab              | Tab                         |
-| Närmaste fiende                   | C                | C                           |
-| Ditt lags utpekade fiende         | T                | T                           |
-| Dig själv                         | G                | G                           |
-| Visa namn (håll in)               | Shift            | Shift                       |
-| Ljud av                           | M                | M                           |
-| Släpp flagga, relik eller aska    | ingen            | ingen                       |
+| Handling                          | Klassisk                    | VibeWars         |
+| --------------------------------- | --------------------------- | ---------------- |
+| Förmåga 1 till 8                  | 1 till 8                    | Q W E R, A S D F |
+| Gå                                | W A S D, eller piltangenter | piltangenter     |
+| Vapenset 1 till 4                 | F1 till F4                  | 1 till 4         |
+| Attackera, eller använd en flagga | Space                       | Space            |
+| Nästa fiende (Shift: föregående)  | Tab                         | Tab              |
+| Närmaste fiende                   | C                           | C                |
+| Ditt lags utpekade fiende         | T                           | T                |
+| Dig själv                         | G                           | G                |
+| Visa namn (håll in)               | Shift                       | Shift            |
+| Ljud av                           | M                           | M                |
+| Släpp flagga, relik eller aska    | ingen                       | ingen            |
 
 Dessa tangenter är fasta:
 

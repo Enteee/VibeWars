@@ -8,21 +8,21 @@ hvilken handling der mistede den. Ændringer gemmes med det samme.
 
 ## Taster
 
-Standardforvalget er **VibeWars**. **Klassisk** er til GW1-hænder.
+Standardforvalget er **Klassisk**, til GW1-hænder. **VibeWars** kaster med venstre hånd og bevæger sig med piletasterne.
 
-| Handling                       | VibeWars         | Klassisk                 |
-| ------------------------------ | ---------------- | ------------------------ |
-| Evne 1 til 8                   | Q W E R, A S D F | 1 til 8                  |
-| Bevæg dig                      | piletaster       | W A S D eller piletaster |
-| Våbensæt 1 til 4               | 1 til 4          | F1 til F4                |
-| Angrib, eller brug et flag     | Mellemrum        | Mellemrum                |
-| Næste fjende (Shift: forrige)  | Tab              | Tab                      |
-| Nærmeste fjende                | C                | C                        |
-| Dit holds udpegede fjende      | T                | T                        |
-| Dig selv                       | G                | G                        |
-| Vis navne (hold)               | Shift            | Shift                    |
-| Lyd fra                        | M                | M                        |
-| Slip flag, relikvie eller aske | ingen            | ingen                    |
+| Handling                       | Klassisk                 | VibeWars         |
+| ------------------------------ | ------------------------ | ---------------- |
+| Evne 1 til 8                   | 1 til 8                  | Q W E R, A S D F |
+| Bevæg dig                      | W A S D eller piletaster | piletaster       |
+| Våbensæt 1 til 4               | F1 til F4                | 1 til 4          |
+| Angrib, eller brug et flag     | Mellemrum                | Mellemrum        |
+| Næste fjende (Shift: forrige)  | Tab                      | Tab              |
+| Nærmeste fjende                | C                        | C                |
+| Dit holds udpegede fjende      | T                        | T                |
+| Dig selv                       | G                        | G                |
+| Vis navne (hold)               | Shift                    | Shift            |
+| Lyd fra                        | M                        | M                |
+| Slip flag, relikvie eller aske | ingen                    | ingen            |
 
 Disse taster er faste:
 

@@ -204,14 +204,15 @@ trận của bạn thấy địa chỉ IP của bạn.
 
 ## Trong trận
 
-- Nhấn xuống đất để đi tới đó, hoặc di chuyển bằng các phím mũi tên.
+- Nhấn xuống đất để đi tới đó, hoặc di chuyển bằng **W A S D** hoặc các phím mũi
+  tên.
 - Nhấn chuột phải vào một địch để nhắm nó, hoặc nhấn **Tab** để chọn địch
   kế tiếp. Nhấn **Space**, hoặc nhấn chuột phải vào địch đó lần nữa, để tấn
   công nó.
-- Tám kỹ năng của bạn nằm trên **Q W E R** và **A S D F**, ô 1 trước tiên.
-  Bạn cũng có thể nhấn vào một kỹ năng trên thanh để dùng nó.
-- **Esc** hủy việc bạn đang làm. Mọi phím đều có thể đổi trong **Tùy chọn**,
-  ở mục Điều khiển; mẫu Classic đặt kỹ năng trên 1 đến 8 và di chuyển bằng
-  WASD. Tất cả đều có trong [Điều khiển](controls.md).
+- Tám kỹ năng của bạn nằm trên **1** đến **8**, ô 1 trước tiên. Bạn cũng có thể
+  nhấn vào một kỹ năng trên thanh để dùng nó.
+- **Esc** hủy việc bạn đang làm. Mọi phím đều có thể đổi trong **Tùy chọn**, ở
+  mục Điều khiển; mẫu VibeWars đặt kỹ năng trên Q W E R và A S D F và di chuyển
+  bằng các phím mũi tên. Tất cả đều có trong [Điều khiển](controls.md).
 
 Nút [?], góc trên bên phải, mở lại trang Hỗ trợ này, kể cả trong trận.

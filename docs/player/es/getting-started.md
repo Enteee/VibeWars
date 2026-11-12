@@ -212,15 +212,17 @@ tu dirección IP.
 
 ## En una partida
 
-- Haz clic en el suelo para caminar hasta allí, o muévete con las flechas.
+- Haz clic en el suelo para caminar hasta allí, o muévete con **W A S D** o las
+  flechas.
 - Clic derecho en un enemigo para seleccionarlo, o pulsa **Tab** para el
   siguiente. Pulsa **Space**, o clic derecho otra vez en el enemigo, para
   atacarlo.
-- Tus ocho habilidades están en **Q W E R** y **A S D F**, primero el hueco 1.
-  También puedes hacer clic en una habilidad de la barra para usarla.
+- Tus ocho habilidades están en **1** a **8**, primero el hueco 1. También
+  puedes hacer clic en una habilidad de la barra para usarla.
 - **Esc** cancela lo que estás haciendo. Cada tecla se puede cambiar en
-  **Opciones**, en controles; el preajuste Clásico pone las habilidades en 1 a
-  8 y el movimiento en WASD. Están todas en [Controles](controls.md).
+  **Opciones**, en controles; el preajuste VibeWars pone las habilidades en
+  Q W E R y A S D F y el movimiento en las flechas. Están todas en
+  [Controles](controls.md).
 
 El botón [?], arriba a la derecha, vuelve a abrir esta Ayuda, también en una
 partida.

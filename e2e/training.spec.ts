@@ -1,6 +1,11 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { KEYMAP_PRESETS, codeLabel, type Keymap } from "../apps/web/src/input/keymap.js";
+import {
+  DEFAULT_KEYMAP,
+  KEYMAP_PRESETS,
+  codeLabel,
+  type Keymap,
+} from "../apps/web/src/input/keymap.js";
 import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
@@ -37,10 +42,7 @@ async function expectFilledSlots(page: Page, names: readonly string[]): Promise<
 }
 
 /** A new elementalist, holding its Wand (#614), with Fireball on the bar, in a wide editor. */
-async function openTraining(
-  page: Page,
-  keymap: Keymap = KEYMAP_PRESETS.vibewars,
-): Promise<Locator> {
+async function openTraining(page: Page, keymap: Keymap = DEFAULT_KEYMAP): Promise<Locator> {
   await page.setViewportSize(WIDE);
   await page.goto("./");
   await openRail(page, "Character Builder");
@@ -890,21 +892,23 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   await releaseControl(page);
 });
 
-test("(22) a stored Classic keymap casts on the number row (#302)", async ({ page }) => {
+test("(22) a stored VibeWars keymap casts on Q to F, Classic being the default (#302, #3134)", async ({
+  page,
+}) => {
   await page.addInitScript(
-    ({ key, classic }) => {
-      localStorage.setItem(key, JSON.stringify(classic));
+    ({ key, vibewars }) => {
+      localStorage.setItem(key, JSON.stringify(vibewars));
     },
-    { key: `${STORAGE_NAMESPACE}.keymap`, classic: KEYMAP_PRESETS.classic },
+    { key: `${STORAGE_NAMESPACE}.keymap`, vibewars: KEYMAP_PRESETS.vibewars },
   );
-  await openTraining(page, KEYMAP_PRESETS.classic);
-  await expect(page.locator(".training-skill-key").first()).toHaveText("1");
+  await openTraining(page, KEYMAP_PRESETS.vibewars);
+  await expect(page.locator(".training-skill-key").first()).toHaveText("Q");
   await takeControl(page);
   await expect(page.locator(".training-hint")).toHaveText(
-    "WASD move · 1–8 cast · tab/right-click to target · space/double right-click attack · esc to release",
+    "arrows move · Q–F cast · tab/right-click to target · space/double right-click attack · esc to release",
   );
 
-  await page.keyboard.press(skillKey(0, KEYMAP_PRESETS.classic));
+  await page.keyboard.press(skillKey(0, KEYMAP_PRESETS.vibewars));
   await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
     "Fireball",
   );

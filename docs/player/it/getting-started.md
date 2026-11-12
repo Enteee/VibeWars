@@ -67,9 +67,9 @@ Il gioco online è peer to peer: gli altri giocatori della tua partita vedono il
 
 ## In partita
 
-- Clicca sul terreno per camminare fin lì, o muoviti con i tasti freccia.
+- Clicca sul terreno per camminare fin lì, o muoviti con **W A S D** o i tasti freccia.
 - Clicca col destro su un nemico per bersagliarlo, o premi **Tab** per il prossimo. Premi **Space**, o clicca di nuovo col destro sul nemico, per attaccarlo.
-- Le tue otto abilità sono su **Q W E R** e **A S D F**, a partire dallo slot 1. Puoi anche cliccare su un'abilità nella barra per usarla.
-- **Esc** annulla ciò che stai facendo. Ogni tasto si può cambiare in **Opzioni**, nella sezione comandi; il preset Classico mette le abilità su 1-8 e muove con WASD. Li trovi tutti in [Comandi](controls.md).
+- Le tue otto abilità sono da **1** a **8**, a partire dallo slot 1. Puoi anche cliccare su un'abilità nella barra per usarla.
+- **Esc** annulla ciò che stai facendo. Ogni tasto si può cambiare in **Opzioni**, nella sezione comandi; il preset VibeWars mette le abilità su Q W E R e A S D F e muove con i tasti freccia. Li trovi tutti in [Comandi](controls.md).
 
 Il pulsante [?], in alto a destra, riapre questo Aiuto, anche in partita.

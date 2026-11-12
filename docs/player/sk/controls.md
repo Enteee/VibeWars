@@ -8,21 +8,21 @@ ho stratila. Zmeny sa ukladajú okamžite.
 
 ## Klávesy
 
-Predvolená predvoľba je **VibeWars**. **Klasické** je pre ruky zvyknuté na GW1.
+Predvolená predvoľba je **Klasické**, pre ruky zvyknuté na GW1. **VibeWars** zosiela ľavou rukou a pohybuje sa šípkami.
 
-| Akcia                                | VibeWars         | Klasické            |
-| ------------------------------------ | ---------------- | ------------------- |
-| Schopnosti 1 až 8                    | Q W E R, A S D F | 1 až 8              |
-| Pohyb                                | šípky            | W A S D alebo šípky |
-| Sady zbraní 1 až 4                   | 1 až 4           | F1 až F4            |
-| Útok alebo použitie vlajky           | Space            | Space               |
-| Ďalší nepriateľ (Shift: predošlý)    | Tab              | Tab                 |
-| Najbližší nepriateľ                  | C                | C                   |
-| Nepriateľ určený tvojím tímom        | T                | T                   |
-| Ty sám                               | G                | G                   |
-| Zobraziť mená (podržať)              | Shift            | Shift               |
-| Stlmiť                               | M                | M                   |
-| Položiť vlajku, relikviu alebo popol | žiadny           | žiadny              |
+| Akcia                                | Klasické            | VibeWars         |
+| ------------------------------------ | ------------------- | ---------------- |
+| Schopnosti 1 až 8                    | 1 až 8              | Q W E R, A S D F |
+| Pohyb                                | W A S D alebo šípky | šípky            |
+| Sady zbraní 1 až 4                   | F1 až F4            | 1 až 4           |
+| Útok alebo použitie vlajky           | Space               | Space            |
+| Ďalší nepriateľ (Shift: predošlý)    | Tab                 | Tab              |
+| Najbližší nepriateľ                  | C                   | C                |
+| Nepriateľ určený tvojím tímom        | T                   | T                |
+| Ty sám                               | G                   | G                |
+| Zobraziť mená (podržať)              | Shift               | Shift            |
+| Stlmiť                               | M                   | M                |
+| Položiť vlajku, relikviu alebo popol | žiadny              | žiadny           |
 
 Tieto klávesy sú pevné:
 

@@ -57,8 +57,8 @@ export const ACTION_NAMES: Readonly<Record<KeyAction, MessageKey>> = {
 };
 
 export const PRESET_NAMES: Readonly<Record<keyof typeof KEYMAP_PRESETS, MessageKey>> = {
-  vibewars: "controls.presetVibeWars",
   classic: "controls.presetClassic",
+  vibewars: "controls.presetVibeWars",
 };
 
 /** One key cell: an action's primary (0) or secondary (1). */
