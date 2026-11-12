@@ -365,8 +365,8 @@ function think(
  * (#2545), so the team commits to a kill and never drops one for
  * another; else the team's target, if one is alive within `FOCUS_REACH`
  * past spell range (#2573), or anywhere while no foe is in range; else
- * `focusPick` in spell range. A foe shooting at the bot from further
- * counts as in range (#3150). A creature only while no other foe is in
+ * `focusPick` in spell range. With no foe in spell range, one shooting
+ * at the bot from further counts as in range (#3150). A creature only while no other foe is in
  * range. With shrines to hold or a relic to run, the team's target only
  * in range. With two foe teams, all but the call and the ghost come from
  * the `front` team (#2685).
@@ -387,12 +387,10 @@ function teamTarget(
   }
   const foes = front === undefined ? all : all.filter((foe) => foe.combatant.team === front);
   const self = context.self;
-  // In reach: within spell range, or shooting at it from further (#3150).
+  const near = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+  // None in spell range: those shooting at it from further are (#3150).
   const reach = (foe: Participant): number => foeReach(cursor.foeReach, foe);
-  const inRange = foes.filter(
-    (foe) =>
-      distance(foe.position, self.position) <= RANGE_SPELL || shoots(context, reach, foe, self),
-  );
+  const inRange = near.length > 0 ? near : foes.filter((foe) => shoots(context, reach, foe, self));
   const held = heldTarget(context, foes, inRange);
   if (held !== undefined && healthFraction(held) < FINISH_FRACTION) {
     return held.id;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { vec2, type Vec2 } from "../../../vec2.js";
+import { distance, vec2, type Vec2 } from "../../../vec2.js";
 import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
 import type { CapturePoint } from "../../capture-points.js";
 import {
@@ -175,7 +175,17 @@ describe("shrines: a lone bot shot at from beyond spell range (#3150)", () => {
     expect(intent.moveTo).not.toEqual(vec2(100, 100));
   });
 
-  it("in a match, goes and hurts the shooter rather than hold the shrine", () => {
+  it("still fights a foe within spell range before a shooter past it", () => {
+    const sim = match([
+      fighter("bot", 0, WARRIOR, vec2(100, 100)),
+      fighter("near", 1, WARRIOR, vec2(100, 400), { behaviour: undefined }),
+      fighter("foe", 1, RANGER, vec2(600, 100), { behaviour: undefined }),
+    ]);
+    sim.setTarget("foe", "bot");
+    expect(askBot(sim, "bot").targetId).toBe("near");
+  });
+
+  it("in a match, goes for the shooter without turning back, and hurts it", () => {
     const sim = new MatchSimulation({
       seed: "shrines",
       ruleset: RULESET,
@@ -189,7 +199,19 @@ describe("shrines: a lone bot shot at from beyond spell range (#3150)", () => {
     });
     sim.setTarget("foe", "bot");
     const full = sim.get("foe")?.combatant.health;
-    for (let t = 0; t < 8; t += DT) sim.step(DT);
+    const away = () => {
+      const [bot, foe] = [sim.get("bot"), sim.get("foe")];
+      return bot === undefined || foe === undefined
+        ? Number.NaN
+        : distance(bot.position, foe.position);
+    };
+    // No back and forth: it never falls back from the shooter once closer.
+    let closest = away();
+    for (let t = 0; t < 10; t += DT) {
+      sim.step(DT);
+      expect(away()).toBeLessThanOrEqual(closest + 1);
+      closest = Math.min(closest, away());
+    }
     expect(sim.get("bot")?.targetId).toBe("foe");
     expect(sim.get("foe")?.combatant.health).toBeLessThan(full ?? 0);
   });
