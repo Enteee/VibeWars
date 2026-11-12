@@ -1295,7 +1295,6 @@ export default {
   "teamPlay.queuedMaps": "Karten in diesem Modus",
   "teamPlay.random": "Zufall",
   "teamPlay.reroll": "Würfeln",
-  "teamPlay.teamBuilds": "Team-Builds",
   "teamPlay.unnamedTeam": "Unbenanntes Team",
 
   "topbar.closed": "Zu",

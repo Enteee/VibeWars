@@ -1203,7 +1203,6 @@ export default {
   "teamPlay.queuedMaps": "이 모드의 맵",
   "teamPlay.random": "랜덤",
   "teamPlay.reroll": "다시 뽑기",
-  "teamPlay.teamBuilds": "팀 빌드",
   "teamPlay.unnamedTeam": "이름 없는 팀",
 
   "topbar.closed": "닫힘",

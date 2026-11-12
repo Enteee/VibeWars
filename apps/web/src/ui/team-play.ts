@@ -170,7 +170,6 @@ function teamCards(
   callbacks: TeamPlayCallbacks,
 ): HTMLElement {
   const section = h("div", "team-play-builds");
-  section.appendChild(h("h3", "menu-column-title", t("teamPlay.teamBuilds")));
   const starter = loadStarterTeamId(size);
   const cards = h("div", "play-cards");
   const shown = teams.filter((team) => team.size === size);

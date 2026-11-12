@@ -1197,7 +1197,6 @@ export default {
   "teamPlay.queuedMaps": "Bản đồ của chế độ này",
   "teamPlay.random": "Random",
   "teamPlay.reroll": "Đổi khác",
-  "teamPlay.teamBuilds": "Build đội",
   "teamPlay.unnamedTeam": "Đội chưa đặt tên",
 
   "topbar.closed": "Đóng",

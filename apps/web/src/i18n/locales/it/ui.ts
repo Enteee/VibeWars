@@ -1354,7 +1354,6 @@ export default {
   "teamPlay.queuedMaps": "Mappe di questa modalità",
   "teamPlay.random": "Casuale",
   "teamPlay.reroll": "Rigenera",
-  "teamPlay.teamBuilds": "Build di squadra",
   "teamPlay.unnamedTeam": "Squadra senza nome",
 
   "topbar.closed": "Chiusa",

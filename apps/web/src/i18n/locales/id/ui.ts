@@ -1211,7 +1211,6 @@ export default {
   "teamPlay.queuedMaps": "Peta di mode ini",
   "teamPlay.random": "Acak",
   "teamPlay.reroll": "Acak lagi",
-  "teamPlay.teamBuilds": "Build Tim",
   "teamPlay.unnamedTeam": "Tim tanpa nama",
 
   "topbar.closed": "Tertutup",

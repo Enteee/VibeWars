@@ -1273,7 +1273,6 @@ export default {
   "teamPlay.queuedMaps": "Baner i denne type",
   "teamPlay.random": "Tilfældig",
   "teamPlay.reroll": "Rul igen",
-  "teamPlay.teamBuilds": "Holdbuilds",
   "teamPlay.unnamedTeam": "Unavngivet hold",
 
   "topbar.closed": "Lukket",

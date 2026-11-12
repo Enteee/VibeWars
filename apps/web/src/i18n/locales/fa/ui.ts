@@ -1275,7 +1275,6 @@ export default {
   "teamPlay.queuedMaps": "نقشه‌های این حالت",
   "teamPlay.random": "تصادفی",
   "teamPlay.reroll": "تعویض",
-  "teamPlay.teamBuilds": "بیلدهای تیمی",
   "teamPlay.unnamedTeam": "تیم بی‌نام",
 
   "topbar.closed": "بسته",

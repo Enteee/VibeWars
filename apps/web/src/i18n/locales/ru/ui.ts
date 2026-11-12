@@ -1391,7 +1391,6 @@ export default {
   "teamPlay.queuedMaps": "Карты этого режима",
   "teamPlay.random": "Случайная",
   "teamPlay.reroll": "Заново",
-  "teamPlay.teamBuilds": "Командные билды",
   "teamPlay.unnamedTeam": "Без названия",
 
   "topbar.closed": "Закрыто",
