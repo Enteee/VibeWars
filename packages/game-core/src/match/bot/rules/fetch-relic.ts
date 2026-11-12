@@ -1,8 +1,6 @@
-import { RANGE_SPELL } from "../../../distances.js";
-import { distance } from "../../../vec2.js";
 import { lyingPoint } from "../../carried.js";
 import { carriesRelic, relicId } from "../../relics.js";
-import { escort, NOTHING, relicGoal, sentTo } from "./shared.js";
+import { escort, NOTHING, pressed, relicGoal, sentTo } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -16,14 +14,11 @@ import type { BotRule } from "./types.js";
 const fetchRelic: BotRule = {
   order: 116,
   name: "fetch-relic",
-  decide: ({ context, self, foes }) => {
+  decide: (rule) => {
+    const { context, self } = rule;
     const { relics, relicSpawns, relicCarry } = context.objectives;
     const goal = relicGoal(context, self);
-    if (
-      goal === undefined ||
-      relics.length === 0 ||
-      foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL)
-    ) {
+    if (goal === undefined || relics.length === 0 || pressed(rule)) {
       return undefined;
     }
     const team = self.combatant.team;

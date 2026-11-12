@@ -190,3 +190,20 @@ describe("bots and a breakable wall (#3140)", () => {
     expect(crossed).toBe(true);
   });
 });
+
+describe("break-wall, shot at from afar (#3150)", () => {
+  it("drops the wall for a foe shooting at either striker from beyond 420", () => {
+    const sim = match([
+      fighter("near", 0, WARRIOR, vec2(700, 400)),
+      fighter("next", 0, RANGER, vec2(600, 400)),
+      fighter("foe", 1, RANGER, vec2(100, 400)),
+    ]);
+    const objectives = { ...NO_OBJECTIVES, breakables: [crack(1000)] };
+    const shot = () => ruleFor(sim, "near", { foeReach: () => 600 }, { objectives, now: 10 });
+    expect(breakWall.decide(shot())?.attackTargetId).toBe(WALL_ID);
+    const foe = sim.get("foe");
+    if (foe === undefined) throw new Error("no foe");
+    foe.targetId = "next";
+    expect(breakWall.decide(shot())).toBeUndefined();
+  });
+});

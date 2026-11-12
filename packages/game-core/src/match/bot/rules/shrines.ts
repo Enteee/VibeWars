@@ -2,7 +2,7 @@ import { RANGE_SPELL } from "../../../distances.js";
 import { distance, type Vec2 } from "../../../vec2.js";
 import { onCapturePoint, type CapturePoint } from "../../capture-points.js";
 import type { Participant } from "../../simulation.js";
-import { NOTHING } from "./shared.js";
+import { NOTHING, POSITION_SLACK, foeNear, pressed, shoots } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -10,28 +10,42 @@ import type { BotRule } from "./types.js";
  * yet and fills it, else walks to its goal shrine. With a foe in spell
  * range (#2551), it steps onto that shrine only if it is in spell range
  * too, and once on it leaves the rest to `fight`: it fights from the
- * shrine rather than off it. Every shrine its team's, it leaves the rest
+ * shrine rather than off it. Shot at from beyond spell range (#3150), it
+ * walks to no shrine, nor back to one its shooter is out of spell range
+ * of: `fight` goes for the shooter. Every shrine its team's, it leaves the rest
  * to `close-in`. Before `fight`, which answers whenever a foe is in reach.
  */
 const shrines: BotRule = {
   order: 99,
   name: "shrines",
-  decide: ({ context, self, foes, allies }) => {
+  decide: (rule) => {
+    const { context, self, allies, foes, foeReach } = rule;
     const points = context.objectives.capturePoints;
     const team = self.combatant.team;
     if (points.length === 0) {
       return undefined;
     }
-    const pressed = foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+    const isPressed = pressed(rule);
     if (
       points.some(
         (point) => onCapturePoint(point, self) && (point.owner !== team || point.progress < 1),
       )
     ) {
-      return pressed ? undefined : NOTHING;
+      return isPressed ? undefined : NOTHING;
     }
     const goal = goalShrine(points, team, self, allies);
-    if (goal === undefined || (pressed && distance(goal.position, self.position) > RANGE_SPELL)) {
+    if (
+      goal === undefined ||
+      (isPressed &&
+        (distance(goal.position, self.position) > RANGE_SPELL ||
+          !foeNear(rule) ||
+          // Off after its shooter, it does not turn back to a shrine it would only be shot on.
+          foes.some(
+            (foe) =>
+              shoots(context, foeReach, foe, self) &&
+              distance(foe.position, goal.position) > RANGE_SPELL + POSITION_SLACK,
+          )))
+    ) {
       return undefined;
     }
     return { ...NOTHING, moveTo: goal.position, moveToLayer: goal.layer };
