@@ -126,6 +126,8 @@ if (group === "api" && sub !== "graphql") {
     if (answer.stdout) { console.log(answer.stdout); }
     process.exit(answer.code);
   }
+  // The open issues with one label, as a test planted them (#3124).
+  if (rel.startsWith("issues?") && rel.includes("labels=") && fs.existsSync(path.join(state, "labelled.json"))) { process.stdout.write(fs.readFileSync(path.join(state, "labelled.json"), "utf8")); process.exit(0); }
   if (rel.startsWith("issues?")) { console.log(JSON.stringify([issue7, { ...pull9, pull_request: {} }])); process.exit(0); }
   console.log("rest ok"); process.exit(0);
 }
@@ -698,6 +700,74 @@ describe("hubd and the GraphQL budget", () => {
     expect(printed(after).card).toMatchObject({ number: 8, status: "Done" });
   }, 20_000);
 
+  it("refuses a sign-off without an area, or into a taken lane (#3124)", async () => {
+    const hubd = await startHubd(5000);
+    /** @param {string} option */
+    const move = (option) => [
+      "project",
+      "item-edit",
+      "--id",
+      "PVTI_8",
+      "--project-id",
+      "PVT_2",
+      "--field-id",
+      "F_status",
+      "--single-select-option-id",
+      option,
+    ];
+    /** @param {string[]} labels */
+    const label8 = (labels) => {
+      fs.writeFileSync(
+        path.join(hubd.state, "issues-8.json"),
+        JSON.stringify({ number: 8, labels: labels.map((name) => ({ name })) }),
+      );
+    };
+    /** @param {string[]} labels those of #10, which is Ready */
+    const label10 = (labels) => {
+      fs.writeFileSync(
+        path.join(hubd.state, "labelled.json"),
+        JSON.stringify([{ number: 10, labels: labels.map((name) => ({ name })) }]),
+      );
+    };
+
+    await hubd.request("manager", "gh", BOARD_READ);
+    await hubd.request("manager", "gh", move("o_backlog"));
+
+    label8(["area:foo"]);
+    const unlabelled = await hubd.request("architect", "gh", move("o_ready"));
+    expect(unlabelled.code).toBe(77);
+    expect(String(unlabelled.reason)).toContain("#8 has no area label");
+
+    label8(["area:maps"]);
+    label10(["area:maps"]);
+    const taken = await hubd.request("architect", "gh", move("o_ready"));
+    expect(taken.code).toBe(77);
+    expect(String(taken.reason)).toContain("area:maps is taken by #10 (Ready)");
+    expect(printed(await hubd.request("manager", "board", ["show", "8"])).card).toMatchObject({
+      status: "Backlog",
+    });
+
+    label10(["area:ui"]);
+    expect((await hubd.request("architect", "gh", move("o_ready"))).code).toBe(0);
+  }, 30_000);
+
+  it("has no sign-off by item-add: the architect may not add a card (#3124)", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("architect", "gh", [
+      "project",
+      "item-add",
+      "2",
+      "--url",
+      "https://github.com/Enteee/VibeWars/issues/8",
+      "--column",
+      "Ready",
+    ]);
+
+    expect(answer.code).not.toBe(0);
+    expect(hubd.calls("project item-add")).toBe(0);
+  }, 20_000);
+
   it("keeps the sign-off to the architect, refusing and auditing the rest (#349)", async () => {
     const hubd = await startHubd(5000);
     /** @param {string} option */
@@ -721,7 +791,11 @@ describe("hubd and the GraphQL budget", () => {
     expect(printed(await hubd.request("manager", "board", ["show", "8"])).card).toMatchObject({
       status: "Backlog",
     });
-    // The sign-off: only the architect.
+    // The sign-off: only the architect, of a card with an area (#3124).
+    fs.writeFileSync(
+      path.join(hubd.state, "issues-8.json"),
+      JSON.stringify({ number: 8, labels: [{ name: "area:maps" }] }),
+    );
     const refused = await hubd.request("manager", "gh", move("o_ready"));
     expect(refused.code).toBe(77);
     expect(String(refused.reason)).toContain(
