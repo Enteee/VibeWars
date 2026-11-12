@@ -178,6 +178,8 @@ phía sau khi bạn di chuyển. Nhân vật của bạn trong menu cũng hiển
 Thay đổi được áp dụng từ sảnh tiếp theo bạn vào, hoặc sảnh mới tiếp theo của
 bạn: sảnh bạn đang ở vẫn giữ những gì bạn có khi vào.
 
+**Chép link Bang**, dưới trình thiết kế áo choàng, chép một link mang tag và áo choàng của bạn. Ai mở link sẽ được hỏi **Gia nhập Bang [VIBE]?**: **Gia nhập** cho họ tag và áo choàng của bạn, **Không** không thay đổi gì. Ai cũng có thể gửi link như vậy và không ai sở hữu một tag, nên trò chơi luôn hỏi trước.
+
 ## Ngôn ngữ
 
 Game khởi động bằng ngôn ngữ của trình duyệt nếu có, nếu không thì bằng

@@ -1,4 +1,5 @@
-import { isLobbyCode } from "@vibewars/game-protocol";
+import { isLobbyCode, parseWireCape, type WireCape } from "@vibewars/game-protocol";
+import { sanitizeGuildTag } from "@vibewars/game-session";
 
 /**
  * An invite link's fragment (#972, #2100) is `&`-separated `name=value`
@@ -81,4 +82,52 @@ export function readPastedLobbyLink(
   return parseLobbyFragment(url.hash).kind === "invite"
     ? { kind: "link", fragment: url.hash }
     : { kind: "malformed" };
+}
+
+/** The fragment part a guild link carries its tag and cape in (#3167). */
+export const GUILD_FRAGMENT_KEY = "guild";
+
+/** What a page's fragment says about a guild to join. `rest` is the fragment with `guild=` taken out. */
+export type GuildFragment =
+  | { readonly kind: "none" }
+  | { readonly kind: "invalid"; readonly rest: string }
+  | {
+      readonly kind: "guild";
+      readonly tag: string;
+      /** `null` for a link that carries only the tag: it clears the cape. */
+      readonly cape: WireCape | null;
+      readonly rest: string;
+    };
+
+/** One `guild=` value, `<TAG>` or `<TAG>.<main>.<trim>.<emblem>`, exactly; else `undefined`. */
+function readGuild(value: string): { tag: string; cape: WireCape | null } | undefined {
+  const [tag, ...cape] = value.split(".");
+  if (tag === undefined || sanitizeGuildTag(tag) !== tag) {
+    return undefined;
+  }
+  if (cape.length === 0) {
+    return { tag, cape: null };
+  }
+  const [main, trim, emblem] = cape;
+  const parsed = cape.length === 3 ? parseWireCape({ main, trim, emblem }) : undefined;
+  return parsed === undefined ? undefined : { tag, cape: parsed };
+}
+
+/**
+ * Read `guild=` out of `hash` (#3167). Every `guild=` part is consumed and
+ * the first valid one wins; none valid, or a fragment
+ * longer than any real link, is invalid.
+ */
+export function parseGuildFragment(hash: string): GuildFragment {
+  const part = takeFragmentPart(hash, GUILD_FRAGMENT_KEY);
+  if (part === undefined) {
+    return { kind: "none" };
+  }
+  const guild =
+    hash.length > MAX_PASTED_LINK_LENGTH
+      ? undefined
+      : part.values.map(readGuild).find((each) => each !== undefined);
+  return guild === undefined
+    ? { kind: "invalid", rest: part.rest }
+    : { kind: "guild", ...guild, rest: part.rest };
 }

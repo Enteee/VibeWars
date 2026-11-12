@@ -441,6 +441,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "Waffen",
 
+  "guildLink.broken": "Dieser Gildenlink ist kaputt.",
+  "guildLink.framed": "Öffne den Gildenlink in einem eigenen Tab. Es wurde nichts geändert.",
+  "guildLink.decline": "Nein",
+  "guildLink.join": "Beitreten",
+  "guildLink.joined": "Du trägst jetzt den Umhang von [{tag}].",
+  "guildLink.joinedNoCape": "Dein Gildenkürzel ist jetzt [{tag}].",
+  "guildLink.question": "Der Gilde [{tag}] beitreten?",
+  "guildLink.questionReplace": "[{old}] durch [{tag}] ersetzen?",
+  "guildLink.trust":
+    "Dieser Link setzt dein Gildenkürzel und deinen Gildenumhang. Jeder kann einen schicken, und niemandem gehört ein Kürzel.",
+
   "help.label": "Hilfe",
   "help.licences": "Lizenzen von Drittanbietern",
   "help.pages": "Hilfeseiten",
@@ -843,6 +854,10 @@ export default {
   "player.emblemRing": "Ring",
   "player.emblemTriangle": "Dreieck",
   "player.guildCape": "Gildenumhang",
+  "player.copyGuildLink": "Gildenlink kopieren",
+  "player.guildLink": "Gildenlink",
+  "player.guildLinkByHand":
+    "Kopieren fehlgeschlagen: Der Gildenlink ist markiert, kopiere ihn von Hand",
   "player.guildTag": "Gildenkürzel",
   "player.guildTagHint": "2–4 Buchstaben oder Ziffern",
   "player.guildTagPlaceholder": "TAG",

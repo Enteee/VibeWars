@@ -393,6 +393,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds} วิ",
   "gearLibrary.weapons": "อาวุธ",
 
+  "guildLink.broken": "ลิงก์กิลด์นี้เสีย",
+  "guildLink.framed": "เปิดลิงก์กิลด์ในแท็บของมันเอง ไม่มีอะไรเปลี่ยนแปลง",
+  "guildLink.decline": "ไม่",
+  "guildLink.join": "เข้าร่วม",
+  "guildLink.joined": "ตอนนี้คุณสวมผ้าคลุมของ [{tag}] แล้ว",
+  "guildLink.joinedNoCape": "แท็กกิลด์ของคุณตอนนี้คือ [{tag}]",
+  "guildLink.question": "เข้าร่วมกิลด์ [{tag}] ไหม",
+  "guildLink.questionReplace": "แทนที่ [{old}] ด้วย [{tag}] ไหม",
+  "guildLink.trust":
+    "ลิงก์นี้ตั้งแท็กกิลด์และผ้าคลุมกิลด์ของคุณ ใครก็ส่งได้ และไม่มีใครเป็นเจ้าของแท็ก",
+
   "help.label": "ช่วยเหลือ",
   "help.licences": "สัญญาอนุญาตบุคคลที่สาม",
   "help.pages": "หน้าช่วยเหลือ",
@@ -784,6 +795,9 @@ export default {
   "player.emblemRing": "วงแหวน",
   "player.emblemTriangle": "สามเหลี่ยม",
   "player.guildCape": "ผ้าคลุมกิลด์",
+  "player.copyGuildLink": "คัดลอกลิงก์กิลด์",
+  "player.guildLink": "ลิงก์กิลด์",
+  "player.guildLinkByHand": "คัดลอกไม่ได้: เลือกลิงก์กิลด์ไว้แล้ว คัดลอกด้วยตัวเอง",
   "player.guildTag": "แท็กกิลด์",
   "player.guildTagHint": "ตัวอักษรหรือตัวเลข 2–4 ตัว",
   "player.guildTagPlaceholder": "TAG",

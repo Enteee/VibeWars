@@ -470,6 +470,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "armas",
 
+  "guildLink.broken": "Esse link de guilda está quebrado.",
+  "guildLink.framed": "Abra o link de guilda em uma aba própria. Nada foi alterado.",
+  "guildLink.decline": "Não",
+  "guildLink.join": "Entrar",
+  "guildLink.joined": "Agora você veste a capa de [{tag}].",
+  "guildLink.joinedNoCape": "Sua tag de guilda agora é [{tag}].",
+  "guildLink.question": "Entrar na guilda [{tag}]?",
+  "guildLink.questionReplace": "Trocar [{old}] por [{tag}]?",
+  "guildLink.trust":
+    "Este link define a tag e a capa da sua guilda. Qualquer pessoa pode enviar um, e ninguém é dono de uma tag.",
+
   "help.label": "Ajuda",
   "help.licences": "Licenças de terceiros",
   "help.pages": "páginas de ajuda",
@@ -882,6 +893,10 @@ export default {
   "player.emblemRing": "anel",
   "player.emblemTriangle": "triângulo",
   "player.guildCape": "Capa da guilda",
+  "player.copyGuildLink": "Copiar link da guilda",
+  "player.guildLink": "Link da guilda",
+  "player.guildLinkByHand":
+    "Não foi possível copiar: o link da guilda está selecionado, copie manualmente",
   "player.guildTag": "Tag da guilda",
   "player.guildTagHint": "2–4 letras ou dígitos",
   "player.guildTagPlaceholder": "TAG",

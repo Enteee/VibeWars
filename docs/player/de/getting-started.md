@@ -173,6 +173,8 @@ nimmt ihn ab.
 Eine Änderung gilt ab der nächsten Lobby, der du beitrittst, oder deiner nächsten neuen: Eine,
 in der du schon bist, behält, womit du beigetreten bist.
 
+**Gildenlink kopieren** unter dem Umhang-Designer kopiert einen Link mit deinem Kürzel und Umhang. Wer ihn öffnet, wird gefragt **Der Gilde [VIBE] beitreten?**: **Beitreten** gibt ihm dein Kürzel und deinen Umhang, **Nein** ändert nichts. Jeder kann so einen Link schicken, und niemandem gehört ein Kürzel, darum fragt das Spiel immer zuerst.
+
 ## Sprache
 
 Das Spiel startet in der Sprache deines Browsers, wenn es sie hat, sonst auf Englisch. Wähle

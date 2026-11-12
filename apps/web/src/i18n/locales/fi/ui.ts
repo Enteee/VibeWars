@@ -448,6 +448,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "aseet",
 
+  "guildLink.broken": "Tämä kiltalinkki on rikki.",
+  "guildLink.framed": "Avaa kiltalinkki omassa välilehdessään. Mitään ei muutettu.",
+  "guildLink.decline": "Ei",
+  "guildLink.join": "Liity",
+  "guildLink.joined": "Kannat nyt killan [{tag}] viittaa.",
+  "guildLink.joinedNoCape": "Kiltatunnuksesi on nyt [{tag}].",
+  "guildLink.question": "Liitytäänkö kiltaan [{tag}]?",
+  "guildLink.questionReplace": "Korvataanko [{old}] killalla [{tag}]?",
+  "guildLink.trust":
+    "Tämä linkki asettaa kiltatunnuksesi ja kiltaviittasi. Kuka tahansa voi lähettää sellaisen, eikä kukaan omista tunnusta.",
+
   "help.label": "Ohje",
   "help.licences": "Kolmansien osapuolten lisenssit",
   "help.pages": "ohjesivut",
@@ -846,6 +857,9 @@ export default {
   "player.emblemRing": "rengas",
   "player.emblemTriangle": "kolmio",
   "player.guildCape": "Kiltaviitta",
+  "player.copyGuildLink": "Kopioi kiltalinkki",
+  "player.guildLink": "Kiltalinkki",
+  "player.guildLinkByHand": "Kopiointi epäonnistui: kiltalinkki on valittu, kopioi se käsin",
   "player.guildTag": "Kiltatunnus",
   "player.guildTagHint": "2–4 kirjainta tai numeroa",
   "player.guildTagPlaceholder": "TAG",

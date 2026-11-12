@@ -190,6 +190,8 @@ Muutos tulee voimaan seuraavasta aulasta, johon liityt, tai seuraavasta
 uudesta omasta aulastasi: aula, jossa jo olet, säilyttää sen, millä
 liityit.
 
+Viittasuunnittelijan alla oleva **Kopioi kiltalinkki** kopioi linkin, jossa on tunnuksesi ja viittasi. Sen avaajalta kysytään **Liitytäänkö kiltaan [VIBE]?**: **Liity** antaa hänelle tunnuksesi ja viittasi, **Ei** ei muuta mitään. Kuka tahansa voi lähettää tällaisen linkin, eikä kukaan omista tunnusta, joten peli kysyy aina ensin.
+
 ## Kieli
 
 Peli käynnistyy selaimesi kielellä, jos se on saatavilla, muuten

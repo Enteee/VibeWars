@@ -439,6 +439,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds} sn",
   "gearLibrary.weapons": "silahlar",
 
+  "guildLink.broken": "Bu lonca bağlantısı bozuk.",
+  "guildLink.framed": "Lonca bağlantısını kendi sekmesinde aç. Hiçbir şey değişmedi.",
+  "guildLink.decline": "Hayır",
+  "guildLink.join": "Katıl",
+  "guildLink.joined": "Artık [{tag}] pelerinini giyiyorsun.",
+  "guildLink.joinedNoCape": "Lonca etiketin artık [{tag}].",
+  "guildLink.question": "[{tag}] loncasına katılınsın mı?",
+  "guildLink.questionReplace": "[{old}] yerine [{tag}] olsun mu?",
+  "guildLink.trust":
+    "Bu bağlantı lonca etiketini ve pelerinini ayarlar. Herkes gönderebilir ve hiç kimse bir etiketin sahibi değildir.",
+
   "help.label": "Yardım",
   "help.licences": "Üçüncü taraf lisansları",
   "help.pages": "yardım sayfaları",
@@ -835,6 +846,9 @@ export default {
   "player.emblemRing": "halka",
   "player.emblemTriangle": "üçgen",
   "player.guildCape": "Lonca pelerini",
+  "player.copyGuildLink": "Lonca bağlantısını kopyala",
+  "player.guildLink": "Lonca bağlantısı",
+  "player.guildLinkByHand": "Kopyalanamadı: lonca bağlantısı seçili, elle kopyala",
   "player.guildTag": "Lonca etiketi",
   "player.guildTagHint": "2–4 harf ya da rakam",
   "player.guildTagPlaceholder": "ETKT",

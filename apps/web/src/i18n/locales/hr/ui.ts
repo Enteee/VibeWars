@@ -471,6 +471,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "oružja",
 
+  "guildLink.broken": "Ova poveznica ceha je neispravna.",
+  "guildLink.framed": "Otvori poveznicu ceha u zasebnoj kartici. Ništa nije promijenjeno.",
+  "guildLink.decline": "Ne",
+  "guildLink.join": "Pridruži se",
+  "guildLink.joined": "Sad nosiš plašt ceha [{tag}].",
+  "guildLink.joinedNoCape": "Oznaka tvog ceha sad je [{tag}].",
+  "guildLink.question": "Pridružiti se cehu [{tag}]?",
+  "guildLink.questionReplace": "Zamijeniti [{old}] s [{tag}]?",
+  "guildLink.trust":
+    "Ova poveznica postavlja oznaku i plašt tvog ceha. Bilo tko je može poslati i nitko nije vlasnik oznake.",
+
   "help.label": "Pomoć",
   "help.licences": "Licence trećih strana",
   "help.pages": "stranice pomoći",
@@ -890,6 +901,9 @@ export default {
   "player.emblemRing": "prsten",
   "player.emblemTriangle": "trokut",
   "player.guildCape": "Plašt ceha",
+  "player.copyGuildLink": "Kopiraj poveznicu ceha",
+  "player.guildLink": "Poveznica ceha",
+  "player.guildLinkByHand": "Kopiranje nije uspjelo: poveznica ceha je označena, kopiraj je ručno",
   "player.guildTag": "Oznaka ceha",
   "player.guildTagHint": "2–4 slova ili znamenke",
   "player.guildTagPlaceholder": "OZN",

@@ -396,6 +396,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "senjata",
 
+  "guildLink.broken": "Link guild itu rusak.",
+  "guildLink.framed": "Buka link guild di tab tersendiri. Tidak ada yang berubah.",
+  "guildLink.decline": "Tidak",
+  "guildLink.join": "Gabung",
+  "guildLink.joined": "Sekarang kamu memakai jubah [{tag}].",
+  "guildLink.joinedNoCape": "Tag guild-mu sekarang [{tag}].",
+  "guildLink.question": "Gabung ke guild [{tag}]?",
+  "guildLink.questionReplace": "Ganti [{old}] dengan [{tag}]?",
+  "guildLink.trust":
+    "Link ini mengatur tag dan jubah guild-mu. Siapa saja bisa mengirimnya, dan tidak ada yang memiliki sebuah tag.",
+
   "help.label": "Bantuan",
   "help.licences": "Lisensi pihak ketiga",
   "help.pages": "halaman bantuan",
@@ -791,6 +802,9 @@ export default {
   "player.emblemRing": "cincin",
   "player.emblemTriangle": "segitiga",
   "player.guildCape": "Jubah guild",
+  "player.copyGuildLink": "Salin link guild",
+  "player.guildLink": "Link guild",
+  "player.guildLinkByHand": "Gagal menyalin: link guild sudah dipilih, salin secara manual",
   "player.guildTag": "Tag guild",
   "player.guildTagHint": "2–4 huruf atau angka",
   "player.guildTagPlaceholder": "TAG",

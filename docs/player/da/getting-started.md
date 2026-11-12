@@ -187,6 +187,8 @@ menuen viser den også. **Ingen kappe** tager den af.
 En ændring gælder fra den næste lobby, du deltager i, eller din næste
 friske: en, du allerede er i, beholder det, du deltog med.
 
+**Kopiér laugslink** under kappedesigneren kopierer et link med dit mærke og din kappe. Den, der åbner det, bliver spurgt **Bliv medlem af lauget [VIBE]?**: **Bliv medlem** giver vedkommende dit mærke og din kappe, **Nej** ændrer intet. Alle kan sende sådan et link, og ingen ejer et mærke, så spillet spørger altid først.
+
 ## Sprog
 
 Spillet starter på din browsers sprog, når det har det, ellers på

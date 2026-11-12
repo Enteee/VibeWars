@@ -470,6 +470,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "armas",
 
+  "guildLink.broken": "Ese enlace de gremio está roto.",
+  "guildLink.framed": "Abre el enlace de gremio en su propia pestaña. No se cambió nada.",
+  "guildLink.decline": "No",
+  "guildLink.join": "Unirme",
+  "guildLink.joined": "Ahora llevas la capa de [{tag}].",
+  "guildLink.joinedNoCape": "Tu etiqueta de gremio ahora es [{tag}].",
+  "guildLink.question": "¿Unirte al gremio [{tag}]?",
+  "guildLink.questionReplace": "¿Cambiar [{old}] por [{tag}]?",
+  "guildLink.trust":
+    "Este enlace fija tu etiqueta y tu capa de gremio. Cualquiera puede enviar uno y nadie es dueño de una etiqueta.",
+
   "help.label": "Ayuda",
   "help.licences": "Licencias de terceros",
   "help.pages": "páginas de ayuda",
@@ -897,6 +908,10 @@ export default {
   "player.emblemRing": "anillo",
   "player.emblemTriangle": "triángulo",
   "player.guildCape": "Capa de gremio",
+  "player.copyGuildLink": "Copiar enlace del gremio",
+  "player.guildLink": "Enlace del gremio",
+  "player.guildLinkByHand":
+    "No se pudo copiar: el enlace del gremio está seleccionado, cópialo a mano",
   "player.guildTag": "Etiqueta de gremio",
   "player.guildTagHint": "2–4 letras o dígitos",
   "player.guildTagPlaceholder": "TAG",

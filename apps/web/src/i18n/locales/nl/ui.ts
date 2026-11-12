@@ -437,6 +437,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "wapens",
 
+  "guildLink.broken": "Die gildelink is kapot.",
+  "guildLink.framed": "Open de gildelink in een eigen tabblad. Er is niets veranderd.",
+  "guildLink.decline": "Nee",
+  "guildLink.join": "Lid worden",
+  "guildLink.joined": "Je draagt nu de cape van [{tag}].",
+  "guildLink.joinedNoCape": "Je gildetag is nu [{tag}].",
+  "guildLink.question": "Lid worden van gilde [{tag}]?",
+  "guildLink.questionReplace": "[{old}] vervangen door [{tag}]?",
+  "guildLink.trust":
+    "Deze link stelt je gildetag en gildecape in. Iedereen kan er een sturen, en niemand is eigenaar van een tag.",
+
   "help.label": "Help",
   "help.licences": "Licenties van derden",
   "help.pages": "helppagina's",
@@ -835,6 +846,9 @@ export default {
   "player.emblemRing": "ring",
   "player.emblemTriangle": "driehoek",
   "player.guildCape": "Gildecape",
+  "player.copyGuildLink": "Gildelink kopiëren",
+  "player.guildLink": "Gildelink",
+  "player.guildLinkByHand": "Kopiëren mislukt: de gildelink is geselecteerd, kopieer hem zelf",
   "player.guildTag": "Gildetag",
   "player.guildTagHint": "2–4 letters of cijfers",
   "player.guildTagPlaceholder": "TAG",

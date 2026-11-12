@@ -395,6 +395,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}초",
   "gearLibrary.weapons": "무기",
 
+  "guildLink.broken": "그 길드 링크는 깨졌어요.",
+  "guildLink.framed": "길드 링크를 별도 탭에서 여세요. 아무것도 바뀌지 않았어요.",
+  "guildLink.decline": "아니요",
+  "guildLink.join": "가입",
+  "guildLink.joined": "이제 [{tag}]의 망토를 입었어요.",
+  "guildLink.joinedNoCape": "이제 길드 태그는 [{tag}]예요.",
+  "guildLink.question": "길드 [{tag}]에 가입할까요?",
+  "guildLink.questionReplace": "[{old}]을(를) [{tag}](으)로 바꿀까요?",
+  "guildLink.trust":
+    "이 링크는 길드 태그와 망토를 설정해요. 누구나 보낼 수 있고, 태그의 주인은 없어요.",
+
   "help.label": "도움말",
   "help.licences": "서드파티 라이선스",
   "help.pages": "도움말 페이지",
@@ -788,6 +799,9 @@ export default {
   "player.emblemRing": "고리",
   "player.emblemTriangle": "삼각형",
   "player.guildCape": "길드 망토",
+  "player.copyGuildLink": "길드 링크 복사",
+  "player.guildLink": "길드 링크",
+  "player.guildLinkByHand": "복사하지 못했어요: 길드 링크가 선택되어 있으니 직접 복사하세요",
   "player.guildTag": "길드 태그",
   "player.guildTagHint": "글자 또는 숫자 2–4자",
   "player.guildTagPlaceholder": "TAG",
