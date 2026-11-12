@@ -481,6 +481,30 @@ function boxOutline(left: number, top: number, right: number, bottom: number): r
   ];
 }
 
+/**
+ * The side of a column of `shape` raised from `low` to `high` (#3157):
+ * each edge swept up between the two, as a quad. With the shape filled at
+ * both ends, they cover all the shape covers at any height between, in a
+ * fill per edge where a fill of the whole shape per slice of height drew
+ * every pixel of a large deck dozens of times, every frame.
+ */
+export function sweptEdges(
+  shape: RenderableShape,
+  low: number,
+  high: number,
+): readonly (readonly Vec2[])[] {
+  const outline = shapeOutline(shape);
+  return outline.map((from, index) => {
+    const to = outline[(index + 1) % outline.length] ?? from;
+    return [
+      { x: from.x, y: from.y - low },
+      { x: to.x, y: to.y - low },
+      { x: to.x, y: to.y - high },
+      { x: from.x, y: from.y - high },
+    ];
+  });
+}
+
 /** A pit as it draws (#2973), every point already sunk. */
 export interface PitDrawing {
   /** Its floor, a step down; the ground's near lip covers its south strip. */

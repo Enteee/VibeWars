@@ -26,6 +26,7 @@ import {
   plankLines,
   southFacingEdges,
   surfacesAt,
+  sweptEdges,
   WALL_HEIGHT,
   pickSurface,
   pitDrawing,
@@ -792,5 +793,25 @@ describe("the deck a body stands under (#3078)", () => {
 
   it("is none on a map without decks", () => {
     expect(overhangAt(FLAT_STRUCTURE, { x: 200, y: 150 }, 0)).toBeUndefined();
+  });
+});
+
+describe("the side of a raised column (#3157)", () => {
+  it("is each edge of its shape swept from its foot up to its top, one quad per edge", () => {
+    const quads = sweptEdges(bridge, 0, 30);
+    expect(quads).toHaveLength(4);
+    expect(quads[0]).toEqual([
+      { x: 100, y: 100 },
+      { x: 300, y: 100 },
+      { x: 300, y: 70 },
+      { x: 100, y: 70 },
+    ]);
+    // The last edge closes the outline, back to its first corner.
+    expect(quads[3]?.[1]).toEqual({ x: 100, y: 100 });
+  });
+
+  it("starts a column raised off the ground at its low end", () => {
+    const [first] = sweptEdges(bridge, 10, 30);
+    expect(first?.map(({ y }) => y)).toEqual([90, 90, 70, 70]);
   });
 });
