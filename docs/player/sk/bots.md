@@ -36,6 +36,7 @@ oltár, má ešte pred tým prednosť Prízračný hrdina druhého tímu na olt�
 Bot, ktorý sa dostane ďaleko pred svoj tím, počká na ostatných, kým pôjde
 ďalej.
 
+Lukostrelci a kopijníci zaujmú vyvýšené miesto, keď je to bezpečné.
 Keď nie je nablízku žiadny nepriateľ, bot prehodí páku, ktorá otvorí kratšiu cestu k nepriateľom. Dvaja boti tiež zbúrajú múr, ktorý skrýva oveľa kratšiu cestu, a bijú doň svojimi zbraňami.
 
 Útočiaci boti si šetria svoje veľké zásahy, útočné schopnosti a poškodzujúce

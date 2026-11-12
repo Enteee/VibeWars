@@ -36,6 +36,7 @@ altar, Ghostly Hero tim lawan di altar didahulukan bahkan dari itu.
 Bot yang terlalu jauh di depan timnya menunggu sisanya sebelum terus
 maju.
 
+Pemanah dan pelempar tombak mengambil tempat tinggi saat aman.
 Saat tidak ada lawan di dekatnya, bot menarik tuas yang membuka jalan lebih pendek ke arah lawan. Dua bot juga merobohkan tembok yang menyembunyikan jalan yang jauh lebih pendek, dengan memukulnya memakai senjata mereka.
 
 Bot penyerang menahan pukulan besarnya, skill serangan dan mantra damage,
