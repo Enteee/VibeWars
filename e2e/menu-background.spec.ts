@@ -77,11 +77,42 @@ test.describe("the live menu background (#3119)", () => {
     await expect(page.locator("#menu-background canvas")).toHaveCount(1);
   });
 
-  test("still draws under reduced motion", async ({ page }) => {
+  test("still draws under reduced motion: once, held, and again after a resize (#3157)", async ({
+    page,
+  }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("./?menu-background");
     await hostLobby(page, { size: 1 });
-    await expect(page.locator("#menu-background")).toHaveAttribute("data-map", "ember-pits");
-    await expect(page.locator("#menu-background canvas")).toHaveCount(1);
+    const background = page.locator("#menu-background");
+    await expect(background).toHaveAttribute("data-map", "ember-pits");
+    await expect(background).toHaveAttribute("data-shown", "");
+    await expect(background.locator("canvas")).toHaveCount(1);
+    // The background alone: the menu over it would make any shot look drawn.
+    await page.addStyleTag({ content: "body > :not(#menu-background) { visibility: hidden; }" });
+    const shot = (): Promise<Buffer> => background.locator("canvas").screenshot();
+    /** How many colours `png` has: one is a canvas cleared and never drawn again. */
+    const colours = (png: Buffer): Promise<number> =>
+      page.evaluate(async (base64) => {
+        const image = new Image();
+        image.src = `data:image/png;base64,${base64}`;
+        await image.decode();
+        const context = new OffscreenCanvas(image.width, image.height).getContext("2d");
+        if (context === null) throw new Error("no 2d context");
+        context.drawImage(image, 0, 0);
+        const { data } = context.getImageData(0, 0, image.width, image.height);
+        const seen = new Set<number>();
+        for (let at = 0; at < data.length; at += 4) {
+          seen.add(((data[at] ?? 0) << 16) | ((data[at + 1] ?? 0) << 8) | (data[at + 2] ?? 0));
+        }
+        return seen.size;
+      }, png.toString("base64"));
+
+    const held = await shot();
+    expect(await colours(held)).toBeGreaterThan(1);
+    await page.waitForTimeout(500);
+    expect((await shot()).equals(held)).toBe(true);
+
+    await page.setViewportSize({ width: 900, height: 600 });
+    await expect.poll(async () => colours(await shot())).toBeGreaterThan(1);
   });
 });
