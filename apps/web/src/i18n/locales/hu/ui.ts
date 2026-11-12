@@ -440,6 +440,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds} mp",
   "gearLibrary.weapons": "fegyverek",
 
+  "guildLink.broken": "Ez a céhlink hibás.",
+  "guildLink.decline": "Nem",
+  "guildLink.join": "Csatlakozás",
+  "guildLink.joined": "Mostantól a(z) [{tag}] köpenyét viseled.",
+  "guildLink.joinedNoCape": "A céhjeled mostantól [{tag}].",
+  "guildLink.question": "Csatlakozol a(z) [{tag}] céhhez?",
+  "guildLink.questionReplace": "Lecseréled: [{old}] helyett [{tag}]?",
+  "guildLink.trust":
+    "Ez a link beállítja a céhjeledet és a céhköpenyedet. Bárki küldhet ilyet, és senkié sem egy céhjel.",
+
   "help.label": "Súgó",
   "help.licences": "Külső licencek",
   "help.pages": "súgóoldalak",
@@ -837,6 +847,9 @@ export default {
   "player.emblemRing": "gyűrű",
   "player.emblemTriangle": "háromszög",
   "player.guildCape": "Céhköpeny",
+  "player.copyGuildLink": "Céhlink másolása",
+  "player.guildLink": "Céhlink",
+  "player.guildLinkByHand": "Nem sikerült másolni: a céhlink ki van jelölve, másold kézzel",
   "player.guildTag": "Céhjel",
   "player.guildTagHint": "2–4 betű vagy szám",
   "player.guildTagPlaceholder": "CÉH",

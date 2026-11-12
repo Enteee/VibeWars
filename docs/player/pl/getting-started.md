@@ -170,6 +170,8 @@ peleryny** ją zdejmuje.
 Zmiana działa od następnego lobby, do którego dołączysz, lub twojego następnego
 nowego: lobby, w którym już jesteś, zachowuje to, z czym dołączyłeś.
 
+**Kopiuj link gildii**, pod projektantem peleryny, kopiuje link z twoim tagiem i peleryną. Kto go otworzy, zobaczy pytanie **Dołączyć do gildii [VIBE]?**: **Dołącz** daje mu twój tag i pelerynę, **Nie** niczego nie zmienia. Każdy może wysłać taki link i nikt nie jest właścicielem tagu, więc gra zawsze najpierw pyta.
+
 ## Język
 
 Gra uruchamia się w języku twojej przeglądarki, jeśli go ma, a w przeciwnym razie po

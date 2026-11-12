@@ -489,6 +489,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds} с",
   "gearLibrary.weapons": "зброя",
 
+  "guildLink.broken": "Це посилання гільдії пошкоджене.",
+  "guildLink.decline": "Ні",
+  "guildLink.join": "Вступити",
+  "guildLink.joined": "Тепер на тобі плащ [{tag}].",
+  "guildLink.joinedNoCape": "Твій тег гільдії тепер [{tag}].",
+  "guildLink.question": "Вступити до гільдії [{tag}]?",
+  "guildLink.questionReplace": "Замінити [{old}] на [{tag}]?",
+  "guildLink.trust":
+    "Це посилання задає тег і плащ твоєї гільдії. Його може надіслати будь-хто, і тег нікому не належить.",
+
   "help.label": "Довідка",
   "help.licences": "Ліцензії сторонніх розробників",
   "help.pages": "сторінки довідки",
@@ -923,6 +933,10 @@ export default {
   "player.emblemRing": "кільце",
   "player.emblemTriangle": "трикутник",
   "player.guildCape": "Плащ гільдії",
+  "player.copyGuildLink": "Копіювати посилання гільдії",
+  "player.guildLink": "Посилання гільдії",
+  "player.guildLinkByHand":
+    "Не вдалося скопіювати: посилання гільдії виділено, скопіюй його вручну",
   "player.guildTag": "Тег гільдії",
   "player.guildTagHint": "2–4 літери або цифри",
   "player.guildTagPlaceholder": "ТЕГ",

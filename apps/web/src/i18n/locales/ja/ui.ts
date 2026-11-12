@@ -398,6 +398,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}秒",
   "gearLibrary.weapons": "武器",
 
+  "guildLink.broken": "そのギルドリンクは壊れています。",
+  "guildLink.decline": "いいえ",
+  "guildLink.join": "参加",
+  "guildLink.joined": "[{tag}] のケープを身につけました。",
+  "guildLink.joinedNoCape": "ギルドタグが [{tag}] になりました。",
+  "guildLink.question": "ギルド [{tag}] に参加しますか？",
+  "guildLink.questionReplace": "[{old}] を [{tag}] に置き換えますか？",
+  "guildLink.trust":
+    "このリンクはギルドタグとギルドケープを設定します。誰でも送ることができ、タグは誰のものでもありません。",
+
   "help.label": "ヘルプ",
   "help.licences": "サードパーティのライセンス",
   "help.pages": "ヘルプページ",
@@ -793,6 +803,10 @@ export default {
   "player.emblemRing": "輪",
   "player.emblemTriangle": "三角",
   "player.guildCape": "ギルドケープ",
+  "player.copyGuildLink": "ギルドリンクをコピー",
+  "player.guildLink": "ギルドリンク",
+  "player.guildLinkByHand":
+    "コピーできませんでした。ギルドリンクを選択したので、手動でコピーしてください",
   "player.guildTag": "ギルドタグ",
   "player.guildTagHint": "英数字2〜4文字",
   "player.guildTagPlaceholder": "TAG",

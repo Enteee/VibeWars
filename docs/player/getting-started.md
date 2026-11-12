@@ -184,6 +184,11 @@ the menu show it too. **No cape** takes it off.
 A change applies from the next lobby you join, or your next fresh one:
 one you are already in keeps what you joined with.
 
+**Copy guild link**, under the cape designer, copies a link that carries
+your tag and cape. Whoever opens it is asked **Join guild [VIBE]?**:
+**Join** gives them your tag and cape, **No** changes nothing. Anyone can
+send such a link and nobody owns a tag, so the game always asks first.
+
 ## Language
 
 The game starts in your browser's language when it has it, else in

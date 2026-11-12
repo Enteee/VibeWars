@@ -438,6 +438,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "vapen",
 
+  "guildLink.broken": "Den gilleslänken är trasig.",
+  "guildLink.decline": "Nej",
+  "guildLink.join": "Gå med",
+  "guildLink.joined": "Du bär nu [{tag}]s mantel.",
+  "guildLink.joinedNoCape": "Din gilletagg är nu [{tag}].",
+  "guildLink.question": "Gå med i gillet [{tag}]?",
+  "guildLink.questionReplace": "Byta ut [{old}] mot [{tag}]?",
+  "guildLink.trust":
+    "Den här länken ställer in din gilletagg och din gillesmantel. Vem som helst kan skicka en, och ingen äger en tagg.",
+
   "help.label": "Hjälp",
   "help.licences": "Tredjepartslicenser",
   "help.pages": "hjälpsidor",
@@ -834,6 +844,9 @@ export default {
   "player.emblemRing": "ring",
   "player.emblemTriangle": "triangel",
   "player.guildCape": "Gillesmantel",
+  "player.copyGuildLink": "Kopiera gilleslänk",
+  "player.guildLink": "Gilleslänk",
+  "player.guildLinkByHand": "Kunde inte kopiera: gilleslänken är markerad, kopiera den för hand",
   "player.guildTag": "Gilletagg",
   "player.guildTagHint": "2–4 bokstäver eller siffror",
   "player.guildTagPlaceholder": "TAGG",

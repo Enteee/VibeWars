@@ -438,6 +438,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds} ث",
   "gearLibrary.weapons": "سلاح‌ها",
 
+  "guildLink.broken": "این لینک انجمن خراب است.",
+  "guildLink.decline": "نه",
+  "guildLink.join": "پیوستن",
+  "guildLink.joined": "حالا شنل [{tag}] را پوشیده‌ای.",
+  "guildLink.joinedNoCape": "برچسب انجمنت حالا [{tag}] است.",
+  "guildLink.question": "به انجمن [{tag}] می‌پیوندی؟",
+  "guildLink.questionReplace": "[{tag}] جای [{old}] را بگیرد؟",
+  "guildLink.trust":
+    "این لینک برچسب و شنل انجمنت را تعیین می‌کند. هر کسی می‌تواند آن را بفرستد و هیچ‌کس مالک یک برچسب نیست.",
+
   "help.label": "راهنما",
   "help.licences": "مجوزهای شخص ثالث",
   "help.pages": "صفحات راهنما",
@@ -838,6 +848,9 @@ export default {
   "player.emblemRing": "حلقه",
   "player.emblemTriangle": "مثلث",
   "player.guildCape": "شنل انجمن",
+  "player.copyGuildLink": "کپی لینک انجمن",
+  "player.guildLink": "لینک انجمن",
+  "player.guildLinkByHand": "کپی نشد: لینک انجمن انتخاب شده است، خودت کپی‌اش کن",
   "player.guildTag": "برچسب انجمن",
   "player.guildTagHint": "2–4 حرف یا رقم",
   "player.guildTagPlaceholder": "برچسب",

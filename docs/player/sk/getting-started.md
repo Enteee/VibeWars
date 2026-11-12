@@ -182,6 +182,8 @@ veje za tebou. Ukazujú ho aj tvoje postavy v menu. **Bez plášťa** ho zloží
 Zmena platí od ďalšieho lobby, ku ktorému sa pripojíš, alebo od ďalšieho
 nového: to, v ktorom už si, si ponechá to, s čím si sa pripojil.
 
+**Kopírovať odkaz na cech** pod návrhárom plášťa skopíruje odkaz s tvojou značkou a plášťom. Kto ho otvorí, dostane otázku **Pridať sa do cechu [VIBE]?**: **Pridať sa** mu dá tvoju značku a plášť, **Nie** nič nezmení. Taký odkaz môže poslať ktokoľvek a značku nikto nevlastní, preto sa hra vždy najprv opýta.
+
 ## Jazyk
 
 Hra sa spustí v jazyku tvojho prehliadača, ak ho má, inak v

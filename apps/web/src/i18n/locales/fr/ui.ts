@@ -472,6 +472,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "armes",
 
+  "guildLink.broken": "Ce lien de guilde est cassé.",
+  "guildLink.decline": "Non",
+  "guildLink.join": "Rejoindre",
+  "guildLink.joined": "Tu portes maintenant la cape de [{tag}].",
+  "guildLink.joinedNoCape": "Ton tag de guilde est maintenant [{tag}].",
+  "guildLink.question": "Rejoindre la guilde [{tag}] ?",
+  "guildLink.questionReplace": "Remplacer [{old}] par [{tag}] ?",
+  "guildLink.trust":
+    "Ce lien définit ton tag et ta cape de guilde. N'importe qui peut en envoyer un, et personne ne possède un tag.",
+
   "help.label": "Aide",
   "help.licences": "Licences tierces",
   "help.pages": "pages d'aide",
@@ -896,6 +906,10 @@ export default {
   "player.emblemRing": "anneau",
   "player.emblemTriangle": "triangle",
   "player.guildCape": "Cape de guilde",
+  "player.copyGuildLink": "Copier le lien de guilde",
+  "player.guildLink": "Lien de guilde",
+  "player.guildLinkByHand":
+    "Copie impossible : le lien de guilde est sélectionné, copie-le à la main",
   "player.guildTag": "Tag de guilde",
   "player.guildTagHint": "2 à 4 lettres ou chiffres",
   "player.guildTagPlaceholder": "TAG",

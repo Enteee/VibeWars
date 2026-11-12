@@ -471,6 +471,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "arme",
 
+  "guildLink.broken": "Linkul acesta de breaslă este stricat.",
+  "guildLink.decline": "Nu",
+  "guildLink.join": "Alătură-te",
+  "guildLink.joined": "Acum porți pelerina breslei [{tag}].",
+  "guildLink.joinedNoCape": "Tagul tău de breaslă este acum [{tag}].",
+  "guildLink.question": "Te alături breslei [{tag}]?",
+  "guildLink.questionReplace": "Înlocuiești [{old}] cu [{tag}]?",
+  "guildLink.trust":
+    "Acest link îți setează tagul și pelerina de breaslă. Oricine poate trimite unul și nimeni nu deține un tag.",
+
   "help.label": "Ajutor",
   "help.licences": "Licențe terțe",
   "help.pages": "pagini de ajutor",
@@ -889,6 +899,9 @@ export default {
   "player.emblemRing": "inel",
   "player.emblemTriangle": "triunghi",
   "player.guildCape": "Pelerină de breaslă",
+  "player.copyGuildLink": "Copiază linkul breslei",
+  "player.guildLink": "Linkul breslei",
+  "player.guildLinkByHand": "Nu s-a putut copia: linkul breslei e selectat, copiază-l manual",
   "player.guildTag": "Tag de breaslă",
   "player.guildTagHint": "2–4 litere sau cifre",
   "player.guildTagPlaceholder": "TAG",

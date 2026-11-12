@@ -437,6 +437,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "våben",
 
+  "guildLink.broken": "Det laugslink er ødelagt.",
+  "guildLink.decline": "Nej",
+  "guildLink.join": "Bliv medlem",
+  "guildLink.joined": "Du bærer nu [{tag}]s kappe.",
+  "guildLink.joinedNoCape": "Dit laugsmærke er nu [{tag}].",
+  "guildLink.question": "Bliv medlem af lauget [{tag}]?",
+  "guildLink.questionReplace": "Erstat [{old}] med [{tag}]?",
+  "guildLink.trust":
+    "Dette link sætter dit laugsmærke og din laugskappe. Alle kan sende et, og ingen ejer et mærke.",
+
   "help.label": "Hjælp",
   "help.licences": "Tredjepartslicenser",
   "help.pages": "hjælpesider",
@@ -833,6 +843,9 @@ export default {
   "player.emblemRing": "ring",
   "player.emblemTriangle": "trekant",
   "player.guildCape": "Laugskappe",
+  "player.copyGuildLink": "Kopiér laugslink",
+  "player.guildLink": "Laugslink",
+  "player.guildLinkByHand": "Kunne ikke kopiere: laugslinket er markeret, kopiér det selv",
   "player.guildTag": "Laugsmærke",
   "player.guildTagHint": "2–4 bogstaver eller cifre",
   "player.guildTagPlaceholder": "TAG",

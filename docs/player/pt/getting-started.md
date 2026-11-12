@@ -193,6 +193,8 @@ Uma mudança vale a partir da próxima sala em que você entrar, ou da
 próxima sala nova: uma em que você já está mantém o que você tinha ao
 entrar.
 
+**Copiar link da guilda**, abaixo do designer de capa, copia um link com sua tag e sua capa. Quem abrir verá **Entrar na guilda [VIBE]?**: **Entrar** dá a essa pessoa sua tag e sua capa, **Não** não muda nada. Qualquer pessoa pode enviar um link assim e ninguém é dono de uma tag, por isso o jogo sempre pergunta antes.
+
 ## Idioma
 
 O jogo começa no idioma do seu navegador quando o tem; caso contrário, em

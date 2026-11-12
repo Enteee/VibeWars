@@ -270,6 +270,29 @@ describe("the Player section of Options (#1513)", () => {
     shown.find((node) => node.textContent === "No cape")?.click();
     expect(loadGuildCape()).toBeNull();
   });
+
+  it("offers the guild link only with a valid tag, and copies the tag and cape (#3167)", async () => {
+    stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VW");
+    stored.set(`${STORAGE_NAMESPACE}.guildCape`, JSON.stringify(FIRST_CAPE));
+    const writeText = vi.fn(() => Promise.resolve());
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    vi.stubGlobal("location", { origin: "https://vibewars.example", pathname: "/" });
+    vi.stubGlobal("document", {
+      createElement: (tag: string) => new FakeElement(tag),
+      body: new FakeElement("body"),
+    });
+    const { tag, shown } = mount();
+    const copy = shown.find((node) => node.className === "player-guild-copy");
+    expect(copy?.hidden).toBe(false);
+    copy?.click();
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        "https://vibewars.example/#guild=VW.violet.white.diamond",
+      );
+    });
+    tag.typeIn("V!");
+    expect(copy?.hidden).toBe(true);
+  });
 });
 
 describe("sameTypedGuild (#2702)", () => {

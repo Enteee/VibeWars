@@ -46,7 +46,12 @@ import {
   type PartyPlace,
   type RandomArenaQueue,
 } from "./net/session.js";
-import { parseLobbyFragment, type LobbyFragment } from "./net/fragment.js";
+import {
+  parseGuildFragment,
+  parseLobbyFragment,
+  type GuildFragment,
+  type LobbyFragment,
+} from "./net/fragment.js";
 import {
   UNREADABLE_RELAY_NOTICE,
   loadRelay,
@@ -114,6 +119,7 @@ import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
 import { setLanguageBusy } from "./ui/language-section.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
+import { openGuildLinkPrompt } from "./ui/guild-link-prompt.js";
 import { needsTouchNotice, showTouchNotice } from "./ui/touch-notice.js";
 import {
   loadTouchNoticeDismissed,
@@ -169,7 +175,13 @@ import { dismissToast, toast } from "./ui/kit.js";
 import { signetOf } from "./ui/player-label.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
-import { loadPlayerName, playerGuild, sameTypedGuild } from "./ui/player-section.js";
+import {
+  loadGuildCape,
+  loadPlayerName,
+  playerGuild,
+  playerGuildTag,
+  sameTypedGuild,
+} from "./ui/player-section.js";
 import { isAlone, partyOf } from "./ui/lobby-window.js";
 import {
   isModeEntry,
@@ -296,6 +308,20 @@ function takeLobbyLink(): LobbyFragment {
   return fragment;
 }
 
+/**
+ * The guild link this page was opened with, if any (#3167), taken out of
+ * the address bar at once, as `takeLobbyLink` does: a reload never asks
+ * twice. Only `guild=` goes; the rest of the fragment stays.
+ */
+function takeGuildLink(): GuildFragment {
+  const fragment = parseGuildFragment(location.hash);
+  if (fragment.kind !== "none") {
+    const rest = fragment.rest === "" ? "" : `#${fragment.rest}`;
+    history.replaceState(history.state, "", `${location.pathname}${location.search}${rest}`);
+  }
+  return fragment;
+}
+
 /** The served build id this tab last reloaded for (#1268): once per id, never a loop. */
 /** This browser's player key (#2706), made on its first launch: every lobby join proves it. */
 const playerKey = loadPlayerKey(localStorage);
@@ -332,6 +358,7 @@ interface Entrant {
 async function main(): Promise<void> {
   // Before anything mounts or waits.
   const relayLink = takeRelayLink();
+  const guildLink = takeGuildLink();
   const lobbyLink = takeLobbyLink();
   // Every screen reads its text in the player's language (#2648).
   await loadLocale();
@@ -391,6 +418,9 @@ async function main(): Promise<void> {
   // defence, and a framing page could overlay a decoy over it, so a framed
   // page never asks. Static hosting sends no `frame-ancestors`.
   const framed = window.top !== window.self;
+  if (guildLink.kind === "invalid") {
+    notices.add(t("guildLink.broken"));
+  }
   if (lobbyLink.kind === "malformed") {
     notices.add(t("session.notAKey"));
   }
@@ -3123,22 +3153,47 @@ async function main(): Promise<void> {
   };
   const buildWatch = watchServedBuild();
 
+  /**
+   * Ask about a guild link (#3167), unless it is the guild the player
+   * already wears, then `next`: a lobby or relay link opened with it
+   * waits its turn. Joined over the menu, its characters wear the new cape.
+   */
+  const askGuild = (link: GuildFragment, next: () => void): void => {
+    if (
+      link.kind !== "guild" ||
+      (playerGuildTag() === link.tag &&
+        JSON.stringify(loadGuildCape()) === JSON.stringify(link.cape))
+    ) {
+      next();
+      return;
+    }
+    openGuildLinkPrompt(app, link.tag, link.cape, () => {
+      const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
+      if (menu && menuCape !== JSON.stringify(playerGuild().guildCape)) {
+        showMenu();
+      }
+      next();
+    });
+  };
   const enterMenu = (): void => {
     splash = undefined;
     showMenu();
-    if (lobbyLink.kind === "invite") {
-      topbarView.invite(lobbyLink.code);
-    }
-    if (relayLink.kind === "config" && !framed) {
-      openRelayPrompt(app, relayLink.relay, savedRelay);
-    }
+    askGuild(guildLink, () => {
+      if (lobbyLink.kind === "invite") {
+        topbarView.invite(lobbyLink.code);
+      }
+      if (relayLink.kind === "config" && !framed) {
+        openRelayPrompt(app, relayLink.relay, savedRelay);
+      }
+    });
   };
   let splash: Splash | undefined;
   if (
     shouldShowSplash({
       forced: new URLSearchParams(window.location.search).has("splash"),
       seen: splashSeen(),
-      joining: lobbyLink.kind === "invite" || relayLink.kind === "config",
+      joining:
+        lobbyLink.kind === "invite" || relayLink.kind === "config" || guildLink.kind === "guild",
       framed,
       disabled: import.meta.env.VITE_VIBEWARS_SPLASH === "off",
     })
@@ -3161,15 +3216,8 @@ async function main(): Promise<void> {
   } else {
     enterMenu();
   }
-  // An invite link pasted into this open tab only changes the fragment:
-  // nothing reloads, so it is taken out and asked about here.
-  const takeFragmentLinks = (): void => {
-    const invited = takeLobbyLink();
-    const pasted = takeRelayLink();
-    // Its prompt goes on the menu, so the splash ends first.
-    if (invited.kind === "invite" || pasted.kind === "config") {
-      splash?.end();
-    }
+  // A lobby or relay link opened in this tab, once any guild link with it is answered (#3167).
+  const askLobbyAndRelay = (invited: LobbyFragment, pasted: TurnFragment): void => {
     if (invited.kind === "malformed") {
       toast(t("session.notAKey"));
     } else if (invited.kind === "invite" && !topbarView.invite(invited.code)) {
@@ -3182,6 +3230,23 @@ async function main(): Promise<void> {
     } else if (pasted.kind === "config") {
       openRelayPrompt(app, pasted.relay, loadRelay());
     }
+  };
+  // An invite link pasted into this open tab only changes the fragment:
+  // nothing reloads, so it is taken out and asked about here.
+  const takeFragmentLinks = (): void => {
+    const guild = takeGuildLink();
+    const invited = takeLobbyLink();
+    const pasted = takeRelayLink();
+    // Its prompt goes on the menu, so the splash ends first.
+    if (invited.kind === "invite" || pasted.kind === "config" || guild.kind === "guild") {
+      splash?.end();
+    }
+    if (guild.kind === "invalid") {
+      toast(t("guildLink.broken"));
+    }
+    askGuild(guild, () => {
+      askLobbyAndRelay(invited, pasted);
+    });
   };
   window.addEventListener("hashchange", takeFragmentLinks);
   // One pasted while the page was still starting, before there was a listener.

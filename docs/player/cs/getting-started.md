@@ -53,6 +53,8 @@ Otevři **Možnosti** přes ⚙ v horní liště: jejich sekce **hráč** obsahu
 
 Změna platí od další lobby, ke které se připojíš, nebo od tvojí další nové: ta, ve které už jsi, si nechá to, s čím ses připojil.
 
+**Kopírovat odkaz na cech** pod návrhářem pláště zkopíruje odkaz s tvou značkou a pláštěm. Kdo ho otevře, dostane otázku **Přidat se do cechu [VIBE]?**: **Přidat se** mu dá tvou značku a plášť, **Ne** nic nezmění. Takový odkaz může poslat kdokoli a značku nikdo nevlastní, proto se hra vždy nejdřív zeptá.
+
 ## Jazyk
 
 Hra se spustí v jazyce tvého prohlížeče, pokud ho má, jinak anglicky. Jiný vyber v **Možnosti → jazyk**: stránka se v něm znovu načte a od té doby ho drží. Názvy dovedností, map a předmětů jsou zatím anglicky. Když jsi s ostatními v lobby, ve frontě nebo v zápase, je volba uzamčená, protože opětovné načtení by tě odpojilo. Jména hráčů zůstávají tak, jak si je hráči napsali.

@@ -192,6 +192,8 @@ menu la montrent aussi. **Sans cape** la retire.
 Un changement s'applique à partir du prochain salon que tu rejoins, ou de ton
 prochain nouveau salon : celui où tu es déjà garde ce avec quoi tu es entré.
 
+**Copier le lien de guilde**, sous le créateur de cape, copie un lien qui porte ton tag et ta cape. Qui l'ouvre voit **Rejoindre la guilde [VIBE] ?** : **Rejoindre** lui donne ton tag et ta cape, **Non** ne change rien. N'importe qui peut envoyer un tel lien et personne ne possède un tag, donc le jeu demande toujours d'abord.
+
 ## Langue
 
 Le jeu démarre dans la langue de ton navigateur s'il l'a, sinon en anglais.

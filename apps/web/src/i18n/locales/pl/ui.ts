@@ -490,6 +490,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "bronie",
 
+  "guildLink.broken": "Ten link gildii jest uszkodzony.",
+  "guildLink.decline": "Nie",
+  "guildLink.join": "Dołącz",
+  "guildLink.joined": "Nosisz teraz pelerynę [{tag}].",
+  "guildLink.joinedNoCape": "Twój tag gildii to teraz [{tag}].",
+  "guildLink.question": "Dołączyć do gildii [{tag}]?",
+  "guildLink.questionReplace": "Zastąpić [{old}] przez [{tag}]?",
+  "guildLink.trust":
+    "Ten link ustawia tag i pelerynę twojej gildii. Każdy może go wysłać i nikt nie jest właścicielem tagu.",
+
   "help.label": "Pomoc",
   "help.licences": "Licencje zewnętrzne",
   "help.pages": "strony pomocy",
@@ -925,6 +935,10 @@ export default {
   "player.emblemRing": "pierścień",
   "player.emblemTriangle": "trójkąt",
   "player.guildCape": "Peleryna gildii",
+  "player.copyGuildLink": "Kopiuj link gildii",
+  "player.guildLink": "Link gildii",
+  "player.guildLinkByHand":
+    "Nie udało się skopiować: link gildii jest zaznaczony, skopiuj go ręcznie",
   "player.guildTag": "Tag gildii",
   "player.guildTagHint": "2–4 litery lub cyfry",
   "player.guildTagPlaceholder": "TAG",

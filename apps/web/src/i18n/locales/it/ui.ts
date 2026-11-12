@@ -472,6 +472,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "armi",
 
+  "guildLink.broken": "Quel link della gilda non è valido.",
+  "guildLink.decline": "No",
+  "guildLink.join": "Unisciti",
+  "guildLink.joined": "Ora indossi il mantello di [{tag}].",
+  "guildLink.joinedNoCape": "Il tuo tag gilda ora è [{tag}].",
+  "guildLink.question": "Unirti alla gilda [{tag}]?",
+  "guildLink.questionReplace": "Sostituire [{old}] con [{tag}]?",
+  "guildLink.trust":
+    "Questo link imposta il tag e il mantello della tua gilda. Chiunque può inviarne uno, e nessuno possiede un tag.",
+
   "help.label": "Aiuto",
   "help.licences": "Licenze di terze parti",
   "help.pages": "pagine di aiuto",
@@ -888,6 +898,9 @@ export default {
   "player.emblemRing": "anello",
   "player.emblemTriangle": "triangolo",
   "player.guildCape": "Mantello gilda",
+  "player.copyGuildLink": "Copia link della gilda",
+  "player.guildLink": "Link della gilda",
+  "player.guildLinkByHand": "Copia non riuscita: il link della gilda è selezionato, copialo a mano",
   "player.guildTag": "Tag gilda",
   "player.guildTagHint": "2–4 lettere o cifre",
   "player.guildTagPlaceholder": "TAG",

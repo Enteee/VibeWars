@@ -487,6 +487,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds} с",
   "gearLibrary.weapons": "оружие",
 
+  "guildLink.broken": "Эта ссылка гильдии повреждена.",
+  "guildLink.decline": "Нет",
+  "guildLink.join": "Вступить",
+  "guildLink.joined": "Теперь на тебе плащ [{tag}].",
+  "guildLink.joinedNoCape": "Твой тег гильдии теперь [{tag}].",
+  "guildLink.question": "Вступить в гильдию [{tag}]?",
+  "guildLink.questionReplace": "Заменить [{old}] на [{tag}]?",
+  "guildLink.trust":
+    "Эта ссылка задаёт тег и плащ твоей гильдии. Её может прислать кто угодно, и тег никому не принадлежит.",
+
   "help.label": "Помощь",
   "help.licences": "Сторонние лицензии",
   "help.pages": "страницы помощи",
@@ -920,6 +930,9 @@ export default {
   "player.emblemRing": "кольцо",
   "player.emblemTriangle": "треугольник",
   "player.guildCape": "Плащ гильдии",
+  "player.copyGuildLink": "Копировать ссылку гильдии",
+  "player.guildLink": "Ссылка гильдии",
+  "player.guildLinkByHand": "Не удалось скопировать: ссылка гильдии выделена, скопируй её вручную",
   "player.guildTag": "Тег гильдии",
   "player.guildTagHint": "2–4 буквы или цифры",
   "player.guildTagPlaceholder": "ТЕГ",

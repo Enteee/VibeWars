@@ -524,6 +524,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}ث",
   "gearLibrary.weapons": "الأسلحة",
 
+  "guildLink.broken": "رابط النقابة هذا معطوب.",
+  "guildLink.decline": "لا",
+  "guildLink.join": "انضمام",
+  "guildLink.joined": "أنت الآن ترتدي عباءة [{tag}].",
+  "guildLink.joinedNoCape": "رمز نقابتك الآن [{tag}].",
+  "guildLink.question": "الانضمام إلى النقابة [{tag}]؟",
+  "guildLink.questionReplace": "استبدال [{old}] بـ [{tag}]؟",
+  "guildLink.trust":
+    "هذا الرابط يضبط رمز نقابتك وعباءتها. يمكن لأي أحد إرساله، ولا أحد يملك رمزًا.",
+
   "help.label": "المساعدة",
   "help.licences": "تراخيص الأطراف الثالثة",
   "help.pages": "صفحات المساعدة",
@@ -973,6 +983,9 @@ export default {
   "player.emblemRing": "حلقة",
   "player.emblemTriangle": "مثلث",
   "player.guildCape": "عباءة النقابة",
+  "player.copyGuildLink": "نسخ رابط النقابة",
+  "player.guildLink": "رابط النقابة",
+  "player.guildLinkByHand": "تعذّر النسخ: رابط النقابة محدد، انسخه يدويًا",
   "player.guildTag": "رمز النقابة",
   "player.guildTagHint": "2–4 أحرف أو أرقام",
   "player.guildTagPlaceholder": "TAG",

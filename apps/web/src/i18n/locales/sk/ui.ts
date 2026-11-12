@@ -488,6 +488,16 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds} s",
   "gearLibrary.weapons": "zbrane",
 
+  "guildLink.broken": "Tento odkaz na cech je poškodený.",
+  "guildLink.decline": "Nie",
+  "guildLink.join": "Pridať sa",
+  "guildLink.joined": "Teraz nosíš plášť cechu [{tag}].",
+  "guildLink.joinedNoCape": "Tvoja značka cechu je teraz [{tag}].",
+  "guildLink.question": "Pridať sa do cechu [{tag}]?",
+  "guildLink.questionReplace": "Nahradiť [{old}] cechom [{tag}]?",
+  "guildLink.trust":
+    "Tento odkaz nastaví značku a plášť tvojho cechu. Poslať ho môže ktokoľvek a značku nikto nevlastní.",
+
   "help.label": "Pomoc",
   "help.licences": "Licencie tretích strán",
   "help.pages": "stránky pomocníka",
@@ -922,6 +932,9 @@ export default {
   "player.emblemRing": "prstenec",
   "player.emblemTriangle": "trojuholník",
   "player.guildCape": "Cechový plášť",
+  "player.copyGuildLink": "Kopírovať odkaz na cech",
+  "player.guildLink": "Odkaz na cech",
+  "player.guildLinkByHand": "Kopírovanie zlyhalo: odkaz na cech je označený, skopíruj ho ručne",
   "player.guildTag": "Značka cechu",
   "player.guildTagHint": "2–4 písmená alebo číslice",
   "player.guildTagPlaceholder": "ZNAČ",
