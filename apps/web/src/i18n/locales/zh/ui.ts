@@ -653,6 +653,7 @@ export default {
   "matches.minutesAgo": { other: "{count} 分钟前" },
   "matches.noMatches": "暂无对局。",
   "matches.noneFit": "没有符合筛选条件的对局。",
+  "matches.recentNote": "显示过去 7 天内最近的 50 场对局。",
   "matches.offline": "目前无法连接对局中继。",
   "matches.playerBuild": "{player}：{build}",
   "matches.sizeChip": "{size}v{size}",

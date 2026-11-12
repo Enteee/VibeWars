@@ -486,8 +486,8 @@ da herkes ayrıldığı için biten bir maç yayımlanmaz. Kayıtlar kurucu
 tarafından bildirilir, yani bir kurucu birini yanlış bildirebilir;
 hiçbir şey onları maça karşı denetlemez.
 
-Onları Takım Oluşturucu'nun altındaki **Maçlar** sayfasında gör: son
-100 tanesi, en yenisi başta, oynandıkça yenileri belirerek. Bir satır
+Onları Takım Oluşturucu'nun altındaki **Maçlar** sayfasında gör: son 7 günün
+en yeni 50 tanesi, en yenisi başta, oynandıkça yenileri belirerek. Bir satır
 tek bir çizgidir: her takımın oyuncuları ana mesleklerinin simgesi olarak
 (ad için üzerine gel), iki ya da üç takım, kazanan altı çizili, ayrıca
 harita, süre ve zaman. Her satır **kurucu bildirdi** olarak işaretlidir.

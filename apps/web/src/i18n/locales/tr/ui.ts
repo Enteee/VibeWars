@@ -704,6 +704,7 @@ export default {
   "matches.minutesAgo": { one: "{count} dk önce", other: "{count} dk önce" },
   "matches.noMatches": "Henüz maç yok.",
   "matches.noneFit": "Bu filtrelere uyan maç yok.",
+  "matches.recentNote": "Son 7 günün en yeni 50 maçı gösteriliyor.",
   "matches.offline": "Maç relay'lerine şu an ulaşılamıyor.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

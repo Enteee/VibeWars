@@ -782,6 +782,7 @@ export default {
   },
   "matches.noMatches": "Матчей пока нет.",
   "matches.noneFit": "Нет матчей под эти фильтры.",
+  "matches.recentNote": "Показаны последние 50 матчей за последние 7 дней.",
   "matches.offline": "Серверы матчей сейчас недоступны.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size} на {size}",

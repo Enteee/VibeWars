@@ -4,7 +4,7 @@ import { hostLobby, setTeamSize, startSoloMatch } from "./helpers/peers.js";
 
 test.describe("the live menu background (#3119)", () => {
   test("fights on the lobby's map and size, and follows a change", async ({ page }) => {
-    await page.goto("./");
+    await page.goto("./?menu-background");
     await hostLobby(page, { size: 1 });
     const background = page.locator("#menu-background");
     await expect(background).toHaveAttribute("data-map", "ember-pits");
@@ -18,7 +18,7 @@ test.describe("the live menu background (#3119)", () => {
   });
 
   test("one fight across the menu's screens; a new size is a new one", async ({ page }) => {
-    await page.goto("./");
+    await page.goto("./?menu-background");
     await hostLobby(page, { size: 1 });
     const background = page.locator("#menu-background");
     await expect(background).toHaveAttribute("data-fight", /.+/);
@@ -37,7 +37,7 @@ test.describe("the live menu background (#3119)", () => {
   test("only Hosted Game picks the map: other modes' lobbies leave the fight running (#3131)", async ({
     page,
   }) => {
-    await page.goto("./");
+    await page.goto("./?menu-background");
     await hostLobby(page, { size: 1 });
     const background = page.locator("#menu-background");
     await expect(background).toHaveAttribute("data-shown", "");
@@ -58,14 +58,14 @@ test.describe("the live menu background (#3119)", () => {
   });
 
   test("is gone for a match", async ({ page }) => {
-    await page.goto("./");
+    await page.goto("./?menu-background");
     await startSoloMatch(page);
     await expect(page.locator("#menu-background canvas")).toHaveCount(0);
     await expect(page.locator("#menu-background")).not.toHaveAttribute("data-map");
   });
 
   test("is gone while the build editor's training arena runs, and back after", async ({ page }) => {
-    await page.goto("./");
+    await page.goto("./?menu-background");
     await expect(page.locator("#menu-background canvas")).toHaveCount(1);
     await openRail(page, "Character Builder");
     await page.getByRole("button", { name: "new character" }).click();
@@ -79,7 +79,7 @@ test.describe("the live menu background (#3119)", () => {
 
   test("still draws under reduced motion", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.goto("./");
+    await page.goto("./?menu-background");
     await hostLobby(page, { size: 1 });
     await expect(page.locator("#menu-background")).toHaveAttribute("data-map", "ember-pits");
     await expect(page.locator("#menu-background canvas")).toHaveCount(1);

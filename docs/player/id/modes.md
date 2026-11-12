@@ -417,7 +417,7 @@ peer, tanpa lobi. Laga yang berakhir karena host-nya keluar, atau yang ditinggal
 tidak diterbitkan. Catatan dilaporkan oleh host, jadi host bisa
 salah mencatat; tak ada yang mencocokkannya dengan laga.
 
-Lihat di halaman **Laga**, di bawah Pembuat Tim: 100 terakhir,
+Lihat di halaman **Laga**, di bawah Pembuat Tim: 50 terbaru dari 7 hari terakhir,
 yang terbaru di depan, dengan yang baru muncul seiring dimainkan. Satu baris adalah satu
 garis: pemain setiap tim sebagai ikon profesi utama mereka (arahkan kursor untuk
 melihat nama), dua tim atau tiga, pemenang digarisbawahi, serta peta,

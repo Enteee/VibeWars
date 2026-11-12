@@ -422,7 +422,7 @@ identifiant de pair, ni salon. Un match qui se termine parce que son hôte est p
 ou que tout le monde a quitté, n'est pas publié. Les fiches sont déclarées par
 l'hôte, un hôte peut donc se tromper ; rien ne les vérifie par rapport au match.
 
-Tu les trouves sur la page **Matchs**, sous l'Atelier d'équipes : les 100 dernières,
+Tu les trouves sur la page **Matchs**, sous l'Atelier d'équipes : les 50 plus récentes des 7 derniers jours,
 de la plus récente à la plus ancienne, les nouvelles apparaissant au fil des matchs.
 Une ligne tient sur une seule ligne : les joueurs de chaque équipe sous l'icône de
 leur profession principale (survole pour le nom), deux ou trois équipes, le gagnant

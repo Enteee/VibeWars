@@ -657,6 +657,7 @@ export default {
   "matches.minutesAgo": { other: "{count} phút trước" },
   "matches.noMatches": "Chưa có trận nào.",
   "matches.noneFit": "Không có trận nào khớp bộ lọc.",
+  "matches.recentNote": "Đang hiển thị 50 trận gần nhất trong 7 ngày qua.",
   "matches.offline": "Hiện không kết nối được relay trận đấu.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

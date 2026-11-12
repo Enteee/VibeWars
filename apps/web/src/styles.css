@@ -1952,7 +1952,8 @@ body:has(> .splash) #menu-background::after {
 }
 
 /* The Matches page (#2532): one row a record, newest first. */
-.matches-note {
+.matches-note,
+.matches-recent {
   margin: 0;
   color: var(--ink-dim);
 }

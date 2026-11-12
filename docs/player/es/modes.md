@@ -400,7 +400,7 @@ que termina porque se fue su anfitrión, o que abandonaron todos, no se publica.
 registros los informa el anfitrión, así que un anfitrión puede equivocarse; nada los
 compara con la partida.
 
-Míralos en la página **Partidas**, debajo de Creador de equipos: las últimas 100, las
+Míralos en la página **Partidas**, debajo de Creador de equipos: las 50 más recientes de los últimos 7 días, las
 más nuevas primero, y las nuevas aparecen a medida que se juegan. Una fila es una
 línea: los jugadores de cada equipo como el icono de su profesión principal (pasa el
 ratón para ver el nombre), dos equipos o tres, el ganador subrayado, y el mapa, la

@@ -706,6 +706,7 @@ export default {
   "matches.minutesAgo": { one: "преди {count} мин", other: "преди {count} мин" },
   "matches.noMatches": "Още няма мачове.",
   "matches.noneFit": "Няма мачове по тези филтри.",
+  "matches.recentNote": "Показват се последните 50 мача от изминалите 7 дни.",
   "matches.offline": "В момента релетата за мачове са недостъпни.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

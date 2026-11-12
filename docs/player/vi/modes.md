@@ -419,7 +419,7 @@ Trận kết thúc vì chủ phòng rời đi, hoặc mọi người đều đã
 công bố. Bản ghi do chủ phòng báo lại, nên chủ phòng có thể báo sai; không có
 gì đối chiếu chúng với trận đấu.
 
-Xem chúng ở trang **Trận đấu**, bên dưới Tạo Đội: 100 trận gần nhất, mới nhất
+Xem chúng ở trang **Trận đấu**, bên dưới Tạo Đội: 50 trận gần nhất trong 7 ngày qua, mới nhất
 trước, với các trận mới xuất hiện khi chúng được chơi. Mỗi hàng là một dòng:
 người chơi của mỗi đội dưới dạng biểu tượng lớp chính của họ (rê chuột để xem
 tên), hai hoặc ba đội, đội thắng được gạch chân, cùng bản đồ, thời lượng và

@@ -524,7 +524,7 @@ jegyzőkönyveket a házigazda jelenti, így egy házigazda el is ronthat
 egyet; semmi sem veti össze őket a meccsel.
 
 Ezeket a **Meccsek** oldalon látod, a Csapatszerkesztő alatt: az
-utolsó 100-at, a legújabbal elöl, és az újak megjelennek, ahogy
+elmúlt 7 nap 50 legfrissebb meccsét, a legújabbal elöl, és az újak megjelennek, ahogy
 lejátsszák őket. Egy sor egy vonal: minden csapat játékosai az
 elsődleges kasztjuk ikonjaként (vidd föléjük az egeret a névért), két
 vagy három csapat, a győztes aláhúzva, és a pálya, az időtartam és az
