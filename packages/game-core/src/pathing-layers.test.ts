@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { Polygon, Segment } from "./geometry.js";
+import { pointInPolygon, type Polygon, type Segment } from "./geometry.js";
 import {
   buildLayeredNavGraph,
   buildNavGraph,
@@ -112,6 +112,62 @@ describe("a ramp's waypoints (#2972)", () => {
 
   it("keeps its waypoints in sight of a body climbing from the deck to the next storey", () => {
     expectEveryLegClear(storeys, UPPER_CLIMBS, vec2(700, 400), 1, vec2(1400, 400), 2);
+  });
+
+  describe("going down a ramp whose foot stands out past its deck (#3177)", () => {
+    // Climbing south onto the deck from the ground, its top on the deck's north edge.
+    const NORTH_RAMP = rect(700, 180, 80, 140);
+    // Climbing south from the deck onto a second storey, its foot on the deck's south edge.
+    const MID_RAMP = rect(560, 480, 80, 140);
+    const UPPER = rect(500, 600, 600, 150);
+    const DOWN: readonly NavTransition[] = [
+      { from: 0, to: 1, area: NORTH_RAMP, uphill: vec2(0, 1), pace: 1 },
+      { from: 1, to: 2, area: MID_RAMP, uphill: vec2(0, 1), pace: 1 },
+    ];
+    /** A ramp's side walls, on both its layers. */
+    const sides = (area: Polygon): Segment[] => {
+      const [a, b, c, d] = area;
+      return a === undefined || b === undefined || c === undefined || d === undefined
+        ? []
+        : [
+            { a: b, b: c },
+            { a: d, b: a },
+          ];
+    };
+    const nav = buildLayeredNavGraph(
+      [
+        { walls: [], walkable: [], open: sides(NORTH_RAMP) },
+        {
+          walls: [],
+          walkable: [DECK, NORTH_RAMP, MID_RAMP],
+          open: [...sides(NORTH_RAMP), ...sides(MID_RAMP)],
+        },
+        { walls: [], walkable: [UPPER, MID_RAMP], open: sides(MID_RAMP) },
+      ],
+      [],
+      BOUNDS,
+      RADIUS,
+      [],
+    ).map((gated) => navGraphFor(gated, 0));
+    const finder = createLayeredPathFinder(nav, DOWN);
+
+    it("walks to the ramp's top on the deck before its foot below", () => {
+      const route = finder.find(vec2(950, 330), 1, vec2(740, 60), 0);
+      const foot = route?.findIndex(({ layer }) => layer === 0) ?? -1;
+      expect(foot).toBeGreaterThan(0);
+      const top = route?.[foot - 1];
+      expect(top?.layer).toBe(1);
+      expect(top !== undefined && pointInPolygon(top, NORTH_RAMP)).toBe(true);
+      expect(top?.y).toBeGreaterThan(route?.[foot]?.y ?? Number.POSITIVE_INFINITY);
+    });
+
+    it("keeps its waypoints in sight from the deck to the ground", () => {
+      expectEveryLegClear(nav, DOWN, vec2(950, 330), 1, vec2(740, 60), 0);
+    });
+
+    it("keeps its waypoints in sight from the second storey to the ground, by both ramps", () => {
+      expectEveryLegClear(nav, DOWN, vec2(1000, 680), 2, vec2(740, 60), 0);
+    });
   });
 });
 

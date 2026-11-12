@@ -47,6 +47,7 @@ export {
   navGraphFor,
   minRampLength,
   nearestStandable,
+  rampIsLinked,
   rampLength,
   type LayeredPathFinder,
   type NavGraph,
