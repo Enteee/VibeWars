@@ -3307,7 +3307,6 @@ export class ArenaScene extends Phaser.Scene {
   }
 }
 
-/** A map's bounds when they are an outline. */
 /**
  * `shape` as triangles, corner by corner. A polygon is triangulated here,
  * once per map, and filled as triangles: Phaser earcuts a `fillPoints`
@@ -3332,6 +3331,7 @@ function shapeTriangles(shape: RenderableShape): readonly (readonly Vec2[])[] {
   return triangles;
 }
 
+/** A map's bounds when they are an outline. */
 type OutlineBounds = Extract<MapBounds, { readonly kind: "outline" }>;
 
 /** The land outside a ground outline (#3066), tiled. */
