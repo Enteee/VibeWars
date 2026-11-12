@@ -756,6 +756,7 @@ export default {
   },
   "matches.noMatches": "אין משחקים עדיין.",
   "matches.noneFit": "אין משחקים שמתאימים לסינון.",
+  "matches.recentNote": "מוצגים 50 המשחקים האחרונים מ־7 הימים האחרונים.",
   "matches.offline": "אין גישה לשרתי המשחקים כרגע.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size} מול {size}",

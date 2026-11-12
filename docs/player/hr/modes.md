@@ -417,7 +417,7 @@ ID peera, ni soba. Meč koji završi jer je domaćin otišao ili jer su svi
 otišli ne objavljuje se. Zapise prijavljuje domaćin, pa domaćin može
 jedan pogriješiti; ništa ih ne provjerava u odnosu na meč.
 
-Vidi ih na stranici **Mečevi**, ispod Uređivača timova: zadnjih 100,
+Vidi ih na stranici **Mečevi**, ispod Uređivača timova: 50 najnovijih iz zadnjih 7 dana,
 najnoviji prvi, a novi se pojavljuju kako se igraju. Redak je jedan
 red: igrači svakog tima kao ikona njihove primarne profesije (prijeđi mišem za
 ime), dva ili tri tima, pobjednik podcrtan, te karta,

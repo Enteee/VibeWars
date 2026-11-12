@@ -421,7 +421,7 @@ adresa, žiadne ID spojenia, žiadne lobby. Zápas, ktorý sa skončí, pretože
 odišiel, alebo ktorý všetci opustili, sa nezverejní. Záznamy hlási hostiteľ, takže
 hostiteľ môže niektorý nahlásiť zle; nič ich so zápasom neoveruje.
 
-Pozri si ich na stránke **Zápasy**, pod **Tvorba tímov**: posledných 100,
+Pozri si ich na stránke **Zápasy**, pod **Tvorba tímov**: 50 najnovších za posledných 7 dní,
 najnovšie ako prvé, a nové pribúdajú, ako sa hrajú. Riadok je jeden
 riadok: hráči každého tímu ako ikona ich hlavného povolania (názov uvidíš po
 prejdení kurzorom), dva tímy alebo tri, víťaz podčiarknutý a mapa,

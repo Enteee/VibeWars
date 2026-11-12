@@ -109,6 +109,11 @@ describe("watchHall", () => {
     };
   }
 
+  it("asks the relays for every record, not only recent ones (#3133)", () => {
+    const { opened } = watched();
+    expect(opened[0]?.since).toBeUndefined();
+  });
+
   it("toasts a new Hall win once, and takes it as the holder", () => {
     const { hear, announce, hall } = watched();
     hear(record([player("Ana", null)]));

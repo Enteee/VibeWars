@@ -417,7 +417,7 @@ id, no lobby. A match that ends because its host left, or that everyone
 left, is not published. Records are reported by the host, so a host can
 get one wrong; nothing checks them against the match.
 
-See them on the **Matches** page, below Team Builder: the last 100,
+See them on the **Matches** page, below Team Builder: the 50 most recent from the past 7 days,
 newest first, with new ones appearing as they are played. A row is one
 line: each team's players as their primary profession's icon (hover for
 the name), two teams or three, the winner underlined, and the map,

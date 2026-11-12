@@ -705,6 +705,7 @@ export const en = {
   "matches.minutesAgo": { one: "{count} min ago", other: "{count} min ago" },
   "matches.noMatches": "No matches yet.",
   "matches.noneFit": "No matches fit these filters.",
+  "matches.recentNote": "Showing the 50 most recent matches from the past 7 days.",
   "matches.offline": "Can't reach the match relays right now.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

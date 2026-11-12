@@ -831,6 +831,7 @@ export default {
   },
   "matches.noMatches": "لا مباريات بعد.",
   "matches.noneFit": "لا مباريات تطابق هذه المرشحات.",
+  "matches.recentNote": "تُعرض آخر 50 مباراة من الأيام السبعة الماضية.",
   "matches.offline": "يتعذّر الوصول إلى مرحّلات المباريات الآن.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size} ضد {size}",

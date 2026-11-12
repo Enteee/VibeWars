@@ -702,6 +702,7 @@ export default {
   "matches.minutesAgo": { one: "{count} min siden", other: "{count} min siden" },
   "matches.noMatches": "Ingen kampe endnu.",
   "matches.noneFit": "Ingen kampe passer til disse filtre.",
+  "matches.recentNote": "Viser de 50 seneste kampe fra de sidste 7 dage.",
   "matches.offline": "Kan ikke nå kamp-relays lige nu.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

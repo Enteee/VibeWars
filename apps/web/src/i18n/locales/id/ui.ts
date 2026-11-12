@@ -662,6 +662,7 @@ export default {
   "matches.minutesAgo": { other: "{count} mnt lalu" },
   "matches.noMatches": "Belum ada pertandingan.",
   "matches.noneFit": "Tidak ada pertandingan yang cocok dengan filter ini.",
+  "matches.recentNote": "Menampilkan 50 pertandingan terbaru dari 7 hari terakhir.",
   "matches.offline": "Relay pertandingan tidak bisa dihubungi saat ini.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

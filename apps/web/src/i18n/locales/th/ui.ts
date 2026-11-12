@@ -656,6 +656,7 @@ export default {
   "matches.minutesAgo": { other: "{count} นาทีก่อน" },
   "matches.noMatches": "ยังไม่มีแมตช์",
   "matches.noneFit": "ไม่มีแมตช์ตรงกับตัวกรองนี้",
+  "matches.recentNote": "แสดง 50 แมตช์ล่าสุดในช่วง 7 วันที่ผ่านมา",
   "matches.offline": "ตอนนี้เชื่อมต่อรีเลย์แมตช์ไม่ได้",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

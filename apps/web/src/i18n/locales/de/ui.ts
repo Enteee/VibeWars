@@ -710,6 +710,7 @@ export default {
   "matches.minutesAgo": { one: "vor {count} Min.", other: "vor {count} Min." },
   "matches.noMatches": "Noch keine Matches.",
   "matches.noneFit": "Keine Matches passen zu diesen Filtern.",
+  "matches.recentNote": "Zeigt die 50 neuesten Matches der letzten 7 Tage.",
   "matches.offline": "Die Match-Relays sind gerade nicht erreichbar.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

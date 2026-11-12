@@ -664,6 +664,7 @@ export default {
   "matches.minutesAgo": { other: "{count}分前" },
   "matches.noMatches": "マッチはまだありません。",
   "matches.noneFit": "条件に合うマッチはありません。",
+  "matches.recentNote": "過去7日間の最新50件のマッチを表示しています。",
   "matches.offline": "現在マッチリレーに接続できません。",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

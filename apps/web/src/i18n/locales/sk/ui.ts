@@ -783,6 +783,7 @@ export default {
   },
   "matches.noMatches": "Zatiaľ žiadne zápasy.",
   "matches.noneFit": "Týmto filtrom nezodpovedajú žiadne zápasy.",
+  "matches.recentNote": "Zobrazuje sa 50 najnovších zápasov za posledných 7 dní.",
   "matches.offline": "Relé zápasov sú momentálne nedostupné.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

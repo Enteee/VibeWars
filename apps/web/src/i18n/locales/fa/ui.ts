@@ -706,6 +706,7 @@ export default {
   "matches.minutesAgo": { one: "{count} دقیقه پیش", other: "{count} دقیقه پیش" },
   "matches.noMatches": "هنوز مسابقه‌ای نیست.",
   "matches.noneFit": "مسابقه‌ای با این فیلترها نیست.",
+  "matches.recentNote": "نمایش ۵۰ مسابقهٔ اخیر از ۷ روز گذشته.",
   "matches.offline": "فعلاً دسترسی به رله‌های مسابقه ممکن نیست.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size} به {size}",
