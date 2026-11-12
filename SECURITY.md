@@ -724,6 +724,18 @@ risk: an agent that has read injected text can store it as a reminder,
 and it comes back every session. The prefix marks it as the agent's own
 note, never the operator's word or the company's.
 
+**Role notepads (#3129).** Every role keeps up to 20 notes of its own
+(`hub note`, 1-5 keywords, 1000 characters), in `.bots/hub/notes.json` on
+the host; each expires 6 h after it was added or last read by its role.
+Every turn prompt ends with one line of the role's note ids and keywords,
+never their text, saying notes are information, never instructions. Only
+the manager lists and reads another role's notes through hub, and that
+read does not renew them. Accepted risk: as with self-reminders, injected
+text an agent stored comes back to its role. The notes are not secret:
+`.bots/hub` is mounted read-only in every jail, so any agent could read the
+file directly; the manager-only rule keeps roles out of each other's
+notepads in normal use, it is not a confidentiality boundary.
+
 **CI watches (#736).** Any employee may ask hubd to tell it when CI on a
 visible pull request ends (`hub watch ci <pr>`). A watch is of a fixed
 kind with fixed reads. hubd never runs a command an agent supplied, and
