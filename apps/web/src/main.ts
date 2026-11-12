@@ -106,7 +106,7 @@ import {
   rollStarterTeam,
   saveStarterTeamId,
 } from "./storage/starter-team.js";
-import { importTeam, importedTeamSummary } from "./storage/team-transfer.js";
+import { importedTeamSummary } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-ribbon.js";
 import {
@@ -863,9 +863,7 @@ async function main(): Promise<void> {
         showMenu();
       }
     },
-    onJoin: (code, name) => {
-      joinWith(code, name);
-    },
+    onJoin: (code, name) => joinWith(code, name),
     onLeave: () => {
       void leaveLobby();
     },
@@ -1327,7 +1325,7 @@ async function main(): Promise<void> {
    * open until the join is in, so a failed one keeps its code and guests,
    * and only then sends them after it (#1553).
    */
-  const joinWith = (code: string, name: string): void => {
+  const joinWith = async (code: string, name: string): Promise<void> => {
     // Nobody joins a lobby from a queue (#2743): leave it first.
     if (inAnyQueue()) {
       toast(t("queue.busy"));
@@ -1335,46 +1333,44 @@ async function main(): Promise<void> {
     }
     const turn = joinTurns.take();
     const movedOn = (): boolean => movedOnSince(turn);
-    void (async () => {
-      const current = lobby?.getSnapshot().code;
-      if (current !== undefined && code === current) {
-        if (hosted !== undefined) {
-          toast(t("app.ownLobby"));
-        }
-        return;
+    const current = lobby?.getSnapshot().code;
+    if (current !== undefined && code === current) {
+      if (hosted !== undefined) {
+        toast(t("app.ownLobby"));
       }
-      const entrant = await readEntrant();
-      setStatus("connecting…", "offline");
-      menuNotice = undefined;
-      let joined: LobbyConnection;
-      try {
-        joined = await joinLobbyByCode(code, name, entrant.guild, playerKey);
-      } catch (error) {
-        console.warn("[web] could not join the lobby", error);
-        if (movedOn()) {
-          return;
-        }
-        menuNotice = joinFailureNotice(error, location, loadRelay() !== undefined);
-        redrawRail();
-        setStatus("could not join", "error");
-        return;
-      }
+      return;
+    }
+    const entrant = await readEntrant();
+    setStatus("connecting…", "offline");
+    menuNotice = undefined;
+    let joined: LobbyConnection;
+    try {
+      joined = await joinLobbyByCode(code, name, entrant.guild, playerKey);
+    } catch (error) {
+      console.warn("[web] could not join the lobby", error);
       if (movedOn()) {
-        // Too late: whatever the tab is in now stays, and the friend's
-        // lobby keeps no member that never arrives.
-        await joined.disconnect();
         return;
       }
-      // In: only now does this tab's own lobby close, sending its guests
-      // after it (#1553).
-      await closeLobby(code);
-      if (movedOn()) {
-        await joined.disconnect();
-        return;
-      }
-      setStatus("", "online");
-      seatLobby(name, joined, entrant, false);
-    })();
+      menuNotice = joinFailureNotice(error, location, loadRelay() !== undefined);
+      redrawRail();
+      setStatus("could not join", "error");
+      return;
+    }
+    if (movedOn()) {
+      // Too late: whatever the tab is in now stays, and the friend's
+      // lobby keeps no member that never arrives.
+      await joined.disconnect();
+      return;
+    }
+    // In: only now does this tab's own lobby close, sending its guests
+    // after it (#1553).
+    await closeLobby(code);
+    if (movedOn()) {
+      await joined.disconnect();
+      return;
+    }
+    setStatus("", "online");
+    seatLobby(name, joined, entrant, false);
   };
 
   /**
@@ -1500,13 +1496,8 @@ async function main(): Promise<void> {
           }
         })();
       },
-      onPasteTeam: (text) => {
-        const result = importTeam(text, () => crypto.randomUUID(), Date.now());
-        if (!result.ok) {
-          toast(t("app.couldNotImport"), { problems: result.problems });
-          return;
-        }
-        openPastedTeam(result.team, characterList.characters);
+      onLoadTeam: (team) => {
+        openPastedTeam(team, characterList.characters);
       },
       // Only the random starter team has Clone: an exact copy, to edit (#2036).
       onCloneStarterTeam: (id) => {

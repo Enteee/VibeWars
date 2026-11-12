@@ -158,14 +158,16 @@ como um espaço vazio. A build é sua quando você pressiona **Salvar**.
 **Compartilhar**, **Carregar código GW1**, **Duplicar** e **Excluir**
 ficam em **⋯**.
 
-Um código de equipe é colado no **Criador de Equipes**.
+Um código de equipe é carregado no **Criador de Equipes**: pressione
+**Carregar equipe**, cole o código e pressione **Carregar**, ou cole-o em
+qualquer lugar do Criador de Equipes.
 
 ## Builds de Equipe
 
 Uma **Build de Equipe** é uma equipe com personagens próprios, feita no
 **Criador de Equipes** e guardada separada dos seus personagens. Cada uma
-é um cartão ali, e só ali: **Nova build de equipe** cria uma, e um clique
-em um cartão, ou em **Editar**, a abre. Você propõe uma na
+é um cartão ali, e só ali: **Nova build de equipe** cria uma,
+**Carregar equipe** carrega uma compartilhada com você, e um clique em um cartão, ou em **Editar**, a abre. Você propõe uma na
 [Sala de Equipe](modes.md#sala-de-equipe).
 
 Toda Build de Equipe tem um tamanho, 2v2, 4v4 ou 8v8 (não existe Build de
@@ -211,7 +213,8 @@ Pressione o nome de um membro, ou **Abrir na tela de Personagem**, para
 editá-lo no editor de builds; **Salvar** ali o devolve à equipe, e o
 **Salvar** da própria equipe guarda tudo e leva você de volta ao Criador
 de Equipes. **Esc** sai sem salvar e pergunta antes. **Compartilhar**,
-**Duplicar** e **Excluir** da equipe ficam em **⋯**.
+**Carregar equipe**, **Duplicar** e **Excluir** da equipe ficam em **⋯**.
+Ali, **Carregar equipe** abre a equipe carregada no lugar desta.
 Você pode salvar uma equipe a qualquer momento, mesmo com problemas, mas
 só uma equipe sem problemas pode ser proposta em uma Sala de Equipe: um
 cartão diz **Não jogável** e o motivo, e uma equipe sem nome aparece como

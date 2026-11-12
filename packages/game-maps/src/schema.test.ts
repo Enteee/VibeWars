@@ -42,6 +42,7 @@ const validMap = {
   height: 100,
   bounds: { kind: "rect" },
   layers: 1,
+  biome: "hall",
   groundLayer: 0,
   pits: [],
   tunnels: [],
@@ -1212,6 +1213,10 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     refuses({ spawnPoints: [unlayered, ...rest] }, /spawnPoints\.0\.layer/);
     const { groundLayer: _ground, ...noGround } = layerTest;
     expect(() => validateMapData(noGround)).toThrow(/groundLayer/);
+    const { biome: _biome, ...noBiome } = layerTest;
+    expect(() => validateMapData(noBiome)).toThrow(/biome/);
+    refuses({ biome: "tundra" }, /biome/);
+    accepts({ biome: "desert" });
     const [ramp0, ...ramps] = layerTest.transitions;
     const { uphill: _uphill, ...noUphill } = ramp0 ?? { uphill: "e" };
     refuses({ transitions: [noUphill, ...ramps] }, /transitions\.0\.uphill/);

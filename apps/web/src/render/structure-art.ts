@@ -3,11 +3,11 @@ import { pointInShape } from "@vibewars/game-maps/geometry";
 import type { DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
 
 import {
-  DECK_LOOK,
   GATE_DOOR_LOOK,
   SWITCHED_DECK_LOOK,
-  TRANSITION_LOOK,
   type ArenaPalette,
+  type DeckLookColours,
+  type TransitionLookColours,
 } from "./arena-palette.js";
 import type { RenderableShape } from "./arena-snapshot.js";
 import {
@@ -72,9 +72,8 @@ export interface TransitionFrame {
 /** How one transition look draws over its slope's fill, once per map. */
 export type TransitionArt = (painter: StructurePainter, ramp: TransitionFrame) => void;
 
-/** `palette` with its deck colours turned into `look`'s, for `litStructurePalette` to light. */
-export function deckPalette(palette: ArenaPalette, look: DeckLook): ArenaPalette {
-  const colours = DECK_LOOK[look];
+/** `palette` with its deck colours turned into a look's `colours`, for `litStructurePalette` to light. */
+export function deckPalette(palette: ArenaPalette, colours: DeckLookColours): ArenaPalette {
   return {
     ...palette,
     deckTop: colours.top,
@@ -87,9 +86,11 @@ export function deckPalette(palette: ArenaPalette, look: DeckLook): ArenaPalette
   };
 }
 
-/** `palette` with its ramp colours turned into `look`'s, for `litStructurePalette` to light. */
-export function transitionPalette(palette: ArenaPalette, look: TransitionLook): ArenaPalette {
-  const colours = TRANSITION_LOOK[look];
+/** `palette` with its ramp colours turned into a look's `colours`, for `litStructurePalette` to light. */
+export function transitionPalette(
+  palette: ArenaPalette,
+  colours: TransitionLookColours,
+): ArenaPalette {
   return {
     ...palette,
     rampTop: colours.top,

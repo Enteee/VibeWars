@@ -157,13 +157,16 @@ emplacement vide. Le build est à toi une fois que tu appuies sur **Sauver**.
 enregistrer, et demande d'abord si tu as changé quelque chose. **Partager**,
 **Charger code GW1**, **Dupliquer** et **Supprimer** sont sous **⋯**.
 
-Un code d'équipe se colle plutôt dans l'**Atelier d'équipes**.
+Un code d'équipe se charge plutôt dans l'**Atelier d'équipes** : appuie sur
+**Charger une équipe**, colle le code et appuie sur **Charger**, ou colle-le
+n'importe où dans l'Atelier d'équipes.
 
 ## Builds d'équipe
 
 Un **Build d'équipe** est une équipe de ses propres personnages, créée dans
 l'**Atelier d'équipes** et gardée à part de tes personnages. Chacun est une
-carte là-bas, et seulement là-bas : **Nouveau build** en crée un, et un clic
+carte là-bas, et seulement là-bas : **Nouveau build** en crée un,
+**Charger une équipe** en charge un qu'on t'a partagé, et un clic
 sur une carte, ou son **Éditer**, l'ouvre. Tu en proposes un dans le
 [Salon d'équipe](modes.md#salon-déquipe).
 
@@ -212,7 +215,8 @@ Appuie sur le nom d'un membre, ou sur **Ouvrir dans l'écran Personnage**, pour
 le modifier dans l'éditeur de build ; son **Sauver** le remet dans l'équipe,
 et le **Sauver** de l'équipe garde le tout et te ramène à l'Atelier d'équipes.
 **Esc** quitte sans enregistrer, et demande d'abord. **Partager**,
-**Dupliquer** et **Supprimer** de l'équipe sont sous **⋯**.
+**Charger une équipe**, **Dupliquer** et **Supprimer** de l'équipe sont sous
+**⋯**. Là, **Charger une équipe** ouvre l'équipe chargée à la place de celle-ci.
 Tu peux enregistrer une équipe à tout moment, problèmes compris, mais seule
 une équipe sans problème peut être proposée dans un Salon d'équipe : une carte
 indique **Non jouable** et pourquoi, et une équipe sans nom s'affiche comme

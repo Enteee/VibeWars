@@ -150,13 +150,15 @@ dán mã ở bất kỳ đâu trong trình sửa mà không phải ô nhập ch�
 không lưu, và hỏi trước nếu bạn đã thay đổi gì. **Chia sẻ**, **Nạp mã GW1**,
 **Nhân bản** và **Xóa** nằm dưới **⋯**.
 
-Mã đội thì được dán ở **Tạo Đội**.
+Mã đội thì được tải ở **Tạo Đội**: nhấn **Tải đội**, dán mã và nhấn **Tải**,
+hoặc dán nó ở bất kỳ đâu trong Tạo Đội.
 
 ## Build đội
 
 **Build đội** là một đội gồm các nhân vật riêng của nó, được tạo ở **Tạo
 Đội** và tách biệt với nhân vật của bạn. Mỗi build đội là một thẻ ở đó, và
-chỉ ở đó: **Build đội mới** tạo một build, và nhấn vào thẻ, hoặc nút **Sửa**
+chỉ ở đó: **Build đội mới** tạo một build, **Tải đội**
+tải một build được chia sẻ với bạn, và nhấn vào thẻ, hoặc nút **Sửa**
 của nó, sẽ mở nó. Bạn đề xuất một build trong
 [Sảnh Đội](modes.md#sảnh-đội).
 
@@ -198,8 +200,8 @@ nó. Lớp mới sẽ bỏ các kỹ năng và cấp mà nó không dùng đư�
 tác**. Nhấn vào tên một thành viên, hoặc **Mở trong màn hình Nhân vật**, để
 sửa nó trong trình sửa build; nút **Lưu** ở đó đưa nó trở lại đội, và nút
 **Lưu** của chính đội giữ tất cả và đưa bạn về Tạo Đội. **Esc** rời đi mà
-không lưu, và hỏi trước. **Chia sẻ**, **Nhân bản** và **Xóa** của đội nằm
-dưới **⋯**. Bạn có thể lưu đội bất cứ lúc nào, kể cả khi còn vấn đề, nhưng
+không lưu, và hỏi trước. **Chia sẻ**, **Tải đội**, **Nhân bản** và **Xóa**
+của đội nằm dưới **⋯**. **Tải đội** ở đó mở đội vừa tải thay cho đội này. Bạn có thể lưu đội bất cứ lúc nào, kể cả khi còn vấn đề, nhưng
 chỉ đội không có vấn đề mới được đề xuất trong Sảnh Đội: thẻ sẽ ghi **Không
 chơi được** và lý do, và đội không có tên hiện là **Đội chưa đặt tên**. Lần
 khởi động đầu tiên tạo ngẫu nhiên một đội có sẵn ở cỡ được chọn, 4v4 nếu bạn

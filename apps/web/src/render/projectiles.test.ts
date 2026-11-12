@@ -133,6 +133,7 @@ describe("MatchClock", () => {
 describe("a shot between layers (#2972)", () => {
   const decked: MapStructure = {
     layerCount: 2,
+    biome: "hall",
     bounds: { kind: "rect" },
     ground: 0,
     pits: [],

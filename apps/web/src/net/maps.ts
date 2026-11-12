@@ -405,6 +405,7 @@ export function structureOf(map: MapData): LoadedStructure {
         ? FLAT_STRUCTURE
         : {
             layerCount: map.layers,
+            biome: map.biome,
             bounds: map.bounds,
             ground: map.groundLayer,
             ...placedDecks(mapDecks(map)),
