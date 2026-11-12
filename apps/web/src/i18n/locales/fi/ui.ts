@@ -713,6 +713,7 @@ export default {
   "matches.minutesAgo": { one: "{count} min sitten", other: "{count} min sitten" },
   "matches.noMatches": "Ei vielä otteluita.",
   "matches.noneFit": "Yksikään ottelu ei sovi näihin suotimiin.",
+  "matches.recentNote": "Näytetään 50 uusinta ottelua viimeiseltä 7 päivältä.",
   "matches.offline": "Ottelurelayhin ei saada juuri nyt yhteyttä.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

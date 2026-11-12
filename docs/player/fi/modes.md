@@ -459,7 +459,7 @@ aulaa. Ottelua, joka päättyy isännän poistumiseen tai josta kaikki
 poistuivat, ei julkaista. Kirjaukset ilmoittaa isäntä, joten isäntä voi
 ilmoittaa jonkin väärin; mikään ei tarkista niitä ottelua vasten.
 
-Näet ne **Ottelut**-sivulla Tiimieditorin alla: viimeiset 100, uusin
+Näet ne **Ottelut**-sivulla Tiimieditorin alla: 50 uusinta viimeisen 7 päivän ajalta, uusin
 ensin, ja uudet ilmestyvät sitä mukaa kuin niitä pelataan. Rivi on yksi
 rivi: kunkin tiimin pelaajat pääammattinsa kuvakkeina (vie hiiri päälle
 nähdäksesi nimen), kaksi tai kolme tiimiä, voittaja alleviivattuna, sekä

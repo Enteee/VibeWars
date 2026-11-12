@@ -440,7 +440,7 @@ inget peer-id, ingen lobby. En match som slutar för att värden lämnade,
 eller som alla lämnade, publiceras inte. Protokollen rapporteras av
 värden, så en värd kan få ett fel; inget kontrollerar dem mot matchen.
 
-Se dem på sidan **Matcher**, under Lagbyggare: de senaste 100,
+Se dem på sidan **Matcher**, under Lagbyggare: de 50 senaste från de senaste 7 dagarna,
 nyaste först, med nya som dyker upp medan de spelas. En rad är en
 linje: varje lags spelare som ikonen för sitt primära yrke (håll pekaren
 över för namnet), två lag eller tre, vinnaren understruken, och kartan,

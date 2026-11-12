@@ -329,7 +329,7 @@ identifizieren könnte: keine Adresse, keine Peer-ID, keine Lobby. Ein Match, da
 gegangen sind, wird nicht veröffentlicht. Berichte kommen vom Host, also kann ein Host einen falsch melden; nichts prüft sie gegen das
 Match.
 
-Du siehst sie auf der Seite **Matches**, unter dem Team-Editor: die letzten 100, neueste zuerst, und neue erscheinen, während sie
+Du siehst sie auf der Seite **Matches**, unter dem Team-Editor: die 50 neuesten der letzten 7 Tage, neueste zuerst, und neue erscheinen, während sie
 gespielt werden. Jeder Eintrag ist eine Zeile: die Spieler jedes Teams als Symbol ihrer Primärklasse (fahre mit der Maus darüber für den
 Namen), zwei oder drei Teams, der Gewinner unterstrichen, und die Karte, Dauer und Zeitpunkt. Jede Zeile ist mit **vom Host gemeldet**
 markiert. Klick auf eine, um die Teams zu sehen, ein Tab pro Team, das des Gewinners zuerst: die Teamkarte. **Klonen** kopiert ein Team

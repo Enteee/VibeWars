@@ -785,6 +785,7 @@ export default {
   },
   "matches.noMatches": "Матчів ще немає.",
   "matches.noneFit": "Немає матчів за цими фільтрами.",
+  "matches.recentNote": "Показано 50 найновіших матчів за останні 7 днів.",
   "matches.offline": "Зараз не вдається зв'язатися з ретрансляторами матчів.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

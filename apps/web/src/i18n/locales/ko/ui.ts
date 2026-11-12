@@ -660,6 +660,7 @@ export default {
   "matches.minutesAgo": { other: "{count}분 전" },
   "matches.noMatches": "아직 매치가 없어요.",
   "matches.noneFit": "필터에 맞는 매치가 없어요.",
+  "matches.recentNote": "지난 7일 동안의 최근 매치 50개를 보여 줘요.",
   "matches.offline": "지금은 매치 릴레이에 연결할 수 없어요.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

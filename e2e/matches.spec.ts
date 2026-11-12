@@ -126,3 +126,63 @@ test("Clone saves a finished 1v1's side as a character and opens it (#2885)", as
   await expect(page.getByLabel("character name")).toHaveValue("Ann");
   await expect(page.getByText("Cloned Ann")).toBeVisible();
 });
+
+test("shows only the 50 most recent matches of the past 7 days, and says so (#3133)", async ({
+  page,
+}) => {
+  const now = Date.now();
+  const nowSeconds = Math.floor(now / 1000);
+  const record = (endedAt: number, durationSeconds: number): MatchRecord => ({
+    v: MATCH_RECORD_VERSION,
+    mode: "team-arena",
+    map: "arena-crossroads",
+    endedAt,
+    durationSeconds,
+    winningTeam: 0,
+    endReason: "annihilation",
+    teams: [
+      {
+        players: [
+          { name: "Ann", guildTag: null, bot: false, pubkey: "a".repeat(64), template: played(0) },
+        ],
+      },
+      {
+        players: [{ name: "Bot A", guildTag: null, bot: true, pubkey: null, template: played(2) }],
+      },
+    ],
+  });
+  // 55 recent ones, a minute apart, each its own duration; and one 8 days old, lasting 99:59.
+  const records = [
+    ...Array.from({ length: 55 }, (_, index) => record(nowSeconds - 60 * (index + 1), 60 + index)),
+    record(nowSeconds - 8 * 24 * 3600, 5999),
+  ];
+  const messages = records.map((one) => {
+    const event = matchRecordEvent(one, now);
+    if (event === undefined) {
+      throw new Error("record too big");
+    }
+    return recordMessage(event);
+  });
+
+  await page.goto("./");
+  await openRail(page, "Matches");
+  await expect(page.locator(".matches-recent")).toHaveText(
+    "Showing the 50 most recent matches from the past 7 days.",
+  );
+  await page.evaluate(
+    ([channel, all]) => {
+      const post = new BroadcastChannel(channel);
+      for (const message of all) {
+        post.postMessage(message);
+      }
+      post.close();
+    },
+    [RECORDS_CHANNEL, messages] as const,
+  );
+  await expect(page.locator(".match-row")).toHaveCount(50);
+  await expect(page.locator(".match-duration", { hasText: "99:59" })).toHaveCount(0);
+  // The newest is on top; the five oldest recent ones went.
+  await expect(page.locator(".match-duration").first()).toHaveText("1:00");
+  await expect(page.locator(".match-duration").last()).toHaveText("1:49");
+  await expect(page.locator(".matches-recent")).toBeVisible();
+});

@@ -786,6 +786,7 @@ export default {
   },
   "matches.noMatches": "Nie ma jeszcze meczów.",
   "matches.noneFit": "Żaden mecz nie pasuje do tych filtrów.",
+  "matches.recentNote": "Pokazuje 50 najnowszych meczów z ostatnich 7 dni.",
   "matches.offline": "Brak połączenia z przekaźnikami meczów.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

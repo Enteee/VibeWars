@@ -761,6 +761,7 @@ export default {
   },
   "matches.noMatches": "Aún no hay partidas.",
   "matches.noneFit": "Ninguna partida coincide con estos filtros.",
+  "matches.recentNote": "Se muestran las 50 partidas más recientes de los últimos 7 días.",
   "matches.offline": "Ahora mismo no se puede conectar con los relays de partidas.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

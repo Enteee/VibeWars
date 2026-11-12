@@ -192,6 +192,8 @@ export interface MatchRecordWatchHandlers {
   readonly noRelay: () => void;
   /** Hear only these; every record for none. */
   readonly filter?: MatchRecordFilter;
+  /** Ask the relays only for events published at or after these unix seconds (#3133); all for none. */
+  readonly since?: number;
 }
 
 export interface MatchRecordWatch {
@@ -215,7 +217,12 @@ export function watchMatchRecords(
     request: JSON.stringify([
       "REQ",
       WATCH_SUBSCRIPTION_ID,
-      { kinds: [MATCH_RECORD_EVENT_KIND], "#t": [MATCH_RECORD_TOPIC], limit: MATCH_RECORD_LIMIT },
+      {
+        kinds: [MATCH_RECORD_EVENT_KIND],
+        "#t": [MATCH_RECORD_TOPIC],
+        limit: MATCH_RECORD_LIMIT,
+        ...(on.since === undefined ? {} : { since: on.since }),
+      },
     ]),
     hear: recordHearer(on, deps),
     allDown: on.noRelay,
