@@ -284,6 +284,7 @@ import {
   NO_OBJECTIVES,
   type Behaviour,
   type BehaviourCursor,
+  type BotBreakable,
   type BotLever,
   type BotObjectives,
   type ResetPolicy,
@@ -1501,8 +1502,10 @@ export class MatchSimulation {
   #botObjectives: BotObjectives = NO_OBJECTIVES;
   /** What bots read of the levers (#3138): refilled in place, at most once a match second. */
   readonly #botLevers: BotLever[] = [];
-  /** The match second `#botLevers` was last filled; -Infinity to refill on the next think. */
-  #botLeversAt = Number.NEGATIVE_INFINITY;
+  /** What bots read of the standing breakable walls (#3140): refilled with `#botLevers`. */
+  readonly #botBreakables: BotBreakable[] = [];
+  /** The match second `#botLevers` and `#botBreakables` were last filled; -Infinity to refill on the next think. */
+  #botWaysAt = Number.NEGATIVE_INFINITY;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
   #pointTicks = 0;
   /** When each team last led every other alone on shrine points (#2690), match clock. */
@@ -1770,6 +1773,11 @@ export class MatchSimulation {
   /** The levers as bots last read them (#3138), filled as a bot thinks; `[]` before. */
   public get botLevers(): readonly BotLever[] {
     return this.#botLevers;
+  }
+
+  /** The standing breakable walls as bots last read them (#3140), filled as a bot thinks; `[]` before. */
+  public get botBreakables(): readonly BotBreakable[] {
+    return this.#botBreakables;
   }
 
   /** Every teleport (#3030), and whether it is on; `[]` on a map without them. */
@@ -4695,26 +4703,43 @@ export class MatchSimulation {
   }
 
   /**
-   * Each lever as bots read it (#3138), and what throwing it now would win
+   * Each lever (#3138) and standing breakable wall (#3140) as bots read
+   * it, and what throwing the lever or felling the wall now would win
    * each team: how much shorter its way to the foes gets. A team's way
    * runs from its living player nearest its centroid to the foe nearest
    * the foes' centroid, each on its own layer, so both ends stand on
-   * ground. At most once a match second, and again after any flip.
+   * ground. At most once a match second, and again after any flip or fall.
    */
-  #refreshBotLevers(): void {
-    if (this.#switches.length === 0 || this.#elapsedSeconds - this.#botLeversAt < 1) {
+  #refreshBotWays(): void {
+    if (
+      (this.#switches.length === 0 && this.#breakables.length === 0) ||
+      this.#elapsedSeconds - this.#botWaysAt < 1
+    ) {
       return;
     }
-    this.#botLeversAt = this.#elapsedSeconds;
+    this.#botWaysAt = this.#elapsedSeconds;
     const teams = Math.max(-1, ...this.#teams) + 1;
     const ways = Array.from({ length: teams }, (_, team) => this.#wayToFoes(team));
     const now = this.#currentWallSet();
     const before = ways.map((way) =>
       way === undefined ? Number.POSITIVE_INFINITY : this.#wayLength(now, way),
     );
+    // What `after` wins each team, if it can walk to `reach` on `layer` now.
+    const gains = (after: WallSet, reach: (from: Vec2) => Vec2, layer: number): number[] =>
+      ways.map((way, team) => {
+        if (
+          way === undefined ||
+          now.paths.find(way.from.position, way.from.layer, reach(way.from.position), layer) ===
+            undefined
+        ) {
+          return 0;
+        }
+        const gain = (before[team] ?? Number.POSITIVE_INFINITY) - this.#wayLength(after, way);
+        // No way to the foes either way: nothing won.
+        return Number.isNaN(gain) ? 0 : gain;
+      });
     this.#botLevers.length = 0;
     for (const lever of this.#switches) {
-      const flipped = this.#currentWallSet(lever);
       this.#botLevers.push({
         targetId: switchTargetId(lever.id),
         position: lever.position,
@@ -4722,21 +4747,26 @@ export class MatchSimulation {
         flippedAt:
           lever.readyAt === 0 ? Number.NEGATIVE_INFINITY : lever.readyAt - SWITCH_COOLDOWN_SECONDS,
         readyAt: lever.readyAt,
-        gain: ways.map((way, team) => {
-          // A lever the team cannot walk to wins it nothing.
-          if (
-            way === undefined ||
-            now.paths.find(way.from.position, way.from.layer, lever.position, lever.layer) ===
-              undefined
-          ) {
-            return 0;
-          }
-          const gain = (before[team] ?? Number.POSITIVE_INFINITY) - this.#wayLength(flipped, way);
-          // No way to the foes either way: nothing won.
-          return Number.isNaN(gain) ? 0 : gain;
-        }),
+        gain: gains(this.#currentWallSet(lever), () => lever.position, lever.layer),
       });
     }
+    this.#botBreakables.length = 0;
+    const standoff = this.#ruleset.collision.playerRadius + 1;
+    this.#breakables.forEach((wall, at) => {
+      if (!standing(wall)) {
+        return;
+      }
+      this.#botBreakables.push({
+        targetId: breakableTargetId(wall.id),
+        field: wall,
+        layer: wall.layer,
+        gain: gains(
+          this.#currentWallSet(undefined, at),
+          (from) => strikePointOf(wall, from, standoff),
+          wall.layer,
+        ),
+      });
+    });
   }
 
   /** `team`'s two ends of its way to the foes (#3138); `undefined` when either side has nobody living. */
@@ -4785,7 +4815,7 @@ export class MatchSimulation {
     if (this.#centroidsTick !== this.#tick) {
       this.#placeCentroids();
     }
-    this.#refreshBotLevers();
+    this.#refreshBotWays();
     const centroids = this.#centroids.get(record.combatant.team);
     const intent = decide(behaviour, record.cursor, {
       self: record,
@@ -6638,7 +6668,7 @@ export class MatchSimulation {
         continue;
       }
       this.#switches[at] = next;
-      this.#botLeversAt = Number.NEGATIVE_INFINITY;
+      this.#botWaysAt = Number.NEGATIVE_INFINITY;
       for (const kind of ["gates", "teleports", "decks", "lifts"] as const) {
         for (const target of next[kind]) {
           toggles[kind].set(target, (toggles[kind].get(target) ?? 0) + 1);
@@ -6887,6 +6917,9 @@ export class MatchSimulation {
     if (this.#switches.length > 0) {
       this.#botObjectives = { ...this.#botObjectives, levers: this.#botLevers };
     }
+    if (this.#breakables.length > 0) {
+      this.#botObjectives = { ...this.#botObjectives, breakables: this.#botBreakables };
+    }
   }
 
   /**
@@ -7124,9 +7157,10 @@ export class MatchSimulation {
    * between its layers, only floor on the layer it rests at; a timer lift
    * always is, and a walk over it waits for it. With `flip`, as they
    * would stand were that lever thrown now (#3138): its gates, decks and
-   * teleports toggled.
+   * teleports toggled; with `broken`, as though that breakable wall
+   * (#3140) had crumbled.
    */
-  #currentWallSet(flip?: SwitchField): WallSet {
+  #currentWallSet(flip?: SwitchField, broken?: number): WallSet {
     const gates =
       flip === undefined
         ? this.#gates
@@ -7146,7 +7180,7 @@ export class MatchSimulation {
       closed |= gate.open ? 0 : 1 << at;
     });
     this.#breakables.forEach((breakable, at) => {
-      closed |= standing(breakable) ? 1 << (gates.length + at) : 0;
+      closed |= standing(breakable) && at !== broken ? 1 << (gates.length + at) : 0;
     });
     const deckBits = gates.length + this.#breakables.length;
     switchedDecks.forEach((deck, at) => {
@@ -7188,7 +7222,9 @@ export class MatchSimulation {
         ...gates.flatMap((gate) =>
           gate.open || gate.blocks === "bodies-and-shots" ? [] : gate.segments,
         ),
-        ...this.#breakables.flatMap((breakable) => (standing(breakable) ? breakable.segments : [])),
+        ...this.#breakables.flatMap((breakable, at) =>
+          standing(breakable) && at !== broken ? breakable.segments : [],
+        ),
       ];
       set = { walls: [...sight, ...barriers], sight, graphs, paths };
       this.#wallSets.set(key, set);
@@ -7384,6 +7420,7 @@ export class MatchSimulation {
       critical: false,
     });
     if (!standing(next)) {
+      this.#botWaysAt = Number.NEGATIVE_INFINITY;
       this.#refreshWalls([], []);
     }
   }
