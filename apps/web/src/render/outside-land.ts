@@ -299,5 +299,10 @@ export function outsideCover(
   width: number,
   height: number,
 ): readonly CellBox[] {
-  return coverBoxes(width, height, OUTSIDE_CELL, (box) => !boxUnder(outline, box, UNDER_FLOOR_MARGIN));
+  return coverBoxes(
+    width,
+    height,
+    OUTSIDE_CELL,
+    (box) => !boxUnder(outline, box, UNDER_FLOOR_MARGIN),
+  );
 }

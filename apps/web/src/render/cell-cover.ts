@@ -34,11 +34,18 @@ export function coverBoxes(
     for (let column = 0; column < columns; column += 1) {
       const x = column * cell;
       const y = row * cell;
-      if (!shows({ x, y, width: Math.min(width, x + cell) - x, height: Math.min(height, y + cell) - y })) {
+      if (
+        !shows({
+          x,
+          y,
+          width: Math.min(width, x + cell) - x,
+          height: Math.min(height, y + cell) - y,
+        })
+      ) {
         continue;
       }
       const last = spans.at(-1);
-      if (last !== undefined && last[1] === column) {
+      if (last?.[1] === column) {
         last[1] = column + 1;
       } else {
         spans.push([column, column + 1]);

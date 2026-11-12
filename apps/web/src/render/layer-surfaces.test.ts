@@ -847,7 +847,10 @@ describe("the side of a raised column (#3157)", () => {
         for (let lift = low; lift <= high && !column; lift += 0.25) {
           column = inside(lifted(lift), point);
         }
-        expect(drawn.some((piece) => inside(piece, point)), `${String(x)},${String(y)}`).toBe(column);
+        expect(
+          drawn.some((piece) => inside(piece, point)),
+          `${String(x)},${String(y)}`,
+        ).toBe(column);
       }
     }
   });

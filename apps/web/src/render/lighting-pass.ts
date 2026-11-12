@@ -525,18 +525,19 @@ export class LightingPass {
     }
 
     const lift = elevationOf(layer, structure.ground);
-    const images = lightMapCover(structure, this.walls, layer, extent).map(({ x, y, width, height }) =>
-      this.scene.add
-        .image(
-          (extent.x + x) / LIGHT_MAP_SCALE,
-          (extent.y + y) / LIGHT_MAP_SCALE - lift,
-          shownKey,
-          this.region(shownKey, x, y, width, height),
-        )
-        .setOrigin(0, 0)
-        .setScale(1 / LIGHT_MAP_SCALE)
-        .setBlendMode(Phaser.BlendModes.MULTIPLY)
-        .setDepth(renderOrder({ kind: "lighting", layer })),
+    const images = lightMapCover(structure, this.walls, layer, extent).map(
+      ({ x, y, width, height }) =>
+        this.scene.add
+          .image(
+            (extent.x + x) / LIGHT_MAP_SCALE,
+            (extent.y + y) / LIGHT_MAP_SCALE - lift,
+            shownKey,
+            this.region(shownKey, x, y, width, height),
+          )
+          .setOrigin(0, 0)
+          .setScale(1 / LIGHT_MAP_SCALE)
+          .setBlendMode(Phaser.BlendModes.MULTIPLY)
+          .setDepth(renderOrder({ kind: "lighting", layer })),
     );
     const map: LayerMap = {
       layer,

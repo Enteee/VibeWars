@@ -18,6 +18,7 @@ import {
   flickerRedrawDue,
   groundHoles,
   layerSurfaces,
+  lightMapCover,
   lightMapExtent,
   lightsByStability,
   litStructurePalette,
@@ -266,6 +267,33 @@ describe("layerSurfaces", () => {
       width: 1,
       height: 1,
     });
+  });
+
+  const holds = (
+    box: { x: number; y: number; width: number; height: number },
+    x: number,
+    y: number,
+  ) => box.x <= x && x < box.x + box.width && box.y <= y && y < box.y + box.height;
+
+  it("lights none of the ground a raised deck covers (#3162)", () => {
+    const extent = lightMapExtent(HEIGHTS, 0, 1200, 800);
+    const cover = lightMapCover(HEIGHTS, [], 0, extent);
+    const area = cover.reduce((sum, { width, height }) => sum + width * height, 0);
+    expect(area).toBeLessThan(extent.width * extent.height);
+    // The lower deck's middle, lifted onto the screen, in light map pixels.
+    expect(cover.some((box) => holds(box, 300, (350 - ELEVATION_STEP) / 2))).toBe(false);
+    expect(cover.some((box) => holds(box, 10, 10))).toBe(true);
+  });
+
+  it("lights only the cells a raised layer's surfaces are in (#3162)", () => {
+    const extent = lightMapExtent(HEIGHTS, 1, 1200, 800);
+    const cover = lightMapCover(HEIGHTS, [], 1, extent);
+    const area = cover.reduce((sum, { width, height }) => sum + width * height, 0);
+    expect(area).toBeGreaterThan(0);
+    for (const box of cover) {
+      expect(box.x + box.width).toBeLessThanOrEqual(extent.width);
+      expect(box.y + box.height).toBeLessThanOrEqual(extent.height);
+    }
   });
 });
 
