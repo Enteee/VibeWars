@@ -893,7 +893,7 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   await releaseControl(page);
 });
 
-test("(22) a stored VibeWars keymap casts on Q to F, Classic being the default (#302, #3134)", async ({
+test("(22) a stored VibeWars keymap casts on Q to F, whatever the default (#302, #3134)", async ({
   page,
 }) => {
   await page.addInitScript(
