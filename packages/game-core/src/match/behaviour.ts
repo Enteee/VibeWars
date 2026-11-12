@@ -250,6 +250,8 @@ export interface BehaviourCursor {
   wardId: string | undefined;
   /** `play-build`, a healer: the spot it walks to, kept until a fresh one is clearly elsewhere (#2615). */
   coverSpot: Vec2 | undefined;
+  /** `play-build`, a bow or a spear: the high ground it walks to, kept until a fresh one is clearly elsewhere (#3141). */
+  highSpot: HighGroundSpot | undefined;
   /** `play-build`: waiting, ahead of its team, for the rest to catch up (#2621). */
   regrouping: boolean;
   /** `play-build`, foes of two teams or more: the team it fights, kept while that team still fights (#2685). */
@@ -301,6 +303,16 @@ export interface BehaviourContext {
   readonly seed: number;
   /** The match second this think happens at (#3138). */
   readonly now: number;
+  /** Spots on the decks above the ground (#3141), in map order; `[]` on a flat map. */
+  readonly highGround: readonly HighGroundSpot[];
+  /** How far `self` walks to `to` on `layer` (#3141), stairs and ramps included: Infinity with no route. */
+  routeLength(to: Vec2, layer: number): number;
+}
+
+/** A spot a bot may stand on above the ground (#3141). */
+export interface HighGroundSpot {
+  readonly point: Vec2;
+  readonly layer: number;
 }
 
 /**
@@ -387,6 +399,7 @@ export function createCursor(): BehaviourCursor {
     upkeepDropSeconds: 0,
     wardId: undefined,
     coverSpot: undefined,
+    highSpot: undefined,
     regrouping: false,
     front: undefined,
     spikeTargetId: undefined,

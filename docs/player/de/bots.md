@@ -36,6 +36,7 @@ solange dein Team den Altar nicht hält, der Geisterheld des anderen Teams auf d
 Altar sogar noch vor. Ein Bot, der seinem Team weit voraus ist, wartet auf die
 anderen, bevor er weitergeht.
 
+Bogenschützen und Speerwerfer besetzen die Anhöhe, wenn es sicher ist.
 Ist kein Gegner in der Nähe, legt ein Bot einen Hebel um, der einen kürzeren Weg zu den Gegnern öffnet. Zwei Bots reißen außerdem eine Mauer nieder, die einen viel kürzeren Weg versperrt, indem sie mit ihren Waffen darauf einschlagen.
 
 Bots, die Schaden machen, halten ihre großen Treffer zurück, also Angriffs-Skills

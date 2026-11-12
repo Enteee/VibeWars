@@ -12,6 +12,7 @@ import { switchTargetId } from "./switches.js";
 import { BOUNDS, DT, fighter, RANGER, RULESET, WARRIOR } from "./bot/rules/test-support.js";
 import { UPHILL } from "./layer-rules.js";
 import {
+  highGroundSpots,
   MatchSimulation,
   type MatchLayers,
   type MatchSimulationOptions,
@@ -438,5 +439,34 @@ describe("an objective on a layer (ADR-0051, #2900)", () => {
       guildLords: [{ team: 0, position: ON_DECK, layer: 1 }],
     });
     expect(get(sim, guildLordId(0)).layer).toBe(1);
+  });
+});
+
+describe("the high ground bots read (#3141)", () => {
+  it("is each deck over the ground's corners' average and its corners pulled in", () => {
+    const spots = highGroundSpots(LAYERS, () => true);
+    expect(spots).toHaveLength(5);
+    expect(spots.every(({ layer }) => layer === 1)).toBe(true);
+    expect(spots[0]?.point).toEqual(vec2(800, 400));
+    expect(spots[1]?.point).toEqual(vec2(575, 325));
+  });
+
+  it("leaves out a spot a body could not stand on, and a tunnel", () => {
+    expect(highGroundSpots(LAYERS, (point) => point.x > 800)).toHaveLength(2);
+    const tunnel: MatchLayers = { ...LAYERS, ground: 1 };
+    expect(highGroundSpots(tunnel, () => true)).toEqual([]);
+  });
+
+  it("is where a bow bot under its target's deck climbs to", () => {
+    const sim = arena([
+      fighter("archer", 0, RANGER, vec2(100, 700), { layer: 0 }),
+      spec("foe", 1, vec2(800, 700), 0),
+    ]);
+    let climbed = false;
+    for (let t = 0; t < 15 && !climbed; t += DT) {
+      sim.step(DT);
+      climbed = get(sim, "archer").layer === 1;
+    }
+    expect(climbed).toBe(true);
   });
 });
