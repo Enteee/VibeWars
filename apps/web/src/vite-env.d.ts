@@ -29,6 +29,8 @@ interface ImportMetaEnv {
   readonly VITE_VIBEWARS_LOBBY_SEED?: string;
   /** `off` skips the splash screen (#2884) unless the URL has `?splash`: e2e only. */
   readonly VITE_VIBEWARS_SPLASH?: string;
+  /** `off` draws no menu background fight (#3156) unless the URL has `?menu-background`: e2e only. */
+  readonly VITE_VIBEWARS_MENU_BACKGROUND?: string;
 }
 
 interface ImportMeta {
