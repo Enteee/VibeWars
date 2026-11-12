@@ -101,6 +101,7 @@
     ]
   },
   "layers": 4,
+  "biome": "hall",
   "groundLayer": 1,
   "pits": [
     {

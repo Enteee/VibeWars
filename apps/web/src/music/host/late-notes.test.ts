@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { dropLate } from "./late-notes.js";
-import { createMeter, type AudioReadings } from "./stats.js";
+import { createMeter, type AudioReadings } from "./audio-meter.js";
 
 const audio: AudioReadings = {
   baseLatencyMs: 0,

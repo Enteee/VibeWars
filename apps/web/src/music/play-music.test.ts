@@ -19,7 +19,7 @@ const tracks = [
     key: "D lydian",
   },
   {
-    id: "clash-of-banners",
+    id: "clash-of-standards",
     title: "Clash of Banners",
     source: "b",
     phraseCycles: 4,
@@ -166,9 +166,9 @@ describe("createMusicFollower", () => {
       NO_EDITS,
     );
     calls.length = 0;
-    music.follow(state("clash-of-banners", 0), "phrase");
-    music.follow(state("clash-of-banners", 2), "phrase");
-    music.follow(state("clash-of-banners", 2), "phrase");
+    music.follow(state("clash-of-standards", 0), "phrase");
+    music.follow(state("clash-of-standards", 2), "phrase");
+    music.follow(state("clash-of-standards", 2), "phrase");
     music.follow(state(null, 0), "phrase");
     expect(calls).toEqual([
       ["crossfadeTo", [tracks[1], "phrase"]],
@@ -203,7 +203,7 @@ describe("createMusicFollower", () => {
       NO_EDITS,
     );
     music.menu("main");
-    music.follow(state("clash-of-banners", 0), "cycle");
+    music.follow(state("clash-of-standards", 0), "cycle");
     music.menu("main");
     expect(calls.filter(([call]) => call === "crossfadeTo")).toEqual([
       ["crossfadeTo", [tracks[0], "phrase"]],
@@ -271,10 +271,10 @@ describe("createMusicFollower", () => {
     const pinned = {
       ...DEFAULT_MUSIC_PREFERENCE,
       mode: "pinned" as const,
-      pinnedTrackId: "clash-of-banners",
+      pinnedTrackId: "clash-of-standards",
     };
     music.setPreference(pinned);
-    expect(music.mode()).toEqual({ kind: "pinned", trackId: "clash-of-banners" });
+    expect(music.mode()).toEqual({ kind: "pinned", trackId: "clash-of-standards" });
     music.setPreference({ ...pinned, mode: "off" });
     expect(calls).toEqual([
       ["crossfadeTo", [tracks[1], "phrase"]],
@@ -293,7 +293,7 @@ describe("createMusicFollower", () => {
       NO_EDITS,
     );
     music.menu("main");
-    music.follow(state("clash-of-banners", 1), "phrase");
+    music.follow(state("clash-of-standards", 1), "phrase");
     calls.length = 0;
     music.setPreference({ ...DEFAULT_MUSIC_PREFERENCE, mode: "off" });
     expect(calls).toEqual([]);
@@ -311,7 +311,7 @@ describe("createMusicFollower", () => {
     );
     music.menu("main");
     calls.length = 0;
-    music.preview("clash-of-banners");
+    music.preview("clash-of-standards");
     // The director goes on deciding, unheard.
     music.follow(state("first-light", 2), "phrase");
     music.preview(null);
@@ -328,10 +328,10 @@ describe("createMusicFollower", () => {
     const { player, calls } = recording();
     const override = createIntensityOverride();
     const music = createMusicFollower(player, tracks, saved(false), () => 0, override, NO_EDITS);
-    music.follow(state("clash-of-banners", 1), "phrase");
+    music.follow(state("clash-of-standards", 1), "phrase");
     calls.length = 0;
     override.set(3);
-    music.follow(state("clash-of-banners", 2), "phrase");
+    music.follow(state("clash-of-standards", 2), "phrase");
     music.follow(state("first-light", 0), "phrase");
     // A new track starts at the fixed level: nothing to send.
     expect(music.intensity).toBe(0);
@@ -359,7 +359,7 @@ describe("createMusicFollower", () => {
     );
     calls.length = 0;
     music.follow(state("first-light", 0), "phrase");
-    music.preview("clash-of-banners");
+    music.preview("clash-of-standards");
     music.preview(null);
     expect(calls).toEqual([
       ["crossfadeTo", [{ ...tracks[0], source: "edited" }, "phrase"]],
@@ -381,8 +381,8 @@ describe("createMusicFollower", () => {
     music.follow(state("first-light", 0), "phrase");
     calls.length = 0;
     music.edit("first-light");
-    music.follow(state("clash-of-banners", 0), "phrase");
-    music.preview("clash-of-banners");
+    music.follow(state("clash-of-standards", 0), "phrase");
+    music.preview("clash-of-standards");
     expect(calls).toEqual([]);
     expect(music.nowPlaying).toBe("first-light");
     music.edit(null);
@@ -497,7 +497,7 @@ describe("createMusicFollower", () => {
 
     // The director changing its mind plays nothing over the share.
     calls.length = 0;
-    music.follow(state("clash-of-banners", 0), "phrase");
+    music.follow(state("clash-of-standards", 0), "phrase");
     expect(calls.filter(([name]) => name !== "setIntensity")).toEqual([]);
 
     // A share that ignores stop goes silent on Back: its host is gone.
@@ -562,7 +562,7 @@ describe("createMusicFollower", () => {
     );
     music.playShared({ trackId: "first-light", source: "shared" });
     calls.length = 0;
-    music.preview("clash-of-banners");
+    music.preview("clash-of-standards");
     expect(calls).toEqual([
       ["renew", undefined],
       ["load", [tracks[1], null]],
@@ -582,7 +582,7 @@ describe("createMusicFollower", () => {
     );
     music.follow(state("first-light", 0), "phrase");
     // The arena's track is wanted, still crossfading in: its key, not the menu's.
-    music.follow(state("clash-of-banners", 0), "phrase");
+    music.follow(state("clash-of-standards", 0), "phrase");
     music.sting("match-start");
     expect(calls.at(-1)).toEqual([
       "sting",
@@ -601,11 +601,11 @@ describe("createMusicFollower", () => {
       NO_EDITS,
     );
     music.follow(state("first-light", 0), "phrase");
-    music.preview("clash-of-banners");
+    music.preview("clash-of-standards");
     music.sting("first-blood");
     expect(calls.at(-1)?.[1]).toMatchObject({ key: "E phrygian" });
     music.preview(null);
-    music.edit("clash-of-banners");
+    music.edit("clash-of-standards");
     music.sting("first-blood");
     expect(calls.at(-1)?.[1]).toMatchObject({ key: "E phrygian" });
     music.edit(null);

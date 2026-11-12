@@ -536,7 +536,7 @@ async function openTeamBuilder(page: Page): Promise<void> {
  * and the random starter team (#2036): "Duo · 2 members".
  */
 const teamRows = (page: Page) =>
-  page.locator(".screen-teams .play-card:not(.play-card-new):not(.is-random)");
+  page.locator(".screen-teams .play-card:not(.play-card-new):not(.play-card-load):not(.is-random)");
 /** The random starter team's card (#2036), which every first start rolls. */
 const starterTeamCard = (page: Page) => page.locator(".screen-teams .play-card.is-random");
 async function teamList(page: Page): Promise<string[]> {
@@ -594,7 +594,12 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await expect(save).toHaveAttribute("title", "Save this team");
   // Nothing stored to copy or delete, so neither can store a half-made team.
   await page.getByRole("button", { name: "more actions" }).click();
-  await expect(bar.locator(".editor-more button")).toHaveText(["Share", "Duplicate", "Delete"]);
+  await expect(bar.locator(".editor-more button")).toHaveText([
+    "Share",
+    "Load team",
+    "Duplicate",
+    "Delete",
+  ]);
   await expect(page.getByRole("button", { name: "duplicate" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "delete" })).toBeDisabled();
   // The first Esc puts ⋯ away, the second leaves.
@@ -669,6 +674,55 @@ test("a toast goes with its screen; one the next screen raises stays (#710)", as
   await expect(page.locator(".toast")).toHaveText("Pasted Duo, 2 members. Save to keep it.");
 });
 
+test("Load team brings a shared team back, from Team Builder and from the editor's ⋯ (#3181)", async ({
+  page,
+}) => {
+  await saveCharacters(page, ["Alpha", "Bravo"]);
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("Duo");
+  await copyOnto(page, "Alpha", 0);
+  await copyOnto(page, "Bravo", 1);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
+
+  // Share it, then delete it.
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  const code = await page.getByLabel("team to share").inputValue();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "delete" }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).last().click();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect(teamRows(page)).toHaveCount(0);
+
+  // Load team, beside New team build: a line, as a phone has no paste.
+  const line = page.getByLabel("team code to load");
+  await page.getByRole("button", { name: "Load team", exact: true }).click();
+  await expect(line).toBeFocused();
+  await page.getByRole("button", { name: "Load", exact: true }).click();
+  await expect(page.locator(".editor-load-problems")).toHaveText("Paste a code first.");
+  await line.fill(`${code}\n`);
+  await page.getByRole("button", { name: "Load", exact: true }).click();
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+  await expect(page.getByLabel("team name")).toHaveValue("Duo");
+  await expect(memberNames(page)).toHaveText(["Alpha", "Bravo"]);
+
+  // The editor's ⋯ has it too, and asks before it drops edits.
+  await page.getByLabel("team name").fill("Trio");
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Load team", exact: true }).click();
+  await page.getByLabel("team code to load").fill(code);
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Discard your edits and open the pasted team?")).toBeVisible();
+  await page.getByRole("button", { name: "discard" }).click();
+  await expect(page.getByLabel("team name")).toHaveValue("Duo");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
+});
+
 test("Team Builder's cards: New team build; a card shows its members, and it or its Edit opens it (#1453, #1515)", async ({
   page,
 }) => {
@@ -712,8 +766,8 @@ test("the random Team Build: last, Reroll changes it in place, Clone opens a cop
   await expect(starter).toHaveCount(1);
   await expect(starter.locator(".roster-random-tag")).toHaveText("Random");
   await expect(starter.getByRole("button", { name: "Edit" })).toHaveCount(0);
-  // Last of the Team Builds, New team build after it.
-  await expect(page.locator(".screen-teams .play-card").nth(-2)).toHaveClass(/is-random/);
+  // Last of the Team Builds, New team build and Load team (#3181) after it.
+  await expect(page.locator(".screen-teams .play-card").nth(-3)).toHaveClass(/is-random/);
 
   const name = starter.locator(".play-card-name");
   const before = (await name.textContent()) ?? "";

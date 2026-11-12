@@ -10,6 +10,7 @@
     "kind": "rect"
   },
   "layers": 3,
+  "biome": "hall",
   "groundLayer": 1,
   "pits": [
     {

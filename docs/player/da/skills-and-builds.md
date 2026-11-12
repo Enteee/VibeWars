@@ -153,14 +153,15 @@ Buildet er dit, når du trykker på **Gem**.
 går uden at gemme og spørger først, hvis du har ændret noget. **Del**,
 **Indlæs GW1-kode**, **Duplikér** og **Slet** ligger under **⋯**.
 
-En holdkode indsættes i stedet i **Holdeditor**.
+En holdkode indlæses i stedet i **Holdeditor**: tryk på **Indlæs hold**, indsæt
+koden og tryk på **Indlæs**, eller indsæt den hvor som helst i Holdeditor.
 
 ## Holdbuilds
 
 Et **holdbuild** er et hold af sine egne figurer, lavet i **Holdeditor**
 og holdt adskilt fra dine egne figurer. Hvert er et kort der, og kun der:
-**Nyt holdbuild** laver et, og et klik på et kort, eller dets **Ret**,
-åbner det. Du foreslår et i [Holdlobbyen](modes.md#holdlobby).
+**Nyt holdbuild** laver et, **Indlæs hold** indlæser et, der er delt med dig,
+og et klik på et kort, eller dets **Ret**, åbner det. Du foreslår et i [Holdlobbyen](modes.md#holdlobby).
 
 Hvert holdbuild har en størrelse, 2v2, 4v4 eller 8v8 (der findes ingen
 1v1-holdbuilds): **Holdstørrelse** i sidebjælken. Holdeditor viser
@@ -206,7 +207,8 @@ Tryk på et medlems navn, eller **Åbn på figursiden**, for at redigere
 det i build-editoren; dens **Gem** sætter det tilbage på holdet, og
 holdets egen **Gem** beholder det hele og tager dig tilbage til
 Holdeditor. **Esc** går uden at gemme og spørger først. Holdets **Del**,
-**Duplikér** og **Slet** ligger under **⋯**.
+**Indlæs hold**, **Duplikér** og **Slet** ligger under **⋯**. **Indlæs hold** der
+åbner det indlæste hold i stedet for dette.
 Du kan gemme et hold når som helst, med problemer og det hele, men kun et
 hold uden problemer kan foreslås i en Holdlobby: et kort siger **Kan ikke
 spilles** og hvorfor, og et hold uden navn vises som **Unavngivet hold**.

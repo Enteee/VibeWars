@@ -496,7 +496,7 @@ describe("the Lobby window's Join lobby (#2882)", () => {
     vi.stubGlobal("location", page2882);
     const join = joinControls(
       () => "Mira",
-      () => undefined,
+      () => Promise.resolve(),
       () => undefined,
       () => undefined,
     );

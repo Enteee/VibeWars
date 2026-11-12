@@ -1,4 +1,4 @@
-import type { StatsMeter } from "./stats.js";
+import type { StatsMeter } from "./audio-meter.js";
 
 /** How superdough is handed a note: the cyclist's `onTrigger`. */
 export type NoteOutput<Hap, Result> = (

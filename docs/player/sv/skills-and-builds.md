@@ -155,14 +155,15 @@ plats. Builden är din när du trycker på **Spara**.
 **Esc** lämnar utan att spara, och frågar först om du har ändrat något.
 **Dela**, **Ladda GW1-kod**, **Duplicera** och **Radera** finns under **⋯**.
 
-En lagkod klistras i stället in i **Lagbyggare**.
+En lagkod laddas i stället i **Lagbyggare**: tryck på **Ladda lag**, klistra in
+koden och tryck på **Ladda**, eller klistra in den var som helst i Lagbyggare.
 
 ## Lagbuilds
 
 En **lagbuild** är ett lag med egna karaktärer, skapat i **Lagbyggare**
 och hållet åtskilt från dina egna karaktärer. Var och en är ett kort
-där, och bara där: **Ny lagbuild** skapar en, och ett klick
-på ett kort, eller dess **Ändra**, öppnar den. Du föreslår en i
+där, och bara där: **Ny lagbuild** skapar en, **Ladda lag**
+laddar en som delats med dig, och ett klick på ett kort, eller dess **Ändra**, öppnar den. Du föreslår en i
 [laglobbyn](modes.md#laglobby).
 
 Varje lagbuild har en storlek, 2v2, 4v4 eller 8v8 (det finns inga lagbuilds för 1v1): **Lagstorlek** i
@@ -207,8 +208,9 @@ Tryck på en medlems namn, eller **Öppna i karaktärsvyn**, för att ändra
 den i build-redigeraren;
 dess **Spara** lägger tillbaka den i laget, och lagets egen **Spara** behåller alltihop
 och tar dig tillbaka till Lagbyggare. **Esc** lämnar
-utan att spara, och frågar först. Lagets **Dela**, **Duplicera** och
-**Radera** finns under **⋯**.
+utan att spara, och frågar först. Lagets **Dela**, **Ladda lag**,
+**Duplicera** och **Radera** finns under **⋯**. **Ladda lag** där öppnar det
+laddade laget i stället för det här.
 Du kan spara ett lag när som helst, problem och allt, men bara ett lag
 utan problem kan föreslås i en laglobby: ett kort säger
 **Går inte att spela** och varför, och ett lag utan namn visas som **Namnlöst lag**.

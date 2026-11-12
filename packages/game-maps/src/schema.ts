@@ -65,6 +65,10 @@ const wallSchema = z.discriminatedUnion("kind", [
   polygonWallSchema.extend({ layer: layerSchema }),
 ]);
 
+/** The materials a map is drawn in (#3172, docs/art/visual-style.md §1). */
+export const BIOMES = ["hall", "heights", "wilds", "desert"] as const;
+export type Biome = (typeof BIOMES)[number];
+
 /**
  * What a deck is drawn as (#3067, #3078): the floor walks the same whatever
  * its look, but a tower, a wall-walk and a bridge each have a role in play.
@@ -909,6 +913,8 @@ export const mapDataSchema = z
     bounds: boundsSchema,
     /** How many layers it has (ADR-0051), the ground and what is below and above it. */
     layers: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+    /** What its ground, walls, decks and ramps are made of (#3172). There is no default. */
+    biome: z.enum(BIOMES),
     /** Which layer is the ground (#2973): 1 only on a map with a pit, the layer under it. */
     groundLayer: z.union([z.literal(0), z.literal(1)]),
     /** Required, may be empty, as `gates`: holes in the ground, on `groundLayer - 1` (#2973). */

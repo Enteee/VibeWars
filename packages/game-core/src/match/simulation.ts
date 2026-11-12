@@ -417,7 +417,7 @@ import {
   beaconLightning,
   stepBeacon,
   type BeaconState,
-} from "./beacon.js";
+} from "./storm-stand.js";
 import { zoneStrike } from "./zone-strike.js";
 import {
   ZONE_REHIT_SECONDS,

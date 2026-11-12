@@ -149,14 +149,15 @@ ešte nemá, príde ako prázdna pozícia. Build je tvoj, keď stlačíš
 **Esc** odíde bez uloženia, a ak si niečo zmenil, najprv sa opýta.
 **Zdieľať**, **Načítať kód GW1**, **Duplikovať** a **Zmazať** sú pod **⋯**.
 
-Tímový kód sa namiesto toho vkladá v **Tvorba tímov**.
+Tímový kód sa namiesto toho načítava v **Tvorba tímov**: stlač **Načítať tím**,
+vlož kód a stlač **Načítať**, alebo ho vlož kamkoľvek v **Tvorba tímov**.
 
 ## Tímové buildy
 
 **Tímový build** je tím s vlastnými postavami, vytvorený v **Tvorba
 tímov** a oddelený od tvojich vlastných postáv. Každý z nich je tam karta,
-a len tam: **Nový tímový build** ho vytvorí a kliknutie
-na kartu alebo na jej **Upraviť** ho otvorí. Navrhuješ ho v
+a len tam: **Nový tímový build** ho vytvorí, **Načítať tím**
+načíta ten, ktorý s tebou niekto zdieľal, a kliknutie na kartu alebo na jej **Upraviť** ho otvorí. Navrhuješ ho v
 [tímovom lobby](modes.md#tímové-lobby).
 
 Každý tímový build má veľkosť, 2v2, 4v4 alebo 8v8 (tímové buildy 1v1 neexistujú): **Veľkosť tímu** v
@@ -199,8 +200,9 @@ Stlačením mena člena alebo **Otvoriť na obrazovke postavy** ho upravíš v
 editore buildov;
 jeho **Uložiť** ho vráti do tímu a vlastné **Uložiť** tímu uloží všetko
 a vráti ťa do **Tvorba tímov**. **Esc** odíde
-bez uloženia a najprv sa opýta. **Zdieľať**, **Duplikovať** a
-**Zmazať** tímu sú pod **⋯**.
+bez uloženia a najprv sa opýta. **Zdieľať**, **Načítať tím**,
+**Duplikovať** a **Zmazať** tímu sú pod **⋯**. **Načítať tím** tam otvorí
+načítaný tím namiesto tohto.
 Tím môžeš uložiť kedykoľvek, aj s problémami, ale v tímovom lobby sa dá
 navrhnúť len tím bez problémov: karta ukazuje **Nedá sa hrať** a prečo a tím
 bez názvu sa zobrazuje ako **Tím bez názvu**.

@@ -168,14 +168,16 @@ Az **Esc** mentés nélkül lép ki, és előbb rákérdez, ha bármit
 módosítottál. A **Megoszt**, a **GW1-kód betöltése**, a **Másolat** és a
 **Törlés** a **⋯** alatt van.
 
-A csapatkódot ehelyett a **Csapatszerkesztőben** kell beilleszteni.
+A csapatkódot ehelyett a **Csapatszerkesztőben** kell betölteni: nyomd meg a
+**Csapat betöltése** gombot, illeszd be a kódot, és nyomd meg a **Betölt**
+gombot, vagy illeszd be bárhová a Csapatszerkesztőben.
 
 ## Csapatbuildek
 
 A **csapatbuild** egy csapat a saját karaktereiből, amelyet a
 **Csapatszerkesztőben** készítesz, és a saját karaktereidtől elkülönítve
 tárolódik. Mindegyik egy kártya ott, és csak ott: az **Új csapatbuild**
-készít egyet, egy kártyára kattintás vagy a **Szerk.** gombja pedig
+készít egyet, a **Csapat betöltése** betölt egy veled megosztottat, egy kártyára kattintás vagy a **Szerk.** gombja pedig
 megnyitja. Egyet a [Csapatlobbiban](modes.md#csapatlobbi) javasolhatsz.
 
 Minden csapatbuildnek van mérete, 2v2, 4v4 vagy 8v8 (1v1-es csapatbuild nincs): az oldalsáv
@@ -221,8 +223,9 @@ Nyomd meg egy tag nevét, vagy a **Megnyitás a Karakter képernyőn** gombot, h
 buildszerkesztőben szerkeszd;
 annak **Mentés** gombja visszateszi a csapatba, a csapat saját **Mentés** gombja pedig mindent
 megtart, és visszavisz a Csapatszerkesztőbe. Az **Esc** mentés
-nélkül lép ki, és előbb rákérdez. A csapat **Megoszt**, **Másolat** és
-**Törlés** gombja a **⋯** alatt van.
+nélkül lép ki, és előbb rákérdez. A csapat **Megoszt**, **Csapat betöltése**,
+**Másolat** és **Törlés** gombja a **⋯** alatt van. Az ottani **Csapat betöltése**
+a betöltött csapatot nyitja meg ennek a helyén.
 Egy csapatot bármikor elmenthetsz, minden problémájával együtt, de csak
 probléma nélküli csapatot lehet a Csapatlobbiban javasolni: a kártyán a
 **Nem játszható** felirat és az ok áll, a név nélküli csapat pedig **Névtelen csapat**ként jelenik meg.

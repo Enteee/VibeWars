@@ -19,7 +19,7 @@ const TRACKS: readonly TrackChoice[] = [
   { id: "ashen-fields", moods: ["melancholy", "atmospheric"], layers: 4 },
   { id: "northern-pass", moods: ["adventurous"], layers: 4 },
   { id: "hall-of-champions", moods: ["epic", "triumphant"], layers: 4 },
-  { id: "clash-of-banners", moods: ["action", "epic"], layers: 4 },
+  { id: "clash-of-standards", moods: ["action", "epic"], layers: 4 },
   { id: "ember-deep", moods: ["dark", "tense"], layers: 4 },
   { id: "jungle-veil", moods: ["mysterious", "atmospheric"], layers: 4 },
   { id: "glass-dunes", moods: ["mysterious", "tense"], layers: 4 },
