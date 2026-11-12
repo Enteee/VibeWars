@@ -20,7 +20,7 @@
  *
  *   BENCH_MAP=a,b      the maps, by id. Default: every map of more
  *                      than one layer.
- *   BENCH_MAX_RATIO=6 exit 1 when a map's p50 is more than this many
+ *   BENCH_MAX_RATIO=3 exit 1 when a map's p50 is more than this many
  *                      times the calibration's. CI's regression gate.
  *   --url <url>        measure a client already served there.
  *
