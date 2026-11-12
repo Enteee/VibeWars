@@ -1,9 +1,11 @@
+import { LOBBY_MODES } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import { teamArenaMapIds } from "../net/maps.js";
 import {
   FIRST_CHOICE,
   RANDOM_MAP,
+  hostedChoice,
   menuBackgroundMap,
   sameChoice,
 } from "./menu-background-choice.js";
@@ -56,5 +58,16 @@ describe("sameChoice (#3119)", () => {
     expect(sameChoice(FIRST_CHOICE, { mapId: RANDOM_MAP, teamSize: 8 })).toBe(true);
     expect(sameChoice(FIRST_CHOICE, { mapId: RANDOM_MAP, teamSize: 4 })).toBe(false);
     expect(sameChoice(FIRST_CHOICE, { mapId: "moss-vale", teamSize: 8 })).toBe(false);
+  });
+});
+
+describe("hostedChoice (#3131)", () => {
+  it("is a Hosted lobby's map and size, and nothing for every other mode", () => {
+    for (const mode of LOBBY_MODES) {
+      const choice = hostedChoice({ mode, mapId: "jungle-ruins", teamSize: 4 });
+      expect(choice).toEqual(
+        mode === "hosted-game" ? { mapId: "jungle-ruins", teamSize: 4 } : undefined,
+      );
+    }
   });
 });

@@ -220,7 +220,7 @@ export interface LobbyPanel {
 }
 
 /**
- * The map a lobby shows, and the menu background fights on (#3119). A
+ * The map a lobby shows. A
  * party queued in Heroes' Ascent is bound for its round's map, not the
  * lobby's (#1996), until a group is formed: a party that skipped ahead
  * plays the group's map, `groupMapId` (#2687). A host's round with no map

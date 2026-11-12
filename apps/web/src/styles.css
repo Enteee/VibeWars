@@ -1430,8 +1430,23 @@ body {
   overflow: hidden;
   pointer-events: none;
 }
+/* Hidden until its first frame, then faded in; faded out, quicker, before
+   a restart (#3131). The durations are set on it by menu-background.ts. */
 #menu-background canvas {
   display: block;
+  opacity: 0;
+  transition: opacity var(--menu-fade-in) ease;
+}
+#menu-background[data-shown] canvas {
+  opacity: 1;
+}
+#menu-background:not([data-shown]) canvas {
+  transition-duration: var(--menu-fade-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  #menu-background canvas {
+    transition: none;
+  }
 }
 #menu-background[data-map]::after {
   content: "";

@@ -142,7 +142,6 @@ import {
   PLAY_BOTS_AFTER_MS,
   hostMaps,
   lobbyPanel,
-  lobbyShownMapId,
   type LobbyMap,
   type LobbyMatchmaking,
   type LobbyPanel,
@@ -209,7 +208,7 @@ import { recordAscentWin } from "./storage/fame.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import { startSplashFight } from "./ui/splash-fight.js";
 import { createMenuBackground } from "./ui/menu-background.js";
-import { RANDOM_MAP } from "./ui/menu-background-choice.js";
+import { hostedChoice } from "./ui/menu-background-choice.js";
 import { watchHall } from "./ui/vault-screen.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
 import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
@@ -2245,15 +2244,12 @@ async function main(): Promise<void> {
       return;
     }
     const snapshot = lobby.getSnapshot();
-    // The background fights on what the lobby shows (#3119), Team Arena's
-    // drawn by it; joiners see the host's choice.
-    menuBackground.setChoice({
-      mapId:
-        snapshot.mode === "team-arena"
-          ? RANDOM_MAP
-          : lobbyShownMapId(snapshot, teamQueue?.groupMapId),
-      teamSize: snapshot.teamSize,
-    });
+    // Only a Hosted lobby picks the background's map and size (#3131);
+    // joiners see the host's. Every other lobby leaves it fighting on.
+    const hosted = hostedChoice(snapshot);
+    if (hosted !== undefined) {
+      menuBackground.setChoice(hosted);
+    }
     choiceMade();
     if (queue !== undefined) {
       // A queued lobby has nothing to choose: it is the versus splash.
