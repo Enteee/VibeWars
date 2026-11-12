@@ -147,14 +147,15 @@ menekan **Simpan**.
 **Esc** keluar tanpa menyimpan, dan bertanya dulu kalau kamu mengubah sesuatu.
 **Bagikan**, **Muat kode GW1**, **Duplikat** dan **Hapus** ada di bawah **⋯**.
 
-Kode tim ditempel di **Pembuat Tim** sebagai gantinya.
+Kode tim dimuat di **Pembuat Tim** sebagai gantinya: tekan **Muat tim**, tempel
+kodenya lalu tekan **Muat**, atau tempel di mana saja di Pembuat Tim.
 
 ## Build Tim
 
 **Build tim** adalah tim berisi karakter-karakternya sendiri, dibuat di **Pembuat
 Tim** dan dipisahkan dari karakter-karaktermu sendiri. Masing-masing adalah sebuah kartu
-di sana, dan hanya di sana: **Build tim baru** membuatnya, dan klik
-pada kartu, atau **Edit**-nya, membukanya. Kamu mengusulkannya di
+di sana, dan hanya di sana: **Build tim baru** membuatnya, **Muat tim**
+memuat build yang dibagikan kepadamu, dan klik pada kartu, atau **Edit**-nya, membukanya. Kamu mengusulkannya di
 [Lobi Tim](modes.md#lobi-tim).
 
 Setiap build tim punya ukuran, 2v2, 4v4 atau 8v8 (tidak ada build tim 1v1): **Ukuran tim** di
@@ -196,8 +197,9 @@ Tekan nama seorang anggota, atau **Buka di layar Karakter**, untuk mengeditnya d
 editor build;
 **Simpan**-nya menaruhnya kembali di tim, dan **Simpan** milik tim menyimpan semuanya
 lalu membawamu kembali ke Pembuat Tim. **Esc** keluar
-tanpa menyimpan, dan bertanya dulu. **Bagikan**, **Duplikat** dan
-**Hapus** milik tim ada di bawah **⋯**.
+tanpa menyimpan, dan bertanya dulu. **Bagikan**, **Muat tim**,
+**Duplikat** dan **Hapus** milik tim ada di bawah **⋯**. **Muat tim** di sana
+membuka tim yang dimuat menggantikan tim ini.
 Kamu bisa menyimpan tim kapan saja, lengkap dengan masalahnya, tapi hanya tim
 tanpa masalah yang bisa diusulkan di Lobi Tim: kartunya bertuliskan
 **Tidak bisa dimainkan** dan alasannya, dan tim tanpa nama tampil sebagai **Tim tanpa nama**.

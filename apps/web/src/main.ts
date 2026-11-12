@@ -106,7 +106,7 @@ import {
   rollStarterTeam,
   saveStarterTeamId,
 } from "./storage/starter-team.js";
-import { importTeam, importedTeamSummary } from "./storage/team-transfer.js";
+import { importedTeamSummary } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
 import {
@@ -1500,13 +1500,8 @@ async function main(): Promise<void> {
           }
         })();
       },
-      onPasteTeam: (text) => {
-        const result = importTeam(text, () => crypto.randomUUID(), Date.now());
-        if (!result.ok) {
-          toast(t("app.couldNotImport"), { problems: result.problems });
-          return;
-        }
-        openPastedTeam(result.team, characterList.characters);
+      onLoadTeam: (team) => {
+        openPastedTeam(team, characterList.characters);
       },
       // Only the random starter team has Clone: an exact copy, to edit (#2036).
       onCloneStarterTeam: (id) => {

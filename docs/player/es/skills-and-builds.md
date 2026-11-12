@@ -153,14 +153,16 @@ es tuya cuando pulsas **Guardar**.
 guardar, y pregunta antes si has cambiado algo. **Compartir**, **Cargar código
 GW1**, **Duplicar** y **Eliminar** están en **⋯**.
 
-Un código de equipo se pega en **Creador de equipos**.
+Un código de equipo se carga en **Creador de equipos**: pulsa **Cargar equipo**,
+pega el código y pulsa **Cargar**, o pégalo en cualquier parte de Creador de
+equipos.
 
 ## Builds de equipo
 
 Una **build de equipo** es un equipo de personajes propios, hecho en **Creador
 de equipos** y separado de tus personajes. Cada una es una carta ahí, y solo
-ahí: **Nueva build** crea una, y un clic en una carta, o su **Editar**, la
-abre. Propones una en la [Sala de equipo](modes.md#sala-de-equipo).
+ahí: **Nueva build** crea una, **Cargar equipo** carga una que te han
+compartido, y un clic en una carta, o su **Editar**, la abre. Propones una en la [Sala de equipo](modes.md#sala-de-equipo).
 
 Cada build de equipo tiene un tamaño, 2v2, 4v4 u 8v8 (no hay builds de equipo
 de 1v1): el **Tamaño del equipo** de la barra lateral. Creador de equipos
@@ -202,7 +204,8 @@ con un **Deshacer**. Pulsa el nombre de un miembro, o **Abrir en la pantalla de
 personaje**, para editarlo en el editor de builds; su **Guardar** lo devuelve al
 equipo, y el **Guardar** del propio equipo lo conserva todo y te lleva de vuelta
 a Creador de equipos. **Esc** sale sin guardar, y pregunta antes. **Compartir**,
-**Duplicar** y **Eliminar** del equipo están en **⋯**.
+**Cargar equipo**, **Duplicar** y **Eliminar** del equipo están en **⋯**.
+**Cargar equipo** ahí abre el equipo cargado en lugar de este.
 Puedes guardar un equipo en cualquier momento, aunque tenga problemas, pero solo
 un equipo sin problemas se puede proponer en una Sala de equipo: una carta dice
 **No jugable** y por qué, y un equipo sin nombre aparece como **Equipo sin

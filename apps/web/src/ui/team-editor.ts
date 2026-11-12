@@ -16,7 +16,7 @@ import {
   type TeamBuildSize,
   type TeamCharacter,
 } from "../storage/schema.js";
-import { exportTeam, importTeam, looksLikeTeam } from "../storage/team-transfer.js";
+import { exportTeam } from "../storage/team-transfer.js";
 import {
   mountAttributes,
   mountGear,
@@ -38,6 +38,7 @@ import {
   h,
   inlineConfirm,
   listenForPaste,
+  loadLine,
   moreMenu,
   problemsChip,
   screenBar,
@@ -59,6 +60,7 @@ import {
 } from "./team-builder.js";
 import { mountPaperDoll } from "./paper-doll.js";
 import { teamSizeStepper } from "./rail.js";
+import { loadTeamCode, pasteTeam } from "./team-play.js";
 import { createSkillTooltip } from "./skill-tooltip.js";
 import { describeNames, describeWords } from "../i18n/describe-words.js";
 
@@ -463,6 +465,23 @@ export function mountTeamEditor(
       },
     );
   });
+  // A loaded or pasted team opens in place of this one (#577, #3181);
+  // edits here are only discarded once the player says so.
+  const openLoaded = (loaded: StoredTeam): void => {
+    if (!isTeamUnsaved(opened, team)) {
+      callbacks.onImportTeam(loaded);
+      return;
+    }
+    ask(
+      save,
+      t("teamEditor.discardForPaste"),
+      t("teamEditor.discard"),
+      () => {
+        callbacks.onImportTeam(loaded);
+      },
+      t("teamEditor.keepEditing"),
+    );
+  };
   // Duplicate copies the stored team: with edits pending it would store
   // them unchecked, under the copy, and drop them from this one.
   const duplicate = button(t("teamEditor.duplicate"), "", () => {
@@ -471,6 +490,7 @@ export function mountTeamEditor(
   // Share (#577): the team, every build inline, as one line with Copy.
   const share = shareLine(t("teamEditor.shareLabel"));
   const shareButton = button(t("teamEditor.share"), "", () => {
+    load.hide();
     share.show(exportTeam(team));
   });
   shareButton.title = t("teamEditor.shareTitle");
@@ -487,7 +507,24 @@ export function mountTeamEditor(
       t("teamEditor.cancel"),
     );
   });
-  const more = moreMenu([shareButton, duplicate, remove], [share.element]);
+  // Load team (#3181): a shared team line opens in place of this one, as
+  // a paste does; Share and Load are one at a time.
+  const load = loadLine(t("teamPlay.loadLine"), t("teamPlay.loadPlaceholder"), (text) => {
+    const result = loadTeamCode(text, () => crypto.randomUUID(), Date.now());
+    if (!result.ok) {
+      return result.problems;
+    }
+    openLoaded(result.team);
+    return [];
+  });
+  const loadButton = button(t("teamEditor.loadTeam"), "", () => {
+    share.hide();
+    load.show();
+  });
+  const more = moreMenu(
+    [shareButton, loadButton, duplicate, remove],
+    [share.element, load.element],
+  );
 
   screenBar({
     crumbs: ["VibeWars", t("teamEditor.crumb"), nameInput],
@@ -505,6 +542,10 @@ export function mountTeamEditor(
       }
       if (share.isOpen()) {
         share.hide();
+        return true;
+      }
+      if (load.isOpen()) {
+        load.hide();
         return true;
       }
       if (chip.isOpen()) {
@@ -1160,37 +1201,15 @@ export function mountTeamEditor(
     if (!more.element.contains(event.target)) {
       more.close();
       share.hide();
+      load.hide();
     }
   };
   document.addEventListener("pointerdown", onPointerDown);
 
   // A team code pasted anywhere but a field opens that team, unsaved
-  // (#577); edits here are only discarded once the player says so. A
-  // single build code is not a team, and is ignored.
-  const stopPaste = listenForPaste((text) => {
-    if (!looksLikeTeam(text)) {
-      return false;
-    }
-    const result = importTeam(text, () => crypto.randomUUID(), Date.now());
-    if (!result.ok) {
-      toast("Could not import", { problems: result.problems });
-      return true;
-    }
-    if (!isTeamUnsaved(opened, team)) {
-      callbacks.onImportTeam(result.team);
-      return true;
-    }
-    ask(
-      save,
-      t("teamEditor.discardForPaste"),
-      t("teamEditor.discard"),
-      () => {
-        callbacks.onImportTeam(result.team);
-      },
-      t("teamEditor.keepEditing"),
-    );
-    return true;
-  });
+  // (#577), as Load team does. A single build code is not a team, and is
+  // ignored.
+  const stopPaste = listenForPaste((text) => pasteTeam(text, openLoaded));
 
   return {
     leave,
