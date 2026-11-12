@@ -392,6 +392,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "vũ khí",
 
+  "guildLink.broken": "Link Bang đó bị hỏng.",
+  "guildLink.framed": "Hãy mở link Bang trong tab riêng. Chưa có gì thay đổi.",
+  "guildLink.decline": "Không",
+  "guildLink.join": "Gia nhập",
+  "guildLink.joined": "Giờ bạn mặc áo choàng của [{tag}].",
+  "guildLink.joinedNoCape": "Tag Bang của bạn giờ là [{tag}].",
+  "guildLink.question": "Gia nhập Bang [{tag}]?",
+  "guildLink.questionReplace": "Thay [{old}] bằng [{tag}]?",
+  "guildLink.trust":
+    "Link này đặt Tag Bang và Áo choàng Bang của bạn. Ai cũng có thể gửi, và không ai sở hữu một tag.",
+
   "help.label": "Hỗ trợ",
   "help.licences": "Giấy phép bên thứ ba",
   "help.pages": "trang hỗ trợ",
@@ -785,6 +796,9 @@ export default {
   "player.emblemRing": "vòng",
   "player.emblemTriangle": "tam giác",
   "player.guildCape": "Áo choàng Bang",
+  "player.copyGuildLink": "Chép link Bang",
+  "player.guildLink": "Link Bang",
+  "player.guildLinkByHand": "Không chép được: link Bang đã được chọn, hãy tự chép",
   "player.guildTag": "Tag Bang",
   "player.guildTagHint": "2–4 chữ cái hoặc số",
   "player.guildTagPlaceholder": "TAG",

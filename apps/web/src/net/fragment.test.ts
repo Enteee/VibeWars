@@ -1,7 +1,10 @@
+import { CAPE_COLOURS, CAPE_EMBLEMS } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
+import { guildLink } from "../ui/player-section.js";
 import {
   MAX_PASTED_LINK_LENGTH,
+  parseGuildFragment,
   parseLobbyFragment,
   readPastedLobbyLink,
   takeFragmentPart,
@@ -108,5 +111,82 @@ describe("readPastedLobbyLink (#2882)", () => {
     ["index.html", `https://vibe.example/VibeWars/index.html#lobby=${KEY}`],
   ])("is another build: %s", (_name, text) => {
     expect(read(text)).toEqual({ kind: "other-build" });
+  });
+});
+
+describe("parseGuildFragment (#3167)", () => {
+  const here = { origin: "https://vibewars.example", pathname: "/play/" };
+  const hashOf = (url: string): string => new URL(url).hash;
+
+  it("reads back every colour and emblem guildLink writes", () => {
+    for (const colour of CAPE_COLOURS) {
+      for (const emblem of CAPE_EMBLEMS) {
+        const cape = { main: colour, trim: "black", emblem } as const;
+        expect(parseGuildFragment(hashOf(guildLink("Vw", cape, here)))).toEqual({
+          kind: "guild",
+          tag: "Vw",
+          cape,
+          rest: "",
+        });
+      }
+    }
+  });
+
+  it("reads a tag alone as a guild with no cape", () => {
+    expect(guildLink("VIBE", null, here)).toBe("https://vibewars.example/play/#guild=VIBE");
+    expect(parseGuildFragment("#guild=VIBE")).toEqual({
+      kind: "guild",
+      tag: "VIBE",
+      cape: null,
+      rest: "",
+    });
+  });
+
+  it("is nothing for a page opened without one", () => {
+    expect(parseGuildFragment("")).toEqual({ kind: "none" });
+    expect(parseGuildFragment(`#lobby=${KEY}`)).toEqual({ kind: "none" });
+  });
+
+  it("calls a bad tag, colour, emblem or count of parts invalid", () => {
+    for (const value of [
+      "V",
+      "V!B",
+      "VIBES",
+      "",
+      "VW.gold",
+      "VW.gold.black",
+      "VW.gold.black.cross.disc",
+      "VW.mauve.black.cross",
+      "VW.gold.mauve.cross",
+      "VW.gold.black.star",
+      "VW.Gold.black.cross",
+    ]) {
+      expect(parseGuildFragment(`#guild=${value}`), value).toEqual({ kind: "invalid", rest: "" });
+    }
+  });
+
+  it("calls a fragment longer than any real link invalid", () => {
+    const long = `#guild=VW&${"x".repeat(MAX_PASTED_LINK_LENGTH)}`;
+    expect(parseGuildFragment(long).kind).toBe("invalid");
+  });
+
+  it("consumes every guild= part, the first valid one winning", () => {
+    expect(parseGuildFragment("#guild=V!&guild=AB.gold.black.cross&guild=CD")).toEqual({
+      kind: "guild",
+      tag: "AB",
+      cape: { main: "gold", trim: "black", emblem: "cross" },
+      rest: "",
+    });
+  });
+
+  it("leaves lobby= and turn= to their own readers", () => {
+    const turn = "turn=abc";
+    const read = parseGuildFragment(`#lobby=${KEY}&guild=VW.gold.black.cross&${turn}`);
+    expect(read.kind === "none" ? undefined : read.rest).toBe(`lobby=${KEY}&${turn}`);
+    expect(parseLobbyFragment(read.kind === "none" ? "" : read.rest)).toEqual({
+      kind: "invite",
+      code: KEY,
+      rest: turn,
+    });
   });
 });

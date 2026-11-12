@@ -190,6 +190,8 @@ Bir değişiklik katıldığın bir sonraki lobiden ya da bir sonraki yeni
 lobinden itibaren geçerli olur: zaten içinde olduğun lobi, katıldığın
 haliyle kalır.
 
+Pelerin tasarımcısının altındaki **Lonca bağlantısını kopyala**, etiketini ve pelerinini taşıyan bir bağlantı kopyalar. Bağlantıyı açan kişiye **[VIBE] loncasına katılınsın mı?** diye sorulur: **Katıl** ona etiketini ve pelerinini verir, **Hayır** hiçbir şeyi değiştirmez. Böyle bir bağlantıyı herkes gönderebilir ve hiç kimse bir etiketin sahibi değildir, bu yüzden oyun her zaman önce sorar.
+
 ## Dil
 
 Oyun, varsa tarayıcının dilinde, yoksa İngilizce başlar. **Ayarlar →

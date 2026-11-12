@@ -182,6 +182,8 @@ izborniku. **Bez plašta** ga skida.
 Promjena vrijedi od sljedeće sobe u koju uđeš ili sljedeće nove:
 ona u kojoj već jesi zadržava ono s čime si ušao.
 
+**Kopiraj poveznicu ceha**, ispod dizajnera plašta, kopira poveznicu s tvojom oznakom i plaštom. Tko je otvori, dobije pitanje **Pridružiti se cehu [VIBE]?**: **Pridruži se** daje mu tvoju oznaku i plašt, **Ne** ne mijenja ništa. Takvu poveznicu može poslati bilo tko i nitko nije vlasnik oznake, pa igra uvijek prvo pita.
+
 ## Jezik
 
 Igra se pokreće na jeziku tvog preglednika ako ga ima, inače na

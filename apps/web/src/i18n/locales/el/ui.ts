@@ -444,6 +444,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}δ",
   "gearLibrary.weapons": "όπλα",
 
+  "guildLink.broken": "Αυτός ο σύνδεσμος συντεχνίας είναι χαλασμένος.",
+  "guildLink.framed": "Άνοιξε τον σύνδεσμο συντεχνίας σε δική του καρτέλα. Δεν άλλαξε τίποτα.",
+  "guildLink.decline": "Όχι",
+  "guildLink.join": "Συμμετοχή",
+  "guildLink.joined": "Τώρα φοράς την κάπα της [{tag}].",
+  "guildLink.joinedNoCape": "Το σήμα συντεχνίας σου είναι τώρα [{tag}].",
+  "guildLink.question": "Συμμετοχή στη συντεχνία [{tag}];",
+  "guildLink.questionReplace": "Αντικατάσταση του [{old}] με το [{tag}];",
+  "guildLink.trust":
+    "Αυτός ο σύνδεσμος ορίζει το σήμα και την κάπα της συντεχνίας σου. Οποιοσδήποτε μπορεί να τον στείλει και κανείς δεν κατέχει ένα σήμα.",
+
   "help.label": "Βοήθεια",
   "help.licences": "Άδειες τρίτων",
   "help.pages": "σελίδες βοήθειας",
@@ -844,6 +855,10 @@ export default {
   "player.emblemRing": "δακτύλιος",
   "player.emblemTriangle": "τρίγωνο",
   "player.guildCape": "Κάπα συντεχνίας",
+  "player.copyGuildLink": "Αντιγραφή συνδέσμου συντεχνίας",
+  "player.guildLink": "Σύνδεσμος συντεχνίας",
+  "player.guildLinkByHand":
+    "Η αντιγραφή απέτυχε: ο σύνδεσμος συντεχνίας είναι επιλεγμένος, αντίγραψέ τον χειροκίνητα",
   "player.guildTag": "Σήμα συντεχνίας",
   "player.guildTagHint": "2–4 γράμματα ή ψηφία",
   "player.guildTagPlaceholder": "ΣΗΜΑ",

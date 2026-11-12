@@ -440,6 +440,17 @@ export const en = {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}s",
   "gearLibrary.weapons": "weapons",
 
+  "guildLink.broken": "That guild link is broken.",
+  "guildLink.framed": "Open the guild link in its own tab. Nothing was changed.",
+  "guildLink.decline": "No",
+  "guildLink.join": "Join",
+  "guildLink.joined": "You now wear [{tag}]'s cape.",
+  "guildLink.joinedNoCape": "Your guild tag is now [{tag}].",
+  "guildLink.question": "Join guild [{tag}]?",
+  "guildLink.questionReplace": "Replace [{old}] with [{tag}]?",
+  "guildLink.trust":
+    "This link sets your guild tag and cape. Anyone can send one, and nobody owns a tag.",
+
   "help.label": "Help",
   "help.licences": "Third-party licences",
   "help.pages": "help pages",
@@ -836,6 +847,9 @@ export const en = {
   "player.emblemRing": "ring",
   "player.emblemTriangle": "triangle",
   "player.guildCape": "Guild cape",
+  "player.copyGuildLink": "Copy guild link",
+  "player.guildLink": "Guild link",
+  "player.guildLinkByHand": "Could not copy: the guild link is selected, copy it by hand",
   "player.guildTag": "Guild tag",
   "player.guildTagHint": "2–4 letters or digits",
   "player.guildTagPlaceholder": "TAG",

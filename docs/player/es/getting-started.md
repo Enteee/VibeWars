@@ -186,6 +186,8 @@ muestran. **Sin capa** te la quita.
 Un cambio se aplica desde la próxima sala a la que entres, o la próxima nueva:
 en la que ya estás se mantiene lo que tenías al entrar.
 
+**Copiar enlace del gremio**, bajo el diseñador de capa, copia un enlace con tu etiqueta y tu capa. Quien lo abra verá **¿Unirte al gremio [VIBE]?**: **Unirme** le da tu etiqueta y tu capa, **No** no cambia nada. Cualquiera puede enviar un enlace así y nadie es dueño de una etiqueta, por eso el juego siempre pregunta antes.
+
 ## Idioma
 
 El juego empieza en el idioma de tu navegador si lo tiene; si no, en inglés.

@@ -184,6 +184,8 @@ menu juga menampilkannya. **Tanpa jubah** melepasnya.
 Perubahan berlaku mulai lobi berikutnya yang kamu masuki, atau lobi barumu berikutnya:
 lobi yang sedang kamu tempati tetap memakai apa yang kamu bawa saat bergabung.
 
+**Salin link guild**, di bawah perancang jubah, menyalin link yang membawa tag dan jubahmu. Siapa pun yang membukanya akan ditanya **Gabung ke guild [VIBE]?**: **Gabung** memberinya tag dan jubahmu, **Tidak** tidak mengubah apa pun. Siapa saja bisa mengirim link seperti itu dan tidak ada yang memiliki sebuah tag, jadi game selalu bertanya dulu.
+
 ## Bahasa
 
 Game dimulai dalam bahasa browser-mu jika tersedia, jika tidak dalam

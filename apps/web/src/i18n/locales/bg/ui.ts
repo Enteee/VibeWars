@@ -441,6 +441,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds}с",
   "gearLibrary.weapons": "оръжия",
 
+  "guildLink.broken": "Този линк на гилдия е повреден.",
+  "guildLink.framed": "Отвори линка на гилдията в отделен раздел. Нищо не е променено.",
+  "guildLink.decline": "Не",
+  "guildLink.join": "Присъедини се",
+  "guildLink.joined": "Вече носиш наметалото на [{tag}].",
+  "guildLink.joinedNoCape": "Тагът на гилдията ти вече е [{tag}].",
+  "guildLink.question": "Да се присъединиш към гилдия [{tag}]?",
+  "guildLink.questionReplace": "Да замениш [{old}] с [{tag}]?",
+  "guildLink.trust":
+    "Този линк задава таг и наметало на гилдия. Всеки може да го изпрати и никой не притежава таг.",
+
   "help.label": "Помощ",
   "help.licences": "Лицензи на трети страни",
   "help.pages": "страници с помощ",
@@ -837,6 +848,9 @@ export default {
   "player.emblemRing": "пръстен",
   "player.emblemTriangle": "триъгълник",
   "player.guildCape": "Наметало на гилдия",
+  "player.copyGuildLink": "Копирай линк на гилдията",
+  "player.guildLink": "Линк на гилдия",
+  "player.guildLinkByHand": "Копирането не успя: линкът на гилдията е маркиран, копирай го ръчно",
   "player.guildTag": "Таг на гилдия",
   "player.guildTagHint": "2–4 букви или цифри",
   "player.guildTagPlaceholder": "TAG",

@@ -467,6 +467,17 @@ export default {
   "gearLibrary.weaponDetail": "{min}–{max} · {seconds} שנ׳",
   "gearLibrary.weapons": "נשקים",
 
+  "guildLink.broken": "קישור הגילדה הזה שבור.",
+  "guildLink.framed": "פתח את קישור הגילדה בכרטיסייה משלו. שום דבר לא השתנה.",
+  "guildLink.decline": "לא",
+  "guildLink.join": "הצטרף",
+  "guildLink.joined": "עכשיו אתה לובש את הגלימה של [{tag}].",
+  "guildLink.joinedNoCape": "תג הגילדה שלך הוא עכשיו [{tag}].",
+  "guildLink.question": "להצטרף לגילדה [{tag}]?",
+  "guildLink.questionReplace": "להחליף את [{old}] ב-[{tag}]?",
+  "guildLink.trust":
+    "הקישור הזה קובע את תג הגילדה ואת הגלימה שלך. כל אחד יכול לשלוח אחד, ואף אחד לא הבעלים של תג.",
+
   "help.label": "עזרה",
   "help.licences": "רישיונות צד שלישי",
   "help.pages": "דפי עזרה",
@@ -892,6 +903,9 @@ export default {
   "player.emblemRing": "טבעת",
   "player.emblemTriangle": "משולש",
   "player.guildCape": "גלימת גילדה",
+  "player.copyGuildLink": "העתק קישור גילדה",
+  "player.guildLink": "קישור גילדה",
+  "player.guildLinkByHand": "ההעתקה נכשלה: קישור הגילדה מסומן, העתק אותו ידנית",
   "player.guildTag": "תג גילדה",
   "player.guildTagHint": "2–4 אותיות או ספרות",
   "player.guildTagPlaceholder": "תג",

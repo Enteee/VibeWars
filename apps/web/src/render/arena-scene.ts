@@ -79,8 +79,10 @@ import {
   type AltTracker,
   CREATURE_PATH,
   WALL_HEIGHT,
+  deckCovers,
   deckHeldBy,
   deckSideLow,
+  shapeOutline,
   southFacingEdges,
   sweptEdges,
   drawnLayerAt,
@@ -217,13 +219,14 @@ import { SPIRE_LOOK, ZONE_EDGE_WIDTH, ZONE_LOOK, strikeEdgeScale } from "./zone-
 import { HAZARD_ART, hazardKindOf, pathMotionAt, phaseProgressAt } from "./hazard-marks.js";
 import {
   OUTSIDE_TILE,
-  insideRuns,
+  outsideCover,
   outsideFrame,
   paintOutsideEdge,
   paintOutsideTile,
   type OutsidePainter,
 } from "./outside-land.js";
 import { withZoneLights } from "./zone-light.js";
+import { insideRuns, shownFill } from "./cell-cover.js";
 import {
   AtmosphereParticles,
   fogArtOf,
@@ -275,6 +278,9 @@ const BEACON_BOLT_GLOW = 0x79c0ff;
 const BEACON_BOLT_CORE = 0xf0f6ff;
 /** How far apart the side face's stacked outlines lay, in world units: where its top still ends. */
 const SIDE_FACE_SLICE = 2;
+/** The cell, world units, a fill leaves out where a deck covers it (#3162), and how far past the deck's edge. */
+const SHOWN_FILL_CELL = 32;
+const SHOWN_FILL_MARGIN = 2;
 /** Line widths, in CSS px: a deck's lip and a wall's lit edge. */
 const DECK_LIP_WIDTH = 3;
 /** The dark of a drop-off's broken lip, under its pale crumbled edge (#3069). */
@@ -2398,7 +2404,10 @@ export class ArenaScene extends Phaser.Scene {
         this.drawWallBox(g, wall, elevationOf(wall.layer, ground), line, lit);
       } else {
         const low = elevationOf(wall.layer, ground);
-        this.drawColumn(g, wall, low, deckSideLow(held, next.walls, ground), lit.support);
+        const depth = renderOrder({ kind: "support", deckLayer: held.layer });
+        const hidden = deckCovers(next.structure, next.walls, depth);
+        const high = deckSideLow(held, next.walls, ground);
+        this.drawColumn(g, wall, low, high, lit.support, false, hidden);
       }
     }
     // A wall's fall always swaps the wall list, so its rubble is drawn here.
@@ -2677,7 +2686,7 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
-    this.drawColumn(side, deck.footprint, frame.low, frame.top, palette.slab);
+    this.drawColumn(side, deck.footprint, frame.low, frame.top, palette.slab, true);
     art.side(side, frame);
     const face = this.structureAt({ kind: "deck", deckLayer: deck.layer });
     face.save();
@@ -2772,13 +2781,21 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** `shape` stacked from lift `low` up to `high`: a side face, or a pillar. */
+  /**
+   * `shape` stacked from lift `low` up to `high`: a side face, or a pillar.
+   * A `capped` column has `shape` drawn opaque at `high` after it, a deck
+   * or a wall's top: its own top is all under that, so it is only its
+   * south sides, swept the whole way up (#3162). Of an uncapped one's top,
+   * what `hidden` covers is left out.
+   */
   private drawColumn(
     g: Phaser.GameObjects.Graphics,
     shape: RenderableShape,
     low: number,
     high: number,
     colour: number,
+    capped = false,
+    hidden: readonly (readonly Vec2[])[] = [],
   ): void {
     if (high <= low) {
       return;
@@ -2786,14 +2803,21 @@ export class ArenaScene extends Phaser.Scene {
     // Up to the last of the outlines it once stacked, so nothing it shows moves.
     const top = low + (Math.ceil((high - low) / SIDE_FACE_SLICE) - 1) * SIDE_FACE_SLICE;
     g.fillStyle(colour, 1);
-    for (const lift of [low, top]) {
+    if (!capped) {
       g.save();
-      g.translateCanvas(0, -lift);
-      this.fillShape(g, shape);
+      g.translateCanvas(0, -top);
+      this.fillShapeShown(
+        g,
+        shape,
+        hidden.map((outline) => outline.map(({ x, y }) => ({ x, y: y + top }))),
+      );
       g.restore();
     }
     // A parallelogram each: two triangles, never a path Phaser earcuts every frame.
-    for (const [a, b, c, d] of sweptEdges(shape, low, top)) {
+    // A top cut round what is hidden meets its sides edge to part of an
+    // edge, which leaves pixels between them: the sides reach into it.
+    const reach = capped ? high : hidden.length > 0 ? top + 1 : top;
+    for (const [a, b, c, d] of sweptEdges(shape, low, reach)) {
       if (a !== undefined && b !== undefined && c !== undefined && d !== undefined) {
         g.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
         g.fillTriangle(a.x, a.y, c.x, c.y, d.x, d.y);
@@ -2822,7 +2846,7 @@ export class ArenaScene extends Phaser.Scene {
     palette: ArenaPalette,
   ): void {
     const top = base + WALL_HEIGHT;
-    this.drawColumn(g, wall, base, top, palette.wallFace);
+    this.drawColumn(g, wall, base, top, palette.wallFace, true);
     g.save();
     g.translateCanvas(0, -top);
     this.drawFlatWall(g, wall, line, palette);
@@ -2838,15 +2862,39 @@ export class ArenaScene extends Phaser.Scene {
       g.fillRect(wall.x, wall.y, wall.width, wall.height);
       return;
     }
-    // Triangulated here, once per map, and filled as triangles: Phaser
-    // earcuts a `fillPoints` path again on every frame it renders (#1353).
-    const flat = wall.points.flatMap((p) => [p.x, p.y]);
-    const corners = Phaser.Geom.Polygon.Earcut(flat).map((index) => wall.points[index]);
-    for (let i = 0; i + 2 < corners.length; i += 3) {
-      const [a, b, c] = [corners[i], corners[i + 1], corners[i + 2]];
+    for (const [a, b, c] of shapeTriangles(wall)) {
       if (a !== undefined && b !== undefined && c !== undefined) {
         g.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
       }
+    }
+  }
+
+  /**
+   * `shape` filled but where `hidden`, in the same coordinates (#3162):
+   * what decks drawn after it cover anyway, so the floor or a cliff under
+   * a terrace does not cost a frame twice.
+   */
+  private fillShapeShown(
+    g: Phaser.GameObjects.Graphics,
+    shape: RenderableShape,
+    hidden: readonly (readonly Vec2[])[],
+  ): void {
+    if (hidden.length === 0) {
+      this.fillShape(g, shape);
+      return;
+    }
+    const { boxes, pieces } = shownFill(
+      shapeOutline(shape),
+      shapeTriangles(shape),
+      hidden,
+      SHOWN_FILL_CELL,
+      SHOWN_FILL_MARGIN,
+    );
+    for (const { x, y, width, height } of boxes) {
+      g.fillRect(x, y, width, height);
+    }
+    for (const piece of pieces) {
+      this.fillFan(g, piece);
     }
   }
 
@@ -2871,12 +2919,15 @@ export class ArenaScene extends Phaser.Scene {
     }
     g.clear();
     const { bounds } = this.snapshot.structure;
+    // What the decks cover of it, they draw over opaque (#3162).
+    const hidden = deckCovers(this.snapshot.structure, this.snapshot.walls, FLOOR_DEPTH);
     if (bounds.kind === "outline") {
       g.fillStyle(palette.floor ?? ARENA_BACKGROUND, 1);
-      this.fillShape(g, { kind: "polygon", points: bounds.outline });
+      this.fillShapeShown(g, { kind: "polygon", points: bounds.outline }, hidden);
     } else if (palette.floor !== undefined) {
       g.fillStyle(palette.floor, 1);
-      g.fillRect(0, 0, this.arena.width, this.arena.height);
+      const { width, height } = this.arena;
+      this.fillShapeShown(g, { kind: "rect", x: 0, y: 0, width, height }, hidden);
     }
     this.drawGrid(g, line, palette);
     if (bounds.kind === "outline") {
@@ -2894,10 +2945,11 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The land outside the ground's outline (#3066), under the floor: one
-   * tiled sprite over the rectangle, lit there by the light map, and four
-   * round it, which no light map covers, so tinted by the map's ambient
-   * and sun instead. Built once per outline.
+   * The land outside the ground's outline (#3066), under the floor: tiled
+   * sprites over the rectangle where the floor leaves it showing (#3162),
+   * lit there by the light map, and four round it, which no light map
+   * covers, so tinted by the map's ambient and sun instead. Built once
+   * per outline.
    */
   private drawOutside(bounds: MapBounds, lighting: MapLighting | undefined): void {
     if (this.outside?.bounds !== bounds) {
@@ -2931,7 +2983,9 @@ export class ArenaScene extends Phaser.Scene {
     const { width, height } = this.arena;
     return {
       bounds,
-      inside: tiled(0, 0, width, height),
+      inside: outsideCover(bounds.outline, width, height).map((box) =>
+        tiled(box.x, box.y, box.width, box.height),
+      ),
       frame: outsideFrame(width, height).map((band) =>
         tiled(band.x, band.y, band.width, band.height),
       ),
@@ -2943,8 +2997,7 @@ export class ArenaScene extends Phaser.Scene {
     if (this.outside === undefined) {
       return;
     }
-    this.outside.inside.destroy();
-    for (const band of this.outside.frame) {
+    for (const band of [...this.outside.inside, ...this.outside.frame]) {
       band.destroy();
     }
     this.outside = undefined;
@@ -3254,14 +3307,38 @@ export class ArenaScene extends Phaser.Scene {
   }
 }
 
+/**
+ * `shape` as triangles, corner by corner. A polygon is triangulated here,
+ * once per map, and filled as triangles: Phaser earcuts a `fillPoints`
+ * path again on every frame it renders (#1353).
+ */
+function shapeTriangles(shape: RenderableShape): readonly (readonly Vec2[])[] {
+  const points = shapeOutline(shape);
+  const corners =
+    shape.kind === "rect"
+      ? [0, 1, 2, 0, 2, 3]
+      : Phaser.Geom.Polygon.Earcut(points.flatMap((p) => [p.x, p.y]));
+  const triangles: (readonly Vec2[])[] = [];
+  for (let i = 0; i + 2 < corners.length; i += 3) {
+    const triangle = [corners[i], corners[i + 1], corners[i + 2]].flatMap((index) => {
+      const corner = index === undefined ? undefined : points[index];
+      return corner === undefined ? [] : [corner];
+    });
+    if (triangle.length === 3) {
+      triangles.push(triangle);
+    }
+  }
+  return triangles;
+}
+
 /** A map's bounds when they are an outline. */
 type OutlineBounds = Extract<MapBounds, { readonly kind: "outline" }>;
 
 /** The land outside a ground outline (#3066), tiled. */
 interface OutsideLand {
   readonly bounds: OutlineBounds;
-  /** Over the rectangle, under its floor. */
-  readonly inside: Phaser.GameObjects.TileSprite;
+  /** Over the rectangle where the floor leaves it showing (#3162), under the floor. */
+  readonly inside: readonly Phaser.GameObjects.TileSprite[];
   /** Round the rectangle, out to the margin. */
   readonly frame: readonly Phaser.GameObjects.TileSprite[];
 }

@@ -184,6 +184,8 @@ af.
 Een wijziging geldt vanaf de volgende lobby waar je binnenkomt, of je volgende
 nieuwe: in een lobby waar je al in zit, houd je wat je had toen je erin kwam.
 
+**Gildelink kopiëren**, onder de capeontwerper, kopieert een link met je tag en cape. Wie hem opent, krijgt de vraag **Lid worden van gilde [VIBE]?**: **Lid worden** geeft diegene je tag en cape, **Nee** verandert niets. Iedereen kan zo'n link sturen en niemand is eigenaar van een tag, dus het spel vraagt het altijd eerst.
+
 ## Taal
 
 Het spel start in de taal van je browser als het die heeft, anders in het

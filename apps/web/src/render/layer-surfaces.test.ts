@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { Uphill } from "@vibewars/game-core";
+import type { Uphill, Vec2 } from "@vibewars/game-core";
 
 import {
   actorAtPoint,
@@ -797,21 +797,61 @@ describe("the deck a body stands under (#3078)", () => {
 });
 
 describe("the side of a raised column (#3157)", () => {
-  it("is each edge of its shape swept from its foot up to its top, one quad per edge", () => {
-    const quads = sweptEdges(bridge, 0, 30);
-    expect(quads).toHaveLength(4);
-    expect(quads[0]).toEqual([
-      { x: 100, y: 100 },
-      { x: 300, y: 100 },
-      { x: 300, y: 70 },
-      { x: 100, y: 70 },
+  it("is each south-facing edge swept from its foot up to its top (#3162)", () => {
+    expect(sweptEdges(bridge, 0, 30)).toEqual([
+      [
+        { x: 300, y: 200 },
+        { x: 100, y: 200 },
+        { x: 100, y: 170 },
+        { x: 300, y: 170 },
+      ],
     ]);
-    // The last edge closes the outline, back to its first corner.
-    expect(quads[3]?.[1]).toEqual({ x: 100, y: 100 });
   });
 
   it("starts a column raised off the ground at its low end", () => {
     const [first] = sweptEdges(bridge, 10, 30);
-    expect(first?.map(({ y }) => y)).toEqual([90, 90, 70, 70]);
+    expect(first?.map(({ y }) => y)).toEqual([190, 190, 170, 170]);
+  });
+
+  it("with the top, covers all the whole column covers, and no more (#3162)", () => {
+    // An L with a notch in its south side and a slanted edge: every kind of corner.
+    const shape = {
+      kind: "polygon" as const,
+      points: [
+        { x: 0, y: 0 },
+        { x: 120, y: 0 },
+        { x: 120, y: 60 },
+        { x: 60, y: 60 },
+        { x: 40, y: 100 },
+        { x: 0, y: 100 },
+      ],
+    };
+    const inside = (outline: readonly Vec2[], { x, y }: Vec2): boolean => {
+      let hit = false;
+      outline.forEach((a, k) => {
+        const b = outline[(k + 1) % outline.length] ?? a;
+        if (a.y > y !== b.y > y && x < a.x + ((y - a.y) / (b.y - a.y)) * (b.x - a.x)) {
+          hit = !hit;
+        }
+      });
+      return hit;
+    };
+    const lifted = (by: number) => shape.points.map(({ x, y }) => ({ x, y: y - by }));
+    const [low, high] = [8, 40];
+    const drawn = [lifted(high), ...sweptEdges(shape, low, high)];
+    for (let y = -50; y <= 110; y += 1.5) {
+      for (let x = -5; x <= 125; x += 1.5) {
+        const point = { x, y };
+        // The column: the shape at some lift between its foot and its top.
+        let column = false;
+        for (let lift = low; lift <= high && !column; lift += 0.25) {
+          column = inside(lifted(lift), point);
+        }
+        expect(
+          drawn.some((piece) => inside(piece, point)),
+          `${String(x)},${String(y)}`,
+        ).toBe(column);
+      }
+    }
   });
 });

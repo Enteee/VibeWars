@@ -53,6 +53,8 @@ Apri **Opzioni** con la ⚙ nella barra superiore: la sezione **giocatore** cont
 
 Una modifica vale dalla prossima lobby in cui entri, o dalla tua prossima nuova: quella in cui sei già mantiene ciò con cui sei entrato.
 
+**Copia link della gilda**, sotto il designer del mantello, copia un link con il tuo tag e il tuo mantello. Chi lo apre si vede chiedere **Unirti alla gilda [VIBE]?**: **Unisciti** gli dà il tuo tag e il tuo mantello, **No** non cambia nulla. Chiunque può inviare un link così e nessuno possiede un tag, quindi il gioco chiede sempre prima.
+
 ## Lingua
 
 Il gioco parte nella lingua del tuo browser, se disponibile, altrimenti in inglese. Scegline un'altra in **Opzioni → lingua**: la pagina si ricarica in quella lingua e la mantiene da quel momento. Per ora i nomi di abilità, mappe e oggetti sono in inglese. Mentre sei in una lobby con altri, in coda o in partita la scelta è bloccata, perché ricaricare ti farebbe uscire. I nomi dei giocatori restano come li hanno scritti loro.

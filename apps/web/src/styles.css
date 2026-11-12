@@ -1629,6 +1629,29 @@ body:has(> .splash) #menu-background::after {
   color: var(--accent);
 }
 
+/* The guild link's Copy under the cape designer (#3167). */
+.screen .player-guild-copy {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+}
+
+.screen .player-guild-copy[hidden] {
+  display: none;
+}
+
+/* A guild link's cape (#3167): its colour, its trim round it, its emblem. */
+.guild-cape-preview {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 36px;
+  margin-inline-end: 0.6rem;
+  vertical-align: middle;
+  background: var(--cape-main);
+  border: 3px solid var(--cape-trim);
+  border-radius: 2px 2px 8px 8px;
+}
+
 /* A player's guild tag after their name (#1406): theirs, but quieter. */
 .guild-tag {
   color: var(--ink-dim);

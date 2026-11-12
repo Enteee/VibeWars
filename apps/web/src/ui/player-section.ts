@@ -8,6 +8,7 @@ import {
 } from "@vibewars/game-session";
 
 import { t, type MessageKey } from "../i18n/index.js";
+import { GUILD_FRAGMENT_KEY } from "../net/fragment.js";
 import { SELF_RIM, paintEmblem } from "../render/body-painter.js";
 import {
   CAPE_PALETTE,
@@ -19,7 +20,7 @@ import { heroRankOf, loadFame } from "../storage/fame.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { canvasPainter } from "./character-figure.js";
 import { cssColour } from "./character-preview.js";
-import { button, h } from "./kit.js";
+import { button, h, shareLine, toast, type ShareLine } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
 
 /**
@@ -147,6 +148,34 @@ export function showsCapeDesigner(typed: string): boolean {
   return sanitizeGuildTag(typed) !== null;
 }
 
+/**
+ * The guild link to `tag` and `cape` (#3167): this page's own origin and
+ * path, with `#guild=<TAG>.<main>.<trim>.<emblem>`, or `#guild=<TAG>` with
+ * no cape. `parseGuildFragment` reads it back.
+ */
+export function guildLink(
+  tag: string,
+  cape: WireCape | null,
+  where: Pick<Location, "origin" | "pathname"> = location,
+): string {
+  const parts = cape === null ? [tag] : [tag, cape.main, cape.trim, cape.emblem];
+  return `${where.origin}${where.pathname}#${GUILD_FRAGMENT_KEY}=${parts.join(".")}`;
+}
+
+/**
+ * Copy `url`, a guild link (#3167), and say so. A refused clipboard shows
+ * it selected in `share` instead, to copy by hand, as an invite link does.
+ */
+async function copyGuildLink(url: string, share: ShareLine): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(url);
+    toast(t("kit.copied"));
+  } catch {
+    share.show(url);
+    toast(t("player.guildLinkByHand"));
+  }
+}
+
 /** One press in the cape designer (#1422). */
 export type CapePick =
   | { readonly part: "main" | "trim"; readonly colour: CapeColour }
@@ -251,12 +280,25 @@ function mountPlayer(container: HTMLElement): () => void {
     saveGuildCape(cape);
     showCape();
   });
+  // Its link beside it (#3167), while the tag is valid: one click copies
+  // the tag and cape into another player's Options.
+  const link = shareLine(t("player.guildLink"));
+  const copy = button(t("player.copyGuildLink"), "player-guild-copy", () => {
+    const tag = sanitizeGuildTag(tagInput.value);
+    if (tag !== null) {
+      void copyGuildLink(guildLink(tag, cape), link);
+    }
+  });
   const showCape = (): void => {
-    designer.root.hidden = !showsCapeDesigner(tagInput.value);
+    const valid = showsCapeDesigner(tagInput.value);
+    designer.root.hidden = !valid;
+    copy.hidden = !valid;
+    link.hide();
     designer.show(cape);
   };
   showCape();
   panel.appendChild(designer.root);
+  panel.append(copy, link.element);
   panel.appendChild(h("p", "player-applies", t("player.applies")));
   return () => {
     panel.remove();
@@ -330,6 +372,25 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
       none.setAttribute("aria-pressed", String(cape === null));
     },
   };
+}
+
+/**
+ * `cape` as a small banner (#3167): its colour, its trim round it, and its
+ * emblem, for a guild link's question.
+ */
+export function capePreview(cape: WireCape): HTMLElement {
+  const banner = h("span", "guild-cape-preview");
+  banner.style.setProperty("--cape-main", cssColour(CAPE_PALETTE[cape.main]));
+  banner.style.setProperty("--cape-trim", cssColour(CAPE_PALETTE[cape.trim]));
+  banner.setAttribute("role", "img");
+  banner.setAttribute(
+    "aria-label",
+    [t(COLOUR_NAMES[cape.main]), t(COLOUR_NAMES[cape.trim]), t(EMBLEM_NAMES[cape.emblem])].join(
+      ", ",
+    ),
+  );
+  banner.appendChild(emblemIcon(cape.emblem));
+  return banner;
 }
 
 /**
