@@ -1,10 +1,11 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
+import { MINIMAL_GW_INSPIRED_PVP_V1, createPathFinder } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { mapStructure, teamArenaMapIds } from "../net/maps.js";
-import { overhangAt } from "../render/layer-surfaces.js";
+import { pickSurface } from "../render/layer-surfaces.js";
+import { splashGraph } from "../ui/splash-fight.js";
 
-import { SELF_ID, TUTOR_ID, tutorialWorld } from "./tutorial-world.js";
+import { SELF_ID, TUTOR_ID, inOpenView, tutorialWorld } from "./tutorial-world.js";
 
 const TICK = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
 /** The card's rule (#3221): no foe nearer the pair than this. */
@@ -69,15 +70,19 @@ describe("tutorialWorld (#3221)", () => {
   });
 
   it.each(["arena-canyon", "arena-crossroads", "arena-long-hall"])(
-    "starts the pair and the mark under open sky on %s",
+    "starts the pair and the mark in plain view on %s, and a click on the mark walks there",
     (mapId) => {
-      const { simulation, mark, ground } = tutorialWorld(mapId, 4, "open-sky");
+      const { map, simulation, mark, ground } = tutorialWorld(mapId, 4, "open-sky");
       const { structure } = mapStructure(mapId);
       const self = simulation.get(SELF_ID);
-      expect(self).toBeDefined();
-      for (const at of [self?.position ?? mark, mark]) {
-        expect(overhangAt(structure, at, ground)).toBeUndefined();
+      if (self === undefined) {
+        throw new Error("no player in the tutorial");
       }
+      expect(inOpenView(structure, self.position)).toBe(true);
+      expect(inOpenView(structure, mark)).toBe(true);
+      // QA on Canyon (#3221): the click named a terrace's top, not the mark.
+      expect(pickSurface(structure, mark, false)).toEqual({ layer: ground, point: mark });
+      expect(createPathFinder(splashGraph(map)).find(self.position, mark)).toBeDefined();
     },
   );
 });

@@ -7,6 +7,7 @@ import {
   loadoutOf,
   loadoutSpec,
   nearestStandable,
+  pointInPolygon,
   resolveLoadout,
   seedFromString,
   vec2,
@@ -20,7 +21,9 @@ import {
 
 import { hostMap, mapStructure } from "../net/maps.js";
 import { DEFAULT_STEP, VIEW_ASPECT, VIEW_STEPS } from "../render/camera-rig.js";
-import { overhangAt } from "../render/layer-surfaces.js";
+import { pickSurface, shapeOutline } from "../render/layer-surfaces.js";
+import { elevationOf } from "../render/render-order.js";
+import type { MapStructure } from "../render/arena-snapshot.js";
 import {
   SPLASH_RULES,
   splashGraph,
@@ -65,6 +68,8 @@ const OPEN_CLEARANCE = 40;
 const OPEN_SEARCH_STEP = 60;
 const OPEN_SEARCH_RINGS = 20;
 const OPEN_SEARCH_ANGLES = 16;
+/** World units between the samples down a deck's drawn side. */
+const SIDE_SAMPLE = 8;
 /** What a tutorial foe never casts: a body of its own, or a step past its leash. */
 const FOE_BANNED_EFFECTS: ReadonlySet<string> = new Set(["summon", "shadow-step"]);
 
@@ -179,6 +184,32 @@ function placesFrom(graph: NavGraph, from: Vec2): readonly [Vec2, Vec2, Vec2] {
 }
 
 /**
+ * Whether the ground at `at` is drawn in plain view (#3221): no deck
+ * over it, nor its lifted top or the side it draws down to the ground in
+ * front of it, and a click on it names the ground there, not a floor
+ * drawn over it.
+ */
+export function inOpenView(structure: MapStructure, at: Vec2): boolean {
+  const { ground } = structure;
+  if (pickSurface(structure, at, false).layer !== ground) {
+    return false;
+  }
+  return !structure.decks.some((deck) => {
+    if (deck.layer <= ground) {
+      return false;
+    }
+    const outline = shapeOutline(deck.footprint);
+    const lift = elevationOf(deck.layer, ground);
+    for (let rise = 0; rise <= lift; rise += SIDE_SAMPLE) {
+      if (pointInPolygon(vec2(at.x, at.y + rise), outline)) {
+        return true;
+      }
+    }
+    return pointInPolygon(vec2(at.x, at.y + lift), outline);
+  });
+}
+
+/**
  * The pair's places nearest `from` with open sky over all three (#3221):
  * a first-timer's first look at their body is never a ghost under a deck.
  * `from`'s own when nothing in reach is open.
@@ -239,7 +270,7 @@ export function tutorialWorld(mapId: string, teamSize: number, seed: string): Tu
   const [spawn, post, mark] = openPlaces(
     graph,
     inwardStart(edge, map.descriptor, HALF_VIEW),
-    (at) => overhangAt(structure, at, ground) !== undefined,
+    (at) => !inOpenView(structure, at),
   );
   // The tutor walks in from the row behind, moved as far.
   const behind = splashSpawn(graph, map, fight, 0, teamSize + 1);
