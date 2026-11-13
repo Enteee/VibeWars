@@ -4,10 +4,53 @@
   "mode": "annihilation",
   "teamSizes": [1, 2, 4, 8],
   "teams": 2,
-  "width": 4000,
-  "height": 1800,
+  "width": 4800,
+  "height": 2600,
   "bounds": {
-    "kind": "rect"
+    "kind": "outline",
+    "outside": "rock",
+    "outline": [
+      {
+        "x": 2400,
+        "y": 60
+      },
+      {
+        "x": 900,
+        "y": 70
+      },
+      {
+        "x": 140,
+        "y": 560
+      },
+      {
+        "x": 70,
+        "y": 1500
+      },
+      {
+        "x": 300,
+        "y": 2420
+      },
+      {
+        "x": 2400,
+        "y": 2540
+      },
+      {
+        "x": 3900,
+        "y": 2530
+      },
+      {
+        "x": 4660,
+        "y": 2040
+      },
+      {
+        "x": 4730,
+        "y": 1100
+      },
+      {
+        "x": 4500,
+        "y": 180
+      }
+    ]
   },
   "layers": 3,
   "biome": "hall",
@@ -17,8 +60,8 @@
       "id": "dais-west-floor",
       "footprint": {
         "kind": "rect",
-        "x": 1700,
-        "y": 680,
+        "x": 2100,
+        "y": 1080,
         "width": 260,
         "height": 440
       }
@@ -27,8 +70,8 @@
       "id": "dais-east-floor",
       "footprint": {
         "kind": "rect",
-        "x": 2040,
-        "y": 680,
+        "x": 2440,
+        "y": 1080,
         "width": 260,
         "height": 440
       }
@@ -37,8 +80,8 @@
       "id": "crypt-west-stair",
       "footprint": {
         "kind": "rect",
-        "x": 1150,
-        "y": 1200,
+        "x": 1550,
+        "y": 1600,
         "width": 140,
         "height": 130
       }
@@ -47,8 +90,8 @@
       "id": "crypt-east-stair",
       "footprint": {
         "kind": "rect",
-        "x": 2710,
-        "y": 470,
+        "x": 3110,
+        "y": 870,
         "width": 140,
         "height": 130
       }
@@ -59,8 +102,8 @@
       "id": "crypt-west-gallery",
       "footprint": {
         "kind": "rect",
-        "x": 1170,
-        "y": 880,
+        "x": 1570,
+        "y": 1280,
         "width": 100,
         "height": 340
       }
@@ -69,8 +112,8 @@
       "id": "crypt-west-vault",
       "footprint": {
         "kind": "rect",
-        "x": 1170,
-        "y": 860,
+        "x": 1570,
+        "y": 1260,
         "width": 560,
         "height": 100
       }
@@ -79,8 +122,8 @@
       "id": "crypt-east-gallery",
       "footprint": {
         "kind": "rect",
-        "x": 2730,
-        "y": 580,
+        "x": 3130,
+        "y": 980,
         "width": 100,
         "height": 340
       }
@@ -89,8 +132,8 @@
       "id": "crypt-east-vault",
       "footprint": {
         "kind": "rect",
-        "x": 2270,
-        "y": 840,
+        "x": 2670,
+        "y": 1240,
         "width": 560,
         "height": 100
       }
@@ -99,8 +142,8 @@
       "id": "crypt-under-aisle",
       "footprint": {
         "kind": "rect",
-        "x": 1930,
-        "y": 760,
+        "x": 2330,
+        "y": 1160,
         "width": 140,
         "height": 280
       }
@@ -112,8 +155,8 @@
       "layer": 2,
       "footprint": {
         "kind": "rect",
-        "x": 500,
-        "y": 0,
+        "x": 900,
+        "y": 400,
         "width": 3000,
         "height": 140
       },
@@ -125,8 +168,8 @@
       "layer": 2,
       "footprint": {
         "kind": "rect",
-        "x": 500,
-        "y": 1660,
+        "x": 900,
+        "y": 2060,
         "width": 3000,
         "height": 140
       },
@@ -138,8 +181,8 @@
       "layer": 2,
       "footprint": {
         "kind": "rect",
-        "x": 0,
-        "y": 520,
+        "x": 400,
+        "y": 920,
         "width": 240,
         "height": 760
       },
@@ -151,8 +194,8 @@
       "layer": 2,
       "footprint": {
         "kind": "rect",
-        "x": 3760,
-        "y": 520,
+        "x": 4160,
+        "y": 920,
         "width": 240,
         "height": 760
       },
@@ -164,8 +207,8 @@
       "layer": 2,
       "footprint": {
         "kind": "rect",
-        "x": 1700,
-        "y": 680,
+        "x": 2100,
+        "y": 1080,
         "width": 260,
         "height": 440
       },
@@ -183,8 +226,8 @@
       "layer": 2,
       "footprint": {
         "kind": "rect",
-        "x": 2040,
-        "y": 680,
+        "x": 2440,
+        "y": 1080,
         "width": 260,
         "height": 440
       },
@@ -205,8 +248,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 390,
-        "y": 20,
+        "x": 790,
+        "y": 420,
         "width": 110,
         "height": 100
       },
@@ -220,8 +263,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 3500,
-        "y": 1680,
+        "x": 3900,
+        "y": 2080,
         "width": 110,
         "height": 100
       },
@@ -235,8 +278,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 3500,
-        "y": 20,
+        "x": 3900,
+        "y": 420,
         "width": 110,
         "height": 100
       },
@@ -250,8 +293,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 390,
-        "y": 1680,
+        "x": 790,
+        "y": 2080,
         "width": 110,
         "height": 100
       },
@@ -265,8 +308,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 240,
-        "y": 540,
+        "x": 640,
+        "y": 940,
         "width": 120,
         "height": 100
       },
@@ -280,8 +323,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 240,
-        "y": 1160,
+        "x": 640,
+        "y": 1560,
         "width": 120,
         "height": 100
       },
@@ -295,8 +338,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 3640,
-        "y": 1160,
+        "x": 4040,
+        "y": 1560,
         "width": 120,
         "height": 100
       },
@@ -310,8 +353,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 3640,
-        "y": 560,
+        "x": 4040,
+        "y": 960,
         "width": 120,
         "height": 44
       },
@@ -325,8 +368,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 1580,
-        "y": 850,
+        "x": 1980,
+        "y": 1250,
         "width": 120,
         "height": 100
       },
@@ -340,8 +383,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 2300,
-        "y": 850,
+        "x": 2700,
+        "y": 1250,
         "width": 120,
         "height": 100
       },
@@ -355,8 +398,8 @@
       "to": 1,
       "area": {
         "kind": "rect",
-        "x": 1160,
-        "y": 1200,
+        "x": 1560,
+        "y": 1600,
         "width": 120,
         "height": 130
       },
@@ -370,8 +413,8 @@
       "to": 1,
       "area": {
         "kind": "rect",
-        "x": 2720,
-        "y": 470,
+        "x": 3120,
+        "y": 870,
         "width": 120,
         "height": 130
       },
@@ -384,71 +427,63 @@
     {
       "layer": 2,
       "from": {
-        "x": 1000,
-        "y": 140
+        "x": 1400,
+        "y": 540
       },
       "to": {
-        "x": 3000,
-        "y": 140
+        "x": 3400,
+        "y": 540
       }
     },
     {
       "layer": 2,
       "from": {
-        "x": 1000,
-        "y": 1660
+        "x": 1400,
+        "y": 2060
       },
       "to": {
-        "x": 3000,
-        "y": 1660
+        "x": 3400,
+        "y": 2060
       }
     }
   ],
   "walls": [
     {
       "kind": "rect",
-      "x": 500,
-      "y": 0,
+      "x": 900,
+      "y": 400,
       "width": 3000,
       "height": 140,
       "layer": 1
     },
     {
       "kind": "rect",
-      "x": 500,
-      "y": 1660,
+      "x": 900,
+      "y": 2060,
       "width": 3000,
       "height": 140,
       "layer": 1
     },
     {
       "kind": "rect",
-      "x": 0,
-      "y": 520,
+      "x": 400,
+      "y": 920,
       "width": 240,
       "height": 760,
       "layer": 1
     },
     {
       "kind": "rect",
-      "x": 3760,
-      "y": 520,
+      "x": 4160,
+      "y": 920,
       "width": 240,
       "height": 760,
       "layer": 1
     },
     {
       "kind": "rect",
-      "x": 900,
-      "y": 430,
-      "width": 90,
-      "height": 90,
-      "layer": 1
-    },
-    {
-      "kind": "rect",
-      "x": 900,
-      "y": 1280,
+      "x": 1300,
+      "y": 830,
       "width": 90,
       "height": 90,
       "layer": 1
@@ -456,31 +491,23 @@
     {
       "kind": "rect",
       "x": 1300,
-      "y": 430,
+      "y": 1680,
       "width": 90,
       "height": 90,
       "layer": 1
     },
     {
       "kind": "rect",
-      "x": 1300,
-      "y": 1280,
+      "x": 1700,
+      "y": 830,
       "width": 90,
       "height": 90,
       "layer": 1
     },
     {
       "kind": "rect",
-      "x": 2610,
-      "y": 430,
-      "width": 90,
-      "height": 90,
-      "layer": 1
-    },
-    {
-      "kind": "rect",
-      "x": 2610,
-      "y": 1280,
+      "x": 1700,
+      "y": 1680,
       "width": 90,
       "height": 90,
       "layer": 1
@@ -488,7 +515,7 @@
     {
       "kind": "rect",
       "x": 3010,
-      "y": 430,
+      "y": 830,
       "width": 90,
       "height": 90,
       "layer": 1
@@ -496,60 +523,171 @@
     {
       "kind": "rect",
       "x": 3010,
-      "y": 1280,
+      "y": 1680,
       "width": 90,
       "height": 90,
       "layer": 1
     },
     {
       "kind": "rect",
-      "x": 1450,
-      "y": 860,
-      "width": 60,
-      "height": 80,
+      "x": 3410,
+      "y": 830,
+      "width": 90,
+      "height": 90,
       "layer": 1
     },
     {
       "kind": "rect",
-      "x": 2490,
-      "y": 860,
-      "width": 60,
-      "height": 80,
+      "x": 3410,
+      "y": 1680,
+      "width": 90,
+      "height": 90,
       "layer": 1
     }
   ],
-  "gates": [],
+  "zones": [
+    {
+      "id": "crypt-foul-air",
+      "kind": "toxic-fog",
+      "layer": 0,
+      "area": {
+        "kind": "rect",
+        "x": 2330,
+        "y": 1240,
+        "width": 140,
+        "height": 120
+      }
+    },
+    {
+      "id": "west-grove",
+      "kind": "grove",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 200,
+            "y": 1500
+          },
+          {
+            "x": 330,
+            "y": 1420
+          },
+          {
+            "x": 420,
+            "y": 1560
+          },
+          {
+            "x": 380,
+            "y": 1820
+          },
+          {
+            "x": 240,
+            "y": 1880
+          },
+          {
+            "x": 170,
+            "y": 1700
+          }
+        ]
+      }
+    },
+    {
+      "id": "east-grove",
+      "kind": "grove",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 4600,
+            "y": 1100
+          },
+          {
+            "x": 4470,
+            "y": 1180
+          },
+          {
+            "x": 4380,
+            "y": 1040
+          },
+          {
+            "x": 4420,
+            "y": 780
+          },
+          {
+            "x": 4560,
+            "y": 720
+          },
+          {
+            "x": 4630,
+            "y": 900
+          }
+        ]
+      }
+    }
+  ],
+  "gates": [
+    {
+      "id": "crypt-west-portcullis",
+      "wall": {
+        "kind": "rect",
+        "x": 1840,
+        "y": 1260,
+        "width": 24,
+        "height": 100,
+        "layer": 0
+      },
+      "opener": {
+        "kind": "switch"
+      },
+      "blocks": "all",
+      "look": "portcullis"
+    },
+    {
+      "id": "crypt-east-portcullis",
+      "wall": {
+        "kind": "rect",
+        "x": 2936,
+        "y": 1240,
+        "width": 24,
+        "height": 100,
+        "layer": 0
+      },
+      "opener": {
+        "kind": "switch"
+      },
+      "blocks": "all",
+      "look": "portcullis"
+    }
+  ],
+  "switches": [
+    {
+      "id": "crypt-west-lever",
+      "layer": 1,
+      "position": {
+        "x": 1620,
+        "y": 1780
+      },
+      "targets": ["crypt-west-portcullis"]
+    },
+    {
+      "id": "crypt-east-lever",
+      "layer": 1,
+      "position": {
+        "x": 3180,
+        "y": 820
+      },
+      "targets": ["crypt-east-portcullis"]
+    }
+  ],
   "objectives": [],
   "spawnPoints": [
     {
       "team": 0,
       "layer": 1,
       "position": {
-        "x": 480,
-        "y": 700
-      }
-    },
-    {
-      "team": 0,
-      "layer": 1,
-      "position": {
-        "x": 480,
-        "y": 820
-      }
-    },
-    {
-      "team": 0,
-      "layer": 1,
-      "position": {
-        "x": 480,
-        "y": 980
-      }
-    },
-    {
-      "team": 0,
-      "layer": 1,
-      "position": {
-        "x": 480,
+        "x": 880,
         "y": 1100
       }
     },
@@ -557,31 +695,87 @@
       "team": 0,
       "layer": 1,
       "position": {
-        "x": 580,
-        "y": 700
+        "x": 880,
+        "y": 1220
       }
     },
     {
       "team": 0,
       "layer": 1,
       "position": {
-        "x": 580,
-        "y": 820
+        "x": 880,
+        "y": 1380
       }
     },
     {
       "team": 0,
       "layer": 1,
       "position": {
-        "x": 580,
-        "y": 980
+        "x": 880,
+        "y": 1500
       }
     },
     {
       "team": 0,
       "layer": 1,
       "position": {
-        "x": 580,
+        "x": 980,
+        "y": 1100
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 980,
+        "y": 1220
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 980,
+        "y": 1380
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 980,
+        "y": 1500
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 3920,
+        "y": 1500
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 3920,
+        "y": 1380
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 3920,
+        "y": 1220
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 3920,
         "y": 1100
       }
     },
@@ -589,64 +783,32 @@
       "team": 1,
       "layer": 1,
       "position": {
-        "x": 3520,
+        "x": 3820,
+        "y": 1500
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 3820,
+        "y": 1380
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 3820,
+        "y": 1220
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 3820,
         "y": 1100
-      }
-    },
-    {
-      "team": 1,
-      "layer": 1,
-      "position": {
-        "x": 3520,
-        "y": 980
-      }
-    },
-    {
-      "team": 1,
-      "layer": 1,
-      "position": {
-        "x": 3520,
-        "y": 820
-      }
-    },
-    {
-      "team": 1,
-      "layer": 1,
-      "position": {
-        "x": 3520,
-        "y": 700
-      }
-    },
-    {
-      "team": 1,
-      "layer": 1,
-      "position": {
-        "x": 3420,
-        "y": 1100
-      }
-    },
-    {
-      "team": 1,
-      "layer": 1,
-      "position": {
-        "x": 3420,
-        "y": 980
-      }
-    },
-    {
-      "team": 1,
-      "layer": 1,
-      "position": {
-        "x": 3420,
-        "y": 820
-      }
-    },
-    {
-      "team": 1,
-      "layer": 1,
-      "position": {
-        "x": 3420,
-        "y": 700
       }
     }
   ],
@@ -662,15 +824,15 @@
     "indoor": [
       {
         "kind": "rect",
-        "x": 0,
-        "y": 0,
+        "x": 400,
+        "y": 400,
         "width": 4000,
         "height": 300
       },
       {
         "kind": "rect",
-        "x": 0,
-        "y": 1500,
+        "x": 400,
+        "y": 1900,
         "width": 4000,
         "height": 300
       }
@@ -685,8 +847,8 @@
       {
         "id": "brazier-0",
         "position": {
-          "x": 945,
-          "y": 560
+          "x": 1345,
+          "y": 960
         },
         "layer": 1,
         "radius": 240,
@@ -697,8 +859,8 @@
       {
         "id": "brazier-1",
         "position": {
-          "x": 1345,
-          "y": 560
+          "x": 1745,
+          "y": 960
         },
         "layer": 1,
         "radius": 240,
@@ -709,8 +871,8 @@
       {
         "id": "brazier-2",
         "position": {
-          "x": 2655,
-          "y": 560
+          "x": 3055,
+          "y": 960
         },
         "layer": 1,
         "radius": 240,
@@ -721,8 +883,8 @@
       {
         "id": "brazier-3",
         "position": {
-          "x": 3055,
-          "y": 560
+          "x": 3455,
+          "y": 960
         },
         "layer": 1,
         "radius": 240,
@@ -733,8 +895,8 @@
       {
         "id": "brazier-4",
         "position": {
-          "x": 945,
-          "y": 1240
+          "x": 1345,
+          "y": 1640
         },
         "layer": 1,
         "radius": 240,
@@ -745,8 +907,8 @@
       {
         "id": "brazier-5",
         "position": {
-          "x": 1345,
-          "y": 1240
+          "x": 1745,
+          "y": 1640
         },
         "layer": 1,
         "radius": 240,
@@ -757,8 +919,8 @@
       {
         "id": "brazier-6",
         "position": {
-          "x": 2655,
-          "y": 1240
+          "x": 3055,
+          "y": 1640
         },
         "layer": 1,
         "radius": 240,
@@ -769,8 +931,8 @@
       {
         "id": "brazier-7",
         "position": {
-          "x": 3055,
-          "y": 1240
+          "x": 3455,
+          "y": 1640
         },
         "layer": 1,
         "radius": 240,
@@ -781,8 +943,8 @@
       {
         "id": "balcony-lamp",
         "position": {
-          "x": 120,
-          "y": 900
+          "x": 520,
+          "y": 1300
         },
         "layer": 2,
         "radius": 170,
@@ -793,8 +955,8 @@
       {
         "id": "ruin-lamp",
         "position": {
-          "x": 3880,
-          "y": 900
+          "x": 4280,
+          "y": 1300
         },
         "layer": 2,
         "radius": 170,
@@ -805,8 +967,8 @@
       {
         "id": "crypt-west-torch",
         "position": {
-          "x": 1220,
-          "y": 1000
+          "x": 1620,
+          "y": 1400
         },
         "layer": 0,
         "radius": 150,
@@ -817,8 +979,8 @@
       {
         "id": "crypt-east-torch",
         "position": {
-          "x": 2780,
-          "y": 800
+          "x": 3180,
+          "y": 1200
         },
         "layer": 0,
         "radius": 150,
@@ -829,8 +991,8 @@
       {
         "id": "crypt-centre-torch",
         "position": {
-          "x": 2000,
-          "y": 900
+          "x": 2400,
+          "y": 1300
         },
         "layer": 0,
         "radius": 160,
@@ -841,8 +1003,8 @@
       {
         "id": "shaft-west",
         "position": {
-          "x": 1400,
-          "y": 550
+          "x": 1800,
+          "y": 950
         },
         "layer": 1,
         "radius": 220,
@@ -853,8 +1015,8 @@
       {
         "id": "shaft-centre",
         "position": {
-          "x": 2000,
-          "y": 900
+          "x": 2400,
+          "y": 1300
         },
         "layer": 2,
         "radius": 260,
@@ -865,8 +1027,8 @@
       {
         "id": "shaft-east",
         "position": {
-          "x": 2600,
-          "y": 1250
+          "x": 3000,
+          "y": 1650
         },
         "layer": 1,
         "radius": 220,
@@ -882,8 +1044,8 @@
         "layer": 1,
         "area": {
           "kind": "rect",
-          "x": 1260,
-          "y": 310,
+          "x": 1660,
+          "y": 710,
           "width": 280,
           "height": 480
         }
@@ -892,8 +1054,8 @@
         "layer": 1,
         "area": {
           "kind": "rect",
-          "x": 2460,
-          "y": 1010,
+          "x": 2860,
+          "y": 1410,
           "width": 280,
           "height": 480
         }
@@ -902,8 +1064,8 @@
         "layer": 0,
         "area": {
           "kind": "rect",
-          "x": 1170,
-          "y": 860,
+          "x": 1570,
+          "y": 1260,
           "width": 560,
           "height": 100
         }
@@ -912,8 +1074,8 @@
         "layer": 0,
         "area": {
           "kind": "rect",
-          "x": 2270,
-          "y": 840,
+          "x": 2670,
+          "y": 1240,
           "width": 560,
           "height": 100
         }
@@ -924,8 +1086,8 @@
         "id": "brazier-smoke-nw",
         "layer": 1,
         "position": {
-          "x": 935,
-          "y": 540
+          "x": 1335,
+          "y": 940
         },
         "kind": "smoke"
       },
@@ -933,8 +1095,8 @@
         "id": "brazier-smoke-se",
         "layer": 1,
         "position": {
-          "x": 3065,
-          "y": 1260
+          "x": 3465,
+          "y": 1660
         },
         "kind": "smoke"
       },
@@ -942,8 +1104,8 @@
         "id": "brazier-smoke-ne",
         "layer": 1,
         "position": {
-          "x": 2665,
-          "y": 540
+          "x": 3065,
+          "y": 940
         },
         "kind": "smoke"
       },
@@ -951,8 +1113,8 @@
         "id": "brazier-smoke-sw",
         "layer": 1,
         "position": {
-          "x": 1335,
-          "y": 1260
+          "x": 1735,
+          "y": 1660
         },
         "kind": "smoke"
       }
