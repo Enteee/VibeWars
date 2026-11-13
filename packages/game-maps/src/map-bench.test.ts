@@ -15,6 +15,7 @@ import { allWallSegments } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import { validateMapData, type MapData } from "./schema.js";
+import { timeMatchTicks } from "./tools/map-balance.js";
 
 /**
  * The tick bench (#542) on an arena (#444): `BENCH_MAP=arena-long-hall
@@ -90,6 +91,32 @@ describe("the tick bench on an arena (#444)", () => {
       `${mapId}, ticks ${String(WARM_UP)}–${String(ticks)}: p50 ${p50.toFixed(3)} ms, p95 ${p95.toFixed(3)} ms, max ${max.toFixed(3)} ms`,
     );
     expect(tickMs).toHaveLength(ticks);
+  });
+});
+
+describe("the host tick on a whole map (#3240)", () => {
+  /**
+   * `BENCH_TICKS=600 BENCH_HOST=arena-canyon,arena-crossroads pnpm run
+   * bench:ticks`: a 4v4 of bots on every layer, structure and objective of
+   * each map, as the host steps it. Report-only.
+   */
+  const ticks = Number(process.env.BENCH_TICKS ?? "0");
+  const ids = (process.env.BENCH_HOST ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id !== "");
+
+  it("times a short 4v4 on a layered map", () => {
+    expect(timeMatchTicks(loadMap("arena-crossroads"), 4, 20, now)).toHaveLength(20);
+  });
+
+  it.runIf(ticks > WARM_UP).each(ids)(`times ${String(ticks)} 4v4 ticks on %s`, (id) => {
+    const tickMs = timeMatchTicks(loadMap(id), 4, ticks, now);
+    const { p50, p95, max } = tickStats(tickMs.slice(WARM_UP));
+    console.log(
+      `host ${id}, ticks ${String(WARM_UP)}–${String(tickMs.length)}: p50 ${p50.toFixed(3)} ms, p95 ${p95.toFixed(3)} ms, max ${max.toFixed(3)} ms`,
+    );
+    expect(tickMs.length).toBeGreaterThan(WARM_UP);
   });
 });
 
