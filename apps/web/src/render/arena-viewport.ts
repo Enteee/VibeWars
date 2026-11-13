@@ -12,6 +12,7 @@ import {
   type Cover,
   type Size,
 } from "./camera-rig.js";
+import { frameTiming } from "./frame-timing.js";
 import { buttonChanges, type MouseButton } from "./pointer-buttons.js";
 
 /** One mouse button going down or up over the arena (#438), or moving while held (#442). */
@@ -153,6 +154,22 @@ export async function createArenaViewport(
   };
   scene.input.on("pointermove", onMove);
   scene.input.on("gameout", onOut);
+
+  const stats = frameTiming();
+  if (stats !== undefined) {
+    let stepped = 0;
+    let rendering = 0;
+    game.events.on(Phaser.Core.Events.PRE_STEP, () => {
+      stepped = performance.now();
+    });
+    game.events.on(Phaser.Core.Events.PRE_RENDER, () => {
+      rendering = performance.now();
+      stats.update.push(rendering - stepped);
+    });
+    game.events.on(Phaser.Core.Events.POST_RENDER, () => {
+      stats.render.push(performance.now() - rendering);
+    });
+  }
 
   const wake = (): void => {
     game.loop.wake();

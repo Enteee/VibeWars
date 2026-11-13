@@ -11,6 +11,7 @@ import {
   SELF_ID,
   TUTOR_ID,
   TUTOR_PROFESSIONS,
+  FOE_KEEP_OFF,
   drawTutorProfession,
   inOpenView,
   tutorialWorld,
@@ -63,21 +64,51 @@ describe("tutorialWorld (#3221)", () => {
   );
 
   // A click on the mark that lands on a body targets it, and walks nowhere.
-  it.each(teamArenaMapIds(8))("lets nobody but the player walk over the mark on %s", (mapId) => {
-    const { simulation, mark } = tutorialWorld(mapId, 8, `mark-${mapId}`, "monk", VIEWPORT);
-    let nearest = Number.POSITIVE_INFINITY;
-    for (let tick = 0; tick < MARK_SECONDS / TICK; tick += 1) {
-      simulation.step(TICK);
-      for (const other of simulation.participants()) {
-        if (other.id !== SELF_ID && other.id !== TUTOR_ID && !other.combatant.dead) {
-          nearest = Math.min(
-            nearest,
-            Math.hypot(other.position.x - mark.x, other.position.y - mark.y),
-          );
+  it.each(teamArenaMapIds(8))(
+    "lets nobody but the player walk over the mark on %s",
+    (mapId) => {
+      const { simulation, mark } = tutorialWorld(mapId, 8, `mark-${mapId}`, "monk", VIEWPORT);
+      let nearest = Number.POSITIVE_INFINITY;
+      for (let tick = 0; tick < MARK_SECONDS / TICK; tick += 1) {
+        simulation.step(TICK);
+        for (const other of simulation.participants()) {
+          if (other.id !== SELF_ID && other.id !== TUTOR_ID && !other.combatant.dead) {
+            nearest = Math.min(
+              nearest,
+              Math.hypot(other.position.x - mark.x, other.position.y - mark.y),
+            );
+          }
         }
       }
+      expect(nearest).toBeGreaterThanOrEqual(MARK_CLEAR);
+    },
+    // Simulates 30 s of a 16-body fight per map, ~5 s on a loaded runner;
+    // the property needs the whole half-minute (#3257).
+    30_000,
+  );
+
+  // The foes' half of the rule above, without a step (#3257): each one's
+  // leash stops it FOE_KEEP_OFF short of every place the pair uses.
+  it.each(teamArenaMapIds(8))("leashes every foe off the pair's places on %s", (mapId) => {
+    const { simulation, mark, teleporter, besidePad, foes } = tutorialWorld(
+      mapId,
+      8,
+      `leash-${mapId}`,
+      "monk",
+      VIEWPORT,
+    );
+    const self = simulation.get(SELF_ID);
+    if (self === undefined) {
+      throw new Error("no player in the tutorial");
     }
-    expect(nearest).toBeGreaterThanOrEqual(MARK_CLEAR);
+    expect(foes).toHaveLength(8);
+    for (const { post, leashUnits } of foes) {
+      for (const place of [self.position, mark, teleporter, besidePad]) {
+        expect(Math.hypot(place.x - post.x, place.y - post.y) - leashUnits).toBeGreaterThanOrEqual(
+          FOE_KEEP_OFF,
+        );
+      }
+    }
   });
 
   it.each(teamArenaMapIds(8))(

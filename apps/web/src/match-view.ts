@@ -70,6 +70,7 @@ import { attackCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
 import { CREATURE_DRAWN_RADIUS } from "./render/creature-shape.js";
 import type { GoalMark } from "./render/goal-mark.js";
+import { frameTiming, snapshotCadence } from "./render/frame-timing.js";
 import { conditionCues } from "./render/body-conditions.js";
 import { bodyFlags } from "./render/body-rings.js";
 import { capeLook } from "./render/cape-shape.js";
@@ -119,6 +120,7 @@ import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 import { button, setToastHost, toast } from "./ui/kit.js";
+import { signedText } from "./ui/player-label.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -1057,6 +1059,8 @@ export async function startMatchView(
   /** The summary (#1057), drawn once under the result banner when the host's `ended` lands. */
   let summary:
     { readonly tables: readonly SummaryTable[]; readonly panel: HTMLElement } | undefined;
+  const stats = frameTiming();
+  const cadence = stats === undefined ? undefined : snapshotCadence(stats, () => performance.now());
   const onFrame = (deltaSeconds: number): void => {
     const match = viewed.getSnapshot();
     if (match === undefined) {
@@ -1072,6 +1076,7 @@ export async function startMatchView(
       waiting = undefined;
       hud.top.hidden = false;
     }
+    cadence?.(match.elapsedSeconds);
     latestMatch = match;
     const previous = lastMatch ?? match;
     lastMatch = match;
@@ -1092,7 +1097,7 @@ export async function startMatchView(
       playerNames(match),
     );
     if (leader !== undefined) {
-      toast(leader);
+      toast(signedText(leader.key, leader.params));
     }
     if (objective !== undefined) {
       toast(objective.text);

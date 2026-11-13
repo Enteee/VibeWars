@@ -146,13 +146,52 @@ PASS is necessary, not sufficient. Bots do not yet value high ground or
 cover (#2542), so a map whose heights favour one side can still pass.
 The operator's playtest is the final word on every map.
 
+### The host tick on a whole map
+
+`BENCH_TICKS=600 BENCH_HOST=arena-canyon,arena-crossroads pnpm run
+bench:ticks` (#3240) times the host's step of a 4v4 of bots on each map
+named: every layer, structure and objective, as a match plays it. It
+prints p50, p95 and max per map. Report-only; CI runs only a short smoke
+of it.
+
+## The render bench
+
+`pnpm run bench:render` (#3157, #3240) builds the client and times its
+frames in headless Chromium at 1280 × 720, as ratios to a fixed WebGL
+calibration drawn in the same browser. CI runs it on pull requests that
+touch the renderer or the maps, and fails a map whose p50 is over 3× the
+calibration's. It measures two cases:
+
+- **The menu background** on every layered map: the bots' fight, the
+  camera still, at the menu's 30 fps cap.
+- **Follow** (`--follow` runs only this one) on every layered map and
+  one flat map, `jungle-ruins`, the baseline. A Hosted 1v1 there, its
+  body walking a fixed loop by left clicks: over the transition nearest
+  its spawn, to the map's centre, and back. The camera follows, the
+  pointer sweeps the ground every 50 ms so hover runs, and nothing caps
+  the frame rate. Its own table gives each map's frame p50 and p95,
+  its update and render p50 (the frame's JS: the game's step, the match view and
+  `ArenaScene.update`, then Phaser's render of the scene), the update's
+  share of the frame time, the time between two frames that drew a
+  new snapshot (its p50, p95 and standard deviation, the jitter), and
+  each map's p50 over the baseline's. The 3× gate does not judge these
+  rows: walking costs a frame about twice what standing does.
+  `BENCH_MAX_FOLLOW_RATIO` fails a map walked that is over that many
+  times the baseline walked.
+
+The follow case measures the page through `?frametiming`
+(`render/frame-timing.ts`), which any client takes: open a match with
+it and `window.__frameTiming` holds those times.
+
+In software GL the update and render JS are a small share of a frame:
+most of it is the GPU process filling pixels, which no JS timer sees.
+
 ## What is not measured
 
-**Client FPS.** It needs a real browser compositing real frames, which
-this headless harness cannot observe. Reporting a number for it would be
-a guess, and the brief is explicit that a plausible-looking fabricated
-measurement is worse than an absent one (§45). Measuring it properly
-means a Playwright run sampling `requestAnimationFrame`.
+**Client FPS on a real GPU.** The render bench draws in headless
+Chromium's software GL, where filling pixels costs far more than on a
+graphics card: there it measures regressions against its calibration,
+not what a player's machine shows.
 
 **A real network, and sync latency.** Every peer shares a process with
 the host, and the in-memory transport delivers a microtask later, so a
@@ -162,3 +201,23 @@ real network, add the WebRTC round trip between the two browsers.
 
 **Memory.** The host's heap is a browser tab's, which a Node process does
 not stand for.
+
+## Render bench (`pnpm bench:render`)
+
+A layered map's frame cost in software GL, as a ratio to a fixed WebGL
+calibration on the same run (#3157, #3190, #3243). CI gates it at
+`BENCH_MAX_RATIO=3` on pull requests that touch the renderer or the maps.
+
+The runner is slow for its first 20-40 s, so the run warms up first: it
+loads the first map, then calibrates for at least 45 s and until two
+windows in a row agree within 5 % (cap 75 s, else it fails). None of
+that is measured. Each map is then judged against the mean of the two
+calibration windows around it, and fails as too noisy if those two
+differ by over 20 %.
+
+**Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over 3×
+for a known reason, each gated at its own ratio and tied to the perf
+issue that will cut it. A listed map that
+measures at or under 3× prints a warning to delete its entry, and does
+not fail: how heavy a map is next to the calibration varies by runner
+hardware (#3255).

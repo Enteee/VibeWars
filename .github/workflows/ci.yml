@@ -98,8 +98,8 @@ jobs:
       - name: Build
         run: devenv shell -- pnpm run build
 
-      # A layered map must draw within 12x Crossroads in software GL (#3157,
-      # #3164): a ratio on this runner, so a slow runner does not trip it.
+      # A layered map must draw within 3x a fixed calibration in software GL (#3157,
+      # #3164, #3243): a ratio on this runner, so a slow runner does not trip it.
       # Pull requests that touch the renderer, the maps, the web build or its
       # dependencies, or this file. The checkout is the merge commit, so its
       # diff against the base tip is the PR.

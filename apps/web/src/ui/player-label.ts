@@ -148,14 +148,72 @@ export function signedNamesLine(
     if (index > 0) {
       line.append(", ");
     }
-    const name = line.appendChild(playerLabelElement("signed-name", player.name, null, 0));
-    const signet = signetOf(player);
-    if (signet !== undefined) {
-      name.prepend(signetElement(signet, SIGNET_ROW_PX));
-    }
+    line.append(signedNameElement({ name: player.name, signet: signetOf(player) }));
   });
   line.append(after);
   return line;
+}
+
+/** A player as `signedText` names them: their name, and their signet if they have a key. */
+export interface SignedName {
+  readonly name: string;
+  readonly signet: number | undefined;
+}
+
+/** A sentence that names players, for `signedText` to build once it is shown. */
+export interface SignedLine {
+  readonly key: MessageKey;
+  readonly params: Readonly<Record<string, string | number | SignedName>>;
+}
+
+/** `player`'s name as an element, their signet before it, set as text, never markup. */
+export function signedNameElement(player: SignedName): HTMLElement {
+  const name = playerLabelElement("signed-name", player.name, null, 0);
+  if (player.signet !== undefined) {
+    name.prepend(signetElement(player.signet, SIGNET_ROW_PX));
+  }
+  return name;
+}
+
+/**
+ * Stands around a player's index while a sentence is translated: no
+ * message holds it, and plain params are stripped of it, so only a
+ * `SignedName` param can sign (#3256).
+ */
+const PLAYER_MARK = "";
+
+/**
+ * Sentence `key`, translated as `t()` does, each param given as a
+ * `SignedName` being that player's name with their signet (#3232). The
+ * placeholders are filled in, the text never searched for a name: a
+ * player named "a" signs no other "a".
+ */
+export function signedText(
+  key: MessageKey,
+  params: Readonly<Record<string, string | number | SignedName>>,
+): DocumentFragment {
+  const players: SignedName[] = [];
+  const plain: Record<string, string | number> = {};
+  for (const [param, value] of Object.entries(params)) {
+    if (typeof value === "object") {
+      plain[param] = `${PLAYER_MARK}${String(players.length)}${PLAYER_MARK}`;
+      players.push(value);
+    } else {
+      plain[param] = typeof value === "string" ? value.replaceAll(PLAYER_MARK, "") : value;
+    }
+  }
+  const fragment = document.createDocumentFragment();
+  t(key, plain)
+    .split(PLAYER_MARK)
+    .forEach((part, index) => {
+      const player = index % 2 === 1 ? players[Number(part)] : undefined;
+      if (player !== undefined) {
+        fragment.append(signedNameElement(player));
+      } else if (index % 2 === 0 && part !== "") {
+        fragment.append(part);
+      }
+    });
+  return fragment;
 }
 
 /**

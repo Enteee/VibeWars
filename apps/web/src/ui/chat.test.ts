@@ -156,6 +156,11 @@ class FakeElement {
     }
   }
 
+  prepend(node: FakeElement): void {
+    node.parent = this;
+    this.children.unshift(node);
+  }
+
   replaceChildren(...nodes: FakeElement[]): void {
     this.children.length = 0;
     this.append(...nodes);
@@ -200,9 +205,11 @@ class FakeElement {
 const fakeDocument: {
   activeElement: FakeElement | null;
   createElement: (tag: string) => FakeElement;
+  createDocumentFragment: () => FakeElement;
 } = {
   activeElement: null,
   createElement: (tag) => new FakeElement(tag),
+  createDocumentFragment: () => new FakeElement(""),
 };
 
 /** A key press as the panel reads one: nothing else has used it. */
@@ -305,6 +312,17 @@ describe("mountChat: closed and open (#2018)", () => {
       root.all("chat-line-name")[1]?.click();
       expect(root.all("chat-line")[0]?.dataset.from).toBe("ann");
       expect(signetOfRow(0).src).toBe(signetUrl(5, SIGNET_ROW_PX));
+    });
+
+    it("signs the muted sender in the notice (#3232)", () => {
+      signets.set("bob", 9);
+      say("bob", "yo");
+      root.find("chat-line-name").click();
+      const notice = root.find("chat-notice");
+      expect(notice.all("player-label-name").map((name) => name.textContent)).toEqual(["bob"]);
+      expect(notice.all("signet").map((signet) => signet.src)).toEqual([
+        signetUrl(9, SIGNET_ROW_PX),
+      ]);
     });
   });
 
