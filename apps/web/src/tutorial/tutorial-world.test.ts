@@ -5,6 +5,7 @@ import { mapStructure, teamArenaMapIds } from "../net/maps.js";
 import { pickSurface } from "../render/layer-surfaces.js";
 import { splashGraph } from "../ui/splash-fight.js";
 
+import { MARK_REACH } from "./stations.js";
 import {
   PLAYER_PROFESSION,
   SELF_ID,
@@ -79,12 +80,12 @@ describe("tutorialWorld (#3221)", () => {
     expect(nearest).toBeGreaterThanOrEqual(MARK_CLEAR);
   });
 
-  it.each(["arena-canyon", "arena-crossroads", "arena-long-hall"])(
+  it.each(teamArenaMapIds(8))(
     "starts the pair and the mark in plain view on %s, and a click on the mark walks there",
     (mapId) => {
       const { map, simulation, mark, ground } = tutorialWorld(
         mapId,
-        4,
+        8,
         "open-sky",
         "monk",
         VIEWPORT,
@@ -102,12 +103,12 @@ describe("tutorialWorld (#3221)", () => {
     },
   );
 
-  it.each(["arena-canyon", "arena-crossroads", "arena-long-hall"])(
+  it.each(teamArenaMapIds(8))(
     "stands the teleporter north in plain view on %s, a walk away, with the tutor's spot beside it",
     (mapId) => {
       const { map, simulation, teleporter, besidePad, ground } = tutorialWorld(
         mapId,
-        4,
+        8,
         "teleporter",
         "monk",
         VIEWPORT,
@@ -119,13 +120,36 @@ describe("tutorialWorld (#3221)", () => {
       }
       expect(teleporter.y).toBeLessThan(self.position.y);
       expect(inOpenView(structure, teleporter)).toBe(true);
-      expect(pickSurface(structure, teleporter, false)).toEqual({
-        layer: ground,
-        point: teleporter,
-      });
+      // A click on the pad names the ground, and a point the walk there
+      // counts as on the pad: by a ramp's foot that is not the pad's own
+      // point (Canyon, 8v8).
+      const picked = pickSurface(structure, teleporter, false);
+      expect(picked.layer).toBe(ground);
+      expect(
+        Math.hypot(picked.point.x - teleporter.x, picked.point.y - teleporter.y),
+      ).toBeLessThanOrEqual(MARK_REACH / 2);
       const paths = createPathFinder(splashGraph(map));
       expect(paths.find(self.position, teleporter)).toBeDefined();
       expect(paths.find(self.position, besidePad)).toBeDefined();
+    },
+  );
+
+  // CI (#3222): on Crossroads, whose ground is its layer 1, a flat world
+  // refused every walk that named it, the player's click and the tutor's.
+  it.each(teamArenaMapIds(8))(
+    "walks the player to the mark, and the tutor off to its post, on %s",
+    (mapId) => {
+      const { simulation, mark, ground } = tutorialWorld(mapId, 8, "walk", "monk", VIEWPORT);
+      const tutorFrom = { ...simulation.get(TUTOR_ID)?.position };
+      simulation.walkTo(SELF_ID, mark, ground);
+      let reached = false;
+      for (let t = 0; t < 10 && !reached; t += TICK) {
+        simulation.step(TICK);
+        const self = simulation.get(SELF_ID)?.position;
+        reached = self !== undefined && Math.hypot(self.x - mark.x, self.y - mark.y) <= MARK_REACH;
+      }
+      expect(reached).toBe(true);
+      expect(simulation.get(TUTOR_ID)?.position).not.toEqual(tutorFrom);
     },
   );
 });

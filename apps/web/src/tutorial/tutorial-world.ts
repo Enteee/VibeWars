@@ -328,6 +328,9 @@ export function tutorialWorld(
     matchRules: SPLASH_RULES,
     walls: map.walls,
     bounds: map.bounds,
+    // Its layers, as a match has them: a walk on a map whose ground is not
+    // its lowest layer names that layer, which a flat world refuses.
+    layers: map.layers,
     participants: [
       ...splashParticipants(
         map,
