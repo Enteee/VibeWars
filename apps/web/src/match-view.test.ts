@@ -218,7 +218,7 @@ describe("toArenaSnapshot", () => {
     ]);
   });
 
-  it("rings a body enchanted or hexed by its statuses, and a corpse never (#1117)", () => {
+  it("marks a body enchanted, in a stance or hexed by its statuses, and a corpse never (#1117, #3226)", () => {
     const status = (id: StatusId): StatusSnapshot => ({
       id,
       endsAt: 10,
@@ -226,17 +226,27 @@ describe("toArenaSnapshot", () => {
       casterId: "me",
     });
     const enchanted = { ...player("enchanted", 0), statuses: [status("armor-boost")] };
+    const stanced = { ...player("stanced", 0), statuses: [status("natural-stride")] };
     const hexed = { ...player("hexed", 0), statuses: [status("backfire")] };
     const dead = {
       ...player("dead", 0),
       dead: true,
-      statuses: [status("armor-boost"), status("backfire")],
+      statuses: [status("armor-boost"), status("natural-stride"), status("backfire")],
     };
-    const arena = toArenaSnapshot(match([enchanted, hexed, dead]), [], [], undefined, undefined);
-    expect(arena.actors.map((actor) => [actor.id, actor.enchanted, actor.hexed])).toEqual([
-      ["enchanted", true, false],
-      ["hexed", false, true],
-      ["dead", false, false],
+    const arena = toArenaSnapshot(
+      match([enchanted, stanced, hexed, dead]),
+      [],
+      [],
+      undefined,
+      undefined,
+    );
+    expect(
+      arena.actors.map((actor) => [actor.id, actor.enchanted, actor.stanced, actor.hexed]),
+    ).toEqual([
+      ["enchanted", true, false, false],
+      ["stanced", false, true, false],
+      ["hexed", false, false, true],
+      ["dead", false, false, false],
     ]);
   });
 

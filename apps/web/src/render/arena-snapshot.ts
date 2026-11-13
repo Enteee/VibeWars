@@ -111,9 +111,11 @@ export interface RenderableActor {
   /** The casting skill's type, for the badge by the cast bar (#1125); only with `castProgress`. */
   readonly castType: SkillType | undefined;
   readonly statuses: readonly string[];
-  /** Wears the solid enchantment ring (#1117); never a corpse. */
+  /** Wears the brass enchantment ring and its motes (#1117, #3226); never a corpse. */
   readonly enchanted: boolean;
-  /** Wears the broken hex ring (#1117); never a corpse. */
+  /** Wears the steel stance band, streaking while it moves (#3226); never a corpse. */
+  readonly stanced: boolean;
+  /** Wears the violet hex halo over its health bar (#1117, #3226); never a corpse. */
   readonly hexed: boolean;
   /** Shimmers, a shrine raise's invulnerability (#1233); never a corpse. */
   readonly invulnerable: boolean;

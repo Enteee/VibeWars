@@ -496,6 +496,7 @@ export function toArenaSnapshot(
         castType: player.castTotal > 0 ? castBadgeType(player.castingSkillId) : undefined,
         statuses,
         enchanted: rings.enchanted,
+        stanced: rings.stanced,
         hexed: rings.hexed,
         invulnerable: !player.dead && player.invulnerableSeconds > 0,
         teleportReadyAt: player.teleportReadyAt,

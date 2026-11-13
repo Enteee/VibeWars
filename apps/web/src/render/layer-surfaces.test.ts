@@ -399,6 +399,7 @@ describe("clicking a character on a layered map (#2831)", () => {
     castType: undefined,
     statuses: [],
     enchanted: false,
+    stanced: false,
     hexed: false,
     invulnerable: false,
     teleportReadyAt: 0,
