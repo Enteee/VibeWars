@@ -1419,6 +1419,18 @@ export default {
   "training.soundOn": "Ton an.",
   "training.you": "Du",
 
+  "tutorial.learn": "Spielen lernen",
+  "tutorial.moreSoon": "Bald mehr Lektionen. Wir sehen uns da draußen!",
+  "tutorial.offer": "Neu hier? Dein Lehrer zeigt dir, wie es geht.",
+  "tutorial.offerTitle": "Zum ersten Mal hier?",
+  "tutorial.skip": "Überspringen",
+  "tutorial.skipTutorial": "Tutorial überspringen",
+  "tutorial.tutor": "Lehrer",
+  "tutorial.walk.hint": "Hier drüben! Tritt auf die leuchtende Markierung.",
+  "tutorial.walk.how": "Linksklick auf den Boden, oder geh mit {keys}.",
+  "tutorial.walk.intro": "Dieser Krieg endet nie. Geh mit mir; ich habe eine Idee.",
+  "tutorial.walk.praise": "Schöner Schritt! Ein Naturtalent.",
+
   "weaponSets.empty": "Waffenset {number}: leer",
   "weaponSets.holds": "Waffenset {number}: {gear}",
 

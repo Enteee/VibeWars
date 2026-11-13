@@ -1308,6 +1308,18 @@ export default {
   "training.soundOn": "เปิดเสียงแล้ว",
   "training.you": "คุณ",
 
+  "tutorial.learn": "เรียนวิธีเล่น",
+  "tutorial.moreSoon": "บทเรียนเพิ่มเติมเร็ว ๆ นี้ แล้วพบกันข้างนอก!",
+  "tutorial.offer": "มาใหม่หรือ? ผู้สอนจะสอนพื้นฐานให้",
+  "tutorial.offerTitle": "ครั้งแรกหรือ?",
+  "tutorial.skip": "ข้าม",
+  "tutorial.skipTutorial": "ข้ามบทสอน",
+  "tutorial.tutor": "ผู้สอน",
+  "tutorial.walk.hint": "ทางนี้! ก้าวไปที่เครื่องหมายเรืองแสง",
+  "tutorial.walk.how": "คลิกซ้ายบนพื้น หรือเดินด้วย {keys}",
+  "tutorial.walk.intro": "สงครามนี้ไม่มีวันจบ เดินมากับข้า ข้ามีแผน",
+  "tutorial.walk.praise": "ก้าวได้ดี! เจ้ามีพรสวรรค์",
+
   "weaponSets.empty": "ชุดอาวุธ {number}: ว่าง",
   "weaponSets.holds": "ชุดอาวุธ {number}: {gear}",
 

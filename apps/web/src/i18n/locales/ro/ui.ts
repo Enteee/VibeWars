@@ -1478,6 +1478,18 @@ export default {
   "training.soundOn": "Sunet pornit.",
   "training.you": "Tu",
 
+  "tutorial.learn": "Învață să joci",
+  "tutorial.moreSoon": "Curând mai multe lecții. Ne vedem acolo!",
+  "tutorial.offer": "Ești nou? Tutorele tău îți arată elementele de bază.",
+  "tutorial.offerTitle": "Prima dată?",
+  "tutorial.skip": "Sari peste",
+  "tutorial.skipTutorial": "Sari peste tutorial",
+  "tutorial.tutor": "Tutore",
+  "tutorial.walk.hint": "Aici! Calcă pe semnul strălucitor.",
+  "tutorial.walk.how": "Clic stânga pe sol, sau mergi cu {keys}.",
+  "tutorial.walk.intro": "Războiul acesta nu se termină. Vino cu mine; am o idee.",
+  "tutorial.walk.praise": "Pas frumos! Ai talent.",
+
   "weaponSets.empty": "Set de arme {number}: gol",
   "weaponSets.holds": "Set de arme {number}: {gear}",
 

@@ -1329,6 +1329,18 @@ export default {
   "training.soundOn": "サウンドオン。",
   "training.you": "自分",
 
+  "tutorial.learn": "遊び方を学ぶ",
+  "tutorial.moreSoon": "続きのレッスンは近日公開。戦場で会おう!",
+  "tutorial.offer": "初めて? 師匠が基本を教えてくれます。",
+  "tutorial.offerTitle": "初めてですか?",
+  "tutorial.skip": "スキップ",
+  "tutorial.skipTutorial": "チュートリアルをスキップ",
+  "tutorial.tutor": "師匠",
+  "tutorial.walk.hint": "こっちだ!光る印の上に立て。",
+  "tutorial.walk.how": "地面を左クリック、または {keys} で歩く。",
+  "tutorial.walk.intro": "この戦は終わらない。ついて来い、考えがある。",
+  "tutorial.walk.praise": "いい足取りだ!筋がいい。",
+
   "weaponSets.empty": "武器セット{number}: 空",
   "weaponSets.holds": "武器セット{number}: {gear}",
 

@@ -1406,6 +1406,18 @@ export default {
   "training.soundOn": "Hang bekapcsolva.",
   "training.you": "Te",
 
+  "tutorial.learn": "Tanulj meg játszani",
+  "tutorial.moreSoon": "Hamarosan több lecke. Odakint találkozunk!",
+  "tutorial.offer": "Új vagy? A tanítód megmutatja az alapokat.",
+  "tutorial.offerTitle": "Először jársz itt?",
+  "tutorial.skip": "Kihagyás",
+  "tutorial.skipTutorial": "Oktatás kihagyása",
+  "tutorial.tutor": "Tanító",
+  "tutorial.walk.hint": "Ide! Lépj a világító jelre.",
+  "tutorial.walk.how": "Bal kattintás a talajra, vagy sétálj ezekkel: {keys}.",
+  "tutorial.walk.intro": "Ez a háború sosem ér véget. Gyere velem; van egy ötletem.",
+  "tutorial.walk.praise": "Szép lépés! Született tehetség vagy.",
+
   "weaponSets.empty": "{number}. fegyverkészlet: üres",
   "weaponSets.holds": "{number}. fegyverkészlet: {gear}",
 

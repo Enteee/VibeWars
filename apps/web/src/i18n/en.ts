@@ -1400,6 +1400,18 @@ export const en = {
   "training.soundOn": "Sound on.",
   "training.you": "You",
 
+  "tutorial.learn": "Learn to play",
+  "tutorial.moreSoon": "More lessons soon. See you out there!",
+  "tutorial.offer": "New here? Your tutor can show you the ropes.",
+  "tutorial.offerTitle": "First time?",
+  "tutorial.skip": "Skip",
+  "tutorial.skipTutorial": "Skip tutorial",
+  "tutorial.tutor": "Tutor",
+  "tutorial.walk.hint": "Over here! Step onto the glowing mark.",
+  "tutorial.walk.how": "Left click the ground, or walk with {keys}.",
+  "tutorial.walk.intro": "This war never ends. Walk with me; I have an idea.",
+  "tutorial.walk.praise": "Nice stride! You're a natural.",
+
   "weaponSets.empty": "Weapon set {number}: empty",
   "weaponSets.holds": "Weapon set {number}: {gear}",
 

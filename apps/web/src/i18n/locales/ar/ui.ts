@@ -1589,6 +1589,18 @@ export default {
   "training.soundOn": "الصوت مفعّل.",
   "training.you": "أنت",
 
+  "tutorial.learn": "تعلّم اللعب",
+  "tutorial.moreSoon": "دروس أخرى قريبًا. نراك هناك!",
+  "tutorial.offer": "جديد هنا؟ معلّمك سيريك الأساسيات.",
+  "tutorial.offerTitle": "أول مرة؟",
+  "tutorial.skip": "تخطَّ",
+  "tutorial.skipTutorial": "تخطَّ الدرس",
+  "tutorial.tutor": "المعلّم",
+  "tutorial.walk.hint": "هنا! قف على العلامة المتوهجة.",
+  "tutorial.walk.how": "انقر يسارًا على الأرض، أو امشِ بـ {keys}.",
+  "tutorial.walk.intro": "هذه الحرب لا تنتهي. امشِ معي؛ لديّ فكرة.",
+  "tutorial.walk.praise": "خطوة رائعة! أنت موهوب.",
+
   "weaponSets.empty": "مجموعة الأسلحة {number}: فارغة",
   "weaponSets.holds": "مجموعة الأسلحة {number}: {gear}",
 

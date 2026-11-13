@@ -1396,6 +1396,18 @@ export default {
   "training.soundOn": "Ljud på.",
   "training.you": "Du",
 
+  "tutorial.learn": "Lär dig spela",
+  "tutorial.moreSoon": "Fler lektioner snart. Vi ses där ute!",
+  "tutorial.offer": "Ny här? Din lärare visar dig grunderna.",
+  "tutorial.offerTitle": "Första gången?",
+  "tutorial.skip": "Hoppa över",
+  "tutorial.skipTutorial": "Hoppa över guiden",
+  "tutorial.tutor": "Lärare",
+  "tutorial.walk.hint": "Hitåt! Kliv på det glödande märket.",
+  "tutorial.walk.how": "Vänsterklicka på marken, eller gå med {keys}.",
+  "tutorial.walk.intro": "Det här kriget tar aldrig slut. Gå med mig; jag har en idé.",
+  "tutorial.walk.praise": "Fint steg! Du är en naturbegåvning.",
+
   "weaponSets.empty": "Vapenset {number}: tomt",
   "weaponSets.holds": "Vapenset {number}: {gear}",
 

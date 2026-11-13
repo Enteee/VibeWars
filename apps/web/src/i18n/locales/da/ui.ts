@@ -1395,6 +1395,18 @@ export default {
   "training.soundOn": "Lyd til.",
   "training.you": "Dig",
 
+  "tutorial.learn": "Lær at spille",
+  "tutorial.moreSoon": "Flere lektioner snart. Vi ses derude!",
+  "tutorial.offer": "Ny her? Din læremester viser dig det grundlæggende.",
+  "tutorial.offerTitle": "Første gang?",
+  "tutorial.skip": "Spring over",
+  "tutorial.skipTutorial": "Spring vejledningen over",
+  "tutorial.tutor": "Læremester",
+  "tutorial.walk.hint": "Herovre! Træd ind på det glødende mærke.",
+  "tutorial.walk.how": "Venstreklik på jorden, eller gå med {keys}.",
+  "tutorial.walk.intro": "Denne krig ender aldrig. Gå med mig; jeg har en idé.",
+  "tutorial.walk.praise": "Flot skridt! Du er et naturtalent.",
+
   "weaponSets.empty": "Våbensæt {number}: tomt",
   "weaponSets.holds": "Våbensæt {number}: {gear}",
 

@@ -1518,6 +1518,18 @@ export default {
   "training.soundOn": "Zvuk zapnutý.",
   "training.you": "Ty",
 
+  "tutorial.learn": "Nauč sa hrať",
+  "tutorial.moreSoon": "Čoskoro ďalšie lekcie. Uvidíme sa vonku!",
+  "tutorial.offer": "Si tu nový? Tvoj učiteľ ti ukáže základy.",
+  "tutorial.offerTitle": "Prvýkrát?",
+  "tutorial.skip": "Preskočiť",
+  "tutorial.skipTutorial": "Preskočiť výučbu",
+  "tutorial.tutor": "Učiteľ",
+  "tutorial.walk.hint": "Sem! Stúp na žiariacu značku.",
+  "tutorial.walk.how": "Klikni ľavým na zem, alebo choď klávesmi {keys}.",
+  "tutorial.walk.intro": "Táto vojna nikdy neskončí. Poď so mnou; mám nápad.",
+  "tutorial.walk.praise": "Pekný krok! Si prirodzený talent.",
+
   "weaponSets.empty": "Sada zbraní {number}: prázdna",
   "weaponSets.holds": "Sada zbraní {number}: {gear}",
 

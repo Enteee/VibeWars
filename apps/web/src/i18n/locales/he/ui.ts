@@ -1462,6 +1462,18 @@ export default {
   "training.soundOn": "הצליל פועל.",
   "training.you": "אתה",
 
+  "tutorial.learn": "ללמוד לשחק",
+  "tutorial.moreSoon": "עוד שיעורים בקרוב. נתראה שם!",
+  "tutorial.offer": "חדש כאן? המורה שלך יראה לך את הבסיס.",
+  "tutorial.offerTitle": "פעם ראשונה?",
+  "tutorial.skip": "דלג",
+  "tutorial.skipTutorial": "דלג על ההדרכה",
+  "tutorial.tutor": "מורה",
+  "tutorial.walk.hint": "לכאן! עלה על הסימן הזוהר.",
+  "tutorial.walk.how": "לחיצה שמאלית על הקרקע, או הליכה עם {keys}.",
+  "tutorial.walk.intro": "המלחמה הזאת לא נגמרת. בוא איתי; יש לי רעיון.",
+  "tutorial.walk.praise": "צעד יפה! יש לך כישרון.",
+
   "weaponSets.empty": "סט נשק {number}: ריק",
   "weaponSets.holds": "סט נשק {number}: {gear}",
 

@@ -1472,6 +1472,18 @@ export default {
   "training.soundOn": "Zvuk uključen.",
   "training.you": "Ti",
 
+  "tutorial.learn": "Nauči igrati",
+  "tutorial.moreSoon": "Uskoro još lekcija. Vidimo se vani!",
+  "tutorial.offer": "Novi si? Tvoj učitelj pokazat će ti osnove.",
+  "tutorial.offerTitle": "Prvi put?",
+  "tutorial.skip": "Preskoči",
+  "tutorial.skipTutorial": "Preskoči vodič",
+  "tutorial.tutor": "Učitelj",
+  "tutorial.walk.hint": "Ovamo! Stani na svjetleću oznaku.",
+  "tutorial.walk.how": "Lijevi klik na tlo, ili hodaj tipkama {keys}.",
+  "tutorial.walk.intro": "Ovaj rat nikad ne završava. Hodaj sa mnom; imam ideju.",
+  "tutorial.walk.praise": "Lijep korak! Prirodni si talent.",
+
   "weaponSets.empty": "Komplet oružja {number}: prazan",
   "weaponSets.holds": "Komplet oružja {number}: {gear}",
 

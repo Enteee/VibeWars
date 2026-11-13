@@ -1400,6 +1400,18 @@ export default {
   "training.soundOn": "Ses açık.",
   "training.you": "Sen",
 
+  "tutorial.learn": "Oynamayı öğren",
+  "tutorial.moreSoon": "Yakında daha fazla ders. Orada görüşürüz!",
+  "tutorial.offer": "Yeni misin? Öğretmenin sana temelleri gösterecek.",
+  "tutorial.offerTitle": "İlk kez mi?",
+  "tutorial.skip": "Atla",
+  "tutorial.skipTutorial": "Öğreticiyi atla",
+  "tutorial.tutor": "Öğretmen",
+  "tutorial.walk.hint": "Buraya! Parlayan işarete bas.",
+  "tutorial.walk.how": "Zemine sol tıkla ya da {keys} ile yürü.",
+  "tutorial.walk.intro": "Bu savaş hiç bitmiyor. Benimle yürü; bir fikrim var.",
+  "tutorial.walk.praise": "Güzel adım! Doğuştan yeteneklisin.",
+
   "weaponSets.empty": "Silah seti {number}: boş",
   "weaponSets.holds": "Silah seti {number}: {gear}",
 
