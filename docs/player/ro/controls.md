@@ -38,7 +38,7 @@ Aceste taste sunt fixe:
 ## Mouse
 
 - **Clic stânga** pe sol ca să mergi acolo. Fără Shift, butonul stâng doar te face să mergi.
-- Pe hărțile cu platforme înălțate, un clic stânga te duce pe suprafața pe care o vezi, iar **Alt + clic stânga** pe solul de dedesubt. Un cerc sub cursor marchează o platformă, un cerc punctat marchează solul.
+- Pe hărțile cu platforme înălțate, un clic stânga te duce pe suprafața pe care o vezi, iar **Alt + clic stânga** pe solul de dedesubt. Un cerc sub cursor marchează o platformă, un cerc punctat marchează solul. Deasupra unui tunel, un clic stânga duce la nivelul pe care ești, iar **Alt + clic stânga** la celălalt.
 - **Clic dreapta** pe un inamic sau pe un aliat ca să-l țintești. Clic dreapta din
   nou, rapid, pe același inamic ca să-l ataci.
 - **Clic dreapta** pe un steag sau pe suportul de steag, într-o Bătălie de bresle sau pe Barrow Field, ca să-l

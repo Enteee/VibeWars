@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { mapStructure, teamArenaMapIds } from "../net/maps.js";
 import { pickSurface } from "../render/layer-surfaces.js";
+import { ELEVATION_STEP } from "../render/render-order.js";
 import { splashGraph } from "../ui/splash-fight.js";
 
 import { MARK_REACH } from "./stations.js";
@@ -226,5 +227,42 @@ describe("drawTutorProfession (Q69)", () => {
     );
     expect(drawn.has(PLAYER_PROFESSION)).toBe(false);
     expect([...drawn].sort()).toEqual([...TUTOR_PROFESSIONS].sort());
+  });
+});
+
+// #3234: a click in a tunnel, from in it, goes along it, not up to the ground over it.
+describe("a walk along Crossroads' cellar-west (#3234)", () => {
+  /** Steps until the player is on `layer` within `MARK_REACH` of `point`, up to `seconds`. */
+  const reaches = (
+    simulation: ReturnType<typeof tutorialWorld>["simulation"],
+    point: { x: number; y: number },
+    layer: number,
+    seconds: number,
+  ): boolean => {
+    for (let t = 0; t < seconds; t += TICK) {
+      simulation.step(TICK);
+      const self = simulation.get(SELF_ID);
+      if (
+        self?.layer === layer &&
+        Math.hypot(self.position.x - point.x, self.position.y - point.y) <= MARK_REACH
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  it("takes a plain click from in the tunnel 300 further along it", () => {
+    const { simulation, ground } = tutorialWorld("arena-crossroads", 8, "tunnel", "monk", VIEWPORT);
+    const { structure } = mapStructure("arena-crossroads");
+    // Into it first: Alt over its cover, from the ground.
+    const into = pickSurface(structure, { x: 1815, y: 1350 + ELEVATION_STEP }, true, ground);
+    expect(into.layer).toBe(ground - 1);
+    simulation.walkTo(SELF_ID, into.point, into.layer);
+    expect(reaches(simulation, into.point, ground - 1, 60)).toBe(true);
+    const along = pickSurface(structure, { x: 1815, y: 1650 + ELEVATION_STEP }, false, ground - 1);
+    expect(along).toEqual({ layer: ground - 1, point: { x: 1815, y: 1650 } });
+    simulation.walkTo(SELF_ID, along.point, along.layer);
+    expect(reaches(simulation, along.point, ground - 1, 15)).toBe(true);
   });
 });

@@ -167,6 +167,7 @@ const DECK_OCCLUDER: Occluder = {
   highLift: 0,
   hidesThrough: 0,
   exempt: null,
+  tunnel: null,
 };
 
 /** A body standing at (150, 150) on `layer` of a two-layer map. */

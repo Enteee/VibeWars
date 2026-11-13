@@ -2,7 +2,7 @@ import type { Vec2 } from "@vibewars/game-core";
 import type { ClientIntent, PeerCall } from "@vibewars/game-protocol";
 import type { CallsSnapshot, MatchSnapshot } from "@vibewars/game-session";
 
-import { actorAtPoint, type ArenaSnapshot } from "../render/arena-snapshot.js";
+import { actorAtPoint, selfLayer, type ArenaSnapshot } from "../render/arena-snapshot.js";
 import { breakableAtPoint } from "../render/breakable-objects.js";
 import { flagObjectAtPoint, switchAtPoint } from "../render/flag-objects.js";
 import { pickSurface } from "../render/layer-surfaces.js";
@@ -55,7 +55,8 @@ export function secondaryClickIntents(
 
 /**
  * What a left click sends (#438): a walk to the surface drawn at `world`,
- * or with `below` (Alt, #2831) the one under it. With `shift` (Show
+ * or with `below` (Alt, #2831) the one under it; over a tunnel, the
+ * level your body is on first (#3234). With `shift` (Show
  * names held, #2738), a click on a body or its name targets it instead,
  * and at once attacks it, as a double right click would on a foe; on the
  * ground it still walks.
@@ -71,7 +72,7 @@ export function primaryClickIntents(
   if (hit !== undefined) {
     return [{ kind: "target", targetSessionId: hit.id }, ...attackClickIntents(snapshot, hit.id)];
   }
-  const { layer, point } = pickSurface(arena.structure, world, below);
+  const { layer, point } = pickSurface(arena.structure, world, below, selfLayer(arena));
   return [{ kind: "walk-to", x: point.x, y: point.y, layer }];
 }
 

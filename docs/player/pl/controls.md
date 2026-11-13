@@ -38,7 +38,7 @@ Te klawisze są stałe:
 ## Mysz
 
 - **Kliknięcie lewym przyciskiem** na ziemi to marsz w to miejsce. Bez Shift lewy przycisk służy tylko do chodzenia.
-- Na mapach z podwyższonymi platformami kliknięcie lewym przyciskiem prowadzi na widoczną powierzchnię, a **Alt + kliknięcie lewym przyciskiem** na ziemię pod nią. Pierścień pod kursorem oznacza platformę, a przerywany pierścień ziemię.
+- Na mapach z podwyższonymi platformami kliknięcie lewym przyciskiem prowadzi na widoczną powierzchnię, a **Alt + kliknięcie lewym przyciskiem** na ziemię pod nią. Pierścień pod kursorem oznacza platformę, a przerywany pierścień ziemię. Nad tunelem lewe kliknięcie prowadzi na poziom, na którym jesteś, a **Alt + lewe kliknięcie** na drugi.
 - **Kliknięcie prawym przyciskiem** wroga lub sojusznika obiera go na cel. Szybkie
   ponowne kliknięcie prawym przyciskiem tego samego wroga go atakuje.
 - **Kliknięcie prawym przyciskiem** flagi lub stojaka flagi, w Bitwie gildii albo
