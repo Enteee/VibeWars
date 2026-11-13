@@ -22,7 +22,6 @@ import {
   SLEEP_SERVICE_TEXT,
   SLEEP_SERVICE_UNIT,
   SLEEP_TMPFILES,
-  sleepNixosSnippet,
   sleepTmpfiles,
 } from "./hub-sleep-units.mjs";
 
@@ -39,6 +38,7 @@ const TEST_TAKES_EFFECT = 120;
  * @property {(line: string) => void} say
  * @property {boolean} canAsk stdin is a tty and sudo is on PATH
  * @property {boolean} nixos
+ * @property {string} nixosModule this checkout's nix/nixos/vibewars-sleep.nix
  * @property {string} user
  * @property {() => string} canHibernate logind's answer
  * @property {() => boolean} hasWakeAlarm
@@ -51,9 +51,10 @@ const TEST_TAKES_EFFECT = 120;
  * @param {{ stdin: { isTTY: boolean } }} proc
  * @param {(question: string) => Promise<string>} ask
  * @param {(line: string) => void} say
+ * @param {string} checkout the VibeWars checkout this init runs for
  * @returns {HibernateHost}
  */
-export function realHibernateHost(proc, ask, say) {
+export function realHibernateHost(proc, ask, say, checkout) {
   return {
     run: (argv, input) => {
       const [command = "", ...args] = argv;
@@ -68,6 +69,7 @@ export function realHibernateHost(proc, ask, say) {
     say,
     canAsk: proc.stdin.isTTY && spawnSync("sudo", ["--version"], { stdio: "ignore" }).status === 0,
     nixos: fs.existsSync("/etc/NIXOS"),
+    nixosModule: fs.realpathSync(path.join(checkout, "nix", "nixos", "vibewars-sleep.nix")),
     user: os.userInfo().username,
     canHibernate: () =>
       /"(\w+)"/.exec(
@@ -267,8 +269,13 @@ export async function askHibernate({ previous, host }) {
     return null;
   }
   if (host.nixos && !host.unitsInstalled()) {
-    host.say("  Hibernation stays off until this is in your configuration and rebuilt:");
-    host.say(sleepNixosSnippet(host.user));
+    host.say("  Hibernation stays off until this is in your NixOS configuration and rebuilt:");
+    host.say(`    imports = [ ${host.nixosModule} ];`);
+    host.say(`    services.vibewars-sleep = { enable = true; user = "${host.user}"; };`);
+    host.say(
+      '  Flake config: add input vibewars = { url = "github:Enteee/VibeWars"; flake = false; };',
+    );
+    host.say('    and import "${inputs.vibewars}/nix/nixos/vibewars-sleep.nix" instead.');
     host.say("  Then run claude-llc-init again.");
     return null;
   }

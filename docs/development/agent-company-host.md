@@ -213,11 +213,26 @@ hubd has no sudo. It writes the wake time to `/run/vibewars-sleep/request`,
 and a root path unit starts a oneshot that refuses anything but a decimal
 time at least 14 minutes ahead and within 7 days and 1 hour, then runs `rtcwake -m no`
 and `systemctl hibernate`. Refusals are in the journal
-(`journalctl -u vibewars-sleep`). Init installs
-`/usr/local/libexec/vibewars-sleep`, `vibewars-sleep.path` and
+(`journalctl -u vibewars-sleep`). The oneshot is
+`scripts/bots/vibewars-sleep.sh`. Init installs it as
+`/usr/local/libexec/vibewars-sleep`, with `vibewars-sleep.path` and
 `.service` in `/etc/systemd/system`, and a tmpfiles rule for the directory,
-owned by the operator. On NixOS it prints the configuration to add instead,
-and hibernation stays off until that is in and init has run again.
+owned by the operator.
+
+On NixOS init installs nothing: import the module and rebuild, then run init
+again. Until then hibernation stays off.
+
+```nix
+imports = [ /path/to/VibeWars/nix/nixos/vibewars-sleep.nix ];
+services.vibewars-sleep = { enable = true; user = "<you>"; };
+```
+
+A flake config adds the input
+`vibewars = { url = "github:Enteee/VibeWars"; flake = false; };` and imports
+`"${inputs.vibewars}/nix/nixos/vibewars-sleep.nix"` instead. `user` has no
+default: leaving it out is an evaluation error, never root. The module reads
+the script when the system is built, so a change to it needs a
+`nixos-rebuild`.
 
 ## Scaling the company by hand
 
