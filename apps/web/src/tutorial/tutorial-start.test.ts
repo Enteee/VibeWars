@@ -77,6 +77,15 @@ describe("teleporterSpot (#3222)", () => {
     expect(START.y - spot.y).toBeLessThanOrEqual(far);
   });
 
+  // QA (#3222): on canyon, north of the start is a plateau the ground walk
+  // never reaches, and the old fallback stood the pad on a ramp.
+  it("takes the open spot farthest north when no ground in reach is open", () => {
+    const shelf = 200;
+    expect(shelf).toBeLessThan(teleporterReach(VIEWPORT).near);
+    const spot = teleporterSpot(START, VIEWPORT, anywhere, (at) => START.y - at.y <= shelf);
+    expect(spot).toEqual(vec2(START.x, START.y - shelf));
+  });
+
   it("takes the farthest standable point north on a map too small for the span", () => {
     const top = START.y - 300;
     const spot = teleporterSpot(START, VIEWPORT, (at) => vec2(at.x, Math.max(top, at.y)), always);

@@ -15,6 +15,8 @@ describe("the splash fight's simulation (#3222)", () => {
     const simulation = splashSimulation(map, { mapId, teamSize: 8, still: false }, "walk");
     const { structure } = mapStructure(mapId);
     const bodies = [...simulation.participants()];
+    // #3250: a flat world stood Crossroads' bots on layer 0, under its fountain.
+    expect(bodies.map((body) => body.layer)).toEqual(bodies.map(() => structure.ground));
     const taken = bodies.filter((body) => {
       const picked = pickSurface(structure, body.position, false);
       simulation.walkTo(body.id, picked.point, picked.layer);

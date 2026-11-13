@@ -153,6 +153,15 @@ describe("tutorialWorld (#3221)", () => {
     },
   );
 
+  // QA (#3222): canyon's arch ramp, 845-965 by 710-790, rises to the arch
+  // on layer 1; its pad stood on it, drawn under the arch.
+  it("counts no spot on a ramp as open", () => {
+    const { structure } = mapStructure("arena-canyon");
+    expect(inOpenView(structure, { x: 905, y: 750 })).toBe(false);
+  });
+
+  // QA (#3222): on canyon the pad stood on the arch's ramp, drawn under the
+  // arch, and a walk to it ended on the floor below, at its x and y.
   it.each(teamArenaMapIds(8))("walks the player onto the teleporter's pad on %s", (mapId) => {
     const { simulation, teleporter, ground } = tutorialWorld(
       mapId,
@@ -167,10 +176,10 @@ describe("tutorialWorld (#3221)", () => {
     let reached = false;
     for (let t = 0; t < 20 && !reached; t += TICK) {
       simulation.step(TICK);
-      const self = simulation.get(SELF_ID)?.position;
+      const self = simulation.get(SELF_ID);
       reached =
-        self !== undefined &&
-        Math.hypot(self.x - teleporter.x, self.y - teleporter.y) <= MARK_REACH;
+        self?.layer === ground &&
+        Math.hypot(self.position.x - teleporter.x, self.position.y - teleporter.y) <= MARK_REACH;
     }
     expect(picked.layer).toBe(ground);
     expect(reached).toBe(true);

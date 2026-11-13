@@ -155,7 +155,7 @@ export async function startTutorialSession(
   parent.append(frame);
 
   const runner = createTutorialRunner(
-    [walkStation(mark), lookStation(teleporter), stepInStation(teleporter)],
+    [walkStation(mark, ground), lookStation(teleporter), stepInStation(teleporter, ground)],
     loadKeymap,
   );
   const inView = (point: Vec2): boolean => {
@@ -183,7 +183,14 @@ export async function startTutorialSession(
     lookDragged ||= look?.panning === true;
     if (self !== undefined && tutor !== undefined && farewell === 0) {
       const beat = runner.tick(
-        { self: self.position, tutor: tutor.position, zoomedOut, lookDragged, inView },
+        {
+          self: self.position,
+          selfLayer: self.layer,
+          tutor: tutor.position,
+          zoomedOut,
+          lookDragged,
+          inView,
+        },
         now,
       );
       highlight = beat.highlight;

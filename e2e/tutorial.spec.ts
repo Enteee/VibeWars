@@ -71,6 +71,8 @@ test.describe("the first-time tutorial (#3218)", () => {
       // Only the pair in the party window, and no scoreline (#3221).
       await expect(page.locator(".party-window .party-row")).toHaveCount(2);
       await expect(page.locator(".hud-scoreboard")).toBeHidden();
+      // No empty target frame over the teleporter's pad (#3222).
+      await expect(page.locator(".hud-target")).toBeHidden();
       await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
       const [x = 0, y = 0] = ((await frame.getAttribute("data-mark")) ?? "").split(",").map(Number);
       // The camera may still be easing in on a slow runner, which makes one

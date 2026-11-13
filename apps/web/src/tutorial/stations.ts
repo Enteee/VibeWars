@@ -10,6 +10,8 @@ import type { KeyAction } from "../input/keymap.js";
  */
 export interface TutorialView {
   readonly self: Vec2;
+  /** The layer the player's body is on: a mark is stood on from its own layer. */
+  readonly selfLayer: number;
   readonly tutor: Vec2;
   /** The view has been wider than the default step. */
   readonly zoomedOut: boolean;
@@ -47,8 +49,18 @@ export interface Station {
 /** How close to a ground mark the player's body counts as on it, in world units. */
 export const MARK_REACH = 40;
 
-/** Station 1 (playbook §1): walk to the glowing mark by the tutor. */
-export function walkStation(mark: Vec2): Station {
+/**
+ * Whether the player stands on the mark at `at` on `layer`: near it, and
+ * on its layer, never under it on a floor below or over it on a deck.
+ */
+function onMark(view: TutorialView, at: Vec2, layer: number): boolean {
+  return (
+    view.selfLayer === layer && Math.hypot(view.self.x - at.x, view.self.y - at.y) <= MARK_REACH
+  );
+}
+
+/** Station 1 (playbook §1): walk to the glowing mark by the tutor, on `layer`. */
+export function walkStation(mark: Vec2, layer: number): Station {
   return {
     id: "walk",
     lines: {
@@ -59,7 +71,7 @@ export function walkStation(mark: Vec2): Station {
     },
     keys: ["move-up", "move-left", "move-down", "move-right"],
     highlight: { kind: "ground", at: mark },
-    done: (view) => Math.hypot(view.self.x - mark.x, view.self.y - mark.y) <= MARK_REACH,
+    done: (view) => onMark(view, mark, layer),
   };
 }
 
@@ -87,8 +99,8 @@ export function lookStation(teleporter: Vec2): Station {
   };
 }
 
-/** Station 3 (playbook §3): step onto the teleporter's pad, where its goal glows. */
-export function stepInStation(pad: Vec2): Station {
+/** Station 3 (playbook §3): step onto the teleporter's pad, on `layer`, where its goal glows. */
+export function stepInStation(pad: Vec2, layer: number): Station {
   return {
     id: "step-in",
     lines: {
@@ -99,6 +111,6 @@ export function stepInStation(pad: Vec2): Station {
     },
     keys: ["move-up", "move-left", "move-down", "move-right"],
     highlight: { kind: "ground", at: pad },
-    done: (view) => Math.hypot(view.self.x - pad.x, view.self.y - pad.y) <= MARK_REACH,
+    done: (view) => onMark(view, pad, layer),
   };
 }

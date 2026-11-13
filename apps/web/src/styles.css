@@ -862,6 +862,11 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* The tutorial shows no empty frame (#3222). */
+.hud-target[hidden] {
+  display: none;
+}
+
 /* A foe a click calls for your team (#2737); otherwise the arena under
    the frame keeps the pointer, as the rest of the top does. */
 .hud-target.is-callable {

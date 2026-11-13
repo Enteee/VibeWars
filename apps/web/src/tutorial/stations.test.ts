@@ -4,8 +4,10 @@ import { describe, expect, it } from "vitest";
 import { MARK_REACH, lookStation, stepInStation, type TutorialView } from "./stations.js";
 
 const PAD = vec2(500, -900);
+const GROUND = 2;
 const view = (over: Partial<TutorialView> = {}): TutorialView => ({
   self: vec2(0, 0),
+  selfLayer: GROUND,
   tutor: vec2(40, 0),
   zoomedOut: false,
   lookDragged: false,
@@ -41,12 +43,19 @@ describe("lookStation (#3222)", () => {
 
 describe("stepInStation (#3222)", () => {
   it("is done on the pad, within MARK_REACH, and not beyond", () => {
-    const station = stepInStation(PAD);
+    const station = stepInStation(PAD, GROUND);
     expect(station.done(view({ self: vec2(PAD.x + MARK_REACH, PAD.y) }))).toBe(true);
     expect(station.done(view({ self: vec2(PAD.x, PAD.y + MARK_REACH + 1) }))).toBe(false);
   });
 
+  // QA (#3222): under canyon's plateau, at the pad's x and y, counted as on it.
+  it("is not done under the pad or over it, on another layer", () => {
+    const station = stepInStation(PAD, GROUND);
+    expect(station.done(view({ self: PAD, selfLayer: GROUND - 1 }))).toBe(false);
+    expect(station.done(view({ self: PAD, selfLayer: GROUND + 1 }))).toBe(false);
+  });
+
   it("points at the pad", () => {
-    expect(stepInStation(PAD).highlight).toEqual({ kind: "ground", at: PAD });
+    expect(stepInStation(PAD, GROUND).highlight).toEqual({ kind: "ground", at: PAD });
   });
 });

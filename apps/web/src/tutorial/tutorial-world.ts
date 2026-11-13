@@ -202,22 +202,34 @@ function placesFrom(graph: NavGraph, from: Vec2): readonly [Vec2, Vec2, Vec2] {
 }
 
 /**
- * Whether the ground at `at` is drawn in plain view (#3221): no deck
- * over it, nor its lifted top or the side it draws down to the ground in
- * front of it, and a click on it names the ground there, not a floor
- * drawn over it.
+ * Whether the ground at `at` is drawn in plain view (#3221): not on a
+ * ramp, no deck or ramp over it, nor its lifted top or the side it draws
+ * down to the ground in front of it, and a click on it names the ground
+ * there, not a floor drawn over it.
  */
 export function inOpenView(structure: MapStructure, at: Vec2): boolean {
   const { ground } = structure;
   if (pickSurface(structure, at, false).layer !== ground) {
     return false;
   }
-  return !structure.decks.some((deck) => {
-    if (deck.layer <= ground) {
+  if (structure.transitions.some((ramp) => pointInPolygon(at, shapeOutline(ramp.area)))) {
+    return false;
+  }
+  // A ramp is drawn up to its top layer, as a deck is (#3222): a spot on
+  // canyon's arch ramp read as open, and its pad hid under the arch.
+  const raised = [
+    ...structure.decks.map((deck) => ({ layer: deck.layer, shape: deck.footprint })),
+    ...structure.transitions.map((ramp) => ({
+      layer: Math.max(ramp.from, ramp.to),
+      shape: ramp.area,
+    })),
+  ];
+  return !raised.some(({ layer, shape }) => {
+    if (layer <= ground) {
       return false;
     }
-    const outline = shapeOutline(deck.footprint);
-    const lift = elevationOf(deck.layer, ground);
+    const outline = shapeOutline(shape);
+    const lift = elevationOf(layer, ground);
     for (let rise = 0; rise <= lift; rise += SIDE_SAMPLE) {
       if (pointInPolygon(vec2(at.x, at.y + rise), outline)) {
         return true;
