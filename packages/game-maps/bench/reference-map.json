@@ -1,0 +1,423 @@
+{
+  "id": "bench-reference",
+  "name": "Bench reference",
+  "mode": "annihilation",
+  "teamSizes": [1, 2, 4, 8],
+  "teams": 2,
+  "width": 3000,
+  "height": 2000,
+  "bounds": {
+    "kind": "outline",
+    "outside": "rock",
+    "outline": [
+      {
+        "x": 120,
+        "y": 160
+      },
+      {
+        "x": 1500,
+        "y": 100
+      },
+      {
+        "x": 2880,
+        "y": 160
+      },
+      {
+        "x": 2900,
+        "y": 1000
+      },
+      {
+        "x": 2880,
+        "y": 1840
+      },
+      {
+        "x": 1500,
+        "y": 1900
+      },
+      {
+        "x": 120,
+        "y": 1840
+      },
+      {
+        "x": 100,
+        "y": 1000
+      }
+    ]
+  },
+  "layers": 3,
+  "biome": "wilds",
+  "groundLayer": 1,
+  "pits": [
+    {
+      "id": "well",
+      "footprint": {
+        "kind": "rect",
+        "x": 1440,
+        "y": 1200,
+        "width": 110,
+        "height": 130
+      }
+    }
+  ],
+  "tunnels": [
+    {
+      "id": "cellar",
+      "footprint": {
+        "kind": "rect",
+        "x": 1450,
+        "y": 1310,
+        "width": 90,
+        "height": 420
+      }
+    }
+  ],
+  "decks": [
+    {
+      "id": "roof",
+      "layer": 2,
+      "footprint": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1200,
+            "y": 500
+          },
+          {
+            "x": 1800,
+            "y": 500
+          },
+          {
+            "x": 1800,
+            "y": 800
+          },
+          {
+            "x": 1200,
+            "y": 800
+          }
+        ]
+      },
+      "look": "rooftop",
+      "switched": null
+    }
+  ],
+  "transitions": [
+    {
+      "id": "roof-stairs",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1090,
+        "y": 600,
+        "width": 110,
+        "height": 80
+      },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "well-steps",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 1450,
+        "y": 1200,
+        "width": 90,
+        "height": 130
+      },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    }
+  ],
+  "dropOffs": [],
+  "walls": [
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": 1200,
+          "y": 500
+        },
+        {
+          "x": 1800,
+          "y": 500
+        },
+        {
+          "x": 1800,
+          "y": 800
+        },
+        {
+          "x": 1200,
+          "y": 800
+        }
+      ],
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 900,
+      "y": 1300,
+      "width": 200,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 1900,
+      "y": 1300,
+      "width": 200,
+      "height": 60,
+      "layer": 1
+    }
+  ],
+  "water": [],
+  "zones": [
+    {
+      "id": "spring",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1560,
+            "y": 1000
+          },
+          {
+            "x": 1500,
+            "y": 1060
+          },
+          {
+            "x": 1440,
+            "y": 1000
+          },
+          {
+            "x": 1500,
+            "y": 940
+          }
+        ]
+      }
+    }
+  ],
+  "gates": [],
+  "switches": [],
+  "objectives": [],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 320,
+        "y": 700
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 320,
+        "y": 780
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 320,
+        "y": 860
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 320,
+        "y": 940
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 320,
+        "y": 1020
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 320,
+        "y": 1100
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 320,
+        "y": 1180
+      }
+    },
+    {
+      "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 320,
+        "y": 1260
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 2680,
+        "y": 700
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 2680,
+        "y": 780
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 2680,
+        "y": 860
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 2680,
+        "y": 940
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 2680,
+        "y": 1020
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 2680,
+        "y": 1100
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 2680,
+        "y": 1180
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 2680,
+        "y": 1260
+      }
+    }
+  ],
+  "lighting": {
+    "ambient": {
+      "colour": 11582676,
+      "intensity": 0.5
+    },
+    "indoorAmbient": {
+      "colour": 5924488,
+      "intensity": 0.3
+    },
+    "indoor": [],
+    "sun": {
+      "directionDeg": 315,
+      "elevationDeg": 55,
+      "colour": 16773334,
+      "intensity": 0.55
+    },
+    "lights": [
+      {
+        "id": "yard-lantern",
+        "position": {
+          "x": 1500,
+          "y": 1100
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "cellar-torch",
+        "position": {
+          "x": 1495,
+          "y": 1600
+        },
+        "layer": 0,
+        "radius": 140,
+        "colour": 16760944,
+        "intensity": 0.85,
+        "flicker": 0.25
+      },
+      {
+        "id": "roof-brazier",
+        "position": {
+          "x": 1500,
+          "y": 650
+        },
+        "layer": 2,
+        "radius": 170,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      }
+    ]
+  },
+  "atmosphere": {
+    "fog": [
+      {
+        "layer": 0,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            {
+              "x": 1450,
+              "y": 1310
+            },
+            {
+              "x": 1540,
+              "y": 1310
+            },
+            {
+              "x": 1540,
+              "y": 1730
+            },
+            {
+              "x": 1450,
+              "y": 1730
+            }
+          ]
+        }
+      }
+    ],
+    "plumes": [],
+    "weather": null
+  }
+}

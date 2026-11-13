@@ -67,11 +67,15 @@ describe("ceilings", () => {
     expect(run(401)?.failures[0]).toMatch(/4\.01× .*over 4× \(ceiling, #3254\)/);
   });
 
-  it("warns, without failing, on a listed map at or under the default", () => {
-    expect(run(290)?.failures).toEqual([]);
-    expect(run(290)?.warnings[0]).toMatch(
-      /m0 is under 3×: delete its BENCH_CEILINGS entry \(#3254\)/,
+  it("fails a listed map at or under the default / 1.25 as stale (#3255)", () => {
+    expect(run(240)?.failures[0]).toMatch(
+      /m0 is under 2\.40× \(3× \/ 1\.25\): delete its BENCH_CEILINGS entry \(#3254\)/,
     );
+  });
+
+  it("keeps a listed map just under the default, within runner noise (#3255)", () => {
+    expect(run(241)?.failures).toEqual([]);
+    expect(run(290)?.failures).toEqual([]);
   });
 
   it("leaves other maps at the default", () => {

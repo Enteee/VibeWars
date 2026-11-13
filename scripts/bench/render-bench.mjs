@@ -12,9 +12,10 @@
  * 16.7 ms measures as the cap, not its cost; such a map is marked
  * `(cap-bound)` in the table. The ratio is therefore only meaningful for work
  * heavier than the cap, and the script enforces that: the calibration must
- * itself take more than `MIN_CALIBRATION_MS`. The baseline is a calibration run the script owns,
- * not a game map: a fixed seeded WebGL workload drawn every frame on a
- * blank page in the same browser, measured in windows interleaved with the maps (one
+ * itself take more than `MIN_CALIBRATION_MS`. The baseline is a calibration run the script owns:
+ * the frozen reference map, `packages/game-maps/bench/reference-map.json`, drawn
+ * as the maps are, so whatever bounds a runner (fill, geometry, JS) bounds both
+ * (#3255). It is measured in windows interleaved with the maps (one
  * before each, one after, after an unmeasured warm-up). Each map is judged against the mean
  * of the two windows around it, and a pair of windows differing by over
  * `MAX_CALIBRATION_SPREAD` fails the run as too noisy to judge (`verdict.mjs`). Prints p50 and p95 per map
@@ -24,7 +25,7 @@
  *
  *   BENCH_MAP=a,b      the maps, by id. Default: every map of more
  *                      than one layer.
- *   BENCH_MAX_RATIO=3 exit 1 when a map's p50 is more than this many
+ *   BENCH_MAX_RATIO=3.5 exit 1 when a map's p50 is more than this many
  *                      times the calibration's. CI's regression gate.
  *   --url <url>        measure a client already served there.
  *   --follow           only the follow case (#3240), below.
@@ -64,6 +65,12 @@ import { settled, verdict } from "./verdict.mjs";
 /** A map p50 this close to a frame-rate cap (60 Hz, or the menu's 30 fps limiter) is cap-bound. */
 const CAP_TOLERANCE_MS = 0.5;
 const CAPS_MS = [1000 / 60, 1000 / 30];
+/**
+ * The calibration's map (#3255), offered only by the build this script
+ * makes. Frozen: an edit to it moves every ratio, so re-derive the gate
+ * (`BENCH_MAX_RATIO`, `BENCH_CEILINGS`) in the same change.
+ */
+const REFERENCE_MAP = "bench-reference";
 /** A calibration lighter than two 60 Hz frames is bound by the caps, not by its cost. */
 const MIN_CALIBRATION_MS = 2000 / 60 + 0.1;
 
@@ -135,8 +142,14 @@ async function serve() {
     `--host 127.0.0.1 --port ${String(PORT)} --strictPort`;
   const child = spawn("sh", ["-c", command], {
     stdio: ["ignore", "ignore", "inherit"],
-    // No splash: the menu, and its background, from load.
-    env: { ...process.env, VITE_VIBEWARS_TRANSPORT: "broadcast", VITE_VIBEWARS_SPLASH: "off" },
+    // No splash: the menu, and its background, from load; the reference map
+    // in the lobby (#3255).
+    env: {
+      ...process.env,
+      VITE_VIBEWARS_TRANSPORT: "broadcast",
+      VITE_VIBEWARS_SPLASH: "off",
+      VIBEWARS_BENCH_REFERENCE: "1",
+    },
     detached: true,
   });
   const stop = () => {
@@ -191,7 +204,12 @@ async function measure(page, mapId, seconds) {
     .locator(".mode-rail")
     .getByRole("button", { name: "Hosted Game", exact: true });
   await entry.click();
-  await page.locator(".lobby-map select").selectOption(mapId);
+  const select = page.locator(".lobby-map select");
+  // The reference map is offered only by a build with VIBEWARS_BENCH_REFERENCE (#3255).
+  if ((await select.locator(`option[value="${mapId}"]`).count()) === 0) {
+    throw new Error(`${mapId}: the lobby does not offer it, so this build cannot measure it`);
+  }
+  await select.selectOption(mapId);
   const background = page.locator("#menu-background");
   await page.waitForFunction(
     (id) => {
@@ -442,88 +460,6 @@ function median(values) {
   return ((sorted[low] ?? 0) + (sorted[Math.floor(sorted.length / 2)] ?? 0)) / 2;
 }
 
-/**
- * The calibration: a fixed WebGL workload, as the renderer's context is,
- * on a blank page where no game runs. 3000 seeded translucent triangles
- * (about 48 screens of overdraw) in one draw call, redrawn every frame
- * for `SECONDS`.
- *
- * @param {import("@playwright/test").Page} page an about:blank page
- * @returns {Promise<number[]>}
- */
-async function calibrate(page) {
-  await page.evaluate(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 1280;
-    canvas.height = 720;
-    document.body.style.margin = "0";
-    document.body.append(canvas);
-    const gl = canvas.getContext("webgl");
-    if (gl === null) {
-      throw new Error("no WebGL for the calibration");
-    }
-    let seed = 12345;
-    const random = () => {
-      seed = (seed * 1664525 + 1013904223) % 4294967296;
-      return seed / 4294967296;
-    };
-    const vertices = new Float32Array(3000 * 3 * 2);
-    for (let t = 0; t < 3000; t += 1) {
-      const x = random() * 2 - 1;
-      const y = random() * 2 - 1;
-      const size = 0.1 + random() * 0.4;
-      for (let v = 0; v < 3; v += 1) {
-        vertices[t * 6 + v * 2] = x + (random() - 0.5) * size;
-        vertices[t * 6 + v * 2 + 1] = y + (random() - 0.5) * size;
-      }
-    }
-    /** @param {number} type @param {string} source */
-    const shader = (type, source) => {
-      const made = gl.createShader(type);
-      if (made === null) {
-        throw new Error("no shader");
-      }
-      gl.shaderSource(made, source);
-      gl.compileShader(made);
-      if (!gl.getShaderParameter(made, gl.COMPILE_STATUS)) {
-        throw new Error(`calibration shader: ${gl.getShaderInfoLog(made) ?? "failed"}`);
-      }
-      return made;
-    };
-    const program = gl.createProgram();
-    gl.attachShader(
-      program,
-      shader(gl.VERTEX_SHADER, "attribute vec2 p; void main(){gl_Position=vec4(p,0.,1.);}"),
-    );
-    gl.attachShader(
-      program,
-      shader(
-        gl.FRAGMENT_SHADER,
-        "precision mediump float; void main(){gl_FragColor=vec4(.2,.6,.3,.1);}",
-      ),
-    );
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      throw new Error(`calibration program: ${gl.getProgramInfoLog(program) ?? "failed"}`);
-    }
-    gl.useProgram(program);
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-    const at = gl.getAttribLocation(program, "p");
-    gl.enableVertexAttribArray(at);
-    gl.vertexAttribPointer(at, 2, gl.FLOAT, false, 0, 0);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    const draw = () => {
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.drawArrays(gl.TRIANGLES, 0, 3000 * 3);
-      requestAnimationFrame(draw);
-    };
-    draw();
-  });
-  return frameTimes(page);
-}
-
 const served = options.url === undefined ? await serve() : undefined;
 const url = options.url ?? served?.url ?? "";
 const executablePath = process.env.VIBEWARS_CHROMIUM;
@@ -536,15 +472,6 @@ try {
     args: ["--no-sandbox", "--disable-gpu-vsync", "--disable-frame-rate-limit"],
   });
   const viewport = { width: 1280, height: 720 };
-  /** One calibration window, on a blank page, with no game page open, so nothing else draws meanwhile. */
-  const calibrationWindow = async () => {
-    const blank = await browser.newPage({ viewport });
-    try {
-      return percentile(await calibrate(blank), 50);
-    } finally {
-      await blank.close();
-    }
-  };
   /** One map on a page of its own, which is collected and closed before the next calibration. */
   const mapWindow = async (/** @type {string} */ mapId, /** @type {number} */ seconds) => {
     const page = await browser.newPage({ viewport });
@@ -558,6 +485,8 @@ try {
       await sleep(CALIBRATION_SETTLE_MS);
     }
   };
+  /** One calibration window: the reference map, drawn as a map is, alone (#3255). */
+  const calibrationWindow = async () => percentile(await mapWindow(REFERENCE_MAP, SECONDS), 50);
   const mapIds = options.follow === true ? [] : mapsToMeasure();
   // The runner is slow for the first 20-40 s of a run: load the first map, then
   // calibrate until the runner has had that long and two windows in a row agree,
@@ -648,9 +577,6 @@ try {
     );
   }
   for (const v of verdicts) {
-    for (const warning of v.warnings) {
-      console.warn(warning);
-    }
     for (const failure of v.failures) {
       console.error(failure);
       failed = true;
