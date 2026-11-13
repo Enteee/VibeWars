@@ -272,6 +272,7 @@ export {
   isTeamQueueMode,
   inPartyOrder,
   parseQueueTicket,
+  soloQueueTicket,
   teamQueueModeOf,
   lobbyModeOfQueue,
   teamSizeOf,
