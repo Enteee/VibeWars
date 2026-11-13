@@ -201,7 +201,9 @@ export class RecordingGraphics {
 
 /**
  * A `RecordingGraphics` that takes any other Graphics call too, as a
- * no-op that chains, so the scene's painters run on it unchanged.
+ * no-op that chains, so the scene's painters run on it unchanged. A
+ * fill it does not record throws instead: ignored, it would let the
+ * gate pass blind to whatever that fill paints.
  */
 export function recordingGraphics(): RecordingGraphics {
   const target = new RecordingGraphics();
@@ -210,6 +212,9 @@ export function recordingGraphics(): RecordingGraphics {
       if (key in object) {
         const value: unknown = Reflect.get(object, key, receiver);
         return typeof value === "function" ? value.bind(proxy) : value;
+      }
+      if (typeof key === "string" && key.startsWith("fill")) {
+        throw new Error(`RecordingGraphics does not record ${key}: add it`);
       }
       return () => proxy;
     },

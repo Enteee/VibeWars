@@ -208,6 +208,27 @@ describe("hiddenSpots (#3251)", () => {
   });
 });
 
+describe("recordingGraphics (#3251)", () => {
+  it("takes a call it does not know as a chaining no-op", () => {
+    const g = recordingGraphics();
+    const lineStyle: unknown = Reflect.get(g, "lineStyle");
+    expect(typeof lineStyle === "function" && lineStyle(2, 0xffffff, 1)).toBe(g);
+  });
+
+  it("throws on a fill it does not record, so the gate never passes blind", () => {
+    const g = recordingGraphics();
+    for (const fill of ["fill", "fillGradientStyle", "fillSomethingNew"]) {
+      expect(() => Reflect.get(g, fill), fill).toThrow(fill);
+    }
+  });
+
+  it("records every fill it does know", () => {
+    const g = recordingGraphics();
+    g.fillStyle(0xffffff, 0.5).fillRect(0, 0, 10, 10).fillCircle(0, 0, 5);
+    expect(g.fills.map(({ alpha }) => alpha)).toEqual([0.5, 0.5]);
+  });
+});
+
 describe("the visibility gate's sweep (#3251)", () => {
   const maps = [...ARENA_MAPS, ...TRAINING_MAPS.values()];
   it.each(maps.map((map) => [map.id, map] as const))(
