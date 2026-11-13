@@ -76,7 +76,7 @@ import { capeLook } from "./render/cape-shape.js";
 import { castBadgeType } from "./render/cast-badge.js";
 import { CRUMBLED, crackStage, renderableBreakables } from "./render/breakable-objects.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
-import { attachFollowCamera } from "./render/follow-camera.js";
+import { attachFollowCamera, type CameraLook } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
 import { projectileSprite } from "./render/projectiles.js";
 import {
@@ -255,6 +255,8 @@ export interface MatchView {
   summary(): readonly SummaryTable[] | undefined;
   /** Shows `line` over the result, or none. */
   setEndLine(line: EndLine | undefined): void;
+  /** What the camera shows (#3222), or nothing before its first frame or without a canvas. */
+  camera(): CameraLook | undefined;
   dispose(): Promise<void>;
 }
 
@@ -1271,6 +1273,7 @@ export async function startMatchView(
 
   return {
     summary: () => summary?.tables,
+    camera: () => camera?.look(),
     setEndLine(line) {
       if (line === undefined) {
         endLine?.root.remove();

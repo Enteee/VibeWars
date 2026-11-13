@@ -227,6 +227,7 @@ import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
 import { showTutorialOffer } from "./tutorial/tutorial-offer.js";
 import { loadTutorialRecord, saveTutorialRecord } from "./tutorial/tutorial-preference.js";
 import { startTutorialSession, type TutorialSession } from "./tutorial/tutorial-session.js";
+import { drawTutorProfession } from "./tutorial/tutorial-world.js";
 import {
   teamQueueModeOf,
   teamSizeOf,
@@ -3202,6 +3203,7 @@ async function main(): Promise<void> {
       const session = await startTutorialSession(viewport, {
         mapId,
         teamSize,
+        tutorProfession: drawTutorProfession(Math.random),
         onEnd: (end) => {
           tutorialRun = undefined;
           tutorial = undefined;

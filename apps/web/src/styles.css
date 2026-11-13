@@ -7944,6 +7944,45 @@ body:has(#screens[style*="none"]) .now-playing {
   color: var(--ink-dim);
 }
 
+/* Into the teleporter (#3222): a flash to white that fades back; a plain fade under reduced motion. */
+.tutorial-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: tutorial-flash 0.8s ease-out forwards;
+}
+
+@keyframes tutorial-flash {
+  10% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes tutorial-fade {
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-flash {
+    animation: tutorial-fade 0.8s ease-in-out forwards;
+  }
+}
+
 /* As the HUD's leave match button. */
 .tutorial-skip-tutorial {
   position: absolute;

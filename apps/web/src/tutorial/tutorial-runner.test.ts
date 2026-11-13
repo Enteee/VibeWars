@@ -7,8 +7,9 @@ import { walkStation, type Station, type TutorialView } from "./stations.js";
 import { HINT_REPEAT_MS, PRAISE_MS, createTutorialRunner } from "./tutorial-runner.js";
 
 const MARK = vec2(200, 100);
-const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100) };
-const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100) };
+const CAMERA = { zoomedOut: false, lookDragged: false, inView: () => false };
+const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100), ...CAMERA };
+const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100), ...CAMERA };
 const label = (code: string): string => code;
 
 describe("the tutorial runner", () => {

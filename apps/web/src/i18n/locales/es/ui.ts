@@ -1488,11 +1488,22 @@ export default {
   "training.you": "Tú",
 
   "tutorial.learn": "Aprender a jugar",
+  "tutorial.look.hint":
+    "Aleja la vista y arrástrala hacia el norte. ¡Encuentra el teletransportador!",
+  "tutorial.look.how":
+    "La rueda del ratón hace zoom. Mantén el botón derecho y arrastra para mirar.",
+  "tutorial.look.intro":
+    "Quizá este teletransportador nos lleve alrededor del campo de batalla. ¡Mira al norte!",
+  "tutorial.look.praise": "¡Ahí está! Nuestro camino alrededor de la lucha.",
   "tutorial.moreSoon": "Pronto más lecciones. ¡Nos vemos ahí fuera!",
   "tutorial.offer": "¿Eres nuevo? Tu tutor te enseñará lo básico.",
   "tutorial.offerTitle": "¿Primera vez?",
   "tutorial.skip": "Saltar",
   "tutorial.skipTutorial": "Saltar tutorial",
+  "tutorial.stepIn.hint": "Súbete a la plataforma del teletransportador. Estoy a tu lado.",
+  "tutorial.stepIn.how": "Haz clic izquierdo en la plataforma, o camina con {keys}.",
+  "tutorial.stepIn.intro": "¡Vamos, al teletransportador conmigo!",
+  "tutorial.stepIn.praise": "Juntos. Contén la respiración.",
   "tutorial.tutor": "Tutor",
   "tutorial.walk.hint": "¡Aquí! Pisa la marca brillante.",
   "tutorial.walk.how": "Clic izquierdo en el suelo, o camina con {keys}.",

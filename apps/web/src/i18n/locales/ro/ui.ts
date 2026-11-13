@@ -1479,11 +1479,21 @@ export default {
   "training.you": "Tu",
 
   "tutorial.learn": "Învață să joci",
+  "tutorial.look.hint": "Micșorează, apoi trage imaginea spre nord. Găsește teleportorul!",
+  "tutorial.look.how":
+    "Rotița mouse-ului face zoom. Ține apăsat butonul drept și trage ca să privești.",
+  "tutorial.look.intro":
+    "Poate acest teleportor ne duce pe lângă câmpul de luptă. Privește spre nord!",
+  "tutorial.look.praise": "Iată-l! Drumul nostru pe lângă luptă.",
   "tutorial.moreSoon": "Curând mai multe lecții. Ne vedem acolo!",
   "tutorial.offer": "Ești nou? Tutorele tău îți arată elementele de bază.",
   "tutorial.offerTitle": "Prima dată?",
   "tutorial.skip": "Sari peste",
   "tutorial.skipTutorial": "Sari peste tutorial",
+  "tutorial.stepIn.hint": "Urcă pe platforma teleportorului. Sunt chiar lângă tine.",
+  "tutorial.stepIn.how": "Clic stânga pe platformă sau mergi cu {keys}.",
+  "tutorial.stepIn.intro": "Hai, în teleportor cu mine!",
+  "tutorial.stepIn.praise": "Împreună. Ține-ți respirația.",
   "tutorial.tutor": "Tutore",
   "tutorial.walk.hint": "Aici! Calcă pe semnul strălucitor.",
   "tutorial.walk.how": "Clic stânga pe sol, sau mergi cu {keys}.",

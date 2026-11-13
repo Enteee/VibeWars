@@ -5,11 +5,18 @@ import type { KeyAction } from "../input/keymap.js";
 
 /**
  * What a station's check reads (#3218): where the player and the tutor
- * stand. Later stations add what they need, such as a zoom or a look-drag.
+ * stand, and what the camera has done (#3222). `zoomedOut` and
+ * `lookDragged` latch for the run: once true, they stay true.
  */
 export interface TutorialView {
   readonly self: Vec2;
   readonly tutor: Vec2;
+  /** The view has been wider than the default step. */
+  readonly zoomedOut: boolean;
+  /** The view has been dragged with the right button. */
+  readonly lookDragged: boolean;
+  /** Whether `point`, on the ground, is on screen now. */
+  readonly inView: (point: Vec2) => boolean;
 }
 
 /** What a station points at: a mark on the ground, or a HUD element by its selector. */
@@ -32,7 +39,8 @@ export interface Station {
   };
   /** The actions whose keys the lines show, as the player has them bound. */
   readonly keys?: readonly KeyAction[];
-  readonly highlight: StationHighlight;
+  /** What it points at, or nothing: a look around has no one place. */
+  readonly highlight: StationHighlight | undefined;
   readonly done: (view: TutorialView) => boolean;
 }
 
@@ -52,5 +60,45 @@ export function walkStation(mark: Vec2): Station {
     keys: ["move-up", "move-left", "move-down", "move-right"],
     highlight: { kind: "ground", at: mark },
     done: (view) => Math.hypot(view.self.x - mark.x, view.self.y - mark.y) <= MARK_REACH,
+  };
+}
+
+/**
+ * Station 2 (playbook §2): zoom out, drag the view, and find the
+ * teleporter north of the pair. The wheel and the right button have no
+ * key in the keymap, so the lines name the mouse.
+ */
+export function lookStation(teleporter: Vec2): Station {
+  let seen = false;
+  return {
+    id: "look",
+    lines: {
+      intro: "tutorial.look.intro",
+      hint: "tutorial.look.hint",
+      praise: "tutorial.look.praise",
+      how: "tutorial.look.how",
+    },
+    highlight: undefined,
+    done: (view) => {
+      // Seen at some moment, not only while the drag is held.
+      seen ||= view.inView(teleporter);
+      return seen && view.zoomedOut && view.lookDragged;
+    },
+  };
+}
+
+/** Station 3 (playbook §3): step onto the teleporter's pad, where its goal glows. */
+export function stepInStation(pad: Vec2): Station {
+  return {
+    id: "step-in",
+    lines: {
+      intro: "tutorial.stepIn.intro",
+      hint: "tutorial.stepIn.hint",
+      praise: "tutorial.stepIn.praise",
+      how: "tutorial.stepIn.how",
+    },
+    keys: ["move-up", "move-left", "move-down", "move-right"],
+    highlight: { kind: "ground", at: pad },
+    done: (view) => Math.hypot(view.self.x - pad.x, view.self.y - pad.y) <= MARK_REACH,
   };
 }

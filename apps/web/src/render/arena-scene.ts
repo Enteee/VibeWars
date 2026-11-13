@@ -1450,7 +1450,8 @@ export class ArenaScene extends Phaser.Scene {
 
   /**
    * The goals on the ground (#3221) on their layers, over the floor and
-   * under the bodies; a goal gone from the snapshot fades out, then is dropped.
+   * under the bodies; a goal gone from the snapshot fades out, then is
+   * dropped. A portal (#3222) is a map portal's entry, always on.
    */
   private drawGoals(): void {
     for (const graphics of this.goalGraphics.values()) {
@@ -1466,7 +1467,10 @@ export class ArenaScene extends Phaser.Scene {
       if (!current.has(id) && goal.goneAt === undefined) {
         goal.goneAt = this.now;
       }
-      const fade = goalMarkFade(goal.goneAt === undefined ? undefined : this.now - goal.goneAt);
+      const fade =
+        goal.mark.kind === "portal" && goal.goneAt !== undefined
+          ? 0
+          : goalMarkFade(goal.goneAt === undefined ? undefined : this.now - goal.goneAt);
       if (fade <= 0) {
         this.goals.delete(id);
         continue;
@@ -1479,6 +1483,11 @@ export class ArenaScene extends Phaser.Scene {
       }
       g.save();
       g.translateCanvas(0, -elevationOf(goal.mark.layer, ground));
+      if (goal.mark.kind === "portal") {
+        paintTeleportEntry(g, goal.mark.position, true, this.reducedMotion ? 0 : this.now);
+        g.restore();
+        continue;
+      }
       for (const command of goalMarkCommands(
         goal.mark.position,
         this.now,

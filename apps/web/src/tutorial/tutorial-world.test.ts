@@ -11,6 +11,8 @@ const TICK = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
 /** The card's rule (#3221): no foe nearer the pair than this. */
 const FOE_RULE = 600;
 const SECONDS = 120;
+/** The PR screenshot's canvas (#3222). */
+const VIEWPORT = { width: 1000, height: 700 };
 /** How long, and how wide, the mark stays clear of every body but the pair. */
 const MARK_SECONDS = 30;
 const MARK_CLEAR = 150;
@@ -18,7 +20,7 @@ const MARK_CLEAR = 150;
 describe("tutorialWorld (#3221)", () => {
   it("gives the bots the same builds for the same seed, so a seed is one world", () => {
     const bars = (seed: string): string[] =>
-      [...tutorialWorld("arena-canyon", 4, seed).simulation.participants()].map(
+      [...tutorialWorld("arena-canyon", 4, seed, "monk", VIEWPORT).simulation.participants()].map(
         (body) => `${body.combatant.id}:${body.combatant.skillBar.join("/")}`,
       );
     expect(bars("same")).toEqual(bars("same"));
@@ -27,7 +29,7 @@ describe("tutorialWorld (#3221)", () => {
   it.each(["arena-canyon", "arena-crossroads"])(
     "keeps every foe 600 units off the pair for two minutes on %s",
     (mapId) => {
-      const { simulation } = tutorialWorld(mapId, 4, `keep-off-${mapId}`);
+      const { simulation } = tutorialWorld(mapId, 4, `keep-off-${mapId}`, "monk", VIEWPORT);
       let nearest = Number.POSITIVE_INFINITY;
       for (let tick = 0; tick < SECONDS / TICK; tick += 1) {
         simulation.step(TICK);
@@ -53,7 +55,7 @@ describe("tutorialWorld (#3221)", () => {
 
   // A click on the mark that lands on a body targets it, and walks nowhere.
   it.each(teamArenaMapIds(8))("lets nobody but the player walk over the mark on %s", (mapId) => {
-    const { simulation, mark } = tutorialWorld(mapId, 8, `mark-${mapId}`);
+    const { simulation, mark } = tutorialWorld(mapId, 8, `mark-${mapId}`, "monk", VIEWPORT);
     let nearest = Number.POSITIVE_INFINITY;
     for (let tick = 0; tick < MARK_SECONDS / TICK; tick += 1) {
       simulation.step(TICK);
@@ -72,7 +74,13 @@ describe("tutorialWorld (#3221)", () => {
   it.each(["arena-canyon", "arena-crossroads", "arena-long-hall"])(
     "starts the pair and the mark in plain view on %s, and a click on the mark walks there",
     (mapId) => {
-      const { map, simulation, mark, ground } = tutorialWorld(mapId, 4, "open-sky");
+      const { map, simulation, mark, ground } = tutorialWorld(
+        mapId,
+        4,
+        "open-sky",
+        "monk",
+        VIEWPORT,
+      );
       const { structure } = mapStructure(mapId);
       const self = simulation.get(SELF_ID);
       if (self === undefined) {
