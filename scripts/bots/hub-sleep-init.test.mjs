@@ -83,11 +83,14 @@ describe("claude-llc-init's hibernation step (#2794)", () => {
     });
   });
 
-  it("prints the snippet on NixOS and runs no sudo", async () => {
+  it("prints the import line on NixOS and runs no sudo", async () => {
     const h = harness({ answers: ["y"], host: { nixos: true } });
     await expect(askHibernate({ previous: {}, host: h.host })).resolves.toBeNull();
     expect(h.ran).toEqual([]);
-    expect(h.said.join("\n")).toContain("systemd.paths.vibewars-sleep");
+    const said = h.said.join("\n");
+    expect(said).toMatch(/imports = \[ \/.*\/nix\/nixos\/vibewars-sleep\.nix \];/);
+    expect(said).toContain('services.vibewars-sleep = { enable = true; user = "ente"; };');
+    expect(said).not.toContain("systemd.paths");
   });
 
   it("stays off and says how when sudo fails", async () => {

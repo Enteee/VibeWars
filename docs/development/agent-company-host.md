@@ -216,8 +216,22 @@ and `systemctl hibernate`. Refusals are in the journal
 (`journalctl -u vibewars-sleep`). Init installs
 `/usr/local/libexec/vibewars-sleep`, `vibewars-sleep.path` and
 `.service` in `/etc/systemd/system`, and a tmpfiles rule for the directory,
-owned by the operator. On NixOS it prints the configuration to add instead,
-and hibernation stays off until that is in and init has run again.
+owned by the operator.
+
+On NixOS init installs nothing (the units live in the Nix store) and prints
+two lines for your configuration, then stays off until you have rebuilt and
+run init again:
+
+```nix
+imports = [ /path/to/VibeWars/nix/nixos/vibewars-sleep.nix ];
+services.vibewars-sleep = { enable = true; user = "<you>"; };
+```
+
+On a flake config, add the checkout as a non-flake input
+(`vibewars = { url = "github:Enteee/VibeWars"; flake = false; };`) and
+import `"${inputs.vibewars}/nix/nixos/vibewars-sleep.nix"` instead. `user` has
+no default. The module reads `scripts/bots/vibewars-sleep.sh` when the system
+is rebuilt, so after that script changes, run `nixos-rebuild switch` again.
 
 ## Scaling the company by hand
 

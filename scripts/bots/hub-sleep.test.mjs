@@ -19,7 +19,7 @@ import {
   sleepInhibitors,
   wallClockJumped,
 } from "./hub-sleep.mjs";
-import { SLEEP_SCRIPT_TEXT, sleepNixosSnippet } from "./hub-sleep-units.mjs";
+import { SLEEP_SCRIPT_TEXT } from "./hub-sleep-units.mjs";
 
 const NOW = 1_000_000;
 const RESET = NOW + 3 * 60 * 60;
@@ -258,9 +258,15 @@ describe("the root oneshot's check (#2794)", () => {
     ).toBe("");
   });
 
-  it("escapes the script for a Nix string", () => {
-    const snippet = sleepNixosSnippet("ente");
-    expect(snippet).toContain("''${BASH_SOURCE[0]}");
-    expect(snippet).not.toMatch(/[^']\$\{BASH_SOURCE/);
+  it("is the file the NixOS module reads, with the bounds of hub-sleep.mjs", () => {
+    const file = fs.readFileSync(new URL("./vibewars-sleep.sh", import.meta.url), "utf8");
+    expect(SLEEP_SCRIPT_TEXT).toBe(file);
+    expect(file).toContain(`+ ${String(MIN_WAKE)})`);
+    expect(file).toContain(`+ ${String(MAX_SLEEP)})`);
+    const nix = fs.readFileSync(
+      new URL("../../nix/nixos/vibewars-sleep.nix", import.meta.url),
+      "utf8",
+    );
+    expect(nix).toContain("builtins.readFile ../../scripts/bots/vibewars-sleep.sh");
   });
 });

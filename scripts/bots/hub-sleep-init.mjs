@@ -22,10 +22,18 @@ import {
   SLEEP_SERVICE_TEXT,
   SLEEP_SERVICE_UNIT,
   SLEEP_TMPFILES,
-  sleepNixosSnippet,
   sleepTmpfiles,
 } from "./hub-sleep-units.mjs";
 
+/** The NixOS module of this checkout. */
+const NIXOS_MODULE = path.resolve(
+  import.meta.dirname,
+  "..",
+  "..",
+  "nix",
+  "nixos",
+  "vibewars-sleep.nix",
+);
 const WAKE_ALARM = "/sys/class/rtc/rtc0/wakealarm";
 /** The test's alarm, in seconds. */
 const TEST_SLEEP = 300;
@@ -267,9 +275,14 @@ export async function askHibernate({ previous, host }) {
     return null;
   }
   if (host.nixos && !host.unitsInstalled()) {
-    host.say("  Hibernation stays off until this is in your configuration and rebuilt:");
-    host.say(sleepNixosSnippet(host.user));
-    host.say("  Then run claude-llc-init again.");
+    host.say("  Add to your NixOS configuration, then nixos-rebuild switch:");
+    host.say(`    imports = [ ${NIXOS_MODULE} ];`);
+    host.say(`    services.vibewars-sleep = { enable = true; user = "${host.user}"; };`);
+    host.say(
+      '  Flake config: add input vibewars = { url = "github:Enteee/VibeWars"; flake = false; };',
+    );
+    host.say('  and import "${inputs.vibewars}/nix/nixos/vibewars-sleep.nix" instead.');
+    host.say("  Hibernation stays off until then. Run claude-llc-init again after the rebuild.");
     return null;
   }
   if (!host.nixos && !install(host)) {
