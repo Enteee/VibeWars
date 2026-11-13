@@ -4,7 +4,14 @@ import { vec2, type Vec2 } from "@vibewars/game-core";
 
 import type { ArenaScene } from "./arena-scene.js";
 import { ARENA_BACKGROUND } from "./arena-palette.js";
-import { WHEEL_IDLE, feedWheel, type CameraView, type Cover, type Size } from "./camera-rig.js";
+import {
+  WHEEL_IDLE,
+  feedWheel,
+  frameClock,
+  type CameraView,
+  type Cover,
+  type Size,
+} from "./camera-rig.js";
 import { buttonChanges, type MouseButton } from "./pointer-buttons.js";
 
 /** One mouse button going down or up over the arena (#438), or moving while held (#442). */
@@ -158,9 +165,10 @@ export async function createArenaViewport(
     scene,
     canvas: game.canvas,
     onFrame(handler) {
-      // STEP passes the frame's delta in milliseconds.
-      const onStep = (_time: number, deltaMs: number): void => {
-        handler(deltaMs / 1000);
+      // STEP passes the frame's timestamp, then a delta Phaser clamps.
+      const seconds = frameClock();
+      const onStep = (time: number): void => {
+        handler(seconds(time));
       };
       game.events.on(Phaser.Core.Events.STEP, onStep);
       return () => {

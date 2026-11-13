@@ -4,6 +4,7 @@ import { LONG_BOW_RANGE } from "@vibewars/game-core";
 
 import {
   DEFAULT_STEP,
+  FRAME_GAP_MAX,
   LEASH_MARGIN_PX,
   VIEW_ASPECT,
   VIEW_STEPS,
@@ -12,6 +13,7 @@ import {
   createCameraRig,
   dropPan,
   feedWheel,
+  frameClock,
   panBy,
   releasePan,
   snapView,
@@ -313,5 +315,18 @@ describe("snapView (#2393)", () => {
         expect(Math.abs(snapped.y - view.y)).toBeLessThanOrEqual(0.5 / view.zoom + 1e-9);
       }
     }
+  });
+});
+
+describe("frameClock", () => {
+  it("measures a frame in wall time, however slow: 0, then the seconds between timestamps", () => {
+    const seconds = frameClock();
+    expect(seconds(1000)).toBe(0);
+    expect(seconds(1016)).toBeCloseTo(0.016);
+    // A 6 fps software renderer: Phaser's own delta says 1/60 s here.
+    expect(seconds(1350)).toBeCloseTo(0.334);
+    expect(seconds(1350)).toBe(0);
+    // A tab back from the background: one frame's worth, not the minutes it was away.
+    expect(seconds(91_350)).toBe(FRAME_GAP_MAX);
   });
 });
