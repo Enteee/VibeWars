@@ -7,6 +7,7 @@ import { splashGraph } from "../ui/splash-fight.js";
 
 import { MARK_REACH } from "./stations.js";
 import {
+  FOE_KEEP_OFF,
   PLAYER_PROFESSION,
   SELF_ID,
   TUTOR_ID,
@@ -62,23 +63,42 @@ describe("tutorialWorld (#3221)", () => {
     120_000,
   );
 
+  // The foes' half of the rule below, without stepping (#3257): a leash
+  // that stops every foe `FOE_KEEP_OFF` short of the mark.
+  it.each(teamArenaMapIds(8))("leashes every foe short of the mark on %s", (mapId) => {
+    const { foes, mark } = tutorialWorld(mapId, 8, `mark-${mapId}`, "monk", VIEWPORT);
+    expect(foes).toHaveLength(8);
+    for (const foe of foes) {
+      expect(
+        Math.hypot(foe.post.x - mark.x, foe.post.y - mark.y) - foe.leashUnits,
+      ).toBeGreaterThanOrEqual(FOE_KEEP_OFF);
+    }
+  });
+
   // A click on the mark that lands on a body targets it, and walks nowhere.
-  it.each(teamArenaMapIds(8))("lets nobody but the player walk over the mark on %s", (mapId) => {
-    const { simulation, mark } = tutorialWorld(mapId, 8, `mark-${mapId}`, "monk", VIEWPORT);
-    let nearest = Number.POSITIVE_INFINITY;
-    for (let tick = 0; tick < MARK_SECONDS / TICK; tick += 1) {
-      simulation.step(TICK);
-      for (const other of simulation.participants()) {
-        if (other.id !== SELF_ID && other.id !== TUTOR_ID && !other.combatant.dead) {
-          nearest = Math.min(
-            nearest,
-            Math.hypot(other.position.x - mark.x, other.position.y - mark.y),
-          );
+  // The allies have no leash, so only a fight shows they keep off it.
+  it.each(teamArenaMapIds(8))(
+    "lets nobody but the player walk over the mark on %s",
+    (mapId) => {
+      const { simulation, mark } = tutorialWorld(mapId, 8, `mark-${mapId}`, "monk", VIEWPORT);
+      let nearest = Number.POSITIVE_INFINITY;
+      for (let tick = 0; tick < MARK_SECONDS / TICK; tick += 1) {
+        simulation.step(TICK);
+        for (const other of simulation.participants()) {
+          if (other.id !== SELF_ID && other.id !== TUTOR_ID && !other.combatant.dead) {
+            nearest = Math.min(
+              nearest,
+              Math.hypot(other.position.x - mark.x, other.position.y - mark.y),
+            );
+          }
         }
       }
-    }
-    expect(nearest).toBeGreaterThanOrEqual(MARK_CLEAR);
-  });
+      expect(nearest).toBeGreaterThanOrEqual(MARK_CLEAR);
+    },
+    // Simulates 30 s of a 16-body fight per map, ~5 s on a loaded runner;
+    // the property needs the whole half-minute.
+    30_000,
+  );
 
   it.each(teamArenaMapIds(8))(
     "starts the pair and the mark in plain view on %s, and a click on the mark walks there",
