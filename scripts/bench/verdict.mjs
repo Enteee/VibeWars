@@ -20,6 +20,7 @@
  * @property {number} spread the two windows' gap over `base`
  * @property {Ceiling | undefined} ceiling the map's entry in the ceilings, if it has one
  * @property {string[]} failures why the run fails, if it does
+ * @property {string[]} warnings what to fix, without failing the run
  */
 
 /**
@@ -34,7 +35,8 @@
  * @param {number | undefined} input.maxRatio
  * @param {number} input.maxSpread
  * @param {readonly Ceiling[]} [input.ceilings] maps gated at their own ratio. A listed map
- *   at or under `maxRatio` fails as stale, so the list only shrinks.
+ *   at or under `maxRatio` warns that it is stale: map cost relative to the calibration
+ *   varies by runner hardware, so a fast runner must not fail the run (#3243).
  * @returns {Verdict[]}
  */
 export function verdict({ windows, maps, maxRatio, maxSpread, ceilings = [] }) {
@@ -49,6 +51,8 @@ export function verdict({ windows, maps, maxRatio, maxSpread, ceilings = [] }) {
     const ratio = map.p50 / base;
     /** @type {string[]} */
     const failures = [];
+    /** @type {string[]} */
+    const warnings = [];
     if (!(spread <= maxSpread)) {
       failures.push(
         `calibration unstable around ${map.mapId} (w${String(i)} ${before.toFixed(1)} ms, w${String(i + 1)} ${after.toFixed(1)} ms, spread ${(spread * 100).toFixed(0)} % > ${String(maxSpread * 100)} %): the runner is too noisy to judge`,
@@ -63,12 +67,12 @@ export function verdict({ windows, maps, maxRatio, maxSpread, ceilings = [] }) {
         );
       }
       if (ceiling !== undefined && ratio <= maxRatio) {
-        failures.push(
+        warnings.push(
           `${map.mapId} is under ${String(maxRatio)}×: delete its BENCH_CEILINGS entry (#${String(ceiling.issue)})`,
         );
       }
     }
-    return { mapId: map.mapId, base, ratio, spread, ceiling, failures };
+    return { mapId: map.mapId, base, ratio, spread, ceiling, failures, warnings };
   });
 }
 

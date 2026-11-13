@@ -67,8 +67,9 @@ describe("ceilings", () => {
     expect(run(401)?.failures[0]).toMatch(/4\.01× .*over 4× \(ceiling, #3254\)/);
   });
 
-  it("fails a listed map at or under the default as stale", () => {
-    expect(run(290)?.failures[0]).toMatch(
+  it("warns, without failing, on a listed map at or under the default", () => {
+    expect(run(290)?.failures).toEqual([]);
+    expect(run(290)?.warnings[0]).toMatch(
       /m0 is under 3×: delete its BENCH_CEILINGS entry \(#3254\)/,
     );
   });

@@ -178,5 +178,7 @@ differ by over 20 %.
 
 **Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over 3×
 for a known reason, each gated at its own ratio and tied to the perf
-issue that will cut it. The list only shrinks: a listed map that
-measures at or under 3× fails the bench until its entry is deleted.
+issue that will cut it. A listed map that
+measures at or under 3× prints a warning to delete its entry, and does
+not fail: how heavy a map is next to the calibration varies by runner
+hardware (#3255).

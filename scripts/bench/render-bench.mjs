@@ -410,6 +410,9 @@ try {
     );
   }
   for (const v of verdicts) {
+    for (const warning of v.warnings) {
+      console.warn(warning);
+    }
     for (const failure of v.failures) {
       console.error(failure);
       failed = true;
