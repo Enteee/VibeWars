@@ -54,11 +54,12 @@ Ove su tipke fiksne:
   i pogled klizi natrag do tebe.
 - Klikni vještinu na traci da je upotrijebiš, a ime u prozoru grupe da
   ciljaš tog saveznika.
-- Drži **Prikaži imena** (Shift) i vidjet ćeš sva imena, ispred imena svakog
-  igrača njegov pečat: mali štit koji je za istog igrača uvijek isti.
-  Dok držiš, klik na ime lika radi isto što i klik na njegovo tijelo. Desni
-  klik samo cilja, čak i dvaput; lijevi klik odmah cilja i napada; klik
-  kotačićem označava neprijatelja ili mjesto. Ime koje bi klik pogodio je istaknuto.
+- Drži **Prikaži imena** (Shift) i vidjet ćeš sva imena, ispred imena svakog igrača
+  njegov pečat: mali štit koji je za istog igrača uvijek isti, a svoj vidiš pod
+  **Opcije › Igrač**. Dok držiš, klik na ime lika radi isto što i klik na njegovo
+  tijelo. Desni klik samo cilja, čak i dvaput; lijevi klik odmah cilja i napada;
+  klik kotačićem označava neprijatelja ili mjesto. Ime koje bi klik pogodio je
+  istaknuto.
 
 ## Gornja traka
 

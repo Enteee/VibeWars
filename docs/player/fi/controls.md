@@ -61,12 +61,12 @@ Nämä näppäimet ovat kiinteitä:
 - Napsauta taitoa palkissa käyttääksesi sitä, ja nimeä ryhmäikkunassa
   kohdistaaksesi siihen liittolaiseen.
 - Pidä **Näytä nimet** (Shift) pohjassa, niin jokainen nimi näkyy, kunkin
-  pelaajan nimi sinettinsä kanssa: pieni kilpi, joka on samalla
-  pelaajalla aina sama. Pohjassa pidettäessä hahmon nimen napsauttaminen
-  toimii kuin sen vartalon napsauttaminen. Oikea napsautus vain kohdistaa,
-  kahdestikin; vasen napsautus kohdistaa ja hyökkää heti; rullan
-  napsautus ilmoittaa tai merkitsee. Nimi, johon napsautus osuisi, on
-  korostettu.
+  pelaajan nimi sinettinsä kanssa: pieni kilpi, joka on samalla pelaajalla
+  aina sama, ja omasi näkyy kohdassa **Asetukset › Pelaaja**. Pohjassa
+  pidettäessä hahmon nimen napsauttaminen toimii kuin sen vartalon
+  napsauttaminen. Oikea napsautus vain kohdistaa, kahdestikin; vasen
+  napsautus kohdistaa ja hyökkää heti; rullan napsautus ilmoittaa tai
+  merkitsee. Nimi, johon napsautus osuisi, on korostettu.
 
 ## Yläpalkki
 

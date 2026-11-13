@@ -24,7 +24,12 @@ import { formatClock } from "./hud.js";
 import { professionIcon } from "./icons.js";
 import { button, h, screenBar, syncList } from "./kit.js";
 import { MATCH_KINDS, MATCH_SIZES, matchesFilter, sessionFilter } from "./matches-filter.js";
-import { playerLabelText, signetElement } from "./player-label.js";
+import {
+  SIGNET_HEADING_PX,
+  SIGNET_ROW_PX,
+  playerLabelText,
+  signetElement,
+} from "./player-label.js";
 import { railIconUrl, railLabel, railScreen, type RailEntry } from "./rail.js";
 import { hallHolds, type HallHold } from "./vault-screen.js";
 
@@ -157,7 +162,7 @@ function playerMember(player: MatchRecordPlayer): TeamFigureMember {
   const heading = h("span", "match-player-heading");
   heading.title = label;
   if (player.pubkey !== null) {
-    heading.appendChild(signetElement(keySignet(player.pubkey), 18));
+    heading.appendChild(signetElement(keySignet(player.pubkey), SIGNET_HEADING_PX));
   }
   heading.appendChild(h("span", "match-player-name", label));
   return {
@@ -296,8 +301,17 @@ function hallRow(hold: HallHold, nowSeconds: number): HTMLElement {
   const holder = who.appendChild(h("span", "matches-hall-holder", hold.holder));
   holder.dir = "auto";
   holder.title = hold.holder;
-  const names = hold.people.join(" · ");
-  const people = who.appendChild(h("span", "matches-hall-people", names));
+  const names = hold.people.map(({ name }) => name).join(" · ");
+  const people = who.appendChild(h("span", "matches-hall-people"));
+  hold.people.forEach(({ name, pubkey }, index) => {
+    if (index > 0) {
+      people.append(" · ");
+    }
+    if (pubkey !== null) {
+      people.appendChild(signetElement(keySignet(pubkey), SIGNET_ROW_PX));
+    }
+    people.append(name);
+  });
   people.dir = "auto";
   people.title = names;
   const meta = row.appendChild(h("span", "matches-hall-meta"));

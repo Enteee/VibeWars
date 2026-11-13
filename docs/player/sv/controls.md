@@ -58,11 +58,11 @@ Dessa tangenter är fasta:
   gruppfönstret för att välja den allierade som mål.
 - Håll in **Visa namn** (Shift) så syns alla namn, varje spelares med
   sitt sigill framför: en liten sköld som alltid är densamma för samma
-  spelare. Medan du håller in fungerar ett klick på en karaktärs namn som
-  ett klick på dess kropp. Ett högerklick väljer bara mål, även två
-  gånger; ett vänsterklick väljer mål och attackerar på en gång; ett
-  hjulklick utpekar eller pingar. Namnet som ett klick skulle träffa är
-  markerat.
+  spelare, och ditt eget syns under **Alternativ › Spelare**. Medan du
+  håller in fungerar ett klick på en karaktärs namn som ett klick på dess
+  kropp. Ett högerklick väljer bara mål, även två gånger; ett
+  vänsterklick väljer mål och attackerar på en gång; ett hjulklick
+  utpekar eller pingar. Namnet som ett klick skulle träffa är markerat.
 
 ## Den övre raden
 

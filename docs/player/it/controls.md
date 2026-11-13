@@ -39,7 +39,7 @@ Questi tasti sono fissi:
 - Clicca sulla bussola per fare un ping in quel punto alla tua squadra; trascina per tracciare una linea che vedranno per qualche secondo.
 - La **Rotellina** regola lo zoom. **Trascina col destro** per guardarti intorno; rilascia e la visuale torna su di te.
 - Clicca su un'abilità nella barra per usarla, e su un nome nella finestra del gruppo per bersagliare quell'alleato.
-- Tieni premuto **Nomi** (Shift) per vedere tutti i nomi, ognuno con il sigillo del giocatore davanti: un piccolo scudo sempre uguale per lo stesso giocatore. Mentre lo tieni premuto, cliccare sul nome di un personaggio funziona come cliccare sul suo corpo. Un clic destro bersaglia soltanto, anche due volte; un clic sinistro bersaglia e attacca subito; un clic con la rotellina segnala o fa un ping. Il nome che il clic colpirebbe è evidenziato.
+- Tieni premuto **Nomi** (Shift) per vedere tutti i nomi, ognuno con il sigillo del giocatore davanti: un piccolo scudo sempre uguale per lo stesso giocatore, e il tuo compare in **Opzioni › Giocatore**. Mentre lo tieni premuto, cliccare sul nome di un personaggio funziona come cliccare sul suo corpo. Un clic destro bersaglia soltanto, anche due volte; un clic sinistro bersaglia e attacca subito; un clic con la rotellina segnala o fa un ping. Il nome che il clic colpirebbe è evidenziato.
 
 ## La barra superiore
 

@@ -139,7 +139,28 @@ import { weaponMarkLayout } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
-import { bodyRings, invulnerableAlpha, invulnerableRing } from "./body-rings.js";
+import {
+  ENCHANTMENT_COLOUR,
+  ENCHANT_MOTES,
+  HEX_COLOUR,
+  HEX_HALO_BROKEN,
+  HEX_HALO_SIDES,
+  HEX_HALO_WIDTH,
+  STANCE_COLOUR,
+  STANCE_STREAKS,
+  STREAK_WIDTH,
+  bodyRings,
+  enchantMote,
+  hexHalo,
+  hexHaloCorner,
+  hexHaloTurn,
+  invulnerableAlpha,
+  invulnerableRing,
+  stanceStreak,
+  type Mote,
+  type RingArc,
+  type Streak,
+} from "./body-rings.js";
 import {
   capeJumped,
   newCapeMotion,
@@ -322,6 +343,17 @@ const CALL_CHEVRON = 0xffa657;
  * off-hand mark (inside r + 7).
  */
 const TARGET_RING_OFFSET = 9;
+/** A body that moved this recently still streaks in its stance (#3226): snapshots do not move it every frame. */
+const MOVING_SECONDS = 0.15;
+
+/** Where a body stood last frame, the way it last moved, and when (#3226). */
+interface BodyMotion {
+  x: number;
+  y: number;
+  ux: number;
+  uy: number;
+  movedAt: number;
+}
 /** A flag's pole, world units up from its foot (#1225): stand-in shapes until its asset. */
 const FLAG_POLE = 26;
 /** Its pennant, along the pole and out from it. */
@@ -603,6 +635,16 @@ export class ArenaScene extends Phaser.Scene {
   private readonly lightSample: LightSample = { colour: 0xffffff, intensity: 1 };
   /** Read once a frame: under reduced motion every mark stays at rest. */
   private reducedMotion = false;
+  /**
+   * Where each body stood last frame, and the way it last moved (#3226):
+   * a stance streaks behind a body while it moves.
+   */
+  private readonly bodyMotion = new Map<string, BodyMotion>();
+  /** Scratch for the marks a body wears, so a frame allocates none (#3226). */
+  private readonly mote: Mote = { x: 0, y: 0, radius: 0, alpha: 0 };
+  private readonly streak: Streak = { x1: 0, y1: 0, x2: 0, y2: 0, alpha: 0 };
+  private readonly corner = { x: 0, y: 0 };
+  private readonly nextCorner = { x: 0, y: 0 };
 
   public constructor() {
     super(ArenaScene.KEY);
@@ -626,6 +668,7 @@ export class ArenaScene extends Phaser.Scene {
   /** The arena's bounds, which the grid covers and the edge line traces. */
   public setArenaBounds(width: number, height: number): void {
     this.arena = { width, height };
+    this.bodyMotion.clear();
   }
 
   /**
@@ -1666,6 +1709,7 @@ export class ArenaScene extends Phaser.Scene {
     const { x, y } = actor.position;
 
     if (actor.dead) {
+      this.bodyMotion.delete(actor.id);
       // A corpse stays visible but obviously inert: hollow, grey, no bars;
       // darker once a skill has exploited it (#466).
       const colour = actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR;
@@ -1796,23 +1840,95 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The enchantment and hex rings round a living body (#1117), and the
-   * shimmer of an invulnerable one (#1233), circular even lying down.
+   * The marks a living body wears (#1117, #3226): the stance band and the
+   * enchantment ring at its feet, circular even lying down, with motes
+   * rising off the ring and streaks behind a moving stance; the hex halo
+   * over its health bar; and the shimmer of an invulnerable one (#1233).
    */
   private drawBodyRings(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
     const { x, y } = actor.position;
-    const rings = bodyRings(actor.radius, actor);
-    const shimmer = actor.invulnerable ? [invulnerableRing(actor.radius)] : [];
-    for (const ring of [...rings, ...shimmer]) {
-      const alpha =
-        ring.kind === "invulnerable" ? invulnerableAlpha(this.now, this.reducedMotion) : 1;
-      g.lineStyle(ring.width, ring.colour, alpha);
-      for (const arc of ring.arcs) {
-        g.beginPath();
-        g.arc(x, y, ring.radius, arc.from, arc.to);
-        g.strokePath();
+    const moving = this.trackMotion(actor);
+    for (const ring of bodyRings(actor.radius, actor)) {
+      this.strokeRing(g, x, y, ring.radius, ring.width, ring.colour, ring.alpha, ring.arcs);
+    }
+    if (actor.invulnerable) {
+      const ring = invulnerableRing(actor.radius);
+      const alpha = invulnerableAlpha(this.now, this.reducedMotion);
+      this.strokeRing(g, x, y, ring.radius, ring.width, ring.colour, alpha, ring.arcs);
+    }
+    if (actor.enchanted) {
+      const phase = cuePhase(actor.id);
+      const mote = this.mote;
+      for (let index = 0; index < ENCHANT_MOTES; index += 1) {
+        if (enchantMote(actor.radius, index, this.now, phase, this.reducedMotion, mote)) {
+          g.fillStyle(ENCHANTMENT_COLOUR, mote.alpha);
+          g.fillCircle(x + mote.x, y + mote.y, mote.radius);
+        }
       }
     }
+    if (actor.stanced && moving !== undefined) {
+      const streak = this.streak;
+      for (let index = 0; index < STANCE_STREAKS; index += 1) {
+        if (stanceStreak(actor.radius, index, moving.ux, moving.uy, this.reducedMotion, streak)) {
+          g.lineStyle(STREAK_WIDTH, STANCE_COLOUR, streak.alpha);
+          g.lineBetween(x + streak.x1, y + streak.y1, x + streak.x2, y + streak.y2);
+        }
+      }
+    }
+    if (actor.hexed) {
+      const halo = hexHalo(actor.radius);
+      const turn = hexHaloTurn(this.now, this.reducedMotion);
+      const { corner, nextCorner } = this;
+      g.lineStyle(HEX_HALO_WIDTH, HEX_COLOUR, 1);
+      for (let side = HEX_HALO_BROKEN; side < HEX_HALO_SIDES; side += 1) {
+        hexHaloCorner(halo, turn, side, corner);
+        hexHaloCorner(halo, turn, side + 1, nextCorner);
+        g.lineBetween(x + corner.x, y + corner.y, x + nextCorner.x, y + nextCorner.y);
+      }
+    }
+  }
+
+  private strokeRing(
+    g: Phaser.GameObjects.Graphics,
+    x: number,
+    y: number,
+    radius: number,
+    width: number,
+    colour: number,
+    alpha: number,
+    arcs: readonly RingArc[],
+  ): void {
+    g.lineStyle(width, colour, alpha);
+    for (const arc of arcs) {
+      g.beginPath();
+      g.arc(x, y, radius, arc.from, arc.to);
+      g.strokePath();
+    }
+  }
+
+  /**
+   * Whether `actor` moved within `MOVING_SECONDS`, and which way: the
+   * snapshot does not move a body every frame, so a frame standing still
+   * between two steps is still moving.
+   */
+  private trackMotion(actor: RenderableActor): BodyMotion | undefined {
+    const { x, y } = actor.position;
+    const known = this.bodyMotion.get(actor.id);
+    if (known === undefined) {
+      this.bodyMotion.set(actor.id, { x, y, ux: 0, uy: 0, movedAt: -Infinity });
+      return undefined;
+    }
+    const dx = x - known.x;
+    const dy = y - known.y;
+    const step = Math.hypot(dx, dy);
+    if (step > 0) {
+      known.x = x;
+      known.y = y;
+      known.ux = dx / step;
+      known.uy = dy / step;
+      known.movedAt = this.now;
+    }
+    return this.now - known.movedAt <= MOVING_SECONDS ? known : undefined;
   }
 
   /**

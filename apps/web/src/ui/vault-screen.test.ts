@@ -201,7 +201,11 @@ describe("hallHolds", () => {
 
   it("makes one row of one holder's wins, its people and end from the newest", () => {
     const holds = hallHolds([by("A", 1_002, "New"), by("A", 1_001, "Old")], NOW);
-    expect(holds).toEqual([{ holder: "A", people: ["A", "New"], endedAt: 1_002, wins: 2 }]);
+    const people = [
+      { name: "A", pubkey: "a".repeat(64) },
+      { name: "New", pubkey: "a".repeat(64) },
+    ];
+    expect(holds).toEqual([{ holder: "A", people, endedAt: 1_002, wins: 2 }]);
   });
 
   it("starts a new row at another holder's win", () => {

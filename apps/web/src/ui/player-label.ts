@@ -69,6 +69,9 @@ export function nameplateName(name: string): string {
 /** A signet's size in the party window and the lobby roster (#2805), px. */
 export const SIGNET_ROW_PX = 11;
 
+/** A signet's size beside a name heading (#3235): a match's, and Options' own, px. */
+export const SIGNET_HEADING_PX = 18;
+
 const signetUrls = new Map<string, string>();
 
 /**

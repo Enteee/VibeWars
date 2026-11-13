@@ -622,6 +622,8 @@ describe("the Matches page (#2532)", () => {
     expect(root.all("matches-hall-row")).toHaveLength(1);
     expect(root.one("matches-hall-holder").textContent).toBe("VIBE");
     expect(root.one("matches-hall-people").textContent).toBe("Ann");
+    // Each of the people wears their signet (#3227).
+    expect(root.one("matches-hall-people").children[0]?.className).toBe("signet");
   });
 
   it("filters a record heard live, and closes an open row it hides (#2741)", () => {

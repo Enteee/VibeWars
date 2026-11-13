@@ -55,11 +55,11 @@ Tombol-tombol ini tetap:
 - Klik skill di bar untuk memakainya, dan nama di jendela party untuk
   menargetkan sekutu itu.
 - Tahan **Tampilkan nama** (Shift) dan semua nama muncul, nama setiap pemain dengan
-  signet di depannya: perisai kecil yang selalu sama untuk
-  pemain yang sama. Selama ditahan, mengklik nama karakter sama dengan mengklik
-  tubuhnya. Klik kanan hanya menargetkan, bahkan dua kali; klik kiri
-  menargetkan dan menyerang sekaligus; klik roda mengumumkan atau memberi ping. Nama yang
-  akan terkena klik disorot.
+  signet di depannya: perisai kecil yang selalu sama untuk pemain yang sama, dan milikmu
+  tampil di **Opsi › Pemain**. Selama ditahan, mengklik nama karakter sama dengan
+  mengklik tubuhnya. Klik kanan hanya menargetkan, bahkan dua kali; klik kiri menargetkan
+  dan menyerang sekaligus; klik roda mengumumkan atau memberi ping. Nama yang akan
+  terkena klik disorot.
 
 ## Bilah atas
 

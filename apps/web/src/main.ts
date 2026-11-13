@@ -329,6 +329,8 @@ function takeGuildLink(): GuildFragment {
 /** The served build id this tab last reloaded for (#1268): once per id, never a loop. */
 /** This browser's player key (#2706), made on its first launch: every lobby join proves it. */
 const playerKey = loadPlayerKey(localStorage);
+/** Its signet (#3235), for Options: derived here, so nothing else reads the key. */
+const ownSignet = keySignet(playerKey.pubkey);
 
 const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 
@@ -840,48 +842,52 @@ async function main(): Promise<void> {
   // The bar's [?] and ⚙ open Help and Options over the screen, which
   // stays as it was underneath: an editor keeps its edits, a lobby keeps
   // updating (#454, #1257, #2386).
-  const topbarView = mountTopbar(topbar, {
-    onHelp: () => {
-      openHelpOverlay(app);
+  const topbarView = mountTopbar(
+    topbar,
+    {
+      onHelp: () => {
+        openHelpOverlay(app);
+      },
+      onOptionsClosed: () => {
+        // Closed over the menu, its characters wear the cape just picked in
+        // Options (#1513). Not when a match starting closed it, which leaves
+        // the screen first; any other screen keeps what it joined with. Only
+        // a new cape redraws it: a redraw would swallow the press outside
+        // that closed the window (#2386).
+        const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
+        if (renamedAlone()) {
+          // Nobody else is in it to keep its code for: the lobby is opened
+          // again under the new name and tag (#1526).
+          void (async () => {
+            await closeLobby();
+            if (menu) {
+              showMenu();
+            } else {
+              openOwnLobby();
+            }
+          })();
+          return;
+        }
+        if (menu && menuCape !== JSON.stringify(playerGuild().guildCape)) {
+          showMenu();
+        }
+      },
+      onJoin: (code, name) => joinWith(code, name),
+      onLeave: () => {
+        void leaveLobby();
+      },
+      onSetOpen: (open) => {
+        hosted?.setOpen(open);
+      },
+      onRemoveMember: (id) => {
+        lobby?.removeMember(id);
+      },
+      onLeaveQueue: () => {
+        leaveAnyQueue();
+      },
     },
-    onOptionsClosed: () => {
-      // Closed over the menu, its characters wear the cape just picked in
-      // Options (#1513). Not when a match starting closed it, which leaves
-      // the screen first; any other screen keeps what it joined with. Only
-      // a new cape redraws it: a redraw would swallow the press outside
-      // that closed the window (#2386).
-      const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
-      if (renamedAlone()) {
-        // Nobody else is in it to keep its code for: the lobby is opened
-        // again under the new name and tag (#1526).
-        void (async () => {
-          await closeLobby();
-          if (menu) {
-            showMenu();
-          } else {
-            openOwnLobby();
-          }
-        })();
-        return;
-      }
-      if (menu && menuCape !== JSON.stringify(playerGuild().guildCape)) {
-        showMenu();
-      }
-    },
-    onJoin: (code, name) => joinWith(code, name),
-    onLeave: () => {
-      void leaveLobby();
-    },
-    onSetOpen: (open) => {
-      hosted?.setOpen(open);
-    },
-    onRemoveMember: (id) => {
-      lobby?.removeMember(id);
-    },
-    onLeaveQueue: () => {
-      leaveAnyQueue();
-    },
-  });
+    ownSignet,
+  );
 
   const showViewport = (visible: boolean): void => {
     if (visible) {
@@ -2944,6 +2950,7 @@ async function main(): Promise<void> {
           selfSessionId: from.selfSessionId,
           connect: () => observeMatchFor(from, watch),
         },
+        ownSignet,
       );
       hallWatch.pause();
       setStatus("", "online");
@@ -3056,6 +3063,7 @@ async function main(): Promise<void> {
           kind: "play",
           connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build),
         },
+        ownSignet,
       );
       hallWatch.pause();
       // In the match, the status has nothing to say until it is lost.
@@ -3205,6 +3213,7 @@ async function main(): Promise<void> {
         mapId,
         teamSize,
         tutorProfession: drawTutorProfession(Math.random),
+        signet: ownSignet,
         onEnd: (end) => {
           tutorialRun = undefined;
           tutorial = undefined;
