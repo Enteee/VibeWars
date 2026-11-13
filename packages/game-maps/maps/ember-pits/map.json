@@ -1407,114 +1407,6 @@
     },
     "lights": [
       {
-        "id": "lava-rill-north",
-        "position": {
-          "x": 1010,
-          "y": 380
-        },
-        "layer": 1,
-        "radius": 364,
-        "colour": 16742960,
-        "intensity": 1,
-        "flicker": 0.35
-      },
-      {
-        "id": "lava-rill-bridge",
-        "position": {
-          "x": 1080,
-          "y": 760
-        },
-        "layer": 1,
-        "radius": 364,
-        "colour": 16742960,
-        "intensity": 1,
-        "flicker": 0.35
-      },
-      {
-        "id": "lava-rill-tip",
-        "position": {
-          "x": 1000,
-          "y": 930
-        },
-        "layer": 1,
-        "radius": 308,
-        "colour": 16742960,
-        "intensity": 1,
-        "flicker": 0.35
-      },
-      {
-        "id": "ember-pit-glow",
-        "position": {
-          "x": 950,
-          "y": 1660
-        },
-        "layer": 1,
-        "radius": 392,
-        "colour": 16737312,
-        "intensity": 1,
-        "flicker": 0.4
-      },
-      {
-        "id": "lava-flow-north",
-        "position": {
-          "x": 2370,
-          "y": 880
-        },
-        "layer": 1,
-        "radius": 364,
-        "colour": 16742960,
-        "intensity": 1,
-        "flicker": 0.35
-      },
-      {
-        "id": "lava-flow-mid",
-        "position": {
-          "x": 2290,
-          "y": 1320
-        },
-        "layer": 1,
-        "radius": 364,
-        "colour": 16742960,
-        "intensity": 1,
-        "flicker": 0.35
-      },
-      {
-        "id": "lava-flow-south",
-        "position": {
-          "x": 2190,
-          "y": 1700
-        },
-        "layer": 1,
-        "radius": 336,
-        "colour": 16742960,
-        "intensity": 1,
-        "flicker": 0.35
-      },
-      {
-        "id": "caldera-west",
-        "position": {
-          "x": 2300,
-          "y": 480
-        },
-        "layer": 1,
-        "radius": 476,
-        "colour": 16737312,
-        "intensity": 1,
-        "flicker": 0.4
-      },
-      {
-        "id": "caldera-east",
-        "position": {
-          "x": 2500,
-          "y": 620
-        },
-        "layer": 1,
-        "radius": 448,
-        "colour": 16737312,
-        "intensity": 1,
-        "flicker": 0.4
-      },
-      {
         "id": "tube-west-glow",
         "position": {
           "x": 2160,
@@ -1633,56 +1525,11 @@
         "kind": "steam"
       },
       {
-        "id": "rill-steam-north",
-        "layer": 1,
-        "position": {
-          "x": 1000,
-          "y": 300
-        },
-        "kind": "steam"
-      },
-      {
-        "id": "rill-steam-south",
-        "layer": 1,
-        "position": {
-          "x": 940,
-          "y": 1700
-        },
-        "kind": "steam"
-      },
-      {
-        "id": "flow-steam-mid",
-        "layer": 1,
-        "position": {
-          "x": 2300,
-          "y": 1250
-        },
-        "kind": "steam"
-      },
-      {
-        "id": "flow-steam-south",
-        "layer": 1,
-        "position": {
-          "x": 2170,
-          "y": 1760
-        },
-        "kind": "steam"
-      },
-      {
         "id": "caldera-smoke-west",
         "layer": 1,
         "position": {
           "x": 2330,
           "y": 500
-        },
-        "kind": "smoke"
-      },
-      {
-        "id": "caldera-smoke-east",
-        "layer": 1,
-        "position": {
-          "x": 2510,
-          "y": 600
         },
         "kind": "smoke"
       },
