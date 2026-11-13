@@ -98,6 +98,10 @@ jobs:
       - name: Build
         run: devenv shell -- pnpm run build
 
+      # The bench's reference map is dead code in a player build (#3255).
+      - name: No bench reference in the player build
+        run: "! grep -rl 'bench-reference' apps/web/dist"
+
       # A layered map must draw within 3x a fixed calibration in software GL (#3157,
       # #3164, #3243): a ratio on this runner, so a slow runner does not trip it.
       # Pull requests that touch the renderer, the maps, the web build or its
