@@ -52,6 +52,11 @@ const ARENA = JSON.parse(
     readonly team: number;
     readonly position: { readonly x: number; readonly y: number };
   }[];
+  readonly bounds: { readonly outline: readonly { readonly x: number; readonly y: number }[] };
+  readonly walls: readonly {
+    readonly layer: number;
+    readonly points?: readonly { readonly x: number; readonly y: number }[];
+  }[];
 };
 
 /** Where a 1v1's hero on `team` starts: the team's first spawn. */
@@ -61,6 +66,28 @@ function spawnOf(team: number): { readonly x: number; readonly y: number } {
     throw new Error(`ember-pits has no team ${String(team)} spawn`);
   }
   return spawn;
+}
+
+/** The middle of the ground-level rock nearest team 0's first spawn. */
+function rockNearSpawn(): { readonly x: number; readonly y: number } {
+  const spawn = spawnOf(0);
+  const away = (point: { readonly x: number; readonly y: number }): number =>
+    Math.hypot(point.x - spawn.x, point.y - spawn.y);
+  const middles = ARENA.walls.flatMap(({ layer, points }) =>
+    layer === 1 && points !== undefined
+      ? [
+          {
+            x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
+            y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
+          },
+        ]
+      : [],
+  );
+  const nearest = middles.sort((a, b) => away(a) - away(b))[0];
+  if (nearest === undefined) {
+    throw new Error("ember-pits has no rock");
+  }
+  return nearest;
 }
 
 /** Ember Pits' middle lane: open from one side's spawns to the other's, between the pillar ring's rows. */
@@ -324,6 +351,8 @@ test("M mutes and unmutes the combat sounds", async ({ page }) => {
 });
 
 test("holding a movement key moves the player on screen", async ({ page }) => {
+  // Ember Pits breathes, and never settles unless motion is reduced.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await startSoloMatch(page);
 
   // A still frame first. If the arena animated on its own, this control
@@ -358,6 +387,8 @@ test("in VibeWars, the arrows move; A, once move-left, casts slot 5 and moves no
     },
     { key: `${STORAGE_NAMESPACE}.keymap`, vibewars: KEYMAP_PRESETS.vibewars },
   );
+  // Ember Pits breathes, and never settles unless motion is reduced.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await startSoloMatch(page);
   await expect(page.locator(".hud-skill-key").first()).toHaveText("Q");
   expect(key("skill-5", KEYMAP_PRESETS.vibewars)).toBe("KeyA");
@@ -393,6 +424,8 @@ test("closing the tab mid-match asks first, as Ctrl+W would (#302)", async ({ pa
 });
 
 test("releasing the movement key stops the player", async ({ page }) => {
+  // Ember Pits breathes, and never settles unless motion is reduced.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await startSoloMatch(page);
 
   await page.keyboard.down(key("move-right"));
@@ -536,8 +569,10 @@ async function spotShot(
 
 test("clicking the ground walks there, round a wall, and stops (#310)", async ({ page }) => {
   const canvas = await startSoloMatch(page);
-  // Behind the west pillar (x 560 to 620, y 600 to 800) from the first spawn, (160, 660).
-  const goal = { x: 700, y: 700 };
+  // Behind the rock nearest the first spawn, on the line from the spawn through it.
+  const spawn = spawnOf(0);
+  const rock = rockNearSpawn();
+  const goal = { x: spawn.x + (rock.x - spawn.x) * 1.3, y: spawn.y + (rock.y - spawn.y) * 1.3 };
   const empty = await spotShot(page, canvas, goal);
 
   await canvas.click({ position: await matchPoint(page, canvas, goal) });
@@ -805,7 +840,7 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   const panned = atWall + 200 / zoom;
   await expect.poll(cameraY).toBeGreaterThan(panned - 3);
   expect(await cameraY()).toBeLessThan(panned + 3);
-  expect(panned).toBeGreaterThan(ARENA.height);
+  expect(panned).toBeGreaterThan(Math.max(...ARENA.bounds.outline.map(({ y }) => y)));
 
   // Let go: the view is on you again. RETURN_RATE (7/s)
   // brings it within 3 px in about 0.65 s; a loaded runner needs more than
@@ -868,10 +903,10 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
   const cameraX = async (): Promise<number> =>
     Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
 
-  // A click walks right from the first spawn (160, 660) on ember-pits, to
-  // y 500: north of the west pillar (y 600 to 800), clear to well past the
-  // goal below, and near enough the centre to be on screen, not under the HUD.
-  const middle = (await projection(stage, canvas)).onPage({ x: 380, y: 500 });
+  // A click walks right from the first spawn along its row, which is open to
+  // well past the goal below, and near enough the centre to be on screen.
+  const spawn = spawnOf(0);
+  const middle = (await projection(stage, canvas)).onPage({ x: spawn.x + 220, y: spawn.y });
   await page.mouse.click(middle.x, middle.y);
   // Over the canvas, for the wheel; then Close.
   await page.mouse.move(centre.x, centre.y);
@@ -880,7 +915,7 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
     await page.mouse.wheel(0, -100);
   }
   await expect(stage).toHaveAttribute("data-zoom-step", "Close");
-  await expect.poll(cameraX, { timeout: 15_000 }).toBeGreaterThan(350);
+  await expect.poll(cameraX, { timeout: 15_000 }).toBeGreaterThan(spawn.x + 190);
   // Both: the view still eases to Close after the camera has stopped, and every leg below uses zoom.
   let last = "";
   await expect

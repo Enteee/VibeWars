@@ -98,8 +98,29 @@ test("in a match a click under the panel walks, and the box shows only while ope
   expect(await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.tagName, at)).toBe(
     "CANVAS",
   );
-  // The follow camera (#721) moves only when the hero does.
+  // The follow camera (#721) moves only when the hero does. Ember Pits'
+  // first spawn sits near the west edge, so the ground under the panel is
+  // outside the arena: walk east along the open spawn row first, and settle.
   const stage = page.locator("#viewport");
+  const canvas = page.locator("#viewport canvas:not(.compass)");
+  const view = await canvas.boundingBox();
+  if (view === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const atSpawn = (await stage.getAttribute("data-camera")) ?? "";
+  await page.mouse.click(view.x + view.width * 0.85, view.y + view.height / 2);
+  let last = "";
+  await expect
+    .poll(
+      async () => {
+        const now = (await stage.getAttribute("data-camera")) ?? "";
+        const settled = now === last && now !== atSpawn;
+        last = now;
+        return settled;
+      },
+      { message: "the hero should walk east and stop", intervals: [500], timeout: 15_000 },
+    )
+    .toBe(true);
   const before = await stage.getAttribute("data-camera");
   await page.mouse.click(at.x, at.y);
   await expect(stage).not.toHaveAttribute("data-camera", before ?? "");

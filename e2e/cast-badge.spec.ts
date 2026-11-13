@@ -44,6 +44,8 @@ async function badgeSpot(page: Page): Promise<Buffer> {
 test("a cast bar wears the casting skill's type badge, and loses it with the bar (#1125)", async ({
   page,
 }) => {
+  // Ember Pits breathes, and never settles unless motion is reduced.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await bringStarter(page, UNGUENT_BUILD);
   await page.goto("./");
   await startSoloMatch(page);
