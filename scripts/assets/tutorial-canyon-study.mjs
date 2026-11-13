@@ -56,6 +56,26 @@ const TRAIL = [
   [6900, 700],
 ];
 const HALF = 300; // corridor half width
+const ARM_HALF = 170;
+/** station 13's dead end: a short arm south-east, ending in a pocket inside the rock band */
+/** @type {Pt[]} */
+const ARM = [
+  [5400, 700],
+  [5560, 1000],
+  [5760, 1100],
+];
+/** the canyon mouth: north edge then south edge, widening east */
+/** @type {Pt[]} */
+const FLARE = [
+  [6850, 400],
+  [7300, 380],
+  [7600, 160],
+  [7900, 160],
+  [7900, 1240],
+  [7600, 1240],
+  [7300, 1020],
+  [6850, 1000],
+];
 /** station sites: centre of each */
 /** @type {Record<number, Pt>} */
 const SITE = {
@@ -70,6 +90,7 @@ const SITE = {
   12: [3700, 700],
   13: [5300, 700],
   14: [6800, 700],
+  15: [5700, 1000],
 };
 const poly = (/** @type {Pt[]} */ a) => a.map(([x, y]) => `${x},${y}`).join(" ");
 
@@ -87,8 +108,15 @@ const defs = `<defs>
 
 /** Rock mass, corridor lip, cliff face on the north wall, floor. */
 function ground() {
-  const line = (/** @type {number} */ w, /** @type {string} */ c, dy = 0, extra = "") =>
-    `<polyline points="${poly(TRAIL)}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="butt" transform="translate(0 ${dy})" ${extra}/>`;
+  const line = (
+    /** @type {number} */ w,
+    /** @type {string} */ c,
+    dy = 0,
+    extra = "",
+    pts = TRAIL,
+    cap = "butt",
+  ) =>
+    `<polyline points="${poly(pts)}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="${cap}" transform="translate(0 ${dy})" ${extra}/>`;
   let s = `<rect x="-500" width="${MW + 500}" height="${MH}" fill="${C.rock}"/>`;
   s += `<rect x="-500" width="${MW + 500}" height="${MH}" fill="#000" filter="url(#grain)" opacity=".5"/>`;
   s += line(2 * HALF + 50, C.lip);
@@ -100,6 +128,17 @@ function ground() {
   // rounded blobs at the corners
   for (const [x, y] of TRAIL.slice(1, -1))
     s += `<circle cx="${x}" cy="${y + 35}" r="${HALF - 35}" fill="${C.floor}"/>`;
+  // station 13's dead-end arm: the same lip, face and floor, cut a little into the rock band
+  s += line(2 * ARM_HALF + 50, C.lip, 0, "", ARM, "round");
+  s += line(2 * ARM_HALF, C.face, 0, "", ARM, "round");
+  s += line(2 * ARM_HALF - 60, C.floor, 30, "", ARM, "round");
+  // station 14's mouth: the walls flare open into the gate
+  for (const [grow, c, dy] of /** @type {const} */ ([
+    [25, C.lip, 0],
+    [0, C.face, 0],
+    [-35, C.floor, 35],
+  ]))
+    s += `<polygon points="${poly(FLARE.map(([x, y], i) => [x, y + (i < 4 ? -grow : grow)]))}" fill="${c}" transform="translate(0 ${dy})"/>`;
   // pebbles and cracks on the whole map
   seed = 11;
   for (let i = 0; i < 700; i++) {
@@ -440,31 +479,30 @@ const SITES = {
     title: "13 Y-junction",
     reuse: "map data",
     reads: "the lit trail runs on east; the south-east arm ends at a tiny parasol and a deck chair",
+    draw: () =>
+      `<ellipse cx="5400" cy="720" rx="90" ry="90" fill="${C.floor}"/>` +
+      goal(6050, 700) +
+      arrow(5500, 700, 120, 0) +
+      path([
+        [4800, 720],
+        [5300, 710],
+        [5900, 700],
+      ]) +
+      pair(4880, 720) +
+      '<g fill="none" stroke="#f2f5fa" stroke-width="7" stroke-dasharray="4 20" stroke-linecap="round" opacity=".6"><path d="M5440,740 L5560,990"/></g>',
+  },
+  15: {
+    slug: "dead-end",
+    title: "13b Dead end",
+    reuse: "map data",
+    reads: "a short arm ends in a tiny parasol and a deck chair: the joke, then back to the trail",
     draw: () => {
-      /** @type {Pt[]} */
-      const arm = [
-        [5400, 760],
-        [5640, 1000],
-        [5900, 1400],
-      ];
-      let s = `<polyline points="${poly(arm)}" fill="none" stroke="${C.lip}" stroke-width="470" stroke-linejoin="round"/>`;
-      s += `<polyline points="${poly(arm)}" fill="none" stroke="${C.face}" stroke-width="420" stroke-linejoin="round"/>`;
-      s += `<polyline points="${poly(arm)}" fill="none" stroke="${C.floor}" stroke-width="340" stroke-linejoin="round"/>`;
-      s += `<ellipse cx="5900" cy="1400" rx="260" ry="150" fill="${C.floor}"/>`;
-      // the joke: parasol + deck chair on the dead end
-      s += `<path d="M5830,1330 q80,-110 160,0 z" fill="#d9d3c4" stroke="${INK}" stroke-width="4"/><line x1="5910" y1="1330" x2="5910" y2="1430" stroke="${INK}" stroke-width="5"/>`;
-      s += `<rect x="5880" y="1410" width="90" height="46" fill="#9a7a62" stroke="${INK}" stroke-width="4"/>`;
-      s += `<text x="5960" y="1350" font-size="30" font-family="DejaVu Sans" fill="#f2f5fa">?</text>`;
-      s += goal(6050, 700) + arrow(5500, 700, 120, 0);
-      return (
-        s +
-        path([
-          [4800, 720],
-          [5300, 710],
-          [5900, 700],
-        ]) +
-        pair(4880, 720)
-      );
+      let s = `<ellipse cx="5760" cy="1100" rx="250" ry="120" fill="${C.floor}"/>`;
+      s += `<ellipse cx="5830" cy="1150" rx="50" ry="14" fill="#000" opacity=".35"/>`;
+      s += `<line x1="5800" y1="1060" x2="5800" y2="1140" stroke="${INK}" stroke-width="6"/><path d="M5730,1070 q70,-100 140,0 z" fill="#d9d3c4" stroke="${INK}" stroke-width="4"/>`;
+      s += `<rect x="5810" y="1110" width="80" height="42" fill="#9a7a62" stroke="${INK}" stroke-width="4"/><rect x="5810" y="1090" width="22" height="30" fill="#b89478" stroke="${INK}" stroke-width="3"/>`;
+      s += `<text x="5930" y="1080" font-size="42" font-family="DejaVu Sans" fill="#f2f5fa" stroke="${INK}" stroke-width="3" paint-order="stroke">?</text>`;
+      return s + pair(5600, 1020);
     },
   },
   14: {
@@ -473,11 +511,13 @@ const SITES = {
     reuse: "edge / exit; mist gate",
     reads: "the walls part; a bright mist gate; beyond it dark rows of foes (the fight)",
     draw: () => {
-      let s = `<ellipse cx="7000" cy="740" rx="360" ry="440" fill="url(#mist)" opacity="1.6"/>`;
-      s += `<ellipse cx="7080" cy="700" rx="150" ry="330" fill="#e9e2dc" opacity=".55" filter="url(#b30)"/>`;
-      s += `<ellipse cx="7080" cy="700" rx="90" ry="260" fill="#fff" opacity=".6" filter="url(#b30)"/>`;
-      for (let i = 0; i < 6; i++) s += body(7230, 440 + i * 90, "#6a4543", false, 12);
-      return s + goal(6850, 700) + pair(6480, 720);
+      let s = `<ellipse cx="7400" cy="700" rx="420" ry="460" fill="url(#mist)" opacity="1.6"/>`;
+      s += `<ellipse cx="7440" cy="700" rx="130" ry="330" fill="#e9e2dc" opacity=".55" filter="url(#b30)"/>`;
+      s += `<ellipse cx="7440" cy="700" rx="75" ry="260" fill="#fff" opacity=".6" filter="url(#b30)"/>`;
+      // the fight beyond: staggered, deep, desaturated, a body wide each
+      for (let i = 0; i < 12; i++)
+        s += body(7610 + (i % 3) * 60 + (i % 2) * 20, 420 + i * 48, "#6a4543", false, 14);
+      return s + goal(6900, 700) + pair(6620, 720);
     },
   },
 };
@@ -511,12 +551,12 @@ for (const [n, site] of Object.entries(SITES)) {
   const [sx, sy] = SITE[Number(n)];
   const vx = Number(sx) + PAD - VW / 2,
     vy = sy - VH / 2;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FW}" height="${FH + BAR * 2}" viewBox="0 0 ${FW} ${FH + BAR * 2}">${style}
-<rect width="${FW}" height="${FH + BAR * 2}" fill="#10141a"/>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FW}" height="${FH + BAR + 56}" viewBox="0 0 ${FW} ${FH + BAR + 56}">${style}
+<rect width="${FW}" height="${FH + BAR + 56}" fill="#10141a"/>
 <text x="10" y="22" class="t">Tutorial canyon: station ${site.title} (default camera, ${VW}×${VH} units)</text>
 <svg x="0" y="${BAR}" width="${FW}" height="${FH}" viewBox="${vx} ${vy} ${VW} ${VH}" overflow="hidden">${defs}${world(site.draw())}<rect x="${vx}" y="${vy}" width="${VW}" height="${VH}" fill="url(#dusk)"/></svg>
-<text x="10" y="${FH + BAR + 20}" class="s">reuses: ${site.reuse}</text><text x="10" y="${FH + BAR + 34}" class="s">reads: ${site.reads}</text></svg>`;
-  render(`3187-canyon-${n}-${site.slug}`, svg);
+<text x="10" y="${FH + BAR + 20}" class="s">reuses: ${site.reuse}</text><text x="10" y="${FH + BAR + 38}" class="s">reads: ${site.reads}</text></svg>`;
+  render(`3187-canyon-${n === "15" ? "13b" : n}-${site.slug}`, svg);
 }
 
 // plan
@@ -525,6 +565,10 @@ for (const [n, site] of Object.entries(SITES)) {
   const PH = Math.round(MH * k);
   let ov = "";
   for (const [n, [x, y]] of Object.entries(SITE)) {
+    if (n === "15") {
+      ov += `<circle cx="5760" cy="1100" r="70" fill="#10141a" stroke="#fff" stroke-width="8"/><text x="5760" y="1140" font-size="100" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" fill="#fff">13b</text>`;
+      continue;
+    }
     ov += `<rect x="${x - VW / 2}" y="${y - VH / 2}" width="${VW}" height="${VH}" fill="none" stroke="#fff" stroke-width="10" stroke-dasharray="40 30" opacity=".5"/>`;
     ov += `<circle cx="${x}" cy="${y}" r="110" fill="#10141a" stroke="#fff" stroke-width="10"/><text x="${x}" y="${y + 50}" font-size="150" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" fill="#fff">${n}</text>`;
   }
