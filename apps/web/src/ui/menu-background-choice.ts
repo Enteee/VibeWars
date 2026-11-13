@@ -17,6 +17,19 @@ export interface MenuBackgroundChoice {
 export const FIRST_CHOICE: MenuBackgroundChoice = { mapId: RANDOM_MAP, teamSize: 8 };
 
 /**
+ * The first choice of a page whose `search` pins the map with
+ * `?menu-background=<mapId>` (#3248), so an e2e fights on a known map, at
+ * the largest size it seats. Bare `?menu-background`, or a map that does
+ * not seat two sides, which is wrong data, is `FIRST_CHOICE`.
+ */
+export function pinnedChoice(search: string): MenuBackgroundChoice {
+  const map = arenaMap(new URLSearchParams(search).get("menu-background") ?? "");
+  return map?.teams === 2 && map.teamSizes.length > 0
+    ? { mapId: map.id, teamSize: Math.max(...map.teamSizes) }
+    : FIRST_CHOICE;
+}
+
+/**
  * What a lobby makes the background fight on: a Hosted lobby its map and
  * size (#3131), every other mode nothing, leaving the fight as it is.
  */

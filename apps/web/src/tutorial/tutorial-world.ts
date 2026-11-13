@@ -1,6 +1,7 @@
 import {
   MINIMAL_GW_INSPIRED_PVP_V1 as RULESET,
   MatchSimulation,
+  PROFESSIONS,
   createRng,
   STARTER_BUILDS,
   getSkill,
@@ -20,7 +21,7 @@ import {
 } from "@vibewars/game-core";
 
 import { hostMap, mapStructure } from "../net/maps.js";
-import { DEFAULT_STEP, VIEW_ASPECT, VIEW_STEPS } from "../render/camera-rig.js";
+import { DEFAULT_STEP, VIEW_ASPECT, VIEW_STEPS, type Size } from "../render/camera-rig.js";
 import { pickSurface, shapeOutline } from "../render/layer-surfaces.js";
 import { elevationOf } from "../render/render-order.js";
 import type { MapStructure } from "../render/arena-snapshot.js";
@@ -32,12 +33,23 @@ import {
   type SplashMap,
 } from "../ui/splash-fight.js";
 
-import { inwardStart } from "./tutorial-start.js";
+import { inwardStart, teleporterSpot } from "./tutorial-start.js";
 
-/** The tutor's profession: a Monk until the operator answers Q69. */
-export const TUTOR_PROFESSION: ProfessionId = "monk";
-/** The player's: a Warrior, the plainest to learn on. */
+/** The player's profession: a Warrior, the plainest to learn on. */
 export const PLAYER_PROFESSION: ProfessionId = "warrior";
+/** What the tutor may be (Q69): any profession but the player's, so the two never look alike. */
+export const TUTOR_PROFESSIONS: readonly ProfessionId[] = (
+  Object.keys(PROFESSIONS) as ProfessionId[]
+).filter((profession) => profession !== PLAYER_PROFESSION);
+
+/** The tutor's profession for one run (#3222), drawn afresh each time from `random` in [0, 1). */
+export function drawTutorProfession(random: () => number): ProfessionId {
+  const drawn = TUTOR_PROFESSIONS[Math.floor(random() * TUTOR_PROFESSIONS.length)];
+  if (drawn === undefined) {
+    throw new Error("no profession for the tutor");
+  }
+  return drawn;
+}
 
 export const SELF_ID = "tutorial-you";
 export const TUTOR_ID = "tutorial-tutor";
@@ -45,6 +57,8 @@ export const TUTOR_ID = "tutorial-tutor";
 const TUTOR_POST = vec2(160, 0);
 /** Where the mark glows, from the tutor's post. */
 const MARK_OFFSET = vec2(0, 70);
+/** Where the tutor waits by the teleporter (#3222), from its pad. */
+const BESIDE_PAD = vec2(70, 0);
 /** The default view's half, in world units: how far the start keeps from every edge. */
 const HALF_VIEW = vec2(
   (VIEW_STEPS[DEFAULT_STEP].height * VIEW_ASPECT) / 2,
@@ -81,6 +95,10 @@ export interface TutorialWorld {
   readonly tutorBuild: PlayerBuild;
   /** Where station 1 sends the player. */
   readonly mark: Vec2;
+  /** The teleporter's pad (#3222), north of the start: found in station 2, stepped on in 3. */
+  readonly teleporter: Vec2;
+  /** Where the tutor walks for station 3, beside the pad. */
+  readonly besidePad: Vec2;
   /** The layer the pair and the mark stand on. */
   readonly ground: number;
 }
@@ -184,22 +202,34 @@ function placesFrom(graph: NavGraph, from: Vec2): readonly [Vec2, Vec2, Vec2] {
 }
 
 /**
- * Whether the ground at `at` is drawn in plain view (#3221): no deck
- * over it, nor its lifted top or the side it draws down to the ground in
- * front of it, and a click on it names the ground there, not a floor
- * drawn over it.
+ * Whether the ground at `at` is drawn in plain view (#3221): not on a
+ * ramp, no deck or ramp over it, nor its lifted top or the side it draws
+ * down to the ground in front of it, and a click on it names the ground
+ * there, not a floor drawn over it.
  */
 export function inOpenView(structure: MapStructure, at: Vec2): boolean {
   const { ground } = structure;
   if (pickSurface(structure, at, false).layer !== ground) {
     return false;
   }
-  return !structure.decks.some((deck) => {
-    if (deck.layer <= ground) {
+  if (structure.transitions.some((ramp) => pointInPolygon(at, shapeOutline(ramp.area)))) {
+    return false;
+  }
+  // A ramp is drawn up to its top layer, as a deck is (#3222): a spot on
+  // canyon's arch ramp read as open, and its pad hid under the arch.
+  const raised = [
+    ...structure.decks.map((deck) => ({ layer: deck.layer, shape: deck.footprint })),
+    ...structure.transitions.map((ramp) => ({
+      layer: Math.max(ramp.from, ramp.to),
+      shape: ramp.area,
+    })),
+  ];
+  return !raised.some(({ layer, shape }) => {
+    if (layer <= ground) {
       return false;
     }
-    const outline = shapeOutline(deck.footprint);
-    const lift = elevationOf(deck.layer, ground);
+    const outline = shapeOutline(shape);
+    const lift = elevationOf(layer, ground);
     for (let rise = 0; rise <= lift; rise += SIDE_SAMPLE) {
       if (pointInPolygon(vec2(at.x, at.y + rise), outline)) {
         return true;
@@ -209,17 +239,9 @@ export function inOpenView(structure: MapStructure, at: Vec2): boolean {
   });
 }
 
-/**
- * The pair's places nearest `from` with open sky over all three (#3221):
- * a first-timer's first look at their body is never a ghost under a deck.
- * `from`'s own when nothing in reach is open.
- */
-function openPlaces(
-  graph: NavGraph,
-  from: Vec2,
-  covered: (at: Vec2) => boolean,
-): readonly [Vec2, Vec2, Vec2] {
-  const open = (at: Vec2): boolean =>
+/** Whether a body at `at` stands under open sky, `OPEN_CLEARANCE` all round. */
+function openAround(covered: (at: Vec2) => boolean): (at: Vec2) => boolean {
+  return (at) =>
     !covered(at) &&
     [0, 1, 2, 3].every(
       (quarter) =>
@@ -230,6 +252,18 @@ function openPlaces(
           ),
         ),
     );
+}
+
+/**
+ * The pair's places nearest `from` with open sky over all three (#3221):
+ * a first-timer's first look at their body is never a ghost under a deck.
+ * `from`'s own when nothing in reach is open.
+ */
+function openPlaces(
+  graph: NavGraph,
+  from: Vec2,
+  open: (at: Vec2) => boolean,
+): readonly [Vec2, Vec2, Vec2] {
   const first = placesFrom(graph, from);
   for (let ring = 0; ring <= OPEN_SEARCH_RINGS; ring += 1) {
     const angles = ring === 0 ? 1 : OPEN_SEARCH_ANGLES;
@@ -254,9 +288,17 @@ function openPlaces(
 /**
  * The first-time tutorial's fight (#3218, #3221): the menu's bots on
  * `mapId`, the foes held off the pair, the player inward from their side's
- * spawn under open sky, and the tutor walking in from the row behind.
+ * spawn under open sky, and the tutor, a `tutorProfession`, walking in
+ * from the row behind. The teleporter (#3222) stands north of the player,
+ * just past the default view on a canvas of `viewport`.
  */
-export function tutorialWorld(mapId: string, teamSize: number, seed: string): TutorialWorld {
+export function tutorialWorld(
+  mapId: string,
+  teamSize: number,
+  seed: string,
+  tutorProfession: ProfessionId,
+  viewport: Size,
+): TutorialWorld {
   const map = hostMap(mapId);
   if (map === undefined) {
     throw new Error(`no map ${mapId} for the tutorial`);
@@ -267,11 +309,11 @@ export function tutorialWorld(mapId: string, teamSize: number, seed: string): Tu
   const ground = structure.ground;
   // Inward from the background's spawn, so the view is filled.
   const edge = splashSpawn(graph, map, fight, 0, teamSize);
-  const [spawn, post, mark] = openPlaces(
-    graph,
-    inwardStart(edge, map.descriptor, HALF_VIEW),
-    (at) => !inOpenView(structure, at),
-  );
+  const open = openAround((at) => !inOpenView(structure, at));
+  const [spawn, post, mark] = openPlaces(graph, inwardStart(edge, map.descriptor, HALF_VIEW), open);
+  const standable = (at: Vec2): Vec2 => nearestStandable(graph, at);
+  const teleporter = teleporterSpot(spawn, viewport, standable, open);
+  const besidePad = standable(vec2(teleporter.x + BESIDE_PAD.x, teleporter.y + BESIDE_PAD.y));
   // The tutor walks in from the row behind, moved as far.
   const behind = splashSpawn(graph, map, fight, 0, teamSize + 1);
   const tutorSpawn = nearestStandable(
@@ -290,7 +332,7 @@ export function tutorialWorld(mapId: string, teamSize: number, seed: string): Tu
           from.y + spawn.y - edge.y + ((centre.y - edge.y) / forward) * ALLY_AHEAD,
         );
   const playerBuild = houseBuild(PLAYER_PROFESSION);
-  const tutorBuild = houseBuild(TUTOR_PROFESSION);
+  const tutorBuild = houseBuild(tutorProfession);
   const builds = createRng(seedFromString(`builds-${seed}`));
   const simulation = new MatchSimulation({
     seed,
@@ -298,6 +340,9 @@ export function tutorialWorld(mapId: string, teamSize: number, seed: string): Tu
     matchRules: SPLASH_RULES,
     walls: map.walls,
     bounds: map.bounds,
+    // Its layers, as a match has them: a walk on a map whose ground is not
+    // its lowest layer names that layer, which a flat world refuses.
+    layers: map.layers,
     participants: [
       ...splashParticipants(
         map,
@@ -309,16 +354,18 @@ export function tutorialWorld(mapId: string, teamSize: number, seed: string): Tu
       ).map((bot) =>
         bot.team === 0
           ? { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) }
-          : { ...bot, behaviour: guarding(bot.spawn, centre, [spawn, post, mark]) },
+          : {
+              ...bot,
+              behaviour: guarding(bot.spawn, centre, [spawn, post, mark, teleporter, besidePad]),
+            },
       ),
       body(SELF_ID, playerBuild, spawn, undefined),
-      // The tutor walks over and stays by the mark.
-      body(TUTOR_ID, tutorBuild, tutorSpawn, {
-        kind: "patrol",
-        waypoints: [post],
-        loop: false,
-      }),
+      // Walked as a player is, so the session can send it on (#3222):
+      // a behaviour would take its walk back every tick.
+      body(TUTOR_ID, tutorBuild, tutorSpawn, undefined),
     ],
   });
-  return { map, simulation, playerBuild, tutorBuild, mark, ground };
+  // The tutor walks over and stays by the mark.
+  simulation.walkTo(TUTOR_ID, post, ground);
+  return { map, simulation, playerBuild, tutorBuild, mark, ground, teleporter, besidePad };
 }

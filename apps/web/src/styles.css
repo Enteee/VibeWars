@@ -862,6 +862,11 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* The tutorial shows no empty frame (#3222). */
+.hud-target[hidden] {
+  display: none;
+}
+
 /* A foe a click calls for your team (#2737); otherwise the arena under
    the frame keeps the pointer, as the rest of the top does. */
 .hud-target.is-callable {
@@ -7953,6 +7958,45 @@ body:has(#screens[style*="none"]) .now-playing {
 .tutorial-how {
   font-size: 0.9rem;
   color: var(--ink-dim);
+}
+
+/* Into the teleporter (#3222): a flash to white that fades back; a plain fade under reduced motion. */
+.tutorial-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: tutorial-flash 0.8s ease-out forwards;
+}
+
+@keyframes tutorial-flash {
+  10% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes tutorial-fade {
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-flash {
+    animation: tutorial-fade 0.8s ease-in-out forwards;
+  }
 }
 
 /* As the HUD's leave match button. */

@@ -12,6 +12,7 @@ import {
   releasePan,
   stepCamera,
   wheelNotch,
+  type CameraView,
   type Cover,
   type Size,
 } from "./camera-rig.js";
@@ -33,6 +34,17 @@ export interface Body extends Vec2 {
   readonly teleportReadyAt: number;
 }
 
+/** What the camera shows now (#3222): read-only, for the tutorial's checks. */
+export interface CameraLook {
+  /** Index into `VIEW_STEPS`: the step zoomed to, not the eased height. */
+  readonly step: number;
+  /** The right button is held in a drag. */
+  readonly panning: boolean;
+  readonly view: CameraView;
+  /** The canvas, CSS px. */
+  readonly viewport: Size;
+}
+
 export interface FollowCamera {
   /**
    * Step the camera toward `self`, or hold it where it is without one.
@@ -46,6 +58,8 @@ export interface FollowCamera {
    * `Default`, and the view snaps there with no glide.
    */
   restart(arena: Size): void;
+  /** What it shows as of the last frame, or nothing before the first. */
+  look(): CameraLook | undefined;
   /** What the HUD covers from now on, kept clear by the edge markers; none until this is called. */
   setCover(next: Cover): void;
   dispose(): void;
@@ -61,6 +75,7 @@ export function attachFollowCamera(
   let rig = createCameraRig();
   let cover = NO_COVER;
   let teleportReadyAt: number | undefined;
+  let shown: CameraView | undefined;
   viewport.setArenaBounds(arena.width, arena.height);
   const offWheel = viewport.onWheelNotch((direction) => {
     rig = wheelNotch(rig, direction);
@@ -125,6 +140,7 @@ export function attachFollowCamera(
         deltaSeconds,
       );
       rig = stepped.rig;
+      shown = stepped.view;
       viewport.setCamera(stepped.view, cover);
       mark("zoomStep", VIEW_STEPS[rig.step]?.name ?? "");
       mark("zoom", stepped.view.zoom.toFixed(4));
@@ -132,6 +148,11 @@ export function attachFollowCamera(
     },
     onSecondaryClick(handler) {
       onClick = handler;
+    },
+    look() {
+      return shown === undefined
+        ? undefined
+        : { step: rig.step, panning: rig.panning, view: shown, viewport: viewport.size() };
     },
     restart(next) {
       viewport.setArenaBounds(next.width, next.height);

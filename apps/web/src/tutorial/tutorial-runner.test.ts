@@ -3,17 +3,28 @@ import { describe, expect, it } from "vitest";
 
 import { KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
 
-import { walkStation, type Station, type TutorialView } from "./stations.js";
+import {
+  lookStation,
+  stepInStation,
+  walkStation,
+  type Station,
+  type TutorialView,
+} from "./stations.js";
 import { HINT_REPEAT_MS, PRAISE_MS, createTutorialRunner } from "./tutorial-runner.js";
 
 const MARK = vec2(200, 100);
-const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100) };
-const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100) };
+const CAMERA = { selfLayer: 0, zoomedOut: false, lookDragged: false, inView: () => false };
+const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100), ...CAMERA };
+const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100), ...CAMERA };
 const label = (code: string): string => code;
 
 describe("the tutorial runner", () => {
   it("says the intro once, then the hint at 10 s and again at 20 s", () => {
-    const runner = createTutorialRunner([walkStation(MARK)], () => KEYMAP_PRESETS.classic, label);
+    const runner = createTutorialRunner(
+      [walkStation(MARK, 0)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
     const said = [0, 1_000, 9_999, HINT_REPEAT_MS, 15_000, 2 * HINT_REPEAT_MS, 25_000].map(
       (now) => runner.tick(AWAY, now).say?.key,
     );
@@ -29,7 +40,11 @@ describe("the tutorial runner", () => {
   });
 
   it("points at the mark until it is done, then praises, and the last station finishes", () => {
-    const runner = createTutorialRunner([walkStation(MARK)], () => KEYMAP_PRESETS.classic, label);
+    const runner = createTutorialRunner(
+      [walkStation(MARK, 0)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
     expect(runner.tick(AWAY, 0)).toMatchObject({
       highlight: { kind: "ground", at: MARK },
       finished: false,
@@ -45,9 +60,9 @@ describe("the tutorial runner", () => {
   });
 
   it("moves on to the next station's intro once the praise has stood", () => {
-    const next: Station = { ...walkStation(vec2(400, 400)), id: "next" };
+    const next: Station = { ...walkStation(vec2(400, 400), 0), id: "next" };
     const runner = createTutorialRunner(
-      [walkStation(MARK), next],
+      [walkStation(MARK, 0), next],
       () => KEYMAP_PRESETS.classic,
       label,
     );
@@ -65,7 +80,7 @@ describe("the tutorial runner", () => {
 
   it("shows the keys as bound in the keymap passed in, read again on every line", () => {
     let keymap: Keymap = KEYMAP_PRESETS.classic;
-    const runner = createTutorialRunner([walkStation(MARK)], () => keymap, label);
+    const runner = createTutorialRunner([walkStation(MARK, 0)], () => keymap, label);
     // Every first key, then every second.
     expect(runner.tick(AWAY, 0).say?.keys).toEqual([
       "KeyW",
@@ -86,5 +101,34 @@ describe("the tutorial runner", () => {
       "ArrowDown",
       "ArrowRight",
     ]);
+  });
+
+  it("runs walk, then look around, then step in, then finishes", () => {
+    const pad = vec2(200, -900);
+    const runner = createTutorialRunner(
+      [walkStation(MARK, 0), lookStation(pad), stepInStation(pad, 0)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    const looked = { ...ON_MARK, zoomedOut: true, lookDragged: true, inView: () => true };
+    const ticks: [TutorialView, number][] = [
+      [AWAY, 0],
+      [ON_MARK, 1_000],
+      [ON_MARK, 1_000 + PRAISE_MS],
+      [looked, 2_000 + PRAISE_MS],
+      [looked, 2_000 + 2 * PRAISE_MS],
+      [{ ...looked, self: pad }, 3_000 + 2 * PRAISE_MS],
+    ];
+    const beats = ticks.map(([view, now]) => runner.tick(view, now));
+    expect(beats.map((beat) => beat.say?.key)).toEqual([
+      "tutorial.walk.intro",
+      "tutorial.walk.praise",
+      "tutorial.look.intro",
+      "tutorial.look.praise",
+      "tutorial.stepIn.intro",
+      "tutorial.stepIn.praise",
+    ]);
+    expect(beats[4]?.highlight).toEqual({ kind: "ground", at: pad });
+    expect(beats.map((beat) => beat.finished)).toEqual([false, false, false, false, false, true]);
   });
 });

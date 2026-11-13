@@ -6,6 +6,7 @@ import {
   FIRST_CHOICE,
   RANDOM_MAP,
   hostedChoice,
+  pinnedChoice,
   menuBackgroundMap,
   sameChoice,
 } from "./menu-background-choice.js";
@@ -68,6 +69,31 @@ describe("hostedChoice (#3131)", () => {
       expect(choice).toEqual(
         mode === "hosted-game" ? { mapId: "jungle-ruins", teamSize: 4 } : undefined,
       );
+    }
+  });
+});
+
+describe("pinnedChoice (#3248)", () => {
+  it("fights on a pinned map at the largest size it seats", () => {
+    expect(pinnedChoice("?splash&menu-background=arena-crossroads")).toEqual({
+      mapId: "arena-crossroads",
+      teamSize: 8,
+    });
+    expect(pinnedChoice("?menu-background=jungle-ruins")).toEqual({
+      mapId: "jungle-ruins",
+      teamSize: 8,
+    });
+  });
+
+  it("is the first choice for a bare param, none, or a map it cannot fight on", () => {
+    for (const search of [
+      "?menu-background",
+      "?menu-background=",
+      "",
+      "?menu-background=no-such-map",
+      "?menu-background=threefold-keep",
+    ]) {
+      expect(pinnedChoice(search)).toBe(FIRST_CHOICE);
     }
   });
 });

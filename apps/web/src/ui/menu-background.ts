@@ -67,10 +67,14 @@ const after = (ms: number): Promise<void> =>
  * `data-fight`, and is hidden until its first frame is drawn, then fades
  * in, `data-shown`; a restart fades the old one out first. Where it cannot draw, or loses its WebGL
  * context, `root` is left empty, the page's plain background, and the
- * player is told nothing.
+ * player is told nothing. It fights on `first` until a choice replaces it.
  */
-export function createMenuBackground(root: HTMLElement, startFight: StartFight): MenuBackground {
-  let wanted = FIRST_CHOICE;
+export function createMenuBackground(
+  root: HTMLElement,
+  startFight: StartFight,
+  first: MenuBackgroundChoice = FIRST_CHOICE,
+): MenuBackground {
+  let wanted = first;
   const suspended = new Set<SuspendReason>(["away"]);
   let fights = 0;
   /** The fight running, or the choice that could not draw one. */
