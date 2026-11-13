@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { MapData } from "@vibewars/game-maps/schema";
 
 import { arenaMap, mapStructure } from "../net/maps.js";
-import { linkTargets } from "./switch-link.js";
+import { dotsAlong, linkTargets, switchFlashAlpha, switchLinkAlpha } from "./switch-link.js";
 
 function map(id: string): MapData {
   const found = arenaMap(id);
@@ -23,6 +23,12 @@ describe("linkTargets (#3236)", () => {
         source: "gate",
         at: longHall.gates.findIndex((gate) => gate.id === "crypt-west-portcullis"),
         position: { x: 1852, y: 1310 },
+        outline: [
+          { x: 1840, y: 1260 },
+          { x: 1864, y: 1260 },
+          { x: 1864, y: 1360 },
+          { x: 1840, y: 1360 },
+        ],
         layer: 0,
       },
     ]);
@@ -53,5 +59,28 @@ describe("linkTargets (#3236)", () => {
       ["crypt-west-portcullis"],
       ["crypt-east-portcullis"],
     ]);
+  });
+});
+
+describe("the link's look (#3236)", () => {
+  it("flashes a thrown lever's targets for 1.5 s, fading", () => {
+    expect(switchFlashAlpha(undefined)).toBe(0);
+    expect(switchFlashAlpha(0)).toBe(1);
+    expect(switchFlashAlpha(0.75)).toBeCloseTo(0.5);
+    expect(switchFlashAlpha(1.5)).toBe(0);
+  });
+
+  it("pulses, and holds steady under reduced motion", () => {
+    const pulse = [0, 0.3, 0.6, 0.9].map((now) => switchLinkAlpha(now, false));
+    expect(new Set(pulse).size).toBeGreaterThan(1);
+    expect(pulse.every((alpha) => alpha >= 0.4 && alpha <= 1)).toBe(true);
+    expect([0, 0.3, 0.6].map((now) => switchLinkAlpha(now, true))).toEqual([1, 1, 1]);
+  });
+
+  it("dots the line end to end", () => {
+    const dots = dotsAlong({ x: 0, y: 0 }, { x: 0, y: 100 }, 10);
+    expect(dots).toHaveLength(11);
+    expect(dots[0]).toEqual({ x: 0, y: 0 });
+    expect(dots[10]).toEqual({ x: 0, y: 100 });
   });
 });

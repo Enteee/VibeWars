@@ -247,7 +247,7 @@ describe("renderableSwitches and switchAtPoint (#3025)", () => {
   });
 
   it("says whether each target is open, on, up or high (#3236)", () => {
-    const at = { position: { x: 0, y: 0 }, layer: 0 };
+    const at = { position: { x: 0, y: 0 }, outline: [], layer: 0 };
     const [west] = renderableSwitches(
       switches,
       [],

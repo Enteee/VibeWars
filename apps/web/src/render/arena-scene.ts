@@ -77,6 +77,7 @@ import {
   type ArenaPalette,
   pavingPalette,
   type PavingLookColours,
+  SWITCH_MARK_LOOK,
 } from "./arena-palette.js";
 import {
   trackAlt,
@@ -220,6 +221,7 @@ import { lightingOn } from "./lighting-preference.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
 import { SWITCH_MARK_ART, leverThrown, switchMarkKey } from "./switch-mark.js";
 import { paintArrival, paintTeleportEntry, paintTeleportExit } from "./teleport-mark.js";
+import { dotsAlong, switchFlashAlpha, switchLinkAlpha } from "./switch-link.js";
 import { doorPalette, GATE_ART, paintPlate, type GatePainter } from "./gate-mark.js";
 import {
   BARRIER_ART,
@@ -338,6 +340,10 @@ interface ZoneGround {
 const HOVER_RING = 0xd7dee8;
 const HOVER_RADIUS = 12;
 const HOVER_DASHES = 8;
+/** A lever's link to what it works (#3236): its targets' outline, and the dots of its line. */
+const SWITCH_LINK_WIDTH = 3;
+const SWITCH_LINK_DOT_STEP = 14;
+const SWITCH_LINK_DOT_RADIUS = 1.6;
 /** The ground over the tunnel the local body is in (#3234): how much of it still draws. */
 const TUNNEL_CUTAWAY_ALPHA = 0.35;
 /** How long that ground takes to fade out or back in, in seconds. */
@@ -863,6 +869,7 @@ export class ArenaScene extends Phaser.Scene {
     this.cutAwayTunnels(deltaMs / 1000);
     this.drawHiddenOutlines();
     this.drawHoverMarker(effects);
+    this.drawSwitchLinks(effects);
     // Over the bodies: a carried flag stands above its carrier's head.
     for (const flag of this.snapshot.flags) {
       this.drawFlag(effects, flag);
@@ -1171,6 +1178,50 @@ export class ArenaScene extends Phaser.Scene {
     g.translateCanvas(0, -elevationOf(lever.layer, this.snapshot.structure.ground));
     SWITCH_MARK_ART[switchMarkKey(lever.mark)](g, lever.position, thrown);
     g.restore();
+  }
+
+  /**
+   * What each lever works (#3236), over every cover so a gate under the
+   * ground still shows: a hovered or targeted lever's targets outlined in
+   * its brass, pulsing, with a dotted line from it to each; a thrown
+   * lever's targets flash the same outline for `SWITCH_FLASH_SECONDS`.
+   */
+  private drawSwitchLinks(g: Phaser.GameObjects.Graphics): void {
+    const { ground } = this.snapshot.structure;
+    const lift = (point: Vec2, layer: number): Vec2 => ({
+      x: point.x,
+      y: point.y - elevationOf(layer, ground),
+    });
+    for (const lever of this.snapshot.switches) {
+      const linked = lever.id === this.snapshot.hoverId || lever.id === this.snapshot.targetId;
+      const thrownAt = this.leverFlips.get(lever.id)?.at;
+      const flash = switchFlashAlpha(thrownAt === undefined ? undefined : this.now - thrownAt);
+      const alpha = Math.max(linked ? switchLinkAlpha(this.now, this.reducedMotion) : 0, flash);
+      if (alpha <= 0) {
+        continue;
+      }
+      const from = lift(lever.position, lever.layer);
+      for (const target of lever.targets) {
+        g.lineStyle(SWITCH_LINK_WIDTH, SWITCH_MARK_LOOK.knobUp, alpha);
+        g.strokePoints(
+          target.outline.map((corner) => {
+            const { x, y } = lift(corner, target.layer);
+            return new Phaser.Math.Vector2(x, y);
+          }),
+          true,
+        );
+        if (linked) {
+          g.fillStyle(SWITCH_MARK_LOOK.knobUp, 0.8);
+          for (const dot of dotsAlong(
+            from,
+            lift(target.position, target.layer),
+            SWITCH_LINK_DOT_STEP,
+          )) {
+            g.fillCircle(dot.x, dot.y, SWITCH_LINK_DOT_RADIUS);
+          }
+        }
+      }
+    }
   }
 
   /** A portal (#3030): its entry's swirl and its exit's ring, each on its own layer. */

@@ -16,6 +16,8 @@ export interface SwitchTarget {
   readonly source: "gate" | "teleport" | "deck" | "lift";
   readonly at: number;
   readonly position: Vec2;
+  /** Its outline on its layer's ground, which a hover or a throw lights. */
+  readonly outline: readonly Vec2[];
   readonly layer: number;
 }
 
@@ -42,6 +44,20 @@ function middleOf(shape: Shape): Vec2 {
   return { x: sum.x / points.length, y: sum.y / points.length };
 }
 
+/** The corners of `shape`, round it. */
+function cornersOf(shape: Shape): readonly Vec2[] {
+  if (shape.kind === "polygon") {
+    return shape.points;
+  }
+  const { x, y, width, height } = shape;
+  return [
+    { x, y },
+    { x: x + width, y },
+    { x: x + width, y: y + height },
+    { x, y: y + height },
+  ];
+}
+
 /** The target `id` names on `map`, or `undefined` for none. */
 function targetOf(map: MapData, id: string): SwitchTarget | undefined {
   for (const [at, { id: candidate, look, blocks, wall }] of map.gates.entries()) {
@@ -52,6 +68,7 @@ function targetOf(map: MapData, id: string): SwitchTarget | undefined {
         source: "gate",
         at,
         position: middleOf(wall),
+        outline: cornersOf(wall),
         layer: wall.layer,
       };
     }
@@ -64,6 +81,7 @@ function targetOf(map: MapData, id: string): SwitchTarget | undefined {
         source: "teleport",
         at,
         position: middleOf(from.area),
+        outline: cornersOf(from.area),
         layer: from.layer,
       };
     }
@@ -71,13 +89,29 @@ function targetOf(map: MapData, id: string): SwitchTarget | undefined {
   const decks = map.decks.filter((deck) => deck.switched !== null);
   for (const [at, { id: candidate, footprint, layer }] of decks.entries()) {
     if (candidate === id) {
-      return { id, kind: "bridge", source: "deck", at, position: middleOf(footprint), layer };
+      return {
+        id,
+        kind: "bridge",
+        source: "deck",
+        at,
+        position: middleOf(footprint),
+        outline: cornersOf(footprint),
+        layer,
+      };
     }
   }
   const lifts = map.transitions.filter((transition) => transition.lift !== null);
   for (const [at, { id: candidate, area, from }] of lifts.entries()) {
     if (candidate === id) {
-      return { id, kind: "lift", source: "lift", at, position: middleOf(area), layer: from };
+      return {
+        id,
+        kind: "lift",
+        source: "lift",
+        at,
+        position: middleOf(area),
+        outline: cornersOf(area),
+        layer: from,
+      };
     }
   }
   return undefined;
@@ -90,4 +124,28 @@ export function linkTargets(switchId: string, map: MapData): SwitchTarget[] {
     const target = targetOf(map, id);
     return target === undefined ? [] : [target];
   });
+}
+
+/** How long a thrown lever's targets flash (#3236). */
+export const SWITCH_FLASH_SECONDS = 1.5;
+
+/** A thrown lever's flash, `since` seconds after the throw: 1 fading to 0, and 0 once over or for no throw. */
+export function switchFlashAlpha(since: number | undefined): number {
+  return since === undefined || since < 0 || since >= SWITCH_FLASH_SECONDS
+    ? 0
+    : 1 - since / SWITCH_FLASH_SECONDS;
+}
+
+/** A hovered or targeted lever's outline at `now` seconds: a slow pulse, steady under reduced motion. */
+export function switchLinkAlpha(now: number, reducedMotion: boolean): number {
+  return reducedMotion ? 1 : 0.7 + 0.3 * Math.sin(now * Math.PI * 2 * 0.8);
+}
+
+/** The dots of a dotted line from `from` to `to`, one every `step`, both ends included. */
+export function dotsAlong(from: Vec2, to: Vec2, step: number): Vec2[] {
+  const count = Math.max(1, Math.round(Math.hypot(to.x - from.x, to.y - from.y) / step));
+  return Array.from({ length: count + 1 }, (_, at) => ({
+    x: from.x + ((to.x - from.x) * at) / count,
+    y: from.y + ((to.y - from.y) * at) / count,
+  }));
 }

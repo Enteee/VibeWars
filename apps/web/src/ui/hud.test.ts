@@ -206,6 +206,7 @@ describe("objectTargetName (#1225)", () => {
       source: "gate" as const,
       at: 0,
       position: { x: 0, y: 0 },
+      outline: [],
       layer: 0,
       on,
     });
