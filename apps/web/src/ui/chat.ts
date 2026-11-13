@@ -6,7 +6,7 @@ import { isHelpOverlayOpen } from "./help-screen.js";
 import { chatIcon } from "./icons.js";
 import { button, h, iconButton } from "./kit.js";
 import { isOptionsWindowOpen } from "./options-screen.js";
-import { SIGNET_ROW_PX, signetElement } from "./player-label.js";
+import { SIGNET_ROW_PX, signedText, signetElement } from "./player-label.js";
 
 /**
  * Chat (#479): the panel at the lower left, in the lobby, on the menu's
@@ -220,7 +220,7 @@ export function mountChat(deps: ChatDeps): ChatPanel {
       }
       log.mute(line.fromId, true);
       repaint();
-      notice(t("chat.muted", { name: line.name }), () => {
+      notice(signedText("chat.muted", { name: { name: line.name, signet } }), () => {
         log.mute(line.fromId, false);
         repaint();
       });
@@ -246,8 +246,9 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     fade();
   };
 
-  const notice = (text: string, undo?: () => void): void => {
-    const row = h("div", "chat-line chat-notice", text);
+  const notice = (text: string | Node, undo?: () => void): void => {
+    const row = h("div", "chat-line chat-notice");
+    row.append(text);
     if (undo !== undefined) {
       row.append(" ", button(t("chat.unmute"), "chat-unmute", undo));
     }

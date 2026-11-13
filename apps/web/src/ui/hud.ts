@@ -62,7 +62,13 @@ import { percent, setHidden, setStyle, setText } from "./dom-write.js";
 import { iconButton } from "./kit.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
-import { SIGNET_ROW_PX, setSignet, signetElement } from "./player-label.js";
+import {
+  SIGNET_ROW_PX,
+  setSignet,
+  signedNameElement,
+  signetElement,
+  type SignedLine,
+} from "./player-label.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
   castFailures,
@@ -1015,6 +1021,8 @@ export interface EnemyPip {
   readonly name: string;
   readonly team: number;
   readonly dead: boolean;
+  /** Their key's (#3232), beside the name on hover; none for a bot. */
+  readonly signet: number | undefined;
 }
 
 /**
@@ -1029,7 +1037,7 @@ export function enemyPips(
 ): EnemyPip[] {
   const pips = players
     .filter((player) => player.team !== selfTeam && player.creature === undefined)
-    .map(({ name, team, dead }) => ({ name, team, dead }));
+    .map(({ name, team, dead, signet }) => ({ name, team, dead, signet }));
   // Stable, so each team keeps its snapshot order.
   return pips.sort((a, b) => a.team - b.team);
 }
@@ -1359,7 +1367,10 @@ function renderEnemyPips(
       lines.set(pip.team, line);
     }
     const node = element("span", pip.dead ? "hud-enemy-pip is-dead" : "hud-enemy-pip", line);
-    node.title = pip.name;
+    // A hover label, not a `title`, as a `title` holds no signet (#3232).
+    const label = element("span", "hud-enemy-label", node);
+    label.setAttribute("aria-hidden", "true");
+    label.append(signedNameElement({ name: pip.name, signet: pip.signet }));
     node.setAttribute("aria-label", pip.dead ? t("hud.pipDead", { name: pip.name }) : pip.name);
   }
 }
@@ -1751,7 +1762,8 @@ function leaderName(
 /**
  * The toast for your team's Ghostly Hero changing leader (#1419), from
  * two snapshots: "Ghostly Hero follows you", "… follows <name>", or
- * "Ghostly Hero stays" once it follows nobody. `undefined` for the first
+ * "Ghostly Hero stays" once it follows nobody, a leader named with their
+ * signet (#3232). `undefined` for the first
  * snapshot, a spectator (`selfTeam` undefined), a foe's ghost, no change,
  * and a ghost dead in either snapshot: its death and its rise say nothing.
  */
@@ -1761,7 +1773,7 @@ export function ghostLeaderToast(
   selfId: string,
   selfTeam: number | undefined,
   names: ReadonlyMap<string, string>,
-): string | undefined {
+): SignedLine | undefined {
   if (before === undefined || selfTeam === undefined) {
     return undefined;
   }
@@ -1776,12 +1788,20 @@ export function ghostLeaderToast(
   if (leaderId === was.creature.leaderId) {
     return undefined;
   }
-  return leaderId === null
-    ? t("hud.ghostNameStays", { name: ghost.name })
-    : t("hud.ghostNameFollows", {
-        name: ghost.name,
-        leader: leaderName(leaderId, selfId, names),
-      });
+  if (leaderId === null) {
+    return { key: "hud.ghostNameStays", params: { name: ghost.name } };
+  }
+  const leader = after.players.find((player) => player.sessionId === leaderId);
+  return {
+    key: "hud.ghostNameFollows",
+    params: {
+      name: ghost.name,
+      leader:
+        leaderId === selfId
+          ? t("hud.leaderYou")
+          : { name: leaderName(leaderId, selfId, names), signet: leader?.signet },
+    },
+  };
 }
 
 /**

@@ -4328,6 +4328,31 @@ body:has(> .splash) #menu-background::after {
   background: transparent;
 }
 
+/* A foe's name on hover (#3232), their signet before it: a `title` holds no image. */
+.hud-enemy-pip {
+  position: relative;
+}
+
+.hud-enemy-label {
+  display: none;
+  position: absolute;
+  inset-block-start: calc(100% + 0.3rem);
+  left: 50%;
+  translate: -50% 0;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.hud-enemy-pip:hover > .hud-enemy-label {
+  display: block;
+}
+
 /*
  * The match's buttons, top right, as one cluster (#454): leave and mute on
  * top, Options, fullscreen and music under them, music under mute.
