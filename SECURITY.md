@@ -275,7 +275,11 @@ channels, as often as they like.
   screen says so (Your player key). Match records (#2739) publish it on Nostr
   beside each human's name, so anyone can link every recorded match
   played by one browser. A host can attach any key to a name, so a
-  signet there proves nothing.
+  signet there proves nothing. The key's secret half stays in this
+  browser's storage and is never sent, logged, shown or put in a link:
+  only `net/transport/player-key.ts` reads it, and
+  `player-key-egress.test.ts` (#3227) drives every way out with a known
+  secret and fails if any of them carries it.
 - **Everything in a snapshot.** A peer receives every snapshot field the
   host sends, for every player. Anything that must stay hidden from a
   player must not be in the snapshot at all.
