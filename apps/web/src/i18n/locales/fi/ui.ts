@@ -656,21 +656,9 @@ export default {
   "lobby.mapRandom": "Kartta: satunnainen (tiimiareena)",
   "lobby.mapShown": "Kartta: {map}",
   "lobby.matchRunning": "Ottelu on vielä käynnissä. Aula avautuu taas, kun se päättyy.",
-  "lobby.modeAnnihilation": "Tuho: kukista kaikki viholliset",
-  "lobby.modeCapturePoints":
-    "Valtauspisteet: seiso pyhäköillä vallataksesi ne. Jokainen pyhäkkösi tuo pisteitä 30 s välein.",
-  "lobby.modeGuildBattle": "Kiltataistelu: surmaa vihollisen killanherra",
-  "lobby.modeKillCount": "Tappolaskenta: eniten tappoja 3 minuutissa",
-  "lobby.modeKingOfTheHill":
-    "Kukkulan kuningas: johda aavesankarisi alttarille. Pidä se hallussasi saadaksesi pisteitä; eniten pisteitä {minutes} minuutissa voittaa.",
   "lobby.modeNameCapturePoints": "Valtauspisteet",
   "lobby.modeNameKingOfTheHill": "Kukkulan kuningas",
   "lobby.modeNameRelicRun": "Reliikkijuoksu",
-  "lobby.modePriestAnnihilation": "Pappituho: kukista kaikki viholliset ja heidän pappinsa",
-  "lobby.modeRelicRun":
-    "Reliikkijuoksu: kanna reliikkisi alttarille. Eniten pisteitä {minutes} minuutissa voittaa.",
-  "lobby.modeRelicRunFoe":
-    "Reliikkijuoksu: kanna vihollisen reliikki aavesankarillesi. 3 pisteen johto voittaa; {minutes} minuutin jälkeen eniten pisteitä.",
   "lobby.notReady": "Ei valmis",
   "lobby.playBots": "Pelaa botteja vastaan",
   "lobby.ready": "Valmis",
@@ -724,7 +712,6 @@ export default {
   "matches.minutesAgo": { one: "{count} min sitten", other: "{count} min sitten" },
   "matches.noMatches": "Ei vielä otteluita.",
   "matches.noneFit": "Yksikään ottelu ei sovi näihin suotimiin.",
-  "matches.recentNote": "Näytetään 50 uusinta ottelua viimeiseltä 7 päivältä.",
   "matches.offline": "Ottelurelayhin ei saada juuri nyt yhteyttä.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

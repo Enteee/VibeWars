@@ -679,22 +679,9 @@ export default {
   "lobby.mapRandom": "Karta: nasumična (Timska arena)",
   "lobby.mapShown": "Karta: {map}",
   "lobby.matchRunning": "Meč je još u tijeku. Soba se ponovno otvara kad završi.",
-  "lobby.modeAnnihilation": "Uništenje: porazi sve neprijatelje",
-  "lobby.modeCapturePoints":
-    "Zauzimanje točaka: stani na svetišta da ih zauzmeš. Svako tvoje svetište boduje svakih 30 s.",
-  "lobby.modeGuildBattle": "Bitka cehova: ubij neprijateljskog Gospodara ceha",
-  "lobby.modeKillCount": "Broj ubojstava: najviše ubojstava u 3 minute",
-  "lobby.modeKingOfTheHill":
-    "Kralj brda: odvedi svog Sablasnog heroja na oltar. Drži ga za bodove; pobjeđuje najviše bodova u {minutes} minuta.",
   "lobby.modeNameCapturePoints": "Zauzimanje točaka",
   "lobby.modeNameKingOfTheHill": "Kralj brda",
   "lobby.modeNameRelicRun": "Utrka za relikvijom",
-  "lobby.modePriestAnnihilation":
-    "Uništenje sa svećenikom: porazi sve neprijatelje i njihova svećenika",
-  "lobby.modeRelicRun":
-    "Utrka za relikvijom: odnesi relikviju na oltar. Pobjeđuje najviše bodova u {minutes} minuta.",
-  "lobby.modeRelicRunFoe":
-    "Utrka za relikvijom: odnesi neprijateljsku relikviju svom Sablasnom heroju. Pobjeđuje vodstvo od 3 boda; nakon {minutes} minuta najviše bodova.",
   "lobby.notReady": "Nije spreman",
   "lobby.playBots": "Igraj protiv botova",
   "lobby.ready": "Spreman",
@@ -764,7 +751,6 @@ export default {
   },
   "matches.noMatches": "Još nema mečeva.",
   "matches.noneFit": "Nijedan meč ne odgovara filtrima.",
-  "matches.recentNote": "Prikazuje se 50 najnovijih mečeva iz posljednjih 7 dana.",
   "matches.offline": "Releji mečeva trenutno nisu dostupni.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

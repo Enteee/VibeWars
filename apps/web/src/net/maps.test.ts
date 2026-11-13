@@ -556,6 +556,25 @@ describe("mapShrines (#1199)", () => {
   });
 });
 
+describe("structureOf's paving (#3210)", () => {
+  it("hands the renderer a map's paving, so a map of one layer with a road is not flat", () => {
+    const [flat] = ARENA_MAPS.filter((map) => map.layers === 1);
+    if (flat === undefined) throw new Error("no flat arena");
+    const paving = [
+      {
+        id: "road",
+        layer: 0,
+        look: "cobbles",
+        area: { kind: "rect", x: 10, y: 10, width: 80, height: 20 },
+      },
+    ] as const;
+    expect(structureOf(flat).structure.paving).toBeUndefined();
+    const { structure } = structureOf({ ...flat, paving: [...paving] });
+    expect(structure.layerCount).toBe(1);
+    expect(structure.paving).toEqual(paving);
+  });
+});
+
 describe("structureOf's water (#2984)", () => {
   const area = { kind: "rect", x: 10, y: 10, width: 20, height: 20 } as const;
   const water = [

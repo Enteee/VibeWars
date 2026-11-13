@@ -654,21 +654,9 @@ export default {
   "lobby.mapRandom": "Χάρτης: τυχαίος (Αρένα Ομάδων)",
   "lobby.mapShown": "Χάρτης: {map}",
   "lobby.matchRunning": "Ένας αγώνας είναι ακόμη σε εξέλιξη. Το λόμπι ανοίγει ξανά όταν τελειώσει.",
-  "lobby.modeAnnihilation": "Αφανισμός: νίκησε όλους τους εχθρούς",
-  "lobby.modeCapturePoints":
-    "Κατάληψη σημείων: στάσου στα ιερά για να τα πάρεις. Κάθε ιερό σου δίνει πόντους κάθε 30 δ.",
-  "lobby.modeGuildBattle": "Μάχη Συντεχνιών: σκότωσε τον εχθρικό Άρχοντα της συντεχνίας",
-  "lobby.modeKillCount": "Μέτρηση θανάτων: οι περισσότεροι φόνοι σε 3 λεπτά",
-  "lobby.modeKingOfTheHill":
-    "Βασιλιάς του λόφου: οδήγησε τον Φαντασματικό Ήρωά σου στον βωμό. Κράτα τον για πόντους· νικούν οι περισσότεροι πόντοι σε {minutes} λεπτά.",
   "lobby.modeNameCapturePoints": "Κατάληψη σημείων",
   "lobby.modeNameKingOfTheHill": "Βασιλιάς του λόφου",
   "lobby.modeNameRelicRun": "Κούρσα κειμηλίου",
-  "lobby.modePriestAnnihilation": "Αφανισμός Ιερέα: νίκησε όλους τους εχθρούς και τον ιερέα τους",
-  "lobby.modeRelicRun":
-    "Κούρσα κειμηλίου: πήγαινε το κειμήλιό σου στον βωμό. Νικούν οι περισσότεροι πόντοι σε {minutes} λεπτά.",
-  "lobby.modeRelicRunFoe":
-    "Κούρσα κειμηλίου: πήγαινε το κειμήλιο του εχθρού στον Φαντασματικό Ήρωά σου. Νικά προβάδισμα 3 πόντων· μετά από {minutes} λεπτά, οι περισσότεροι πόντοι.",
   "lobby.notReady": "Μη έτοιμος",
   "lobby.playBots": "Παίξε με bots",
   "lobby.ready": "Έτοιμος",
@@ -723,7 +711,6 @@ export default {
   "matches.minutesAgo": { one: "πριν {count} λ.", other: "πριν {count} λ." },
   "matches.noMatches": "Δεν υπάρχουν αγώνες ακόμη.",
   "matches.noneFit": "Κανένας αγώνας δεν ταιριάζει στα φίλτρα.",
-  "matches.recentNote": "Εμφανίζονται οι 50 πιο πρόσφατοι αγώνες των τελευταίων 7 ημερών.",
   "matches.offline": "Δεν υπάρχει πρόσβαση στους αναμεταδότες αγώνων αυτή τη στιγμή.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

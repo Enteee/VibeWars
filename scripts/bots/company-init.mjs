@@ -542,6 +542,7 @@ const hibernate = await askHibernate({
     (line) => {
       console.log(line);
     },
+    path.dirname(ROOT),
   ),
 });
 

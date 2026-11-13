@@ -1,4 +1,4 @@
-import type { Biome, DeckLook, TransitionLook } from "@vibewars/game-maps/schema";
+import type { Biome, DeckLook, PavingLook, TransitionLook } from "@vibewars/game-maps/schema";
 
 /** Shaded toward black by `share`, 0 to 1. */
 export function shade(colour: number, share: number): number {
@@ -514,11 +514,57 @@ function tintAll<Colours extends { readonly [Slot in keyof Colours]: number | un
   ) as Colours;
 }
 
-/** A map's materials (#3172): its arena's colours, and each deck and transition look's. */
+/** What a paved surface of one look is made of (#3210): its bed, its stones, their lit edge, its rim. */
+export interface PavingLookColours {
+  /** Under and between the stones: mortar, packed sand, the dirt itself. */
+  readonly bed: number;
+  readonly stone: number;
+  readonly light: number;
+  /** The darker line round its edge and under each stone. */
+  readonly rim: number;
+}
+
+/** `from` moved `share` of the way to `to`, channel by channel. */
+function mix(from: number, to: number, share: number): number {
+  const channel = (at: number): number =>
+    Math.round(((from >> at) & 0xff) + (((to >> at) & 0xff) - ((from >> at) & 0xff)) * share) << at;
+  return channel(16) | channel(8) | channel(0);
+}
+
+/**
+ * Each paving look in `tones` (#3210): a floor material, so each colour
+ * is the ground moved part of the way to what it is laid in, never
+ * brighter than the stone of a deck.
+ */
+function pavingColours(tones: BiomeTones): Record<PavingLook, PavingLookColours> {
+  const rim = shade(tones.ground, 0.45);
+  return {
+    cobbles: {
+      bed: shade(tones.ground, 0.25),
+      stone: mix(tones.ground, tones.stone, 0.32),
+      light: mix(tones.ground, tones.stone, 0.5),
+      rim,
+    },
+    flagstones: {
+      bed: shade(tones.ground, 0.3),
+      stone: mix(tones.ground, tones.rock, 0.6),
+      light: mix(tones.ground, tones.stone, 0.4),
+      rim,
+    },
+    dirt: {
+      bed: mix(tones.ground, tones.earth, 0.55),
+      stone: mix(tones.ground, tones.rock, 0.6),
+      light: mix(tones.ground, tones.earth, 0.75),
+      rim,
+    },
+  };
+}
+/** A map's materials (#3172): its arena's colours, and each deck, transition and paving look's. */
 export interface BiomeMaterials {
   readonly palette: ArenaPalette;
   readonly deck: Record<DeckLook, DeckLookColours>;
   readonly transition: Record<TransitionLook, TransitionLookColours>;
+  readonly paving: Record<PavingLook, PavingLookColours>;
 }
 
 function lookColours<
@@ -542,6 +588,7 @@ function biomeMaterials(tones: BiomeTones): BiomeMaterials {
     palette: tintAll(GRAPHIC_LAYERS, (slot) => PALETTE_MATERIAL[slot], tones),
     deck: lookColours(DECK_LOOK, DECK_MATERIAL, tones),
     transition: lookColours(TRANSITION_LOOK, TRANSITION_MATERIAL, tones),
+    paving: pavingColours(tones),
   };
 }
 
@@ -552,3 +599,21 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   wilds: biomeMaterials(BIOME_TONES.wilds),
   desert: biomeMaterials(BIOME_TONES.desert),
 };
+
+/** Paving on a map of one layer (#3210): laid in the flat palette's tones, on the scene's background. */
+const FLAT_PAVING = pavingColours({
+  ground: ARENA_BACKGROUND,
+  rock: FLAT.wallTop,
+  stone: FLAT.deckTop,
+  wood: HALL_TONES.wood,
+  earth: shade(HALL_TONES.earth, 0.5),
+  plant: HALL_TONES.plant,
+});
+
+/** The colours a map's paving is drawn in: a map of one layer's are flat whatever its biome. */
+export function pavingPalette(map: {
+  readonly layerCount: number;
+  readonly biome: Biome;
+}): Record<PavingLook, PavingLookColours> {
+  return map.layerCount > 1 ? BIOME[map.biome].paving : FLAT_PAVING;
+}

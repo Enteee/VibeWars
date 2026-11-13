@@ -22,7 +22,6 @@ import {
   SLEEP_SERVICE_TEXT,
   SLEEP_SERVICE_UNIT,
   SLEEP_TMPFILES,
-  sleepNixosSnippet,
   sleepTmpfiles,
 } from "./hub-sleep-units.mjs";
 
@@ -31,6 +30,9 @@ const WAKE_ALARM = "/sys/class/rtc/rtc0/wakealarm";
 const TEST_SLEEP = 300;
 /** How long `systemctl hibernate` gets to take the machine down, in seconds. */
 const TEST_TAKES_EFFECT = 120;
+/** Where NixOS fetches the module from: GitHub, never the checkout (#3202). */
+const REPO = "https://github.com/Enteee/VibeWars";
+const NIXOS_MODULE = "nix/nixos/vibewars-sleep.nix";
 
 /**
  * @typedef {object} HibernateHost
@@ -39,6 +41,11 @@ const TEST_TAKES_EFFECT = 120;
  * @property {(line: string) => void} say
  * @property {boolean} canAsk stdin is a tty and sudo is on PATH
  * @property {boolean} nixos
+ * @property {() => string | null} mainRev GitHub's main as the checkout fetches
+ *   it, `null` if the fetch failed
+ * @property {(rev: string) => boolean} hasModuleAt `rev` holds the NixOS module
+ * @property {(url: string) => string | null} prefetch the sha256 of the unpacked
+ *   tarball, `null` if nix-prefetch-url is missing or failed
  * @property {string} user
  * @property {() => string} canHibernate logind's answer
  * @property {() => boolean} hasWakeAlarm
@@ -51,9 +58,10 @@ const TEST_TAKES_EFFECT = 120;
  * @param {{ stdin: { isTTY: boolean } }} proc
  * @param {(question: string) => Promise<string>} ask
  * @param {(line: string) => void} say
+ * @param {string} checkout the VibeWars checkout this init runs for
  * @returns {HibernateHost}
  */
-export function realHibernateHost(proc, ask, say) {
+export function realHibernateHost(proc, ask, say, checkout) {
   return {
     run: (argv, input) => {
       const [command = "", ...args] = argv;
@@ -68,6 +76,28 @@ export function realHibernateHost(proc, ask, say) {
     say,
     canAsk: proc.stdin.isTTY && spawnSync("sudo", ["--version"], { stdio: "ignore" }).status === 0,
     nixos: fs.existsSync("/etc/NIXOS"),
+    mainRev: () => {
+      const git = (/** @type {string[]} */ ...args) =>
+        spawnSync("git", ["-C", checkout, ...args], {
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "inherit"],
+        });
+      if (git("fetch", "--quiet", `${REPO}.git`, "main").status !== 0) {
+        return null;
+      }
+      return git("rev-parse", "FETCH_HEAD").stdout.trim();
+    },
+    hasModuleAt: (rev) =>
+      spawnSync("git", ["-C", checkout, "cat-file", "-e", `${rev}:${NIXOS_MODULE}`], {
+        stdio: "ignore",
+      }).status === 0,
+    prefetch: (url) => {
+      const result = spawnSync("nix-prefetch-url", ["--unpack", url], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "inherit"],
+      });
+      return result.status === 0 ? result.stdout.trim() : null;
+    },
     user: os.userInfo().username,
     canHibernate: () =>
       /"(\w+)"/.exec(
@@ -223,6 +253,41 @@ async function unproven(host) {
 }
 
 /**
+ * Say what a NixOS host imports. Root applies the module, so it is pinned to
+ * a commit of GitHub's main and its hash, never read from the checkout, which
+ * the company user can write (#3202).
+ *
+ * @param {HibernateHost} host
+ */
+function nixosImport(host) {
+  const rev = host.mainRev();
+  if (rev === null) {
+    host.say(`  Could not fetch main from ${REPO}: hibernation stays off.`);
+    return;
+  }
+  if (!host.hasModuleAt(rev)) {
+    host.say(`  main (${rev}) has no ${NIXOS_MODULE} yet: hibernation stays off.`);
+    return;
+  }
+  const url = `${REPO}/archive/${rev}.tar.gz`;
+  const sha256 = host.prefetch(url);
+  if (sha256 === null) {
+    host.say(`  nix-prefetch-url --unpack ${url} failed: hibernation stays off.`);
+    return;
+  }
+  host.say("  Hibernation stays off until this is in your NixOS configuration and rebuilt:");
+  host.say('    imports = [ "${builtins.fetchTarball {');
+  host.say(`      url = "${url}";`);
+  host.say(`      sha256 = "${sha256}";`);
+  host.say(`    }}/${NIXOS_MODULE}" ];`);
+  host.say(`    services.vibewars-sleep = { enable = true; user = "${host.user}"; };`);
+  host.say(
+    `  Flake config: add input vibewars = { url = "git+${REPO}?ref=main&rev=${rev}"; flake = false; };`,
+  );
+  host.say(`    and import "\${inputs.vibewars}/${NIXOS_MODULE}" instead.`);
+}
+
+/**
  * Ask whether this machine may hibernate, and set it up if so.
  *
  * @param {object} options
@@ -267,8 +332,7 @@ export async function askHibernate({ previous, host }) {
     return null;
   }
   if (host.nixos && !host.unitsInstalled()) {
-    host.say("  Hibernation stays off until this is in your configuration and rebuilt:");
-    host.say(sleepNixosSnippet(host.user));
+    nixosImport(host);
     host.say("  Then run claude-llc-init again.");
     return null;
   }

@@ -400,6 +400,7 @@ export function structureOf(map: MapData): LoadedStructure {
       map.layers === 1 &&
       map.lighting === undefined &&
       map.atmosphere === undefined &&
+      map.paving === undefined &&
       water.length === 0 &&
       zones.length === 0
         ? FLAT_STRUCTURE
@@ -417,6 +418,7 @@ export function structureOf(map: MapData): LoadedStructure {
             zones,
             ...(map.lighting === undefined ? {} : { lighting: map.lighting }),
             ...(map.atmosphere === undefined ? {} : { atmosphere: map.atmosphere }),
+            ...(map.paving === undefined ? {} : { paving: map.paving }),
           },
     wallLayers: map.walls.map((wall) => wall.layer),
     gateLayers: map.gates.map((gate) => gate.wall.layer),

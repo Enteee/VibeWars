@@ -23,6 +23,7 @@ export type RenderItem =
   | { readonly kind: "outside" }
   | { readonly kind: "floor" }
   | { readonly kind: "pit" }
+  | { readonly kind: "paving"; readonly layer: number }
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
   | { readonly kind: "zone"; readonly layer: number; readonly part: ZonePart }
   | { readonly kind: "ground-effect"; readonly layer: number }
@@ -76,6 +77,12 @@ const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, mar
  * and its ramp, under whoever stands there. Both are under their layer's
  * lighting, which lights them as it lights the floor.
  */
+/**
+ * A road or square (#3210): on its layer's floor, over a pit's sunk floor,
+ * under its water and everything else on it, and lit as the floor is.
+ */
+const GROUND_PAVING = -1.7;
+const DECK_PAVING = 5.55;
 const GROUND_WATER: Record<WaterPart, number> = { surface: -1.6, ripples: -1.5 };
 const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
 /**
@@ -118,6 +125,8 @@ export function renderOrder(item: RenderItem): number {
       return -2;
     case "pit":
       return PIT;
+    case "paving":
+      return item.layer === 0 ? GROUND_PAVING : (item.layer - 1) * LAYER_STACK + DECK_PAVING;
     case "water":
       return item.layer === 0
         ? GROUND_WATER[item.part]

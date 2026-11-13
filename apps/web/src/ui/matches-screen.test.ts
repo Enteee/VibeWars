@@ -652,13 +652,10 @@ describe("the Matches page (#2532)", () => {
     ]);
   });
 
-  it("always says it shows only the recent matches, empty or not (#3133)", () => {
+  it("adds no note on how recent the matches are (#3186)", () => {
     const { root } = render();
-    const recent = root.one("matches-recent");
-    expect(recent.textContent).toBe(t("matches.recentNote"));
-    expect(recent.hidden).toBe(false);
     hear("one");
-    expect(recent.hidden).toBe(false);
+    expect(root.all("matches-recent")).toEqual([]);
   });
 
   it("asks only for matches of the past week (#3133)", () => {

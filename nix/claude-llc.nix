@@ -36,10 +36,12 @@ let
       case "$f" in *.test.mjs) continue ;; esac
       cp "$f" "$out/$(basename "$f")"
     done
+    cp ${../scripts/bots/vibewars-sleep.sh} $out/vibewars-sleep.sh
 
     tree="$(mktemp -d)"
     mkdir -p "$tree/scripts/bots" "$tree/nix"
     cp ${../scripts/bots}/*.mjs "$tree/scripts/bots/"
+    cp ${../scripts/bots/vibewars-sleep.sh} "$tree/scripts/bots/vibewars-sleep.sh"
     cp ${../nix}/*.nix "$tree/nix/"
     cp ${../devenv.nix} "$tree/devenv.nix"
     cp ${../devenv.yaml} "$tree/devenv.yaml"

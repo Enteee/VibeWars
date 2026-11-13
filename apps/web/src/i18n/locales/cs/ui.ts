@@ -706,21 +706,9 @@ export default {
   "lobby.mapRandom": "Mapa: náhodná (Týmová aréna)",
   "lobby.mapShown": "Mapa: {map}",
   "lobby.matchRunning": "Zápas ještě běží. Lobby se znovu otevře, až skončí.",
-  "lobby.modeAnnihilation": "Vyhlazení: poraz všechny nepřátele",
-  "lobby.modeCapturePoints":
-    "Dobývání bodů: stůj na svatyních a obsaď je. Každá tvoje svatyně boduje každých 30 s.",
-  "lobby.modeGuildBattle": "Bitva cechů: zabij nepřátelského Pána cechu",
-  "lobby.modeKillCount": "Počet zabití: nejvíc zabití za 3 minuty",
-  "lobby.modeKingOfTheHill":
-    "Král kopce: doveď svého Přízračného hrdinu na oltář. Drž ho a sbírej body; vyhrává nejvíc bodů za {minutes} minut.",
   "lobby.modeNameCapturePoints": "Dobývání bodů",
   "lobby.modeNameKingOfTheHill": "Král kopce",
   "lobby.modeNameRelicRun": "Běh s relikvií",
-  "lobby.modePriestAnnihilation": "Vyhlazení s knězem: poraz všechny nepřátele i jejich kněze",
-  "lobby.modeRelicRun":
-    "Běh s relikvií: odnes svou relikvii na oltář. Vyhrává nejvíc bodů za {minutes} minut.",
-  "lobby.modeRelicRunFoe":
-    "Běh s relikvií: odnes nepřátelskou relikvii ke svému Přízračnému hrdinovi. Vyhrává náskok 3 bodů, po {minutes} minutách nejvíc bodů.",
   "lobby.notReady": "Nepřipraven",
   "lobby.playBots": "Hrát proti botům",
   "lobby.ready": "Připraven",
@@ -794,7 +782,6 @@ export default {
   },
   "matches.noMatches": "Zatím žádné zápasy.",
   "matches.noneFit": "Těmto filtrům žádný zápas neodpovídá.",
-  "matches.recentNote": "Zobrazuje se 50 nejnovějších zápasů za posledních 7 dní.",
   "matches.offline": "Relay servery zápasů teď nejsou dostupné.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
