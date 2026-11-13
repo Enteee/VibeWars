@@ -5,17 +5,20 @@ import { availableLanguages } from "../i18n/languages.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { FakeElement } from "./fake-dom.test-support.js";
 import { languageSection, setLanguageBusy } from "./language-section.js";
-import { OPTIONS_SECTIONS, optionsSections } from "./options-sections.js";
+import { optionsSections } from "./options-sections.js";
 
-describe("OPTIONS_SECTIONS (#423)", () => {
+/** This build's sections, as Options lists them. */
+const SECTIONS = optionsSections(availableLanguages(), 0);
+
+describe("optionsSections (#423)", () => {
   it("opens on Player (#1513), and no two sections share an id", () => {
-    const ids = OPTIONS_SECTIONS.map((section) => section.id);
+    const ids = SECTIONS.map((section) => section.id);
     expect(ids[0]).toBe("player");
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("has no licences: they live in Help (#2559)", () => {
-    expect(OPTIONS_SECTIONS.map((section) => section.id)).not.toContain("licences");
+    expect(SECTIONS.map((section) => section.id)).not.toContain("licences");
   });
 });
 
@@ -45,14 +48,14 @@ describe("Options > Language (#2648)", () => {
   };
 
   it("is hidden with English alone, and after Player with a second language", () => {
-    expect(optionsSections(["en"]).map((section) => section.id)).not.toContain("language");
-    const sections = optionsSections(["en", "de"]);
+    expect(optionsSections(["en"], 0).map((section) => section.id)).not.toContain("language");
+    const sections = optionsSections(["en", "de"], 0);
     expect(sections[1]?.id).toBe("language");
     expect(sections[1]?.title).toBe(t("options.language"));
   });
 
   it("lists this build's languages (#2656)", () => {
-    expect(OPTIONS_SECTIONS.map((section) => section.id)).toContain("language");
+    expect(SECTIONS.map((section) => section.id)).toContain("language");
     expect(availableLanguages()).toEqual([
       "en",
       "es",

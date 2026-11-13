@@ -57,11 +57,12 @@ Te klawisze są stałe:
 - Kliknij umiejętność na pasku, aby jej użyć, a imię w oknie grupy, aby obrać tego
   sojusznika na cel.
 - Przytrzymaj **Pokaż nazwy** (Shift), a pokażą się wszystkie nazwy, przed każdą
-  nazwą gracza jego sygnet: mała tarcza, zawsze taka sama dla tego samego gracza.
-  Dopóki trzymasz klawisz, kliknięcie nazwy postaci działa jak kliknięcie jej
-  ciała. Kliknięcie prawym przyciskiem tylko obiera cel, nawet dwukrotne;
-  kliknięcie lewym od razu obiera cel i atakuje; kliknięcie kółkiem wskazuje wroga
-  lub pinguje. Nazwa, którą trafi kliknięcie, jest podświetlona.
+  nazwą gracza jego sygnet: mała tarcza, zawsze taka sama dla tego samego gracza,
+  a swój widzisz w **Opcje › Gracz**. Dopóki trzymasz klawisz, kliknięcie nazwy
+  postaci działa jak kliknięcie jej ciała. Kliknięcie prawym przyciskiem tylko
+  obiera cel, nawet dwukrotne; kliknięcie lewym od razu obiera cel i atakuje;
+  kliknięcie kółkiem wskazuje wroga lub pinguje. Nazwa, którą trafi kliknięcie,
+  jest podświetlona.
 
 ## Górny pasek
 

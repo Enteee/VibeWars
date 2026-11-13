@@ -200,43 +200,50 @@ so the silhouette identifies the profession and the colour only supports it.
 
 ## Shapes
 
-| Thing          | Shape                                                                       |
-| -------------- | --------------------------------------------------------------------------- |
-| Actor          | Filled circle in team colour                                                |
-| You            | Your team's circle plus an `ink` rim, 2 px inside                           |
-| Target         | `target` ring, 9 px outside the actor                                       |
-| Enchanted      | Solid `enchantment` ring, 2.5 px outside the actor                          |
-| Hexed          | Broken `hex` ring, 8 dashes, 5 px outside the actor                         |
-| Burning        | Three `condition` flames flickering on the top edge                         |
-| Bleeding       | `damage` drops falling from the bottom edge                                 |
-| Poisoned       | Two hollow `poison` bubbles rising from its flanks                          |
-| Dead           | Hollow `dead` circle, no bars                                               |
-| Creature       | Team hexagon, kind glyph in `edge`, its kind's ornament                     |
-| Cast           | Bar above the health bar, fills as the cast completes                       |
-| Condition      | Circle plate, glyph inside                                                  |
-| Hex            | Diamond plate, glyph inside                                                 |
-| Enchantment    | Rounded-square plate, glyph inside                                          |
-| Stance         | Pentagon plate, point up, glyph inside                                      |
-| Preparation    | Triangle plate, point up, glyph inside                                      |
-| Glyph          | Triangle plate, point down, glyph inside                                    |
-| Shout          | `ink` hexagon plate, glyph inside                                           |
-| Chant          | `ink` banner plate, notched at the foot, glyph inside                       |
-| Echo           | The chant's banner, swallowtail foot: a chant answered                      |
-| Weapon spell   | Shield plate, glyph inside                                                  |
-| Skill effect   | `ink-dim` wide capsule plate, glyph inside                                  |
-| Item           | `ink` urn plate, glyph inside (#1434)                                       |
-| Environment    | `environment` slanted ground plate, glyph inside (#3027)                    |
-| Draining spire | Stone obelisk on its zone's centroid, faint violet ring on its edge (#3028) |
-| Area flash     | Caster's team colour ring at the area's true radius                         |
-| Ward           | Owner's team colour disc, faint, its skill's icon in it                     |
-| Trap           | `friend` rim alone, its skill's icon in it; yours only                      |
-| Swing flash    | Attacker's team colour arc between it and its target                        |
-| Skill impact   | Burst of 8 spikes (hurt) or a glow (helped), 0.3 s                          |
-| Projectile     | Weapon silhouette, tinted the shooter's team colour                         |
-| Weapon mark    | `ink` weapon held in the hands, one shape per weapon                        |
-| Walk marker    | `ink` cross of four ticks where you clicked the floor                       |
-| Called foe     | `condition` chevron pointing down, over its name                            |
-| Ping           | `friend` pin on the spot, a `friend` ring growing off                       |
+| Thing          | Shape                                                                         |
+| -------------- | ----------------------------------------------------------------------------- |
+| Actor          | Filled circle in team colour                                                  |
+| You            | Your team's circle plus an `ink` rim, 2 px inside                             |
+| Target         | `target` ring, 9 px outside the actor                                         |
+| Enchanted      | Solid brass `#e8c27a` ring at its feet, 3.25 px outside; slow motes rising    |
+| In a stance    | Flat steel `#dfe7f1` band inside that ring, 1.25 px out; streaks while moving |
+| Hexed          | Broken violet `#a77bff` hexagon over the health bar, turning slowly           |
+| Burning        | Three `condition` flames flickering on the top edge                           |
+| Bleeding       | `damage` drops falling from the bottom edge                                   |
+| Poisoned       | Two hollow `poison` bubbles rising from its flanks                            |
+| Dead           | Hollow `dead` circle, no bars                                                 |
+| Creature       | Team hexagon, kind glyph in `edge`, its kind's ornament                       |
+| Cast           | Bar above the health bar, fills as the cast completes                         |
+| Condition      | Circle plate, glyph inside                                                    |
+| Hex            | Diamond plate, glyph inside                                                   |
+| Enchantment    | Rounded-square plate, glyph inside                                            |
+| Stance         | Pentagon plate, point up, glyph inside                                        |
+| Preparation    | Triangle plate, point up, glyph inside                                        |
+| Glyph          | Triangle plate, point down, glyph inside                                      |
+| Shout          | `ink` hexagon plate, glyph inside                                             |
+| Chant          | `ink` banner plate, notched at the foot, glyph inside                         |
+| Echo           | The chant's banner, swallowtail foot: a chant answered                        |
+| Weapon spell   | Shield plate, glyph inside                                                    |
+| Skill effect   | `ink-dim` wide capsule plate, glyph inside                                    |
+| Item           | `ink` urn plate, glyph inside (#1434)                                         |
+| Environment    | `environment` slanted ground plate, glyph inside (#3027)                      |
+| Draining spire | Stone obelisk on its zone's centroid, faint violet ring on its edge (#3028)   |
+| Area flash     | Caster's team colour ring at the area's true radius                           |
+| Ward           | Owner's team colour disc, faint, its skill's icon in it                       |
+| Trap           | `friend` rim alone, its skill's icon in it; yours only                        |
+| Swing flash    | Attacker's team colour arc between it and its target                          |
+| Skill impact   | Burst of 8 spikes (hurt) or a glow (helped), 0.3 s                            |
+| Projectile     | Weapon silhouette, tinted the shooter's team colour                           |
+| Weapon mark    | `ink` weapon held in the hands, one shape per weapon                          |
+| Walk marker    | `ink` cross of four ticks where you clicked the floor                         |
+| Called foe     | `condition` chevron pointing down, over its name                              |
+| Ping           | `friend` pin on the spot, a `friend` ring growing off                         |
+
+The marks a body wears are drawn by skill type, from the skill visuals study
+(`3191-skill-visuals.md`, #3226): one per category however many statuses of
+it, the same for both teams. A form wears none yet. Under reduced motion the
+motes, the streaks and the halo's turn stop; the ring, the band and the halo
+stay.
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond

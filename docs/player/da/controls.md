@@ -55,12 +55,13 @@ Disse taster er faste:
   glider tilbage til dig.
 - Klik på en evne på bjælken for at bruge den, og på et navn i
   gruppevinduet for at vælge den allierede som mål.
-- Hold **Vis navne** (Shift), og alle navne vises, hver spillers med
-  deres signet foran: et lille skjold, der altid er det samme for den
-  samme spiller. Mens du holder, virker et klik på en figurs navn som et
-  klik på dens krop. Et højreklik vælger kun mål, også to gange; et
-  venstreklik vælger mål og angriber på én gang; et hjulklik udpeger eller
-  pinger. Det navn, et klik ville ramme, fremhæves.
+- Hold **Vis navne** (Shift), og alle navne vises, hver spillers med deres
+  signet foran: et lille skjold, der altid er det samme for den samme
+  spiller, og dit eget vises i **Valg › Spiller**. Mens du holder, virker
+  et klik på en figurs navn som et klik på dens krop. Et højreklik vælger
+  kun mål, også to gange; et venstreklik vælger mål og angriber på én
+  gang; et hjulklik udpeger eller pinger. Det navn, et klik ville ramme,
+  fremhæves.
 
 ## Topbjælken
 

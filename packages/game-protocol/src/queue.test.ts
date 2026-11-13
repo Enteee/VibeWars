@@ -7,6 +7,7 @@ import {
   isTeamQueueMode,
   parseQueueTicket,
   QUEUE_MODES,
+  soloQueueTicket,
   TEAM_ARENA_SIZES,
   teamQueueModeOf,
   teamSizeOf,
@@ -43,6 +44,13 @@ const ARENA_SIDE: QueueTicket = {
 };
 /** One human and seven bots in Heroes' Ascent, at its first round. */
 const LONE_HERO: QueueTicket = { ...TICKET, mode: "heroes-ascent", bots: 7, ascentRound: 0 };
+
+describe("soloQueueTicket (#3241)", () => {
+  it("builds a ticket the parser keeps as it is", () => {
+    const ticket = soloQueueTicket("b".repeat(64), "random-arena-1v1", 1000, false);
+    expect(parseQueueTicket(ticket)).toEqual(ticket);
+  });
+});
 
 describe("parseQueueTicket (#869, #882, #1078)", () => {
   it("keeps a well-formed ticket, a solo or a whole team", () => {

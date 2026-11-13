@@ -8,6 +8,7 @@
  */
 
 import type { LobbyMode } from "./protocol.js";
+import { PROTOCOL_VERSION } from "./protocol-version.js";
 
 /**
  * What a player can queue for. Which of these the menu offers is Q97's
@@ -316,6 +317,28 @@ function parseParty(value: unknown, members: readonly string[]): TicketParty | n
     signed.push(consent);
   }
   return { groupId, consents: signed };
+}
+
+/** A lone player's Random Arena ticket: no party, no bots, no Ascent round, no Hall. */
+export function soloQueueTicket(
+  ticketId: string,
+  mode: QueueMode,
+  at: number,
+  hardNat: boolean,
+): QueueTicket {
+  return {
+    ticketId,
+    protocol: PROTOCOL_VERSION,
+    mode,
+    members: [ticketId],
+    bots: 0,
+    enteredAt: at,
+    heartbeatAt: at,
+    party: null,
+    ascentRound: null,
+    hardNat,
+    holdsHallSince: null,
+  };
 }
 
 /**

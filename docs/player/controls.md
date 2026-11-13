@@ -57,10 +57,11 @@ These keys are fixed:
   target that ally.
 - Hold **Show names** (Shift) and every name shows, each player's with
   their signet before it: a small shield that is always the same for the
-  same player. While held, clicking a character's name works as clicking
-  its body does. A right click only targets, even twice; a left click
-  targets and attacks at once; a wheel click calls or pings. The name a
-  click would hit is highlighted.
+  same player, and your own shows in **Options › Player**. While held,
+  clicking a character's name works as clicking its body does. A right
+  click only targets, even twice; a left click targets and attacks at
+  once; a wheel click calls or pings. The name a click would hit is
+  highlighted.
 
 ## The top bar
 
