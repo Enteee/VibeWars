@@ -38,7 +38,7 @@ const TEST_TAKES_EFFECT = 120;
  * @property {(line: string) => void} say
  * @property {boolean} canAsk stdin is a tty and sudo is on PATH
  * @property {boolean} nixos
- * @property {string} nixosModule this checkout's nix/nixos/vibewars-sleep.nix
+ * @property {() => string} rev the checkout's HEAD: NixOS pins the module to it
  * @property {string} user
  * @property {() => string} canHibernate logind's answer
  * @property {() => boolean} hasWakeAlarm
@@ -69,7 +69,8 @@ export function realHibernateHost(proc, ask, say, checkout) {
     say,
     canAsk: proc.stdin.isTTY && spawnSync("sudo", ["--version"], { stdio: "ignore" }).status === 0,
     nixos: fs.existsSync("/etc/NIXOS"),
-    nixosModule: fs.realpathSync(path.join(checkout, "nix", "nixos", "vibewars-sleep.nix")),
+    rev: () =>
+      spawnSync("git", ["-C", checkout, "rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim(),
     user: os.userInfo().username,
     canHibernate: () =>
       /"(\w+)"/.exec(
@@ -269,11 +270,15 @@ export async function askHibernate({ previous, host }) {
     return null;
   }
   if (host.nixos && !host.unitsInstalled()) {
+    // Root applies the module: pin it to a commit on GitHub, never import it
+    // from the checkout, which the company user can write (#3202).
+    const rev = host.rev();
+    const source = `builtins.fetchGit { url = "https://github.com/Enteee/VibeWars"; rev = "${rev}"; }`;
     host.say("  Hibernation stays off until this is in your NixOS configuration and rebuilt:");
-    host.say(`    imports = [ ${host.nixosModule} ];`);
+    host.say(`    imports = [ "\${${source}}/nix/nixos/vibewars-sleep.nix" ];`);
     host.say(`    services.vibewars-sleep = { enable = true; user = "${host.user}"; };`);
     host.say(
-      '  Flake config: add input vibewars = { url = "github:Enteee/VibeWars"; flake = false; };',
+      `  Flake config: add input vibewars = { url = "github:Enteee/VibeWars/${rev}"; flake = false; };`,
     );
     host.say('    and import "${inputs.vibewars}/nix/nixos/vibewars-sleep.nix" instead.');
     host.say("  Then run claude-llc-init again.");

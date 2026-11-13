@@ -27,7 +27,7 @@ function harness({ answers = [], host = {}, failing }) {
     say: (line) => said.push(line),
     canAsk: true,
     nixos: false,
-    nixosModule: "/home/ente/VibeWars/nix/nixos/vibewars-sleep.nix",
+    rev: () => "c9f0b10aa",
     user: "ente",
     canHibernate: () => "yes",
     hasWakeAlarm: () => true,
@@ -84,12 +84,15 @@ describe("claude-llc-init's hibernation step (#2794)", () => {
     });
   });
 
-  it("prints the module import on NixOS and runs no sudo", async () => {
+  it("prints the module import, pinned to a commit, on NixOS and runs no sudo", async () => {
     const h = harness({ answers: ["y"], host: { nixos: true } });
     await expect(askHibernate({ previous: {}, host: h.host })).resolves.toBeNull();
     expect(h.ran).toEqual([]);
     const said = h.said.join("\n");
-    expect(said).toContain("imports = [ /home/ente/VibeWars/nix/nixos/vibewars-sleep.nix ];");
+    expect(said).toContain(
+      'imports = [ "${builtins.fetchGit { url = "https://github.com/Enteee/VibeWars"; rev = "c9f0b10aa"; }}/nix/nixos/vibewars-sleep.nix" ];',
+    );
+    expect(said).toContain('url = "github:Enteee/VibeWars/c9f0b10aa"; flake = false;');
     expect(said).toContain('services.vibewars-sleep = { enable = true; user = "ente"; };');
     expect(said).toContain('import "${inputs.vibewars}/nix/nixos/vibewars-sleep.nix"');
     expect(said).not.toContain("systemd.paths");
