@@ -43,6 +43,7 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
+import { BENCH_CEILINGS } from "./ceilings.mjs";
 import { settled, verdict } from "./verdict.mjs";
 
 /* global document, requestAnimationFrame -- in page.evaluate, which runs in the page */
@@ -397,6 +398,7 @@ try {
     maps: rows,
     maxRatio: MAX_RATIO,
     maxSpread: MAX_CALIBRATION_SPREAD,
+    ceilings: BENCH_CEILINGS,
   });
   console.log("| map | frames | p50 ms | p95 ms | base ms | p50 / calibration |");
   console.log("|---|---|---|---|---|---|");
@@ -404,7 +406,7 @@ try {
     const v = verdicts[i];
     if (v === undefined) continue;
     console.log(
-      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${v.base.toFixed(1)} | ${v.ratio.toFixed(2)}${CAPS_MS.some((cap) => Math.abs(row.p50 - cap) < CAP_TOLERANCE_MS) ? " (cap-bound)" : ""} |`,
+      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${v.base.toFixed(1)} | ${v.ratio.toFixed(2)}${v.ceiling === undefined ? "" : ` (ceiling ${v.ceiling.ratio.toFixed(1)}, #${String(v.ceiling.issue)})`}${CAPS_MS.some((cap) => Math.abs(row.p50 - cap) < CAP_TOLERANCE_MS) ? " (cap-bound)" : ""} |`,
     );
   }
   for (const v of verdicts) {

@@ -56,6 +56,35 @@ describe("verdict", () => {
   });
 });
 
+describe("ceilings", () => {
+  const ceilings = [{ mapId: "m0", ratio: 4, issue: 3254 }];
+  /** @param {number} p50 */
+  const run = (p50) =>
+    verdict({ windows: [100, 100], maps: maps(p50), maxRatio: 3, maxSpread: 0.2, ceilings })[0];
+
+  it("gates a listed map at its ceiling", () => {
+    expect(run(390)?.failures).toEqual([]);
+    expect(run(401)?.failures[0]).toMatch(/4\.01× .*over 4× \(ceiling, #3254\)/);
+  });
+
+  it("fails a listed map at or under the default as stale", () => {
+    expect(run(290)?.failures[0]).toMatch(
+      /m0 is under 3×: delete its BENCH_CEILINGS entry \(#3254\)/,
+    );
+  });
+
+  it("leaves other maps at the default", () => {
+    const [other] = verdict({
+      windows: [100, 100],
+      maps: [{ mapId: "m1", p50: 350 }],
+      maxRatio: 3,
+      maxSpread: 0.2,
+      ceilings,
+    });
+    expect(other?.failures[0]).toMatch(/over 3×/);
+  });
+});
+
 describe("settled", () => {
   const rule = { minMs: 20_000, tol: 0.05 };
   /** @param {number} n */

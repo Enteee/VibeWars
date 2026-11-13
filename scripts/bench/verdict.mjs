@@ -4,6 +4,11 @@
  */
 
 /**
+ * @typedef {object} Ceiling a map gated above `maxRatio` until its perf issue lands
+ * @property {string} mapId
+ * @property {number} ratio
+ * @property {number} issue
+ *
  * @typedef {object} MapRow
  * @property {string} mapId
  * @property {number} p50 ms
@@ -13,6 +18,7 @@
  * @property {number} base mean of the two windows around the map, ms
  * @property {number} ratio the map's p50 over `base`
  * @property {number} spread the two windows' gap over `base`
+ * @property {Ceiling | undefined} ceiling the map's entry in the ceilings, if it has one
  * @property {string[]} failures why the run fails, if it does
  */
 
@@ -27,9 +33,11 @@
  * @param {readonly MapRow[]} input.maps in run order
  * @param {number | undefined} input.maxRatio
  * @param {number} input.maxSpread
+ * @param {readonly Ceiling[]} [input.ceilings] maps gated at their own ratio. A listed map
+ *   at or under `maxRatio` fails as stale, so the list only shrinks.
  * @returns {Verdict[]}
  */
-export function verdict({ windows, maps, maxRatio, maxSpread }) {
+export function verdict({ windows, maps, maxRatio, maxSpread, ceilings = [] }) {
   if (windows.length !== maps.length + 1) {
     throw new Error(`${String(maps.length)} maps need ${String(maps.length + 1)} windows`);
   }
@@ -46,12 +54,21 @@ export function verdict({ windows, maps, maxRatio, maxSpread }) {
         `calibration unstable around ${map.mapId} (w${String(i)} ${before.toFixed(1)} ms, w${String(i + 1)} ${after.toFixed(1)} ms, spread ${(spread * 100).toFixed(0)} % > ${String(maxSpread * 100)} %): the runner is too noisy to judge`,
       );
     }
-    if (maxRatio !== undefined && !(ratio <= maxRatio)) {
-      failures.push(
-        `${map.mapId}: p50 is ${ratio.toFixed(2)}× the calibration's, over ${String(maxRatio)}×`,
-      );
+    const ceiling = ceilings.find((c) => c.mapId === map.mapId);
+    if (maxRatio !== undefined) {
+      const limit = ceiling?.ratio ?? maxRatio;
+      if (!(ratio <= limit)) {
+        failures.push(
+          `${map.mapId}: p50 is ${ratio.toFixed(2)}× the calibration's, over ${String(limit)}×${ceiling === undefined ? "" : ` (ceiling, #${String(ceiling.issue)})`}`,
+        );
+      }
+      if (ceiling !== undefined && ratio <= maxRatio) {
+        failures.push(
+          `${map.mapId} is under ${String(maxRatio)}×: delete its BENCH_CEILINGS entry (#${String(ceiling.issue)})`,
+        );
+      }
     }
-    return { mapId: map.mapId, base, ratio, spread, failures };
+    return { mapId: map.mapId, base, ratio, spread, ceiling, failures };
   });
 }
 

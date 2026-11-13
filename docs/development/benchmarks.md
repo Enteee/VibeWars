@@ -162,3 +162,21 @@ real network, add the WebRTC round trip between the two browsers.
 
 **Memory.** The host's heap is a browser tab's, which a Node process does
 not stand for.
+
+## Render bench (`pnpm bench:render`)
+
+A layered map's frame cost in software GL, as a ratio to a fixed WebGL
+calibration on the same run (#3157, #3190, #3243). CI gates it at
+`BENCH_MAX_RATIO=3` on pull requests that touch the renderer or the maps.
+
+The runner is slow for its first ~20 s, so the run warms up first: it
+loads the first map, then calibrates for at least 20 s and until two
+windows in a row agree within 5 % (cap 40 s, else it fails). None of
+that is measured. Each map is then judged against the mean of the two
+calibration windows around it, and fails as too noisy if those two
+differ by over 20 %.
+
+**Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over 3×
+for a known reason, each gated at its own ratio and tied to the perf
+issue that will cut it. The list only shrinks: a listed map that
+measures at or under 3× fails the bench until its entry is deleted.
