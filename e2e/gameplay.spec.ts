@@ -864,15 +864,30 @@ test("the target frame shows the target's health and the skill it casts, filling
   await expect(health).toHaveText("100%");
   await expect(cast).toBeHidden();
 
+  // The 3 s cast can end before a slow runner reads the bar twice: keep
+  // every width the fill takes, in the page, from before it starts.
+  const fill = cast.locator(".hud-target-cast-fill");
+  await fill.evaluate((node) => {
+    const widths: number[] = [];
+    new MutationObserver(() => {
+      widths.push(parseFloat(node.style.width));
+    }).observe(node, { attributes: true, attributeFilter: ["style"] });
+    Object.assign(window, { castWidths: widths });
+  });
+  const widths = (): Promise<readonly number[]> =>
+    page.evaluate(() => (window as unknown as { castWidths: readonly number[] }).castWidths);
+
   // Troll Unguent: a 3 s self cast, so it needs no target.
   await opponent.keyboard.press(starterKey("Ranger/Mesmer", "ranger.troll-unguent"));
   await expect(cast).toBeVisible();
   await expect(cast.locator(".hud-target-cast-name")).toHaveText("Troll Unguent");
   await expect(cast.locator(".skill-type-badge")).toHaveCount(1);
-  const fill = cast.locator(".hud-target-cast-fill");
-  const width = (): Promise<number> => fill.evaluate((node) => node.getBoundingClientRect().width);
-  const early = await width();
-  await expect.poll(width).toBeGreaterThan(early);
+  // It fills: at least two widths short of full, rising.
+  await expect
+    .poll(async () => new Set((await widths()).filter((w) => w > 0 && w < 100)).size)
+    .toBeGreaterThanOrEqual(2);
+  const seen = await widths();
+  expect(seen).toEqual([...seen].sort((a, b) => a - b));
 
   // The frame it ends, the row clears.
   await expect(cast).toBeHidden({ timeout: 5_000 });
