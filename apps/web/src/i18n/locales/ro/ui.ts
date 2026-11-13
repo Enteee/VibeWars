@@ -1353,7 +1353,6 @@ export default {
   "teamPlay.queuedMaps": "Hărți în acest mod",
   "teamPlay.random": "Aleator",
   "teamPlay.reroll": "Altul",
-  "teamPlay.teamBuilds": "Builduri de echipă",
   "teamPlay.unnamedTeam": "Echipă fără nume",
 
   "topbar.closed": "Închis",

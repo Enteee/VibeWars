@@ -1400,7 +1400,6 @@ export default {
   "teamPlay.queuedMaps": "Mapy w tym trybie",
   "teamPlay.random": "Losowo",
   "teamPlay.reroll": "Losuj",
-  "teamPlay.teamBuilds": "Buildy drużyn",
   "teamPlay.unnamedTeam": "Drużyna bez nazwy",
 
   "topbar.closed": "Zamknięte",

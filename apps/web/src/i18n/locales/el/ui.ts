@@ -1296,7 +1296,6 @@ export default {
   "teamPlay.queuedMaps": "Χάρτες λειτουργίας",
   "teamPlay.random": "Τυχαία",
   "teamPlay.reroll": "Νέα ζαριά",
-  "teamPlay.teamBuilds": "Συνθέσεις ομάδας",
   "teamPlay.unnamedTeam": "Ανώνυμη ομάδα",
 
   "topbar.closed": "Κλειστό",

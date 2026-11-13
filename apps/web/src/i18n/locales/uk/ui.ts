@@ -1395,7 +1395,6 @@ export default {
   "teamPlay.queuedMaps": "Мапи цього режиму",
   "teamPlay.random": "Випадковий",
   "teamPlay.reroll": "Інший",
-  "teamPlay.teamBuilds": "Командні білди",
   "teamPlay.unnamedTeam": "Команда без назви",
 
   "topbar.closed": "Закрито",

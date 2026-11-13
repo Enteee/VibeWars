@@ -1349,7 +1349,6 @@ export default {
   "teamPlay.queuedMaps": "Karte u ovom načinu",
   "teamPlay.random": "Nasumično",
   "teamPlay.reroll": "Ponovi",
-  "teamPlay.teamBuilds": "Timski sastavi",
   "teamPlay.unnamedTeam": "Tim bez imena",
 
   "topbar.closed": "Zatvoreno",

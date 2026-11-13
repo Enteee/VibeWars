@@ -1180,7 +1180,6 @@ export default {
   "teamPlay.queuedMaps": "此模式的地图",
   "teamPlay.random": "随机",
   "teamPlay.reroll": "重随",
-  "teamPlay.teamBuilds": "队伍配置",
   "teamPlay.unnamedTeam": "未命名队伍",
 
   "topbar.closed": "已关闭",

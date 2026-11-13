@@ -1281,7 +1281,6 @@ export default {
   "teamPlay.queuedMaps": "Maps in deze modus",
   "teamPlay.random": "Random",
   "teamPlay.reroll": "Opnieuw",
-  "teamPlay.teamBuilds": "Teambuilds",
   "teamPlay.unnamedTeam": "Naamloos team",
 
   "topbar.closed": "Gesloten",

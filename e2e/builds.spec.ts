@@ -730,7 +730,7 @@ test("Team Builder's cards: New team build; a card shows its members, and it or 
   await openTeamBuilder(page);
   // None of your own yet: the random starter team (#2036) and New team
   // build, and no None.
-  await expect(page.getByRole("heading", { name: "Team Builds" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Team Builds" })).toHaveCount(0);
   await expect(teamRows(page)).toHaveCount(0);
   await expect(starterTeamCard(page)).toHaveCount(1);
   await expect(page.locator(".screen-teams .play-cards")).not.toContainText("None");

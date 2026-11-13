@@ -1390,7 +1390,6 @@ export default {
   "teamPlay.queuedMaps": "Mapy v tomto režimu",
   "teamPlay.random": "Náhodný",
   "teamPlay.reroll": "Přehodit",
-  "teamPlay.teamBuilds": "Týmové buildy",
   "teamPlay.unnamedTeam": "Tým bez názvu",
 
   "topbar.closed": "Zavřeno",

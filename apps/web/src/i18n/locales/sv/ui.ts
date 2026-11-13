@@ -1274,7 +1274,6 @@ export default {
   "teamPlay.queuedMaps": "Kartor i det här läget",
   "teamPlay.random": "Slump",
   "teamPlay.reroll": "Slumpa",
-  "teamPlay.teamBuilds": "Lagbuilds",
   "teamPlay.unnamedTeam": "Namnlöst lag",
 
   "topbar.closed": "Stängd",

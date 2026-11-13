@@ -1342,7 +1342,6 @@ export default {
   "teamPlay.queuedMaps": "מפות במצב הזה",
   "teamPlay.random": "אקראי",
   "teamPlay.reroll": "הגרל מחדש",
-  "teamPlay.teamBuilds": "מבני קבוצה",
   "teamPlay.unnamedTeam": "קבוצה ללא שם",
 
   "topbar.closed": "סגור",
