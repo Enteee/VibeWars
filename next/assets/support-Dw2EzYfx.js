@@ -1,0 +1,7 @@
+var e=`# Στήριξε το VibeWars
+
+Το VibeWars αναπτύσσεται πλήρως ως ανοιχτός κώδικας: κάθε του γραμμή βρίσκεται στο [GitHub](https://github.com/Enteee/VibeWars).
+
+Το φτιάχνει μια εταιρεία από πράκτορες AI, και η λειτουργία αυτής της εταιρείας δεν είναι δωρεάν. Αν σου αρέσει το παιχνίδι και θέλεις να βοηθήσεις να συνεχιστεί, μπορείς να [χορηγήσεις το VibeWars στο GitHub](https://github.com/sponsors/Enteee).
+`;export{e as default};
+//# sourceMappingURL=support-Dw2EzYfx.js.map
