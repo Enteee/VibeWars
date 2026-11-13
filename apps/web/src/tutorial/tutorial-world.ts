@@ -1,12 +1,14 @@
 import {
   MINIMAL_GW_INSPIRED_PVP_V1 as RULESET,
   MatchSimulation,
+  createRng,
   STARTER_BUILDS,
   getSkill,
   loadoutOf,
   loadoutSpec,
   nearestStandable,
   resolveLoadout,
+  seedFromString,
   vec2,
   type Behaviour,
   type NavGraph,
@@ -104,7 +106,9 @@ function guarding(post: Vec2, centre: Vec2, pair: readonly Vec2[]): Behaviour {
 
 /**
  * Whether `value`, a skill or anything in it, holds an effect of one of
- * `kinds`, however deep in a condition it sits.
+ * `kinds`, however deep in a condition it sits. It matches `kind` on
+ * any object in the tree, so a nested object that is not an effect but
+ * shares one of those kinds would match too; no skill has one today.
  */
 function holdsEffect(value: unknown, kinds: ReadonlySet<string>): boolean {
   if (Array.isArray(value)) {
@@ -256,6 +260,7 @@ export function tutorialWorld(mapId: string, teamSize: number, seed: string): Tu
         );
   const playerBuild = houseBuild(PLAYER_PROFESSION);
   const tutorBuild = houseBuild(TUTOR_PROFESSION);
+  const builds = createRng(seedFromString(`builds-${seed}`));
   const simulation = new MatchSimulation({
     seed,
     ruleset: RULESET,
@@ -263,8 +268,13 @@ export function tutorialWorld(mapId: string, teamSize: number, seed: string): Tu
     walls: map.walls,
     bounds: map.bounds,
     participants: [
-      ...splashParticipants(map, fight, graph, (team) =>
-        team === 0 ? STARTER_BUILDS : FOE_BUILDS,
+      ...splashParticipants(
+        map,
+        fight,
+        graph,
+        (team) => (team === 0 ? STARTER_BUILDS : FOE_BUILDS),
+        // The bots' builds follow the seed too, so a seed is one whole world.
+        () => builds.nextFloat(),
       ).map((bot) =>
         bot.team === 0
           ? { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) }

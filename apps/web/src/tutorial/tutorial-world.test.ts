@@ -15,6 +15,14 @@ const MARK_SECONDS = 30;
 const MARK_CLEAR = 150;
 
 describe("tutorialWorld (#3221)", () => {
+  it("gives the bots the same builds for the same seed, so a seed is one world", () => {
+    const bars = (seed: string): string[] =>
+      [...tutorialWorld("arena-canyon", 4, seed).simulation.participants()].map(
+        (body) => `${body.combatant.id}:${body.combatant.skillBar.join("/")}`,
+      );
+    expect(bars("same")).toEqual(bars("same"));
+  });
+
   it.each(["arena-canyon", "arena-crossroads"])(
     "keeps every foe 600 units off the pair for two minutes on %s",
     (mapId) => {
