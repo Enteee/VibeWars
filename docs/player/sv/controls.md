@@ -38,7 +38,7 @@ Dessa tangenter är fasta:
 ## Mus
 
 - **Vänsterklicka** på marken för att gå dit. Utan Shift går vänsterknappen bara.
-- På kartor med upphöjda plattformar går ett vänsterklick till ytan du ser, och **Alt + vänsterklick** till marken under den. En ring under markören markerar en plattform, en streckad ring marken.
+- På kartor med upphöjda plattformar går ett vänsterklick till ytan du ser, och **Alt + vänsterklick** till marken under den. En ring under markören markerar en plattform, en streckad ring marken. Över en tunnel går ett vänsterklick till den nivå du är på, och **Alt + vänsterklick** till den andra.
 - **Högerklicka** på en fiende eller en allierad för att välja den som mål.
   Högerklicka på samma fiende igen, snabbt, för att attackera den.
 - **Högerklicka** på en flagga eller flaggstället, i en gillestrid eller på Barrow Field, för att

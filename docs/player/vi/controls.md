@@ -40,7 +40,7 @@ Các phím sau là cố định:
 - **Chuột trái** xuống đất để đi tới đó. Không có Shift, nút trái chỉ dùng
   để đi.
 - Trên bản đồ có bệ nâng cao, chuột trái đưa bạn tới bề mặt bạn nhìn thấy,
-  còn **Alt + chuột trái** tới mặt đất bên dưới. Một vòng tròn dưới con trỏ
+  còn **Alt + chuột trái** tới mặt đất bên dưới. Một vòng tròn dưới con trỏ Phía trên một đường hầm, nhấp chuột trái sẽ đi đến tầng bạn đang đứng, còn **Alt + nhấp chuột trái** đến tầng còn lại.
   đánh dấu bệ, vòng tròn nét đứt đánh dấu mặt đất.
 - **Chuột phải** vào một địch hoặc đồng minh để nhắm nó. Nhấn chuột phải vào
   cùng địch đó lần nữa, thật nhanh, để tấn công nó.

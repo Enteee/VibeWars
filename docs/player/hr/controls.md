@@ -37,7 +37,7 @@ Ove su tipke fiksne:
 ## Miš
 
 - **Lijevi klik** na tlo za hodanje onamo. Bez Shifta, lijeva tipka samo hoda.
-- Na kartama s povišenim platformama lijevi klik ide na površinu koju vidiš, a **Alt + lijevi klik** na tlo ispod nje. Prsten pod pokazivačem označava platformu, a isprekidani prsten tlo.
+- Na kartama s povišenim platformama lijevi klik ide na površinu koju vidiš, a **Alt + lijevi klik** na tlo ispod nje. Prsten pod pokazivačem označava platformu, a isprekidani prsten tlo. Iznad tunela lijevi klik vodi na razinu na kojoj si, a **Alt + lijevi klik** na drugu.
 - **Desni klik** na neprijatelja ili saveznika da ga ciljaš. Brzi ponovni
   desni klik na istog neprijatelja da ga napadneš.
 - **Desni klik** na zastavu ili stalak za zastavu, u Bitki cehova ili na Barrow Fieldu, da

@@ -38,7 +38,7 @@ Disse taster er faste:
 ## Mus
 
 - **Venstreklik** på jorden for at gå derhen. Uden Shift går du kun med venstre knap.
-- På baner med hævede platforme går et venstreklik til den overflade, du ser, og **Alt + venstreklik** til jorden under den. En ring under markøren markerer en platform, en stiplet ring jorden.
+- På baner med hævede platforme går et venstreklik til den overflade, du ser, og **Alt + venstreklik** til jorden under den. En ring under markøren markerer en platform, en stiplet ring jorden. Over en tunnel går et venstreklik til det niveau, du er på, og **Alt + venstreklik** til det andet.
 - **Højreklik** på en fjende eller en allieret for at vælge den som mål.
   Højreklik hurtigt på den samme fjende igen for at angribe den.
 - **Højreklik** på et flag eller flagstanden, i en Laugskamp eller på Barrow Field, for at
