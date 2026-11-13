@@ -188,3 +188,30 @@ test("in a match the chat sits bottom-left beside the skill bar, above the HUD w
     expect(panel.y + panel.height).toBeLessThanOrEqual(hud.y);
   }).toPass();
 });
+
+test("muting a sender says so with their signet beside their name (#3232)", async ({ browser }) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+  await openMenu(host, "Ann");
+  const code = await hostLobby(host);
+  await openMenu(guest, "Bob");
+  await joinFriend(guest, code);
+  await host.getByRole("button", { name: "join team 1" }).click();
+  await guest.getByRole("button", { name: "join team 2" }).click();
+
+  await say(host, "hi");
+  const log = guest.getByRole("log");
+  const line = log.locator(".chat-line", { hasText: "Ann: hi" });
+  await expect(line).toBeVisible();
+  const ann = await line.locator("img.signet").getAttribute("src");
+  expect(ann).toBeTruthy();
+  // Open, a name mutes; their lines go, and the notice names them.
+  await guest.locator("body").press("Enter");
+  await line.locator(".chat-line-name").click();
+  const notice = log.locator(".chat-notice");
+  await expect(notice).toContainText("Ann");
+  const signet = notice.locator("img.signet");
+  await expect(signet).toBeVisible();
+  await expect(signet).toHaveAttribute("src", ann ?? "");
+  await context.close();
+});

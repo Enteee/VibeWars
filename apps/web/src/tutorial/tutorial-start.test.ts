@@ -1,6 +1,20 @@
+import { vec2, type Vec2 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { inwardStart } from "./tutorial-start.js";
+import {
+  DEFAULT_STEP,
+  clampToLeash,
+  createCameraRig,
+  wheelNotch,
+  zoomFor,
+} from "../render/camera-rig.js";
+
+import {
+  TELEPORTER_MARGIN,
+  inwardStart,
+  teleporterReach,
+  teleporterSpot,
+} from "./tutorial-start.js";
 
 const SIZE = { width: 4400, height: 3000 };
 const HALF = { x: 978, y: 550 };
@@ -31,5 +45,50 @@ describe("inwardStart (#3221)", () => {
       x: 800,
       y: 500,
     });
+  });
+});
+
+/** The PR screenshot's canvas. */
+const VIEWPORT = { width: 1000, height: 700 };
+const START = vec2(2000, 2000);
+const anywhere = (at: Vec2): Vec2 => at;
+const always = (): boolean => true;
+/** How far north a point may be and still show, from the view's step and pan. */
+const northEdge = (step: number, pan: number): number =>
+  VIEWPORT.height / 2 / zoomFor(step, VIEWPORT) - pan;
+
+describe("teleporterSpot (#3222)", () => {
+  it("stands out of the default view, and in it after one notch out and a drag to the leash", () => {
+    const spot = teleporterSpot(START, VIEWPORT, anywhere, always);
+    const rise = START.y - spot.y;
+    expect(spot.x).toBe(START.x);
+    expect(rise - northEdge(DEFAULT_STEP, 0)).toBeGreaterThanOrEqual(TELEPORTER_MARGIN);
+    const wide = wheelNotch(createCameraRig(), 1).step;
+    const zoom = zoomFor(wide, VIEWPORT);
+    const leash = clampToLeash(vec2(0, Number.NEGATIVE_INFINITY), VIEWPORT, zoom).y;
+    expect(northEdge(wide, leash) - rise).toBeGreaterThanOrEqual(TELEPORTER_MARGIN);
+  });
+
+  it("steps aside from ground that is not open", () => {
+    const { near, far } = teleporterReach(VIEWPORT);
+    const spot = teleporterSpot(START, VIEWPORT, anywhere, (at) => at.x !== START.x);
+    expect(spot.x).not.toBe(START.x);
+    expect(START.y - spot.y).toBeGreaterThanOrEqual(near);
+    expect(START.y - spot.y).toBeLessThanOrEqual(far);
+  });
+
+  // QA (#3222): on canyon, north of the start is a plateau the ground walk
+  // never reaches, and the old fallback stood the pad on a ramp.
+  it("takes the open spot farthest north when no ground in reach is open", () => {
+    const shelf = 200;
+    expect(shelf).toBeLessThan(teleporterReach(VIEWPORT).near);
+    const spot = teleporterSpot(START, VIEWPORT, anywhere, (at) => START.y - at.y <= shelf);
+    expect(spot).toEqual(vec2(START.x, START.y - shelf));
+  });
+
+  it("takes the farthest standable point north on a map too small for the span", () => {
+    const top = START.y - 300;
+    const spot = teleporterSpot(START, VIEWPORT, (at) => vec2(at.x, Math.max(top, at.y)), always);
+    expect(spot).toEqual(vec2(START.x, top));
   });
 });

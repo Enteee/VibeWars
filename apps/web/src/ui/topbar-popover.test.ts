@@ -30,6 +30,7 @@ class FakeElement {
   alt = "";
   tabIndex = 0;
   value = "";
+  readonly dataset: Record<string, string> = {};
   parent: FakeElement | undefined;
   readonly tagName: string;
   children: FakeElement[] = [];

@@ -80,14 +80,14 @@ describe("queueStatus (#2743)", () => {
         since: 0,
         teams: 1,
         isHost: false,
-        hallHolder: "Ana",
+        hallHolder: { name: "Ana", signet: 5 },
       },
       720_000 - 90_000,
     );
     expect(status).toEqual({
       title: "The Vault",
       waited: "The Hall opens in 1:30",
-      detail: "Ana holds the Hall of Heroes",
+      detail: { key: "queue.hallHeldBy", params: { holder: { name: "Ana", signet: 5 } } },
       leave: "host-only",
     });
   });

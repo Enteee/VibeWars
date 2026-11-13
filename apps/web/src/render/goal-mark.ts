@@ -8,6 +8,11 @@ import type { Vec2 } from "@vibewars/game-core";
  */
 export interface GoalMark {
   readonly id: string;
+  /**
+   * A `goal` glows to be walked onto; a `portal` (#3222) is drawn as a
+   * map's portal entry (`teleport-mark.ts`), and is gone at once.
+   */
+  readonly kind: "goal" | "portal";
   readonly position: Vec2;
   /** The map layer it lies on, whose height it is drawn at. */
   readonly layer: number;

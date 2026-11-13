@@ -172,7 +172,7 @@ import {
   type MenuCallbacks,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
-import { signetOf } from "./ui/player-label.js";
+import { signedText, signetOf } from "./ui/player-label.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import {
@@ -220,13 +220,14 @@ import { recordAscentWin } from "./storage/fame.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import { startSplashFight } from "./ui/splash-fight.js";
 import { createMenuBackground } from "./ui/menu-background.js";
-import { hostedChoice } from "./ui/menu-background-choice.js";
+import { hostedChoice, pinnedChoice } from "./ui/menu-background-choice.js";
 import { watchHall } from "./ui/vault-screen.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
 import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
 import { showTutorialOffer } from "./tutorial/tutorial-offer.js";
 import { loadTutorialRecord, saveTutorialRecord } from "./tutorial/tutorial-preference.js";
 import { startTutorialSession, type TutorialSession } from "./tutorial/tutorial-session.js";
+import { drawTutorProfession } from "./tutorial/tutorial-world.js";
 import {
   teamQueueModeOf,
   teamSizeOf,
@@ -393,6 +394,7 @@ async function main(): Promise<void> {
     menuFightOff
       ? () => Promise.reject(new Error("the menu background is off in this build"))
       : startSplashFight,
+    pinnedChoice(window.location.search),
   );
   /** Resolves once a lobby has given the background its choice (#3119). */
   let choiceMade: () => void = () => undefined;
@@ -634,7 +636,7 @@ async function main(): Promise<void> {
   const hallWatch = watchHall(
     watchRecords,
     () => Date.now(),
-    toast,
+    (line) => toast(signedText(line.key, line.params)),
     () => {
       paintQueue();
     },
@@ -3210,6 +3212,7 @@ async function main(): Promise<void> {
       const session = await startTutorialSession(viewport, {
         mapId,
         teamSize,
+        tutorProfession: drawTutorProfession(Math.random),
         signet: ownSignet,
         onEnd: (end) => {
           tutorialRun = undefined;

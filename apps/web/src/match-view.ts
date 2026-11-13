@@ -77,7 +77,7 @@ import { capeLook } from "./render/cape-shape.js";
 import { castBadgeType } from "./render/cast-badge.js";
 import { CRUMBLED, crackStage, renderableBreakables } from "./render/breakable-objects.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
-import { attachFollowCamera } from "./render/follow-camera.js";
+import { attachFollowCamera, type CameraLook } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
 import { projectileSprite } from "./render/projectiles.js";
 import {
@@ -120,6 +120,7 @@ import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 import { button, setToastHost, toast } from "./ui/kit.js";
+import { signedText } from "./ui/player-label.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -256,6 +257,8 @@ export interface MatchView {
   summary(): readonly SummaryTable[] | undefined;
   /** Shows `line` over the result, or none. */
   setEndLine(line: EndLine | undefined): void;
+  /** What the camera shows (#3222), or nothing before its first frame or without a canvas. */
+  camera(): CameraLook | undefined;
   dispose(): Promise<void>;
 }
 
@@ -1094,7 +1097,7 @@ export async function startMatchView(
       playerNames(match),
     );
     if (leader !== undefined) {
-      toast(leader);
+      toast(signedText(leader.key, leader.params));
     }
     if (objective !== undefined) {
       toast(objective.text);
@@ -1278,6 +1281,7 @@ export async function startMatchView(
 
   return {
     summary: () => summary?.tables,
+    camera: () => camera?.look(),
     setEndLine(line) {
       if (line === undefined) {
         endLine?.root.remove();

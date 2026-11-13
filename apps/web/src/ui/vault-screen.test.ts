@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { MatchRecord } from "@vibewars/game-session";
 
+import { keySignet } from "../identity/key-signet.js";
 import type { MatchRecordWatchHandlers } from "../net/transport/match-records.js";
 import {
   HALL_CLOCK_SKEW_MS,
@@ -18,6 +19,10 @@ const player = (name: string, guildTag: string | null, bot = false) => ({
   bot,
   pubkey: bot ? null : "a".repeat(64),
 });
+
+/** The signet of every person here, all of one key (#3232). */
+const SIGNET = keySignet("a".repeat(64));
+const ANA = { name: "Ana", signet: SIGNET };
 
 function record(
   winners: readonly ReturnType<typeof player>[],
@@ -42,7 +47,7 @@ describe("vaultLines", () => {
   });
 
   it("names the holder, or says there is none", () => {
-    expect(vaultLines(0, "Ana").holder).toBe("Ana holds the Hall of Heroes");
+    expect(vaultLines(0, ANA).holder).toEqual({ key: "queue.hallHeldBy", params: { holder: ANA } });
     expect(vaultLines(0, undefined).holder).toBe("Nobody holds the Hall of Heroes");
   });
 });
@@ -50,12 +55,12 @@ describe("vaultLines", () => {
 describe("hallHolderOf", () => {
   it("is the guild tag when more than half the party shares it", () => {
     const three = [player("A", "VW"), player("B", "VW"), player("C", null)];
-    expect(hallHolderOf(record(three))).toBe("VW");
+    expect(hallHolderOf(record(three))).toEqual({ name: "VW", signet: undefined });
   });
 
   it("is the leader when exactly half share a tag, bots not counted", () => {
     const half = [player("A", "VW"), player("B", null), player("Bot", "VW", true)];
-    expect(hallHolderOf(record(half))).toBe("A");
+    expect(hallHolderOf(record(half))).toEqual({ name: "A", signet: SIGNET });
   });
 
   it("is nothing for a Hosted Game on a Hall map", () => {
@@ -118,22 +123,22 @@ describe("watchHall", () => {
     const { hear, announce, hall } = watched();
     hear(record([player("Ana", null)]));
     expect(announce).toHaveBeenCalledTimes(1);
-    expect(announce).toHaveBeenCalledWith("Ana holds the Hall of Heroes");
-    expect(hall.holder()).toBe("Ana");
+    expect(announce).toHaveBeenCalledWith({ key: "queue.hallHeldBy", params: { holder: ANA } });
+    expect(hall.holder()?.name).toBe("Ana");
   });
 
   it("does not toast replayed history, but it still names the holder", () => {
     const { hear, announce, hall } = watched();
     hear(record([player("Old", null)], 500));
     expect(announce).not.toHaveBeenCalled();
-    expect(hall.holder()).toBe("Old");
+    expect(hall.holder()?.name).toBe("Old");
   });
 
   it("keeps the newest holder, in whatever order records arrive", () => {
     const { hear, hall } = watched();
     hear(record([player("New", null)], 900));
     hear(record([player("Old", null)], 500));
-    expect(hall.holder()).toBe("New");
+    expect(hall.holder()?.name).toBe("New");
   });
 
   it("toasts at most one win a slot, however many are heard", () => {
@@ -142,7 +147,7 @@ describe("watchHall", () => {
       hear(record([player(`Fake${String(endedAt)}`, null)], endedAt));
     }
     expect(announce).toHaveBeenCalledTimes(1);
-    expect(hall.holder()).toBe("Fake2029");
+    expect(hall.holder()?.name).toBe("Fake2029");
     setNow(2_500_000 + 720_000);
     hear(record([player("Next", null)], 3_000));
     expect(announce).toHaveBeenCalledTimes(2);
@@ -152,14 +157,14 @@ describe("watchHall", () => {
     const { hear, announce, hall } = watched();
     hear(record([player("Now", null)], 2_000));
     hear(record([player("Ahead", null)], 2_500 + 31));
-    expect(hall.holder()).toBe("Now");
+    expect(hall.holder()?.name).toBe("Now");
     expect(announce).toHaveBeenCalledTimes(1);
   });
 
   it("leaves a host's slightly fast clock alone", () => {
     const { hear, hall } = watched();
     hear(record([player("Fast", null)], 2_500 + 29));
-    expect(hall.holder()).toBe("Fast");
+    expect(hall.holder()?.name).toBe("Fast");
   });
 
   it("verifies only won Halls, on a small budget of its own", () => {
@@ -181,7 +186,7 @@ describe("watchHall", () => {
     hall.resume();
     expect(opened).toHaveLength(2);
     hear(record([player("Meanwhile", null)], 2_800));
-    expect(hall.holder()).toBe("Meanwhile");
+    expect(hall.holder()?.name).toBe("Meanwhile");
     expect(announce).not.toHaveBeenCalled();
   });
 });
