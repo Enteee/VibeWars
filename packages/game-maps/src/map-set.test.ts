@@ -48,7 +48,7 @@ const NEW_ARENAS = new Set(["arena-crossroads", "arena-long-hall", "arena-canyon
  * The 2.5D rebuilds (#3064): asymmetric by design. Their fairness is the balance bench and the
  * walk and high-ground checks (map-balance.test.ts), not a half turn.
  */
-const REBUILT = new Set(["arena-canyon"]);
+const REBUILT = new Set(["arena-canyon", "arena-crossroads"]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
   ...map,

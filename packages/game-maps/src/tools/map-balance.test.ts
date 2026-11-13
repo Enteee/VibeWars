@@ -55,22 +55,28 @@ describe("the balance verdict (#3065)", () => {
 });
 
 describe("walks and high ground (#3070)", () => {
-  const canyon = loadMap("arena-canyon");
+  // The 2.5D rebuilds (#3064): asymmetric, so proven by numbers.
+  describe.each([
+    ["Canyon", "arena-canyon"],
+    ["Crossroads", "arena-crossroads"],
+  ])("%s", (_name, id) => {
+    const map = loadMap(id);
 
-  it("Canyon's spawns walk to the centre within 10 % of each other", () => {
-    const [walk0 = 0, walk1 = 0] = walksToCentre(canyon);
-    expect(walk0).toBeGreaterThan(0);
-    expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.1);
+    it("walks each team from its spawn to the centre within 10 % of the other", () => {
+      const [walk0 = 0, walk1 = 0] = walksToCentre(map);
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.1);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      const [ground0 = 0, ground1 = 0] = highGround(map);
+      expect(ground0).toBeGreaterThan(0);
+      expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.25);
+    }, 60_000);
   });
 
-  it("gives Canyon's teams high ground within 25 % of each other", () => {
-    const [ground0 = 0, ground1 = 0] = highGround(canyon);
-    expect(ground0).toBeGreaterThan(0);
-    expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.25);
-  }, 60_000);
-
   it("counts no high ground on a map without decks", () => {
-    expect(highGround({ ...canyon, decks: [] })).toEqual([0, 0]);
+    expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });
 });
 
