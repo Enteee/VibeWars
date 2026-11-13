@@ -3,12 +3,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { STARTER_BUILDS } from "@vibewars/game-core";
+import type { LobbyMode } from "@vibewars/game-protocol";
 import {
   MATCH_RECORD_VERSION,
   createLobbyHost,
   joinLobby,
   recordTemplate,
-  type LobbyMode,
   type MatchRecord,
   type PlayerKey,
   type Transport,
@@ -248,7 +248,7 @@ describe("the player key's secret never leaves this browser's storage (#3227)", 
       [
         inviteUrl(CODE, where),
         guildLink("VIBE", null, where),
-        guildLink("VIBE", { main: 1, trim: 2, emblem: 3 }, where),
+        guildLink("VIBE", { main: "gold", trim: "teal", emblem: "ring" }, where),
       ],
       SECRET,
     );
