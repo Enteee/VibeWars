@@ -2,7 +2,7 @@
 # on the usage limit (#2794, #3202). hubd writes a wake time to
 # /run/vibewars-sleep/request; this path unit starts a root oneshot that
 # checks it, sets the RTC alarm and hibernates. Import it pinned to a commit
-# (fetchGit or a flake input), never from a path the company user can write,
+# (fetchTarball with its hash, or a flake input), never from a path the company user can write,
 # as root applies it: docs/development/agent-company-host.md. Then set
 #   services.vibewars-sleep = { enable = true; user = "<you>"; };
 # The script is read when the system is built: a change to it needs a

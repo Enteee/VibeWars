@@ -27,7 +27,9 @@ function harness({ answers = [], host = {}, failing }) {
     say: (line) => said.push(line),
     canAsk: true,
     nixos: false,
-    rev: () => "c9f0b10aa",
+    mainRev: () => "c9f0b10aa",
+    hasModuleAt: () => true,
+    prefetch: () => "0abc",
     user: "ente",
     canHibernate: () => "yes",
     hasWakeAlarm: () => true,
@@ -84,18 +86,49 @@ describe("claude-llc-init's hibernation step (#2794)", () => {
     });
   });
 
-  it("prints the module import, pinned to a commit, on NixOS and runs no sudo", async () => {
-    const h = harness({ answers: ["y"], host: { nixos: true } });
+  it("prints the module import, pinned to main's commit and hash, on NixOS and runs no sudo", async () => {
+    /** @type {string[]} */
+    const prefetched = [];
+    const h = harness({
+      answers: ["y"],
+      host: {
+        nixos: true,
+        prefetch: (url) => {
+          prefetched.push(url);
+          return "0abc";
+        },
+      },
+    });
     await expect(askHibernate({ previous: {}, host: h.host })).resolves.toBeNull();
     expect(h.ran).toEqual([]);
+    const url = "https://github.com/Enteee/VibeWars/archive/c9f0b10aa.tar.gz";
+    expect(prefetched).toEqual([url]);
     const said = h.said.join("\n");
     expect(said).toContain(
-      'imports = [ "${builtins.fetchGit { url = "https://github.com/Enteee/VibeWars"; rev = "c9f0b10aa"; }}/nix/nixos/vibewars-sleep.nix" ];',
+      [
+        '    imports = [ "${builtins.fetchTarball {',
+        `      url = "${url}";`,
+        '      sha256 = "0abc";',
+        '    }}/nix/nixos/vibewars-sleep.nix" ];',
+        '    services.vibewars-sleep = { enable = true; user = "ente"; };',
+      ].join("\n"),
     );
     expect(said).toContain('url = "github:Enteee/VibeWars/c9f0b10aa"; flake = false;');
-    expect(said).toContain('services.vibewars-sleep = { enable = true; user = "ente"; };');
     expect(said).toContain('import "${inputs.vibewars}/nix/nixos/vibewars-sleep.nix"');
     expect(said).not.toContain("systemd.paths");
+    expect(said).not.toMatch(/imports = \[ \//);
+  });
+
+  it.each([
+    ["main cannot be fetched", { mainRev: () => null }, "Could not fetch main"],
+    ["main has no module yet", { hasModuleAt: () => false }, "has no nix/nixos/vibewars-sleep.nix"],
+    ["the prefetch fails", { prefetch: () => null }, "nix-prefetch-url --unpack"],
+  ])("stays off on NixOS when %s, and prints no import", async (_name, host, message) => {
+    const h = harness({ answers: ["y"], host: { nixos: true, ...host } });
+    await expect(askHibernate({ previous: {}, host: h.host })).resolves.toBeNull();
+    const said = h.said.join("\n");
+    expect(said).toContain(message);
+    expect(said).not.toContain("imports");
   });
 
   it("stays off and says how when sudo fails", async () => {

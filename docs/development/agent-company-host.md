@@ -219,16 +219,18 @@ and `systemctl hibernate`. Refusals are in the journal
 `.service` in `/etc/systemd/system`, and a tmpfiles rule for the directory,
 owned by the operator.
 
-On NixOS init installs nothing: it prints the import below, pinned to the
-checkout's commit. Add it, rebuild, then run init again. Until then
-hibernation stays off.
+On NixOS init installs nothing. It fetches GitHub's `main`, checks that the
+commit has the module, hashes its tarball with `nix-prefetch-url --unpack`,
+and prints the import with all three filled in. Add it, rebuild, then run
+init again. Until then hibernation stays off, and it stays off if any of
+those steps fails.
 
 ```nix
 imports = [
   "${
-    builtins.fetchGit {
-      url = "https://github.com/Enteee/VibeWars";
-      rev = "<commit>";
+    builtins.fetchTarball {
+      url = "https://github.com/Enteee/VibeWars/archive/<commit>.tar.gz";
+      sha256 = "<sha256>";
     }
   }/nix/nixos/vibewars-sleep.nix"
 ];
@@ -237,13 +239,14 @@ services.vibewars-sleep = { enable = true; user = "<you>"; };
 
 A flake config adds the input
 `vibewars = { url = "github:Enteee/VibeWars/<commit>"; flake = false; };`
-and imports `"${inputs.vibewars}/nix/nixos/vibewars-sleep.nix"` instead.
-Never import the module from the checkout or any other path the company
-user can write: root applies whatever is there at the next rebuild, so that
-user could give itself root. A pinned commit changes only through a merged
-pull request and your own bump of `rev`. `user` has no default: leaving it
-out is an evaluation error, never root. The module reads the script when the
-system is built, so a newer script needs a new `rev` and a `nixos-rebuild`.
+and imports `"${inputs.vibewars}/nix/nixos/vibewars-sleep.nix"` instead;
+`flake.lock` holds its hash. Never import the module from the checkout or any
+other path the company user can write: root applies whatever is there at the
+next rebuild, so that user could give itself root. A pinned commit changes
+only through a merged pull request and your own new pin. `user` has no
+default: leaving it out is an evaluation error, never root. The module reads
+the script when the system is built, so a newer script needs a new pin (run
+init again) and a `nixos-rebuild`.
 
 ## Scaling the company by hand
 
