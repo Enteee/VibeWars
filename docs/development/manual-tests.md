@@ -130,10 +130,12 @@ not store, and some relays refuse them. `node
 scripts/net/nostr-kind-probe.mjs` puts two real queue boards on each relay
 in `relays.ts` alone, publishes a ticket from one and prints, per relay,
 whether its socket opened, what it answered the event and whether the
-other board heard it. It exits 0 only if most relays delivered. Run it
-when the relay list or the event kind changes. If most relays stop
-delivering, the queue goes back to the architect (ADR-0032 §3); a single
-relay that refuses can be dropped from `relays.ts`.
+other board heard it. It exits 0 only if most relays delivered, and exits
+2, probing nothing, if `parseQueueTicket` refuses its own ticket: then the
+probe is stale, not the relays. Run it when the relay list or the event
+kind changes. If most relays stop delivering, the queue goes back to
+the architect (ADR-0032 §3); a single relay that refuses can be dropped
+from `relays.ts`.
 
 2026-10-27: 6 of 8. `relay.kaleidoswap.com` refuses kind 23854;
 `relay.degmods.com` accepts it and delivers nothing.
