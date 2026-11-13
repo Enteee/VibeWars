@@ -32,6 +32,9 @@ export const STALE = 3;
 
 /** @typedef {Record<string, string>} Manifest relative path to the sha256 of its contents */
 
+/** The root oneshot, which nix stages beside the scripts that install it. */
+const SLEEP_SCRIPT_FILE = "scripts/bots/vibewars-sleep.sh";
+
 /**
  * Does a change to this file make a build stale? The company's scripts, as
  * nix stages them (not the tests, not `fixtures/`), and every file that
@@ -42,6 +45,9 @@ export const STALE = 3;
  */
 export function isBuildInput(file) {
   if (["devenv.nix", "devenv.yaml", "devenv.lock"].includes(file)) {
+    return true;
+  }
+  if (file === SLEEP_SCRIPT_FILE) {
     return true;
   }
   if (/^scripts\/bots\/[^/]+\.mjs$/.test(file)) {

@@ -36,7 +36,7 @@ const MAX_STEP_SECONDS = 0.1;
 /** Behind the menus it never draws faster (#3119); matches are not capped. */
 const FPS_LIMIT = 30;
 /** Nobody wins and the clock never runs out. */
-const SPLASH_RULES = {
+export const SPLASH_RULES = {
   victory: "kill-count",
   scoreToWin: 1_000_000,
   timeLimitSeconds: 1_000_000,
@@ -46,7 +46,7 @@ const SPLASH_RULES = {
   deathPenalty: false,
 } as const;
 
-type SplashMap = NonNullable<ReturnType<typeof hostMap>>;
+export type SplashMap = NonNullable<ReturnType<typeof hostMap>>;
 
 /** What the fight is on, and whether it moves at all. */
 export interface SplashFightOptions {
@@ -85,13 +85,17 @@ export function splashSpawn(
   return nearestStandable(graph, vec2(x, y));
 }
 
-function splashParticipants(map: SplashMap, fight: SplashFightOptions): ParticipantSpec[] {
-  const graph = buildNavGraph(
-    allWallSegments(map.descriptor.walls),
-    map.bounds,
-    SPAWN_CLEARANCE,
-    [],
-  );
+/** Where a body can stand on `map`, for its spawn. */
+export function splashGraph(map: SplashMap): NavGraph {
+  return buildNavGraph(allWallSegments(map.descriptor.walls), map.bounds, SPAWN_CLEARANCE, []);
+}
+
+/** The bots of both sides, `fight.teamSize` each, walking in from their spawns. */
+export function splashParticipants(
+  map: SplashMap,
+  fight: SplashFightOptions,
+  graph: NavGraph = splashGraph(map),
+): ParticipantSpec[] {
   return [0, 1].flatMap((team) =>
     Array.from({ length: fight.teamSize }, (_, index) => {
       const loadout = loadoutOf(pick(STARTER_BUILDS));

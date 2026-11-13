@@ -746,21 +746,9 @@ export default {
   "lobby.mapRandom": "الخريطة: عشوائية (ساحة الفرق)",
   "lobby.mapShown": "الخريطة: {map}",
   "lobby.matchRunning": "ما زالت هناك مباراة جارية. تُفتح الردهة مجددًا عند انتهائها.",
-  "lobby.modeAnnihilation": "الإبادة: اهزم كل عدو",
-  "lobby.modeCapturePoints":
-    "نقاط السيطرة: قف على المزارات للسيطرة عليها. يسجّل كل مزار تملكه نقاطًا كل 30 ث.",
-  "lobby.modeGuildBattle": "معركة النقابات: اقتل سيد نقابة العدو",
-  "lobby.modeKillCount": "عدد القتلى: أكثر قتلى في 3 دقائق",
-  "lobby.modeKingOfTheHill":
-    "ملك التل: قُد بطلك الشبحي إلى المذبح. احتفظ به لتسجيل النقاط؛ يفوز صاحب أكثر النقاط خلال {minutes} دقيقة.",
   "lobby.modeNameCapturePoints": "نقاط السيطرة",
   "lobby.modeNameKingOfTheHill": "ملك التل",
   "lobby.modeNameRelicRun": "سباق الآثار",
-  "lobby.modePriestAnnihilation": "إبادة الكهنة: اهزم كل عدو وكاهنه",
-  "lobby.modeRelicRun":
-    "سباق الآثار: احمل أثرك إلى المذبح. يفوز صاحب أكثر النقاط خلال {minutes} دقيقة.",
-  "lobby.modeRelicRunFoe":
-    "سباق الآثار: احمل أثر العدو إلى بطلك الشبحي. يفوز المتقدم بـ 3 نقاط؛ وبعد {minutes} دقيقة، صاحب أكثر النقاط.",
   "lobby.notReady": "غير جاهز",
   "lobby.playBots": "العب ضد البوتات",
   "lobby.ready": "جاهز",
@@ -842,7 +830,6 @@ export default {
   },
   "matches.noMatches": "لا مباريات بعد.",
   "matches.noneFit": "لا مباريات تطابق هذه المرشحات.",
-  "matches.recentNote": "تُعرض آخر 50 مباراة من الأيام السبعة الماضية.",
   "matches.offline": "يتعذّر الوصول إلى مرحّلات المباريات الآن.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size} ضد {size}",
@@ -1463,7 +1450,6 @@ export default {
   "teamPlay.queuedMaps": "خرائط هذا النمط",
   "teamPlay.random": "عشوائية",
   "teamPlay.reroll": "إعادة اختيار",
-  "teamPlay.teamBuilds": "بنى الفرق",
   "teamPlay.unnamedTeam": "فريق بلا اسم",
 
   "topbar.closed": "مغلقة",
@@ -1602,6 +1588,18 @@ export default {
   "training.soundOff": "الصوت معطّل.",
   "training.soundOn": "الصوت مفعّل.",
   "training.you": "أنت",
+
+  "tutorial.learn": "تعلّم اللعب",
+  "tutorial.moreSoon": "دروس أخرى قريبًا. نراك هناك!",
+  "tutorial.offer": "جديد هنا؟ معلّمك سيريك الأساسيات.",
+  "tutorial.offerTitle": "أول مرة؟",
+  "tutorial.skip": "تخطَّ",
+  "tutorial.skipTutorial": "تخطَّ الدرس",
+  "tutorial.tutor": "المعلّم",
+  "tutorial.walk.hint": "هنا! قف على العلامة المتوهجة.",
+  "tutorial.walk.how": "انقر يسارًا على الأرض، أو امشِ بـ {keys}.",
+  "tutorial.walk.intro": "هذه الحرب لا تنتهي. امشِ معي؛ لديّ فكرة.",
+  "tutorial.walk.praise": "خطوة رائعة! أنت موهوب.",
 
   "weaponSets.empty": "مجموعة الأسلحة {number}: فارغة",
   "weaponSets.holds": "مجموعة الأسلحة {number}: {gear}",

@@ -648,21 +648,9 @@ export const en = {
   "lobby.mapRandom": "Map: random (Team Arena)",
   "lobby.mapShown": "Map: {map}",
   "lobby.matchRunning": "A match is still running. The lobby opens again when it ends.",
-  "lobby.modeAnnihilation": "Annihilation: defeat every foe",
-  "lobby.modeCapturePoints":
-    "Capture Points: stand on shrines to take them. Each shrine you own scores every 30 s.",
-  "lobby.modeGuildBattle": "Guild Battle: kill the enemy Guild Lord",
-  "lobby.modeKillCount": "Kill Count: most kills in 3 minutes",
-  "lobby.modeKingOfTheHill":
-    "King of the Hill: lead your Ghostly Hero onto the altar. Hold it to score; most points in {minutes} minutes wins.",
   "lobby.modeNameCapturePoints": "Capture Points",
   "lobby.modeNameKingOfTheHill": "King of the Hill",
   "lobby.modeNameRelicRun": "Relic Run",
-  "lobby.modePriestAnnihilation": "Priest Annihilation: defeat every foe and their priest",
-  "lobby.modeRelicRun":
-    "Relic Run: carry your relic to the altar. Most points in {minutes} minutes wins.",
-  "lobby.modeRelicRunFoe":
-    "Relic Run: carry the foe's relic to your Ghostly Hero. A 3-point lead wins; after {minutes} minutes, most points.",
   "lobby.notReady": "Not ready",
   "lobby.playBots": "Play against bots",
   "lobby.ready": "Ready",
@@ -716,7 +704,6 @@ export const en = {
   "matches.minutesAgo": { one: "{count} min ago", other: "{count} min ago" },
   "matches.noMatches": "No matches yet.",
   "matches.noneFit": "No matches fit these filters.",
-  "matches.recentNote": "Showing the 50 most recent matches from the past 7 days.",
   "matches.offline": "Can't reach the match relays right now.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1278,7 +1265,6 @@ export const en = {
   "teamPlay.queuedMaps": "Maps in this mode",
   "teamPlay.random": "Random",
   "teamPlay.reroll": "Reroll",
-  "teamPlay.teamBuilds": "Team Builds",
   "teamPlay.unnamedTeam": "Unnamed team",
 
   "topbar.closed": "Closed",
@@ -1413,6 +1399,18 @@ export const en = {
   "training.soundOff": "Sound off.",
   "training.soundOn": "Sound on.",
   "training.you": "You",
+
+  "tutorial.learn": "Learn to play",
+  "tutorial.moreSoon": "More lessons soon. See you out there!",
+  "tutorial.offer": "New here? Your tutor can show you the ropes.",
+  "tutorial.offerTitle": "First time?",
+  "tutorial.skip": "Skip",
+  "tutorial.skipTutorial": "Skip tutorial",
+  "tutorial.tutor": "Tutor",
+  "tutorial.walk.hint": "Over here! Step onto the glowing mark.",
+  "tutorial.walk.how": "Left click the ground, or walk with {keys}.",
+  "tutorial.walk.intro": "This war never ends. Walk with me; I have an idea.",
+  "tutorial.walk.praise": "Nice stride! You're a natural.",
 
   "weaponSets.empty": "Weapon set {number}: empty",
   "weaponSets.holds": "Weapon set {number}: {gear}",

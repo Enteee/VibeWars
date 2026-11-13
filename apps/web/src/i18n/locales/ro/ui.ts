@@ -687,21 +687,9 @@ export default {
   "lobby.mapRandom": "Hartă: aleatorie (Arenă de echipe)",
   "lobby.mapShown": "Hartă: {map}",
   "lobby.matchRunning": "Un meci încă rulează. Lobby-ul se redeschide când se termină.",
-  "lobby.modeAnnihilation": "Anihilare: învinge toți inamicii",
-  "lobby.modeCapturePoints":
-    "Capturare de puncte: stai pe sanctuare ca să le cucerești. Fiecare sanctuar deținut aduce puncte la 30 s.",
-  "lobby.modeGuildBattle": "Bătălie de bresle: ucide Lordul breslei inamice",
-  "lobby.modeKillCount": "Număr de ucideri: cele mai multe ucideri în 3 minute",
-  "lobby.modeKingOfTheHill":
-    "Regele dealului: condu-ți Eroul Fantomatic pe altar. Ține-l acolo ca să marchezi; câștigă cine are cele mai multe puncte în {minutes} minute.",
   "lobby.modeNameCapturePoints": "Capturare de puncte",
   "lobby.modeNameKingOfTheHill": "Regele dealului",
   "lobby.modeNameRelicRun": "Cursa relicvelor",
-  "lobby.modePriestAnnihilation": "Anihilare cu preot: învinge toți inamicii și preotul lor",
-  "lobby.modeRelicRun":
-    "Cursa relicvelor: du-ți relicva la altar. Câștigă cine are cele mai multe puncte în {minutes} minute.",
-  "lobby.modeRelicRunFoe":
-    "Cursa relicvelor: du relicva inamicului la Eroul tău Fantomatic. Câștigă un avans de 3 puncte; după {minutes} minute, cine are cele mai multe puncte.",
   "lobby.notReady": "Nepregătit",
   "lobby.playBots": "Joacă contra boților",
   "lobby.ready": "Gata",
@@ -763,7 +751,6 @@ export default {
   },
   "matches.noMatches": "Niciun meci încă.",
   "matches.noneFit": "Niciun meci nu corespunde filtrelor.",
-  "matches.recentNote": "Se afișează cele mai recente 50 de meciuri din ultimele 7 zile.",
   "matches.offline": "Releele de meciuri nu pot fi contactate acum.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1353,7 +1340,6 @@ export default {
   "teamPlay.queuedMaps": "Hărți în acest mod",
   "teamPlay.random": "Aleator",
   "teamPlay.reroll": "Altul",
-  "teamPlay.teamBuilds": "Builduri de echipă",
   "teamPlay.unnamedTeam": "Echipă fără nume",
 
   "topbar.closed": "Închis",
@@ -1491,6 +1477,18 @@ export default {
   "training.soundOff": "Sunet oprit.",
   "training.soundOn": "Sunet pornit.",
   "training.you": "Tu",
+
+  "tutorial.learn": "Învață să joci",
+  "tutorial.moreSoon": "Curând mai multe lecții. Ne vedem acolo!",
+  "tutorial.offer": "Ești nou? Tutorele tău îți arată elementele de bază.",
+  "tutorial.offerTitle": "Prima dată?",
+  "tutorial.skip": "Sari peste",
+  "tutorial.skipTutorial": "Sari peste tutorial",
+  "tutorial.tutor": "Tutore",
+  "tutorial.walk.hint": "Aici! Calcă pe semnul strălucitor.",
+  "tutorial.walk.how": "Clic stânga pe sol, sau mergi cu {keys}.",
+  "tutorial.walk.intro": "Războiul acesta nu se termină. Vino cu mine; am o idee.",
+  "tutorial.walk.praise": "Pas frumos! Ai talent.",
 
   "weaponSets.empty": "Set de arme {number}: gol",
   "weaponSets.holds": "Set de arme {number}: {gear}",

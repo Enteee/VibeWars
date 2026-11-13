@@ -600,21 +600,9 @@ export default {
   "lobby.mapRandom": "Bản đồ: ngẫu nhiên (Đấu trường đội)",
   "lobby.mapShown": "Bản đồ: {map}",
   "lobby.matchRunning": "Trận đấu vẫn đang diễn ra. Sảnh sẽ mở lại khi trận kết thúc.",
-  "lobby.modeAnnihilation": "Hủy diệt: hạ gục mọi địch",
-  "lobby.modeCapturePoints":
-    "Chiếm điểm: đứng trên đền để chiếm. Mỗi đền bạn giữ ghi điểm sau mỗi 30 s.",
-  "lobby.modeGuildBattle": "Chiến Bang: hạ Lãnh chúa Bang của địch",
-  "lobby.modeKillCount": "Đếm hạ gục: nhiều lượt hạ nhất trong 3 phút",
-  "lobby.modeKingOfTheHill":
-    "Vua đồi: dẫn Anh hùng Ma lên tế đàn. Giữ để ghi điểm; nhiều điểm nhất trong {minutes} phút sẽ thắng.",
   "lobby.modeNameCapturePoints": "Chiếm điểm",
   "lobby.modeNameKingOfTheHill": "Vua đồi",
   "lobby.modeNameRelicRun": "Vận chuyển thánh tích",
-  "lobby.modePriestAnnihilation": "Diệt tư tế: hạ gục mọi địch và tư tế của chúng",
-  "lobby.modeRelicRun":
-    "Vận chuyển thánh tích: mang thánh tích tới tế đàn. Nhiều điểm nhất trong {minutes} phút sẽ thắng.",
-  "lobby.modeRelicRunFoe":
-    "Vận chuyển thánh tích: mang thánh tích của địch tới Anh hùng Ma của bạn. Dẫn trước 3 điểm sẽ thắng; sau {minutes} phút, nhiều điểm nhất sẽ thắng.",
   "lobby.notReady": "Chưa sẵn sàng",
   "lobby.playBots": "Đấu với bot",
   "lobby.ready": "Sẵn sàng",
@@ -668,7 +656,6 @@ export default {
   "matches.minutesAgo": { other: "{count} phút trước" },
   "matches.noMatches": "Chưa có trận nào.",
   "matches.noneFit": "Không có trận nào khớp bộ lọc.",
-  "matches.recentNote": "Đang hiển thị 50 trận gần nhất trong 7 ngày qua.",
   "matches.offline": "Hiện không kết nối được relay trận đấu.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1197,7 +1184,6 @@ export default {
   "teamPlay.queuedMaps": "Bản đồ của chế độ này",
   "teamPlay.random": "Random",
   "teamPlay.reroll": "Đổi khác",
-  "teamPlay.teamBuilds": "Build đội",
   "teamPlay.unnamedTeam": "Đội chưa đặt tên",
 
   "topbar.closed": "Đóng",
@@ -1326,6 +1312,18 @@ export default {
   "training.soundOff": "Tắt âm thanh.",
   "training.soundOn": "Bật âm thanh.",
   "training.you": "Bạn",
+
+  "tutorial.learn": "Học chơi",
+  "tutorial.moreSoon": "Sắp có thêm bài học. Hẹn gặp ngoài kia!",
+  "tutorial.offer": "Mới đến? Người hướng dẫn sẽ chỉ bạn những điều cơ bản.",
+  "tutorial.offerTitle": "Lần đầu?",
+  "tutorial.skip": "Bỏ qua",
+  "tutorial.skipTutorial": "Bỏ qua hướng dẫn",
+  "tutorial.tutor": "Người hướng dẫn",
+  "tutorial.walk.hint": "Đằng này! Bước lên dấu phát sáng.",
+  "tutorial.walk.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",
+  "tutorial.walk.intro": "Cuộc chiến này không bao giờ dứt. Đi cùng tôi; tôi có ý này.",
+  "tutorial.walk.praise": "Bước đi đẹp! Bạn có năng khiếu.",
 
   "weaponSets.empty": "Bộ vũ khí {number}: trống",
   "weaponSets.holds": "Bộ vũ khí {number}: {gear}",

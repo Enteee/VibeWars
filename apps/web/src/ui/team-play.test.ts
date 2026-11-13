@@ -269,7 +269,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
           (node) => node.attributes.has("aria-pressed") && node.className.startsWith("play-card"),
         ),
     ).toBe(false);
-    expect(root.everything().some((node) => node.textContent === "Team Builds")).toBe(true);
+    expect(root.everything().some((node) => node.textContent === "Team Builds")).toBe(false);
   });
 
   it("opens a card in the editor, as its Edit does: a card is no pick", () => {

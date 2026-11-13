@@ -683,21 +683,9 @@ export default {
   "lobby.mapRandom": "מפה: אקראית (זירת קבוצות)",
   "lobby.mapShown": "מפה: {map}",
   "lobby.matchRunning": "משחק עדיין מתנהל. הלובי ייפתח שוב כשיסתיים.",
-  "lobby.modeAnnihilation": "השמדה: הבס כל אויב",
-  "lobby.modeCapturePoints":
-    "כיבוש נקודות: עמוד על מקדשים כדי לכבוש אותם. כל מקדש שלך מניב נקודות כל 30 שנ׳.",
-  "lobby.modeGuildBattle": "קרב גילדות: הרוג את לורד הגילדה של האויב",
-  "lobby.modeKillCount": "ספירת הריגות: הכי הרבה הריגות ב-3 דקות",
-  "lobby.modeKingOfTheHill":
-    "מלך הגבעה: הובל את הגיבור הרוחני שלך אל המזבח. החזק בו כדי לצבור נקודות; הכי הרבה נקודות ב-{minutes} דקות מנצח.",
   "lobby.modeNameCapturePoints": "כיבוש נקודות",
   "lobby.modeNameKingOfTheHill": "מלך הגבעה",
   "lobby.modeNameRelicRun": "מרוץ השרידים",
-  "lobby.modePriestAnnihilation": "השמדת כוהנים: הבס כל אויב ואת הכוהן שלו",
-  "lobby.modeRelicRun":
-    "מרוץ השרידים: שא את השריד שלך אל המזבח. הכי הרבה נקודות ב-{minutes} דקות מנצח.",
-  "lobby.modeRelicRunFoe":
-    "מרוץ השרידים: שא את שריד האויב אל הגיבור הרוחני שלך. יתרון של 3 נקודות מנצח; אחרי {minutes} דקות, הכי הרבה נקודות.",
   "lobby.notReady": "לא מוכן",
   "lobby.playBots": "שחק נגד בוטים",
   "lobby.ready": "מוכן",
@@ -767,7 +755,6 @@ export default {
   },
   "matches.noMatches": "אין משחקים עדיין.",
   "matches.noneFit": "אין משחקים שמתאימים לסינון.",
-  "matches.recentNote": "מוצגים 50 המשחקים האחרונים מ־7 הימים האחרונים.",
   "matches.offline": "אין גישה לשרתי המשחקים כרגע.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size} מול {size}",
@@ -1342,7 +1329,6 @@ export default {
   "teamPlay.queuedMaps": "מפות במצב הזה",
   "teamPlay.random": "אקראי",
   "teamPlay.reroll": "הגרל מחדש",
-  "teamPlay.teamBuilds": "מבני קבוצה",
   "teamPlay.unnamedTeam": "קבוצה ללא שם",
 
   "topbar.closed": "סגור",
@@ -1475,6 +1461,18 @@ export default {
   "training.soundOff": "הצליל כבוי.",
   "training.soundOn": "הצליל פועל.",
   "training.you": "אתה",
+
+  "tutorial.learn": "ללמוד לשחק",
+  "tutorial.moreSoon": "עוד שיעורים בקרוב. נתראה שם!",
+  "tutorial.offer": "חדש כאן? המורה שלך יראה לך את הבסיס.",
+  "tutorial.offerTitle": "פעם ראשונה?",
+  "tutorial.skip": "דלג",
+  "tutorial.skipTutorial": "דלג על ההדרכה",
+  "tutorial.tutor": "מורה",
+  "tutorial.walk.hint": "לכאן! עלה על הסימן הזוהר.",
+  "tutorial.walk.how": "לחיצה שמאלית על הקרקע, או הליכה עם {keys}.",
+  "tutorial.walk.intro": "המלחמה הזאת לא נגמרת. בוא איתי; יש לי רעיון.",
+  "tutorial.walk.praise": "צעד יפה! יש לך כישרון.",
 
   "weaponSets.empty": "סט נשק {number}: ריק",
   "weaponSets.holds": "סט נשק {number}: {gear}",

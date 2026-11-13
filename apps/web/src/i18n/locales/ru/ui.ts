@@ -705,21 +705,9 @@ export default {
   "lobby.mapRandom": "Карта: случайная (Командная арена)",
   "lobby.mapShown": "Карта: {map}",
   "lobby.matchRunning": "Матч ещё идёт. Лобби откроется, когда он закончится.",
-  "lobby.modeAnnihilation": "Истребление: победи всех врагов",
-  "lobby.modeCapturePoints":
-    "Захват точек: встань на святилище, чтобы занять его. Каждое твоё святилище приносит очки раз в 30 с.",
-  "lobby.modeGuildBattle": "Битва гильдий: убей вражеского Лорда гильдии",
-  "lobby.modeKillCount": "Счёт убийств: больше всего убийств за 3 минуты",
-  "lobby.modeKingOfTheHill":
-    "Царь горы: приведи Призрачного героя на алтарь. Удерживай его, чтобы набирать очки; побеждает набравший больше всех за {minutes} минут.",
   "lobby.modeNameCapturePoints": "Захват точек",
   "lobby.modeNameKingOfTheHill": "Царь горы",
   "lobby.modeNameRelicRun": "Гонка за реликвией",
-  "lobby.modePriestAnnihilation": "Истребление со жрецом: победи всех врагов и их жреца",
-  "lobby.modeRelicRun":
-    "Гонка за реликвией: доставь реликвию к алтарю. Побеждает набравший больше всех очков за {minutes} минут.",
-  "lobby.modeRelicRunFoe":
-    "Гонка за реликвией: доставь реликвию врага своему Призрачному герою. Побеждает отрыв в 3 очка; через {minutes} минут — набравший больше всех очков.",
   "lobby.notReady": "Не готов",
   "lobby.playBots": "Играть с ботами",
   "lobby.ready": "Готов",
@@ -793,7 +781,6 @@ export default {
   },
   "matches.noMatches": "Матчей пока нет.",
   "matches.noneFit": "Нет матчей под эти фильтры.",
-  "matches.recentNote": "Показаны последние 50 матчей за последние 7 дней.",
   "matches.offline": "Серверы матчей сейчас недоступны.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size} на {size}",
@@ -1391,7 +1378,6 @@ export default {
   "teamPlay.queuedMaps": "Карты этого режима",
   "teamPlay.random": "Случайная",
   "teamPlay.reroll": "Заново",
-  "teamPlay.teamBuilds": "Командные билды",
   "teamPlay.unnamedTeam": "Без названия",
 
   "topbar.closed": "Закрыто",
@@ -1530,6 +1516,18 @@ export default {
   "training.soundOff": "Звук выключен.",
   "training.soundOn": "Звук включён.",
   "training.you": "Ты",
+
+  "tutorial.learn": "Научиться играть",
+  "tutorial.moreSoon": "Скоро новые уроки. Увидимся на поле боя!",
+  "tutorial.offer": "Впервые здесь? Наставник покажет основы.",
+  "tutorial.offerTitle": "Впервые?",
+  "tutorial.skip": "Пропустить",
+  "tutorial.skipTutorial": "Пропустить обучение",
+  "tutorial.tutor": "Наставник",
+  "tutorial.walk.hint": "Сюда! Встань на светящуюся метку.",
+  "tutorial.walk.how": "Левый клик по земле или иди клавишами {keys}.",
+  "tutorial.walk.intro": "Эта война никогда не кончится. Идём со мной; есть идея.",
+  "tutorial.walk.praise": "Отличный шаг! У тебя талант.",
 
   "weaponSets.empty": "Набор оружия {number}: пусто",
   "weaponSets.holds": "Набор оружия {number}: {gear}",

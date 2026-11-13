@@ -654,21 +654,9 @@ export default {
   "lobby.mapRandom": "Χάρτης: τυχαίος (Αρένα Ομάδων)",
   "lobby.mapShown": "Χάρτης: {map}",
   "lobby.matchRunning": "Ένας αγώνας είναι ακόμη σε εξέλιξη. Το λόμπι ανοίγει ξανά όταν τελειώσει.",
-  "lobby.modeAnnihilation": "Αφανισμός: νίκησε όλους τους εχθρούς",
-  "lobby.modeCapturePoints":
-    "Κατάληψη σημείων: στάσου στα ιερά για να τα πάρεις. Κάθε ιερό σου δίνει πόντους κάθε 30 δ.",
-  "lobby.modeGuildBattle": "Μάχη Συντεχνιών: σκότωσε τον εχθρικό Άρχοντα της συντεχνίας",
-  "lobby.modeKillCount": "Μέτρηση θανάτων: οι περισσότεροι φόνοι σε 3 λεπτά",
-  "lobby.modeKingOfTheHill":
-    "Βασιλιάς του λόφου: οδήγησε τον Φαντασματικό Ήρωά σου στον βωμό. Κράτα τον για πόντους· νικούν οι περισσότεροι πόντοι σε {minutes} λεπτά.",
   "lobby.modeNameCapturePoints": "Κατάληψη σημείων",
   "lobby.modeNameKingOfTheHill": "Βασιλιάς του λόφου",
   "lobby.modeNameRelicRun": "Κούρσα κειμηλίου",
-  "lobby.modePriestAnnihilation": "Αφανισμός Ιερέα: νίκησε όλους τους εχθρούς και τον ιερέα τους",
-  "lobby.modeRelicRun":
-    "Κούρσα κειμηλίου: πήγαινε το κειμήλιό σου στον βωμό. Νικούν οι περισσότεροι πόντοι σε {minutes} λεπτά.",
-  "lobby.modeRelicRunFoe":
-    "Κούρσα κειμηλίου: πήγαινε το κειμήλιο του εχθρού στον Φαντασματικό Ήρωά σου. Νικά προβάδισμα 3 πόντων· μετά από {minutes} λεπτά, οι περισσότεροι πόντοι.",
   "lobby.notReady": "Μη έτοιμος",
   "lobby.playBots": "Παίξε με bots",
   "lobby.ready": "Έτοιμος",
@@ -723,7 +711,6 @@ export default {
   "matches.minutesAgo": { one: "πριν {count} λ.", other: "πριν {count} λ." },
   "matches.noMatches": "Δεν υπάρχουν αγώνες ακόμη.",
   "matches.noneFit": "Κανένας αγώνας δεν ταιριάζει στα φίλτρα.",
-  "matches.recentNote": "Εμφανίζονται οι 50 πιο πρόσφατοι αγώνες των τελευταίων 7 ημερών.",
   "matches.offline": "Δεν υπάρχει πρόσβαση στους αναμεταδότες αγώνων αυτή τη στιγμή.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1296,7 +1283,6 @@ export default {
   "teamPlay.queuedMaps": "Χάρτες λειτουργίας",
   "teamPlay.random": "Τυχαία",
   "teamPlay.reroll": "Νέα ζαριά",
-  "teamPlay.teamBuilds": "Συνθέσεις ομάδας",
   "teamPlay.unnamedTeam": "Ανώνυμη ομάδα",
 
   "topbar.closed": "Κλειστό",
@@ -1433,6 +1419,18 @@ export default {
   "training.soundOff": "Ήχος κλειστός.",
   "training.soundOn": "Ήχος ανοιχτός.",
   "training.you": "Εσύ",
+
+  "tutorial.learn": "Μάθε να παίζεις",
+  "tutorial.moreSoon": "Σύντομα περισσότερα μαθήματα. Τα λέμε εκεί έξω!",
+  "tutorial.offer": "Νέος εδώ; Ο δάσκαλός σου θα σου δείξει τα βασικά.",
+  "tutorial.offerTitle": "Πρώτη φορά;",
+  "tutorial.skip": "Παράλειψη",
+  "tutorial.skipTutorial": "Παράλειψη εκμάθησης",
+  "tutorial.tutor": "Δάσκαλος",
+  "tutorial.walk.hint": "Εδώ! Πάτα πάνω στο φωτεινό σημάδι.",
+  "tutorial.walk.how": "Αριστερό κλικ στο έδαφος ή περπάτα με {keys}.",
+  "tutorial.walk.intro": "Αυτός ο πόλεμος δεν τελειώνει. Περπάτα μαζί μου· έχω μια ιδέα.",
+  "tutorial.walk.praise": "Ωραίο βήμα! Είσαι γεννημένος για αυτό.",
 
   "weaponSets.empty": "Σετ όπλων {number}: άδειο",
   "weaponSets.holds": "Σετ όπλων {number}: {gear}",

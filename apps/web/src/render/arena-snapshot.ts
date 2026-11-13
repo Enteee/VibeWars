@@ -20,7 +20,13 @@ import type {
 } from "@vibewars/game-maps/schema";
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
-import type { Biome, MapAtmosphere, MapBounds, MapLighting } from "@vibewars/game-maps/schema";
+import type {
+  Biome,
+  MapAtmosphere,
+  MapBounds,
+  MapLighting,
+  MapPaving,
+} from "@vibewars/game-maps/schema";
 
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import type { AttackCast } from "./attack-clock.js";
@@ -214,6 +220,8 @@ export interface MapStructure {
   readonly lighting?: MapLighting;
   /** Its fog, smoke, steam and weather (#3032); a map without it has none. */
   readonly atmosphere?: MapAtmosphere;
+  /** Its roads, squares and tracks (#3210), drawn on their layer's floor; a map without it has none. */
+  readonly paving?: readonly MapPaving[];
   /** Each deck there is now, drawn as its `look` (#3067): a tower, a wall-walk, a bridge. */
   readonly decks: readonly MapDeck[];
   /** Each switched deck that is down (#3068): drawn as what is left of it, and nothing more. */

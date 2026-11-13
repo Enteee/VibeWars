@@ -607,21 +607,9 @@ export default {
   "lobby.mapRandom": "マップ: ランダム (チームアリーナ)",
   "lobby.mapShown": "マップ: {map}",
   "lobby.matchRunning": "マッチがまだ進行中です。終了するとロビーが再度開きます。",
-  "lobby.modeAnnihilation": "殲滅: 敵を全滅させる",
-  "lobby.modeCapturePoints":
-    "拠点制圧: 祠の上に立って制圧します。所有する祠ごとに30秒おきに得点します。",
-  "lobby.modeGuildBattle": "ギルドバトル: 敵のギルドロードを倒す",
-  "lobby.modeKillCount": "キルカウント: 3分間で最も多くキルする",
-  "lobby.modeKingOfTheHill":
-    "King of the Hill: ゴーストヒーローを祭壇へ導きます。確保し続けると得点し、{minutes}分間で最多得点のチームが勝利します。",
   "lobby.modeNameCapturePoints": "拠点制圧",
   "lobby.modeNameKingOfTheHill": "King of the Hill",
   "lobby.modeNameRelicRun": "レリックラン",
-  "lobby.modePriestAnnihilation": "司祭殲滅: 敵と司祭を全滅させる",
-  "lobby.modeRelicRun":
-    "レリックラン: レリックを祭壇へ運びます。{minutes}分間で最多得点のチームが勝利します。",
-  "lobby.modeRelicRunFoe":
-    "レリックラン: 敵のレリックを自軍のゴーストヒーローへ運びます。3点差をつけると勝利し、{minutes}分経過時は最多得点のチームが勝利します。",
   "lobby.notReady": "未準備",
   "lobby.playBots": "ボットと対戦",
   "lobby.ready": "準備完了",
@@ -675,7 +663,6 @@ export default {
   "matches.minutesAgo": { other: "{count}分前" },
   "matches.noMatches": "マッチはまだありません。",
   "matches.noneFit": "条件に合うマッチはありません。",
-  "matches.recentNote": "過去7日間の最新50件のマッチを表示しています。",
   "matches.offline": "現在マッチリレーに接続できません。",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1216,7 +1203,6 @@ export default {
   "teamPlay.queuedMaps": "このモードのマップ",
   "teamPlay.random": "ランダム",
   "teamPlay.reroll": "リロール",
-  "teamPlay.teamBuilds": "チームビルド",
   "teamPlay.unnamedTeam": "名前なしチーム",
 
   "topbar.closed": "閉鎖中",
@@ -1342,6 +1328,18 @@ export default {
   "training.soundOff": "サウンドオフ。",
   "training.soundOn": "サウンドオン。",
   "training.you": "自分",
+
+  "tutorial.learn": "遊び方を学ぶ",
+  "tutorial.moreSoon": "続きのレッスンは近日公開。戦場で会おう!",
+  "tutorial.offer": "初めて? 師匠が基本を教えてくれます。",
+  "tutorial.offerTitle": "初めてですか?",
+  "tutorial.skip": "スキップ",
+  "tutorial.skipTutorial": "チュートリアルをスキップ",
+  "tutorial.tutor": "師匠",
+  "tutorial.walk.hint": "こっちだ!光る印の上に立て。",
+  "tutorial.walk.how": "地面を左クリック、または {keys} で歩く。",
+  "tutorial.walk.intro": "この戦は終わらない。ついて来い、考えがある。",
+  "tutorial.walk.praise": "いい足取りだ!筋がいい。",
 
   "weaponSets.empty": "武器セット{number}: 空",
   "weaponSets.holds": "武器セット{number}: {gear}",

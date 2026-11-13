@@ -230,6 +230,19 @@ export function rampFrame(structure: MapStructure, ramp: Transition): RampFrame 
   };
 }
 
+/**
+ * Whether the deck `ramp` climbs to goes on south of it (#3178): a stair
+ * cut into a terrace. Its south side face would stand behind that deck,
+ * so drawn it would only paint a dark slab over the deck's top.
+ */
+function deckBeyondSouthSide(structure: MapStructure, box: Box, ramp: Transition): boolean {
+  const upper = Math.max(ramp.from, ramp.to);
+  const beyond = { x: (box.left + box.right) / 2, y: box.bottom + 1 };
+  return structure.decks.some(
+    (deck) => deck.layer === upper && pointInPolygon(beyond, shapeOutline(deck.footprint)),
+  );
+}
+
 /** The slope, south side face and uphill chevrons of `ramp`. */
 export function rampDrawing(structure: MapStructure, ramp: Transition): RampDrawing {
   const uphill = UPHILL[ramp.uphill];
@@ -249,12 +262,14 @@ export function rampDrawing(structure: MapStructure, ramp: Transition): RampDraw
       lifted(southEast),
       lifted(southWest),
     ],
-    side: [
-      lifted(southWest),
-      lifted(southEast),
-      { x: southEast.x, y: southEast.y - foot },
-      { x: southWest.x, y: southWest.y - foot },
-    ],
+    side: deckBeyondSouthSide(structure, box, ramp)
+      ? []
+      : [
+          lifted(southWest),
+          lifted(southEast),
+          { x: southEast.x, y: southEast.y - foot },
+          { x: southWest.x, y: southWest.y - foot },
+        ],
     chevrons: CHEVRON_AT.map((t) => [
       onRamp(t - CHEVRON_BACK, -CHEVRON_WIDE),
       onRamp(t, 0),
@@ -782,6 +797,8 @@ export function occludersOf(
     // slope is drawn already lifted, so it hides at no further lift. A ramp
     // up from the ground covers the ground behind it, but not a body on it
     // (#3000): on its upper half that body is on the layer above already.
+    // A raised one draws over its own foot's layer too (#3178); a body on
+    // it draws on the layer above, so it needs no such exemption.
     // A lift (#3079) is a shaft, its platform drawn as it moves: it hides nothing.
     ...structure.transitions.flatMap((ramp) => {
       if (ramp.from < ground || ramp.lift !== null) {
@@ -790,7 +807,7 @@ export function occludersOf(
       const { slope } = rampDrawing(structure, ramp);
       return ramp.from === ground
         ? [occluder(slope, 0, 0, ground, shapeOutline(ramp.area))]
-        : [occluder(slope, 0, 0, ramp.from - 1, null)];
+        : [occluder(slope, 0, 0, ramp.from, null)];
     }),
     // The ground over a tunnel covers it whole, from its sunk floor up (#2973).
     ...structure.tunnels.map((tunnel) =>

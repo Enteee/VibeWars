@@ -646,21 +646,9 @@ export default {
   "lobby.mapRandom": "نقشه: تصادفی (آرنای تیمی)",
   "lobby.mapShown": "نقشه: {map}",
   "lobby.matchRunning": "مسابقه‌ای هنوز در جریان است. لابی پس از پایانش دوباره باز می‌شود.",
-  "lobby.modeAnnihilation": "نابودی: همهٔ دشمنان را شکست بده",
-  "lobby.modeCapturePoints":
-    "تسخیر نقاط: روی زیارتگاه‌ها بایست تا تصرفشان کنی. هر زیارتگاه تو هر 30 ثانیه امتیاز می‌دهد.",
-  "lobby.modeGuildBattle": "نبرد انجمن: ارباب انجمن دشمن را بکش",
-  "lobby.modeKillCount": "شمار کشته‌ها: بیشترین کشته در 3 دقیقه",
-  "lobby.modeKingOfTheHill":
-    "پادشاه تپه: قهرمان شبح‌گونت را به محراب برسان. نگهش دار تا امتیاز بگیری؛ بیشترین امتیاز در {minutes} دقیقه برنده است.",
   "lobby.modeNameCapturePoints": "تسخیر نقاط",
   "lobby.modeNameKingOfTheHill": "پادشاه تپه",
   "lobby.modeNameRelicRun": "حمل یادگار",
-  "lobby.modePriestAnnihilation": "نابودی کشیش: همهٔ دشمنان و کشیششان را شکست بده",
-  "lobby.modeRelicRun":
-    "حمل یادگار: یادگارت را به محراب ببر. بیشترین امتیاز در {minutes} دقیقه برنده است.",
-  "lobby.modeRelicRunFoe":
-    "حمل یادگار: یادگار دشمن را به قهرمان شبح‌گونت برسان. برتری 3 امتیازی می‌برد؛ پس از {minutes} دقیقه، بیشترین امتیاز.",
   "lobby.notReady": "آماده نیست",
   "lobby.playBots": "بازی با بات‌ها",
   "lobby.ready": "آماده",
@@ -717,7 +705,6 @@ export default {
   "matches.minutesAgo": { one: "{count} دقیقه پیش", other: "{count} دقیقه پیش" },
   "matches.noMatches": "هنوز مسابقه‌ای نیست.",
   "matches.noneFit": "مسابقه‌ای با این فیلترها نیست.",
-  "matches.recentNote": "نمایش ۵۰ مسابقهٔ اخیر از ۷ روز گذشته.",
   "matches.offline": "فعلاً دسترسی به رله‌های مسابقه ممکن نیست.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size} به {size}",
@@ -1275,7 +1262,6 @@ export default {
   "teamPlay.queuedMaps": "نقشه‌های این حالت",
   "teamPlay.random": "تصادفی",
   "teamPlay.reroll": "تعویض",
-  "teamPlay.teamBuilds": "بیلدهای تیمی",
   "teamPlay.unnamedTeam": "تیم بی‌نام",
 
   "topbar.closed": "بسته",
@@ -1409,6 +1395,18 @@ export default {
   "training.soundOff": "صدا خاموش شد.",
   "training.soundOn": "صدا روشن شد.",
   "training.you": "تو",
+
+  "tutorial.learn": "بازی را یاد بگیر",
+  "tutorial.moreSoon": "به‌زودی درس‌های بیشتر. آن بیرون می‌بینمت!",
+  "tutorial.offer": "تازه آمده‌ای؟ معلمت اصول را نشانت می‌دهد.",
+  "tutorial.offerTitle": "اولین بار؟",
+  "tutorial.skip": "رد شدن",
+  "tutorial.skipTutorial": "رد شدن از آموزش",
+  "tutorial.tutor": "معلم",
+  "tutorial.walk.hint": "اینجا! روی نشان درخشان برو.",
+  "tutorial.walk.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
+  "tutorial.walk.intro": "این جنگ هرگز تمام نمی‌شود. با من بیا؛ فکری دارم.",
+  "tutorial.walk.praise": "قدم خوبی بود! استعدادش را داری.",
 
   "weaponSets.empty": "ست سلاح {number}: خالی",
   "weaponSets.holds": "ست سلاح {number}: {gear}",

@@ -53,6 +53,7 @@ describe("isBuildInput", () => {
   it("is the staged scripts, the nix modules and devenv's own files", () => {
     for (const file of [
       "scripts/bots/hubd.mjs",
+      "scripts/bots/vibewars-sleep.sh",
       "nix/claude-llc.nix",
       "devenv.nix",
       "devenv.yaml",
@@ -64,6 +65,7 @@ describe("isBuildInput", () => {
       "scripts/bots/hubd.test.mjs",
       "scripts/bots/fixtures/old.mjs",
       "scripts/bots/schedule.json",
+      "scripts/bots/runner-spike.sh",
       "nix/notes.md",
       "README.md",
       "apps/web/src/main.ts",

@@ -709,21 +709,9 @@ export default {
   "lobby.mapRandom": "Mapa: losowa (Arena drużynowa)",
   "lobby.mapShown": "Mapa: {map}",
   "lobby.matchRunning": "Mecz wciąż trwa. Lobby otworzy się ponownie po jego zakończeniu.",
-  "lobby.modeAnnihilation": "Anihilacja: pokonaj wszystkich wrogów",
-  "lobby.modeCapturePoints":
-    "Punkty kontrolne: stań na kapliczkach, aby je przejąć. Każda twoja kapliczka punktuje co 30 s.",
-  "lobby.modeGuildBattle": "Bitwa gildii: zabij wrogiego Lorda Gildii",
-  "lobby.modeKillCount": "Licznik zabójstw: najwięcej zabójstw w 3 minuty",
-  "lobby.modeKingOfTheHill":
-    "Król wzgórza: zaprowadź Upiornego Bohatera na ołtarz. Utrzymaj go, aby punktować; wygrywa najwięcej punktów w {minutes} minut.",
   "lobby.modeNameCapturePoints": "Punkty kontrolne",
   "lobby.modeNameKingOfTheHill": "Król wzgórza",
   "lobby.modeNameRelicRun": "Wyścig relikwii",
-  "lobby.modePriestAnnihilation": "Anihilacja kapłana: pokonaj wszystkich wrogów i ich kapłana",
-  "lobby.modeRelicRun":
-    "Wyścig relikwii: zanieś relikwię na ołtarz. Wygrywa najwięcej punktów w {minutes} minut.",
-  "lobby.modeRelicRunFoe":
-    "Wyścig relikwii: zanieś relikwię wroga do swojego Upiornego Bohatera. Wygrywa 3 punkty przewagi; po {minutes} minutach najwięcej punktów.",
   "lobby.notReady": "Niegotowy",
   "lobby.playBots": "Graj z botami",
   "lobby.ready": "Gotowy",
@@ -797,7 +785,6 @@ export default {
   },
   "matches.noMatches": "Nie ma jeszcze meczów.",
   "matches.noneFit": "Żaden mecz nie pasuje do tych filtrów.",
-  "matches.recentNote": "Pokazuje 50 najnowszych meczów z ostatnich 7 dni.",
   "matches.offline": "Brak połączenia z przekaźnikami meczów.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1400,7 +1387,6 @@ export default {
   "teamPlay.queuedMaps": "Mapy w tym trybie",
   "teamPlay.random": "Losowo",
   "teamPlay.reroll": "Losuj",
-  "teamPlay.teamBuilds": "Buildy drużyn",
   "teamPlay.unnamedTeam": "Drużyna bez nazwy",
 
   "topbar.closed": "Zamknięte",
@@ -1540,6 +1526,18 @@ export default {
   "training.soundOff": "Dźwięk wył.",
   "training.soundOn": "Dźwięk wł.",
   "training.you": "Ty",
+
+  "tutorial.learn": "Naucz się grać",
+  "tutorial.moreSoon": "Wkrótce więcej lekcji. Do zobaczenia na polu bitwy!",
+  "tutorial.offer": "Nowy? Twój nauczyciel pokaże ci podstawy.",
+  "tutorial.offerTitle": "Pierwszy raz?",
+  "tutorial.skip": "Pomiń",
+  "tutorial.skipTutorial": "Pomiń samouczek",
+  "tutorial.tutor": "Nauczyciel",
+  "tutorial.walk.hint": "Tutaj! Wejdź na świecący znak.",
+  "tutorial.walk.how": "Kliknij lewym na ziemię albo idź klawiszami {keys}.",
+  "tutorial.walk.intro": "Ta wojna nigdy się nie kończy. Chodź ze mną; mam pomysł.",
+  "tutorial.walk.praise": "Ładny krok! Masz talent.",
 
   "weaponSets.empty": "Zestaw broni {number}: pusty",
   "weaponSets.holds": "Zestaw broni {number}: {gear}",

@@ -647,21 +647,9 @@ export default {
   "lobby.mapRandom": "Harita: rastgele (Takım Arenası)",
   "lobby.mapShown": "Harita: {map}",
   "lobby.matchRunning": "Bir maç hâlâ sürüyor. Bitince lobi yeniden açılır.",
-  "lobby.modeAnnihilation": "İmha: tüm düşmanları yen",
-  "lobby.modeCapturePoints":
-    "Nokta Ele Geçirme: tapınakların üstünde durarak onları ele geçir. Sahip olduğun her tapınak 30 sn'de bir puan getirir.",
-  "lobby.modeGuildBattle": "Lonca Savaşı: düşman Lonca Lordu'nu öldür",
-  "lobby.modeKillCount": "Leş Sayısı: 3 dakikada en çok leş",
-  "lobby.modeKingOfTheHill":
-    "Tepenin Kralı: Hayalet Kahramanını sunağa götür. Sunağı tutarak puan al; {minutes} dakikada en çok puanı alan kazanır.",
   "lobby.modeNameCapturePoints": "Nokta Ele Geçirme",
   "lobby.modeNameKingOfTheHill": "Tepenin Kralı",
   "lobby.modeNameRelicRun": "Kalıntı Koşusu",
-  "lobby.modePriestAnnihilation": "Rahip İmhası: tüm düşmanları ve rahiplerini yen",
-  "lobby.modeRelicRun":
-    "Kalıntı Koşusu: kalıntını sunağa taşı. {minutes} dakikada en çok puanı alan kazanır.",
-  "lobby.modeRelicRunFoe":
-    "Kalıntı Koşusu: düşmanın kalıntısını Hayalet Kahramanına taşı. 3 puan öne geçen kazanır; {minutes} dakika sonunda en çok puanı alan kazanır.",
   "lobby.notReady": "Hazır değil",
   "lobby.playBots": "Botlara karşı oyna",
   "lobby.ready": "Hazır",
@@ -715,7 +703,6 @@ export default {
   "matches.minutesAgo": { one: "{count} dk önce", other: "{count} dk önce" },
   "matches.noMatches": "Henüz maç yok.",
   "matches.noneFit": "Bu filtrelere uyan maç yok.",
-  "matches.recentNote": "Son 7 günün en yeni 50 maçı gösteriliyor.",
   "matches.offline": "Maç relay'lerine şu an ulaşılamıyor.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1278,7 +1265,6 @@ export default {
   "teamPlay.queuedMaps": "Bu moddaki haritalar",
   "teamPlay.random": "Rastgele",
   "teamPlay.reroll": "Yenile",
-  "teamPlay.teamBuilds": "Takım Dizilimleri",
   "teamPlay.unnamedTeam": "Adsız takım",
 
   "topbar.closed": "Kapalı",
@@ -1413,6 +1399,18 @@ export default {
   "training.soundOff": "Ses kapalı.",
   "training.soundOn": "Ses açık.",
   "training.you": "Sen",
+
+  "tutorial.learn": "Oynamayı öğren",
+  "tutorial.moreSoon": "Yakında daha fazla ders. Orada görüşürüz!",
+  "tutorial.offer": "Yeni misin? Öğretmenin sana temelleri gösterecek.",
+  "tutorial.offerTitle": "İlk kez mi?",
+  "tutorial.skip": "Atla",
+  "tutorial.skipTutorial": "Öğreticiyi atla",
+  "tutorial.tutor": "Öğretmen",
+  "tutorial.walk.hint": "Buraya! Parlayan işarete bas.",
+  "tutorial.walk.how": "Zemine sol tıkla ya da {keys} ile yürü.",
+  "tutorial.walk.intro": "Bu savaş hiç bitmiyor. Benimle yürü; bir fikrim var.",
+  "tutorial.walk.praise": "Güzel adım! Doğuştan yeteneklisin.",
 
   "weaponSets.empty": "Silah seti {number}: boş",
   "weaponSets.holds": "Silah seti {number}: {gear}",

@@ -706,21 +706,9 @@ export default {
   "lobby.mapRandom": "Mapa: náhodná (Tímová aréna)",
   "lobby.mapShown": "Mapa: {map}",
   "lobby.matchRunning": "Zápas ešte beží. Lobby sa znova otvorí, keď skončí.",
-  "lobby.modeAnnihilation": "Anihilácia: poraz všetkých nepriateľov",
-  "lobby.modeCapturePoints":
-    "Dobývanie bodov: postav sa na svätyne a obsaď ich. Každá tvoja svätyňa boduje každých 30 s.",
-  "lobby.modeGuildBattle": "Cechová bitka: zabi nepriateľského Pána cechu",
-  "lobby.modeKillCount": "Počet zabití: najviac zabití za 3 minúty",
-  "lobby.modeKingOfTheHill":
-    "Kráľ kopca: doveď svojho Prízračného hrdinu na oltár. Drž ho a získavaj body; po {minutes} minútach vyhráva ten, kto ich má najviac.",
   "lobby.modeNameCapturePoints": "Dobývanie bodov",
   "lobby.modeNameKingOfTheHill": "Kráľ kopca",
   "lobby.modeNameRelicRun": "Beh s relikviou",
-  "lobby.modePriestAnnihilation": "Anihilácia kňaza: poraz všetkých nepriateľov aj ich kňaza",
-  "lobby.modeRelicRun":
-    "Beh s relikviou: dones svoju relikviu na oltár. Vyhráva najviac bodov za {minutes} minút.",
-  "lobby.modeRelicRunFoe":
-    "Beh s relikviou: dones nepriateľskú relikviu svojmu Prízračnému hrdinovi. Vyhráva náskok 3 bodov; po {minutes} minútach najviac bodov.",
   "lobby.notReady": "Nepripravený",
   "lobby.playBots": "Hrať proti botom",
   "lobby.ready": "Pripravený",
@@ -794,7 +782,6 @@ export default {
   },
   "matches.noMatches": "Zatiaľ žiadne zápasy.",
   "matches.noneFit": "Týmto filtrom nezodpovedajú žiadne zápasy.",
-  "matches.recentNote": "Zobrazuje sa 50 najnovších zápasov za posledných 7 dní.",
   "matches.offline": "Relé zápasov sú momentálne nedostupné.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1392,7 +1379,6 @@ export default {
   "teamPlay.queuedMaps": "Mapy v tomto režime",
   "teamPlay.random": "Náhodný",
   "teamPlay.reroll": "Znova",
-  "teamPlay.teamBuilds": "Tímové buildy",
   "teamPlay.unnamedTeam": "Tím bez názvu",
 
   "topbar.closed": "Zatvorené",
@@ -1531,6 +1517,18 @@ export default {
   "training.soundOff": "Zvuk vypnutý.",
   "training.soundOn": "Zvuk zapnutý.",
   "training.you": "Ty",
+
+  "tutorial.learn": "Nauč sa hrať",
+  "tutorial.moreSoon": "Čoskoro ďalšie lekcie. Uvidíme sa vonku!",
+  "tutorial.offer": "Si tu nový? Tvoj učiteľ ti ukáže základy.",
+  "tutorial.offerTitle": "Prvýkrát?",
+  "tutorial.skip": "Preskočiť",
+  "tutorial.skipTutorial": "Preskočiť výučbu",
+  "tutorial.tutor": "Učiteľ",
+  "tutorial.walk.hint": "Sem! Stúp na žiariacu značku.",
+  "tutorial.walk.how": "Klikni ľavým na zem, alebo choď klávesmi {keys}.",
+  "tutorial.walk.intro": "Táto vojna nikdy neskončí. Poď so mnou; mám nápad.",
+  "tutorial.walk.praise": "Pekný krok! Si prirodzený talent.",
 
   "weaponSets.empty": "Sada zbraní {number}: prázdna",
   "weaponSets.holds": "Sada zbraní {number}: {gear}",

@@ -645,21 +645,9 @@ export default {
   "lobby.mapRandom": "Bane: tilfældig (Holdarena)",
   "lobby.mapShown": "Bane: {map}",
   "lobby.matchRunning": "En kamp er stadig i gang. Lobbyen åbner igen, når den er slut.",
-  "lobby.modeAnnihilation": "Udslettelse: besejr alle fjender",
-  "lobby.modeCapturePoints":
-    "Erobring: stå på helligdomme for at tage dem. Hver helligdom, du ejer, giver point hvert 30. s.",
-  "lobby.modeGuildBattle": "Laugskamp: dræb fjendens Laugsherre",
-  "lobby.modeKillCount": "Drabstælling: flest drab på 3 minutter",
-  "lobby.modeKingOfTheHill":
-    "Kongen af bakken: før din Spøgelseshelt op på alteret. Hold det for at score; flest point på {minutes} minutter vinder.",
   "lobby.modeNameCapturePoints": "Erobring",
   "lobby.modeNameKingOfTheHill": "Kongen af bakken",
   "lobby.modeNameRelicRun": "Relikvieløb",
-  "lobby.modePriestAnnihilation": "Præsteudslettelse: besejr alle fjender og deres præst",
-  "lobby.modeRelicRun":
-    "Relikvieløb: bær din relikvie til alteret. Flest point på {minutes} minutter vinder.",
-  "lobby.modeRelicRunFoe":
-    "Relikvieløb: bær fjendens relikvie til din Spøgelseshelt. 3 points forspring vinder; efter {minutes} minutter vinder flest point.",
   "lobby.notReady": "Ikke klar",
   "lobby.playBots": "Spil mod bots",
   "lobby.ready": "Klar",
@@ -713,7 +701,6 @@ export default {
   "matches.minutesAgo": { one: "{count} min siden", other: "{count} min siden" },
   "matches.noMatches": "Ingen kampe endnu.",
   "matches.noneFit": "Ingen kampe passer til disse filtre.",
-  "matches.recentNote": "Viser de 50 seneste kampe fra de sidste 7 dage.",
   "matches.offline": "Kan ikke nå kamp-relays lige nu.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1273,7 +1260,6 @@ export default {
   "teamPlay.queuedMaps": "Baner i denne type",
   "teamPlay.random": "Tilfældig",
   "teamPlay.reroll": "Rul igen",
-  "teamPlay.teamBuilds": "Holdbuilds",
   "teamPlay.unnamedTeam": "Unavngivet hold",
 
   "topbar.closed": "Lukket",
@@ -1408,6 +1394,18 @@ export default {
   "training.soundOff": "Lyd fra.",
   "training.soundOn": "Lyd til.",
   "training.you": "Dig",
+
+  "tutorial.learn": "Lær at spille",
+  "tutorial.moreSoon": "Flere lektioner snart. Vi ses derude!",
+  "tutorial.offer": "Ny her? Din læremester viser dig det grundlæggende.",
+  "tutorial.offerTitle": "Første gang?",
+  "tutorial.skip": "Spring over",
+  "tutorial.skipTutorial": "Spring vejledningen over",
+  "tutorial.tutor": "Læremester",
+  "tutorial.walk.hint": "Herovre! Træd ind på det glødende mærke.",
+  "tutorial.walk.how": "Venstreklik på jorden, eller gå med {keys}.",
+  "tutorial.walk.intro": "Denne krig ender aldrig. Gå med mig; jeg har en idé.",
+  "tutorial.walk.praise": "Flot skridt! Du er et naturtalent.",
 
   "weaponSets.empty": "Våbensæt {number}: tomt",
   "weaponSets.holds": "Våbensæt {number}: {gear}",

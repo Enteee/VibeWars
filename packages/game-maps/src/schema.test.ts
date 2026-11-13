@@ -12,6 +12,7 @@ import {
   MAX_AFTER_CROSSINGS,
   MAX_FOG_BANKS,
   MAX_LIGHTS,
+  MAX_PAVING,
   MAX_OUTLINE_POINTS,
   MAX_PLUMES,
   MAX_WATER_BODIES,
@@ -1638,6 +1639,59 @@ describe("atmosphere (#3032)", () => {
     expect(accepts({ ...atmosphere, fog: Array(MAX_FOG_BANKS + 1).fill(bank) })).toBe(false);
     expect(accepts({ ...atmosphere, plumes: plumes(MAX_PLUMES) })).toBe(true);
     expect(accepts({ ...atmosphere, plumes: plumes(MAX_PLUMES + 1) })).toBe(false);
+  });
+});
+
+describe("paving (#3210)", () => {
+  const road = (overrides: object = {}) => ({
+    id: "road",
+    layer: 0,
+    look: "cobbles",
+    area: { kind: "rect", x: 10, y: 40, width: 80, height: 20 },
+    ...overrides,
+  });
+  const accepts = (paving: unknown[]): void => {
+    expect(() => validateMapData({ ...validMap, paving })).not.toThrow();
+  };
+  const refuses = (paving: unknown[], message: RegExp): void => {
+    expect(() => validateMapData({ ...validMap, paving })).toThrow(message);
+  };
+
+  it("is optional, and may be cobbles, flagstones or dirt, a rectangle or a polygon", () => {
+    expect(validateMapData(validMap).paving).toBeUndefined();
+    const square = {
+      kind: "polygon",
+      points: [
+        { x: 20, y: 20 },
+        { x: 60, y: 20 },
+        { x: 50, y: 70 },
+      ],
+    };
+    accepts([
+      road(),
+      road({ id: "square", look: "flagstones", area: square }),
+      road({ id: "track", look: "dirt" }),
+    ]);
+  });
+
+  it("refuses an unknown look, a layer the map has not, and an area off the map", () => {
+    refuses([road({ look: "marble" })], /paving\.0\.look/);
+    refuses([road({ layer: 1 })], /paving\.0\.layer: layer 1/);
+    refuses(
+      [road({ area: { kind: "rect", x: 80, y: 40, width: 40, height: 20 } })],
+      /paving\.0\.area: paving road is outside the map/,
+    );
+  });
+
+  it("refuses a used id", () => {
+    refuses([road(), road({ look: "dirt" })], /paving\.1\.id: paving id road is used twice/);
+  });
+
+  it(`holds at most ${String(MAX_PAVING)} pavings`, () => {
+    const pavings = (count: number): unknown[] =>
+      Array.from({ length: count }, (_, at) => road({ id: `road-${String(at)}` }));
+    accepts(pavings(MAX_PAVING));
+    refuses(pavings(MAX_PAVING + 1), /paving: /);
   });
 });
 

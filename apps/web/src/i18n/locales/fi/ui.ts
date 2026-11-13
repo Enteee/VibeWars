@@ -656,21 +656,9 @@ export default {
   "lobby.mapRandom": "Kartta: satunnainen (tiimiareena)",
   "lobby.mapShown": "Kartta: {map}",
   "lobby.matchRunning": "Ottelu on vielä käynnissä. Aula avautuu taas, kun se päättyy.",
-  "lobby.modeAnnihilation": "Tuho: kukista kaikki viholliset",
-  "lobby.modeCapturePoints":
-    "Valtauspisteet: seiso pyhäköillä vallataksesi ne. Jokainen pyhäkkösi tuo pisteitä 30 s välein.",
-  "lobby.modeGuildBattle": "Kiltataistelu: surmaa vihollisen killanherra",
-  "lobby.modeKillCount": "Tappolaskenta: eniten tappoja 3 minuutissa",
-  "lobby.modeKingOfTheHill":
-    "Kukkulan kuningas: johda aavesankarisi alttarille. Pidä se hallussasi saadaksesi pisteitä; eniten pisteitä {minutes} minuutissa voittaa.",
   "lobby.modeNameCapturePoints": "Valtauspisteet",
   "lobby.modeNameKingOfTheHill": "Kukkulan kuningas",
   "lobby.modeNameRelicRun": "Reliikkijuoksu",
-  "lobby.modePriestAnnihilation": "Pappituho: kukista kaikki viholliset ja heidän pappinsa",
-  "lobby.modeRelicRun":
-    "Reliikkijuoksu: kanna reliikkisi alttarille. Eniten pisteitä {minutes} minuutissa voittaa.",
-  "lobby.modeRelicRunFoe":
-    "Reliikkijuoksu: kanna vihollisen reliikki aavesankarillesi. 3 pisteen johto voittaa; {minutes} minuutin jälkeen eniten pisteitä.",
   "lobby.notReady": "Ei valmis",
   "lobby.playBots": "Pelaa botteja vastaan",
   "lobby.ready": "Valmis",
@@ -724,7 +712,6 @@ export default {
   "matches.minutesAgo": { one: "{count} min sitten", other: "{count} min sitten" },
   "matches.noMatches": "Ei vielä otteluita.",
   "matches.noneFit": "Yksikään ottelu ei sovi näihin suotimiin.",
-  "matches.recentNote": "Näytetään 50 uusinta ottelua viimeiseltä 7 päivältä.",
   "matches.offline": "Ottelurelayhin ei saada juuri nyt yhteyttä.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1291,7 +1278,6 @@ export default {
   "teamPlay.queuedMaps": "Tämän tilan kartat",
   "teamPlay.random": "Arvottu",
   "teamPlay.reroll": "Arvo uusi",
-  "teamPlay.teamBuilds": "Tiimibuildit",
   "teamPlay.unnamedTeam": "Nimetön tiimi",
 
   "topbar.closed": "Suljettu",
@@ -1426,6 +1412,18 @@ export default {
   "training.soundOff": "Ääni pois.",
   "training.soundOn": "Ääni päällä.",
   "training.you": "Sinä",
+
+  "tutorial.learn": "Opettele pelaamaan",
+  "tutorial.moreSoon": "Lisää oppitunteja pian. Nähdään siellä!",
+  "tutorial.offer": "Uusi täällä? Opettajasi näyttää perusteet.",
+  "tutorial.offerTitle": "Ensimmäinen kerta?",
+  "tutorial.skip": "Ohita",
+  "tutorial.skipTutorial": "Ohita opetus",
+  "tutorial.tutor": "Opettaja",
+  "tutorial.walk.hint": "Tänne! Astu hehkuvalle merkille.",
+  "tutorial.walk.how": "Vasen napsautus maahan, tai kävele näppäimillä {keys}.",
+  "tutorial.walk.intro": "Tämä sota ei lopu koskaan. Kävele kanssani; minulla on idea.",
+  "tutorial.walk.praise": "Hieno askel! Olet luonnonlahjakkuus.",
 
   "weaponSets.empty": "Asesarja {number}: tyhjä",
   "weaponSets.holds": "Asesarja {number}: {gear}",

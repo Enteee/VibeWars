@@ -688,22 +688,9 @@ export default {
   "lobby.mapRandom": "Mappa: casuale (Arena a squadre)",
   "lobby.mapShown": "Mappa: {map}",
   "lobby.matchRunning": "C'è ancora una partita in corso. La lobby riaprirà al termine.",
-  "lobby.modeAnnihilation": "Annientamento: sconfiggi ogni nemico",
-  "lobby.modeCapturePoints":
-    "Conquista: resta sui santuari per prenderli. Ogni santuario tuo dà punti ogni 30 s.",
-  "lobby.modeGuildBattle": "Battaglia di gilda: uccidi il Signore della gilda nemico",
-  "lobby.modeKillCount": "Conta uccisioni: più uccisioni in 3 minuti",
-  "lobby.modeKingOfTheHill":
-    "Re della collina: guida il tuo Eroe spettrale sull'altare. Tienilo per segnare; vince chi fa più punti in {minutes} minuti.",
   "lobby.modeNameCapturePoints": "Conquista",
   "lobby.modeNameKingOfTheHill": "Re della collina",
   "lobby.modeNameRelicRun": "Corsa alla reliquia",
-  "lobby.modePriestAnnihilation":
-    "Annientamento del sacerdote: sconfiggi ogni nemico e il suo sacerdote",
-  "lobby.modeRelicRun":
-    "Corsa alla reliquia: porta la reliquia all'altare. Vince chi fa più punti in {minutes} minuti.",
-  "lobby.modeRelicRunFoe":
-    "Corsa alla reliquia: porta la reliquia nemica al tuo Eroe spettrale. Vince chi ha 3 punti di vantaggio; dopo {minutes} minuti, chi ha più punti.",
   "lobby.notReady": "Non pronto",
   "lobby.playBots": "Gioca contro i bot",
   "lobby.ready": "Pronto",
@@ -761,7 +748,6 @@ export default {
   "matches.minutesAgo": { one: "{count} min fa", many: "{count} min fa", other: "{count} min fa" },
   "matches.noMatches": "Ancora nessuna partita.",
   "matches.noneFit": "Nessuna partita corrisponde ai filtri.",
-  "matches.recentNote": "Mostra le 50 partite più recenti degli ultimi 7 giorni.",
   "matches.offline": "Al momento i relay delle partite non sono raggiungibili.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
@@ -1354,7 +1340,6 @@ export default {
   "teamPlay.queuedMaps": "Mappe di questa modalità",
   "teamPlay.random": "Casuale",
   "teamPlay.reroll": "Rigenera",
-  "teamPlay.teamBuilds": "Build di squadra",
   "teamPlay.unnamedTeam": "Squadra senza nome",
 
   "topbar.closed": "Chiusa",
@@ -1492,6 +1477,18 @@ export default {
   "training.soundOff": "Audio spento.",
   "training.soundOn": "Audio attivo.",
   "training.you": "Tu",
+
+  "tutorial.learn": "Impara a giocare",
+  "tutorial.moreSoon": "Presto altre lezioni. Ci vediamo là fuori!",
+  "tutorial.offer": "Nuovo qui? Il tuo tutor ti mostrerà le basi.",
+  "tutorial.offerTitle": "Prima volta?",
+  "tutorial.skip": "Salta",
+  "tutorial.skipTutorial": "Salta tutorial",
+  "tutorial.tutor": "Tutor",
+  "tutorial.walk.hint": "Di qua! Sali sul segno luminoso.",
+  "tutorial.walk.how": "Clic sinistro sul terreno, o cammina con {keys}.",
+  "tutorial.walk.intro": "Questa guerra non finisce mai. Cammina con me; ho un'idea.",
+  "tutorial.walk.praise": "Bel passo! Sei portato.",
 
   "weaponSets.empty": "Set di armi {number}: vuoto",
   "weaponSets.holds": "Set di armi {number}: {gear}",

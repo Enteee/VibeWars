@@ -2,7 +2,7 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
-import { ARENA_MAPS, ASCENT_PROGRESSION } from "../net/maps.js";
+import { ASCENT_PROGRESSION } from "../net/maps.js";
 import {
   PLAY_BOTS_AFTER_MS,
   hostMaps,
@@ -11,7 +11,6 @@ import {
   lobbyPanel,
   mapLabel,
   matchmakingButtons,
-  modeLine,
   teamColumn,
   waitingFor,
   waitingLine,
@@ -245,49 +244,8 @@ describe("hostMaps (#1453)", () => {
   });
 });
 
-describe("modeLine (#476)", () => {
-  it("says what the map's mode is, in a line", () => {
-    const map = {
-      id: "ember-pits",
-      size: "small",
-      teamSizes: [4],
-    } as const;
-    expect(modeLine({ ...map, mode: "kill-count" })).toBe("Kill Count: most kills in 3 minutes");
-    expect(modeLine({ ...map, mode: "annihilation" })).toBe("Annihilation: defeat every foe");
-    expect(modeLine({ ...map, mode: "relic-run" })).toBe(
-      "Relic Run: carry your relic to the altar. Most points in 8 minutes wins.",
-    );
-    expect(modeLine({ ...map, mode: "king-of-the-hill" })).toBe(
-      "King of the Hill: lead your Ghostly Hero onto the altar. Hold it to score; most points in 8 minutes wins.",
-    );
-  });
-
-  it("tells Cinder Sanctum's foe-relic rules, not the altar's (#2695)", () => {
-    const relicCarry = ARENA_MAPS.find((map) => map.id === "cinder-sanctum")?.relicCarry;
-    expect(relicCarry).toBe("foe");
-    expect(
-      modeLine({
-        id: "cinder-sanctum",
-        size: "small",
-        teamSizes: [8],
-        mode: "relic-run",
-        relicCarry,
-      }),
-    ).toBe(
-      "Relic Run: carry the foe's relic to your Ghostly Hero. A 3-point lead wins; after 8 minutes, most points.",
-    );
-  });
-});
-
 describe("a Hall of Heroes map in the lobby (#2700)", () => {
   const map = { id: "hall-of-heroes-king", size: "small", teamSizes: [8] } as const;
-
-  it("states the Hall's 11 minutes", () => {
-    expect(modeLine({ ...map, mode: "king-of-the-hill" })).toContain("in 11 minutes");
-    expect(modeLine({ ...map, id: "hall-of-heroes-relic", mode: "relic-run" })).toContain(
-      "in 11 minutes",
-    );
-  });
 
   it("is told apart in the picker by its mode", () => {
     expect(mapLabel({ ...map, mode: "king-of-the-hill" })).toBe(
@@ -676,22 +634,15 @@ describe("lobbyPanel: the map (#1994)", () => {
     expect(open.title).toBe("");
   });
 
-  /** The mode line under the bar in `mode`, on Crossroads. */
-  const modeLines = (mode: LobbySnapshot["mode"]): string[] => {
-    const shown = { ...snapshot("waiting"), mode, mapId: "arena-crossroads" };
-    const { body } = lobbyPanel(shown, callbacks, undefined, maps);
-    return (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent);
-  };
-
-  it("has no mode line for Team Arena before its draw, not its placeholder map's (#2642)", () => {
-    expect(modeLines("team-arena")).toEqual([]);
+  it("names no mode under the bar, a map set or not (#3186)", () => {
+    for (const mode of ["hosted-game", "team-arena"] as const) {
+      const shown = { ...snapshot("waiting"), mode, mapId: "arena-crossroads" };
+      const { body } = lobbyPanel(shown, callbacks, undefined, maps);
+      expect((body as unknown as FakeElement).all("lobby-mode")).toEqual([]);
+    }
   });
 
-  it("names the mode of a map that is set", () => {
-    expect(modeLines("hosted-game")).toEqual(["Annihilation: defeat every foe"]);
-  });
-
-  it("names a queued Heroes' Ascent's round map and its mode, not the lobby's (#1996)", () => {
+  it("names a queued Heroes' Ascent's round map, not the lobby's (#1996)", () => {
     const ascent = [
       {
         id: "broken-tower",
@@ -713,13 +664,8 @@ describe("lobbyPanel: the map (#1994)", () => {
       mapId: "broken-tower",
       ascentRound: 1,
     } as const;
-    const { status, body } = lobbyPanel(queued, callbacks, undefined, ascent);
+    const { status } = lobbyPanel(queued, callbacks, undefined, ascent);
     expect((status[0] as unknown as FakeElement).textContent).toBe("Map: Blackwater Ford (medium)");
-    expect(
-      (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent),
-    ).toEqual([
-      "Capture Points: stand on shrines to take them. Each shrine you own scores every 30 s.",
-    ]);
   });
 
   it("shows the group's map once a party that skipped ahead is formed into one (#2687)", () => {
