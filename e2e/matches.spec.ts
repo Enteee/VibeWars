@@ -127,7 +127,7 @@ test("Clone saves a finished 1v1's side as a character and opens it (#2885)", as
   await expect(page.getByText("Cloned Ann")).toBeVisible();
 });
 
-test("shows only the 50 most recent matches of the past 7 days, and says so (#3133)", async ({
+test("shows only the 50 most recent matches of the past 7 days (#3133), with no note saying so (#3186)", async ({
   page,
 }) => {
   const now = Date.now();
@@ -166,9 +166,7 @@ test("shows only the 50 most recent matches of the past 7 days, and says so (#31
 
   await page.goto("./");
   await openRail(page, "Matches");
-  await expect(page.locator(".matches-recent")).toHaveText(
-    "Showing the 50 most recent matches from the past 7 days.",
-  );
+  await expect(page.locator(".matches-note")).toBeVisible();
   await page.evaluate(
     ([channel, all]) => {
       const post = new BroadcastChannel(channel);
@@ -184,5 +182,5 @@ test("shows only the 50 most recent matches of the past 7 days, and says so (#31
   // The newest is on top; the five oldest recent ones went.
   await expect(page.locator(".match-duration").first()).toHaveText("1:00");
   await expect(page.locator(".match-duration").last()).toHaveText("1:49");
-  await expect(page.locator(".matches-recent")).toBeVisible();
+  await expect(page.locator(".matches-recent")).toHaveCount(0);
 });
