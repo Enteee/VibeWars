@@ -175,7 +175,11 @@ export function signedNameElement(player: SignedName): HTMLElement {
   return name;
 }
 
-/** Stands around a player's index while a sentence is translated: no name or message holds it. */
+/**
+ * Stands around a player's index while a sentence is translated: no
+ * message holds it, and plain params are stripped of it, so only a
+ * `SignedName` param can sign (#3256).
+ */
 const PLAYER_MARK = "";
 
 /**
@@ -195,7 +199,7 @@ export function signedText(
       plain[param] = `${PLAYER_MARK}${String(players.length)}${PLAYER_MARK}`;
       players.push(value);
     } else {
-      plain[param] = value;
+      plain[param] = typeof value === "string" ? value.replaceAll(PLAYER_MARK, "") : value;
     }
   }
   const fragment = document.createDocumentFragment();

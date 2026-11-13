@@ -94,4 +94,31 @@ describe("signedText (#3232)", () => {
     expect(read(line)).toBe("You muted <b>& for this session.");
     expect(signets(line)).toBe(0);
   });
+
+  const signedNames = (node: FakeElement): number =>
+    (node.className === "signed-name" ? 1 : 0) +
+    node.children.reduce((sum, child) => sum + signedNames(child), 0);
+
+  it("never lets a plain param forge a signed name (#3256)", () => {
+    const line = signed(
+      signedText("hud.ghostNameFollows", {
+        name: "0",
+        leader: { name: "Bo", signet: 2 },
+      }),
+    );
+    expect(signedNames(line)).toBe(1);
+    expect(read(line)).toBe("0 follows [s]Bo");
+  });
+
+  it("signs nothing on a plain-only line holding marks (#3256)", () => {
+    const line = signed(signedText("chat.muted", { name: "0" }));
+    expect(signedNames(line)).toBe(0);
+    expect(read(line)).toBe("You muted 0 for this session.");
+  });
+
+  it("keeps a mark in a player's own name inside their element (#3256)", () => {
+    const line = signed(signedText("chat.muted", { name: { name: "ab", signet: 3 } }));
+    expect(signedNames(line)).toBe(1);
+    expect(read(line)).toContain("ab");
+  });
 });
