@@ -414,11 +414,16 @@ const HALL_TONES: BiomeTones = {
   plant: 0x4f5e3c,
 };
 
-/** Each biome's tones; the heights and the wilds are the hall's until their maps are rebuilt (#3064). */
+/** Each biome's tones; the heights are the hall's until their maps are rebuilt (#3064). */
 const BIOME_TONES: Record<Biome, BiomeTones> = {
   hall: HALL_TONES,
   heights: HALL_TONES,
-  wilds: HALL_TONES,
+  /** Moss on dark earth (#3071): the hall's dressed stone and wood, built in a wood. */
+  wilds: {
+    ...HALL_TONES,
+    ground: 0x2a3328,
+    rock: 0x5b5f58,
+  },
   /** Warm sandstone, desaturated so danger orange and yellow stay the loudest warm things. */
   desert: {
     ground: 0x3b3226,
