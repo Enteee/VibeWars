@@ -469,7 +469,7 @@ export function switchDescriptors(map: MapData): SwitchDescriptor[] {
 }
 
 /** `wall` as the wire carries it: its shape, without its layer. */
-function wallDescriptor(wall: MapData["walls"][number]): WallDescriptor {
+export function wallDescriptor(wall: MapData["walls"][number]): WallDescriptor {
   return wall.kind === "rect"
     ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
     : { kind: "polygon", points: wall.points };

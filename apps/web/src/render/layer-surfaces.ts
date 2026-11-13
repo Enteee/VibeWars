@@ -14,7 +14,8 @@ import type {
   RenderableWall,
 } from "./arena-snapshot.js";
 import { creatureOutline } from "./creature-shape.js";
-import { ELEVATION_STEP, elevationOf, renderOrder } from "./render-order.js";
+import { LIGHT_MARK_BOX, lightMarkKey } from "./light-mark.js";
+import { elevationOf, renderOrder } from "./render-order.js";
 
 /**
  * What a layered arena (ADR-0051) shows under the cursor, and which part
@@ -136,6 +137,30 @@ export function drawnLayerAt(
     (deck) => deck.layer > layer && pointInPolygon(position, shapeOutline(deck.footprint)),
   );
   return near === undefined || underDeck ? layer : Math.max(near.from, near.to);
+}
+
+/** Where a body standing at a point draws (ADR-0051): how high it is lifted, and on which layer. */
+export interface StandingDraw {
+  readonly lift: number;
+  readonly layer: number;
+}
+
+/**
+ * Where a body of `radius` that has settled at `position` on `layer`
+ * draws: lifted by `liftAt`, on `drawnLayerAt`'s layer. A moving body
+ * eases towards this lift.
+ */
+export function standingDraw(
+  structure: MapStructure,
+  lifts: readonly RenderableLift[],
+  position: Vec2,
+  layer: number,
+  radius: number,
+): StandingDraw {
+  return {
+    lift: liftAt(structure, lifts, position, layer),
+    layer: drawnLayerAt(structure, position, layer, radius),
+  };
 }
 
 /**
@@ -292,6 +317,57 @@ export function isBridgeLook(look: MapStructure["decks"][number]["look"]): boole
 
 /** How high a wall that is not a support stands above its layer. */
 export const WALL_HEIGHT = 28;
+
+/** How high a parapet stands over its deck, and a merlon over the parapet. */
+export const PARAPET_HEIGHT = 6;
+export const MERLON_HEIGHT = 4;
+/** How tall a rope railing's posts stand over its deck. */
+export const POST_HEIGHT = 11;
+/** How tall a plinth's statue stands, its body and its head, in world units. */
+export const STATUE_HEIGHT = 22;
+export const STATUE_HEAD = 5;
+/** The stones fallen at a ruin's foot, per face: where along it, how big; the biggest under its bites. */
+export const RUBBLE: readonly (readonly [number, number])[] = [
+  [0.05, 9],
+  [0.13, 16],
+  [0.21, 10],
+  [0.38, 18],
+  [0.5, 11],
+  [0.63, 14],
+  [0.75, 9],
+  [0.86, 17],
+];
+
+/**
+ * How far a deck's art stands past its slab (#3251): `above` its top,
+ * and `below` the foot of its side, or `"base"` for down to the layer
+ * under it. A deck hides a body wherever its art does.
+ */
+interface DeckArtReach {
+  readonly above: number;
+  readonly below: number | "base";
+}
+
+function deckArtReach(look: MapDeck["look"]): DeckArtReach {
+  switch (look) {
+    case "tower":
+    case "wall-walk":
+    case "gatehouse-roof":
+      return { above: PARAPET_HEIGHT + MERLON_HEIGHT, below: 0 };
+    case "bridge-stone":
+      return { above: PARAPET_HEIGHT, below: "base" };
+    case "bridge-plank":
+      return { above: POST_HEIGHT, below: 0 };
+    case "pier":
+      return { above: 0, below: "base" };
+    case "plinth":
+      return { above: STATUE_HEIGHT + STATUE_HEAD, below: 0 };
+    case "ruin":
+      return { above: 0, below: Math.max(...RUBBLE.map(([, size]) => size)) / 2 };
+    default:
+      return { above: 0, below: 0 };
+  }
+}
 
 /** A straight line between two points. */
 export interface Segment {
@@ -778,21 +854,52 @@ export function occludersOf(
   const { ground } = structure;
   const sunk = liftOf(structure, ground - 1);
   return [
+    // A wall that holds a deck up draws with that deck's supports, over
+    // everyone under the deck, whichever layer its foot is on (#3251).
     ...walls.map((wall) => {
       const base = liftOf(structure, wall.layer);
       const held = deckHeldBy(wall, structure);
-      const high = held === undefined ? base + WALL_HEIGHT : deckSideLow(held, walls, ground);
-      return occluder(shapeOutline(wall), base, high, wall.layer, null);
+      return held === undefined
+        ? occluder(shapeOutline(wall), base, base + WALL_HEIGHT, wall.layer, null)
+        : occluder(
+            shapeOutline(wall),
+            base,
+            deckSideLow(held, walls, ground),
+            held.layer - 1,
+            null,
+          );
     }),
-    ...structure.decks.map((deck) =>
-      occluder(
+    ...structure.decks.map((deck) => {
+      const reach = deckArtReach(deck.look);
+      return occluder(
         shapeOutline(deck.footprint),
-        deckSideLow(deck, walls, ground),
-        liftOf(structure, deck.layer),
+        reach.below === "base"
+          ? liftOf(structure, deck.layer - 1)
+          : deckSideLow(deck, walls, ground) - reach.below,
+        liftOf(structure, deck.layer) + reach.above,
         deck.layer - 1,
         null,
-      ),
-    ),
+      );
+    }),
+    // A torch or a hearth draws over whoever is on a layer below its own (#3251).
+    ...(structure.lighting?.lights ?? []).flatMap((light) => {
+      const key = lightMarkKey(light.id);
+      if (key === undefined || light.layer === 0) {
+        return [];
+      }
+      const box = LIGHT_MARK_BOX[key];
+      const { x, y } = light.position;
+      const lift = liftOf(structure, light.layer);
+      return [
+        occluder(
+          boxOutline(x + box.left, y + box.top, x + box.right, y + box.bottom),
+          lift,
+          lift,
+          light.layer - 1,
+          null,
+        ),
+      ];
+    }),
     // A raised ramp covers the ground under it as a deck does (#2975); its
     // slope is drawn already lifted, so it hides at no further lift. A ramp
     // up from the ground covers the ground behind it, but not a body on it
@@ -804,10 +911,13 @@ export function occludersOf(
       if (ramp.from < ground || ramp.lift !== null) {
         return [];
       }
-      const { slope } = rampDrawing(structure, ramp);
-      return ramp.from === ground
-        ? [occluder(slope, 0, 0, ground, shapeOutline(ramp.area))]
-        : [occluder(slope, 0, 0, ramp.from, null)];
+      // Its side face, where it has one, draws with it and hides as it does (#3251).
+      const { slope, side } = rampDrawing(structure, ramp);
+      return (side.length === 0 ? [slope] : [slope, side]).map((outline) =>
+        ramp.from === ground
+          ? occluder(outline, 0, 0, ground, shapeOutline(ramp.area))
+          : occluder(outline, 0, 0, ramp.from, null),
+      );
     }),
     // The ground over a tunnel covers it whole, from its sunk floor up (#2973).
     ...structure.tunnels.map((tunnel) =>
@@ -828,8 +938,6 @@ export function occludersOf(
   ];
 }
 
-/** How finely a deck's side face is tested, in world units. */
-const LIFT_SLICE = ELEVATION_STEP / 4;
 const probe = { x: 0, y: 0 };
 const feet = { x: 0, y: 0 };
 
@@ -847,17 +955,28 @@ function hides(each: Occluder, x: number, y: number): boolean {
   if (x < each.left || x > each.right || y < each.top || y > each.bottom) {
     return false;
   }
-  for (let lift = each.lowLift; ; lift += LIFT_SLICE) {
-    const at = Math.min(lift, each.highLift);
-    probe.x = x;
-    probe.y = y + at;
-    if (pointInPolygon(probe, each.outline)) {
+  probe.x = x;
+  probe.y = y + each.lowLift;
+  if (pointInPolygon(probe, each.outline)) {
+    return true;
+  }
+  // Swept from its low lift to its high, the outline covers the point
+  // where an edge crosses the probe's path between the two (#3251).
+  const low = y + each.lowLift;
+  const high = y + each.highLift;
+  const { outline } = each;
+  for (let k = 0; k < outline.length; k += 1) {
+    const a = outline[k];
+    const b = outline[(k + 1) % outline.length];
+    if (a === undefined || b === undefined || a.x <= x === b.x <= x) {
+      continue;
+    }
+    const crossing = a.y + ((x - a.x) / (b.x - a.x)) * (b.y - a.y);
+    if (crossing >= low && crossing <= high) {
       return true;
     }
-    if (at === each.highLift) {
-      return false;
-    }
   }
+  return false;
 }
 
 function closedPath(points: readonly Vec2[], perEdge: number): Float64Array {
@@ -954,8 +1073,16 @@ export interface HiddenPiece {
 /** How long a piece of a polyline is tested as one, in world units. */
 const POLYLINE_STEP = 2;
 
-/** Whether a structure covers a body on `layer` at this point. */
-function hiddenAt(occluders: readonly Occluder[], layer: number, x: number, y: number): boolean {
+/**
+ * Whether a structure covers a body on `layer` at this point: where
+ * `traceHiddenOutline` strokes the outline, dashes aside.
+ */
+export function hiddenAt(
+  occluders: readonly Occluder[],
+  layer: number,
+  x: number,
+  y: number,
+): boolean {
   return occluders.some(
     (each) => layer <= each.hidesThrough && hides(each, x, y) && !exempted(each, x, y),
   );
