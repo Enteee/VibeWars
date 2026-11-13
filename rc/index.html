@@ -7,13 +7,16 @@
     <title>VibeWars</title>
     <!-- Vite copies `public/` to the dist root, which the server then serves. -->
     <link rel="icon" type="image/svg+xml" href="/VibeWars/rc/icon.svg" />
-    <script type="module" crossorigin src="/VibeWars/rc/assets/main-BOuf57if.js"></script>
+    <script type="module" crossorigin src="/VibeWars/rc/assets/main-PQKnI3C8.js"></script>
     <link rel="modulepreload" crossorigin href="/VibeWars/rc/assets/preload-helper-CsNSpIhQ.js">
-    <link rel="modulepreload" crossorigin href="/VibeWars/rc/assets/dist-BvjhOe0K.js">
-    <link rel="modulepreload" crossorigin href="/VibeWars/rc/assets/music-urls-Dw3aMrXT.js">
-    <link rel="stylesheet" crossorigin href="/VibeWars/rc/assets/main-BPvc2LkO.css">
+    <link rel="modulepreload" crossorigin href="/VibeWars/rc/assets/dist-BZQ4XYpG.js">
+    <link rel="modulepreload" crossorigin href="/VibeWars/rc/assets/arena-snapshot-BwoxeFV7.js">
+    <link rel="modulepreload" crossorigin href="/VibeWars/rc/assets/music-urls-ClYegoqA.js">
+    <link rel="stylesheet" crossorigin href="/VibeWars/rc/assets/main-7_NsDuEf.css">
   </head>
   <body>
+    <!-- The menu background's fight (#3119): behind the screens, no input. -->
+    <div id="menu-background" aria-hidden="true"></div>
     <div id="app">
       <!-- The shown screen's place and controls, then the global icons (#1272). -->
       <header id="topbar">
@@ -25,6 +28,7 @@
         <span id="status" class="status" hidden></span>
         <div class="topbar-tools">
           <div class="topbar-screen-actions"></div>
+          <div class="topbar-queue-action"></div>
           <div id="topbar-actions" class="topbar-actions"></div>
         </div>
       </header>

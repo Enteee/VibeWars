@@ -1,3 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/engine-pyjisxSv.js","assets/music-urls-Dw3aMrXT.js"])))=>i.map(i=>d[i]);
-import{t as e}from"./preload-helper-CsNSpIhQ.js";function t(e,t,n){return e===`null`&&n!==t}var n=[`RTCPeerConnection`,`webkitRTCPeerConnection`,`RTCDataChannel`,`RTCSessionDescription`];function r(e){for(let t of n)Reflect.deleteProperty(e,t);return n.every(t=>!(t in e))}t(self.origin,window,window.parent)&&r(globalThis)&&e(async()=>{let{startEngine:e}=await import(`./engine-pyjisxSv.js`);return{startEngine:e}},__vite__mapDeps([0,1])).then(({startEngine:e})=>e());
-//# sourceMappingURL=music-host-Cb38sFKp.js.map
