@@ -15,11 +15,18 @@ const ZONE_LIGHT_PREFIX = "zone-";
 const TELEPORT_LIGHT_PREFIX = "teleport-";
 
 /**
+ * The farthest a zone's light reaches. A light's cost grows with its
+ * area, and a long river of lava would otherwise cast one the size of the
+ * map from its middle (#3225).
+ */
+export const ZONE_LIGHT_MAX_RADIUS = 320;
+
+/**
  * The lights `zones` cast (#3052): one per zone whose kind has a light,
  * on its centroid, reaching `radiusScale` times its outline's
- * half-diagonal. Render only: the map file has none of them. With
- * `mapLights` already lit, past `MAX_LIGHTS` the rest are dropped in map
- * order.
+ * half-diagonal, at most `ZONE_LIGHT_MAX_RADIUS`. Render only: the map
+ * file has none of them. With `mapLights` already lit, past `MAX_LIGHTS`
+ * the rest are dropped in map order.
  */
 export function zoneLights(zones: readonly MapZone[], mapLights: number): readonly LightsOf[] {
   const lights: LightsOf[] = [];
@@ -40,7 +47,7 @@ export function zoneLights(zones: readonly MapZone[], mapLights: number): readon
       id: `${ZONE_LIGHT_PREFIX}${String(index)}`,
       position: zoneCentroid(zone.area),
       layer: zone.layer,
-      radius: light.radiusScale * halfDiagonal,
+      radius: Math.min(light.radiusScale * halfDiagonal, ZONE_LIGHT_MAX_RADIUS),
       colour: light.colour,
       intensity: light.intensity,
       flicker: light.flicker,
