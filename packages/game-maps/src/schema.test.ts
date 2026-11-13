@@ -225,8 +225,8 @@ describe("the bench's reference map", () => {
     expect(map.transitions.length).toBeGreaterThan(0);
     expect(map.pits.length).toBeGreaterThan(0);
     expect(map.tunnels.length).toBeGreaterThan(0);
-    expect(map.lighting.lights.length).toBeGreaterThan(0);
-    expect(map.zones.length).toBeGreaterThan(0);
+    expect(map.lighting?.lights.length).toBeGreaterThan(0);
+    expect(map.zones?.length).toBeGreaterThan(0);
   });
 });
 

@@ -60,6 +60,15 @@ import {
 import { TRAINING_MAPS } from "../training/maps.js";
 
 /**
+ * True only in the render bench's build (#3255). There is no Vite
+ * `import.meta.env` when the e2e specs import this module in Node.
+ */
+function benchBuild(): boolean {
+  const { env } = import.meta as { readonly env?: Partial<ImportMetaEnv> };
+  return env?.VITE_VIBEWARS_BENCH_REFERENCE === "1";
+}
+
+/**
  * The arenas a lobby can be played on (#403), as the host's browser
  * builds them: the server used to load these from disk and serve the list
  * at `/api/maps`.
@@ -108,7 +117,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   // Capture Points' (#1378, #2551).
   scarredEarth,
   // The render bench's yardstick (#3255): in its build only, never a player's.
-  ...(import.meta.env.VITE_VIBEWARS_BENCH_REFERENCE === "1" ? [benchReference] : []),
+  ...(benchBuild() ? [benchReference] : []),
 ].map((raw) => validateMapData(raw));
 
 /** The arena a new lobby starts on, the server's default before (#403). */
