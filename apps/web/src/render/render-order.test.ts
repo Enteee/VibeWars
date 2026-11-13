@@ -239,7 +239,6 @@ describe("an effect zone's place in the order (ADR-0053, #3024)", () => {
       { kind: "deck", deckLayer: 1 },
       { kind: "water", layer: 1, part: "ripples" },
       { kind: "lighting", layer: 1 },
-      { kind: "zone", layer: 1, part: "ground" },
       { kind: "zone", layer: 1, part: "marks" },
       { kind: "ground-effect", layer: 1 },
       { kind: "light-mark", layer: 1 },
@@ -298,5 +297,38 @@ describe("atmosphere's place in the order (#3032)", () => {
     expect(renderOrder({ kind: "weather" })).toBeGreaterThan(top);
     expect(renderOrder({ kind: "weather" })).toBeLessThan(renderOrder({ kind: "hidden-outline" }));
     expect(renderOrder({ kind: "weather" })).toBeLessThan(renderOrder({ kind: "ui" }));
+  });
+});
+
+describe("paving's place in the order (#3210)", () => {
+  it("draws ground paving over the floor, the outside and a pit's floor, under the water, wards, terrain, light and bodies", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "outside" },
+      { kind: "floor" },
+      { kind: "pit" },
+      { kind: "paving", layer: 0 },
+      { kind: "water", layer: 0, part: "surface" },
+      { kind: "ground-effect", layer: 0 },
+      { kind: "terrain" },
+      { kind: "lighting", layer: 0 },
+      character(0),
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
+  });
+
+  it("draws paving on a raised ground over its deck and ramps, under its water, light and bodies", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "deck", deckLayer: 1 },
+      { kind: "ramp", upperLayer: 1 },
+      { kind: "paving", layer: 1 },
+      { kind: "water", layer: 1, part: "surface" },
+      { kind: "lighting", layer: 1 },
+      character(1),
+      { kind: "wall", layer: 1 },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
   });
 });

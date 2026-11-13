@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-import type { MapAtmosphere, MapBounds, MapLighting } from "@vibewars/game-maps/schema";
+import type { MapAtmosphere, MapBounds, MapLighting, MapPaving } from "@vibewars/game-maps/schema";
 
 import {
   ALTAR_REACH_UNITS,
@@ -74,6 +74,8 @@ import {
   WALL_STROKE,
   arenaPalette,
   type ArenaPalette,
+  pavingPalette,
+  type PavingLookColours,
 } from "./arena-palette.js";
 import {
   trackAlt,
@@ -226,6 +228,7 @@ import {
   paintOutsideTile,
   type OutsidePainter,
 } from "./outside-land.js";
+import { paintPaving, pavingDrawing } from "./paving-painter.js";
 import { withZoneLights } from "./zone-light.js";
 import { insideRuns, shownFill } from "./cell-cover.js";
 import {
@@ -295,6 +298,11 @@ const ZONE_TEXTURE_SCALE = 2;
 const ZONE_TEXTURE_MAX_SIDE = 2048;
 /** Zone grounds made so far: each texture gets a key of its own, across maps and restarts. */
 let zoneGroundTextures = 0;
+/** Pixels per world unit of a paving's texture (#3210), and its longest side, however large it is. */
+const PAVING_TEXTURE_SCALE = 2;
+const PAVING_TEXTURE_MAX_SIDE = 2048;
+/** Pavings painted so far: each texture gets a key of its own, across maps and restarts. */
+let pavingTextures = 0;
 
 /** A painted zone's ground (#3052): its art, its image and the texture the image shows. */
 interface ZoneGround {
@@ -475,6 +483,17 @@ export class ArenaScene extends Phaser.Scene {
         readonly atmosphere: MapAtmosphere;
         readonly fog: readonly FogArt[];
         readonly particles: AtmosphereParticles;
+      }
+    | undefined;
+  /** The map's paving (#3210), one canvas texture per paving, painted when the map changes. */
+  private pavingDrawn:
+    | {
+        readonly paving: readonly MapPaving[] | undefined;
+        readonly colours: Record<MapPaving["look"], PavingLookColours>;
+        readonly painted: readonly {
+          readonly image: Phaser.GameObjects.Image;
+          readonly key: string;
+        }[];
       }
     | undefined;
   /** Each painted zone's ground (#3052), one canvas texture per zone, made when the map changes. */
@@ -2329,6 +2348,7 @@ export class ArenaScene extends Phaser.Scene {
     const { ground } = next.structure;
     this.drawFloor(palette, line);
     this.drawOutside(next.structure.bounds, next.lighting);
+    this.drawPaving(next.structure);
     paintDeckShadows(
       {
         save: () => g.save(),
@@ -3220,9 +3240,60 @@ export class ArenaScene extends Phaser.Scene {
     this.lightingPass = undefined;
     this.dropOutside();
     this.dropZoneGrounds();
+    this.dropPaving();
     this.leverFlips.clear();
     this.alt?.dispose();
     this.alt = undefined;
+  }
+
+  /**
+   * The map's roads, squares and tracks (#3210) on their layers' floors,
+   * one canvas texture each, painted once: made again only when the map's
+   * paving or its colours change, so they cost nothing per frame.
+   */
+  private drawPaving(structure: MapStructure): void {
+    const colours = pavingPalette(structure);
+    const drawn = this.pavingDrawn;
+    if (drawn !== undefined && drawn.paving === structure.paving && drawn.colours === colours) {
+      return;
+    }
+    this.dropPaving();
+    const painted = (structure.paving ?? []).map((paving) => {
+      const drawing = pavingDrawing(paving, colours[paving.look]);
+      const { x, y, width, height } = drawing.bounds;
+      const scale = Math.min(
+        PAVING_TEXTURE_SCALE,
+        PAVING_TEXTURE_MAX_SIDE / Math.max(1, width, height),
+      );
+      const key = `paving-${String(pavingTextures)}`;
+      pavingTextures += 1;
+      const texture = this.textures.createCanvas(
+        key,
+        Math.max(1, Math.ceil(width * scale)),
+        Math.max(1, Math.ceil(height * scale)),
+      );
+      if (texture === null) {
+        throw new Error("paving: could not create a paving's texture");
+      }
+      paintPaving(texture.context, drawing, scale);
+      texture.refresh();
+      const image = this.add
+        .image(x, y - elevationOf(paving.layer, structure.ground), key)
+        .setOrigin(0, 0)
+        .setScale(1 / scale)
+        .setDepth(renderOrder({ kind: "paving", layer: paving.layer }));
+      return { image, key };
+    });
+    this.pavingDrawn = { paving: structure.paving, colours, painted };
+  }
+
+  /** Drops the paving drawn last, and its textures. */
+  private dropPaving(): void {
+    for (const { image, key } of this.pavingDrawn?.painted ?? []) {
+      image.destroy();
+      this.textures.remove(key);
+    }
+    this.pavingDrawn = undefined;
   }
 
   /** Drops the painted grounds of the zones drawn last, and their textures. */
