@@ -240,10 +240,10 @@ that is measured. Each map is then judged against the mean of the two
 calibration windows around it, and fails as too noisy if those two
 differ by over 20 %.
 
-**Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over the
-gate for a known reason, each gated at its own ratio and tied to the perf
+**Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over or
+near the gate for a known reason, each gated at its own ratio and tied to the perf
 issue that will cut it. Long-hall is listed at 4.0 (its worst run 3.45,
-+15 %) until #3254. A listed map that measures at or under the gate ÷ 1.15
-(3.04 at 3.5) fails as stale, so its entry is deleted when its issue
-lands. The 15 % margin keeps a map just under the gate from flaking on
-runner noise.
++15 %) until #3254. A listed map that measures at or under the gate ÷ 1.25
+(2.80 at 3.5) fails as stale, so its entry is deleted when its issue
+lands. The margin keeps a map just under the gate from flaking: long-hall
+measured 2.99-3.45.

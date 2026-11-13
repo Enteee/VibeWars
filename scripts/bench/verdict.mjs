@@ -24,9 +24,10 @@
 
 /**
  * How far under `maxRatio` a listed map must measure to fail as stale: a
- * map just under the default keeps its ceiling, as runner noise is ±10 % (#3255).
+ * map just under the default keeps its ceiling, as runner noise is ±10 % and long-hall
+ * measured 2.99-3.45 against a 3.5 gate (#3255).
  */
-export const STALE_MARGIN = 1.15;
+export const STALE_MARGIN = 1.25;
 
 /**
  * Map i is bracketed by windows i and i + 1, so `windows` is one longer than
