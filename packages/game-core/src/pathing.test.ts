@@ -465,6 +465,7 @@ const SERVER_MAPS: readonly {
 }[] = [
   { name: "arena-alpha", walls: ARENA_ALPHA, bounds: ARENA_BOUNDS },
   { name: "arena-open", walls: rect(420, 250, 60, 100), bounds: { width: 900, height: 600 } },
+  // Ember Pits as it was before its 2.5D rebuild (#3225), kept as a fixture: its walls only.
   {
     name: "ember-pits",
     walls: [
