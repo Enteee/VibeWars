@@ -10,6 +10,7 @@ import { validateMapData, type GateLook, type MapData } from "@vibewars/game-map
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
 import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
+import benchReference from "@vibewars/game-maps/bench/reference-map.json" with { type: "json" };
 import ashenCourtyard from "@vibewars/game-maps/maps/ashen-courtyard/map.json" with { type: "json" };
 import elonianPlateau from "@vibewars/game-maps/maps/elonian-plateau/map.json" with { type: "json" };
 import emberPits from "@vibewars/game-maps/maps/ember-pits/map.json" with { type: "json" };
@@ -106,6 +107,11 @@ export const ARENA_MAPS: readonly MapData[] = [
   brazenCauseway,
   // Capture Points' (#1378, #2551).
   scarredEarth,
+  // The render bench's yardstick (#3255): in its build only. A player build
+  // folds this to false and drops the JSON; Node (vitest, e2e) has no define.
+  ...(typeof __VIBEWARS_BENCH_REFERENCE__ !== "undefined" && __VIBEWARS_BENCH_REFERENCE__
+    ? [benchReference]
+    : []),
 ].map((raw) => validateMapData(raw));
 
 /** The arena a new lobby starts on, the server's default before (#403). */
