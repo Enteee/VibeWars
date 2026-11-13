@@ -209,6 +209,28 @@ describe("validateMapData", () => {
 });
 
 /**
+ * The render bench's reference map (#3255) is in no list a player sees,
+ * so this is what validates it.
+ */
+describe("the bench's reference map", () => {
+  const map = validateMapData(
+    JSON.parse(
+      readFileSync(fileURLToPath(new URL("../bench/reference-map.json", import.meta.url)), "utf8"),
+    ),
+  );
+
+  it("is valid and has what a map draws: layers, a deck, a ramp, a pit with a tunnel, lights, a zone", () => {
+    expect(map.layers).toBeGreaterThan(1);
+    expect(map.decks.length).toBeGreaterThan(0);
+    expect(map.transitions.length).toBeGreaterThan(0);
+    expect(map.pits.length).toBeGreaterThan(0);
+    expect(map.tunnels.length).toBeGreaterThan(0);
+    expect(map.lighting.lights.length).toBeGreaterThan(0);
+    expect(map.zones.length).toBeGreaterThan(0);
+  });
+});
+
+/**
  * The training arenas (#2 §4.4) are not in `maps/`, so `loadAllMaps` never
  * sees them; this is what validates them instead.
  */

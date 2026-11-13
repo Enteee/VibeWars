@@ -31,6 +31,11 @@ interface ImportMetaEnv {
   readonly VITE_VIBEWARS_SPLASH?: string;
   /** `off` draws no menu background fight (#3156) unless the URL has `?menu-background`: e2e only. */
   readonly VITE_VIBEWARS_MENU_BACKGROUND?: string;
+  /**
+   * `1` only in the build scripts/bench/render-bench.mjs makes: the
+   * lobby offers the bench's reference map (#3255). Read only by `net/maps.ts`.
+   */
+  readonly VITE_VIBEWARS_BENCH_REFERENCE?: string;
 }
 
 interface ImportMeta {
