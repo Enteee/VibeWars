@@ -25,6 +25,15 @@
  *   BENCH_MAX_RATIO=3 exit 1 when a map's p50 is more than this many
  *                      times the calibration's. CI's regression gate.
  *   --url <url>        measure a client already served there.
+ *   --follow           only the follow case (#3240), below.
+ *
+ * Then the follow case: on every map measured and `FLAT_BASELINE`, a Hosted
+ * 1v1 whose body walks `followLoop` while the camera follows it and the
+ * pointer hovers the ground, uncapped. Its rows join the table and the
+ * gate; a second table gives the frame's update and render JS, the
+ * update's share of the frame, and the snapshot cadence, which the
+ * client measures itself under `?framestats`.
+ *   BENCH_FOLLOW_SECONDS=12  how long each map walks, measured.
  *
  * The menu background never draws faster than 30 fps (#3119): a map
  * under that cap measures as the cap. Software GL is far over it.
@@ -175,7 +184,7 @@ async function measure(page, mapId) {
 }
 
 /**
- * Frame intervals over `SECONDS` of animation frames, in ms, sorted.
+ * Frame intervals over `seconds` of animation frames, in ms, sorted.
  *
  * @param {import("@playwright/test").Page} page
  * @param {number} [seconds]

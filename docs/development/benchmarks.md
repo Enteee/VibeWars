@@ -146,13 +146,48 @@ PASS is necessary, not sufficient. Bots do not yet value high ground or
 cover (#2542), so a map whose heights favour one side can still pass.
 The operator's playtest is the final word on every map.
 
+### The host tick on a whole map
+
+`BENCH_TICKS=600 BENCH_HOST=arena-canyon,arena-crossroads pnpm run
+bench:ticks` (#3240) times the host's step of a 4v4 of bots on each map
+named: every layer, structure and objective, as a match plays it. It
+prints p50, p95 and max per map. Report-only; CI runs only a short smoke
+of it.
+
+## The render bench
+
+`pnpm run bench:render` (#3157, #3240) builds the client and times its
+frames in headless Chromium at 1280 × 720, as ratios to a fixed WebGL
+calibration drawn in the same browser. CI runs it on pull requests that
+touch the renderer or the maps, and fails a map whose p50 is over 3× the
+calibration's. It measures two cases:
+
+- **The menu background** on every layered map: the bots' fight, the
+  camera still, at the menu's 30 fps cap.
+- **Follow** (`--follow` runs only this one) on every layered map and
+  one flat map, `jungle-ruins`, the baseline. A Hosted 1v1 there, its
+  body walking a fixed loop by left clicks: over the transition nearest
+  its spawn, to the map's centre, and back. The camera follows, the
+  pointer sweeps the ground every 50 ms so hover runs, and nothing caps
+  the frame rate. A second table gives each map's update and render p50
+  (the frame's JS: the game's step, the match view and
+  `ArenaScene.update`, then Phaser's render of the scene), the update's
+  share of the frame time, and the time between two frames that drew a
+  new snapshot: its p50, p95 and standard deviation (jitter).
+
+The follow case measures the page through `?framestats`
+(`render/frame-stats.ts`), which any client takes: open a match with
+it and `window.__frameStats` holds those times.
+
+In software GL the update and render JS are a small share of a frame:
+most of it is the GPU process filling pixels, which no JS timer sees.
+
 ## What is not measured
 
-**Client FPS.** It needs a real browser compositing real frames, which
-this headless harness cannot observe. Reporting a number for it would be
-a guess, and the brief is explicit that a plausible-looking fabricated
-measurement is worse than an absent one (§45). Measuring it properly
-means a Playwright run sampling `requestAnimationFrame`.
+**Client FPS on a real GPU.** The render bench draws in headless
+Chromium's software GL, where filling pixels costs far more than on a
+graphics card: there it measures regressions against its calibration,
+not what a player's machine shows.
 
 **A real network, and sync latency.** Every peer shares a process with
 the host, and the in-memory transport delivers a microtask later, so a
