@@ -291,6 +291,13 @@ describe("who may read the player key (#3227)", () => {
   it.each([
     ["its storage key", /[.`"']playerKey[`"']/, ["net/transport/player-key.ts"]],
     ["loadPlayerKey", /\bloadPlayerKey\b/, ["main.ts", "net/transport/player-key.ts"]],
+    // Walking storage reaches the secret without naming it: a debug dump
+    // or a backup export.
+    [
+      "a walk over localStorage",
+      /Object\.(?:keys|entries|values)\(\s*(?:window\.|globalThis\.)?localStorage\b|localStorage\.key\(|JSON\.stringify\(\s*(?:window\.|globalThis\.)?localStorage\b|for\s*\(\s*(?:const|let|var)\s+\w+\s+in\s+(?:window\.|globalThis\.)?localStorage\b/,
+      [],
+    ],
   ])("names %s only where it is read", (_what, pattern, allowed) => {
     const naming = sources(SRC)
       .filter((file) => pattern.test(fs.readFileSync(file, "utf8")))

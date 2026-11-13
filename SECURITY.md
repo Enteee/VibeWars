@@ -278,8 +278,9 @@ channels, as often as they like.
   signet there proves nothing. The key's secret half stays in this
   browser's storage and is never sent, logged, shown or put in a link:
   only `net/transport/player-key.ts` reads it, and
-  `player-key-egress.test.ts` (#3227) drives every way out with a known
-  secret and fails if any of them carries it.
+  `player-key-egress.test.ts` (#3227) drives everything that holds the
+  `PlayerKey` with a known secret and fails if any of them carries it,
+  and fails on any new reader of its storage or walk over storage.
 - **Everything in a snapshot.** A peer receives every snapshot field the
   host sends, for every player. Anything that must stay hidden from a
   player must not be in the snapshot at all.
