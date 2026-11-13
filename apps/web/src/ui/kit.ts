@@ -700,7 +700,12 @@ export function toast(
   dismissToast();
   const element = h("div", "toast");
   element.setAttribute("role", "status");
-  element.appendChild(h("span", "toast-text")).append(text);
+  const textElement = element.appendChild(
+    h("span", "toast-text", typeof text === "string" ? text : undefined),
+  );
+  if (typeof text !== "string") {
+    textElement.append(text);
+  }
   const { undo, problems = [] } = options;
   if (problems.length > 0) {
     const list = h("ul", "problems-list toast-problems");

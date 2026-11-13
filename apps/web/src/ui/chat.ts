@@ -247,8 +247,10 @@ export function mountChat(deps: ChatDeps): ChatPanel {
   };
 
   const notice = (text: string | Node, undo?: () => void): void => {
-    const row = h("div", "chat-line chat-notice");
-    row.append(text);
+    const row = h("div", "chat-line chat-notice", typeof text === "string" ? text : undefined);
+    if (typeof text !== "string") {
+      row.append(text);
+    }
     if (undo !== undefined) {
       row.append(" ", button(t("chat.unmute"), "chat-unmute", undo));
     }

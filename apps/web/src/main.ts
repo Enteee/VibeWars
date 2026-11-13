@@ -172,7 +172,7 @@ import {
   type MenuCallbacks,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
-import { signetOf } from "./ui/player-label.js";
+import { signedText, signetOf } from "./ui/player-label.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import {
@@ -634,7 +634,7 @@ async function main(): Promise<void> {
   const hallWatch = watchHall(
     watchRecords,
     () => Date.now(),
-    toast,
+    (line) => toast(signedText(line.key, line.params)),
     () => {
       paintQueue();
     },
