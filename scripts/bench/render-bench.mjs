@@ -57,6 +57,8 @@ const MAX_CALIBRATION_SPREAD = 0.2;
 const PORT = 4322;
 const MAPS = path.join(import.meta.dirname, "..", "..", "packages", "game-maps", "maps");
 const SETTLE_MS = 1000;
+/** After a map page closes, before the next calibration window: its renderer winds down (#3243). */
+const CALIBRATION_SETTLE_MS = 1500;
 const SECONDS = Number(process.env.BENCH_SECONDS ?? 5);
 const MAX_RATIO =
   process.env.BENCH_MAX_RATIO === undefined ? undefined : Number(process.env.BENCH_MAX_RATIO);
@@ -333,8 +335,10 @@ try {
       await page.goto(url);
       frames = await measure(page, mapId);
     } finally {
+      const session = await page.context().newCDPSession(page);
+      await session.send("HeapProfiler.collectGarbage");
       await page.close();
-      await sleep(SETTLE_MS);
+      await sleep(CALIBRATION_SETTLE_MS);
     }
     rows.push({
       mapId,
