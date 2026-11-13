@@ -107,20 +107,26 @@ test("in a match a click under the panel walks, and the box shows only while ope
   if (view === null) {
     throw new Error("the arena canvas has no box");
   }
-  const atSpawn = (await stage.getAttribute("data-camera")) ?? "";
+  // The camera may still be gliding onto the spawn: a click before it
+  // settles lands somewhere else on the ground.
+  const settle = async (message: string, from: string): Promise<string> => {
+    let last = "";
+    await expect
+      .poll(
+        async () => {
+          const now = (await stage.getAttribute("data-camera")) ?? "";
+          const settled = now === last && now !== from;
+          last = now;
+          return settled;
+        },
+        { message, intervals: [500], timeout: 15_000 },
+      )
+      .toBe(true);
+    return last;
+  };
+  const atSpawn = await settle("the camera should settle on the spawn", "");
   await page.mouse.click(view.x + view.width * 0.85, view.y + view.height / 2);
-  let last = "";
-  await expect
-    .poll(
-      async () => {
-        const now = (await stage.getAttribute("data-camera")) ?? "";
-        const settled = now === last && now !== atSpawn;
-        last = now;
-        return settled;
-      },
-      { message: "the hero should walk east and stop", intervals: [500], timeout: 15_000 },
-    )
-    .toBe(true);
+  await settle("the hero should walk east and stop", atSpawn);
   const before = await stage.getAttribute("data-camera");
   await page.mouse.click(at.x, at.y);
   await expect(stage).not.toHaveAttribute("data-camera", before ?? "");
