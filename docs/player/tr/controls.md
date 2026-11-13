@@ -61,10 +61,10 @@ Bu tuşlar sabittir:
   almak için grup penceresindeki bir ada tıkla.
 - **Adları göster**'i (Shift) basılı tut, her ad görünür; her oyuncununkinin
   önünde mührü vardır: aynı oyuncu için hep aynı olan küçük bir kalkan.
-  Basılıyken bir karakterin adına tıklamak, bedenine tıklamak gibi
-  çalışır. Sağ tık, iki kez bile olsa, yalnızca hedef alır; sol tık
-  hedef alır ve hemen saldırır; teker tıkı bildirir ya da işaretler.
-  Bir tıkın isabet edeceği ad vurgulanır.
+  Seninki **Ayarlar › Oyuncu** bölümünde görünür. Basılıyken bir karakterin
+  adına tıklamak, bedenine tıklamak gibi çalışır. Sağ tık, iki kez bile
+  olsa, yalnızca hedef alır; sol tık hedef alır ve hemen saldırır; teker
+  tıkı bildirir ya da işaretler. Bir tıkın isabet edeceği ad vurgulanır.
 
 ## Üst çubuk
 

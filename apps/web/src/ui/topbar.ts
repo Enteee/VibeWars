@@ -494,9 +494,9 @@ function part(bar: HTMLElement, selector: string): HTMLElement {
 
 /**
  * Fill the bar's global icons and hand its slots to `screenBar` (#1272);
- * they live as long as the page.
+ * they live as long as the page. `signet` is the player key's, for Options (#3235).
  */
-export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topbar {
+export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks, signet: number): Topbar {
   const actions = part(bar, ".topbar-actions");
   const tools = part(bar, ".topbar-tools");
   const screenActions = part(bar, ".topbar-screen-actions");
@@ -519,7 +519,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   const queue = queueButton(bar, callbacks.onLeaveQueue);
 
   const options = iconButton("topbar-options", t("topbar.options"), settingsIcon());
-  attachOptionsWindow(options, bar, callbacks.onOptionsClosed);
+  attachOptionsWindow(options, bar, signet, callbacks.onOptionsClosed);
 
   // The bar's join status, right before the global icons, on every menu
   // screen that asks for it; the lobby's own controls are the Lobby

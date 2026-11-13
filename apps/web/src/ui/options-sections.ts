@@ -1,4 +1,4 @@
-import { availableLanguages, type LanguageCode } from "../i18n/languages.js";
+import type { LanguageCode } from "../i18n/languages.js";
 import { controlsSection } from "./controls-section.js";
 import { displaySection } from "./display-section.js";
 import { languageSection } from "./language-section.js";
@@ -22,15 +22,17 @@ export interface OptionsSection {
 /**
  * The sections for a build with `languages`: Language after Player, which
  * Options opens on (#1513), and only when there is a second language to pick.
+ * Player shows `signet`, the player key's (#3235).
  */
-export function optionsSections(languages: readonly LanguageCode[]): readonly OptionsSection[] {
+export function optionsSections(
+  languages: readonly LanguageCode[],
+  signet: number,
+): readonly OptionsSection[] {
   return [
-    playerSection,
+    playerSection(signet),
     ...(languages.length > 1 ? [languageSection(languages)] : []),
     controlsSection,
     displaySection,
     relaySection,
   ];
 }
-
-export const OPTIONS_SECTIONS: readonly OptionsSection[] = optionsSections(availableLanguages());

@@ -39,7 +39,7 @@ Tyto klávesy jsou pevné:
 - Kliknutím na kompas označíš dané místo pro svůj tým; tažením po něm nakreslíš čáru, kterou uvidí na několik sekund.
 - **Kolečko** přibližuje. **Tažením pravým** se rozhlížíš; po puštění se pohled plynule vrátí k tobě.
 - Kliknutím na dovednost na liště ji použiješ, kliknutím na jméno v okně skupiny zaměříš daného spojence.
-- Podrž **Ukázat jména** (Shift) a zobrazí se všechna jména, u každého hráče s jeho pečetí před jménem: malým štítem, který je u stejného hráče vždy stejný. Během držení funguje kliknutí na jméno postavy jako kliknutí na její tělo. Kliknutí pravým jen zaměřuje, i dvojité; kliknutí levým zaměří a rovnou zaútočí; kliknutí kolečkem nahlásí nebo označí. Jméno, které by kliknutí zasáhlo, je zvýrazněné.
+- Podrž **Ukázat jména** (Shift) a zobrazí se všechna jména, u každého hráče s jeho pečetí před jménem: malým štítem, který je u stejného hráče vždy stejný, a svou najdeš v **Možnosti › Hráč**. Během držení funguje kliknutí na jméno postavy jako kliknutí na její tělo. Kliknutí pravým jen zaměřuje, i dvojité; kliknutí levým zaměří a rovnou zaútočí; kliknutí kolečkem nahlásí nebo označí. Jméno, které by kliknutí zasáhlo, je zvýrazněné.
 
 ## Horní lišta
 

@@ -57,11 +57,11 @@ Tieto klávesy sú pevné:
 - Kliknutím na schopnosť na lište ju použiješ a kliknutím na meno v okne
   družiny zameriaš daného spojenca.
 - Podrž **Zobraziť mená** (Shift) a zobrazia sa všetky mená, pri každom hráčovi
-  s jeho pečaťou pred menom: malým štítom, ktorý je pre toho istého hráča
-  vždy rovnaký. Kým držíš, kliknutie na meno postavy funguje ako kliknutie
-  na jej telo. Pravé kliknutie len zameriava, aj dvakrát; ľavé kliknutie
-  naraz zameria a zaútočí; kliknutie kolieskom určí cieľ alebo označí signálom.
-  Meno, ktoré by kliknutie zasiahlo, je zvýraznené.
+  s jeho pečaťou pred menom: malým štítom, ktorý je pre toho istého hráča vždy
+  rovnaký, a svoju nájdeš v **Nastavenia › Hráč**. Kým držíš, kliknutie na meno
+  postavy funguje ako kliknutie na jej telo. Pravé kliknutie len zameriava, aj
+  dvakrát; ľavé kliknutie naraz zameria a zaútočí; kliknutie kolieskom určí
+  cieľ alebo označí signálom. Meno, ktoré by kliknutie zasiahlo, je zvýraznené.
 
 ## Horná lišta
 

@@ -62,10 +62,11 @@ Ezek a billentyűk rögzítettek:
   osztagablakban, hogy célba vedd azt a szövetségest.
 - Tartsd nyomva a **Nevek mutatása** (Shift) billentyűt, és minden név
   megjelenik, a játékosoké előtt a címerükkel: egy kis pajzs, amely
-  ugyanannál a játékosnál mindig ugyanaz. Amíg nyomva tartod, egy
-  karakter nevére kattintani ugyanaz, mint a testére kattintani. A jobb
-  kattintás csak célba vesz, kétszer is; a bal kattintás egyszerre célba
-  vesz és támad; a görgőkattintás bemond vagy jelez. Az a név, amelyet a
+  ugyanannál a játékosnál mindig ugyanaz, a sajátodat pedig az
+  **Opciók › Játékos** alatt látod. Amíg nyomva tartod, egy karakter
+  nevére kattintani ugyanaz, mint a testére kattintani. A jobb kattintás
+  csak célba vesz, kétszer is; a bal kattintás egyszerre célba vesz és
+  támad; a görgőkattintás bemond vagy jelez. Az a név, amelyet a
   kattintás eltalálna, kiemelve látszik.
 
 ## A felső sáv

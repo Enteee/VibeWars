@@ -507,6 +507,7 @@ export function toArenaSnapshot(
         castType: player.castTotal > 0 ? castBadgeType(player.castingSkillId) : undefined,
         statuses,
         enchanted: rings.enchanted,
+        stanced: rings.stanced,
         hexed: rings.hexed,
         invulnerable: !player.dead && player.invulnerableSeconds > 0,
         teleportReadyAt: player.teleportReadyAt,
@@ -545,10 +546,12 @@ function animationFrames(handler: (deltaSeconds: number) => void): () => void {
   };
 }
 
+/** `signet` is the player key's, for the Options window over the match (#3235). */
 export async function startMatchView(
   parent: HTMLElement,
   callbacks: MatchViewCallbacks,
   options: MatchViewOptions,
+  signet: number,
 ): Promise<MatchView> {
   // With no WebGL there is no arena, said plainly where it would be
   // (#655). The match itself goes on: the HUD still shows it, and a host
@@ -776,7 +779,7 @@ export async function startMatchView(
   const leave = renderLeave(hud, callbacks.onLeave);
   // Options over the match (#454), a window like the music's (#2386): the
   // match goes on underneath.
-  const optionsWindow = attachOptionsWindow(hud.options, parent);
+  const optionsWindow = attachOptionsWindow(hud.options, parent, signet);
   // Help over the match too (#1257), the same way.
   const openHelp = (): void => {
     // A press while Help is open closes it (#2724).

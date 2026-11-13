@@ -21,7 +21,8 @@ const { values } = parseArgs({ options: { timeout: { type: "string", default: "1
 const timeoutMs = Number(values.timeout) * 1000;
 
 // Imported once the hook above is in place: their own imports end in ".js".
-const { PROTOCOL_VERSION } = await import("../../packages/game-protocol/src/protocol-version.ts");
+const { parseQueueTicket, soloQueueTicket } =
+  await import("../../packages/game-protocol/src/queue.ts");
 const { createNostrQueue } = await import("../../apps/web/src/net/transport/nostr-queue.ts");
 const { NOSTR_RELAYS } = await import("../../apps/web/src/net/transport/relays.ts");
 const { newTicketKey, verifyTicketSig } =
@@ -97,15 +98,7 @@ async function probe(url) {
   // Published a second in and once more halfway, as a heartbeat would:
   // the first may still beat the listener's subscription to the relay.
   const publish = () => {
-    const at = Date.now();
-    publisher.board.publish({
-      ticketId: key.ticketId,
-      protocol: PROTOCOL_VERSION,
-      mode: "random-arena-1v1",
-      partySize: 1,
-      enteredAt: at,
-      heartbeatAt: at,
-    });
+    publisher.board.publish(soloQueueTicket(key.ticketId, "random-arena-1v1", Date.now(), false));
   };
   const first = setTimeout(publish, 1000);
   const again = setTimeout(publish, timeoutMs / 2);
@@ -115,6 +108,16 @@ async function probe(url) {
   listener.close();
   publisher.close();
   return notes;
+}
+
+// A ticket the client would refuse reads as every relay failing: refuse to probe with one.
+if (
+  parseQueueTicket(
+    soloQueueTicket(newTicketKey().ticketId, "random-arena-1v1", Date.now(), false),
+  ) === undefined
+) {
+  console.error("probe ticket rejected by parseQueueTicket: the probe is stale, not the relays");
+  process.exit(2);
 }
 
 const results = await Promise.all(NOSTR_RELAYS.map((url) => probe(url)));
