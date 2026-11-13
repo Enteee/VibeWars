@@ -101,7 +101,12 @@ export interface TutorialWorld {
   readonly besidePad: Vec2;
   /** The layer the pair and the mark stand on. */
   readonly ground: number;
+  /** Each foe's guard (#3257): its post and leash, which keep it off the pair's places. */
+  readonly foes: readonly Guard[];
 }
+
+/** A tutorial foe's behaviour. */
+export type Guard = Extract<Behaviour, { kind: "guard" }>;
 
 /**
  * A foe's in the tutorial (#3221): it guards `post`, its spawn, on a leash
@@ -109,7 +114,7 @@ export interface TutorialWorld {
  * pair's places if that is nearer, so it meets the fight in the middle and
  * never comes to the pair.
  */
-function guarding(post: Vec2, centre: Vec2, pair: readonly Vec2[]): Behaviour {
+function guarding(post: Vec2, centre: Vec2, pair: readonly Vec2[]): Guard {
   const reach = Math.max(
     0,
     Math.min(
@@ -334,6 +339,7 @@ export function tutorialWorld(
   const playerBuild = houseBuild(PLAYER_PROFESSION);
   const tutorBuild = houseBuild(tutorProfession);
   const builds = createRng(seedFromString(`builds-${seed}`));
+  const foes: Guard[] = [];
   const simulation = new MatchSimulation({
     seed,
     ruleset: RULESET,
@@ -351,14 +357,14 @@ export function tutorialWorld(
         (team) => (team === 0 ? STARTER_BUILDS : FOE_BUILDS),
         // The bots' builds follow the seed too, so a seed is one whole world.
         () => builds.nextFloat(),
-      ).map((bot) =>
-        bot.team === 0
-          ? { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) }
-          : {
-              ...bot,
-              behaviour: guarding(bot.spawn, centre, [spawn, post, mark, teleporter, besidePad]),
-            },
-      ),
+      ).map((bot) => {
+        if (bot.team === 0) {
+          return { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) };
+        }
+        const guard = guarding(bot.spawn, centre, [spawn, post, mark, teleporter, besidePad]);
+        foes.push(guard);
+        return { ...bot, behaviour: guard };
+      }),
       body(SELF_ID, playerBuild, spawn, undefined),
       // Walked as a player is, so the session can send it on (#3222):
       // a behaviour would take its walk back every tick.
@@ -367,5 +373,5 @@ export function tutorialWorld(
   });
   // The tutor walks over and stays by the mark.
   simulation.walkTo(TUTOR_ID, post, ground);
-  return { map, simulation, playerBuild, tutorBuild, mark, ground, teleporter, besidePad };
+  return { map, simulation, playerBuild, tutorBuild, mark, ground, teleporter, besidePad, foes };
 }
