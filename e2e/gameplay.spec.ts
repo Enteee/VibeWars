@@ -358,6 +358,9 @@ test("in VibeWars, the arrows move; A, once move-left, casts slot 5 and moves no
     },
     { key: `${STORAGE_NAMESPACE}.keymap`, vibewars: KEYMAP_PRESETS.vibewars },
   );
+  // The enchantment's motes circle for as long as it lasts (#3226): only
+  // under reduced motion does the enchanted body hold still to compare.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await startSoloMatch(page);
   await expect(page.locator(".hud-skill-key").first()).toHaveText("Q");
   expect(key("skill-5", KEYMAP_PRESETS.vibewars)).toBe("KeyA");
