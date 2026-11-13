@@ -32,12 +32,13 @@ layer draws flat whatever its biome, until its family card rebuilds it.
 | Biome   | Ground    | Rock      | Plant / earth                    |
 | ------- | --------- | --------- | -------------------------------- |
 | Hall    | `#26303f` | `#4b5a70` | none (stone and steel)           |
-| Wilds   | `#2a3328` | `#5b5f58` | moss `#3f5a35`, earth `#5a4630`  |
+| Wilds   | `#2a3328` | `#5b5f58` | moss `#4f5e3c`, earth `#5a4630`  |
 | Heights | `#26303f` | `#4b5a70` | none, decks `#a0b2c7`            |
 | Desert  | `#3b3226` | `#6e6252` | earth `#6e5a40`, scrub `#6a6448` |
 
-The wilds and the heights still draw in the hall's tones; the wilds row is for
-its family card (#3064). The desert's stone decks are `#c2b296`.
+The heights still draw in the hall's tones. The wilds (#3071, Crossroads) keep
+the hall's dressed stone and wood, and its moss: a greener moss sits too near
+the allies' green. The desert's stone decks are `#c2b296`.
 
 **Signals are reserved for the fight** and no biome tone may sit within a
 hand's width of them on the colour wheel (a quarter of its radius, the
