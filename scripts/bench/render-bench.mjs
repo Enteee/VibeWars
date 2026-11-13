@@ -29,11 +29,15 @@
  *
  * Then the follow case: on every map measured and `FLAT_BASELINE`, a Hosted
  * 1v1 whose body walks `followLoop` while the camera follows it and the
- * pointer hovers the ground, uncapped. Its rows join the table and the
- * gate; a second table gives the frame's update and render JS, the
- * update's share of the frame, and the snapshot cadence, which the
- * client measures itself under `?frametiming`.
+ * pointer hovers the ground, uncapped. Its rows join the table, outside
+ * the calibration's gate: walking costs a frame about twice what standing
+ * does. A second table gives the frame's update and render JS, the
+ * update's share of the frame, the snapshot cadence, which the client
+ * measures itself under `?frametiming`, and each map's p50 over the flat
+ * baseline's, both walked.
  *   BENCH_FOLLOW_SECONDS=12  how long each map walks, measured.
+ *   BENCH_MAX_FOLLOW_RATIO=2 exit 1 when a map walked is more than this
+ *                      many times the flat baseline walked.
  *
  * The menu background never draws faster than 30 fps (#3119): a map
  * under that cap measures as the cap. Software GL is far over it.
@@ -64,6 +68,10 @@ const SETTLE_MS = 1000;
 const SECONDS = Number(process.env.BENCH_SECONDS ?? 5);
 const MAX_RATIO =
   process.env.BENCH_MAX_RATIO === undefined ? undefined : Number(process.env.BENCH_MAX_RATIO);
+const MAX_FOLLOW_RATIO =
+  process.env.BENCH_MAX_FOLLOW_RATIO === undefined
+    ? undefined
+    : Number(process.env.BENCH_MAX_FOLLOW_RATIO);
 const { values: options } = parseArgs({
   options: { url: { type: "string" }, follow: { type: "boolean" } },
 });
@@ -555,7 +563,7 @@ try {
     console.log(
       `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${ratio.toFixed(2)}${CAPS_MS.some((cap) => Math.abs(row.p50 - cap) < CAP_TOLERANCE_MS) ? " (cap-bound)" : ""} |`,
     );
-    if (MAX_RATIO !== undefined && !(ratio <= MAX_RATIO)) {
+    if (MAX_RATIO !== undefined && rows.includes(row) && !(ratio <= MAX_RATIO)) {
       console.error(
         `${row.mapId}: p50 is ${ratio.toFixed(2)}× the calibration's, over ${String(MAX_RATIO)}×`,
       );
@@ -564,13 +572,21 @@ try {
   }
   console.log();
   console.log(
-    "| follow | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | waypoints |",
+    "| follow | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | waypoints | p50 / flat |",
   );
-  console.log("|---|---|---|---|---|---|---|---|");
+  console.log("|---|---|---|---|---|---|---|---|---|");
+  const flat = followed.at(-1);
   for (const row of followed) {
+    const ratio = flat === undefined ? Number.NaN : row.p50 / flat.p50;
     console.log(
-      `| ${row.mapId} | ${row.update.toFixed(1)} | ${row.render.toFixed(1)} | ${(row.share * 100).toFixed(0)} % | ${row.snapshotP50.toFixed(1)} | ${row.snapshotP95.toFixed(1)} | ${row.jitter.toFixed(1)} | ${String(row.reached)} |`,
+      `| ${row.mapId} | ${row.update.toFixed(1)} | ${row.render.toFixed(1)} | ${(row.share * 100).toFixed(0)} % | ${row.snapshotP50.toFixed(1)} | ${row.snapshotP95.toFixed(1)} | ${row.jitter.toFixed(1)} | ${String(row.reached)} | ${ratio.toFixed(2)} |`,
     );
+    if (MAX_FOLLOW_RATIO !== undefined && !(ratio <= MAX_FOLLOW_RATIO)) {
+      console.error(
+        `${row.mapId}: p50 is ${ratio.toFixed(2)}× the flat baseline's walked, over ${String(MAX_FOLLOW_RATIO)}×`,
+      );
+      failed = true;
+    }
   }
 } finally {
   await browser?.close();

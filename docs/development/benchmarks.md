@@ -172,8 +172,12 @@ calibration's. It measures two cases:
   the frame rate. A second table gives each map's update and render p50
   (the frame's JS: the game's step, the match view and
   `ArenaScene.update`, then Phaser's render of the scene), the update's
-  share of the frame time, and the time between two frames that drew a
-  new snapshot: its p50, p95 and standard deviation (jitter).
+  share of the frame time, the time between two frames that drew a
+  new snapshot (its p50, p95 and standard deviation, the jitter), and
+  each map's p50 over the baseline's. The 3× gate does not judge these
+  rows: walking costs a frame about twice what standing does.
+  `BENCH_MAX_FOLLOW_RATIO` fails a map walked that is over that many
+  times the baseline walked.
 
 The follow case measures the page through `?frametiming`
 (`render/frame-timing.ts`), which any client takes: open a match with
