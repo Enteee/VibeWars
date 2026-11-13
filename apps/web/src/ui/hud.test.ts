@@ -635,6 +635,23 @@ describe("carriedBundle (#1225, #1374)", () => {
     vi.unstubAllGlobals();
     expect(hud.dropFlag.hidden).toBe(true);
   });
+
+  it("shows the scoreboard, unless told not to, as the tutorial does (#3221)", () => {
+    vi.stubGlobal("document", { createElement: () => new FakeNode() });
+    const make = (showScore?: boolean): HudElements =>
+      createHud(
+        new FakeNode() as unknown as HTMLElement,
+        () => undefined,
+        () => undefined,
+        () => undefined,
+        showScore,
+      );
+    const ordinary = make();
+    const tutorial = make(false);
+    vi.unstubAllGlobals();
+    expect(ordinary.scoreboard.hidden).toBe(false);
+    expect(tutorial.scoreboard.hidden).toBe(true);
+  });
 });
 
 describe("moraleLabel (#843)", () => {

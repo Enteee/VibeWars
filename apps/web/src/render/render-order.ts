@@ -34,6 +34,7 @@ export type RenderItem =
   | { readonly kind: "lighting"; readonly layer: number }
   | { readonly kind: "lit-ground-effect" }
   | { readonly kind: "light-mark"; readonly layer: number }
+  | { readonly kind: "goal-mark"; readonly layer: number }
   | { readonly kind: "character"; readonly band: number; readonly part: CharacterPart }
   | { readonly kind: "wall"; readonly layer: number }
   | { readonly kind: "support"; readonly deckLayer: number }
@@ -70,6 +71,11 @@ const DECK_LIGHTING = 5.8;
  * whoever stands on it, so a body crossing a hearth stays in sight.
  */
 const LIGHT_MARK = 0.8;
+/**
+ * A goal on the ground (#3221): over its layer's floor, lighting and
+ * torches, which never dim it, under whoever walks onto it.
+ */
+const GOAL_MARK = 0.9;
 const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, marks: 1.4 };
 /**
  * Ground water sits on the floor and under the ward and trap circles
@@ -149,6 +155,8 @@ export function renderOrder(item: RenderItem): number {
       return LIT_GROUND_EFFECT;
     case "light-mark":
       return item.layer * LAYER_STACK + LIGHT_MARK;
+    case "goal-mark":
+      return item.layer * LAYER_STACK + GOAL_MARK;
     case "terrain":
       return 0;
     case "character":
