@@ -127,17 +127,27 @@ describe("BIOME", () => {
     expect(transition.lift.riser).toBe(BIOME.hall.transition.lift.riser);
   });
 
-  it("keeps every desert tone a hand's width from every signal", () => {
-    const hall = new Set(coloursOf("hall"));
-    for (const tone of coloursOf("desert").filter((colour) => !hall.has(colour))) {
-      for (const signal of SIGNALS) {
-        expect(
-          wheelDistance(tone, signal),
-          `#${tone.toString(16)} near #${signal.toString(16)}`,
-        ).toBeGreaterThan(HAND);
-      }
-    }
+  it("draws the wilds green, and keeps the hall's dressed stone", () => {
+    const { palette, deck } = BIOME.wilds;
+    const green = (colour: number): boolean => ((colour >> 8) & 0xff) > colour >> 16;
+    expect(green(palette.floor ?? 0)).toBe(true);
+    expect(deck.tower.top).toBe(BIOME.hall.deck.tower.top);
   });
+
+  it.each(["desert", "wilds"] as const)(
+    "keeps every %s tone a hand's width from every signal",
+    (biome) => {
+      const hall = new Set(coloursOf("hall"));
+      for (const tone of coloursOf(biome).filter((colour) => !hall.has(colour))) {
+        for (const signal of SIGNALS) {
+          expect(
+            wheelDistance(tone, signal),
+            `#${tone.toString(16)} near #${signal.toString(16)}`,
+          ).toBeGreaterThan(HAND);
+        }
+      }
+    },
+  );
 });
 
 describe("shade", () => {
