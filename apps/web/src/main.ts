@@ -220,7 +220,7 @@ import { recordAscentWin } from "./storage/fame.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import { startSplashFight } from "./ui/splash-fight.js";
 import { createMenuBackground } from "./ui/menu-background.js";
-import { hostedChoice } from "./ui/menu-background-choice.js";
+import { hostedChoice, pinnedChoice } from "./ui/menu-background-choice.js";
 import { watchHall } from "./ui/vault-screen.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
 import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
@@ -392,6 +392,7 @@ async function main(): Promise<void> {
     menuFightOff
       ? () => Promise.reject(new Error("the menu background is off in this build"))
       : startSplashFight,
+    pinnedChoice(window.location.search),
   );
   /** Resolves once a lobby has given the background its choice (#3119). */
   let choiceMade: () => void = () => undefined;
