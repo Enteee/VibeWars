@@ -212,7 +212,7 @@ maps (#3157, #3190, #3243, #3255).
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
 synthetic medium arena in the real map schema: two layers, walls, a deck
 and a ramp, a pit with a tunnel, lights and a zone. Only the bench's build
-(`VITE_VIBEWARS_BENCH_REFERENCE=1`) offers it in the lobby, and it is
+(`VIBEWARS_BENCH_REFERENCE=1`) offers it in the lobby, and it is
 drawn through the menu background like any map, so whatever bounds a
 runner (fill, geometry, JS) bounds the reference and the maps alike. It
 is frozen: a pull request that edits it re-derives the gate below in the
@@ -228,7 +228,10 @@ with the reference between 38 and 82 ms on different runners:
 | arena-crossroads | 2.25, 2.25, 2.33, 2.29, 2.36 | 2.29   |
 | arena-long-hall  | 2.99, 3.11, 3.12, 3.30, 3.45 | 3.12   |
 
-So 2.36 × 1.5 → 3.5.
+So 2.36 × 1.5 → 3.5. Each map stays within about ±10 % of its median
+while the reference swings 2×. The two edge cells are canyon at −10.2 %
+and long-hall at +10.6 %. With the old blank-page calibration it was
+±15 %.
 
 The runner is slow for its first 20-40 s, so the run warms up first: it
 loads the first map, then calibrates for at least 45 s and until two
@@ -239,5 +242,8 @@ differ by over 20 %.
 
 **Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over the
 gate for a known reason, each gated at its own ratio and tied to the perf
-issue that will cut it. None is listed today. A listed map that measures
-at or under the gate fails, so its entry is deleted when its issue lands.
+issue that will cut it. Long-hall is listed at 4.0 (its worst run 3.45,
++15 %) until #3254. A listed map that measures at or under the gate ÷ 1.15
+(3.04 at 3.5) fails as stale, so its entry is deleted when its issue
+lands. The 15 % margin keeps a map just under the gate from flaking on
+runner noise.

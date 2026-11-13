@@ -38,7 +38,7 @@ function sizesOf(id: string): readonly number[] {
 }
 
 describe("the render bench's reference map (#3255)", () => {
-  it("is in no list of a build without VITE_VIBEWARS_BENCH_REFERENCE", () => {
+  it("is in no list of a build without VIBEWARS_BENCH_REFERENCE", () => {
     const REFERENCE = "bench-reference";
     expect(ARENA_MAPS.map((map) => map.id)).not.toContain(REFERENCE);
     expect(arenaIds()).not.toContain(REFERENCE);

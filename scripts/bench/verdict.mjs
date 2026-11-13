@@ -23,6 +23,12 @@
  */
 
 /**
+ * How far under `maxRatio` a listed map must measure to fail as stale: a
+ * map just under the default keeps its ceiling, as runner noise is ±10 % (#3255).
+ */
+export const STALE_MARGIN = 1.15;
+
+/**
  * Map i is bracketed by windows i and i + 1, so `windows` is one longer than
  * `maps`. A bracket whose windows differ by more than `maxSpread` of their
  * mean fails: the runner was too noisy to judge the map. A map over
@@ -34,8 +40,8 @@
  * @param {number | undefined} input.maxRatio
  * @param {number} input.maxSpread
  * @param {readonly Ceiling[]} [input.ceilings] maps gated at their own ratio. A listed map
- *   at or under `maxRatio` fails as stale: the reference map moves with the runner as the
- *   maps do, so a ratio under the default is the map's own (#3255).
+ *   at or under `maxRatio / STALE_MARGIN` fails as stale: the reference map moves with the
+ *   runner as the maps do, so a ratio that far under the default is the map's own (#3255).
  * @returns {Verdict[]}
  */
 export function verdict({ windows, maps, maxRatio, maxSpread, ceilings = [] }) {
@@ -63,9 +69,10 @@ export function verdict({ windows, maps, maxRatio, maxSpread, ceilings = [] }) {
           `${map.mapId}: p50 is ${ratio.toFixed(2)}× the calibration's, over ${String(limit)}×${ceiling === undefined ? "" : ` (ceiling, #${String(ceiling.issue)})`}`,
         );
       }
-      if (ceiling !== undefined && ratio <= maxRatio) {
+      const stale = maxRatio / STALE_MARGIN;
+      if (ceiling !== undefined && ratio <= stale) {
         failures.push(
-          `${map.mapId} is under ${String(maxRatio)}×: delete its BENCH_CEILINGS entry (#${String(ceiling.issue)})`,
+          `${map.mapId} is under ${stale.toFixed(2)}× (${String(maxRatio)}× / ${String(STALE_MARGIN)}): delete its BENCH_CEILINGS entry (#${String(ceiling.issue)})`,
         );
       }
     }

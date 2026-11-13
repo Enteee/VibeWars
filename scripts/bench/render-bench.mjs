@@ -148,7 +148,7 @@ async function serve() {
       ...process.env,
       VITE_VIBEWARS_TRANSPORT: "broadcast",
       VITE_VIBEWARS_SPLASH: "off",
-      VITE_VIBEWARS_BENCH_REFERENCE: "1",
+      VIBEWARS_BENCH_REFERENCE: "1",
     },
     detached: true,
   });
@@ -205,7 +205,7 @@ async function measure(page, mapId, seconds) {
     .getByRole("button", { name: "Hosted Game", exact: true });
   await entry.click();
   const select = page.locator(".lobby-map select");
-  // The reference map is offered only by a build with VITE_VIBEWARS_BENCH_REFERENCE (#3255).
+  // The reference map is offered only by a build with VIBEWARS_BENCH_REFERENCE (#3255).
   if ((await select.locator(`option[value="${mapId}"]`).count()) === 0) {
     throw new Error(`${mapId}: the lobby does not offer it, so this build cannot measure it`);
   }
