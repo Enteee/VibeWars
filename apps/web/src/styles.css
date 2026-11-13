@@ -7872,6 +7872,81 @@ body:has(#screens[style*="none"]) .now-playing {
   align-self: flex-start;
 }
 
+/*
+ * The first-time tutorial (#3218). Its offer is a menu card over the
+ * background fight, before the menu; fades only.
+ */
+.tutorial-offer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  background: var(--menu-scrim);
+}
+
+.tutorial-offer {
+  width: min(420px, 100%);
+  padding: 1.2rem 1.4rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.tutorial-offer-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* Over the match it is played in: the tutor's line, and Skip tutorial in its corner. */
+.tutorial-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.tutorial-speech {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(36rem, calc(100% - 2rem));
+  margin: 0;
+  padding: 0.5rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  text-align: center;
+  background: var(--menu-scrim);
+  border: 1px solid var(--line);
+}
+
+.tutorial-speech:empty,
+.tutorial-said:empty,
+.tutorial-how:empty {
+  display: none;
+}
+
+.tutorial-said {
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.tutorial-how {
+  font-size: 0.9rem;
+  color: var(--ink-dim);
+}
+
+.tutorial-skip-tutorial {
+  position: absolute;
+  top: calc(0.6rem + var(--build-banner-space, 0px));
+  inset-inline-start: 0.9rem;
+  pointer-events: auto;
+}
+
 /* The splash screen (#2884): over everything until it ends. */
 /* Its fight is the menu background's (#3119), seen through it; the menu
    waits underneath until it ends. */

@@ -224,6 +224,9 @@ import { hostedChoice } from "./ui/menu-background-choice.js";
 import { watchHall } from "./ui/vault-screen.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
 import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
+import { showTutorialOffer } from "./tutorial/tutorial-offer.js";
+import { loadTutorialRecord, saveTutorialRecord } from "./tutorial/tutorial-preference.js";
+import { startTutorialSession, type TutorialSession } from "./tutorial/tutorial-session.js";
 import {
   teamQueueModeOf,
   teamSizeOf,
@@ -3182,6 +3185,88 @@ async function main(): Promise<void> {
       }
     });
   };
+  /** The first-time offer's removal while it shows, and the tutorial while it runs (#3218). */
+  let closeOffer: (() => void) | undefined;
+  /** The tutorial being started or run, until it ends or a link drops it. */
+  let tutorialRun: object | undefined;
+  let tutorial: TutorialSession | undefined;
+  /** A lobby, relay or guild link came in this tab: it is what the player is here for. */
+  let linked = false;
+  const startTutorial = async (mapId: string, teamSize: number): Promise<void> => {
+    const run = {};
+    tutorialRun = run;
+    // The match view's, so the menu background stops: one fight at a time.
+    showViewport(true);
+    try {
+      const session = await startTutorialSession(viewport, {
+        mapId,
+        teamSize,
+        onEnd: (end) => {
+          tutorialRun = undefined;
+          tutorial = undefined;
+          saveTutorialRecord(end);
+          enterMenu();
+        },
+      });
+      if (tutorialRun === run) {
+        tutorial = session;
+      } else {
+        // A link came while it started, and already took the player to the menu.
+        await session.stop();
+      }
+    } catch (error) {
+      console.warn("[web] no tutorial", error);
+      // Unless a link has taken the player to the menu already.
+      if (tutorialRun === run) {
+        tutorialRun = undefined;
+        enterMenu();
+      }
+    }
+  };
+  /** A link came: the offer or the tutorial goes, nothing recorded, so it is offered again. */
+  const dropTutorial = (): void => {
+    if (closeOffer === undefined && tutorialRun === undefined) {
+      return;
+    }
+    closeOffer?.();
+    closeOffer = undefined;
+    tutorialRun = undefined;
+    void tutorial?.stop();
+    tutorial = undefined;
+    enterMenu();
+  };
+  /**
+   * After the splash, a first-timer is offered the tutorial (#3218) over
+   * its fight; nobody is on a touch device, without a fight to stand in,
+   * or once a link has come.
+   */
+  const afterSplash = (): void => {
+    const { map: mapId, teamSize } = requireElement("#menu-background").dataset;
+    if (
+      linked ||
+      loadTutorialRecord() !== undefined ||
+      mapId === undefined ||
+      teamSize === undefined ||
+      needsTouchNotice(
+        (query) => matchMedia(query).matches,
+        () => false,
+      )
+    ) {
+      enterMenu();
+      return;
+    }
+    closeOffer = showTutorialOffer(document.body, {
+      onLearn: () => {
+        closeOffer = undefined;
+        void startTutorial(mapId, Number(teamSize));
+      },
+      onSkip: () => {
+        closeOffer = undefined;
+        saveTutorialRecord("skipped");
+        enterMenu();
+      },
+    });
+  };
   let splash: Splash | undefined;
   if (
     shouldShowSplash({
@@ -3206,7 +3291,7 @@ async function main(): Promise<void> {
         return menuBackground.resume("away");
       },
       playTheme: (startAtEpochMs, onHeard) => music().splash(startAtEpochMs, onHeard),
-      onDone: enterMenu,
+      onDone: afterSplash,
     });
   } else {
     enterMenu();
@@ -3234,7 +3319,9 @@ async function main(): Promise<void> {
     const pasted = takeRelayLink();
     // Its prompt goes on the menu, so the splash ends first.
     if (invited.kind === "invite" || pasted.kind === "config" || guild.kind === "guild") {
+      linked = true;
       splash?.end();
+      dropTutorial();
     }
     if (guild.kind === "invalid") {
       toast(t("guildLink.broken"));
