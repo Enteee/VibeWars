@@ -1,12 +1,12 @@
 /**
- * `?framestats` (#3240): what a match frame costs and how often a new
+ * `?frametiming` (#3240): what a match frame costs and how often a new
  * snapshot reaches it, for `scripts/bench/render-bench.mjs --follow`.
  * Without the flag nothing is measured. The bench reads
- * `window.__frameStats`, then resets it to measure a window of its own.
+ * `window.__frameTiming`, then resets it to measure a window of its own.
  */
 
 /** Times in ms, appended as they happen. */
-export interface FrameStats {
+export interface FrameTiming {
   /** Per frame: the game's step, the match view's frame and `ArenaScene.update`. */
   readonly update: number[];
   /** Per frame: Phaser's render of the scene. */
@@ -15,26 +15,26 @@ export interface FrameStats {
   readonly snapshots: number[];
 }
 
-/** Whether the page asked to measure its frames: `?framestats`. */
+/** Whether the page asked to measure its frames: `?frametiming`. */
 export function measuringFrames(search: string): boolean {
-  return new URLSearchParams(search).has("framestats");
+  return new URLSearchParams(search).has("frametiming");
 }
 
-/** The page's stats, on `window.__frameStats`, or `undefined` without `?framestats`. */
-export function frameStats(): FrameStats | undefined {
+/** The page's stats, on `window.__frameTiming`, or `undefined` without `?frametiming`. */
+export function frameTiming(): FrameTiming | undefined {
   if (!measuringFrames(location.search)) {
     return undefined;
   }
-  const shown: unknown = Reflect.get(window, "__frameStats");
-  if (isFrameStats(shown)) {
+  const shown: unknown = Reflect.get(window, "__frameTiming");
+  if (isFrameTiming(shown)) {
     return shown;
   }
-  const stats: FrameStats = { update: [], render: [], snapshots: [] };
-  Object.assign(window, { __frameStats: stats });
+  const stats: FrameTiming = { update: [], render: [], snapshots: [] };
+  Object.assign(window, { __frameTiming: stats });
   return stats;
 }
 
-function isFrameStats(value: unknown): value is FrameStats {
+function isFrameTiming(value: unknown): value is FrameTiming {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -53,7 +53,7 @@ function isFrameStats(value: unknown): value is FrameStats {
  * the time since the last new one.
  */
 export function snapshotCadence(
-  stats: FrameStats,
+  stats: FrameTiming,
   now: () => number,
 ): (elapsedSeconds: number) => void {
   let last: number | undefined;

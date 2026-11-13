@@ -32,7 +32,7 @@
  * pointer hovers the ground, uncapped. Its rows join the table and the
  * gate; a second table gives the frame's update and render JS, the
  * update's share of the frame, and the snapshot cadence, which the
- * client measures itself under `?framestats`.
+ * client measures itself under `?frametiming`.
  *   BENCH_FOLLOW_SECONDS=12  how long each map walks, measured.
  *
  * The menu background never draws faster than 30 fps (#3119): a map
@@ -242,9 +242,9 @@ const UPHILL = new Map([
  */
 
 /**
- * What `?framestats` measured in the page (apps/web/src/render/frame-stats.ts).
+ * What `?frametiming` measured in the page (apps/web/src/render/frame-timing.ts).
  *
- * @typedef {{ update: number[], render: number[], snapshots: number[] }} FrameStats
+ * @typedef {{ update: number[], render: number[], snapshots: number[] }} FrameTiming
  */
 
 /**
@@ -309,10 +309,10 @@ async function camera(page) {
  * `--follow` on `mapId`: a Hosted 1v1 there, its frames timed while the
  * self walks `followLoop` with left clicks, the camera following, and the
  * pointer crosses the ground every step so hover runs. The client measures
- * itself through `?framestats`: the update and render of each frame, and
+ * itself through `?frametiming`: the update and render of each frame, and
  * the time between snapshots.
  *
- * @param {import("@playwright/test").Page} page on the client, `?framestats`
+ * @param {import("@playwright/test").Page} page on the client, `?frametiming`
  * @param {string} mapId
  */
 async function follow(page, mapId) {
@@ -348,8 +348,8 @@ async function follow(page, mapId) {
   const loop = followLoop(mapId, await camera(page));
   await page.evaluate(() => {
     /** @type {unknown} */
-    const shown = Reflect.get(window, "__frameStats");
-    const stats = /** @type {FrameStats} */ (shown);
+    const shown = Reflect.get(window, "__frameTiming");
+    const stats = /** @type {FrameTiming} */ (shown);
     for (const times of [stats.update, stats.render, stats.snapshots]) {
       times.length = 0;
     }
@@ -397,8 +397,8 @@ async function follow(page, mapId) {
   const measured = await frames;
   const stats = await page.evaluate(() => {
     /** @type {unknown} */
-    const shown = Reflect.get(window, "__frameStats");
-    return /** @type {FrameStats} */ (shown);
+    const shown = Reflect.get(window, "__frameTiming");
+    return /** @type {FrameTiming} */ (shown);
   });
   return { frames: measured, reached: next, ...stats };
 }
@@ -522,7 +522,7 @@ try {
   for (const mapId of [...mapsToMeasure(), FLAT_BASELINE]) {
     const match = await browser.newPage({ viewport });
     try {
-      await match.goto(`${url}?framestats`);
+      await match.goto(`${url}?frametiming`);
       const run = await follow(match, mapId);
       /** @type {(times: number[]) => number} */
       const sum = (times) => times.reduce((total, time) => total + time, 0);

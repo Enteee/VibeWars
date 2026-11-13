@@ -175,9 +175,9 @@ calibration's. It measures two cases:
   share of the frame time, and the time between two frames that drew a
   new snapshot: its p50, p95 and standard deviation (jitter).
 
-The follow case measures the page through `?framestats`
-(`render/frame-stats.ts`), which any client takes: open a match with
-it and `window.__frameStats` holds those times.
+The follow case measures the page through `?frametiming`
+(`render/frame-timing.ts`), which any client takes: open a match with
+it and `window.__frameTiming` holds those times.
 
 In software GL the update and render JS are a small share of a frame:
 most of it is the GPU process filling pixels, which no JS timer sees.
