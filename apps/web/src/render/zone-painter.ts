@@ -102,6 +102,13 @@ export const ZONE_DRIFT = 6;
 const ZONE_RIPPLE_SPACING = 16;
 /** World units a bead of lava runs along its crack in a second: slow. */
 const LAVA_FLOW_SPEED = 9;
+/**
+ * Most cracks in one lava zone that run beads, and most embers in one zone
+ * that glow: the marks are drawn every frame, so a big zone would otherwise
+ * cost by its area (#3225). The rest of its cracks still show, unmoving.
+ */
+const LAVA_BEADS_MAX = 24;
+const EMBERS_MAX = 120;
 /** Seconds a ring takes to sink from the spire's edge into its obelisk. */
 const DRAIN_SECONDS = 3;
 /** Seconds the spire's runes glow up and down. */
@@ -617,7 +624,7 @@ export function paintZoneMotion(
 ): void {
   switch (art.painter) {
     case "lava": {
-      for (const [index, crackLine] of art.cracks.entries()) {
+      for (const [index, crackLine] of art.cracks.slice(0, LAVA_BEADS_MAX).entries()) {
         const length = lengthOf(crackLine);
         if (length === 0) {
           continue;
@@ -634,7 +641,8 @@ export function paintZoneMotion(
       break;
     }
     case "embers": {
-      for (const speck of art.specks) {
+      // Scattered at random, so the first are spread over the whole zone.
+      for (const speck of art.specks.slice(0, EMBERS_MAX)) {
         const glow = still
           ? 0.6
           : Math.max(0, Math.sin(beat(speck.phase, speck.periodSeconds, seconds, still) * Math.PI));
