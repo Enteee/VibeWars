@@ -11,6 +11,7 @@ import {
   vec2,
   type NavGraph,
   type ParticipantSpec,
+  type PlayerBuild,
   type Vec2,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
@@ -56,8 +57,8 @@ export interface SplashFightOptions {
   readonly still: boolean;
 }
 
-function pick<T>(from: readonly T[]): T {
-  const picked = from[Math.floor(Math.random() * from.length)];
+function pick<T>(from: readonly T[], random: () => number): T {
+  const picked = from[Math.floor(random() * from.length)];
   if (picked === undefined) {
     throw new Error("nothing to pick the splash fight from");
   }
@@ -90,15 +91,20 @@ export function splashGraph(map: SplashMap): NavGraph {
   return buildNavGraph(allWallSegments(map.descriptor.walls), map.bounds, SPAWN_CLEARANCE, []);
 }
 
-/** The bots of both sides, `fight.teamSize` each, walking in from their spawns. */
+/**
+ * The bots of both sides, `fight.teamSize` each, walking in from their
+ * spawns, on builds picked from `buildsOf` their team by `random`.
+ */
 export function splashParticipants(
   map: SplashMap,
   fight: SplashFightOptions,
   graph: NavGraph = splashGraph(map),
+  buildsOf: (team: number) => readonly PlayerBuild[] = () => STARTER_BUILDS,
+  random: () => number = Math.random,
 ): ParticipantSpec[] {
   return [0, 1].flatMap((team) =>
     Array.from({ length: fight.teamSize }, (_, index) => {
-      const loadout = loadoutOf(pick(STARTER_BUILDS));
+      const loadout = loadoutOf(pick(buildsOf(team), random));
       const resolved = resolveLoadout(
         {
           primaryProfession: loadout.primaryProfession,

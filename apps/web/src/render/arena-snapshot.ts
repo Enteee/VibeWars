@@ -46,6 +46,7 @@ import type {
   RenderableFlag,
   RenderableStand,
 } from "./flag-objects.js";
+import type { GoalMark } from "./goal-mark.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { liftAt } from "./layer-surfaces.js";
@@ -575,6 +576,8 @@ export interface ArenaSnapshot {
   readonly pings: readonly RenderablePing[];
   /** Your team's lines on the compass (#2391), oldest first; the arena does not draw them. */
   readonly strokes: readonly RenderableStroke[];
+  /** Goals on the ground that only you see (#3221), such as the tutorial's walk mark. */
+  readonly goals: readonly GoalMark[];
 }
 
 /** One segment of a line drawn on the compass (#2391), in world units. */
@@ -608,6 +611,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   calledId: undefined,
   pings: [],
   strokes: [],
+  goals: [],
 };
 
 /** `snapshot` with your team's calls on it (#443). */
