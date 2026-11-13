@@ -61,10 +61,11 @@ import { TRAINING_MAPS } from "../training/maps.js";
 
 /**
  * True only in the render bench's build (#3255). There is no Vite
- * `import.meta.env` when the e2e specs import this module in Node.
+ * `import.meta.env` when the e2e specs import this module in Node. Vite
+ * replaces only the literal `import.meta.env`, so it is not destructured.
  */
 function benchBuild(): boolean {
-  const { env } = import.meta as { readonly env?: Partial<ImportMetaEnv> };
+  const env = import.meta.env as Partial<ImportMetaEnv> | undefined;
   return env?.VITE_VIBEWARS_BENCH_REFERENCE === "1";
 }
 
