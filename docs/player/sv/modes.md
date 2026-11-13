@@ -63,8 +63,7 @@ startplats efter 8 sekunder, och att dö kostar ingen moral. Första laget
 till 15 dödanden vinner direkt. När tiden är slut vinner flest dödanden;
 lika många är oavgjort.
 
-Ember Pits spelar det: en ring av trasiga pelare runt en öppen grop, med
-en korridor längs varje sida, för alla lagstorlekar.
+Ember Pits spelar det: rännor av lava med stenbroar över, en lavatunnel under marken, en spak som lyfter en hiss upp längs en basaltpelare, och ånghål, för alla lagstorlekar.
 
 ## Prästförintelse
 

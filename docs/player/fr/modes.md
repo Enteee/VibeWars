@@ -64,8 +64,7 @@ départ après 8 secondes, et mourir ne coûte pas de moral. La première équip
 15 éliminations gagne aussitôt. À la fin du temps, le plus d'éliminations gagne ;
 à égalité d'éliminations, c'est un match nul.
 
-Ember Pits le joue : un anneau de piliers brisés autour d'une fosse ouverte,
-avec un couloir de chaque côté, pour toutes les tailles d'équipe.
+Ember Pits le joue : des rigoles de lave franchies par des ponts de pierre, un tunnel de lave sous terre, un levier qui fait monter un élévateur le long d'une colonne de basalte, et des évents de vapeur, pour toutes les tailles d'équipe.
 
 ## Annihilation de prêtre
 

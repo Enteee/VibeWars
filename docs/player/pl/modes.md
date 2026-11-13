@@ -57,8 +57,7 @@ stołowych gór, z najdłuższą linią widzenia ze wszystkich aren.
 śmierć nie kosztuje morale. Pierwsza drużyna z 15 zabójstwami wygrywa od razu. Po
 upływie czasu wygrywa więcej zabójstw; równa liczba to remis.
 
-Gra w niego Ember Pits: krąg rozbitych filarów wokół otwartego dołu, z korytarzem
-wzdłuż każdego boku, dla każdego rozmiaru drużyny.
+Gra w niego Ember Pits: strumienie lawy przecięte kamiennymi mostami, lawowy tunel pod ziemią, dźwignia, która wynosi windę na bazaltową kolumnę, i wyziewy pary, dla każdego rozmiaru drużyny.
 
 ## Anihilacja kapłana
 

@@ -59,8 +59,7 @@ všetkých arén.
 zrodu a smrť nestojí morálku. Prvý tím s 15 zabitiami vyhráva okamžite.
 Po uplynutí času vyhráva viac zabití; rovnaký počet je remíza.
 
-Hrá sa na Ember Pits: kruh rozbitých stĺpov okolo otvorenej jamy, s
-chodbou po každej strane, pre každú veľkosť tímu.
+Hrá sa na Ember Pits: potôčiky lávy premostené kamennými mostmi, lávový tunel pod zemou, páka, ktorá vyvezie výťah na čadičový stĺp, a parné prieduchy, pre každú veľkosť tímu.
 
 ## Anihilácia kňaza
 

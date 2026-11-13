@@ -62,8 +62,7 @@ segundos, y morir no cuesta moral. El primer equipo que llega a 15 bajas gana
 al instante. Al acabar el tiempo, gana quien tenga más bajas; con las mismas
 bajas es un empate.
 
-Se juega en Ember Pits: un anillo de pilares rotos alrededor de un foso abierto,
-con un pasillo a cada lado, para todos los tamaños de equipo.
+Se juega en Ember Pits: regueros de lava cruzados por puentes de piedra, un tubo de lava bajo tierra, una palanca que sube un elevador por una columna de basalto y respiraderos de vapor, para todos los tamaños de equipo.
 
 ## Aniquilación de sacerdote
 

@@ -67,8 +67,7 @@ ja pisimmät näkölinjat kaikista areenoista.
 tappoon yltävä tiimi voittaa heti. Ajan loppuessa enemmän tappoja
 voittaa; yhtä monta tappoa on tasapeli.
 
-Sitä pelaa Ember Pits: rikkinäisten pylväiden kehä avoimen kuopan
-ympärillä ja käytävä kummallakin sivulla, kaikille tiimikoille.
+Sitä pelaa Ember Pits: laavapuroja, joiden yli kulkee kivisiltoja, laavatunneli maan alla, vipu, joka nostaa hissin basalttipylvään päälle, ja höyryaukkoja, kaikille tiimikoille.
 
 ## Pappituho
 

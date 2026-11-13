@@ -58,8 +58,7 @@ savana oko pet velikih mesa, s najduljim vidicima od svih arena.
 8 sekundi, a umiranje ne stoji morala. Prvi tim s 15 ubojstava odmah
 pobjeđuje. Na isteku vremena pobjeđuje više ubojstava; jednak broj je neriješeno.
 
-Ember Pits ga igra: prsten slomljenih stupova oko otvorene jame, s
-hodnikom uz svaku stranu, za svaku veličinu tima.
+Ember Pits ga igra: potočići lave preko kojih vode kameni mostovi, lavni tunel pod zemljom, poluga koja diže dizalo uz stup od bazalta i parni otvori, za svaku veličinu tima.
 
 ## Uništenje sa svećenikom
 

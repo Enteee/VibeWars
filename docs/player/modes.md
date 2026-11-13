@@ -58,8 +58,7 @@ savanna round five great mesas, with the longest sightlines of any arena.
 8 seconds, and dying costs no morale. The first team to 15 kills wins at
 once. At time, more kills wins; equal kills is a draw.
 
-Ember Pits plays it: a ring of broken pillars round an open pit, with a
-corridor along each side, for every team size.
+Ember Pits plays it: rills of lava crossed by stone bridges, a lava tube under the ground, a lever that raises a lift up a basalt column, and steam vents, for every team size.
 
 ## Priest Annihilation
 

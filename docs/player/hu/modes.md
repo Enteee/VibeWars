@@ -66,8 +66,7 @@ visszatérnek a kezdőpontjukon, és a halál nem kerül morálba. Az első
 csapat, amely eléri a 15 ölést, azonnal nyer. Az idő végén a több ölés
 nyer; egyenlő ölésszám döntetlen.
 
-Az Ember Pits játssza: törött oszlopok gyűrűje egy nyílt gödör körül,
-mindkét oldalán egy-egy folyosóval, minden csapatmérethez.
+Az Ember Pits játssza: lávaerek, amelyeken kőhidak vezetnek át, egy lávacső a föld alatt, egy kar, amely felvonót emel egy bazaltoszlopra, és gőzkürtők, minden csapatmérethez.
 
 ## Papirtás
 
