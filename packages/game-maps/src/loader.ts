@@ -2,8 +2,9 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { teamIds } from "@vibewars/game-core";
+import { MINIMAL_GW_INSPIRED_PVP_V1, teamIds } from "@vibewars/game-core";
 
+import { unlinkedTransitions } from "./nav-graphs.js";
 import { MapValidationError, validateMapData, type MapData } from "./schema.js";
 
 export class MapNotFoundError extends Error {
@@ -43,6 +44,12 @@ export function loadMap(mapId: string): MapData {
   if (short.length > 0) {
     throw new MapValidationError(
       `Invalid map data:\n${short.map((line) => `  - spawnPoints: ${line}`).join("\n")}`,
+    );
+  }
+  const unlinked = unlinkedTransitions(map, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+  if (unlinked.length > 0) {
+    throw new MapValidationError(
+      `Invalid map data:\n${unlinked.map((line) => `  - ${line}`).join("\n")}`,
     );
   }
   return map;
