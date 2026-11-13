@@ -824,16 +824,16 @@
     "indoor": [
       {
         "kind": "rect",
-        "x": 400,
+        "x": 900,
         "y": 400,
-        "width": 4000,
+        "width": 3000,
         "height": 300
       },
       {
         "kind": "rect",
-        "x": 400,
+        "x": 900,
         "y": 1900,
-        "width": 4000,
+        "width": 3000,
         "height": 300
       }
     ],
