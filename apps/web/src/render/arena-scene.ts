@@ -88,7 +88,7 @@ import {
   shapeOutline,
   southFacingEdges,
   sweptEdges,
-  drawnLayerAt,
+  standingDraw,
   hiddenCrop,
   liftAt,
   occludersOf,
@@ -899,7 +899,14 @@ export class ArenaScene extends Phaser.Scene {
     const seen = new Set<string>();
     const lifted = actors.map((actor) => {
       seen.add(actor.id);
-      const target = liftAt(structure, this.snapshot.lifts, actor.position, actor.layer);
+      const settled = standingDraw(
+        structure,
+        this.snapshot.lifts,
+        actor.position,
+        actor.layer,
+        actor.radius,
+      );
+      const target = settled.lift;
       const known = this.elevations.get(actor.id);
       const was = this.lastLayers.get(actor.id);
       this.lastLayers.set(actor.id, actor.layer);
@@ -928,7 +935,7 @@ export class ArenaScene extends Phaser.Scene {
       this.elevations.set(actor.id, lift);
       return {
         ...actor,
-        layer: drawnLayerAt(structure, actor.position, actor.layer, actor.radius),
+        layer: settled.layer,
         position: { x: actor.position.x, y: actor.position.y - lift },
       };
     });

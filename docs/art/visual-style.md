@@ -191,6 +191,17 @@ Every rule below can be checked from one screenshot.
 9. **Colour-blind pass**: view the screenshot in grey; the danger edge and
    the telegraph still stand out.
 
+Rules 3 and 7 are checked by CI (#3251): `render/visibility-gate.test.ts`
+draws every map through the scene's own map drawing, records each filled
+polygon at its depth, and stands a body on every point the simulation lets
+one stand, 8 units apart, on every layer. Wherever a structure is painted
+over a body, its hidden outline must show there, and nothing static is
+painted over the outline. Art that reaches past its occluder fails it,
+naming the map, the point and the piece. A fix is in the occluder
+(`occludersOf`) or in the art. A map whose geometry hides a body until a
+map edit lands goes in `KNOWN_HIDDEN` with its issue. That list only
+shrinks: an entry whose map passes fails as stale.
+
 Worked example, toxic fog (`toxic-fog.svg`): soft overlapping puffs inside a
 hard dashed edge, so the cloud can move and the boundary cannot.
 

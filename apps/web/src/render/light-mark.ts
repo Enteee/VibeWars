@@ -52,3 +52,12 @@ const fire: LightMarkArt = (painter, at) => {
 };
 
 export const LIGHT_MARK_ART: Record<LightMarkKey, LightMarkArt> = { torch, fire };
+
+/** The box each mark is painted in, round its anchor, in world units: what it can hide (#3251). */
+export const LIGHT_MARK_BOX: Record<
+  LightMarkKey,
+  { readonly left: number; readonly top: number; readonly right: number; readonly bottom: number }
+> = {
+  torch: { left: -5, top: -22, right: 5, bottom: 0 },
+  fire: { left: -14.5, top: -14.5, right: 14.5, bottom: 14.5 },
+};

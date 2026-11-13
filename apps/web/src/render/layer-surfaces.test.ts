@@ -261,14 +261,13 @@ describe("a body under a raised ramp (#2975)", () => {
     return count;
   };
 
-  it("has an occluder for each ramp, drawn as its slope", () => {
-    expect(occluders).toHaveLength(4);
-    expect(occluders[3]).toMatchObject({
-      outline: slope,
-      hidesThrough: 1,
-      lowLift: 0,
-      exempt: null,
-    });
+  it("has an occluder for each ramp's slope and its side face, which draws with it (#3251)", () => {
+    const { side } = rampDrawing(HEIGHTS, upper);
+    expect(occluders).toHaveLength(6);
+    expect(occluders.slice(4)).toMatchObject([
+      { outline: slope, hidesThrough: 1, lowLift: 0, exempt: null },
+      { outline: side, hidesThrough: 1, lowLift: 0, exempt: null },
+    ]);
   });
 
   it("hides a body on the ground or on the deck it starts from under the slope, not one above (#3178)", () => {
