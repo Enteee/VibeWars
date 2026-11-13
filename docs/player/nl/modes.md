@@ -58,8 +58,8 @@ langste zichtlijnen van alle arena's.
 en doodgaan kost geen moraal. Het eerste team met 15 kills wint meteen. Bij het
 einde van de tijd wint wie meer kills heeft; gelijke kills is gelijkspel.
 
-Ember Pits speelt het: een ring van gebroken pilaren rond een open put, met aan
-elke kant een gang, voor elke teamgrootte.
+Ember Pits speelt het: lavageulen met stenen bruggen erover, een lavatunnel, een
+hendellift een basaltzuil op en stoomgaten, voor elke teamgrootte.
 
 ## Priest Annihilation
 

@@ -53,8 +53,8 @@ Savanne rund um fünf große Tafelberge, mit den längsten Sichtlinien aller Are
 Sterben kostet keine Moral. Das erste Team mit 15 Kills gewinnt sofort. Bei Zeitablauf gewinnen die
 meisten Kills; bei Gleichstand ist es ein Unentschieden.
 
-Ember Pits spielt es: ein Ring aus zerbrochenen Säulen um eine offene Grube, mit einem Korridor an
-jeder Seite, für jede Teamgröße.
+Ember Pits spielt es: Lavarinnen mit Steinbrücken darüber, eine Lavaröhre, ein Hebellift
+eine Basaltsäule hinauf und Dampfschlote, für jede Teamgröße.
 
 ## Priestervernichtung
 

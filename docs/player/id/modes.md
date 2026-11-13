@@ -58,8 +58,8 @@ terbuka di sekeliling lima mesa besar, dengan jarak pandang terpanjang di antara
 8 detik, dan kematian tidak mengurangi moral. Tim pertama yang mencapai 15 kill langsung
 menang. Saat waktu habis, kill lebih banyak menang; kill sama berarti seri.
 
-Ember Pits memainkannya: lingkaran pilar runtuh di sekeliling lubang terbuka, dengan
-lorong di sepanjang setiap sisi, untuk setiap ukuran tim.
+Ember Pits memainkannya: aliran lava yang diseberangi jembatan batu, terowongan lava,
+lift bertuas ke atas tiang basal, dan lubang uap, untuk setiap ukuran tim.
 
 ## Pemusnahan Pendeta
 
