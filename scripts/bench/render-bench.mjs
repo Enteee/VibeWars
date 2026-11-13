@@ -15,9 +15,9 @@
  * itself take more than `MIN_CALIBRATION_MS`. The baseline is a calibration run the script owns,
  * not a game map: a fixed seeded WebGL workload drawn every frame on a
  * blank page in the same browser, measured in windows interleaved with the maps (one
- * before each, one after) and taken as the median, so a slower runner moves the baseline with
- * the maps, one noisy window cannot move the gate, and a heavier Crossroads cannot loosen it.
- * Windows differing by over `MAX_CALIBRATION_SPREAD` of their median fail the run as too noisy; the slowest window is left out of that, as the median already outvotes it and CI shows one window in four running ~28% slow. Prints p50 and p95 per map
+ * before each, one after, after an unmeasured warm-up). Each map is judged against the mean
+ * of the two windows around it, and a pair of windows differing by over
+ * `MAX_CALIBRATION_SPREAD` fails the run as too noisy to judge (`verdict.mjs`). Prints p50 and p95 per map
  * and the ratio of each to the calibration's. The percentiles weigh a frame by how long
  * it lasted: what a moment of the run is spent in, so a map that hangs
  * for a second between quick frames does not measure as quick.
@@ -43,6 +43,8 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
+import { verdict } from "./verdict.mjs";
+
 /* global document, requestAnimationFrame -- in page.evaluate, which runs in the page */
 
 /** A map p50 this close to a frame-rate cap (60 Hz, or the menu's 30 fps limiter) is cap-bound. */
@@ -51,12 +53,14 @@ const CAPS_MS = [1000 / 60, 1000 / 30];
 /** A calibration lighter than two 60 Hz frames is bound by the caps, not by its cost. */
 const MIN_CALIBRATION_MS = 2000 / 60 + 0.1;
 
-/** The calibration windows (one before each map, one after) may differ this much, of their median. */
+/** The two calibration windows around a map may differ this much, of their mean. */
 const MAX_CALIBRATION_SPREAD = 0.2;
 
 const PORT = 4322;
 const MAPS = path.join(import.meta.dirname, "..", "..", "packages", "game-maps", "maps");
 const SETTLE_MS = 1000;
+/** The first map is loaded this long, unmeasured, before the first calibration window. */
+const WARMUP_SECONDS = 5;
 /** After a map page closes, before the next calibration window: its renderer winds down (#3243). */
 const CALIBRATION_SETTLE_MS = 1500;
 const SECONDS = Number(process.env.BENCH_SECONDS ?? 5);
@@ -153,9 +157,10 @@ function percentile(frames, p) {
  *
  * @param {import("@playwright/test").Page} page
  * @param {string} mapId
+ * @param {number} seconds
  * @returns {Promise<number[]>}
  */
-async function measure(page, mapId) {
+async function measure(page, mapId, seconds) {
   const entry = page
     .locator(".mode-rail")
     .getByRole("button", { name: "Hosted Game", exact: true });
@@ -176,16 +181,17 @@ async function measure(page, mapId) {
     throw new Error(`${mapId}: the menu background has no canvas`);
   }
   await sleep(SETTLE_MS);
-  return frameTimes(page);
+  return frameTimes(page, seconds);
 }
 
 /**
- * Frame intervals over `SECONDS` of animation frames, in ms, sorted.
+ * Frame intervals over `seconds` of animation frames, in ms, sorted.
  *
  * @param {import("@playwright/test").Page} page
+ * @param {number} [seconds]
  * @returns {Promise<number[]>}
  */
-function frameTimes(page) {
+function frameTimes(page, seconds = SECONDS) {
   return page.evaluate(
     (ms) =>
       new Promise((resolve) => {
@@ -205,7 +211,7 @@ function frameTimes(page) {
         };
         requestAnimationFrame(step);
       }),
-    SECONDS * 1000,
+    seconds * 1000,
   );
 }
 
@@ -324,22 +330,35 @@ try {
       await blank.close();
     }
   };
-  const maps = mapsToMeasure();
-  const windows = [];
-  const rows = [];
-  for (const mapId of maps) {
-    windows.push(await calibrationWindow());
+  /** One map on a page of its own, which is collected and closed before the next calibration. */
+  const mapWindow = async (/** @type {string} */ mapId, /** @type {number} */ seconds) => {
     const page = await browser.newPage({ viewport });
-    let frames;
     try {
       await page.goto(url);
-      frames = await measure(page, mapId);
+      return await measure(page, mapId, seconds);
     } finally {
       const session = await page.context().newCDPSession(page);
       await session.send("HeapProfiler.collectGarbage");
       await page.close();
       await sleep(CALIBRATION_SETTLE_MS);
     }
+  };
+  const mapIds = mapsToMeasure();
+  // The runner is slow for the first seconds of a run: load the first map and
+  // calibrate once, and keep neither (#3243).
+  const [warmMap] = mapIds;
+  if (warmMap !== undefined) {
+    await mapWindow(warmMap, WARMUP_SECONDS);
+    const warm = await calibrationWindow();
+    console.log(
+      `warm-up: map ${warmMap} ${String(WARMUP_SECONDS)} s, calibration ${warm.toFixed(1)} ms (discarded)`,
+    );
+  }
+  const windows = [];
+  const rows = [];
+  for (const mapId of mapIds) {
+    windows.push(await calibrationWindow());
+    const frames = await mapWindow(mapId, SECONDS);
     rows.push({
       mapId,
       frames: frames.length,
@@ -348,34 +367,34 @@ try {
     });
   }
   windows.push(await calibrationWindow());
-  const base = median(windows);
-  const sorted = [...windows].sort((a, b) => a - b);
-  const spread = ((sorted.at(-2) ?? base) - (sorted[0] ?? base)) / base;
+  const wholeRun = (Math.max(...windows) - Math.min(...windows)) / median(windows);
   console.log(
-    `calibration p50 ${base.toFixed(1)} ms, median of ${String(windows.length)} windows (${windows.map((w) => w.toFixed(1)).join(", ")}); spread ${(spread * 100).toFixed(0)}%`,
+    `calibration windows p50 ms: ${windows.map((w) => w.toFixed(1)).join(", ")} (whole-run spread ${(wholeRun * 100).toFixed(0)} %, not gated)`,
   );
-  if (!(base >= MIN_CALIBRATION_MS)) {
-    throw new Error(
-      `the calibration p50 is under ${String(MIN_CALIBRATION_MS)} ms, so it is bound by the frame-rate cap and the ratio would be meaningless`,
-    );
-  }
-  if (!(spread <= MAX_CALIBRATION_SPREAD)) {
-    throw new Error(
-      `the calibration windows differ by ${(spread * 100).toFixed(0)}% of their median, over ${String(MAX_CALIBRATION_SPREAD * 100)}%: the runner was too noisy to judge the maps`,
-    );
-  }
-  console.log("| map | frames | p50 ms | p95 ms | p50 / calibration |");
-  console.log("|---|---|---|---|---|");
-  for (const row of rows) {
-    const ratio = row.p50 / base;
+  const verdicts = verdict({
+    windows,
+    maps: rows,
+    maxRatio: MAX_RATIO,
+    maxSpread: MAX_CALIBRATION_SPREAD,
+  });
+  console.log("| map | frames | p50 ms | p95 ms | base ms | p50 / calibration |");
+  console.log("|---|---|---|---|---|---|");
+  for (const [i, row] of rows.entries()) {
+    const v = verdicts[i];
+    if (v === undefined) continue;
     console.log(
-      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${ratio.toFixed(2)}${CAPS_MS.some((cap) => Math.abs(row.p50 - cap) < CAP_TOLERANCE_MS) ? " (cap-bound)" : ""} |`,
+      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${v.base.toFixed(1)} | ${v.ratio.toFixed(2)}${CAPS_MS.some((cap) => Math.abs(row.p50 - cap) < CAP_TOLERANCE_MS) ? " (cap-bound)" : ""} |`,
     );
-    if (MAX_RATIO !== undefined && !(ratio <= MAX_RATIO)) {
-      console.error(
-        `${row.mapId}: p50 is ${ratio.toFixed(2)}× the calibration's, over ${String(MAX_RATIO)}×`,
-      );
+  }
+  for (const v of verdicts) {
+    for (const failure of v.failures) {
+      console.error(failure);
       failed = true;
+    }
+    if (!(v.base >= MIN_CALIBRATION_MS)) {
+      throw new Error(
+        `the calibration around ${v.mapId} is under ${String(MIN_CALIBRATION_MS)} ms, so it is bound by the frame-rate cap and the ratio would be meaningless`,
+      );
     }
   }
 } finally {
