@@ -199,6 +199,7 @@ import {
 } from "./flag-objects.js";
 import { goalMarkCommands, goalMarkFade, type GoalMark } from "./goal-mark.js";
 import { lyingPose } from "./lying-pose.js";
+import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import { LightingPass, litStructurePalette, baseTint } from "./lighting-pass.js";
 import {
@@ -477,6 +478,8 @@ export class ArenaScene extends Phaser.Scene {
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
+  private readonly staticCull = new StaticGraphicsCull();
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
   private readonly liftGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Each lift as its art draws it, in the snapshot's `lifts` order; set when the map is drawn. */
@@ -789,10 +792,17 @@ export class ArenaScene extends Phaser.Scene {
     this.updateLighting(time);
     this.updateGroundEffects();
     this.drawMap();
+    // Only what the camera shows is tessellated (#3240): the map cut once in
+    // a while, the zones and the fog, drawn every frame, every frame.
+    const view = this.cameraView();
+    this.staticCull.cull(view);
     this.drawLifts();
     this.drawRipples();
     this.drawZones();
-    this.drawAtmosphere(deltaMs / 1000);
+    this.drawAtmosphere(deltaMs / 1000, view);
+    for (const graphics of this.zoneGraphics.values()) {
+      cullToView(graphics, view);
+    }
     // Over the grid and walls, under the actors: a flash never hides a
     // health bar, a status or the target ring.
     this.areaFlashes = decayAreaFlashes(this.areaFlashes, deltaMs / 1000);
@@ -2674,6 +2684,29 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.occluders = occludersOf(next.walls, next.structure);
     this.drawnMap = next;
+    this.staticCull.capture([
+      ...(this.floorGraphics === undefined ? [] : [this.floorGraphics]),
+      g,
+      ...this.structureGraphics.values(),
+    ]);
+  }
+
+  /** What the camera shows this frame, in world units. */
+  private cameraView(): Box {
+    const camera = this.cameras.main;
+    const { x, y, zoom } = this.view ?? {
+      x: camera.midPoint.x,
+      y: camera.midPoint.y,
+      zoom: camera.zoom,
+    };
+    const halfWidth = camera.width / 2 / zoom;
+    const halfHeight = camera.height / 2 / zoom;
+    return {
+      left: x - halfWidth,
+      top: y - halfHeight,
+      right: x + halfWidth,
+      bottom: y + halfHeight,
+    };
   }
 
   /** What a structure covers of each body (#2831, #2972): its team's outline, weapon and symbol, no fill. */
@@ -3305,7 +3338,7 @@ export class ArenaScene extends Phaser.Scene {
    * The map's fog, plumes and weather (#3032), only with lighting on. Its
    * vents stand either way: they are stone on the ground, as torches are.
    */
-  private drawAtmosphere(dt: number): void {
+  private drawAtmosphere(dt: number, view: Box): void {
     for (const graphics of [...this.fogGraphics.values(), ...this.plumeGraphics.values()]) {
       graphics.clear();
     }
@@ -3325,8 +3358,8 @@ export class ArenaScene extends Phaser.Scene {
     const { fog, particles } = this.atmosphereDrawn;
     const line = 1 / (this.view?.zoom ?? 1);
     const on = lightingOn();
-    const view = this.cameras.main.worldView;
-    particles.step(dt, view, { on, reducedMotion: this.reducedMotion });
+    const worldView = this.cameras.main.worldView;
+    particles.step(dt, worldView, { on, reducedMotion: this.reducedMotion });
     for (const plume of atmosphere.plumes) {
       paintVent(this.fogAt(plume.layer), plume, elevationOf(plume.layer, ground), line);
     }
@@ -3340,13 +3373,14 @@ export class ArenaScene extends Phaser.Scene {
         elevationOf(art.layer, ground),
         this.now,
         this.reducedMotion,
+        view,
       );
     }
     const weather = (this.weatherGraphics ??= this.add
       .graphics()
       .setDepth(renderOrder({ kind: "weather" })));
     if (atmosphere.weather !== null) {
-      paintWeatherWash(weather, atmosphere.weather, view);
+      paintWeatherWash(weather, atmosphere.weather, worldView);
     }
     for (const particle of particles.particles) {
       if (particle.kind === "smoke" || particle.kind === "steam") {

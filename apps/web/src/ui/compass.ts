@@ -77,6 +77,33 @@ export interface CompassMark {
   readonly side: "ally" | "enemy";
 }
 
+/** Each wall's box, by wall: a map has hundreds, and the compass looks at them every frame (#3240). */
+const wallBoxes = new WeakMap<
+  RenderableWall,
+  { left: number; top: number; right: number; bottom: number }
+>();
+
+/** Whether `wall`'s box comes within `reach` of `centre` on either axis: only then can it cross the disc. */
+function nearWall(wall: RenderableWall, centre: Vec2, reach: number): boolean {
+  let box = wallBoxes.get(wall);
+  if (box === undefined) {
+    const corners = outline(wall);
+    box = {
+      left: Math.min(...corners.map(({ x }) => x)),
+      top: Math.min(...corners.map(({ y }) => y)),
+      right: Math.max(...corners.map(({ x }) => x)),
+      bottom: Math.max(...corners.map(({ y }) => y)),
+    };
+    wallBoxes.set(wall, box);
+  }
+  return (
+    box.left <= centre.x + reach &&
+    box.right >= centre.x - reach &&
+    box.top <= centre.y + reach &&
+    box.bottom >= centre.y - reach
+  );
+}
+
 /** A wall's closed outline, corner by corner. */
 function outline(wall: RenderableWall): readonly Vec2[] {
   if (wall.kind === "polygon") {
@@ -327,7 +354,9 @@ export function compassView(
         ? undefined
         : { ...local(arena.stand.position), holder: arena.stand.holder },
     altar: arena.altar === undefined || !within(arena.altar) ? undefined : local(arena.altar),
-    walls: arena.walls.flatMap((wall) => clipOutline(outline(wall).map(local), sizePx / 2)),
+    walls: arena.walls
+      .filter((wall) => nearWall(wall, self.position, reach))
+      .flatMap((wall) => clipOutline(outline(wall).map(local), sizePx / 2)),
     edge:
       arena.structure.bounds.kind === "rect"
         ? []

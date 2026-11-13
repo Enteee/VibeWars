@@ -130,13 +130,13 @@ export function playBuildBot(
   };
 }
 
-/** One match to its end, or its time limit's. */
-function playMatch(
+/** The mirror match `playMatch` plays on `map`, `size` a team, ready to step. */
+function mirrorMatch(
   map: MapData,
   size: number,
   seed: number,
   rotation: number,
-): { readonly winningTeam: number | undefined; readonly elapsedSeconds: number } {
+): { readonly sim: MatchSimulation; readonly timeLimitSeconds: number } {
   const rules = mapMatchRules(map, map.mode);
   const participants = Array.from({ length: map.teams }, (_, team) => {
     const spawns = map.spawnPoints.filter((spawn) => spawn.team === team);
@@ -164,11 +164,43 @@ function playMatch(
     ...mapSimulationFields(map, map.teams),
     participants,
   });
+  return { sim, timeLimitSeconds: rules.timeLimitSeconds };
+}
+
+/** One match to its end, or its time limit's. */
+function playMatch(
+  map: MapData,
+  size: number,
+  seed: number,
+  rotation: number,
+): { readonly winningTeam: number | undefined; readonly elapsedSeconds: number } {
+  const { sim, timeLimitSeconds } = mirrorMatch(map, size, seed, rotation);
   // The time limit ends every match; the margin only guards against a mode that would not.
-  while (sim.phase === "active" && sim.elapsedSeconds < rules.timeLimitSeconds + 1) {
+  while (sim.phase === "active" && sim.elapsedSeconds < timeLimitSeconds + 1) {
     sim.step(DT);
   }
   return { winningTeam: sim.outcome.winningTeam, elapsedSeconds: sim.elapsedSeconds };
+}
+
+/**
+ * How long each of `ticks` host ticks of a bot mirror match on `map` took,
+ * in ms by `now` (#3240): every wall, layer, structure and objective of the
+ * map, stepped as the host steps it. Stops early if the match ends.
+ */
+export function timeMatchTicks(
+  map: MapData,
+  size: number,
+  ticks: number,
+  now: () => number,
+): number[] {
+  const { sim } = mirrorMatch(map, size, 0, 0);
+  const tickMs: number[] = [];
+  while (tickMs.length < ticks && sim.phase === "active") {
+    const start = now();
+    sim.step(DT);
+    tickMs.push(now() - start);
+  }
+  return tickMs;
 }
 
 function percent(share: number): string {

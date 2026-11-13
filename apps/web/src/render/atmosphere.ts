@@ -1,6 +1,7 @@
 import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 import type { MapAtmosphere } from "@vibewars/game-maps/schema";
 
+import type { Box } from "./graphics-cull.js";
 import { shapeOutline } from "./layer-surfaces.js";
 import { seeded } from "./zone-painter.js";
 
@@ -308,7 +309,8 @@ export interface AtmospherePainter {
 /**
  * A fog bank `lift` world units up: each puff a soft disc with a paler
  * crown up and to the left, where the sky lights it, so the bank reads as
- * haze with body rather than a flat tint.
+ * haze with body rather than a flat tint. A puff wholly outside `view`
+ * is not drawn (#3240): a bank spans the map, the camera a part of it.
  */
 export function paintFog(
   painter: AtmospherePainter,
@@ -316,10 +318,19 @@ export function paintFog(
   lift: number,
   now: number,
   reducedMotion: boolean,
+  view: Box,
 ): void {
   for (const puff of art.puffs) {
     const at = fogPuffAt(puff, now, reducedMotion);
     const y = at.y - lift;
+    if (
+      at.x + puff.radius < view.left ||
+      at.x - puff.radius > view.right ||
+      y + puff.radius < view.top ||
+      y - puff.radius > view.bottom
+    ) {
+      continue;
+    }
     // Rings shrinking inward: the puff is densest at its heart, its edge melts away.
     for (let ring = 0; ring < FOG_RINGS; ring += 1) {
       painter.fillStyle(FOG_COLOUR, puff.alpha / FOG_RINGS);
