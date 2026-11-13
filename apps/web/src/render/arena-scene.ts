@@ -228,7 +228,7 @@ import {
   paintOutsideTile,
   type OutsidePainter,
 } from "./outside-land.js";
-import { paintPaving, pavingDrawing } from "./paving-painter.js";
+import { paintPaving, pavingDrawing, pavingTextureSizes } from "./paving-painter.js";
 import { withZoneLights } from "./zone-light.js";
 import { insideRuns, shownFill } from "./cell-cover.js";
 import {
@@ -298,9 +298,6 @@ const ZONE_TEXTURE_SCALE = 2;
 const ZONE_TEXTURE_MAX_SIDE = 2048;
 /** Zone grounds made so far: each texture gets a key of its own, across maps and restarts. */
 let zoneGroundTextures = 0;
-/** Pixels per world unit of a paving's texture (#3210), and its longest side, however large it is. */
-const PAVING_TEXTURE_SCALE = 2;
-const PAVING_TEXTURE_MAX_SIDE = 2048;
 /** Pavings painted so far: each texture gets a key of its own, across maps and restarts. */
 let pavingTextures = 0;
 
@@ -3258,20 +3255,20 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     this.dropPaving();
-    const painted = (structure.paving ?? []).map((paving) => {
-      const drawing = pavingDrawing(paving, colours[paving.look]);
-      const { x, y, width, height } = drawing.bounds;
-      const scale = Math.min(
-        PAVING_TEXTURE_SCALE,
-        PAVING_TEXTURE_MAX_SIDE / Math.max(1, width, height),
-      );
+    const pavings = structure.paving ?? [];
+    const drawings = pavings.map((paving) => pavingDrawing(paving, colours[paving.look]));
+    const sizes = pavingTextureSizes(drawings.map((drawing) => drawing.bounds));
+    const painted = pavings.map((paving, at) => {
+      const drawing = drawings[at];
+      const size = sizes[at];
+      if (drawing === undefined || size === undefined) {
+        throw new Error("paving: a paving lost its drawing");
+      }
+      const { x, y } = drawing.bounds;
+      const { scale, width, height } = size;
       const key = `paving-${String(pavingTextures)}`;
       pavingTextures += 1;
-      const texture = this.textures.createCanvas(
-        key,
-        Math.max(1, Math.ceil(width * scale)),
-        Math.max(1, Math.ceil(height * scale)),
-      );
+      const texture = this.textures.createCanvas(key, width, height);
       if (texture === null) {
         throw new Error("paving: could not create a paving's texture");
       }

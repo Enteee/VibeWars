@@ -3,7 +3,15 @@ import type { MapPaving } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
 import { BIOME, pavingPalette } from "./arena-palette.js";
-import { MAX_PAVING_STONES, PAVING_EDGE, pavingDrawing } from "./paving-painter.js";
+import {
+  MAX_PAVING_STONES,
+  PAVING_EDGE,
+  PAVING_TEXTURE_BUDGET,
+  PAVING_TEXTURE_MAX_SIDE,
+  PAVING_TEXTURE_SCALE,
+  pavingDrawing,
+  pavingTextureSizes,
+} from "./paving-painter.js";
 
 const colours = BIOME.desert.paving;
 const LOOKS = ["cobbles", "flagstones", "dirt"] as const;
@@ -91,5 +99,46 @@ describe("paving (#3210)", () => {
         }
       }
     }
+  });
+});
+
+describe("pavingTextureSizes", () => {
+  const pixels = (sizes: readonly { width: number; height: number }[]): number =>
+    sizes.reduce((sum, { width, height }) => sum + width * height, 0);
+
+  it("keeps 32 map-sized pavings under the budget together", () => {
+    const sizes = pavingTextureSizes(
+      Array.from({ length: 32 }, () => ({ width: 6400, height: 3600 })),
+    );
+    expect(pixels(sizes)).toBeLessThanOrEqual(PAVING_TEXTURE_BUDGET);
+    for (const size of sizes) {
+      expect(Math.max(size.width, size.height)).toBeLessThanOrEqual(PAVING_TEXTURE_MAX_SIDE);
+    }
+  });
+
+  it("paints a town's roads at one scale, under the budget", () => {
+    const bounds = [
+      ...Array.from({ length: 12 }, () => ({ width: 6000, height: 3000 })),
+      { width: 400, height: 400 },
+    ];
+    const sizes = pavingTextureSizes(bounds);
+    expect(pixels(sizes)).toBeLessThanOrEqual(PAVING_TEXTURE_BUDGET);
+    expect(new Set(sizes.map((size) => size.scale)).size).toBe(1);
+  });
+
+  it("keeps the full scale while a map's pavings are small", () => {
+    const sizes = pavingTextureSizes([
+      { width: 300, height: 120 },
+      { width: 80, height: 80 },
+    ]);
+    expect(sizes).toEqual([
+      { scale: PAVING_TEXTURE_SCALE, width: 600, height: 240 },
+      { scale: PAVING_TEXTURE_SCALE, width: 160, height: 160 },
+    ]);
+  });
+
+  it("caps a single long paving's side", () => {
+    const [size] = pavingTextureSizes([{ width: 6400, height: 40 }]);
+    expect(size?.width).toBeLessThanOrEqual(PAVING_TEXTURE_MAX_SIDE);
   });
 });

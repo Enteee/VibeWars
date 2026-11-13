@@ -295,6 +295,45 @@ export type PavingCanvas = Pick<
   | "globalAlpha"
 >;
 
+/** Pixels per world unit of a paving's texture at most, however small the map's pavings are. */
+export const PAVING_TEXTURE_SCALE = 2;
+/** The longest side of one paving's texture. */
+export const PAVING_TEXTURE_MAX_SIDE = 2048;
+/** The pixels of all of a map's paving textures together: 32 MiB on the GPU. */
+export const PAVING_TEXTURE_BUDGET = 8 * 1024 * 1024;
+
+/** A paving's texture: its size in pixels, at `scale` pixels per world unit. */
+export interface PavingTextureSize {
+  readonly scale: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * The textures for a map's pavings, given their bounds: one scale for
+ * all of them, so together they stay under `PAVING_TEXTURE_BUDGET`, and
+ * each side under `PAVING_TEXTURE_MAX_SIDE`. Sides round down, so no
+ * texture holds more than its share; the sliver lost lies inside the
+ * paving's soft edge.
+ */
+export function pavingTextureSizes(
+  bounds: readonly { readonly width: number; readonly height: number }[],
+): PavingTextureSize[] {
+  const area = bounds.reduce((sum, { width, height }) => sum + width * height, 0);
+  const shared = Math.min(
+    PAVING_TEXTURE_SCALE,
+    Math.sqrt(PAVING_TEXTURE_BUDGET / Math.max(1, area)),
+  );
+  return bounds.map(({ width, height }) => {
+    const scale = Math.min(shared, PAVING_TEXTURE_MAX_SIDE / Math.max(1, width, height));
+    return {
+      scale,
+      width: Math.max(1, Math.floor(width * scale)),
+      height: Math.max(1, Math.floor(height * scale)),
+    };
+  });
+}
+
 /** `drawing` painted onto a canvas of its bounds at `scale` pixels per world unit. */
 export function paintPaving(context: PavingCanvas, drawing: PavingDrawing, scale: number): void {
   const { x, y } = drawing.bounds;
