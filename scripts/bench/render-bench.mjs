@@ -62,12 +62,12 @@ const MAPS = path.join(import.meta.dirname, "..", "..", "packages", "game-maps",
 const SETTLE_MS = 1000;
 /** The first map is loaded this long, unmeasured, before the warm-up calibration. */
 const WARMUP_LOAD_SECONDS = 5;
-/** The warm-up lasts at least this long: the runner is slow for the first ~20 s (#3243). */
-const WARMUP_MIN_MS = 20_000;
+/** The warm-up lasts at least this long: the runner is slow for the first 20-40 s (#3243). */
+const WARMUP_MIN_MS = 45_000;
 /** After that, until two windows in a row agree within this much, of their mean. */
 const WARMUP_TOLERANCE = 0.05;
 /** The warm-up ends here, settled or not; not settled fails the run. */
-const WARMUP_CAP_MS = 40_000;
+const WARMUP_CAP_MS = 75_000;
 /** After a map page closes, before the next calibration window: its renderer winds down (#3243). */
 const CALIBRATION_SETTLE_MS = 1500;
 const SECONDS = Number(process.env.BENCH_SECONDS ?? 5);
@@ -351,7 +351,7 @@ try {
     }
   };
   const mapIds = mapsToMeasure();
-  // The runner is slow for the first ~20 s of a run: load the first map, then
+  // The runner is slow for the first 20-40 s of a run: load the first map, then
   // calibrate until the runner has had that long and two windows in a row agree,
   // and keep none of it (#3243).
   const [warmMap] = mapIds;

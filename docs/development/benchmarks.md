@@ -169,9 +169,9 @@ A layered map's frame cost in software GL, as a ratio to a fixed WebGL
 calibration on the same run (#3157, #3190, #3243). CI gates it at
 `BENCH_MAX_RATIO=3` on pull requests that touch the renderer or the maps.
 
-The runner is slow for its first ~20 s, so the run warms up first: it
-loads the first map, then calibrates for at least 20 s and until two
-windows in a row agree within 5 % (cap 40 s, else it fails). None of
+The runner is slow for its first 20-40 s, so the run warms up first: it
+loads the first map, then calibrates for at least 45 s and until two
+windows in a row agree within 5 % (cap 75 s, else it fails). None of
 that is measured. Each map is then judged against the mean of the two
 calibration windows around it, and fails as too noisy if those two
 differ by over 20 %.
