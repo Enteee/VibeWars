@@ -101,6 +101,15 @@ export interface TutorialWorld {
   readonly besidePad: Vec2;
   /** The layer the pair and the mark stand on. */
   readonly ground: number;
+  /** Each foe's guard, as its behaviour has it (#3257). */
+  readonly foes: readonly FoeGuard[];
+}
+
+/** Where a tutorial foe stands guard, and how far it leaves its post. */
+export interface FoeGuard {
+  readonly post: Vec2;
+  readonly leashUnits: number;
+  readonly aggroUnits: number;
 }
 
 /**
@@ -109,7 +118,7 @@ export interface TutorialWorld {
  * pair's places if that is nearer, so it meets the fight in the middle and
  * never comes to the pair.
  */
-function guarding(post: Vec2, centre: Vec2, pair: readonly Vec2[]): Behaviour {
+function guarding(post: Vec2, centre: Vec2, pair: readonly Vec2[]): FoeGuard {
   const reach = Math.max(
     0,
     Math.min(
@@ -117,14 +126,7 @@ function guarding(post: Vec2, centre: Vec2, pair: readonly Vec2[]): Behaviour {
       ...pair.map((at) => Math.hypot(at.x - post.x, at.y - post.y) - FOE_KEEP_OFF),
     ),
   );
-  return {
-    kind: "guard",
-    post,
-    aggroUnits: reach + FOE_AGGRO_PAST_LEASH,
-    leashUnits: reach,
-    rooted: false,
-    thinkSeconds: 0.25,
-  };
+  return { post, aggroUnits: reach + FOE_AGGRO_PAST_LEASH, leashUnits: reach };
 }
 
 /**
@@ -334,6 +336,12 @@ export function tutorialWorld(
   const playerBuild = houseBuild(PLAYER_PROFESSION);
   const tutorBuild = houseBuild(tutorProfession);
   const builds = createRng(seedFromString(`builds-${seed}`));
+  const foes: FoeGuard[] = [];
+  const guard = (station: Vec2): Behaviour => {
+    const foe = guarding(station, centre, [spawn, post, mark, teleporter, besidePad]);
+    foes.push(foe);
+    return { kind: "guard", ...foe, rooted: false, thinkSeconds: 0.25 };
+  };
   const simulation = new MatchSimulation({
     seed,
     ruleset: RULESET,
@@ -356,7 +364,7 @@ export function tutorialWorld(
           ? { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) }
           : {
               ...bot,
-              behaviour: guarding(bot.spawn, centre, [spawn, post, mark, teleporter, besidePad]),
+              behaviour: guard(bot.spawn),
             },
       ),
       body(SELF_ID, playerBuild, spawn, undefined),
@@ -367,5 +375,5 @@ export function tutorialWorld(
   });
   // The tutor walks over and stays by the mark.
   simulation.walkTo(TUTOR_ID, post, ground);
-  return { map, simulation, playerBuild, tutorBuild, mark, ground, teleporter, besidePad };
+  return { map, simulation, playerBuild, tutorBuild, mark, ground, teleporter, besidePad, foes };
 }
