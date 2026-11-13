@@ -1806,6 +1806,19 @@ export class MatchSimulation {
     return this.#gates;
   }
 
+  /** How many layers a body may stand on (ADR-0051): 1 on a flat map. */
+  public get layerCount(): number {
+    return this.#graphs.length;
+  }
+
+  /**
+   * Whether a body may stand at `point` on `layer` as the walls stand now,
+   * by the graph its walks are planned on (#3251).
+   */
+  public standable(point: Vec2, layer: number): boolean {
+    return isStandable(this.#graphOn(layer), point);
+  }
+
   /** Every switch (#3025), which way it points and when it may move again; `[]` on a map without them. */
   public get switches(): readonly Switch[] {
     return this.#switches;

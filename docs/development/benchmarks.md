@@ -242,8 +242,9 @@ differ by over 20 %.
 
 **Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over or
 near the gate for a known reason, each gated at its own ratio and tied to the perf
-issue that will cut it. Long-hall is listed at 4.0 (its worst run 3.45,
-+15 %) until #3254. A listed map that measures at or under the gate ÷ 1.25
+issue that will cut it. None is listed: long-hall's was deleted when its
+issue, #3254, boxed each cluster of flickering lights on its own, which
+took it from 3.24 to 2.71. A listed map that measures at or under the gate ÷ 1.25
 (2.80 at 3.5) fails as stale, so its entry is deleted when its issue
 lands. The margin keeps a map just under the gate from flaking: long-hall
-measured 2.99-3.45.
+measured 2.99-3.45 before #3254.

@@ -278,24 +278,57 @@ export function lightMapCover(
   );
 }
 
+/** Some flickering lights, and the box round them that a flicker redraws. */
+export interface FlickerRegion {
+  readonly box: LightMapBox;
+  readonly lights: readonly LightsOf[];
+}
+
+function overlaps(a: LightMapBox, b: LightMapBox): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
 /**
- * What a flicker redraws of a light map with `extent` (#3157): the box
- * round every flickering light, in the map's own pixels. The rest holds
- * the steady lights, which never change.
+ * What a flicker redraws of a light map with `extent` (#3157, #3254): a box
+ * round each group of flickering lights whose reach overlaps, in the map's
+ * own pixels, so lights far apart do not redraw the dark between them. The
+ * boxes never overlap: a redraw of one clears nothing another drew. The
+ * rest holds the steady lights, which never change.
  */
-export function flickerBox(
+export function flickerRegions(
   flickering: readonly LightsOf[],
   extent: LightMapBox,
-): LightMapBox | undefined {
-  if (flickering.length === 0) {
-    return undefined;
+): readonly FlickerRegion[] {
+  const boxOf = (lights: readonly LightsOf[]): LightMapBox => {
+    const reach = lights.flatMap(({ position, radius }) => [
+      { x: position.x - radius, y: position.y - radius },
+      { x: position.x + radius, y: position.y + radius },
+    ]);
+    const box = pixelBox(reach, extent);
+    return { ...box, x: box.x - extent.x, y: box.y - extent.y };
+  };
+  let regions: FlickerRegion[] = flickering.map((light) => ({
+    box: boxOf([light]),
+    lights: [light],
+  }));
+  // A merged box can reach a third one, so merge until none overlap.
+  for (let merged = true; merged;) {
+    merged = false;
+    const next: FlickerRegion[] = [];
+    for (const region of regions) {
+      const into = next.findIndex(({ box }) => overlaps(box, region.box));
+      const other = next[into];
+      if (other === undefined) {
+        next.push(region);
+      } else {
+        const lights = [...other.lights, ...region.lights];
+        next[into] = { box: boxOf(lights), lights };
+        merged = true;
+      }
+    }
+    regions = next;
   }
-  const reach = flickering.flatMap(({ position, radius }) => [
-    { x: position.x - radius, y: position.y - radius },
-    { x: position.x + radius, y: position.y + radius },
-  ]);
-  const box = pixelBox(reach, extent);
-  return { ...box, x: box.x - extent.x, y: box.y - extent.y };
+  return regions;
 }
 
 /**
@@ -318,8 +351,8 @@ interface LayerMap {
   /** What of the arena it covers, in light map pixels. */
   readonly extent: LightMapBox;
   readonly flickering: readonly LightsOf[];
-  /** What a flicker redraws, in its own pixels; `undefined` when nothing flickers. */
-  readonly flickerBox: LightMapBox | undefined;
+  /** What a flicker redraws, in its own pixels; none when nothing flickers. */
+  readonly flickerRegions: readonly FlickerRegion[];
   /** Each light whose shadows were cut from its own texture, by light id (#2988). */
   readonly shadowed: ReadonlyMap<string, string>;
   drawnAt: number;
@@ -397,7 +430,7 @@ export class LightingPass {
     for (const map of this.layers) {
       if (flickerRedrawDue(map.flickering, map.drawnAt, nowMs)) {
         const started = performance.now();
-        this.drawFlicker(map, nowMs, map.flickerBox);
+        this.drawFlicker(map, nowMs, map.flickerRegions);
         this.budget.record(performance.now() - started);
       }
     }
@@ -549,7 +582,7 @@ export class LightingPass {
       outsideKey,
       extent,
       flickering,
-      flickerBox: flickerBox(flickering, extent),
+      flickerRegions: flickerRegions(flickering, extent),
       shadowed,
       drawnAt: Number.NEGATIVE_INFINITY,
     };
@@ -658,32 +691,41 @@ export class LightingPass {
 
   /**
    * The steady map, plus each flickering light as it is now: all of it the
-   * first time, then only `box`, where they reach (#3157).
+   * first time, then only each of `regions`, where its lights reach (#3157,
+   * #3254).
    */
-  private drawFlicker(map: LayerMap, nowMs: number, box?: LightMapBox): void {
-    const { x, y, width, height } = box ?? { ...map.extent, x: 0, y: 0 };
-    const centreX = x + width / 2;
-    const centreY = y + height / 2;
-    map.shown.clear(x, y, width, height);
-    map.shown.stamp(map.baseKey, this.region(map.baseKey, x, y, width, height), centreX, centreY);
-    for (const light of map.flickering) {
-      this.stampLight(
-        map.shown,
-        map.extent,
-        light,
-        light.intensity * flickerAt(light.id, light.flicker, nowMs),
-        map.shadowed.get(light.id),
-      );
-    }
-    if (map.outsideKey !== undefined && map.flickering.length > 0) {
-      map.shown.erase(
-        this.scene.textures.getFrame(
-          map.outsideKey,
-          this.region(map.outsideKey, x, y, width, height),
-        ),
-        centreX,
-        centreY,
-      );
+  private drawFlicker(
+    map: LayerMap,
+    nowMs: number,
+    regions: readonly FlickerRegion[] = [
+      { box: { ...map.extent, x: 0, y: 0 }, lights: map.flickering },
+    ],
+  ): void {
+    for (const { box, lights } of regions) {
+      const { x, y, width, height } = box;
+      const centreX = x + width / 2;
+      const centreY = y + height / 2;
+      map.shown.clear(x, y, width, height);
+      map.shown.stamp(map.baseKey, this.region(map.baseKey, x, y, width, height), centreX, centreY);
+      for (const light of lights) {
+        this.stampLight(
+          map.shown,
+          map.extent,
+          light,
+          light.intensity * flickerAt(light.id, light.flicker, nowMs),
+          map.shadowed.get(light.id),
+        );
+      }
+      if (map.outsideKey !== undefined && lights.length > 0) {
+        map.shown.erase(
+          this.scene.textures.getFrame(
+            map.outsideKey,
+            this.region(map.outsideKey, x, y, width, height),
+          ),
+          centreX,
+          centreY,
+        );
+      }
     }
     map.shown.render();
     map.drawnAt = nowMs;

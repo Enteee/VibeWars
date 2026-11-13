@@ -11,8 +11,14 @@ import {
 } from "./arena-palette.js";
 import type { RenderableShape } from "./arena-snapshot.js";
 import {
+  MERLON_HEIGHT,
+  PARAPET_HEIGHT,
   plankLines,
+  POST_HEIGHT,
+  RUBBLE,
   southFacingEdges,
+  STATUE_HEAD,
+  STATUE_HEIGHT,
   type RampDrawing,
   type RampFrame,
   type Segment,
@@ -104,14 +110,10 @@ export function transitionPalette(
 const DECK_PLANK = 48;
 /** How far apart flagstones and paving are, in world units. */
 const PAVING = 20;
-/** How high a parapet stands over its deck, and a merlon over the parapet. */
-const PARAPET_HEIGHT = 6;
-const MERLON_HEIGHT = 4;
 /** A crenellation's merlon and gap, along the edge. */
 const MERLON_EVERY = 12;
-/** A railing's posts: how far apart, how tall. */
+/** How far apart a railing's posts stand. */
 const POST_EVERY = 36;
-const POST_HEIGHT = 11;
 /** How far a rope sags between two posts. */
 const ROPE_SAG = 3;
 /** How far apart a pier stands along a stone bridge's face. */
@@ -153,27 +155,14 @@ const RUIN_BITES = [
 ] as const;
 /** How far a bite reaches into a ruin's top, per course it falls, in world units. */
 const BITE_DEPTH = 6;
-/** The stones fallen at a ruin's foot, per face: where along it, how big; the biggest under its bites. */
-const RUBBLE = [
-  [0.05, 9],
-  [0.13, 16],
-  [0.21, 10],
-  [0.38, 18],
-  [0.5, 11],
-  [0.63, 14],
-  [0.75, 9],
-  [0.86, 17],
-] as const;
 /** One flagstone in this many is gone from a ruin's top, and one in this many cracked. */
 const STONE_MISSING_ONE_IN = 6;
 const STONE_CRACKED_ONE_IN = 4;
 /** How far a plinth's capture ring stands out past its base, in world units. */
 const RING_MARGIN = 14;
 const RING_SEGMENTS = 24;
-/** A plinth's statue: its base's share of the top, its body and head in world units. */
+/** A plinth's statue: its base's share of the top. */
 const STATUE_BASE = 0.4;
-const STATUE_HEIGHT = 22;
-const STATUE_HEAD = 5;
 /** A rough step's depths, in turn, in world units: cut by hand, never even. */
 const ROUGH_TREADS = [14, 19, 12, 17, 15];
 /** How far a rough step's edge wanders, as a share of its depth. */
@@ -262,9 +251,15 @@ function parapet(painter: StructurePainter, deck: DeckFrame, crenellated: boolea
 /** Posts along each open edge with a rope sagging between them, in the top's frame. */
 function railing(painter: StructurePainter, deck: DeckFrame): void {
   const { open, line, palette } = deck;
+  // A post stands on the deck, never past its side (#3251): it would hide a body there.
+  const { middle, half } = boxMiddle(deck.footprint);
+  const onDeck = ({ x, y }: Vec2): Vec2 => ({
+    x: Math.min(Math.max(x, middle.x - half.x + line * 1.5), middle.x + half.x - line * 1.5),
+    y,
+  });
   for (const edge of open) {
     const spans = Math.max(1, Math.round(lengthOf(edge) / POST_EVERY));
-    const posts = Array.from({ length: spans + 1 }, (_, k) => along(edge, k / spans));
+    const posts = Array.from({ length: spans + 1 }, (_, k) => onDeck(along(edge, k / spans)));
     painter.fillStyle(palette.wallFace, 1);
     for (const post of posts) {
       painter.fillRect(post.x - line * 1.5, post.y - POST_HEIGHT, line * 3, POST_HEIGHT);
