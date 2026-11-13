@@ -19,6 +19,10 @@ Shared rules: the outside is lit like the rest of the map, painted with grain
   sight. Desaturated: it stays away from the grove signal green `#2f8a3c`.
 - **deep-water**: `#18304a` with grain and thin ripples, shore `#8fb8d6` 3 px (the
   deep-water shoreline). Darker and greyer than friend blue `#59c2ff`. Sight passes.
+- **basalt** (#3225, the volcanic biome's): a cooled crust `#24201e` broken by jagged
+  black cracks `#0c0a09`, a dull ember `#6e3018` deep in some. Edge: a black crevice
+  with the ember in it, a thin ash rim `#8c827a`. Blocks sight. The ember is far
+  below danger orange: only lava glows hot.
 
 Outside bodies never use danger orange, acid green or friend blue as a fill.
 

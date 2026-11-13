@@ -8,7 +8,7 @@
   "height": 2200,
   "bounds": {
     "kind": "outline",
-    "outside": "rock",
+    "outside": "basalt",
     "outline": [
       {
         "x": 180,
@@ -97,7 +97,7 @@
     ]
   },
   "layers": 4,
-  "biome": "hall",
+  "biome": "volcanic",
   "groundLayer": 1,
   "pits": [
     {

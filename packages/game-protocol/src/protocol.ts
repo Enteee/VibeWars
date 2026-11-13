@@ -479,7 +479,7 @@ export type WallDescriptor = RectWallDescriptor | PolygonWallDescriptor;
 export type WireTeamCount = 2 | 3;
 
 /** What lies beyond a ground outline (#3066), as game-maps' `OUTSIDE_KINDS`. */
-export type OutsideKind = "cliff" | "rock" | "forest" | "deep-water";
+export type OutsideKind = "cliff" | "rock" | "forest" | "deep-water" | "basalt";
 
 /** A map's ground (#3066): its whole rectangle, or an outline inside it with land outside. */
 export type MapBoundsDescriptor =

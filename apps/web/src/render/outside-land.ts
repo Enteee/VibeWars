@@ -48,6 +48,16 @@ export const OUTSIDE_LOOK = {
     spot: 0x5f8c55,
   },
   "deep-water": { base: 0x18304a, grain: [0x152a40, 0x1c3754], ripple: 0x2f5878, shore: 0x8fb8d6 },
+  // Its warmth is a dull ember, far below danger orange: the crust is cold enough to stand beside.
+  basalt: {
+    base: 0x161312,
+    grain: [0x110f0e, 0x1e1a18],
+    top: 0x3a3431,
+    lit: 0x4a4340,
+    crack: 0x0c0a09,
+    ember: 0x6e3018,
+    ash: 0x8c827a,
+  },
 } as const;
 
 /** Paints one tile of `kind` at the origin, `OUTSIDE_TILE` square; it repeats without a seam. */
@@ -177,6 +187,43 @@ const TILE_ART: Record<OutsideKind, (painter: OutsidePainter) => void> = {
       });
     }
   },
+  // Packed basalt columns seen from above: six-sided tops lit from the NW, each
+  // with its shadow to the SE, a dull ember in the gaps between some.
+  basalt: (painter) => {
+    const look = OUTSIDE_LOOK.basalt;
+    for (const [k, at] of scatter(5, 53).entries()) {
+      const radius = 17 + hash(k * 29) * 7;
+      const turn = hash(k * 31) * (Math.PI / 3);
+      const glows = hash(k * 37) < 0.35;
+      wrapped(at, radius * 1.5, (here) => {
+        const corner = (step: number, scale: number, dx: number, dy: number): Vec2 => ({
+          x: here.x + dx + Math.cos(turn + (step * Math.PI) / 3) * radius * scale,
+          y: here.y + dy + Math.sin(turn + (step * Math.PI) / 3) * radius * scale,
+        });
+        const hexagon = (
+          colour: number,
+          alpha: number,
+          scale: number,
+          dx: number,
+          dy: number,
+        ): void => {
+          painter.fillStyle(colour, alpha);
+          for (let step = 0; step < 6; step += 1) {
+            const a = corner(step, scale, dx, dy);
+            const b = corner(step + 1, scale, dx, dy);
+            painter.fillTriangle(here.x + dx, here.y + dy, a.x, a.y, b.x, b.y);
+          }
+        };
+        if (glows) {
+          painter.fillStyle(look.ember, 0.35);
+          painter.fillCircle(here.x + radius * 0.3, here.y + radius * 0.35, radius * 1.2);
+        }
+        hexagon(look.crack, 0.85, 1.05, radius * 0.25, radius * 0.3);
+        hexagon(look.top, 1, 1, 0, 0);
+        hexagon(look.lit, 1, 0.55, -radius * 0.18, -radius * 0.18);
+      });
+    }
+  },
 };
 
 /** One stroke of an edge: `offset` world units to the outside of the outline, negative to the ground. */
@@ -211,6 +258,12 @@ export const OUTSIDE_EDGE: Record<OutsideKind, readonly EdgeStroke[]> = {
   "deep-water": [
     { offset: 5, width: 10, colour: OUTSIDE_LOOK["deep-water"].ripple, alpha: 0.8 },
     { offset: -1.5, width: 3, colour: OUTSIDE_LOOK["deep-water"].shore, alpha: 1 },
+  ],
+  // A black crevice, a dull ember in it, a rim of pale ash.
+  basalt: [
+    { offset: 3, width: 6, colour: OUTSIDE_LOOK.basalt.crack, alpha: 1 },
+    { offset: 3, width: 1.5, colour: OUTSIDE_LOOK.basalt.ember, alpha: 0.7 },
+    { offset: -1.25, width: 2.5, colour: OUTSIDE_LOOK.basalt.ash, alpha: 0.9 },
   ],
 };
 

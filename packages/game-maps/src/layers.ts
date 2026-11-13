@@ -57,8 +57,8 @@ export function matchLayers(map: MapData): MatchLayers {
         ? undefined
         : {
             polygon: map.bounds.outline,
-            // A cliff or deep water is seen and shot across; rock and forest are not.
-            blocksSight: map.bounds.outside === "rock" || map.bounds.outside === "forest",
+            // A cliff or deep water is seen and shot across; rock, forest and basalt are not.
+            blocksSight: ["rock", "forest", "basalt"].includes(map.bounds.outside),
           },
   };
 }

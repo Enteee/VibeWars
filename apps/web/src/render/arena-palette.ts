@@ -434,6 +434,20 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     /** Dry scrub: green would be nature's. */
     plant: 0x6a6448,
   },
+  /**
+   * A cooling crust of basalt and ash (#3225): near-black, a breath warm,
+   * so the lava on it is by far the hottest thing on the ground.
+   */
+  volcanic: {
+    ground: 0x2b2421,
+    rock: 0x4a4340,
+    stone: 0x8c827a,
+    /** Charred. */
+    wood: 0x5e4632,
+    earth: 0x4a3426,
+    /** Ash-choked scrub. */
+    plant: 0x5a5444,
+  },
 };
 
 /** What each colour of the arena is made of. */
@@ -598,6 +612,7 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   heights: biomeMaterials(BIOME_TONES.heights),
   wilds: biomeMaterials(BIOME_TONES.wilds),
   desert: biomeMaterials(BIOME_TONES.desert),
+  volcanic: biomeMaterials(BIOME_TONES.volcanic),
 };
 
 /** Paving on a map of one layer (#3210): laid in the flat palette's tones, on the scene's background. */

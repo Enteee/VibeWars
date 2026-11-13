@@ -66,7 +66,7 @@ const wallSchema = z.discriminatedUnion("kind", [
 ]);
 
 /** The materials a map is drawn in (#3172, docs/art/visual-style.md §1). */
-export const BIOMES = ["hall", "heights", "wilds", "desert"] as const;
+export const BIOMES = ["hall", "heights", "wilds", "desert", "volcanic"] as const;
 export type Biome = (typeof BIOMES)[number];
 
 /**
@@ -204,7 +204,7 @@ const belowGroundSchema = z.object({
 export const MAX_OUTLINE_POINTS = 32;
 
 /** What lies beyond a ground outline (#3066), each its own art; cliffs and deep water leave sight open. */
-export const OUTSIDE_KINDS = ["cliff", "rock", "forest", "deep-water"] as const;
+export const OUTSIDE_KINDS = ["cliff", "rock", "forest", "deep-water", "basalt"] as const;
 
 /**
  * A map's ground (#3066): its whole rectangle, or a simple polygon inside
