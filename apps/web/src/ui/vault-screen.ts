@@ -140,11 +140,17 @@ export function watchHall(
 /** How many holds the Matches page lists. */
 const HALL_HOLDS_SHOWN = 20;
 
+/** One of a hold's people: a name and the key its signet (#2805) comes from. */
+export interface HallPerson {
+  readonly name: string;
+  readonly pubkey: string | null;
+}
+
 /** An unbroken run of Hall wins by one holder. */
 export interface HallHold {
   readonly holder: string;
-  /** The winning team's non-bot names, from the newest win. */
-  readonly people: readonly string[];
+  /** The winning team's non-bot people, from the newest win. */
+  readonly people: readonly HallPerson[];
   /** Unix seconds, of the newest win. */
   readonly endedAt: number;
   readonly wins: number;
@@ -165,7 +171,9 @@ export function hallHolds(records: readonly MatchRecord[], nowMs: number): HallH
       continue;
     }
     const players = record.teams[record.winningTeam]?.players ?? [];
-    const people = players.filter((player) => !player.bot).map((player) => player.name);
+    const people = players
+      .filter((player) => !player.bot)
+      .map(({ name, pubkey }) => ({ name, pubkey }));
     const running = holds.at(-1);
     const wins = running?.holder === holder ? running.wins + 1 : 1;
     if (wins > 1) {
