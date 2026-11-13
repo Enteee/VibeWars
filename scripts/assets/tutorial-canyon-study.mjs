@@ -10,7 +10,8 @@ import { join } from "node:path";
 const out = process.argv[2] ?? "docs/art";
 mkdirSync(out, { recursive: true });
 
-const MW = 7400,
+const PAD = 500; // rock east and west of the trail: the camera is not clamped, half a view is 978
+const MW = 8400,
   MH = 4100,
   VH = 1100,
   VW = Math.round((VH * 16) / 9),
@@ -88,8 +89,8 @@ const defs = `<defs>
 function ground() {
   const line = (/** @type {number} */ w, /** @type {string} */ c, dy = 0, extra = "") =>
     `<polyline points="${poly(TRAIL)}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="butt" transform="translate(0 ${dy})" ${extra}/>`;
-  let s = `<rect width="${MW}" height="${MH}" fill="${C.rock}"/>`;
-  s += `<rect width="${MW}" height="${MH}" fill="#000" filter="url(#grain)" opacity=".5"/>`;
+  let s = `<rect x="-500" width="${MW + 500}" height="${MH}" fill="${C.rock}"/>`;
+  s += `<rect x="-500" width="${MW + 500}" height="${MH}" fill="#000" filter="url(#grain)" opacity=".5"/>`;
   s += line(2 * HALF + 50, C.lip);
   s += line(2 * HALF, C.face);
   s += line(2 * HALF - 70, C.floor, 35);
@@ -484,13 +485,15 @@ const SITES = {
 // ---- assembly ---------------------------------------------------------------
 /** @type {(a: string) => string} */
 const world = (overlay) =>
+  `<g transform="translate(${PAD} 0)">` +
   ground() +
   lavaAll() +
   glows() +
   mist() +
   // arrival pad
   `<circle cx="500" cy="3530" r="150" fill="#2a2038" stroke="#a77bff" stroke-width="8" opacity=".9"/><circle cx="500" cy="3530" r="95" fill="none" stroke="#a77bff" stroke-width="6" stroke-dasharray="14 10"/>` +
-  overlay;
+  overlay +
+  `</g>`;
 
 /** @type {(name: string, svg: string) => void} */
 function render(name, svg) {
@@ -506,7 +509,7 @@ const style = `<style>.t{font:bold 14px 'DejaVu Sans',sans-serif;fill:#fff}.s{fo
 
 for (const [n, site] of Object.entries(SITES)) {
   const [sx, sy] = SITE[Number(n)];
-  const vx = sx - VW / 2,
+  const vx = Number(sx) + PAD - VW / 2,
     vy = sy - VH / 2;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FW}" height="${FH + BAR * 2}" viewBox="0 0 ${FW} ${FH + BAR * 2}">${style}
 <rect width="${FW}" height="${FH + BAR * 2}" fill="#10141a"/>

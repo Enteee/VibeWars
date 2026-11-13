@@ -31,7 +31,9 @@ station puts one. Regenerate with `node scripts/assets/tutorial-canyon-study.mjs
 One trail, four legs: west to east (arrival pad → 4 → 5 → 6), north (7), east to west
 (8 → 9 → 10), north, then west to east (11 → 12 → 13 → 14). Corridor 600 wide, rock between
 the rows at least 800 thick (impassable, dark top, so a camera never sees the next row).
-**Map 7400×4100 units.** Sites are 1400–1600 apart along a row and ≥ 1200 vertically at the
+Site coordinates below are trail coordinates; add 500 for map x (500 of rock on each side, so the
+unclamped camera, half a view 978×550, never sees past the map edge).
+**Map 8400×4100 units.** Sites are 1400–1600 apart along a row and ≥ 1200 vertically at the
 turns, so standing at a site the next is out of the default view (half 978 × 550) and never
 glimpsed. The only way on is the trail; station 5's wall shuts the full width until it falls.
 
@@ -49,7 +51,7 @@ glimpsed. The only way on is the trail; station 5's wall shuts the full width un
 | 13  | Y-junction (5300, 700): trail on east, dead-end arm south-east to (5900, 1400) | map data                        | **parasol and deck chair** prop for the joke |
 | 14  | canyon mouth (6800, 700), exit at x = 7100                                     | edge / exit                     | mist gate (below)                            |
 
-**Render budget.** 7400×4100 is about six times Ember Pits. If `render bench` refuses, cut
+**Render budget.** 8400×4100 is about seven times Ember Pits. If `render bench` refuses, cut
 between 7 and 8 (the east turn): map one is stations 4–7, map two stations 8–14, crossed by
 the same mist gate as station 14.
 
