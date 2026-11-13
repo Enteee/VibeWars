@@ -14,7 +14,7 @@ import {
   LightingPass,
   OVER_BUDGET_LIMIT,
   baseTint,
-  flickerBox,
+  flickerRegions,
   flickerRedrawDue,
   groundHoles,
   layerSurfaces,
@@ -298,22 +298,70 @@ describe("layerSurfaces", () => {
   });
 });
 
-describe("flickerBox (#3157)", () => {
+describe("flickerRegions (#3157, #3254)", () => {
   const extent = { x: 100, y: 50, width: 200, height: 100 };
+  const at = (id: string, x: number, y: number) => ({ ...light(id, 1, 1), position: { x, y } });
 
   it("is nothing to redraw when no light flickers", () => {
-    expect(flickerBox([], extent)).toBeUndefined();
+    expect(flickerRegions([], extent)).toEqual([]);
   });
 
   it("is the reach of each flickering light, in the light map's own pixels", () => {
     // Reach 300..400 by 150..250 in the arena: 150..200 by 75..125 at half scale.
-    const box = flickerBox([{ ...light("a", 1, 1), position: { x: 350, y: 200 } }], extent);
-    expect(box).toEqual({ x: 50, y: 25, width: 50, height: 50 });
+    const a = at("a", 350, 200);
+    expect(flickerRegions([a], extent)).toEqual([
+      { box: { x: 50, y: 25, width: 50, height: 50 }, lights: [a] },
+    ]);
   });
 
   it("is held within the light map", () => {
-    const box = flickerBox([{ ...light("a", 1, 1), position: { x: 190, y: 90 } }], extent);
-    expect(box).toEqual({ x: 0, y: 0, width: 20, height: 20 });
+    expect(flickerRegions([at("a", 190, 90)], extent).map(({ box }) => box)).toEqual([
+      { x: 0, y: 0, width: 20, height: 20 },
+    ]);
+  });
+
+  it("boxes lights far apart one by one, not the dark between them", () => {
+    const regions = flickerRegions([at("a", 250, 150), at("b", 450, 150)], extent);
+    expect(regions.map(({ box, lights }) => [box, lights.map(({ id }) => id)])).toEqual([
+      [{ x: 0, y: 0, width: 50, height: 50 }, ["a"]],
+      [{ x: 100, y: 0, width: 50, height: 50 }, ["b"]],
+    ]);
+  });
+
+  it("boxes lights whose reach overlaps together", () => {
+    const regions = flickerRegions([at("a", 250, 150), at("b", 300, 150)], extent);
+    expect(regions.map(({ box, lights }) => [box, lights.map(({ id }) => id)])).toEqual([
+      [{ x: 0, y: 0, width: 75, height: 50 }, ["a", "b"]],
+    ]);
+  });
+
+  it("merges until no two boxes overlap, as a merged box can reach a third", () => {
+    // a and c are apart; b, last, overlaps both, so all three are one box.
+    const lights = [at("a", 250, 150), at("c", 400, 150), at("b", 325, 150)];
+    const regions = flickerRegions(lights, extent);
+    expect(regions.map(({ lights: own }) => own.map(({ id }) => id).sort())).toEqual([
+      ["a", "b", "c"],
+    ]);
+  });
+
+  it("never gives two boxes that overlap, and gives every light once", () => {
+    const lights = Array.from({ length: 12 }, (_, k) =>
+      at(`l${String(k)}`, 120 + ((k * 137) % 400), 60 + ((k * 71) % 180)),
+    );
+    const regions = flickerRegions(lights, extent);
+    expect(regions.flatMap(({ lights: own }) => own.map(({ id }) => id)).sort()).toEqual(
+      lights.map(({ id }) => id).sort(),
+    );
+    for (const [i, a] of regions.entries()) {
+      for (const b of regions.slice(i + 1)) {
+        const apart =
+          a.box.x + a.box.width <= b.box.x ||
+          b.box.x + b.box.width <= a.box.x ||
+          a.box.y + a.box.height <= b.box.y ||
+          b.box.y + b.box.height <= a.box.y;
+        expect(apart).toBe(true);
+      }
+    }
   });
 });
 
