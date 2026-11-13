@@ -362,6 +362,20 @@ const lightingSchema = z.object({
   lights: z.array(lightSchema).max(MAX_LIGHTS),
 });
 
+/** The most paved areas on a map (#3210). */
+export const MAX_PAVING = 32;
+
+/**
+ * A paved surface on one layer's floor (#3210): a road, a square or a worn
+ * track. Only the renderer reads it, never the simulation.
+ */
+const pavingSchema = z.object({
+  id: z.string().min(1),
+  layer: layerSchema,
+  look: z.enum(["cobbles", "flagstones", "dirt"]),
+  area: waterSchema.shape.area,
+});
+
 /** The most fog banks on a map (#3032). */
 export const MAX_FOG_BANKS = 8;
 
@@ -960,6 +974,8 @@ export const mapDataSchema = z
     lighting: lightingSchema.optional(),
     /** Its fog, smoke, steam and weather (#3032); without it, the map has none. */
     atmosphere: atmosphereSchema.optional(),
+    /** Its paved surfaces (#3210): only the renderer reads them; without it, the map has none. */
+    paving: z.array(pavingSchema).max(MAX_PAVING).optional(),
   })
   .superRefine((map, context) => {
     if (map.teams !== 2 && TWO_TEAM_MODES.includes(map.mode)) {
@@ -1882,6 +1898,26 @@ export const mapDataSchema = z
         plumeIds.add(plume.id);
       });
     }
+
+    const pavingIds = new Set<string>();
+    (map.paving ?? []).forEach((paving, index) => {
+      layerInRange(paving.layer, ["paving", index, "layer"]);
+      if (pavingIds.has(paving.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["paving", index, "id"],
+          message: `paving id ${paving.id} is used twice`,
+        });
+      }
+      pavingIds.add(paving.id);
+      if (!shapeInBounds(paving.area, map.width, map.height)) {
+        context.addIssue({
+          code: "custom",
+          path: ["paving", index, "area"],
+          message: `paving ${paving.id} is outside the map`,
+        });
+      }
+    });
   });
 
 export type Vec2Data = z.infer<typeof vec2Schema>;
@@ -1900,6 +1936,8 @@ export type Objective = z.infer<typeof objectiveSchema>;
 export type MapLighting = z.infer<typeof lightingSchema>;
 export type MapAtmosphere = z.infer<typeof atmosphereSchema>;
 export type Water = z.infer<typeof waterSchema>;
+export type MapPaving = z.infer<typeof pavingSchema>;
+export type PavingLook = MapPaving["look"];
 export type Zone = z.infer<typeof zoneSchema>;
 export type Gate = z.infer<typeof gateSchema>;
 export type GateLook = Gate["look"];
