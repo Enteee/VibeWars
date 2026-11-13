@@ -1479,11 +1479,21 @@ export default {
   "training.you": "Tu",
 
   "tutorial.learn": "Impara a giocare",
+  "tutorial.look.hint": "Allontana la vista, poi trascinala a nord. Trova il teletrasporto!",
+  "tutorial.look.how":
+    "La rotella del mouse fa lo zoom. Tieni premuto il tasto destro e trascina per guardare.",
+  "tutorial.look.intro":
+    "Forse questo teletrasporto ci porta oltre il campo di battaglia. Guarda a nord!",
+  "tutorial.look.praise": "Eccolo! La nostra via attorno alla battaglia.",
   "tutorial.moreSoon": "Presto altre lezioni. Ci vediamo là fuori!",
   "tutorial.offer": "Nuovo qui? Il tuo tutor ti mostrerà le basi.",
   "tutorial.offerTitle": "Prima volta?",
   "tutorial.skip": "Salta",
   "tutorial.skipTutorial": "Salta tutorial",
+  "tutorial.stepIn.hint": "Sali sulla piattaforma del teletrasporto. Sono proprio accanto a te.",
+  "tutorial.stepIn.how": "Clic sinistro sulla piattaforma, o cammina con {keys}.",
+  "tutorial.stepIn.intro": "Dai, nel teletrasporto con me!",
+  "tutorial.stepIn.praise": "Insieme. Trattieni il respiro.",
   "tutorial.tutor": "Tutor",
   "tutorial.walk.hint": "Di qua! Sali sul segno luminoso.",
   "tutorial.walk.how": "Clic sinistro sul terreno, o cammina con {keys}.",

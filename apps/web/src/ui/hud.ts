@@ -138,6 +138,8 @@ export interface HudElements {
   /** One line above your bars, for why a key did nothing. */
   readonly message: HTMLElement;
   readonly targetPanel: HTMLElement;
+  /** Whether the target frame shows with nothing targeted: "no target". */
+  readonly showsNoTarget: boolean;
   /** The target's statuses, as your own monitor shows them (#835). */
   readonly targetEffects: EffectsMonitor;
   /** The target's primary and secondary profession icons, before its name (#281). */
@@ -222,14 +224,16 @@ export function renderKeyLabels(
  * The HUD, in `parent`. `onEndUpkeep` ends an enchantment you maintain,
  * double-clicked in your effects monitor (#838); `onCall` calls your
  * target for your team, clicked on the target frame (#2737). Without
- * `showScore`, as in the tutorial (#3221), the scoreboard never shows.
+ * `inMatch`, as in the tutorial (#3221), the scoreboard never shows, and
+ * the target frame only while there is a target (#3222): an empty one
+ * covered the teleporter's pad.
  */
 export function createHud(
   parent: HTMLElement,
   onEndUpkeep: (targetId: string, statusId: StatusId) => void,
   onDropFlag: () => void,
   onCall: () => void,
-  showScore = true,
+  inMatch = true,
 ): HudElements {
   const root = element("div", "hud", parent);
 
@@ -238,7 +242,7 @@ export function createHud(
   // can I cast"; the target frame under them.
   const top = element("div", "hud-top", parent);
   const scoreboard = element("div", "hud-scoreboard", top);
-  scoreboard.hidden = !showScore;
+  scoreboard.hidden = !inMatch;
   const scoreboardText = element("span", "hud-scoreboard-text", scoreboard);
   const enemies = element("span", "hud-enemies", scoreboard);
   const carriers = element("div", "hud-carriers", top);
@@ -383,6 +387,7 @@ export function createHud(
     slotTips: createSlotTooltips(),
     message,
     targetPanel,
+    showsNoTarget: inMatch,
     targetEffects,
     targetProfessions,
     targetSignet,
@@ -1855,14 +1860,13 @@ function renderTarget(
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
   renderTargetSignet(hud, target?.signet);
-  setText(
-    hud.targetText,
+  const name =
     target?.name ??
-      (self === undefined
-        ? undefined
-        : objectTargetName(self.targetSessionId, self.team, stand, beacon)) ??
-      t("hud.noTarget"),
-  );
+    (self === undefined
+      ? undefined
+      : objectTargetName(self.targetSessionId, self.team, stand, beacon));
+  setHidden(hud.targetPanel, name === undefined && !hud.showsNoTarget);
+  setText(hud.targetText, name ?? t("hud.noTarget"));
   setHidden(hud.targetBot, target?.bot !== true);
   setHidden(hud.attacking, self === undefined || !isAttackingTarget(self, target));
   const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;

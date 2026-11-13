@@ -638,19 +638,22 @@ describe("carriedBundle (#1225, #1374)", () => {
 
   it("shows the scoreboard, unless told not to, as the tutorial does (#3221)", () => {
     vi.stubGlobal("document", { createElement: () => new FakeNode() });
-    const make = (showScore?: boolean): HudElements =>
+    const make = (inMatch?: boolean): HudElements =>
       createHud(
         new FakeNode() as unknown as HTMLElement,
         () => undefined,
         () => undefined,
         () => undefined,
-        showScore,
+        inMatch,
       );
     const ordinary = make();
     const tutorial = make(false);
     vi.unstubAllGlobals();
     expect(ordinary.scoreboard.hidden).toBe(false);
     expect(tutorial.scoreboard.hidden).toBe(true);
+    // QA (#3222): an empty frame covered the teleporter's pad.
+    expect(ordinary.showsNoTarget).toBe(true);
+    expect(tutorial.showsNoTarget).toBe(false);
   });
 });
 

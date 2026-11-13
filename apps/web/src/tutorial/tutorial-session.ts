@@ -1,3 +1,4 @@
+import type { ProfessionId, Vec2 } from "@vibewars/game-core";
 import { NO_GUILD } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
@@ -11,7 +12,9 @@ import {
 } from "../training/local-connection.js";
 
 import { mountSkipTutorial } from "./tutorial-offer.js";
-import { walkStation, type StationHighlight } from "./stations.js";
+import { DEFAULT_STEP } from "../render/camera-rig.js";
+
+import { lookStation, stepInStation, walkStation, type StationHighlight } from "./stations.js";
 import { createTutorialRunner, type TutorLine } from "./tutorial-runner.js";
 import { SELF_ID, TUTOR_ID, tutorialWorld } from "./tutorial-world.js";
 
@@ -19,6 +22,8 @@ import { SELF_ID, TUTOR_ID, tutorialWorld } from "./tutorial-world.js";
 const MAX_STEP_SECONDS = 0.1;
 /** How long "more soon" stands before the menu. */
 const FAREWELL_MS = 2_500;
+/** The step into the teleporter (#3222): to white and back, as `.tutorial-flash` animates it. */
+const FLASH_MS = 800;
 
 /** How a tutorial ended: through, skipped, or cut short with nothing to record. */
 export type TutorialEnd = "done" | "skipped";
@@ -27,6 +32,8 @@ export interface TutorialSessionOptions {
   /** The background fight's: the tutorial is a body in it. */
   readonly mapId: string;
   readonly teamSize: number;
+  /** Drawn by the caller for each run (Q69), so a test can pin it. */
+  readonly tutorProfession: ProfessionId;
   /** The player key's, for the Options window over it (#3235). */
   readonly signet: number;
   /** Once, as it ends by itself, by Skip tutorial or by Leave; never after `stop`. */
@@ -50,11 +57,14 @@ export async function startTutorialSession(
   parent: HTMLElement,
   options: TutorialSessionOptions,
 ): Promise<TutorialSession> {
-  const { map, simulation, playerBuild, tutorBuild, mark, ground } = tutorialWorld(
-    options.mapId,
-    options.teamSize,
-    `tutorial-${String(Math.random())}`,
-  );
+  const { map, simulation, playerBuild, tutorBuild, mark, ground, teleporter, besidePad } =
+    tutorialWorld(
+      options.mapId,
+      options.teamSize,
+      `tutorial-${String(Math.random())}`,
+      options.tutorProfession,
+      { width: Math.max(1, parent.clientWidth), height: Math.max(1, parent.clientHeight) },
+    );
   const professions = new Map<string, Professions>([
     [
       SELF_ID,
@@ -75,10 +85,16 @@ export async function startTutorialSession(
     guildOf: () => NO_GUILD,
     professionsOf: (id) => professions.get(id) ?? NO_PROFESSIONS,
   });
+  const portal: GoalMark = {
+    id: "tutorial-teleporter",
+    kind: "portal",
+    position: teleporter,
+    layer: ground,
+  };
   const goals = (): readonly GoalMark[] =>
     highlight?.kind === "ground"
-      ? [{ id: "tutorial-mark", position: highlight.at, layer: ground }]
-      : [];
+      ? [portal, { id: "tutorial-mark", kind: "goal", position: highlight.at, layer: ground }]
+      : [portal];
 
   const frame = document.createElement("div");
   frame.className = "tutorial-frame";
@@ -96,6 +112,10 @@ export async function startTutorialSession(
   let view: MatchView | undefined;
   let request = 0;
   let farewell = 0;
+  // What the camera has done this run (#3222): once true, they stay true.
+  let zoomedOut = false;
+  let lookDragged = false;
+  let tutorSent = false;
   const stop = async (): Promise<void> => {
     ended = true;
     cancelAnimationFrame(request);
@@ -134,7 +154,21 @@ export async function startTutorialSession(
   });
   parent.append(frame);
 
-  const runner = createTutorialRunner([walkStation(mark)], loadKeymap);
+  const runner = createTutorialRunner(
+    [walkStation(mark, ground), lookStation(teleporter), stepInStation(teleporter, ground)],
+    loadKeymap,
+  );
+  const inView = (point: Vec2): boolean => {
+    const look = view?.camera();
+    if (look === undefined) {
+      return false;
+    }
+    const { x, y, zoom } = look.view;
+    return (
+      Math.abs(point.x - x) <= look.viewport.width / 2 / zoom &&
+      Math.abs(point.y - y) <= look.viewport.height / 2 / zoom
+    );
+  };
   let last: number | undefined;
   const step = (now: number): void => {
     if (ended) {
@@ -144,9 +178,27 @@ export async function startTutorialSession(
     last = now;
     const self = simulation.get(SELF_ID);
     const tutor = simulation.get(TUTOR_ID);
+    const look = view?.camera();
+    zoomedOut ||= look !== undefined && look.step > DEFAULT_STEP;
+    lookDragged ||= look?.panning === true;
     if (self !== undefined && tutor !== undefined && farewell === 0) {
-      const beat = runner.tick({ self: self.position, tutor: tutor.position }, now);
+      const beat = runner.tick(
+        {
+          self: self.position,
+          selfLayer: self.layer,
+          tutor: tutor.position,
+          zoomedOut,
+          lookDragged,
+          inView,
+        },
+        now,
+      );
       highlight = beat.highlight;
+      // Station 3 has begun: the tutor goes to stand by the pad.
+      if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
+        tutorSent = true;
+        simulation.walkTo(TUTOR_ID, besidePad, ground);
+      }
       // Where the mark is, for the e2e specs to click.
       if (highlight?.kind === "ground") {
         frame.dataset.mark = `${String(Math.round(highlight.at.x))},${String(Math.round(highlight.at.y))}`;
@@ -157,6 +209,13 @@ export async function startTutorialSession(
         say(beat.say);
       }
       if (beat.finished) {
+        // Into the teleporter together: to white and back, before "more soon".
+        const flash = document.createElement("div");
+        flash.className = "tutorial-flash";
+        frame.append(flash);
+        window.setTimeout(() => {
+          flash.remove();
+        }, FLASH_MS);
         farewell = window.setTimeout(() => {
           said.textContent = t("tutorial.moreSoon");
           farewell = window.setTimeout(() => {

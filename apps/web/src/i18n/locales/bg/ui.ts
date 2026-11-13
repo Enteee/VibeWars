@@ -1404,11 +1404,21 @@ export default {
   "training.you": "Ти",
 
   "tutorial.learn": "Научи се да играеш",
+  "tutorial.look.hint": "Отдалечи изгледа, после го плъзни на север. Намери телепорта!",
+  "tutorial.look.how":
+    "Колелцето на мишката мащабира. Задръж десния бутон и плъзни, за да огледаш.",
+  "tutorial.look.intro":
+    "Може би този телепорт ще ни изведе около бойното поле. Погледни на север!",
+  "tutorial.look.praise": "Ето го! Пътят ни около битката.",
   "tutorial.moreSoon": "Скоро още уроци. До скоро на бойното поле!",
   "tutorial.offer": "Нов си? Учителят ти ще ти покаже основите.",
   "tutorial.offerTitle": "За първи път?",
   "tutorial.skip": "Пропусни",
   "tutorial.skipTutorial": "Пропусни обучението",
+  "tutorial.stepIn.hint": "Стъпи на площадката на телепорта. Аз съм до теб.",
+  "tutorial.stepIn.how": "Ляв клик върху площадката или върви с {keys}.",
+  "tutorial.stepIn.intro": "Хайде, в телепорта с мен!",
+  "tutorial.stepIn.praise": "Заедно. Задръж дъха си.",
   "tutorial.tutor": "Учител",
   "tutorial.walk.hint": "Насам! Стъпи на светещия знак.",
   "tutorial.walk.how": "Ляв клик на земята или ходи с {keys}.",
