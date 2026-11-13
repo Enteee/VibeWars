@@ -67,6 +67,8 @@ export default defineConfig({
   define: {
     __VIBEWARS_BUILD__: JSON.stringify(BUILD),
     __VIBEWARS_RELEASE__: JSON.stringify(RELEASE),
+    // The render bench's build only (#3255): its lobby offers the reference map.
+    __VIBEWARS_BENCH_REFERENCE__: JSON.stringify(process.env.VIBEWARS_BENCH_REFERENCE === "1"),
   },
   // Every bundled npm package's licence, for Options (#1242, ADR-0039), and
   // the arena's icon sheet (#1671).

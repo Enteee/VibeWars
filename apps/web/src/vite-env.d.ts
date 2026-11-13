@@ -50,3 +50,10 @@ declare const __VIBEWARS_BUILD__: string;
  * it from `VIBEWARS_RELEASE`.
  */
 declare const __VIBEWARS_RELEASE__: string;
+
+/**
+ * True only in the build `scripts/bench/render-bench.mjs` makes: the lobby
+ * offers the bench's reference map (#3255). `vite.config.ts` stamps it from
+ * `VIBEWARS_BENCH_REFERENCE=1`; undefined in Node, where nothing stamps it.
+ */
+declare const __VIBEWARS_BENCH_REFERENCE__: boolean | undefined;

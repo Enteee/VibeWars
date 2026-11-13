@@ -157,10 +157,10 @@ of it.
 ## The render bench
 
 `pnpm run bench:render` (#3157, #3240) builds the client and times its
-frames in headless Chromium at 1280 × 720, as ratios to a fixed WebGL
-calibration drawn in the same browser. CI runs it on pull requests that
-touch the renderer or the maps, and fails a map whose p50 is over 3× the
-calibration's. It measures two cases:
+frames in headless Chromium at 1280 × 720, as ratios to a frozen
+reference map drawn the same way in the same browser. CI runs it on pull
+requests that touch the renderer or the maps, and fails a map whose p50
+is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
 
 - **The menu background** on every layered map: the bots' fight, the
   camera still, at the menu's 30 fps cap.
@@ -174,7 +174,7 @@ calibration's. It measures two cases:
   `ArenaScene.update`, then Phaser's render of the scene), the update's
   share of the frame time, the time between two frames that drew a
   new snapshot (its p50, p95 and standard deviation, the jitter), and
-  each map's p50 over the baseline's. The 3× gate does not judge these
+  each map's p50 over the baseline's. The `BENCH_MAX_RATIO` gate does not judge these
   rows: walking costs a frame about twice what standing does.
   `BENCH_MAX_FOLLOW_RATIO` fails a map walked that is over that many
   times the baseline walked.
@@ -204,9 +204,34 @@ not stand for.
 
 ## Render bench (`pnpm bench:render`)
 
-A layered map's frame cost in software GL, as a ratio to a fixed WebGL
-calibration on the same run (#3157, #3190, #3243). CI gates it at
-`BENCH_MAX_RATIO=3` on pull requests that touch the renderer or the maps.
+A layered map's frame cost in software GL, as a ratio to a frozen
+reference map drawn the same way on the same run. CI gates it at
+`BENCH_MAX_RATIO=3.5` on pull requests that touch the renderer or the
+maps (#3157, #3190, #3243, #3255).
+
+**The reference map.** `packages/game-maps/bench/reference-map.json` is a
+synthetic medium arena in the real map schema: two layers, walls, a deck
+and a ramp, a pit with a tunnel, lights and a zone. Only the bench's build
+(`VIBEWARS_BENCH_REFERENCE=1`) offers it in the lobby, and it is
+drawn through the menu background like any map, so whatever bounds a
+runner (fill, geometry, JS) bounds the reference and the maps alike. It
+is frozen: a pull request that edits it re-derives the gate below in the
+same pull request.
+
+**The gate** is the highest ratio of a healthy map (canyon, crossroads)
+over five CI runs, × 1.5, rounded to 0.1. Five runs on one head (#3255),
+with the reference between 38 and 82 ms on different runners:
+
+| map              | ratios                       | median |
+| ---------------- | ---------------------------- | ------ |
+| arena-canyon     | 1.50, 1.75, 1.67, 1.53, 1.69 | 1.67   |
+| arena-crossroads | 2.25, 2.25, 2.33, 2.29, 2.36 | 2.29   |
+| arena-long-hall  | 2.99, 3.11, 3.12, 3.30, 3.45 | 3.12   |
+
+So 2.36 × 1.5 → 3.5. Each map stays within about ±10 % of its median
+while the reference swings 2×. The two edge cells are canyon at −10.2 %
+and long-hall at +10.6 %. With the old blank-page calibration it was
+±15 %.
 
 The runner is slow for its first 20-40 s, so the run warms up first: it
 loads the first map, then calibrates for at least 45 s and until two
@@ -215,9 +240,10 @@ that is measured. Each map is then judged against the mean of the two
 calibration windows around it, and fails as too noisy if those two
 differ by over 20 %.
 
-**Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over 3×
-for a known reason, each gated at its own ratio and tied to the perf
-issue that will cut it. A listed map that
-measures at or under 3× prints a warning to delete its entry, and does
-not fail: how heavy a map is next to the calibration varies by runner
-hardware (#3255).
+**Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over or
+near the gate for a known reason, each gated at its own ratio and tied to the perf
+issue that will cut it. Long-hall is listed at 4.0 (its worst run 3.45,
++15 %) until #3254. A listed map that measures at or under the gate ÷ 1.25
+(2.80 at 3.5) fails as stale, so its entry is deleted when its issue
+lands. The margin keeps a map just under the gate from flaking: long-hall
+measured 2.99-3.45.
