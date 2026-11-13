@@ -1,5 +1,5 @@
 import type { MessageKey } from "../i18n/index.js";
-import { codeLabel, type Keymap } from "../input/keymap.js";
+import { codeLabel, type KeyAction, type Keymap } from "../input/keymap.js";
 
 import type { Station, StationHighlight, TutorialView } from "./stations.js";
 
@@ -26,6 +26,14 @@ export interface TutorialBeat {
   readonly highlight: StationHighlight | undefined;
   /** The last station is done: its praise is said and nothing comes after. */
   readonly finished: boolean;
+}
+
+/** Every key bound to `actions`, each action's first ones, then their second: W A S D ↑ ← ↓ →. */
+function keysOf(actions: readonly KeyAction[], map: Keymap): string[] {
+  const deepest = Math.max(0, ...actions.map((action) => map[action].length));
+  return Array.from({ length: deepest }, (_, at) =>
+    actions.flatMap((action) => map[action][at] ?? []),
+  ).flat();
 }
 
 export interface TutorialRunner {
@@ -56,7 +64,7 @@ export function createTutorialRunner(
     return {
       key,
       how: key === station.lines.praise ? undefined : station.lines.how,
-      keys: (station.keys ?? []).flatMap((action) => map[action].map(label)),
+      keys: keysOf(station.keys ?? [], map).map(label),
     };
   };
   const quiet = (highlight: StationHighlight | undefined): TutorialBeat => ({

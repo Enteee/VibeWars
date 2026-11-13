@@ -231,6 +231,12 @@ export async function startTutorialSession(
     if (self !== undefined && tutor !== undefined && farewell === 0) {
       const beat = runner.tick({ self: self.position, tutor: tutor.position }, now);
       highlight = beat.highlight;
+      // Where the mark is, for the e2e specs to click.
+      if (highlight?.kind === "ground") {
+        frame.dataset.mark = `${String(Math.round(highlight.at.x))},${String(Math.round(highlight.at.y))}`;
+      } else {
+        delete frame.dataset.mark;
+      }
       if (beat.say !== undefined) {
         say(beat.say);
       }

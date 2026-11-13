@@ -7912,7 +7912,7 @@ body:has(#screens[style*="none"]) .now-playing {
   top: 22%;
   left: 50%;
   transform: translateX(-50%);
-  max-width: min(36rem, calc(100% - 2rem));
+  max-width: min(44rem, calc(100% - 2rem));
   margin: 0;
   padding: 0.5rem 0.9rem;
   display: flex;
@@ -7940,11 +7940,25 @@ body:has(#screens[style*="none"]) .now-playing {
   color: var(--ink-dim);
 }
 
+/* As the HUD's leave match button. */
 .tutorial-skip-tutorial {
   position: absolute;
   top: calc(0.6rem + var(--build-banner-space, 0px));
   inset-inline-start: 0.9rem;
+  height: 2.2rem;
+  padding: 0 0.7rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
   pointer-events: auto;
+}
+
+.tutorial-skip-tutorial:hover,
+.tutorial-skip-tutorial:focus-visible {
+  border-color: var(--accent);
 }
 
 /* The splash screen (#2884): over everything until it ends. */

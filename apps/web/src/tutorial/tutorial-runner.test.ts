@@ -66,18 +66,25 @@ describe("the tutorial runner", () => {
   it("shows the keys as bound in the keymap passed in, read again on every line", () => {
     let keymap: Keymap = KEYMAP_PRESETS.classic;
     const runner = createTutorialRunner([walkStation(MARK)], () => keymap, label);
+    // Every first key, then every second.
     expect(runner.tick(AWAY, 0).say?.keys).toEqual([
-      ...KEYMAP_PRESETS.classic["move-up"],
-      ...KEYMAP_PRESETS.classic["move-left"],
-      ...KEYMAP_PRESETS.classic["move-down"],
-      ...KEYMAP_PRESETS.classic["move-right"],
+      "KeyW",
+      "KeyA",
+      "KeyS",
+      "KeyD",
+      "ArrowUp",
+      "ArrowLeft",
+      "ArrowDown",
+      "ArrowRight",
     ]);
     keymap = { ...KEYMAP_PRESETS.classic, "move-up": ["KeyI"], "move-left": ["KeyJ"] };
     expect(runner.tick(AWAY, HINT_REPEAT_MS).say?.keys).toEqual([
       "KeyI",
       "KeyJ",
-      ...KEYMAP_PRESETS.classic["move-down"],
-      ...KEYMAP_PRESETS.classic["move-right"],
+      "KeyS",
+      "KeyD",
+      "ArrowDown",
+      "ArrowRight",
     ]);
   });
 });

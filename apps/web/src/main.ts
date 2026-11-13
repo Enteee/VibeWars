@@ -3190,8 +3190,9 @@ async function main(): Promise<void> {
   /** The tutorial being started or run, until it ends or a link drops it. */
   let tutorialRun: object | undefined;
   let tutorial: TutorialSession | undefined;
-  /** A lobby, relay or guild link came in this tab: it is what the player is here for. */
-  let linked = false;
+  /** A lobby, relay or guild link came with this tab or in it: it is what the player is here for. */
+  let linked =
+    lobbyLink.kind === "invite" || relayLink.kind === "config" || guildLink.kind === "guild";
   const startTutorial = async (mapId: string, teamSize: number): Promise<void> => {
     const run = {};
     tutorialRun = run;
@@ -3272,8 +3273,7 @@ async function main(): Promise<void> {
     shouldShowSplash({
       forced: new URLSearchParams(window.location.search).has("splash"),
       seen: splashSeen(),
-      joining:
-        lobbyLink.kind === "invite" || relayLink.kind === "config" || guildLink.kind === "guild",
+      joining: linked,
       framed,
       disabled: import.meta.env.VITE_VIBEWARS_SPLASH === "off",
     })
