@@ -1,22 +1,29 @@
 #!/usr/bin/env node
 /**
  * `pnpm bench:render` — how long a frame of a layered map takes to draw,
- * against Crossroads on the same run (#3157).
+ * against a fixed synthetic workload on the same run (#3157, #3190).
  *
  * Builds the static client, serves it, and opens the live menu background
  * on each map in headless Chromium at 1280×720, as e2e does: picked as a
  * Hosted Game's map, which the background then fights on. Each map draws
  * for `BENCH_SECONDS` (5) after a second to settle; the time between two
- * animation frames is a frame's cost. Prints p50 and p95 per map and the
- * ratio of each to Crossroads'. The percentiles weigh a frame by how long
+ * animation frames is a frame's cost. Headless Chromium holds every frame
+ * to 60 Hz whatever its flags (they stay, harmless), so a frame lighter than
+ * 16.7 ms measures as the cap, not its cost; such a map is marked
+ * `(cap-bound)` in the table. The ratio is therefore only meaningful for work
+ * heavier than the cap, and the script enforces that: the calibration must
+ * itself take more than `MIN_CALIBRATION_MS`. The baseline is a calibration run the script owns,
+ * not a game map: a fixed seeded WebGL workload drawn every frame on a
+ * blank page in the same browser before the maps, so a slower runner moves the baseline with the maps and
+ * a heavier Crossroads cannot loosen the gate. Prints p50 and p95 per map
+ * and the ratio of each to the calibration's. The percentiles weigh a frame by how long
  * it lasted: what a moment of the run is spent in, so a map that hangs
  * for a second between quick frames does not measure as quick.
  *
- *   BENCH_MAP=a,b      the maps, by id; Crossroads is always measured.
- *                      Default: Crossroads and every map of more than
- *                      one layer.
- *   BENCH_MAX_RATIO=8 exit 1 when a map's p50 is more than this many
- *                      times Crossroads'. CI's regression gate.
+ *   BENCH_MAP=a,b      the maps, by id. Default: every map of more
+ *                      than one layer.
+ *   BENCH_MAX_RATIO=3 exit 1 when a map's p50 is more than this many
+ *                      times the calibration's. CI's regression gate.
  *   --url <url>        measure a client already served there.
  *
  * The menu background never draws faster than 30 fps (#3119): a map
@@ -36,9 +43,14 @@ import { chromium } from "@playwright/test";
 
 /* global document, requestAnimationFrame -- in page.evaluate, which runs in the page */
 
+/** A map p50 this close to a frame-rate cap (60 Hz, or the menu's 30 fps limiter) is cap-bound. */
+const CAP_TOLERANCE_MS = 0.5;
+const CAPS_MS = [1000 / 60, 1000 / 30];
+/** A calibration lighter than two 60 Hz frames is bound by the caps, not by its cost. */
+const MIN_CALIBRATION_MS = 2000 / 60 + 0.1;
+
 const PORT = 4322;
 const MAPS = path.join(import.meta.dirname, "..", "..", "packages", "game-maps", "maps");
-const BASELINE = "arena-crossroads";
 const SETTLE_MS = 1000;
 const SECONDS = Number(process.env.BENCH_SECONDS ?? 5);
 const MAX_RATIO =
@@ -59,7 +71,7 @@ function layeredMaps() {
     .sort();
 }
 
-/** The maps to measure, Crossroads first. */
+/** The maps to measure. */
 function mapsToMeasure() {
   const asked = process.env.BENCH_MAP;
   const ids =
@@ -69,7 +81,7 @@ function mapsToMeasure() {
           .split(",")
           .map((id) => id.trim())
           .filter((id) => id !== "");
-  return [BASELINE, ...ids.filter((id) => id !== BASELINE)];
+  return ids;
 }
 
 /**
@@ -157,6 +169,16 @@ async function measure(page, mapId) {
     throw new Error(`${mapId}: the menu background has no canvas`);
   }
   await sleep(SETTLE_MS);
+  return frameTimes(page);
+}
+
+/**
+ * Frame intervals over `SECONDS` of animation frames, in ms, sorted.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @returns {Promise<number[]>}
+ */
+function frameTimes(page) {
   return page.evaluate(
     (ms) =>
       new Promise((resolve) => {
@@ -180,6 +202,88 @@ async function measure(page, mapId) {
   );
 }
 
+/**
+ * The calibration: a fixed WebGL workload, as the renderer's context is,
+ * on a blank page where no game runs. 3000 seeded translucent triangles
+ * (about 48 screens of overdraw) in one draw call, redrawn every frame
+ * for `SECONDS`.
+ *
+ * @param {import("@playwright/test").Page} page an about:blank page
+ * @returns {Promise<number[]>}
+ */
+async function calibrate(page) {
+  await page.evaluate(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1280;
+    canvas.height = 720;
+    document.body.style.margin = "0";
+    document.body.append(canvas);
+    const gl = canvas.getContext("webgl");
+    if (gl === null) {
+      throw new Error("no WebGL for the calibration");
+    }
+    let seed = 12345;
+    const random = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    };
+    const vertices = new Float32Array(3000 * 3 * 2);
+    for (let t = 0; t < 3000; t += 1) {
+      const x = random() * 2 - 1;
+      const y = random() * 2 - 1;
+      const size = 0.1 + random() * 0.4;
+      for (let v = 0; v < 3; v += 1) {
+        vertices[t * 6 + v * 2] = x + (random() - 0.5) * size;
+        vertices[t * 6 + v * 2 + 1] = y + (random() - 0.5) * size;
+      }
+    }
+    /** @param {number} type @param {string} source */
+    const shader = (type, source) => {
+      const made = gl.createShader(type);
+      if (made === null) {
+        throw new Error("no shader");
+      }
+      gl.shaderSource(made, source);
+      gl.compileShader(made);
+      if (!gl.getShaderParameter(made, gl.COMPILE_STATUS)) {
+        throw new Error(`calibration shader: ${gl.getShaderInfoLog(made) ?? "failed"}`);
+      }
+      return made;
+    };
+    const program = gl.createProgram();
+    gl.attachShader(
+      program,
+      shader(gl.VERTEX_SHADER, "attribute vec2 p; void main(){gl_Position=vec4(p,0.,1.);}"),
+    );
+    gl.attachShader(
+      program,
+      shader(
+        gl.FRAGMENT_SHADER,
+        "precision mediump float; void main(){gl_FragColor=vec4(.2,.6,.3,.1);}",
+      ),
+    );
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw new Error(`calibration program: ${gl.getProgramInfoLog(program) ?? "failed"}`);
+    }
+    gl.useProgram(program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    const at = gl.getAttribLocation(program, "p");
+    gl.enableVertexAttribArray(at);
+    gl.vertexAttribPointer(at, 2, gl.FLOAT, false, 0, 0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    const draw = () => {
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, 3000 * 3);
+      requestAnimationFrame(draw);
+    };
+    draw();
+  });
+  return frameTimes(page);
+}
+
 const served = options.url === undefined ? await serve() : undefined;
 const url = options.url ?? served?.url ?? "";
 const executablePath = process.env.VIBEWARS_CHROMIUM;
@@ -188,10 +292,21 @@ let failed = false;
 try {
   browser = await chromium.launch({
     ...(executablePath === undefined ? {} : { executablePath }),
-    args: ["--no-sandbox"],
+    args: ["--no-sandbox", "--disable-gpu-vsync", "--disable-frame-rate-limit"],
   });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  const viewport = { width: 1280, height: 720 };
+  const blank = await browser.newPage({ viewport });
+  const calibration = await calibrate(blank);
+  await blank.close();
+  const page = await browser.newPage({ viewport });
   await page.goto(url);
+  const base = percentile(calibration, 50);
+  console.log(`calibration p50 ${base.toFixed(1)} ms over ${String(calibration.length)} frames`);
+  if (!(base >= MIN_CALIBRATION_MS)) {
+    throw new Error(
+      `the calibration p50 is under ${String(MIN_CALIBRATION_MS)} ms, so it is bound by the frame-rate cap and the ratio would be meaningless`,
+    );
+  }
   const rows = [];
   for (const mapId of mapsToMeasure()) {
     const frames = await measure(page, mapId);
@@ -202,17 +317,16 @@ try {
       p95: percentile(frames, 95),
     });
   }
-  const base = rows[0]?.p50 ?? NaN;
-  console.log("| map | frames | p50 ms | p95 ms | p50 / Crossroads |");
+  console.log("| map | frames | p50 ms | p95 ms | p50 / calibration |");
   console.log("|---|---|---|---|---|");
   for (const row of rows) {
     const ratio = row.p50 / base;
     console.log(
-      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${ratio.toFixed(2)} |`,
+      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${ratio.toFixed(2)}${CAPS_MS.some((cap) => Math.abs(row.p50 - cap) < CAP_TOLERANCE_MS) ? " (cap-bound)" : ""} |`,
     );
     if (MAX_RATIO !== undefined && !(ratio <= MAX_RATIO)) {
       console.error(
-        `${row.mapId}: p50 is ${ratio.toFixed(2)}× Crossroads', over ${String(MAX_RATIO)}×`,
+        `${row.mapId}: p50 is ${ratio.toFixed(2)}× the calibration's, over ${String(MAX_RATIO)}×`,
       );
       failed = true;
     }
