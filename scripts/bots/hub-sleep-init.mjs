@@ -282,7 +282,7 @@ function nixosImport(host) {
   host.say(`    }}/${NIXOS_MODULE}" ];`);
   host.say(`    services.vibewars-sleep = { enable = true; user = "${host.user}"; };`);
   host.say(
-    `  Flake config: add input vibewars = { url = "github:Enteee/VibeWars/${rev}"; flake = false; };`,
+    `  Flake config: add input vibewars = { url = "git+${REPO}?ref=main&rev=${rev}"; flake = false; };`,
   );
   host.say(`    and import "\${inputs.vibewars}/${NIXOS_MODULE}" instead.`);
 }

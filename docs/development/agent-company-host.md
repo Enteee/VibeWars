@@ -238,7 +238,7 @@ services.vibewars-sleep = { enable = true; user = "<you>"; };
 ```
 
 A flake config adds the input
-`vibewars = { url = "github:Enteee/VibeWars/<commit>"; flake = false; };`
+`vibewars = { url = "git+https://github.com/Enteee/VibeWars?ref=main&rev=<commit>"; flake = false; };`
 and imports `"${inputs.vibewars}/nix/nixos/vibewars-sleep.nix"` instead;
 `flake.lock` holds its hash. Never import the module from the checkout or any
 other path the company user can write: root applies whatever is there at the

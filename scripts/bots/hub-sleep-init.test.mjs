@@ -113,7 +113,9 @@ describe("claude-llc-init's hibernation step (#2794)", () => {
         '    services.vibewars-sleep = { enable = true; user = "ente"; };',
       ].join("\n"),
     );
-    expect(said).toContain('url = "github:Enteee/VibeWars/c9f0b10aa"; flake = false;');
+    expect(said).toContain(
+      'url = "git+https://github.com/Enteee/VibeWars?ref=main&rev=c9f0b10aa"; flake = false;',
+    );
     expect(said).toContain('import "${inputs.vibewars}/nix/nixos/vibewars-sleep.nix"');
     expect(said).not.toContain("systemd.paths");
     expect(said).not.toMatch(/imports = \[ \//);
