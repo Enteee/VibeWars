@@ -11,7 +11,9 @@ export const APP_ID = `vibewars-p${PROTOCOL_VERSION}`;
 /**
  * Nostr relays from Trystero 0.26.0's default list, kept only where a
  * probe from the sandbox opened a socket and got an answer to a `REQ`
- * (2026-10-25, PR for #392).
+ * (2026-10-25, PR for #392). Re-probed 2026-11-13 (#3214): layer.systems
+ * answers HTTP 521 and kaleidoswap refuses the ticket's event kind, so both
+ * are gone.
  */
 export const NOSTR_RELAYS: readonly string[] = [
   "wss://nos.lol",
