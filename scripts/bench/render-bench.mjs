@@ -334,6 +334,7 @@ try {
       frames = await measure(page, mapId);
     } finally {
       await page.close();
+      await sleep(SETTLE_MS);
     }
     rows.push({
       mapId,
