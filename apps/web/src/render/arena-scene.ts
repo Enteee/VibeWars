@@ -105,6 +105,7 @@ import {
   traceHiddenOutline,
   seenFrom,
   tunnelCover,
+  tunnelFloor,
   tunnelsHolding,
   traceHiddenPolyline,
   type Occluder,
@@ -3056,6 +3057,11 @@ export class ArenaScene extends Phaser.Scene {
     }
     const pit = this.structureAt({ kind: "pit" });
     const cover = this.structureAt({ kind: "deck", deckLayer: structure.ground });
+    // Under its cover, seen only while that is cut away (#3234); a pit draws over it.
+    pit.fillStyle(PIT_FLOOR, 1);
+    for (const tunnel of structure.tunnels) {
+      this.fillFan(pit, tunnelFloor(structure, tunnel));
+    }
     for (const each of structure.pits) {
       const drawing = pitDrawing(structure, each);
       pit.fillStyle(PIT_FLOOR, 1);

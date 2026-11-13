@@ -676,6 +676,47 @@ export function tunnelCover(
   return boxOutline(box.left, box.top, box.right, box.bottom + step);
 }
 
+/**
+ * The floor of `tunnel`, sunk a step (#3234): only seen through its cover
+ * while that is cut away for whoever is in it.
+ */
+export function tunnelFloor(
+  structure: MapStructure,
+  tunnel: MapStructure["tunnels"][number],
+): readonly Vec2[] {
+  const step = -liftOf(structure, structure.ground - 1);
+  const box = boxOf(tunnel.footprint);
+  return boxOutline(box.left, box.top + step, box.right, box.bottom + step);
+}
+
+/** `outline` cut to `box` (Sutherland-Hodgman): empty if they do not meet. */
+function clipToBoxOutline(outline: readonly Vec2[], box: Box): readonly Vec2[] {
+  const sides: readonly ((point: Vec2) => number)[] = [
+    ({ x }) => x - box.left,
+    ({ x }) => box.right - x,
+    ({ y }) => y - box.top,
+    ({ y }) => box.bottom - y,
+  ];
+  let points = outline;
+  for (const inside of sides) {
+    points = points.flatMap((point, at) => {
+      const next = points[(at + 1) % points.length] ?? point;
+      const [here, there] = [inside(point), inside(next)];
+      const crossing =
+        here >= 0 !== there >= 0
+          ? [
+              {
+                x: point.x + ((next.x - point.x) * here) / (here - there),
+                y: point.y + ((next.y - point.y) * here) / (here - there),
+              },
+            ]
+          : [];
+      return here >= 0 ? [point, ...crossing] : crossing;
+    });
+  }
+  return points;
+}
+
 /** A place a click can name: the layer, and the point on it in the simulation's terms. */
 export interface Surface {
   readonly layer: number;
@@ -966,6 +1007,17 @@ export function occludersOf(
       ...occluder(shapeOutline(tunnel.footprint), sunk, 0, ground - 1, null),
       tunnel: at,
     })),
+    // A road on the ground is an image of its own: it covers whoever is in
+    // a tunnel under it even with the ground over that tunnel cut away (#3234).
+    ...structure.tunnels.flatMap((tunnel) => {
+      const footprint = boxOf(tunnel.footprint);
+      const cover = { ...footprint, bottom: footprint.bottom - sunk };
+      return (structure.paving ?? []).flatMap((paving) => {
+        const over =
+          paving.layer === ground ? clipToBoxOutline(shapeOutline(paving.area), cover) : [];
+        return over.length < 3 ? [] : [occluder(over, 0, 0, ground - 1, null)];
+      });
+    }),
     // A pit draws a step down: the strip along its south edge then falls
     // behind the ground's near lip (#2973).
     ...structure.pits.map((pit) => {

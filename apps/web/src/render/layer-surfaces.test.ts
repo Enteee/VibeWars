@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { Uphill, Vec2 } from "@vibewars/game-core";
+import { pointInPolygon, type Uphill, type Vec2 } from "@vibewars/game-core";
 
 import {
   actorAtPoint,
@@ -1016,8 +1016,24 @@ describe("a click over a tunnel (#3234)", () => {
   const inSouth = south.centre;
 
   it("shows a body in the viewer's own tunnel, and hides it from the ground", () => {
-    expect(hidden(inWest, TUNNEL, inWest)).toBe(0);
-    expect(hidden(inWest, GROUND, inWest)).toBeGreaterThan(0);
+    // South of the streets, which cross cellar-west round its centre, and
+    // north of where cellar-south meets it.
+    const open = { x: inWest.x, y: inWest.y + 150 };
+    expect(hidden(inWest, TUNNEL, open)).toBe(0);
+    expect(hidden(inWest, GROUND, open)).toBeGreaterThan(0);
+  });
+
+  it("still hides a body in the viewer's own tunnel under a road, an image that cannot fade", () => {
+    const roads = (structure.paving ?? []).filter(({ layer }) => layer === GROUND);
+    // The first point along cellar-west whose body draws on a road.
+    const underRoad = Array.from({ length: 70 }, (_, k) => ({
+      x: inWest.x,
+      y: 1200 + 10 * k,
+    })).find((at) =>
+      roads.some(({ area }) => pointInPolygon({ x: at.x, y: at.y + STEP }, shapeOutline(area))),
+    );
+    expect(underRoad).toBeDefined();
+    expect(hidden(inWest, TUNNEL, underRoad ?? inWest)).toBeGreaterThan(0);
   });
 
   it("still hides a body in another tunnel from a viewer in one", () => {
