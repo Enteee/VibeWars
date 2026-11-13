@@ -685,22 +685,9 @@ export default {
   "lobby.mapRandom": "Carte : aléatoire (Arène d'équipe)",
   "lobby.mapShown": "Carte : {map}",
   "lobby.matchRunning": "Un match est en cours. Le salon rouvrira à sa fin.",
-  "lobby.modeAnnihilation": "Annihilation : élimine tous les ennemis",
-  "lobby.modeCapturePoints":
-    "Points de capture : reste sur les sanctuaires pour les prendre. Chaque sanctuaire possédé marque toutes les 30 s.",
-  "lobby.modeGuildBattle": "Bataille de guilde : tue le Seigneur de guilde ennemi",
-  "lobby.modeKillCount": "Décompte : le plus d'éliminations en 3 minutes",
-  "lobby.modeKingOfTheHill":
-    "Roi de la colline : mène ton Héros fantomatique sur l'autel. Tiens-le pour marquer ; le plus de points en {minutes} minutes l'emporte.",
   "lobby.modeNameCapturePoints": "Points de capture",
   "lobby.modeNameKingOfTheHill": "Roi de la colline",
   "lobby.modeNameRelicRun": "Course aux reliques",
-  "lobby.modePriestAnnihilation":
-    "Annihilation de prêtre : élimine tous les ennemis et leur prêtre",
-  "lobby.modeRelicRun":
-    "Course aux reliques : porte ta relique à l'autel. Le plus de points en {minutes} minutes l'emporte.",
-  "lobby.modeRelicRunFoe":
-    "Course aux reliques : porte la relique ennemie à ton Héros fantomatique. 3 points d'avance l'emportent ; après {minutes} minutes, le plus de points.",
   "lobby.notReady": "Pas prêt",
   "lobby.playBots": "Jouer contre des bots",
   "lobby.ready": "Prêt",
@@ -770,7 +757,6 @@ export default {
   },
   "matches.noMatches": "Aucun match pour l'instant.",
   "matches.noneFit": "Aucun match pour ces filtres.",
-  "matches.recentNote": "Affiche les 50 matchs les plus récents des 7 derniers jours.",
   "matches.offline": "Relais de matchs injoignables pour le moment.",
   "matches.playerBuild": "{player} : {build}",
   "matches.sizeChip": "{size}v{size}",

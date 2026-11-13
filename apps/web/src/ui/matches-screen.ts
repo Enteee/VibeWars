@@ -401,7 +401,6 @@ export function renderMatchesScreen(
       draw();
     }),
   );
-  body.appendChild(h("p", "matches-recent", t("matches.recentNote")));
   const note = body.appendChild(h("p", "matches-note", t("matches.noMatches")));
   const list = body.appendChild(h("ol", "match-list"));
   let records: HeardMatchRecord[] = [];

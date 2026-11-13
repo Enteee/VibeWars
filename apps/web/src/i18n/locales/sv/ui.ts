@@ -646,21 +646,9 @@ export default {
   "lobby.mapRandom": "Karta: slumpad (Lagarena)",
   "lobby.mapShown": "Karta: {map}",
   "lobby.matchRunning": "En match pågår fortfarande. Lobbyn öppnas igen när den är slut.",
-  "lobby.modeAnnihilation": "Förintelse: besegra alla fiender",
-  "lobby.modeCapturePoints":
-    "Erövringspunkter: stå på helgedomar för att ta dem. Varje helgedom du äger ger poäng var 30:e sekund.",
-  "lobby.modeGuildBattle": "Gillestrid: dräp fiendens gillesherre",
-  "lobby.modeKillCount": "Dödsräkning: flest dödanden på 3 minuter",
-  "lobby.modeKingOfTheHill":
-    "King of the Hill: led din spökhjälte till altaret. Håll det för att få poäng; flest poäng på {minutes} minuter vinner.",
   "lobby.modeNameCapturePoints": "Erövringspunkter",
   "lobby.modeNameKingOfTheHill": "King of the Hill",
   "lobby.modeNameRelicRun": "Reliklöpning",
-  "lobby.modePriestAnnihilation": "Prästförintelse: besegra alla fiender och deras präst",
-  "lobby.modeRelicRun":
-    "Reliklöpning: bär din relik till altaret. Flest poäng på {minutes} minuter vinner.",
-  "lobby.modeRelicRunFoe":
-    "Reliklöpning: bär fiendens relik till din spökhjälte. 3 poängs ledning vinner; efter {minutes} minuter vinner flest poäng.",
   "lobby.notReady": "Ej redo",
   "lobby.playBots": "Spela mot bottar",
   "lobby.ready": "Redo",
@@ -714,7 +702,6 @@ export default {
   "matches.minutesAgo": { one: "{count} min sedan", other: "{count} min sedan" },
   "matches.noMatches": "Inga matcher än.",
   "matches.noneFit": "Inga matcher passar filtren.",
-  "matches.recentNote": "Visar de 50 senaste matcherna från de senaste 7 dagarna.",
   "matches.offline": "Når inte matchreläerna just nu.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

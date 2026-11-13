@@ -652,21 +652,9 @@ export default {
   "lobby.mapRandom": "Karte: zufällig (Teamarena)",
   "lobby.mapShown": "Karte: {map}",
   "lobby.matchRunning": "Ein Match läuft noch. Die Lobby öffnet wieder, wenn es vorbei ist.",
-  "lobby.modeAnnihilation": "Vernichtung: Besiege alle Gegner",
-  "lobby.modeCapturePoints":
-    "Punkte erobern: Stell dich auf Schreine, um sie einzunehmen. Jeder eigene Schrein punktet alle 30 s.",
-  "lobby.modeGuildBattle": "Gildenschlacht: Töte den gegnerischen Gildenlord",
-  "lobby.modeKillCount": "Kill-Zähler: Die meisten Kills in 3 Minuten",
-  "lobby.modeKingOfTheHill":
-    "King of the Hill: Führe deinen Geisterhelden auf den Altar. Halte ihn, um zu punkten; die meisten Punkte in {minutes} Minuten gewinnen.",
   "lobby.modeNameCapturePoints": "Punkte erobern",
   "lobby.modeNameKingOfTheHill": "King of the Hill",
   "lobby.modeNameRelicRun": "Reliktlauf",
-  "lobby.modePriestAnnihilation": "Priestervernichtung: Besiege alle Gegner und ihren Priester",
-  "lobby.modeRelicRun":
-    "Reliktlauf: Trage dein Relikt zum Altar. Die meisten Punkte in {minutes} Minuten gewinnen.",
-  "lobby.modeRelicRunFoe":
-    "Reliktlauf: Trage das Relikt des Gegners zu deinem Geisterhelden. 3 Punkte Vorsprung gewinnen; nach {minutes} Minuten die meisten Punkte.",
   "lobby.notReady": "Nicht bereit",
   "lobby.playBots": "Gegen Bots spielen",
   "lobby.ready": "Bereit",
@@ -721,7 +709,6 @@ export default {
   "matches.minutesAgo": { one: "vor {count} Min.", other: "vor {count} Min." },
   "matches.noMatches": "Noch keine Matches.",
   "matches.noneFit": "Keine Matches passen zu diesen Filtern.",
-  "matches.recentNote": "Zeigt die 50 neuesten Matches der letzten 7 Tage.",
   "matches.offline": "Die Match-Relays sind gerade nicht erreichbar.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

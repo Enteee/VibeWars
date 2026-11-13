@@ -603,21 +603,9 @@ export default {
   "lobby.mapRandom": "맵: 무작위 (팀 아레나)",
   "lobby.mapShown": "맵: {map}",
   "lobby.matchRunning": "아직 매치가 진행 중이에요. 끝나면 로비가 다시 열려요.",
-  "lobby.modeAnnihilation": "전멸전: 모든 적을 쓰러뜨리세요",
-  "lobby.modeCapturePoints":
-    "거점 점령: 성소 위에 서서 점령하세요. 점령한 성소마다 30초마다 점수를 얻어요.",
-  "lobby.modeGuildBattle": "길드 대전: 적 길드 로드를 처치하세요",
-  "lobby.modeKillCount": "처치 수: 3분 동안 가장 많이 처치하세요",
-  "lobby.modeKingOfTheHill":
-    "King of the Hill: 유령 영웅을 제단으로 이끄세요. 제단을 지키면 점수를 얻고, {minutes}분 동안 가장 많이 얻은 팀이 이겨요.",
   "lobby.modeNameCapturePoints": "거점 점령",
   "lobby.modeNameKingOfTheHill": "King of the Hill",
   "lobby.modeNameRelicRun": "유물 쟁탈",
-  "lobby.modePriestAnnihilation": "사제 전멸전: 모든 적과 사제를 쓰러뜨리세요",
-  "lobby.modeRelicRun":
-    "유물 쟁탈: 유물을 제단으로 옮기세요. {minutes}분 동안 가장 많은 점수를 얻은 팀이 이겨요.",
-  "lobby.modeRelicRunFoe":
-    "유물 쟁탈: 적의 유물을 내 유령 영웅에게 옮기세요. 3점 앞서면 승리하고, {minutes}분이 지나면 가장 많은 점수를 얻은 팀이 이겨요.",
   "lobby.notReady": "준비 안 됨",
   "lobby.playBots": "봇과 대전",
   "lobby.ready": "준비 완료",
@@ -671,7 +659,6 @@ export default {
   "matches.minutesAgo": { other: "{count}분 전" },
   "matches.noMatches": "아직 매치가 없어요.",
   "matches.noneFit": "필터에 맞는 매치가 없어요.",
-  "matches.recentNote": "지난 7일 동안의 최근 매치 50개를 보여 줘요.",
   "matches.offline": "지금은 매치 릴레이에 연결할 수 없어요.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

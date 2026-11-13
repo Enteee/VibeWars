@@ -649,21 +649,9 @@ export default {
   "lobby.mapRandom": "Карта: случайна (Отборна арена)",
   "lobby.mapShown": "Карта: {map}",
   "lobby.matchRunning": "Още тече мач. Лобито се отваря отново, когато свърши.",
-  "lobby.modeAnnihilation": "Унищожение: победи всички врагове",
-  "lobby.modeCapturePoints":
-    "Превземане на точки: застани върху светилищата, за да ги вземеш. Всяко твое светилище носи точки на всеки 30 с.",
-  "lobby.modeGuildBattle": "Битка на гилдии: убий вражеския Лорд на гилдията",
-  "lobby.modeKillCount": "Брой убийства: най-много убийства за 3 минути",
-  "lobby.modeKingOfTheHill":
-    "Цар на хълма: отведи Призрачния си герой на олтара. Задръж го, за да трупаш точки; печели този с най-много точки за {minutes} минути.",
   "lobby.modeNameCapturePoints": "Превземане на точки",
   "lobby.modeNameKingOfTheHill": "Цар на хълма",
   "lobby.modeNameRelicRun": "Бяг с реликви",
-  "lobby.modePriestAnnihilation": "Унищожение на жреци: победи всички врагове и жреца им",
-  "lobby.modeRelicRun":
-    "Бяг с реликви: занеси реликвата си до олтара. Печели този с най-много точки за {minutes} минути.",
-  "lobby.modeRelicRunFoe":
-    "Бяг с реликви: занеси реликвата на врага при Призрачния си герой. 3 точки преднина печелят; след {minutes} минути – най-много точки.",
   "lobby.notReady": "Не съм готов",
   "lobby.playBots": "Играй срещу ботове",
   "lobby.ready": "Готов",
@@ -717,7 +705,6 @@ export default {
   "matches.minutesAgo": { one: "преди {count} мин", other: "преди {count} мин" },
   "matches.noMatches": "Още няма мачове.",
   "matches.noneFit": "Няма мачове по тези филтри.",
-  "matches.recentNote": "Показват се последните 50 мача от изминалите 7 дни.",
   "matches.offline": "В момента релетата за мачове са недостъпни.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",

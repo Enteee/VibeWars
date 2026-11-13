@@ -708,21 +708,9 @@ export default {
   "lobby.mapRandom": "Мапа: випадкова (Командна арена)",
   "lobby.mapShown": "Мапа: {map}",
   "lobby.matchRunning": "Матч ще триває. Лобі відкриється, коли він завершиться.",
-  "lobby.modeAnnihilation": "Винищення: здолай усіх ворогів",
-  "lobby.modeCapturePoints":
-    "Захоплення точок: стій на святилищах, щоб захопити їх. Кожне твоє святилище приносить очки кожні 30 с.",
-  "lobby.modeGuildBattle": "Битва гільдій: убий ворожого Лорда гільдії",
-  "lobby.modeKillCount": "Лік убивств: найбільше вбивств за 3 хвилини",
-  "lobby.modeKingOfTheHill":
-    "Цар гори: приведи свого Примарного героя на вівтар. Утримуй його, щоб набирати очки; перемагає той, хто набере найбільше за {minutes} хвилин.",
   "lobby.modeNameCapturePoints": "Захоплення точок",
   "lobby.modeNameKingOfTheHill": "Цар гори",
   "lobby.modeNameRelicRun": "Перегони за реліквією",
-  "lobby.modePriestAnnihilation": "Винищення зі жерцем: здолай усіх ворогів і їхнього жерця",
-  "lobby.modeRelicRun":
-    "Перегони за реліквією: донеси свою реліквію до вівтаря. Перемагає той, хто набере найбільше очок за {minutes} хвилин.",
-  "lobby.modeRelicRunFoe":
-    "Перегони за реліквією: донеси реліквію ворога до свого Примарного героя. Перемагає відрив у 3 очки; через {minutes} хвилин — той, хто має найбільше очок.",
   "lobby.notReady": "Не готово",
   "lobby.playBots": "Грати проти ботів",
   "lobby.ready": "Готово",
@@ -796,7 +784,6 @@ export default {
   },
   "matches.noMatches": "Матчів ще немає.",
   "matches.noneFit": "Немає матчів за цими фільтрами.",
-  "matches.recentNote": "Показано 50 найновіших матчів за останні 7 днів.",
   "matches.offline": "Зараз не вдається зв'язатися з ретрансляторами матчів.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
