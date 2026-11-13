@@ -863,7 +863,7 @@ export class ArenaScene extends Phaser.Scene {
         this.drawActor(band.body, band.marks, actor);
       }
     }
-    this.cutAwayTunnels(deltaMs / 1000);
+    this.cutAwayTunnels(dt);
     this.drawHiddenOutlines();
     this.drawHoverMarker(effects);
     // Over the bodies: a carried flag stands above its carrier's head.
