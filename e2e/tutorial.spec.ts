@@ -32,6 +32,9 @@ test.describe("the first-time tutorial (#3218)", () => {
   test("Learn, walk to the mark, look around, step in: then the menu, and no offer again", async ({
     page,
   }) => {
+    // Three stations, each a walk or a drag in a sim that runs no faster than
+    // the page draws: a loaded runner takes most of a minute (#3222).
+    test.setTimeout(120_000);
     await pastTheSplash(page);
     await page.getByRole("button", { name: "Learn to play" }).click();
     const frame = page.locator(".tutorial-frame");
@@ -110,7 +113,7 @@ test.describe("the first-time tutorial (#3218)", () => {
       await expect(frame.locator(".tutorial-said")).toHaveText("Together. Hold your breath.", {
         timeout: 5_000,
       });
-    }).toPass({ timeout: 40_000 });
+    }).toPass({ timeout: 60_000 });
     await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
     await expect(frame).toHaveCount(0);
 

@@ -152,6 +152,29 @@ describe("tutorialWorld (#3221)", () => {
       expect(simulation.get(TUTOR_ID)?.position).not.toEqual(tutorFrom);
     },
   );
+
+  it.each(teamArenaMapIds(8))("walks the player onto the teleporter's pad on %s", (mapId) => {
+    const { simulation, teleporter, ground } = tutorialWorld(
+      mapId,
+      8,
+      "teleporter",
+      "monk",
+      VIEWPORT,
+    );
+    const { structure } = mapStructure(mapId);
+    const picked = pickSurface(structure, teleporter, false);
+    simulation.walkTo(SELF_ID, picked.point, picked.layer);
+    let reached = false;
+    for (let t = 0; t < 20 && !reached; t += TICK) {
+      simulation.step(TICK);
+      const self = simulation.get(SELF_ID)?.position;
+      reached =
+        self !== undefined &&
+        Math.hypot(self.x - teleporter.x, self.y - teleporter.y) <= MARK_REACH;
+    }
+    expect(picked.layer).toBe(ground);
+    expect(reached).toBe(true);
+  });
 });
 
 describe("drawTutorProfession (Q69)", () => {
