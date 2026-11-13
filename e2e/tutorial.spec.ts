@@ -39,6 +39,9 @@ test.describe("the first-time tutorial (#3218)", () => {
       "This war never ends. Walk with me; I have an idea.",
     );
     await expect(frame.locator(".tutorial-how")).toContainText("W");
+    // Only the pair in the party window, and no scoreline (#3221).
+    await expect(page.locator(".party-window .party-row")).toHaveCount(2);
+    await expect(page.locator(".hud-scoreboard")).toBeHidden();
     await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
     const [x = 0, y = 0] = ((await frame.getAttribute("data-mark")) ?? "").split(",").map(Number);
     const view = await projection(

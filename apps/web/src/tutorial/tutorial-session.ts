@@ -13,12 +13,14 @@ import {
   type ProfessionId,
   type Vec2,
 } from "@vibewars/game-core";
-import { NO_GUILD, PING_SECONDS } from "@vibewars/game-session";
+import { NO_GUILD } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { startMatchView, type MatchView } from "../match-view.js";
-import { hostMap } from "../net/maps.js";
+import { hostMap, mapStructure } from "../net/maps.js";
+import { DEFAULT_STEP, VIEW_ASPECT, VIEW_STEPS } from "../render/camera-rig.js";
+import type { GoalMark } from "../render/goal-mark.js";
 import {
   NO_PROFESSIONS,
   createLocalConnection,
@@ -28,6 +30,7 @@ import { SPLASH_RULES, splashGraph, splashParticipants, splashSpawn } from "../u
 
 import { mountSkipTutorial } from "./tutorial-offer.js";
 import { walkStation, type StationHighlight } from "./stations.js";
+import { inwardStart } from "./tutorial-start.js";
 import { createTutorialRunner, type TutorLine } from "./tutorial-runner.js";
 
 /** The tutor's profession: a Monk until the operator answers Q69. */
@@ -41,8 +44,17 @@ const TUTOR_ID = "tutorial-tutor";
 const TUTOR_POST = vec2(160, 0);
 /** Where the mark glows, from the tutor's post. */
 const MARK_OFFSET = vec2(0, 70);
-/** A ping id no call board hands out, for the mark. */
-const MARK_PING_ID = -1;
+/** The default view's half, in world units: how far the start keeps from every edge. */
+const HALF_VIEW = vec2(
+  (VIEW_STEPS[DEFAULT_STEP].height * VIEW_ASPECT) / 2,
+  VIEW_STEPS[DEFAULT_STEP].height / 2,
+);
+/**
+ * A foe in the tutorial (#3221) goes no nearer the pair than this, and
+ * picks a fight no further than `FOE_AGGRO_PAST_LEASH` past where it stops.
+ */
+const FOE_KEEP_OFF = 700;
+const FOE_AGGRO_PAST_LEASH = 200;
 /** A long frame is not caught up on, as in the splash fight. */
 const MAX_STEP_SECONDS = 0.1;
 /** How long "more soon" stands before the menu. */
@@ -62,6 +74,29 @@ export interface TutorialSessionOptions {
 export interface TutorialSession {
   /** Ends it with nothing said: the view and the simulation are gone once it resolves. */
   readonly stop: () => Promise<void>;
+}
+
+/**
+ * A foe's in the tutorial (#3221): it guards `post`, its spawn, on a leash
+ * that reaches the centre, or `FOE_KEEP_OFF` short of the pair if that is
+ * nearer, so it meets the fight in the middle and never comes to the pair.
+ */
+function guarding(post: Vec2, centre: Vec2, pair: Vec2): Behaviour {
+  const reach = Math.max(
+    0,
+    Math.min(
+      Math.hypot(centre.x - post.x, centre.y - post.y),
+      Math.hypot(pair.x - post.x, pair.y - post.y) - FOE_KEEP_OFF,
+    ),
+  );
+  return {
+    kind: "guard",
+    post,
+    aggroUnits: reach + FOE_AGGRO_PAST_LEASH,
+    leashUnits: reach,
+    rooted: false,
+    thinkSeconds: 0.25,
+  };
 }
 
 function houseBuild(profession: ProfessionId): PlayerBuild {
@@ -104,8 +139,8 @@ function body(
  * like the menu's, on its map, next to the tutor, a teammate. Both stand
  * behind their side's spawn while the bots fight in the middle. Drawn by
  * the match view into `parent`, so it moves, looks and is followed as a
- * match is; the runner's lines stand over it, its mark is a ping that
- * never fades.
+ * match is; the runner's lines stand over it, its mark is a goal on the
+ * ground (#3221), and its party window lists only the pair.
  */
 export async function startTutorialSession(
   parent: HTMLElement,
@@ -117,7 +152,17 @@ export async function startTutorialSession(
   }
   const fight = { mapId: options.mapId, teamSize: options.teamSize, still: false };
   const graph = splashGraph(map);
-  const spawn = splashSpawn(graph, map, fight, 0, options.teamSize);
+  // Inward from the background's spawn, so the view is filled (#3221);
+  // the tutor walks in from the row behind, moved as far.
+  const edge = splashSpawn(graph, map, fight, 0, options.teamSize);
+  const spawn = nearestStandable(graph, inwardStart(edge, map.descriptor, HALF_VIEW));
+  const behind = splashSpawn(graph, map, fight, 0, options.teamSize + 1);
+  const tutorSpawn = nearestStandable(
+    graph,
+    vec2(behind.x + spawn.x - edge.x, behind.y + spawn.y - edge.y),
+  );
+  const ground = mapStructure(options.mapId).structure.ground;
+  const centre = vec2(map.descriptor.width / 2, map.descriptor.height / 2);
   const post = nearestStandable(graph, vec2(spawn.x + TUTOR_POST.x, spawn.y + TUTOR_POST.y));
   const mark = nearestStandable(graph, vec2(post.x + MARK_OFFSET.x, post.y + MARK_OFFSET.y));
   const playerBuild = houseBuild(PLAYER_PROFESSION);
@@ -129,10 +174,12 @@ export async function startTutorialSession(
     walls: map.walls,
     bounds: map.bounds,
     participants: [
-      ...splashParticipants(map, fight, graph),
+      ...splashParticipants(map, fight, graph).map((bot) =>
+        bot.team === 0 ? bot : { ...bot, behaviour: guarding(bot.spawn, centre, spawn) },
+      ),
       body(SELF_ID, playerBuild, spawn, undefined),
       // The tutor walks over from the row behind and stays by the mark.
-      body(TUTOR_ID, tutorBuild, splashSpawn(graph, map, fight, 0, options.teamSize + 1), {
+      body(TUTOR_ID, tutorBuild, tutorSpawn, {
         kind: "patrol",
         waypoints: [post],
         loop: false,
@@ -158,16 +205,11 @@ export async function startTutorialSession(
       id === SELF_ID ? t("training.you") : id === TUTOR_ID ? t("tutorial.tutor") : "",
     guildOf: () => NO_GUILD,
     professionsOf: (id) => professions.get(id) ?? NO_PROFESSIONS,
-    // The mark is the tutor's ping, struck again as each one would fade.
-    marks: () => {
-      if (highlight?.kind !== "ground") {
-        return [];
-      }
-      const remaining = PING_SECONDS - (simulation.elapsedSeconds % PING_SECONDS);
-      const { x, y } = highlight.at;
-      return [{ id: MARK_PING_ID, x, y, byId: TUTOR_ID, remaining }];
-    },
   });
+  const goals = (): readonly GoalMark[] =>
+    highlight?.kind === "ground"
+      ? [{ id: "tutorial-mark", position: highlight.at, layer: ground }]
+      : [];
 
   const frame = document.createElement("div");
   frame.className = "tutorial-frame";
@@ -211,7 +253,11 @@ export async function startTutorialSession(
         end("skipped");
       },
     },
-    { kind: "play", connect: () => Promise.resolve(connection) },
+    {
+      kind: "play",
+      connect: () => Promise.resolve(connection),
+      tutorial: { party: [SELF_ID, TUTOR_ID], goals },
+    },
   );
   mountSkipTutorial(frame, () => {
     end("skipped");
