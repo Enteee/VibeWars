@@ -138,6 +138,27 @@ export interface SplashFight {
 }
 
 /**
+ * The splash fight's simulation on `map`, with its layers as a match has
+ * them (#3222): a bot's walk on a map whose ground is not its lowest layer
+ * names that layer, which a flat world refuses.
+ */
+export function splashSimulation(
+  map: SplashMap,
+  fight: SplashFightOptions,
+  seed: string,
+): MatchSimulation {
+  return new MatchSimulation({
+    seed,
+    ruleset: RULESET,
+    matchRules: SPLASH_RULES,
+    walls: map.walls,
+    bounds: map.bounds,
+    layers: map.layers,
+    participants: splashParticipants(map, fight),
+  });
+}
+
+/**
  * A silent fight of bots, `teamSize` a side on `mapId`, drawn into
  * `parent` at no more than 30 fps, seen from nobody, the camera still on
  * the map's centre. Rejects where the arena cannot be drawn.
@@ -152,14 +173,7 @@ export async function startSplashFight(
   }
   const viewport = await createArenaViewport(parent, { fpsLimit: FPS_LIMIT });
   const connection = createLocalConnection({
-    simulation: new MatchSimulation({
-      seed: `splash-${String(Math.random())}`,
-      ruleset: RULESET,
-      matchRules: SPLASH_RULES,
-      walls: map.walls,
-      bounds: map.bounds,
-      participants: splashParticipants(map, fight),
-    }),
+    simulation: splashSimulation(map, fight, `splash-${String(Math.random())}`),
     selfId: "splash-nobody",
     map: map.descriptor,
     nameOf: () => "",
