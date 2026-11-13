@@ -147,6 +147,11 @@ export type RenderableWall = (RectRenderableWall | PolygonRenderableWall) & {
 /** A shut gate's door (#3061): it blocks as a wall does, and draws as a door. */
 export type RenderableDoor = RenderableWall & { readonly door: true; readonly look: GateLook };
 
+/** The layer the local player's body stands on; `undefined` for a spectator (#3234). */
+export function selfLayer(arena: Pick<ArenaSnapshot, "actors">): number | undefined {
+  return arena.actors.find(({ team }) => team === "self")?.layer;
+}
+
 export function isDoor(wall: RenderableWall): wall is RenderableDoor {
   return "door" in wall;
 }

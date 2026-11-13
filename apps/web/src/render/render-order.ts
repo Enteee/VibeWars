@@ -39,6 +39,7 @@ export type RenderItem =
   | { readonly kind: "wall"; readonly layer: number }
   | { readonly kind: "support"; readonly deckLayer: number }
   | { readonly kind: "side-face"; readonly deckLayer: number }
+  | { readonly kind: "tunnel-cover"; readonly deckLayer: number }
   | { readonly kind: "deck"; readonly deckLayer: number }
   | { readonly kind: "ramp"; readonly upperLayer: number }
   | { readonly kind: "lift"; readonly upperLayer: number }
@@ -112,6 +113,11 @@ const WEATHER = 89;
 const WALL = 2;
 const SUPPORT = 3;
 const SIDE_FACE = 4;
+/**
+ * The ground over one tunnel (#3234): a deck of the ground's layer of its
+ * own, so it can be cut away for whoever is in it, under the deck's inlay.
+ */
+const TUNNEL_COVER = 4.9;
 const DECK = 5;
 const RAMP = 5.5;
 /** A lift's platform (#3079): over its shaft, under whoever rides it. */
@@ -167,6 +173,8 @@ export function renderOrder(item: RenderItem): number {
       return (item.deckLayer - 1) * LAYER_STACK + SUPPORT;
     case "side-face":
       return (item.deckLayer - 1) * LAYER_STACK + SIDE_FACE;
+    case "tunnel-cover":
+      return (item.deckLayer - 1) * LAYER_STACK + TUNNEL_COVER;
     case "deck":
       return (item.deckLayer - 1) * LAYER_STACK + DECK;
     case "ramp":

@@ -39,7 +39,7 @@ Estas teclas são fixas:
 ## Mouse
 
 - **Clique esquerdo** no chão para andar até lá. Sem Shift, o botão esquerdo só anda.
-- Nos mapas com plataformas elevadas, o clique esquerdo vai para a superfície que vês e **Alt + clique esquerdo** para o chão por baixo. Um anel sob o cursor indica uma plataforma; um tracejado, o chão.
+- Nos mapas com plataformas elevadas, o clique esquerdo vai para a superfície que vês e **Alt + clique esquerdo** para o chão por baixo. Um anel sob o cursor indica uma plataforma; um tracejado, o chão. Sobre um túnel, um clique esquerdo vai para o nível em que você está, e **Alt + clique esquerdo** para o outro.
 - **Clique direito** em um inimigo ou aliado para mirar nele. Clique
   direito de novo no mesmo inimigo, rápido, para atacá-lo.
 - **Clique direito** em uma bandeira ou no suporte da bandeira, em uma

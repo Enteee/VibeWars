@@ -737,11 +737,18 @@ export function surfacesAt(structure: MapStructure, world: Vec2): readonly Surfa
     }
   }
   // A pit's floor shows through its hole, under the ground's near lip; a
-  // tunnel's only under the ground over it.
+  // tunnel's only under the ground over it, so the cover drawn is what
+  // names it (#3234), not its footprint sunk a step.
   const below = { x: world.x, y: world.y + liftOf(structure, ground - 1) };
   const inPit = inAny(structure.pits, below);
-  if (inPit || inAny(structure.tunnels, below)) {
-    surfaces.push({ layer: ground - 1, point: below, lift: liftOf(structure, ground - 1) });
+  const tunnel = inPit ? undefined : coveredTunnelAt(structure, world);
+  if (inPit || tunnel !== undefined) {
+    const box = tunnel === undefined ? undefined : boxOf(tunnel.footprint);
+    const point =
+      box === undefined
+        ? below
+        : { x: below.x, y: Math.min(Math.max(below.y, box.top), box.bottom) };
+    surfaces.push({ layer: ground - 1, point, lift: liftOf(structure, ground - 1) });
   }
   if (!inPit || !inAny(structure.pits, world)) {
     surfaces.push({ layer: ground, point: world, lift: 0 });
@@ -790,12 +797,44 @@ export function trackAlt(
   };
 }
 
-/** Where a click at `world` goes: the visible surface, or with `below` the one under it, if any. */
-export function pickSurface(structure: MapStructure, world: Vec2, below: boolean): Surface {
-  const surfaces = surfacesAt(structure, world);
-  return (
-    (below ? surfaces[1] : undefined) ?? surfaces[0] ?? { layer: structure.ground, point: world }
-  );
+/** The tunnel whose cover is drawn at `world`, outside every pit's hole; none if there is none. */
+function coveredTunnelAt(
+  structure: MapStructure,
+  world: Vec2,
+): MapStructure["tunnels"][number] | undefined {
+  if (inAny(structure.pits, world)) {
+    return undefined;
+  }
+  return structure.tunnels.find((tunnel) => pointInPolygon(world, tunnelCover(structure, tunnel)));
+}
+
+/**
+ * Where a click at `world` goes: the visible surface, or with `below` the
+ * one under it, if any. Over a tunnel's cover (#3234), the visible one is
+ * the level `from`, the clicking body's layer, is on: the tunnel from in
+ * it, its pit or its stair, the ground from anywhere else or no body.
+ */
+export function pickSurface(
+  structure: MapStructure,
+  world: Vec2,
+  below: boolean,
+  from?: number,
+): Surface {
+  const { ground } = structure;
+  const found = surfacesAt(structure, world);
+  const tunnel = found.findIndex(({ layer }) => layer === ground - 1);
+  // A deck over the cover keeps its place; the rule only orders these two.
+  const surfaces =
+    from === ground - 1 &&
+    tunnel > 0 &&
+    found[tunnel - 1]?.layer === ground &&
+    coveredTunnelAt(structure, world) !== undefined
+      ? found.map(
+          (surface, at) =>
+            found[at === tunnel ? at - 1 : at === tunnel - 1 ? tunnel : at] ?? surface,
+        )
+      : found;
+  return (below ? surfaces[1] : undefined) ?? surfaces[0] ?? { layer: ground, point: world };
 }
 
 /** A structure as it hides bodies: its outline, the lifts it is drawn at, whom it covers. */
@@ -811,6 +850,8 @@ export interface Occluder {
   readonly hidesThrough: number;
   /** A ground outline where a body's feet clear it: a ground ramp's own area (#3000). */
   readonly exempt: readonly Vec2[] | null;
+  /** The tunnel it is the ground over, by its index: who stands in it sees through it (#3234). */
+  readonly tunnel: number | null;
 }
 
 function occluder(
@@ -832,6 +873,7 @@ function occluder(
     highLift,
     hidesThrough,
     exempt,
+    tunnel: null,
   };
 }
 
@@ -920,9 +962,10 @@ export function occludersOf(
       );
     }),
     // The ground over a tunnel covers it whole, from its sunk floor up (#2973).
-    ...structure.tunnels.map((tunnel) =>
-      occluder(shapeOutline(tunnel.footprint), sunk, 0, ground - 1, null),
-    ),
+    ...structure.tunnels.map((tunnel, at) => ({
+      ...occluder(shapeOutline(tunnel.footprint), sunk, 0, ground - 1, null),
+      tunnel: at,
+    })),
     // A pit draws a step down: the strip along its south edge then falls
     // behind the ground's near lip (#2973).
     ...structure.pits.map((pit) => {
@@ -936,6 +979,37 @@ export function occludersOf(
       return occluder(strip, sunk, sunk, ground - 1, null);
     }),
   ];
+}
+
+/** The tunnels, by index, a body on `layer` at `position` stands in: none from a pit's floor alone. */
+export function tunnelsHolding(
+  structure: MapStructure,
+  position: Vec2,
+  layer: number,
+): ReadonlySet<number> {
+  const inside = new Set<number>();
+  if (layer === structure.ground - 1) {
+    structure.tunnels.forEach(({ footprint }, at) => {
+      if (pointInPolygon(position, shapeOutline(footprint))) {
+        inside.add(at);
+      }
+    });
+  }
+  return inside;
+}
+
+/**
+ * `occluders` as a viewer in `tunnels` sees them (#3234): the ground over
+ * their own tunnel is cut away, so it hides nobody in it. Every other
+ * tunnel still hides whoever is in it.
+ */
+export function seenFrom(
+  occluders: readonly Occluder[],
+  tunnels: ReadonlySet<number>,
+): readonly Occluder[] {
+  return tunnels.size === 0
+    ? occluders
+    : occluders.filter(({ tunnel }) => tunnel === null || !tunnels.has(tunnel));
 }
 
 const probe = { x: 0, y: 0 };

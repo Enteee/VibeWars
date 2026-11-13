@@ -35,7 +35,12 @@ import {
   RING_PATH,
   traceHiddenOutline,
   traceHiddenPolyline,
+  seenFrom,
+  shapeOutline,
+  tunnelsHolding,
 } from "./layer-surfaces.js";
+import { mapStructure } from "../net/maps.js";
+
 import { ELEVATION_STEP } from "./render-order.js";
 
 const bridge = { kind: "rect", x: 100, y: 100, width: 200, height: 100 } as const;
@@ -939,5 +944,83 @@ describe("the side of a raised column (#3157)", () => {
         ).toBe(column);
       }
     }
+  });
+});
+
+describe("a click over a tunnel (#3234)", () => {
+  // Crossroads' ground is its layer 1; cellar-west and cellar-south run under it.
+  const { structure } = mapStructure("arena-crossroads");
+  const GROUND = 1;
+  const TUNNEL = 0;
+  const STEP = ELEVATION_STEP;
+  // Cellar-west runs north to south, cellar-south west to east.
+  const boxOfTunnel = (at: number): { centre: Vec2; top: number } => {
+    const tunnel = structure.tunnels[at];
+    if (tunnel === undefined) {
+      throw new Error(`no tunnel ${String(at)} on crossroads`);
+    }
+    const outline = shapeOutline(tunnel.footprint);
+    const xs = outline.map(({ x }) => x);
+    const ys = outline.map(({ y }) => y);
+    const top = Math.min(...ys);
+    return {
+      centre: { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (top + Math.max(...ys)) / 2 },
+      top,
+    };
+  };
+  const west = boxOfTunnel(0);
+  const south = boxOfTunnel(1);
+  // Where a body at the centre of cellar-west draws, a step down.
+  const inWest = west.centre;
+  const world = { x: inWest.x, y: inWest.y + STEP };
+
+  it("goes to the level the body is on: the ground from above, the tunnel from in it", () => {
+    expect(structure.ground).toBe(GROUND);
+    expect(pickSurface(structure, world, false, GROUND)).toEqual({ layer: GROUND, point: world });
+    expect(pickSurface(structure, world, false, TUNNEL)).toEqual({ layer: TUNNEL, point: inWest });
+    expect(pickSurface(structure, world, false)).toEqual({ layer: GROUND, point: world });
+  });
+
+  it("goes to the other level with Alt", () => {
+    expect(pickSurface(structure, world, true, GROUND)).toEqual({ layer: TUNNEL, point: inWest });
+    expect(pickSurface(structure, world, true, TUNNEL)).toEqual({ layer: GROUND, point: world });
+  });
+
+  it("names the tunnel wherever its cover is drawn, not a step south of it", () => {
+    // Cellar-south's cover starts at its footprint's north edge: the
+    // footprint sunk a step lies wholly south of this point.
+    const { top } = south;
+    const atCover = { x: south.centre.x, y: top + STEP / 2 };
+    expect(pickSurface(structure, atCover, true, GROUND)).toEqual({
+      layer: TUNNEL,
+      point: { x: atCover.x, y: top },
+    });
+    expect(pickSurface(structure, atCover, false, TUNNEL).layer).toBe(TUNNEL);
+  });
+
+  it("goes to the ground outside every tunnel, from in one", () => {
+    const beside = { x: world.x - 200, y: world.y };
+    expect(pickSurface(structure, beside, false, TUNNEL)).toEqual({ layer: GROUND, point: beside });
+  });
+
+  // The ground over a body's own tunnel is cut away; every other still hides.
+  const occluders = occludersOf([], structure);
+  const hidden = (from: Vec2, fromLayer: number, at: Vec2): number => {
+    let count = 0;
+    const seen = seenFrom(occluders, tunnelsHolding(structure, from, fromLayer));
+    traceHiddenOutline(RING_PATH, at.x, at.y + STEP, 10, TUNNEL, seen, () => {
+      count += 1;
+    });
+    return count;
+  };
+  const inSouth = south.centre;
+
+  it("shows a body in the viewer's own tunnel, and hides it from the ground", () => {
+    expect(hidden(inWest, TUNNEL, inWest)).toBe(0);
+    expect(hidden(inWest, GROUND, inWest)).toBeGreaterThan(0);
+  });
+
+  it("still hides a body in another tunnel from a viewer in one", () => {
+    expect(hidden(inWest, TUNNEL, inSouth)).toBeGreaterThan(0);
   });
 });

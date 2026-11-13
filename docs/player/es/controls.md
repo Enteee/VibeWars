@@ -39,7 +39,7 @@ Estas teclas son fijas:
 ## Ratón
 
 - **Clic izquierdo** en el suelo para caminar hasta allí. Sin Shift, el botón izquierdo solo camina.
-- En los mapas con plataformas elevadas, el clic izquierdo va a la superficie que ves, y **Alt + clic izquierdo** al suelo que hay debajo. Un anillo bajo el cursor indica una plataforma; uno discontinuo, el suelo.
+- En los mapas con plataformas elevadas, el clic izquierdo va a la superficie que ves, y **Alt + clic izquierdo** al suelo que hay debajo. Un anillo bajo el cursor indica una plataforma; uno discontinuo, el suelo. Sobre un túnel, un clic izquierdo va al nivel en el que estás, y **Alt + clic izquierdo** al otro.
 - **Clic derecho** en un enemigo o un aliado para seleccionarlo. Otro clic
   derecho rápido en el mismo enemigo lo ataca.
 - **Clic derecho** en una bandera o en la base de bandera, en una Batalla
