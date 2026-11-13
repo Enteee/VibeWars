@@ -313,7 +313,7 @@ try {
     args: ["--no-sandbox", "--disable-gpu-vsync", "--disable-frame-rate-limit"],
   });
   const viewport = { width: 1280, height: 720 };
-  /** One calibration window, on a blank page of its own so nothing else draws meanwhile. */
+  /** One calibration window, on a blank page, with no game page open, so nothing else draws meanwhile. */
   const calibrationWindow = async () => {
     const blank = await browser.newPage({ viewport });
     try {
@@ -322,14 +322,19 @@ try {
       await blank.close();
     }
   };
-  const page = await browser.newPage({ viewport });
-  await page.goto(url);
   const maps = mapsToMeasure();
   const windows = [];
   const rows = [];
   for (const mapId of maps) {
     windows.push(await calibrationWindow());
-    const frames = await measure(page, mapId);
+    const page = await browser.newPage({ viewport });
+    let frames;
+    try {
+      await page.goto(url);
+      frames = await measure(page, mapId);
+    } finally {
+      await page.close();
+    }
     rows.push({
       mapId,
       frames: frames.length,
