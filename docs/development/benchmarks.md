@@ -204,9 +204,31 @@ not stand for.
 
 ## Render bench (`pnpm bench:render`)
 
-A layered map's frame cost in software GL, as a ratio to a fixed WebGL
-calibration on the same run (#3157, #3190, #3243). CI gates it at
-`BENCH_MAX_RATIO=3` on pull requests that touch the renderer or the maps.
+A layered map's frame cost in software GL, as a ratio to a frozen
+reference map drawn the same way on the same run. CI gates it at
+`BENCH_MAX_RATIO=3.5` on pull requests that touch the renderer or the
+maps (#3157, #3190, #3243, #3255).
+
+**The reference map.** `packages/game-maps/bench/reference-map.json` is a
+synthetic medium arena in the real map schema: two layers, walls, a deck
+and a ramp, a pit with a tunnel, lights and a zone. Only the bench's build
+(`VITE_VIBEWARS_BENCH_REFERENCE=1`) offers it in the lobby, and it is
+drawn through the menu background like any map, so whatever bounds a
+runner (fill, geometry, JS) bounds the reference and the maps alike. It
+is frozen: a pull request that edits it re-derives the gate below in the
+same pull request.
+
+**The gate** is the highest ratio of a healthy map (canyon, crossroads)
+over five CI runs, × 1.5, rounded to 0.1. Five runs on one head (#3255),
+with the reference between 38 and 82 ms on different runners:
+
+| map              | ratios                       | median |
+| ---------------- | ---------------------------- | ------ |
+| arena-canyon     | 1.50, 1.75, 1.67, 1.53, 1.69 | 1.67   |
+| arena-crossroads | 2.25, 2.25, 2.33, 2.29, 2.36 | 2.29   |
+| arena-long-hall  | 2.99, 3.11, 3.12, 3.30, 3.45 | 3.12   |
+
+So 2.36 × 1.5 → 3.5.
 
 The runner is slow for its first 20-40 s, so the run warms up first: it
 loads the first map, then calibrates for at least 45 s and until two
@@ -215,9 +237,7 @@ that is measured. Each map is then judged against the mean of the two
 calibration windows around it, and fails as too noisy if those two
 differ by over 20 %.
 
-**Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over 3×
-for a known reason, each gated at its own ratio and tied to the perf
-issue that will cut it. A listed map that
-measures at or under 3× prints a warning to delete its entry, and does
-not fail: how heavy a map is next to the calibration varies by runner
-hardware (#3255).
+**Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over the
+gate for a known reason, each gated at its own ratio and tied to the perf
+issue that will cut it. None is listed today. A listed map that measures
+at or under the gate fails, so its entry is deleted when its issue lands.
