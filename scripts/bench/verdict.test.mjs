@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { verdict } from "./verdict.mjs";
+import { settled, verdict } from "./verdict.mjs";
 
 /** @param {number[]} p50s */
 const maps = (...p50s) => p50s.map((p50, i) => ({ mapId: `m${String(i)}`, p50 }));
@@ -53,5 +53,19 @@ describe("verdict", () => {
     expect(() =>
       verdict({ windows: [1, 2], maps: maps(1, 2), maxRatio: 3, maxSpread: 0.2 }),
     ).toThrow();
+  });
+});
+
+describe("settled", () => {
+  it("settles on the window that agrees with the one before", () => {
+    expect(settled([72.1, 69.1, 54.6, 54.9], 0.03)).toBe(4);
+  });
+
+  it("never settles on a steady decline", () => {
+    expect(settled([72, 60, 50, 42, 35, 30], 0.03)).toBeUndefined();
+  });
+
+  it("needs two windows", () => {
+    expect(settled([50], 0.03)).toBeUndefined();
   });
 });

@@ -43,7 +43,7 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
-import { verdict } from "./verdict.mjs";
+import { settled, verdict } from "./verdict.mjs";
 
 /* global document, requestAnimationFrame -- in page.evaluate, which runs in the page */
 
@@ -59,8 +59,12 @@ const MAX_CALIBRATION_SPREAD = 0.2;
 const PORT = 4322;
 const MAPS = path.join(import.meta.dirname, "..", "..", "packages", "game-maps", "maps");
 const SETTLE_MS = 1000;
-/** The first map is loaded this long, unmeasured, before the first calibration window. */
+/** The first map is loaded this long, unmeasured, before the warm-up calibration. */
 const WARMUP_SECONDS = 5;
+/** Warm-up calibrates until two windows in a row agree within this much, of their mean. */
+const WARMUP_TOLERANCE = 0.03;
+/** Past this many warm-up windows without agreeing, the run fails. */
+const MAX_WARMUP_WINDOWS = 6;
 /** After a map page closes, before the next calibration window: its renderer winds down (#3243). */
 const CALIBRATION_SETTLE_MS = 1500;
 const SECONDS = Number(process.env.BENCH_SECONDS ?? 5);
@@ -344,14 +348,25 @@ try {
     }
   };
   const mapIds = mapsToMeasure();
-  // The runner is slow for the first seconds of a run: load the first map and
-  // calibrate once, and keep neither (#3243).
+  // The runner is slow for the first seconds of a run: load the first map,
+  // then calibrate until two windows in a row agree, and keep none of it (#3243).
   const [warmMap] = mapIds;
   if (warmMap !== undefined) {
     await mapWindow(warmMap, WARMUP_SECONDS);
-    const warm = await calibrationWindow();
+    const warm = [];
+    let after;
+    while (after === undefined && warm.length < MAX_WARMUP_WINDOWS) {
+      warm.push(await calibrationWindow());
+      after = settled(warm, WARMUP_TOLERANCE);
+    }
+    const list = warm.map((w) => w.toFixed(1)).join(", ");
+    if (after === undefined) {
+      throw new Error(
+        `calibration never settled in warm-up (${list}): the runner is too noisy to judge`,
+      );
+    }
     console.log(
-      `warm-up: map ${warmMap} ${String(WARMUP_SECONDS)} s, calibration ${warm.toFixed(1)} ms (discarded)`,
+      `warm-up: map ${warmMap} ${String(WARMUP_SECONDS)} s; calibration ${list} ms (settled after ${String(after)}, discarded)`,
     );
   }
   const windows = [];

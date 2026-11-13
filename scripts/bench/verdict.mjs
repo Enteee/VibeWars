@@ -54,3 +54,22 @@ export function verdict({ windows, maps, maxRatio, maxSpread }) {
     return { mapId: map.mapId, base, ratio, spread, failures };
   });
 }
+
+/**
+ * How many warm-up windows it took before two consecutive ones agreed
+ * within `tolerance` of their mean, or `undefined` if none did.
+ *
+ * @param {readonly number[]} windows calibration p50s, ms, in run order
+ * @param {number} tolerance
+ * @returns {number | undefined}
+ */
+export function settled(windows, tolerance) {
+  for (let i = 1; i < windows.length; i++) {
+    const a = windows[i - 1] ?? NaN;
+    const b = windows[i] ?? NaN;
+    if (Math.abs(a - b) / ((a + b) / 2) <= tolerance) {
+      return i + 1;
+    }
+  }
+  return undefined;
+}
