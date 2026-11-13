@@ -18,9 +18,7 @@ export const NOSTR_RELAYS: readonly string[] = [
   "wss://cdn.satellite.earth",
   "wss://relay.degmods.com",
   "wss://nostr.stakey.net",
-  "wss://relay.layer.systems",
   "wss://nostr.rblb.it",
-  "wss://relay.kaleidoswap.com",
   "wss://relay.agentry.com",
 ];
 
