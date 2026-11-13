@@ -241,6 +241,7 @@ describe("actorAtPoint", () => {
       calledId: undefined,
       pings: [],
       strokes: [],
+      goals: [],
     };
     expect(actorAtPoint(snapshot, vec2(0, 0))).toBeUndefined();
   });
@@ -271,6 +272,7 @@ describe("actorAtPoint", () => {
       calledId: undefined,
       pings: [],
       strokes: [],
+      goals: [],
     };
     expect(actorAtPoint(snapshot, vec2(105, 100))?.id).toBe("a");
   });
@@ -301,6 +303,7 @@ describe("actorAtPoint", () => {
       calledId: undefined,
       pings: [],
       strokes: [],
+      goals: [],
     };
     expect(actorAtPoint(snapshot, vec2(200, 200))).toBeUndefined();
   });
@@ -331,6 +334,7 @@ describe("actorAtPoint", () => {
       calledId: undefined,
       pings: [],
       strokes: [],
+      goals: [],
     };
     expect(actorAtPoint(snapshot, vec2(10, 0))?.id).toBe("a");
   });
@@ -362,6 +366,7 @@ describe("actorAtPoint", () => {
       calledId: undefined,
       pings: [],
       strokes: [],
+      goals: [],
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("near");
   });
@@ -395,6 +400,7 @@ describe("actorAtPoint and the dead", () => {
       calledId: undefined,
       pings: [],
       strokes: [],
+      goals: [],
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("living");
   });
@@ -425,6 +431,7 @@ describe("actorAtPoint and the dead", () => {
       calledId: undefined,
       pings: [],
       strokes: [],
+      goals: [],
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))).toBeUndefined();
   });

@@ -221,13 +221,15 @@ export function renderKeyLabels(
 /**
  * The HUD, in `parent`. `onEndUpkeep` ends an enchantment you maintain,
  * double-clicked in your effects monitor (#838); `onCall` calls your
- * target for your team, clicked on the target frame (#2737).
+ * target for your team, clicked on the target frame (#2737). Without
+ * `showScore`, as in the tutorial (#3221), the scoreboard never shows.
  */
 export function createHud(
   parent: HTMLElement,
   onEndUpkeep: (targetId: string, statusId: StatusId) => void,
   onDropFlag: () => void,
   onCall: () => void,
+  showScore = true,
 ): HudElements {
   const root = element("div", "hud", parent);
 
@@ -236,6 +238,7 @@ export function createHud(
   // can I cast"; the target frame under them.
   const top = element("div", "hud-top", parent);
   const scoreboard = element("div", "hud-scoreboard", top);
+  scoreboard.hidden = !showScore;
   const scoreboardText = element("span", "hud-scoreboard-text", scoreboard);
   const enemies = element("span", "hud-enemies", scoreboard);
   const carriers = element("div", "hud-carriers", top);

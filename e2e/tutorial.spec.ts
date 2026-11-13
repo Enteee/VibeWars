@@ -39,17 +39,24 @@ test.describe("the first-time tutorial (#3218)", () => {
       "This war never ends. Walk with me; I have an idea.",
     );
     await expect(frame.locator(".tutorial-how")).toContainText("W");
+    // Only the pair in the party window, and no scoreline (#3221).
+    await expect(page.locator(".party-window .party-row")).toHaveCount(2);
+    await expect(page.locator(".hud-scoreboard")).toBeHidden();
     await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
     const [x = 0, y = 0] = ((await frame.getAttribute("data-mark")) ?? "").split(",").map(Number);
-    const view = await projection(
-      page.locator("#viewport"),
-      page.locator("#viewport canvas:not(.compass)"),
-    );
-    const at = view.onPage({ x, y });
-    await page.mouse.click(at.x, at.y);
-    await expect(frame.locator(".tutorial-said")).toHaveText("Nice stride! You're a natural.", {
-      timeout: 15_000,
-    });
+    // The camera may still be easing in on a slow runner, which makes one
+    // projection stale: project afresh and click again until the walk lands.
+    await expect(async () => {
+      const view = await projection(
+        page.locator("#viewport"),
+        page.locator("#viewport canvas:not(.compass)"),
+      );
+      const at = view.onPage({ x, y });
+      await page.mouse.click(at.x, at.y);
+      await expect(frame.locator(".tutorial-said")).toHaveText("Nice stride! You're a natural.", {
+        timeout: 5_000,
+      });
+    }).toPass({ timeout: 30_000 });
     await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
     await expect(frame).toHaveCount(0);
 

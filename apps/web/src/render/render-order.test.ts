@@ -86,6 +86,26 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     );
   });
 
+  it("draws a goal mark over its layer's floor, light and torches, under whoever walks onto it (#3221)", () => {
+    for (const layer of [0, 1, 2]) {
+      const goal = renderOrder({ kind: "goal-mark", layer });
+      expect(renderOrder({ kind: "lighting", layer })).toBeLessThan(goal);
+      expect(renderOrder({ kind: "paving", layer })).toBeLessThan(goal);
+      expect(renderOrder({ kind: "light-mark", layer })).toBeLessThan(goal);
+      expect(goal).toBeLessThan(renderOrder(character(layer)));
+      expect(goal).toBeLessThan(renderOrder({ kind: "wall", layer }));
+    }
+    expect(renderOrder({ kind: "floor" })).toBeLessThan(
+      renderOrder({ kind: "goal-mark", layer: 0 }),
+    );
+    expect(renderOrder({ kind: "deck", deckLayer: 1 })).toBeLessThan(
+      renderOrder({ kind: "goal-mark", layer: 1 }),
+    );
+    expect(renderOrder({ kind: "goal-mark", layer: 0 })).toBeLessThan(
+      renderOrder(character(characterBand(0, 1))),
+    );
+  });
+
   it("leaves everyone in front of the walls on a map of one layer", () => {
     expect(renderOrder(character(characterBand(0, 1)))).toBeGreaterThan(
       renderOrder({ kind: "wall", layer: 0 }),
