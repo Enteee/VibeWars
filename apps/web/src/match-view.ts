@@ -119,6 +119,7 @@ import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 import { button, setToastHost, toast } from "./ui/kit.js";
+import { signedText } from "./ui/player-label.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -1092,7 +1093,7 @@ export async function startMatchView(
       playerNames(match),
     );
     if (leader !== undefined) {
-      toast(leader);
+      toast(signedText(leader.key, leader.params));
     }
     if (objective !== undefined) {
       toast(objective.text);

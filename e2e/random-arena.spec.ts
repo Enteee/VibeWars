@@ -155,7 +155,9 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     // The count and the foe's pip (#881).
     await expect(alice.locator(".hud-scoreboard")).toContainText("1 v 1");
     const pip = alice.locator(".hud-enemy-pip");
-    await expect(pip).toHaveAttribute("title", "Bob");
+    await expect(pip).toHaveAttribute("aria-label", "Bob");
+    // Its hover label, signet beside the name (#3232).
+    await expect(pip.locator(".hud-enemy-label")).toContainText("Bob");
     await expect(pip).not.toHaveClass(/is-dead/);
     // Alice beats Bob, who stands still, with the starter build's spells.
     // The result is up for QUEUED_RESULT_SECONDS only, and a pass of
