@@ -172,6 +172,14 @@ describe("partyRows (#1055)", () => {
     expect(partyRows(match([ME, minion, KAJA])).map((row) => row.id)).toEqual(["me", "kaja"]);
   });
 
+  it("lists only the given members, as the tutorial's pair (#3221)", () => {
+    expect(partyRows(match([ME, KAJA, ODO]), new Set(["me", "odo"])).map((row) => row.id)).toEqual([
+      "me",
+      "odo",
+    ]);
+    expect(partyRows(match([ME, KAJA, ODO])).map((row) => row.id)).toEqual(["me", "kaja", "odo"]);
+  });
+
   it("lists your own pet under you, in its mode, but not a teammate's (#1110)", () => {
     const kajaWolf = player("kaja/c1", {
       creature: {

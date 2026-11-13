@@ -4193,6 +4193,10 @@ body:has(> .splash) #menu-background::after {
 /* Count and clock: top-centre, away from the skill bar, so checking the
    score never competes with checking what you can cast. The foes' pips
    sit beside them (#881). */
+.hud-scoreboard[hidden] {
+  display: none;
+}
+
 .hud-scoreboard {
   display: flex;
   align-items: center;

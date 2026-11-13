@@ -176,6 +176,7 @@ import {
   type RenderableTeleport,
   type RenderableFlag,
 } from "./flag-objects.js";
+import { goalMarkCommands, goalMarkFade, type GoalMark } from "./goal-mark.js";
 import { lyingPose } from "./lying-pose.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import { LightingPass, litStructurePalette, baseTint } from "./lighting-pass.js";
@@ -543,6 +544,12 @@ export class ArenaScene extends Phaser.Scene {
   private impacts: Impact[] = [];
   private addedImpacts: Impact[] = [];
   private walkMarker: WalkMarker | undefined;
+  /**
+   * The goals on the ground (#3221), each with when it left the snapshot,
+   * so a reached one fades out; and their graphics, one per layer's depth.
+   */
+  private goals = new Map<string, { mark: GoalMark; goneAt: number | undefined }>();
+  private readonly goalGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Every caped body's cape (#1699), and where the body was drawn last frame. */
   private capes = new Map<string, { motion: CapeMotion; x: number; y: number }>();
   /**
@@ -760,6 +767,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const ping of this.snapshot.pings) {
       this.drawPing(g, ping);
     }
+    this.drawGoals();
     this.drawStand(g, marks);
     this.drawAltar(g);
     for (const point of this.snapshot.capturePoints) {
@@ -1438,6 +1446,67 @@ export class ArenaScene extends Phaser.Scene {
     g.fillCircle(x, head, PING_HEAD_RADIUS);
     g.lineStyle(1.5, BODY_EDGE, 1);
     g.strokeCircle(x, head, PING_HEAD_RADIUS);
+  }
+
+  /**
+   * The goals on the ground (#3221) on their layers, over the floor and
+   * under the bodies; a goal gone from the snapshot fades out, then is dropped.
+   */
+  private drawGoals(): void {
+    for (const graphics of this.goalGraphics.values()) {
+      graphics.clear();
+    }
+    const current = new Set<string>();
+    for (const mark of this.snapshot.goals) {
+      current.add(mark.id);
+      this.goals.set(mark.id, { mark, goneAt: undefined });
+    }
+    const ground = this.snapshot.structure.ground;
+    for (const [id, goal] of this.goals) {
+      if (!current.has(id) && goal.goneAt === undefined) {
+        goal.goneAt = this.now;
+      }
+      const fade = goalMarkFade(goal.goneAt === undefined ? undefined : this.now - goal.goneAt);
+      if (fade <= 0) {
+        this.goals.delete(id);
+        continue;
+      }
+      const depth = renderOrder({ kind: "goal-mark", layer: goal.mark.layer });
+      let g = this.goalGraphics.get(depth);
+      if (g === undefined) {
+        g = this.add.graphics().setDepth(depth);
+        this.goalGraphics.set(depth, g);
+      }
+      g.save();
+      g.translateCanvas(0, -elevationOf(goal.mark.layer, ground));
+      for (const command of goalMarkCommands(
+        goal.mark.position,
+        this.now,
+        this.reducedMotion,
+        fade,
+      )) {
+        switch (command.kind) {
+          case "disc":
+            g.fillStyle(command.colour, command.alpha);
+            g.fillCircle(command.at.x, command.at.y, command.radius);
+            break;
+          case "ring":
+            g.lineStyle(command.width, command.colour, command.alpha);
+            g.strokeCircle(command.at.x, command.at.y, command.radius);
+            break;
+          case "band":
+            g.fillStyle(command.colour, command.alpha);
+            g.fillRect(
+              command.at.x - command.width / 2,
+              command.at.y - command.height,
+              command.width,
+              command.height,
+            );
+            break;
+        }
+      }
+      g.restore();
+    }
   }
 
   /** Your team's called foe (#443): a `condition` chevron over it, cased like the weapon mark. */

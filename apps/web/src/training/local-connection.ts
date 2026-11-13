@@ -22,7 +22,6 @@ import type {
   ClientIntent,
   MapDescriptor,
   PeerCall,
-  WirePing,
 } from "@vibewars/game-protocol";
 import {
   armedAttackSnapshot,
@@ -161,10 +160,8 @@ export function createLocalConnection(options: {
   readonly guildOf: (id: string) => Guild;
   /** Each participant's professions: the player's build's, a dummy's none. */
   readonly professionsOf: (id: string) => Professions;
-  /** Pings laid over your team's calls each read, such as the tutorial's mark (#3218). */
-  readonly marks?: () => readonly WirePing[];
 }): LocalMatchConnection {
-  const { simulation, selfId, map, nameOf, guildOf, professionsOf, marks } = options;
+  const { simulation, selfId, map, nameOf, guildOf, professionsOf } = options;
   // What each slot holds now, a copy standing in one (#469) included.
   const held = (): readonly (SlotSkill | null)[] => {
     const self = simulation.get(selfId);
@@ -248,12 +245,7 @@ export function createLocalConnection(options: {
     const now = simulation.elapsedSeconds;
     calls.step(now, alive);
     // Your own lines echo straight back, as pings do (#2391).
-    const view = calls.view(selfTeam(), now);
-    return {
-      ...view,
-      pings: marks === undefined ? view.pings : [...view.pings, ...marks()],
-      strokes: calls.strokes(selfTeam(), now),
-    };
+    return { ...calls.view(selfTeam(), now), strokes: calls.strokes(selfTeam(), now) };
   };
 
   return {
