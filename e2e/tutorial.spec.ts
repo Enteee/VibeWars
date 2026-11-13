@@ -68,13 +68,25 @@ test.describe("the first-time tutorial (#3218)", () => {
     if (box === null) {
       throw new Error("no canvas");
     }
+    // The praise shows for 2.5 s only, which a slow runner's drag can outlast:
+    // keep every line the guide says, and look for it among them.
+    await frame.evaluate((element) => {
+      new MutationObserver(() => {
+        const text = element.querySelector(".tutorial-said")?.textContent ?? "";
+        const said = element.getAttribute("data-said-log") ?? "";
+        if (!said.endsWith(`|${text}`)) {
+          element.setAttribute("data-said-log", `${said}|${text}`);
+        }
+      }).observe(element, { childList: true, characterData: true, subtree: true });
+    });
     const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     await page.mouse.move(centre.x, centre.y);
     await page.mouse.wheel(0, 100);
     await page.mouse.down({ button: "right" });
     await page.mouse.move(centre.x, box.y + 1, { steps: 10 });
-    await expect(frame.locator(".tutorial-said")).toHaveText(
-      "There it is! Our way around the fight.",
+    await expect(frame).toHaveAttribute(
+      "data-said-log",
+      /\|There it is! Our way around the fight\./,
     );
     await page.mouse.up({ button: "right" });
 
