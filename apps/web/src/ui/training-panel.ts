@@ -685,6 +685,7 @@ export function createTrainingPanel(): TrainingPanel {
         ...setup.map,
         gateLayers: setup.structure.gateLayers,
         gateLooks: setup.structure.gateLooks,
+        switchTargets: setup.structure.switchTargets,
       },
       blocking: gateWalls(
         setup.map.gates,

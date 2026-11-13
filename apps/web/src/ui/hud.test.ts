@@ -14,6 +14,7 @@ import { dismissToast, setToastHost, toast } from "./kit.js";
 
 import {
   carriedBundle,
+  leverName,
   objectTargetName,
   changedSlots,
   createHud,
@@ -196,6 +197,54 @@ describe("objectTargetName (#1225)", () => {
 
   it("names a switch a lever (#3025)", () => {
     expect(objectTargetName("switch-west", 0, NOBODY)).toBe(t("hud.switch"));
+  });
+
+  describe("says what a lever's next throw does (#3236)", () => {
+    const gate = (on: boolean) => ({
+      id: "crypt-west-portcullis",
+      kind: "portcullis" as const,
+      source: "gate" as const,
+      at: 0,
+      position: { x: 0, y: 0 },
+      layer: 0,
+      on,
+    });
+    const lever = (targets: ReturnType<typeof gate>[]) => [
+      { id: "switch-west", mark: "west", position: { x: 0, y: 0 }, layer: 1, up: true, targets },
+    ];
+    const portcullis = t("hud.switchTarget.portcullis");
+
+    it("opens a shut gate and closes an open one", () => {
+      expect(objectTargetName("switch-west", 0, NOBODY, false, lever([gate(false)]))).toBe(
+        t("hud.switchOpens", { target: portcullis }),
+      );
+      expect(objectTargetName("switch-west", 0, NOBODY, false, lever([gate(true)]))).toBe(
+        t("hud.switchCloses", { target: portcullis }),
+      );
+    });
+
+    it("names its first target and counts the rest", () => {
+      expect(
+        objectTargetName(
+          "switch-west",
+          0,
+          NOBODY,
+          false,
+          lever([gate(true), gate(false), gate(true)]),
+        ),
+      ).toBe(
+        t("hud.switchCloses", { target: t("hud.switchMore", { target: portcullis, more: 2 }) }),
+      );
+      expect(t("hud.switchMore", { target: portcullis, more: 1 })).toBe("Portcullis +1");
+    });
+
+    it("switches a portal on and off", () => {
+      const portal = { ...gate(true), kind: "portal" as const, source: "teleport" as const };
+      expect(leverName([portal])).toBe(
+        t("hud.switchOff", { target: t("hud.switchTarget.portal") }),
+      );
+      expect(leverName([{ ...portal, on: false }])).toBe("Lever · switches on Portal");
+    });
   });
 
   it("names a breakable wall a cracked wall (#3031)", () => {
