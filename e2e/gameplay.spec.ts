@@ -565,6 +565,8 @@ async function spotShot(
 }
 
 test("clicking the ground walks there, round a wall, and stops (#310)", async ({ page }) => {
+  // Ember Pits breathes, and never settles unless motion is reduced.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await startSoloMatch(page);
   // Behind the rock nearest the first spawn, on the line from the spawn through it.
   const spawn = spawnOf(0);
