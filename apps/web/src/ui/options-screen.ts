@@ -1,10 +1,11 @@
 import { t } from "../i18n/index.js";
+import { availableLanguages } from "../i18n/languages.js";
 import { overlayClose } from "./kit.js";
-import { OPTIONS_SECTIONS } from "./options-sections.js";
+import { optionsSections } from "./options-sections.js";
 import { attachTopbarPopover } from "./topbar-popover.js";
 
 /**
- * Options (#423, #454): the sections of `OPTIONS_SECTIONS` listed on the
+ * Options (#423, #454): the sections of `optionsSections` listed on the
  * left, the selected one on the right, opening on the first, as a window
  * from the top bar or a match's HUD (#2386). Its ×, or Esc, closes it
  * (#2381); a section that wants Esc for itself, as
@@ -63,14 +64,16 @@ let windowOpen = false;
  * the Lobby's and the music's, and the screen or match under it goes on.
  * Its ×, Esc or a click outside closes it, except while Controls waits for
  * a key: Esc then cancels only that wait. `onClose` hears every way it closes.
+ * `signet` is the player key's, for the Player section (#3235).
  */
 export function attachOptionsWindow(
   trigger: HTMLButtonElement,
   parent: HTMLElement,
+  signet: number,
   onClose?: () => void,
 ): { dispose(): void } {
   return attachTopbarPopover(trigger, parent, (close) => {
-    const options = optionsPanel(close);
+    const options = optionsPanel(close, signet);
     options.panel.classList.add("screen", "options-screen", "options-window");
     options.panel.setAttribute("aria-label", t("options.label"));
     // A press inside keeps the focus, and so Esc, in the window.
@@ -97,7 +100,10 @@ export function isOptionsWindowOpen(): boolean {
 }
 
 /** The Options frame and its sections. */
-function optionsPanel(close: () => void): {
+function optionsPanel(
+  close: () => void,
+  signet: number,
+): {
   readonly panel: HTMLElement;
   readonly dispose: () => void;
 } {
@@ -114,10 +120,11 @@ function optionsPanel(close: () => void): {
   body.append(nav, pane);
   panel.appendChild(body);
 
+  const sections = optionsSections(availableLanguages(), signet);
   const switcher = new SectionSwitcher<HTMLElement>(pane, (container) => {
     container.replaceChildren();
   });
-  const entries = OPTIONS_SECTIONS.map((section) => {
+  const entries = sections.map((section) => {
     const entry = document.createElement("button");
     entry.type = "button";
     entry.className = "options-entry";
@@ -130,7 +137,7 @@ function optionsPanel(close: () => void): {
     return entry;
   });
   const select = (id: string): void => {
-    const section = OPTIONS_SECTIONS.find((candidate) => candidate.id === id);
+    const section = sections.find((candidate) => candidate.id === id);
     if (section === undefined) {
       return;
     }
@@ -147,7 +154,7 @@ function optionsPanel(close: () => void): {
     }
   };
 
-  const [first] = OPTIONS_SECTIONS;
+  const [first] = sections;
   if (first !== undefined) {
     select(first.id);
   }

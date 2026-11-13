@@ -27,6 +27,8 @@ export interface TutorialSessionOptions {
   /** The background fight's: the tutorial is a body in it. */
   readonly mapId: string;
   readonly teamSize: number;
+  /** The player key's, for the Options window over it (#3235). */
+  readonly signet: number;
   /** Once, as it ends by itself, by Skip tutorial or by Leave; never after `stop`. */
   readonly onEnd: (end: TutorialEnd) => void;
 }
@@ -125,6 +127,7 @@ export async function startTutorialSession(
       connect: () => Promise.resolve(connection),
       tutorial: { party: [SELF_ID, TUTOR_ID], goals },
     },
+    options.signet,
   );
   mountSkipTutorial(frame, () => {
     end("skipped");

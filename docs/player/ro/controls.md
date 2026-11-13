@@ -56,11 +56,12 @@ Aceste taste sunt fixe:
 - Dă clic pe o abilitate de pe bară ca s-o folosești, și pe un nume din fereastra
   grupului ca să țintești acel aliat.
 - Ține apăsat **Arată nume** (Shift) și apar toate numele, fiecare jucător având
-  sigiliul înaintea numelui: un mic scut, mereu același pentru același jucător.
-  Cât timp ții apăsat, clicul pe numele unui personaj funcționează ca și clicul pe
-  corpul lui. Un clic dreapta doar țintește, chiar și de două ori; un clic stânga
-  țintește și atacă dintr-odată; un clic pe rotiță anunță sau dă ping. Numele pe
-  care l-ar nimeri clicul este evidențiat.
+  sigiliul înaintea numelui: un mic scut, mereu același pentru același jucător,
+  iar pe al tău îl vezi în **Opțiuni › Jucător**. Cât timp ții apăsat, clicul pe
+  numele unui personaj funcționează ca și clicul pe corpul lui. Un clic dreapta
+  doar țintește, chiar și de două ori; un clic stânga țintește și atacă
+  dintr-odată; un clic pe rotiță anunță sau dă ping. Numele pe care l-ar nimeri
+  clicul este evidențiat.
 
 ## Bara de sus
 

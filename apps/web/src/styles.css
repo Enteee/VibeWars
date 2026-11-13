@@ -1552,6 +1552,17 @@ body:has(> .splash) #menu-background::after {
   align-content: start;
 }
 
+/* The key's signet left of the name (#3235), held to it on a narrow window. */
+.player-name-row {
+  display: flex;
+  align-items: center;
+}
+
+.player-name-row > .field-input {
+  flex: 1;
+  min-width: 0;
+}
+
 .player-guild-tag .field-input {
   width: 7ch;
 }

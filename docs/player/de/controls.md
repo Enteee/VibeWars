@@ -55,11 +55,12 @@ Diese Tasten sind fest:
 - Klick auf einen Skill auf der Leiste nutzt ihn, ein Name im Gruppenfenster
   visiert diesen Verbündeten an.
 - Halte **Namen zeigen** (Shift), und jeder Name erscheint, bei Spielern mit ihrem
-  Siegel davor: einem kleinen Schild, das beim selben Spieler immer gleich ist.
-  Solange du hältst, wirkt ein Klick auf den Namen eines Charakters wie ein Klick
-  auf seinen Körper. Ein Rechtsklick visiert nur an, auch zweimal; ein Linksklick
-  visiert an und greift sofort an; ein Mausrad-Klick sagt an oder pingt. Der Name,
-  den ein Klick treffen würde, ist hervorgehoben.
+  Siegel davor: einem kleinen Schild, das beim selben Spieler immer gleich ist,
+  und dein eigenes siehst du unter **Optionen › Spieler**. Solange du hältst,
+  wirkt ein Klick auf den Namen eines Charakters wie ein Klick auf seinen Körper.
+  Ein Rechtsklick visiert nur an, auch zweimal; ein Linksklick visiert an und
+  greift sofort an; ein Mausrad-Klick sagt an oder pingt. Der Name, den ein Klick
+  treffen würde, ist hervorgehoben.
 
 ## Die obere Leiste
 
