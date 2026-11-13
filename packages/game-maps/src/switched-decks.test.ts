@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 
 import { mapSimulationFields } from "./match-fields.js";
 import { validateMapData } from "./schema.js";
+import longHallData from "../maps/arena-long-hall/map.json" with { type: "json" };
 import switchedData from "../test-maps/switched/map.json" with { type: "json" };
 
 const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -167,5 +168,28 @@ describe("switched decks in a match (#3068)", () => {
     };
     expect(walk(false)).toBe(true);
     expect(walk(true)).toBe(false);
+  });
+
+  it("gives Long Hall's dais way under its eighth body, into the crypt below (#3211)", () => {
+    const sim = new MatchSimulation({
+      seed: "long-hall-dais",
+      ruleset: RULESET,
+      ...mapSimulationFields(validateMapData(longHallData), 2),
+      participants: [
+        ...[1150, 1450].flatMap((y, row) =>
+          [2140, 2200, 2260, 2320].map((x, at) =>
+            body(`dais-${String(row)}-${String(at)}`, x, y, 2),
+          ),
+        ),
+        body("foe", 3920, 1500, 1, 1),
+      ],
+    });
+    run(sim, 0.5);
+    expect(sim.switchedDecks.find(({ id }) => id === "dais-west")?.up).toBe(false);
+    for (const row of [0, 1]) {
+      for (const at of [0, 1, 2, 3]) {
+        expect(where(sim, `dais-${String(row)}-${String(at)}`)).toMatchObject({ layer: 0 });
+      }
+    }
   });
 });

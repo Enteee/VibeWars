@@ -96,9 +96,13 @@ export function armedSweep(armedAttack: ArmedAttackSnapshot, now: number): numbe
 
 /**
  * Your team, you first, then your companion (#1110), then the others in
- * seat order; empty when you are alone with no pet, or spectating.
+ * seat order; empty when you are alone with no pet, or spectating. With
+ * `only`, as in the tutorial (#3221), nobody else is listed.
  */
-export function partyRows(snapshot: MatchSnapshot): readonly PartyRow[] {
+export function partyRows(
+  snapshot: MatchSnapshot,
+  only?: ReadonlySet<string>,
+): readonly PartyRow[] {
   const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
   if (self === undefined) {
     return [];
@@ -112,7 +116,9 @@ export function partyRows(snapshot: MatchSnapshot): readonly PartyRow[] {
   const companions = snapshot.players.filter(
     (player) => player.creature?.ownerId === self.sessionId && player.creature.mode !== null,
   );
-  const members = [self, ...companions, ...others];
+  const members = [self, ...companions, ...others].filter(
+    (player) => only === undefined || only.has(player.sessionId),
+  );
   if (members.length === 1) {
     return [];
   }
@@ -330,6 +336,7 @@ export function createPartyWindow(
   parent: HTMLElement,
   onTarget: (sessionId: string) => void,
   onCommand: (creatureId: string, mode: CompanionMode) => void,
+  only?: ReadonlySet<string>,
 ): PartyWindow {
   // The dock spans the right edge and centres the panel in it, clamped
   // under the compass (styles.css).
@@ -347,7 +354,7 @@ export function createPartyWindow(
   return {
     element: panel,
     update(snapshot) {
-      const party = partyRows(snapshot);
+      const party = partyRows(snapshot, only);
       setHidden(panel, party.length === 0);
       panel.classList.toggle("is-compact", party.length > FULL_ROWS);
       const ids = new Set(party.map((row) => row.id));

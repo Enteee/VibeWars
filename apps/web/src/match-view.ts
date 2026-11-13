@@ -69,6 +69,7 @@ import {
 import { attackCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
 import { CREATURE_DRAWN_RADIUS } from "./render/creature-shape.js";
+import type { GoalMark } from "./render/goal-mark.js";
 import { conditionCues } from "./render/body-conditions.js";
 import { bodyFlags } from "./render/body-rings.js";
 import { capeLook } from "./render/cape-shape.js";
@@ -161,10 +162,18 @@ export interface MatchOutcome {
  * Where the match comes from: a seat in a lobby's match over its
  * transport, or watching it from no team (#480), with no skill bar and
  * nothing to send. A watcher's `selfSessionId` is its own in the lobby,
- * which no body in the match has.
+ * which no body in the match has. A `tutorial` (#3221) lists only its
+ * `party`, shows no scoreboard, and lays its `goals` on the ground.
  */
 export type MatchViewOptions =
-  | { readonly kind: "play"; readonly connect: () => Promise<MatchConnection> }
+  | {
+      readonly kind: "play";
+      readonly connect: () => Promise<MatchConnection>;
+      readonly tutorial?: {
+        readonly party: readonly string[];
+        readonly goals: () => readonly GoalMark[];
+      };
+    }
   | {
       readonly kind: "observe";
       readonly selfSessionId: string;
@@ -441,6 +450,8 @@ export function toArenaSnapshot(
     calledId: undefined,
     pings: [],
     strokes: [],
+    // Only the tutorial sets a goal (#3221).
+    goals: [],
     actors: match.players.map((player) => {
       const statuses = player.statuses.map((status) => status.id);
       // Rings and condition cues for what the statuses already say (#1117,
@@ -589,6 +600,7 @@ export async function startMatchView(
       ? undefined
       : attachFollowCamera(viewport, parent, viewed.map, () => viewport.size());
 
+  const tutorial = options.kind === "play" ? options.tutorial : undefined;
   const hud = createHud(
     parent,
     (targetId, status) => {
@@ -604,6 +616,7 @@ export async function startMatchView(
         seat?.sendCall(call);
       }
     },
+    tutorial === undefined,
   );
   // A toast goes under the target frame (#1465): at the bottom centre it
   // would sit on the skill bar.
@@ -618,6 +631,7 @@ export async function startMatchView(
     (creatureId, mode) => {
       seat?.sendIntent({ kind: "command", creatureId, order: { kind: "mode", mode } });
     },
+    tutorial === undefined ? undefined : new Set(tutorial.party),
   );
   // The compass (#486), top right under the match controls; a click on it
   // pings, a drag draws for your team (#2391).
@@ -1135,6 +1149,9 @@ export async function startMatchView(
     );
     // A watcher has no team, so nobody's calls.
     latestArena = seat === undefined ? arena : withCalls(arena, seat.getCalls());
+    if (tutorial !== undefined) {
+      latestArena = { ...latestArena, goals: tutorial.goals() };
+    }
     viewport?.scene.setSnapshot(latestArena);
     compass.update(latestArena, viewed.selfSessionId);
     // For the e2e specs: who your team has called.
