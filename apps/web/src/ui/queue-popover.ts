@@ -3,6 +3,7 @@ import type { QueueState } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
 import { button, h } from "./kit.js";
+import { signedText, type SignedLine, type SignedName } from "./player-label.js";
 import { modeLabel, waitedLabel } from "./queue-screen.js";
 import { attachTopbarPopover, closeTopbarPopover } from "./topbar-popover.js";
 import { isVaultRound, vaultLines } from "./vault-screen.js";
@@ -35,7 +36,7 @@ export type QueueStatusInput =
       readonly teams: number | undefined;
       readonly isHost: boolean;
       /** Who holds the Hall of Heroes (#2701), as the Vault says; `undefined` for nobody. */
-      readonly hallHolder: string | undefined;
+      readonly hallHolder: SignedName | undefined;
     };
 
 /** What the flyout says. */
@@ -44,7 +45,8 @@ export interface QueueStatus {
   readonly title: string;
   /** m:ss, or in the Vault how long until the Hall opens. */
   readonly waited: string;
-  readonly detail?: string;
+  /** In the Vault, the holder named with their signet (#3232). */
+  readonly detail?: string | SignedLine;
   /** Leave Queue, or a guest's word that only the host can. */
   readonly leave: "button" | "host-only";
 }
@@ -154,7 +156,7 @@ export function queueButton(parent: HTMLElement, onLeave: () => void): QueueButt
       }
       title.textContent = status.title;
       waited.textContent = status.waited;
-      detail.textContent = status.detail ?? "";
+      paintDetail(detail, status.detail);
       detail.hidden = status.detail === undefined;
       hostOnly.hidden = status.leave !== "host-only";
       leave.hidden = status.leave !== "button";
@@ -188,4 +190,18 @@ export function queueButton(parent: HTMLElement, onLeave: () => void): QueueButt
       paint?.();
     },
   };
+}
+
+/** Show `text` in `detail`, rebuilt only when it changes, as it is painted every second. */
+function paintDetail(detail: HTMLElement, text: string | SignedLine | undefined): void {
+  const key = JSON.stringify(text ?? "");
+  if (detail.dataset.text === key) {
+    return;
+  }
+  detail.dataset.text = key;
+  if (typeof text === "object") {
+    detail.replaceChildren(signedText(text.key, text.params));
+  } else {
+    detail.textContent = text ?? "";
+  }
 }

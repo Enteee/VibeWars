@@ -60,10 +60,10 @@ Các phím sau là cố định:
   sổ tổ đội để nhắm đồng minh đó.
 - Giữ **Hiện tên** (Shift) thì mọi cái tên đều hiện, tên mỗi người chơi có ấn
   ký của họ đứng trước: một chiếc khiên nhỏ luôn giống nhau cho cùng một người
-  chơi. Khi đang giữ, nhấn vào tên một nhân vật có tác dụng như nhấn vào cơ
-  thể của nó. Chuột phải chỉ nhắm, kể cả khi nhấn hai lần; chuột trái nhắm và
-  tấn công cùng lúc; nhấn con lăn để gọi hoặc ping. Cái tên mà cú nhấn sẽ
-  trúng được làm nổi bật.
+  chơi, còn ấn ký của bạn hiện trong **Tùy chọn › Người chơi**. Khi đang giữ,
+  nhấn vào tên một nhân vật có tác dụng như nhấn vào cơ thể của nó. Chuột phải
+  chỉ nhắm, kể cả khi nhấn hai lần; chuột trái nhắm và tấn công cùng lúc; nhấn
+  con lăn để gọi hoặc ping. Cái tên mà cú nhấn sẽ trúng được làm nổi bật.
 
 ## Thanh trên cùng
 

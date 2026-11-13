@@ -60,10 +60,11 @@ Estas teclas son fijas:
   ventana de grupo para seleccionar a ese aliado.
 - Mantén **Ver nombres** (Shift) y se ven todos los nombres, cada jugador
   con su sello delante: un pequeño escudo que siempre es igual para el mismo
-  jugador. Mientras lo mantienes, hacer clic en el nombre de un personaje
-  funciona como hacer clic en su cuerpo. Un clic derecho solo selecciona,
-  incluso dos veces; un clic izquierdo selecciona y ataca a la vez; un clic
-  con la rueda marca o señala. El nombre al que daría el clic se resalta.
+  jugador, y el tuyo aparece en **Opciones › Jugador**. Mientras lo
+  mantienes, hacer clic en el nombre de un personaje funciona como hacer
+  clic en su cuerpo. Un clic derecho solo selecciona, incluso dos veces; un
+  clic izquierdo selecciona y ataca a la vez; un clic con la rueda marca o
+  señala. El nombre al que daría el clic se resalta.
 
 ## La barra superior
 

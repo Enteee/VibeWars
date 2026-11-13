@@ -268,6 +268,13 @@ describe("toast (#566)", () => {
     expect(body.children[0]?.children[0]?.textContent).toBe("Copied.");
   });
 
+  it("shows a node as it is, a signed name in it (#3232)", () => {
+    const signed = new FakeNode("span");
+    signed.textContent = "Ana";
+    toast(signed as unknown as Node);
+    expect(body.children[0]?.children[0]?.children).toEqual([signed]);
+  });
+
   it("goes after its seconds, and the replaced one's timer takes nothing down", () => {
     toast("first");
     vi.advanceTimersByTime(TOAST_SECONDS * 1000 - 100);

@@ -22,20 +22,24 @@ import { canvasPainter } from "./character-figure.js";
 import { cssColour } from "./character-preview.js";
 import { button, h, shareLine, toast, type ShareLine } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
+import { SIGNET_HEADING_PX, signetElement } from "./player-label.js";
 
 /**
  * The Player section of Options (#1513): the name, the guild tag (#1406)
  * and the guild cape (#1422), which are the player's, not one screen's.
  * Each is saved on every keystroke and pick; the screen under Options
  * re-renders as it closes, so the roster wears the cape just picked.
+ * `signet` is the player key's (#3235), left of the name.
  */
-export const playerSection: OptionsSection = {
-  id: "player",
-  get title() {
-    return t("options.player");
-  },
-  mount: mountPlayer,
-};
+export function playerSection(signet: number): OptionsSection {
+  return {
+    id: "player",
+    get title() {
+      return t("options.player");
+    },
+    mount: (container) => mountPlayer(container, signet),
+  };
+}
 
 const NAME_STORAGE_KEY = `${STORAGE_NAMESPACE}.playerName`;
 
@@ -227,7 +231,7 @@ export function isInvalidGuildTag(typed: string): boolean {
   return typed.trim() !== "" && sanitizeGuildTag(typed) === null;
 }
 
-function mountPlayer(container: HTMLElement): () => void {
+function mountPlayer(container: HTMLElement, signet: number): () => void {
   const panel = h("div", "player-section");
   container.appendChild(panel);
 
@@ -240,7 +244,10 @@ function mountPlayer(container: HTMLElement): () => void {
   nameInput.addEventListener("input", () => {
     savePlayerName(nameInput.value);
   });
-  nameField.appendChild(nameInput);
+  // The key's signet left of it (#3235): the name can change, it cannot.
+  const nameRow = h("span", "player-name-row");
+  nameRow.append(signetElement(signet, SIGNET_HEADING_PX), nameInput);
+  nameField.appendChild(nameRow);
   // The guild tag beside it (#1406): `Ente [VIBE]` to everyone else.
   const tagField = h("label", "field player-guild-tag");
   tagField.appendChild(h("span", "field-label", t("player.guildTag")));

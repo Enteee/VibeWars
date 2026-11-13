@@ -1401,11 +1401,21 @@ export default {
   "training.you": "Sen",
 
   "tutorial.learn": "Oynamayı öğren",
+  "tutorial.look.hint": "Uzaklaştır, sonra görüşü kuzeye sürükle. Işınlayıcıyı bul!",
+  "tutorial.look.how":
+    "Fare tekerleği yakınlaştırır. Sağ tuşu basılı tutup sürükleyerek etrafa bak.",
+  "tutorial.look.intro":
+    "Belki bu ışınlayıcı bizi savaş alanının etrafından dolaştırır. Kuzeye bak!",
+  "tutorial.look.praise": "İşte orada! Savaşın etrafından yolumuz.",
   "tutorial.moreSoon": "Yakında daha fazla ders. Orada görüşürüz!",
   "tutorial.offer": "Yeni misin? Öğretmenin sana temelleri gösterecek.",
   "tutorial.offerTitle": "İlk kez mi?",
   "tutorial.skip": "Atla",
   "tutorial.skipTutorial": "Öğreticiyi atla",
+  "tutorial.stepIn.hint": "Işınlayıcının platformuna çık. Hemen yanındayım.",
+  "tutorial.stepIn.how": "Platforma sol tıkla ya da {keys} ile yürü.",
+  "tutorial.stepIn.intro": "Hadi, benimle ışınlayıcıya!",
+  "tutorial.stepIn.praise": "Birlikte. Nefesini tut.",
   "tutorial.tutor": "Öğretmen",
   "tutorial.walk.hint": "Buraya! Parlayan işarete bas.",
   "tutorial.walk.how": "Zemine sol tıkla ya da {keys} ile yürü.",

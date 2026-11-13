@@ -638,19 +638,22 @@ describe("carriedBundle (#1225, #1374)", () => {
 
   it("shows the scoreboard, unless told not to, as the tutorial does (#3221)", () => {
     vi.stubGlobal("document", { createElement: () => new FakeNode() });
-    const make = (showScore?: boolean): HudElements =>
+    const make = (inMatch?: boolean): HudElements =>
       createHud(
         new FakeNode() as unknown as HTMLElement,
         () => undefined,
         () => undefined,
         () => undefined,
-        showScore,
+        inMatch,
       );
     const ordinary = make();
     const tutorial = make(false);
     vi.unstubAllGlobals();
     expect(ordinary.scoreboard.hidden).toBe(false);
     expect(tutorial.scoreboard.hidden).toBe(true);
+    // QA (#3222): an empty frame covered the teleporter's pad.
+    expect(ordinary.showsNoTarget).toBe(true);
+    expect(tutorial.showsNoTarget).toBe(false);
   });
 });
 
@@ -792,6 +795,11 @@ describe("enemyPips (#881)", () => {
       { name: "Ally", team: 0, dead: false },
       { name: "Buddy", team: 0, dead: true },
     ]);
+  });
+
+  it("carries a foe's signet, for the name on hover (#3232)", () => {
+    const keyed = player({ sessionId: "k", name: "Keyed", team: 1, signet: 7 });
+    expect(enemyPips([keyed], 0)).toEqual([{ name: "Keyed", team: 1, dead: false, signet: 7 }]);
   });
 
   it("groups two foe teams, each in snapshot order (#2684)", () => {
@@ -1372,22 +1380,33 @@ describe("a Ghostly Hero's leader (#1377, #1419)", () => {
 
   describe("ghostLeaderToast", () => {
     it("toasts whom your team's ghost now follows, or that it stays", () => {
-      expect(toast(ghosts(null), ghosts("me"))).toBe(
-        t("hud.ghostNameFollows", { name: "Ghostly Hero", leader: t("hud.leaderYou") }),
-      );
-      expect(toast(ghosts(null), ghosts("ally"))).toBe(
-        t("hud.ghostNameFollows", { name: "Ghostly Hero", leader: "Devona" }),
-      );
-      expect(toast(ghosts("me"), ghosts(null))).toBe(
-        t("hud.ghostNameStays", { name: "Ghostly Hero" }),
-      );
+      expect(toast(ghosts(null), ghosts("me"))).toEqual({
+        key: "hud.ghostNameFollows",
+        params: { name: "Ghostly Hero", leader: t("hud.leaderYou") },
+      });
+      expect(toast(ghosts(null), ghosts("ally"))).toEqual({
+        key: "hud.ghostNameFollows",
+        params: { name: "Ghostly Hero", leader: { name: "Devona", signet: undefined } },
+      });
+      expect(toast(ghosts("me"), ghosts(null))).toEqual({
+        key: "hud.ghostNameStays",
+        params: { name: "Ghostly Hero" },
+      });
     });
 
     it("toasts a leader handed from one ally to another once, as the new one", () => {
-      expect(toast(ghosts("ally"), ghosts("me"))).toBe(
-        t("hud.ghostNameFollows", { name: "Ghostly Hero", leader: t("hud.leaderYou") }),
-      );
+      expect(toast(ghosts("ally"), ghosts("me"))).toEqual({
+        key: "hud.ghostNameFollows",
+        params: { name: "Ghostly Hero", leader: t("hud.leaderYou") },
+      });
       expect(toast(ghosts("me"), ghosts("me"))).toBeUndefined();
+    });
+
+    it("names a keyed leader with their signet, and you with none (#3232)", () => {
+      const ally = player({ sessionId: "ally", name: "Devona", team: 0, signet: 42 });
+      const after = { players: [me, ally, ghost(0, "ally")] };
+      expect(toast(ghosts(null), after)?.params.leader).toEqual({ name: "Devona", signet: 42 });
+      expect(toast(ghosts(null), ghosts("me"))?.params.leader).toBe(t("hud.leaderYou"));
     });
 
     it("says nothing of the foe's ghost, to a spectator, or on the first snapshot", () => {

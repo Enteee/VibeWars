@@ -18,6 +18,7 @@ import {
   saveGuildTag,
   showsCapeDesigner,
 } from "./player-section.js";
+import { SIGNET_HEADING_PX, signetUrl } from "./player-label.js";
 
 describe("the guild tag field (#1406)", () => {
   afterEach(() => {
@@ -218,9 +219,9 @@ describe("the Player section of Options (#1513)", () => {
   });
 
   /** Mount the section; its name and tag fields, its cape designer, and all of it. */
-  function mount() {
+  function mount(signet = 0) {
     const container = new FakeElement("div");
-    playerSection.mount(container as unknown as HTMLElement);
+    playerSection(signet).mount(container as unknown as HTMLElement);
     const shown = container.all();
     const [name, tag] = shown.filter((node) => node.tagName === "input");
     const cape = shown.find((node) => node.className === "player-cape");
@@ -232,6 +233,16 @@ describe("the Player section of Options (#1513)", () => {
 
   it("says when a change applies", () => {
     expect(mount().shown.some((node) => node.textContent === t("player.applies"))).toBe(true);
+  });
+
+  it("shows the key's signet just left of the name (#3235)", () => {
+    const { name, shown } = mount(12345);
+    const row = shown.find((node) => node.children.includes(name));
+    expect(row?.className).toBe("player-name-row");
+    const [signet] = row?.children ?? [];
+    expect(signet?.className).toBe("signet");
+    expect(signet?.src).toBe(signetUrl(12345, SIGNET_HEADING_PX));
+    expect(row?.children.indexOf(name)).toBe(1);
   });
 
   it("shows what is saved, and saves the name and tag on every keystroke", () => {

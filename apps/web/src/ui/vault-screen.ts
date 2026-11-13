@@ -2,8 +2,10 @@ import { nextHallSlotMs } from "@vibewars/game-core";
 import type { MatchRecord } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
+import { keySignet } from "../identity/key-signet.js";
 import { ASCENT_PROGRESSION, ascentMapPool } from "../net/maps.js";
 import type { MatchRecordWatch, MatchRecordWatchHandlers } from "../net/transport/match-records.js";
+import type { SignedLine, SignedName } from "./player-label.js";
 import { waitedLabel } from "./queue-screen.js";
 
 /**
@@ -21,22 +23,26 @@ export function isVaultRound(round: number | null): boolean {
 /** The Vault's lines at `nowMs`, with `holder` holding the Hall or nobody. */
 export function vaultLines(
   nowMs: number,
-  holder: string | undefined,
-): { readonly title: string; readonly countdown: string; readonly holder: string } {
+  holder: SignedName | undefined,
+): { readonly title: string; readonly countdown: string; readonly holder: string | SignedLine } {
   return {
     title: t("queue.vault"),
     countdown: t("queue.vaultOpensIn", { time: waitedLabel(nextHallSlotMs(nowMs) - nowMs) }),
-    holder: holder === undefined ? t("queue.hallUnheld") : t("queue.hallHeldBy", { holder }),
+    holder:
+      holder === undefined
+        ? t("queue.hallUnheld")
+        : { key: "queue.hallHeldBy", params: { holder } },
   };
 }
 
 /**
  * Who `record` says now holds the Hall: its winning party's guild tag when
- * more than half of its people share one, else its leader's name.
+ * more than half of its people share one, else its leader's name, with
+ * their signet (#3232); a tag has none.
  * `undefined` for any record but a won Hall: a Hosted Game may play the
  * same maps, and holds nothing.
  */
-export function hallHolderOf(record: MatchRecord): string | undefined {
+export function hallHolderOf(record: MatchRecord): SignedName | undefined {
   if (
     record.mode !== "heroes-ascent" ||
     !ascentMapPool(ASCENT_PROGRESSION.length - 1).includes(record.map) ||
@@ -54,10 +60,16 @@ export function hallHolderOf(record: MatchRecord): string | undefined {
   }
   for (const [tag, count] of tags) {
     if (count * 2 > people.length) {
-      return tag;
+      return { name: tag, signet: undefined };
     }
   }
-  return (people[0] ?? players[0])?.name;
+  const leader = people[0] ?? players[0];
+  return leader === undefined
+    ? undefined
+    : {
+        name: leader.name,
+        signet: leader.pubkey === null ? undefined : keySignet(leader.pubkey),
+      };
 }
 
 /**
@@ -73,7 +85,7 @@ export const HALL_CLOCK_SKEW_MS = 30_000;
 
 /** The newest Hall holder heard. */
 export interface HallWatch {
-  readonly holder: () => string | undefined;
+  readonly holder: () => SignedName | undefined;
   /** Stop listening, and checking signatures, for as long as a match runs. */
   readonly pause: () => void;
   /** Listen again; what the relays replay finds a Hall won meanwhile. */
@@ -89,10 +101,10 @@ export interface HallWatch {
 export function watchHall(
   watch: (on: MatchRecordWatchHandlers) => MatchRecordWatch,
   now: () => number,
-  announce: (text: string) => void,
+  announce: (line: SignedLine) => void,
   changed: () => void,
 ): HallWatch {
-  let newest: { readonly holder: string; readonly endedAt: number } | undefined;
+  let newest: { readonly holder: SignedName; readonly endedAt: number } | undefined;
   let announcedSlot: number | undefined;
   const open = (): MatchRecordWatch => {
     const openedAt = now();
@@ -118,7 +130,7 @@ export function watchHall(
         const slot = nextHallSlotMs(heardAt);
         if (endedAt > openedAt && slot !== announcedSlot) {
           announcedSlot = slot;
-          announce(t("queue.hallHeldBy", { holder }));
+          announce({ key: "queue.hallHeldBy", params: { holder } });
         }
       },
       noRelay: () => undefined,
@@ -175,11 +187,11 @@ export function hallHolds(records: readonly MatchRecord[], nowMs: number): HallH
       .filter((player) => !player.bot)
       .map(({ name, pubkey }) => ({ name, pubkey }));
     const running = holds.at(-1);
-    const wins = running?.holder === holder ? running.wins + 1 : 1;
+    const wins = running?.holder === holder.name ? running.wins + 1 : 1;
     if (wins > 1) {
       holds.pop();
     }
-    holds.push({ holder, people, endedAt: record.endedAt, wins });
+    holds.push({ holder: holder.name, people, endedAt: record.endedAt, wins });
   }
   return holds.slice(-HALL_HOLDS_SHOWN).reverse();
 }

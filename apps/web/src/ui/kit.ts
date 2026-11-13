@@ -686,20 +686,26 @@ export function dismissToast(): void {
 
 /**
  * A short note at the bottom centre (#566), or in the toast host if one
- * is set: "Saved", or what a change removed with an Undo. One at a
+ * is set: "Saved", or what a change removed with an Undo, as text or a
+ * node, a signed name in it (#3232). One at a
  * time: a new one replaces the old, wherever it is.
  * `problems` lists why something failed, as a problems chip lists them.
  * Returns a dismiss that takes down this toast only, not one that
  * replaced it.
  */
 export function toast(
-  text: string,
+  text: string | Node,
   options: { readonly undo?: () => void; readonly problems?: readonly string[] } = {},
 ): () => void {
   dismissToast();
   const element = h("div", "toast");
   element.setAttribute("role", "status");
-  element.appendChild(h("span", "toast-text", text));
+  const textElement = element.appendChild(
+    h("span", "toast-text", typeof text === "string" ? text : undefined),
+  );
+  if (typeof text !== "string") {
+    textElement.append(text);
+  }
   const { undo, problems = [] } = options;
   if (problems.length > 0) {
     const list = h("ul", "problems-list toast-problems");

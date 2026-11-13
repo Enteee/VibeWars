@@ -76,7 +76,7 @@ import { capeLook } from "./render/cape-shape.js";
 import { castBadgeType } from "./render/cast-badge.js";
 import { CRUMBLED, crackStage, renderableBreakables } from "./render/breakable-objects.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
-import { attachFollowCamera } from "./render/follow-camera.js";
+import { attachFollowCamera, type CameraLook } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
 import { projectileSprite } from "./render/projectiles.js";
 import {
@@ -119,6 +119,7 @@ import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 import { button, setToastHost, toast } from "./ui/kit.js";
+import { signedText } from "./ui/player-label.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -255,6 +256,8 @@ export interface MatchView {
   summary(): readonly SummaryTable[] | undefined;
   /** Shows `line` over the result, or none. */
   setEndLine(line: EndLine | undefined): void;
+  /** What the camera shows (#3222), or nothing before its first frame or without a canvas. */
+  camera(): CameraLook | undefined;
   dispose(): Promise<void>;
 }
 
@@ -546,10 +549,12 @@ function animationFrames(handler: (deltaSeconds: number) => void): () => void {
   };
 }
 
+/** `signet` is the player key's, for the Options window over the match (#3235). */
 export async function startMatchView(
   parent: HTMLElement,
   callbacks: MatchViewCallbacks,
   options: MatchViewOptions,
+  signet: number,
 ): Promise<MatchView> {
   // With no WebGL there is no arena, said plainly where it would be
   // (#655). The match itself goes on: the HUD still shows it, and a host
@@ -777,7 +782,7 @@ export async function startMatchView(
   const leave = renderLeave(hud, callbacks.onLeave);
   // Options over the match (#454), a window like the music's (#2386): the
   // match goes on underneath.
-  const optionsWindow = attachOptionsWindow(hud.options, parent);
+  const optionsWindow = attachOptionsWindow(hud.options, parent, signet);
   // Help over the match too (#1257), the same way.
   const openHelp = (): void => {
     // A press while Help is open closes it (#2724).
@@ -1088,7 +1093,7 @@ export async function startMatchView(
       playerNames(match),
     );
     if (leader !== undefined) {
-      toast(leader);
+      toast(signedText(leader.key, leader.params));
     }
     if (objective !== undefined) {
       toast(objective.text);
@@ -1272,6 +1277,7 @@ export async function startMatchView(
 
   return {
     summary: () => summary?.tables,
+    camera: () => camera?.look(),
     setEndLine(line) {
       if (line === undefined) {
         endLine?.root.remove();
