@@ -51,7 +51,15 @@ test("a cast bar wears the casting skill's type badge, and loses it with the bar
   await startSoloMatch(page);
   const before = await badgeSpot(page);
 
-  await page.keyboard.press(TROLL_UNGUENT);
+  // The first match of a cold run can take the key before its skill bar
+  // does; press again only while nothing casts, as a press mid-cast queues.
+  const casting = page.locator(".hud-skill.is-casting");
+  await expect(async () => {
+    if ((await casting.count()) === 0) {
+      await page.keyboard.press(TROLL_UNGUENT);
+    }
+    await expect(casting).toHaveCount(1, { timeout: 2_000 });
+  }).toPass();
   await expect.poll(async () => (await badgeSpot(page)).equals(before)).toBe(false);
 
   await expect
