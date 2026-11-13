@@ -1391,8 +1391,8 @@
   ],
   "lighting": {
     "ambient": {
-      "colour": 9076108,
-      "intensity": 0.38
+      "colour": 10522250,
+      "intensity": 0.5
     },
     "indoorAmbient": {
       "colour": 5917266,
@@ -1401,9 +1401,9 @@
     "indoor": [],
     "sun": {
       "directionDeg": 315,
-      "elevationDeg": 30,
-      "colour": 16751216,
-      "intensity": 0.4
+      "elevationDeg": 40,
+      "colour": 16754792,
+      "intensity": 0.5
     },
     "lights": [
       {
@@ -1413,7 +1413,7 @@
           "y": 380
         },
         "layer": 1,
-        "radius": 260,
+        "radius": 364,
         "colour": 16742960,
         "intensity": 1,
         "flicker": 0.35
@@ -1425,7 +1425,7 @@
           "y": 760
         },
         "layer": 1,
-        "radius": 260,
+        "radius": 364,
         "colour": 16742960,
         "intensity": 1,
         "flicker": 0.35
@@ -1437,7 +1437,7 @@
           "y": 930
         },
         "layer": 1,
-        "radius": 220,
+        "radius": 308,
         "colour": 16742960,
         "intensity": 1,
         "flicker": 0.35
@@ -1449,7 +1449,7 @@
           "y": 1660
         },
         "layer": 1,
-        "radius": 280,
+        "radius": 392,
         "colour": 16737312,
         "intensity": 1,
         "flicker": 0.4
@@ -1461,7 +1461,7 @@
           "y": 880
         },
         "layer": 1,
-        "radius": 260,
+        "radius": 364,
         "colour": 16742960,
         "intensity": 1,
         "flicker": 0.35
@@ -1473,7 +1473,7 @@
           "y": 1320
         },
         "layer": 1,
-        "radius": 260,
+        "radius": 364,
         "colour": 16742960,
         "intensity": 1,
         "flicker": 0.35
@@ -1485,7 +1485,7 @@
           "y": 1700
         },
         "layer": 1,
-        "radius": 240,
+        "radius": 336,
         "colour": 16742960,
         "intensity": 1,
         "flicker": 0.35
@@ -1497,7 +1497,7 @@
           "y": 480
         },
         "layer": 1,
-        "radius": 340,
+        "radius": 476,
         "colour": 16737312,
         "intensity": 1,
         "flicker": 0.4
@@ -1509,7 +1509,7 @@
           "y": 620
         },
         "layer": 1,
-        "radius": 320,
+        "radius": 448,
         "colour": 16737312,
         "intensity": 1,
         "flicker": 0.4
