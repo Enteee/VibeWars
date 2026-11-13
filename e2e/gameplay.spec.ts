@@ -146,24 +146,25 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
 }
 
 /**
- * The arena once two shots in a row match, so a frame is not taken
- * mid-animation, such as inside a cast's impact glow (#1139). Bounded: a
- * scene that never settles fails here.
+ * Where your view stands once two reads 200 ms apart agree: `data-camera`,
+ * which follows your hero. Your position, not the arena's pixels, which
+ * go on moving with the marks and the foes around you (#3226).
  */
-async function settledArenaShot(page: Page, canvas: Locator): Promise<Buffer> {
-  let last = await arenaShot(page, canvas);
+async function stillCamera(page: Page): Promise<string> {
+  const stage = page.locator("#viewport");
+  let seen = "";
   await expect
     .poll(
       async () => {
-        const next = await arenaShot(page, canvas);
-        const same = next.equals(last);
-        last = next;
-        return same;
+        const was = seen;
+        await page.waitForTimeout(200);
+        seen = (await stage.getAttribute("data-camera")) ?? "";
+        return seen !== "" && seen === was;
       },
-      { timeout: 3_000, message: "the arena should settle" },
+      { message: "the view should stand still", intervals: [0], timeout: 5_000 },
     )
     .toBe(true);
-  return last;
+  return seen;
 }
 
 /**
@@ -358,10 +359,7 @@ test("in VibeWars, the arrows move; A, once move-left, casts slot 5 and moves no
     },
     { key: `${STORAGE_NAMESPACE}.keymap`, vibewars: KEYMAP_PRESETS.vibewars },
   );
-  // The enchantment's motes circle for as long as it lasts (#3226): only
-  // under reduced motion does the enchanted body hold still to compare.
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  const canvas = await startSoloMatch(page);
+  await startSoloMatch(page);
   await expect(page.locator(".hud-skill-key").first()).toHaveText("Q");
   expect(key("skill-5", KEYMAP_PRESETS.vibewars)).toBe("KeyA");
 
@@ -371,17 +369,15 @@ test("in VibeWars, the arrows move; A, once move-left, casts slot 5 and moves no
   await expect(
     page.getByRole("list", { name: "your effects" }).getByRole("listitem"),
   ).not.toHaveCount(0);
-  // The cast's impact glow (#1139) is still playing here; wait it out.
-  const held = await settledArenaShot(page, canvas);
+  const held = await stillCamera(page);
   await page.waitForTimeout(500);
-  expect((await arenaShot(page, canvas)).equals(held), "A should not move the player").toBe(true);
+  expect(await stillCamera(page), "A should not move the player").toBe(held);
   await page.keyboard.up("a");
 
   await page.keyboard.down(key("move-right", KEYMAP_PRESETS.vibewars));
   await page.waitForTimeout(500);
   await page.keyboard.up(key("move-right", KEYMAP_PRESETS.vibewars));
-  await page.waitForTimeout(300);
-  expect((await arenaShot(page, canvas)).equals(held), "the right arrow should move").toBe(false);
+  expect(await stillCamera(page), "the right arrow should move").not.toBe(held);
 });
 
 test("closing the tab mid-match asks first, as Ctrl+W would (#302)", async ({ page }) => {
