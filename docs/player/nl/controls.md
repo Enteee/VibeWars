@@ -56,10 +56,11 @@ Deze toetsen liggen vast:
   groepsvenster om die bondgenoot te kiezen.
 - Houd **Namen tonen** (Shift) ingedrukt en elke naam verschijnt, die van elke
   speler met zijn zegel ervoor: een schildje dat voor dezelfde speler altijd
-  hetzelfde is. Zolang je het ingedrukt houdt, werkt klikken op de naam van een
-  personage als klikken op zijn lichaam. Een rechtsklik kiest alleen, ook twee
-  keer; een linksklik kiest en valt meteen aan; een wielklik wijst aan of pingt.
-  De naam die een klik zou raken, licht op.
+  hetzelfde is, en dat van jezelf staat bij **Opties › Speler**. Zolang je het
+  ingedrukt houdt, werkt klikken op de naam van een personage als klikken op
+  zijn lichaam. Een rechtsklik kiest alleen, ook twee keer; een linksklik kiest
+  en valt meteen aan; een wielklik wijst aan of pingt. De naam die een klik zou
+  raken, licht op.
 
 ## De bovenste balk
 

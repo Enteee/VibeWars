@@ -59,11 +59,12 @@ Ces touches sont fixes :
 - Clique sur une compétence de la barre pour l'utiliser, et sur un nom dans
   la fenêtre de groupe pour cibler cet allié.
 - Maintiens **Noms** (Shift) et tous les noms s'affichent, chacun précédé du
-  sceau du joueur : un petit bouclier toujours identique pour un même joueur.
-  Pendant ce temps, cliquer sur le nom d'un personnage revient à cliquer sur
-  son corps. Un clic droit ne fait que cibler, même deux fois ; un clic gauche
-  cible et attaque à la fois ; un clic molette annonce ou signale. Le nom
-  qu'un clic toucherait est mis en évidence.
+  sceau du joueur : un petit bouclier toujours identique pour un même joueur,
+  et le tien s'affiche dans **Options › Joueur**. Pendant ce temps, cliquer
+  sur le nom d'un personnage revient à cliquer sur son corps. Un clic droit ne
+  fait que cibler, même deux fois ; un clic gauche cible et attaque à la fois
+  ; un clic molette annonce ou signale. Le nom qu'un clic toucherait est mis
+  en évidence.
 
 ## La barre du haut
 

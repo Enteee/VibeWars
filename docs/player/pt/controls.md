@@ -60,10 +60,11 @@ Estas teclas são fixas:
   do grupo para mirar nesse aliado.
 - Segure **Mostrar nomes** (Shift) e todos os nomes aparecem, o de cada
   jogador com seu sinete na frente: um pequeno escudo que é sempre igual
-  para o mesmo jogador. Enquanto segura, clicar no nome de um personagem
-  funciona como clicar no corpo dele. Um clique direito só mira, mesmo
-  dois seguidos; um clique esquerdo mira e ataca de uma vez; um clique na
-  roda anuncia ou marca. O nome que o clique atingiria fica destacado.
+  para o mesmo jogador, e o seu aparece em **Opções › Jogador**. Enquanto
+  segura, clicar no nome de um personagem funciona como clicar no corpo
+  dele. Um clique direito só mira, mesmo dois seguidos; um clique
+  esquerdo mira e ataca de uma vez; um clique na roda anuncia ou marca. O
+  nome que o clique atingiria fica destacado.
 
 ## A barra superior
 
