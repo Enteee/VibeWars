@@ -265,15 +265,16 @@ describe("a body under a raised ramp (#2975)", () => {
     expect(occluders).toHaveLength(4);
     expect(occluders[3]).toMatchObject({
       outline: slope,
-      hidesThrough: 0,
+      hidesThrough: 1,
       lowLift: 0,
       exempt: null,
     });
   });
 
-  it("hides a ground body under the slope, not a body on the deck it starts from", () => {
+  it("hides a body on the ground or on the deck it starts from under the slope, not one above (#3178)", () => {
     expect(hidden(0)).toBeGreaterThan(0);
-    expect(hidden(1)).toBe(0);
+    expect(hidden(1)).toBeGreaterThan(0);
+    expect(hidden(2)).toBe(0);
   });
 
   // West of the bridge's deck, north of the ground ramp, where its lifted slope is drawn (#3000).
@@ -538,6 +539,86 @@ describe("liftAt (#2958)", () => {
     expect(deckSideLow(bridge, [pillar], 0)).toBe(STEP - DECK_SLAB);
     expect(deckSideLow(bridge, [], 0)).toBe(0);
     expect(deckSideLow(platform, [pillar], 0)).toBe(STEP);
+  });
+});
+
+describe("a stair cut into a terrace (#3178)", () => {
+  // Canyon's south-west stairs: from a ledge up south into a terrace that wraps round it.
+  const stairs = {
+    from: 1,
+    to: 2,
+    area: { kind: "rect", x: 580, y: 1500, width: 80, height: 120 },
+    uphill: "s",
+    look: "stairs",
+    lift: null,
+  } as const;
+  const ledge = {
+    layer: 1,
+    footprint: { kind: "rect", x: 560, y: 1380, width: 220, height: 130 },
+    look: "ledge",
+    switched: null,
+  } as const;
+  const terrace = {
+    layer: 2,
+    footprint: {
+      kind: "polygon",
+      points: [
+        { x: 400, y: 1400 },
+        { x: 560, y: 1400 },
+        { x: 560, y: 1510 },
+        { x: 580, y: 1510 },
+        { x: 580, y: 1610 },
+        { x: 660, y: 1610 },
+        { x: 660, y: 1510 },
+        { x: 780, y: 1510 },
+        { x: 780, y: 1400 },
+        { x: 900, y: 1400 },
+        { x: 900, y: 1750 },
+        { x: 400, y: 1750 },
+      ],
+    },
+    look: "terrace",
+    switched: null,
+  } as const;
+  const CUT: MapStructure = {
+    ...FLAT_STRUCTURE,
+    layerCount: 3,
+    decks: [ledge, terrace],
+    transitions: [stairs],
+  };
+  const R = 14;
+
+  it("draws no south side face where the terrace goes on beyond the stair", () => {
+    expect(rampDrawing(CUT, stairs).side).toEqual([]);
+  });
+
+  it("keeps the south side face of a stair with nothing south of it", () => {
+    const open = { ...CUT, decks: [ledge] };
+    expect(rampDrawing(open, stairs).side).toHaveLength(4);
+  });
+
+  it("draws a body at the stair's foot, on it and at its top on the terrace's layer", () => {
+    expect(drawnLayerAt(CUT, { x: 620, y: 1490 }, 1, R)).toBe(2);
+    expect(drawnLayerAt(CUT, { x: 620, y: 1560 }, 1, R)).toBe(2);
+    expect(drawnLayerAt(CUT, { x: 620, y: 1630 }, 2, R)).toBe(2);
+  });
+
+  it("outlines a ledge body the stair's slope covers, never a body on the terrace", () => {
+    const occluders = occludersOf([], CUT);
+    const count = (x: number, y: number, layer: number): number => {
+      let n = 0;
+      traceHiddenOutline(RING_PATH, x, y, R, layer, occluders, () => {
+        n += 1;
+      });
+      return n;
+    };
+    const slope = rampDrawing(CUT, stairs).slope;
+    const middle = {
+      x: slope.reduce((sum, { x }) => sum + x, 0) / slope.length,
+      y: slope.reduce((sum, { y }) => sum + y, 0) / slope.length,
+    };
+    expect(count(middle.x, middle.y, 1)).toBeGreaterThan(0);
+    expect(count(middle.x, middle.y, 2)).toBe(0);
   });
 });
 
