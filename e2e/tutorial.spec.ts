@@ -42,6 +42,20 @@ test.describe("the first-time tutorial (#3218)", () => {
       "This war never ends. Walk with me; I have an idea.",
     );
     await expect(frame.locator(".tutorial-how")).toContainText("W");
+    // The guide's praise shows for 2.5 s only, which a slow runner can
+    // outlast: keep every line said on the body, which outlives the frame.
+    await frame.evaluate((element) => {
+      new MutationObserver(() => {
+        const text = element.querySelector(".tutorial-said")?.textContent ?? "";
+        const said = document.body.getAttribute("data-said-log") ?? "";
+        if (!said.endsWith(`|${text}`)) {
+          document.body.setAttribute("data-said-log", `${said}|${text}`);
+        }
+      }).observe(element, { childList: true, characterData: true, subtree: true });
+    });
+    const saidLog = page.locator("body");
+    const hasSaid = async (line: string): Promise<boolean> =>
+      ((await saidLog.getAttribute("data-said-log")) ?? "").split("|").includes(line);
     // Only the pair in the party window, and no scoreline (#3221).
     await expect(page.locator(".party-window .party-row")).toHaveCount(2);
     await expect(page.locator(".hud-scoreboard")).toBeHidden();
@@ -49,48 +63,37 @@ test.describe("the first-time tutorial (#3218)", () => {
     const [x = 0, y = 0] = ((await frame.getAttribute("data-mark")) ?? "").split(",").map(Number);
     // The camera may still be easing in on a slow runner, which makes one
     // projection stale: project afresh and click again until the walk lands.
+    const stride = "Nice stride! You're a natural.";
     await expect(async () => {
+      if (await hasSaid(stride)) {
+        return;
+      }
       const view = await projection(
         page.locator("#viewport"),
         page.locator("#viewport canvas:not(.compass)"),
       );
       const at = view.onPage({ x, y });
       await page.mouse.click(at.x, at.y);
-      await expect(frame.locator(".tutorial-said")).toHaveText("Nice stride! You're a natural.", {
-        timeout: 5_000,
-      });
+      await expect.poll(() => hasSaid(stride), { timeout: 5_000 }).toBe(true);
     }).toPass({ timeout: 30_000 });
 
     // Station 2 (#3222): one wheel notch out, then a right-drag north to the leash.
-    await expect(frame.locator(".tutorial-said")).toHaveText(
-      "Maybe this teleporter gets us around the battlefield. Look north!",
-      { timeout: 10_000 },
-    );
+    await expect
+      .poll(() => hasSaid("Maybe this teleporter gets us around the battlefield. Look north!"), {
+        timeout: 10_000,
+      })
+      .toBe(true);
     await expect(frame).not.toHaveAttribute("data-mark", /.+/);
     const box = await page.locator("#viewport canvas:not(.compass)").boundingBox();
     if (box === null) {
       throw new Error("no canvas");
     }
-    // The praise shows for 2.5 s only, which a slow runner's drag can outlast:
-    // keep every line the guide says, and look for it among them.
-    await frame.evaluate((element) => {
-      new MutationObserver(() => {
-        const text = element.querySelector(".tutorial-said")?.textContent ?? "";
-        const said = element.getAttribute("data-said-log") ?? "";
-        if (!said.endsWith(`|${text}`)) {
-          element.setAttribute("data-said-log", `${said}|${text}`);
-        }
-      }).observe(element, { childList: true, characterData: true, subtree: true });
-    });
     const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     await page.mouse.move(centre.x, centre.y);
     await page.mouse.wheel(0, 100);
     await page.mouse.down({ button: "right" });
     await page.mouse.move(centre.x, box.y + 1, { steps: 10 });
-    await expect(frame).toHaveAttribute(
-      "data-said-log",
-      /\|There it is! Our way around the fight\./,
-    );
+    await expect.poll(() => hasSaid("There it is! Our way around the fight.")).toBe(true);
     await page.mouse.up({ button: "right" });
 
     // Station 3: the pad carries the mark. The view has glided back, so the
@@ -99,7 +102,13 @@ test.describe("the first-time tutorial (#3218)", () => {
     const [padX = 0, padY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
       .split(",")
       .map(Number);
+    // Once on the pad the guide speaks and the view closes: a retry that
+    // starts after that has nothing to project, so it asks the log first.
+    const together = "Together. Hold your breath.";
     await expect(async () => {
+      if (await hasSaid(together)) {
+        return;
+      }
       const view = await projection(
         page.locator("#viewport"),
         page.locator("#viewport canvas:not(.compass)"),
@@ -110,9 +119,7 @@ test.describe("the first-time tutorial (#3218)", () => {
         Math.min(box.x + box.width - inset, Math.max(box.x + inset, at.x)),
         Math.min(box.y + box.height - inset, Math.max(box.y + inset, at.y)),
       );
-      await expect(frame.locator(".tutorial-said")).toHaveText("Together. Hold your breath.", {
-        timeout: 5_000,
-      });
+      await expect.poll(() => hasSaid(together), { timeout: 5_000 }).toBe(true);
     }).toPass({ timeout: 60_000 });
     await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
     await expect(frame).toHaveCount(0);
