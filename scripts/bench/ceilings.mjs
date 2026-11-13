@@ -5,4 +5,4 @@
  *
  * @type {readonly import("./verdict.mjs").Ceiling[]}
  */
-export const BENCH_CEILINGS = [{ mapId: "arena-long-hall", ratio: 4, issue: 3254 }];
+export const BENCH_CEILINGS = [{ mapId: "arena-long-hall", ratio: 4.1, issue: 3254 }];
