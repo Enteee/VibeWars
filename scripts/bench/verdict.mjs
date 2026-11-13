@@ -56,18 +56,21 @@ export function verdict({ windows, maps, maxRatio, maxSpread }) {
 }
 
 /**
- * How many warm-up windows it took before two consecutive ones agreed
- * within `tolerance` of their mean, or `undefined` if none did.
+ * The warm-up window at which the runner counts as settled: the first one
+ * that ends at least `minMs` into the warm-up and agrees with the one before
+ * within `tol` of their mean. Agreement alone cannot tell the slow plateau
+ * from the settled one; time can (#3243). `undefined` if there is none.
  *
  * @param {readonly number[]} windows calibration p50s, ms, in run order
- * @param {number} tolerance
- * @returns {number | undefined}
+ * @param {readonly number[]} times ms from the warm-up's start to the end of each window
+ * @param {{ minMs: number, tol: number }} rule
+ * @returns {number | undefined} how many windows it took
  */
-export function settled(windows, tolerance) {
+export function settled(windows, times, { minMs, tol }) {
   for (let i = 1; i < windows.length; i++) {
     const a = windows[i - 1] ?? NaN;
     const b = windows[i] ?? NaN;
-    if (Math.abs(a - b) / ((a + b) / 2) <= tolerance) {
+    if ((times[i] ?? 0) >= minMs && Math.abs(a - b) / ((a + b) / 2) <= tol) {
       return i + 1;
     }
   }

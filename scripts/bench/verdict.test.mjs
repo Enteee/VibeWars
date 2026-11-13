@@ -57,15 +57,24 @@ describe("verdict", () => {
 });
 
 describe("settled", () => {
-  it("settles on the window that agrees with the one before", () => {
-    expect(settled([72.1, 69.1, 54.6, 54.9], 0.03)).toBe(4);
+  const rule = { minMs: 20_000, tol: 0.05 };
+  /** @param {number} n */
+  const every = (n, step = 2500) => Array.from({ length: n }, (_, i) => (i + 1) * step);
+
+  it("does not settle on the slow plateau before the minimum time", () => {
+    expect(settled([81, 79, 62, 63], every(4), rule)).toBeUndefined();
   });
 
-  it("never settles on a steady decline", () => {
-    expect(settled([72, 60, 50, 42, 35, 30], 0.03)).toBeUndefined();
+  it("settles on the first agreeing pair after the minimum time", () => {
+    const windows = [81, 79, 62, 63, 60, 60, 60, 60, 60, 60];
+    expect(settled(windows, every(10), rule)).toBe(8);
   });
 
-  it("needs two windows", () => {
-    expect(settled([50], 0.03)).toBeUndefined();
+  it("settles a flat run at the first window past the minimum", () => {
+    expect(settled(Array(10).fill(60), every(10), rule)).toBe(8);
+  });
+
+  it("never settles on a steady fall", () => {
+    expect(settled([72, 60, 50, 42, 35, 30, 25, 21, 18, 15], every(10), rule)).toBeUndefined();
   });
 });
