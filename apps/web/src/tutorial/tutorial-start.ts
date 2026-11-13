@@ -70,7 +70,8 @@ export function teleporterReach(viewport: Size): { readonly near: number; readon
 /**
  * Where the teleporter stands (#3222): straight north of `start`, inside
  * `teleporterReach`, on ground `standable` snaps to and `open` passes,
- * the middle of the span first. On a map too small for that, the
+ * nearest first: after the drag it stands low on the screen, below the
+ * tutor's line, which would hide it higher up. On a map too small for that, the
  * farthest standable point north, which may be in the default view.
  */
 export function teleporterSpot(
@@ -80,20 +81,17 @@ export function teleporterSpot(
   open: (at: Vec2) => boolean,
 ): Vec2 {
   const { near, far } = teleporterReach(viewport);
-  const middle = (near + far) / 2;
-  for (let away = 0; away <= (far - near) / 2; away += SPOT_STEP) {
-    for (const north of away === 0 ? [middle] : [middle - away, middle + away]) {
-      for (const aside of SPOT_ASIDE) {
-        const spot = standable(vec2(start.x + aside, start.y - north));
-        const rise = start.y - spot.y;
-        if (
-          rise >= near &&
-          rise <= far &&
-          Math.abs(spot.x - start.x) <= SPOT_ASIDE_MOST &&
-          open(spot)
-        ) {
-          return spot;
-        }
+  for (let north = near; north <= far; north += SPOT_STEP) {
+    for (const aside of SPOT_ASIDE) {
+      const spot = standable(vec2(start.x + aside, start.y - north));
+      const rise = start.y - spot.y;
+      if (
+        rise >= near &&
+        rise <= far &&
+        Math.abs(spot.x - start.x) <= SPOT_ASIDE_MOST &&
+        open(spot)
+      ) {
+        return spot;
       }
     }
   }

@@ -29,7 +29,7 @@ test.describe("the first-time tutorial (#3218)", () => {
     await expect(page.locator(".tutorial-offer")).toHaveCount(0);
   });
 
-  test("Learn, then a click on the mark: praise, then the menu, and no offer again", async ({
+  test("Learn, walk to the mark, look around, step in: then the menu, and no offer again", async ({
     page,
   }) => {
     await pastTheSplash(page);
@@ -57,6 +57,48 @@ test.describe("the first-time tutorial (#3218)", () => {
         timeout: 5_000,
       });
     }).toPass({ timeout: 30_000 });
+
+    // Station 2 (#3222): one wheel notch out, then a right-drag north to the leash.
+    await expect(frame.locator(".tutorial-said")).toHaveText(
+      "Maybe this teleporter gets us around the battlefield. Look north!",
+      { timeout: 10_000 },
+    );
+    await expect(frame).not.toHaveAttribute("data-mark", /.+/);
+    const box = await page.locator("#viewport canvas:not(.compass)").boundingBox();
+    if (box === null) {
+      throw new Error("no canvas");
+    }
+    const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    await page.mouse.move(centre.x, centre.y);
+    await page.mouse.wheel(0, 100);
+    await page.mouse.down({ button: "right" });
+    await page.mouse.move(centre.x, box.y + 1, { steps: 10 });
+    await expect(frame.locator(".tutorial-said")).toHaveText(
+      "There it is! Our way around the fight.",
+    );
+    await page.mouse.up({ button: "right" });
+
+    // Station 3: the pad carries the mark. The view has glided back, so the
+    // pad may be off the top: click toward it until it shows, then on it.
+    await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/, { timeout: 10_000 });
+    const [padX = 0, padY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+      .split(",")
+      .map(Number);
+    await expect(async () => {
+      const view = await projection(
+        page.locator("#viewport"),
+        page.locator("#viewport canvas:not(.compass)"),
+      );
+      const at = view.onPage({ x: padX, y: padY });
+      const inset = 40;
+      await page.mouse.click(
+        Math.min(box.x + box.width - inset, Math.max(box.x + inset, at.x)),
+        Math.min(box.y + box.height - inset, Math.max(box.y + inset, at.y)),
+      );
+      await expect(frame.locator(".tutorial-said")).toHaveText("Together. Hold your breath.", {
+        timeout: 5_000,
+      });
+    }).toPass({ timeout: 40_000 });
     await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
     await expect(frame).toHaveCount(0);
 

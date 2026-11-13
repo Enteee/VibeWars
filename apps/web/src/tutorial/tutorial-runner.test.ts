@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest";
 
 import { KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
 
-import { walkStation, type Station, type TutorialView } from "./stations.js";
+import {
+  lookStation,
+  stepInStation,
+  walkStation,
+  type Station,
+  type TutorialView,
+} from "./stations.js";
 import { HINT_REPEAT_MS, PRAISE_MS, createTutorialRunner } from "./tutorial-runner.js";
 
 const MARK = vec2(200, 100);
@@ -87,5 +93,34 @@ describe("the tutorial runner", () => {
       "ArrowDown",
       "ArrowRight",
     ]);
+  });
+
+  it("runs walk, then look around, then step in, then finishes", () => {
+    const pad = vec2(200, -900);
+    const runner = createTutorialRunner(
+      [walkStation(MARK), lookStation(pad), stepInStation(pad)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    const looked = { ...ON_MARK, zoomedOut: true, lookDragged: true, inView: () => true };
+    const ticks: [TutorialView, number][] = [
+      [AWAY, 0],
+      [ON_MARK, 1_000],
+      [ON_MARK, 1_000 + PRAISE_MS],
+      [looked, 2_000 + PRAISE_MS],
+      [looked, 2_000 + 2 * PRAISE_MS],
+      [{ ...looked, self: pad }, 3_000 + 2 * PRAISE_MS],
+    ];
+    const beats = ticks.map(([view, now]) => runner.tick(view, now));
+    expect(beats.map((beat) => beat.say?.key)).toEqual([
+      "tutorial.walk.intro",
+      "tutorial.walk.praise",
+      "tutorial.look.intro",
+      "tutorial.look.praise",
+      "tutorial.stepIn.intro",
+      "tutorial.stepIn.praise",
+    ]);
+    expect(beats[4]?.highlight).toEqual({ kind: "ground", at: pad });
+    expect(beats.map((beat) => beat.finished)).toEqual([false, false, false, false, false, true]);
   });
 });

@@ -5,7 +5,15 @@ import { mapStructure, teamArenaMapIds } from "../net/maps.js";
 import { pickSurface } from "../render/layer-surfaces.js";
 import { splashGraph } from "../ui/splash-fight.js";
 
-import { SELF_ID, TUTOR_ID, inOpenView, tutorialWorld } from "./tutorial-world.js";
+import {
+  PLAYER_PROFESSION,
+  SELF_ID,
+  TUTOR_ID,
+  TUTOR_PROFESSIONS,
+  drawTutorProfession,
+  inOpenView,
+  tutorialWorld,
+} from "./tutorial-world.js";
 
 const TICK = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
 /** The card's rule (#3221): no foe nearer the pair than this. */
@@ -93,4 +101,43 @@ describe("tutorialWorld (#3221)", () => {
       expect(createPathFinder(splashGraph(map)).find(self.position, mark)).toBeDefined();
     },
   );
+
+  it.each(["arena-canyon", "arena-crossroads", "arena-long-hall"])(
+    "stands the teleporter north in plain view on %s, a walk away, with the tutor's spot beside it",
+    (mapId) => {
+      const { map, simulation, teleporter, besidePad, ground } = tutorialWorld(
+        mapId,
+        4,
+        "teleporter",
+        "monk",
+        VIEWPORT,
+      );
+      const { structure } = mapStructure(mapId);
+      const self = simulation.get(SELF_ID);
+      if (self === undefined) {
+        throw new Error("no player in the tutorial");
+      }
+      expect(teleporter.y).toBeLessThan(self.position.y);
+      expect(inOpenView(structure, teleporter)).toBe(true);
+      expect(pickSurface(structure, teleporter, false)).toEqual({
+        layer: ground,
+        point: teleporter,
+      });
+      const paths = createPathFinder(splashGraph(map));
+      expect(paths.find(self.position, teleporter)).toBeDefined();
+      expect(paths.find(self.position, besidePad)).toBeDefined();
+    },
+  );
+});
+
+describe("drawTutorProfession (Q69)", () => {
+  it("never draws the player's profession, and can draw every other", () => {
+    const drawn = new Set(
+      Array.from({ length: TUTOR_PROFESSIONS.length * 4 }, (_, index) =>
+        drawTutorProfession(() => index / (TUTOR_PROFESSIONS.length * 4)),
+      ),
+    );
+    expect(drawn.has(PLAYER_PROFESSION)).toBe(false);
+    expect([...drawn].sort()).toEqual([...TUTOR_PROFESSIONS].sort());
+  });
 });
