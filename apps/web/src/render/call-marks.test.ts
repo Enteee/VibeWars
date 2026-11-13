@@ -36,6 +36,7 @@ const CALLED: RenderableActor = {
   castType: undefined,
   statuses: [],
   enchanted: false,
+  stanced: false,
   hexed: false,
   invulnerable: false,
   teleportReadyAt: 0,
