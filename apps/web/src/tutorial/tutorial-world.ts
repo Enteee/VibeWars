@@ -52,6 +52,11 @@ const HALF_VIEW = vec2(
  */
 export const FOE_KEEP_OFF = 700;
 const FOE_AGGRO_PAST_LEASH = 200;
+/**
+ * How far ahead of the pair, towards the centre, their side's bots start
+ * and come back (#3221), so none walks over the pair or the mark.
+ */
+const ALLY_AHEAD = 400;
 /** How far round a body the sky must be open, so no deck edge cuts it. */
 const OPEN_CLEARANCE = 40;
 /** The rings searched for an open start, outward from the first pick. */
@@ -239,6 +244,16 @@ export function tutorialWorld(mapId: string, teamSize: number, seed: string): Tu
     vec2(behind.x + spawn.x - edge.x, behind.y + spawn.y - edge.y),
   );
   const centre = vec2(map.descriptor.width / 2, map.descriptor.height / 2);
+  // Their side's bots, moved as far as the pair and then ahead of it,
+  // the way their side faces.
+  const forward = Math.hypot(centre.x - edge.x, centre.y - edge.y);
+  const ahead = (from: Vec2): Vec2 =>
+    forward === 0
+      ? from
+      : vec2(
+          from.x + spawn.x - edge.x + ((centre.x - edge.x) / forward) * ALLY_AHEAD,
+          from.y + spawn.y - edge.y + ((centre.y - edge.y) / forward) * ALLY_AHEAD,
+        );
   const playerBuild = houseBuild(PLAYER_PROFESSION);
   const tutorBuild = houseBuild(TUTOR_PROFESSION);
   const simulation = new MatchSimulation({
@@ -252,7 +267,7 @@ export function tutorialWorld(mapId: string, teamSize: number, seed: string): Tu
         team === 0 ? STARTER_BUILDS : FOE_BUILDS,
       ).map((bot) =>
         bot.team === 0
-          ? bot
+          ? { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) }
           : { ...bot, behaviour: guarding(bot.spawn, centre, [spawn, post, mark]) },
       ),
       body(SELF_ID, playerBuild, spawn, undefined),
