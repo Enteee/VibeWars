@@ -52,6 +52,7 @@ import {
   type SwingFlash,
   isDoor,
   isCrackedWall,
+  selfLayer,
 } from "./arena-snapshot.js";
 import {
   CHARACTER_BANDS,
@@ -102,7 +103,10 @@ import {
   rampFrame,
   RING_PATH,
   traceHiddenOutline,
+  seenFrom,
   tunnelCover,
+  tunnelFloor,
+  tunnelsHolding,
   traceHiddenPolyline,
   type Occluder,
 } from "./layer-surfaces.js";
@@ -334,6 +338,10 @@ interface ZoneGround {
 const HOVER_RING = 0xd7dee8;
 const HOVER_RADIUS = 12;
 const HOVER_DASHES = 8;
+/** The ground over the tunnel the local body is in (#3234): how much of it still draws. */
+const TUNNEL_CUTAWAY_ALPHA = 0.35;
+/** How long that ground takes to fade out or back in, in seconds. */
+const TUNNEL_CUTAWAY_FADE = 0.2;
 
 const TARGET_RING = 0xffd866;
 /** The `condition` orange: your team's called foe wears its chevron (#443). */
@@ -464,7 +472,11 @@ export class ArenaScene extends Phaser.Scene {
   /** What `mapGraphics` shows; `undefined` until it is first drawn. */
   private drawnMap: MapLayer | undefined;
   /** What hides a body on the drawn map (#2831). */
+  private mapOccluders: readonly Occluder[] = [];
+  /** `mapOccluders` as the local body sees them: its own tunnel cut away (#3234). */
   private occluders: readonly Occluder[] = [];
+  /** The tunnels the local body stands in, whose covers are cut away (#3234). */
+  private viewerTunnels: ReadonlySet<number> = new Set();
   private hiddenOutlines: Phaser.GameObjects.Graphics | undefined;
   /** Each body's symbol where a structure covers it (#2972). */
   private hiddenGlyphs = new Map<string, Phaser.GameObjects.Image>();
@@ -478,6 +490,8 @@ export class ArenaScene extends Phaser.Scene {
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** The ground over each tunnel (#3234), by its index: faded while the local body is in it. */
+  private readonly tunnelCovers = new Map<number, Phaser.GameObjects.Graphics>();
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
   private readonly staticCull = new StaticGraphicsCull();
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
@@ -846,6 +860,7 @@ export class ArenaScene extends Phaser.Scene {
         this.drawActor(band.body, band.marks, actor);
       }
     }
+    this.cutAwayTunnels(deltaMs / 1000);
     this.drawHiddenOutlines();
     this.drawHoverMarker(effects);
     // Over the bodies: a carried flag stands above its carrier's head.
@@ -2689,12 +2704,14 @@ export class ArenaScene extends Phaser.Scene {
     for (const dropOff of next.structure.dropOffs) {
       this.drawDropOff(dropOff, ground, line);
     }
-    this.occluders = occludersOf(next.walls, next.structure);
+    this.mapOccluders = occludersOf(next.walls, next.structure);
+    this.occluders = seenFrom(this.mapOccluders, this.viewerTunnels);
     this.drawnMap = next;
     this.staticCull.capture([
       ...(this.floorGraphics === undefined ? [] : [this.floorGraphics]),
       g,
       ...this.structureGraphics.values(),
+      ...this.tunnelCovers.values(),
     ]);
   }
 
@@ -2815,6 +2832,37 @@ export class ArenaScene extends Phaser.Scene {
     shownGlyphs.add(actor.id);
   }
 
+  /**
+   * The ground over the tunnel the local body is in, cut away (#3234): it
+   * fades to `TUNNEL_CUTAWAY_ALPHA` and stops hiding whoever is in that
+   * tunnel, and fades back in once the body leaves. At once under reduced
+   * motion.
+   */
+  private cutAwayTunnels(dt: number): void {
+    const self = this.snapshot.actors.find(({ team }) => team === "self");
+    const inside =
+      self === undefined
+        ? new Set<number>()
+        : tunnelsHolding(this.snapshot.structure, self.position, self.layer);
+    if (
+      inside.size !== this.viewerTunnels.size ||
+      [...inside].some((id) => !this.viewerTunnels.has(id))
+    ) {
+      this.viewerTunnels = inside;
+      this.occluders = seenFrom(this.mapOccluders, inside);
+    }
+    const step = this.reducedMotion ? 1 : (dt * (1 - TUNNEL_CUTAWAY_ALPHA)) / TUNNEL_CUTAWAY_FADE;
+    for (const [at, graphics] of this.tunnelCovers) {
+      const target = inside.has(at) ? TUNNEL_CUTAWAY_ALPHA : 1;
+      const alpha = graphics.alpha;
+      if (alpha !== target) {
+        graphics.setAlpha(
+          alpha < target ? Math.min(target, alpha + step) : Math.max(target, alpha - step),
+        );
+      }
+    }
+  }
+
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */
   private drawHoverMarker(g: Phaser.GameObjects.Graphics): void {
     const { structure } = this.snapshot;
@@ -2823,7 +2871,12 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    const { layer } = pickSurface(structure, world, this.alt?.held() === true);
+    const { layer } = pickSurface(
+      structure,
+      world,
+      this.alt?.held() === true,
+      selfLayer(this.snapshot),
+    );
     g.lineStyle(1.5, HOVER_RING, 0.8);
     if (layer !== structure.ground) {
       g.strokeCircle(world.x, world.y, HOVER_RADIUS);
@@ -2993,11 +3046,22 @@ export class ArenaScene extends Phaser.Scene {
    * so it covers them, the tunnel's outline inlaid faintly in it.
    */
   private drawPits(structure: MapStructure, line: number, palette: ArenaPalette): void {
+    for (const [at, graphics] of this.tunnelCovers) {
+      if (at >= structure.tunnels.length) {
+        graphics.destroy();
+        this.tunnelCovers.delete(at);
+      }
+    }
     if (structure.pits.length === 0 && structure.tunnels.length === 0) {
       return;
     }
     const pit = this.structureAt({ kind: "pit" });
     const cover = this.structureAt({ kind: "deck", deckLayer: structure.ground });
+    // Under its cover, seen only while that is cut away (#3234); a pit draws over it.
+    pit.fillStyle(PIT_FLOOR, 1);
+    for (const tunnel of structure.tunnels) {
+      this.fillFan(pit, tunnelFloor(structure, tunnel));
+    }
     for (const each of structure.pits) {
       const drawing = pitDrawing(structure, each);
       pit.fillStyle(PIT_FLOOR, 1);
@@ -3012,8 +3076,16 @@ export class ArenaScene extends Phaser.Scene {
       cover.lineStyle(line, palette.wallStroke, 1);
       this.strokeShape(cover, each.footprint);
     }
-    for (const tunnel of structure.tunnels) {
-      this.drawGroundPatch(cover, tunnelCover(structure, tunnel), line, palette);
+    for (const [at, tunnel] of structure.tunnels.entries()) {
+      let ground = this.tunnelCovers.get(at);
+      if (ground === undefined) {
+        ground = this.add
+          .graphics()
+          .setDepth(renderOrder({ kind: "tunnel-cover", deckLayer: structure.ground }));
+        this.tunnelCovers.set(at, ground);
+      }
+      ground.clear();
+      this.drawGroundPatch(ground, tunnelCover(structure, tunnel), line, palette);
       cover.lineStyle(line, TUNNEL_INLAY.colour, TUNNEL_INLAY.alpha);
       this.strokeShape(cover, tunnel.footprint);
     }

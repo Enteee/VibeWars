@@ -38,6 +38,14 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     expect(renderOrder(character(1))).toBeGreaterThan(deck);
   });
 
+  it("draws the ground over a tunnel over whoever is in it, under the ground's deck and its inlay (#3234)", () => {
+    const cover = renderOrder({ kind: "tunnel-cover", deckLayer: 1 });
+    expect(renderOrder(character(0))).toBeLessThan(cover);
+    expect(renderOrder({ kind: "wall", layer: 0 })).toBeLessThan(cover);
+    expect(cover).toBeLessThan(renderOrder({ kind: "deck", deckLayer: 1 }));
+    expect(cover).toBeLessThan(renderOrder(character(1)));
+  });
+
   it("stacks a third layer the same way", () => {
     const deck = renderOrder({ kind: "deck", deckLayer: 2 });
     expect(renderOrder(character(1))).toBeLessThan(deck);

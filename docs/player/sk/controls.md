@@ -38,7 +38,7 @@ Tieto klávesy sú pevné:
 ## Myš
 
 - **Ľavým kliknutím** na zem tam dôjdeš. Bez Shiftu ľavé tlačidlo len chodí.
-- Na mapách s vyvýšenými plošinami ide ľavé kliknutie na povrch, ktorý vidíš, a **Alt + ľavé kliknutie** na zem pod ním. Krúžok pod kurzorom označuje plošinu, čiarkovaný krúžok zem.
+- Na mapách s vyvýšenými plošinami ide ľavé kliknutie na povrch, ktorý vidíš, a **Alt + ľavé kliknutie** na zem pod ním. Krúžok pod kurzorom označuje plošinu, čiarkovaný krúžok zem. Nad tunelom ide ľavé kliknutie na úroveň, na ktorej si, a **Alt + ľavé kliknutie** na tú druhú.
 - **Pravým kliknutím** na nepriateľa alebo spojenca ho zameriaš. Ďalším
   rýchlym pravým kliknutím na toho istého nepriateľa naňho zaútočíš.
 - **Pravým kliknutím** na vlajku alebo na stojan na vlajku, v Cechovej bitke

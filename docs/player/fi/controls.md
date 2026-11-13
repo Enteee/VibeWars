@@ -40,7 +40,7 @@ Nämä näppäimet ovat kiinteitä:
 ## Hiiri
 
 - **Vasen napsautus** maahan kävelee sinne. Ilman Shiftiä vasen painike vain kävelee.
-- Kartoilla, joilla on korotettuja tasanteita, vasen napsautus vie näkemällesi pinnalle ja **Alt + vasen napsautus** sen alla olevaan maahan. Kursorin alla oleva rengas merkitsee tasannetta, katkoviivarengas maata.
+- Kartoilla, joilla on korotettuja tasanteita, vasen napsautus vie näkemällesi pinnalle ja **Alt + vasen napsautus** sen alla olevaan maahan. Kursorin alla oleva rengas merkitsee tasannetta, katkoviivarengas maata. Tunnelin päällä vasen napsautus vie sille tasolle, jolla olet, ja **Alt + vasen napsautus** toiselle.
 - **Oikea napsautus** viholliseen tai liittolaiseen kohdistaa siihen.
   Napsauta samaa vihollista uudelleen oikealla, nopeasti, hyökätäksesi sen
   kimppuun.
