@@ -1471,6 +1471,18 @@ export default {
   "training.soundOn": "Som ligado.",
   "training.you": "Você",
 
+  "tutorial.learn": "Aprender a jogar",
+  "tutorial.moreSoon": "Mais lições em breve. Até lá fora!",
+  "tutorial.offer": "Novo por aqui? O seu tutor mostra-lhe o básico.",
+  "tutorial.offerTitle": "Primeira vez?",
+  "tutorial.skip": "Saltar",
+  "tutorial.skipTutorial": "Saltar tutorial",
+  "tutorial.tutor": "Tutor",
+  "tutorial.walk.hint": "Aqui! Pise a marca brilhante.",
+  "tutorial.walk.how": "Clique esquerdo no chão, ou ande com {keys}.",
+  "tutorial.walk.intro": "Esta guerra nunca acaba. Caminhe comigo; tenho uma ideia.",
+  "tutorial.walk.praise": "Belo passo! Tem jeito para isto.",
+
   "weaponSets.empty": "Conjunto de armas {number}: vazio",
   "weaponSets.holds": "Conjunto de armas {number}: {gear}",
 

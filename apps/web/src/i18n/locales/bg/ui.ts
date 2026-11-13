@@ -1403,6 +1403,18 @@ export default {
   "training.soundOn": "Звукът е включен.",
   "training.you": "Ти",
 
+  "tutorial.learn": "Научи се да играеш",
+  "tutorial.moreSoon": "Скоро още уроци. До скоро на бойното поле!",
+  "tutorial.offer": "Нов си? Учителят ти ще ти покаже основите.",
+  "tutorial.offerTitle": "За първи път?",
+  "tutorial.skip": "Пропусни",
+  "tutorial.skipTutorial": "Пропусни обучението",
+  "tutorial.tutor": "Учител",
+  "tutorial.walk.hint": "Насам! Стъпи на светещия знак.",
+  "tutorial.walk.how": "Ляв клик на земята или ходи с {keys}.",
+  "tutorial.walk.intro": "Тази война никога не свършва. Ела с мен; имам идея.",
+  "tutorial.walk.praise": "Хубава крачка! Имаш дарба.",
+
   "weaponSets.empty": "Оръжеен комплект {number}: празен",
   "weaponSets.holds": "Оръжеен комплект {number}: {gear}",
 

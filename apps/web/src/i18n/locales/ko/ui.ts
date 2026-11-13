@@ -1318,6 +1318,18 @@ export default {
   "training.soundOn": "소리 켜짐.",
   "training.you": "나",
 
+  "tutorial.learn": "플레이 배우기",
+  "tutorial.moreSoon": "곧 더 많은 수업이 옵니다. 전장에서 만나요!",
+  "tutorial.offer": "처음인가요? 스승이 기본을 알려 줄 거예요.",
+  "tutorial.offerTitle": "처음이신가요?",
+  "tutorial.skip": "건너뛰기",
+  "tutorial.skipTutorial": "튜토리얼 건너뛰기",
+  "tutorial.tutor": "스승",
+  "tutorial.walk.hint": "이쪽이야! 빛나는 표식 위로 올라와.",
+  "tutorial.walk.how": "땅을 왼쪽 클릭하거나 {keys}로 걸어.",
+  "tutorial.walk.intro": "이 전쟁은 끝나지 않아. 나와 함께 가자, 생각이 있어.",
+  "tutorial.walk.praise": "좋은 걸음이야! 타고났구나.",
+
   "weaponSets.empty": "무기 세트 {number}: 비어 있음",
   "weaponSets.holds": "무기 세트 {number}: {gear}",
 

@@ -1527,6 +1527,18 @@ export default {
   "training.soundOn": "Dźwięk wł.",
   "training.you": "Ty",
 
+  "tutorial.learn": "Naucz się grać",
+  "tutorial.moreSoon": "Wkrótce więcej lekcji. Do zobaczenia na polu bitwy!",
+  "tutorial.offer": "Nowy? Twój nauczyciel pokaże ci podstawy.",
+  "tutorial.offerTitle": "Pierwszy raz?",
+  "tutorial.skip": "Pomiń",
+  "tutorial.skipTutorial": "Pomiń samouczek",
+  "tutorial.tutor": "Nauczyciel",
+  "tutorial.walk.hint": "Tutaj! Wejdź na świecący znak.",
+  "tutorial.walk.how": "Kliknij lewym na ziemię albo idź klawiszami {keys}.",
+  "tutorial.walk.intro": "Ta wojna nigdy się nie kończy. Chodź ze mną; mam pomysł.",
+  "tutorial.walk.praise": "Ładny krok! Masz talent.",
+
   "weaponSets.empty": "Zestaw broni {number}: pusty",
   "weaponSets.holds": "Zestaw broni {number}: {gear}",
 

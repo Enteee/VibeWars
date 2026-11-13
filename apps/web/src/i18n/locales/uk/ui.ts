@@ -1522,6 +1522,18 @@ export default {
   "training.soundOn": "Звук увімкнено.",
   "training.you": "Ти",
 
+  "tutorial.learn": "Навчитися грати",
+  "tutorial.moreSoon": "Незабаром нові уроки. Побачимось на полі бою!",
+  "tutorial.offer": "Вперше тут? Наставник покаже основи.",
+  "tutorial.offerTitle": "Вперше?",
+  "tutorial.skip": "Пропустити",
+  "tutorial.skipTutorial": "Пропустити навчання",
+  "tutorial.tutor": "Наставник",
+  "tutorial.walk.hint": "Сюди! Стань на сяйливу позначку.",
+  "tutorial.walk.how": "Лівий клік по землі або йди клавішами {keys}.",
+  "tutorial.walk.intro": "Ця війна ніколи не скінчиться. Ходімо зі мною; є ідея.",
+  "tutorial.walk.praise": "Чудовий крок! У тебе талант.",
+
   "weaponSets.empty": "Набір зброї {number}: порожньо",
   "weaponSets.holds": "Набір зброї {number}: {gear}",
 

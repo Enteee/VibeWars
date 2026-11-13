@@ -1291,6 +1291,18 @@ export default {
   "training.soundOn": "声音已开启。",
   "training.you": "你",
 
+  "tutorial.learn": "学习游戏",
+  "tutorial.moreSoon": "更多课程即将推出。战场上见!",
+  "tutorial.offer": "新来的?你的导师会教你基础。",
+  "tutorial.offerTitle": "第一次来?",
+  "tutorial.skip": "跳过",
+  "tutorial.skipTutorial": "跳过教程",
+  "tutorial.tutor": "导师",
+  "tutorial.walk.hint": "这边!站到发光的标记上。",
+  "tutorial.walk.how": "左键点击地面,或用 {keys} 行走。",
+  "tutorial.walk.intro": "这场战争永无止境。跟我走,我有个主意。",
+  "tutorial.walk.praise": "步伐不错!你很有天赋。",
+
   "weaponSets.empty": "武器组 {number}：空",
   "weaponSets.holds": "武器组 {number}：{gear}",
 

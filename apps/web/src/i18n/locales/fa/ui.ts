@@ -1396,6 +1396,18 @@ export default {
   "training.soundOn": "صدا روشن شد.",
   "training.you": "تو",
 
+  "tutorial.learn": "بازی را یاد بگیر",
+  "tutorial.moreSoon": "به‌زودی درس‌های بیشتر. آن بیرون می‌بینمت!",
+  "tutorial.offer": "تازه آمده‌ای؟ معلمت اصول را نشانت می‌دهد.",
+  "tutorial.offerTitle": "اولین بار؟",
+  "tutorial.skip": "رد شدن",
+  "tutorial.skipTutorial": "رد شدن از آموزش",
+  "tutorial.tutor": "معلم",
+  "tutorial.walk.hint": "اینجا! روی نشان درخشان برو.",
+  "tutorial.walk.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
+  "tutorial.walk.intro": "این جنگ هرگز تمام نمی‌شود. با من بیا؛ فکری دارم.",
+  "tutorial.walk.praise": "قدم خوبی بود! استعدادش را داری.",
+
   "weaponSets.empty": "ست سلاح {number}: خالی",
   "weaponSets.holds": "ست سلاح {number}: {gear}",
 

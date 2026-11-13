@@ -1413,6 +1413,18 @@ export default {
   "training.soundOn": "Ääni päällä.",
   "training.you": "Sinä",
 
+  "tutorial.learn": "Opettele pelaamaan",
+  "tutorial.moreSoon": "Lisää oppitunteja pian. Nähdään siellä!",
+  "tutorial.offer": "Uusi täällä? Opettajasi näyttää perusteet.",
+  "tutorial.offerTitle": "Ensimmäinen kerta?",
+  "tutorial.skip": "Ohita",
+  "tutorial.skipTutorial": "Ohita opetus",
+  "tutorial.tutor": "Opettaja",
+  "tutorial.walk.hint": "Tänne! Astu hehkuvalle merkille.",
+  "tutorial.walk.how": "Vasen napsautus maahan, tai kävele näppäimillä {keys}.",
+  "tutorial.walk.intro": "Tämä sota ei lopu koskaan. Kävele kanssani; minulla on idea.",
+  "tutorial.walk.praise": "Hieno askel! Olet luonnonlahjakkuus.",
+
   "weaponSets.empty": "Asesarja {number}: tyhjä",
   "weaponSets.holds": "Asesarja {number}: {gear}",
 

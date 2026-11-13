@@ -1517,6 +1517,18 @@ export default {
   "training.soundOn": "Звук включён.",
   "training.you": "Ты",
 
+  "tutorial.learn": "Научиться играть",
+  "tutorial.moreSoon": "Скоро новые уроки. Увидимся на поле боя!",
+  "tutorial.offer": "Впервые здесь? Наставник покажет основы.",
+  "tutorial.offerTitle": "Впервые?",
+  "tutorial.skip": "Пропустить",
+  "tutorial.skipTutorial": "Пропустить обучение",
+  "tutorial.tutor": "Наставник",
+  "tutorial.walk.hint": "Сюда! Встань на светящуюся метку.",
+  "tutorial.walk.how": "Левый клик по земле или иди клавишами {keys}.",
+  "tutorial.walk.intro": "Эта война никогда не кончится. Идём со мной; есть идея.",
+  "tutorial.walk.praise": "Отличный шаг! У тебя талант.",
+
   "weaponSets.empty": "Набор оружия {number}: пусто",
   "weaponSets.holds": "Набор оружия {number}: {gear}",
 

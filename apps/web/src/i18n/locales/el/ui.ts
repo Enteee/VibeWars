@@ -1420,6 +1420,18 @@ export default {
   "training.soundOn": "Ήχος ανοιχτός.",
   "training.you": "Εσύ",
 
+  "tutorial.learn": "Μάθε να παίζεις",
+  "tutorial.moreSoon": "Σύντομα περισσότερα μαθήματα. Τα λέμε εκεί έξω!",
+  "tutorial.offer": "Νέος εδώ; Ο δάσκαλός σου θα σου δείξει τα βασικά.",
+  "tutorial.offerTitle": "Πρώτη φορά;",
+  "tutorial.skip": "Παράλειψη",
+  "tutorial.skipTutorial": "Παράλειψη εκμάθησης",
+  "tutorial.tutor": "Δάσκαλος",
+  "tutorial.walk.hint": "Εδώ! Πάτα πάνω στο φωτεινό σημάδι.",
+  "tutorial.walk.how": "Αριστερό κλικ στο έδαφος ή περπάτα με {keys}.",
+  "tutorial.walk.intro": "Αυτός ο πόλεμος δεν τελειώνει. Περπάτα μαζί μου· έχω μια ιδέα.",
+  "tutorial.walk.praise": "Ωραίο βήμα! Είσαι γεννημένος για αυτό.",
+
   "weaponSets.empty": "Σετ όπλων {number}: άδειο",
   "weaponSets.holds": "Σετ όπλων {number}: {gear}",
 

@@ -1313,6 +1313,18 @@ export default {
   "training.soundOn": "Bật âm thanh.",
   "training.you": "Bạn",
 
+  "tutorial.learn": "Học chơi",
+  "tutorial.moreSoon": "Sắp có thêm bài học. Hẹn gặp ngoài kia!",
+  "tutorial.offer": "Mới đến? Người hướng dẫn sẽ chỉ bạn những điều cơ bản.",
+  "tutorial.offerTitle": "Lần đầu?",
+  "tutorial.skip": "Bỏ qua",
+  "tutorial.skipTutorial": "Bỏ qua hướng dẫn",
+  "tutorial.tutor": "Người hướng dẫn",
+  "tutorial.walk.hint": "Đằng này! Bước lên dấu phát sáng.",
+  "tutorial.walk.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",
+  "tutorial.walk.intro": "Cuộc chiến này không bao giờ dứt. Đi cùng tôi; tôi có ý này.",
+  "tutorial.walk.praise": "Bước đi đẹp! Bạn có năng khiếu.",
+
   "weaponSets.empty": "Bộ vũ khí {number}: trống",
   "weaponSets.holds": "Bộ vũ khí {number}: {gear}",
 

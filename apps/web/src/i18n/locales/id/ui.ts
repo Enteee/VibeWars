@@ -1327,6 +1327,18 @@ export default {
   "training.soundOn": "Suara nyala.",
   "training.you": "Kamu",
 
+  "tutorial.learn": "Belajar bermain",
+  "tutorial.moreSoon": "Pelajaran lain segera hadir. Sampai jumpa di luar sana!",
+  "tutorial.offer": "Baru di sini? Gurumu akan menunjukkan dasarnya.",
+  "tutorial.offerTitle": "Pertama kali?",
+  "tutorial.skip": "Lewati",
+  "tutorial.skipTutorial": "Lewati tutorial",
+  "tutorial.tutor": "Guru",
+  "tutorial.walk.hint": "Ke sini! Injak tanda yang bercahaya.",
+  "tutorial.walk.how": "Klik kiri di tanah, atau berjalan dengan {keys}.",
+  "tutorial.walk.intro": "Perang ini tak pernah usai. Jalan bersamaku; aku punya ide.",
+  "tutorial.walk.praise": "Langkah bagus! Kamu berbakat.",
+
   "weaponSets.empty": "Set senjata {number}: kosong",
   "weaponSets.holds": "Set senjata {number}: {gear}",
 

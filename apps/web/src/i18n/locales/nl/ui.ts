@@ -1405,6 +1405,18 @@ export default {
   "training.soundOn": "Geluid aan.",
   "training.you": "Jij",
 
+  "tutorial.learn": "Leer spelen",
+  "tutorial.moreSoon": "Binnenkort meer lessen. Tot daarbuiten!",
+  "tutorial.offer": "Nieuw hier? Je leraar laat je de basis zien.",
+  "tutorial.offerTitle": "Eerste keer?",
+  "tutorial.skip": "Overslaan",
+  "tutorial.skipTutorial": "Tutorial overslaan",
+  "tutorial.tutor": "Leraar",
+  "tutorial.walk.hint": "Hierheen! Stap op de gloeiende markering.",
+  "tutorial.walk.how": "Klik links op de grond, of loop met {keys}.",
+  "tutorial.walk.intro": "Deze oorlog eindigt nooit. Loop met me mee; ik heb een idee.",
+  "tutorial.walk.praise": "Mooie pas! Je bent een natuurtalent.",
+
   "weaponSets.empty": "Wapenset {number}: leeg",
   "weaponSets.holds": "Wapenset {number}: {gear}",
 
