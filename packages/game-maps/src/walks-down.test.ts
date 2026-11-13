@@ -9,7 +9,7 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { pointInShape, shapeVertices } from "./geometry.js";
+import { pointInShape, shapesOverlap, shapeVertices } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import { mapSimulationFields } from "./match-fields.js";
@@ -57,9 +57,10 @@ function body(id: string, at: Vec2, layer: number, team: number): ParticipantSpe
   };
 }
 
-/** Every always-there deck of `map`, with the point on it nearest its middle a route to `goal` starts from. */
+/** Every always-there deck of `map`, with the point on it nearest its middle a body stands on and a route to `goal` starts from. */
 function deckStarts(map: MapData, goal: Vec2) {
-  const finder = layeredFinder(map, RULESET.collision.playerRadius);
+  const radius = RULESET.collision.playerRadius;
+  const finder = layeredFinder(map, radius);
   return map.decks
     .filter((deck) => deck.switched === null)
     .flatMap((deck) => {
@@ -70,10 +71,19 @@ function deckStarts(map: MapData, goal: Vec2) {
         x: (Math.min(...xs) + Math.max(...xs)) / 2,
         y: (Math.min(...ys) + Math.max(...ys)) / 2,
       };
+      // A wall on the deck, such as a column standing on it, is no place to stand.
+      const walls = map.walls.filter((wall) => wall.layer === deck.layer);
+      const standable = ({ x, y }: Vec2): boolean =>
+        !walls.some((wall) =>
+          shapesOverlap(
+            { kind: "rect", x: x - radius, y: y - radius, width: 2 * radius, height: 2 * radius },
+            wall,
+          ),
+        );
       const points: Vec2[] = [];
       for (let x = Math.min(...xs); x <= Math.max(...xs); x += STEP) {
         for (let y = Math.min(...ys); y <= Math.max(...ys); y += STEP) {
-          if (pointInShape({ x, y }, deck.footprint)) points.push({ x, y });
+          if (pointInShape({ x, y }, deck.footprint) && standable({ x, y })) points.push({ x, y });
         }
       }
       const away = (point: Vec2): number => Math.hypot(point.x - middle.x, point.y - middle.y);
