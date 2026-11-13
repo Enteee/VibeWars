@@ -157,10 +157,10 @@ of it.
 ## The render bench
 
 `pnpm run bench:render` (#3157, #3240) builds the client and times its
-frames in headless Chromium at 1280 × 720, as ratios to a fixed WebGL
-calibration drawn in the same browser. CI runs it on pull requests that
-touch the renderer or the maps, and fails a map whose p50 is over 3× the
-calibration's. It measures two cases:
+frames in headless Chromium at 1280 × 720, as ratios to a frozen
+reference map drawn the same way in the same browser. CI runs it on pull
+requests that touch the renderer or the maps, and fails a map whose p50
+is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
 
 - **The menu background** on every layered map: the bots' fight, the
   camera still, at the menu's 30 fps cap.
@@ -174,7 +174,7 @@ calibration's. It measures two cases:
   `ArenaScene.update`, then Phaser's render of the scene), the update's
   share of the frame time, the time between two frames that drew a
   new snapshot (its p50, p95 and standard deviation, the jitter), and
-  each map's p50 over the baseline's. The 3× gate does not judge these
+  each map's p50 over the baseline's. The `BENCH_MAX_RATIO` gate does not judge these
   rows: walking costs a frame about twice what standing does.
   `BENCH_MAX_FOLLOW_RATIO` fails a map walked that is over that many
   times the baseline walked.
