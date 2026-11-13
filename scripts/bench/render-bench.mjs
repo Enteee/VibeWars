@@ -14,8 +14,10 @@
  * heavier than the cap, and the script enforces that: the calibration must
  * itself take more than `MIN_CALIBRATION_MS`. The baseline is a calibration run the script owns,
  * not a game map: a fixed seeded WebGL workload drawn every frame on a
- * blank page in the same browser before the maps, so a slower runner moves the baseline with the maps and
- * a heavier Crossroads cannot loosen the gate. Prints p50 and p95 per map
+ * blank page in the same browser, measured in windows interleaved with the maps (one
+ * before each, one after) and taken as the median, so a slower runner moves the baseline with
+ * the maps, one noisy window cannot move the gate, and a heavier Crossroads cannot loosen it.
+ * Windows differing by over `MAX_CALIBRATION_SPREAD` of their median fail the run as too noisy. Prints p50 and p95 per map
  * and the ratio of each to the calibration's. The percentiles weigh a frame by how long
  * it lasted: what a moment of the run is spent in, so a map that hangs
  * for a second between quick frames does not measure as quick.
@@ -48,6 +50,9 @@ const CAP_TOLERANCE_MS = 0.5;
 const CAPS_MS = [1000 / 60, 1000 / 30];
 /** A calibration lighter than two 60 Hz frames is bound by the caps, not by its cost. */
 const MIN_CALIBRATION_MS = 2000 / 60 + 0.1;
+
+/** The calibration windows (one before each map, one after) may differ this much, of their median. */
+const MAX_CALIBRATION_SPREAD = 0.2;
 
 const PORT = 4322;
 const MAPS = path.join(import.meta.dirname, "..", "..", "packages", "game-maps", "maps");
@@ -203,6 +208,18 @@ function frameTimes(page) {
 }
 
 /**
+ * The median of numbers.
+ *
+ * @param {number[]} values
+ * @returns {number}
+ */
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const low = Math.floor((sorted.length - 1) / 2);
+  return ((sorted[low] ?? 0) + (sorted[Math.floor(sorted.length / 2)] ?? 0)) / 2;
+}
+
+/**
  * The calibration: a fixed WebGL workload, as the renderer's context is,
  * on a blank page where no game runs. 3000 seeded translucent triangles
  * (about 48 screens of overdraw) in one draw call, redrawn every frame
@@ -287,6 +304,7 @@ async function calibrate(page) {
 const served = options.url === undefined ? await serve() : undefined;
 const url = options.url ?? served?.url ?? "";
 const executablePath = process.env.VIBEWARS_CHROMIUM;
+/** @type {import("@playwright/test").Browser | undefined} */
 let browser;
 let failed = false;
 try {
@@ -295,20 +313,22 @@ try {
     args: ["--no-sandbox", "--disable-gpu-vsync", "--disable-frame-rate-limit"],
   });
   const viewport = { width: 1280, height: 720 };
-  const blank = await browser.newPage({ viewport });
-  const calibration = await calibrate(blank);
-  await blank.close();
+  /** One calibration window, on a blank page of its own so nothing else draws meanwhile. */
+  const calibrationWindow = async () => {
+    const blank = await browser.newPage({ viewport });
+    try {
+      return percentile(await calibrate(blank), 50);
+    } finally {
+      await blank.close();
+    }
+  };
   const page = await browser.newPage({ viewport });
   await page.goto(url);
-  const base = percentile(calibration, 50);
-  console.log(`calibration p50 ${base.toFixed(1)} ms over ${String(calibration.length)} frames`);
-  if (!(base >= MIN_CALIBRATION_MS)) {
-    throw new Error(
-      `the calibration p50 is under ${String(MIN_CALIBRATION_MS)} ms, so it is bound by the frame-rate cap and the ratio would be meaningless`,
-    );
-  }
+  const maps = mapsToMeasure();
+  const windows = [];
   const rows = [];
-  for (const mapId of mapsToMeasure()) {
+  for (const mapId of maps) {
+    windows.push(await calibrationWindow());
     const frames = await measure(page, mapId);
     rows.push({
       mapId,
@@ -316,6 +336,22 @@ try {
       p50: percentile(frames, 50),
       p95: percentile(frames, 95),
     });
+  }
+  windows.push(await calibrationWindow());
+  const base = median(windows);
+  const spread = (Math.max(...windows) - Math.min(...windows)) / base;
+  console.log(
+    `calibration p50 ${base.toFixed(1)} ms, median of ${String(windows.length)} windows (${windows.map((w) => w.toFixed(1)).join(", ")}); spread ${(spread * 100).toFixed(0)}%`,
+  );
+  if (!(base >= MIN_CALIBRATION_MS)) {
+    throw new Error(
+      `the calibration p50 is under ${String(MIN_CALIBRATION_MS)} ms, so it is bound by the frame-rate cap and the ratio would be meaningless`,
+    );
+  }
+  if (!(spread <= MAX_CALIBRATION_SPREAD)) {
+    throw new Error(
+      `the calibration windows differ by ${(spread * 100).toFixed(0)}% of their median, over ${String(MAX_CALIBRATION_SPREAD * 100)}%: the runner was too noisy to judge the maps`,
+    );
   }
   console.log("| map | frames | p50 ms | p95 ms | p50 / calibration |");
   console.log("|---|---|---|---|---|");
