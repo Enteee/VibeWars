@@ -655,6 +655,8 @@ export class ArenaScene extends Phaser.Scene {
   private nameGlyphs = new Map<string, Phaser.GameObjects.Image>();
   /** One signet image per actor with one (#2805), beside its name. */
   private nameSignets = new Map<string, Phaser.GameObjects.Image>();
+  /** The text before a name's signet (#3252), per actor with a lead. */
+  private nameLeads = new Map<string, Phaser.GameObjects.Text>();
   /** Signet textures asked for and still loading (#2805). */
   private signetsAdding = new Set<string>();
   /** The primary profession's glyph inside each body, one pooled image per actor (#1037). */
@@ -2169,26 +2171,28 @@ export class ArenaScene extends Phaser.Scene {
         label.setColor(color);
       }
       const shown = nameShown(this.snapshot, actor);
-      label.setText(
-        markedForTeam(
-          actor.team,
-          taggedName({
-            name: playerLabelText(nameplateName(actor.name), actor.guildTag, actor.heroRank),
-            bot: actor.bot,
-          }),
-        ),
-      );
+      const name = taggedName({
+        name: playerLabelText(nameplateName(actor.name), actor.guildTag, actor.heroRank),
+        bot: actor.bot,
+      });
+      // The team's mark opens the plate: on the lead when there is one.
+      label.setText(actor.nameLead === undefined ? markedForTeam(actor.team, name) : name);
       screenSized(label, zoom);
+      const lead = this.updateNameLead(actor, color, zoom);
       // `width` is unscaled: the label's screen px.
+      const leadWidth = lead?.width ?? 0;
       const signetDrawn = this.signetReady(actor.signet);
-      const layout = nameplateLayout(actor, label.width, zoom, signetDrawn);
+      const layout = nameplateLayout(actor, label.width, zoom, signetDrawn, leadWidth);
       label.setPosition(layout.textX, layout.bottom).setVisible(shown);
+      if (lead !== undefined && layout.leadX !== undefined) {
+        lead.setPosition(layout.leadX, layout.bottom).setVisible(shown);
+      }
       this.updateNameGlyph(actor, layout, shown, hovered);
       this.updateNameSignet(actor, layout, shown);
       if (shown) {
         this.nameBoxes.set(
           actor.id,
-          nameTagBox(actor, label.width, label.height, zoom, signetDrawn),
+          nameTagBox(actor, label.width, label.height, zoom, signetDrawn, leadWidth),
         );
       } else {
         this.nameBoxes.delete(actor.id);
@@ -2220,8 +2224,41 @@ export class ArenaScene extends Phaser.Scene {
         this.nameGlyphs.delete(id);
         this.nameSignets.get(id)?.destroy();
         this.nameSignets.delete(id);
+        this.nameLeads.get(id)?.destroy();
+        this.nameLeads.delete(id);
       }
     }
+  }
+
+  /**
+   * The text before `actor`'s signet and name (#3252), in the name's
+   * colour, or `undefined` when it has none: one made the first time,
+   * destroyed when the lead goes.
+   */
+  private updateNameLead(
+    actor: RenderableActor,
+    color: string,
+    zoom: number,
+  ): Phaser.GameObjects.Text | undefined {
+    let lead = this.nameLeads.get(actor.id);
+    if (actor.nameLead === undefined) {
+      lead?.destroy();
+      this.nameLeads.delete(actor.id);
+      return undefined;
+    }
+    if (lead === undefined) {
+      lead = this.add
+        .text(0, 0, "", { fontSize: "11px", fontFamily: "ui-monospace, monospace", color })
+        .setOrigin(0.5, 1)
+        .setDepth(OVERLAY_DEPTH);
+      this.nameLeads.set(actor.id, lead);
+    }
+    if (lead.style.color !== color) {
+      lead.setColor(color);
+    }
+    lead.setText(markedForTeam(actor.team, actor.nameLead));
+    screenSized(lead, zoom);
+    return lead;
   }
 
   /**

@@ -467,12 +467,14 @@ export function toArenaSnapshot(
       // #1138); a corpse wears none.
       const living = player.dead ? [] : statuses;
       const rings = bodyFlags(living);
+      const plate = ghostNameplate(player, self, match.players, names);
       return {
         id: player.sessionId,
-        name: ghostNameplate(player, self, names),
+        name: plate.name,
+        nameLead: plate.lead,
+        signet: plate.signet,
         guildTag: player.guildTag,
         heroRank: player.heroRank,
-        signet: player.signet,
         cape:
           player.guildCape === undefined
             ? undefined

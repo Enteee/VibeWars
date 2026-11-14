@@ -95,6 +95,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
   return {
     id,
     name: id,
+    nameLead: undefined,
     guildTag: undefined,
     heroRank: 0,
     signet: undefined,
