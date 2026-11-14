@@ -14,7 +14,7 @@ import { key } from "./keys.js";
  */
 
 /** How far east, world units, the hero walks off its spawn before the click under the chat. */
-const EAST_WALK = 450;
+const EAST_WALK = 750;
 
 async function openMenu(page: Page, playerName: string): Promise<void> {
   await page.goto("./");
@@ -106,7 +106,8 @@ test("in a match a click under the panel walks, and the box shows only while ope
   );
   // The follow camera (#721) moves only when the hero does. Ember Pits'
   // first spawn sits near the west edge, so the ground under the panel is
-  // outside the arena: walk east along the open spawn row first, and settle.
+  // outside the arena: walk east along the open spawn row first, far enough
+  // that it is open ash west of the ember pit, not the basalt rim, and settle.
   // By a held key, not a click: the house foe can stand where a click east
   // would land, and a click on it targets it instead of walking (#3270).
   const stage = page.locator("#viewport");
