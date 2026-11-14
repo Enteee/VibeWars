@@ -68,10 +68,31 @@
     ],
     "outside": "basalt"
   },
-  "layers": 1,
+  "layers": 2,
   "biome": "volcanic",
-  "groundLayer": 0,
-  "pits": [],
+  "groundLayer": 1,
+  "pits": [
+    {
+      "id": "lower-gorge",
+      "footprint": {
+        "kind": "rect",
+        "x": 360,
+        "y": 990,
+        "width": 5830,
+        "height": 220
+      }
+    },
+    {
+      "id": "south-gorge",
+      "footprint": {
+        "kind": "rect",
+        "x": 1260,
+        "y": 2210,
+        "width": 6280,
+        "height": 170
+      }
+    }
+  ],
   "tunnels": [],
   "decks": [],
   "transitions": [],
@@ -80,7 +101,7 @@
   "paving": [
     {
       "id": "arrival",
-      "layer": 0,
+      "layer": 1,
       "look": "dirt",
       "area": {
         "kind": "polygon",
@@ -122,7 +143,7 @@
     },
     {
       "id": "site-4",
-      "layer": 0,
+      "layer": 1,
       "look": "dirt",
       "area": {
         "kind": "polygon",
@@ -164,7 +185,7 @@
     },
     {
       "id": "site-5",
-      "layer": 0,
+      "layer": 1,
       "look": "dirt",
       "area": {
         "kind": "polygon",
@@ -206,7 +227,7 @@
     },
     {
       "id": "site-6",
-      "layer": 0,
+      "layer": 1,
       "look": "dirt",
       "area": {
         "kind": "polygon",
@@ -248,7 +269,7 @@
     },
     {
       "id": "site-7",
-      "layer": 0,
+      "layer": 1,
       "look": "dirt",
       "area": {
         "kind": "polygon",
@@ -398,7 +419,7 @@
     },
     {
       "id": "exit",
-      "layer": 0,
+      "layer": 1,
       "look": "dirt",
       "area": {
         "kind": "polygon",
@@ -443,7 +464,7 @@
     {
       "id": "boulder-run-1",
       "kind": "rockfall",
-      "layer": 0,
+      "layer": 1,
       "area": {
         "kind": "rect",
         "x": 1760,
@@ -460,7 +481,7 @@
     {
       "id": "boulder-run-2",
       "kind": "rockfall",
-      "layer": 0,
+      "layer": 1,
       "area": {
         "kind": "rect",
         "x": 2100,
@@ -477,7 +498,7 @@
     {
       "id": "boulder-run-3",
       "kind": "rockfall",
-      "layer": 0,
+      "layer": 1,
       "area": {
         "kind": "rect",
         "x": 2440,
@@ -494,7 +515,7 @@
     {
       "id": "clearing-rockfall",
       "kind": "rockfall",
-      "layer": 0,
+      "layer": 1,
       "area": {
         "kind": "rect",
         "x": 5100,
@@ -511,7 +532,7 @@
     {
       "id": "bad-ground-molten",
       "kind": "molten",
-      "layer": 0,
+      "layer": 1,
       "area": {
         "kind": "rect",
         "x": 6520,
@@ -523,7 +544,7 @@
     {
       "id": "bad-ground-mire",
       "kind": "mire",
-      "layer": 0,
+      "layer": 1,
       "area": {
         "kind": "rect",
         "x": 6630,
@@ -544,7 +565,7 @@
         "y": 1480,
         "width": 120,
         "height": 640,
-        "layer": 0
+        "layer": 1
       },
       "health": 400
     }
@@ -552,7 +573,7 @@
   "spawnPoints": [
     {
       "team": 0,
-      "layer": 0,
+      "layer": 1,
       "position": {
         "x": 1000,
         "y": 1800
@@ -560,7 +581,7 @@
     },
     {
       "team": 1,
-      "layer": 0,
+      "layer": 1,
       "position": {
         "x": 6800,
         "y": 500
@@ -721,7 +742,7 @@
   "atmosphere": {
     "fog": [
       {
-        "layer": 0,
+        "layer": 1,
         "area": {
           "kind": "rect",
           "x": 800,
@@ -731,7 +752,7 @@
         }
       },
       {
-        "layer": 0,
+        "layer": 1,
         "area": {
           "kind": "rect",
           "x": 4700,
@@ -741,7 +762,7 @@
         }
       },
       {
-        "layer": 0,
+        "layer": 1,
         "area": {
           "kind": "rect",
           "x": 6560,
@@ -751,7 +772,7 @@
         }
       },
       {
-        "layer": 0,
+        "layer": 1,
         "area": {
           "kind": "rect",
           "x": 4300,
@@ -764,7 +785,7 @@
     "plumes": [
       {
         "id": "lower-stream-smoke",
-        "layer": 0,
+        "layer": 1,
         "position": {
           "x": 4800,
           "y": 1100

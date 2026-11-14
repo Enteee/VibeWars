@@ -60,12 +60,14 @@ function layerOf(of: MapData, id: string): number {
   return marked(of, id).layer;
 }
 
-/** The centre of the site `id` on `of`. */
+/** The centre of the site `id` on `of`'s box, the point canyon-map.ts gives the tutorial. */
 function site(of: MapData, id: string): Vec2 {
   const corners = shapeVertices(marked(of, id).area);
+  const xs = corners.map(({ x }) => x);
+  const ys = corners.map(({ y }) => y);
   return {
-    x: corners.reduce((sum, { x }) => sum + x, 0) / corners.length,
-    y: corners.reduce((sum, { y }) => sum + y, 0) / corners.length,
+    x: (Math.min(...xs) + Math.max(...xs)) / 2,
+    y: (Math.min(...ys) + Math.max(...ys)) / 2,
   };
 }
 

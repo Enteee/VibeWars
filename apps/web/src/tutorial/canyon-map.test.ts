@@ -23,7 +23,7 @@ describe("the tutorial canyon (#3245)", () => {
   it("reads the arrivals, sites 4 to 14 and the exits from the maps' marks", () => {
     const [first, second] = TUTORIAL_CANYON;
     expect([...CANYON_SITES.keys()]).toEqual([4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
-    expect(CANYON_ARRIVAL).toEqual({ map: first, position: { x: 1000, y: 1800 }, layer: 0 });
+    expect(CANYON_ARRIVAL).toEqual({ map: first, position: { x: 1000, y: 1800 }, layer: 1 });
     expect(CANYON_EXIT).toEqual({ map: second, position: { x: 7600, y: 700 }, layer: 1 });
     expect(CANYON_ARRIVALS.map(({ map }) => map)).toEqual([first, second]);
     expect(CANYON_EXITS.map(({ map }) => map)).toEqual([first, second]);
