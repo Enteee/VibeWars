@@ -20,7 +20,7 @@ const MW = 2600,
   STEP = 70; // drawn height of one layer step
 // Desert biome (visual-style §1): ground #3b3226, rock #6e6252, stone decks #c2b296.
 const C = {
-  out: "#1c1812",
+  out: "#3a3226",
   ground: "#3b3226",
   groundHi: "#4a3f30",
   earth: "#6e5a40",
@@ -153,8 +153,8 @@ const DROPS = [
 ];
 const AWNINGS = [rect(960, 1340, 200, 70), rect(1600, 1420, 260, 70)];
 const BREAKABLE = rect(1488, 1640, 24, 180);
-const MIRE = { cx: 1070, cy: 1450, rx: 90, ry: 55 };
-const SCORCH = { cx: 1960, cy: 1480, rx: 120, ry: 60 };
+const MIRE = { cx: 1000, cy: 1700, rx: 90, ry: 55 };
+const SCORCH = { cx: 1600, cy: 1700, rx: 120, ry: 60 };
 /** @type {{ t1: Pt; t2: Pt }} */
 const SPAWNS = { t1: [520, 1560], t2: [2080, 1560] };
 /** @type {{ p: Pt; col: string; r: number }[]} */
@@ -262,6 +262,9 @@ const lift = ([x, y], e) => [x, y - e];
 /** Plain 2.5D world, no annotations. */
 const world = () => {
   let s = `<rect x="-1200" y="-1200" width="${MW + 2400}" height="${MH + 2400}" fill="${C.out}"/>`;
+  // outside: `rock` (OUTSIDE_KINDS), boulders and scree round the town
+  for (let i = 0; i < 110; i++)
+    s += `<ellipse cx="${((i * 421) % 3000) - 200}" cy="${((i * 317 + i * i * 11) % 2300) - 200}" rx="${44 + (i % 4) * 12}" ry="${28 + (i % 4) * 8}" fill="#5a4e3c" stroke="${INK}" stroke-width="3" opacity=".9"/>`;
   s += `<polygon points="${pts(OUTLINE)}" fill="${C.ground}" stroke="${INK}" stroke-width="8" stroke-linejoin="round"/>`;
   s += `<polygon points="${pts(OUTLINE)}" fill="url(#sand)" opacity=".5"/>`;
   // L0 zones
