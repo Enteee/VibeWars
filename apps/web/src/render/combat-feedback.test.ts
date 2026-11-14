@@ -104,6 +104,7 @@ function floated(
       addSwingFlash: () => undefined,
       addBeaconBolt: () => undefined,
       addImpacts: () => undefined,
+      addShoutMarks: () => undefined,
       struckTwice: () => undefined,
     },
     {
@@ -184,6 +185,7 @@ describe("showCombatFeedback", () => {
           addSwingFlash: () => undefined,
           addBeaconBolt: () => undefined,
           addImpacts: () => undefined,
+          addShoutMarks: () => undefined,
           struckTwice: () => undefined,
         },
         {
@@ -222,6 +224,7 @@ describe("showCombatFeedback", () => {
         addSwingFlash: () => undefined,
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -284,6 +287,7 @@ describe("showCombatFeedback", () => {
         addSwingFlash: () => undefined,
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -316,6 +320,7 @@ describe("a number over a raised body", () => {
         addSwingFlash: () => undefined,
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -353,6 +358,7 @@ describe("showCombatFeedback and areas", () => {
         addSwingFlash: () => undefined,
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -440,6 +446,7 @@ describe("swingFlashFor (#161)", () => {
           },
           struckTwice: () => undefined,
           addImpacts: () => undefined,
+          addShoutMarks: () => undefined,
         },
         swing("weapon"),
         snapshot(weaponId),
@@ -496,6 +503,7 @@ describe("swingFlashFor (#161)", () => {
         },
         struckTwice: () => undefined,
         addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
       },
       { ...swing("skill"), skillId: "warrior.mighty-blow", doubleStrike: true },
       snapshot("daggers"),
@@ -512,6 +520,7 @@ describe("swingFlashFor (#161)", () => {
       addSwingFlash: () => undefined,
       addBeaconBolt: () => undefined,
       addImpacts: () => undefined,
+      addShoutMarks: () => undefined,
       struckTwice: (actorId: string) => told.push(actorId),
     };
     showCombatFeedback(sink, swing("weapon"), snapshot("daggers"), 0);
@@ -531,6 +540,7 @@ describe("swingFlashFor (#161)", () => {
         landed.push(...impacts.map((impact) => impact.anchorId));
       },
       struckTwice: () => undefined,
+      addShoutMarks: () => undefined,
     };
     showCombatFeedback(sink, swing("weapon"), snapshot("sword"), 0);
     expect(landed).toEqual([]);

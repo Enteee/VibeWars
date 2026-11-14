@@ -21,6 +21,7 @@ import {
 } from "./arena-snapshot.js";
 import { impactsFor, type Impact } from "./body-impacts.js";
 import { elevationOf } from "./render-order.js";
+import { shoutMarksFor, type ShoutMark } from "./shout-marks.js";
 
 /**
  * Combat events as floating text. Kept apart from the Phaser scene so it
@@ -38,6 +39,8 @@ export interface FloatingTextSink {
   struckTwice(actorId: string): void;
   /** A skill landed on these bodies (#1139). */
   addImpacts(impacts: readonly Impact[]): void;
+  /** A shout or chant went out (#3301). */
+  addShoutMarks(marks: readonly ShoutMark[]): void;
 }
 
 const COLOURS: Record<FloatingCue["tone"], number> = {
@@ -139,6 +142,20 @@ export function showCombatFeedback(
   const impacts = impactsFor(message);
   if (impacts.length > 0) {
     scene.addImpacts(impacts);
+  }
+  const shout = shoutMarksFor(message, (id) => {
+    const player = snapshot.players.find((p) => p.sessionId === id);
+    return player === undefined
+      ? undefined
+      : {
+          team: player.team,
+          position: vec2(player.x, player.y),
+          layer: player.layer,
+          radius: ACTOR_RADIUS,
+        };
+  });
+  if (shout.length > 0) {
+    scene.addShoutMarks(shout);
   }
 
   const bolt = beaconBoltFor(message, snapshot);

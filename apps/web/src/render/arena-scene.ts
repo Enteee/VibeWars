@@ -154,6 +154,16 @@ import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
 import {
+  addShoutMarks,
+  chevronAlpha,
+  decayShoutMarks,
+  SHOUT_COLOUR,
+  SHOUT_RING_WIDTH,
+  shoutChevron,
+  shoutRingRadius,
+  type ShoutMark,
+} from "./shout-marks.js";
+import {
   ENCHANTMENT_COLOUR,
   ENCHANT_MOTES,
   HEX_COLOUR,
@@ -234,7 +244,13 @@ import {
 import { lyingPose } from "./lying-pose.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
-import { LightingPass, litStructurePalette, baseTint } from "./lighting-pass.js";
+import {
+  LightingPass,
+  litOverhangColours,
+  litStructurePalette,
+  baseTint,
+} from "./lighting-pass.js";
+import { bodyUnder, overhangAlpha, paintOverhang, type OverhangCover } from "./overhang-art.js";
 import {
   DECK_ART,
   SWITCHED_DECK_ART,
@@ -553,6 +569,11 @@ export class ArenaScene extends Phaser.Scene {
     number,
     { readonly ground: Phaser.GameObjects.Graphics; readonly seam: Phaser.GameObjects.Graphics }
   >();
+  /** Each overhang (#3293) as drawn, and where it hangs: faded while a body is under it. */
+  private overhangsDrawn: readonly {
+    readonly cover: OverhangCover;
+    readonly graphics: Phaser.GameObjects.Graphics;
+  }[] = [];
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
   private readonly staticCull = new StaticGraphicsCull();
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
@@ -655,6 +676,8 @@ export class ArenaScene extends Phaser.Scene {
   /** Skills landing on bodies (#1139), newest last; merged in on the next frame. */
   private impacts: Impact[] = [];
   private addedImpacts: Impact[] = [];
+  /** Shout and chant rings and chevrons (#3301), aged in place. */
+  private readonly shoutMarks: ShoutMark[] = [];
   private walkMarker: WalkMarker | undefined;
   /**
    * The goals on the ground (#3221), each with when it left the snapshot,
@@ -821,6 +844,10 @@ export class ArenaScene extends Phaser.Scene {
     this.addedImpacts.push(...impacts);
   }
 
+  public addShoutMarks(marks: readonly ShoutMark[]): void {
+    addShoutMarks(this.shoutMarks, marks);
+  }
+
   /**
    * Every icon the arena draws comes from one sheet (#1671), loaded at its
    * own size: one raster at match start, however many skills there are.
@@ -890,6 +917,7 @@ export class ArenaScene extends Phaser.Scene {
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
     this.updateLighting(time);
+    decayShoutMarks(this.shoutMarks, dt);
     this.updateGroundEffects();
     this.drawMap();
     // Only what the camera shows is tessellated (#3240): the map cut once in
@@ -958,6 +986,7 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     this.cutAwayTunnels(dt);
+    this.fadeOverhangs(dt);
     this.drawHiddenOutlines();
     this.drawHoverMarker(effects);
     this.drawSwitchLinks(effects);
@@ -983,6 +1012,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const impact of this.impacts) {
       this.drawImpact(impact);
     }
+    this.drawShoutChevrons();
     this.updateBodyGlyphs();
     this.updateCastBadges();
     this.updateProjectiles(time / 1000);
@@ -1774,6 +1804,38 @@ export class ArenaScene extends Phaser.Scene {
       } else {
         g.lineStyle(IMPACT_LINE_WIDTH, impact.colour, mark.alpha);
         g.strokeCircle(x, y, mark.radius);
+      }
+    }
+  }
+
+  /**
+   * A chevron over each body a shout helped (#3301), above its health bar
+   * and any hex halo, with the bar: a tunnel cuts it away as it does the bar.
+   */
+  private drawShoutChevrons(): void {
+    for (const mark of this.shoutMarks) {
+      if (mark.kind !== "chevron") {
+        continue;
+      }
+      const actor = this.drawnActors.find((a) => a.id === mark.anchorId);
+      const g = actor === undefined ? undefined : this.bandOf(actor.layer)?.bar;
+      if (actor === undefined || g === undefined || actor.dead) {
+        continue;
+      }
+      const halo = actor.hexed ? hexHalo(actor.radius) : undefined;
+      const points = shoutChevron(
+        actor.position.x,
+        actor.position.y,
+        actor.radius,
+        halo === undefined ? undefined : halo.rise + halo.halfHeight,
+      );
+      const alpha = chevronAlpha(mark.ageSeconds);
+      for (const [width, colour] of [
+        [4, BODY_EDGE],
+        [2, SHOUT_COLOUR],
+      ] as const) {
+        g.lineStyle(width, colour, alpha);
+        g.strokePoints(points.map(({ x, y }) => new Phaser.Math.Vector2(x, y)));
       }
     }
   }
@@ -2618,6 +2680,31 @@ export class ArenaScene extends Phaser.Scene {
         }
       }
     }
+    this.drawShoutRings(g);
+  }
+
+  /**
+   * Each shout's ring (#3301), on the ground where its caster stood, at
+   * that layer's height like a skill area: under the bodies.
+   */
+  private drawShoutRings(ground: Phaser.GameObjects.Graphics): void {
+    const structure = this.snapshot.structure;
+    for (const mark of this.shoutMarks) {
+      if (mark.kind !== "ring") {
+        continue;
+      }
+      const ring = shoutRingRadius(mark.ageSeconds, mark.from, this.reducedMotion);
+      if (ring === undefined) {
+        continue;
+      }
+      const onDeck = mark.layer > 0;
+      const g = onDeck ? this.deckGroundGraphicsOf(mark.layer) : ground;
+      const y = onDeck
+        ? mark.position.y - liftAt(structure, this.snapshot.lifts, mark.position, mark.layer)
+        : mark.position.y - elevationOf(mark.layer, structure.ground);
+      g.lineStyle(SHOUT_RING_WIDTH, SHOUT_COLOUR, ring.alpha);
+      g.strokeCircle(mark.position.x, y, ring.radius);
+    }
   }
 
   /**
@@ -3012,6 +3099,7 @@ export class ArenaScene extends Phaser.Scene {
         ),
       );
     }
+    this.drawOverhangs(next.structure, next.lighting, line);
     for (const dropOff of next.structure.dropOffs) {
       this.drawDropOff(dropOff, ground, line);
     }
@@ -3023,6 +3111,7 @@ export class ArenaScene extends Phaser.Scene {
       g,
       ...this.structureGraphics.values(),
       ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
+      ...this.overhangsDrawn.map(({ graphics }) => graphics),
     ]);
   }
 
@@ -3176,6 +3265,71 @@ export class ArenaScene extends Phaser.Scene {
         piece.setAlpha(ground.alpha);
       }
     }
+  }
+
+  /**
+   * Each overhang over a body (#3293), anyone's, faded to
+   * `OVERHANG_FADED_ALPHA` so it never hides one, and back once its
+   * footprint is empty. At once under reduced motion.
+   */
+  private fadeOverhangs(dt: number): void {
+    for (const { cover, graphics } of this.overhangsDrawn) {
+      const covering = bodyUnder(cover, this.drawnActors, this.liftOf);
+      const next = overhangAlpha(graphics.alpha, covering, dt, this.reducedMotion);
+      if (next !== graphics.alpha) {
+        graphics.setAlpha(next);
+      }
+    }
+  }
+
+  private readonly liftOf = (id: string): number => this.elevations.get(id) ?? 0;
+
+  /**
+   * The map's awnings, lean-tos and canopies (#3293): each its own
+   * graphics, so each fades alone, at its layer's height and lit as a deck
+   * of that layer.
+   */
+  private drawOverhangs(
+    structure: MapStructure,
+    lighting: MapLighting | undefined,
+    line: number,
+  ): void {
+    for (const { graphics } of this.overhangsDrawn) {
+      graphics.destroy();
+    }
+    this.overhangsDrawn = structure.overhangs.map((overhang) => {
+      const top = elevationOf(overhang.layer, structure.ground);
+      const graphics = this.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "overhang", layer: overhang.layer }));
+      graphics.save();
+      graphics.translateCanvas(0, -top);
+      paintOverhang(
+        {
+          fillStyle: (colour, alpha) => graphics.fillStyle(colour, alpha),
+          lineStyle: (width, colour, alpha) => graphics.lineStyle(width, colour, alpha),
+          fillShape: (shape) => {
+            this.fillShape(graphics, shape);
+          },
+          fillCircle: (x, y, radius) => graphics.fillCircle(x, y, radius),
+          lineBetween: (ax, ay, bx, by) => graphics.lineBetween(ax, ay, bx, by),
+        },
+        overhang.look,
+        overhang.footprint,
+        litOverhangColours(
+          BIOME[structure.biome].overhang[overhang.look],
+          lighting,
+          overhang.footprint,
+          overhang.layer,
+        ),
+        line,
+      );
+      graphics.restore();
+      return {
+        cover: { layer: overhang.layer, outline: shapeOutline(overhang.footprint), top },
+        graphics,
+      };
+    });
   }
 
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */

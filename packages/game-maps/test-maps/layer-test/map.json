@@ -29,6 +29,7 @@
       }
     }
   ],
+  "overhangs": [],
   "transitions": [
     {
       "id": "ramp-1",

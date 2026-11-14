@@ -43,6 +43,20 @@ the allies' green. The desert's stone decks are `#c2b296`. The volcanic biome
 (#3225, Ember Pits) is a cooling basalt crust, near black and a breath warm, its
 stone ash grey `#8c827a`, so lava is by far the hottest thing on its ground.
 
+**Overhangs** (#3293) are roofs nobody stands on. They hang at their layer's
+height over whoever is under them, with a thin eave below their front edge and
+a soft double shade on the ground. Each biome tints the three looks from its own
+tones (`overhangColours`):
+
+| Look    | Roof                  | Detail                     | Eave        |
+| ------- | --------------------- | -------------------------- | ----------- |
+| Awning  | cloth, earth to stone | stripes, a darker earth    | earth, deep |
+| Lean-to | timber, the wood      | slats, a darker wood       | wood, deep  |
+| Canopy  | leaves, the plant     | clumps, plant toward stone | plant, deep |
+
+An overhang never hides a body. While anyone is under it, or drawn where its
+roof is, it fades to 0.35, as a tunnel's cover does.
+
 **Signals are reserved for the fight** and no biome tone may sit within a
 hand's width of them on the colour wheel (a quarter of its radius, the
 radius being chroma; `arena-palette.test.ts` checks the biome tones):
@@ -157,6 +171,7 @@ bubbles swell and pop every frame.
 | Idle loops       | **1 to 6 s**; never faster than a heartbeat, never above 3 Hz                       |
 | Strike telegraph | the edge goes 2.5× wider and the fill 60 % within **0.3 s** of the warning starting |
 | Strike           | full fill, edge stays 2.5× wide                                                     |
+| Overhang fade    | to 0.35 alpha and back over **0.2 s** (`OVERHANG_FADE_SECONDS`); at once, reduced   |
 
 - **Danger must read in under 0.3 s**: the telegraph's change is a jump, not
   a fade, and it is a change of **edge width and brightness**, which survive
@@ -203,6 +218,11 @@ Every rule below can be checked from one screenshot.
     crossing the body's edge and the target ring. Both hit marks fan out on
     the free sides, clear of the health bar and the damage number, and both
     of those draw over every hit mark and arc (#3292).
+12. **A shout or chant** sends one thin cool `#9fdcff` ring from the
+    caster's edge to earshot in 0.3 s, fading as it grows, on the ground
+    under bodies; an upward chevron in the same blue stands over each body
+    of the caster's side it helped, above the health bar and any hex halo,
+    for 1 s. Neither is team-coloured (#3301).
 
 Rules 3 and 7 are checked by CI (#3251): `render/visibility-gate.test.ts`
 draws every map through the scene's own map drawing, records each filled

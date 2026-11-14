@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import type { Vec2 } from "@vibewars/game-core";
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
-import type { ArenaPalette } from "./arena-palette.js";
+import type { ArenaPalette, OverhangLookColours } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { boxMeets, boxUnder, coverBoxes } from "./cell-cover.js";
 import { deckCovers, rampDrawing, shapeOutline } from "./layer-surfaces.js";
@@ -162,6 +162,28 @@ export function litStructurePalette(
     wallLit: multiplyColour(palette.wallLit, tint),
     support: multiplyColour(palette.support, tint),
     slab: multiplyColour(palette.slab, tint),
+  };
+}
+
+/**
+ * An overhang's colours (#3293), lit where it hangs as a deck of its
+ * layer is. It draws over that layer's light map, so it takes its light
+ * once, as a wall does.
+ */
+export function litOverhangColours(
+  colours: OverhangLookColours,
+  lighting: MapLighting | undefined,
+  shape: RenderableShape,
+  layer: number,
+): OverhangLookColours {
+  if (lighting === undefined) {
+    return colours;
+  }
+  const tint = tintOf(lightAt(lighting, shapeCentre(shape), layer, 0, SURFACE_LIGHT_FLOOR));
+  return {
+    roof: multiplyColour(colours.roof, tint),
+    detail: multiplyColour(colours.detail, tint),
+    eave: multiplyColour(colours.eave, tint),
   };
 }
 

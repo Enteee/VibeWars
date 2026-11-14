@@ -55,6 +55,7 @@ const BRIDGE: MapStructure = {
   tunnels: [],
   dropOffs: [],
   downDecks: [],
+  overhangs: [],
   decks: [{ layer: 1, footprint: bridge, look: "platform", switched: null }],
   transitions: [],
   water: [],
@@ -107,6 +108,7 @@ describe("a click on a ramp (#2972)", () => {
     tunnels: [],
     dropOffs: [],
     downDecks: [],
+    overhangs: [],
     decks: [
       { layer: 1, footprint: rect(200, 100, 200, 100), look: "platform", switched: null },
       { layer: 2, footprint: rect(260, -100, 80, 100), look: "platform", switched: null },
@@ -233,6 +235,7 @@ describe("a body under a raised ramp (#2975)", () => {
     tunnels: [],
     dropOffs: [],
     downDecks: [],
+    overhangs: [],
     decks: [
       {
         layer: 1,
@@ -461,6 +464,7 @@ describe("liftAt (#2958)", () => {
     tunnels: [],
     dropOffs: [],
     downDecks: [],
+    overhangs: [],
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
     transitions: [
       ramp(0, 1, [300, 250, 140, 200], "e"),
@@ -708,6 +712,7 @@ describe("a level under the ground (#2973)", () => {
     pits: [{ footprint: rect(500, 520, 200, 130) }],
     tunnels: [{ footprint: rect(700, 550, 280, 70) }],
     downDecks: [],
+    overhangs: [],
   };
   const STEP = ELEVATION_STEP;
   const occluders = occludersOf([], SUNK);
