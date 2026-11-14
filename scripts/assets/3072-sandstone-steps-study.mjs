@@ -153,8 +153,8 @@ const DROPS = [
 ];
 const AWNINGS = [rect(960, 1340, 200, 70), rect(1600, 1420, 260, 70)];
 const BREAKABLE = rect(1488, 1640, 24, 180);
-const MIRE = { cx: 1000, cy: 1700, rx: 90, ry: 55 };
-const SCORCH = { cx: 1600, cy: 1700, rx: 120, ry: 60 };
+const MIRE = { cx: 840, cy: 1700, rx: 90, ry: 55 };
+const SCORCH = { cx: 1760, cy: 1700, rx: 120, ry: 60 };
 /** @type {{ t1: Pt; t2: Pt }} */
 const SPAWNS = { t1: [520, 1560], t2: [2080, 1560] };
 /** @type {{ p: Pt; col: string; r: number }[]} */
@@ -164,7 +164,7 @@ const LIGHTS = [
   { p: [1300, 940], col: C.torch, r: 150 },
   { p: [630, 1220], col: C.torch, r: 150 },
   { p: [1970, 1220], col: C.torch, r: 150 },
-  { p: [1600, 1700], col: C.fire, r: 200 },
+  { p: [1760, 1700], col: C.fire, r: 200 },
 ];
 // routes: the walk is the polyline length at base speed
 /** @type {Record<"t1" | "t2", [string, Pt[]][]>} */
