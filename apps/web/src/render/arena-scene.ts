@@ -464,6 +464,9 @@ const EDGE_MARKER_LENGTH = 12;
 const EDGE_MARKER_WIDTH = 10;
 /** A skill impact's spikes and ring (#1139). */
 const IMPACT_LINE_WIDTH = 1.5;
+/** An outlined impact spike's dark edge (#3292): this much wider than the spike, the sprites' outline colour. */
+const IMPACT_OUTLINE = 2;
+const IMPACT_OUTLINE_COLOUR = 0x0e1116;
 /**
  * The world's layers, bottom up (#1037). Wards on the floor and their
  * icons (#1087), under everything that stands on them; the grid and the
@@ -1750,7 +1753,11 @@ export class ArenaScene extends Phaser.Scene {
     const { x, y } = actor.position;
     for (const mark of impactMarks(impact, actor.radius, this.reducedMotion)) {
       if (mark.kind === "spike") {
-        g.lineStyle(IMPACT_LINE_WIDTH, impact.colour, mark.alpha);
+        if (mark.outlined) {
+          g.lineStyle(mark.width + IMPACT_OUTLINE, IMPACT_OUTLINE_COLOUR, mark.alpha);
+          g.lineBetween(x + mark.from.x, y + mark.from.y, x + mark.to.x, y + mark.to.y);
+        }
+        g.lineStyle(mark.width, impact.colour, mark.alpha);
         g.lineBetween(x + mark.from.x, y + mark.from.y, x + mark.to.x, y + mark.to.y);
       } else if (mark.kind === "tint") {
         g.fillStyle(impact.colour, mark.alpha);

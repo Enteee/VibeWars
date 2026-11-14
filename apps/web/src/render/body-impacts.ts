@@ -14,13 +14,16 @@ import { SKILL_SPRITE } from "./projectiles.js";
  * impact"): every body it touched flashes for a moment. A burst of spikes
  * when it hurt or hindered that body, a glow when it helped, so the two
  * read without colour; the colour is the skill type's where the palette
- * has one, else what it did. A flying spell lands in a warm burst, and an
- * attack skill strikes a bigger gold star (#3292).
+ * has one, else what it did. A flying spell lands in a bigger warm
+ * burst, and an attack skill strikes a gold star across the body's edge,
+ * both thick, outlined and reaching past the target ring so they read
+ * over it (#3292).
  *
  * No Phaser here, so it can be tested in Node.
  */
 
-export type ImpactShape = "burst" | "star" | "glow";
+/** `landing` is a flying spell's burst, `star` an attack skill's (#3292). */
+export type ImpactShape = "burst" | "landing" | "star" | "glow";
 
 export interface Impact {
   /** The body it flashes on, drawn where that body is now. */
@@ -122,11 +125,19 @@ export function impactsFor(message: CombatMessage): readonly Impact[] {
         remainingSeconds: IMPACT_SECONDS,
       };
     }
+    if (flying) {
+      return {
+        anchorId,
+        shape: "landing",
+        colour: FLYING_SPELL_BURST_COLOUR,
+        remainingSeconds: IMPACT_SECONDS,
+      };
+    }
     const byEffect = seen.has("harm") ? DAMAGE_COLOUR : CONDITION_COLOUR;
     return {
       anchorId,
       shape: "burst",
-      colour: flying ? FLYING_SPELL_BURST_COLOUR : (typeColour ?? byEffect),
+      colour: typeColour ?? byEffect,
       remainingSeconds: IMPACT_SECONDS,
     };
   });
@@ -153,15 +164,44 @@ export function mergeImpacts(
 }
 
 export type ImpactMark =
-  | { readonly kind: "spike"; readonly from: Vec2; readonly to: Vec2; readonly alpha: number }
+  | {
+      readonly kind: "spike";
+      readonly from: Vec2;
+      readonly to: Vec2;
+      readonly alpha: number;
+      /** Line width, px; an outlined spike gets a dark edge under it. */
+      readonly width: number;
+      readonly outlined: boolean;
+    }
   | { readonly kind: "tint" | "ring"; readonly radius: number; readonly alpha: number };
 
 /** The burst's spikes. */
 export const IMPACT_SPIKES = 8;
-/** Every mark stays inside the body's radius plus this, clear of the target ring at r + 8. */
+/** A plain burst and a glow stay inside the body's radius plus this, clear of the target ring at r + 8. */
 export const IMPACT_REACH = 6;
-/** An attack skill's star reaches this many times as far as a burst (#3292). */
-export const STAR_REACH_SCALE = 1.5;
+
+/**
+ * A spiked shape's spikes, from the body's edge: where each starts and
+ * ends at the start of the flash, how far both move out by its end, and
+ * how they are drawn. A landing and a star reach past the target ring
+ * (r + 8), thick and outlined so they read over it in any colour, and
+ * leave out the spikes that would point up into the health bar (#3292).
+ */
+interface SpikeLook {
+  readonly inner: number;
+  readonly outer: number;
+  readonly grow: readonly [inner: number, outer: number];
+  readonly width: number;
+  readonly outlined: boolean;
+  readonly clearOfBar: boolean;
+}
+export const SPIKE_LOOK: Readonly<Record<Exclude<ImpactShape, "glow">, SpikeLook>> = {
+  burst: { inner: 1, outer: 3, grow: [2, 3], width: 1.5, outlined: false, clearOfBar: false },
+  landing: { inner: 2, outer: 9, grow: [2, 4], width: 3, outlined: true, clearOfBar: true },
+  star: { inner: -4, outer: 11, grow: [2, 3], width: 3, outlined: true, clearOfBar: true },
+};
+/** A spike pointing up more steeply than this (sine of its angle, y down) would cross the health bar. */
+const UP_INTO_BAR = -0.7;
 const GLOW_TINT_ALPHA = 0.35;
 
 /**
@@ -179,20 +219,22 @@ export function impactMarks(
     : Math.min(1, Math.max(0, 1 - impact.remainingSeconds / IMPACT_SECONDS));
   const alpha = reducedMotion ? 1 : 1 - progress;
   if (impact.shape !== "glow") {
-    const scale = impact.shape === "star" ? STAR_REACH_SCALE : 1;
-    const inner = radius + scale * (1 + 2 * progress);
-    const outer = radius + scale * (3 + 3 * progress);
+    const look = SPIKE_LOOK[impact.shape];
+    const inner = radius + look.inner + look.grow[0] * progress;
+    const outer = radius + look.outer + look.grow[1] * progress;
     return Array.from({ length: IMPACT_SPIKES }, (_, k) => {
       const angle = Math.PI / IMPACT_SPIKES + (k * 2 * Math.PI) / IMPACT_SPIKES;
-      const cos = Math.cos(angle);
-      const sin = Math.sin(angle);
-      return {
+      return { cos: Math.cos(angle), sin: Math.sin(angle) };
+    })
+      .filter(({ sin }) => !look.clearOfBar || sin >= UP_INTO_BAR)
+      .map(({ cos, sin }): ImpactMark => ({
         kind: "spike",
         from: vec2(cos * inner, sin * inner),
         to: vec2(cos * outer, sin * outer),
         alpha,
-      };
-    });
+        width: look.width,
+        outlined: look.outlined,
+      }));
   }
   const ringRadius = reducedMotion ? radius + 4 : radius + IMPACT_REACH - 4 * progress;
   return [

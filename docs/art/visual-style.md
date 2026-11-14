@@ -193,11 +193,15 @@ Every rule below can be checked from one screenshot.
 8. **At 16 px** a zone is still told from the next by hue **and** edge.
 9. **Colour-blind pass**: view the screenshot in grey; the danger edge and
    the telegraph still stand out.
-10. **A flying spell** keeps its own sprite and adds a near-white core, a
-    ground shadow on the deck under it and a short warm trail; it lands in an
-    8-spike ember burst, and a miss shows none (#3292).
+10. **A flying spell** keeps its own sprite and adds a near-white core on
+    its head, a ground shadow on the deck under it and a short warm trail
+    behind its tail, all sized from the sprite as drawn; it lands in a
+    thick, dark-outlined ember burst reaching past the target ring, and a
+    miss shows none (#3292).
 11. **An attack skill** strikes a thick warm arc over the plain swing (melee
-    only) and a gold impact star half as big again as a burst (#3292).
+    only), held whole before it fades, and a thick, dark-outlined gold star
+    crossing the body's edge and the target ring. Neither hit mark points up
+    into the health bar (#3292).
 
 Rules 3 and 7 are checked by CI (#3251): `render/visibility-gate.test.ts`
 draws every map through the scene's own map drawing, records each filled

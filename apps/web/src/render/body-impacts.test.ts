@@ -7,7 +7,7 @@ import {
   IMPACT_REACH,
   IMPACT_SECONDS,
   MAX_IMPACTS,
-  STAR_REACH_SCALE,
+  SPIKE_LOOK,
   impactMarks,
   impactsFor,
   mergeImpacts,
@@ -157,9 +157,9 @@ describe("impactsFor (#1139)", () => {
 describe("impactsFor, flight and hit (#3292)", () => {
   const hit = { kind: "damage", targetId: "foe", amount: 50, critical: false } as const;
 
-  it("lands a flying spell that hit in a warm burst, and shows nothing for one that missed", () => {
+  it("lands a flying spell that hit in a warm landing burst, and shows nothing for one that missed", () => {
     expect(shapes(message("elementalist.glowstone", [hit]))).toEqual([
-      ["foe", "burst", FLYING_SPELL_BURST_COLOUR],
+      ["foe", "landing", FLYING_SPELL_BURST_COLOUR],
     ]);
     expect(
       shapes(
@@ -167,7 +167,7 @@ describe("impactsFor, flight and hit (#3292)", () => {
           { kind: "status-applied", targetId: "foe", statusId: "blind", durationSeconds: 3 },
         ]),
       ),
-    ).toEqual([["foe", "burst", FLYING_SPELL_BURST_COLOUR]]);
+    ).toEqual([["foe", "landing", FLYING_SPELL_BURST_COLOUR]]);
     expect(
       shapes(message("elementalist.glowstone", [{ kind: "attack-dodged", targetId: "foe" }])),
     ).toEqual([]);
@@ -246,19 +246,43 @@ describe("impactMarks (#1139)", () => {
     }
   });
 
-  it("reaches half as far again for an attack skill's star, 8 spikes like a burst (#3292)", () => {
-    for (const reducedMotion of [false, true]) {
-      for (let step = 0; step <= 10; step += 1) {
-        const remainingSeconds = (IMPACT_SECONDS * step) / 10;
-        const burst = impactMarks(impact("a", remainingSeconds), 14, reducedMotion);
-        const star = impactMarks(
-          { ...impact("a", remainingSeconds), shape: "star" },
-          14,
-          reducedMotion,
-        );
-        expect(star).toHaveLength(8);
-        expect(reach(star) - 14).toBeCloseTo(STAR_REACH_SCALE * (reach(burst) - 14), 9);
-        expect(reach(star)).toBeLessThanOrEqual(14 + STAR_REACH_SCALE * IMPACT_REACH + 1e-9);
+  it("reaches a landing and a star past the target ring, thick and outlined, clear of the health bar (#3292)", () => {
+    for (const shape of ["landing", "star"] as const) {
+      for (const reducedMotion of [false, true]) {
+        for (let step = 0; step <= 10; step += 1) {
+          const remainingSeconds = (IMPACT_SECONDS * step) / 10;
+          const marks = impactMarks({ ...impact("a", remainingSeconds), shape }, 14, reducedMotion);
+          // 8 round, less the two that would point up into the bar.
+          expect(marks).toHaveLength(6);
+          for (const mark of marks) {
+            if (mark.kind !== "spike") {
+              throw new Error("a spiked shape draws only spikes");
+            }
+            const out = Math.hypot(mark.to.x, mark.to.y);
+            // Past the target ring at r + 8, and the dashed edge a ward draws.
+            expect(out).toBeGreaterThan(14 + 8);
+            expect(out).toBeLessThanOrEqual(14 + 15);
+            expect(mark.to.y / out).toBeGreaterThanOrEqual(-0.7);
+            expect(mark.width).toBeGreaterThanOrEqual(3);
+            expect(mark.outlined).toBe(true);
+          }
+        }
+      }
+    }
+    expect(SPIKE_LOOK.burst.outlined).toBe(false);
+  });
+
+  it("crosses the body's edge with an attack skill's star, like a crosshair (#3292)", () => {
+    for (let step = 0; step <= 10; step += 1) {
+      const remainingSeconds = (IMPACT_SECONDS * step) / 10;
+      for (const mark of impactMarks(
+        { ...impact("a", remainingSeconds), shape: "star" },
+        14,
+        false,
+      )) {
+        if (mark.kind === "spike") {
+          expect(Math.hypot(mark.from.x, mark.from.y)).toBeLessThan(14);
+        }
       }
     }
     const fresh = impactMarks({ ...impact("a"), shape: "star" }, 14, true);

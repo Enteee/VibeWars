@@ -466,7 +466,7 @@ describe("swingFlashFor (#161)", () => {
     ).toBeUndefined();
   });
 
-  it("fades an attack skill's arc out in 0.2 s, and holds it whole under reduced motion", () => {
+  it("holds an attack skill's arc whole for 0.1 s, fades it out by 0.2 s, and holds it whole under reduced motion", () => {
     const arc = swingFlashFor(
       { ...swing("skill"), skillId: "warrior.mighty-blow" },
       snapshot("sword"),
@@ -477,8 +477,10 @@ describe("swingFlashFor (#161)", () => {
     const flash = { ...arc, id: 1 };
     expect(swingFlashAlpha(flash, false)).toBe(1);
     const [half] = decaySwingFlashes([flash], SKILL_ARC_SECONDS / 2);
-    expect(half === undefined ? 0 : swingFlashAlpha(half, false)).toBeCloseTo(0.5, 9);
+    expect(half === undefined ? 0 : swingFlashAlpha(half, false)).toBeCloseTo(1, 9);
     expect(half === undefined ? 0 : swingFlashAlpha(half, true)).toBe(1);
+    const [late] = decaySwingFlashes([flash], (SKILL_ARC_SECONDS * 3) / 4);
+    expect(late === undefined ? 0 : swingFlashAlpha(late, false)).toBeCloseTo(0.5, 9);
     expect(decaySwingFlashes([flash], SKILL_ARC_SECONDS + 0.01)).toEqual([]);
   });
 

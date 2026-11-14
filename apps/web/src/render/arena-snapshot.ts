@@ -451,13 +451,19 @@ export function decaySwingFlashes(flashes: readonly SwingFlash[], dt: number): S
     .filter((flash) => flash.remainingSeconds > 0);
 }
 
-/** A flash's opacity: 1 when it swings, 0 when it is gone; held whole under `reducedMotion`. */
+/**
+ * A flash's opacity: 1 when it swings, 0 when it is gone; held whole under
+ * `reducedMotion`. An attack skill's arc holds whole for its first half,
+ * so its colour reads before it fades (#3292).
+ */
 export function swingFlashAlpha(flash: SwingFlash, reducedMotion: boolean): number {
-  if (reducedMotion && flash.kind === "skill") {
+  if (flash.kind === "swing") {
+    return Math.max(0, Math.min(1, flash.remainingSeconds / SWING_FLASH_SECONDS));
+  }
+  if (reducedMotion) {
     return 1;
   }
-  const seconds = flash.kind === "skill" ? SKILL_ARC_SECONDS : SWING_FLASH_SECONDS;
-  return Math.max(0, Math.min(1, flash.remainingSeconds / seconds));
+  return Math.max(0, Math.min(1, (2 * flash.remainingSeconds) / SKILL_ARC_SECONDS));
 }
 
 /**
