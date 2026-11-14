@@ -134,7 +134,19 @@ describe("BIOME", () => {
     expect(deck.tower.top).toBe(BIOME.hall.deck.tower.top);
   });
 
-  it.each(["desert", "wilds"] as const)(
+  it("draws the snow in low-chroma greys, so the friend blue holds on it", () => {
+    const { palette, deck } = BIOME.snow;
+    const chroma = (colour: number): number => {
+      const channels = [colour >> 16, (colour >> 8) & 0xff, colour & 0xff];
+      return Math.max(...channels) - Math.min(...channels);
+    };
+    for (const colour of [palette.floor ?? 0, palette.wallTop, deck.ledge.top]) {
+      expect(chroma(colour), `#${colour.toString(16)}`).toBeLessThan(0x20);
+    }
+    expect(deck.plinth.edgeTop).toBe(BIOME.hall.deck.plinth.edgeTop);
+  });
+
+  it.each(["desert", "wilds", "snow"] as const)(
     "keeps every %s tone a hand's width from every signal",
     (biome) => {
       const hall = new Set(coloursOf("hall"));

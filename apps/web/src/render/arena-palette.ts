@@ -457,6 +457,20 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     /** Ash-choked scrub. */
     plant: 0x5a5444,
   },
+  /**
+   * A frozen river (#3286, docs/art/3072-frozen-crossing.md): neutral greys,
+   * the river ice a breath cooler, kept mid-grey so the friend blue holds on it.
+   */
+  snow: {
+    /** River ice: the floor that shows, the banks being decks. */
+    ground: 0x7d8a8e,
+    rock: 0x4d4a4a,
+    stone: 0x9ea4ab,
+    wood: 0x7a6248,
+    /** Thaw slush. */
+    earth: 0x6a6050,
+    plant: 0x6a6a58,
+  },
 };
 
 /** What each colour of the arena is made of. */
@@ -659,6 +673,7 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   wilds: biomeMaterials(BIOME_TONES.wilds),
   desert: biomeMaterials(BIOME_TONES.desert),
   volcanic: biomeMaterials(BIOME_TONES.volcanic),
+  snow: biomeMaterials(BIOME_TONES.snow),
 };
 
 /** Paving on a map of one layer (#3210): laid in the flat palette's tones, on the scene's background. */
