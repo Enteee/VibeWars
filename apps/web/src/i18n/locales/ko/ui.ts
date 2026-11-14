@@ -1332,6 +1332,11 @@ export default {
   "training.soundOn": "소리 켜짐.",
   "training.you": "나",
 
+  "tutorial.dodge.hint": "고리 옆에서 그림자가 생길 때까지 기다렸다가 비켜서세요.",
+  "tutorial.dodge.hit": "아야! 그림자가 커지면 움직이라는 뜻이에요.",
+  "tutorial.dodge.how": "땅을 왼쪽 클릭하거나 {keys}(으)로 걸으세요.",
+  "tutorial.dodge.intro": "여기는 돌이 떨어져요. 그림자가 커지면 옆으로 피하세요!",
+  "tutorial.dodge.praise": "날랜 발! 돌이 당신을 못 잡네요.",
   "tutorial.learn": "플레이 배우기",
   "tutorial.look.hint": "축소한 뒤 시야를 북쪽으로 끌어. 순간이동기를 찾아!",
   "tutorial.look.how": "마우스 휠로 확대/축소해. 오른쪽 버튼을 누른 채 끌어서 둘러봐.",

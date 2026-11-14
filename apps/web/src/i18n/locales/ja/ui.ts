@@ -1343,6 +1343,11 @@ export default {
   "training.soundOn": "サウンドオン。",
   "training.you": "自分",
 
+  "tutorial.dodge.hint": "輪のそばで影が出るのを待って、外へ出よう。",
+  "tutorial.dodge.hit": "いたっ!影が大きくなったら動いて。",
+  "tutorial.dodge.how": "地面を左クリック、または {keys} で歩く。",
+  "tutorial.dodge.intro": "ここは落石がある。影が大きくなったら、よけて!",
+  "tutorial.dodge.praise": "軽い足取り!岩には当たらないね。",
   "tutorial.learn": "遊び方を学ぶ",
   "tutorial.look.hint": "ズームアウトして、視点を北へドラッグしろ。テレポーターを探せ!",
   "tutorial.look.how": "マウスホイールでズーム。右ボタンを押したままドラッグで見回す。",

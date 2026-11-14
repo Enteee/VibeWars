@@ -82,7 +82,8 @@ export interface TrainingSetup {
   readonly arming: PlayerArming;
 }
 
-function toMapDescriptor(map: MapData): MapDescriptor {
+/** `map` as the wire carries it, for a local connection. */
+export function toMapDescriptor(map: MapData): MapDescriptor {
   const walls: WallDescriptor[] = map.walls.map((wall) =>
     wall.kind === "rect"
       ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }

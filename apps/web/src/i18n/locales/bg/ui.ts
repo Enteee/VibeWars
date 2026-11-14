@@ -1417,6 +1417,11 @@ export default {
   "training.soundOn": "Звукът е включен.",
   "training.you": "Ти",
 
+  "tutorial.dodge.hint": "Изчакай до кръг да се появи сянката му, после се отмести.",
+  "tutorial.dodge.hit": "Ох! Растяща сянка значи: мръдни.",
+  "tutorial.dodge.how": "Кликни с левия бутон по земята или върви с {keys}.",
+  "tutorial.dodge.intro": "Тук падат камъни. Щом сянка расте, отстъпи встрани!",
+  "tutorial.dodge.praise": "Бързи крака! Камъните не могат да те стигнат.",
   "tutorial.learn": "Научи се да играеш",
   "tutorial.look.hint": "Отдалечи изгледа, после го плъзни на север. Намери телепорта!",
   "tutorial.look.how":

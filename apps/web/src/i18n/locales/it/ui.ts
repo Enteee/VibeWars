@@ -1492,6 +1492,11 @@ export default {
   "training.soundOn": "Audio attivo.",
   "training.you": "Tu",
 
+  "tutorial.dodge.hint": "Aspetta vicino a un cerchio la sua ombra, poi spostati.",
+  "tutorial.dodge.hit": "Ahi! Un'ombra che cresce vuol dire: muoviti.",
+  "tutorial.dodge.how": "Clic sinistro sul terreno, o cammina con {keys}.",
+  "tutorial.dodge.intro": "Qui cadono massi. Quando un'ombra cresce, fatti da parte!",
+  "tutorial.dodge.praise": "Piedi svelti! I massi non ti prendono.",
   "tutorial.learn": "Impara a giocare",
   "tutorial.look.hint": "Allontana la vista, poi trascinala a nord. Trova il teletrasporto!",
   "tutorial.look.how":

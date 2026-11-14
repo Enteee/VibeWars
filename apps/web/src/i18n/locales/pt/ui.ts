@@ -1485,6 +1485,11 @@ export default {
   "training.soundOn": "Som ligado.",
   "training.you": "Você",
 
+  "tutorial.dodge.hint": "Espere junto a um anel pela sombra dele e saia de lado.",
+  "tutorial.dodge.hit": "Ai! Uma sombra que cresce quer dizer: mexa-se.",
+  "tutorial.dodge.how": "Clique com o botão esquerdo no chão, ou ande com {keys}.",
+  "tutorial.dodge.intro": "Aqui caem pedras. Quando uma sombra crescer, saia de lado!",
+  "tutorial.dodge.praise": "Pés ligeiros! As pedras não te pegam.",
   "tutorial.learn": "Aprender a jogar",
   "tutorial.look.hint": "Afasta o zoom e arrasta a vista para norte. Encontra o teletransportador!",
   "tutorial.look.how": "A roda do rato faz zoom. Mantém o botão direito e arrasta para olhar.",

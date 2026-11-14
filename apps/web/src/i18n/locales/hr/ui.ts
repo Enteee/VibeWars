@@ -1486,6 +1486,11 @@ export default {
   "training.soundOn": "Zvuk uključen.",
   "training.you": "Ti",
 
+  "tutorial.dodge.hint": "Pričekaj kraj kruga njegovu sjenu, pa se makni.",
+  "tutorial.dodge.hit": "Joj! Sjena koja raste znači: miči se.",
+  "tutorial.dodge.how": "Lijevi klik na tlo, ili hodaj s {keys}.",
+  "tutorial.dodge.intro": "Ovdje pada kamenje. Kad sjena raste, makni se u stranu!",
+  "tutorial.dodge.praise": "Brze noge! Kamenje te ne može stići.",
   "tutorial.learn": "Nauči igrati",
   "tutorial.look.hint": "Odzumiraj, pa povuci pogled prema sjeveru. Pronađi teleporter!",
   "tutorial.look.how": "Kotačić miša zumira. Drži desnu tipku i povuci da se osvrneš.",

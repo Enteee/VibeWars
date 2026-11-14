@@ -1410,6 +1410,11 @@ export default {
   "training.soundOn": "صدا روشن شد.",
   "training.you": "تو",
 
+  "tutorial.dodge.hint": "کنار یک حلقه منتظر سایه‌اش بمان، بعد کنار برو.",
+  "tutorial.dodge.hit": "آخ! سایه‌ای که بزرگ می‌شود یعنی: حرکت کن.",
+  "tutorial.dodge.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
+  "tutorial.dodge.intro": "اینجا سنگ می‌ریزد. وقتی سایه‌ای بزرگ شد، کنار برو!",
+  "tutorial.dodge.praise": "پاهای چابک! سنگ‌ها به تو نمی‌رسند.",
   "tutorial.learn": "بازی را یاد بگیر",
   "tutorial.look.hint": "دید را کوچک کن، بعد آن را به شمال بکش. تله‌پورت را پیدا کن!",
   "tutorial.look.how": "چرخ ماوس بزرگ‌نمایی می‌کند. دکمهٔ راست را نگه دار و بکش تا نگاه کنی.",

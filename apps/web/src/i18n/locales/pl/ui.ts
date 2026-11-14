@@ -1541,6 +1541,11 @@ export default {
   "training.soundOn": "Dźwięk wł.",
   "training.you": "Ty",
 
+  "tutorial.dodge.hint": "Poczekaj przy kręgu na jego cień, potem odsuń się.",
+  "tutorial.dodge.hit": "Au! Rosnący cień znaczy: ruszaj się.",
+  "tutorial.dodge.how": "Kliknij lewym przyciskiem ziemię albo idź klawiszami {keys}.",
+  "tutorial.dodge.intro": "Tu spadają kamienie. Gdy cień rośnie, odsuń się!",
+  "tutorial.dodge.praise": "Szybkie nogi! Kamienie cię nie dogonią.",
   "tutorial.learn": "Naucz się grać",
   "tutorial.look.hint": "Oddal widok, a potem przeciągnij go na północ. Znajdź teleporter!",
   "tutorial.look.how":

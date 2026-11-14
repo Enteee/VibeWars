@@ -8,6 +8,15 @@ import { projection } from "./camera.js";
  */
 const FLAT_MAP = "jungle-ruins";
 const RAISED_MAP = "arena-crossroads";
+/** Where the pair arrives in the canyon (#3247), its first map's arrival pad. */
+const CANYON_ARRIVAL = { x: 1000, y: 1800 };
+/**
+ * Beside the canyon's first rockfall, 200 south of its middle (#3247):
+ * near enough for each of its strikes to count as a dodge, out of its reach.
+ */
+const DODGE_SPOT = { x: 1860, y: 1920 };
+/** The furthest a click in the canyon sends the player, in world units: well inside the view. */
+const STRIDE = 250;
 
 /**
  * Through the splash to its end, where a first-timer is offered the
@@ -41,12 +50,13 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon: then the menu, and no offer again`, async ({
       page,
     }) => {
-      // Three stations, each a walk or a drag in a sim that runs no faster than
-      // the page draws: a loaded runner takes most of a minute (#3222).
-      test.setTimeout(120_000);
+      // Four stations, each a walk or a drag in a sim that runs no faster than
+      // the page draws: a loaded runner takes most of a minute (#3222), and
+      // the canyon's three dodges at least 18 s more (#3247).
+      test.setTimeout(180_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
       const frame = page.locator(".tutorial-frame");
@@ -135,6 +145,52 @@ test.describe("the first-time tutorial (#3218)", () => {
         );
         await expect.poll(() => hasSaid(together), { timeout: 5_000 }).toBe(true);
       }).toPass({ timeout: 60_000 });
+
+      // Station 4 (#3247): the canyon, the player on its arrival.
+      await expect(frame).toHaveAttribute("data-world", "canyon", { timeout: 15_000 });
+      const stage = page.locator("#viewport");
+      await expect
+        .poll(async () => {
+          const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+            .split(",")
+            .map(Number);
+          return Math.hypot(cx - CANYON_ARRIVAL.x, cy - CANYON_ARRIVAL.y);
+        })
+        .toBeLessThan(150);
+      await expect
+        .poll(() => hasSaid("Rocks fall here. When a shadow grows, step aside!"), {
+          timeout: 10_000,
+        })
+        .toBe(true);
+      const walkTo = async (point: { x: number; y: number }): Promise<void> => {
+        // A stride toward it at most, so the click stays clear of the HUD
+        // at the screen's edges, whoever follows it up clicks again.
+        const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
+        const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+          .split(",")
+          .map(Number);
+        const far = Math.hypot(point.x - cx, point.y - cy);
+        const reach = Math.min(1, STRIDE / Math.max(far, 1));
+        const at = view.onPage({ x: cx + (point.x - cx) * reach, y: cy + (point.y - cy) * reach });
+        await page.mouse.click(at.x, at.y);
+      };
+      // Beside the first landing, until three of its strikes have missed.
+      await expect(async () => {
+        await walkTo(DODGE_SPOT);
+        await expect(frame).toHaveAttribute("data-dodges", /^[3-9]$/, { timeout: 3_000 });
+      }).toPass({ timeout: 90_000 });
+      await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
+      const [goalX = 0, goalY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+        .split(",")
+        .map(Number);
+      const quick = "Quick feet! The rocks can't catch you.";
+      await expect(async () => {
+        if (await hasSaid(quick)) {
+          return;
+        }
+        await walkTo({ x: goalX, y: goalY });
+        await expect.poll(() => hasSaid(quick), { timeout: 3_000 }).toBe(true);
+      }).toPass({ timeout: 90_000 });
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 

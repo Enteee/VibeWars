@@ -1603,6 +1603,11 @@ export default {
   "training.soundOn": "الصوت مفعّل.",
   "training.you": "أنت",
 
+  "tutorial.dodge.hint": "انتظر قرب حلقة حتى يظهر ظلها، ثم ابتعد.",
+  "tutorial.dodge.hit": "آه! الظل الذي يكبر يعني: تحرّك.",
+  "tutorial.dodge.how": "انقر بالزر الأيسر على الأرض، أو امشِ بـ {keys}.",
+  "tutorial.dodge.intro": "الصخور تتساقط هنا. حين يكبر ظل، تنحَّ جانبًا!",
+  "tutorial.dodge.praise": "قدمان سريعتان! الصخور لا تلحق بك.",
   "tutorial.learn": "تعلّم اللعب",
   "tutorial.look.hint": "صغّر العرض، ثم اسحبه نحو الشمال. جد البوابة!",
   "tutorial.look.how": "عجلة الفأرة تكبّر وتصغّر. اضغط الزر الأيمن واسحب لتنظر.",

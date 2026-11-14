@@ -19,7 +19,14 @@ export interface TutorialView {
   readonly lookDragged: boolean;
   /** Whether `point`, on the ground, is on screen now. */
   readonly inView: (point: Vec2) => boolean;
+  /** The rockfalls dodged so far in the canyon (#3247): it only grows. */
+  readonly rockfallDodges: number;
+  /** What hit the player since the last look, if anything did. */
+  readonly hitBy: "rockfall" | undefined;
 }
+
+/** The world a station runs in (#3247): the battlefield it starts on, or the canyon past the teleporter. */
+export type TutorialWorldName = "battlefield" | "canyon";
 
 /** What a station points at: a mark on the ground, or a HUD element by its selector. */
 export type StationHighlight =
@@ -38,7 +45,10 @@ export interface Station {
     readonly hint: MessageKey;
     readonly praise: MessageKey;
     readonly how: MessageKey;
+    /** Said when the player is hit, at most once every `HIT_REPEAT_MS`, where a station has one. */
+    readonly hit?: MessageKey;
   };
+  readonly world: TutorialWorldName;
   /** The actions whose keys the lines show, as the player has them bound. */
   readonly keys?: readonly KeyAction[];
   /** What it points at, or nothing: a look around has no one place. */
@@ -63,6 +73,7 @@ function onMark(view: TutorialView, at: Vec2, layer: number): boolean {
 export function walkStation(mark: Vec2, layer: number): Station {
   return {
     id: "walk",
+    world: "battlefield",
     lines: {
       intro: "tutorial.walk.intro",
       hint: "tutorial.walk.hint",
@@ -84,6 +95,7 @@ export function lookStation(teleporter: Vec2): Station {
   let seen = false;
   return {
     id: "look",
+    world: "battlefield",
     lines: {
       intro: "tutorial.look.intro",
       hint: "tutorial.look.hint",
@@ -103,6 +115,7 @@ export function lookStation(teleporter: Vec2): Station {
 export function stepInStation(pad: Vec2, layer: number): Station {
   return {
     id: "step-in",
+    world: "battlefield",
     lines: {
       intro: "tutorial.stepIn.intro",
       hint: "tutorial.stepIn.hint",
@@ -112,5 +125,30 @@ export function stepInStation(pad: Vec2, layer: number): Station {
     keys: ["move-up", "move-left", "move-down", "move-right"],
     highlight: { kind: "ground", at: pad },
     done: (view) => onMark(view, pad, layer),
+  };
+}
+
+/** How many rockfalls station 4 has the player dodge. */
+export const DODGES_NEEDED = 3;
+
+/**
+ * Station 4 (playbook §4), in the canyon: dodge `DODGES_NEEDED`
+ * rockfalls, then reach the mark at the boulder run's east end, on
+ * `layer`. A hit neither counts nor undoes a dodge.
+ */
+export function dodgeStation(mark: Vec2, layer: number): Station {
+  return {
+    id: "dodge",
+    world: "canyon",
+    lines: {
+      intro: "tutorial.dodge.intro",
+      hint: "tutorial.dodge.hint",
+      praise: "tutorial.dodge.praise",
+      how: "tutorial.dodge.how",
+      hit: "tutorial.dodge.hit",
+    },
+    keys: ["move-up", "move-left", "move-down", "move-right"],
+    highlight: { kind: "ground", at: mark },
+    done: (view) => view.rockfallDodges >= DODGES_NEEDED && onMark(view, mark, layer),
   };
 }

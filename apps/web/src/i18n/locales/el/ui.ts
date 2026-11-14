@@ -1434,6 +1434,11 @@ export default {
   "training.soundOn": "Ήχος ανοιχτός.",
   "training.you": "Εσύ",
 
+  "tutorial.dodge.hint": "Περίμενε δίπλα σε έναν κύκλο τη σκιά του, μετά βγες.",
+  "tutorial.dodge.hit": "Αχ! Σκιά που μεγαλώνει σημαίνει: κουνήσου.",
+  "tutorial.dodge.how": "Αριστερό κλικ στο έδαφος, ή περπάτα με {keys}.",
+  "tutorial.dodge.intro": "Εδώ πέφτουν βράχια. Όταν μια σκιά μεγαλώνει, παραμέρισε!",
+  "tutorial.dodge.praise": "Γρήγορα πόδια! Οι βράχοι δεν σε πιάνουν.",
   "tutorial.learn": "Μάθε να παίζεις",
   "tutorial.look.hint": "Κάνε σμίκρυνση, μετά σύρε τη θέα βόρεια. Βρες τον τηλεμεταφορέα!",
   "tutorial.look.how":

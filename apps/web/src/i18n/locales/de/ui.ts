@@ -1433,6 +1433,11 @@ export default {
   "training.soundOn": "Ton an.",
   "training.you": "Du",
 
+  "tutorial.dodge.hint": "Warte an einem Ring auf seinen Schatten, dann tritt heraus.",
+  "tutorial.dodge.hit": "Au! Ein wachsender Schatten heißt: weg da.",
+  "tutorial.dodge.how": "Linksklick auf den Boden, oder geh mit {keys}.",
+  "tutorial.dodge.intro": "Hier fallen Steine. Wächst ein Schatten, tritt zur Seite!",
+  "tutorial.dodge.praise": "Flinke Füße! Die Steine kriegen dich nicht.",
   "tutorial.learn": "Spielen lernen",
   "tutorial.look.hint": "Zoom heraus, dann zieh die Ansicht nach Norden. Finde den Teleporter!",
   "tutorial.look.how": "Das Mausrad zoomt. Halte die rechte Taste und zieh, um dich umzusehen.",

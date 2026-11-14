@@ -1,10 +1,12 @@
 import type { MessageKey } from "../i18n/index.js";
 import { codeLabel, type KeyAction, type Keymap } from "../input/keymap.js";
 
-import type { Station, StationHighlight, TutorialView } from "./stations.js";
+import type { Station, StationHighlight, TutorialView, TutorialWorldName } from "./stations.js";
 
 /** After this long with the station not done, its hint is said again (playbook §0). */
 export const HINT_REPEAT_MS = 10_000;
+/** The tutor's reaction to a hit is said no more often than this (#3247). */
+export const HIT_REPEAT_MS = 10_000;
 /** How long the praise stands before the next station's intro. */
 export const PRAISE_MS = 2_500;
 
@@ -26,6 +28,12 @@ export interface TutorialBeat {
   readonly highlight: StationHighlight | undefined;
   /** The last station is done: its praise is said and nothing comes after. */
   readonly finished: boolean;
+  /**
+   * The world the station now running, or praised and about to give way
+   * to the next, plays in: the next's from its praise on, so the world
+   * changes under that praise (#3247).
+   */
+  readonly world: TutorialWorldName;
 }
 
 /** Every key bound to `actions`, each action's first ones, then their second: W A S D ↑ ← ↓ →. */
@@ -43,7 +51,9 @@ export interface TutorialRunner {
 /**
  * The tutorial as a state machine over `stations` (#3218), with no screen
  * of its own: each station's intro, its hint again every `HINT_REPEAT_MS`
- * until it is done, then its praise and, after `PRAISE_MS`, the next.
+ * until it is done, a station's hit line when the player is hit, no more
+ * than every `HIT_REPEAT_MS` (#3247), then its praise and, after
+ * `PRAISE_MS`, the next.
  * The keys a line shows are read from `keymap()` as it is said, so a
  * rebind shows on the next line.
  */
@@ -58,6 +68,13 @@ export function createTutorialRunner(
   /** When the station before was praised, while that praise stands. */
   let praisedAt: number | undefined;
   let finished = false;
+  /** When the tutor last reacted to a hit. */
+  let reactedAt: number | undefined;
+  const last = stations[stations.length - 1];
+  if (last === undefined) {
+    throw new Error("a tutorial of no stations");
+  }
+  const worldOf = (): TutorialWorldName => (stations[index] ?? last).world;
 
   const line = (station: Station, key: MessageKey): TutorLine => {
     const map = keymap();
@@ -67,11 +84,12 @@ export function createTutorialRunner(
       keys: keysOf(station.keys ?? [], map).map(label),
     };
   };
-  const quiet = (highlight: StationHighlight | undefined): TutorialBeat => ({
-    say: undefined,
-    highlight,
-    finished,
-  });
+  const beat = (
+    say: TutorLine | undefined,
+    highlight: StationHighlight | undefined,
+  ): TutorialBeat => ({ say, highlight, finished, world: worldOf() });
+  const quiet = (highlight: StationHighlight | undefined): TutorialBeat =>
+    beat(undefined, highlight);
 
   return {
     tick(view, nowMs) {
@@ -88,18 +106,28 @@ export function createTutorialRunner(
       }
       if (saidAt === undefined) {
         saidAt = nowMs;
-        return { say: line(station, station.lines.intro), highlight: station.highlight, finished };
+        return beat(line(station, station.lines.intro), station.highlight);
       }
       if (station.done(view)) {
         index += 1;
         saidAt = undefined;
         praisedAt = nowMs;
         finished = index >= stations.length;
-        return { say: line(station, station.lines.praise), highlight: undefined, finished };
+        return beat(line(station, station.lines.praise), undefined);
+      }
+      const { hit } = station.lines;
+      if (
+        hit !== undefined &&
+        view.hitBy !== undefined &&
+        (reactedAt === undefined || nowMs - reactedAt >= HIT_REPEAT_MS)
+      ) {
+        reactedAt = nowMs;
+        saidAt = nowMs;
+        return beat(line(station, hit), station.highlight);
       }
       if (nowMs - saidAt >= HINT_REPEAT_MS) {
         saidAt = nowMs;
-        return { say: line(station, station.lines.hint), highlight: station.highlight, finished };
+        return beat(line(station, station.lines.hint), station.highlight);
       }
       return quiet(station.highlight);
     },

@@ -1501,6 +1501,11 @@ export default {
   "training.soundOn": "Con sonido.",
   "training.you": "Tú",
 
+  "tutorial.dodge.hint": "Espera junto a un anillo a que aparezca su sombra y apártate.",
+  "tutorial.dodge.hit": "¡Ay! Una sombra que crece significa: muévete.",
+  "tutorial.dodge.how": "Haz clic izquierdo en el suelo o camina con {keys}.",
+  "tutorial.dodge.intro": "Aquí caen rocas. ¡Cuando crezca una sombra, apártate!",
+  "tutorial.dodge.praise": "¡Pies ligeros! Las rocas no te alcanzan.",
   "tutorial.learn": "Aprender a jugar",
   "tutorial.look.hint":
     "Aleja la vista y arrástrala hacia el norte. ¡Encuentra el teletransportador!",

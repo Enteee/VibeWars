@@ -1419,6 +1419,11 @@ export default {
   "training.soundOn": "Geluid aan.",
   "training.you": "Jij",
 
+  "tutorial.dodge.hint": "Wacht bij een ring op zijn schaduw en stap dan opzij.",
+  "tutorial.dodge.hit": "Au! Een groeiende schaduw betekent: bewegen.",
+  "tutorial.dodge.how": "Klik met links op de grond, of loop met {keys}.",
+  "tutorial.dodge.intro": "Hier vallen stenen. Groeit er een schaduw, stap opzij!",
+  "tutorial.dodge.praise": "Snelle voeten! De stenen krijgen je niet te pakken.",
   "tutorial.learn": "Leer spelen",
   "tutorial.look.hint": "Zoom uit en sleep het beeld naar het noorden. Vind de teleporter!",
   "tutorial.look.how": "Het muiswiel zoomt. Houd de rechterknop vast en sleep om rond te kijken.",

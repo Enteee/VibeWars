@@ -1409,6 +1409,11 @@ export default {
   "training.soundOn": "Lyd til.",
   "training.you": "Dig",
 
+  "tutorial.dodge.hint": "Vent ved en ring på dens skygge, og træd så væk.",
+  "tutorial.dodge.hit": "Av! En voksende skygge betyder: flyt dig.",
+  "tutorial.dodge.how": "Venstreklik på jorden, eller gå med {keys}.",
+  "tutorial.dodge.intro": "Her falder der sten. Når en skygge vokser, så træd til side!",
+  "tutorial.dodge.praise": "Hurtige fødder! Stenene kan ikke fange dig.",
   "tutorial.learn": "Lær at spille",
   "tutorial.look.hint": "Zoom ud, og træk så udsynet mod nord. Find teleporten!",
   "tutorial.look.how": "Musehjulet zoomer. Hold højre knap nede og træk for at se dig om.",

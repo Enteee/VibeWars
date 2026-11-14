@@ -1414,6 +1414,11 @@ export const en = {
   "training.soundOn": "Sound on.",
   "training.you": "You",
 
+  "tutorial.dodge.hint": "Wait by a ring for its shadow, then step out.",
+  "tutorial.dodge.hit": "Ow! A growing shadow means move.",
+  "tutorial.dodge.how": "Left click the ground, or walk with {keys}.",
+  "tutorial.dodge.intro": "Rocks fall here. When a shadow grows, step aside!",
+  "tutorial.dodge.praise": "Quick feet! The rocks can't catch you.",
   "tutorial.learn": "Learn to play",
   "tutorial.look.hint": "Zoom out, then drag the view north. Find the teleporter!",
   "tutorial.look.how": "The mouse wheel zooms. Hold the right button and drag to look.",

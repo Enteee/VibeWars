@@ -1536,6 +1536,11 @@ export default {
   "training.soundOn": "Звук увімкнено.",
   "training.you": "Ти",
 
+  "tutorial.dodge.hint": "Зачекай біля кола, поки з'явиться його тінь, і відійди.",
+  "tutorial.dodge.hit": "Ой! Тінь, що росте, означає: рухайся.",
+  "tutorial.dodge.how": "Клацни лівою кнопкою по землі або йди клавішами {keys}.",
+  "tutorial.dodge.intro": "Тут падає каміння. Коли тінь росте, відійди вбік!",
+  "tutorial.dodge.praise": "Швидкі ноги! Каміння тебе не наздожене.",
   "tutorial.learn": "Навчитися грати",
   "tutorial.look.hint": "Віддали огляд, потім потягни його на північ. Знайди телепорт!",
   "tutorial.look.how":

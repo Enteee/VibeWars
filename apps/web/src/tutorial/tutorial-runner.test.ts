@@ -4,16 +4,30 @@ import { describe, expect, it } from "vitest";
 import { KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
 
 import {
+  DODGES_NEEDED,
+  dodgeStation,
   lookStation,
   stepInStation,
   walkStation,
   type Station,
   type TutorialView,
 } from "./stations.js";
-import { HINT_REPEAT_MS, PRAISE_MS, createTutorialRunner } from "./tutorial-runner.js";
+import {
+  HINT_REPEAT_MS,
+  HIT_REPEAT_MS,
+  PRAISE_MS,
+  createTutorialRunner,
+} from "./tutorial-runner.js";
 
 const MARK = vec2(200, 100);
-const CAMERA = { selfLayer: 0, zoomedOut: false, lookDragged: false, inView: () => false };
+const CAMERA = {
+  selfLayer: 0,
+  zoomedOut: false,
+  lookDragged: false,
+  inView: () => false,
+  rockfallDodges: 0,
+  hitBy: undefined,
+};
 const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100), ...CAMERA };
 const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100), ...CAMERA };
 const label = (code: string): string => code;
@@ -56,6 +70,7 @@ describe("the tutorial runner", () => {
       say: undefined,
       highlight: undefined,
       finished: true,
+      world: "battlefield",
     });
   });
 
@@ -103,14 +118,16 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, then look around, then step in, then finishes", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, then dodges and finishes (#3247)", () => {
     const pad = vec2(200, -900);
+    const goal = vec2(2850, 1800);
     const runner = createTutorialRunner(
-      [walkStation(MARK, 0), lookStation(pad), stepInStation(pad, 0)],
+      [walkStation(MARK, 0), lookStation(pad), stepInStation(pad, 0), dodgeStation(goal, 0)],
       () => KEYMAP_PRESETS.classic,
       label,
     );
     const looked = { ...ON_MARK, zoomedOut: true, lookDragged: true, inView: () => true };
+    const dodged = { ...looked, self: goal, rockfallDodges: DODGES_NEEDED };
     const ticks: [TutorialView, number][] = [
       [AWAY, 0],
       [ON_MARK, 1_000],
@@ -118,6 +135,9 @@ describe("the tutorial runner", () => {
       [looked, 2_000 + PRAISE_MS],
       [looked, 2_000 + 2 * PRAISE_MS],
       [{ ...looked, self: pad }, 3_000 + 2 * PRAISE_MS],
+      [{ ...looked, self: pad }, 3_000 + 3 * PRAISE_MS],
+      [{ ...dodged, rockfallDodges: DODGES_NEEDED - 1 }, 4_000 + 3 * PRAISE_MS],
+      [dodged, 5_000 + 3 * PRAISE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -127,8 +147,64 @@ describe("the tutorial runner", () => {
       "tutorial.look.praise",
       "tutorial.stepIn.intro",
       "tutorial.stepIn.praise",
+      "tutorial.dodge.intro",
+      undefined,
+      "tutorial.dodge.praise",
     ]);
     expect(beats[4]?.highlight).toEqual({ kind: "ground", at: pad });
-    expect(beats.map((beat) => beat.finished)).toEqual([false, false, false, false, false, true]);
+    expect(beats[6]?.highlight).toEqual({ kind: "ground", at: goal });
+    // The world turns once, under the step in's praise, and stays turned.
+    expect(beats.map((beat) => beat.world)).toEqual([
+      "battlefield",
+      "battlefield",
+      "battlefield",
+      "battlefield",
+      "battlefield",
+      "canyon",
+      "canyon",
+      "canyon",
+      "canyon",
+    ]);
+    expect(beats.map((beat) => beat.finished)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+    ]);
+  });
+
+  it("reacts to a hit once in HIT_REPEAT_MS, and only at a station with a hit line (#3247)", () => {
+    const goal = vec2(2850, 1800);
+    const runner = createTutorialRunner(
+      [dodgeStation(goal, 0)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    const hit: TutorialView = { ...AWAY, hitBy: "rockfall" };
+    const ticks: [TutorialView, number][] = [
+      [AWAY, 0],
+      [hit, 1_000],
+      [hit, 1_000 + HIT_REPEAT_MS - 1],
+      [hit, 1_000 + HIT_REPEAT_MS],
+    ];
+    expect(ticks.map(([view, now]) => runner.tick(view, now).say?.key)).toEqual([
+      "tutorial.dodge.intro",
+      "tutorial.dodge.hit",
+      undefined,
+      "tutorial.dodge.hit",
+    ]);
+
+    const walker = createTutorialRunner(
+      [walkStation(MARK, 0)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    walker.tick(AWAY, 0);
+    expect(walker.tick({ ...AWAY, hitBy: "rockfall" }, 1_000).say).toBeUndefined();
   });
 });

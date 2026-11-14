@@ -1528,6 +1528,11 @@ export default {
   "training.soundOn": "Zvuk zapnut.",
   "training.you": "Ty",
 
+  "tutorial.dodge.hint": "Počkej u kruhu na jeho stín, pak uhni.",
+  "tutorial.dodge.hit": "Au! Rostoucí stín znamená: uhni.",
+  "tutorial.dodge.how": "Klikni levým tlačítkem na zem, nebo choď pomocí {keys}.",
+  "tutorial.dodge.intro": "Tady padá kamení. Když stín roste, uhni stranou!",
+  "tutorial.dodge.praise": "Rychlé nohy! Kamení tě nedostihne.",
   "tutorial.learn": "Nauč se hrát",
   "tutorial.look.hint": "Oddal pohled a pak ho táhni na sever. Najdi teleport!",
   "tutorial.look.how": "Kolečko myši přibližuje. Drž pravé tlačítko a táhni, ať se rozhlédneš.",
