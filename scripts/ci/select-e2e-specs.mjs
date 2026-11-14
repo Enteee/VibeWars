@@ -76,6 +76,11 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
   /** @type {{ spec: string, repeat: number, cost: number }[]} */
   const chunks = [];
   for (const [spec, weight] of Object.entries(weights)) {
+    if (weight > MAX_SPEC_SECONDS) {
+      throw new Error(
+        `e2e-repeat: ${spec} records ${String(Math.round(weight))} s a run, over the ${String(MAX_SPEC_SECONDS)} s a job can hold; split the spec.`,
+      );
+    }
     const per = Math.max(1, Math.min(repeats, Math.floor(budget / weight)));
     for (let left = repeats; left > 0; left -= per) {
       const repeat = Math.min(per, left);
@@ -108,6 +113,8 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
 /** Recorded seconds (e2e-durations.json) of test runs per job: 400 s, so a run ends near 10 min (#3309). Hosted e2e-repeat runs take up to ~3.3x the recorded seconds (gameplay.spec, 15 min a run against 271 s recorded, #3266), and a spec over the budget still gets one run per job. MAX_JOBS fits ten repeats of each of the two largest specs (training 371 s, builds 302 s: 20 jobs). */
 export const SECONDS_PER_JOB = 400;
 export const MAX_JOBS = 20;
+/** A spec over this many recorded seconds cannot finish one run in the 40 min job at 3.3x plus setup (#3313). */
+export const MAX_SPEC_SECONDS = 600;
 export const REPEATS = 10;
 /**
  * Throws unless the Playwright JSON report ran at least one test. Skipped

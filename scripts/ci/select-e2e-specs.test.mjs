@@ -165,6 +165,12 @@ describe("the plan under the real budget", () => {
     }
   });
 
+  it("refuses a spec too long for one job, naming it", () => {
+    expect(() => planJobs({ "huge.spec.ts": 601 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
+      /huge\.spec\.ts.*split the spec/,
+    );
+  });
+
   it("refuses specs that need more than MAX_JOBS jobs", () => {
     const weights = { "a.spec.ts": 500, "b.spec.ts": 500, "c.spec.ts": 500 };
     expect(() => planJobs(weights, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(/split the PR/);
