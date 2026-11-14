@@ -31,3 +31,41 @@ describe("ArenaScene shutdown (#3087)", () => {
     expect(scene.leverFlips.size).toBe(0);
   });
 });
+
+describe("ArenaScene tunnel cutaway (#3272)", () => {
+  it("fades the paving over the viewer's tunnel with its cover, and back once they leave", async () => {
+    const { mapStructure } = await import("../net/maps.js");
+    const { structure } = mapStructure("arena-long-hall");
+    const fading = (): { alpha: number; setAlpha(alpha: number): unknown } => ({
+      alpha: 1,
+      setAlpha(alpha: number) {
+        this.alpha = alpha;
+        return this;
+      },
+    });
+    const cover = { ground: fading(), seam: fading() };
+    const over = fading();
+    const elsewhere = fading();
+    const self = { team: "self", position: { x: 1620, y: 1450 }, layer: structure.ground - 1 };
+    const scene = Object.assign(new ArenaScene(), {
+      snapshot: { structure, actors: [self] },
+      tunnelCovers: new Map([[0, cover]]),
+      pavingDrawn: {
+        overTunnels: new Map([
+          [0, [over]],
+          [1, [elsewhere]],
+        ]),
+      },
+      reducedMotion: true,
+    }) as unknown as { cutAwayTunnels(dt: number): void };
+
+    scene.cutAwayTunnels(0.016);
+    expect(over.alpha).toBe(cover.ground.alpha);
+    expect(over.alpha).toBeLessThan(1);
+    expect(elsewhere.alpha).toBe(1);
+
+    self.layer = structure.ground;
+    scene.cutAwayTunnels(0.016);
+    expect(over.alpha).toBe(1);
+  });
+});

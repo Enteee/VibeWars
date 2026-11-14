@@ -258,7 +258,14 @@ import {
   paintOutsideTile,
   type OutsidePainter,
 } from "./outside-land.js";
-import { isStonePaving, paintPaving, pavingDrawing, pavingTextureSizes } from "./paving-painter.js";
+import {
+  isStonePaving,
+  paintPaving,
+  paintPavingPiece,
+  pavingDrawing,
+  pavingTextureSizes,
+  pavingTunnelPieces,
+} from "./paving-painter.js";
 import { withZoneLights } from "./zone-light.js";
 import { insideRuns, shownFill } from "./cell-cover.js";
 import {
@@ -558,6 +565,8 @@ export class ArenaScene extends Phaser.Scene {
           readonly image: Phaser.GameObjects.Image;
           readonly key: string;
         }[];
+        /** The pieces over each tunnel (#3272), by its index: they fade with its cover. */
+        readonly overTunnels: ReadonlyMap<number, readonly Phaser.GameObjects.Image[]>;
       }
     | undefined;
   /** Each painted zone's ground (#3052), one canvas texture per zone, made when the map changes. */
@@ -2898,9 +2907,9 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The ground over the tunnel the local body is in, cut away (#3234): it
-   * fades to `TUNNEL_CUTAWAY_ALPHA` and stops hiding whoever is in that
-   * tunnel, and fades back in once the body leaves. At once under reduced
+   * The ground over the tunnel the local body is in, and the paving on it
+   * (#3272), cut away (#3234): they fade to `TUNNEL_CUTAWAY_ALPHA` and stop
+   * hiding whoever is in that tunnel, and fade back in once the body leaves. At once under reduced
    * motion.
    */
   private cutAwayTunnels(dt: number): void {
@@ -2925,6 +2934,9 @@ export class ArenaScene extends Phaser.Scene {
           alpha < target ? Math.min(target, alpha + step) : Math.max(target, alpha - step);
         ground.setAlpha(next);
         seam.setAlpha(next);
+      }
+      for (const piece of this.pavingDrawn?.overTunnels.get(at) ?? []) {
+        piece.setAlpha(ground.alpha);
       }
     }
   }
@@ -3676,7 +3688,9 @@ export class ArenaScene extends Phaser.Scene {
   /**
    * The map's roads, squares and tracks (#3210) on their layers' floors,
    * one canvas texture each, painted once: made again only when the map's
-   * paving or its colours change, so they cost nothing per frame.
+   * paving or its colours change, so they cost nothing per frame. The
+   * part of one over a tunnel is cut out and drawn as a piece of its own,
+   * which fades with that tunnel's cover (#3272).
    */
   private drawPaving(structure: MapStructure): void {
     const colours = pavingPalette(structure);
@@ -3698,30 +3712,67 @@ export class ArenaScene extends Phaser.Scene {
           renderOrder({ kind: "paving", layer: paving.layer }),
         ),
       );
-    const painted = pavings.map((paving, at) => {
+    const covers = structure.tunnels.map((tunnel, at) => ({
+      tunnel: at,
+      layer: structure.ground,
+      outline: tunnelCover(structure, tunnel),
+    }));
+    const overTunnels = new Map<number, Phaser.GameObjects.Image[]>();
+    const painted = pavings.flatMap((paving, at) => {
       const drawing = drawings[at];
       const size = sizes[at];
       if (drawing === undefined || size === undefined) {
         throw new Error("paving: a paving lost its drawing");
       }
-      const { x, y } = drawing.bounds;
-      const { scale, width, height } = size;
-      const key = `paving-${String(pavingTextures)}`;
-      pavingTextures += 1;
-      const texture = this.textures.createCanvas(key, width, height);
-      if (texture === null) {
-        throw new Error("paving: could not create a paving's texture");
-      }
-      paintPaving(texture.context, drawing, scale);
-      texture.refresh();
-      const image = this.add
-        .image(x, y - elevationOf(paving.layer, structure.ground), key)
-        .setOrigin(0, 0)
-        .setScale(1 / scale)
-        .setDepth(renderOrder({ kind: "paving", layer: paving.layer }));
-      return { image, key };
+      const { scale } = size;
+      const x = drawing.bounds.x;
+      const y = drawing.bounds.y - elevationOf(paving.layer, structure.ground);
+      const depth = renderOrder({ kind: "paving", layer: paving.layer });
+      const pieces = pavingTunnelPieces(drawing, paving.layer, size, covers);
+      const image = (
+        width: number,
+        height: number,
+        paint: (context: CanvasRenderingContext2D) => void,
+      ): { readonly image: Phaser.GameObjects.Image; readonly key: string } => {
+        const key = `paving-${String(pavingTextures)}`;
+        pavingTextures += 1;
+        const texture = this.textures.createCanvas(key, width, height);
+        if (texture === null) {
+          throw new Error("paving: could not create a paving's texture");
+        }
+        paint(texture.context);
+        texture.refresh();
+        return {
+          image: this.add
+            .image(x, y, key)
+            .setOrigin(0, 0)
+            .setScale(1 / scale)
+            .setDepth(depth),
+          key,
+        };
+      };
+      const whole = image(size.width, size.height, (context) => {
+        paintPaving(context, drawing, scale, pieces);
+      });
+      return [
+        whole,
+        ...pieces.map((piece) => {
+          const { left, top, width, height } = piece.pixels;
+          const made = image(width, height, (context) => {
+            paintPavingPiece(context, drawing, scale, piece);
+          });
+          made.image.setPosition(x + left / scale, y + top / scale);
+          overTunnels.set(piece.tunnel, [...(overTunnels.get(piece.tunnel) ?? []), made.image]);
+          return made;
+        }),
+      ];
     });
-    this.pavingDrawn = { paving: structure.paving, colours, painted: [...painted, ...lava] };
+    this.pavingDrawn = {
+      paving: structure.paving,
+      colours,
+      painted: [...painted, ...lava],
+      overTunnels,
+    };
   }
 
   /** Drops the paving drawn last, and its textures. */

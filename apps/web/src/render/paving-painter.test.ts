@@ -9,10 +9,14 @@ import {
   PAVING_TEXTURE_BUDGET,
   PAVING_TEXTURE_MAX_SIDE,
   PAVING_TEXTURE_SCALE,
+  type PavingCanvas,
+  type StonePaving,
   isStonePaving,
+  paintPaving,
+  paintPavingPiece,
   pavingDrawing,
   pavingTextureSizes,
-  type StonePaving,
+  pavingTunnelPieces,
 } from "./paving-painter.js";
 
 const colours = BIOME.desert.paving;
@@ -150,5 +154,87 @@ describe("lava paving (#3245)", () => {
     const stream: MapPaving = { ...street(), id: "stream", look: "lava" };
     expect(isStonePaving(stream)).toBe(false);
     expect(LOOKS.every((look) => isStonePaving({ ...street(), look }))).toBe(true);
+  });
+});
+
+describe("pavingTunnelPieces (#3272)", () => {
+  const drawing = pavingDrawing(street(), colours.cobbles);
+  const [size] = pavingTextureSizes([drawing.bounds]);
+  if (size === undefined) {
+    throw new Error("no size");
+  }
+  const { x, y } = drawing.bounds;
+  const box = (left: number, top: number, right: number, bottom: number): readonly Vec2[] => [
+    { x: left, y: top },
+    { x: right, y: top },
+    { x: right, y: bottom },
+    { x: left, y: bottom },
+  ];
+
+  it("makes none for a tunnel the paving misses", () => {
+    const covers = [{ tunnel: 0, layer: 0, outline: box(900, 900, 1000, 1000) }];
+    expect(pavingTunnelPieces(drawing, 0, size, covers)).toEqual([]);
+  });
+
+  it("cuts only the overlap, in whole pixels of the paving's texture", () => {
+    const covers = [{ tunnel: 3, layer: 0, outline: box(300.2, 150, 900, 200) }];
+    expect(pavingTunnelPieces(drawing, 0, size, covers)).toEqual([
+      {
+        tunnel: 3,
+        pixels: {
+          left: Math.round((300.2 - x) * size.scale),
+          top: (150 - y) * size.scale,
+          width: size.width - Math.round((300.2 - x) * size.scale),
+          height: 50 * size.scale,
+        },
+      },
+    ]);
+  });
+
+  it("makes a piece for each tunnel under it, and none for a tunnel on another layer", () => {
+    const covers = [
+      { tunnel: 0, layer: 0, outline: box(120, 130, 160, 150) },
+      { tunnel: 1, layer: 1, outline: box(200, 130, 240, 150) },
+      { tunnel: 2, layer: 0, outline: box(300, 140, 340, 160) },
+    ];
+    expect(pavingTunnelPieces(drawing, 0, size, covers).map(({ tunnel }) => tunnel)).toEqual([
+      0, 2,
+    ]);
+    expect(pavingTunnelPieces(drawing, 1, size, covers).map(({ tunnel }) => tunnel)).toEqual([1]);
+  });
+
+  it("cuts each piece out of the paving, and paints it on the same pixel grid", () => {
+    const [piece] = pavingTunnelPieces(drawing, 0, size, [
+      { tunnel: 0, layer: 0, outline: box(150, 120, 260, 180) },
+    ]);
+    if (piece === undefined) {
+      throw new Error("no piece");
+    }
+    const calls = (paint: (context: PavingCanvas) => void): unknown[][] => {
+      const seen: unknown[][] = [];
+      const context = new Proxy({} as PavingCanvas, {
+        get:
+          (_target, name) =>
+          (...args: unknown[]) => {
+            seen.push([name, ...args]);
+          },
+        set: () => true,
+      });
+      paint(context);
+      return seen;
+    };
+    const whole = calls((context) => {
+      paintPaving(context, drawing, size.scale, [piece]);
+    });
+    const { left, top, width, height } = piece.pixels;
+    expect(whole.at(-1)).toEqual(["clearRect", left, top, width, height]);
+    const part = calls((context) => {
+      paintPavingPiece(context, drawing, size.scale, piece);
+    });
+    const [, a, b, c, d, e, f] = part[0] ?? [];
+    expect([a, b, c, d]).toEqual([size.scale, 0, 0, size.scale]);
+    expect(e).toBeCloseTo(-x * size.scale - left);
+    expect(f).toBeCloseTo(-y * size.scale - top);
+    expect(part.slice(1)).toEqual(whole.slice(1, part.length));
   });
 });
