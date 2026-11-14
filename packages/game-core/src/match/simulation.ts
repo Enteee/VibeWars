@@ -9917,6 +9917,18 @@ export class MatchSimulation {
   }
 
   /**
+   * A status from outside any skill or zone, a script's (the tutorial's
+   * bleeding tutor, #3303), on the living participant `id` for `seconds`.
+   * Nobody is credited; a dead or absent one gets nothing.
+   */
+  public afflict(id: string, statusId: StatusId, seconds: number, sourceId: string): void {
+    const record = this.#participants.get(id);
+    if (record !== undefined && record.combatant.health > 0) {
+      applyStatus(record.combatant, statusId, seconds, sourceId, NO_RANKS);
+    }
+  }
+
+  /**
    * Set `record`'s morale and the maxima that follow it (GW1: on the base,
    * before upgrades; a creature has none, so its base is its own). A drop
    * clamps health and energy to the new ceilings; a rise leaves them where

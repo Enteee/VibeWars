@@ -37,14 +37,14 @@ describe("createHealWatch (#3303)", () => {
     expect(watch.tally()).toEqual({ tutorHit: true, healedTutor: true });
   });
 
-  it("counts the heal on a tutor already back to full: the cast resolved on it", () => {
+  it("does not count a cast that gave the tutor no health back", () => {
     const watch = createHealWatch(SELF, TUTOR, HEAL);
     watch.observe(strike);
     watch.observe({
       ...heal,
       events: [{ kind: "skill-used", casterId: SELF, skillId: HEAL, targetId: TUTOR }],
     });
-    expect(watch.tally().healedTutor).toBe(true);
+    expect(watch.tally().healedTutor).toBe(false);
   });
 
   it("does not count a heal before the hit, even once the hit comes", () => {

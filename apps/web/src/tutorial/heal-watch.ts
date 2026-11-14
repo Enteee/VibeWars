@@ -18,7 +18,8 @@ export interface HealWatch {
  * Station 6's watch (#3303), over the combat messages: a zone's strike
  * that hurts `tutorId`, then `selfId`'s `healSkill` that heals it. A heal
  * before the hit is not counted, and stays not counted after it. A heal
- * lands as the playbook means it when the cast resolves on the tutor.
+ * counts when it gives the tutor health back: the tutor bleeds until it
+ * does, so it always has some to give.
  */
 export function createHealWatch(selfId: string, tutorId: string, healSkill: string): HealWatch {
   let tutorHit = false;
@@ -38,9 +39,9 @@ export function createHealWatch(selfId: string, tutorId: string, healSkill: stri
         cause === "skill" &&
         casterSessionId === selfId &&
         skillId === healSkill &&
-        // Its `skill-used` names the target even when the tutor has healed
-        // back to full on its own, and the heal itself is then no event.
-        events.some((event) => "targetId" in event && event.targetId === tutorId);
+        events.some(
+          (event) => event.kind === "heal" && event.targetId === tutorId && event.amount > 0,
+        );
     },
     tally: () => ({ tutorHit, healedTutor }),
   };

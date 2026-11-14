@@ -378,12 +378,12 @@ export async function startTutorialSession(
         atWall = wallTutor(world);
       }
       atWall?.step();
-      // Station 6 is next: the tutor walks into the clearing's rockfall, and
-      // out of it once a rock has hit it.
+      // Station 6 is next: the tutor walks into the clearing's rockfall, out
+      // of it once the rocks have hurt it, and bleeds until it is healed.
       if (inClearing === undefined && beat.station === "heal" && stage.name === "canyon") {
         inClearing = clearingTutor(world);
       }
-      inClearing?.step(tutorHit);
+      inClearing?.step(tutorHit, healedTutor);
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;

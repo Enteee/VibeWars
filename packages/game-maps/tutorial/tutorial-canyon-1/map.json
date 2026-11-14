@@ -873,7 +873,7 @@
         ]
       },
       "schedule": {
-        "periodSeconds": 6,
+        "periodSeconds": 3,
         "activeSeconds": 1,
         "offsetSeconds": 0
       }

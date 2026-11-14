@@ -91,15 +91,15 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
 
 ![Station 6: the tutor hurt, a heal skill lit on the skill bar](img/6-heal.png)
 
-- A boulder hits the **tutor**: "Ow! The rock got me. A little help?" The tutor's health drops
-  in the party window.
+- Boulders hit the **tutor**: "Ow! The rock got me. A little help?" It stays in the rockfall
+  until it is down to half health, then steps out. It bleeds from the first hit until healed, down
+  to about 40 %, so its bar stays low in the party window and only the heal brings it back.
 - **Teach.** The **skill bar** (keys 1 to 8, or as bound): a skill costs energy, takes a moment,
   then recharges. Target an ally with a click on their name in the party window or on them.
   Your health and energy bars, and the pips on them, are pointed at the first time they move.
 - **Do.** Target the tutor and use the heal skill (granted for the tutorial if the build has
   none).
-- **Check.** The heal lands on the tutor after the boulder has hit it (#3303): a check on
-  health would tie the tutorial to max health and regeneration.
+- **Check.** The heal gives the tutor health back after a boulder has hit it (#3303).
 
 ## 7. Cross the bad ground
 

@@ -204,24 +204,44 @@ export function wallTutor(simulation: MatchSimulation): WallTutor {
   };
 }
 
-/** The tutor in the clearing (#3303), stepped once a frame with whether a rock has hit it yet. */
+/** The tutor in the clearing (#3303), stepped once a frame with what station 6 has seen. */
 export interface ClearingTutor {
-  readonly step: (hit: boolean) => void;
+  readonly step: (hit: boolean, healed: boolean) => void;
 }
 
+/** The tutor's health, as a fraction, at which it walks out of the rockfall (#3303). */
+const HURT = 0.5;
+/** Above this fraction, a hit tutor not yet healed bleeds (#3303). */
+const BLEED_FLOOR = 0.4;
+/** Each frame's bleeding, renewed while it lasts. */
+const BLEED_SECONDS = 1;
+/** Who the bleeding is from: the tutorial, nobody in the match. */
+const BLEED_SOURCE = "tutorial";
+
 /**
- * Sends the tutor into the clearing's rockfall to wait for its strike, then,
- * once hit, out to its east side, where it waits to be healed and is not
- * hit again. It uses no skill there, so it never heals itself.
+ * Sends the tutor into the clearing's rockfall and keeps it there until
+ * the strikes have taken half its health, then out to the east side,
+ * where it waits to be healed and is not hit again. From the first hit
+ * until the player's heal lands it bleeds down towards `BLEED_FLOOR`, so
+ * its bar stays low and only the heal brings it back. It uses no skill
+ * there, so it never heals itself.
  */
 export function clearingTutor(simulation: MatchSimulation): ClearingTutor {
   simulation.walkTo(TUTOR_ID, CLEARING.centre, CLEARING.layer);
-  let stepped = false;
+  let out = false;
   return {
-    step: (hit) => {
-      if (hit && !stepped) {
-        stepped = true;
+    step: (hit, healed) => {
+      const tutor = simulation.get(TUTOR_ID);
+      if (!hit || tutor === undefined) {
+        return;
+      }
+      const { health, maxHealth } = tutor.combatant;
+      if (!out && health <= maxHealth * HURT) {
+        out = true;
         simulation.walkTo(TUTOR_ID, CLEARING.east, CLEARING.layer);
+      }
+      if (!healed && health > maxHealth * BLEED_FLOOR) {
+        simulation.afflict(TUTOR_ID, "bleeding", BLEED_SECONDS, BLEED_SOURCE);
       }
     },
   };

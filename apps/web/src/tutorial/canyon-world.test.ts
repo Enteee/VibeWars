@@ -107,7 +107,7 @@ describe("wallTutor (#3302)", () => {
 describe("clearingTutor (#3303)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
 
-  it("is hit by the clearing's next strike within 6 s, and not again once east of it", () => {
+  it("stays in the rockfall until half its health is gone, then bleeds east of it until healed", () => {
     const world = canyonWorld("canyon-test", build, build);
     const { simulation } = world;
     const rockfall = world.zones.find(({ id }) => id === CLEARING.zoneId);
@@ -137,38 +137,55 @@ describe("clearingTutor (#3303)", () => {
       }
       return found;
     };
+    const fraction = (): number => body().combatant.health / body().combatant.maxHealth;
+    const bleeding = (): boolean =>
+      body().combatant.statuses.active.some(({ id }) => id === "bleeding");
     const fromCentre = (): number =>
       Math.hypot(body().position.x - CLEARING.centre.x, body().position.y - CLEARING.centre.y);
     for (let walked = 0; walked < 40 && fromCentre() > MARK_REACH; walked += TICK) {
       simulation.step(TICK);
-      tutor.step(false);
+      tutor.step(false, false);
     }
     expect(fromCentre()).toBeLessThanOrEqual(MARK_REACH);
     expect(pointInPolygon(body().position, rockfall.polygon)).toBe(true);
 
     const before = body().combatant.health;
     let waited = 0;
-    for (; waited < 6.5 && body().combatant.health >= before; waited += TICK) {
+    for (; waited < 3.5 && body().combatant.health >= before; waited += TICK) {
       simulation.step(TICK);
-      tutor.step(false);
+      tutor.step(false, false);
     }
     expect(body().combatant.health).toBeLessThan(before);
+    expect(bleeding()).toBe(false);
 
-    let lowest = Number.POSITIVE_INFINITY;
-    for (let after = 0; after < 20; after += TICK) {
+    // Struck and bleeding, it stays in the ring until half its health is gone.
+    let hurt = 0;
+    for (; hurt < 20 && fraction() > 0.5; hurt += TICK) {
       simulation.step(TICK);
-      tutor.step(true);
-      // Out of the ring by the time it next strikes, 6 s on.
-      if (after > 5) {
+      tutor.step(true, false);
+      expect(bleeding() || fraction() <= 0.4).toBe(true);
+    }
+    expect(fraction()).toBeLessThanOrEqual(0.5);
+    // Then out, and low, for as long as nobody heals it.
+    for (let after = 0; after < 40; after += TICK) {
+      simulation.step(TICK);
+      tutor.step(true, false);
+      if (after > 4) {
         expect(pointInPolygon(body().position, rockfall.polygon)).toBe(false);
-        expect(body().combatant.health).toBeGreaterThanOrEqual(lowest);
-        lowest = body().combatant.health;
-      } else {
-        lowest = Math.min(lowest, body().combatant.health);
+        expect(fraction()).toBeGreaterThan(0.3);
+        expect(fraction()).toBeLessThanOrEqual(0.5);
       }
     }
     expect(
       Math.hypot(body().position.x - CLEARING.east.x, body().position.y - CLEARING.east.y),
     ).toBeLessThanOrEqual(MARK_REACH);
+    // Healed, it bleeds no more, and natural regeneration takes it back up.
+    const healed = body().combatant.health;
+    for (let after = 0; after < 15; after += TICK) {
+      simulation.step(TICK);
+      tutor.step(true, true);
+    }
+    expect(bleeding()).toBe(false);
+    expect(body().combatant.health).toBeGreaterThan(healed);
   });
 });
