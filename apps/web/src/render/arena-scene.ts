@@ -151,8 +151,9 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
-import { weaponMarkLayout } from "./weapon-mark.js";
+import { weaponMarkLayout, weaponTipAt } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
+import { CAST_GLOW_CORE, CAST_GLOW_CORE_LIFT, castGlow } from "./cast-beats.js";
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
 import {
@@ -1508,7 +1509,8 @@ export class ArenaScene extends Phaser.Scene {
       }
       const total = actor.dead ? 0 : actor.swingTotal;
       const cast = actor.dead ? undefined : actor.attackCast;
-      clock.observe(this.snapshot.clock, actor.swingElapsed, total, actor.weaponId, cast);
+      const spell = actor.dead ? undefined : actor.spellCast;
+      clock.observe(this.snapshot.clock, actor.swingElapsed, total, actor.weaponId, cast, spell);
     }
     for (const id of this.attackClocks.keys()) {
       if (!present.has(id)) {
@@ -1656,6 +1658,33 @@ export class ArenaScene extends Phaser.Scene {
     const at = dropped ?? { ...actor.position, r: actor.radius, facing: actor.facing };
     const frame = dropped === undefined ? this.weaponFrame(actor) : REST_FRAME;
     paintWeaponMark(phaserPainter(g), at, actor.weaponId, frame);
+  }
+
+  /**
+   * The glow at a standing caster's weapon (#3320), at its far end, over
+   * the weapon mark and under the bars: it grows with a spell cast, flashes
+   * on release and fizzles when stopped short.
+   */
+  private drawCastGlow(
+    g: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+    frame: AttackFrame,
+  ): void {
+    const clock = this.attackClocks.get(actor.id);
+    const glow = castGlow(clock?.castBeat(this.clock.read(this.now)), this.reducedMotion);
+    if (glow === undefined) {
+      return;
+    }
+    const { x, y } = actor.position;
+    const tip = weaponTipAt(x, y, actor.radius, actor.facing, actor.weaponId, frame);
+    if (tip === undefined) {
+      return;
+    }
+    // The study's glow: a soft disc round a brighter core.
+    g.fillStyle(glow.colour, glow.alpha);
+    g.fillCircle(tip.x, tip.y, glow.radius);
+    g.fillStyle(glow.colour, Math.min(1, glow.alpha + CAST_GLOW_CORE_LIFT));
+    g.fillCircle(tip.x, tip.y, glow.radius * CAST_GLOW_CORE);
   }
 
   /** Where `actor`'s weapon is in its swing, `REST_FRAME` for none. */
@@ -2054,6 +2083,7 @@ export class ArenaScene extends Phaser.Scene {
     } else if (actor.knockedDown) {
       this.drawLyingBody(g, marks, actor);
     } else {
+      const frame = this.weaponFrame(actor);
       paintStandingBody(
         phaserPainter(g),
         {
@@ -2064,12 +2094,13 @@ export class ArenaScene extends Phaser.Scene {
           team: actor.team,
           weaponId: actor.weaponId,
           offhandId: actor.offhandId,
-          frame: this.weaponFrame(actor),
+          frame,
           cape: this.wornCape(actor),
           tint: this.bodyTint(actor),
         },
         phaserPainter(marks),
       );
+      this.drawCastGlow(marks, actor, frame);
     }
     // On the body layer, after the body and its self rim: every mark draws over the rings.
     this.drawBodyRings(g, actor);

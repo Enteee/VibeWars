@@ -5,9 +5,11 @@ import { WEAPONS } from "@vibewars/game-core";
 import {
   AttackClock,
   OFF_HAND_DELAY,
+  RAISE_SECONDS,
   REST_FRAME,
   attackCastOf,
   shownFrame,
+  spellCastOf,
 } from "./attack-clock.js";
 import { REST_CLIP, WEAPON_MOTION, weaponPose } from "./weapon-pose.js";
 
@@ -311,6 +313,101 @@ describe("AttackClock, an attack skill's wind-up (#562)", () => {
       clip: expect.objectContaining({ phase: "recover" }) as unknown,
       hit: 1,
     });
+  });
+});
+
+describe("AttackClock, a spell cast's raise (#3320)", () => {
+  const STAFF = WEAPON_MOTION.staff;
+  const SPELL = "elementalist.fireball";
+  const CAST = 2;
+
+  /**
+   * A staff at rest casting Fireball from match time 0, snapshotted every
+   * tick up to `until`, the cast timer running until `castUntil`.
+   */
+  function casting(until: number, castUntil = CAST): AttackClock {
+    const clock = new AttackClock();
+    for (let tick = 0; tick * TICK <= until + EPS; tick += 1) {
+      const at = tick * TICK;
+      const spell = at < castUntil - EPS ? { skillId: SPELL, elapsed: at, total: CAST } : undefined;
+      clock.observe(at, 0, 0, "staff", undefined, spell);
+    }
+    return clock;
+  }
+
+  it("raises the weapon over its first moments and holds it there", () => {
+    const clock = casting(1);
+    expect(clock.frame(0, "staff")).toEqual({ clip: { phase: "raise", progress: 0 }, hit: 1 });
+    expect(clock.frame(RAISE_SECONDS / 2, "staff").clip).toEqual({
+      phase: "raise",
+      progress: expect.closeTo(0.5, 6) as number,
+    });
+    const held = clock.frame(1, "staff").clip;
+    expect(held).toEqual({ phase: "raise", progress: 1 });
+    // Raised is the wind-up's pose, so the strike starts from it.
+    expect(weaponPose("staff", held, 1)).toEqual(
+      weaponPose("staff", { phase: "wind-up", progress: 1 }, 1),
+    );
+    expect(clock.castBeat(1)).toEqual({
+      phase: "casting",
+      skillId: SPELL,
+      progress: expect.closeTo(0.5, 6) as number,
+    });
+  });
+
+  it("strikes, holds and recovers when the cast completes, and says it was released", () => {
+    const clock = casting(CAST + TICK);
+    expect(clock.frame(CAST + STAFF.strike / 2, "staff").clip.phase).toBe("strike");
+    const hit = CAST + STAFF.strike;
+    expect(clock.frame(hit + STAFF.hold / 2, "staff").clip.phase).toBe("hold");
+    expect(clock.frame(hit + STAFF.hold + STAFF.recover + EPS, "staff")).toEqual({
+      clip: REST_CLIP,
+      hit: 1,
+    });
+    expect(clock.castBeat(CAST + 0.1)).toEqual({
+      phase: "released",
+      skillId: SPELL,
+      since: expect.closeTo(0.1, 6) as number,
+    });
+  });
+
+  it("settles back to rest from the raise when stopped short, and counts no hit", () => {
+    const stop = 1;
+    const clock = casting(stop + TICK, stop);
+    const frame = clock.frame(stop, "staff");
+    expect(frame.clip.phase).toBe("settle");
+    expect(frame.clip.phase === "settle" && frame.clip.from.phase).toBe("raise");
+    expect(clock.frame(stop + STAFF.recover + EPS, "staff")).toEqual({ clip: REST_CLIP, hit: 0 });
+    expect(clock.castBeat(stop + 0.1)).toEqual({
+      phase: "stopped",
+      skillId: SPELL,
+      since: expect.closeTo(0.1, 6) as number,
+      progress: expect.closeTo(stop / CAST, 6) as number,
+    });
+  });
+
+  it("has no beat for an attack skill, nor before any cast", () => {
+    const clock = new AttackClock();
+    expect(clock.castBeat(0)).toBeUndefined();
+    clock.observe(0, 0, 0, "axe", { elapsed: 0, total: 0.5 });
+    expect(clock.frame(0, "axe").clip.phase).toBe("wind-up");
+    expect(clock.castBeat(0)).toBeUndefined();
+  });
+});
+
+describe("spellCastOf (#3320)", () => {
+  it("is the cast timer of a skill with a cast time that is not an attack", () => {
+    expect(spellCastOf("elementalist.fireball", 0.5, 2)).toEqual({
+      skillId: "elementalist.fireball",
+      elapsed: 1.5,
+      total: 2,
+    });
+  });
+
+  it("is undefined for an attack skill, an instant skill and no cast", () => {
+    expect(spellCastOf("warrior.swift-chop", 0.2, 0.665)).toBeUndefined();
+    expect(spellCastOf("warrior.watch-yourself", 0, 0)).toBeUndefined();
+    expect(spellCastOf(undefined, 0, 0)).toBeUndefined();
   });
 });
 

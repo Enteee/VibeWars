@@ -1,13 +1,8 @@
-import {
-  findStatusDefinition,
-  getSkill,
-  vec2,
-  type SkillType,
-  type Vec2,
-} from "@vibewars/game-core";
+import { findStatusDefinition, getSkill, vec2, type Vec2 } from "@vibewars/game-core";
 import type { CombatMessage } from "@vibewars/game-session";
 
 import { SKILL_SPRITE } from "./projectiles.js";
+import { impactTypeColour } from "./skill-colours.js";
 
 /**
  * A skill landing on a body (#1139, docs/art/art-direction.md "Skill
@@ -37,15 +32,6 @@ export const IMPACT_SECONDS = 0.3;
 /** Past this many at once, the oldest go. */
 export const MAX_IMPACTS = 64;
 
-/** The palette's skill type tokens, which colour an impact over what it did. */
-const TYPE_COLOURS: Partial<Record<SkillType, number>> = {
-  hex: 0xd2a8ff,
-  enchantment: 0x56d4dd,
-  stance: 0xf778ba,
-  preparation: 0xe3b341,
-  glyph: 0xc3e88d,
-  "weapon-spell": 0x8b9cff,
-};
 const DAMAGE_COLOUR = 0xff7b72;
 const CONDITION_COLOUR = 0xffa657;
 const HEAL_COLOUR = 0x7ee787;
@@ -104,7 +90,7 @@ export function impactsFor(message: CombatMessage): readonly Impact[] {
     seen.add(effect);
     effects.set(event.targetId, seen);
   }
-  const typeColour = TYPE_COLOURS[skill.type];
+  const typeColour = impactTypeColour(skill);
   const attack = skill.type === "attack";
   const flying = SKILL_SPRITE[skill.id] !== undefined;
   return [...effects].map(([anchorId, seen]): Impact => {
