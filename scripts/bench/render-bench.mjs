@@ -222,11 +222,14 @@ async function hostedMap(page, mapId) {
     .getByRole("button", { name: "Hosted Game", exact: true })
     .click();
   const select = page.locator(".lobby-map select");
-  const offered = async () => (await select.locator(`option[value="${mapId}"]`).count()) > 0;
+  const option = select.locator(`option[value="${mapId}"]`);
+  const offered = async () => (await option.count()) > 0;
   const arrows = page.locator('.mode-rail [data-entry="team-size"] .mode-rail-step');
   for (const arrow of [arrows.first(), arrows.last()]) {
     while (!(await offered()) && (await arrow.isEnabled())) {
       await arrow.click();
+      // The lobby takes the new size, and redraws its maps, a moment later.
+      await option.waitFor({ state: "attached", timeout: 2000 }).catch(() => undefined);
     }
   }
   // The reference map is offered only by a build with VIBEWARS_BENCH_REFERENCE (#3255).
