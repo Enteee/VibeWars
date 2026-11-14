@@ -12,7 +12,7 @@ the place (a green valley with a waterfall, an arch and a ruined mill) is kept.
 - **Bounds** 5000×2600 = 13.0 M u² (2.6× Canyon, 8v8, short side 2600 ≥ 1800). The ground outline
   fills 76 % of it. It is a valley: wide in the middle, pinched at the two spawn ends, with a cliff
   cut in the north for the waterfall and a notch in the south where the race leaves. Outside is
-  scree and rock. The valley is mirrored west–east, so both teams get the same ground.
+  `forest` (`OUTSIDE_KINDS`) round the valley and a `cliff` band across the north, both drawn. The valley is mirrored west–east, so both teams get the same ground.
 - **Biome `wilds`, no new row.** Moss ground `#2c4a34`, terrace tops `#6f8a62`, rock `#5a6358`.
   Water (`#2f6b82`) and mist are looks and zones, not biome tones. Signal colours are not used.
 - **Layers (4):** L0 the pool, the race bed and the mill under-pass; L1 the valley floor;
@@ -31,8 +31,9 @@ the place (a green valley with a waterfall, an arch and a ruined mill) is kept.
 - **Elements:** a brass **lever** at (2290,1160) works the **drawbridge** at (2500,1300) (raised = the
   race is a wall, lowered = the straight way). Two **breakable walls** (collapsed field walls) at
   x=1700 and x=3274, 360 long, in the south half of each side: breaking one opens the straight line
-  from the south terrace to the mill. Zones: `mist` (three patches: one each side of the race,
-  one south) and `bog` (two, in each spawn's flank). Two shed **overhangs** on the race banks,
+  from the south terrace to the mill. Zone kinds (`ZONE_KINDS`): `mire` (two, one in each spawn's flank, drawn as the bog) and
+  `spring` (two, on the valley floor south of the arches, either side of the race). Mist is
+  atmosphere, not a zone: three low patches, a band each side and one south. Two shed **overhangs** on the race banks,
   220 and 300 wide. Waterfall and pool are the water look; torches on the stairs, mill and bridge.
 - **Light:** dawn, the sun low in the east, 20°, `#ffe6c0` 0.45, ambient `#b8c8c0` 0.55, with a
   low mist band (pale, ≤ 0.15, under bodies). Torches `#ffb060` radius 140–170 at each stair head,

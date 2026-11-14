@@ -20,7 +20,7 @@ const MW = 5000,
   STEP = 70; // drawn height of one layer step
 // Wilds biome (visual-style §1): moss ground, stone rock. Water and mist are looks, not new tones.
 const C = {
-  out: "#101a14",
+  out: "#17301f",
   ground: "#2c4a34",
   field: "#3a5e3e", // terraced fields
   furrow: "#2f5035",
@@ -169,7 +169,12 @@ const MIST = [
   { cx: 3300, cy: 1400, rx: 280, ry: 90 },
   { cx: 2500, cy: 2200, rx: 260, ry: 80 },
 ];
-// bog: a wet-ground zone in each spawn mouth's flank
+// springs: a healing zone on the valley floor either side of the race, a contested pick-up
+const SPRING = [
+  { cx: 1950, cy: 1900, rx: 110, ry: 50 },
+  { cx: 3050, cy: 1900, rx: 110, ry: 50 },
+];
+// bog: a `mire` zone in each spawn mouth's flank
 const BOG = [
   { cx: 900, cy: 1500, rx: 200, ry: 80 },
   { cx: 4100, cy: 1500, rx: 200, ry: 80 },
@@ -282,18 +287,13 @@ const steps = (st) => {
 /** Plain 2.5D world, no annotations. */
 const world = () => {
   let s = `<rect x="-1200" y="-1200" width="${MW + 2400}" height="${MH + 2400}" fill="${C.out}"/>`;
-  // rock and scree outside the valley
-  for (const [x, y, r] of [
-    [80, 160, 90],
-    [4920, 160, 90],
-    [100, 2480, 90],
-    [4900, 2480, 90],
-    [1200, 100, 60],
-    [3800, 100, 60],
-    [1200, 2540, 60],
-    [3800, 2540, 60],
-  ])
-    s += `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.6}" fill="${C.rock}" opacity=".6"/>`;
+  // outside the valley: forest (OUTSIDE_KIND) round it, a cliff band to the north
+  s += `<rect x="-300" y="-300" width="${MW + 600}" height="420" fill="${C.rock}" opacity=".8"/>`;
+  for (let i = 0; i < 420; i++) {
+    const x = ((i * 397 + i * i * 13) % (MW + 400)) - 200,
+      y = ((i * 233 + i * i * 7) % (MH + 400)) - 200;
+    s += `<circle cx="${x}" cy="${y}" r="${46 + (i % 4) * 8}" fill="#1d3a26" stroke="${INK}" stroke-width="3" opacity=".9"/>`;
+  }
   s += `<polygon points="${pts(OUTLINE)}" fill="${C.ground}" stroke="${INK}" stroke-width="8" stroke-linejoin="round"/>`;
   // pool, race, waterfall
   s += `<ellipse cx="${POOL.cx}" cy="${POOL.cy}" rx="${POOL.rx}" ry="${POOL.ry}" fill="${C.pool}" stroke="${INK}" stroke-width="6"/>`;
@@ -308,6 +308,8 @@ const world = () => {
     s += `<ellipse cx="${z.cx}" cy="${z.cy}" rx="${z.rx}" ry="${z.ry}" fill="${C.mist}" opacity=".3" stroke="#a9c4b4" stroke-width="3" stroke-dasharray="10 8"/>`;
   for (const z of BOG)
     s += `<ellipse cx="${z.cx}" cy="${z.cy}" rx="${z.rx}" ry="${z.ry}" fill="#1f3326" opacity=".9"/><ellipse cx="${z.cx}" cy="${z.cy}" rx="${z.rx * 0.6}" ry="${z.ry * 0.5}" fill="${C.race}" opacity=".6"/>`;
+  for (const z of SPRING)
+    s += `<ellipse cx="${z.cx}" cy="${z.cy}" rx="${z.rx}" ry="${z.ry}" fill="#6fd0c0" opacity=".45" stroke="${INK}" stroke-width="4"/>`;
   // the mill under-pass: floor with cover seam and slots, running beneath the race
   {
     const [a, b] = /** @type {[Pt, Pt]} */ ([TUNNEL_PATH[0], TUNNEL_PATH[1]]);
@@ -415,8 +417,9 @@ const teamCol = { t1: C.friend, t2: C.foe };
     tag("L2 south terrace", [720, 1960 - STEP], 32) +
     tag("timber wall", [1580, 1480], 28) +
     tag("shed", [2090, 1400 - 90], 28) +
-    tag("mist", [1590, 1400], 28) +
-    tag("bog", [840, 1500], 28);
+    tag("mist (atmosphere)", [1500, 1400], 28) +
+    tag("spring (zone)", [1850, 1880], 28) +
+    tag("mire (zone)", [760, 1520], 28);
   a +=
     tag("sun (E, low, dawn)", [3700, 1500], 40) +
     `<path d="M4560,1480 l-120,-60" stroke="#ffe6c0" stroke-width="9" fill="none"/>`;
