@@ -21,6 +21,7 @@ import {
   type TutorialView,
 } from "./stations.js";
 import { ASIDE_MS, createTutorialRunner } from "./tutorial-runner.js";
+import { PLAYER_PROFESSION, houseBuild } from "./tutorial-world.js";
 
 const PAD = vec2(500, -900);
 const GROUND = 2;
@@ -276,6 +277,11 @@ describe("ratsStation (#3316)", () => {
   const station = ratsStation(pocket, rats, bar);
   const one = new Set([RAT_SKILLS.runner]);
   const two = new Set([RAT_SKILLS.runner, RAT_SKILLS.bash]);
+
+  it("names skills the player's build holds", () => {
+    const { skillBar } = houseBuild(PLAYER_PROFESSION);
+    expect(skillBar).toEqual(expect.arrayContaining(Object.values(RAT_SKILLS)));
+  });
 
   it("is not done with no rat left and one skill landed, and done with two", () => {
     expect(SKILLS_ON_RATS).toBe(2);

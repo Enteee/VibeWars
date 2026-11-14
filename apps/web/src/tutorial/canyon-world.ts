@@ -151,7 +151,6 @@ export function canyonWorld(
   part: 0 | 1,
 ): CanyonWorld {
   const { map: data, position: arrival, layer: ground } = CANYON_ARRIVALS[part];
-  const ahead = part === 0 ? DODGE_MARK.position : RAT_POCKET.pocket;
   const zones = matchZones(data);
   const simulation = new MatchSimulation({
     seed,
@@ -184,7 +183,10 @@ export function canyonWorld(
     simulation,
     zones,
     ground,
-    besideMark: vec2(ahead.x + TUTOR_AT_MARK.x, ahead.y + TUTOR_AT_MARK.y),
+    besideMark:
+      part === 0
+        ? vec2(DODGE_MARK.position.x + TUTOR_AT_MARK.x, DODGE_MARK.position.y + TUTOR_AT_MARK.y)
+        : RAT_POCKET.tutorSpot,
   };
 }
 
@@ -336,7 +338,7 @@ export function badGroundTutor(simulation: MatchSimulation): BadGroundTutor {
 }
 
 /** A rat's aggro and leash round its post (#3316): it bites only who comes close. */
-const RAT_AGGRO = 150;
+export const RAT_AGGRO = 150;
 const RAT_LEASH = 250;
 /** How long a rat waits between its decisions, as a base guard does. */
 const RAT_THINK_SECONDS = 0.5;
@@ -363,6 +365,11 @@ export interface CanyonRats {
   readonly rats: readonly [CanyonRat, CanyonRat, CanyonRat];
   /** Where one more rat comes, if the three died with too few skills. */
   readonly extra: Vec2;
+  /**
+   * Where the tutor waits for the player: east of the pocket, on the
+   * player's side, out of every rat's aggro, so none bites it first.
+   */
+  readonly tutorSpot: Vec2;
 }
 
 export const RAT_POCKET: CanyonRats = ((): CanyonRats => {
@@ -381,6 +388,7 @@ export const RAT_POCKET: CanyonRats = ((): CanyonRats => {
       { id: "tutorial-rat-3", post: at(-300, 0), maxHealth: undefined },
     ],
     extra: at(-150, 0),
+    tutorSpot: at(100, -90),
   };
 })();
 
@@ -460,11 +468,7 @@ export function ratPocket(
   watch: RatWatch,
   healSlot: number | undefined,
 ): RatPocket {
-  simulation.walkTo(
-    TUTOR_ID,
-    vec2(RAT_POCKET.pocket.x + TUTOR_AT_MARK.x, RAT_POCKET.pocket.y + TUTOR_AT_MARK.y),
-    RAT_POCKET.layer,
-  );
+  simulation.walkTo(TUTOR_ID, RAT_POCKET.tutorSpot, RAT_POCKET.layer);
   const [runner] = RAT_POCKET.rats;
   const ids = RAT_POCKET.rats.map(({ id }) => id);
   let fled = false;

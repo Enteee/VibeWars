@@ -14,6 +14,7 @@ import {
   CLEARING,
   CRACKED_WALL,
   DODGE_MARK,
+  RAT_AGGRO,
   RAT_POCKET,
   badGroundTutor,
   canyonWorld,
@@ -337,6 +338,26 @@ describe("ratPocket (#3316)", () => {
     );
     const first = canyonWorld("rats-test", build, build, 0).simulation;
     expect(ids.map((id) => first.get(id))).toEqual([undefined, undefined, undefined]);
+  });
+
+  it("has the tutor wait out of every rat's aggro, where it can stand", () => {
+    const world = canyonWorld("rats-test", build, build, 1);
+    const spot = RAT_POCKET.tutorSpot;
+    expect(world.besideMark).toEqual(spot);
+    expect(world.simulation.standable(spot, RAT_POCKET.layer)).toBe(true);
+    for (const post of [...RAT_POCKET.rats.map((rat) => rat.post), RAT_POCKET.extra]) {
+      expect(Math.hypot(spot.x - post.x, spot.y - post.y)).toBeGreaterThanOrEqual(RAT_AGGRO + 50);
+    }
+    // Gone on ahead, it stands there unbitten however long the player takes.
+    world.simulation.walkTo(TUTOR_ID, world.besideMark, world.ground);
+    for (let t = 0; t < 60; t += TICK) {
+      world.simulation.step(TICK);
+    }
+    const tutor = world.simulation.get(TUTOR_ID);
+    expect(
+      Math.hypot((tutor?.position.x ?? 0) - spot.x, (tutor?.position.y ?? 0) - spot.y),
+    ).toBeLessThan(4);
+    expect(tutor?.combatant.health).toBe(tutor?.combatant.maxHealth);
   });
 
   it("runs the runner off when the player hits it, the tutor joining only once it is hit", () => {
