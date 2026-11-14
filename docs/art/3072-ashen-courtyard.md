@@ -48,10 +48,10 @@ The centre is the well court, (1450,1250).
 
 | Route                                                                        | Length        | Walk                    |
 | ---------------------------------------------------------------------------- | ------------- | ----------------------- |
-| round the timber wall to the pit ramp (walls up)                             | 1179 / 1293 u | 6.5 / 7.2 s (T1 / T2)   |
+| round the timber wall to the pit ramp (walls up)                             | 1179 / 1146 u | 6.5 / 6.4 s (T1 / T2)   |
 | wall-walk (north stair, along the walk, centre stair down, south to the pit) | 2388 / 2601 u | 13.3 / 14.4 s (T1 / T2) |
 
-The teams are within 9 % of each other on both, the east the longer on the wall-walk, shorter on the straight way: the build card must bench it. The wall-walk is the long way on purpose: it is the
+The teams are within 9 % of each other on both, the east the longer on the wall-walk (and 3 % shorter on the straight way): the build card must bench it. The wall-walk is the long way on purpose: it is the
 high-ground flank, and the lever and the breakable wall decide how soon a team commits to it.
 High ground within half the map of either spawn is its own half of the wall-walk plus its two towers,
 of unequal area (the west keeps the bigger tower); the two halves meet at the north walk's centre stair, so neither side owns a tower the
