@@ -502,6 +502,7 @@ export function toArenaSnapshot(
             : CREATURE_ARMS[player.creature.look]?.offHand,
         profession: player.primaryProfession,
         creatureLook: player.creature?.look,
+        auraRadius: player.creature?.auraRadius ?? undefined,
         // A form draws the body bigger (#3229), not what it collides as.
         radius:
           (player.creature === undefined

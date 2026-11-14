@@ -616,6 +616,11 @@ export function companionMode(creature: Creature): CompanionMode | null {
   return creature.companionSkillId === undefined ? null : creature.mode;
 }
 
+/** How far a creature's aura reaches (#3306), rounded to a world unit; `null` for none. */
+export function creatureAuraRadius(creature: Creature): number | null {
+  return creature.aura === undefined ? null : Math.round(creature.aura.radius);
+}
+
 /**
  * A creature's own Health pips: a minion's rot (#467), a Guild Lord's
  * innate regeneration (#1222); 0 for anyone else.

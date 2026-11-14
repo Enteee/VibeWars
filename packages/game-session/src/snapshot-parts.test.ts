@@ -170,6 +170,7 @@ describe("packSnapshot (#662)", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     });
     const players = [

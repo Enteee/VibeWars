@@ -3,6 +3,7 @@ import {
   adrenalineLossIn,
   applyIntent,
   companionMode,
+  creatureAuraRadius,
   drainAccumulator,
   raisedMaxEnergy,
   raisedMaxHealth,
@@ -142,6 +143,7 @@ function toPlayerSnapshot(
             mode: companionMode(participant.creature),
             armedAttack: armedAttackSnapshot(participant.armedAttack, elapsedSeconds),
             leaderId: participant.creature.leaderId ?? null,
+            auraRadius: creatureAuraRadius(participant.creature),
           },
     // The Training Ground has dummies, not a lobby's bots.
     bot: false,

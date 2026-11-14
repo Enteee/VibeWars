@@ -223,6 +223,12 @@ Every rule below can be checked from one screenshot.
     under bodies; an upward chevron in the same blue stands over each body
     of the caster's side it helped, above the health bar and any hex halo,
     for 1 s. Neither is team-coloured (#3301).
+13. **A spirit** is a pale-green `#76c96f` wisp, a teardrop point up round
+    a near-white core, bobbing ±2 px over 2 s (still under reduced motion),
+    with a 1.5 px team rim. Its range is a solid 1.5 px ring in the same
+    green at its aura's real radius, on the ground under bodies, alpha
+    0.18, 0.45 while targeted or hovered. Solid, since a spirit's area is
+    not harmful ground, whatever it does (#3306).
 
 Rules 3 and 7 are checked by CI (#3251): `render/visibility-gate.test.ts`
 draws every map through the scene's own map drawing, records each filled

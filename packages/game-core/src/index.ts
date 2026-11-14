@@ -239,6 +239,7 @@ export {
   MAX_CREATURES,
   MAX_MAP_CREATURES,
   companionMode,
+  creatureAuraRadius,
   MAX_GROUND_EFFECTS,
   MatchSimulation,
   walkableAreas,
