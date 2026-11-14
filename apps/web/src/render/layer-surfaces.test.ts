@@ -32,6 +32,7 @@ import {
   pitDrawing,
   TUNNEL_GRATING_STEP,
   tunnelCover,
+  tunnelOpenings,
   tunnelSeam,
   rampDrawing,
   RING_PATH,
@@ -772,15 +773,78 @@ describe("a level under the ground (#2973)", () => {
   it("covers the tunnel and the step south of it, where whoever is in it draws", () => {
     const [tunnel] = SUNK.tunnels;
     if (tunnel === undefined) throw new Error("no tunnel");
-    const cover = tunnelCover(SUNK, tunnel);
-    expect(cover[0]).toEqual({ x: 700, y: 550 });
-    expect(cover[2]).toEqual({ x: 980, y: 620 + STEP });
+    const [cover, ...more] = tunnelCover(SUNK, tunnel);
+    expect(more).toEqual([]);
+    expect(cover?.[0]).toEqual({ x: 700, y: 550 });
+    expect(cover?.[2]).toEqual({ x: 980, y: 620 + STEP });
+  });
+
+  describe("stairs down through the cover (#3329)", () => {
+    const stair = (x: number) =>
+      ({
+        from: 0,
+        to: 1,
+        area: rect(x, 500, 60, 90),
+        uphill: "n",
+        look: "stairs",
+        lift: null,
+      }) as const;
+    // One comes down inside the roof; one only meets its west edge, a mouth outside it.
+    const SHAFT = { ...SUNK, transitions: [stair(800), stair(640)] };
+    const [tunnel] = SHAFT.tunnels;
+    if (tunnel === undefined) throw new Error("no tunnel");
+
+    it("opens the overlap of a stair inside the footprint, and none for one outside it", () => {
+      expect(tunnelOpenings(SHAFT, tunnel)).toEqual([
+        [
+          { x: 800, y: 550 },
+          { x: 860, y: 550 },
+          { x: 860, y: 590 },
+          { x: 800, y: 590 },
+        ],
+      ]);
+      expect(tunnelOpenings({ ...SUNK, transitions: [stair(640)] }, tunnel)).toEqual([]);
+    });
+
+    it("cuts the hole out of the cover, which still covers the rest", () => {
+      const cover = tunnelCover(SHAFT, tunnel);
+      const covered = (x: number, y: number): boolean =>
+        cover.some((piece) => pointInPolygon({ x, y }, piece));
+      expect(covered(830, 570)).toBe(false);
+      expect(covered(830, 600)).toBe(true);
+      expect(covered(750, 570)).toBe(true);
+      expect(covered(900, 570)).toBe(true);
+      expect(covered(830, 620 + STEP - 1)).toBe(true);
+    });
+
+    it("shows a body on the stair through the hole, and still hides one under the roof", () => {
+      const shown = occludersOf([], SHAFT);
+      const count = (x: number, y: number): number => {
+        let hidden = 0;
+        traceHiddenOutline(RING_PATH, x, y + STEP, 4, 0, shown, () => {
+          hidden += 1;
+        });
+        return hidden;
+      };
+      expect(count(830, 560 - STEP)).toBe(0);
+      expect(count(930, 585)).toBeGreaterThan(0);
+    });
+
+    it("rims the hole as the seam, and puts no grating slot in it", () => {
+      // Over the first slot, centred at 780.
+      const seam = tunnelSeam({ ...SUNK, transitions: [stair(760)] }, tunnel, 2);
+      expect(seam.openings).toHaveLength(1);
+      expect(seam.openings[0]?.lip[0]).toEqual({ x: 762, y: 552 });
+      const centres = seam.slots.map((slot) => ((slot[0]?.x ?? 0) + (slot[1]?.x ?? 0)) / 2);
+      expect(centres).toEqual([780 + TUNNEL_GRATING_STEP]);
+    });
   });
 
   it("seams the tunnel's cover with its edge and a grating slot every 120 along it (#3236)", () => {
     const [tunnel] = SUNK.tunnels;
     if (tunnel === undefined) throw new Error("no tunnel");
-    const seam = tunnelSeam(tunnel, 2);
+    const seam = tunnelSeam(SUNK, tunnel, 2);
+    expect(seam.openings).toEqual([]);
     expect(seam.edge[0]).toEqual({ x: 700, y: 550 });
     expect(seam.edge[2]).toEqual({ x: 980, y: 620 });
     expect(seam.lip[0]).toEqual({ x: 702, y: 552 });

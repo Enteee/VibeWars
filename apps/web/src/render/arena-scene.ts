@@ -111,6 +111,7 @@ import {
   tunnelCover,
   tunnelFloor,
   tunnelSeam,
+  tunnelOpenings,
   tunnelsHolding,
   traceHiddenPolyline,
   type Occluder,
@@ -314,6 +315,7 @@ import {
 import {
   isStonePaving,
   paintPaving,
+  pavingHoles,
   paintPavingPiece,
   pavingDrawing,
   pavingTextureSizes,
@@ -3672,8 +3674,10 @@ export class ArenaScene extends Phaser.Scene {
       }
       drawn.ground.clear();
       drawn.seam.clear();
-      this.drawGroundPatch(drawn.ground, tunnelCover(structure, tunnel), line, palette);
-      this.drawTunnelSeam(drawn.seam, tunnel, line, palette);
+      for (const piece of tunnelCover(structure, tunnel)) {
+        this.drawGroundPatch(drawn.ground, piece, line, palette);
+      }
+      this.drawTunnelSeam(drawn.seam, structure, tunnel, line, palette);
     }
   }
 
@@ -3681,20 +3685,24 @@ export class ArenaScene extends Phaser.Scene {
    * The seam a covered tunnel shows on the ground (#3236): a recessed edge,
    * dark with its lit lip inside, and grating slots along its middle, all in
    * the biome's rock, so from above it reads as a passage running under.
+   * Each hole its stairs go down by (#3329) is rimmed the same way.
    */
   private drawTunnelSeam(
     g: Phaser.GameObjects.Graphics,
+    structure: MapStructure,
     tunnel: MapStructure["tunnels"][number],
     line: number,
     palette: ArenaPalette,
   ): void {
-    const seam = tunnelSeam(tunnel, (line * TUNNEL_SEAM_WIDTH) / 2);
+    const seam = tunnelSeam(structure, tunnel, (line * TUNNEL_SEAM_WIDTH) / 2);
     const points = (outline: readonly Vec2[]): Phaser.Math.Vector2[] =>
       outline.map(({ x, y }) => new Phaser.Math.Vector2(x, y));
-    g.lineStyle(line * TUNNEL_SEAM_WIDTH, palette.wallFace, 1);
-    g.strokePoints(points(seam.edge), true);
-    g.lineStyle(line, palette.wallLit, 0.8);
-    g.strokePoints(points(seam.lip), true);
+    for (const { edge, lip } of [seam, ...seam.openings]) {
+      g.lineStyle(line * TUNNEL_SEAM_WIDTH, palette.wallFace, 1);
+      g.strokePoints(points(edge), true);
+      g.lineStyle(line, palette.wallLit, 0.8);
+      g.strokePoints(points(lip), true);
+    }
     for (const slot of seam.slots) {
       g.fillStyle(TUNNEL_MOUTH, 1);
       this.fillFan(g, slot);
@@ -4217,11 +4225,16 @@ export class ArenaScene extends Phaser.Scene {
           renderOrder({ kind: "paving", layer: paving.layer }),
         ),
       );
-    const covers = structure.tunnels.map((tunnel, at) => ({
-      tunnel: at,
-      layer: structure.ground,
-      outline: tunnelCover(structure, tunnel),
-    }));
+    const covers = structure.tunnels.flatMap((tunnel, at) =>
+      tunnelCover(structure, tunnel).map((outline) => ({
+        tunnel: at,
+        layer: structure.ground,
+        outline,
+      })),
+    );
+    const holes = structure.tunnels.flatMap((tunnel) =>
+      tunnelOpenings(structure, tunnel).map((outline) => ({ layer: structure.ground, outline })),
+    );
     const overTunnels = new Map<number, Phaser.GameObjects.Image[]>();
     const painted = pavings.flatMap((paving, at) => {
       const drawing = drawings[at];
@@ -4234,6 +4247,7 @@ export class ArenaScene extends Phaser.Scene {
       const y = drawing.bounds.y - elevationOf(paving.layer, structure.ground);
       const depth = renderOrder({ kind: "paving", layer: paving.layer });
       const pieces = pavingTunnelPieces(drawing, paving.layer, size, covers);
+      const cut = pavingHoles(drawing, paving.layer, size, holes);
       const image = (
         width: number,
         height: number,
@@ -4257,7 +4271,7 @@ export class ArenaScene extends Phaser.Scene {
         };
       };
       const whole = image(size.width, size.height, (context) => {
-        paintPaving(context, drawing, scale, pieces);
+        paintPaving(context, drawing, scale, pieces, cut);
       });
       return [
         whole,

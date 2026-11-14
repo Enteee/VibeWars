@@ -26,6 +26,7 @@ import {
   stageShadows,
   sunShadowTint,
 } from "./lighting-pass.js";
+import { shapeOutline } from "./layer-surfaces.js";
 import { ELEVATION_STEP } from "./render-order.js";
 
 // Phaser probes for a browser when it loads: only its constants are read here.
@@ -285,6 +286,31 @@ describe("layerSurfaces", () => {
     // The lower deck's middle, lifted onto the screen, in light map pixels.
     expect(cover.some((box) => holds(box, 300, (350 - ELEVATION_STEP) / 2))).toBe(false);
     expect(cover.some((box) => holds(box, 10, 10))).toBe(true);
+  });
+
+  it("lights a tunnel's floor under the ground, and none of that layer elsewhere (#3329)", () => {
+    const tunnel = { kind: "rect" as const, x: 200, y: 600, width: 400, height: 80 };
+    const stair = ramp(0, 1, [300, 560, 60, 100], "n");
+    const tunnelled: MapStructure = {
+      ...HEIGHTS,
+      ground: 1,
+      decks: [],
+      tunnels: [{ footprint: tunnel }],
+      transitions: [stair],
+    };
+    expect(layerSurfaces(tunnelled, 0)).toContainEqual(shapeOutline(tunnel));
+    const extent = lightMapExtent(tunnelled, 0, 1200, 800);
+    const cover = lightMapCover(tunnelled, [], 0, extent);
+    // In light map pixels (half a world unit), against the extent's corner.
+    const lit = (x: number, y: number): boolean =>
+      cover.some((box) => holds(box, x * 0.5 - extent.x, y * 0.5 - extent.y));
+    // A torch in the gallery's middle lights its cell; the bed far off is not this layer's.
+    expect(lit(450, 640)).toBe(true);
+    expect(lit(450, 300)).toBe(false);
+    // The ground over the stair is a hole: its light comes from the tunnel.
+    expect(groundHoles(tunnelled)).toContainEqual(
+      shapeOutline({ kind: "rect", x: 300, y: 600, width: 60, height: 60 }),
+    );
   });
 
   it("lights only the cells a raised layer's surfaces are in (#3162)", () => {

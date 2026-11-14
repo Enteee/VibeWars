@@ -6,7 +6,7 @@ import type { MapLighting } from "@vibewars/game-maps/schema";
 import type { ArenaPalette, OverhangLookColours } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { boxMeets, boxUnder, coverBoxes } from "./cell-cover.js";
-import { deckCovers, rampDrawing, shapeOutline } from "./layer-surfaces.js";
+import { deckCovers, rampDrawing, shapeOutline, tunnelOpenings } from "./layer-surfaces.js";
 import {
   SURFACE_LIGHT_FLOOR,
   flickerAt,
@@ -204,9 +204,12 @@ export function layerSurfaces(
   const decks = structure.decks
     .filter((deck) => deck.layer === layer)
     .map((deck) => outline(deck.footprint));
-  // A pit's floor is the layer under the ground's, seen through its hole (#2973).
+  // A pit's floor is the layer under the ground's, seen through its hole
+  // (#2973), and so is a tunnel's, under its cover or through its stairs' (#3329).
   const pits =
-    layer === structure.ground - 1 ? structure.pits.map((pit) => outline(pit.footprint)) : [];
+    layer === structure.ground - 1
+      ? [...structure.pits, ...structure.tunnels].map(({ footprint }) => outline(footprint))
+      : [];
   // A ramp's drawn slope is already lifted; the light map is lifted whole.
   const ramps = structure.transitions
     .filter((ramp) => ramp.to === layer)
@@ -354,11 +357,16 @@ export function flickerRegions(
 }
 
 /**
- * Where the ground's light never falls (#2973): each pit's hole, lit by
- * the layer under it, so a body in a pit is not lit twice.
+ * Where the ground's light never falls (#2973): each pit's hole, and each
+ * hole stairs cut down into a tunnel (#3329), lit by the layer under it, so
+ * a body in one is not lit twice.
  */
 export function groundHoles(structure: MapStructure): readonly (readonly Vec2[])[] {
-  return structure.pits.map((pit) => shapeOutline(pit.footprint));
+  return [
+    ...structure.pits.map((pit) => shapeOutline(pit.footprint)),
+    // The stairs down into a tunnel go through the ground (#3329).
+    ...structure.tunnels.flatMap((tunnel) => tunnelOpenings(structure, tunnel)),
+  ];
 }
 
 interface LayerMap {
