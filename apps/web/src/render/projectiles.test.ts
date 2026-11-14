@@ -15,8 +15,11 @@ import {
   projectileHeading,
   projectileLayer,
   projectilePosition,
+  projectileCore,
   projectileTrail,
   SHOT_TRAIL_REACH,
+  SPRITE_HEAD,
+  SPRITE_TAIL,
   PROJECTILE_SPRITES,
   projectileSprite,
   SKILL_SPRITE,
@@ -187,31 +190,63 @@ describe("a shot between layers (#2972)", () => {
 });
 
 describe("projectileTrail (#3292)", () => {
-  const length = 16;
-
   it.each([0, Math.PI / 3, Math.PI, -2])("trails behind a sprite flying at %s rad", (heading) => {
-    const trail = projectileTrail(heading, length);
-    expect(trail.length).toBeGreaterThanOrEqual(3);
-    expect(trail.length).toBeLessThanOrEqual(4);
-    const ahead = { x: Math.cos(heading), y: Math.sin(heading) };
-    let last = 0;
-    for (const dot of trail) {
-      const along = dot.offset.x * ahead.x + dot.offset.y * ahead.y;
-      const across = dot.offset.x * ahead.y - dot.offset.y * ahead.x;
-      expect(along).toBeLessThan(0);
-      expect(across).toBeCloseTo(0, 9);
-      expect(-along).toBeGreaterThan(last);
-      last = -along;
-      expect(-along + dot.radius).toBeLessThanOrEqual(SHOT_TRAIL_REACH * length + dot.radius);
+    for (const sprite of PROJECTILE_SPRITES) {
+      const head = SPRITE_HEAD[sprite].radius;
+      const trail = projectileTrail(sprite, heading, 1);
+      expect(trail.length).toBeGreaterThanOrEqual(3);
+      expect(trail.length).toBeLessThanOrEqual(4);
+      const ahead = { x: Math.cos(heading), y: Math.sin(heading) };
+      let last = SPRITE_TAIL;
+      for (const dot of trail) {
+        const along = dot.offset.x * ahead.x + dot.offset.y * ahead.y;
+        const across = dot.offset.x * ahead.y - dot.offset.y * ahead.x;
+        expect(across).toBeCloseTo(0, 9);
+        // Behind the sprite's tail, never over the sprite, never bigger than its head.
+        expect(-along - dot.radius).toBeGreaterThanOrEqual(SPRITE_TAIL);
+        expect(-along).toBeGreaterThan(last);
+        expect(dot.radius).toBeLessThanOrEqual(head);
+        last = -along;
+      }
+      expect(last).toBeLessThanOrEqual(SPRITE_TAIL + SHOT_TRAIL_REACH * head + 1e-9);
     }
-    expect(last).toBeLessThanOrEqual(SHOT_TRAIL_REACH * length);
+  });
+
+  it("scales with the sprite as drawn", () => {
+    const one = projectileTrail("stone", 0, 1);
+    const two = projectileTrail("stone", 0, 2);
+    two.forEach((dot, i) => {
+      expect(dot.radius).toBeCloseTo(2 * (one[i]?.radius ?? 0), 9);
+      expect(dot.offset.x).toBeCloseTo(2 * (one[i]?.offset.x ?? 0), 9);
+    });
   });
 
   it("fades warm from gold at the sprite to ember at the tail, whatever the sprite", () => {
-    const trail = projectileTrail(0, length);
+    const trail = projectileTrail("stone", 0, 1);
     expect(trail[0]?.colour).toBe(0xffd23d);
     expect(trail.at(-1)?.colour).toBe(0xff8a3d);
     const alphas = trail.map((dot) => dot.alpha);
     expect([...alphas].sort((a, b) => b - a)).toEqual(alphas);
+  });
+});
+
+describe("projectileCore (#3292)", () => {
+  it.each([0, Math.PI / 2, -2])("sits on the sprite's head, inside it, at %s rad", (heading) => {
+    for (const sprite of PROJECTILE_SPRITES) {
+      const head = SPRITE_HEAD[sprite];
+      const core = projectileCore(sprite, heading, 1.5);
+      expect(core.offset.x).toBeCloseTo(Math.cos(heading) * head.along * 1.5, 9);
+      expect(core.offset.y).toBeCloseTo(Math.sin(heading) * head.along * 1.5, 9);
+      expect(core.radius).toBeGreaterThan(0);
+      expect(core.radius).toBeLessThan(head.radius * 1.5);
+    }
+  });
+
+  it("puts every head inside its 32 px frame", () => {
+    for (const sprite of PROJECTILE_SPRITES) {
+      const head = SPRITE_HEAD[sprite];
+      expect(head.along + head.radius).toBeLessThanOrEqual(16);
+      expect(head.radius).toBeLessThanOrEqual(6);
+    }
   });
 });

@@ -170,12 +170,37 @@ export function projectileLayer(shot: RenderableProjectile, clock: number): numb
  * A flying spell's look (#3292, docs/art/3191-skill-visuals.md
  * "Glowstone"): over its own sprite, which tells which spell it is, a
  * near-white core says it is hot, a short warm trail says where it came
- * from, and a soft shadow on the ground under it says it flies.
+ * from, and a soft shadow on the ground under it says it flies. All of
+ * it is sized from what the sprite draws, never from its padded frame.
  */
 
-/** The core: near-white, this share of the sprite's radius. */
+/** Where a sprite's bright head sits in its frame, px: this far ahead of the frame's centre, this big. */
+export interface SpriteHead {
+  readonly along: number;
+  readonly radius: number;
+}
+
+/** Each sprite's head, read off its SVG in `public/icons/projectile/`. */
+export const SPRITE_HEAD: Readonly<Record<ProjectileSprite, SpriteHead>> = {
+  arrow: { along: 10, radius: 4 },
+  spear: { along: 8, radius: 4 },
+  bolt: { along: 8.5, radius: 4.5 },
+  fireball: { along: 8.5, radius: 4.5 },
+  "lightning-orb": { along: 9, radius: 4 },
+  "ice-shard": { along: 6, radius: 3 },
+  "water-trident": { along: 10, radius: 5 },
+  "ebon-hawk": { along: 5, radius: 3 },
+  stone: { along: 6, radius: 5 },
+  "thrown-dagger": { along: 8, radius: 3 },
+  "deathly-swarm": { along: 10, radius: 4.5 },
+};
+
+/** How far behind the frame's centre every sprite's tail ends, px: each starts 2 px into its 32 px frame. */
+export const SPRITE_TAIL = 14;
+
+/** The core: near-white, this share of the head's radius, on the head. */
 export const SHOT_CORE_COLOUR = 0xfff4d0;
-export const SHOT_CORE_SHARE = 0.4;
+export const SHOT_CORE_SHARE = 0.6;
 
 /** The shadow: a soft dark ellipse this far under the sprite, on the deck below it. */
 export const SHOT_SHADOW = {
@@ -186,37 +211,59 @@ export const SHOT_SHADOW = {
   alpha: 0.3,
 } as const;
 
-/** The trail's longest reach behind the sprite, in sprite lengths. */
-export const SHOT_TRAIL_REACH = 2;
-
-/** One dot of a flying spell's trail, where it sits from the sprite's centre. */
-export interface TrailDot {
+/** A dot drawn by a flying spell, where it sits from the sprite's centre. */
+export interface ShotDot {
   readonly offset: Vec2;
   readonly radius: number;
+}
+
+/** The core of `sprite` drawn at `scale`, flying along `heading`. */
+export function projectileCore(sprite: ProjectileSprite, heading: number, scale: number): ShotDot {
+  const head = SPRITE_HEAD[sprite];
+  return {
+    offset: {
+      x: Math.cos(heading) * head.along * scale,
+      y: Math.sin(heading) * head.along * scale,
+    },
+    radius: SHOT_CORE_SHARE * head.radius * scale,
+  };
+}
+
+/** The trail's longest reach behind the sprite's tail, in head radii. */
+export const SHOT_TRAIL_REACH = 6;
+
+/** One dot of a flying spell's trail. */
+export interface TrailDot extends ShotDot {
   readonly colour: number;
   readonly alpha: number;
 }
 
-/** Warm whatever the sprite: gold at the sprite, ember at the tail. */
+/** Warm whatever the sprite: gold at the sprite, ember at the tail; `back` behind the tail and `share` big, in head radii. */
 const TRAIL = [
-  { back: 0.6, share: 0.35, colour: 0xffd23d, alpha: 0.85 },
-  { back: 1.05, share: 0.28, colour: 0xffb03d, alpha: 0.6 },
-  { back: 1.5, share: 0.21, colour: 0xff9a3d, alpha: 0.4 },
-  { back: SHOT_TRAIL_REACH, share: 0.14, colour: 0xff8a3d, alpha: 0.22 },
+  { back: 1, share: 0.9, colour: 0xffd23d, alpha: 0.85 },
+  { back: 2.7, share: 0.75, colour: 0xffb03d, alpha: 0.6 },
+  { back: 4.3, share: 0.6, colour: 0xff9a3d, alpha: 0.4 },
+  { back: SHOT_TRAIL_REACH, share: 0.45, colour: 0xff8a3d, alpha: 0.22 },
 ] as const;
 
 /**
- * The trail behind a sprite `length` long, flying along `heading`:
- * fading dots back along its line, none past `SHOT_TRAIL_REACH`. A shot
- * flies straight, so the scene works this out once per shot, never per
- * frame.
+ * The trail behind `sprite` drawn at `scale`, flying along `heading`:
+ * fading dots back along its line from its tail, none bigger than its
+ * head, none past `SHOT_TRAIL_REACH`. A shot flies straight, so the
+ * scene works this out once per shot, never per frame.
  */
-export function projectileTrail(heading: number, length: number): readonly TrailDot[] {
+export function projectileTrail(
+  sprite: ProjectileSprite,
+  heading: number,
+  scale: number,
+): readonly TrailDot[] {
+  const head = SPRITE_HEAD[sprite].radius * scale;
+  const tail = SPRITE_TAIL * scale;
   const cos = Math.cos(heading);
   const sin = Math.sin(heading);
   return TRAIL.map(({ back, share, colour, alpha }) => ({
-    offset: { x: -cos * back * length, y: -sin * back * length },
-    radius: share * length,
+    offset: { x: -cos * (tail + back * head), y: -sin * (tail + back * head) },
+    radius: share * head,
     colour,
     alpha,
   }));

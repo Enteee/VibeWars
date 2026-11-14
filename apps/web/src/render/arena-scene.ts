@@ -131,10 +131,11 @@ import {
   projectileLanding,
   projectileLayer,
   projectilePosition,
+  projectileCore,
   projectileTrail,
   SHOT_CORE_COLOUR,
-  SHOT_CORE_SHARE,
   SHOT_SHADOW,
+  type ShotDot,
   type TrailDot,
   shotFadeAlpha,
 } from "./projectiles.js";
@@ -671,7 +672,7 @@ export class ArenaScene extends Phaser.Scene {
       endedAt: number | undefined;
       /** A flying spell's (#3292): where it left, its trail, and its core's radius. */
       readonly spell:
-        | { readonly from: Vec2; readonly trail: readonly TrailDot[]; readonly core: number }
+        | { readonly from: Vec2; readonly trail: readonly TrailDot[]; readonly core: ShotDot }
         | undefined;
     }
   >();
@@ -1837,7 +1838,7 @@ export class ArenaScene extends Phaser.Scene {
         const heading = projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts);
         image.setRotation(heading);
         image.setTint(shot.colour);
-        const length = Math.max(image.displayWidth, image.displayHeight);
+        const scale = image.scaleX;
         const from = projectilePosition(
           shot,
           shot.launchedAt,
@@ -1852,8 +1853,8 @@ export class ArenaScene extends Phaser.Scene {
             shot.spell && from !== undefined
               ? {
                   from,
-                  trail: projectileTrail(heading, length),
-                  core: (SHOT_CORE_SHARE * length) / 2,
+                  trail: projectileTrail(shot.sprite, heading, scale),
+                  core: projectileCore(shot.sprite, heading, scale),
                 }
               : undefined,
         });
@@ -1895,7 +1896,11 @@ export class ArenaScene extends Phaser.Scene {
     for (const { image, spell } of this.projectileImages.values()) {
       if (spell !== undefined && cores !== undefined) {
         cores.fillStyle(SHOT_CORE_COLOUR, image.alpha);
-        cores.fillCircle(image.x, image.y, spell.core);
+        cores.fillCircle(
+          image.x + spell.core.offset.x,
+          image.y + spell.core.offset.y,
+          spell.core.radius,
+        );
       }
     }
   }
