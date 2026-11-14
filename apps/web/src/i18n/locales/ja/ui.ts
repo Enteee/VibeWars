@@ -300,6 +300,7 @@ export default {
   "controls.weaponSet3": "武器セット3",
   "controls.weaponSet4": "武器セット4",
   "controls.weaponSets": "武器セット",
+  "creature.rat": "ネズミ",
 
   "echo.secondsLeft": { other: "エコー: 残り{count}秒" },
 

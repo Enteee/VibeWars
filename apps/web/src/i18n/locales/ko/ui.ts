@@ -297,6 +297,7 @@ export default {
   "controls.weaponSet3": "무기 세트 3",
   "controls.weaponSet4": "무기 세트 4",
   "controls.weaponSets": "무기 세트",
+  "creature.rat": "쥐",
 
   "echo.secondsLeft": { other: "메아리: {count}초 남음" },
 

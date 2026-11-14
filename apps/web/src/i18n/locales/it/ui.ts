@@ -346,6 +346,7 @@ export default {
   "controls.weaponSet3": "Set di armi 3",
   "controls.weaponSet4": "Set di armi 4",
   "controls.weaponSets": "Set di armi",
+  "creature.rat": "Ratto",
 
   "echo.secondsLeft": {
     one: "Eco: {count} s rimanente",

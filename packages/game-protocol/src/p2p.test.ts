@@ -708,6 +708,22 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   [
+    "snapshot with a rat (#3315)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [
+        player,
+        {
+          ...minion,
+          id: "rat/0",
+          name: "Rat",
+          creature: { ...minion.creature, ownerId: null, kind: "critter", look: "rat" },
+        },
+      ],
+    },
+  ],
+  [
     "snapshot with a pet on Heel (#1110)",
     parseWireSnapshotPart,
     {

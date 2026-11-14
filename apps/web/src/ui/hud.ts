@@ -66,6 +66,7 @@ import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast
 import { pipsElement, renderPips } from "./pips.js";
 import {
   SIGNET_ROW_PX,
+  bodyName,
   setSignet,
   signedNameElement,
   signetElement,
@@ -1877,7 +1878,7 @@ export function ghostNameplate(
 ): Nameplate {
   const leaderId = player.creature?.kind === "ghostly-hero" ? player.creature.leaderId : null;
   if (leaderId === null || (self !== undefined && self.team !== player.team)) {
-    return { lead: undefined, name: player.name, signet: player.signet };
+    return { lead: undefined, name: bodyName(player), signet: player.signet };
   }
   return {
     lead: `${player.name} ›`,
@@ -1945,7 +1946,7 @@ function renderTarget(
   renderTargetProfessions(hud.targetProfessions, target);
   renderTargetSignet(hud, target?.signet);
   const name =
-    target?.name ??
+    (target === undefined ? undefined : bodyName(target)) ??
     (self === undefined
       ? undefined
       : objectTargetName(self.targetSessionId, self.team, stand, beacon, switches));

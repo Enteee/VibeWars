@@ -324,6 +324,7 @@ export default {
   "controls.weaponSet3": "Våbensæt 3",
   "controls.weaponSet4": "Våbensæt 4",
   "controls.weaponSets": "Våbensæt",
+  "creature.rat": "Rotte",
 
   "echo.secondsLeft": { one: "Ekko: {count} s tilbage", other: "Ekko: {count} s tilbage" },
 

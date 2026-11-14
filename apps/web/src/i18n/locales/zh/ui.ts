@@ -292,6 +292,7 @@ export default {
   "controls.weaponSet3": "武器组 3",
   "controls.weaponSet4": "武器组 4",
   "controls.weaponSets": "武器组",
+  "creature.rat": "老鼠",
 
   "echo.secondsLeft": { other: "回响：剩余 {count} 秒" },
 

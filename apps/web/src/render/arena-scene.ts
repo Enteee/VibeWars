@@ -2102,19 +2102,19 @@ export class ArenaScene extends Phaser.Scene {
     const team = this.lit(teamColour(actor.team), actor);
     const colourOf = (colour: OrnamentColour): number =>
       colour === "team" ? team : colour === "ink" ? SELF_RIM : colour;
-    for (const ornament of creatureOrnament(look, x, y, actor.radius)) {
+    for (const ornament of creatureOrnament(look, x, y, actor.radius, actor.facing)) {
       if (ornament.kind === "polygon") {
         tracePath(g, ornament.points);
         g.fillStyle(colourOf(ornament.colour), 1);
         g.fillPath();
         g.lineStyle(ornament.edge, BODY_EDGE, 1);
         g.strokePath();
-      } else if (ornament.kind === "outline") {
+      } else if (ornament.kind === "outline" || ornament.kind === "stroke") {
         for (const [width, colour] of [
           [ornament.casing, BODY_EDGE],
           [ornament.width, colourOf(ornament.colour)],
         ] as const) {
-          tracePath(g, ornament.points);
+          tracePath(g, ornament.points, ornament.kind === "outline");
           g.lineStyle(width, colour, 1);
           g.strokePath();
         }
@@ -4425,8 +4425,8 @@ function phaserPainter(g: Phaser.GameObjects.Graphics): Painter {
   return painter;
 }
 
-/** Begins a closed path along `points` on `g`, to fill or stroke. */
-function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[]): void {
+/** Begins a path along `points` on `g`, to fill or stroke: closed, unless `closed` is false. */
+function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[], closed = true): void {
   const [first, ...rest] = points;
   g.beginPath();
   if (first !== undefined) {
@@ -4435,7 +4435,9 @@ function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[]): vo
       g.lineTo(point.x, point.y);
     }
   }
-  g.closePath();
+  if (closed) {
+    g.closePath();
+  }
 }
 
 export type {

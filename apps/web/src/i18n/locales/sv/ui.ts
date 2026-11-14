@@ -325,6 +325,7 @@ export default {
   "controls.weaponSet3": "Vapenset 3",
   "controls.weaponSet4": "Vapenset 4",
   "controls.weaponSets": "Vapenset",
+  "creature.rat": "Råtta",
 
   "echo.secondsLeft": { one: "Ekad: {count} s kvar", other: "Ekad: {count} s kvar" },
 
