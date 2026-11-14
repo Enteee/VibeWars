@@ -261,6 +261,7 @@ import {
 import { bodyUnder, overhangAlpha, paintOverhang, type OverhangCover } from "./overhang-art.js";
 import {
   DECK_ART,
+  FADING_TOP_LOOKS,
   SWITCHED_DECK_ART,
   TRANSITION_ART,
   deckPalette,
@@ -577,8 +578,11 @@ export class ArenaScene extends Phaser.Scene {
     number,
     { readonly ground: Phaser.GameObjects.Graphics; readonly seam: Phaser.GameObjects.Graphics }
   >();
-  /** Each overhang (#3293) as drawn, and where it hangs: faded while a body is under it. */
-  private overhangsDrawn: readonly {
+  /**
+   * Each overhang (#3293) and arch top (#3312) as drawn, and where it
+   * hangs: faded while a body is under it.
+   */
+  private coversDrawn: {
     readonly cover: OverhangCover;
     readonly graphics: Phaser.GameObjects.Graphics;
   }[] = [];
@@ -3146,6 +3150,10 @@ export class ArenaScene extends Phaser.Scene {
         g.restore();
       }
     }
+    for (const { graphics } of this.coversDrawn) {
+      graphics.destroy();
+    }
+    this.coversDrawn = [];
     for (const deck of [...next.structure.decks, ...next.structure.downDecks]) {
       this.drawDeck(
         next.structure,
@@ -3172,7 +3180,7 @@ export class ArenaScene extends Phaser.Scene {
       g,
       ...this.structureGraphics.values(),
       ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
-      ...this.overhangsDrawn.map(({ graphics }) => graphics),
+      ...this.coversDrawn.map(({ graphics }) => graphics),
     ]);
   }
 
@@ -3329,12 +3337,12 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * Each overhang over a body (#3293), anyone's, faded to
+   * Each overhang or arch top over a body (#3293, #3312), anyone's, faded to
    * `OVERHANG_FADED_ALPHA` so it never hides one, and back once its
    * footprint is empty. At once under reduced motion.
    */
   private fadeOverhangs(dt: number): void {
-    for (const { cover, graphics } of this.overhangsDrawn) {
+    for (const { cover, graphics } of this.coversDrawn) {
       const covering = bodyUnder(cover, this.drawnActors, this.liftOf);
       const next = overhangAlpha(graphics.alpha, covering, dt, this.reducedMotion);
       if (next !== graphics.alpha) {
@@ -3355,10 +3363,7 @@ export class ArenaScene extends Phaser.Scene {
     lighting: MapLighting | undefined,
     line: number,
   ): void {
-    for (const { graphics } of this.overhangsDrawn) {
-      graphics.destroy();
-    }
-    this.overhangsDrawn = structure.overhangs.map((overhang) => {
+    for (const overhang of structure.overhangs) {
       const top = elevationOf(overhang.layer, structure.ground);
       const graphics = this.add
         .graphics()
@@ -3386,11 +3391,11 @@ export class ArenaScene extends Phaser.Scene {
         line,
       );
       graphics.restore();
-      return {
+      this.coversDrawn.push({
         cover: { layer: overhang.layer, outline: shapeOutline(overhang.footprint), top },
         graphics,
-      };
-    });
+      });
+    }
   }
 
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */
@@ -3531,7 +3536,7 @@ export class ArenaScene extends Phaser.Scene {
     const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
     this.drawColumn(side, deck.footprint, frame.low, frame.top, palette.slab, true);
     art.side(side, frame);
-    const face = this.structureAt({ kind: "deck", deckLayer: deck.layer });
+    const face = this.deckTop(deck, frame.top);
     face.save();
     face.translateCanvas(0, -frame.top);
     face.fillStyle(palette.deckTop, 1);
@@ -3547,6 +3552,23 @@ export class ArenaScene extends Phaser.Scene {
       SWITCHED_DECK_ART.cracks(face, frame, switched.cracks, switched.afterCrossings);
     }
     face.restore();
+  }
+
+  /**
+   * The graphics `deck`'s top draws in: its layer's, or its own for a top
+   * walked under, faded as an overhang is while a body is under it (#3312).
+   */
+  private deckTop(deck: MapStructure["decks"][number], top: number): Phaser.GameObjects.Graphics {
+    const item: RenderItem = { kind: "deck", deckLayer: deck.layer };
+    if (!FADING_TOP_LOOKS.has(deck.look)) {
+      return this.structureAt(item);
+    }
+    const graphics = this.add.graphics().setDepth(renderOrder(item));
+    this.coversDrawn.push({
+      cover: { layer: deck.layer, outline: shapeOutline(deck.footprint), top },
+      graphics,
+    });
+    return graphics;
   }
 
   /**

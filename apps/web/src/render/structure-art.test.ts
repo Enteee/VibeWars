@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { pointInShape } from "@vibewars/game-maps/geometry";
 import { DECK_LOOKS, TRANSITION_LOOKS } from "@vibewars/game-maps/schema";
+
+import { arenaMap } from "../net/maps.js";
 
 import { arenaPalette, BIOME, SWITCHED_DECK_LOOK } from "./arena-palette.js";
 import { FLAT_STRUCTURE, type MapStructure } from "./arena-snapshot.js";
@@ -10,12 +13,16 @@ import {
   openEdges,
   rampDrawing,
   rampFrame,
+  shapeOutline,
   type Segment,
 } from "./layer-surfaces.js";
+import { bodyUnder } from "./overhang-art.js";
 import { elevationOf } from "./render-order.js";
 import {
   DECK_ART,
+  FADING_TOP_LOOKS,
   SWITCHED_DECK_ART,
+  archPassage,
   TRANSITION_ART,
   deckPalette,
   transitionPalette,
@@ -270,5 +277,63 @@ describe("switched decks gone down or giving way (#3068)", () => {
     expect(lines(2)).toBe(2 * lines(1));
     expect(cracks(1).filter(({ colour }) => colour === SWITCHED_DECK_LOOK.hole)).toEqual([]);
     expect(cracks(2).filter(({ colour }) => colour === SWITCHED_DECK_LOOK.hole)).toHaveLength(2);
+  });
+});
+
+describe("the way under an arch (#3312)", () => {
+  it("walks a long north–south arch east–west, its south face open its whole width", () => {
+    const { walk, openings } = archPassage(rect(960, 690, 80, 520));
+    expect(walk).toBe("x");
+    expect(openings).toEqual([{ from: { x: 1040, y: 1210 }, to: { x: 960, y: 1210 } }]);
+  });
+
+  it("walks a gate arch north–south, through the middle of its south face, as a square one", () => {
+    expect(archPassage(rect(1200, 1180, 260, 70))).toEqual({
+      walk: "y",
+      openings: [{ from: { x: 1395, y: 1250 }, to: { x: 1265, y: 1250 } }],
+    });
+    expect(archPassage(rect(0, 0, 100, 100)).walk).toBe("y");
+  });
+
+  it("lintels a face walked along, where a gate arch's opening is round", () => {
+    const shaded = (footprint: ReturnType<typeof rect>): number => {
+      if (towerDeck === undefined) throw new Error("no tower");
+      const painter = recorder();
+      DECK_ART.arch.side(painter, frameOf({ ...towerDeck, look: "arch", footprint }, []));
+      return painter.calls.filter(({ name }) => name === "fillTriangle").length;
+    };
+    // A quad is two triangles; a round top adds one per segment.
+    expect(shaded(rect(960, 690, 80, 520))).toBe(2);
+    expect(shaded(rect(1200, 1180, 260, 70))).toBeGreaterThan(2);
+  });
+
+  it("hides no one under Canyon's arch: all its walkable ground fades the top, inside its footprint", () => {
+    const canyon = arenaMap("arena-canyon");
+    const arch = canyon?.decks.find(({ id }) => id === "stone-arch");
+    if (canyon === undefined || arch === undefined) throw new Error("no Canyon arch");
+    expect(FADING_TOP_LOOKS.has(arch.look)).toBe(true);
+    const cover = {
+      layer: arch.layer,
+      outline: shapeOutline(arch.footprint),
+      top: elevationOf(arch.layer, canyon.groundLayer),
+    };
+    const { x, y, width, height } = { x: 960, y: 690, width: 80, height: 520 };
+    expect(arch.footprint).toEqual({ kind: "rect", x, y, width, height });
+    let walkable = 0;
+    for (let px = x + 1; px < x + width; px += 6) {
+      for (let py = y + 1; py < y + height; py += 6) {
+        const position = { x: px, y: py };
+        const floor = canyon.groundLayer;
+        if (canyon.walls.some((wall) => wall.layer === floor && pointInShape(position, wall))) {
+          continue;
+        }
+        walkable += 1;
+        expect(bodyUnder(cover, [{ id: "b", position, layer: floor }], () => 0)).toBe(true);
+      }
+    }
+    expect(walkable).toBeGreaterThan(1000);
+    // Its south face, where the walk is seen to pass, opens all of x 960–1040.
+    const [face] = archPassage(arch.footprint).openings;
+    expect(face).toEqual({ from: { x: 1040, y: 1210 }, to: { x: 960, y: 1210 } });
   });
 });
