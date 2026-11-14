@@ -48,6 +48,7 @@ const validMap = {
   pits: [],
   tunnels: [],
   decks: [],
+  overhangs: [],
   transitions: [],
   dropOffs: [],
   walls: [
@@ -2268,5 +2269,62 @@ describe("lifts (#3079)", () => {
       { gates: [0, 1, 2, 3, 4].map(spare) },
       /7 gates, breakables, switched teleports, switched decks and lifts, more than 6/,
     );
+  });
+});
+
+describe("overhangs (#3293)", () => {
+  const awning = (id: string, layer = 1, x = 500) => ({
+    id,
+    layer,
+    footprint: { kind: "rect", x, y: 300, width: 120, height: 80 },
+    look: "awning",
+  });
+  const refuses = (overrides: object, message: RegExp): void => {
+    expect(() => validateMapData({ ...layerTest, ...overrides })).toThrow(message);
+  };
+
+  it("accepts an awning, a lean-to and a canopy over the ground, with no way up", () => {
+    const overhangs = [
+      awning("awning"),
+      { ...awning("lean-to", 1, 700), look: "lean-to" },
+      { ...awning("canopy", 1, 900), look: "canopy" },
+    ];
+    expect(validateMapData({ ...layerTest, overhangs }).overhangs).toHaveLength(3);
+  });
+
+  it("requires the field", () => {
+    const { overhangs: _overhangs, ...none } = layerTest;
+    expect(() => validateMapData(none)).toThrow(/overhangs/);
+  });
+
+  it("refuses an id used twice", () => {
+    refuses({ overhangs: [awning("a"), awning("a", 1, 900)] }, /overhang id a is used twice/);
+  });
+
+  it("refuses a layer out of range, or on the ground", () => {
+    refuses({ overhangs: [awning("high", 2)] }, /layer 2 is not one of the map's 2/);
+    refuses({ overhangs: [awning("low", 0)] }, /overhang low is on layer 0, not above the ground/);
+  });
+
+  it("refuses an unknown look", () => {
+    refuses({ overhangs: [{ ...awning("tent"), look: "tent" }] }, /overhangs\.0\.look/);
+  });
+
+  it("refuses more than 12", () => {
+    const many = Array.from({ length: 13 }, (_, k) => awning(`a${String(k)}`, 1, 100 * k));
+    refuses({ overhangs: many }, /overhangs/);
+  });
+
+  it("refuses a footprint wholly off the ground, and lets one hang over its edge", () => {
+    const off = {
+      ...awning("off"),
+      footprint: { kind: "rect", x: -300, y: 300, width: 120, height: 80 },
+    };
+    refuses({ overhangs: [off] }, /overhang off must hang over the ground's outline/);
+    const edge = {
+      ...awning("edge"),
+      footprint: { kind: "rect", x: -60, y: 300, width: 120, height: 80 },
+    };
+    expect(validateMapData({ ...layerTest, overhangs: [edge] }).overhangs).toHaveLength(1);
   });
 });

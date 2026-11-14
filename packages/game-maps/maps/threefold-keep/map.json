@@ -13,6 +13,7 @@
   "pits": [],
   "tunnels": [],
   "decks": [],
+  "overhangs": [],
   "transitions": [],
   "keep": true,
   "ghostLevel": 24,
