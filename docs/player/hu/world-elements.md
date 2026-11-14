@@ -54,6 +54,12 @@ sárgaréz gombja felhúzva világít, lehúzva szürke. Kattints jobb gombbal
 egy karra, hogy célba vedd, aztán nyomd meg a **Space** gombot, hogy
 odamenj és átbillentsd.
 
+Vidd az egeret egy kar fölé, vagy vedd célba, és amit működtet, sárgaréz
+körvonalat kap, a kartól hozzá vezető pontozott vonallal, akár a fölötte
+lévő talajon át is. Amikor bárki átbillenti a kart, felvillan, amit
+működtet. A célkeret megmondja, mit tesz a következő billentés, például
+_Kar · kinyitja: csapórács_.
+
 Néhány kapu ehelyett **nyomólappal** nyílik: kőkoronggal, amely
 besüllyed és sárgarezessé válik, amíg valaki rajta áll. A kapu bezárul,
 amikor az utolsó is lelép, és a lap fél másodperccel később újra
@@ -97,6 +103,12 @@ egy játékos fér el. A **híd** kőből, pallókból vagy egy kidőlt fatörzs
 ível át egy szakadékot, és az alatta lévő játékosok elsétálhatnak alatta.
 Attól, hogy magasabban vagy, nem változik sem a hatótávod, sem a
 sebzésed.
+
+## Alagutak
+
+Néhány átjáró a föld alatt fut. Felülről egy rácsrésekkel tagolt,
+besüllyesztett fuga jelzi, merre fut egy ilyen, és a két végén lévő
+fények egyeznek: ha meleg fénynél mész le, meleg fénynél jössz fel.
 
 ## Időjárás és hangulat
 

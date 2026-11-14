@@ -676,6 +676,46 @@ export function tunnelCover(
   return boxOutline(box.left, box.top, box.right, box.bottom + step);
 }
 
+/** How far apart a tunnel cover's grating slots are, along its length (#3236). */
+export const TUNNEL_GRATING_STEP = 120;
+/** A grating slot's size along the tunnel, and its most across it. */
+const GRATING_SLOT = { along: 18, across: 44 };
+
+/**
+ * The seam over `tunnel` on the ground (#3236): its edge, the same edge
+ * `inset` inward where the recess's lit lip runs, and a grating slot every
+ * `TUNNEL_GRATING_STEP` along its middle, centred on its length.
+ */
+export function tunnelSeam(
+  tunnel: MapStructure["tunnels"][number],
+  inset: number,
+): {
+  readonly edge: readonly Vec2[];
+  readonly lip: readonly Vec2[];
+  readonly slots: readonly (readonly Vec2[])[];
+} {
+  const box = boxOf(tunnel.footprint);
+  const lengthwise = box.right - box.left >= box.bottom - box.top;
+  const [start, end] = lengthwise ? [box.left, box.right] : [box.top, box.bottom];
+  const middle = lengthwise ? (box.top + box.bottom) / 2 : (box.left + box.right) / 2;
+  const width = lengthwise ? box.bottom - box.top : box.right - box.left;
+  const across = Math.min(GRATING_SLOT.across, width / 2) / 2;
+  const along = GRATING_SLOT.along / 2;
+  const count = Math.max(1, Math.floor((end - start) / TUNNEL_GRATING_STEP));
+  const first = (start + end - (count - 1) * TUNNEL_GRATING_STEP) / 2;
+  const slots = Array.from({ length: count }, (_, at) => {
+    const centre = first + at * TUNNEL_GRATING_STEP;
+    return lengthwise
+      ? boxOutline(centre - along, middle - across, centre + along, middle + across)
+      : boxOutline(middle - across, centre - along, middle + across, centre + along);
+  });
+  return {
+    edge: boxOutline(box.left, box.top, box.right, box.bottom),
+    lip: boxOutline(box.left + inset, box.top + inset, box.right - inset, box.bottom - inset),
+    slots,
+  };
+}
+
 /**
  * The floor of `tunnel`, sunk a step (#3234): only seen through its cover
  * while that is cut away for whoever is in it.

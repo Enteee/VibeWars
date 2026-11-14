@@ -53,6 +53,12 @@ está para cima e fica cinza quando está para baixo. Clique com o botão direit
 numa alavanca para selecioná-la e depois aperte **Space** para ir até ela e
 acioná-la.
 
+Passe o mouse sobre uma alavanca ou selecione-a e o que ela controla
+ganha um contorno de latão, com uma linha pontilhada da alavanca até
+ele, mesmo através do chão que fica por cima. Quando alguém aciona a
+alavanca, o que ela controla pisca. O quadro do alvo diz o que o próximo
+acionamento faz, como _Alavanca · abre a grade levadiça_.
+
 Alguns portões abrem com uma **placa de pressão**: um disco de pedra que
 afunda e fica cor de latão enquanto alguém está sobre ele. O portão fecha
 quando o último sai, e a placa o abre de novo meio segundo
@@ -99,6 +105,13 @@ parede grossa, com um parapeito e escadas nas pontas. Uma escada de mão
 tábuas ou de um tronco caído atravessa um vão, e os jogadores lá embaixo
 podem passar por baixo dela. Estar mais alto não muda seu alcance nem
 seu dano.
+
+## Túneis
+
+Algumas passagens correm por baixo da terra. Visto de cima, um rejunte
+rebaixado com fendas de grade marca por onde uma delas passa, e as luzes
+das suas duas pontas combinam: desça junto a uma luz quente e você sai
+junto a uma luz quente.
 
 ## Pontes levadiças, pontes de corda e passagens secretas
 

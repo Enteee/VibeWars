@@ -40,6 +40,7 @@ export type RenderItem =
   | { readonly kind: "support"; readonly deckLayer: number }
   | { readonly kind: "side-face"; readonly deckLayer: number }
   | { readonly kind: "tunnel-cover"; readonly deckLayer: number }
+  | { readonly kind: "tunnel-seam"; readonly deckLayer: number }
   | { readonly kind: "deck"; readonly deckLayer: number }
   | { readonly kind: "ramp"; readonly upperLayer: number }
   | { readonly kind: "lift"; readonly upperLayer: number }
@@ -90,6 +91,8 @@ const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, mar
  */
 const GROUND_PAVING = -1.7;
 const DECK_PAVING = 5.55;
+/** A covered tunnel's seam (#3236): over the paving on the ground above it, under its water. */
+const TUNNEL_SEAM = 5.57;
 const GROUND_WATER: Record<WaterPart, number> = { surface: -1.6, ripples: -1.5 };
 const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
 /**
@@ -115,7 +118,7 @@ const SUPPORT = 3;
 const SIDE_FACE = 4;
 /**
  * The ground over one tunnel (#3234): a deck of the ground's layer of its
- * own, so it can be cut away for whoever is in it, under the deck's inlay.
+ * own, so it can be cut away for whoever is in it, under the deck.
  */
 const TUNNEL_COVER = 4.9;
 const DECK = 5;
@@ -175,6 +178,8 @@ export function renderOrder(item: RenderItem): number {
       return (item.deckLayer - 1) * LAYER_STACK + SIDE_FACE;
     case "tunnel-cover":
       return (item.deckLayer - 1) * LAYER_STACK + TUNNEL_COVER;
+    case "tunnel-seam":
+      return (item.deckLayer - 1) * LAYER_STACK + TUNNEL_SEAM;
     case "deck":
       return (item.deckLayer - 1) * LAYER_STACK + DECK;
     case "ramp":

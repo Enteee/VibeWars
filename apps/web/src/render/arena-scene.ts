@@ -70,13 +70,13 @@ import {
   DECK_LIP,
   PIT_FLOOR,
   PIT_WALL,
-  TUNNEL_INLAY,
   TUNNEL_MOUTH,
   WALL_STROKE,
   arenaPalette,
   type ArenaPalette,
   pavingPalette,
   type PavingLookColours,
+  SWITCH_MARK_LOOK,
 } from "./arena-palette.js";
 import {
   trackAlt,
@@ -106,6 +106,7 @@ import {
   seenFrom,
   tunnelCover,
   tunnelFloor,
+  tunnelSeam,
   tunnelsHolding,
   traceHiddenPolyline,
   type Occluder,
@@ -220,6 +221,7 @@ import { lightingOn } from "./lighting-preference.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
 import { SWITCH_MARK_ART, leverThrown, switchMarkKey } from "./switch-mark.js";
 import { paintArrival, paintTeleportEntry, paintTeleportExit } from "./teleport-mark.js";
+import { dotsAlong, switchFlashAlpha, switchLinkAlpha } from "./switch-link.js";
 import { doorPalette, GATE_ART, paintPlate, type GatePainter } from "./gate-mark.js";
 import {
   BARRIER_ART,
@@ -319,6 +321,9 @@ const DECK_LIP_WIDTH = 3;
 /** The dark of a drop-off's broken lip, under its pale crumbled edge (#3069). */
 const DROP_OFF_CRACK = 0x2a2420;
 const WALL_LIT_WIDTH = 2;
+/** A covered tunnel's seam (#3236): its recessed edge's dark, in CSS px, and a grating slot's bars across it. */
+const TUNNEL_SEAM_WIDTH = 4;
+const GRATING_BARS = 3;
 /** Pixels per world unit of a zone's painted ground (#3052): sharp at a close zoom. */
 const ZONE_TEXTURE_SCALE = 2;
 /** The longest side of a zone's ground texture, in pixels, however large the zone. */
@@ -338,6 +343,10 @@ interface ZoneGround {
 const HOVER_RING = 0xd7dee8;
 const HOVER_RADIUS = 12;
 const HOVER_DASHES = 8;
+/** A lever's link to what it works (#3236): its targets' outline, and the dots of its line. */
+const SWITCH_LINK_WIDTH = 3;
+const SWITCH_LINK_DOT_STEP = 14;
+const SWITCH_LINK_DOT_RADIUS = 1.6;
 /** The ground over the tunnel the local body is in (#3234): how much of it still draws. */
 const TUNNEL_CUTAWAY_ALPHA = 0.35;
 /** How long that ground takes to fade out or back in, in seconds. */
@@ -490,8 +499,14 @@ export class ArenaScene extends Phaser.Scene {
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
-  /** The ground over each tunnel (#3234), by its index: faded while the local body is in it. */
-  private readonly tunnelCovers = new Map<number, Phaser.GameObjects.Graphics>();
+  /**
+   * The ground over each tunnel (#3234) and its seam over the paving
+   * (#3236), by its index: both faded while the local body is in it.
+   */
+  private readonly tunnelCovers = new Map<
+    number,
+    { readonly ground: Phaser.GameObjects.Graphics; readonly seam: Phaser.GameObjects.Graphics }
+  >();
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
   private readonly staticCull = new StaticGraphicsCull();
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
@@ -866,6 +881,7 @@ export class ArenaScene extends Phaser.Scene {
     this.cutAwayTunnels(dt);
     this.drawHiddenOutlines();
     this.drawHoverMarker(effects);
+    this.drawSwitchLinks(effects);
     // Over the bodies: a carried flag stands above its carrier's head.
     for (const flag of this.snapshot.flags) {
       this.drawFlag(effects, flag);
@@ -1174,6 +1190,50 @@ export class ArenaScene extends Phaser.Scene {
     g.translateCanvas(0, -elevationOf(lever.layer, this.snapshot.structure.ground));
     SWITCH_MARK_ART[switchMarkKey(lever.mark)](g, lever.position, thrown);
     g.restore();
+  }
+
+  /**
+   * What each lever works (#3236), over every cover so a gate under the
+   * ground still shows: a hovered or targeted lever's targets outlined in
+   * its brass, pulsing, with a dotted line from it to each; a thrown
+   * lever's targets flash the same outline for `SWITCH_FLASH_SECONDS`.
+   */
+  private drawSwitchLinks(g: Phaser.GameObjects.Graphics): void {
+    const { ground } = this.snapshot.structure;
+    const lift = (point: Vec2, layer: number): Vec2 => ({
+      x: point.x,
+      y: point.y - elevationOf(layer, ground),
+    });
+    for (const lever of this.snapshot.switches) {
+      const linked = lever.id === this.snapshot.hoverId || lever.id === this.snapshot.targetId;
+      const thrownAt = this.leverFlips.get(lever.id)?.at;
+      const flash = switchFlashAlpha(thrownAt === undefined ? undefined : this.now - thrownAt);
+      const alpha = Math.max(linked ? switchLinkAlpha(this.now, this.reducedMotion) : 0, flash);
+      if (alpha <= 0) {
+        continue;
+      }
+      const from = lift(lever.position, lever.layer);
+      for (const target of lever.targets) {
+        g.lineStyle(SWITCH_LINK_WIDTH, SWITCH_MARK_LOOK.knobUp, alpha);
+        g.strokePoints(
+          target.outline.map((corner) => {
+            const { x, y } = lift(corner, target.layer);
+            return new Phaser.Math.Vector2(x, y);
+          }),
+          true,
+        );
+        if (linked) {
+          g.fillStyle(SWITCH_MARK_LOOK.knobUp, 0.8);
+          for (const dot of dotsAlong(
+            from,
+            lift(target.position, target.layer),
+            SWITCH_LINK_DOT_STEP,
+          )) {
+            g.fillCircle(dot.x, dot.y, SWITCH_LINK_DOT_RADIUS);
+          }
+        }
+      }
+    }
   }
 
   /** A portal (#3030): its entry's swirl and its exit's ring, each on its own layer. */
@@ -2714,7 +2774,7 @@ export class ArenaScene extends Phaser.Scene {
       ...(this.floorGraphics === undefined ? [] : [this.floorGraphics]),
       g,
       ...this.structureGraphics.values(),
-      ...this.tunnelCovers.values(),
+      ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
     ]);
   }
 
@@ -2855,13 +2915,14 @@ export class ArenaScene extends Phaser.Scene {
       this.occluders = seenFrom(this.mapOccluders, inside);
     }
     const step = this.reducedMotion ? 1 : (dt * (1 - TUNNEL_CUTAWAY_ALPHA)) / TUNNEL_CUTAWAY_FADE;
-    for (const [at, graphics] of this.tunnelCovers) {
+    for (const [at, { ground, seam }] of this.tunnelCovers) {
       const target = inside.has(at) ? TUNNEL_CUTAWAY_ALPHA : 1;
-      const alpha = graphics.alpha;
+      const alpha = ground.alpha;
       if (alpha !== target) {
-        graphics.setAlpha(
-          alpha < target ? Math.min(target, alpha + step) : Math.max(target, alpha - step),
-        );
+        const next =
+          alpha < target ? Math.min(target, alpha + step) : Math.max(target, alpha - step);
+        ground.setAlpha(next);
+        seam.setAlpha(next);
       }
     }
   }
@@ -3046,12 +3107,13 @@ export class ArenaScene extends Phaser.Scene {
    * Each pit sunk a step (#2973): its floor, its far wall with the mouths
    * of the tunnels leaving it, under whoever is in it. The ground in front
    * of it and over each tunnel then draws as a deck of the ground's layer,
-   * so it covers them, the tunnel's outline inlaid faintly in it.
+   * so it covers them, each tunnel's seam over its paving (#3236).
    */
   private drawPits(structure: MapStructure, line: number, palette: ArenaPalette): void {
-    for (const [at, graphics] of this.tunnelCovers) {
+    for (const [at, { ground, seam }] of this.tunnelCovers) {
       if (at >= structure.tunnels.length) {
-        graphics.destroy();
+        ground.destroy();
+        seam.destroy();
         this.tunnelCovers.delete(at);
       }
     }
@@ -3080,17 +3142,62 @@ export class ArenaScene extends Phaser.Scene {
       this.strokeShape(cover, each.footprint);
     }
     for (const [at, tunnel] of structure.tunnels.entries()) {
-      let ground = this.tunnelCovers.get(at);
-      if (ground === undefined) {
-        ground = this.add
-          .graphics()
-          .setDepth(renderOrder({ kind: "tunnel-cover", deckLayer: structure.ground }));
-        this.tunnelCovers.set(at, ground);
+      let drawn = this.tunnelCovers.get(at);
+      if (drawn === undefined) {
+        const deckLayer = structure.ground;
+        drawn = {
+          ground: this.add.graphics().setDepth(renderOrder({ kind: "tunnel-cover", deckLayer })),
+          seam: this.add.graphics().setDepth(renderOrder({ kind: "tunnel-seam", deckLayer })),
+        };
+        this.tunnelCovers.set(at, drawn);
       }
-      ground.clear();
-      this.drawGroundPatch(ground, tunnelCover(structure, tunnel), line, palette);
-      cover.lineStyle(line, TUNNEL_INLAY.colour, TUNNEL_INLAY.alpha);
-      this.strokeShape(cover, tunnel.footprint);
+      drawn.ground.clear();
+      drawn.seam.clear();
+      this.drawGroundPatch(drawn.ground, tunnelCover(structure, tunnel), line, palette);
+      this.drawTunnelSeam(drawn.seam, tunnel, line, palette);
+    }
+  }
+
+  /**
+   * The seam a covered tunnel shows on the ground (#3236): a recessed edge,
+   * dark with its lit lip inside, and grating slots along its middle, all in
+   * the biome's rock, so from above it reads as a passage running under.
+   */
+  private drawTunnelSeam(
+    g: Phaser.GameObjects.Graphics,
+    tunnel: MapStructure["tunnels"][number],
+    line: number,
+    palette: ArenaPalette,
+  ): void {
+    const seam = tunnelSeam(tunnel, (line * TUNNEL_SEAM_WIDTH) / 2);
+    const points = (outline: readonly Vec2[]): Phaser.Math.Vector2[] =>
+      outline.map(({ x, y }) => new Phaser.Math.Vector2(x, y));
+    g.lineStyle(line * TUNNEL_SEAM_WIDTH, palette.wallFace, 1);
+    g.strokePoints(points(seam.edge), true);
+    g.lineStyle(line, palette.wallLit, 0.8);
+    g.strokePoints(points(seam.lip), true);
+    for (const slot of seam.slots) {
+      g.fillStyle(TUNNEL_MOUTH, 1);
+      this.fillFan(g, slot);
+      g.lineStyle(line * WALL_LIT_WIDTH, palette.wallFace, 1);
+      const [nw, ne, se, sw] = slot;
+      if (nw === undefined || ne === undefined || se === undefined || sw === undefined) {
+        continue;
+      }
+      // Bars across the slot's long side, its south edge lit.
+      const lengthwise = ne.x - nw.x < sw.y - nw.y;
+      for (let bar = 1; bar <= GRATING_BARS; bar += 1) {
+        const at = bar / (GRATING_BARS + 1);
+        if (lengthwise) {
+          const y = nw.y + (sw.y - nw.y) * at;
+          g.lineBetween(nw.x, y, ne.x, y);
+        } else {
+          const x = nw.x + (ne.x - nw.x) * at;
+          g.lineBetween(x, nw.y, x, sw.y);
+        }
+      }
+      g.lineStyle(line, palette.wallLit, 1);
+      g.lineBetween(sw.x, sw.y, se.x, se.y);
     }
   }
 

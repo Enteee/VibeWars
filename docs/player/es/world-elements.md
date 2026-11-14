@@ -54,6 +54,12 @@ brazo de madera, cuyo pomo de latón brilla cuando está arriba y se ve gris
 cuando está abajo. Haz clic derecho en una palanca para fijarla como objetivo
 y pulsa **Space** para ir hasta ella y accionarla.
 
+Pasa el ratón por encima de una palanca o fíjala como objetivo y lo que
+controla se perfila en latón, con una línea de puntos desde la palanca
+hasta ello, incluso a través del suelo que tenga encima. Cuando alguien
+acciona la palanca, lo que controla destella. El marco del objetivo dice
+qué hará el siguiente accionamiento, como _Palanca · abre el rastrillo_.
+
 Algunas puertas se abren con una **placa de presión**: un disco de piedra que
 se hunde y se vuelve de latón mientras alguien está encima. La puerta se cierra
 cuando el último se baja, y su placa vuelve a abrirla medio segundo
@@ -100,6 +106,13 @@ extremos. Por una escalera de mano solo cabe un jugador a la vez. Un
 **puente** de piedra, de tablones o de un tronco caído cruza un hueco, y
 los jugadores de abajo pueden pasar por debajo. Estar más alto no cambia
 tu alcance ni tu daño.
+
+## Túneles
+
+Algunos pasadizos van bajo tierra. Desde arriba, una junta hundida con
+ranuras de rejilla marca por dónde va uno, y las luces de sus dos
+extremos coinciden: si bajas junto a una luz cálida, sales junto a una
+luz cálida.
 
 ## Puentes levadizos, puentes de cuerda y pasadizos ocultos
 

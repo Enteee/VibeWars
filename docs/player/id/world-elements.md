@@ -57,6 +57,13 @@ dengan lengan kayu, kenop kuningannya menyala saat di atas dan abu-abu saat
 di bawah. Klik kanan tuas untuk menargetkannya, lalu tekan **Space** untuk
 berjalan ke sana dan menariknya.
 
+Arahkan kursor ke tuas atau targetkan tuas itu, dan apa yang
+dikendalikannya diberi garis tepi kuningan, dengan garis titik-titik
+dari tuas ke sana, bahkan menembus tanah di atasnya. Saat siapa pun
+menarik tuas itu, apa yang dikendalikannya berkedip. Bingkai target
+menyebutkan apa yang dilakukan tarikan berikutnya, misalnya
+_Tuas · membuka jeruji gerbang_.
+
 Beberapa gerbang malah terbuka lewat **pelat tekan**: cakram batu yang
 turun dan berubah warna kuningan selama ada yang berdiri di atasnya. Gerbang
 menutup saat orang terakhir turun, dan pelatnya membukanya lagi setengah detik
@@ -103,6 +110,13 @@ Tangga panjat hanya muat untuk satu pemain sekaligus. **Jembatan** dari
 batu, papan, atau batang pohon tumbang membentang di atas celah, dan
 pemain di bawahnya bisa lewat di kolongnya. Berada lebih tinggi tidak
 mengubah jangkauan atau damage-mu.
+
+## Terowongan
+
+Sebagian lorong berada di bawah tanah. Dari atas, sambungan cekung
+dengan celah-celah kisi menandai jalur lorong itu, dan cahaya di kedua
+ujungnya serasi: turun di dekat cahaya hangat, dan kamu keluar di dekat
+cahaya hangat.
 
 ## Cuaca dan suasana
 

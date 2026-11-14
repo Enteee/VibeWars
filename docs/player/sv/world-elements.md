@@ -55,6 +55,11 @@ mässingsknopp lyser när den är uppe och är grå när den är nere.
 Högerklicka på en spak för att välja den som mål, och tryck sedan på
 **Space** för att gå dit och dra i den.
 
+För musen över en spak eller välj den som mål, så får det den styr en
+mässingskontur, med en prickad linje från spaken dit, även genom marken
+ovanför. När någon drar i spaken blinkar det den styr. Målramen säger
+vad nästa drag gör, till exempel _Spak · öppnar fällgallret_.
+
 Vissa portar öppnas i stället av en **tryckplatta**: en stenskiva som
 sjunker och blir mässingsfärgad medan någon står på den. Porten stängs
 när den sista kliver av, och plattan öppnar porten igen en halv
@@ -99,6 +104,12 @@ trappor i ändarna. En stege är bred nog för en spelare i taget. En
 **bro** av sten, plankor eller en fallen stock spänner över en klyfta,
 och spelare nedanför kan gå under den. Att stå högre upp ändrar inte din
 räckvidd eller din skada.
+
+## Tunnlar
+
+En del gångar går under marken. Uppifrån visar en försänkt fog med
+gallerspringor var en sådan går, och ljusen i dess två ändar matchar:
+går du ner vid ett varmt ljus kommer du upp vid ett varmt ljus.
 
 ## Vindbryggor, repbroar och dolda gångar
 

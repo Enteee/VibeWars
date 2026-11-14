@@ -30,7 +30,9 @@ import {
   WALL_HEIGHT,
   pickSurface,
   pitDrawing,
+  TUNNEL_GRATING_STEP,
   tunnelCover,
+  tunnelSeam,
   rampDrawing,
   RING_PATH,
   traceHiddenOutline,
@@ -763,6 +765,19 @@ describe("a level under the ground (#2973)", () => {
     const cover = tunnelCover(SUNK, tunnel);
     expect(cover[0]).toEqual({ x: 700, y: 550 });
     expect(cover[2]).toEqual({ x: 980, y: 620 + STEP });
+  });
+
+  it("seams the tunnel's cover with its edge and a grating slot every 120 along it (#3236)", () => {
+    const [tunnel] = SUNK.tunnels;
+    if (tunnel === undefined) throw new Error("no tunnel");
+    const seam = tunnelSeam(tunnel, 2);
+    expect(seam.edge[0]).toEqual({ x: 700, y: 550 });
+    expect(seam.edge[2]).toEqual({ x: 980, y: 620 });
+    expect(seam.lip[0]).toEqual({ x: 702, y: 552 });
+    expect(seam.slots).toHaveLength(2);
+    const centres = seam.slots.map((slot) => ((slot[0]?.x ?? 0) + (slot[1]?.x ?? 0)) / 2);
+    expect(centres).toEqual([780, 780 + TUNNEL_GRATING_STEP]);
+    expect(seam.slots[0]?.[0]?.y).toBeCloseTo(585 - 17.5);
   });
 
   it("lifts a ramp out of the pit from its floor to the ground", () => {
