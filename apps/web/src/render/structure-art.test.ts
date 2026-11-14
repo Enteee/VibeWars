@@ -317,11 +317,13 @@ describe("the way under an arch (#3312)", () => {
       outline: shapeOutline(arch.footprint),
       top: elevationOf(arch.layer, canyon.groundLayer),
     };
-    const { x, y, width, height } = { x: 960, y: 690, width: 80, height: 520 };
+    const { x, y, width, height } = { x: 960, y: 730, width: 80, height: 450 };
     expect(arch.footprint).toEqual({ kind: "rect", x, y, width, height });
+    let samples = 0;
     let walkable = 0;
     for (let px = x + 1; px < x + width; px += 6) {
       for (let py = y + 1; py < y + height; py += 6) {
+        samples += 1;
         const position = { x: px, y: py };
         const floor = canyon.groundLayer;
         if (canyon.walls.some((wall) => wall.layer === floor && pointInShape(position, wall))) {
@@ -331,9 +333,11 @@ describe("the way under an arch (#3312)", () => {
         expect(bodyUnder(cover, [{ id: "b", position, layer: floor }], () => 0)).toBe(true);
       }
     }
-    expect(walkable).toBeGreaterThan(1000);
+    // The bed runs under the whole arch: no wall cuts into its walk.
+    expect(samples).toBeGreaterThan(1000);
+    expect(walkable).toBe(samples);
     // Its south face, where the walk is seen to pass, opens all of x 960–1040.
     const [face] = archPassage(arch.footprint).openings;
-    expect(face).toEqual({ from: { x: 1040, y: 1210 }, to: { x: 960, y: 1210 } });
+    expect(face).toEqual({ from: { x: 1040, y: 1180 }, to: { x: 960, y: 1180 } });
   });
 });
