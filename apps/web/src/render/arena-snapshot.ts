@@ -22,6 +22,7 @@ import type {
 } from "@vibewars/game-maps/schema";
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
+import { harmsViewer } from "../ground-harm.js";
 import type {
   Biome,
   MapAtmosphere,
@@ -50,7 +51,6 @@ import type {
 } from "./flag-objects.js";
 import { switchAtPoint } from "./flag-objects.js";
 import type { GoalMark } from "./goal-mark.js";
-import { harmsViewer } from "./ground-effect-look.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { liftAt } from "./layer-surfaces.js";

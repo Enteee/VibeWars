@@ -1,7 +1,8 @@
-import { AREA_EARSHOT, findStatusDefinition } from "@vibewars/game-core";
-import type { Vec2 } from "@vibewars/game-core";
+import { AREA_EARSHOT, findStatusDefinition, getSkill, groundReach } from "@vibewars/game-core";
+import type { StatusCategory, Vec2 } from "@vibewars/game-core";
 import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
+import { harmsViewer } from "../ground-harm.js";
 import type { SoundId } from "./sound-ids.js";
 import type { WorldPlaces } from "./world-places.js";
 
@@ -14,7 +15,8 @@ import type { WorldPlaces } from "./world-places.js";
 /**
  * The sounds one combat message plays for `selfId`. An area skill that
  * hits five players lists its crack five times; the player throttles
- * that to one.
+ * that to one. The skill-type cues (#3297) play once a message each: an
+ * area enchantment on five allies, you among them, chimes once.
  */
 export function soundsForCombat(message: CombatMessage, selfId: string): SoundId[] {
   const mine = message.casterSessionId === selfId;
@@ -56,7 +58,47 @@ export function soundsForCombat(message: CombatMessage, selfId: string): SoundId
         break;
     }
   }
-  return sounds;
+  return [...sounds, ...skillTypeSounds(message, selfId)];
+}
+
+/** The status categories whose landing on you has a cue of its own (#3297). */
+const STATUS_SOUNDS: Partial<Record<StatusCategory, SoundId>> = {
+  enchantment: "enchant-on",
+  hex: "hex-on",
+  stance: "stance-on",
+};
+
+/**
+ * The skill-type cues of one message (#3297): an enchantment, hex or
+ * stance landing on you, by the status's category; a shout or chant of
+ * yours or an ally's reaching you, and a form you take, by the skill's
+ * type. A shout aimed at a foe is no ally's and stays a hit.
+ */
+function skillTypeSounds(message: CombatMessage, selfId: string): SoundId[] {
+  if (isTick(message)) {
+    return [];
+  }
+  const skill = message.cause === "skill" ? getSkill(message.skillId) : undefined;
+  const sounds = new Set<SoundId>();
+  for (const event of message.events) {
+    if (event.targetId !== selfId) {
+      continue;
+    }
+    if (event.kind === "status-applied") {
+      const category = findStatusDefinition(event.statusId)?.category;
+      const sound = category === undefined ? undefined : STATUS_SOUNDS[category];
+      if (sound !== undefined) {
+        sounds.add(sound);
+      }
+    }
+    if ((skill?.type === "shout" || skill?.type === "chant") && skill.target !== "single-enemy") {
+      sounds.add("shout");
+    }
+    if (skill?.type === "form" && message.casterSessionId === selfId) {
+      sounds.add("form-on");
+    }
+  }
+  return [...sounds];
 }
 
 /**
@@ -202,5 +244,57 @@ export function soundsForWorld(
       sounds.add("wall-crumble");
     }
   });
+  return [...sounds];
+}
+
+/** How far past a harmful area's edge you are still warned of it (#3297). */
+export const AREA_WARN_MARGIN = 100;
+/** How far a spirit's summoning is heard, either side's (#3297). */
+export const SPIRIT_EARSHOT = 700;
+
+/**
+ * The skill cues the ground and the spirits make between two snapshots
+ * (#3297): `area-warn` when an area that can hurt you (`harmsViewer`)
+ * lands with you inside it or within `AREA_WARN_MARGIN` of its edge, on
+ * your layer, and `spirit-up` when a spirit of either side is summoned
+ * within `SPIRIT_EARSHOT`. Only an area's landing warns, so one you
+ * stay in warns once. The snapshot names an area's team, not its caster:
+ * your own side's ground never warns you. Without a `prev`, or without
+ * a player of your own, nothing plays.
+ */
+export function soundsForSkillsAround(
+  prev: MatchSnapshot | undefined,
+  next: MatchSnapshot,
+  selfId: string,
+): SoundId[] {
+  const self = playerById(next, selfId);
+  if (prev === undefined || self === undefined) {
+    return [];
+  }
+  const away = (x: number, y: number): number => Math.hypot(x - self.x, y - self.y);
+  const sounds = new Set<SoundId>();
+  const landed = new Set(prev.groundEffects.map((effect) => effect.id));
+  for (const effect of next.groundEffects) {
+    if (
+      !landed.has(effect.id) &&
+      effect.team !== self.team &&
+      effect.layer === self.layer &&
+      harmsViewer(groundReach(effect.skillId), "enemy", false) &&
+      away(effect.x, effect.y) <= effect.radius + AREA_WARN_MARGIN
+    ) {
+      sounds.add("area-warn");
+    }
+  }
+  const before = new Set(prev.players.map((p) => p.sessionId));
+  for (const spirit of next.players) {
+    if (
+      spirit.creature?.kind === "spirit" &&
+      !spirit.dead &&
+      !before.has(spirit.sessionId) &&
+      away(spirit.x, spirit.y) <= SPIRIT_EARSHOT
+    ) {
+      sounds.add("spirit-up");
+    }
+  }
   return [...sounds];
 }

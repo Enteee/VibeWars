@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
-import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
+import type { StatusId } from "@vibewars/game-core";
+import type {
+  CombatMessage,
+  GroundEffectSnapshot,
+  MatchSnapshot,
+  PlayerSnapshot,
+} from "@vibewars/game-session";
 
 import {
   hitsForCombat,
   soundsForCombat,
+  soundsForSkillsAround,
   soundsForSnapshot,
   soundsForWorld,
 } from "./combat-sounds.js";
@@ -145,6 +152,87 @@ describe("soundsForCombat", () => {
       { kind: "death", targetId: "foe" },
     ]);
     expect(soundsForCombat(kill, ME)).toEqual(["hit-dealt", "death"]);
+  });
+});
+
+describe("soundsForCombat: the skill types that concern you (#3297)", () => {
+  const cast = (
+    casterSessionId: string,
+    skillId: string,
+    events: CombatMessage["events"],
+  ): CombatMessage => ({ ...message(casterSessionId, events), skillId });
+  const on = (targetId: string, statusId: StatusId): CombatMessage["events"][number] => ({
+    kind: "status-applied",
+    targetId,
+    statusId,
+    durationSeconds: 5,
+  });
+  const tick = (events: CombatMessage["events"]): CombatMessage => ({
+    ...message(ME, events),
+    cause: "degeneration",
+    skillId: "",
+  });
+
+  it("shimmers once for an enchantment on you, not on an ally, however many it lands on", () => {
+    expect(soundsForCombat(message("ally", [on(ME, "armor-boost")]), ME)).toEqual(["enchant-on"]);
+    expect(soundsForCombat(message(ME, [on("ally", "armor-boost")]), ME)).toEqual([]);
+    const area = message("ally", [
+      on("ally", "regeneration"),
+      on(ME, "regeneration"),
+      on(ME, "armor-boost"),
+    ]);
+    expect(soundsForCombat(area, ME)).toEqual(["enchant-on"]);
+    expect(soundsForCombat(tick([on(ME, "regeneration")]), ME)).toEqual([]);
+  });
+
+  it("drones for a hex on you, not on a foe, and thuds too when it hurts", () => {
+    expect(soundsForCombat(message("foe", [on(ME, "faintheartedness")]), ME)).toEqual(["hex-on"]);
+    expect(soundsForCombat(message(ME, [on("foe", "faintheartedness")]), ME)).toEqual([]);
+    const twice = message("foe", [
+      on(ME, "faintheartedness"),
+      { kind: "damage", targetId: ME, amount: 9, critical: false },
+      on(ME, "faintheartedness"),
+    ]);
+    expect(soundsForCombat(twice, ME)).toEqual(["hit-taken", "hex-on"]);
+    expect(soundsForCombat(tick([on(ME, "faintheartedness")]), ME)).toEqual([]);
+  });
+
+  it("pings for a stance you enter, not a foe's", () => {
+    expect(soundsForCombat(cast(ME, "warrior.frenzy", [on(ME, "frenzy")]), ME)).toEqual([
+      "stance-on",
+    ]);
+    expect(soundsForCombat(cast("foe", "warrior.frenzy", [on("foe", "frenzy")]), ME)).toEqual([]);
+    const both = cast(ME, "warrior.frenzy", [on(ME, "frenzy"), on(ME, "frenzy")]);
+    expect(soundsForCombat(both, ME)).toEqual(["stance-on"]);
+    expect(soundsForCombat(tick([on(ME, "frenzy")]), ME)).toEqual([]);
+  });
+
+  it("swells once for a shout that reaches you, yours or an ally's, not one past you or at you", () => {
+    const shout = (caster: string, targets: string[]): CombatMessage =>
+      cast(
+        caster,
+        "warrior.watch-yourself",
+        targets.map((t) => on(t, "watch-yourself")),
+      );
+    expect(soundsForCombat(shout(ME, [ME, "ally"]), ME)).toEqual(["shout"]);
+    expect(soundsForCombat(shout("ally", ["ally", ME, ME]), ME)).toEqual(["shout"]);
+    expect(soundsForCombat(shout("foe", ["foe"]), ME)).toEqual([]);
+    const coward = cast("foe", "warrior.coward", [
+      { kind: "damage", targetId: ME, amount: 9, critical: false },
+    ]);
+    expect(soundsForCombat(coward, ME)).toEqual(["hit-taken"]);
+    expect(soundsForCombat({ ...shout("ally", [ME]), cause: "degeneration" }, ME)).toEqual([]);
+  });
+
+  it("swells deep for a form you take, not a foe's", () => {
+    const avatar = (caster: string): CombatMessage =>
+      cast(caster, "dervish.avatar-of-melandru", [on(caster, "avatar-of-melandru")]);
+    expect(soundsForCombat(avatar(ME), ME)).toEqual(["form-on"]);
+    expect(soundsForCombat(avatar("foe"), ME)).toEqual([]);
+    expect(
+      soundsForCombat({ ...avatar(ME), events: [...avatar(ME).events, ...avatar(ME).events] }, ME),
+    ).toEqual(["form-on"]);
+    expect(soundsForCombat({ ...avatar(ME), cause: "degeneration" }, ME)).toEqual([]);
   });
 });
 
@@ -420,5 +508,78 @@ describe("soundsForWorld", () => {
     expect(soundsForWorld(empty, empty, ME, { gates: [], switches: [], breakables: [] })).toEqual(
       [],
     );
+  });
+});
+
+describe("soundsForSkillsAround (#3297)", () => {
+  /** A foe's well: ground that hurts you. */
+  const well: GroundEffectSnapshot = {
+    id: 4,
+    skillId: "necromancer.well-of-darkness",
+    team: 1,
+    x: 0,
+    y: 0,
+    layer: 0,
+    radius: 100,
+    endsAt: 19,
+    durationSeconds: 17,
+  };
+  const ground = (effects: GroundEffectSnapshot[], players = [player(ME)]): MatchSnapshot => ({
+    ...snapshot(players),
+    groundEffects: effects,
+  });
+  const bare = ground([]);
+
+  it("warns once of a foe's harmful area landing on you, never of the same one again", () => {
+    expect(soundsForSkillsAround(bare, ground([well]), ME)).toEqual(["area-warn"]);
+    expect(soundsForSkillsAround(ground([well]), ground([well]), ME)).toEqual([]);
+  });
+
+  it("warns within 100 of the edge, not 150 from it, nor on another layer", () => {
+    const near = { ...well, x: 199 };
+    expect(soundsForSkillsAround(bare, ground([near]), ME)).toEqual(["area-warn"]);
+    expect(soundsForSkillsAround(bare, ground([{ ...well, x: 250 }]), ME)).toEqual([]);
+    expect(soundsForSkillsAround(bare, ground([{ ...well, layer: 1 }]), ME)).toEqual([]);
+  });
+
+  it("never warns of your own side's ground, nor of a foe's that only helps foes", () => {
+    expect(soundsForSkillsAround(bare, ground([{ ...well, team: 0 }]), ME)).toEqual([]);
+    const ward = { ...well, skillId: "elementalist.ward-against-melee" };
+    expect(soundsForSkillsAround(bare, ground([ward]), ME)).toEqual([]);
+  });
+
+  describe("spirit-up", () => {
+    const spirit = (x: number, team = 1): PlayerSnapshot =>
+      player("spirit", {
+        x,
+        team,
+        creature: {
+          ownerId: "foe",
+          kind: "spirit",
+          look: "spirit",
+          mode: null,
+          armedAttack: null,
+          leaderId: null,
+        },
+      });
+    const alone = ground([]);
+    const summoned = (x: number, team?: number) => ground([], [player(ME), spirit(x, team)]);
+
+    it("breathes for a spirit summoned within 700, either side's, once", () => {
+      expect(soundsForSkillsAround(alone, summoned(699), ME)).toEqual(["spirit-up"]);
+      expect(soundsForSkillsAround(alone, summoned(699, 0), ME)).toEqual(["spirit-up"]);
+      expect(soundsForSkillsAround(summoned(699), summoned(699), ME)).toEqual([]);
+    });
+
+    it("stays silent for one summoned at 701", () => {
+      expect(soundsForSkillsAround(alone, summoned(701), ME)).toEqual([]);
+    });
+  });
+
+  it("plays nothing without a prev, or for a watcher", () => {
+    expect(soundsForSkillsAround(undefined, ground([well]), ME)).toEqual([]);
+    expect(
+      soundsForSkillsAround(ground([], [player("foe")]), ground([well], [player("foe")]), ME),
+    ).toEqual([]);
   });
 });

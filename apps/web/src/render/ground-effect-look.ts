@@ -1,4 +1,5 @@
 import { getSkill, type GroundReach, type Vec2 } from "@vibewars/game-core";
+import { groundReaches, type GroundSide } from "../ground-harm.js";
 import { HEX_COLOUR } from "./body-rings.js";
 import { ZONE_EDGE_WIDTH } from "./zone-look.js";
 
@@ -11,9 +12,6 @@ import { ZONE_EDGE_WIDTH } from "./zone-look.js";
 
 /** The edge and pool of every skill area: the hex halo's violet. */
 export const GROUND_COLOUR = HEX_COLOUR;
-
-/** A side as the viewer reads it: the snapshot's `teamSide`. */
-export type GroundSide = "ally" | "enemy" | "third";
 
 /** One dash of a harmful edge, and the gap after it, world units. */
 export const GROUND_DASH = 9;
@@ -33,28 +31,6 @@ const HELP_POOL_ALPHA = 0.15;
 export const MAX_POOL_ALPHA = 0.25;
 const EDGE_ALPHA = 0.9;
 const ENDED_EDGE_ALPHA = 0.55;
-
-/** Whether ground of `reach`, owned by `owner`, reaches a body of side `body`. */
-export function groundReaches(reach: GroundReach, owner: GroundSide, body: GroundSide): boolean {
-  switch (reach) {
-    case "all":
-      return true;
-    case "allies":
-      return body === owner;
-    case "foes":
-      return body !== owner;
-  }
-}
-
-/**
- * Whether the ground can hurt the viewer's side (Q75 option A): it
- * reaches its owner's foes, or all, and the viewer's side among them;
- * ground that reaches allies alone only ever helps. A watcher has no
- * side, so it reads the skill's own reach.
- */
-export function harmsViewer(reach: GroundReach, owner: GroundSide, watching: boolean): boolean {
-  return reach !== "allies" && (watching || groundReaches(reach, owner, "ally"));
-}
 
 export interface GroundLookInput {
   readonly dashed: boolean;

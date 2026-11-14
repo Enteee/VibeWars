@@ -4,7 +4,6 @@ import {
   cursedBy,
   groundLook,
   groundMotion,
-  harmsViewer,
   overlapsOf,
   poolBreath,
   stackedPoolAlpha,
@@ -14,26 +13,6 @@ import {
 } from "./ground-effect-look.js";
 import { dashedCircle } from "./dashed-circle.js";
 import { ZONE_EDGE_WIDTH } from "./zone-look.js";
-
-describe("harmsViewer (#3283, Q75 option A)", () => {
-  it("dashes a foe's harm, not your own nor a foe's help", () => {
-    expect(harmsViewer("foes", "enemy", false)).toBe(true);
-    expect(harmsViewer("foes", "ally", false)).toBe(false);
-    expect(harmsViewer("allies", "enemy", false)).toBe(false);
-    expect(harmsViewer("allies", "ally", false)).toBe(false);
-  });
-
-  it("dashes an area that reaches all for every viewer", () => {
-    expect(harmsViewer("all", "ally", false)).toBe(true);
-    expect(harmsViewer("all", "enemy", false)).toBe(true);
-    expect(harmsViewer("all", "ally", true)).toBe(true);
-  });
-
-  it("shows a watcher the skill's own reach", () => {
-    expect(harmsViewer("foes", "ally", true)).toBe(true);
-    expect(harmsViewer("allies", "enemy", true)).toBe(false);
-  });
-});
 
 describe("groundLook (#3283)", () => {
   const settled = { dashed: true, age: 5, remaining: 5 };
