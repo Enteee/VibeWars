@@ -95,6 +95,7 @@ describe("nextTabTarget", () => {
           mode: null,
           armedAttack: null,
           leaderId: null,
+          auraRadius: null,
         },
       }),
       player("foe/c1", {
@@ -106,6 +107,7 @@ describe("nextTabTarget", () => {
           mode: null,
           armedAttack: null,
           leaderId: null,
+          auraRadius: null,
         },
       }),
       NEAR,
@@ -190,6 +192,7 @@ describe("nextFollowed (#480)", () => {
       mode: null,
       armedAttack: null,
       leaderId: null,
+      auraRadius: null,
     },
   });
   const SEATS = [B1, A1, PET, A2, B2];

@@ -3,6 +3,7 @@ import {
   MASTERLESS_TEAM,
   NO_RANKS,
   outsideMatch,
+  getSkill,
   getStatusDefinition,
   type ActiveStatus,
   type GroundEffect,
@@ -427,6 +428,7 @@ describe("wireIdentity (#1052)", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
       bot: false,
       signet: null,
@@ -456,7 +458,26 @@ describe("wireIdentity (#1052)", () => {
       mode: "heel",
       armedAttack: null,
       leaderId: null,
+      auraRadius: null,
     });
+  });
+
+  it("sends a spirit's aura reach for its range ring, and none for a pet (#3306)", () => {
+    const summon = getSkill("ranger.favorable-winds")?.effects.find(
+      (effect) => effect.kind === "summon",
+    );
+    const winds = {
+      ...minion("p1"),
+      creature: {
+        ...minion("p1").creature,
+        kind: "spirit" as const,
+        look: "spirit" as const,
+        name: "Favorable Winds",
+        aura: summon?.kind === "summon" ? summon.creature.aura : undefined,
+      },
+    };
+    expect(wireIdentity(winds, seats, 0)?.creature?.auraRadius).toBe(1190);
+    expect(wireIdentity(minion("p1"), seats, 0)?.creature?.auraRadius).toBeNull();
   });
 
   it("sends a pet's armed attack with when it lapses, to the 0.1 s (#1167)", () => {
@@ -510,6 +531,7 @@ describe("wireIdentity (#1052)", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
       bot: false,
       signet: null,
