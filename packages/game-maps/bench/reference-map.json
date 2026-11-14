@@ -98,6 +98,33 @@
       },
       "look": "rooftop",
       "switched": null
+    },
+    {
+      "id": "loft",
+      "layer": 2,
+      "footprint": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 300,
+            "y": 500
+          },
+          {
+            "x": 800,
+            "y": 500
+          },
+          {
+            "x": 800,
+            "y": 800
+          },
+          {
+            "x": 300,
+            "y": 800
+          }
+        ]
+      },
+      "look": "rooftop",
+      "switched": null
     }
   ],
   "transitions": [
@@ -128,6 +155,21 @@
         "height": 130
       },
       "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "loft-stairs",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 800,
+        "y": 600,
+        "width": 110,
+        "height": 80
+      },
+      "uphill": "w",
       "look": "stairs",
       "lift": null
     }
@@ -171,6 +213,76 @@
       "width": 200,
       "height": 60,
       "layer": 1
+    },
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": 300,
+          "y": 500
+        },
+        {
+          "x": 800,
+          "y": 500
+        },
+        {
+          "x": 800,
+          "y": 800
+        },
+        {
+          "x": 300,
+          "y": 800
+        }
+      ],
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 300,
+      "y": 1300,
+      "width": 200,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 2300,
+      "y": 1300,
+      "width": 200,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 600,
+      "y": 1500,
+      "width": 200,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 2000,
+      "y": 1500,
+      "width": 200,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 300,
+      "y": 300,
+      "width": 200,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 2400,
+      "y": 300,
+      "width": 200,
+      "height": 60,
+      "layer": 1
     }
   ],
   "water": [],
@@ -197,6 +309,136 @@
           {
             "x": 1500,
             "y": 940
+          }
+        ]
+      }
+    },
+    {
+      "id": "spring-0",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 660,
+            "y": 1000
+          },
+          {
+            "x": 600,
+            "y": 1060
+          },
+          {
+            "x": 540,
+            "y": 1000
+          },
+          {
+            "x": 600,
+            "y": 940
+          }
+        ]
+      }
+    },
+    {
+      "id": "spring-1",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 2460,
+            "y": 1000
+          },
+          {
+            "x": 2400,
+            "y": 1060
+          },
+          {
+            "x": 2340,
+            "y": 1000
+          },
+          {
+            "x": 2400,
+            "y": 940
+          }
+        ]
+      }
+    },
+    {
+      "id": "spring-2",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1560,
+            "y": 500
+          },
+          {
+            "x": 1500,
+            "y": 560
+          },
+          {
+            "x": 1440,
+            "y": 500
+          },
+          {
+            "x": 1500,
+            "y": 440
+          }
+        ]
+      }
+    },
+    {
+      "id": "spring-3",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1060,
+            "y": 1200
+          },
+          {
+            "x": 1000,
+            "y": 1260
+          },
+          {
+            "x": 940,
+            "y": 1200
+          },
+          {
+            "x": 1000,
+            "y": 1140
+          }
+        ]
+      }
+    },
+    {
+      "id": "spring-4",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 2060,
+            "y": 1200
+          },
+          {
+            "x": 2000,
+            "y": 1260
+          },
+          {
+            "x": 1940,
+            "y": 1200
+          },
+          {
+            "x": 2000,
+            "y": 1140
           }
         ]
       }
@@ -384,6 +626,150 @@
         },
         "layer": 2,
         "radius": 170,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-0",
+        "position": {
+          "x": 400,
+          "y": 400
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-1",
+        "position": {
+          "x": 2400,
+          "y": 400
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-2",
+        "position": {
+          "x": 600,
+          "y": 1400
+        },
+        "layer": 1,
+        "radius": 140,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-3",
+        "position": {
+          "x": 2200,
+          "y": 1400
+        },
+        "layer": 1,
+        "radius": 140,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-4",
+        "position": {
+          "x": 900,
+          "y": 900
+        },
+        "layer": 1,
+        "radius": 160,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-5",
+        "position": {
+          "x": 2100,
+          "y": 900
+        },
+        "layer": 1,
+        "radius": 160,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-6",
+        "position": {
+          "x": 700,
+          "y": 650
+        },
+        "layer": 2,
+        "radius": 150,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-7",
+        "position": {
+          "x": 1500,
+          "y": 1500
+        },
+        "layer": 0,
+        "radius": 140,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-8",
+        "position": {
+          "x": 1500,
+          "y": 1700
+        },
+        "layer": 0,
+        "radius": 140,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-9",
+        "position": {
+          "x": 1000,
+          "y": 1600
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-10",
+        "position": {
+          "x": 2000,
+          "y": 1600
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16760944,
+        "intensity": 0.7,
+        "flicker": 0.25
+      },
+      {
+        "id": "extra-11",
+        "position": {
+          "x": 1500,
+          "y": 300
+        },
+        "layer": 1,
+        "radius": 150,
         "colour": 16760944,
         "intensity": 0.7,
         "flicker": 0.25

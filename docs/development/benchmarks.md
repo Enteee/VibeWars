@@ -210,7 +210,7 @@ reference map drawn the same way on the same run. CI gates it at
 maps (#3157, #3190, #3243, #3255).
 
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
-synthetic medium arena in the real map schema: two layers, walls, a deck
+synthetic medium arena in the real map schema: three layers, walls, two decks
 and a ramp, a pit with a tunnel, lights and a zone. Only the bench's build
 (`VIBEWARS_BENCH_REFERENCE=1`) offers it in the lobby, and it is
 drawn through the menu background like any map, so whatever bounds a
