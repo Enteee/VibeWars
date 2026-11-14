@@ -151,8 +151,9 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
-import { weaponMarkLayout } from "./weapon-mark.js";
+import { weaponMarkLayout, weaponTipAt } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
+import { CAST_GLOW_CORE, CAST_GLOW_CORE_LIFT, castGlow } from "./cast-beats.js";
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
 import {
@@ -261,6 +262,7 @@ import {
 import { bodyUnder, overhangAlpha, paintOverhang, type OverhangCover } from "./overhang-art.js";
 import {
   DECK_ART,
+  FADING_TOP_LOOKS,
   SWITCHED_DECK_ART,
   TRANSITION_ART,
   deckPalette,
@@ -577,8 +579,11 @@ export class ArenaScene extends Phaser.Scene {
     number,
     { readonly ground: Phaser.GameObjects.Graphics; readonly seam: Phaser.GameObjects.Graphics }
   >();
-  /** Each overhang (#3293) as drawn, and where it hangs: faded while a body is under it. */
-  private overhangsDrawn: readonly {
+  /**
+   * Each overhang (#3293) and arch top (#3312) as drawn, and where it
+   * hangs: faded while a body is under it.
+   */
+  private coversDrawn: {
     readonly cover: OverhangCover;
     readonly graphics: Phaser.GameObjects.Graphics;
   }[] = [];
@@ -1504,7 +1509,8 @@ export class ArenaScene extends Phaser.Scene {
       }
       const total = actor.dead ? 0 : actor.swingTotal;
       const cast = actor.dead ? undefined : actor.attackCast;
-      clock.observe(this.snapshot.clock, actor.swingElapsed, total, actor.weaponId, cast);
+      const spell = actor.dead ? undefined : actor.spellCast;
+      clock.observe(this.snapshot.clock, actor.swingElapsed, total, actor.weaponId, cast, spell);
     }
     for (const id of this.attackClocks.keys()) {
       if (!present.has(id)) {
@@ -1652,6 +1658,33 @@ export class ArenaScene extends Phaser.Scene {
     const at = dropped ?? { ...actor.position, r: actor.radius, facing: actor.facing };
     const frame = dropped === undefined ? this.weaponFrame(actor) : REST_FRAME;
     paintWeaponMark(phaserPainter(g), at, actor.weaponId, frame);
+  }
+
+  /**
+   * The glow at a standing caster's weapon (#3320), at its far end, over
+   * the weapon mark and under the bars: it grows with a spell cast, flashes
+   * on release and fizzles when stopped short.
+   */
+  private drawCastGlow(
+    g: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+    frame: AttackFrame,
+  ): void {
+    const clock = this.attackClocks.get(actor.id);
+    const glow = castGlow(clock?.castBeat(this.clock.read(this.now)), this.reducedMotion);
+    if (glow === undefined) {
+      return;
+    }
+    const { x, y } = actor.position;
+    const tip = weaponTipAt(x, y, actor.radius, actor.facing, actor.weaponId, frame);
+    if (tip === undefined) {
+      return;
+    }
+    // The study's glow: a soft disc round a brighter core.
+    g.fillStyle(glow.colour, glow.alpha);
+    g.fillCircle(tip.x, tip.y, glow.radius);
+    g.fillStyle(glow.colour, Math.min(1, glow.alpha + CAST_GLOW_CORE_LIFT));
+    g.fillCircle(tip.x, tip.y, glow.radius * CAST_GLOW_CORE);
   }
 
   /** Where `actor`'s weapon is in its swing, `REST_FRAME` for none. */
@@ -2050,6 +2083,7 @@ export class ArenaScene extends Phaser.Scene {
     } else if (actor.knockedDown) {
       this.drawLyingBody(g, marks, actor);
     } else {
+      const frame = this.weaponFrame(actor);
       paintStandingBody(
         phaserPainter(g),
         {
@@ -2060,12 +2094,13 @@ export class ArenaScene extends Phaser.Scene {
           team: actor.team,
           weaponId: actor.weaponId,
           offhandId: actor.offhandId,
-          frame: this.weaponFrame(actor),
+          frame,
           cape: this.wornCape(actor),
           tint: this.bodyTint(actor),
         },
         phaserPainter(marks),
       );
+      this.drawCastGlow(marks, actor, frame);
     }
     // On the body layer, after the body and its self rim: every mark draws over the rings.
     this.drawBodyRings(g, actor);
@@ -3146,6 +3181,10 @@ export class ArenaScene extends Phaser.Scene {
         g.restore();
       }
     }
+    for (const { graphics } of this.coversDrawn) {
+      graphics.destroy();
+    }
+    this.coversDrawn = [];
     for (const deck of [...next.structure.decks, ...next.structure.downDecks]) {
       this.drawDeck(
         next.structure,
@@ -3172,7 +3211,7 @@ export class ArenaScene extends Phaser.Scene {
       g,
       ...this.structureGraphics.values(),
       ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
-      ...this.overhangsDrawn.map(({ graphics }) => graphics),
+      ...this.coversDrawn.map(({ graphics }) => graphics),
     ]);
   }
 
@@ -3329,12 +3368,12 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * Each overhang over a body (#3293), anyone's, faded to
+   * Each overhang or arch top over a body (#3293, #3312), anyone's, faded to
    * `OVERHANG_FADED_ALPHA` so it never hides one, and back once its
    * footprint is empty. At once under reduced motion.
    */
   private fadeOverhangs(dt: number): void {
-    for (const { cover, graphics } of this.overhangsDrawn) {
+    for (const { cover, graphics } of this.coversDrawn) {
       const covering = bodyUnder(cover, this.drawnActors, this.liftOf);
       const next = overhangAlpha(graphics.alpha, covering, dt, this.reducedMotion);
       if (next !== graphics.alpha) {
@@ -3355,10 +3394,7 @@ export class ArenaScene extends Phaser.Scene {
     lighting: MapLighting | undefined,
     line: number,
   ): void {
-    for (const { graphics } of this.overhangsDrawn) {
-      graphics.destroy();
-    }
-    this.overhangsDrawn = structure.overhangs.map((overhang) => {
+    for (const overhang of structure.overhangs) {
       const top = elevationOf(overhang.layer, structure.ground);
       const graphics = this.add
         .graphics()
@@ -3386,11 +3422,11 @@ export class ArenaScene extends Phaser.Scene {
         line,
       );
       graphics.restore();
-      return {
+      this.coversDrawn.push({
         cover: { layer: overhang.layer, outline: shapeOutline(overhang.footprint), top },
         graphics,
-      };
-    });
+      });
+    }
   }
 
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */
@@ -3531,7 +3567,7 @@ export class ArenaScene extends Phaser.Scene {
     const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
     this.drawColumn(side, deck.footprint, frame.low, frame.top, palette.slab, true);
     art.side(side, frame);
-    const face = this.structureAt({ kind: "deck", deckLayer: deck.layer });
+    const face = this.deckTop(deck, frame.top);
     face.save();
     face.translateCanvas(0, -frame.top);
     face.fillStyle(palette.deckTop, 1);
@@ -3547,6 +3583,23 @@ export class ArenaScene extends Phaser.Scene {
       SWITCHED_DECK_ART.cracks(face, frame, switched.cracks, switched.afterCrossings);
     }
     face.restore();
+  }
+
+  /**
+   * The graphics `deck`'s top draws in: its layer's, or its own for a top
+   * walked under, faded as an overhang is while a body is under it (#3312).
+   */
+  private deckTop(deck: MapStructure["decks"][number], top: number): Phaser.GameObjects.Graphics {
+    const item: RenderItem = { kind: "deck", deckLayer: deck.layer };
+    if (!FADING_TOP_LOOKS.has(deck.look)) {
+      return this.structureAt(item);
+    }
+    const graphics = this.add.graphics().setDepth(renderOrder(item));
+    this.coversDrawn.push({
+      cover: { layer: deck.layer, outline: shapeOutline(deck.footprint), top },
+      graphics,
+    });
+    return graphics;
   }
 
   /**

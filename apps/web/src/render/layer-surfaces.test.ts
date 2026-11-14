@@ -397,6 +397,7 @@ describe("clicking a character on a layered map (#2831)", () => {
     swingElapsed: 0,
     swingTotal: 0,
     attackCast: undefined,
+    spellCast: undefined,
     offhandId: undefined,
     profession: undefined,
     creatureLook: undefined,

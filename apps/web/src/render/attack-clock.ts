@@ -35,6 +35,11 @@ import {
  *   that runs out is a hit: strike, hold and recover play from its end.
  *   One that stops short (an interrupt, a cancel) eases back to rest over
  *   the recover time. The swing timer drives the pose again afterwards.
+ * - A spell, or any other skill with a cast time that is not an attack
+ *   (#3320), raises the weapon instead: the wind-up's pose, eased in over
+ *   `RAISE_SECONDS` and held. It ends as an attack skill's cast does, by
+ *   the same rule: run out, it strikes, holds and recovers; stopped short,
+ *   it settles. `castBeat` says where it is, for the glow at the hand.
  *
  * No Phaser here, so it is tested in Node.
  */
@@ -44,6 +49,29 @@ export interface AttackCast {
   readonly elapsed: number;
   readonly total: number;
 }
+
+/** The host's cast timer while any other skill with a cast time is cast (#3320). */
+export interface SpellCast extends AttackCast {
+  readonly skillId: string;
+}
+
+/** How long a spell cast takes to raise the weapon to its pose (#3320). */
+export const RAISE_SECONDS = 0.15;
+
+/**
+ * Where a spell cast is (#3320): under way, `progress` 0 … 1 through it;
+ * or ended `since` seconds ago, run out (`released`) or stopped short
+ * at `progress`.
+ */
+export type CastBeat =
+  | { readonly phase: "casting"; readonly skillId: string; readonly progress: number }
+  | { readonly phase: "released"; readonly skillId: string; readonly since: number }
+  | {
+      readonly phase: "stopped";
+      readonly skillId: string;
+      readonly since: number;
+      readonly progress: number;
+    };
 
 /**
  * The cast timer of the skill an actor is casting, if it is an attack
@@ -62,6 +90,29 @@ export function attackCastOf(
     return undefined;
   }
   return { elapsed: Math.max(0, castTotal - castRemaining), total: castTotal };
+}
+
+/**
+ * The cast timer of the skill an actor is casting, if it has a cast time
+ * and is not an attack skill (#3320); `undefined` otherwise.
+ */
+export function spellCastOf(
+  castingSkillId: string | undefined,
+  castRemaining: number,
+  castTotal: number,
+): SpellCast | undefined {
+  if (
+    castingSkillId === undefined ||
+    castTotal <= 0 ||
+    getSkill(castingSkillId)?.attack !== undefined
+  ) {
+    return undefined;
+  }
+  return {
+    skillId: castingSkillId,
+    elapsed: Math.max(0, castTotal - castRemaining),
+    total: castTotal,
+  };
 }
 
 /** The wire rounds the swing timer to the millisecond (`match-host.ts`): less is noise. */
@@ -134,20 +185,34 @@ export class AttackClock {
   #pendingDouble = false;
   /** A swing that stopped short, easing back to rest from where it was. */
   #settle: { readonly at: number; readonly from: SwingClip; readonly hit: number } | undefined;
-  /** An attack skill winding up: when its cast started on the match clock, and its length. */
-  #cast: { readonly start: number; readonly total: number } | undefined;
+  /**
+   * A cast under way: when it started on the match clock, its length, and
+   * the spell's id, `undefined` for an attack skill winding up.
+   */
+  #cast:
+    | { readonly start: number; readonly total: number; readonly spell: string | undefined }
+    | undefined;
   /** The last snapshot's reading of the cast. */
   #castObserved: { readonly at: number; readonly elapsed: number } | undefined;
   /** How far into the cast the mark has been shown, which it never goes back from. */
   #castShown = 0;
-  /** When the last attack skill's cast ran out: its strike plays from there. */
+  /** When the last cast ran out: its strike plays from there. */
   #castStrike: number | undefined;
+  /** How the last spell cast ended, and when. */
+  #spellEnd:
+    | {
+        readonly at: number;
+        readonly skillId: string;
+        readonly released: boolean;
+        readonly progress: number;
+      }
+    | undefined;
 
   /**
    * A snapshot taken at match time `at` says the actor is `elapsed` into a
    * swing of `total` seconds, `total` 0 when it does not attack, and how
-   * far into its `cast` when an attack skill winds up. The same snapshot
-   * seen again is ignored.
+   * far into its `cast` when an attack skill winds up, or its `spell`
+   * when anything else is cast. The same snapshot seen again is ignored.
    */
   public observe(
     at: number,
@@ -155,13 +220,30 @@ export class AttackClock {
     total: number,
     weaponId: WeaponId,
     cast?: AttackCast,
+    spell?: SpellCast,
   ): void {
     const last = this.#observed;
     if (last?.at === at) {
       return;
     }
     this.#observeSwing(at, elapsed, total, weaponId, last);
-    this.#observeCast(at, cast, weaponId);
+    this.#observeCast(at, cast ?? spell, spell?.skillId, weaponId);
+  }
+
+  /** Where the spell cast is at match time `at`; `undefined` before the first. */
+  public castBeat(at: number): CastBeat | undefined {
+    const cast = this.#cast;
+    if (cast?.spell !== undefined) {
+      return { phase: "casting", skillId: cast.spell, progress: this.#castProgress(at) };
+    }
+    const end = this.#spellEnd;
+    if (end === undefined) {
+      return undefined;
+    }
+    const since = Math.max(0, at - end.at);
+    return end.released
+      ? { phase: "released", skillId: end.skillId, since }
+      : { phase: "stopped", skillId: end.skillId, since, progress: end.progress };
   }
 
   #observeSwing(
@@ -231,8 +313,7 @@ export class AttackClock {
   #mainFrame(at: number, weaponId: WeaponId): AttackFrame {
     const m = WEAPON_MOTION[weaponId];
     if (this.#cast !== undefined) {
-      const progress = this.#castProgress(at);
-      return { clip: { phase: "wind-up", progress }, hit: this.#hits + 1 };
+      return { clip: this.#castClip(at), hit: this.#hits + 1 };
     }
     const castStrike = this.#castStrike;
     if (castStrike !== undefined && at < castStrike + m.strike) {
@@ -272,10 +353,16 @@ export class AttackClock {
   }
 
   /**
-   * An attack skill's cast as this snapshot has it: started, run on, run
-   * out (its blow) or stopped short (eased back to rest).
+   * A cast as this snapshot has it, an attack skill's or a `spell`'s:
+   * started, run on, run out (its blow, or a spell's release) or stopped
+   * short (eased back to rest).
    */
-  #observeCast(at: number, cast: AttackCast | undefined, weaponId: WeaponId): void {
+  #observeCast(
+    at: number,
+    cast: AttackCast | undefined,
+    spell: string | undefined,
+    weaponId: WeaponId,
+  ): void {
     const last = this.#castObserved;
     if (last?.at === at) {
       return;
@@ -284,29 +371,58 @@ export class AttackClock {
     this.#castObserved = live === undefined ? undefined : { at, elapsed: live.elapsed };
     const running = this.#cast;
     if (running !== undefined && last !== undefined) {
-      if (live !== undefined && live.elapsed >= last.elapsed - WIRE_EPSILON) {
+      if (
+        live !== undefined &&
+        spell === running.spell &&
+        live.elapsed >= last.elapsed - WIRE_EPSILON
+      ) {
         // The same cast, run on or slowed.
-        this.#cast = { start: at - live.elapsed, total: live.total };
+        this.#cast = { start: at - live.elapsed, total: live.total, spell };
         return;
       }
       if (last.elapsed + (at - last.at) >= running.total - WIRE_EPSILON) {
         this.#hits += 1;
         this.#castStrike = running.start + running.total;
         this.#lastHit = this.#castStrike + WEAPON_MOTION[weaponId].strike;
+        if (running.spell !== undefined) {
+          const skillId = running.spell;
+          this.#spellEnd = { at: this.#castStrike, skillId, released: true, progress: 1 };
+        }
       } else {
-        const from: SwingClip = { phase: "wind-up", progress: this.#castProgress(at) };
+        const progress = this.#castProgress(at);
+        const from = this.#castClip(at);
         this.#settle = { at, from, hit: this.#hits + 1 };
+        if (running.spell !== undefined) {
+          this.#spellEnd = { at, skillId: running.spell, released: false, progress };
+        }
       }
     }
-    this.#cast = live === undefined ? undefined : { start: at - live.elapsed, total: live.total };
+    this.#cast =
+      live === undefined ? undefined : { start: at - live.elapsed, total: live.total, spell };
     this.#castShown = live?.elapsed ?? 0;
     if (live !== undefined) {
       // The cast replaces whatever the swing was showing; it does not blend.
       this.#settle = undefined;
+      if (spell !== undefined) {
+        this.#spellEnd = undefined;
+      }
     }
   }
 
-  /** How far the cast under way has wound up at `at`, 0 … 1, never going back. */
+  /**
+   * The cast under way at `at`: an attack skill winds up over all of it,
+   * a spell raises the weapon over its first `RAISE_SECONDS` and holds.
+   */
+  #castClip(at: number): SwingClip {
+    const progress = this.#castProgress(at);
+    const cast = this.#cast;
+    if (cast?.spell === undefined) {
+      return { phase: "wind-up", progress };
+    }
+    return { phase: "raise", progress: unit((progress * cast.total) / RAISE_SECONDS) };
+  }
+
+  /** How far through the cast under way `at` is, 0 … 1, never going back. */
   #castProgress(at: number): number {
     const cast = this.#cast;
     if (cast === undefined) {

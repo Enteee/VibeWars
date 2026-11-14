@@ -108,6 +108,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     swingElapsed: 0,
     swingTotal: 0,
     attackCast: undefined,
+    spellCast: undefined,
     offhandId: undefined,
     profession: undefined,
     creatureLook: undefined,

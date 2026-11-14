@@ -18,8 +18,8 @@ import { ACTOR_RADIUS, FLOATING_TEXT_OFFSET_X, FLOATING_TEXT_OFFSET_Y } from "./
 const DAMAGE = 0xff7b72;
 const CONDITION = 0xffa657;
 const HEAL = 0x7ee787;
-const HEX = 0xd2a8ff;
-const ENCHANTMENT = 0x56d4dd;
+const HEX = 0xa77bff;
+const ENCHANTMENT = 0xe8c27a;
 
 function message(
   skillId: string,

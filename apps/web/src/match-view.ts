@@ -67,7 +67,7 @@ import {
   FLAT_STRUCTURE,
   FORM_SCALE,
 } from "./render/arena-snapshot.js";
-import { attackCastOf } from "./render/attack-clock.js";
+import { attackCastOf, spellCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
 import { CREATURE_DRAWN_RADIUS } from "./render/creature-shape.js";
 import type { GoalMark } from "./render/goal-mark.js";
@@ -496,6 +496,7 @@ export function toArenaSnapshot(
         swingElapsed: player.swingElapsed,
         swingTotal: player.swingTotal,
         attackCast: attackCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
+        spellCast: spellCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
         offhandId:
           player.creature === undefined
             ? player.offhandId

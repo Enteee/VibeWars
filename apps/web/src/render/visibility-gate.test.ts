@@ -66,7 +66,7 @@ interface GatedScene {
   add: unknown;
   textures: unknown;
   occluders: readonly Occluder[];
-  overhangsDrawn: readonly { cover: OverhangCover; graphics: RecordingGraphics }[];
+  coversDrawn: readonly { cover: OverhangCover; graphics: RecordingGraphics }[];
   drawnActors: readonly OverhangBody[];
   reducedMotion: boolean;
   fadeOverhangs(dt: number): void;
@@ -107,14 +107,14 @@ function paint(
     return g;
   };
   scene.drawMap();
-  const overhangs = new Map(scene.overhangsDrawn.map(({ cover, graphics: g }) => [g, cover]));
+  const covers = new Map(scene.coversDrawn.map(({ cover, graphics: g }) => [g, cover]));
   return {
     fills: made.flatMap((g) =>
       g.fills.map(({ polygon }) => ({
         polygon,
         depth: g.depth,
-        what: g.what || (overhangs.has(g) ? "overhang" : "map"),
-        fadesOver: overhangs.get(g) ?? null,
+        what: g.what || (covers.has(g) ? "cover" : "map"),
+        fadesOver: covers.get(g) ?? null,
       })),
     ),
     occluders: scene.occluders,
@@ -233,7 +233,7 @@ describe("overhangs (#3293)", () => {
   const AWNING_FILL: PaintedFill = {
     polygon: DECK_OUTLINE,
     depth: renderOrder({ kind: "overhang", layer: 1 }),
-    what: "overhang",
+    what: "cover",
     fadesOver: AWNING,
   };
 
@@ -265,7 +265,7 @@ describe("overhangs (#3293)", () => {
     expect(awning.length).toBeGreaterThan(0);
     expect(awning.every(({ depth }) => depth > bodyOn(0).depth)).toBe(true);
     expect(hiddenSpots({ fills, occluders, bodies: [bodyOn(0)] })).toEqual([]);
-    const [drawn] = scene.overhangsDrawn;
+    const [drawn] = scene.coversDrawn;
     scene.reducedMotion = true;
     scene.drawnActors = [];
     scene.fadeOverhangs(1 / 60);

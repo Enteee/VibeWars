@@ -229,6 +229,12 @@ Every rule below can be checked from one screenshot.
     green at its aura's real radius, on the ground under bodies, alpha
     0.18, 0.45 while targeted or hovered. Solid, since a spirit's area is
     not harmful ground, whatever it does (#3306).
+14. **A cast with a cast time** that is not an attack skill lifts the
+    weapon to its wind-up pose in 0.15 s and holds it, with a glow at the
+    weapon's far end, past the body, in the type colour (`render/skill-colours.ts`) growing from 7 px,
+    alpha 0.4, to 12 px, alpha 0.55; on release the weapon strikes and the
+    glow becomes a 16 px white flash, gone in 0.15 s; stopped short, it
+    shrinks to nothing and greys in 0.2 s. An instant skill shows none (#3320).
 
 Rules 3 and 7 are checked by CI (#3251): `render/visibility-gate.test.ts`
 draws every map through the scene's own map drawing, records each filled

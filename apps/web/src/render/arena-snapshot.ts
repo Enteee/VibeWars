@@ -32,7 +32,7 @@ import type {
 } from "@vibewars/game-maps/schema";
 
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
-import type { AttackCast } from "./attack-clock.js";
+import type { AttackCast, SpellCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
 import {
   breakableAtPoint,
@@ -103,6 +103,8 @@ export interface RenderableActor {
   readonly swingTotal: number;
   /** The host's cast timer while an attack skill winds up (#562), which the pose follows instead. */
   readonly attackCast: AttackCast | undefined;
+  /** The host's cast timer while anything else with a cast time is cast (#3320): the weapon raises, the hand glows. */
+  readonly spellCast: SpellCast | undefined;
   /** Picks the off-hand mark (#276); `undefined` draws none. */
   readonly offhandId: OffhandId | undefined;
   /** The primary profession, whose glyph leads the name (#281); `undefined` draws none. */
@@ -120,7 +122,7 @@ export interface RenderableActor {
   readonly exploited: boolean;
   /** Lying down from a knockdown (#545): drawn flattened, the weapon dropped beside it. */
   readonly knockedDown: boolean;
-  /** Fraction of the current cast still remaining, or `undefined`. */
+  /** Fraction of the current cast done, 0 … 1, or `undefined`. */
   readonly castProgress: number | undefined;
   /** The casting skill's type, for the badge by the cast bar (#1125); only with `castProgress`. */
   readonly castType: SkillType | undefined;

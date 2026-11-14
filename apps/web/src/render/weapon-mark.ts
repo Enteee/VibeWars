@@ -48,3 +48,32 @@ export function weaponMarkLayout(
     alpha: posed.alpha,
   };
 }
+
+/**
+ * The far end of the weapon mark as `weaponMarkLayout` places it at
+ * `frame` (#3320): the point of it farthest from the body's centre, where
+ * a cast's glow sits, out past the body as the study draws it; `undefined`
+ * with no weapon.
+ */
+export function weaponTipAt(
+  x: number,
+  y: number,
+  r: number,
+  facing: number,
+  weaponId: string | undefined,
+  frame: AttackFrame,
+): Point | undefined {
+  const { strokes, fills } = weaponMarkLayout(x, y, r, facing, weaponId, frame);
+  let tip: Point | undefined;
+  let reach = -1;
+  for (const line of [...strokes, ...fills]) {
+    for (const point of line) {
+      const d = (point.x - x) ** 2 + (point.y - y) ** 2;
+      if (d > reach) {
+        reach = d;
+        tip = point;
+      }
+    }
+  }
+  return tip;
+}
