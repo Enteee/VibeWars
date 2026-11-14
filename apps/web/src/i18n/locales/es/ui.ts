@@ -1528,6 +1528,12 @@ export default {
   "tutorial.walk.how": "Clic izquierdo en el suelo, o camina con {keys}.",
   "tutorial.walk.intro": "Esta guerra nunca acaba. Camina conmigo; tengo una idea.",
   "tutorial.walk.praise": "¡Buen paso! Lo llevas en la sangre.",
+  "tutorial.wall.firstHit": "¡Ahí! Se agrieta. Sigue así.",
+  "tutorial.wall.hint": "Primero haz clic derecho en el muro, luego golpéalo.",
+  "tutorial.wall.how":
+    "Haz clic derecho en el muro, luego pulsa {keys}, o haz clic derecho en él dos veces.",
+  "tutorial.wall.intro": "Un muro bloquea el sendero. Haz clic derecho en él y golpéalo.",
+  "tutorial.wall.praise": "¡Se derrumba! El sendero está abierto.",
 
   "weaponSets.empty": "Set de armas {number}: vacío",
   "weaponSets.holds": "Set de armas {number}: {gear}",

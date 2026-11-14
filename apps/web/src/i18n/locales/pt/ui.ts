@@ -1510,6 +1510,12 @@ export default {
   "tutorial.walk.how": "Clique esquerdo no chão, ou ande com {keys}.",
   "tutorial.walk.intro": "Esta guerra nunca acaba. Caminhe comigo; tenho uma ideia.",
   "tutorial.walk.praise": "Belo passo! Tem jeito para isto.",
+  "tutorial.wall.firstHit": "Isso! Está rachando. Continue.",
+  "tutorial.wall.hint": "Primeiro clique com o botão direito no muro, depois golpeie.",
+  "tutorial.wall.how":
+    "Clique com o botão direito no muro, depois pressione {keys}, ou clique nele com o direito duas vezes.",
+  "tutorial.wall.intro": "Um muro bloqueia a trilha. Clique com o botão direito nele e golpeie.",
+  "tutorial.wall.praise": "Caiu! A trilha está aberta.",
 
   "weaponSets.empty": "Conjunto de armas {number}: vazio",
   "weaponSets.holds": "Conjunto de armas {number}: {gear}",

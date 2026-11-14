@@ -1356,6 +1356,11 @@ export default {
   "tutorial.walk.how": "땅을 왼쪽 클릭하거나 {keys}로 걸어.",
   "tutorial.walk.intro": "이 전쟁은 끝나지 않아. 나와 함께 가자, 생각이 있어.",
   "tutorial.walk.praise": "좋은 걸음이야! 타고났구나.",
+  "tutorial.wall.firstHit": "좋아! 금이 간다. 계속해.",
+  "tutorial.wall.hint": "먼저 벽을 우클릭하고, 그다음 쳐.",
+  "tutorial.wall.how": "벽을 우클릭한 뒤 {keys}를 누르거나, 두 번 우클릭해.",
+  "tutorial.wall.intro": "벽이 길을 막고 있어. 우클릭하고, 쳐 봐.",
+  "tutorial.wall.praise": "무너진다! 길이 열렸어.",
 
   "weaponSets.empty": "무기 세트 {number}: 비어 있음",
   "weaponSets.holds": "무기 세트 {number}: {gear}",

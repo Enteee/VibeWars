@@ -1557,6 +1557,12 @@ export default {
   "tutorial.walk.how": "Klikni ľavým na zem, alebo choď klávesmi {keys}.",
   "tutorial.walk.intro": "Táto vojna nikdy neskončí. Poď so mnou; mám nápad.",
   "tutorial.walk.praise": "Pekný krok! Si prirodzený talent.",
+  "tutorial.wall.firstHit": "Tak! Praská. Pokračuj.",
+  "tutorial.wall.hint": "Najprv klikni na múr pravým tlačidlom, potom doň udri.",
+  "tutorial.wall.how":
+    "Klikni na múr pravým tlačidlom, potom stlač {keys}, alebo naň klikni pravým dvakrát.",
+  "tutorial.wall.intro": "Chodník blokuje múr. Klikni naň pravým tlačidlom a potom doň udri.",
+  "tutorial.wall.praise": "Padá! Chodník je voľný.",
 
   "weaponSets.empty": "Sada zbraní {number}: prázdna",
   "weaponSets.holds": "Sada zbraní {number}: {gear}",

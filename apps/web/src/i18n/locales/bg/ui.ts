@@ -1443,6 +1443,12 @@ export default {
   "tutorial.walk.how": "Ляв клик на земята или ходи с {keys}.",
   "tutorial.walk.intro": "Тази война никога не свършва. Ела с мен; имам идея.",
   "tutorial.walk.praise": "Хубава крачка! Имаш дарба.",
+  "tutorial.wall.firstHit": "Ето! Пука се. Продължавай.",
+  "tutorial.wall.hint": "Първо десен клик върху стената, после я удари.",
+  "tutorial.wall.how":
+    "Десен клик върху стената, после натисни {keys} или щракни я двукратно с десния бутон.",
+  "tutorial.wall.intro": "Стена препречва пътеката. Десен клик върху нея, после я удари.",
+  "tutorial.wall.praise": "Падна! Пътеката е отворена.",
 
   "weaponSets.empty": "Оръжеен комплект {number}: празен",
   "weaponSets.holds": "Оръжеен комплект {number}: {gear}",

@@ -1451,6 +1451,12 @@ export default {
   "tutorial.walk.how": "Vasen napsautus maahan, tai kävele näppäimillä {keys}.",
   "tutorial.walk.intro": "Tämä sota ei lopu koskaan. Kävele kanssani; minulla on idea.",
   "tutorial.walk.praise": "Hieno askel! Olet luonnonlahjakkuus.",
+  "tutorial.wall.firstHit": "Siinä! Se halkeilee. Jatka.",
+  "tutorial.wall.hint": "Napsauta ensin muuria oikealla, sitten lyö sitä.",
+  "tutorial.wall.how":
+    "Napsauta muuria oikealla painikkeella, paina sitten {keys} tai napsauta sitä oikealla kahdesti.",
+  "tutorial.wall.intro": "Muuri tukkii polun. Napsauta sitä oikealla ja lyö.",
+  "tutorial.wall.praise": "Se kaatuu! Polku on auki.",
 
   "weaponSets.empty": "Asesarja {number}: tyhjä",
   "weaponSets.holds": "Asesarja {number}: {gear}",

@@ -1555,6 +1555,12 @@ export default {
   "tutorial.walk.how": "Левый клик по земле или иди клавишами {keys}.",
   "tutorial.walk.intro": "Эта война никогда не кончится. Идём со мной; есть идея.",
   "tutorial.walk.praise": "Отличный шаг! У тебя талант.",
+  "tutorial.wall.firstHit": "Вот! Трескается. Давай дальше.",
+  "tutorial.wall.hint": "Сначала правый клик по стене, потом бей.",
+  "tutorial.wall.how":
+    "Правый клик по стене, затем нажми {keys} или дважды щёлкни по ней правой кнопкой.",
+  "tutorial.wall.intro": "Стена перегородила тропу. Правый клик по ней, потом бей.",
+  "tutorial.wall.praise": "Рухнула! Тропа открыта.",
 
   "weaponSets.empty": "Набор оружия {number}: пусто",
   "weaponSets.holds": "Набор оружия {number}: {gear}",

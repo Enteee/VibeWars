@@ -1500,6 +1500,11 @@ export default {
   "tutorial.walk.how": "לחיצה שמאלית על הקרקע, או הליכה עם {keys}.",
   "tutorial.walk.intro": "המלחמה הזאת לא נגמרת. בוא איתי; יש לי רעיון.",
   "tutorial.walk.praise": "צעד יפה! יש לך כישרון.",
+  "tutorial.wall.firstHit": "הנה! היא נסדקת. המשך.",
+  "tutorial.wall.hint": "קודם לחץ על החומה בלחצן הימני, ואז הכה בה.",
+  "tutorial.wall.how": "לחיצה ימנית על החומה, ואז לחץ {keys}, או לחץ עליה בימני פעמיים.",
+  "tutorial.wall.intro": "חומה חוסמת את השביל. לחץ עליה בלחצן הימני, ואז הכה בה.",
+  "tutorial.wall.praise": "היא נופלת! השביל פתוח.",
 
   "weaponSets.empty": "סט נשק {number}: ריק",
   "weaponSets.holds": "סט נשק {number}: {gear}",

@@ -1561,6 +1561,12 @@ export default {
   "tutorial.walk.how": "Лівий клік по землі або йди клавішами {keys}.",
   "tutorial.walk.intro": "Ця війна ніколи не скінчиться. Ходімо зі мною; є ідея.",
   "tutorial.walk.praise": "Чудовий крок! У тебе талант.",
+  "tutorial.wall.firstHit": "Ось! Тріскає. Давай далі.",
+  "tutorial.wall.hint": "Спершу правий клік по стіні, тоді бий.",
+  "tutorial.wall.how":
+    "Правий клік по стіні, потім натисни {keys} або двічі клацни по ній правою кнопкою.",
+  "tutorial.wall.intro": "Стіна перегородила стежку. Правий клік по ній, тоді бий.",
+  "tutorial.wall.praise": "Впала! Стежка відкрита.",
 
   "weaponSets.empty": "Набір зброї {number}: порожньо",
   "weaponSets.holds": "Набір зброї {number}: {gear}",

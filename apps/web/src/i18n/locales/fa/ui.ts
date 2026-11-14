@@ -1434,6 +1434,11 @@ export default {
   "tutorial.walk.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
   "tutorial.walk.intro": "این جنگ هرگز تمام نمی‌شود. با من بیا؛ فکری دارم.",
   "tutorial.walk.praise": "قدم خوبی بود! استعدادش را داری.",
+  "tutorial.wall.firstHit": "آنجا! ترک برداشت. ادامه بده.",
+  "tutorial.wall.hint": "اول روی دیوار کلیک راست کن، بعد بزنش.",
+  "tutorial.wall.how": "روی دیوار کلیک راست کن، بعد {keys} را بزن، یا دوبار رویش کلیک راست کن.",
+  "tutorial.wall.intro": "دیواری راه را بسته است. رویش کلیک راست کن، بعد بزنش.",
+  "tutorial.wall.praise": "فرو ریخت! راه باز است.",
 
   "weaponSets.empty": "ست سلاح {number}: خالی",
   "weaponSets.holds": "ست سلاح {number}: {gear}",

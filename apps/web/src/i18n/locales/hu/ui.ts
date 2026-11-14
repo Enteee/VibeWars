@@ -1445,6 +1445,12 @@ export default {
   "tutorial.walk.how": "Bal kattintás a talajra, vagy sétálj ezekkel: {keys}.",
   "tutorial.walk.intro": "Ez a háború sosem ér véget. Gyere velem; van egy ötletem.",
   "tutorial.walk.praise": "Szép lépés! Született tehetség vagy.",
+  "tutorial.wall.firstHit": "Ez az! Reped. Csak így tovább.",
+  "tutorial.wall.hint": "Előbb jobb klikk a falra, aztán üsd.",
+  "tutorial.wall.how":
+    "Jobb klikk a falra, aztán nyomd meg: {keys}, vagy kattints rá kétszer jobb gombbal.",
+  "tutorial.wall.intro": "Egy fal zárja el az ösvényt. Jobb klikk rá, aztán üsd.",
+  "tutorial.wall.praise": "Leomlik! Az ösvény szabad.",
 
   "weaponSets.empty": "{number}. fegyverkészlet: üres",
   "weaponSets.holds": "{number}. fegyverkészlet: {gear}",

@@ -1518,6 +1518,11 @@ export default {
   "tutorial.walk.how": "Clic sinistro sul terreno, o cammina con {keys}.",
   "tutorial.walk.intro": "Questa guerra non finisce mai. Cammina con me; ho un'idea.",
   "tutorial.walk.praise": "Bel passo! Sei portato.",
+  "tutorial.wall.firstHit": "Ecco! Si crepa. Continua.",
+  "tutorial.wall.hint": "Prima clic destro sul muro, poi colpiscilo.",
+  "tutorial.wall.how": "Clic destro sul muro, poi premi {keys}, o fai due clic destri su di esso.",
+  "tutorial.wall.intro": "Un muro blocca il sentiero. Clic destro sopra, poi colpiscilo.",
+  "tutorial.wall.praise": "Crolla! Il sentiero è aperto.",
 
   "weaponSets.empty": "Set di armi {number}: vuoto",
   "weaponSets.holds": "Set di armi {number}: {gear}",

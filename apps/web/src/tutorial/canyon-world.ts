@@ -1,6 +1,7 @@
 import {
   MINIMAL_GW_INSPIRED_PVP_V1 as RULESET,
   MatchSimulation,
+  breakableTargetId,
   vec2,
   type MatchZone,
   type PlayerBuild,
@@ -47,6 +48,43 @@ export const DODGE_MARK: CanyonPoint = ((): CanyonPoint => {
     map,
     position: vec2(Math.max(...xs) + MARK_PAST, (Math.min(...ys) + Math.max(...ys)) / 2),
     layer: landing.layer,
+  };
+})();
+
+/** Station 5's mark (#3302): this far west of the cracked wall's west face. */
+const MARK_BEFORE_WALL = 60;
+/** Where the tutor waits by the wall, from the mark. */
+const TUTOR_AT_WALL = vec2(0, -90);
+
+/** Station 5's wall (#3302): the breakable that shuts the trail east of the boulder run. */
+export interface CanyonWall {
+  readonly id: string;
+  /** What a body targets to strike it. */
+  readonly targetId: string;
+  /** The mark at its west face, where the trail meets it. */
+  readonly face: Vec2;
+  readonly layer: number;
+  readonly maxHealth: number;
+  /** Where the tutor waits by it. */
+  readonly besideFace: Vec2;
+}
+
+export const CRACKED_WALL: CanyonWall = ((): CanyonWall => {
+  const { map } = CANYON_ARRIVAL;
+  const id = "cracked-wall";
+  const breakable = map.breakables?.find((entry) => entry.id === id);
+  if (breakable?.wall.kind !== "rect") {
+    throw new Error(`${map.id}: no ${id} for station 5`);
+  }
+  const { x, y, height, layer } = breakable.wall;
+  const face = vec2(x - MARK_BEFORE_WALL, y + height / 2);
+  return {
+    id,
+    targetId: breakableTargetId(id),
+    face,
+    layer,
+    maxHealth: breakable.health,
+    besideFace: vec2(face.x + TUTOR_AT_WALL.x, face.y + TUTOR_AT_WALL.y),
   };
 })();
 
@@ -107,5 +145,29 @@ export function canyonWorld(
     zones,
     ground,
     besideMark: vec2(mark.x + TUTOR_AT_MARK.x, mark.y + TUTOR_AT_MARK.y),
+  };
+}
+
+/** The tutor at the cracked wall (#3302), stepped once a frame. */
+export interface WallTutor {
+  readonly step: () => void;
+}
+
+/**
+ * Sends the tutor to wait by the cracked wall, and has it strike the wall
+ * once the player's first blow has landed: the wall below its full health,
+ * which only the player can do before then. It never breaks the wall alone.
+ */
+export function wallTutor(simulation: MatchSimulation): WallTutor {
+  simulation.walkTo(TUTOR_ID, CRACKED_WALL.besideFace, CRACKED_WALL.layer);
+  let striking = false;
+  return {
+    step: () => {
+      const wall = simulation.breakables.find(({ id }) => id === CRACKED_WALL.id);
+      if (striking || wall === undefined || wall.health >= wall.maxHealth || wall.health <= 0) {
+        return;
+      }
+      striking = simulation.requestAttack(TUTOR_ID, CRACKED_WALL.targetId)?.ok === true;
+    },
   };
 }

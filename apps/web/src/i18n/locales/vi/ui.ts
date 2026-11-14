@@ -1352,6 +1352,12 @@ export default {
   "tutorial.walk.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",
   "tutorial.walk.intro": "Cuộc chiến này không bao giờ dứt. Đi cùng tôi; tôi có ý này.",
   "tutorial.walk.praise": "Bước đi đẹp! Bạn có năng khiếu.",
+  "tutorial.wall.firstHit": "Đó! Nó nứt rồi. Tiếp tục.",
+  "tutorial.wall.hint": "Nhấp chuột phải vào bức tường trước, rồi đánh nó.",
+  "tutorial.wall.how":
+    "Nhấp chuột phải vào bức tường, rồi nhấn {keys}, hoặc nhấp chuột phải hai lần.",
+  "tutorial.wall.intro": "Một bức tường chắn lối. Nhấp chuột phải vào nó, rồi đánh.",
+  "tutorial.wall.praise": "Đổ rồi! Lối đi đã mở.",
 
   "weaponSets.empty": "Bộ vũ khí {number}: trống",
   "weaponSets.holds": "Bộ vũ khí {number}: {gear}",
