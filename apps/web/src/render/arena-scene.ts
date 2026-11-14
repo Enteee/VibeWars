@@ -487,7 +487,6 @@ const FLOOR_DEPTH = renderOrder({ kind: "floor" });
 const LIT_GROUND_DEPTH = renderOrder({ kind: "lit-ground-effect" });
 const MAP_DEPTH = renderOrder({ kind: "terrain" });
 const EFFECT_DEPTH = renderOrder({ kind: "effect" });
-const HEALTH_BAR_DEPTH = renderOrder({ kind: "health-bar" });
 const CAST_BADGE_DEPTH = renderOrder({ kind: "cast-badge" });
 const OVERLAY_DEPTH = renderOrder({ kind: "ui" });
 /** Over every world object, names and numbers included. */
@@ -542,6 +541,7 @@ export class ArenaScene extends Phaser.Scene {
   private bands: readonly {
     readonly body: Phaser.GameObjects.Graphics;
     readonly marks: Phaser.GameObjects.Graphics;
+    readonly bar: Phaser.GameObjects.Graphics;
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
@@ -634,8 +634,6 @@ export class ArenaScene extends Phaser.Scene {
   private readonly standing = new Map<string, RenderableActor>();
   /** Every mark on a body, over the body glyphs (#1037). */
   private markGraphics: Phaser.GameObjects.Graphics | undefined;
-  /** Every health bar, over the marks (#3292). */
-  private barGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Energy barriers' curtains (#3031), added over what is behind them. */
   private barrierGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Each breakable wall's last health seen, and when it fell, for its dust (#3031). */
@@ -857,13 +855,13 @@ export class ArenaScene extends Phaser.Scene {
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
       marks: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "marks" })),
+      bar: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "bar" })),
     }));
     this.barrierGraphics = this.add
       .graphics()
       .setDepth(EFFECT_DEPTH)
       .setBlendMode(Phaser.BlendModes.ADD);
     this.markGraphics = this.add.graphics().setDepth(EFFECT_DEPTH);
-    this.barGraphics = this.add.graphics().setDepth(HEALTH_BAR_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
     this.nameUnderline = this.add.graphics().setDepth(OVERLAY_DEPTH);
     // Made before any shot's sprite, so under every one at their depth.
@@ -878,12 +876,12 @@ export class ArenaScene extends Phaser.Scene {
     if (effects === undefined || floor === undefined) {
       return;
     }
-    for (const { body, marks: bandMarks } of this.bands) {
+    for (const { body, marks: bandMarks, bar } of this.bands) {
       body.clear();
       bandMarks.clear();
+      bar.clear();
     }
     effects.clear();
-    this.barGraphics?.clear();
     this.barrierGraphics?.clear();
     const { body: g, marks } = floor;
     this.now = time / 1000;
@@ -956,7 +954,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
       if (band !== undefined) {
-        this.drawActor(band.body, band.marks, actor);
+        this.drawActor(band, actor);
       }
     }
     this.cutAwayTunnels(dt);
@@ -968,8 +966,13 @@ export class ArenaScene extends Phaser.Scene {
       this.drawFlag(effects, flag);
     }
     this.swingFlashes = decaySwingFlashes(this.swingFlashes, dt);
+    // Arcs and hit marks on their body's band, under its health bars and
+    // any deck over it (#3292).
     for (const flash of this.swingFlashes) {
-      this.drawSwingFlash(effects, flash);
+      const band = this.bandOf(flash.layer);
+      if (band !== undefined) {
+        this.drawSwingFlash(band.marks, flash);
+      }
     }
     this.beaconBolts = decayBeaconBolts(this.beaconBolts, dt);
     for (const bolt of this.beaconBolts) {
@@ -978,7 +981,7 @@ export class ArenaScene extends Phaser.Scene {
     this.impacts = mergeImpacts(this.impacts, this.addedImpacts, dt);
     this.addedImpacts = [];
     for (const impact of this.impacts) {
-      this.drawImpact(effects, impact);
+      this.drawImpact(impact);
     }
     this.updateBodyGlyphs();
     this.updateCastBadges();
@@ -1750,9 +1753,10 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** A skill's impact on a body (#1139), where that body is now; none once it has left the state. */
-  private drawImpact(g: Phaser.GameObjects.Graphics, impact: Impact): void {
+  private drawImpact(impact: Impact): void {
     const actor = this.drawnActors.find((a) => a.id === impact.anchorId);
-    if (actor === undefined) {
+    const g = actor === undefined ? undefined : this.bandOf(actor.layer)?.marks;
+    if (actor === undefined || g === undefined) {
       return;
     }
     const { x, y } = actor.position;
@@ -1944,15 +1948,12 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * One actor: its body on `g`, every mark on it on `marks`, over the
-   * body glyphs (#1037). In a clump a neighbour's weapon now crosses your
+   * One actor on its band: its body, every mark on it over the body
+   * glyphs (#1037), and its health bar over those (#3292). In a clump a neighbour's weapon now crosses your
    * body: the weapon is the more urgent read.
    */
-  private drawActor(
-    g: Phaser.GameObjects.Graphics,
-    marks: Phaser.GameObjects.Graphics,
-    actor: RenderableActor,
-  ): void {
+  private drawActor(band: (typeof this.bands)[number], actor: RenderableActor): void {
+    const { body: g, marks, bar } = band;
     const { x, y } = actor.position;
 
     if (actor.dead) {
@@ -2008,9 +2009,7 @@ export class ArenaScene extends Phaser.Scene {
       this.drawCallChevron(marks, actor);
     }
 
-    if (this.barGraphics !== undefined) {
-      this.drawHealthBar(this.barGraphics, actor);
-    }
+    this.drawHealthBar(bar, actor);
 
     if (actor.castProgress !== undefined) {
       this.drawCastBar(marks, actor, actor.castProgress);

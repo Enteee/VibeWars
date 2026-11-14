@@ -409,6 +409,8 @@ export interface SwingFlash {
   readonly kind: "swing" | "skill";
   /** The attacker's centre when it swung. */
   readonly centre: Vec2;
+  /** The attacker's layer: the arc draws on its band, under that band's health bars (#3292). */
+  readonly layer: number;
   /** Toward the target, in radians. */
   readonly angle: number;
   readonly radius: number;

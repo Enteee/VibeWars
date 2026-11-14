@@ -88,6 +88,7 @@ export function swingFlashFor(
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const swung = {
     centre: vec2(attacker.x, attacker.y),
+    layer: attacker.layer,
     angle: Math.atan2(target.y - attacker.y, target.x - attacker.x),
     radius: ACTOR_RADIUS + SWING_FLASH_GAP,
     own: attacker.sessionId === snapshot.selfSessionId,

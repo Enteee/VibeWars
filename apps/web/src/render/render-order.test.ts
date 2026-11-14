@@ -15,7 +15,7 @@ import {
 const character = (band: number): RenderItem => ({ kind: "character", band, part: "body" });
 
 describe("renderOrder (#2810, section 8: 12)", () => {
-  it("runs terrain, ground characters, walls, supports, side faces, decks, elevated characters, effects, health bars (#3292), cast badges, UI", () => {
+  it("runs terrain, ground characters, walls, supports, side faces, decks, elevated characters, effects, UI", () => {
     const items: readonly RenderItem[] = [
       { kind: "terrain" },
       character(0),
@@ -25,8 +25,6 @@ describe("renderOrder (#2810, section 8: 12)", () => {
       { kind: "deck", deckLayer: 1 },
       character(1),
       { kind: "effect" },
-      { kind: "health-bar" },
-      { kind: "cast-badge" },
       { kind: "ui" },
     ];
     const orders = items.map(renderOrder);
@@ -38,6 +36,16 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     const deck = renderOrder({ kind: "deck", deckLayer: 1 });
     expect(renderOrder(character(0))).toBeLessThan(deck);
     expect(renderOrder(character(1))).toBeGreaterThan(deck);
+  });
+
+  it("draws a body's health bar over its band's marks, under a deck over it (#3292)", () => {
+    const part = (band: number, p: "marks" | "bar"): number =>
+      renderOrder({ kind: "character", band, part: p });
+    expect(part(0, "marks")).toBeLessThan(part(0, "bar"));
+    expect(part(0, "bar")).toBeLessThan(renderOrder({ kind: "tunnel-cover", deckLayer: 1 }));
+    expect(part(0, "bar")).toBeLessThan(renderOrder({ kind: "deck", deckLayer: 1 }));
+    expect(part(0, "bar")).toBeLessThan(renderOrder({ kind: "wall", layer: 0 }));
+    expect(part(1, "bar")).toBeGreaterThan(renderOrder({ kind: "deck", deckLayer: 1 }));
   });
 
   it("draws the ground over a tunnel over whoever is in it, under the ground's deck (#3234)", () => {
