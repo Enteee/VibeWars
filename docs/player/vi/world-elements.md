@@ -53,6 +53,12 @@ mở, các cánh cửa xoay sang bên để lộ một lối đi tối. **Cần 
 nó phát sáng khi gạt lên và xám khi gạt xuống. Nhấp chuột phải vào cần
 gạt để chọn nó làm mục tiêu, rồi nhấn **Space** để đi tới đó và gạt nó.
 
+Di chuột lên một cần gạt hoặc chọn nó làm mục tiêu, thứ nó điều khiển sẽ
+được viền màu đồng thau, kèm một đường chấm nối từ cần gạt tới đó, kể cả
+xuyên qua lớp đất phía trên. Khi bất kỳ ai gạt cần, thứ nó điều khiển sẽ
+nhấp nháy. Khung mục tiêu cho biết lần gạt tiếp theo sẽ làm gì, chẳng
+hạn _Cần gạt · mở cửa song sắt_.
+
 Một số cổng lại mở bằng **tấm áp lực**: một đĩa đá lún xuống và chuyển
 sang màu đồng thau khi có người đứng trên đó. Cổng đóng lại khi người
 cuối cùng bước ra, và nửa giây sau tấm lại mở được cổng. Một số
@@ -96,6 +102,13 @@ và cầu thang ở hai đầu. Một thang leo chỉ đủ rộng cho một ng�
 lúc. Một **cây cầu** bằng đá, ván gỗ hoặc một khúc gỗ đổ bắc qua một
 khoảng trống, và người chơi bên dưới có thể đi qua bên dưới nó. Đứng cao
 hơn không thay đổi tầm đánh hay sát thương của bạn.
+
+## Đường hầm
+
+Một số lối đi chạy dưới mặt đất. Nhìn từ trên xuống, một đường nối lõm
+có các khe lưới đánh dấu nơi lối đi đó chạy qua, và ánh đèn ở hai đầu
+của nó giống nhau: đi xuống cạnh một ngọn đèn ấm thì bạn sẽ ra cạnh một
+ngọn đèn ấm.
 
 ## Cầu kéo, cầu dây và lối đi bí mật
 

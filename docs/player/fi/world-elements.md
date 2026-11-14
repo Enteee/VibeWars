@@ -52,6 +52,12 @@ portit, joita se ohjaa: kivijalusta ja puinen varsi, jonka messinkinuppi hehkuu
 ylhäällä ja on harmaa alhaalla. Valitse vipu kohteeksi oikealla klikkauksella
 ja paina sitten **Space**, niin kävelet sen luo ja käännät sen.
 
+Kun viet hiiren vivun päälle tai valitset sen kohteeksi, kaikki mitä se
+ohjaa saa messinkisen ääriviivan ja pisteviivan vivusta siihen, jopa sen
+yllä olevan maan läpi. Kun kuka tahansa kääntää vivun, kaikki mitä se
+ohjaa välähtää. Kohdekehys kertoo, mitä seuraava kääntö tekee,
+esimerkiksi _Vipu · avaa: laskuristikko_.
+
 Jotkin portit aukeavat sen sijaan **painelaatasta**: kivikiekko, joka painuu
 alas ja muuttuu messinginväriseksi, kun joku seisoo sen päällä. Portti sulkeutuu,
 kun viimeinen astuu pois, ja sen laatta avaa sen uudelleen puoli sekuntia
@@ -96,6 +102,13 @@ molemmissa päissä. Tikkaille mahtuu vain yksi pelaaja kerrallaan. Kivestä,
 lankuista tai kaatuneesta puunrungosta tehty **silta** ylittää aukon, ja
 alapuolella olevat pelaajat voivat kulkea sen ali. Korkeammalla oleminen ei
 muuta kantamaasi eikä vahinkoasi.
+
+## Tunnelit
+
+Jotkin käytävät kulkevat maan alla. Ylhäältä upotettu sauma
+ritiläaukkoineen näyttää, missä sellainen kulkee, ja sen kummankin pään
+valot ovat samanlaiset: menet alas lämpimän valon luota ja tulet ylös
+lämpimän valon luota.
 
 ## Sää ja tunnelma
 

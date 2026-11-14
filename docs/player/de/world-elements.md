@@ -55,6 +55,12 @@ Steinsockel mit einem Holzarm, dessen Messingknauf oben leuchtet und unten grau
 ist. Rechtsklick auf einen Hebel visiert ihn an, dann drückst du **Space**, um
 hinzulaufen und ihn umzulegen.
 
+Fährst du mit der Maus über einen Hebel oder visierst du ihn an, bekommt
+alles, was er steuert, einen Messingumriss und eine gepunktete Linie vom
+Hebel dorthin, selbst durch den Boden darüber. Legt jemand den Hebel um,
+blinkt auf, was er steuert. Der Zielrahmen sagt, was das nächste Umlegen
+bewirkt, etwa _Hebel · öffnet das Fallgitter_.
+
 Manche Tore öffnen sich stattdessen über eine **Druckplatte**: eine Steinscheibe,
 die einsinkt und messingfarben wird, solange jemand darauf steht. Das Tor
 schließt sich, wenn der Letzte heruntertritt, und seine Platte öffnet es eine halbe
@@ -101,6 +107,13 @@ für jeweils einen Spieler. Eine **Brücke** aus Stein, Planken oder einem
 umgestürzten Baumstamm überspannt eine Lücke, und Spieler darunter können
 unter ihr hindurchgehen. Weiter oben zu stehen ändert weder deine
 Reichweite noch deinen Schaden.
+
+## Tunnel
+
+Manche Durchgänge verlaufen unter der Erde. Von oben zeigt eine
+eingelassene Fuge mit Gitterschlitzen, wo einer verläuft, und die
+Lichter an seinen beiden Enden passen zusammen: Gehst du bei einem
+warmen Licht hinunter, kommst du bei einem warmen Licht wieder heraus.
 
 ## Zugbrücken, Seilbrücken und verborgene Durchgänge
 

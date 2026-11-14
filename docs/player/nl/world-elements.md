@@ -53,6 +53,12 @@ houten arm, waarvan de koperen knop gloeit als hij omhoog staat en grijs is
 als hij omlaag staat. Rechtsklik op een hendel om hem als doel te kiezen en
 druk dan op **Space** om erheen te lopen en hem over te halen.
 
+Beweeg de muis over een hendel of kies hem als doel, en wat hij bedient
+krijgt een koperen omlijning, met een stippellijn van de hendel
+ernaartoe, zelfs door de grond erboven. Haalt iemand de hendel over, dan
+licht op wat hij bedient. Het doelkader zegt wat de volgende keer
+overhalen doet, zoals _Hendel · opent het valhek_.
+
 Sommige poorten gaan in plaats daarvan open met een **drukplaat**: een
 stenen schijf die wegzakt en koperkleurig wordt zolang iemand erop staat. De
 poort gaat dicht als de laatste eraf stapt, en de plaat opent hem een halve
@@ -99,6 +105,13 @@ de uiteinden. Een ladder is breed genoeg voor één speler tegelijk. Een
 **brug** van steen, planken of een omgevallen boomstam overspant een
 kloof, en spelers eronder kunnen eronderdoor lopen. Hoger staan
 verandert niets aan je bereik of je schade.
+
+## Tunnels
+
+Sommige doorgangen lopen onder de grond. Van bovenaf geeft een verzonken
+naad met roostersleuven aan waar er een loopt, en de lichten aan de twee
+uiteinden horen bij elkaar: ga naar beneden bij een warm licht en je
+komt boven bij een warm licht.
 
 ## Ophaalbruggen, touwbruggen en geheime doorgangen
 

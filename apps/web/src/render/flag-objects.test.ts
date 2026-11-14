@@ -223,16 +223,59 @@ describe("renderableSwitches and switchAtPoint (#3025)", () => {
     { id: "west", layer: 0, position: { x: 100, y: 100 } },
     { id: "east", layer: 1, position: { x: 400, y: 100 } },
   ];
+  const NONE = { gates: [], teleports: [], decks: [], lifts: [] };
 
   it("targets each by its switch- id, up until a snapshot says thrown", () => {
-    expect(renderableSwitches(switches, [false])).toEqual([
-      { id: "switch-west", mark: "west", position: { x: 100, y: 100 }, layer: 0, up: false },
-      { id: "switch-east", mark: "east", position: { x: 400, y: 100 }, layer: 1, up: true },
+    expect(renderableSwitches(switches, [false], [], NONE)).toEqual([
+      {
+        id: "switch-west",
+        mark: "west",
+        position: { x: 100, y: 100 },
+        layer: 0,
+        up: false,
+        targets: [],
+      },
+      {
+        id: "switch-east",
+        mark: "east",
+        position: { x: 400, y: 100 },
+        layer: 1,
+        up: true,
+        targets: [],
+      },
+    ]);
+  });
+
+  it("says whether each target is open, on, up or high (#3236)", () => {
+    const at = { position: { x: 0, y: 0 }, outline: [], layer: 0 };
+    const [west] = renderableSwitches(
+      switches,
+      [],
+      [
+        [
+          { ...at, id: "gate", kind: "portcullis", source: "gate", at: 1 },
+          { ...at, id: "portal", kind: "portal", source: "teleport", at: 0 },
+          { ...at, id: "bridge", kind: "bridge", source: "deck", at: 0 },
+          { ...at, id: "lift", kind: "lift", source: "lift", at: 0 },
+        ],
+      ],
+      {
+        gates: [false, true],
+        teleports: [false],
+        decks: [{ up: true }],
+        lifts: [{ phase: "sinking" }],
+      },
+    );
+    expect(west?.targets.map(({ id, on }) => [id, on])).toEqual([
+      ["gate", true],
+      ["portal", false],
+      ["bridge", true],
+      ["lift", false],
     ]);
   });
 
   it("picks the switch under a click, and nothing beside it", () => {
-    const drawn = renderableSwitches(switches, []);
+    const drawn = renderableSwitches(switches, [], [], NONE);
     expect(switchAtPoint(drawn, { x: 105, y: 96 })).toBe("switch-west");
     expect(switchAtPoint(drawn, { x: 100, y: 100 + SWITCH_PICK_RADIUS + 1 })).toBeUndefined();
   });

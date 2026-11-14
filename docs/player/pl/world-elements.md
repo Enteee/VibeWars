@@ -54,6 +54,12 @@ gałka świeci, gdy jest w górze, i szarzeje, gdy jest w dole. Kliknij dźwigni
 prawym przyciskiem, aby obrać ją na cel, a potem naciśnij **Space**, aby do
 niej podejść i ją przestawić.
 
+Najedź kursorem na dźwignię albo obierz ją na cel, a to, czym steruje,
+dostanie mosiężny obrys z kropkowaną linią od dźwigni do niego, nawet
+przez ziemię nad nim. Gdy ktokolwiek przestawi dźwignię, to, czym
+steruje, błyśnie. Ramka celu mówi, co zrobi następne przestawienie, na
+przykład _Dźwignia · otwiera bronę_.
+
 Niektóre bramy otwiera zamiast tego **płyta naciskowa**: kamienny krąg, który
 zapada się i robi się mosiężny, dopóki ktoś na nim stoi. Brama zamyka się,
 gdy zejdzie z niej ostatnia osoba, a płyta znów ją otwiera pół sekundy
@@ -98,6 +104,13 @@ jest na tyle szeroka, że mieści naraz jednego gracza. **Most** z kamienia,
 desek albo powalonego pnia przerzucony jest nad szczeliną, a gracze na
 dole mogą przejść pod nim. Przebywanie wyżej nie zmienia twojego zasięgu
 ani obrażeń.
+
+## Tunele
+
+Niektóre przejścia biegną pod ziemią. Z góry wpuszczona w grunt spoina z
+otworami kraty pokazuje, którędy biegnie takie przejście, a światła na
+jego obu końcach do siebie pasują: zejdź przy ciepłym świetle, a
+wyjdziesz przy ciepłym świetle.
 
 ## Mosty zwodzone, mosty linowe i ukryte przejścia
 

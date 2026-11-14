@@ -34,6 +34,8 @@ import { formatNumber, t, type MessageKey } from "../i18n/index.js";
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import { THIRD_TEAM_MARK, markedForTeam, teamColour, teamSide } from "../render/arena-snapshot.js";
+import type { LinkedTarget, RenderableSwitch } from "../render/flag-objects.js";
+import type { SwitchTargetKind } from "../render/switch-link.js";
 import { botTagElement } from "./bot-tag.js";
 import { cssColour } from "./character-preview.js";
 import { paintHealthTint } from "./health-tint.js";
@@ -718,6 +720,45 @@ function setBar(
   setText(label, text);
 }
 
+const SWITCH_TARGET_NAMES: Readonly<Record<SwitchTargetKind, MessageKey>> = {
+  door: "hud.switchTarget.door",
+  portcullis: "hud.switchTarget.portcullis",
+  passage: "hud.switchTarget.passage",
+  barrier: "hud.switchTarget.barrier",
+  portal: "hud.switchTarget.portal",
+  bridge: "hud.switchTarget.bridge",
+  lift: "hud.switchTarget.lift",
+};
+
+/** What a lever's next throw does to `target`, as it stands now. */
+function leverVerb({ kind, on }: LinkedTarget): MessageKey {
+  switch (kind) {
+    case "portal":
+      return on ? "hud.switchOff" : "hud.switchOn";
+    case "bridge":
+    case "lift":
+      return on ? "hud.switchLowers" : "hud.switchRaises";
+    default:
+      return on ? "hud.switchCloses" : "hud.switchOpens";
+  }
+}
+
+/**
+ * The target frame's name for a lever (#3236): what its next throw does to
+ * its first target, and how many more it works; plain "Lever" for one
+ * that works nothing there.
+ */
+export function leverName(targets: readonly LinkedTarget[]): string {
+  const [first] = targets;
+  if (first === undefined) {
+    return t("hud.switch");
+  }
+  const named = t(SWITCH_TARGET_NAMES[first.kind]);
+  const target =
+    targets.length > 1 ? t("hud.switchMore", { target: named, more: targets.length - 1 }) : named;
+  return t(leverVerb(first), { target });
+}
+
 /**
  * The target frame's name for a flag or the stand selected (#1225),
  * which are no body, the stand with its holder (#1226), a relic
@@ -730,6 +771,8 @@ export function objectTargetName(
   stand: StandState | undefined,
   /** The stand is a Storm Beacon (#2694). */
   beacon = false,
+  /** The map's levers, which say what they work (#3236). */
+  switches: readonly RenderableSwitch[] = [],
 ): string | undefined {
   if (targetId === FLAG_STAND_ID) {
     if (stand?.holder === undefined) {
@@ -741,7 +784,7 @@ export function objectTargetName(
     return stand.holder === selfTeam ? t("hud.flagStandOurs") : t("hud.flagStandTheirs");
   }
   if (targetId !== undefined && switchIdOf(targetId) !== undefined) {
-    return t("hud.switch");
+    return leverName(switches.find((lever) => lever.id === targetId)?.targets ?? []);
   }
   if (targetId !== undefined && breakableIdOf(targetId) !== undefined) {
     return t("hud.breakableWall");
@@ -1877,6 +1920,7 @@ function renderTarget(
   stand: StandState | undefined,
   beacon: boolean,
   names: ReadonlyMap<string, string>,
+  switches: readonly RenderableSwitch[],
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
   renderTargetSignet(hud, target?.signet);
@@ -1884,7 +1928,7 @@ function renderTarget(
     target?.name ??
     (self === undefined
       ? undefined
-      : objectTargetName(self.targetSessionId, self.team, stand, beacon));
+      : objectTargetName(self.targetSessionId, self.team, stand, beacon, switches));
   setHidden(hud.targetPanel, name === undefined && !hud.showsNoTarget);
   setText(hud.targetText, name ?? t("hud.noTarget"));
   setHidden(hud.targetBot, target?.bot !== true);
@@ -1967,7 +2011,7 @@ export function updateFollowed(
 ): void {
   const names = new Map(match.players.map((player) => [player.sessionId, player.name]));
   const casters = new Map(match.players.map((player) => [player.sessionId, player]));
-  renderTarget(hud, undefined, followed, match.stand, false, names);
+  renderTarget(hud, undefined, followed, match.stand, false, names, []);
   renderTargetChain(hud.targetChain, undefined);
   hud.targetEffects.update(
     targetEffectRows(viewerId, followed, casters, matchNow(hud, match.elapsedSeconds)),
@@ -1992,6 +2036,8 @@ export function updateHud(
   mode: MatchMode,
   /** The map's stand is a Storm Beacon (#2694). */
   beacon: boolean,
+  /** The map's levers, for the target frame to say what one works (#3236). */
+  switches: readonly RenderableSwitch[],
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
@@ -2068,7 +2114,7 @@ export function updateHud(
         ],
   );
 
-  renderTarget(hud, self, target, match?.stand, beacon, names);
+  renderTarget(hud, self, target, match?.stand, beacon, names, switches);
   renderTargetChain(hud.targetChain, targetChainIcon(target, chainMark));
   hud.targetEffects.update(targetEffectRows(self.sessionId, target, casters, now));
 

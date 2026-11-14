@@ -18,6 +18,7 @@ import type { GateDescriptor, SwitchDescriptor, TeleportDescriptor } from "@vibe
 import type { GateLook } from "@vibewars/game-maps/schema";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 import type { RenderableShape } from "./arena-snapshot.js";
+import type { SwitchTarget } from "./switch-link.js";
 
 /**
  * A Guild Battle's flags and flag stand as the arena draws them (#1225),
@@ -242,15 +243,50 @@ export interface RenderableSwitch {
   readonly position: Vec2;
   readonly layer: number;
   readonly up: boolean;
+  /** What it works (#3236), in its map's order, each open, on, up or high as `on` says. */
+  readonly targets: readonly LinkedTarget[];
+}
+
+/** A lever's target (#3236) as it stands now: a gate open, a portal on, a bridge up, a lift high. */
+export interface LinkedTarget extends SwitchTarget {
+  readonly on: boolean;
+}
+
+/** Where each kind of target's state is, by its `at`. */
+export interface TargetStates {
+  readonly gates: readonly boolean[];
+  readonly teleports: readonly boolean[];
+  readonly decks: readonly { readonly up: boolean }[];
+  readonly lifts: readonly { readonly phase: string }[];
+}
+
+function targetOn({ source, at }: SwitchTarget, states: TargetStates): boolean {
+  switch (source) {
+    case "gate":
+      return states.gates[at] === true;
+    case "teleport":
+      return states.teleports[at] === true;
+    case "deck":
+      return states.decks[at]?.up === true;
+    case "lift": {
+      const phase = states.lifts[at]?.phase;
+      return phase === "high" || phase === "rising";
+    }
+  }
 }
 
 /** How near a click comes to a switch to pick it. */
 export const SWITCH_PICK_RADIUS = 18;
 
-/** Every switch, pointing as `up` says; `[]` on a map without them. */
+/**
+ * Every switch, pointing as `up` says, with what it works (`targets`, by
+ * switch, in the map's order) as `states` say; `[]` on a map without them.
+ */
 export function renderableSwitches(
   switches: readonly SwitchDescriptor[],
   up: readonly boolean[],
+  targets: readonly (readonly SwitchTarget[])[],
+  states: TargetStates,
 ): RenderableSwitch[] {
   return switches.map(({ id, position, layer }, at) => ({
     id: switchTargetId(id),
@@ -258,6 +294,7 @@ export function renderableSwitches(
     position,
     layer,
     up: up[at] !== false,
+    targets: (targets[at] ?? []).map((target) => ({ ...target, on: targetOn(target, states) })),
   }));
 }
 

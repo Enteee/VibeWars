@@ -59,6 +59,12 @@ un bras de bois, dont le pommeau de laiton brille quand il est levé et
 devient gris quand il est baissé. Fais un clic droit sur un levier pour le
 cibler, puis appuie sur **Space** pour t'y rendre et l'actionner.
 
+Survole un levier ou cible-le et ce qu'il commande se détache d'un
+contour de laiton, avec une ligne pointillée du levier jusqu'à lui, même
+à travers le sol qui le recouvre. Quand quelqu'un actionne le levier, ce
+qu'il commande clignote. Le cadre de la cible dit ce que fera le
+prochain actionnement, par exemple _Levier · ouvre la herse_.
+
 Certaines portes s'ouvrent plutôt avec une **plaque de pression** : un
 disque de pierre qui s'enfonce et prend la couleur du laiton tant que
 quelqu'un se tient dessus. La porte se ferme quand le dernier en descend, et
@@ -107,6 +113,13 @@ extrémités. Une échelle ne laisse passer qu'un joueur à la fois. Un
 **pont** de pierre, de planches ou fait d'un tronc d'arbre tombé enjambe
 un vide, et les joueurs d'en bas peuvent passer sous lui. Être plus haut
 ne change ni ta portée ni tes dégâts.
+
+## Tunnels
+
+Certains passages courent sous terre. Vu d'en haut, un joint encastré
+percé de fentes de grille marque par où passe l'un d'eux, et les
+lumières à ses deux bouts sont assorties : descends près d'une lumière
+chaude et tu ressors près d'une lumière chaude.
 
 ## Météo et ambiance
 

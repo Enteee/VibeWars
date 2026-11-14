@@ -57,6 +57,12 @@ kol; pirinç topuzu yukarıdayken parlar, aşağıdayken gridir. Bir kolu
 hedef almak için ona sağ tıkla, sonra oraya yürüyüp onu çevirmek için
 **Space**'e bas.
 
+İmleci bir kolun üzerine getir ya da onu hedef al; bağlı olduğu şeyler
+pirinç renkli bir çerçeveyle belirir ve koldan onlara noktalı bir çizgi
+uzanır, üstlerinde zemin olsa bile. Biri kolu çevirdiğinde bağlı olduğu
+şeyler parlar. Hedef çerçevesi bir sonraki çevirmenin ne yapacağını
+söyler, örneğin _Kol · parmaklıklı kapıyı açar_.
+
 Bazı kapılar bunun yerine bir **basınç plakasıyla** açılır: üstünde biri
 durduğu sürece çöken ve pirinç rengine dönen taş bir disk. Son kişi
 indiğinde kapı kapanır ve plaka kapıyı yarım saniye sonra yeniden
@@ -102,6 +108,13 @@ yalnızca bir oyuncunun geçebileceği genişliktedir. Taştan, kalaslardan ya
 da devrilmiş bir kütükten bir **köprü** bir boşluğun üzerinden geçer ve
 aşağıdaki oyuncular altından yürüyebilir. Daha yüksekte olmak menzilini ya
 da hasarını değiştirmez.
+
+## Tüneller
+
+Bazı geçitler yerin altından geçer. Yukarıdan bakınca ızgara yarıklı,
+gömme bir derz bir geçidin nereden geçtiğini gösterir ve iki ucundaki
+ışıklar birbirine uyar: sıcak bir ışığın yanından inersen sıcak bir
+ışığın yanından çıkarsın.
 
 ## Kaldırmalı köprüler, halat köprüler ve gizli geçitler
 

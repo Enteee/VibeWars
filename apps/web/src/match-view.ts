@@ -70,6 +70,7 @@ import { attackCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
 import { CREATURE_DRAWN_RADIUS } from "./render/creature-shape.js";
 import type { GoalMark } from "./render/goal-mark.js";
+import type { SwitchTarget } from "./render/switch-link.js";
 import { frameTiming, snapshotCadence } from "./render/frame-timing.js";
 import { conditionCues } from "./render/body-conditions.js";
 import { bodyFlags } from "./render/body-rings.js";
@@ -376,6 +377,7 @@ export interface GatedMap extends Pick<
 > {
   readonly gateLayers: readonly number[];
   readonly gateLooks: readonly GateLook[];
+  readonly switchTargets: readonly (readonly SwitchTarget[])[];
 }
 
 /** A map's gates and switches where it has none. */
@@ -386,6 +388,7 @@ const UNGATED: GatedMap = {
   breakables: [],
   gateLayers: [],
   gateLooks: [],
+  switchTargets: [],
 };
 
 /** Project the wire snapshot onto the renderer's own shape (ADR-0001). */
@@ -415,7 +418,7 @@ export function toArenaSnapshot(
     altar: match.altar,
     capturePoints: renderableCapturePoints(match.capturePoints, self?.team),
     gates: renderableGates(gated.gates, gated.gateLayers, gated.gateLooks, match.gates, self?.team),
-    switches: renderableSwitches(gated.switches, match.switches),
+    switches: renderableSwitches(gated.switches, match.switches, gated.switchTargets, match),
     teleports: renderableTeleports(gated.teleports, match.teleports),
     breakables: renderableBreakables(gated.breakables, match.breakables),
     lifts: match.lifts,
@@ -584,7 +587,9 @@ export async function startMatchView(
   }
   // A watcher has none (#480): nothing below sends an intent without it.
   const { seat } = viewed;
-  const { structure, wallLayers, gateLayers, gateLooks } = mapStructure(viewed.map.id);
+  const { structure, wallLayers, gateLayers, gateLooks, switchTargets } = mapStructure(
+    viewed.map.id,
+  );
   const walls = viewed.map.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(viewed.map.walls);
@@ -1149,7 +1154,7 @@ export async function startMatchView(
         shrines,
         flagField,
         relicField,
-        { ...viewed.map, gateLayers, gateLooks },
+        { ...viewed.map, gateLayers, gateLooks, switchTargets },
         standing(match.decks),
       ),
       viewport?.pointerWorld(),
@@ -1189,6 +1194,7 @@ export async function startMatchView(
         viewed.timeLimitSeconds,
         mode,
         flagField?.beacon === true,
+        latestArena.switches,
         match,
       );
       updateFollowed(hud, viewed.selfSessionId, followed, match);
@@ -1212,6 +1218,7 @@ export async function startMatchView(
       seat.timeLimitSeconds,
       mode,
       flagField?.beacon === true,
+      latestArena.switches,
       match,
     );
     updateRecharges(hud, seat.skillBar, seat.getRecharges(), seat.getQueuedSlot());
