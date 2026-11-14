@@ -1497,6 +1497,12 @@ export default {
   "tutorial.dodge.how": "Clic stânga pe teren sau mergi cu {keys}.",
   "tutorial.dodge.intro": "Aici cad pietre. Când o umbră crește, dă-te la o parte!",
   "tutorial.dodge.praise": "Picioare iuți! Pietrele nu te prind.",
+  "tutorial.heal.energy": "Bara aceea albastră e energia. Abilitățile o consumă.",
+  "tutorial.heal.hint": "Mai întâi dă clic pe numele meu în lista grupului.",
+  "tutorial.heal.how": "Dă clic pe numele meu în lista grupului, apoi apasă {keys}.",
+  "tutorial.heal.intro": "Prin spărtură, în poiană. După mine!",
+  "tutorial.heal.ow": "Au! M-a lovit piatra. Mă ajuți puțin?",
+  "tutorial.heal.praise": "Mult mai bine, mulțumesc! Știi și să vindeci.",
   "tutorial.learn": "Învață să joci",
   "tutorial.look.hint": "Micșorează, apoi trage imaginea spre nord. Găsește teleportorul!",
   "tutorial.look.how":

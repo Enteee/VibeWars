@@ -172,6 +172,25 @@ export function houseBuild(profession: ProfessionId): PlayerBuild {
   return build;
 }
 
+/** The heal the player's build carries for station 6 (#3303), and its slot: the eighth. */
+export const TUTORIAL_HEAL = "monk.heal-other";
+export const TUTORIAL_HEAL_SLOT = 7;
+
+/**
+ * The player's build for the whole tutorial (#3303): the Warrior starter,
+ * with Monk as its secondary and `TUTORIAL_HEAL` in the eighth slot, so
+ * there is an ally's heal to teach. Non-elite, so the build stays legal.
+ */
+export function tutorialPlayerBuild(): PlayerBuild {
+  const starter = houseBuild(PLAYER_PROFESSION);
+  return {
+    ...starter,
+    secondaryProfession: "monk",
+    skillBar: starter.skillBar.map((id, slot) =>
+      slot === TUTORIAL_HEAL_SLOT ? TUTORIAL_HEAL : id,
+    ),
+  };
+}
 /** One of the tutorial's bodies on the pair's side, `build` resolved as a match does. */
 export function body(
   id: string,
@@ -338,7 +357,7 @@ export function tutorialWorld(
           from.x + spawn.x - edge.x + ((centre.x - edge.x) / forward) * ALLY_AHEAD,
           from.y + spawn.y - edge.y + ((centre.y - edge.y) / forward) * ALLY_AHEAD,
         );
-  const playerBuild = houseBuild(PLAYER_PROFESSION);
+  const playerBuild = tutorialPlayerBuild();
   const tutorBuild = houseBuild(tutorProfession);
   const builds = createRng(seedFromString(`builds-${seed}`));
   const foes: Guard[] = [];

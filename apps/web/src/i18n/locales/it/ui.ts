@@ -1497,6 +1497,12 @@ export default {
   "tutorial.dodge.how": "Clic sinistro sul terreno, o cammina con {keys}.",
   "tutorial.dodge.intro": "Qui cadono massi. Quando un'ombra cresce, fatti da parte!",
   "tutorial.dodge.praise": "Piedi svelti! I massi non ti prendono.",
+  "tutorial.heal.energy": "Quella barra blu è l'energia. Le abilità la consumano.",
+  "tutorial.heal.hint": "Prima clicca il mio nome nella lista del gruppo.",
+  "tutorial.heal.how": "Clicca il mio nome nella lista del gruppo, poi premi {keys}.",
+  "tutorial.heal.intro": "Oltre la breccia, fino alla radura. Seguimi!",
+  "tutorial.heal.ow": "Ahi! La roccia mi ha preso. Mi dai una mano?",
+  "tutorial.heal.praise": "Molto meglio, grazie! Sai anche curare.",
   "tutorial.learn": "Impara a giocare",
   "tutorial.look.hint": "Allontana la vista, poi trascinala a nord. Trova il teletrasporto!",
   "tutorial.look.how":

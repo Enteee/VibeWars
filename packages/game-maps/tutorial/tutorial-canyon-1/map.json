@@ -873,9 +873,9 @@
         ]
       },
       "schedule": {
-        "periodSeconds": 3600,
+        "periodSeconds": 6,
         "activeSeconds": 1,
-        "offsetSeconds": 3590
+        "offsetSeconds": 0
       }
     },
     {
