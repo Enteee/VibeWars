@@ -115,7 +115,7 @@ jobs:
         run: |
           git fetch --no-tags --depth=1 origin "$BASE_REF"
           if git diff --name-only FETCH_HEAD HEAD | grep -qE '^(apps/web/src/render/|apps/web/package.json|apps/web/vite.config|packages/game-maps/|scripts/bench/|pnpm-lock.yaml|.github/workflows/ci.yml)'; then
-            BENCH_MAX_RATIO=3.5 devenv shell -- pnpm run bench:render
+            BENCH_MAX_RATIO=2.2 devenv shell -- pnpm run bench:render
           else
             echo "no renderer or map change: render bench skipped"
           fi
