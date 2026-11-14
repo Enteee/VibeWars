@@ -111,7 +111,7 @@
       "footprint": {
         "kind": "rect",
         "x": 680,
-        "y": 1150,
+        "y": 1110,
         "width": 80,
         "height": 120
       }
@@ -490,7 +490,7 @@
       "area": {
         "kind": "rect",
         "x": 680,
-        "y": 1160,
+        "y": 1120,
         "width": 80,
         "height": 110
       },
