@@ -55,7 +55,7 @@ The centre is the central shelf, (1300,1000).
 | stepping stones (over the open water)                           | 979 / 1069 u  | 5.4 / 5.9 s |
 | log bridge (up the bank, over the bridge, through the ice wall) | 1571 / 1490 u | 8.7 / 8.3 s |
 
-The log-bridge time assumes the ice wall is broken (it starts shut). Both teams have the same three routes; all three are within 10 % (ice shelf 3 %, stones 9 %, log bridge 5 %); the east is the quicker side on each. The build card's bench (#3065) confirms it. The east bank is not a mirror of the west: it bulges toward the river in the middle and steps back at the south, and the T2 seats stand further from the water. The sides differ on purpose: the east bank
+The log-bridge time assumes the ice wall is broken (it starts shut). Both teams have the same three routes; all three are within 10 % (ice shelf 3 %, stones 9 %, log bridge 5 %); the bench (#3065) has the final say once the map is built. The east bank is not a mirror of the west: it bulges toward the river in the middle and steps back at the south, and the T2 seats stand further from the water. The sides differ on purpose: the east bank
 holds the cave and a snow-capped ridge (231 k u²); the west a bare rock ridge (213 k u², 8 %
 smaller, within 25 %) and the thaw slush. High ground within half the map of either spawn is its own
 ridge, reached by its own stair; neither is reachable without crossing the middle or the bridge.
