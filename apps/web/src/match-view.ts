@@ -1218,6 +1218,7 @@ export async function startMatchView(
         mode,
         flagField?.beacon === true,
         latestArena.switches,
+        latestArena.breakables,
         match,
       );
       updateFollowed(hud, viewed.selfSessionId, followed, match);
@@ -1242,6 +1243,7 @@ export async function startMatchView(
       mode,
       flagField?.beacon === true,
       latestArena.switches,
+      latestArena.breakables,
       match,
     );
     updateRecharges(hud, seat.skillBar, seat.getRecharges(), seat.getQueuedSlot());
