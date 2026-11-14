@@ -1,0 +1,1 @@
+{"version":3,"file":"game--U33VAww.js","names":["ENGLISH_NAMES","game_default"],"sources":["../../src/i18n/locales/tr/game.ts"],"sourcesContent":["import { ENGLISH_NAMES } from \"../../game-names.js\";\n\nexport default ENGLISH_NAMES;\n"],"mappings":"A,uCAEA,IAAAC,EAAeD,E"}
