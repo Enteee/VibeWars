@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
-import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
+import type { StatusId } from "@vibewars/game-core";
+import type {
+  CombatMessage,
+  GroundEffectSnapshot,
+  MatchSnapshot,
+  PlayerSnapshot,
+} from "@vibewars/game-session";
 
 import {
+  AREA_WARN_REACH,
+  SPIRIT_EARSHOT,
   hitsForCombat,
   soundsForCombat,
+  soundsForSkillGround,
   soundsForSnapshot,
   soundsForWorld,
 } from "./combat-sounds.js";
@@ -420,5 +429,179 @@ describe("soundsForWorld", () => {
     expect(soundsForWorld(empty, empty, ME, { gates: [], switches: [], breakables: [] })).toEqual(
       [],
     );
+  });
+});
+
+describe("skill type cues (#3297)", () => {
+  const status = (targetId: string, statusId: StatusId): CombatMessage["events"][number] => ({
+    kind: "status-applied",
+    targetId,
+    statusId,
+    durationSeconds: 10,
+  });
+  const skill = (
+    caster: string,
+    skillId: string,
+    events: CombatMessage["events"],
+  ): CombatMessage => ({ ...message(caster, events), skillId });
+
+  for (const [cue, statusId] of [
+    ["enchant-on", "regeneration"],
+    ["hex-on", "pacifism"],
+    ["stance-on", "sprint"],
+  ] as const) {
+    describe(cue, () => {
+      it("plays when it lands on you", () => {
+        expect(soundsForCombat(message("ally", [status(ME, statusId)]), ME)).toEqual([cue]);
+      });
+
+      it("stays silent when it lands on an ally or a foe", () => {
+        const others = message(ME, [status("ally", statusId), status("foe", statusId)]);
+        expect(soundsForCombat(others, ME)).toEqual([]);
+      });
+
+      it("plays once for a message that applies it to you twice", () => {
+        const twice = message("ally", [status(ME, statusId), status(ME, statusId)]);
+        expect(soundsForCombat(twice, ME)).toEqual([cue]);
+      });
+
+      it("stays silent for a status tick", () => {
+        const tick: CombatMessage = {
+          ...message("ally", [status(ME, statusId)]),
+          cause: "degeneration",
+        };
+        expect(soundsForCombat(tick, ME)).toEqual([]);
+      });
+    });
+  }
+
+  it("plays a hex and the damage beside it as two cues", () => {
+    const both = message("foe", [
+      status(ME, "pacifism"),
+      { kind: "damage", targetId: ME, amount: 9, critical: false },
+    ]);
+    expect(soundsForCombat(both, ME)).toEqual(["hex-on", "hit-taken"]);
+  });
+
+  for (const [cue, skillId, statusId] of [
+    ["shout", "warrior.for-great-justice", "regeneration"],
+    ["shout", "paragon.defensive-anthem", "regeneration"],
+    ["form-on", "dervish.avatar-of-melandru", "avatar-of-melandru"],
+  ] as const) {
+    describe(`${cue} from ${skillId}`, () => {
+      it("plays when it reaches you", () => {
+        const sounds = soundsForCombat(skill("ally", skillId, [status(ME, statusId)]), ME);
+        expect(sounds.filter((id) => id === cue)).toEqual([cue]);
+      });
+
+      it("stays silent when it reaches only others", () => {
+        const others = skill(ME, skillId, [status("ally", statusId), status("foe", statusId)]);
+        expect(soundsForCombat(others, ME)).toEqual([]);
+      });
+
+      it("plays once however many of its events touch you", () => {
+        const many = skill("ally", skillId, [status(ME, statusId), status(ME, statusId)]);
+        expect(soundsForCombat(many, ME).filter((id) => id === cue)).toEqual([cue]);
+      });
+
+      it("stays silent for a tick", () => {
+        const tick: CombatMessage = {
+          ...skill("ally", skillId, [status(ME, statusId)]),
+          cause: "degeneration",
+        };
+        expect(soundsForCombat(tick, ME)).toEqual([]);
+      });
+    });
+  }
+});
+
+describe("soundsForSkillGround (#3297)", () => {
+  /** A well of suffering hurts foes; a healing spring only helps allies. */
+  const HARMFUL = "necromancer.well-of-suffering";
+  const HELPFUL = "ranger.healing-spring";
+  const area = (id: number, skillId: string, team: number, x = 0): GroundEffectSnapshot => ({
+    id,
+    skillId,
+    team,
+    x,
+    y: 0,
+    layer: 0,
+    radius: 100,
+    endsAt: 10,
+    durationSeconds: 10,
+  });
+  const world = (
+    groundEffects: GroundEffectSnapshot[],
+    players: PlayerSnapshot[] = [player(ME)],
+  ): MatchSnapshot => ({ ...snapshot(players), groundEffects });
+  const spirit = (sessionId: string, x: number, team = 1): PlayerSnapshot =>
+    player(sessionId, {
+      x,
+      team,
+      creature: {
+        ownerId: null,
+        kind: "spirit",
+        look: "spirit",
+        mode: null,
+        armedAttack: null,
+        leaderId: null,
+      },
+    });
+
+  it("warns of a foe's harmful area appearing with you inside", () => {
+    expect(soundsForSkillGround(world([]), world([area(1, HARMFUL, 1)]), ME)).toEqual([
+      "area-warn",
+    ]);
+  });
+
+  it("warns of one appearing within reach of its edge", () => {
+    const near = area(1, HARMFUL, 1, 100 + AREA_WARN_REACH);
+    expect(soundsForSkillGround(world([]), world([near]), ME)).toEqual(["area-warn"]);
+  });
+
+  it("stays silent for your own side's area", () => {
+    expect(soundsForSkillGround(world([]), world([area(1, HARMFUL, 0)]), ME)).toEqual([]);
+  });
+
+  it("stays silent for a foe's area that only helps foes", () => {
+    expect(soundsForSkillGround(world([]), world([area(1, HELPFUL, 1)]), ME)).toEqual([]);
+  });
+
+  it("stays silent for the same area in the next snapshot", () => {
+    const pool = area(1, HARMFUL, 1);
+    expect(soundsForSkillGround(world([pool]), world([pool]), ME)).toEqual([]);
+  });
+
+  it("stays silent for an area 150 from your edge", () => {
+    const far = area(1, HARMFUL, 1, 100 + 150);
+    expect(soundsForSkillGround(world([]), world([far]), ME)).toEqual([]);
+  });
+
+  it("stays silent for an area on another layer", () => {
+    const below = { ...area(1, HARMFUL, 1), layer: 1 };
+    expect(soundsForSkillGround(world([]), world([below]), ME)).toEqual([]);
+  });
+
+  it("plays for a spirit of either side summoned within earshot", () => {
+    for (const team of [0, 1]) {
+      const next = world([], [player(ME), spirit("spirit", SPIRIT_EARSHOT - 1, team)]);
+      expect(soundsForSkillGround(world([]), next, ME)).toEqual(["spirit-up"]);
+    }
+  });
+
+  it("stays silent for a spirit summoned just past earshot", () => {
+    const next = world([], [player(ME), spirit("spirit", SPIRIT_EARSHOT + 1)]);
+    expect(soundsForSkillGround(world([]), next, ME)).toEqual([]);
+  });
+
+  it("stays silent for a spirit already standing", () => {
+    const both = world([], [player(ME), spirit("spirit", 10)]);
+    expect(soundsForSkillGround(both, both, ME)).toEqual([]);
+  });
+
+  it("stays silent without a prev, or without a player of your own", () => {
+    const next = world([area(1, HARMFUL, 1)], [player(ME), spirit("spirit", 10)]);
+    expect(soundsForSkillGround(undefined, next, ME)).toEqual([]);
+    expect(soundsForSkillGround(world([], []), { ...next, players: [] }, ME)).toEqual([]);
   });
 });
