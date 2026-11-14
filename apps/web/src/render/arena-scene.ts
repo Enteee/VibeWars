@@ -71,8 +71,8 @@ import {
   ARENA_BACKGROUND,
   BIOME,
   DECK_LIP,
-  PIT_FLOOR,
-  PIT_WALL,
+  pitFloor,
+  pitWall,
   TUNNEL_MOUTH,
   WALL_STROKE,
   arenaPalette,
@@ -3366,6 +3366,7 @@ export class ArenaScene extends Phaser.Scene {
       for (const piece of this.pavingDrawn?.overTunnels.get(at) ?? []) {
         piece.setAlpha(ground.alpha);
       }
+      this.lightingPass?.fadeTunnel(at, ground.alpha);
     }
   }
 
@@ -3644,19 +3645,27 @@ export class ArenaScene extends Phaser.Scene {
     const pit = this.structureAt({ kind: "pit" });
     const cover = this.structureAt({ kind: "deck", deckLayer: structure.ground });
     // Under its cover, seen only while that is cut away (#3234); a pit draws over it.
-    pit.fillStyle(PIT_FLOOR, 1);
+    // A tunnel's floor is the ground's: its roof, and the light under it, make it dark (#3329).
+    const tunnelGround = palette.floor ?? ARENA_BACKGROUND;
+    pit.fillStyle(tunnelGround, 1);
     for (const tunnel of structure.tunnels) {
       this.fillFan(pit, tunnelFloor(structure, tunnel));
     }
+    const floor = pitFloor(palette);
     for (const each of structure.pits) {
       const drawing = pitDrawing(structure, each);
-      pit.fillStyle(PIT_FLOOR, 1);
+      pit.fillStyle(floor, 1);
       this.fillFan(pit, drawing.floor);
-      pit.fillStyle(PIT_WALL, 1);
+      pit.fillStyle(pitWall(palette), 1);
       this.fillFan(pit, drawing.farWall);
       pit.fillStyle(TUNNEL_MOUTH, 1);
       for (const mouth of drawing.mouths) {
         this.fillFan(pit, mouth);
+      }
+      // Where a tunnel runs on north, its floor shows, lit by its layer (#3329).
+      pit.fillStyle(tunnelGround, 1);
+      for (const passage of drawing.passages) {
+        this.fillFan(pit, passage);
       }
       this.drawGroundPatch(cover, drawing.lip, line, palette);
       cover.lineStyle(line, palette.wallStroke, 1);
@@ -3685,7 +3694,7 @@ export class ArenaScene extends Phaser.Scene {
    * The seam a covered tunnel shows on the ground (#3236): a recessed edge,
    * dark with its lit lip inside, and grating slots along its middle, all in
    * the biome's rock, so from above it reads as a passage running under.
-   * Each hole its stairs go down by (#3329) is rimmed the same way.
+   * Each hole its shafts go down by (#3329) is rimmed the same way.
    */
   private drawTunnelSeam(
     g: Phaser.GameObjects.Graphics,
@@ -3695,13 +3704,13 @@ export class ArenaScene extends Phaser.Scene {
     palette: ArenaPalette,
   ): void {
     const seam = tunnelSeam(structure, tunnel, (line * TUNNEL_SEAM_WIDTH) / 2);
-    const points = (outline: readonly Vec2[]): Phaser.Math.Vector2[] =>
-      outline.map(({ x, y }) => new Phaser.Math.Vector2(x, y));
-    for (const { edge, lip } of [seam, ...seam.openings]) {
-      g.lineStyle(line * TUNNEL_SEAM_WIDTH, palette.wallFace, 1);
-      g.strokePoints(points(edge), true);
-      g.lineStyle(line, palette.wallLit, 0.8);
-      g.strokePoints(points(lip), true);
+    g.lineStyle(line * TUNNEL_SEAM_WIDTH, palette.wallFace, 1);
+    for (const { from, to } of seam.edges) {
+      g.lineBetween(from.x, from.y, to.x, to.y);
+    }
+    g.lineStyle(line, palette.wallLit, 0.8);
+    for (const { from, to } of seam.lips) {
+      g.lineBetween(from.x, from.y, to.x, to.y);
     }
     for (const slot of seam.slots) {
       g.fillStyle(TUNNEL_MOUTH, 1);

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { Uphill } from "@vibewars/game-core";
+import { pointInPolygon, type Uphill } from "@vibewars/game-core";
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import { arenaPalette } from "./arena-palette.js";
@@ -22,9 +22,11 @@ import {
   lightMapExtent,
   lightsByStability,
   litStructurePalette,
+  roofedOver,
   shownStage,
   stageShadows,
   sunShadowTint,
+  tunnelLightCover,
 } from "./lighting-pass.js";
 import { shapeOutline } from "./layer-surfaces.js";
 import { ELEVATION_STEP } from "./render-order.js";
@@ -311,6 +313,58 @@ describe("layerSurfaces", () => {
     expect(groundHoles(tunnelled)).toContainEqual(
       shapeOutline({ kind: "rect", x: 300, y: 600, width: 60, height: 60 }),
     );
+  });
+
+  describe("a tunnel's light, seen through its cut-away roof (#3329)", () => {
+    const tunnel = { kind: "rect" as const, x: 200, y: 600, width: 400, height: 80 };
+    const tunnelled: MapStructure = {
+      ...HEIGHTS,
+      ground: 1,
+      decks: [],
+      tunnels: [{ footprint: tunnel }],
+      transitions: [ramp(0, 1, [300, 560, 60, 100], "n")],
+    };
+    const extent = lightMapExtent(tunnelled, 1, 1200, 800);
+    const [own] = tunnelLightCover(tunnelled, extent);
+
+    it("gives the ground's light over a tunnel's cover an image of its own, to fade with it", () => {
+      // The footprint and the step south of it, in light map pixels.
+      expect(own).toEqual({
+        tunnel: 0,
+        box: { x: 100, y: 300, width: 200, height: (80 + ELEVATION_STEP) / 2 },
+      });
+      // The rest of the ground's map never lies over it, so the tunnel's
+      // floor is not dimmed by the ground's light once the cover is cut away.
+      const cover = lightMapCover(tunnelled, [], 1, extent);
+      const meets = (
+        a: { x: number; y: number; width: number; height: number },
+        b: { x: number; y: number; width: number; height: number },
+      ): boolean =>
+        a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+      expect(cover.some((box) => own !== undefined && meets(box, own.box))).toBe(false);
+      // Together they still cover the whole ground.
+      const area = [...cover, ...(own === undefined ? [] : [own.box])].reduce(
+        (sum, { width, height }) => sum + width * height,
+        0,
+      );
+      expect(area).toBe(extent.width * extent.height);
+    });
+
+    it("roofs the tunnel's floor, but for its shaft, so a torch there shows its pool", () => {
+      const roofed = roofedOver(tunnelled, 0);
+      const under = (x: number, y: number): boolean =>
+        roofed.some((outline) => pointInPolygon({ x, y }, outline));
+      expect(under(450, 640)).toBe(true);
+      expect(under(330, 630)).toBe(false);
+      expect(roofedOver(tunnelled, 1)).toEqual([]);
+      expect(roofedOver(HEIGHTS, 0)).toEqual([]);
+    });
+
+    it("lights the stair down the shaft with the tunnel's layer, where the ground's is cut", () => {
+      const [, slope] = layerSurfaces(tunnelled, 0);
+      // Its top, at the ground's height, is on the tunnel layer's map a step down.
+      expect(slope?.map(({ y }) => y)).toContain(560 - ELEVATION_STEP);
+    });
   });
 
   it("lights only the cells a raised layer's surfaces are in (#3162)", () => {

@@ -36,7 +36,7 @@ export function shapeOutline(shape: RenderableShape): readonly Vec2[] {
 
 type Transition = MapStructure["transitions"][number];
 
-interface Box {
+export interface Box {
   readonly left: number;
   readonly top: number;
   readonly right: number;
@@ -624,8 +624,13 @@ export interface PitDrawing {
   readonly floor: readonly Vec2[];
   /** Its far (north) wall, from the rim down to the floor. */
   readonly farWall: readonly Vec2[];
-  /** Where each tunnel leaves it: a dark opening at the foot of its wall. */
+  /** Where each tunnel leaves it east or west: a dark opening at the foot of its wall. */
   readonly mouths: readonly (readonly Vec2[])[];
+  /**
+   * Where a tunnel runs on north out of it (#3329): no wall there, but the
+   * tunnel's floor going on under the ground, as the pit's is a step down.
+   */
+  readonly passages: readonly (readonly Vec2[])[];
   /** The ground's near lip: the strip south of it that hides its floor's south edge. */
   readonly lip: readonly Vec2[];
 }
@@ -637,54 +642,81 @@ const MOUTH_DEPTH = 14;
 export function pitDrawing(structure: MapStructure, pit: MapStructure["pits"][number]): PitDrawing {
   const step = -liftOf(structure, structure.ground - 1);
   const box = boxOf(pit.footprint);
-  const mouths = structure.tunnels.flatMap(({ footprint }) => {
-    const tunnel = boxOf(footprint);
-    const top = Math.max(box.top, tunnel.top) + step;
-    const bottom = Math.min(box.bottom, tunnel.bottom) + step;
-    const left = Math.max(box.left, tunnel.left);
-    const right = Math.min(box.right, tunnel.right);
-    if (bottom > top && tunnel.left <= box.right && tunnel.right > box.right) {
-      return [boxOutline(box.right - MOUTH_DEPTH, top, box.right, bottom)];
-    }
-    if (bottom > top && tunnel.right >= box.left && tunnel.left < box.left) {
-      return [boxOutline(box.left, top, box.left + MOUTH_DEPTH, bottom)];
-    }
-    // Through the far wall, the whole of its height.
-    if (right > left && tunnel.bottom >= box.top && tunnel.top < box.top) {
-      return [boxOutline(left, box.top, right, box.top + step)];
-    }
-    return [];
-  });
+  const ways = structure.tunnels.map(
+    ({ footprint }): { readonly mouth?: readonly Vec2[]; readonly passage?: readonly Vec2[] } => {
+      const tunnel = boxOf(footprint);
+      const top = Math.max(box.top, tunnel.top) + step;
+      const bottom = Math.min(box.bottom, tunnel.bottom) + step;
+      const left = Math.max(box.left, tunnel.left);
+      const right = Math.min(box.right, tunnel.right);
+      if (bottom > top && tunnel.left <= box.right && tunnel.right > box.right) {
+        return { mouth: boxOutline(box.right - MOUTH_DEPTH, top, box.right, bottom) };
+      }
+      if (bottom > top && tunnel.right >= box.left && tunnel.left < box.left) {
+        return { mouth: boxOutline(box.left, top, box.left + MOUTH_DEPTH, bottom) };
+      }
+      // Through the far wall, the whole of its height.
+      if (right > left && tunnel.bottom >= box.top && tunnel.top < box.top) {
+        return { passage: boxOutline(left, box.top, right, box.top + step) };
+      }
+      return {};
+    },
+  );
   return {
     floor: boxOutline(box.left, box.top + step, box.right, box.bottom + step),
     farWall: boxOutline(box.left, box.top, box.right, box.top + step),
-    mouths,
+    mouths: ways.flatMap(({ mouth }) => (mouth === undefined ? [] : [mouth])),
+    passages: ways.flatMap(({ passage }) => (passage === undefined ? [] : [passage])),
     lip: boxOutline(box.left, box.bottom, box.right, box.bottom + step),
   };
 }
 
+/** Where `a` and `b` overlap; empty (right <= left or bottom <= top) if they do not. */
+function boxAnd(a: Box, b: Box): Box {
+  return {
+    left: Math.max(a.left, b.left),
+    top: Math.max(a.top, b.top),
+    right: Math.min(a.right, b.right),
+    bottom: Math.min(a.bottom, b.bottom),
+  };
+}
+
+function boxEmpty(box: Box): boolean {
+  return box.right <= box.left || box.bottom <= box.top;
+}
+
 /**
- * Where stairs lead from the ground down into `tunnel` (#3329): each
- * transition between its layer and the ground's, cut to its footprint.
- * One that only meets the footprint's edge is a mouth outside the roof,
- * so it opens none.
+ * Where the ground over `tunnel` is open (#3329): each pit, and each
+ * stair between its layer and the ground's, that comes down inside its
+ * footprint, cut to its cover. That reaches the step south of the
+ * footprint, so a shaft at its south end is open to its floor. One that
+ * only meets the footprint's edge is a mouth outside the roof, so it
+ * opens none, and a stair in a pit is already open with it.
  */
 function openingBoxes(structure: MapStructure, tunnel: MapStructure["tunnels"][number]): Box[] {
   const { ground } = structure;
   const box = boxOf(tunnel.footprint);
-  return structure.transitions.flatMap(({ from, to, area }) => {
-    if (Math.min(from, to) !== ground - 1 || Math.max(from, to) !== ground) {
-      return [];
-    }
-    const stair = boxOf(area);
-    const cut = {
-      left: Math.max(box.left, stair.left),
-      top: Math.max(box.top, stair.top),
-      right: Math.min(box.right, stair.right),
-      bottom: Math.min(box.bottom, stair.bottom),
-    };
-    return cut.right > cut.left && cut.bottom > cut.top ? [cut] : [];
-  });
+  const cover = tunnelCoverBox(structure, tunnel);
+  const stairs = structure.transitions.filter(
+    ({ from, to }) => Math.min(from, to) === ground - 1 && Math.max(from, to) === ground,
+  );
+  const cuts = [...structure.pits, ...stairs.map(({ area }) => ({ footprint: area }))].flatMap(
+    ({ footprint }) => {
+      const open = boxOf(footprint);
+      return boxEmpty(boxAnd(open, box)) ? [] : [boxAnd(open, cover)];
+    },
+  );
+  const within = (inner: Box, outer: Box): boolean =>
+    inner.left >= outer.left &&
+    inner.top >= outer.top &&
+    inner.right <= outer.right &&
+    inner.bottom <= outer.bottom;
+  return cuts.filter(
+    (cut, at) =>
+      !cuts.some(
+        (other, by) => by !== at && within(cut, other) && (by < at || !within(other, cut)),
+      ),
+  );
 }
 
 /** The holes stairs into `tunnel` cut in the ground over it (#3329). */
@@ -721,18 +753,40 @@ function boxWithout(box: Box, holes: readonly Box[]): Box[] {
 }
 
 /**
- * The ground drawn over `tunnel` (#2973): its footprint, and a step south
- * of it, where whoever is in the tunnel draws, sunk a step down. It comes
- * in pieces round the holes its stairs go down by (#3329).
+ * The box the ground over `tunnel` covers (#2973): its footprint, and a
+ * step south of it, where whoever is in the tunnel draws, sunk a step down.
+ */
+export function tunnelCoverBox(
+  structure: MapStructure,
+  tunnel: MapStructure["tunnels"][number],
+): Box {
+  const box = boxOf(tunnel.footprint);
+  return { ...box, bottom: box.bottom - liftOf(structure, structure.ground - 1) };
+}
+
+/**
+ * The ground drawn over `tunnel`: its cover box, in pieces round the
+ * holes its shafts go down by (#3329).
  */
 export function tunnelCover(
   structure: MapStructure,
   tunnel: MapStructure["tunnels"][number],
 ): readonly (readonly Vec2[])[] {
-  const step = -liftOf(structure, structure.ground - 1);
-  const box = boxOf(tunnel.footprint);
-  return boxWithout({ ...box, bottom: box.bottom + step }, openingBoxes(structure, tunnel)).map(
+  return boxWithout(tunnelCoverBox(structure, tunnel), openingBoxes(structure, tunnel)).map(
     (piece) => boxOutline(piece.left, piece.top, piece.right, piece.bottom),
+  );
+}
+
+/**
+ * What of `tunnel`'s floor is under its roof (#3329): its footprint, but
+ * for the holes its shafts go down by, which are open to the sky.
+ */
+export function tunnelRoof(
+  structure: MapStructure,
+  tunnel: MapStructure["tunnels"][number],
+): readonly (readonly Vec2[])[] {
+  return boxWithout(boxOf(tunnel.footprint), openingBoxes(structure, tunnel)).map((piece) =>
+    boxOutline(piece.left, piece.top, piece.right, piece.bottom),
   );
 }
 
@@ -741,22 +795,123 @@ export const TUNNEL_GRATING_STEP = 120;
 /** A grating slot's size along the tunnel, and its most across it. */
 const GRATING_SLOT = { along: 18, across: 44 };
 
+/** A straight line drawn between two points. */
+export interface Segment {
+  readonly from: Vec2;
+  readonly to: Vec2;
+}
+
+/** `[from, to]` less each of `cuts`, as the stretches left. */
+function spanWithout(
+  from: number,
+  to: number,
+  cuts: readonly (readonly [number, number])[],
+): [number, number][] {
+  return cuts.reduce<[number, number][]>(
+    (spans, [a, b]) =>
+      spans.flatMap(([left, right]): [number, number][] =>
+        b <= left || a >= right
+          ? [[left, right]]
+          : (
+              [
+                [left, Math.max(left, a)],
+                [Math.min(right, b), right],
+              ] as [number, number][]
+            ).filter(([x, y]) => y > x),
+      ),
+    [[from, to]],
+  );
+}
+
 /**
- * The seam over `tunnel` on the ground (#3236): its edge, the same edge
- * `inset` inward where the recess's lit lip runs, and a grating slot every
- * `TUNNEL_GRATING_STEP` along its middle, centred on its length. Each hole
- * its stairs go down by (#3329) has the same edge and lip, and no slot
- * falls in one.
+ * The outline of `pieces`, boxes that never overlap (#3329): each side of
+ * each, less where another lies against it, so a side between two pieces
+ * is no edge. Each edge runs `inset` past its ends, so a stroke `inset`
+ * either side of it closes its corners; its lip runs `inset` in from it,
+ * on its piece's side, and `inset` short of its ends.
+ */
+function outlineOf(
+  pieces: readonly Box[],
+  inset: number,
+): { readonly edges: readonly Segment[]; readonly lips: readonly Segment[] } {
+  const edges: Segment[] = [];
+  const lips: Segment[] = [];
+  const along = (
+    level: number,
+    from: number,
+    to: number,
+    inward: number,
+    against: (other: Box) => [number, number] | undefined,
+    point: (on: number, at: number) => Vec2,
+  ): void => {
+    const cuts = pieces.flatMap((other) => {
+      const cut = against(other);
+      return cut === undefined ? [] : [cut];
+    });
+    for (const [a, b] of spanWithout(from, to, cuts)) {
+      edges.push({ from: point(a - inset, level), to: point(b + inset, level) });
+      if (b - a > 2 * inset) {
+        lips.push({ from: point(a + inset, level + inward), to: point(b - inset, level + inward) });
+      }
+    }
+  };
+  const xy = (x: number, y: number): Vec2 => ({ x, y });
+  const yx = (y: number, x: number): Vec2 => ({ x, y });
+  const rows = (other: Box): [number, number] => [other.left, other.right];
+  const columns = (other: Box): [number, number] => [other.top, other.bottom];
+  for (const box of pieces) {
+    along(
+      box.top,
+      box.left,
+      box.right,
+      inset,
+      (o) => (o.bottom === box.top ? rows(o) : undefined),
+      xy,
+    );
+    along(
+      box.bottom,
+      box.left,
+      box.right,
+      -inset,
+      (o) => (o.top === box.bottom ? rows(o) : undefined),
+      xy,
+    );
+    along(
+      box.left,
+      box.top,
+      box.bottom,
+      inset,
+      (o) => (o.right === box.left ? columns(o) : undefined),
+      yx,
+    );
+    along(
+      box.right,
+      box.top,
+      box.bottom,
+      -inset,
+      (o) => (o.left === box.right ? columns(o) : undefined),
+      yx,
+    );
+  }
+  return { edges, lips };
+}
+
+/**
+ * The seam over `tunnel` on the ground (#3236): the edge of its roof, the
+ * same edge `inset` in where the recess's lit lip runs, and a grating slot
+ * every `TUNNEL_GRATING_STEP` along its middle, centred on its length.
+ * Round each hole its shafts go down by (#3329) the roof has the same
+ * edge and lip, and no slot falls in one: the outline is the roof's, so
+ * none is drawn across an open pit.
  */
 export function tunnelSeam(
   structure: MapStructure,
   tunnel: MapStructure["tunnels"][number],
   inset: number,
 ): {
-  readonly edge: readonly Vec2[];
-  readonly lip: readonly Vec2[];
+  readonly edges: readonly Segment[];
+  readonly lips: readonly Segment[];
   readonly slots: readonly (readonly Vec2[])[];
-  readonly openings: readonly { readonly edge: readonly Vec2[]; readonly lip: readonly Vec2[] }[];
 } {
   const box = boxOf(tunnel.footprint);
   const holes = openingBoxes(structure, tunnel);
@@ -794,14 +949,8 @@ export function tunnelSeam(
       ),
   );
   return {
-    edge: boxOutline(box.left, box.top, box.right, box.bottom),
-    lip: boxOutline(box.left + inset, box.top + inset, box.right - inset, box.bottom - inset),
+    ...outlineOf(boxWithout(box, holes), inset),
     slots: slots.map((slot) => boxOutline(slot.left, slot.top, slot.right, slot.bottom)),
-    // A hole has the recess's edge and lit lip, the lip inside it.
-    openings: holes.map((hole) => ({
-      edge: boxOutline(hole.left, hole.top, hole.right, hole.bottom),
-      lip: boxOutline(hole.left + inset, hole.top + inset, hole.right - inset, hole.bottom - inset),
-    })),
   };
 }
 

@@ -768,6 +768,28 @@ describe("a level under the ground (#2973)", () => {
     expect(drawn.mouths).toHaveLength(1);
     expect(drawn.mouths[0]?.[1]).toEqual({ x: 700, y: 550 + STEP });
     expect(drawn.mouths[0]?.[2]).toEqual({ x: 700, y: 620 + STEP });
+    expect(drawn.passages).toEqual([]);
+  });
+
+  it("shows a tunnel running on north of a pit as its floor, not a dark mouth (#3329)", () => {
+    // A shaft at the south end of a gallery running north.
+    const shaft: MapStructure = {
+      ...SUNK,
+      pits: [{ footprint: rect(500, 700, 80, 120) }],
+      tunnels: [{ footprint: rect(500, 500, 80, 260) }],
+    };
+    const [pit] = shaft.pits;
+    if (pit === undefined) throw new Error("no pit");
+    const drawn = pitDrawing(shaft, pit);
+    expect(drawn.mouths).toEqual([]);
+    expect(drawn.passages).toEqual([
+      [
+        { x: 500, y: 700 },
+        { x: 580, y: 700 },
+        { x: 580, y: 700 + STEP },
+        { x: 500, y: 700 + STEP },
+      ],
+    ]);
   });
 
   it("covers the tunnel and the step south of it, where whoever is in it draws", () => {
@@ -831,12 +853,49 @@ describe("a level under the ground (#2973)", () => {
     });
 
     it("rims the hole as the seam, and puts no grating slot in it", () => {
-      // Over the first slot, centred at 780.
+      // Over the first slot, centred at 780: the hole is 760..820 by 550..590.
       const seam = tunnelSeam({ ...SUNK, transitions: [stair(760)] }, tunnel, 2);
-      expect(seam.openings).toHaveLength(1);
-      expect(seam.openings[0]?.lip[0]).toEqual({ x: 762, y: 552 });
+      expect(seam.edges).toContainEqual({ from: { x: 758, y: 590 }, to: { x: 822, y: 590 } });
+      expect(seam.edges).toContainEqual({ from: { x: 760, y: 548 }, to: { x: 760, y: 592 } });
+      // The lip runs on the roof's side of the hole's edge.
+      expect(seam.lips).toContainEqual({ from: { x: 762, y: 592 }, to: { x: 818, y: 592 } });
       const centres = seam.slots.map((slot) => ((slot[0]?.x ?? 0) + (slot[1]?.x ?? 0)) / 2);
       expect(centres).toEqual([780 + TUNNEL_GRATING_STEP]);
+    });
+
+    it("opens a pit inside the roof, and the step south of a shaft at its end", () => {
+      // A shaft over the gallery's south edge, its stair inside it.
+      const pitted: MapStructure = {
+        ...SUNK,
+        pits: [{ footprint: rect(880, 580, 60, 120) }],
+        transitions: [{ ...stair(880), area: rect(885, 590, 50, 100) }],
+      };
+      // One hole: the stair is in the pit's.
+      expect(tunnelOpenings(pitted, tunnel)).toEqual([
+        [
+          { x: 880, y: 580 },
+          { x: 940, y: 580 },
+          { x: 940, y: 620 + STEP },
+          { x: 880, y: 620 + STEP },
+        ],
+      ]);
+      const cover = tunnelCover(pitted, tunnel);
+      const covered = (x: number, y: number): boolean =>
+        cover.some((piece) => pointInPolygon({ x, y }, piece));
+      // The tunnel's floor seen down the shaft, a step south of the footprint, is not covered.
+      expect(covered(910, 650)).toBe(false);
+      expect(covered(910, 570)).toBe(true);
+    });
+
+    it("draws no edge across an open pit, only round the roof", () => {
+      // A pit across the gallery's west end: its rim, not a seam, is the edge there.
+      const pitted: MapStructure = { ...SUNK, pits: [{ footprint: rect(660, 540, 80, 90) }] };
+      const seam = tunnelSeam(pitted, tunnel, 2);
+      const across = seam.edges.filter(
+        ({ from, to }) => from.x === to.x && from.x === 700 && from.y < 620 && to.y > 550,
+      );
+      expect(across).toEqual([]);
+      expect(seam.edges).toContainEqual({ from: { x: 740, y: 548 }, to: { x: 740, y: 622 } });
     });
   });
 
@@ -844,10 +903,13 @@ describe("a level under the ground (#2973)", () => {
     const [tunnel] = SUNK.tunnels;
     if (tunnel === undefined) throw new Error("no tunnel");
     const seam = tunnelSeam(SUNK, tunnel, 2);
-    expect(seam.openings).toEqual([]);
-    expect(seam.edge[0]).toEqual({ x: 700, y: 550 });
-    expect(seam.edge[2]).toEqual({ x: 980, y: 620 });
-    expect(seam.lip[0]).toEqual({ x: 702, y: 552 });
+    expect(seam.edges).toEqual([
+      { from: { x: 698, y: 550 }, to: { x: 982, y: 550 } },
+      { from: { x: 698, y: 620 }, to: { x: 982, y: 620 } },
+      { from: { x: 700, y: 548 }, to: { x: 700, y: 622 } },
+      { from: { x: 980, y: 548 }, to: { x: 980, y: 622 } },
+    ]);
+    expect(seam.lips[0]).toEqual({ from: { x: 702, y: 552 }, to: { x: 978, y: 552 } });
     expect(seam.slots).toHaveLength(2);
     const centres = seam.slots.map((slot) => ((slot[0]?.x ?? 0) + (slot[1]?.x ?? 0)) / 2);
     expect(centres).toEqual([780, 780 + TUNNEL_GRATING_STEP]);
