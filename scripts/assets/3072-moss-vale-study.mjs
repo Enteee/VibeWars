@@ -134,6 +134,8 @@ const DRAWBRIDGE = rect(2400, 1240, 200, 120); // over the race; lever-driven
 const MILL = rect(2380, 1780, 240, 200); // the ruined mill floor, over the race
 /** @type {Pt} */
 const LEVER = [2290, 1160];
+/** @type {Pt} */
+const LEVER2 = [2710, 1160]; // a lever on each bank, both work the drawbridge
 // stairs: field terrace up from the valley, upper terrace up from the field, arch ends
 const STAIRS = [
   { id: "stair-F1", r: rect(900, 660, 140, 110), from: 0, dir: "n" },
@@ -191,6 +193,7 @@ for (let i = 0; i < 8; i++) {
 const LIGHTS = [
   { p: [2500, 1300], col: C.torch, r: 170 },
   { p: [2290, 1160], col: C.torch, r: 140 },
+  { p: [2710, 1160], col: C.torch, r: 140 },
   { p: [2500, 1880], col: C.torch, r: 160 },
   { p: [2200, 1880], col: C.torch, r: 130 },
   { p: [2800, 1880], col: C.torch, r: 130 },
@@ -346,6 +349,7 @@ const world = () => {
   s += slab(DRAWBRIDGE, 20, 20, C.timber, C.roofFace, C.roofFace);
   s += slab(MILL, STEP, STEP, C.roof, C.roofFace, C.roofFace);
   s += `<circle cx="${LEVER[0]}" cy="${LEVER[1]}" r="16" fill="${C.brass}" stroke="${INK}" stroke-width="4"/>`;
+  s += `<circle cx="${LEVER2[0]}" cy="${LEVER2[1]}" r="16" fill="${C.brass}" stroke="${INK}" stroke-width="4"/>`;
   // waterfall-ledge (L3)
   for (const l of LEDGES) s += slab(l.r, 2 * STEP, STEP, C.top, C.face, C.faceE);
   // lights
@@ -407,6 +411,7 @@ const teamCol = { t1: C.friend, t2: C.foe };
     tag("mill race (water)", [2640, 800], 32) +
     tag("drawbridge", [2620, 1230], 32) +
     tag("lever", [2150, 1130], 32) +
+    tag("lever", [2730, 1130], 32) +
     tag("ruined mill", [2650, 1840 - STEP], 32) +
     tag("under-pass", [2560, 1990], 32);
   a +=

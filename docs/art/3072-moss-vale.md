@@ -28,7 +28,7 @@ the place (a green valley with a waterfall, an arch and a ruined mill) is kept.
   drawbridge, the mill floor, and the under-pass.
 - **Drop-offs (many):** every terrace edge, both arch decks, the falls ledges and the mill floor
   drop to the ground.
-- **Elements:** a brass **lever** at (2290,1160) works the **drawbridge** at (2500,1300) (raised = the
+- **Elements:** two brass **levers**, one on each bank, at (2290,1160) and (2710,1160), each work the **drawbridge** at (2500,1300) (raised = the
   race is a wall, lowered = the straight way). Two **breakable walls** (collapsed field walls) at
   x=1700 and x=3274, 360 long, in the south half of each side: breaking one opens the straight line
   from the south terrace to the mill. Zone kinds (`ZONE_KINDS`): `mire` (two, one in each spawn's flank, drawn as the bog) and
@@ -51,6 +51,8 @@ centre is the drawbridge, (2500,1300).
 | valley floor, over the drawbridge                         | 1900 u | 10.6 s |
 | arch deck (up the arch stair, across, down to the bridge) | 2022 u | 11.2 s |
 | mill under-pass (south, under the race, up by the mill)   | 2617 u | 14.5 s |
+
+With the drawbridge raised, the floor and arch routes are cut and both teams have the under-pass (14.5 s, identical) and the mill floor; each team reaches a lever on its own bank, so neither holds the bridge alone.
 
 All under 25 s. Both teams have identical walks (the valley is mirrored). High ground within half
 the map of either spawn: the same field, south and upper terraces and one arch deck each; L2
