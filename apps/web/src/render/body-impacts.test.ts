@@ -2,14 +2,18 @@ import type { CombatMessage } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import {
+  ATTACK_STAR_COLOUR,
+  FLYING_SPELL_BURST_COLOUR,
   IMPACT_REACH,
   IMPACT_SECONDS,
   MAX_IMPACTS,
+  SPIKE_LOOK,
   impactMarks,
   impactsFor,
   mergeImpacts,
   type Impact,
 } from "./body-impacts.js";
+import { ACTOR_RADIUS, FLOATING_TEXT_OFFSET_X, FLOATING_TEXT_OFFSET_Y } from "./arena-snapshot.js";
 
 const DAMAGE = 0xff7b72;
 const CONDITION = 0xffa657;
@@ -42,7 +46,7 @@ describe("impactsFor (#1139)", () => {
   it("bursts a damage spell in damage and glows a heal in heal", () => {
     expect(
       shapes(
-        message("elementalist.fireball", [
+        message("elementalist.immolate", [
           { kind: "damage", targetId: "foe", amount: 50, critical: false },
         ]),
       ),
@@ -84,7 +88,7 @@ describe("impactsFor (#1139)", () => {
     ).toEqual([["foe", "burst", CONDITION]]);
     expect(
       shapes(
-        message("warrior.sever-artery", [
+        message("elementalist.immolate", [
           { kind: "damage", targetId: "foe", amount: 30, critical: false },
           { kind: "status-applied", targetId: "foe", statusId: "bleeding", durationSeconds: 15 },
         ]),
@@ -119,14 +123,14 @@ describe("impactsFor (#1139)", () => {
   it("lets harm beat help on one body, and flashes every body an area touched", () => {
     expect(
       shapes(
-        message("elementalist.fireball", [
+        message("elementalist.immolate", [
           { kind: "heal", targetId: "foe", amount: 5 },
           { kind: "damage", targetId: "foe", amount: 50, critical: false },
         ]),
       ),
     ).toEqual([["foe", "burst", DAMAGE]]);
     const area = message(
-      "elementalist.fireball",
+      "elementalist.immolate",
       ["a", "b", "c"].map((targetId) => ({
         kind: "damage" as const,
         targetId,
@@ -148,6 +152,44 @@ describe("impactsFor (#1139)", () => {
       impactsFor(message("warrior.swift-chop", [{ kind: "attack-missed", targetId: "foe" }])),
     ).toEqual([]);
     expect(impactsFor(message("nobody.no-such-skill", [hit]))).toEqual([]);
+  });
+});
+
+describe("impactsFor, flight and hit (#3292)", () => {
+  const hit = { kind: "damage", targetId: "foe", amount: 50, critical: false } as const;
+
+  it("lands a flying spell that hit in a warm landing burst, and shows nothing for one that missed", () => {
+    expect(shapes(message("elementalist.glowstone", [hit]))).toEqual([
+      ["foe", "landing", FLYING_SPELL_BURST_COLOUR],
+    ]);
+    expect(
+      shapes(
+        message("elementalist.lightning-orb", [
+          { kind: "status-applied", targetId: "foe", statusId: "blind", durationSeconds: 3 },
+        ]),
+      ),
+    ).toEqual([["foe", "landing", FLYING_SPELL_BURST_COLOUR]]);
+    expect(
+      shapes(message("elementalist.glowstone", [{ kind: "attack-dodged", targetId: "foe" }])),
+    ).toEqual([]);
+  });
+
+  it("strikes a gold star on every body an attack skill harmed", () => {
+    expect(shapes(message("warrior.mighty-blow", [hit]))).toEqual([
+      ["foe", "star", ATTACK_STAR_COLOUR],
+    ]);
+    expect(
+      shapes(
+        message("warrior.sever-artery", [
+          hit,
+          { kind: "status-applied", targetId: "foe", statusId: "bleeding", durationSeconds: 15 },
+        ]),
+      ),
+    ).toEqual([["foe", "star", ATTACK_STAR_COLOUR]]);
+  });
+
+  it("leaves a skill that neither flies nor attacks as it was", () => {
+    expect(shapes(message("elementalist.immolate", [hit]))).toEqual([["foe", "burst", DAMAGE]]);
   });
 });
 
@@ -203,6 +245,59 @@ describe("impactMarks (#1139)", () => {
         }
       }
     }
+  });
+
+  it("reaches a landing and a star past the target ring, thick and outlined, clear of the health bar and the damage number (#3292)", () => {
+    for (const shape of ["landing", "star"] as const) {
+      for (const reducedMotion of [false, true]) {
+        for (let step = 0; step <= 10; step += 1) {
+          const remainingSeconds = (IMPACT_SECONDS * step) / 10;
+          const marks = impactMarks(
+            { ...impact("a", remainingSeconds), shape },
+            ACTOR_RADIUS,
+            reducedMotion,
+          );
+          // 12 round, less the ones that would point up into the bar or right into the number.
+          expect(marks).toHaveLength(6);
+          for (const mark of marks) {
+            if (mark.kind !== "spike") {
+              throw new Error("a spiked shape draws only spikes");
+            }
+            const out = Math.hypot(mark.to.x, mark.to.y);
+            // Past the target ring at r + 8, and the dashed edge a ward draws.
+            expect(out).toBeGreaterThan(ACTOR_RADIUS + 8);
+            expect(out).toBeLessThanOrEqual(ACTOR_RADIUS + 15);
+            expect(mark.to.y / out).toBeGreaterThanOrEqual(-0.7);
+            // The number starts right of the body with its bottom below the centre, and rises.
+            for (let t = 0; t <= 1; t += 0.25) {
+              const x = mark.from.x + t * (mark.to.x - mark.from.x);
+              const y = mark.from.y + t * (mark.to.y - mark.from.y);
+              expect(x < FLOATING_TEXT_OFFSET_X || y > FLOATING_TEXT_OFFSET_Y).toBe(true);
+            }
+            expect(mark.width).toBeGreaterThanOrEqual(3);
+            expect(mark.outlined).toBe(true);
+          }
+        }
+      }
+    }
+    expect(SPIKE_LOOK.burst.outlined).toBe(false);
+  });
+
+  it("crosses the body's edge with an attack skill's star, like a crosshair (#3292)", () => {
+    for (let step = 0; step <= 10; step += 1) {
+      const remainingSeconds = (IMPACT_SECONDS * step) / 10;
+      for (const mark of impactMarks(
+        { ...impact("a", remainingSeconds), shape: "star" },
+        14,
+        false,
+      )) {
+        if (mark.kind === "spike") {
+          expect(Math.hypot(mark.from.x, mark.from.y)).toBeLessThan(14);
+        }
+      }
+    }
+    const fresh = impactMarks({ ...impact("a"), shape: "star" }, 14, true);
+    expect(impactMarks({ ...impact("a", 0.01), shape: "star" }, 14, true)).toEqual(fresh);
   });
 
   it("bursts 8 spikes that grow out and fade, and glows a ring that contracts", () => {

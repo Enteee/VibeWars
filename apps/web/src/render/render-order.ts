@@ -11,7 +11,7 @@
  */
 
 /** A body's parts on one character band, in the order they draw. */
-export type CharacterPart = "body" | "glyph" | "marks";
+export type CharacterPart = "body" | "glyph" | "marks" | "bar";
 
 /** A body of water's parts (#2984): its fill and shore, then the ripples on it. */
 export type WaterPart = "surface" | "ripples";
@@ -79,7 +79,12 @@ const LIGHT_MARK = 0.8;
  * torches, which never dim it, under whoever walks onto it.
  */
 const GOAL_MARK = 0.9;
-const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, marks: 1.4 };
+/**
+ * A body's health bar over its band's marks, hit marks and swing arcs
+ * included, so a hit never hides it (#3292); still in its band, so a deck
+ * over the body covers its bar too.
+ */
+const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, marks: 1.4, bar: 1.5 };
 /**
  * Ground water sits on the floor and under the ward and trap circles
  * (#2984), so they stay readable on it; water on a deck sits on that deck

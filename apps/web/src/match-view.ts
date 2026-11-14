@@ -83,7 +83,7 @@ import { CRUMBLED, crackStage, renderableBreakables } from "./render/breakable-o
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera, type CameraLook } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
-import { projectileSprite } from "./render/projectiles.js";
+import { projectileSprite, SKILL_SPRITE } from "./render/projectiles.js";
 import {
   createHud,
   describeRefusal,
@@ -447,6 +447,7 @@ export function toArenaSnapshot(
         flightSeconds: shot.flightSeconds,
         // Tinted by side; a shooter who has left counts as the other side.
         colour: teamColour(shooter?.team === side ? "ally" : "enemy"),
+        spell: shot.skillId !== undefined && SKILL_SPRITE[shot.skillId] !== undefined,
       };
     }),
     groundEffects,
