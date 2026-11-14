@@ -1438,6 +1438,11 @@ export const en = {
   "tutorial.walk.how": "Left click the ground, or walk with {keys}.",
   "tutorial.walk.intro": "This war never ends. Walk with me; I have an idea.",
   "tutorial.walk.praise": "Nice stride! You're a natural.",
+  "tutorial.wall.firstHit": "There! It cracks. Keep going.",
+  "tutorial.wall.hint": "Right click the wall first, then strike it.",
+  "tutorial.wall.how": "Right click the wall, then press {keys}, or right click it twice.",
+  "tutorial.wall.intro": "A wall blocks the trail. Right click it, then hit it.",
+  "tutorial.wall.praise": "Down it goes! The trail is open.",
 
   "weaponSets.empty": "Weapon set {number}: empty",
   "weaponSets.holds": "Weapon set {number}: {gear}",

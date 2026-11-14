@@ -1433,6 +1433,11 @@ export default {
   "tutorial.walk.how": "Venstreklik på jorden, eller gå med {keys}.",
   "tutorial.walk.intro": "Denne krig ender aldrig. Gå med mig; jeg har en idé.",
   "tutorial.walk.praise": "Flot skridt! Du er et naturtalent.",
+  "tutorial.wall.firstHit": "Der! Den revner. Bliv ved.",
+  "tutorial.wall.hint": "Højreklik først på muren, og slå den så.",
+  "tutorial.wall.how": "Højreklik på muren, og tryk så {keys}, eller højreklik på den to gange.",
+  "tutorial.wall.intro": "En mur spærrer stien. Højreklik på den, og slå så.",
+  "tutorial.wall.praise": "Den falder! Stien er åben.",
 
   "weaponSets.empty": "Våbensæt {number}: tomt",
   "weaponSets.holds": "Våbensæt {number}: {gear}",

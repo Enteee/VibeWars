@@ -1518,6 +1518,12 @@ export default {
   "tutorial.walk.how": "Clic stânga pe sol, sau mergi cu {keys}.",
   "tutorial.walk.intro": "Războiul acesta nu se termină. Vino cu mine; am o idee.",
   "tutorial.walk.praise": "Pas frumos! Ai talent.",
+  "tutorial.wall.firstHit": "Uite! Crapă. Continuă.",
+  "tutorial.wall.hint": "Întâi clic dreapta pe zid, apoi lovește-l.",
+  "tutorial.wall.how":
+    "Clic dreapta pe zid, apoi apasă {keys}, sau dă de două ori clic dreapta pe el.",
+  "tutorial.wall.intro": "Un zid blochează poteca. Clic dreapta pe el, apoi lovește-l.",
+  "tutorial.wall.praise": "Cade! Poteca e liberă.",
 
   "weaponSets.empty": "Set de arme {number}: gol",
   "weaponSets.holds": "Set de arme {number}: {gear}",

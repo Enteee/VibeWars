@@ -1329,6 +1329,11 @@ export default {
   "tutorial.walk.how": "左键点击地面,或用 {keys} 行走。",
   "tutorial.walk.intro": "这场战争永无止境。跟我走,我有个主意。",
   "tutorial.walk.praise": "步伐不错!你很有天赋。",
+  "tutorial.wall.firstHit": "好！它裂开了。继续。",
+  "tutorial.wall.hint": "先右键点这堵墙，然后打它。",
+  "tutorial.wall.how": "右键点击墙，然后按 {keys}，或再右键点它一次。",
+  "tutorial.wall.intro": "一堵墙挡住了小路。右键点它，然后打它。",
+  "tutorial.wall.praise": "倒了！小路通了。",
 
   "weaponSets.empty": "武器组 {number}：空",
   "weaponSets.holds": "武器组 {number}：{gear}",

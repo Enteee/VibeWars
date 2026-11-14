@@ -1366,6 +1366,11 @@ export default {
   "tutorial.walk.how": "Klik kiri di tanah, atau berjalan dengan {keys}.",
   "tutorial.walk.intro": "Perang ini tak pernah usai. Jalan bersamaku; aku punya ide.",
   "tutorial.walk.praise": "Langkah bagus! Kamu berbakat.",
+  "tutorial.wall.firstHit": "Nah! Mulai retak. Terus.",
+  "tutorial.wall.hint": "Klik kanan temboknya dulu, lalu pukul.",
+  "tutorial.wall.how": "Klik kanan temboknya, lalu tekan {keys}, atau klik kanan dua kali.",
+  "tutorial.wall.intro": "Sebuah tembok menghalangi jalan. Klik kanan, lalu pukul.",
+  "tutorial.wall.praise": "Runtuh! Jalannya terbuka.",
 
   "weaponSets.empty": "Set senjata {number}: kosong",
   "weaponSets.holds": "Set senjata {number}: {gear}",

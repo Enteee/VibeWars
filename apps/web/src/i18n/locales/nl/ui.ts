@@ -1444,6 +1444,12 @@ export default {
   "tutorial.walk.how": "Klik links op de grond, of loop met {keys}.",
   "tutorial.walk.intro": "Deze oorlog eindigt nooit. Loop met me mee; ik heb een idee.",
   "tutorial.walk.praise": "Mooie pas! Je bent een natuurtalent.",
+  "tutorial.wall.firstHit": "Daar! Hij barst. Ga door.",
+  "tutorial.wall.hint": "Rechtsklik eerst op de muur, sla er dan op.",
+  "tutorial.wall.how":
+    "Rechtsklik op de muur en druk dan op {keys}, of rechtsklik er twee keer op.",
+  "tutorial.wall.intro": "Een muur verspert het pad. Rechtsklik erop en sla erop.",
+  "tutorial.wall.praise": "Hij valt! Het pad is vrij.",
 
   "weaponSets.empty": "Wapenset {number}: leeg",
   "weaponSets.holds": "Wapenset {number}: {gear}",

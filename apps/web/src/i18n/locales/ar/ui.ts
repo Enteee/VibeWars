@@ -1627,6 +1627,12 @@ export default {
   "tutorial.walk.how": "انقر يسارًا على الأرض، أو امشِ بـ {keys}.",
   "tutorial.walk.intro": "هذه الحرب لا تنتهي. امشِ معي؛ لديّ فكرة.",
   "tutorial.walk.praise": "خطوة رائعة! أنت موهوب.",
+  "tutorial.wall.firstHit": "هناك! إنه يتشقق. واصل.",
+  "tutorial.wall.hint": "انقر على الجدار بالزر الأيمن أولًا، ثم اضربه.",
+  "tutorial.wall.how":
+    "انقر على الجدار بالزر الأيمن، ثم اضغط {keys}، أو انقر عليه بالزر الأيمن مرتين.",
+  "tutorial.wall.intro": "جدار يسدّ الطريق. انقر عليه بالزر الأيمن، ثم اضربه.",
+  "tutorial.wall.praise": "سقط! الطريق مفتوح.",
 
   "weaponSets.empty": "مجموعة الأسلحة {number}: فارغة",
   "weaponSets.holds": "مجموعة الأسلحة {number}: {gear}",

@@ -1458,6 +1458,12 @@ export default {
   "tutorial.walk.how": "Linksklick auf den Boden, oder geh mit {keys}.",
   "tutorial.walk.intro": "Dieser Krieg endet nie. Geh mit mir; ich habe eine Idee.",
   "tutorial.walk.praise": "Schöner Schritt! Ein Naturtalent.",
+  "tutorial.wall.firstHit": "Da! Sie bekommt Risse. Weiter so.",
+  "tutorial.wall.hint": "Erst ein Rechtsklick auf die Mauer, dann schlag zu.",
+  "tutorial.wall.how":
+    "Rechtsklick auf die Mauer, dann {keys} drücken oder zweimal rechts auf sie klicken.",
+  "tutorial.wall.intro": "Eine Mauer versperrt den Pfad. Rechtsklick drauf, dann schlag zu.",
+  "tutorial.wall.praise": "Sie fällt! Der Pfad ist frei.",
 
   "weaponSets.empty": "Waffenset {number}: leer",
   "weaponSets.holds": "Waffenset {number}: {gear}",
