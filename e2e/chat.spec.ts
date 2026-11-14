@@ -1,7 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../packages/game-core/src/ruleset.js";
-
 import { joinFriend } from "./helpers/menu.js";
 import { hostLobby, openPeers, playHouseTeams, startSoloMatch } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
@@ -113,28 +111,32 @@ test("in a match a click under the panel walks, and the box shows only while ope
   const stage = page.locator("#viewport");
   // The camera may still be gliding onto the spawn: a click before it
   // settles lands somewhere else on the ground.
-  const settle = async (message: string, from: string): Promise<string> => {
+  const settle = async (message: string): Promise<void> => {
     let last = "";
     await expect
       .poll(
         async () => {
           const now = (await stage.getAttribute("data-camera")) ?? "";
-          const settled = now === last && now !== from;
+          const settled = now === last && now !== "";
           last = now;
           return settled;
         },
         { message, intervals: [500], timeout: 15_000 },
       )
       .toBe(true);
-    return last;
   };
-  const atSpawn = await settle("the camera should settle on the spawn", "");
+  const cameraX = async (): Promise<number> =>
+    Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
+  await settle("the camera should settle on the spawn");
+  const spawnX = await cameraX();
+  // Held until the camera has come that far, not for a guessed time: a
+  // slow frame then cannot leave the hero short of the open ash.
   await page.keyboard.down(key("move-right"));
-  await page.waitForTimeout(
-    (1000 * EAST_WALK) / MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond,
-  );
+  await expect
+    .poll(cameraX, { message: "the hero should walk east", timeout: 15_000 })
+    .toBeGreaterThanOrEqual(spawnX + EAST_WALK);
   await page.keyboard.up(key("move-right"));
-  await settle("the hero should walk east and stop", atSpawn);
+  await settle("the hero should stop where the key let go");
   const before = await stage.getAttribute("data-camera");
   await page.mouse.click(at.x, at.y);
   await expect(stage).not.toHaveAttribute("data-camera", before ?? "");
