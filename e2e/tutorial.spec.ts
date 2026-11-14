@@ -352,14 +352,22 @@ test.describe("the first-time tutorial (#3218)", () => {
       const [ledgeX = 0, ledgeY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
         .split(",")
         .map(Number);
-      const under = "Hold Alt and click. The dashed ring is below you.";
+      // No click once the mark has gone under: the camera trails the
+      // player, so a stride from it can land on the ground below the deck,
+      // a plain walk down, and that one earns the tip.
+      const upper = (await frame.getAttribute("data-mark-layer")) ?? "";
       await expect(async () => {
-        if (await hasSaid(under)) {
+        if ((await frame.getAttribute("data-mark-layer")) !== upper) {
           return;
         }
         await walkTo({ x: ledgeX, y: ledgeY });
-        await expect.poll(() => hasSaid(under), { timeout: 3_000 }).toBe(true);
+        await expect(frame).not.toHaveAttribute("data-mark-layer", upper, { timeout: 3_000 });
       }).toPass({ timeout: 90_000 });
+      await expect
+        .poll(() => hasSaid("Hold Alt and click. The dashed ring is below you."), {
+          timeout: 15_000,
+        })
+        .toBe(true);
       const climbed = "Two layers, one spot. You read the ground now.";
       await expect(async () => {
         if (await hasSaid(climbed)) {

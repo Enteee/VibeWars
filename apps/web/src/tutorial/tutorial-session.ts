@@ -183,6 +183,8 @@ export async function startTutorialSession(
   /** A ground mark beside a HUD highlight (#3302). */
   let besideHud: Vec2 | undefined;
   const markAt = (): Vec2 | undefined => (highlight?.kind === "ground" ? highlight.at : besideHud);
+  const markLayer = (): number =>
+    (highlight?.kind === "ground" ? highlight.layer : undefined) ?? stage.ground;
   const goals = (): readonly GoalMark[] => {
     const at = markAt();
     return at === undefined
@@ -193,7 +195,7 @@ export async function startTutorialSession(
             id: "tutorial-mark",
             kind: "goal",
             position: at,
-            layer: (highlight?.kind === "ground" ? highlight.layer : undefined) ?? stage.ground,
+            layer: markLayer(),
           },
         ];
   };
@@ -525,12 +527,14 @@ export async function startTutorialSession(
       } else {
         frame.dataset.dodges = String(rockfallDodges);
       }
-      // Where the mark is, for the e2e specs to click.
+      // Where the mark is, and on which layer, for the e2e specs to click.
       const at = markAt();
       if (at === undefined) {
         delete frame.dataset.mark;
+        delete frame.dataset.markLayer;
       } else {
         frame.dataset.mark = `${String(Math.round(at.x))},${String(Math.round(at.y))}`;
+        frame.dataset.markLayer = String(markLayer());
       }
       // The wall's health (#3302), for the e2e specs to wait on.
       if (wallHealth === undefined) {
