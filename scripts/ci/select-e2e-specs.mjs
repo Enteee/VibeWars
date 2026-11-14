@@ -110,15 +110,15 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
   return jobs.map(({ specs, repeat }) => ({ specs, repeat }));
 };
 
-/** Recorded seconds (e2e-durations.json) of test runs per job: 400 s, so a run ends near 10 min (#3309). Hosted e2e-repeat runs take up to ~3.3x the recorded seconds (gameplay.spec, 15 min a run against 271 s recorded, #3266), and a spec over the budget still gets one run per job. MAX_JOBS fits ten repeats of each of the two largest specs (training 371 s, builds 302 s: 20 jobs). */
-export const SECONDS_PER_JOB = 400;
+/** Recorded seconds (e2e-durations.json, hosted CI shard times) of test runs per job: 800 s, so a job's tests take about 20 min at 1.5x and a run ends near 25 min with setup; a spec over the budget still gets one run per job. MAX_JOBS fits ten repeats of each of the two largest specs (gameplay 663 s, tutorial 407 s: 20 jobs). */
+export const SECONDS_PER_JOB = 800;
 export const MAX_JOBS = 20;
 /** The e2e-repeat matrix job's timeout-minutes; a test holds it equal to the workflow's. */
 export const JOB_TIMEOUT_MINUTES = 40;
 /** devenv/cache setup and build per job, in seconds. */
 export const SETUP_SECONDS = 300;
-/** How much slower hosted runners are than the recorded seconds (#3266). */
-export const HOSTED_SLOWDOWN = 3.3;
+/** How much slower an e2e-repeat run is than the recorded seconds, which come from hosted CI shards (gameplay.spec: 15 min a repeat run against 663 s recorded, 1.4x). */
+export const HOSTED_SLOWDOWN = 1.5;
 /** Recorded seconds one run of a spec may take and still finish in the job timeout (#3313). */
 export const MAX_SPEC_SECONDS = Math.floor(
   (JOB_TIMEOUT_MINUTES * 60 - SETUP_SECONDS) / HOSTED_SLOWDOWN,
