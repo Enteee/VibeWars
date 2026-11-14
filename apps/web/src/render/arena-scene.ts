@@ -226,7 +226,13 @@ import {
 import { lyingPose } from "./lying-pose.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
-import { LightingPass, litStructurePalette, baseTint } from "./lighting-pass.js";
+import {
+  LightingPass,
+  litOverhangColours,
+  litStructurePalette,
+  baseTint,
+} from "./lighting-pass.js";
+import { bodyUnder, overhangAlpha, paintOverhang, type OverhangCover } from "./overhang-art.js";
 import {
   DECK_ART,
   SWITCHED_DECK_ART,
@@ -541,6 +547,11 @@ export class ArenaScene extends Phaser.Scene {
     number,
     { readonly ground: Phaser.GameObjects.Graphics; readonly seam: Phaser.GameObjects.Graphics }
   >();
+  /** Each overhang (#3293) as drawn, and where it hangs: faded while a body is under it. */
+  private overhangsDrawn: readonly {
+    readonly cover: OverhangCover;
+    readonly graphics: Phaser.GameObjects.Graphics;
+  }[] = [];
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
   private readonly staticCull = new StaticGraphicsCull();
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
@@ -929,6 +940,7 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     this.cutAwayTunnels(dt);
+    this.fadeOverhangs(dt);
     this.drawHiddenOutlines();
     this.drawHoverMarker(effects);
     this.drawSwitchLinks(effects);
@@ -2909,6 +2921,7 @@ export class ArenaScene extends Phaser.Scene {
         ),
       );
     }
+    this.drawOverhangs(next.structure, next.lighting, line);
     for (const dropOff of next.structure.dropOffs) {
       this.drawDropOff(dropOff, ground, line);
     }
@@ -2920,6 +2933,7 @@ export class ArenaScene extends Phaser.Scene {
       g,
       ...this.structureGraphics.values(),
       ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
+      ...this.overhangsDrawn.map(({ graphics }) => graphics),
     ]);
   }
 
@@ -3073,6 +3087,71 @@ export class ArenaScene extends Phaser.Scene {
         piece.setAlpha(ground.alpha);
       }
     }
+  }
+
+  /**
+   * Each overhang over a body (#3293), anyone's, faded to
+   * `OVERHANG_FADED_ALPHA` so it never hides one, and back once its
+   * footprint is empty. At once under reduced motion.
+   */
+  private fadeOverhangs(dt: number): void {
+    for (const { cover, graphics } of this.overhangsDrawn) {
+      const covering = bodyUnder(cover, this.drawnActors, this.liftOf);
+      const next = overhangAlpha(graphics.alpha, covering, dt, this.reducedMotion);
+      if (next !== graphics.alpha) {
+        graphics.setAlpha(next);
+      }
+    }
+  }
+
+  private readonly liftOf = (id: string): number => this.elevations.get(id) ?? 0;
+
+  /**
+   * The map's awnings, lean-tos and canopies (#3293): each its own
+   * graphics, so each fades alone, at its layer's height and lit as a deck
+   * of that layer.
+   */
+  private drawOverhangs(
+    structure: MapStructure,
+    lighting: MapLighting | undefined,
+    line: number,
+  ): void {
+    for (const { graphics } of this.overhangsDrawn) {
+      graphics.destroy();
+    }
+    this.overhangsDrawn = structure.overhangs.map((overhang) => {
+      const top = elevationOf(overhang.layer, structure.ground);
+      const graphics = this.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "overhang", layer: overhang.layer }));
+      graphics.save();
+      graphics.translateCanvas(0, -top);
+      paintOverhang(
+        {
+          fillStyle: (colour, alpha) => graphics.fillStyle(colour, alpha),
+          lineStyle: (width, colour, alpha) => graphics.lineStyle(width, colour, alpha),
+          fillShape: (shape) => {
+            this.fillShape(graphics, shape);
+          },
+          fillCircle: (x, y, radius) => graphics.fillCircle(x, y, radius),
+          lineBetween: (ax, ay, bx, by) => graphics.lineBetween(ax, ay, bx, by),
+        },
+        overhang.look,
+        overhang.footprint,
+        litOverhangColours(
+          BIOME[structure.biome].overhang[overhang.look],
+          lighting,
+          overhang.footprint,
+          overhang.layer,
+        ),
+        line,
+      );
+      graphics.restore();
+      return {
+        cover: { layer: overhang.layer, outline: shapeOutline(overhang.footprint), top },
+        graphics,
+      };
+    });
   }
 
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */

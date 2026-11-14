@@ -7,10 +7,16 @@ import type { MapData } from "@vibewars/game-maps/schema";
 import { mapSimulationFields } from "@vibewars/game-maps/match-fields";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ArenaSnapshot, MapStructure, RenderableWall } from "./arena-snapshot.js";
+import {
+  FLAT_STRUCTURE,
+  type ArenaSnapshot,
+  type MapStructure,
+  type RenderableWall,
+} from "./arena-snapshot.js";
 import { standingDraw, type Occluder } from "./layer-surfaces.js";
+import { OVERHANG_FADED_ALPHA, type OverhangBody, type OverhangCover } from "./overhang-art.js";
 import { recordingGraphics, type RecordingGraphics } from "./recording-graphics.js";
-import { characterBand, renderOrder, type RenderItem } from "./render-order.js";
+import { characterBand, ELEVATION_STEP, renderOrder, type RenderItem } from "./render-order.js";
 import { coversOutline, hiddenSpots, type GateBody, type PaintedFill } from "./visibility-gate.js";
 
 // Phaser probes for a browser when it loads: the scene needs a base class,
@@ -60,6 +66,10 @@ interface GatedScene {
   add: unknown;
   textures: unknown;
   occluders: readonly Occluder[];
+  overhangsDrawn: readonly { cover: OverhangCover; graphics: RecordingGraphics }[];
+  drawnActors: readonly OverhangBody[];
+  reducedMotion: boolean;
+  fadeOverhangs(dt: number): void;
   structureAt(item: RenderItem): RecordingGraphics;
   drawMap(): void;
   drawPaving(): void;
@@ -67,10 +77,10 @@ interface GatedScene {
 
 /** `map` drawn by the scene's own map drawing: every fill it painted, and its occluders. */
 function paint(
-  map: MapData,
+  map: Pick<MapData, "width" | "height">,
   structure: MapStructure,
   walls: readonly RenderableWall[],
-): { fills: PaintedFill[]; occluders: readonly Occluder[] } {
+): { fills: PaintedFill[]; occluders: readonly Occluder[]; scene: GatedScene } {
   const scene = new ArenaScene() as unknown as GatedScene;
   const made: RecordingGraphics[] = [];
   const graphics = (): RecordingGraphics => {
@@ -97,11 +107,18 @@ function paint(
     return g;
   };
   scene.drawMap();
+  const overhangs = new Map(scene.overhangsDrawn.map(({ cover, graphics: g }) => [g, cover]));
   return {
     fills: made.flatMap((g) =>
-      g.fills.map(({ polygon }) => ({ polygon, depth: g.depth, what: g.what || "map" })),
+      g.fills.map(({ polygon }) => ({
+        polygon,
+        depth: g.depth,
+        what: g.what || (overhangs.has(g) ? "overhang" : "map"),
+        fadesOver: overhangs.get(g) ?? null,
+      })),
     ),
     occluders: scene.occluders,
+    scene,
   };
 }
 
@@ -156,6 +173,7 @@ const DECK_FILL: PaintedFill = {
   polygon: DECK_OUTLINE,
   depth: renderOrder({ kind: "deck", deckLayer: 1 }),
   what: "deck 1",
+  fadesOver: null,
 };
 const DECK_OCCLUDER: Occluder = {
   outline: DECK_OUTLINE,
@@ -206,6 +224,55 @@ describe("hiddenSpots (#3251)", () => {
 
   it("finds no body on the deck's own layer: it draws over the deck", () => {
     expect(hiddenSpots({ fills: [DECK_FILL], occluders: [], bodies: [bodyOn(1)] })).toEqual([]);
+  });
+});
+
+describe("overhangs (#3293)", () => {
+  /** An awning of layer 1 over the deck's square, on a map whose ground is 0. */
+  const AWNING: OverhangCover = { layer: 1, outline: DECK_OUTLINE, top: ELEVATION_STEP };
+  const AWNING_FILL: PaintedFill = {
+    polygon: DECK_OUTLINE,
+    depth: renderOrder({ kind: "overhang", layer: 1 }),
+    what: "overhang",
+    fadesOver: AWNING,
+  };
+
+  it("counts an overhang over a body as see-through, as it fades, with no occluder", () => {
+    expect(hiddenSpots({ fills: [AWNING_FILL], occluders: [], bodies: [bodyOn(0)] })).toEqual([]);
+  });
+
+  it("would find the body were the same fill never faded", () => {
+    const solid = { ...AWNING_FILL, fadesOver: null };
+    expect(hiddenSpots({ fills: [solid], occluders: [], bodies: [bodyOn(0)] })).toHaveLength(1);
+  });
+
+  it("draws an awning the scene fades to at most 0.35 over a body under it", () => {
+    const structure: MapStructure = {
+      ...FLAT_STRUCTURE,
+      layerCount: 2,
+      biome: "desert",
+      overhangs: [
+        {
+          id: "awning",
+          layer: 1,
+          footprint: { kind: "rect", x: 100, y: 100, width: 100, height: 100 },
+          look: "awning",
+        },
+      ],
+    };
+    const { fills, occluders, scene } = paint({ width: 400, height: 400 }, structure, []);
+    const awning = fills.filter(({ fadesOver }) => fadesOver !== null);
+    expect(awning.length).toBeGreaterThan(0);
+    expect(awning.every(({ depth }) => depth > bodyOn(0).depth)).toBe(true);
+    expect(hiddenSpots({ fills, occluders, bodies: [bodyOn(0)] })).toEqual([]);
+    const [drawn] = scene.overhangsDrawn;
+    scene.reducedMotion = true;
+    scene.drawnActors = [];
+    scene.fadeOverhangs(1 / 60);
+    expect(drawn?.graphics.alpha).toBe(1);
+    scene.drawnActors = [{ id: "under", position: { x: 150, y: 150 }, layer: 0 }];
+    scene.fadeOverhangs(1 / 60);
+    expect(drawn?.graphics.alpha).toBeLessThanOrEqual(OVERHANG_FADED_ALPHA);
   });
 });
 
