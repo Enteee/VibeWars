@@ -16,11 +16,11 @@ the place (a frozen river) is kept.
   `#9ea4ab` (ridge tops `#b4b9be`), river ice `#7d8a94` (a breath cooler than the ground), open water `#34495a`. All
   low chroma and neutral-to-grey; none sits within a hand's width of friend `#59c2ff`, help
   `#3f9fe8`/`#9fdcff` or magic violet, which is why the ice is grey-teal and the water dark, not blue.
-  `arena-palette.test.ts` checks it. Decks are kept mid-grey on purpose: near-white snow would wash the friend blue out, so bodies keep their contrast on it.
+  The build PR adds the row and its `arena-palette.test.ts` check; this study adds no code. Decks are kept mid-grey on purpose: near-white snow would wash the friend blue out, so bodies keep their contrast on it.
 - **Layers (3):** L0 river ice, open water, stepping stones and the cave floor; L1 the two banks (a
   `deck` each, 70 up) and the log bridge; L2 a ridge on each bank (`decks`, 140 up).
 - **Structures (≥ 4):** two banks; two ramps down to the ice; two ridge stairs; two ridges; the log
-  bridge (a `bridge` deck at bank height); five stepping stones over the open water band.
+  bridge (a `bridge` deck at bank height); five stepping stones over the open water band, 100 wide at a 90 pitch so they overlap and form one walkable strip (the deep water lies only round it, and the strip touches the ice shelf at its end).
 - **Tunnel:** the far-bank cave, 110 wide, from a mouth on the ice at (1570,1500) east under the east
   bank and out at its south edge at (2000,1710) onto the south lane. Cover shows the seam and
   grating slots (#3236), as wide as the walkable floor (#3179).
@@ -46,7 +46,7 @@ The centre is the central shelf, (1300,1000).
 | Route                                                           | Length | Walk  |
 | --------------------------------------------------------------- | ------ | ----- |
 | ice shelf (ramp down, across the ice)                           | 927 u  | 5.1 s |
-| stepping stones (over the open water)                           | 1102 u | 6.1 s |
+| stepping stones (over the open water)                           | 1103 u | 6.1 s |
 | log bridge (up the bank, over the bridge, through the ice wall) | 1597 u | 8.9 s |
 
 Both teams have the same three, so their walks are equal. The sides differ on purpose: the east bank
@@ -54,7 +54,7 @@ holds the cave and a snow-capped ridge (231 k u²); the west a bare rock ridge (
 smaller, within 25 %) and the thaw slush. High ground within half the map of either spawn is its own
 ridge, reached by its own stair; neither is reachable without crossing the middle or the bridge.
 The cave gives the east a flank onto the south lane; the west's matching asset is the bank-edge
-drop on its south lane. This asymmetry is for the bench to tune, not the layout.
+drop on its south lane. **Known risk for the build card:** the cave is an east-only flank, so a 2v2 with a one-sided tunnel needs the bench to watch for it (walks are equal, the flank is not); the build card must measure it, not leave it to later tuning.
 
 ## Canyon lessons, on the plan
 

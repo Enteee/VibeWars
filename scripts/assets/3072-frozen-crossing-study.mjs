@@ -151,8 +151,10 @@ const POOLS = [
   ],
   rect(1030, 1160, 540, 200),
 ];
+// 100 wide at a 90 pitch: they overlap by 10, so the chain is one walkable strip and the deep
+// water lies only round it
 const STONES = [1120, 1210, 1300, 1390, 1480].map((x, i) =>
-  rect(x - 35, 1230 + (i % 2) * 20, 70, 70),
+  rect(x - 50, 1230 + (i % 2) * 20, 100, 70),
 );
 const WALL = rect(1180, 740, 240, 26); // breakable ice wall across the central shelf strip
 /** @type {Pt} */
@@ -217,8 +219,9 @@ const ROUTES = {
       [
         [500, 1380],
         [1000, 1360],
-        [1100, 1260],
-        [1300, 1260],
+        [1120, 1265],
+        [1210, 1285],
+        [1300, 1265],
         [1300, 1000],
       ],
     ],
@@ -249,8 +252,9 @@ const ROUTES = {
       [
         [2100, 1380],
         [1600, 1360],
-        [1500, 1260],
-        [1300, 1260],
+        [1480, 1265],
+        [1390, 1285],
+        [1300, 1265],
         [1300, 1000],
       ],
     ],
