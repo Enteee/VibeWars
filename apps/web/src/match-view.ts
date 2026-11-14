@@ -65,6 +65,7 @@ import {
   type MapStructure,
   placedDecks,
   FLAT_STRUCTURE,
+  FORM_SCALE,
 } from "./render/arena-snapshot.js";
 import { attackCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
@@ -74,6 +75,7 @@ import type { SwitchTarget } from "./render/switch-link.js";
 import { frameTiming, snapshotCadence } from "./render/frame-timing.js";
 import { conditionCues } from "./render/body-conditions.js";
 import { bodyFlags } from "./render/body-rings.js";
+import { ashCape } from "./render/body-painter.js";
 import { capeLook } from "./render/cape-shape.js";
 import { castBadgeType } from "./render/cast-badge.js";
 import { CRUMBLED, crackStage, renderableBreakables } from "./render/breakable-objects.js";
@@ -473,7 +475,12 @@ export function toArenaSnapshot(
         signet: plate.signet,
         guildTag: player.guildTag,
         heroRank: player.heroRank,
-        cape: player.guildCape === undefined ? undefined : capeLook(player.guildCape),
+        cape:
+          player.guildCape === undefined
+            ? undefined
+            : rings.formed
+              ? ashCape(capeLook(player.guildCape))
+              : capeLook(player.guildCape),
         bot: player.bot,
         position: { x: player.x, y: player.y },
         layer: player.layer,
@@ -492,10 +499,11 @@ export function toArenaSnapshot(
             : CREATURE_ARMS[player.creature.look]?.offHand,
         profession: player.primaryProfession,
         creatureLook: player.creature?.look,
+        // A form draws the body bigger (#3229), not what it collides as.
         radius:
-          player.creature === undefined
+          (player.creature === undefined
             ? ACTOR_RADIUS
-            : CREATURE_DRAWN_RADIUS[player.creature.look],
+            : CREATURE_DRAWN_RADIUS[player.creature.look]) * (rings.formed ? FORM_SCALE : 1),
         team:
           player.sessionId === match.selfSessionId
             ? ("self" as const)
@@ -518,6 +526,7 @@ export function toArenaSnapshot(
         enchanted: rings.enchanted,
         stanced: rings.stanced,
         hexed: rings.hexed,
+        formed: rings.formed,
         invulnerable: !player.dead && player.invulnerableSeconds > 0,
         teleportReadyAt: player.teleportReadyAt,
         conditionCues: conditionCues(living),

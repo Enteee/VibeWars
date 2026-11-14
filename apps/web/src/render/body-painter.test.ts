@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { REST_FRAME } from "./attack-clock.js";
-import { paintStandingBody, type Painter, type StandingBody } from "./body-painter.js";
+import {
+  ASH,
+  FORM_AURA_BREATH_SECONDS,
+  FORM_AURA_COLOUR,
+  ashCape,
+  formAuraBreath,
+  paintFormAura,
+  paintStandingBody,
+  type Painter,
+  type StandingBody,
+} from "./body-painter.js";
 import { newCapeMotion, stepCapeMotion } from "./cape-motion.js";
 import type { CapeLook } from "./cape-shape.js";
 
@@ -113,5 +123,48 @@ describe("paintStandingBody (#1250)", () => {
     paintStandingBody(body.painter, BODY, marks.painter);
     expect([...body.calls, ...marks.calls]).toEqual(paint(BODY));
     expect(marks.calls.length).toBeGreaterThan(0);
+  });
+});
+
+describe("a body in a form (#3229)", () => {
+  it("glows under the disc in two faint cold steps, the outer one widest", () => {
+    const { painter, calls } = recorder();
+    paintFormAura(painter, 100, 50, 14 * 1.35, 1);
+    expect(calls).toEqual([
+      `fillStyle(${String(FORM_AURA_COLOUR)}, 0.12)`,
+      "fillCircle(100, 50, 25.9)",
+      `fillStyle(${String(FORM_AURA_COLOUR)}, 0.18)`,
+      "fillCircle(100, 50, 22.4)",
+    ]);
+  });
+
+  it("breathes between its low point and full, and holds full under reduced motion", () => {
+    const breaths = Array.from({ length: 24 }, (_, i) =>
+      formAuraBreath((i * FORM_AURA_BREATH_SECONDS) / 24, 0.3, false),
+    );
+    expect(Math.min(...breaths)).toBeGreaterThanOrEqual(0.6);
+    expect(Math.max(...breaths)).toBeLessThanOrEqual(1);
+    expect(Math.max(...breaths) - Math.min(...breaths)).toBeGreaterThan(0.3);
+    for (const now of [0, 0.7, 1.9, 13]) {
+      expect(formAuraBreath(now, 0.3, true)).toBe(1);
+    }
+  });
+
+  it("tones a cape's colours to ash and keeps its emblem", () => {
+    const ash = ashCape(LOOK);
+    expect(ash.emblem).toBe(LOOK.emblem);
+    const distance = (a: number, b: number): number =>
+      Math.max(
+        ...[16, 8, 0].map((shift) => Math.abs(((a >> shift) & 0xff) - ((b >> shift) & 0xff))),
+      );
+    expect(distance(ash.main, ASH)).toBeLessThan(distance(LOOK.main, ASH) / 2);
+    expect(distance(ash.trim, ASH)).toBeLessThan(distance(LOOK.trim, ASH) / 2);
+    expect(ash.main).not.toBe(ash.trim);
+  });
+
+  it("paints a 1.35× body with its ash cape as pinned", () => {
+    expect(
+      paint({ ...BODY, r: 14 * 1.35, cape: { look: ashCape(LOOK), motion: newCapeMotion() } }),
+    ).toMatchSnapshot();
   });
 });

@@ -18,6 +18,8 @@ export interface BodyFlags {
   readonly enchanted: boolean;
   readonly stanced: boolean;
   readonly hexed: boolean;
+  /** In a form (#3229), a Dervish's avatar: a bigger body, an ash cape, a cold aura. */
+  readonly formed: boolean;
 }
 
 /** Which marks `statuses` call for. A status id the client's catalogue does not know is ignored. */
@@ -25,13 +27,15 @@ export function bodyFlags(statuses: readonly string[]): BodyFlags {
   let enchanted = false;
   let stanced = false;
   let hexed = false;
+  let formed = false;
   for (const id of statuses) {
     const category = findStatusDefinition(id)?.category;
     enchanted ||= category === "enchantment";
     stanced ||= category === "stance";
     hexed ||= category === "hex";
+    formed ||= category === "form";
   }
-  return { enchanted, stanced, hexed };
+  return { enchanted, stanced, hexed, formed };
 }
 
 /** A stretch of a ring, radians, `atan2` convention, clockwise on screen. */
