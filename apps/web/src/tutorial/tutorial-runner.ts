@@ -22,6 +22,8 @@ export interface TutorLine {
   readonly key: MessageKey;
   readonly how: MessageKey | undefined;
   readonly keys: readonly string[];
+  /** The skills the line names, by its placeholder (#3316). */
+  readonly skills: Readonly<Record<string, string>>;
 }
 
 /** What one tick asks of the screen. */
@@ -94,12 +96,17 @@ export function createTutorialRunner(
   }
   const worldOf = (): TutorialWorldName => (stations[index] ?? last).world;
 
-  const line = (station: Station, key: MessageKey): TutorLine => {
+  const line = (
+    station: Station,
+    key: MessageKey,
+    skills: Readonly<Record<string, string>> = {},
+  ): TutorLine => {
     const map = keymap();
     return {
       key,
       how: key === station.lines.praise ? undefined : station.lines.how,
       keys: keysOf(station.keys ?? [], map).map(label),
+      skills,
     };
   };
   const beat = (
@@ -168,7 +175,7 @@ export function createTutorialRunner(
         saidAt = nowMs;
         asideStands = true;
         pointing = said.highlight;
-        return beat(line(station, said.line), pointing ?? highlight, mark);
+        return beat(line(station, said.line, said.skills), pointing ?? highlight, mark);
       }
       const { hit } = station.lines;
       if (

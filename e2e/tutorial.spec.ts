@@ -68,7 +68,7 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats: then the menu, and no offer again`, async ({
       page,
     }) => {
       // Four stations, each a walk or a drag in a sim that runs no faster than
@@ -76,8 +76,9 @@ test.describe("the first-time tutorial (#3218)", () => {
       // the canyon's three dodges at least 18 s more (#3247), and the wall
       // some 10 to 15 s, slower where the page draws slowly (#3302), and the
       // walk to the clearing and the heal some 30 s more (#3303), and the
-      // walk round the bad ground some 20 s more (#3310).
-      test.setTimeout(420_000);
+      // walk round the bad ground some 20 s more (#3310), and the walk to the
+      // rats and their fight some 60 s more (#3316).
+      test.setTimeout(540_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
       const frame = page.locator(".tutorial-frame");
@@ -307,6 +308,37 @@ test.describe("the first-time tutorial (#3218)", () => {
       }).toPass({ timeout: 60_000 });
       // Round the mud, no status: the effects monitor was never pointed at.
       expect(await hasSaid("See that icon? Mud. It wears off.")).toBe(false);
+
+      // Station 8 (#3316): on to the canyon's second map, its three rats at
+      // the pocket west of the arrival; the closest targeted again and
+      // again, two skills and the plain attack kill them all.
+      await expect
+        .poll(() => hasSaid("Rats! Different skills, different jobs."), { timeout: 15_000 })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-world", "canyon-2");
+      await expect(frame).toHaveAttribute("data-rats", "3", { timeout: 10_000 });
+      await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
+      const [pocketX = 0, pocketY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+        .split(",")
+        .map(Number);
+      await expect(async () => {
+        await walkTo({ x: pocketX, y: pocketY });
+        const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+          .split(",")
+          .map(Number);
+        expect(Math.hypot(cx - pocketX, cy - pocketY)).toBeLessThan(150);
+      }).toPass({ timeout: 90_000 });
+      const fought = "Well fought! Every skill has its job.";
+      await expect(async () => {
+        if (await hasSaid(fought)) {
+          return;
+        }
+        // The closest rat, attacked, then Protector's Strike and Crushing Blow.
+        for (const key of ["KeyC", "Space", "Digit4", "Digit3"]) {
+          await page.keyboard.press(key);
+        }
+        await expect.poll(() => hasSaid(fought), { timeout: 3_000 }).toBe(true);
+      }).toPass({ timeout: 120_000 });
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 
