@@ -221,11 +221,22 @@ same pull request.
 **The gate** was 3.5 against a reference that measured 38 to 82 ms; on a
 fast runner the calibration landed on the 30 fps beat (31.7-34.3 ms) and the
 cap guard failed the job (#3285). The reference now has a second deck, 27
-lights, 12 zones and 6 more walls, and measures about 88 ms on the CI runners,
-with every calibration window far over the guard. It grew about 1.6× relative
-to the maps (canyon 1.67 → 0.98-1.19, crossroads 2.29 → 1.18-1.57), so the
-gate is re-scaled by that factor: 3.5 ÷ 1.6 = 2.2, the same absolute headroom
-over a map's cost as before. The five-run table is in PR #3289.
+lights, 12 zones and 6 more walls, and measures 52 to 105 ms on the CI
+runners: every calibration window of five runs on one head is over 50 ms, far
+over the guard. Five runs on one head (reference p50 in ms: 88, 52, 87, 54,
+105):
+
+| map              | ratios                       | median | before (median) |
+| ---------------- | ---------------------------- | ------ | --------------- |
+| arena-canyon     | 0.98, 1.04, 0.89, 1.04, 0.98 | 0.98   | 1.67            |
+| arena-crossroads | 1.18, 1.15, 1.18, 1.30, 1.15 | 1.18   | 2.29            |
+| arena-long-hall  | 1.61, 1.95, 1.63, 1.87, 1.66 | 1.66   | 2.71            |
+
+The ratios fell by 0.52 to 0.64 (the reference grew about 1.6-1.9× against the
+maps; long-hall's old figure is after #3254). The gate is re-scaled by the
+smaller of those, 3.5 × 0.64 → 2.2, so the closest map keeps the same
+headroom as before (long-hall 2.2 / 1.74 = 1.26, was 3.5 / 2.71 = 1.29) and
+the highest ratio seen, 1.95, passes.
 
 The runner is slow for its first 20-40 s, so the run warms up first: it
 loads the first map, then calibrates for at least 45 s and until two
