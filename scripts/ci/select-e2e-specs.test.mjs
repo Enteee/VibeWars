@@ -155,12 +155,19 @@ describe("specSeconds", () => {
 });
 
 describe("the plan under the real budget", () => {
-  it("never exceeds 6 jobs (builds.spec.ts fits) and refuses a spec over 400 s", () => {
-    const fits = { "builds.spec.ts": 400 };
-    expect(planJobs(fits, 10, SECONDS_PER_JOB, MAX_JOBS).length).toBeLessThanOrEqual(6);
-    expect(() => planJobs({ "big.spec.ts": 500 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
-      /split the PR/,
-    );
+  it("keeps the two largest specs within MAX_JOBS and every job within the budget", () => {
+    const weights = { "training.spec.ts": 371, "builds.spec.ts": 302 };
+    const plan = planJobs(weights, 10, SECONDS_PER_JOB, MAX_JOBS);
+    expect(plan.length).toBeLessThanOrEqual(MAX_JOBS);
+    for (const job of plan) {
+      const cost = job.specs.reduce((sum, spec) => sum + (weights[spec] ?? 0) * job.repeat, 0);
+      expect(cost).toBeLessThanOrEqual(SECONDS_PER_JOB);
+    }
+  });
+
+  it("refuses specs that need more than MAX_JOBS jobs", () => {
+    const weights = { "a.spec.ts": 500, "b.spec.ts": 500, "c.spec.ts": 500 };
+    expect(() => planJobs(weights, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(/split the PR/);
   });
 
   it("is empty for no specs", () => {
