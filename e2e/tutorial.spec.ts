@@ -368,6 +368,8 @@ test.describe("the first-time tutorial (#3218)", () => {
           timeout: 15_000,
         })
         .toBe(true);
+      const tip = "Tip: Alt+click picks the ground under a ledge.";
+      expect(await hasSaid(tip), "no tip while the player is still up").toBe(false);
       const climbed = "Two layers, one spot. You read the ground now.";
       await expect(async () => {
         if (await hasSaid(climbed)) {
@@ -379,7 +381,7 @@ test.describe("the first-time tutorial (#3218)", () => {
         await expect.poll(() => hasSaid(climbed), { timeout: 5_000 }).toBe(true);
       }).toPass({ timeout: 60_000 });
       // Down by an Alt walk: no tip.
-      expect(await hasSaid("Tip: Alt+click picks the ground under a ledge.")).toBe(false);
+      expect(await hasSaid(tip), "no tip after an Alt walk down").toBe(false);
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 
