@@ -1499,7 +1499,7 @@ export default {
   "tutorial.dodge.intro": "Aici cad pietre. Când o umbră crește, dă-te la o parte!",
   "tutorial.dodge.praise": "Picioare iuți! Pietrele nu te prind.",
   "tutorial.ground.burning": "Fierbinte! Bara se golește, apoi dispare.",
-  "tutorial.ground.health": "Bara aceea roșie ești tu. Ține-o plină.",
+  "tutorial.ground.health": "Bara aceea verde ești tu. Ține-o plină.",
   "tutorial.ground.hint": "Semnul e dincolo de noroi. Prin el sau pe lângă.",
   "tutorial.ground.how": "Clic stânga pe teren sau mergi cu {keys}.",
   "tutorial.ground.intro": "Noroiul te încetinește. Lava arde. Tu alegi.",

@@ -1548,7 +1548,7 @@ export default {
   "tutorial.dodge.intro": "Tu spadają kamienie. Gdy cień rośnie, odsuń się!",
   "tutorial.dodge.praise": "Szybkie nogi! Kamienie cię nie dogonią.",
   "tutorial.ground.burning": "Gorąco! Pasek się opróżnia, potem znika.",
-  "tutorial.ground.health": "Ten czerwony pasek to ty. Trzymaj go wysoko.",
+  "tutorial.ground.health": "Ten zielony pasek to ty. Trzymaj go wysoko.",
   "tutorial.ground.hint": "Znacznik jest za błotem. Przez nie albo dookoła.",
   "tutorial.ground.how": "Kliknij lewym przyciskiem ziemię albo idź klawiszami {keys}.",
   "tutorial.ground.intro": "Błoto spowalnia. Lawa parzy. Twój wybór.",

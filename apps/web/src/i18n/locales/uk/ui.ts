@@ -1543,7 +1543,7 @@ export default {
   "tutorial.dodge.intro": "Тут падає каміння. Коли тінь росте, відійди вбік!",
   "tutorial.dodge.praise": "Швидкі ноги! Каміння тебе не наздожене.",
   "tutorial.ground.burning": "Гаряче! Смужка спадає, а потім зникає.",
-  "tutorial.ground.health": "Ця червона смужка — це ти. Тримай її повною.",
+  "tutorial.ground.health": "Ця зелена смужка — це ти. Тримай її повною.",
   "tutorial.ground.hint": "Мітка за багнюкою. Навпростець або в обхід.",
   "tutorial.ground.how": "Клацни лівою кнопкою по землі або йди клавішами {keys}.",
   "tutorial.ground.intro": "Багнюка сповільнює. Лава пече. Вирішуй сам.",

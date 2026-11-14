@@ -1539,7 +1539,7 @@ export default {
   "tutorial.dodge.intro": "Tu padajú kamene. Keď tieň rastie, uhni nabok!",
   "tutorial.dodge.praise": "Rýchle nohy! Kamene ťa nedostihnú.",
   "tutorial.ground.burning": "Horúco! Pruh ubúda a potom zmizne.",
-  "tutorial.ground.health": "Ten červený pruh si ty. Drž ho hore.",
+  "tutorial.ground.health": "Ten zelený pruh si ty. Drž ho hore.",
   "tutorial.ground.hint": "Značka je za blatom. Cez neho, alebo okolo.",
   "tutorial.ground.how": "Klikni ľavým tlačidlom na zem, alebo choď pomocou {keys}.",
   "tutorial.ground.intro": "Blato ťa spomalí. Láva páli. Voľba je tvoja.",

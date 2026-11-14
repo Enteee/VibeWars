@@ -1511,7 +1511,7 @@ export default {
   "tutorial.dodge.intro": "Ici, des rochers tombent. Quand une ombre grandit, écarte-toi !",
   "tutorial.dodge.praise": "Pieds légers ! Les rochers ne t'attrapent pas.",
   "tutorial.ground.burning": "Ça brûle ! La barre se vide, puis disparaît.",
-  "tutorial.ground.health": "Cette barre rouge, c'est toi. Garde-la haute.",
+  "tutorial.ground.health": "Cette barre verte, c'est toi. Garde-la haute.",
   "tutorial.ground.hint": "La marque est après la boue. À travers ou autour.",
   "tutorial.ground.how": "Clic gauche sur le sol, ou marche avec {keys}.",
   "tutorial.ground.intro": "La boue te ralentit. La lave brûle. À toi de voir.",

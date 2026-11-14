@@ -1312,7 +1312,7 @@ export default {
   "tutorial.dodge.intro": "这里会落石。影子变大时,快闪开!",
   "tutorial.dodge.praise": "好快的脚步!石头追不上你。",
   "tutorial.ground.burning": "好烫！条会慢慢耗尽，然后消失。",
-  "tutorial.ground.health": "那条红色的条就是你。别让它见底。",
+  "tutorial.ground.health": "那条绿色的条就是你。别让它见底。",
   "tutorial.ground.hint": "标记在泥地那边。穿过去，或绕过去。",
   "tutorial.ground.how": "左键点击地面,或用 {keys} 行走。",
   "tutorial.ground.intro": "泥地让你变慢。熔岩会灼烧。你来选。",

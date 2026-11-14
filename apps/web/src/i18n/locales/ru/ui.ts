@@ -1538,7 +1538,7 @@ export default {
   "tutorial.dodge.intro": "Здесь падают камни. Когда тень растёт, отойди в сторону!",
   "tutorial.dodge.praise": "Быстрые ноги! Камням тебя не догнать.",
   "tutorial.ground.burning": "Горячо! Полоска убывает, потом исчезает.",
-  "tutorial.ground.health": "Эта красная полоска — ты. Держи её полной.",
+  "tutorial.ground.health": "Эта зелёная полоска — ты. Держи её полной.",
   "tutorial.ground.hint": "Метка за грязью. Напрямик или в обход.",
   "tutorial.ground.how": "Щёлкни левой кнопкой по земле или иди клавишами {keys}.",
   "tutorial.ground.intro": "Грязь замедляет. Лава жжёт. Решать тебе.",

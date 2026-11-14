@@ -1416,7 +1416,7 @@ export default {
   "tutorial.dodge.intro": "Her falder der sten. Når en skygge vokser, så træd til side!",
   "tutorial.dodge.praise": "Hurtige fødder! Stenene kan ikke fange dig.",
   "tutorial.ground.burning": "Varmt! Bjælken tømmes, så er den væk.",
-  "tutorial.ground.health": "Den røde bjælke er dig. Hold den oppe.",
+  "tutorial.ground.health": "Den grønne bjælke er dig. Hold den oppe.",
   "tutorial.ground.hint": "Mærket er på den anden side af mudderet. Igennem eller udenom.",
   "tutorial.ground.how": "Venstreklik på jorden, eller gå med {keys}.",
   "tutorial.ground.intro": "Mudder sinker dig. Lava brænder. Du vælger.",

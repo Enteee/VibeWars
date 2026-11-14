@@ -1424,7 +1424,7 @@ export default {
   "tutorial.dodge.intro": "Тук падат камъни. Щом сянка расте, отстъпи встрани!",
   "tutorial.dodge.praise": "Бързи крака! Камъните не могат да те стигнат.",
   "tutorial.ground.burning": "Горещо! Лентата изтича и после изчезва.",
-  "tutorial.ground.health": "Червената лента си ти. Пази я пълна.",
+  "tutorial.ground.health": "Зелената лента си ти. Пази я пълна.",
   "tutorial.ground.hint": "Знакът е отвъд калта. През нея или около нея.",
   "tutorial.ground.how": "Кликни с левия бутон по земята или върви с {keys}.",
   "tutorial.ground.intro": "Калта те забавя. Лавата гори. Ти избираш.",

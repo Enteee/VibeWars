@@ -1440,7 +1440,7 @@ export default {
   "tutorial.dodge.intro": "Hier fallen Steine. Wächst ein Schatten, tritt zur Seite!",
   "tutorial.dodge.praise": "Flinke Füße! Die Steine kriegen dich nicht.",
   "tutorial.ground.burning": "Heiß! Der Balken läuft ab, dann ist es vorbei.",
-  "tutorial.ground.health": "Der rote Balken bist du. Halt ihn oben.",
+  "tutorial.ground.health": "Der grüne Balken bist du. Halt ihn oben.",
   "tutorial.ground.hint": "Die Markierung liegt hinter dem Schlamm. Mitten durch oder drum herum.",
   "tutorial.ground.how": "Linksklick auf den Boden, oder geh mit {keys}.",
   "tutorial.ground.intro": "Schlamm bremst dich. Lava brennt. Du entscheidest.",

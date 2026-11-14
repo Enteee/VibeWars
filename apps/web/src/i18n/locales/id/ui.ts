@@ -1348,7 +1348,7 @@ export default {
   "tutorial.dodge.intro": "Batu berjatuhan di sini. Saat bayangan membesar, menyingkirlah!",
   "tutorial.dodge.praise": "Kaki cepat! Batu-batu tak bisa menangkapmu.",
   "tutorial.ground.burning": "Panas! Batangnya terkuras, lalu hilang.",
-  "tutorial.ground.health": "Batang merah itu adalah kamu. Jaga tetap penuh.",
+  "tutorial.ground.health": "Batang hijau itu adalah kamu. Jaga tetap penuh.",
   "tutorial.ground.hint": "Tandanya di seberang lumpur. Terobos atau memutar.",
   "tutorial.ground.how": "Klik kiri tanah, atau berjalan dengan {keys}.",
   "tutorial.ground.intro": "Lumpur memperlambatmu. Lava membakar. Kamu yang pilih.",

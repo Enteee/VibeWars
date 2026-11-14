@@ -1483,7 +1483,7 @@ export default {
   "tutorial.dodge.intro": "כאן נופלים סלעים. כשצל גדל, זוז הצידה!",
   "tutorial.dodge.praise": "רגליים זריזות! הסלעים לא תופסים אותך.",
   "tutorial.ground.burning": "חם! הפס מתרוקן ואז נעלם.",
-  "tutorial.ground.health": "הפס האדום הזה זה אתה. שמור עליו מלא.",
+  "tutorial.ground.health": "הפס הירוק הזה זה אתה. שמור עליו מלא.",
   "tutorial.ground.hint": "הסימון מעבר לבוץ. דרכו או מסביב.",
   "tutorial.ground.how": "לחץ לחיצה שמאלית על הקרקע, או לך עם {keys}.",
   "tutorial.ground.intro": "בוץ מאט אותך. לבה שורפת. ההחלטה שלך.",

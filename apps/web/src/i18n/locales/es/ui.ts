@@ -1508,7 +1508,7 @@ export default {
   "tutorial.dodge.intro": "Aquí caen rocas. ¡Cuando crezca una sombra, apártate!",
   "tutorial.dodge.praise": "¡Pies ligeros! Las rocas no te alcanzan.",
   "tutorial.ground.burning": "¡Quema! La barra se vacía y luego desaparece.",
-  "tutorial.ground.health": "Esa barra roja eres tú. Mantenla arriba.",
+  "tutorial.ground.health": "Esa barra verde eres tú. Mantenla arriba.",
   "tutorial.ground.hint": "La marca está pasado el barro. A través o rodeándolo.",
   "tutorial.ground.how": "Haz clic izquierdo en el suelo o camina con {keys}.",
   "tutorial.ground.intro": "El barro te frena. La lava quema. Tú decides.",

@@ -1350,7 +1350,7 @@ export default {
   "tutorial.dodge.intro": "ここは落石がある。影が大きくなったら、よけて!",
   "tutorial.dodge.praise": "軽い足取り!岩には当たらないね。",
   "tutorial.ground.burning": "熱っ！バーが減って、やがて消える。",
-  "tutorial.ground.health": "その赤いバーが君だ。減らさないように。",
+  "tutorial.ground.health": "その緑のバーが君だ。減らさないように。",
   "tutorial.ground.hint": "目印は泥の向こう。突っ切るか、回り込むか。",
   "tutorial.ground.how": "地面を左クリック、または {keys} で歩く。",
   "tutorial.ground.intro": "泥は足を鈍らせる。溶岩は焼く。君次第だ。",

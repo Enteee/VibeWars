@@ -1492,7 +1492,7 @@ export default {
   "tutorial.dodge.intro": "Aqui caem pedras. Quando uma sombra crescer, saia de lado!",
   "tutorial.dodge.praise": "Pés ligeiros! As pedras não te pegam.",
   "tutorial.ground.burning": "Quente! A barra esvazia e depois some.",
-  "tutorial.ground.health": "Essa barra vermelha é você. Mantenha-a cheia.",
+  "tutorial.ground.health": "Essa barra verde é você. Mantenha-a cheia.",
   "tutorial.ground.hint": "A marca fica depois da lama. Por dentro ou em volta.",
   "tutorial.ground.how": "Clique com o botão esquerdo no chão, ou ande com {keys}.",
   "tutorial.ground.intro": "A lama te atrasa. A lava queima. Você decide.",

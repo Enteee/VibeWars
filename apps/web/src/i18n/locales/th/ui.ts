@@ -1329,7 +1329,7 @@ export default {
   "tutorial.dodge.intro": "ที่นี่มีหินร่วง เมื่อเงาขยายใหญ่ ให้หลบไปข้างๆ!",
   "tutorial.dodge.praise": "เท้าไวมาก! หินตามคุณไม่ทัน",
   "tutorial.ground.burning": "ร้อน! แถบจะลดลง แล้วก็หายไป",
-  "tutorial.ground.health": "แถบสีแดงนั่นคือตัวเธอ รักษาให้เต็มไว้",
+  "tutorial.ground.health": "แถบสีเขียวนั่นคือตัวเธอ รักษาให้เต็มไว้",
   "tutorial.ground.hint": "จุดหมายอยู่หลังโคลน ลุยผ่านหรืออ้อมก็ได้",
   "tutorial.ground.how": "คลิกซ้ายที่พื้น หรือเดินด้วย {keys}",
   "tutorial.ground.intro": "โคลนทำให้ช้า ลาวาเผาไหม้ เธอเลือกเอง",

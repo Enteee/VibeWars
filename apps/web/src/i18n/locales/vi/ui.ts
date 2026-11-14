@@ -1334,7 +1334,7 @@ export default {
   "tutorial.dodge.intro": "Ở đây có đá rơi. Khi một bóng lớn dần, hãy tránh sang bên!",
   "tutorial.dodge.praise": "Chân nhanh thật! Đá không đuổi kịp bạn.",
   "tutorial.ground.burning": "Nóng! Thanh cạn dần rồi biến mất.",
-  "tutorial.ground.health": "Thanh đỏ đó là bạn. Giữ cho nó đầy.",
+  "tutorial.ground.health": "Thanh xanh lá đó là bạn. Giữ cho nó đầy.",
   "tutorial.ground.hint": "Dấu ở bên kia bãi bùn. Lội qua hoặc đi vòng.",
   "tutorial.ground.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",
   "tutorial.ground.intro": "Bùn làm bạn chậm. Dung nham thiêu đốt. Tùy bạn.",

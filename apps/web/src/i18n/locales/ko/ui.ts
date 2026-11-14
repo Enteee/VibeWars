@@ -1339,7 +1339,7 @@ export default {
   "tutorial.dodge.intro": "여기는 돌이 떨어져요. 그림자가 커지면 옆으로 피하세요!",
   "tutorial.dodge.praise": "날랜 발! 돌이 당신을 못 잡네요.",
   "tutorial.ground.burning": "뜨거워! 막대가 줄어들다가 사라져.",
-  "tutorial.ground.health": "저 빨간 막대가 너야. 채워 둬.",
+  "tutorial.ground.health": "저 초록 막대가 너야. 채워 둬.",
   "tutorial.ground.hint": "표시는 진흙 너머에 있어. 가로지르든 돌아가든.",
   "tutorial.ground.how": "땅을 왼쪽 클릭하거나 {keys}(으)로 걸으세요.",
   "tutorial.ground.intro": "진흙은 느리게 하고, 용암은 태워. 네가 골라.",

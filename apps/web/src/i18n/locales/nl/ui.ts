@@ -1426,7 +1426,7 @@ export default {
   "tutorial.dodge.intro": "Hier vallen stenen. Groeit er een schaduw, stap opzij!",
   "tutorial.dodge.praise": "Snelle voeten! De stenen krijgen je niet te pakken.",
   "tutorial.ground.burning": "Heet! De balk loopt leeg en is dan weg.",
-  "tutorial.ground.health": "Die rode balk ben jij. Houd hem vol.",
+  "tutorial.ground.health": "Die groene balk ben jij. Houd hem vol.",
   "tutorial.ground.hint": "De markering ligt voorbij de modder. Erdoorheen of eromheen.",
   "tutorial.ground.how": "Klik met links op de grond, of loop met {keys}.",
   "tutorial.ground.intro": "Modder remt je af. Lava brandt. Jij kiest.",

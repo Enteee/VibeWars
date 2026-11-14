@@ -20,7 +20,7 @@ import {
   stepInStation,
   type TutorialView,
 } from "./stations.js";
-import { createTutorialRunner } from "./tutorial-runner.js";
+import { ASIDE_MS, createTutorialRunner } from "./tutorial-runner.js";
 
 const PAD = vec2(500, -900);
 const GROUND = 2;
@@ -200,13 +200,13 @@ describe("healStation (#3303)", () => {
 
 describe("badGroundStation (#3310)", () => {
   const ACROSS = vec2(6900, 720);
-  /** What a runner over the station alone says at each look, a second apart. */
+  /** What a runner over the station alone says at each look, `ASIDE_MS` apart. */
   const says = (looks: readonly Partial<TutorialView>[]): (string | undefined)[] => {
     const runner = createTutorialRunner(
       [badGroundStation(ACROSS, GROUND)],
       () => KEYMAP_PRESETS.classic,
     );
-    return looks.map((over, at) => runner.tick(view(over), at * 1_000).say?.key);
+    return looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key);
   };
 
   it("is done on the mark, on its layer, and only there", () => {

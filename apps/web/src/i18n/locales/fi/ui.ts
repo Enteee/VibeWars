@@ -1434,7 +1434,7 @@ export default {
   "tutorial.dodge.intro": "Täällä putoilee kiviä. Kun varjo kasvaa, astu sivuun!",
   "tutorial.dodge.praise": "Nopeat jalat! Kivet eivät saa sinua kiinni.",
   "tutorial.ground.burning": "Kuumaa! Palkki tyhjenee ja sitten se katoaa.",
-  "tutorial.ground.health": "Tuo punainen palkki olet sinä. Pidä se täynnä.",
+  "tutorial.ground.health": "Tuo vihreä palkki olet sinä. Pidä se täynnä.",
   "tutorial.ground.hint": "Merkki on mudan takana. Läpi tai ympäri.",
   "tutorial.ground.how": "Napsauta maata vasemmalla, tai kävele näppäimillä {keys}.",
   "tutorial.ground.intro": "Muta hidastaa. Laava polttaa. Sinä päätät.",

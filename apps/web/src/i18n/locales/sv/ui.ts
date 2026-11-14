@@ -1417,7 +1417,7 @@ export default {
   "tutorial.dodge.intro": "Här faller stenar. När en skugga växer, kliv åt sidan!",
   "tutorial.dodge.praise": "Snabba fötter! Stenarna hinner inte ifatt dig.",
   "tutorial.ground.burning": "Varmt! Mätaren töms, sedan är den borta.",
-  "tutorial.ground.health": "Den röda mätaren är du. Håll den uppe.",
+  "tutorial.ground.health": "Den gröna mätaren är du. Håll den uppe.",
   "tutorial.ground.hint": "Markeringen ligger bortom leran. Rakt igenom eller runt.",
   "tutorial.ground.how": "Vänsterklicka på marken, eller gå med {keys}.",
   "tutorial.ground.intro": "Lera saktar ner dig. Lava bränner. Du väljer.",
