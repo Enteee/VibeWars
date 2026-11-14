@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 
-import { DECK_SHADOW, DECK_TINT } from "./arena-palette.js";
+import { DECK_SHADOW, DECK_TINT, OVERHANG_SHADE } from "./arena-palette.js";
 import type { MapStructure, RenderableShape } from "./arena-snapshot.js";
 import {
   CASTER_HEIGHT,
@@ -157,6 +157,7 @@ const STRUCTURE: MapStructure = {
   tunnels: [],
   dropOffs: [],
   downDecks: [],
+  overhangs: [],
   decks: [{ layer: 1, footprint: BRIDGE, look: "platform", switched: null }],
   transitions: [],
   water: [],
@@ -231,5 +232,18 @@ describe("the fixed deck shadow (#2988)", () => {
 
   it("falls from a deck one step over the ground, wherever the ground is (#2973)", () => {
     expect(paint(false, SUNK)).toEqual(paint(false));
+  });
+  it("lays an overhang's soft shade twice on the ground, light maps or not (#3293)", () => {
+    const awning = { id: "awning", layer: 1, footprint: BRIDGE, look: "awning" } as const;
+    const shaded = { ...STRUCTURE, decks: [], overhangs: [awning, { ...awning, layer: 2 }] };
+    const shade = OVERHANG_SHADE.offsets.flatMap((offset) => [
+      "save",
+      `translate ${String(offset)} ${String(offset)}`,
+      `fill ${OVERHANG_SHADE.colour.toString(16)}`,
+      "shape",
+      "restore",
+    ]);
+    expect(paint(true, shaded)).toEqual(shade);
+    expect(paint(false, shaded)).toEqual(shade);
   });
 });

@@ -147,6 +147,7 @@ describe("a shot between layers (#2972)", () => {
     tunnels: [],
     dropOffs: [],
     downDecks: [],
+    overhangs: [],
     decks: [
       {
         layer: 1,

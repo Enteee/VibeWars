@@ -29,6 +29,7 @@
       "switched": null
     }
   ],
+  "overhangs": [],
   "transitions": [
     {
       "id": "timer-lift",

@@ -42,6 +42,7 @@ export type RenderItem =
   | { readonly kind: "tunnel-cover"; readonly deckLayer: number }
   | { readonly kind: "tunnel-seam"; readonly deckLayer: number }
   | { readonly kind: "deck"; readonly deckLayer: number }
+  | { readonly kind: "overhang"; readonly layer: number }
   | { readonly kind: "ramp"; readonly upperLayer: number }
   | { readonly kind: "lift"; readonly upperLayer: number }
   | { readonly kind: "hidden-outline" }
@@ -128,6 +129,12 @@ const SIDE_FACE = 4;
 const TUNNEL_COVER = 4.9;
 const DECK = 5;
 const RAMP = 5.5;
+/**
+ * An awning, lean-to or canopy (#3293): at its layer's height, over the
+ * bodies under it and over that layer's deck, lighting and zones, under
+ * its fog. It is lit by its palette, as a deck's art is.
+ */
+const OVERHANG = 5.87;
 /** A lift's platform (#3079): over its shaft, under whoever rides it. */
 const LIFT = 5.6;
 const HIDDEN_OUTLINE = 90;
@@ -187,6 +194,8 @@ export function renderOrder(item: RenderItem): number {
       return (item.deckLayer - 1) * LAYER_STACK + TUNNEL_SEAM;
     case "deck":
       return (item.deckLayer - 1) * LAYER_STACK + DECK;
+    case "overhang":
+      return (item.layer - 1) * LAYER_STACK + OVERHANG;
     case "ramp":
       return (item.upperLayer - 1) * LAYER_STACK + RAMP;
     case "lift":

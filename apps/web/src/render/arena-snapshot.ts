@@ -15,6 +15,7 @@ import {
 } from "@vibewars/game-core";
 import type {
   DeckLook,
+  OverhangLook,
   GateLook,
   SwitchedDeckData,
   TransitionLift,
@@ -235,6 +236,14 @@ export interface MapDeck {
   readonly switched: RenderableSwitchedDeck | null;
 }
 
+/** An overhang of a map (#3293): a roof nobody stands on, faded over whoever is under it. */
+export interface MapOverhang {
+  readonly id: string;
+  readonly layer: number;
+  readonly footprint: RenderableShape;
+  readonly look: OverhangLook;
+}
+
 /** A map's floors above and below the ground (ADR-0051), its water and zones, from its file: never per tick. */
 export interface MapStructure {
   readonly layerCount: number;
@@ -254,6 +263,8 @@ export interface MapStructure {
   readonly decks: readonly MapDeck[];
   /** Each switched deck that is down (#3068): drawn as what is left of it, and nothing more. */
   readonly downDecks: readonly MapDeck[];
+  /** Its awnings, lean-tos and canopies (#3293): over bodies, never walked. */
+  readonly overhangs: readonly MapOverhang[];
   /** Stretches of a raised edge you step off onto `layer - 1`, never climb (#3069). */
   readonly dropOffs: readonly {
     readonly layer: number;
@@ -286,6 +297,7 @@ export const FLAT_STRUCTURE: MapStructure = {
   decks: [],
   dropOffs: [],
   downDecks: [],
+  overhangs: [],
   pits: [],
   tunnels: [],
   transitions: [],
