@@ -114,12 +114,16 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
 
 ![Station 8: three rats, a skill bar with different skills lit](img/8-rats.png)
 
-- Three rats. Each takes a different skill to finish quickly: one a ranged skill, one a
-  melee/area skill, one a condition.
+- Three rats on the canyon's second map. The tutorial build has only melee attacks, so
+  the lesson is combos (#3316): one rat runs when hit, which Protector's Strike punishes;
+  a big one (240 health) is knocked down with Hammer Bash, then Crushing Blow; the third
+  takes anything. The tutor waits east of the pocket, out of every rat's reach, and only
+  joins on a rat the player has hit.
 - **Teach.** Different skills, different jobs. Target with right click, **Tab** is the next foe,
   **C** the closest.
 - **Do.** Kill all three rats using at least two different skills.
-- **Check.** Three rats dead, two or more distinct skill ids cast.
+- **Check.** Three rats dead, two or more distinct skill ids landed on them. Dead with fewer,
+  one more rat comes: "Try a different skill on this one."
 
 ## 9. Climb a layer
 

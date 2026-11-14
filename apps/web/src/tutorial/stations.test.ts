@@ -7,17 +7,21 @@ import {
   DODGES_NEEDED,
   EFFECTS_MONITOR,
   MARK_REACH,
+  RAT_SKILLS,
+  SKILLS_ON_RATS,
   badGroundStation,
   breakWallStation,
   dodgeStation,
   healStation,
   lookStation,
   partyRow,
+  ratsStation,
   skillSlot,
   stepInStation,
   type TutorialView,
 } from "./stations.js";
 import { ASIDE_MS, createTutorialRunner } from "./tutorial-runner.js";
+import { PLAYER_PROFESSION, houseBuild } from "./tutorial-world.js";
 
 const PAD = vec2(500, -900);
 const GROUND = 2;
@@ -38,6 +42,12 @@ const view = (over: Partial<TutorialView> = {}): TutorialView => ({
   energySpent: false,
   zoneStatus: undefined,
   healthDropped: false,
+  ratsAlive: 0,
+  skillsOnRats: new Set<string>(),
+  selfTarget: undefined,
+  ratFled: false,
+  bigRatDown: false,
+  extraRat: false,
   ...over,
 });
 const sees =
@@ -248,5 +258,70 @@ describe("badGroundStation (#3310)", () => {
     expect(at({ zoneStatus: "mired" })).toEqual(monitor);
     expect(at({})).toEqual(ground);
     expect(at({ zoneStatus: "burning" })).toEqual(ground);
+  });
+});
+
+describe("ratsStation (#3316)", () => {
+  const pocket = vec2(5200, 2100);
+  const rats = { runner: "rat-1", big: "rat-2" };
+  const bar = [
+    "warrior.enraged-smash",
+    RAT_SKILLS.bash,
+    RAT_SKILLS.crush,
+    RAT_SKILLS.runner,
+    "warrior.auspicious-blow",
+    "warrior.flail",
+    "warrior.sprint",
+    "monk.heal-other",
+  ];
+  const station = ratsStation(pocket, rats, bar);
+  const one = new Set([RAT_SKILLS.runner]);
+  const two = new Set([RAT_SKILLS.runner, RAT_SKILLS.bash]);
+
+  it("names skills the player's build holds", () => {
+    const { skillBar } = houseBuild(PLAYER_PROFESSION);
+    expect(skillBar).toEqual(expect.arrayContaining(Object.values(RAT_SKILLS)));
+  });
+
+  it("is not done with no rat left and one skill landed, and done with two", () => {
+    expect(SKILLS_ON_RATS).toBe(2);
+    expect(station.done(view({ ratsAlive: 0, skillsOnRats: one }))).toBe(false);
+    expect(station.done(view({ ratsAlive: 0, skillsOnRats: two }))).toBe(true);
+  });
+
+  it("is not done while a rat stands, the extra one counted, however many skills landed", () => {
+    expect(station.done(view({ ratsAlive: 1, skillsOnRats: two }))).toBe(false);
+    expect(station.done(view({ ratsAlive: 1, skillsOnRats: one, extraRat: true }))).toBe(false);
+    expect(station.done(view({ ratsAlive: 0, skillsOnRats: two, extraRat: true }))).toBe(true);
+  });
+
+  it("runs on the canyon's second map, and shows the targeting keys", () => {
+    expect(station.world).toBe("canyon-2");
+    expect(station.keys).toEqual(["target-next", "target-closest"]);
+  });
+
+  it("marks the pocket, lights the runner's strike, then Hammer Bash and Crushing Blow on the big rat", () => {
+    const at = (over: Partial<TutorialView>): unknown =>
+      typeof station.highlight === "function" ? station.highlight(view(over)) : undefined;
+    expect(at({})).toEqual({ kind: "ground", at: pocket });
+    expect(at({ selfTarget: "rat-3" })).toEqual({ kind: "ground", at: pocket });
+    expect(at({ selfTarget: "rat-1" })).toEqual({ kind: "hud", element: skillSlot(3) });
+    expect(at({ selfTarget: "rat-2" })).toEqual({ kind: "hud", element: skillSlot(1) });
+    expect(at({ selfTarget: "rat-2", bigRatDown: true })).toEqual({
+      kind: "hud",
+      element: skillSlot(2),
+    });
+  });
+
+  it("names the skills from the catalog in its lines, never in the text", () => {
+    expect(station.asides?.map(({ line, skills }) => [line, skills])).toEqual([
+      ["tutorial.rats.runs", { skill: RAT_SKILLS.runner }],
+      ["tutorial.rats.big", { bash: RAT_SKILLS.bash, crush: RAT_SKILLS.crush }],
+      ["tutorial.rats.again", undefined],
+    ]);
+  });
+
+  it("refuses a bar without the skills it names", () => {
+    expect(() => ratsStation(pocket, rats, bar.slice(0, 2))).toThrow(/protectors-strike/);
   });
 });

@@ -10,6 +10,7 @@ import {
 import type { MapDescriptor } from "@vibewars/game-protocol";
 import { NO_GUILD } from "@vibewars/game-session";
 
+import { skillName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { startMatchView, type MatchView } from "../match-view.js";
@@ -28,16 +29,21 @@ import {
   BAD_GROUND,
   CRACKED_WALL,
   DODGE_MARK,
+  RAT_POCKET,
+  allyHealSlot,
   badGroundTutor,
   canyonWorld,
   clearingTutor,
+  ratPocket,
   wallTutor,
   type BadGroundTutor,
   type ClearingTutor,
+  type RatPocket,
   type WallTutor,
 } from "./canyon-world.js";
 import { createHealWatch, type HealWatch } from "./heal-watch.js";
 import { createDodgeCounter, type DodgeCounter } from "./dodge-count.js";
+import { createRatWatch, type RatWatch } from "./rat-watch.js";
 import {
   ZONE_STATUSES,
   badGroundStation,
@@ -45,6 +51,7 @@ import {
   dodgeStation,
   healStation,
   lookStation,
+  ratsStation,
   stepInStation,
   walkStation,
   type StationHighlight,
@@ -68,6 +75,9 @@ const FAREWELL_MS = 2_500;
 const PULSE_CLASS = "tutorial-pulse";
 /** The fade back from white once the canyon stands (#3247), as `.tutorial-flash` animates it. */
 const FLASH_MS = 800;
+
+/** No skill landed on a rat: what station 8 reads before its rats are there. */
+const NO_SKILLS: ReadonlySet<string> = new Set();
 
 /** How a tutorial ended: through, skipped, or cut short with nothing to record. */
 export type TutorialEnd = "done" | "skipped";
@@ -102,6 +112,8 @@ interface Stage {
   readonly dodges: DodgeCounter | undefined;
   /** Station 6's watch on the canyon's combat (#3303); the battlefield has none. */
   readonly heals: HealWatch | undefined;
+  /** Station 8's watch on the rats (#3316), on the canyon's second map only. */
+  readonly rats: RatWatch | undefined;
   /** Its zones, as the simulation applies them: the battlefield's play no part. */
   readonly zones: readonly MatchZone[];
 }
@@ -160,6 +172,7 @@ export async function startTutorialSession(
     fixed: [portal],
     dodges: undefined,
     heals: undefined,
+    rats: undefined,
     zones: [],
   };
   let highlight: StationHighlight | undefined;
@@ -209,6 +222,8 @@ export async function startTutorialSession(
   let healthDropped = false;
   let healthBefore: number | undefined;
   let onBadGround: BadGroundTutor | undefined;
+  // Station 8's (#3316), on the canyon's second map.
+  let atRats: RatPocket | undefined;
   /** The station the last beat ran. */
   let running: string | undefined;
   /** The HUD element pulsing now, if any. */
@@ -236,7 +251,10 @@ export async function startTutorialSession(
     }
   };
   const say = (line: TutorLine): void => {
-    said.textContent = t(line.key);
+    const skills = Object.fromEntries(
+      Object.entries(line.skills).map(([slot, id]) => [slot, skillName(id)]),
+    );
+    said.textContent = t(line.key, skills);
     how.textContent = line.how === undefined ? "" : t(line.how, { keys: line.keys.join(" ") });
   };
   const open = (): Promise<MatchView> => {
@@ -272,6 +290,11 @@ export async function startTutorialSession(
       breakWallStation(CRACKED_WALL.face, CRACKED_WALL.maxHealth),
       healStation(TUTOR_ID, TUTORIAL_HEAL_SLOT),
       badGroundStation(BAD_GROUND.mark, BAD_GROUND.layer),
+      ratsStation(
+        RAT_POCKET.pocket,
+        { runner: RAT_POCKET.rats[0].id, big: RAT_POCKET.rats[1].id },
+        playerBuild.skillBar,
+      ),
     ],
     loadKeymap,
   );
@@ -288,33 +311,46 @@ export async function startTutorialSession(
   };
   let last: number | undefined;
   /**
-   * Into the canyon (#3247): white over the battlefield, its view and world
-   * dropped, the canyon built and drawn, then the white fades.
+   * Into the canyon (#3247), or on to its second map (#3316): white over
+   * the world, its view and simulation dropped, `to` built and drawn,
+   * then the white fades.
    */
-  const swap = async (): Promise<void> => {
+  const swap = async (to: Exclude<TutorialWorldName, "battlefield">): Promise<void> => {
     swapping = true;
     const flash = document.createElement("div");
     flash.className = "tutorial-flash tutorial-flash-hold";
     frame.append(flash);
     await view?.dispose();
     view = undefined;
-    const canyon = canyonWorld(`${seed}-canyon`, playerBuild, tutorBuild);
-    const heals = createHealWatch(SELF_ID, TUTOR_ID, TUTORIAL_HEAL);
+    const part = to === "canyon" ? 0 : 1;
+    const canyon = canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part);
+    const heals = part === 0 ? createHealWatch(SELF_ID, TUTOR_ID, TUTORIAL_HEAL) : undefined;
+    const rats =
+      part === 1
+        ? createRatWatch(
+            SELF_ID,
+            RAT_POCKET.rats.map(({ id }) => id),
+            playerBuild.skillBar,
+          )
+        : undefined;
     const connection = connect(canyon.simulation, canyon.map);
     // Only station 6's strikes and heals: the tutor may meet a boulder before.
+    // Station 8's blows on the rats, whenever they land.
     connection.onCombat((message) => {
       if (running === "heal") {
-        heals.observe(message);
+        heals?.observe(message);
       }
+      rats?.observe(message);
     });
     stage = {
-      name: "canyon",
+      name: to,
       simulation: canyon.simulation,
       connection,
       ground: canyon.ground,
       fixed: [],
-      dodges: createDodgeCounter(canyon.zones),
+      dodges: part === 0 ? createDodgeCounter(canyon.zones) : undefined,
       heals,
+      rats,
       zones: canyon.zones,
     };
     // The tutor goes on ahead, to wait by the mark.
@@ -344,7 +380,7 @@ export async function startTutorialSession(
       request = requestAnimationFrame(step);
       return;
     }
-    const { simulation: world, connection, dodges, heals } = stage;
+    const { simulation: world, connection, dodges, heals, rats } = stage;
     connection.advance(last === undefined ? 0 : Math.min((now - last) / 1000, MAX_STEP_SECONDS));
     last = now;
     const self = world.get(SELF_ID);
@@ -386,6 +422,7 @@ export async function startTutorialSession(
     healthDropped ||=
       crossing && health !== undefined && healthBefore !== undefined && health < healthBefore;
     healthBefore = health;
+    const ratTally = rats?.tally();
     if (self !== undefined && tutor !== undefined && farewell === 0) {
       const beat = runner.tick(
         {
@@ -405,6 +442,12 @@ export async function startTutorialSession(
           energySpent,
           zoneStatus,
           healthDropped,
+          ratsAlive: atRats?.alive() ?? 0,
+          skillsOnRats: ratTally?.skillsOnRats ?? NO_SKILLS,
+          selfTarget: self.targetId,
+          ratFled: atRats?.fled() ?? false,
+          bigRatDown: ratTally?.knockedDown.has(RAT_POCKET.rats[1].id) ?? false,
+          extraRat: atRats?.extra() ?? false,
         },
         now,
       );
@@ -435,6 +478,14 @@ export async function startTutorialSession(
         onBadGround = badGroundTutor(world);
       }
       onBadGround?.step();
+      // Station 8 is next, on the second map: the tutor goes to the pocket,
+      // and the rats are run.
+      if (atRats === undefined && beat.station === "rats" && rats !== undefined) {
+        atRats = ratPocket(world, rats, allyHealSlot(tutorBuild));
+      }
+      if (ratTally !== undefined) {
+        atRats?.step(ratTally);
+      }
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;
@@ -459,6 +510,12 @@ export async function startTutorialSession(
       } else {
         frame.dataset.wall = String(wallHealth);
       }
+      // The rats standing (#3316), for the e2e specs to wait on.
+      if (atRats === undefined) {
+        delete frame.dataset.rats;
+      } else {
+        frame.dataset.rats = String(atRats.alive());
+      }
       if (beat.say !== undefined) {
         say(beat.say);
       }
@@ -469,9 +526,9 @@ export async function startTutorialSession(
             end("done");
           }, FAREWELL_MS);
         }, FAREWELL_MS);
-      } else if (beat.world !== stage.name) {
-        // Into the teleporter together, under its praise.
-        void swap();
+      } else if (beat.world !== stage.name && beat.world !== "battlefield") {
+        // Into the teleporter together, or on to the next map, under its praise.
+        void swap(beat.world);
       }
     }
     request = requestAnimationFrame(step);
