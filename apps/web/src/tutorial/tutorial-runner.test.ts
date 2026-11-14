@@ -177,10 +177,10 @@ describe("the tutorial runner", () => {
         { ...broken, tutorHit: true, tutorTargeted: true, energySpent: true },
         8_000 + 5 * PRAISE_MS + 2 * ASIDE_MS,
       ],
-      [{ ...broken, ...healed }, 9_000 + 5 * PRAISE_MS + 2 * ASIDE_MS],
-      [{ ...broken, ...healed }, 9_000 + 6 * PRAISE_MS + 2 * ASIDE_MS],
-      [{ ...broken, ...healed, zoneStatus: "mired" }, 9_000 + 6 * PRAISE_MS + 3 * ASIDE_MS],
-      [{ ...broken, ...healed, self: across }, 10_000 + 6 * PRAISE_MS + 3 * ASIDE_MS],
+      [{ ...broken, ...healed }, 9_000 + 5 * PRAISE_MS + 3 * ASIDE_MS],
+      [{ ...broken, ...healed }, 9_000 + 6 * PRAISE_MS + 3 * ASIDE_MS],
+      [{ ...broken, ...healed, zoneStatus: "mired" }, 9_000 + 6 * PRAISE_MS + 4 * ASIDE_MS],
+      [{ ...broken, ...healed, self: across }, 10_000 + 6 * PRAISE_MS + 5 * ASIDE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -330,6 +330,32 @@ describe("the tutorial runner", () => {
       { kind: "hud", element: EFFECTS_MONITOR },
       { kind: "hud", element: HEALTH_BAR },
       { kind: "hud", element: HEALTH_BAR },
+    ]);
+  });
+
+  it("says an aside that is due before the praise, and lets it stand ASIDE_MS (#3310)", () => {
+    const runner = createTutorialRunner(
+      [healStation("tutor", 7)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    const hit: TutorialView = { ...AWAY, tutorHit: true };
+    const healed: TutorialView = { ...hit, energySpent: true, healedTutor: true };
+    const ticks: [TutorialView, number][] = [
+      [AWAY, 0],
+      [hit, ASIDE_MS],
+      [healed, ASIDE_MS + 1_000],
+      [healed, 2 * ASIDE_MS],
+      [healed, 3 * ASIDE_MS - 1],
+      [healed, 3 * ASIDE_MS],
+    ];
+    expect(ticks.map(([view, now]) => runner.tick(view, now).say?.key)).toEqual([
+      "tutorial.heal.intro",
+      "tutorial.heal.ow",
+      undefined,
+      "tutorial.heal.energy",
+      undefined,
+      "tutorial.heal.praise",
     ]);
   });
 
