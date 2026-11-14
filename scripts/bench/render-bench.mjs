@@ -78,7 +78,10 @@ const MIN_CALIBRATION_MS = 2000 / 60 + 0.1;
 const MAX_CALIBRATION_SPREAD = 0.2;
 
 const PORT = 4322;
-const MAPS = path.join(import.meta.dirname, "..", "..", "packages", "game-maps", "maps");
+/** Where the maps it measures live: the arenas, and the tutorial's (#3245). */
+const MAP_DIRS = ["maps", "tutorial"].map((dir) =>
+  path.join(import.meta.dirname, "..", "..", "packages", "game-maps", dir),
+);
 const SETTLE_MS = 1000;
 /** The first map is loaded this long, unmeasured, before the warm-up calibration. */
 const WARMUP_LOAD_SECONDS = 5;
@@ -101,17 +104,30 @@ const { values: options } = parseArgs({
   options: { url: { type: "string" }, follow: { type: "boolean" } },
 });
 
-/** Every arena map of more than one layer, read from its `map.json`. */
+/**
+ * `mapId`'s `map.json`, in whichever of `MAP_DIRS` holds it.
+ *
+ * @param {string} mapId
+ * @returns {string}
+ */
+function mapFile(mapId) {
+  const file = MAP_DIRS.map((dir) => path.join(dir, mapId, "map.json")).find((each) =>
+    fs.existsSync(each),
+  );
+  if (file === undefined) {
+    throw new Error(`${mapId}: no map.json`);
+  }
+  return file;
+}
+
+/** Every arena and tutorial map of more than one layer, read from its `map.json`. */
 function layeredMaps() {
-  return fs
-    .readdirSync(MAPS)
-    .filter((id) => {
-      const file = path.join(MAPS, id, "map.json");
-      return (
-        fs.existsSync(file) &&
-        Number(/"layers":\s*(\d+)/.exec(fs.readFileSync(file, "utf8"))?.[1] ?? 1) > 1
-      );
-    })
+  return MAP_DIRS.flatMap((dir) =>
+    fs.readdirSync(dir).filter((id) => fs.existsSync(path.join(dir, id, "map.json"))),
+  )
+    .filter(
+      (id) => Number(/"layers":\s*(\d+)/.exec(fs.readFileSync(mapFile(id), "utf8"))?.[1] ?? 1) > 1,
+    )
     .sort();
 }
 
@@ -305,7 +321,7 @@ const UPHILL = new Map([
 function followLoop(mapId, start) {
   // The map as written; the walk needs no validation.
   /** @type {unknown} */
-  const parsed = JSON.parse(fs.readFileSync(path.join(MAPS, mapId, "map.json"), "utf8"));
+  const parsed = JSON.parse(fs.readFileSync(mapFile(mapId), "utf8"));
   const map = /** @type {FollowedMap} */ (parsed);
   const centre = { x: map.width / 2, y: map.height / 2 };
   /** @type {{ x: number, y: number }[]} */

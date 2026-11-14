@@ -77,6 +77,7 @@ import {
   type ArenaPalette,
   pavingPalette,
   type PavingLookColours,
+  type StonePavingLook,
 } from "./arena-palette.js";
 import {
   trackAlt,
@@ -255,7 +256,7 @@ import {
   paintOutsideTile,
   type OutsidePainter,
 } from "./outside-land.js";
-import { paintPaving, pavingDrawing, pavingTextureSizes } from "./paving-painter.js";
+import { isStonePaving, paintPaving, pavingDrawing, pavingTextureSizes } from "./paving-painter.js";
 import { withZoneLights } from "./zone-light.js";
 import { insideRuns, shownFill } from "./cell-cover.js";
 import {
@@ -270,6 +271,7 @@ import {
 } from "./atmosphere.js";
 import { fillDisc, strokeDisc } from "./disc.js";
 import {
+  groundArtOf,
   paintZoneGround,
   paintZoneMotion,
   zoneArtOf,
@@ -536,7 +538,7 @@ export class ArenaScene extends Phaser.Scene {
   private pavingDrawn:
     | {
         readonly paving: readonly MapPaving[] | undefined;
-        readonly colours: Record<MapPaving["look"], PavingLookColours>;
+        readonly colours: Record<StonePavingLook, PavingLookColours>;
         readonly painted: readonly {
           readonly image: Phaser.GameObjects.Image;
           readonly key: string;
@@ -3510,32 +3512,43 @@ export class ArenaScene extends Phaser.Scene {
       if (art === undefined) {
         return undefined;
       }
-      const { width, height } = art.bounds;
-      const scale = Math.min(
-        ZONE_TEXTURE_SCALE,
-        ZONE_TEXTURE_MAX_SIDE / Math.max(1, width, height),
-      );
-      const key = `zone-ground-${String(zoneGroundTextures)}`;
-      zoneGroundTextures += 1;
-      const texture = this.textures.createCanvas(
-        key,
-        Math.max(1, Math.ceil(width * scale)),
-        Math.max(1, Math.ceil(height * scale)),
-      );
-      if (texture === null) {
-        throw new Error("zones: could not create a zone's ground");
-      }
-      paintZoneGround(texture.context, art, scale);
-      texture.refresh();
-      const image = this.add
-        .image(art.bounds.left, art.bounds.top, key)
-        .setOrigin(0, 0)
-        .setScale(1 / scale)
-        .setDepth(renderOrder({ kind: "zone", layer: zone.layer, part: "ground" }));
-      return { art, image, key };
+      const depth = renderOrder({ kind: "zone", layer: zone.layer, part: "ground" });
+      return { art, ...this.paintGround(art, 0, depth) };
     });
     this.zoneGrounds = { zones, grounds };
     return grounds;
+  }
+
+  /**
+   * `art`'s still ground painted once onto a canvas texture of its own,
+   * as an image `lift` world units up at `depth`: a zone's, or lava
+   * paving's (#3245).
+   */
+  private paintGround(
+    art: ZoneArt,
+    lift: number,
+    depth: number,
+  ): { readonly image: Phaser.GameObjects.Image; readonly key: string } {
+    const { width, height } = art.bounds;
+    const scale = Math.min(ZONE_TEXTURE_SCALE, ZONE_TEXTURE_MAX_SIDE / Math.max(1, width, height));
+    const key = `zone-ground-${String(zoneGroundTextures)}`;
+    zoneGroundTextures += 1;
+    const texture = this.textures.createCanvas(
+      key,
+      Math.max(1, Math.ceil(width * scale)),
+      Math.max(1, Math.ceil(height * scale)),
+    );
+    if (texture === null) {
+      throw new Error("zones: could not create a zone's ground");
+    }
+    paintZoneGround(texture.context, art, scale);
+    texture.refresh();
+    const image = this.add
+      .image(art.bounds.left, art.bounds.top - lift, key)
+      .setOrigin(0, 0)
+      .setScale(1 / scale)
+      .setDepth(depth);
+    return { image, key };
   }
 
   /**
@@ -3565,9 +3578,19 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     this.dropPaving();
-    const pavings = structure.paving ?? [];
+    const pavings = (structure.paving ?? []).filter(isStonePaving);
     const drawings = pavings.map((paving) => pavingDrawing(paving, colours[paving.look]));
     const sizes = pavingTextureSizes(drawings.map((drawing) => drawing.bounds));
+    // Lava (#3245) is a molten zone's ground, painted by the zone painter at the paving's depth.
+    const lava = (structure.paving ?? [])
+      .filter((paving) => paving.look === "lava")
+      .map((paving, index) =>
+        this.paintGround(
+          groundArtOf("lava", paving.area, index),
+          elevationOf(paving.layer, structure.ground),
+          renderOrder({ kind: "paving", layer: paving.layer }),
+        ),
+      );
     const painted = pavings.map((paving, at) => {
       const drawing = drawings[at];
       const size = sizes[at];
@@ -3591,7 +3614,7 @@ export class ArenaScene extends Phaser.Scene {
         .setDepth(renderOrder({ kind: "paving", layer: paving.layer }));
       return { image, key };
     });
-    this.pavingDrawn = { paving: structure.paving, colours, painted };
+    this.pavingDrawn = { paving: structure.paving, colours, painted: [...painted, ...lava] };
   }
 
   /** Drops the paving drawn last, and its textures. */

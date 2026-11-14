@@ -32,6 +32,7 @@
     },
     "./maps/*": "./maps/*",
     "./training/*": "./training/*",
+    "./tutorial/*": "./tutorial/*",
     "./bench/*": "./bench/*"
   },
   "main": "./dist/index.js",
@@ -40,6 +41,7 @@
     "dist",
     "maps",
     "training",
+    "tutorial",
     "bench"
   ],
   "scripts": {

@@ -1,6 +1,6 @@
 import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 
-import type { MapZone } from "./arena-snapshot.js";
+import type { MapZone, RenderableShape } from "./arena-snapshot.js";
 import { shapeOutline } from "./layer-surfaces.js";
 import { paintRipples } from "./water-painter.js";
 import { ripplesIn, shoreDistance, type Ripple } from "./water-shape.js";
@@ -169,16 +169,25 @@ function crack(random: () => number, outline: readonly Vec2[], start: Vec2): Vec
 /** `zone`'s art, the `index`th on its map; `undefined` for a hazard, which is its mark. */
 export function zoneArtOf(zone: MapZone, index: number): ZoneArt | undefined {
   const painter = ZONE_LOOK[zone.kind].painter;
-  if (painter === "hazard") {
-    return undefined;
-  }
-  const outline = shapeOutline(zone.area);
+  return painter === "hazard" ? undefined : groundArtOf(painter, zone.area, index);
+}
+
+/**
+ * The art `painter` paints `shape` in, the `index`th of its kind on its
+ * map: a zone's, or lava paving's, which is a molten zone's ground (#3245).
+ */
+export function groundArtOf(
+  painter: Exclude<ZonePainterId, "hazard">,
+  shape: RenderableShape,
+  index: number,
+): ZoneArt {
+  const outline = shapeOutline(shape);
   const xs = outline.map((corner) => corner.x);
   const ys = outline.map((corner) => corner.y);
   const left = Math.min(...xs);
   const top = Math.min(...ys);
   const bounds = { left, top, width: Math.max(...xs) - left, height: Math.max(...ys) - top };
-  const centroid = zoneCentroid(zone.area);
+  const centroid = zoneCentroid(shape);
   const seed = (index + 1) * 7919 + Math.round(centroid.x) * 31 + Math.round(centroid.y);
   const random = seeded(seed);
   const area = bounds.width * bounds.height;

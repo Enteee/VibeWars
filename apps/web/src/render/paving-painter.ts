@@ -1,7 +1,7 @@
 import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 import type { MapPaving } from "@vibewars/game-maps/schema";
 
-import { type PavingLookColours, shade } from "./arena-palette.js";
+import { type PavingLookColours, type StonePavingLook, shade } from "./arena-palette.js";
 import { shapeOutline } from "./layer-surfaces.js";
 
 /**
@@ -63,8 +63,16 @@ export function pavingSeed(id: string): number {
   return h >>> 0;
 }
 
+/** A paving laid in stones, slabs or pebbles: every look but lava (#3245). */
+export type StonePaving = MapPaving & { readonly look: StonePavingLook };
+
+/** Whether `paving` is laid in stones, rather than painted as lava. */
+export function isStonePaving(paving: MapPaving): paving is StonePaving {
+  return paving.look !== "lava";
+}
+
 /** `paving`'s draw commands, in `colours`. */
-export function pavingDrawing(paving: MapPaving, colours: PavingLookColours): PavingDrawing {
+export function pavingDrawing(paving: StonePaving, colours: PavingLookColours): PavingDrawing {
   const outline = shapeOutline(paving.area);
   const xs = outline.map((corner) => corner.x);
   const ys = outline.map((corner) => corner.y);
@@ -131,7 +139,7 @@ type Random = () => number;
 
 /** Each look's stones: closed outlines wholly inside the paving's outline. */
 const LAY: Record<
-  MapPaving["look"],
+  StonePavingLook,
   (outline: readonly Vec2[], area: Area, random: Random) => (readonly Vec2[])[]
 > = {
   cobbles: (outline, area, random) =>

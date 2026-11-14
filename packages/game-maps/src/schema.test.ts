@@ -1679,7 +1679,7 @@ describe("paving (#3210)", () => {
     expect(() => validateMapData({ ...validMap, paving })).toThrow(message);
   };
 
-  it("is optional, and may be cobbles, flagstones or dirt, a rectangle or a polygon", () => {
+  it("is optional, and may be cobbles, flagstones, dirt or lava, a rectangle or a polygon", () => {
     expect(validateMapData(validMap).paving).toBeUndefined();
     const square = {
       kind: "polygon",
@@ -1693,6 +1693,7 @@ describe("paving (#3210)", () => {
       road(),
       road({ id: "square", look: "flagstones", area: square }),
       road({ id: "track", look: "dirt" }),
+      road({ id: "stream", look: "lava" }),
     ]);
   });
 
