@@ -164,7 +164,7 @@ const LIGHTS = [
   { p: [1300, 940], col: C.torch, r: 150 },
   { p: [630, 1220], col: C.torch, r: 150 },
   { p: [1970, 1220], col: C.torch, r: 150 },
-  { p: [1960, 1480], col: C.fire, r: 200 },
+  { p: [1600, 1700], col: C.fire, r: 200 },
 ];
 // routes: the walk is the polyline length at base speed
 /** @type {Record<"t1" | "t2", [string, Pt[]][]>} */
