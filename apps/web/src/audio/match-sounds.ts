@@ -1,6 +1,11 @@
 import type { ConnectionState, MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 
-import { soundsForCombat, soundsForSnapshot, soundsForWorld } from "./combat-sounds.js";
+import {
+  soundsForCombat,
+  soundsForSkillGround,
+  soundsForSnapshot,
+  soundsForWorld,
+} from "./combat-sounds.js";
 import type { SoundId } from "./sound-ids.js";
 import type { SoundPlayer } from "./sound-player.js";
 import type { WorldPlaces } from "./world-places.js";
@@ -47,7 +52,7 @@ export function attachMatchSounds(
   };
 
   connection.onCombat((message) => {
-    playAll(soundsForCombat(message, connection.selfSessionId));
+    playAll(soundsForCombat(message, connection.selfSessionId, prev));
   });
   connection.onCastRefused?.(() => {
     playAll(["refused"]);
@@ -60,6 +65,7 @@ export function attachMatchSounds(
       }
       playAll(soundsForSnapshot(prev, next));
       playAll(soundsForWorld(prev, next, connection.selfSessionId, places));
+      playAll(soundsForSkillGround(prev, next, connection.selfSessionId));
       prev = next;
     },
     connectionChanged(state) {
