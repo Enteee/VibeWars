@@ -20,7 +20,7 @@ const MW = 3200,
   STEP = 70; // drawn height of one layer step
 // Hall biome (visual-style §1): ground #26303f, rock #4b5a70. Burn is zones and light, not a new row.
 const C = {
-  out: "#14171c",
+  out: "#252b34",
   ground: "#26303f",
   flag: "#2f3a4c", // flagstones
   rock: "#4b5a70",
@@ -126,6 +126,8 @@ const TUNNEL_W = 200;
 const GATE = rect(1500, 2150, 200, 30); // portcullis, worked by the lever on the west wall-walk
 /** @type {Pt} */
 const LEVER = [235, 1200];
+/** @type {Pt} */
+const LEVER2 = [2965, 1200]; // the same portcullis, worked from the east wall-walk too
 // fallen-timber walls: breakable, a team's yard has two exits north and south
 const BARRICADES = [rect(1000, 1000, 26, 400), rect(2174, 1000, 26, 400)];
 // lean-to overhangs of charred rafters along the north wall (different on each side)
@@ -137,6 +139,7 @@ const CHAR = [
   { cx: 1100, cy: 1650, rx: 120, ry: 50 },
   { cx: 2100, cy: 750, rx: 120, ry: 50 },
 ];
+// `vent` zones (ZONE_KINDS); the smoke over them is atmosphere
 const SMOKE = [
   { cx: 760, cy: 1560, rx: 140, ry: 60 },
   { cx: 2440, cy: 820, rx: 140, ry: 60 },
@@ -173,10 +176,11 @@ const LIGHTS = [
 const ROUTES = {
   t1: [
     [
-      "across the court",
+      "round the timber wall",
       [
         [600, 1200],
-        [1000, 1200],
+        [1000, 960],
+        [1100, 1000],
         [1140, 1200],
         [1300, 1200],
         [1600, 1200],
@@ -197,10 +201,11 @@ const ROUTES = {
   ],
   t2: [
     [
-      "across the court",
+      "round the timber wall",
       [
         [2600, 1200],
-        [2200, 1200],
+        [2200, 960],
+        [2100, 1000],
         [2060, 1200],
         [1900, 1200],
         [1600, 1200],
@@ -274,6 +279,15 @@ const world = () => {
   // rubble outside the wall, then the courtyard flags
   for (const [x, y, r] of [
     [60, 120, 70],
+    ...Array.from(
+      { length: 90 },
+      (_, i) =>
+        /** @type {[number, number, number]} */ ([
+          ((i * 421) % 3600) - 200,
+          ((i * 317 + i * i * 11) % 2800) - 200,
+          40 + (i % 4) * 12,
+        ]),
+    ),
     [3120, 160, 60],
     [90, 2300, 80],
     [3140, 2260, 70],
@@ -325,6 +339,7 @@ const world = () => {
   for (let x = 460; x < 2760; x += 130)
     s += `<rect x="${x}" y="${220 - STEP - 14}" width="60" height="16" fill="${C.lip}" opacity=".5"/>`;
   s += `<circle cx="${LEVER[0]}" cy="${LEVER[1] - STEP}" r="16" fill="${C.brass}" stroke="${INK}" stroke-width="4"/>`;
+  s += `<circle cx="${LEVER2[0]}" cy="${LEVER2[1] - STEP}" r="16" fill="${C.brass}" stroke="${INK}" stroke-width="4"/>`;
   // lights
   for (const l of LIGHTS)
     s += `<circle cx="${l.p[0]}" cy="${l.p[1]}" r="${l.r}" fill="${l.col}" opacity=".16"/><circle cx="${l.p[0]}" cy="${l.p[1]}" r="9" fill="${l.col}" stroke="${INK}" stroke-width="3"/>`;
@@ -392,6 +407,7 @@ const teamCol = { t1: C.friend, t2: C.foe };
     tag("gatehouse passage", [1640, 2090], 32) +
     tag("portcullis", [1720, 2180], 30) +
     tag("lever", [260, 1160 - STEP], 32) +
+    tag("lever", [2800, 1160 - STEP], 32) +
     tag("barbican", [1360, 2350], 30);
   a +=
     tag("timber wall", [880, 960], 30) +
@@ -401,8 +417,8 @@ const teamCol = { t1: C.friend, t2: C.foe };
   a +=
     tag("char", [560, 800], 30) +
     tag("char", [2300, 1710], 30) +
-    tag("smoke", [700, 1640], 30) +
-    tag("smoke", [2380, 900], 30);
+    tag("vent (zone)", [700, 1640], 30) +
+    tag("vent (zone)", [2380, 900], 30);
   a +=
     tag("sun (NW), day + smoke", [250, 100], 44) +
     `<path d="M240,130 l100,80" stroke="#fff1d6" stroke-width="9" fill="none"/>`;

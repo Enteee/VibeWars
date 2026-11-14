@@ -11,7 +11,7 @@ the place (a burned castle courtyard) is kept.
 
 - **Bounds** 3200×2400 = 7.68 M u² (1.5× Canyon, 4v4). The ground outline fills 78 % of it. It is a
   walled box, chamfered at the corners (the curtain wall is its edge), with one barbican yard
-  bulging out south of the gatehouse. Outside the wall is rubble and natural land.
+  bulging out south of the gatehouse. Outside the wall is `rock` (`OUTSIDE_KINDS`): scree and boulders, drawn.
 - **Biome `hall`, no new row.** Justification: the dressed-stone family already has the right
   tones (ground `#26303f`, rock `#4b5a70`) and burning is zones, light and char, not a palette.
   Char `#1b1a1a`, ash `#4a4a4c` and charred timber `#7a5a3c` are patch looks, not biome tones.
@@ -32,8 +32,8 @@ the place (a burned castle courtyard) is kept.
   in the gatehouse passage at (1600,2150) (shut = the barbican is sealed, open = a way round the south
   walk). Two **breakable fallen-timber walls**, at x=1000 and x=2174, 400 long, across each team's yard
   between its spawn and the pit: the yard has an exit north and south, and breaking the wall opens
-  the straight way to the pit. Zones: `scorched` (four char patches, two near the north, two south)
-  and `smoke` (two vents, one each side). Two lean-to overhangs of charred rafters on the north
+  the straight way to the pit (1000 u, 5.6 s). Zone kinds (`ZONE_KINDS`): `scorched` (four char patches, two near the north, two south)
+  and `vent` (two, one each side; the smoke over them is atmosphere, not a zone). Two lean-to overhangs of charred rafters on the north
   wall, different widths on each side. Embers: warm lights on the two biggest char patches.
 - **Light:** the **Day** row (visual-style §2): sun from the NW, 50°, `#fff1d6` 0.55, ambient
   `#b0bcd4` 0.45, with a low smoke haze (pale, ≤ 0.15, under bodies). Torches (`#ffb060`, radius 150)
@@ -48,7 +48,7 @@ The centre is the well court, (1600,1200).
 
 | Route                                                                        | Length   | Walk                     |
 | ---------------------------------------------------------------------------- | -------- | ------------------------ |
-| across the court (through the pit ramp)                                      | 1000 u   | 5.6 s                    |
+| round the timber wall to the pit ramp (walls up)                             | 1238 u   | 6.9 s (both teams)       |
 | wall-walk (north stair, along the walk, centre stair down, south to the pit) | ≈ 2430 u | 13.4 s (T1), 13.6 s (T2) |
 
 The teams are within 2 % of each other on both. The wall-walk is the long way on purpose: it is the
@@ -70,4 +70,4 @@ no one.
 ## New art needed
 
 Nothing beyond the schema's elements. The charred-timber look reuses the breakable-wall look in a
-darker tone; the char and smoke patches are zone looks. Mechanics are not designed here.
+darker tone; the char and vent patches are zone looks. Mechanics are not designed here.
