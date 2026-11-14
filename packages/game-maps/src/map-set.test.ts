@@ -49,7 +49,7 @@ const NEW_ARENAS = new Set(["arena-crossroads", "arena-long-hall", "arena-canyon
  * The 2.5D rebuilds (#3064): asymmetric by design. Their fairness is the balance bench and the
  * walk and high-ground checks (map-balance.test.ts), not a half turn.
  */
-const REBUILT = new Set(["arena-canyon", "arena-crossroads", "ember-pits"]);
+const REBUILT = new Set(["arena-canyon", "arena-crossroads", "ember-pits", "sandstone-steps"]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
   ...map,
@@ -764,8 +764,8 @@ describe("Hall of Heroes (#2552)", () => {
 const ROUTE_HALF_GAP = 100;
 
 // The medium arenas (#2604, #2605) cross the centre in three lanes, the large (#2607, #2609) in four.
+// Sandstone Steps, rebuilt in 2.5D (#3278), is proven by its walks and high ground instead (map-balance.test.ts).
 describe.each([
-  ["sandstone-steps", 1, 3],
   ["frozen-crossing", 2, 3],
   ["ashen-courtyard", 4, 3],
   ["moss-vale", 8, 3],
