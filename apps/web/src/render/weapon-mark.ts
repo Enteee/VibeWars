@@ -2,7 +2,7 @@ import { isWeaponId } from "@vibewars/game-core";
 
 import type { AttackFrame } from "./attack-clock.js";
 import { WEAPON_MARK_RADIUS, type Point } from "./weapon-mark-geometry.js";
-import { weaponPose, type WeaponMarkLayout } from "./weapon-pose.js";
+import { weaponHandPoint, weaponPose, type WeaponMarkLayout } from "./weapon-pose.js";
 
 /**
  * The weapon mark (#188, #418, docs/art/art-direction.md "Player mark"):
@@ -46,5 +46,30 @@ export function weaponMarkLayout(
     fills: posed.fills.map(place),
     strings: posed.strings.map(place),
     alpha: posed.alpha,
+  };
+}
+
+/**
+ * Where the hand holding the weapon is on a body placed as in
+ * `weaponMarkLayout` (#3320), for the cast glow; `undefined` with no weapon.
+ */
+export function weaponHandAt(
+  x: number,
+  y: number,
+  r: number,
+  facing: number,
+  weaponId: string | undefined,
+  frame: AttackFrame,
+): Point | undefined {
+  if (weaponId === undefined || !isWeaponId(weaponId)) {
+    return undefined;
+  }
+  const hand = weaponHandPoint(weaponId, frame.clip, frame.hit);
+  const scale = r / WEAPON_MARK_RADIUS;
+  const cos = Math.cos(facing);
+  const sin = Math.sin(facing);
+  return {
+    x: x + (hand.x * cos - hand.y * sin) * scale,
+    y: y + (hand.x * sin + hand.y * cos) * scale,
   };
 }

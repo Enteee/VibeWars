@@ -25,9 +25,12 @@ export interface WeaponMarkLayout extends WeaponMarkGeometry {
   readonly alpha: number;
 }
 
-/** A wind-up or a strike: the part of a swing that comes before its hit. */
+/**
+ * A wind-up or a strike: the part of a swing that comes before its hit;
+ * or a spell cast's raise (#3320), the wind-up's pose eased in and held.
+ */
 export interface SwingClip {
-  readonly phase: "wind-up" | "strike";
+  readonly phase: "wind-up" | "strike" | "raise";
   readonly progress: number;
 }
 
@@ -211,6 +214,8 @@ function poseOf(m: WeaponMotion, clip: AttackClip): Pose {
         m.wind,
         easeInOut(m.motion === "bow" ? Math.min(1, clip.progress / BOW_ANCHOR) : clip.progress),
       );
+    case "raise":
+      return lerpPose(REST, m.wind, easeInOut(clip.progress));
     case "strike":
       return lerpPose(m.wind, m.strikePose, easeOutCubic(clip.progress));
     case "hold":
@@ -220,6 +225,22 @@ function poseOf(m: WeaponMotion, clip: AttackClip): Pose {
     case "settle":
       return lerpPose(poseOf(m, clip.from), REST, easeInOut(clip.progress));
   }
+}
+
+/** Where the hand holds a weapon whose pose turns about the body's centre. */
+const HAND = p(4, 9);
+
+/**
+ * The hand holding `weaponId` at `clip` (#3320), in the local frame:
+ * its pivot, or `HAND` for one that turns about the body's centre, moved
+ * with the pose. Fists and daggers mirror it for a left-hand hit.
+ */
+export function weaponHandPoint(weaponId: WeaponMarkId, clip: AttackClip, hit: number): Point {
+  const m = WEAPON_MOTION[weaponId];
+  const q = poseOf(m, clip);
+  const hand = m.pivot.x === 0 && m.pivot.y === 0 ? HAND : m.pivot;
+  const right = m.motion !== "hands" || hit % 2 === 0;
+  return right ? p(hand.x + q.dx, hand.y + q.dy) : p(hand.x + q.dx, -hand.y - q.dy);
 }
 
 /** `line` turned by `q.rot` degrees and scaled by `scale` about `pivot`, then moved by (dx, dy). */
