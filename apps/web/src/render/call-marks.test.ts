@@ -26,6 +26,7 @@ const CALLED: RenderableActor = {
   offhandId: undefined,
   profession: undefined,
   creatureLook: undefined,
+  auraRadius: undefined,
   radius: R,
   team: "enemy",
   health: 500,

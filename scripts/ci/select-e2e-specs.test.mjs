@@ -7,6 +7,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   assertRan,
+  JOB_TIMEOUT_MINUTES,
+  MAX_SPEC_SECONDS,
   MAX_JOBS,
   SECONDS_PER_JOB,
   planJobs,
@@ -163,6 +165,19 @@ describe("the plan under the real budget", () => {
       const cost = job.specs.reduce((sum, spec) => sum + (weights[spec] ?? 0) * job.repeat, 0);
       expect(cost).toBeLessThanOrEqual(SECONDS_PER_JOB);
     }
+  });
+
+  it("derives the spec limit from the job timeout the workflow sets", () => {
+    const yml = fs.readFileSync(".github/workflows/e2e-repeat.yml", "utf8");
+    const job = yml.slice(yml.indexOf("\n  e2e-repeat:"));
+    expect(/timeout-minutes: (\d+)/.exec(job)?.[1]).toBe(String(JOB_TIMEOUT_MINUTES));
+    expect(MAX_SPEC_SECONDS).toBe(636);
+  });
+
+  it("refuses a spec too long for one job, naming it", () => {
+    expect(() => planJobs({ "huge.spec.ts": 637 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
+      /huge\.spec\.ts.*split the spec/,
+    );
   });
 
   it("refuses specs that need more than MAX_JOBS jobs", () => {

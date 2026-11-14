@@ -7686,6 +7686,7 @@
             ]
           }
         },
+        { "name": "auraRadius", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "kind",
           "optional": false,
@@ -8617,6 +8618,11 @@
                     }
                   },
                   {
+                    "name": "auraRadius",
+                    "optional": false,
+                    "type": { "union": ["null", "number"] }
+                  },
+                  {
                     "name": "kind",
                     "optional": false,
                     "type": {
@@ -9116,6 +9122,11 @@
                                 }
                               ]
                             }
+                          },
+                          {
+                            "name": "auraRadius",
+                            "optional": false,
+                            "type": { "union": ["null", "number"] }
                           },
                           {
                             "name": "kind",
@@ -9626,6 +9637,11 @@
                                 }
                               ]
                             }
+                          },
+                          {
+                            "name": "auraRadius",
+                            "optional": false,
+                            "type": { "union": ["null", "number"] }
                           },
                           {
                             "name": "kind",

@@ -39,6 +39,8 @@ import {
   healthFraction,
   nameShown,
   nameTagBox,
+  SPIRIT_RING_WIDTH,
+  spiritRingAlpha,
   nameplateLayout,
   placeFloatingText,
   signetTextureKey,
@@ -200,11 +202,17 @@ import {
   DEAD_DASH,
   DEAD_GAP,
   RING_CASING,
+  SPIRIT_CORE,
+  SPIRIT_CORE_SCALE,
+  SPIRIT_GREEN,
+  SPIRIT_RIM_WIDTH,
   TICK_EDGE,
   creatureOrnament,
   creatureOutline,
   creatureTick,
   dashes,
+  spiritBob,
+  spiritWisp,
   type OrnamentColour,
 } from "./creature-shape.js";
 import { CAST_BADGE_SIZE, CAST_BAR_RISE, castBadgeLayout } from "./cast-badge.js";
@@ -2122,14 +2130,20 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
 
-    tracePath(g, creatureOutline(x, y, actor.radius));
-    g.fillStyle(team, 1);
-    g.fillPath();
-    g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
-    g.strokePath();
+    // A spirit's plate is a wisp (#3306), bobbing, inside a team rim.
+    const bob = look === "spirit" ? spiritBob(this.now, cuePhase(actor.id), this.reducedMotion) : 0;
+    if (look === "spirit") {
+      this.drawSpiritWisp(g, actor, y + bob, team);
+    } else {
+      tracePath(g, creatureOutline(x, y, actor.radius));
+      g.fillStyle(team, 1);
+      g.fillPath();
+      g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+      g.strokePath();
+    }
 
     if (CREATURE_ARMS[look] === undefined) {
-      const [tip, left, right] = creatureTick(x, y, actor.radius, actor.facing);
+      const [tip, left, right] = creatureTick(x, y + bob, actor.radius, actor.facing);
       marks.fillStyle(SELF_RIM, 1);
       marks.fillTriangle(tip.x, tip.y, left.x, left.y, right.x, right.y);
       marks.lineStyle(TICK_EDGE, BODY_EDGE, 1);
@@ -2147,6 +2161,30 @@ export class ArenaScene extends Phaser.Scene {
         cape: undefined,
       });
     }
+  }
+
+  /**
+   * A spirit's wisp (#3306) at height `y`: pale green round a near-white
+   * core, lit as its band, cased in the body edge under a `team` rim.
+   */
+  private drawSpiritWisp(
+    g: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+    y: number,
+    team: number,
+  ): void {
+    const { x } = actor.position;
+    const r = actor.radius;
+    tracePath(g, spiritWisp(x, y, r));
+    g.fillStyle(this.lit(SPIRIT_GREEN, actor), 1);
+    g.fillPath();
+    g.lineStyle(SPIRIT_RIM_WIDTH + RING_CASING, BODY_EDGE, 1);
+    g.strokePath();
+    g.lineStyle(SPIRIT_RIM_WIDTH, team, 1);
+    g.strokePath();
+    tracePath(g, spiritWisp(x, y, r, SPIRIT_CORE_SCALE));
+    g.fillStyle(this.lit(SPIRIT_CORE, actor), 1);
+    g.fillPath();
   }
 
   /**
@@ -2681,6 +2719,29 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     this.drawShoutRings(g);
+    this.drawSpiritRings(g);
+  }
+
+  /**
+   * Each living spirit's range ring (#3306), on the ground at its aura's
+   * real radius and its layer's height, as a shout's ring: under the bodies.
+   */
+  private drawSpiritRings(ground: Phaser.GameObjects.Graphics): void {
+    const structure = this.snapshot.structure;
+    for (const actor of this.snapshot.actors) {
+      const alpha = spiritRingAlpha(this.snapshot, actor);
+      if (alpha === undefined || actor.auraRadius === undefined) {
+        continue;
+      }
+      const onDeck = actor.layer > 0;
+      const g = onDeck ? this.deckGroundGraphicsOf(actor.layer) : ground;
+      const { x } = actor.position;
+      const y = onDeck
+        ? actor.position.y - liftAt(structure, this.snapshot.lifts, actor.position, actor.layer)
+        : actor.position.y - elevationOf(actor.layer, structure.ground);
+      g.lineStyle(SPIRIT_RING_WIDTH, SPIRIT_GREEN, alpha);
+      g.strokeCircle(x, y, actor.auraRadius);
+    }
   }
 
   /**
