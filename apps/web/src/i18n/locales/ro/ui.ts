@@ -1492,6 +1492,11 @@ export default {
   "training.soundOn": "Sunet pornit.",
   "training.you": "Tu",
 
+  "tutorial.dodge.hint": "Așteaptă lângă un cerc să-i apară umbra, apoi ieși.",
+  "tutorial.dodge.hit": "Au! O umbră care crește înseamnă: mișcă-te.",
+  "tutorial.dodge.how": "Clic stânga pe teren sau mergi cu {keys}.",
+  "tutorial.dodge.intro": "Aici cad pietre. Când o umbră crește, dă-te la o parte!",
+  "tutorial.dodge.praise": "Picioare iuți! Pietrele nu te prind.",
   "tutorial.learn": "Învață să joci",
   "tutorial.look.hint": "Micșorează, apoi trage imaginea spre nord. Găsește teleportorul!",
   "tutorial.look.how":

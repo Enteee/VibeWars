@@ -1,4 +1,5 @@
-import type { ProfessionId, Vec2 } from "@vibewars/game-core";
+import type { MatchSimulation, ProfessionId, Vec2 } from "@vibewars/game-core";
+import type { MapDescriptor } from "@vibewars/game-protocol";
 import { NO_GUILD } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
@@ -8,13 +9,23 @@ import type { GoalMark } from "../render/goal-mark.js";
 import {
   NO_PROFESSIONS,
   createLocalConnection,
+  type LocalMatchConnection,
   type Professions,
 } from "../training/local-connection.js";
 
 import { mountSkipTutorial } from "./tutorial-offer.js";
 import { DEFAULT_STEP } from "../render/camera-rig.js";
 
-import { lookStation, stepInStation, walkStation, type StationHighlight } from "./stations.js";
+import { DODGE_MARK, canyonWorld } from "./canyon-world.js";
+import { createDodgeCounter, type DodgeCounter } from "./dodge-count.js";
+import {
+  dodgeStation,
+  lookStation,
+  stepInStation,
+  walkStation,
+  type StationHighlight,
+  type TutorialWorldName,
+} from "./stations.js";
 import { createTutorialRunner, type TutorLine } from "./tutorial-runner.js";
 import { SELF_ID, TUTOR_ID, tutorialWorld } from "./tutorial-world.js";
 
@@ -22,7 +33,7 @@ import { SELF_ID, TUTOR_ID, tutorialWorld } from "./tutorial-world.js";
 const MAX_STEP_SECONDS = 0.1;
 /** How long "more soon" stands before the menu. */
 const FAREWELL_MS = 2_500;
-/** The step into the teleporter (#3222): to white and back, as `.tutorial-flash` animates it. */
+/** The fade back from white once the canyon stands (#3247), as `.tutorial-flash` animates it. */
 const FLASH_MS = 800;
 
 /** How a tutorial ended: through, skipped, or cut short with nothing to record. */
@@ -45,26 +56,39 @@ export interface TutorialSession {
   readonly stop: () => Promise<void>;
 }
 
+/** A world the pair stands in, and the connection its view is drawn through. */
+interface Stage {
+  readonly name: TutorialWorldName;
+  readonly simulation: MatchSimulation;
+  readonly connection: LocalMatchConnection;
+  /** The layer the pair and the station's mark stand on. */
+  readonly ground: number;
+  /** What glows on its ground whatever the station: the battlefield's teleporter. */
+  readonly fixed: readonly GoalMark[];
+  /** The canyon's rockfall count (#3247); the battlefield has none. */
+  readonly dodges: DodgeCounter | undefined;
+}
+
 /**
  * The first-time tutorial (#3218): the player's own body in a local fight
  * like the menu's, on its map, next to the tutor, a teammate. Both stand
  * behind their side's spawn while the bots fight in the middle. Drawn by
  * the match view into `parent`, so it moves, looks and is followed as a
  * match is; the runner's lines stand over it, its mark is a goal on the
- * ground (#3221), and its party window lists only the pair.
+ * ground (#3221), and its party window lists only the pair. Through the
+ * teleporter the battlefield gives way to the canyon (#3247), under a
+ * white fade: one view at a time, rebuilt on the new world.
  */
 export async function startTutorialSession(
   parent: HTMLElement,
   options: TutorialSessionOptions,
 ): Promise<TutorialSession> {
+  const seed = `tutorial-${String(Math.random())}`;
   const { map, simulation, playerBuild, tutorBuild, mark, ground, teleporter, besidePad } =
-    tutorialWorld(
-      options.mapId,
-      options.teamSize,
-      `tutorial-${String(Math.random())}`,
-      options.tutorProfession,
-      { width: Math.max(1, parent.clientWidth), height: Math.max(1, parent.clientHeight) },
-    );
+    tutorialWorld(options.mapId, options.teamSize, seed, options.tutorProfession, {
+      width: Math.max(1, parent.clientWidth),
+      height: Math.max(1, parent.clientHeight),
+    });
   const professions = new Map<string, Professions>([
     [
       SELF_ID,
@@ -75,29 +99,42 @@ export async function startTutorialSession(
       { primary: tutorBuild.primaryProfession, secondary: tutorBuild.secondaryProfession },
     ],
   ]);
-  let highlight: StationHighlight | undefined;
-  const connection = createLocalConnection({
-    simulation,
-    selfId: SELF_ID,
-    map: map.descriptor,
-    nameOf: (id) =>
-      id === SELF_ID ? t("training.you") : id === TUTOR_ID ? t("tutorial.tutor") : "",
-    guildOf: () => NO_GUILD,
-    professionsOf: (id) => professions.get(id) ?? NO_PROFESSIONS,
-  });
+  const connect = (world: MatchSimulation, descriptor: MapDescriptor): LocalMatchConnection =>
+    createLocalConnection({
+      simulation: world,
+      selfId: SELF_ID,
+      map: descriptor,
+      nameOf: (id) =>
+        id === SELF_ID ? t("training.you") : id === TUTOR_ID ? t("tutorial.tutor") : "",
+      guildOf: () => NO_GUILD,
+      professionsOf: (id) => professions.get(id) ?? NO_PROFESSIONS,
+    });
   const portal: GoalMark = {
     id: "tutorial-teleporter",
     kind: "portal",
     position: teleporter,
     layer: ground,
   };
+  let stage: Stage = {
+    name: "battlefield",
+    simulation,
+    connection: connect(simulation, map.descriptor),
+    ground,
+    fixed: [portal],
+    dodges: undefined,
+  };
+  let highlight: StationHighlight | undefined;
   const goals = (): readonly GoalMark[] =>
     highlight?.kind === "ground"
-      ? [portal, { id: "tutorial-mark", kind: "goal", position: highlight.at, layer: ground }]
-      : [portal];
+      ? [
+          ...stage.fixed,
+          { id: "tutorial-mark", kind: "goal", position: highlight.at, layer: stage.ground },
+        ]
+      : stage.fixed;
 
   const frame = document.createElement("div");
   frame.className = "tutorial-frame";
+  frame.dataset.world = stage.name;
   const speech = document.createElement("p");
   speech.className = "tutorial-speech";
   speech.setAttribute("role", "status");
@@ -116,6 +153,8 @@ export async function startTutorialSession(
   let zoomedOut = false;
   let lookDragged = false;
   let tutorSent = false;
+  let swapping = false;
+  let rockfallDodges = 0;
   const stop = async (): Promise<void> => {
     ended = true;
     cancelAnimationFrame(request);
@@ -134,28 +173,37 @@ export async function startTutorialSession(
     said.textContent = t(line.key);
     how.textContent = line.how === undefined ? "" : t(line.how, { keys: line.keys.join(" ") });
   };
-
-  view = await startMatchView(
-    parent,
-    {
-      onLeave: () => {
-        end("skipped");
+  const open = (): Promise<MatchView> => {
+    const { connection } = stage;
+    return startMatchView(
+      parent,
+      {
+        onLeave: () => {
+          end("skipped");
+        },
       },
-    },
-    {
-      kind: "play",
-      connect: () => Promise.resolve(connection),
-      tutorial: { party: [SELF_ID, TUTOR_ID], goals },
-    },
-    options.signet,
-  );
+      {
+        kind: "play",
+        connect: () => Promise.resolve(connection),
+        tutorial: { party: [SELF_ID, TUTOR_ID], goals },
+      },
+      options.signet,
+    );
+  };
+
+  view = await open();
   mountSkipTutorial(frame, () => {
     end("skipped");
   });
   parent.append(frame);
 
   const runner = createTutorialRunner(
-    [walkStation(mark, ground), lookStation(teleporter), stepInStation(teleporter, ground)],
+    [
+      walkStation(mark, ground),
+      lookStation(teleporter),
+      stepInStation(teleporter, ground),
+      dodgeStation(DODGE_MARK.position, DODGE_MARK.layer),
+    ],
     loadKeymap,
   );
   const inView = (point: Vec2): boolean => {
@@ -170,17 +218,66 @@ export async function startTutorialSession(
     );
   };
   let last: number | undefined;
+  /**
+   * Into the canyon (#3247): white over the battlefield, its view and world
+   * dropped, the canyon built and drawn, then the white fades.
+   */
+  const swap = async (): Promise<void> => {
+    swapping = true;
+    const flash = document.createElement("div");
+    flash.className = "tutorial-flash tutorial-flash-hold";
+    frame.append(flash);
+    await view?.dispose();
+    view = undefined;
+    const canyon = canyonWorld(`${seed}-canyon`, playerBuild, tutorBuild);
+    stage = {
+      name: "canyon",
+      simulation: canyon.simulation,
+      connection: connect(canyon.simulation, canyon.map),
+      ground: canyon.ground,
+      fixed: [],
+      dodges: createDodgeCounter(canyon.zones),
+    };
+    // The tutor goes on ahead, to wait by the mark.
+    canyon.simulation.walkTo(TUTOR_ID, canyon.besideMark, canyon.ground);
+    const opened = await open();
+    // Stopped while it was being built: `stop` had no view to drop.
+    if (ended) {
+      await opened.dispose();
+      return;
+    }
+    view = opened;
+    frame.dataset.world = stage.name;
+    // Over the new view, which was added after it.
+    parent.append(frame);
+    flash.className = "tutorial-flash tutorial-flash-out";
+    window.setTimeout(() => {
+      flash.remove();
+    }, FLASH_MS);
+    last = undefined;
+    swapping = false;
+  };
   const step = (now: number): void => {
     if (ended) {
       return;
     }
+    if (swapping) {
+      request = requestAnimationFrame(step);
+      return;
+    }
+    const { simulation: world, connection, dodges } = stage;
     connection.advance(last === undefined ? 0 : Math.min((now - last) / 1000, MAX_STEP_SECONDS));
     last = now;
-    const self = simulation.get(SELF_ID);
-    const tutor = simulation.get(TUTOR_ID);
+    const self = world.get(SELF_ID);
+    const tutor = world.get(TUTOR_ID);
     const look = view?.camera();
     zoomedOut ||= look !== undefined && look.step > DEFAULT_STEP;
     lookDragged ||= look?.panning === true;
+    const tally =
+      self === undefined
+        ? undefined
+        : dodges?.observe(world.elapsedSeconds, self.position, self.layer);
+    rockfallDodges = tally?.dodges ?? rockfallDodges;
     if (self !== undefined && tutor !== undefined && farewell === 0) {
       const beat = runner.tick(
         {
@@ -190,6 +287,8 @@ export async function startTutorialSession(
           zoomedOut,
           lookDragged,
           inView,
+          rockfallDodges,
+          hitBy: tally?.hit === true ? "rockfall" : undefined,
         },
         now,
       );
@@ -197,7 +296,13 @@ export async function startTutorialSession(
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;
-        simulation.walkTo(TUTOR_ID, besidePad, ground);
+        world.walkTo(TUTOR_ID, besidePad, ground);
+      }
+      // How many rockfalls are dodged, for the e2e specs to wait on.
+      if (dodges === undefined) {
+        delete frame.dataset.dodges;
+      } else {
+        frame.dataset.dodges = String(rockfallDodges);
       }
       // Where the mark is, for the e2e specs to click.
       if (highlight?.kind === "ground") {
@@ -209,19 +314,15 @@ export async function startTutorialSession(
         say(beat.say);
       }
       if (beat.finished) {
-        // Into the teleporter together: to white and back, before "more soon".
-        const flash = document.createElement("div");
-        flash.className = "tutorial-flash";
-        frame.append(flash);
-        window.setTimeout(() => {
-          flash.remove();
-        }, FLASH_MS);
         farewell = window.setTimeout(() => {
           said.textContent = t("tutorial.moreSoon");
           farewell = window.setTimeout(() => {
             end("done");
           }, FAREWELL_MS);
         }, FAREWELL_MS);
+      } else if (beat.world !== stage.name) {
+        // Into the teleporter together, under its praise.
+        void swap();
       }
     }
     request = requestAnimationFrame(step);

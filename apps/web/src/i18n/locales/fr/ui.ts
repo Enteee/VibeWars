@@ -1504,6 +1504,11 @@ export default {
   "training.soundOn": "Son activé.",
   "training.you": "Toi",
 
+  "tutorial.dodge.hint": "Attends près d'un cercle que son ombre paraisse, puis écarte-toi.",
+  "tutorial.dodge.hit": "Aïe ! Une ombre qui grandit, ça veut dire : bouge.",
+  "tutorial.dodge.how": "Clic gauche sur le sol, ou marche avec {keys}.",
+  "tutorial.dodge.intro": "Ici, des rochers tombent. Quand une ombre grandit, écarte-toi !",
+  "tutorial.dodge.praise": "Pieds légers ! Les rochers ne t'attrapent pas.",
   "tutorial.learn": "Apprendre à jouer",
   "tutorial.look.hint": "Dézoome, puis fais glisser la vue vers le nord. Trouve le téléporteur !",
   "tutorial.look.how": "La molette zoome. Maintiens le bouton droit et fais glisser pour regarder.",

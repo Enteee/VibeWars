@@ -1305,6 +1305,11 @@ export default {
   "training.soundOn": "声音已开启。",
   "training.you": "你",
 
+  "tutorial.dodge.hint": "在圆环旁等它的影子出现,然后走开。",
+  "tutorial.dodge.hit": "哎哟!影子变大就是要你移动。",
+  "tutorial.dodge.how": "左键点击地面,或用 {keys} 行走。",
+  "tutorial.dodge.intro": "这里会落石。影子变大时,快闪开!",
+  "tutorial.dodge.praise": "好快的脚步!石头追不上你。",
   "tutorial.learn": "学习游戏",
   "tutorial.look.hint": "缩小视野,再把视角向北拖动。找到传送门!",
   "tutorial.look.how": "鼠标滚轮缩放。按住右键拖动来环顾四周。",

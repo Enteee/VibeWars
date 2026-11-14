@@ -1327,6 +1327,11 @@ export default {
   "training.soundOn": "Bật âm thanh.",
   "training.you": "Bạn",
 
+  "tutorial.dodge.hint": "Đợi cạnh một vòng tròn đến khi bóng của nó hiện ra, rồi bước ra.",
+  "tutorial.dodge.hit": "Ối! Bóng lớn dần nghĩa là: di chuyển.",
+  "tutorial.dodge.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",
+  "tutorial.dodge.intro": "Ở đây có đá rơi. Khi một bóng lớn dần, hãy tránh sang bên!",
+  "tutorial.dodge.praise": "Chân nhanh thật! Đá không đuổi kịp bạn.",
   "tutorial.learn": "Học chơi",
   "tutorial.look.hint": "Thu nhỏ, rồi kéo khung nhìn về phía bắc. Tìm cổng dịch chuyển!",
   "tutorial.look.how": "Con lăn chuột để phóng to thu nhỏ. Giữ nút phải và kéo để nhìn quanh.",

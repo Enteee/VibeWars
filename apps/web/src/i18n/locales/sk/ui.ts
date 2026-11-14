@@ -1532,6 +1532,11 @@ export default {
   "training.soundOn": "Zvuk zapnutý.",
   "training.you": "Ty",
 
+  "tutorial.dodge.hint": "Počkaj pri kruhu na jeho tieň, potom uhni.",
+  "tutorial.dodge.hit": "Au! Rastúci tieň znamená: uhni.",
+  "tutorial.dodge.how": "Klikni ľavým tlačidlom na zem, alebo choď pomocou {keys}.",
+  "tutorial.dodge.intro": "Tu padajú kamene. Keď tieň rastie, uhni nabok!",
+  "tutorial.dodge.praise": "Rýchle nohy! Kamene ťa nedostihnú.",
   "tutorial.learn": "Nauč sa hrať",
   "tutorial.look.hint": "Oddiaľ pohľad a potom ho potiahni na sever. Nájdi teleport!",
   "tutorial.look.how":

@@ -163,7 +163,8 @@ const FOE_BUILDS = STARTER_BUILDS.filter((build) =>
   }),
 );
 
-function houseBuild(profession: ProfessionId): PlayerBuild {
+/** The starter build of `profession`: what the player and the tutor play. */
+export function houseBuild(profession: ProfessionId): PlayerBuild {
   const build = STARTER_BUILDS.find((candidate) => candidate.primaryProfession === profession);
   if (build === undefined) {
     throw new Error(`no starter build for ${profession}`);
@@ -171,7 +172,8 @@ function houseBuild(profession: ProfessionId): PlayerBuild {
   return build;
 }
 
-function body(
+/** One of the tutorial's bodies on the pair's side, `build` resolved as a match does. */
+export function body(
   id: string,
   build: PlayerBuild,
   spawn: Vec2,

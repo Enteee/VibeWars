@@ -1341,6 +1341,11 @@ export default {
   "training.soundOn": "Suara nyala.",
   "training.you": "Kamu",
 
+  "tutorial.dodge.hint": "Tunggu di dekat lingkaran sampai bayangannya muncul, lalu menyingkir.",
+  "tutorial.dodge.hit": "Aduh! Bayangan yang membesar artinya: bergerak.",
+  "tutorial.dodge.how": "Klik kiri tanah, atau berjalan dengan {keys}.",
+  "tutorial.dodge.intro": "Batu berjatuhan di sini. Saat bayangan membesar, menyingkirlah!",
+  "tutorial.dodge.praise": "Kaki cepat! Batu-batu tak bisa menangkapmu.",
   "tutorial.learn": "Belajar bermain",
   "tutorial.look.hint": "Perkecil tampilan, lalu seret ke utara. Temukan teleporternya!",
   "tutorial.look.how": "Roda mouse untuk zoom. Tahan tombol kanan dan seret untuk melihat.",

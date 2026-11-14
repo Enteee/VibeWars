@@ -1476,6 +1476,11 @@ export default {
   "training.soundOn": "הצליל פועל.",
   "training.you": "אתה",
 
+  "tutorial.dodge.hint": "חכה ליד טבעת עד שיופיע הצל שלה, ואז זוז ממנה.",
+  "tutorial.dodge.hit": "אאוץ'! צל שגדל אומר: זוז.",
+  "tutorial.dodge.how": "לחץ לחיצה שמאלית על הקרקע, או לך עם {keys}.",
+  "tutorial.dodge.intro": "כאן נופלים סלעים. כשצל גדל, זוז הצידה!",
+  "tutorial.dodge.praise": "רגליים זריזות! הסלעים לא תופסים אותך.",
   "tutorial.learn": "ללמוד לשחק",
   "tutorial.look.hint": "התרחק, ואז גרור את המבט צפונה. מצא את השוגר!",
   "tutorial.look.how": "גלגלת העכבר מתקרבת ומתרחקת. החזק את הכפתור הימני וגרור כדי להסתכל.",

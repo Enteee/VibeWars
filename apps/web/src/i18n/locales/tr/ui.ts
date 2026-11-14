@@ -1414,6 +1414,11 @@ export default {
   "training.soundOn": "Ses açık.",
   "training.you": "Sen",
 
+  "tutorial.dodge.hint": "Bir halkanın yanında gölgesini bekle, sonra kenara çekil.",
+  "tutorial.dodge.hit": "Ah! Büyüyen gölge, hareket et demek.",
+  "tutorial.dodge.how": "Zemine sol tıkla ya da {keys} ile yürü.",
+  "tutorial.dodge.intro": "Burada kayalar düşer. Bir gölge büyüyünce kenara çekil!",
+  "tutorial.dodge.praise": "Çevik ayaklar! Kayalar sana yetişemiyor.",
   "tutorial.learn": "Oynamayı öğren",
   "tutorial.look.hint": "Uzaklaştır, sonra görüşü kuzeye sürükle. Işınlayıcıyı bul!",
   "tutorial.look.how":

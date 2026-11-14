@@ -1427,6 +1427,11 @@ export default {
   "training.soundOn": "Ääni päällä.",
   "training.you": "Sinä",
 
+  "tutorial.dodge.hint": "Odota renkaan luona sen varjoa ja astu sitten pois.",
+  "tutorial.dodge.hit": "Auts! Kasvava varjo tarkoittaa: liiku.",
+  "tutorial.dodge.how": "Napsauta maata vasemmalla, tai kävele näppäimillä {keys}.",
+  "tutorial.dodge.intro": "Täällä putoilee kiviä. Kun varjo kasvaa, astu sivuun!",
+  "tutorial.dodge.praise": "Nopeat jalat! Kivet eivät saa sinua kiinni.",
   "tutorial.learn": "Opettele pelaamaan",
   "tutorial.look.hint": "Loitonna ja vedä näkymää pohjoiseen. Löydä teleportti!",
   "tutorial.look.how": "Hiiren rulla zoomaa. Pidä oikeaa painiketta ja vedä katsoaksesi.",

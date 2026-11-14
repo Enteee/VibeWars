@@ -1,7 +1,14 @@
 import { vec2, type Vec2 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { MARK_REACH, lookStation, stepInStation, type TutorialView } from "./stations.js";
+import {
+  DODGES_NEEDED,
+  MARK_REACH,
+  dodgeStation,
+  lookStation,
+  stepInStation,
+  type TutorialView,
+} from "./stations.js";
 
 const PAD = vec2(500, -900);
 const GROUND = 2;
@@ -12,6 +19,8 @@ const view = (over: Partial<TutorialView> = {}): TutorialView => ({
   zoomedOut: false,
   lookDragged: false,
   inView: () => false,
+  rockfallDodges: 0,
+  hitBy: undefined,
   ...over,
 });
 const sees =
@@ -57,5 +66,38 @@ describe("stepInStation (#3222)", () => {
 
   it("points at the pad", () => {
     expect(stepInStation(PAD, GROUND).highlight).toEqual({ kind: "ground", at: PAD });
+  });
+});
+
+describe("dodgeStation (#3247)", () => {
+  const MARK = vec2(2850, 1800);
+
+  it("needs every dodge and the mark", () => {
+    const station = dodgeStation(MARK, GROUND);
+    expect(station.done(view({ self: MARK, rockfallDodges: DODGES_NEEDED - 1 }))).toBe(false);
+    expect(station.done(view({ rockfallDodges: DODGES_NEEDED }))).toBe(false);
+    expect(station.done(view({ self: MARK, rockfallDodges: DODGES_NEEDED }))).toBe(true);
+  });
+
+  it("is not done on the mark from another layer", () => {
+    const station = dodgeStation(MARK, GROUND);
+    expect(
+      station.done(view({ self: MARK, selfLayer: GROUND - 1, rockfallDodges: DODGES_NEEDED })),
+    ).toBe(false);
+  });
+
+  it("is not done by a hit, nor kept from being done by one", () => {
+    const station = dodgeStation(MARK, GROUND);
+    expect(station.done(view({ self: MARK, hitBy: "rockfall" }))).toBe(false);
+    expect(
+      station.done(view({ self: MARK, hitBy: "rockfall", rockfallDodges: DODGES_NEEDED })),
+    ).toBe(true);
+  });
+
+  it("runs in the canyon, pointing at its mark, with a line for a hit", () => {
+    const station = dodgeStation(MARK, GROUND);
+    expect(station.world).toBe("canyon");
+    expect(station.highlight).toEqual({ kind: "ground", at: MARK });
+    expect(station.lines.hit).toBe("tutorial.dodge.hit");
   });
 });

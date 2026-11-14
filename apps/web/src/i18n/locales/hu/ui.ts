@@ -1420,6 +1420,11 @@ export default {
   "training.soundOn": "Hang bekapcsolva.",
   "training.you": "Te",
 
+  "tutorial.dodge.hint": "Várd meg egy kör mellett az árnyékát, aztán lépj ki.",
+  "tutorial.dodge.hit": "Jaj! A növekvő árnyék azt jelenti: mozdulj.",
+  "tutorial.dodge.how": "Kattints a földre bal gombbal, vagy járj ezekkel: {keys}.",
+  "tutorial.dodge.intro": "Itt kövek hullanak. Ha egy árnyék nő, lépj félre!",
+  "tutorial.dodge.praise": "Fürge lábak! A kövek nem érnek utol.",
   "tutorial.learn": "Tanulj meg játszani",
   "tutorial.look.hint": "Kicsinyíts, aztán húzd a nézetet északra. Keresd meg a teleportot!",
   "tutorial.look.how":

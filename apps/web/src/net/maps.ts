@@ -61,6 +61,7 @@ import {
   type MapStructure,
 } from "../render/arena-snapshot.js";
 import { TRAINING_MAPS } from "../training/maps.js";
+import { TUTORIAL_CANYON } from "../tutorial/canyon-map.js";
 
 /**
  * The arenas a lobby can be played on (#403), as the host's browser
@@ -343,15 +344,26 @@ const NOT_RANDOM: readonly MatchMode[] = [
 ];
 
 /**
+ * The file this build has for `mapId`: an arena, a training ground or
+ * the tutorial's canyon (#3247), which no lobby lists but which is drawn
+ * as any map is; `undefined` for one it does not have.
+ */
+function fileMap(mapId: string): MapData | undefined {
+  return (
+    ARENA_MAPS.find((map) => map.id === mapId) ??
+    TRAINING_MAPS.get(mapId) ??
+    TUTORIAL_CANYON.find((map) => map.id === mapId)
+  );
+}
+
+/**
  * The mode a match on `mapId` plays (#476), from the same map file the
  * host plays it by: what a joining peer's scoreboard counts (#1200). An
  * arena or a training ground; a map this build does not have gets
  * Annihilation's.
  */
 export function mapMode(mapId: string): MatchMode {
-  return (
-    (ARENA_MAPS.find((map) => map.id === mapId) ?? TRAINING_MAPS.get(mapId))?.mode ?? "annihilation"
-  );
+  return fileMap(mapId)?.mode ?? "annihilation";
 }
 
 /**
@@ -360,7 +372,7 @@ export function mapMode(mapId: string): MatchMode {
  * them, or one this build does not have.
  */
 export function mapShrines(mapId: string, teamCount: number): readonly MapShrine[] {
-  const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+  const map = fileMap(mapId);
   return shrinesOf(seatedObjectives(map?.objectives ?? [], teamCount));
 }
 
@@ -453,7 +465,7 @@ const structures = new Map<string, LoadedStructure>();
 export function mapStructure(mapId: string): LoadedStructure {
   let known = structures.get(mapId);
   if (known === undefined) {
-    const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+    const map = fileMap(mapId);
     known = map === undefined ? NO_STRUCTURE : structureOf(map);
     structures.set(mapId, known);
   }
@@ -510,13 +522,13 @@ export function teleportDescriptors(map: MapData): TeleportDescriptor[] {
 
 /** The flag stand and spawns on `mapId` (#1225), for the renderer: as `mapShrines`. */
 export function mapFlagField(mapId: string): FlagField | undefined {
-  const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+  const map = fileMap(mapId);
   return flagFieldOf(map?.objectives ?? []);
 }
 
 /** The altar and relic spawns on `mapId` (#1374), for the renderer: as `mapFlagField`. */
 export function mapRelicField(mapId: string, teamCount: number): RelicField | undefined {
-  const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+  const map = fileMap(mapId);
   return relicFieldOf(map, seatedObjectives(map?.objectives ?? [], teamCount));
 }
 

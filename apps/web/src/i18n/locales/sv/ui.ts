@@ -1410,6 +1410,11 @@ export default {
   "training.soundOn": "Ljud på.",
   "training.you": "Du",
 
+  "tutorial.dodge.hint": "Vänta vid en ring på dess skugga, och kliv sedan undan.",
+  "tutorial.dodge.hit": "Aj! En växande skugga betyder: flytta dig.",
+  "tutorial.dodge.how": "Vänsterklicka på marken, eller gå med {keys}.",
+  "tutorial.dodge.intro": "Här faller stenar. När en skugga växer, kliv åt sidan!",
+  "tutorial.dodge.praise": "Snabba fötter! Stenarna hinner inte ifatt dig.",
   "tutorial.learn": "Lär dig spela",
   "tutorial.look.hint": "Zooma ut och dra sedan vyn norrut. Hitta teleportern!",
   "tutorial.look.how": "Mushjulet zoomar. Håll in höger knapp och dra för att se dig om.",
