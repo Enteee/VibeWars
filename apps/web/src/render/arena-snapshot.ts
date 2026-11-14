@@ -1181,9 +1181,13 @@ export interface BodyGlyphLayout {
  * is its kind's (#1162), opaque, and its shape never lies down; a
  * Ghostly Hero's pale (#1377). A corpse greys it.
  *
- * `undefined`: neither a profession nor a creature, so no glyph.
+ * `undefined`: neither a profession nor a creature, so no glyph; and a
+ * living spirit, whose wisp is its glyph and whose core it would hide (#3306).
  */
 export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undefined {
+  if (actor.creatureLook === "spirit" && !actor.dead) {
+    return undefined;
+  }
   const creature = actor.creatureLook !== undefined;
   const glyph: BodyGlyph | undefined =
     actor.creatureLook !== undefined
