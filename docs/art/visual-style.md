@@ -203,6 +203,11 @@ Every rule below can be checked from one screenshot.
     crossing the body's edge and the target ring. Both hit marks fan out on
     the free sides, clear of the health bar and the damage number, and both
     of those draw over every hit mark and arc (#3292).
+12. **A shout or chant** sends one thin cool `#9fdcff` ring from the
+    caster's edge to earshot in 0.3 s, fading as it grows, on the ground
+    under bodies; an upward chevron in the same blue stands over each body
+    of the caster's side it helped, above the health bar and any hex halo,
+    for 1 s. Neither is team-coloured (#3301).
 
 Rules 3 and 7 are checked by CI (#3251): `render/visibility-gate.test.ts`
 draws every map through the scene's own map drawing, records each filled
