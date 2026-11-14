@@ -451,6 +451,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       look: "rat",
       mode: null,
       armedAttack: null,
+      auraRadius: null,
       leaderId: null,
     } as const;
     expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
