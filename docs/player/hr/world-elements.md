@@ -53,6 +53,12 @@ mjedena kugla svijetli kad je gore, a siva je kad je dolje. Desnim klikom
 odaberi polugu kao metu, zatim pritisni **Space** da odeš do nje i
 povučeš je.
 
+Prijeđi mišem preko poluge ili je odaberi kao metu i ono čime upravlja
+dobije mjedeni obris, s točkastom crtom od poluge do njega, čak i kroz
+tlo iznad njega. Kad bilo tko povuče polugu, ono čime upravlja bljesne.
+Okvir mete kaže što će učiniti sljedeće povlačenje, primjerice
+_Poluga · otvara rešetku_.
+
 Neka se vrata umjesto toga otvaraju **pločom na pritisak**: kamenim diskom
 koji se spusti i postane mjeden dok netko stoji na njemu. Vrata se zatvore
 kad posljednji siđe, a ploča ih
@@ -96,6 +102,12 @@ zida, s grudobranom i stubama na oba kraja. Ljestve su dovoljno
 široke samo za jednog igrača odjednom. **Most** od kamena, dasaka ili
 palog debla premošćuje procjep, a igrači ispod mogu proći ispod
 njega. To što si više ne mijenja ni tvoj domet ni štetu.
+
+## Tuneli
+
+Neki prolazi vode ispod zemlje. Odozgo udubljeni šav s prorezima rešetke
+pokazuje kuda takav prolaz vodi, a svjetla na njegova dva kraja se
+podudaraju: siđeš li kod toplog svjetla, izlaziš kod toplog svjetla.
 
 ## Vrijeme i ugođaj
 

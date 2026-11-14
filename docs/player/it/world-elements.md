@@ -55,6 +55,12 @@ con un braccio di legno, il cui pomello d'ottone brilla quando è su ed è
 grigio quando è giù. Fai clic destro su una leva per selezionarla, poi
 premi **Space** per andarci e azionarla.
 
+Passa il mouse su una leva o selezionala e ciò che comanda viene
+contornato d'ottone, con una linea punteggiata dalla leva fin lì, anche
+attraverso il terreno che lo sovrasta. Quando qualcuno aziona la leva,
+ciò che comanda lampeggia. La cornice del bersaglio dice cosa farà il
+prossimo azionamento, ad esempio _Leva · apre la saracinesca_.
+
 Alcuni cancelli si aprono invece con una **piastra a pressione**: un disco
 di pietra che si abbassa e diventa d'ottone mentre qualcuno ci sta sopra.
 Il cancello si chiude quando scende l'ultimo, e la piastra lo riapre mezzo
@@ -101,6 +107,13 @@ Una scala a pioli è larga abbastanza per un solo giocatore alla volta. Un
 **ponte** di pietra, di assi o fatto da un tronco caduto attraversa un
 vuoto, e i giocatori sotto possono camminarci al di sotto. Stare più in
 alto non cambia la tua gittata né i tuoi danni.
+
+## Tunnel
+
+Alcuni passaggi corrono sottoterra. Dall'alto, una fuga incassata con
+fessure a griglia segna dove ne corre uno, e le luci ai suoi due capi si
+corrispondono: scendi accanto a una luce calda e risali accanto a una
+luce calda.
 
 ## Ponti levatoi, ponti di corda e passaggi nascosti
 

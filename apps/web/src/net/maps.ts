@@ -7,6 +7,7 @@ import {
   type MapShrine,
 } from "@vibewars/game-maps/match-fields";
 import { validateMapData, type GateLook, type MapData } from "@vibewars/game-maps/schema";
+import { linkTargets, type SwitchTarget } from "../render/switch-link.js";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
 import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
@@ -370,6 +371,8 @@ export interface LoadedStructure {
   readonly gateLayers: readonly number[];
   /** Each gate's look while shut (#3068), in the map's order. */
   readonly gateLooks: readonly GateLook[];
+  /** What each switch works (#3236), in the map's order: the wire's switches carry no targets. */
+  readonly switchTargets: readonly (readonly SwitchTarget[])[];
 }
 
 /** `map`'s decks, each switched one (#3068) as it starts, uncracked. */
@@ -431,6 +434,7 @@ export function structureOf(map: MapData): LoadedStructure {
     wallLayers: map.walls.map((wall) => wall.layer),
     gateLayers: map.gates.map((gate) => gate.wall.layer),
     gateLooks: map.gates.map((gate) => gate.look),
+    switchTargets: (map.switches ?? []).map((lever) => linkTargets(lever.id, map)),
   };
 }
 
@@ -440,6 +444,7 @@ const NO_STRUCTURE: LoadedStructure = {
   wallLayers: [],
   gateLayers: [],
   gateLooks: [],
+  switchTargets: [],
 };
 const structures = new Map<string, LoadedStructure>();
 

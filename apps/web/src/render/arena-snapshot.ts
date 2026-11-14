@@ -46,6 +46,7 @@ import type {
   RenderableFlag,
   RenderableStand,
 } from "./flag-objects.js";
+import { switchAtPoint } from "./flag-objects.js";
 import type { GoalMark } from "./goal-mark.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
@@ -811,6 +812,7 @@ export function withNames(
     pointer === undefined
       ? undefined
       : (actorAtPoint(snapshot, pointer, showAllNames ? nameBoxes : undefined)?.id ??
+        switchAtPoint(snapshot.switches, pointer) ??
         breakableAtPoint(snapshot.breakables, pointer, snapshot.structure));
   return { ...snapshot, hoverId, showAllNames, nameBoxes };
 }

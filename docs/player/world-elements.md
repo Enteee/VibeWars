@@ -52,6 +52,11 @@ closes the gates it works: a stone base with a wooden arm, its brass
 knob glowing when up and grey when down. Right click a lever to target
 it, then press **Space** to walk there and throw it.
 
+Hover over or target a lever and what it works is outlined in brass,
+with a dotted line from the lever to it, even through the ground above
+it. When anyone throws the lever, what it works flashes. The target
+frame says what the next throw does, such as _Lever · opens Portcullis_.
+
 Some gates open from a **pressure plate** instead: a stone disc that
 sinks and turns brass while someone stands on it. The gate closes when
 the last one steps off, and its plate opens it again half a second
@@ -93,6 +98,12 @@ top of a thick wall, with a parapet and stairs at its ends. A ladder is
 wide enough for one player at a time. A **bridge** of stone, planks or a
 fallen log spans a gap, and players below can walk underneath it. Being
 higher up does not change your range or your damage.
+
+## Tunnels
+
+Some passages run under the ground. From above, a recessed seam with
+grating slots marks where one runs, and the lights at its two ends
+match: go down by a warm light and you come out by a warm light.
 
 ## Drawbridges, rope bridges and hidden passages
 
