@@ -64,7 +64,16 @@ const rect = (x, y, w, h) => [
   [x + w, y + h],
   [x, y + h],
 ];
-/** The valley is mirrored west-east: the same shape for both teams. */
+/** The east wall is the west one bent by hand: a steeper north-east, a bulge in the south-east. */
+/** @type {(p: Pt) => Pt} */
+const east = ([x, y]) => {
+  const [mxp, myp] = mx([x, y]);
+  return [
+    mxp + ((y * 7) % 110) - 40,
+    myp + ((x * 3) % 90) - 30 + (y > 1500 ? 60 : 0) - (y < 500 ? 40 : 0),
+  ];
+};
+/** The valley is NOT mirrored: only the spine (pool, race, drawbridge, mill) is on the axis. Mirror west-east: the same shape for both teams. */
 /** @type {(p: Pt) => Pt} */
 const mx = ([x, y]) => [MW - x, y];
 /** @type {(r: Pt[]) => Pt[]} */
@@ -99,8 +108,8 @@ const SOUTHW = [
 ];
 const OUTLINE = [
   ...WEST,
-  ...WEST.slice(0, -1).reverse().map(mx),
-  ...SOUTHW.map(mx).reverse(),
+  ...WEST.slice(0, -1).reverse().map(east),
+  ...SOUTHW.map(east).reverse(),
   ...SOUTHW.slice(1),
 ];
 // the waterfall pool and the mill race south of it; the race is water, not walkable
@@ -115,20 +124,20 @@ const RACE = [
 // L3: the cliff-top ledge behind the waterfall; the mill roof is L2
 const LEDGES = [
   { id: "falls ledge W", r: rect(1850, 150, 330, 170) },
-  { id: "falls ledge E", r: mrect(rect(1850, 150, 330, 170)) },
+  { id: "falls ledge E", r: rect(2900, 140, 300, 190) },
 ];
 // L2: terraced fields and their upper terraces (L3), arches, the drawbridge, the mill floor
 const TERRACES = [
   { id: "field terrace W", r: rect(620, 330, 980, 330), elev: 1 },
-  { id: "field terrace E", r: mrect(rect(620, 330, 980, 330)), elev: 1 },
+  { id: "field terrace E", r: rect(3500, 360, 900, 370), elev: 1 },
   { id: "upper terrace W", r: rect(1000, 270, 420, 200), elev: 2 },
-  { id: "upper terrace E", r: mrect(rect(1000, 270, 420, 200)), elev: 2 },
+  { id: "upper terrace E", r: rect(3650, 300, 360, 230), elev: 2 },
   { id: "south terrace W", r: rect(700, 1980, 900, 300), elev: 1 },
-  { id: "south terrace E", r: mrect(rect(700, 1980, 900, 300)), elev: 1 },
+  { id: "south terrace E", r: rect(3300, 1930, 1000, 270), elev: 1 },
 ];
 const ARCHES = [
   { id: "natural arch W", r: rect(1500, 1000, 560, 160) },
-  { id: "natural arch E", r: mrect(rect(1500, 1000, 560, 160)) },
+  { id: "natural arch E", r: rect(3000, 1060, 500, 180) },
 ];
 const DRAWBRIDGE = rect(2400, 1240, 200, 120); // over the race; lever-driven
 const MILL = rect(2380, 1780, 240, 200); // the ruined mill floor, over the race
@@ -147,12 +156,18 @@ const STAIRS = [
   { id: "arch-up-W2", r: rect(2060, 1000, 120, 160), from: 0, dir: "w" },
   { id: "mill-up-W", r: rect(2240, 1830, 140, 110), from: 0, dir: "e" },
 ];
-const MIRRORED = STAIRS.map((s) => ({
-  ...s,
-  id: `${s.id}~`,
-  r: mrect(s.r),
-  dir: s.dir === "e" ? "w" : s.dir === "w" ? "e" : s.dir,
-}));
+// the east side is drawn by hand: other terraces, other stairs
+const EAST_STAIRS = [
+  { id: "stair-F1E", r: rect(3650, 730, 140, 110), from: 0, dir: "n" },
+  { id: "stair-F2E", r: rect(4200, 730, 140, 110), from: 0, dir: "n" },
+  { id: "stair-U1E", r: rect(3750, 530, 140, 100), from: 1, dir: "n" },
+  { id: "stair-S1E", r: rect(3400, 1820, 140, 110), from: 0, dir: "s" },
+  { id: "stair-S2E", r: rect(4050, 1820, 140, 110), from: 0, dir: "s" },
+  { id: "arch-up-E1", r: rect(2880, 1060, 120, 180), from: 0, dir: "e" },
+  { id: "arch-up-E2", r: rect(3500, 1060, 120, 180), from: 0, dir: "w" },
+  { id: "mill-up-E", r: mrect(rect(2240, 1830, 140, 110)), from: 0, dir: "w" },
+];
+const MIRRORED = EAST_STAIRS;
 const ALLSTAIRS = [...STAIRS, ...MIRRORED];
 // the mill under-pass: a dry service tunnel on the ground layer, crossing beneath the race
 /** @type {Pt[]} */
@@ -162,7 +177,7 @@ const TUNNEL_PATH = [
 ];
 const TUNNEL_W = 160;
 // breakable walls: collapsed field walls in the centre-south of each half
-const BARRICADES = [rect(1700, 1500, 26, 360), rect(3274, 1500, 26, 360)];
+const BARRICADES = [rect(1700, 1500, 26, 360), rect(3274, 1560, 26, 360)];
 // local overhangs: a leaning mill-race shed on each bank, different widths
 const OVERHANGS = [rect(2090, 1420, 220, 110), rect(2700, 1420, 300, 110)];
 // mist: zone patches at dawn (slow), along the race and the fields
@@ -174,12 +189,12 @@ const MIST = [
 // springs: a healing zone on the valley floor either side of the race, a contested pick-up
 const SPRING = [
   { cx: 1950, cy: 1900, rx: 110, ry: 50 },
-  { cx: 3050, cy: 1900, rx: 110, ry: 50 },
+  { cx: 3120, cy: 1840, rx: 110, ry: 50 },
 ];
 // bog: a `mire` zone in each spawn mouth's flank
 const BOG = [
   { cx: 900, cy: 1500, rx: 200, ry: 80 },
-  { cx: 4100, cy: 1500, rx: 200, ry: 80 },
+  { cx: 4150, cy: 1420, rx: 200, ry: 80 },
 ];
 /** @type {{ t1: Pt[]; t2: Pt[] }} */
 const SPAWNS = { t1: [], t2: [] };
@@ -187,7 +202,7 @@ for (let i = 0; i < 8; i++) {
   /** @type {Pt} */
   const p = [430 + (i % 2) * 190, 1030 + Math.floor(i / 2) * 180];
   SPAWNS.t1.push(p);
-  SPAWNS.t2.push(mx(p));
+  SPAWNS.t2.push([MW - p[0] + 40, p[1] + 30]);
 }
 /** @type {{ p: Pt; col: string; r: number }[]} */
 const LIGHTS = [
@@ -204,43 +219,27 @@ const LIGHTS = [
   { p: [700, 1300], col: C.torch, r: 150 },
   { p: [4300, 1300], col: C.torch, r: 150 },
 ];
+/** @type {(a: Pt[]) => Pt} */
+const cen = (a) =>
+  /** @type {Pt} */ ([
+    a.reduce((t, p) => t + p[0], 0) / a.length,
+    a.reduce((t, p) => t + p[1], 0) / a.length,
+  ]);
+const C1 = cen(SPAWNS.t1),
+  C2 = cen(SPAWNS.t2);
 /** @type {Record<"t1" | "t2", [string, Pt[]][]>} */
 const ROUTES = {
   t1: [
-    [
-      "valley floor, over the drawbridge",
-      [
-        [600, 1300],
-        [1500, 1300],
-        [2400, 1300],
-        [2500, 1300],
-      ],
-    ],
-    [
-      "mill under-pass",
-      [
-        [600, 1300],
-        [1200, 1700],
-        [2200, 1880],
-        [2500, 1880],
-        [2500, 1500],
-        [2500, 1300],
-      ],
-    ],
-    [
-      "arch deck",
-      [
-        [600, 1300],
-        [1380, 1080],
-        [2180, 1080],
-        [2400, 1300],
-        [2500, 1300],
-      ],
-    ],
+    ["valley floor, over the drawbridge", [C1, [1500, 1300], [2400, 1300], [2500, 1300]]],
+    ["mill under-pass", [C1, [1200, 1700], [2200, 1880], [2500, 1880], [2500, 1500], [2500, 1300]]],
+    ["arch deck", [C1, [1380, 1080], [2180, 1080], [2400, 1300], [2500, 1300]]],
   ],
-  t2: [],
+  t2: [
+    ["valley floor, over the drawbridge", [C2, [3500, 1330], [2600, 1300], [2500, 1300]]],
+    ["mill under-pass", [C2, [3800, 1750], [2800, 1880], [2500, 1880], [2500, 1500], [2500, 1300]]],
+    ["arch deck", [C2, [3620, 1150], [2880, 1150], [2600, 1300], [2500, 1300]]],
+  ],
 };
-ROUTES.t2 = ROUTES.t1.map(([n, r]) => [n, r.map(mx)]);
 /** @type {(r: Pt[]) => number} */
 const len = (r) =>
   r.reduce(
@@ -429,7 +428,7 @@ const teamCol = { t1: C.friend, t2: C.foe };
     tag("sun (E, low, dawn)", [3700, 1500], 40) +
     `<path d="M4560,1480 l-120,-60" stroke="#ffe6c0" stroke-width="9" fill="none"/>`;
   a += tag(
-    "plan 5000×2600, mirrored W–E. Dashed: routes to the drawbridge (floor, under-pass, arch). Left half only labelled.",
+    "plan 5000×2600. Dashed: routes to the drawbridge (floor, under-pass, arch).",
     [20, MH - 20],
     34,
   );
