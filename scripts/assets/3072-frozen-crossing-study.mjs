@@ -209,8 +209,8 @@ const SPAWNS0 = {
     [540, 1180],
   ],
   t2: [
-    [1850, 1250],
-    [1780, 1380],
+    [1920, 1300],
+    [1850, 1430],
   ],
 };
 /** @type {{ p: Pt; col: string; r: number }[]} */
@@ -218,7 +218,7 @@ const LIGHTS0 = [
   { p: [1570, 1500], col: C.torch, r: 150 },
   { p: [2000, 1710], col: C.torch, r: 150 },
   { p: [600, 1115], col: C.torch, r: 150 },
-  { p: [1983, 1315], col: C.torch, r: 150 },
+  { p: [2053, 1365], col: C.torch, r: 150 },
   { p: [1300, 880], col: C.torch, r: 150 },
   { p: [1050, 600], col: C.torch, r: 150 },
   { p: [1550, 600], col: C.torch, r: 150 },
@@ -497,7 +497,7 @@ const teamCol = { t1: C.friend, t2: C.foe };
     });
     for (const p of SPAWNS[k]) a += bodyAt(p, teamCol[k], STEP);
   }
-  a += tag("T1", [380, 1010], 44) + tag("T2", [1780, 1210], 44);
+  a += tag("T1", [380, 1010], 44) + tag("T2", [1850, 1260], 44);
   a += tag("L1 west bank", [150, 1480]) + tag("L1 east bank", [2000, 1000]);
   a += tag("L2 bare ridge", [430, 760 - 2 * STEP]) + tag("L2 snow ridge", [1760, 760 - 2 * STEP]);
   a +=

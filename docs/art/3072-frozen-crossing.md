@@ -46,16 +46,16 @@ the place (a frozen river) is kept.
 
 ## Routes and balance (base speed 180 u/s)
 
-Spawns (map positions): T1 (470,1050) and (540,1180) on the west bank, T2 (1850,1250) and (1780,1380) on the east bank, found by a grid search that evens the routes out.
+Spawns (map positions): T1 (470,1050) and (540,1180) on the west bank, T2 (1920,1300) and (1850,1430) (the spawns are placed on the map, not sheared; the east bank's L1 runs x 1400..2380 at y 1300, so both stand on it, well clear of the water) on the east bank, found by a grid search that evens the routes out.
 The centre is the central shelf, (1300,1000).
 
 | Route (T1 / T2)                                                 | Length        | Walk        |
 | --------------------------------------------------------------- | ------------- | ----------- |
-| ice shelf (ramp down, across the ice)                           | 803 / 693 u   | 4.5 / 3.9 s |
-| stepping stones (over the open water)                           | 979 / 992 u   | 5.4 / 5.5 s |
-| log bridge (up the bank, over the bridge, through the ice wall) | 1571 / 1441 u | 8.7 / 8.0 s |
+| ice shelf (ramp down, across the ice)                           | 803 / 778 u   | 4.5 / 4.3 s |
+| stepping stones (over the open water)                           | 979 / 1069 u  | 5.4 / 5.9 s |
+| log bridge (up the bank, over the bridge, through the ice wall) | 1571 / 1490 u | 8.7 / 8.3 s |
 
-The log-bridge time assumes the ice wall is broken (it starts shut). Both teams have the same three routes; the stones are within 1 %, the log bridge within 9 %, the ice shelf within 16 % (the east is the quicker side to the shelf, the west gets the longer bank and the bigger north). Build must put the bench (#3065) on exactly that gap. The east bank is not a mirror of the west: it bulges toward the river in the middle and steps back at the south, and the T2 seats stand further from the water. The sides differ on purpose: the east bank
+The log-bridge time assumes the ice wall is broken (it starts shut). Both teams have the same three routes; all three are within 10 % (ice shelf 3 %, stones 9 %, log bridge 5 %); the east is the quicker side on each. The build card's bench (#3065) confirms it. The east bank is not a mirror of the west: it bulges toward the river in the middle and steps back at the south, and the T2 seats stand further from the water. The sides differ on purpose: the east bank
 holds the cave and a snow-capped ridge (231 k u²); the west a bare rock ridge (213 k u², 8 %
 smaller, within 25 %) and the thaw slush. High ground within half the map of either spawn is its own
 ridge, reached by its own stair; neither is reachable without crossing the middle or the bridge.
