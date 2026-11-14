@@ -22,6 +22,15 @@ const WALL_MIDDLE = { x: 3600, y: 1800 };
  * in a heal's range of the tutor waiting east of it.
  */
 const BY_CLEARING = { x: 4900, y: 1800 };
+/**
+ * Station 7's way round the mire (#3310): up the north leg's east side and
+ * through the bulge east of the mud, in no zone; then its mark, north of it.
+ */
+const CLEAR_WAY = [
+  { x: 7000, y: 1450 },
+  { x: 7150, y: 1100 },
+];
+const PAST_THE_MUD = { x: 6900, y: 720 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -59,15 +68,16 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud: then the menu, and no offer again`, async ({
       page,
     }) => {
       // Four stations, each a walk or a drag in a sim that runs no faster than
       // the page draws: a loaded runner takes most of a minute (#3222), and
       // the canyon's three dodges at least 18 s more (#3247), and the wall
       // some 10 to 15 s, slower where the page draws slowly (#3302), and the
-      // walk to the clearing and the heal some 30 s more (#3303).
-      test.setTimeout(360_000);
+      // walk to the clearing and the heal some 30 s more (#3303), and the
+      // walk round the bad ground some 20 s more (#3310).
+      test.setTimeout(420_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
       const frame = page.locator(".tutorial-frame");
@@ -269,6 +279,34 @@ test.describe("the first-time tutorial (#3218)", () => {
         await expect.poll(() => hasSaid(thanks), { timeout: 4_000 }).toBe(true);
       }).toPass({ timeout: 30_000 });
       expect(await hasSaid("That blue bar is energy. Skills spend it.")).toBe(true);
+
+      // Station 7 (#3310): the mark past the bad ground, reached the clear way round.
+      await expect
+        .poll(() => hasSaid("Mud slows you. Lava burns. Your call."), { timeout: 10_000 })
+        .toBe(true);
+      await expect(frame).toHaveAttribute(
+        "data-mark",
+        `${String(PAST_THE_MUD.x)},${String(PAST_THE_MUD.y)}`,
+      );
+      for (const point of CLEAR_WAY) {
+        await expect(async () => {
+          await walkTo(point);
+          const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+            .split(",")
+            .map(Number);
+          expect(Math.hypot(cx - point.x, cy - point.y)).toBeLessThan(150);
+        }).toPass({ timeout: 60_000 });
+      }
+      const across = "Across! Now you know what the ground can do.";
+      await expect(async () => {
+        if (await hasSaid(across)) {
+          return;
+        }
+        await walkTo(PAST_THE_MUD);
+        await expect.poll(() => hasSaid(across), { timeout: 3_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
+      // Round the mud, no status: the effects monitor was never pointed at.
+      expect(await hasSaid("See that icon? Mud. It wears off.")).toBe(false);
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 

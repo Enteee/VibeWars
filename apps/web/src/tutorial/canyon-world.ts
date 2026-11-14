@@ -246,3 +246,83 @@ export function clearingTutor(simulation: MatchSimulation): ClearingTutor {
     },
   };
 }
+
+/** How far north of the mire station 7's mark lies (#3310), past its far edge. */
+const MARK_BEYOND_MIRE = 170;
+/** How far south of the mire station 7 is reckoned to begin, where the north leg starts. */
+const START_BEFORE_MIRE = 350;
+/** How far east of station 7's mark the tutor waits for the player. */
+const TUTOR_BY_MARK = 80;
+/** How near a waypoint the tutor must come before it walks to the next. */
+const WAYPOINT_REACH = 20;
+
+/** Station 7's site (#3310): the mark past the bad ground, and the tutor's way round it. */
+export interface CanyonBadGround {
+  readonly layer: number;
+  /** Where the station is reckoned to begin: due south of the mire. */
+  readonly start: Vec2;
+  /**
+   * North of the mire, where the clear way east comes back in: the
+   * straight line from `start` runs through the mud.
+   */
+  readonly mark: Vec2;
+  /** The tutor's way to beside the mark, round the mire's east side, in no zone. */
+  readonly tutorRoute: readonly Vec2[];
+}
+
+export const BAD_GROUND: CanyonBadGround = ((): CanyonBadGround => {
+  const { map } = CANYON_ARRIVAL;
+  const zoneId = "bad-ground-mire";
+  const zone = map.zones?.find((entry) => entry.id === zoneId);
+  if (zone?.area.kind !== "polygon") {
+    throw new Error(`${map.id}: no ${zoneId} for station 7`);
+  }
+  const { points } = zone.area;
+  const centre = polygonCentre(points);
+  const east = Math.max(...points.map(({ x }) => x));
+  const north = Math.min(...points.map(({ y }) => y));
+  const south = Math.max(...points.map(({ y }) => y));
+  const mark = vec2(east, north - MARK_BEYOND_MIRE);
+  return {
+    layer: zone.layer,
+    start: vec2(centre.x, south + START_BEFORE_MIRE),
+    mark,
+    // Up the north leg's east side, through the bulge east of the mire, and back in.
+    tutorRoute: [
+      vec2(east + 100, south + 140),
+      vec2(east + 250, centre.y),
+      vec2(mark.x + TUTOR_BY_MARK, mark.y),
+    ],
+  };
+})();
+
+/** The tutor at station 7 (#3310), stepped once a frame. */
+export interface BadGroundTutor {
+  readonly step: () => void;
+}
+
+/** Walks the tutor round the bad ground to wait beside the mark, one waypoint at a time. */
+export function badGroundTutor(simulation: MatchSimulation): BadGroundTutor {
+  const route = BAD_GROUND.tutorRoute;
+  let leg = 0;
+  const walk = (): void => {
+    const to = route[leg];
+    if (to !== undefined) {
+      simulation.walkTo(TUTOR_ID, to, BAD_GROUND.layer);
+    }
+  };
+  walk();
+  return {
+    step: () => {
+      const tutor = simulation.get(TUTOR_ID);
+      const to = route[leg];
+      if (tutor === undefined || to === undefined) {
+        return;
+      }
+      if (Math.hypot(tutor.position.x - to.x, tutor.position.y - to.y) <= WAYPOINT_REACH) {
+        leg += 1;
+        walk();
+      }
+    },
+  };
+}

@@ -1,9 +1,13 @@
 import { vec2, type Vec2 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
+import { KEYMAP_PRESETS } from "../input/keymap.js";
+
 import {
   DODGES_NEEDED,
+  EFFECTS_MONITOR,
   MARK_REACH,
+  badGroundStation,
   breakWallStation,
   dodgeStation,
   healStation,
@@ -13,6 +17,7 @@ import {
   stepInStation,
   type TutorialView,
 } from "./stations.js";
+import { ASIDE_MS, createTutorialRunner } from "./tutorial-runner.js";
 
 const PAD = vec2(500, -900);
 const GROUND = 2;
@@ -31,6 +36,8 @@ const view = (over: Partial<TutorialView> = {}): TutorialView => ({
   tutorTargeted: false,
   healedTutor: false,
   energySpent: false,
+  zoneStatus: undefined,
+  healthDropped: false,
   ...over,
 });
 const sees =
@@ -179,5 +186,67 @@ describe("healStation (#3303)", () => {
     expect(energy?.when(view())).toBe(false);
     expect(energy?.when(view({ energySpent: true }))).toBe(true);
     expect(station.lines.hit).toBe("tutorial.dodge.hit");
+  });
+});
+
+describe("badGroundStation (#3310)", () => {
+  const ACROSS = vec2(6900, 720);
+  /** What a runner over the station alone says at each look, `ASIDE_MS` apart. */
+  const says = (looks: readonly Partial<TutorialView>[]): (string | undefined)[] => {
+    const runner = createTutorialRunner(
+      [badGroundStation(ACROSS, GROUND)],
+      () => KEYMAP_PRESETS.classic,
+    );
+    return looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key);
+  };
+
+  it("is done on the mark, on its layer, and only there", () => {
+    const station = badGroundStation(ACROSS, GROUND);
+    expect(station.done(view({ self: ACROSS }))).toBe(true);
+    expect(station.done(view({ self: vec2(ACROSS.x + MARK_REACH, ACROSS.y) }))).toBe(true);
+    expect(station.done(view({ self: vec2(ACROSS.x, ACROSS.y + MARK_REACH + 1) }))).toBe(false);
+    expect(station.done(view({ self: ACROSS, selfLayer: GROUND - 1 }))).toBe(false);
+    expect(station.done(view({ self: ACROSS, zoneStatus: "mired" }))).toBe(true);
+  });
+
+  it("names the mud once: a second spell of it gets no second line", () => {
+    expect(
+      says([{}, { zoneStatus: "mired" }, { zoneStatus: "mired" }, {}, { zoneStatus: "mired" }]),
+    ).toEqual(["tutorial.ground.intro", "tutorial.ground.mired", undefined, undefined, undefined]);
+  });
+
+  it("names the lava for burning or crippled, and only the first status gets a line", () => {
+    expect(says([{}, { zoneStatus: "crippled" }])).toEqual([
+      "tutorial.ground.intro",
+      "tutorial.ground.burning",
+    ]);
+    expect(says([{}, { zoneStatus: "burning" }, {}, { zoneStatus: "mired" }])).toEqual([
+      "tutorial.ground.intro",
+      "tutorial.ground.burning",
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it("names the health bar on the first drop only", () => {
+    expect(
+      says([{}, { healthDropped: true }, { healthDropped: true }, { healthDropped: true }]),
+    ).toEqual(["tutorial.ground.intro", "tutorial.ground.health", undefined, undefined]);
+  });
+
+  it("pulses the effects monitor, the mark beside it, while the first status lasts, then never again", () => {
+    const station = badGroundStation(ACROSS, GROUND);
+    if (typeof station.highlight !== "function" || station.mark === undefined) {
+      throw new Error("a bad ground station's highlight follows the player's statuses");
+    }
+    const { highlight, mark } = station;
+    const at = (over: Partial<TutorialView>): unknown => [highlight(view(over)), mark(view(over))];
+    const ground = [{ kind: "ground", at: ACROSS }, undefined];
+    const monitor = [{ kind: "hud", element: EFFECTS_MONITOR }, ACROSS];
+    expect(at({})).toEqual(ground);
+    expect(at({ zoneStatus: "mired" })).toEqual(monitor);
+    expect(at({ zoneStatus: "mired" })).toEqual(monitor);
+    expect(at({})).toEqual(ground);
+    expect(at({ zoneStatus: "burning" })).toEqual(ground);
   });
 });

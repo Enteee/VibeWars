@@ -11,6 +11,8 @@ export const HINT_REPEAT_MS = 10_000;
 export const HIT_REPEAT_MS = 10_000;
 /** How long the praise stands before the next station's intro. */
 export const PRAISE_MS = 2_500;
+/** An aside waits until the line before it has stood this long, so each is read (#3310). */
+export const ASIDE_MS = 2_500;
 
 /**
  * A line the tutor says: its i18n key, the station's `how` under it
@@ -59,7 +61,8 @@ export interface TutorialRunner {
  * of its own: each station's intro, its hint again every `HINT_REPEAT_MS`
  * until it is done, a station's hit line when the player is hit, no more
  * than every `HIT_REPEAT_MS` (#3247), its reaction once, after which its
- * hint is not said again (#3302), each of its asides once (#3303), then
+ * hint is not said again (#3302), each of its asides once and no sooner
+ * than `ASIDE_MS` after the line before (#3303, #3310), each due before
  * its praise and, after `PRAISE_MS`, the next.
  * The keys a line shows are read from `keymap()` as it is said, so a
  * rebind shows on the next line.
@@ -81,6 +84,10 @@ export function createTutorialRunner(
   let reacted = false;
   /** The station running's asides it has said, by index. */
   let asided = new Set<number>();
+  /** What the aside standing points at, until the next line is said. */
+  let pointing: StationHighlight | undefined;
+  /** The last line said was an aside, which the praise does not cut short. */
+  let asideStands = false;
   const last = stations[stations.length - 1];
   if (last === undefined) {
     throw new Error("a tutorial of no stations");
@@ -125,16 +132,24 @@ export function createTutorialRunner(
       }
       const mark = station.mark?.(view);
       const highlight =
-        typeof station.highlight === "function" ? station.highlight(view) : station.highlight;
+        pointing ??
+        (typeof station.highlight === "function" ? station.highlight(view) : station.highlight);
       if (saidAt === undefined) {
         saidAt = nowMs;
         return beat(line(station, station.lines.intro), highlight, mark);
       }
-      if (station.done(view)) {
+      // An aside that is due is said before the praise, and stands its `ASIDE_MS` (#3310).
+      const aside = (station.asides ?? []).findIndex(
+        (entry, at) => !asided.has(at) && entry.when(view),
+      );
+      const dwelling = nowMs - saidAt < ASIDE_MS;
+      if (station.done(view) && aside < 0 && !(asideStands && dwelling)) {
         index += 1;
         saidAt = undefined;
         reacted = false;
         asided = new Set<number>();
+        pointing = undefined;
+        asideStands = false;
         praisedAt = nowMs;
         finished = index >= stations.length;
         return beat(line(station, station.lines.praise), undefined);
@@ -143,16 +158,17 @@ export function createTutorialRunner(
       if (reaction !== undefined && !reacted && reaction.when(view)) {
         reacted = true;
         saidAt = nowMs;
+        pointing = undefined;
+        asideStands = false;
         return beat(line(station, reaction.line), highlight, mark);
       }
-      const aside = (station.asides ?? []).findIndex(
-        (entry, at) => !asided.has(at) && entry.when(view),
-      );
-      const said = station.asides?.[aside];
+      const said = dwelling ? undefined : station.asides?.[aside];
       if (said !== undefined) {
         asided.add(aside);
         saidAt = nowMs;
-        return beat(line(station, said.line), highlight, mark);
+        asideStands = true;
+        pointing = said.highlight;
+        return beat(line(station, said.line), pointing ?? highlight, mark);
       }
       const { hit } = station.lines;
       if (
@@ -162,11 +178,15 @@ export function createTutorialRunner(
       ) {
         reactedAt = nowMs;
         saidAt = nowMs;
+        pointing = undefined;
+        asideStands = false;
         return beat(line(station, hit), highlight, mark);
       }
       // Once it has reacted, the player is on it: no more nudging.
       if (!reacted && nowMs - saidAt >= HINT_REPEAT_MS) {
         saidAt = nowMs;
+        pointing = undefined;
+        asideStands = false;
         return beat(line(station, station.lines.hint), highlight, mark);
       }
       return quiet(highlight, mark);

@@ -5,6 +5,9 @@ import { KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
 
 import {
   DODGES_NEEDED,
+  EFFECTS_MONITOR,
+  HEALTH_BAR,
+  badGroundStation,
   breakWallStation,
   dodgeStation,
   healStation,
@@ -17,6 +20,7 @@ import {
   type TutorialView,
 } from "./stations.js";
 import {
+  ASIDE_MS,
   HINT_REPEAT_MS,
   HIT_REPEAT_MS,
   PRAISE_MS,
@@ -37,6 +41,8 @@ const CAMERA = {
   tutorTargeted: false,
   healedTutor: false,
   energySpent: false,
+  zoneStatus: undefined,
+  healthDropped: false,
 };
 const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100), ...CAMERA };
 const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100), ...CAMERA };
@@ -128,10 +134,11 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor and finishes (#3247, #3302, #3303)", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground and finishes (#3247, #3302, #3303, #3310)", () => {
     const pad = vec2(200, -900);
     const goal = vec2(2850, 1800);
     const face = vec2(3480, 1800);
+    const across = vec2(6900, 720);
     const runner = createTutorialRunner(
       [
         walkStation(MARK, 0),
@@ -140,6 +147,7 @@ describe("the tutorial runner", () => {
         dodgeStation(goal, 0),
         breakWallStation(face, 400),
         healStation("tutor", 7),
+        badGroundStation(across, 0),
       ],
       () => KEYMAP_PRESETS.classic,
       label,
@@ -163,13 +171,16 @@ describe("the tutorial runner", () => {
       [{ ...dodged, wallHealth: 380, wallTargeted: true }, 7_000 + 4 * PRAISE_MS],
       [{ ...dodged, wallHealth: 0, wallTargeted: true }, 8_000 + 4 * PRAISE_MS],
       [{ ...broken }, 8_000 + 5 * PRAISE_MS],
-      [{ ...broken, tutorHit: true }, 9_000 + 5 * PRAISE_MS],
-      [{ ...broken, tutorHit: true, tutorTargeted: true }, 10_000 + 5 * PRAISE_MS],
+      [{ ...broken, tutorHit: true }, 8_000 + 5 * PRAISE_MS + ASIDE_MS],
+      [{ ...broken, tutorHit: true, tutorTargeted: true }, 9_000 + 5 * PRAISE_MS + ASIDE_MS],
       [
         { ...broken, tutorHit: true, tutorTargeted: true, energySpent: true },
-        11_000 + 5 * PRAISE_MS,
+        8_000 + 5 * PRAISE_MS + 2 * ASIDE_MS,
       ],
-      [{ ...broken, ...healed }, 12_000 + 5 * PRAISE_MS],
+      [{ ...broken, ...healed }, 9_000 + 5 * PRAISE_MS + 3 * ASIDE_MS],
+      [{ ...broken, ...healed }, 9_000 + 6 * PRAISE_MS + 3 * ASIDE_MS],
+      [{ ...broken, ...healed, zoneStatus: "mired" }, 9_000 + 6 * PRAISE_MS + 4 * ASIDE_MS],
+      [{ ...broken, ...healed, self: across }, 10_000 + 6 * PRAISE_MS + 5 * ASIDE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -191,6 +202,14 @@ describe("the tutorial runner", () => {
       undefined,
       "tutorial.heal.energy",
       "tutorial.heal.praise",
+      "tutorial.ground.intro",
+      "tutorial.ground.mired",
+      "tutorial.ground.praise",
+    ]);
+    // The mark past the bad ground, then the effects monitor while the mud's status lasts.
+    expect(beats.slice(18, 20).map((beat) => [beat.highlight, beat.mark])).toEqual([
+      [{ kind: "ground", at: across }, undefined],
+      [{ kind: "hud", element: EFFECTS_MONITOR }, across],
     ]);
     // The tutor's party row pulses until it is targeted, then the heal's slot.
     expect(beats.slice(13, 17).map((beat) => beat.highlight)).toEqual([
@@ -221,9 +240,9 @@ describe("the tutorial runner", () => {
     // The world turns once, under the step in's praise, and stays turned.
     expect(beats.map((beat) => beat.world)).toEqual([
       ...Array<string>(5).fill("battlefield"),
-      ...Array<string>(13).fill("canyon"),
+      ...Array<string>(16).fill("canyon"),
     ]);
-    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(17).fill(false), true]);
+    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(20).fill(false), true]);
   });
 
   it("says a station's reaction once, then no more hints until it is done (#3302)", () => {
@@ -265,11 +284,11 @@ describe("the tutorial runner", () => {
     const hit: TutorialView = { ...AWAY, tutorHit: true };
     const said = [
       runner.tick(AWAY, 0),
-      runner.tick(hit, 1_000),
-      runner.tick(hit, 2_000),
-      runner.tick(hit, 1_000 + HINT_REPEAT_MS),
-      runner.tick({ ...hit, energySpent: true }, 12_000),
-      runner.tick({ ...hit, energySpent: true }, 13_000),
+      runner.tick(hit, ASIDE_MS),
+      runner.tick(hit, ASIDE_MS + 1_000),
+      runner.tick(hit, ASIDE_MS + HINT_REPEAT_MS),
+      runner.tick({ ...hit, energySpent: true }, 2 * ASIDE_MS + HINT_REPEAT_MS),
+      runner.tick({ ...hit, energySpent: true }, 3 * ASIDE_MS + HINT_REPEAT_MS),
     ].map((beat) => beat.say?.key);
     expect(said).toEqual([
       "tutorial.heal.intro",
@@ -278,6 +297,65 @@ describe("the tutorial runner", () => {
       "tutorial.heal.hint",
       "tutorial.heal.energy",
       undefined,
+    ]);
+  });
+
+  it("says two asides true on the same tick in turn, each standing ASIDE_MS (#3310)", () => {
+    const runner = createTutorialRunner(
+      [badGroundStation(MARK, 0)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    const lava: TutorialView = { ...AWAY, zoneStatus: "burning", healthDropped: true };
+    const ticks: [TutorialView, number][] = [
+      [AWAY, 0],
+      [lava, ASIDE_MS - 1],
+      [lava, ASIDE_MS],
+      [lava, 2 * ASIDE_MS - 1],
+      [lava, 2 * ASIDE_MS],
+      [lava, 3 * ASIDE_MS],
+    ];
+    const beats = ticks.map(([view, now]) => runner.tick(view, now));
+    expect(beats.map((beat) => beat.say?.key)).toEqual([
+      "tutorial.ground.intro",
+      undefined,
+      "tutorial.ground.burning",
+      undefined,
+      "tutorial.ground.health",
+      undefined,
+    ]);
+    // The health line points at the health bar while it stands, over the effects monitor.
+    expect(beats.slice(2).map((beat) => beat.highlight)).toEqual([
+      { kind: "hud", element: EFFECTS_MONITOR },
+      { kind: "hud", element: EFFECTS_MONITOR },
+      { kind: "hud", element: HEALTH_BAR },
+      { kind: "hud", element: HEALTH_BAR },
+    ]);
+  });
+
+  it("says an aside that is due before the praise, and lets it stand ASIDE_MS (#3310)", () => {
+    const runner = createTutorialRunner(
+      [healStation("tutor", 7)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    const hit: TutorialView = { ...AWAY, tutorHit: true };
+    const healed: TutorialView = { ...hit, energySpent: true, healedTutor: true };
+    const ticks: [TutorialView, number][] = [
+      [AWAY, 0],
+      [hit, ASIDE_MS],
+      [healed, ASIDE_MS + 1_000],
+      [healed, 2 * ASIDE_MS],
+      [healed, 3 * ASIDE_MS - 1],
+      [healed, 3 * ASIDE_MS],
+    ];
+    expect(ticks.map(([view, now]) => runner.tick(view, now).say?.key)).toEqual([
+      "tutorial.heal.intro",
+      "tutorial.heal.ow",
+      undefined,
+      "tutorial.heal.energy",
+      undefined,
+      "tutorial.heal.praise",
     ]);
   });
 
