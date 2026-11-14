@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 
 import { CANYON_ARRIVAL } from "./canyon-map.js";
 import {
+  BAD_GROUND,
   CLEARING,
   CRACKED_WALL,
   DODGE_MARK,
+  badGroundTutor,
   canyonWorld,
   clearingTutor,
   wallTutor,
@@ -187,5 +189,102 @@ describe("clearingTutor (#3303)", () => {
     }
     expect(bleeding()).toBe(false);
     expect(body().combatant.health).toBeGreaterThan(healed);
+  });
+});
+
+describe("badGroundTutor (#3310)", () => {
+  const build = houseBuild(PLAYER_PROFESSION);
+  /** The canyon with its cracked wall down, as station 5 leaves it, the pair at its face. */
+  const pastTheWall = (): ReturnType<typeof canyonWorld> => {
+    const world = canyonWorld("canyon-test", build, build);
+    const { simulation } = world;
+    simulation.walkTo(SELF_ID, CRACKED_WALL.face, CRACKED_WALL.layer);
+    simulation.walkTo(TUTOR_ID, CRACKED_WALL.besideFace, CRACKED_WALL.layer);
+    const wallHealth = (): number =>
+      simulation.breakables.find(({ id }) => id === CRACKED_WALL.id)?.health ?? 0;
+    for (let elapsed = 0; elapsed < 120 && wallHealth() > 0; elapsed += TICK) {
+      simulation.step(TICK);
+      simulation.requestAttack(SELF_ID, CRACKED_WALL.targetId);
+      simulation.requestAttack(TUTOR_ID, CRACKED_WALL.targetId);
+    }
+    expect(wallHealth()).toBe(0);
+    return world;
+  };
+  const badGround = (world: ReturnType<typeof canyonWorld>) =>
+    world.zones.filter(({ kind }) => kind === "mire" || kind === "molten");
+
+  it("puts the mark past the mire, in no zone, the straight way to it through the mud", () => {
+    const world = canyonWorld("canyon-test", build, build);
+    const zones = badGround(world);
+    expect(zones.map(({ kind }) => kind).sort()).toEqual(["mire", "molten"]);
+    const mire = zones.find(({ kind }) => kind === "mire");
+    if (mire === undefined) {
+      throw new Error("no mire");
+    }
+    for (const zone of world.zones) {
+      expect(pointInPolygon(BAD_GROUND.mark, zone.polygon)).toBe(false);
+      expect(pointInPolygon(BAD_GROUND.start, zone.polygon)).toBe(false);
+    }
+    const { start, mark } = BAD_GROUND;
+    const through = Array.from({ length: 21 }, (_, k) => ({
+      x: start.x + ((mark.x - start.x) * k) / 20,
+      y: start.y + ((mark.y - start.y) * k) / 20,
+    })).some((point) => pointInPolygon(point, mire.polygon));
+    expect(through).toBe(true);
+  });
+
+  it("walks the tutor round the bad ground, never into it, to wait beside the mark", () => {
+    const world = pastTheWall();
+    const { simulation } = world;
+    const zones = badGround(world);
+    const tutor = badGroundTutor(simulation);
+    const body = () => {
+      const found = simulation.get(TUTOR_ID);
+      if (found === undefined) {
+        throw new Error("no tutor");
+      }
+      return found;
+    };
+    const waiting = BAD_GROUND.tutorRoute[BAD_GROUND.tutorRoute.length - 1] ?? BAD_GROUND.mark;
+    const away = (): number =>
+      Math.hypot(body().position.x - waiting.x, body().position.y - waiting.y);
+    for (let elapsed = 0; elapsed < 60; elapsed += TICK) {
+      simulation.step(TICK);
+      tutor.step();
+      expect(zones.filter((zone) => pointInPolygon(body().position, zone.polygon))).toEqual([]);
+    }
+    expect(away()).toBeLessThanOrEqual(MARK_REACH);
+  });
+
+  it("lets the player walk the molten strip's length and live", () => {
+    const world = pastTheWall();
+    const { simulation } = world;
+    const molten = world.zones.find(({ kind }) => kind === "molten");
+    if (molten === undefined) {
+      throw new Error("no molten strip");
+    }
+    const ys = molten.polygon.map(({ y }) => y);
+    const x = polygonCentre(molten.polygon).x;
+    const self = () => {
+      const found = simulation.get(SELF_ID);
+      if (found === undefined) {
+        throw new Error("no player");
+      }
+      return found;
+    };
+    // Up to its south end, then along all of it, crippled, at full health.
+    simulation.walkTo(SELF_ID, { x, y: Math.max(...ys) + 60 }, molten.layer);
+    for (let elapsed = 0; elapsed < 60 && self().position.y < Math.max(...ys); elapsed += TICK) {
+      simulation.step(TICK);
+    }
+    self().combatant.health = self().combatant.maxHealth;
+    simulation.walkTo(SELF_ID, { x, y: Math.min(...ys) - 60 }, molten.layer);
+    let lowest = self().combatant.health;
+    for (let elapsed = 0; elapsed < 30; elapsed += TICK) {
+      simulation.step(TICK);
+      lowest = Math.min(lowest, self().combatant.health);
+    }
+    expect(lowest).toBeLessThan(self().combatant.maxHealth);
+    expect(lowest).toBeGreaterThan(0);
   });
 });

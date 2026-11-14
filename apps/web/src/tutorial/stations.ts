@@ -35,7 +35,18 @@ export interface TutorialView {
   readonly healedTutor: boolean;
   /** The player's energy has dropped, as a skill spends it: once true, it stays true. */
   readonly energySpent: boolean;
+  /**
+   * The status the bad ground gives the player now (#3310), the first of
+   * `ZONE_STATUSES` if there are several, or none: a rock's does not count.
+   */
+  readonly zoneStatus: ZoneStatus | undefined;
+  /** The player's health has dropped in station 7 (#3310): once true, it stays true. */
+  readonly healthDropped: boolean;
 }
+
+/** The statuses station 7's ground gives (#3310): the mire's, then the molten strip's. */
+export const ZONE_STATUSES = ["mired", "burning", "crippled"] as const;
+export type ZoneStatus = (typeof ZONE_STATUSES)[number];
 
 /** The world a station runs in (#3247): the battlefield it starts on, or the canyon past the teleporter. */
 export type TutorialWorldName = "battlefield" | "canyon";
@@ -252,5 +263,53 @@ export function healStation(tutorId: string, healSlot: number): Station {
       { line: "tutorial.heal.energy", when: (view) => view.energySpent },
     ],
     done: (view) => view.tutorHit && view.healedTutor,
+  };
+}
+
+/** The effects monitor (#3310), where a status shows as an icon and a draining bar. */
+export const EFFECTS_MONITOR = ".effects-monitor";
+
+/**
+ * Station 7 (playbook §7), in the canyon: walk to the mark past the bad
+ * ground, on `layer`, through the mud or round it. The first status the
+ * ground gives the player gets one line, the mire's or the molten strip's,
+ * and the effects monitor pulses, the mark beside it, until that status
+ * runs out; a later one gets neither. The first drop in health gets the
+ * health bar's line. Done on the mark, however the player came.
+ */
+export function badGroundStation(mark: Vec2, layer: number): Station {
+  /** The first status the ground gave, and whether it has run out since. */
+  let first: ZoneStatus | undefined;
+  let ranOut = false;
+  const look = (view: TutorialView): { first: ZoneStatus | undefined; showing: boolean } => {
+    first ??= view.zoneStatus;
+    ranOut ||= first !== undefined && view.zoneStatus === undefined;
+    return { first, showing: first !== undefined && !ranOut };
+  };
+  return {
+    id: "bad-ground",
+    world: "canyon",
+    lines: {
+      intro: "tutorial.ground.intro",
+      hint: "tutorial.ground.hint",
+      praise: "tutorial.ground.praise",
+      how: "tutorial.ground.how",
+    },
+    keys: ["move-up", "move-left", "move-down", "move-right"],
+    highlight: (view) =>
+      look(view).showing ? { kind: "hud", element: EFFECTS_MONITOR } : { kind: "ground", at: mark },
+    mark: (view) => (look(view).showing ? mark : undefined),
+    asides: [
+      { line: "tutorial.ground.mired", when: (view) => look(view).first === "mired" },
+      {
+        line: "tutorial.ground.burning",
+        when: (view) => {
+          const { first: status } = look(view);
+          return status === "burning" || status === "crippled";
+        },
+      },
+      { line: "tutorial.ground.health", when: (view) => view.healthDropped },
+    ],
+    done: (view) => onMark(view, mark, layer),
   };
 }

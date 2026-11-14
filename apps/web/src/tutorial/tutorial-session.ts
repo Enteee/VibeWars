@@ -1,4 +1,12 @@
-import type { MatchSimulation, ProfessionId, Vec2 } from "@vibewars/game-core";
+import {
+  ZONE_RULES,
+  zonesHolding,
+  type MatchSimulation,
+  type MatchZone,
+  type ProfessionId,
+  type StatusId,
+  type Vec2,
+} from "@vibewars/game-core";
 import type { MapDescriptor } from "@vibewars/game-protocol";
 import { NO_GUILD } from "@vibewars/game-session";
 
@@ -17,17 +25,22 @@ import { mountSkipTutorial } from "./tutorial-offer.js";
 import { DEFAULT_STEP } from "../render/camera-rig.js";
 
 import {
+  BAD_GROUND,
   CRACKED_WALL,
   DODGE_MARK,
+  badGroundTutor,
   canyonWorld,
   clearingTutor,
   wallTutor,
+  type BadGroundTutor,
   type ClearingTutor,
   type WallTutor,
 } from "./canyon-world.js";
 import { createHealWatch, type HealWatch } from "./heal-watch.js";
 import { createDodgeCounter, type DodgeCounter } from "./dodge-count.js";
 import {
+  ZONE_STATUSES,
+  badGroundStation,
   breakWallStation,
   dodgeStation,
   healStation,
@@ -36,6 +49,7 @@ import {
   walkStation,
   type StationHighlight,
   type TutorialWorldName,
+  type ZoneStatus,
 } from "./stations.js";
 import { createTutorialRunner, type TutorLine } from "./tutorial-runner.js";
 import {
@@ -88,6 +102,8 @@ interface Stage {
   readonly dodges: DodgeCounter | undefined;
   /** Station 6's watch on the canyon's combat (#3303); the battlefield has none. */
   readonly heals: HealWatch | undefined;
+  /** Its zones, as the simulation applies them: the battlefield's play no part. */
+  readonly zones: readonly MatchZone[];
 }
 
 /**
@@ -144,6 +160,7 @@ export async function startTutorialSession(
     fixed: [portal],
     dodges: undefined,
     heals: undefined,
+    zones: [],
   };
   let highlight: StationHighlight | undefined;
   /** A ground mark beside a HUD highlight (#3302). */
@@ -186,6 +203,12 @@ export async function startTutorialSession(
   let energySpent = false;
   let energyBefore: number | undefined;
   let inClearing: ClearingTutor | undefined;
+  // Station 7's (#3310), read only while it runs: the statuses its ground
+  // has given, and whether health has dropped, latched.
+  const groundGave = new Set<StatusId>();
+  let healthDropped = false;
+  let healthBefore: number | undefined;
+  let onBadGround: BadGroundTutor | undefined;
   /** The station the last beat ran. */
   let running: string | undefined;
   /** The HUD element pulsing now, if any. */
@@ -248,6 +271,7 @@ export async function startTutorialSession(
       dodgeStation(DODGE_MARK.position, DODGE_MARK.layer),
       breakWallStation(CRACKED_WALL.face, CRACKED_WALL.maxHealth),
       healStation(TUTOR_ID, TUTORIAL_HEAL_SLOT),
+      badGroundStation(BAD_GROUND.mark, BAD_GROUND.layer),
     ],
     loadKeymap,
   );
@@ -291,6 +315,7 @@ export async function startTutorialSession(
       fixed: [],
       dodges: createDodgeCounter(canyon.zones),
       heals,
+      zones: canyon.zones,
     };
     // The tutor goes on ahead, to wait by the mark.
     canyon.simulation.walkTo(TUTOR_ID, canyon.besideMark, canyon.ground);
@@ -344,6 +369,23 @@ export async function startTutorialSession(
       healing && energy !== undefined && energyBefore !== undefined && energy < energyBefore;
     energyBefore = energy;
     const { tutorHit, healedTutor } = heals?.tally() ?? { tutorHit: false, healedTutor: false };
+    const crossing = running === "bad-ground" && self !== undefined;
+    if (crossing) {
+      for (const zone of zonesHolding(stage.zones, self.position, self.layer)) {
+        const rule = ZONE_RULES[zone.kind];
+        if (rule.trigger === "while-inside") {
+          rule.statuses.forEach((status) => groundGave.add(status));
+        }
+      }
+    }
+    const holding = new Set(self?.combatant.statuses.active.map(({ id }) => id));
+    const zoneStatus: ZoneStatus | undefined = crossing
+      ? ZONE_STATUSES.find((status) => groundGave.has(status) && holding.has(status))
+      : undefined;
+    const health = self?.combatant.health;
+    healthDropped ||=
+      crossing && health !== undefined && healthBefore !== undefined && health < healthBefore;
+    healthBefore = health;
     if (self !== undefined && tutor !== undefined && farewell === 0) {
       const beat = runner.tick(
         {
@@ -361,6 +403,8 @@ export async function startTutorialSession(
           tutorTargeted,
           healedTutor,
           energySpent,
+          zoneStatus,
+          healthDropped,
         },
         now,
       );
@@ -383,7 +427,14 @@ export async function startTutorialSession(
       if (inClearing === undefined && beat.station === "heal" && stage.name === "canyon") {
         inClearing = clearingTutor(world);
       }
-      inClearing?.step(tutorHit, healedTutor);
+      if (beat.station === "heal") {
+        inClearing?.step(tutorHit, healedTutor);
+      }
+      // Station 7 is next: the tutor walks round the bad ground to the mark.
+      if (onBadGround === undefined && beat.station === "bad-ground" && stage.name === "canyon") {
+        onBadGround = badGroundTutor(world);
+      }
+      onBadGround?.step();
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;
