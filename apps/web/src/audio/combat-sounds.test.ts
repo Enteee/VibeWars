@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { IMPLEMENTED_SKILLS } from "@vibewars/game-core";
+import { IMPLEMENTED_SKILLS, getSkill } from "@vibewars/game-core";
 import type { Skill, StatusId } from "@vibewars/game-core";
 import type {
   CombatMessage,
@@ -733,12 +733,25 @@ describe("castVoices (#3298)", () => {
   it("voices an instant skill at its activation, and a timed one never from its message", () => {
     const latest = snapshot([player(ME), player("foe", at(300))]);
     const used = (skill: Skill): CombatMessage => ({
-      ...message("foe", []),
+      ...message("foe", [
+        { kind: "skill-used", casterId: "foe", skillId: skill.id, targetId: "foe" },
+      ]),
       cause: "skill",
       skillId: skill.id,
     });
     expect(instantCastVoice(used(instant), latest, seat)).toMatchObject(castLayers(instant));
     expect(instantCastVoice(used(monkSpell), latest, seat)).toBeUndefined();
+  });
+
+  it("is silent for an instant's trigger, which carries no use", () => {
+    const latest = snapshot([player(ME), player("foe", at(300))]);
+    const riposte = getSkill("warrior.riposte");
+    expect(riposte?.activationSeconds).toBe(0);
+    const trigger: CombatMessage = {
+      ...message("foe", [{ kind: "damage", targetId: ME, amount: 20, critical: false }]),
+      skillId: "warrior.riposte",
+    };
+    expect(instantCastVoice(trigger, latest, seat)).toBeUndefined();
   });
 });
 

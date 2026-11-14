@@ -509,8 +509,10 @@ export function castVoices(
 
 /**
  * An instant skill's voice (#3298): it has no cast for a snapshot to show,
- * so it is heard when its combat message comes, at its activation. An
- * attack skill takes its weapon's time and is heard as a cast.
+ * so it is heard when its combat message comes, at its activation: the
+ * entry that carries its `skill-used`, never a trigger's or a pulse's under
+ * the same skill. An attack skill takes its weapon's time and is heard as a
+ * cast.
  */
 export function instantCastVoice(
   message: CombatMessage,
@@ -521,6 +523,7 @@ export function instantCastVoice(
   if (
     latest === undefined ||
     skill === undefined ||
+    !message.events.some(({ kind }) => kind === "skill-used") ||
     skill.activationSeconds > 0 ||
     skill.attack !== undefined
   ) {
