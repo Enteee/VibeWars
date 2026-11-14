@@ -89,32 +89,31 @@ const WALKS = [
   { id: "south walk W", r: rect(420, 1990, 960, 190) },
   { id: "south walk E", r: rect(1820, 1990, 960, 190) },
   { id: "west walk", r: rect(140, 420, 190, 1560) },
-  { id: "east walk", r: rect(2870, 420, 190, 1560) },
+  { id: "east walk (collapsed south of the stair)", r: rect(2870, 420, 190, 1020) },
 ];
 // L3: four corner towers and the gatehouse block over the south wall
 const TOWERS = [
-  { id: "tower NW", r: rect(140, 220, 280, 200) },
-  { id: "tower NE", r: rect(2780, 220, 280, 200) },
+  { id: "tower NW", r: rect(140, 220, 320, 240) },
+  { id: "tower NE (half fallen)", r: rect(2860, 220, 200, 150) },
   { id: "tower SW", r: rect(140, 1980, 280, 200) },
-  { id: "tower SE", r: rect(2780, 1980, 280, 200) },
   { id: "gatehouse", r: rect(1380, 1960, 440, 240) },
 ];
 // the sunken well court (L0, a pit under the ground) with a ramp down from each side
-const PIT = rect(1300, 1000, 600, 400);
-const WELL = { cx: 1600, cy: 1200, rx: 120, ry: 60 };
+const PIT = rect(1150, 1050, 600, 400);
+const WELL = { cx: 1450, cy: 1250, rx: 120, ry: 60 };
 const RAMPS = [
-  { id: "pit-ramp-w", r: rect(1140, 1120, 160, 160), from: -1, dir: "e" },
-  { id: "pit-ramp-e", r: rect(1900, 1120, 160, 160), from: -1, dir: "w" },
+  { id: "pit-ramp-w", r: rect(990, 1170, 160, 160), from: -1, dir: "e" },
+  { id: "pit-ramp-e", r: rect(1750, 1170, 160, 160), from: -1, dir: "w" },
 ];
 // stairs from the courtyard up to the wall-walks (L1→L2), and from the walks up the towers (L2→L3)
 const STAIRS = [
-  { id: "stair-N1", r: rect(900, 410, 140, 110), from: 0, dir: "n" },
-  { id: "stair-N2", r: rect(1530, 410, 140, 110), from: 0, dir: "n" },
-  { id: "stair-N3", r: rect(2200, 410, 140, 110), from: 0, dir: "n" },
+  { id: "stair-N1", r: rect(780, 410, 140, 110), from: 0, dir: "n" },
+  { id: "stair-N2", r: rect(1380, 410, 140, 110), from: 0, dir: "n" },
+  { id: "stair-N3", r: rect(2300, 410, 140, 110), from: 0, dir: "n" },
   { id: "stair-W", r: rect(330, 1000, 110, 140), from: 0, dir: "w" },
-  { id: "stair-E", r: rect(2760, 1000, 110, 140), from: 0, dir: "e" },
+  { id: "stair-E", r: rect(2760, 1200, 110, 140), from: 0, dir: "e" },
   { id: "stair-S1", r: rect(900, 1880, 140, 110), from: 0, dir: "s" },
-  { id: "stair-S2", r: rect(2200, 1880, 140, 110), from: 0, dir: "s" },
+  { id: "stair-S2", r: rect(2420, 1880, 140, 110), from: 0, dir: "s" },
 ];
 // the gatehouse passage: a tunnel on the ground layer under the gatehouse, to the barbican
 /** @type {Pt[]} */
@@ -127,11 +126,11 @@ const GATE = rect(1500, 2150, 200, 30); // portcullis, worked by the lever on th
 /** @type {Pt} */
 const LEVER = [235, 1200];
 /** @type {Pt} */
-const LEVER2 = [2965, 1200]; // the same portcullis, worked from the east wall-walk too
+const LEVER2 = [2965, 1300]; // the same portcullis, worked from the east wall-walk too
 // fallen-timber walls: breakable, a team's yard has two exits north and south
-const BARRICADES = [rect(1000, 1000, 26, 400), rect(2174, 1000, 26, 400)];
+const BARRICADES = [rect(860, 1000, 26, 400), rect(2124, 900, 26, 300)];
 // lean-to overhangs of charred rafters along the north wall (different on each side)
-const OVERHANGS = [rect(1000, 440, 420, 120), rect(1760, 440, 320, 120)];
+const OVERHANGS = [rect(900, 440, 420, 120), rect(1700, 440, 280, 120)];
 /** @type {{ cx: number; cy: number; rx: number; ry: number }[]} */
 const CHAR = [
   { cx: 700, cy: 700, rx: 160, ry: 70 },
@@ -153,21 +152,21 @@ const SPAWNS = {
     [640, 1300],
   ],
   t2: [
-    [2730, 1000],
-    [2730, 1400],
-    [2560, 1100],
-    [2560, 1300],
+    [2420, 880],
+    [2480, 1230],
+    [2290, 1030],
+    [2330, 1370],
   ],
 };
 /** @type {{ p: Pt; col: string; r: number }[]} */
 const LIGHTS = [
   { p: [1600, 1960], col: C.torch, r: 150 },
   { p: [1600, 2300], col: C.torch, r: 150 },
-  { p: [1600, 1200], col: C.torch, r: 150 },
-  { p: [900, 520], col: C.torch, r: 150 },
+  { p: [1450, 1250], col: C.torch, r: 150 },
+  { p: [780, 520], col: C.torch, r: 150 },
   { p: [2300, 520], col: C.torch, r: 150 },
   { p: [900, 1870], col: C.torch, r: 150 },
-  { p: [2300, 1870], col: C.torch, r: 150 },
+  { p: [2420, 1870], col: C.torch, r: 150 },
   { p: [700, 700], col: C.fire, r: 200 },
   { p: [2400, 1600], col: C.fire, r: 200 },
   { p: [235, 1200], col: C.torch, r: 150 },
@@ -178,24 +177,24 @@ const ROUTES = {
     [
       "round the timber wall",
       [
-        [600, 1200],
-        [1000, 960],
-        [1100, 1000],
-        [1140, 1200],
-        [1300, 1200],
-        [1600, 1200],
+        [550, 1200],
+        [850, 960],
+        [950, 1000],
+        [1000, 1230],
+        [1150, 1250],
+        [1450, 1250],
       ],
     ],
     [
       "wall-walk",
       [
-        [600, 1200],
-        [900, 560],
-        [970, 380],
-        [1600, 320],
-        [1600, 520],
-        [1600, 1000],
-        [1600, 1200],
+        [550, 1200],
+        [820, 560],
+        [880, 380],
+        [1450, 320],
+        [1450, 520],
+        [1450, 1050],
+        [1450, 1250],
       ],
     ],
   ],
@@ -203,24 +202,24 @@ const ROUTES = {
     [
       "round the timber wall",
       [
-        [2600, 1200],
-        [2200, 960],
-        [2100, 1000],
-        [2060, 1200],
-        [1900, 1200],
-        [1600, 1200],
+        [2350, 1130],
+        [2160, 860],
+        [2060, 960],
+        [1990, 1230],
+        [1910, 1250],
+        [1450, 1250],
       ],
     ],
     [
       "wall-walk",
       [
-        [2600, 1200],
-        [2270, 560],
-        [2270, 380],
-        [1600, 320],
-        [1600, 520],
-        [1600, 1000],
-        [1600, 1200],
+        [2350, 1130],
+        [2370, 560],
+        [2370, 380],
+        [1450, 320],
+        [1450, 520],
+        [1450, 1050],
+        [1450, 1250],
       ],
     ],
   ],
