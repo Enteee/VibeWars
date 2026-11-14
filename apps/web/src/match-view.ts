@@ -75,6 +75,7 @@ import type { SwitchTarget } from "./render/switch-link.js";
 import { frameTiming, snapshotCadence } from "./render/frame-timing.js";
 import { conditionCues } from "./render/body-conditions.js";
 import { bodyFlags } from "./render/body-rings.js";
+import { cursedBy } from "./render/ground-effect-look.js";
 import { ashCape } from "./render/body-painter.js";
 import { capeLook } from "./render/cape-shape.js";
 import { castBadgeType } from "./render/cast-badge.js";
@@ -408,6 +409,10 @@ export function toArenaSnapshot(
   // Drawn in the ally colour: your own side, or a watcher's team 1, as
   // the scoreboard reads it first (#1199, #480).
   const side = self?.team ?? 0;
+  const groundEffects = [
+    ...match.groundEffects.map((effect) => toRenderableGroundEffect(effect, self?.team)),
+    ...match.traps.map((effect) => toRenderableGroundEffect(effect, self?.team)),
+  ];
 
   return {
     walls,
@@ -444,10 +449,7 @@ export function toArenaSnapshot(
         colour: teamColour(shooter?.team === side ? "ally" : "enemy"),
       };
     }),
-    groundEffects: [
-      ...match.groundEffects.map((effect) => toRenderableGroundEffect(effect, self?.team, "ward")),
-      ...match.traps.map((effect) => toRenderableGroundEffect(effect, self?.team, "trap")),
-    ],
+    groundEffects,
     // Render the target the *server* confirmed, not whatever was last
     // clicked — a click is only a request (brief §32).
     targetId: self?.targetSessionId,
@@ -527,6 +529,14 @@ export function toArenaSnapshot(
         stanced: rings.stanced,
         hexed: rings.hexed,
         formed: rings.formed,
+        cursed:
+          !player.dead &&
+          cursedBy(
+            { x: player.x, y: player.y },
+            player.layer,
+            teamSide(player.team, side),
+            groundEffects,
+          ),
         invulnerable: !player.dead && player.invulnerableSeconds > 0,
         teleportReadyAt: player.teleportReadyAt,
         conditionCues: conditionCues(living),
