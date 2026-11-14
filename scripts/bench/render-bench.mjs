@@ -373,7 +373,10 @@ async function follow(page, mapId) {
   const stage = page.locator(".team-lobby-stage");
   await stage.waitFor({ timeout: 60_000 });
   if ((await stage.textContent()) === "Choose your character") {
-    await page.locator('.team-lobby-solo .play-card-open[aria-pressed="true"]').click();
+    // The same redraw race as the seats below: dispatch the click, do not aim it.
+    await page
+      .locator('.team-lobby-solo .play-card-open[aria-pressed="true"]')
+      .dispatchEvent("click");
   } else {
     // The Team Lobby redraws its seats faster than a click can settle on one.
     await page.locator(".team-lobby-seat").first().waitFor({ timeout: 60_000 });
