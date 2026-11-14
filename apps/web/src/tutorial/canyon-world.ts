@@ -2,6 +2,7 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1 as RULESET,
   MatchSimulation,
   breakableTargetId,
+  polygonCentre,
   vec2,
   type MatchZone,
   type PlayerBuild,
@@ -88,6 +89,37 @@ export const CRACKED_WALL: CanyonWall = ((): CanyonWall => {
   };
 })();
 
+/** How far east of the clearing's rockfall the tutor waits once it has been hit (#3303). */
+const CLEAR_OF_ROCKFALL = 50;
+
+/** Station 6's clearing (#3303): its rockfall, and where the tutor stands in and beside it. */
+export interface CanyonClearing {
+  /** The rockfall's zone id, as its strikes name their source. */
+  readonly zoneId: string;
+  readonly layer: number;
+  /** The rockfall's centre, where the tutor waits to be hit. */
+  readonly centre: Vec2;
+  /** East of the rockfall, out of its reach, where the tutor waits to be healed. */
+  readonly east: Vec2;
+}
+
+export const CLEARING: CanyonClearing = ((): CanyonClearing => {
+  const { map } = CANYON_ARRIVAL;
+  const zoneId = "clearing-rockfall";
+  const zone = map.zones?.find((entry) => entry.id === zoneId);
+  if (zone?.area.kind !== "polygon") {
+    throw new Error(`${map.id}: no ${zoneId} for station 6`);
+  }
+  const { points } = zone.area;
+  const centre = polygonCentre(points);
+  return {
+    zoneId,
+    layer: zone.layer,
+    centre,
+    east: vec2(Math.max(...points.map(({ x }) => x)) + CLEAR_OF_ROCKFALL, centre.y),
+  };
+})();
+
 /** The canyon past the teleporter (#3247), built and not yet stepped. */
 export interface CanyonWorld {
   readonly map: MapDescriptor;
@@ -168,6 +200,29 @@ export function wallTutor(simulation: MatchSimulation): WallTutor {
         return;
       }
       striking = simulation.requestAttack(TUTOR_ID, CRACKED_WALL.targetId)?.ok === true;
+    },
+  };
+}
+
+/** The tutor in the clearing (#3303), stepped once a frame with whether a rock has hit it yet. */
+export interface ClearingTutor {
+  readonly step: (hit: boolean) => void;
+}
+
+/**
+ * Sends the tutor into the clearing's rockfall to wait for its strike, then,
+ * once hit, out to its east side, where it waits to be healed and is not
+ * hit again. It uses no skill there, so it never heals itself.
+ */
+export function clearingTutor(simulation: MatchSimulation): ClearingTutor {
+  simulation.walkTo(TUTOR_ID, CLEARING.centre, CLEARING.layer);
+  let stepped = false;
+  return {
+    step: (hit) => {
+      if (hit && !stepped) {
+        stepped = true;
+        simulation.walkTo(TUTOR_ID, CLEARING.east, CLEARING.layer);
+      }
     },
   };
 }

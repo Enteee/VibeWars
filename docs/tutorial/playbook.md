@@ -98,7 +98,8 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
   Your health and energy bars, and the pips on them, are pointed at the first time they move.
 - **Do.** Target the tutor and use the heal skill (granted for the tutorial if the build has
   none).
-- **Check.** The tutor is above 90 % health.
+- **Check.** The heal lands on the tutor after the boulder has hit it (#3303): a check on
+  health would tie the tutorial to max health and regeneration.
 
 ## 7. Cross the bad ground
 

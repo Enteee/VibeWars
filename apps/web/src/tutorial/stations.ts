@@ -27,6 +27,14 @@ export interface TutorialView {
   readonly wallHealth: number | undefined;
   /** The player has targeted that wall: once true, it stays true. */
   readonly wallTargeted: boolean;
+  /** A zone's strike has hurt the tutor (#3303): once true, it stays true. */
+  readonly tutorHit: boolean;
+  /** The player has targeted the tutor: once true, it stays true. */
+  readonly tutorTargeted: boolean;
+  /** The player's heal has landed on the tutor after that hit: once true, it stays true. */
+  readonly healedTutor: boolean;
+  /** The player's energy has dropped, as a skill spends it: once true, it stays true. */
+  readonly energySpent: boolean;
 }
 
 /** The world a station runs in (#3247): the battlefield it starts on, or the canyon past the teleporter. */
@@ -36,6 +44,12 @@ export type TutorialWorldName = "battlefield" | "canyon";
 export type StationHighlight =
   | { readonly kind: "ground"; readonly at: Vec2 }
   | { readonly kind: "hud"; readonly element: string };
+
+/** A line a station says once, when the view first shows what it is about. */
+export interface StationAside {
+  readonly line: MessageKey;
+  readonly when: (view: TutorialView) => boolean;
+}
 
 /** One beat of the tutorial (`docs/tutorial/playbook.md`): data, not code. */
 export interface Station {
@@ -55,15 +69,21 @@ export interface Station {
   readonly world: TutorialWorldName;
   /** The actions whose keys the lines show, as the player has them bound. */
   readonly keys?: readonly KeyAction[];
-  /** What it points at, or nothing: a look around has no one place. */
-  readonly highlight: StationHighlight | undefined;
+  /**
+   * What it points at, or nothing: a look around has no one place. One that
+   * moves as the player goes (#3303) is read from each look.
+   */
+  readonly highlight:
+    StationHighlight | ((view: TutorialView) => StationHighlight | undefined) | undefined;
   /** A mark on the ground beside a HUD highlight (#3302), while this returns one. */
   readonly mark?: (view: TutorialView) => Vec2 | undefined;
   /** A line said once, the first look at which `when` holds (#3302). */
-  readonly reaction?: {
-    readonly line: MessageKey;
-    readonly when: (view: TutorialView) => boolean;
-  };
+  readonly reaction?: StationAside;
+  /**
+   * Lines each said once, the first look at which its `when` holds, that
+   * are no reaction: the hint goes on being said after them (#3303).
+   */
+  readonly asides?: readonly StationAside[];
   readonly done: (view: TutorialView) => boolean;
 }
 
@@ -190,5 +210,47 @@ export function breakWallStation(face: Vec2, maxHealth: number): Station {
       when: (view) => view.wallHealth !== undefined && view.wallHealth < maxHealth,
     },
     done: (view) => view.wallHealth === 0,
+  };
+}
+
+/** The tutor's row in the party window (#3303): where an ally is targeted by name. */
+export function partyRow(memberId: string): string {
+  return `.party-row[data-member="${memberId}"]`;
+}
+
+/** The skill bar's slot `slot`, from 0 (#3303). */
+export function skillSlot(slot: number): string {
+  return `.hud-skill:nth-child(${String(slot + 1)})`;
+}
+
+/**
+ * Station 6 (playbook §6), in the canyon's clearing: a rock hits the
+ * tutor, which says so, and the player heals it. The tutor's row in the party window
+ * pulses until the tutor is targeted, then the heal's slot, `healSlot`,
+ * does. Done once the player's heal lands on the tutor after a strike
+ * hurt it: a heal before the hit does not count. The first time the
+ * player's energy drops, the tutor names the bar once.
+ */
+export function healStation(tutorId: string, healSlot: number): Station {
+  return {
+    id: "heal",
+    world: "canyon",
+    lines: {
+      intro: "tutorial.heal.intro",
+      hint: "tutorial.heal.hint",
+      praise: "tutorial.heal.praise",
+      how: "tutorial.heal.how",
+      hit: "tutorial.dodge.hit",
+    },
+    keys: ["skill-8"],
+    highlight: (view) => ({
+      kind: "hud",
+      element: view.tutorTargeted ? skillSlot(healSlot) : partyRow(tutorId),
+    }),
+    asides: [
+      { line: "tutorial.heal.ow", when: (view) => view.tutorHit },
+      { line: "tutorial.heal.energy", when: (view) => view.energySpent },
+    ],
+    done: (view) => view.tutorHit && view.healedTutor,
   };
 }

@@ -1,8 +1,15 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1, polygonCentre } from "@vibewars/game-core";
+import { MINIMAL_GW_INSPIRED_PVP_V1, pointInPolygon, polygonCentre } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { CANYON_ARRIVAL } from "./canyon-map.js";
-import { CRACKED_WALL, DODGE_MARK, canyonWorld, wallTutor } from "./canyon-world.js";
+import {
+  CLEARING,
+  CRACKED_WALL,
+  DODGE_MARK,
+  canyonWorld,
+  clearingTutor,
+  wallTutor,
+} from "./canyon-world.js";
 import { DODGE_REACH } from "./dodge-count.js";
 import { MARK_REACH } from "./stations.js";
 import { PLAYER_PROFESSION, SELF_ID, TUTOR_ID, houseBuild } from "./tutorial-world.js";
@@ -94,5 +101,74 @@ describe("wallTutor (#3302)", () => {
       }
     }
     expect(wallHealth(world)).toBe(0);
+  });
+});
+
+describe("clearingTutor (#3303)", () => {
+  const build = houseBuild(PLAYER_PROFESSION);
+
+  it("is hit by the clearing's next strike within 6 s, and not again once east of it", () => {
+    const world = canyonWorld("canyon-test", build, build);
+    const { simulation } = world;
+    const rockfall = world.zones.find(({ id }) => id === CLEARING.zoneId);
+    if (rockfall === undefined) {
+      throw new Error(`no ${CLEARING.zoneId}`);
+    }
+    expect(pointInPolygon(CLEARING.centre, rockfall.polygon)).toBe(true);
+    expect(pointInPolygon(CLEARING.east, rockfall.polygon)).toBe(false);
+    // The wall down first, as station 5 leaves it.
+    simulation.walkTo(SELF_ID, CRACKED_WALL.face, CRACKED_WALL.layer);
+    simulation.walkTo(TUTOR_ID, CRACKED_WALL.besideFace, CRACKED_WALL.layer);
+    let elapsed = 0;
+    const wallHealth = (): number =>
+      simulation.breakables.find(({ id }) => id === CRACKED_WALL.id)?.health ?? 0;
+    for (; elapsed < 120 && wallHealth() > 0; elapsed += TICK) {
+      simulation.step(TICK);
+      simulation.requestAttack(SELF_ID, CRACKED_WALL.targetId);
+      simulation.requestAttack(TUTOR_ID, CRACKED_WALL.targetId);
+    }
+    expect(wallHealth()).toBe(0);
+
+    const tutor = clearingTutor(simulation);
+    const body = () => {
+      const found = simulation.get(TUTOR_ID);
+      if (found === undefined) {
+        throw new Error("no tutor");
+      }
+      return found;
+    };
+    const fromCentre = (): number =>
+      Math.hypot(body().position.x - CLEARING.centre.x, body().position.y - CLEARING.centre.y);
+    for (let walked = 0; walked < 40 && fromCentre() > MARK_REACH; walked += TICK) {
+      simulation.step(TICK);
+      tutor.step(false);
+    }
+    expect(fromCentre()).toBeLessThanOrEqual(MARK_REACH);
+    expect(pointInPolygon(body().position, rockfall.polygon)).toBe(true);
+
+    const before = body().combatant.health;
+    let waited = 0;
+    for (; waited < 6.5 && body().combatant.health >= before; waited += TICK) {
+      simulation.step(TICK);
+      tutor.step(false);
+    }
+    expect(body().combatant.health).toBeLessThan(before);
+
+    let lowest = Number.POSITIVE_INFINITY;
+    for (let after = 0; after < 20; after += TICK) {
+      simulation.step(TICK);
+      tutor.step(true);
+      // Out of the ring by the time it next strikes, 6 s on.
+      if (after > 5) {
+        expect(pointInPolygon(body().position, rockfall.polygon)).toBe(false);
+        expect(body().combatant.health).toBeGreaterThanOrEqual(lowest);
+        lowest = body().combatant.health;
+      } else {
+        lowest = Math.min(lowest, body().combatant.health);
+      }
+    }
+    expect(
+      Math.hypot(body().position.x - CLEARING.east.x, body().position.y - CLEARING.east.y),
+    ).toBeLessThanOrEqual(MARK_REACH);
   });
 });
