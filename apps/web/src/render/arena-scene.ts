@@ -487,6 +487,7 @@ const FLOOR_DEPTH = renderOrder({ kind: "floor" });
 const LIT_GROUND_DEPTH = renderOrder({ kind: "lit-ground-effect" });
 const MAP_DEPTH = renderOrder({ kind: "terrain" });
 const EFFECT_DEPTH = renderOrder({ kind: "effect" });
+const HEALTH_BAR_DEPTH = renderOrder({ kind: "health-bar" });
 const CAST_BADGE_DEPTH = renderOrder({ kind: "cast-badge" });
 const OVERLAY_DEPTH = renderOrder({ kind: "ui" });
 /** Over every world object, names and numbers included. */
@@ -633,6 +634,8 @@ export class ArenaScene extends Phaser.Scene {
   private readonly standing = new Map<string, RenderableActor>();
   /** Every mark on a body, over the body glyphs (#1037). */
   private markGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** Every health bar, over the marks (#3292). */
+  private barGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Energy barriers' curtains (#3031), added over what is behind them. */
   private barrierGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Each breakable wall's last health seen, and when it fell, for its dust (#3031). */
@@ -860,6 +863,7 @@ export class ArenaScene extends Phaser.Scene {
       .setDepth(EFFECT_DEPTH)
       .setBlendMode(Phaser.BlendModes.ADD);
     this.markGraphics = this.add.graphics().setDepth(EFFECT_DEPTH);
+    this.barGraphics = this.add.graphics().setDepth(HEALTH_BAR_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
     this.nameUnderline = this.add.graphics().setDepth(OVERLAY_DEPTH);
     // Made before any shot's sprite, so under every one at their depth.
@@ -879,6 +883,7 @@ export class ArenaScene extends Phaser.Scene {
       bandMarks.clear();
     }
     effects.clear();
+    this.barGraphics?.clear();
     this.barrierGraphics?.clear();
     const { body: g, marks } = floor;
     this.now = time / 1000;
@@ -2003,7 +2008,9 @@ export class ArenaScene extends Phaser.Scene {
       this.drawCallChevron(marks, actor);
     }
 
-    this.drawHealthBar(marks, actor);
+    if (this.barGraphics !== undefined) {
+      this.drawHealthBar(this.barGraphics, actor);
+    }
 
     if (actor.castProgress !== undefined) {
       this.drawCastBar(marks, actor, actor.castProgress);

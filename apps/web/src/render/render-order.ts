@@ -46,6 +46,7 @@ export type RenderItem =
   | { readonly kind: "lift"; readonly upperLayer: number }
   | { readonly kind: "hidden-outline" }
   | { readonly kind: "effect" }
+  | { readonly kind: "health-bar" }
   | { readonly kind: "cast-badge" }
   | { readonly kind: "ui" }
   | { readonly kind: "edge-marker" };
@@ -127,6 +128,8 @@ const RAMP = 5.5;
 const LIFT = 5.6;
 const HIDDEN_OUTLINE = 90;
 const EFFECT = 100;
+/** Health bars, over every hit mark and swing arc so a hit never hides one (#3292). */
+const HEALTH_BAR = 100.25;
 const CAST_BADGE = 100.5;
 const UI = 110;
 const EDGE_MARKER = 120;
@@ -190,6 +193,8 @@ export function renderOrder(item: RenderItem): number {
       return HIDDEN_OUTLINE;
     case "effect":
       return EFFECT;
+    case "health-bar":
+      return HEALTH_BAR;
     case "cast-badge":
       return CAST_BADGE;
     case "ui":

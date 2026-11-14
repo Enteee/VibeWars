@@ -15,7 +15,7 @@ import {
 const character = (band: number): RenderItem => ({ kind: "character", band, part: "body" });
 
 describe("renderOrder (#2810, section 8: 12)", () => {
-  it("runs terrain, ground characters, walls, supports, side faces, decks, elevated characters, effects, UI", () => {
+  it("runs terrain, ground characters, walls, supports, side faces, decks, elevated characters, effects, health bars (#3292), cast badges, UI", () => {
     const items: readonly RenderItem[] = [
       { kind: "terrain" },
       character(0),
@@ -25,6 +25,8 @@ describe("renderOrder (#2810, section 8: 12)", () => {
       { kind: "deck", deckLayer: 1 },
       character(1),
       { kind: "effect" },
+      { kind: "health-bar" },
+      { kind: "cast-badge" },
       { kind: "ui" },
     ];
     const orders = items.map(renderOrder);

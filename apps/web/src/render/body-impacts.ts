@@ -184,8 +184,10 @@ export const IMPACT_REACH = 6;
  * A spiked shape's spikes, from the body's edge: where each starts and
  * ends at the start of the flash, how far both move out by its end, and
  * how they are drawn. A landing and a star reach past the target ring
- * (r + 8), thick and outlined so they read over it in any colour, and
- * leave out the spikes that would point up into the health bar (#3292).
+ * (r + 8), thick and outlined so they read over it in any colour. Of
+ * their twelve spikes round, they keep only those on the free sides,
+ * below and left: none points up into the health bar or right into the
+ * damage number, which starts right of the body and rises (#3292).
  */
 interface SpikeLook {
   readonly inner: number;
@@ -193,15 +195,43 @@ interface SpikeLook {
   readonly grow: readonly [inner: number, outer: number];
   readonly width: number;
   readonly outlined: boolean;
-  readonly clearOfBar: boolean;
+  /** Spikes round the whole body, evenly spaced, before any is left out. */
+  readonly spikes: number;
+  readonly clearOfText: boolean;
 }
 export const SPIKE_LOOK: Readonly<Record<Exclude<ImpactShape, "glow">, SpikeLook>> = {
-  burst: { inner: 1, outer: 3, grow: [2, 3], width: 1.5, outlined: false, clearOfBar: false },
-  landing: { inner: 2, outer: 9, grow: [2, 4], width: 3, outlined: true, clearOfBar: true },
-  star: { inner: -4, outer: 11, grow: [2, 3], width: 3, outlined: true, clearOfBar: true },
+  burst: {
+    inner: 1,
+    outer: 3,
+    grow: [2, 3],
+    width: 1.5,
+    outlined: false,
+    spikes: IMPACT_SPIKES,
+    clearOfText: false,
+  },
+  landing: {
+    inner: 2,
+    outer: 9,
+    grow: [2, 4],
+    width: 3,
+    outlined: true,
+    spikes: 12,
+    clearOfText: true,
+  },
+  star: {
+    inner: -4,
+    outer: 11,
+    grow: [2, 3],
+    width: 3,
+    outlined: true,
+    spikes: 12,
+    clearOfText: true,
+  },
 };
 /** A spike pointing up more steeply than this (sine of its angle, y down) would cross the health bar. */
 const UP_INTO_BAR = -0.7;
+/** A spike pointing right flatter than this (sine, y down) would cross the damage number. */
+const RIGHT_INTO_NUMBER = 0.5;
 const GLOW_TINT_ALPHA = 0.35;
 
 /**
@@ -222,11 +252,14 @@ export function impactMarks(
     const look = SPIKE_LOOK[impact.shape];
     const inner = radius + look.inner + look.grow[0] * progress;
     const outer = radius + look.outer + look.grow[1] * progress;
-    return Array.from({ length: IMPACT_SPIKES }, (_, k) => {
-      const angle = Math.PI / IMPACT_SPIKES + (k * 2 * Math.PI) / IMPACT_SPIKES;
+    return Array.from({ length: look.spikes }, (_, k) => {
+      const angle = Math.PI / look.spikes + (k * 2 * Math.PI) / look.spikes;
       return { cos: Math.cos(angle), sin: Math.sin(angle) };
     })
-      .filter(({ sin }) => !look.clearOfBar || sin >= UP_INTO_BAR)
+      .filter(
+        ({ cos, sin }) =>
+          !look.clearOfText || (sin >= UP_INTO_BAR && (cos <= 0 || sin >= RIGHT_INTO_NUMBER)),
+      )
       .map(({ cos, sin }): ImpactMark => ({
         kind: "spike",
         from: vec2(cos * inner, sin * inner),

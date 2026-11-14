@@ -13,6 +13,7 @@ import {
   mergeImpacts,
   type Impact,
 } from "./body-impacts.js";
+import { ACTOR_RADIUS, FLOATING_TEXT_OFFSET_X, FLOATING_TEXT_OFFSET_Y } from "./arena-snapshot.js";
 
 const DAMAGE = 0xff7b72;
 const CONDITION = 0xffa657;
@@ -246,13 +247,17 @@ describe("impactMarks (#1139)", () => {
     }
   });
 
-  it("reaches a landing and a star past the target ring, thick and outlined, clear of the health bar (#3292)", () => {
+  it("reaches a landing and a star past the target ring, thick and outlined, clear of the health bar and the damage number (#3292)", () => {
     for (const shape of ["landing", "star"] as const) {
       for (const reducedMotion of [false, true]) {
         for (let step = 0; step <= 10; step += 1) {
           const remainingSeconds = (IMPACT_SECONDS * step) / 10;
-          const marks = impactMarks({ ...impact("a", remainingSeconds), shape }, 14, reducedMotion);
-          // 8 round, less the two that would point up into the bar.
+          const marks = impactMarks(
+            { ...impact("a", remainingSeconds), shape },
+            ACTOR_RADIUS,
+            reducedMotion,
+          );
+          // 12 round, less the ones that would point up into the bar or right into the number.
           expect(marks).toHaveLength(6);
           for (const mark of marks) {
             if (mark.kind !== "spike") {
@@ -260,9 +265,15 @@ describe("impactMarks (#1139)", () => {
             }
             const out = Math.hypot(mark.to.x, mark.to.y);
             // Past the target ring at r + 8, and the dashed edge a ward draws.
-            expect(out).toBeGreaterThan(14 + 8);
-            expect(out).toBeLessThanOrEqual(14 + 15);
+            expect(out).toBeGreaterThan(ACTOR_RADIUS + 8);
+            expect(out).toBeLessThanOrEqual(ACTOR_RADIUS + 15);
             expect(mark.to.y / out).toBeGreaterThanOrEqual(-0.7);
+            // The number starts right of the body with its bottom below the centre, and rises.
+            for (let t = 0; t <= 1; t += 0.25) {
+              const x = mark.from.x + t * (mark.to.x - mark.from.x);
+              const y = mark.from.y + t * (mark.to.y - mark.from.y);
+              expect(x < FLOATING_TEXT_OFFSET_X || y > FLOATING_TEXT_OFFSET_Y).toBe(true);
+            }
             expect(mark.width).toBeGreaterThanOrEqual(3);
             expect(mark.outlined).toBe(true);
           }
