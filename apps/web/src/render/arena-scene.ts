@@ -159,6 +159,9 @@ import {
   hexHalo,
   hexHaloCorner,
   hexHaloTurn,
+  CURSE_MARK_SIDES,
+  CURSE_MARK_WIDTH,
+  curseMarkCorner,
   invulnerableAlpha,
   invulnerableRing,
   stanceStreak,
@@ -203,6 +206,23 @@ import {
   type RenderableFlag,
 } from "./flag-objects.js";
 import { goalMarkCommands, goalMarkFade, type GoalMark } from "./goal-mark.js";
+import {
+  GROUND_COLOUR,
+  GROUND_DASH,
+  GROUND_GAP,
+  GROUND_STROKES,
+  GROUND_STROKE_WIDTH,
+  dashedCircle,
+  groundLook,
+  groundMotion,
+  overlapsOf,
+  poolBreath,
+  stackedPoolAlpha,
+  swirl,
+  wisp,
+  type Swirl,
+  type Wisp,
+} from "./ground-effect-look.js";
 import { lyingPose } from "./lying-pose.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
@@ -302,6 +322,7 @@ import type {
   ArenaSnapshot,
   FloatingText,
   RenderableActor,
+  RenderableGroundEffect,
   RenderableWall,
   RenderableShape,
   MapStructure,
@@ -465,6 +486,8 @@ const ATLAS_MAP = "arena-atlas-map";
 /** A ward's icon at its centre (#1087), world units. */
 const GROUND_ICON_SIZE = 22;
 const GROUND_ICON_ALPHA = 0.55;
+/** The owner's side, a dot at the corner of a skill area's icon (#3283). */
+const OWNER_PIP_RADIUS = 1.5;
 
 const HEALTH_BAR_WIDTH = 34;
 const HEALTH_BAR_HEIGHT = 4;
@@ -689,6 +712,8 @@ export class ArenaScene extends Phaser.Scene {
   /** Scratch for the marks a body wears, so a frame allocates none (#3226). */
   private readonly mote: Mote = { x: 0, y: 0, radius: 0, alpha: 0 };
   private readonly streak: Streak = { x1: 0, y1: 0, x2: 0, y2: 0, alpha: 0 };
+  private readonly swirl: Swirl = { radius: 0, from: 0, to: 0, alpha: 0 };
+  private readonly wisp: Wisp = { x: 0, y1: 0, y2: 0, alpha: 0 };
   private readonly corner = { x: 0, y: 0 };
   private readonly nextCorner = { x: 0, y: 0 };
 
@@ -1960,7 +1985,8 @@ export class ArenaScene extends Phaser.Scene {
    * The marks a living body wears (#1117, #3226): the stance band and the
    * enchantment ring at its feet, circular even lying down, with motes
    * rising off the ring and streaks behind a moving stance; the hex halo
-   * over its health bar; and the shimmer of an invulnerable one (#1233).
+   * over its health bar; the curse mark of skill ground (#3283); and the
+   * shimmer of an invulnerable one (#1233).
    */
   private drawBodyRings(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
     const { x, y } = actor.position;
@@ -2001,6 +2027,16 @@ export class ArenaScene extends Phaser.Scene {
         hexHaloCorner(halo, turn, side, corner);
         hexHaloCorner(halo, turn, side + 1, nextCorner);
         g.lineBetween(x + corner.x, y + corner.y, x + nextCorner.x, y + nextCorner.y);
+      }
+    }
+    // Stands in skill ground that can hurt it (#3283): one mark, however
+    // many areas.
+    if (actor.cursed) {
+      g.lineStyle(CURSE_MARK_WIDTH, HEX_COLOUR, 1);
+      for (let side = 0; side < CURSE_MARK_SIDES; side += 1) {
+        const from = curseMarkCorner(actor.radius, side);
+        const to = curseMarkCorner(actor.radius, side + 1);
+        g.lineBetween(x + from.x, y + from.y, x + to.x, y + to.y);
       }
     }
   }
@@ -2433,8 +2469,10 @@ export class ArenaScene extends Phaser.Scene {
       deck.clear();
     }
     const structure = this.snapshot.structure;
+    const clock = this.clock.read(this.now);
+    const effects = this.snapshot.groundEffects;
     const seen = new Set<number>();
-    for (const effect of this.snapshot.groundEffects) {
+    for (const effect of effects) {
       seen.add(effect.id);
       // A ward on a deck (#2979) draws flat at that deck's height, on its
       // own layer's graphics: over the deck, under whoever stands there.
@@ -2446,12 +2484,7 @@ export class ArenaScene extends Phaser.Scene {
       const y = onDeck
         ? effect.position.y - liftAt(structure, this.snapshot.lifts, effect.position, effect.layer)
         : effect.position.y - elevationOf(effect.layer, structure.ground);
-      if (effect.filled) {
-        drawn.fillStyle(effect.colour, 0.15);
-        drawn.fillCircle(x, y, effect.radius);
-      }
-      drawn.lineStyle(1.5, effect.colour, 0.6);
-      drawn.strokeCircle(x, y, effect.radius);
+      this.drawGroundEffect(drawn, effect, x, y, clock, overlapsOf(effect, effects));
       const frame = groundFrame(effect.skillId);
       if (!this.textures.get(ATLAS).has(frame)) {
         continue;
@@ -2479,6 +2512,58 @@ export class ArenaScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  /**
+   * One skill area (#3283) at (`x`, `y`): a violet pool, under an edge
+   * dashed where it can hurt your side and solid where it cannot, wide
+   * as it lands and thin as it ends; a storm's swirls or a well's wisps
+   * inside; the owner's pip at the icon's corner.
+   */
+  private drawGroundEffect(
+    g: Phaser.GameObjects.Graphics,
+    effect: RenderableGroundEffect,
+    x: number,
+    y: number,
+    clock: number,
+    overlaps: number,
+  ): void {
+    const remaining = effect.endsAt - clock;
+    const look = groundLook({
+      dashed: effect.dashed,
+      age: effect.durationSeconds - remaining,
+      remaining,
+    });
+    const phase = cuePhase(String(effect.id));
+    const breath = poolBreath(this.now, phase, this.reducedMotion);
+    g.fillStyle(GROUND_COLOUR, stackedPoolAlpha(look.poolAlpha * breath, overlaps));
+    g.fillCircle(x, y, effect.radius);
+    g.lineStyle(look.edgeWidth, GROUND_COLOUR, look.edgeAlpha);
+    if (look.dashed) {
+      for (const arc of dashedCircle(effect.radius, GROUND_DASH, GROUND_GAP)) {
+        g.beginPath();
+        g.arc(x, y, effect.radius, arc.from, arc.to);
+        g.strokePath();
+      }
+    } else {
+      g.strokeCircle(x, y, effect.radius);
+    }
+    const motion = groundMotion(effect.skillId);
+    for (let index = 0; motion !== undefined && index < GROUND_STROKES; index += 1) {
+      if (motion === "swirl") {
+        const s = swirl(effect.radius, index, this.now, phase, this.reducedMotion, this.swirl);
+        g.lineStyle(GROUND_STROKE_WIDTH, GROUND_COLOUR, s.alpha);
+        g.beginPath();
+        g.arc(x, y, s.radius, s.from, s.to);
+        g.strokePath();
+      } else {
+        const w = wisp(effect.radius, index, this.now, phase, this.reducedMotion, this.wisp);
+        g.lineStyle(GROUND_STROKE_WIDTH, GROUND_COLOUR, w.alpha);
+        g.lineBetween(x + w.x, y + w.y1, x + w.x, y + w.y2);
+      }
+    }
+    g.fillStyle(teamColour(effect.owner), 1);
+    g.fillCircle(x + GROUND_ICON_SIZE / 2, y - GROUND_ICON_SIZE / 2, OWNER_PIP_RADIUS);
   }
 
   /** The graphics the wards on `layer`'s decks draw to, made the first time one does. */

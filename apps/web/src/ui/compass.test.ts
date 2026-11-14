@@ -60,6 +60,7 @@ function actor(
     stanced: false,
     hexed: false,
     formed: false,
+    cursed: false,
     invulnerable: false,
     teleportReadyAt: 0,
     conditionCues: [],

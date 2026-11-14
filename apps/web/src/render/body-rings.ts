@@ -314,3 +314,22 @@ export function invulnerableAlpha(nowSeconds: number, reducedMotion: boolean): n
   const phase = (nowSeconds / INVULNERABLE_PULSE_SECONDS) * 2 * Math.PI;
   return INVULNERABLE_MIN_ALPHA + ((1 - INVULNERABLE_MIN_ALPHA) * (1 + Math.cos(phase))) / 2;
 }
+
+/** The curse mark's sides: three of a small hexagon, the hex halo's language (#3283). */
+export const CURSE_MARK_SIDES = 3;
+/** Corner to centre of the curse mark's hexagon, world units. */
+export const CURSE_MARK_SIZE = 5;
+export const CURSE_MARK_WIDTH = 2;
+
+/**
+ * Corner `corner` of the curse mark worn by a body of `radius`, from its
+ * centre: a hexagon's upper half, at its feet beside the ring, low right.
+ * It does not turn: it says where the body stands, not what it wears.
+ */
+export function curseMarkCorner(radius: number, corner: number): { x: number; y: number } {
+  const angle = Math.PI + (corner * 2 * Math.PI) / 6;
+  return {
+    x: radius * 0.95 + Math.cos(angle) * CURSE_MARK_SIZE,
+    y: radius * 0.75 + Math.sin(angle) * CURSE_MARK_SIZE,
+  };
+}

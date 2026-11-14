@@ -176,14 +176,14 @@ function actor(
     stanced: false,
     hexed: false,
     formed: false,
+    cursed: false,
     invulnerable: false,
     teleportReadyAt: 0,
     conditionCues: [],
     ...overrides,
   };
 }
-
-describe("toRenderableGroundEffect (#1087)", () => {
+describe("toRenderableGroundEffect (#1087, #3283)", () => {
   const ward = {
     id: 4,
     skillId: "elementalist.ward-against-melee",
@@ -195,26 +195,33 @@ describe("toRenderableGroundEffect (#1087)", () => {
     endsAt: 19,
     durationSeconds: 17,
   };
+  const well = { ...ward, skillId: "necromancer.well-of-darkness" };
 
-  it("draws a ward where it was placed, at its radius, with its skill", () => {
-    expect(toRenderableGroundEffect(ward, 1, "ward")).toEqual({
+  it("draws a ward where it was placed, at its radius, with its skill and its reach", () => {
+    expect(toRenderableGroundEffect(ward, 1)).toEqual({
       id: 4,
       skillId: "elementalist.ward-against-melee",
       position: { x: 120, y: 80 },
       layer: 1,
       radius: 109,
-      colour: teamColour("ally"),
-      filled: true,
+      reach: "allies",
+      owner: "ally",
+      dashed: false,
+      endsAt: 19,
+      durationSeconds: 17,
     });
   });
 
-  it("colours a ward by side: yours as an ally's, any other team's as a foe's", () => {
-    expect(toRenderableGroundEffect(ward, 0, "ward").colour).toBe(teamColour("enemy"));
-    expect(toRenderableGroundEffect(ward, undefined, "ward").colour).toBe(teamColour("enemy"));
+  it("dashes what can hurt your side: a foe's well, not yours, nor a foe's ward", () => {
+    expect(toRenderableGroundEffect(well, 0).dashed).toBe(true);
+    expect(toRenderableGroundEffect(well, 0).owner).toBe("enemy");
+    expect(toRenderableGroundEffect(well, 1).dashed).toBe(false);
+    expect(toRenderableGroundEffect(ward, 0).dashed).toBe(false);
   });
 
-  it("draws a trap as its outline alone (#1105)", () => {
-    expect(toRenderableGroundEffect(ward, 1, "trap").filled).toBe(false);
+  it("shows a watcher the skill's own reach", () => {
+    expect(toRenderableGroundEffect(well, undefined).dashed).toBe(true);
+    expect(toRenderableGroundEffect(ward, undefined).dashed).toBe(false);
   });
 });
 

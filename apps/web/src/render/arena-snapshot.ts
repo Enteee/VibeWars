@@ -1,6 +1,8 @@
 import {
   Vec,
+  groundReach,
   type CreatureLook,
+  type GroundReach,
   type LiftPhase,
   type OffhandId,
   type ProfessionId,
@@ -48,6 +50,7 @@ import type {
 } from "./flag-objects.js";
 import { switchAtPoint } from "./flag-objects.js";
 import type { GoalMark } from "./goal-mark.js";
+import { harmsViewer } from "./ground-effect-look.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { liftAt } from "./layer-surfaces.js";
@@ -130,6 +133,11 @@ export interface RenderableActor {
    * and it wears an ash cape and a cold aura; never a corpse.
    */
   readonly formed: boolean;
+  /**
+   * Stands in skill ground that can hurt it and the viewer's side (#3283):
+   * a small curse mark at its feet; never a corpse.
+   */
+  readonly cursed: boolean;
   /** Shimmers, a shrine raise's invulnerability (#1233); never a corpse. */
   readonly invulnerable: boolean;
   /** The match clock (`clock`) from which it may take a teleport again (#3030); 0 if it never took one. */
@@ -492,9 +500,8 @@ export function beaconBoltPoints(bolt: Pick<BeaconBolt, "id" | "from" | "to">): 
 }
 
 /**
- * A ward or a trap on the ground (#1087, #1105): a circle in its side's
- * colour, its skill's icon at the centre. A ward's is a translucent
- * disc; a trap's, its outline alone.
+ * Skill-made ground (#1087, #1105, #3283): a ward, a well, a storm or a
+ * trap, in violet whoever owns it, its skill's icon at the centre.
  */
 export interface RenderableGroundEffect {
   readonly id: number;
@@ -503,28 +510,38 @@ export interface RenderableGroundEffect {
   /** The layer it lies on (ADR-0051): drawn on that layer's deck. */
   readonly layer: number;
   readonly radius: number;
-  readonly colour: number;
-  readonly filled: boolean;
+  /** Whom it reaches, relative to its owner. */
+  readonly reach: GroundReach;
+  /** Its owner's side, as the viewer reads it: the owner pip's colour. */
+  readonly owner: "ally" | "enemy" | "third";
+  /** It can hurt the viewer's side (`harmsViewer`): a dashed edge. */
+  readonly dashed: boolean;
+  /** The match clock it ends at, and how long it lasts in all. */
+  readonly endsAt: number;
+  readonly durationSeconds: number;
 }
 
 /**
- * `effect` as the arena draws it, for a viewer on `selfTeam`: an ally's in
- * the ally colour, any other's in the enemy's; `kind` says which list it
- * came in.
+ * `effect` as the arena draws it, for a viewer on `selfTeam`, or a
+ * watcher, who reads sides as team 0's (`toArenaSnapshot`).
  */
 export function toRenderableGroundEffect(
   effect: GroundEffectSnapshot,
   selfTeam: number | undefined,
-  kind: "ward" | "trap",
 ): RenderableGroundEffect {
+  const reach = groundReach(effect.skillId);
+  const owner = teamSide(effect.team, selfTeam ?? 0);
   return {
     id: effect.id,
     skillId: effect.skillId,
     position: { x: effect.x, y: effect.y },
     layer: effect.layer,
     radius: effect.radius,
-    colour: teamColour(selfTeam === undefined ? "enemy" : teamSide(effect.team, selfTeam)),
-    filled: kind === "ward",
+    reach,
+    owner,
+    dashed: harmsViewer(reach, owner, selfTeam === undefined),
+    endsAt: effect.endsAt,
+    durationSeconds: effect.durationSeconds,
   };
 }
 

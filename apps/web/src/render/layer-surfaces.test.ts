@@ -409,6 +409,7 @@ describe("clicking a character on a layered map (#2831)", () => {
     stanced: false,
     hexed: false,
     formed: false,
+    cursed: false,
     invulnerable: false,
     teleportReadyAt: 0,
     conditionCues: [],

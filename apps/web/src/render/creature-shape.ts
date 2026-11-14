@@ -1,5 +1,6 @@
 import type { CreatureLook } from "@vibewars/game-core";
 
+import { dashedCircle } from "./ground-effect-look.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
@@ -155,14 +156,6 @@ function star(x: number, y: number, n: number, outer: number, inner: number): Po
   });
 }
 
-/** The arcs of a dashed circle of radius `r`: `dash` long, `gap` apart, as near as whole. */
-function dashedArcs(r: number, dash: number, gap: number): { from: number; to: number }[] {
-  const count = Math.max(1, Math.round((2 * Math.PI * r) / (dash + gap)));
-  const step = (2 * Math.PI) / count;
-  const drawn = (step * dash) / (dash + gap);
-  return Array.from({ length: count }, (_, k) => ({ from: k * step, to: k * step + drawn }));
-}
-
 /** A ring of radius `radius` round (`x`, `y`). */
 function ring(
   x: number,
@@ -227,7 +220,7 @@ export function creatureOrnament(
       ];
     case "spirit":
       return [
-        ring(x, y, r * 1.5, "team", 1.6, dashedArcs(r * 1.5, r * SPIRIT_DASH, r * SPIRIT_GAP)),
+        ring(x, y, r * 1.5, "team", 1.6, dashedCircle(r * 1.5, r * SPIRIT_DASH, r * SPIRIT_GAP)),
       ];
     case "priest":
       return [ring(x, y, r * 1.45, "ink", 1.6)];
