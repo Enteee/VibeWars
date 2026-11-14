@@ -206,11 +206,11 @@ not stand for.
 
 A layered map's frame cost in software GL, as a ratio to a frozen
 reference map drawn the same way on the same run. CI gates it at
-`BENCH_MAX_RATIO=2.2` on pull requests that touch the renderer or the
+`BENCH_MAX_RATIO=2.7` on pull requests that touch the renderer or the
 maps (#3157, #3190, #3243, #3255).
 
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
-synthetic medium arena in the real map schema: three layers, walls, two decks
+synthetic medium arena in the real map schema: three layers, walls, six decks
 and a ramp, a pit with a tunnel, lights and a zone. Only the bench's build
 (`VIBEWARS_BENCH_REFERENCE=1`) offers it in the lobby, and it is
 drawn through the menu background like any map, so whatever bounds a
@@ -220,23 +220,29 @@ same pull request.
 
 **The gate** was 3.5 against a reference that measured 38 to 82 ms; on a
 fast runner the calibration landed on the 30 fps beat (31.7-34.3 ms) and the
-cap guard failed the job (#3285). The reference now has a second deck, 27
-lights, 12 zones and 6 more walls, and measures 52 to 105 ms on the CI
-runners: every calibration window of five runs on one head is over 50 ms, far
-over the guard. Five runs on one head (reference p50 in ms: 88, 52, 87, 54,
-105):
+cap guard failed the job (#3285). The reference now has 6 decks with their
+stairs, 14 walls, 10 lights and 3 zones of different kinds: it grew mostly in
+decks, walls and transitions, so the lights and zones stay in the maps' mix.
+It measures 46 to 97 ms on the CI runners, and every calibration window of
+five runs on one head is over 40 ms, well over the guard. Five runs (reference
+p50 in ms: 95, 46, 97, 71, 71):
 
-| map              | ratios                       | median | before (median) |
-| ---------------- | ---------------------------- | ------ | --------------- |
-| arena-canyon     | 0.98, 1.04, 0.89, 1.04, 0.98 | 0.98   | 1.67            |
-| arena-crossroads | 1.18, 1.15, 1.18, 1.30, 1.15 | 1.18   | 2.29            |
-| arena-long-hall  | 1.61, 1.95, 1.63, 1.87, 1.66 | 1.66   | 2.71            |
+| map              | ratios                       | median | before (median) | factor |
+| ---------------- | ---------------------------- | ------ | --------------- | ------ |
+| arena-canyon     | 1.12, 1.14, 1.09, 1.04, 1.01 | 1.09   | 1.67            | 0.65   |
+| arena-crossroads | 1.47, 1.28, 1.50, 1.45, 1.23 | 1.45   | 2.29            | 0.63   |
+| arena-long-hall  | 2.26, 2.00, 2.16, 2.19, 1.97 | 2.16   | 3.12            | 0.69   |
 
-The ratios fell by 0.52 to 0.64 (the reference grew about 1.6-1.9× against the
-maps; long-hall's old figure is after #3254). The gate is re-scaled by the
-smaller of those, 3.5 × 0.64 → 2.2, so the closest map keeps the same
-headroom as before (long-hall 2.2 / 1.74 = 1.26, was 3.5 / 2.71 = 1.29) and
-the highest ratio seen, 1.95, passes.
+Medians throughout. Each ratio is its old median × 0.65 within 6 % (1.09 vs
+1.09, 1.49 vs 1.45, 2.03 vs 2.16). Within a map the runs stay within -15 % /
++5 % of the median, crossroads' two low runs (1.23, 1.28) being the edge.
+The "before" long-hall is its pre-#3254 median; #3254 has since taken it to
+2.71, which is 1.76 on the new scale.
+
+The gate keeps the closest map's headroom: long-hall at 2.7 / 2.16 = 1.25, as
+at 3.5 / 2.71 = 1.29 after #3254, and its worst run, 2.26, is 16 % under.
+That is looser than the old rule's 1.5 × the highest of canyon and
+crossroads (1.50 × 1.5 → 2.3), which would put long-hall 2 % from failing.
 
 The runner is slow for its first 20-40 s, so the run warms up first: it
 loads the first map, then calibrates for at least 45 s and until two
@@ -250,6 +256,6 @@ near the gate for a known reason, each gated at its own ratio and tied to the pe
 issue that will cut it. None is listed: long-hall's was deleted when its
 issue, #3254, boxed each cluster of flickering lights on its own, which
 took it from 3.24 to 2.71. A listed map that measures at or under the gate ÷ 1.25
-(1.76 at 2.2) fails as stale, so its entry is deleted when its issue
+(2.16 at 2.7) fails as stale, so its entry is deleted when its issue
 lands. The margin keeps a map just under the gate from flaking: long-hall
 measured 2.99-3.45 before #3254.
