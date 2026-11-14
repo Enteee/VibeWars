@@ -1,7 +1,9 @@
-import { AREA_EARSHOT, findStatusDefinition } from "@vibewars/game-core";
+import { AREA_EARSHOT, findStatusDefinition, getSkill, groundReach } from "@vibewars/game-core";
 import type { Vec2 } from "@vibewars/game-core";
 import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
+import { harmsViewer } from "../render/ground-effect-look.js";
+import { teamSide } from "../render/arena-snapshot.js";
 import type { SoundId } from "./sound-ids.js";
 import type { WorldPlaces } from "./world-places.js";
 
@@ -52,11 +54,55 @@ export function soundsForCombat(message: CombatMessage, selfId: string): SoundId
       case "death":
         sounds.push("death");
         break;
+      case "status-applied": {
+        const applied = onMe ? statusCue(event.statusId) : undefined;
+        if (applied !== undefined && !sounds.includes(applied)) {
+          sounds.push(applied);
+        }
+        break;
+      }
       default:
         break;
     }
   }
+  const skillCue = skillTypeCue(message, selfId);
+  if (skillCue !== undefined) {
+    sounds.push(skillCue);
+  }
   return sounds;
+}
+
+/** The cue for a status landing on you: an enchantment, a hex or a stance, nothing else. */
+function statusCue(statusId: string): SoundId | undefined {
+  switch (findStatusDefinition(statusId)?.category) {
+    case "enchantment":
+      return "enchant-on";
+    case "hex":
+      return "hex-on";
+    case "stance":
+      return "stance-on";
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * What the skill's own type adds (#3297): a shout or chant that reaches
+ * you, or a form you take. Once a message, however many it touches.
+ */
+function skillTypeCue(message: CombatMessage, selfId: string): SoundId | undefined {
+  if (message.cause !== "skill" || isTick(message)) {
+    return undefined;
+  }
+  switch (getSkill(message.skillId)?.type) {
+    case "shout":
+    case "chant":
+      return message.events.some((event) => event.targetId === selfId) ? "shout" : undefined;
+    case "form":
+      return message.casterSessionId === selfId ? "form-on" : undefined;
+    default:
+      return undefined;
+  }
 }
 
 /**
@@ -145,6 +191,57 @@ export function soundsForSnapshot(prev: MatchSnapshot | undefined, next: MatchSn
     startedCasting(prev, next, targetId)
   ) {
     sounds.push("cast-target");
+  }
+  return sounds;
+}
+
+/** How close to an area's edge it still warns you, world units. */
+const AREA_WARN_MARGIN = 100;
+/** How far a summoned spirit is heard, world units. */
+const SPIRIT_EARSHOT = 700;
+
+/**
+ * The cues the skills' ground and creatures make between two snapshots
+ * (#3297): `area-warn` when an area that can hurt you (`harmsViewer`)
+ * lands with you inside or within 100 of its edge, and `spirit-up` when
+ * a spirit, either side's, is summoned within 700 of you. Distance is on
+ * the ground, layers ignored. Your own team's areas never warn, and an
+ * area warns once, the snapshot it appears in. Without a `prev`, or a
+ * player of your own, nothing plays.
+ */
+export function soundsForSkillWorld(
+  prev: MatchSnapshot | undefined,
+  next: MatchSnapshot,
+  selfId: string,
+): SoundId[] {
+  const self = playerById(next, selfId);
+  if (prev === undefined || self === undefined) {
+    return [];
+  }
+  const sounds: SoundId[] = [];
+  const known = new Set(prev.groundEffects.map((effect) => effect.id));
+  const warned = next.groundEffects.some((effect) => {
+    const owner = teamSide(effect.team, self.team);
+    return (
+      !known.has(effect.id) &&
+      owner !== "ally" &&
+      harmsViewer(groundReach(effect.skillId), owner, false) &&
+      Math.hypot(effect.x - self.x, effect.y - self.y) <= effect.radius + AREA_WARN_MARGIN
+    );
+  });
+  if (warned) {
+    sounds.push("area-warn");
+  }
+  const before = new Set(prev.players.map((player) => player.sessionId));
+  const summoned = next.players.some(
+    (player) =>
+      player.creature?.kind === "spirit" &&
+      !player.dead &&
+      !before.has(player.sessionId) &&
+      Math.hypot(player.x - self.x, player.y - self.y) <= SPIRIT_EARSHOT,
+  );
+  if (summoned) {
+    sounds.push("spirit-up");
   }
   return sounds;
 }

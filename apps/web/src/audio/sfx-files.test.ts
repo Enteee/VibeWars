@@ -10,7 +10,7 @@ const SFX = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../pu
 
 /** Budgets from #104. */
 const MAX_FILE_BYTES = 10 * 1024;
-const MAX_SET_BYTES = 48 * 1024;
+const MAX_SET_BYTES = 72 * 1024;
 
 // Rendered by `pnpm sfx:render` (#2524); the `.hash` files beside them are its cache.
 describe("public/sfx", () => {

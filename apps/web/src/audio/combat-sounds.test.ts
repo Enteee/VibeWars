@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import type { StatusId } from "@vibewars/game-core";
 import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
 import {
   hitsForCombat,
   soundsForCombat,
+  soundsForSkillWorld,
   soundsForSnapshot,
   soundsForWorld,
 } from "./combat-sounds.js";
@@ -420,5 +422,138 @@ describe("soundsForWorld", () => {
     expect(soundsForWorld(empty, empty, ME, { gates: [], switches: [], breakables: [] })).toEqual(
       [],
     );
+  });
+});
+
+describe("skill-type cues (#3297)", () => {
+  const status = (targetId: string, statusId: StatusId): CombatMessage["events"][number] => ({
+    kind: "status-applied",
+    targetId,
+    statusId,
+    durationSeconds: 10,
+  });
+  const skillMessage = (
+    caster: string,
+    skillId: string,
+    events: CombatMessage["events"],
+  ): CombatMessage => ({ ...message(caster, events), skillId });
+
+  it.each([
+    ["enchant-on", "regeneration"],
+    ["hex-on", "mind-wrack"],
+    ["stance-on", "balanced-stance"],
+  ] as const)("%s plays for a status of its category on you, once a message", (cue, id) => {
+    const msg = message("foe", [status(ME, id), status(ME, id), status("ally", id)]);
+    expect(soundsForCombat(msg, ME)).toEqual([cue]);
+  });
+
+  it("is silent for a status on someone else", () => {
+    expect(soundsForCombat(message("foe", [status("ally", "mind-wrack")]), ME)).toEqual([]);
+  });
+
+  it("is silent for a status tick", () => {
+    const tick: CombatMessage = {
+      ...message("foe", [status(ME, "mind-wrack")]),
+      cause: "degeneration",
+      skillId: "",
+    };
+    expect(soundsForCombat(tick, ME)).toEqual([]);
+  });
+
+  it("shouts when a shout reaches you, once, and not when it misses you", () => {
+    const reach = skillMessage("ally", "paragon.fall-back", [
+      { kind: "heal", targetId: ME, amount: 0 },
+      { kind: "heal", targetId: ME, amount: 0 },
+    ]);
+    const miss = skillMessage("ally", "paragon.fall-back", [
+      { kind: "heal", targetId: "other", amount: 0 },
+    ]);
+    expect(soundsForCombat(reach, ME).filter((id) => id === "shout")).toEqual(["shout"]);
+    expect(soundsForCombat(miss, ME)).toEqual([]);
+  });
+
+  it("plays form-on when you take a form, and not for another's", () => {
+    const events: CombatMessage["events"] = [status(ME, "avatar-of-melandru")];
+    expect(soundsForCombat(skillMessage(ME, "dervish.avatar-of-melandru", events), ME)).toContain(
+      "form-on",
+    );
+    expect(
+      soundsForCombat(skillMessage("foe", "dervish.avatar-of-melandru", events), ME),
+    ).not.toContain("form-on");
+  });
+});
+
+describe("soundsForSkillWorld (#3297)", () => {
+  const effect = (id: number, skillId: string, team: number, x: number, radius = 100) => ({
+    id,
+    skillId,
+    team,
+    x,
+    y: 0,
+    layer: 0,
+    radius,
+    endsAt: 30,
+    durationSeconds: 20,
+  });
+  const world = (
+    groundEffects: MatchSnapshot["groundEffects"],
+    players = [player(ME, { team: 0 })],
+  ): MatchSnapshot => ({ ...snapshot(players), groundEffects });
+  const empty = world([]);
+  const WELL = "necromancer.well-of-suffering";
+
+  it("warns when a foe's harmful area lands on you", () => {
+    expect(soundsForSkillWorld(empty, world([effect(1, WELL, 1, 0)]), ME)).toEqual(["area-warn"]);
+  });
+
+  it("warns within 100 of the edge, not at 150", () => {
+    const near = world([effect(1, WELL, 1, 190)]);
+    const far = world([effect(1, WELL, 1, 250)]);
+    expect(soundsForSkillWorld(empty, near, ME)).toEqual(["area-warn"]);
+    expect(soundsForSkillWorld(empty, far, ME)).toEqual([]);
+  });
+
+  it("is silent for your own team's area, and for a foe's area that only helps foes", () => {
+    expect(soundsForSkillWorld(empty, world([effect(1, WELL, 0, 0)]), ME)).toEqual([]);
+    const ward = "elementalist.ward-against-melee";
+    expect(soundsForSkillWorld(empty, world([effect(1, ward, 1, 0)]), ME)).toEqual([]);
+  });
+
+  it("warns once: the same area in the next snapshot is silent", () => {
+    const landed = world([effect(1, WELL, 1, 0)]);
+    expect(soundsForSkillWorld(landed, world([effect(1, WELL, 1, 0)]), ME)).toEqual([]);
+  });
+
+  it("is silent without a prev", () => {
+    expect(soundsForSkillWorld(undefined, world([effect(1, WELL, 1, 0)]), ME)).toEqual([]);
+  });
+
+  const spirit = (id: string, x: number): PlayerSnapshot =>
+    player(id, {
+      x,
+      team: 1,
+      creature: {
+        ownerId: "foe",
+        kind: "spirit",
+        look: "plain" as never,
+        mode: null,
+        armedAttack: null,
+        leaderId: null,
+      },
+    });
+
+  it("plays spirit-up for a spirit summoned at 699, not at 701", () => {
+    const base = empty;
+    expect(
+      soundsForSkillWorld(base, world([], [player(ME, { team: 0 }), spirit("s", 699)]), ME),
+    ).toEqual(["spirit-up"]);
+    expect(
+      soundsForSkillWorld(base, world([], [player(ME, { team: 0 }), spirit("s", 701)]), ME),
+    ).toEqual([]);
+  });
+
+  it("is silent for a spirit that was already there", () => {
+    const withSpirit = world([], [player(ME, { team: 0 }), spirit("s", 100)]);
+    expect(soundsForSkillWorld(withSpirit, withSpirit, ME)).toEqual([]);
   });
 });

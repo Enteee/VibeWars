@@ -1434,6 +1434,13 @@ concerns you, never the whole arena (#104).
 | `gate-stone`       | a stone gate within 700 moves       | 0.55 s | −10 dBFS | Low, slow grinding rumble, pitchless  |
 | `barrier`          | an energy barrier within 700 moves  | 0.35 s | −13 dBFS | Soft sine hum, rising                 |
 | `wall-crumble`     | a breakable wall within 700 falls   | 0.60 s | −7 dBFS  | Heavy low noise burst into rattles    |
+| `enchant-on`       | an enchantment lands on you         | 0.30 s | −14 dBFS | Soft brass shimmer, two partials      |
+| `hex-on`           | a hex lands on you                  | 0.30 s | −8 dBFS  | Dark detuned low dyad, slow wobble    |
+| `stance-on`        | you enter a stance                  | 0.15 s | −14 dBFS | Tiny bright steel ping, short scrape  |
+| `shout`            | a shout or chant reaches you        | 0.25 s | −12 dBFS | Short airy rising swell, no ticks     |
+| `area-warn`        | a harmful area lands on or near you | 0.35 s | −9 dBFS  | Low violet pulse, falling drone       |
+| `spirit-up`        | a spirit is summoned within 700     | 0.40 s | −13 dBFS | Hollow breathy rising tone            |
+| `form-on`          | you take a form                     | 0.50 s | −10 dBFS | Deep swell, a faint ash crackle       |
 
 Rules:
 
@@ -1445,7 +1452,7 @@ Rules:
   ticks, so the interrupt cue is unmistakable.
 - **Nothing pitched repeats fast.** The hits have almost no pitch, because
   they fire many times a second in a team fight.
-- **Budget:** at most 10 KB each and 48 KB for the set, as mono MP3 at
+- **Budget:** at most 10 KB each and 72 KB for the set (24 cues), as mono MP3 at
   22.05 kHz, 48 kbit/s. MP3 because every browser's Web Audio decodes it.
 - **Exactly one file per id** in `apps/web/src/audio/sound-ids.ts`. An asset
   nobody plays is dead weight.
