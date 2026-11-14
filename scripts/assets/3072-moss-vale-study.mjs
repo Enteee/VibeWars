@@ -73,7 +73,7 @@ const east = ([x, y]) => {
     myp + ((x * 3) % 90) - 30 + (y > 1500 ? 60 : 0) - (y < 500 ? 40 : 0),
   ];
 };
-/** The valley is NOT mirrored: only the spine (pool, race, drawbridge, mill) is on the axis. Mirror west-east: the same shape for both teams. */
+/** The valley is NOT mirrored: only the spine (pool, race, drawbridge, mill) is on the axis; `mx` mirrors a point west-east so each side can start from the other and then be bent by hand. */
 /** @type {(p: Pt) => Pt} */
 const mx = ([x, y]) => [MW - x, y];
 /** @type {(r: Pt[]) => Pt[]} */
