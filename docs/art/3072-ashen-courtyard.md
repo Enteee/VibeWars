@@ -30,9 +30,9 @@ the place (a burned castle courtyard) is kept.
   tower ends drop to the walk.
 - **Elements:** two brass **levers**, one on each side wall-walk, at (235,1200) and (2965,1300), each work the **portcullis**
   in the gatehouse passage at (1600,2150) (shut = the barbican is sealed, open = a way round the south
-  walk). Two **breakable fallen-timber walls**, at x=860 (400 long) and x=2124 (300 long, y 900..1200), across each team's yard
+  walk). Two **breakable fallen-timber walls**, at x=860 (400 long) and x=2124 (240 long, y 980..1220), across each team's yard
   between its spawn and the pit: the yard has an exit north and south, and breaking the wall opens
-  the straight way to the pit (1000 u, 5.6 s). Zone kinds (`ZONE_KINDS`): `scorched` (four char patches, two near the north, two south)
+  the straight way to the pit (901 u, 5.0 s for T1; 830 u, 4.6 s for T2). Zone kinds (`ZONE_KINDS`): `scorched` (four char patches, two near the north, two south)
   and `vent` (two, one each side; the smoke over them is atmosphere, not a zone). Two lean-to overhangs of charred rafters on the north
   wall, different widths and places on each side. The pit, the stairs, the walls and the spawns are all off the mirror axis. Embers: warm lights on the two biggest char patches.
 - **Light:** the **Day** row (visual-style §2): sun from the NW, 50°, `#fff1d6` 0.55, ambient
@@ -43,15 +43,15 @@ the place (a burned castle courtyard) is kept.
 
 ## Routes and balance (base speed 180 u/s)
 
-Spawns: four seats a side in the west and east yard (T1 around (550,1200), T2 around (2350,1130), nearer the pit since the pit sits west of centre).
+Spawns: four seats a side in the west and east yard (T1 around (550,1200), T2 around (2270,1120), nearer the pit since the pit sits west of centre).
 The centre is the well court, (1450,1250).
 
 | Route                                                                        | Length        | Walk                    |
 | ---------------------------------------------------------------------------- | ------------- | ----------------------- |
 | round the timber wall to the pit ramp (walls up)                             | 1179 / 1293 u | 6.5 / 7.2 s (T1 / T2)   |
-| wall-walk (north stair, along the walk, centre stair down, south to the pit) | 2388 / 2602 u | 13.3 / 14.5 s (T1 / T2) |
+| wall-walk (north stair, along the walk, centre stair down, south to the pit) | 2388 / 2601 u | 13.3 / 14.4 s (T1 / T2) |
 
-The teams are within 9 % of each other on both, the east the longer: the build card must bench it. The wall-walk is the long way on purpose: it is the
+The teams are within 9 % of each other on both, the east the longer on the wall-walk, shorter on the straight way: the build card must bench it. The wall-walk is the long way on purpose: it is the
 high-ground flank, and the lever and the breakable wall decide how soon a team commits to it.
 High ground within half the map of either spawn is its own half of the wall-walk plus its two towers,
 of unequal area (the west keeps the bigger tower); the two halves meet at the north walk's centre stair, so neither side owns a tower the

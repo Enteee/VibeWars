@@ -128,7 +128,7 @@ const LEVER = [235, 1200];
 /** @type {Pt} */
 const LEVER2 = [2965, 1300]; // the same portcullis, worked from the east wall-walk too
 // fallen-timber walls: breakable, a team's yard has two exits north and south
-const BARRICADES = [rect(860, 1000, 26, 400), rect(2124, 900, 26, 300)];
+const BARRICADES = [rect(860, 1000, 26, 400), rect(2124, 980, 26, 240)];
 // lean-to overhangs of charred rafters along the north wall (different on each side)
 const OVERHANGS = [rect(900, 440, 420, 120), rect(1700, 440, 280, 120)];
 /** @type {{ cx: number; cy: number; rx: number; ry: number }[]} */
@@ -152,10 +152,10 @@ const SPAWNS = {
     [640, 1300],
   ],
   t2: [
-    [2420, 880],
-    [2480, 1230],
-    [2290, 1030],
-    [2330, 1370],
+    [2340, 870],
+    [2400, 1220],
+    [2220, 1030],
+    [2250, 1370],
   ],
 };
 /** @type {{ p: Pt; col: string; r: number }[]} */
@@ -202,8 +202,9 @@ const ROUTES = {
     [
       "round the timber wall",
       [
-        [2350, 1130],
-        [2160, 860],
+        [2270, 1120],
+        [2160, 930],
+        [2080, 950],
         [2060, 960],
         [1990, 1230],
         [1910, 1250],
@@ -213,7 +214,7 @@ const ROUTES = {
     [
       "wall-walk",
       [
-        [2350, 1130],
+        [2270, 1120],
         [2370, 560],
         [2370, 380],
         [1450, 320],
