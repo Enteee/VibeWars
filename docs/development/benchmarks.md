@@ -210,7 +210,7 @@ reference map drawn the same way on the same run. CI gates it at
 maps (#3157, #3190, #3243, #3255).
 
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
-synthetic medium arena in the real map schema: three layers, walls, six decks
+synthetic medium arena in the real map schema: three layers, walls, three decks
 and a ramp, a pit with a tunnel, lights and a zone. Only the bench's build
 (`VIBEWARS_BENCH_REFERENCE=1`) offers it in the lobby, and it is
 drawn through the menu background like any map, so whatever bounds a
@@ -220,29 +220,30 @@ same pull request.
 
 **The gate** was 3.5 against a reference that measured 38 to 82 ms; on a
 fast runner the calibration landed on the 30 fps beat (31.7-34.3 ms) and the
-cap guard failed the job (#3285). The reference now has 6 decks with their
+cap guard failed the job (#3285). The reference now has 3 decks with their
 stairs, 14 walls, 10 lights and 3 zones of different kinds: it grew mostly in
-decks, walls and transitions, so the lights and zones stay in the maps' mix.
-It measures 46 to 97 ms on the CI runners, and every calibration window of
-five runs on one head is over 40 ms, well over the guard. Five runs (reference
-p50 in ms: 95, 46, 97, 71, 71):
+walls, decks and transitions, so the lights and zones stay in the maps' mix.
+(Six decks were tried: its calibration windows oscillated 92 / 103 ms on the
+slower runners and the warm-up failed once, so there are three.) It measures
+68 to 87 ms on the CI runners; every calibration window of five runs on one
+head is over 65 ms, well over the guard. Five runs (reference p50 in ms: 68,
+69, 87, 68, 70):
 
 | map              | ratios                       | median | before (median) | factor |
 | ---------------- | ---------------------------- | ------ | --------------- | ------ |
-| arena-canyon     | 1.12, 1.14, 1.09, 1.04, 1.01 | 1.09   | 1.67            | 0.65   |
-| arena-crossroads | 1.47, 1.28, 1.50, 1.45, 1.23 | 1.45   | 2.29            | 0.63   |
-| arena-long-hall  | 2.26, 2.00, 2.16, 2.19, 1.97 | 2.16   | 3.12            | 0.69   |
+| arena-canyon     | 1.14, 1.26, 1.20, 1.12, 1.25 | 1.20   | 1.67            | 0.72   |
+| arena-crossroads | 1.51, 1.50, 1.59, 1.54, 1.49 | 1.51   | 2.29            | 0.66   |
+| arena-long-hall  | 2.05, 2.07, 2.40, 2.05, 2.24 | 2.07   | 3.12            | 0.66   |
 
-Medians throughout. Each ratio is its old median × 0.65 within 6 % (1.09 vs
-1.09, 1.49 vs 1.45, 2.03 vs 2.16). Within a map the runs stay within -15 % /
-+5 % of the median, crossroads' two low runs (1.23, 1.28) being the edge.
-The "before" long-hall is its pre-#3254 median; #3254 has since taken it to
-2.71, which is 1.76 on the new scale.
+Medians throughout; "before" is the old five-run table. Each new median is the
+old one × the factor, 0.66-0.72 (old × 0.68 gives 1.14, 1.56, 2.12). Within a
+map the runs stay within -7 % / +5 % of the median, except long-hall's 2.40,
++16 %, on the slowest runner (reference 87 ms).
 
-The gate keeps the closest map's headroom: long-hall at 2.7 / 2.16 = 1.25, as
-at 3.5 / 2.71 = 1.29 after #3254, and its worst run, 2.26, is 16 % under.
-That is looser than the old rule's 1.5 × the highest of canyon and
-crossroads (1.50 × 1.5 → 2.3), which would put long-hall 2 % from failing.
+The gate keeps the headroom of long-hall, the map nearest it: after #3254 it
+measured 2.71 against 3.5, a factor of 1.29, and 2.07 × 1.29 = 2.67, so 2.7.
+Its worst run, 2.40, is 11 % under. The old rule (1.5 × the highest of canyon
+and crossroads, 1.59 → 2.4) would put that run on the gate.
 
 The runner is slow for its first 20-40 s, so the run warms up first: it
 loads the first map, then calibrates for at least 45 s and until two
