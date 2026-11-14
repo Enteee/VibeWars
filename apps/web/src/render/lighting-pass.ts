@@ -314,7 +314,7 @@ export function lightMapCover(
     }));
   if (layer === structure.ground) {
     const decks = deckCovers(structure, walls, renderOrder({ kind: "lighting", layer })).map(inMap);
-    const tunnels = tunnelLightCover(structure, extent).map(({ box }) => box);
+    const tunnels = tunnelLightCover(structure, extent).flatMap(({ boxes }) => boxes);
     return coverBoxes(
       extent.width,
       extent.height,
@@ -333,21 +333,28 @@ export function lightMapCover(
  * The ground's light map over each tunnel's cover (#3329), in its own
  * pixels: shown on its own, so it fades as the cover is cut away, and the
  * ground's light never falls on the tunnel's floor under it. Its edges are
- * rounded to whole pixels, as `lightMapCover` cuts them out.
+ * rounded to whole pixels, as `lightMapCover` cuts them out. Where covers
+ * overlap, at a junction, the earlier tunnel owns the shared corner, so
+ * the light there is multiplied in once, not twice.
  */
 export function tunnelLightCover(
   structure: MapStructure,
   extent: LightMapBox,
-): readonly { readonly tunnel: number; readonly box: LightMapBox }[] {
+): readonly { readonly tunnel: number; readonly boxes: readonly LightMapBox[] }[] {
+  const owned: LightMapBox[] = [];
   return structure.tunnels.flatMap((tunnel, at) => {
     const cover = tunnelCoverBox(structure, tunnel);
     const left = Math.max(0, Math.round(cover.left * LIGHT_MAP_SCALE) - extent.x);
     const top = Math.max(0, Math.round(cover.top * LIGHT_MAP_SCALE) - extent.y);
     const right = Math.min(extent.width, Math.round(cover.right * LIGHT_MAP_SCALE) - extent.x);
     const bottom = Math.min(extent.height, Math.round(cover.bottom * LIGHT_MAP_SCALE) - extent.y);
-    return right > left && bottom > top
-      ? [{ tunnel: at, box: { x: left, y: top, width: right - left, height: bottom - top } }]
-      : [];
+    if (right <= left || bottom <= top) {
+      return [];
+    }
+    const box = { x: left, y: top, width: right - left, height: bottom - top };
+    const boxes = boxesWithout(box, owned);
+    owned.push(box);
+    return boxes.length > 0 ? [{ tunnel: at, boxes }] : [];
   });
 }
 
@@ -448,8 +455,8 @@ interface LayerMap {
   readonly shown: Phaser.Textures.DynamicTexture;
   /** The map shown, one image per box of it a surface is in (#3162). */
   readonly images: readonly Phaser.GameObjects.Image[];
-  /** Of the ground's, the image over each tunnel's cover, by tunnel (#3329). */
-  readonly tunnels: ReadonlyMap<number, Phaser.GameObjects.Image>;
+  /** Of the ground's, the images over each tunnel's cover, by tunnel (#3329). */
+  readonly tunnels: ReadonlyMap<number, readonly Phaser.GameObjects.Image[]>;
   readonly outsideKey: string | undefined;
   /** What of the arena it covers, in light map pixels. */
   readonly extent: LightMapBox;
@@ -535,7 +542,9 @@ export class LightingPass {
    */
   public fadeTunnel(at: number, alpha: number): void {
     for (const map of this.layers) {
-      map.tunnels.get(at)?.setAlpha(alpha);
+      for (const image of map.tunnels.get(at) ?? []) {
+        image.setAlpha(alpha);
+      }
     }
   }
 
@@ -692,7 +701,7 @@ export class LightingPass {
     // The ground's light over a tunnel fades with its cover (#3329).
     const tunnels = new Map(
       layer === structure.ground
-        ? tunnelLightCover(structure, extent).map(({ tunnel, box }) => [tunnel, image(box)])
+        ? tunnelLightCover(structure, extent).map(({ tunnel, boxes }) => [tunnel, boxes.map(image)])
         : [],
     );
     const map: LayerMap = {
@@ -701,7 +710,7 @@ export class LightingPass {
       base,
       shownKey,
       shown,
-      images: [...images, ...tunnels.values()],
+      images: [...images, ...[...tunnels.values()].flat()],
       tunnels,
       outsideKey,
       extent,

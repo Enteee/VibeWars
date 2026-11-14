@@ -27,6 +27,7 @@ import {
   stageShadows,
   sunShadowTint,
   tunnelLightCover,
+  type LightMapBox,
 } from "./lighting-pass.js";
 import { shapeOutline } from "./layer-surfaces.js";
 import { ELEVATION_STEP } from "./render-order.js";
@@ -326,28 +327,48 @@ describe("layerSurfaces", () => {
     };
     const extent = lightMapExtent(tunnelled, 1, 1200, 800);
     const [own] = tunnelLightCover(tunnelled, extent);
+    const meets = (a: LightMapBox, b: LightMapBox): boolean =>
+      a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    const area = (boxes: readonly LightMapBox[]): number =>
+      boxes.reduce((sum, { width, height }) => sum + width * height, 0);
 
     it("gives the ground's light over a tunnel's cover an image of its own, to fade with it", () => {
       // The footprint and the step south of it, in light map pixels.
       expect(own).toEqual({
         tunnel: 0,
-        box: { x: 100, y: 300, width: 200, height: (80 + ELEVATION_STEP) / 2 },
+        boxes: [{ x: 100, y: 300, width: 200, height: (80 + ELEVATION_STEP) / 2 }],
       });
       // The rest of the ground's map never lies over it, so the tunnel's
       // floor is not dimmed by the ground's light once the cover is cut away.
       const cover = lightMapCover(tunnelled, [], 1, extent);
-      const meets = (
-        a: { x: number; y: number; width: number; height: number },
-        b: { x: number; y: number; width: number; height: number },
-      ): boolean =>
-        a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-      expect(cover.some((box) => own !== undefined && meets(box, own.box))).toBe(false);
+      const owned = own?.boxes ?? [];
+      expect(cover.some((box) => owned.some((other) => meets(box, other)))).toBe(false);
       // Together they still cover the whole ground.
-      const area = [...cover, ...(own === undefined ? [] : [own.box])].reduce(
-        (sum, { width, height }) => sum + width * height,
-        0,
+      expect(area([...cover, ...owned])).toBe(extent.width * extent.height);
+    });
+
+    it("lights the corner where two tunnels' covers cross once, with the earlier tunnel's", () => {
+      const crossed: MapStructure = {
+        ...tunnelled,
+        tunnels: [
+          { footprint: tunnel },
+          { footprint: { ...tunnel, x: 500, y: 400, width: 80, height: 400 } },
+        ],
+      };
+      const crossing = lightMapExtent(crossed, 1, 1200, 800);
+      const covers = tunnelLightCover(crossed, crossing);
+      expect(covers.map(({ tunnel: at }) => at)).toEqual([0, 1]);
+      const shown = [
+        ...lightMapCover(crossed, [], 1, crossing),
+        ...covers.flatMap(({ boxes }) => boxes),
+      ];
+      // No pixel is multiplied in twice, and none is left out.
+      expect(shown.some((box, at) => shown.slice(at + 1).some((other) => meets(box, other)))).toBe(
+        false,
       );
-      expect(area).toBe(extent.width * extent.height);
+      expect(area(shown)).toBe(crossing.width * crossing.height);
+      // The earlier tunnel owns the corner they share.
+      expect(covers[0]?.boxes).toEqual(tunnelLightCover(tunnelled, crossing)[0]?.boxes);
     });
 
     it("roofs the tunnel's floor, but for its shaft, so a torch there shows its pool", () => {
