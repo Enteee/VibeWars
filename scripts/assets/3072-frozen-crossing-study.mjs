@@ -89,7 +89,7 @@ const OUTLINE = [
   [110, 1000],
 ];
 /** @type {Pt[]} */
-const RIVER = [
+const RIVER0 = [
   [1020, 120],
   [1560, 100],
   [1600, 600],
@@ -103,7 +103,7 @@ const RIVER = [
 ];
 // L1: the west bank; the east bank is its mirror, with a different cave and ridge
 /** @type {Pt[]} */
-const BANK_W = [
+const BANK_W0 = [
   [260, 500],
   [1030, 520],
   [1070, 900],
@@ -125,12 +125,12 @@ const BEND = [
   [-50, 20],
   [-60, 30],
 ];
-const BANK_E = mirror(BANK_W).map(
+const BANK_E0 = mirror(BANK_W0).map(
   ([x, y], i) => /** @type {Pt} */ ([x + (BEND[i]?.[0] ?? 0), y + (BEND[i]?.[1] ?? 0)]),
 );
 // L2 ridges: different outlines, areas within 25 %
 /** @type {Pt[]} */
-const RIDGE_W = [
+const RIDGE_W0 = [
   [300, 560],
   [700, 500],
   [900, 600],
@@ -139,7 +139,7 @@ const RIDGE_W = [
   [330, 800],
 ];
 /** @type {Pt[]} */
-const RIDGE_E = [
+const RIDGE_E0 = [
   [1700, 560],
   [2050, 520],
   [2300, 640],
@@ -147,10 +147,10 @@ const RIDGE_E = [
   [1950, 990],
   [1720, 860],
 ];
-const LOG = rect(1030, 560, 570, 80); // log bridge between the banks, at bank height
+const LOG0 = rect(1030, 560, 570, 80); // log bridge between the banks, at bank height
 // open water: north pools beside the central shelf, and the stepping-stone band
 /** @type {Pt[][]} */
-const POOLS = [
+const POOLS0 = [
   [
     [1060, 660],
     [1180, 650],
@@ -171,21 +171,21 @@ const POOLS = [
 // stepping stones: 120 wide at a 105 pitch, so they overlap and run edge to edge of the deep band
 // (x 1030..1570), plus a link of two more up to the band's north edge at x 1250..1350: no water
 // between the strip and either bank or the central shelf
-const STONES = [
+const STONES0 = [
   ...[1090, 1195, 1300, 1405, 1510].map((x) => rect(x - 60, 1230, 120, 90)),
   rect(1250, 1160, 100, 80),
 ];
-const WALL = rect(1180, 740, 240, 26); // breakable ice wall across the central shelf strip
+const WALL0 = rect(1180, 740, 240, 26); // breakable ice wall across the central shelf strip
 /** @type {Pt} */
-const LEVER = [1300, 880];
+const LEVER0 = [1300, 880];
 /** @type {Pt[]} */
-const TUNNEL_PATH = [
+const TUNNEL_PATH0 = [
   [1570, 1500],
   [2000, 1500],
   [2000, 1710],
 ];
 const TUNNEL_W = 110;
-const STAIRS = [
+const STAIRS0 = [
   { id: "ramp-w", r: rect(960, 950, 110, 110), from: 0, horiz: true },
   { id: "ramp-e", r: rect(MW - 1070, 950, 110, 110), from: 0, horiz: true },
   { id: "stone-ramp-w", r: rect(930, 1235, 110, 90), from: 0, horiz: true },
@@ -194,37 +194,37 @@ const STAIRS = [
   { id: "ridge-stair-e", r: rect(1980, 960, 120, 90), from: 1, horiz: false },
 ];
 /** @type {{ at: Pt; e: number }[]} */
-const DROPS = [
+const DROPS0 = [
   { at: [330, 850], e: 2 },
   { at: [2290, 880], e: 2 },
   { at: [1040, 1600], e: 1 },
   { at: [1560, 1600], e: 1 },
 ];
-const MIRE = { cx: 700, cy: 1810, rx: 100, ry: 38 };
-const SCORCH = { cx: 1900, cy: 1810, rx: 90, ry: 32 };
+const MIRE0 = { cx: 700, cy: 1810, rx: 100, ry: 38 };
+const SCORCH0 = { cx: 1900, cy: 1810, rx: 90, ry: 32 };
 /** @type {{ t1: Pt[]; t2: Pt[] }} */
-const SPAWNS = {
+const SPAWNS0 = {
   t1: [
-    [470, 1330],
-    [540, 1460],
+    [470, 1050],
+    [540, 1180],
   ],
   t2: [
-    [2160, 1360],
-    [2090, 1490],
+    [1850, 1250],
+    [1780, 1380],
   ],
 };
 /** @type {{ p: Pt; col: string; r: number }[]} */
-const LIGHTS = [
+const LIGHTS0 = [
   { p: [1570, 1500], col: C.torch, r: 150 },
   { p: [2000, 1710], col: C.torch, r: 150 },
-  { p: [500, 1400], col: C.torch, r: 150 },
-  { p: [2100, 1400], col: C.torch, r: 150 },
+  { p: [600, 1115], col: C.torch, r: 150 },
+  { p: [1983, 1315], col: C.torch, r: 150 },
   { p: [1300, 880], col: C.torch, r: 150 },
   { p: [1050, 600], col: C.torch, r: 150 },
   { p: [1550, 600], col: C.torch, r: 150 },
 ];
 /** @type {Record<"t1" | "t2", [string, Pt[]][]>} */
-const ROUTES = {
+const ROUTES0 = {
   t1: [
     [
       "ice shelf",
@@ -291,6 +291,63 @@ const ROUTES = {
 /** @type {(r: Pt[]) => number} */
 const len = (r) =>
   r.reduce((s, [x, y], i) => (i ? s + Math.hypot(x - r[i - 1][0], y - r[i - 1][1]) : 0), 0);
+
+// ---- the river meanders -----------------------------------------------------------
+// The plan above was drawn straight; every footprint is then sheared sideways by the same
+// S-curve in y, so the river bends west, then east, and each bank is wide where the other is
+// narrow. Faces stay vertical (the camera's up is screen-up), so only x moves.
+/** @type {(y: number) => number} */
+const F = (y) => Math.round(170 * Math.sin(((y - 250) / 1450) * 2 * Math.PI));
+/** @type {(p: Pt) => Pt} */
+const sp = ([x, y]) => [x + F(y), y];
+/** @type {(a: Pt[]) => Pt[]} */
+const sh = (a) => a.map(sp);
+/** Like sh, but cut into 90 u pieces first so a long edge bends with the river. */
+/** @type {(a: Pt[]) => Pt[]} */
+const bend = (a) =>
+  sh(
+    a.flatMap((p, i) => {
+      const q = /** @type {Pt} */ (a[(i + 1) % a.length]);
+      const n = Math.max(1, Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) / 90));
+      return Array.from(
+        { length: n },
+        (_, k) =>
+          /** @type {Pt} */ ([p[0] + ((q[0] - p[0]) * k) / n, p[1] + ((q[1] - p[1]) * k) / n]),
+      );
+    }),
+  );
+/** @type {(r: Pt[]) => Pt[]} */
+const slide = (r) => {
+  const d = F((r[0][1] + r[2][1]) / 2);
+  return r.map(([x, y]) => /** @type {Pt} */ ([x + d, y]));
+};
+const RIVER = bend(RIVER0);
+const BANK_W = bend(BANK_W0);
+const BANK_E = bend(BANK_E0);
+const RIDGE_W = bend(RIDGE_W0);
+const RIDGE_E = bend(RIDGE_E0);
+const LOG = sh(LOG0);
+const POOLS = POOLS0.map(sh);
+const STONES = STONES0.map(sh);
+const WALL = sh(WALL0);
+const LEVER = sp(LEVER0);
+const TUNNEL_SHIFT = F(1500);
+const TUNNEL_PATH = TUNNEL_PATH0.map(([x, y]) => /** @type {Pt} */ ([x + TUNNEL_SHIFT, y]));
+const STAIRS = STAIRS0.map((st) => ({ ...st, r: slide(st.r) }));
+const DROPS = DROPS0.map((d) => ({ ...d, at: sp(d.at) }));
+const MIRE = { ...MIRE0, cx: MIRE0.cx + F(MIRE0.cy) };
+const SCORCH = { ...SCORCH0, cx: SCORCH0.cx + F(SCORCH0.cy) };
+const SPAWNS = SPAWNS0;
+const LIGHTS = LIGHTS0.map((l) => ({ ...l, p: sp(l.p) }));
+/** @type {(k: "t1" | "t2") => [string, Pt[]][]} */
+const routesOf = (k) => {
+  const mid = /** @type {Pt} */ ([
+    (SPAWNS[k][0][0] + SPAWNS[k][1][0]) / 2,
+    (SPAWNS[k][0][1] + SPAWNS[k][1][1]) / 2,
+  ]);
+  return ROUTES0[k].map(([n, r]) => /** @type {[string, Pt[]]} */ ([n, [mid, ...sh(r.slice(1))]]));
+};
+const ROUTES = { t1: routesOf("t1"), t2: routesOf("t2") };
 
 // ---- drawing -------------------------------------------------------------------
 /** A slab `elev` above the ground: shadow SE, south and east faces, then the top. */
@@ -440,8 +497,8 @@ const teamCol = { t1: C.friend, t2: C.foe };
     });
     for (const p of SPAWNS[k]) a += bodyAt(p, teamCol[k], STEP);
   }
-  a += tag("T1", [380, 1290], 44) + tag("T2", [2150, 1290], 44);
-  a += tag("L1 west bank", [300, 1180]) + tag("L1 east bank", [1850, 1160]);
+  a += tag("T1", [380, 1010], 44) + tag("T2", [1780, 1210], 44);
+  a += tag("L1 west bank", [150, 1480]) + tag("L1 east bank", [2000, 1000]);
   a += tag("L2 bare ridge", [430, 760 - 2 * STEP]) + tag("L2 snow ridge", [1760, 760 - 2 * STEP]);
   a +=
     tag("log bridge", [1130, 540 - STEP]) +

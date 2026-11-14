@@ -9,6 +9,12 @@ the place (a frozen river) is kept.
 
 ## Rules the study holds
 
+- **The river meanders.** It is not a straight stripe between two mirrored halves: it bends west,
+  then east, then west, an S in y. The numbers below (x, y of every footprint, ramp, stone) are
+  the straight drawing; the map position is x + 170·sin(2π(y − 250)/1450), so the west bank is wide in the
+  north and pinched at the south, the east bank the other way round. Spawns, the ridge outlines and the
+  two banks are placed by hand after that, so no side is a copy of the other.
+
 - **Bounds** 2600×1940 = 5.04 M u² (1× Canyon, 2v2). The ground outline fills 72 % of it, ragged,
   with `rock` (`OUTSIDE_KINDS`) outside, drawn as boulders and drifted scree.
 - **New biome `snow`, proposed row** for `visual-style.md` §1 (the map's first build PR adds it):
@@ -40,16 +46,16 @@ the place (a frozen river) is kept.
 
 ## Routes and balance (base speed 180 u/s)
 
-Spawns: T1 (470,1330) and (540,1460) on the west bank; T2 mirrored on the east bank.
+Spawns (map positions): T1 (470,1050) and (540,1180) on the west bank, T2 (1850,1250) and (1780,1380) on the east bank, found by a grid search that evens the routes out.
 The centre is the central shelf, (1300,1000).
 
 | Route (T1 / T2)                                                 | Length        | Walk        |
 | --------------------------------------------------------------- | ------------- | ----------- |
-| ice shelf (ramp down, across the ice)                           | 927 / 974 u   | 5.2 / 5.4 s |
-| stepping stones (over the open water)                           | 1086 / 1121 u | 6.0 / 6.2 s |
-| log bridge (up the bank, over the bridge, through the ice wall) | 1597 / 1648 u | 8.9 / 9.2 s |
+| ice shelf (ramp down, across the ice)                           | 803 / 693 u   | 4.5 / 3.9 s |
+| stepping stones (over the open water)                           | 979 / 992 u   | 5.4 / 5.5 s |
+| log bridge (up the bank, over the bridge, through the ice wall) | 1571 / 1441 u | 8.7 / 8.0 s |
 
-The log-bridge time assumes the ice wall is broken (it starts shut). Both teams have the same three routes and their walks are within 6 %. The east bank is not a mirror of the west: it bulges toward the river in the middle and steps back at the south, and the T2 seats stand further from the water. The sides differ on purpose: the east bank
+The log-bridge time assumes the ice wall is broken (it starts shut). Both teams have the same three routes; the stones are within 1 %, the log bridge within 9 %, the ice shelf within 16 % (the east is the quicker side to the shelf, the west gets the longer bank and the bigger north). Build must put the bench (#3065) on exactly that gap. The east bank is not a mirror of the west: it bulges toward the river in the middle and steps back at the south, and the T2 seats stand further from the water. The sides differ on purpose: the east bank
 holds the cave and a snow-capped ridge (231 k u²); the west a bare rock ridge (213 k u², 8 %
 smaller, within 25 %) and the thaw slush. High ground within half the map of either spawn is its own
 ridge, reached by its own stair; neither is reachable without crossing the middle or the bridge.
