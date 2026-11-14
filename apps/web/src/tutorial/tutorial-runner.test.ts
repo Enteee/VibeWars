@@ -5,8 +5,12 @@ import { KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
 
 import {
   DODGES_NEEDED,
+  breakWallStation,
   dodgeStation,
+  healStation,
   lookStation,
+  partyRow,
+  skillSlot,
   stepInStation,
   walkStation,
   type Station,
@@ -27,6 +31,12 @@ const CAMERA = {
   inView: () => false,
   rockfallDodges: 0,
   hitBy: undefined,
+  wallHealth: undefined,
+  wallTargeted: false,
+  tutorHit: false,
+  tutorTargeted: false,
+  healedTutor: false,
+  energySpent: false,
 };
 const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100), ...CAMERA };
 const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100), ...CAMERA };
@@ -118,16 +128,26 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, look around and step in, swaps to the canyon once, then dodges and finishes (#3247)", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor and finishes (#3247, #3302, #3303)", () => {
     const pad = vec2(200, -900);
     const goal = vec2(2850, 1800);
+    const face = vec2(3480, 1800);
     const runner = createTutorialRunner(
-      [walkStation(MARK, 0), lookStation(pad), stepInStation(pad, 0), dodgeStation(goal, 0)],
+      [
+        walkStation(MARK, 0),
+        lookStation(pad),
+        stepInStation(pad, 0),
+        dodgeStation(goal, 0),
+        breakWallStation(face, 400),
+        healStation("tutor", 7),
+      ],
       () => KEYMAP_PRESETS.classic,
       label,
     );
     const looked = { ...ON_MARK, zoomedOut: true, lookDragged: true, inView: () => true };
     const dodged = { ...looked, self: goal, rockfallDodges: DODGES_NEEDED };
+    const broken = { ...dodged, wallHealth: 0, wallTargeted: true };
+    const healed = { tutorHit: true, tutorTargeted: true, energySpent: true, healedTutor: true };
     const ticks: [TutorialView, number][] = [
       [AWAY, 0],
       [ON_MARK, 1_000],
@@ -138,6 +158,18 @@ describe("the tutorial runner", () => {
       [{ ...looked, self: pad }, 3_000 + 3 * PRAISE_MS],
       [{ ...dodged, rockfallDodges: DODGES_NEEDED - 1 }, 4_000 + 3 * PRAISE_MS],
       [dodged, 5_000 + 3 * PRAISE_MS],
+      [{ ...dodged, wallHealth: 400 }, 5_000 + 4 * PRAISE_MS],
+      [{ ...dodged, wallHealth: 400, wallTargeted: true }, 6_000 + 4 * PRAISE_MS],
+      [{ ...dodged, wallHealth: 380, wallTargeted: true }, 7_000 + 4 * PRAISE_MS],
+      [{ ...dodged, wallHealth: 0, wallTargeted: true }, 8_000 + 4 * PRAISE_MS],
+      [{ ...broken }, 8_000 + 5 * PRAISE_MS],
+      [{ ...broken, tutorHit: true }, 9_000 + 5 * PRAISE_MS],
+      [{ ...broken, tutorHit: true, tutorTargeted: true }, 10_000 + 5 * PRAISE_MS],
+      [
+        { ...broken, tutorHit: true, tutorTargeted: true, energySpent: true },
+        11_000 + 5 * PRAISE_MS,
+      ],
+      [{ ...broken, ...healed }, 12_000 + 5 * PRAISE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -150,31 +182,102 @@ describe("the tutorial runner", () => {
       "tutorial.dodge.intro",
       undefined,
       "tutorial.dodge.praise",
+      "tutorial.wall.intro",
+      undefined,
+      "tutorial.wall.firstHit",
+      "tutorial.wall.praise",
+      "tutorial.heal.intro",
+      "tutorial.heal.ow",
+      undefined,
+      "tutorial.heal.energy",
+      "tutorial.heal.praise",
+    ]);
+    // The tutor's party row pulses until it is targeted, then the heal's slot.
+    expect(beats.slice(13, 17).map((beat) => beat.highlight)).toEqual([
+      { kind: "hud", element: partyRow("tutor") },
+      { kind: "hud", element: partyRow("tutor") },
+      { kind: "hud", element: skillSlot(7) },
+      { kind: "hud", element: skillSlot(7) },
+    ]);
+    expect(beats[13]?.say?.keys).toEqual(["Digit8"]);
+    // The frame pulses throughout; the mark by the wall stands until it is targeted.
+    expect(beats[9]?.highlight).toEqual({ kind: "hud", element: ".hud-target" });
+    expect(beats.slice(9, 12).map((beat) => [beat.highlight?.kind, beat.mark])).toEqual([
+      ["hud", face],
+      ["hud", undefined],
+      ["hud", undefined],
+    ]);
+    // The wall station is next from the dodge's praise on, the heal from the wall's.
+    expect(beats.slice(7, 13).map((beat) => beat.station)).toEqual([
+      "dodge",
+      "break-wall",
+      "break-wall",
+      "break-wall",
+      "break-wall",
+      "heal",
     ]);
     expect(beats[4]?.highlight).toEqual({ kind: "ground", at: pad });
     expect(beats[6]?.highlight).toEqual({ kind: "ground", at: goal });
     // The world turns once, under the step in's praise, and stays turned.
     expect(beats.map((beat) => beat.world)).toEqual([
-      "battlefield",
-      "battlefield",
-      "battlefield",
-      "battlefield",
-      "battlefield",
-      "canyon",
-      "canyon",
-      "canyon",
-      "canyon",
+      ...Array<string>(5).fill("battlefield"),
+      ...Array<string>(13).fill("canyon"),
     ]);
-    expect(beats.map((beat) => beat.finished)).toEqual([
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      true,
+    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(17).fill(false), true]);
+  });
+
+  it("says a station's reaction once, then no more hints until it is done (#3302)", () => {
+    const face = vec2(3480, 1800);
+    const runner = createTutorialRunner(
+      [breakWallStation(face, 700)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    const wall = (wallHealth: number): TutorialView => ({
+      ...AWAY,
+      wallHealth,
+      wallTargeted: true,
+    });
+    const said = [
+      runner.tick(wall(700), 0),
+      runner.tick(wall(700), HINT_REPEAT_MS),
+      runner.tick(wall(650), HINT_REPEAT_MS + 1_000),
+      runner.tick(wall(600), HINT_REPEAT_MS + 2_000),
+      runner.tick(wall(500), 3 * HINT_REPEAT_MS),
+      runner.tick(wall(0), 3 * HINT_REPEAT_MS + 1_000),
+    ].map((beat) => beat.say?.key);
+    expect(said).toEqual([
+      "tutorial.wall.intro",
+      "tutorial.wall.hint",
+      "tutorial.wall.firstHit",
+      undefined,
+      undefined,
+      "tutorial.wall.praise",
+    ]);
+  });
+
+  it("says each aside once, and goes on hinting after it (#3303)", () => {
+    const runner = createTutorialRunner(
+      [healStation("tutor", 7)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    const hit: TutorialView = { ...AWAY, tutorHit: true };
+    const said = [
+      runner.tick(AWAY, 0),
+      runner.tick(hit, 1_000),
+      runner.tick(hit, 2_000),
+      runner.tick(hit, 1_000 + HINT_REPEAT_MS),
+      runner.tick({ ...hit, energySpent: true }, 12_000),
+      runner.tick({ ...hit, energySpent: true }, 13_000),
+    ].map((beat) => beat.say?.key);
+    expect(said).toEqual([
+      "tutorial.heal.intro",
+      "tutorial.heal.ow",
+      undefined,
+      "tutorial.heal.hint",
+      "tutorial.heal.energy",
+      undefined,
     ]);
   });
 

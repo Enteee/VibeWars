@@ -1497,6 +1497,12 @@ export default {
   "tutorial.dodge.how": "Clic stânga pe teren sau mergi cu {keys}.",
   "tutorial.dodge.intro": "Aici cad pietre. Când o umbră crește, dă-te la o parte!",
   "tutorial.dodge.praise": "Picioare iuți! Pietrele nu te prind.",
+  "tutorial.heal.energy": "Bara aceea albastră e energia. Abilitățile o consumă.",
+  "tutorial.heal.hint": "Mai întâi dă clic pe numele meu în lista grupului.",
+  "tutorial.heal.how": "Dă clic pe numele meu în lista grupului, apoi apasă {keys}.",
+  "tutorial.heal.intro": "Prin spărtură, în poiană. După mine!",
+  "tutorial.heal.ow": "Au! M-a lovit piatra. Mă ajuți puțin?",
+  "tutorial.heal.praise": "Mult mai bine, mulțumesc! Știi și să vindeci.",
   "tutorial.learn": "Învață să joci",
   "tutorial.look.hint": "Micșorează, apoi trage imaginea spre nord. Găsește teleportorul!",
   "tutorial.look.how":
@@ -1518,6 +1524,12 @@ export default {
   "tutorial.walk.how": "Clic stânga pe sol, sau mergi cu {keys}.",
   "tutorial.walk.intro": "Războiul acesta nu se termină. Vino cu mine; am o idee.",
   "tutorial.walk.praise": "Pas frumos! Ai talent.",
+  "tutorial.wall.firstHit": "Uite! Crapă. Continuă.",
+  "tutorial.wall.hint": "Întâi clic dreapta pe zid, apoi lovește-l.",
+  "tutorial.wall.how":
+    "Clic dreapta pe zid, apoi apasă {keys}, sau dă de două ori clic dreapta pe el.",
+  "tutorial.wall.intro": "Un zid blochează poteca. Clic dreapta pe el, apoi lovește-l.",
+  "tutorial.wall.praise": "Cade! Poteca e liberă.",
 
   "weaponSets.empty": "Set de arme {number}: gol",
   "weaponSets.holds": "Set de arme {number}: {gear}",

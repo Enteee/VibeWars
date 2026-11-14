@@ -616,6 +616,11 @@ export function companionMode(creature: Creature): CompanionMode | null {
   return creature.companionSkillId === undefined ? null : creature.mode;
 }
 
+/** How far a creature's aura reaches (#3306), rounded to a world unit; `null` for none. */
+export function creatureAuraRadius(creature: Creature): number | null {
+  return creature.aura === undefined ? null : Math.round(creature.aura.radius);
+}
+
 /**
  * A creature's own Health pips: a minion's rot (#467), a Guild Lord's
  * innate regeneration (#1222); 0 for anyone else.
@@ -9913,6 +9918,18 @@ export class MatchSimulation {
         this.#setMorale(record, Math.min(MORALE_CEILING, record.combatant.morale + amount));
         record.combatant.cast.refreshSpent();
       }
+    }
+  }
+
+  /**
+   * A status from outside any skill or zone, a script's (the tutorial's
+   * bleeding tutor, #3303), on the living participant `id` for `seconds`.
+   * Nobody is credited; a dead or absent one gets nothing.
+   */
+  public afflict(id: string, statusId: StatusId, seconds: number, sourceId: string): void {
+    const record = this.#participants.get(id);
+    if (record !== undefined && record.combatant.health > 0) {
+      applyStatus(record.combatant, statusId, seconds, sourceId, NO_RANKS);
     }
   }
 

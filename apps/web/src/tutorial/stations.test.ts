@@ -4,8 +4,12 @@ import { describe, expect, it } from "vitest";
 import {
   DODGES_NEEDED,
   MARK_REACH,
+  breakWallStation,
   dodgeStation,
+  healStation,
   lookStation,
+  partyRow,
+  skillSlot,
   stepInStation,
   type TutorialView,
 } from "./stations.js";
@@ -21,6 +25,12 @@ const view = (over: Partial<TutorialView> = {}): TutorialView => ({
   inView: () => false,
   rockfallDodges: 0,
   hitBy: undefined,
+  wallHealth: undefined,
+  wallTargeted: false,
+  tutorHit: false,
+  tutorTargeted: false,
+  healedTutor: false,
+  energySpent: false,
   ...over,
 });
 const sees =
@@ -98,6 +108,76 @@ describe("dodgeStation (#3247)", () => {
     const station = dodgeStation(MARK, GROUND);
     expect(station.world).toBe("canyon");
     expect(station.highlight).toEqual({ kind: "ground", at: MARK });
+    expect(station.lines.hit).toBe("tutorial.dodge.hit");
+  });
+});
+
+describe("breakWallStation (#3302)", () => {
+  const face = vec2(3480, 1800);
+  const station = breakWallStation(face, 400);
+
+  it("is not done while the wall stands at any health, nor outside the canyon, and is done at 0", () => {
+    for (const wallHealth of [400, 250, 1, undefined]) {
+      expect(station.done(view({ wallHealth }))).toBe(false);
+    }
+    expect(station.done(view({ wallHealth: 0 }))).toBe(true);
+  });
+
+  it("is done at once for a wall already broken, before any target or blow", () => {
+    expect(breakWallStation(face, 400).done(view({ wallHealth: 0, wallTargeted: false }))).toBe(
+      true,
+    );
+  });
+
+  it("marks the wall's face until it is targeted, and pulses the target frame", () => {
+    expect(station.highlight).toEqual({ kind: "hud", element: ".hud-target" });
+    expect(station.mark?.(view({ wallHealth: 400 }))).toEqual(face);
+    expect(station.mark?.(view({ wallHealth: 400, wallTargeted: true }))).toBeUndefined();
+  });
+
+  it("reacts to the first blow: the wall below its full health", () => {
+    expect(station.reaction?.when(view({ wallHealth: 400 }))).toBe(false);
+    expect(station.reaction?.when(view({ wallHealth: 399 }))).toBe(true);
+    expect(station.reaction?.when(view({ wallHealth: undefined }))).toBe(false);
+  });
+});
+
+describe("healStation (#3303)", () => {
+  const station = healStation("tutor", 7);
+
+  it("is not done before the tutor is hit, nor after a hit with no heal", () => {
+    expect(station.done(view())).toBe(false);
+    expect(station.done(view({ tutorHit: true }))).toBe(false);
+    expect(station.done(view({ tutorHit: true, tutorTargeted: true }))).toBe(false);
+  });
+
+  it("is done after a hit and then a heal", () => {
+    expect(station.done(view({ tutorHit: true, healedTutor: true }))).toBe(true);
+  });
+
+  it("does not count a heal before the hit", () => {
+    expect(station.done(view({ tutorHit: false, healedTutor: true }))).toBe(false);
+  });
+
+  it("pulses the tutor's party row until the tutor is targeted, then the heal's slot", () => {
+    if (typeof station.highlight !== "function") {
+      throw new Error("a heal station's highlight follows the target");
+    }
+    expect(station.highlight(view())).toEqual({ kind: "hud", element: partyRow("tutor") });
+    expect(station.highlight(view({ tutorTargeted: true }))).toEqual({
+      kind: "hud",
+      element: skillSlot(7),
+    });
+    expect(skillSlot(7)).toBe(".hud-skill:nth-child(8)");
+    expect(station.keys).toEqual(["skill-8"]);
+  });
+
+  it("says the tutor's hit once it lands, and names energy once it is spent", () => {
+    const [ow, energy] = station.asides ?? [];
+    expect(ow?.when(view())).toBe(false);
+    expect(ow?.when(view({ tutorHit: true }))).toBe(true);
+    expect(energy?.when(view())).toBe(false);
+    expect(energy?.when(view({ energySpent: true }))).toBe(true);
     expect(station.lines.hit).toBe("tutorial.dodge.hit");
   });
 });

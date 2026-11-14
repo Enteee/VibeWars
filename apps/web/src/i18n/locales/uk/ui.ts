@@ -1541,6 +1541,12 @@ export default {
   "tutorial.dodge.how": "Клацни лівою кнопкою по землі або йди клавішами {keys}.",
   "tutorial.dodge.intro": "Тут падає каміння. Коли тінь росте, відійди вбік!",
   "tutorial.dodge.praise": "Швидкі ноги! Каміння тебе не наздожене.",
+  "tutorial.heal.energy": "Синя смуга — це енергія. Навички її витрачають.",
+  "tutorial.heal.hint": "Спершу клацни моє ім'я у списку загону.",
+  "tutorial.heal.how": "Клацни моє ім'я у списку загону, потім натисни {keys}.",
+  "tutorial.heal.intro": "Крізь пролом, на галявину. За мною!",
+  "tutorial.heal.ow": "Ой! Мене влучив камінь. Допоможеш?",
+  "tutorial.heal.praise": "Набагато краще, дякую! Ти й лікувати вмієш.",
   "tutorial.learn": "Навчитися грати",
   "tutorial.look.hint": "Віддали огляд, потім потягни його на північ. Знайди телепорт!",
   "tutorial.look.how":
@@ -1561,6 +1567,12 @@ export default {
   "tutorial.walk.how": "Лівий клік по землі або йди клавішами {keys}.",
   "tutorial.walk.intro": "Ця війна ніколи не скінчиться. Ходімо зі мною; є ідея.",
   "tutorial.walk.praise": "Чудовий крок! У тебе талант.",
+  "tutorial.wall.firstHit": "Ось! Тріскає. Давай далі.",
+  "tutorial.wall.hint": "Спершу правий клік по стіні, тоді бий.",
+  "tutorial.wall.how":
+    "Правий клік по стіні, потім натисни {keys} або двічі клацни по ній правою кнопкою.",
+  "tutorial.wall.intro": "Стіна перегородила стежку. Правий клік по ній, тоді бий.",
+  "tutorial.wall.praise": "Впала! Стежка відкрита.",
 
   "weaponSets.empty": "Набір зброї {number}: порожньо",
   "weaponSets.holds": "Набір зброї {number}: {gear}",

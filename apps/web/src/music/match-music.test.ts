@@ -388,6 +388,7 @@ describe("stingsFor (#2523)", () => {
             mode: null,
             armedAttack: null,
             leaderId: null,
+            auraRadius: null,
           },
         }),
       ],

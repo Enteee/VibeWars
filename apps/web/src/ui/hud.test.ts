@@ -881,6 +881,7 @@ describe("enemyPips (#881)", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     });
     expect(enemyPips([...players, minion], 0)).toEqual(enemyPips(players, 0));
@@ -943,6 +944,7 @@ describe("scoreboardText (#881)", () => {
           mode: null,
           armedAttack: null,
           leaderId: null,
+          auraRadius: null,
         },
       });
     expect(
@@ -997,6 +999,7 @@ describe("scoreboardText (#881)", () => {
           mode: null,
           armedAttack: null,
           leaderId: null,
+          auraRadius: null,
         },
       });
     const priests = (dead0: boolean, dead1: boolean) => [
@@ -1126,6 +1129,7 @@ describe("the Guild Battle scoreboard (#1226)", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     });
   const players = [
@@ -1397,6 +1401,7 @@ describe("a Ghostly Hero's leader (#1377, #1419)", () => {
         mode: null,
         armedAttack: null,
         leaderId,
+        auraRadius: null,
       },
     });
   /** A snapshot of both teams' ghosts, team 0's following `ours` and team 1's `theirs`. */

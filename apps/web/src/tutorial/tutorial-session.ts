@@ -16,10 +16,21 @@ import {
 import { mountSkipTutorial } from "./tutorial-offer.js";
 import { DEFAULT_STEP } from "../render/camera-rig.js";
 
-import { DODGE_MARK, canyonWorld } from "./canyon-world.js";
+import {
+  CRACKED_WALL,
+  DODGE_MARK,
+  canyonWorld,
+  clearingTutor,
+  wallTutor,
+  type ClearingTutor,
+  type WallTutor,
+} from "./canyon-world.js";
+import { createHealWatch, type HealWatch } from "./heal-watch.js";
 import { createDodgeCounter, type DodgeCounter } from "./dodge-count.js";
 import {
+  breakWallStation,
   dodgeStation,
+  healStation,
   lookStation,
   stepInStation,
   walkStation,
@@ -27,12 +38,20 @@ import {
   type TutorialWorldName,
 } from "./stations.js";
 import { createTutorialRunner, type TutorLine } from "./tutorial-runner.js";
-import { SELF_ID, TUTOR_ID, tutorialWorld } from "./tutorial-world.js";
+import {
+  SELF_ID,
+  TUTORIAL_HEAL,
+  TUTORIAL_HEAL_SLOT,
+  TUTOR_ID,
+  tutorialWorld,
+} from "./tutorial-world.js";
 
 /** A long frame is not caught up on, as in the splash fight. */
 const MAX_STEP_SECONDS = 0.1;
 /** How long "more soon" stands before the menu. */
 const FAREWELL_MS = 2_500;
+/** What a HUD element a station points at wears while it does (#3302). */
+const PULSE_CLASS = "tutorial-pulse";
 /** The fade back from white once the canyon stands (#3247), as `.tutorial-flash` animates it. */
 const FLASH_MS = 800;
 
@@ -67,6 +86,8 @@ interface Stage {
   readonly fixed: readonly GoalMark[];
   /** The canyon's rockfall count (#3247); the battlefield has none. */
   readonly dodges: DodgeCounter | undefined;
+  /** Station 6's watch on the canyon's combat (#3303); the battlefield has none. */
+  readonly heals: HealWatch | undefined;
 }
 
 /**
@@ -122,15 +143,18 @@ export async function startTutorialSession(
     ground,
     fixed: [portal],
     dodges: undefined,
+    heals: undefined,
   };
   let highlight: StationHighlight | undefined;
-  const goals = (): readonly GoalMark[] =>
-    highlight?.kind === "ground"
-      ? [
-          ...stage.fixed,
-          { id: "tutorial-mark", kind: "goal", position: highlight.at, layer: stage.ground },
-        ]
-      : stage.fixed;
+  /** A ground mark beside a HUD highlight (#3302). */
+  let besideHud: Vec2 | undefined;
+  const markAt = (): Vec2 | undefined => (highlight?.kind === "ground" ? highlight.at : besideHud);
+  const goals = (): readonly GoalMark[] => {
+    const at = markAt();
+    return at === undefined
+      ? stage.fixed
+      : [...stage.fixed, { id: "tutorial-mark", kind: "goal", position: at, layer: stage.ground }];
+  };
 
   const frame = document.createElement("div");
   frame.className = "tutorial-frame";
@@ -155,10 +179,29 @@ export async function startTutorialSession(
   let tutorSent = false;
   let swapping = false;
   let rockfallDodges = 0;
+  let wallTargeted = false;
+  let atWall: WallTutor | undefined;
+  // Station 6's (#3303), read only while it runs: once true, they stay true.
+  let tutorTargeted = false;
+  let energySpent = false;
+  let energyBefore: number | undefined;
+  let inClearing: ClearingTutor | undefined;
+  /** The station the last beat ran. */
+  let running: string | undefined;
+  /** The HUD element pulsing now, if any. */
+  let pulsing: Element | undefined;
+  const pulse = (element: Element | undefined): void => {
+    if (element !== pulsing) {
+      pulsing?.classList.remove(PULSE_CLASS);
+      element?.classList.add(PULSE_CLASS);
+      pulsing = element;
+    }
+  };
   const stop = async (): Promise<void> => {
     ended = true;
     cancelAnimationFrame(request);
     window.clearTimeout(farewell);
+    pulse(undefined);
     frame.remove();
     await view?.dispose();
     view = undefined;
@@ -203,6 +246,8 @@ export async function startTutorialSession(
       lookStation(teleporter),
       stepInStation(teleporter, ground),
       dodgeStation(DODGE_MARK.position, DODGE_MARK.layer),
+      breakWallStation(CRACKED_WALL.face, CRACKED_WALL.maxHealth),
+      healStation(TUTOR_ID, TUTORIAL_HEAL_SLOT),
     ],
     loadKeymap,
   );
@@ -230,13 +275,22 @@ export async function startTutorialSession(
     await view?.dispose();
     view = undefined;
     const canyon = canyonWorld(`${seed}-canyon`, playerBuild, tutorBuild);
+    const heals = createHealWatch(SELF_ID, TUTOR_ID, TUTORIAL_HEAL);
+    const connection = connect(canyon.simulation, canyon.map);
+    // Only station 6's strikes and heals: the tutor may meet a boulder before.
+    connection.onCombat((message) => {
+      if (running === "heal") {
+        heals.observe(message);
+      }
+    });
     stage = {
       name: "canyon",
       simulation: canyon.simulation,
-      connection: connect(canyon.simulation, canyon.map),
+      connection,
       ground: canyon.ground,
       fixed: [],
       dodges: createDodgeCounter(canyon.zones),
+      heals,
     };
     // The tutor goes on ahead, to wait by the mark.
     canyon.simulation.walkTo(TUTOR_ID, canyon.besideMark, canyon.ground);
@@ -265,7 +319,7 @@ export async function startTutorialSession(
       request = requestAnimationFrame(step);
       return;
     }
-    const { simulation: world, connection, dodges } = stage;
+    const { simulation: world, connection, dodges, heals } = stage;
     connection.advance(last === undefined ? 0 : Math.min((now - last) / 1000, MAX_STEP_SECONDS));
     last = now;
     const self = world.get(SELF_ID);
@@ -278,6 +332,18 @@ export async function startTutorialSession(
         ? undefined
         : dodges?.observe(world.elapsedSeconds, self.position, self.layer);
     rockfallDodges = tally?.dodges ?? rockfallDodges;
+    const wallHealth =
+      stage.name === "canyon"
+        ? world.breakables.find(({ id }) => id === CRACKED_WALL.id)?.health
+        : undefined;
+    wallTargeted ||= wallHealth !== undefined && self?.targetId === CRACKED_WALL.targetId;
+    const healing = running === "heal" && heals !== undefined;
+    tutorTargeted ||= healing && self?.targetId === TUTOR_ID;
+    const energy = self?.combatant.energy;
+    energySpent ||=
+      healing && energy !== undefined && energyBefore !== undefined && energy < energyBefore;
+    energyBefore = energy;
+    const { tutorHit, healedTutor } = heals?.tally() ?? { tutorHit: false, healedTutor: false };
     if (self !== undefined && tutor !== undefined && farewell === 0) {
       const beat = runner.tick(
         {
@@ -289,10 +355,35 @@ export async function startTutorialSession(
           inView,
           rockfallDodges,
           hitBy: tally?.hit === true ? "rockfall" : undefined,
+          wallHealth,
+          wallTargeted,
+          tutorHit,
+          tutorTargeted,
+          healedTutor,
+          energySpent,
         },
         now,
       );
+      running = beat.station;
       highlight = beat.highlight;
+      besideHud = beat.mark;
+      pulse(
+        highlight?.kind === "hud"
+          ? (parent.querySelector(highlight.element) ?? undefined)
+          : undefined,
+      );
+      // Station 5 is next: the tutor goes to wait by the wall, and joins in
+      // once the player has struck it.
+      if (atWall === undefined && beat.station === "break-wall" && stage.name === "canyon") {
+        atWall = wallTutor(world);
+      }
+      atWall?.step();
+      // Station 6 is next: the tutor walks into the clearing's rockfall, out
+      // of it once the rocks have hurt it, and bleeds until it is healed.
+      if (inClearing === undefined && beat.station === "heal" && stage.name === "canyon") {
+        inClearing = clearingTutor(world);
+      }
+      inClearing?.step(tutorHit, healedTutor);
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;
@@ -305,10 +396,17 @@ export async function startTutorialSession(
         frame.dataset.dodges = String(rockfallDodges);
       }
       // Where the mark is, for the e2e specs to click.
-      if (highlight?.kind === "ground") {
-        frame.dataset.mark = `${String(Math.round(highlight.at.x))},${String(Math.round(highlight.at.y))}`;
-      } else {
+      const at = markAt();
+      if (at === undefined) {
         delete frame.dataset.mark;
+      } else {
+        frame.dataset.mark = `${String(Math.round(at.x))},${String(Math.round(at.y))}`;
+      }
+      // The wall's health (#3302), for the e2e specs to wait on.
+      if (wallHealth === undefined) {
+        delete frame.dataset.wall;
+      } else {
+        frame.dataset.wall = String(wallHealth);
       }
       if (beat.say !== undefined) {
         say(beat.say);

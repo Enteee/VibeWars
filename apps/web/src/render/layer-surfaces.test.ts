@@ -400,6 +400,7 @@ describe("clicking a character on a layered map (#2831)", () => {
     offhandId: undefined,
     profession: undefined,
     creatureLook: undefined,
+    auraRadius: undefined,
     team: "enemy",
     health: 500,
     maxHealth: 500,

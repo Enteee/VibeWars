@@ -10,6 +10,8 @@ import {
   creatureOutline,
   creatureTick,
   dashes,
+  spiritBob,
+  spiritWisp,
   type CreatureOrnament,
 } from "./creature-shape.js";
 
@@ -83,16 +85,15 @@ describe("creature ornaments (#2047)", () => {
     expect(gems.every((gem) => gem.kind === "polygon" && gem.colour === 0xffd866)).toBe(true);
   });
 
-  it("dashes the spirit's aura and keeps the other rings whole", () => {
-    const [aura] = creatureOrnament("spirit", 0, 0, 10);
+  it("gives a spirit no dashed aura (#3306) and keeps the other rings whole", () => {
     const [halo] = creatureOrnament("ghostly-hero", 0, 0, 13.5);
-    expect(aura?.kind === "ring" && aura.arcs.length).toBeGreaterThan(10);
+    expect(creatureOrnament("spirit", 0, 0, 10)).toEqual([]);
     expect(halo?.kind === "ring" && halo.arcs).toEqual([{ from: 0, to: 2 * Math.PI }]);
   });
 
   it("keeps every ornament round its creature: past the plate, within 1.8 × its radius", () => {
     // The study's ear tips reach 1.69 r and the Lord's gems 1.77 r.
-    for (const look of CREATURE_LOOKS) {
+    for (const look of CREATURE_LOOKS.filter((look) => look !== "spirit")) {
       const r = CREATURE_DRAWN_RADIUS[look];
       const ornaments = creatureOrnament(look, 40, -20, r);
       expect(ornaments.length).toBeGreaterThan(0);
@@ -100,6 +101,50 @@ describe("creature ornaments (#2047)", () => {
         expect(reach(ornament, 40, -20)).toBeGreaterThan(r * HEXAGON_SCALE);
         expect(reach(ornament, 40, -20)).toBeLessThanOrEqual(r * 1.8);
       }
+    }
+  });
+});
+
+describe("spiritWisp (#3306)", () => {
+  it("is a teardrop, point up, about the size of the plate it replaces", () => {
+    const wisp = spiritWisp(40, -20, 10);
+    const ys = wisp.map((at) => at.y);
+    const xs = wisp.map((at) => at.x);
+    // The tip is the top, on the middle line.
+    const tip = wisp[ys.indexOf(Math.min(...ys))];
+    expect(tip?.x).toBeCloseTo(40, 9);
+    expect(tip?.y).toBeCloseTo(-20 - 12.5, 9);
+    expect(Math.max(...ys)).toBeCloseTo(-20 + 12.5, 1);
+    // Widest below its middle, as wide as the hexagon.
+    const widest = wisp[xs.indexOf(Math.max(...xs))];
+    expect(widest?.y).toBeGreaterThan(-20);
+    expect(Math.max(...xs) - 40).toBeCloseTo(40 - Math.min(...xs), 9);
+    expect(Math.max(...xs) - 40).toBeGreaterThan(9);
+    expect(Math.max(...xs) - 40).toBeLessThanOrEqual(10 * HEXAGON_SCALE);
+  });
+
+  it("draws its core smaller, low inside it", () => {
+    const outer = spiritWisp(0, 0, 10);
+    const core = spiritWisp(0, 0, 10, 0.45);
+    expect(Math.min(...core.map((at) => at.y))).toBeGreaterThan(
+      Math.min(...outer.map((at) => at.y)),
+    );
+    expect(Math.max(...core.map((at) => at.y))).toBeLessThan(Math.max(...outer.map((at) => at.y)));
+    expect(Math.max(...core.map((at) => at.x))).toBeLessThan(Math.max(...outer.map((at) => at.x)));
+  });
+});
+
+describe("spiritBob (#3306)", () => {
+  it("floats ±2 over 2 s, out of step by phase", () => {
+    expect(spiritBob(0.5, 0, false)).toBeCloseTo(2, 9);
+    expect(spiritBob(1.5, 0, false)).toBeCloseTo(-2, 9);
+    expect(spiritBob(2.5, 0, false)).toBeCloseTo(2, 9);
+    expect(spiritBob(0.5, 0.5, false)).toBeCloseTo(-2, 9);
+  });
+
+  it("stays still under reduced motion", () => {
+    for (const now of [0, 0.5, 1.3, 7]) {
+      expect(spiritBob(now, 0.25, true)).toBe(0);
     }
   });
 });

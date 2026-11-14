@@ -1422,6 +1422,12 @@ export default {
   "tutorial.dodge.how": "Кликни с левия бутон по земята или върви с {keys}.",
   "tutorial.dodge.intro": "Тук падат камъни. Щом сянка расте, отстъпи встрани!",
   "tutorial.dodge.praise": "Бързи крака! Камъните не могат да те стигнат.",
+  "tutorial.heal.energy": "Синята лента е енергия. Уменията я харчат.",
+  "tutorial.heal.hint": "Първо щракни името ми в списъка на групата.",
+  "tutorial.heal.how": "Щракни името ми в списъка на групата, после натисни {keys}.",
+  "tutorial.heal.intro": "През пролома и в поляната. След мен!",
+  "tutorial.heal.ow": "Ох! Камъкът ме удари. Ще помогнеш ли?",
+  "tutorial.heal.praise": "Много по-добре, благодаря! Ти си и лечител.",
   "tutorial.learn": "Научи се да играеш",
   "tutorial.look.hint": "Отдалечи изгледа, после го плъзни на север. Намери телепорта!",
   "tutorial.look.how":
@@ -1443,6 +1449,12 @@ export default {
   "tutorial.walk.how": "Ляв клик на земята или ходи с {keys}.",
   "tutorial.walk.intro": "Тази война никога не свършва. Ела с мен; имам идея.",
   "tutorial.walk.praise": "Хубава крачка! Имаш дарба.",
+  "tutorial.wall.firstHit": "Ето! Пука се. Продължавай.",
+  "tutorial.wall.hint": "Първо десен клик върху стената, после я удари.",
+  "tutorial.wall.how":
+    "Десен клик върху стената, после натисни {keys} или щракни я двукратно с десния бутон.",
+  "tutorial.wall.intro": "Стена препречва пътеката. Десен клик върху нея, после я удари.",
+  "tutorial.wall.praise": "Падна! Пътеката е отворена.",
 
   "weaponSets.empty": "Оръжеен комплект {number}: празен",
   "weaponSets.holds": "Оръжеен комплект {number}: {gear}",

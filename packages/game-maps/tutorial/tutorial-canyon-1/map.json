@@ -873,9 +873,9 @@
         ]
       },
       "schedule": {
-        "periodSeconds": 3600,
+        "periodSeconds": 3,
         "activeSeconds": 1,
-        "offsetSeconds": 3590
+        "offsetSeconds": 0
       }
     },
     {
@@ -984,7 +984,7 @@
         "height": 640,
         "layer": 1
       },
-      "health": 400
+      "health": 700
     }
   ],
   "spawnPoints": [

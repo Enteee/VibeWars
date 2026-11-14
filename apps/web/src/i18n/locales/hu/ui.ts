@@ -1425,6 +1425,12 @@ export default {
   "tutorial.dodge.how": "Kattints a földre bal gombbal, vagy járj ezekkel: {keys}.",
   "tutorial.dodge.intro": "Itt kövek hullanak. Ha egy árnyék nő, lépj félre!",
   "tutorial.dodge.praise": "Fürge lábak! A kövek nem érnek utol.",
+  "tutorial.heal.energy": "Az a kék sáv az energia. A képességek azt fogyasztják.",
+  "tutorial.heal.hint": "Előbb kattints a nevemre a csapatlistában.",
+  "tutorial.heal.how": "Kattints a nevemre a csapatlistában, aztán nyomd meg: {keys}.",
+  "tutorial.heal.intro": "Át a résen, be a tisztásra. Utánam!",
+  "tutorial.heal.ow": "Jaj! Eltalált a kő. Segítesz egy kicsit?",
+  "tutorial.heal.praise": "Sokkal jobb, köszönöm! Gyógyítani is tudsz.",
   "tutorial.learn": "Tanulj meg játszani",
   "tutorial.look.hint": "Kicsinyíts, aztán húzd a nézetet északra. Keresd meg a teleportot!",
   "tutorial.look.how":
@@ -1445,6 +1451,12 @@ export default {
   "tutorial.walk.how": "Bal kattintás a talajra, vagy sétálj ezekkel: {keys}.",
   "tutorial.walk.intro": "Ez a háború sosem ér véget. Gyere velem; van egy ötletem.",
   "tutorial.walk.praise": "Szép lépés! Született tehetség vagy.",
+  "tutorial.wall.firstHit": "Ez az! Reped. Csak így tovább.",
+  "tutorial.wall.hint": "Előbb jobb klikk a falra, aztán üsd.",
+  "tutorial.wall.how":
+    "Jobb klikk a falra, aztán nyomd meg: {keys}, vagy kattints rá kétszer jobb gombbal.",
+  "tutorial.wall.intro": "Egy fal zárja el az ösvényt. Jobb klikk rá, aztán üsd.",
+  "tutorial.wall.praise": "Leomlik! Az ösvény szabad.",
 
   "weaponSets.empty": "{number}. fegyverkészlet: üres",
   "weaponSets.holds": "{number}. fegyverkészlet: {gear}",

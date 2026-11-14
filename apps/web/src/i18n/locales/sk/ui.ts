@@ -1537,6 +1537,12 @@ export default {
   "tutorial.dodge.how": "Klikni ľavým tlačidlom na zem, alebo choď pomocou {keys}.",
   "tutorial.dodge.intro": "Tu padajú kamene. Keď tieň rastie, uhni nabok!",
   "tutorial.dodge.praise": "Rýchle nohy! Kamene ťa nedostihnú.",
+  "tutorial.heal.energy": "Ten modrý pás je energia. Zručnosti ju míňajú.",
+  "tutorial.heal.hint": "Najprv klikni na moje meno v zozname družiny.",
+  "tutorial.heal.how": "Klikni na moje meno v zozname družiny, potom stlač {keys}.",
+  "tutorial.heal.intro": "Cez prielom a na čistinu. Za mnou!",
+  "tutorial.heal.ow": "Au! Trafil ma kameň. Pomôžeš mi?",
+  "tutorial.heal.praise": "Oveľa lepšie, vďaka! Vieš aj liečiť.",
   "tutorial.learn": "Nauč sa hrať",
   "tutorial.look.hint": "Oddiaľ pohľad a potom ho potiahni na sever. Nájdi teleport!",
   "tutorial.look.how":
@@ -1557,6 +1563,12 @@ export default {
   "tutorial.walk.how": "Klikni ľavým na zem, alebo choď klávesmi {keys}.",
   "tutorial.walk.intro": "Táto vojna nikdy neskončí. Poď so mnou; mám nápad.",
   "tutorial.walk.praise": "Pekný krok! Si prirodzený talent.",
+  "tutorial.wall.firstHit": "Tak! Praská. Pokračuj.",
+  "tutorial.wall.hint": "Najprv klikni na múr pravým tlačidlom, potom doň udri.",
+  "tutorial.wall.how":
+    "Klikni na múr pravým tlačidlom, potom stlač {keys}, alebo naň klikni pravým dvakrát.",
+  "tutorial.wall.intro": "Chodník blokuje múr. Klikni naň pravým tlačidlom a potom doň udri.",
+  "tutorial.wall.praise": "Padá! Chodník je voľný.",
 
   "weaponSets.empty": "Sada zbraní {number}: prázdna",
   "weaponSets.holds": "Sada zbraní {number}: {gear}",

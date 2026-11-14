@@ -867,6 +867,24 @@ body {
   display: none;
 }
 
+/* What a tutorial station points at on the HUD (#3302): a ring that breathes; a steady one under reduced motion. */
+.tutorial-pulse {
+  box-shadow: 0 0 0 2px var(--accent);
+  animation: tutorial-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes tutorial-pulse {
+  50% {
+    box-shadow: 0 0 0.6rem 4px var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-pulse {
+    animation: none;
+  }
+}
+
 /* A foe a click calls for your team (#2737); otherwise the arena under
    the frame keeps the pointer, as the rest of the top does. */
 .hud-target.is-callable {

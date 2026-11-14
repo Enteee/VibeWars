@@ -7,6 +7,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   assertRan,
+  JOB_TIMEOUT_MINUTES,
+  MAX_SPEC_SECONDS,
   MAX_JOBS,
   SECONDS_PER_JOB,
   planJobs,
@@ -155,12 +157,32 @@ describe("specSeconds", () => {
 });
 
 describe("the plan under the real budget", () => {
-  it("never exceeds 6 jobs (builds.spec.ts fits) and refuses a spec over 400 s", () => {
-    const fits = { "builds.spec.ts": 400 };
-    expect(planJobs(fits, 10, SECONDS_PER_JOB, MAX_JOBS).length).toBeLessThanOrEqual(6);
-    expect(() => planJobs({ "big.spec.ts": 500 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
-      /split the PR/,
+  it("keeps the two largest specs within MAX_JOBS and every job within the budget", () => {
+    const weights = { "gameplay.spec.ts": 663, "tutorial.spec.ts": 407 };
+    const plan = planJobs(weights, 10, SECONDS_PER_JOB, MAX_JOBS);
+    expect(plan.length).toBeLessThanOrEqual(MAX_JOBS);
+    for (const job of plan) {
+      const cost = job.specs.reduce((sum, spec) => sum + (weights[spec] ?? 0) * job.repeat, 0);
+      expect(cost).toBeLessThanOrEqual(SECONDS_PER_JOB);
+    }
+  });
+
+  it("derives the spec limit from the job timeout the workflow sets", () => {
+    const yml = fs.readFileSync(".github/workflows/e2e-repeat.yml", "utf8");
+    const job = yml.slice(yml.indexOf("\n  e2e-repeat:"));
+    expect(/timeout-minutes: (\d+)/.exec(job)?.[1]).toBe(String(JOB_TIMEOUT_MINUTES));
+    expect(MAX_SPEC_SECONDS).toBe(1400);
+  });
+
+  it("refuses a spec too long for one job, naming it", () => {
+    expect(() => planJobs({ "huge.spec.ts": 1401 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
+      /huge\.spec\.ts.*split the spec/,
     );
+  });
+
+  it("refuses specs that need more than MAX_JOBS jobs", () => {
+    const weights = { "a.spec.ts": 500, "b.spec.ts": 500, "c.spec.ts": 500 };
+    expect(() => planJobs(weights, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(/split the PR/);
   });
 
   it("is empty for no specs", () => {

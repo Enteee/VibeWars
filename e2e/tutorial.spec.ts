@@ -15,6 +15,15 @@ const CANYON_ARRIVAL = { x: 1000, y: 1800 };
  * near enough for each of its strikes to count as a dodge, out of its reach.
  */
 const DODGE_SPOT = { x: 1860, y: 1920 };
+/** The middle of the canyon's cracked wall (#3302), station 5's, east of its mark. */
+const WALL_MIDDLE = { x: 3600, y: 1800 };
+/**
+ * West of the canyon's clearing (#3303), out of its rockfall's reach and
+ * in a heal's range of the tutor waiting east of it.
+ */
+const BY_CLEARING = { x: 4900, y: 1800 };
+/** The tutor's id, as its party row names it. */
+const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
 const STRIDE = 250;
 
@@ -50,13 +59,15 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor: then the menu, and no offer again`, async ({
       page,
     }) => {
       // Four stations, each a walk or a drag in a sim that runs no faster than
       // the page draws: a loaded runner takes most of a minute (#3222), and
-      // the canyon's three dodges at least 18 s more (#3247).
-      test.setTimeout(180_000);
+      // the canyon's three dodges at least 18 s more (#3247), and the wall
+      // some 10 to 15 s, slower where the page draws slowly (#3302), and the
+      // walk to the clearing and the heal some 30 s more (#3303).
+      test.setTimeout(360_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
       const frame = page.locator(".tutorial-frame");
@@ -191,6 +202,68 @@ test.describe("the first-time tutorial (#3218)", () => {
         await walkTo({ x: goalX, y: goalY });
         await expect.poll(() => hasSaid(quick), { timeout: 3_000 }).toBe(true);
       }).toPass({ timeout: 90_000 });
+
+      // Station 5 (#3302): up to the wall's mark, target the wall, strike it until it falls.
+      await expect
+        .poll(() => hasSaid("A wall blocks the trail. Right click it, then hit it."), {
+          timeout: 10_000,
+        })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-wall", "700");
+      const [faceX = 0, faceY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+        .split(",")
+        .map(Number);
+      const target = page.locator(".hud-target");
+      await expect(async () => {
+        await walkTo({ x: faceX, y: faceY });
+        const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
+        const at = view.onPage(WALL_MIDDLE);
+        await page.mouse.click(at.x, at.y, { button: "right" });
+        await expect(target).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 60_000 });
+      await expect(target).toHaveClass(/tutorial-pulse/);
+      // The mark by the wall goes once it is targeted; the frame pulses on.
+      await expect(frame).not.toHaveAttribute("data-mark", /./);
+      await page.keyboard.press("Space");
+      await expect
+        .poll(() => hasSaid("There! It cracks. Keep going."), { timeout: 15_000 })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-wall", "0", { timeout: 90_000 });
+      await expect
+        .poll(() => hasSaid("Down it goes! The trail is open."), { timeout: 5_000 })
+        .toBe(true);
+
+      // Station 6 (#3303): into the clearing behind the tutor, which a rock
+      // hits; target it by its name in the party window, then heal it.
+      await expect
+        .poll(() => hasSaid("Through the gap and into the clearing. Follow me!"), {
+          timeout: 10_000,
+        })
+        .toBe(true);
+      const tutorRow = page.locator(`.party-row[data-member="${TUTOR_ID}"]`);
+      await expect(tutorRow).toHaveClass(/tutorial-pulse/);
+      await expect(async () => {
+        await walkTo(BY_CLEARING);
+        const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+          .split(",")
+          .map(Number);
+        expect(Math.hypot(cx - BY_CLEARING.x, cy - BY_CLEARING.y)).toBeLessThan(150);
+      }).toPass({ timeout: 60_000 });
+      await expect
+        .poll(() => hasSaid("Ow! The rock got me. A little help?"), { timeout: 30_000 })
+        .toBe(true);
+      await tutorRow.click();
+      const healSlot = page.locator(".hud-skill:nth-child(8)");
+      await expect(healSlot).toHaveClass(/tutorial-pulse/);
+      const thanks = "Much better, thank you! You're a healer too.";
+      await expect(async () => {
+        if (await hasSaid(thanks)) {
+          return;
+        }
+        await page.keyboard.press("Digit8");
+        await expect.poll(() => hasSaid(thanks), { timeout: 4_000 }).toBe(true);
+      }).toPass({ timeout: 30_000 });
+      expect(await hasSaid("That blue bar is energy. Skills spend it.")).toBe(true);
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 

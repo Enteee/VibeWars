@@ -1546,6 +1546,12 @@ export default {
   "tutorial.dodge.how": "Kliknij lewym przyciskiem ziemię albo idź klawiszami {keys}.",
   "tutorial.dodge.intro": "Tu spadają kamienie. Gdy cień rośnie, odsuń się!",
   "tutorial.dodge.praise": "Szybkie nogi! Kamienie cię nie dogonią.",
+  "tutorial.heal.energy": "Ten niebieski pasek to energia. Umiejętności ją zużywają.",
+  "tutorial.heal.hint": "Najpierw kliknij moje imię na liście drużyny.",
+  "tutorial.heal.how": "Kliknij moje imię na liście drużyny, potem wciśnij {keys}.",
+  "tutorial.heal.intro": "Przez wyłom, na polanę. Za mną!",
+  "tutorial.heal.ow": "Au! Trafił mnie kamień. Pomożesz trochę?",
+  "tutorial.heal.praise": "Dużo lepiej, dzięki! Umiesz też leczyć.",
   "tutorial.learn": "Naucz się grać",
   "tutorial.look.hint": "Oddal widok, a potem przeciągnij go na północ. Znajdź teleporter!",
   "tutorial.look.how":
@@ -1566,6 +1572,12 @@ export default {
   "tutorial.walk.how": "Kliknij lewym na ziemię albo idź klawiszami {keys}.",
   "tutorial.walk.intro": "Ta wojna nigdy się nie kończy. Chodź ze mną; mam pomysł.",
   "tutorial.walk.praise": "Ładny krok! Masz talent.",
+  "tutorial.wall.firstHit": "Jest! Pęka. Dalej.",
+  "tutorial.wall.hint": "Najpierw kliknij mur prawym przyciskiem, potem go uderz.",
+  "tutorial.wall.how":
+    "Kliknij mur prawym przyciskiem, potem naciśnij {keys} albo kliknij go prawym dwa razy.",
+  "tutorial.wall.intro": "Mur zagradza ścieżkę. Kliknij go prawym, potem uderz.",
+  "tutorial.wall.praise": "Pada! Ścieżka wolna.",
 
   "weaponSets.empty": "Zestaw broni {number}: pusty",
   "weaponSets.holds": "Zestaw broni {number}: {gear}",

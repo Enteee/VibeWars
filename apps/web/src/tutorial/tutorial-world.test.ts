@@ -1,4 +1,9 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1, createPathFinder } from "@vibewars/game-core";
+import {
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  createPathFinder,
+  getSkill,
+  validatePlayerBuild,
+} from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { mapStructure, teamArenaMapIds } from "../net/maps.js";
@@ -12,9 +17,12 @@ import {
   SELF_ID,
   TUTOR_ID,
   TUTOR_PROFESSIONS,
+  TUTORIAL_HEAL,
+  TUTORIAL_HEAL_SLOT,
   FOE_KEEP_OFF,
   drawTutorProfession,
   inOpenView,
+  tutorialPlayerBuild,
   tutorialWorld,
 } from "./tutorial-world.js";
 
@@ -215,6 +223,19 @@ describe("tutorialWorld (#3221)", () => {
     }
     expect(picked.layer).toBe(ground);
     expect(reached).toBe(true);
+  });
+});
+
+describe("tutorialPlayerBuild (#3303)", () => {
+  it("is a legal Warrior/Monk with Heal Other in slot 8, resolved as the player's body", () => {
+    const build = tutorialPlayerBuild();
+    expect(build.primaryProfession).toBe(PLAYER_PROFESSION);
+    expect(build.secondaryProfession).toBe("monk");
+    expect(build.skillBar[TUTORIAL_HEAL_SLOT]).toBe(TUTORIAL_HEAL);
+    expect(getSkill(TUTORIAL_HEAL)?.elite).toBe(false);
+    expect(validatePlayerBuild(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes)).toEqual([]);
+    const { simulation } = tutorialWorld("arena-canyon", 4, "heal", "monk", VIEWPORT);
+    expect(simulation.get(SELF_ID)?.skillBar[TUTORIAL_HEAL_SLOT]).toBe(TUTORIAL_HEAL);
   });
 });
 

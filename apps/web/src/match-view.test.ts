@@ -134,6 +134,7 @@ describe("toArenaSnapshot", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     };
     const arena = toArenaSnapshot(match([player("me", 0), minion]), [], [], undefined, undefined);
@@ -157,6 +158,7 @@ describe("toArenaSnapshot", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     }));
     const arena = toArenaSnapshot(
@@ -181,6 +183,7 @@ describe("toArenaSnapshot", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     });
     const pick = (look: "beast" | "guild-lord"): string | undefined =>
@@ -204,6 +207,7 @@ describe("toArenaSnapshot", () => {
             mode: null,
             armedAttack: null,
             leaderId: null,
+            auraRadius: null,
           },
         })),
       ),

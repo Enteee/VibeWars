@@ -1,3 +1,5 @@
+import type { Vec2 } from "@vibewars/game-core";
+
 import type { MessageKey } from "../i18n/index.js";
 import { codeLabel, type KeyAction, type Keymap } from "../input/keymap.js";
 
@@ -26,6 +28,10 @@ export interface TutorialBeat {
   readonly say: TutorLine | undefined;
   /** What to point at, or nothing between stations. */
   readonly highlight: StationHighlight | undefined;
+  /** A ground mark beside a HUD highlight (#3302), or none. */
+  readonly mark: Vec2 | undefined;
+  /** The station running, or the next from its predecessor's praise on; none once finished. */
+  readonly station: string | undefined;
   /** The last station is done: its praise is said and nothing comes after. */
   readonly finished: boolean;
   /**
@@ -52,8 +58,9 @@ export interface TutorialRunner {
  * The tutorial as a state machine over `stations` (#3218), with no screen
  * of its own: each station's intro, its hint again every `HINT_REPEAT_MS`
  * until it is done, a station's hit line when the player is hit, no more
- * than every `HIT_REPEAT_MS` (#3247), then its praise and, after
- * `PRAISE_MS`, the next.
+ * than every `HIT_REPEAT_MS` (#3247), its reaction once, after which its
+ * hint is not said again (#3302), each of its asides once (#3303), then
+ * its praise and, after `PRAISE_MS`, the next.
  * The keys a line shows are read from `keymap()` as it is said, so a
  * rebind shows on the next line.
  */
@@ -70,6 +77,10 @@ export function createTutorialRunner(
   let finished = false;
   /** When the tutor last reacted to a hit. */
   let reactedAt: number | undefined;
+  /** The station running has said its reaction. */
+  let reacted = false;
+  /** The station running's asides it has said, by index. */
+  let asided = new Set<number>();
   const last = stations[stations.length - 1];
   if (last === undefined) {
     throw new Error("a tutorial of no stations");
@@ -87,9 +98,17 @@ export function createTutorialRunner(
   const beat = (
     say: TutorLine | undefined,
     highlight: StationHighlight | undefined,
-  ): TutorialBeat => ({ say, highlight, finished, world: worldOf() });
-  const quiet = (highlight: StationHighlight | undefined): TutorialBeat =>
-    beat(undefined, highlight);
+    mark?: Vec2,
+  ): TutorialBeat => ({
+    say,
+    highlight,
+    mark,
+    finished,
+    world: worldOf(),
+    station: stations[index]?.id,
+  });
+  const quiet = (highlight: StationHighlight | undefined, mark?: Vec2): TutorialBeat =>
+    beat(undefined, highlight, mark);
 
   return {
     tick(view, nowMs) {
@@ -104,16 +123,36 @@ export function createTutorialRunner(
         }
         praisedAt = undefined;
       }
+      const mark = station.mark?.(view);
+      const highlight =
+        typeof station.highlight === "function" ? station.highlight(view) : station.highlight;
       if (saidAt === undefined) {
         saidAt = nowMs;
-        return beat(line(station, station.lines.intro), station.highlight);
+        return beat(line(station, station.lines.intro), highlight, mark);
       }
       if (station.done(view)) {
         index += 1;
         saidAt = undefined;
+        reacted = false;
+        asided = new Set<number>();
         praisedAt = nowMs;
         finished = index >= stations.length;
         return beat(line(station, station.lines.praise), undefined);
+      }
+      const { reaction } = station;
+      if (reaction !== undefined && !reacted && reaction.when(view)) {
+        reacted = true;
+        saidAt = nowMs;
+        return beat(line(station, reaction.line), highlight, mark);
+      }
+      const aside = (station.asides ?? []).findIndex(
+        (entry, at) => !asided.has(at) && entry.when(view),
+      );
+      const said = station.asides?.[aside];
+      if (said !== undefined) {
+        asided.add(aside);
+        saidAt = nowMs;
+        return beat(line(station, said.line), highlight, mark);
       }
       const { hit } = station.lines;
       if (
@@ -123,13 +162,14 @@ export function createTutorialRunner(
       ) {
         reactedAt = nowMs;
         saidAt = nowMs;
-        return beat(line(station, hit), station.highlight);
+        return beat(line(station, hit), highlight, mark);
       }
-      if (nowMs - saidAt >= HINT_REPEAT_MS) {
+      // Once it has reacted, the player is on it: no more nudging.
+      if (!reacted && nowMs - saidAt >= HINT_REPEAT_MS) {
         saidAt = nowMs;
-        return beat(line(station, station.lines.hint), station.highlight);
+        return beat(line(station, station.lines.hint), highlight, mark);
       }
-      return quiet(station.highlight);
+      return quiet(highlight, mark);
     },
   };
 }
