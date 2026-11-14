@@ -93,6 +93,8 @@ jobs:
     strategy:
       # One failing job is the answer; the others add nothing but cost.
       fail-fast: true
+      # A run can be 20 jobs; 10 at once leaves the hosted pool to other PRs' CI (#3313).
+      max-parallel: 10
       # One entry per job: { job, specs, repeat }, from the plan job.
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.matrix) }}
