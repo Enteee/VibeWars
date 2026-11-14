@@ -146,6 +146,7 @@ function actor(
   return {
     id,
     name: id,
+    nameLead: undefined,
     guildTag: undefined,
     heroRank: 0,
     signet: undefined,
@@ -174,6 +175,7 @@ function actor(
     enchanted: false,
     stanced: false,
     hexed: false,
+    formed: false,
     invulnerable: false,
     teleportReadyAt: 0,
     conditionCues: [],
@@ -929,6 +931,29 @@ describe("nameplateLayout (#281)", () => {
     const bot = actor("b", 200, 100, 14, { profession: "monk", bot: true });
     expect(nameplateLayout(bot, 40, 1, true)).toEqual(plain);
     expect(plain.signetX).toBeUndefined();
+  });
+
+  it("puts a ghost's leader's signet between its lead and the name, all centred (#3252)", () => {
+    const ghost = actor("g", 200, 100, 14, { nameLead: "Ghostly Hero ›", signet: 42 });
+    const layout = nameplateLayout(ghost, 40, 1, true, 84);
+    const leadRight = (layout.leadX ?? 0) + 42;
+    const signetLeft = (layout.signetX ?? 0) - NAMEPLATE_SIGNET_SIZE / 2;
+    const signetRight = (layout.signetX ?? 0) + NAMEPLATE_SIGNET_SIZE / 2;
+    expect(signetLeft).toBeGreaterThan(leadRight);
+    expect(layout.textX - 20).toBeGreaterThan(signetRight);
+    expect(((layout.leadX ?? 0) - 42 + layout.textX + 20) / 2).toBeCloseTo(200, 9);
+    const box = nameTagBox(ghost, 40, 14, 1, true, 84);
+    expect(box.left).toBeCloseTo((layout.leadX ?? 0) - 42, 9);
+    expect((box.left + box.right) / 2).toBeCloseTo(200, 9);
+  });
+
+  it("lays out a lead with no signet as text alone, centred (#3252)", () => {
+    const ghost = actor("g", 200, 100, 14, { nameLead: "Ghostly Hero ›" });
+    const layout = nameplateLayout(ghost, 40, 1, true, 84);
+    expect(layout.signetX).toBeUndefined();
+    expect(layout.textX - 20).toBeGreaterThan((layout.leadX ?? 0) + 42);
+    expect(((layout.leadX ?? 0) - 42 + layout.textX + 20) / 2).toBeCloseTo(200, 9);
+    expect(nameplateLayout(actor("d", 200, 100), 40, 1, false).leadX).toBeUndefined();
   });
 
   it("widens the name tag's box by the signet only when it is drawn (#2805)", () => {

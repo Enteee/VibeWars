@@ -1473,18 +1473,35 @@ describe("a Ghostly Hero's leader (#1377, #1419)", () => {
   });
 
   describe("ghostNameplate", () => {
+    const devona = player({ sessionId: "ally", name: "Devona", team: 0, signet: 42 });
+    const players = [me, devona];
+
     it("names the leader of your team's ghost, and of both to a spectator", () => {
-      expect(ghostNameplate(ghost(0, "me"), me, names)).toBe(
-        `Ghostly Hero › ${t("hud.leaderYou")}`,
-      );
-      expect(ghostNameplate(ghost(0, "ally"), me, names)).toBe("Ghostly Hero › Devona");
-      expect(ghostNameplate(ghost(1, "ally"), undefined, names)).toBe("Ghostly Hero › Devona");
+      expect(ghostNameplate(ghost(0, "me"), me, players, names)).toEqual({
+        lead: "Ghostly Hero ›",
+        name: t("hud.leaderYou"),
+        signet: undefined,
+      });
+      const followsDevona = { lead: "Ghostly Hero ›", name: "Devona", signet: 42 };
+      expect(ghostNameplate(ghost(0, "ally"), me, players, names)).toEqual(followsDevona);
+      expect(ghostNameplate(ghost(1, "ally"), undefined, players, names)).toEqual(followsDevona);
+    });
+
+    it("leaves a leader with no signet, or gone, unsigned (#3252)", () => {
+      const unsigned = [me, { ...devona, signet: undefined }];
+      expect(ghostNameplate(ghost(0, "ally"), me, unsigned, names).signet).toBeUndefined();
+      expect(ghostNameplate(ghost(0, "ally"), me, [me], names).signet).toBeUndefined();
     });
 
     it("keeps a staying ghost's, a foe's ghost's and anyone else's plain name", () => {
-      expect(ghostNameplate(ghost(0, null), me, names)).toBe("Ghostly Hero");
-      expect(ghostNameplate(ghost(1, "foe"), me, names)).toBe("Ghostly Hero");
-      expect(ghostNameplate(me, me, names)).toBe("me");
+      const plain = { lead: undefined, name: "Ghostly Hero", signet: undefined };
+      expect(ghostNameplate(ghost(0, null), me, players, names)).toEqual(plain);
+      expect(ghostNameplate(ghost(1, "foe"), me, players, names)).toEqual(plain);
+      expect(ghostNameplate(devona, me, players, names)).toEqual({
+        lead: undefined,
+        name: "Devona",
+        signet: 42,
+      });
     });
   });
 });

@@ -68,6 +68,12 @@ export interface RenderableActor {
   readonly id: string;
   /** Drawn above the actor, so a player can tell who is who. */
   readonly name: string;
+  /**
+   * Drawn before the signet and the name (#3252): a following Ghostly
+   * Hero's "Ghostly Hero ›", whose name and signet are its leader's;
+   * `undefined` for none.
+   */
+  readonly nameLead: string | undefined;
   /** The player's guild tag (#1406), after the name on its plate; `undefined` for none. */
   readonly guildTag: string | undefined;
   /** Beside the name on its plate (#2702); 0 for none. */
@@ -119,6 +125,11 @@ export interface RenderableActor {
   readonly stanced: boolean;
   /** Wears the violet hex halo over its health bar (#1117, #3226); never a corpse. */
   readonly hexed: boolean;
+  /**
+   * In a form (#3229): `radius` is already `FORM_SCALE` times its own,
+   * and it wears an ash cape and a cold aura; never a corpse.
+   */
+  readonly formed: boolean;
   /** Shimmers, a shrine raise's invulnerability (#1233); never a corpse. */
   readonly invulnerable: boolean;
   /** The match clock (`clock`) from which it may take a teleport again (#3030); 0 if it never took one. */
@@ -759,7 +770,7 @@ function nearestInColumn(
       continue;
     }
     const { x, y } = actor.position;
-    const r = actor.radius;
+    const r = hitRadius(actor);
     const inside =
       point.x >= Math.min(tag.left, x - r) &&
       point.x <= Math.max(tag.right, x + r) &&
@@ -774,7 +785,18 @@ function nearestInColumn(
   return best;
 }
 
-/** The actor among `actors` that `accepts` nearest `point`, within its radius. */
+/** How much bigger a body in a form draws (#3229, docs/art/3191-skill-visuals.md). */
+export const FORM_SCALE = 1.35;
+
+/**
+ * The radius a click finds `actor` within: a form draws the body bigger
+ * (#3229) but targets it as before.
+ */
+export function hitRadius(actor: RenderableActor): number {
+  return actor.formed ? actor.radius / FORM_SCALE : actor.radius;
+}
+
+/** The actor among `actors` that `accepts` nearest `point`, within its hit radius. */
 function nearestUnder(
   actors: readonly RenderableActor[],
   point: Vec2,
@@ -787,7 +809,7 @@ function nearestUnder(
       continue;
     }
     const d = Vec.distance(actor.position, point);
-    if (d <= actor.radius && d < bestDistance) {
+    if (d <= hitRadius(actor) && d < bestDistance) {
       best = actor;
       bestDistance = d;
     }
@@ -945,6 +967,8 @@ const PROFESSION_GLYPH_GAP = 2;
 /** A player's signet on its name plate (#2805), screen px, and the gap after it. */
 export const NAMEPLATE_SIGNET_SIZE = 16;
 const NAMEPLATE_SIGNET_GAP = 2;
+/** After a name's lead (#3252), screen px: a space's width in the plate's 11 px monospace. */
+const NAMEPLATE_LEAD_GAP = 7;
 
 /** The arena's texture for `bits`' signet (#2805), one per bits. */
 export function signetTextureKey(bits: number): string {
@@ -952,12 +976,14 @@ export function signetTextureKey(bits: number): string {
 }
 
 /**
- * Where a name, its profession glyph and its signet go: centre x of
- * each, and their shared bottom, in world units.
+ * Where a name, its profession glyph, its lead and its signet go: centre
+ * x of each, and their shared bottom, in world units.
  */
 export interface NameplateLayout {
   /** `undefined`: the actor has no profession, so no glyph. */
   readonly glyphX: number | undefined;
+  /** `undefined`: the name has no lead (#3252). */
+  readonly leadX: number | undefined;
   /** `undefined`: no signet drawn (#2805), and no gap left for one. */
   readonly signetX: number | undefined;
   readonly textX: number;
@@ -965,22 +991,24 @@ export interface NameplateLayout {
 }
 
 /**
- * Lay out an actor's name, the glyph before it (#281) and its signet
- * just left of the name (#2805): all centred together on the body, so a
- * long name pushes the others left with it, and all sit on
- * `nameLabelBottom`. Each is screen-sized (#456), so their widths are
+ * Lay out an actor's name, the glyph before it (#281), its lead after
+ * the glyph (#3252) and its signet just left of the name (#2805): all
+ * centred together on the body, so a long name pushes the others left
+ * with it, and all sit on `nameLabelBottom`. Each is screen-sized (#456), so their widths are
  * screen px, laid out in world units at `zoom`.
  *
  * @param textWidth the label's measured width, screen px, never a
  *   character count: a name can be any script (#192)
  * @param signetDrawn whether the actor's signet texture is ready to draw;
  *   until it is, the plate leaves no gap for one
+ * @param leadWidth the lead's measured width, screen px; 0 for none
  */
 export function nameplateLayout(
   actor: RenderableActor,
   textWidth: number,
   zoom: number,
   signetDrawn: boolean,
+  leadWidth = 0,
 ): NameplateLayout {
   const bottom = nameLabelBottom(actor, zoom);
   const { x } = actor.position;
@@ -990,23 +1018,27 @@ export function nameplateLayout(
   const signet = screenPx(NAMEPLATE_SIGNET_SIZE, zoom);
   const withSignet = signetDrawn && actor.signet !== undefined;
   const signetRun = withSignet ? signet + screenPx(NAMEPLATE_SIGNET_GAP, zoom) : 0;
+  const lead = screenPx(leadWidth, zoom);
+  const leadRun = leadWidth > 0 ? lead + screenPx(NAMEPLATE_LEAD_GAP, zoom) : 0;
   const text = screenPx(textWidth, zoom);
-  const left = x - (glyphRun + signetRun + text) / 2;
+  const left = x - (glyphRun + leadRun + signetRun + text) / 2;
   return {
     glyphX: actor.profession === undefined ? undefined : left + glyph / 2,
-    signetX: withSignet ? left + glyphRun + signet / 2 : undefined,
-    textX: left + glyphRun + signetRun + text / 2,
+    leadX: leadWidth > 0 ? left + glyphRun + lead / 2 : undefined,
+    signetX: withSignet ? left + glyphRun + leadRun + signet / 2 : undefined,
+    textX: left + glyphRun + leadRun + signetRun + text / 2,
     bottom,
   };
 }
 
 /**
- * The box an actor's drawn name tag covers (#2738): glyph, signet and
- * label laid out by `nameplateLayout`, as tall as the tallest. World
+ * The box an actor's drawn name tag covers (#2738): glyph, lead, signet
+ * and label laid out by `nameplateLayout`, as tall as the tallest. World
  * units, so the hit it makes does not change with zoom.
  *
  * @param textWidth the label's width, screen px, as `nameplateLayout`'s
  * @param textHeight its height, screen px
+ * @param leadWidth the lead's width, screen px, as `nameplateLayout`'s
  */
 export function nameTagBox(
   actor: RenderableActor,
@@ -1014,16 +1046,19 @@ export function nameTagBox(
   textHeight: number,
   zoom: number,
   signetDrawn: boolean,
+  leadWidth = 0,
 ): Rect {
-  const layout = nameplateLayout(actor, textWidth, zoom, signetDrawn);
+  const layout = nameplateLayout(actor, textWidth, zoom, signetDrawn, leadWidth);
   const text = screenPx(textWidth, zoom);
   const right = layout.textX + text / 2;
   const left =
     layout.glyphX !== undefined
       ? layout.glyphX - screenPx(PROFESSION_GLYPH_SIZE, zoom) / 2
-      : layout.signetX !== undefined
-        ? layout.signetX - screenPx(NAMEPLATE_SIGNET_SIZE, zoom) / 2
-        : layout.textX - text / 2;
+      : layout.leadX !== undefined
+        ? layout.leadX - screenPx(leadWidth, zoom) / 2
+        : layout.signetX !== undefined
+          ? layout.signetX - screenPx(NAMEPLATE_SIGNET_SIZE, zoom) / 2
+          : layout.textX - text / 2;
   const height = screenPx(
     Math.max(
       textHeight,

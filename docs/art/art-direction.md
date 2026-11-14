@@ -566,6 +566,13 @@ goes, which it never meets, since a raise starts with no hex and refuses
 every new one. Its alpha pulses between 0.35 and 1 every 0.8 s; under
 reduced motion it holds at 1. It is gone the frame the window ends.
 
+**A form** (#3229), a Dervish's avatar, changes the body itself: every ring
+above is drawn at r × 1.35, marks, bars and name plate with it, while clicks
+still find the body at r. Its cape is toned 70% to ash `#7a7672`, emblem
+kept, and a faint cold aura `#c8def2` glows to r × 1.35 + 7 under every
+disc, breathing over 2.6 s; under reduced motion it holds full. A corpse
+wears none of it.
+
 **The condition cues** (#1138) say a living body is burning, bleeding or
 poisoned: three `condition` flames on its top edge, 3 wide, flickering
 between r + 3 and r + 6 every 0.3 s; a `damage` drop falling from its

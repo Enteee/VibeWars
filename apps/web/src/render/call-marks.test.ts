@@ -10,6 +10,7 @@ const R = 14;
 const CALLED: RenderableActor = {
   id: "foe",
   name: "foe",
+  nameLead: undefined,
   guildTag: undefined,
   heroRank: 0,
   signet: undefined,
@@ -38,6 +39,7 @@ const CALLED: RenderableActor = {
   enchanted: false,
   stanced: false,
   hexed: false,
+  formed: false,
   invulnerable: false,
   teleportReadyAt: 0,
   conditionCues: [],

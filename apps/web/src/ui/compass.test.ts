@@ -30,6 +30,7 @@ function actor(
   return {
     id,
     name: id,
+    nameLead: undefined,
     guildTag: undefined,
     heroRank: 0,
     signet: undefined,
@@ -58,6 +59,7 @@ function actor(
     enchanted: false,
     stanced: false,
     hexed: false,
+    formed: false,
     invulnerable: false,
     teleportReadyAt: 0,
     conditionCues: [],

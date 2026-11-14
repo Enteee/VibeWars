@@ -1853,21 +1853,41 @@ export function ghostLeaderToast(
 }
 
 /**
+ * A body's arena name plate (#3252): `name` with `signet` just left
+ * of it, and `lead` before both when there is one.
+ */
+export interface Nameplate {
+  readonly lead: string | undefined;
+  readonly name: string;
+  readonly signet: number | undefined;
+}
+
+/**
  * The arena name of a Ghostly Hero that follows someone (#1419),
- * "Ghostly Hero › you" or "Ghostly Hero › <name>"; any other body's, a
- * staying ghost's and a foe's ghost's plain name. A spectator
- * (`self` undefined) sees both sides' leaders.
+ * "Ghostly Hero ›" before "you" or before its leader's signet (#3252)
+ * and name; any other body's, a staying ghost's and a foe's ghost's
+ * plain name and own signet. A spectator (`self` undefined) sees both
+ * sides' leaders.
  */
 export function ghostNameplate(
   player: PlayerSnapshot,
   self: PlayerSnapshot | undefined,
+  players: readonly PlayerSnapshot[],
   names: ReadonlyMap<string, string>,
-): string {
+): Nameplate {
   const leaderId = player.creature?.kind === "ghostly-hero" ? player.creature.leaderId : null;
   if (leaderId === null || (self !== undefined && self.team !== player.team)) {
-    return player.name;
+    return { lead: undefined, name: player.name, signet: player.signet };
   }
-  return `${player.name} › ${leaderName(leaderId, self?.sessionId, names)}`;
+  return {
+    lead: `${player.name} ›`,
+    name: leaderName(leaderId, self?.sessionId, names),
+    // "you" goes unsigned, as in the leader toast (#3232).
+    signet:
+      leaderId === self?.sessionId
+        ? undefined
+        : players.find((other) => other.sessionId === leaderId)?.signet,
+  };
 }
 
 /**
