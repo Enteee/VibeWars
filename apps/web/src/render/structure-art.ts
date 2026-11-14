@@ -131,6 +131,8 @@ const LANDING = [0.42, 0.58] as const;
 /** An arch's opening and a gatehouse's passage, as shares of the face they are in. */
 const OPENING_WIDTH = 0.5;
 const PASSAGE_HEIGHT = 0.7;
+/** An arch walked along its face (#3312): the lintel over its open face, as a share of the face. */
+const LINTEL = 0.2;
 /** The segments an arch's round top is drawn in. */
 const ARCH_SEGMENTS = 8;
 /** How far apart a gatehouse grid's bars are, in world units. */
@@ -329,12 +331,44 @@ function opening(edge: Segment): Segment {
   return { from: along(edge, margin), to: along(edge, 1 - margin) };
 }
 
-/** A round-topped dark opening in each south face, from its foot: what passes under an arch. */
+/**
+ * How an arch is walked under (#3312): across its footprint's short axis,
+ * a square one north–south; and the stretches of its south faces that
+ * open. Walked north–south, a south face is where the walk enters, and
+ * its middle opens. Walked east–west, the faces it enters by are edge-on
+ * to the camera, so each south face opens its whole width under a lintel.
+ */
+export function archPassage(footprint: RenderableShape): {
+  readonly walk: "x" | "y";
+  readonly openings: readonly Segment[];
+} {
+  const walk = longAxis(footprint) === "x" ? "y" : "x";
+  const faces = southFacingEdges(footprint);
+  return { walk, openings: walk === "y" ? faces.map(opening) : faces };
+}
+
+/**
+ * What passes under an arch, dark in its south faces from their foot: a
+ * round-topped opening where the walk enters, the whole face under a lit
+ * lintel where it passes along it.
+ */
 function archway(painter: StructurePainter, deck: DeckFrame): void {
-  const { footprint, low, top, palette } = deck;
+  const { footprint, low, top, line, palette } = deck;
+  const { walk, openings } = archPassage(footprint);
   painter.fillStyle(palette.support, 1);
-  for (const edge of southFacingEdges(footprint)) {
-    const { from, to } = opening(edge);
+  if (walk === "x") {
+    const high = top - (top - low) * LINTEL;
+    for (const { from, to } of openings) {
+      fillQuad(painter, raised(from, low), raised(to, low), raised(to, high), raised(from, high));
+    }
+    painter.lineStyle(line * 2, palette.wallLit, 1);
+    for (const { from, to } of openings) {
+      const [a, b] = [raised(from, high), raised(to, high)];
+      painter.lineBetween(a.x, a.y, b.x, b.y);
+    }
+    return;
+  }
+  for (const { from, to } of openings) {
     const middle = along({ from, to }, 0.5);
     const radius = Math.min(lengthOf({ from, to }) / 2, (top - low) * 0.45);
     const spring = low + Math.max(0, (top - low) * 0.85 - radius);
@@ -619,6 +653,9 @@ function statue(painter: StructurePainter, deck: DeckFrame): void {
 
 const nothing = (): void => undefined;
 
+/** The looks walked under, whose top fades while a body is under it, as an overhang does (#3312). */
+export const FADING_TOP_LOOKS: ReadonlySet<DeckLook> = new Set<DeckLook>(["arch"]);
+
 export const DECK_ART: Record<DeckLook, DeckArt> = {
   /** Today's deck: built stone, planked north to south. */
   platform: {
@@ -725,7 +762,7 @@ export const DECK_ART: Record<DeckLook, DeckArt> = {
       brokenBrink(painter, deck);
     },
   },
-  /** A stone arch: a dark round opening in its face, a walkable top. */
+  /** A stone arch: the dark way under it in its face, a walkable top. */
   arch: {
     side: (painter, deck) => {
       courses(painter, deck, false);
