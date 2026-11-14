@@ -282,6 +282,7 @@ function seeded(seed: number): Random {
 export type PavingCanvas = Pick<
   CanvasRenderingContext2D,
   | "setTransform"
+  | "clearRect"
   | "beginPath"
   | "moveTo"
   | "lineTo"
@@ -334,10 +335,99 @@ export function pavingTextureSizes(
   });
 }
 
-/** `drawing` painted onto a canvas of its bounds at `scale` pixels per world unit. */
-export function paintPaving(context: PavingCanvas, drawing: PavingDrawing, scale: number): void {
+/**
+ * `drawing` painted onto a canvas of its bounds at `scale` pixels per
+ * world unit, with the pieces over tunnels (#3272) cut out: they draw on
+ * their own.
+ */
+export function paintPaving(
+  context: PavingCanvas,
+  drawing: PavingDrawing,
+  scale: number,
+  pieces: readonly PavingTunnelPiece[],
+): void {
+  paintCommands(context, drawing, scale, { left: 0, top: 0 });
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  for (const { pixels } of pieces) {
+    context.clearRect(pixels.left, pixels.top, pixels.width, pixels.height);
+  }
+}
+
+/**
+ * A part of a paving over a tunnel (#3272), drawn on its own so it can
+ * fade with that tunnel's cover: `pixels` is its rectangle on the
+ * paving's texture, and the paving's own texture has it cut out.
+ */
+export interface PavingTunnelPiece {
+  /** The tunnel's index in the map's `tunnels`. */
+  readonly tunnel: number;
+  /** Its rectangle in the paving's texture, whole pixels, so the piece and the hole meet exactly. */
+  readonly pixels: {
+    readonly left: number;
+    readonly top: number;
+    readonly width: number;
+    readonly height: number;
+  };
+}
+
+/**
+ * The pieces of a paving on `layer` that lie over the tunnel covers
+ * `covers` (#3272): one per cover on the same layer its texture overlaps,
+ * the overlap rounded to the texture's pixels. A cover on another layer,
+ * or one that misses the paving, makes none.
+ */
+export function pavingTunnelPieces(
+  drawing: PavingDrawing,
+  layer: number,
+  size: PavingTextureSize,
+  covers: readonly {
+    readonly tunnel: number;
+    readonly layer: number;
+    readonly outline: readonly Vec2[];
+  }[],
+): PavingTunnelPiece[] {
   const { x, y } = drawing.bounds;
-  context.setTransform(scale, 0, 0, scale, -x * scale, -y * scale);
+  const { scale, width, height } = size;
+  return covers.flatMap((cover) => {
+    if (cover.layer !== layer || cover.outline.length === 0) {
+      return [];
+    }
+    const xs = cover.outline.map((corner) => corner.x);
+    const ys = cover.outline.map((corner) => corner.y);
+    const pixel = (world: number, origin: number, most: number): number =>
+      Math.min(most, Math.max(0, Math.round((world - origin) * scale)));
+    const left = pixel(Math.min(...xs), x, width);
+    const right = pixel(Math.max(...xs), x, width);
+    const top = pixel(Math.min(...ys), y, height);
+    const bottom = pixel(Math.max(...ys), y, height);
+    if (right <= left || bottom <= top) {
+      return [];
+    }
+    return [
+      { tunnel: cover.tunnel, pixels: { left, top, width: right - left, height: bottom - top } },
+    ];
+  });
+}
+
+/** `piece` of `drawing` painted onto a canvas of its own size, pixel for pixel as the paving's. */
+export function paintPavingPiece(
+  context: PavingCanvas,
+  drawing: PavingDrawing,
+  scale: number,
+  piece: PavingTunnelPiece,
+): void {
+  paintCommands(context, drawing, scale, piece.pixels);
+}
+
+/** `drawing`'s commands at `scale`, the texture's pixel `origin` at the canvas's corner. */
+function paintCommands(
+  context: PavingCanvas,
+  drawing: PavingDrawing,
+  scale: number,
+  origin: { readonly left: number; readonly top: number },
+): void {
+  const { x, y } = drawing.bounds;
+  context.setTransform(scale, 0, 0, scale, -x * scale - origin.left, -y * scale - origin.top);
   context.lineJoin = "round";
   for (const command of drawing.commands) {
     const [first, ...rest] = command.points;
