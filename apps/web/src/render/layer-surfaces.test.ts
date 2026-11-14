@@ -383,6 +383,7 @@ describe("the hidden part of a weapon and symbol (#2972)", () => {
 describe("clicking a character on a layered map (#2831)", () => {
   const actor = (id: string, y: number, layer: number): RenderableActor => ({
     name: id,
+    nameLead: undefined,
     guildTag: undefined,
     heroRank: 0,
     signet: undefined,
