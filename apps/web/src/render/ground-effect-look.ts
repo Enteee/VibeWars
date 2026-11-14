@@ -111,20 +111,6 @@ export function poolBreath(now: number, phase: number, reducedMotion: boolean): 
   return reducedMotion ? 1 : 1 + 0.15 * Math.sin((now / 3) * 2 * Math.PI + phase);
 }
 
-/** An arc, in radians, clockwise from `from` to `to`. */
-export interface Arc {
-  readonly from: number;
-  readonly to: number;
-}
-
-/** The arcs of a dashed circle of `radius`: `dash` long, `gap` apart, as near as whole. */
-export function dashedCircle(radius: number, dash: number, gap: number): Arc[] {
-  const count = Math.max(1, Math.round((2 * Math.PI * radius) / (dash + gap)));
-  const step = (2 * Math.PI) / count;
-  const drawn = (step * dash) / (dash + gap);
-  return Array.from({ length: count }, (_, k) => ({ from: k * step, to: k * step + drawn }));
-}
-
 /** What moves inside an area: a storm's swirls, a well's wisps, or nothing. */
 export type GroundMotion = "swirl" | "wisp";
 

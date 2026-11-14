@@ -212,7 +212,6 @@ import {
   GROUND_GAP,
   GROUND_STROKES,
   GROUND_STROKE_WIDTH,
-  dashedCircle,
   groundLook,
   groundMotion,
   overlapsOf,
@@ -297,6 +296,7 @@ import {
   type FogArt,
 } from "./atmosphere.js";
 import { fillDisc, strokeDisc } from "./disc.js";
+import { dashedCircle } from "./dashed-circle.js";
 import {
   paintZoneGround,
   paintZoneMotion,

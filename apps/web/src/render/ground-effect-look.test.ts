@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_POOL_ALPHA,
   cursedBy,
-  dashedCircle,
   groundLook,
   groundMotion,
   harmsViewer,
@@ -13,6 +12,7 @@ import {
   wisp,
   type CursingArea,
 } from "./ground-effect-look.js";
+import { dashedCircle } from "./dashed-circle.js";
 import { ZONE_EDGE_WIDTH } from "./zone-look.js";
 
 describe("harmsViewer (#3283, Q75 option A)", () => {

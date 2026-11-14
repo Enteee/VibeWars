@@ -1,6 +1,6 @@
 import type { CreatureLook } from "@vibewars/game-core";
 
-import { dashedCircle } from "./ground-effect-look.js";
+import { dashedCircle } from "./dashed-circle.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
