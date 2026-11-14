@@ -24,7 +24,7 @@ Ci si gioca su Canyon, Crossroads e Long Hall, e su due arene più grandi, di me
 
 **Più uccisioni in 3 minuti.** I morti tornano al loro spawn dopo 8 secondi, e morire non costa morale. La prima squadra a 15 uccisioni vince subito. Allo scadere del tempo, vince chi ha più uccisioni; a parità è un pareggio.
 
-Ci si gioca su Ember Pits: un anello di pilastri spezzati intorno a una fossa aperta, con un corridoio su ogni lato, per ogni dimensione.
+Ci si gioca su Ember Pits: rivoli di lava attraversati da ponti di pietra, un tunnel di lava, un montacarichi a leva su una colonna di basalto e sfiati di vapore, per ogni dimensione.
 
 ## Annientamento del sacerdote
 

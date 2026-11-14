@@ -29,6 +29,7 @@ import structuresData from "../test-maps/structures/map.json" with { type: "json
 import heightsData from "../training/training-heights/map.json" with { type: "json" };
 import {
   MAX_OUTLINE_POINTS,
+  OUTSIDE_KINDS,
   mapDataSchema,
   type Gate,
   type GateOpener,
@@ -48,7 +49,7 @@ const NEW_ARENAS = new Set(["arena-crossroads", "arena-long-hall", "arena-canyon
  * The 2.5D rebuilds (#3064): asymmetric by design. Their fairness is the balance bench and the
  * walk and high-ground checks (map-balance.test.ts), not a half turn.
  */
-const REBUILT = new Set(["arena-canyon", "arena-crossroads"]);
+const REBUILT = new Set(["arena-canyon", "arena-crossroads", "ember-pits"]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
   ...map,
@@ -984,5 +985,17 @@ describe("a ground outline's nav nodes (#3066)", () => {
     };
     const nodes = layeredFinder(outlined, RADIUS).nodeCount;
     expect(nodes).toBeLessThanOrEqual(600);
+  });
+});
+
+describe("matchLayers: the land outside an outline", () => {
+  const outlined = mapDataSchema.parse(outlineTest);
+
+  it.each(OUTSIDE_KINDS)("%s is seen across only if it is a drop or water", (outside) => {
+    if (outlined.bounds.kind !== "outline") {
+      throw new Error("outline-test has no outline");
+    }
+    const layers = matchLayers({ ...outlined, bounds: { ...outlined.bounds, outside } });
+    expect(layers.outline?.blocksSight).toBe(outside !== "cliff" && outside !== "deep-water");
   });
 });

@@ -44,13 +44,28 @@ async function badgeSpot(page: Page): Promise<Buffer> {
 test("a cast bar wears the casting skill's type badge, and loses it with the bar (#1125)", async ({
   page,
 }) => {
+  // Ember Pits breathes, and never settles unless motion is reduced.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await bringStarter(page, UNGUENT_BUILD);
   await page.goto("./");
   await startSoloMatch(page);
   const before = await badgeSpot(page);
 
+  // Look for the badge straight after the press, not once the HUD shows
+  // the cast: at a slow frame rate the 3 s cast can be over by then (#3270).
+  // The first match of a cold run can take the key before its skill bar
+  // does; press again only after 2 s with the skill neither casting nor
+  // recharging, as a press mid-cast queues.
+  const taken = page.locator(".hud-skill.is-casting, .hud-skill .recharge-overlay");
   await page.keyboard.press(TROLL_UNGUENT);
-  await expect.poll(async () => (await badgeSpot(page)).equals(before)).toBe(false);
+  let pressed = Date.now();
+  await expect(async () => {
+    if (Date.now() - pressed > 2_000 && (await taken.count()) === 0) {
+      await page.keyboard.press(TROLL_UNGUENT);
+      pressed = Date.now();
+    }
+    expect((await badgeSpot(page)).equals(before)).toBe(false);
+  }).toPass({ intervals: [0] });
 
   await expect
     .poll(async () => (await badgeSpot(page)).equals(before), { timeout: 10_000 })

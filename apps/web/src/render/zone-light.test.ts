@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import type { MapZone } from "./arena-snapshot.js";
 import type { RenderableTeleport } from "./flag-objects.js";
-import { teleportLights, withZoneLights, zoneLights } from "./zone-light.js";
+import { ZONE_LIGHT_MAX_RADIUS, teleportLights, withZoneLights, zoneLights } from "./zone-light.js";
 
 const lava: MapZone = {
   kind: "molten",
@@ -61,6 +61,15 @@ describe("a zone's own light (#3052)", () => {
     expect(light?.radius).toBeCloseTo(1.6 * 50);
     expect(light?.colour).toBe(0xff9040);
     expect(light?.flicker).toBeGreaterThan(0);
+  });
+
+  it("reaches no farther than its cap, however long the zone (#3225)", () => {
+    const river: MapZone = {
+      kind: "molten",
+      layer: 0,
+      area: { kind: "rect", x: 0, y: 0, width: 300, height: 1000 },
+    };
+    expect(zoneLights([river], 0)[0]?.radius).toBe(ZONE_LIGHT_MAX_RADIUS);
   });
 
   it("comes only from kinds with a light, in map order, a polygon's too", () => {

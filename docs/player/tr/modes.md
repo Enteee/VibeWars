@@ -64,8 +64,8 @@ görüş hatlarıyla.
 geri gelir ve ölmek moral kaybettirmez. 15 leşe ilk ulaşan takım hemen
 kazanır. Süre dolunca daha çok leş kazanır; eşit leş beraberliktir.
 
-Ember Pits bunu oynatır: her takım boyutu için, açık bir çukurun
-çevresinde kırık sütunlardan bir halka ve her yanında bir koridor.
+Ember Pits bunu oynatır: her takım boyutu için, taş köprülerle geçilen lav
+derecikleri, bir lav tüneli, bir bazalt sütuna çıkan kollu asansör ve buhar bacaları.
 
 ## Rahip İmhası
 

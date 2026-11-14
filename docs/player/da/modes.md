@@ -63,8 +63,8 @@ startområde efter 8 sekunder, og at dø koster ingen moral. Det første
 hold med 15 drab vinder med det samme. Når tiden er gået, vinder flest
 drab; lige mange drab er uafgjort.
 
-Ember Pits spiller den: en ring af ødelagte søjler rundt om en åben grube,
-med en korridor langs hver side, til alle holdstørrelser.
+Ember Pits spiller den: lavastrømme med stenbroer over, en lavatunnel, en
+løftebane med håndtag op ad en basaltsøjle og dampventiler, til alle holdstørrelser.
 
 ## Præsteudslettelse
 

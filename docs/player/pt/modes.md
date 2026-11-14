@@ -65,9 +65,9 @@ de 8 segundos, e morrer não custa moral. A primeira equipe a chegar a 15
 abates vence na hora. No fim do tempo, vence quem tem mais abates; abates
 iguais é empate.
 
-Ember Pits joga esse modo: um anel de pilares quebrados em volta de um
-fosso aberto, com um corredor de cada lado, para todos os tamanhos de
-equipe.
+Ember Pits joga esse modo: córregos de lava cruzados por pontes de pedra,
+um túnel de lava, um elevador de alavanca até uma coluna de basalto e
+respiradouros de vapor, para todos os tamanhos de equipe.
 
 ## Aniquilação de Sacerdotes
 

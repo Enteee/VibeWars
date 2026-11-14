@@ -2081,7 +2081,7 @@ function parseMap(value: unknown): MapDescriptor | undefined {
       };
 }
 
-const OUTSIDE_KINDS: readonly OutsideKind[] = ["cliff", "rock", "forest", "deep-water"];
+const OUTSIDE_KINDS: readonly OutsideKind[] = ["cliff", "rock", "forest", "deep-water", "basalt"];
 
 function parseBounds(value: unknown): MapBoundsDescriptor | undefined {
   const raw = fields(value);

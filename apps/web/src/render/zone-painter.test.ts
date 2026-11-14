@@ -109,6 +109,29 @@ describe("a zone's painted ground (#3052)", () => {
     }
   });
 
+  it("draws a big zone's moving marks at a capped count, not by its area (#3225)", () => {
+    const big = (kind: MapZone["kind"]): MapZone => ({
+      kind,
+      layer: 1,
+      area: { kind: "rect", x: 0, y: 0, width: 400, height: 400 },
+    });
+    for (const [kind, most] of [
+      ["molten", 24 * 2 * 2],
+      ["scorched", 120 * 2],
+    ] as const) {
+      const art = zoneArtOf(big(kind), 0);
+      if (art === undefined) {
+        throw new Error(kind);
+      }
+      expect(art.cracks.length + art.specks.length).toBeGreaterThan(most / 2);
+      const painted = recorder();
+      paintZoneMotion(painted.painter, art, 1, 0.3, false);
+      const circles = painted.calls.filter(([name]) => name === "fillCircle").length;
+      expect(circles).toBeGreaterThan(0);
+      expect(circles).toBeLessThanOrEqual(most);
+    }
+  });
+
   it("stands the spire's obelisk on its centroid", () => {
     const art = zoneArtOf(square("draining-spire"), 0);
     if (art === undefined) {

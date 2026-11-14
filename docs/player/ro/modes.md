@@ -59,8 +59,8 @@ secunde, iar moartea nu costă moral. Prima echipă care ajunge la 15 ucideri c�
 imediat. La expirarea timpului câștigă cele mai multe ucideri; la egalitate de
 ucideri e remiză.
 
-Se joacă pe Ember Pits: un cerc de coloane sparte în jurul unei gropi deschise, cu
-un coridor pe fiecare latură, pentru orice mărime de echipă.
+Se joacă pe Ember Pits: pâraie de lavă trecute de poduri de piatră, un tunel de
+lavă, un lift cu manetă pe o coloană de bazalt și guri de abur, pentru orice mărime de echipă.
 
 ## Anihilare cu preot
 

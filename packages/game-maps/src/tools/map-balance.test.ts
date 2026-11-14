@@ -59,6 +59,7 @@ describe("walks and high ground (#3070)", () => {
   describe.each([
     ["Canyon", "arena-canyon"],
     ["Crossroads", "arena-crossroads"],
+    ["Ember Pits", "ember-pits"],
   ])("%s", (_name, id) => {
     const map = loadMap(id);
 

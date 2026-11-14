@@ -29,16 +29,19 @@ ramps and stairs draw in them, tinted from the hall's materials
 ground, never the signals, and brass and iron stay as they are. A map of one
 layer draws flat whatever its biome, until its family card rebuilds it.
 
-| Biome   | Ground    | Rock      | Plant / earth                    |
-| ------- | --------- | --------- | -------------------------------- |
-| Hall    | `#26303f` | `#4b5a70` | none (stone and steel)           |
-| Wilds   | `#2a3328` | `#5b5f58` | moss `#4f5e3c`, earth `#5a4630`  |
-| Heights | `#26303f` | `#4b5a70` | none, decks `#a0b2c7`            |
-| Desert  | `#3b3226` | `#6e6252` | earth `#6e5a40`, scrub `#6a6448` |
+| Biome    | Ground    | Rock      | Plant / earth                        |
+| -------- | --------- | --------- | ------------------------------------ |
+| Hall     | `#26303f` | `#4b5a70` | none (stone and steel)               |
+| Wilds    | `#2a3328` | `#5b5f58` | moss `#4f5e3c`, earth `#5a4630`      |
+| Heights  | `#26303f` | `#4b5a70` | none, decks `#a0b2c7`                |
+| Desert   | `#3b3226` | `#6e6252` | earth `#6e5a40`, scrub `#6a6448`     |
+| Volcanic | `#2b2421` | `#4a4340` | earth `#4a3426`, ash scrub `#5a5444` |
 
 The heights still draw in the hall's tones. The wilds (#3071, Crossroads) keep
 the hall's dressed stone and wood, and its moss: a greener moss sits too near
-the allies' green. The desert's stone decks are `#c2b296`.
+the allies' green. The desert's stone decks are `#c2b296`. The volcanic biome
+(#3225, Ember Pits) is a cooling basalt crust, near black and a breath warm, its
+stone ash grey `#8c827a`, so lava is by far the hottest thing on its ground.
 
 **Signals are reserved for the fight** and no biome tone may sit within a
 hand's width of them on the colour wheel (a quarter of its radius, the

@@ -130,7 +130,7 @@ import {
   projectilePosition,
   shotFadeAlpha,
 } from "./projectiles.js";
-import { NO_COVER, snapView, type CameraView, type Cover } from "./camera-rig.js";
+import { NO_COVER, frameClock, snapView, type CameraView, type Cover } from "./camera-rig.js";
 import { edgeMarkers, type EdgeMarker, type EdgeThing } from "./edge-markers.js";
 import { statusRowLayout } from "./status-icons.js";
 import {
@@ -667,6 +667,8 @@ export class ArenaScene extends Phaser.Scene {
   private readonly lightSample: LightSample = { colour: 0xffffff, intensity: 1 };
   /** Read once a frame: under reduced motion every mark stays at rest. */
   private reducedMotion = false;
+  /** Seconds between frames in wall time: Phaser's own delta is clamped (#3225). */
+  private readonly frameSeconds = frameClock();
   /**
    * Where each body stood last frame, and the way it last moved (#3226):
    * a stance streaks behind a body while it moves.
@@ -800,7 +802,8 @@ export class ArenaScene extends Phaser.Scene {
     this.nameUnderline = this.add.graphics().setDepth(OVERLAY_DEPTH);
   }
 
-  public override update(time: number, deltaMs: number): void {
+  public override update(time: number): void {
+    const dt = this.frameSeconds(time);
     const effects = this.markGraphics;
     const floor = this.bandOf(this.snapshot.structure.ground);
     if (effects === undefined || floor === undefined) {
@@ -815,7 +818,7 @@ export class ArenaScene extends Phaser.Scene {
     const { body: g, marks } = floor;
     this.now = time / 1000;
     this.reducedMotion = prefersReducedMotion();
-    this.drawnActors = this.liftActors(deltaMs / 1000);
+    this.drawnActors = this.liftActors(dt);
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
     this.updateLighting(time);
@@ -828,13 +831,13 @@ export class ArenaScene extends Phaser.Scene {
     this.drawLifts();
     this.drawRipples();
     this.drawZones();
-    this.drawAtmosphere(deltaMs / 1000, view);
+    this.drawAtmosphere(dt, view);
     for (const graphics of this.zoneGraphics.values()) {
       cullToView(graphics, view);
     }
     // Over the grid and walls, under the actors: a flash never hides a
     // health bar, a status or the target ring.
-    this.areaFlashes = decayAreaFlashes(this.areaFlashes, deltaMs / 1000);
+    this.areaFlashes = decayAreaFlashes(this.areaFlashes, dt);
     for (const flash of this.areaFlashes) {
       const alpha = areaFlashAlpha(flash);
       g.fillStyle(flash.colour, 0.12 * alpha);
@@ -842,7 +845,7 @@ export class ArenaScene extends Phaser.Scene {
       g.lineStyle(2, flash.colour, alpha);
       g.strokeCircle(flash.position.x, flash.position.y, flash.radius);
     }
-    this.walkMarker = decayWalkMarker(this.walkMarker, deltaMs / 1000);
+    this.walkMarker = decayWalkMarker(this.walkMarker, dt);
     if (this.walkMarker !== undefined) {
       this.drawWalkMarker(g, this.walkMarker);
     }
@@ -868,14 +871,14 @@ export class ArenaScene extends Phaser.Scene {
       this.drawBreakableOverlay(effects, breakable);
     }
     this.drawArrivals(g);
-    this.stepCapes(deltaMs / 1000);
+    this.stepCapes(dt);
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
       if (band !== undefined) {
         this.drawActor(band.body, band.marks, actor);
       }
     }
-    this.cutAwayTunnels(deltaMs / 1000);
+    this.cutAwayTunnels(dt);
     this.drawHiddenOutlines();
     this.drawHoverMarker(effects);
     this.drawSwitchLinks(effects);
@@ -883,15 +886,15 @@ export class ArenaScene extends Phaser.Scene {
     for (const flag of this.snapshot.flags) {
       this.drawFlag(effects, flag);
     }
-    this.swingFlashes = decaySwingFlashes(this.swingFlashes, deltaMs / 1000);
+    this.swingFlashes = decaySwingFlashes(this.swingFlashes, dt);
     for (const flash of this.swingFlashes) {
       this.drawSwingFlash(effects, flash);
     }
-    this.beaconBolts = decayBeaconBolts(this.beaconBolts, deltaMs / 1000);
+    this.beaconBolts = decayBeaconBolts(this.beaconBolts, dt);
     for (const bolt of this.beaconBolts) {
       this.drawBeaconBolt(effects, bolt);
     }
-    this.impacts = mergeImpacts(this.impacts, this.addedImpacts, deltaMs / 1000);
+    this.impacts = mergeImpacts(this.impacts, this.addedImpacts, dt);
     this.addedImpacts = [];
     for (const impact of this.impacts) {
       this.drawImpact(effects, impact);
@@ -901,7 +904,7 @@ export class ArenaScene extends Phaser.Scene {
     this.updateProjectiles(time / 1000);
     this.updateStatusIcons();
     this.updateNameLabels();
-    this.updateFloatingTexts(deltaMs / 1000);
+    this.updateFloatingTexts(dt);
     this.updateEdgeMarkers();
   }
 

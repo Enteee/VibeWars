@@ -4,11 +4,15 @@ import { joinFriend } from "./helpers/menu.js";
 import { hostLobby, openPeers, playHouseTeams, startSoloMatch } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter } from "./helpers/starter.js";
+import { key } from "./keys.js";
 
 /**
  * Chat (#479): Enter opens the box, Enter sends, and the lobby host
  * routes each line. Two pages of one context, over BroadcastChannel.
  */
+
+/** How far east, world units, the hero walks off its spawn before the click under the chat. */
+const EAST_WALK = 750;
 
 async function openMenu(page: Page, playerName: string): Promise<void> {
   await page.goto("./");
@@ -98,8 +102,41 @@ test("in a match a click under the panel walks, and the box shows only while ope
   expect(await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.tagName, at)).toBe(
     "CANVAS",
   );
-  // The follow camera (#721) moves only when the hero does.
+  // The follow camera (#721) moves only when the hero does. Ember Pits'
+  // first spawn sits near the west edge, so the ground under the panel is
+  // outside the arena: walk east along the open spawn row first, far enough
+  // that it is open ash west of the ember pit, not the basalt rim, and settle.
+  // By a held key, not a click: the house foe can stand where a click east
+  // would land, and a click on it targets it instead of walking (#3270).
   const stage = page.locator("#viewport");
+  // The camera may still be gliding onto the spawn: a click before it
+  // settles lands somewhere else on the ground.
+  const settle = async (message: string): Promise<void> => {
+    let last = "";
+    await expect
+      .poll(
+        async () => {
+          const now = (await stage.getAttribute("data-camera")) ?? "";
+          const settled = now === last && now !== "";
+          last = now;
+          return settled;
+        },
+        { message, intervals: [500], timeout: 15_000 },
+      )
+      .toBe(true);
+  };
+  const cameraX = async (): Promise<number> =>
+    Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
+  await settle("the camera should settle on the spawn");
+  const spawnX = await cameraX();
+  // Held until the camera has come that far, not for a guessed time: a
+  // slow frame then cannot leave the hero short of the open ash.
+  await page.keyboard.down(key("move-right"));
+  await expect
+    .poll(cameraX, { message: "the hero should walk east", timeout: 15_000 })
+    .toBeGreaterThanOrEqual(spawnX + EAST_WALK);
+  await page.keyboard.up(key("move-right"));
+  await settle("the hero should stop where the key let go");
   const before = await stage.getAttribute("data-camera");
   await page.mouse.click(at.x, at.y);
   await expect(stage).not.toHaveAttribute("data-camera", before ?? "");

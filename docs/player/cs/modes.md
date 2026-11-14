@@ -24,7 +24,7 @@ Hrají ho Canyon, Crossroads a Long Hall a dvě větší, středně velké arén
 
 **Nejvíc zabití za 3 minuty.** Mrtví se vrátí na svém startovním místě po 8 sekundách a smrt nestojí morálku. První tým s 15 zabitími okamžitě vyhrává. Po vypršení času vyhrává víc zabití; při shodném počtu je remíza.
 
-Hraje ho Ember Pits: kruh rozbitých sloupů kolem otevřené jámy, s chodbou podél každé strany, pro všechny velikosti týmů.
+Hraje ho Ember Pits: lávové stružky s kamennými mosty, lávový tunel, výtah na páku nahoru na čedičový sloup a parní průduchy, pro všechny velikosti týmů.
 
 ## Vyhlazení s knězem
 

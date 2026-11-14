@@ -59,8 +59,8 @@ nguyên trống trải quanh năm cao nguyên lớn, với tầm nhìn xa nhất
 8 giây, và chết không tốn sĩ khí. Đội đầu tiên đạt 15 lượt hạ thắng ngay lập
 tức. Khi hết giờ, nhiều lượt hạ hơn sẽ thắng; bằng nhau là hòa.
 
-Ember Pits chơi chế độ này: một vòng cột đổ quanh một cái hố trống, với hành
-lang dọc mỗi bên, cho mọi cỡ đội.
+Ember Pits chơi chế độ này: những dòng dung nham có cầu đá bắc qua, một đường hầm
+dung nham, một thang nâng bằng cần gạt lên cột đá bazan và các lỗ phun hơi, cho mọi cỡ đội.
 
 ## Diệt tư tế
 

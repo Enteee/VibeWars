@@ -5719,6 +5719,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "basalt" },
                   { "literal": "cliff" },
                   { "literal": "deep-water" },
                   { "literal": "forest" },
@@ -5758,6 +5759,7 @@
                     "optional": false,
                     "type": {
                       "union": [
+                        { "literal": "basalt" },
                         { "literal": "cliff" },
                         { "literal": "deep-water" },
                         { "literal": "forest" },
@@ -6047,6 +6049,7 @@
     },
     "OutsideKind": {
       "union": [
+        { "literal": "basalt" },
         { "literal": "cliff" },
         { "literal": "deep-water" },
         { "literal": "forest" },
@@ -6322,6 +6325,7 @@
                           "optional": false,
                           "type": {
                             "union": [
+                              { "literal": "basalt" },
                               { "literal": "cliff" },
                               { "literal": "deep-water" },
                               { "literal": "forest" },
@@ -6749,6 +6753,7 @@
                           "optional": false,
                           "type": {
                             "union": [
+                              { "literal": "basalt" },
                               { "literal": "cliff" },
                               { "literal": "deep-water" },
                               { "literal": "forest" },

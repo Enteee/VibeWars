@@ -165,6 +165,26 @@ export function dropPan(rig: CameraRig): CameraRig {
   return { ...rig, offset: { x: 0, y: 0 }, panning: false };
 }
 
+/** Seconds: the longest gap between two frames that `frameClock` passes on. */
+export const FRAME_GAP_MAX = 1;
+
+/**
+ * Seconds between frames from their timestamps in milliseconds, for
+ * `stepCamera`: 0 for the first. Wall time, not Phaser's delta, which it
+ * holds to 1/60 s for a game's first 120 frames and to 0.2 s after them:
+ * on a slow machine that stretched every ease and fade in wall time. A
+ * gap over `FRAME_GAP_MAX` is a hidden tab coming back, not a slow frame.
+ */
+export function frameClock(): (timeMs: number) => number {
+  let last: number | undefined;
+  return (timeMs) => {
+    const seconds =
+      last === undefined ? 0 : Math.min(FRAME_GAP_MAX, Math.max(0, timeMs - last) / 1000);
+    last = timeMs;
+    return seconds;
+  };
+}
+
 export function stepCamera(
   rig: CameraRig,
   input: CameraInput,
