@@ -158,6 +158,19 @@ describe("a body's layer (ADR-0051)", () => {
     expect(get(sim, "a").layer).toBe(1);
   });
 
+  it("a walk from the deck to the ground under its ramp ends on the ground (#3337)", () => {
+    // The ramp covers ground a walk down passes over on the deck's layer:
+    // each goal along it is one a step lands within reach of somewhere.
+    for (let x = 360; x <= 500; x += 5) {
+      const sim = arena([spec("a", 0, vec2(600, 400), 1), spec("b", 1, vec2(1000, 600), 0)]);
+      sim.walkTo("a", vec2(x, 400), 0);
+      run(sim, 6);
+      const a = get(sim, "a");
+      expect({ x, layer: a.layer }).toEqual({ x, layer: 0 });
+      expect(Math.abs(a.position.x - x)).toBeLessThanOrEqual(1);
+    }
+  });
+
   it("does not change layer standing still on a ramp", () => {
     const sim = arena([spec("a", 0, vec2(400, 400), 0)]);
     run(sim, 1);
