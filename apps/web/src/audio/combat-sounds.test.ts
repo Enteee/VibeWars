@@ -35,36 +35,36 @@ function message(casterSessionId: string, events: CombatMessage["events"]): Comb
 describe("soundsForCombat", () => {
   it("cracks for a hit you deal", () => {
     const hit = message(ME, [{ kind: "damage", targetId: "foe", amount: 9, critical: false }]);
-    expect(soundsForCombat(hit, ME)).toEqual(["hit-dealt"]);
+    expect(soundsForCombat(hit, ME, undefined)).toEqual(["hit-dealt"]);
   });
 
   it("thuds for a hit you take", () => {
     const hit = message("foe", [{ kind: "damage", targetId: ME, amount: 9, critical: false }]);
-    expect(soundsForCombat(hit, ME)).toEqual(["hit-taken"]);
+    expect(soundsForCombat(hit, ME, undefined)).toEqual(["hit-taken"]);
   });
 
   it("counts hurting yourself as a hit taken, not one dealt", () => {
     const hit = message(ME, [{ kind: "damage", targetId: ME, amount: 9, critical: false }]);
-    expect(soundsForCombat(hit, ME)).toEqual(["hit-taken"]);
+    expect(soundsForCombat(hit, ME, undefined)).toEqual(["hit-taken"]);
   });
 
   it("chimes for a heal on you, and not for one you give", () => {
     const onMe = message("ally", [{ kind: "heal", targetId: ME, amount: 5 }]);
     const byMe = message(ME, [{ kind: "heal", targetId: "ally", amount: 5 }]);
-    expect(soundsForCombat(onMe, ME)).toEqual(["heal"]);
-    expect(soundsForCombat(byMe, ME)).toEqual([]);
+    expect(soundsForCombat(onMe, ME, undefined)).toEqual(["heal"]);
+    expect(soundsForCombat(byMe, ME, undefined)).toEqual([]);
   });
 
   it("plays the interrupt when it is yours, or you are the one interrupted", () => {
     const yours = message(ME, [{ kind: "interrupted", targetId: "foe", skillId: "x" }]);
     const onYou = message("foe", [{ kind: "interrupted", targetId: ME, skillId: "x" }]);
-    expect(soundsForCombat(yours, ME)).toEqual(["interrupt"]);
-    expect(soundsForCombat(onYou, ME)).toEqual(["interrupt"]);
+    expect(soundsForCombat(yours, ME, undefined)).toEqual(["interrupt"]);
+    expect(soundsForCombat(onYou, ME, undefined)).toEqual(["interrupt"]);
   });
 
   it("is silent for a cast you cancel by moving (#279)", () => {
     const cancelled = message(ME, [{ kind: "cancelled", targetId: ME, skillId: "x" }]);
-    expect(soundsForCombat(cancelled, ME)).toEqual([]);
+    expect(soundsForCombat(cancelled, ME, undefined)).toEqual([]);
   });
 
   it("plays interrupt-missed only for your own miss", () => {
@@ -74,14 +74,14 @@ describe("soundsForCombat", () => {
     const theirs = message("foe", [
       { kind: "interrupt-missed", targetId: ME, refusedSkillId: null },
     ]);
-    expect(soundsForCombat(yours, ME)).toEqual(["interrupt-missed"]);
-    expect(soundsForCombat(theirs, ME)).toEqual([]);
+    expect(soundsForCombat(yours, ME, undefined)).toEqual(["interrupt-missed"]);
+    expect(soundsForCombat(theirs, ME, undefined)).toEqual([]);
   });
 
   it("plays a death for anyone's", () => {
-    expect(soundsForCombat(message("a", [{ kind: "death", targetId: "b" }]), ME)).toEqual([
-      "death",
-    ]);
+    expect(
+      soundsForCombat(message("a", [{ kind: "death", targetId: "b" }]), ME, undefined),
+    ).toEqual(["death"]);
   });
 
   it("is silent for an ally's hit on an enemy, and for every other kind", () => {
@@ -94,8 +94,8 @@ describe("soundsForCombat", () => {
     const other = message(ME, [
       { kind: "status-applied", targetId: ME, statusId: "burning", durationSeconds: 3 },
     ]);
-    expect(soundsForCombat(elsewhere, ME)).toEqual([]);
-    expect(soundsForCombat(other, ME)).toEqual([]);
+    expect(soundsForCombat(elsewhere, ME, undefined)).toEqual([]);
+    expect(soundsForCombat(other, ME, undefined)).toEqual([]);
   });
 
   it("is silent for a status tick on you, except the death it causes", () => {
@@ -130,9 +130,9 @@ describe("soundsForCombat", () => {
         { kind: "death", targetId: ME },
       ],
     };
-    expect(soundsForCombat(burning, ME)).toEqual([]);
-    expect(soundsForCombat(regen, ME)).toEqual([]);
-    expect(soundsForCombat(fatal, ME)).toEqual(["death"]);
+    expect(soundsForCombat(burning, ME, undefined)).toEqual([]);
+    expect(soundsForCombat(regen, ME, undefined)).toEqual([]);
+    expect(soundsForCombat(fatal, ME, undefined)).toEqual(["death"]);
   });
 
   it("cracks for a weapon hit you deal: no skill, but not a status tick either (#160)", () => {
@@ -145,7 +145,7 @@ describe("soundsForCombat", () => {
       doubleStrike: false,
       events: [{ kind: "damage", targetId: "foe", amount: 12, critical: false }],
     };
-    expect(soundsForCombat(swing, ME)).toEqual(["hit-dealt"]);
+    expect(soundsForCombat(swing, ME, undefined)).toEqual(["hit-dealt"]);
   });
 
   it("plays a kill as a hit and a death", () => {
@@ -153,7 +153,7 @@ describe("soundsForCombat", () => {
       { kind: "damage", targetId: "foe", amount: 90, critical: false },
       { kind: "death", targetId: "foe" },
     ]);
-    expect(soundsForCombat(kill, ME)).toEqual(["hit-dealt", "death"]);
+    expect(soundsForCombat(kill, ME, undefined)).toEqual(["hit-dealt", "death"]);
   });
 });
 
@@ -452,17 +452,19 @@ describe("skill type cues (#3297)", () => {
   ] as const) {
     describe(cue, () => {
       it("plays when it lands on you", () => {
-        expect(soundsForCombat(message("ally", [status(ME, statusId)]), ME)).toEqual([cue]);
+        expect(soundsForCombat(message("ally", [status(ME, statusId)]), ME, undefined)).toEqual([
+          cue,
+        ]);
       });
 
       it("stays silent when it lands on an ally or a foe", () => {
         const others = message(ME, [status("ally", statusId), status("foe", statusId)]);
-        expect(soundsForCombat(others, ME)).toEqual([]);
+        expect(soundsForCombat(others, ME, undefined)).toEqual([]);
       });
 
       it("plays once for a message that applies it to you twice", () => {
         const twice = message("ally", [status(ME, statusId), status(ME, statusId)]);
-        expect(soundsForCombat(twice, ME)).toEqual([cue]);
+        expect(soundsForCombat(twice, ME, undefined)).toEqual([cue]);
       });
 
       it("stays silent for a status tick", () => {
@@ -470,7 +472,7 @@ describe("skill type cues (#3297)", () => {
           ...message("ally", [status(ME, statusId)]),
           cause: "degeneration",
         };
-        expect(soundsForCombat(tick, ME)).toEqual([]);
+        expect(soundsForCombat(tick, ME, undefined)).toEqual([]);
       });
     });
   }
@@ -480,7 +482,24 @@ describe("skill type cues (#3297)", () => {
       status(ME, "pacifism"),
       { kind: "damage", targetId: ME, amount: 9, critical: false },
     ]);
-    expect(soundsForCombat(both, ME)).toEqual(["hex-on", "hit-taken"]);
+    expect(soundsForCombat(both, ME, undefined)).toEqual(["hex-on", "hit-taken"]);
+  });
+
+  /** You and an ally on team 0, a foe on team 1. */
+  const sides = snapshot([player(ME), player("ally", { team: 0 }), player("foe")]);
+
+  it("plays no shout for a foe's shout on you", () => {
+    const coward = skill("foe", "warrior.coward", [
+      { kind: "knocked-down", targetId: ME, durationSeconds: 2 },
+    ]);
+    expect(soundsForCombat(coward, ME, sides)).not.toContain("shout");
+    const alone = skill("foe", "warrior.youre-all-alone", [status(ME, "crippled")]);
+    expect(soundsForCombat(alone, ME, sides)).toEqual([]);
+  });
+
+  it("plays no shout before the first snapshot, when no side is known", () => {
+    const ally = skill("ally", "warrior.for-great-justice", [status(ME, "regeneration")]);
+    expect(soundsForCombat(ally, ME, undefined)).toEqual(["enchant-on"]);
   });
 
   for (const [cue, skillId, statusId] of [
@@ -490,18 +509,18 @@ describe("skill type cues (#3297)", () => {
   ] as const) {
     describe(`${cue} from ${skillId}`, () => {
       it("plays when it reaches you", () => {
-        const sounds = soundsForCombat(skill("ally", skillId, [status(ME, statusId)]), ME);
+        const sounds = soundsForCombat(skill("ally", skillId, [status(ME, statusId)]), ME, sides);
         expect(sounds.filter((id) => id === cue)).toEqual([cue]);
       });
 
       it("stays silent when it reaches only others", () => {
         const others = skill(ME, skillId, [status("ally", statusId), status("foe", statusId)]);
-        expect(soundsForCombat(others, ME)).toEqual([]);
+        expect(soundsForCombat(others, ME, sides)).toEqual([]);
       });
 
       it("plays once however many of its events touch you", () => {
         const many = skill("ally", skillId, [status(ME, statusId), status(ME, statusId)]);
-        expect(soundsForCombat(many, ME).filter((id) => id === cue)).toEqual([cue]);
+        expect(soundsForCombat(many, ME, sides).filter((id) => id === cue)).toEqual([cue]);
       });
 
       it("stays silent for a tick", () => {
@@ -509,7 +528,7 @@ describe("skill type cues (#3297)", () => {
           ...skill("ally", skillId, [status(ME, statusId)]),
           cause: "degeneration",
         };
-        expect(soundsForCombat(tick, ME)).toEqual([]);
+        expect(soundsForCombat(tick, ME, sides)).toEqual([]);
       });
     });
   }

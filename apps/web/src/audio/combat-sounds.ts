@@ -24,9 +24,14 @@ const STATUS_CUES: Partial<Record<StatusCategory, SoundId>> = {
  * The sounds one combat message plays for `selfId`. An area skill that
  * hits five players lists its crack five times; the player throttles
  * that to one. A skill type's cue (#3297) plays once per message, however
- * many of its events land on you.
+ * many of its events land on you. `latest`, the newest snapshot, tells
+ * whose side the caster is on: only your own side's shout is a `shout`.
  */
-export function soundsForCombat(message: CombatMessage, selfId: string): SoundId[] {
+export function soundsForCombat(
+  message: CombatMessage,
+  selfId: string,
+  latest: MatchSnapshot | undefined,
+): SoundId[] {
   const mine = message.casterSessionId === selfId;
   const tick = isTick(message);
   const sounds: SoundId[] = [];
@@ -37,7 +42,7 @@ export function soundsForCombat(message: CombatMessage, selfId: string): SoundId
   };
   if (!tick && message.events.some(({ targetId }) => targetId === selfId)) {
     const type = message.cause === "skill" ? getSkill(message.skillId)?.type : undefined;
-    if (type === "shout" || type === "chant") {
+    if ((type === "shout" || type === "chant") && alliedCaster(message, selfId, latest)) {
       once("shout");
     } else if (type === "form") {
       once("form-on");
@@ -88,6 +93,23 @@ export function soundsForCombat(message: CombatMessage, selfId: string): SoundId
     }
   }
   return sounds;
+}
+
+/**
+ * Whether `message`'s caster stands on `selfId`'s side in `latest`. A
+ * caster not in it, or no snapshot yet, is not known to be an ally.
+ */
+function alliedCaster(
+  message: CombatMessage,
+  selfId: string,
+  latest: MatchSnapshot | undefined,
+): boolean {
+  if (latest === undefined) {
+    return false;
+  }
+  const self = playerById(latest, selfId);
+  const caster = playerById(latest, message.casterSessionId);
+  return self !== undefined && caster?.team === self.team;
 }
 
 /**

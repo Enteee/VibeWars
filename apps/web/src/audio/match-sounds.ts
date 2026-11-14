@@ -52,7 +52,7 @@ export function attachMatchSounds(
   };
 
   connection.onCombat((message) => {
-    playAll(soundsForCombat(message, connection.selfSessionId));
+    playAll(soundsForCombat(message, connection.selfSessionId, prev));
   });
   connection.onCastRefused?.(() => {
     playAll(["refused"]);
