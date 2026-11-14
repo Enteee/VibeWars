@@ -1537,6 +1537,12 @@ export default {
   "tutorial.dodge.how": "Klikni ľavým tlačidlom na zem, alebo choď pomocou {keys}.",
   "tutorial.dodge.intro": "Tu padajú kamene. Keď tieň rastie, uhni nabok!",
   "tutorial.dodge.praise": "Rýchle nohy! Kamene ťa nedostihnú.",
+  "tutorial.heal.energy": "Ten modrý pás je energia. Zručnosti ju míňajú.",
+  "tutorial.heal.hint": "Najprv klikni na moje meno v zozname družiny.",
+  "tutorial.heal.how": "Klikni na moje meno v zozname družiny, potom stlač {keys}.",
+  "tutorial.heal.intro": "Cez prielom a na čistinu. Za mnou!",
+  "tutorial.heal.ow": "Au! Trafil ma kameň. Pomôžeš mi?",
+  "tutorial.heal.praise": "Oveľa lepšie, vďaka! Vieš aj liečiť.",
   "tutorial.learn": "Nauč sa hrať",
   "tutorial.look.hint": "Oddiaľ pohľad a potom ho potiahni na sever. Nájdi teleport!",
   "tutorial.look.how":

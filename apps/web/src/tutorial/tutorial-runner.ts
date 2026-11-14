@@ -59,8 +59,8 @@ export interface TutorialRunner {
  * of its own: each station's intro, its hint again every `HINT_REPEAT_MS`
  * until it is done, a station's hit line when the player is hit, no more
  * than every `HIT_REPEAT_MS` (#3247), its reaction once, after which its
- * hint is not said again (#3302), then its praise and, after `PRAISE_MS`,
- * the next.
+ * hint is not said again (#3302), each of its asides once (#3303), then
+ * its praise and, after `PRAISE_MS`, the next.
  * The keys a line shows are read from `keymap()` as it is said, so a
  * rebind shows on the next line.
  */
@@ -79,6 +79,8 @@ export function createTutorialRunner(
   let reactedAt: number | undefined;
   /** The station running has said its reaction. */
   let reacted = false;
+  /** The station running's asides it has said, by index. */
+  let asided = new Set<number>();
   const last = stations[stations.length - 1];
   if (last === undefined) {
     throw new Error("a tutorial of no stations");
@@ -122,14 +124,17 @@ export function createTutorialRunner(
         praisedAt = undefined;
       }
       const mark = station.mark?.(view);
+      const highlight =
+        typeof station.highlight === "function" ? station.highlight(view) : station.highlight;
       if (saidAt === undefined) {
         saidAt = nowMs;
-        return beat(line(station, station.lines.intro), station.highlight, mark);
+        return beat(line(station, station.lines.intro), highlight, mark);
       }
       if (station.done(view)) {
         index += 1;
         saidAt = undefined;
         reacted = false;
+        asided = new Set<number>();
         praisedAt = nowMs;
         finished = index >= stations.length;
         return beat(line(station, station.lines.praise), undefined);
@@ -138,7 +143,16 @@ export function createTutorialRunner(
       if (reaction !== undefined && !reacted && reaction.when(view)) {
         reacted = true;
         saidAt = nowMs;
-        return beat(line(station, reaction.line), station.highlight, mark);
+        return beat(line(station, reaction.line), highlight, mark);
+      }
+      const aside = (station.asides ?? []).findIndex(
+        (entry, at) => !asided.has(at) && entry.when(view),
+      );
+      const said = station.asides?.[aside];
+      if (said !== undefined) {
+        asided.add(aside);
+        saidAt = nowMs;
+        return beat(line(station, said.line), highlight, mark);
       }
       const { hit } = station.lines;
       if (
@@ -148,14 +162,14 @@ export function createTutorialRunner(
       ) {
         reactedAt = nowMs;
         saidAt = nowMs;
-        return beat(line(station, hit), station.highlight, mark);
+        return beat(line(station, hit), highlight, mark);
       }
       // Once it has reacted, the player is on it: no more nudging.
       if (!reacted && nowMs - saidAt >= HINT_REPEAT_MS) {
         saidAt = nowMs;
-        return beat(line(station, station.lines.hint), station.highlight, mark);
+        return beat(line(station, station.lines.hint), highlight, mark);
       }
-      return quiet(station.highlight, mark);
+      return quiet(highlight, mark);
     },
   };
 }

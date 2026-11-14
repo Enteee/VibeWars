@@ -1419,6 +1419,12 @@ export default {
   "tutorial.dodge.how": "Zemine sol tıkla ya da {keys} ile yürü.",
   "tutorial.dodge.intro": "Burada kayalar düşer. Bir gölge büyüyünce kenara çekil!",
   "tutorial.dodge.praise": "Çevik ayaklar! Kayalar sana yetişemiyor.",
+  "tutorial.heal.energy": "O mavi çubuk enerjidir. Yetenekler onu harcar.",
+  "tutorial.heal.hint": "Önce grup listesinde adıma tıkla.",
+  "tutorial.heal.how": "Grup listesinde adıma tıkla, sonra {keys} tuşuna bas.",
+  "tutorial.heal.intro": "Gedikten geçip açıklığa. Beni izle!",
+  "tutorial.heal.ow": "Ah! Kaya bana çarptı. Biraz yardım?",
+  "tutorial.heal.praise": "Çok daha iyi, teşekkürler! Sen iyileştirebiliyorsun da.",
   "tutorial.learn": "Oynamayı öğren",
   "tutorial.look.hint": "Uzaklaştır, sonra görüşü kuzeye sürükle. Işınlayıcıyı bul!",
   "tutorial.look.how":
