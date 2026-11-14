@@ -1043,7 +1043,7 @@
         "radius": 420,
         "colour": 16738856,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0
       },
       {
         "id": "lower-stream-glow-3",
@@ -1055,7 +1055,7 @@
         "radius": 420,
         "colour": 16738856,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0
       },
       {
         "id": "lower-stream-glow-4",
@@ -1079,7 +1079,7 @@
         "radius": 420,
         "colour": 16738856,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0
       },
       {
         "id": "lower-stream-glow-6",
@@ -1091,7 +1091,7 @@
         "radius": 420,
         "colour": 16738856,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0
       },
       {
         "id": "south-stream-glow-1",
@@ -1115,7 +1115,7 @@
         "radius": 420,
         "colour": 16738856,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0
       },
       {
         "id": "south-stream-glow-3",
@@ -1127,7 +1127,7 @@
         "radius": 420,
         "colour": 16738856,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0
       },
       {
         "id": "south-stream-glow-4",
@@ -1151,7 +1151,7 @@
         "radius": 420,
         "colour": 16738856,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0
       },
       {
         "id": "bad-ground-glow",
@@ -1163,7 +1163,7 @@
         "radius": 360,
         "colour": 16738856,
         "intensity": 0.75,
-        "flicker": 0.35
+        "flicker": 0
       }
     ]
   },
