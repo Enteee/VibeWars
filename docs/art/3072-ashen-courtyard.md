@@ -28,7 +28,7 @@ the place (a burned castle courtyard) is kept.
   five-tread ramp down from the west and from the east.
 - **Drop-offs (4):** the gaps in the north and south walk strips drop to the court; the broken
   tower ends drop to the walk.
-- **Elements:** a brass **lever** on the west wall-walk at (235,1200) works the **portcullis**
+- **Elements:** two brass **levers**, one on each side wall-walk, at (235,1200) and (2965,1200), each work the **portcullis**
   in the gatehouse passage at (1600,2150) (shut = the barbican is sealed, open = a way round the south
   walk). Two **breakable fallen-timber walls**, at x=1000 and x=2174, 400 long, across each team's yard
   between its spawn and the pit: the yard has an exit north and south, and breaking the wall opens
