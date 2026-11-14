@@ -317,8 +317,13 @@ export const MAX_WIRE_TELEPORTS = 6;
 /** The most breakable walls a map holds (#3031), as `MAX_BREAKABLES` in game-maps. */
 export const MAX_WIRE_BREAKABLES = 4;
 
-/** The widest area a combat message may draw. */
-export const MAX_WIRE_RADIUS = 200;
+/**
+ * The widest area a combat message may draw: `AREA_EARSHOT` in game-core,
+ * where a shout or chant reaches (#3301). Past it, the client refuses the
+ * whole tick's combat batch, so `wire-radius.test.ts` in game-session holds
+ * every area the simulation logs to this bound.
+ */
+export const MAX_WIRE_RADIUS = 350;
 
 /** The most combat entries one tick's `"combat"` message carries. */
 export const MAX_WIRE_COMBATS = 64;

@@ -43,6 +43,7 @@ import {
   placeFloatingText,
   signetTextureKey,
   swingFlashAlpha,
+  SKILL_ARC_WIDTH,
   markedForTeam,
   teamColour,
   type AreaFlash,
@@ -128,7 +129,14 @@ import {
   MatchClock,
   projectileHeading,
   projectileLanding,
+  projectileLayer,
   projectilePosition,
+  projectileCore,
+  projectileTrail,
+  SHOT_CORE_COLOUR,
+  SHOT_SHADOW,
+  type ShotDot,
+  type TrailDot,
   shotFadeAlpha,
 } from "./projectiles.js";
 import { NO_COVER, frameClock, snapView, type CameraView, type Cover } from "./camera-rig.js";
@@ -145,6 +153,16 @@ import { weaponMarkLayout } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
+import {
+  addShoutMarks,
+  chevronAlpha,
+  decayShoutMarks,
+  SHOUT_COLOUR,
+  SHOUT_RING_WIDTH,
+  shoutChevron,
+  shoutRingRadius,
+  type ShoutMark,
+} from "./shout-marks.js";
 import {
   ENCHANTMENT_COLOUR,
   ENCHANT_MOTES,
@@ -226,7 +244,13 @@ import {
 import { lyingPose } from "./lying-pose.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
-import { LightingPass, litStructurePalette, baseTint } from "./lighting-pass.js";
+import {
+  LightingPass,
+  litOverhangColours,
+  litStructurePalette,
+  baseTint,
+} from "./lighting-pass.js";
+import { bodyUnder, overhangAlpha, paintOverhang, type OverhangCover } from "./overhang-art.js";
 import {
   DECK_ART,
   SWITCHED_DECK_ART,
@@ -456,6 +480,9 @@ const EDGE_MARKER_LENGTH = 12;
 const EDGE_MARKER_WIDTH = 10;
 /** A skill impact's spikes and ring (#1139). */
 const IMPACT_LINE_WIDTH = 1.5;
+/** An outlined impact spike's dark edge (#3292): this much wider than the spike, the sprites' outline colour. */
+const IMPACT_OUTLINE = 2;
+const IMPACT_OUTLINE_COLOUR = 0x0e1116;
 /**
  * The world's layers, bottom up (#1037). Wards on the floor and their
  * icons (#1087), under everything that stands on them; the grid and the
@@ -530,6 +557,7 @@ export class ArenaScene extends Phaser.Scene {
   private bands: readonly {
     readonly body: Phaser.GameObjects.Graphics;
     readonly marks: Phaser.GameObjects.Graphics;
+    readonly bar: Phaser.GameObjects.Graphics;
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
@@ -541,6 +569,11 @@ export class ArenaScene extends Phaser.Scene {
     number,
     { readonly ground: Phaser.GameObjects.Graphics; readonly seam: Phaser.GameObjects.Graphics }
   >();
+  /** Each overhang (#3293) as drawn, and where it hangs: faded while a body is under it. */
+  private overhangsDrawn: readonly {
+    readonly cover: OverhangCover;
+    readonly graphics: Phaser.GameObjects.Graphics;
+  }[] = [];
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
   private readonly staticCull = new StaticGraphicsCull();
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
@@ -643,6 +676,8 @@ export class ArenaScene extends Phaser.Scene {
   /** Skills landing on bodies (#1139), newest last; merged in on the next frame. */
   private impacts: Impact[] = [];
   private addedImpacts: Impact[] = [];
+  /** Shout and chant rings and chevrons (#3301), aged in place. */
+  private readonly shoutMarks: ShoutMark[] = [];
   private walkMarker: WalkMarker | undefined;
   /**
    * The goals on the ground (#3221), each with when it left the snapshot,
@@ -658,8 +693,19 @@ export class ArenaScene extends Phaser.Scene {
    */
   private projectileImages = new Map<
     number,
-    { image: Phaser.GameObjects.Image; to: { x: number; y: number }; endedAt: number | undefined }
+    {
+      image: Phaser.GameObjects.Image;
+      to: { x: number; y: number };
+      endedAt: number | undefined;
+      /** A flying spell's (#3292): where it left, its trail, and its core's radius. */
+      readonly spell:
+        | { readonly from: Vec2; readonly trail: readonly TrailDot[]; readonly core: ShotDot }
+        | undefined;
+    }
   >();
+  /** Flying spells' trails under their sprites, and their cores over them (#3292). */
+  private shotTrails: Phaser.GameObjects.Graphics | undefined;
+  private shotCores: Phaser.GameObjects.Graphics | undefined;
   private readonly clock = new MatchClock();
   /**
    * Shots that have ended, kept until they leave the state: if the clock
@@ -798,6 +844,10 @@ export class ArenaScene extends Phaser.Scene {
     this.addedImpacts.push(...impacts);
   }
 
+  public addShoutMarks(marks: readonly ShoutMark[]): void {
+    addShoutMarks(this.shoutMarks, marks);
+  }
+
   /**
    * Every icon the arena draws comes from one sheet (#1671), loaded at its
    * own size: one raster at match start, however many skills there are.
@@ -832,6 +882,7 @@ export class ArenaScene extends Phaser.Scene {
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
       marks: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "marks" })),
+      bar: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "bar" })),
     }));
     this.barrierGraphics = this.add
       .graphics()
@@ -840,6 +891,9 @@ export class ArenaScene extends Phaser.Scene {
     this.markGraphics = this.add.graphics().setDepth(EFFECT_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
     this.nameUnderline = this.add.graphics().setDepth(OVERLAY_DEPTH);
+    // Made before any shot's sprite, so under every one at their depth.
+    this.shotTrails = this.add.graphics().setDepth(OVERLAY_DEPTH);
+    this.shotCores = this.add.graphics().setDepth(OVERLAY_DEPTH + 1);
   }
 
   public override update(time: number): void {
@@ -849,9 +903,10 @@ export class ArenaScene extends Phaser.Scene {
     if (effects === undefined || floor === undefined) {
       return;
     }
-    for (const { body, marks: bandMarks } of this.bands) {
+    for (const { body, marks: bandMarks, bar } of this.bands) {
       body.clear();
       bandMarks.clear();
+      bar.clear();
     }
     effects.clear();
     this.barrierGraphics?.clear();
@@ -862,6 +917,7 @@ export class ArenaScene extends Phaser.Scene {
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
     this.updateLighting(time);
+    decayShoutMarks(this.shoutMarks, dt);
     this.updateGroundEffects();
     this.drawMap();
     // Only what the camera shows is tessellated (#3240): the map cut once in
@@ -912,6 +968,7 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.drawArrivals(g);
     this.stepCapes(dt);
+    this.drawShotShadows(time / 1000);
     // Every form's aura first, under every disc of its band (#3229): it
     // never covers a neighbour.
     for (const actor of this.drawnActors) {
@@ -925,10 +982,11 @@ export class ArenaScene extends Phaser.Scene {
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
       if (band !== undefined) {
-        this.drawActor(band.body, band.marks, actor);
+        this.drawActor(band, actor);
       }
     }
     this.cutAwayTunnels(dt);
+    this.fadeOverhangs(dt);
     this.drawHiddenOutlines();
     this.drawHoverMarker(effects);
     this.drawSwitchLinks(effects);
@@ -937,8 +995,13 @@ export class ArenaScene extends Phaser.Scene {
       this.drawFlag(effects, flag);
     }
     this.swingFlashes = decaySwingFlashes(this.swingFlashes, dt);
+    // Arcs and hit marks on their body's band, under its health bars and
+    // any deck over it (#3292).
     for (const flash of this.swingFlashes) {
-      this.drawSwingFlash(effects, flash);
+      const band = this.bandOf(flash.layer);
+      if (band !== undefined) {
+        this.drawSwingFlash(band.marks, flash);
+      }
     }
     this.beaconBolts = decayBeaconBolts(this.beaconBolts, dt);
     for (const bolt of this.beaconBolts) {
@@ -947,8 +1010,9 @@ export class ArenaScene extends Phaser.Scene {
     this.impacts = mergeImpacts(this.impacts, this.addedImpacts, dt);
     this.addedImpacts = [];
     for (const impact of this.impacts) {
-      this.drawImpact(effects, impact);
+      this.drawImpact(impact);
     }
+    this.drawShoutChevrons();
     this.updateBodyGlyphs();
     this.updateCastBadges();
     this.updateProjectiles(time / 1000);
@@ -1719,15 +1783,20 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** A skill's impact on a body (#1139), where that body is now; none once it has left the state. */
-  private drawImpact(g: Phaser.GameObjects.Graphics, impact: Impact): void {
+  private drawImpact(impact: Impact): void {
     const actor = this.drawnActors.find((a) => a.id === impact.anchorId);
-    if (actor === undefined) {
+    const g = actor === undefined ? undefined : this.bandOf(actor.layer)?.marks;
+    if (actor === undefined || g === undefined) {
       return;
     }
     const { x, y } = actor.position;
     for (const mark of impactMarks(impact, actor.radius, this.reducedMotion)) {
       if (mark.kind === "spike") {
-        g.lineStyle(IMPACT_LINE_WIDTH, impact.colour, mark.alpha);
+        if (mark.outlined) {
+          g.lineStyle(mark.width + IMPACT_OUTLINE, IMPACT_OUTLINE_COLOUR, mark.alpha);
+          g.lineBetween(x + mark.from.x, y + mark.from.y, x + mark.to.x, y + mark.to.y);
+        }
+        g.lineStyle(mark.width, impact.colour, mark.alpha);
         g.lineBetween(x + mark.from.x, y + mark.from.y, x + mark.to.x, y + mark.to.y);
       } else if (mark.kind === "tint") {
         g.fillStyle(impact.colour, mark.alpha);
@@ -1735,6 +1804,38 @@ export class ArenaScene extends Phaser.Scene {
       } else {
         g.lineStyle(IMPACT_LINE_WIDTH, impact.colour, mark.alpha);
         g.strokeCircle(x, y, mark.radius);
+      }
+    }
+  }
+
+  /**
+   * A chevron over each body a shout helped (#3301), above its health bar
+   * and any hex halo, with the bar: a tunnel cuts it away as it does the bar.
+   */
+  private drawShoutChevrons(): void {
+    for (const mark of this.shoutMarks) {
+      if (mark.kind !== "chevron") {
+        continue;
+      }
+      const actor = this.drawnActors.find((a) => a.id === mark.anchorId);
+      const g = actor === undefined ? undefined : this.bandOf(actor.layer)?.bar;
+      if (actor === undefined || g === undefined || actor.dead) {
+        continue;
+      }
+      const halo = actor.hexed ? hexHalo(actor.radius) : undefined;
+      const points = shoutChevron(
+        actor.position.x,
+        actor.position.y,
+        actor.radius,
+        halo === undefined ? undefined : halo.rise + halo.halfHeight,
+      );
+      const alpha = chevronAlpha(mark.ageSeconds);
+      for (const [width, colour] of [
+        [4, BODY_EDGE],
+        [2, SHOUT_COLOUR],
+      ] as const) {
+        g.lineStyle(width, colour, alpha);
+        g.strokePoints(points.map(({ x, y }) => new Phaser.Math.Vector2(x, y)));
       }
     }
   }
@@ -1758,15 +1859,15 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private drawSwingFlash(g: Phaser.GameObjects.Graphics, flash: SwingFlash): void {
-    const alpha = swingFlashAlpha(flash);
+    const alpha = swingFlashAlpha(flash, this.reducedMotion);
     const { x, y } = flash.centre;
     const from = flash.angle - Math.PI / 4;
     const to = flash.angle + Math.PI / 4;
-    g.lineStyle(2, flash.colour, alpha);
+    g.lineStyle(flash.kind === "skill" ? SKILL_ARC_WIDTH : 2, flash.colour, alpha);
     g.beginPath();
     g.arc(x, y, flash.radius, from, to);
     g.strokePath();
-    if (flash.own) {
+    if (flash.own && flash.kind === "swing") {
       // Along the outer edge, as your circle gets its rim.
       g.lineStyle(1, SELF_RIM, alpha);
       g.beginPath();
@@ -1784,6 +1885,10 @@ export class ArenaScene extends Phaser.Scene {
    */
   private updateProjectiles(now: number): void {
     const clock = this.clock.read(now);
+    const trails = this.shotTrails;
+    const cores = this.shotCores;
+    trails?.clear();
+    cores?.clear();
     const flying = new Set<number>();
     const sent = new Set(this.snapshot.projectiles.map((shot) => shot.id));
     for (const id of this.endedShots) {
@@ -1808,15 +1913,42 @@ export class ArenaScene extends Phaser.Scene {
         const image = this.add
           .image(position.x, position.y, ATLAS, projectileFrame(shot.sprite))
           .setDepth(OVERLAY_DEPTH);
-        image.setRotation(projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts));
+        const heading = projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts);
+        image.setRotation(heading);
         image.setTint(shot.colour);
+        const scale = image.scaleX;
+        const from = projectilePosition(
+          shot,
+          shot.launchedAt,
+          this.snapshot.structure,
+          this.snapshot.lifts,
+        );
         this.projectileImages.set(shot.id, {
           image,
           to: projectileLanding(shot, this.snapshot.structure, this.snapshot.lifts),
           endedAt: undefined,
+          spell:
+            shot.spell && from !== undefined
+              ? {
+                  from,
+                  trail: projectileTrail(shot.sprite, heading, scale),
+                  core: projectileCore(shot.sprite, heading, scale),
+                }
+              : undefined,
         });
       } else {
         shown.image.setPosition(position.x, position.y);
+      }
+      const spell = this.projectileImages.get(shot.id)?.spell;
+      if (spell !== undefined && trails !== undefined && !this.reducedMotion) {
+        // Never behind where it left: a trail grows out of the caster's hand.
+        const flown = Math.hypot(position.x - spell.from.x, position.y - spell.from.y);
+        for (const dot of spell.trail) {
+          if (Math.hypot(dot.offset.x, dot.offset.y) <= flown) {
+            trails.fillStyle(dot.colour, dot.alpha);
+            trails.fillCircle(position.x + dot.offset.x, position.y + dot.offset.y, dot.radius);
+          }
+        }
       }
     }
     const fade = !prefersReducedMotion();
@@ -1839,18 +1971,51 @@ export class ArenaScene extends Phaser.Scene {
         shown.image.setAlpha(alpha);
       }
     }
+    for (const { image, spell } of this.projectileImages.values()) {
+      if (spell !== undefined && cores !== undefined) {
+        cores.fillStyle(SHOT_CORE_COLOUR, image.alpha);
+        cores.fillCircle(
+          image.x + spell.core.offset.x,
+          image.y + spell.core.offset.y,
+          spell.core.radius,
+        );
+      }
+    }
   }
 
   /**
-   * One actor: its body on `g`, every mark on it on `marks`, over the
-   * body glyphs (#1037). In a clump a neighbour's weapon now crosses your
+   * Each flying spell's shadow (#3292): on the ground under it, in the
+   * band of the layer it flies over, so it takes that band's tone and
+   * lies under the bodies there. Gone once the shot lands.
+   */
+  private drawShotShadows(now: number): void {
+    const clock = this.clock.read(now);
+    const { structure, lifts } = this.snapshot;
+    for (const shot of this.snapshot.projectiles) {
+      if (!shot.spell || this.endedShots.has(shot.id)) {
+        continue;
+      }
+      const position = projectilePosition(shot, clock, structure, lifts);
+      const band = this.bandOf(projectileLayer(shot, clock));
+      if (position !== undefined && band !== undefined) {
+        band.body.fillStyle(SHOT_SHADOW.colour, SHOT_SHADOW.alpha);
+        band.body.fillEllipse(
+          position.x + SHOT_SHADOW.offset.x,
+          position.y + SHOT_SHADOW.offset.y,
+          SHOT_SHADOW.width,
+          SHOT_SHADOW.height,
+        );
+      }
+    }
+  }
+
+  /**
+   * One actor on its band: its body, every mark on it over the body
+   * glyphs (#1037), and its health bar over those (#3292). In a clump a neighbour's weapon now crosses your
    * body: the weapon is the more urgent read.
    */
-  private drawActor(
-    g: Phaser.GameObjects.Graphics,
-    marks: Phaser.GameObjects.Graphics,
-    actor: RenderableActor,
-  ): void {
+  private drawActor(band: (typeof this.bands)[number], actor: RenderableActor): void {
+    const { body: g, marks, bar } = band;
     const { x, y } = actor.position;
 
     if (actor.dead) {
@@ -1906,7 +2071,7 @@ export class ArenaScene extends Phaser.Scene {
       this.drawCallChevron(marks, actor);
     }
 
-    this.drawHealthBar(marks, actor);
+    this.drawHealthBar(bar, actor);
 
     if (actor.castProgress !== undefined) {
       this.drawCastBar(marks, actor, actor.castProgress);
@@ -2515,6 +2680,31 @@ export class ArenaScene extends Phaser.Scene {
         }
       }
     }
+    this.drawShoutRings(g);
+  }
+
+  /**
+   * Each shout's ring (#3301), on the ground where its caster stood, at
+   * that layer's height like a skill area: under the bodies.
+   */
+  private drawShoutRings(ground: Phaser.GameObjects.Graphics): void {
+    const structure = this.snapshot.structure;
+    for (const mark of this.shoutMarks) {
+      if (mark.kind !== "ring") {
+        continue;
+      }
+      const ring = shoutRingRadius(mark.ageSeconds, mark.from, this.reducedMotion);
+      if (ring === undefined) {
+        continue;
+      }
+      const onDeck = mark.layer > 0;
+      const g = onDeck ? this.deckGroundGraphicsOf(mark.layer) : ground;
+      const y = onDeck
+        ? mark.position.y - liftAt(structure, this.snapshot.lifts, mark.position, mark.layer)
+        : mark.position.y - elevationOf(mark.layer, structure.ground);
+      g.lineStyle(SHOUT_RING_WIDTH, SHOUT_COLOUR, ring.alpha);
+      g.strokeCircle(mark.position.x, y, ring.radius);
+    }
   }
 
   /**
@@ -2909,6 +3099,7 @@ export class ArenaScene extends Phaser.Scene {
         ),
       );
     }
+    this.drawOverhangs(next.structure, next.lighting, line);
     for (const dropOff of next.structure.dropOffs) {
       this.drawDropOff(dropOff, ground, line);
     }
@@ -2920,6 +3111,7 @@ export class ArenaScene extends Phaser.Scene {
       g,
       ...this.structureGraphics.values(),
       ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
+      ...this.overhangsDrawn.map(({ graphics }) => graphics),
     ]);
   }
 
@@ -3073,6 +3265,71 @@ export class ArenaScene extends Phaser.Scene {
         piece.setAlpha(ground.alpha);
       }
     }
+  }
+
+  /**
+   * Each overhang over a body (#3293), anyone's, faded to
+   * `OVERHANG_FADED_ALPHA` so it never hides one, and back once its
+   * footprint is empty. At once under reduced motion.
+   */
+  private fadeOverhangs(dt: number): void {
+    for (const { cover, graphics } of this.overhangsDrawn) {
+      const covering = bodyUnder(cover, this.drawnActors, this.liftOf);
+      const next = overhangAlpha(graphics.alpha, covering, dt, this.reducedMotion);
+      if (next !== graphics.alpha) {
+        graphics.setAlpha(next);
+      }
+    }
+  }
+
+  private readonly liftOf = (id: string): number => this.elevations.get(id) ?? 0;
+
+  /**
+   * The map's awnings, lean-tos and canopies (#3293): each its own
+   * graphics, so each fades alone, at its layer's height and lit as a deck
+   * of that layer.
+   */
+  private drawOverhangs(
+    structure: MapStructure,
+    lighting: MapLighting | undefined,
+    line: number,
+  ): void {
+    for (const { graphics } of this.overhangsDrawn) {
+      graphics.destroy();
+    }
+    this.overhangsDrawn = structure.overhangs.map((overhang) => {
+      const top = elevationOf(overhang.layer, structure.ground);
+      const graphics = this.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "overhang", layer: overhang.layer }));
+      graphics.save();
+      graphics.translateCanvas(0, -top);
+      paintOverhang(
+        {
+          fillStyle: (colour, alpha) => graphics.fillStyle(colour, alpha),
+          lineStyle: (width, colour, alpha) => graphics.lineStyle(width, colour, alpha),
+          fillShape: (shape) => {
+            this.fillShape(graphics, shape);
+          },
+          fillCircle: (x, y, radius) => graphics.fillCircle(x, y, radius),
+          lineBetween: (ax, ay, bx, by) => graphics.lineBetween(ax, ay, bx, by),
+        },
+        overhang.look,
+        overhang.footprint,
+        litOverhangColours(
+          BIOME[structure.biome].overhang[overhang.look],
+          lighting,
+          overhang.footprint,
+          overhang.layer,
+        ),
+        line,
+      );
+      graphics.restore();
+      return {
+        cover: { layer: overhang.layer, outline: shapeOutline(overhang.footprint), top },
+        graphics,
+      };
+    });
   }
 
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */

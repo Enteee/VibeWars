@@ -15,6 +15,7 @@ import {
 } from "@vibewars/game-core";
 import type {
   DeckLook,
+  OverhangLook,
   GateLook,
   SwitchedDeckData,
   TransitionLift,
@@ -235,6 +236,14 @@ export interface MapDeck {
   readonly switched: RenderableSwitchedDeck | null;
 }
 
+/** An overhang of a map (#3293): a roof nobody stands on, faded over whoever is under it. */
+export interface MapOverhang {
+  readonly id: string;
+  readonly layer: number;
+  readonly footprint: RenderableShape;
+  readonly look: OverhangLook;
+}
+
 /** A map's floors above and below the ground (ADR-0051), its water and zones, from its file: never per tick. */
 export interface MapStructure {
   readonly layerCount: number;
@@ -254,6 +263,8 @@ export interface MapStructure {
   readonly decks: readonly MapDeck[];
   /** Each switched deck that is down (#3068): drawn as what is left of it, and nothing more. */
   readonly downDecks: readonly MapDeck[];
+  /** Its awnings, lean-tos and canopies (#3293): over bodies, never walked. */
+  readonly overhangs: readonly MapOverhang[];
   /** Stretches of a raised edge you step off onto `layer - 1`, never climb (#3069). */
   readonly dropOffs: readonly {
     readonly layer: number;
@@ -286,6 +297,7 @@ export const FLAT_STRUCTURE: MapStructure = {
   decks: [],
   dropOffs: [],
   downDecks: [],
+  overhangs: [],
   pits: [],
   tunnels: [],
   transitions: [],
@@ -401,11 +413,16 @@ export function areaFlashAlpha(flash: AreaFlash): number {
  * A melee swing (#161): a 90° arc around the attacker, toward its target,
  * in the attacker's side's colour, fading out (docs/art/art-direction.md
  * "Swing flash"). It hugs the attacker, so it never reads as the target ring.
+ * A melee attack skill's is a thick warm arc instead (#3292), the same for
+ * both sides, held a little longer.
  */
 export interface SwingFlash {
   readonly id: number;
+  readonly kind: "swing" | "skill";
   /** The attacker's centre when it swung. */
   readonly centre: Vec2;
+  /** The attacker's layer: the arc draws on its band, under that band's health bars (#3292). */
+  readonly layer: number;
   /** Toward the target, in radians. */
   readonly angle: number;
   readonly radius: number;
@@ -433,6 +450,11 @@ export const FLOATING_TEXT_OFFSET_Y = 8;
 
 /** Short, so a dagger's rapid hits read as separate flashes, never a standing ring. */
 export const SWING_FLASH_SECONDS = 0.12;
+/** An attack skill's arc (#3292): long enough to read as a blow, not a swing. */
+export const SKILL_ARC_SECONDS = 0.2;
+/** Its colour, whatever the side, and its width, three times a swing's. */
+export const SKILL_ARC_COLOUR = 0xff8a3d;
+export const SKILL_ARC_WIDTH = 6;
 /** Outside the body: the attacker's radius plus this. */
 export const SWING_FLASH_GAP = 6;
 
@@ -443,8 +465,19 @@ export function decaySwingFlashes(flashes: readonly SwingFlash[], dt: number): S
     .filter((flash) => flash.remainingSeconds > 0);
 }
 
-export function swingFlashAlpha(flash: SwingFlash): number {
-  return Math.max(0, Math.min(1, flash.remainingSeconds / SWING_FLASH_SECONDS));
+/**
+ * A flash's opacity: 1 when it swings, 0 when it is gone; held whole under
+ * `reducedMotion`. An attack skill's arc holds whole for its first half,
+ * so its colour reads before it fades (#3292).
+ */
+export function swingFlashAlpha(flash: SwingFlash, reducedMotion: boolean): number {
+  if (flash.kind === "swing") {
+    return Math.max(0, Math.min(1, flash.remainingSeconds / SWING_FLASH_SECONDS));
+  }
+  if (reducedMotion) {
+    return 1;
+  }
+  return Math.max(0, Math.min(1, (2 * flash.remainingSeconds) / SKILL_ARC_SECONDS));
 }
 
 /**

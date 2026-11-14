@@ -170,6 +170,7 @@
       "switched": null
     }
   ],
+  "overhangs": [],
   "transitions": [
     {
       "id": "ledge-steps",

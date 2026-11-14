@@ -96,11 +96,11 @@ jobs:
       # One entry per job: { job, specs, repeat }, from the plan job.
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.matrix) }}
-    # 800 recorded seconds x up to 3.3 on hosted runners is ~44 min of tests, plus
-    # ~5 min of devenv/cache setup and the build: 60 leaves margin, and a hang
-    # still ends within the hour instead of sitting pending for six, which
-    # hubd blocks the merge on (#2114).
-    timeout-minutes: 60
+    # 400 recorded seconds x up to 3.3 on hosted runners is ~22 min of tests (a
+    # lone 371 s spec: ~20 min), plus ~5 min of devenv/cache setup and the
+    # build: 40 leaves margin, and a hang still ends sooner instead of sitting
+    # pending for six, which hubd blocks the merge on (#2114).
+    timeout-minutes: 40
     env:
       SPECS: ${{ matrix.specs }}
       REPEAT: ${{ matrix.repeat }}

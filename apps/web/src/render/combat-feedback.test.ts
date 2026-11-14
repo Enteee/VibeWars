@@ -3,8 +3,12 @@ import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/gam
 
 import { t } from "../i18n/index.js";
 import {
+  decaySwingFlashes,
   FLOATING_TEXT_OFFSET_Y,
   floatingTextY,
+  SKILL_ARC_COLOUR,
+  SKILL_ARC_SECONDS,
+  swingFlashAlpha,
   placeFloatingText,
   teamColour,
   type AreaFlash,
@@ -100,6 +104,7 @@ function floated(
       addSwingFlash: () => undefined,
       addBeaconBolt: () => undefined,
       addImpacts: () => undefined,
+      addShoutMarks: () => undefined,
       struckTwice: () => undefined,
     },
     {
@@ -180,6 +185,7 @@ describe("showCombatFeedback", () => {
           addSwingFlash: () => undefined,
           addBeaconBolt: () => undefined,
           addImpacts: () => undefined,
+          addShoutMarks: () => undefined,
           struckTwice: () => undefined,
         },
         {
@@ -218,6 +224,7 @@ describe("showCombatFeedback", () => {
         addSwingFlash: () => undefined,
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -280,6 +287,7 @@ describe("showCombatFeedback", () => {
         addSwingFlash: () => undefined,
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -312,6 +320,7 @@ describe("a number over a raised body", () => {
         addSwingFlash: () => undefined,
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -349,6 +358,7 @@ describe("showCombatFeedback and areas", () => {
         addSwingFlash: () => undefined,
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -436,6 +446,7 @@ describe("swingFlashFor (#161)", () => {
           },
           struckTwice: () => undefined,
           addImpacts: () => undefined,
+          addShoutMarks: () => undefined,
         },
         swing("weapon"),
         snapshot(weaponId),
@@ -447,6 +458,60 @@ describe("swingFlashFor (#161)", () => {
     expect(record("shortbow")).toBe(0);
   });
 
+  it("flashes a thick warm arc for a melee attack skill, the same for both sides (#3292)", () => {
+    const blow = (weaponId: string): ReturnType<typeof swingFlashFor> =>
+      swingFlashFor({ ...swing("skill"), skillId: "warrior.mighty-blow" }, snapshot(weaponId));
+    const arc = blow("sword");
+    expect(arc?.kind).toBe("skill");
+    expect(arc?.colour).toBe(SKILL_ARC_COLOUR);
+    expect(arc?.remainingSeconds).toBe(SKILL_ARC_SECONDS);
+    expect(arc?.angle).toBeCloseTo(Math.PI / 2, 9);
+    // A ranged attack skill has its arrow; a spell has no arc at all.
+    expect(blow("longbow")).toBeUndefined();
+    expect(
+      swingFlashFor({ ...swing("skill"), skillId: "elementalist.immolate" }, snapshot("sword")),
+    ).toBeUndefined();
+  });
+
+  it("holds an attack skill's arc whole for 0.1 s, fades it out by 0.2 s, and holds it whole under reduced motion", () => {
+    const arc = swingFlashFor(
+      { ...swing("skill"), skillId: "warrior.mighty-blow" },
+      snapshot("sword"),
+    );
+    if (arc === undefined) {
+      throw new Error("no arc");
+    }
+    const flash = { ...arc, id: 1 };
+    expect(swingFlashAlpha(flash, false)).toBe(1);
+    const [half] = decaySwingFlashes([flash], SKILL_ARC_SECONDS / 2);
+    expect(half === undefined ? 0 : swingFlashAlpha(half, false)).toBeCloseTo(1, 9);
+    expect(half === undefined ? 0 : swingFlashAlpha(half, true)).toBe(1);
+    const [late] = decaySwingFlashes([flash], (SKILL_ARC_SECONDS * 3) / 4);
+    expect(late === undefined ? 0 : swingFlashAlpha(late, false)).toBeCloseTo(0.5, 9);
+    expect(decaySwingFlashes([flash], SKILL_ARC_SECONDS + 0.01)).toEqual([]);
+  });
+
+  it("gives a dual strike's attack skill one arc, not two (#561)", () => {
+    let arcs = 0;
+    showCombatFeedback(
+      {
+        addFloatingText: () => undefined,
+        addAreaFlash: () => undefined,
+        addBeaconBolt: () => undefined,
+        addSwingFlash: () => {
+          arcs += 1;
+        },
+        struckTwice: () => undefined,
+        addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
+      },
+      { ...swing("skill"), skillId: "warrior.mighty-blow", doubleStrike: true },
+      snapshot("daggers"),
+      0,
+    );
+    expect(arcs).toBe(1);
+  });
+
   it("tells the scene whose swing struck twice, and nobody's for a single one (#561)", () => {
     const told: string[] = [];
     const sink = {
@@ -455,6 +520,7 @@ describe("swingFlashFor (#161)", () => {
       addSwingFlash: () => undefined,
       addBeaconBolt: () => undefined,
       addImpacts: () => undefined,
+      addShoutMarks: () => undefined,
       struckTwice: (actorId: string) => told.push(actorId),
     };
     showCombatFeedback(sink, swing("weapon"), snapshot("daggers"), 0);
@@ -474,6 +540,7 @@ describe("swingFlashFor (#161)", () => {
         landed.push(...impacts.map((impact) => impact.anchorId));
       },
       struckTwice: () => undefined,
+      addShoutMarks: () => undefined,
     };
     showCombatFeedback(sink, swing("weapon"), snapshot("sword"), 0);
     expect(landed).toEqual([]);

@@ -1,7 +1,7 @@
 import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
-import { DECK_SHADOW, DECK_TINT } from "./arena-palette.js";
+import { DECK_SHADOW, DECK_TINT, OVERHANG_SHADE } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { shapeOutline } from "./layer-surfaces.js";
 import { isIndoors } from "./lighting-model.js";
@@ -177,7 +177,8 @@ export interface DeckShadowPainter {
 /**
  * What each bridge throws on the ground: a hard shadow, and the ground
  * under it a step darker. Where the light maps cast shadows (#2988) they
- * replace the fixed one; the step darker stays.
+ * replace the fixed one; the step darker stays. An overhang (#3293) throws
+ * a soft shade.
  */
 export function paintDeckShadows(
   painter: DeckShadowPainter,
@@ -197,5 +198,18 @@ export function paintDeckShadows(
     }
     painter.fillStyle(DECK_TINT.colour, DECK_TINT.alpha);
     painter.fillShape(deck.footprint);
+  }
+  // An overhang's soft shade on the ground under it (#3293); the light maps do not know it.
+  for (const overhang of structure.overhangs) {
+    if (overhang.layer !== structure.ground + 1) {
+      continue;
+    }
+    for (const offset of OVERHANG_SHADE.offsets) {
+      painter.save();
+      painter.translateCanvas(offset, offset);
+      painter.fillStyle(OVERHANG_SHADE.colour, OVERHANG_SHADE.alpha);
+      painter.fillShape(overhang.footprint);
+      painter.restore();
+    }
   }
 }

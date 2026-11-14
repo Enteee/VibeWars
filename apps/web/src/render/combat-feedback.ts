@@ -1,4 +1,4 @@
-import { isWeaponId, vec2, WEAPONS } from "@vibewars/game-core";
+import { getSkill, isWeaponId, vec2, WEAPONS } from "@vibewars/game-core";
 import type { CombatMessage, MatchSnapshot } from "@vibewars/game-session";
 
 import { floatingCueFor, type FloatingCue } from "../ui/combat-readouts.js";
@@ -10,6 +10,8 @@ import {
   FLOATING_TEXT_SECONDS,
   BEACON_BOLT_SECONDS,
   type BeaconBolt,
+  SKILL_ARC_COLOUR,
+  SKILL_ARC_SECONDS,
   SWING_FLASH_GAP,
   SWING_FLASH_SECONDS,
   teamColour,
@@ -19,6 +21,7 @@ import {
 } from "./arena-snapshot.js";
 import { impactsFor, type Impact } from "./body-impacts.js";
 import { elevationOf } from "./render-order.js";
+import { shoutMarksFor, type ShoutMark } from "./shout-marks.js";
 
 /**
  * Combat events as floating text. Kept apart from the Phaser scene so it
@@ -36,6 +39,8 @@ export interface FloatingTextSink {
   struckTwice(actorId: string): void;
   /** A skill landed on these bodies (#1139). */
   addImpacts(impacts: readonly Impact[]): void;
+  /** A shout or chant went out (#3301). */
+  addShoutMarks(marks: readonly ShoutMark[]): void;
 }
 
 const COLOURS: Record<FloatingCue["tone"], number> = {
@@ -61,14 +66,16 @@ function isMelee(weaponId: string | undefined): boolean {
 
 /**
  * The arc a melee weapon event flashes (#161): around the attacker, toward
- * the target it swung at. Nothing for a ranged weapon, whose shot is the
- * feedback, or when either side is not in the snapshot.
+ * the target it swung at, and a melee attack skill's thick warm one
+ * (#3292). Nothing for a ranged weapon or attack skill, whose shot is the
+ * feedback, for any other skill, or when either side is not in the snapshot.
  */
 export function swingFlashFor(
   message: CombatMessage,
   snapshot: MatchSnapshot,
 ): Omit<SwingFlash, "id"> | undefined {
-  if (message.cause !== "weapon") {
+  const skill = message.cause === "skill" ? getSkill(message.skillId) : undefined;
+  if (message.cause !== "weapon" && skill?.type !== "attack") {
     return undefined;
   }
   const attacker = snapshot.players.find((p) => p.sessionId === message.casterSessionId);
@@ -82,14 +89,21 @@ export function swingFlashFor(
     return undefined;
   }
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
-  return {
+  const swung = {
     centre: vec2(attacker.x, attacker.y),
+    layer: attacker.layer,
     angle: Math.atan2(target.y - attacker.y, target.x - attacker.x),
     radius: ACTOR_RADIUS + SWING_FLASH_GAP,
-    colour: teamColour(attacker.team === self?.team ? "ally" : "enemy"),
     own: attacker.sessionId === snapshot.selfSessionId,
-    remainingSeconds: SWING_FLASH_SECONDS,
   };
+  return skill === undefined
+    ? {
+        ...swung,
+        kind: "swing",
+        colour: teamColour(attacker.team === self?.team ? "ally" : "enemy"),
+        remainingSeconds: SWING_FLASH_SECONDS,
+      }
+    : { ...swung, kind: "skill", colour: SKILL_ARC_COLOUR, remainingSeconds: SKILL_ARC_SECONDS };
 }
 
 /** Turn server combat events into floating numbers above the right actor. */
@@ -128,6 +142,20 @@ export function showCombatFeedback(
   const impacts = impactsFor(message);
   if (impacts.length > 0) {
     scene.addImpacts(impacts);
+  }
+  const shout = shoutMarksFor(message, (id) => {
+    const player = snapshot.players.find((p) => p.sessionId === id);
+    return player === undefined
+      ? undefined
+      : {
+          team: player.team,
+          position: vec2(player.x, player.y),
+          layer: player.layer,
+          radius: ACTOR_RADIUS,
+        };
+  });
+  if (shout.length > 0) {
+    scene.addShoutMarks(shout);
   }
 
   const bolt = beaconBoltFor(message, snapshot);

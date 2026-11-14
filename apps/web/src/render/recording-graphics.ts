@@ -47,11 +47,18 @@ export class RecordingGraphics {
   public readonly fills: RecordedFill[] = [];
   private transform: Transform = IDENTITY;
   private readonly saved: Transform[] = [];
-  private alpha = 1;
+  /** The whole object's alpha, as a faded overhang sets it (#3293). */
+  public alpha = 1;
+  private fillAlpha = 1;
   private paths: Vec2[][] = [];
 
   public setDepth(depth: number): this {
     this.depth = depth;
+    return this;
+  }
+
+  public setAlpha(alpha: number): this {
+    this.alpha = alpha;
     return this;
   }
 
@@ -91,7 +98,7 @@ export class RecordingGraphics {
   }
 
   public fillStyle(_colour: number, alpha = 1): this {
-    this.alpha = alpha;
+    this.fillAlpha = alpha;
     return this;
   }
 
@@ -184,7 +191,7 @@ export class RecordingGraphics {
 
   public fillPath(): this {
     for (const path of this.paths) {
-      this.fills.push({ polygon: path, alpha: this.alpha });
+      this.fills.push({ polygon: path, alpha: this.fillAlpha });
     }
     return this;
   }
@@ -195,7 +202,7 @@ export class RecordingGraphics {
   }
 
   private record(points: readonly Vec2[]): void {
-    this.fills.push({ polygon: points.map(({ x, y }) => this.at(x, y)), alpha: this.alpha });
+    this.fills.push({ polygon: points.map(({ x, y }) => this.at(x, y)), alpha: this.fillAlpha });
   }
 }
 
