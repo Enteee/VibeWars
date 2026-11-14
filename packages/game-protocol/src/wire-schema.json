@@ -7691,6 +7691,7 @@
           "optional": false,
           "type": {
             "union": [
+              { "literal": "critter" },
               { "literal": "ghostly-hero" },
               { "literal": "guard" },
               { "literal": "guild-lord" },
@@ -7717,6 +7718,7 @@
               { "literal": "guild-lord" },
               { "literal": "jagged-horror" },
               { "literal": "priest" },
+              { "literal": "rat" },
               { "literal": "shambling-horror" },
               { "literal": "spirit" },
               { "literal": "vampiric-horror" }
@@ -8619,6 +8621,7 @@
                     "optional": false,
                     "type": {
                       "union": [
+                        { "literal": "critter" },
                         { "literal": "ghostly-hero" },
                         { "literal": "guard" },
                         { "literal": "guild-lord" },
@@ -8649,6 +8652,7 @@
                         { "literal": "guild-lord" },
                         { "literal": "jagged-horror" },
                         { "literal": "priest" },
+                        { "literal": "rat" },
                         { "literal": "shambling-horror" },
                         { "literal": "spirit" },
                         { "literal": "vampiric-horror" }
@@ -9118,6 +9122,7 @@
                             "optional": false,
                             "type": {
                               "union": [
+                                { "literal": "critter" },
                                 { "literal": "ghostly-hero" },
                                 { "literal": "guard" },
                                 { "literal": "guild-lord" },
@@ -9148,6 +9153,7 @@
                                 { "literal": "guild-lord" },
                                 { "literal": "jagged-horror" },
                                 { "literal": "priest" },
+                                { "literal": "rat" },
                                 { "literal": "shambling-horror" },
                                 { "literal": "spirit" },
                                 { "literal": "vampiric-horror" }
@@ -9626,6 +9632,7 @@
                             "optional": false,
                             "type": {
                               "union": [
+                                { "literal": "critter" },
                                 { "literal": "ghostly-hero" },
                                 { "literal": "guard" },
                                 { "literal": "guild-lord" },
@@ -9656,6 +9663,7 @@
                                 { "literal": "guild-lord" },
                                 { "literal": "jagged-horror" },
                                 { "literal": "priest" },
+                                { "literal": "rat" },
                                 { "literal": "shambling-horror" },
                                 { "literal": "spirit" },
                                 { "literal": "vampiric-horror" }

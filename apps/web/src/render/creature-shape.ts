@@ -85,6 +85,8 @@ export const CREATURE_DRAWN_RADIUS: Readonly<Record<CreatureLook, number>> = {
   "guild-lord": 15,
   guard: 12,
   "ghostly-hero": 13.5,
+  // A critter (#3315) is smaller than a body.
+  rat: 7,
 };
 
 /** The gold of a Guild Lord's gems. */
@@ -102,7 +104,8 @@ export type OrnamentColour = "team" | "ink" | number;
  *   `colour` stroke `width` wide, which is dashed along `arcs` when it is
  *   not one whole circle;
  * - `outline`: a closed polygon stroked `colour` over an `edge` casing
- *   `casing` wide.
+ *   `casing` wide;
+ * - `stroke`: an open line, cased as an `outline`.
  */
 export type CreatureOrnament =
   | {
@@ -126,6 +129,13 @@ export type CreatureOrnament =
       readonly colour: OrnamentColour;
       readonly width: number;
       readonly casing: number;
+    }
+  | {
+      readonly kind: "stroke";
+      readonly points: readonly Point[];
+      readonly colour: OrnamentColour;
+      readonly width: number;
+      readonly casing: number;
     };
 
 /** A ring's `edge` casing, wider than its stroke by this. */
@@ -135,6 +145,8 @@ const RIM_EDGE = 1.4;
 /** The spirit's dashed aura: dash and gap at radius 10, the study's `3 2.6`. */
 const SPIRIT_DASH = 0.3;
 const SPIRIT_GAP = 0.26;
+/** A rat's ears, either side of its facing. */
+const RAT_EAR_ANGLE = 0.75;
 const WHOLE: readonly { readonly from: number; readonly to: number }[] = [
   { from: 0, to: 2 * Math.PI },
 ];
@@ -173,13 +185,15 @@ function ring(
  * wears round its plate (#2047, C of #2043): ears on a pet, a toothed rim
  * on a minion (more teeth on a horror), a dashed aura on a spirit, an `ink`
  * ring on a priest, a thick `ink` hexagon on a guard, gold gems on a Guild
- * Lord, a team halo on a Ghostly Hero.
+ * Lord, a team halo on a Ghostly Hero; on a rat (#3315) two round ears
+ * ahead and a thin tail behind, along `facing`, the one look that turns.
  */
 export function creatureOrnament(
   look: CreatureLook,
   x: number,
   y: number,
   r: number,
+  facing: number,
 ): readonly CreatureOrnament[] {
   // The study draws at radius 10 (15 for the Lord's gems): scale from there.
   const u = r / 10;
@@ -250,6 +264,32 @@ export function creatureOrnament(
     }
     case "ghostly-hero":
       return [ring(x, y, r * 1.4, "team", 2.2)];
+    case "rat": {
+      // Along the facing and across it, in units of `r`.
+      const at = (along: number, across: number): Point => ({
+        x: x + (along * Math.cos(facing) - across * Math.sin(facing)) * r,
+        y: y + (along * Math.sin(facing) + across * Math.cos(facing)) * r,
+      });
+      const ears = [-1, 1].map((side): CreatureOrnament => {
+        const centre = at(Math.cos(RAT_EAR_ANGLE) * 1.1, side * Math.sin(RAT_EAR_ANGLE) * 1.1);
+        return {
+          kind: "polygon",
+          points: ngon(centre.x, centre.y, 10, r * 0.38, 0),
+          colour: "team",
+          edge: RIM_EDGE,
+        };
+      });
+      return [
+        ...ears,
+        {
+          kind: "stroke",
+          points: [at(-1, 0), at(-1.35, 0.18), at(-1.7, 0.08)],
+          colour: "team",
+          width: 1.6,
+          casing: 3.6,
+        },
+      ];
+    }
   }
 }
 

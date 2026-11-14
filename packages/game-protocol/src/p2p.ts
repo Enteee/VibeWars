@@ -157,7 +157,8 @@ export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
 
 /**
  * What kind of creature a body is (#1052); a priest (#1186), a Guild Lord
- * (#1222), a base guard (#1223) and a Ghostly Hero (#1377) are a map's.
+ * (#1222), a base guard (#1223) and a Ghostly Hero (#1377) are a map's, a
+ * critter (#3315) a world's.
  */
 export const CREATURE_KINDS = [
   "spirit",
@@ -167,6 +168,7 @@ export const CREATURE_KINDS = [
   "guild-lord",
   "guard",
   "ghostly-hero",
+  "critter",
 ] as const;
 
 /** How a creature is drawn (#1162); game-core's `CREATURE_LOOKS`, mirrored. */
@@ -184,6 +186,7 @@ export const CREATURE_LOOKS = [
   "guild-lord",
   "guard",
   "ghostly-hero",
+  "rat",
 ] as const;
 
 /**

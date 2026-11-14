@@ -355,6 +355,7 @@ export default {
   "controls.weaponSet3": "Sada zbraní 3",
   "controls.weaponSet4": "Sada zbraní 4",
   "controls.weaponSets": "Sady zbraní",
+  "creature.rat": "Potkan",
 
   "echo.secondsLeft": {
     one: "Ozvena: zostáva {count} s",

@@ -345,6 +345,7 @@ export default {
   "controls.weaponSet3": "Set de arme 3",
   "controls.weaponSet4": "Set de arme 4",
   "controls.weaponSets": "Seturi de arme",
+  "creature.rat": "Șobolan",
 
   "echo.secondsLeft": {
     one: "Ecou: încă {count} s",

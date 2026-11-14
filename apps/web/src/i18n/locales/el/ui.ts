@@ -331,6 +331,7 @@ export default {
   "controls.weaponSet3": "Σετ όπλων 3",
   "controls.weaponSet4": "Σετ όπλων 4",
   "controls.weaponSets": "Σετ όπλων",
+  "creature.rat": "Αρουραίος",
 
   "echo.secondsLeft": { one: "Ηχώ: απομένει {count} δ", other: "Ηχώ: απομένουν {count} δ" },
 

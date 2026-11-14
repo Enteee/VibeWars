@@ -467,10 +467,11 @@ import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * What kind of non-player body this is (#467); a priest (#1186), a Guild
- * Lord (#1222), a base guard (#1223) and a Ghostly Hero (#1377) are a map's.
+ * Lord (#1222), a base guard (#1223) and a Ghostly Hero (#1377) are a map's,
+ * a critter (#3315) a world's, as the tutorial's rats.
  */
 export type CreatureKind =
-  "spirit" | "minion" | "pet" | "priest" | "guild-lord" | "guard" | "ghostly-hero";
+  "spirit" | "minion" | "pet" | "priest" | "guild-lord" | "guard" | "ghostly-hero" | "critter";
 
 /**
  * How a companion fights (#1110, GW1 pet control): game-protocol's
@@ -502,6 +503,7 @@ export const CREATURE_LOOKS = [
   "guild-lord",
   "guard",
   "ghostly-hero",
+  "rat",
 ] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
@@ -3174,6 +3176,7 @@ export class MatchSimulation {
         creature.kind === "guild-lord" ||
         creature.kind === "guard" ||
         creature.kind === "ghostly-hero" ||
+        creature.kind === "critter" ||
         record.combatant.dead
       ) {
         continue;

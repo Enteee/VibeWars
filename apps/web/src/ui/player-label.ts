@@ -21,6 +21,17 @@ export function playerLabel(name: string, guildTag: string | null | undefined): 
   return { name, tag: guildTag === null || guildTag === undefined ? undefined : `[${guildTag}]` };
 }
 
+/**
+ * The name a body is drawn with: a rat's (#3315) in the player's
+ * language, any other's as it came. What is sent stays the English.
+ */
+export function bodyName(player: {
+  readonly name: string;
+  readonly creature?: { readonly look: string } | null | undefined;
+}): string {
+  return player.creature?.look === "rat" ? t("creature.rat") : player.name;
+}
+
 /** The label as one string, for text that cannot hold an element: the name plate. */
 export function playerLabelText(
   name: string,

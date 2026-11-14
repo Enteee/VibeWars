@@ -332,6 +332,7 @@ export default {
   "controls.weaponSet3": "Asesarja 3",
   "controls.weaponSet4": "Asesarja 4",
   "controls.weaponSets": "Asesarjat",
+  "creature.rat": "Rotta",
 
   "echo.secondsLeft": {
     one: "Kaiutettu: {count} s jäljellä",

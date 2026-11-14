@@ -377,6 +377,7 @@ export default {
   "controls.weaponSet3": "مجموعة الأسلحة 3",
   "controls.weaponSet4": "مجموعة الأسلحة 4",
   "controls.weaponSets": "مجموعات الأسلحة",
+  "creature.rat": "جرذ",
 
   "echo.secondsLeft": {
     zero: "مُستنسَخة: تبقّى {count} ث",

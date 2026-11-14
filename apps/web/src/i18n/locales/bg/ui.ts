@@ -328,6 +328,7 @@ export default {
   "controls.weaponSet3": "Оръжеен комплект 3",
   "controls.weaponSet4": "Оръжеен комплект 4",
   "controls.weaponSets": "Оръжейни комплекти",
+  "creature.rat": "Плъх",
 
   "echo.secondsLeft": { one: "Ехо: остава {count} с", other: "Ехо: остават {count} с" },
 

@@ -324,6 +324,7 @@ export default {
   "controls.weaponSet3": "3. fegyverkészlet",
   "controls.weaponSet4": "4. fegyverkészlet",
   "controls.weaponSets": "Fegyverkészletek",
+  "creature.rat": "Patkány",
 
   "echo.secondsLeft": {
     one: "Visszhang: {count} mp van hátra",

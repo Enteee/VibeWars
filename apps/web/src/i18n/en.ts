@@ -327,6 +327,7 @@ export const en = {
   "controls.weaponSet3": "Weapon set 3",
   "controls.weaponSet4": "Weapon set 4",
   "controls.weaponSets": "Weapon sets",
+  "creature.rat": "Rat",
 
   "echo.secondsLeft": { one: "Echoed: {count} s left", other: "Echoed: {count} s left" },
 

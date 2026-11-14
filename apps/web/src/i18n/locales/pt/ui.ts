@@ -344,6 +344,7 @@ export default {
   "controls.weaponSet3": "Conjunto de armas 3",
   "controls.weaponSet4": "Conjunto de armas 4",
   "controls.weaponSets": "Conjuntos de armas",
+  "creature.rat": "Rato",
 
   "echo.secondsLeft": {
     one: "Ecoada: {count} s restante",

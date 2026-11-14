@@ -443,6 +443,18 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
   });
 
+  it("keep a rat, nobody's critter (#3315)", () => {
+    const creature = {
+      ownerId: null,
+      kind: "critter",
+      look: "rat",
+      mode: null,
+      armedAttack: null,
+      leaderId: null,
+    } as const;
+    expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
+  });
+
   it("keep a pet's armed attack, and refuse one that is not a known pet attack (#1167)", () => {
     const pet = (skillId: string): WirePlayer => ({
       ...WIRE_PLAYER,

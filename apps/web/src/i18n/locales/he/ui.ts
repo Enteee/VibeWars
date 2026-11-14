@@ -341,6 +341,7 @@ export default {
   "controls.weaponSet3": "סט נשק 3",
   "controls.weaponSet4": "סט נשק 4",
   "controls.weaponSets": "סטים של נשק",
+  "creature.rat": "חולדה",
 
   "echo.secondsLeft": {
     one: "הד: נותרה {count} שנ׳",

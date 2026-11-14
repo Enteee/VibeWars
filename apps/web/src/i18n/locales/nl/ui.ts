@@ -324,6 +324,7 @@ export default {
   "controls.weaponSet3": "Wapenset 3",
   "controls.weaponSet4": "Wapenset 4",
   "controls.weaponSets": "Wapensets",
+  "creature.rat": "Rat",
 
   "echo.secondsLeft": { one: "Geëchood: nog {count} s", other: "Geëchood: nog {count} s" },
 

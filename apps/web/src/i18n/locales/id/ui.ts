@@ -298,6 +298,7 @@ export default {
   "controls.weaponSet3": "Set senjata 3",
   "controls.weaponSet4": "Set senjata 4",
   "controls.weaponSets": "Set senjata",
+  "creature.rat": "Tikus",
 
   "echo.secondsLeft": { other: "Gema: sisa {count} s" },
 
