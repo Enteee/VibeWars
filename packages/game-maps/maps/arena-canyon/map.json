@@ -120,10 +120,10 @@
       "id": "junction-shaft",
       "footprint": {
         "kind": "rect",
-        "x": 1200,
-        "y": 760,
+        "x": 1130,
+        "y": 735,
         "width": 80,
-        "height": 120
+        "height": 115
       }
     },
     {
@@ -154,7 +154,7 @@
         "kind": "rect",
         "x": 740,
         "y": 930,
-        "width": 500,
+        "width": 420,
         "height": 80
       }
     },
@@ -172,19 +172,19 @@
       "id": "junction",
       "footprint": {
         "kind": "rect",
-        "x": 1200,
-        "y": 860,
-        "width": 220,
-        "height": 150
+        "x": 1080,
+        "y": 815,
+        "width": 160,
+        "height": 120
       }
     },
     {
       "id": "east-gallery",
       "footprint": {
         "kind": "rect",
-        "x": 1400,
-        "y": 850,
-        "width": 800,
+        "x": 1220,
+        "y": 830,
+        "width": 980,
         "height": 80
       }
     },
@@ -504,8 +504,8 @@
       "to": 1,
       "area": {
         "kind": "rect",
-        "x": 1200,
-        "y": 760,
+        "x": 1130,
+        "y": 735,
         "width": 80,
         "height": 115
       },
@@ -1372,8 +1372,8 @@
       {
         "id": "junction-brazier",
         "position": {
-          "x": 1270,
-          "y": 960
+          "x": 1160,
+          "y": 900
         },
         "layer": 0,
         "radius": 150,
@@ -1474,7 +1474,7 @@
         "layer": 3,
         "radius": 130,
         "colour": 16756832,
-        "intensity": 0.6,
+        "intensity": 0.4,
         "flicker": 0.2
       },
       {

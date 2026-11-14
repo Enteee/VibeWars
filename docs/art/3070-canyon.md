@@ -28,5 +28,6 @@ is not committed). Layout is new and asymmetric; the PNG is a guide, not coordin
   study's L1 ledges are now rim-height shelves reached from the bed by their ramps,
   and the arch stands at rim height. Under the bed, a tunnel network: two stair
   shafts a side, torch-lit galleries, and a junction chamber west of the centre with
-  its own shaft and a brazier. The south-west shaft comes up at the foot of the ramp
+  its own shaft and a brazier. The chamber sits north of the stream and clear of the
+  south rim, so nothing above is drawn over it. The south-west shaft comes up at the foot of the ramp
   to the south-west shelf.
