@@ -23,6 +23,13 @@ export const SOUND_IDS = [
   "gate-stone",
   "barrier",
   "wall-crumble",
+  "enchant-on",
+  "hex-on",
+  "stance-on",
+  "shout",
+  "area-warn",
+  "spirit-up",
+  "form-on",
 ] as const;
 
 export type SoundId = (typeof SOUND_IDS)[number];

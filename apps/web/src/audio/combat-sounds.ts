@@ -1,6 +1,8 @@
-import { AREA_EARSHOT, findStatusDefinition } from "@vibewars/game-core";
-import type { Vec2 } from "@vibewars/game-core";
+import { AREA_EARSHOT, findStatusDefinition, getSkill } from "@vibewars/game-core";
+import type { StatusCategory, Vec2 } from "@vibewars/game-core";
 import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
+
+import { toRenderableGroundEffect } from "../render/arena-snapshot.js";
 
 import type { SoundId } from "./sound-ids.js";
 import type { WorldPlaces } from "./world-places.js";
@@ -11,21 +13,55 @@ import type { WorldPlaces } from "./world-places.js";
  * §Sound. Pure, so the rules are tested without an AudioContext.
  */
 
+/** The cue a status landing on you plays, by its category (#3297). */
+const STATUS_CUES: Partial<Record<StatusCategory, SoundId>> = {
+  enchantment: "enchant-on",
+  hex: "hex-on",
+  stance: "stance-on",
+};
+
 /**
  * The sounds one combat message plays for `selfId`. An area skill that
  * hits five players lists its crack five times; the player throttles
- * that to one.
+ * that to one. A skill type's cue (#3297) plays once per message, however
+ * many of its events land on you. `latest`, the newest snapshot, tells
+ * whose side the caster is on: only your own side's shout is a `shout`.
  */
-export function soundsForCombat(message: CombatMessage, selfId: string): SoundId[] {
+export function soundsForCombat(
+  message: CombatMessage,
+  selfId: string,
+  latest: MatchSnapshot | undefined,
+): SoundId[] {
   const mine = message.casterSessionId === selfId;
   const tick = isTick(message);
   const sounds: SoundId[] = [];
+  const once = (id: SoundId): void => {
+    if (!sounds.includes(id)) {
+      sounds.push(id);
+    }
+  };
+  if (!tick && message.events.some(({ targetId }) => targetId === selfId)) {
+    const type = message.cause === "skill" ? getSkill(message.skillId)?.type : undefined;
+    if ((type === "shout" || type === "chant") && alliedCaster(message, selfId, latest)) {
+      once("shout");
+    } else if (type === "form") {
+      once("form-on");
+    }
+  }
   for (const event of message.events) {
     if (tick && event.kind !== "death") {
       continue;
     }
     const onMe = event.targetId === selfId;
     switch (event.kind) {
+      case "status-applied": {
+        const category = findStatusDefinition(event.statusId)?.category;
+        const cue = category === undefined ? undefined : STATUS_CUES[category];
+        if (onMe && cue !== undefined) {
+          once(cue);
+        }
+        break;
+      }
       case "damage": {
         const hit = hitOn(message, event.targetId, selfId);
         if (hit !== undefined) {
@@ -57,6 +93,23 @@ export function soundsForCombat(message: CombatMessage, selfId: string): SoundId
     }
   }
   return sounds;
+}
+
+/**
+ * Whether `message`'s caster stands on `selfId`'s side in `latest`. A
+ * caster not in it, or no snapshot yet, is not known to be an ally.
+ */
+function alliedCaster(
+  message: CombatMessage,
+  selfId: string,
+  latest: MatchSnapshot | undefined,
+): boolean {
+  if (latest === undefined) {
+    return false;
+  }
+  const self = playerById(latest, selfId);
+  const caster = playerById(latest, message.casterSessionId);
+  return self !== undefined && caster?.team === self.team;
 }
 
 /**
@@ -203,4 +256,51 @@ export function soundsForWorld(
     }
   });
   return [...sounds];
+}
+
+/** How near a harmful area's edge you are warned of it (#3297). */
+export const AREA_WARN_REACH = 100;
+/** How far a spirit's summoning is heard (#3297). */
+export const SPIRIT_EARSHOT = 700;
+
+/**
+ * The skill cues the snapshot carries (#3297): `area-warn` when a skill
+ * area that can hurt you (`harmsViewer`, as its dashed edge shows)
+ * appears on your layer with you inside it or within `AREA_WARN_REACH`
+ * of its edge, and `spirit-up` when a spirit of either side is summoned
+ * within `SPIRIT_EARSHOT`. Only a new area or spirit counts, so each
+ * plays once for it. Without a `prev`, or without a player of your own,
+ * nothing plays.
+ */
+export function soundsForSkillGround(
+  prev: MatchSnapshot | undefined,
+  next: MatchSnapshot,
+  selfId: string,
+): SoundId[] {
+  const self = playerById(next, selfId);
+  if (prev === undefined || self === undefined) {
+    return [];
+  }
+  const away = (x: number, y: number): number => Math.hypot(x - self.x, y - self.y);
+  const sounds: SoundId[] = [];
+  const known = new Set(prev.groundEffects.map(({ id }) => id));
+  const warns = next.groundEffects.some(
+    (effect) =>
+      !known.has(effect.id) &&
+      effect.layer === self.layer &&
+      away(effect.x, effect.y) - effect.radius <= AREA_WARN_REACH &&
+      toRenderableGroundEffect(effect, self.team).dashed,
+  );
+  if (warns) {
+    sounds.push("area-warn");
+  }
+  const there = new Set(prev.players.map(({ sessionId }) => sessionId));
+  const summoned = next.players.some(
+    (p) =>
+      p.creature?.kind === "spirit" && !there.has(p.sessionId) && away(p.x, p.y) <= SPIRIT_EARSHOT,
+  );
+  if (summoned) {
+    sounds.push("spirit-up");
+  }
+  return sounds;
 }
