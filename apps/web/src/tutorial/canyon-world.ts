@@ -27,8 +27,8 @@ import { SELF_ID, TUTOR_ID, body } from "./tutorial-world.js";
 
 /** Where the tutor stands as the pair arrives: beside the player, to the north. */
 const TUTOR_BESIDE = vec2(0, -80);
-/** Station 4's mark (#3247): this far east of the boulder run's last landing. */
-const MARK_PAST = 160;
+/** Station 4's mark (#3247): this far east of the boulder run's last landing, inside its `DODGE_REACH`. */
+const MARK_PAST = 100;
 /** Where the tutor waits for the player there, from the mark. */
 const TUTOR_AT_MARK = vec2(0, -90);
 /** The boulder run's last landing, the one the mark is past. */

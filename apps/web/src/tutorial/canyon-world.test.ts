@@ -1,8 +1,9 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
+import { MINIMAL_GW_INSPIRED_PVP_V1, polygonCentre } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { CANYON_ARRIVAL } from "./canyon-map.js";
 import { DODGE_MARK, canyonWorld } from "./canyon-world.js";
+import { DODGE_REACH } from "./dodge-count.js";
 import { MARK_REACH } from "./stations.js";
 import { PLAYER_PROFESSION, SELF_ID, TUTOR_ID, houseBuild } from "./tutorial-world.js";
 
@@ -44,5 +45,21 @@ describe("canyonWorld (#3247)", () => {
         (self?.position.y ?? 0) - DODGE_MARK.position.y,
       ),
     ).toBeLessThanOrEqual(MARK_REACH);
+  });
+
+  it("keeps the mark within the last landing's DODGE_REACH, so a dodge there counts", () => {
+    const world = canyonWorld("canyon-test", build, build);
+    const last = world.zones.find(({ id }) => id === "boulder-run-3");
+    if (last === undefined) {
+      throw new Error("no boulder-run-3");
+    }
+    const centre = polygonCentre(last.polygon);
+    const fromCentre = Math.hypot(
+      DODGE_MARK.position.x - centre.x,
+      DODGE_MARK.position.y - centre.y,
+    );
+    // Anywhere the player counts as on the mark is in reach, and outside the ring.
+    expect(fromCentre + MARK_REACH).toBeLessThan(DODGE_REACH);
+    expect(last.polygon.some(({ x }) => x >= DODGE_MARK.position.x - MARK_REACH)).toBe(false);
   });
 });
