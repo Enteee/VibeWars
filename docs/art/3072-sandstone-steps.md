@@ -26,8 +26,8 @@ the place (a terraced desert town on a hill) is kept.
 - **Elements:** a brass **lever** on the plaza at (1090,830) works the **gate** in the
   under-pass at (1200,1020) (it stands at the shaft foot: shut, the under-pass is a dead end for both teams alike, so the stair (6.2 / 6.3 s) and the grand steps (7.0 / 7.6 s) are the two routes; open, the under-pass links both lanes to the shaft); a **mud-brick breakable
   wall** across the south alley at x=1500, where a straight L0 walk between spawns would run;
-  zones `mire` (west cistern seep, at (840,1700)) and `scorched` (east forge ash, at (1760,1700)),
-  at different depths (mire (840,1700), forge ash moved south to (1700,1770)), 120 u clear of the breakable wall, on the south edge of the street: off all three routes and well clear of both spawns
+  zones `mire` (west cistern seep, at (900,1760)) and `scorched` (east forge ash, at (1760,1770)),
+  at different depths (mire (900,1760), forge ash (1760,1770), both further south than the street lane), 120 u clear of the breakable wall, on the south edge of the street: off all three routes and well clear of both spawns
   (≥ 130 u from any route, ≥ 235 u from a spawn); a smoke vent is the forge's atmosphere.
 - **Light:** the **Day** row (visual-style §2): sun from the NW, 50°, `#fff1d6` 0.55, ambient
   `#b0bcd4` 0.45; hot reads from the sand, not from dimming. Local lights: a torch (`#ffb060`,
