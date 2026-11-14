@@ -208,6 +208,35 @@ function percentile(frames, p) {
 }
 
 /**
+ * Open the Hosted Game lobby and pick `mapId` as its map. The lobby offers
+ * only the maps of the team size on the rail, so for a map the size shown
+ * does not play, like the 1v1 tutorial canyon (#3245), it steps the size,
+ * down then up, until the map is offered.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} mapId
+ */
+async function hostedMap(page, mapId) {
+  await page
+    .locator(".mode-rail")
+    .getByRole("button", { name: "Hosted Game", exact: true })
+    .click();
+  const select = page.locator(".lobby-map select");
+  const offered = async () => (await select.locator(`option[value="${mapId}"]`).count()) > 0;
+  const arrows = page.locator('.mode-rail [data-entry="team-size"] .mode-rail-step');
+  for (const arrow of [arrows.first(), arrows.last()]) {
+    while (!(await offered()) && (await arrow.isEnabled())) {
+      await arrow.click();
+    }
+  }
+  // The reference map is offered only by a build with VIBEWARS_BENCH_REFERENCE (#3255).
+  if (!(await offered())) {
+    throw new Error(`${mapId}: the lobby does not offer it, so this build cannot measure it`);
+  }
+  await select.selectOption(mapId);
+}
+
+/**
  * Frame times on `mapId`'s menu background, in ms, sorted.
  *
  * @param {import("@playwright/test").Page} page
@@ -216,16 +245,7 @@ function percentile(frames, p) {
  * @returns {Promise<number[]>}
  */
 async function measure(page, mapId, seconds) {
-  const entry = page
-    .locator(".mode-rail")
-    .getByRole("button", { name: "Hosted Game", exact: true });
-  await entry.click();
-  const select = page.locator(".lobby-map select");
-  // The reference map is offered only by a build with VIBEWARS_BENCH_REFERENCE (#3255).
-  if ((await select.locator(`option[value="${mapId}"]`).count()) === 0) {
-    throw new Error(`${mapId}: the lobby does not offer it, so this build cannot measure it`);
-  }
-  await select.selectOption(mapId);
+  await hostedMap(page, mapId);
   const background = page.locator("#menu-background");
   await page.waitForFunction(
     (id) => {
@@ -377,11 +397,7 @@ async function camera(page) {
  * @param {string} mapId
  */
 async function follow(page, mapId) {
-  await page
-    .locator(".mode-rail")
-    .getByRole("button", { name: "Hosted Game", exact: true })
-    .click();
-  await page.locator(".lobby-map select").selectOption(mapId);
+  await hostedMap(page, mapId);
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
