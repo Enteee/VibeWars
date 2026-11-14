@@ -127,33 +127,6 @@
       "switched": null
     },
     {
-      "id": "deck-1",
-      "layer": 2,
-      "footprint": {
-        "kind": "polygon",
-        "points": [
-          {
-            "x": 2300,
-            "y": 300
-          },
-          {
-            "x": 2720,
-            "y": 300
-          },
-          {
-            "x": 2720,
-            "y": 560
-          },
-          {
-            "x": 2300,
-            "y": 560
-          }
-        ]
-      },
-      "look": "terrace",
-      "switched": null
-    },
-    {
       "id": "deck-2",
       "layer": 2,
       "footprint": {
@@ -178,60 +151,6 @@
         ]
       },
       "look": "ruin",
-      "switched": null
-    },
-    {
-      "id": "deck-3",
-      "layer": 2,
-      "footprint": {
-        "kind": "polygon",
-        "points": [
-          {
-            "x": 2300,
-            "y": 1330
-          },
-          {
-            "x": 2720,
-            "y": 1330
-          },
-          {
-            "x": 2720,
-            "y": 1590
-          },
-          {
-            "x": 2300,
-            "y": 1590
-          }
-        ]
-      },
-      "look": "platform",
-      "switched": null
-    },
-    {
-      "id": "deck-4",
-      "layer": 2,
-      "footprint": {
-        "kind": "polygon",
-        "points": [
-          {
-            "x": 900,
-            "y": 1650
-          },
-          {
-            "x": 1320,
-            "y": 1650
-          },
-          {
-            "x": 1320,
-            "y": 1850
-          },
-          {
-            "x": 900,
-            "y": 1850
-          }
-        ]
-      },
-      "look": "platform",
       "switched": null
     }
   ],
@@ -282,21 +201,6 @@
       "lift": null
     },
     {
-      "id": "stairs-1",
-      "from": 1,
-      "to": 2,
-      "area": {
-        "kind": "rect",
-        "x": 2190,
-        "y": 390,
-        "width": 110,
-        "height": 80
-      },
-      "uphill": "e",
-      "look": "stairs-landing",
-      "lift": null
-    },
-    {
       "id": "stairs-2",
       "from": 1,
       "to": 2,
@@ -309,36 +213,6 @@
       },
       "uphill": "w",
       "look": "rough-steps",
-      "lift": null
-    },
-    {
-      "id": "stairs-3",
-      "from": 1,
-      "to": 2,
-      "area": {
-        "kind": "rect",
-        "x": 2190,
-        "y": 1420,
-        "width": 110,
-        "height": 80
-      },
-      "uphill": "e",
-      "look": "stairs",
-      "lift": null
-    },
-    {
-      "id": "stairs-4",
-      "from": 1,
-      "to": 2,
-      "area": {
-        "kind": "rect",
-        "x": 1320,
-        "y": 1740,
-        "width": 110,
-        "height": 80
-      },
-      "uphill": "w",
-      "look": "stairs",
       "lift": null
     }
   ],
@@ -408,28 +282,6 @@
       "kind": "polygon",
       "points": [
         {
-          "x": 2300,
-          "y": 300
-        },
-        {
-          "x": 2720,
-          "y": 300
-        },
-        {
-          "x": 2720,
-          "y": 560
-        },
-        {
-          "x": 2300,
-          "y": 560
-        }
-      ],
-      "layer": 1
-    },
-    {
-      "kind": "polygon",
-      "points": [
-        {
           "x": 300,
           "y": 1330
         },
@@ -444,50 +296,6 @@
         {
           "x": 300,
           "y": 1590
-        }
-      ],
-      "layer": 1
-    },
-    {
-      "kind": "polygon",
-      "points": [
-        {
-          "x": 2300,
-          "y": 1330
-        },
-        {
-          "x": 2720,
-          "y": 1330
-        },
-        {
-          "x": 2720,
-          "y": 1590
-        },
-        {
-          "x": 2300,
-          "y": 1590
-        }
-      ],
-      "layer": 1
-    },
-    {
-      "kind": "polygon",
-      "points": [
-        {
-          "x": 900,
-          "y": 1650
-        },
-        {
-          "x": 1320,
-          "y": 1650
-        },
-        {
-          "x": 1320,
-          "y": 1850
-        },
-        {
-          "x": 900,
-          "y": 1850
         }
       ],
       "layer": 1
@@ -536,6 +344,30 @@
       "kind": "rect",
       "x": 500,
       "y": 1700,
+      "width": 200,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 2300,
+      "y": 300,
+      "width": 200,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 2300,
+      "y": 1330,
+      "width": 200,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 1000,
+      "y": 1650,
       "width": 200,
       "height": 60,
       "layer": 1
