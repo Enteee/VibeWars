@@ -2,9 +2,12 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1 as RULESET,
   MatchSimulation,
   breakableTargetId,
+  critterSpec,
+  getSkill,
   polygonCentre,
   vec2,
   type MatchZone,
+  type ParticipantSpec,
   type PlayerBuild,
   type Vec2,
 } from "@vibewars/game-core";
@@ -24,7 +27,9 @@ import type { MapDescriptor } from "@vibewars/game-protocol";
 import { toMapDescriptor } from "../training/scenario-setup.js";
 import { SPLASH_RULES } from "../ui/splash-fight.js";
 
-import { CANYON_ARRIVAL, type CanyonPoint } from "./canyon-map.js";
+import { CANYON_ARRIVAL, CANYON_ARRIVALS, CANYON_SITES, type CanyonPoint } from "./canyon-map.js";
+import type { RatTally, RatWatch } from "./rat-watch.js";
+import { SKILLS_ON_RATS } from "./stations.js";
 import { SELF_ID, TUTOR_ID, body } from "./tutorial-world.js";
 
 /** Where the tutor stands as the pair arrives: beside the player, to the north. */
@@ -120,7 +125,7 @@ export const CLEARING: CanyonClearing = ((): CanyonClearing => {
   };
 })();
 
-/** The canyon past the teleporter (#3247), built and not yet stepped. */
+/** The canyon past the teleporter (#3247), either of its maps, built and not yet stepped. */
 export interface CanyonWorld {
   readonly map: MapDescriptor;
   readonly simulation: MatchSimulation;
@@ -128,23 +133,25 @@ export interface CanyonWorld {
   readonly zones: readonly MatchZone[];
   /** The layer the trail runs on. */
   readonly ground: number;
-  /** Where the tutor waits by station 4's mark. */
+  /** Where the tutor goes on ahead to: by station 4's mark, or by the rat pocket (#3316). */
   readonly besideMark: Vec2;
 }
 
 /**
- * The tutorial canyon's first map (#3245) as a world for the pair alone:
- * no foes and no bots, only its zones, which strike on their own clock.
- * The player stands on the arrival facing east, down the trail, the tutor
- * beside them; both play the builds they played on the battlefield.
+ * One of the tutorial canyon's two maps (#3245), `part` 0 or 1, as a world
+ * for the pair: no bots, only its zones, which strike on their own clock,
+ * and on the second the rat pocket's rats (#3316). The player stands on
+ * the map's arrival, the tutor beside them; both play the builds they
+ * played on the battlefield.
  */
 export function canyonWorld(
   seed: string,
   playerBuild: PlayerBuild,
   tutorBuild: PlayerBuild,
+  part: 0 | 1,
 ): CanyonWorld {
-  const { map: data, position: arrival, layer: ground } = CANYON_ARRIVAL;
-  const mark = DODGE_MARK.position;
+  const { map: data, position: arrival, layer: ground } = CANYON_ARRIVALS[part];
+  const ahead = part === 0 ? DODGE_MARK.position : RAT_POCKET.pocket;
   const zones = matchZones(data);
   const simulation = new MatchSimulation({
     seed,
@@ -169,6 +176,7 @@ export function canyonWorld(
         vec2(arrival.x + TUTOR_BESIDE.x, arrival.y + TUTOR_BESIDE.y),
         undefined,
       ),
+      ...(part === 0 ? [] : RAT_POCKET.rats.map(ratAt)),
     ],
   });
   return {
@@ -176,7 +184,7 @@ export function canyonWorld(
     simulation,
     zones,
     ground,
-    besideMark: vec2(mark.x + TUTOR_AT_MARK.x, mark.y + TUTOR_AT_MARK.y),
+    besideMark: vec2(ahead.x + TUTOR_AT_MARK.x, ahead.y + TUTOR_AT_MARK.y),
   };
 }
 
@@ -322,6 +330,205 @@ export function badGroundTutor(simulation: MatchSimulation): BadGroundTutor {
       if (Math.hypot(tutor.position.x - to.x, tutor.position.y - to.y) <= WAYPOINT_REACH) {
         leg += 1;
         walk();
+      }
+    },
+  };
+}
+
+/** A rat's aggro and leash round its post (#3316): it bites only who comes close. */
+const RAT_AGGRO = 150;
+const RAT_LEASH = 250;
+/** How long a rat waits between its decisions, as a base guard does. */
+const RAT_THINK_SECONDS = 0.5;
+/** Station 8's big rat's health (#3316): twice a rat's, so a combo is worth it. */
+const BIG_RAT_HEALTH = 240;
+/** How far the runner flees from where the player's first blow found it (#3316), west. */
+const RAT_FLEE = vec2(-400, 0);
+/** Below this share of the player's health the tutor heals the player at the rats (#3316). */
+const RAT_HEAL_BELOW = 0.3;
+
+/** One of station 8's rats (#3316): its id, its post, and its health, if not a rat's own. */
+export interface CanyonRat {
+  readonly id: string;
+  readonly post: Vec2;
+  readonly maxHealth: number | undefined;
+}
+
+/** Station 8's rat pocket (#3316), on the canyon's second map. */
+export interface CanyonRats {
+  readonly layer: number;
+  /** The pocket's middle, which the player is led to. */
+  readonly pocket: Vec2;
+  /** The runner, which flees when first hit; the big one; and a plain one. */
+  readonly rats: readonly [CanyonRat, CanyonRat, CanyonRat];
+  /** Where one more rat comes, if the three died with too few skills. */
+  readonly extra: Vec2;
+}
+
+export const RAT_POCKET: CanyonRats = ((): CanyonRats => {
+  const site = CANYON_SITES.get(8);
+  if (site === undefined) {
+    throw new Error("no site 8 for station 8");
+  }
+  const { position: pocket, layer } = site;
+  const at = (dx: number, dy: number): Vec2 => vec2(pocket.x + dx, pocket.y + dy);
+  return {
+    layer,
+    pocket,
+    rats: [
+      { id: "tutorial-rat-1", post: at(-150, -90), maxHealth: undefined },
+      { id: "tutorial-rat-2", post: at(-150, 90), maxHealth: BIG_RAT_HEALTH },
+      { id: "tutorial-rat-3", post: at(-300, 0), maxHealth: undefined },
+    ],
+    extra: at(-150, 0),
+  };
+})();
+
+/** `rat` as `MatchSimulation` takes it: a rat of team 1 holding `post`, facing east. */
+function ratAt(rat: CanyonRat): ParticipantSpec {
+  return ratSpec(rat.id, rat.post, rat.post, rat.maxHealth, undefined);
+}
+
+function ratSpec(
+  id: string,
+  at: Vec2,
+  post: Vec2,
+  maxHealth: number | undefined,
+  startHealthFraction: number | undefined,
+): ParticipantSpec {
+  const spec = critterSpec(
+    id,
+    1,
+    at,
+    RAT_POCKET.layer,
+    {
+      kind: "guard",
+      post,
+      aggroUnits: RAT_AGGRO,
+      leashUnits: RAT_LEASH,
+      rooted: false,
+      thinkSeconds: RAT_THINK_SECONDS,
+    },
+    0,
+  );
+  return {
+    ...spec,
+    ...(maxHealth === undefined ? {} : { maxHealth }),
+    ...(startHealthFraction === undefined ? {} : { startHealthFraction }),
+  };
+}
+
+/**
+ * The slot of the first skill on `build`'s bar that heals another ally,
+ * or none: what the tutor may use on the player at the rats (#3316).
+ */
+export function allyHealSlot(build: PlayerBuild): number | undefined {
+  const slot = build.skillBar.findIndex((id) => {
+    const skill = id === null ? undefined : getSkill(id);
+    return (
+      skill !== undefined &&
+      (skill.target === "single-ally" || skill.target === "single-other-ally") &&
+      skill.effects.some((effect) => effect.kind === "heal")
+    );
+  });
+  return slot < 0 ? undefined : slot;
+}
+
+/** Station 8 at the rat pocket (#3316), stepped once a frame with what the rat watch has seen. */
+export interface RatPocket {
+  /** The rats standing now, any extra one among them. */
+  readonly alive: () => number;
+  /** The runner has fled the player's first blow. */
+  readonly fled: () => boolean;
+  /** One more rat has come, the three having died with too few skills. */
+  readonly extra: () => boolean;
+  readonly step: (tally: RatTally) => void;
+}
+
+/**
+ * Sends the tutor to the pocket and runs station 8's rats: the runner
+ * flees west once the player first hits it, put back where it stood with
+ * its post moved, which a guard's leash then walks it to; the player's
+ * and the tutor's target and attack follow it. The tutor attacks only a rat the
+ * player has already hit, so the player always opens, and heals the
+ * player with `healSlot`, if its build has one, below `RAT_HEAL_BELOW`.
+ * Once every rat is dead with fewer than `SKILLS_ON_RATS` skills landed,
+ * one more comes, watched by `watch`, and again as long as that holds.
+ */
+export function ratPocket(
+  simulation: MatchSimulation,
+  watch: RatWatch,
+  healSlot: number | undefined,
+): RatPocket {
+  simulation.walkTo(
+    TUTOR_ID,
+    vec2(RAT_POCKET.pocket.x + TUTOR_AT_MARK.x, RAT_POCKET.pocket.y + TUTOR_AT_MARK.y),
+    RAT_POCKET.layer,
+  );
+  const [runner] = RAT_POCKET.rats;
+  const ids = RAT_POCKET.rats.map(({ id }) => id);
+  let fled = false;
+  let extra = false;
+  const standing = (id: string): boolean => simulation.get(id)?.combatant.dead === false;
+  const alive = (): number => ids.filter(standing).length;
+  const flee = (): void => {
+    const rat = simulation.get(runner.id);
+    if (rat === undefined) {
+      return;
+    }
+    const { position, combatant } = rat;
+    const pair = [SELF_ID, TUTOR_ID].flatMap((id) => simulation.get(id) ?? []);
+    const aimed = pair.filter((body) => body.targetId === runner.id).map(({ id }) => id);
+    const striking = pair
+      .filter((body) => body.combatant.attack?.targetId === runner.id)
+      .map(({ id }) => id);
+    simulation.remove(runner.id);
+    simulation.add(
+      ratSpec(
+        runner.id,
+        position,
+        vec2(position.x + RAT_FLEE.x, position.y + RAT_FLEE.y),
+        runner.maxHealth,
+        combatant.health / combatant.maxHealth,
+      ),
+    );
+    for (const id of aimed) {
+      simulation.setTarget(id, runner.id);
+    }
+    for (const id of striking) {
+      simulation.requestAttack(id, runner.id);
+    }
+  };
+  return {
+    alive,
+    fled: () => fled,
+    extra: () => extra,
+    step: (tally) => {
+      if (!fled && tally.hitByPlayer.has(runner.id) && standing(runner.id)) {
+        fled = true;
+        flee();
+      }
+      const self = simulation.get(SELF_ID);
+      const tutor = simulation.get(TUTOR_ID);
+      if (self === undefined || tutor === undefined) {
+        return;
+      }
+      const { health, maxHealth } = self.combatant;
+      if (healSlot !== undefined && !self.combatant.dead && health < maxHealth * RAT_HEAL_BELOW) {
+        simulation.setTarget(TUTOR_ID, SELF_ID);
+        simulation.requestSkill(TUTOR_ID, healSlot);
+        return;
+      }
+      const prey = ids.find((id) => tally.hitByPlayer.has(id) && standing(id));
+      if (prey !== undefined && tutor.combatant.attack?.targetId !== prey) {
+        simulation.requestAttack(TUTOR_ID, prey);
+      }
+      if (alive() === 0 && tally.skillsOnRats.size < SKILLS_ON_RATS) {
+        extra = true;
+        const id = `tutorial-rat-${String(ids.length + 1)}`;
+        ids.push(id);
+        watch.watch(id);
+        simulation.add(ratSpec(id, RAT_POCKET.extra, RAT_POCKET.extra, undefined, undefined));
       }
     },
   };

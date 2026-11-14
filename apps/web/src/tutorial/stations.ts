@@ -42,14 +42,29 @@ export interface TutorialView {
   readonly zoneStatus: ZoneStatus | undefined;
   /** The player's health has dropped in station 7 (#3310): once true, it stays true. */
   readonly healthDropped: boolean;
+  /** Station 8's rats still standing (#3316), the extra one among them; none outside it. */
+  readonly ratsAlive: number;
+  /** The skill ids from the player's bar that have landed on a rat: it only grows. */
+  readonly skillsOnRats: ReadonlySet<string>;
+  /** Whom the player has targeted now, if anyone. */
+  readonly selfTarget: string | undefined;
+  /** Station 8's runner has fled the player's first blow: once true, it stays true. */
+  readonly ratFled: boolean;
+  /** Station 8's big rat has been knocked down: once true, it stays true. */
+  readonly bigRatDown: boolean;
+  /** The rats died before two skills landed, so one more came: once true, it stays true. */
+  readonly extraRat: boolean;
 }
 
 /** The statuses station 7's ground gives (#3310): the mire's, then the molten strip's. */
 export const ZONE_STATUSES = ["mired", "burning", "crippled"] as const;
 export type ZoneStatus = (typeof ZONE_STATUSES)[number];
 
-/** The world a station runs in (#3247): the battlefield it starts on, or the canyon past the teleporter. */
-export type TutorialWorldName = "battlefield" | "canyon";
+/**
+ * The world a station runs in (#3247): the battlefield it starts on, the
+ * canyon past the teleporter, or the canyon's second map (#3316).
+ */
+export type TutorialWorldName = "battlefield" | "canyon" | "canyon-2";
 
 /** What a station points at: a mark on the ground, or a HUD element by its selector. */
 export type StationHighlight =
@@ -59,6 +74,8 @@ export type StationHighlight =
 /** A line a station says once, when the view first shows what it is about. */
 export interface StationAside {
   readonly line: MessageKey;
+  /** The skills the line names, by its placeholder: `{ bash: "warrior.hammer-bash" }` (#3316). */
+  readonly skills?: Readonly<Record<string, string>>;
   readonly when: (view: TutorialView) => boolean;
 }
 
@@ -311,5 +328,84 @@ export function badGroundStation(mark: Vec2, layer: number): Station {
       { line: "tutorial.ground.health", when: (view) => view.healthDropped },
     ],
     done: (view) => onMark(view, mark, layer),
+  };
+}
+
+/** The skills station 8 names (#3316), as the player's build holds them. */
+export const RAT_SKILLS = {
+  runner: "warrior.protectors-strike",
+  bash: "warrior.hammer-bash",
+  crush: "warrior.crushing-blow",
+} as const;
+
+/** How many distinct skills must land on the rats before station 8 is done (#3316). */
+export const SKILLS_ON_RATS = 2;
+
+/** Station 8's rats with a lesson each (#3316): the one that runs, and the big one. */
+export interface StationRats {
+  readonly runner: string;
+  readonly big: string;
+}
+
+/** The slot of `skill` on `skillBar`, from 0. */
+function slotOf(skillBar: readonly (string | null)[], skill: string): number {
+  const slot = skillBar.indexOf(skill);
+  if (slot < 0) {
+    throw new Error(`station 8: ${skill} is not on the player's bar`);
+  }
+  return slot;
+}
+
+/**
+ * Station 8 (playbook §8), at the canyon's rat pocket, `pocket`: three
+ * rats, killed with at least two different skills. The player's build
+ * has no ranged, area or condition skill, so the lesson is combos: the
+ * runner, targeted, lights Protector's Strike, and its line is said once
+ * it flees; the big rat, targeted, lights Hammer Bash, then Crushing Blow
+ * once it is down. Otherwise the pocket is marked. If the rats died with
+ * too few skills, one more came, and its line is said once. Done with no
+ * rat standing and `SKILLS_ON_RATS` skills landed.
+ */
+export function ratsStation(
+  pocket: Vec2,
+  rats: StationRats,
+  skillBar: readonly (string | null)[],
+): Station {
+  const runner = slotOf(skillBar, RAT_SKILLS.runner);
+  const bash = slotOf(skillBar, RAT_SKILLS.bash);
+  const crush = slotOf(skillBar, RAT_SKILLS.crush);
+  return {
+    id: "rats",
+    world: "canyon-2",
+    lines: {
+      intro: "tutorial.rats.intro",
+      hint: "tutorial.rats.hint",
+      praise: "tutorial.rats.praise",
+      how: "tutorial.rats.how",
+    },
+    keys: ["target-next", "target-closest"],
+    highlight: (view) => {
+      if (view.selfTarget === rats.runner) {
+        return { kind: "hud", element: skillSlot(runner) };
+      }
+      if (view.selfTarget === rats.big) {
+        return { kind: "hud", element: skillSlot(view.bigRatDown ? crush : bash) };
+      }
+      return { kind: "ground", at: pocket };
+    },
+    asides: [
+      {
+        line: "tutorial.rats.runs",
+        skills: { skill: RAT_SKILLS.runner },
+        when: (view) => view.ratFled,
+      },
+      {
+        line: "tutorial.rats.big",
+        skills: { bash: RAT_SKILLS.bash, crush: RAT_SKILLS.crush },
+        when: (view) => view.selfTarget === rats.big,
+      },
+      { line: "tutorial.rats.again", when: (view) => view.extraRat },
+    ],
+    done: (view) => view.ratsAlive === 0 && view.skillsOnRats.size >= SKILLS_ON_RATS,
   };
 }

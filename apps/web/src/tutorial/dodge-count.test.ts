@@ -65,7 +65,7 @@ describe("createDodgeCounter (#3247)", () => {
 
   it("judges a hit as the canyon's simulation strikes: in a ring hurts, beside it does not", () => {
     const build = houseBuild(PLAYER_PROFESSION);
-    const world = canyonWorld("dodge-test", build, build);
+    const world = canyonWorld("dodge-test", build, build, 0);
     const { simulation } = world;
     const counter = createDodgeCounter(world.zones);
     const first = world.zones.find((zone) => zone.id === "boulder-run-1");

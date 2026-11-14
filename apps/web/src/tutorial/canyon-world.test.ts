@@ -1,18 +1,28 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1, pointInPolygon, polygonCentre } from "@vibewars/game-core";
+import {
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  pointInPolygon,
+  polygonCentre,
+  vec2,
+  type MatchSimulation,
+  type Vec2,
+} from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { CANYON_ARRIVAL } from "./canyon-map.js";
+import { CANYON_ARRIVAL, CANYON_ARRIVALS } from "./canyon-map.js";
 import {
   BAD_GROUND,
   CLEARING,
   CRACKED_WALL,
   DODGE_MARK,
+  RAT_POCKET,
   badGroundTutor,
   canyonWorld,
   clearingTutor,
+  ratPocket,
   wallTutor,
 } from "./canyon-world.js";
 import { DODGE_REACH } from "./dodge-count.js";
+import { createRatWatch, type RatTally, type RatWatch } from "./rat-watch.js";
 import { MARK_REACH } from "./stations.js";
 import { PLAYER_PROFESSION, SELF_ID, TUTOR_ID, houseBuild } from "./tutorial-world.js";
 
@@ -22,7 +32,7 @@ describe("canyonWorld (#3247)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
 
   it("holds the pair alone, the player on the arrival and the tutor beside", () => {
-    const world = canyonWorld("canyon-test", build, build);
+    const world = canyonWorld("canyon-test", build, build, 0);
     const self = world.simulation.get(SELF_ID);
     const tutor = world.simulation.get(TUTOR_ID);
     expect([...world.simulation.participants()].map(({ id }) => id).sort()).toEqual(
@@ -36,7 +46,7 @@ describe("canyonWorld (#3247)", () => {
   });
 
   it("puts station 4's mark where the player walks to, on the trail past the boulder run", () => {
-    const world = canyonWorld("canyon-test", build, build);
+    const world = canyonWorld("canyon-test", build, build, 0);
     const { simulation } = world;
     const landings = world.zones.filter(({ id }) => id.startsWith("boulder-run-"));
     expect(landings).toHaveLength(3);
@@ -57,7 +67,7 @@ describe("canyonWorld (#3247)", () => {
   });
 
   it("keeps the mark within the last landing's DODGE_REACH, so a dodge there counts", () => {
-    const world = canyonWorld("canyon-test", build, build);
+    const world = canyonWorld("canyon-test", build, build, 0);
     const last = world.zones.find(({ id }) => id === "boulder-run-3");
     if (last === undefined) {
       throw new Error("no boulder-run-3");
@@ -79,7 +89,7 @@ describe("wallTutor (#3302)", () => {
     world.simulation.breakables.find(({ id }) => id === CRACKED_WALL.id)?.health;
 
   it("waits by the wall until the player's first blow lands, then strikes it too", () => {
-    const world = canyonWorld("canyon-test", build, build);
+    const world = canyonWorld("canyon-test", build, build, 0);
     const { simulation } = world;
     simulation.walkTo(SELF_ID, CRACKED_WALL.face, CRACKED_WALL.layer);
     const tutor = wallTutor(simulation);
@@ -110,7 +120,7 @@ describe("clearingTutor (#3303)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
 
   it("stays in the rockfall until half its health is gone, then bleeds east of it until healed", () => {
-    const world = canyonWorld("canyon-test", build, build);
+    const world = canyonWorld("canyon-test", build, build, 0);
     const { simulation } = world;
     const rockfall = world.zones.find(({ id }) => id === CLEARING.zoneId);
     if (rockfall === undefined) {
@@ -196,7 +206,7 @@ describe("badGroundTutor (#3310)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
   /** The canyon with its cracked wall down, as station 5 leaves it, the pair at its face. */
   const pastTheWall = (): ReturnType<typeof canyonWorld> => {
-    const world = canyonWorld("canyon-test", build, build);
+    const world = canyonWorld("canyon-test", build, build, 0);
     const { simulation } = world;
     simulation.walkTo(SELF_ID, CRACKED_WALL.face, CRACKED_WALL.layer);
     simulation.walkTo(TUTOR_ID, CRACKED_WALL.besideFace, CRACKED_WALL.layer);
@@ -214,7 +224,7 @@ describe("badGroundTutor (#3310)", () => {
     world.zones.filter(({ kind }) => kind === "mire" || kind === "molten");
 
   it("puts the mark past the mire, in no zone, the straight way to it through the mud", () => {
-    const world = canyonWorld("canyon-test", build, build);
+    const world = canyonWorld("canyon-test", build, build, 0);
     const zones = badGround(world);
     expect(zones.map(({ kind }) => kind).sort()).toEqual(["mire", "molten"]);
     const mire = zones.find(({ kind }) => kind === "mire");
@@ -286,5 +296,104 @@ describe("badGroundTutor (#3310)", () => {
     }
     expect(lowest).toBeLessThan(self().combatant.maxHealth);
     expect(lowest).toBeGreaterThan(0);
+  });
+});
+
+describe("ratPocket (#3316)", () => {
+  const build = houseBuild(PLAYER_PROFESSION);
+  const ids = RAT_POCKET.rats.map(({ id }) => id);
+  /** One step, its log fed to `watch` as the connection would deliver it. */
+  const stepWatched = (simulation: MatchSimulation, watch: RatWatch): void => {
+    for (const entry of simulation.step(TICK).log) {
+      watch.observe({
+        casterSessionId: entry.sourceId ?? "",
+        cause: entry.cause,
+        skillId: entry.skillId ?? "",
+        weaponId: entry.weaponId ?? "",
+        attributeId: entry.attributeId ?? "",
+        doubleStrike: entry.doubleStrike,
+        events: entry.events,
+      });
+    }
+  };
+
+  it("places three rats at the pocket on the second map, on team 1, the big one at 240", () => {
+    const world = canyonWorld("rats-test", build, build, 1);
+    const { simulation } = world;
+    expect(world.map.id).toBe(CANYON_ARRIVALS[1].map.id);
+    for (const id of ids) {
+      const rat = simulation.get(id);
+      expect(rat?.combatant.team).toBe(1);
+      expect(rat?.layer).toBe(RAT_POCKET.layer);
+      expect(rat?.creature?.look).toBe("rat");
+      const { x, y } = rat?.position ?? vec2(0, 0);
+      expect(Math.hypot(x - RAT_POCKET.pocket.x, y - RAT_POCKET.pocket.y)).toBeLessThan(400);
+      expect(simulation.standable(vec2(x, y), RAT_POCKET.layer)).toBe(true);
+    }
+    expect(simulation.get(ids[1] ?? "")?.combatant.maxHealth).toBe(240);
+    expect(simulation.get(ids[0] ?? "")?.combatant.maxHealth).toBe(120);
+    expect(simulation.get(ids[0] ?? "")?.combatant.team).not.toBe(
+      simulation.get(SELF_ID)?.combatant.team,
+    );
+    const first = canyonWorld("rats-test", build, build, 0).simulation;
+    expect(ids.map((id) => first.get(id))).toEqual([undefined, undefined, undefined]);
+  });
+
+  it("runs the runner off when the player hits it, the tutor joining only once it is hit", () => {
+    const { simulation } = canyonWorld("rats-test", build, build, 1);
+    const [runnerId = ""] = ids;
+    const watch = createRatWatch(SELF_ID, ids, build.skillBar);
+    const pocket = ratPocket(simulation, watch, undefined);
+    const runner = (): Vec2 => simulation.get(runnerId)?.position ?? vec2(0, 0);
+    const post = runner();
+    // The player walks in to its first blow.
+    simulation.requestAttack(SELF_ID, runnerId);
+    const hit = (): boolean => watch.tally().hitByPlayer.has(runnerId);
+    for (let walked = 0; walked < 30 && !hit(); walked += TICK) {
+      stepWatched(simulation, watch);
+      if (!hit()) {
+        pocket.step(watch.tally());
+        // The tutor waits for the player's first blow.
+        expect(simulation.get(TUTOR_ID)?.combatant.attack).toBeUndefined();
+      }
+    }
+    expect(watch.tally().hitByPlayer.has(runnerId)).toBe(true);
+    pocket.step(watch.tally());
+    expect(pocket.fled()).toBe(true);
+    expect(simulation.get(SELF_ID)?.combatant.attack?.targetId).toBe(runnerId);
+    expect(simulation.get(TUTOR_ID)?.combatant.attack?.targetId).toBe(runnerId);
+    for (let ran = 0; ran < 2; ran += TICK) {
+      stepWatched(simulation, watch);
+      pocket.step(watch.tally());
+    }
+    // West, away from where it stood, though the player is beside it.
+    expect(runner().x).toBeLessThan(post.x - 150);
+    expect(pocket.alive()).toBe(3);
+    expect(watch.tally().skillsOnRats.size).toBe(0);
+  });
+
+  it("brings one more rat once all are dead with too few skills, and no more after two", () => {
+    const { simulation } = canyonWorld("rats-test", build, build, 1);
+    const watch = createRatWatch(SELF_ID, ids, build.skillBar);
+    const pocket = ratPocket(simulation, watch, undefined);
+    const none: RatTally = {
+      hitByPlayer: new Set(),
+      skillsOnRats: new Set(),
+      knockedDown: new Set(),
+    };
+    for (const id of ids) {
+      simulation.remove(id);
+    }
+    expect(pocket.alive()).toBe(0);
+    pocket.step(none);
+    expect(pocket.extra()).toBe(true);
+    expect(pocket.alive()).toBe(1);
+    const extra = simulation.get("tutorial-rat-4");
+    expect(extra?.position).toEqual(RAT_POCKET.extra);
+    expect(extra?.combatant.team).toBe(1);
+    simulation.remove("tutorial-rat-4");
+    pocket.step({ ...none, skillsOnRats: new Set(["warrior.hammer-bash", "warrior.sprint"]) });
+    expect(pocket.alive()).toBe(0);
+    expect(simulation.get("tutorial-rat-5")).toBeUndefined();
   });
 });
