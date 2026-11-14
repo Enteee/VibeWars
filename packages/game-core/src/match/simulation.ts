@@ -6407,7 +6407,7 @@ export class MatchSimulation {
 
   /**
    * The click-to-walk step (#310): along the path to the goal, until
-   * within `ARRIVE_UNITS` of it. A walk whose way there has got no
+   * within `ARRIVE_UNITS` of it, on its layer. A walk whose way there has got no
    * shorter for as long as an approach may get nowhere
    * (`unreachableAfterSeconds`, #218) ends where it is, without a word:
    * the player sees the hero stop. A body on a lift (#3079) is waiting to
@@ -6433,13 +6433,20 @@ export class MatchSimulation {
     if (goal === undefined) {
       return;
     }
-    if (distance(record.position, goal) <= ARRIVE_UNITS) {
+    const layer = record.walkLayer ?? record.layer;
+    if (this.#walkArrived(record, goal, layer)) {
       record.walkGoal = undefined;
       record.route = undefined;
       return;
     }
-    const layer = record.walkLayer ?? record.layer;
     const path = this.#route(record, goal, layer);
+    if (path === undefined && distance(record.position, goal) <= ARRIVE_UNITS) {
+      // At the point, on another layer, with no way to the one ordered:
+      // the walk ends rather than stand there walking (#3337).
+      record.walkGoal = undefined;
+      record.route = undefined;
+      return;
+    }
     const left = path === undefined ? Number.POSITIVE_INFINITY : pathLength(record.position, path);
     if (left < record.walkLeast - STALL_FRACTION * this.#stepUnits(record, dt)) {
       record.walkLeast = left;
@@ -6465,10 +6472,20 @@ export class MatchSimulation {
     } else {
       this.#stepToward(record, next, undefined, path?.length === 1, dt);
     }
-    if (distance(record.position, goal) <= ARRIVE_UNITS) {
+    if (this.#walkArrived(record, goal, layer)) {
       record.walkGoal = undefined;
       record.route = undefined;
     }
+  }
+
+  /**
+   * A walk has arrived within `ARRIVE_UNITS` of its goal, and only on the
+   * layer it was ordered to (#3337). Stairs over a tunnel cover the
+   * ground under them, so a walk down to it passes over its goal on the
+   * upper layer first, before the ramp's foot turns it to the lower.
+   */
+  #walkArrived(record: ParticipantRecord, goal: Vec2, layer: number): boolean {
+    return record.layer === layer && distance(record.position, goal) <= ARRIVE_UNITS;
   }
 
   /**

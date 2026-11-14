@@ -141,3 +141,33 @@ describe("walking down from a deck (#3177)", () => {
     );
   });
 });
+
+describe("a walk down ends on the layer it was ordered to (#3337)", () => {
+  const canyon = loadAllMaps().find((map) => map.id === "arena-canyon");
+  if (canyon === undefined) throw new Error("no arena-canyon");
+
+  // QA's failing clicks: from a shaft's top, or the bed beside it, to the
+  // tunnel under its stairs, which cover the same ground.
+  it.each([
+    ["the junction shaft's top", { x: 1170, y: 715 }, { x: 1170, y: 770 }],
+    ["the east shaft's top", { x: 2045, y: 707 }, { x: 2050, y: 815 }],
+    ["the bed west of the junction", { x: 900, y: 972 }, { x: 1170, y: 830 }],
+  ] as const)("from %s, into the tunnel under the stairs", (_from, start, goal) => {
+    const foe = canyon.spawnPoints.find((spawn) => spawn.team === 1)?.position ?? goal;
+    const sim = new MatchSimulation({
+      seed: "walks-down:3337",
+      ruleset: RULESET,
+      ...mapSimulationFields(canyon, canyon.teams),
+      participants: [body("walker", start, 1, 0), body("foe", foe, canyon.groundLayer, 1)],
+    });
+    sim.walkTo("walker", goal, 0);
+    for (let t = 0; t < 20; t += DT) {
+      sim.step(DT);
+    }
+    const walker = sim.get("walker");
+    expect(walker?.layer).toBe(0);
+    expect(
+      Math.hypot((walker?.position.x ?? 0) - goal.x, (walker?.position.y ?? 0) - goal.y),
+    ).toBeLessThanOrEqual(ARRIVED);
+  });
+});
