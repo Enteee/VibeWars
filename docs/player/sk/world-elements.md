@@ -52,6 +52,11 @@ ktoré ovláda: kamenný podstavec s dreveným ramenom, ktorého mosadzná hlavi
 svieti, keď je hore, a sivie, keď je dole. Klikni na páku pravým tlačidlom,
 aby si ju zameral, a potom stlač **Space**, aby si k nej došiel a prepol ju.
 
+Prejdi myšou nad páku alebo ju zameraj a to, čo ovláda, dostane mosadzný
+obrys s bodkovanou čiarou od páky k nemu, aj cez zem nad tým. Keď
+ktokoľvek páku prepne, to, čo ovláda, zablikne. Rámček cieľa hovorí, čo
+urobí ďalšie prepnutie, napríklad _Páka · otvorí mrežu_.
+
 Niektoré brány namiesto toho otvára **nášľapná doska**: kamenný kotúč, ktorý
 sa prepadne a zmosadznie, kým na ňom niekto stojí. Brána sa zatvorí, keď
 z dosky zíde posledný, a doska ju znova otvorí o pol sekundy neskôr.
@@ -94,6 +99,13 @@ koncoch. Rebrík je dosť široký len pre jedného hráča naraz. **Most** z
 kameňa, dosiek alebo spadnutého kmeňa sa klenie ponad priepasť a hráči
 pod ním môžu prejsť popod neho. Byť vyššie nemení tvoj dosah ani tvoje
 zranenie.
+
+## Tunely
+
+Niektoré priechody vedú pod zemou. Zhora ukazuje zapustená škára so
+štrbinami mreže, kadiaľ taký priechod vedie, a svetlá na jeho dvoch
+koncoch sa zhodujú: zídeš dole pri teplom svetle a vyjdeš pri teplom
+svetle.
 
 ## Padacie mosty, lanové mosty a skryté chodby
 

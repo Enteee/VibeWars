@@ -70,7 +70,6 @@ import {
   DECK_LIP,
   PIT_FLOOR,
   PIT_WALL,
-  TUNNEL_INLAY,
   TUNNEL_MOUTH,
   WALL_STROKE,
   arenaPalette,
@@ -107,6 +106,7 @@ import {
   seenFrom,
   tunnelCover,
   tunnelFloor,
+  tunnelSeam,
   tunnelsHolding,
   traceHiddenPolyline,
   type Occluder,
@@ -321,6 +321,9 @@ const DECK_LIP_WIDTH = 3;
 /** The dark of a drop-off's broken lip, under its pale crumbled edge (#3069). */
 const DROP_OFF_CRACK = 0x2a2420;
 const WALL_LIT_WIDTH = 2;
+/** A covered tunnel's seam (#3236): its recessed edge's dark, in CSS px, and a grating slot's bars across it. */
+const TUNNEL_SEAM_WIDTH = 4;
+const GRATING_BARS = 3;
 /** Pixels per world unit of a zone's painted ground (#3052): sharp at a close zoom. */
 const ZONE_TEXTURE_SCALE = 2;
 /** The longest side of a zone's ground texture, in pixels, however large the zone. */
@@ -496,8 +499,14 @@ export class ArenaScene extends Phaser.Scene {
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
-  /** The ground over each tunnel (#3234), by its index: faded while the local body is in it. */
-  private readonly tunnelCovers = new Map<number, Phaser.GameObjects.Graphics>();
+  /**
+   * The ground over each tunnel (#3234) and its seam over the paving
+   * (#3236), by its index: both faded while the local body is in it.
+   */
+  private readonly tunnelCovers = new Map<
+    number,
+    { readonly ground: Phaser.GameObjects.Graphics; readonly seam: Phaser.GameObjects.Graphics }
+  >();
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
   private readonly staticCull = new StaticGraphicsCull();
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
@@ -2762,7 +2771,7 @@ export class ArenaScene extends Phaser.Scene {
       ...(this.floorGraphics === undefined ? [] : [this.floorGraphics]),
       g,
       ...this.structureGraphics.values(),
-      ...this.tunnelCovers.values(),
+      ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
     ]);
   }
 
@@ -2903,13 +2912,14 @@ export class ArenaScene extends Phaser.Scene {
       this.occluders = seenFrom(this.mapOccluders, inside);
     }
     const step = this.reducedMotion ? 1 : (dt * (1 - TUNNEL_CUTAWAY_ALPHA)) / TUNNEL_CUTAWAY_FADE;
-    for (const [at, graphics] of this.tunnelCovers) {
+    for (const [at, { ground, seam }] of this.tunnelCovers) {
       const target = inside.has(at) ? TUNNEL_CUTAWAY_ALPHA : 1;
-      const alpha = graphics.alpha;
+      const alpha = ground.alpha;
       if (alpha !== target) {
-        graphics.setAlpha(
-          alpha < target ? Math.min(target, alpha + step) : Math.max(target, alpha - step),
-        );
+        const next =
+          alpha < target ? Math.min(target, alpha + step) : Math.max(target, alpha - step);
+        ground.setAlpha(next);
+        seam.setAlpha(next);
       }
     }
   }
@@ -3094,12 +3104,13 @@ export class ArenaScene extends Phaser.Scene {
    * Each pit sunk a step (#2973): its floor, its far wall with the mouths
    * of the tunnels leaving it, under whoever is in it. The ground in front
    * of it and over each tunnel then draws as a deck of the ground's layer,
-   * so it covers them, the tunnel's outline inlaid faintly in it.
+   * so it covers them, each tunnel's seam over its paving (#3236).
    */
   private drawPits(structure: MapStructure, line: number, palette: ArenaPalette): void {
-    for (const [at, graphics] of this.tunnelCovers) {
+    for (const [at, { ground, seam }] of this.tunnelCovers) {
       if (at >= structure.tunnels.length) {
-        graphics.destroy();
+        ground.destroy();
+        seam.destroy();
         this.tunnelCovers.delete(at);
       }
     }
@@ -3128,17 +3139,62 @@ export class ArenaScene extends Phaser.Scene {
       this.strokeShape(cover, each.footprint);
     }
     for (const [at, tunnel] of structure.tunnels.entries()) {
-      let ground = this.tunnelCovers.get(at);
-      if (ground === undefined) {
-        ground = this.add
-          .graphics()
-          .setDepth(renderOrder({ kind: "tunnel-cover", deckLayer: structure.ground }));
-        this.tunnelCovers.set(at, ground);
+      let drawn = this.tunnelCovers.get(at);
+      if (drawn === undefined) {
+        const deckLayer = structure.ground;
+        drawn = {
+          ground: this.add.graphics().setDepth(renderOrder({ kind: "tunnel-cover", deckLayer })),
+          seam: this.add.graphics().setDepth(renderOrder({ kind: "tunnel-seam", deckLayer })),
+        };
+        this.tunnelCovers.set(at, drawn);
       }
-      ground.clear();
-      this.drawGroundPatch(ground, tunnelCover(structure, tunnel), line, palette);
-      cover.lineStyle(line, TUNNEL_INLAY.colour, TUNNEL_INLAY.alpha);
-      this.strokeShape(cover, tunnel.footprint);
+      drawn.ground.clear();
+      drawn.seam.clear();
+      this.drawGroundPatch(drawn.ground, tunnelCover(structure, tunnel), line, palette);
+      this.drawTunnelSeam(drawn.seam, tunnel, line, palette);
+    }
+  }
+
+  /**
+   * The seam a covered tunnel shows on the ground (#3236): a recessed edge,
+   * dark with its lit lip inside, and grating slots along its middle, all in
+   * the biome's rock, so from above it reads as a passage running under.
+   */
+  private drawTunnelSeam(
+    g: Phaser.GameObjects.Graphics,
+    tunnel: MapStructure["tunnels"][number],
+    line: number,
+    palette: ArenaPalette,
+  ): void {
+    const seam = tunnelSeam(tunnel, (line * TUNNEL_SEAM_WIDTH) / 2);
+    const points = (outline: readonly Vec2[]): Phaser.Math.Vector2[] =>
+      outline.map(({ x, y }) => new Phaser.Math.Vector2(x, y));
+    g.lineStyle(line * TUNNEL_SEAM_WIDTH, palette.wallFace, 1);
+    g.strokePoints(points(seam.edge), true);
+    g.lineStyle(line, palette.wallLit, 0.8);
+    g.strokePoints(points(seam.lip), true);
+    for (const slot of seam.slots) {
+      g.fillStyle(TUNNEL_MOUTH, 1);
+      this.fillFan(g, slot);
+      g.lineStyle(line * WALL_LIT_WIDTH, palette.wallFace, 1);
+      const [nw, ne, se, sw] = slot;
+      if (nw === undefined || ne === undefined || se === undefined || sw === undefined) {
+        continue;
+      }
+      // Bars across the slot's long side, its south edge lit.
+      const lengthwise = ne.x - nw.x < sw.y - nw.y;
+      for (let bar = 1; bar <= GRATING_BARS; bar += 1) {
+        const at = bar / (GRATING_BARS + 1);
+        if (lengthwise) {
+          const y = nw.y + (sw.y - nw.y) * at;
+          g.lineBetween(nw.x, y, ne.x, y);
+        } else {
+          const x = nw.x + (ne.x - nw.x) * at;
+          g.lineBetween(x, nw.y, x, sw.y);
+        }
+      }
+      g.lineStyle(line, palette.wallLit, 1);
+      g.lineBetween(sw.x, sw.y, se.x, se.y);
     }
   }
 

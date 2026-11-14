@@ -53,6 +53,12 @@ de lemn, al cărei mâner de alamă strălucește când e sus și e gri când e 
 click dreapta pe o manetă ca s-o iei ca țintă, apoi apasă **Space** ca să mergi
 până la ea și s-o tragi.
 
+Treci cu mouse-ul peste o manetă sau ia-o ca țintă și ce acționează ea
+primește un contur de alamă, cu o linie punctată de la manetă până la
+el, chiar și prin pământul de deasupra. Când cineva trage maneta, ce
+acționează ea clipește. Rama țintei spune ce va face următoarea tragere,
+de exemplu _Manetă · deschide grilajul_.
+
 Unele porți se deschid în schimb de la o **placă de presiune**: un disc de
 piatră care se lasă în jos și devine de alamă cât timp stă cineva pe el. Poarta
 se închide când coboară ultimul, iar placa o deschide din nou o jumătate de
@@ -98,6 +104,13 @@ scări la capete. O scară de mână e destul de lată pentru un singur jucător
 odată. Un **pod** de piatră, de scânduri sau dintr-un buștean căzut trece
 peste un gol, iar jucătorii de dedesubt pot merge pe sub el. Dacă stai mai
 sus, nu ți se schimbă nici raza, nici daunele.
+
+## Tuneluri
+
+Unele pasaje trec pe sub pământ. De sus, un rost adâncit cu fante de
+grătar arată pe unde trece unul, iar luminile de la cele două capete ale
+lui se potrivesc: cobori lângă o lumină caldă și ieși lângă o lumină
+caldă.
 
 ## Poduri mobile, poduri de frânghie și pasaje ascunse
 

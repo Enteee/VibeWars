@@ -38,12 +38,18 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     expect(renderOrder(character(1))).toBeGreaterThan(deck);
   });
 
-  it("draws the ground over a tunnel over whoever is in it, under the ground's deck and its inlay (#3234)", () => {
+  it("draws the ground over a tunnel over whoever is in it, under the ground's deck (#3234)", () => {
     const cover = renderOrder({ kind: "tunnel-cover", deckLayer: 1 });
     expect(renderOrder(character(0))).toBeLessThan(cover);
     expect(renderOrder({ kind: "wall", layer: 0 })).toBeLessThan(cover);
     expect(cover).toBeLessThan(renderOrder({ kind: "deck", deckLayer: 1 }));
     expect(cover).toBeLessThan(renderOrder(character(1)));
+  });
+
+  it("draws a tunnel's seam over the ground's paving, under whoever stands on it (#3236)", () => {
+    const seam = renderOrder({ kind: "tunnel-seam", deckLayer: 1 });
+    expect(renderOrder({ kind: "paving", layer: 1 })).toBeLessThan(seam);
+    expect(seam).toBeLessThan(renderOrder(character(1)));
   });
 
   it("stacks a third layer the same way", () => {

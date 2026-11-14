@@ -35,6 +35,11 @@ dřevěným ramenem, jehož mosazná hlavice nahoře září a dole je šedá.
 Pravým kliknutím páku zaměříš a pak stiskni **Space**, abys k ní došel a
 přepnul ji.
 
+Najeď myší na páku nebo ji zaměř a to, co ovládá, dostane mosazný obrys
+s tečkovanou čarou od páky k němu, i skrz zem nad tím. Když páku kdokoli
+přepne, to, co ovládá, blikne. Rámeček cíle říká, co udělá příští
+přepnutí, například _Páka · otevře mříž_.
+
 Některé brány se místo toho otevírají **nášlapnou deskou**: kamenným kotoučem, který se propadne a zbarví do mosazna, dokud na něm někdo stojí. Brána se zavře, když z ní sestoupí poslední, a její deska ji znovu otevře o půl sekundy později. Některé desky reagují jen na jeden tým.
 
 ## Portály
@@ -50,6 +55,13 @@ Vejdeš-li do **portálu**, okamžitě se objevíš u jeho výstupu. Portál ved
 ## Výšky
 
 Část terénu je vyvýšená a nahoru se dostaneš jen po jejích rampách, schodech, hrubých stupních nebo žebřících: okraj vyvýšené plošiny tě zastaví jako zeď. Kde je ale její okraj rozbitý, můžeš z ní sestoupit a hned spadnout na zem pod ní, ale nikdy se tam nevyšplháš zpátky nahoru. Rampy a schody přejdeš plnou rychlostí, hrubé stupně o něco pomaleji a žebřík poloviční rychlostí: seskočit dolů je rychlé, vyšplhat zpátky pomalé. **Věž** je malá kamenná plošina na zděném těle, s místem pro pár hráčů, na kterou vede úzké schodiště nebo žebřík. **Ochoz** vede po vrcholu silné zdi, s poprsní zídkou a schody na obou koncích. Žebřík je dost široký jen pro jednoho hráče najednou. **Most** z kamene, prken nebo padlého kmene překlenuje mezeru a hráči pod ním mohou procházet. Výška nemění tvůj dosah ani zranění.
+
+## Tunely
+
+Některé průchody vedou pod zemí. Shora ukazuje zapuštěná spára se
+štěrbinami mříže, kudy takový průchod vede, a světla na jeho dvou
+koncích se shodují: sejdeš-li dolů u teplého světla, vyjdeš u teplého
+světla.
 
 ## Padací mosty, provazové mosty a skryté průchody
 

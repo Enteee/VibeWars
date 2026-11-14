@@ -53,6 +53,12 @@ lyser, når den er oppe, og er grå, når den er nede. Højreklik på et håndta
 at vælge det som mål, og tryk så på **Mellemrum** for at gå derhen og slå det
 om.
 
+Hold musen over et håndtag eller vælg det som mål, så får det, håndtaget
+styrer, en messingkant med en prikket linje fra håndtaget hen til det,
+også gennem jorden ovenover. Når nogen slår håndtaget om, blinker det,
+håndtaget styrer. Målrammen viser, hvad det næste slag gør, fx
+_Håndtag · åbner faldgitteret_.
+
 Nogle porte åbner i stedet fra en **trykplade**: en stenskive, der synker og
 bliver messingfarvet, mens nogen står på den. Porten lukker, når den sidste
 træder af, og dens plade åbner den igen et halvt sekund senere.
@@ -96,6 +102,12 @@ trapper i begge ender. En stige er bred nok til én spiller ad gangen. En
 **bro** af sten, planker eller en væltet træstamme spænder over en kløft,
 og spillere nedenunder kan gå under den. At stå højere oppe ændrer
 hverken din rækkevidde eller din skade.
+
+## Tunneler
+
+Nogle passager løber under jorden. Ovenfra markerer en nedsænket fuge
+med gitterspalter, hvor en af dem løber, og lyset i dens to ender passer
+sammen: går du ned ved et varmt lys, kommer du op ved et varmt lys.
 
 ## Vindebroer, rebbroer og skjulte gange
 

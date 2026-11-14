@@ -941,6 +941,54 @@
         "flicker": 0.3
       },
       {
+        "id": "crypt-west-stair-torch",
+        "position": {
+          "x": 1680,
+          "y": 1745
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 1,
+        "flicker": 0.3
+      },
+      {
+        "id": "crypt-west-vault-torch",
+        "position": {
+          "x": 2100,
+          "y": 1310
+        },
+        "layer": 0,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 1,
+        "flicker": 0.3
+      },
+      {
+        "id": "crypt-east-stair-torch",
+        "position": {
+          "x": 3120,
+          "y": 855
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 10470655,
+        "intensity": 1,
+        "flicker": 0.3
+      },
+      {
+        "id": "crypt-east-vault-torch",
+        "position": {
+          "x": 2700,
+          "y": 1290
+        },
+        "layer": 0,
+        "radius": 150,
+        "colour": 10470655,
+        "intensity": 1,
+        "flicker": 0.3
+      },
+      {
         "id": "balcony-lamp",
         "position": {
           "x": 520,
