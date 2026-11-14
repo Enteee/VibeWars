@@ -28,7 +28,7 @@ the place (a terraced desert town on a hill) is kept.
   wall** across the south alley at x=1500, where a straight L0 walk between spawns would run;
   zones `mire` (west cistern seep, at (840,1700)) and `scorched` (east forge ash, at (1760,1700)),
   mirrored about the plaza axis, 120 u clear of the breakable wall, on the south edge of the street: off all three routes and well clear of both spawns
-  (≥ 130 u from any route, ≥ 400 u from a spawn); a smoke vent is the forge's atmosphere.
+  (≥ 130 u from any route, ≥ 270 u from a spawn); a smoke vent is the forge's atmosphere.
 - **Light:** the **Day** row (visual-style §2): sun from the NW, 50°, `#fff1d6` 0.55, ambient
   `#b0bcd4` 0.45; hot reads from the sand, not from dimming. Local lights: a torch (`#ffb060`,
   radius 150) at each tunnel mouth, each stair head and the well, plus the forge (`#ff9040`,
