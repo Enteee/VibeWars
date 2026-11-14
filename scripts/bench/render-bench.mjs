@@ -25,7 +25,7 @@
  *
  *   BENCH_MAP=a,b      the maps, by id. Default: every map of more
  *                      than one layer.
- *   BENCH_MAX_RATIO=3.5 exit 1 when a map's p50 is more than this many
+ *   BENCH_MAX_RATIO=2.7 exit 1 when a map's p50 is more than this many
  *                      times the calibration's. CI's regression gate.
  *   --url <url>        measure a client already served there.
  *   --follow           only the follow case (#3240), below.
@@ -408,7 +408,10 @@ async function follow(page, mapId) {
   const stage = page.locator(".team-lobby-stage");
   await stage.waitFor({ timeout: 60_000 });
   if ((await stage.textContent()) === "Choose your character") {
-    await page.locator('.team-lobby-solo .play-card-open[aria-pressed="true"]').click();
+    // The same redraw race as the seats below: dispatch the click, do not aim it.
+    await page
+      .locator('.team-lobby-solo .play-card-open[aria-pressed="true"]')
+      .dispatchEvent("click");
   } else {
     // The Team Lobby redraws its seats faster than a click can settle on one.
     await page.locator(".team-lobby-seat").first().waitFor({ timeout: 60_000 });
