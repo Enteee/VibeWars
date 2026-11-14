@@ -22,6 +22,8 @@ Dovednost stisknutá během používání jiné nebo během té pauzy se **zařa
 
 **Přerušení** zastaví dovednost nepřítele během jejího sesílání. Jeho energie je utracená a dovednost se obnovuje; některá přerušení dovednost navíc na chvíli zablokují. Přerušíš-li příliš brzy nebo příliš pozdě, nestane se nic.
 
+Sesílání každé profese má vlastní zvuk; poslouchej zvuk svého cíle.
+
 Většina přerušení zastaví i obyčejný útok uprostřed máchnutí: rána nedopadne a máchnutí začíná znovu. Nepřítel, který k cíli teprve jde, nemá co přerušit. Přerušení, jehož karta říká "a skill" nebo "a spell", obyčejný útok nechá být.
 
 Některé postoje, například Mantra of Concentration, zastaví přerušení mířené na tebe. Žádný z nich nezastaví sražení.

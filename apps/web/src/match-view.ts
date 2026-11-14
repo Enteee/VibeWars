@@ -1106,7 +1106,11 @@ export async function startMatchView(
     latestMatch = match;
     const previous = lastMatch ?? match;
     lastMatch = match;
-    matchSounds.snapshot(match);
+    // A watcher hears casts from the player it follows (#3298).
+    matchSounds.snapshot(
+      match,
+      seat === undefined ? match.players.find((p) => p.sessionId === followedId) : undefined,
+    );
     matchMusic.snapshot(match);
     // A watcher leaving costs nobody anything.
     guardUnload(seat !== undefined && match.phase !== "finished");

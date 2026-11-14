@@ -8,9 +8,9 @@ import { SOUND_IDS } from "./sound-ids.js";
 
 const SFX = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public/sfx");
 
-/** Budgets from #104. */
+/** Budgets from #104; the set raised by 32 KB for the cast voices (#3298). */
 const MAX_FILE_BYTES = 10 * 1024;
-const MAX_SET_BYTES = 72 * 1024;
+const MAX_SET_BYTES = 104 * 1024;
 
 // Rendered by `pnpm sfx:render` (#2524); the `.hash` files beside them are its cache.
 describe("public/sfx", () => {

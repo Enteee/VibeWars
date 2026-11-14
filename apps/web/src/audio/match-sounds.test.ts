@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { IMPLEMENTED_SKILLS } from "@vibewars/game-core";
 import type {
   CombatMessage,
   MatchConnection,
@@ -6,6 +7,7 @@ import type {
   PlayerSnapshot,
 } from "@vibewars/game-session";
 
+import type { CastVoice } from "./combat-sounds.js";
 import { attachMatchSounds } from "./match-sounds.js";
 import type { SoundId } from "./sound-ids.js";
 import type { SoundPlayer } from "./sound-player.js";
@@ -84,10 +86,18 @@ function snapshot(castingSkillId: string | undefined, switches: boolean[] = []):
   };
 }
 
+/** A spell that takes time to cast, so a snapshot shows it. */
+const SPELL =
+  IMPLEMENTED_SKILLS.find(
+    ({ type, activationSeconds }) => type === "spell" && activationSeconds > 0,
+  )?.id ?? "";
+
 function setup() {
   const played: SoundId[] = [];
+  const cast: CastVoice[] = [];
   const player: SoundPlayer = {
     play: (id) => played.push(id),
+    playCast: (voice) => cast.push(voice),
     setMuted: () => undefined,
     muted: false,
     setVolume: () => undefined,
@@ -109,15 +119,21 @@ function setup() {
     switches: [{ x: 100, y: 0 }],
     breakables: [],
   });
-  return { played, sounds, combat: (m: CombatMessage) => combat(m), refused: () => refused() };
+  return {
+    played,
+    cast,
+    sounds,
+    combat: (m: CombatMessage) => combat(m),
+    refused: () => refused(),
+  };
 }
 
 describe("attachMatchSounds", () => {
   it("plays combat, refusals and cast starts, and nothing on the first snapshot", () => {
-    const { played, sounds, combat, refused } = setup();
-    sounds.snapshot(snapshot("heal"));
+    const { played, cast, sounds, combat, refused } = setup();
+    sounds.snapshot(snapshot(SPELL));
     sounds.snapshot(snapshot(undefined));
-    sounds.snapshot(snapshot("fireball"));
+    sounds.snapshot(snapshot(SPELL));
     combat({
       casterSessionId: "foe",
       cause: "skill",
@@ -128,7 +144,8 @@ describe("attachMatchSounds", () => {
       events: [{ kind: "damage", targetId: ME, amount: 1, critical: false }],
     });
     refused();
-    expect(played).toEqual(["cast-self", "hit-taken", "refused"]);
+    expect(played).toEqual(["hit-taken", "refused"]);
+    expect(cast).toHaveLength(1);
   });
 
   it("plays a lever thrown near you", () => {
@@ -139,14 +156,15 @@ describe("attachMatchSounds", () => {
   });
 
   it("does not replay a cast that ran through a reconnect", () => {
-    const { played, sounds } = setup();
+    const { played, cast, sounds } = setup();
     sounds.snapshot(snapshot(undefined));
     sounds.connectionChanged("reconnecting");
     sounds.snapshot(snapshot(undefined));
     sounds.connectionChanged("online");
-    sounds.snapshot(snapshot("fireball"));
-    sounds.snapshot(snapshot("fireball"));
+    sounds.snapshot(snapshot(SPELL));
+    sounds.snapshot(snapshot(SPELL));
     expect(played).toEqual([]);
+    expect(cast).toEqual([]);
   });
 
   it("is silent once disposed", () => {

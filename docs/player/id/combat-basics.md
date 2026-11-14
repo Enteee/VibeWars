@@ -43,6 +43,8 @@ berjalan. Dipakai dengan cara itu, keduanya tidak membuatmu berjalan mendekat: d
 mereka terpakai dan skill masuk cooldown; sebagian interupsi juga mengunci
 skill itu untuk sementara. Interupsi terlalu cepat atau terlalu lambat dan tidak terjadi apa-apa.
 
+Setiap profesi punya suara sendiri saat memakai skill; dengarkan suara targetmu.
+
 Kebanyakan interupsi juga menghentikan serangan biasa di tengah ayunan: pukulan itu tidak pernah
 mendarat dan ayunan dimulai dari awal. Musuh yang masih berjalan menuju targetnya
 tidak punya apa pun untuk diinterupsi. Interupsi yang kartunya bertuliskan "a skill" atau "a

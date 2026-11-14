@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { CAST_VOICE_LIMIT, type CastVoice } from "./combat-sounds.js";
 import { SOUND_IDS } from "./sound-ids.js";
 import { VOLUME_RAMP_SECONDS } from "./volume-ramp.js";
 import {
+  CAST_CUT_SECONDS,
   MASTER_GAIN,
   SOUND_THROTTLE_MS,
   createWebAudioPlayer,
@@ -25,32 +27,53 @@ function fakeGain(): SoundGain & { ramps: [number, number][] } {
   return gain;
 }
 
-/** A context that counts the sounds started and resumes, and decodes or fails on demand. */
+/**
+ * A context that counts the sounds started and resumes, and decodes or
+ * fails on demand. Its first gain is the output; each cast voice's after
+ * it is in `voices`, and `stopped` counts the sources stopped.
+ */
 function fakeContext(decode: () => Promise<AudioBuffer>): SoundContext & {
   started: number;
+  stopped: number;
   resumed: number;
   state: string;
+  currentTime: number;
   output: ReturnType<typeof fakeGain>;
+  voices: ReturnType<typeof fakeGain>[];
 } {
   const output = fakeGain();
   const context = {
     started: 0,
+    stopped: 0,
     resumed: 0,
     state: "running",
     currentTime: 3,
     output,
+    voices: [] as ReturnType<typeof fakeGain>[],
+    outputMade: false,
     resume: () => {
       context.resumed += 1;
       context.state = "running";
       return Promise.resolve();
     },
     destination: {},
-    createGain: () => ({ gain: output, connect: () => undefined }),
+    createGain: () => {
+      const gain = context.outputMade ? fakeGain() : output;
+      if (context.outputMade) {
+        context.voices.push(gain);
+      }
+      context.outputMade = true;
+      return { gain, connect: () => undefined };
+    },
     createBufferSource: () => ({
       buffer: null,
+      playbackRate: { value: 1 },
       connect: () => undefined,
       start: () => {
         context.started += 1;
+      },
+      stop: () => {
+        context.stopped += 1;
       },
     }),
     decodeAudioData: decode,
@@ -118,6 +141,49 @@ describe("createWebAudioPlayer", () => {
     player.play("hit-dealt");
     player.play("death");
     expect(context.started).toBe(2);
+  });
+
+  it("plays a cast's two layers as one voice, and past the limit cuts the voice that matters least (#3298)", async () => {
+    const { player, context } = setup();
+    await settle();
+    const voice = (priority: number): CastVoice => ({
+      base: "cast-base-monk",
+      motif: "cast-motif-spell",
+      rate: 1.1,
+      gain: 0.5,
+      priority,
+    });
+    for (const priority of [3, 2, 2.5]) {
+      player.playCast(voice(priority));
+    }
+    expect(context.started).toBe(2 * CAST_VOICE_LIMIT);
+
+    player.playCast(voice(4));
+    expect(context.started).toBe(2 * CAST_VOICE_LIMIT);
+
+    player.playCast(voice(0));
+    expect(context.started).toBe(2 * CAST_VOICE_LIMIT + 2);
+    expect(context.stopped).toBe(2);
+    expect(context.voices[0]?.ramps).toEqual([[0, context.currentTime + CAST_CUT_SECONDS]]);
+  });
+
+  it("frees a cast voice once it has played out", async () => {
+    const { player, context } = setup();
+    await settle();
+    const voice: CastVoice = {
+      base: "cast-base-monk",
+      motif: "cast-motif-spell",
+      rate: 1,
+      gain: 1,
+      priority: 2,
+    };
+    for (let at = 0; at < CAST_VOICE_LIMIT; at += 1) {
+      player.playCast(voice);
+    }
+    context.currentTime += 0.2;
+    player.playCast({ ...voice, priority: 3 });
+    expect(context.started).toBe(2 * (CAST_VOICE_LIMIT + 1));
+    expect(context.stopped).toBe(0);
   });
 
   it("starts no sound while muted, and plays again once unmuted", async () => {

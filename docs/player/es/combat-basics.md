@@ -46,6 +46,8 @@ Su energía se gasta y la habilidad entra en recarga; algunas interrupciones
 además bloquean la habilidad un tiempo. Si interrumpes demasiado pronto o
 demasiado tarde, no pasa nada.
 
+Los lanzamientos de cada profesión tienen su propio sonido; escucha los de tu objetivo.
+
 La mayoría de las interrupciones también detienen un ataque normal a medio
 golpe: ese golpe no llega nunca y el ataque vuelve a empezar. Un enemigo que
 aún camina hacia su objetivo no tiene nada que interrumpir. Una interrupción

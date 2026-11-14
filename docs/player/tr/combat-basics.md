@@ -47,6 +47,8 @@ menzil dışındaysa reddedilirler.
 Enerjisi harcanır ve beceri dolmaya geçer; bazı kesintiler beceriyi bir
 süre kilitler de. Çok erken ya da çok geç kesersen hiçbir şey olmaz.
 
+Her mesleğin yetenek kullanırken kendine özgü bir sesi vardır; hedefininkini dinle.
+
 Çoğu kesinti sıradan bir saldırıyı da savuruşun ortasında durdurur: o
 darbe asla isabet etmez ve savuruş baştan başlar. Hâlâ hedefine
 yürüyen bir düşmanda kesilecek bir şey yoktur. Kartında "a skill" ya da
