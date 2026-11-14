@@ -149,13 +149,18 @@ const POOLS = [
     [1530, 880],
     [1430, 860],
   ],
-  rect(1030, 1160, 540, 200),
+  // the deep band (1030..1570 x 1160..1360) minus the stone strip and its link north:
+  rect(1030, 1160, 220, 70),
+  rect(1350, 1160, 220, 70),
+  rect(1030, 1320, 540, 40),
 ];
-// 100 wide at a 90 pitch: they overlap by 10, so the chain is one walkable strip and the deep
-// water lies only round it
-const STONES = [1120, 1210, 1300, 1390, 1480].map((x, i) =>
-  rect(x - 50, 1230 + (i % 2) * 20, 100, 70),
-);
+// stepping stones: 120 wide at a 105 pitch, so they overlap and run edge to edge of the deep band
+// (x 1030..1570), plus a link of two more up to the band's north edge at x 1250..1350: no water
+// between the strip and either bank or the central shelf
+const STONES = [
+  ...[1090, 1195, 1300, 1405, 1510].map((x) => rect(x - 60, 1230, 120, 90)),
+  rect(1250, 1160, 100, 80),
+];
 const WALL = rect(1180, 740, 240, 26); // breakable ice wall across the central shelf strip
 /** @type {Pt} */
 const LEVER = [1300, 880];
@@ -218,10 +223,8 @@ const ROUTES = {
       "stepping stones",
       [
         [500, 1380],
-        [1000, 1360],
-        [1120, 1265],
-        [1210, 1285],
-        [1300, 1265],
+        [1000, 1275],
+        [1300, 1275],
         [1300, 1000],
       ],
     ],
@@ -251,10 +254,8 @@ const ROUTES = {
       "stepping stones",
       [
         [2100, 1380],
-        [1600, 1360],
-        [1480, 1265],
-        [1390, 1285],
-        [1300, 1265],
+        [1600, 1275],
+        [1300, 1275],
         [1300, 1000],
       ],
     ],

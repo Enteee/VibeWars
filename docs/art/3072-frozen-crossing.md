@@ -20,7 +20,7 @@ the place (a frozen river) is kept.
 - **Layers (3):** L0 river ice, open water, stepping stones and the cave floor; L1 the two banks (a
   `deck` each, 70 up) and the log bridge; L2 a ridge on each bank (`decks`, 140 up).
 - **Structures (≥ 4):** two banks; two ramps down to the ice; two ridge stairs; two ridges; the log
-  bridge (a `bridge` deck at bank height); five stepping stones over the open water band, 100 wide at a 90 pitch so they overlap and form one walkable strip (the deep water lies only round it, and the strip touches the ice shelf at its end).
+  bridge (a `bridge` deck at bank height); five stepping stones, 120 wide at a 105 pitch, run edge to edge of the deep band (x 1030..1570, y 1230..1320) and a sixth links the strip north to the band edge at x 1250..1350. There is no water between the strip and the shelf or banks; the deep water is the band minus the stones: three rects, (1030,1160,220×70), (1350,1160,220×70) and (1030,1320,540×40).
 - **Tunnel:** the far-bank cave, 110 wide, from a mouth on the ice at (1570,1500) east under the east
   bank and out at its south edge at (2000,1710) onto the south lane. Cover shows the seam and
   grating slots (#3236), as wide as the walkable floor (#3179).
@@ -46,7 +46,7 @@ The centre is the central shelf, (1300,1000).
 | Route                                                           | Length | Walk  |
 | --------------------------------------------------------------- | ------ | ----- |
 | ice shelf (ramp down, across the ice)                           | 927 u  | 5.1 s |
-| stepping stones (over the open water)                           | 1103 u | 6.1 s |
+| stepping stones (over the open water)                           | 1086 u | 6.0 s |
 | log bridge (up the bank, over the bridge, through the ice wall) | 1597 u | 8.9 s |
 
 Both teams have the same three, so their walks are equal. The sides differ on purpose: the east bank
