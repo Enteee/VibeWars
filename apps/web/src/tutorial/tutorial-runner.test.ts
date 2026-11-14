@@ -220,6 +220,36 @@ describe("the tutorial runner", () => {
     ]);
   });
 
+  it("says a station's reaction once, then no more hints until it is done (#3302)", () => {
+    const face = vec2(3480, 1800);
+    const runner = createTutorialRunner(
+      [breakWallStation(face, 700)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    const wall = (wallHealth: number): TutorialView => ({
+      ...AWAY,
+      wallHealth,
+      wallTargeted: true,
+    });
+    const said = [
+      runner.tick(wall(700), 0),
+      runner.tick(wall(700), HINT_REPEAT_MS),
+      runner.tick(wall(650), HINT_REPEAT_MS + 1_000),
+      runner.tick(wall(600), HINT_REPEAT_MS + 2_000),
+      runner.tick(wall(500), 3 * HINT_REPEAT_MS),
+      runner.tick(wall(0), 3 * HINT_REPEAT_MS + 1_000),
+    ].map((beat) => beat.say?.key);
+    expect(said).toEqual([
+      "tutorial.wall.intro",
+      "tutorial.wall.hint",
+      "tutorial.wall.firstHit",
+      undefined,
+      undefined,
+      "tutorial.wall.praise",
+    ]);
+  });
+
   it("reacts to a hit once in HIT_REPEAT_MS, and only at a station with a hit line (#3247)", () => {
     const goal = vec2(2850, 1800);
     const runner = createTutorialRunner(

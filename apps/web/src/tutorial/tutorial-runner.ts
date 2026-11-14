@@ -58,9 +58,9 @@ export interface TutorialRunner {
  * The tutorial as a state machine over `stations` (#3218), with no screen
  * of its own: each station's intro, its hint again every `HINT_REPEAT_MS`
  * until it is done, a station's hit line when the player is hit, no more
- * than every `HIT_REPEAT_MS` (#3247), its reaction once (#3302), then
- * its praise and, after
- * `PRAISE_MS`, the next.
+ * than every `HIT_REPEAT_MS` (#3247), its reaction once, after which its
+ * hint is not said again (#3302), then its praise and, after `PRAISE_MS`,
+ * the next.
  * The keys a line shows are read from `keymap()` as it is said, so a
  * rebind shows on the next line.
  */
@@ -150,7 +150,8 @@ export function createTutorialRunner(
         saidAt = nowMs;
         return beat(line(station, hit), station.highlight, mark);
       }
-      if (nowMs - saidAt >= HINT_REPEAT_MS) {
+      // Once it has reacted, the player is on it: no more nudging.
+      if (!reacted && nowMs - saidAt >= HINT_REPEAT_MS) {
         saidAt = nowMs;
         return beat(line(station, station.lines.hint), station.highlight, mark);
       }

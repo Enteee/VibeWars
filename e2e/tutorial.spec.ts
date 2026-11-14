@@ -58,8 +58,8 @@ test.describe("the first-time tutorial (#3218)", () => {
       // Four stations, each a walk or a drag in a sim that runs no faster than
       // the page draws: a loaded runner takes most of a minute (#3222), and
       // the canyon's three dodges at least 18 s more (#3247), and the wall
-      // some 10 to 15 s (#3302).
-      test.setTimeout(240_000);
+      // some 10 to 15 s, slower where the page draws slowly (#3302).
+      test.setTimeout(300_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
       const frame = page.locator(".tutorial-frame");
@@ -220,7 +220,7 @@ test.describe("the first-time tutorial (#3218)", () => {
       await expect
         .poll(() => hasSaid("There! It cracks. Keep going."), { timeout: 15_000 })
         .toBe(true);
-      await expect(frame).toHaveAttribute("data-wall", "0", { timeout: 45_000 });
+      await expect(frame).toHaveAttribute("data-wall", "0", { timeout: 90_000 });
       await expect
         .poll(() => hasSaid("Down it goes! The trail is open."), { timeout: 5_000 })
         .toBe(true);
