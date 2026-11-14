@@ -15,11 +15,12 @@ station puts one. Regenerate with `node scripts/assets/tutorial-canyon-study.mjs
   grey-brown. Orange (`#ff8a3d`, `#ffd23d`) appears only in lava, which is scenery and danger.
   If #3225 lands first, take its row and re-check the tones.
 - **Lava is never a pit.** Four streams run through the rock between the trail's rows (scenery,
-  warm glow, radius ≈ 420, flicker 0.35, still under reduced motion). Station 7's strip is a
-  `molten` zone that hurts, the way round is visible beside it.
+  warm glow, radius ≈ 420, still under reduced motion). Only every third glow flickers (0.35): a
+  flickering light is redrawn as it flickers, and all of them put the map over the render bench's
+  cap. Station 7's strip is a `molten` zone that hurts, the way round is visible beside it.
 - **Mist** is low, pale, soft ellipses (`#cfc6c0`, ≤ 0.30) drawn under bodies, rings and bars,
   so it never hides one (§signals). Mist drifts at 0.14 at most.
-- **Light:** the dusk row (`#7f86a8` ambient 0.35, sun 25° `#ffb87a` 0.5) from the north-west,
+- **Light:** the dusk row (`#7f86a8` ambient 0.5, sun 25° `#ffb87a` 0.5) from the north-west,
   so shadows fall south-east (blocks, wall, boulders); lava is the warm light.
   A faint dusk vignette closes the frame edge.
 - **Signals stay for the fight:** blue and red appear only on bodies; the gold mark is the

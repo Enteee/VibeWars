@@ -10,6 +10,8 @@ import {
   PAVING_TEXTURE_MAX_SIDE,
   PAVING_TEXTURE_SCALE,
   type PavingCanvas,
+  type StonePaving,
+  isStonePaving,
   paintPaving,
   paintPavingPiece,
   pavingDrawing,
@@ -28,7 +30,7 @@ const within = (point: Vec2, outline: readonly Vec2[]): boolean =>
       distancePointToSegment(point, { a, b: outline[(at + 1) % outline.length] ?? a }) < 1e-6,
   );
 
-const street = (overrides: Partial<MapPaving> = {}): MapPaving => ({
+const street = (overrides: Partial<StonePaving> = {}): StonePaving => ({
   id: "main-street",
   layer: 0,
   look: "cobbles",
@@ -144,6 +146,14 @@ describe("pavingTextureSizes", () => {
   it("caps a single long paving's side", () => {
     const [size] = pavingTextureSizes([{ width: 6400, height: 40 }]);
     expect(size?.width).toBeLessThanOrEqual(PAVING_TEXTURE_MAX_SIDE);
+  });
+});
+
+describe("lava paving (#3245)", () => {
+  it("is no stone paving: the zone painter paints it as a molten zone's ground", () => {
+    const stream: MapPaving = { ...street(), id: "stream", look: "lava" };
+    expect(isStonePaving(stream)).toBe(false);
+    expect(LOOKS.every((look) => isStonePaving({ ...street(), look }))).toBe(true);
   });
 });
 

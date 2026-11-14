@@ -120,9 +120,9 @@ describe("the host tick on a whole map (#3240)", () => {
   });
 });
 
-/** The training arenas, which `loadAllMaps` does not see (#2985). */
-function trainingMaps(): MapData[] {
-  const root = fileURLToPath(new URL("../training/", import.meta.url));
+/** The training arenas (#2985) or the tutorial's maps (#3245), which `loadAllMaps` does not see. */
+function mapsIn(dir: "training" | "tutorial"): MapData[] {
+  const root = fileURLToPath(new URL(`../${dir}/`, import.meta.url));
   return readdirSync(root, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) =>
@@ -134,11 +134,12 @@ describe("the nav graph on every map (#2544)", () => {
   /** The most wall corners a map's graph may have: what pathing stays cheap at. */
   const MAX_NODES = 600;
 
-  it.each([...loadAllMaps(), ...trainingMaps()].map((map) => [map.id, map] as const))(
-    "%s has at most 600 nav nodes",
-    (_, map) => {
-      const finder = layeredFinder(map, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
-      expect(finder.nodeCount).toBeLessThanOrEqual(MAX_NODES);
-    },
-  );
+  it.each(
+    [...loadAllMaps(), ...mapsIn("training"), ...mapsIn("tutorial")].map(
+      (map) => [map.id, map] as const,
+    ),
+  )("%s has at most 600 nav nodes", (_, map) => {
+    const finder = layeredFinder(map, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+    expect(finder.nodeCount).toBeLessThanOrEqual(MAX_NODES);
+  });
 });

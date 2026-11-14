@@ -526,6 +526,9 @@ function tintAll<Colours extends { readonly [Slot in keyof Colours]: number | un
   ) as Colours;
 }
 
+/** A paving look laid in stones, slabs or pebbles (#3210); lava is a molten zone's ground (#3245). */
+export type StonePavingLook = Exclude<PavingLook, "lava">;
+
 /** What a paved surface of one look is made of (#3210): its bed, its stones, their lit edge, its rim. */
 export interface PavingLookColours {
   /** Under and between the stones: mortar, packed sand, the dirt itself. */
@@ -548,7 +551,7 @@ function mix(from: number, to: number, share: number): number {
  * is the ground moved part of the way to what it is laid in, never
  * brighter than the stone of a deck.
  */
-function pavingColours(tones: BiomeTones): Record<PavingLook, PavingLookColours> {
+function pavingColours(tones: BiomeTones): Record<StonePavingLook, PavingLookColours> {
   const rim = shade(tones.ground, 0.45);
   return {
     cobbles: {
@@ -576,7 +579,7 @@ export interface BiomeMaterials {
   readonly palette: ArenaPalette;
   readonly deck: Record<DeckLook, DeckLookColours>;
   readonly transition: Record<TransitionLook, TransitionLookColours>;
-  readonly paving: Record<PavingLook, PavingLookColours>;
+  readonly paving: Record<StonePavingLook, PavingLookColours>;
 }
 
 function lookColours<
@@ -627,6 +630,6 @@ const FLAT_PAVING = pavingColours({
 export function pavingPalette(map: {
   readonly layerCount: number;
   readonly biome: Biome;
-}): Record<PavingLook, PavingLookColours> {
+}): Record<StonePavingLook, PavingLookColours> {
   return map.layerCount > 1 ? BIOME[map.biome].paving : FLAT_PAVING;
 }

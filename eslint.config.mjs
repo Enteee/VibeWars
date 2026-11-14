@@ -165,7 +165,7 @@ export default defineConfig([
             {
               name: "@vibewars/game-maps",
               message:
-                "The root loads maps with node:fs. In apps/web import /geometry, /schema, /maps/* or /training/*.",
+                "The root loads maps with node:fs. In apps/web import /geometry, /schema, /maps/*, /training/* or /tutorial/*.",
             },
           ],
           patterns: [

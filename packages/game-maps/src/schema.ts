@@ -367,12 +367,13 @@ export const MAX_PAVING = 32;
 
 /**
  * A paved surface on one layer's floor (#3210): a road, a square or a worn
- * track. Only the renderer reads it, never the simulation.
+ * track, or a stream of lava in rock nobody stands on (#3245), which is
+ * scenery and hurts nobody. Only the renderer reads it, never the simulation.
  */
 const pavingSchema = z.object({
   id: z.string().min(1),
   layer: layerSchema,
-  look: z.enum(["cobbles", "flagstones", "dirt"]),
+  look: z.enum(["cobbles", "flagstones", "dirt", "lava"]),
   area: waterSchema.shape.area,
 });
 

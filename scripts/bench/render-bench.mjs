@@ -78,7 +78,10 @@ const MIN_CALIBRATION_MS = 2000 / 60 + 0.1;
 const MAX_CALIBRATION_SPREAD = 0.2;
 
 const PORT = 4322;
-const MAPS = path.join(import.meta.dirname, "..", "..", "packages", "game-maps", "maps");
+/** Where the maps it measures live: the arenas, and the tutorial's (#3245). */
+const MAP_DIRS = ["maps", "tutorial"].map((dir) =>
+  path.join(import.meta.dirname, "..", "..", "packages", "game-maps", dir),
+);
 const SETTLE_MS = 1000;
 /** The first map is loaded this long, unmeasured, before the warm-up calibration. */
 const WARMUP_LOAD_SECONDS = 5;
@@ -101,17 +104,30 @@ const { values: options } = parseArgs({
   options: { url: { type: "string" }, follow: { type: "boolean" } },
 });
 
-/** Every arena map of more than one layer, read from its `map.json`. */
+/**
+ * `mapId`'s `map.json`, in whichever of `MAP_DIRS` holds it.
+ *
+ * @param {string} mapId
+ * @returns {string}
+ */
+function mapFile(mapId) {
+  const file = MAP_DIRS.map((dir) => path.join(dir, mapId, "map.json")).find((each) =>
+    fs.existsSync(each),
+  );
+  if (file === undefined) {
+    throw new Error(`${mapId}: no map.json`);
+  }
+  return file;
+}
+
+/** Every arena and tutorial map of more than one layer, read from its `map.json`. */
 function layeredMaps() {
-  return fs
-    .readdirSync(MAPS)
-    .filter((id) => {
-      const file = path.join(MAPS, id, "map.json");
-      return (
-        fs.existsSync(file) &&
-        Number(/"layers":\s*(\d+)/.exec(fs.readFileSync(file, "utf8"))?.[1] ?? 1) > 1
-      );
-    })
+  return MAP_DIRS.flatMap((dir) =>
+    fs.readdirSync(dir).filter((id) => fs.existsSync(path.join(dir, id, "map.json"))),
+  )
+    .filter(
+      (id) => Number(/"layers":\s*(\d+)/.exec(fs.readFileSync(mapFile(id), "utf8"))?.[1] ?? 1) > 1,
+    )
     .sort();
 }
 
@@ -192,6 +208,38 @@ function percentile(frames, p) {
 }
 
 /**
+ * Open the Hosted Game lobby and pick `mapId` as its map. The lobby offers
+ * only the maps of the team size on the rail, so for a map the size shown
+ * does not play, like the 1v1 tutorial canyon (#3245), it steps the size,
+ * down then up, until the map is offered.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} mapId
+ */
+async function hostedMap(page, mapId) {
+  await page
+    .locator(".mode-rail")
+    .getByRole("button", { name: "Hosted Game", exact: true })
+    .click();
+  const select = page.locator(".lobby-map select");
+  const option = select.locator(`option[value="${mapId}"]`);
+  const offered = async () => (await option.count()) > 0;
+  const arrows = page.locator('.mode-rail [data-entry="team-size"] .mode-rail-step');
+  for (const arrow of [arrows.first(), arrows.last()]) {
+    while (!(await offered()) && (await arrow.isEnabled())) {
+      await arrow.click();
+      // The lobby takes the new size, and redraws its maps, a moment later.
+      await option.waitFor({ state: "attached", timeout: 2000 }).catch(() => undefined);
+    }
+  }
+  // The reference map is offered only by a build with VIBEWARS_BENCH_REFERENCE (#3255).
+  if (!(await offered())) {
+    throw new Error(`${mapId}: the lobby does not offer it, so this build cannot measure it`);
+  }
+  await select.selectOption(mapId);
+}
+
+/**
  * Frame times on `mapId`'s menu background, in ms, sorted.
  *
  * @param {import("@playwright/test").Page} page
@@ -200,16 +248,7 @@ function percentile(frames, p) {
  * @returns {Promise<number[]>}
  */
 async function measure(page, mapId, seconds) {
-  const entry = page
-    .locator(".mode-rail")
-    .getByRole("button", { name: "Hosted Game", exact: true });
-  await entry.click();
-  const select = page.locator(".lobby-map select");
-  // The reference map is offered only by a build with VIBEWARS_BENCH_REFERENCE (#3255).
-  if ((await select.locator(`option[value="${mapId}"]`).count()) === 0) {
-    throw new Error(`${mapId}: the lobby does not offer it, so this build cannot measure it`);
-  }
-  await select.selectOption(mapId);
+  await hostedMap(page, mapId);
   const background = page.locator("#menu-background");
   await page.waitForFunction(
     (id) => {
@@ -305,7 +344,7 @@ const UPHILL = new Map([
 function followLoop(mapId, start) {
   // The map as written; the walk needs no validation.
   /** @type {unknown} */
-  const parsed = JSON.parse(fs.readFileSync(path.join(MAPS, mapId, "map.json"), "utf8"));
+  const parsed = JSON.parse(fs.readFileSync(mapFile(mapId), "utf8"));
   const map = /** @type {FollowedMap} */ (parsed);
   const centre = { x: map.width / 2, y: map.height / 2 };
   /** @type {{ x: number, y: number }[]} */
@@ -361,11 +400,7 @@ async function camera(page) {
  * @param {string} mapId
  */
 async function follow(page, mapId) {
-  await page
-    .locator(".mode-rail")
-    .getByRole("button", { name: "Hosted Game", exact: true })
-    .click();
-  await page.locator(".lobby-map select").selectOption(mapId);
+  await hostedMap(page, mapId);
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
