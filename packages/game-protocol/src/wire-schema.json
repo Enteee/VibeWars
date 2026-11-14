@@ -758,7 +758,7 @@
     "MAX_WIRE_PIPS": { "literal": 10 },
     "MAX_WIRE_POINTS": { "literal": 256 },
     "MAX_WIRE_PROJECTILES": { "literal": 256 },
-    "MAX_WIRE_RADIUS": { "literal": 200 },
+    "MAX_WIRE_RADIUS": { "literal": 350 },
     "MAX_WIRE_RANK": { "literal": 16 },
     "MAX_WIRE_RANKS": { "literal": 16 },
     "MAX_WIRE_SIGNET": { "literal": 8191 },
