@@ -401,9 +401,12 @@ export function areaFlashAlpha(flash: AreaFlash): number {
  * A melee swing (#161): a 90° arc around the attacker, toward its target,
  * in the attacker's side's colour, fading out (docs/art/art-direction.md
  * "Swing flash"). It hugs the attacker, so it never reads as the target ring.
+ * A melee attack skill's is a thick warm arc instead (#3292), the same for
+ * both sides, held a little longer.
  */
 export interface SwingFlash {
   readonly id: number;
+  readonly kind: "swing" | "skill";
   /** The attacker's centre when it swung. */
   readonly centre: Vec2;
   /** Toward the target, in radians. */
@@ -433,6 +436,11 @@ export const FLOATING_TEXT_OFFSET_Y = 8;
 
 /** Short, so a dagger's rapid hits read as separate flashes, never a standing ring. */
 export const SWING_FLASH_SECONDS = 0.12;
+/** An attack skill's arc (#3292): long enough to read as a blow, not a swing. */
+export const SKILL_ARC_SECONDS = 0.2;
+/** Its colour, whatever the side, and its width, three times a swing's. */
+export const SKILL_ARC_COLOUR = 0xff8a3d;
+export const SKILL_ARC_WIDTH = 6;
 /** Outside the body: the attacker's radius plus this. */
 export const SWING_FLASH_GAP = 6;
 
@@ -443,8 +451,13 @@ export function decaySwingFlashes(flashes: readonly SwingFlash[], dt: number): S
     .filter((flash) => flash.remainingSeconds > 0);
 }
 
-export function swingFlashAlpha(flash: SwingFlash): number {
-  return Math.max(0, Math.min(1, flash.remainingSeconds / SWING_FLASH_SECONDS));
+/** A flash's opacity: 1 when it swings, 0 when it is gone; held whole under `reducedMotion`. */
+export function swingFlashAlpha(flash: SwingFlash, reducedMotion: boolean): number {
+  if (reducedMotion && flash.kind === "skill") {
+    return 1;
+  }
+  const seconds = flash.kind === "skill" ? SKILL_ARC_SECONDS : SWING_FLASH_SECONDS;
+  return Math.max(0, Math.min(1, flash.remainingSeconds / seconds));
 }
 
 /**

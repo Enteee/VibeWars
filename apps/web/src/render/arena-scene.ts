@@ -43,6 +43,7 @@ import {
   placeFloatingText,
   signetTextureKey,
   swingFlashAlpha,
+  SKILL_ARC_WIDTH,
   markedForTeam,
   teamColour,
   type AreaFlash,
@@ -128,7 +129,13 @@ import {
   MatchClock,
   projectileHeading,
   projectileLanding,
+  projectileLayer,
   projectilePosition,
+  projectileTrail,
+  SHOT_CORE_COLOUR,
+  SHOT_CORE_SHARE,
+  SHOT_SHADOW,
+  type TrailDot,
   shotFadeAlpha,
 } from "./projectiles.js";
 import { NO_COVER, frameClock, snapView, type CameraView, type Cover } from "./camera-rig.js";
@@ -658,8 +665,19 @@ export class ArenaScene extends Phaser.Scene {
    */
   private projectileImages = new Map<
     number,
-    { image: Phaser.GameObjects.Image; to: { x: number; y: number }; endedAt: number | undefined }
+    {
+      image: Phaser.GameObjects.Image;
+      to: { x: number; y: number };
+      endedAt: number | undefined;
+      /** A flying spell's (#3292): where it left, its trail, and its core's radius. */
+      readonly spell:
+        | { readonly from: Vec2; readonly trail: readonly TrailDot[]; readonly core: number }
+        | undefined;
+    }
   >();
+  /** Flying spells' trails under their sprites, and their cores over them (#3292). */
+  private shotTrails: Phaser.GameObjects.Graphics | undefined;
+  private shotCores: Phaser.GameObjects.Graphics | undefined;
   private readonly clock = new MatchClock();
   /**
    * Shots that have ended, kept until they leave the state: if the clock
@@ -840,6 +858,9 @@ export class ArenaScene extends Phaser.Scene {
     this.markGraphics = this.add.graphics().setDepth(EFFECT_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
     this.nameUnderline = this.add.graphics().setDepth(OVERLAY_DEPTH);
+    // Made before any shot's sprite, so under every one at their depth.
+    this.shotTrails = this.add.graphics().setDepth(OVERLAY_DEPTH);
+    this.shotCores = this.add.graphics().setDepth(OVERLAY_DEPTH + 1);
   }
 
   public override update(time: number): void {
@@ -912,6 +933,7 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.drawArrivals(g);
     this.stepCapes(dt);
+    this.drawShotShadows(time / 1000);
     // Every form's aura first, under every disc of its band (#3229): it
     // never covers a neighbour.
     for (const actor of this.drawnActors) {
@@ -1758,15 +1780,15 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private drawSwingFlash(g: Phaser.GameObjects.Graphics, flash: SwingFlash): void {
-    const alpha = swingFlashAlpha(flash);
+    const alpha = swingFlashAlpha(flash, this.reducedMotion);
     const { x, y } = flash.centre;
     const from = flash.angle - Math.PI / 4;
     const to = flash.angle + Math.PI / 4;
-    g.lineStyle(2, flash.colour, alpha);
+    g.lineStyle(flash.kind === "skill" ? SKILL_ARC_WIDTH : 2, flash.colour, alpha);
     g.beginPath();
     g.arc(x, y, flash.radius, from, to);
     g.strokePath();
-    if (flash.own) {
+    if (flash.own && flash.kind === "swing") {
       // Along the outer edge, as your circle gets its rim.
       g.lineStyle(1, SELF_RIM, alpha);
       g.beginPath();
@@ -1784,6 +1806,10 @@ export class ArenaScene extends Phaser.Scene {
    */
   private updateProjectiles(now: number): void {
     const clock = this.clock.read(now);
+    const trails = this.shotTrails;
+    const cores = this.shotCores;
+    trails?.clear();
+    cores?.clear();
     const flying = new Set<number>();
     const sent = new Set(this.snapshot.projectiles.map((shot) => shot.id));
     for (const id of this.endedShots) {
@@ -1808,15 +1834,42 @@ export class ArenaScene extends Phaser.Scene {
         const image = this.add
           .image(position.x, position.y, ATLAS, projectileFrame(shot.sprite))
           .setDepth(OVERLAY_DEPTH);
-        image.setRotation(projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts));
+        const heading = projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts);
+        image.setRotation(heading);
         image.setTint(shot.colour);
+        const length = Math.max(image.displayWidth, image.displayHeight);
+        const from = projectilePosition(
+          shot,
+          shot.launchedAt,
+          this.snapshot.structure,
+          this.snapshot.lifts,
+        );
         this.projectileImages.set(shot.id, {
           image,
           to: projectileLanding(shot, this.snapshot.structure, this.snapshot.lifts),
           endedAt: undefined,
+          spell:
+            shot.spell && from !== undefined
+              ? {
+                  from,
+                  trail: projectileTrail(heading, length),
+                  core: (SHOT_CORE_SHARE * length) / 2,
+                }
+              : undefined,
         });
       } else {
         shown.image.setPosition(position.x, position.y);
+      }
+      const spell = this.projectileImages.get(shot.id)?.spell;
+      if (spell !== undefined && trails !== undefined && !this.reducedMotion) {
+        // Never behind where it left: a trail grows out of the caster's hand.
+        const flown = Math.hypot(position.x - spell.from.x, position.y - spell.from.y);
+        for (const dot of spell.trail) {
+          if (Math.hypot(dot.offset.x, dot.offset.y) <= flown) {
+            trails.fillStyle(dot.colour, dot.alpha);
+            trails.fillCircle(position.x + dot.offset.x, position.y + dot.offset.y, dot.radius);
+          }
+        }
       }
     }
     const fade = !prefersReducedMotion();
@@ -1837,6 +1890,38 @@ export class ArenaScene extends Phaser.Scene {
         this.projectileImages.delete(id);
       } else {
         shown.image.setAlpha(alpha);
+      }
+    }
+    for (const { image, spell } of this.projectileImages.values()) {
+      if (spell !== undefined && cores !== undefined) {
+        cores.fillStyle(SHOT_CORE_COLOUR, image.alpha);
+        cores.fillCircle(image.x, image.y, spell.core);
+      }
+    }
+  }
+
+  /**
+   * Each flying spell's shadow (#3292): on the ground under it, in the
+   * band of the layer it flies over, so it takes that band's tone and
+   * lies under the bodies there. Gone once the shot lands.
+   */
+  private drawShotShadows(now: number): void {
+    const clock = this.clock.read(now);
+    const { structure, lifts } = this.snapshot;
+    for (const shot of this.snapshot.projectiles) {
+      if (!shot.spell || this.endedShots.has(shot.id)) {
+        continue;
+      }
+      const position = projectilePosition(shot, clock, structure, lifts);
+      const band = this.bandOf(projectileLayer(shot, clock));
+      if (position !== undefined && band !== undefined) {
+        band.body.fillStyle(SHOT_SHADOW.colour, SHOT_SHADOW.alpha);
+        band.body.fillEllipse(
+          position.x + SHOT_SHADOW.offset.x,
+          position.y + SHOT_SHADOW.offset.y,
+          SHOT_SHADOW.width,
+          SHOT_SHADOW.height,
+        );
       }
     }
   }

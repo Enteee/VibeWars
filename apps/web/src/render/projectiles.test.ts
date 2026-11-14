@@ -13,7 +13,10 @@ import {
   SHOT_FADE_SECONDS,
   shotFadeAlpha,
   projectileHeading,
+  projectileLayer,
   projectilePosition,
+  projectileTrail,
+  SHOT_TRAIL_REACH,
   PROJECTILE_SPRITES,
   projectileSprite,
   SKILL_SPRITE,
@@ -83,6 +86,7 @@ describe("projectilePosition", () => {
     fromLayer: 0,
     toLayer: 0,
     colour: 0,
+    spell: false,
   };
 
   it("flies from its release to its aim point over its flight", () => {
@@ -162,6 +166,7 @@ describe("a shot between layers (#2972)", () => {
     launchedAt: 10,
     flightSeconds: 2,
     colour: 0xffffff,
+    spell: true,
   } as const;
 
   it("starts at the shooter's height and rises evenly to the target's", () => {
@@ -169,5 +174,44 @@ describe("a shot between layers (#2972)", () => {
     expect(projectilePosition(shot, 10, decked, [])).toEqual({ x: 0, y: 0 });
     expect(projectilePosition(shot, 11, decked, [])).toEqual({ x: 50, y: -lift / 2 });
     expect(projectilePosition(shot, 12, decked, [])).toEqual({ x: 100, y: -lift });
+  });
+
+  it("casts its shadow on the shooter's layer, then on the landing deck (#3292)", () => {
+    expect(projectileLayer(shot, 10)).toBe(0);
+    expect(projectileLayer(shot, 10.9)).toBe(0);
+    expect(projectileLayer(shot, 11)).toBe(1);
+    // Where it lands, it is drawn at the deck's height: its shadow lies under it there.
+    expect(projectileLayer(shot, 12)).toBe(1);
+    expect(projectilePosition(shot, 12, decked, [])?.y).toBe(-elevationOf(1, 0));
+  });
+});
+
+describe("projectileTrail (#3292)", () => {
+  const length = 16;
+
+  it.each([0, Math.PI / 3, Math.PI, -2])("trails behind a sprite flying at %s rad", (heading) => {
+    const trail = projectileTrail(heading, length);
+    expect(trail.length).toBeGreaterThanOrEqual(3);
+    expect(trail.length).toBeLessThanOrEqual(4);
+    const ahead = { x: Math.cos(heading), y: Math.sin(heading) };
+    let last = 0;
+    for (const dot of trail) {
+      const along = dot.offset.x * ahead.x + dot.offset.y * ahead.y;
+      const across = dot.offset.x * ahead.y - dot.offset.y * ahead.x;
+      expect(along).toBeLessThan(0);
+      expect(across).toBeCloseTo(0, 9);
+      expect(-along).toBeGreaterThan(last);
+      last = -along;
+      expect(-along + dot.radius).toBeLessThanOrEqual(SHOT_TRAIL_REACH * length + dot.radius);
+    }
+    expect(last).toBeLessThanOrEqual(SHOT_TRAIL_REACH * length);
+  });
+
+  it("fades warm from gold at the sprite to ember at the tail, whatever the sprite", () => {
+    const trail = projectileTrail(0, length);
+    expect(trail[0]?.colour).toBe(0xffd23d);
+    expect(trail.at(-1)?.colour).toBe(0xff8a3d);
+    const alphas = trail.map((dot) => dot.alpha);
+    expect([...alphas].sort((a, b) => b - a)).toEqual(alphas);
   });
 });

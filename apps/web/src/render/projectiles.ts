@@ -103,6 +103,8 @@ export interface RenderableProjectile {
   readonly flightSeconds: number;
   /** The shooter's side, from where you stand. */
   readonly colour: number;
+  /** A flying spell (#3292): it gets a bright core, a ground shadow and a warm trail. */
+  readonly spell: boolean;
 }
 
 /** Where `shot` leaves from and lands, as drawn: each end lifted to its own layer (#2972), or its lift's platform (#3079). */
@@ -156,6 +158,68 @@ export function projectileHeading(
 ): number {
   const { from, to } = drawnEnds(shot, structure, lifts);
   return Math.atan2(to.y - from.y, to.x - from.x);
+}
+
+/** The layer a shot flies over at `clock`: its shooter's for the first half, its target's after. */
+export function projectileLayer(shot: RenderableProjectile, clock: number): number {
+  const t = shot.flightSeconds > 0 ? (clock - shot.launchedAt) / shot.flightSeconds : 1;
+  return t < 0.5 ? shot.fromLayer : shot.toLayer;
+}
+
+/*
+ * A flying spell's look (#3292, docs/art/3191-skill-visuals.md
+ * "Glowstone"): over its own sprite, which tells which spell it is, a
+ * near-white core says it is hot, a short warm trail says where it came
+ * from, and a soft shadow on the ground under it says it flies.
+ */
+
+/** The core: near-white, this share of the sprite's radius. */
+export const SHOT_CORE_COLOUR = 0xfff4d0;
+export const SHOT_CORE_SHARE = 0.4;
+
+/** The shadow: a soft dark ellipse this far under the sprite, on the deck below it. */
+export const SHOT_SHADOW = {
+  offset: { x: -3, y: 12 },
+  width: 12,
+  height: 5,
+  colour: 0x000000,
+  alpha: 0.3,
+} as const;
+
+/** The trail's longest reach behind the sprite, in sprite lengths. */
+export const SHOT_TRAIL_REACH = 2;
+
+/** One dot of a flying spell's trail, where it sits from the sprite's centre. */
+export interface TrailDot {
+  readonly offset: Vec2;
+  readonly radius: number;
+  readonly colour: number;
+  readonly alpha: number;
+}
+
+/** Warm whatever the sprite: gold at the sprite, ember at the tail. */
+const TRAIL = [
+  { back: 0.6, share: 0.35, colour: 0xffd23d, alpha: 0.85 },
+  { back: 1.05, share: 0.28, colour: 0xffb03d, alpha: 0.6 },
+  { back: 1.5, share: 0.21, colour: 0xff9a3d, alpha: 0.4 },
+  { back: SHOT_TRAIL_REACH, share: 0.14, colour: 0xff8a3d, alpha: 0.22 },
+] as const;
+
+/**
+ * The trail behind a sprite `length` long, flying along `heading`:
+ * fading dots back along its line, none past `SHOT_TRAIL_REACH`. A shot
+ * flies straight, so the scene works this out once per shot, never per
+ * frame.
+ */
+export function projectileTrail(heading: number, length: number): readonly TrailDot[] {
+  const cos = Math.cos(heading);
+  const sin = Math.sin(heading);
+  return TRAIL.map(({ back, share, colour, alpha }) => ({
+    offset: { x: -cos * back * length, y: -sin * back * length },
+    radius: share * length,
+    colour,
+    alpha,
+  }));
 }
 
 /**
