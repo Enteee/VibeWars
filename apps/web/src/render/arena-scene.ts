@@ -151,9 +151,9 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
-import { weaponHandAt, weaponMarkLayout } from "./weapon-mark.js";
+import { weaponMarkLayout, weaponTipAt } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
-import { castGlow } from "./cast-beats.js";
+import { CAST_GLOW_CORE, CAST_GLOW_CORE_LIFT, castGlow } from "./cast-beats.js";
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
 import {
@@ -1657,9 +1657,9 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The glow at a standing caster's hand (#3320), over the weapon mark and
-   * under the bars: it grows with a spell cast, flashes on release and
-   * fizzles when stopped short.
+   * The glow at a standing caster's weapon (#3320), at its far end, over
+   * the weapon mark and under the bars: it grows with a spell cast, flashes
+   * on release and fizzles when stopped short.
    */
   private drawCastGlow(
     g: Phaser.GameObjects.Graphics,
@@ -1672,12 +1672,15 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const { x, y } = actor.position;
-    const hand = weaponHandAt(x, y, actor.radius, actor.facing, actor.weaponId, frame);
-    if (hand === undefined) {
+    const tip = weaponTipAt(x, y, actor.radius, actor.facing, actor.weaponId, frame);
+    if (tip === undefined) {
       return;
     }
+    // The study's glow: a soft disc round a brighter core.
     g.fillStyle(glow.colour, glow.alpha);
-    g.fillCircle(hand.x, hand.y, glow.radius);
+    g.fillCircle(tip.x, tip.y, glow.radius);
+    g.fillStyle(glow.colour, Math.min(1, glow.alpha + CAST_GLOW_CORE_LIFT));
+    g.fillCircle(tip.x, tip.y, glow.radius * CAST_GLOW_CORE);
   }
 
   /** Where `actor`'s weapon is in its swing, `REST_FRAME` for none. */

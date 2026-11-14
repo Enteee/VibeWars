@@ -227,22 +227,6 @@ function poseOf(m: WeaponMotion, clip: AttackClip): Pose {
   }
 }
 
-/** Where the hand holds a weapon whose pose turns about the body's centre. */
-const HAND = p(4, 9);
-
-/**
- * The hand holding `weaponId` at `clip` (#3320), in the local frame:
- * its pivot, or `HAND` for one that turns about the body's centre, moved
- * with the pose. Fists and daggers mirror it for a left-hand hit.
- */
-export function weaponHandPoint(weaponId: WeaponMarkId, clip: AttackClip, hit: number): Point {
-  const m = WEAPON_MOTION[weaponId];
-  const q = poseOf(m, clip);
-  const hand = m.pivot.x === 0 && m.pivot.y === 0 ? HAND : m.pivot;
-  const right = m.motion !== "hands" || hit % 2 === 0;
-  return right ? p(hand.x + q.dx, hand.y + q.dy) : p(hand.x + q.dx, -hand.y - q.dy);
-}
-
 /** `line` turned by `q.rot` degrees and scaled by `scale` about `pivot`, then moved by (dx, dy). */
 function transform(line: readonly Point[], pivot: Point, q: Pose, scale = 1): Point[] {
   const radians = (q.rot * Math.PI) / 180;

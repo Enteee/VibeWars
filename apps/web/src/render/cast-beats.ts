@@ -4,7 +4,7 @@ import type { CastBeat } from "./attack-clock.js";
 import { skillColour } from "./skill-colours.js";
 
 /**
- * The glow at a caster's hand (#3320, docs/art/3191-skill-visuals.md, the
+ * The glow at a caster's weapon (#3320, docs/art/3191-skill-visuals.md, the
  * study's top row): it appears small in the skill's type colour as a cast
  * starts and grows with its progress; a cast that runs out flashes white
  * and fades; one stopped short shrinks to nothing and greys. Reduced
@@ -29,6 +29,9 @@ const FLASH_ALPHA = 0.6;
 const FLASH_COLOUR = 0xffffff;
 /** What a fizzled glow greys to: the slate of a spent cast. */
 const SPENT_COLOUR = 0x8a8f98;
+/** The study's glow is a disc round a core this much of its radius, this much more opaque. */
+export const CAST_GLOW_CORE = 0.45;
+export const CAST_GLOW_CORE_LIFT = 0.3;
 export const FLASH_SECONDS = 0.15;
 export const FIZZLE_SECONDS = 0.2;
 

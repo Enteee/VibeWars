@@ -2,7 +2,7 @@ import { isWeaponId } from "@vibewars/game-core";
 
 import type { AttackFrame } from "./attack-clock.js";
 import { WEAPON_MARK_RADIUS, type Point } from "./weapon-mark-geometry.js";
-import { weaponHandPoint, weaponPose, type WeaponMarkLayout } from "./weapon-pose.js";
+import { weaponPose, type WeaponMarkLayout } from "./weapon-pose.js";
 
 /**
  * The weapon mark (#188, #418, docs/art/art-direction.md "Player mark"):
@@ -50,10 +50,12 @@ export function weaponMarkLayout(
 }
 
 /**
- * Where the hand holding the weapon is on a body placed as in
- * `weaponMarkLayout` (#3320), for the cast glow; `undefined` with no weapon.
+ * The far end of the weapon mark as `weaponMarkLayout` places it at
+ * `frame` (#3320): the point of it farthest from the body's centre, where
+ * a cast's glow sits, out past the body as the study draws it; `undefined`
+ * with no weapon.
  */
-export function weaponHandAt(
+export function weaponTipAt(
   x: number,
   y: number,
   r: number,
@@ -61,15 +63,17 @@ export function weaponHandAt(
   weaponId: string | undefined,
   frame: AttackFrame,
 ): Point | undefined {
-  if (weaponId === undefined || !isWeaponId(weaponId)) {
-    return undefined;
+  const { strokes, fills } = weaponMarkLayout(x, y, r, facing, weaponId, frame);
+  let tip: Point | undefined;
+  let reach = -1;
+  for (const line of [...strokes, ...fills]) {
+    for (const point of line) {
+      const d = (point.x - x) ** 2 + (point.y - y) ** 2;
+      if (d > reach) {
+        reach = d;
+        tip = point;
+      }
+    }
   }
-  const hand = weaponHandPoint(weaponId, frame.clip, frame.hit);
-  const scale = r / WEAPON_MARK_RADIUS;
-  const cos = Math.cos(facing);
-  const sin = Math.sin(facing);
-  return {
-    x: x + (hand.x * cos - hand.y * sin) * scale,
-    y: y + (hand.x * sin + hand.y * cos) * scale,
-  };
+  return tip;
 }

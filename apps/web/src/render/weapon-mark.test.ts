@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { WEAPONS } from "@vibewars/game-core";
 
 import { REST_FRAME } from "./attack-clock.js";
-import { weaponMarkLayout } from "./weapon-mark.js";
+import { weaponMarkLayout, weaponTipAt } from "./weapon-mark.js";
 import { WEAPON_MARK_GEOMETRY } from "./weapon-mark-geometry.js";
 
 const R = 14;
@@ -100,5 +100,26 @@ describe("weaponMarkLayout", () => {
         alpha: 1,
       });
     }
+  });
+});
+
+describe("weaponTipAt (#3320)", () => {
+  it("is the raised mark's far end, out past the body's edge, for every weapon", () => {
+    const raised = { clip: { phase: "raise", progress: 1 } as const, hit: 1 };
+    for (const id of IDS) {
+      const tip = weaponTipAt(100, 50, R, 0.7, id, raised);
+      expect(tip, id).toBeDefined();
+      const reach = Math.hypot((tip?.x ?? 100) - 100, (tip?.y ?? 50) - 50);
+      expect(reach, id).toBeGreaterThan(R * 0.9);
+      for (const line of [...weaponMarkLayout(100, 50, R, 0.7, id, raised).strokes]) {
+        for (const point of line) {
+          expect(Math.hypot(point.x - 100, point.y - 50), id).toBeLessThanOrEqual(reach + 1e-9);
+        }
+      }
+    }
+  });
+
+  it("is undefined with no weapon", () => {
+    expect(weaponTipAt(0, 0, R, 0, undefined, REST_FRAME)).toBeUndefined();
   });
 });
