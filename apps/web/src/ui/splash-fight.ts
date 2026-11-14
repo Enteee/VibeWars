@@ -21,7 +21,12 @@ import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import { hostMap, mapStructure } from "../net/maps.js";
 import { createArenaViewport } from "../render/arena-viewport.js";
 import { NO_COVER, VIEW_ASPECT, VIEW_STEPS, zoomFor } from "../render/camera-rig.js";
-import { NO_PROFESSIONS, createLocalConnection } from "../training/local-connection.js";
+import {
+  NO_PROFESSIONS,
+  createLocalConnection,
+  type LocalMatchConnection,
+  type Professions,
+} from "../training/local-connection.js";
 
 /** The widest view step: smaller characters, and the whole fight in frame. */
 const WIDEST_STEP = 3;
@@ -91,6 +96,12 @@ export function splashGraph(map: SplashMap): NavGraph {
   return buildNavGraph(allWallSegments(map.descriptor.walls), map.bounds, SPAWN_CLEARANCE, []);
 }
 
+/** The splash fight's bots, and each one's professions by id, off the build it plays (#3336). */
+export interface SplashBots {
+  readonly specs: readonly ParticipantSpec[];
+  readonly professions: ReadonlyMap<string, Professions>;
+}
+
 /**
  * The bots of both sides, `fight.teamSize` each, walking in from their
  * spawns, on builds picked from `buildsOf` their team by `random`.
@@ -101,8 +112,9 @@ export function splashParticipants(
   graph: NavGraph = splashGraph(map),
   buildsOf: (team: number) => readonly PlayerBuild[] = () => STARTER_BUILDS,
   random: () => number = Math.random,
-): ParticipantSpec[] {
-  return [0, 1].flatMap((team) =>
+): SplashBots {
+  const professions = new Map<string, Professions>();
+  const specs = [0, 1].flatMap((team) =>
     Array.from({ length: fight.teamSize }, (_, index) => {
       const loadout = loadoutOf(pick(buildsOf(team), random));
       const resolved = resolveLoadout(
@@ -114,8 +126,13 @@ export function splashParticipants(
         },
         RULESET.combat,
       );
+      const id = `splash-${String(team)}-${String(index)}`;
+      professions.set(id, {
+        primary: loadout.primaryProfession,
+        secondary: loadout.secondaryProfession,
+      });
       return {
-        id: `splash-${String(team)}-${String(index)}`,
+        id,
         team,
         skillBar: loadout.skillBar,
         ...loadoutSpec(resolved),
@@ -125,6 +142,7 @@ export function splashParticipants(
       } satisfies ParticipantSpec;
     }),
   );
+  return { specs, professions };
 }
 
 /** A running splash fight. */
@@ -140,21 +158,45 @@ export interface SplashFight {
 /**
  * The splash fight's simulation on `map`, with its layers as a match has
  * them (#3222): a bot's walk on a map whose ground is not its lowest layer
- * names that layer, which a flat world refuses.
+ * names that layer, which a flat world refuses. With it, its bots'
+ * professions, for their icons (#3336).
  */
 export function splashSimulation(
   map: SplashMap,
   fight: SplashFightOptions,
   seed: string,
-): MatchSimulation {
-  return new MatchSimulation({
+): { readonly simulation: MatchSimulation; readonly professions: SplashBots["professions"] } {
+  const { specs, professions } = splashParticipants(map, fight);
+  const simulation = new MatchSimulation({
     seed,
     ruleset: RULESET,
     matchRules: SPLASH_RULES,
     walls: map.walls,
     bounds: map.bounds,
     layers: map.layers,
-    participants: splashParticipants(map, fight),
+    participants: specs,
+  });
+  return { simulation, professions };
+}
+
+/**
+ * The splash fight as a connection, seen from nobody: nameless bots, each
+ * showing the professions of the build it plays (#3336).
+ */
+export function splashConnection(
+  map: SplashMap,
+  fight: SplashFightOptions,
+  seed: string,
+): LocalMatchConnection {
+  const { simulation, professions } = splashSimulation(map, fight, seed);
+  return createLocalConnection({
+    simulation,
+    selfId: "splash-nobody",
+    map: map.descriptor,
+    nameOf: () => "",
+    guildOf: () => NO_GUILD,
+    // Only a body that is no bot, such as the self nobody plays.
+    professionsOf: (id) => professions.get(id) ?? NO_PROFESSIONS,
   });
 }
 
@@ -172,14 +214,7 @@ export async function startSplashFight(
     throw new Error(`no map ${fight.mapId} for the splash fight`);
   }
   const viewport = await createArenaViewport(parent, { fpsLimit: FPS_LIMIT });
-  const connection = createLocalConnection({
-    simulation: splashSimulation(map, fight, `splash-${String(Math.random())}`),
-    selfId: "splash-nobody",
-    map: map.descriptor,
-    nameOf: () => "",
-    guildOf: () => NO_GUILD,
-    professionsOf: () => NO_PROFESSIONS,
-  });
+  const connection = splashConnection(map, fight, `splash-${String(Math.random())}`);
   const { structure, wallLayers } = mapStructure(map.descriptor.id);
   const walls = map.descriptor.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
   const { width, height } = map.descriptor;

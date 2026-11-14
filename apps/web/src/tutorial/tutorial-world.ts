@@ -378,7 +378,7 @@ export function tutorialWorld(
         (team) => (team === 0 ? STARTER_BUILDS : FOE_BUILDS),
         // The bots' builds follow the seed too, so a seed is one whole world.
         () => builds.nextFloat(),
-      ).map((bot) => {
+      ).specs.map((bot) => {
         if (bot.team === 0) {
           return { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) };
         }
