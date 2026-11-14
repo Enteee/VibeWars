@@ -113,8 +113,16 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
 /** Recorded seconds (e2e-durations.json) of test runs per job: 400 s, so a run ends near 10 min (#3309). Hosted e2e-repeat runs take up to ~3.3x the recorded seconds (gameplay.spec, 15 min a run against 271 s recorded, #3266), and a spec over the budget still gets one run per job. MAX_JOBS fits ten repeats of each of the two largest specs (training 371 s, builds 302 s: 20 jobs). */
 export const SECONDS_PER_JOB = 400;
 export const MAX_JOBS = 20;
-/** A spec over this many recorded seconds cannot finish one run in the 40 min job at 3.3x plus setup (#3313). */
-export const MAX_SPEC_SECONDS = 600;
+/** The e2e-repeat matrix job's timeout-minutes; a test holds it equal to the workflow's. */
+export const JOB_TIMEOUT_MINUTES = 40;
+/** devenv/cache setup and build per job, in seconds. */
+export const SETUP_SECONDS = 300;
+/** How much slower hosted runners are than the recorded seconds (#3266). */
+export const HOSTED_SLOWDOWN = 3.3;
+/** Recorded seconds one run of a spec may take and still finish in the job timeout (#3313). */
+export const MAX_SPEC_SECONDS = Math.floor(
+  (JOB_TIMEOUT_MINUTES * 60 - SETUP_SECONDS) / HOSTED_SLOWDOWN,
+);
 export const REPEATS = 10;
 /**
  * Throws unless the Playwright JSON report ran at least one test. Skipped
