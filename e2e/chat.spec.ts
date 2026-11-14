@@ -1,14 +1,20 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../packages/game-core/src/ruleset.js";
+
 import { joinFriend } from "./helpers/menu.js";
 import { hostLobby, openPeers, playHouseTeams, startSoloMatch } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter } from "./helpers/starter.js";
+import { key } from "./keys.js";
 
 /**
  * Chat (#479): Enter opens the box, Enter sends, and the lobby host
  * routes each line. Two pages of one context, over BroadcastChannel.
  */
+
+/** How far east, world units, the hero walks off its spawn before the click under the chat. */
+const EAST_WALK = 450;
 
 async function openMenu(page: Page, playerName: string): Promise<void> {
   await page.goto("./");
@@ -101,12 +107,9 @@ test("in a match a click under the panel walks, and the box shows only while ope
   // The follow camera (#721) moves only when the hero does. Ember Pits'
   // first spawn sits near the west edge, so the ground under the panel is
   // outside the arena: walk east along the open spawn row first, and settle.
+  // By a held key, not a click: the house foe can stand where a click east
+  // would land, and a click on it targets it instead of walking (#3270).
   const stage = page.locator("#viewport");
-  const canvas = page.locator("#viewport canvas:not(.compass)");
-  const view = await canvas.boundingBox();
-  if (view === null) {
-    throw new Error("the arena canvas has no box");
-  }
   // The camera may still be gliding onto the spawn: a click before it
   // settles lands somewhere else on the ground.
   const settle = async (message: string, from: string): Promise<string> => {
@@ -125,7 +128,11 @@ test("in a match a click under the panel walks, and the box shows only while ope
     return last;
   };
   const atSpawn = await settle("the camera should settle on the spawn", "");
-  await page.mouse.click(view.x + view.width * 0.85, view.y + view.height / 2);
+  await page.keyboard.down(key("move-right"));
+  await page.waitForTimeout(
+    (1000 * EAST_WALK) / MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond,
+  );
+  await page.keyboard.up(key("move-right"));
   await settle("the hero should walk east and stop", atSpawn);
   const before = await stage.getAttribute("data-camera");
   await page.mouse.click(at.x, at.y);

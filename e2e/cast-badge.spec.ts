@@ -51,16 +51,21 @@ test("a cast bar wears the casting skill's type badge, and loses it with the bar
   await startSoloMatch(page);
   const before = await badgeSpot(page);
 
+  // Look for the badge straight after the press, not once the HUD shows
+  // the cast: at a slow frame rate the 3 s cast can be over by then (#3270).
   // The first match of a cold run can take the key before its skill bar
-  // does; press again only while nothing casts, as a press mid-cast queues.
-  const casting = page.locator(".hud-skill.is-casting");
+  // does; press again only after 2 s with the skill neither casting nor
+  // recharging, as a press mid-cast queues.
+  const taken = page.locator(".hud-skill.is-casting, .hud-skill .recharge-overlay");
+  await page.keyboard.press(TROLL_UNGUENT);
+  let pressed = Date.now();
   await expect(async () => {
-    if ((await casting.count()) === 0) {
+    if (Date.now() - pressed > 2_000 && (await taken.count()) === 0) {
       await page.keyboard.press(TROLL_UNGUENT);
+      pressed = Date.now();
     }
-    await expect(casting).toHaveCount(1, { timeout: 2_000 });
-  }).toPass();
-  await expect.poll(async () => (await badgeSpot(page)).equals(before)).toBe(false);
+    expect((await badgeSpot(page)).equals(before)).toBe(false);
+  }).toPass({ intervals: [0] });
 
   await expect
     .poll(async () => (await badgeSpot(page)).equals(before), { timeout: 10_000 })
