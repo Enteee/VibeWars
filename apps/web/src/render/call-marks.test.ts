@@ -10,6 +10,7 @@ const R = 14;
 const CALLED: RenderableActor = {
   id: "foe",
   name: "foe",
+  nameLead: undefined,
   guildTag: undefined,
   heroRank: 0,
   signet: undefined,

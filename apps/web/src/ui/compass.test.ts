@@ -30,6 +30,7 @@ function actor(
   return {
     id,
     name: id,
+    nameLead: undefined,
     guildTag: undefined,
     heroRank: 0,
     signet: undefined,
