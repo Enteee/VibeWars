@@ -1,0 +1,777 @@
+{
+  "id": "tutorial-canyon-1",
+  "name": "Tutorial Canyon I",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "teams": 2,
+  "width": 7700,
+  "height": 2400,
+  "bounds": {
+    "kind": "outline",
+    "outline": [
+      {
+        "x": 6500,
+        "y": 300
+      },
+      {
+        "x": 7100,
+        "y": 300
+      },
+      {
+        "x": 7100,
+        "y": 850
+      },
+      {
+        "x": 7300,
+        "y": 1000
+      },
+      {
+        "x": 7300,
+        "y": 1200
+      },
+      {
+        "x": 7100,
+        "y": 1350
+      },
+      {
+        "x": 7100,
+        "y": 2100
+      },
+      {
+        "x": 5760,
+        "y": 2100
+      },
+      {
+        "x": 5660,
+        "y": 2180
+      },
+      {
+        "x": 4740,
+        "y": 2180
+      },
+      {
+        "x": 4640,
+        "y": 2100
+      },
+      {
+        "x": 700,
+        "y": 2100
+      },
+      {
+        "x": 700,
+        "y": 1500
+      },
+      {
+        "x": 6500,
+        "y": 1500
+      }
+    ],
+    "outside": "basalt"
+  },
+  "layers": 1,
+  "biome": "volcanic",
+  "groundLayer": 0,
+  "pits": [],
+  "tunnels": [],
+  "decks": [],
+  "transitions": [],
+  "dropOffs": [],
+  "walls": [],
+  "paving": [
+    {
+      "id": "arrival",
+      "layer": 0,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1194,
+            "y": 1850
+          },
+          {
+            "x": 1080,
+            "y": 1920
+          },
+          {
+            "x": 920,
+            "y": 1920
+          },
+          {
+            "x": 806,
+            "y": 1850
+          },
+          {
+            "x": 806,
+            "y": 1750
+          },
+          {
+            "x": 920,
+            "y": 1680
+          },
+          {
+            "x": 1080,
+            "y": 1680
+          },
+          {
+            "x": 1194,
+            "y": 1750
+          }
+        ]
+      }
+    },
+    {
+      "id": "site-4",
+      "layer": 0,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 2394,
+            "y": 1850
+          },
+          {
+            "x": 2280,
+            "y": 1920
+          },
+          {
+            "x": 2120,
+            "y": 1920
+          },
+          {
+            "x": 2006,
+            "y": 1850
+          },
+          {
+            "x": 2006,
+            "y": 1750
+          },
+          {
+            "x": 2120,
+            "y": 1680
+          },
+          {
+            "x": 2280,
+            "y": 1680
+          },
+          {
+            "x": 2394,
+            "y": 1750
+          }
+        ]
+      }
+    },
+    {
+      "id": "site-5",
+      "layer": 0,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 3794,
+            "y": 1850
+          },
+          {
+            "x": 3680,
+            "y": 1920
+          },
+          {
+            "x": 3520,
+            "y": 1920
+          },
+          {
+            "x": 3406,
+            "y": 1850
+          },
+          {
+            "x": 3406,
+            "y": 1750
+          },
+          {
+            "x": 3520,
+            "y": 1680
+          },
+          {
+            "x": 3680,
+            "y": 1680
+          },
+          {
+            "x": 3794,
+            "y": 1750
+          }
+        ]
+      }
+    },
+    {
+      "id": "site-6",
+      "layer": 0,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 5394,
+            "y": 1850
+          },
+          {
+            "x": 5280,
+            "y": 1920
+          },
+          {
+            "x": 5120,
+            "y": 1920
+          },
+          {
+            "x": 5006,
+            "y": 1850
+          },
+          {
+            "x": 5006,
+            "y": 1750
+          },
+          {
+            "x": 5120,
+            "y": 1680
+          },
+          {
+            "x": 5280,
+            "y": 1680
+          },
+          {
+            "x": 5394,
+            "y": 1750
+          }
+        ]
+      }
+    },
+    {
+      "id": "site-7",
+      "layer": 0,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 6994,
+            "y": 1150
+          },
+          {
+            "x": 6880,
+            "y": 1220
+          },
+          {
+            "x": 6720,
+            "y": 1220
+          },
+          {
+            "x": 6606,
+            "y": 1150
+          },
+          {
+            "x": 6606,
+            "y": 1050
+          },
+          {
+            "x": 6720,
+            "y": 980
+          },
+          {
+            "x": 6880,
+            "y": 980
+          },
+          {
+            "x": 6994,
+            "y": 1050
+          }
+        ]
+      }
+    },
+    {
+      "id": "lower-stream",
+      "layer": 0,
+      "look": "lava",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 400,
+            "y": 1072
+          },
+          {
+            "x": 1800,
+            "y": 1032
+          },
+          {
+            "x": 3300,
+            "y": 1092
+          },
+          {
+            "x": 4800,
+            "y": 1072
+          },
+          {
+            "x": 5900,
+            "y": 1112
+          },
+          {
+            "x": 6150,
+            "y": 1032
+          },
+          {
+            "x": 6150,
+            "y": 1088
+          },
+          {
+            "x": 5900,
+            "y": 1168
+          },
+          {
+            "x": 4800,
+            "y": 1128
+          },
+          {
+            "x": 3300,
+            "y": 1148
+          },
+          {
+            "x": 1800,
+            "y": 1088
+          },
+          {
+            "x": 400,
+            "y": 1128
+          }
+        ]
+      }
+    },
+    {
+      "id": "south-stream",
+      "layer": 0,
+      "look": "lava",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1300,
+            "y": 2262
+          },
+          {
+            "x": 3000,
+            "y": 2282
+          },
+          {
+            "x": 4500,
+            "y": 2262
+          },
+          {
+            "x": 6000,
+            "y": 2272
+          },
+          {
+            "x": 7500,
+            "y": 2252
+          },
+          {
+            "x": 7500,
+            "y": 2308
+          },
+          {
+            "x": 6000,
+            "y": 2328
+          },
+          {
+            "x": 4500,
+            "y": 2318
+          },
+          {
+            "x": 3000,
+            "y": 2338
+          },
+          {
+            "x": 1300,
+            "y": 2318
+          }
+        ]
+      }
+    },
+    {
+      "id": "exit",
+      "layer": 0,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 6994,
+            "y": 550
+          },
+          {
+            "x": 6880,
+            "y": 620
+          },
+          {
+            "x": 6720,
+            "y": 620
+          },
+          {
+            "x": 6606,
+            "y": 550
+          },
+          {
+            "x": 6606,
+            "y": 450
+          },
+          {
+            "x": 6720,
+            "y": 380
+          },
+          {
+            "x": 6880,
+            "y": 380
+          },
+          {
+            "x": 6994,
+            "y": 450
+          }
+        ]
+      }
+    }
+  ],
+  "zones": [
+    {
+      "id": "boulder-run-1",
+      "kind": "rockfall",
+      "layer": 0,
+      "area": {
+        "kind": "rect",
+        "x": 1760,
+        "y": 1520,
+        "width": 200,
+        "height": 560
+      },
+      "schedule": {
+        "periodSeconds": 6,
+        "activeSeconds": 1,
+        "offsetSeconds": 0
+      }
+    },
+    {
+      "id": "boulder-run-2",
+      "kind": "rockfall",
+      "layer": 0,
+      "area": {
+        "kind": "rect",
+        "x": 2100,
+        "y": 1520,
+        "width": 200,
+        "height": 560
+      },
+      "schedule": {
+        "periodSeconds": 6,
+        "activeSeconds": 1,
+        "offsetSeconds": 2
+      }
+    },
+    {
+      "id": "boulder-run-3",
+      "kind": "rockfall",
+      "layer": 0,
+      "area": {
+        "kind": "rect",
+        "x": 2440,
+        "y": 1520,
+        "width": 200,
+        "height": 560
+      },
+      "schedule": {
+        "periodSeconds": 6,
+        "activeSeconds": 1,
+        "offsetSeconds": 4
+      }
+    },
+    {
+      "id": "clearing-rockfall",
+      "kind": "rockfall",
+      "layer": 0,
+      "area": {
+        "kind": "rect",
+        "x": 5100,
+        "y": 1700,
+        "width": 200,
+        "height": 200
+      },
+      "schedule": {
+        "periodSeconds": 3600,
+        "activeSeconds": 1,
+        "offsetSeconds": 3590
+      }
+    },
+    {
+      "id": "bad-ground-molten",
+      "kind": "molten",
+      "layer": 0,
+      "area": {
+        "kind": "rect",
+        "x": 6520,
+        "y": 900,
+        "width": 110,
+        "height": 400
+      }
+    },
+    {
+      "id": "bad-ground-mire",
+      "kind": "mire",
+      "layer": 0,
+      "area": {
+        "kind": "rect",
+        "x": 6630,
+        "y": 880,
+        "width": 270,
+        "height": 440
+      }
+    }
+  ],
+  "gates": [],
+  "objectives": [],
+  "breakables": [
+    {
+      "id": "cracked-wall",
+      "wall": {
+        "kind": "rect",
+        "x": 3540,
+        "y": 1480,
+        "width": 120,
+        "height": 640,
+        "layer": 0
+      },
+      "health": 400
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 1000,
+        "y": 1800
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 6800,
+        "y": 500
+      }
+    }
+  ],
+  "lighting": {
+    "ambient": {
+      "colour": 8357544,
+      "intensity": 0.35
+    },
+    "indoorAmbient": {
+      "colour": 5924488,
+      "intensity": 0.3
+    },
+    "indoor": [],
+    "sun": {
+      "directionDeg": 315,
+      "elevationDeg": 25,
+      "colour": 16758906,
+      "intensity": 0.5
+    },
+    "lights": [
+      {
+        "id": "lower-stream-glow-1",
+        "position": {
+          "x": 400,
+          "y": 1100
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      },
+      {
+        "id": "lower-stream-glow-2",
+        "position": {
+          "x": 1800,
+          "y": 1060
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      },
+      {
+        "id": "lower-stream-glow-3",
+        "position": {
+          "x": 3300,
+          "y": 1120
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      },
+      {
+        "id": "lower-stream-glow-4",
+        "position": {
+          "x": 4800,
+          "y": 1100
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      },
+      {
+        "id": "lower-stream-glow-5",
+        "position": {
+          "x": 5900,
+          "y": 1140
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      },
+      {
+        "id": "lower-stream-glow-6",
+        "position": {
+          "x": 6150,
+          "y": 1060
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      },
+      {
+        "id": "south-stream-glow-1",
+        "position": {
+          "x": 1300,
+          "y": 2290
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      },
+      {
+        "id": "south-stream-glow-2",
+        "position": {
+          "x": 3000,
+          "y": 2310
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      },
+      {
+        "id": "south-stream-glow-3",
+        "position": {
+          "x": 4500,
+          "y": 2290
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      },
+      {
+        "id": "south-stream-glow-4",
+        "position": {
+          "x": 6000,
+          "y": 2300
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      },
+      {
+        "id": "south-stream-glow-5",
+        "position": {
+          "x": 7400,
+          "y": 2280
+        },
+        "layer": 0,
+        "radius": 420,
+        "colour": 16738856,
+        "intensity": 0.7,
+        "flicker": 0.35
+      }
+    ]
+  },
+  "atmosphere": {
+    "fog": [
+      {
+        "layer": 0,
+        "area": {
+          "kind": "rect",
+          "x": 800,
+          "y": 1600,
+          "width": 1100,
+          "height": 400
+        }
+      },
+      {
+        "layer": 0,
+        "area": {
+          "kind": "rect",
+          "x": 4700,
+          "y": 1550,
+          "width": 1000,
+          "height": 500
+        }
+      },
+      {
+        "layer": 0,
+        "area": {
+          "kind": "rect",
+          "x": 6560,
+          "y": 200,
+          "width": 480,
+          "height": 600
+        }
+      },
+      {
+        "layer": 0,
+        "area": {
+          "kind": "rect",
+          "x": 4300,
+          "y": 180,
+          "width": 1500,
+          "height": 440
+        }
+      }
+    ],
+    "plumes": [
+      {
+        "id": "lower-stream-smoke",
+        "layer": 0,
+        "position": {
+          "x": 4800,
+          "y": 1100
+        },
+        "kind": "smoke"
+      }
+    ],
+    "weather": null
+  }
+}

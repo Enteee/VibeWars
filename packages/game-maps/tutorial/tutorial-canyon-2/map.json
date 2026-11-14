@@ -1,11 +1,11 @@
 {
-  "id": "tutorial-canyon",
-  "name": "Tutorial Canyon",
+  "id": "tutorial-canyon-2",
+  "name": "Tutorial Canyon II",
   "mode": "annihilation",
   "teamSizes": [1],
   "teams": 2,
   "width": 8400,
-  "height": 4100,
+  "height": 2700,
   "bounds": {
     "kind": "outline",
     "outline": [
@@ -83,54 +83,6 @@
       },
       {
         "x": 7100,
-        "y": 2550
-      },
-      {
-        "x": 7300,
-        "y": 2700
-      },
-      {
-        "x": 7300,
-        "y": 2900
-      },
-      {
-        "x": 7100,
-        "y": 3050
-      },
-      {
-        "x": 7100,
-        "y": 3800
-      },
-      {
-        "x": 5760,
-        "y": 3800
-      },
-      {
-        "x": 5660,
-        "y": 3880
-      },
-      {
-        "x": 4740,
-        "y": 3880
-      },
-      {
-        "x": 4640,
-        "y": 3800
-      },
-      {
-        "x": 700,
-        "y": 3800
-      },
-      {
-        "x": 700,
-        "y": 3200
-      },
-      {
-        "x": 6500,
-        "y": 3200
-      },
-      {
-        "x": 6500,
         "y": 2400
       },
       {
@@ -319,216 +271,6 @@
     }
   ],
   "paving": [
-    {
-      "id": "arrival",
-      "layer": 1,
-      "look": "dirt",
-      "area": {
-        "kind": "polygon",
-        "points": [
-          {
-            "x": 1194,
-            "y": 3550
-          },
-          {
-            "x": 1080,
-            "y": 3620
-          },
-          {
-            "x": 920,
-            "y": 3620
-          },
-          {
-            "x": 806,
-            "y": 3550
-          },
-          {
-            "x": 806,
-            "y": 3450
-          },
-          {
-            "x": 920,
-            "y": 3380
-          },
-          {
-            "x": 1080,
-            "y": 3380
-          },
-          {
-            "x": 1194,
-            "y": 3450
-          }
-        ]
-      }
-    },
-    {
-      "id": "site-4",
-      "layer": 1,
-      "look": "dirt",
-      "area": {
-        "kind": "polygon",
-        "points": [
-          {
-            "x": 2394,
-            "y": 3550
-          },
-          {
-            "x": 2280,
-            "y": 3620
-          },
-          {
-            "x": 2120,
-            "y": 3620
-          },
-          {
-            "x": 2006,
-            "y": 3550
-          },
-          {
-            "x": 2006,
-            "y": 3450
-          },
-          {
-            "x": 2120,
-            "y": 3380
-          },
-          {
-            "x": 2280,
-            "y": 3380
-          },
-          {
-            "x": 2394,
-            "y": 3450
-          }
-        ]
-      }
-    },
-    {
-      "id": "site-5",
-      "layer": 1,
-      "look": "dirt",
-      "area": {
-        "kind": "polygon",
-        "points": [
-          {
-            "x": 3794,
-            "y": 3550
-          },
-          {
-            "x": 3680,
-            "y": 3620
-          },
-          {
-            "x": 3520,
-            "y": 3620
-          },
-          {
-            "x": 3406,
-            "y": 3550
-          },
-          {
-            "x": 3406,
-            "y": 3450
-          },
-          {
-            "x": 3520,
-            "y": 3380
-          },
-          {
-            "x": 3680,
-            "y": 3380
-          },
-          {
-            "x": 3794,
-            "y": 3450
-          }
-        ]
-      }
-    },
-    {
-      "id": "site-6",
-      "layer": 1,
-      "look": "dirt",
-      "area": {
-        "kind": "polygon",
-        "points": [
-          {
-            "x": 5394,
-            "y": 3550
-          },
-          {
-            "x": 5280,
-            "y": 3620
-          },
-          {
-            "x": 5120,
-            "y": 3620
-          },
-          {
-            "x": 5006,
-            "y": 3550
-          },
-          {
-            "x": 5006,
-            "y": 3450
-          },
-          {
-            "x": 5120,
-            "y": 3380
-          },
-          {
-            "x": 5280,
-            "y": 3380
-          },
-          {
-            "x": 5394,
-            "y": 3450
-          }
-        ]
-      }
-    },
-    {
-      "id": "site-7",
-      "layer": 1,
-      "look": "dirt",
-      "area": {
-        "kind": "polygon",
-        "points": [
-          {
-            "x": 6994,
-            "y": 2850
-          },
-          {
-            "x": 6880,
-            "y": 2920
-          },
-          {
-            "x": 6720,
-            "y": 2920
-          },
-          {
-            "x": 6606,
-            "y": 2850
-          },
-          {
-            "x": 6606,
-            "y": 2750
-          },
-          {
-            "x": 6720,
-            "y": 2680
-          },
-          {
-            "x": 6880,
-            "y": 2680
-          },
-          {
-            "x": 6994,
-            "y": 2750
-          }
-        ]
-      }
-    },
     {
       "id": "site-8",
       "layer": 1,
@@ -982,231 +724,59 @@
       }
     },
     {
-      "id": "lower-stream",
+      "id": "arrival",
       "layer": 1,
-      "look": "lava",
+      "look": "dirt",
       "area": {
         "kind": "polygon",
         "points": [
           {
-            "x": 400,
-            "y": 2772
+            "x": 6994,
+            "y": 2150
           },
           {
-            "x": 1800,
-            "y": 2732
+            "x": 6880,
+            "y": 2220
           },
           {
-            "x": 3300,
-            "y": 2792
+            "x": 6720,
+            "y": 2220
           },
           {
-            "x": 4800,
-            "y": 2772
+            "x": 6606,
+            "y": 2150
           },
           {
-            "x": 5900,
-            "y": 2812
+            "x": 6606,
+            "y": 2050
           },
           {
-            "x": 6150,
-            "y": 2732
+            "x": 6720,
+            "y": 1980
           },
           {
-            "x": 6150,
-            "y": 2788
+            "x": 6880,
+            "y": 1980
           },
           {
-            "x": 5900,
-            "y": 2868
-          },
-          {
-            "x": 4800,
-            "y": 2828
-          },
-          {
-            "x": 3300,
-            "y": 2848
-          },
-          {
-            "x": 1800,
-            "y": 2788
-          },
-          {
-            "x": 400,
-            "y": 2828
-          }
-        ]
-      }
-    },
-    {
-      "id": "south-stream",
-      "layer": 1,
-      "look": "lava",
-      "area": {
-        "kind": "polygon",
-        "points": [
-          {
-            "x": 1300,
-            "y": 3962
-          },
-          {
-            "x": 3000,
-            "y": 3982
-          },
-          {
-            "x": 4500,
-            "y": 3962
-          },
-          {
-            "x": 6000,
-            "y": 3972
-          },
-          {
-            "x": 7900,
-            "y": 3952
-          },
-          {
-            "x": 7900,
-            "y": 4008
-          },
-          {
-            "x": 6000,
-            "y": 4028
-          },
-          {
-            "x": 4500,
-            "y": 4018
-          },
-          {
-            "x": 3000,
-            "y": 4038
-          },
-          {
-            "x": 1300,
-            "y": 4018
+            "x": 6994,
+            "y": 2050
           }
         ]
       }
     }
   ],
-  "zones": [
-    {
-      "id": "boulder-run-1",
-      "kind": "rockfall",
-      "layer": 1,
-      "area": {
-        "kind": "rect",
-        "x": 1760,
-        "y": 3220,
-        "width": 200,
-        "height": 560
-      },
-      "schedule": {
-        "periodSeconds": 6,
-        "activeSeconds": 1,
-        "offsetSeconds": 0
-      }
-    },
-    {
-      "id": "boulder-run-2",
-      "kind": "rockfall",
-      "layer": 1,
-      "area": {
-        "kind": "rect",
-        "x": 2100,
-        "y": 3220,
-        "width": 200,
-        "height": 560
-      },
-      "schedule": {
-        "periodSeconds": 6,
-        "activeSeconds": 1,
-        "offsetSeconds": 2
-      }
-    },
-    {
-      "id": "boulder-run-3",
-      "kind": "rockfall",
-      "layer": 1,
-      "area": {
-        "kind": "rect",
-        "x": 2440,
-        "y": 3220,
-        "width": 200,
-        "height": 560
-      },
-      "schedule": {
-        "periodSeconds": 6,
-        "activeSeconds": 1,
-        "offsetSeconds": 4
-      }
-    },
-    {
-      "id": "clearing-rockfall",
-      "kind": "rockfall",
-      "layer": 1,
-      "area": {
-        "kind": "rect",
-        "x": 5100,
-        "y": 3400,
-        "width": 200,
-        "height": 200
-      },
-      "schedule": {
-        "periodSeconds": 3600,
-        "activeSeconds": 1,
-        "offsetSeconds": 3590
-      }
-    },
-    {
-      "id": "bad-ground-molten",
-      "kind": "molten",
-      "layer": 1,
-      "area": {
-        "kind": "rect",
-        "x": 6520,
-        "y": 2600,
-        "width": 110,
-        "height": 400
-      }
-    },
-    {
-      "id": "bad-ground-mire",
-      "kind": "mire",
-      "layer": 1,
-      "area": {
-        "kind": "rect",
-        "x": 6630,
-        "y": 2580,
-        "width": 270,
-        "height": 440
-      }
-    }
-  ],
+  "zones": [],
   "gates": [],
   "objectives": [],
-  "breakables": [
-    {
-      "id": "cracked-wall",
-      "wall": {
-        "kind": "rect",
-        "x": 3540,
-        "y": 3180,
-        "width": 120,
-        "height": 640,
-        "layer": 1
-      },
-      "health": 400
-    }
-  ],
+  "breakables": [],
   "spawnPoints": [
     {
       "team": 0,
       "layer": 1,
       "position": {
-        "x": 1000,
-        "y": 3500
+        "x": 6800,
+        "y": 2100
       }
     },
     {
@@ -1378,163 +948,11 @@
         "colour": 16738856,
         "intensity": 0.7,
         "flicker": 0.35
-      },
-      {
-        "id": "lower-stream-glow-1",
-        "position": {
-          "x": 400,
-          "y": 2800
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
-      },
-      {
-        "id": "lower-stream-glow-2",
-        "position": {
-          "x": 1800,
-          "y": 2760
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
-      },
-      {
-        "id": "lower-stream-glow-3",
-        "position": {
-          "x": 3300,
-          "y": 2820
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
-      },
-      {
-        "id": "lower-stream-glow-4",
-        "position": {
-          "x": 4800,
-          "y": 2800
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
-      },
-      {
-        "id": "lower-stream-glow-5",
-        "position": {
-          "x": 5900,
-          "y": 2840
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
-      },
-      {
-        "id": "lower-stream-glow-6",
-        "position": {
-          "x": 6150,
-          "y": 2760
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
-      },
-      {
-        "id": "south-stream-glow-1",
-        "position": {
-          "x": 1300,
-          "y": 3990
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
-      },
-      {
-        "id": "south-stream-glow-2",
-        "position": {
-          "x": 3000,
-          "y": 4010
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
-      },
-      {
-        "id": "south-stream-glow-3",
-        "position": {
-          "x": 4500,
-          "y": 3990
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
-      },
-      {
-        "id": "south-stream-glow-4",
-        "position": {
-          "x": 6000,
-          "y": 4000
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
-      },
-      {
-        "id": "south-stream-glow-5",
-        "position": {
-          "x": 7900,
-          "y": 3980
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.7,
-        "flicker": 0.35
       }
     ]
   },
   "atmosphere": {
     "fog": [
-      {
-        "layer": 1,
-        "area": {
-          "kind": "rect",
-          "x": 800,
-          "y": 3300,
-          "width": 1100,
-          "height": 400
-        }
-      },
-      {
-        "layer": 1,
-        "area": {
-          "kind": "rect",
-          "x": 4700,
-          "y": 3250,
-          "width": 1000,
-          "height": 500
-        }
-      },
       {
         "layer": 1,
         "area": {
@@ -1593,15 +1011,6 @@
         "position": {
           "x": 3900,
           "y": 1450
-        },
-        "kind": "smoke"
-      },
-      {
-        "id": "lower-stream-smoke",
-        "layer": 1,
-        "position": {
-          "x": 4800,
-          "y": 2800
         },
         "kind": "smoke"
       },
