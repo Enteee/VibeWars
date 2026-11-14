@@ -19,8 +19,8 @@ the place (a frozen river) is kept.
   The build PR adds the row and its `arena-palette.test.ts` check; this study adds no code. Decks are kept mid-grey on purpose: near-white snow would wash the friend blue out, so bodies keep their contrast on it.
 - **Layers (3):** L0 river ice, open water, stepping stones and the cave floor; L1 the two banks (a
   `deck` each, 70 up) and the log bridge; L2 a ridge on each bank (`decks`, 140 up).
-- **Structures (≥ 4):** two banks; two ramps down to the ice; two ridge stairs; two ridges; the log
-  bridge (a `bridge` deck at bank height); five stepping stones, 120 wide at a 105 pitch, run edge to edge of the deep band (x 1030..1570, y 1230..1320) and a sixth links the strip north to the band edge at x 1250..1350. There is no water between the strip and the shelf or banks; the deep water is the band minus the stones: three rects, (1030,1160,220×70), (1350,1160,220×70) and (1030,1320,540×40).
+- **Structures (≥ 4):** two banks; four ramps (two down to the ice, two off the stones); two ridge stairs; two ridges; the log
+  bridge (a `bridge` deck at bank height); five stepping stones, 120 wide at a 105 pitch, run edge to edge of the deep band (x 1030..1570, y 1230..1320) and a sixth links the strip north to the band edge at x 1250..1350. Each end meets the bank's 70 u face at a short ramp up (`stone-ramp-w` at (930,1235), `stone-ramp-e` mirrored), both walk-up and walk-down; there is no water between the strip and the ramps or the shelf; the deep water is the band minus the stones: three rects, (1030,1160,220×70), (1350,1160,220×70) and (1030,1320,540×40).
 - **Tunnel:** the far-bank cave, 110 wide, from a mouth on the ice at (1570,1500) east under the east
   bank and out at its south edge at (2000,1710) onto the south lane. Cover shows the seam and
   grating slots (#3236), as wide as the walkable floor (#3179).

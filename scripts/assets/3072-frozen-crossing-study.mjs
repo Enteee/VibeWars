@@ -174,6 +174,8 @@ const TUNNEL_W = 110;
 const STAIRS = [
   { id: "ramp-w", r: rect(960, 950, 110, 110), from: 0, horiz: true },
   { id: "ramp-e", r: rect(MW - 1070, 950, 110, 110), from: 0, horiz: true },
+  { id: "stone-ramp-w", r: rect(930, 1235, 110, 90), from: 0, horiz: true },
+  { id: "stone-ramp-e", r: rect(MW - 1040, 1235, 110, 90), from: 0, horiz: true },
   { id: "ridge-stair-w", r: rect(620, 930, 120, 90), from: 1, horiz: false },
   { id: "ridge-stair-e", r: rect(1980, 960, 120, 90), from: 1, horiz: false },
 ];
@@ -467,7 +469,7 @@ const teamCol = { t1: C.friend, t2: C.foe };
         ["west bank", BANK_W],
         ["east bank", BANK_E],
         ["log", LOG],
-        ...STAIRS.slice(0, 2).map((s) => /** @type {[string, Pt[]]} */ ([s.id, s.r])),
+        ...STAIRS.slice(0, 4).map((s) => /** @type {[string, Pt[]]} */ ([s.id, s.r])),
       ],
     ],
     [
@@ -476,7 +478,7 @@ const teamCol = { t1: C.friend, t2: C.foe };
       [
         ["bare ridge", RIDGE_W],
         ["snow ridge", RIDGE_E],
-        ...STAIRS.slice(2).map((s) => /** @type {[string, Pt[]]} */ ([s.id, s.r])),
+        ...STAIRS.slice(4).map((s) => /** @type {[string, Pt[]]} */ ([s.id, s.r])),
       ],
     ],
   ];
