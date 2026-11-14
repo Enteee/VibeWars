@@ -1152,6 +1152,18 @@
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0.35
+      },
+      {
+        "id": "bad-ground-glow",
+        "position": {
+          "x": 6570,
+          "y": 1100
+        },
+        "layer": 1,
+        "radius": 360,
+        "colour": 16738856,
+        "intensity": 0.75,
+        "flicker": 0.35
       }
     ]
   },
