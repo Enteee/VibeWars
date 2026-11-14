@@ -105,9 +105,9 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
   return jobs.map(({ specs, repeat }) => ({ specs, repeat }));
 };
 
-/** Recorded seconds (e2e-durations.json) of test runs per job: 800 s, so with setup and build the job fits the 60 min cap, hosted e2e-repeat runs taking up to ~3.3x the recorded seconds (gameplay.spec, 15 min a run against 271 s recorded, #3266), and ten repeats of a spec up to 400 s fit in MAX_JOBS jobs. */
-export const SECONDS_PER_JOB = 800;
-export const MAX_JOBS = 6;
+/** Recorded seconds (e2e-durations.json) of test runs per job: 400 s, so a run ends near 10 min (#3309). Hosted e2e-repeat runs take up to ~3.3x the recorded seconds (gameplay.spec, 15 min a run against 271 s recorded, #3266), and a spec over the budget still gets one run per job. MAX_JOBS fits ten repeats of each of the two largest specs (training 371 s, builds 302 s: 20 jobs). */
+export const SECONDS_PER_JOB = 400;
+export const MAX_JOBS = 20;
 export const REPEATS = 10;
 /**
  * Throws unless the Playwright JSON report ran at least one test. Skipped
