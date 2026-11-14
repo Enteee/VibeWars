@@ -518,6 +518,32 @@
       "switched": null
     },
     {
+      "id": "watch-house",
+      "layer": 3,
+      "footprint": {
+        "kind": "rect",
+        "x": 1690,
+        "y": 260,
+        "width": 150,
+        "height": 110
+      },
+      "look": "rooftop",
+      "switched": null
+    },
+    {
+      "id": "watch-walk",
+      "layer": 3,
+      "footprint": {
+        "kind": "rect",
+        "x": 1840,
+        "y": 290,
+        "width": 60,
+        "height": 50
+      },
+      "look": "bridge-plank",
+      "switched": null
+    },
+    {
       "id": "rope-bridge",
       "layer": 2,
       "footprint": {
@@ -732,6 +758,21 @@
       },
       "uphill": "n",
       "look": "ladder",
+      "lift": null
+    },
+    {
+      "id": "watch-house-stairs",
+      "from": 2,
+      "to": 3,
+      "area": {
+        "kind": "rect",
+        "x": 1840,
+        "y": 330,
+        "width": 60,
+        "height": 130
+      },
+      "uphill": "n",
+      "look": "stairs",
       "lift": null
     }
   ],
@@ -948,20 +989,20 @@
       "kind": "polygon",
       "points": [
         {
-          "x": 1840,
-          "y": 400
+          "x": 1610,
+          "y": 420
         },
         {
-          "x": 1880,
-          "y": 390
+          "x": 1650,
+          "y": 410
         },
         {
-          "x": 1895,
-          "y": 425
+          "x": 1665,
+          "y": 445
         },
         {
-          "x": 1860,
-          "y": 440
+          "x": 1630,
+          "y": 460
         }
       ],
       "layer": 2
@@ -986,6 +1027,14 @@
           "y": 362
         }
       ],
+      "layer": 2
+    },
+    {
+      "kind": "rect",
+      "x": 1690,
+      "y": 260,
+      "width": 150,
+      "height": 100,
       "layer": 2
     }
   ],
@@ -1464,6 +1513,18 @@
         "colour": 16756832,
         "intensity": 0.7,
         "flicker": 0.3
+      },
+      {
+        "id": "watch-house-lantern",
+        "position": {
+          "x": 1765,
+          "y": 300
+        },
+        "layer": 3,
+        "radius": 130,
+        "colour": 16756832,
+        "intensity": 0.6,
+        "flicker": 0.2
       },
       {
         "id": "bridge-lantern",

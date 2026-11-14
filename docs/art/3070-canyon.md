@@ -8,7 +8,9 @@ is not committed). Layout is new and asymmetric; the PNG is a guide, not coordin
   (L2 top `#9a7a62`, lip `#c9ad94`, cliff face `#5e4538`). Desaturated brown, never
   danger orange; the only warm saturation is torch light.
 - **Heights:** ledges on the north cliff (L1), a stone arch over the bed at x=250
-  (walk over, pass under), a ruined watchtower on the north rim (L2, holes and rubble),
+  (walk over, pass under), a ruined watchtower on the north rim (L2, holes and rubble), and west of it a watch
+  house (#3179) whose flat roof (L3, sunlit, a lantern) is reached by stairs between
+  the two and joined to the tower top by a plank walk,
   a terraced path of three plaster steps on the south rim down to L1, a drop-off from
   the south lip into the bed.
 - **Elements:** rope bridge at the narrowest point (x=400) with a brass lever on its
