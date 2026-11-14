@@ -256,7 +256,7 @@ describe("a body's layer (ADR-0051)", () => {
 
   it("rises at a shrine on its spawn's layer, having died on a deck", () => {
     const sim = arena([spec("a", 0, vec2(400, 400), 0)], {
-      shrines: [{ team: 0, position: vec2(150, 400) }],
+      shrines: [{ team: 0, position: vec2(150, 400), layer: 0 }],
     });
     sim.walkTo("a", vec2(600, 450), 1);
     run(sim, 6);
@@ -423,9 +423,10 @@ describe("an objective on a layer (ADR-0051, #2900)", () => {
 
   const DECK_FLAGS: FlagField = {
     stand: vec2(1000, 400),
+    standLayer: 0,
     spawns: [
       { team: 0, position: ON_DECK, layer: 1 },
-      { team: 1, position: vec2(1500, 900) },
+      { team: 1, position: vec2(1500, 900), layer: 0 },
     ],
   };
 

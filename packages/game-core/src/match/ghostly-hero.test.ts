@@ -39,9 +39,10 @@ const DT = 1 / RULES.tickRateHz;
 const FIELD: GhostField = {
   level: 28,
   altar: undefined,
+  altarLayer: 0,
   spawns: [
-    { team: 0, position: vec2(300, 500) },
-    { team: 1, position: vec2(1700, 500) },
+    { team: 0, position: vec2(300, 500), layer: 0 },
+    { team: 1, position: vec2(1700, 500), layer: 0 },
   ],
 };
 const GHOST_0 = ghostId(0);
@@ -227,8 +228,8 @@ describe("the Ghostly Hero (#2689)", () => {
 
 describe("when a dead Ghostly Hero rises (#2839)", () => {
   const SHRINES: readonly Shrine[] = [
-    { team: 0, position: vec2(100, 500) },
-    { team: 1, position: vec2(1900, 500) },
+    { team: 0, position: vec2(100, 500), layer: 0 },
+    { team: 1, position: vec2(1900, 500), layer: 0 },
   ];
 
   function game(matchRules: MatchRules, shrines: readonly Shrine[]): MatchSimulation {

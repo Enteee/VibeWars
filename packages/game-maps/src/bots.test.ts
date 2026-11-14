@@ -82,7 +82,7 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
           const build = STARTER_BUILDS[(i + seed.charCodeAt(0)) % STARTER_BUILDS.length];
           if (build === undefined) throw new Error("no built-in builds");
           return {
-            ...playBuildBot(build, `${String(team)}-${String(i)}`, team, spawn.position, 0),
+            ...playBuildBot(build, `${String(team)}-${String(i)}`, team, spawn, 0),
             behaviour: { kind: "play-build", reaction: BOT_REACTION, spikeHold },
           };
         }),
@@ -556,7 +556,7 @@ describe("a lever gate the only way between the spawns (#3138)", () => {
             build(name),
             `${String(team)}-${String(k)}`,
             team,
-            { x: team === 0 ? 150 : 1450, y: 300 + 200 * k },
+            { position: { x: team === 0 ? 150 : 1450, y: 300 + 200 * k }, layer: 0 },
             0,
           ),
         ),
@@ -600,7 +600,7 @@ function casterBots(
           throw new Error(
             `no starter build ${String(CASTERS[(k + team * shift) % CASTERS.length])}`,
           );
-        return playBuildBot(build, `${String(team)}-${String(k)}`, team, spawn.position, 0);
+        return playBuildBot(build, `${String(team)}-${String(k)}`, team, spawn, 0);
       }),
   );
 }
@@ -636,7 +636,7 @@ describe("a breakable wall the only way between the spawns (#3140)", () => {
             build(name),
             `${String(team)}-${String(k)}`,
             team,
-            { x: team === 0 ? 150 : 1450, y: 300 + 200 * k },
+            { position: { x: team === 0 ? 150 : 1450, y: 300 + 200 * k }, layer: 0 },
             0,
           ),
         ),

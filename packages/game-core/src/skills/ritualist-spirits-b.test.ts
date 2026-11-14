@@ -42,9 +42,10 @@ const NO_RESPAWN: MatchRules = {
 };
 const FIELD: FlagField = {
   stand: vec2(1000, 300),
+  standLayer: 0,
   spawns: [
-    { team: 0, position: vec2(300, 300) },
-    { team: 1, position: vec2(1700, 300) },
+    { team: 0, position: vec2(300, 300), layer: 0 },
+    { team: 1, position: vec2(1700, 300), layer: 0 },
   ],
 };
 

@@ -2190,8 +2190,10 @@ export class MatchSimulation {
         template.attack === undefined ? 0 : (ranks.get(template.attack.attributeId) ?? 0),
       ),
       spawn: at,
-      // Where its summoner stands (ADR-0051); nobody summoned a masterless one.
-      layer: (ownerId === undefined ? undefined : this.#participants.get(ownerId)?.layer) ?? 0,
+      // Where its summoner stands (ADR-0051); a masterless one stands on the ground.
+      layer:
+        (ownerId === undefined ? undefined : this.#participants.get(ownerId)?.layer) ??
+        this.#ground,
       facing,
       // Spawning Power is the summoner's (#1098), for what they create: spirits
       // and minions. A pet is charmed, not created, and is not on the wiki's
@@ -6848,7 +6850,7 @@ export class MatchSimulation {
     if (ghost.creature?.leaderId === record.id) {
       this.#stay(ghost, ghost.position);
     } else {
-      ghost.behaviour = followBehaviour(field.altar, field.altarLayer ?? 0);
+      ghost.behaviour = followBehaviour(field.altar, field.altarLayer);
       ghost.cursor = createCursor();
       if (ghost.creature !== undefined) {
         ghost.creature.leaderId = record.id;
@@ -6890,11 +6892,10 @@ export class MatchSimulation {
    */
   #mayClaim(record: ParticipantRecord): boolean {
     const field = this.#ghostField;
-    const altar = field?.altar;
     if (
-      altar === undefined ||
+      field?.altar === undefined ||
       record.combatant.dead ||
-      !onHill(altar, field?.altarLayer ?? 0, record)
+      !onHill(field.altar, field.altarLayer, record)
     ) {
       return false;
     }
@@ -6980,13 +6981,13 @@ export class MatchSimulation {
         relicSpawns: this.#relicField.spawns,
         relicCarry: this.#relicField.relicCarry,
         altar: this.#relicField.altar,
-        altarLayer: this.#relicField.altarLayer ?? 0,
+        altarLayer: this.#relicField.altarLayer,
       };
     } else if (victory === "king-of-the-hill" && this.#ghostField !== undefined) {
       this.#botObjectives = {
         ...NO_OBJECTIVES,
         altar: this.#ghostField.altar,
-        altarLayer: this.#ghostField.altarLayer ?? 0,
+        altarLayer: this.#ghostField.altarLayer,
         altarHolder: this.#altarState.holder,
       };
     } else {
@@ -7899,7 +7900,7 @@ export class MatchSimulation {
         !body.combatant.dead &&
         body.creature?.kind !== "spirit" &&
         body.combatant.team !== state.owner &&
-        atObjective(field.stand, field.standLayer ?? 0, body, BEACON_STRIKE_RADIUS),
+        atObjective(field.stand, field.standLayer, body, BEACON_STRIKE_RADIUS),
     );
     if (foes.length === 0) {
       return;
@@ -9840,15 +9841,23 @@ export class MatchSimulation {
     }
   }
 
-  /** Where `record` respawns: its spawn, or the altar its team holds in the Halls' King of the Hill (#2700). */
-  #respawnPlace(record: ParticipantRecord): Vec2 {
-    const altar = this.#ghostField?.altar;
-    return altar !== undefined &&
+  /**
+   * Where `record` respawns, and on which layer: its spawn, or the altar
+   * its team holds in the Halls' King of the Hill (#2700), on the altar's.
+   */
+  #respawnPlace(record: ParticipantRecord): { readonly at: Vec2; readonly layer: number } {
+    const field = this.#ghostField;
+    return field?.altar !== undefined &&
       record.creature === undefined &&
       this.#matchRules?.respawnOnWave === true &&
       this.#altarState.holder === record.combatant.team
-      ? altar
-      : record.spawn;
+      ? { at: field.altar, layer: field.altarLayer }
+      : this.#spawnPlace(record);
+  }
+
+  /** Where `record` starts, and is reset to: its spawn, on its spec's layer or the ground. */
+  #spawnPlace(record: ParticipantRecord): { readonly at: Vec2; readonly layer: number } {
+    return { at: record.spawn, layer: record.spec.layer ?? this.#ground };
   }
 
   /**
@@ -10317,7 +10326,7 @@ export class MatchSimulation {
     combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
-    record.layer = shrine.layer ?? this.#ground;
+    record.layer = shrine.layer;
     let position = nearestStandable(this.#graphOn(record.layer), shrine.position);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
       position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);
@@ -10539,7 +10548,7 @@ export class MatchSimulation {
    * morale boost (#474).
    */
   #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
-    const returnsTo = why === "respawn" ? this.#respawnPlace(record) : record.spawn;
+    const returnsTo = why === "respawn" ? this.#respawnPlace(record) : this.#spawnPlace(record);
     if (why === "reset") {
       record.combatant.overcast = 0;
       this.#setMorale(record, 0);
@@ -10553,8 +10562,8 @@ export class MatchSimulation {
     emptyAdrenaline(record.combatant);
     record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
-    record.position = returnsTo;
-    record.layer = record.spec.layer ?? this.#ground;
+    record.position = returnsTo.at;
+    record.layer = returnsTo.layer;
     this.#refreshFloors(record);
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;

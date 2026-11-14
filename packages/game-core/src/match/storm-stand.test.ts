@@ -22,10 +22,11 @@ const STAND = vec2(1000, 300);
 
 const FIELD: FlagField = {
   stand: STAND,
+  standLayer: 0,
   beacon: true,
   spawns: [
-    { team: 0, position: vec2(900, 300) },
-    { team: 1, position: vec2(1100, 300) },
+    { team: 0, position: vec2(900, 300), layer: 0 },
+    { team: 1, position: vec2(1100, 300), layer: 0 },
   ],
 };
 

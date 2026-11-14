@@ -22,8 +22,8 @@ export interface BaseGuard {
   readonly team: number;
   readonly role: GuardRole;
   readonly position: Vec2;
-  /** The layer it stands on (ADR-0051). Omitted: the ground. */
-  readonly layer?: number;
+  /** The layer it stands on (ADR-0051). */
+  readonly layer: number;
 }
 
 interface GuardRoleSpec {
@@ -129,7 +129,7 @@ export function guardSpec(guard: BaseGuard, index: number, facing: number): Part
       },
     },
     spawn: guard.position,
-    layer: guard.layer ?? 0,
+    layer: guard.layer,
     facing,
     maxHealth: GUARD_HEALTH,
     maxEnergy: GUARD_ENERGY,
