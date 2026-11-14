@@ -10,17 +10,17 @@ the place (a frozen river) is kept.
 ## Rules the study holds
 
 - **Bounds** 2600×1940 = 5.04 M u² (1× Canyon, 2v2). The ground outline fills 72 % of it, ragged,
-  with natural land outside.
+  with `rock` (`OUTSIDE_KINDS`) outside, drawn as boulders and drifted scree.
 - **New biome `snow`, proposed row** for `visual-style.md` §1 (the map's first build PR adds it):
   ground `#5a5f66` (shaded snow), rock `#4d4a4a`, plant/earth: thaw slush `#6a6a58`. Snow decks
   `#9ea4ab` (ridge tops `#b4b9be`), river ice `#7d8a94` (a breath cooler than the ground), open water `#34495a`. All
-  low chroma and neutral-to-grey; none sits within a hand's width of friend `#59c2ff`, help
-  `#3f9fe8`/`#9fdcff` or magic violet, which is why the ice is grey-teal and the water dark, not blue.
+  low chroma and neutral-to-grey; the river ice has friend `#59c2ff`'s hue (206° against 202°) but not its colour: saturation 10 % against
+  100 %, and an sRGB distance of 126, with the ice 40 % darker (L 0.54 against 0.67), which is why the ice is grey-teal and the water dark, not blue. The other tones are neutral greys at saturation ≤ 10 %.
   The build PR adds the row and its `arena-palette.test.ts` check; this study adds no code. Decks are kept mid-grey on purpose: near-white snow would wash the friend blue out, so bodies keep their contrast on it.
 - **Layers (3):** L0 river ice, open water, stepping stones and the cave floor; L1 the two banks (a
   `deck` each, 70 up) and the log bridge; L2 a ridge on each bank (`decks`, 140 up).
 - **Structures (≥ 4):** two banks; four ramps (two down to the ice, two off the stones); two ridge stairs; two ridges; the log
-  bridge (a `bridge` deck at bank height); five stepping stones, 120 wide at a 105 pitch, run edge to edge of the deep band (x 1030..1570, y 1230..1320) and a sixth links the strip north to the band edge at x 1250..1350. Each end meets the bank's 70 u face at a short ramp up (`stone-ramp-w` at (930,1235), `stone-ramp-e` mirrored), both walk-up and walk-down; there is no water between the strip and the ramps or the shelf; the deep water is the band minus the stones: three rects, (1030,1160,220×70), (1350,1160,220×70) and (1030,1320,540×40).
+  bridge (a `bridge` deck at bank height); five stepping stones, 120 wide at a 105 pitch, run edge to edge of the deep band (x 1030..1570; the strip itself is y 1230..1320) and a sixth links the strip north to the band edge at x 1250..1350. Each end meets the bank's 70 u face at a short ramp up (`stone-ramp-w` at (930,1235), `stone-ramp-e` mirrored), both walk-up and walk-down; there is no water between the strip and the ramps or the shelf; the deep band is y 1160..1360, and its water is the band minus the strip and link: three rects, (1030,1160,220×70) and (1350,1160,220×70) north of the strip (y 1160..1230) and (1030,1320,540×40) south of it (y 1320..1360).
 - **Tunnel:** the far-bank cave, 110 wide, from a mouth on the ice at (1570,1500) east under the east
   bank and out at its south edge at (2000,1710) onto the south lane. Cover shows the seam and
   grating slots (#3236), as wide as the walkable floor (#3179).
@@ -43,18 +43,22 @@ the place (a frozen river) is kept.
 Spawns: T1 (470,1330) and (540,1460) on the west bank; T2 mirrored on the east bank.
 The centre is the central shelf, (1300,1000).
 
-| Route                                                           | Length | Walk  |
-| --------------------------------------------------------------- | ------ | ----- |
-| ice shelf (ramp down, across the ice)                           | 927 u  | 5.1 s |
-| stepping stones (over the open water)                           | 1086 u | 6.0 s |
-| log bridge (up the bank, over the bridge, through the ice wall) | 1597 u | 8.9 s |
+| Route (T1 / T2)                                                 | Length        | Walk        |
+| --------------------------------------------------------------- | ------------- | ----------- |
+| ice shelf (ramp down, across the ice)                           | 927 / 974 u   | 5.2 / 5.4 s |
+| stepping stones (over the open water)                           | 1086 / 1121 u | 6.0 / 6.2 s |
+| log bridge (up the bank, over the bridge, through the ice wall) | 1597 / 1648 u | 8.9 / 9.2 s |
 
-Both teams have the same three, so their walks are equal. The sides differ on purpose: the east bank
+The log-bridge time assumes the ice wall is broken (it starts shut). Both teams have the same three routes and their walks are within 6 %. The east bank is not a mirror of the west: it bulges toward the river in the middle and steps back at the south, and the T2 seats stand further from the water. The sides differ on purpose: the east bank
 holds the cave and a snow-capped ridge (231 k u²); the west a bare rock ridge (213 k u², 8 %
 smaller, within 25 %) and the thaw slush. High ground within half the map of either spawn is its own
 ridge, reached by its own stair; neither is reachable without crossing the middle or the bridge.
 The cave gives the east a flank onto the south lane; the west's matching asset is the bank-edge
-drop on its south lane. **Known risk for the build card:** the cave is an east-only flank, so a 2v2 with a one-sided tunnel needs the bench to watch for it (walks are equal, the flank is not); the build card must measure it, not leave it to later tuning.
+drop on its south lane. **Known risk for the build card:** the cave is an east-only flank, so a 2v2 with a one-sided tunnel needs the bench to watch for it (walks are within 6 %, the flank is not); the build card must measure it, not leave it to later tuning.
+
+## Signature fight
+
+The thaw: the stone strip is a narrow, fast crossing that the ice wall and the lever can shut or open round, so the fight is for the lever and the strip, not for the ridges.
 
 ## Canyon lessons, on the plan
 

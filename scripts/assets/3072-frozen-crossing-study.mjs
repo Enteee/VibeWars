@@ -113,7 +113,21 @@ const BANK_W = [
   [300, 1450],
   [230, 1000],
 ];
-const BANK_E = mirror(BANK_W);
+// the east bank is the west one bent by hand: it bulges toward the river in the middle and steps back at the south
+/** @type {Pt[]} */
+const BEND = [
+  [-40, 10],
+  [30, -10],
+  [60, 20],
+  [-30, 30],
+  [50, -20],
+  [40, -40],
+  [-50, 20],
+  [-60, 30],
+];
+const BANK_E = mirror(BANK_W).map(
+  ([x, y], i) => /** @type {Pt} */ ([x + (BEND[i]?.[0] ?? 0), y + (BEND[i]?.[1] ?? 0)]),
+);
 // L2 ridges: different outlines, areas within 25 %
 /** @type {Pt[]} */
 const RIDGE_W = [
@@ -195,8 +209,8 @@ const SPAWNS = {
     [540, 1460],
   ],
   t2: [
-    [2130, 1330],
-    [2060, 1460],
+    [2160, 1360],
+    [2090, 1490],
   ],
 };
 /** @type {{ p: Pt; col: string; r: number }[]} */
@@ -246,7 +260,7 @@ const ROUTES = {
     [
       "ice shelf",
       [
-        [2100, 1380],
+        [2125, 1425],
         [1700, 1100],
         [1590, 1000],
         [1300, 1000],
@@ -255,7 +269,7 @@ const ROUTES = {
     [
       "stepping stones",
       [
-        [2100, 1380],
+        [2125, 1425],
         [1600, 1275],
         [1300, 1275],
         [1300, 1000],
@@ -264,7 +278,7 @@ const ROUTES = {
     [
       "log bridge",
       [
-        [2100, 1380],
+        [2125, 1425],
         [1800, 900],
         [1600, 640],
         [1300, 600],
