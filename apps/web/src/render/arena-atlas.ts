@@ -75,6 +75,8 @@ export const CREATURE_GLYPH: Readonly<
   guard: { family: "profession", name: "warrior" },
   // Until the Ghostly Hero's own glyph is drawn (#1377): the priest's, tinted pale in the arena.
   "ghostly-hero": { family: "creature", name: "spirit" },
+  // Until the rat's own glyph is drawn (#3315): the pet's, another animal.
+  rat: { family: "creature", name: "beast" },
 };
 
 /** Whether `skill` leaves a ground effect (#1087), whose icon shows at the ward's centre. */

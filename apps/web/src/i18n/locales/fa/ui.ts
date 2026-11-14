@@ -325,6 +325,7 @@ export default {
   "controls.weaponSet3": "ست سلاح 3",
   "controls.weaponSet4": "ست سلاح 4",
   "controls.weaponSets": "ست‌های سلاح",
+  "creature.rat": "موش",
 
   "echo.secondsLeft": { one: "پژواک: {count} ثانیه مانده", other: "پژواک: {count} ثانیه مانده" },
 

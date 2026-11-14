@@ -356,6 +356,7 @@ export default {
   "controls.weaponSet3": "Набір зброї 3",
   "controls.weaponSet4": "Набір зброї 4",
   "controls.weaponSets": "Набори зброї",
+  "creature.rat": "Щур",
 
   "echo.secondsLeft": {
     one: "Відлуння: ще {count} с",

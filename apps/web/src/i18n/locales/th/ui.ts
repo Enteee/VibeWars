@@ -295,6 +295,7 @@ export default {
   "controls.weaponSet3": "ชุดอาวุธ 3",
   "controls.weaponSet4": "ชุดอาวุธ 4",
   "controls.weaponSets": "ชุดอาวุธ",
+  "creature.rat": "หนู",
 
   "echo.secondsLeft": { other: "เอคโค: เหลือ {count} วิ" },
 

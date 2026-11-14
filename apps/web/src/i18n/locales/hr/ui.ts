@@ -345,6 +345,7 @@ export default {
   "controls.weaponSet3": "Komplet oružja 3",
   "controls.weaponSet4": "Komplet oružja 4",
   "controls.weaponSets": "Kompleti oružja",
+  "creature.rat": "Štakor",
 
   "echo.secondsLeft": {
     one: "Jeka: još {count} s",

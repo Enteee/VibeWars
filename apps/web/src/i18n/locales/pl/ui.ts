@@ -357,6 +357,7 @@ export default {
   "controls.weaponSet3": "Zestaw broni 3",
   "controls.weaponSet4": "Zestaw broni 4",
   "controls.weaponSets": "Zestawy broni",
+  "creature.rat": "Szczur",
 
   "echo.secondsLeft": {
     one: "Echo: pozostała {count} s",

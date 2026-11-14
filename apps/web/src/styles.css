@@ -936,6 +936,11 @@ body {
   background: #3a6a3e;
 }
 
+/* A wall (#3317) is nobody's: stone, not a body's green. */
+.hud-target-health.is-wall .hud-bar-fill {
+  background: var(--ink-dim);
+}
+
 /* A corpse: an empty track in the corpse colour. */
 .hud-target-health.is-dead {
   border-color: #4a5464;

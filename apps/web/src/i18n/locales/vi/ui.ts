@@ -294,6 +294,7 @@ export default {
   "controls.weaponSet3": "Bộ vũ khí 3",
   "controls.weaponSet4": "Bộ vũ khí 4",
   "controls.weaponSets": "Bộ vũ khí",
+  "creature.rat": "Chuột",
 
   "echo.secondsLeft": { other: "Vang vọng: còn {count} s" },
 

@@ -323,6 +323,7 @@ export default {
   "controls.weaponSet3": "Silah seti 3",
   "controls.weaponSet4": "Silah seti 4",
   "controls.weaponSets": "Silah setleri",
+  "creature.rat": "Sıçan",
 
   "echo.secondsLeft": {
     one: "Yankılandı: {count} sn kaldı",
