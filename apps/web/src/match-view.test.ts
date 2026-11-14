@@ -281,6 +281,12 @@ describe("toArenaSnapshot", () => {
     const solo = toArenaSnapshot(match([formed]), [], [], undefined, undefined);
     expect(actorAtPoint(solo, inside)?.id).toBe("formed");
     expect(actorAtPoint(solo, drawnOnly)).toBeUndefined();
+    // Its name-and-body column ends at the same body, not the drawn one.
+    const tag = { left: -5, top: -60, right: 5, bottom: -40 };
+    const tagBoxes = new Map([["formed", tag]]);
+    expect(actorAtPoint(solo, { x: 0, y: ACTOR_RADIUS - 1 }, tagBoxes)?.id).toBe("formed");
+    expect(actorAtPoint(solo, { x: 0, y: ACTOR_RADIUS * 1.2 }, tagBoxes)).toBeUndefined();
+    expect(actorAtPoint(solo, { x: ACTOR_RADIUS * 1.2, y: -50 }, tagBoxes)).toBeUndefined();
   });
 
   it("shimmers a body while it is invulnerable, and not at 0 or as a corpse (#1233)", () => {

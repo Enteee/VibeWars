@@ -770,7 +770,7 @@ function nearestInColumn(
       continue;
     }
     const { x, y } = actor.position;
-    const r = actor.radius;
+    const r = hitRadius(actor);
     const inside =
       point.x >= Math.min(tag.left, x - r) &&
       point.x <= Math.max(tag.right, x + r) &&
