@@ -60,6 +60,8 @@ export type StationHighlight =
 export interface StationAside {
   readonly line: MessageKey;
   readonly when: (view: TutorialView) => boolean;
+  /** What the HUD points at while this aside stands, over the station's own. */
+  readonly highlight?: StationHighlight;
 }
 
 /** One beat of the tutorial (`docs/tutorial/playbook.md`): data, not code. */
@@ -268,6 +270,8 @@ export function healStation(tutorId: string, healSlot: number): Station {
 
 /** The effects monitor (#3310), where a status shows as an icon and a draining bar. */
 export const EFFECTS_MONITOR = ".effects-monitor";
+/** The player's health bar on the HUD (#3310). */
+export const HEALTH_BAR = ".hud-bar-health";
 
 /**
  * Station 7 (playbook §7), in the canyon: walk to the mark past the bad
@@ -275,7 +279,7 @@ export const EFFECTS_MONITOR = ".effects-monitor";
  * ground gives the player gets one line, the mire's or the molten strip's,
  * and the effects monitor pulses, the mark beside it, until that status
  * runs out; a later one gets neither. The first drop in health gets the
- * health bar's line. Done on the mark, however the player came.
+ * health bar's line, pointing at it. Done on the mark, however the player came.
  */
 export function badGroundStation(mark: Vec2, layer: number): Station {
   /** The first status the ground gave, and whether it has run out since. */
@@ -308,7 +312,11 @@ export function badGroundStation(mark: Vec2, layer: number): Station {
           return status === "burning" || status === "crippled";
         },
       },
-      { line: "tutorial.ground.health", when: (view) => view.healthDropped },
+      {
+        line: "tutorial.ground.health",
+        when: (view) => view.healthDropped,
+        highlight: { kind: "hud", element: HEALTH_BAR },
+      },
     ],
     done: (view) => onMark(view, mark, layer),
   };

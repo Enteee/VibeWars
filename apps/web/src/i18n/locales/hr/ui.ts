@@ -1493,7 +1493,7 @@ export default {
   "tutorial.dodge.intro": "Ovdje pada kamenje. Kad sjena raste, makni se u stranu!",
   "tutorial.dodge.praise": "Brze noge! Kamenje te ne može stići.",
   "tutorial.ground.burning": "Vruće! Traka se prazni, a onda nestane.",
-  "tutorial.ground.health": "Ta crvena traka si ti. Drži je punom.",
+  "tutorial.ground.health": "Ta zelena traka si ti. Drži je punom.",
   "tutorial.ground.hint": "Oznaka je iza blata. Kroz njega ili oko njega.",
   "tutorial.ground.how": "Lijevi klik na tlo, ili hodaj s {keys}.",
   "tutorial.ground.intro": "Blato te usporava. Lava peče. Ti biraš.",

@@ -1535,7 +1535,7 @@ export default {
   "tutorial.dodge.intro": "Tady padá kamení. Když stín roste, uhni stranou!",
   "tutorial.dodge.praise": "Rychlé nohy! Kamení tě nedostihne.",
   "tutorial.ground.burning": "Horko! Pruh ubývá a pak zmizí.",
-  "tutorial.ground.health": "Ten červený pruh jsi ty. Drž ho nahoře.",
+  "tutorial.ground.health": "Ten zelený pruh jsi ty. Drž ho nahoře.",
   "tutorial.ground.hint": "Značka je za bahnem. Projdi jím, nebo ho obejdi.",
   "tutorial.ground.how": "Klikni levým tlačítkem na zem, nebo choď pomocí {keys}.",
   "tutorial.ground.intro": "Bahno tě zpomalí. Láva pálí. Volba je tvoje.",

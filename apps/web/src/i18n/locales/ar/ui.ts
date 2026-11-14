@@ -1610,7 +1610,7 @@ export default {
   "tutorial.dodge.intro": "الصخور تتساقط هنا. حين يكبر ظل، تنحَّ جانبًا!",
   "tutorial.dodge.praise": "قدمان سريعتان! الصخور لا تلحق بك.",
   "tutorial.ground.burning": "حار! الشريط ينفد، ثم يزول.",
-  "tutorial.ground.health": "ذلك الشريط الأحمر هو أنت. أبقِه ممتلئًا.",
+  "tutorial.ground.health": "ذلك الشريط الأخضر هو أنت. أبقِه ممتلئًا.",
   "tutorial.ground.hint": "العلامة بعد الطين. اعبره أو دُر حوله.",
   "tutorial.ground.how": "انقر بالزر الأيسر على الأرض، أو امشِ بـ {keys}.",
   "tutorial.ground.intro": "الطين يبطئك. الحمم تحرق. القرار لك.",

@@ -1427,7 +1427,7 @@ export default {
   "tutorial.dodge.intro": "Itt kövek hullanak. Ha egy árnyék nő, lépj félre!",
   "tutorial.dodge.praise": "Fürge lábak! A kövek nem érnek utol.",
   "tutorial.ground.burning": "Forró! A sáv lefogy, aztán eltűnik.",
-  "tutorial.ground.health": "Az a piros sáv te vagy. Tartsd fent.",
+  "tutorial.ground.health": "Az a zöld sáv te vagy. Tartsd fent.",
   "tutorial.ground.hint": "A jel a sáron túl van. Át rajta vagy körbe.",
   "tutorial.ground.how": "Kattints a földre bal gombbal, vagy járj ezekkel: {keys}.",
   "tutorial.ground.intro": "A sár lelassít. A láva éget. Te döntesz.",

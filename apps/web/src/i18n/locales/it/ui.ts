@@ -1499,7 +1499,7 @@ export default {
   "tutorial.dodge.intro": "Qui cadono massi. Quando un'ombra cresce, fatti da parte!",
   "tutorial.dodge.praise": "Piedi svelti! I massi non ti prendono.",
   "tutorial.ground.burning": "Scotta! La barra si svuota, poi sparisce.",
-  "tutorial.ground.health": "Quella barra rossa sei tu. Tienila alta.",
+  "tutorial.ground.health": "Quella barra verde sei tu. Tienila alta.",
   "tutorial.ground.hint": "Il segno è oltre il fango. Attraverso o intorno.",
   "tutorial.ground.how": "Clic sinistro sul terreno, o cammina con {keys}.",
   "tutorial.ground.intro": "Il fango ti rallenta. La lava brucia. Decidi tu.",

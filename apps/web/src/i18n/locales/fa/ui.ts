@@ -1417,7 +1417,7 @@ export default {
   "tutorial.dodge.intro": "اینجا سنگ می‌ریزد. وقتی سایه‌ای بزرگ شد، کنار برو!",
   "tutorial.dodge.praise": "پاهای چابک! سنگ‌ها به تو نمی‌رسند.",
   "tutorial.ground.burning": "داغ است! نوار خالی می‌شود و بعد می‌رود.",
-  "tutorial.ground.health": "آن نوار قرمز تویی. پرش نگه دار.",
+  "tutorial.ground.health": "آن نوار سبز تویی. پرش نگه دار.",
   "tutorial.ground.hint": "نشانه آن سوی گل است. از میانش برو یا دورش بزن.",
   "tutorial.ground.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
   "tutorial.ground.intro": "گل کندت می‌کند. گدازه می‌سوزاند. انتخاب با توست.",

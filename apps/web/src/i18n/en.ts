@@ -1421,7 +1421,7 @@ export const en = {
   "tutorial.dodge.intro": "Rocks fall here. When a shadow grows, step aside!",
   "tutorial.dodge.praise": "Quick feet! The rocks can't catch you.",
   "tutorial.ground.burning": "Hot! The bar drains, then it's gone.",
-  "tutorial.ground.health": "That red bar is you. Keep it up.",
+  "tutorial.ground.health": "That green bar is you. Keep it up.",
   "tutorial.ground.hint": "The mark is past the mud. Through it, or round it.",
   "tutorial.ground.how": "Left click the ground, or walk with {keys}.",
   "tutorial.ground.intro": "Mud slows you. Lava burns. Your call.",

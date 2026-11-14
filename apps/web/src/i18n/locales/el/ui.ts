@@ -1441,7 +1441,7 @@ export default {
   "tutorial.dodge.intro": "Εδώ πέφτουν βράχια. Όταν μια σκιά μεγαλώνει, παραμέρισε!",
   "tutorial.dodge.praise": "Γρήγορα πόδια! Οι βράχοι δεν σε πιάνουν.",
   "tutorial.ground.burning": "Καίει! Η μπάρα αδειάζει και μετά χάνεται.",
-  "tutorial.ground.health": "Η κόκκινη μπάρα είσαι εσύ. Κράτα τη ψηλά.",
+  "tutorial.ground.health": "Η πράσινη μπάρα είσαι εσύ. Κράτα τη ψηλά.",
   "tutorial.ground.hint": "Το σημάδι είναι πέρα από τη λάσπη. Μέσα ή γύρω της.",
   "tutorial.ground.how": "Αριστερό κλικ στο έδαφος, ή περπάτα με {keys}.",
   "tutorial.ground.intro": "Η λάσπη σε καθυστερεί. Η λάβα καίει. Εσύ διαλέγεις.",

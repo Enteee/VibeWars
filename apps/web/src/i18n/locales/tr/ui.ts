@@ -1421,7 +1421,7 @@ export default {
   "tutorial.dodge.intro": "Burada kayalar düşer. Bir gölge büyüyünce kenara çekil!",
   "tutorial.dodge.praise": "Çevik ayaklar! Kayalar sana yetişemiyor.",
   "tutorial.ground.burning": "Sıcak! Çubuk azalır, sonra kaybolur.",
-  "tutorial.ground.health": "O kırmızı çubuk sensin. Dolu tut.",
+  "tutorial.ground.health": "O yeşil çubuk sensin. Dolu tut.",
   "tutorial.ground.hint": "İşaret çamurun ötesinde. İçinden ya da etrafından.",
   "tutorial.ground.how": "Zemine sol tıkla ya da {keys} ile yürü.",
   "tutorial.ground.intro": "Çamur yavaşlatır. Lav yakar. Seçim senin.",
