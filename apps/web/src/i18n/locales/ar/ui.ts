@@ -1604,6 +1604,12 @@ export default {
   "training.soundOn": "الصوت مفعّل.",
   "training.you": "أنت",
 
+  "tutorial.climb.hint": "إلى الحافة، ثم انزل إلى الأرض تحتها.",
+  "tutorial.climb.how": "انقر حيث تريد الوقوف. Alt+نقرة (Option على Mac) تختار الأرض تحتك.",
+  "tutorial.climb.intro": "اصعد الدرج. الحلقة المصمتة هي حيث ستقف.",
+  "tutorial.climb.praise": "طبقتان، بقعة واحدة. صرت تقرأ الأرض الآن.",
+  "tutorial.climb.tip": "نصيحة: Alt+نقرة تختار الأرض تحت الحافة.",
+  "tutorial.climb.under": "اضغط Alt مع النقر. الحلقة المتقطعة تحتك.",
   "tutorial.dodge.hint": "انتظر قرب حلقة حتى يظهر ظلها، ثم ابتعد.",
   "tutorial.dodge.hit": "آه! الظل الذي يكبر يعني: تحرّك.",
   "tutorial.dodge.how": "انقر بالزر الأيسر على الأرض، أو امشِ بـ {keys}.",

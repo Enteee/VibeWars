@@ -1323,6 +1323,12 @@ export default {
   "training.soundOn": "เปิดเสียงแล้ว",
   "training.you": "คุณ",
 
+  "tutorial.climb.hint": "ขึ้นไปบนชะง่อน แล้วลงไปที่พื้นข้างใต้",
+  "tutorial.climb.how": "คลิกตรงที่จะยืน Alt+คลิก (Option บน Mac) จะเลือกพื้นข้างล่าง",
+  "tutorial.climb.intro": "ขึ้นบันได วงทึบคือที่ที่คุณจะยืน",
+  "tutorial.climb.praise": "สองชั้น จุดเดียว ตอนนี้คุณอ่านพื้นออกแล้ว",
+  "tutorial.climb.tip": "เคล็ดลับ: Alt+คลิก เลือกพื้นใต้ชะง่อน",
+  "tutorial.climb.under": "กด Alt ค้างไว้แล้วคลิก วงเส้นประอยู่ข้างล่างคุณ",
   "tutorial.dodge.hint": "รอข้างวงจนเงาของมันปรากฏ แล้วก้าวออกมา",
   "tutorial.dodge.hit": "โอ๊ย! เงาที่ขยายใหญ่ขึ้นแปลว่า ให้ขยับ",
   "tutorial.dodge.how": "คลิกซ้ายที่พื้น หรือเดินด้วย {keys}",

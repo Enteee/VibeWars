@@ -68,7 +68,7 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge: then the menu, and no offer again`, async ({
       page,
     }) => {
       // Four stations, each a walk or a drag in a sim that runs no faster than
@@ -77,8 +77,9 @@ test.describe("the first-time tutorial (#3218)", () => {
       // some 10 to 15 s, slower where the page draws slowly (#3302), and the
       // walk to the clearing and the heal some 30 s more (#3303), and the
       // walk round the bad ground some 20 s more (#3310), and the walk to the
-      // rats and their fight some 60 s more (#3316).
-      test.setTimeout(540_000);
+      // rats and their fight some 60 s more (#3316), and the ledge some 30 s
+      // more (#3323).
+      test.setTimeout(600_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
       const frame = page.locator(".tutorial-frame");
@@ -339,6 +340,38 @@ test.describe("the first-time tutorial (#3218)", () => {
         }
         await expect.poll(() => hasSaid(fought), { timeout: 3_000 }).toBe(true);
       }).toPass({ timeout: 120_000 });
+
+      // Station 9 (#3323): up the steps onto the ledge, its mark; then an
+      // Alt+click on the same mark walks to the ground under it.
+      await expect
+        .poll(() => hasSaid("Up the steps. A solid ring is where you'll stand."), {
+          timeout: 15_000,
+        })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
+      const [ledgeX = 0, ledgeY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+        .split(",")
+        .map(Number);
+      const under = "Hold Alt and click. The dashed ring is below you.";
+      await expect(async () => {
+        if (await hasSaid(under)) {
+          return;
+        }
+        await walkTo({ x: ledgeX, y: ledgeY });
+        await expect.poll(() => hasSaid(under), { timeout: 3_000 }).toBe(true);
+      }).toPass({ timeout: 90_000 });
+      const climbed = "Two layers, one spot. You read the ground now.";
+      await expect(async () => {
+        if (await hasSaid(climbed)) {
+          return;
+        }
+        await page.keyboard.down("Alt");
+        await walkTo({ x: ledgeX, y: ledgeY });
+        await page.keyboard.up("Alt");
+        await expect.poll(() => hasSaid(climbed), { timeout: 5_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
+      // Down by an Alt walk: no tip.
+      expect(await hasSaid("Tip: Alt+click picks the ground under a ledge.")).toBe(false);
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 

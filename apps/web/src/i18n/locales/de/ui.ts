@@ -1434,6 +1434,13 @@ export default {
   "training.soundOn": "Ton an.",
   "training.you": "Du",
 
+  "tutorial.climb.hint": "Rauf auf den Vorsprung, dann runter auf den Boden darunter.",
+  "tutorial.climb.how":
+    "Klick dorthin, wo du stehen willst. Alt+Klick (Option auf dem Mac) wählt den Boden darunter.",
+  "tutorial.climb.intro": "Die Stufen hoch. Ein voller Ring zeigt, wo du stehst.",
+  "tutorial.climb.praise": "Zwei Ebenen, eine Stelle. Jetzt liest du das Gelände.",
+  "tutorial.climb.tip": "Tipp: Alt+Klick wählt den Boden unter einem Vorsprung.",
+  "tutorial.climb.under": "Halte Alt und klick. Der gestrichelte Ring liegt unter dir.",
   "tutorial.dodge.hint": "Warte an einem Ring auf seinen Schatten, dann tritt heraus.",
   "tutorial.dodge.hit": "Au! Ein wachsender Schatten heißt: weg da.",
   "tutorial.dodge.how": "Linksklick auf den Boden, oder geh mit {keys}.",

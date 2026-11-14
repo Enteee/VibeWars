@@ -1487,6 +1487,12 @@ export default {
   "training.soundOn": "Zvuk uključen.",
   "training.you": "Ti",
 
+  "tutorial.climb.hint": "Gore na izbočinu, pa dolje na tlo ispod nje.",
+  "tutorial.climb.how": "Klikni gdje želiš stati. Alt+klik (Option na Macu) bira tlo ispod.",
+  "tutorial.climb.intro": "Uz stepenice. Puni krug pokazuje gdje ćeš stati.",
+  "tutorial.climb.praise": "Dva sloja, jedno mjesto. Sad znaš čitati teren.",
+  "tutorial.climb.tip": "Savjet: Alt+klik bira tlo ispod izbočine.",
+  "tutorial.climb.under": "Drži Alt i klikni. Isprekidani krug je ispod tebe.",
   "tutorial.dodge.hint": "Pričekaj kraj kruga njegovu sjenu, pa se makni.",
   "tutorial.dodge.hit": "Joj! Sjena koja raste znači: miči se.",
   "tutorial.dodge.how": "Lijevi klik na tlo, ili hodaj s {keys}.",

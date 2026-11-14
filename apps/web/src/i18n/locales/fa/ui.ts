@@ -1411,6 +1411,13 @@ export default {
   "training.soundOn": "صدا روشن شد.",
   "training.you": "تو",
 
+  "tutorial.climb.hint": "برو روی لبه، بعد پایین روی زمینِ زیرش.",
+  "tutorial.climb.how":
+    "جایی که می‌خواهی بایستی کلیک کن. Alt+کلیک (Option در Mac) زمینِ پایین را انتخاب می‌کند.",
+  "tutorial.climb.intro": "از پله‌ها بالا برو. حلقه‌ی توپر جایی است که می‌ایستی.",
+  "tutorial.climb.praise": "دو لایه، یک نقطه. حالا زمین را می‌خوانی.",
+  "tutorial.climb.tip": "نکته: Alt+کلیک زمینِ زیر لبه را انتخاب می‌کند.",
+  "tutorial.climb.under": "Alt را نگه دار و کلیک کن. حلقه‌ی خط‌چین زیر توست.",
   "tutorial.dodge.hint": "کنار یک حلقه منتظر سایه‌اش بمان، بعد کنار برو.",
   "tutorial.dodge.hit": "آخ! سایه‌ای که بزرگ می‌شود یعنی: حرکت کن.",
   "tutorial.dodge.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",

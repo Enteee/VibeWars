@@ -1418,6 +1418,13 @@ export default {
   "training.soundOn": "Звукът е включен.",
   "training.you": "Ти",
 
+  "tutorial.climb.hint": "Качи се на ръба, после слез на земята под него.",
+  "tutorial.climb.how":
+    "Кликни където искаш да застанеш. Alt+клик (Option на Mac) избира земята отдолу.",
+  "tutorial.climb.intro": "Изкачи стъпалата. Плътният кръг е мястото, където ще застанеш.",
+  "tutorial.climb.praise": "Два слоя, едно място. Вече четеш терена.",
+  "tutorial.climb.tip": "Съвет: Alt+клик избира земята под ръба.",
+  "tutorial.climb.under": "Задръж Alt и кликни. Пунктирният кръг е под теб.",
   "tutorial.dodge.hint": "Изчакай до кръг да се появи сянката му, после се отмести.",
   "tutorial.dodge.hit": "Ох! Растяща сянка значи: мръдни.",
   "tutorial.dodge.how": "Кликни с левия бутон по земята или върви с {keys}.",

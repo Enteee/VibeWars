@@ -1,4 +1,6 @@
 import type { Vec2 } from "@vibewars/game-core";
+import { pointInShape, shapeVertices } from "@vibewars/game-maps/geometry";
+import type { Shape } from "@vibewars/game-maps/schema";
 
 import type { MessageKey } from "../i18n/index.js";
 import type { KeyAction } from "../input/keymap.js";
@@ -54,6 +56,8 @@ export interface TutorialView {
   readonly bigRatDown: boolean;
   /** The rats died before two skills landed, so one more came: once true, it stays true. */
   readonly extraRat: boolean;
+  /** The last walk the player sent was an Alt walk, to the ground under the click (#3323). */
+  readonly belowClicked: boolean;
 }
 
 /** The statuses station 7's ground gives (#3310): the mire's, then the molten strip's. */
@@ -68,7 +72,12 @@ export type TutorialWorldName = "battlefield" | "canyon" | "canyon-2";
 
 /** What a station points at: a mark on the ground, or a HUD element by its selector. */
 export type StationHighlight =
-  | { readonly kind: "ground"; readonly at: Vec2 }
+  | {
+      readonly kind: "ground";
+      readonly at: Vec2;
+      /** The layer it glows on (#3323): the world's ground where it names none. */
+      readonly layer?: number;
+    }
   | { readonly kind: "hud"; readonly element: string };
 
 /** A line a station says once, when the view first shows what it is about. */
@@ -415,5 +424,59 @@ export function ratsStation(
       { line: "tutorial.rats.again", when: (view) => view.extraRat },
     ],
     done: (view) => view.ratsAlive === 0 && view.skillsOnRats.size >= SKILLS_ON_RATS,
+  };
+}
+
+/** The middle of `shape`'s bounds. */
+function shapeCentre(shape: Shape): Vec2 {
+  const corners = shapeVertices(shape);
+  const xs = corners.map(({ x }) => x);
+  const ys = corners.map(({ y }) => y);
+  return {
+    x: (Math.min(...xs) + Math.max(...xs)) / 2,
+    y: (Math.min(...ys) + Math.max(...ys)) / 2,
+  };
+}
+
+/**
+ * Station 9 (playbook §9), on the canyon's second map: up onto `ledge`,
+ * on `upper`, then down to the ground under it, on `lower`. The mark is
+ * on the ledge until the player has stood on it, then under its middle;
+ * the cursor's rings teach the rest. Any way down counts, but one that was
+ * no Alt walk gets the tip, once. Done under the ledge, after it.
+ */
+export function climbStation(ledge: Shape, upper: number, lower: number): Station {
+  const centre = shapeCentre(ledge);
+  /** The player has stood on the ledge; then has come down, and whether by an Alt walk. */
+  let up = false;
+  let down: { readonly byAlt: boolean } | undefined;
+  const look = (view: TutorialView): { up: boolean; down: typeof down } => {
+    up ||= view.selfLayer === upper && pointInShape(view.self, ledge);
+    if (up && down === undefined && view.selfLayer === lower) {
+      down = { byAlt: view.belowClicked };
+    }
+    return { up, down };
+  };
+  return {
+    id: "climb",
+    world: "canyon-2",
+    lines: {
+      intro: "tutorial.climb.intro",
+      hint: "tutorial.climb.hint",
+      praise: "tutorial.climb.praise",
+      how: "tutorial.climb.how",
+    },
+    highlight: (view) => ({ kind: "ground", at: centre, layer: look(view).up ? lower : upper }),
+    asides: [
+      { line: "tutorial.climb.under", when: (view) => look(view).up },
+      {
+        line: "tutorial.climb.tip",
+        when: (view) => {
+          const { down: came } = look(view);
+          return came !== undefined && !came.byAlt;
+        },
+      },
+    ],
+    done: (view) => look(view).up && view.selfLayer === lower && pointInShape(view.self, ledge),
   };
 }

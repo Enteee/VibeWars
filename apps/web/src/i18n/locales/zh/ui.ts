@@ -1306,6 +1306,12 @@ export default {
   "training.soundOn": "声音已开启。",
   "training.you": "你",
 
+  "tutorial.climb.hint": "登上岩台,再下到它下方的地面。",
+  "tutorial.climb.how": "点击你要站的位置。Alt+点击(Mac 上用 Option)选择下方的地面。",
+  "tutorial.climb.intro": "走上台阶。实线圆环就是你要站的地方。",
+  "tutorial.climb.praise": "两层地面,同一个点。你已经会看地形了。",
+  "tutorial.climb.tip": "提示:Alt+点击可选择岩台下方的地面。",
+  "tutorial.climb.under": "按住 Alt 再点击。虚线圆环在你下方。",
   "tutorial.dodge.hint": "在圆环旁等它的影子出现,然后走开。",
   "tutorial.dodge.hit": "哎哟!影子变大就是要你移动。",
   "tutorial.dodge.how": "左键点击地面,或用 {keys} 行走。",

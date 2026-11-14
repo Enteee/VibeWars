@@ -1486,6 +1486,13 @@ export default {
   "training.soundOn": "Som ligado.",
   "training.you": "Você",
 
+  "tutorial.climb.hint": "Suba na saliência e depois desça ao chão embaixo dela.",
+  "tutorial.climb.how":
+    "Clique onde quer ficar. Alt+clique (Option no Mac) escolhe o chão de baixo.",
+  "tutorial.climb.intro": "Suba os degraus. Um anel cheio marca onde você vai ficar.",
+  "tutorial.climb.praise": "Duas camadas, um só lugar. Agora você lê o terreno.",
+  "tutorial.climb.tip": "Dica: Alt+clique escolhe o chão sob uma saliência.",
+  "tutorial.climb.under": "Segure Alt e clique. O anel tracejado está abaixo de você.",
   "tutorial.dodge.hint": "Espere junto a um anel pela sombra dele e saia de lado.",
   "tutorial.dodge.hit": "Ai! Uma sombra que cresce quer dizer: mexa-se.",
   "tutorial.dodge.how": "Clique com o botão esquerdo no chão, ou ande com {keys}.",

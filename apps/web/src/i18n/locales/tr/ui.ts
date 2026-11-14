@@ -1415,6 +1415,13 @@ export default {
   "training.soundOn": "Ses açık.",
   "training.you": "Sen",
 
+  "tutorial.climb.hint": "Çıkıntıya çık, sonra altındaki zemine in.",
+  "tutorial.climb.how":
+    "Durmak istediğin yere tıkla. Alt+tık (Mac'te Option) alttaki zemini seçer.",
+  "tutorial.climb.intro": "Basamakları çık. Dolu halka, duracağın yer.",
+  "tutorial.climb.praise": "İki katman, tek nokta. Artık zemini okuyorsun.",
+  "tutorial.climb.tip": "İpucu: Alt+tık, çıkıntının altındaki zemini seçer.",
+  "tutorial.climb.under": "Alt'a basılı tut ve tıkla. Kesikli halka altında.",
   "tutorial.dodge.hint": "Bir halkanın yanında gölgesini bekle, sonra kenara çekil.",
   "tutorial.dodge.hit": "Ah! Büyüyen gölge, hareket et demek.",
   "tutorial.dodge.how": "Zemine sol tıkla ya da {keys} ile yürü.",

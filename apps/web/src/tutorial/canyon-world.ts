@@ -22,12 +22,19 @@ import {
   matchTeleports,
   matchZones,
 } from "@vibewars/game-maps/layers";
+import type { Shape } from "@vibewars/game-maps/schema";
 import type { MapDescriptor } from "@vibewars/game-protocol";
 
 import { toMapDescriptor } from "../training/scenario-setup.js";
 import { SPLASH_RULES } from "../ui/splash-fight.js";
 
-import { CANYON_ARRIVAL, CANYON_ARRIVALS, CANYON_SITES, type CanyonPoint } from "./canyon-map.js";
+import {
+  CANYON_ARRIVAL,
+  CANYON_ARRIVALS,
+  CANYON_SITES,
+  TUTORIAL_CANYON,
+  type CanyonPoint,
+} from "./canyon-map.js";
 import type { RatTally, RatWatch } from "./rat-watch.js";
 import { SKILLS_ON_RATS } from "./stations.js";
 import { SELF_ID, TUTOR_ID, body } from "./tutorial-world.js";
@@ -533,6 +540,105 @@ export function ratPocket(
         ids.push(id);
         watch.watch(id);
         simulation.add(ratSpec(id, RAT_POCKET.extra, RAT_POCKET.extra, undefined, undefined));
+      }
+    },
+  };
+}
+
+/** How far beside the player the tutor keeps at station 9 (#3323), in world units. */
+const TUTOR_BESIDE_LEDGE = 90;
+/** How far past a stair's ends the tutor's way runs, on the layer there. */
+const PAST_THE_STAIRS = 60;
+
+/** Station 9's ledge (#3323), on the canyon's second map: a deck, and the stairs up to it. */
+export interface CanyonLedge {
+  /** The deck's footprint. */
+  readonly footprint: Shape;
+  /** The deck's layer, and the ground's under it. */
+  readonly upper: number;
+  readonly lower: number;
+  /** The stairs' foot, on `lower`, and their top, on `upper`: the tutor's only way. */
+  readonly foot: Vec2;
+  readonly top: Vec2;
+}
+
+export const LEDGE: CanyonLedge = ((): CanyonLedge => {
+  const map = TUTORIAL_CANYON[1];
+  const deck = map.decks.find(({ id }) => id === "ledge");
+  const stairs = map.transitions.find(({ id }) => id === "ledge-steps");
+  if (deck === undefined || stairs?.area.kind !== "rect") {
+    throw new Error(`${map.id}: no ledge and ledge-steps for station 9`);
+  }
+  const { x, y, width, height } = stairs.area;
+  const middle = vec2(x + width / 2, y + height / 2);
+  // `uphill` is the way the stairs climb: the top is that way, the foot the other.
+  const along = { n: vec2(0, -1), s: vec2(0, 1), e: vec2(1, 0), w: vec2(-1, 0) }[stairs.uphill];
+  const half = Math.abs(along.x) * (width / 2) + Math.abs(along.y) * (height / 2) + PAST_THE_STAIRS;
+  return {
+    footprint: deck.footprint,
+    upper: stairs.to,
+    lower: stairs.from,
+    foot: vec2(middle.x - along.x * half, middle.y - along.y * half),
+    top: vec2(middle.x + along.x * half, middle.y + along.y * half),
+  };
+})();
+
+/** The tutor at station 9 (#3323), stepped once a frame. */
+export interface LedgeTutor {
+  readonly step: () => void;
+}
+
+/**
+ * Keeps the tutor beside the player at station 9: at the stairs' foot
+ * until the player is on the ledge, up the stairs after them, and down
+ * the stairs again once they are below. It never drops off the edge.
+ */
+export function ledgeTutor(simulation: MatchSimulation): LedgeTutor {
+  const { upper, lower, foot, top } = LEDGE;
+  /** The layer the tutor is on its way to, and the waypoints left. */
+  let bound = lower;
+  let route: readonly { at: Vec2; layer: number }[] = [{ at: foot, layer: lower }];
+  const walk = (): void => {
+    const [next] = route;
+    if (next !== undefined) {
+      simulation.walkTo(TUTOR_ID, next.at, next.layer);
+    }
+  };
+  walk();
+  return {
+    step: () => {
+      const self = simulation.get(SELF_ID);
+      const tutor = simulation.get(TUTOR_ID);
+      if (self === undefined || tutor === undefined) {
+        return;
+      }
+      if (self.layer !== bound && (self.layer === upper || self.layer === lower)) {
+        bound = self.layer;
+        const beside = {
+          at: vec2(self.position.x + TUTOR_BESIDE_LEDGE, self.position.y),
+          layer: bound,
+        };
+        const stairs =
+          bound === upper
+            ? [
+                { at: foot, layer: lower },
+                { at: top, layer: upper },
+              ]
+            : [
+                { at: top, layer: upper },
+                { at: foot, layer: lower },
+              ];
+        route = tutor.layer === bound ? [beside] : [...stairs, beside];
+        walk();
+        return;
+      }
+      const [next] = route;
+      if (
+        next !== undefined &&
+        Math.hypot(tutor.position.x - next.at.x, tutor.position.y - next.at.y) <= WAYPOINT_REACH
+      ) {
+        route = route.slice(1);
+        walk();
       }
     },
   };
