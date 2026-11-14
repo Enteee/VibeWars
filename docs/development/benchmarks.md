@@ -206,7 +206,7 @@ not stand for.
 
 A layered map's frame cost in software GL, as a ratio to a frozen
 reference map drawn the same way on the same run. CI gates it at
-`BENCH_MAX_RATIO=3.5` on pull requests that touch the renderer or the
+`BENCH_MAX_RATIO=2.2` on pull requests that touch the renderer or the
 maps (#3157, #3190, #3243, #3255).
 
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
@@ -218,20 +218,14 @@ runner (fill, geometry, JS) bounds the reference and the maps alike. It
 is frozen: a pull request that edits it re-derives the gate below in the
 same pull request.
 
-**The gate** is the highest ratio of a healthy map (canyon, crossroads)
-over five CI runs, × 1.5, rounded to 0.1. Five runs on one head (#3255),
-with the reference between 38 and 82 ms on different runners:
-
-| map              | ratios                       | median |
-| ---------------- | ---------------------------- | ------ |
-| arena-canyon     | 1.50, 1.75, 1.67, 1.53, 1.69 | 1.67   |
-| arena-crossroads | 2.25, 2.25, 2.33, 2.29, 2.36 | 2.29   |
-| arena-long-hall  | 2.99, 3.11, 3.12, 3.30, 3.45 | 3.12   |
-
-So 2.36 × 1.5 → 3.5. Each map stays within about ±10 % of its median
-while the reference swings 2×. The two edge cells are canyon at −10.2 %
-and long-hall at +10.6 %. With the old blank-page calibration it was
-±15 %.
+**The gate** was 3.5 against a reference that measured 38 to 82 ms; on a
+fast runner the calibration landed on the 30 fps beat (31.7-34.3 ms) and the
+cap guard failed the job (#3285). The reference now has a second deck, 27
+lights, 12 zones and 6 more walls, and measures about 88 ms on the CI runners,
+with every calibration window far over the guard. It grew about 1.6× relative
+to the maps (canyon 1.67 → 0.98-1.19, crossroads 2.29 → 1.18-1.57), so the
+gate is re-scaled by that factor: 3.5 ÷ 1.6 = 2.2, the same absolute headroom
+over a map's cost as before. The five-run table is in PR #3289.
 
 The runner is slow for its first 20-40 s, so the run warms up first: it
 loads the first map, then calibrates for at least 45 s and until two
@@ -245,6 +239,6 @@ near the gate for a known reason, each gated at its own ratio and tied to the pe
 issue that will cut it. None is listed: long-hall's was deleted when its
 issue, #3254, boxed each cluster of flickering lights on its own, which
 took it from 3.24 to 2.71. A listed map that measures at or under the gate ÷ 1.25
-(2.80 at 3.5) fails as stale, so its entry is deleted when its issue
+(1.76 at 2.2) fails as stale, so its entry is deleted when its issue
 lands. The margin keeps a map just under the gate from flaking: long-hall
 measured 2.99-3.45 before #3254.
