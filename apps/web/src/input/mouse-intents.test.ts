@@ -111,6 +111,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     offhandId: undefined,
     profession: undefined,
     creatureLook: undefined,
+    auraRadius: undefined,
     radius: 14,
     team,
     health: 500,

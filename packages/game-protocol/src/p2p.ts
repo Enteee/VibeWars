@@ -602,6 +602,11 @@ export interface WireCreature {
   readonly armedAttack: WireArmedAttack | null;
   /** Whom a Ghostly Hero follows (#1377); `null` while it stays, and for any other creature. */
   readonly leaderId: string | null;
+  /**
+   * How far its aura reaches (#3306), world units rounded to an integer:
+   * a spirit's range ring. `null` for a creature without an aura.
+   */
+  readonly auraRadius: number | null;
 }
 
 /** A companion's armed pet attack (#1167). */
@@ -2347,7 +2352,8 @@ function parseCreature(value: unknown): WireCreature | undefined {
     !isOneOf(raw.kind, CREATURE_KINDS) ||
     !isOneOf(raw.look, CREATURE_LOOKS) ||
     !(raw.mode === null || isOneOf(raw.mode, COMPANION_MODES)) ||
-    !(raw.leaderId === null || isString(raw.leaderId))
+    !(raw.leaderId === null || isString(raw.leaderId)) ||
+    !(raw.auraRadius === null || isCount(raw.auraRadius))
   ) {
     return undefined;
   }
@@ -2361,6 +2367,7 @@ function parseCreature(value: unknown): WireCreature | undefined {
         mode: raw.mode,
         armedAttack,
         leaderId: raw.leaderId,
+        auraRadius: raw.auraRadius,
       };
 }
 

@@ -564,6 +564,7 @@ describe("soundsForSkillGround (#3297)", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     });
 

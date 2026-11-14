@@ -101,6 +101,7 @@ const WOLF = player("me/c1", {
     mode: "fight",
     armedAttack: null,
     leaderId: null,
+    auraRadius: null,
   },
 });
 
@@ -115,6 +116,7 @@ function armedWolf(endsAt: number): PlayerSnapshot {
       mode: "fight",
       armedAttack: { skillId: "ranger.brutal-strike", endsAt },
       leaderId: null,
+      auraRadius: null,
     },
   };
 }
@@ -166,6 +168,7 @@ describe("partyRows (#1055)", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     });
     expect(partyRows(match([ME, minion]))).toEqual([]);
@@ -189,6 +192,7 @@ describe("partyRows (#1055)", () => {
         mode: "guard",
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     });
     const rows = partyRows(match([KAJA, kajaWolf, ME, WOLF]));
@@ -430,6 +434,7 @@ describe("createPartyWindow (#1055)", () => {
             mode: "heel",
             armedAttack: null,
             leaderId: null,
+            auraRadius: null,
           },
         },
       ]),

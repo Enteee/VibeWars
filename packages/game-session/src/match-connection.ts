@@ -117,6 +117,7 @@ export interface PlayerSnapshot {
    * attack its next blow carries (#1167), `null` when none is armed.
    * `ownerId` is `null` for a map's NPC, as a priest (#1186). `leaderId`
    * is whom a Ghostly Hero follows (#1377), `null` while it stays.
+   * `auraRadius` is how far its aura reaches (#3306), `null` for none.
    */
   readonly creature:
     | {
@@ -126,6 +127,7 @@ export interface PlayerSnapshot {
         readonly mode: CompanionMode | null;
         readonly armedAttack: ArmedAttackSnapshot | null;
         readonly leaderId: string | null;
+        readonly auraRadius: number | null;
       }
     | undefined;
   /** A lobby's bot plays it (#1193), not a peer. */

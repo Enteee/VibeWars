@@ -439,6 +439,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       mode: null,
       armedAttack: null,
       leaderId: null,
+      auraRadius: null,
     } as const;
     expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
   });
@@ -453,6 +454,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
         mode: "fight",
         armedAttack: { skillId, endsAt: 12.1 },
         leaderId: null,
+        auraRadius: null,
       },
     });
     expect(playerSnapshot(pet("ranger.brutal-strike"))?.creature?.armedAttack).toEqual({

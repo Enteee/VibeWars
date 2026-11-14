@@ -1,6 +1,5 @@
 import type { CreatureLook } from "@vibewars/game-core";
 
-import { dashedCircle } from "./dashed-circle.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
@@ -132,9 +131,6 @@ export type CreatureOrnament =
 export const RING_CASING = 1.8;
 /** A rim polygon's `edge` outline. */
 const RIM_EDGE = 1.4;
-/** The spirit's dashed aura: dash and gap at radius 10, the study's `3 2.6`. */
-const SPIRIT_DASH = 0.3;
-const SPIRIT_GAP = 0.26;
 const WHOLE: readonly { readonly from: number; readonly to: number }[] = [
   { from: 0, to: 2 * Math.PI },
 ];
@@ -171,7 +167,7 @@ function ring(
 /**
  * What a creature of look `look`, drawn at radius `r` at (`x`, `y`),
  * wears round its plate (#2047, C of #2043): ears on a pet, a toothed rim
- * on a minion (more teeth on a horror), a dashed aura on a spirit, an `ink`
+ * on a minion (more teeth on a horror), nothing on a spirit, an `ink`
  * ring on a priest, a thick `ink` hexagon on a guard, gold gems on a Guild
  * Lord, a team halo on a Ghostly Hero.
  */
@@ -219,9 +215,8 @@ export function creatureOrnament(
         },
       ];
     case "spirit":
-      return [
-        ring(x, y, r * 1.5, "team", 1.6, dashedCircle(r * 1.5, r * SPIRIT_DASH, r * SPIRIT_GAP)),
-      ];
+      // Its wisp is the plate (#3306), and its range ring is on the ground.
+      return [];
     case "priest":
       return [ring(x, y, r * 1.45, "ink", 1.6)];
     case "guard":
@@ -251,6 +246,46 @@ export function creatureOrnament(
     case "ghostly-hero":
       return [ring(x, y, r * 1.4, "team", 2.2)];
   }
+}
+
+/** A spirit's wisp (#3306): the Ritual row's pale green, round a near-white core. */
+export const SPIRIT_GREEN = 0x76c96f;
+export const SPIRIT_CORE = 0xeaffe4;
+/** The wisp's team rim, so friend blue and foe red still read. */
+export const SPIRIT_RIM_WIDTH = 1.5;
+/** The wisp's core, against the wisp, and how far below its middle it sits, against `r`. */
+export const SPIRIT_CORE_SCALE = 0.45;
+const SPIRIT_CORE_DROP = 0.3;
+/** Its bob: ±2 px over 2 s. */
+const SPIRIT_BOB = 2;
+const SPIRIT_BOB_SECONDS = 2;
+/** Points round a wisp's outline. */
+const WISP_POINTS = 18;
+/** A unit wisp: a teardrop, point up, 1.25 tall either side of its middle. */
+const UNIT_WISP: readonly Point[] = Array.from({ length: WISP_POINTS }, (_, k) => {
+  const t = (k * 2 * Math.PI) / WISP_POINTS;
+  return { x: Math.sin(t) * Math.sin(t / 2) * 1.3, y: -Math.cos(t) * 1.25 };
+});
+
+/**
+ * A spirit's wisp (#3306) of radius `r` round (`x`, `y`): a teardrop,
+ * point up, about as big as the hexagon plate it replaces; `scale` draws
+ * its core.
+ */
+export function spiritWisp(x: number, y: number, r: number, scale = 1): readonly Point[] {
+  const cy = scale === 1 ? y : y + r * SPIRIT_CORE_DROP;
+  return UNIT_WISP.map((at) => ({ x: x + at.x * r * scale, y: cy + at.y * r * scale }));
+}
+
+/**
+ * How far a spirit's wisp floats off its spot at `nowSeconds` (#3306),
+ * world units, its `phase` keeping a pair from bobbing in step; 0 under
+ * reduced motion.
+ */
+export function spiritBob(nowSeconds: number, phase: number, reducedMotion: boolean): number {
+  return reducedMotion
+    ? 0
+    : SPIRIT_BOB * Math.sin(((nowSeconds / SPIRIT_BOB_SECONDS + phase) % 1) * 2 * Math.PI);
 }
 
 /** The facing tick's edge outline. */

@@ -258,6 +258,7 @@ describe("outOfRange", () => {
           mode: "guard",
           armedAttack: null,
           leaderId: null,
+          auraRadius: null,
         },
       });
     expect(outOfRange([slot(COMFORT)], self({}), foe(5000), pet(500), [])).toEqual([true]);
@@ -287,6 +288,7 @@ describe("outOfRange", () => {
         mode: "guard",
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     });
     expect(outOfRange([slot(COMFORT), slot(RESTORE_LIFE)], self({}), pet, undefined, [])).toEqual([

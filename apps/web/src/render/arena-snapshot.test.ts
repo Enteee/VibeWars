@@ -19,6 +19,7 @@ import {
   nameLabelBottom,
   nameShown,
   nameTagBox,
+  spiritRingAlpha,
   offhandMarkLayout,
   type OffhandMarkLayout,
   nameplateLayout,
@@ -162,6 +163,7 @@ function actor(
     offhandId: undefined,
     profession: undefined,
     creatureLook: undefined,
+    auraRadius: undefined,
     radius,
     team: "ally",
     health: 500,
@@ -719,6 +721,29 @@ describe("placeFloatingText", () => {
     }
     // A column of FLOATING_TEXT_STACK lines, plus how far one rises in its life.
     expect(tallest).toBeLessThanOrEqual((FLOATING_TEXT_STACK - 1) * FLOATING_TEXT_LINE + 24 * 1.2);
+  });
+});
+
+describe("spiritRingAlpha (#3306)", () => {
+  const spirit = actor("winds", 100, 100, 10, { creatureLook: "spirit", auraRadius: 1190 });
+  const arena = (overrides: Partial<ArenaSnapshot>): ArenaSnapshot => ({
+    ...EMPTY_SNAPSHOT,
+    actors: [spirit],
+    ...overrides,
+  });
+
+  it("rings a living spirit faintly, and stronger while you target or hover it", () => {
+    expect(spiritRingAlpha(arena({}), spirit)).toBe(0.18);
+    expect(spiritRingAlpha(arena({ targetId: "winds" }), spirit)).toBe(0.45);
+    expect(spiritRingAlpha(arena({ hoverId: "winds" }), spirit)).toBe(0.45);
+    expect(spiritRingAlpha(arena({ targetId: "someone" }), spirit)).toBe(0.18);
+  });
+
+  it("rings no dead spirit, no spirit without an aura, and no other creature", () => {
+    expect(spiritRingAlpha(arena({}), { ...spirit, dead: true })).toBeUndefined();
+    expect(spiritRingAlpha(arena({}), { ...spirit, auraRadius: undefined })).toBeUndefined();
+    expect(spiritRingAlpha(arena({}), { ...spirit, creatureLook: "beast" })).toBeUndefined();
+    expect(spiritRingAlpha(arena({}), { ...spirit, creatureLook: undefined })).toBeUndefined();
   });
 });
 

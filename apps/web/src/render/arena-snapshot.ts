@@ -109,6 +109,8 @@ export interface RenderableActor {
   readonly profession: ProfessionId | undefined;
   /** A creature's shape and kind glyph (#1162); `undefined`: a player or a dummy, a disc. */
   readonly creatureLook: CreatureLook | undefined;
+  /** How far a creature's aura reaches (#3306): a spirit's range ring; `undefined` for none. */
+  readonly auraRadius: number | undefined;
   readonly radius: number;
   readonly team: "ally" | "enemy" | "third" | "self";
   readonly health: number;
@@ -900,6 +902,28 @@ export function nameShown(snapshot: ArenaSnapshot, actor: RenderableActor): bool
     return false;
   }
   return snapshot.showAllNames || actor.id === snapshot.targetId || actor.id === snapshot.hoverId;
+}
+
+/** A spirit's range ring's alpha (#3306): faint, and stronger while you target or hover it. */
+export const SPIRIT_RING_ALPHA = 0.18;
+export const SPIRIT_RING_FOCUS_ALPHA = 0.45;
+export const SPIRIT_RING_WIDTH = 1.5;
+
+/**
+ * The alpha of a living spirit's range ring (#3306), a solid circle at
+ * `auraRadius` on the ground under the bodies. Solid, because its area is
+ * not a harmful ground effect, whatever it does. `undefined`, no ring, for
+ * any other body, a dead spirit, and a spirit with no aura.
+ */
+export function spiritRingAlpha(
+  snapshot: Pick<ArenaSnapshot, "targetId" | "hoverId">,
+  actor: RenderableActor,
+): number | undefined {
+  if (actor.creatureLook !== "spirit" || actor.dead || actor.auraRadius === undefined) {
+    return undefined;
+  }
+  const focused = actor.id === snapshot.targetId || actor.id === snapshot.hoverId;
+  return focused ? SPIRIT_RING_FOCUS_ALPHA : SPIRIT_RING_ALPHA;
 }
 
 /** Health as a 0..1 fraction, clamped — the shape a health bar needs. */

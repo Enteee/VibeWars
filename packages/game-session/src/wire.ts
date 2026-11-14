@@ -1,5 +1,6 @@
 import {
   companionMode,
+  creatureAuraRadius,
   energyCostOf,
   getSkill,
   getStatusDefinition,
@@ -711,6 +712,7 @@ export function wireIdentity(
           mode: companionMode(creature),
           armedAttack: armedAttackSnapshot(participant.armedAttack, elapsedSeconds),
           leaderId: creature.leaderId ?? null,
+          auraRadius: creatureAuraRadius(creature),
         },
         bot: false,
         signet: null,
