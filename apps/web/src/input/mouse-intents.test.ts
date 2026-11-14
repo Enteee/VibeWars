@@ -123,6 +123,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     enchanted: false,
     stanced: false,
     hexed: false,
+    formed: false,
     invulnerable: false,
     teleportReadyAt: 0,
     conditionCues: [],

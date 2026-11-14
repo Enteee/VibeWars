@@ -250,6 +250,39 @@ describe("toArenaSnapshot", () => {
     ]);
   });
 
+  it("draws a body in a form 1.35× in an ash cape, clicked as before, and a corpse never (#3229)", () => {
+    const avatar: StatusSnapshot = {
+      id: "avatar-of-grenth",
+      endsAt: 10,
+      durationSeconds: 10,
+      casterId: "me",
+    };
+    const cape = { main: "violet", trim: "white", emblem: "diamond" } as const;
+    const formed = {
+      ...player("formed", 0),
+      x: 0,
+      y: 0,
+      guildCape: cape,
+      statuses: [avatar],
+    };
+    const dead = { ...player("dead", 0), dead: true, guildCape: cape, statuses: [avatar] };
+    const arena = toArenaSnapshot(match([formed, dead]), [], [], undefined, undefined);
+    const [body, corpse] = arena.actors;
+    expect(body?.formed).toBe(true);
+    expect(body?.radius).toBeCloseTo(ACTOR_RADIUS * 1.35, 9);
+    expect(body?.cape?.emblem).toBe("diamond");
+    expect(body?.cape?.main).not.toBe(0xa078e0);
+    expect(corpse?.formed).toBe(false);
+    expect(corpse?.radius).toBe(ACTOR_RADIUS);
+    expect(corpse?.cape?.main).toBe(0xa078e0);
+    // Targeted by the body it collides as, not the bigger one drawn.
+    const inside = { x: ACTOR_RADIUS - 1, y: 0 };
+    const drawnOnly = { x: ACTOR_RADIUS * 1.2, y: 0 };
+    const solo = toArenaSnapshot(match([formed]), [], [], undefined, undefined);
+    expect(actorAtPoint(solo, inside)?.id).toBe("formed");
+    expect(actorAtPoint(solo, drawnOnly)).toBeUndefined();
+  });
+
   it("shimmers a body while it is invulnerable, and not at 0 or as a corpse (#1233)", () => {
     const raised = { ...player("raised", 0), invulnerableSeconds: 4.2 };
     const dead = { ...player("dead", 0), invulnerableSeconds: 4.2, dead: true };

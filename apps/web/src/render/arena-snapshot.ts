@@ -119,6 +119,11 @@ export interface RenderableActor {
   readonly stanced: boolean;
   /** Wears the violet hex halo over its health bar (#1117, #3226); never a corpse. */
   readonly hexed: boolean;
+  /**
+   * In a form (#3229): `radius` is already `FORM_SCALE` times its own,
+   * and it wears an ash cape and a cold aura; never a corpse.
+   */
+  readonly formed: boolean;
   /** Shimmers, a shrine raise's invulnerability (#1233); never a corpse. */
   readonly invulnerable: boolean;
   /** The match clock (`clock`) from which it may take a teleport again (#3030); 0 if it never took one. */
@@ -774,7 +779,18 @@ function nearestInColumn(
   return best;
 }
 
-/** The actor among `actors` that `accepts` nearest `point`, within its radius. */
+/** How much bigger a body in a form draws (#3229, docs/art/3191-skill-visuals.md). */
+export const FORM_SCALE = 1.35;
+
+/**
+ * The radius a click finds `actor` within: a form draws the body bigger
+ * (#3229) but targets it as before.
+ */
+export function hitRadius(actor: RenderableActor): number {
+  return actor.formed ? actor.radius / FORM_SCALE : actor.radius;
+}
+
+/** The actor among `actors` that `accepts` nearest `point`, within its hit radius. */
 function nearestUnder(
   actors: readonly RenderableActor[],
   point: Vec2,
@@ -787,7 +803,7 @@ function nearestUnder(
       continue;
     }
     const d = Vec.distance(actor.position, point);
-    if (d <= actor.radius && d < bestDistance) {
+    if (d <= hitRadius(actor) && d < bestDistance) {
       best = actor;
       bestDistance = d;
     }

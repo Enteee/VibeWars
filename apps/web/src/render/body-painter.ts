@@ -167,6 +167,69 @@ function tracePoints(painter: Painter, points: readonly Point[], close: boolean)
   painter.strokePath();
 }
 
+/**
+ * A form's cold aura (#3229, docs/art/3191-skill-visuals.md): a pale
+ * glow round the disc, under it, in two soft steps. Faint and not a team
+ * colour, so it never reads as a side.
+ */
+export const FORM_AURA_COLOUR = 0xc8def2;
+/** Each step's reach past the body's edge and its alpha at the full breath. */
+export const FORM_AURA_STEPS: readonly { readonly reach: number; readonly alpha: number }[] = [
+  { reach: 7, alpha: 0.12 },
+  { reach: 3.5, alpha: 0.18 },
+];
+/** One breath in and out, seconds. */
+export const FORM_AURA_BREATH_SECONDS = 2.6;
+/** The breath's low point, a share of the full aura. */
+const FORM_AURA_BREATH_LOW = 0.6;
+
+/**
+ * The aura's strength at `now`, seconds, from its low point to 1: it
+ * breathes, offset by `phase` so two avatars do not breathe as one.
+ * Under reduced motion it holds still, at the full aura.
+ */
+export function formAuraBreath(now: number, phase: number, reducedMotion: boolean): number {
+  if (reducedMotion) {
+    return 1;
+  }
+  const wave = (1 - Math.cos(2 * Math.PI * (now / FORM_AURA_BREATH_SECONDS + phase))) / 2;
+  return FORM_AURA_BREATH_LOW + (1 - FORM_AURA_BREATH_LOW) * wave;
+}
+
+/** The cold aura round a body of drawn radius `r` at `breath` (`formAuraBreath`). */
+export function paintFormAura(
+  painter: Painter,
+  x: number,
+  y: number,
+  r: number,
+  breath: number,
+): void {
+  for (const step of FORM_AURA_STEPS) {
+    painter.fillStyle(FORM_AURA_COLOUR, step.alpha * breath);
+    painter.fillCircle(x, y, r + step.reach);
+  }
+}
+
+/** The grey a form tones a cape towards (#3229). */
+export const ASH = 0x7a7672;
+/** How far towards `ASH`: enough to read as ash, little enough to tell whose. */
+const ASH_SHARE = 0.7;
+
+/** `look` toned to ash for a body in a form (#3229): its colours greyed, its emblem kept. */
+export function ashCape(look: CapeLook): CapeLook {
+  return { main: towardsAsh(look.main), trim: towardsAsh(look.trim), emblem: look.emblem };
+}
+
+function towardsAsh(colour: number): number {
+  let out = 0;
+  for (const shift of [16, 8, 0]) {
+    const from = (colour >> shift) & 0xff;
+    const to = (ASH >> shift) & 0xff;
+    out |= Math.round(from + (to - from) * ASH_SHARE) << shift;
+  }
+  return out;
+}
+
 /** The off-hand, then the weapon mark: what lies over the body glyph. */
 export function paintBodyMarks(painter: Painter, body: StandingBody): void {
   paintOffhandMark(painter, body);

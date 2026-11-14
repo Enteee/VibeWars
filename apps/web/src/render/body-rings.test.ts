@@ -37,9 +37,9 @@ function anyOf(category: StatusCategory): string {
   return found.id;
 }
 
-const NONE = { enchanted: false, stanced: false, hexed: false } as const;
+const NONE = { enchanted: false, stanced: false, hexed: false, formed: false } as const;
 
-describe("bodyFlags (#1117, #3226)", () => {
+describe("bodyFlags (#1117, #3226, #3229)", () => {
   it("an enchantment, maintained or not, makes a body enchanted", () => {
     expect(bodyFlags(["armor-boost"])).toEqual({ ...NONE, enchanted: true });
     expect(bodyFlags(["mending"])).toEqual({ ...NONE, enchanted: true });
@@ -52,13 +52,19 @@ describe("bodyFlags (#1117, #3226)", () => {
       enchanted: true,
       stanced: true,
       hexed: true,
+      formed: false,
     });
   });
 
-  it("no other category, a form included, and no unknown id, marks a body", () => {
-    const others = (
-      ["condition", "form", "preparation", "weapon-spell", "skill-effect"] as const
-    ).map(anyOf);
+  it("a form makes it formed, an avatar of Grenth among them (#3229)", () => {
+    expect(bodyFlags(["avatar-of-grenth"])).toEqual({ ...NONE, formed: true });
+    expect(bodyFlags([anyOf("form"), "backfire"])).toEqual({ ...NONE, formed: true, hexed: true });
+  });
+
+  it("no other category, and no unknown id, marks a body", () => {
+    const others = (["condition", "preparation", "weapon-spell", "skill-effect"] as const).map(
+      anyOf,
+    );
     expect(bodyFlags([...others, "no-such-status"])).toEqual(NONE);
   });
 });
@@ -95,7 +101,7 @@ describe("bodyRings (#1117, #3226)", () => {
   });
 
   it("both: the band first, inside, the ring outside, not touching", () => {
-    const rings = bodyRings(r, { enchanted: true, stanced: true, hexed: true });
+    const rings = bodyRings(r, { ...NONE, enchanted: true, stanced: true, hexed: true });
     expect(rings.map((ring) => ring.kind)).toEqual(["stance", "enchantment"]);
     const [band, ring] = rings;
     expect((band?.radius ?? 0) + (band?.width ?? 0) / 2).toBeLessThan(

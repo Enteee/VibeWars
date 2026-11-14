@@ -289,7 +289,9 @@ import { screenPx, screenSized } from "./screen-text.js";
 import {
   BODY_EDGE_WIDTH,
   SELF_RIM,
+  formAuraBreath,
   paintBodyMarks,
+  paintFormAura,
   paintStandingBody,
   paintWeaponMark,
   type Painter,
@@ -880,6 +882,16 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.drawArrivals(g);
     this.stepCapes(dt);
+    // Every form's aura first, under every disc of its band (#3229): it
+    // never covers a neighbour.
+    for (const actor of this.drawnActors) {
+      const band = actor.formed && !actor.dead ? this.bandOf(actor.layer) : undefined;
+      if (band !== undefined) {
+        const { x, y } = actor.position;
+        const breath = formAuraBreath(this.now, cuePhase(actor.id), this.reducedMotion);
+        paintFormAura(phaserPainter(band.body), x, y, actor.radius, breath);
+      }
+    }
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
       if (band !== undefined) {
