@@ -23,3 +23,10 @@ is not committed). Layout is new and asymmetric; the PNG is a guide, not coordin
   ledges, B the mire, cave mouth and terraces) and must be balanced by the bench and
   high-ground numbers, not by mirroring.
 - **Outline:** not a rectangle: a ragged rim edge, outside is natural land.
+- **Layers since #3179:** the map is four layers, so the bed moved up to make room
+  for tunnels: tunnels 0, bed 1 (the ground), rims 2, tower and house tops 3. The
+  study's L1 ledges are now rim-height shelves reached from the bed by their ramps,
+  and the arch stands at rim height. Under the bed, a tunnel network: two stair
+  shafts a side, torch-lit galleries, and a junction chamber west of the centre with
+  its own shaft and a brazier. The south-west shaft comes up at the foot of the ramp
+  to the south-west shelf.
