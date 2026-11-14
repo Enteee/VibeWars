@@ -1559,7 +1559,7 @@ export default {
   "tutorial.offer": "Впервые здесь? Наставник покажет основы.",
   "tutorial.offerTitle": "Впервые?",
   "tutorial.rats.again": "Попробуй на этой другой навык.",
-  "tutorial.rats.big": "Большая. Сбей её с ног навыком {bash}, затем {crush}.",
+  "tutorial.rats.big": "Крупная. Бей её, пока {bash} не загорится, потом сбей с ног и бей {crush}.",
   "tutorial.rats.hint": "Используй против крыс два разных навыка.",
   "tutorial.rats.how": "Выбери крысу клавишей {keys} или щёлкни по ней.",
   "tutorial.rats.intro": "Крысы! У каждого навыка своя задача.",

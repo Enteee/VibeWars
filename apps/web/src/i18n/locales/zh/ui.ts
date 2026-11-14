@@ -1333,7 +1333,7 @@ export default {
   "tutorial.offer": "新来的?你的导师会教你基础。",
   "tutorial.offerTitle": "第一次来?",
   "tutorial.rats.again": "对这只换个技能试试。",
-  "tutorial.rats.big": "大家伙。先用{bash}击倒，再用{crush}。",
+  "tutorial.rats.big": "大的来了。打它直到{bash}亮起，然后把它击倒，再用{crush}。",
   "tutorial.rats.hint": "对老鼠使用两种不同的技能。",
   "tutorial.rats.how": "按{keys}选中老鼠，或直接点击它。",
   "tutorial.rats.intro": "老鼠！不同的技能，不同的用处。",

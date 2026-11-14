@@ -1350,7 +1350,7 @@ export default {
   "tutorial.offer": "มาใหม่หรือ? ผู้สอนจะสอนพื้นฐานให้",
   "tutorial.offerTitle": "ครั้งแรกหรือ?",
   "tutorial.rats.again": "ลองใช้สกิลอื่นกับตัวนี้",
-  "tutorial.rats.big": "ตัวใหญ่ ล้มมันด้วย {bash} แล้วตามด้วย {crush}",
+  "tutorial.rats.big": "ตัวใหญ่ ตีมันจน {bash} สว่าง แล้วล้มมันและใช้ {crush}",
   "tutorial.rats.hint": "ใช้สกิลสองแบบที่ต่างกันกับหนู",
   "tutorial.rats.how": "เล็งหนูด้วย {keys} หรือคลิกที่มัน",
   "tutorial.rats.intro": "หนู! สกิลต่างกัน หน้าที่ต่างกัน",

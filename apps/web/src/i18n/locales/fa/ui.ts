@@ -1438,7 +1438,8 @@ export default {
   "tutorial.offer": "تازه آمده‌ای؟ معلمت اصول را نشانت می‌دهد.",
   "tutorial.offerTitle": "اولین بار؟",
   "tutorial.rats.again": "روی این یکی مهارت دیگری را امتحان کن.",
-  "tutorial.rats.big": "یک موش بزرگ. با {bash} زمینش بزن، بعد {crush}.",
+  "tutorial.rats.big":
+    "یک موش بزرگ. آن‌قدر بزنش تا {bash} روشن شود، بعد زمینش بزن و {crush} را بزن.",
   "tutorial.rats.hint": "روی موش‌ها از دو مهارت مختلف استفاده کن.",
   "tutorial.rats.how": "با {keys} یک موش را هدف بگیر، یا رویش کلیک کن.",
   "tutorial.rats.intro": "موش‌ها! مهارت‌های مختلف، کارهای مختلف.",

@@ -1565,7 +1565,8 @@ export default {
   "tutorial.offer": "Вперше тут? Наставник покаже основи.",
   "tutorial.offerTitle": "Вперше?",
   "tutorial.rats.again": "Спробуй на цьому іншу навичку.",
-  "tutorial.rats.big": "Великий. Збий його з ніг навичкою {bash}, потім {crush}.",
+  "tutorial.rats.big":
+    "Великий. Бий його, доки {bash} не засвітиться, тоді збий з ніг і бий {crush}.",
   "tutorial.rats.hint": "Використай проти щурів дві різні навички.",
   "tutorial.rats.how": "Вибери щура клавішею {keys} або клацни на нього.",
   "tutorial.rats.intro": "Щури! У кожної навички своя робота.",

@@ -1533,7 +1533,8 @@ export default {
   "tutorial.offer": "Nouveau ? Ton tuteur va te montrer les bases.",
   "tutorial.offerTitle": "Première fois ?",
   "tutorial.rats.again": "Essaie une autre compétence sur celui-ci.",
-  "tutorial.rats.big": "Un gros. Renverse-le avec {bash}, puis {crush}.",
+  "tutorial.rats.big":
+    "Un gros. Frappe-le jusqu'à ce que {bash} s'allume, renverse-le, puis {crush}.",
   "tutorial.rats.hint": "Utilise deux compétences différentes sur les rats.",
   "tutorial.rats.how": "Cible un rat avec {keys}, ou clique dessus.",
   "tutorial.rats.intro": "Des rats ! À chaque compétence son rôle.",

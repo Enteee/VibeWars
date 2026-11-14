@@ -1442,7 +1442,8 @@ export const en = {
   "tutorial.offer": "New here? Your tutor can show you the ropes.",
   "tutorial.offerTitle": "First time?",
   "tutorial.rats.again": "Try a different skill on this one.",
-  "tutorial.rats.big": "A big one. Knock it down with {bash}, then {crush}.",
+  "tutorial.rats.big":
+    "A big one. Hit it until {bash} lights up, then knock it down and use {crush}.",
   "tutorial.rats.hint": "Use two different skills on the rats.",
   "tutorial.rats.how": "Target a rat with {keys}, or click it.",
   "tutorial.rats.intro": "Rats! Different skills, different jobs.",

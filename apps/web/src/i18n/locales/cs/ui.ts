@@ -1556,7 +1556,7 @@ export default {
   "tutorial.offer": "Jsi tu nový? Tvůj učitel ti ukáže základy.",
   "tutorial.offerTitle": "Poprvé?",
   "tutorial.rats.again": "Zkus na tuhle jinou dovednost.",
-  "tutorial.rats.big": "Velká. Sraz ji {bash}, pak {crush}.",
+  "tutorial.rats.big": "Velká. Bij ji, dokud se {bash} nerozsvítí, pak ji poval a použij {crush}.",
   "tutorial.rats.hint": "Použij na krysy dvě různé dovednosti.",
   "tutorial.rats.how": "Zaměř krysu klávesou {keys} nebo na ni klikni.",
   "tutorial.rats.intro": "Krysy! Různé dovednosti, různé úkoly.",

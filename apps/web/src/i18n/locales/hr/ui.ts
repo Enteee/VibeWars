@@ -1514,7 +1514,8 @@ export default {
   "tutorial.offer": "Novi si? Tvoj učitelj pokazat će ti osnove.",
   "tutorial.offerTitle": "Prvi put?",
   "tutorial.rats.again": "Probaj drugu vještinu na ovom.",
-  "tutorial.rats.big": "Veliki je. Obori ga s {bash}, pa {crush}.",
+  "tutorial.rats.big":
+    "Veliki. Udaraj ga dok {bash} ne zasvijetli, zatim ga obori i upotrijebi {crush}.",
   "tutorial.rats.hint": "Upotrijebi dvije različite vještine na štakorima.",
   "tutorial.rats.how": "Ciljaj štakora s {keys} ili klikni na njega.",
   "tutorial.rats.intro": "Štakori! Različite vještine, različiti poslovi.",

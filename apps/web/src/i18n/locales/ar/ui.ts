@@ -1631,7 +1631,7 @@ export default {
   "tutorial.offer": "جديد هنا؟ معلّمك سيريك الأساسيات.",
   "tutorial.offerTitle": "أول مرة؟",
   "tutorial.rats.again": "جرّب مهارة مختلفة على هذا.",
-  "tutorial.rats.big": "جرذ كبير. أسقطه بـ{bash}، ثم {crush}.",
+  "tutorial.rats.big": "واحد كبير. اضربه حتى يضيء {bash}، ثم أسقطه واستخدم {crush}.",
   "tutorial.rats.hint": "استخدم مهارتين مختلفتين على الجرذان.",
   "tutorial.rats.how": "استهدف جرذًا بـ{keys}، أو انقر عليه.",
   "tutorial.rats.intro": "جرذان! مهارات مختلفة لمهام مختلفة.",

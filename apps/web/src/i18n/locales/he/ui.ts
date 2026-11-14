@@ -1504,7 +1504,7 @@ export default {
   "tutorial.offer": "חדש כאן? המורה שלך יראה לך את הבסיס.",
   "tutorial.offerTitle": "פעם ראשונה?",
   "tutorial.rats.again": "נסה מיומנות אחרת על זה.",
-  "tutorial.rats.big": "חולדה גדולה. הפל אותה עם {bash}, ואז {crush}.",
+  "tutorial.rats.big": "גדול. הכה בו עד ש-{bash} נדלק, ואז הפל אותו והשתמש ב-{crush}.",
   "tutorial.rats.hint": "השתמש בשתי מיומנויות שונות על החולדות.",
   "tutorial.rats.how": "סמן חולדה עם {keys}, או לחץ עליה.",
   "tutorial.rats.intro": "חולדות! מיומנויות שונות, תפקידים שונים.",

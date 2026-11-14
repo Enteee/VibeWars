@@ -1570,7 +1570,7 @@ export default {
   "tutorial.offer": "Nowy? Twój nauczyciel pokaże ci podstawy.",
   "tutorial.offerTitle": "Pierwszy raz?",
   "tutorial.rats.again": "Spróbuj innej umiejętności na tym.",
-  "tutorial.rats.big": "Duży. Powal go {bash}, potem {crush}.",
+  "tutorial.rats.big": "Duży. Bij go, aż {bash} się zaświeci, potem go powal i użyj {crush}.",
   "tutorial.rats.hint": "Użyj na szczurach dwóch różnych umiejętności.",
   "tutorial.rats.how": "Wskaż szczura klawiszem {keys} albo go kliknij.",
   "tutorial.rats.intro": "Szczury! Różne umiejętności, różne zadania.",

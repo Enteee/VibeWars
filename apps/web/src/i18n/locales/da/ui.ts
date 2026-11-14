@@ -1437,7 +1437,7 @@ export default {
   "tutorial.offer": "Ny her? Din læremester viser dig det grundlæggende.",
   "tutorial.offerTitle": "Første gang?",
   "tutorial.rats.again": "Prøv en anden færdighed på den her.",
-  "tutorial.rats.big": "En stor en. Slå den ned med {bash}, så {crush}.",
+  "tutorial.rats.big": "En stor. Slå den, til {bash} lyser op, slå den så omkuld og brug {crush}.",
   "tutorial.rats.hint": "Brug to forskellige færdigheder på rotterne.",
   "tutorial.rats.how": "Vælg en rotte med {keys}, eller klik på den.",
   "tutorial.rats.intro": "Rotter! Forskellige færdigheder, forskellige job.",

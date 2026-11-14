@@ -1360,7 +1360,7 @@ export default {
   "tutorial.offer": "처음인가요? 스승이 기본을 알려 줄 거예요.",
   "tutorial.offerTitle": "처음이신가요?",
   "tutorial.rats.again": "이번엔 다른 스킬을 써 봐.",
-  "tutorial.rats.big": "큰 놈이야. {bash}(으)로 넘어뜨리고 {crush}.",
+  "tutorial.rats.big": "큰 놈이야. {bash}에 불이 들어올 때까지 때리고, 넘어뜨린 다음 {crush}을 써.",
   "tutorial.rats.hint": "쥐들에게 서로 다른 스킬 두 개를 써 봐.",
   "tutorial.rats.how": "{keys}(으)로 쥐를 지정하거나 클릭해.",
   "tutorial.rats.intro": "쥐다! 스킬마다 할 일이 달라.",

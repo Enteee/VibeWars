@@ -1532,7 +1532,7 @@ export default {
   "tutorial.offer": "¿Eres nuevo? Tu tutor te enseñará lo básico.",
   "tutorial.offerTitle": "¿Primera vez?",
   "tutorial.rats.again": "Prueba otra habilidad con esta.",
-  "tutorial.rats.big": "Una grande. Derríbala con {bash} y luego {crush}.",
+  "tutorial.rats.big": "Uno grande. Golpéalo hasta que {bash} se ilumine, derríbalo y usa {crush}.",
   "tutorial.rats.hint": "Usa dos habilidades distintas con las ratas.",
   "tutorial.rats.how": "Selecciona una rata con {keys} o haz clic en ella.",
   "tutorial.rats.intro": "¡Ratas! Cada habilidad tiene su trabajo.",

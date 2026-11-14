@@ -1356,7 +1356,8 @@ export default {
   "tutorial.offer": "Mới đến? Người hướng dẫn sẽ chỉ bạn những điều cơ bản.",
   "tutorial.offerTitle": "Lần đầu?",
   "tutorial.rats.again": "Thử một kỹ năng khác với con này.",
-  "tutorial.rats.big": "Một con to. Quật ngã nó bằng {bash}, rồi {crush}.",
+  "tutorial.rats.big":
+    "Con to đấy. Đánh nó đến khi {bash} sáng lên, rồi quật ngã nó và dùng {crush}.",
   "tutorial.rats.hint": "Dùng hai kỹ năng khác nhau lên lũ chuột.",
   "tutorial.rats.how": "Chọn một con chuột bằng {keys}, hoặc nhấp vào nó.",
   "tutorial.rats.intro": "Chuột! Kỹ năng khác nhau, việc khác nhau.",

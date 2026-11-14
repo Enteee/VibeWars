@@ -1370,7 +1370,7 @@ export default {
   "tutorial.offer": "Baru di sini? Gurumu akan menunjukkan dasarnya.",
   "tutorial.offerTitle": "Pertama kali?",
   "tutorial.rats.again": "Coba skill lain pada yang ini.",
-  "tutorial.rats.big": "Yang besar. Jatuhkan dengan {bash}, lalu {crush}.",
+  "tutorial.rats.big": "Yang besar. Pukul sampai {bash} menyala, lalu jatuhkan dan pakai {crush}.",
   "tutorial.rats.hint": "Gunakan dua skill berbeda pada tikus-tikus itu.",
   "tutorial.rats.how": "Bidik tikus dengan {keys}, atau klik tikusnya.",
   "tutorial.rats.intro": "Tikus! Skill berbeda, tugas berbeda.",

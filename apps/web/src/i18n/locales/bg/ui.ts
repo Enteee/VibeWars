@@ -1447,7 +1447,8 @@ export default {
   "tutorial.offer": "Нов си? Учителят ти ще ти покаже основите.",
   "tutorial.offerTitle": "За първи път?",
   "tutorial.rats.again": "Опитай друго умение върху този.",
-  "tutorial.rats.big": "Голям е. Повали го с {bash}, после {crush}.",
+  "tutorial.rats.big":
+    "Голям е. Удряй го, докато {bash} светне, после го повали и използвай {crush}.",
   "tutorial.rats.hint": "Използвай две различни умения срещу плъховете.",
   "tutorial.rats.how": "Прицели се в плъх с {keys} или кликни върху него.",
   "tutorial.rats.intro": "Плъхове! Различни умения, различни задачи.",

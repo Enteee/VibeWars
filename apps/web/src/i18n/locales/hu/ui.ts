@@ -1449,7 +1449,8 @@ export default {
   "tutorial.offer": "Új vagy? A tanítód megmutatja az alapokat.",
   "tutorial.offerTitle": "Először jársz itt?",
   "tutorial.rats.again": "Próbálj ki egy másik képességet ezen.",
-  "tutorial.rats.big": "Egy nagy. Döntsd le ezzel: {bash}, aztán {crush}.",
+  "tutorial.rats.big":
+    "Egy nagy. Üsd, amíg a {bash} fel nem villan, aztán döntsd le, és jöhet a {crush}.",
   "tutorial.rats.hint": "Használj két különböző képességet a patkányokon.",
   "tutorial.rats.how": "Célozz meg egy patkányt ezzel: {keys}, vagy kattints rá.",
   "tutorial.rats.intro": "Patkányok! Más képesség, más feladat.",

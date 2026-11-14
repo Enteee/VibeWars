@@ -1455,7 +1455,7 @@ export default {
   "tutorial.offer": "Uusi täällä? Opettajasi näyttää perusteet.",
   "tutorial.offerTitle": "Ensimmäinen kerta?",
   "tutorial.rats.again": "Kokeile tähän eri taitoa.",
-  "tutorial.rats.big": "Iso. Kaada se taidolla {bash}, sitten {crush}.",
+  "tutorial.rats.big": "Iso. Lyö sitä, kunnes {bash} syttyy, kaada se ja käytä sitten {crush}.",
   "tutorial.rats.hint": "Käytä rottiin kahta eri taitoa.",
   "tutorial.rats.how": "Valitse rotta näppäimellä {keys} tai napsauta sitä.",
   "tutorial.rats.intro": "Rottia! Eri taidot, eri tehtävät.",

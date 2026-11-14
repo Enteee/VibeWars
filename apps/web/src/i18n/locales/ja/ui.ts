@@ -1371,7 +1371,7 @@ export default {
   "tutorial.offer": "初めて? 師匠が基本を教えてくれます。",
   "tutorial.offerTitle": "初めてですか?",
   "tutorial.rats.again": "こいつには別のスキルを試して。",
-  "tutorial.rats.big": "大きいのだ。{bash}で倒して、{crush}を。",
+  "tutorial.rats.big": "大物だ。{bash}が光るまで叩け。倒したら{crush}だ。",
   "tutorial.rats.hint": "ネズミに2種類のスキルを使おう。",
   "tutorial.rats.how": "{keys}でネズミを狙うか、クリックしよう。",
   "tutorial.rats.intro": "ネズミだ！スキルごとに役目がある。",

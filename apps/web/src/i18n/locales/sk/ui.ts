@@ -1561,7 +1561,7 @@ export default {
   "tutorial.offer": "Si tu nový? Tvoj učiteľ ti ukáže základy.",
   "tutorial.offerTitle": "Prvýkrát?",
   "tutorial.rats.again": "Skús na túto inú zručnosť.",
-  "tutorial.rats.big": "Veľká. Zraz ju {bash}, potom {crush}.",
+  "tutorial.rats.big": "Veľký. Bi ho, kým sa {bash} nerozsvieti, potom ho zvaľ a použi {crush}.",
   "tutorial.rats.hint": "Použi na potkany dve rôzne zručnosti.",
   "tutorial.rats.how": "Zameraj potkana klávesom {keys} alebo naň klikni.",
   "tutorial.rats.intro": "Potkany! Rôzne zručnosti, rôzne úlohy.",

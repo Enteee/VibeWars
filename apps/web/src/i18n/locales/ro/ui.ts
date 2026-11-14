@@ -1522,7 +1522,8 @@ export default {
   "tutorial.offer": "Ești nou? Tutorele tău îți arată elementele de bază.",
   "tutorial.offerTitle": "Prima dată?",
   "tutorial.rats.again": "Încearcă altă abilitate pe acesta.",
-  "tutorial.rats.big": "Unul mare. Doboară-l cu {bash}, apoi {crush}.",
+  "tutorial.rats.big":
+    "Unul mare. Lovește-l până se aprinde {bash}, apoi doboară-l și folosește {crush}.",
   "tutorial.rats.hint": "Folosește două abilități diferite pe șobolani.",
   "tutorial.rats.how": "Țintește un șobolan cu {keys} sau dă clic pe el.",
   "tutorial.rats.intro": "Șobolani! Abilități diferite, sarcini diferite.",

@@ -1462,7 +1462,8 @@ export default {
   "tutorial.offer": "Neu hier? Dein Lehrer zeigt dir, wie es geht.",
   "tutorial.offerTitle": "Zum ersten Mal hier?",
   "tutorial.rats.again": "Versuch bei dieser eine andere Fertigkeit.",
-  "tutorial.rats.big": "Eine große. Wirf sie mit {bash} um, dann {crush}.",
+  "tutorial.rats.big":
+    "Ein großer. Schlag zu, bis {bash} aufleuchtet, dann wirf ihn um und nimm {crush}.",
   "tutorial.rats.hint": "Setz zwei verschiedene Fertigkeiten gegen die Ratten ein.",
   "tutorial.rats.how": "Ziel auf eine Ratte mit {keys} oder klick sie an.",
   "tutorial.rats.intro": "Ratten! Andere Fertigkeit, andere Aufgabe.",

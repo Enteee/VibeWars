@@ -1444,7 +1444,8 @@ export default {
   "tutorial.offer": "Yeni misin? Öğretmenin sana temelleri gösterecek.",
   "tutorial.offerTitle": "İlk kez mi?",
   "tutorial.rats.again": "Bunda başka bir yetenek dene.",
-  "tutorial.rats.big": "Büyük bir tane. {bash} ile yere ser, sonra {crush}.",
+  "tutorial.rats.big":
+    "Büyük bir tane. {bash} yanana kadar vur, sonra onu yere ser ve {crush} kullan.",
   "tutorial.rats.hint": "Farelerde iki farklı yetenek kullan.",
   "tutorial.rats.how": "Bir fareyi {keys} ile hedefle ya da üstüne tıkla.",
   "tutorial.rats.intro": "Fareler! Farklı yetenekler, farklı işler.",

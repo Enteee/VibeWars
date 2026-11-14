@@ -1448,7 +1448,8 @@ export default {
   "tutorial.offer": "Nieuw hier? Je leraar laat je de basis zien.",
   "tutorial.offerTitle": "Eerste keer?",
   "tutorial.rats.again": "Probeer een andere vaardigheid op deze.",
-  "tutorial.rats.big": "Een grote. Sla hem neer met {bash}, dan {crush}.",
+  "tutorial.rats.big":
+    "Een grote. Sla hem tot {bash} oplicht, sla hem dan neer en gebruik {crush}.",
   "tutorial.rats.hint": "Gebruik twee verschillende vaardigheden op de ratten.",
   "tutorial.rats.how": "Kies een rat met {keys}, of klik erop.",
   "tutorial.rats.intro": "Ratten! Andere vaardigheid, andere taak.",

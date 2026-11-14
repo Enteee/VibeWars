@@ -1438,7 +1438,7 @@ export default {
   "tutorial.offer": "Ny här? Din lärare visar dig grunderna.",
   "tutorial.offerTitle": "Första gången?",
   "tutorial.rats.again": "Prova en annan färdighet på den här.",
-  "tutorial.rats.big": "En stor. Slå ner den med {bash}, sedan {crush}.",
+  "tutorial.rats.big": "En stor. Slå den tills {bash} lyser, fäll den sedan och använd {crush}.",
   "tutorial.rats.hint": "Använd två olika färdigheter på råttorna.",
   "tutorial.rats.how": "Välj en råtta med {keys}, eller klicka på den.",
   "tutorial.rats.intro": "Råttor! Olika färdigheter, olika jobb.",
