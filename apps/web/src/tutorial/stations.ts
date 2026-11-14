@@ -23,6 +23,10 @@ export interface TutorialView {
   readonly rockfallDodges: number;
   /** What hit the player since the last look, if anything did. */
   readonly hitBy: "rockfall" | undefined;
+  /** The health of the canyon's cracked wall (#3302), or none outside the canyon. */
+  readonly wallHealth: number | undefined;
+  /** The player has targeted that wall: once true, it stays true. */
+  readonly wallTargeted: boolean;
 }
 
 /** The world a station runs in (#3247): the battlefield it starts on, or the canyon past the teleporter. */
@@ -53,6 +57,13 @@ export interface Station {
   readonly keys?: readonly KeyAction[];
   /** What it points at, or nothing: a look around has no one place. */
   readonly highlight: StationHighlight | undefined;
+  /** A mark on the ground beside a HUD highlight (#3302), while this returns one. */
+  readonly mark?: (view: TutorialView) => Vec2 | undefined;
+  /** A line said once, the first look at which `when` holds (#3302). */
+  readonly reaction?: {
+    readonly line: MessageKey;
+    readonly when: (view: TutorialView) => boolean;
+  };
   readonly done: (view: TutorialView) => boolean;
 }
 
@@ -150,5 +161,34 @@ export function dodgeStation(mark: Vec2, layer: number): Station {
     keys: ["move-up", "move-left", "move-down", "move-right"],
     highlight: { kind: "ground", at: mark },
     done: (view) => view.rockfallDodges >= DODGES_NEEDED && onMark(view, mark, layer),
+  };
+}
+
+/**
+ * Station 5 (playbook §5), in the canyon: target the cracked wall and
+ * break it. The ground mark at its west face, `face`, stands until the
+ * wall is targeted, the target frame pulses throughout; the tutor reacts
+ * once to the first blow, the wall below its `maxHealth`. A wall broken
+ * before the station begins is done at once.
+ */
+export function breakWallStation(face: Vec2, maxHealth: number): Station {
+  return {
+    id: "break-wall",
+    world: "canyon",
+    lines: {
+      intro: "tutorial.wall.intro",
+      hint: "tutorial.wall.hint",
+      praise: "tutorial.wall.praise",
+      how: "tutorial.wall.how",
+    },
+    // A wall is targeted by a click: `target-closest` picks bodies only.
+    keys: ["attack"],
+    highlight: { kind: "hud", element: ".hud-target" },
+    mark: (view) => (view.wallTargeted ? undefined : face),
+    reaction: {
+      line: "tutorial.wall.firstHit",
+      when: (view) => view.wallHealth !== undefined && view.wallHealth < maxHealth,
+    },
+    done: (view) => view.wallHealth === 0,
   };
 }

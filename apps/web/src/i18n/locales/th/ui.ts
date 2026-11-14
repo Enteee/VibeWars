@@ -1346,6 +1346,11 @@ export default {
   "tutorial.walk.how": "คลิกซ้ายบนพื้น หรือเดินด้วย {keys}",
   "tutorial.walk.intro": "สงครามนี้ไม่มีวันจบ เดินมากับข้า ข้ามีแผน",
   "tutorial.walk.praise": "ก้าวได้ดี! เจ้ามีพรสวรรค์",
+  "tutorial.wall.firstHit": "นั่นไง! มันร้าวแล้ว ตีต่อไป",
+  "tutorial.wall.hint": "คลิกขวาที่กำแพงก่อน แล้วค่อยตี",
+  "tutorial.wall.how": "คลิกขวาที่กำแพง แล้วกด {keys} หรือคลิกขวาที่มันสองครั้ง",
+  "tutorial.wall.intro": "กำแพงขวางทางอยู่ คลิกขวาที่มัน แล้วตีเลย",
+  "tutorial.wall.praise": "พังแล้ว! ทางเปิดแล้ว",
 
   "weaponSets.empty": "ชุดอาวุธ {number}: ว่าง",
   "weaponSets.holds": "ชุดอาวุธ {number}: {gear}",

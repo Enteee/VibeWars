@@ -1552,6 +1552,12 @@ export default {
   "tutorial.walk.how": "Klikni levým na zem, nebo jdi klávesami {keys}.",
   "tutorial.walk.intro": "Tahle válka nikdy neskončí. Pojď se mnou; mám nápad.",
   "tutorial.walk.praise": "Pěkný krok! Jsi přirozený talent.",
+  "tutorial.wall.firstHit": "Tak! Praská. Pokračuj.",
+  "tutorial.wall.hint": "Nejdřív klikni na zeď pravým tlačítkem, pak do ní udeř.",
+  "tutorial.wall.how":
+    "Klikni na zeď pravým tlačítkem, pak stiskni {keys}, nebo na ni klikni pravým dvakrát.",
+  "tutorial.wall.intro": "Stezku blokuje zeď. Klikni na ni pravým tlačítkem a pak do ní udeř.",
+  "tutorial.wall.praise": "Padá! Stezka je volná.",
 
   "weaponSets.empty": "Sada zbraní {number}: prázdná",
   "weaponSets.holds": "Sada zbraní {number}: {gear}",

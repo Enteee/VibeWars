@@ -1460,6 +1460,12 @@ export default {
   "tutorial.walk.how": "Αριστερό κλικ στο έδαφος ή περπάτα με {keys}.",
   "tutorial.walk.intro": "Αυτός ο πόλεμος δεν τελειώνει. Περπάτα μαζί μου· έχω μια ιδέα.",
   "tutorial.walk.praise": "Ωραίο βήμα! Είσαι γεννημένος για αυτό.",
+  "tutorial.wall.firstHit": "Εκεί! Ραγίζει. Συνέχισε.",
+  "tutorial.wall.hint": "Κάνε πρώτα δεξί κλικ στον τοίχο, μετά χτύπα τον.",
+  "tutorial.wall.how":
+    "Δεξί κλικ στον τοίχο, μετά πάτα {keys} ή κάνε δύο φορές δεξί κλικ πάνω του.",
+  "tutorial.wall.intro": "Ένας τοίχος κλείνει το μονοπάτι. Δεξί κλικ πάνω του και χτύπα τον.",
+  "tutorial.wall.praise": "Πέφτει! Το μονοπάτι άνοιξε.",
 
   "weaponSets.empty": "Σετ όπλων {number}: άδειο",
   "weaponSets.holds": "Σετ όπλων {number}: {gear}",

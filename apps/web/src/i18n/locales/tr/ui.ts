@@ -1440,6 +1440,11 @@ export default {
   "tutorial.walk.how": "Zemine sol tıkla ya da {keys} ile yürü.",
   "tutorial.walk.intro": "Bu savaş hiç bitmiyor. Benimle yürü; bir fikrim var.",
   "tutorial.walk.praise": "Güzel adım! Doğuştan yeteneklisin.",
+  "tutorial.wall.firstHit": "İşte! Çatlıyor. Devam et.",
+  "tutorial.wall.hint": "Önce duvara sağ tıkla, sonra vur.",
+  "tutorial.wall.how": "Duvara sağ tıkla, sonra {keys} tuşuna bas ya da iki kez sağ tıkla.",
+  "tutorial.wall.intro": "Bir duvar patikayı kapatıyor. Ona sağ tıkla, sonra vur.",
+  "tutorial.wall.praise": "Yıkıldı! Patika açık.",
 
   "weaponSets.empty": "Silah seti {number}: boş",
   "weaponSets.holds": "Silah seti {number}: {gear}",

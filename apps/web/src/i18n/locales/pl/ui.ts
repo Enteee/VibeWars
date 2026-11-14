@@ -1566,6 +1566,12 @@ export default {
   "tutorial.walk.how": "Kliknij lewym na ziemię albo idź klawiszami {keys}.",
   "tutorial.walk.intro": "Ta wojna nigdy się nie kończy. Chodź ze mną; mam pomysł.",
   "tutorial.walk.praise": "Ładny krok! Masz talent.",
+  "tutorial.wall.firstHit": "Jest! Pęka. Dalej.",
+  "tutorial.wall.hint": "Najpierw kliknij mur prawym przyciskiem, potem go uderz.",
+  "tutorial.wall.how":
+    "Kliknij mur prawym przyciskiem, potem naciśnij {keys} albo kliknij go prawym dwa razy.",
+  "tutorial.wall.intro": "Mur zagradza ścieżkę. Kliknij go prawym, potem uderz.",
+  "tutorial.wall.praise": "Pada! Ścieżka wolna.",
 
   "weaponSets.empty": "Zestaw broni {number}: pusty",
   "weaponSets.holds": "Zestaw broni {number}: {gear}",

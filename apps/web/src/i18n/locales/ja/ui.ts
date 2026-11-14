@@ -1367,6 +1367,11 @@ export default {
   "tutorial.walk.how": "地面を左クリック、または {keys} で歩く。",
   "tutorial.walk.intro": "この戦は終わらない。ついて来い、考えがある。",
   "tutorial.walk.praise": "いい足取りだ!筋がいい。",
+  "tutorial.wall.firstHit": "よし！ひびが入った。その調子。",
+  "tutorial.wall.hint": "まず壁を右クリックして、それから叩こう。",
+  "tutorial.wall.how": "壁を右クリックして {keys} を押すか、もう一度右クリック。",
+  "tutorial.wall.intro": "壁が道をふさいでいる。右クリックして、叩こう。",
+  "tutorial.wall.praise": "崩れた！道が開いたぞ。",
 
   "weaponSets.empty": "武器セット{number}: 空",
   "weaponSets.holds": "武器セット{number}: {gear}",

@@ -1529,6 +1529,12 @@ export default {
   "tutorial.walk.how": "Clic gauche sur le sol, ou marche avec {keys}.",
   "tutorial.walk.intro": "Cette guerre ne finit jamais. Marche avec moi, j'ai une idée.",
   "tutorial.walk.praise": "Belle foulée ! Tu es doué.",
+  "tutorial.wall.firstHit": "Là ! Il se fissure. Continue.",
+  "tutorial.wall.hint": "D'abord un clic droit sur le mur, puis frappe-le.",
+  "tutorial.wall.how":
+    "Clic droit sur le mur, puis appuie sur {keys}, ou fais deux clics droits dessus.",
+  "tutorial.wall.intro": "Un mur bloque le sentier. Clic droit dessus, puis frappe.",
+  "tutorial.wall.praise": "Il tombe ! Le sentier est ouvert.",
 
   "weaponSets.empty": "Set d'armes {number} : vide",
   "weaponSets.holds": "Set d'armes {number} : {gear}",

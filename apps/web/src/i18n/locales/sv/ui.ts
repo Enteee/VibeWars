@@ -1434,6 +1434,12 @@ export default {
   "tutorial.walk.how": "Vänsterklicka på marken, eller gå med {keys}.",
   "tutorial.walk.intro": "Det här kriget tar aldrig slut. Gå med mig; jag har en idé.",
   "tutorial.walk.praise": "Fint steg! Du är en naturbegåvning.",
+  "tutorial.wall.firstHit": "Där! Den spricker. Fortsätt.",
+  "tutorial.wall.hint": "Högerklicka först på muren, slå den sedan.",
+  "tutorial.wall.how":
+    "Högerklicka på muren och tryck sedan {keys}, eller högerklicka på den två gånger.",
+  "tutorial.wall.intro": "En mur spärrar stigen. Högerklicka på den och slå sedan.",
+  "tutorial.wall.praise": "Den faller! Stigen är öppen.",
 
   "weaponSets.empty": "Vapenset {number}: tomt",
   "weaponSets.holds": "Vapenset {number}: {gear}",

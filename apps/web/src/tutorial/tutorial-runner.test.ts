@@ -5,6 +5,7 @@ import { KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
 
 import {
   DODGES_NEEDED,
+  breakWallStation,
   dodgeStation,
   lookStation,
   stepInStation,
@@ -27,6 +28,8 @@ const CAMERA = {
   inView: () => false,
   rockfallDodges: 0,
   hitBy: undefined,
+  wallHealth: undefined,
+  wallTargeted: false,
 };
 const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100), ...CAMERA };
 const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100), ...CAMERA };
@@ -118,11 +121,18 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, look around and step in, swaps to the canyon once, then dodges and finishes (#3247)", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall and finishes (#3247, #3302)", () => {
     const pad = vec2(200, -900);
     const goal = vec2(2850, 1800);
+    const face = vec2(3480, 1800);
     const runner = createTutorialRunner(
-      [walkStation(MARK, 0), lookStation(pad), stepInStation(pad, 0), dodgeStation(goal, 0)],
+      [
+        walkStation(MARK, 0),
+        lookStation(pad),
+        stepInStation(pad, 0),
+        dodgeStation(goal, 0),
+        breakWallStation(face, 400),
+      ],
       () => KEYMAP_PRESETS.classic,
       label,
     );
@@ -138,6 +148,10 @@ describe("the tutorial runner", () => {
       [{ ...looked, self: pad }, 3_000 + 3 * PRAISE_MS],
       [{ ...dodged, rockfallDodges: DODGES_NEEDED - 1 }, 4_000 + 3 * PRAISE_MS],
       [dodged, 5_000 + 3 * PRAISE_MS],
+      [{ ...dodged, wallHealth: 400 }, 5_000 + 4 * PRAISE_MS],
+      [{ ...dodged, wallHealth: 400, wallTargeted: true }, 6_000 + 4 * PRAISE_MS],
+      [{ ...dodged, wallHealth: 380, wallTargeted: true }, 7_000 + 4 * PRAISE_MS],
+      [{ ...dodged, wallHealth: 0, wallTargeted: true }, 8_000 + 4 * PRAISE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -150,6 +164,26 @@ describe("the tutorial runner", () => {
       "tutorial.dodge.intro",
       undefined,
       "tutorial.dodge.praise",
+      "tutorial.wall.intro",
+      undefined,
+      "tutorial.wall.firstHit",
+      "tutorial.wall.praise",
+    ]);
+    // The frame pulses throughout; the mark by the wall stands until it is targeted.
+    expect(beats[9]?.highlight).toEqual({ kind: "hud", element: ".hud-target" });
+    expect(beats.slice(9, 12).map((beat) => [beat.highlight?.kind, beat.mark])).toEqual([
+      ["hud", face],
+      ["hud", undefined],
+      ["hud", undefined],
+    ]);
+    // The wall station is next from the dodge's praise on.
+    expect(beats.slice(7, 13).map((beat) => beat.station)).toEqual([
+      "dodge",
+      "break-wall",
+      "break-wall",
+      "break-wall",
+      "break-wall",
+      undefined,
     ]);
     expect(beats[4]?.highlight).toEqual({ kind: "ground", at: pad });
     expect(beats[6]?.highlight).toEqual({ kind: "ground", at: goal });
@@ -164,6 +198,10 @@ describe("the tutorial runner", () => {
       "canyon",
       "canyon",
       "canyon",
+      "canyon",
+      "canyon",
+      "canyon",
+      "canyon",
     ]);
     expect(beats.map((beat) => beat.finished)).toEqual([
       false,
@@ -174,7 +212,41 @@ describe("the tutorial runner", () => {
       false,
       false,
       false,
+      false,
+      false,
+      false,
+      false,
       true,
+    ]);
+  });
+
+  it("says a station's reaction once, then no more hints until it is done (#3302)", () => {
+    const face = vec2(3480, 1800);
+    const runner = createTutorialRunner(
+      [breakWallStation(face, 700)],
+      () => KEYMAP_PRESETS.classic,
+      label,
+    );
+    const wall = (wallHealth: number): TutorialView => ({
+      ...AWAY,
+      wallHealth,
+      wallTargeted: true,
+    });
+    const said = [
+      runner.tick(wall(700), 0),
+      runner.tick(wall(700), HINT_REPEAT_MS),
+      runner.tick(wall(650), HINT_REPEAT_MS + 1_000),
+      runner.tick(wall(600), HINT_REPEAT_MS + 2_000),
+      runner.tick(wall(500), 3 * HINT_REPEAT_MS),
+      runner.tick(wall(0), 3 * HINT_REPEAT_MS + 1_000),
+    ].map((beat) => beat.say?.key);
+    expect(said).toEqual([
+      "tutorial.wall.intro",
+      "tutorial.wall.hint",
+      "tutorial.wall.firstHit",
+      undefined,
+      undefined,
+      "tutorial.wall.praise",
     ]);
   });
 

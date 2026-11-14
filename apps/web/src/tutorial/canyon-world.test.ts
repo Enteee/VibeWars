@@ -2,7 +2,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1, polygonCentre } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { CANYON_ARRIVAL } from "./canyon-map.js";
-import { DODGE_MARK, canyonWorld } from "./canyon-world.js";
+import { CRACKED_WALL, DODGE_MARK, canyonWorld, wallTutor } from "./canyon-world.js";
 import { DODGE_REACH } from "./dodge-count.js";
 import { MARK_REACH } from "./stations.js";
 import { PLAYER_PROFESSION, SELF_ID, TUTOR_ID, houseBuild } from "./tutorial-world.js";
@@ -61,5 +61,38 @@ describe("canyonWorld (#3247)", () => {
     // Anywhere the player counts as on the mark is in reach, and outside the ring.
     expect(fromCentre + MARK_REACH).toBeLessThan(DODGE_REACH);
     expect(last.polygon.some(({ x }) => x >= DODGE_MARK.position.x - MARK_REACH)).toBe(false);
+  });
+});
+
+describe("wallTutor (#3302)", () => {
+  const build = houseBuild(PLAYER_PROFESSION);
+  const wallHealth = (world: ReturnType<typeof canyonWorld>): number | undefined =>
+    world.simulation.breakables.find(({ id }) => id === CRACKED_WALL.id)?.health;
+
+  it("waits by the wall until the player's first blow lands, then strikes it too", () => {
+    const world = canyonWorld("canyon-test", build, build);
+    const { simulation } = world;
+    simulation.walkTo(SELF_ID, CRACKED_WALL.face, CRACKED_WALL.layer);
+    const tutor = wallTutor(simulation);
+    for (let elapsed = 0; elapsed < 40; elapsed += TICK) {
+      simulation.step(TICK);
+      tutor.step();
+    }
+    expect(wallHealth(world)).toBe(CRACKED_WALL.maxHealth);
+    expect(simulation.get(TUTOR_ID)?.combatant.attack).toBeUndefined();
+
+    expect(simulation.setTarget(SELF_ID, CRACKED_WALL.targetId)).toBe(true);
+    expect(simulation.requestAttack(SELF_ID, CRACKED_WALL.targetId)?.ok).toBe(true);
+    let struckAt: number | undefined;
+    let elapsed = 0;
+    for (; elapsed < 60 && (wallHealth(world) ?? 0) > 0; elapsed += TICK) {
+      simulation.step(TICK);
+      tutor.step();
+      if (struckAt === undefined && (wallHealth(world) ?? 0) < CRACKED_WALL.maxHealth) {
+        struckAt = elapsed;
+        expect(simulation.get(TUTOR_ID)?.combatant.attack?.targetId).toBe(CRACKED_WALL.targetId);
+      }
+    }
+    expect(wallHealth(world)).toBe(0);
   });
 });

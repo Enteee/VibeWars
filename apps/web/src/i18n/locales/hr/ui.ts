@@ -1510,6 +1510,11 @@ export default {
   "tutorial.walk.how": "Lijevi klik na tlo, ili hodaj tipkama {keys}.",
   "tutorial.walk.intro": "Ovaj rat nikad ne završava. Hodaj sa mnom; imam ideju.",
   "tutorial.walk.praise": "Lijep korak! Prirodni si talent.",
+  "tutorial.wall.firstHit": "Eto! Puca. Samo naprijed.",
+  "tutorial.wall.hint": "Prvo desni klik na zid, pa ga udari.",
+  "tutorial.wall.how": "Desni klik na zid, zatim pritisni {keys} ili dvaput desno klikni na njega.",
+  "tutorial.wall.intro": "Zid zatvara stazu. Desni klik na njega, pa ga udari.",
+  "tutorial.wall.praise": "Pada! Staza je otvorena.",
 
   "weaponSets.empty": "Komplet oružja {number}: prazan",
   "weaponSets.holds": "Komplet oružja {number}: {gear}",
