@@ -952,6 +952,24 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     expect(fireball?.skillId).toBe("elementalist.fireball");
   });
 
+  it("carries a use over the wire with its entry's caster and skill, and a trigger without one (#3298)", () => {
+    const used = { kind: "skill-used" as const, casterId: "a", skillId: "warrior.riposte" };
+    const sent = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "warrior.riposte",
+        weaponId: undefined,
+        events: [{ ...used, targetId: "a" }],
+      }),
+      entry({ cause: "skill", skillId: "warrior.riposte", weaponId: undefined }),
+    ]);
+    const [use, trigger] = (parseWireCombatBatch(JSON.parse(JSON.stringify(sent))) ?? []).map(
+      combatMessage,
+    );
+    expect(use?.events).toEqual([{ ...used, targetId: "a" }]);
+    expect(trigger?.events.map(({ kind }) => kind)).toEqual(["damage"]);
+  });
+
   it("carries a double strike over the wire, and a single one as such (#561)", () => {
     const sent = wireCombat([
       entry({ weaponId: "daggers", doubleStrike: true }),

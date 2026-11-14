@@ -43,6 +43,8 @@ nastavlja. Tako korišteni ne dovode te u domet: izvan dometa bivaju odbijeni.
 energija je potrošena i vještina se obnavlja; neki prekidi usto na neko vrijeme
 zaključavaju vještinu. Prekid prerano ili prekasno ne čini ništa.
 
+Svaka profesija ima vlastiti zvuk kad koristi vještinu; slušaj zvuk svoje mete.
+
 Većina prekida zaustavlja i običan napad u zamahu: taj udarac nikad ne
 padne i zamah počinje iznova. Neprijatelj koji još hoda do mete
 nema što prekinuti. Prekid na čijoj kartici piše "vještina" ili

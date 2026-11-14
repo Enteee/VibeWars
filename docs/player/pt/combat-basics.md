@@ -47,6 +47,8 @@ conjura. A energia dele é gasta e a habilidade recarrega; algumas
 interrupções também travam a habilidade por um tempo. Interrompa cedo ou
 tarde demais e nada acontece.
 
+Cada profissão tem o próprio som ao usar uma habilidade; escute o do seu alvo.
+
 A maioria das interrupções também para um ataque simples no meio do
 golpe: esse golpe nunca acerta e o movimento recomeça. Um inimigo que
 ainda está andando até o alvo não tem o que interromper. Uma interrupção

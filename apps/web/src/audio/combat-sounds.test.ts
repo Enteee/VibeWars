@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { StatusId } from "@vibewars/game-core";
+import { IMPLEMENTED_SKILLS, getSkill } from "@vibewars/game-core";
+import type { Skill, StatusId } from "@vibewars/game-core";
 import type {
   CombatMessage,
   GroundEffectSnapshot,
@@ -9,7 +10,14 @@ import type {
 
 import {
   AREA_WARN_REACH,
+  CAST_EARSHOT,
+  CAST_VOICE_LIMIT,
   SPIRIT_EARSHOT,
+  castLayers,
+  castPitch,
+  castPitchStep,
+  castVoices,
+  instantCastVoice,
   hitsForCombat,
   soundsForCombat,
   soundsForSkillGround,
@@ -283,23 +291,12 @@ const casting = (skill: string): Partial<PlayerSnapshot> => ({
 describe("soundsForSnapshot", () => {
   const idle = snapshot([player(ME, { targetSessionId: "foe" }), player("foe")]);
 
-  it("plays cast-self when your cast starts, and not again while it runs", () => {
+  it("is silent for your own cast: that is a voice (#3298)", () => {
     const started = snapshot([
       player(ME, { targetSessionId: "foe", ...casting("fireball") }),
       player("foe"),
     ]);
-    const running = snapshot([
-      player(ME, { targetSessionId: "foe", castingSkillId: "fireball", castRemaining: 0.5 }),
-      player("foe"),
-    ]);
-    expect(soundsForSnapshot(idle, started)).toEqual(["cast-self"]);
-    expect(soundsForSnapshot(started, running)).toEqual([]);
-  });
-
-  it("plays cast-self when one cast changes straight into another", () => {
-    const first = snapshot([player(ME, casting("fireball")), player("foe")]);
-    const second = snapshot([player(ME, casting("flare")), player("foe")]);
-    expect(soundsForSnapshot(first, second)).toEqual(["cast-self"]);
+    expect(soundsForSnapshot(idle, started)).toEqual([]);
   });
 
   it("plays cast-target when your target starts casting", () => {
@@ -342,18 +339,18 @@ describe("soundsForSnapshot", () => {
     expect(soundsForSnapshot(before, after)).toEqual([]);
   });
 
-  it("plays cast-self only, not both, when you target yourself", () => {
+  it("plays no cast-target when you target yourself", () => {
     const before = snapshot([player(ME, { targetSessionId: ME })]);
     const after = snapshot([player(ME, { targetSessionId: ME, ...casting("heal") })]);
-    expect(soundsForSnapshot(before, after)).toEqual(["cast-self"]);
+    expect(soundsForSnapshot(before, after)).toEqual([]);
   });
 
-  it("plays both when you and your target start casting together", () => {
+  it("plays cast-target when you and your target start casting together", () => {
     const after = snapshot([
       player(ME, { targetSessionId: "foe", ...casting("fireball") }),
       player("foe", casting("heal")),
     ]);
-    expect(soundsForSnapshot(idle, after)).toEqual(["cast-self", "cast-target"]);
+    expect(soundsForSnapshot(idle, after)).toEqual(["cast-target"]);
   });
 
   it("is silent for a dead caster", () => {
@@ -622,5 +619,160 @@ describe("soundsForSkillGround (#3297)", () => {
     const next = world([area(1, HARMFUL, 1)], [player(ME), spirit("spirit", 10)]);
     expect(soundsForSkillGround(undefined, next, ME)).toEqual([]);
     expect(soundsForSkillGround(world([], []), { ...next, players: [] }, ME)).toEqual([]);
+  });
+});
+
+describe("castVoices (#3298)", () => {
+  const skillWhere = (wanted: (skill: Skill) => boolean): Skill => {
+    const skill = IMPLEMENTED_SKILLS.find(wanted);
+    if (skill === undefined) {
+      throw new Error("no such skill in the catalog");
+    }
+    return skill;
+  };
+  const monkSpell = skillWhere(
+    (s) => s.profession === "monk" && s.type === "spell" && s.activationSeconds > 0,
+  );
+  const otherSpell = skillWhere(
+    (s) =>
+      s.profession === "monk" && s.type === "spell" && castPitch(s.id) !== castPitch(monkSpell.id),
+  );
+  const instant = skillWhere((s) => s.activationSeconds === 0 && s.attack === undefined);
+  const seat = { selfId: ME, at: undefined };
+  const at = (x: number, extra: Partial<PlayerSnapshot> = {}): Partial<PlayerSnapshot> => ({
+    x,
+    ...extra,
+  });
+  const before = (...others: PlayerSnapshot[]): MatchSnapshot => snapshot([player(ME), ...others]);
+
+  it("voices a foe at 300 starting a Monk spell: the Monk base and the spell motif, at its pitch", () => {
+    const after = snapshot([player(ME), player("foe", at(300, casting(monkSpell.id)))]);
+    expect(castVoices(before(player("foe", at(300))), after, seat)).toEqual([
+      expect.objectContaining({
+        base: "cast-base-monk",
+        motif: "cast-motif-spell",
+        rate: castPitch(monkSpell.id),
+      }),
+    ]);
+  });
+
+  it("pitches the same skill the same every time, and another skill of its kind apart", () => {
+    const first = castVoices(
+      before(player("foe", at(300))),
+      snapshot([player(ME), player("foe", at(300, casting(monkSpell.id)))]),
+      seat,
+    );
+    const again = castVoices(
+      before(player("ally", at(400, { team: 0 }))),
+      snapshot([player(ME), player("ally", at(400, { team: 0, ...casting(monkSpell.id) }))]),
+      seat,
+    );
+    expect(again[0]?.rate).toBe(first[0]?.rate);
+    expect(castPitch(otherSpell.id)).not.toBe(castPitch(monkSpell.id));
+  });
+
+  it("is silent for a foe just out of earshot", () => {
+    const far = CAST_EARSHOT + 1;
+    const after = snapshot([player(ME), player("foe", at(far, casting(monkSpell.id)))]);
+    expect(castVoices(before(player("foe", at(far))), after, seat)).toEqual([]);
+  });
+
+  it("fades a cast with distance, and an ally's under a foe's", () => {
+    const gainOf = (id: string, x: number, team: number): number => {
+      const after = snapshot([player(ME), player(id, at(x, { team, ...casting(monkSpell.id) }))]);
+      return castVoices(before(player(id, at(x, { team }))), after, seat)[0]?.gain ?? 0;
+    };
+    expect(gainOf("foe", 100, 1)).toBeCloseTo(1);
+    expect(gainOf("foe", 200, 1)).toBeCloseTo(1);
+    expect(gainOf("foe", 700, 1)).toBeCloseTo(10 ** (-12 / 20));
+    expect(gainOf("ally", 100, 0)).toBeCloseTo(10 ** (-3 / 20));
+  });
+
+  it("voices your own cast quietly, in place of cast-self", () => {
+    const after = snapshot([player(ME, casting(monkSpell.id))]);
+    const voices = castVoices(snapshot([player(ME)]), after, seat);
+    expect(voices.map(({ base, motif }) => [base, motif])).toEqual([
+      ["cast-base-monk", "cast-motif-spell"],
+    ]);
+    expect(voices[0]?.gain).toBeLessThan(0.5);
+    expect(soundsForSnapshot(snapshot([player(ME)]), after)).toEqual([]);
+  });
+
+  it("keeps the limit of 5 casts starting at once, and never cuts your target's", () => {
+    const ids = ["near", "mid", "ally", "far", "target"];
+    const where = (id: string): Partial<PlayerSnapshot> =>
+      id === "ally" ? at(100, { team: 0 }) : at(id === "near" ? 150 : id === "mid" ? 300 : 650);
+    const idle = snapshot([
+      player(ME, { targetSessionId: "target" }),
+      ...ids.map((id) => player(id, where(id))),
+    ]);
+    const busy = snapshot([
+      player(ME, { targetSessionId: "target" }),
+      ...ids.map((id) => player(id, { ...where(id), ...casting(monkSpell.id) })),
+    ]);
+    const voices = castVoices(idle, busy, seat);
+    expect(voices).toHaveLength(CAST_VOICE_LIMIT);
+    expect(voices.map(({ priority }) => Math.floor(priority))).toEqual([0, 2, 2]);
+  });
+
+  it("hears a watcher's casts from its camera, with no own or target voice", () => {
+    const watcher = { selfId: "watcher", at: { x: 1000, y: 0 } };
+    const idle = snapshot([player("a", at(1200)), player("b", at(0))]);
+    const busy = snapshot([
+      player("a", at(1200, casting(monkSpell.id))),
+      player("b", at(0, casting(monkSpell.id))),
+    ]);
+    expect(castVoices(idle, busy, watcher)).toHaveLength(1);
+  });
+
+  it("is silent without a previous snapshot", () => {
+    const busy = snapshot([player(ME), player("foe", at(100, casting(monkSpell.id)))]);
+    expect(castVoices(undefined, busy, seat)).toEqual([]);
+  });
+
+  it("voices an instant skill at its activation, and a timed one never from its message", () => {
+    const latest = snapshot([player(ME), player("foe", at(300))]);
+    const used = (skill: Skill): CombatMessage => ({
+      ...message("foe", [
+        { kind: "skill-used", casterId: "foe", skillId: skill.id, targetId: "foe" },
+      ]),
+      cause: "skill",
+      skillId: skill.id,
+    });
+    expect(instantCastVoice(used(instant), latest, seat)).toMatchObject(castLayers(instant));
+    expect(instantCastVoice(used(monkSpell), latest, seat)).toBeUndefined();
+  });
+
+  it("is silent for an instant's trigger, which carries no use", () => {
+    const latest = snapshot([player(ME), player("foe", at(300))]);
+    const riposte = getSkill("warrior.riposte");
+    expect(riposte?.activationSeconds).toBe(0);
+    const trigger: CombatMessage = {
+      ...message("foe", [{ kind: "damage", targetId: ME, amount: 20, critical: false }]),
+      skillId: "warrior.riposte",
+    };
+    expect(instantCastVoice(trigger, latest, seat)).toBeUndefined();
+  });
+});
+
+describe("castPitch (#3298)", () => {
+  it("pitches every catalog skill within -5 to +6 semitones", () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      const semitones = castPitchStep(skill.id) / 2;
+      expect(semitones, skill.id).toBeGreaterThanOrEqual(-5);
+      expect(semitones, skill.id).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it("gives no two-layer sound to more than 6 skills", () => {
+    const buckets = new Map<string, number>();
+    for (const skill of IMPLEMENTED_SKILLS) {
+      const { base, motif, rate } = castLayers(skill);
+      const bucket = `${base} ${motif} ${String(rate)}`;
+      buckets.set(bucket, (buckets.get(bucket) ?? 0) + 1);
+    }
+    const [worst, size] = [...buckets].reduce((a, b) => (b[1] > a[1] ? b : a));
+    console.info(`the worst cast sound is shared by ${String(size)} skills: ${worst}`);
+    expect(size).toBeLessThanOrEqual(6);
   });
 });

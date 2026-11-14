@@ -1,3 +1,4 @@
+import { CAST_VOICE_LIMIT, type CastVoice } from "./combat-sounds.js";
 import { loadMuted } from "./mute-preference.js";
 import { loadSfxVolume } from "./sfx-volume-preference.js";
 import { SOUND_IDS, type SoundId } from "./sound-ids.js";
@@ -17,6 +18,12 @@ import { VOLUME_RAMP_SECONDS } from "./volume-ramp.js";
 export interface SoundPlayer {
   /** Play one sound now. Silent while muted, and until its buffer has decoded. */
   play(id: SoundId): void;
+  /**
+   * Play one cast's two layers together (#3298). At most `CAST_VOICE_LIMIT`
+   * sound at once: past it, a voice that matters more cuts the one that
+   * matters least, with a short fade, and one that matters less is dropped.
+   */
+  playCast(voice: CastVoice): void;
   setMuted(muted: boolean): void;
   readonly muted: boolean;
   /** 0 to 1, the player's sound effects volume (#424); a change ramps to it. */
@@ -26,6 +33,9 @@ export interface SoundPlayer {
 
 /** One id plays at most this often, so a Barrage hitting five is one thwack (#54). */
 export const SOUND_THROTTLE_MS = 60;
+
+/** How long a cut cast voice fades out over, so it does not click. */
+export const CAST_CUT_SECONDS = 0.03;
 
 /** The output gain at full volume. */
 export const MASTER_GAIN = 0.5;
@@ -42,8 +52,10 @@ export interface SoundContext {
   createGain(): { readonly gain: SoundGain; connect(sink: SoundSink): unknown };
   createBufferSource(): {
     buffer: AudioBuffer | null;
+    readonly playbackRate: { value: number };
     connect(sink: SoundSink): unknown;
     start(): void;
+    stop(when?: number): void;
   };
   decodeAudioData(bytes: ArrayBuffer): Promise<AudioBuffer>;
 }
@@ -80,6 +92,13 @@ export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
   let output: { context: SoundContext; sink: SoundSink; gain: SoundGain } | undefined;
   const buffers = new Map<SoundId, AudioBuffer>();
   const lastPlayed = new Map<SoundId, number>();
+  /** The cast voices sounding, until `ends`, in context time. */
+  let voices: {
+    readonly priority: number;
+    readonly ends: number;
+    readonly gain: SoundGain;
+    readonly sources: readonly { stop(when?: number): void }[];
+  }[] = [];
 
   // Sound is a nicety: the first thing to go wrong says so once, and the
   // game carries on in silence rather than warning on every hit.
@@ -151,6 +170,49 @@ export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
         source.buffer = buffer;
         source.connect(output.sink);
         source.start();
+      } catch (error) {
+        fail(error);
+      }
+    },
+    playCast(voice) {
+      const base = buffers.get(voice.base);
+      const motif = buffers.get(voice.motif);
+      if (muted || broken || output === undefined || base === undefined || motif === undefined) {
+        return;
+      }
+      try {
+        const { context, sink } = output;
+        const now = context.currentTime;
+        voices = voices.filter(({ ends }) => ends > now);
+        if (voices.length >= CAST_VOICE_LIMIT) {
+          const least = voices.reduce((a, b) => (b.priority > a.priority ? b : a));
+          if (least.priority <= voice.priority) {
+            return;
+          }
+          least.gain.cancelScheduledValues(now);
+          least.gain.setValueAtTime(least.gain.value, now);
+          least.gain.linearRampToValueAtTime(0, now + CAST_CUT_SECONDS);
+          for (const source of least.sources) {
+            source.stop(now + CAST_CUT_SECONDS);
+          }
+          voices = voices.filter((other) => other !== least);
+        }
+        const gain = context.createGain();
+        gain.gain.value = voice.gain;
+        gain.connect(sink);
+        const sources = [
+          { buffer: base, rate: 1 },
+          { buffer: motif, rate: voice.rate },
+        ].map(({ buffer, rate }) => {
+          const source = context.createBufferSource();
+          source.buffer = buffer;
+          source.playbackRate.value = rate;
+          source.connect(gain);
+          source.start();
+          return source;
+        });
+        const ends = now + Math.max(base.duration, motif.duration / voice.rate);
+        voices.push({ priority: voice.priority, ends, gain: gain.gain, sources });
       } catch (error) {
         fail(error);
       }

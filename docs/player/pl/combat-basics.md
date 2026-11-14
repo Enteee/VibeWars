@@ -43,6 +43,8 @@ Użyte w ten sposób nie podprowadzają cię do celu: poza zasięgiem zostają o
 jest wydana, a umiejętność się odnawia; niektóre przerwania dodatkowo blokują ją
 na jakiś czas. Przerwanie za wcześnie lub za późno nic nie daje.
 
+Każda profesja ma własny dźwięk użycia umiejętności; nasłuchuj dźwięku swojego celu.
+
 Większość przerwań zatrzymuje też zwykły atak w połowie zamachu: cios nigdy nie
 trafia, a zamach zaczyna się od nowa. Wróg, który wciąż idzie do celu, nie ma
 czego przerywać. Przerwanie, którego karta mówi „umiejętność” lub „czar”, nie

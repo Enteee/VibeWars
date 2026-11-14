@@ -45,6 +45,8 @@ energia je minutá a schopnosť sa dobíja; niektoré prerušenia navyše
 schopnosť na chvíľu zamknú. Prerušenie príliš skoro alebo príliš neskoro
 nespraví nič.
 
+Každá profesia má vlastný zvuk pri použití schopnosti; počúvaj zvuk svojho cieľa.
+
 Väčšina prerušení zastaví aj obyčajný útok uprostred švihu: ten úder nikdy
 nedopadne a švih začne odznova. Nepriateľ, ktorý k cieľu ešte len kráča,
 nemá čo prerušiť. Prerušenie, ktoré má na karte „a skill“ alebo „a spell“,

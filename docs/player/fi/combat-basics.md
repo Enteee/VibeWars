@@ -48,6 +48,8 @@ energiansa kuluu ja taito latautuu; jotkin keskeytykset myös lukitsevat
 taidon hetkeksi. Keskeytä liian aikaisin tai liian myöhään, niin mitään
 ei tapahdu.
 
+Jokaisen ammatin taidoilla on oma äänensä; kuuntele kohteesi ääntä.
+
 Useimmat keskeytykset pysäyttävät myös tavallisen hyökkäyksen kesken
 lyönnin: se isku ei koskaan osu ja lyönti alkaa alusta. Vihollisessa,
 joka vielä kävelee kohdettaan kohti, ei ole mitään keskeytettävää.
