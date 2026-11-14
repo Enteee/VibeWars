@@ -34,6 +34,7 @@ import { formatNumber, t, type MessageKey } from "../i18n/index.js";
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import { THIRD_TEAM_MARK, markedForTeam, teamColour, teamSide } from "../render/arena-snapshot.js";
+import type { RenderableBreakable } from "../render/breakable-objects.js";
 import type { LinkedTarget, RenderableSwitch } from "../render/flag-objects.js";
 import type { SwitchTargetKind } from "../render/switch-link.js";
 import { botTagElement } from "./bot-tag.js";
@@ -1494,6 +1495,52 @@ export function targetHealthPercent(target: PlayerSnapshot): number {
 }
 
 /**
+ * The breakable wall `targetId` names, among the map's (#3317); `undefined`
+ * for any other target, and for a wall the map does not have.
+ */
+export function targetWall(
+  targetId: string | undefined,
+  breakables: readonly RenderableBreakable[],
+): RenderableBreakable | undefined {
+  return targetId === undefined || breakableIdOf(targetId) === undefined
+    ? undefined
+    : breakables.find(({ id }) => id === targetId);
+}
+
+/**
+ * A wall's health as a whole percentage of its maximum (#3317), rounded as
+ * a body's is: down, and never 0% while it stands.
+ */
+export function wallHealthPercent(wall: Pick<RenderableBreakable, "health" | "maxHealth">): number {
+  if (wall.maxHealth <= 0 || wall.health <= 0) {
+    return 0;
+  }
+  return Math.max(1, Math.min(100, Math.floor((wall.health / wall.maxHealth) * 100)));
+}
+
+/** The target frame's health bar. */
+export type TargetHealthBar = Pick<
+  HudElements,
+  "targetHealth" | "targetHealthFill" | "targetHealthLost" | "targetHealthText" | "targetHealthPips"
+>;
+
+/**
+ * A wall's health on the target frame's bar (#3317): neutral, as a wall is
+ * nobody's, the percentage alone, no pips, as walls do not regenerate, and
+ * an empty track once it has crumbled.
+ */
+export function renderWallHealth(hud: TargetHealthBar, wall: RenderableBreakable): void {
+  hud.targetHealth.classList.toggle("is-dead", wall.health <= 0);
+  hud.targetHealth.classList.toggle("is-wall", true);
+  paintHealthTint(hud.targetHealth, { dead: true, statuses: [] });
+  const health = wallHealthPercent(wall);
+  setStyle(hud.targetHealthFill.style, "width", percent(health / 100));
+  setStyle(hud.targetHealthLost.style, "width", percent(0));
+  setText(hud.targetHealthText, `${String(health)}%`);
+  renderPips(hud.targetHealthPips, 0);
+}
+
+/**
  * The label on the target's health bar (#484): the percentage, which is
  * what players call, and for yourself and allies the hit points as well.
  * A foe, or anyone to a spectator, shows the percentage alone, as GW1
@@ -1941,6 +1988,7 @@ function renderTarget(
   beacon: boolean,
   names: ReadonlyMap<string, string>,
   switches: readonly RenderableSwitch[],
+  breakables: readonly RenderableBreakable[],
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
   renderTargetSignet(hud, target?.signet);
@@ -1968,9 +2016,14 @@ function renderTarget(
     hud.targetPanel.title = title;
   }
   hud.targetPanel.classList.toggle("is-callable", callable);
-  setHidden(hud.targetHealth, target === undefined);
+  const wall = target === undefined ? targetWall(self?.targetSessionId, breakables) : undefined;
+  setHidden(hud.targetHealth, target === undefined && wall === undefined);
+  if (wall !== undefined) {
+    renderWallHealth(hud, wall);
+  }
   if (target !== undefined) {
     hud.targetHealth.classList.toggle("is-dead", target.dead);
+    hud.targetHealth.classList.toggle("is-wall", false);
     paintHealthTint(hud.targetHealth, target);
     setStyle(hud.targetHealthFill.style, "width", percent(targetHealthPercent(target) / 100));
     setStyle(hud.targetHealthLost.style, "width", percent(lostHealthPercent(target) / 100));
@@ -2031,7 +2084,7 @@ export function updateFollowed(
 ): void {
   const names = new Map(match.players.map((player) => [player.sessionId, player.name]));
   const casters = new Map(match.players.map((player) => [player.sessionId, player]));
-  renderTarget(hud, undefined, followed, match.stand, false, names, []);
+  renderTarget(hud, undefined, followed, match.stand, false, names, [], []);
   renderTargetChain(hud.targetChain, undefined);
   hud.targetEffects.update(
     targetEffectRows(viewerId, followed, casters, matchNow(hud, match.elapsedSeconds)),
@@ -2058,6 +2111,8 @@ export function updateHud(
   beacon: boolean,
   /** The map's levers, for the target frame to say what one works (#3236). */
   switches: readonly RenderableSwitch[],
+  /** The map's breakable walls, for the target frame to show one's health (#3317). */
+  breakables: readonly RenderableBreakable[],
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
@@ -2134,7 +2189,7 @@ export function updateHud(
         ],
   );
 
-  renderTarget(hud, self, target, match?.stand, beacon, names, switches);
+  renderTarget(hud, self, target, match?.stand, beacon, names, switches, breakables);
   renderTargetChain(hud.targetChain, targetChainIcon(target, chainMark));
   hud.targetEffects.update(targetEffectRows(self.sessionId, target, casters, now));
 

@@ -222,12 +222,17 @@ test.describe("the first-time tutorial (#3218)", () => {
         await expect(target).toBeVisible({ timeout: 2_000 });
       }).toPass({ timeout: 60_000 });
       await expect(target).toHaveClass(/tutorial-pulse/);
+      // The frame shows the wall's health, as it does a body's (#3317).
+      const wallBar = target.locator(".hud-target-health");
+      await expect(wallBar).toBeVisible();
+      await expect(wallBar.locator(".hud-bar-label")).toHaveText("100%");
       // The mark by the wall goes once it is targeted; the frame pulses on.
       await expect(frame).not.toHaveAttribute("data-mark", /./);
       await page.keyboard.press("Space");
       await expect
         .poll(() => hasSaid("There! It cracks. Keep going."), { timeout: 15_000 })
         .toBe(true);
+      await expect(wallBar.locator(".hud-bar-label")).not.toHaveText("100%");
       await expect(frame).toHaveAttribute("data-wall", "0", { timeout: 90_000 });
       await expect
         .poll(() => hasSaid("Down it goes! The trail is open."), { timeout: 5_000 })
