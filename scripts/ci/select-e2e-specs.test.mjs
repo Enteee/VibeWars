@@ -158,7 +158,7 @@ describe("specSeconds", () => {
 
 describe("the plan under the real budget", () => {
   it("keeps the two largest specs within MAX_JOBS and every job within the budget", () => {
-    const weights = { "training.spec.ts": 371, "builds.spec.ts": 302 };
+    const weights = { "gameplay.spec.ts": 663, "tutorial.spec.ts": 407 };
     const plan = planJobs(weights, 10, SECONDS_PER_JOB, MAX_JOBS);
     expect(plan.length).toBeLessThanOrEqual(MAX_JOBS);
     for (const job of plan) {
@@ -171,11 +171,11 @@ describe("the plan under the real budget", () => {
     const yml = fs.readFileSync(".github/workflows/e2e-repeat.yml", "utf8");
     const job = yml.slice(yml.indexOf("\n  e2e-repeat:"));
     expect(/timeout-minutes: (\d+)/.exec(job)?.[1]).toBe(String(JOB_TIMEOUT_MINUTES));
-    expect(MAX_SPEC_SECONDS).toBe(636);
+    expect(MAX_SPEC_SECONDS).toBe(1400);
   });
 
   it("refuses a spec too long for one job, naming it", () => {
-    expect(() => planJobs({ "huge.spec.ts": 637 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
+    expect(() => planJobs({ "huge.spec.ts": 1401 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
       /huge\.spec\.ts.*split the spec/,
     );
   });
