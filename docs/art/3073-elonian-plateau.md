@@ -11,7 +11,7 @@ canyon between, a sandstorm on a timer) is kept.
 ## Rules the study holds
 
 - **Bounds** 4600×2800 = 12.88 M u² (2.55× Canyon, 8v8, short side 2800 ≥ 1800). The ground outline
-  fills 66 % of it, ragged, with `rock` (`OUTSIDE_KINDS`) outside: boulders and scree, drawn in the plan
+  fills 66 % of it, ragged, with `rock` (`OUTSIDE_KINDS`) outside: boulders and scree, drawn right round the outline in the plan
   and both spawn frames. Sized to the walk, not to today's 6400 width: the walk from a spawn to the
   centre is 11 s, under the 25 s cap.
 - **Biome `desert`** (visual-style §1): ground `#3b3226`, rock `#6e6252`, stone decks `#c2b296`,
@@ -34,7 +34,7 @@ canyon between, a sandstorm on a timer) is kept.
   passage at (2350,1360) (shut, the passage is a dead end for both teams alike; the wash and the
   lift-and-arch route remain). A **breakable sandstone wall** across the wash's south neck at x 2288, y 1840..2100.
   Zones: `scorched` (sun-baked rock, west, (1000,1950)) and `rockfall` (loose scree, east,
-  (3600,1100)), off all routes, ≥ 200 u from a spawn. The **sandstorm** is the atmosphere that exists
+  (3600,1100)), off all routes, ≥ 200 u from a spawn. A **seep**, a shallow standing pool (the shallow water look, `#8fb8d6` at 30 %, pale rim) at (1500,2250) on L0, south of the wash and ≥ 450 u from every route: walkable scenery, no zone, so the 5 % balance holds. The **sandstorm** is the atmosphere that exists
   (#3032), a pale band in the south-east, on a timer, and under bodies. If it is meant to cut vision
   or slow players, that is a mechanic: not designed here, listed below.
 - **Light:** the **Day** row (visual-style §2): sun from the NW, 50°, `#fff1d6` 0.55, ambient
@@ -46,7 +46,7 @@ canyon between, a sandstorm on a timer) is kept.
 ## Routes and balance (base speed 180 u/s)
 
 Eight seats a side in a 2×4 block: T1 centred (480,1655) in the west mouth, T2 (4180,1380) in the east. The centre is
-the foot of the centre fin, (2300,1560).
+the foot of the centre fin, (2300,1560). T2's block stands about 80 u from the east outline on purpose: it backs onto the rim, as T1 does not.
 
 | Route (T1 / T2)                                           | Length        | Walk          |
 | --------------------------------------------------------- | ------------- | ------------- |

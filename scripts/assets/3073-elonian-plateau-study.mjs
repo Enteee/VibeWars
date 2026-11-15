@@ -164,6 +164,7 @@ const LEVER = /** @type {Pt} */ ([2300, 1250]);
 const BREAKABLE = rect(2288, 1840, 24, 260); // a sandstone wall across the wash's south neck
 const SCORCH = { cx: 1000, cy: 1950, rx: 150, ry: 65 };
 const ROCKFALL = { cx: 3600, cy: 1100, rx: 150, ry: 65 };
+const SEEP = { cx: 1500, cy: 2250, rx: 190, ry: 60 }; // shallow water, off every route
 const STORM = rect(2500, 2260, 1300, 300); // the sandstorm's band (atmosphere, timer #3032)
 /** @type {{ t1: Pt[]; t2: Pt[] }} */
 const SPAWNS = { t1: [], t2: [] };
@@ -260,14 +261,16 @@ const ell = (cx, cy, rx, ry, fill, stroke) =>
 const world = () => {
   let s = `<rect x="-1200" y="-1200" width="${MW + 2400}" height="${MH + 2400}" fill="${C.out}"/>`;
   // outside: `rock` (OUTSIDE_KINDS), tumbled masonry round the fortress
-  for (let i = 0; i < 110; i++)
-    s += `<ellipse cx="${((i * 421) % 3100) - 200}" cy="${((i * 317 + i * i * 11) % 2300) - 200}" rx="${44 + (i % 4) * 12}" ry="${28 + (i % 4) * 8}" fill="#5a4e3c" stroke="${INK}" stroke-width="3" opacity=".9"/>`;
+  for (let i = 0; i < 170; i++)
+    s += `<ellipse cx="${((i * 421) % (MW + 800)) - 400}" cy="${((i * 317 + i * i * 11) % (MH + 800)) - 400}" rx="${44 + (i % 4) * 12}" ry="${28 + (i % 4) * 8}" fill="#5a4e3c" stroke="${INK}" stroke-width="3" opacity=".9"/>`;
   s += `<polygon points="${pts(OUTLINE)}" fill="${C.ground}" stroke="${INK}" stroke-width="8" stroke-linejoin="round"/>`;
   s += `<polygon points="${pts(OUTLINE)}" fill="url(#flag)" opacity=".5"/>`;
   // L0 zones
   s += ell(SCORCH.cx, SCORCH.cy, SCORCH.rx, SCORCH.ry, C.scorch, "#15110d");
   s += ell(ROCKFALL.cx, ROCKFALL.cy, ROCKFALL.rx, ROCKFALL.ry, C.scree, "#3a3226");
   s += `<ellipse cx="900" cy="2200" rx="240" ry="50" fill="#d9c9a8" opacity=".25"/><ellipse cx="3900" cy="1500" rx="240" ry="50" fill="#d9c9a8" opacity=".25"/>`;
+  // the seep: a shallow standing pool in the dry wash's west bend, scenery (no zone)
+  s += `<ellipse cx="${SEEP.cx}" cy="${SEEP.cy}" rx="${SEEP.rx}" ry="${SEEP.ry}" fill="#8fb8d6" opacity=".3" stroke="#c4dcee" stroke-width="5"/>`;
   // passage floor and cover seam on the ground, grating slots every 120
   for (let i = 1; i < TUNNEL_PATH.length; i++) {
     const a = /** @type {Pt} */ (TUNNEL_PATH[i - 1]),
@@ -375,6 +378,7 @@ const bodyAt = (p, col, e) => {
   for (const l of LIFTS) a += tag("timer lift", [l.r[0][0] - 20, l.r[0][1] - 20], 26);
   a +=
     tag("sandstone wall", [2350, 2020], 26) +
+    tag("seep (shallow water)", [SEEP.cx - 100, SEEP.cy + 90], 26) +
     tag("scorched", [SCORCH.cx - 60, SCORCH.cy + 100], 28) +
     tag("rockfall", [ROCKFALL.cx - 60, ROCKFALL.cy + 100], 28) +
     tag("sandstorm band (atmosphere, timer)", [STORM[0][0], STORM[0][1] + 150], 28);
