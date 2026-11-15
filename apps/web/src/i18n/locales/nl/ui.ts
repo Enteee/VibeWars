@@ -1463,6 +1463,12 @@ export default {
   "tutorial.moreSoon": "Binnenkort meer lessen. Tot daarbuiten!",
   "tutorial.offer": "Nieuw hier? Je leraar laat je de basis zien.",
   "tutorial.offerTitle": "Eerste keer?",
+  "tutorial.ping.hint": "Ping de kant die je op wilt.",
+  "tutorial.ping.how":
+    "Klik met het wiel op de grond, klik op het kompas, of sleep over het kompas om een lijn te tekenen.",
+  "tutorial.ping.intro": "Links of rechts? Jij beslist.",
+  "tutorial.ping.pocket": "Mooi uitzicht. Maar verkeerde kant.",
+  "tutorial.ping.praise": "Goed gekozen. Verder.",
   "tutorial.ramp.hint": "Beide trappen op naar de markering op het hoge platform.",
   "tutorial.ramp.how": "Klik op het hoge platform. Je route neemt de treden voor je.",
   "tutorial.ramp.intro": "Trappen verbinden lagen. Loop erop en ze dragen je omhoog.",

@@ -1453,6 +1453,12 @@ export default {
   "tutorial.moreSoon": "Fler lektioner snart. Vi ses där ute!",
   "tutorial.offer": "Ny här? Din lärare visar dig grunderna.",
   "tutorial.offerTitle": "Första gången?",
+  "tutorial.ping.hint": "Pinga vägen du vill gå.",
+  "tutorial.ping.how":
+    "Klicka med hjulet på marken, klicka på kompassen eller dra på kompassen för att rita en linje.",
+  "tutorial.ping.intro": "Vänster eller höger? Du bestämmer.",
+  "tutorial.ping.pocket": "Fin utsikt. Men fel väg.",
+  "tutorial.ping.praise": "Bra val. Vidare.",
   "tutorial.ramp.hint": "Upp för båda trapporna till märket på den höga plattformen.",
   "tutorial.ramp.how": "Klicka på den höga plattformen. Din väg tar trappstegen åt dig.",
   "tutorial.ramp.intro": "Trappor binder ihop lager. Gå på dem så bär de dig upp.",

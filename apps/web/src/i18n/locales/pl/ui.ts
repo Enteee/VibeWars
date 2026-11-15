@@ -1585,6 +1585,12 @@ export default {
   "tutorial.moreSoon": "Wkrótce więcej lekcji. Do zobaczenia na polu bitwy!",
   "tutorial.offer": "Nowy? Twój nauczyciel pokaże ci podstawy.",
   "tutorial.offerTitle": "Pierwszy raz?",
+  "tutorial.ping.hint": "Wskaż drogę, którą chcesz iść.",
+  "tutorial.ping.how":
+    "Kliknij kółkiem w ziemię, kliknij kompas albo przeciągnij po kompasie, by narysować linię.",
+  "tutorial.ping.intro": "W lewo czy w prawo? Ty decydujesz.",
+  "tutorial.ping.pocket": "Ładny widok. Ale zła droga.",
+  "tutorial.ping.praise": "Dobry wybór. Naprzód.",
   "tutorial.ramp.hint": "W górę po obu schodach do znacznika na wysokiej platformie.",
   "tutorial.ramp.how": "Kliknij wysoką platformę. Ścieżka sama poprowadzi po schodach.",
   "tutorial.ramp.intro": "Schody łączą poziomy. Wejdź na nie, a wyniosą cię w górę.",

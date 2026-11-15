@@ -266,9 +266,11 @@ import { lyingPose } from "./lying-pose.js";
 import {
   SLEEPER_RIM_WIDTH,
   SLEEPER_Z_WIDTH,
+  parasolCommands,
   sleeperCommands,
-  type SleeperProp,
-} from "./sleeper-prop.js";
+  type PropCommand,
+  type TutorialProp,
+} from "./tutorial-props.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import {
@@ -795,7 +797,7 @@ export class ArenaScene extends Phaser.Scene {
   private goals = new Map<string, { mark: GoalMark; goneAt: number | undefined }>();
   private readonly goalGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Scenery the simulation does not know (#3326), lying on the walls of its layer. */
-  private props: readonly SleeperProp[] = [];
+  private props: readonly TutorialProp[] = [];
   /** The props' graphics, one per wall-top depth. */
   private readonly propGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Every caped body's cape (#1699), and where the body was drawn last frame. */
@@ -919,7 +921,7 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** Replace the props to draw from the next frame: none clears them. */
-  public setProps(props: readonly SleeperProp[]): void {
+  public setProps(props: readonly TutorialProp[]): void {
     this.props = props;
   }
 
@@ -2021,8 +2023,9 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The props (#3326) on top of their layer's walls: lifted by the layer's
-   * height and the wall's, just over that wall's depth, and lit where they lie.
+   * The props (#3326) just over their layer's walls' depth, lit where they
+   * lie: a sleeper on top of a wall, lifted by the layer's height and the
+   * wall's; a parasol (#3332) on the layer's ground, by the layer's alone.
    */
   private drawProps(): void {
     for (const graphics of this.propGraphics.values()) {
@@ -2036,16 +2039,18 @@ export class ArenaScene extends Phaser.Scene {
         g = this.add.graphics().setDepth(depth);
         this.propGraphics.set(depth, g);
       }
-      const lift = elevationOf(prop.layer, ground) + (layerCount === 1 ? 0 : WALL_HEIGHT);
+      const onWall = prop.kind === "sleeper" && layerCount > 1;
+      const lift = elevationOf(prop.layer, ground) + (onWall ? WALL_HEIGHT : 0);
       const tint = this.tintAt(prop.position, prop.layer);
+      const lit = (colour: number): number =>
+        tint === undefined ? colour : multiplyColour(colour, tint);
+      const commands: readonly PropCommand[] =
+        prop.kind === "sleeper"
+          ? sleeperCommands(prop.position, prop.facing, this.now, this.reducedMotion)
+          : parasolCommands(prop.position);
       g.save();
       g.translateCanvas(0, -lift);
-      for (const command of sleeperCommands(
-        prop.position,
-        prop.facing,
-        this.now,
-        this.reducedMotion,
-      )) {
+      for (const command of commands) {
         switch (command.kind) {
           case "glow":
             g.fillStyle(command.colour, command.alpha / 2);
@@ -2084,6 +2089,16 @@ export class ArenaScene extends Phaser.Scene {
             g.strokePath();
             break;
           }
+          case "shape":
+            g.fillStyle(lit(command.colour), command.alpha);
+            tracePath(g, command.outline);
+            g.fillPath();
+            break;
+          case "stroke":
+            g.lineStyle(command.width, lit(command.colour), 1);
+            tracePath(g, command.points, false);
+            g.strokePath();
+            break;
         }
       }
       g.restore();

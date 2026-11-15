@@ -1456,6 +1456,12 @@ export const en = {
   "tutorial.moreSoon": "More lessons soon. See you out there!",
   "tutorial.offer": "New here? Your tutor can show you the ropes.",
   "tutorial.offerTitle": "First time?",
+  "tutorial.ping.hint": "Ping the way you want to go.",
+  "tutorial.ping.how":
+    "Wheel-click the ground, click the compass, or drag on the compass to draw a line.",
+  "tutorial.ping.intro": "Left or right? You call it.",
+  "tutorial.ping.pocket": "Nice view. Wrong way, though.",
+  "tutorial.ping.praise": "Good call. Onward.",
   "tutorial.ramp.hint": "Up both flights of steps to the mark on the high deck.",
   "tutorial.ramp.how": "Click the high deck. Your path takes the steps for you.",
   "tutorial.ramp.intro": "Steps join layers. Walk on, and they carry you up.",

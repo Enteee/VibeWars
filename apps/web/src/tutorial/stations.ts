@@ -66,6 +66,11 @@ export interface TutorialView {
   readonly calledTargeted: boolean;
   /** A rat called at station 12 died before the tutor struck it: once true, it stays true. */
   readonly calledLost: boolean;
+  /**
+   * Where the player last pinged at station 13 (#3332): the newest ping,
+   * or the last point of the newest compass line, since it began; none yet.
+   */
+  readonly lastPing: Vec2 | undefined;
 }
 
 /** The statuses station 7's ground gives (#3310): the mire's, then the molten strip's. */
@@ -593,6 +598,93 @@ export function callStation(): Station {
     done: (view) => {
       struck ||= view.calledId !== undefined && view.hitByTutor.has(view.calledId);
       return struck;
+    },
+  };
+}
+
+/** Which way a ping at station 13 (#3332) calls: the east branch, the pocket, or neither. */
+export type PingBranch = "east" | "pocket";
+
+/**
+ * The branch a ping at `at` calls, from the fork at `fork`: the one whose
+ * end it is nearer, as long as it is nearer that end than the fork is. A
+ * ping behind the player, or back past the fork, calls neither.
+ */
+export function pingBranch(at: Vec2, fork: Vec2, east: Vec2, pocket: Vec2): PingBranch | undefined {
+  const far = (from: Vec2, to: Vec2): number => Math.hypot(from.x - to.x, from.y - to.y);
+  const branch = far(at, east) <= far(at, pocket) ? "east" : "pocket";
+  const end = branch === "east" ? east : pocket;
+  return far(at, end) < far(fork, end) ? branch : undefined;
+}
+
+/** How far east of the fork the player walks, unpinged, before station 13 says its hint again. */
+export const PAST_THE_FORK = 300;
+/** How near the pocket the tutor counts as in it, for its line there. */
+const IN_THE_POCKET = 150;
+
+/**
+ * Station 13 (playbook §13), at the canyon's fork: ping a branch, and
+ * the tutor follows. The compass is lit. A ping on the pocket first sends
+ * the tutor in, once, to a parasol and a line, and back; a ping on the
+ * east branch sends it to `eastSide`, past the fork, and then no pocket
+ * ping counts. A ping on neither, or a walk east unpinged, gets the hint
+ * once each. Done once the east branch is called and the tutor stands at
+ * `eastSide`.
+ */
+export function pingStation(fork: Vec2, east: Vec2, pocket: Vec2, eastSide: Vec2): Station {
+  /** The east branch has been called, and the pocket: once true, they stay true. */
+  let eastCalled = false;
+  let pocketCalled = false;
+  /** A ping has called neither: once true, it stays true. */
+  let strayPing = false;
+  const look = (view: TutorialView): void => {
+    if (view.lastPing === undefined) {
+      return;
+    }
+    const branch = pingBranch(view.lastPing, fork, east, pocket);
+    eastCalled ||= branch === "east";
+    pocketCalled ||= branch === "pocket" && !eastCalled;
+    strayPing ||= branch === undefined;
+  };
+  return {
+    id: "ping",
+    world: "canyon-2",
+    lines: {
+      intro: "tutorial.ping.intro",
+      hint: "tutorial.ping.hint",
+      praise: "tutorial.ping.praise",
+      how: "tutorial.ping.how",
+    },
+    highlight: { kind: "hud", element: ".compass" },
+    mark: () => fork,
+    asides: [
+      {
+        line: "tutorial.ping.pocket",
+        when: (view) => {
+          look(view);
+          return (
+            pocketCalled &&
+            Math.hypot(view.tutor.x - pocket.x, view.tutor.y - pocket.y) <= IN_THE_POCKET
+          );
+        },
+      },
+      {
+        line: "tutorial.ping.hint",
+        when: (view) => {
+          look(view);
+          return strayPing;
+        },
+      },
+      {
+        line: "tutorial.ping.hint",
+        when: (view) => !eastCalled && view.self.x > fork.x + PAST_THE_FORK,
+      },
+    ],
+    done: (view) => {
+      look(view);
+      return (
+        eastCalled && Math.hypot(view.tutor.x - eastSide.x, view.tutor.y - eastSide.y) <= MARK_REACH
+      );
     },
   };
 }

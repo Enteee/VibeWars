@@ -1452,6 +1452,12 @@ export default {
   "tutorial.moreSoon": "Flere lektioner snart. Vi ses derude!",
   "tutorial.offer": "Ny her? Din læremester viser dig det grundlæggende.",
   "tutorial.offerTitle": "Første gang?",
+  "tutorial.ping.hint": "Ping den vej, du vil gå.",
+  "tutorial.ping.how":
+    "Klik med hjulet på jorden, klik på kompasset, eller træk på kompasset for at tegne en linje.",
+  "tutorial.ping.intro": "Venstre eller højre? Du bestemmer.",
+  "tutorial.ping.pocket": "Flot udsigt. Men forkert vej.",
+  "tutorial.ping.praise": "Godt valgt. Videre.",
   "tutorial.ramp.hint": "Op ad begge trapper til mærket på den høje platform.",
   "tutorial.ramp.how": "Klik på den høje platform. Din vej tager trapperne for dig.",
   "tutorial.ramp.intro": "Trapper forbinder lag. Gå ud på dem, så bærer de dig op.",

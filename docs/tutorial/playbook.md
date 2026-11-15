@@ -170,8 +170,10 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
 - **Teach.** Wheel-click the ground, or click the **compass**, to ping. Dragging on the compass
   draws a line.
 - **Do.** Ping the branch you pick.
-- **Check.** A ping happened on either branch. The tutor follows the pinged one. (The other
-  branch is a short dead end with a joke, so a wrong pick costs nothing.)
+- **Check.** A ping on the east branch, and the tutor a few steps down it. The tutor follows
+  the pinged branch: the other is a short pocket with a parasol and a joke ("Nice view. Wrong
+  way, though."), and the tutor walks back from it, so a wrong pick costs only the walk.
+- **HUD.** The compass.
 
 ## 14. Back to the front
 

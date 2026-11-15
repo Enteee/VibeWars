@@ -31,12 +31,13 @@ import { SPLASH_RULES } from "../ui/splash-fight.js";
 import {
   CANYON_ARRIVAL,
   CANYON_ARRIVALS,
+  CANYON_POCKET,
   CANYON_SITES,
   TUTORIAL_CANYON,
   type CanyonPoint,
 } from "./canyon-map.js";
 import type { RatTally, RatWatch } from "./rat-watch.js";
-import { SKILLS_ON_RATS } from "./stations.js";
+import { SKILLS_ON_RATS, pingBranch } from "./stations.js";
 import { SELF_ID, TUTOR_ID, body } from "./tutorial-world.js";
 
 /** Where the tutor stands as the pair arrives: beside the player, to the north. */
@@ -973,6 +974,94 @@ export function tunnelTutor(simulation: MatchSimulation): TunnelTutor {
       const [next] = route;
       if (next !== undefined) {
         simulation.walkTo(TUTOR_ID, next.at, next.layer);
+      }
+    },
+  };
+}
+
+/** How far east of the fork the tutor goes once the east branch is called at station 13 (#3332). */
+const A_FEW_STEPS = 200;
+/** How far west of the parasol the tutor stands in the pocket, and how long, for its line there. */
+const BESIDE_PARASOL = 70;
+const IN_THE_POCKET_SECONDS = 3;
+
+/** Station 13's fork (#3332), on the canyon's second map: the east branch and the pocket. */
+export interface CanyonFork {
+  readonly fork: Vec2;
+  readonly layer: number;
+  /**
+   * The east branch's end, as far east of the fork as the pocket is from
+   * it, so a ping along the trail just past the fork calls east.
+   */
+  readonly east: Vec2;
+  /** The pocket's middle, where the parasol stands. */
+  readonly pocket: Vec2;
+  /** Where the tutor goes once the east branch is called: a few steps past the fork. */
+  readonly eastSide: Vec2;
+  /** Where the tutor stands in the pocket: beside the parasol. */
+  readonly lounge: Vec2;
+}
+
+export const FORK: CanyonFork = ((): CanyonFork => {
+  const site = CANYON_SITES.get(13);
+  if (site === undefined) {
+    throw new Error("no site 13 for station 13");
+  }
+  const { position: fork, layer } = site;
+  const pocket = CANYON_POCKET.position;
+  return {
+    fork,
+    layer,
+    east: vec2(fork.x + Math.hypot(pocket.x - fork.x, pocket.y - fork.y), fork.y),
+    pocket,
+    eastSide: vec2(fork.x + A_FEW_STEPS, fork.y),
+    lounge: vec2(pocket.x - BESIDE_PARASOL, pocket.y),
+  };
+})();
+
+/** The tutor at station 13 (#3332), stepped once a frame with the player's latest ping. */
+export interface PingTutor {
+  readonly step: (ping: Vec2 | undefined) => void;
+}
+
+/**
+ * The tutor at station 13: waits at the fork, and follows the branch the
+ * player pings. The pocket, called first, gets one detour: in to the
+ * parasol, a while there, and back to the fork. The east branch, called
+ * at any time, sends it a few steps past the fork; after that it stays.
+ */
+export function pingTutor(simulation: MatchSimulation): PingTutor {
+  const { fork, layer, east, pocket, eastSide, lounge } = FORK;
+  /** Where the tutor is bound: waiting, in the pocket, back from it, or east for good. */
+  let state: "fork" | "pocket" | "back" | "east" = "fork";
+  /** When the tutor reached the parasol, on the match clock. */
+  let lounging: number | undefined;
+  simulation.walkTo(TUTOR_ID, fork, layer);
+  return {
+    step: (ping) => {
+      const branch = ping === undefined ? undefined : pingBranch(ping, fork, east, pocket);
+      if (state !== "east" && branch === "east") {
+        state = "east";
+        simulation.walkTo(TUTOR_ID, eastSide, layer);
+        return;
+      }
+      if (state === "fork" && branch === "pocket") {
+        state = "pocket";
+        simulation.walkTo(TUTOR_ID, lounge, layer);
+        return;
+      }
+      const tutor = simulation.get(TUTOR_ID);
+      if (state !== "pocket" || tutor === undefined) {
+        return;
+      }
+      const there =
+        Math.hypot(tutor.position.x - lounge.x, tutor.position.y - lounge.y) <= WAYPOINT_REACH;
+      if (lounging === undefined && there) {
+        lounging = simulation.elapsedSeconds;
+      }
+      if (lounging !== undefined && simulation.elapsedSeconds - lounging >= IN_THE_POCKET_SECONDS) {
+        state = "back";
+        simulation.walkTo(TUTOR_ID, fork, layer);
       }
     },
   };

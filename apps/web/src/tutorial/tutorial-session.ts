@@ -1,5 +1,6 @@
 import {
   ZONE_RULES,
+  vec2,
   zonesHolding,
   type MatchSimulation,
   type MatchZone,
@@ -15,7 +16,7 @@ import { t } from "../i18n/index.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { startMatchView, type MatchView } from "../match-view.js";
 import type { GoalMark } from "../render/goal-mark.js";
-import type { SleeperProp } from "../render/sleeper-prop.js";
+import type { ParasolProp, SleeperProp } from "../render/tutorial-props.js";
 import {
   NO_PROFESSIONS,
   createLocalConnection,
@@ -31,6 +32,7 @@ import {
   CALL_RATS,
   CRACKED_WALL,
   DODGE_MARK,
+  FORK,
   LEDGE,
   RAMP,
   RAT_POCKET,
@@ -41,6 +43,7 @@ import {
   canyonWorld,
   clearingTutor,
   ledgeTutor,
+  pingTutor,
   rampTutor,
   ratPocket,
   tunnelStart,
@@ -51,6 +54,7 @@ import {
   type CallTutor,
   type ClearingTutor,
   type LedgeTutor,
+  type PingTutor,
   type RampTutor,
   type RatPocket,
   type TunnelTutor,
@@ -68,6 +72,7 @@ import {
   dodgeStation,
   healStation,
   lookStation,
+  pingStation,
   rampStation,
   ratsStation,
   stepInStation,
@@ -98,6 +103,13 @@ const SLEEPER: SleeperProp = {
   position: TUNNEL.sleeper,
   layer: TUNNEL.above,
   facing: 0,
+};
+/** Station 13's parasol and deck chair (#3332), in the pocket, the wrong way at the fork. */
+const PARASOL: ParasolProp = {
+  id: "tutorial-parasol",
+  kind: "parasol",
+  position: FORK.pocket,
+  layer: FORK.layer,
 };
 /** What a HUD element a station points at wears while it does (#3302). */
 const PULSE_CLASS = "tutorial-pulse";
@@ -277,6 +289,12 @@ export async function startTutorialSession(
   // Station 12's (#3331): whether the player has targeted the call with its key.
   let calledTargeted = false;
   let atCall: CallTutor | undefined;
+  // Station 13's (#3332): the player's newest ping or compass line end since
+  // it began, and the newest ping and line segment seen so far, by id.
+  let lastPing: Vec2 | undefined;
+  let pingSeen = -1;
+  let strokeSeen = -1;
+  let atFork: PingTutor | undefined;
   /** The station the last beat ran. */
   let running: string | undefined;
   /** The HUD element pulsing now, if any. */
@@ -325,8 +343,9 @@ export async function startTutorialSession(
         tutorial: {
           party: [SELF_ID, TUTOR_ID],
           goals,
-          // The guard asleep over the tunnel (#3326), only while station 11 runs.
-          props: () => (running === "tunnel" ? [SLEEPER] : []),
+          // The guard asleep over the tunnel (#3326), only while station 11
+          // runs; the parasol in the pocket (#3332), only while station 13 does.
+          props: () => (running === "tunnel" ? [SLEEPER] : running === "ping" ? [PARASOL] : []),
           onWalk: (below) => {
             belowClicked = below;
           },
@@ -356,6 +375,7 @@ export async function startTutorialSession(
     rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
     tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
     callStation(),
+    pingStation(FORK.fork, FORK.east, FORK.pocket, FORK.eastSide),
   ];
   // A seeded start past the last station starts at the last (#3383).
   const firstStation = Math.min(options.firstStation, stations.length - 1);
@@ -504,7 +524,22 @@ export async function startTutorialSession(
     healthBefore = health;
     const ratTally = rats?.tally();
     const callTally = callRats?.tally();
-    const calledId = connection.getCalls().target?.targetId;
+    const calls = connection.getCalls();
+    const calledId = calls.target?.targetId;
+    // Only what the player sends while station 13 runs counts there.
+    const ping = calls.pings.findLast(({ byId, id }) => byId === SELF_ID && id > pingSeen);
+    const stroke = calls.strokes.findLast(({ byId, id }) => byId === SELF_ID && id > strokeSeen);
+    const lineEnd = stroke?.points.at(-1);
+    if (running === "ping") {
+      lastPing =
+        lineEnd !== undefined
+          ? vec2(lineEnd[0], lineEnd[1])
+          : ping !== undefined
+            ? vec2(ping.x, ping.y)
+            : lastPing;
+    }
+    pingSeen = ping?.id ?? pingSeen;
+    strokeSeen = stroke?.id ?? strokeSeen;
     if (self !== undefined && tutor !== undefined && farewell === 0) {
       const beat = runner.tick(
         {
@@ -535,6 +570,7 @@ export async function startTutorialSession(
           hitByTutor: callTally?.hitByTutor ?? NO_HITS,
           calledTargeted,
           calledLost: atCall?.lost() ?? false,
+          lastPing,
         },
         now,
       );
@@ -599,9 +635,16 @@ export async function startTutorialSession(
       if (atCall === undefined && beat.station === "call" && callRats !== undefined) {
         atCall = callTutor(world, callRats);
       }
-      if (callTally !== undefined) {
+      // Station 13 is next: once the called rat is down, the tutor walks to
+      // the fork and follows the player's pings; until then it fights on.
+      const callDown = calledId === undefined || world.get(calledId)?.combatant.dead !== false;
+      if (atFork === undefined && beat.station === "ping" && callDown) {
+        atFork = pingTutor(world);
+      }
+      if (callTally !== undefined && atFork === undefined) {
         atCall?.step(calledId, callTally);
       }
+      atFork?.step(beat.station === "ping" ? lastPing : undefined);
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;
