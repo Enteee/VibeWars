@@ -117,8 +117,11 @@ jobs:
           BENCH_MAP: ${{ matrix.row.map }}
           BENCH_SIZE: ${{ matrix.row.size }}
           BENCH_SEEDS: ${{ needs.plan.outputs.seeds }}
-          BENCH_STUCK: ${{ github.event_name == 'pull_request' && '1' || inputs.stuck && '1' || '' }}
+          EVENT: ${{ github.event_name }}
+          STUCK: ${{ inputs.stuck }}
         run: |
+          # The bench tests for the variable being set, so it is set only to ask.
+          if [ "$EVENT" = pull_request ] || [ "$STUCK" = true ]; then export BENCH_STUCK=1; fi
           devenv shell -- pnpm bench:balance -t "prints each map" | tee bench.log
           sed 's/\x1b\[[0-9;]*m//g' bench.log | grep '^|' > row.md
 
