@@ -133,7 +133,14 @@ every size a map seats is its own row. `BENCH_SEEDS` sets the seeds,
 not in CI: it is a design tool, and every map PR pastes its table.
 
 A row gives the matches run, the wins of each team (by spawn side), the
-draws, the mean match length in simulated seconds, and a verdict. A
+draws, the mean match length in simulated seconds, the share of
+bot time spent stuck, the share of that when the nearest foe was on
+another layer, and a verdict (#3354). A bot is stuck when, over 5 seconds,
+it stayed within 64 units, took part in no damage or heal and started no
+skill while a foe lived: _stuck %_ is those seconds over all living-bot
+seconds, _apart %_ the share of them with the nearest foe on another
+layer. Creatures are not counted. `BENCH_STUCK=1` also prints, per row,
+the cells (64 units, with their layer) where bots were stuck longest. A
 match the mode does not decide by its time limit is a draw; a mode
 without a wipe is won by whoever its own outcome names. The verdict is
 PASS when every team's share of the decided matches is within 10 points
