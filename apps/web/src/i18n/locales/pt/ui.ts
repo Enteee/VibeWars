@@ -599,6 +599,8 @@ export default {
   "hud.relicScoredOurs": "Relíquia entregue!",
   "hud.relicScoredTheirs": "Relíquia inimiga entregue",
   "hud.relicTheirs": "Relíquia inimiga",
+  "hud.respawnIn": "De volta em {seconds}",
+  "hud.respawnResurrectionOnly": "Espere ser ressuscitado",
   "hud.shrinesBoth": "Santuários: +{ours}, inimigo +{theirs}",
   "hud.shrinesOurs": "Santuários: +{ours}",
   "hud.shrinesTheirs": "Santuários inimigos: +{theirs}",

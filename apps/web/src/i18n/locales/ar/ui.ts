@@ -653,6 +653,8 @@ export default {
   "hud.relicScoredOurs": "سُجّل الأثر!",
   "hud.relicScoredTheirs": "سجّل العدو أثرًا",
   "hud.relicTheirs": "أثر العدو",
+  "hud.respawnIn": "العودة خلال {seconds}",
+  "hud.respawnResurrectionOnly": "انتظر من يحييك",
   "hud.shrinesBoth": "المزارات: +{ours}، العدو +{theirs}",
   "hud.shrinesOurs": "المزارات: +{ours}",
   "hud.shrinesTheirs": "مزارات العدو: +{theirs}",

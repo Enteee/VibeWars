@@ -525,6 +525,8 @@ export default {
   "hud.relicScoredOurs": "Relik mencetak poin!",
   "hud.relicScoredTheirs": "Relik musuh mencetak poin",
   "hud.relicTheirs": "Relik musuh",
+  "hud.respawnIn": "Kembali dalam {seconds}",
+  "hud.respawnResurrectionOnly": "Tunggu dibangkitkan",
   "hud.shrinesBoth": "Kuil: +{ours}, musuh +{theirs}",
   "hud.shrinesOurs": "Kuil: +{ours}",
   "hud.shrinesTheirs": "Kuil musuh: +{theirs}",

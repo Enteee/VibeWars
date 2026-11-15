@@ -572,6 +572,8 @@ export default {
   "hud.relicScoredOurs": "Relikt gewertet!",
   "hud.relicScoredTheirs": "Relikt für Gegner gewertet",
   "hud.relicTheirs": "Gegnerrelikt",
+  "hud.respawnIn": "Zurück in {seconds}",
+  "hud.respawnResurrectionOnly": "Warte auf eine Wiederbelebung",
   "hud.shrinesBoth": "Schreine: +{ours}, Gegner +{theirs}",
   "hud.shrinesOurs": "Schreine: +{ours}",
   "hud.shrinesTheirs": "Gegnerische Schreine: +{theirs}",

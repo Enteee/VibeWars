@@ -600,6 +600,8 @@ export default {
   "hud.relicScoredOurs": "Relikvija donesena!",
   "hud.relicScoredTheirs": "Neprijatelj je donio relikviju",
   "hud.relicTheirs": "Neprijateljska relikvija",
+  "hud.respawnIn": "Natrag za {seconds}",
+  "hud.respawnResurrectionOnly": "Čekaj uskrsnuće",
   "hud.shrinesBoth": "Svetišta: +{ours}, neprijatelj +{theirs}",
   "hud.shrinesOurs": "Svetišta: +{ours}",
   "hud.shrinesTheirs": "Neprijateljska svetišta: +{theirs}",

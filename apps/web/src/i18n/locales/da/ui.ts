@@ -566,6 +566,8 @@ export default {
   "hud.relicScoredOurs": "Relikvie i mål!",
   "hud.relicScoredTheirs": "Fjendens relikvie i mål",
   "hud.relicTheirs": "Fjendens relikvie",
+  "hud.respawnIn": "Tilbage om {seconds}",
+  "hud.respawnResurrectionOnly": "Vent på at blive genoplivet",
   "hud.shrinesBoth": "Helligdomme: +{ours}, fjenden +{theirs}",
   "hud.shrinesOurs": "Helligdomme: +{ours}",
   "hud.shrinesTheirs": "Fjendens helligdomme: +{theirs}",

@@ -567,6 +567,8 @@ export default {
   "hud.relicScoredOurs": "Relik inlämnad!",
   "hud.relicScoredTheirs": "Fiendens relik inlämnad",
   "hud.relicTheirs": "Fiendens relik",
+  "hud.respawnIn": "Tillbaka om {seconds}",
+  "hud.respawnResurrectionOnly": "Vänta på att bli återupplivad",
   "hud.shrinesBoth": "Helgedomar: +{ours}, fienden +{theirs}",
   "hud.shrinesOurs": "Helgedomar: +{ours}",
   "hud.shrinesTheirs": "Fiendens helgedomar: +{theirs}",

@@ -97,6 +97,10 @@ W większości trybów polegli leżą, dopóki sojusznik ich nie **wskrzesi**
 umiejętnością, taką jak Resurrection Signet, którą może wziąć każdy. Niektóre
 tryby przywracają poległych falami albo samoczynnie; zobacz [Tryby](modes.md).
 
+Gdy nie żyjesz, wiersz pod tablicą wyników odlicza czas do twojego
+powrotu albo mówi, że musisz czekać na wskrzeszenie. Okno drużyny
+pokazuje odliczanie przy każdym poległym sojuszniku.
+
 Każda śmierć kosztuje 15% **morale**, do -60%: wraz z nim maleją twoje maksymalne
 Zdrowie i Energia. Każdy wróg zabity przez drużynę odzyskuje 2%, do poziomu 0.
 W Bitwie gildii utrzymywanie stojaka flagi podnosi je powyżej tej granicy, aż do +10%.

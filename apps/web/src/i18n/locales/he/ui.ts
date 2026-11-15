@@ -596,6 +596,8 @@ export default {
   "hud.relicScoredOurs": "שריד הובקע!",
   "hud.relicScoredTheirs": "האויב הבקיע שריד",
   "hud.relicTheirs": "שריד האויב",
+  "hud.respawnIn": "חוזר בעוד {seconds}",
+  "hud.respawnResurrectionOnly": "המתן שיחיו אותך",
   "hud.shrinesBoth": "מקדשים: +{ours}, אויב +{theirs}",
   "hud.shrinesOurs": "מקדשים: +{ours}",
   "hud.shrinesTheirs": "מקדשי האויב: +{theirs}",

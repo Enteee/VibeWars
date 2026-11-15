@@ -569,6 +569,8 @@ export const en = {
   "hud.relicScoredOurs": "Relic scored!",
   "hud.relicScoredTheirs": "Enemy relic scored",
   "hud.relicTheirs": "Enemy relic",
+  "hud.respawnIn": "Back in {seconds}",
+  "hud.respawnResurrectionOnly": "Wait for a resurrection",
   "hud.shrinesBoth": "Shrines: +{ours}, enemy +{theirs}",
   "hud.shrinesOurs": "Shrines: +{ours}",
   "hud.shrinesTheirs": "Enemy shrines: +{theirs}",

@@ -522,6 +522,8 @@ export default {
   "hud.relicScoredOurs": "ได้แต้มเรลิก!",
   "hud.relicScoredTheirs": "ศัตรูได้แต้มเรลิก",
   "hud.relicTheirs": "เรลิกศัตรู",
+  "hud.respawnIn": "กลับมาใน {seconds}",
+  "hud.respawnResurrectionOnly": "รอการชุบชีวิต",
   "hud.shrinesBoth": "ศาลเจ้า: +{ours}, ศัตรู +{theirs}",
   "hud.shrinesOurs": "ศาลเจ้า: +{ours}",
   "hud.shrinesTheirs": "ศาลเจ้าศัตรู: +{theirs}",

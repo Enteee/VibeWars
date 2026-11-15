@@ -619,6 +619,8 @@ export default {
   "hud.relicScoredOurs": "Реліквію доставлено!",
   "hud.relicScoredTheirs": "Реліквію ворога доставлено",
   "hud.relicTheirs": "Реліквія ворога",
+  "hud.respawnIn": "Повернення через {seconds}",
+  "hud.respawnResurrectionOnly": "Чекайте на воскресіння",
   "hud.shrinesBoth": "Святилища: +{ours}, ворог +{theirs}",
   "hud.shrinesOurs": "Святилища: +{ours}",
   "hud.shrinesTheirs": "Святилища ворога: +{theirs}",

@@ -28,6 +28,7 @@ import {
   armedAttackSnapshot,
   createCallBoard,
   groundEffectSnapshot,
+  respawnIn,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
@@ -82,6 +83,8 @@ function toPlayerSnapshot(
   professions: Professions,
   pips: NetPips,
   elapsedSeconds: number,
+  /** Whose respawns it is told, as a host tells a team its own (#3367). */
+  selfTeam: number,
 ): PlayerSnapshot {
   const { combatant } = participant;
   const activeCast = combatant.cast.activeCast;
@@ -120,6 +123,7 @@ function toPlayerSnapshot(
     team: combatant.team,
     dead: combatant.dead,
     corpseExploited: participant.corpseExploited,
+    respawnIn: combatant.team === selfTeam ? respawnIn(participant) : undefined,
     castingSkillId: activeCast?.skillId,
     castRemaining: activeCast?.remainingSeconds ?? 0,
     castTotal: activeCast?.totalSeconds ?? 0,
@@ -284,6 +288,7 @@ export function createLocalConnection(options: {
             professionsOf(participant.id),
             simulation.pips(participant),
             simulation.elapsedSeconds,
+            selfTeam(),
           ),
         ),
         score: [...simulation.score.byTeam.values()],

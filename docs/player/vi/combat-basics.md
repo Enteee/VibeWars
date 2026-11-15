@@ -98,6 +98,10 @@ sinh** họ bằng một kỹ năng, như Resurrection Signet, mà ai cũng có 
 Một số chế độ đưa người chết trở lại theo từng đợt, hoặc tự động; xem
 [Chế độ](modes.md).
 
+Khi bạn chết, một dòng dưới bảng điểm đếm ngược đến lúc bạn trở lại,
+hoặc bảo bạn chờ được hồi sinh. Cửa sổ nhóm hiển thị số đếm bên cạnh mỗi
+đồng minh đã chết.
+
 Mỗi lần chết khiến bạn mất 15% **sĩ khí**, xuống tới -60%: Máu và Năng lượng
 tối đa của bạn giảm theo. Mỗi địch mà đội bạn hạ gục lấy lại 2%, tối đa về 0.
 Trong Chiến Bang, giữ bệ cờ đẩy nó lên cao hơn mức đó, tới +10%.

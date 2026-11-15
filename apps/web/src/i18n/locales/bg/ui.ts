@@ -570,6 +570,8 @@ export default {
   "hud.relicScoredOurs": "Точка от реликва!",
   "hud.relicScoredTheirs": "Вражеска точка от реликва",
   "hud.relicTheirs": "Вражеска реликва",
+  "hud.respawnIn": "Обратно след {seconds}",
+  "hud.respawnResurrectionOnly": "Изчакай възкресяване",
   "hud.shrinesBoth": "Светилища: +{ours}, врагът +{theirs}",
   "hud.shrinesOurs": "Светилища: +{ours}",
   "hud.shrinesTheirs": "Вражески светилища: +{theirs}",

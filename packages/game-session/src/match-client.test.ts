@@ -403,8 +403,11 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
   it("have one field for each field of the other", () => {
     // Every WirePlayer key is above (`satisfies`), and every
     // PlayerSnapshot key is one of the names: a field added to either
-    // without the other stops this compiling.
-    expectTypeOf<(typeof FIELDS)[keyof typeof FIELDS]>().toEqualTypeOf<keyof PlayerSnapshot>();
+    // without the other stops this compiling. `respawnIn` alone is no
+    // snapshot field: its team hears it on `"respawns"` (#3367).
+    expectTypeOf<(typeof FIELDS)[keyof typeof FIELDS]>().toEqualTypeOf<
+      Exclude<keyof PlayerSnapshot, "respawnIn">
+    >();
     expect(new Set(Object.values(FIELDS)).size).toBe(Object.keys(FIELDS).length);
   });
 
