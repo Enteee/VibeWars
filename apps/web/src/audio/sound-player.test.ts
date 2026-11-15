@@ -150,6 +150,7 @@ describe("createWebAudioPlayer", () => {
       base: "cast-base-monk",
       motif: "cast-motif-spell",
       rate: 1.1,
+      motifTrim: 0.6,
       gain: 0.5,
       priority,
     });
@@ -174,6 +175,7 @@ describe("createWebAudioPlayer", () => {
       base: "cast-base-monk",
       motif: "cast-motif-spell",
       rate: 1,
+      motifTrim: 0.6,
       gain: 1,
       priority: 2,
     };
