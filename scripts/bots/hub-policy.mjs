@@ -897,6 +897,11 @@ function authorizeAs(role, request, acting, employee) {
   if (request.kind === "board") {
     return authorizeBoard(argv);
   }
+  if (request.kind === "heavy") {
+    // Every role runs heavy local jobs, one at a time company-wide (#3362).
+    // hubd checks the words and that each employee touches only its own lease.
+    return { allow: true };
+  }
   if (request.kind === "watch") {
     // Every role may ask to be told when CI on a pull request ends (#736).
     // hubd checks the words, the pull request's visibility, and that each
