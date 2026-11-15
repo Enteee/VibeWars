@@ -31,6 +31,8 @@ interface ImportMetaEnv {
   readonly VITE_VIBEWARS_SPLASH?: string;
   /** `off` draws no menu background fight (#3156) unless the URL has `?menu-background`: e2e only. */
   readonly VITE_VIBEWARS_MENU_BACKGROUND?: string;
+  /** `on` starts the tutorial at the URL's `?tutorial-station=N`, 1 for the first (#3383): e2e only. */
+  readonly VITE_VIBEWARS_TUTORIAL_STATION?: string;
 }
 
 interface ImportMeta {

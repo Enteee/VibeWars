@@ -145,20 +145,52 @@ export interface CanyonWorld {
   readonly besideMark: Vec2;
 }
 
+/** Where the pair stand as a canyon map is built (#3383), and whether its rat pocket is cleared. */
+export interface CanyonStart {
+  readonly position: Vec2;
+  readonly layer: number;
+  readonly ratsSlain: boolean;
+}
+
+/**
+ * The canyon's first map entered at station 5 (#3383), which only an e2e
+ * build's seeded start does: the pair on station 4's mark, where its
+ * dodges leave them.
+ */
+export function wallStart(): CanyonStart {
+  return { position: DODGE_MARK.position, layer: DODGE_MARK.layer, ratsSlain: false };
+}
+
+/**
+ * The canyon's second map entered at station 11 (#3383), which only an e2e
+ * build's seeded start does: the pair on the high deck, where station 10
+ * leaves them, and station 8's rats slain.
+ */
+export function tunnelStart(): CanyonStart {
+  return { position: RAMP.mark, layer: RAMP.layer, ratsSlain: true };
+}
+
 /**
  * One of the tutorial canyon's two maps (#3245), `part` 0 or 1, as a world
  * for the pair: no bots, only its zones, which strike on their own clock,
  * and on the second the rat pocket's rats (#3316). The player stands on
- * the map's arrival, the tutor beside them; both play the builds they
- * played on the battlefield.
+ * `start`, the map's arrival unless a seeded start says otherwise, the
+ * tutor beside them; both play the builds they played on the battlefield.
  */
 export function canyonWorld(
   seed: string,
   playerBuild: PlayerBuild,
   tutorBuild: PlayerBuild,
   part: 0 | 1,
+  start: CanyonStart = {
+    position: CANYON_ARRIVALS[part].position,
+    layer: CANYON_ARRIVALS[part].layer,
+    ratsSlain: false,
+  },
 ): CanyonWorld {
-  const { map: data, position: arrival, layer: ground } = CANYON_ARRIVALS[part];
+  const { map: data, layer: ground } = CANYON_ARRIVALS[part];
+  const { position: arrival, layer } = start;
+  const rats = start.ratsSlain ? [] : RAT_POCKET.rats.map(ratAt);
   const zones = matchZones(data);
   const simulation = new MatchSimulation({
     seed,
@@ -176,14 +208,17 @@ export function canyonWorld(
     switchedDecks: matchSwitchedDecks(data),
     lifts: matchLifts(data),
     participants: [
-      body(SELF_ID, playerBuild, arrival, undefined),
-      body(
-        TUTOR_ID,
-        tutorBuild,
-        vec2(arrival.x + TUTOR_BESIDE.x, arrival.y + TUTOR_BESIDE.y),
-        undefined,
-      ),
-      ...(part === 0 ? [] : [...RAT_POCKET.rats.map(ratAt), ...CALL_RATS.rats.map(callRatAt)]),
+      { ...body(SELF_ID, playerBuild, arrival, undefined), layer },
+      {
+        ...body(
+          TUTOR_ID,
+          tutorBuild,
+          vec2(arrival.x + TUTOR_BESIDE.x, arrival.y + TUTOR_BESIDE.y),
+          undefined,
+        ),
+        layer,
+      },
+      ...(part === 0 ? [] : [...rats, ...CALL_RATS.rats.map(callRatAt)]),
     ],
   });
   return {

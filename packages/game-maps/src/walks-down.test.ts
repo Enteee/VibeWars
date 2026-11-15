@@ -107,6 +107,32 @@ function deckStarts(map: MapData, goal: Vec2) {
     });
 }
 
+/**
+ * The ground point nearest `map`'s centre that its first spawn walks to:
+ * the centre itself, unless something like a sunken court sits there.
+ */
+function groundGoal(map: MapData): Vec2 {
+  const centre = { x: map.width / 2, y: map.height / 2 };
+  const spawn = map.spawnPoints.find((point) => point.layer === map.groundLayer);
+  if (spawn === undefined) return centre;
+  const finder = layeredFinder(map, RULESET.collision.playerRadius);
+  for (let ring = 0; ring * STEP < Math.max(map.width, map.height) / 2; ring += 1) {
+    const reach = ring * STEP;
+    for (let x = centre.x - reach; x <= centre.x + reach; x += STEP) {
+      for (let y = centre.y - reach; y <= centre.y + reach; y += STEP) {
+        const onRing = Math.max(Math.abs(x - centre.x), Math.abs(y - centre.y)) === reach;
+        if (
+          onRing &&
+          finder.find(spawn.position, map.groundLayer, { x, y }, map.groundLayer) !== undefined
+        ) {
+          return { x, y };
+        }
+      }
+    }
+  }
+  return centre;
+}
+
 const layered = loadAllMaps().filter((map) => map.decks.some((deck) => deck.switched === null));
 
 describe("walking down from a deck (#3177)", () => {
@@ -115,7 +141,7 @@ describe("walking down from a deck (#3177)", () => {
   });
 
   describe.each(layered.map((map) => [map.id, map] as const))("%s", (_id, map) => {
-    const goal = { x: map.width / 2, y: map.height / 2 };
+    const goal = groundGoal(map);
     it.each(deckStarts(map, goal).map((start) => [start.deck, start] as const))(
       "from deck %s, a walk to the ground's centre arrives",
       (_deck, { layer, start, length }) => {

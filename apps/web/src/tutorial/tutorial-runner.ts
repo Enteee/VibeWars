@@ -67,14 +67,16 @@ export interface TutorialRunner {
  * than `ASIDE_MS` after the line before (#3303, #3310), each due before
  * its praise and, after `PRAISE_MS`, the next.
  * The keys a line shows are read from `keymap()` as it is said, so a
- * rebind shows on the next line.
+ * rebind shows on the next line. It starts at station `first`, an index:
+ * 0 but in an e2e build's seeded start (#3383).
  */
 export function createTutorialRunner(
   stations: readonly Station[],
   keymap: () => Keymap,
+  first = 0,
   label: (code: string) => string = codeLabel,
 ): TutorialRunner {
-  let index = 0;
+  let index = first;
   /** When the last line was said, or `undefined` before the station's intro. */
   let saidAt: number | undefined;
   /** When the station before was praised, while that praise stands. */

@@ -72,6 +72,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [walkStation(MARK, 0)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const said = [0, 1_000, 9_999, HINT_REPEAT_MS, 15_000, 2 * HINT_REPEAT_MS, 25_000].map(
@@ -92,6 +93,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [walkStation(MARK, 0)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     expect(runner.tick(AWAY, 0)).toMatchObject({
@@ -114,6 +116,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [walkStation(MARK, 0), next],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     runner.tick(AWAY, 0);
@@ -128,9 +131,25 @@ describe("the tutorial runner", () => {
     });
   });
 
+  it("starts at station `first`, in that station's world (#3383)", () => {
+    const later: Station = { ...walkStation(vec2(400, 400), 0), id: "later", world: "canyon-2" };
+    const runner = createTutorialRunner(
+      [walkStation(MARK, 0), later],
+      () => KEYMAP_PRESETS.classic,
+      1,
+      label,
+    );
+    expect(runner.tick(AWAY, 0)).toMatchObject({
+      station: "later",
+      world: "canyon-2",
+      say: { key: "tutorial.walk.intro" },
+      highlight: { kind: "ground", at: vec2(400, 400) },
+    });
+  });
+
   it("shows the keys as bound in the keymap passed in, read again on every line", () => {
     let keymap: Keymap = KEYMAP_PRESETS.classic;
-    const runner = createTutorialRunner([walkStation(MARK, 0)], () => keymap, label);
+    const runner = createTutorialRunner([walkStation(MARK, 0)], () => keymap, 0, label);
     // Every first key, then every second.
     expect(runner.tick(AWAY, 0).say?.keys).toEqual([
       "KeyW",
@@ -197,6 +216,7 @@ describe("the tutorial runner", () => {
         pingStation(fork, eastEnd, lounge, eastSide),
       ],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const looked = { ...ON_MARK, zoomedOut: true, lookDragged: true, inView: () => true };
@@ -401,6 +421,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [breakWallStation(face, 700)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const wall = (wallHealth: number): TutorialView => ({
@@ -430,6 +451,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [healStation("tutor", 7)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const hit: TutorialView = { ...AWAY, tutorHit: true };
@@ -455,6 +477,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [badGroundStation(MARK, 0)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const lava: TutorialView = { ...AWAY, zoneStatus: "burning", healthDropped: true };
@@ -488,6 +511,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [healStation("tutor", 7)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const hit: TutorialView = { ...AWAY, tutorHit: true };
@@ -515,6 +539,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [dodgeStation(goal, 0)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const hit: TutorialView = { ...AWAY, hitBy: "rockfall" };
@@ -534,6 +559,7 @@ describe("the tutorial runner", () => {
     const walker = createTutorialRunner(
       [walkStation(MARK, 0)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     walker.tick(AWAY, 0);

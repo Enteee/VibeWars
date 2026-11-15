@@ -29,6 +29,8 @@ import {
   pingTutor,
   rampTutor,
   ratPocket,
+  tunnelStart,
+  wallStart,
   wallTutor,
 } from "./canyon-world.js";
 import { DODGE_REACH } from "./dodge-count.js";
@@ -68,6 +70,33 @@ describe("canyonWorld (#3247)", () => {
     expect(tutor?.layer).toBe(CANYON_ARRIVAL.layer);
     expect(world.map.id).toBe(CANYON_ARRIVAL.map.id);
     expect(world.zones.filter(({ kind }) => kind === "rockfall").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("starts the pair on the high deck, with station 8's rats slain, for a seeded station 11 (#3383)", () => {
+    const world = canyonWorld("canyon-test", build, build, 1, tunnelStart());
+    const { simulation } = world;
+    for (let elapsed = 0; elapsed < 1; elapsed += TICK) {
+      simulation.step(TICK);
+    }
+    const ids = [...simulation.participants()].map(({ id }) => id);
+    expect(ids).toEqual(expect.arrayContaining(CALL_RATS.rats.map(({ id }) => id)));
+    for (const { id } of RAT_POCKET.rats) {
+      expect(ids).not.toContain(id);
+    }
+    for (const id of [SELF_ID, TUTOR_ID]) {
+      expect(simulation.get(id)?.layer).toBe(RAMP.layer);
+    }
+    expect(simulation.get(SELF_ID)?.position).toEqual(RAMP.mark);
+  });
+
+  it("starts the pair on station 4's mark, the wall still whole, for a seeded station 5 (#3383)", () => {
+    const { simulation } = canyonWorld("canyon-test", build, build, 0, wallStart());
+    expect(simulation.get(SELF_ID)?.position).toEqual(DODGE_MARK.position);
+    for (const id of [SELF_ID, TUTOR_ID]) {
+      expect(simulation.get(id)?.layer).toBe(DODGE_MARK.layer);
+    }
+    const wall = simulation.breakables.find(({ id }) => id === CRACKED_WALL.id);
+    expect(wall?.health).toBe(CRACKED_WALL.maxHealth);
   });
 
   it("puts station 4's mark where the player walks to, on the trail past the boulder run", () => {
