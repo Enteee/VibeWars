@@ -60,7 +60,9 @@ export const WALK_CANDIDATES = 3;
  * Of `foes`, the one `self` walks to soonest, on its layer (#3353): a foe in
  * a tunnel straight below is far by stairs. Only the `WALK_CANDIDATES`
  * nearest by straight line are priced, a tie to the nearer of them; with
- * none of them reachable, the nearest by straight line.
+ * none of them reachable, the nearest by straight line. With all of them on
+ * `self`'s layer nothing is priced: a route search per candidate per think
+ * is paid only where a layer can mislead the straight line.
  */
 export function nearestToWalk(
   self: Participant,
@@ -70,6 +72,9 @@ export function nearestToWalk(
   const near = [...foes]
     .sort((a, b) => distance(a.position, self.position) - distance(b.position, self.position))
     .slice(0, WALK_CANDIDATES);
+  if (near.every((foe) => foe.layer === self.layer)) {
+    return near[0];
+  }
   let best: Participant | undefined;
   let bestWalk = Number.POSITIVE_INFINITY;
   for (const foe of near) {

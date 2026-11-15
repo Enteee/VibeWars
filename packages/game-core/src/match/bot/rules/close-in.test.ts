@@ -6,7 +6,7 @@ import closeIn from "./close-in.js";
 import { WALK_CANDIDATES } from "./shared.js";
 import { body, match, ruleFor } from "./test-support.js";
 
-/** The bot at (100,400) on the ground; foes far beyond reach to the east, each on its layer. */
+/** The bot at (100,400) on the ground, layer 1; foes far beyond reach to the east, each on its layer. */
 function closeInTo(
   foes: readonly (readonly [Vec2, number])[],
   routeLength: (to: Vec2, layer: number) => number,
@@ -19,7 +19,13 @@ function closeInTo(
     ...foe,
     layer: foes[index]?.[1] ?? foe.layer,
   }));
-  const view = ruleFor(sim, "bot", { foes: placed }, { routeLength });
+  const base = ruleFor(sim, "bot");
+  const view = ruleFor(
+    sim,
+    "bot",
+    { foes: placed, self: { ...base.self, layer: 1 } },
+    { routeLength },
+  );
   return closeIn.decide(view);
 }
 
@@ -75,7 +81,7 @@ describe("close-in: a bot walks to the foe nearest to walk to (#3353)", () => {
     const far = vec2(1500, 700);
     closeInTo(
       [
-        [vec2(1100, 400), 1],
+        [vec2(1100, 400), 0],
         [vec2(1150, 400), 1],
         [vec2(1200, 400), 1],
         [far, 1],
@@ -87,5 +93,21 @@ describe("close-in: a bot walks to the foe nearest to walk to (#3353)", () => {
     );
     expect(priced).toHaveLength(WALK_CANDIDATES);
     expect(priced).not.toContainEqual(far);
+  });
+
+  it("prices nothing when every candidate is on the bot's layer", () => {
+    let priced = 0;
+    const intent = closeInTo(
+      [
+        [deck, 1],
+        [tunnel, 1],
+      ],
+      (to, layer) => {
+        priced += 1;
+        return walk(to, layer);
+      },
+    );
+    expect(priced).toBe(0);
+    expect(intent?.moveTo).toEqual(tunnel);
   });
 });
