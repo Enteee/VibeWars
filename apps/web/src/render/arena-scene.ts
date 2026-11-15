@@ -3980,6 +3980,9 @@ export class ArenaScene extends Phaser.Scene {
     const [top, bottom] = [Math.min(...ys), Math.max(...ys)];
     g.fillStyle(palette.floor ?? 0, 1);
     g.fillRect(left, top, right - left, bottom - top);
+    if (palette.grid === undefined) {
+      return;
+    }
     g.lineStyle(line, palette.grid, 1);
     for (let x = Math.ceil(left / GRID_STEP) * GRID_STEP; x <= right; x += GRID_STEP) {
       g.lineBetween(x, top, x, bottom);
@@ -4671,13 +4674,18 @@ export class ArenaScene extends Phaser.Scene {
   /**
    * The grid over the arena's bounds, not the screen: over its rectangle,
    * edged in `wall-stroke`, or inside its outline (#3066), whose edge the
-   * outside draws. Past either is `bg` or the outside.
+   * outside draws. Past either is `bg` or the outside. A ground not
+   * laid in tiles, as river ice is not, has no grid.
    */
   private drawGrid(g: Phaser.GameObjects.Graphics, line: number, palette: ArenaPalette): void {
     const { width, height } = this.arena;
     const { bounds } = this.snapshot.structure;
-    g.lineStyle(line, palette.grid, 1);
+    const { grid } = palette;
     if (bounds.kind === "outline") {
+      if (grid === undefined) {
+        return;
+      }
+      g.lineStyle(line, grid, 1);
       for (let x = 0; x <= width; x += GRID_STEP) {
         for (const [from, to] of insideRuns(bounds.outline, "x", x)) {
           g.lineBetween(x, from, x, to);
@@ -4690,11 +4698,14 @@ export class ArenaScene extends Phaser.Scene {
       }
       return;
     }
-    for (let x = 0; x <= width; x += GRID_STEP) {
-      g.lineBetween(x, 0, x, height);
-    }
-    for (let y = 0; y <= height; y += GRID_STEP) {
-      g.lineBetween(0, y, width, y);
+    if (grid !== undefined) {
+      g.lineStyle(line, grid, 1);
+      for (let x = 0; x <= width; x += GRID_STEP) {
+        g.lineBetween(x, 0, x, height);
+      }
+      for (let y = 0; y <= height; y += GRID_STEP) {
+        g.lineBetween(0, y, width, y);
+      }
     }
     g.lineStyle(line, WALL_STROKE, 1);
     g.strokeRect(0, 0, width, height);
