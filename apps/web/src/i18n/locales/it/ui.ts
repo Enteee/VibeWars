@@ -1528,6 +1528,11 @@ export default {
   "tutorial.moreSoon": "Presto altre lezioni. Ci vediamo là fuori!",
   "tutorial.offer": "Nuovo qui? Il tuo tutor ti mostrerà le basi.",
   "tutorial.offerTitle": "Prima volta?",
+  "tutorial.ramp.hint": "Su per entrambe le rampe fino al segno sulla piattaforma alta.",
+  "tutorial.ramp.how": "Clicca la piattaforma alta. Il percorso sale i gradini per te.",
+  "tutorial.ramp.intro": "I gradini uniscono i livelli. Salici e ti portano su.",
+  "tutorial.ramp.landing": "Ancora una rampa.",
+  "tutorial.ramp.praise": "Terreno alto. I nemici di sotto faticano a raggiungerti.",
   "tutorial.rats.again": "Prova un'altra abilità su questo.",
   "tutorial.rats.big":
     "Uno grosso. Colpiscilo finché {bash} si accende, poi atterralo e usa {crush}.",

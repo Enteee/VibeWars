@@ -1455,6 +1455,11 @@ export default {
   "tutorial.moreSoon": "Hamarosan több lecke. Odakint találkozunk!",
   "tutorial.offer": "Új vagy? A tanítód megmutatja az alapokat.",
   "tutorial.offerTitle": "Először jársz itt?",
+  "tutorial.ramp.hint": "Fel mindkét lépcsősoron a magas terasz jeléig.",
+  "tutorial.ramp.how": "Kattints a magas teraszra. Az utad magától veszi a lépcsőket.",
+  "tutorial.ramp.intro": "A lépcsők szinteket kötnek össze. Lépj rájuk, és felvisznek.",
+  "tutorial.ramp.landing": "Még egy lépcsősor.",
+  "tutorial.ramp.praise": "Magaslat. A lenti ellenségek nehezen érnek el.",
   "tutorial.rats.again": "Próbálj ki egy másik képességet ezen.",
   "tutorial.rats.big":
     "Egy nagy. Üsd, amíg a {bash} fel nem villan, aztán döntsd le, és jöhet a {crush}.",

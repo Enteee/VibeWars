@@ -485,3 +485,36 @@ export function climbStation(ledge: Shape, stairs: Shape, upper: number, lower: 
     done: (view) => look(view).up && view.selfLayer === lower && pointInShape(view.self, ledge),
   };
 }
+
+/**
+ * Station 10 (playbook §10), on the canyon's second map: up two flights of
+ * stairs to the mark on the high deck, at `mark` on `layer`. A click on the
+ * deck walks the whole way, so there is nothing new to press. Standing on
+ * `landing`, on its layer between, gets one line once: on that layer
+ * elsewhere, as on station 9's ledge, it does not. Done on the mark.
+ */
+export function rampStation(
+  mark: Vec2,
+  layer: number,
+  landing: Shape,
+  landingLayer: number,
+): Station {
+  return {
+    id: "ramp",
+    world: "canyon-2",
+    lines: {
+      intro: "tutorial.ramp.intro",
+      hint: "tutorial.ramp.hint",
+      praise: "tutorial.ramp.praise",
+      how: "tutorial.ramp.how",
+    },
+    highlight: { kind: "ground", at: mark, layer },
+    asides: [
+      {
+        line: "tutorial.ramp.landing",
+        when: (view) => view.selfLayer === landingLayer && pointInShape(view.self, landing),
+      },
+    ],
+    done: (view) => onMark(view, mark, layer),
+  };
+}

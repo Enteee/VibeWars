@@ -1468,6 +1468,11 @@ export default {
   "tutorial.moreSoon": "Bald mehr Lektionen. Wir sehen uns da draußen!",
   "tutorial.offer": "Neu hier? Dein Lehrer zeigt dir, wie es geht.",
   "tutorial.offerTitle": "Zum ersten Mal hier?",
+  "tutorial.ramp.hint": "Beide Treppen hinauf zur Markierung auf der hohen Plattform.",
+  "tutorial.ramp.how": "Klick auf die hohe Plattform. Dein Weg nimmt die Stufen für dich.",
+  "tutorial.ramp.intro": "Stufen verbinden Ebenen. Geh drauf, und sie tragen dich hinauf.",
+  "tutorial.ramp.landing": "Noch eine Treppe.",
+  "tutorial.ramp.praise": "Hoher Grund. Feinde unten erreichen dich nur schwer.",
   "tutorial.rats.again": "Versuch bei dieser eine andere Fertigkeit.",
   "tutorial.rats.big":
     "Ein großer. Schlag zu, bis {bash} aufleuchtet, dann wirf ihn um und nimm {crush}.",
