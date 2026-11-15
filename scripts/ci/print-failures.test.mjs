@@ -65,7 +65,9 @@ function fixture(trace, context = '- heading "Hi"') {
 
 describe("print-failures", () => {
   it("reads a deflated zip entry", () => {
-    expect(readZipEntry(zipOf("trace.trace", "abc"), "trace.trace").toString()).toBe("abc");
+    expect(readZipEntry(zipOf("0-trace.trace", "abc"), /(^|-)trace\.trace$/).toString()).toBe(
+      "abc",
+    );
   });
 
   it("keeps the last 30 actions", () => {
