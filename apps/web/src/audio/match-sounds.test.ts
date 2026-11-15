@@ -213,8 +213,8 @@ describe("attachMatchSounds", () => {
     expect(played).toEqual([]);
   });
 
-  it("chimes for your respawn, quieter for a teammate's, not for a foe's, and not on the first snapshot (#3366)", () => {
-    const { played, gains, sounds } = setup();
+  it("chimes once for your respawn with a wave, quieter for a teammate's alone, not for a foe's, and not on the first snapshot (#3366)", () => {
+    const { played, gains, sounds, advance } = setup();
     sounds.snapshot(
       field(
         [
@@ -234,8 +234,12 @@ describe("attachMatchSounds", () => {
         false,
       ),
     );
-    expect(played).toEqual(["respawn-you", "respawn-you"]);
+    expect(played).toEqual(["respawn-you"]);
     expect(gains[0]).toBe(1);
+    advance(100);
+    sounds.snapshot(field([["ally", 0, true]], false));
+    sounds.snapshot(field([["ally", 0, false]], false));
+    expect(played).toEqual(["respawn-you", "respawn-you"]);
     expect(gains[1]).toBeCloseTo(10 ** (-8 / 20));
   });
 
