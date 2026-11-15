@@ -211,15 +211,15 @@ function percent(share: number): string {
 /** How far apart the points are that `highGround` measures a map's decks by. */
 const HIGH_GROUND_STEP = 20;
 
-/** The spawn of `team` nearest the middle of its spawns: where its walks start. */
-function homeSpawn(map: MapData, team: number): Vec2 {
+/** The spawn of `team` nearest the middle of its spawns: where its walks start, on its layer (#3344). */
+function homeSpawn(map: MapData, team: number): SpawnPoint {
   const own = map.spawnPoints.filter((spawn) => spawn.team === team);
   const centre = {
     x: own.reduce((sum, { position }) => sum + position.x, 0) / own.length,
     y: own.reduce((sum, { position }) => sum + position.y, 0) / own.length,
   };
   const away = (point: Vec2): number => Math.hypot(point.x - centre.x, point.y - centre.y);
-  const [home] = own.map(({ position }) => position).sort((a, b) => away(a) - away(b));
+  const [home] = [...own].sort((a, b) => away(a.position) - away(b.position));
   if (home === undefined) throw new Error(`${map.id} has no spawn for team ${String(team)}`);
   return home;
 }
@@ -233,11 +233,11 @@ export function walksToCentre(map: MapData): number[] {
   const centre = { x: map.width / 2, y: map.height / 2 };
   return Array.from({ length: map.teams }, (_, team) => {
     const start = homeSpawn(map, team);
-    const route = finder.find(start, map.groundLayer, centre, map.groundLayer);
+    const route = finder.find(start.position, start.layer, centre, map.groundLayer);
     if (route === undefined)
       throw new Error(`${map.id}: team ${String(team)} cannot walk to the centre`);
     return route.reduce((walked, point, index) => {
-      const from = route[index - 1] ?? start;
+      const from = route[index - 1] ?? start.position;
       return walked + Math.hypot(point.x - from.x, point.y - from.y);
     }, 0);
   });
@@ -252,7 +252,8 @@ export function walksToCentre(map: MapData): number[] {
  */
 export function highGround(map: MapData): number[] {
   const [home0, home1] = [homeSpawn(map, 0), homeSpawn(map, 1)];
-  const across = Math.abs(home1.x - home0.x) >= Math.abs(home1.y - home0.y);
+  const across =
+    Math.abs(home1.position.x - home0.position.x) >= Math.abs(home1.position.y - home0.position.y);
   const middle = across
     ? { kind: "rect" as const, x: map.width / 2 - 1, y: 0, width: 2, height: map.height }
     : { kind: "rect" as const, x: 0, y: map.height / 2 - 1, width: map.width, height: 2 };
@@ -273,14 +274,14 @@ export function highGround(map: MapData): number[] {
       for (let y = HIGH_GROUND_STEP / 2; y < map.height; y += HIGH_GROUND_STEP) {
         const point = { x, y };
         // Beyond the middle is walled off: no walk gets there.
-        if (side(point) !== side(home)) continue;
+        if (side(point) !== side(home.position)) continue;
         const layers = new Set(
           map.decks
             .filter((deck) => deck.switched === null && pointInShape(point, deck.footprint))
             .map(({ layer }) => layer),
         );
         for (const layer of layers) {
-          if (finder.find(home, map.groundLayer, point, layer) !== undefined) area += cell;
+          if (finder.find(home.position, home.layer, point, layer) !== undefined) area += cell;
         }
       }
     }

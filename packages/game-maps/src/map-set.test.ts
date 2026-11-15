@@ -22,6 +22,7 @@ import { describe, expect, it } from "vitest";
 import { allWallSegments, wallToSegments } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { matchLayers } from "./layers.js";
+import { mapNavGraphs } from "./nav-graphs.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
@@ -123,26 +124,30 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
         3,
       );
     }
-    const graph = buildNavGraph(walls, bounds, RADIUS, []);
-    for (const { position } of map.spawnPoints) {
-      for (const wall of walls) {
+    // Each on its own layer (#3344): clear of that layer's walls, on that layer's floor.
+    const layerWalls = matchLayers(map).walls;
+    const graphs = mapNavGraphs(map, RADIUS);
+    for (const { position, layer } of map.spawnPoints) {
+      for (const wall of layerWalls[layer] ?? []) {
         expect(
           distancePointToSegment(position, wall),
           JSON.stringify(position),
         ).toBeGreaterThanOrEqual(RADIUS);
       }
+      const graph = graphs[layer];
+      if (graph === undefined) throw new Error(`no layer ${String(layer)}`);
       // On the map, and not inside a wall's outline either.
       expect(nearestStandable(graph, position)).toEqual(position);
     }
   });
 
   it("lets every spawn walk to every other", () => {
-    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS, []));
+    const finder = layeredFinder(map, RADIUS);
     for (const from of map.spawnPoints) {
       for (const to of map.spawnPoints) {
         if (from !== to) {
           expect(
-            finder.find(from.position, to.position),
+            finder.find(from.position, from.layer, to.position, to.layer),
             `${JSON.stringify(from.position)} to ${JSON.stringify(to.position)}`,
           ).toBeDefined();
         }
@@ -173,9 +178,8 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
       const image = turned(map, spawn.position);
       const across = map.spawnPoints
         .filter((other) => other.team === 1)
-        .map((other) => other.position)
         .reduce((best, other) =>
-          Vec.distance(other, image) < Vec.distance(best, image) ? other : best,
+          Vec.distance(other.position, image) < Vec.distance(best.position, image) ? other : best,
         );
       const sim = new MatchSimulation({
         seed: `reach-${String(k)}`,
@@ -184,7 +188,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
         layers: matchLayers(map),
         bounds,
         participants: [
-          { id: "a", team: 0, at: spawn.position },
+          { id: "a", team: 0, at: spawn },
           { id: "b", team: 1, at: across },
         ].map(({ id, team, at }) => ({
           id,
@@ -194,7 +198,8 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
           equipment: resolved.weaponSets[0].equipment,
           baseEnergyPips: resolved.weaponSets[0].baseEnergyPips,
           maxHealth: 1e7,
-          spawn: at,
+          spawn: at.position,
+          layer: at.layer,
           facing: 0,
         })),
       });
