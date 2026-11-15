@@ -197,9 +197,7 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, stations 1 to 3: walk to the mark, look around, step in, on into the canyon`, async ({
-      page,
-    }) => {
+    test(`Learn on ${mapId}, from the start`, async ({ page }) => {
       // A walk, a drag and a walk in a sim that runs no faster than the page
       // draws: a loaded runner takes most of a minute (#3222).
       test.setTimeout(240_000);
@@ -280,9 +278,7 @@ test.describe("the first-time tutorial (#3218)", () => {
       await expect(frame).toHaveAttribute("data-world", "canyon", { timeout: 15_000 });
     });
 
-    test(`Learn on ${mapId}, stations 4 to 7: dodge in the canyon, break the wall, heal the tutor, round the mud`, async ({
-      page,
-    }) => {
+    test(`Learn on ${mapId}, from the canyon`, async ({ page }) => {
       // The three dodges at least 18 s (#3247), the wall some 10 to 15 s
       // (#3302), the clearing and the heal some 30 s (#3303), the bad ground
       // some 20 s (#3310): slower where the page draws slowly.
@@ -423,9 +419,7 @@ test.describe("the first-time tutorial (#3218)", () => {
       await expect(frame).toHaveAttribute("data-world", "canyon-2");
     });
 
-    test(`Learn on ${mapId}, stations 8 to 10: kill the rats, climb the ledge, up to the high deck`, async ({
-      page,
-    }) => {
+    test(`Learn on ${mapId}, from the rat pocket`, async ({ page }) => {
       // The rats some 60 s (#3316), the ledge some 30 s (#3323), the high
       // deck some 30 s (#3325).
       test.setTimeout(300_000);
@@ -551,9 +545,7 @@ test.describe("the first-time tutorial (#3218)", () => {
         .toBe(true);
     });
 
-    test(`Learn on ${mapId}, stations 11 and 12: through the tunnel, call a rat: then the menu, and no offer again`, async ({
-      page,
-    }) => {
+    test(`Learn on ${mapId}, from the tunnel to the menu`, async ({ page }) => {
       // Seeded on the high deck, where station 10 leaves the player (#3383).
       // The tunnel some two minutes (#3326), the call some 40 s (#3331).
       test.setTimeout(360_000);
