@@ -16,7 +16,13 @@ import {
 } from "./arena-snapshot.js";
 import type { Impact } from "./body-impacts.js";
 import { elevationOf } from "./render-order.js";
-import { beaconBoltFor, showCombatFeedback, swingFlashFor } from "./combat-feedback.js";
+import {
+  beaconBoltFor,
+  showCombatFeedback,
+  swingFlashFor,
+  type BodyDeath,
+  type BodyFlash,
+} from "./combat-feedback.js";
 
 function player(sessionId: string): PlayerSnapshot {
   return {
@@ -105,6 +111,8 @@ function floated(
       addBeaconBolt: () => undefined,
       addImpacts: () => undefined,
       addShoutMarks: () => undefined,
+      addBodyFlash: () => undefined,
+      addBodyDeath: () => undefined,
       struckTwice: () => undefined,
     },
     {
@@ -186,6 +194,8 @@ describe("showCombatFeedback", () => {
           addBeaconBolt: () => undefined,
           addImpacts: () => undefined,
           addShoutMarks: () => undefined,
+          addBodyFlash: () => undefined,
+          addBodyDeath: () => undefined,
           struckTwice: () => undefined,
         },
         {
@@ -225,6 +235,8 @@ describe("showCombatFeedback", () => {
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         addShoutMarks: () => undefined,
+        addBodyFlash: () => undefined,
+        addBodyDeath: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -288,6 +300,8 @@ describe("showCombatFeedback", () => {
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         addShoutMarks: () => undefined,
+        addBodyFlash: () => undefined,
+        addBodyDeath: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -321,6 +335,8 @@ describe("a number over a raised body", () => {
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         addShoutMarks: () => undefined,
+        addBodyFlash: () => undefined,
+        addBodyDeath: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -359,6 +375,8 @@ describe("showCombatFeedback and areas", () => {
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         addShoutMarks: () => undefined,
+        addBodyFlash: () => undefined,
+        addBodyDeath: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -447,6 +465,8 @@ describe("swingFlashFor (#161)", () => {
           struckTwice: () => undefined,
           addImpacts: () => undefined,
           addShoutMarks: () => undefined,
+          addBodyFlash: () => undefined,
+          addBodyDeath: () => undefined,
         },
         swing("weapon"),
         snapshot(weaponId),
@@ -504,6 +524,8 @@ describe("swingFlashFor (#161)", () => {
         struckTwice: () => undefined,
         addImpacts: () => undefined,
         addShoutMarks: () => undefined,
+        addBodyFlash: () => undefined,
+        addBodyDeath: () => undefined,
       },
       { ...swing("skill"), skillId: "warrior.mighty-blow", doubleStrike: true },
       snapshot("daggers"),
@@ -521,6 +543,8 @@ describe("swingFlashFor (#161)", () => {
       addBeaconBolt: () => undefined,
       addImpacts: () => undefined,
       addShoutMarks: () => undefined,
+      addBodyFlash: () => undefined,
+      addBodyDeath: () => undefined,
       struckTwice: (actorId: string) => told.push(actorId),
     };
     showCombatFeedback(sink, swing("weapon"), snapshot("daggers"), 0);
@@ -541,6 +565,8 @@ describe("swingFlashFor (#161)", () => {
       },
       struckTwice: () => undefined,
       addShoutMarks: () => undefined,
+      addBodyFlash: () => undefined,
+      addBodyDeath: () => undefined,
     };
     showCombatFeedback(sink, swing("weapon"), snapshot("sword"), 0);
     expect(landed).toEqual([]);
@@ -551,5 +577,78 @@ describe("swingFlashFor (#161)", () => {
       0,
     );
     expect(landed).toEqual(["them"]);
+  });
+});
+
+describe("body reactions (#3365)", () => {
+  /** The flashes and deaths a scene would have been asked to show, for these events. */
+  function reactions(
+    events: CombatMessage["events"],
+    cause: CombatMessage["cause"],
+  ): { flashes: BodyFlash[]; deaths: BodyDeath[] } {
+    const flashes: BodyFlash[] = [];
+    const deaths: BodyDeath[] = [];
+    showCombatFeedback(
+      {
+        addFloatingText: () => undefined,
+        addAreaFlash: () => undefined,
+        addSwingFlash: () => undefined,
+        addBeaconBolt: () => undefined,
+        addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
+        addBodyFlash: (flash) => flashes.push(flash),
+        addBodyDeath: (death) => deaths.push(death),
+        struckTwice: () => undefined,
+      },
+      {
+        casterSessionId: "me",
+        cause,
+        skillId: "",
+        weaponId: cause === "weapon" ? "sword" : "",
+        attributeId: "",
+        doubleStrike: false,
+        events,
+      },
+      SNAPSHOT,
+      0,
+    );
+    return { flashes, deaths };
+  }
+
+  it("flashes a plain weapon hit, and slides it away from the striker", () => {
+    const { flashes } = reactions(
+      [{ kind: "damage", targetId: "them", amount: 12, critical: false }],
+      "weapon",
+    );
+    expect(flashes).toEqual([
+      { targetId: "them", tint: 0.55, slide: { from: { x: 100, y: 100 }, distance: 3 } },
+    ]);
+  });
+
+  it("flashes a critical brighter and slides it further", () => {
+    const { flashes } = reactions(
+      [{ kind: "damage", targetId: "them", amount: 30, critical: true }],
+      "weapon",
+    );
+    expect(flashes.map(({ tint, slide }) => [tint, slide?.distance])).toEqual([[0.8, 5]]);
+  });
+
+  it("only tints a sourceless tick, without a slide", () => {
+    const { flashes } = reactions(
+      [{ kind: "damage", targetId: "them", amount: 1, critical: false }],
+      "degeneration",
+    );
+    expect(flashes).toEqual([{ targetId: "them", tint: 0.35, slide: null }]);
+  });
+
+  it("makes a death a death effect", () => {
+    const { deaths } = reactions(
+      [
+        { kind: "damage", targetId: "them", amount: 40, critical: false },
+        { kind: "death", targetId: "them" },
+      ],
+      "skill",
+    );
+    expect(deaths).toEqual([{ targetId: "them" }]);
   });
 });

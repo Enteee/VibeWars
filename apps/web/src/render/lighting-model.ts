@@ -189,3 +189,12 @@ export function multiplyColour(colour: number, tint: number): number {
     Math.round((((colour >> shift) & 0xff) * ((tint >> shift) & 0xff)) / 255) << shift;
   return channel(16) | channel(8) | channel(0);
 }
+
+/** `from` moved `share` of the way to `to`, channel by channel. */
+export function mixColour(from: number, to: number, share: number): number {
+  const channel = (shift: number): number => {
+    const a = (from >> shift) & 0xff;
+    return Math.round(a + (((to >> shift) & 0xff) - a) * share) << shift;
+  };
+  return channel(16) | channel(8) | channel(0);
+}

@@ -1,4 +1,4 @@
-import { getSkill, isWeaponId, vec2, WEAPONS } from "@vibewars/game-core";
+import { getSkill, isWeaponId, vec2, WEAPONS, type Vec2 } from "@vibewars/game-core";
 import type { CombatMessage, MatchSnapshot } from "@vibewars/game-session";
 
 import { floatingCueFor, type FloatingCue } from "../ui/combat-readouts.js";
@@ -20,6 +20,7 @@ import {
   type SwingFlash,
 } from "./arena-snapshot.js";
 import { impactsFor, type Impact } from "./body-impacts.js";
+import { FLASH_TINT, SLIDE_PX } from "./body-reactions.js";
 import { elevationOf } from "./render-order.js";
 import { shoutMarksFor, type ShoutMark } from "./shout-marks.js";
 
@@ -41,6 +42,21 @@ export interface FloatingTextSink {
   addImpacts(impacts: readonly Impact[]): void;
   /** A shout or chant went out (#3301). */
   addShoutMarks(marks: readonly ShoutMark[]): void;
+  /** A body took damage (#3365): it flashes, and slides if a body hit it. */
+  addBodyFlash(flash: BodyFlash): void;
+  /** A body died (#3365): it falls, drains and kicks up dust. */
+  addBodyDeath(death: BodyDeath): void;
+}
+
+/** A hit's flash on `targetId`: its tint toward white, and its slide away from `from`; `null` for none. */
+export interface BodyFlash {
+  readonly targetId: string;
+  readonly tint: number;
+  readonly slide: { readonly from: Vec2; readonly distance: number } | null;
+}
+
+export interface BodyDeath {
+  readonly targetId: string;
 }
 
 const COLOURS: Record<FloatingCue["tone"], number> = {
@@ -184,7 +200,26 @@ export function showCombatFeedback(
   // The health bar shows them, as GW1 does. A death by bleeding still says so.
   const ticking = message.cause === "degeneration";
 
+  // A hit from a body pushes the hit body away from it; a tick, a beacon
+  // or a body's own skill has no one to push from.
+  const source =
+    message.cause === "weapon" || message.cause === "skill"
+      ? snapshot.players.find((p) => p.sessionId === message.casterSessionId)
+      : undefined;
   for (const event of message.events) {
+    if (event.kind === "damage") {
+      const kind = event.critical ? "critical" : "hit";
+      scene.addBodyFlash({
+        targetId: event.targetId,
+        tint: source === undefined ? FLASH_TINT.tick : FLASH_TINT[kind],
+        slide:
+          source === undefined || source.sessionId === event.targetId
+            ? null
+            : { from: vec2(source.x, source.y), distance: SLIDE_PX[kind] },
+      });
+    } else if (event.kind === "death") {
+      scene.addBodyDeath({ targetId: event.targetId });
+    }
     if (ticking && (event.kind === "damage" || event.kind === "heal")) {
       continue;
     }

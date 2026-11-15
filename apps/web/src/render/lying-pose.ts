@@ -34,12 +34,7 @@ export interface LyingPose {
 export function lyingPose(x: number, y: number, r: number, facing: number): LyingPose {
   const cos = Math.cos(facing);
   const sin = Math.sin(facing);
-  const body = Array.from({ length: OUTLINE_POINTS }, (_, k) => {
-    const angle = (k / OUTLINE_POINTS) * 2 * Math.PI;
-    const along = r * Math.cos(angle);
-    const across = r * LYING_WIDTH * Math.sin(angle);
-    return { x: x + along * cos - across * sin, y: y + along * sin + across * cos };
-  });
+  const body = flattenedDisc(x, y, r, facing, LYING_WIDTH);
   // Out of the right hand that held it, and turned a quarter toward the
   // feet, so it reads as let go rather than still held.
   const offset = r * DROPPED_OFFSET;
@@ -52,4 +47,26 @@ export function lyingPose(x: number, y: number, r: number, facing: number): Lyin
       facing: facing + Math.PI / 2,
     },
   };
+}
+
+/**
+ * The disc at `(x, y)` flattened across `facing` to `width` of its radius:
+ * 1 is the standing disc, `LYING_WIDTH` the lying one, and a falling body
+ * passes between (#3365).
+ */
+export function flattenedDisc(
+  x: number,
+  y: number,
+  r: number,
+  facing: number,
+  width: number,
+): readonly Point[] {
+  const cos = Math.cos(facing);
+  const sin = Math.sin(facing);
+  return Array.from({ length: OUTLINE_POINTS }, (_, k) => {
+    const angle = (k / OUTLINE_POINTS) * 2 * Math.PI;
+    const along = r * Math.cos(angle);
+    const across = r * width * Math.sin(angle);
+    return { x: x + along * cos - across * sin, y: y + along * sin + across * cos };
+  });
 }
