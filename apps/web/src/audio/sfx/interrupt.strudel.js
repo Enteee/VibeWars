@@ -4,7 +4,7 @@
 // the -1 dBFS limit, because MP3 encoding overshoots the peak.
 setcpm(60);
 stack(
-  s("white").attack(0.0005).decay(0.0295).sustain(0).hpf(500).gain(0.5).compress(0, 0.03),
+  s("white").attack(0.0005).decay(0.0295).sustain(0).hpf(500).lpf(6000).gain(0.5).compress(0, 0.03),
   s("square")
     .freq(720)
     .penv(-26)
@@ -15,6 +15,6 @@ stack(
     .sustain(0.5)
     .tremolo(30)
     .tremolodepth(0.9)
-    .lpf(5000)
+    .lpf(3000)
     .gain(0.7),
 );
