@@ -31,6 +31,13 @@ const CLEAR_WAY = [
   { x: 7150, y: 1100 },
 ];
 const PAST_THE_MUD = { x: 6900, y: 720 };
+/**
+ * On station 9's ledge (#3323), just west of its stairs' top and near its
+ * north edge: a click here picks the deck, never the ground beside or
+ * under it, so the walk up ends on the ledge (the ledge spans x 3290-3910,
+ * y 1800-1980 on the canyon's second map).
+ */
+const ON_THE_LEDGE = { x: 3850, y: 1830 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -352,15 +359,16 @@ test.describe("the first-time tutorial (#3218)", () => {
       const [ledgeX = 0, ledgeY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
         .split(",")
         .map(Number);
-      // No click once the mark has gone under: the camera trails the
-      // player, so a stride from it can land on the ground below the deck,
-      // a plain walk down, and that one earns the tip.
+      // Up by the stairs' top, not the mark: a click toward the mark can
+      // pick the ground under or past the deck, a walk up the stairs,
+      // across and off the edge, and that one earns the tip. No click once
+      // the mark has gone under.
       const upper = (await frame.getAttribute("data-mark-layer")) ?? "";
       await expect(async () => {
         if ((await frame.getAttribute("data-mark-layer")) !== upper) {
           return;
         }
-        await walkTo({ x: ledgeX, y: ledgeY });
+        await walkTo(ON_THE_LEDGE);
         await expect(frame).not.toHaveAttribute("data-mark-layer", upper, { timeout: 3_000 });
       }).toPass({ timeout: 90_000 });
       await expect
