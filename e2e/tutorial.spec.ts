@@ -562,6 +562,12 @@ test.describe("the first-time tutorial (#3218)", () => {
         .toBe(true);
       await expect(page.locator(".party-window")).toHaveClass(/tutorial-pulse/);
       await expect(async () => {
+        // Its view gone, the tutorial has ended under the walk (#3363):
+        // what the tutor said last says how.
+        await expect(
+          frame,
+          `said: ${(await saidLog.getAttribute("data-said-log")) ?? ""}`,
+        ).toHaveCount(1, { timeout: 1_000 });
         await walkTo(BY_THE_RATS, LONG_STRIDE);
         await near(BY_THE_RATS, 150);
       }).toPass({ timeout: 90_000 });
