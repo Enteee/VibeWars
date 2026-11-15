@@ -50,7 +50,7 @@ Two seats a side, T1 centred (445,1070), T2 centred (2275,880), the centre is th
 
 Each team has the same three; T1 / T2 are within 9 % (bridge 0 %, cellar 9 %, walk 8 %). With the
 drawbridge raised (a lever on each bank, so neither team holds it alone), the cellar and the north
-walk are the two crossings; the walk is long on purpose (the high road is slow, 2 s slower than the
+walk are the two crossings; the walk is long on purpose (the high road is slow, 3 s slower than the
 cellar), so raising the bridge splits a team between a short wet crossing and a long dry one. High
 ground within half the map of either spawn is one L2 deck (gatehouse for T1, keep for T2), each
 reached only by its own side's stair from the north walk. The gatehouse (92 k u²) and the keep
