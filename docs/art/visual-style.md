@@ -29,19 +29,25 @@ ramps and stairs draw in them, tinted from the hall's materials
 ground, never the signals, and brass and iron stay as they are. A map of one
 layer draws flat whatever its biome, until its family card rebuilds it.
 
-| Biome    | Ground    | Rock      | Plant / earth                        |
-| -------- | --------- | --------- | ------------------------------------ |
-| Hall     | `#26303f` | `#4b5a70` | none (stone and steel)               |
-| Wilds    | `#2a3328` | `#5b5f58` | moss `#4f5e3c`, earth `#5a4630`      |
-| Heights  | `#26303f` | `#4b5a70` | none, decks `#a0b2c7`                |
-| Desert   | `#3b3226` | `#6e6252` | earth `#6e5a40`, scrub `#6a6448`     |
-| Volcanic | `#2b2421` | `#4a4340` | earth `#4a3426`, ash scrub `#5a5444` |
+| Biome    | Ground    | Rock      | Plant / earth                          |
+| -------- | --------- | --------- | -------------------------------------- |
+| Hall     | `#26303f` | `#4b5a70` | none (stone and steel)                 |
+| Wilds    | `#2a3328` | `#5b5f58` | moss `#4f5e3c`, earth `#5a4630`        |
+| Heights  | `#26303f` | `#4b5a70` | none, decks `#a0b2c7`                  |
+| Desert   | `#3b3226` | `#6e6252` | earth `#6e5a40`, scrub `#6a6448`       |
+| Volcanic | `#2b2421` | `#4a4340` | earth `#4a3426`, ash scrub `#5a5444`   |
+| Snow     | `#7d8a8e` | `#4d4a4a` | slush earth `#6a6050`, plant `#6a6a58` |
 
 The heights still draw in the hall's tones. The wilds (#3071, Crossroads) keep
 the hall's dressed stone and wood, and its moss: a greener moss sits too near
 the allies' green. The desert's stone decks are `#c2b296`. The volcanic biome
 (#3225, Ember Pits) is a cooling basalt crust, near black and a breath warm, its
-stone ash grey `#8c827a`, so lava is by far the hottest thing on its ground.
+stone ash grey `#8c827a`, so lava is by far the hottest thing on its ground. The snow biome (#3286,
+Frozen Crossing) is neutral grey at low chroma: its ground is the river ice,
+the only floor that shows (the banks are decks), its decks `#9ea4ab`. Snow
+stays mid-grey so the friend blue keeps its contrast. The ice is the study's
+`#7d8a94` with a little less blue, because the hall's blue grid tinted from
+it came too near the friend blue. Open water is the shared deep water look.
 
 **Overhangs** (#3293) are roofs nobody stands on. They hang at their layer's
 height over whoever is under them, with a thin eave below their front edge and
