@@ -56,6 +56,7 @@
  */
 import { execFile, spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { constants as osConstants } from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -279,7 +280,7 @@ if (argv[0] === "push") {
             resolve(127);
           });
           child.on("exit", (status, signal) => {
-            resolve(status ?? (signal === null ? 1 : 128));
+            resolve(status ?? (signal === null ? 1 : 128 + osConstants.signals[signal]));
           });
         }),
         kill: (signal) => child.kill(signal),

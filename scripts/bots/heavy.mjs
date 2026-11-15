@@ -94,8 +94,23 @@ export const runHeavy = async (deps) => {
   const label = cmd.slice(0, 3).join(" ");
   const deadline = now() + maxWaitMin * 60_000;
   let lastAhead = -1;
+  let warnedDown = false;
   for (;;) {
-    const answer = await request("acquire", [label]);
+    /** @type {Record<string, unknown>} */
+    let answer;
+    try {
+      answer = await request("acquire", [label]);
+    } catch {
+      // hubd restarting: it forgot the queue, so ask again on the next poll.
+      if (!warnedDown) say("heavy: hubd did not answer; retrying");
+      warnedDown = true;
+      if (now() >= deadline) {
+        say(`heavy: gave up after ${String(maxWaitMin)} min (hubd unreachable)`);
+        return EXIT_GAVE_UP;
+      }
+      await sleep(POLL_MS);
+      continue;
+    }
     if (typeof answer.leaseId === "string" && answer.granted === true) {
       return runLeased(answer.leaseId);
     }

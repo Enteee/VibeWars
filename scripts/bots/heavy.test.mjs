@@ -6,7 +6,7 @@ import { EXIT_GAVE_UP, RENEW_MS, runHeavy } from "./heavy.mjs";
  * A fake world: a clock that only sleep advances, a scripted hubd, a child
  * that ends when told to.
  *
- * @param {{ answers?: Record<string, unknown>[], childCode?: number, childMs?: number, env?: Record<string, string> }} [options]
+ * @param {{ answers?: Record<string, unknown>[], childCode?: number, childMs?: number, failAcquires?: number, env?: Record<string, string> }} [options]
  */
 const world = (options = {}) => {
   let clock = 0;
@@ -16,6 +16,7 @@ const world = (options = {}) => {
   const answers = [...(options.answers ?? [{ granted: true, leaseId: "L1" }])];
   /** @type {Record<string, unknown> | undefined} */
   let renewAnswer;
+  let failures = options.failAcquires ?? 0;
   return {
     calls,
     said,
@@ -29,6 +30,10 @@ const world = (options = {}) => {
         env: options.env ?? {},
         request: (op, args) => {
           calls.push([op, args]);
+          if (op === "acquire" && failures > 0) {
+            failures -= 1;
+            return Promise.reject(new Error("hubd down"));
+          }
           if (op === "acquire")
             return Promise.resolve(answers.length > 1 ? answers.shift() : answers[0]);
           if (op === "renew") return Promise.resolve(renewAnswer ?? { ok: true });
@@ -76,6 +81,13 @@ describe("runHeavy", () => {
     ]);
     expect(w.spawned[0]?.env.VIBEWARS_HEAVY).toBe("L9");
     expect(w.calls.at(-1)).toEqual(["release", ["L9"]]);
+  });
+
+  it("retries when hubd does not answer an acquire", async () => {
+    const w = world({ failAcquires: 1 });
+    expect(await w.run(["x"])).toBe(0);
+    expect(w.said).toEqual(["heavy: hubd did not answer; retrying"]);
+    expect(w.spawned).toHaveLength(1);
   });
 
   it("passes the child's exit code through", async () => {
