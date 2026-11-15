@@ -218,32 +218,34 @@ function playMatch(
     }
     const bodies = [...sim.participants()];
     meter.feed(
-      bodies.map((body) => {
-        const foes = bodies.filter(
-          (other) => other.combatant.team !== body.combatant.team && !other.combatant.dead,
-        );
-        let nearest: (typeof foes)[number] | undefined;
-        let nearestDistance = Infinity;
-        for (const foe of foes) {
-          const distance = Math.hypot(
-            foe.position.x - body.position.x,
-            foe.position.y - body.position.y,
+      bodies
+        .filter((body) => body.creature === undefined)
+        .map((body) => {
+          const foes = bodies.filter(
+            (other) => other.combatant.team !== body.combatant.team && !other.combatant.dead,
           );
-          if (distance < nearestDistance) {
-            nearest = foe;
-            nearestDistance = distance;
+          let nearest: (typeof foes)[number] | undefined;
+          let nearestDistance = Infinity;
+          for (const foe of foes) {
+            const distance = Math.hypot(
+              foe.position.x - body.position.x,
+              foe.position.y - body.position.y,
+            );
+            if (distance < nearestDistance) {
+              nearest = foe;
+              nearestDistance = distance;
+            }
           }
-        }
-        return {
-          id: body.id,
-          x: body.position.x,
-          y: body.position.y,
-          layer: body.layer,
-          counts: !body.combatant.dead && nearest !== undefined,
-          active: active.has(body.id),
-          nearestFoeLayer: nearest?.layer,
-        };
-      }),
+          return {
+            id: body.id,
+            x: body.position.x,
+            y: body.position.y,
+            layer: body.layer,
+            counts: !body.combatant.dead && nearest !== undefined,
+            active: active.has(body.id),
+            nearestFoeLayer: nearest?.layer,
+          };
+        }),
     );
   }
   return {
