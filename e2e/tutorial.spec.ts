@@ -80,6 +80,8 @@ const TO_THE_TUNNEL = [
 ];
 /** How far each stride of station 11 (#3326) reaches, in world units: still inside the view. */
 const LONG_STRIDE = 500;
+/** How far to one side station 11's walk clicks when a click has not moved it (#3363). */
+const SIDESTEP = 60;
 /**
  * In station 11's tunnel (#3326), west and east of its middle: the tunnel
  * (x 2080-2800, y 450-950, layer 0) is a layer, 56 world units, under the
@@ -504,9 +506,29 @@ test.describe("the first-time tutorial (#3218)", () => {
       };
       // On each waypoint, not just near it: there is no pathing, and a leg
       // begun beside one can run its straight line into a corner (#3363).
+      // Stuck since the last try, the same click would never move it: a
+      // short stride, a little to one side, instead.
       for (const waypoint of TO_THE_TUNNEL) {
+        let last = "";
+        let tries = 0;
         await expect(async () => {
-          await walkTo(waypoint, LONG_STRIDE);
+          const camera = (await stage.getAttribute("data-camera")) ?? "";
+          const [cx = 0, cy = 0] = camera.split(",").map(Number);
+          if (camera === last) {
+            tries += 1;
+            const far = Math.max(Math.hypot(waypoint.x - cx, waypoint.y - cy), 1);
+            const side = tries % 2 === 0 ? SIDESTEP : -SIDESTEP;
+            await walkTo(
+              {
+                x: waypoint.x - ((waypoint.y - cy) / far) * side,
+                y: waypoint.y + ((waypoint.x - cx) / far) * side,
+              },
+              LONG_STRIDE / 2,
+            );
+          } else {
+            await walkTo(waypoint, LONG_STRIDE);
+          }
+          last = camera;
           await near(waypoint, 40);
         }).toPass({ timeout: 90_000 });
       }
