@@ -16,6 +16,7 @@ import {
   paintPavingPiece,
   pavingDrawing,
   pavingTextureSizes,
+  pavingHoles,
   pavingTunnelPieces,
 } from "./paving-painter.js";
 
@@ -224,7 +225,7 @@ describe("pavingTunnelPieces (#3272)", () => {
       return seen;
     };
     const whole = calls((context) => {
-      paintPaving(context, drawing, size.scale, [piece]);
+      paintPaving(context, drawing, size.scale, [piece], []);
     });
     const { left, top, width, height } = piece.pixels;
     expect(whole.at(-1)).toEqual(["clearRect", left, top, width, height]);
@@ -236,5 +237,30 @@ describe("pavingTunnelPieces (#3272)", () => {
     expect(e).toBeCloseTo(-x * size.scale - left);
     expect(f).toBeCloseTo(-y * size.scale - top);
     expect(part.slice(1)).toEqual(whole.slice(1, part.length));
+  });
+
+  it("cuts the holes stairs go down by out of the paving, and paints them nowhere (#3329)", () => {
+    const holes = [
+      { layer: 0, outline: box(150, 120, 190, 160) },
+      { layer: 1, outline: box(200, 120, 240, 160) },
+    ];
+    const cut = pavingHoles(drawing, 0, size, holes);
+    expect(cut).toHaveLength(1);
+    const [hole] = cut;
+    if (hole === undefined) {
+      throw new Error("no hole");
+    }
+    expect(Math.abs(hole.width - 40 * size.scale)).toBeLessThanOrEqual(1);
+    const seen: unknown[][] = [];
+    const context = new Proxy({} as PavingCanvas, {
+      get:
+        (_target, name) =>
+        (...args: unknown[]) => {
+          seen.push([name, ...args]);
+        },
+      set: () => true,
+    });
+    paintPaving(context, drawing, size.scale, [], cut);
+    expect(seen.at(-1)).toEqual(["clearRect", hole.left, hole.top, hole.width, hole.height]);
   });
 });

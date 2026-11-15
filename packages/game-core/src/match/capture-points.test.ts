@@ -147,7 +147,10 @@ describe("a capture point (#1378, #2690)", () => {
     expect(onCapturePoint(shrine, onFloor(500 + CAPTURE_REACH_UNITS))).toBe(true);
     expect(onCapturePoint(shrine, onFloor(501 + CAPTURE_REACH_UNITS))).toBe(false);
     const { state } = stepCapturePoints(
-      initialCapturePoints([point, vec2(900, 500)]),
+      initialCapturePoints([
+        { ...point, layer: 0 },
+        { ...vec2(900, 500), layer: 0 },
+      ]),
       CAPTURE_SECONDS,
       [pips([0, 4]), NOBODY],
     );

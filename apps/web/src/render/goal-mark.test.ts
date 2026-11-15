@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 
+import type { MapStructure } from "./arena-snapshot.js";
 import {
   GOAL_MARK_FADE_SECONDS,
   GOAL_MARK_PULSE_SECONDS,
   goalMarkCommands,
   goalMarkFade,
   goalMarkPulse,
+  traceHiddenGoalMark,
+  type GoalMark,
 } from "./goal-mark.js";
+import { occludersOf } from "./layer-surfaces.js";
 
 const AT = { x: 400, y: 300 };
 
@@ -45,5 +49,52 @@ describe("goal mark (#3221)", () => {
     const bands = commands.filter((command) => command.kind === "band");
     expect(bands.length).toBeGreaterThan(1);
     expect(Math.min(...bands.map((band) => band.at.y))).toBeLessThan(AT.y);
+  });
+});
+
+describe("a goal mark under a deck (#3342)", () => {
+  const bridge = { kind: "rect", x: 100, y: 100, width: 200, height: 100 } as const;
+  const BRIDGE: MapStructure = {
+    layerCount: 2,
+    biome: "hall",
+    bounds: { kind: "rect" },
+    ground: 0,
+    pits: [],
+    tunnels: [],
+    dropOffs: [],
+    downDecks: [],
+    overhangs: [],
+    decks: [{ layer: 1, footprint: bridge, look: "platform", switched: null }],
+    transitions: [],
+    water: [],
+    zones: [],
+  };
+  const occluders = occludersOf([], BRIDGE);
+  const mark = (x: number, y: number, layer: number): GoalMark => ({
+    id: String(x),
+    kind: "goal",
+    position: { x, y },
+    layer,
+  });
+  const hiddenPieces = (goal: GoalMark): number => {
+    let pieces = 0;
+    traceHiddenGoalMark(goal, 0, false, BRIDGE.ground, occluders, () => {
+      pieces += 1;
+    });
+    return pieces;
+  };
+
+  it("shows its covered ring through the deck, as a body's", () => {
+    expect(hiddenPieces(mark(200, 150, 0))).toBeGreaterThan(0);
+  });
+
+  it("draws as today on the deck, and in the open beside it", () => {
+    expect(hiddenPieces(mark(200, 150, 1))).toBe(0);
+    expect(hiddenPieces(mark(500, 150, 0))).toBe(0);
+  });
+
+  it("judges each of several marks on its own", () => {
+    const marks = [mark(200, 150, 0), mark(500, 150, 0), mark(150, 150, 1)];
+    expect(marks.map((goal) => hiddenPieces(goal) > 0)).toEqual([true, false, false]);
   });
 });

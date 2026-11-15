@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { Polygon, Segment } from "../geometry.js";
-import { CAPTURE_POINTS_MATCH_RULES, PRIEST_WAVE_SECONDS } from "../match-rules.js";
+import {
+  CAPTURE_POINTS_MATCH_RULES,
+  HALLS_MATCH_RULES,
+  PRIEST_WAVE_SECONDS,
+} from "../match-rules.js";
 import { NO_RANKS } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { CAPTURE_SECONDS, MAX_PIPS } from "./capture-points.js";
@@ -256,7 +260,7 @@ describe("a body's layer (ADR-0051)", () => {
 
   it("rises at a shrine on its spawn's layer, having died on a deck", () => {
     const sim = arena([spec("a", 0, vec2(400, 400), 0)], {
-      shrines: [{ team: 0, position: vec2(150, 400) }],
+      shrines: [{ team: 0, position: vec2(150, 400), layer: 0 }],
     });
     sim.walkTo("a", vec2(600, 450), 1);
     run(sim, 6);
@@ -421,11 +425,37 @@ describe("an objective on a layer (ADR-0051, #2900)", () => {
     expect(filled(ON_RAMP, ON_RAMP, 0)).toBeGreaterThan(0);
   });
 
+  it("returns the Halls' altar holders' dead to the altar on its deck (#3344)", () => {
+    const sim = arena([spec("a", 0, vec2(150, 400), 0), spec("x", 1, vec2(1500, 900), 0)], {
+      matchRules: HALLS_MATCH_RULES["king-of-the-hill"],
+      ghostField: {
+        level: 28,
+        altar: ON_DECK,
+        altarLayer: 1,
+        spawns: [
+          { team: 0, position: ON_DECK, layer: 1 },
+          { team: 1, position: vec2(1500, 1000), layer: 0 },
+        ],
+      },
+    });
+    run(sim, 10);
+    expect(sim.altarState.holder).toBe(0);
+    const { combatant } = get(sim, "a");
+    combatant.statuses.apply("burning", 10, "nobody", NO_RANKS);
+    combatant.health = 0.2;
+    run(sim, 60 - sim.elapsedSeconds + 1);
+    const risen = get(sim, "a");
+    expect(risen.combatant.dead).toBe(false);
+    expect(risen.layer).toBe(1);
+    expect(risen.position).toEqual(ON_DECK);
+  });
+
   const DECK_FLAGS: FlagField = {
     stand: vec2(1000, 400),
+    standLayer: 0,
     spawns: [
       { team: 0, position: ON_DECK, layer: 1 },
-      { team: 1, position: vec2(1500, 900) },
+      { team: 1, position: vec2(1500, 900), layer: 0 },
     ],
   };
 

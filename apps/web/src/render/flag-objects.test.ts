@@ -21,9 +21,10 @@ import {
 
 const FIELD: FlagField = {
   stand: vec2(1500, 1000),
+  standLayer: 0,
   spawns: [
-    { team: 0, position: vec2(560, 1000) },
-    { team: 1, position: vec2(2440, 1000) },
+    { team: 0, position: vec2(560, 1000), layer: 0 },
+    { team: 1, position: vec2(2440, 1000), layer: 0 },
   ],
 };
 
@@ -83,11 +84,12 @@ describe("renderableStand", () => {
 describe("renderableRelics (#1374)", () => {
   const RELICS: RelicField = {
     altar: vec2(1100, 700),
+    altarLayer: 0,
     relicTarget: "altar",
     relicCarry: "own",
     spawns: [
-      { team: 0, position: vec2(110, 700) },
-      { team: 1, position: vec2(2090, 700) },
+      { team: 0, position: vec2(110, 700), layer: 0 },
+      { team: 1, position: vec2(2090, 700), layer: 0 },
     ],
   };
 

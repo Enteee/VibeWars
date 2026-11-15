@@ -26,8 +26,8 @@ import type { ParticipantSpec } from "./simulation.js";
 export interface GhostSpawn {
   readonly team: number;
   readonly position: Vec2;
-  /** The layer it starts on (ADR-0051). Omitted: the ground. */
-  readonly layer?: number;
+  /** The layer it starts on (ADR-0051). */
+  readonly layer: number;
 }
 
 /**
@@ -37,8 +37,8 @@ export interface GhostSpawn {
 export interface GhostField {
   readonly level: GhostLevel;
   readonly altar: Vec2 | undefined;
-  /** The layer the altar is on (ADR-0051). Omitted: the ground. */
-  readonly altarLayer?: number;
+  /** The layer the altar is on (ADR-0051); the ground when there is no altar. */
+  readonly altarLayer: number;
   readonly spawns: readonly GhostSpawn[];
 }
 
@@ -152,7 +152,7 @@ export function ghostSpec(
       },
     },
     spawn: spawn.position,
-    layer: spawn.layer ?? 0,
+    layer: spawn.layer,
     facing,
     maxHealth: GHOST_HEALTH,
     maxEnergy: GHOST_ENERGY,

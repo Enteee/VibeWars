@@ -1,7 +1,7 @@
 import { BIOMES, DECK_LOOKS, TRANSITION_LOOKS } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
-import { arenaPalette, BIOME, shade } from "./arena-palette.js";
+import { arenaPalette, BIOME, pitFloor, pitWall, shade } from "./arena-palette.js";
 
 /** The signals of docs/art/visual-style.md §1, which no biome tone may sit near. */
 const SIGNALS = [
@@ -125,6 +125,14 @@ describe("BIOME", () => {
     expect(warm(deck.tower.top)).toBe(true);
     expect(deck.plinth.edgeTop).toBe(BIOME.hall.deck.plinth.edgeTop);
     expect(transition.lift.riser).toBe(BIOME.hall.transition.lift.riser);
+  });
+
+  it("sinks a pit in the biome's own tones, the hall's as they were (#3329)", () => {
+    expect(pitFloor(BIOME.hall.palette)).toBe(shade(0x26303f, 0.45));
+    expect(pitWall(BIOME.hall.palette)).toBe(shade(0x4b5a70, 0.6));
+    const warm = (colour: number): boolean => colour >> 16 > (colour & 0xff);
+    expect(warm(pitFloor(BIOME.desert.palette))).toBe(true);
+    expect(warm(pitWall(BIOME.desert.palette))).toBe(true);
   });
 
   it("draws the wilds green, and keeps the hall's dressed stone", () => {

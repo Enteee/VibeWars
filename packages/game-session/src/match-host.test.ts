@@ -843,4 +843,31 @@ describe("a map's layers (#3017)", () => {
     });
     expect(x).toBeGreaterThan(920);
   });
+
+  it("seats a player on its spawn's layer, a deck over the ground (#3344)", async () => {
+    const deck = [
+      { x: 300, y: 400 },
+      { x: 800, y: 400 },
+      { x: 800, y: 700 },
+      { x: 300, y: 700 },
+    ];
+    const match = startMatch({
+      map: {
+        ...ARENA,
+        layers: {
+          ...flatLayers(ARENA.walls),
+          count: 2,
+          walls: [ARENA.walls, []],
+          decks: [{ layer: 1, footprint: deck }],
+          deepWater: [[], []],
+        },
+        spawns: ARENA.spawns.map((spawn) => ({ ...spawn, layer: 1 })),
+      },
+    });
+    const local = await match.joinLocal();
+    const { connection: remote } = await match.join();
+    await match.step(0.05);
+    expect(self(local)?.layer).toBe(1);
+    expect(self(remote)?.layer).toBe(1);
+  });
 });
