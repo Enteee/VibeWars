@@ -1361,6 +1361,11 @@ export default {
   "tutorial.moreSoon": "Sắp có thêm bài học. Hẹn gặp ngoài kia!",
   "tutorial.offer": "Mới đến? Người hướng dẫn sẽ chỉ bạn những điều cơ bản.",
   "tutorial.offerTitle": "Lần đầu?",
+  "tutorial.ramp.hint": "Lên cả hai đợt bậc tới dấu trên sàn cao.",
+  "tutorial.ramp.how": "Nhấp vào sàn cao. Đường đi tự leo bậc giúp bạn.",
+  "tutorial.ramp.intro": "Bậc thang nối các tầng. Bước lên, chúng đưa bạn lên.",
+  "tutorial.ramp.landing": "Thêm một đợt bậc nữa.",
+  "tutorial.ramp.praise": "Đất cao. Kẻ thù bên dưới khó với tới bạn.",
   "tutorial.rats.again": "Thử một kỹ năng khác với con này.",
   "tutorial.rats.big":
     "Con to đấy. Đánh nó đến khi {bash} sáng lên, rồi quật ngã nó và dùng {crush}.",

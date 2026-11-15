@@ -38,6 +38,12 @@ const PAST_THE_MUD = { x: 6900, y: 720 };
  * y 1800-1980 on the canyon's second map).
  */
 const ON_THE_LEDGE = { x: 3850, y: 1830 };
+/**
+ * Where station 10's mark (#3325), at the high deck's middle, is drawn:
+ * the deck (x 1780-2180, y 1480-1740, layer 3) stands two layers over the
+ * ground (layer 1), 112 world units up, so a click here picks the mark.
+ */
+const OVER_THE_HIGH_DECK = { x: 1980, y: 1610 - 112 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -75,7 +81,7 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge, up to the high deck: then the menu, and no offer again`, async ({
       page,
     }) => {
       // Four stations, each a walk or a drag in a sim that runs no faster than
@@ -85,7 +91,7 @@ test.describe("the first-time tutorial (#3218)", () => {
       // walk to the clearing and the heal some 30 s more (#3303), and the
       // walk round the bad ground some 20 s more (#3310), and the walk to the
       // rats and their fight some 60 s more (#3316), and the ledge some 30 s
-      // more (#3323).
+      // more (#3323), and the walk up to the high deck some 30 s more (#3325).
       test.setTimeout(600_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
@@ -390,6 +396,23 @@ test.describe("the first-time tutorial (#3218)", () => {
       }).toPass({ timeout: 60_000 });
       // Down by an Alt walk: no tip.
       expect(await hasSaid(tip), "no tip after an Alt walk down").toBe(false);
+
+      // Station 10 (#3325): a click on the high deck walks up both flights.
+      await expect
+        .poll(() => hasSaid("Steps join layers. Walk on, and they carry you up."), {
+          timeout: 15_000,
+        })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-mark-layer", "3");
+      const high = "High ground. Foes below can't easily reach you.";
+      await expect(async () => {
+        if (await hasSaid(high)) {
+          return;
+        }
+        await walkTo(OVER_THE_HIGH_DECK);
+        await expect.poll(() => hasSaid(high), { timeout: 5_000 }).toBe(true);
+      }).toPass({ timeout: 90_000 });
+      expect(await hasSaid("One more flight."), "the landing gets its line").toBe(true);
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 

@@ -30,17 +30,20 @@ import {
   CRACKED_WALL,
   DODGE_MARK,
   LEDGE,
+  RAMP,
   RAT_POCKET,
   allyHealSlot,
   badGroundTutor,
   canyonWorld,
   clearingTutor,
   ledgeTutor,
+  rampTutor,
   ratPocket,
   wallTutor,
   type BadGroundTutor,
   type ClearingTutor,
   type LedgeTutor,
+  type RampTutor,
   type RatPocket,
   type WallTutor,
 } from "./canyon-world.js";
@@ -55,6 +58,7 @@ import {
   dodgeStation,
   healStation,
   lookStation,
+  rampStation,
   ratsStation,
   stepInStation,
   walkStation,
@@ -241,6 +245,7 @@ export async function startTutorialSession(
   // Station 9's (#3323): whether the last walk the player sent was an Alt walk.
   let belowClicked = false;
   let onLedge: LedgeTutor | undefined;
+  let onRamp: RampTutor | undefined;
   /** The station the last beat ran. */
   let running: string | undefined;
   /** The HUD element pulsing now, if any. */
@@ -319,6 +324,7 @@ export async function startTutorialSession(
         playerBuild.skillBar,
       ),
       climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
+      rampStation(RAMP.mark, RAMP.layer, RAMP.landing),
     ],
     loadKeymap,
   );
@@ -515,7 +521,15 @@ export async function startTutorialSession(
       if (onLedge === undefined && beat.station === "climb" && stage.name === "canyon-2") {
         onLedge = ledgeTutor(world);
       }
-      onLedge?.step();
+      // Only while it is on: the landing at station 10 is on the ledge's layer.
+      if (beat.station === "climb") {
+        onLedge?.step();
+      }
+      // Station 10 is next: the tutor climbs behind the player to the high deck.
+      if (onRamp === undefined && beat.station === "ramp" && stage.name === "canyon-2") {
+        onRamp = rampTutor(world);
+      }
+      onRamp?.step();
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;

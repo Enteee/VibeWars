@@ -1519,6 +1519,11 @@ export default {
   "tutorial.moreSoon": "Uskoro još lekcija. Vidimo se vani!",
   "tutorial.offer": "Novi si? Tvoj učitelj pokazat će ti osnove.",
   "tutorial.offerTitle": "Prvi put?",
+  "tutorial.ramp.hint": "Gore oba stubišta do oznake na visokoj platformi.",
+  "tutorial.ramp.how": "Klikni visoku platformu. Put sam ide stubama.",
+  "tutorial.ramp.intro": "Stube povezuju razine. Stani na njih i odnijet će te gore.",
+  "tutorial.ramp.landing": "Još jedno stubište.",
+  "tutorial.ramp.praise": "Visok teren. Neprijatelji dolje teško te dosegnu.",
   "tutorial.rats.again": "Probaj drugu vještinu na ovom.",
   "tutorial.rats.big":
     "Veliki. Udaraj ga dok {bash} ne zasvijetli, zatim ga obori i upotrijebi {crush}.",
