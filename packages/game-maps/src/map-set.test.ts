@@ -55,6 +55,7 @@ const REBUILT = new Set([
   "arena-crossroads",
   "ember-pits",
   "frozen-crossing",
+  "sandstone-steps",
   "ashen-courtyard",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
@@ -775,10 +776,9 @@ describe("Hall of Heroes (#2552)", () => {
 const ROUTE_HALF_GAP = 100;
 
 // The medium arenas (#2604, #2605) cross the centre in three lanes, the large (#2607, #2609) in four.
-// Frozen Crossing (#3286) and Ashen Courtyard (#3287), rebuilt in 2.5D, are proven by their walks
-// and high ground instead (map-balance.test.ts).
+// Sandstone Steps (#3278), Frozen Crossing (#3286) and Ashen Courtyard (#3287), rebuilt in 2.5D, are
+// proven by their walks and high ground instead (map-balance.test.ts).
 describe.each([
-  ["sandstone-steps", 1, 3],
   ["moss-vale", 8, 3],
   ["canthan-terraces", 1, 4],
   ["sunken-bastion", 2, 4],
