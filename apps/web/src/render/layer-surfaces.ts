@@ -730,7 +730,7 @@ export function tunnelOpenings(
 }
 
 /** `box` with each of `holes` cut out, as the boxes left: up to four round each hole. */
-function boxWithout(box: Box, holes: readonly Box[]): Box[] {
+export function boxWithout(box: Box, holes: readonly Box[]): Box[] {
   return holes.reduce<Box[]>(
     (pieces, hole) =>
       pieces.flatMap((piece) => {

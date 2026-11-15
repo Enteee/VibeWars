@@ -68,4 +68,47 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
     scene.cutAwayTunnels(0.016);
     expect(over.alpha).toBe(1);
   });
+
+  it("fades the water over the viewer's tunnel with its cover, and no other water (#3350)", async () => {
+    const { mapStructure } = await import("../net/maps.js");
+    const { structure } = mapStructure("arena-long-hall");
+    const fading = (): { alpha: number; setAlpha(alpha: number): unknown } => ({
+      alpha: 1,
+      setAlpha(alpha: number) {
+        this.alpha = alpha;
+        return this;
+      },
+    });
+    const cover = { ground: fading(), seam: fading() };
+    const otherCover = { ground: fading(), seam: fading() };
+    const over = { surface: fading(), ripples: fading() };
+    const overOther = { surface: fading(), ripples: fading() };
+    const outside = fading();
+    const self = { team: "self", position: { x: 1620, y: 1450 }, layer: structure.ground - 1 };
+    const scene = Object.assign(new ArenaScene(), {
+      snapshot: { structure, actors: [self] },
+      tunnelCovers: new Map([
+        [0, cover],
+        [1, otherCover],
+      ]),
+      waterOverTunnels: new Map([
+        [0, over],
+        [1, overOther],
+      ]),
+      structureGraphics: new Map([["water", outside]]),
+      reducedMotion: true,
+    }) as unknown as { cutAwayTunnels(dt: number): void };
+
+    scene.cutAwayTunnels(0.016);
+    expect(cover.ground.alpha).toBeLessThan(1);
+    expect(over.surface.alpha).toBe(cover.ground.alpha);
+    expect(over.ripples.alpha).toBe(cover.ground.alpha);
+    expect(overOther.surface.alpha).toBe(1);
+    expect(overOther.ripples.alpha).toBe(1);
+    expect(outside.alpha).toBe(1);
+
+    self.layer = structure.ground;
+    scene.cutAwayTunnels(0.016);
+    expect(over.surface.alpha).toBe(1);
+  });
 });
