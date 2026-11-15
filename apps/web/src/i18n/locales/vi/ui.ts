@@ -1328,6 +1328,12 @@ export default {
   "training.soundOn": "Bật âm thanh.",
   "training.you": "Bạn",
 
+  "tutorial.climb.hint": "Lên gờ đá, rồi xuống mặt đất bên dưới nó.",
+  "tutorial.climb.how": "Nhấp vào chỗ muốn đứng. Alt+nhấp (Option trên Mac) chọn mặt đất bên dưới.",
+  "tutorial.climb.intro": "Leo lên bậc thang. Vòng liền là nơi bạn sẽ đứng.",
+  "tutorial.climb.praise": "Hai tầng, một chỗ. Giờ bạn đã biết đọc địa hình.",
+  "tutorial.climb.tip": "Mẹo: Alt+nhấp chọn mặt đất dưới gờ đá.",
+  "tutorial.climb.under": "Giữ Alt rồi nhấp. Vòng nét đứt ở bên dưới bạn.",
   "tutorial.dodge.hint": "Đợi cạnh một vòng tròn đến khi bóng của nó hiện ra, rồi bước ra.",
   "tutorial.dodge.hit": "Ối! Bóng lớn dần nghĩa là: di chuyển.",
   "tutorial.dodge.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",

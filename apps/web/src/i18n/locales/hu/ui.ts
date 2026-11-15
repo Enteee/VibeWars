@@ -1421,6 +1421,13 @@ export default {
   "training.soundOn": "Hang bekapcsolva.",
   "training.you": "Te",
 
+  "tutorial.climb.hint": "Fel a párkányra, aztán le az alatta lévő földre.",
+  "tutorial.climb.how":
+    "Kattints oda, ahol állni akarsz. Az Alt+kattintás (Macen Option) az alsó talajt választja.",
+  "tutorial.climb.intro": "Fel a lépcsőn. A teli kör mutatja, hol fogsz állni.",
+  "tutorial.climb.praise": "Két szint, egy pont. Most már olvasod a terepet.",
+  "tutorial.climb.tip": "Tipp: az Alt+kattintás a párkány alatti talajt választja.",
+  "tutorial.climb.under": "Tartsd lenyomva az Altot, és kattints. A szaggatott kör alattad van.",
   "tutorial.dodge.hint": "Várd meg egy kör mellett az árnyékát, aztán lépj ki.",
   "tutorial.dodge.hit": "Jaj! A növekvő árnyék azt jelenti: mozdulj.",
   "tutorial.dodge.how": "Kattints a földre bal gombbal, vagy járj ezekkel: {keys}.",

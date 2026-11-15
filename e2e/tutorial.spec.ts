@@ -31,6 +31,13 @@ const CLEAR_WAY = [
   { x: 7150, y: 1100 },
 ];
 const PAST_THE_MUD = { x: 6900, y: 720 };
+/**
+ * On station 9's ledge (#3323), just west of its stairs' top and near its
+ * north edge: a click here picks the deck, never the ground beside or
+ * under it, so the walk up ends on the ledge (the ledge spans x 3290-3910,
+ * y 1800-1980 on the canyon's second map).
+ */
+const ON_THE_LEDGE = { x: 3850, y: 1830 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -68,7 +75,7 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge: then the menu, and no offer again`, async ({
       page,
     }) => {
       // Four stations, each a walk or a drag in a sim that runs no faster than
@@ -77,8 +84,9 @@ test.describe("the first-time tutorial (#3218)", () => {
       // some 10 to 15 s, slower where the page draws slowly (#3302), and the
       // walk to the clearing and the heal some 30 s more (#3303), and the
       // walk round the bad ground some 20 s more (#3310), and the walk to the
-      // rats and their fight some 60 s more (#3316).
-      test.setTimeout(540_000);
+      // rats and their fight some 60 s more (#3316), and the ledge some 30 s
+      // more (#3323).
+      test.setTimeout(600_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
       const frame = page.locator(".tutorial-frame");
@@ -339,6 +347,49 @@ test.describe("the first-time tutorial (#3218)", () => {
         }
         await expect.poll(() => hasSaid(fought), { timeout: 3_000 }).toBe(true);
       }).toPass({ timeout: 120_000 });
+
+      // Station 9 (#3323): up the steps onto the ledge, its mark; then an
+      // Alt+click on the same mark walks to the ground under it.
+      await expect
+        .poll(() => hasSaid("Up the steps. A solid ring is where you'll stand."), {
+          timeout: 15_000,
+        })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
+      const [ledgeX = 0, ledgeY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+        .split(",")
+        .map(Number);
+      // Up by the stairs' top, not the mark: a click toward the mark can
+      // pick the ground under or past the deck, a walk up the stairs,
+      // across and off the edge, and that one earns the tip. No click once
+      // the mark has gone under.
+      const upper = (await frame.getAttribute("data-mark-layer")) ?? "";
+      await expect(async () => {
+        if ((await frame.getAttribute("data-mark-layer")) !== upper) {
+          return;
+        }
+        await walkTo(ON_THE_LEDGE);
+        await expect(frame).not.toHaveAttribute("data-mark-layer", upper, { timeout: 3_000 });
+      }).toPass({ timeout: 90_000 });
+      await expect
+        .poll(() => hasSaid("Hold Alt and click. The dashed ring is below you."), {
+          timeout: 15_000,
+        })
+        .toBe(true);
+      const tip = "Tip: Alt+click picks the ground under a ledge.";
+      expect(await hasSaid(tip), "no tip while the player is still up").toBe(false);
+      const climbed = "Two layers, one spot. You read the ground now.";
+      await expect(async () => {
+        if (await hasSaid(climbed)) {
+          return;
+        }
+        await page.keyboard.down("Alt");
+        await walkTo({ x: ledgeX, y: ledgeY });
+        await page.keyboard.up("Alt");
+        await expect.poll(() => hasSaid(climbed), { timeout: 5_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
+      // Down by an Alt walk: no tip.
+      expect(await hasSaid(tip), "no tip after an Alt walk down").toBe(false);
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 

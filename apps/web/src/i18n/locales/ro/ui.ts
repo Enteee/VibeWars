@@ -1493,6 +1493,13 @@ export default {
   "training.soundOn": "Sunet pornit.",
   "training.you": "Tu",
 
+  "tutorial.climb.hint": "Urcă pe cornișă, apoi coboară pe pământul de sub ea.",
+  "tutorial.climb.how":
+    "Dă clic unde vrei să stai. Alt+clic (Option pe Mac) alege terenul de dedesubt.",
+  "tutorial.climb.intro": "Urcă treptele. Cercul plin arată unde vei sta.",
+  "tutorial.climb.praise": "Două niveluri, un singur loc. Acum știi să citești terenul.",
+  "tutorial.climb.tip": "Sfat: Alt+clic alege terenul de sub o cornișă.",
+  "tutorial.climb.under": "Ține apăsat Alt și dă clic. Cercul punctat e sub tine.",
   "tutorial.dodge.hint": "Așteaptă lângă un cerc să-i apară umbra, apoi ieși.",
   "tutorial.dodge.hit": "Au! O umbră care crește înseamnă: mișcă-te.",
   "tutorial.dodge.how": "Clic stânga pe teren sau mergi cu {keys}.",

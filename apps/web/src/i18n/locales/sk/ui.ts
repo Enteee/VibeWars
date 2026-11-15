@@ -1533,6 +1533,13 @@ export default {
   "training.soundOn": "Zvuk zapnutý.",
   "training.you": "Ty",
 
+  "tutorial.climb.hint": "Hore na rímsu, potom dole na zem pod ňou.",
+  "tutorial.climb.how":
+    "Klikni, kam sa chceš postaviť. Alt+klik (Option na Macu) vyberie zem pod tebou.",
+  "tutorial.climb.intro": "Hore po schodoch. Plný kruh ukazuje, kde budeš stáť.",
+  "tutorial.climb.praise": "Dve vrstvy, jedno miesto. Teraz už terén vieš čítať.",
+  "tutorial.climb.tip": "Tip: Alt+klik vyberie zem pod rímsou.",
+  "tutorial.climb.under": "Drž Alt a klikni. Prerušovaný kruh je pod tebou.",
   "tutorial.dodge.hint": "Počkaj pri kruhu na jeho tieň, potom uhni.",
   "tutorial.dodge.hit": "Au! Rastúci tieň znamená: uhni.",
   "tutorial.dodge.how": "Klikni ľavým tlačidlom na zem, alebo choď pomocou {keys}.",

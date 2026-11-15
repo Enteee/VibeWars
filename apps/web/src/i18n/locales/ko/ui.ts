@@ -1333,6 +1333,12 @@ export default {
   "training.soundOn": "소리 켜짐.",
   "training.you": "나",
 
+  "tutorial.climb.hint": "턱 위로 올라간 다음, 그 아래 땅으로 내려가세요.",
+  "tutorial.climb.how": "설 곳을 클릭하세요. Alt+클릭(Mac은 Option)하면 아래쪽 땅을 골라요.",
+  "tutorial.climb.intro": "계단을 오르세요. 실선 고리가 설 자리예요.",
+  "tutorial.climb.praise": "두 층, 한 자리. 이제 땅을 읽을 줄 아네요.",
+  "tutorial.climb.tip": "팁: Alt+클릭하면 턱 아래 땅을 골라요.",
+  "tutorial.climb.under": "Alt를 누른 채 클릭하세요. 점선 고리는 아래쪽이에요.",
   "tutorial.dodge.hint": "고리 옆에서 그림자가 생길 때까지 기다렸다가 비켜서세요.",
   "tutorial.dodge.hit": "아야! 그림자가 커지면 움직이라는 뜻이에요.",
   "tutorial.dodge.how": "땅을 왼쪽 클릭하거나 {keys}(으)로 걸으세요.",

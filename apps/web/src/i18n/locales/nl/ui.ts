@@ -1420,6 +1420,13 @@ export default {
   "training.soundOn": "Geluid aan.",
   "training.you": "Jij",
 
+  "tutorial.climb.hint": "Op de richel, en dan omlaag naar de grond eronder.",
+  "tutorial.climb.how":
+    "Klik waar je wilt staan. Alt+klik (Option op een Mac) kiest de grond eronder.",
+  "tutorial.climb.intro": "De treden op. Een volle ring is waar je komt te staan.",
+  "tutorial.climb.praise": "Twee lagen, één plek. Nu kun je het terrein lezen.",
+  "tutorial.climb.tip": "Tip: Alt+klik kiest de grond onder een richel.",
+  "tutorial.climb.under": "Houd Alt ingedrukt en klik. De gestippelde ring ligt onder je.",
   "tutorial.dodge.hint": "Wacht bij een ring op zijn schaduw en stap dan opzij.",
   "tutorial.dodge.hit": "Au! Een groeiende schaduw betekent: bewegen.",
   "tutorial.dodge.how": "Klik met links op de grond, of loop met {keys}.",

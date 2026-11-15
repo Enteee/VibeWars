@@ -6,6 +6,7 @@ import {
   type MatchSimulation,
   type Vec2,
 } from "@vibewars/game-core";
+import { pointInShape, shapeVertices } from "@vibewars/game-maps/geometry";
 import { describe, expect, it } from "vitest";
 
 import { CANYON_ARRIVAL, CANYON_ARRIVALS } from "./canyon-map.js";
@@ -14,11 +15,13 @@ import {
   CLEARING,
   CRACKED_WALL,
   DODGE_MARK,
+  LEDGE,
   RAT_AGGRO,
   RAT_POCKET,
   badGroundTutor,
   canyonWorld,
   clearingTutor,
+  ledgeTutor,
   ratPocket,
   wallTutor,
 } from "./canyon-world.js";
@@ -416,5 +419,56 @@ describe("ratPocket (#3316)", () => {
     pocket.step({ ...none, skillsOnRats: new Set(["warrior.hammer-bash", "warrior.sprint"]) });
     expect(pocket.alive()).toBe(0);
     expect(simulation.get("tutorial-rat-5")).toBeUndefined();
+  });
+});
+
+describe("ledgeTutor (#3323)", () => {
+  const build = houseBuild(PLAYER_PROFESSION);
+
+  it("takes the player up the stairs onto the ledge and down under it, the tutor along by the stairs", () => {
+    const { simulation } = canyonWorld("ledge-test", build, build, 1);
+    // Only the pair: no rat bites on the way.
+    for (const { id } of RAT_POCKET.rats) {
+      simulation.remove(id);
+    }
+    const { footprint, upper, lower, foot, top } = LEDGE;
+    const corners = shapeVertices(footprint);
+    const middle = vec2(
+      (Math.min(...corners.map(({ x }) => x)) + Math.max(...corners.map(({ x }) => x))) / 2,
+      (Math.min(...corners.map(({ y }) => y)) + Math.max(...corners.map(({ y }) => y))) / 2,
+    );
+    const body = (id: string) => {
+      const found = simulation.get(id);
+      if (found === undefined) {
+        throw new Error(`no ${id}`);
+      }
+      return found;
+    };
+    const tutor = ledgeTutor(simulation);
+    let tutorLayer = body(TUTOR_ID).layer;
+    const run = (seconds: number): void => {
+      for (let elapsed = 0; elapsed < seconds; elapsed += TICK) {
+        simulation.step(TICK);
+        tutor.step();
+        const { layer, position } = body(TUTOR_ID);
+        if (layer !== tutorLayer) {
+          // Only ever on the stairs: never off the ledge's edge.
+          expect(position.x).toBeGreaterThanOrEqual(Math.min(foot.x, top.x));
+          expect(position.x).toBeLessThanOrEqual(Math.max(foot.x, top.x));
+          tutorLayer = layer;
+        }
+      }
+    };
+    simulation.walkTo(SELF_ID, middle, upper);
+    run(40);
+    expect(body(SELF_ID).layer).toBe(upper);
+    expect(pointInShape(body(SELF_ID).position, footprint)).toBe(true);
+    expect(body(TUTOR_ID).layer).toBe(upper);
+    // An Alt walk: the same point, the ground under it.
+    simulation.walkTo(SELF_ID, middle, lower);
+    run(40);
+    expect(body(SELF_ID).layer).toBe(lower);
+    expect(pointInShape(body(SELF_ID).position, footprint)).toBe(true);
+    expect(body(TUTOR_ID).layer).toBe(lower);
   });
 });

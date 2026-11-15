@@ -1344,6 +1344,12 @@ export default {
   "training.soundOn": "サウンドオン。",
   "training.you": "自分",
 
+  "tutorial.climb.hint": "岩棚に上って、その下の地面へ降りよう。",
+  "tutorial.climb.how": "立ちたい場所をクリック。Alt+クリック(MacはOption)で下の地面を選ぶ。",
+  "tutorial.climb.intro": "階段を上ろう。実線の輪が立つ場所だ。",
+  "tutorial.climb.praise": "二つの層、一つの場所。もう地面が読めるね。",
+  "tutorial.climb.tip": "ヒント:Alt+クリックで岩棚の下の地面を選べる。",
+  "tutorial.climb.under": "Altを押しながらクリック。点線の輪は足元の下だ。",
   "tutorial.dodge.hint": "輪のそばで影が出るのを待って、外へ出よう。",
   "tutorial.dodge.hit": "いたっ!影が大きくなったら動いて。",
   "tutorial.dodge.how": "地面を左クリック、または {keys} で歩く。",

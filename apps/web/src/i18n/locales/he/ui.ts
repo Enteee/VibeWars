@@ -1477,6 +1477,12 @@ export default {
   "training.soundOn": "הצליל פועל.",
   "training.you": "אתה",
 
+  "tutorial.climb.hint": "עלה על המדף, ואז רד לקרקע שמתחתיו.",
+  "tutorial.climb.how": "לחץ איפה שתרצה לעמוד. Alt+לחיצה (Option ב-Mac) בוחרת את הקרקע שמתחת.",
+  "tutorial.climb.intro": "עלה במדרגות. טבעת מלאה מסמנת איפה תעמוד.",
+  "tutorial.climb.praise": "שתי שכבות, נקודה אחת. עכשיו אתה קורא את השטח.",
+  "tutorial.climb.tip": "טיפ: Alt+לחיצה בוחרת את הקרקע מתחת למדף.",
+  "tutorial.climb.under": "החזק Alt ולחץ. הטבעת המקווקוות נמצאת מתחתיך.",
   "tutorial.dodge.hint": "חכה ליד טבעת עד שיופיע הצל שלה, ואז זוז ממנה.",
   "tutorial.dodge.hit": "אאוץ'! צל שגדל אומר: זוז.",
   "tutorial.dodge.how": "לחץ לחיצה שמאלית על הקרקע, או לך עם {keys}.",

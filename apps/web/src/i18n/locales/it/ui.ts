@@ -1493,6 +1493,13 @@ export default {
   "training.soundOn": "Audio attivo.",
   "training.you": "Tu",
 
+  "tutorial.climb.hint": "Sali sulla sporgenza, poi scendi a terra sotto di essa.",
+  "tutorial.climb.how":
+    "Clicca dove vuoi stare. Alt+clic (Option su Mac) sceglie il terreno sotto.",
+  "tutorial.climb.intro": "Su per i gradini. Un cerchio pieno indica dove starai.",
+  "tutorial.climb.praise": "Due livelli, un solo punto. Ora sai leggere il terreno.",
+  "tutorial.climb.tip": "Suggerimento: Alt+clic sceglie il terreno sotto una sporgenza.",
+  "tutorial.climb.under": "Tieni premuto Alt e clicca. Il cerchio tratteggiato è sotto di te.",
   "tutorial.dodge.hint": "Aspetta vicino a un cerchio la sua ombra, poi spostati.",
   "tutorial.dodge.hit": "Ahi! Un'ombra che cresce vuol dire: muoviti.",
   "tutorial.dodge.how": "Clic sinistro sul terreno, o cammina con {keys}.",

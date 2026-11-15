@@ -1411,6 +1411,13 @@ export default {
   "training.soundOn": "Ljud på.",
   "training.you": "Du",
 
+  "tutorial.climb.hint": "Upp på avsatsen, och sedan ner till marken under den.",
+  "tutorial.climb.how":
+    "Klicka där du vill stå. Alt+klick (Option på en Mac) väljer marken nedanför.",
+  "tutorial.climb.intro": "Uppför trappan. En hel ring visar var du kommer att stå.",
+  "tutorial.climb.praise": "Två lager, en plats. Nu kan du läsa terrängen.",
+  "tutorial.climb.tip": "Tips: Alt+klick väljer marken under en avsats.",
+  "tutorial.climb.under": "Håll ner Alt och klicka. Den streckade ringen ligger under dig.",
   "tutorial.dodge.hint": "Vänta vid en ring på dess skugga, och kliv sedan undan.",
   "tutorial.dodge.hit": "Aj! En växande skugga betyder: flytta dig.",
   "tutorial.dodge.how": "Vänsterklicka på marken, eller gå med {keys}.",

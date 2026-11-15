@@ -1415,6 +1415,12 @@ export const en = {
   "training.soundOn": "Sound on.",
   "training.you": "You",
 
+  "tutorial.climb.hint": "Onto the ledge, then down to the ground under it.",
+  "tutorial.climb.how": "Click where to stand. Alt+click (Option on a Mac) picks the ground below.",
+  "tutorial.climb.intro": "Up the steps. A solid ring is where you'll stand.",
+  "tutorial.climb.praise": "Two layers, one spot. You read the ground now.",
+  "tutorial.climb.tip": "Tip: Alt+click picks the ground under a ledge.",
+  "tutorial.climb.under": "Hold Alt and click. The dashed ring is below you.",
   "tutorial.dodge.hint": "Wait by a ring for its shadow, then step out.",
   "tutorial.dodge.hit": "Ow! A growing shadow means move.",
   "tutorial.dodge.how": "Left click the ground, or walk with {keys}.",
