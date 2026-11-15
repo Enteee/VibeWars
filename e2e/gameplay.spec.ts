@@ -921,9 +921,16 @@ test("dead in Kill Count, you read when you are back, counting down, until you a
     await expect(respawn).toBeVisible({ timeout: 1_000 });
   }).toPass({ timeout: 90_000 });
   // Ember Pits' 8 s, whole seconds down; never a foe's count. Seen within
-  // a second of the death, it reads 2 at least, so it has a second to count.
-  await expect(respawn).toHaveText(/^Back in [2-8]$/);
-  const first = Number(/\d+/.exec((await respawn.textContent()) ?? "")?.[0]);
+  // a second of the death, it reads 2 at least, so it has a second to count:
+  // the count checked is the one counted down from, read once.
+  await expect(respawn).toHaveText(/^Back in [1-8]$/);
+  let first = 0;
+  await expect
+    .poll(async () => {
+      first = Number(/^Back in (\d)$/.exec((await respawn.textContent()) ?? "")?.[1]);
+      return first;
+    })
+    .toBeGreaterThanOrEqual(2);
   await expect(respawn).toHaveText(`Back in ${String(first - 1)}`, { timeout: 3_000 });
   await expect(opponent.locator(".hud-respawn")).toBeHidden();
   // Back on its feet, the line goes.
