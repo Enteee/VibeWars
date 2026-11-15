@@ -105,6 +105,7 @@ function floated(
       addBeaconBolt: () => undefined,
       addImpacts: () => undefined,
       addShoutMarks: () => undefined,
+      addBodyFlash: () => undefined,
       struckTwice: () => undefined,
     },
     {
@@ -186,6 +187,7 @@ describe("showCombatFeedback", () => {
           addBeaconBolt: () => undefined,
           addImpacts: () => undefined,
           addShoutMarks: () => undefined,
+          addBodyFlash: () => undefined,
           struckTwice: () => undefined,
         },
         {
@@ -225,6 +227,7 @@ describe("showCombatFeedback", () => {
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         addShoutMarks: () => undefined,
+        addBodyFlash: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -288,6 +291,7 @@ describe("showCombatFeedback", () => {
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         addShoutMarks: () => undefined,
+        addBodyFlash: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -321,6 +325,7 @@ describe("a number over a raised body", () => {
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         addShoutMarks: () => undefined,
+        addBodyFlash: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -359,6 +364,7 @@ describe("showCombatFeedback and areas", () => {
         addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         addShoutMarks: () => undefined,
+        addBodyFlash: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -447,6 +453,7 @@ describe("swingFlashFor (#161)", () => {
           struckTwice: () => undefined,
           addImpacts: () => undefined,
           addShoutMarks: () => undefined,
+          addBodyFlash: () => undefined,
         },
         swing("weapon"),
         snapshot(weaponId),
@@ -504,6 +511,7 @@ describe("swingFlashFor (#161)", () => {
         struckTwice: () => undefined,
         addImpacts: () => undefined,
         addShoutMarks: () => undefined,
+        addBodyFlash: () => undefined,
       },
       { ...swing("skill"), skillId: "warrior.mighty-blow", doubleStrike: true },
       snapshot("daggers"),
@@ -521,6 +529,7 @@ describe("swingFlashFor (#161)", () => {
       addBeaconBolt: () => undefined,
       addImpacts: () => undefined,
       addShoutMarks: () => undefined,
+      addBodyFlash: () => undefined,
       struckTwice: (actorId: string) => told.push(actorId),
     };
     showCombatFeedback(sink, swing("weapon"), snapshot("daggers"), 0);
@@ -541,6 +550,7 @@ describe("swingFlashFor (#161)", () => {
       },
       struckTwice: () => undefined,
       addShoutMarks: () => undefined,
+      addBodyFlash: () => undefined,
     };
     showCombatFeedback(sink, swing("weapon"), snapshot("sword"), 0);
     expect(landed).toEqual([]);
@@ -551,5 +561,69 @@ describe("swingFlashFor (#161)", () => {
       0,
     );
     expect(landed).toEqual(["them"]);
+  });
+});
+
+describe("hit flash (#3365)", () => {
+  const flashesFor = (
+    events: CombatMessage["events"],
+    cause: CombatMessage["cause"],
+  ): { tint: number; slide: { x: number; y: number } }[] => {
+    const flashes: { tint: number; slide: { x: number; y: number } }[] = [];
+    showCombatFeedback(
+      {
+        addFloatingText: () => undefined,
+        addAreaFlash: () => undefined,
+        addSwingFlash: () => undefined,
+        addBeaconBolt: () => undefined,
+        addImpacts: () => undefined,
+        addShoutMarks: () => undefined,
+        addBodyFlash: (flash) => flashes.push(flash),
+        struckTwice: () => undefined,
+      },
+      {
+        casterSessionId: "me",
+        cause,
+        skillId: "",
+        weaponId: cause === "weapon" ? "sword" : "",
+        attributeId: "",
+        doubleStrike: false,
+        events,
+      },
+      { ...SNAPSHOT, players: [{ ...player("me"), x: 50 }, player("them")] },
+      0,
+    );
+    return flashes;
+  };
+
+  it("a plain weapon hit flashes the victim and nudges it away", () => {
+    const [flash] = flashesFor(
+      [{ kind: "damage", targetId: "them", amount: 10, critical: false }],
+      "weapon",
+    );
+    expect(flash?.tint).toBe(0.55);
+    expect(flash?.slide.x).toBeCloseTo(3);
+  });
+
+  it("a critical hit flashes harder and nudges further", () => {
+    const [flash] = flashesFor(
+      [{ kind: "damage", targetId: "them", amount: 10, critical: true }],
+      "weapon",
+    );
+    expect(flash?.tint).toBe(0.8);
+    expect(flash?.slide.x).toBeCloseTo(5);
+  });
+
+  it("a bleeding tick tints and does not nudge", () => {
+    const [flash] = flashesFor(
+      [{ kind: "damage", targetId: "them", amount: 1, critical: false }],
+      "degeneration",
+    );
+    expect(flash?.tint).toBe(0.35);
+    expect(flash?.slide).toEqual({ x: 0, y: 0 });
+  });
+
+  it("a heal does not flash", () => {
+    expect(flashesFor([{ kind: "heal", targetId: "them", amount: 10 }], "skill")).toEqual([]);
   });
 });
