@@ -780,8 +780,13 @@ describe("networked combat (P2P)", () => {
     await target(match, a, b.selfSessionId);
     const heard = combatMessages(a);
     a.sendIntent({ kind: "use-skill", slot: FIREBALL });
+    // Its use comes over the wire first (#3298), then its hits.
     const fireball = (): CombatMessage | undefined =>
-      heard.find((entry) => entry.skillId === "elementalist.fireball");
+      heard.find(
+        (entry) =>
+          entry.skillId === "elementalist.fireball" &&
+          entry.events.some((event) => event.kind === "damage"),
+      );
     await until(match, () => fireball() !== undefined, "the Fireball");
 
     const message = fireball();
