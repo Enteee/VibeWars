@@ -261,7 +261,12 @@ import {
   type Wisp,
 } from "./ground-effect-look.js";
 import { lyingPose } from "./lying-pose.js";
-import { sleeperCommands, type SleeperProp } from "./sleeper-prop.js";
+import {
+  SLEEPER_RIM_WIDTH,
+  SLEEPER_Z_WIDTH,
+  sleeperCommands,
+  type SleeperProp,
+} from "./sleeper-prop.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import {
@@ -1898,6 +1903,12 @@ export class ArenaScene extends Phaser.Scene {
         this.reducedMotion,
       )) {
         switch (command.kind) {
+          case "glow":
+            g.fillStyle(command.colour, command.alpha / 2);
+            g.fillCircle(command.at.x, command.at.y, command.radius);
+            g.fillStyle(command.colour, command.alpha);
+            g.fillCircle(command.at.x, command.at.y, command.radius / 2);
+            break;
           case "body":
             g.fillStyle(
               tint === undefined ? command.colour : multiplyColour(command.colour, tint),
@@ -1905,13 +1916,22 @@ export class ArenaScene extends Phaser.Scene {
             );
             tracePath(g, command.outline);
             g.fillPath();
-            g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+            g.lineStyle(SLEEPER_RIM_WIDTH, command.rim, 1);
             g.strokePath();
+            break;
+          case "head":
+            g.fillStyle(
+              tint === undefined ? command.colour : multiplyColour(command.colour, tint),
+              1,
+            );
+            g.fillCircle(command.at.x, command.at.y, command.radius);
+            g.lineStyle(SLEEPER_RIM_WIDTH, command.rim, 1);
+            g.strokeCircle(command.at.x, command.at.y, command.radius);
             break;
           case "z": {
             const { at, size } = command;
             const half = size / 2;
-            g.lineStyle(1.5, command.colour, command.alpha);
+            g.lineStyle(SLEEPER_Z_WIDTH, command.colour, command.alpha);
             g.beginPath();
             g.moveTo(at.x - half, at.y - half);
             g.lineTo(at.x + half, at.y - half);

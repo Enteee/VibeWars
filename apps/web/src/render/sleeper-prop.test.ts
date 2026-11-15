@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { MINIMAL_GW_INSPIRED_PVP_V1 as RULESET } from "@vibewars/game-core";
+
 import { teamColour } from "./arena-snapshot.js";
 import {
+  SLEEPER_GLOW,
   SLEEPER_GREY,
   SLEEPER_RADIUS,
+  SLEEPER_RIM,
   SLEEPER_ZS,
   SLEEPER_Z_RISE,
   SLEEPER_Z_SECONDS,
@@ -14,20 +18,44 @@ import {
 
 const AT = { x: 500, y: 300 };
 
+/** A colour's channels summed: enough to tell the paler of two greys. */
+const lightness = (colour: number): number =>
+  ((colour >> 16) & 0xff) + ((colour >> 8) & 0xff) + (colour & 0xff);
+
 const zsOf = (commands: readonly SleeperCommand[]) =>
   commands.flatMap((command) => (command.kind === "z" ? [command] : []));
 
 describe("the sleeping guard (#3326)", () => {
-  it("lies flat, a body's disc at radius 10", () => {
-    const [body] = sleeperCommands(AT, 0, 0, false);
-    if (body?.kind !== "body") {
-      throw new Error("no body first");
+  it("lies flat, head to feet longer than a fighter's disc is wide", () => {
+    const commands = sleeperCommands(AT, 0, 0, false);
+    const body = commands.find((command) => command.kind === "body");
+    const head = commands.find((command) => command.kind === "head");
+    if (body?.kind !== "body" || head?.kind !== "head") {
+      throw new Error("no body or no head");
     }
-    const xs = body.outline.map(({ x }) => x);
+    const xs = [...body.outline.map(({ x }) => x), head.at.x + head.radius];
     const ys = body.outline.map(({ y }) => y);
     expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(2 * SLEEPER_RADIUS, 0);
+    expect(2 * SLEEPER_RADIUS).toBeGreaterThan(2 * RULESET.collision.playerRadius);
     // Flattened across its facing, as a knocked-down body is.
-    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(1.5 * SLEEPER_RADIUS);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(SLEEPER_RADIUS);
+    // The head at the end it faces, apart from the body.
+    expect(head.at.x).toBeGreaterThan(AT.x);
+    expect(head.at.x - head.radius).toBeGreaterThanOrEqual(
+      Math.max(...body.outline.map(({ x }) => x)) - 0.01,
+    );
+  });
+
+  it("is pale-rimmed, and lit by a warm glow drawn under it", () => {
+    const commands = sleeperCommands(AT, 0, 0, false);
+    expect(commands[0]?.kind).toBe("glow");
+    expect(commands[0]?.colour).toBe(SLEEPER_GLOW);
+    for (const command of commands) {
+      if (command.kind === "body" || command.kind === "head") {
+        expect(command.rim).toBe(SLEEPER_RIM);
+        expect(lightness(command.rim)).toBeGreaterThan(lightness(command.colour));
+      }
+    }
   });
 
   it("wears no team's colour", () => {
@@ -38,7 +66,7 @@ describe("the sleeping guard (#3326)", () => {
     expect(colours).toContain(SLEEPER_GREY);
   });
 
-  it("lets three z's rise 12 and fade over 2 s, staggered", () => {
+  it("lets three z's rise 32 and fade over 2 s, staggered", () => {
     const zs = zsOf(sleeperCommands(AT, 0, 0, false));
     expect(zs).toHaveLength(SLEEPER_ZS);
     expect(new Set(zs.map(({ alpha }) => alpha.toFixed(3))).size).toBe(SLEEPER_ZS);

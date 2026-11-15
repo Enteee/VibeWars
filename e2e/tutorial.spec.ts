@@ -64,12 +64,15 @@ const OVER_THE_LANDING = { x: 2350, y: 1560 - 56 };
 /**
  * Station 11's way off the high deck (#3326): down both flights, west along
  * the south leg, north up the west one, onto the top of the tunnel's west
- * steps, one long stride from the tunnel's west half. Each stride a long
+ * steps, one long stride from the tunnel's west half. The west leg bends west
+ * past its foot: a stride north from there can land where no path goes,
+ * so one waypoint takes the bend. Each stride a long
  * one: a short first one from the deck falls on the rock round it.
  */
 const TO_THE_TUNNEL = [
   { x: 2350, y: 1950 },
   { x: 1300, y: 2100 },
+  { x: 1030, y: 1650 },
   { x: 1200, y: 1300 },
   { x: 1200, y: 800 },
   { x: 1600, y: 700 },
