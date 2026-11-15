@@ -117,7 +117,21 @@ export function soundsForCombat(
         break;
     }
   }
-  return sounds;
+  return loudestFirst(sounds);
+}
+
+/**
+ * `cues` with the louder of each sound first, keeping their order
+ * otherwise: the player's per-id throttle keeps the first and drops the
+ * rest, so your minion's quiet death must not silence a teammate's.
+ */
+function loudestFirst(cues: Cue[]): Cue[] {
+  return cues
+    .map((cue, at) => ({ cue, at }))
+    .sort((a, b) =>
+      cueId(a.cue) === cueId(b.cue) ? cueGain(b.cue) - cueGain(a.cue) || a.at - b.at : a.at - b.at,
+    )
+    .map(({ cue }) => cue);
 }
 
 /**
@@ -178,9 +192,10 @@ export function deathThrottle(): (cues: readonly Cue[], nowMs: number) => Cue[] 
 }
 
 /**
- * The respawns between two snapshots that concern `selfId` (#3366): its
- * own, and its team's, quieter. A resurrection is one too: dead, then not.
- * A foe's, and a creature's, are silent; so is everything without a `prev`.
+ * The respawn cue between two snapshots for `selfId` (#3366): its own, or
+ * else its team's, quieter; at most one, as a team respawns in a wave. A
+ * resurrection is one too: dead, then not. A foe's, and a creature's, are
+ * silent; so is everything without a `prev`.
  */
 export function soundsForRespawn(
   prev: MatchSnapshot | undefined,
@@ -191,22 +206,16 @@ export function soundsForRespawn(
     return [];
   }
   const side = sideOf(next, selfId);
-  const cues: Cue[] = [];
-  for (const body of next.players) {
-    if (
-      body.dead ||
-      body.creature !== undefined ||
-      playerById(prev, body.sessionId)?.dead !== true
-    ) {
-      continue;
-    }
-    if (body.sessionId === selfId) {
-      cues.push("respawn-you");
-    } else if (body.team === side) {
-      cues.push({ id: "respawn-you", db: ALLY_RESPAWN_DB });
-    }
+  const risen = next.players.filter(
+    (body) =>
+      !body.dead && body.creature === undefined && playerById(prev, body.sessionId)?.dead === true,
+  );
+  if (risen.some((body) => body.sessionId === selfId)) {
+    return ["respawn-you"];
   }
-  return cues;
+  return risen.some((body) => body.team === side)
+    ? [{ id: "respawn-you", db: ALLY_RESPAWN_DB }]
+    : [];
 }
 
 /**

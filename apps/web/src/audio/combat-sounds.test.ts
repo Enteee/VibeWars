@@ -217,6 +217,14 @@ describe("deaths and respawns, by whose they are (#3366)", () => {
     expect(died("mine")).toEqual([{ id: "death-ally", db: -6 }]);
   });
 
+  it("puts a teammate's death before your minion's, so the throttle keeps the louder", () => {
+    const both = message("x", [
+      { kind: "death", targetId: "mine" },
+      { kind: "death", targetId: "ally" },
+    ]);
+    expect(soundsForCombat(both, ME, field)).toEqual(["death-ally", { id: "death-ally", db: -6 }]);
+  });
+
   it("is silent for a body it cannot place, but never for your own death", () => {
     expect(died("stranger")).toEqual([]);
     const unseen = (targetId: string) =>
@@ -264,6 +272,21 @@ describe("deaths and respawns, by whose they are (#3366)", () => {
     expect(soundsForRespawn(deadAlly, backAlly, ME)).toEqual([{ id: "respawn-you", db: -8 }]);
     const [deadFoe, backFoe] = respawned("foe", 1);
     expect(soundsForRespawn(deadFoe, backFoe, ME)).toEqual([]);
+  });
+
+  it("chimes once for a wave, your own when you are in it", () => {
+    const wave = (dead: boolean) =>
+      snapshot([
+        player("ally", { team: 0, dead }),
+        player(ME, { dead }),
+        player("other", { team: 0, dead }),
+      ]);
+    expect(soundsForRespawn(wave(true), wave(false), ME)).toEqual(["respawn-you"]);
+    const allies = (dead: boolean) =>
+      snapshot([player(ME), player("ally", { team: 0, dead }), player("other", { team: 0, dead })]);
+    expect(soundsForRespawn(allies(true), allies(false), ME)).toEqual([
+      { id: "respawn-you", db: -8 },
+    ]);
   });
 
   it("is silent on the first snapshot, and for a creature raised again", () => {
