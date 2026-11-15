@@ -177,7 +177,7 @@ describe("the tutorial runner", () => {
         badGroundStation(across, 0),
         ratsStation(pocket, { runner: "rat-1", big: "rat-2" }, bar),
         climbStation(ledge, stairs, 2, 1),
-        rampStation(onDeck, 3, 2),
+        rampStation(onDeck, 3, { kind: "rect", x: 2260, y: 1480, width: 180, height: 160 }, 2),
       ],
       () => KEYMAP_PRESETS.classic,
       label,

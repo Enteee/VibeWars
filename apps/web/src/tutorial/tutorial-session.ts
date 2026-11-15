@@ -324,7 +324,7 @@ export async function startTutorialSession(
         playerBuild.skillBar,
       ),
       climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
-      rampStation(RAMP.mark, RAMP.layer, RAMP.landing),
+      rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
     ],
     loadKeymap,
   );

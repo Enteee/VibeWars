@@ -521,4 +521,24 @@ describe("rampTutor (#3325)", () => {
     expect(near(SELF_ID, RAMP.mark)).toBe(true);
     expect(body(TUTOR_ID).layer).toBe(RAMP.layer);
   });
+
+  it("stays at the first flight's foot while the player stands on station 9's ledge", () => {
+    const { simulation } = canyonWorld("ramp-ledge-test", build, build, 1);
+    for (const { id } of RAT_POCKET.rats) {
+      simulation.remove(id);
+    }
+    const tutor = rampTutor(simulation);
+    simulation.walkTo(SELF_ID, vec2(3600, 1890), LEDGE.upper);
+    for (let elapsed = 0; elapsed < 40; elapsed += TICK) {
+      simulation.step(TICK);
+      tutor.step();
+    }
+    expect(simulation.get(SELF_ID)?.layer).toBe(LEDGE.upper);
+    expect(LEDGE.upper).toBe(RAMP.landing);
+    const at = simulation.get(TUTOR_ID);
+    expect(at?.layer).toBe(RAMP.ground);
+    expect(
+      Math.hypot((at?.position.x ?? 0) - RAMP.foot.x, (at?.position.y ?? 0) - RAMP.foot.y),
+    ).toBeLessThan(MARK_REACH);
+  });
 });

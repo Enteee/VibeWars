@@ -11,7 +11,7 @@ import {
   type PlayerBuild,
   type Vec2,
 } from "@vibewars/game-core";
-import { allWallSegments } from "@vibewars/game-maps/geometry";
+import { allWallSegments, pointInShape } from "@vibewars/game-maps/geometry";
 import {
   matchBreakables,
   matchGates,
@@ -655,8 +655,9 @@ export interface CanyonRamp {
   /** The mark, at the high deck's middle, on its layer. */
   readonly mark: Vec2;
   readonly layer: number;
-  /** The landing between the flights: its layer, and its middle. */
+  /** The landing between the flights: its layer, its footprint and its middle. */
   readonly landing: number;
+  readonly landingFootprint: Shape;
   readonly onLanding: Vec2;
   /** The first flight's foot, on the ground. */
   readonly foot: Vec2;
@@ -686,6 +687,7 @@ export const RAMP: CanyonRamp = ((): CanyonRamp => {
     mark: middle(deck.footprint),
     layer: deck.layer,
     landing: landing.layer,
+    landingFootprint: landing.footprint,
     onLanding: middle(landing.footprint),
     foot: vec2(centre.x - along.x * half, centre.y - along.y * half),
     ground: stairs.from,
@@ -703,7 +705,7 @@ export interface RampTutor {
  * mark once they are on the high deck. The walk finds the stairs itself.
  */
 export function rampTutor(simulation: MatchSimulation): RampTutor {
-  const { mark, layer, landing, onLanding, foot, ground } = RAMP;
+  const { mark, layer, landing, landingFootprint, onLanding, foot, ground } = RAMP;
   const beside = vec2(mark.x + TUTOR_BESIDE_MARK, mark.y);
   /** The highest layer the player has reached, which the tutor follows to. */
   let reached = ground;
@@ -714,7 +716,11 @@ export function rampTutor(simulation: MatchSimulation): RampTutor {
       if (
         self === undefined ||
         self.layer <= reached ||
-        (self.layer !== landing && self.layer !== layer)
+        // The ledge of station 9 is on the landing's layer: on the landing itself.
+        !(
+          (self.layer === landing && pointInShape(self.position, landingFootprint)) ||
+          self.layer === layer
+        )
       ) {
         return;
       }
