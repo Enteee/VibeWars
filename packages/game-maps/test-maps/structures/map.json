@@ -131,6 +131,19 @@
       "switched": null
     },
     {
+      "id": "snow-drift",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 1500,
+        "y": 1350,
+        "width": 190,
+        "height": 90
+      },
+      "look": "drift",
+      "switched": null
+    },
+    {
       "id": "fallen-ruin",
       "layer": 2,
       "footprint": {
@@ -566,6 +579,21 @@
         "kind": "rect",
         "x": 760,
         "y": 1550,
+        "width": 145,
+        "height": 60
+      },
+      "uphill": "e",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "ramp-11",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1355,
+        "y": 1360,
         "width": 145,
         "height": 60
       },
