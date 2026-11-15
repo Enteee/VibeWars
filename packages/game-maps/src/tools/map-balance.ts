@@ -16,6 +16,7 @@ import { pointInShape } from "../geometry.js";
 import { layeredFinder } from "../layered-finder.test-support.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
 import type { MapData, SpawnPoint } from "../schema.js";
+import { StuckMeter, topStuckCells, type StuckCell, type StuckTotals } from "./stuck-meter.js";
 
 /**
  * The map balance bench (#3065): bot-vs-bot matches on a real map, every
@@ -55,7 +56,16 @@ export interface MapBalanceResult {
   readonly draws: number;
   /** Simulated seconds a match lasted, on average over all of them. */
   readonly meanSeconds: number;
+  /** The share of living-bot seconds a bot spent stuck (#3354). */
+  readonly stuckShare: number;
+  /** The share of stuck seconds when the nearest living foe was on another layer. */
+  readonly apartShare: number;
+  /** The cells where bots were stuck most, over all matches. */
+  readonly stuckCells: readonly StuckCell[];
 }
+
+/** How many cells `stuckCells` lists. */
+const STUCK_CELLS = 5;
 
 export type BalanceVerdict =
   { readonly pass: true } | { readonly pass: false; readonly reason: string };
@@ -65,10 +75,12 @@ export function runMapBalance({ map, size, seeds }: MapBalanceOptions): MapBalan
   const wins: number[] = Array.from({ length: map.teams }, () => 0);
   let draws = 0;
   let seconds = 0;
+  const stuck: StuckTotals[] = [];
   for (let seed = 0; seed < seeds; seed += 1) {
     // Rotated by one, so no build keeps one spawn, and a 1v1 plays a second build.
     for (const rotation of [0, 1]) {
-      const { winningTeam, elapsedSeconds } = playMatch(map, size, seed, rotation);
+      const { winningTeam, elapsedSeconds, stuck: totals } = playMatch(map, size, seed, rotation);
+      stuck.push(totals);
       if (winningTeam === undefined) {
         draws += 1;
       } else {
@@ -77,7 +89,20 @@ export function runMapBalance({ map, size, seeds }: MapBalanceOptions): MapBalan
       seconds += elapsedSeconds;
     }
   }
-  return { wins, draws, meanSeconds: seconds / (seeds * 2) };
+  const living = stuck.reduce((sum, t) => sum + t.livingSeconds, 0);
+  const stuckSeconds = stuck.reduce((sum, t) => sum + t.stuckSeconds, 0);
+  const apart = stuck.reduce((sum, t) => sum + t.apartSeconds, 0);
+  return {
+    wins,
+    draws,
+    meanSeconds: seconds / (seeds * 2),
+    stuckShare: living === 0 ? 0 : stuckSeconds / living,
+    apartShare: stuckSeconds === 0 ? 0 : apart / stuckSeconds,
+    stuckCells: topStuckCells(
+      stuck.map((t) => t.cells),
+      STUCK_CELLS,
+    ),
+  };
 }
 
 /** PASS when every team wins a fair share of the decided matches and few are draws. */
@@ -174,13 +199,60 @@ function playMatch(
   size: number,
   seed: number,
   rotation: number,
-): { readonly winningTeam: number | undefined; readonly elapsedSeconds: number } {
+): {
+  readonly winningTeam: number | undefined;
+  readonly elapsedSeconds: number;
+  readonly stuck: StuckTotals;
+} {
   const { sim, timeLimitSeconds } = mirrorMatch(map, size, seed, rotation);
+  const meter = new StuckMeter(RULESET.tickRateHz);
   // The time limit ends every match; the margin only guards against a mode that would not.
   while (sim.phase === "active" && sim.elapsedSeconds < timeLimitSeconds + 1) {
-    sim.step(DT);
+    const { log } = sim.step(DT);
+    const active = new Set<string>();
+    for (const entry of log) {
+      if (entry.sourceId !== undefined) active.add(entry.sourceId);
+      for (const event of entry.events) {
+        if (event.kind === "damage" || event.kind === "heal") active.add(event.targetId);
+      }
+    }
+    const bodies = [...sim.participants()];
+    meter.feed(
+      bodies
+        .filter((body) => body.creature === undefined)
+        .map((body) => {
+          const foes = bodies.filter(
+            (other) => other.combatant.team !== body.combatant.team && !other.combatant.dead,
+          );
+          let nearest: (typeof foes)[number] | undefined;
+          let nearestDistance = Infinity;
+          for (const foe of foes) {
+            const distance = Math.hypot(
+              foe.position.x - body.position.x,
+              foe.position.y - body.position.y,
+            );
+            if (distance < nearestDistance) {
+              nearest = foe;
+              nearestDistance = distance;
+            }
+          }
+          return {
+            id: body.id,
+            x: body.position.x,
+            y: body.position.y,
+            layer: body.layer,
+            counts: !body.combatant.dead && nearest !== undefined,
+            active: active.has(body.id),
+            nearestFoeLayer: nearest?.layer,
+          };
+        }),
+    );
   }
-  return { winningTeam: sim.outcome.winningTeam, elapsedSeconds: sim.elapsedSeconds };
+  return {
+    winningTeam: sim.outcome.winningTeam,
+    elapsedSeconds: sim.elapsedSeconds,
+    stuck: meter.totals(),
+  };
 }
 
 /**

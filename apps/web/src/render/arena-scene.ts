@@ -110,6 +110,8 @@ import {
   seenFrom,
   tunnelCover,
   tunnelCoverBox,
+  boxWithout,
+  segmentInBox,
   tunnelFloor,
   tunnelSeam,
   tunnelOpenings,
@@ -277,6 +279,14 @@ import {
   transitionPalette,
   type DeckFrame,
 } from "./structure-art.js";
+import {
+  clippedPainter,
+  coverPieces,
+  liftedCovers,
+  outlineArea,
+  type CoverPiece,
+  type TunnelCoverBox,
+} from "./cover-pieces.js";
 import { liftFrame, liftPlatform, liftShaft, type LiftFrame } from "./lift-art.js";
 import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
@@ -608,7 +618,16 @@ export class ArenaScene extends Phaser.Scene {
   private coversDrawn: {
     readonly cover: OverhangCover;
     readonly graphics: Phaser.GameObjects.Graphics;
+    /** The tunnel it is over, for a deck's top split by one (#3352): it fades with its cover too. */
+    readonly tunnel: number | undefined;
+    /** How far it has faded as an overhang, before the cut-away. */
+    overhang: number;
   }[] = [];
+  /**
+   * What of the decks over each tunnel draws on its own (#3352), by the
+   * tunnel's index: tops and side faces, faded with its cover.
+   */
+  private readonly decksOverTunnels = new Map<number, Phaser.GameObjects.Graphics[]>();
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
   private readonly staticCull = new StaticGraphicsCull();
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
@@ -3235,6 +3254,11 @@ export class ArenaScene extends Phaser.Scene {
       graphics.destroy();
     }
     this.coversDrawn = [];
+    for (const graphics of [...this.decksOverTunnels.values()].flat()) {
+      graphics.destroy();
+    }
+    this.decksOverTunnels.clear();
+    const covers = tunnelCoverBoxes(next.structure);
     for (const deck of [...next.structure.decks, ...next.structure.downDecks]) {
       this.drawDeck(
         next.structure,
@@ -3247,6 +3271,7 @@ export class ArenaScene extends Phaser.Scene {
           deck.footprint,
           deck.layer,
         ),
+        covers,
       );
     }
     this.drawOverhangs(next.structure, next.lighting, line);
@@ -3262,6 +3287,7 @@ export class ArenaScene extends Phaser.Scene {
       ...this.structureGraphics.values(),
       ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
       ...[...this.waterOverTunnels.values()].map(({ surface }) => surface),
+      ...[...this.decksOverTunnels.values()].flat(),
       ...this.coversDrawn.map(({ graphics }) => graphics),
     ]);
   }
@@ -3430,6 +3456,9 @@ export class ArenaScene extends Phaser.Scene {
       for (const piece of this.pavingDrawn?.overTunnels.get(at) ?? []) {
         piece.setAlpha(ground.alpha);
       }
+      for (const piece of this.decksOverTunnels.get(at) ?? []) {
+        piece.setAlpha(ground.alpha);
+      }
       const water = this.waterOverTunnels.get(at);
       water?.surface.setAlpha(ground.alpha);
       water?.ripples.setAlpha(ground.alpha);
@@ -3443,11 +3472,15 @@ export class ArenaScene extends Phaser.Scene {
    * footprint is empty. At once under reduced motion.
    */
   private fadeOverhangs(dt: number): void {
-    for (const { cover, graphics } of this.coversDrawn) {
-      const covering = bodyUnder(cover, this.drawnActors, this.liftOf);
-      const next = overhangAlpha(graphics.alpha, covering, dt, this.reducedMotion);
-      if (next !== graphics.alpha) {
-        graphics.setAlpha(next);
+    for (const drawn of this.coversDrawn) {
+      const covering = bodyUnder(drawn.cover, this.drawnActors, this.liftOf);
+      drawn.overhang = overhangAlpha(drawn.overhang, covering, dt, this.reducedMotion);
+      // A top over a tunnel takes the lower of its fade and the cut-away's (#3352).
+      const cut =
+        drawn.tunnel === undefined ? 1 : (this.tunnelCovers.get(drawn.tunnel)?.ground.alpha ?? 1);
+      const next = Math.min(drawn.overhang, cut);
+      if (next !== drawn.graphics.alpha) {
+        drawn.graphics.setAlpha(next);
       }
     }
   }
@@ -3495,6 +3528,8 @@ export class ArenaScene extends Phaser.Scene {
       this.coversDrawn.push({
         cover: { layer: overhang.layer, outline: shapeOutline(overhang.footprint), top },
         graphics,
+        tunnel: undefined,
+        overhang: 1,
       });
     }
   }
@@ -3606,6 +3641,7 @@ export class ArenaScene extends Phaser.Scene {
     walls: readonly RenderableWall[],
     line: number,
     palette: ArenaPalette,
+    covers: readonly TunnelCoverBox[],
   ): void {
     const { ground } = structure;
     const art = DECK_ART[deck.look];
@@ -3618,6 +3654,14 @@ export class ArenaScene extends Phaser.Scene {
       line,
       palette,
     };
+    const pieces =
+      deck.layer > ground
+        ? coverPieces(shapeOutline(deck.footprint), EVERYWHERE, liftedCovers(covers, frame.top))
+        : [];
+    if (pieces.some(({ tunnel, outline }) => tunnel !== undefined && outlineArea(outline) > 0)) {
+      this.drawDeckOverTunnels(deck, frame, pieces);
+      return;
+    }
     const switched = deck.switched;
     if (switched !== null && !switched.up) {
       // Gone down (#3068): nothing spans it but what is left of it.
@@ -3656,6 +3700,123 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * A deck over a tunnel (#3352), drawn as `drawDeck` draws it but in
+   * pieces: what is over each tunnel, its top and the stretch of its side
+   * faces in front of it, in graphics of its own that fade with that
+   * tunnel's cover; the rest where the deck would draw whole. Every piece
+   * is the whole deck's art clipped to its box, so they meet with no seam.
+   */
+  private drawDeckOverTunnels(
+    deck: MapStructure["decks"][number],
+    frame: DeckFrame,
+    pieces: readonly CoverPiece[],
+  ): void {
+    const art = DECK_ART[deck.look];
+    const { palette, line } = frame;
+    const switched = deck.switched;
+    const down = switched !== null && !switched.up;
+    const tops = new Map<number | undefined, Phaser.GameObjects.Graphics>();
+    const topOf = (tunnel: number | undefined): Phaser.GameObjects.Graphics => {
+      let top = tops.get(tunnel);
+      if (top === undefined) {
+        top =
+          tunnel === undefined
+            ? down
+              ? this.structureAt({ kind: "deck", deckLayer: deck.layer })
+              : this.deckTop(deck, frame.top)
+            : this.deckTopOverTunnel(deck, frame.top, tunnel, down);
+        tops.set(tunnel, top);
+      }
+      return top;
+    };
+    for (const piece of pieces) {
+      const face = topOf(piece.tunnel);
+      const painter = clippedPainter(face, piece.box);
+      face.save();
+      face.translateCanvas(0, -frame.top);
+      if (switched !== null && !switched.up) {
+        if (switched.hinge !== null) {
+          SWITCHED_DECK_ART.raised(painter, frame, switched.hinge);
+        } else if (deck.look === "bridge-plank" && switched.afterCrossings === null) {
+          SWITCHED_DECK_ART.cut(painter, frame);
+        } else {
+          SWITCHED_DECK_ART.fallen(painter, frame);
+        }
+        face.restore();
+        continue;
+      }
+      if (outlineArea(piece.outline) > 0) {
+        face.fillStyle(palette.deckTop, 1);
+        this.fillShape(face, { kind: "polygon", points: piece.outline });
+      }
+      painter.lineStyle(line, palette.wallStroke, 1);
+      for (const [from, to] of piece.shore) {
+        painter.lineBetween(from.x, from.y, to.x, to.y);
+      }
+      painter.lineStyle(line * DECK_LIP_WIDTH, DECK_LIP, 1);
+      for (const { from, to } of southFacingEdges(deck.footprint)) {
+        painter.lineBetween(from.x, from.y, to.x, to.y);
+      }
+      art.top(painter, frame);
+      if (switched !== null && switched.afterCrossings !== null && switched.cracks > 0) {
+        SWITCHED_DECK_ART.cracks(painter, frame, switched.cracks, switched.afterCrossings);
+      }
+      face.restore();
+    }
+    if (down) {
+      return;
+    }
+    for (const { tunnel, box } of sideStretches(deck.footprint, pieces)) {
+      const side =
+        tunnel === undefined
+          ? this.structureAt({ kind: "side-face", deckLayer: deck.layer })
+          : this.overTunnel(tunnel, { kind: "side-face", deckLayer: deck.layer });
+      const painter = clippedPainter(side, box);
+      painter.fillStyle(palette.slab, 1);
+      for (const [a, b, c, d] of sweptEdges(deck.footprint, frame.low, frame.top)) {
+        if (a !== undefined && b !== undefined && c !== undefined && d !== undefined) {
+          painter.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+          painter.fillTriangle(a.x, a.y, c.x, c.y, d.x, d.y);
+        }
+      }
+      art.side(painter, frame);
+    }
+  }
+
+  /**
+   * The graphics the top of `deck` over `tunnel` draws in (#3352): faded
+   * with the tunnel's cover, and as an overhang too for a top walked under.
+   */
+  private deckTopOverTunnel(
+    deck: MapStructure["decks"][number],
+    top: number,
+    tunnel: number,
+    down: boolean,
+  ): Phaser.GameObjects.Graphics {
+    const item: RenderItem = { kind: "deck", deckLayer: deck.layer };
+    if (down || !FADING_TOP_LOOKS.has(deck.look)) {
+      return this.overTunnel(tunnel, item);
+    }
+    const graphics = this.add.graphics().setDepth(renderOrder(item));
+    this.coversDrawn.push({
+      cover: { layer: deck.layer, outline: shapeOutline(deck.footprint), top },
+      graphics,
+      tunnel,
+      overhang: 1,
+    });
+    return graphics;
+  }
+
+  /** New graphics at `item`'s place in the draw order, faded with `tunnel`'s cover (#3352). */
+  private overTunnel(tunnel: number, item: RenderItem): Phaser.GameObjects.Graphics {
+    const graphics = this.add.graphics().setDepth(renderOrder(item));
+    const over = this.decksOverTunnels.get(tunnel) ?? [];
+    over.push(graphics);
+    this.decksOverTunnels.set(tunnel, over);
+    return graphics;
+  }
+
+  /**
    * The graphics `deck`'s top draws in: its layer's, or its own for a top
    * walked under, faded as an overhang is while a body is under it (#3312).
    */
@@ -3668,6 +3829,8 @@ export class ArenaScene extends Phaser.Scene {
     this.coversDrawn.push({
       cover: { layer: deck.layer, outline: shapeOutline(deck.footprint), top },
       graphics,
+      tunnel: undefined,
+      overhang: 1,
     });
     return graphics;
   }
@@ -4631,16 +4794,62 @@ function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[], clo
   }
 }
 
+/** The whole plane, as a box: what a deck's pieces tile (#3352). */
+const EVERYWHERE: Box = { left: -Infinity, top: -Infinity, right: Infinity, bottom: Infinity };
+
+/**
+ * Where a split deck's side faces draw (#3352): a side face stands in
+ * front of the deck, lifted off its south edge, so it goes with the piece
+ * that edge runs through, cut by x alone. Each south edge's stretch over a
+ * tunnel is a band of the plane, top to bottom, for that tunnel's piece;
+ * where two overlap the earlier owns it, and the rest is the deck's.
+ */
+function sideStretches(
+  footprint: RenderableShape,
+  pieces: readonly CoverPiece[],
+): readonly { readonly tunnel: number | undefined; readonly box: Box }[] {
+  const owned: Box[] = [];
+  const over = pieces.flatMap(({ tunnel, box }) =>
+    tunnel === undefined
+      ? []
+      : southFacingEdges(footprint).flatMap(({ from, to }) => {
+          const share = segmentInBox(from, to, box);
+          if (share === undefined) {
+            return [];
+          }
+          const xs = share.map((t) => from.x + (to.x - from.x) * t);
+          const band: Box = {
+            left: Math.min(...xs),
+            top: -Infinity,
+            right: Math.max(...xs),
+            bottom: Infinity,
+          };
+          if (band.right <= band.left) {
+            return [];
+          }
+          const bands = boxWithout(band, owned).map((piece) => ({ tunnel, box: piece }));
+          owned.push(band);
+          return bands;
+        }),
+  );
+  return [...over, ...boxWithout(EVERYWHERE, owned).map((box) => ({ tunnel: undefined, box }))];
+}
+
+/** The box of the ground over each of the map's tunnels, by its index. */
+function tunnelCoverBoxes(structure: MapStructure): readonly TunnelCoverBox[] {
+  return structure.tunnels.map((tunnel, at) => ({
+    tunnel: at,
+    box: tunnelCoverBox(structure, tunnel),
+  }));
+}
+
 /**
  * The map's water, the ground's split by the tunnel covers under it
  * (#3350), so what is over a tunnel fades with its cover. Water on any
  * other layer is one piece.
  */
 function splitWater(structure: MapStructure): readonly WaterSplit[] {
-  const covers = structure.tunnels.map((tunnel, at) => ({
-    tunnel: at,
-    box: tunnelCoverBox(structure, tunnel),
-  }));
+  const covers = tunnelCoverBoxes(structure);
   return structure.water.map(waterShapeOf).map((shape) => ({
     shape,
     pieces: waterPieces(shape, shape.layer === structure.ground ? covers : []),

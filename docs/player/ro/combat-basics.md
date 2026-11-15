@@ -47,6 +47,8 @@ lui e consumată și abilitatea se reîncarcă; unele întreruperi blochează ș
 abilitatea o vreme. Dacă întrerupi prea devreme sau prea târziu, nu se întâmplă
 nimic.
 
+Fiecare profesie are propriul sunet când folosește o abilitate; ascultă-l pe al țintei tale.
+
 Majoritatea întreruperilor opresc și un atac simplu în plin avânt: lovitura nu
 mai ajunge, iar avântul o ia de la capăt. Un inamic care încă merge spre ținta
 lui nu are ce să fie întrerupt. O întrerupere a cărei carte spune „o abilitate”

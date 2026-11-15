@@ -111,4 +111,111 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
     scene.cutAwayTunnels(0.016);
     expect(over.surface.alpha).toBe(1);
   });
+
+  it("fades the decks over the viewer's tunnel with its cover, and no other deck (#3352)", async () => {
+    const { mapStructure } = await import("../net/maps.js");
+    const { structure } = mapStructure("arena-long-hall");
+    const fading = (): { alpha: number; setAlpha(alpha: number): unknown } => ({
+      alpha: 1,
+      setAlpha(alpha: number) {
+        this.alpha = alpha;
+        return this;
+      },
+    });
+    const cover = { ground: fading(), seam: fading() };
+    const otherCover = { ground: fading(), seam: fading() };
+    const [top, side] = [fading(), fading()];
+    const overOther = fading();
+    const solid = fading();
+    const self = { team: "self", position: { x: 1620, y: 1450 }, layer: structure.ground - 1 };
+    const scene = Object.assign(new ArenaScene(), {
+      snapshot: { structure, actors: [self] },
+      tunnelCovers: new Map([
+        [0, cover],
+        [1, otherCover],
+      ]),
+      decksOverTunnels: new Map([
+        [0, [top, side]],
+        [1, [overOther]],
+      ]),
+      structureGraphics: new Map([["deck", solid]]),
+      reducedMotion: true,
+    }) as unknown as { cutAwayTunnels(dt: number): void };
+
+    scene.cutAwayTunnels(0.016);
+    expect(cover.ground.alpha).toBeLessThan(1);
+    expect(top.alpha).toBe(cover.ground.alpha);
+    expect(side.alpha).toBe(cover.ground.alpha);
+    expect(overOther.alpha).toBe(1);
+    expect(solid.alpha).toBe(1);
+
+    self.layer = structure.ground;
+    scene.cutAwayTunnels(0.016);
+    expect(top.alpha).toBe(1);
+    expect(side.alpha).toBe(1);
+  });
+
+  it("gives a walked-under top over the viewer's tunnel the lower of its two fades (#3352)", async () => {
+    const { mapStructure } = await import("../net/maps.js");
+    const { OVERHANG_FADED_ALPHA } = await import("./overhang-art.js");
+    const { structure } = mapStructure("arena-long-hall");
+    const fading = (): { alpha: number; setAlpha(alpha: number): unknown } => ({
+      alpha: 1,
+      setAlpha(alpha: number) {
+        this.alpha = alpha;
+        return this;
+      },
+    });
+    const cover = { ground: fading(), seam: fading() };
+    const arch = fading();
+    const self = {
+      id: "me",
+      team: "self",
+      position: { x: 1620, y: 1450 },
+      layer: structure.ground - 1,
+    };
+    const scene = Object.assign(new ArenaScene(), {
+      snapshot: { structure, actors: [self] },
+      tunnelCovers: new Map([[0, cover]]),
+      coversDrawn: [
+        {
+          cover: {
+            layer: structure.ground + 1,
+            outline: [
+              { x: 1570, y: 1400 },
+              { x: 1670, y: 1400 },
+              { x: 1670, y: 1500 },
+              { x: 1570, y: 1500 },
+            ],
+            top: 40,
+          },
+          graphics: arch,
+          tunnel: 0,
+          overhang: 1,
+        },
+      ],
+      drawnActors: [self],
+      reducedMotion: true,
+    }) as unknown as {
+      cutAwayTunnels(dt: number): void;
+      fadeOverhangs(dt: number): void;
+    };
+
+    // In the tunnel, under the arch: the cut-away is the lower.
+    scene.cutAwayTunnels(0.016);
+    scene.fadeOverhangs(0.016);
+    expect(cover.ground.alpha).toBeLessThan(OVERHANG_FADED_ALPHA);
+    expect(arch.alpha).toBe(cover.ground.alpha);
+
+    // Out of the tunnel, still under the arch: the overhang's fade is.
+    self.layer = structure.ground;
+    scene.cutAwayTunnels(0.016);
+    scene.fadeOverhangs(0.016);
+    expect(arch.alpha).toBe(OVERHANG_FADED_ALPHA);
+
+    self.position = { x: 2400, y: 600 };
+    scene.cutAwayTunnels(0.016);
+    scene.fadeOverhangs(0.016);
+    expect(arch.alpha).toBe(1);
+  });
 });

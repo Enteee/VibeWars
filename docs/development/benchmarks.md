@@ -129,11 +129,25 @@ them is their spawn side. Each seed is played twice, the second time
 with the builds rotated by one, so no build keeps one spawn.
 `BENCH_MAP=all` (the default) runs every map, and without `BENCH_SIZE`
 every size a map seats is its own row. `BENCH_SEEDS` sets the seeds,
-100 by default; a 4v4 row of 100 seeds takes about twenty minutes. It is
-not in CI: it is a design tool, and every map PR pastes its table.
+100 by default; a 4v4 row of 100 seeds takes about twenty minutes.
+
+Pull requests that touch a map, the bot rules or the bench run it on
+GitHub-hosted runners (`balance-bench.yml`, #3356): 20 seeds, at most 12
+rows, each touched map at every size it seats, or `arena-canyon` and
+`arena-crossroads` 2v2 for a rule change. Read the table in the run's job
+summary, or copy it from `hub run view <id> --log` between
+`--- balance table ---` and `--- end ---`. It is information, never a
+gate. Run it locally only after asking on Telegram: it loads the host.
 
 A row gives the matches run, the wins of each team (by spawn side), the
-draws, the mean match length in simulated seconds, and a verdict. A
+draws, the mean match length in simulated seconds, the share of
+bot time spent stuck, the share of that when the nearest foe was on
+another layer, and a verdict (#3354). A bot is stuck when, over 5 seconds,
+it stayed within 64 units, took part in no damage or heal and started no
+skill while a foe lived: _stuck %_ is those seconds over all living-bot
+seconds, _apart %_ the share of them with the nearest foe on another
+layer. Creatures are not counted. `BENCH_STUCK=1` also prints, per row,
+the cells (64 units, with their layer) where bots were stuck longest. A
 match the mode does not decide by its time limit is a draw; a mode
 without a wipe is won by whoever its own outcome names. The verdict is
 PASS when every team's share of the decided matches is within 10 points

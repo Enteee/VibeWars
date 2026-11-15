@@ -444,6 +444,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent | undefined {
     case "shadow-stepped-back":
       return { ...none, kind: event.kind, targetId: event.targetId };
     case "skill-used":
+      return { ...none, kind: event.kind, targetId: event.targetId };
     case "adrenaline-gained":
     case "effect-skipped":
       return undefined;
@@ -477,8 +478,11 @@ export function wireCombat(log: readonly CombatLogEntry[]): WireCombat[] {
   });
 }
 
-/** A wire event back as game-core's, or `undefined` for one this client does not know. */
-function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
+/**
+ * A wire event back as game-core's, or `undefined` for one this client does
+ * not know. A use (#3298) takes its caster and skill from `combat`, its entry.
+ */
+function combatEvent(event: WireCombatEvent, combat: WireCombat): CombatEvent | undefined {
   const { targetId, amount, skillId, statusId, durationSeconds, crit, fromId, energy } = event;
   if (targetId === null) {
     return undefined;
@@ -539,6 +543,10 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
         : { kind: event.kind, targetId, healthFraction: amount, energyFraction: energy };
     case "attack-out-of-sequence":
       return { kind: "attack-missed", targetId, reason: "out-of-sequence" };
+    case "skill-used":
+      return combat.cause === "skill" && combat.skillId !== ""
+        ? { kind: event.kind, casterId: combat.casterId, skillId: combat.skillId, targetId }
+        : undefined;
     case "attack-missed":
     case "creature-destroyed":
     case "death":
@@ -559,7 +567,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
 
 /** A validated wire combat entry as the client's `CombatMessage`; unknown events are dropped. */
 export function combatMessage(combat: WireCombat): CombatMessage {
-  const events = combat.events.flatMap((event) => combatEvent(event) ?? []);
+  const events = combat.events.flatMap((event) => combatEvent(event, combat) ?? []);
   const message = {
     casterSessionId: combat.casterId,
     cause: combat.cause,

@@ -45,6 +45,8 @@ Eine **Unterbrechung** stoppt den Skill eines Gegners, während er ihn wirkt. Se
 Energie ist verbraucht und der Skill lädt sich auf; manche Unterbrechungen sperren
 den Skill auch eine Weile. Zu früh oder zu spät passiert nichts.
 
+Jede Profession klingt beim Wirken anders; achte auf den Klang deines Ziels.
+
 Die meisten Unterbrechungen stoppen auch einen normalen Angriff mitten im Schlag:
 Der Treffer kommt nie an und der Schlag beginnt von vorn. Ein Gegner, der noch zu
 seinem Ziel läuft, hat nichts zu unterbrechen. Eine Unterbrechung, auf deren Karte

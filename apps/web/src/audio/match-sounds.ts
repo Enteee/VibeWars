@@ -1,11 +1,15 @@
+import type { Vec2 } from "@vibewars/game-core";
 import type { ConnectionState, MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 
 import {
+  castVoices,
+  instantCastVoice,
   soundsForCombat,
   soundsForSkillGround,
   soundsForSnapshot,
   soundsForWorld,
 } from "./combat-sounds.js";
+import type { CastListener, CastVoice } from "./combat-sounds.js";
 import type { SoundId } from "./sound-ids.js";
 import type { SoundPlayer } from "./sound-player.js";
 import type { WorldPlaces } from "./world-places.js";
@@ -16,8 +20,12 @@ import type { WorldPlaces } from "./world-places.js";
  * Training Ground both use it, since both run a `MatchConnection`.
  */
 export interface MatchSounds {
-  /** Feed every snapshot the view draws; cast starts are found by diffing them. */
-  snapshot(next: MatchSnapshot): void;
+  /**
+   * Feed every snapshot the view draws; cast starts are found by diffing
+   * them. A watcher passes `camera`, where it looks from: casts are heard
+   * from there (#3298).
+   */
+  snapshot(next: MatchSnapshot, camera?: Vec2): void;
   /**
    * `onConnectionChange` takes one handler, which the caller owns, so it
    * passes the state on. While reconnecting nothing is diffed, and the
@@ -39,6 +47,7 @@ export function attachMatchSounds(
   places: WorldPlaces,
 ): MatchSounds {
   let prev: MatchSnapshot | undefined;
+  let camera: Vec2 | undefined;
   let online = true;
   let disposed = false;
 
@@ -50,19 +59,32 @@ export function attachMatchSounds(
       player.play(id);
     }
   };
+  const castAll = (voices: readonly CastVoice[]): void => {
+    if (disposed) {
+      return;
+    }
+    for (const voice of voices) {
+      player.playCast(voice);
+    }
+  };
+  const listener = (): CastListener => ({ selfId: connection.selfSessionId, at: camera });
 
   connection.onCombat((message) => {
     playAll(soundsForCombat(message, connection.selfSessionId, prev));
+    const instant = instantCastVoice(message, prev, listener());
+    castAll(instant === undefined ? [] : [instant]);
   });
   connection.onCastRefused?.(() => {
     playAll(["refused"]);
   });
 
   return {
-    snapshot(next) {
+    snapshot(next, at) {
       if (!online) {
         return;
       }
+      camera = at;
+      castAll(castVoices(prev, next, listener()));
       playAll(soundsForSnapshot(prev, next));
       playAll(soundsForWorld(prev, next, connection.selfSessionId, places));
       playAll(soundsForSkillGround(prev, next, connection.selfSessionId));
