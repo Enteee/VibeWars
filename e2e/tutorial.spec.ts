@@ -78,6 +78,11 @@ const TO_THE_TUNNEL = [
   { x: 1600, y: 700 },
   { x: 1720, y: 700 },
 ];
+/**
+ * How far above the view's middle a walk's click may land, in CSS px
+ * (#3363): below the target frame at the top, which a click calls.
+ */
+const CLEAR_ABOVE = 200;
 /** How far each stride of station 11 (#3326) reaches, in world units: still inside the view. */
 const LONG_STRIDE = 500;
 /** How far to one side station 11's walk clicks when a click has not moved it (#3363). */
@@ -256,7 +261,10 @@ test.describe("the first-time tutorial (#3218)", () => {
           .split(",")
           .map(Number);
         const far = Math.hypot(point.x - cx, point.y - cy);
-        const reach = Math.min(1, stride / Math.max(far, 1));
+        // Never up into the target frame, either: a click there calls the
+        // target, and a rat called on the way finishes station 12 (#3363).
+        const up = Math.max(0, (cy - point.y) * view.zoom);
+        const reach = Math.min(1, stride / Math.max(far, 1), CLEAR_ABOVE / Math.max(up, 1));
         const at = view.onPage({ x: cx + (point.x - cx) * reach, y: cy + (point.y - cy) * reach });
         await page.mouse.click(at.x, at.y);
       };
