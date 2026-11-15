@@ -25,12 +25,14 @@ drop-offs, wind and snow) is kept.
   exactly as wide as the walkable floor (#3179).
 - **Drop-offs (4):** both cliff ledges' south edges to the floor, and both peak ledges down to their cliff
   ledge. The **chasm** itself is a drop too: the unwalkable band, drawn as a dark void
-  with a lit lip, open at its south end (y 1250..1560).
+  with a lit lip, open at its south end (y 1250..1560), its tip at (1700,1560).
 - **Elements:** two brass **levers**, one on each cliff ledge ((1380,860) and (2080,840)), work the
-  **rope bridge** (L1 height, 420 long, 80 wide). The bridge is lever-driven, so when it is down there
-  is still the **cave** (8.2 / 8.3 s) and the **south pass** round the chasm's end (11.0 / 10.9 s): nobody
-  is cut off, the same rule as Moss Vale's drawbridge. A **breakable ice wall** stands across the
-  south pass at x 1688, y 1700..1920, shutting the straight walk until it is broken. Zones: `mire`
+  **rope bridge** (L1 height, 420 long, 80 wide). The bridge **starts up** (raised) and a lever
+  lowers it. The **middle** is a stone **pier** (L1, 160 × 160, centred (1700,840)) standing in the chasm under the
+  bridge's middle: the bridge is two spans to it. The **cave** runs under the chasm and ends in a stair
+  up inside the pier (one more transition, five in all). A **breakable ice wall** (x 1688, y 1560..1920)
+  runs from the chasm's tip to a rock **ridge** (y 1920 to the south outline), so the south pass is
+  shut until the wall is broken: there is no way round it. Zones: `mire`
   (a deep drift, west, (900,1680)) and `rockfall` (loose scree, east, (2560,1720)), both south of the
   routes, ≥ 200 u from a spawn. Atmosphere (existing, #3032): low wind drifts and snow. If the wind is meant to
   push or slow, that is a mechanic: not designed here.
@@ -43,13 +45,19 @@ drop-offs, wind and snow) is kept.
 ## Routes and balance (base speed 180 u/s)
 
 Four seats a side, T1 centred (550,1325) in the west mouth, T2 (2865,1375) in the east. The centre is the
-chasm's middle landing, (1700,1000). Walk from spawn to the centre is 7.5 s by the bridge, well under any cap.
+pier, (1700,840). Walk from spawn to it is 7.5 s by the bridge (lowered), 9.1 s by the cave.
 
-| Route (T1 / T2)                                      | Length        | Walk          |
-| ---------------------------------------------------- | ------------- | ------------- |
-| rope bridge (stair, up the ledge, across the bridge) | 1353 / 1377 u | 7.5 / 7.7 s   |
-| cave (mouth, under the chasm, up to the landing)     | 1480 / 1497 u | 8.2 / 8.3 s   |
-| south pass (round the chasm's southern end)          | 1986 / 1967 u | 11.0 / 10.9 s |
+| Route (T1 / T2)                                        | Length        | Walk          |
+| ------------------------------------------------------ | ------------- | ------------- |
+| to the pier: rope bridge (stair, ledge, bridge)        | 1353 / 1377 u | 7.5 / 7.7 s   |
+| to the pier: cave (mouth, under the chasm, pier stair) | 1640 / 1657 u | 9.1 / 9.2 s   |
+| to the far stair foot: south pass (wall broken)        | 2572 / 2564 u | 14.3 / 14.2 s |
+
+**Worst case.** Bridge up and wall standing: each spawn still has the cave to the pier, and its own
+ledge by its own stair, but the far side is cut off until a lever is pulled or the wall is broken.
+The bridge is up at the start, so the opening is the cave (9.1 s) and the levers, which sit on ledges
+reached without the bridge. With the bridge down the pier has two routes per spawn (bridge, cave);
+with it up, one route to the pier (cave) but two ways to progress (lever, wall). Crossing needs a lever or the wall.
 
 The walks are within 2 % T1 / T2. The sides differ on purpose: the west peak is smaller (111 k u²)
 than the east (132 k u², 16 % larger, so within 25 %), the ledges' outlines differ, the overhang sits

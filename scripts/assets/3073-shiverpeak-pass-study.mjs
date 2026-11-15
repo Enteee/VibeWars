@@ -155,7 +155,9 @@ const LEVERS = [
   { p: /** @type {Pt} */ ([2080, 840]), team: 2 },
 ];
 const OVERHANGS = [rect(1250, 1560, 220, 70)];
-const BREAKABLE = rect(1688, 1700, 24, 220); // an ice wall in the south pass
+const BREAKABLE = rect(1688, 1560, 24, 360); // an ice wall in the south pass, from the chasm tip to the ridge
+const RIDGE = rect(1670, 1920, 60, 380); // rock from the wall to the south outline: the pass has no way round
+const PIER = rect(1620, 760, 160, 160); // the stone pier in the chasm: the bridge's middle support, the stair of the cave
 const MIRE = { cx: 900, cy: 1680, rx: 120, ry: 60 };
 const ROCKFALL = { cx: 2560, cy: 1720, rx: 130, ry: 62 };
 /** @type {{ t1: Pt[]; t2: Pt[] }} */
@@ -193,18 +195,18 @@ const cen = (/** @type {Pt[]} */ a) =>
   ]);
 const C1 = cen(SPAWNS.t1),
   C2 = cen(SPAWNS.t2);
-// routes from each team's centre to the chasm's middle landing (1700,1000): walk is the polyline at base speed
+// routes from each team's centre to the bridge's middle pier (1700,840): walk is the polyline at base speed
 /** @type {Record<"t1" | "t2", [string, Pt[]][]>} */
 const ROUTES = {
   t1: [
     ["rope bridge", [C1, [825, 1130], [830, 1000], [1380, 880], [1700, 840]]],
-    ["cave", [C1, [1150, 1330], [1700, 1330], [1700, 1000]]],
-    ["south pass", [C1, [1000, 1700], [1700, 1700], [1700, 1000]]],
+    ["cave", [C1, [1150, 1330], [1700, 1330], [1700, 840]]],
+    ["south pass (to the far stair foot)", [C1, [1000, 1700], [2400, 1700], [2485, 1120]]],
   ],
   t2: [
     ["rope bridge", [C2, [2485, 1120], [2480, 1000], [2080, 880], [1700, 840]]],
-    ["cave", [C2, [2250, 1330], [1700, 1330], [1700, 1000]]],
-    ["south pass", [C2, [2400, 1700], [1700, 1700], [1700, 1000]]],
+    ["cave", [C2, [2250, 1330], [1700, 1330], [1700, 840]]],
+    ["south pass (to the far stair foot)", [C2, [2400, 1700], [1000, 1700], [825, 1130]]],
   ],
 };
 /** @type {(r: Pt[]) => number} */
@@ -264,7 +266,9 @@ const world = () => {
   for (let x = 1530; x < 1940; x += 24)
     s += `<path d="M${x},${800 - STEP} v80" stroke="#3a2a16" stroke-width="3"/>`;
   s += `<path d="M1520,${800 - STEP - 14} H1940 M1520,${880 - STEP + 14} H1940" stroke="#d8c8a0" stroke-width="5"/>`;
+  s += slab(PIER, STEP, STEP, C.deck, C.face, C.faceE);
   // breakable ice wall in the south pass
+  s += slab(RIDGE, 0, 90, C.out, C.face, C.faceE);
   s += slab(BREAKABLE, 0, 70, C.ice, C.iceFace, C.iceFace);
   // L1 wall-walks and the stairs up to them and to the towers
   for (const w of [LEDGE_W, LEDGE_E]) s += slab(w, STEP, STEP, C.deck, C.face, C.faceE);
@@ -353,6 +357,8 @@ const bodyAt = (p, col, e) => {
   for (const l of LEVERS) a += tag("lever", [l.p[0] - 50, l.p[1] - STEP - 24], 28);
   a +=
     tag("ice wall", [1560, 1690], 28) +
+    tag("ridge", [1600, 2120], 28) +
+    tag("pier", [1700, 960], 28) +
     tag("drift (mire)", [MIRE.cx - 80, MIRE.cy + 100], 28) +
     tag("scree (rockfall)", [ROCKFALL.cx - 100, ROCKFALL.cy + 100], 28) +
     tag("south pass (the long way)", [1250, 2030], 30);
