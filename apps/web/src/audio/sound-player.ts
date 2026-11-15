@@ -213,13 +213,16 @@ export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
         gain.gain.value = voice.gain;
         gain.connect(sink);
         const sources = [
-          { buffer: base, rate: 1 },
-          { buffer: motif, rate: voice.rate },
-        ].map(({ buffer, rate }) => {
+          { buffer: base, rate: 1, trim: 1 },
+          { buffer: motif, rate: voice.rate, trim: voice.motifTrim },
+        ].map(({ buffer, rate, trim }) => {
+          const level = context.createGain();
+          level.gain.value = trim;
+          level.connect(gain);
           const source = context.createBufferSource();
           source.buffer = buffer;
           source.playbackRate.value = rate;
-          source.connect(gain);
+          source.connect(level);
           source.start();
           return source;
         });

@@ -12,6 +12,7 @@ import {
   AREA_WARN_REACH,
   CAST_EARSHOT,
   CAST_VOICE_LIMIT,
+  MOTIF_DB,
   SPIRIT_EARSHOT,
   castLayers,
   castPitch,
@@ -909,6 +910,13 @@ describe("castVoices (#3298)", () => {
 });
 
 describe("castPitch (#3298)", () => {
+  it("plays the motif 4 dB under its base (#3371)", () => {
+    expect(MOTIF_DB).toBe(-4);
+    for (const skill of IMPLEMENTED_SKILLS) {
+      expect(castLayers(skill).motifTrim).toBeCloseTo(10 ** (-4 / 20), 6);
+    }
+  });
+
   it("pitches every catalog skill within -5 to +6 semitones", () => {
     for (const skill of IMPLEMENTED_SKILLS) {
       const semitones = castPitchStep(skill.id) / 2;

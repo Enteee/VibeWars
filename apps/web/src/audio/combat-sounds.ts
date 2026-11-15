@@ -439,6 +439,8 @@ const CAST_FAR_DB = -12;
 const ALLY_DB = -3;
 /** Your own cast: about −16 dBFS for both layers, as `cast-self` was. */
 const SELF_DB = -7;
+/** The motif sits this far under its base, so the high layer never leads a cast (#3371). */
+export const MOTIF_DB = -4;
 /** At most this many cast voices sound at once; the rest are dropped or cut. */
 export const CAST_VOICE_LIMIT = 3;
 /** A skill's motif is pitched in quarter-tones, 24 to the octave. */
@@ -545,6 +547,8 @@ export interface CastVoice {
   readonly motif: SoundId;
   /** The motif's playback rate: the skill's own pitch. */
   readonly rate: number;
+  /** Linear gain on the motif alone, under the base's (#3371). */
+  readonly motifTrim: number;
   /** Linear gain on both layers. */
   readonly gain: number;
   /**
@@ -564,8 +568,9 @@ export interface CastListener {
 const decibels = (db: number): number => 10 ** (db / 20);
 
 /** `skill`'s two layers: its profession's base, its type's motif at its own pitch. */
-export function castLayers(skill: Skill): Pick<CastVoice, "base" | "motif" | "rate"> {
+export function castLayers(skill: Skill): Pick<CastVoice, "base" | "motif" | "rate" | "motifTrim"> {
   return {
+    motifTrim: decibels(MOTIF_DB),
     base: CAST_BASES[skill.profession],
     motif: CAST_MOTIFS[skill.type],
     rate: castPitch(skill.id),
