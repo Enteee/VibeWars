@@ -163,11 +163,12 @@ describe("Relic Run bots (#2581)", () => {
       matchRules: RELIC_RUN_MATCH_RULES,
       relicField: {
         altar: altar.position,
+        altarLayer: altar.layer,
         relicTarget: "altar",
         relicCarry: "own",
         spawns: map.objectives.flatMap((objective) =>
           objective.kind === "relic-spawn"
-            ? [{ team: objective.team, position: objective.position }]
+            ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
             : [],
         ),
       },
@@ -203,9 +204,10 @@ describe("King of the Hill bots (#2582)", () => {
       ghostField: {
         level: 24,
         altar: altar.position,
+        altarLayer: altar.layer,
         spawns: arena.objectives.flatMap((objective) =>
           objective.kind === "ghost-spawn" && objective.team < 2
-            ? [{ team: objective.team, position: objective.position }]
+            ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
             : [],
         ),
       },
@@ -353,7 +355,9 @@ describe("Capture Points bots (#2580)", () => {
       bounds: { width: map.width, height: map.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       capturePoints: map.objectives.flatMap((objective) =>
-        objective.kind === "capture-point" ? [objective.position] : [],
+        objective.kind === "capture-point"
+          ? [{ ...objective.position, layer: objective.layer }]
+          : [],
       ),
       participants,
     });
@@ -382,7 +386,9 @@ describe("Capture Points bots (#2580)", () => {
       bounds: { width: cairns.width, height: cairns.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       capturePoints: cairns.objectives.flatMap((objective) =>
-        objective.kind === "capture-point" ? [objective.position] : [],
+        objective.kind === "capture-point"
+          ? [{ ...objective.position, layer: objective.layer }]
+          : [],
       ),
       participants: casterBots(cairns, 2),
     });
@@ -413,9 +419,10 @@ describe("Capture Points bots (#2580)", () => {
       ghostField: {
         level: 24,
         altar: altar.position,
+        altarLayer: altar.layer,
         spawns: keep.objectives.flatMap((objective) =>
           objective.kind === "ghost-spawn"
-            ? [{ team: objective.team, position: objective.position }]
+            ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
             : [],
         ),
       },
@@ -438,7 +445,9 @@ describe("Capture Points bots (#2580)", () => {
       bounds: { width: gallery.width, height: gallery.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       capturePoints: gallery.objectives.flatMap((objective) =>
-        objective.kind === "capture-point" ? [objective.position] : [],
+        objective.kind === "capture-point"
+          ? [{ ...objective.position, layer: objective.layer }]
+          : [],
       ),
       participants: casterBots(gallery, 2),
     });
@@ -490,7 +499,7 @@ describe("The Brazen Causeway (#2697)", () => {
       matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
       shrines: map.objectives.flatMap((objective) =>
         objective.kind === "resurrection-shrine"
-          ? [{ team: objective.team, position: objective.position }]
+          ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
           : [],
       ),
       participants: casterBots(map, 2),

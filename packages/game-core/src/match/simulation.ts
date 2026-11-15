@@ -10594,7 +10594,7 @@ export class MatchSimulation {
     record.outOfCombatSeconds = 0;
     record.history.clear();
     record.combatant.moving = false;
-    this.#stepStart.set(record.id, returnsTo);
+    this.#stepStart.set(record.id, returnsTo.at);
     // A companion comes back with its owner, alive, beside them (#1046),
     // wherever it was summoned.
     const companion = record.creature === undefined ? this.#companionOf(record) : undefined;
