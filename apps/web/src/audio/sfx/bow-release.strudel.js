@@ -3,7 +3,7 @@
 // string, not a hit, so it never sounds like hit-dealt.
 setcpm(60);
 stack(
-  s("sawtooth").freq(147).attack(0.001).decay(0.179).sustain(0).lpf(3500).gain(0.5),
+  s("sawtooth").freq(147).attack(0.001).decay(0.179).sustain(0).lpf(3000).gain(0.5),
   s("triangle").freq(294).attack(0.001).decay(0.1).sustain(0).gain(0.5),
   s("white")
     .attack(0.0005)
