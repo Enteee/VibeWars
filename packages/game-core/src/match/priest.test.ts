@@ -47,8 +47,8 @@ function match(): MatchSimulation {
     matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
     bounds: { width: 1000, height: 600 },
     shrines: [
-      { team: 0, position: SHRINE_0 },
-      { team: 1, position: SHRINE_1 },
+      { layer: 0, team: 0, position: SHRINE_0 },
+      { layer: 0, team: 1, position: SHRINE_1 },
     ],
     participants: [
       spec("a", 0, vec2(400, 100)),
@@ -199,8 +199,8 @@ describe("a shrine's raise (#1208)", () => {
       matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
       bounds: { width: 1000, height: 600 },
       shrines: [
-        { team: 0, position: SHRINE_0 },
-        { team: 1, position: SHRINE_1 },
+        { layer: 0, team: 0, position: SHRINE_0 },
+        { layer: 0, team: 1, position: SHRINE_1 },
       ],
       participants: [
         { ...spec("a", 0, vec2(400, 100)), skillBar: ["necromancer.blood-renewal-lite"] },
@@ -286,8 +286,8 @@ describe("a shrine's raise (#1208)", () => {
       matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
       bounds: { width: 1000, height: 600 },
       shrines: [
-        { team: 0, position: SHRINE_0 },
-        { team: 1, position: SHRINE_1 },
+        { layer: 0, team: 0, position: SHRINE_0 },
+        { layer: 0, team: 1, position: SHRINE_1 },
       ],
       participants: [
         spec("a", 0, vec2(400, 100)),

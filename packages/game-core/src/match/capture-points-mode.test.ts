@@ -257,11 +257,12 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
       bounds: { width: 3200, height: 2000 },
       capturePoints: SHRINES,
       ghostField: {
+        altarLayer: 0,
         level: 24,
         altar: undefined,
         spawns: [
-          { team: 0, position: shrine(2) },
-          { team: 1, position: vec2(2920, 1800) },
+          { layer: 0, team: 0, position: shrine(2) },
+          { layer: 0, team: 1, position: vec2(2920, 1800) },
         ],
       },
       participants: [
@@ -339,9 +340,9 @@ describe("a Capture Points base's shrine (#2845)", () => {
       bounds: { width: 3200, height: 2000 },
       capturePoints: SHRINES,
       shrines: [
-        { team: 0, position: vec2(110, 1000) },
-        { team: 1, position: vec2(3090, 1000) },
-        ...(more.length > 0 ? [{ team: 2, position: vec2(200, 200) }] : []),
+        { layer: 0, team: 0, position: vec2(110, 1000) },
+        { layer: 0, team: 1, position: vec2(3090, 1000) },
+        ...(more.length > 0 ? [{ layer: 0, team: 2, position: vec2(200, 200) }] : []),
       ],
       teamCount: more.length > 0 ? 3 : 2,
       participants: [

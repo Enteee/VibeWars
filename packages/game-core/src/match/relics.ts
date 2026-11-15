@@ -38,8 +38,8 @@ export type RelicCarry = "own" | "foe";
 /** A Relic Run map's objectives: one `relic-spawn` per team, and its altar if it scores there. */
 export interface RelicField {
   readonly altar: Vec2 | undefined;
-  /** The layer the altar is on (ADR-0051). Omitted: the ground. */
-  readonly altarLayer?: number;
+  /** The layer the altar is on (ADR-0051), when it has one. */
+  readonly altarLayer: number;
   readonly relicTarget: RelicTarget;
   readonly relicCarry: RelicCarry;
   readonly spawns: readonly CarriedSpawn[];
@@ -96,8 +96,7 @@ export function carriedRelic(
 /** Whether `body` is on the altar: near enough for a carrier to score, on its layer or a ramp to it. */
 export function onAltar(field: RelicField, body: BodyOnFloors): boolean {
   return (
-    field.altar !== undefined &&
-    atObjective(field.altar, field.altarLayer ?? 0, body, ALTAR_REACH_UNITS)
+    field.altar !== undefined && atObjective(field.altar, field.altarLayer, body, ALTAR_REACH_UNITS)
   );
 }
 

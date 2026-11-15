@@ -25,12 +25,13 @@ import {
  */
 
 const FIELD: RelicField = {
+  altarLayer: 0,
   altar: vec2(1100, 700),
   relicTarget: "altar",
   relicCarry: "own",
   spawns: [
-    { team: 0, position: vec2(100, 700) },
-    { team: 1, position: vec2(2100, 700) },
+    { layer: 0, team: 0, position: vec2(100, 700) },
+    { layer: 0, team: 1, position: vec2(2100, 700) },
   ],
 };
 const START = initialRelics(FIELD);
@@ -158,6 +159,7 @@ describe("a foe's relic", () => {
 
 describe("the foe's relic to your Ghostly Hero (#2695)", () => {
   const GHOST_FIELD: RelicField = {
+    altarLayer: 0,
     altar: undefined,
     relicTarget: "own-ghost",
     relicCarry: "foe",

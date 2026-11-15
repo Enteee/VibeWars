@@ -8,11 +8,12 @@ import { MatchSimulation, type ParticipantSpec } from "../../simulation.js";
 import { askBot, body, BOT, BOUNDS, RULESET } from "./test-support.js";
 
 const FIELD: GhostField = {
+  altarLayer: 0,
   level: 24,
   altar: vec2(800, 400),
   spawns: [
-    { team: 0, position: vec2(100, 400) },
-    { team: 1, position: vec2(1500, 400) },
+    { layer: 0, team: 0, position: vec2(100, 400) },
+    { layer: 0, team: 1, position: vec2(1500, 400) },
   ],
 };
 const HILL: BotObjectives = { ...NO_OBJECTIVES, altar: FIELD.altar };

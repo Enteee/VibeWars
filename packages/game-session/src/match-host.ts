@@ -801,15 +801,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // Counted on the team, so each side fills its own points in turn
     // rather than every other player of a team landing on one.
     const teammates = [...seats.values()].filter((seat) => seat.team === team).length;
-    const spawn = spawnPoint(map.spawns, team, teammates);
+    const spawn = spawnPoint(map.spawns, team, teammates, map.layers.ground);
     sim.add({
       id: playerId,
       team,
       skillBar: loadout.skillBar,
       ...loadoutSpec(resolved),
-      spawn,
+      spawn: spawn.position,
+      layer: spawn.layer,
       facing: spawnFacing(
-        spawn,
+        spawn.position,
         map.spawns.filter((point) => point.team !== team).map((point) => point.position),
         map.spawns.map((point) => point.position),
       ),

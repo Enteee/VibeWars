@@ -15,8 +15,8 @@ import type { ParticipantSpec } from "./simulation.js";
 export interface Shrine {
   readonly team: number;
   readonly position: Vec2;
-  /** The layer it stands on (ADR-0051). Omitted: the ground. */
-  readonly layer?: number;
+  /** The layer it stands on (ADR-0051). */
+  readonly layer: number;
 }
 
 export const PRIEST_SKILL_ID = "monk.heal-area";
@@ -42,7 +42,7 @@ export function priestSpec(shrine: Shrine, facing: number): ParticipantSpec {
     attributeRanks: new Map([["monk.healing-prayers", PRIEST_HEALING_PRAYERS]]),
     equipment: unarmedResolvedEquipment(PRIEST_ARMOR),
     spawn: shrine.position,
-    layer: shrine.layer ?? 0,
+    layer: shrine.layer,
     facing,
     maxHealth: PRIEST_HEALTH,
     maxEnergy: PRIEST_ENERGY,

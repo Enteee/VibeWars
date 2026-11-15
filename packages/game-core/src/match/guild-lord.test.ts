@@ -47,12 +47,12 @@ function match(participants: readonly ParticipantSpec[] = []): MatchSimulation {
     matchRules: GUILD_BATTLE_MATCH_RULES,
     bounds: { width: 2000, height: 600 },
     shrines: [
-      { team: 0, position: SHRINE_0 },
-      { team: 1, position: SHRINE_1 },
+      { layer: 0, team: 0, position: SHRINE_0 },
+      { layer: 0, team: 1, position: SHRINE_1 },
     ],
     guildLords: [
-      { team: 0, position: LORD_0 },
-      { team: 1, position: LORD_1 },
+      { layer: 0, team: 0, position: LORD_0 },
+      { layer: 0, team: 1, position: LORD_1 },
     ],
     participants: [spec("a", 0, vec2(950, 300)), spec("x", 1, vec2(1050, 300)), ...participants],
   });
@@ -144,8 +144,8 @@ describe("the Guild Lord (#1222)", () => {
       bounds: { width: 2000, height: 600 },
       walls: [{ a: vec2(250, 100), b: vec2(250, 500) }],
       guildLords: [
-        { team: 0, position: LORD_0 },
-        { team: 1, position: LORD_1 },
+        { layer: 0, team: 0, position: LORD_0 },
+        { layer: 0, team: 1, position: LORD_1 },
       ],
       participants: [spec("a", 0, vec2(950, 300)), spec("x", 1, vec2(350, 300))],
     });

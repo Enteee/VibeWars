@@ -66,8 +66,8 @@ function match(
     matchRules: GUILD_BATTLE_MATCH_RULES,
     bounds: { width: 3000, height: 1200 },
     guildLords: [
-      { team: 0, position: LORD_0 },
-      { team: 1, position: LORD_1 },
+      { layer: 0, team: 0, position: LORD_0 },
+      { layer: 0, team: 1, position: LORD_1 },
     ],
     guards,
     participants: [spec("a", 0, vec2(1450, 1000)), spec("x", 1, vec2(1550, 1000)), ...participants],
@@ -141,9 +141,9 @@ describe("the Guild Lord's guard on its Health (#1223)", () => {
 
 describe("the base guards (#1223)", () => {
   const ROSTER: readonly BaseGuard[] = [
-    { team: 0, role: "bodyguard", position: vec2(160, 300) },
-    { team: 0, role: "knight", position: vec2(130, 200) },
-    { team: 1, role: "footman", position: vec2(2700, 300) },
+    { layer: 0, team: 0, role: "bodyguard", position: vec2(160, 300) },
+    { layer: 0, team: 0, role: "knight", position: vec2(130, 200) },
+    { layer: 0, team: 1, role: "footman", position: vec2(2700, 300) },
   ];
 
   it("stand at their posts as creatures nobody owns, named for their role", () => {
@@ -199,7 +199,7 @@ describe("the base guards (#1223)", () => {
   it("let a Knight pulled past its 900-unit leash walk home, ignoring a foe it passes", () => {
     const post = vec2(500, 600);
     const sim = match(
-      [{ team: 0, role: "knight", position: post }],
+      [{ layer: 0, team: 0, role: "knight", position: post }],
       [spec("near", 1, vec2(1050, 600))],
     );
     const knight = get(sim, guardId(0, 0));
@@ -212,7 +212,7 @@ describe("the base guards (#1223)", () => {
 
   it("let an Archer shoot a foe in longbow range of its post, and ignore one beyond it", () => {
     const post = vec2(500, 600);
-    const sim = match([{ team: 0, role: "archer", position: post }]);
+    const sim = match([{ layer: 0, team: 0, role: "archer", position: post }]);
     const archer = get(sim, guardId(0, 0));
     const x = get(sim, "x");
     x.position = vec2(post.x + LONGBOW_RANGE + 40, post.y);

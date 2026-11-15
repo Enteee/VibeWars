@@ -1,9 +1,11 @@
+import { STARTER_BUILDS } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { loadAllMaps, loadMap } from "../loader.js";
 import {
   balanceVerdict,
   highGround,
+  playBuildBot,
   runMapBalance,
   walksToCentre,
   type MapBalanceResult,
@@ -78,6 +80,20 @@ describe("walks and high ground (#3070)", () => {
 
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
+  });
+});
+
+describe("a balance run's bots (#3344)", () => {
+  it("seats a bot on its spawn's layer, as a real match does", () => {
+    const [build] = STARTER_BUILDS;
+    if (build === undefined) {
+      throw new Error("no built-in builds");
+    }
+    const spawn = { position: { x: 400, y: 300 }, layer: 1 };
+    expect(playBuildBot(build, "0-0", 0, spawn, 0)).toMatchObject({
+      spawn: spawn.position,
+      layer: 1,
+    });
   });
 });
 

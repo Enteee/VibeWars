@@ -21,11 +21,12 @@ const DT = 1 / RULES.tickRateHz;
 const STAND = vec2(1000, 300);
 
 const FIELD: FlagField = {
+  standLayer: 0,
   stand: STAND,
   beacon: true,
   spawns: [
-    { team: 0, position: vec2(900, 300) },
-    { team: 1, position: vec2(1100, 300) },
+    { layer: 0, team: 0, position: vec2(900, 300) },
+    { layer: 0, team: 1, position: vec2(1100, 300) },
   ],
 };
 

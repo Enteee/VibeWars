@@ -336,8 +336,8 @@ describe("the host's own player (createLocalPeer)", () => {
         ...ARENA,
         mode: "priest-annihilation",
         shrines: [
-          { team: 0, position: { x: 300, y: 550 } },
-          { team: 1, position: { x: 800, y: 550 } },
+          { layer: 0, team: 0, position: { x: 300, y: 550 } },
+          { layer: 0, team: 1, position: { x: 800, y: 550 } },
         ],
       },
       matchRules: PRIEST_ANNIHILATION_MATCH_RULES,

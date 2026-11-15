@@ -13,7 +13,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { NO_RANKS } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { ghostId } from "./ghost.js";
-import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { MatchSimulation, type MatchLayers, type ParticipantSpec } from "./simulation.js";
 
 /** The Hall of Heroes' rules (#2700): waves on the minute, no death penalty, nobody beaten. */
 
@@ -22,6 +22,27 @@ const DT = 1 / RULES.tickRateHz;
 const ALTAR = vec2(1600, 1100);
 const SPAWN_A = vec2(360, 1040);
 const SPAWN_X = vec2(2840, 1160);
+
+/** A deck over the ground, the altar on it (#3344): its holder's dead return up there. */
+const DECKED_ALTAR: { readonly layers: MatchLayers; readonly altarLayer: number } = {
+  layers: {
+    count: 2,
+    ground: 0,
+    pits: [],
+    walls: [[], []],
+    decks: [
+      {
+        layer: 1,
+        footprint: [vec2(1400, 900), vec2(1800, 900), vec2(1800, 1300), vec2(1400, 1300)],
+      },
+    ],
+    transitions: [],
+    outline: undefined,
+    deepWater: [[], []],
+    dropOffs: [],
+  },
+  altarLayer: 1,
+};
 
 function fighter(id: string, team: number, spawn: Vec2): ParticipantSpec {
   return {
@@ -36,18 +57,23 @@ function fighter(id: string, team: number, spawn: Vec2): ParticipantSpec {
   };
 }
 
-function hall(): MatchSimulation {
+function hall(decked?: {
+  readonly layers: MatchLayers;
+  readonly altarLayer: number;
+}): MatchSimulation {
   return new MatchSimulation({
     seed: "halls",
     matchRules: HALLS_MATCH_RULES["king-of-the-hill"],
     walls: [],
     bounds: { width: 3200, height: 2200 },
+    layers: decked?.layers,
     ghostField: {
+      altarLayer: decked?.altarLayer ?? 0,
       level: 28,
       altar: ALTAR,
       spawns: [
-        { team: 0, position: vec2(120, 1100) },
-        { team: 1, position: vec2(3080, 1100) },
+        { layer: 0, team: 0, position: vec2(120, 1100) },
+        { layer: 0, team: 1, position: vec2(3080, 1100) },
       ],
     },
     participants: [fighter("a", 0, SPAWN_A), fighter("x", 1, SPAWN_X)],
@@ -154,6 +180,17 @@ describe("the Hall of Heroes' rules (#2700)", () => {
     stepTo(sim, 60.1);
     expect(sim.score.byTeam.get(0)).toBeGreaterThan(0);
     expect(get(sim, "a").position).toEqual(ALTAR);
+  });
+
+  it("returns the holder's dead on the altar's own layer, a deck over the ground (#3344)", () => {
+    const sim = hall(DECKED_ALTAR);
+    get(sim, ghostId(0)).layer = 1;
+    claimAltar(sim);
+    kill(sim, "a");
+    expect(get(sim, "a").layer).toBe(0);
+    stepTo(sim, 60.1);
+    expect(get(sim, "a").position).toEqual(ALTAR);
+    expect(get(sim, "a").layer).toBe(1);
   });
 
   it("returns the dead of a team not holding the altar at their spawn", () => {

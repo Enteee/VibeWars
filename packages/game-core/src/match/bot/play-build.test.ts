@@ -41,11 +41,12 @@ describe("play-build's target in King of the Hill (#2600)", () => {
   /** Team 1's ghost rising at `foeGhostAt`, a bot of team 0 and a badly hurt foe player in its range. */
   function hill(foeGhostAt: Vec2) {
     const field: GhostField = {
+      altarLayer: 0,
       level: 24,
       altar: ALTAR,
       spawns: [
-        { team: 0, position: vec2(100, 400) },
-        { team: 1, position: foeGhostAt },
+        { layer: 0, team: 0, position: vec2(100, 400) },
+        { layer: 0, team: 1, position: foeGhostAt },
       ],
     };
     return new MatchSimulation({
@@ -102,11 +103,12 @@ describe("play-build's target in King of the Hill (#2600)", () => {
       bounds: BOUNDS,
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
       ghostField: {
+        altarLayer: 0,
         level: 24,
         altar: vec2(1300, 400),
         spawns: [
-          { team: 0, position: vec2(100, 400) },
-          { team: 1, position: vec2(1300, 400) },
+          { layer: 0, team: 0, position: vec2(100, 400) },
+          { layer: 0, team: 1, position: vec2(1300, 400) },
         ],
       },
       participants: [
@@ -369,12 +371,13 @@ describe("play-build with three teams (#2685)", () => {
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
       teamCount: 3,
       ghostField: {
+        altarLayer: 0,
         level: 24,
         altar: vec2(1300, 700),
         spawns: [
-          { team: 0, position: vec2(100, 400) },
-          { team: 1, position: vec2(650, 450) },
-          { team: 2, position: vec2(1500, 100) },
+          { layer: 0, team: 0, position: vec2(100, 400) },
+          { layer: 0, team: 1, position: vec2(650, 450) },
+          { layer: 0, team: 2, position: vec2(1500, 100) },
         ],
       },
       participants: [

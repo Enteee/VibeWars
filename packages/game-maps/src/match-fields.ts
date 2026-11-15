@@ -39,6 +39,7 @@ import type { MapData, Objective } from "./schema.js";
 export interface MapShrine {
   readonly team: number;
   readonly position: Vec2;
+  readonly layer: number;
 }
 
 /** The simulation options a map fills in: all but the seed, rules and players. */
@@ -178,7 +179,7 @@ export function relicFieldOf(
   );
   return {
     altar: altar?.position,
-    altarLayer: altar?.layer ?? 0,
+    altarLayer: altar?.layer ?? map.groundLayer,
     relicTarget: map.relicTarget,
     relicCarry: map.relicCarry,
     spawns,
@@ -197,7 +198,7 @@ function ghostFieldOf(map: MapData, objectives: readonly Objective[]): GhostFiel
   return {
     level: map.ghostLevel,
     altar: map.mode === "king-of-the-hill" ? altar?.position : undefined,
-    altarLayer: altar?.layer ?? 0,
+    altarLayer: altar?.layer ?? map.groundLayer,
     spawns: objectives.flatMap((objective) =>
       objective.kind === "ghost-spawn"
         ? [{ team: objective.team, position: objective.position, layer: objective.layer }]

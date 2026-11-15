@@ -1,6 +1,7 @@
 import {
   CAPTURE_POINTS_MATCH_RULES,
   HALLS_MATCH_RULES,
+  KILL_COUNT_MATCH_RULES,
   NO_UPGRADES,
   MatchSimulation,
   NO_RANKS,
@@ -27,6 +28,7 @@ import {
   RULESET,
   WEAPON_SWAPS_PER_SECOND,
   WEAPON_SWAP_BURST,
+  type HostMap,
   type PlannedSeats,
 } from "./match-host.js";
 import type { MatchRecord } from "./match-record.js";
@@ -842,5 +844,53 @@ describe("a map's layers (#3017)", () => {
       deepWater: [[], []],
     });
     expect(x).toBeGreaterThan(920);
+  });
+});
+
+describe("a spawn's layer (#3344)", () => {
+  /** A deck on layer 1 over all of `ARENA`'s spawns, its ground layer 0 under it. */
+  const DECKED: HostMap = {
+    ...ARENA,
+    layers: {
+      ...flatLayers(ARENA.walls),
+      count: 2,
+      walls: [ARENA.walls, []],
+      decks: [
+        {
+          layer: 1,
+          footprint: [
+            { x: 300, y: 400 },
+            { x: 800, y: 400 },
+            { x: 800, y: 700 },
+            { x: 300, y: 700 },
+          ],
+        },
+      ],
+      deepWater: [[], []],
+    },
+    spawns: ARENA.spawns.map((spawn) => ({ ...spawn, layer: 1 })),
+  };
+
+  it("seats a player on the spawn's layer, and respawns them there", async () => {
+    // The host's simulation, caught as it seats the player.
+    const seat = vi.spyOn(MatchSimulation.prototype, "add");
+    const match = startMatch({ map: DECKED, matchRules: KILL_COUNT_MATCH_RULES });
+    const { connection: remote } = await match.join();
+    await match.step(0.05);
+    const sim = seat.mock.contexts[0];
+    seat.mockRestore();
+    expect(self(remote)?.layer).toBe(1);
+
+    const body = sim instanceof MatchSimulation ? sim.get(remote.selfSessionId) : undefined;
+    if (body === undefined) {
+      throw new Error("the player is not in the simulation");
+    }
+    body.combatant.statuses.apply("burning", 10, "nobody", NO_RANKS);
+    body.combatant.health = 0.2;
+    await match.step(0.5);
+    expect(self(remote)?.dead).toBe(true);
+
+    await match.step(KILL_COUNT_MATCH_RULES.respawnSeconds + 1);
+    expect(self(remote)).toMatchObject({ dead: false, layer: 1 });
   });
 });

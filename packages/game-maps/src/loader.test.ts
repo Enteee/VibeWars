@@ -220,15 +220,17 @@ describe("every bundled map", () => {
     }
   });
 
-  it("never spawns a player inside a wall", () => {
+  it("never spawns a player inside a wall on its own layer", () => {
     // A player who spawns inside geometry is immediately stuck, which is
     // the single worst map bug and completely invisible until someone
     // tries to play the map.
     const PLAYER_RADIUS = 14;
+    // Only the spawn's own layer counts (#3344): a deck spawn over a
+    // wall below stands clear of it.
     for (const map of maps) {
-      const segments = allWallSegments(map.walls);
       for (const spawn of map.spawnPoints) {
-        for (const segment of segments) {
+        const walls = map.walls.filter((wall) => wall.layer === spawn.layer);
+        for (const segment of allWallSegments(walls)) {
           expect(
             circleIntersectsSegment(spawn.position, PLAYER_RADIUS, segment),
             `${map.id} spawn at (${String(spawn.position.x)}, ${String(spawn.position.y)})`,

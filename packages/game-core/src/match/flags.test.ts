@@ -25,10 +25,11 @@ import {
 
 const DT = 0.05;
 const FIELD: FlagField = {
+  standLayer: 0,
   stand: vec2(1500, 1000),
   spawns: [
-    { team: 0, position: vec2(560, 1000) },
-    { team: 1, position: vec2(2440, 1000) },
+    { layer: 0, team: 0, position: vec2(560, 1000) },
+    { layer: 0, team: 1, position: vec2(2440, 1000) },
   ],
 };
 const START = initialFlags(FIELD);

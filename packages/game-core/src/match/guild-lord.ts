@@ -16,8 +16,8 @@ import type { ParticipantSpec } from "./simulation.js";
 export interface GuildLord {
   readonly team: number;
   readonly position: Vec2;
-  /** The layer it stands on (ADR-0051). Omitted: the ground. */
-  readonly layer?: number;
+  /** The layer it stands on (ADR-0051). */
+  readonly layer: number;
 }
 
 export const GUILD_LORD_HEALTH = 1680;
@@ -81,7 +81,7 @@ export function guildLordSpec(lord: GuildLord, facing: number): ParticipantSpec 
       },
     },
     spawn: lord.position,
-    layer: lord.layer ?? 0,
+    layer: lord.layer,
     facing,
     maxHealth: GUILD_LORD_HEALTH,
     maxEnergy: GUILD_LORD_ENERGY,

@@ -106,7 +106,7 @@ export function playBuildBot(
   build: PlayerBuild,
   id: string,
   team: number,
-  spawn: Vec2,
+  spawn: { readonly position: Vec2; readonly layer: number },
   facing: number,
 ): ParticipantSpec {
   const loadout = loadoutOf(build);
@@ -124,7 +124,8 @@ export function playBuildBot(
     team,
     skillBar: loadout.skillBar,
     ...loadoutSpec(resolved),
-    spawn,
+    spawn: spawn.position,
+    layer: spawn.layer,
     facing,
     behaviour: { kind: "play-build", reaction: BOT_REACTION },
   };
@@ -143,13 +144,13 @@ function mirrorMatch(
     const others = map.spawnPoints.filter((spawn) => spawn.team !== team);
     return Array.from({ length: size }, (_, k) => {
       // As the host seats them: each teammate on the team's next spawn.
-      const spawn = spawns[k % spawns.length]?.position;
+      const spawn = spawns[k % spawns.length];
       const build = STARTER_BUILDS[(seed + k + rotation) % STARTER_BUILDS.length];
       if (spawn === undefined || build === undefined) {
         throw new Error(`${map.id} has no spawn for team ${String(team)}, or no built-in builds`);
       }
       const facing = spawnFacing(
-        spawn,
+        spawn.position,
         others.map((point) => point.position),
         map.spawnPoints.map((point) => point.position),
       );

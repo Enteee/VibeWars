@@ -275,6 +275,7 @@ describe("summon (#1052)", () => {
 /** `match()` with both Guild Lords and `guards` Footmen, far from everyone (#1281). */
 function guarded(guards: number): MatchSimulation {
   const post = (i: number): BaseGuard => ({
+    layer: 0,
     team: i % 2,
     role: "footman",
     position: vec2(3000 + 40 * i, 3000),
@@ -288,8 +289,8 @@ function guarded(guards: number): MatchSimulation {
       spec("y", 1, vec2(600, 300)),
     ],
     guildLords: [
-      { team: 0, position: vec2(3000, 3200) },
-      { team: 1, position: vec2(4000, 3200) },
+      { layer: 0, team: 0, position: vec2(3000, 3200) },
+      { layer: 0, team: 1, position: vec2(4000, 3200) },
     ],
     guards: Array.from({ length: guards }, (_, i) => post(i)),
   });

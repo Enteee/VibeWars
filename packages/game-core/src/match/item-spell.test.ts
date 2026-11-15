@@ -27,10 +27,11 @@ const DEATHS_CHARGE = "assassin.deaths-charge";
 const ASHES = "blind-was-mingson";
 
 const FIELD: FlagField = {
+  standLayer: 0,
   stand: vec2(1000, 300),
   spawns: [
-    { team: 0, position: vec2(300, 300) },
-    { team: 1, position: vec2(1700, 300) },
+    { layer: 0, team: 0, position: vec2(300, 300) },
+    { layer: 0, team: 1, position: vec2(1700, 300) },
   ],
 };
 

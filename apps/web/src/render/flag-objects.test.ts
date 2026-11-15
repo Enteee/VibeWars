@@ -20,10 +20,11 @@ import {
 /** The Guild Battle's flags as the arena draws and picks them (#1225). */
 
 const FIELD: FlagField = {
+  standLayer: 0,
   stand: vec2(1500, 1000),
   spawns: [
-    { team: 0, position: vec2(560, 1000) },
-    { team: 1, position: vec2(2440, 1000) },
+    { layer: 0, team: 0, position: vec2(560, 1000) },
+    { layer: 0, team: 1, position: vec2(2440, 1000) },
   ],
 };
 
@@ -82,12 +83,13 @@ describe("renderableStand", () => {
 
 describe("renderableRelics (#1374)", () => {
   const RELICS: RelicField = {
+    altarLayer: 0,
     altar: vec2(1100, 700),
     relicTarget: "altar",
     relicCarry: "own",
     spawns: [
-      { team: 0, position: vec2(110, 700) },
-      { team: 1, position: vec2(2090, 700) },
+      { layer: 0, team: 0, position: vec2(110, 700) },
+      { layer: 0, team: 1, position: vec2(2090, 700) },
     ],
   };
 

@@ -37,11 +37,12 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const FIELD: GhostField = {
+  altarLayer: 0,
   level: 28,
   altar: undefined,
   spawns: [
-    { team: 0, position: vec2(300, 500) },
-    { team: 1, position: vec2(1700, 500) },
+    { layer: 0, team: 0, position: vec2(300, 500) },
+    { layer: 0, team: 1, position: vec2(1700, 500) },
   ],
 };
 const GHOST_0 = ghostId(0);
@@ -227,8 +228,8 @@ describe("the Ghostly Hero (#2689)", () => {
 
 describe("when a dead Ghostly Hero rises (#2839)", () => {
   const SHRINES: readonly Shrine[] = [
-    { team: 0, position: vec2(100, 500) },
-    { team: 1, position: vec2(1900, 500) },
+    { layer: 0, team: 0, position: vec2(100, 500) },
+    { layer: 0, team: 1, position: vec2(1900, 500) },
   ];
 
   function game(matchRules: MatchRules, shrines: readonly Shrine[]): MatchSimulation {
