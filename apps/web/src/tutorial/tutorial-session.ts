@@ -318,7 +318,7 @@ export async function startTutorialSession(
         { runner: RAT_POCKET.rats[0].id, big: RAT_POCKET.rats[1].id },
         playerBuild.skillBar,
       ),
-      climbStation(LEDGE.footprint, LEDGE.upper, LEDGE.lower),
+      climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
     ],
     loadKeymap,
   );

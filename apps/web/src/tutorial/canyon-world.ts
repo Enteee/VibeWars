@@ -557,6 +557,8 @@ export interface CanyonLedge {
   /** The deck's layer, and the ground's under it. */
   readonly upper: number;
   readonly lower: number;
+  /** The stairs up to it: standing on them is not standing on the ledge. */
+  readonly stairs: Shape;
   /** The stairs' foot, on `lower`, and their top, on `upper`: the tutor's only way. */
   readonly foot: Vec2;
   readonly top: Vec2;
@@ -576,6 +578,7 @@ export const LEDGE: CanyonLedge = ((): CanyonLedge => {
   const half = Math.abs(along.x) * (width / 2) + Math.abs(along.y) * (height / 2) + PAST_THE_STAIRS;
   return {
     footprint: deck.footprint,
+    stairs: stairs.area,
     upper: stairs.to,
     lower: stairs.from,
     foot: vec2(middle.x - along.x * half, middle.y - along.y * half),

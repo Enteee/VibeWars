@@ -330,6 +330,7 @@ describe("ratsStation (#3316)", () => {
 
 describe("climbStation (#3323)", () => {
   const LEDGE = { kind: "rect", x: 3290, y: 1800, width: 620, height: 180 } as const;
+  const STAIRS = { kind: "rect", x: 3890, y: 1800, width: 140, height: 180 } as const;
   const UPPER = 2;
   const LOWER = 1;
   const MIDDLE = vec2(3600, 1890);
@@ -339,27 +340,41 @@ describe("climbStation (#3323)", () => {
   /** What a runner over the station alone says at each look, `ASIDE_MS` apart. */
   const says = (looks: readonly Partial<TutorialView>[]): (string | undefined)[] => {
     const runner = createTutorialRunner(
-      [climbStation(LEDGE, UPPER, LOWER)],
+      [climbStation(LEDGE, STAIRS, UPPER, LOWER)],
       () => KEYMAP_PRESETS.classic,
     );
     return looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key);
   };
 
   it("is not done under the ledge before the ledge was reached", () => {
-    const station = climbStation(LEDGE, UPPER, LOWER);
+    const station = climbStation(LEDGE, STAIRS, UPPER, LOWER);
     expect(station.done(view(UNDER))).toBe(false);
     expect(station.done(view(BESIDE))).toBe(false);
   });
 
   it("is done on the lower layer under the ledge after it, and not beside it", () => {
-    const station = climbStation(LEDGE, UPPER, LOWER);
+    const station = climbStation(LEDGE, STAIRS, UPPER, LOWER);
     expect(station.done(view(ON_LEDGE))).toBe(false);
     expect(station.done(view(BESIDE))).toBe(false);
     expect(station.done(view(UNDER))).toBe(true);
   });
 
+  it("does not count the stairs' top, where it overlaps the ledge, as up (#3343)", () => {
+    const station = climbStation(LEDGE, STAIRS, UPPER, LOWER);
+    if (typeof station.highlight !== "function") {
+      throw new Error("a climb station's mark moves");
+    }
+    const onStairsTop = { self: vec2(3900, 1890), selfLayer: UPPER };
+    expect(station.highlight(view(onStairsTop))).toEqual({
+      kind: "ground",
+      at: MIDDLE,
+      layer: UPPER,
+    });
+    expect(station.done(view(UNDER))).toBe(false);
+  });
+
   it("marks the ledge, then the ground under its middle once the player stood on it", () => {
-    const station = climbStation(LEDGE, UPPER, LOWER);
+    const station = climbStation(LEDGE, STAIRS, UPPER, LOWER);
     if (typeof station.highlight !== "function") {
       throw new Error("a climb station's mark moves");
     }

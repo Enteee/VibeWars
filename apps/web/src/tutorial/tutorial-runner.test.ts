@@ -151,6 +151,7 @@ describe("the tutorial runner", () => {
     const across = vec2(6900, 720);
     const pocket = vec2(5200, 2100);
     const ledge = { kind: "rect", x: 3290, y: 1800, width: 620, height: 180 } as const;
+    const stairs = { kind: "rect", x: 3890, y: 1800, width: 140, height: 180 } as const;
     const onLedge = vec2(3600, 1890);
     const bar = [
       "warrior.enraged-smash",
@@ -172,7 +173,7 @@ describe("the tutorial runner", () => {
         healStation("tutor", 7),
         badGroundStation(across, 0),
         ratsStation(pocket, { runner: "rat-1", big: "rat-2" }, bar),
-        climbStation(ledge, 2, 1),
+        climbStation(ledge, stairs, 2, 1),
       ],
       () => KEYMAP_PRESETS.classic,
       label,

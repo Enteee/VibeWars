@@ -445,13 +445,18 @@ function shapeCentre(shape: Shape): Vec2 {
  * the cursor's rings teach the rest. Any way down counts, but one that was
  * no Alt walk gets the tip, once. Done under the ledge, after it.
  */
-export function climbStation(ledge: Shape, upper: number, lower: number): Station {
+export function climbStation(ledge: Shape, stairs: Shape, upper: number, lower: number): Station {
   const centre = shapeCentre(ledge);
   /** The player has stood on the ledge; then has come down, and whether by an Alt walk. */
   let up = false;
   let down: { readonly byAlt: boolean } | undefined;
   const look = (view: TutorialView): { up: boolean; down: typeof down } => {
-    up ||= view.selfLayer === upper && pointInShape(view.self, ledge);
+    // Not on its stairs (#3343): their top overlaps the ledge, and a walk
+    // ordered from there can still take the player back down them.
+    up ||=
+      view.selfLayer === upper &&
+      pointInShape(view.self, ledge) &&
+      !pointInShape(view.self, stairs);
     if (up && down === undefined && view.selfLayer === lower) {
       down = { byAlt: view.belowClicked };
     }
