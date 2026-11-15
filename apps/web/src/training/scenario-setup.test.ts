@@ -17,7 +17,7 @@ describe("every training scenario", () => {
         return;
       }
       const spawn = playerSpawn(map);
-      for (const position of [spawn, ...scenario.dummies.map((dummy) => dummy.position)]) {
+      for (const position of [spawn.position, ...scenario.dummies.map((dummy) => dummy.position)]) {
         expect(position.x).toBeGreaterThanOrEqual(0);
         expect(position.x).toBeLessThanOrEqual(map.width);
         expect(position.y).toBeGreaterThanOrEqual(0);

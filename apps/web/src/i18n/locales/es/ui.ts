@@ -1502,6 +1502,13 @@ export default {
   "training.soundOn": "Con sonido.",
   "training.you": "Tú",
 
+  "tutorial.climb.hint": "Sube a la cornisa y luego baja al suelo que hay debajo.",
+  "tutorial.climb.how":
+    "Haz clic donde quieras estar. Alt+clic (Option en Mac) elige el suelo de abajo.",
+  "tutorial.climb.intro": "Sube los escalones. Un anillo sólido marca dónde estarás.",
+  "tutorial.climb.praise": "Dos niveles, un mismo sitio. Ya sabes leer el terreno.",
+  "tutorial.climb.tip": "Consejo: Alt+clic elige el suelo bajo una cornisa.",
+  "tutorial.climb.under": "Mantén Alt y haz clic. El anillo discontinuo está debajo de ti.",
   "tutorial.dodge.hint": "Espera junto a un anillo a que aparezca su sombra y apártate.",
   "tutorial.dodge.hit": "¡Ay! Una sombra que crece significa: muévete.",
   "tutorial.dodge.how": "Haz clic izquierdo en el suelo o camina con {keys}.",

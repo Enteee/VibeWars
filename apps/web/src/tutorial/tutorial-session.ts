@@ -29,15 +29,18 @@ import {
   BAD_GROUND,
   CRACKED_WALL,
   DODGE_MARK,
+  LEDGE,
   RAT_POCKET,
   allyHealSlot,
   badGroundTutor,
   canyonWorld,
   clearingTutor,
+  ledgeTutor,
   ratPocket,
   wallTutor,
   type BadGroundTutor,
   type ClearingTutor,
+  type LedgeTutor,
   type RatPocket,
   type WallTutor,
 } from "./canyon-world.js";
@@ -48,6 +51,7 @@ import {
   ZONE_STATUSES,
   badGroundStation,
   breakWallStation,
+  climbStation,
   dodgeStation,
   healStation,
   lookStation,
@@ -179,11 +183,21 @@ export async function startTutorialSession(
   /** A ground mark beside a HUD highlight (#3302). */
   let besideHud: Vec2 | undefined;
   const markAt = (): Vec2 | undefined => (highlight?.kind === "ground" ? highlight.at : besideHud);
+  const markLayer = (): number =>
+    (highlight?.kind === "ground" ? highlight.layer : undefined) ?? stage.ground;
   const goals = (): readonly GoalMark[] => {
     const at = markAt();
     return at === undefined
       ? stage.fixed
-      : [...stage.fixed, { id: "tutorial-mark", kind: "goal", position: at, layer: stage.ground }];
+      : [
+          ...stage.fixed,
+          {
+            id: "tutorial-mark",
+            kind: "goal",
+            position: at,
+            layer: markLayer(),
+          },
+        ];
   };
 
   const frame = document.createElement("div");
@@ -224,6 +238,9 @@ export async function startTutorialSession(
   let onBadGround: BadGroundTutor | undefined;
   // Station 8's (#3316), on the canyon's second map.
   let atRats: RatPocket | undefined;
+  // Station 9's (#3323): whether the last walk the player sent was an Alt walk.
+  let belowClicked = false;
+  let onLedge: LedgeTutor | undefined;
   /** The station the last beat ran. */
   let running: string | undefined;
   /** The HUD element pulsing now, if any. */
@@ -269,7 +286,13 @@ export async function startTutorialSession(
       {
         kind: "play",
         connect: () => Promise.resolve(connection),
-        tutorial: { party: [SELF_ID, TUTOR_ID], goals },
+        tutorial: {
+          party: [SELF_ID, TUTOR_ID],
+          goals,
+          onWalk: (below) => {
+            belowClicked = below;
+          },
+        },
       },
       options.signet,
     );
@@ -295,6 +318,7 @@ export async function startTutorialSession(
         { runner: RAT_POCKET.rats[0].id, big: RAT_POCKET.rats[1].id },
         playerBuild.skillBar,
       ),
+      climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
     ],
     loadKeymap,
   );
@@ -448,6 +472,7 @@ export async function startTutorialSession(
           ratFled: atRats?.fled() ?? false,
           bigRatDown: ratTally?.knockedDown.has(RAT_POCKET.rats[1].id) ?? false,
           extraRat: atRats?.extra() ?? false,
+          belowClicked,
         },
         now,
       );
@@ -486,6 +511,11 @@ export async function startTutorialSession(
       if (ratTally !== undefined) {
         atRats?.step(ratTally);
       }
+      // Station 9 is next: the tutor keeps beside the player, by the stairs.
+      if (onLedge === undefined && beat.station === "climb" && stage.name === "canyon-2") {
+        onLedge = ledgeTutor(world);
+      }
+      onLedge?.step();
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;
@@ -497,12 +527,14 @@ export async function startTutorialSession(
       } else {
         frame.dataset.dodges = String(rockfallDodges);
       }
-      // Where the mark is, for the e2e specs to click.
+      // Where the mark is, and on which layer, for the e2e specs to click.
       const at = markAt();
       if (at === undefined) {
         delete frame.dataset.mark;
+        delete frame.dataset.markLayer;
       } else {
         frame.dataset.mark = `${String(Math.round(at.x))},${String(Math.round(at.y))}`;
+        frame.dataset.markLayer = String(markLayer());
       }
       // The wall's health (#3302), for the e2e specs to wait on.
       if (wallHealth === undefined) {

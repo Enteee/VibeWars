@@ -807,9 +807,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       team,
       skillBar: loadout.skillBar,
       ...loadoutSpec(resolved),
-      spawn,
+      spawn: spawn.position,
+      layer: spawn.layer,
       facing: spawnFacing(
-        spawn,
+        spawn.position,
         map.spawns.filter((point) => point.team !== team).map((point) => point.position),
         map.spawns.map((point) => point.position),
       ),

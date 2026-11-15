@@ -1542,6 +1542,13 @@ export default {
   "training.soundOn": "Dźwięk wł.",
   "training.you": "Ty",
 
+  "tutorial.climb.hint": "Wejdź na półkę, a potem zejdź na ziemię pod nią.",
+  "tutorial.climb.how":
+    "Kliknij tam, gdzie chcesz stanąć. Alt+klik (Option na Macu) wybiera ziemię niżej.",
+  "tutorial.climb.intro": "Wejdź po schodach. Pełny krąg to miejsce, gdzie staniesz.",
+  "tutorial.climb.praise": "Dwie warstwy, jedno miejsce. Już umiesz czytać teren.",
+  "tutorial.climb.tip": "Wskazówka: Alt+klik wybiera ziemię pod półką.",
+  "tutorial.climb.under": "Przytrzymaj Alt i kliknij. Przerywany krąg jest pod tobą.",
   "tutorial.dodge.hint": "Poczekaj przy kręgu na jego cień, potem odsuń się.",
   "tutorial.dodge.hit": "Au! Rosnący cień znaczy: ruszaj się.",
   "tutorial.dodge.how": "Kliknij lewym przyciskiem ziemię albo idź klawiszami {keys}.",

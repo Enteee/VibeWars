@@ -36,8 +36,8 @@ export const FLAG_CARRIER_SPEED_MULTIPLIER = 1.2;
 /** A Guild Battle map's flag objectives: one stand, one `flag-spawn` per team. */
 export interface FlagField {
   readonly stand: Vec2;
-  /** The layer the stand is on (ADR-0051). Omitted: the ground. */
-  readonly standLayer?: number;
+  /** The layer the stand is on (ADR-0051). */
+  readonly standLayer: number;
   readonly spawns: readonly CarriedSpawn[];
   /** The stand is a Storm Beacon (#2694): it strikes foes instead of boosting morale. */
   readonly beacon?: boolean | undefined;
@@ -113,7 +113,7 @@ export function flagTargetPoint(
   targetId: string,
 ): CarriedPoint | undefined {
   if (targetId === FLAG_STAND_ID) {
-    return { position: field.stand, layer: field.standLayer ?? 0 };
+    return { position: field.stand, layer: field.standLayer };
   }
   const flag = flags.find(({ team }) => flagId(team) === targetId);
   return flag === undefined ? undefined : lyingPoint(field.spawns, flag);

@@ -10,6 +10,7 @@ import {
   RAT_SKILLS,
   badGroundStation,
   breakWallStation,
+  climbStation,
   dodgeStation,
   healStation,
   lookStation,
@@ -51,6 +52,7 @@ const CAMERA = {
   ratFled: false,
   bigRatDown: false,
   extraRat: false,
+  belowClicked: false,
 };
 const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100), ...CAMERA };
 const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100), ...CAMERA };
@@ -142,12 +144,15 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats and finishes (#3247, #3302, #3303, #3310, #3316)", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats, climbs the ledge and finishes (#3247, #3302, #3303, #3310, #3316, #3323)", () => {
     const pad = vec2(200, -900);
     const goal = vec2(2850, 1800);
     const face = vec2(3480, 1800);
     const across = vec2(6900, 720);
     const pocket = vec2(5200, 2100);
+    const ledge = { kind: "rect", x: 3290, y: 1800, width: 620, height: 180 } as const;
+    const stairs = { kind: "rect", x: 3890, y: 1800, width: 140, height: 180 } as const;
+    const onLedge = vec2(3600, 1890);
     const bar = [
       "warrior.enraged-smash",
       RAT_SKILLS.bash,
@@ -168,6 +173,7 @@ describe("the tutorial runner", () => {
         healStation("tutor", 7),
         badGroundStation(across, 0),
         ratsStation(pocket, { runner: "rat-1", big: "rat-2" }, bar),
+        climbStation(ledge, stairs, 2, 1),
       ],
       () => KEYMAP_PRESETS.classic,
       label,
@@ -184,6 +190,15 @@ describe("the tutorial runner", () => {
       skillsOnRats: new Set([RAT_SKILLS.runner]),
     };
     const two = new Set([RAT_SKILLS.runner, RAT_SKILLS.bash]);
+    const climb: TutorialView = {
+      ...rats,
+      ratFled: true,
+      ratsAlive: 0,
+      extraRat: true,
+      skillsOnRats: two,
+      self: vec2(3600, 2100),
+      selfLayer: 1,
+    };
     const ticks: [TutorialView, number][] = [
       [AWAY, 0],
       [ON_MARK, 1_000],
@@ -226,6 +241,9 @@ describe("the tutorial runner", () => {
         { ...rats, ratFled: true, ratsAlive: 0, extraRat: true, skillsOnRats: two },
         11_000 + 7 * PRAISE_MS + 9 * ASIDE_MS,
       ],
+      [climb, 11_000 + 8 * PRAISE_MS + 9 * ASIDE_MS],
+      [{ ...climb, self: onLedge, selfLayer: 2 }, 11_000 + 8 * PRAISE_MS + 10 * ASIDE_MS],
+      [{ ...climb, self: onLedge, belowClicked: true }, 11_000 + 8 * PRAISE_MS + 11 * ASIDE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -258,6 +276,14 @@ describe("the tutorial runner", () => {
       undefined,
       "tutorial.rats.again",
       "tutorial.rats.praise",
+      "tutorial.climb.intro",
+      "tutorial.climb.under",
+      "tutorial.climb.praise",
+    ]);
+    // The ledge is marked on its layer, then the ground under its middle.
+    expect(beats.slice(29, 31).map((beat) => beat.highlight)).toEqual([
+      { kind: "ground", at: onLedge, layer: 2 },
+      { kind: "ground", at: onLedge, layer: 1 },
     ]);
     // The rats name their skills from the catalog; the runner lights its strike, the big rat
     // Hammer Bash until it is down, then Crushing Blow; otherwise the pocket is marked.
@@ -307,9 +333,9 @@ describe("the tutorial runner", () => {
     expect(beats.map((beat) => beat.world)).toEqual([
       ...Array<string>(5).fill("battlefield"),
       ...Array<string>(15).fill("canyon"),
-      ...Array<string>(9).fill("canyon-2"),
+      ...Array<string>(12).fill("canyon-2"),
     ]);
-    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(28).fill(false), true]);
+    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(31).fill(false), true]);
   });
 
   it("says a station's reaction once, then no more hints until it is done (#3302)", () => {

@@ -178,6 +178,8 @@ export type MatchViewOptions =
       readonly tutorial?: {
         readonly party: readonly string[];
         readonly goals: () => readonly GoalMark[];
+        /** Each walk a click sends, and whether it was an Alt walk, to the ground below (#3323). */
+        readonly onWalk: (below: boolean) => void;
       };
     }
   | {
@@ -1273,6 +1275,7 @@ export async function startMatchView(
               seat.sendIntent(intent);
               if (intent.kind === "walk-to") {
                 viewport.scene.showWalkMarker(world);
+                tutorial?.onWalk(altKey);
               }
             }
           } else if (button === "middle" && phase === "down" && latestArena !== undefined) {

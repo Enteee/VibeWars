@@ -1342,6 +1342,13 @@ export default {
   "training.soundOn": "Suara nyala.",
   "training.you": "Kamu",
 
+  "tutorial.climb.hint": "Naik ke tepian, lalu turun ke tanah di bawahnya.",
+  "tutorial.climb.how":
+    "Klik tempat kamu mau berdiri. Alt+klik (Option di Mac) memilih tanah di bawah.",
+  "tutorial.climb.intro": "Naiki tangga. Lingkaran penuh menandai tempatmu berdiri.",
+  "tutorial.climb.praise": "Dua lapisan, satu titik. Sekarang kamu bisa membaca medan.",
+  "tutorial.climb.tip": "Tips: Alt+klik memilih tanah di bawah tepian.",
+  "tutorial.climb.under": "Tahan Alt lalu klik. Lingkaran putus-putus ada di bawahmu.",
   "tutorial.dodge.hint": "Tunggu di dekat lingkaran sampai bayangannya muncul, lalu menyingkir.",
   "tutorial.dodge.hit": "Aduh! Bayangan yang membesar artinya: bergerak.",
   "tutorial.dodge.how": "Klik kiri tanah, atau berjalan dengan {keys}.",

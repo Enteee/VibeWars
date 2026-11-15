@@ -1428,6 +1428,13 @@ export default {
   "training.soundOn": "Ääni päällä.",
   "training.you": "Sinä",
 
+  "tutorial.climb.hint": "Ylös reunalle, sitten alas sen alla olevalle maalle.",
+  "tutorial.climb.how":
+    "Napsauta kohtaa, jossa haluat seistä. Alt+napsautus (Macissa Option) valitsee alemman maan.",
+  "tutorial.climb.intro": "Portaat ylös. Yhtenäinen rengas näyttää, mihin päädyt seisomaan.",
+  "tutorial.climb.praise": "Kaksi kerrosta, yksi kohta. Nyt osaat lukea maastoa.",
+  "tutorial.climb.tip": "Vinkki: Alt+napsautus valitsee maan reunan alta.",
+  "tutorial.climb.under": "Pidä Alt pohjassa ja napsauta. Katkoviivarengas on allasi.",
   "tutorial.dodge.hint": "Odota renkaan luona sen varjoa ja astu sitten pois.",
   "tutorial.dodge.hit": "Auts! Kasvava varjo tarkoittaa: liiku.",
   "tutorial.dodge.how": "Napsauta maata vasemmalla, tai kävele näppäimillä {keys}.",

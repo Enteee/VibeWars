@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { MatchSimulation, STARTER_BUILDS, vec2 } from "@vibewars/game-core";
+
 import { loadAllMaps, loadMap } from "../loader.js";
+import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
 import {
   balanceVerdict,
   highGround,
+  playBuildBot,
   runMapBalance,
   walksToCentre,
   type MapBalanceResult,
@@ -79,6 +83,26 @@ describe("walks and high ground (#3070)", () => {
 
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
+  });
+});
+
+describe("a seated bot (#3344)", () => {
+  it("stands on its spawn's layer", () => {
+    const map = loadMap("arena-canyon");
+    const build = STARTER_BUILDS[0];
+    if (build === undefined) {
+      throw new Error("no built-in builds");
+    }
+    const onRim = { position: vec2(1400, 400), layer: 2 };
+    const sim = new MatchSimulation({
+      seed: "seated",
+      matchRules: mapMatchRules(map, map.mode),
+      teamCount: map.teams,
+      ...mapSimulationFields(map, map.teams),
+      participants: [playBuildBot(build, "rim", 0, onRim, 0)],
+    });
+    expect(map.groundLayer).not.toBe(onRim.layer);
+    expect(sim.get("rim")?.layer).toBe(onRim.layer);
   });
 });
 

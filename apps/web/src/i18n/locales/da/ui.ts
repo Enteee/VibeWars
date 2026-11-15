@@ -1410,6 +1410,13 @@ export default {
   "training.soundOn": "Lyd til.",
   "training.you": "Dig",
 
+  "tutorial.climb.hint": "Op på afsatsen, og så ned på jorden under den.",
+  "tutorial.climb.how":
+    "Klik hvor du vil stå. Alt+klik (Option på en Mac) vælger jorden nedenunder.",
+  "tutorial.climb.intro": "Op ad trappen. En fuld ring er der, hvor du kommer til at stå.",
+  "tutorial.climb.praise": "To lag, ét sted. Nu kan du læse terrænet.",
+  "tutorial.climb.tip": "Tip: Alt+klik vælger jorden under en afsats.",
+  "tutorial.climb.under": "Hold Alt nede og klik. Den stiplede ring er under dig.",
   "tutorial.dodge.hint": "Vent ved en ring på dens skygge, og træd så væk.",
   "tutorial.dodge.hit": "Av! En voksende skygge betyder: flyt dig.",
   "tutorial.dodge.how": "Venstreklik på jorden, eller gå med {keys}.",

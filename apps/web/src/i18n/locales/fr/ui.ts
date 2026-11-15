@@ -1505,6 +1505,13 @@ export default {
   "training.soundOn": "Son activé.",
   "training.you": "Toi",
 
+  "tutorial.climb.hint": "Monte sur la corniche, puis descends au sol en dessous.",
+  "tutorial.climb.how":
+    "Clique là où tu veux te tenir. Alt+clic (Option sur Mac) choisit le sol du dessous.",
+  "tutorial.climb.intro": "Monte les marches. Un cercle plein montre où tu seras.",
+  "tutorial.climb.praise": "Deux niveaux, un seul endroit. Tu sais lire le terrain.",
+  "tutorial.climb.tip": "Astuce : Alt+clic choisit le sol sous une corniche.",
+  "tutorial.climb.under": "Maintiens Alt et clique. Le cercle en pointillés est sous toi.",
   "tutorial.dodge.hint": "Attends près d'un cercle que son ombre paraisse, puis écarte-toi.",
   "tutorial.dodge.hit": "Aïe ! Une ombre qui grandit, ça veut dire : bouge.",
   "tutorial.dodge.how": "Clic gauche sur le sol, ou marche avec {keys}.",

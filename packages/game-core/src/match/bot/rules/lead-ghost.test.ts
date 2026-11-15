@@ -10,9 +10,10 @@ import { askBot, body, BOT, BOUNDS, fighter, MONK, RULESET, WARRIOR } from "./te
 const FIELD: GhostField = {
   level: 24,
   altar: vec2(800, 400),
+  altarLayer: 0,
   spawns: [
-    { team: 0, position: vec2(100, 400) },
-    { team: 1, position: vec2(1500, 400) },
+    { team: 0, position: vec2(100, 400), layer: 0 },
+    { team: 1, position: vec2(1500, 400), layer: 0 },
   ],
 };
 const HILL: BotObjectives = { ...NO_OBJECTIVES, altar: FIELD.altar };

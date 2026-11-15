@@ -43,9 +43,10 @@ describe("play-build's target in King of the Hill (#2600)", () => {
     const field: GhostField = {
       level: 24,
       altar: ALTAR,
+      altarLayer: 0,
       spawns: [
-        { team: 0, position: vec2(100, 400) },
-        { team: 1, position: foeGhostAt },
+        { team: 0, position: vec2(100, 400), layer: 0 },
+        { team: 1, position: foeGhostAt, layer: 0 },
       ],
     };
     return new MatchSimulation({
@@ -104,9 +105,10 @@ describe("play-build's target in King of the Hill (#2600)", () => {
       ghostField: {
         level: 24,
         altar: vec2(1300, 400),
+        altarLayer: 0,
         spawns: [
-          { team: 0, position: vec2(100, 400) },
-          { team: 1, position: vec2(1300, 400) },
+          { team: 0, position: vec2(100, 400), layer: 0 },
+          { team: 1, position: vec2(1300, 400), layer: 0 },
         ],
       },
       participants: [
@@ -371,10 +373,11 @@ describe("play-build with three teams (#2685)", () => {
       ghostField: {
         level: 24,
         altar: vec2(1300, 700),
+        altarLayer: 0,
         spawns: [
-          { team: 0, position: vec2(100, 400) },
-          { team: 1, position: vec2(650, 450) },
-          { team: 2, position: vec2(1500, 100) },
+          { team: 0, position: vec2(100, 400), layer: 0 },
+          { team: 1, position: vec2(650, 450), layer: 0 },
+          { team: 2, position: vec2(1500, 100), layer: 0 },
         ],
       },
       participants: [
