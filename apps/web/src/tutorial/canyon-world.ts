@@ -733,3 +733,116 @@ export function rampTutor(simulation: MatchSimulation): RampTutor {
     },
   };
 }
+
+/** How far past the east stairs' top station 11's mark lies, and the tutor beside it. */
+const TUTOR_BESIDE_TUNNEL = 70;
+
+/** Station 11's tunnel (#3326), on the canyon's second map, under its sleeping guard. */
+export interface CanyonTunnel {
+  /** The tunnel's footprint: on `under` inside it is in the tunnel, on `above` over it. */
+  readonly footprint: Shape;
+  readonly under: number;
+  readonly above: number;
+  /** The mark, just past the east stairs' top, on `above`. */
+  readonly mark: Vec2;
+  /** Where the guard lies: on the rock over the tunnel's middle, a wall of `above`. */
+  readonly sleeper: Vec2;
+  /** The tutor's way through: the west stairs' top and foot, the east's foot and top. */
+  readonly westTop: Vec2;
+  readonly westFoot: Vec2;
+  readonly eastFoot: Vec2;
+  readonly eastTop: Vec2;
+}
+
+export const TUNNEL: CanyonTunnel = ((): CanyonTunnel => {
+  const map = TUTORIAL_CANYON[1];
+  const tunnel = map.tunnels.find(({ id }) => id === "tunnel");
+  const west = map.transitions.find(({ id }) => id === "tunnel-west-steps");
+  const east = map.transitions.find(({ id }) => id === "tunnel-east-steps");
+  if (
+    tunnel?.footprint.kind !== "rect" ||
+    west?.area.kind !== "rect" ||
+    east?.area.kind !== "rect"
+  ) {
+    throw new Error(`${map.id}: no tunnel and its steps for station 11`);
+  }
+  /** A flight's foot and top, each `PAST_THE_STAIRS` beyond its ends. */
+  const ends = (
+    area: { x: number; y: number; width: number; height: number },
+    uphill: "n" | "s" | "e" | "w",
+  ): { foot: Vec2; top: Vec2 } => {
+    const middle = vec2(area.x + area.width / 2, area.y + area.height / 2);
+    const along = { n: vec2(0, -1), s: vec2(0, 1), e: vec2(1, 0), w: vec2(-1, 0) }[uphill];
+    const half =
+      Math.abs(along.x) * (area.width / 2) +
+      Math.abs(along.y) * (area.height / 2) +
+      PAST_THE_STAIRS;
+    return {
+      foot: vec2(middle.x - along.x * half, middle.y - along.y * half),
+      top: vec2(middle.x + along.x * half, middle.y + along.y * half),
+    };
+  };
+  const westEnds = ends(west.area, west.uphill);
+  const eastEnds = ends(east.area, east.uphill);
+  const { x, y, width, height } = tunnel.footprint;
+  return {
+    footprint: tunnel.footprint,
+    under: east.from,
+    above: east.to,
+    mark: eastEnds.top,
+    sleeper: vec2(x + width / 2, y + height / 2),
+    westTop: westEnds.top,
+    westFoot: westEnds.foot,
+    eastFoot: eastEnds.foot,
+    eastTop: vec2(eastEnds.top.x + TUTOR_BESIDE_TUNNEL, eastEnds.top.y),
+  };
+})();
+
+/** The tutor at station 11 (#3326), stepped once a frame. */
+export interface TunnelTutor {
+  readonly step: () => void;
+}
+
+/**
+ * The tutor at station 11: waits at the west stairs' top, and once the
+ * player is down in the tunnel goes through it after them, waypoint by
+ * waypoint, to beside the mark. Never over the top, where the guard lies.
+ */
+export function tunnelTutor(simulation: MatchSimulation): TunnelTutor {
+  const { under, above, westTop, westFoot, eastFoot, eastTop } = TUNNEL;
+  let route: readonly { at: Vec2; layer: number }[] = [
+    { at: westFoot, layer: under },
+    { at: eastFoot, layer: under },
+    { at: eastTop, layer: above },
+  ];
+  let following = false;
+  simulation.walkTo(TUTOR_ID, westTop, above);
+  return {
+    step: () => {
+      const self = simulation.get(SELF_ID);
+      const tutor = simulation.get(TUTOR_ID);
+      if (self === undefined || tutor === undefined) {
+        return;
+      }
+      if (!following) {
+        if (self.layer !== under) {
+          return;
+        }
+        following = true;
+      } else {
+        const [next] = route;
+        if (
+          next === undefined ||
+          Math.hypot(tutor.position.x - next.at.x, tutor.position.y - next.at.y) > WAYPOINT_REACH
+        ) {
+          return;
+        }
+        route = route.slice(1);
+      }
+      const [next] = route;
+      if (next !== undefined) {
+        simulation.walkTo(TUTOR_ID, next.at, next.layer);
+      }
+    },
+  };
+}

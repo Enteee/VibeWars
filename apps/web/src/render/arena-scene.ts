@@ -261,6 +261,12 @@ import {
   type Wisp,
 } from "./ground-effect-look.js";
 import { lyingPose } from "./lying-pose.js";
+import {
+  SLEEPER_RIM_WIDTH,
+  SLEEPER_Z_WIDTH,
+  sleeperCommands,
+  type SleeperProp,
+} from "./sleeper-prop.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import {
@@ -747,6 +753,10 @@ export class ArenaScene extends Phaser.Scene {
    */
   private goals = new Map<string, { mark: GoalMark; goneAt: number | undefined }>();
   private readonly goalGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** Scenery the simulation does not know (#3326), lying on the walls of its layer. */
+  private props: readonly SleeperProp[] = [];
+  /** The props' graphics, one per wall-top depth. */
+  private readonly propGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Every caped body's cape (#1699), and where the body was drawn last frame. */
   private capes = new Map<string, { motion: CapeMotion; x: number; y: number }>();
   /**
@@ -865,6 +875,11 @@ export class ArenaScene extends Phaser.Scene {
   /** Replace the snapshot to draw on the next frame. */
   public setSnapshot(snapshot: ArenaSnapshot): void {
     this.snapshot = snapshot;
+  }
+
+  /** Replace the props to draw from the next frame: none clears them. */
+  public setProps(props: readonly SleeperProp[]): void {
+    this.props = props;
   }
 
   /** Queue a floating number/label above a world position. */
@@ -1041,6 +1056,7 @@ export class ArenaScene extends Phaser.Scene {
         paintFormAura(phaserPainter(band.body), x, y, actor.radius, breath);
       }
     }
+    this.drawProps();
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
       if (band !== undefined) {
@@ -1854,6 +1870,76 @@ export class ArenaScene extends Phaser.Scene {
               command.height,
             );
             break;
+        }
+      }
+      g.restore();
+    }
+  }
+
+  /**
+   * The props (#3326) on top of their layer's walls: lifted by the layer's
+   * height and the wall's, just over that wall's depth, and lit where they lie.
+   */
+  private drawProps(): void {
+    for (const graphics of this.propGraphics.values()) {
+      graphics.clear();
+    }
+    const { ground, layerCount } = this.snapshot.structure;
+    for (const prop of this.props) {
+      const depth = renderOrder({ kind: "wall-top", layer: prop.layer });
+      let g = this.propGraphics.get(depth);
+      if (g === undefined) {
+        g = this.add.graphics().setDepth(depth);
+        this.propGraphics.set(depth, g);
+      }
+      const lift = elevationOf(prop.layer, ground) + (layerCount === 1 ? 0 : WALL_HEIGHT);
+      const tint = this.tintAt(prop.position, prop.layer);
+      g.save();
+      g.translateCanvas(0, -lift);
+      for (const command of sleeperCommands(
+        prop.position,
+        prop.facing,
+        this.now,
+        this.reducedMotion,
+      )) {
+        switch (command.kind) {
+          case "glow":
+            g.fillStyle(command.colour, command.alpha / 2);
+            g.fillCircle(command.at.x, command.at.y, command.radius);
+            g.fillStyle(command.colour, command.alpha);
+            g.fillCircle(command.at.x, command.at.y, command.radius / 2);
+            break;
+          case "body":
+            g.fillStyle(
+              tint === undefined ? command.colour : multiplyColour(command.colour, tint),
+              1,
+            );
+            tracePath(g, command.outline);
+            g.fillPath();
+            g.lineStyle(SLEEPER_RIM_WIDTH, command.rim, 1);
+            g.strokePath();
+            break;
+          case "head":
+            g.fillStyle(
+              tint === undefined ? command.colour : multiplyColour(command.colour, tint),
+              1,
+            );
+            g.fillCircle(command.at.x, command.at.y, command.radius);
+            g.lineStyle(SLEEPER_RIM_WIDTH, command.rim, 1);
+            g.strokeCircle(command.at.x, command.at.y, command.radius);
+            break;
+          case "z": {
+            const { at, size } = command;
+            const half = size / 2;
+            g.lineStyle(SLEEPER_Z_WIDTH, command.colour, command.alpha);
+            g.beginPath();
+            g.moveTo(at.x - half, at.y - half);
+            g.lineTo(at.x + half, at.y - half);
+            g.lineTo(at.x - half, at.y + half);
+            g.lineTo(at.x + half, at.y + half);
+            g.strokePath();
+            break;
+          }
         }
       }
       g.restore();
@@ -2716,6 +2802,11 @@ export class ArenaScene extends Phaser.Scene {
   private bodyTint(actor: RenderableActor): number | undefined {
     // Drawn lifted and eased; the light is where it stands, on its own layer.
     const { position, layer } = this.standing.get(actor.id) ?? actor;
+    return this.tintAt(position, layer);
+  }
+
+  /** What the light at `position` on `layer` multiplies a body there by. */
+  private tintAt(position: Vec2, layer: number): number | undefined {
     const lit = this.bodyLight(position, layer);
     const structure = this.drawnMap?.structure;
     // Under a deck, in its shade (#3078): shape, not light, so with lighting off too.

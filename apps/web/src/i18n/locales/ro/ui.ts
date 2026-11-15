@@ -1547,6 +1547,11 @@ export default {
   "tutorial.stepIn.how": "Clic stânga pe platformă sau mergi cu {keys}.",
   "tutorial.stepIn.intro": "Hai, în teleportor cu mine!",
   "tutorial.stepIn.praise": "Împreună. Ține-ți respirația.",
+  "tutorial.tunnel.hint": "Coboară treptele, prin tunel, până la semn.",
+  "tutorial.tunnel.how":
+    "Dă clic pe treptele în jos, apoi pe semnul de dincolo de capătul celălalt.",
+  "tutorial.tunnel.intro": "Ssst. Nu-l trezi. Trecem pe dedesubt.",
+  "tutorial.tunnel.praise": "Niciun sunet. Tunelurile te ascund de cei de sus.",
   "tutorial.tutor": "Tutore",
   "tutorial.walk.hint": "Aici! Calcă pe semnul strălucitor.",
   "tutorial.walk.how": "Clic stânga pe sol, sau mergi cu {keys}.",
