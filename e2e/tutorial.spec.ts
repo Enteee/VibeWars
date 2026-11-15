@@ -44,6 +44,17 @@ const ON_THE_LEDGE = { x: 3850, y: 1830 };
  * ground (layer 1), 112 world units up, so a click here picks the mark.
  */
 const OVER_THE_HIGH_DECK = { x: 1980, y: 1610 - 112 };
+/**
+ * On the canyon floor south of station 10's first flight (#3325), clear of
+ * the tutor waiting at its foot (x 2350, y 1850).
+ */
+const SOUTH_OF_THE_FLIGHTS = { x: 2600, y: 2050 };
+/**
+ * On the ground under station 10's high deck (#3325), in the notch of the
+ * bounds that holds the deck and its landing: 210 world units below where
+ * the deck is drawn, so from here a plain click on it is one stride.
+ */
+const UNDER_THE_HIGH_DECK = { x: 1980, y: 1700 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -405,12 +416,28 @@ test.describe("the first-time tutorial (#3218)", () => {
         .toBe(true);
       await expect(frame).toHaveAttribute("data-mark-layer", "3");
       const high = "High ground. Foes below can't easily reach you.";
+      // Along the ground to under the deck, an Alt walk at every stride: a
+      // plain one would pick the ledge or the landing on the way, and from
+      // the ledge the next stride lies out of bounds. South of the tutor
+      // first, so no stride falls on it or north of the canyon floor.
+      for (const waypoint of [SOUTH_OF_THE_FLIGHTS, UNDER_THE_HIGH_DECK]) {
+        await expect(async () => {
+          await page.keyboard.down("Alt");
+          await walkTo(waypoint);
+          await page.keyboard.up("Alt");
+          const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+            .split(",")
+            .map(Number);
+          expect(Math.hypot(cx - waypoint.x, cy - waypoint.y)).toBeLessThan(150);
+        }).toPass({ timeout: 90_000 });
+      }
+      // One click on the deck walks round to the first flight and up both.
       await expect(async () => {
         if (await hasSaid(high)) {
           return;
         }
         await walkTo(OVER_THE_HIGH_DECK);
-        await expect.poll(() => hasSaid(high), { timeout: 5_000 }).toBe(true);
+        await expect.poll(() => hasSaid(high), { timeout: 20_000 }).toBe(true);
       }).toPass({ timeout: 90_000 });
       expect(await hasSaid("One more flight."), "the landing gets its line").toBe(true);
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
