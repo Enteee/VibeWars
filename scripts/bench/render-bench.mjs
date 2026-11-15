@@ -239,6 +239,34 @@ async function hostedMap(page, mapId) {
   await select.selectOption(mapId);
 }
 
+/** The per-frame passes #3368 times, as `pass-timing.ts` names them. */
+const PASSES = ["cutAwayTunnels", "drawHiddenOutlines", "fadeOverhangs", "lighting"];
+
+/**
+ * Zero the page's pass timings, or read them and zero them: the mean ms a
+ * frame of each pass costs.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @returns {Promise<Record<string, number>>}
+ */
+function takePasses(page) {
+  return page.evaluate(() => {
+    /** @type {unknown} */
+    const timing = Reflect.get(window, "__passTiming");
+    const shown = /** @type {Record<string, { ms: number, calls: number }> | undefined} */ (timing);
+    /** @type {Record<string, number>} */
+    const means = {};
+    for (const [pass, { ms, calls }] of Object.entries(shown ?? {})) {
+      means[pass] = calls === 0 ? 0 : ms / calls;
+    }
+    Reflect.deleteProperty(window, "__passTiming");
+    return means;
+  });
+}
+
+/** The passes of the latest still window, which `measure` leaves for its caller. */
+let lastPasses = /** @type {Record<string, number>} */ ({});
+
 /**
  * Frame times on `mapId`'s menu background, in ms, sorted.
  *
@@ -264,7 +292,10 @@ async function measure(page, mapId, seconds) {
     throw new Error(`${mapId}: the menu background has no canvas`);
   }
   await sleep(SETTLE_MS);
-  return frameTimes(page, seconds);
+  await takePasses(page);
+  const frames = await frameTimes(page, seconds);
+  lastPasses = await takePasses(page);
+  return frames;
 }
 
 /**
@@ -437,6 +468,7 @@ async function follow(page, mapId) {
       times.length = 0;
     }
   });
+  await takePasses(page);
   const frames = frameTimes(page, FOLLOW_SECONDS);
   const end = Date.now() + FOLLOW_SECONDS * 1000;
   let next = 0;
@@ -478,12 +510,13 @@ async function follow(page, mapId) {
     await sleep(STEP_MS);
   }
   const measured = await frames;
+  const passes = await takePasses(page);
   const stats = await page.evaluate(() => {
     /** @type {unknown} */
     const shown = Reflect.get(window, "__frameTiming");
     return /** @type {FrameTiming} */ (shown);
   });
-  return { frames: measured, reached: next, ...stats };
+  return { frames: measured, reached: next, passes, ...stats };
 }
 
 /**
@@ -557,6 +590,7 @@ try {
     windows.push(await calibrationWindow());
     const frames = await mapWindow(mapId, SECONDS);
     rows.push({
+      passes: lastPasses,
       mapId,
       frames: frames.length,
       p50: percentile(frames, 50),
@@ -589,6 +623,7 @@ try {
           sum(run.snapshots.map((time) => (time - mean) ** 2)) / run.snapshots.length,
         ),
         reached: run.reached,
+        passes: run.passes,
       });
     } finally {
       await match.close();
@@ -625,6 +660,22 @@ try {
       );
     }
   }
+  /** @type {(label: string, mapRows: { mapId: string, p50: number, passes: Record<string, number> }[]) => void} */
+  const printPasses = (label, mapRows) => {
+    console.log();
+    console.log(
+      `| ${label} | ${PASSES.map((pass) => `${pass} ms/frame`).join(" | ")} | passes % of p50 |`,
+    );
+    console.log(`|---|${PASSES.map(() => "---|").join("")}---|`);
+    for (const row of mapRows) {
+      const costs = PASSES.map((pass) => row.passes[pass] ?? 0);
+      const share = costs.reduce((a, b) => a + b, 0) / row.p50;
+      console.log(
+        `| ${row.mapId} | ${costs.map((cost) => cost.toFixed(2)).join(" | ")} | ${(share * 100).toFixed(0)} % |`,
+      );
+    }
+  };
+  if (rows.length > 0) printPasses("passes (still)", rows);
   console.log();
   console.log(
     "| follow | frames | p50 ms | p95 ms | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | waypoints | p50 / flat |",
@@ -643,6 +694,7 @@ try {
       failed = true;
     }
   }
+  printPasses("passes (follow)", followed);
 } finally {
   await browser?.close();
   served?.stop();

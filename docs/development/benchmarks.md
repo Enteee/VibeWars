@@ -204,6 +204,27 @@ it and `window.__frameTiming` holds those times.
 In software GL the update and render JS are a small share of a frame:
 most of it is the GPU process filling pixels, which no JS timer sees.
 
+The bench build also times the per-frame passes that grow with 2.5D
+geometry (#3368, `render/pass-timing.ts`): `cutAwayTunnels`,
+`drawHiddenOutlines`, `fadeOverhangs` and the lighting update. Each
+case prints their mean ms a frame and their sum as a share of the frame
+p50. Only the bench's build measures; a player build folds the timing to
+nothing.
+
+## The hosted perf bench
+
+`.github/workflows/perf-bench.yml` (#3368) runs the render bench and the
+host tick (a 4v4 of bots, 400 ticks, `BENCH_HOST`) on GitHub-hosted
+runners, so nobody loads the company host for it. Dispatch it with a list
+of map ids, or `layered` (the default) for every map of more than one
+layer. A pull request touching the renderer, the layer rules, pathing or
+a map runs it on the touched maps plus `arena-canyon` and
+`sandstone-steps`. It is information, never a gate: the 2.7 ceiling stays
+enforced by `ci.yml`. Read the table in the run's job summary, or in the
+log between `--- perf table ---` and `--- end ---`. Raw ms on a hosted
+runner are for orientation; the ratios are against the calibration map
+run on the same runner.
+
 ## What is not measured
 
 **Client FPS on a real GPU.** The render bench draws in headless

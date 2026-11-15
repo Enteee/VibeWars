@@ -290,6 +290,7 @@ import {
 import { liftFrame, liftPlatform, liftShaft, type LiftFrame } from "./lift-art.js";
 import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
+import { passEnd, passStart } from "./pass-timing.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
 import { SWITCH_MARK_ART, leverThrown, switchMarkKey } from "./switch-mark.js";
 import { paintArrival, paintTeleportEntry, paintTeleportExit } from "./teleport-mark.js";
@@ -978,7 +979,9 @@ export class ArenaScene extends Phaser.Scene {
     this.drawnActors = this.liftActors(dt);
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
+    const lightAt = passStart();
     this.updateLighting(time);
+    passEnd("lighting", lightAt);
     decayShoutMarks(this.shoutMarks, dt);
     this.updateGroundEffects();
     this.drawMap();
@@ -1047,9 +1050,15 @@ export class ArenaScene extends Phaser.Scene {
         this.drawActor(band, actor);
       }
     }
+    const cutAt = passStart();
     this.cutAwayTunnels(dt);
+    passEnd("cutAwayTunnels", cutAt);
+    const fadeAt = passStart();
     this.fadeOverhangs(dt);
+    passEnd("fadeOverhangs", fadeAt);
+    const outlineAt = passStart();
     this.drawHiddenOutlines();
+    passEnd("drawHiddenOutlines", outlineAt);
     this.drawHoverMarker(effects);
     this.drawSwitchLinks(effects);
     // Over the bodies: a carried flag stands above its carrier's head.
