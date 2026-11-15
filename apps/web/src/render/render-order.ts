@@ -37,6 +37,7 @@ export type RenderItem =
   | { readonly kind: "goal-mark"; readonly layer: number }
   | { readonly kind: "character"; readonly band: number; readonly part: CharacterPart }
   | { readonly kind: "wall"; readonly layer: number }
+  | { readonly kind: "wall-top"; readonly layer: number }
   | { readonly kind: "support"; readonly deckLayer: number }
   | { readonly kind: "side-face"; readonly deckLayer: number }
   | { readonly kind: "tunnel-cover"; readonly deckLayer: number }
@@ -120,6 +121,11 @@ const PLUME = 1.6;
 /** Rain or snow (#3032): over the whole world, under hidden outlines, effects and the HUD. */
 const WEATHER = 89;
 const WALL = 2;
+/**
+ * Scenery lying on a wall (#3326), such as the tutorial's sleeping guard:
+ * just over its wall, under the next layer's supports and decks.
+ */
+const WALL_TOP = 2.05;
 const SUPPORT = 3;
 const SIDE_FACE = 4;
 /**
@@ -184,6 +190,8 @@ export function renderOrder(item: RenderItem): number {
       return item.band * LAYER_STACK + CHARACTER_PART[item.part];
     case "wall":
       return item.layer * LAYER_STACK + WALL;
+    case "wall-top":
+      return item.layer * LAYER_STACK + WALL_TOP;
     case "support":
       return (item.deckLayer - 1) * LAYER_STACK + SUPPORT;
     case "side-face":

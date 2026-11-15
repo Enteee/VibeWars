@@ -61,6 +61,34 @@ const UNDER_THE_HIGH_DECK = { x: 1980, y: 1700 };
  * over the ground.
  */
 const OVER_THE_LANDING = { x: 2350, y: 1560 - 56 };
+/**
+ * Station 11's way off the high deck (#3326): down both flights, west along
+ * the south leg, north up the west one, onto the top of the tunnel's west
+ * steps, one long stride from the tunnel's west half. The west leg bends west
+ * past its foot: a stride north from there can land where no path goes,
+ * so one waypoint takes the bend. Each stride a long
+ * one: a short first one from the deck falls on the rock round it.
+ */
+const TO_THE_TUNNEL = [
+  { x: 2350, y: 1950 },
+  { x: 1300, y: 2100 },
+  { x: 1030, y: 1650 },
+  { x: 1200, y: 1300 },
+  { x: 1200, y: 800 },
+  { x: 1600, y: 700 },
+  { x: 1720, y: 700 },
+];
+/** How far each stride of station 11 (#3326) reaches, in world units: still inside the view. */
+const LONG_STRIDE = 500;
+/**
+ * In station 11's tunnel (#3326), west and east of its middle: the tunnel
+ * (x 2080-2800, y 450-950, layer 0) is a layer, 56 world units, under the
+ * rock over it, so its floor is drawn this far below where it lies.
+ */
+const IN_THE_TUNNEL_WEST = { x: 2200, y: 700 + 56 };
+const IN_THE_TUNNEL_EAST = { x: 2700, y: 700 + 56 };
+/** Station 11's mark (#3326), just past the top of the tunnel's east steps. */
+const PAST_THE_TUNNEL = { x: 3240, y: 700 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -98,7 +126,7 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge, up to the high deck: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge, up to the high deck, through the tunnel: then the menu, and no offer again`, async ({
       page,
     }) => {
       // Four stations, each a walk or a drag in a sim that runs no faster than
@@ -108,8 +136,9 @@ test.describe("the first-time tutorial (#3218)", () => {
       // walk to the clearing and the heal some 30 s more (#3303), and the
       // walk round the bad ground some 20 s more (#3310), and the walk to the
       // rats and their fight some 60 s more (#3316), and the ledge some 30 s
-      // more (#3323), and the walk up to the high deck some 30 s more (#3325).
-      test.setTimeout(600_000);
+      // more (#3323), and the walk up to the high deck some 30 s more (#3325), and the walk
+      // round to the tunnel and through it two to five minutes more (#3326).
+      test.setTimeout(900_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
       const frame = page.locator(".tutorial-frame");
@@ -215,7 +244,7 @@ test.describe("the first-time tutorial (#3218)", () => {
           timeout: 10_000,
         })
         .toBe(true);
-      const walkTo = async (point: { x: number; y: number }): Promise<void> => {
+      const walkTo = async (point: { x: number; y: number }, stride = STRIDE): Promise<void> => {
         // A stride toward it at most, so the click stays clear of the HUD
         // at the screen's edges, whoever follows it up clicks again.
         const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
@@ -223,7 +252,7 @@ test.describe("the first-time tutorial (#3218)", () => {
           .split(",")
           .map(Number);
         const far = Math.hypot(point.x - cx, point.y - cy);
-        const reach = Math.min(1, STRIDE / Math.max(far, 1));
+        const reach = Math.min(1, stride / Math.max(far, 1));
         const at = view.onPage({ x: cx + (point.x - cx) * reach, y: cy + (point.y - cy) * reach });
         await page.mouse.click(at.x, at.y);
       };
@@ -453,6 +482,47 @@ test.describe("the first-time tutorial (#3218)", () => {
         }
         await walkTo(OVER_THE_HIGH_DECK);
         await expect.poll(() => hasSaid(high), { timeout: 5_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
+
+      // Station 11 (#3326): down off the deck, round to the tunnel's west
+      // steps, an Alt walk down into its west half, on through its east half
+      // under the sleeping guard, and up the far steps to the mark.
+      await expect
+        .poll(() => hasSaid("Shh. Don't wake them. We go under."), { timeout: 15_000 })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-mark-layer", "1");
+      const near = async (point: { x: number; y: number }, reach: number): Promise<void> => {
+        const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+          .split(",")
+          .map(Number);
+        expect(Math.hypot(cx - point.x, cy - point.y)).toBeLessThan(reach);
+      };
+      for (const waypoint of TO_THE_TUNNEL) {
+        await expect(async () => {
+          await walkTo(waypoint, LONG_STRIDE);
+          await near(waypoint, 150);
+        }).toPass({ timeout: 90_000 });
+      }
+      // One click each, then a wait for the walk: an Alt click from inside
+      // the tunnel goes back up onto the rock (#3234), where the guard bars
+      // the way east.
+      await expect(async () => {
+        await page.keyboard.down("Alt");
+        await walkTo(IN_THE_TUNNEL_WEST, LONG_STRIDE);
+        await page.keyboard.up("Alt");
+        await expect(() => near(IN_THE_TUNNEL_WEST, 100)).toPass({ timeout: 20_000 });
+      }).toPass({ timeout: 60_000 });
+      await expect(async () => {
+        await walkTo(IN_THE_TUNNEL_EAST, LONG_STRIDE);
+        await expect(() => near(IN_THE_TUNNEL_EAST, 100)).toPass({ timeout: 20_000 });
+      }).toPass({ timeout: 60_000 });
+      const quiet = "Not a peep. Tunnels hide you from whoever's above.";
+      await expect(async () => {
+        if (await hasSaid(quiet)) {
+          return;
+        }
+        await walkTo(PAST_THE_TUNNEL, LONG_STRIDE);
+        await expect.poll(() => hasSaid(quiet), { timeout: 5_000 }).toBe(true);
       }).toPass({ timeout: 60_000 });
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
