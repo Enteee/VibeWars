@@ -1504,7 +1504,7 @@ Rules:
   ticks, so the interrupt cue is unmistakable.
 - **Nothing pitched repeats fast.** The hits have almost no pitch, because
   they fire many times a second in a team fight.
-- **Budget:** at most 10 KB each and 104 KB for the set, as mono MP3 at
+- **Budget:** at most 10 KB each and 120 KB for the set, as mono MP3 at
   22.05 kHz, 48 kbit/s. MP3 because every browser's Web Audio decodes it.
 - **Exactly one file per id** in `apps/web/src/audio/sound-ids.ts`. An asset
   nobody plays is dead weight.
