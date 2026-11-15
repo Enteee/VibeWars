@@ -13,8 +13,8 @@ const running = (...relics: RelicState[]): BotObjectives => ({
   ...NO_OBJECTIVES,
   relics,
   relicSpawns: [
-    { team: 0, position: vec2(100, 400) },
-    { team: 1, position: vec2(1500, 400) },
+    { team: 0, position: vec2(100, 400), layer: 0 },
+    { team: 1, position: vec2(1500, 400), layer: 0 },
   ],
   altar: ALTAR,
 });

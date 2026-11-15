@@ -75,9 +75,10 @@ const ALTAR = vec2(1500, 900);
 const FIELD: GhostField = {
   level: 24,
   altar: ALTAR,
+  altarLayer: 0,
   spawns: [
-    { team: 0, position: vec2(120, 900) },
-    { team: 1, position: vec2(2880, 900) },
+    { team: 0, position: vec2(120, 900), layer: 0 },
+    { team: 1, position: vec2(2880, 900), layer: 0 },
   ],
 };
 const GHOST_0 = ghostId(0);
@@ -474,9 +475,10 @@ describe("on the Hall of Heroes (#1995)", () => {
       ghostField: {
         level: 28,
         altar,
+        altarLayer: 0,
         spawns: [
-          { team: 0, position: vec2(120, 1100) },
-          { team: 1, position: vec2(3080, 1100) },
+          { team: 0, position: vec2(120, 1100), layer: 0 },
+          { team: 1, position: vec2(3080, 1100), layer: 0 },
         ],
       },
       participants: [fighter("a", 0, vec2(360, 1040)), fighter("x", 1, vec2(2840, 1160))],
@@ -492,7 +494,7 @@ describe("on the Hall of Heroes (#1995)", () => {
 describe("King of the Hill with three teams (#2682)", () => {
   const THREE: GhostField = {
     ...FIELD,
-    spawns: [...FIELD.spawns, { team: 2, position: vec2(1500, 120) }],
+    spawns: [...FIELD.spawns, { team: 2, position: vec2(1500, 120), layer: 0 }],
   };
 
   /** `kingOfTheHill` with a third team at the top edge, and its ghost. */
@@ -551,9 +553,9 @@ describe("King of the Hill with three teams (#2682)", () => {
     const SHORT = { ...KING_OF_THE_HILL_MATCH_RULES, timeLimitSeconds: 135 };
     const sim = threeWay(
       [
-        { team: 0, position: vec2(240, 600) },
-        { team: 1, position: vec2(2760, 1200) },
-        { team: 2, position: vec2(1600, 120) },
+        { team: 0, position: vec2(240, 600), layer: 0 },
+        { team: 1, position: vec2(2760, 1200), layer: 0 },
+        { team: 2, position: vec2(1600, 120), layer: 0 },
       ],
       SHORT,
     );

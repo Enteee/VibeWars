@@ -31,6 +31,7 @@ import scarredEarth from "../maps/scarred-earth/map.json" with { type: "json" };
 import sunkenBastion from "../maps/sunken-bastion/map.json" with { type: "json" };
 import threefoldKeep from "../maps/threefold-keep/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
+import { matchLayers } from "./layers.js";
 import { MapNotFoundError, listMapIds, loadAllMaps, loadMap, unseatedTeams } from "./loader.js";
 import { validateMapData } from "./schema.js";
 
@@ -223,12 +224,15 @@ describe("every bundled map", () => {
   it("never spawns a player inside a wall", () => {
     // A player who spawns inside geometry is immediately stuck, which is
     // the single worst map bug and completely invisible until someone
-    // tries to play the map.
+    // tries to play the map. Only the spawn's own layer's walls count: a
+    // deck spawn stands clear of a wall under it (#3344).
     const PLAYER_RADIUS = 14;
     for (const map of maps) {
-      const segments = allWallSegments(map.walls);
+      const { walls } = matchLayers(map);
       for (const spawn of map.spawnPoints) {
-        for (const segment of segments) {
+        const segments = walls[spawn.layer];
+        expect(segments, `${map.id} spawn on layer ${String(spawn.layer)}`).toBeDefined();
+        for (const segment of segments ?? []) {
           expect(
             circleIntersectsSegment(spawn.position, PLAYER_RADIUS, segment),
             `${map.id} spawn at (${String(spawn.position.x)}, ${String(spawn.position.y)})`,

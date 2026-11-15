@@ -47,14 +47,14 @@ export interface CapturePoint extends CapturePointState {
   readonly layer: number;
 }
 
-/** Where a map puts a shrine. Omitted `layer`: the ground. */
-export type CapturePointSite = Vec2 & { readonly layer?: number };
+/** Where a map puts a shrine, and on which layer (ADR-0051). */
+export type CapturePointSite = Vec2 & { readonly layer: number };
 
 /** A shrine at each of `sites`, neutral, nobody's progress on it. */
 export function initialCapturePoints(sites: readonly CapturePointSite[]): CapturePoint[] {
   return sites.map(({ x, y, layer }) => ({
     position: { x, y },
-    layer: layer ?? 0,
+    layer,
     owner: null,
     capturer: null,
     progress: 0,
