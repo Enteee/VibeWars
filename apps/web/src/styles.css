@@ -4274,6 +4274,16 @@ body:has(> .splash) #menu-background::after {
   text-decoration: line-through;
 }
 
+/* While you are dead, when you are back, under the scoreboard (#3367). */
+.hud-respawn {
+  padding: 0.1rem 0.6rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* A line a flag away from home, under the scoreboard (#1226). */
 /* A watcher is told how late what it sees is (#480). */
 .hud-watching {
@@ -7439,6 +7449,18 @@ body:has(#screens[style*="none"]) .now-playing {
 }
 
 .party-row-dead[hidden] {
+  display: none;
+}
+
+/* When a dead member is back (#3367): a small number after "dead". */
+.party-row-respawn {
+  margin-inline-start: 0.4em;
+  color: var(--ink-dim);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+.party-row-respawn:empty {
   display: none;
 }
 

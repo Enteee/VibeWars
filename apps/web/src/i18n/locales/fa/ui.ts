@@ -567,6 +567,8 @@ export default {
   "hud.relicScoredOurs": "یادگار امتیاز گرفت!",
   "hud.relicScoredTheirs": "یادگار دشمن امتیاز گرفت",
   "hud.relicTheirs": "یادگار دشمن",
+  "hud.respawnIn": "بازگشت تا {seconds}",
+  "hud.respawnResurrectionOnly": "منتظر بمان تا زنده‌ات کنند",
   "hud.shrinesBoth": "زیارتگاه‌ها: +{ours}، دشمن +{theirs}",
   "hud.shrinesOurs": "زیارتگاه‌ها: +{ours}",
   "hud.shrinesTheirs": "زیارتگاه‌های دشمن: +{theirs}",
@@ -1411,6 +1413,13 @@ export default {
   "training.soundOn": "صدا روشن شد.",
   "training.you": "تو",
 
+  "tutorial.call.hint": "یک موش را اعلام کن، من همان را می‌زنم.",
+  "tutorial.call.how":
+    "با چرخ ماوس روی یک موش کلیک کن، یا روی نوار هدف کلیک کن، تا اعلامش کنی. {keys} هدفی را که تیمت اعلام کرده نشانه می‌گیرد.",
+  "tutorial.call.intro": "دو موش. تو انتخاب کن، من می‌زنم. یکی را اعلام کن.",
+  "tutorial.call.other": "آن یکی را اعلام کن.",
+  "tutorial.call.praise": "اعلامش کن، و تیم همان را می‌زند.",
+  "tutorial.call.t": "همین است. {keys} هدف اعلام‌شده را پیدا می‌کند.",
   "tutorial.climb.hint": "برو روی لبه، بعد پایین روی زمینِ زیرش.",
   "tutorial.climb.how":
     "جایی که می‌خواهی بایستی کلیک کن. Alt+کلیک (Option در Mac) زمینِ پایین را انتخاب می‌کند.",
@@ -1463,6 +1472,10 @@ export default {
   "tutorial.stepIn.how": "روی سکو کلیک چپ کن، یا با {keys} راه برو.",
   "tutorial.stepIn.intro": "بیا، با من به تله‌پورت!",
   "tutorial.stepIn.praise": "با هم. نفست را نگه دار.",
+  "tutorial.tunnel.hint": "از پله‌ها پایین، از تونل بگذر، تا نشانه.",
+  "tutorial.tunnel.how": "روی پله‌های پایین کلیک کن، بعد روی نشانهٔ آن سرِ تونل.",
+  "tutorial.tunnel.intro": "هیس. بیدارش نکن. از زیر می‌رویم.",
+  "tutorial.tunnel.praise": "حتی یک صدا هم نه. تونل‌ها تو را از بالایی‌ها پنهان می‌کنند.",
   "tutorial.tutor": "معلم",
   "tutorial.walk.hint": "اینجا! روی نشان درخشان برو.",
   "tutorial.walk.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",

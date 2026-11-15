@@ -268,6 +268,22 @@ export function skillBarSlots(
 }
 
 /**
+ * When `participant` comes back (#3367), as its team is told: whole
+ * seconds, rounded up, while it is dead; `null` if it never will, as
+ * under `"resurrection-only"`; `undefined` while it is alive.
+ */
+export function respawnIn(
+  participant: Pick<Participant, "combatant" | "respawnInSeconds">,
+): number | null | undefined {
+  if (!participant.combatant.dead) {
+    return undefined;
+  }
+  return Number.isFinite(participant.respawnInSeconds)
+    ? Math.max(0, Math.ceil(participant.respawnInSeconds))
+    : null;
+}
+
+/**
  * The weapon sets `participant` carries, as its own client sees them
  * (#489): set 1 first, `null` where one is empty, and which is in hand or
  * queued.
@@ -778,6 +794,8 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     team: player.team,
     dead: player.dead,
     corpseExploited: player.corpseExploited,
+    // Only the host's `"respawns"` carries them (#3367).
+    respawnIn: undefined,
     castingSkillId: absent(player.castingSkillId),
     castRemaining: player.castRemaining,
     castTotal: player.castTotal,

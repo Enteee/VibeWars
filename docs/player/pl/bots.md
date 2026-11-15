@@ -35,6 +35,7 @@ nawet przed tym. Bot, który znacznie wysunie się przed drużynę, czeka na res
 zanim ruszy dalej.
 
 Łucznicy i włócznicy zajmują wzniesienie, gdy jest to bezpieczne.
+Bot, na którym skupiło się dwóch wrogów albo który ma mniej niż połowę zdrowia i szybko je traci, chowa się przed ich wzrokiem na maksymalnie trzy sekundy: za murem, pod pomostem albo na wzniesieniu.
 Gdy w pobliżu nie ma wroga, bot przestawia dźwignię, która otwiera krótszą drogę do wrogów. Dwa boty burzą też mur, który zasłania znacznie krótszą drogę, uderzając w niego bronią.
 
 Boty zadające obrażenia wstrzymują swoje mocne ciosy, umiejętności ataku i czary

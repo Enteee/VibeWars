@@ -71,6 +71,7 @@ import { attackCastOf, spellCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
 import { CREATURE_DRAWN_RADIUS } from "./render/creature-shape.js";
 import type { GoalMark } from "./render/goal-mark.js";
+import type { SleeperProp } from "./render/sleeper-prop.js";
 import type { SwitchTarget } from "./render/switch-link.js";
 import { frameTiming, snapshotCadence } from "./render/frame-timing.js";
 import { conditionCues } from "./render/body-conditions.js";
@@ -169,7 +170,7 @@ export interface MatchOutcome {
  * transport, or watching it from no team (#480), with no skill bar and
  * nothing to send. A watcher's `selfSessionId` is its own in the lobby,
  * which no body in the match has. A `tutorial` (#3221) lists only its
- * `party`, shows no scoreboard, and lays its `goals` on the ground.
+ * `party`, shows no scoreboard, and lays its `goals` and `props` on the ground.
  */
 export type MatchViewOptions =
   | {
@@ -178,8 +179,12 @@ export type MatchViewOptions =
       readonly tutorial?: {
         readonly party: readonly string[];
         readonly goals: () => readonly GoalMark[];
+        /** Scenery it lays on the map (#3326), such as a sleeping guard. */
+        readonly props: () => readonly SleeperProp[];
         /** Each walk a click sends, and whether it was an Alt walk, to the ground below (#3323). */
         readonly onWalk: (below: boolean) => void;
+        /** Each press of the `target-called` key while the team has a call (#3331). */
+        readonly onCalledTargeted: () => void;
       };
     }
   | {
@@ -981,9 +986,13 @@ export async function startMatchView(
         seat.sendIntent({ kind: "target", targetSessionId: closest });
       }
     } else if (action === "target-called") {
-      const intent = calledTargetIntent(seat.getSnapshot(), seat.getCalls());
+      const calls = seat.getCalls();
+      const intent = calledTargetIntent(seat.getSnapshot(), calls);
       if (intent !== undefined) {
         seat.sendIntent(intent);
+      }
+      if (calls.target !== null) {
+        tutorial?.onCalledTargeted();
       }
     } else if (action === "target-self") {
       const intent = selfTargetIntent(match.players, seat.selfSessionId);
@@ -1197,6 +1206,9 @@ export async function startMatchView(
       latestArena = { ...latestArena, goals: tutorial.goals() };
     }
     viewport?.scene.setSnapshot(latestArena);
+    if (tutorial !== undefined) {
+      viewport?.scene.setProps(tutorial.props());
+    }
     compass.update(latestArena, viewed.selfSessionId);
     // For the e2e specs: who your team has called.
     const called = latestArena.calledId ?? "";

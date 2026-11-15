@@ -599,6 +599,8 @@ export default {
   "hud.relicScoredOurs": "Relíquia entregue!",
   "hud.relicScoredTheirs": "Relíquia inimiga entregue",
   "hud.relicTheirs": "Relíquia inimiga",
+  "hud.respawnIn": "De volta em {seconds}",
+  "hud.respawnResurrectionOnly": "Espere ser ressuscitado",
   "hud.shrinesBoth": "Santuários: +{ours}, inimigo +{theirs}",
   "hud.shrinesOurs": "Santuários: +{ours}",
   "hud.shrinesTheirs": "Santuários inimigos: +{theirs}",
@@ -1486,6 +1488,13 @@ export default {
   "training.soundOn": "Som ligado.",
   "training.you": "Você",
 
+  "tutorial.call.hint": "Marca um rato, e eu bato nesse.",
+  "tutorial.call.how":
+    "Clica com a roda num rato, ou clica na barra de alvo, para o marcar. {keys} mira o que a tua equipa marcou.",
+  "tutorial.call.intro": "Dois ratos. Tu escolhes, eu bato. Marca um.",
+  "tutorial.call.other": "Marca o outro.",
+  "tutorial.call.praise": "Marca-o, e a equipa bate no mesmo.",
+  "tutorial.call.t": "É isso. {keys} encontra o alvo marcado.",
   "tutorial.climb.hint": "Suba na saliência e depois desça ao chão embaixo dela.",
   "tutorial.climb.how":
     "Clique onde quer ficar. Alt+clique (Option no Mac) escolhe o chão de baixo.",
@@ -1538,6 +1547,10 @@ export default {
   "tutorial.stepIn.how": "Clique esquerdo na plataforma, ou anda com {keys}.",
   "tutorial.stepIn.intro": "Anda, para o teletransportador comigo!",
   "tutorial.stepIn.praise": "Juntos. Sustém a respiração.",
+  "tutorial.tunnel.hint": "Desça os degraus, atravesse o túnel, até a marca.",
+  "tutorial.tunnel.how": "Clique nos degraus que descem, depois na marca após a outra ponta.",
+  "tutorial.tunnel.intro": "Psiu. Não o acorde. Vamos por baixo.",
+  "tutorial.tunnel.praise": "Nem um pio. Túneis o escondem de quem está em cima.",
   "tutorial.tutor": "Tutor",
   "tutorial.walk.hint": "Aqui! Pise a marca brilhante.",
   "tutorial.walk.how": "Clique esquerdo no chão, ou ande com {keys}.",

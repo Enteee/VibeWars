@@ -59,4 +59,8 @@ Warrior e Paragon indossano l'armatura più pesante; Ranger, Assassin e Dervish 
 
 Nella maggior parte delle modalità i morti restano a terra finché un alleato non li **resuscita** con un'abilità, come Resurrection Signet, che chiunque può prendere. Alcune modalità riportano i morti a ondate, o da soli; vedi [Modalità](modes.md).
 
+Mentre sei morto, una riga sotto il punteggio conta alla rovescia fino
+al tuo ritorno, o ti dice di aspettare che ti resuscitino. La finestra
+del gruppo mostra il conto alla rovescia accanto a ogni alleato morto.
+
 Ogni morte ti costa il 15% di **morale**, fino a -60%: la Salute e l'Energia massime calano di conseguenza. Ogni nemico ucciso dalla tua squadra ne restituisce il 2%, fino a 0. In una Battaglia di gilda, tenere la Base bandiera lo porta oltre, fino a +10%.

@@ -566,6 +566,8 @@ export default {
   "hud.relicScoredOurs": "Relikvie i mål!",
   "hud.relicScoredTheirs": "Fjendens relikvie i mål",
   "hud.relicTheirs": "Fjendens relikvie",
+  "hud.respawnIn": "Tilbage om {seconds}",
+  "hud.respawnResurrectionOnly": "Vent på at blive genoplivet",
   "hud.shrinesBoth": "Helligdomme: +{ours}, fjenden +{theirs}",
   "hud.shrinesOurs": "Helligdomme: +{ours}",
   "hud.shrinesTheirs": "Fjendens helligdomme: +{theirs}",
@@ -1410,6 +1412,13 @@ export default {
   "training.soundOn": "Lyd til.",
   "training.you": "Dig",
 
+  "tutorial.call.hint": "Kald en rotte, så slår jeg den.",
+  "tutorial.call.how":
+    "Klik med hjulet på en rotte, eller klik på målbjælken, for at kalde den. {keys} sigter på det, dit hold har kaldt.",
+  "tutorial.call.intro": "To rotter. Du vælger, jeg slår. Kald én.",
+  "tutorial.call.other": "Kald den anden.",
+  "tutorial.call.praise": "Kald det, og holdet slår det samme.",
+  "tutorial.call.t": "Sådan. {keys} finder det kaldte mål.",
   "tutorial.climb.hint": "Op på afsatsen, og så ned på jorden under den.",
   "tutorial.climb.how":
     "Klik hvor du vil stå. Alt+klik (Option på en Mac) vælger jorden nedenunder.",
@@ -1461,6 +1470,10 @@ export default {
   "tutorial.stepIn.how": "Venstreklik på pladen, eller gå med {keys}.",
   "tutorial.stepIn.intro": "Kom, ind i teleporten med mig!",
   "tutorial.stepIn.praise": "Sammen. Hold vejret.",
+  "tutorial.tunnel.hint": "Ned ad trinene, gennem tunnelen, hen til mærket.",
+  "tutorial.tunnel.how": "Klik på trinene ned, så på mærket bag den anden ende.",
+  "tutorial.tunnel.intro": "Shh. Væk dem ikke. Vi går nedenunder.",
+  "tutorial.tunnel.praise": "Ikke et pip. Tunneler skjuler dig for dem ovenover.",
   "tutorial.tutor": "Læremester",
   "tutorial.walk.hint": "Herovre! Træd ind på det glødende mærke.",
   "tutorial.walk.how": "Venstreklik på jorden, eller gå med {keys}.",

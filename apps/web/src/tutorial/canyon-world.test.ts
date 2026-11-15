@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import { CANYON_ARRIVAL, CANYON_ARRIVALS } from "./canyon-map.js";
 import {
   BAD_GROUND,
+  CALL_RATS,
   CLEARING,
   CRACKED_WALL,
   DODGE_MARK,
@@ -20,6 +21,7 @@ import {
   RAT_AGGRO,
   RAT_POCKET,
   badGroundTutor,
+  callTutor,
   canyonWorld,
   clearingTutor,
   ledgeTutor,
@@ -33,6 +35,21 @@ import { MARK_REACH } from "./stations.js";
 import { PLAYER_PROFESSION, SELF_ID, TUTOR_ID, houseBuild } from "./tutorial-world.js";
 
 const TICK = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
+
+/** One step, its log fed to `watch` as the connection would deliver it. */
+const stepWatched = (simulation: MatchSimulation, watch: RatWatch): void => {
+  for (const entry of simulation.step(TICK).log) {
+    watch.observe({
+      casterSessionId: entry.sourceId ?? "",
+      cause: entry.cause,
+      skillId: entry.skillId ?? "",
+      weaponId: entry.weaponId ?? "",
+      attributeId: entry.attributeId ?? "",
+      doubleStrike: entry.doubleStrike,
+      events: entry.events,
+    });
+  }
+};
 
 describe("canyonWorld (#3247)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
@@ -308,21 +325,6 @@ describe("badGroundTutor (#3310)", () => {
 describe("ratPocket (#3316)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
   const ids = RAT_POCKET.rats.map(({ id }) => id);
-  /** One step, its log fed to `watch` as the connection would deliver it. */
-  const stepWatched = (simulation: MatchSimulation, watch: RatWatch): void => {
-    for (const entry of simulation.step(TICK).log) {
-      watch.observe({
-        casterSessionId: entry.sourceId ?? "",
-        cause: entry.cause,
-        skillId: entry.skillId ?? "",
-        weaponId: entry.weaponId ?? "",
-        attributeId: entry.attributeId ?? "",
-        doubleStrike: entry.doubleStrike,
-        events: entry.events,
-      });
-    }
-  };
-
   it("places three rats at the pocket on the second map, on team 1, the big one at 240", () => {
     const world = canyonWorld("rats-test", build, build, 1);
     const { simulation } = world;
@@ -368,7 +370,7 @@ describe("ratPocket (#3316)", () => {
   it("runs the runner off when the player hits it, the tutor joining only once it is hit", () => {
     const { simulation } = canyonWorld("rats-test", build, build, 1);
     const [runnerId = ""] = ids;
-    const watch = createRatWatch(SELF_ID, ids, build.skillBar);
+    const watch = createRatWatch(SELF_ID, TUTOR_ID, ids, build.skillBar);
     const pocket = ratPocket(simulation, watch, undefined);
     const runner = (): Vec2 => simulation.get(runnerId)?.position ?? vec2(0, 0);
     const post = runner();
@@ -400,10 +402,11 @@ describe("ratPocket (#3316)", () => {
 
   it("brings one more rat once all are dead with too few skills, and no more after two", () => {
     const { simulation } = canyonWorld("rats-test", build, build, 1);
-    const watch = createRatWatch(SELF_ID, ids, build.skillBar);
+    const watch = createRatWatch(SELF_ID, TUTOR_ID, ids, build.skillBar);
     const pocket = ratPocket(simulation, watch, undefined);
     const none: RatTally = {
       hitByPlayer: new Set(),
+      hitByTutor: new Set(),
       skillsOnRats: new Set(),
       knockedDown: new Set(),
     };
@@ -421,6 +424,64 @@ describe("ratPocket (#3316)", () => {
     pocket.step({ ...none, skillsOnRats: new Set(["warrior.hammer-bash", "warrior.sprint"]) });
     expect(pocket.alive()).toBe(0);
     expect(simulation.get("tutorial-rat-5")).toBeUndefined();
+  });
+});
+
+describe("callTutor (#3331)", () => {
+  const build = houseBuild(PLAYER_PROFESSION);
+  const [{ id: first }, { id: second }] = CALL_RATS.rats;
+  const none: RatTally = {
+    hitByPlayer: new Set(),
+    hitByTutor: new Set(),
+    skillsOnRats: new Set(),
+    knockedDown: new Set(),
+  };
+
+  it("places two rats on team 1 that bite no one who has not struck them", () => {
+    const { simulation } = canyonWorld("call-test", build, build, 1);
+    for (const { id, post } of CALL_RATS.rats) {
+      expect(simulation.get(id)?.combatant.team).toBe(1);
+      expect(simulation.get(id)?.position).toEqual(post);
+    }
+    const [a, b] = CALL_RATS.rats;
+    expect(Math.hypot(a.post.x - b.post.x, a.post.y - b.post.y)).toBe(200);
+  });
+
+  it("has the tutor strike the rat called, the latest call, and never the other", () => {
+    const { simulation } = canyonWorld("call-test", build, build, 1);
+    const watch = createRatWatch(SELF_ID, TUTOR_ID, [first, second], build.skillBar);
+    const tutor = callTutor(simulation, watch);
+    const attacking = (): string | undefined =>
+      simulation.get(TUTOR_ID)?.combatant.attack?.targetId;
+    tutor.step(undefined, watch.tally());
+    expect(attacking()).toBeUndefined();
+    tutor.step(TUTOR_ID, watch.tally());
+    expect(attacking()).toBeUndefined();
+    tutor.step(first, watch.tally());
+    expect(attacking()).toBe(first);
+    tutor.step(second, watch.tally());
+    expect(attacking()).toBe(second);
+    // The tutor walks from where the pair arrives, round through the tunnel.
+    for (let walked = 0; walked < 90 && !watch.tally().hitByTutor.has(second); walked += TICK) {
+      stepWatched(simulation, watch);
+      tutor.step(second, watch.tally());
+    }
+    expect(watch.tally().hitByTutor).toEqual(new Set([second]));
+    expect(tutor.lost()).toBe(false);
+  });
+
+  it("says a called rat was lost once it died unstruck by the tutor, and brings one more once both are", () => {
+    const { simulation } = canyonWorld("call-test", build, build, 1);
+    const watch = createRatWatch(SELF_ID, TUTOR_ID, [first, second], build.skillBar);
+    const tutor = callTutor(simulation, watch);
+    tutor.step(first, none);
+    simulation.remove(first);
+    tutor.step(undefined, none);
+    expect(tutor.lost()).toBe(true);
+    expect(simulation.get("tutorial-call-rat-3")).toBeUndefined();
+    simulation.remove(second);
+    tutor.step(undefined, none);
+    expect(simulation.get("tutorial-call-rat-3")?.position).toEqual(CALL_RATS.extra);
   });
 });
 

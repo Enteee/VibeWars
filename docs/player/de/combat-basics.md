@@ -99,6 +99,11 @@ In den meisten Modi bleiben Tote liegen, bis ein Verbündeter sie mit einem Skil
 **wiederbelebt**, etwa Resurrection Signet, das jeder nehmen kann. Manche Modi
 holen die Toten in Wellen oder von selbst zurück; siehe [Modi](modes.md).
 
+Solange du tot bist, zählt eine Zeile unter der Anzeigetafel herunter,
+bis du zurück bist, oder sagt dir, dass du auf eine Wiederbelebung
+warten musst. Das Gruppenfenster zeigt den Countdown neben jedem toten
+Verbündeten.
+
 Jeder Tod kostet dich 15 % **Moral**, bis -60 %: Dein maximales Leben und deine
 Energie schrumpfen mit. Jeder Gegner, den dein Team tötet, bringt 2 % zurück, bis 0. In einer Gildenschlacht hebt das Halten des Flaggenstands sie darüber hinaus,
 bis +10 %.

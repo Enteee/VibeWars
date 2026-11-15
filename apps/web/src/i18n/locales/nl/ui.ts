@@ -566,6 +566,8 @@ export default {
   "hud.relicScoredOurs": "Relikwie gescoord!",
   "hud.relicScoredTheirs": "Vijand scoort relikwie",
   "hud.relicTheirs": "Vijandelijk relikwie",
+  "hud.respawnIn": "Terug over {seconds}",
+  "hud.respawnResurrectionOnly": "Wacht tot je tot leven wordt gewekt",
   "hud.shrinesBoth": "Schrijnen: +{ours}, vijand +{theirs}",
   "hud.shrinesOurs": "Schrijnen: +{ours}",
   "hud.shrinesTheirs": "Vijandelijke schrijnen: +{theirs}",
@@ -1420,6 +1422,13 @@ export default {
   "training.soundOn": "Geluid aan.",
   "training.you": "Jij",
 
+  "tutorial.call.hint": "Roep een rat af, dan sla ik die.",
+  "tutorial.call.how":
+    "Klik met het wiel op een rat, of klik op de doelbalk, om hem af te roepen. {keys} richt op wat je team afriep.",
+  "tutorial.call.intro": "Twee ratten. Jij kiest, ik sla. Roep er één af.",
+  "tutorial.call.other": "Roep de andere af.",
+  "tutorial.call.praise": "Roep het af, en het team slaat hetzelfde.",
+  "tutorial.call.t": "Zo is het. {keys} vindt het afgeroepen doel.",
   "tutorial.climb.hint": "Op de richel, en dan omlaag naar de grond eronder.",
   "tutorial.climb.how":
     "Klik waar je wilt staan. Alt+klik (Option op een Mac) kiest de grond eronder.",
@@ -1473,6 +1482,10 @@ export default {
   "tutorial.stepIn.how": "Klik links op het platform, of loop met {keys}.",
   "tutorial.stepIn.intro": "Kom, de teleporter in met mij!",
   "tutorial.stepIn.praise": "Samen. Houd je adem in.",
+  "tutorial.tunnel.hint": "De treden af, door de tunnel, naar de markering.",
+  "tutorial.tunnel.how": "Klik op de treden omlaag, dan op de markering voorbij het andere eind.",
+  "tutorial.tunnel.intro": "Sst. Maak de wacht niet wakker. We gaan eronderdoor.",
+  "tutorial.tunnel.praise": "Geen kik. Tunnels verbergen je voor wie erboven is.",
   "tutorial.tutor": "Leraar",
   "tutorial.walk.hint": "Hierheen! Stap op de gloeiende markering.",
   "tutorial.walk.how": "Klik links op de grond, of loop met {keys}.",

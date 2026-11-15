@@ -38,6 +38,7 @@ sobre el altar va incluso antes. Un bot que se adelanta mucho a su equipo
 espera al resto antes de seguir.
 
 Los arqueros y lanceros toman el terreno elevado cuando es seguro.
+Un bot al que atacan dos enemigos, o que está por debajo de la mitad de su salud y la pierde rápido, se oculta de su vista hasta tres segundos: tras un muro, bajo una plataforma o en terreno elevado.
 Si no hay ningún enemigo cerca, un bot acciona la palanca que abre un camino más corto hacia los enemigos. Dos bots también derriban un muro que oculta un camino mucho más corto, golpeándolo con sus armas.
 
 Los bots de daño guardan sus golpes fuertes, habilidades de ataque y

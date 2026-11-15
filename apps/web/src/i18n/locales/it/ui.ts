@@ -601,6 +601,8 @@ export default {
   "hud.relicScoredOurs": "Reliquia a segno!",
   "hud.relicScoredTheirs": "Reliquia nemica a segno",
   "hud.relicTheirs": "Reliquia nemica",
+  "hud.respawnIn": "Di ritorno tra {seconds}",
+  "hud.respawnResurrectionOnly": "Aspetta che ti resuscitino",
   "hud.shrinesBoth": "Santuari: +{ours}, nemico +{theirs}",
   "hud.shrinesOurs": "Santuari: +{ours}",
   "hud.shrinesTheirs": "Santuari nemici: +{theirs}",
@@ -1493,6 +1495,13 @@ export default {
   "training.soundOn": "Audio attivo.",
   "training.you": "Tu",
 
+  "tutorial.call.hint": "Segnala un ratto e colpisco quello.",
+  "tutorial.call.how":
+    "Clic con la rotella su un ratto, o clic sulla barra del bersaglio, per segnalarlo. {keys} punta ciò che la tua squadra ha segnalato.",
+  "tutorial.call.intro": "Due ratti. Tu scegli, io colpisco. Segnalane uno.",
+  "tutorial.call.other": "Segnala l'altro.",
+  "tutorial.call.praise": "Segnalalo, e la squadra colpisce lo stesso bersaglio.",
+  "tutorial.call.t": "Esatto. {keys} trova il bersaglio segnalato.",
   "tutorial.climb.hint": "Sali sulla sporgenza, poi scendi a terra sotto di essa.",
   "tutorial.climb.how":
     "Clicca dove vuoi stare. Alt+clic (Option su Mac) sceglie il terreno sotto.",
@@ -1547,6 +1556,10 @@ export default {
   "tutorial.stepIn.how": "Clic sinistro sulla piattaforma, o cammina con {keys}.",
   "tutorial.stepIn.intro": "Dai, nel teletrasporto con me!",
   "tutorial.stepIn.praise": "Insieme. Trattieni il respiro.",
+  "tutorial.tunnel.hint": "Giù per i gradini, attraverso il tunnel, fino al segno.",
+  "tutorial.tunnel.how": "Clicca i gradini in discesa, poi il segno oltre l'altra estremità.",
+  "tutorial.tunnel.intro": "Sst. Non svegliarlo. Passiamo sotto.",
+  "tutorial.tunnel.praise": "Neanche un fiato. I tunnel ti nascondono a chi sta sopra.",
   "tutorial.tutor": "Tutor",
   "tutorial.walk.hint": "Di qua! Sali sul segno luminoso.",
   "tutorial.walk.how": "Clic sinistro sul terreno, o cammina con {keys}.",

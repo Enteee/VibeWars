@@ -59,4 +59,8 @@ Warrior a Paragon nosí nejvíc brnění; Ranger, Assassin a Dervish méně; ses
 
 Ve většině režimů mrtví zůstanou ležet, dokud je spojenec **neoživí** dovedností, například Resurrection Signet, kterou si může vzít kdokoli. Některé režimy vrací mrtvé ve vlnách nebo samy od sebe; viz [Režimy](modes.md).
 
+Když jsi mrtvý, řádek pod skóre odpočítává do tvého návratu, nebo ti
+řekne, ať počkáš na oživení. Okno družiny ukazuje odpočet u každého
+mrtvého spojence.
+
 Každá smrt tě stojí 15 % **morálky**, až na -60 %: spolu s ní se snižuje tvoje maximální zdraví a energie. Každý nepřítel, kterého tvůj tým zabije, z ní 2 % vrátí, až po 0. V Bitvě cechů ji držení stojanu vlajky zvedá i výš, až na +10 %.
