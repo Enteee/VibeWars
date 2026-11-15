@@ -16,7 +16,8 @@ export function shade(colour: number, share: number): number {
 export interface ArenaPalette {
   /** The ground's fill; `undefined` leaves the scene's background showing. */
   readonly floor: number | undefined;
-  readonly grid: number;
+  /** The tile grid over the ground; `undefined` where the ground is not laid in tiles, as river ice is not. */
+  readonly grid: number | undefined;
   readonly wallTop: number;
   readonly wallFace: number;
   readonly wallLit: number;
@@ -316,6 +317,15 @@ const DECK_LOOK: Record<DeckLook, DeckLookColours> = {
     edgeFace: shade(0x3a4658, 0.3),
     support: shade(0x3a4658, 0.3),
   },
+  /** Snow lying deep on a bank or a ridge (#3286): pale, rock in its face and showing through. */
+  drift: {
+    top: 0xb4c4d6,
+    detail: shade(0xb4c4d6, 0.14),
+    side: 0x5c6a7c,
+    edgeTop: 0xd8e2ee,
+    edgeFace: shade(0x5c6a7c, 0.3),
+    support: shade(0x5c6a7c, 0.4),
+  },
   /** Masonry fallen in: the same stone as a stone bridge, weathered darker. */
   ruin: {
     top: 0x9a9588,
@@ -505,6 +515,7 @@ const DECK_MATERIAL: Record<DeckLook, LookMaterial<DeckLookColours>> = {
   "bridge-plank": { of: "wood" },
   "bridge-log": { of: "wood" },
   ledge: { of: "rock" },
+  drift: { of: "stone", but: { side: "rock", edgeFace: "rock", support: "rock" } },
   ruin: { of: "stone" },
   arch: { of: "rock" },
   "gatehouse-roof": { of: "stone", but: { edgeTop: "kept" } },
@@ -656,9 +667,23 @@ function lookColours<
   ) as Record<Look, Colours>;
 }
 
-function biomeMaterials(tones: BiomeTones): BiomeMaterials {
+/**
+ * Whether a biome's ground is laid in tiles, and drawn with the grid on it:
+ * dressed stone and packed earth are; river ice is one sheet (#3286).
+ */
+const TILED_GROUND: Record<Biome, boolean> = {
+  hall: true,
+  heights: true,
+  wilds: true,
+  desert: true,
+  volcanic: true,
+  snow: false,
+};
+
+function biomeMaterials(tones: BiomeTones, tiled: boolean): BiomeMaterials {
+  const palette = tintAll(GRAPHIC_LAYERS, (slot) => PALETTE_MATERIAL[slot], tones);
   return {
-    palette: tintAll(GRAPHIC_LAYERS, (slot) => PALETTE_MATERIAL[slot], tones),
+    palette: tiled ? palette : { ...palette, grid: undefined },
     deck: lookColours(DECK_LOOK, DECK_MATERIAL, tones),
     transition: lookColours(TRANSITION_LOOK, TRANSITION_MATERIAL, tones),
     paving: pavingColours(tones),
@@ -668,12 +693,12 @@ function biomeMaterials(tones: BiomeTones): BiomeMaterials {
 
 /** Each biome's materials (#3172), tinted from the hall's by its tones. */
 export const BIOME: Record<Biome, BiomeMaterials> = {
-  hall: biomeMaterials(BIOME_TONES.hall),
-  heights: biomeMaterials(BIOME_TONES.heights),
-  wilds: biomeMaterials(BIOME_TONES.wilds),
-  desert: biomeMaterials(BIOME_TONES.desert),
-  volcanic: biomeMaterials(BIOME_TONES.volcanic),
-  snow: biomeMaterials(BIOME_TONES.snow),
+  hall: biomeMaterials(BIOME_TONES.hall, TILED_GROUND.hall),
+  heights: biomeMaterials(BIOME_TONES.heights, TILED_GROUND.heights),
+  wilds: biomeMaterials(BIOME_TONES.wilds, TILED_GROUND.wilds),
+  desert: biomeMaterials(BIOME_TONES.desert, TILED_GROUND.desert),
+  volcanic: biomeMaterials(BIOME_TONES.volcanic, TILED_GROUND.volcanic),
+  snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
 };
 
 /** Paving on a map of one layer (#3210): laid in the flat palette's tones, on the scene's background. */

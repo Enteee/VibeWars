@@ -157,6 +157,11 @@ const RUIN_BITES = [
 ] as const;
 /** How far a bite reaches into a ruin's top, per course it falls, in world units. */
 const BITE_DEPTH = 6;
+/** How far apart bare rock's cracks and a drift's wind ripples are scattered, in world units. */
+const CRACK_EVERY = 44;
+const RIPPLE_EVERY = 40;
+/** One ripple's place in this many has a rock through the snow instead. */
+const ROCK_ONE_IN = 11;
 /** One flagstone in this many is gone from a ruin's top, and one in this many cracked. */
 const STONE_MISSING_ONE_IN = 6;
 const STONE_CRACKED_ONE_IN = 4;
@@ -582,6 +587,83 @@ function brokenPaving(painter: StructurePainter, deck: DeckFrame): void {
   }
 }
 
+/**
+ * Each cell of `every` over `shape`'s box whose middle is on it, with its
+ * place's hash: where a natural top's marks go, never in rows a player would
+ * read as laid, the same on every client.
+ */
+function scattered(
+  shape: RenderableShape,
+  every: number,
+  mark: (at: Vec2, hash: number) => void,
+): void {
+  const { middle, half } = boxMiddle(shape);
+  const [left, top] = [middle.x - half.x, middle.y - half.y];
+  const [columns, rows] = [Math.ceil((half.x * 2) / every), Math.ceil((half.y * 2) / every)];
+  for (let column = 0; column < columns; column += 1) {
+    for (let row = 0; row < rows; row += 1) {
+      const hash = stoneHash(column, row);
+      // Off the cell's middle by up to a third of it, so no two marks line up.
+      const at = {
+        x: left + (column + 0.5 + ((hash % 7) - 3) / 9) * every,
+        y: top + (row + 0.5 + (((hash >> 3) % 7) - 3) / 9) * every,
+      };
+      if (pointInShape(at, shape)) {
+        mark(at, hash);
+      }
+    }
+  }
+}
+
+/** Bare rock's cracks, in the top's frame: short jagged lines, one cell in two. */
+function cracks(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, line, palette } = deck;
+  painter.lineStyle(line * 1.5, palette.plank, 1);
+  scattered(footprint, CRACK_EVERY, (at, hash) => {
+    if (hash % 2 !== 0) {
+      return;
+    }
+    const lean = hash % 3 === 0 ? -1 : 1;
+    const reach = CRACK_EVERY * (0.25 + (hash % 5) / 20);
+    const bend = { x: at.x + reach * 0.2 * lean, y: at.y - reach * 0.3 };
+    painter.lineBetween(at.x - reach * lean, at.y - reach * 0.4, bend.x, bend.y);
+    painter.lineBetween(bend.x, bend.y, at.x + reach * 0.8 * lean, at.y + reach * 0.5);
+  });
+}
+
+/**
+ * A drift's top, in the top's frame: short ripples the wind laid across
+ * it, and here and there a rock through the snow, its north face lit.
+ */
+function windRipples(painter: StructurePainter, deck: DeckFrame): void {
+  const { footprint, line, palette } = deck;
+  scattered(footprint, RIPPLE_EVERY, (at, hash) => {
+    if (hash % ROCK_ONE_IN === 0) {
+      const size = 5 + (hash % 4);
+      painter.fillStyle(palette.slab, 1);
+      painter.fillTriangle(
+        at.x - size,
+        at.y + size * 0.5,
+        at.x + size,
+        at.y + size * 0.5,
+        at.x,
+        at.y - size * 0.6,
+      );
+      painter.lineStyle(line * 1.5, palette.wallLit, 1);
+      painter.lineBetween(at.x - size, at.y + size * 0.5, at.x, at.y - size * 0.6);
+      return;
+    }
+    if (hash % 3 === 0) {
+      return;
+    }
+    const reach = RIPPLE_EVERY * (0.3 + (hash % 4) / 16);
+    const sag = reach * 0.18;
+    painter.lineStyle(line * 1.5, palette.plank, 1);
+    painter.lineBetween(at.x - reach, at.y, at.x, at.y + sag);
+    painter.lineBetween(at.x, at.y + sag, at.x + reach, at.y);
+  });
+}
+
 /** The middle of `shape`'s box, and its half-widths. */
 function boxMiddle(shape: RenderableShape): { readonly middle: Vec2; readonly half: Vec2 } {
   const outline =
@@ -734,15 +816,25 @@ export const DECK_ART: Record<DeckLook, DeckArt> = {
       }
     },
   },
-  /** A stone shelf on a cliff face: paving along it, a bright lip, strata down the rock. */
+  /** A shelf of bare rock (#3286): cracks wandering over it, a bright lip, strata down its face. */
   ledge: {
     side: (painter, deck) => {
       courses(painter, deck, false);
     },
     top: (painter, deck) => {
-      painter.lineStyle(deck.line, deck.palette.plank, 1);
-      strokeSegments(painter, acrossLong(deck.footprint, PAVING));
+      cracks(painter, deck);
       painter.lineStyle(deck.line * 2, deck.palette.wallLit, 1);
+      strokeSegments(painter, southFacingEdges(deck.footprint));
+    },
+  },
+  /** Snow lying deep (#3286): wind ripples, rock breaking through, a bright brink, rock strata under. */
+  drift: {
+    side: (painter, deck) => {
+      courses(painter, deck, false);
+    },
+    top: (painter, deck) => {
+      windRipples(painter, deck);
+      painter.lineStyle(deck.line * 3, deck.palette.wallLit, 1);
       strokeSegments(painter, southFacingEdges(deck.footprint));
     },
   },

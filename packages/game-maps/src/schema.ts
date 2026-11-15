@@ -82,6 +82,7 @@ export const DECK_LOOKS = [
   "bridge-plank",
   "bridge-log",
   "ledge",
+  "drift",
   "ruin",
   "arch",
   "gatehouse-roof",
