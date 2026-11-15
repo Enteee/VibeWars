@@ -104,6 +104,10 @@ I de fleste spiltilstande bliver de døde liggende, indtil en allieret
 tage med. Nogle spiltilstande bringer de døde tilbage i bølger eller af
 sig selv; se [Spiltilstande](modes.md).
 
+Mens du er død, tæller en linje under pointtavlen ned til du er tilbage,
+eller beder dig vente på at blive genoplivet. Gruppevinduet viser
+nedtællingen ved hver død allieret.
+
 Hver død koster dig 15 % **moral**, ned til -60 %: dit maksimale liv og
 din maksimale energi skrumper med den. Hver fjende, dit hold dræber,
 vinder 2 % tilbage, op til 0. I en Laugskamp løfter det at holde

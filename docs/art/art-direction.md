@@ -1413,7 +1413,9 @@ matching table in the generator, re-run it, and add a row to this page.
 Sound follows the one rule too: a player must tell what happened without
 looking. So each event gets its own timbre, not just its own pitch, and the
 sounds that fire most often are the shortest and quietest. You hear only what
-concerns you, never the whole arena (#104).
+concerns you, never the whole arena (#104). A creature that is not yours
+dies in silence, and at most three deaths sound in half a second, never
+dropping your own (#3366).
 
 | id                 | Plays when                                                     | Length | Peak     | Character                                     |
 | ------------------ | -------------------------------------------------------------- | ------ | -------- | --------------------------------------------- |
@@ -1423,7 +1425,11 @@ concerns you, never the whole arena (#104).
 | `heal`             | you are healed                                                 | 0.32 s | −12 dBFS | Soft bright two-note chime, a fifth           |
 | `interrupt`        | a cast is interrupted, by or on you                            | 0.25 s | −2 dBFS  | Broadband crack into a buzzy fall             |
 | `interrupt-missed` | your interrupt hit nothing                                     | 0.10 s | −14 dBFS | Muted low click: "wasted"                     |
-| `death`            | anyone dies                                                    | 0.60 s | −6 dBFS  | Long low fall with a breath of noise          |
+| `death-you`        | you die                                                        | 0.80 s | −5 dBFS  | Low falling two-note, a fourth down           |
+| `death-ally`       | a teammate dies; your own minion, 6 dB quieter                 | 0.50 s | −9 dBFS  | Short muted bell                              |
+| `death-foe`        | a foe dies                                                     | 0.35 s | −8 dBFS  | Quick bright downward pluck: the reward       |
+| `respawn-you`      | you respawn or are resurrected; a teammate, 8 dB quieter       | 0.60 s | −10 dBFS | Rising airy chime                             |
+| `crit`             | a critical hit you deal or take, over its hit                  | 0.15 s | −8 dBFS  | Short bright transient                        |
 | `refused`          | the server refuses your cast                                   | 0.16 s | −12 dBFS | Tiny falling two-note blip                    |
 | `weapon-swing`     | your weapon attack misses                                      | 0.16 s | −14 dBFS | Dry, pitchless airy whoosh                    |
 | `bow-release`      | you fire a ranged weapon                                       | 0.18 s | −13 dBFS | Soft low string pluck, a tiny snap            |
@@ -1498,7 +1504,7 @@ Rules:
   ticks, so the interrupt cue is unmistakable.
 - **Nothing pitched repeats fast.** The hits have almost no pitch, because
   they fire many times a second in a team fight.
-- **Budget:** at most 10 KB each and 104 KB for the set, as mono MP3 at
+- **Budget:** at most 10 KB each and 120 KB for the set, as mono MP3 at
   22.05 kHz, 48 kbit/s. MP3 because every browser's Web Audio decodes it.
 - **Exactly one file per id** in `apps/web/src/audio/sound-ids.ts`. An asset
   nobody plays is dead weight.

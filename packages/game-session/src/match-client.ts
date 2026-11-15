@@ -11,6 +11,7 @@ import {
   parseWireCalls,
   parseWireStrokes,
   parseWireTraps,
+  parseWireRespawns,
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSkillBar,
@@ -140,6 +141,24 @@ export function onFromHost<T>(
   });
 }
 
+/**
+ * `players` with each dead one's `respawnIn` from `respawns` (#3367); the
+ * alive, and the dead it does not name, foes among them, keep none.
+ */
+export function withRespawns(
+  players: readonly PlayerSnapshot[],
+  respawns: ReadonlyMap<string, number | null>,
+): readonly PlayerSnapshot[] {
+  if (respawns.size === 0) {
+    return players;
+  }
+  return players.map((player) =>
+    player.dead && respawns.has(player.sessionId)
+      ? { ...player, respawnIn: respawns.get(player.sessionId) }
+      : player,
+  );
+}
+
 /** The latest recharges, and the match time they were told at, to count down from. */
 interface Recharges {
   readonly message: RechargeMessage;
@@ -180,6 +199,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let strokes: { readonly wire: WireStroke; readonly at: number }[] = [];
   /** Your team's traps as last sent (#1105). */
   let traps: WireTraps["traps"] = [];
+  /** When each of your team's dead comes back, as last sent (#3367), by id. */
+  let respawns = new Map<string, number | null>();
   let lost = false;
   /** When the host's peer went, by `Date.now`, while waiting for it back. */
   let droppedAt: number | undefined;
@@ -317,6 +338,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   });
   fromHost("traps", parseWireTraps, (message) => {
     traps = message.traps;
+  });
+  fromHost("respawns", parseWireRespawns, (message) => {
+    respawns = new Map(message.respawns.map(({ id, respawnIn }) => [id, respawnIn]));
   });
   fromHost(
     "ended",
@@ -458,7 +482,15 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 traps,
                 summary,
               }
-            : { ...matchSnapshot(latest.wire, latest.players, welcome.playerId), traps, summary };
+            : {
+                ...matchSnapshot(
+                  latest.wire,
+                  withRespawns(latest.players, respawns),
+                  welcome.playerId,
+                ),
+                traps,
+                summary,
+              };
         // An `ended` may land before the snapshot that says so.
         return ended === undefined
           ? snapshot

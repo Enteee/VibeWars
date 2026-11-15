@@ -106,6 +106,10 @@ les **ressuscite** avec une compétence, comme Resurrection Signet, que tout
 le monde peut prendre. Certains modes ramènent les morts par vagues, ou tout
 seuls ; voir [Modes](modes.md).
 
+Tant que tu es mort, une ligne sous le tableau des scores décompte
+jusqu'à ton retour, ou te dit d'attendre qu'on te ressuscite. La fenêtre
+du groupe affiche le décompte à côté de chaque allié mort.
+
 Chaque mort te coûte 15% de **moral**, jusqu'à -60% : ta santé et ton énergie
 maximales baissent d'autant. Chaque ennemi tué par ton équipe t'en rend 2%,
 jusqu'à 0. En Bataille de guilde, tenir le Socle du drapeau le fait monter

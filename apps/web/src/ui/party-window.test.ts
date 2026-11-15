@@ -44,6 +44,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     invulnerableSeconds: 0,
     teleportReadyAt: 0,
     corpseExploited: false,
+    respawnIn: undefined,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
@@ -133,6 +134,8 @@ describe("partyRows (#1055)", () => {
     expect(kaja?.targeted).toBe(true);
     expect(me?.targeted).toBe(false);
     expect(odo).toMatchObject({ dead: true, healthPercent: undefined, healthPoints: undefined });
+    expect(partyRows(match([ME, { ...ODO, respawnIn: 2 }]))[1]?.respawnIn).toBe(2);
+    expect(partyRows(match([ME, { ...ODO, respawnIn: null }]))[1]?.respawnIn).toBeUndefined();
     expect(bleeder).toMatchObject({ tint: "bleeding", pips: -3 });
     expect(me?.tint).toBeNull();
   });
@@ -370,6 +373,18 @@ describe("createPartyWindow (#1055)", () => {
     const [, bar, dead] = odo?.children ?? [];
     expect(bar?.hidden).toBe(true);
     expect(dead?.hidden).toBe(false);
+  });
+
+  it("counts a dead member back beside their word, and drops it when they rise (#3367)", () => {
+    party.update(match([ME, KAJA, { ...ODO, respawnIn: 4 }]));
+    const odo = () => panel().children[2];
+    const respawn = () => odo()?.children[2]?.children[0];
+    expect(respawn()?.textContent).toBe("4");
+    party.update(match([ME, KAJA, { ...ODO, respawnIn: null }]));
+    expect(respawn()?.textContent).toBe("");
+    party.update(match([ME, KAJA, { ...ODO, dead: false, respawnIn: undefined }]));
+    expect(respawn()?.textContent).toBe("");
+    expect(odo()?.children[2]?.hidden).toBe(true);
   });
 
   it("shows the BOT tag after a bot's name, and on no one else's (#1194)", () => {

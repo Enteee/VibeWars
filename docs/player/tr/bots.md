@@ -38,6 +38,7 @@ bile önce gelir. Takımının çok önüne geçen bir bot, ilerlemeden önce
 diğerlerini bekler.
 
 Okçular ve mızrakçılar güvenli olduğunda yüksek yeri tutar.
+İki rakibin odaklandığı ya da canı yarının altında olup hızla azalan bir bot, en fazla üç saniye onların görüşünden saklanır: bir duvarın arkasına, bir platformun altına ya da yüksek yere.
 Yakında düşman yoksa bot, düşmanlara daha kısa bir yol açan kolu çeker. İki bot ayrıca çok daha kısa bir yolu gizleyen bir duvarı silahlarıyla vurarak yıkar.
 
 Hasar veren botlar büyük vuruşlarını, saldırı becerilerini ve hasar

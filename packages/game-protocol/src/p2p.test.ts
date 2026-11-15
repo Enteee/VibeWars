@@ -40,6 +40,7 @@ import {
   parseWireCalls,
   parseWireStrokes,
   parseWireTraps,
+  parseWireRespawns,
   parseWireChatLine,
   parseWireSharedTrack,
   parsePeerHello,
@@ -1056,6 +1057,17 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireTraps,
     { traps: Array.from({ length: MAX_WIRE_GROUND_EFFECTS }, () => trap) },
   ],
+  [
+    "respawns (#3367)",
+    parseWireRespawns,
+    {
+      respawns: [
+        { id: "p1", respawnIn: 5 },
+        { id: "p2", respawnIn: null },
+      ],
+    },
+  ],
+  ["no respawns (#3367)", parseWireRespawns, { respawns: [] }],
   ["chat (#479)", parsePeerChat, { channel: "team", text: "spike the monk" }],
   ["shared-track (#2745)", parseWireSharedTrack, sharedTrack],
   [
@@ -1365,6 +1377,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireTraps,
     { traps: Array.from({ length: MAX_WIRE_GROUND_EFFECTS + 1 }, () => trap) },
   ],
+  ["respawns without a list (#3367)", parseWireRespawns, {}],
+  ["a respawn of no time (#3367)", parseWireRespawns, { respawns: [{ id: "p1" }] }],
+  [
+    "a respawn in part of a second (#3367)",
+    parseWireRespawns,
+    { respawns: [{ id: "p1", respawnIn: 2.5 }] },
+  ],
+  ["a respawn in the past (#3367)", parseWireRespawns, { respawns: [{ id: "p1", respawnIn: -1 }] }],
   ["a trap of no radius (#1105)", parseWireTraps, { traps: [{ ...trap, radius: 0 }] }],
   ["a trap with no skill (#1105)", parseWireTraps, { traps: [{ ...trap, skillId: 3 }] }],
   [

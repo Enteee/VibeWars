@@ -96,6 +96,10 @@ U većini načina mrtvi ostaju ležati dok ih saveznik ne **uskrsne**
 vještinom, poput Resurrection Signet, koju može uzeti svatko. Neki načini
 vraćaju mrtve u valovima ili same od sebe; vidi [Načine](modes.md).
 
+Dok si mrtav, redak ispod semafora odbrojava do tvog povratka ili ti
+kaže da čekaš uskrsnuće. Prozor družine prikazuje odbrojavanje uz svakog
+mrtvog saveznika.
+
 Svaka smrt stoji te 15% **morala**, do -60%: tvoje najveće zdravlje
 i energija smanjuju se s njim. Svaki neprijatelj kojeg tvoj tim ubije vraća 2%,
 do 0. U Bitki cehova držanje stalka za zastavu diže ga iznad toga,

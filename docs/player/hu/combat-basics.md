@@ -108,6 +108,11 @@ egy készséggel **fel nem támasztja** őket, például a Resurrection
 Signettel, amelyet bárki felvehet. Egyes módok hullámokban hozzák vissza
 a halottakat, vagy maguktól; lásd: [Játékmódok](modes.md).
 
+Amíg halott vagy, az eredményjelző alatti sor visszaszámol a
+visszatérésedig, vagy szól, hogy várd meg, hogy feltámasszanak. A
+csapatablak minden halott szövetséges mellett mutatja a
+visszaszámlálást.
+
 Minden halál 15% **morálodba** kerül, legfeljebb -60%-ig: vele együtt
 csökken a maximális Életerőd és Energiád. Minden ellenség, amelyet a
 csapatod megöl, 2%-ot hoz vissza belőle, legfeljebb 0-ig. Céhcsatában a

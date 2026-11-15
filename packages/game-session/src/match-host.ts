@@ -43,6 +43,7 @@ import {
   MAX_WIRE_COMBATS,
   MAX_LOBBY_PLAYERS,
   MAX_WIRE_PROJECTILES,
+  MAX_WIRE_ACTORS,
   MAX_WIRE_GROUND_EFFECTS,
   PROTOCOL_VERSION,
   helloProtocolVersion,
@@ -70,6 +71,7 @@ import {
   type WireSkillBar,
   type WireSnapshot,
   type WireSnapshotPart,
+  type WireRespawns,
   type WireStrokes,
   type WireTraps,
   type WireCape,
@@ -96,6 +98,7 @@ import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
 import {
   groundEffectSnapshot,
+  respawnIn,
   wireCarried,
   sameSkillBar,
   skillBarSlots,
@@ -419,6 +422,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     [0, ""],
     [1, ""],
   ]);
+  /** The respawns each team was last sent (#3367), to send again only on a change. */
+  const respawnsSent = new Map<Team, string>([
+    [0, "[]"],
+    [1, "[]"],
+  ]);
   let seated = 0;
   /**
    * The seats the match had, in seat order: whoever left still has a line
@@ -691,6 +699,40 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
   };
 
+  /**
+   * `team`'s dead and when each comes back (#3367): a foe's respawn is
+   * hidden information, so this is all a peer ever hears of them.
+   */
+  const respawnsOf = (team: Team): WireRespawns => ({
+    respawns: [...sim.participants()]
+      .flatMap((participant) => {
+        const seconds = respawnIn(participant);
+        return participant.combatant.team !== team || seconds === undefined
+          ? []
+          : [{ id: participant.id, respawnIn: seconds }];
+      })
+      .slice(0, MAX_WIRE_ACTORS),
+  });
+
+  /**
+   * `team`'s respawns to every seated peer of it, each its own, never a
+   * broadcast, when they changed since it was last sent them (#3367):
+   * about once a second while any of it is dead.
+   */
+  const sendRespawns = (team: Team): void => {
+    const view = respawnsOf(team);
+    const key = JSON.stringify(view.respawns);
+    if (key === respawnsSent.get(team)) {
+      return;
+    }
+    respawnsSent.set(team, key);
+    for (const seat of seats.values()) {
+      if (seat.team === team && seat.peerId !== undefined) {
+        transport.send("respawns", view, seat.peerId);
+      }
+    }
+  };
+
   /** Alive and in the match. */
   const isAlive = (id: string): boolean => sim.get(id)?.combatant.dead === false;
 
@@ -765,10 +807,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sendRecharges(seat, true);
     sendAdrenaline(seat, true);
     sendChainMarks(seat, true);
-    // A rejoin sees the call its team has up, its lines, and its traps.
+    // A rejoin sees the call its team has up, its lines, its traps and its dead.
     transport.send("calls", calls.view(seat.team, sim.elapsedSeconds), peerId);
     transport.send("strokes", { segments: calls.strokes(seat.team, sim.elapsedSeconds) }, peerId);
     transport.send("traps", trapsOf(seat.team), peerId);
+    transport.send("respawns", respawnsOf(seat.team), peerId);
   };
 
   /**
@@ -1317,6 +1360,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sendStrokes(1);
     sendTraps(0);
     sendTraps(1);
+    sendRespawns(0);
+    sendRespawns(1);
     // To the players, never the room (#480): a spectator in it watches
     // through `delayed` alone. One send to them all, so each part is
     // serialized once, not once per player.

@@ -105,6 +105,7 @@ export {
   skillBarSlots,
   statusSnapshot,
   groundEffectSnapshot,
+  respawnIn,
   wireStatuses,
   wireWeaponSets,
 } from "./wire.js";

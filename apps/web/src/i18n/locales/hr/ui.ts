@@ -600,6 +600,8 @@ export default {
   "hud.relicScoredOurs": "Relikvija donesena!",
   "hud.relicScoredTheirs": "Neprijatelj je donio relikviju",
   "hud.relicTheirs": "Neprijateljska relikvija",
+  "hud.respawnIn": "Natrag za {seconds}",
+  "hud.respawnResurrectionOnly": "Čekaj uskrsnuće",
   "hud.shrinesBoth": "Svetišta: +{ours}, neprijatelj +{theirs}",
   "hud.shrinesOurs": "Svetišta: +{ours}",
   "hud.shrinesTheirs": "Neprijateljska svetišta: +{theirs}",
@@ -1487,6 +1489,13 @@ export default {
   "training.soundOn": "Zvuk uključen.",
   "training.you": "Ti",
 
+  "tutorial.call.hint": "Označi štakora i ja ću udariti njega.",
+  "tutorial.call.how":
+    "Klikni kotačićem na štakora ili klikni traku mete da ga označiš. {keys} cilja ono što je tvoj tim označio.",
+  "tutorial.call.intro": "Dva štakora. Ti biraš, ja udaram. Označi jednog.",
+  "tutorial.call.other": "Označi drugog.",
+  "tutorial.call.praise": "Označi metu i cijeli tim udara isto.",
+  "tutorial.call.t": "Tako je. {keys} pronalazi označenu metu.",
   "tutorial.climb.hint": "Gore na izbočinu, pa dolje na tlo ispod nje.",
   "tutorial.climb.how": "Klikni gdje želiš stati. Alt+klik (Option na Macu) bira tlo ispod.",
   "tutorial.climb.intro": "Uz stepenice. Puni krug pokazuje gdje ćeš stati.",

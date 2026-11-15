@@ -37,6 +37,7 @@ A bot that gets far ahead of its team waits for the rest before it pushes
 on.
 
 Archers and spearmen take the high ground when it is safe.
+A bot that two foes focus on, or that is below half health and losing it fast, ducks out of their sight for up to three seconds: behind a wall, under a deck or onto high ground.
 With no foe near, a bot throws a lever that opens a shorter way to the foes. Two bots also break down a wall that hides a much shorter way, striking it with their weapons.
 
 Bot damage dealers hold their big hits, attack skills and damage spells,

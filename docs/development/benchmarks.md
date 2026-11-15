@@ -160,8 +160,10 @@ the 95 % interval at 100 matches) and draws are at most a quarter of the
 matches. Otherwise it is FAIL, naming the favoured team, or the share of
 draws, or "no contact" when no match was decided at all.
 
-PASS is necessary, not sufficient. Bots do not yet value high ground or
-cover (#2542), so a map whose heights favour one side can still pass.
+PASS is necessary, not sufficient. Bots take high ground only with a bow
+or a spear (#3141), and duck behind walls, decks and tunnels only once
+focused (#3369); they never hold a choke or a height for its own sake.
+So a map whose heights favour one side can still pass.
 The operator's playtest is the final word on every map.
 
 ### The host tick on a whole map
@@ -204,6 +206,82 @@ it and `window.__frameTiming` holds those times.
 In software GL the update and render JS are a small share of a frame:
 most of it is the GPU process filling pixels, which no JS timer sees.
 
+The bench build also times the per-frame passes that grow with 2.5D
+geometry (#3368, `render/pass-timing.ts`): `cutAwayTunnels`,
+`drawHiddenOutlines`, `fadeOverhangs` and the lighting update. Each
+case prints their mean ms a frame and their sum as a share of the frame
+p50. Only the bench's build measures; a player build folds the timing to
+nothing.
+
+## The hosted perf bench
+
+`.github/workflows/perf-bench.yml` (#3368) runs the render bench and the
+host tick (a 4v4 of bots, 400 ticks, `BENCH_HOST`) on GitHub-hosted
+runners, so nobody loads the company host for it. Dispatch it with a list
+of map ids, or `layered` (the default) for every map of more than one
+layer. A pull request touching the renderer, the layer rules, pathing or
+a map runs it on the touched maps plus `arena-canyon` and
+`sandstone-steps`. It is information, never a gate: the 2.7 ceiling stays
+enforced by `ci.yml`. Read the table in the run's job summary, or in the
+log between `--- perf table ---` and `--- end ---`. Raw ms on a hosted
+runner are for orientation; the ratios are against the calibration map
+run on the same runner.
+
+### 2.5D maps
+
+Every layered map, one dispatch run of the workflow on 2026-11-15
+([run 43712803219](https://github.com/Enteee/VibeWars/actions/runs/43712803219),
+hosted runner, so raw ms are for orientation). The ratio ceiling stays 2.7.
+The three passes the card named cost about 1 % of a frame between them; the
+frames are dominated by software-GL pixel filling, not by these passes.
+
+| map              | frames | p50 ms | p95 ms | base ms | p50 / calibration |
+| ---------------- | ------ | ------ | ------ | ------- | ----------------- |
+| arena-canyon     | 99     | 103.4  | 121.7  | 69.8    | 1.48              |
+| arena-crossroads | 99     | 103.7  | 121.6  | 69.7    | 1.49              |
+| arena-long-hall  | 69     | 156.4  | 161.3  | 69.3    | 2.26              |
+| ember-pits       | 93     | 121.0  | 123.6  | 69.6    | 1.74              |
+| frozen-crossing  | 96     | 104.2  | 122.1  | 69.6    | 1.50              |
+| sandstone-steps  | 97     | 104.9  | 123.1  | 69.5    | 1.51              |
+
+| passes (still)   | cutAwayTunnels ms/frame | drawHiddenOutlines ms/frame | fadeOverhangs ms/frame | lighting ms/frame | passes % of p50 |
+| ---------------- | ----------------------- | --------------------------- | ---------------------- | ----------------- | --------------- |
+| arena-canyon     | 0.01                    | 0.88                        | 0.02                   | 0.46              | 1 %             |
+| arena-crossroads | 0.02                    | 0.43                        | 0.01                   | 0.57              | 1 %             |
+| arena-long-hall  | 0.01                    | 0.43                        | 0.00                   | 0.55              | 1 %             |
+| ember-pits       | 0.01                    | 0.32                        | 0.00                   | 0.52              | 1 %             |
+| frozen-crossing  | 0.00                    | 0.29                        | 0.01                   | 0.42              | 1 %             |
+| sandstone-steps  | 0.02                    | 0.12                        | 0.00                   | 0.59              | 1 %             |
+
+| follow                    | frames | p50 ms | p95 ms | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | waypoints | p50 / flat |
+| ------------------------- | ------ | ------ | ------ | ------------- | ------------- | ------------ | --------------- | --------------- | ------------------ | --------- | ---------- |
+| arena-canyon (follow)     | 110    | 112.9  | 148.4  | 3.2           | 2.5           | 3 %          | 110.8           | 151.9           | 21.6               | 3         | 7.28       |
+| arena-crossroads (follow) | 114    | 109.5  | 135.5  | 2.3           | 2.0           | 2 %          | 110.8           | 145.5           | 20.8               | 3         | 7.06       |
+| arena-long-hall (follow)  | 85     | 142.9  | 203.5  | 2.4           | 3.0           | 2 %          | 144.0           | 261.6           | 36.8               | 2         | 9.22       |
+| ember-pits (follow)       | 101    | 118.7  | 156.2  | 4.3           | 2.3           | 4 %          | 121.1           | 231.3           | 25.6               | 2         | 7.66       |
+| frozen-crossing (follow)  | 117    | 104.2  | 121.5  | 2.4           | 3.6           | 2 %          | 105.1           | 214.4           | 26.3               | 3         | 6.72       |
+| sandstone-steps (follow)  | 102    | 123.6  | 153.8  | 2.3           | 1.9           | 2 %          | 124.4           | 264.1           | 36.0               | 3         | 7.97       |
+| jungle-ruins (follow)     | 775    | 15.5   | 35.1   | 1.0           | 1.2           | 7 %          | 52.5            | 110.8           | 18.0               | 1         | 1.00       |
+
+| passes (follow)           | cutAwayTunnels ms/frame | drawHiddenOutlines ms/frame | fadeOverhangs ms/frame | lighting ms/frame | passes % of p50 |
+| ------------------------- | ----------------------- | --------------------------- | ---------------------- | ----------------- | --------------- |
+| arena-canyon (follow)     | 0.01                    | 0.77                        | 0.01                   | 0.38              | 1 %             |
+| arena-crossroads (follow) | 0.01                    | 0.26                        | 0.00                   | 0.44              | 1 %             |
+| arena-long-hall (follow)  | 0.01                    | 0.18                        | 0.00                   | 0.49              | 0 %             |
+| ember-pits (follow)       | 0.01                    | 0.17                        | 0.00                   | 0.45              | 1 %             |
+| frozen-crossing (follow)  | 0.00                    | 0.15                        | 0.00                   | 0.36              | 0 %             |
+| sandstone-steps (follow)  | 0.02                    | 0.08                        | 0.00                   | 0.58              | 1 %             |
+| jungle-ruins (follow)     | 0.00                    | 0.00                        | 0.00                   | 0.01              | 0 %             |
+
+| host tick (4v4, 400 ticks) | p50 ms | p95 ms | max ms |
+| -------------------------- | ------ | ------ | ------ |
+| arena-canyon               | 1.071  | 2.552  | 5.751  |
+| arena-crossroads           | 0.851  | 1.616  | 6.191  |
+| arena-long-hall            | 0.896  | 1.808  | 3.964  |
+| ember-pits                 | 0.668  | 2.550  | 5.536  |
+| frozen-crossing            | 0.542  | 1.152  | 2.106  |
+| sandstone-steps            | 0.691  | 1.202  | 2.089  |
+
 ## What is not measured
 
 **Client FPS on a real GPU.** The render bench draws in headless
@@ -225,7 +303,7 @@ not stand for.
 A layered map's frame cost in software GL, as a ratio to a frozen
 reference map drawn the same way on the same run. CI gates it at
 `BENCH_MAX_RATIO=2.7` on pull requests that touch the renderer or the
-maps (#3157, #3190, #3243, #3255).
+maps (#3157, #3190, #3243, #3255), in its own `render bench` job of `ci.yml` (#3382).
 
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
 synthetic medium arena in the real map schema: three layers, walls, three decks

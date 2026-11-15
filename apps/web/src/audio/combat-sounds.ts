@@ -13,6 +13,24 @@ import type { WorldPlaces } from "./world-places.js";
  * §Sound. Pure, so the rules are tested without an AudioContext.
  */
 
+/** A sound to play: at full gain, or `db` below it (#3366). */
+export type Cue = SoundId | { readonly id: SoundId; readonly db: number };
+
+/** Which sound `cue` plays. */
+export function cueId(cue: Cue): SoundId {
+  return typeof cue === "string" ? cue : cue.id;
+}
+
+/** The gain `cue` plays at, 1 for full. */
+export function cueGain(cue: Cue): number {
+  return typeof cue === "string" ? 1 : decibels(cue.db);
+}
+
+/** How much quieter your own minion's death is than a teammate's (#3366). */
+const OWN_MINION_DEATH_DB = -6;
+/** How much quieter a teammate's respawn is than your own (#3366). */
+const ALLY_RESPAWN_DB = -8;
+
 /** The cue a status landing on you plays, by its category (#3297). */
 const STATUS_CUES: Partial<Record<StatusCategory, SoundId>> = {
   enchantment: "enchant-on",
@@ -31,10 +49,10 @@ export function soundsForCombat(
   message: CombatMessage,
   selfId: string,
   latest: MatchSnapshot | undefined,
-): SoundId[] {
+): Cue[] {
   const mine = message.casterSessionId === selfId;
   const tick = isTick(message);
-  const sounds: SoundId[] = [];
+  const sounds: Cue[] = [];
   const once = (id: SoundId): void => {
     if (!sounds.includes(id)) {
       sounds.push(id);
@@ -66,6 +84,9 @@ export function soundsForCombat(
         const hit = hitOn(message, event.targetId, selfId);
         if (hit !== undefined) {
           sounds.push(hit === "taken" ? "hit-taken" : "hit-dealt");
+          if (event.critical) {
+            once("crit");
+          }
         }
         break;
       }
@@ -85,14 +106,119 @@ export function soundsForCombat(
           sounds.push("interrupt-missed");
         }
         break;
-      case "death":
-        sounds.push("death");
+      case "death": {
+        const death = deathCue(event.targetId, selfId, latest);
+        if (death !== undefined) {
+          sounds.push(death);
+        }
         break;
+      }
       default:
         break;
     }
   }
-  return sounds;
+  return loudestFirst(sounds);
+}
+
+/**
+ * `cues` with each sound's copies, loudest first, in the places that
+ * sound held; every other sound keeps its place. The player's per-id
+ * throttle keeps the first and drops the rest, so your minion's quiet
+ * death must not silence a teammate's.
+ */
+function loudestFirst(cues: readonly Cue[]): Cue[] {
+  const louder = new Map<SoundId, Cue[]>();
+  for (const cue of cues) {
+    louder.set(cueId(cue), [...(louder.get(cueId(cue)) ?? []), cue]);
+  }
+  for (const copies of louder.values()) {
+    copies.sort((a, b) => cueGain(b) - cueGain(a));
+  }
+  return cues.map((cue) => louder.get(cueId(cue))?.shift() ?? cue);
+}
+
+/**
+ * The cue a death plays for `selfId` (#3366): its own, a teammate's or a
+ * foe's. A creature's death is heard only when it is `selfId`'s own, and
+ * quieter; a body `latest` does not hold is nobody's to mourn.
+ */
+function deathCue(
+  targetId: string,
+  selfId: string,
+  latest: MatchSnapshot | undefined,
+): Cue | undefined {
+  if (targetId === selfId) {
+    return "death-you";
+  }
+  const body = latest === undefined ? undefined : playerById(latest, targetId);
+  if (latest === undefined || body === undefined) {
+    return undefined;
+  }
+  if (body.creature !== undefined) {
+    return body.creature.ownerId === selfId
+      ? { id: "death-ally", db: OWN_MINION_DEATH_DB }
+      : undefined;
+  }
+  return body.team === sideOf(latest, selfId) ? "death-ally" : "death-foe";
+}
+
+/** The team `selfId` hears from: its own, or team 0 for a watcher (#3366). */
+function sideOf(snapshot: MatchSnapshot, selfId: string): number {
+  return playerById(snapshot, selfId)?.team ?? 0;
+}
+
+/** At most this many death cues play in `DEATH_WINDOW_MS` (#3366); `death-you` always plays. */
+export const DEATH_CUES_PER_WINDOW = 3;
+export const DEATH_WINDOW_MS = 500;
+
+/**
+ * A filter that lets at most `DEATH_CUES_PER_WINDOW` death cues through in
+ * any `DEATH_WINDOW_MS`, so a wiped team in 8v8 is not a carillon. The
+ * newest are dropped; your own death never is, though it counts.
+ */
+export function deathThrottle(): (cues: readonly Cue[], nowMs: number) => Cue[] {
+  let heard: number[] = [];
+  return (cues, nowMs) => {
+    heard = heard.filter((at) => nowMs - at < DEATH_WINDOW_MS);
+    return cues.filter((cue) => {
+      const id = cueId(cue);
+      if (!id.startsWith("death-")) {
+        return true;
+      }
+      if (id !== "death-you" && heard.length >= DEATH_CUES_PER_WINDOW) {
+        return false;
+      }
+      heard.push(nowMs);
+      return true;
+    });
+  };
+}
+
+/**
+ * The respawn cue between two snapshots for `selfId` (#3366): its own, or
+ * else its team's, quieter; at most one, as a team respawns in a wave. A
+ * resurrection is one too: dead, then not. A foe's, and a creature's, are
+ * silent; so is everything without a `prev`.
+ */
+export function soundsForRespawn(
+  prev: MatchSnapshot | undefined,
+  next: MatchSnapshot,
+  selfId: string,
+): Cue[] {
+  if (prev === undefined) {
+    return [];
+  }
+  const side = sideOf(next, selfId);
+  const risen = next.players.filter(
+    (body) =>
+      !body.dead && body.creature === undefined && playerById(prev, body.sessionId)?.dead === true,
+  );
+  if (risen.some((body) => body.sessionId === selfId)) {
+    return ["respawn-you"];
+  }
+  return risen.some((body) => body.team === side)
+    ? [{ id: "respawn-you", db: ALLY_RESPAWN_DB }]
+    : [];
 }
 
 /**
@@ -313,6 +439,8 @@ const CAST_FAR_DB = -12;
 const ALLY_DB = -3;
 /** Your own cast: about −16 dBFS for both layers, as `cast-self` was. */
 const SELF_DB = -7;
+/** The motif sits this far under its base, so the high layer never leads a cast (#3371). */
+export const MOTIF_DB = -4;
 /** At most this many cast voices sound at once; the rest are dropped or cut. */
 export const CAST_VOICE_LIMIT = 3;
 /** A skill's motif is pitched in quarter-tones, 24 to the octave. */
@@ -419,6 +547,8 @@ export interface CastVoice {
   readonly motif: SoundId;
   /** The motif's playback rate: the skill's own pitch. */
   readonly rate: number;
+  /** Linear gain on the motif alone, under the base's (#3371). */
+  readonly motifTrim: number;
   /** Linear gain on both layers. */
   readonly gain: number;
   /**
@@ -438,8 +568,9 @@ export interface CastListener {
 const decibels = (db: number): number => 10 ** (db / 20);
 
 /** `skill`'s two layers: its profession's base, its type's motif at its own pitch. */
-export function castLayers(skill: Skill): Pick<CastVoice, "base" | "motif" | "rate"> {
+export function castLayers(skill: Skill): Pick<CastVoice, "base" | "motif" | "rate" | "motifTrim"> {
   return {
+    motifTrim: decibels(MOTIF_DB),
     base: CAST_BASES[skill.profession],
     motif: CAST_MOTIFS[skill.type],
     rate: castPitch(skill.id),

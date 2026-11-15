@@ -6,21 +6,22 @@ setcpm(60);
 const tick = (at) =>
   stack(
     s("square")
-      .freq(2400)
+      .freq(1100)
       .penv(-1.5)
       .pattack(0.04)
       .panchor(0)
       .attack(0.001)
       .decay(0.039)
       .sustain(0)
-      .lpf(6000)
+      .lpf(3000)
       .gain(0.5)
       .compress(at, at + 0.04),
     s("white")
       .attack(0.0005)
       .decay(0.0095)
       .sustain(0)
-      .hpf(3000)
+      .hpf(2000)
+      .lpf(5000)
       .gain(0.25)
       .compress(at, at + 0.01),
   );

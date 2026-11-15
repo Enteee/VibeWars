@@ -617,6 +617,8 @@ export default {
   "hud.relicScoredOurs": "Relikvie doručena!",
   "hud.relicScoredTheirs": "Nepřátelé doručili relikvii",
   "hud.relicTheirs": "Relikvie nepřátel",
+  "hud.respawnIn": "Zpět za {seconds}",
+  "hud.respawnResurrectionOnly": "Počkej na oživení",
   "hud.shrinesBoth": "Svatyně: +{ours}, nepřátelé +{theirs}",
   "hud.shrinesOurs": "Svatyně: +{ours}",
   "hud.shrinesTheirs": "Svatyně nepřátel: +{theirs}",
@@ -1529,6 +1531,13 @@ export default {
   "training.soundOn": "Zvuk zapnut.",
   "training.you": "Ty",
 
+  "tutorial.call.hint": "Označ krysu a já udeřím tu.",
+  "tutorial.call.how":
+    "Klikni kolečkem na krysu nebo klikni na lištu cíle, abys ji označil. {keys} zaměří, co tvůj tým označil.",
+  "tutorial.call.intro": "Dvě krysy. Ty vybíráš, já biju. Označ jednu.",
+  "tutorial.call.other": "Označ tu druhou.",
+  "tutorial.call.praise": "Označ cíl a celý tým bije do stejného.",
+  "tutorial.call.t": "Přesně tak. {keys} najde označený cíl.",
   "tutorial.climb.hint": "Nahoru na římsu, pak dolů na zem pod ní.",
   "tutorial.climb.how":
     "Klikni, kam se chceš postavit. Alt+klik (Option na Macu) vybere zem pod tebou.",

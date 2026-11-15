@@ -38,6 +38,7 @@ adverse sur l'autel passe même avant. Un bot qui prend trop d'avance sur son
 équipe attend les autres avant de continuer.
 
 Les archers et les lanciers prennent les hauteurs quand c'est sans danger.
+Un bot que deux adversaires prennent pour cible, ou qui est sous la moitié de sa santé et la perd vite, se met hors de leur vue jusqu'à trois secondes : derrière un mur, sous une plateforme ou sur les hauteurs.
 Sans ennemi à proximité, un bot actionne le levier qui ouvre un chemin plus court vers les ennemis. Deux bots abattent aussi un mur qui cache un chemin bien plus court, en le frappant de leurs armes.
 
 Les bots attaquants gardent leurs gros coups, compétences d'attaque et sorts

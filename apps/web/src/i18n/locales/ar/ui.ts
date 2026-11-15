@@ -653,6 +653,8 @@ export default {
   "hud.relicScoredOurs": "سُجّل الأثر!",
   "hud.relicScoredTheirs": "سجّل العدو أثرًا",
   "hud.relicTheirs": "أثر العدو",
+  "hud.respawnIn": "العودة خلال {seconds}",
+  "hud.respawnResurrectionOnly": "انتظر من يحييك",
   "hud.shrinesBoth": "المزارات: +{ours}، العدو +{theirs}",
   "hud.shrinesOurs": "المزارات: +{ours}",
   "hud.shrinesTheirs": "مزارات العدو: +{theirs}",
@@ -1604,6 +1606,13 @@ export default {
   "training.soundOn": "الصوت مفعّل.",
   "training.you": "أنت",
 
+  "tutorial.call.hint": "نادِ على جرذ، وسأضرب ذلك الجرذ.",
+  "tutorial.call.how":
+    "انقر بعجلة الفأرة على جرذ، أو انقر شريط الهدف، لتنادي عليه. {keys} يستهدف ما نادى عليه فريقك.",
+  "tutorial.call.intro": "جرذان. أنت تختار، وأنا أضرب. نادِ على واحد.",
+  "tutorial.call.other": "نادِ على الآخر.",
+  "tutorial.call.praise": "نادِ عليه، فيضرب الفريق الهدف نفسه.",
+  "tutorial.call.t": "هكذا تمامًا. {keys} يجد الهدف المنادى عليه.",
   "tutorial.climb.hint": "إلى الحافة، ثم انزل إلى الأرض تحتها.",
   "tutorial.climb.how": "انقر حيث تريد الوقوف. Alt+نقرة (Option على Mac) تختار الأرض تحتك.",
   "tutorial.climb.intro": "اصعد الدرج. الحلقة المصمتة هي حيث ستقف.",

@@ -57,12 +57,13 @@ import { askMaxRunners } from "./runners-state.mjs";
 // the hooks it runs come from devenv.nix.
 // `dependency review` is dependency-review.yml, which runs on every pull
 // request (#133). `e2e` is the Playwright suite, a job of its own in ci.yml
-// (#132).
+// (#132). `render bench` is a job of its own in ci.yml (#3382).
 const EXPECTED_CHECKS = [
   "format + lint + typecheck + test + build",
   "git hooks",
   "dependency review",
   "e2e",
+  "render bench",
 ];
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");

@@ -4,6 +4,6 @@
 setcpm(60);
 stack(
   s("sawtooth").freq(523.25).attack(0.01).release(0.06).lpf(2600).gain(0.5).compress(0, 0.12),
-  s("sawtooth").freq(783.99).attack(0.01).release(0.22).lpf(3200).gain(0.5).compress(0.16, 0.26),
-  s("sine").freq(1567.98).attack(0.02).release(0.3).gain(0.2).compress(0, 0.18),
+  s("sawtooth").freq(783.99).attack(0.01).release(0.22).lpf(3000).gain(0.5).compress(0.16, 0.26),
+  s("sine").freq(1046.5).attack(0.02).release(0.3).gain(0.2).compress(0, 0.18),
 );

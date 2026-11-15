@@ -102,24 +102,6 @@ jobs:
       - name: No bench reference in the player build
         run: "test -d apps/web/dist && ! grep -rl 'bench-reference' apps/web/dist"
 
-      # A layered map must draw within 2.7x a frozen reference map in software GL (#3157,
-      # #3164, #3243): a ratio on this runner, so a slow runner does not trip it.
-      # Pull requests that touch the renderer, the maps, the web build or its
-      # dependencies, or this file. The checkout is the merge commit, so its
-      # diff against the base tip is the PR.
-      - name: Render bench
-        if: github.event_name == 'pull_request'
-        timeout-minutes: 20
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          git fetch --no-tags --depth=1 origin "$BASE_REF"
-          if git diff --name-only FETCH_HEAD HEAD | grep -qE '^(apps/web/src/render/|apps/web/package.json|apps/web/vite.config|packages/game-maps/|scripts/bench/|pnpm-lock.yaml|.github/workflows/ci.yml)'; then
-            BENCH_MAX_RATIO=2.7 devenv shell -- pnpm run bench:render
-          else
-            echo "no renderer or map change: render bench skipped"
-          fi
-
       # No package version younger than a week, and no git/tarball/URL
       # resolution, may enter pnpm-lock.yaml
       # (#107), even if the author overrode minimumReleaseAge or
@@ -133,6 +115,56 @@ jobs:
           git fetch --depth=1 origin "$BASE_REF"
           git show "origin/$BASE_REF:pnpm-lock.yaml" > "$RUNNER_TEMP/base-lock.yaml"
           devenv shell -- node scripts/ci/lockfile-age.mjs "$RUNNER_TEMP/base-lock.yaml" pnpm-lock.yaml
+
+  # The render bench (#3157), a job of its own so a renderer pull request
+  # waits for the longer of it and `ci`, not their sum. The job name is a
+  # required check (company-init.mjs EXPECTED_CHECKS). No `needs:`, no
+  # job-level `if:` and no `paths:`, for the reason given on `ci`: a skipped
+  # required check counts as passing. The pull-request condition and the path
+  # filter are inside the step, so any other run passes in seconds.
+  render-bench:
+    name: render bench
+    runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('["self-hosted","vibewars-company"]') || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: ./.github/actions/devenv
+
+      # A layered map must draw within 2.7x a frozen reference map in software GL (#3157,
+      # #3164, #3243): a ratio on this runner, so a slow runner does not trip it.
+      # Pull requests that touch the renderer, the maps, the web build or its
+      # dependencies, or this file. The checkout is the merge commit, so its
+      # diff against the base tip is the PR.
+      - name: Does the render bench apply
+        id: applies
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          applies=false
+          if [ "$EVENT" = pull_request ]; then
+            git fetch --no-tags --depth=1 origin "$BASE_REF"
+            if git diff --name-only FETCH_HEAD HEAD | grep -qE '^(apps/web/src/render/|apps/web/package.json|apps/web/vite.config|packages/game-maps/|scripts/bench/|pnpm-lock.yaml|.github/workflows/ci.yml)'; then
+              applies=true
+            fi
+          fi
+          echo "applies=$applies" >> "$GITHUB_OUTPUT"
+          [ "$applies" = true ] || echo "no renderer or map change on a pull request: render bench skipped"
+
+      # What the bench's own `vite build` needs and `ci`'s earlier steps
+      # used to leave behind: the rendered sound effects, and the workspace
+      # packages' declarations and output (their `main` is ./dist).
+      - name: Render sound effects
+        if: steps.applies.outputs.applies == 'true'
+        run: devenv shell -- pnpm run sfx:render
+
+      - name: Build the workspace packages
+        if: steps.applies.outputs.applies == 'true'
+        run: devenv shell -- pnpm -r --filter "./packages/**" run build
+
+      - name: Render bench
+        if: steps.applies.outputs.applies == 'true'
+        timeout-minutes: 20
+        run: BENCH_MAX_RATIO=2.7 devenv shell -- pnpm run bench:render
 
   # The `e2e` check (EXPECTED_CHECKS, #132) is the aggregate below; the work
   # is spread over six shards (#1610, #1797) so a pull request waits one sixth of
@@ -216,6 +248,14 @@ jobs:
           if [ "$EVENT" = push ]; then k=$(( (RUN_NUMBER % 3) * 2 + SHARD )); fi
           echo "e2e shard $k of 6"
           devenv shell -- node scripts/ci/shard-e2e.mjs "$k" 6
+
+      - name: Print failed tests
+        if: failure()
+        # Ends red on purpose: `hub run view --log-failed` shows only failed
+        # steps. The job is already red here (if: failure()), so this decides nothing.
+        run: |
+          devenv shell -- node scripts/ci/print-failures.mjs || true
+          exit 1
 
       - name: Upload Playwright output
         if: failure()

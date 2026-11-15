@@ -619,6 +619,8 @@ export default {
   "hud.relicScoredOurs": "Реліквію доставлено!",
   "hud.relicScoredTheirs": "Реліквію ворога доставлено",
   "hud.relicTheirs": "Реліквія ворога",
+  "hud.respawnIn": "Повернення через {seconds}",
+  "hud.respawnResurrectionOnly": "Чекайте на воскресіння",
   "hud.shrinesBoth": "Святилища: +{ours}, ворог +{theirs}",
   "hud.shrinesOurs": "Святилища: +{ours}",
   "hud.shrinesTheirs": "Святилища ворога: +{theirs}",
@@ -1537,6 +1539,13 @@ export default {
   "training.soundOn": "Звук увімкнено.",
   "training.you": "Ти",
 
+  "tutorial.call.hint": "Познач щура, і я вдарю його.",
+  "tutorial.call.how":
+    "Клацни коліщатком по щуру або клацни панель цілі, щоб позначити його. {keys} наводить на ціль, позначену командою.",
+  "tutorial.call.intro": "Два щури. Ти обираєш, я б'ю. Познач одного.",
+  "tutorial.call.other": "Познач іншого.",
+  "tutorial.call.praise": "Познач ціль, і команда б'є в одну точку.",
+  "tutorial.call.t": "Саме так. {keys} знаходить позначену ціль.",
   "tutorial.climb.hint": "Нагору на виступ, потім униз на землю під ним.",
   "tutorial.climb.how":
     "Клацни там, де хочеш стати. Alt+клацання (Option на Mac) обирає землю внизу.",
