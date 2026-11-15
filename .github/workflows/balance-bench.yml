@@ -1,0 +1,160 @@
+name: balance bench
+
+# The map balance bench on GitHub-hosted runners (#3356, #3065): all-bot
+# matches on real maps, so a map or bot PR carries its table without loading
+# the company host. Information, never a gate: it fails only if the bench
+# crashes, never because a verdict says FAIL. Not an expected check.
+# Read the table: the run's job summary, or `hub run view <id> --log`
+# between the lines `--- balance table ---` and `--- end ---`.
+
+on:
+  pull_request:
+    paths:
+      - packages/game-maps/maps/**
+      - packages/game-maps/src/match-fields.ts
+      - packages/game-maps/src/tools/map-balance.ts
+      - packages/game-core/src/match/bot/**
+      - .github/workflows/balance-bench.yml
+  workflow_dispatch:
+    inputs:
+      map:
+        description: A map id, or all
+        required: true
+        default: all
+      size:
+        description: Team size (every size the map seats if empty)
+        required: false
+      seeds:
+        description: Seeds per row
+        required: true
+        default: "100"
+      stuck:
+        description: Measure standing still in reach of nothing (BENCH_STUCK)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      rows: ${{ steps.plan.outputs.rows }}
+      seeds: ${{ steps.plan.outputs.seeds }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Plan
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          MAP: ${{ inputs.map }}
+          SIZE: ${{ inputs.size }}
+          SEEDS_INPUT: ${{ inputs.seeds }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            plan=$(node scripts/ci/balance-plan.mjs "$BASE" "$HEAD")
+            seeds=20
+          else
+            seeds=$SEEDS_INPUT
+            case "$seeds" in '' | *[!0-9]*) echo "seeds must be a number" >&2; exit 1 ;; esac
+            if [ "$MAP" = all ]; then
+              ids=$(ls packages/game-maps/maps)
+            else
+              ids=$MAP
+            fi
+            plan=$(for id in $ids; do
+              f="packages/game-maps/maps/$id/map.json"
+              [ -f "$f" ] || { echo "no such map: $id" >&2; exit 1; }
+              if [ -n "$SIZE" ]; then jq -c --arg id "$id" --argjson s "$SIZE" '{map:$id,size:$s}' <<<"{}"
+              else jq -c --arg id "$id" '.teamSizes[] | {map:$id,size:.}' "$f"; fi
+            done | jq -cs '{rows: ., dropped: []}')
+          fi
+          echo "rows=$(jq -c .rows <<<"$plan")" >> "$GITHUB_OUTPUT"
+          echo "seeds=$seeds" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Plan ($seeds seeds per row)"
+            echo
+            jq -r '.rows[] | "- \(.map) \(.size)v\(.size)"' <<<"$plan"
+            if [ "$(jq '.dropped | length' <<<"$plan")" != 0 ]; then
+              echo
+              echo "Over the cap, not run:"
+              jq -r '.dropped[] | "- \(.map) \(.size)v\(.size)"' <<<"$plan"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  bench:
+    needs: plan
+    if: needs.plan.outputs.rows != '[]'
+    name: bench (${{ matrix.row.map }} ${{ matrix.row.size }}v${{ matrix.row.size }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        row: ${{ fromJSON(needs.plan.outputs.rows) }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: ./.github/actions/devenv
+
+      # The client imports the workspace packages by their built output.
+      - name: Build packages
+        run: devenv shell -- pnpm exec tsc --build tsconfig.build.json
+
+      - name: Bench
+        env:
+          BENCH_MAP: ${{ matrix.row.map }}
+          BENCH_SIZE: ${{ matrix.row.size }}
+          BENCH_SEEDS: ${{ needs.plan.outputs.seeds }}
+          EVENT: ${{ github.event_name }}
+          STUCK: ${{ inputs.stuck }}
+        run: |
+          set -o pipefail
+          # The bench tests for the variable being set, so it is set only to ask.
+          if [ "$EVENT" = pull_request ] || [ "$STUCK" = true ]; then export BENCH_STUCK=1; fi
+          devenv shell -- pnpm bench:balance -t "prints each map" | tee bench.log
+          sed 's/\x1b\[[0-9;]*m//g' bench.log | grep '^|' > row.md
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: balance-row-${{ matrix.row.map }}-${{ matrix.row.size }}
+          path: row.md
+
+  report:
+    needs: [plan, bench]
+    if: ${{ !cancelled() && needs.bench.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: balance-row-*
+          path: rows
+
+      - name: Join
+        run: |
+          set -- rows/*/row.md; first=$1
+          {
+            head -n 2 "$first"
+            for f in rows/*/row.md; do tail -n +3 "$f"; done
+          } > balance-table.md
+          { echo "## Balance table"; echo; cat balance-table.md; } >> "$GITHUB_STEP_SUMMARY"
+          echo "--- balance table ---"
+          cat balance-table.md
+          echo "--- end ---"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: balance-table.md
+          path: balance-table.md

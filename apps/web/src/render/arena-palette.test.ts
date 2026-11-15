@@ -142,7 +142,26 @@ describe("BIOME", () => {
     expect(deck.tower.top).toBe(BIOME.hall.deck.tower.top);
   });
 
-  it.each(["desert", "wilds"] as const)(
+  it("draws the snow in low-chroma greys, so the friend blue holds on it", () => {
+    const { palette, deck } = BIOME.snow;
+    const chroma = (colour: number): number => {
+      const channels = [colour >> 16, (colour >> 8) & 0xff, colour & 0xff];
+      return Math.max(...channels) - Math.min(...channels);
+    };
+    for (const colour of [palette.floor ?? 0, palette.wallTop, deck.ledge.top, deck.drift.top]) {
+      expect(chroma(colour), `#${colour.toString(16)}`).toBeLessThan(0x20);
+    }
+    expect(deck.plinth.edgeTop).toBe(BIOME.hall.deck.plinth.edgeTop);
+  });
+
+  it("lays no tile grid on the river ice, and keeps it on every tiled ground", () => {
+    expect(BIOME.snow.palette.grid).toBeUndefined();
+    for (const biome of BIOMES.filter((name) => name !== "snow")) {
+      expect(BIOME[biome].palette.grid, biome).toBeTypeOf("number");
+    }
+  });
+
+  it.each(["desert", "wilds", "snow"] as const)(
     "keeps every %s tone a hand's width from every signal",
     (biome) => {
       const hall = new Set(coloursOf("hall"));

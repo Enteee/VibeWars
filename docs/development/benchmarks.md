@@ -9,6 +9,10 @@ Since #404 there is no server. A match runs in its host's browser, in
 
 ## How to run it
 
+On the company host, run a heavy job (a bench, Playwright) wrapped in
+`company heavy <cmd>` (#3362): the host runs one at a time and queues the
+rest.
+
 ```sh
 pnpm exec vitest run packages/game-session/src/benchmark.test.ts
 ```
@@ -100,7 +104,7 @@ id stops the run and names the id:
 
 ```sh
 BENCH_TICKS=600 BENCH_CROWD=casters BENCH_SKILLS=assassin.death-blossom,elementalist.fireball \
-  pnpm exec vitest run --silent=false packages/game-core/src/tools/tick-bench.test.ts
+  company heavy pnpm exec vitest run --silent=false packages/game-core/src/tools/tick-bench.test.ts
 ```
 
 Run it on the PR's branch and on `main`, on the same machine, and
@@ -121,7 +125,7 @@ either way as noise.
 
 ## The map balance bench
 
-`BENCH_MAP=<id> BENCH_SIZE=<n> pnpm run bench:balance` (#3065) plays
+`BENCH_MAP=<id> BENCH_SIZE=<n> company heavy pnpm run bench:balance` (#3065) plays
 all-bot matches on one real map: its walls, gates, switches, layers,
 zones and objectives, and its mode's own rules and time limit. Both
 teams field the same built-in builds, so the only difference between
@@ -129,8 +133,15 @@ them is their spawn side. Each seed is played twice, the second time
 with the builds rotated by one, so no build keeps one spawn.
 `BENCH_MAP=all` (the default) runs every map, and without `BENCH_SIZE`
 every size a map seats is its own row. `BENCH_SEEDS` sets the seeds,
-100 by default; a 4v4 row of 100 seeds takes about twenty minutes. It is
-not in CI: it is a design tool, and every map PR pastes its table.
+100 by default; a 4v4 row of 100 seeds takes about twenty minutes.
+
+Pull requests that touch a map, the bot rules or the bench run it on
+GitHub-hosted runners (`balance-bench.yml`, #3356): 20 seeds, at most 12
+rows, each touched map at every size it seats, or `arena-canyon` and
+`arena-crossroads` 2v2 for a rule change. Read the table in the run's job
+summary, or copy it from `hub run view <id> --log` between
+`--- balance table ---` and `--- end ---`. It is information, never a
+gate. Run it locally only after asking on Telegram: it loads the host.
 
 A row gives the matches run, the wins of each team (by spawn side), the
 draws, the mean match length in simulated seconds, the share of
