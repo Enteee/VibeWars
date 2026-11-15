@@ -71,7 +71,7 @@ import { attackCastOf, spellCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
 import { CREATURE_DRAWN_RADIUS } from "./render/creature-shape.js";
 import type { GoalMark } from "./render/goal-mark.js";
-import type { SleeperProp } from "./render/sleeper-prop.js";
+import type { TutorialProp } from "./render/tutorial-props.js";
 import type { SwitchTarget } from "./render/switch-link.js";
 import { frameTiming, snapshotCadence } from "./render/frame-timing.js";
 import { conditionCues } from "./render/body-conditions.js";
@@ -180,7 +180,7 @@ export type MatchViewOptions =
         readonly party: readonly string[];
         readonly goals: () => readonly GoalMark[];
         /** Scenery it lays on the map (#3326), such as a sleeping guard. */
-        readonly props: () => readonly SleeperProp[];
+        readonly props: () => readonly TutorialProp[];
         /** Each walk a click sends, and whether it was an Alt walk, to the ground below (#3323). */
         readonly onWalk: (below: boolean) => void;
         /** Each press of the `target-called` key while the team has a call (#3331). */

@@ -1529,6 +1529,12 @@ export default {
   "tutorial.moreSoon": "Mais lições em breve. Até lá fora!",
   "tutorial.offer": "Novo por aqui? O seu tutor mostra-lhe o básico.",
   "tutorial.offerTitle": "Primeira vez?",
+  "tutorial.ping.hint": "Assinala o caminho que queres seguir.",
+  "tutorial.ping.how":
+    "Clica com a roda no chão, clica na bússola ou arrasta na bússola para traçar uma linha.",
+  "tutorial.ping.intro": "Esquerda ou direita? Tu decides.",
+  "tutorial.ping.pocket": "Bela vista. Mas caminho errado.",
+  "tutorial.ping.praise": "Boa escolha. Em frente.",
   "tutorial.ramp.hint": "Suba os dois lances de escada até a marca na plataforma alta.",
   "tutorial.ramp.how": "Clique na plataforma alta. Seu caminho sobe os degraus por você.",
   "tutorial.ramp.intro": "Escadas ligam camadas. Pise nelas e elas o levam para cima.",

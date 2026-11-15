@@ -1537,6 +1537,12 @@ export default {
   "tutorial.moreSoon": "Presto altre lezioni. Ci vediamo là fuori!",
   "tutorial.offer": "Nuovo qui? Il tuo tutor ti mostrerà le basi.",
   "tutorial.offerTitle": "Prima volta?",
+  "tutorial.ping.hint": "Segnala la strada che vuoi prendere.",
+  "tutorial.ping.how":
+    "Clic con la rotellina sul terreno, clic sulla bussola o trascina sulla bussola per tracciare una linea.",
+  "tutorial.ping.intro": "Sinistra o destra? Decidi tu.",
+  "tutorial.ping.pocket": "Bella vista. Ma è la strada sbagliata.",
+  "tutorial.ping.praise": "Ottima scelta. Avanti.",
   "tutorial.ramp.hint": "Su per entrambe le rampe fino al segno sulla piattaforma alta.",
   "tutorial.ramp.how": "Clicca la piattaforma alta. Il percorso sale i gradini per te.",
   "tutorial.ramp.intro": "I gradini uniscono i livelli. Salici e ti portano su.",

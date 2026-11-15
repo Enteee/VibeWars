@@ -1537,6 +1537,12 @@ export default {
   "tutorial.moreSoon": "Curând mai multe lecții. Ne vedem acolo!",
   "tutorial.offer": "Ești nou? Tutorele tău îți arată elementele de bază.",
   "tutorial.offerTitle": "Prima dată?",
+  "tutorial.ping.hint": "Semnalează drumul pe care vrei să mergi.",
+  "tutorial.ping.how":
+    "Clic cu rotița pe sol, clic pe busolă sau trage pe busolă ca să desenezi o linie.",
+  "tutorial.ping.intro": "Stânga sau dreapta? Tu decizi.",
+  "tutorial.ping.pocket": "Frumoasă priveliște. Dar e drumul greșit.",
+  "tutorial.ping.praise": "Bună alegere. Înainte.",
   "tutorial.ramp.hint": "Urcă ambele șiruri de trepte până la semnul de pe platforma înaltă.",
   "tutorial.ramp.how": "Dă clic pe platforma înaltă. Drumul urcă treptele pentru tine.",
   "tutorial.ramp.intro": "Treptele leagă straturile. Pășește și te urcă.",

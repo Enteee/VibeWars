@@ -1385,6 +1385,12 @@ export default {
   "tutorial.moreSoon": "続きのレッスンは近日公開。戦場で会おう!",
   "tutorial.offer": "初めて? 師匠が基本を教えてくれます。",
   "tutorial.offerTitle": "初めてですか?",
+  "tutorial.ping.hint": "行きたい道をピンで示して。",
+  "tutorial.ping.how":
+    "地面をホイールクリック、コンパスをクリック、またはコンパス上をドラッグして線を引こう。",
+  "tutorial.ping.intro": "左か右か？君が決めて。",
+  "tutorial.ping.pocket": "いい眺めだ。でも道が違う。",
+  "tutorial.ping.praise": "いい判断だ。進もう。",
   "tutorial.ramp.hint": "二つの階段を上り、高台の印へ。",
   "tutorial.ramp.how": "高台をクリック。道が階段を通ってくれる。",
   "tutorial.ramp.intro": "階段は層をつなぐ。歩けば上まで運んでくれる。",

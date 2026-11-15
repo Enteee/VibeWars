@@ -1548,6 +1548,12 @@ export default {
   "tutorial.moreSoon": "D'autres leçons bientôt. À tout à l'heure là-bas !",
   "tutorial.offer": "Nouveau ? Ton tuteur va te montrer les bases.",
   "tutorial.offerTitle": "Première fois ?",
+  "tutorial.ping.hint": "Signale le chemin que tu veux prendre.",
+  "tutorial.ping.how":
+    "Clic molette sur le sol, clic sur la boussole, ou glisse sur la boussole pour tracer une ligne.",
+  "tutorial.ping.intro": "À gauche ou à droite ? À toi de voir.",
+  "tutorial.ping.pocket": "Jolie vue. Mais mauvais chemin.",
+  "tutorial.ping.praise": "Bien vu. En avant.",
   "tutorial.ramp.hint":
     "Monte les deux volées de marches jusqu'à la marque sur la plate-forme haute.",
   "tutorial.ramp.how": "Clique sur la plate-forme haute. Ton chemin prend les marches pour toi.",

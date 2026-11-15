@@ -16,6 +16,7 @@ import {
   CLEARING,
   CRACKED_WALL,
   DODGE_MARK,
+  FORK,
   LEDGE,
   RAMP,
   RAT_AGGRO,
@@ -25,6 +26,7 @@ import {
   canyonWorld,
   clearingTutor,
   ledgeTutor,
+  pingTutor,
   rampTutor,
   ratPocket,
   wallTutor,
@@ -601,5 +603,60 @@ describe("rampTutor (#3325)", () => {
     expect(
       Math.hypot((at?.position.x ?? 0) - RAMP.foot.x, (at?.position.y ?? 0) - RAMP.foot.y),
     ).toBeLessThan(MARK_REACH);
+  });
+});
+
+describe("pingTutor (#3332)", () => {
+  const build = houseBuild(PLAYER_PROFESSION);
+  const { fork, east, pocket, eastSide, lounge } = FORK;
+  const at = (simulation: MatchSimulation, point: Vec2): boolean => {
+    const tutor = simulation.get(TUTOR_ID);
+    return (
+      tutor !== undefined &&
+      Math.hypot(tutor.position.x - point.x, tutor.position.y - point.y) < MARK_REACH
+    );
+  };
+  const run = (until: () => boolean, step: () => void, seconds = 120): void => {
+    for (let walked = 0; walked < seconds && !until(); walked += TICK) {
+      step();
+    }
+  };
+
+  it("marks the pocket off the north leg, the east end as far from the fork", () => {
+    expect(pocket.y).toBeGreaterThan(fork.y);
+    expect(Math.hypot(east.x - fork.x, east.y - fork.y)).toBeCloseTo(
+      Math.hypot(pocket.x - fork.x, pocket.y - fork.y),
+    );
+    expect(eastSide.x).toBeGreaterThan(fork.x);
+  });
+
+  it("goes into the pocket once on a pocket ping, back to the fork, and east on an east ping", () => {
+    const { simulation } = canyonWorld("ping-test", build, build, 1);
+    for (const { id } of [...RAT_POCKET.rats, ...CALL_RATS.rats]) {
+      simulation.remove(id);
+    }
+    const tutor = pingTutor(simulation);
+    let ping: Vec2 | undefined;
+    const step = (): void => {
+      simulation.step(TICK);
+      tutor.step(ping);
+    };
+    run(() => at(simulation, fork), step);
+    expect(at(simulation, fork)).toBe(true);
+    ping = pocket;
+    run(() => at(simulation, lounge), step, 30);
+    expect(at(simulation, lounge)).toBe(true);
+    run(() => at(simulation, fork), step, 30);
+    expect(at(simulation, fork)).toBe(true);
+    // Once back, the same pocket ping sends it nowhere.
+    run(() => !at(simulation, fork), step, 5);
+    expect(at(simulation, fork)).toBe(true);
+    ping = east;
+    run(() => at(simulation, eastSide), step, 30);
+    expect(at(simulation, eastSide)).toBe(true);
+    // East is for good: a pocket ping after it does not move it.
+    ping = pocket;
+    run(() => !at(simulation, eastSide), step, 5);
+    expect(at(simulation, eastSide)).toBe(true);
   });
 });
