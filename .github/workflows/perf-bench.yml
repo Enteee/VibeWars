@@ -82,9 +82,12 @@ jobs:
         run: devenv shell -- pnpm exec tsc --build tsconfig.build.json
 
       # Still and walking, the render ratio against the calibration map and
-      # the per-frame pass costs. No ceiling here: information only.
+      # the per-frame pass costs. A ratio breach is printed, not failed: ci.yml
+      # enforces the ceilings, and the table must reach the report either way.
+      # A crash (a map that does not load) still fails the step.
       - name: Render bench
         env:
+          BENCH_REPORT_ONLY: "1"
           BENCH_MAP: ${{ needs.plan.outputs.maps }}
         run: |
           set -o pipefail

@@ -699,4 +699,7 @@ try {
   await browser?.close();
   served?.stop();
 }
-process.exitCode = failed ? 1 : 0;
+// BENCH_REPORT_ONLY (the hosted perf bench, #3368): a ratio breach is printed
+// above and does not fail the run, so the table still reaches the report.
+// ci.yml, which enforces the ceilings, does not set it. A crash still fails.
+process.exitCode = failed && process.env.BENCH_REPORT_ONLY === undefined ? 1 : 0;
