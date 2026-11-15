@@ -357,7 +357,9 @@ export async function startTutorialSession(
     tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
     callStation(),
   ];
-  const runner = createTutorialRunner(stations, loadKeymap, options.firstStation);
+  // A seeded start past the last station starts at the last (#3383).
+  const firstStation = Math.min(options.firstStation, stations.length - 1);
+  const runner = createTutorialRunner(stations, loadKeymap, firstStation);
   const inView = (point: Vec2): boolean => {
     const look = view?.camera();
     if (look === undefined) {
@@ -654,7 +656,7 @@ export async function startTutorialSession(
   });
   // An e2e build's seeded start past the battlefield (#3383) builds its
   // station's world at once, and never draws the battlefield.
-  const first = stations[options.firstStation];
+  const first = stations[firstStation];
   if (first === undefined || first.world === "battlefield") {
     view = await open();
     parent.append(frame);
