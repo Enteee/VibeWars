@@ -372,6 +372,7 @@ describe("auto-attack", () => {
         seed: 0,
         now: 0,
         highGround: [],
+        cover: [],
         routeLength: () => 0,
       },
     );
@@ -441,6 +442,7 @@ describe("follow-and-attack (#467)", () => {
       seed: 0,
       now: 0,
       highGround: [],
+      cover: [],
       routeLength: () => 0,
     });
   }

@@ -268,6 +268,23 @@ export interface BehaviourCursor {
   readonly foeReach: Map<string, number>;
   /** `play-build`: the foe close-in priced a walk to, and the match second it did (#3353). */
   walkFoe: { readonly id: string; readonly pricedAt: number } | undefined;
+  /** `play-build`: its health fraction at each think of the last `HEALTH_MARK_SECONDS` (#3369), oldest first. */
+  readonly healthMarks: { readonly at: number; readonly health: number }[];
+  /**
+   * `play-build`: the cover it ducks to, since when, at what health
+   * fraction, and how far it had left to walk at its last think;
+   * `undefined` while it ducks to none (#3369).
+   */
+  duck:
+    | {
+        readonly spot: HighGroundSpot;
+        readonly since: number;
+        readonly health: number;
+        readonly left: number;
+      }
+    | undefined;
+  /** `play-build`: the match second from which it may duck again (#3369). */
+  duckReadyAt: number;
 }
 
 export interface BehaviourContext {
@@ -307,6 +324,8 @@ export interface BehaviourContext {
   readonly now: number;
   /** Spots on the decks above the ground (#3141), in map order; `[]` on a flat map. */
   readonly highGround: readonly HighGroundSpot[];
+  /** Spots behind walls and under decks (#3369), on every layer, in map order; see `coverSpots`. */
+  readonly cover: readonly HighGroundSpot[];
   /** How far `self` walks to `to` on `layer` (#3141), stairs and ramps included: Infinity with no route. */
   routeLength(to: Vec2, layer: number): number;
 }
@@ -410,6 +429,9 @@ export function createCursor(): BehaviourCursor {
     thinks: 0,
     foeReach: new Map(),
     walkFoe: undefined,
+    healthMarks: [],
+    duck: undefined,
+    duckReadyAt: 0,
   };
 }
 

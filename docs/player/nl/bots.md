@@ -38,6 +38,7 @@ daar zelfs voor. Een bot die ver voor zijn team uit loopt, wacht op de rest
 voordat hij doorduwt.
 
 Boogschutters en speerwerpers nemen de hoge grond in als dat veilig is.
+Een bot waar twee vijanden zich op richten, of die onder de helft van zijn gezondheid zit en die snel verliest, duikt tot drie seconden uit hun zicht: achter een muur, onder een platform of op hoge grond.
 Is er geen vijand in de buurt, dan haalt een bot een hendel over die een kortere weg naar de vijanden opent. Twee bots slaan ook een muur neer die een veel kortere weg verbergt, door er met hun wapens op in te hakken.
 
 Schadebots bewaren hun grote klappen, aanvalsskills en schadespreuken, en
