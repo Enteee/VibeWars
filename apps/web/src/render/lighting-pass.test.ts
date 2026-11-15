@@ -26,6 +26,8 @@ import {
   shownStage,
   stageShadows,
   sunShadowTint,
+  TUNNEL_GLOW_CAP,
+  tunnelGlow,
   tunnelLightCover,
   type LightMapBox,
 } from "./lighting-pass.js";
@@ -41,6 +43,9 @@ vi.mock("phaser", () => ({
   },
 }));
 
+/** The blend modes as the mock gives them. */
+const ADD = 1;
+const MULTIPLY = 2;
 const DARK = { colour: 0xffffff, intensity: 0 };
 const light = (id: string, layer: number, flicker: number) => ({
   id,
@@ -485,12 +490,6 @@ describe("flickerRegions (#3157, #3254)", () => {
 });
 
 describe("LightingPass", () => {
-  /** Something whose every method does nothing and returns it, as a Phaser chain. */
-  function inert(): unknown {
-    const self: object = new Proxy(() => self, { get: () => () => self });
-    return self;
-  }
-
   /**
    * A scene whose light maps, as Phaser 4's DynamicTexture does, queue a
    * draw and run it only at `render()`: what each painted then, and
@@ -499,6 +498,7 @@ describe("LightingPass", () => {
   function fakeScene() {
     const destroyed = new Set<object>();
     const drawn: { colour: number; alive: boolean }[] = [];
+    const images: { key: string; alpha: number; blendMode: number }[] = [];
     const graphics = () => {
       const painter = {
         colour: -1,
@@ -543,13 +543,40 @@ describe("LightingPass", () => {
         exists: () => true,
         remove: () => undefined,
         addDynamicTexture: (_key: string, width: number, height: number) => texture(width, height),
+        // A raised or sunk layer's mask is a canvas: drawn on, never read here.
+        createCanvas: () => ({
+          context: new Proxy({}, { get: () => () => undefined, set: () => true }),
+          refresh: () => undefined,
+        }),
         get: () => ({ has: () => false, add: () => undefined }),
         getFrame: () => undefined,
       },
       make: { graphics },
-      add: { image: inert },
+      add: {
+        image: (_x: number, _y: number, key: string) => {
+          const image = {
+            key,
+            alpha: 1,
+            blendMode: -1,
+            setOrigin: () => image,
+            setScale: () => image,
+            setDepth: () => image,
+            setBlendMode(mode: number) {
+              image.blendMode = mode;
+              return image;
+            },
+            setAlpha(alpha: number) {
+              image.alpha = alpha;
+              return image;
+            },
+            destroy: () => undefined,
+          };
+          images.push(image);
+          return image;
+        },
+      },
     };
-    return { scene: scene as unknown as Phaser.Scene, drawn };
+    return { scene: scene as unknown as Phaser.Scene, drawn, images };
   }
 
   const STRUCTURE: MapStructure = {
@@ -582,5 +609,51 @@ describe("LightingPass", () => {
       { colour: sunShadowTint(SUNLIT), alive: true },
       { colour: baseTint(SUNLIT, true), alive: true },
     ]);
+  });
+
+  describe("a tunnel's lights (#3350)", () => {
+    const TUNNELLED: MapStructure = {
+      ...STRUCTURE,
+      layerCount: 2,
+      ground: 1,
+      tunnels: [{ footprint: { kind: "rect", x: 100, y: 100, width: 200, height: 80 } }],
+    };
+    const TORCH = { ...light("torch", 0, 0), colour: 0xffb060 };
+    const LIT: MapLighting = { ...BASE, lights: [TORCH] };
+
+    it("lift a pool past the lighting-off tone, and no further than the cap", () => {
+      const glow = tunnelGlow(TORCH.intensity);
+      expect(glow).toBeGreaterThan(0);
+      expect(glow).toBeLessThanOrEqual(TUNNEL_GLOW_CAP);
+      expect(tunnelGlow(10)).toBe(TUNNEL_GLOW_CAP);
+    });
+
+    it("add their pools over the tunnels' layer, and only there", () => {
+      const { scene, images } = fakeScene();
+      new LightingPass(scene).show(LIT, TUNNELLED, [], 400, 400, false);
+      const glows = images.filter(({ key }) => key.endsWith("-glow"));
+      expect(glows.length).toBeGreaterThan(0);
+      expect(glows.every(({ blendMode }) => blendMode === ADD)).toBe(true);
+    });
+
+    it("leave a map with no tunnels lit as before", () => {
+      const { scene, images } = fakeScene();
+      new LightingPass(scene).show(LIT, { ...STRUCTURE, layerCount: 2 }, [], 400, 400, false);
+      expect(images.some(({ key }) => key.endsWith("-glow"))).toBe(false);
+      expect(images.every(({ blendMode }) => blendMode === MULTIPLY)).toBe(true);
+    });
+
+    it("fade the ground's light over a tunnel to its cover's alpha (fadeTunnel)", () => {
+      const { scene, images } = fakeScene();
+      const pass = new LightingPass(scene);
+      pass.show(LIT, TUNNELLED, [], 400, 400, false);
+      const before = images.map(({ alpha }) => alpha);
+      pass.fadeTunnel(0, 0.15);
+      const faded = images.filter(({ alpha }) => alpha === 0.15);
+      expect(faded.length).toBeGreaterThan(0);
+      expect(faded.length).toBeLessThan(images.length);
+      expect(before.every((alpha) => alpha === 1)).toBe(true);
+      expect(faded.some(({ key }) => key.endsWith("-glow"))).toBe(false);
+    });
   });
 });

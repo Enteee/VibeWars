@@ -109,6 +109,7 @@ import {
   traceHiddenOutline,
   seenFrom,
   tunnelCover,
+  tunnelCoverBox,
   tunnelFloor,
   tunnelSeam,
   tunnelOpenings,
@@ -307,7 +308,7 @@ import {
   type LightSample,
 } from "./lighting-model.js";
 import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
-import { waterShapeOf, type WaterShape } from "./water-shape.js";
+import { waterPieces, waterShapeOf, type WaterPiece, type WaterShape } from "./water-shape.js";
 import { SPIRE_LOOK, ZONE_EDGE_WIDTH, ZONE_LOOK, strikeEdgeScale } from "./zone-look.js";
 import { HAZARD_ART, hazardKindOf, pathMotionAt, phaseProgressAt } from "./hazard-marks.js";
 import {
@@ -422,9 +423,22 @@ const SWITCH_LINK_WIDTH = 3;
 const SWITCH_LINK_DOT_STEP = 14;
 const SWITCH_LINK_DOT_RADIUS = 1.6;
 /** The ground over the tunnel the local body is in (#3234): how much of it still draws. */
-const TUNNEL_CUTAWAY_ALPHA = 0.35;
+const TUNNEL_CUTAWAY_ALPHA = 0.15;
 /** How long that ground takes to fade out or back in, in seconds. */
 const TUNNEL_CUTAWAY_FADE = 0.2;
+
+/** A body of water, and its pieces split by the tunnel covers under it (#3350). */
+interface WaterSplit {
+  readonly shape: WaterShape;
+  readonly pieces: readonly WaterPiece[];
+}
+
+/** What of the water over one tunnel draws on its own (#3350), to fade with its cover. */
+interface WaterOverTunnel {
+  readonly surface: Phaser.GameObjects.Graphics;
+  readonly ripples: Phaser.GameObjects.Graphics;
+  readonly painter: WaterPainter;
+}
 
 const TARGET_RING = 0xffd866;
 /** The `condition` orange: your team's called foe wears its chevron (#443). */
@@ -601,8 +615,16 @@ export class ArenaScene extends Phaser.Scene {
   private readonly liftGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Each lift as its art draws it, in the snapshot's `lifts` order; set when the map is drawn. */
   private liftFrames: readonly { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
-  /** The map's water (#2984), built when the map changes. */
-  private waterShapes: readonly WaterShape[] = [];
+  /**
+   * The map's water (#2984), built when the map changes: each body split
+   * by the tunnel covers under it (#3350).
+   */
+  private waterShapes: readonly WaterSplit[] = [];
+  /**
+   * The surface and ripples of the water over each tunnel (#3350), by its
+   * index: faded with its cover.
+   */
+  private readonly waterOverTunnels = new Map<number, WaterOverTunnel>();
   /** The ripples on each layer's water, drawn every frame. */
   private readonly rippleGraphics = new Map<
     number,
@@ -3090,15 +3112,35 @@ export class ArenaScene extends Phaser.Scene {
     for (const graphics of this.structureGraphics.values()) {
       graphics.clear();
     }
-    if (next.structure.water !== this.drawnMap?.structure.water) {
-      this.waterShapes = next.structure.water.map(waterShapeOf);
+    if (
+      next.structure.water !== this.drawnMap?.structure.water ||
+      next.structure.tunnels !== this.drawnMap.structure.tunnels
+    ) {
+      this.waterShapes = splitWater(next.structure);
     }
-    for (const shape of this.waterShapes) {
-      const surface = this.structureAt({ kind: "water", layer: shape.layer, part: "surface" });
-      surface.save();
-      surface.translateCanvas(0, -elevationOf(shape.layer, ground));
-      WATER_ART[waterArtKey(shape.depth)].surface(this.waterPainter(surface), shape, line);
-      surface.restore();
+    for (const [at, { surface, ripples }] of this.waterOverTunnels) {
+      surface.clear();
+      if (at >= next.structure.tunnels.length) {
+        surface.destroy();
+        ripples.destroy();
+        this.waterOverTunnels.delete(at);
+      }
+    }
+    for (const { shape, pieces } of this.waterShapes) {
+      for (const piece of pieces) {
+        const surface =
+          piece.tunnel === undefined
+            ? this.structureAt({ kind: "water", layer: shape.layer, part: "surface" })
+            : this.waterOverTunnel(piece.tunnel).surface;
+        surface.save();
+        surface.translateCanvas(0, -elevationOf(shape.layer, ground));
+        WATER_ART[waterArtKey(shape.depth)].surface(
+          pieces.length === 1 ? this.waterPainter(surface) : this.piecePainter(surface, piece),
+          { ...shape, outline: piece.outline, ripples: piece.ripples },
+          line,
+        );
+        surface.restore();
+      }
     }
     this.drawPits(next.structure, line, palette);
     const lifts: { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
@@ -3219,6 +3261,7 @@ export class ArenaScene extends Phaser.Scene {
       g,
       ...this.structureGraphics.values(),
       ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
+      ...[...this.waterOverTunnels.values()].map(({ surface }) => surface),
       ...this.coversDrawn.map(({ graphics }) => graphics),
     ]);
   }
@@ -3387,6 +3430,9 @@ export class ArenaScene extends Phaser.Scene {
       for (const piece of this.pavingDrawn?.overTunnels.get(at) ?? []) {
         piece.setAlpha(ground.alpha);
       }
+      const water = this.waterOverTunnels.get(at);
+      water?.surface.setAlpha(ground.alpha);
+      water?.ripples.setAlpha(ground.alpha);
       this.lightingPass?.fadeTunnel(at, ground.alpha);
     }
   }
@@ -4007,19 +4053,27 @@ export class ArenaScene extends Phaser.Scene {
     for (const { graphics } of this.rippleGraphics.values()) {
       graphics.clear();
     }
+    for (const { ripples } of this.waterOverTunnels.values()) {
+      ripples.clear();
+    }
     const line = 1 / (this.view?.zoom ?? 1);
-    for (const shape of this.waterShapes) {
-      const { graphics, painter } = this.ripplesAt(shape.layer);
-      graphics.save();
-      graphics.translateCanvas(0, -elevationOf(shape.layer, this.snapshot.structure.ground));
-      WATER_ART[waterArtKey(shape.depth)].ripples(
-        painter,
-        shape,
-        line,
-        this.now,
-        this.reducedMotion,
-      );
-      graphics.restore();
+    for (const { shape, pieces } of this.waterShapes) {
+      for (const piece of pieces) {
+        const { graphics, painter } =
+          piece.tunnel === undefined
+            ? this.ripplesAt(shape.layer)
+            : this.tunnelRipplesAt(piece.tunnel);
+        graphics.save();
+        graphics.translateCanvas(0, -elevationOf(shape.layer, this.snapshot.structure.ground));
+        WATER_ART[waterArtKey(shape.depth)].ripples(
+          painter,
+          { ...shape, outline: piece.outline, ripples: piece.ripples },
+          line,
+          this.now,
+          this.reducedMotion,
+        );
+        graphics.restore();
+      }
     }
   }
 
@@ -4396,6 +4450,46 @@ export class ArenaScene extends Phaser.Scene {
     return ripples;
   }
 
+  /** The surface and ripples of the water over tunnel `at` (#3350), made the first time. */
+  private waterOverTunnel(at: number): WaterOverTunnel {
+    let over = this.waterOverTunnels.get(at);
+    if (over === undefined) {
+      const layer = this.snapshot.structure.ground;
+      const ripples = this.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "water", layer, part: "ripples" }));
+      over = {
+        surface: this.add
+          .graphics()
+          .setDepth(renderOrder({ kind: "water", layer, part: "surface" })),
+        ripples,
+        painter: this.waterPainter(ripples),
+      };
+      this.waterOverTunnels.set(at, over);
+    }
+    return over;
+  }
+
+  private tunnelRipplesAt(at: number): {
+    readonly graphics: Phaser.GameObjects.Graphics;
+    readonly painter: WaterPainter;
+  } {
+    const { ripples, painter } = this.waterOverTunnel(at);
+    return { graphics: ripples, painter };
+  }
+
+  /** `g` as a piece of water draws through it (#3350): its shore stroked, never a cut edge. */
+  private piecePainter(g: Phaser.GameObjects.Graphics, piece: WaterPiece): WaterPainter {
+    return {
+      ...this.waterPainter(g),
+      strokeOutline: () => {
+        for (const [a, b] of piece.shore) {
+          g.lineBetween(a.x, a.y, b.x, b.y);
+        }
+      },
+    };
+  }
+
   /** `g` as water draws through it: outlines filled as triangles, as a wall's are. */
   private waterPainter(g: Phaser.GameObjects.Graphics): WaterPainter {
     return {
@@ -4535,6 +4629,22 @@ function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[], clo
   if (closed) {
     g.closePath();
   }
+}
+
+/**
+ * The map's water, the ground's split by the tunnel covers under it
+ * (#3350), so what is over a tunnel fades with its cover. Water on any
+ * other layer is one piece.
+ */
+function splitWater(structure: MapStructure): readonly WaterSplit[] {
+  const covers = structure.tunnels.map((tunnel, at) => ({
+    tunnel: at,
+    box: tunnelCoverBox(structure, tunnel),
+  }));
+  return structure.water.map(waterShapeOf).map((shape) => ({
+    shape,
+    pieces: waterPieces(shape, shape.layer === structure.ground ? covers : []),
+  }));
 }
 
 export type {

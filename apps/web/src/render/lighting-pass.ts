@@ -50,6 +50,23 @@ export const FLICKER_INTERVAL_MS = 66;
 export const LIGHTING_BUDGET_MS = 2;
 /** Rebuilds in a row over budget before giving something up: one slow frame is no trend. */
 export const OVER_BUDGET_LIMIT = 30;
+/**
+ * A light in a tunnel adds a warm pool over the lit floor (#3350), this
+ * much of its intensity at the heart, and never more than the cap: the
+ * floor's colours lift past their lighting-off tone without clipping to white.
+ */
+export const TUNNEL_GLOW = 0.5;
+export const TUNNEL_GLOW_CAP = 0.3;
+
+/** What a light of `intensity` on a tunnel's layer adds at the heart of its pool (#3350), 0 to 1. */
+export function tunnelGlow(intensity: number): number {
+  return Math.min(Math.max(intensity, 0) * TUNNEL_GLOW, TUNNEL_GLOW_CAP);
+}
+
+/** Whether `layer` is the tunnels' (#3350): its lights add a warm pool too. */
+export function glowsOn(structure: MapStructure, layer: number): boolean {
+  return structure.tunnels.length > 0 && layer === structure.ground - 1;
+}
 
 /** What the budget still allows, best first. */
 export type LightingStage = "full" | "no-flicker" | "no-shadows" | "flat";
@@ -467,6 +484,8 @@ interface LayerMap {
   /** Of the ground's, the images over each tunnel's cover, by tunnel (#3329). */
   readonly tunnels: ReadonlyMap<number, readonly Phaser.GameObjects.Image[]>;
   readonly outsideKey: string | undefined;
+  /** Of the tunnels' layer, the warm pools its lights add (#3350); none elsewhere. */
+  readonly glowKey: string | undefined;
   /** What of the arena it covers, in light map pixels. */
   readonly extent: LightMapBox;
   readonly flickering: readonly LightsOf[];
@@ -579,7 +598,13 @@ export class LightingPass {
       for (const image of map.images) {
         image.destroy();
       }
-      for (const key of [map.baseKey, map.shownKey, map.outsideKey, ...map.shadowed.values()]) {
+      for (const key of [
+        map.baseKey,
+        map.shownKey,
+        map.outsideKey,
+        map.glowKey,
+        ...map.shadowed.values(),
+      ]) {
         if (key !== undefined && textures.exists(key)) {
           textures.remove(key);
         }
@@ -693,20 +718,38 @@ export class LightingPass {
       painter.destroy();
     }
 
-    const lift = elevationOf(layer, structure.ground);
-    const image = ({ x, y, width, height }: LightMapBox): Phaser.GameObjects.Image =>
-      this.scene.add
-        .image(
-          (extent.x + x) / LIGHT_MAP_SCALE,
-          (extent.y + y) / LIGHT_MAP_SCALE - lift,
-          shownKey,
-          this.region(shownKey, x, y, width, height),
+    const glowKey = glowsOn(structure, layer)
+      ? this.buildGlow(
+          `lighting-${String(nextLightingId)}-glow`,
+          extent,
+          [...steady, ...flickering],
+          shadowed,
+          outsideKey,
         )
-        .setOrigin(0, 0)
-        .setScale(1 / LIGHT_MAP_SCALE)
-        .setBlendMode(Phaser.BlendModes.MULTIPLY)
-        .setDepth(renderOrder({ kind: "lighting", layer }));
-    const images = lightMapCover(structure, this.walls, layer, extent).map(image);
+      : undefined;
+
+    const lift = elevationOf(layer, structure.ground);
+    const imageOf =
+      (key: string, blendMode: Phaser.BlendModes) =>
+      ({ x, y, width, height }: LightMapBox): Phaser.GameObjects.Image =>
+        this.scene.add
+          .image(
+            (extent.x + x) / LIGHT_MAP_SCALE,
+            (extent.y + y) / LIGHT_MAP_SCALE - lift,
+            key,
+            this.region(key, x, y, width, height),
+          )
+          .setOrigin(0, 0)
+          .setScale(1 / LIGHT_MAP_SCALE)
+          .setBlendMode(blendMode)
+          .setDepth(renderOrder({ kind: "lighting", layer }));
+    const image = imageOf(shownKey, Phaser.BlendModes.MULTIPLY);
+    const cover = lightMapCover(structure, this.walls, layer, extent);
+    // The warm pools add over the lit floor, so they are made after it (#3350).
+    const images = [
+      ...cover.map(image),
+      ...(glowKey === undefined ? [] : cover.map(imageOf(glowKey, Phaser.BlendModes.ADD))),
+    ];
     // The ground's light over a tunnel fades with its cover (#3329).
     const tunnels = new Map(
       layer === structure.ground
@@ -722,6 +765,7 @@ export class LightingPass {
       images: [...images, ...[...tunnels.values()].flat()],
       tunnels,
       outsideKey,
+      glowKey,
       extent,
       flickering,
       flickerRegions: flickerRegions(flickering, extent),
@@ -803,6 +847,34 @@ export class LightingPass {
     texture.erase(painter);
     texture.render();
     painter.destroy();
+    return key;
+  }
+
+  /**
+   * The warm pools `lights` add on the tunnels' layer (#3350): black but
+   * for each light at `tunnelGlow` of its intensity, drawn adding over
+   * the lit floor, so a torch lifts it past its lighting-off tone. Steady:
+   * a pool does not flicker.
+   */
+  private buildGlow(
+    key: string,
+    extent: LightMapBox,
+    lights: readonly LightsOf[],
+    shadowed: ReadonlyMap<string, string>,
+    outsideKey: string | undefined,
+  ): string {
+    const glow = this.scene.textures.addDynamicTexture(key, extent.width, extent.height);
+    if (glow === null) {
+      throw new Error("lighting: could not create a tunnel's glow");
+    }
+    glow.fill(0x000000, 1);
+    for (const light of lights) {
+      this.stampLight(glow, extent, light, tunnelGlow(light.intensity), shadowed.get(light.id));
+    }
+    if (outsideKey !== undefined) {
+      glow.erase(outsideKey, glow.width / 2, glow.height / 2);
+    }
+    glow.render();
     return key;
   }
 
