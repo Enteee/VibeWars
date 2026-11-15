@@ -2,10 +2,9 @@ import { pointInPolygon } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import type { MapWater } from "./arena-snapshot.js";
+import { outlineArea } from "./cover-pieces.js";
 import {
-  clipToBox,
   MAX_RIPPLES,
-  outlineArea,
   RIPPLE_DRIFT,
   RIPPLE_HALF_LENGTH,
   RIPPLE_SHORE_CLEARANCE,
@@ -99,43 +98,6 @@ describe("ripple phase (#2984)", () => {
   it("holds still under reduced motion", () => {
     expect(rippleSwell(ripple, 7.3, true)).toBe(rippleSwell(ripple, 0, true));
     expect(rippleDrift(ripple, 7.3, true)).toBe(rippleDrift(ripple, 0, true));
-  });
-});
-
-describe("clipToBox (#3350)", () => {
-  const BOX = { left: 0, top: 0, right: 100, bottom: 100 };
-  const square = (left: number, top: number, size: number) => [
-    { x: left, y: top },
-    { x: left + size, y: top },
-    { x: left + size, y: top + size },
-    { x: left, y: top + size },
-  ];
-
-  it("keeps an outline inside the box whole", () => {
-    expect(clipToBox(square(10, 10, 50), BOX)).toEqual(square(10, 10, 50));
-  });
-
-  it("is nothing of an outline outside the box", () => {
-    expect(clipToBox(square(200, 10, 50), BOX)).toEqual([]);
-  });
-
-  it("cuts an outline that crosses the box at its side", () => {
-    expect(outlineArea(clipToBox(square(50, 50, 100), BOX))).toBe(2500);
-  });
-
-  it("clips a concave outline to what of it is inside", () => {
-    // A U: two prongs joined at the bottom, cut by the box through both.
-    const u = [
-      { x: 20, y: 50 },
-      { x: 40, y: 50 },
-      { x: 40, y: 150 },
-      { x: 60, y: 150 },
-      { x: 60, y: 50 },
-      { x: 80, y: 50 },
-      { x: 80, y: 200 },
-      { x: 20, y: 200 },
-    ];
-    expect(outlineArea(clipToBox(u, BOX))).toBe(2000);
   });
 });
 
