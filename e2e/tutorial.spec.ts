@@ -38,6 +38,29 @@ const PAST_THE_MUD = { x: 6900, y: 720 };
  * y 1800-1980 on the canyon's second map).
  */
 const ON_THE_LEDGE = { x: 3850, y: 1830 };
+/**
+ * Where station 10's mark (#3325), at the high deck's middle, is drawn:
+ * the deck (x 1780-2180, y 1480-1740, layer 3) stands two layers over the
+ * ground (layer 1), 112 world units up, so a click here picks the mark.
+ */
+const OVER_THE_HIGH_DECK = { x: 1980, y: 1610 - 112 };
+/**
+ * On the canyon floor south of station 10's first flight (#3325), clear of
+ * the tutor waiting at its foot (x 2350, y 1850).
+ */
+const SOUTH_OF_THE_FLIGHTS = { x: 2600, y: 2050 };
+/**
+ * On the ground under station 10's high deck (#3325), in the notch of the
+ * bounds that holds the deck and its landing: 210 world units below where
+ * the deck is drawn, so from here a plain click on it is one stride.
+ */
+const UNDER_THE_HIGH_DECK = { x: 1980, y: 1700 };
+/**
+ * Where the middle of station 10's landing (#3325) is drawn: the landing
+ * (x 2260-2440, y 1480-1640, layer 2) stands one layer, 56 world units,
+ * over the ground.
+ */
+const OVER_THE_LANDING = { x: 2350, y: 1560 - 56 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -75,7 +98,7 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge, up to the high deck: then the menu, and no offer again`, async ({
       page,
     }) => {
       // Four stations, each a walk or a drag in a sim that runs no faster than
@@ -85,7 +108,7 @@ test.describe("the first-time tutorial (#3218)", () => {
       // walk to the clearing and the heal some 30 s more (#3303), and the
       // walk round the bad ground some 20 s more (#3310), and the walk to the
       // rats and their fight some 60 s more (#3316), and the ledge some 30 s
-      // more (#3323).
+      // more (#3323), and the walk up to the high deck some 30 s more (#3325).
       test.setTimeout(600_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
@@ -390,6 +413,47 @@ test.describe("the first-time tutorial (#3218)", () => {
       }).toPass({ timeout: 60_000 });
       // Down by an Alt walk: no tip.
       expect(await hasSaid(tip), "no tip after an Alt walk down").toBe(false);
+
+      // Station 10 (#3325): a click on the high deck walks up both flights.
+      await expect
+        .poll(() => hasSaid("Steps join layers. Walk on, and they carry you up."), {
+          timeout: 15_000,
+        })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-mark-layer", "3");
+      const high = "High ground. Foes below can't easily reach you.";
+      // Along the ground to under the deck, an Alt walk at every stride: a
+      // plain one would pick the ledge or the landing on the way, and from
+      // the ledge the next stride lies out of bounds. South of the tutor
+      // first, so no stride falls on it or north of the canyon floor.
+      for (const waypoint of [SOUTH_OF_THE_FLIGHTS, UNDER_THE_HIGH_DECK]) {
+        await expect(async () => {
+          await page.keyboard.down("Alt");
+          await walkTo(waypoint);
+          await page.keyboard.up("Alt");
+          const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+            .split(",")
+            .map(Number);
+          expect(Math.hypot(cx - waypoint.x, cy - waypoint.y)).toBeLessThan(150);
+        }).toPass({ timeout: 90_000 });
+      }
+      // A click on the landing climbs the first flight, and the landing,
+      // stood on, gets its line; a click on the deck from there, the second.
+      // One click from the ground taking both is the unit test's.
+      await expect(async () => {
+        if (await hasSaid("One more flight.")) {
+          return;
+        }
+        await walkTo(OVER_THE_LANDING);
+        await expect.poll(() => hasSaid("One more flight."), { timeout: 10_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
+      await expect(async () => {
+        if (await hasSaid(high)) {
+          return;
+        }
+        await walkTo(OVER_THE_HIGH_DECK);
+        await expect.poll(() => hasSaid(high), { timeout: 5_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 

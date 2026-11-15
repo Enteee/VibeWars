@@ -12,6 +12,7 @@ import {
   badGroundStation,
   breakWallStation,
   climbStation,
+  rampStation,
   dodgeStation,
   healStation,
   lookStation,
@@ -405,6 +406,64 @@ describe("climbStation (#3323)", () => {
       undefined,
       undefined,
       "tutorial.climb.praise",
+    ]);
+  });
+});
+
+describe("rampStation (#3325)", () => {
+  const MARK = vec2(1980, 1610);
+  const DECK = 3;
+  const LANDING = 2;
+  const LANDING_FOOTPRINT = { kind: "rect", x: 2260, y: 1480, width: 180, height: 160 } as const;
+  /** Station 9's ledge, on the landing's layer. */
+  const ON_LEDGE = { self: vec2(3600, 1890), selfLayer: LANDING };
+  const BELOW = { self: vec2(2000, 2100), selfLayer: 1 };
+  const ON_LANDING = { self: vec2(2350, 1560), selfLayer: LANDING };
+  const ON_MARK = { self: MARK, selfLayer: DECK };
+
+  it("is done on the mark on the high deck", () => {
+    expect(rampStation(MARK, DECK, LANDING_FOOTPRINT, LANDING).done(view(ON_MARK))).toBe(true);
+  });
+
+  it("is not done at the same x and y on a layer below", () => {
+    const station = rampStation(MARK, DECK, LANDING_FOOTPRINT, LANDING);
+    expect(station.done(view({ self: MARK, selfLayer: LANDING }))).toBe(false);
+    expect(station.done(view({ self: MARK, selfLayer: 1 }))).toBe(false);
+  });
+
+  it("marks the high deck on its layer", () => {
+    expect(rampStation(MARK, DECK, LANDING_FOOTPRINT, LANDING).highlight).toEqual({
+      kind: "ground",
+      at: MARK,
+      layer: DECK,
+    });
+  });
+
+  it("says one more flight once, the first time on the landing", () => {
+    const runner = createTutorialRunner(
+      [rampStation(MARK, DECK, LANDING_FOOTPRINT, LANDING)],
+      () => KEYMAP_PRESETS.classic,
+    );
+    const looks = [BELOW, ON_LANDING, BELOW, ON_LANDING, ON_MARK];
+    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
+      "tutorial.ramp.intro",
+      "tutorial.ramp.landing",
+      undefined,
+      undefined,
+      "tutorial.ramp.praise",
+    ]);
+  });
+
+  it("says nothing on the landing's layer off the landing, as on station 9's ledge", () => {
+    const runner = createTutorialRunner(
+      [rampStation(MARK, DECK, LANDING_FOOTPRINT, LANDING)],
+      () => KEYMAP_PRESETS.classic,
+    );
+    const looks = [ON_LEDGE, ON_LEDGE, ON_LANDING];
+    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
+      "tutorial.ramp.intro",
+      undefined,
+      "tutorial.ramp.landing",
     ]);
   });
 });

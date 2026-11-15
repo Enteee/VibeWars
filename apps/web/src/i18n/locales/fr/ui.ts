@@ -1539,6 +1539,12 @@ export default {
   "tutorial.moreSoon": "D'autres leçons bientôt. À tout à l'heure là-bas !",
   "tutorial.offer": "Nouveau ? Ton tuteur va te montrer les bases.",
   "tutorial.offerTitle": "Première fois ?",
+  "tutorial.ramp.hint":
+    "Monte les deux volées de marches jusqu'à la marque sur la plate-forme haute.",
+  "tutorial.ramp.how": "Clique sur la plate-forme haute. Ton chemin prend les marches pour toi.",
+  "tutorial.ramp.intro": "Les marches relient les niveaux. Avance, elles te montent.",
+  "tutorial.ramp.landing": "Encore une volée.",
+  "tutorial.ramp.praise": "Position haute. Les ennemis d'en bas t'atteignent mal.",
   "tutorial.rats.again": "Essaie une autre compétence sur celui-ci.",
   "tutorial.rats.big":
     "Un gros. Frappe-le jusqu'à ce que {bash} s'allume, renverse-le, puis {crush}.",
