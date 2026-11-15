@@ -6,7 +6,7 @@ name: e2e repeat
 # 800 s of runs (#1884, #3309): the plan weighs each spec by its seconds in
 # scripts/ci/e2e-durations.json (hosted CI shard times), so a job runs ~13 min
 # recorded, ~20 on hosted runners (about 1.5x), plus setup, inside the 40-minute
-# cap, and at most 5 of up to 20 jobs run at once (#3313, #3393). A PR too big for 20
+# cap, and at most 5 of up to 20 jobs run at once (#3313, #3396). A PR too big for 20
 # jobs fails `plan` with a refusal, as does a spec too long for one job,
 # of timing out. Playwright's own
 # --shard is not used: it splits by test count and can leave a shard empty.
