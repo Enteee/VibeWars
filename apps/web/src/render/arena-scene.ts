@@ -261,7 +261,12 @@ import {
   type Wisp,
 } from "./ground-effect-look.js";
 import { lyingPose } from "./lying-pose.js";
-import { sleeperCommands, type SleeperProp } from "./sleeper-prop.js";
+import {
+  SLEEPER_RIM_WIDTH,
+  SLEEPER_Z_WIDTH,
+  sleeperCommands,
+  type SleeperProp,
+} from "./sleeper-prop.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import {
@@ -1898,6 +1903,12 @@ export class ArenaScene extends Phaser.Scene {
         this.reducedMotion,
       )) {
         switch (command.kind) {
+          case "glow":
+            g.fillStyle(command.colour, command.alpha / 2);
+            g.fillCircle(command.at.x, command.at.y, command.radius);
+            g.fillStyle(command.colour, command.alpha);
+            g.fillCircle(command.at.x, command.at.y, command.radius / 2);
+            break;
           case "body":
             g.fillStyle(
               tint === undefined ? command.colour : multiplyColour(command.colour, tint),
@@ -1905,13 +1916,22 @@ export class ArenaScene extends Phaser.Scene {
             );
             tracePath(g, command.outline);
             g.fillPath();
-            g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+            g.lineStyle(SLEEPER_RIM_WIDTH, command.rim, 1);
             g.strokePath();
+            break;
+          case "head":
+            g.fillStyle(
+              tint === undefined ? command.colour : multiplyColour(command.colour, tint),
+              1,
+            );
+            g.fillCircle(command.at.x, command.at.y, command.radius);
+            g.lineStyle(SLEEPER_RIM_WIDTH, command.rim, 1);
+            g.strokeCircle(command.at.x, command.at.y, command.radius);
             break;
           case "z": {
             const { at, size } = command;
             const half = size / 2;
-            g.lineStyle(1.5, command.colour, command.alpha);
+            g.lineStyle(SLEEPER_Z_WIDTH, command.colour, command.alpha);
             g.beginPath();
             g.moveTo(at.x - half, at.y - half);
             g.lineTo(at.x + half, at.y - half);
@@ -4051,6 +4071,9 @@ export class ArenaScene extends Phaser.Scene {
     const [top, bottom] = [Math.min(...ys), Math.max(...ys)];
     g.fillStyle(palette.floor ?? 0, 1);
     g.fillRect(left, top, right - left, bottom - top);
+    if (palette.grid === undefined) {
+      return;
+    }
     g.lineStyle(line, palette.grid, 1);
     for (let x = Math.ceil(left / GRID_STEP) * GRID_STEP; x <= right; x += GRID_STEP) {
       g.lineBetween(x, top, x, bottom);
@@ -4742,13 +4765,18 @@ export class ArenaScene extends Phaser.Scene {
   /**
    * The grid over the arena's bounds, not the screen: over its rectangle,
    * edged in `wall-stroke`, or inside its outline (#3066), whose edge the
-   * outside draws. Past either is `bg` or the outside.
+   * outside draws. Past either is `bg` or the outside. A ground not
+   * laid in tiles, as river ice is not, has no grid.
    */
   private drawGrid(g: Phaser.GameObjects.Graphics, line: number, palette: ArenaPalette): void {
     const { width, height } = this.arena;
     const { bounds } = this.snapshot.structure;
-    g.lineStyle(line, palette.grid, 1);
+    const { grid } = palette;
     if (bounds.kind === "outline") {
+      if (grid === undefined) {
+        return;
+      }
+      g.lineStyle(line, grid, 1);
       for (let x = 0; x <= width; x += GRID_STEP) {
         for (const [from, to] of insideRuns(bounds.outline, "x", x)) {
           g.lineBetween(x, from, x, to);
@@ -4761,11 +4789,14 @@ export class ArenaScene extends Phaser.Scene {
       }
       return;
     }
-    for (let x = 0; x <= width; x += GRID_STEP) {
-      g.lineBetween(x, 0, x, height);
-    }
-    for (let y = 0; y <= height; y += GRID_STEP) {
-      g.lineBetween(0, y, width, y);
+    if (grid !== undefined) {
+      g.lineStyle(line, grid, 1);
+      for (let x = 0; x <= width; x += GRID_STEP) {
+        g.lineBetween(x, 0, x, height);
+      }
+      for (let y = 0; y <= height; y += GRID_STEP) {
+        g.lineBetween(0, y, width, y);
+      }
     }
     g.lineStyle(line, WALL_STROKE, 1);
     g.strokeRect(0, 0, width, height);

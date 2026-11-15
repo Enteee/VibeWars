@@ -266,6 +266,8 @@ export interface BehaviourCursor {
   thinks: number;
   /** `play-build`: each foe's reach, read once from its bar (#2598). */
   readonly foeReach: Map<string, number>;
+  /** `play-build`: the foe close-in priced a walk to, and the match second it did (#3353). */
+  walkFoe: { readonly id: string; readonly pricedAt: number } | undefined;
 }
 
 export interface BehaviourContext {
@@ -407,6 +409,7 @@ export function createCursor(): BehaviourCursor {
     spikeReadySeconds: undefined,
     thinks: 0,
     foeReach: new Map(),
+    walkFoe: undefined,
   };
 }
 

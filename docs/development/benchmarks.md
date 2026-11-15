@@ -9,6 +9,10 @@ Since #404 there is no server. A match runs in its host's browser, in
 
 ## How to run it
 
+On the company host, run a heavy job (a bench, Playwright) wrapped in
+`company heavy <cmd>` (#3362): the host runs one at a time and queues the
+rest.
+
 ```sh
 pnpm exec vitest run packages/game-session/src/benchmark.test.ts
 ```
@@ -100,7 +104,7 @@ id stops the run and names the id:
 
 ```sh
 BENCH_TICKS=600 BENCH_CROWD=casters BENCH_SKILLS=assassin.death-blossom,elementalist.fireball \
-  pnpm exec vitest run --silent=false packages/game-core/src/tools/tick-bench.test.ts
+  company heavy pnpm exec vitest run --silent=false packages/game-core/src/tools/tick-bench.test.ts
 ```
 
 Run it on the PR's branch and on `main`, on the same machine, and
@@ -121,7 +125,7 @@ either way as noise.
 
 ## The map balance bench
 
-`BENCH_MAP=<id> BENCH_SIZE=<n> pnpm run bench:balance` (#3065) plays
+`BENCH_MAP=<id> BENCH_SIZE=<n> company heavy pnpm run bench:balance` (#3065) plays
 all-bot matches on one real map: its walls, gates, switches, layers,
 zones and objectives, and its mode's own rules and time limit. Both
 teams field the same built-in builds, so the only difference between
