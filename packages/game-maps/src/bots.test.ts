@@ -17,7 +17,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
-import { matchGates } from "./layers.js";
+import { matchGates, matchLayers } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import { playBuildBot } from "./tools/map-balance.js";
@@ -50,6 +50,7 @@ describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_,
       ruleset: RULESET,
       walls: allWallSegments(map.walls),
       bounds: { width: map.width, height: map.height },
+      layers: matchLayers(map),
       matchRules: ANNIHILATION_MATCH_RULES,
       participants,
     });
