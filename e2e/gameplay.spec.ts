@@ -897,6 +897,9 @@ test("the target frame shows the target's health and the skill it casts, filling
 test("dead in Kill Count, you read when you are back, counting down, until you are (#3367)", async ({
   page,
 }) => {
+  // The starter build's spells take up to 90 s to kill a foe who stands
+  // still on a loaded runner; then 8 s of respawn to read.
+  test.setTimeout(150_000);
   const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const respawn = page.locator(".hud-respawn");
