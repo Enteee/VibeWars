@@ -108,6 +108,10 @@ jobs:
 
       - uses: ./.github/actions/devenv
 
+      # The client imports the workspace packages by their built output.
+      - name: Build packages
+        run: devenv shell -- pnpm exec tsc --build tsconfig.build.json
+
       - name: Bench
         env:
           BENCH_MAP: ${{ matrix.row.map }}
@@ -115,7 +119,7 @@ jobs:
           BENCH_SEEDS: ${{ needs.plan.outputs.seeds }}
           BENCH_STUCK: ${{ github.event_name == 'pull_request' && '1' || inputs.stuck && '1' || '' }}
         run: |
-          devenv shell -- pnpm bench:balance | tee bench.log
+          devenv shell -- pnpm bench:balance -t "prints each map" | tee bench.log
           grep '^|' bench.log > row.md
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
