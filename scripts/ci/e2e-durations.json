@@ -345,11 +345,11 @@
   "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on arena-crossroads, from the canyon": 70,
   "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on arena-crossroads, from the wall": 120,
   "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on arena-crossroads, from the rat pocket": 130,
-  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on arena-crossroads, from the tunnel to the menu": 140,
+  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on arena-crossroads, from the tunnel to the menu": 170,
   "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, from the start": 25,
   "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, from the canyon": 70,
   "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, from the wall": 115,
   "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, from the rat pocket": 130,
-  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, from the tunnel to the menu": 145,
+  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, from the tunnel to the menu": 175,
   "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Skip opens the menu, and it is not offered again": 10.6
 }
