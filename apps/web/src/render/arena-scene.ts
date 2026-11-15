@@ -233,7 +233,13 @@ import {
   type RenderableTeleport,
   type RenderableFlag,
 } from "./flag-objects.js";
-import { goalMarkCommands, goalMarkFade, type GoalMark } from "./goal-mark.js";
+import {
+  GOAL_MARK_GOLD,
+  goalMarkCommands,
+  goalMarkFade,
+  traceHiddenGoalMark,
+  type GoalMark,
+} from "./goal-mark.js";
 import {
   GROUND_COLOUR,
   GROUND_DASH,
@@ -3233,7 +3239,10 @@ export class ArenaScene extends Phaser.Scene {
     };
   }
 
-  /** What a structure covers of each body (#2831, #2972): its team's outline, weapon and symbol, no fill. */
+  /**
+   * What a structure covers of each body (#2831, #2972): its team's outline,
+   * weapon and symbol, no fill. A goal's ring shows the same way (#3342).
+   */
   private drawHiddenOutlines(): void {
     this.hiddenOutlines ??= this.add.graphics().setDepth(renderOrder({ kind: "hidden-outline" }));
     const g = this.hiddenOutlines;
@@ -3244,6 +3253,18 @@ export class ArenaScene extends Phaser.Scene {
         if (!actor.dead) {
           this.drawHiddenBody(g, actor, shownGlyphs);
         }
+      }
+      for (const { mark, goneAt } of this.goals.values()) {
+        const fade = goalMarkFade(goneAt === undefined ? undefined : this.now - goneAt);
+        g.lineStyle(BODY_EDGE_WIDTH, GOAL_MARK_GOLD, fade);
+        traceHiddenGoalMark(
+          mark,
+          this.now,
+          this.reducedMotion,
+          this.snapshot.structure.ground,
+          this.occluders,
+          this.strokeHiddenSegment,
+        );
       }
     }
     for (const [id, glyph] of this.hiddenGlyphs) {
