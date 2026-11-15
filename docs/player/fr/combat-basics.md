@@ -47,6 +47,8 @@ lance. Son énergie est dépensée et la compétence se recharge ; certaines
 interruptions bloquent aussi la compétence un moment. Trop tôt ou trop tard,
 il ne se passe rien.
 
+Chaque profession a son propre son quand elle lance une compétence ; écoute celui de ta cible.
+
 La plupart des interruptions arrêtent aussi une simple attaque en plein
 geste : ce coup n'arrive jamais et le geste recommence. Un ennemi qui marche
 encore vers sa cible n'a rien à interrompre. Une interruption dont la carte

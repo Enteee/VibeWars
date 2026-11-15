@@ -46,6 +46,8 @@ Ett **avbrott** stoppar en fiendes förmåga medan hen kastar den. Fiendens
 energi är förbrukad och förmågan återladdas; vissa avbrott låser dessutom
 förmågan en stund. Avbryter du för tidigt eller för sent händer ingenting.
 
+Varje yrke har sitt eget ljud när det använder en färdighet; lyssna efter ditt måls.
+
 De flesta avbrott stoppar också en vanlig attack mitt i svingen: det
 slaget landar aldrig och svingen börjar om. En fiende som fortfarande går
 fram mot sitt mål har inget att avbryta. Ett avbrott vars kort säger "en

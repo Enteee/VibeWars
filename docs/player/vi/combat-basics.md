@@ -43,6 +43,8 @@ quật ngã. Lần thi triển kia vẫn tiếp tục. Dùng theo cách này, ch
 chúng bị tiêu và kỹ năng phải hồi chiêu; một số đòn ngắt còn khóa kỹ năng đó
 một lúc. Ngắt quá sớm hay quá muộn thì không có gì xảy ra.
 
+Mỗi nghề có âm thanh riêng khi dùng kỹ năng; hãy lắng nghe âm thanh của mục tiêu.
+
 Hầu hết đòn ngắt cũng chặn một đòn tấn công thường giữa chừng: cú đánh đó
 không bao giờ trúng và cú vung bắt đầu lại. Địch còn đang đi tới mục tiêu
 thì không có gì để ngắt. Đòn ngắt mà thẻ của nó ghi "a skill" hoặc "a

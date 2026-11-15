@@ -1417,7 +1417,6 @@ concerns you, never the whole arena (#104).
 
 | id                 | Plays when                                                     | Length | Peak     | Character                                     |
 | ------------------ | -------------------------------------------------------------- | ------ | -------- | --------------------------------------------- |
-| `cast-self`        | you start a cast                                               | 0.25 s | −16 dBFS | Soft rising sine shimmer                      |
 | `cast-target`      | your target starts a cast                                      | 0.14 s | −4 dBFS  | Two sharp high ticks: interrupt now           |
 | `hit-dealt`        | you deal damage                                                | 0.12 s | −6 dBFS  | Dry noise crack over a quick drop             |
 | `hit-taken`        | you take damage                                                | 0.20 s | −5 dBFS  | Low, dull thud                                |
@@ -1442,17 +1441,64 @@ concerns you, never the whole arena (#104).
 | `spirit-up`        | a spirit is summoned within 700                                | 0.40 s | −13 dBFS | Hollow breathy rising tone                    |
 | `form-on`          | you take a form                                                | 0.50 s | −10 dBFS | Deep swell, a faint ash crackle               |
 
+### Cast voices
+
+Every cast has a two-layer voice (#3298), so you hear who casts what, and
+when to interrupt, without seeing the caster. A low **base** says the
+caster's profession and a high **motif** says the skill's type. They start
+together and count as one voice.
+
+| Base                     | Length | Peak     | Character                         |
+| ------------------------ | ------ | -------- | --------------------------------- |
+| `cast-base-warrior`      | 0.40 s | −12 dBFS | Low drum hit, a grunt of noise    |
+| `cast-base-ranger`       | 0.40 s | −12 dBFS | Wooden flute breath               |
+| `cast-base-monk`         | 0.45 s | −12 dBFS | Low sung chant, one held "o"      |
+| `cast-base-necromancer`  | 0.45 s | −12 dBFS | Dark bowed drone, two strings     |
+| `cast-base-mesmer`       | 0.40 s | −12 dBFS | Glassy detuned pad, a slow beat   |
+| `cast-base-elementalist` | 0.45 s | −12 dBFS | Deep rumble with air over it      |
+| `cast-base-assassin`     | 0.35 s | −12 dBFS | Short dry whisper                 |
+| `cast-base-ritualist`    | 0.40 s | −12 dBFS | Hollow log drum                   |
+| `cast-base-paragon`      | 0.45 s | −12 dBFS | Brass swell, a low fifth          |
+| `cast-base-dervish`      | 0.45 s | −12 dBFS | Low swirl of sand-hiss over a hum |
+| `cast-base-common`       | 0.35 s | −12 dBFS | Plain soft tone, a fifth          |
+
+| Motif                    | Skill types                            | Length | Peak     | Character            |
+| ------------------------ | -------------------------------------- | ------ | -------- | -------------------- |
+| `cast-motif-spell`       | spell, item spell, weapon spell, glyph | 0.20 s | −14 dBFS | Quick rising sweep   |
+| `cast-motif-hex`         | hex                                    | 0.22 s | −14 dBFS | Falling detuned pair |
+| `cast-motif-enchantment` | enchantment                            | 0.25 s | −14 dBFS | Small bell pair      |
+| `cast-motif-signet`      | signet, stance, form, skill            | 0.15 s | −14 dBFS | Dry metallic tap     |
+| `cast-motif-shout`       | shout, chant, echo                     | 0.18 s | −14 dBFS | Short sung "a"       |
+| `cast-motif-attack`      | attack, pet attack, preparation        | 0.18 s | −14 dBFS | Blade's short scrape |
+| `cast-motif-ritual`      | nature and binding ritual              | 0.22 s | −14 dBFS | Hollow wooden ping   |
+| `cast-motif-ward`        | well, ward, trap                       | 0.22 s | −14 dBFS | Low ping             |
+
+- **Pitch per skill:** the motif plays at `2^(n/24)`, `n` a quarter-tone
+  step from −10 to +12 (−5 to +6 semitones). The skills sharing a base and
+  a motif are ordered by a hash of their id and dealt round the 23 steps, so
+  no step holds more than its share: at most 4 skills sound alike. The same
+  skill always sounds the same.
+- **Who:** your own cast, quietly (about −16 dBFS for both); your target's,
+  at full, with `cast-target`'s ticks over it; and anyone else's within 700
+  of you, foe or ally, full to 200 and −12 dB at 700, an ally's 3 dB under a
+  foe's. Sound carries over a ledge. A watcher hears from the player it
+  follows.
+- **Instants** have no cast to see: theirs plays at their activation.
+- **At most 3 at once.** Your target first, then you, then the nearest foe,
+  then the nearest ally. A cast that matters more cuts the voice that
+  matters least, with a 30 ms fade; one that matters less is dropped.
+
 Rules:
 
-- **Loudness:** `interrupt` is the loudest, `cast-self` the quietest, and no
-  peak goes above −1 dBFS after encoding.
+- **Loudness:** `interrupt` is the loudest, your own cast voice the
+  quietest, and no peak goes above −1 dBFS after encoding.
 - **No clicks:** every sound fades in and out over 5 ms.
 - **Interrupt is the only harsh sound.** Interrupts are where skill play
   lives; nothing else may sound like one. `cast-target` is the only one with
   ticks, so the interrupt cue is unmistakable.
 - **Nothing pitched repeats fast.** The hits have almost no pitch, because
   they fire many times a second in a team fight.
-- **Budget:** at most 10 KB each and 72 KB for the set, as mono MP3 at
+- **Budget:** at most 10 KB each and 104 KB for the set, as mono MP3 at
   22.05 kHz, 48 kbit/s. MP3 because every browser's Web Audio decodes it.
 - **Exactly one file per id** in `apps/web/src/audio/sound-ids.ts`. An asset
   nobody plays is dead weight.
