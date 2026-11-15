@@ -125,7 +125,11 @@ jobs:
 
       - name: Print failed tests
         if: failure()
-        run: node scripts/ci/print-failures.mjs || true
+        # Ends red on purpose: `hub run view --log-failed` shows only failed
+        # steps. The job is already red here (if: failure()), so this decides nothing.
+        run: |
+          node scripts/ci/print-failures.mjs || true
+          exit 1
 
       - name: Upload Playwright output
         if: failure()
