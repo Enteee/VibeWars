@@ -120,6 +120,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           STUCK: ${{ inputs.stuck }}
         run: |
+          set -o pipefail
           # The bench tests for the variable being set, so it is set only to ask.
           if [ "$EVENT" = pull_request ] || [ "$STUCK" = true ]; then export BENCH_STUCK=1; fi
           devenv shell -- pnpm bench:balance -t "prints each map" | tee bench.log

@@ -6,7 +6,7 @@
  * the hosted runners for hours; the dropped rows are listed, never an error.
  *
  * Usage:
- *   node scripts/ci/balance-plan.mjs <base> [head]   prints {"rows":[...],"dropped":[...]}
+ *   node scripts/ci/balance-plan.mjs <base> [head]   (base...head) prints {"rows":[...],"dropped":[...]}
  */
 
 import { execFileSync } from "node:child_process";
@@ -60,8 +60,8 @@ const sizesFromDisk = (id) => {
 };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const [base, head = "HEAD"] = process.argv.slice(2);
-  const files = execFileSync("git", ["diff", "--name-only", "--no-renames", base, head], {
+  const [base = "HEAD", head = "HEAD"] = process.argv.slice(2);
+  const files = execFileSync("git", ["diff", "--name-only", "--no-renames", `${base}...${head}`], {
     encoding: "utf8",
   })
     .split("\n")
