@@ -239,6 +239,7 @@ export {
   MAX_CREATURES,
   MAX_MAP_CREATURES,
   companionMode,
+  creatureAuraRadius,
   MAX_GROUND_EFFECTS,
   MatchSimulation,
   walkableAreas,
@@ -298,6 +299,8 @@ export type { AltarState } from "./match/altar.js";
 export type { GhostField, GhostLevel, GhostSpawn } from "./match/ghost.js";
 export { CLAIM_SKILL_ID, ghostId, isGhostId } from "./match/ghost.js";
 export { GUILD_LORD_HEALTH, guildLordId, guildLordLossCap } from "./match/guild-lord.js";
+export type { CritterTemplate } from "./match/critters.js";
+export { RAT, critterSpec } from "./match/critters.js";
 export type { BaseGuard, GuardRole } from "./match/guards.js";
 export { GUARD_ROLE_IDS, GUARD_ROLES, guardId } from "./match/guards.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";

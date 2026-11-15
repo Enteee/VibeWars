@@ -1,4 +1,10 @@
-import type { Biome, DeckLook, PavingLook, TransitionLook } from "@vibewars/game-maps/schema";
+import type {
+  Biome,
+  DeckLook,
+  OverhangLook,
+  PavingLook,
+  TransitionLook,
+} from "@vibewars/game-maps/schema";
 
 /** Shaded toward black by `share`, 0 to 1. */
 export function shade(colour: number, share: number): number {
@@ -70,12 +76,26 @@ export function arenaPalette(map: {
 }
 
 export const DECK_SHADOW = { colour: 0x080b10, alpha: 0.55, offset: 32 };
+/**
+ * The shade under an awning, lean-to or canopy (#3293): softer than a
+ * deck's, laid twice, the second nearer, so its edge blurs.
+ */
+export const OVERHANG_SHADE = { colour: 0x080b10, alpha: 0.2, offsets: [6, 14] } as const;
 export const DECK_TINT = { colour: 0x0d131c, alpha: 0.55 };
 export const DECK_LIP = 0xffffff;
 
-/** A pit (#2973): its floor a step darker than the ground, its far wall darker still. */
-export const PIT_FLOOR = shade(0x26303f, 0.45);
-export const PIT_WALL = shade(0x4b5a70, 0.6);
+/**
+ * A pit (#2973): its floor, and a tunnel's (#3329), 45 % darker than the
+ * ground, in the biome's tone, so the light in it warms a floor and not a
+ * void.
+ */
+export function pitFloor(palette: ArenaPalette): number {
+  return shade(palette.floor ?? ARENA_BACKGROUND, 0.45);
+}
+/** Its far wall: the biome's rock, darker still. */
+export function pitWall(palette: ArenaPalette): number {
+  return shade(palette.wallTop, 0.6);
+}
 /** Where a tunnel leaves a pit: near black, so it reads as a way in. */
 export const TUNNEL_MOUTH = 0x05070a;
 
@@ -574,12 +594,45 @@ function pavingColours(tones: BiomeTones): Record<StonePavingLook, PavingLookCol
     },
   };
 }
+/** An overhang look's colours (#3293): its roof, the stripes or slats or leaves on it, and its eave. */
+export interface OverhangLookColours {
+  readonly roof: number;
+  readonly detail: number;
+  readonly eave: number;
+}
+
+/**
+ * Each overhang look in `tones` (#3293): a cloth awning dyed from the
+ * biome's earth and stone, a timber lean-to of its wood, a leafy canopy
+ * of its plants.
+ */
+function overhangColours(tones: BiomeTones): Record<OverhangLook, OverhangLookColours> {
+  return {
+    awning: {
+      roof: mix(tones.earth, tones.stone, 0.55),
+      detail: shade(tones.earth, 0.15),
+      eave: shade(tones.earth, 0.45),
+    },
+    "lean-to": {
+      roof: tones.wood,
+      detail: shade(tones.wood, 0.35),
+      eave: shade(tones.wood, 0.55),
+    },
+    canopy: {
+      roof: tones.plant,
+      detail: mix(tones.plant, tones.stone, 0.25),
+      eave: shade(tones.plant, 0.5),
+    },
+  };
+}
+
 /** A map's materials (#3172): its arena's colours, and each deck, transition and paving look's. */
 export interface BiomeMaterials {
   readonly palette: ArenaPalette;
   readonly deck: Record<DeckLook, DeckLookColours>;
   readonly transition: Record<TransitionLook, TransitionLookColours>;
   readonly paving: Record<StonePavingLook, PavingLookColours>;
+  readonly overhang: Record<OverhangLook, OverhangLookColours>;
 }
 
 function lookColours<
@@ -604,6 +657,7 @@ function biomeMaterials(tones: BiomeTones): BiomeMaterials {
     deck: lookColours(DECK_LOOK, DECK_MATERIAL, tones),
     transition: lookColours(TRANSITION_LOOK, TRANSITION_MATERIAL, tones),
     paving: pavingColours(tones),
+    overhang: overhangColours(tones),
   };
 }
 

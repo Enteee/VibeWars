@@ -76,6 +76,11 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
   /** @type {{ spec: string, repeat: number, cost: number }[]} */
   const chunks = [];
   for (const [spec, weight] of Object.entries(weights)) {
+    if (weight > MAX_SPEC_SECONDS) {
+      throw new Error(
+        `e2e-repeat: ${spec} records ${String(Math.round(weight))} s a run, over the ${String(MAX_SPEC_SECONDS)} s a job can hold; split the spec.`,
+      );
+    }
     const per = Math.max(1, Math.min(repeats, Math.floor(budget / weight)));
     for (let left = repeats; left > 0; left -= per) {
       const repeat = Math.min(per, left);
@@ -105,9 +110,19 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
   return jobs.map(({ specs, repeat }) => ({ specs, repeat }));
 };
 
-/** Recorded seconds (e2e-durations.json) of test runs per job: 800 s, so with setup and build the job fits the 60 min cap, hosted e2e-repeat runs taking up to ~3.3x the recorded seconds (gameplay.spec, 15 min a run against 271 s recorded, #3266), and ten repeats of a spec up to 400 s fit in MAX_JOBS jobs. */
+/** Recorded seconds (e2e-durations.json, hosted CI shard times) of test runs per job: 800 s, so a job's tests take about 20 min at 1.5x and a run ends near 25 min with setup; a spec over the budget still gets one run per job. MAX_JOBS fits ten repeats of each of the two largest specs (gameplay 663 s, tutorial 407 s: 20 jobs). */
 export const SECONDS_PER_JOB = 800;
-export const MAX_JOBS = 6;
+export const MAX_JOBS = 20;
+/** The e2e-repeat matrix job's timeout-minutes; a test holds it equal to the workflow's. */
+export const JOB_TIMEOUT_MINUTES = 40;
+/** devenv/cache setup and build per job, in seconds. */
+export const SETUP_SECONDS = 300;
+/** How much slower an e2e-repeat run is than the recorded seconds, which come from hosted CI shards (gameplay.spec: 15 min a repeat run against 663 s recorded, 1.4x). */
+export const HOSTED_SLOWDOWN = 1.5;
+/** Recorded seconds one run of a spec may take and still finish in the job timeout (#3313). */
+export const MAX_SPEC_SECONDS = Math.floor(
+  (JOB_TIMEOUT_MINUTES * 60 - SETUP_SECONDS) / HOSTED_SLOWDOWN,
+);
 export const REPEATS = 10;
 /**
  * Throws unless the Playwright JSON report ran at least one test. Skipped

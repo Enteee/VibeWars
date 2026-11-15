@@ -39,10 +39,13 @@ import {
   healthFraction,
   nameShown,
   nameTagBox,
+  SPIRIT_RING_WIDTH,
+  spiritRingAlpha,
   nameplateLayout,
   placeFloatingText,
   signetTextureKey,
   swingFlashAlpha,
+  SKILL_ARC_WIDTH,
   markedForTeam,
   teamColour,
   type AreaFlash,
@@ -68,8 +71,8 @@ import {
   ARENA_BACKGROUND,
   BIOME,
   DECK_LIP,
-  PIT_FLOOR,
-  PIT_WALL,
+  pitFloor,
+  pitWall,
   TUNNEL_MOUTH,
   WALL_STROKE,
   arenaPalette,
@@ -106,8 +109,12 @@ import {
   traceHiddenOutline,
   seenFrom,
   tunnelCover,
+  tunnelCoverBox,
+  boxWithout,
+  segmentInBox,
   tunnelFloor,
   tunnelSeam,
+  tunnelOpenings,
   tunnelsHolding,
   traceHiddenPolyline,
   type Occluder,
@@ -128,7 +135,14 @@ import {
   MatchClock,
   projectileHeading,
   projectileLanding,
+  projectileLayer,
   projectilePosition,
+  projectileCore,
+  projectileTrail,
+  SHOT_CORE_COLOUR,
+  SHOT_SHADOW,
+  type ShotDot,
+  type TrailDot,
   shotFadeAlpha,
 } from "./projectiles.js";
 import { NO_COVER, frameClock, snapView, type CameraView, type Cover } from "./camera-rig.js";
@@ -141,10 +155,21 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
-import { weaponMarkLayout } from "./weapon-mark.js";
+import { weaponMarkLayout, weaponTipAt } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
+import { CAST_GLOW_CORE, CAST_GLOW_CORE_LIFT, castGlow } from "./cast-beats.js";
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
+import {
+  addShoutMarks,
+  chevronAlpha,
+  decayShoutMarks,
+  SHOUT_COLOUR,
+  SHOUT_RING_WIDTH,
+  shoutChevron,
+  shoutRingRadius,
+  type ShoutMark,
+} from "./shout-marks.js";
 import {
   ENCHANTMENT_COLOUR,
   ENCHANT_MOTES,
@@ -182,11 +207,17 @@ import {
   DEAD_DASH,
   DEAD_GAP,
   RING_CASING,
+  SPIRIT_CORE,
+  SPIRIT_CORE_SCALE,
+  SPIRIT_GREEN,
+  SPIRIT_RIM_WIDTH,
   TICK_EDGE,
   creatureOrnament,
   creatureOutline,
   creatureTick,
   dashes,
+  spiritBob,
+  spiritWisp,
   type OrnamentColour,
 } from "./creature-shape.js";
 import { CAST_BADGE_SIZE, CAST_BAR_RISE, castBadgeLayout } from "./cast-badge.js";
@@ -206,7 +237,13 @@ import {
   type RenderableTeleport,
   type RenderableFlag,
 } from "./flag-objects.js";
-import { goalMarkCommands, goalMarkFade, type GoalMark } from "./goal-mark.js";
+import {
+  GOAL_MARK_GOLD,
+  goalMarkCommands,
+  goalMarkFade,
+  traceHiddenGoalMark,
+  type GoalMark,
+} from "./goal-mark.js";
 import {
   GROUND_COLOUR,
   GROUND_DASH,
@@ -226,15 +263,30 @@ import {
 import { lyingPose } from "./lying-pose.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
-import { LightingPass, litStructurePalette, baseTint } from "./lighting-pass.js";
+import {
+  LightingPass,
+  litOverhangColours,
+  litStructurePalette,
+  baseTint,
+} from "./lighting-pass.js";
+import { bodyUnder, overhangAlpha, paintOverhang, type OverhangCover } from "./overhang-art.js";
 import {
   DECK_ART,
+  FADING_TOP_LOOKS,
   SWITCHED_DECK_ART,
   TRANSITION_ART,
   deckPalette,
   transitionPalette,
   type DeckFrame,
 } from "./structure-art.js";
+import {
+  clippedPainter,
+  coverPieces,
+  liftedCovers,
+  outlineArea,
+  type CoverPiece,
+  type TunnelCoverBox,
+} from "./cover-pieces.js";
 import { liftFrame, liftPlatform, liftShaft, type LiftFrame } from "./lift-art.js";
 import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
@@ -266,7 +318,7 @@ import {
   type LightSample,
 } from "./lighting-model.js";
 import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
-import { waterShapeOf, type WaterShape } from "./water-shape.js";
+import { waterPieces, waterShapeOf, type WaterPiece, type WaterShape } from "./water-shape.js";
 import { SPIRE_LOOK, ZONE_EDGE_WIDTH, ZONE_LOOK, strikeEdgeScale } from "./zone-look.js";
 import { HAZARD_ART, hazardKindOf, pathMotionAt, phaseProgressAt } from "./hazard-marks.js";
 import {
@@ -280,6 +332,7 @@ import {
 import {
   isStonePaving,
   paintPaving,
+  pavingHoles,
   paintPavingPiece,
   pavingDrawing,
   pavingTextureSizes,
@@ -380,9 +433,22 @@ const SWITCH_LINK_WIDTH = 3;
 const SWITCH_LINK_DOT_STEP = 14;
 const SWITCH_LINK_DOT_RADIUS = 1.6;
 /** The ground over the tunnel the local body is in (#3234): how much of it still draws. */
-const TUNNEL_CUTAWAY_ALPHA = 0.35;
+const TUNNEL_CUTAWAY_ALPHA = 0.15;
 /** How long that ground takes to fade out or back in, in seconds. */
 const TUNNEL_CUTAWAY_FADE = 0.2;
+
+/** A body of water, and its pieces split by the tunnel covers under it (#3350). */
+interface WaterSplit {
+  readonly shape: WaterShape;
+  readonly pieces: readonly WaterPiece[];
+}
+
+/** What of the water over one tunnel draws on its own (#3350), to fade with its cover. */
+interface WaterOverTunnel {
+  readonly surface: Phaser.GameObjects.Graphics;
+  readonly ripples: Phaser.GameObjects.Graphics;
+  readonly painter: WaterPainter;
+}
 
 const TARGET_RING = 0xffd866;
 /** The `condition` orange: your team's called foe wears its chevron (#443). */
@@ -456,6 +522,9 @@ const EDGE_MARKER_LENGTH = 12;
 const EDGE_MARKER_WIDTH = 10;
 /** A skill impact's spikes and ring (#1139). */
 const IMPACT_LINE_WIDTH = 1.5;
+/** An outlined impact spike's dark edge (#3292): this much wider than the spike, the sprites' outline colour. */
+const IMPACT_OUTLINE = 2;
+const IMPACT_OUTLINE_COLOUR = 0x0e1116;
 /**
  * The world's layers, bottom up (#1037). Wards on the floor and their
  * icons (#1087), under everything that stands on them; the grid and the
@@ -530,6 +599,7 @@ export class ArenaScene extends Phaser.Scene {
   private bands: readonly {
     readonly body: Phaser.GameObjects.Graphics;
     readonly marks: Phaser.GameObjects.Graphics;
+    readonly bar: Phaser.GameObjects.Graphics;
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
@@ -541,14 +611,39 @@ export class ArenaScene extends Phaser.Scene {
     number,
     { readonly ground: Phaser.GameObjects.Graphics; readonly seam: Phaser.GameObjects.Graphics }
   >();
+  /**
+   * Each overhang (#3293) and arch top (#3312) as drawn, and where it
+   * hangs: faded while a body is under it.
+   */
+  private coversDrawn: {
+    readonly cover: OverhangCover;
+    readonly graphics: Phaser.GameObjects.Graphics;
+    /** The tunnel it is over, for a deck's top split by one (#3352): it fades with its cover too. */
+    readonly tunnel: number | undefined;
+    /** How far it has faded as an overhang, before the cut-away. */
+    overhang: number;
+  }[] = [];
+  /**
+   * What of the decks over each tunnel draws on its own (#3352), by the
+   * tunnel's index: tops and side faces, faded with its cover.
+   */
+  private readonly decksOverTunnels = new Map<number, Phaser.GameObjects.Graphics[]>();
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
   private readonly staticCull = new StaticGraphicsCull();
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
   private readonly liftGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Each lift as its art draws it, in the snapshot's `lifts` order; set when the map is drawn. */
   private liftFrames: readonly { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
-  /** The map's water (#2984), built when the map changes. */
-  private waterShapes: readonly WaterShape[] = [];
+  /**
+   * The map's water (#2984), built when the map changes: each body split
+   * by the tunnel covers under it (#3350).
+   */
+  private waterShapes: readonly WaterSplit[] = [];
+  /**
+   * The surface and ripples of the water over each tunnel (#3350), by its
+   * index: faded with its cover.
+   */
+  private readonly waterOverTunnels = new Map<number, WaterOverTunnel>();
   /** The ripples on each layer's water, drawn every frame. */
   private readonly rippleGraphics = new Map<
     number,
@@ -643,6 +738,8 @@ export class ArenaScene extends Phaser.Scene {
   /** Skills landing on bodies (#1139), newest last; merged in on the next frame. */
   private impacts: Impact[] = [];
   private addedImpacts: Impact[] = [];
+  /** Shout and chant rings and chevrons (#3301), aged in place. */
+  private readonly shoutMarks: ShoutMark[] = [];
   private walkMarker: WalkMarker | undefined;
   /**
    * The goals on the ground (#3221), each with when it left the snapshot,
@@ -658,8 +755,19 @@ export class ArenaScene extends Phaser.Scene {
    */
   private projectileImages = new Map<
     number,
-    { image: Phaser.GameObjects.Image; to: { x: number; y: number }; endedAt: number | undefined }
+    {
+      image: Phaser.GameObjects.Image;
+      to: { x: number; y: number };
+      endedAt: number | undefined;
+      /** A flying spell's (#3292): where it left, its trail, and its core's radius. */
+      readonly spell:
+        | { readonly from: Vec2; readonly trail: readonly TrailDot[]; readonly core: ShotDot }
+        | undefined;
+    }
   >();
+  /** Flying spells' trails under their sprites, and their cores over them (#3292). */
+  private shotTrails: Phaser.GameObjects.Graphics | undefined;
+  private shotCores: Phaser.GameObjects.Graphics | undefined;
   private readonly clock = new MatchClock();
   /**
    * Shots that have ended, kept until they leave the state: if the clock
@@ -798,6 +906,10 @@ export class ArenaScene extends Phaser.Scene {
     this.addedImpacts.push(...impacts);
   }
 
+  public addShoutMarks(marks: readonly ShoutMark[]): void {
+    addShoutMarks(this.shoutMarks, marks);
+  }
+
   /**
    * Every icon the arena draws comes from one sheet (#1671), loaded at its
    * own size: one raster at match start, however many skills there are.
@@ -832,6 +944,7 @@ export class ArenaScene extends Phaser.Scene {
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
       marks: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "marks" })),
+      bar: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "bar" })),
     }));
     this.barrierGraphics = this.add
       .graphics()
@@ -840,6 +953,9 @@ export class ArenaScene extends Phaser.Scene {
     this.markGraphics = this.add.graphics().setDepth(EFFECT_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
     this.nameUnderline = this.add.graphics().setDepth(OVERLAY_DEPTH);
+    // Made before any shot's sprite, so under every one at their depth.
+    this.shotTrails = this.add.graphics().setDepth(OVERLAY_DEPTH);
+    this.shotCores = this.add.graphics().setDepth(OVERLAY_DEPTH + 1);
   }
 
   public override update(time: number): void {
@@ -849,9 +965,10 @@ export class ArenaScene extends Phaser.Scene {
     if (effects === undefined || floor === undefined) {
       return;
     }
-    for (const { body, marks: bandMarks } of this.bands) {
+    for (const { body, marks: bandMarks, bar } of this.bands) {
       body.clear();
       bandMarks.clear();
+      bar.clear();
     }
     effects.clear();
     this.barrierGraphics?.clear();
@@ -862,6 +979,7 @@ export class ArenaScene extends Phaser.Scene {
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
     this.updateLighting(time);
+    decayShoutMarks(this.shoutMarks, dt);
     this.updateGroundEffects();
     this.drawMap();
     // Only what the camera shows is tessellated (#3240): the map cut once in
@@ -912,6 +1030,7 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.drawArrivals(g);
     this.stepCapes(dt);
+    this.drawShotShadows(time / 1000);
     // Every form's aura first, under every disc of its band (#3229): it
     // never covers a neighbour.
     for (const actor of this.drawnActors) {
@@ -925,10 +1044,11 @@ export class ArenaScene extends Phaser.Scene {
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
       if (band !== undefined) {
-        this.drawActor(band.body, band.marks, actor);
+        this.drawActor(band, actor);
       }
     }
     this.cutAwayTunnels(dt);
+    this.fadeOverhangs(dt);
     this.drawHiddenOutlines();
     this.drawHoverMarker(effects);
     this.drawSwitchLinks(effects);
@@ -937,8 +1057,13 @@ export class ArenaScene extends Phaser.Scene {
       this.drawFlag(effects, flag);
     }
     this.swingFlashes = decaySwingFlashes(this.swingFlashes, dt);
+    // Arcs and hit marks on their body's band, under its health bars and
+    // any deck over it (#3292).
     for (const flash of this.swingFlashes) {
-      this.drawSwingFlash(effects, flash);
+      const band = this.bandOf(flash.layer);
+      if (band !== undefined) {
+        this.drawSwingFlash(band.marks, flash);
+      }
     }
     this.beaconBolts = decayBeaconBolts(this.beaconBolts, dt);
     for (const bolt of this.beaconBolts) {
@@ -947,8 +1072,9 @@ export class ArenaScene extends Phaser.Scene {
     this.impacts = mergeImpacts(this.impacts, this.addedImpacts, dt);
     this.addedImpacts = [];
     for (const impact of this.impacts) {
-      this.drawImpact(effects, impact);
+      this.drawImpact(impact);
     }
+    this.drawShoutChevrons();
     this.updateBodyGlyphs();
     this.updateCastBadges();
     this.updateProjectiles(time / 1000);
@@ -1432,7 +1558,8 @@ export class ArenaScene extends Phaser.Scene {
       }
       const total = actor.dead ? 0 : actor.swingTotal;
       const cast = actor.dead ? undefined : actor.attackCast;
-      clock.observe(this.snapshot.clock, actor.swingElapsed, total, actor.weaponId, cast);
+      const spell = actor.dead ? undefined : actor.spellCast;
+      clock.observe(this.snapshot.clock, actor.swingElapsed, total, actor.weaponId, cast, spell);
     }
     for (const id of this.attackClocks.keys()) {
       if (!present.has(id)) {
@@ -1582,6 +1709,33 @@ export class ArenaScene extends Phaser.Scene {
     paintWeaponMark(phaserPainter(g), at, actor.weaponId, frame);
   }
 
+  /**
+   * The glow at a standing caster's weapon (#3320), at its far end, over
+   * the weapon mark and under the bars: it grows with a spell cast, flashes
+   * on release and fizzles when stopped short.
+   */
+  private drawCastGlow(
+    g: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+    frame: AttackFrame,
+  ): void {
+    const clock = this.attackClocks.get(actor.id);
+    const glow = castGlow(clock?.castBeat(this.clock.read(this.now)), this.reducedMotion);
+    if (glow === undefined) {
+      return;
+    }
+    const { x, y } = actor.position;
+    const tip = weaponTipAt(x, y, actor.radius, actor.facing, actor.weaponId, frame);
+    if (tip === undefined) {
+      return;
+    }
+    // The study's glow: a soft disc round a brighter core.
+    g.fillStyle(glow.colour, glow.alpha);
+    g.fillCircle(tip.x, tip.y, glow.radius);
+    g.fillStyle(glow.colour, Math.min(1, glow.alpha + CAST_GLOW_CORE_LIFT));
+    g.fillCircle(tip.x, tip.y, glow.radius * CAST_GLOW_CORE);
+  }
+
   /** Where `actor`'s weapon is in its swing, `REST_FRAME` for none. */
   private weaponFrame(actor: RenderableActor): AttackFrame {
     return actor.weaponId === undefined || !isWeaponId(actor.weaponId)
@@ -1719,15 +1873,20 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** A skill's impact on a body (#1139), where that body is now; none once it has left the state. */
-  private drawImpact(g: Phaser.GameObjects.Graphics, impact: Impact): void {
+  private drawImpact(impact: Impact): void {
     const actor = this.drawnActors.find((a) => a.id === impact.anchorId);
-    if (actor === undefined) {
+    const g = actor === undefined ? undefined : this.bandOf(actor.layer)?.marks;
+    if (actor === undefined || g === undefined) {
       return;
     }
     const { x, y } = actor.position;
     for (const mark of impactMarks(impact, actor.radius, this.reducedMotion)) {
       if (mark.kind === "spike") {
-        g.lineStyle(IMPACT_LINE_WIDTH, impact.colour, mark.alpha);
+        if (mark.outlined) {
+          g.lineStyle(mark.width + IMPACT_OUTLINE, IMPACT_OUTLINE_COLOUR, mark.alpha);
+          g.lineBetween(x + mark.from.x, y + mark.from.y, x + mark.to.x, y + mark.to.y);
+        }
+        g.lineStyle(mark.width, impact.colour, mark.alpha);
         g.lineBetween(x + mark.from.x, y + mark.from.y, x + mark.to.x, y + mark.to.y);
       } else if (mark.kind === "tint") {
         g.fillStyle(impact.colour, mark.alpha);
@@ -1735,6 +1894,38 @@ export class ArenaScene extends Phaser.Scene {
       } else {
         g.lineStyle(IMPACT_LINE_WIDTH, impact.colour, mark.alpha);
         g.strokeCircle(x, y, mark.radius);
+      }
+    }
+  }
+
+  /**
+   * A chevron over each body a shout helped (#3301), above its health bar
+   * and any hex halo, with the bar: a tunnel cuts it away as it does the bar.
+   */
+  private drawShoutChevrons(): void {
+    for (const mark of this.shoutMarks) {
+      if (mark.kind !== "chevron") {
+        continue;
+      }
+      const actor = this.drawnActors.find((a) => a.id === mark.anchorId);
+      const g = actor === undefined ? undefined : this.bandOf(actor.layer)?.bar;
+      if (actor === undefined || g === undefined || actor.dead) {
+        continue;
+      }
+      const halo = actor.hexed ? hexHalo(actor.radius) : undefined;
+      const points = shoutChevron(
+        actor.position.x,
+        actor.position.y,
+        actor.radius,
+        halo === undefined ? undefined : halo.rise + halo.halfHeight,
+      );
+      const alpha = chevronAlpha(mark.ageSeconds);
+      for (const [width, colour] of [
+        [4, BODY_EDGE],
+        [2, SHOUT_COLOUR],
+      ] as const) {
+        g.lineStyle(width, colour, alpha);
+        g.strokePoints(points.map(({ x, y }) => new Phaser.Math.Vector2(x, y)));
       }
     }
   }
@@ -1758,15 +1949,15 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private drawSwingFlash(g: Phaser.GameObjects.Graphics, flash: SwingFlash): void {
-    const alpha = swingFlashAlpha(flash);
+    const alpha = swingFlashAlpha(flash, this.reducedMotion);
     const { x, y } = flash.centre;
     const from = flash.angle - Math.PI / 4;
     const to = flash.angle + Math.PI / 4;
-    g.lineStyle(2, flash.colour, alpha);
+    g.lineStyle(flash.kind === "skill" ? SKILL_ARC_WIDTH : 2, flash.colour, alpha);
     g.beginPath();
     g.arc(x, y, flash.radius, from, to);
     g.strokePath();
-    if (flash.own) {
+    if (flash.own && flash.kind === "swing") {
       // Along the outer edge, as your circle gets its rim.
       g.lineStyle(1, SELF_RIM, alpha);
       g.beginPath();
@@ -1784,6 +1975,10 @@ export class ArenaScene extends Phaser.Scene {
    */
   private updateProjectiles(now: number): void {
     const clock = this.clock.read(now);
+    const trails = this.shotTrails;
+    const cores = this.shotCores;
+    trails?.clear();
+    cores?.clear();
     const flying = new Set<number>();
     const sent = new Set(this.snapshot.projectiles.map((shot) => shot.id));
     for (const id of this.endedShots) {
@@ -1808,15 +2003,42 @@ export class ArenaScene extends Phaser.Scene {
         const image = this.add
           .image(position.x, position.y, ATLAS, projectileFrame(shot.sprite))
           .setDepth(OVERLAY_DEPTH);
-        image.setRotation(projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts));
+        const heading = projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts);
+        image.setRotation(heading);
         image.setTint(shot.colour);
+        const scale = image.scaleX;
+        const from = projectilePosition(
+          shot,
+          shot.launchedAt,
+          this.snapshot.structure,
+          this.snapshot.lifts,
+        );
         this.projectileImages.set(shot.id, {
           image,
           to: projectileLanding(shot, this.snapshot.structure, this.snapshot.lifts),
           endedAt: undefined,
+          spell:
+            shot.spell && from !== undefined
+              ? {
+                  from,
+                  trail: projectileTrail(shot.sprite, heading, scale),
+                  core: projectileCore(shot.sprite, heading, scale),
+                }
+              : undefined,
         });
       } else {
         shown.image.setPosition(position.x, position.y);
+      }
+      const spell = this.projectileImages.get(shot.id)?.spell;
+      if (spell !== undefined && trails !== undefined && !this.reducedMotion) {
+        // Never behind where it left: a trail grows out of the caster's hand.
+        const flown = Math.hypot(position.x - spell.from.x, position.y - spell.from.y);
+        for (const dot of spell.trail) {
+          if (Math.hypot(dot.offset.x, dot.offset.y) <= flown) {
+            trails.fillStyle(dot.colour, dot.alpha);
+            trails.fillCircle(position.x + dot.offset.x, position.y + dot.offset.y, dot.radius);
+          }
+        }
       }
     }
     const fade = !prefersReducedMotion();
@@ -1839,18 +2061,51 @@ export class ArenaScene extends Phaser.Scene {
         shown.image.setAlpha(alpha);
       }
     }
+    for (const { image, spell } of this.projectileImages.values()) {
+      if (spell !== undefined && cores !== undefined) {
+        cores.fillStyle(SHOT_CORE_COLOUR, image.alpha);
+        cores.fillCircle(
+          image.x + spell.core.offset.x,
+          image.y + spell.core.offset.y,
+          spell.core.radius,
+        );
+      }
+    }
   }
 
   /**
-   * One actor: its body on `g`, every mark on it on `marks`, over the
-   * body glyphs (#1037). In a clump a neighbour's weapon now crosses your
+   * Each flying spell's shadow (#3292): on the ground under it, in the
+   * band of the layer it flies over, so it takes that band's tone and
+   * lies under the bodies there. Gone once the shot lands.
+   */
+  private drawShotShadows(now: number): void {
+    const clock = this.clock.read(now);
+    const { structure, lifts } = this.snapshot;
+    for (const shot of this.snapshot.projectiles) {
+      if (!shot.spell || this.endedShots.has(shot.id)) {
+        continue;
+      }
+      const position = projectilePosition(shot, clock, structure, lifts);
+      const band = this.bandOf(projectileLayer(shot, clock));
+      if (position !== undefined && band !== undefined) {
+        band.body.fillStyle(SHOT_SHADOW.colour, SHOT_SHADOW.alpha);
+        band.body.fillEllipse(
+          position.x + SHOT_SHADOW.offset.x,
+          position.y + SHOT_SHADOW.offset.y,
+          SHOT_SHADOW.width,
+          SHOT_SHADOW.height,
+        );
+      }
+    }
+  }
+
+  /**
+   * One actor on its band: its body, every mark on it over the body
+   * glyphs (#1037), and its health bar over those (#3292). In a clump a neighbour's weapon now crosses your
    * body: the weapon is the more urgent read.
    */
-  private drawActor(
-    g: Phaser.GameObjects.Graphics,
-    marks: Phaser.GameObjects.Graphics,
-    actor: RenderableActor,
-  ): void {
+  private drawActor(band: (typeof this.bands)[number], actor: RenderableActor): void {
+    const { body: g, marks, bar } = band;
     const { x, y } = actor.position;
 
     if (actor.dead) {
@@ -1877,6 +2132,7 @@ export class ArenaScene extends Phaser.Scene {
     } else if (actor.knockedDown) {
       this.drawLyingBody(g, marks, actor);
     } else {
+      const frame = this.weaponFrame(actor);
       paintStandingBody(
         phaserPainter(g),
         {
@@ -1887,12 +2143,13 @@ export class ArenaScene extends Phaser.Scene {
           team: actor.team,
           weaponId: actor.weaponId,
           offhandId: actor.offhandId,
-          frame: this.weaponFrame(actor),
+          frame,
           cape: this.wornCape(actor),
           tint: this.bodyTint(actor),
         },
         phaserPainter(marks),
       );
+      this.drawCastGlow(marks, actor, frame);
     }
     // On the body layer, after the body and its self rim: every mark draws over the rings.
     this.drawBodyRings(g, actor);
@@ -1906,7 +2163,7 @@ export class ArenaScene extends Phaser.Scene {
       this.drawCallChevron(marks, actor);
     }
 
-    this.drawHealthBar(marks, actor);
+    this.drawHealthBar(bar, actor);
 
     if (actor.castProgress !== undefined) {
       this.drawCastBar(marks, actor, actor.castProgress);
@@ -1929,19 +2186,19 @@ export class ArenaScene extends Phaser.Scene {
     const team = this.lit(teamColour(actor.team), actor);
     const colourOf = (colour: OrnamentColour): number =>
       colour === "team" ? team : colour === "ink" ? SELF_RIM : colour;
-    for (const ornament of creatureOrnament(look, x, y, actor.radius)) {
+    for (const ornament of creatureOrnament(look, x, y, actor.radius, actor.facing)) {
       if (ornament.kind === "polygon") {
         tracePath(g, ornament.points);
         g.fillStyle(colourOf(ornament.colour), 1);
         g.fillPath();
         g.lineStyle(ornament.edge, BODY_EDGE, 1);
         g.strokePath();
-      } else if (ornament.kind === "outline") {
+      } else if (ornament.kind === "outline" || ornament.kind === "stroke") {
         for (const [width, colour] of [
           [ornament.casing, BODY_EDGE],
           [ornament.width, colourOf(ornament.colour)],
         ] as const) {
-          tracePath(g, ornament.points);
+          tracePath(g, ornament.points, ornament.kind === "outline");
           g.lineStyle(width, colour, 1);
           g.strokePath();
         }
@@ -1957,14 +2214,20 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
 
-    tracePath(g, creatureOutline(x, y, actor.radius));
-    g.fillStyle(team, 1);
-    g.fillPath();
-    g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
-    g.strokePath();
+    // A spirit's plate is a wisp (#3306), bobbing, inside a team rim.
+    const bob = look === "spirit" ? spiritBob(this.now, cuePhase(actor.id), this.reducedMotion) : 0;
+    if (look === "spirit") {
+      this.drawSpiritWisp(g, actor, y + bob, team);
+    } else {
+      tracePath(g, creatureOutline(x, y, actor.radius));
+      g.fillStyle(team, 1);
+      g.fillPath();
+      g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+      g.strokePath();
+    }
 
     if (CREATURE_ARMS[look] === undefined) {
-      const [tip, left, right] = creatureTick(x, y, actor.radius, actor.facing);
+      const [tip, left, right] = creatureTick(x, y + bob, actor.radius, actor.facing);
       marks.fillStyle(SELF_RIM, 1);
       marks.fillTriangle(tip.x, tip.y, left.x, left.y, right.x, right.y);
       marks.lineStyle(TICK_EDGE, BODY_EDGE, 1);
@@ -1982,6 +2245,30 @@ export class ArenaScene extends Phaser.Scene {
         cape: undefined,
       });
     }
+  }
+
+  /**
+   * A spirit's wisp (#3306) at height `y`: pale green round a near-white
+   * core, lit as its band, cased in the body edge under a `team` rim.
+   */
+  private drawSpiritWisp(
+    g: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+    y: number,
+    team: number,
+  ): void {
+    const { x } = actor.position;
+    const r = actor.radius;
+    tracePath(g, spiritWisp(x, y, r));
+    g.fillStyle(this.lit(SPIRIT_GREEN, actor), 1);
+    g.fillPath();
+    g.lineStyle(SPIRIT_RIM_WIDTH + RING_CASING, BODY_EDGE, 1);
+    g.strokePath();
+    g.lineStyle(SPIRIT_RIM_WIDTH, team, 1);
+    g.strokePath();
+    tracePath(g, spiritWisp(x, y, r, SPIRIT_CORE_SCALE));
+    g.fillStyle(this.lit(SPIRIT_CORE, actor), 1);
+    g.fillPath();
   }
 
   /**
@@ -2515,6 +2802,54 @@ export class ArenaScene extends Phaser.Scene {
         }
       }
     }
+    this.drawShoutRings(g);
+    this.drawSpiritRings(g);
+  }
+
+  /**
+   * Each living spirit's range ring (#3306), on the ground at its aura's
+   * real radius and its layer's height, as a shout's ring: under the bodies.
+   */
+  private drawSpiritRings(ground: Phaser.GameObjects.Graphics): void {
+    const structure = this.snapshot.structure;
+    for (const actor of this.snapshot.actors) {
+      const alpha = spiritRingAlpha(this.snapshot, actor);
+      if (alpha === undefined || actor.auraRadius === undefined) {
+        continue;
+      }
+      const onDeck = actor.layer > 0;
+      const g = onDeck ? this.deckGroundGraphicsOf(actor.layer) : ground;
+      const { x } = actor.position;
+      const y = onDeck
+        ? actor.position.y - liftAt(structure, this.snapshot.lifts, actor.position, actor.layer)
+        : actor.position.y - elevationOf(actor.layer, structure.ground);
+      g.lineStyle(SPIRIT_RING_WIDTH, SPIRIT_GREEN, alpha);
+      g.strokeCircle(x, y, actor.auraRadius);
+    }
+  }
+
+  /**
+   * Each shout's ring (#3301), on the ground where its caster stood, at
+   * that layer's height like a skill area: under the bodies.
+   */
+  private drawShoutRings(ground: Phaser.GameObjects.Graphics): void {
+    const structure = this.snapshot.structure;
+    for (const mark of this.shoutMarks) {
+      if (mark.kind !== "ring") {
+        continue;
+      }
+      const ring = shoutRingRadius(mark.ageSeconds, mark.from, this.reducedMotion);
+      if (ring === undefined) {
+        continue;
+      }
+      const onDeck = mark.layer > 0;
+      const g = onDeck ? this.deckGroundGraphicsOf(mark.layer) : ground;
+      const y = onDeck
+        ? mark.position.y - liftAt(structure, this.snapshot.lifts, mark.position, mark.layer)
+        : mark.position.y - elevationOf(mark.layer, structure.ground);
+      g.lineStyle(SHOUT_RING_WIDTH, SHOUT_COLOUR, ring.alpha);
+      g.strokeCircle(mark.position.x, y, ring.radius);
+    }
   }
 
   /**
@@ -2796,15 +3131,35 @@ export class ArenaScene extends Phaser.Scene {
     for (const graphics of this.structureGraphics.values()) {
       graphics.clear();
     }
-    if (next.structure.water !== this.drawnMap?.structure.water) {
-      this.waterShapes = next.structure.water.map(waterShapeOf);
+    if (
+      next.structure.water !== this.drawnMap?.structure.water ||
+      next.structure.tunnels !== this.drawnMap.structure.tunnels
+    ) {
+      this.waterShapes = splitWater(next.structure);
     }
-    for (const shape of this.waterShapes) {
-      const surface = this.structureAt({ kind: "water", layer: shape.layer, part: "surface" });
-      surface.save();
-      surface.translateCanvas(0, -elevationOf(shape.layer, ground));
-      WATER_ART[waterArtKey(shape.depth)].surface(this.waterPainter(surface), shape, line);
-      surface.restore();
+    for (const [at, { surface, ripples }] of this.waterOverTunnels) {
+      surface.clear();
+      if (at >= next.structure.tunnels.length) {
+        surface.destroy();
+        ripples.destroy();
+        this.waterOverTunnels.delete(at);
+      }
+    }
+    for (const { shape, pieces } of this.waterShapes) {
+      for (const piece of pieces) {
+        const surface =
+          piece.tunnel === undefined
+            ? this.structureAt({ kind: "water", layer: shape.layer, part: "surface" })
+            : this.waterOverTunnel(piece.tunnel).surface;
+        surface.save();
+        surface.translateCanvas(0, -elevationOf(shape.layer, ground));
+        WATER_ART[waterArtKey(shape.depth)].surface(
+          pieces.length === 1 ? this.waterPainter(surface) : this.piecePainter(surface, piece),
+          { ...shape, outline: piece.outline, ripples: piece.ripples },
+          line,
+        );
+        surface.restore();
+      }
     }
     this.drawPits(next.structure, line, palette);
     const lifts: { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
@@ -2895,6 +3250,15 @@ export class ArenaScene extends Phaser.Scene {
         g.restore();
       }
     }
+    for (const { graphics } of this.coversDrawn) {
+      graphics.destroy();
+    }
+    this.coversDrawn = [];
+    for (const graphics of [...this.decksOverTunnels.values()].flat()) {
+      graphics.destroy();
+    }
+    this.decksOverTunnels.clear();
+    const covers = tunnelCoverBoxes(next.structure);
     for (const deck of [...next.structure.decks, ...next.structure.downDecks]) {
       this.drawDeck(
         next.structure,
@@ -2907,8 +3271,10 @@ export class ArenaScene extends Phaser.Scene {
           deck.footprint,
           deck.layer,
         ),
+        covers,
       );
     }
+    this.drawOverhangs(next.structure, next.lighting, line);
     for (const dropOff of next.structure.dropOffs) {
       this.drawDropOff(dropOff, ground, line);
     }
@@ -2920,6 +3286,9 @@ export class ArenaScene extends Phaser.Scene {
       g,
       ...this.structureGraphics.values(),
       ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
+      ...[...this.waterOverTunnels.values()].map(({ surface }) => surface),
+      ...[...this.decksOverTunnels.values()].flat(),
+      ...this.coversDrawn.map(({ graphics }) => graphics),
     ]);
   }
 
@@ -2941,7 +3310,10 @@ export class ArenaScene extends Phaser.Scene {
     };
   }
 
-  /** What a structure covers of each body (#2831, #2972): its team's outline, weapon and symbol, no fill. */
+  /**
+   * What a structure covers of each body (#2831, #2972): its team's outline,
+   * weapon and symbol, no fill. A goal's ring shows the same way (#3342).
+   */
   private drawHiddenOutlines(): void {
     this.hiddenOutlines ??= this.add.graphics().setDepth(renderOrder({ kind: "hidden-outline" }));
     const g = this.hiddenOutlines;
@@ -2952,6 +3324,18 @@ export class ArenaScene extends Phaser.Scene {
         if (!actor.dead) {
           this.drawHiddenBody(g, actor, shownGlyphs);
         }
+      }
+      for (const { mark, goneAt } of this.goals.values()) {
+        const fade = goalMarkFade(goneAt === undefined ? undefined : this.now - goneAt);
+        g.lineStyle(BODY_EDGE_WIDTH, GOAL_MARK_GOLD, fade);
+        traceHiddenGoalMark(
+          mark,
+          this.now,
+          this.reducedMotion,
+          this.snapshot.structure.ground,
+          this.occluders,
+          this.strokeHiddenSegment,
+        );
       }
     }
     for (const [id, glyph] of this.hiddenGlyphs) {
@@ -3072,6 +3456,81 @@ export class ArenaScene extends Phaser.Scene {
       for (const piece of this.pavingDrawn?.overTunnels.get(at) ?? []) {
         piece.setAlpha(ground.alpha);
       }
+      for (const piece of this.decksOverTunnels.get(at) ?? []) {
+        piece.setAlpha(ground.alpha);
+      }
+      const water = this.waterOverTunnels.get(at);
+      water?.surface.setAlpha(ground.alpha);
+      water?.ripples.setAlpha(ground.alpha);
+      this.lightingPass?.fadeTunnel(at, ground.alpha);
+    }
+  }
+
+  /**
+   * Each overhang or arch top over a body (#3293, #3312), anyone's, faded to
+   * `OVERHANG_FADED_ALPHA` so it never hides one, and back once its
+   * footprint is empty. At once under reduced motion.
+   */
+  private fadeOverhangs(dt: number): void {
+    for (const drawn of this.coversDrawn) {
+      const covering = bodyUnder(drawn.cover, this.drawnActors, this.liftOf);
+      drawn.overhang = overhangAlpha(drawn.overhang, covering, dt, this.reducedMotion);
+      // A top over a tunnel takes the lower of its fade and the cut-away's (#3352).
+      const cut =
+        drawn.tunnel === undefined ? 1 : (this.tunnelCovers.get(drawn.tunnel)?.ground.alpha ?? 1);
+      const next = Math.min(drawn.overhang, cut);
+      if (next !== drawn.graphics.alpha) {
+        drawn.graphics.setAlpha(next);
+      }
+    }
+  }
+
+  private readonly liftOf = (id: string): number => this.elevations.get(id) ?? 0;
+
+  /**
+   * The map's awnings, lean-tos and canopies (#3293): each its own
+   * graphics, so each fades alone, at its layer's height and lit as a deck
+   * of that layer.
+   */
+  private drawOverhangs(
+    structure: MapStructure,
+    lighting: MapLighting | undefined,
+    line: number,
+  ): void {
+    for (const overhang of structure.overhangs) {
+      const top = elevationOf(overhang.layer, structure.ground);
+      const graphics = this.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "overhang", layer: overhang.layer }));
+      graphics.save();
+      graphics.translateCanvas(0, -top);
+      paintOverhang(
+        {
+          fillStyle: (colour, alpha) => graphics.fillStyle(colour, alpha),
+          lineStyle: (width, colour, alpha) => graphics.lineStyle(width, colour, alpha),
+          fillShape: (shape) => {
+            this.fillShape(graphics, shape);
+          },
+          fillCircle: (x, y, radius) => graphics.fillCircle(x, y, radius),
+          lineBetween: (ax, ay, bx, by) => graphics.lineBetween(ax, ay, bx, by),
+        },
+        overhang.look,
+        overhang.footprint,
+        litOverhangColours(
+          BIOME[structure.biome].overhang[overhang.look],
+          lighting,
+          overhang.footprint,
+          overhang.layer,
+        ),
+        line,
+      );
+      graphics.restore();
+      this.coversDrawn.push({
+        cover: { layer: overhang.layer, outline: shapeOutline(overhang.footprint), top },
+        graphics,
+        tunnel: undefined,
+        overhang: 1,
+      });
     }
   }
 
@@ -3182,6 +3641,7 @@ export class ArenaScene extends Phaser.Scene {
     walls: readonly RenderableWall[],
     line: number,
     palette: ArenaPalette,
+    covers: readonly TunnelCoverBox[],
   ): void {
     const { ground } = structure;
     const art = DECK_ART[deck.look];
@@ -3194,6 +3654,14 @@ export class ArenaScene extends Phaser.Scene {
       line,
       palette,
     };
+    const pieces =
+      deck.layer > ground
+        ? coverPieces(shapeOutline(deck.footprint), EVERYWHERE, liftedCovers(covers, frame.top))
+        : [];
+    if (pieces.some(({ tunnel, outline }) => tunnel !== undefined && outlineArea(outline) > 0)) {
+      this.drawDeckOverTunnels(deck, frame, pieces);
+      return;
+    }
     const switched = deck.switched;
     if (switched !== null && !switched.up) {
       // Gone down (#3068): nothing spans it but what is left of it.
@@ -3213,7 +3681,7 @@ export class ArenaScene extends Phaser.Scene {
     const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
     this.drawColumn(side, deck.footprint, frame.low, frame.top, palette.slab, true);
     art.side(side, frame);
-    const face = this.structureAt({ kind: "deck", deckLayer: deck.layer });
+    const face = this.deckTop(deck, frame.top);
     face.save();
     face.translateCanvas(0, -frame.top);
     face.fillStyle(palette.deckTop, 1);
@@ -3229,6 +3697,142 @@ export class ArenaScene extends Phaser.Scene {
       SWITCHED_DECK_ART.cracks(face, frame, switched.cracks, switched.afterCrossings);
     }
     face.restore();
+  }
+
+  /**
+   * A deck over a tunnel (#3352), drawn as `drawDeck` draws it but in
+   * pieces: what is over each tunnel, its top and the stretch of its side
+   * faces in front of it, in graphics of its own that fade with that
+   * tunnel's cover; the rest where the deck would draw whole. Every piece
+   * is the whole deck's art clipped to its box, so they meet with no seam.
+   */
+  private drawDeckOverTunnels(
+    deck: MapStructure["decks"][number],
+    frame: DeckFrame,
+    pieces: readonly CoverPiece[],
+  ): void {
+    const art = DECK_ART[deck.look];
+    const { palette, line } = frame;
+    const switched = deck.switched;
+    const down = switched !== null && !switched.up;
+    const tops = new Map<number | undefined, Phaser.GameObjects.Graphics>();
+    const topOf = (tunnel: number | undefined): Phaser.GameObjects.Graphics => {
+      let top = tops.get(tunnel);
+      if (top === undefined) {
+        top =
+          tunnel === undefined
+            ? down
+              ? this.structureAt({ kind: "deck", deckLayer: deck.layer })
+              : this.deckTop(deck, frame.top)
+            : this.deckTopOverTunnel(deck, frame.top, tunnel, down);
+        tops.set(tunnel, top);
+      }
+      return top;
+    };
+    for (const piece of pieces) {
+      const face = topOf(piece.tunnel);
+      const painter = clippedPainter(face, piece.box);
+      face.save();
+      face.translateCanvas(0, -frame.top);
+      if (switched !== null && !switched.up) {
+        if (switched.hinge !== null) {
+          SWITCHED_DECK_ART.raised(painter, frame, switched.hinge);
+        } else if (deck.look === "bridge-plank" && switched.afterCrossings === null) {
+          SWITCHED_DECK_ART.cut(painter, frame);
+        } else {
+          SWITCHED_DECK_ART.fallen(painter, frame);
+        }
+        face.restore();
+        continue;
+      }
+      if (outlineArea(piece.outline) > 0) {
+        face.fillStyle(palette.deckTop, 1);
+        this.fillShape(face, { kind: "polygon", points: piece.outline });
+      }
+      painter.lineStyle(line, palette.wallStroke, 1);
+      for (const [from, to] of piece.shore) {
+        painter.lineBetween(from.x, from.y, to.x, to.y);
+      }
+      painter.lineStyle(line * DECK_LIP_WIDTH, DECK_LIP, 1);
+      for (const { from, to } of southFacingEdges(deck.footprint)) {
+        painter.lineBetween(from.x, from.y, to.x, to.y);
+      }
+      art.top(painter, frame);
+      if (switched !== null && switched.afterCrossings !== null && switched.cracks > 0) {
+        SWITCHED_DECK_ART.cracks(painter, frame, switched.cracks, switched.afterCrossings);
+      }
+      face.restore();
+    }
+    if (down) {
+      return;
+    }
+    for (const { tunnel, box } of sideStretches(deck.footprint, pieces)) {
+      const side =
+        tunnel === undefined
+          ? this.structureAt({ kind: "side-face", deckLayer: deck.layer })
+          : this.overTunnel(tunnel, { kind: "side-face", deckLayer: deck.layer });
+      const painter = clippedPainter(side, box);
+      painter.fillStyle(palette.slab, 1);
+      for (const [a, b, c, d] of sweptEdges(deck.footprint, frame.low, frame.top)) {
+        if (a !== undefined && b !== undefined && c !== undefined && d !== undefined) {
+          painter.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+          painter.fillTriangle(a.x, a.y, c.x, c.y, d.x, d.y);
+        }
+      }
+      art.side(painter, frame);
+    }
+  }
+
+  /**
+   * The graphics the top of `deck` over `tunnel` draws in (#3352): faded
+   * with the tunnel's cover, and as an overhang too for a top walked under.
+   */
+  private deckTopOverTunnel(
+    deck: MapStructure["decks"][number],
+    top: number,
+    tunnel: number,
+    down: boolean,
+  ): Phaser.GameObjects.Graphics {
+    const item: RenderItem = { kind: "deck", deckLayer: deck.layer };
+    if (down || !FADING_TOP_LOOKS.has(deck.look)) {
+      return this.overTunnel(tunnel, item);
+    }
+    const graphics = this.add.graphics().setDepth(renderOrder(item));
+    this.coversDrawn.push({
+      cover: { layer: deck.layer, outline: shapeOutline(deck.footprint), top },
+      graphics,
+      tunnel,
+      overhang: 1,
+    });
+    return graphics;
+  }
+
+  /** New graphics at `item`'s place in the draw order, faded with `tunnel`'s cover (#3352). */
+  private overTunnel(tunnel: number, item: RenderItem): Phaser.GameObjects.Graphics {
+    const graphics = this.add.graphics().setDepth(renderOrder(item));
+    const over = this.decksOverTunnels.get(tunnel) ?? [];
+    over.push(graphics);
+    this.decksOverTunnels.set(tunnel, over);
+    return graphics;
+  }
+
+  /**
+   * The graphics `deck`'s top draws in: its layer's, or its own for a top
+   * walked under, faded as an overhang is while a body is under it (#3312).
+   */
+  private deckTop(deck: MapStructure["decks"][number], top: number): Phaser.GameObjects.Graphics {
+    const item: RenderItem = { kind: "deck", deckLayer: deck.layer };
+    if (!FADING_TOP_LOOKS.has(deck.look)) {
+      return this.structureAt(item);
+    }
+    const graphics = this.add.graphics().setDepth(renderOrder(item));
+    this.coversDrawn.push({
+      cover: { layer: deck.layer, outline: shapeOutline(deck.footprint), top },
+      graphics,
+      tunnel: undefined,
+      overhang: 1,
+    });
+    return graphics;
   }
 
   /**
@@ -3271,19 +3875,27 @@ export class ArenaScene extends Phaser.Scene {
     const pit = this.structureAt({ kind: "pit" });
     const cover = this.structureAt({ kind: "deck", deckLayer: structure.ground });
     // Under its cover, seen only while that is cut away (#3234); a pit draws over it.
-    pit.fillStyle(PIT_FLOOR, 1);
+    // A tunnel's floor is the ground's: its roof, and the light under it, make it dark (#3329).
+    const tunnelGround = palette.floor ?? ARENA_BACKGROUND;
+    pit.fillStyle(tunnelGround, 1);
     for (const tunnel of structure.tunnels) {
       this.fillFan(pit, tunnelFloor(structure, tunnel));
     }
+    const floor = pitFloor(palette);
     for (const each of structure.pits) {
       const drawing = pitDrawing(structure, each);
-      pit.fillStyle(PIT_FLOOR, 1);
+      pit.fillStyle(floor, 1);
       this.fillFan(pit, drawing.floor);
-      pit.fillStyle(PIT_WALL, 1);
+      pit.fillStyle(pitWall(palette), 1);
       this.fillFan(pit, drawing.farWall);
       pit.fillStyle(TUNNEL_MOUTH, 1);
       for (const mouth of drawing.mouths) {
         this.fillFan(pit, mouth);
+      }
+      // Where a tunnel runs on north, its floor shows, lit by its layer (#3329).
+      pit.fillStyle(tunnelGround, 1);
+      for (const passage of drawing.passages) {
+        this.fillFan(pit, passage);
       }
       this.drawGroundPatch(cover, drawing.lip, line, palette);
       cover.lineStyle(line, palette.wallStroke, 1);
@@ -3301,8 +3913,10 @@ export class ArenaScene extends Phaser.Scene {
       }
       drawn.ground.clear();
       drawn.seam.clear();
-      this.drawGroundPatch(drawn.ground, tunnelCover(structure, tunnel), line, palette);
-      this.drawTunnelSeam(drawn.seam, tunnel, line, palette);
+      for (const piece of tunnelCover(structure, tunnel)) {
+        this.drawGroundPatch(drawn.ground, piece, line, palette);
+      }
+      this.drawTunnelSeam(drawn.seam, structure, tunnel, line, palette);
     }
   }
 
@@ -3310,20 +3924,24 @@ export class ArenaScene extends Phaser.Scene {
    * The seam a covered tunnel shows on the ground (#3236): a recessed edge,
    * dark with its lit lip inside, and grating slots along its middle, all in
    * the biome's rock, so from above it reads as a passage running under.
+   * Each hole its shafts go down by (#3329) is rimmed the same way.
    */
   private drawTunnelSeam(
     g: Phaser.GameObjects.Graphics,
+    structure: MapStructure,
     tunnel: MapStructure["tunnels"][number],
     line: number,
     palette: ArenaPalette,
   ): void {
-    const seam = tunnelSeam(tunnel, (line * TUNNEL_SEAM_WIDTH) / 2);
-    const points = (outline: readonly Vec2[]): Phaser.Math.Vector2[] =>
-      outline.map(({ x, y }) => new Phaser.Math.Vector2(x, y));
+    const seam = tunnelSeam(structure, tunnel, (line * TUNNEL_SEAM_WIDTH) / 2);
     g.lineStyle(line * TUNNEL_SEAM_WIDTH, palette.wallFace, 1);
-    g.strokePoints(points(seam.edge), true);
+    for (const { from, to } of seam.edges) {
+      g.lineBetween(from.x, from.y, to.x, to.y);
+    }
     g.lineStyle(line, palette.wallLit, 0.8);
-    g.strokePoints(points(seam.lip), true);
+    for (const { from, to } of seam.lips) {
+      g.lineBetween(from.x, from.y, to.x, to.y);
+    }
     for (const slot of seam.slots) {
       g.fillStyle(TUNNEL_MOUTH, 1);
       this.fillFan(g, slot);
@@ -3598,19 +4216,27 @@ export class ArenaScene extends Phaser.Scene {
     for (const { graphics } of this.rippleGraphics.values()) {
       graphics.clear();
     }
+    for (const { ripples } of this.waterOverTunnels.values()) {
+      ripples.clear();
+    }
     const line = 1 / (this.view?.zoom ?? 1);
-    for (const shape of this.waterShapes) {
-      const { graphics, painter } = this.ripplesAt(shape.layer);
-      graphics.save();
-      graphics.translateCanvas(0, -elevationOf(shape.layer, this.snapshot.structure.ground));
-      WATER_ART[waterArtKey(shape.depth)].ripples(
-        painter,
-        shape,
-        line,
-        this.now,
-        this.reducedMotion,
-      );
-      graphics.restore();
+    for (const { shape, pieces } of this.waterShapes) {
+      for (const piece of pieces) {
+        const { graphics, painter } =
+          piece.tunnel === undefined
+            ? this.ripplesAt(shape.layer)
+            : this.tunnelRipplesAt(piece.tunnel);
+        graphics.save();
+        graphics.translateCanvas(0, -elevationOf(shape.layer, this.snapshot.structure.ground));
+        WATER_ART[waterArtKey(shape.depth)].ripples(
+          painter,
+          { ...shape, outline: piece.outline, ripples: piece.ripples },
+          line,
+          this.now,
+          this.reducedMotion,
+        );
+        graphics.restore();
+      }
     }
   }
 
@@ -3846,11 +4472,16 @@ export class ArenaScene extends Phaser.Scene {
           renderOrder({ kind: "paving", layer: paving.layer }),
         ),
       );
-    const covers = structure.tunnels.map((tunnel, at) => ({
-      tunnel: at,
-      layer: structure.ground,
-      outline: tunnelCover(structure, tunnel),
-    }));
+    const covers = structure.tunnels.flatMap((tunnel, at) =>
+      tunnelCover(structure, tunnel).map((outline) => ({
+        tunnel: at,
+        layer: structure.ground,
+        outline,
+      })),
+    );
+    const holes = structure.tunnels.flatMap((tunnel) =>
+      tunnelOpenings(structure, tunnel).map((outline) => ({ layer: structure.ground, outline })),
+    );
     const overTunnels = new Map<number, Phaser.GameObjects.Image[]>();
     const painted = pavings.flatMap((paving, at) => {
       const drawing = drawings[at];
@@ -3863,6 +4494,7 @@ export class ArenaScene extends Phaser.Scene {
       const y = drawing.bounds.y - elevationOf(paving.layer, structure.ground);
       const depth = renderOrder({ kind: "paving", layer: paving.layer });
       const pieces = pavingTunnelPieces(drawing, paving.layer, size, covers);
+      const cut = pavingHoles(drawing, paving.layer, size, holes);
       const image = (
         width: number,
         height: number,
@@ -3886,7 +4518,7 @@ export class ArenaScene extends Phaser.Scene {
         };
       };
       const whole = image(size.width, size.height, (context) => {
-        paintPaving(context, drawing, scale, pieces);
+        paintPaving(context, drawing, scale, pieces, cut);
       });
       return [
         whole,
@@ -3979,6 +4611,46 @@ export class ArenaScene extends Phaser.Scene {
       this.rippleGraphics.set(layer, ripples);
     }
     return ripples;
+  }
+
+  /** The surface and ripples of the water over tunnel `at` (#3350), made the first time. */
+  private waterOverTunnel(at: number): WaterOverTunnel {
+    let over = this.waterOverTunnels.get(at);
+    if (over === undefined) {
+      const layer = this.snapshot.structure.ground;
+      const ripples = this.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "water", layer, part: "ripples" }));
+      over = {
+        surface: this.add
+          .graphics()
+          .setDepth(renderOrder({ kind: "water", layer, part: "surface" })),
+        ripples,
+        painter: this.waterPainter(ripples),
+      };
+      this.waterOverTunnels.set(at, over);
+    }
+    return over;
+  }
+
+  private tunnelRipplesAt(at: number): {
+    readonly graphics: Phaser.GameObjects.Graphics;
+    readonly painter: WaterPainter;
+  } {
+    const { ripples, painter } = this.waterOverTunnel(at);
+    return { graphics: ripples, painter };
+  }
+
+  /** `g` as a piece of water draws through it (#3350): its shore stroked, never a cut edge. */
+  private piecePainter(g: Phaser.GameObjects.Graphics, piece: WaterPiece): WaterPainter {
+    return {
+      ...this.waterPainter(g),
+      strokeOutline: () => {
+        for (const [a, b] of piece.shore) {
+          g.lineBetween(a.x, a.y, b.x, b.y);
+        }
+      },
+    };
   }
 
   /** `g` as water draws through it: outlines filled as triangles, as a wall's are. */
@@ -4107,8 +4779,8 @@ function phaserPainter(g: Phaser.GameObjects.Graphics): Painter {
   return painter;
 }
 
-/** Begins a closed path along `points` on `g`, to fill or stroke. */
-function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[]): void {
+/** Begins a path along `points` on `g`, to fill or stroke: closed, unless `closed` is false. */
+function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[], closed = true): void {
   const [first, ...rest] = points;
   g.beginPath();
   if (first !== undefined) {
@@ -4117,7 +4789,71 @@ function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[]): vo
       g.lineTo(point.x, point.y);
     }
   }
-  g.closePath();
+  if (closed) {
+    g.closePath();
+  }
+}
+
+/** The whole plane, as a box: what a deck's pieces tile (#3352). */
+const EVERYWHERE: Box = { left: -Infinity, top: -Infinity, right: Infinity, bottom: Infinity };
+
+/**
+ * Where a split deck's side faces draw (#3352): a side face stands in
+ * front of the deck, lifted off its south edge, so it goes with the piece
+ * that edge runs through, cut by x alone. Each south edge's stretch over a
+ * tunnel is a band of the plane, top to bottom, for that tunnel's piece;
+ * where two overlap the earlier owns it, and the rest is the deck's.
+ */
+function sideStretches(
+  footprint: RenderableShape,
+  pieces: readonly CoverPiece[],
+): readonly { readonly tunnel: number | undefined; readonly box: Box }[] {
+  const owned: Box[] = [];
+  const over = pieces.flatMap(({ tunnel, box }) =>
+    tunnel === undefined
+      ? []
+      : southFacingEdges(footprint).flatMap(({ from, to }) => {
+          const share = segmentInBox(from, to, box);
+          if (share === undefined) {
+            return [];
+          }
+          const xs = share.map((t) => from.x + (to.x - from.x) * t);
+          const band: Box = {
+            left: Math.min(...xs),
+            top: -Infinity,
+            right: Math.max(...xs),
+            bottom: Infinity,
+          };
+          if (band.right <= band.left) {
+            return [];
+          }
+          const bands = boxWithout(band, owned).map((piece) => ({ tunnel, box: piece }));
+          owned.push(band);
+          return bands;
+        }),
+  );
+  return [...over, ...boxWithout(EVERYWHERE, owned).map((box) => ({ tunnel: undefined, box }))];
+}
+
+/** The box of the ground over each of the map's tunnels, by its index. */
+function tunnelCoverBoxes(structure: MapStructure): readonly TunnelCoverBox[] {
+  return structure.tunnels.map((tunnel, at) => ({
+    tunnel: at,
+    box: tunnelCoverBox(structure, tunnel),
+  }));
+}
+
+/**
+ * The map's water, the ground's split by the tunnel covers under it
+ * (#3350), so what is over a tunnel fades with its cover. Water on any
+ * other layer is one piece.
+ */
+function splitWater(structure: MapStructure): readonly WaterSplit[] {
+  const covers = tunnelCoverBoxes(structure);
+  return structure.water.map(waterShapeOf).map((shape) => ({
+    shape,
+    pieces: waterPieces(shape, shape.layer === structure.ground ? covers : []),
+  }));
 }
 
 export type {

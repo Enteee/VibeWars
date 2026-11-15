@@ -152,7 +152,7 @@ describe("shrines: Capture Points bots take and hold shrines (#2580)", () => {
         ruleset: RULESET,
         bounds: BOUNDS,
         matchRules,
-        capturePoints: [vec2(100, 100)],
+        capturePoints: [{ ...vec2(100, 100), layer: 0 }],
         participants: [body("bot", 0, vec2(100, 400), { behaviour: BOT }), far()],
       });
       for (let t = 0; t < 2; t += DT) sim.step(DT);
@@ -200,7 +200,7 @@ describe("shrines: a lone bot shot at from beyond spell range (#3150)", () => {
       ruleset: RULESET,
       bounds: BOUNDS,
       matchRules: CAPTURE_POINTS_MATCH_RULES,
-      capturePoints: [vec2(100, 100)],
+      capturePoints: [{ ...vec2(100, 100), layer: 0 }],
       participants: [
         fighter("bot", 0, WARRIOR, vec2(100, 100)),
         fighter("foe", 1, RANGER, vec2(600, 100), { behaviour: undefined }),

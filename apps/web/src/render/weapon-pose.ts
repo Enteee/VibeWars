@@ -25,9 +25,12 @@ export interface WeaponMarkLayout extends WeaponMarkGeometry {
   readonly alpha: number;
 }
 
-/** A wind-up or a strike: the part of a swing that comes before its hit. */
+/**
+ * A wind-up or a strike: the part of a swing that comes before its hit;
+ * or a spell cast's raise (#3320), the wind-up's pose eased in and held.
+ */
 export interface SwingClip {
-  readonly phase: "wind-up" | "strike";
+  readonly phase: "wind-up" | "strike" | "raise";
   readonly progress: number;
 }
 
@@ -211,6 +214,8 @@ function poseOf(m: WeaponMotion, clip: AttackClip): Pose {
         m.wind,
         easeInOut(m.motion === "bow" ? Math.min(1, clip.progress / BOW_ANCHOR) : clip.progress),
       );
+    case "raise":
+      return lerpPose(REST, m.wind, easeInOut(clip.progress));
     case "strike":
       return lerpPose(m.wind, m.strikePose, easeOutCubic(clip.progress));
     case "hold":

@@ -867,6 +867,24 @@ body {
   display: none;
 }
 
+/* What a tutorial station points at on the HUD (#3302): a ring that breathes; a steady one under reduced motion. */
+.tutorial-pulse {
+  box-shadow: 0 0 0 2px var(--accent);
+  animation: tutorial-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes tutorial-pulse {
+  50% {
+    box-shadow: 0 0 0.6rem 4px var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-pulse {
+    animation: none;
+  }
+}
+
 /* A foe a click calls for your team (#2737); otherwise the arena under
    the frame keeps the pointer, as the rest of the top does. */
 .hud-target.is-callable {
@@ -916,6 +934,11 @@ body {
 
 .hud-target-health .hud-bar-fill {
   background: #3a6a3e;
+}
+
+/* A wall (#3317) is nobody's: stone, not a body's green. */
+.hud-target-health.is-wall .hud-bar-fill {
+  background: var(--ink-dim);
 }
 
 /* A corpse: an empty track in the corpse colour. */
@@ -8008,6 +8031,28 @@ body:has(#screens[style*="none"]) .now-playing {
   }
 }
 
+/* The swap into the canyon (#3247): white, held while the world is rebuilt, then faded. */
+.tutorial-flash-hold {
+  animation: tutorial-flash-in 0.08s ease-out forwards;
+}
+
+.tutorial-flash-out {
+  opacity: 1;
+  animation: tutorial-flash-out 0.8s ease-out forwards;
+}
+
+@keyframes tutorial-flash-in {
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes tutorial-flash-out {
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes tutorial-fade {
   50% {
     opacity: 1;
@@ -8021,6 +8066,14 @@ body:has(#screens[style*="none"]) .now-playing {
 @media (prefers-reduced-motion: reduce) {
   .tutorial-flash {
     animation: tutorial-fade 0.8s ease-in-out forwards;
+  }
+
+  .tutorial-flash-hold {
+    animation: tutorial-flash-in 0.4s ease-in-out forwards;
+  }
+
+  .tutorial-flash-out {
+    animation: tutorial-flash-out 0.8s ease-in-out forwards;
   }
 }
 

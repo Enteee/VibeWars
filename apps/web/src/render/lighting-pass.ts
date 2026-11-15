@@ -3,10 +3,18 @@ import Phaser from "phaser";
 import type { Vec2 } from "@vibewars/game-core";
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
-import type { ArenaPalette } from "./arena-palette.js";
+import type { ArenaPalette, OverhangLookColours } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { boxMeets, boxUnder, coverBoxes } from "./cell-cover.js";
-import { deckCovers, rampDrawing, shapeOutline } from "./layer-surfaces.js";
+import {
+  deckCovers,
+  rampDrawing,
+  shapeOutline,
+  tunnelCoverBox,
+  tunnelFarWall,
+  tunnelOpenings,
+  tunnelRoof,
+} from "./layer-surfaces.js";
 import {
   SURFACE_LIGHT_FLOOR,
   flickerAt,
@@ -42,6 +50,23 @@ export const FLICKER_INTERVAL_MS = 66;
 export const LIGHTING_BUDGET_MS = 2;
 /** Rebuilds in a row over budget before giving something up: one slow frame is no trend. */
 export const OVER_BUDGET_LIMIT = 30;
+/**
+ * A light in a tunnel adds a warm pool over the lit floor (#3350), this
+ * much of its intensity at the heart, and never more than the cap: the
+ * floor's colours lift past their lighting-off tone without clipping to white.
+ */
+export const TUNNEL_GLOW = 0.5;
+export const TUNNEL_GLOW_CAP = 0.3;
+
+/** What a light of `intensity` on a tunnel's layer adds at the heart of its pool (#3350), 0 to 1. */
+export function tunnelGlow(intensity: number): number {
+  return Math.min(Math.max(intensity, 0) * TUNNEL_GLOW, TUNNEL_GLOW_CAP);
+}
+
+/** Whether `layer` is the tunnels' (#3350): its lights add a warm pool too. */
+export function glowsOn(structure: MapStructure, layer: number): boolean {
+  return structure.tunnels.length > 0 && layer === structure.ground - 1;
+}
 
 /** What the budget still allows, best first. */
 export type LightingStage = "full" | "no-flicker" | "no-shadows" | "flat";
@@ -165,6 +190,28 @@ export function litStructurePalette(
   };
 }
 
+/**
+ * An overhang's colours (#3293), lit where it hangs as a deck of its
+ * layer is. It draws over that layer's light map, so it takes its light
+ * once, as a wall does.
+ */
+export function litOverhangColours(
+  colours: OverhangLookColours,
+  lighting: MapLighting | undefined,
+  shape: RenderableShape,
+  layer: number,
+): OverhangLookColours {
+  if (lighting === undefined) {
+    return colours;
+  }
+  const tint = tintOf(lightAt(lighting, shapeCentre(shape), layer, 0, SURFACE_LIGHT_FLOOR));
+  return {
+    roof: multiplyColour(colours.roof, tint),
+    detail: multiplyColour(colours.detail, tint),
+    eave: multiplyColour(colours.eave, tint),
+  };
+}
+
 /** The outlines a layer other than the ground has to light, in that layer's own coordinates. */
 export function layerSurfaces(
   structure: MapStructure,
@@ -182,19 +229,48 @@ export function layerSurfaces(
   const decks = structure.decks
     .filter((deck) => deck.layer === layer)
     .map((deck) => outline(deck.footprint));
-  // A pit's floor is the layer under the ground's, seen through its hole (#2973).
+  // A pit's floor is the layer under the ground's, seen through its hole
+  // (#2973), and so is a tunnel's, under its cover or through its stairs' (#3329).
   const pits =
-    layer === structure.ground - 1 ? structure.pits.map((pit) => outline(pit.footprint)) : [];
+    layer === structure.ground - 1
+      ? [...structure.pits, ...structure.tunnels].map(({ footprint }) => outline(footprint))
+      : [];
   // A ramp's drawn slope is already lifted; the light map is lifted whole.
+  // A stair down from the ground stands in its pit or shaft, so it is lit
+  // with its floor, not left unlit where the ground's light is cut (#3329).
+  const down = (ramp: MapStructure["transitions"][number]): boolean =>
+    layer === structure.ground - 1 &&
+    Math.min(ramp.from, ramp.to) === layer &&
+    Math.max(ramp.from, ramp.to) === structure.ground;
   const ramps = structure.transitions
-    .filter((ramp) => ramp.to === layer)
+    .filter((ramp) => ramp.to === layer || down(ramp))
     .map((ramp) =>
       rampDrawing(structure, ramp).slope.map((p) => ({
         x: p.x,
         y: p.y + elevationOf(layer, structure.ground),
       })),
     );
-  return [...decks, ...pits, ...ramps];
+  // A cut-away cover shows each tunnel's far wall over its floor: lit with it (#3329).
+  const walls =
+    layer === structure.ground - 1
+      ? structure.tunnels.flatMap((tunnel) => tunnelFarWall(structure, tunnel))
+      : [];
+  return [...decks, ...pits, ...ramps, ...walls];
+}
+
+/**
+ * What of `layer` is under a roof, so no sun reaches it (#3329): on the
+ * layer under the ground, each tunnel's floor and far wall but for its
+ * shafts, which are open. It takes the indoor ambient, as
+ * `lighting.indoor` does, so a torch in it shows its pool.
+ */
+export function roofedOver(structure: MapStructure, layer: number): readonly (readonly Vec2[])[] {
+  return layer === structure.ground - 1
+    ? structure.tunnels.flatMap((tunnel) => [
+        ...tunnelRoof(structure, tunnel),
+        ...tunnelFarWall(structure, tunnel),
+      ])
+    : [];
 }
 
 /** A box of a light map, in its pixels. */
@@ -264,17 +340,70 @@ export function lightMapCover(
     }));
   if (layer === structure.ground) {
     const decks = deckCovers(structure, walls, renderOrder({ kind: "lighting", layer })).map(inMap);
+    const tunnels = tunnelLightCover(structure, extent).flatMap(({ boxes }) => boxes);
     return coverBoxes(
       extent.width,
       extent.height,
       LIGHT_MAP_CELL,
       (box) => !decks.some((outline) => boxUnder(outline, box, 2)),
-    );
+    ).flatMap((box) => boxesWithout(box, tunnels));
   }
   const surfaces = layerSurfaces(structure, layer).map(inMap);
   // A few pixels past each surface, for its smoothed edge.
   return coverBoxes(extent.width, extent.height, LIGHT_MAP_CELL, (box) =>
     surfaces.some((outline) => boxMeets(outline, box, 3)),
+  );
+}
+
+/**
+ * The ground's light map over each tunnel's cover (#3329), in its own
+ * pixels: shown on its own, so it fades as the cover is cut away, and the
+ * ground's light never falls on the tunnel's floor under it. Its edges are
+ * rounded to whole pixels, as `lightMapCover` cuts them out. Where covers
+ * overlap, at a junction, the earlier tunnel owns the shared corner, so
+ * the light there is multiplied in once, not twice.
+ */
+export function tunnelLightCover(
+  structure: MapStructure,
+  extent: LightMapBox,
+): readonly { readonly tunnel: number; readonly boxes: readonly LightMapBox[] }[] {
+  const owned: LightMapBox[] = [];
+  return structure.tunnels.flatMap((tunnel, at) => {
+    const cover = tunnelCoverBox(structure, tunnel);
+    const left = Math.max(0, Math.round(cover.left * LIGHT_MAP_SCALE) - extent.x);
+    const top = Math.max(0, Math.round(cover.top * LIGHT_MAP_SCALE) - extent.y);
+    const right = Math.min(extent.width, Math.round(cover.right * LIGHT_MAP_SCALE) - extent.x);
+    const bottom = Math.min(extent.height, Math.round(cover.bottom * LIGHT_MAP_SCALE) - extent.y);
+    if (right <= left || bottom <= top) {
+      return [];
+    }
+    const box = { x: left, y: top, width: right - left, height: bottom - top };
+    const boxes = boxesWithout(box, owned);
+    owned.push(box);
+    return boxes.length > 0 ? [{ tunnel: at, boxes }] : [];
+  });
+}
+
+/** `box` with each of `holes` cut out, as the boxes left: up to four round each hole. */
+function boxesWithout(box: LightMapBox, holes: readonly LightMapBox[]): LightMapBox[] {
+  return holes.reduce<LightMapBox[]>(
+    (pieces, hole) =>
+      pieces.flatMap((piece) => {
+        if (!overlaps(piece, hole)) {
+          return [piece];
+        }
+        const top = Math.max(piece.y, hole.y);
+        const bottom = Math.min(piece.y + piece.height, hole.y + hole.height);
+        const left = Math.max(piece.x, hole.x);
+        const right = Math.min(piece.x + piece.width, hole.x + hole.width);
+        return [
+          { ...piece, height: top - piece.y },
+          { ...piece, y: bottom, height: piece.y + piece.height - bottom },
+          { x: piece.x, y: top, width: left - piece.x, height: bottom - top },
+          { x: right, y: top, width: piece.x + piece.width - right, height: bottom - top },
+        ].filter(({ width, height }) => width > 0 && height > 0);
+      }),
+    [box],
   );
 }
 
@@ -332,11 +461,16 @@ export function flickerRegions(
 }
 
 /**
- * Where the ground's light never falls (#2973): each pit's hole, lit by
- * the layer under it, so a body in a pit is not lit twice.
+ * Where the ground's light never falls (#2973): each pit's hole, and each
+ * hole stairs cut down into a tunnel (#3329), lit by the layer under it, so
+ * a body in one is not lit twice.
  */
 export function groundHoles(structure: MapStructure): readonly (readonly Vec2[])[] {
-  return structure.pits.map((pit) => shapeOutline(pit.footprint));
+  return [
+    ...structure.pits.map((pit) => shapeOutline(pit.footprint)),
+    // The stairs down into a tunnel go through the ground (#3329).
+    ...structure.tunnels.flatMap((tunnel) => tunnelOpenings(structure, tunnel)),
+  ];
 }
 
 interface LayerMap {
@@ -347,7 +481,11 @@ interface LayerMap {
   readonly shown: Phaser.Textures.DynamicTexture;
   /** The map shown, one image per box of it a surface is in (#3162). */
   readonly images: readonly Phaser.GameObjects.Image[];
+  /** Of the ground's, the images over each tunnel's cover, by tunnel (#3329). */
+  readonly tunnels: ReadonlyMap<number, readonly Phaser.GameObjects.Image[]>;
   readonly outsideKey: string | undefined;
+  /** Of the tunnels' layer, the warm pools its lights add (#3350); none elsewhere. */
+  readonly glowKey: string | undefined;
   /** What of the arena it covers, in light map pixels. */
   readonly extent: LightMapBox;
   readonly flickering: readonly LightsOf[];
@@ -425,6 +563,19 @@ export class LightingPass {
     return this.lighting !== undefined && stageShadows(this.stage);
   }
 
+  /**
+   * Fades the ground's light over tunnel `at` to `alpha`, its cover's
+   * (#3329): cut away, the cover no longer stands between the tunnel and
+   * the eye, and nor does the light that falls on it.
+   */
+  public fadeTunnel(at: number, alpha: number): void {
+    for (const map of this.layers) {
+      for (const image of map.tunnels.get(at) ?? []) {
+        image.setAlpha(alpha);
+      }
+    }
+  }
+
   /** Redraws what flickers, when it is due. */
   public update(nowMs: number): void {
     for (const map of this.layers) {
@@ -447,7 +598,13 @@ export class LightingPass {
       for (const image of map.images) {
         image.destroy();
       }
-      for (const key of [map.baseKey, map.shownKey, map.outsideKey, ...map.shadowed.values()]) {
+      for (const key of [
+        map.baseKey,
+        map.shownKey,
+        map.outsideKey,
+        map.glowKey,
+        ...map.shadowed.values(),
+      ]) {
         if (key !== undefined && textures.exists(key)) {
           textures.remove(key);
         }
@@ -528,11 +685,15 @@ export class LightingPass {
       base.draw(painter, -extent.x, -extent.y);
       painters.push(painter);
     }
-    if (lighting.indoor.length > 0) {
+    const roofed = roofedOver(structure, layer);
+    if (lighting.indoor.length > 0 || roofed.length > 0) {
       const painter = this.scene.make.graphics({}, false);
       painter.fillStyle(baseTint(lighting, true), 1);
       for (const shape of lighting.indoor) {
         fillShape(painter, shape);
+      }
+      for (const outline of roofed) {
+        fillOutline(painter, outline, 0, 0);
       }
       painter.setScale(LIGHT_MAP_SCALE);
       base.draw(painter, -extent.x, -extent.y);
@@ -557,20 +718,43 @@ export class LightingPass {
       painter.destroy();
     }
 
+    const glowKey = glowsOn(structure, layer)
+      ? this.buildGlow(
+          `lighting-${String(nextLightingId)}-glow`,
+          extent,
+          [...steady, ...flickering],
+          shadowed,
+          outsideKey,
+        )
+      : undefined;
+
     const lift = elevationOf(layer, structure.ground);
-    const images = lightMapCover(structure, this.walls, layer, extent).map(
-      ({ x, y, width, height }) =>
+    const imageOf =
+      (key: string, blendMode: Phaser.BlendModes) =>
+      ({ x, y, width, height }: LightMapBox): Phaser.GameObjects.Image =>
         this.scene.add
           .image(
             (extent.x + x) / LIGHT_MAP_SCALE,
             (extent.y + y) / LIGHT_MAP_SCALE - lift,
-            shownKey,
-            this.region(shownKey, x, y, width, height),
+            key,
+            this.region(key, x, y, width, height),
           )
           .setOrigin(0, 0)
           .setScale(1 / LIGHT_MAP_SCALE)
-          .setBlendMode(Phaser.BlendModes.MULTIPLY)
-          .setDepth(renderOrder({ kind: "lighting", layer })),
+          .setBlendMode(blendMode)
+          .setDepth(renderOrder({ kind: "lighting", layer }));
+    const image = imageOf(shownKey, Phaser.BlendModes.MULTIPLY);
+    const cover = lightMapCover(structure, this.walls, layer, extent);
+    // The warm pools add over the lit floor, so they are made after it (#3350).
+    const images = [
+      ...cover.map(image),
+      ...(glowKey === undefined ? [] : cover.map(imageOf(glowKey, Phaser.BlendModes.ADD))),
+    ];
+    // The ground's light over a tunnel fades with its cover (#3329).
+    const tunnels = new Map(
+      layer === structure.ground
+        ? tunnelLightCover(structure, extent).map(({ tunnel, boxes }) => [tunnel, boxes.map(image)])
+        : [],
     );
     const map: LayerMap = {
       layer,
@@ -578,8 +762,10 @@ export class LightingPass {
       base,
       shownKey,
       shown,
-      images,
+      images: [...images, ...[...tunnels.values()].flat()],
+      tunnels,
       outsideKey,
+      glowKey,
       extent,
       flickering,
       flickerRegions: flickerRegions(flickering, extent),
@@ -661,6 +847,34 @@ export class LightingPass {
     texture.erase(painter);
     texture.render();
     painter.destroy();
+    return key;
+  }
+
+  /**
+   * The warm pools `lights` add on the tunnels' layer (#3350): black but
+   * for each light at `tunnelGlow` of its intensity, drawn adding over
+   * the lit floor, so a torch lifts it past its lighting-off tone. Steady:
+   * a pool does not flicker.
+   */
+  private buildGlow(
+    key: string,
+    extent: LightMapBox,
+    lights: readonly LightsOf[],
+    shadowed: ReadonlyMap<string, string>,
+    outsideKey: string | undefined,
+  ): string {
+    const glow = this.scene.textures.addDynamicTexture(key, extent.width, extent.height);
+    if (glow === null) {
+      throw new Error("lighting: could not create a tunnel's glow");
+    }
+    glow.fill(0x000000, 1);
+    for (const light of lights) {
+      this.stampLight(glow, extent, light, tunnelGlow(light.intensity), shadowed.get(light.id));
+    }
+    if (outsideKey !== undefined) {
+      glow.erase(outsideKey, glow.width / 2, glow.height / 2);
+    }
+    glow.render();
     return key;
   }
 

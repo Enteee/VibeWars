@@ -38,6 +38,16 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     expect(renderOrder(character(1))).toBeGreaterThan(deck);
   });
 
+  it("draws a body's health bar over its band's marks, under a deck over it (#3292)", () => {
+    const part = (band: number, p: "marks" | "bar"): number =>
+      renderOrder({ kind: "character", band, part: p });
+    expect(part(0, "marks")).toBeLessThan(part(0, "bar"));
+    expect(part(0, "bar")).toBeLessThan(renderOrder({ kind: "tunnel-cover", deckLayer: 1 }));
+    expect(part(0, "bar")).toBeLessThan(renderOrder({ kind: "deck", deckLayer: 1 }));
+    expect(part(0, "bar")).toBeLessThan(renderOrder({ kind: "wall", layer: 0 }));
+    expect(part(1, "bar")).toBeGreaterThan(renderOrder({ kind: "deck", deckLayer: 1 }));
+  });
+
   it("draws the ground over a tunnel over whoever is in it, under the ground's deck (#3234)", () => {
     const cover = renderOrder({ kind: "tunnel-cover", deckLayer: 1 });
     expect(renderOrder(character(0))).toBeLessThan(cover);

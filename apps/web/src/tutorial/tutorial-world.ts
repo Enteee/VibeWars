@@ -163,7 +163,8 @@ const FOE_BUILDS = STARTER_BUILDS.filter((build) =>
   }),
 );
 
-function houseBuild(profession: ProfessionId): PlayerBuild {
+/** The starter build of `profession`: what the player and the tutor play. */
+export function houseBuild(profession: ProfessionId): PlayerBuild {
   const build = STARTER_BUILDS.find((candidate) => candidate.primaryProfession === profession);
   if (build === undefined) {
     throw new Error(`no starter build for ${profession}`);
@@ -171,7 +172,27 @@ function houseBuild(profession: ProfessionId): PlayerBuild {
   return build;
 }
 
-function body(
+/** The heal the player's build carries for station 6 (#3303), and its slot: the eighth. */
+export const TUTORIAL_HEAL = "monk.heal-other";
+export const TUTORIAL_HEAL_SLOT = 7;
+
+/**
+ * The player's build for the whole tutorial (#3303): the Warrior starter,
+ * with Monk as its secondary and `TUTORIAL_HEAL` in the eighth slot, so
+ * there is an ally's heal to teach. Non-elite, so the build stays legal.
+ */
+export function tutorialPlayerBuild(): PlayerBuild {
+  const starter = houseBuild(PLAYER_PROFESSION);
+  return {
+    ...starter,
+    secondaryProfession: "monk",
+    skillBar: starter.skillBar.map((id, slot) =>
+      slot === TUTORIAL_HEAL_SLOT ? TUTORIAL_HEAL : id,
+    ),
+  };
+}
+/** One of the tutorial's bodies on the pair's side, `build` resolved as a match does. */
+export function body(
   id: string,
   build: PlayerBuild,
   spawn: Vec2,
@@ -336,7 +357,7 @@ export function tutorialWorld(
           from.x + spawn.x - edge.x + ((centre.x - edge.x) / forward) * ALLY_AHEAD,
           from.y + spawn.y - edge.y + ((centre.y - edge.y) / forward) * ALLY_AHEAD,
         );
-  const playerBuild = houseBuild(PLAYER_PROFESSION);
+  const playerBuild = tutorialPlayerBuild();
   const tutorBuild = houseBuild(tutorProfession);
   const builds = createRng(seedFromString(`builds-${seed}`));
   const foes: Guard[] = [];
@@ -357,7 +378,7 @@ export function tutorialWorld(
         (team) => (team === 0 ? STARTER_BUILDS : FOE_BUILDS),
         // The bots' builds follow the seed too, so a seed is one whole world.
         () => builds.nextFloat(),
-      ).map((bot) => {
+      ).participants.map((bot) => {
         if (bot.team === 0) {
           return { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) };
         }

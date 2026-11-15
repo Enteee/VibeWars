@@ -264,6 +264,7 @@
       "switched": null
     }
   ],
+  "overhangs": [],
   "transitions": [
     {
       "id": "cinder-west-steps",

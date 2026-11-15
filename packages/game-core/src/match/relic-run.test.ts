@@ -94,11 +94,12 @@ const WALLS = [
 const BOUNDS = { width: 3200, height: 1800 };
 const FIELD: RelicField & { altar: Vec2 } = {
   altar: vec2(1600, 900),
+  altarLayer: 0,
   relicTarget: "altar",
   relicCarry: "own",
   spawns: [
-    { team: 0, position: vec2(120, 900) },
-    { team: 1, position: vec2(3080, 900) },
+    { team: 0, position: vec2(120, 900), layer: 0 },
+    { team: 1, position: vec2(3080, 900), layer: 0 },
   ],
 };
 
@@ -292,11 +293,12 @@ describe("the foe's relic to your Ghostly Hero (#2695)", () => {
   const GHOST_POST = vec2(400, 900);
   const FOE_FIELD: RelicField = {
     altar: undefined,
+    altarLayer: 0,
     relicTarget: "own-ghost",
     relicCarry: "foe",
     spawns: [
-      { team: 0, position: vec2(900, 900) },
-      { team: 1, position: vec2(1000, 900) },
+      { team: 0, position: vec2(900, 900), layer: 0 },
+      { team: 1, position: vec2(1000, 900), layer: 0 },
     ],
   };
 
@@ -310,14 +312,15 @@ describe("the foe's relic to your Ghostly Hero (#2695)", () => {
       ghostField: {
         level: 20,
         altar: undefined,
+        altarLayer: 0,
         spawns: [
-          { team: 0, position: GHOST_POST },
-          { team: 1, position: vec2(2800, 900) },
+          { team: 0, position: GHOST_POST, layer: 0 },
+          { team: 1, position: vec2(2800, 900), layer: 0 },
         ],
       },
       shrines: [
-        { team: 0, position: vec2(200, 900) },
-        { team: 1, position: vec2(3000, 900) },
+        { team: 0, position: vec2(200, 900), layer: 0 },
+        { team: 1, position: vec2(3000, 900), layer: 0 },
       ],
       participants: [runner("a", 0, vec2(950, 900)), runner("x", 1, vec2(2900, 900))],
     });

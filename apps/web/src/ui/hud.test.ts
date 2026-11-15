@@ -8,6 +8,7 @@ import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
+import type { RenderableBreakable } from "../render/breakable-objects.js";
 
 import { isEliteSkill } from "./icons.js";
 import { dismissToast, setToastHost, toast } from "./kit.js";
@@ -40,7 +41,11 @@ import {
   standBoostToast,
   carrierLines,
   renderTargetSignet,
+  renderWallHealth,
+  targetWall,
+  wallHealthPercent,
   type ScoreboardMatch,
+  type TargetHealthBar,
   skillSlotHtml,
   castRowSkill,
   targetCast,
@@ -250,6 +255,87 @@ describe("objectTargetName (#1225)", () => {
 
   it("names a breakable wall a cracked wall (#3031)", () => {
     expect(objectTargetName("breakable-gap", 0, NOBODY)).toBe(t("hud.breakableWall"));
+  });
+});
+
+describe("a breakable wall on the target frame (#3317)", () => {
+  const wall = (health: number): RenderableBreakable => ({
+    id: "breakable-cracked-wall",
+    layer: 0,
+    wall: { kind: "rect", x: 0, y: 0, width: 20, height: 100 },
+    outline: [],
+    health,
+    maxHealth: 700,
+  });
+  const node = () => {
+    const classes = new Set<string>();
+    const style = new Map<string, string>();
+    return {
+      classes,
+      textContent: "" as string | null,
+      hidden: true,
+      title: "",
+      dataset: {} as Record<string, string>,
+      classList: {
+        toggle: (name: string, on?: boolean): boolean => {
+          if (on ?? !classes.has(name)) {
+            classes.add(name);
+          } else {
+            classes.delete(name);
+          }
+          return classes.has(name);
+        },
+      },
+      style: {
+        getPropertyValue: (name: string): string => style.get(name) ?? "",
+        setProperty: (name: string, value: string): void => {
+          style.set(name, value);
+        },
+      },
+    };
+  };
+  const frame = () => {
+    const parts = {
+      targetHealth: node(),
+      targetHealthFill: node(),
+      targetHealthLost: node(),
+      targetHealthText: node(),
+      targetHealthPips: node(),
+    };
+    return { parts, hud: parts as unknown as TargetHealthBar };
+  };
+
+  it("finds the wall a target names, and none for a switch or a wall the map lacks", () => {
+    const walls = [wall(350)];
+    expect(targetWall("breakable-cracked-wall", walls)).toBe(walls[0]);
+    expect(targetWall("switch-lever", walls)).toBeUndefined();
+    expect(targetWall("breakable-elsewhere", walls)).toBeUndefined();
+    expect(targetWall(undefined, walls)).toBeUndefined();
+    expect(targetWall("breakable-cracked-wall", [])).toBeUndefined();
+  });
+
+  it("rounds as a body's does: full is 100%, a sliver never 0%", () => {
+    expect(wallHealthPercent(wall(700))).toBe(100);
+    expect(wallHealthPercent(wall(1))).toBe(1);
+    expect(wallHealthPercent(wall(0))).toBe(0);
+  });
+
+  it("shows 350/700 as a half-full neutral bar labelled 50%, no pips", () => {
+    const { parts, hud } = frame();
+    renderWallHealth(hud, wall(350));
+    expect(parts.targetHealthFill.style.getPropertyValue("width")).toBe("50%");
+    expect(parts.targetHealthText.textContent).toBe("50%");
+    expect(parts.targetHealth.classes.has("is-wall")).toBe(true);
+    expect(parts.targetHealth.classes.has("is-dead")).toBe(false);
+    expect(parts.targetHealthPips.hidden).toBe(true);
+  });
+
+  it("shows a crumbled wall as an empty is-dead bar", () => {
+    const { parts, hud } = frame();
+    renderWallHealth(hud, wall(0));
+    expect(parts.targetHealthFill.style.getPropertyValue("width")).toBe("0%");
+    expect(parts.targetHealthText.textContent).toBe("0%");
+    expect(parts.targetHealth.classes.has("is-dead")).toBe(true);
   });
 });
 
@@ -881,6 +967,7 @@ describe("enemyPips (#881)", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     });
     expect(enemyPips([...players, minion], 0)).toEqual(enemyPips(players, 0));
@@ -943,6 +1030,7 @@ describe("scoreboardText (#881)", () => {
           mode: null,
           armedAttack: null,
           leaderId: null,
+          auraRadius: null,
         },
       });
     expect(
@@ -997,6 +1085,7 @@ describe("scoreboardText (#881)", () => {
           mode: null,
           armedAttack: null,
           leaderId: null,
+          auraRadius: null,
         },
       });
     const priests = (dead0: boolean, dead1: boolean) => [
@@ -1126,6 +1215,7 @@ describe("the Guild Battle scoreboard (#1226)", () => {
         mode: null,
         armedAttack: null,
         leaderId: null,
+        auraRadius: null,
       },
     });
   const players = [
@@ -1397,6 +1487,7 @@ describe("a Ghostly Hero's leader (#1377, #1419)", () => {
         mode: null,
         armedAttack: null,
         leaderId,
+        auraRadius: null,
       },
     });
   /** A snapshot of both teams' ghosts, team 0's following `ours` and team 1's `theirs`. */

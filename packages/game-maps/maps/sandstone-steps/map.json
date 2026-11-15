@@ -350,6 +350,7 @@
       "switched": null
     }
   ],
+  "overhangs": [],
   "transitions": [
     {
       "id": "stair-west",

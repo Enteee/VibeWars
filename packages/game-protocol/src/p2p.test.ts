@@ -245,6 +245,7 @@ const minion: WirePlayer = {
     mode: null,
     armedAttack: null,
     leaderId: null,
+    auraRadius: null,
   },
   signet: null,
 };
@@ -692,6 +693,37 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["snapshot", parseWireSnapshotPart, snapshot],
   ["snapshot with a creature", parseWireSnapshotPart, { ...snapshot, players: [player, minion] }],
   [
+    "snapshot with a spirit and its aura's reach (#3306)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [
+        player,
+        {
+          ...minion,
+          name: "Favorable Winds",
+          creature: { ...minion.creature, kind: "spirit", look: "spirit", auraRadius: 1190 },
+        },
+      ],
+    },
+  ],
+  [
+    "snapshot with a rat (#3315)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [
+        player,
+        {
+          ...minion,
+          id: "rat/0",
+          name: "Rat",
+          creature: { ...minion.creature, ownerId: null, kind: "critter", look: "rat" },
+        },
+      ],
+    },
+  ],
+  [
     "snapshot with a pet on Heel (#1110)",
     parseWireSnapshotPart,
     {
@@ -708,6 +740,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             mode: "heel",
             armedAttack: null,
             leaderId: null,
+            auraRadius: null,
           },
         },
       ],
@@ -730,6 +763,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             mode: "fight",
             armedAttack: { skillId: "ranger.brutal-strike", endsAt: 12.1 },
             leaderId: null,
+            auraRadius: null,
           },
         },
       ],
@@ -773,6 +807,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             mode: null,
             armedAttack: null,
             leaderId: null,
+            auraRadius: null,
           },
         },
       ],
@@ -794,6 +829,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             mode: null,
             armedAttack: null,
             leaderId: null,
+            auraRadius: null,
           },
         },
       ],
@@ -1866,6 +1902,22 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
           },
         },
       ],
+    },
+  ],
+  [
+    "snapshot with a creature that does not say how far its aura reaches (#3306)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [{ ...minion, creature: { ...minion.creature, auraRadius: undefined } }],
+    },
+  ],
+  [
+    "snapshot with an aura of a fractional reach (#3306)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [{ ...minion, creature: { ...minion.creature, auraRadius: 1190.5 } }],
     },
   ],
   [

@@ -95,6 +95,7 @@
     }
   ],
   "dropOffs": [],
+  "overhangs": [],
   "transitions": [
     {
       "id": "ramp-1",

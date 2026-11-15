@@ -157,7 +157,8 @@ export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
 
 /**
  * What kind of creature a body is (#1052); a priest (#1186), a Guild Lord
- * (#1222), a base guard (#1223) and a Ghostly Hero (#1377) are a map's.
+ * (#1222), a base guard (#1223) and a Ghostly Hero (#1377) are a map's, a
+ * critter (#3315) a world's.
  */
 export const CREATURE_KINDS = [
   "spirit",
@@ -167,6 +168,7 @@ export const CREATURE_KINDS = [
   "guild-lord",
   "guard",
   "ghostly-hero",
+  "critter",
 ] as const;
 
 /** How a creature is drawn (#1162); game-core's `CREATURE_LOOKS`, mirrored. */
@@ -184,6 +186,7 @@ export const CREATURE_LOOKS = [
   "guild-lord",
   "guard",
   "ghostly-hero",
+  "rat",
 ] as const;
 
 /**
@@ -317,8 +320,13 @@ export const MAX_WIRE_TELEPORTS = 6;
 /** The most breakable walls a map holds (#3031), as `MAX_BREAKABLES` in game-maps. */
 export const MAX_WIRE_BREAKABLES = 4;
 
-/** The widest area a combat message may draw. */
-export const MAX_WIRE_RADIUS = 200;
+/**
+ * The widest area a combat message may draw: `AREA_EARSHOT` in game-core,
+ * where a shout or chant reaches (#3301). Past it, the client refuses the
+ * whole tick's combat batch, so `wire-radius.test.ts` in game-session holds
+ * every area the simulation logs to this bound.
+ */
+export const MAX_WIRE_RADIUS = 350;
 
 /** The most combat entries one tick's `"combat"` message carries. */
 export const MAX_WIRE_COMBATS = 64;
@@ -597,6 +605,11 @@ export interface WireCreature {
   readonly armedAttack: WireArmedAttack | null;
   /** Whom a Ghostly Hero follows (#1377); `null` while it stays, and for any other creature. */
   readonly leaderId: string | null;
+  /**
+   * How far its aura reaches (#3306), world units rounded to an integer:
+   * a spirit's range ring. `null` for a creature without an aura.
+   */
+  readonly auraRadius: number | null;
 }
 
 /** A companion's armed pet attack (#1167). */
@@ -2342,7 +2355,8 @@ function parseCreature(value: unknown): WireCreature | undefined {
     !isOneOf(raw.kind, CREATURE_KINDS) ||
     !isOneOf(raw.look, CREATURE_LOOKS) ||
     !(raw.mode === null || isOneOf(raw.mode, COMPANION_MODES)) ||
-    !(raw.leaderId === null || isString(raw.leaderId))
+    !(raw.leaderId === null || isString(raw.leaderId)) ||
+    !(raw.auraRadius === null || isCount(raw.auraRadius))
   ) {
     return undefined;
   }
@@ -2356,6 +2370,7 @@ function parseCreature(value: unknown): WireCreature | undefined {
         mode: raw.mode,
         armedAttack,
         leaderId: raw.leaderId,
+        auraRadius: raw.auraRadius,
       };
 }
 

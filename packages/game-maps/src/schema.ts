@@ -131,6 +131,24 @@ const SWITCHED_DECK_LOOKS: Readonly<
   fall: ["bridge-plank", "ruin"],
 };
 
+/** What an overhang is drawn as (#3293): cloth, timber or leaves. */
+export const OVERHANG_LOOKS = ["awning", "lean-to", "canopy"] as const;
+
+/** The most overhangs a map may hang (#3293). */
+const MAX_OVERHANGS = 12;
+
+/**
+ * A roof nobody stands on (#3293): an awning, a lean-to or a canopy over
+ * the ground or a deck below `layer`. Art only: the simulation never
+ * sees it, so it needs no way up.
+ */
+const overhangSchema = z.object({
+  id: z.string().min(1),
+  layer: layerSchema,
+  footprint: shapeSchema,
+  look: z.enum(OVERHANG_LOOKS),
+});
+
 /** A walkable floor above the ground (ADR-0051). */
 const deckSchema = z.object({
   id: z.string().min(1),
@@ -938,6 +956,8 @@ export const mapDataSchema = z
     tunnels: z.array(belowGroundSchema),
     /** Required, may be empty, as `gates`. */
     decks: z.array(deckSchema),
+    /** Required, may be empty, as `gates` (#3293). */
+    overhangs: z.array(overhangSchema).max(MAX_OVERHANGS),
     /** Required, may be empty, as `gates`. */
     transitions: z.array(transitionSchema),
     /** Required, may be empty, as `gates` (#3069). */
@@ -1150,6 +1170,41 @@ export const mapDataSchema = z
           code: "custom",
           path: ["spawnPoints", index],
           message: `spawn ${String(index)} must be on its layer's walkable area and a body clear of that layer's walls`,
+        });
+      }
+    });
+    const overhangIds = new Set<string>();
+    map.overhangs.forEach((overhang, index) => {
+      layerInRange(overhang.layer, ["overhangs", index, "layer"]);
+      if (overhang.layer <= map.groundLayer) {
+        context.addIssue({
+          code: "custom",
+          path: ["overhangs", index, "layer"],
+          message: `overhang ${overhang.id} is on layer ${String(overhang.layer)}, not above the ground`,
+        });
+      }
+      if (overhangIds.has(overhang.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["overhangs", index, "id"],
+          message: `overhang id ${overhang.id} is used twice`,
+        });
+      }
+      overhangIds.add(overhang.id);
+      // It may hang over the outline's edge, as a deck may, but not wholly off the ground.
+      const over = shapeVertices(overhang.footprint).some(
+        (corner) =>
+          corner.x >= 0 &&
+          corner.y >= 0 &&
+          corner.x <= map.width &&
+          corner.y <= map.height &&
+          onGround(map.bounds, corner),
+      );
+      if (!over) {
+        context.addIssue({
+          code: "custom",
+          path: ["overhangs", index, "footprint"],
+          message: `overhang ${overhang.id} must hang over the ground's outline`,
         });
       }
     });
@@ -1928,6 +1983,8 @@ export type Shape = z.infer<typeof shapeSchema>;
 export type Wall = z.infer<typeof wallSchema>;
 export type Deck = z.infer<typeof deckSchema>;
 export type DeckLook = Deck["look"];
+export type Overhang = z.infer<typeof overhangSchema>;
+export type OverhangLook = Overhang["look"];
 export type TransitionLook = Transition["look"];
 export type Transition = z.infer<typeof transitionSchema>;
 export type BelowGround = z.infer<typeof belowGroundSchema>;

@@ -241,6 +241,7 @@
       }
     }
   ],
+  "overhangs": [],
   "transitions": [
     {
       "id": "north-west-stairs",

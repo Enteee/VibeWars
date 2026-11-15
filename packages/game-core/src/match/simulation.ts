@@ -467,10 +467,11 @@ import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * What kind of non-player body this is (#467); a priest (#1186), a Guild
- * Lord (#1222), a base guard (#1223) and a Ghostly Hero (#1377) are a map's.
+ * Lord (#1222), a base guard (#1223) and a Ghostly Hero (#1377) are a map's,
+ * a critter (#3315) a world's, as the tutorial's rats.
  */
 export type CreatureKind =
-  "spirit" | "minion" | "pet" | "priest" | "guild-lord" | "guard" | "ghostly-hero";
+  "spirit" | "minion" | "pet" | "priest" | "guild-lord" | "guard" | "ghostly-hero" | "critter";
 
 /**
  * How a companion fights (#1110, GW1 pet control): game-protocol's
@@ -502,6 +503,7 @@ export const CREATURE_LOOKS = [
   "guild-lord",
   "guard",
   "ghostly-hero",
+  "rat",
 ] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
@@ -614,6 +616,11 @@ export interface Creature {
 /** A companion's mode (#1110); `null` for a creature that takes no orders. */
 export function companionMode(creature: Creature): CompanionMode | null {
   return creature.companionSkillId === undefined ? null : creature.mode;
+}
+
+/** How far a creature's aura reaches (#3306), rounded to a world unit; `null` for none. */
+export function creatureAuraRadius(creature: Creature): number | null {
+  return creature.aura === undefined ? null : Math.round(creature.aura.radius);
 }
 
 /**
@@ -2183,8 +2190,10 @@ export class MatchSimulation {
         template.attack === undefined ? 0 : (ranks.get(template.attack.attributeId) ?? 0),
       ),
       spawn: at,
-      // Where its summoner stands (ADR-0051); nobody summoned a masterless one.
-      layer: (ownerId === undefined ? undefined : this.#participants.get(ownerId)?.layer) ?? 0,
+      // Where its summoner stands (ADR-0051); a masterless one stands on the ground.
+      layer:
+        (ownerId === undefined ? undefined : this.#participants.get(ownerId)?.layer) ??
+        this.#ground,
       facing,
       // Spawning Power is the summoner's (#1098), for what they create: spirits
       // and minions. A pet is charmed, not created, and is not on the wiki's
@@ -3174,6 +3183,7 @@ export class MatchSimulation {
         creature.kind === "guild-lord" ||
         creature.kind === "guard" ||
         creature.kind === "ghostly-hero" ||
+        creature.kind === "critter" ||
         record.combatant.dead
       ) {
         continue;
@@ -6399,7 +6409,7 @@ export class MatchSimulation {
 
   /**
    * The click-to-walk step (#310): along the path to the goal, until
-   * within `ARRIVE_UNITS` of it. A walk whose way there has got no
+   * within `ARRIVE_UNITS` of it, on its layer. A walk whose way there has got no
    * shorter for as long as an approach may get nowhere
    * (`unreachableAfterSeconds`, #218) ends where it is, without a word:
    * the player sees the hero stop. A body on a lift (#3079) is waiting to
@@ -6425,13 +6435,20 @@ export class MatchSimulation {
     if (goal === undefined) {
       return;
     }
-    if (distance(record.position, goal) <= ARRIVE_UNITS) {
+    const layer = record.walkLayer ?? record.layer;
+    if (this.#walkArrived(record, goal, layer)) {
       record.walkGoal = undefined;
       record.route = undefined;
       return;
     }
-    const layer = record.walkLayer ?? record.layer;
     const path = this.#route(record, goal, layer);
+    if (path === undefined && distance(record.position, goal) <= ARRIVE_UNITS) {
+      // At the point, on another layer, with no way to the one ordered:
+      // the walk ends rather than stand there walking (#3337).
+      record.walkGoal = undefined;
+      record.route = undefined;
+      return;
+    }
     const left = path === undefined ? Number.POSITIVE_INFINITY : pathLength(record.position, path);
     if (left < record.walkLeast - STALL_FRACTION * this.#stepUnits(record, dt)) {
       record.walkLeast = left;
@@ -6457,10 +6474,20 @@ export class MatchSimulation {
     } else {
       this.#stepToward(record, next, undefined, path?.length === 1, dt);
     }
-    if (distance(record.position, goal) <= ARRIVE_UNITS) {
+    if (this.#walkArrived(record, goal, layer)) {
       record.walkGoal = undefined;
       record.route = undefined;
     }
+  }
+
+  /**
+   * A walk has arrived within `ARRIVE_UNITS` of its goal, and only on the
+   * layer it was ordered to (#3337). Stairs over a tunnel cover the
+   * ground under them, so a walk down to it passes over its goal on the
+   * upper layer first, before the ramp's foot turns it to the lower.
+   */
+  #walkArrived(record: ParticipantRecord, goal: Vec2, layer: number): boolean {
+    return record.layer === layer && distance(record.position, goal) <= ARRIVE_UNITS;
   }
 
   /**
@@ -6823,7 +6850,7 @@ export class MatchSimulation {
     if (ghost.creature?.leaderId === record.id) {
       this.#stay(ghost, ghost.position);
     } else {
-      ghost.behaviour = followBehaviour(field.altar, field.altarLayer ?? 0);
+      ghost.behaviour = followBehaviour(field.altar, field.altarLayer);
       ghost.cursor = createCursor();
       if (ghost.creature !== undefined) {
         ghost.creature.leaderId = record.id;
@@ -6865,11 +6892,10 @@ export class MatchSimulation {
    */
   #mayClaim(record: ParticipantRecord): boolean {
     const field = this.#ghostField;
-    const altar = field?.altar;
     if (
-      altar === undefined ||
+      field?.altar === undefined ||
       record.combatant.dead ||
-      !onHill(altar, field?.altarLayer ?? 0, record)
+      !onHill(field.altar, field.altarLayer, record)
     ) {
       return false;
     }
@@ -6955,13 +6981,13 @@ export class MatchSimulation {
         relicSpawns: this.#relicField.spawns,
         relicCarry: this.#relicField.relicCarry,
         altar: this.#relicField.altar,
-        altarLayer: this.#relicField.altarLayer ?? 0,
+        altarLayer: this.#relicField.altarLayer,
       };
     } else if (victory === "king-of-the-hill" && this.#ghostField !== undefined) {
       this.#botObjectives = {
         ...NO_OBJECTIVES,
         altar: this.#ghostField.altar,
-        altarLayer: this.#ghostField.altarLayer ?? 0,
+        altarLayer: this.#ghostField.altarLayer,
         altarHolder: this.#altarState.holder,
       };
     } else {
@@ -7874,7 +7900,7 @@ export class MatchSimulation {
         !body.combatant.dead &&
         body.creature?.kind !== "spirit" &&
         body.combatant.team !== state.owner &&
-        atObjective(field.stand, field.standLayer ?? 0, body, BEACON_STRIKE_RADIUS),
+        atObjective(field.stand, field.standLayer, body, BEACON_STRIKE_RADIUS),
     );
     if (foes.length === 0) {
       return;
@@ -9815,15 +9841,23 @@ export class MatchSimulation {
     }
   }
 
-  /** Where `record` respawns: its spawn, or the altar its team holds in the Halls' King of the Hill (#2700). */
-  #respawnPlace(record: ParticipantRecord): Vec2 {
-    const altar = this.#ghostField?.altar;
-    return altar !== undefined &&
+  /**
+   * Where `record` respawns, and on which layer: its spawn, or the altar
+   * its team holds in the Halls' King of the Hill (#2700), on the altar's.
+   */
+  #respawnPlace(record: ParticipantRecord): { readonly at: Vec2; readonly layer: number } {
+    const field = this.#ghostField;
+    return field?.altar !== undefined &&
       record.creature === undefined &&
       this.#matchRules?.respawnOnWave === true &&
       this.#altarState.holder === record.combatant.team
-      ? altar
-      : record.spawn;
+      ? { at: field.altar, layer: field.altarLayer }
+      : this.#spawnPlace(record);
+  }
+
+  /** Where `record` starts, and is reset to: its spawn, on its spec's layer or the ground. */
+  #spawnPlace(record: ParticipantRecord): { readonly at: Vec2; readonly layer: number } {
+    return { at: record.spawn, layer: record.spec.layer ?? this.#ground };
   }
 
   /**
@@ -9913,6 +9947,18 @@ export class MatchSimulation {
         this.#setMorale(record, Math.min(MORALE_CEILING, record.combatant.morale + amount));
         record.combatant.cast.refreshSpent();
       }
+    }
+  }
+
+  /**
+   * A status from outside any skill or zone, a script's (the tutorial's
+   * bleeding tutor, #3303), on the living participant `id` for `seconds`.
+   * Nobody is credited; a dead or absent one gets nothing.
+   */
+  public afflict(id: string, statusId: StatusId, seconds: number, sourceId: string): void {
+    const record = this.#participants.get(id);
+    if (record !== undefined && record.combatant.health > 0) {
+      applyStatus(record.combatant, statusId, seconds, sourceId, NO_RANKS);
     }
   }
 
@@ -10280,7 +10326,7 @@ export class MatchSimulation {
     combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
-    record.layer = shrine.layer ?? this.#ground;
+    record.layer = shrine.layer;
     let position = nearestStandable(this.#graphOn(record.layer), shrine.position);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
       position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);
@@ -10502,7 +10548,7 @@ export class MatchSimulation {
    * morale boost (#474).
    */
   #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
-    const returnsTo = why === "respawn" ? this.#respawnPlace(record) : record.spawn;
+    const returnsTo = why === "respawn" ? this.#respawnPlace(record) : this.#spawnPlace(record);
     if (why === "reset") {
       record.combatant.overcast = 0;
       this.#setMorale(record, 0);
@@ -10516,8 +10562,8 @@ export class MatchSimulation {
     emptyAdrenaline(record.combatant);
     record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
-    record.position = returnsTo;
-    record.layer = record.spec.layer ?? this.#ground;
+    record.position = returnsTo.at;
+    record.layer = returnsTo.layer;
     this.#refreshFloors(record);
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;
@@ -10548,7 +10594,7 @@ export class MatchSimulation {
     record.outOfCombatSeconds = 0;
     record.history.clear();
     record.combatant.moving = false;
-    this.#stepStart.set(record.id, returnsTo);
+    this.#stepStart.set(record.id, returnsTo.at);
     // A companion comes back with its owner, alive, beside them (#1046),
     // wherever it was summoned.
     const companion = record.creature === undefined ? this.#companionOf(record) : undefined;

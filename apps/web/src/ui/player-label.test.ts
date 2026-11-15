@@ -1,13 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { FakeElement } from "./fake-dom.test-support.js";
 import {
+  bodyName,
   heroRankText,
   nameplateName,
   playerLabel,
   playerLabelText,
   signedText,
 } from "./player-label.js";
+
+describe("bodyName (#3315)", () => {
+  it("draws a rat by its look, and any other body by the name it came with", () => {
+    const creature = { look: "rat" };
+    expect(bodyName({ name: "Rat", creature })).toBe(t("creature.rat"));
+    expect(bodyName({ name: "Knight", creature: { look: "guard" } })).toBe("Knight");
+    expect(bodyName({ name: "Mhenlo", creature: null })).toBe("Mhenlo");
+  });
+});
 
 describe("playerLabel (#1406)", () => {
   it("puts a player's guild tag after their name, in brackets", () => {

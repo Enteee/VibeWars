@@ -15,6 +15,7 @@ import {
 } from "@vibewars/game-core";
 import type {
   DeckLook,
+  OverhangLook,
   GateLook,
   SwitchedDeckData,
   TransitionLift,
@@ -31,7 +32,7 @@ import type {
 } from "@vibewars/game-maps/schema";
 
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
-import type { AttackCast } from "./attack-clock.js";
+import type { AttackCast, SpellCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
 import {
   breakableAtPoint,
@@ -102,12 +103,16 @@ export interface RenderableActor {
   readonly swingTotal: number;
   /** The host's cast timer while an attack skill winds up (#562), which the pose follows instead. */
   readonly attackCast: AttackCast | undefined;
+  /** The host's cast timer while anything else with a cast time is cast (#3320): the weapon raises, the hand glows. */
+  readonly spellCast: SpellCast | undefined;
   /** Picks the off-hand mark (#276); `undefined` draws none. */
   readonly offhandId: OffhandId | undefined;
   /** The primary profession, whose glyph leads the name (#281); `undefined` draws none. */
   readonly profession: ProfessionId | undefined;
   /** A creature's shape and kind glyph (#1162); `undefined`: a player or a dummy, a disc. */
   readonly creatureLook: CreatureLook | undefined;
+  /** How far a creature's aura reaches (#3306): a spirit's range ring; `undefined` for none. */
+  readonly auraRadius: number | undefined;
   readonly radius: number;
   readonly team: "ally" | "enemy" | "third" | "self";
   readonly health: number;
@@ -117,7 +122,7 @@ export interface RenderableActor {
   readonly exploited: boolean;
   /** Lying down from a knockdown (#545): drawn flattened, the weapon dropped beside it. */
   readonly knockedDown: boolean;
-  /** Fraction of the current cast still remaining, or `undefined`. */
+  /** Fraction of the current cast done, 0 … 1, or `undefined`. */
   readonly castProgress: number | undefined;
   /** The casting skill's type, for the badge by the cast bar (#1125); only with `castProgress`. */
   readonly castType: SkillType | undefined;
@@ -235,6 +240,14 @@ export interface MapDeck {
   readonly switched: RenderableSwitchedDeck | null;
 }
 
+/** An overhang of a map (#3293): a roof nobody stands on, faded over whoever is under it. */
+export interface MapOverhang {
+  readonly id: string;
+  readonly layer: number;
+  readonly footprint: RenderableShape;
+  readonly look: OverhangLook;
+}
+
 /** A map's floors above and below the ground (ADR-0051), its water and zones, from its file: never per tick. */
 export interface MapStructure {
   readonly layerCount: number;
@@ -254,6 +267,8 @@ export interface MapStructure {
   readonly decks: readonly MapDeck[];
   /** Each switched deck that is down (#3068): drawn as what is left of it, and nothing more. */
   readonly downDecks: readonly MapDeck[];
+  /** Its awnings, lean-tos and canopies (#3293): over bodies, never walked. */
+  readonly overhangs: readonly MapOverhang[];
   /** Stretches of a raised edge you step off onto `layer - 1`, never climb (#3069). */
   readonly dropOffs: readonly {
     readonly layer: number;
@@ -286,6 +301,7 @@ export const FLAT_STRUCTURE: MapStructure = {
   decks: [],
   dropOffs: [],
   downDecks: [],
+  overhangs: [],
   pits: [],
   tunnels: [],
   transitions: [],
@@ -401,11 +417,16 @@ export function areaFlashAlpha(flash: AreaFlash): number {
  * A melee swing (#161): a 90° arc around the attacker, toward its target,
  * in the attacker's side's colour, fading out (docs/art/art-direction.md
  * "Swing flash"). It hugs the attacker, so it never reads as the target ring.
+ * A melee attack skill's is a thick warm arc instead (#3292), the same for
+ * both sides, held a little longer.
  */
 export interface SwingFlash {
   readonly id: number;
+  readonly kind: "swing" | "skill";
   /** The attacker's centre when it swung. */
   readonly centre: Vec2;
+  /** The attacker's layer: the arc draws on its band, under that band's health bars (#3292). */
+  readonly layer: number;
   /** Toward the target, in radians. */
   readonly angle: number;
   readonly radius: number;
@@ -433,6 +454,11 @@ export const FLOATING_TEXT_OFFSET_Y = 8;
 
 /** Short, so a dagger's rapid hits read as separate flashes, never a standing ring. */
 export const SWING_FLASH_SECONDS = 0.12;
+/** An attack skill's arc (#3292): long enough to read as a blow, not a swing. */
+export const SKILL_ARC_SECONDS = 0.2;
+/** Its colour, whatever the side, and its width, three times a swing's. */
+export const SKILL_ARC_COLOUR = 0xff8a3d;
+export const SKILL_ARC_WIDTH = 6;
 /** Outside the body: the attacker's radius plus this. */
 export const SWING_FLASH_GAP = 6;
 
@@ -443,8 +469,19 @@ export function decaySwingFlashes(flashes: readonly SwingFlash[], dt: number): S
     .filter((flash) => flash.remainingSeconds > 0);
 }
 
-export function swingFlashAlpha(flash: SwingFlash): number {
-  return Math.max(0, Math.min(1, flash.remainingSeconds / SWING_FLASH_SECONDS));
+/**
+ * A flash's opacity: 1 when it swings, 0 when it is gone; held whole under
+ * `reducedMotion`. An attack skill's arc holds whole for its first half,
+ * so its colour reads before it fades (#3292).
+ */
+export function swingFlashAlpha(flash: SwingFlash, reducedMotion: boolean): number {
+  if (flash.kind === "swing") {
+    return Math.max(0, Math.min(1, flash.remainingSeconds / SWING_FLASH_SECONDS));
+  }
+  if (reducedMotion) {
+    return 1;
+  }
+  return Math.max(0, Math.min(1, (2 * flash.remainingSeconds) / SKILL_ARC_SECONDS));
 }
 
 /**
@@ -869,6 +906,28 @@ export function nameShown(snapshot: ArenaSnapshot, actor: RenderableActor): bool
   return snapshot.showAllNames || actor.id === snapshot.targetId || actor.id === snapshot.hoverId;
 }
 
+/** A spirit's range ring's alpha (#3306): faint, and stronger while you target or hover it. */
+export const SPIRIT_RING_ALPHA = 0.18;
+export const SPIRIT_RING_FOCUS_ALPHA = 0.45;
+export const SPIRIT_RING_WIDTH = 1.5;
+
+/**
+ * The alpha of a living spirit's range ring (#3306), a solid circle at
+ * `auraRadius` on the ground under the bodies. Solid, because its area is
+ * not a harmful ground effect, whatever it does. `undefined`, no ring, for
+ * any other body, a dead spirit, and a spirit with no aura.
+ */
+export function spiritRingAlpha(
+  snapshot: Pick<ArenaSnapshot, "targetId" | "hoverId">,
+  actor: RenderableActor,
+): number | undefined {
+  if (actor.creatureLook !== "spirit" || actor.dead || actor.auraRadius === undefined) {
+    return undefined;
+  }
+  const focused = actor.id === snapshot.targetId || actor.id === snapshot.hoverId;
+  return focused ? SPIRIT_RING_FOCUS_ALPHA : SPIRIT_RING_ALPHA;
+}
+
 /** Health as a 0..1 fraction, clamped — the shape a health bar needs. */
 export function healthFraction(actor: RenderableActor): number {
   if (actor.maxHealth <= 0) {
@@ -1124,9 +1183,13 @@ export interface BodyGlyphLayout {
  * is its kind's (#1162), opaque, and its shape never lies down; a
  * Ghostly Hero's pale (#1377). A corpse greys it.
  *
- * `undefined`: neither a profession nor a creature, so no glyph.
+ * `undefined`: neither a profession nor a creature, so no glyph; and a
+ * living spirit, whose wisp is its glyph and whose core it would hide (#3306).
  */
 export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undefined {
+  if (actor.creatureLook === "spirit" && !actor.dead) {
+    return undefined;
+  }
   const creature = actor.creatureLook !== undefined;
   const glyph: BodyGlyph | undefined =
     actor.creatureLook !== undefined

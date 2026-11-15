@@ -17,7 +17,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
-import { matchGates } from "./layers.js";
+import { matchGates, matchLayers } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import { playBuildBot } from "./tools/map-balance.js";
@@ -50,6 +50,7 @@ describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_,
       ruleset: RULESET,
       walls: allWallSegments(map.walls),
       bounds: { width: map.width, height: map.height },
+      layers: matchLayers(map),
       matchRules: ANNIHILATION_MATCH_RULES,
       participants,
     });
@@ -82,7 +83,7 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
           const build = STARTER_BUILDS[(i + seed.charCodeAt(0)) % STARTER_BUILDS.length];
           if (build === undefined) throw new Error("no built-in builds");
           return {
-            ...playBuildBot(build, `${String(team)}-${String(i)}`, team, spawn.position, 0),
+            ...playBuildBot(build, `${String(team)}-${String(i)}`, team, spawn, 0),
             behaviour: { kind: "play-build", reaction: BOT_REACTION, spikeHold },
           };
         }),
@@ -163,11 +164,12 @@ describe("Relic Run bots (#2581)", () => {
       matchRules: RELIC_RUN_MATCH_RULES,
       relicField: {
         altar: altar.position,
+        altarLayer: altar.layer,
         relicTarget: "altar",
         relicCarry: "own",
         spawns: map.objectives.flatMap((objective) =>
           objective.kind === "relic-spawn"
-            ? [{ team: objective.team, position: objective.position }]
+            ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
             : [],
         ),
       },
@@ -203,9 +205,10 @@ describe("King of the Hill bots (#2582)", () => {
       ghostField: {
         level: 24,
         altar: altar.position,
+        altarLayer: altar.layer,
         spawns: arena.objectives.flatMap((objective) =>
           objective.kind === "ghost-spawn" && objective.team < 2
-            ? [{ team: objective.team, position: objective.position }]
+            ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
             : [],
         ),
       },
@@ -353,7 +356,9 @@ describe("Capture Points bots (#2580)", () => {
       bounds: { width: map.width, height: map.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       capturePoints: map.objectives.flatMap((objective) =>
-        objective.kind === "capture-point" ? [objective.position] : [],
+        objective.kind === "capture-point"
+          ? [{ ...objective.position, layer: objective.layer }]
+          : [],
       ),
       participants,
     });
@@ -382,7 +387,9 @@ describe("Capture Points bots (#2580)", () => {
       bounds: { width: cairns.width, height: cairns.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       capturePoints: cairns.objectives.flatMap((objective) =>
-        objective.kind === "capture-point" ? [objective.position] : [],
+        objective.kind === "capture-point"
+          ? [{ ...objective.position, layer: objective.layer }]
+          : [],
       ),
       participants: casterBots(cairns, 2),
     });
@@ -413,9 +420,10 @@ describe("Capture Points bots (#2580)", () => {
       ghostField: {
         level: 24,
         altar: altar.position,
+        altarLayer: altar.layer,
         spawns: keep.objectives.flatMap((objective) =>
           objective.kind === "ghost-spawn"
-            ? [{ team: objective.team, position: objective.position }]
+            ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
             : [],
         ),
       },
@@ -438,7 +446,9 @@ describe("Capture Points bots (#2580)", () => {
       bounds: { width: gallery.width, height: gallery.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       capturePoints: gallery.objectives.flatMap((objective) =>
-        objective.kind === "capture-point" ? [objective.position] : [],
+        objective.kind === "capture-point"
+          ? [{ ...objective.position, layer: objective.layer }]
+          : [],
       ),
       participants: casterBots(gallery, 2),
     });
@@ -490,7 +500,7 @@ describe("The Brazen Causeway (#2697)", () => {
       matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
       shrines: map.objectives.flatMap((objective) =>
         objective.kind === "resurrection-shrine"
-          ? [{ team: objective.team, position: objective.position }]
+          ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
           : [],
       ),
       participants: casterBots(map, 2),
@@ -556,7 +566,7 @@ describe("a lever gate the only way between the spawns (#3138)", () => {
             build(name),
             `${String(team)}-${String(k)}`,
             team,
-            { x: team === 0 ? 150 : 1450, y: 300 + 200 * k },
+            { position: { x: team === 0 ? 150 : 1450, y: 300 + 200 * k }, layer: 0 },
             0,
           ),
         ),
@@ -600,7 +610,7 @@ function casterBots(
           throw new Error(
             `no starter build ${String(CASTERS[(k + team * shift) % CASTERS.length])}`,
           );
-        return playBuildBot(build, `${String(team)}-${String(k)}`, team, spawn.position, 0);
+        return playBuildBot(build, `${String(team)}-${String(k)}`, team, spawn, 0);
       }),
   );
 }
@@ -636,7 +646,7 @@ describe("a breakable wall the only way between the spawns (#3140)", () => {
             build(name),
             `${String(team)}-${String(k)}`,
             team,
-            { x: team === 0 ? 150 : 1450, y: 300 + 200 * k },
+            { position: { x: team === 0 ? 150 : 1450, y: 300 + 200 * k }, layer: 0 },
             0,
           ),
         ),

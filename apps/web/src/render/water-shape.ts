@@ -1,7 +1,8 @@
 import { distancePointToSegment, pointInPolygon, type Vec2 } from "@vibewars/game-core";
 
 import type { MapWater } from "./arena-snapshot.js";
-import { shapeOutline } from "./layer-surfaces.js";
+import { coverPieces, outlineArea, type TunnelCoverBox } from "./cover-pieces.js";
+import { shapeOutline, type Box } from "./layer-surfaces.js";
 
 /**
  * What a body of water draws (#2984): its shore and the ripples on it,
@@ -121,4 +122,61 @@ export function rippleSwell(ripple: Ripple, seconds: number, still: boolean): nu
 /** A ripple's drift along its stroke at render time `seconds`, in world units. */
 export function rippleDrift(ripple: Ripple, seconds: number, still: boolean): number {
   return RIPPLE_DRIFT * Math.cos(rippleAngle(ripple, seconds, still));
+}
+
+/**
+ * A piece of a body of water split by the tunnel covers under it (#3350):
+ * the part over tunnel `tunnel`, or of the rest when `undefined`. Its
+ * `shore` is the edges of `outline` that are the water's own: a cut edge
+ * meets the next piece's exactly and is never stroked.
+ */
+export interface WaterPiece {
+  readonly tunnel: number | undefined;
+  readonly outline: readonly Vec2[];
+  readonly shore: readonly (readonly [Vec2, Vec2])[];
+  readonly ripples: readonly Ripple[];
+}
+
+/**
+ * `shape` split by the tunnel covers it lies over (#3350), as `coverPieces`
+ * splits it, each piece with the ripples whose centre is in its box. Water
+ * over no cover is one piece, its whole self.
+ */
+export function waterPieces(
+  shape: WaterShape,
+  covers: readonly TunnelCoverBox[],
+): readonly WaterPiece[] {
+  const { centre, width, height } = shape.anchor;
+  const whole: Box = {
+    left: centre.x - width / 2,
+    top: centre.y - height / 2,
+    right: centre.x + width / 2,
+    bottom: centre.y + height / 2,
+  };
+  const pieces = coverPieces(shape.outline, whole, covers);
+  const [only] = pieces;
+  if (pieces.length === 1 && only !== undefined && only.tunnel === undefined) {
+    return [
+      { tunnel: undefined, outline: only.outline, shore: only.shore, ripples: shape.ripples },
+    ];
+  }
+  const placed = new Set<Ripple>();
+  return pieces.flatMap(({ tunnel, box, outline, shore }) => {
+    if (outlineArea(outline) === 0) {
+      return [];
+    }
+    // A ripple belongs to the one box its centre is in: right and bottom edges open.
+    const ripples = shape.ripples.filter(
+      (ripple) =>
+        !placed.has(ripple) &&
+        ripple.at.x >= box.left &&
+        ripple.at.x < box.right &&
+        ripple.at.y >= box.top &&
+        ripple.at.y < box.bottom,
+    );
+    for (const ripple of ripples) {
+      placed.add(ripple);
+    }
+    return [{ tunnel, outline, shore, ripples }];
+  });
 }

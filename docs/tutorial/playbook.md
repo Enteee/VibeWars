@@ -91,14 +91,15 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
 
 ![Station 6: the tutor hurt, a heal skill lit on the skill bar](img/6-heal.png)
 
-- A boulder hits the **tutor**: "Ow! The rock got me. A little help?" The tutor's health drops
-  in the party window.
+- Boulders hit the **tutor**: "Ow! The rock got me. A little help?" It stays in the rockfall
+  until it is down to half health, then steps out. It bleeds from the first hit until healed, down
+  to about 40 %, so its bar stays low in the party window and only the heal brings it back.
 - **Teach.** The **skill bar** (keys 1 to 8, or as bound): a skill costs energy, takes a moment,
   then recharges. Target an ally with a click on their name in the party window or on them.
   Your health and energy bars, and the pips on them, are pointed at the first time they move.
 - **Do.** Target the tutor and use the heal skill (granted for the tutorial if the build has
   none).
-- **Check.** The tutor is above 90 % health.
+- **Check.** The heal gives the tutor health back after a boulder has hit it (#3303).
 
 ## 7. Cross the bad ground
 
@@ -113,12 +114,16 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
 
 ![Station 8: three rats, a skill bar with different skills lit](img/8-rats.png)
 
-- Three rats. Each takes a different skill to finish quickly: one a ranged skill, one a
-  melee/area skill, one a condition.
+- Three rats on the canyon's second map. The tutorial build has only melee attacks, so
+  the lesson is combos (#3316): one rat runs when hit, which Protector's Strike punishes;
+  a big one (240 health) is knocked down with Hammer Bash, then Crushing Blow; the third
+  takes anything. The tutor waits east of the pocket, out of every rat's reach, and only
+  joins on a rat the player has hit.
 - **Teach.** Different skills, different jobs. Target with right click, **Tab** is the next foe,
   **C** the closest.
 - **Do.** Kill all three rats using at least two different skills.
-- **Check.** Three rats dead, two or more distinct skill ids cast.
+- **Check.** Three rats dead, two or more distinct skill ids landed on them. Dead with fewer,
+  one more rat comes: "Try a different skill on this one."
 
 ## 9. Climb a layer
 

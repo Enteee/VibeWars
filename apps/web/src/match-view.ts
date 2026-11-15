@@ -67,7 +67,7 @@ import {
   FLAT_STRUCTURE,
   FORM_SCALE,
 } from "./render/arena-snapshot.js";
-import { attackCastOf } from "./render/attack-clock.js";
+import { attackCastOf, spellCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
 import { CREATURE_DRAWN_RADIUS } from "./render/creature-shape.js";
 import type { GoalMark } from "./render/goal-mark.js";
@@ -83,7 +83,7 @@ import { CRUMBLED, crackStage, renderableBreakables } from "./render/breakable-o
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera, type CameraLook } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
-import { projectileSprite } from "./render/projectiles.js";
+import { projectileSprite, SKILL_SPRITE } from "./render/projectiles.js";
 import {
   createHud,
   describeRefusal,
@@ -178,6 +178,8 @@ export type MatchViewOptions =
       readonly tutorial?: {
         readonly party: readonly string[];
         readonly goals: () => readonly GoalMark[];
+        /** Each walk a click sends, and whether it was an Alt walk, to the ground below (#3323). */
+        readonly onWalk: (below: boolean) => void;
       };
     }
   | {
@@ -447,6 +449,7 @@ export function toArenaSnapshot(
         flightSeconds: shot.flightSeconds,
         // Tinted by side; a shooter who has left counts as the other side.
         colour: teamColour(shooter?.team === side ? "ally" : "enemy"),
+        spell: shot.skillId !== undefined && SKILL_SPRITE[shot.skillId] !== undefined,
       };
     }),
     groundEffects,
@@ -495,12 +498,14 @@ export function toArenaSnapshot(
         swingElapsed: player.swingElapsed,
         swingTotal: player.swingTotal,
         attackCast: attackCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
+        spellCast: spellCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
         offhandId:
           player.creature === undefined
             ? player.offhandId
             : CREATURE_ARMS[player.creature.look]?.offHand,
         profession: player.primaryProfession,
         creatureLook: player.creature?.look,
+        auraRadius: player.creature?.auraRadius ?? undefined,
         // A form draws the body bigger (#3229), not what it collides as.
         radius:
           (player.creature === undefined
@@ -1106,7 +1111,11 @@ export async function startMatchView(
     latestMatch = match;
     const previous = lastMatch ?? match;
     lastMatch = match;
-    matchSounds.snapshot(match);
+    // A watcher hears casts from the player it follows (#3298).
+    matchSounds.snapshot(
+      match,
+      seat === undefined ? match.players.find((p) => p.sessionId === followedId) : undefined,
+    );
     matchMusic.snapshot(match);
     // A watcher leaving costs nobody anything.
     guardUnload(seat !== undefined && match.phase !== "finished");
@@ -1216,6 +1225,7 @@ export async function startMatchView(
         mode,
         flagField?.beacon === true,
         latestArena.switches,
+        latestArena.breakables,
         match,
       );
       updateFollowed(hud, viewed.selfSessionId, followed, match);
@@ -1240,6 +1250,7 @@ export async function startMatchView(
       mode,
       flagField?.beacon === true,
       latestArena.switches,
+      latestArena.breakables,
       match,
     );
     updateRecharges(hud, seat.skillBar, seat.getRecharges(), seat.getQueuedSlot());
@@ -1268,6 +1279,7 @@ export async function startMatchView(
               seat.sendIntent(intent);
               if (intent.kind === "walk-to") {
                 viewport.scene.showWalkMarker(world);
+                tutorial?.onWalk(altKey);
               }
             }
           } else if (button === "middle" && phase === "down" && latestArena !== undefined) {

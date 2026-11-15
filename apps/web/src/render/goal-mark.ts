@@ -1,5 +1,8 @@
 import type { Vec2 } from "@vibewars/game-core";
 
+import { RING_PATH, traceHiddenOutline, type Occluder } from "./layer-surfaces.js";
+import { elevationOf } from "./render-order.js";
+
 /**
  * A goal on the ground (#3221), such as the tutorial's walk mark: a gold
  * ring about a body wide, softly pulsing, with a short column of light
@@ -54,7 +57,7 @@ export const GOAL_MARK_FADE_SECONDS = 0.3;
 /** How high the column of light rises. */
 export const GOAL_MARK_COLUMN = 44;
 /** The palette's `altar` gold, never the target ring's yellow. */
-const GOLD = 0xc8a45a;
+export const GOAL_MARK_GOLD = 0xc8a45a;
 /** The light at its heart. */
 const GLOW = 0xf6e3a8;
 /** The column's slices, faintest at the top. */
@@ -76,6 +79,36 @@ export function goalMarkFade(goneSeconds: number | undefined): number {
   return Math.max(0, 1 - goneSeconds / GOAL_MARK_FADE_SECONDS);
 }
 
+/** The ring's radius at `pulse`: it swells a little as it glows. */
+function goalMarkRadius(pulse: number): number {
+  return GOAL_MARK_RADIUS * (1 + 0.08 * pulse);
+}
+
+/**
+ * Calls `segment` for each piece of `mark`'s ring that a structure covers,
+ * dashed, as a body's outline is under a deck or in a tunnel (#3342): the
+ * same rule, so the player can see where to go. A portal's entry is
+ * traced as a ring too.
+ */
+export function traceHiddenGoalMark(
+  mark: GoalMark,
+  seconds: number,
+  reducedMotion: boolean,
+  ground: number,
+  occluders: readonly Occluder[],
+  segment: (ax: number, ay: number, bx: number, by: number) => void,
+): void {
+  traceHiddenOutline(
+    RING_PATH,
+    mark.position.x,
+    mark.position.y - elevationOf(mark.layer, ground),
+    goalMarkRadius(goalMarkPulse(seconds, reducedMotion)),
+    mark.layer,
+    occluders,
+    segment,
+  );
+}
+
 /**
  * The mark at `seconds` on the scene's clock, faded to `fade`: a soft glow
  * on the floor, the column over it, then the ring and its dark rim, which
@@ -91,7 +124,7 @@ export function goalMarkCommands(
     return [];
   }
   const pulse = goalMarkPulse(seconds, reducedMotion);
-  const radius = GOAL_MARK_RADIUS * (1 + 0.08 * pulse);
+  const radius = goalMarkRadius(pulse);
   const column = Array.from({ length: COLUMN_SLICES }, (_, slice): GoalMarkCommand => {
     const height = GOAL_MARK_COLUMN / COLUMN_SLICES;
     return {
@@ -108,7 +141,7 @@ export function goalMarkCommands(
       kind: "disc",
       at: position,
       radius: radius * 1.5,
-      colour: GOLD,
+      colour: GOAL_MARK_GOLD,
       alpha: fade * (0.14 + 0.08 * pulse),
     },
     { kind: "disc", at: position, radius, colour: GLOW, alpha: fade * 0.18 },
@@ -119,7 +152,7 @@ export function goalMarkCommands(
       at: position,
       radius,
       width: 3,
-      colour: GOLD,
+      colour: GOAL_MARK_GOLD,
       alpha: fade * (0.8 + 0.2 * pulse),
     },
   ];

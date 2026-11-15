@@ -8,6 +8,63 @@ import { projection } from "./camera.js";
  */
 const FLAT_MAP = "jungle-ruins";
 const RAISED_MAP = "arena-crossroads";
+/** Where the pair arrives in the canyon (#3247), its first map's arrival pad. */
+const CANYON_ARRIVAL = { x: 1000, y: 1800 };
+/**
+ * Beside the canyon's first rockfall, 200 south of its middle (#3247):
+ * near enough for each of its strikes to count as a dodge, out of its reach.
+ */
+const DODGE_SPOT = { x: 1860, y: 1920 };
+/** The middle of the canyon's cracked wall (#3302), station 5's, east of its mark. */
+const WALL_MIDDLE = { x: 3600, y: 1800 };
+/**
+ * West of the canyon's clearing (#3303), out of its rockfall's reach and
+ * in a heal's range of the tutor waiting east of it.
+ */
+const BY_CLEARING = { x: 4900, y: 1800 };
+/**
+ * Station 7's way round the mire (#3310): up the north leg's east side and
+ * through the bulge east of the mud, in no zone; then its mark, north of it.
+ */
+const CLEAR_WAY = [
+  { x: 7000, y: 1450 },
+  { x: 7150, y: 1100 },
+];
+const PAST_THE_MUD = { x: 6900, y: 720 };
+/**
+ * On station 9's ledge (#3323), just west of its stairs' top and near its
+ * north edge: a click here picks the deck, never the ground beside or
+ * under it, so the walk up ends on the ledge (the ledge spans x 3290-3910,
+ * y 1800-1980 on the canyon's second map).
+ */
+const ON_THE_LEDGE = { x: 3850, y: 1830 };
+/**
+ * Where station 10's mark (#3325), at the high deck's middle, is drawn:
+ * the deck (x 1780-2180, y 1480-1740, layer 3) stands two layers over the
+ * ground (layer 1), 112 world units up, so a click here picks the mark.
+ */
+const OVER_THE_HIGH_DECK = { x: 1980, y: 1610 - 112 };
+/**
+ * On the canyon floor south of station 10's first flight (#3325), clear of
+ * the tutor waiting at its foot (x 2350, y 1850).
+ */
+const SOUTH_OF_THE_FLIGHTS = { x: 2600, y: 2050 };
+/**
+ * On the ground under station 10's high deck (#3325), in the notch of the
+ * bounds that holds the deck and its landing: 210 world units below where
+ * the deck is drawn, so from here a plain click on it is one stride.
+ */
+const UNDER_THE_HIGH_DECK = { x: 1980, y: 1700 };
+/**
+ * Where the middle of station 10's landing (#3325) is drawn: the landing
+ * (x 2260-2440, y 1480-1640, layer 2) stands one layer, 56 world units,
+ * over the ground.
+ */
+const OVER_THE_LANDING = { x: 2350, y: 1560 - 56 };
+/** The tutor's id, as its party row names it. */
+const TUTOR_ID = "tutorial-tutor";
+/** The furthest a click in the canyon sends the player, in world units: well inside the view. */
+const STRIDE = 250;
 
 /**
  * Through the splash to its end, where a first-timer is offered the
@@ -41,12 +98,18 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge, up to the high deck: then the menu, and no offer again`, async ({
       page,
     }) => {
-      // Three stations, each a walk or a drag in a sim that runs no faster than
-      // the page draws: a loaded runner takes most of a minute (#3222).
-      test.setTimeout(120_000);
+      // Four stations, each a walk or a drag in a sim that runs no faster than
+      // the page draws: a loaded runner takes most of a minute (#3222), and
+      // the canyon's three dodges at least 18 s more (#3247), and the wall
+      // some 10 to 15 s, slower where the page draws slowly (#3302), and the
+      // walk to the clearing and the heal some 30 s more (#3303), and the
+      // walk round the bad ground some 20 s more (#3310), and the walk to the
+      // rats and their fight some 60 s more (#3316), and the ledge some 30 s
+      // more (#3323), and the walk up to the high deck some 30 s more (#3325).
+      test.setTimeout(600_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
       const frame = page.locator(".tutorial-frame");
@@ -134,6 +197,262 @@ test.describe("the first-time tutorial (#3218)", () => {
           Math.min(box.y + box.height - inset, Math.max(box.y + inset, at.y)),
         );
         await expect.poll(() => hasSaid(together), { timeout: 5_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
+
+      // Station 4 (#3247): the canyon, the player on its arrival.
+      await expect(frame).toHaveAttribute("data-world", "canyon", { timeout: 15_000 });
+      const stage = page.locator("#viewport");
+      await expect
+        .poll(async () => {
+          const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+            .split(",")
+            .map(Number);
+          return Math.hypot(cx - CANYON_ARRIVAL.x, cy - CANYON_ARRIVAL.y);
+        })
+        .toBeLessThan(150);
+      await expect
+        .poll(() => hasSaid("Rocks fall here. When a shadow grows, step aside!"), {
+          timeout: 10_000,
+        })
+        .toBe(true);
+      const walkTo = async (point: { x: number; y: number }): Promise<void> => {
+        // A stride toward it at most, so the click stays clear of the HUD
+        // at the screen's edges, whoever follows it up clicks again.
+        const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
+        const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+          .split(",")
+          .map(Number);
+        const far = Math.hypot(point.x - cx, point.y - cy);
+        const reach = Math.min(1, STRIDE / Math.max(far, 1));
+        const at = view.onPage({ x: cx + (point.x - cx) * reach, y: cy + (point.y - cy) * reach });
+        await page.mouse.click(at.x, at.y);
+      };
+      // Beside the first landing, until three of its strikes have missed.
+      await expect(async () => {
+        await walkTo(DODGE_SPOT);
+        await expect(frame).toHaveAttribute("data-dodges", /^[3-9]$/, { timeout: 3_000 });
+      }).toPass({ timeout: 90_000 });
+      await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
+      const [goalX = 0, goalY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+        .split(",")
+        .map(Number);
+      const quick = "Quick feet! The rocks can't catch you.";
+      await expect(async () => {
+        if (await hasSaid(quick)) {
+          return;
+        }
+        await walkTo({ x: goalX, y: goalY });
+        await expect.poll(() => hasSaid(quick), { timeout: 3_000 }).toBe(true);
+      }).toPass({ timeout: 90_000 });
+
+      // Station 5 (#3302): up to the wall's mark, target the wall, strike it until it falls.
+      await expect
+        .poll(() => hasSaid("A wall blocks the trail. Right click it, then hit it."), {
+          timeout: 10_000,
+        })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-wall", "700");
+      const [faceX = 0, faceY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+        .split(",")
+        .map(Number);
+      const target = page.locator(".hud-target");
+      await expect(async () => {
+        await walkTo({ x: faceX, y: faceY });
+        const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
+        const at = view.onPage(WALL_MIDDLE);
+        await page.mouse.click(at.x, at.y, { button: "right" });
+        await expect(target).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 60_000 });
+      await expect(target).toHaveClass(/tutorial-pulse/);
+      // The frame shows the wall's health, as it does a body's (#3317).
+      const wallBar = target.locator(".hud-target-health");
+      await expect(wallBar).toBeVisible();
+      await expect(wallBar.locator(".hud-bar-label")).toHaveText("100%");
+      // The mark by the wall goes once it is targeted; the frame pulses on.
+      await expect(frame).not.toHaveAttribute("data-mark", /./);
+      await page.keyboard.press("Space");
+      await expect
+        .poll(() => hasSaid("There! It cracks. Keep going."), { timeout: 15_000 })
+        .toBe(true);
+      await expect(wallBar.locator(".hud-bar-label")).not.toHaveText("100%");
+      await expect(frame).toHaveAttribute("data-wall", "0", { timeout: 90_000 });
+      await expect
+        .poll(() => hasSaid("Down it goes! The trail is open."), { timeout: 5_000 })
+        .toBe(true);
+
+      // Station 6 (#3303): into the clearing behind the tutor, which a rock
+      // hits; target it by its name in the party window, then heal it.
+      await expect
+        .poll(() => hasSaid("Through the gap and into the clearing. Follow me!"), {
+          timeout: 10_000,
+        })
+        .toBe(true);
+      const tutorRow = page.locator(`.party-row[data-member="${TUTOR_ID}"]`);
+      await expect(tutorRow).toHaveClass(/tutorial-pulse/);
+      await expect(async () => {
+        await walkTo(BY_CLEARING);
+        const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+          .split(",")
+          .map(Number);
+        expect(Math.hypot(cx - BY_CLEARING.x, cy - BY_CLEARING.y)).toBeLessThan(150);
+      }).toPass({ timeout: 60_000 });
+      await expect
+        .poll(() => hasSaid("Ow! The rock got me. A little help?"), { timeout: 30_000 })
+        .toBe(true);
+      await tutorRow.click();
+      const healSlot = page.locator(".hud-skill:nth-child(8)");
+      await expect(healSlot).toHaveClass(/tutorial-pulse/);
+      const thanks = "Much better, thank you! You're a healer too.";
+      await expect(async () => {
+        if (await hasSaid(thanks)) {
+          return;
+        }
+        await page.keyboard.press("Digit8");
+        await expect.poll(() => hasSaid(thanks), { timeout: 4_000 }).toBe(true);
+      }).toPass({ timeout: 30_000 });
+      expect(await hasSaid("That blue bar is energy. Skills spend it.")).toBe(true);
+
+      // Station 7 (#3310): the mark past the bad ground, reached the clear way round.
+      await expect
+        .poll(() => hasSaid("Mud slows you. Lava burns. Your call."), { timeout: 10_000 })
+        .toBe(true);
+      await expect(frame).toHaveAttribute(
+        "data-mark",
+        `${String(PAST_THE_MUD.x)},${String(PAST_THE_MUD.y)}`,
+      );
+      for (const point of CLEAR_WAY) {
+        await expect(async () => {
+          await walkTo(point);
+          const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+            .split(",")
+            .map(Number);
+          expect(Math.hypot(cx - point.x, cy - point.y)).toBeLessThan(150);
+        }).toPass({ timeout: 60_000 });
+      }
+      const across = "Across! Now you know what the ground can do.";
+      await expect(async () => {
+        if (await hasSaid(across)) {
+          return;
+        }
+        await walkTo(PAST_THE_MUD);
+        await expect.poll(() => hasSaid(across), { timeout: 3_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
+      // Round the mud, no status: the effects monitor was never pointed at.
+      expect(await hasSaid("See that icon? Mud. It wears off.")).toBe(false);
+
+      // Station 8 (#3316): on to the canyon's second map, its three rats at
+      // the pocket west of the arrival; the closest targeted again and
+      // again, two skills and the plain attack kill them all.
+      await expect
+        .poll(() => hasSaid("Rats! Different skills, different jobs."), { timeout: 15_000 })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-world", "canyon-2");
+      await expect(frame).toHaveAttribute("data-rats", "3", { timeout: 10_000 });
+      await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
+      const [pocketX = 0, pocketY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+        .split(",")
+        .map(Number);
+      await expect(async () => {
+        await walkTo({ x: pocketX, y: pocketY });
+        const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+          .split(",")
+          .map(Number);
+        expect(Math.hypot(cx - pocketX, cy - pocketY)).toBeLessThan(150);
+      }).toPass({ timeout: 90_000 });
+      const fought = "Well fought! Every skill has its job.";
+      await expect(async () => {
+        if (await hasSaid(fought)) {
+          return;
+        }
+        // The closest rat, attacked, then Protector's Strike and Crushing Blow.
+        for (const key of ["KeyC", "Space", "Digit4", "Digit3"]) {
+          await page.keyboard.press(key);
+        }
+        await expect.poll(() => hasSaid(fought), { timeout: 3_000 }).toBe(true);
+      }).toPass({ timeout: 120_000 });
+
+      // Station 9 (#3323): up the steps onto the ledge, its mark; then an
+      // Alt+click on the same mark walks to the ground under it.
+      await expect
+        .poll(() => hasSaid("Up the steps. A solid ring is where you'll stand."), {
+          timeout: 15_000,
+        })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
+      const [ledgeX = 0, ledgeY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+        .split(",")
+        .map(Number);
+      // Up by the stairs' top, not the mark: a click toward the mark can
+      // pick the ground under or past the deck, a walk up the stairs,
+      // across and off the edge, and that one earns the tip. No click once
+      // the mark has gone under.
+      const upper = (await frame.getAttribute("data-mark-layer")) ?? "";
+      await expect(async () => {
+        if ((await frame.getAttribute("data-mark-layer")) !== upper) {
+          return;
+        }
+        await walkTo(ON_THE_LEDGE);
+        await expect(frame).not.toHaveAttribute("data-mark-layer", upper, { timeout: 3_000 });
+      }).toPass({ timeout: 90_000 });
+      await expect
+        .poll(() => hasSaid("Hold Alt and click. The dashed ring is below you."), {
+          timeout: 15_000,
+        })
+        .toBe(true);
+      const tip = "Tip: Alt+click picks the ground under a ledge.";
+      expect(await hasSaid(tip), "no tip while the player is still up").toBe(false);
+      const climbed = "Two layers, one spot. You read the ground now.";
+      await expect(async () => {
+        if (await hasSaid(climbed)) {
+          return;
+        }
+        await page.keyboard.down("Alt");
+        await walkTo({ x: ledgeX, y: ledgeY });
+        await page.keyboard.up("Alt");
+        await expect.poll(() => hasSaid(climbed), { timeout: 5_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
+      // Down by an Alt walk: no tip.
+      expect(await hasSaid(tip), "no tip after an Alt walk down").toBe(false);
+
+      // Station 10 (#3325): a click on the high deck walks up both flights.
+      await expect
+        .poll(() => hasSaid("Steps join layers. Walk on, and they carry you up."), {
+          timeout: 15_000,
+        })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-mark-layer", "3");
+      const high = "High ground. Foes below can't easily reach you.";
+      // Along the ground to under the deck, an Alt walk at every stride: a
+      // plain one would pick the ledge or the landing on the way, and from
+      // the ledge the next stride lies out of bounds. South of the tutor
+      // first, so no stride falls on it or north of the canyon floor.
+      for (const waypoint of [SOUTH_OF_THE_FLIGHTS, UNDER_THE_HIGH_DECK]) {
+        await expect(async () => {
+          await page.keyboard.down("Alt");
+          await walkTo(waypoint);
+          await page.keyboard.up("Alt");
+          const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+            .split(",")
+            .map(Number);
+          expect(Math.hypot(cx - waypoint.x, cy - waypoint.y)).toBeLessThan(150);
+        }).toPass({ timeout: 90_000 });
+      }
+      // A click on the landing climbs the first flight, and the landing,
+      // stood on, gets its line; a click on the deck from there, the second.
+      // One click from the ground taking both is the unit test's.
+      await expect(async () => {
+        if (await hasSaid("One more flight.")) {
+          return;
+        }
+        await walkTo(OVER_THE_LANDING);
+        await expect.poll(() => hasSaid("One more flight."), { timeout: 10_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
+      await expect(async () => {
+        if (await hasSaid(high)) {
+          return;
+        }
+        await walkTo(OVER_THE_HIGH_DECK);
+        await expect.poll(() => hasSaid(high), { timeout: 5_000 }).toBe(true);
       }).toPass({ timeout: 60_000 });
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);

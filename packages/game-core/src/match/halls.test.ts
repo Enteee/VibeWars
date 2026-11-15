@@ -45,9 +45,10 @@ function hall(): MatchSimulation {
     ghostField: {
       level: 28,
       altar: ALTAR,
+      altarLayer: 0,
       spawns: [
-        { team: 0, position: vec2(120, 1100) },
-        { team: 1, position: vec2(3080, 1100) },
+        { team: 0, position: vec2(120, 1100), layer: 0 },
+        { team: 1, position: vec2(3080, 1100), layer: 0 },
       ],
     },
     participants: [fighter("a", 0, SPAWN_A), fighter("x", 1, SPAWN_X)],

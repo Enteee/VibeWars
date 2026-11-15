@@ -19,7 +19,7 @@ import {
   matchSwitchedDecks,
   matchZones,
 } from "@vibewars/game-maps/layers";
-import type { MapData } from "@vibewars/game-maps/schema";
+import type { MapData, SpawnPoint } from "@vibewars/game-maps/schema";
 import type { MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
 import {
   gateDescriptor,
@@ -82,7 +82,8 @@ export interface TrainingSetup {
   readonly arming: PlayerArming;
 }
 
-function toMapDescriptor(map: MapData): MapDescriptor {
+/** `map` as the wire carries it, for a local connection. */
+export function toMapDescriptor(map: MapData): MapDescriptor {
   const walls: WallDescriptor[] = map.walls.map((wall) =>
     wall.kind === "rect"
       ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
@@ -103,13 +104,13 @@ function toMapDescriptor(map: MapData): MapDescriptor {
   };
 }
 
-/** Where the player stands: the map's first spawn point for the player's team. */
-export function playerSpawn(map: MapData): { x: number; y: number } {
+/** Where the player stands, and on which layer: the map's first spawn point for the player's team. */
+export function playerSpawn(map: MapData): SpawnPoint {
   const spawn = map.spawnPoints.find((point) => point.team === PLAYER_TEAM);
   if (spawn === undefined) {
     throw new Error(`training map ${map.id} has no spawn for team ${String(PLAYER_TEAM)}`);
   }
-  return spawn.position;
+  return spawn;
 }
 
 export function trainingMap(scenario: TrainingScenario): MapData {
@@ -149,13 +150,14 @@ export function setupScenario(
         team: PLAYER_TEAM,
         skillBar: arming.skillBar,
         ...loadoutSpec(arming.loadout),
-        spawn,
-        facing: firstDummy === undefined ? 0 : facingToward(spawn, firstDummy.position),
+        spawn: spawn.position,
+        layer: spawn.layer,
+        facing: firstDummy === undefined ? 0 : facingToward(spawn.position, firstDummy.position),
         // A player who dies in training is back at once: the scenario is
         // the lesson, not the walk back.
         reset: { kind: "on-death", afterSeconds: 3 },
       },
-      ...scenarioParticipants(scenario, spawn),
+      ...scenarioParticipants(scenario, spawn.position),
     ],
   });
   return {

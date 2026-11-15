@@ -13,7 +13,7 @@ import {
 } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
-import { CAPTURE_SECONDS, MAX_PIPS } from "./capture-points.js";
+import { CAPTURE_SECONDS, MAX_PIPS, type CapturePointSite } from "./capture-points.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
 
@@ -35,6 +35,9 @@ const SHRINES = [
   vec2(1600, 1700),
   vec2(2680, 1000),
 ];
+
+/** The shrines as the map places them: on its ground, layer 0. */
+const SHRINE_SITES: readonly CapturePointSite[] = SHRINES.map((at) => ({ ...at, layer: 0 }));
 
 function fighter(id: string, team: number, spawn: Vec2): ParticipantSpec {
   return {
@@ -100,7 +103,7 @@ function capturePoints(
     matchRules,
     walls: [],
     bounds: { width: 3200, height: 2000 },
-    capturePoints: SHRINES,
+    capturePoints: SHRINE_SITES,
     teamCount: more.some(({ team }) => team === 2) ? 3 : 2,
     participants: [
       fighter("a", 0, vec2(280, 620)),
@@ -255,13 +258,14 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       walls: [],
       bounds: { width: 3200, height: 2000 },
-      capturePoints: SHRINES,
+      capturePoints: SHRINE_SITES,
       ghostField: {
         level: 24,
         altar: undefined,
+        altarLayer: 0,
         spawns: [
-          { team: 0, position: shrine(2) },
-          { team: 1, position: vec2(2920, 1800) },
+          { team: 0, position: shrine(2), layer: 0 },
+          { team: 1, position: vec2(2920, 1800), layer: 0 },
         ],
       },
       participants: [
@@ -337,11 +341,11 @@ describe("a Capture Points base's shrine (#2845)", () => {
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       walls: [],
       bounds: { width: 3200, height: 2000 },
-      capturePoints: SHRINES,
+      capturePoints: SHRINE_SITES,
       shrines: [
-        { team: 0, position: vec2(110, 1000) },
-        { team: 1, position: vec2(3090, 1000) },
-        ...(more.length > 0 ? [{ team: 2, position: vec2(200, 200) }] : []),
+        { team: 0, position: vec2(110, 1000), layer: 0 },
+        { team: 1, position: vec2(3090, 1000), layer: 0 },
+        ...(more.length > 0 ? [{ team: 2, position: vec2(200, 200), layer: 0 }] : []),
       ],
       teamCount: more.length > 0 ? 3 : 2,
       participants: [

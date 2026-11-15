@@ -346,19 +346,28 @@ export function pavingTextureSizes(
 /**
  * `drawing` painted onto a canvas of its bounds at `scale` pixels per
  * world unit, with the pieces over tunnels (#3272) cut out: they draw on
- * their own.
+ * their own. The `holes` stairs go down by (#3329) are cut out too.
  */
 export function paintPaving(
   context: PavingCanvas,
   drawing: PavingDrawing,
   scale: number,
   pieces: readonly PavingTunnelPiece[],
+  holes: readonly PavingPixels[],
 ): void {
   paintCommands(context, drawing, scale, { left: 0, top: 0 });
   context.setTransform(1, 0, 0, 1, 0, 0);
-  for (const { pixels } of pieces) {
+  for (const pixels of [...pieces.map((piece) => piece.pixels), ...holes]) {
     context.clearRect(pixels.left, pixels.top, pixels.width, pixels.height);
   }
+}
+
+/** A rectangle of a paving's texture, in whole pixels. */
+export interface PavingPixels {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
 }
 
 /**
@@ -370,12 +379,7 @@ export interface PavingTunnelPiece {
   /** The tunnel's index in the map's `tunnels`. */
   readonly tunnel: number;
   /** Its rectangle in the paving's texture, whole pixels, so the piece and the hole meet exactly. */
-  readonly pixels: {
-    readonly left: number;
-    readonly top: number;
-    readonly width: number;
-    readonly height: number;
-  };
+  readonly pixels: PavingPixels;
 }
 
 /**
@@ -394,27 +398,50 @@ export function pavingTunnelPieces(
     readonly outline: readonly Vec2[];
   }[],
 ): PavingTunnelPiece[] {
+  return covers.flatMap((cover) =>
+    pavingPixelsOver(drawing, layer, size, cover).map((pixels) => ({
+      tunnel: cover.tunnel,
+      pixels,
+    })),
+  );
+}
+
+/**
+ * The rectangles of a paving on `layer`'s texture over the `holes` stairs
+ * cut in the ground (#3329), rounded as `pavingTunnelPieces` rounds.
+ */
+export function pavingHoles(
+  drawing: PavingDrawing,
+  layer: number,
+  size: PavingTextureSize,
+  holes: readonly { readonly layer: number; readonly outline: readonly Vec2[] }[],
+): PavingPixels[] {
+  return holes.flatMap((hole) => pavingPixelsOver(drawing, layer, size, hole));
+}
+
+/** The whole pixels of the texture `area` on `layer` overlaps: none off it or on another layer. */
+function pavingPixelsOver(
+  drawing: PavingDrawing,
+  layer: number,
+  size: PavingTextureSize,
+  area: { readonly layer: number; readonly outline: readonly Vec2[] },
+): PavingPixels[] {
+  if (area.layer !== layer || area.outline.length === 0) {
+    return [];
+  }
   const { x, y } = drawing.bounds;
   const { scale, width, height } = size;
-  return covers.flatMap((cover) => {
-    if (cover.layer !== layer || cover.outline.length === 0) {
-      return [];
-    }
-    const xs = cover.outline.map((corner) => corner.x);
-    const ys = cover.outline.map((corner) => corner.y);
-    const pixel = (world: number, origin: number, most: number): number =>
-      Math.min(most, Math.max(0, Math.round((world - origin) * scale)));
-    const left = pixel(Math.min(...xs), x, width);
-    const right = pixel(Math.max(...xs), x, width);
-    const top = pixel(Math.min(...ys), y, height);
-    const bottom = pixel(Math.max(...ys), y, height);
-    if (right <= left || bottom <= top) {
-      return [];
-    }
-    return [
-      { tunnel: cover.tunnel, pixels: { left, top, width: right - left, height: bottom - top } },
-    ];
-  });
+  const xs = area.outline.map((corner) => corner.x);
+  const ys = area.outline.map((corner) => corner.y);
+  const pixel = (world: number, origin: number, most: number): number =>
+    Math.min(most, Math.max(0, Math.round((world - origin) * scale)));
+  const left = pixel(Math.min(...xs), x, width);
+  const right = pixel(Math.max(...xs), x, width);
+  const top = pixel(Math.min(...ys), y, height);
+  const bottom = pixel(Math.max(...ys), y, height);
+  return right <= left || bottom <= top
+    ? []
+    : [{ left, top, width: right - left, height: bottom - top }];
 }
 
 /** `piece` of `drawing` painted onto a canvas of its own size, pixel for pixel as the paving's. */

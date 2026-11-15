@@ -16,8 +16,8 @@ export const FLAG_STAND_ID = "flag-stand";
 export interface CarriedSpawn {
   readonly team: number;
   readonly position: Vec2;
-  /** The layer it starts on (ADR-0051). Omitted: the ground. */
-  readonly layer?: number;
+  /** The layer it starts on (ADR-0051). */
+  readonly layer: number;
 }
 
 /** Where a bundle lies, or a player walks to for it: a point on a layer. */
@@ -120,9 +120,7 @@ export function lyingPoint(
   switch (place.kind) {
     case "spawn": {
       const spawn = spawns.find(({ team }) => team === object.team);
-      return spawn === undefined
-        ? undefined
-        : { position: spawn.position, layer: spawn.layer ?? 0 };
+      return spawn === undefined ? undefined : { position: spawn.position, layer: spawn.layer };
     }
     case "ground":
       return { position: place.position, layer: place.layer };

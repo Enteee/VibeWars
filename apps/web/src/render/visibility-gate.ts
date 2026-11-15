@@ -1,6 +1,7 @@
 import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 
 import { hiddenAt, type Occluder, RING_PATH } from "./layer-surfaces.js";
+import { bodyUnder, type OverhangCover } from "./overhang-art.js";
 import { renderOrder } from "./render-order.js";
 
 /**
@@ -15,6 +16,11 @@ export interface PaintedFill {
   readonly depth: number;
   /** What painted it, for the failure: a structure kind and its layer. */
   readonly what: string;
+  /**
+   * The overhang it is (#3293), which fades over any body under it, so
+   * hides none of them; `null` for a fill that never fades.
+   */
+  readonly fadesOver: OverhangCover | null;
 }
 
 /** A body standing still where it draws: lifted, on its drawn layer, at its band's depth. */
@@ -134,6 +140,7 @@ function topCover({ cells }: FillIndex, body: GateBody, point: Vec2): PaintedFil
     []) {
     if (
       each.fill.depth > body.depth &&
+      !fadedFor(each.fill, body) &&
       (top === undefined || each.fill.depth > top.depth) &&
       point.x >= each.left &&
       point.x <= each.right &&
@@ -145,6 +152,18 @@ function topCover({ cells }: FillIndex, body: GateBody, point: Vec2): PaintedFil
     }
   }
   return top;
+}
+
+/** Whether `fill` is an overhang faded over `body` (#3293): see-through, as the scene draws it. */
+function fadedFor(fill: PaintedFill, body: GateBody): boolean {
+  return (
+    fill.fadesOver !== null &&
+    bodyUnder(
+      fill.fadesOver,
+      [{ id: "", position: { x: body.x, y: body.y }, layer: body.layer }],
+      () => body.stands.y - body.y,
+    )
+  );
 }
 
 /**

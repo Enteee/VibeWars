@@ -336,8 +336,8 @@ describe("the host's own player (createLocalPeer)", () => {
         ...ARENA,
         mode: "priest-annihilation",
         shrines: [
-          { team: 0, position: { x: 300, y: 550 } },
-          { team: 1, position: { x: 800, y: 550 } },
+          { team: 0, position: { x: 300, y: 550 }, layer: 0 },
+          { team: 1, position: { x: 800, y: 550 }, layer: 0 },
         ],
       },
       matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
@@ -439,6 +439,20 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       mode: null,
       armedAttack: null,
       leaderId: null,
+      auraRadius: null,
+    } as const;
+    expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
+  });
+
+  it("keep a rat, nobody's critter (#3315)", () => {
+    const creature = {
+      ownerId: null,
+      kind: "critter",
+      look: "rat",
+      mode: null,
+      armedAttack: null,
+      auraRadius: null,
+      leaderId: null,
     } as const;
     expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
   });
@@ -453,6 +467,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
         mode: "fight",
         armedAttack: { skillId, endsAt: 12.1 },
         leaderId: null,
+        auraRadius: null,
       },
     });
     expect(playerSnapshot(pet("ranger.brutal-strike"))?.creature?.armedAttack).toEqual({
