@@ -39,6 +39,8 @@ the place (rice-paddy terraces on a hillside, a pagoda, a lantern bridge) is kep
   `#b0bcd4` 0.45. Local lights: a paper lantern (`#ffcf80`, radius 150) at each culvert mouth,
   each stair head, the shaft and the lantern bridge, a larger one (radius 220) at the pagoda,
   and the spring's teal glow. Nothing is dark: only the culvert is dim, and it carries the mouth lanterns.
+- **Atmosphere (#3032):** the **fog bank**, thin, over the two lowest paddy fields and the culvert approach only
+  (no zone, never over a route or the high ground). Reduced motion: it holds still.
 - **Reduced motion:** the lantern flicker stops (a steady glow); the water glint and spring
   drift stop; everything else is static already.
 
