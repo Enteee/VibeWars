@@ -59,7 +59,7 @@ import {
   teamSide,
   toRenderableGroundEffect,
   type ArenaSnapshot,
-  type RenderableCrackedWall,
+  type RenderableBreakableWall,
   type RenderableDoor,
   type RenderableWall,
   type MapStructure,
@@ -79,7 +79,7 @@ import { cursedBy } from "./render/ground-effect-look.js";
 import { ashCape } from "./render/body-painter.js";
 import { capeLook } from "./render/cape-shape.js";
 import { castBadgeType } from "./render/cast-badge.js";
-import { CRUMBLED, crackStage, renderableBreakables } from "./render/breakable-objects.js";
+import { renderableBreakables } from "./render/breakable-objects.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera, type CameraLook } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
@@ -309,7 +309,7 @@ export function switchedStructure(
  * What blocks the eye and the compass for how the gates and breakable
  * walls stand (#2691, #3031): the map's walls, every closed stone gate's
  * and every standing breakable wall's, one array per combination, so the
- * map layer redraws only when a gate moves or a wall cracks further. A
+ * map layer redraws only when a gate moves or a wall falls. A
  * closed energy barrier is none of them: sight passes it, and it draws
  * as a curtain of its own.
  */
@@ -329,10 +329,8 @@ export function gateWalls(
 } {
   const known = new Map<string, ReturnType<ReturnType<typeof gateWalls>>>();
   return (open, health) => {
-    const stages = breakables.map(({ maxHealth }, at) =>
-      crackStage(health[at] ?? maxHealth, maxHealth),
-    );
-    const key = `${gates.map((_, at) => (open[at] === true ? "o" : "c")).join("")}/${stages.join("")}`;
+    const up = breakables.map(({ maxHealth }, at) => (health[at] ?? maxHealth) > 0);
+    const key = `${gates.map((_, at) => (open[at] === true ? "o" : "c")).join("")}/${up.map((stands) => (stands ? "s" : "r")).join("")}`;
     let set = known.get(key);
     if (set === undefined) {
       const shut = gates.flatMap((gate, at) =>
@@ -343,13 +341,12 @@ export function gateWalls(
         door: true,
         look: gateLooks[at] ?? "door",
       }));
-      const standing = breakables.flatMap((breakable, at) => {
-        const cracks = stages[at];
-        return cracks === undefined || cracks === CRUMBLED ? [] : [{ breakable, cracks }];
-      });
-      const cracked: RenderableCrackedWall[] = standing.map(({ breakable, cracks }) => ({
+      const standing = breakables.flatMap((breakable, at) =>
+        up[at] === true ? [{ breakable }] : [],
+      );
+      const cracked: RenderableBreakableWall[] = standing.map(({ breakable }) => ({
         ...toRenderableWall(breakable.wall, breakable.layer),
-        cracks,
+        breakable: true,
       }));
       set = {
         walls: [...walls, ...doors, ...cracked],

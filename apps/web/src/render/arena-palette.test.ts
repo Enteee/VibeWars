@@ -1,7 +1,15 @@
 import { BIOMES, DECK_LOOKS, TRANSITION_LOOKS } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
-import { arenaPalette, BIOME, pitFloor, pitWall, shade } from "./arena-palette.js";
+import {
+  arenaPalette,
+  BIOME,
+  BREAKABLE_WALL_LOOK,
+  breakableLook,
+  pitFloor,
+  pitWall,
+  shade,
+} from "./arena-palette.js";
 
 /** The signals of docs/art/visual-style.md §1, which no biome tone may sit near. */
 const SIGNALS = [
@@ -180,5 +188,33 @@ describe("BIOME", () => {
 describe("shade", () => {
   it("moves each channel toward black", () => {
     expect(shade(0x804020, 0.5)).toBe(0x402010);
+  });
+});
+
+describe("breakableLook (#3370)", () => {
+  it("makes each listed biome's breakable wall its own material, not the stone", () => {
+    const looks = (["volcanic", "desert", "snow", "wilds"] as const).map((biome) =>
+      breakableLook({ layerCount: 2, biome }),
+    );
+    for (const look of looks) {
+      expect(look).not.toEqual(BREAKABLE_WALL_LOOK);
+    }
+    expect(new Set(looks.map(({ face }) => face)).size).toBe(looks.length);
+    expect(looks.map(({ courses }) => courses)).toEqual(["blocks", "bricks", "ice", "fieldstone"]);
+  });
+
+  it("glows only in the volcanic, and keeps the stone in the hall and heights", () => {
+    expect(breakableLook({ layerCount: 2, biome: "volcanic" }).glow).toBeDefined();
+    for (const biome of ["desert", "snow", "wilds", "hall"] as const) {
+      expect(breakableLook({ layerCount: 2, biome }).glow).toBeUndefined();
+    }
+    expect(breakableLook({ layerCount: 2, biome: "hall" })).toBe(BREAKABLE_WALL_LOOK);
+    expect(breakableLook({ layerCount: 2, biome: "heights" })).toBe(BREAKABLE_WALL_LOOK);
+  });
+
+  it("is the stone on a map of one layer, whatever its biome", () => {
+    for (const biome of BIOMES) {
+      expect(breakableLook({ layerCount: 1, biome })).toBe(BREAKABLE_WALL_LOOK);
+    }
   });
 });

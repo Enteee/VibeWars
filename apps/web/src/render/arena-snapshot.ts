@@ -34,11 +34,7 @@ import type {
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import type { AttackCast, SpellCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
-import {
-  breakableAtPoint,
-  type CrackStage,
-  type RenderableBreakable,
-} from "./breakable-objects.js";
+import { breakableAtPoint, type RenderableBreakable } from "./breakable-objects.js";
 import type { CapeLook } from "./cape-shape.js";
 import type { RenderablePing } from "./call-marks.js";
 import type {
@@ -181,11 +177,14 @@ export function isDoor(wall: RenderableWall): wall is RenderableDoor {
   return "door" in wall;
 }
 
-/** A standing breakable wall (#3031): it blocks as a wall does, and draws as stone with its cracks. */
-export type RenderableCrackedWall = RenderableWall & { readonly cracks: CrackStage };
+/**
+ * A standing breakable wall (#3031): it blocks as a wall does, and draws
+ * on its own as its health changes (#3370), not with the map.
+ */
+export type RenderableBreakableWall = RenderableWall & { readonly breakable: true };
 
-export function isCrackedWall(wall: RenderableWall): wall is RenderableCrackedWall {
-  return "cracks" in wall;
+export function isBreakableWall(wall: RenderableWall): wall is RenderableBreakableWall {
+  return "breakable" in wall;
 }
 
 /** A deck's or ramp's outline, as a wall's without a layer. */

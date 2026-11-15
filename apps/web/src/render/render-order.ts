@@ -37,6 +37,7 @@ export type RenderItem =
   | { readonly kind: "goal-mark"; readonly layer: number }
   | { readonly kind: "character"; readonly band: number; readonly part: CharacterPart }
   | { readonly kind: "wall"; readonly layer: number }
+  | { readonly kind: "breakable"; readonly layer: number }
   | { readonly kind: "support"; readonly deckLayer: number }
   | { readonly kind: "side-face"; readonly deckLayer: number }
   | { readonly kind: "tunnel-cover"; readonly deckLayer: number }
@@ -120,6 +121,8 @@ const PLUME = 1.6;
 /** Rain or snow (#3032): over the whole world, under hidden outlines, effects and the HUD. */
 const WEATHER = 89;
 const WALL = 2;
+/** A breakable wall (#3370), drawn on its own as it cracks and falls: just over its layer's walls. */
+const BREAKABLE = 2.1;
 const SUPPORT = 3;
 const SIDE_FACE = 4;
 /**
@@ -184,6 +187,8 @@ export function renderOrder(item: RenderItem): number {
       return item.band * LAYER_STACK + CHARACTER_PART[item.part];
     case "wall":
       return item.layer * LAYER_STACK + WALL;
+    case "breakable":
+      return item.layer * LAYER_STACK + BREAKABLE;
     case "support":
       return (item.deckLayer - 1) * LAYER_STACK + SUPPORT;
     case "side-face":
