@@ -100,6 +100,10 @@ schopnosťou, napríklad Resurrection Signet, ktorú si môže vziať ktokoľvek
 Niektoré režimy vracajú mŕtvych vo vlnách alebo samých od seba; pozri
 [Režimy](modes.md).
 
+Kým si mŕtvy, riadok pod skóre odpočítava do tvojho návratu, alebo ti
+povie, aby si počkal na oživenie. Okno družiny ukazuje odpočet pri
+každom mŕtvom spojencovi.
+
 Každá smrť ťa stojí 15 % **morálky**, až do -60 %: spolu s ňou sa zmenšuje
 tvoje maximálne zdravie a energia. Každý nepriateľ, ktorého tvoj tím zabije,
 vráti 2 %, až do 0. V Cechovej bitke ju držanie stojana na vlajku zdvihne

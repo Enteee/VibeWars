@@ -104,6 +104,10 @@ Na maioria dos modos, os mortos ficam caídos até um aliado os
 qualquer um pode levar. Alguns modos trazem os mortos de volta em ondas
 ou sozinhos; veja [Modos](modes.md).
 
+Enquanto você está morto, uma linha abaixo do placar faz a contagem
+regressiva até você voltar, ou diz para esperar ser ressuscitado. A
+janela do grupo mostra a contagem ao lado de cada aliado morto.
+
 Cada morte custa 15% de **moral**, até -60%: sua vida e sua energia
 máximas diminuem junto. Cada inimigo morto pela sua equipe devolve 2%,
 até 0. Em uma Batalha de Guildas, controlar o suporte da bandeira leva

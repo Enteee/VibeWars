@@ -617,6 +617,8 @@ export default {
   "hud.relicScoredOurs": "Relikvia doručená!",
   "hud.relicScoredTheirs": "Nepriateľ doručil relikviu",
   "hud.relicTheirs": "Nepriateľská relikvia",
+  "hud.respawnIn": "Späť o {seconds}",
+  "hud.respawnResurrectionOnly": "Počkaj na oživenie",
   "hud.shrinesBoth": "Svätyne: +{ours}, nepriateľ +{theirs}",
   "hud.shrinesOurs": "Svätyne: +{ours}",
   "hud.shrinesTheirs": "Nepriateľské svätyne: +{theirs}",

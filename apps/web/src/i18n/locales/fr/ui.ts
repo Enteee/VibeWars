@@ -602,6 +602,8 @@ export default {
   "hud.relicScoredOurs": "Relique marquée !",
   "hud.relicScoredTheirs": "Relique ennemie marquée",
   "hud.relicTheirs": "Relique ennemie",
+  "hud.respawnIn": "De retour dans {seconds}",
+  "hud.respawnResurrectionOnly": "Attends qu'on te ressuscite",
   "hud.shrinesBoth": "Sanctuaires : +{ours}, ennemi +{theirs}",
   "hud.shrinesOurs": "Sanctuaires : +{ours}",
   "hud.shrinesTheirs": "Sanctuaires ennemis : +{theirs}",

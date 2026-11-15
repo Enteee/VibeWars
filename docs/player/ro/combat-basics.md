@@ -102,6 +102,10 @@ critice. Unele farmece îl fac pe purtător imun la lovituri critice.
 cu o abilitate, precum Resurrection Signet, pe care o poate lua oricine. Unele
 moduri îi readuc pe morți în valuri sau de la sine; vezi [Moduri](modes.md).
 
+Cât timp ești mort, un rând sub tabela de scor numără invers până revii
+sau îți spune să aștepți să fii reînviat. Fereastra grupului arată
+numărătoarea lângă fiecare aliat mort.
+
 Fiecare moarte te costă 15% **moral**, până la -60%: Viața și Energia ta maximă
 se micșorează odată cu el. Fiecare inamic ucis de echipa ta recuperează 2%,
 până la 0. Într-o Bătălie de bresle, deținerea suportului de steag îl ridică

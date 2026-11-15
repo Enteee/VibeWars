@@ -601,6 +601,8 @@ export default {
   "hud.relicScoredOurs": "Reliquia a segno!",
   "hud.relicScoredTheirs": "Reliquia nemica a segno",
   "hud.relicTheirs": "Reliquia nemica",
+  "hud.respawnIn": "Di ritorno tra {seconds}",
+  "hud.respawnResurrectionOnly": "Aspetta che ti resuscitino",
   "hud.shrinesBoth": "Santuari: +{ours}, nemico +{theirs}",
   "hud.shrinesOurs": "Santuari: +{ours}",
   "hud.shrinesTheirs": "Santuari nemici: +{theirs}",

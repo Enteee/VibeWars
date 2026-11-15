@@ -566,6 +566,8 @@ export default {
   "hud.relicScoredOurs": "Relikwie gescoord!",
   "hud.relicScoredTheirs": "Vijand scoort relikwie",
   "hud.relicTheirs": "Vijandelijk relikwie",
+  "hud.respawnIn": "Terug over {seconds}",
+  "hud.respawnResurrectionOnly": "Wacht tot je tot leven wordt gewekt",
   "hud.shrinesBoth": "Schrijnen: +{ours}, vijand +{theirs}",
   "hud.shrinesOurs": "Schrijnen: +{ours}",
   "hud.shrinesTheirs": "Vijandelijke schrijnen: +{theirs}",

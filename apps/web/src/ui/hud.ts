@@ -186,6 +186,8 @@ export interface HudElements {
   readonly scoreboard: HTMLElement;
   readonly scoreboardText: HTMLElement;
   readonly enemies: HTMLElement;
+  /** While you are dead, when you are back, under the scoreboard (#3367). */
+  readonly respawn: HTMLElement;
   /** A Guild Battle's flag carriers under the scoreboard, a line a flag (#1226), or a Relic Run's relics (#1374). */
   readonly carriers: HTMLElement;
   readonly result: HTMLElement;
@@ -255,6 +257,9 @@ export function createHud(
   scoreboard.hidden = !inMatch;
   const scoreboardText = element("span", "hud-scoreboard-text", scoreboard);
   const enemies = element("span", "hud-enemies", scoreboard);
+  const respawn = element("div", "hud-respawn", top);
+  respawn.setAttribute("role", "status");
+  respawn.hidden = true;
   const carriers = element("div", "hud-carriers", top);
   const result = element("div", "hud-result", parent);
   result.style.display = "none";
@@ -421,6 +426,7 @@ export function createHud(
     scoreboard,
     scoreboardText,
     enemies,
+    respawn,
     carriers,
     result,
     controls,
@@ -2092,6 +2098,20 @@ export function updateFollowed(
   );
 }
 
+/**
+ * What the centre line says while you are dead (#3367): when you are
+ * back, or to wait for a resurrection; `undefined` alive, or while the
+ * host has not said.
+ */
+export function respawnLine(self: PlayerSnapshot): string | undefined {
+  if (!self.dead || self.respawnIn === undefined) {
+    return undefined;
+  }
+  return self.respawnIn === null
+    ? t("hud.respawnResurrectionOnly")
+    : t("hud.respawnIn", { seconds: Math.max(1, self.respawnIn) });
+}
+
 export function updateHud(
   hud: HudElements,
   self: PlayerSnapshot | undefined,
@@ -2145,6 +2165,12 @@ export function updateHud(
 
   if (self === undefined) {
     return;
+  }
+
+  const respawn = respawnLine(self);
+  setHidden(hud.respawn, respawn === undefined);
+  if (respawn !== undefined) {
+    setText(hud.respawn, respawn);
   }
 
   const healthText = t("hud.health", {

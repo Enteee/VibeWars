@@ -574,6 +574,8 @@ export default {
   "hud.relicScoredOurs": "Πόντος κειμηλίου!",
   "hud.relicScoredTheirs": "Εχθρικός πόντος κειμηλίου",
   "hud.relicTheirs": "Εχθρικό κειμήλιο",
+  "hud.respawnIn": "Επιστροφή σε {seconds}",
+  "hud.respawnResurrectionOnly": "Περίμενε να σε αναστήσουν",
   "hud.shrinesBoth": "Ιερά: +{ours}, εχθρός +{theirs}",
   "hud.shrinesOurs": "Ιερά: +{ours}",
   "hud.shrinesTheirs": "Εχθρικά ιερά: +{theirs}",

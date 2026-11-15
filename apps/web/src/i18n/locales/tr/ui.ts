@@ -568,6 +568,8 @@ export default {
   "hud.relicScoredOurs": "Kalıntı puanı!",
   "hud.relicScoredTheirs": "Düşman kalıntı puanı",
   "hud.relicTheirs": "Düşman kalıntısı",
+  "hud.respawnIn": "{seconds} sonra dönüyorsun",
+  "hud.respawnResurrectionOnly": "Diriltilmeyi bekle",
   "hud.shrinesBoth": "Tapınaklar: +{ours}, düşman +{theirs}",
   "hud.shrinesOurs": "Tapınaklar: +{ours}",
   "hud.shrinesTheirs": "Düşman tapınakları: +{theirs}",

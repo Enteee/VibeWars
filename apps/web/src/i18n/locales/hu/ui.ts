@@ -569,6 +569,8 @@ export default {
   "hud.relicScoredOurs": "Ereklyepont!",
   "hud.relicScoredTheirs": "Ellenséges ereklyepont",
   "hud.relicTheirs": "Ellenséges ereklye",
+  "hud.respawnIn": "Vissza {seconds} mp múlva",
+  "hud.respawnResurrectionOnly": "Várd meg, hogy feltámasszanak",
   "hud.shrinesBoth": "Szentélyek: +{ours}, ellenség +{theirs}",
   "hud.shrinesOurs": "Szentélyek: +{ours}",
   "hud.shrinesTheirs": "Ellenséges szentélyek: +{theirs}",

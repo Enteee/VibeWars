@@ -50,6 +50,8 @@ export interface PartyRow {
   readonly bot: boolean;
   readonly self: boolean;
   readonly dead: boolean;
+  /** Whole seconds until it is back (#3367), beside "dead"; undefined alive, or never back. */
+  readonly respawnIn: number | undefined;
   readonly targeted: boolean;
   /** 0 … 100; undefined when dead. */
   readonly healthPercent: number | undefined;
@@ -74,6 +76,7 @@ function partyRow(player: PlayerSnapshot, self: PlayerSnapshot): PartyRow {
     bot: player.bot,
     self: player.sessionId === self.sessionId,
     dead: player.dead,
+    respawnIn: player.respawnIn ?? undefined,
     targeted: player.sessionId === self.targetSessionId,
     healthPercent: player.dead ? undefined : targetHealthPercent(player),
     healthPoints: player.dead
@@ -151,6 +154,8 @@ interface RowElements {
   readonly points: HTMLElement;
   readonly pips: HTMLElement;
   readonly deadText: HTMLElement;
+  /** When a dead member is back (#3367), after "dead". */
+  readonly respawn: HTMLElement;
   /** A companion's Guard, Fight and Heel buttons (#1110), by mode; empty on a person's row. */
   readonly commands: ReadonlyMap<CompanionMode, HTMLButtonElement>;
   /** A companion's armed pet attack (#1167): the icon and its sweep; `undefined` on a person's row. */
@@ -213,6 +218,7 @@ function createRow(
   const pips = bar.appendChild(pipsElement());
   const deadText = span("party-row-dead", row);
   deadText.textContent = t("partyWindow.dead");
+  const respawn = span("party-row-respawn", deadText);
   const commands = new Map<CompanionMode, HTMLButtonElement>();
   let element: HTMLElement = row;
   let armed: RowElements["armed"];
@@ -261,6 +267,7 @@ function createRow(
     points,
     pips,
     deadText,
+    respawn,
     commands,
     armed,
     key: "",
@@ -308,6 +315,8 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot, 
   elements.row.classList.toggle("is-targeted", row.targeted);
   elements.bar.hidden = row.dead;
   elements.deadText.hidden = !row.dead;
+  elements.respawn.textContent =
+    row.respawnIn === undefined ? "" : String(Math.max(1, row.respawnIn));
   paintHealthTint(elements.bar, player);
   elements.fill.style.width = `${String(row.healthPercent ?? 0)}%`;
   elements.lost.style.width = `${String(lost)}%`;

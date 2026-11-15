@@ -567,6 +567,8 @@ export default {
   "hud.relicScoredOurs": "یادگار امتیاز گرفت!",
   "hud.relicScoredTheirs": "یادگار دشمن امتیاز گرفت",
   "hud.relicTheirs": "یادگار دشمن",
+  "hud.respawnIn": "بازگشت تا {seconds}",
+  "hud.respawnResurrectionOnly": "منتظر بمان تا زنده‌ات کنند",
   "hud.shrinesBoth": "زیارتگاه‌ها: +{ours}، دشمن +{theirs}",
   "hud.shrinesOurs": "زیارتگاه‌ها: +{ours}",
   "hud.shrinesTheirs": "زیارتگاه‌های دشمن: +{theirs}",

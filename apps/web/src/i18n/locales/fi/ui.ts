@@ -577,6 +577,8 @@ export default {
   "hud.relicScoredOurs": "Reliikkipiste!",
   "hud.relicScoredTheirs": "Vihollisen reliikkipiste",
   "hud.relicTheirs": "Vihollisen reliikki",
+  "hud.respawnIn": "Takaisin {seconds} s päästä",
+  "hud.respawnResurrectionOnly": "Odota, että sinut herätetään henkiin",
   "hud.shrinesBoth": "Pyhäköt: +{ours}, vihollinen +{theirs}",
   "hud.shrinesOurs": "Pyhäköt: +{ours}",
   "hud.shrinesTheirs": "Vihollisen pyhäköt: +{theirs}",

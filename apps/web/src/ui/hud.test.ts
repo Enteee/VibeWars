@@ -42,6 +42,7 @@ import {
   carrierLines,
   renderTargetSignet,
   renderWallHealth,
+  respawnLine,
   targetWall,
   wallHealthPercent,
   type ScoreboardMatch,
@@ -87,6 +88,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     team: 1,
     dead: false,
     corpseExploited: false,
+    respawnIn: undefined,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
@@ -171,6 +173,26 @@ describe("invulnerableLabel (#1233)", () => {
     expect(invulnerableLabel(4.2)).toBe(t("hud.invulnerable", { clock: "0:05" }));
     expect(invulnerableLabel(4)).toBe(t("hud.invulnerable", { clock: "0:04" }));
     expect(invulnerableLabel(0.01)).toBe(t("hud.invulnerable", { clock: "0:01" }));
+  });
+});
+
+describe("respawnLine (#3367)", () => {
+  it("says when you are back while you are dead, and nothing alive", () => {
+    expect(respawnLine(player({ dead: true, respawnIn: 3 }))).toBe(
+      t("hud.respawnIn", { seconds: 3 }),
+    );
+    expect(respawnLine(player({ dead: true, respawnIn: 3 }))).toBe("Back in 3");
+    expect(respawnLine(player({ dead: false, respawnIn: undefined }))).toBeUndefined();
+  });
+
+  it("says to wait for a resurrection when you will not respawn", () => {
+    expect(respawnLine(player({ dead: true, respawnIn: null }))).toBe(
+      t("hud.respawnResurrectionOnly"),
+    );
+  });
+
+  it("says nothing dead until the host has said", () => {
+    expect(respawnLine(player({ dead: true, respawnIn: undefined }))).toBeUndefined();
   });
 });
 
@@ -1681,6 +1703,7 @@ describe("isAttackingTarget", () => {
     team: 0,
     dead: false,
     corpseExploited: false,
+    respawnIn: undefined,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
@@ -1796,6 +1819,7 @@ describe("targetProfessionIcons (#281)", () => {
     team: 1,
     dead: false,
     corpseExploited: false,
+    respawnIn: undefined,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
@@ -1998,12 +2022,14 @@ describe("createHud's layout (#1042)", () => {
     expect(named(descendants(hud.root as unknown as FakeNode), order)).toEqual(order);
   });
 
-  it("puts the target frame under the scoreboard and its flag carriers (#1226), outside your block", () => {
+  it("puts the target frame under the scoreboard, your respawn (#3367) and its flag carriers (#1226), outside your block", () => {
     const { parent, hud } = build();
     const top = hud.top as unknown as FakeNode;
     expect(parent.children).toContain(top);
+    expect(hud.respawn.hidden).toBe(true);
     expect(top.children.map((node) => node.className)).toEqual([
       "hud-scoreboard",
+      "hud-respawn",
       "hud-carriers",
       "hud-target",
     ]);
@@ -2028,6 +2054,7 @@ describe("createHud's layout (#1042)", () => {
     const top = hud.top as unknown as FakeNode;
     expect(top.children.map((node) => node.className)).toEqual([
       "hud-scoreboard",
+      "hud-respawn",
       "hud-carriers",
       "hud-target",
       "toast",

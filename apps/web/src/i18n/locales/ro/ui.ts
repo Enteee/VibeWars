@@ -600,6 +600,8 @@ export default {
   "hud.relicScoredOurs": "Relicvă adusă!",
   "hud.relicScoredTheirs": "Inamicul a adus relicva",
   "hud.relicTheirs": "Relicvă inamică",
+  "hud.respawnIn": "Revii în {seconds}",
+  "hud.respawnResurrectionOnly": "Așteaptă să fii reînviat",
   "hud.shrinesBoth": "Sanctuare: +{ours}, inamic +{theirs}",
   "hud.shrinesOurs": "Sanctuare: +{ours}",
   "hud.shrinesTheirs": "Sanctuare inamice: +{theirs}",

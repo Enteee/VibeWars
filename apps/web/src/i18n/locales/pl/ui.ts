@@ -619,6 +619,8 @@ export default {
   "hud.relicScoredOurs": "Relikwia zdobyta!",
   "hud.relicScoredTheirs": "Wróg zdobył relikwię",
   "hud.relicTheirs": "Relikwia wroga",
+  "hud.respawnIn": "Powrót za {seconds}",
+  "hud.respawnResurrectionOnly": "Czekaj na wskrzeszenie",
   "hud.shrinesBoth": "Kapliczki: +{ours}, wróg +{theirs}",
   "hud.shrinesOurs": "Kapliczki: +{ours}",
   "hud.shrinesTheirs": "Kapliczki wroga: +{theirs}",

@@ -518,6 +518,8 @@ export default {
   "hud.relicScoredOurs": "圣物得分！",
   "hud.relicScoredTheirs": "敌方圣物得分",
   "hud.relicTheirs": "敌方圣物",
+  "hud.respawnIn": "{seconds} 秒后复活",
+  "hud.respawnResurrectionOnly": "等待复活",
   "hud.shrinesBoth": "神殿：我方 +{ours}，敌方 +{theirs}",
   "hud.shrinesOurs": "神殿：+{ours}",
   "hud.shrinesTheirs": "敌方神殿：+{theirs}",

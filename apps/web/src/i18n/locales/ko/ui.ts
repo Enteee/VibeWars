@@ -524,6 +524,8 @@ export default {
   "hud.relicScoredOurs": "유물 득점!",
   "hud.relicScoredTheirs": "적 유물 득점",
   "hud.relicTheirs": "적 유물",
+  "hud.respawnIn": "{seconds}초 후 복귀",
+  "hud.respawnResurrectionOnly": "부활을 기다리세요",
   "hud.shrinesBoth": "성소: +{ours}, 적 +{theirs}",
   "hud.shrinesOurs": "성소: +{ours}",
   "hud.shrinesTheirs": "적 성소: +{theirs}",

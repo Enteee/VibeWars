@@ -42,6 +42,7 @@ function snapshot(castingSkillId: string | undefined, switches: boolean[] = []):
     team: 0,
     dead: false,
     corpseExploited: false,
+    respawnIn: undefined,
     castingSkillId,
     castRemaining: castingSkillId === undefined ? 0 : 1,
     castTotal: castingSkillId === undefined ? 0 : 1,

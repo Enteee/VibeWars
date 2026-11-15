@@ -521,6 +521,8 @@ export default {
   "hud.relicScoredOurs": "Ghi điểm thánh tích!",
   "hud.relicScoredTheirs": "Địch ghi điểm thánh tích",
   "hud.relicTheirs": "Thánh tích địch",
+  "hud.respawnIn": "Trở lại sau {seconds}",
+  "hud.respawnResurrectionOnly": "Chờ được hồi sinh",
   "hud.shrinesBoth": "Đền: +{ours}, địch +{theirs}",
   "hud.shrinesOurs": "Đền: +{ours}",
   "hud.shrinesTheirs": "Đền địch: +{theirs}",

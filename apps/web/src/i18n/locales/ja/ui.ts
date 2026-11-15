@@ -528,6 +528,8 @@ export default {
   "hud.relicScoredOurs": "レリック得点!",
   "hud.relicScoredTheirs": "敵のレリック得点",
   "hud.relicTheirs": "敵のレリック",
+  "hud.respawnIn": "復帰まで {seconds}",
+  "hud.respawnResurrectionOnly": "蘇生を待ってください",
   "hud.shrinesBoth": "祠: +{ours}、敵 +{theirs}",
   "hud.shrinesOurs": "祠: +{ours}",
   "hud.shrinesTheirs": "敵の祠: +{theirs}",
