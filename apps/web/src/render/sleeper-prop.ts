@@ -12,7 +12,7 @@ export interface SleeperProp {
   readonly id: string;
   readonly kind: "sleeper";
   readonly position: Vec2;
-  /** The map layer it lies on, whose height and band it is drawn at. */
+  /** The map layer whose wall it lies on top of, lifted by both heights. */
   readonly layer: number;
   /** The way its body lies, in radians. */
   readonly facing: number;

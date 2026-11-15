@@ -1530,7 +1530,6 @@ export default {
   "tutorial.tunnel.hint": "במורד המדרגות, דרך המנהרה, אל הסימן.",
   "tutorial.tunnel.how": "לחץ על המדרגות למטה, ואז על הסימן מעבר לקצה השני.",
   "tutorial.tunnel.intro": "שש. אל תעיר אותו. עוברים מלמטה.",
-  "tutorial.tunnel.over": "מלמטה, לא מלמעלה. רד במדרגות.",
   "tutorial.tunnel.praise": "אף ציוץ. מנהרות מסתירות אותך ממי שלמעלה.",
   "tutorial.tutor": "מורה",
   "tutorial.walk.hint": "לכאן! עלה על הסימן הזוהר.",

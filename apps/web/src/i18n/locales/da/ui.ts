@@ -1464,7 +1464,6 @@ export default {
   "tutorial.tunnel.hint": "Ned ad trinene, gennem tunnelen, hen til mærket.",
   "tutorial.tunnel.how": "Klik på trinene ned, så på mærket bag den anden ende.",
   "tutorial.tunnel.intro": "Shh. Væk dem ikke. Vi går nedenunder.",
-  "tutorial.tunnel.over": "Under, ikke over. Gå ned ad trinene.",
   "tutorial.tunnel.praise": "Ikke et pip. Tunneler skjuler dig for dem ovenover.",
   "tutorial.tutor": "Læremester",
   "tutorial.walk.hint": "Herovre! Træd ind på det glødende mærke.",

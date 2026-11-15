@@ -519,20 +519,4 @@ describe("tunnelStation (#3326)", () => {
   it("marks the east mouth's top on the ground's layer", () => {
     expect(tunnel().highlight).toEqual({ kind: "ground", at: MARK, layer: ABOVE });
   });
-
-  it("whispers under, not over, once, the first time over the top", () => {
-    const runner = createTutorialRunner([tunnel()], () => KEYMAP_PRESETS.classic);
-    const looks = [BEFORE, WEST_OVER, BEFORE, EAST_OVER, WEST_UNDER, EAST_UNDER, ON_MARK];
-    // Past the over line's wait, inside the hint's.
-    const at = (k: number) => (k === 0 ? 0 : ASIDE_MS + (k - 1) * 1_500);
-    expect(looks.map((over, k) => runner.tick(view(over), at(k)).say?.key)).toEqual([
-      "tutorial.tunnel.intro",
-      "tutorial.tunnel.over",
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      "tutorial.tunnel.praise",
-    ]);
-  });
 });

@@ -1477,7 +1477,6 @@ export default {
   "tutorial.tunnel.hint": "Le a lépcsőn, át az alagúton, a jelig.",
   "tutorial.tunnel.how": "Kattints a lefelé vezető lépcsőre, aztán a túlsó vég mögötti jelre.",
   "tutorial.tunnel.intro": "Pszt. Ne ébreszd fel. Alul megyünk.",
-  "tutorial.tunnel.over": "Alul, nem felül. Menj le a lépcsőn.",
   "tutorial.tunnel.praise": "Egy pisszenés se. Az alagút elrejt a fenti szemek elől.",
   "tutorial.tutor": "Tanító",
   "tutorial.walk.hint": "Ide! Lépj a világító jelre.",

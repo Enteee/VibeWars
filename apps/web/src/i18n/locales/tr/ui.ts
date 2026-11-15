@@ -1472,7 +1472,6 @@ export default {
   "tutorial.tunnel.hint": "Basamaklardan in, tünelden geç, işarete var.",
   "tutorial.tunnel.how": "Aşağı inen basamaklara, sonra öbür ucun ötesindeki işarete tıkla.",
   "tutorial.tunnel.intro": "Şşt. Uyandırma onu. Altından geçiyoruz.",
-  "tutorial.tunnel.over": "Altından, üstünden değil. Basamaklardan in.",
   "tutorial.tunnel.praise": "Çıt yok. Tüneller seni yukarıdakilerden gizler.",
   "tutorial.tutor": "Öğretmen",
   "tutorial.walk.hint": "Buraya! Parlayan işarete bas.",

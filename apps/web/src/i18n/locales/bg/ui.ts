@@ -1475,7 +1475,6 @@ export default {
   "tutorial.tunnel.hint": "Надолу по стъпалата, през тунела, до знака.",
   "tutorial.tunnel.how": "Кликни стъпалата надолу, после знака отвъд другия край.",
   "tutorial.tunnel.intro": "Шшт. Не го буди. Минаваме отдолу.",
-  "tutorial.tunnel.over": "Отдолу, не отгоре. Слез по стъпалата.",
   "tutorial.tunnel.praise": "Нито звук. Тунелите те крият от онези горе.",
   "tutorial.tutor": "Учител",
   "tutorial.walk.hint": "Насам! Стъпи на светещия знак.",

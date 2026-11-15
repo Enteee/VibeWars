@@ -1476,7 +1476,6 @@ export default {
   "tutorial.tunnel.hint": "De treden af, door de tunnel, naar de markering.",
   "tutorial.tunnel.how": "Klik op de treden omlaag, dan op de markering voorbij het andere eind.",
   "tutorial.tunnel.intro": "Sst. Maak de wacht niet wakker. We gaan eronderdoor.",
-  "tutorial.tunnel.over": "Eronder, niet erover. Neem de treden omlaag.",
   "tutorial.tunnel.praise": "Geen kik. Tunnels verbergen je voor wie erboven is.",
   "tutorial.tutor": "Leraar",
   "tutorial.walk.hint": "Hierheen! Stap op de gloeiende markering.",

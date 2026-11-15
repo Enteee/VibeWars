@@ -1657,7 +1657,6 @@ export default {
   "tutorial.tunnel.hint": "انزل الدرج، واعبر النفق، إلى العلامة.",
   "tutorial.tunnel.how": "انقر الدرج نازلًا، ثم العلامة بعد الطرف الآخر.",
   "tutorial.tunnel.intro": "صه. لا توقظه. سنمرّ من تحت.",
-  "tutorial.tunnel.over": "من تحت، لا من فوق. انزل الدرج.",
   "tutorial.tunnel.praise": "ولا همسة. الأنفاق تخفيك عمّن فوقك.",
   "tutorial.tutor": "المعلّم",
   "tutorial.walk.hint": "هنا! قف على العلامة المتوهجة.",

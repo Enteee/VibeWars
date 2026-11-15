@@ -1586,7 +1586,6 @@ export default {
   "tutorial.tunnel.hint": "Вниз по ступеням, через туннель, к метке.",
   "tutorial.tunnel.how": "Щёлкни по ступеням вниз, затем по метке за дальним концом.",
   "tutorial.tunnel.intro": "Тсс. Не разбуди его. Идём низом.",
-  "tutorial.tunnel.over": "Низом, не верхом. Спустись по ступеням.",
   "tutorial.tunnel.praise": "Ни звука. Туннели прячут тебя от тех, кто наверху.",
   "tutorial.tutor": "Наставник",
   "tutorial.walk.hint": "Сюда! Встань на светящуюся метку.",

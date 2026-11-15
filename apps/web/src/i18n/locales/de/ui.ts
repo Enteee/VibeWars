@@ -1490,7 +1490,6 @@ export default {
   "tutorial.tunnel.hint": "Die Stufen hinab, durch den Tunnel, zur Markierung.",
   "tutorial.tunnel.how": "Klick die Stufen hinab, dann die Markierung hinter dem anderen Ende.",
   "tutorial.tunnel.intro": "Pst. Weck die Wache nicht. Wir gehen unten durch.",
-  "tutorial.tunnel.over": "Unten durch, nicht drüber. Nimm die Stufen hinab.",
   "tutorial.tunnel.praise": "Kein Mucks. Tunnel verbergen dich vor denen oben.",
   "tutorial.tutor": "Lehrer",
   "tutorial.walk.hint": "Hier drüben! Tritt auf die leuchtende Markierung.",

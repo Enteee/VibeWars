@@ -1383,7 +1383,6 @@ export default {
   "tutorial.tunnel.hint": "Xuống bậc thang, qua đường hầm, tới dấu.",
   "tutorial.tunnel.how": "Nhấp vào bậc đi xuống, rồi vào dấu ở quá đầu bên kia.",
   "tutorial.tunnel.intro": "Suỵt. Đừng đánh thức hắn. Ta đi bên dưới.",
-  "tutorial.tunnel.over": "Bên dưới, không phải bên trên. Xuống bậc thang.",
   "tutorial.tunnel.praise": "Không một tiếng động. Đường hầm giấu bạn khỏi kẻ ở trên.",
   "tutorial.tutor": "Người hướng dẫn",
   "tutorial.walk.hint": "Đằng này! Bước lên dấu phát sáng.",

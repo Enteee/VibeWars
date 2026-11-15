@@ -745,7 +745,7 @@ export interface CanyonTunnel {
   readonly above: number;
   /** The mark, just past the east stairs' top, on `above`. */
   readonly mark: Vec2;
-  /** Where the guard lies: over the tunnel's middle, on `above`. */
+  /** Where the guard lies: on the rock over the tunnel's middle, a wall of `above`. */
   readonly sleeper: Vec2;
   /** The tutor's way through: the west stairs' top and foot, the east's foot and top. */
   readonly westTop: Vec2;

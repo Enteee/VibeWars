@@ -1550,7 +1550,6 @@ export default {
   "tutorial.tunnel.hint": "Giù per i gradini, attraverso il tunnel, fino al segno.",
   "tutorial.tunnel.how": "Clicca i gradini in discesa, poi il segno oltre l'altra estremità.",
   "tutorial.tunnel.intro": "Sst. Non svegliarlo. Passiamo sotto.",
-  "tutorial.tunnel.over": "Sotto, non sopra. Scendi i gradini.",
   "tutorial.tunnel.praise": "Neanche un fiato. I tunnel ti nascondono a chi sta sopra.",
   "tutorial.tutor": "Tutor",
   "tutorial.walk.hint": "Di qua! Sali sul segno luminoso.",

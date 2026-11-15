@@ -1465,7 +1465,6 @@ export default {
   "tutorial.tunnel.hint": "Ner för trappstegen, genom tunneln, till märket.",
   "tutorial.tunnel.how": "Klicka på stegen ner, sedan på märket bortom andra änden.",
   "tutorial.tunnel.intro": "Sch. Väck inte vakten. Vi går under.",
-  "tutorial.tunnel.over": "Under, inte över. Ta stegen ner.",
   "tutorial.tunnel.praise": "Inte ett ljud. Tunnlar döljer dig för den som är ovanför.",
   "tutorial.tutor": "Lärare",
   "tutorial.walk.hint": "Hitåt! Kliv på det glödande märket.",

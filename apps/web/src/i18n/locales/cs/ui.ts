@@ -1583,7 +1583,6 @@ export default {
   "tutorial.tunnel.hint": "Dolů po schodech, tunelem, ke značce.",
   "tutorial.tunnel.how": "Klikni na schody dolů, pak na značku za druhým koncem.",
   "tutorial.tunnel.intro": "Pst. Nevzbuď ho. Půjdeme spodem.",
-  "tutorial.tunnel.over": "Spodem, ne vrchem. Sejdi po schodech.",
   "tutorial.tunnel.praise": "Ani muk. Tunely tě skryjí před těmi nahoře.",
   "tutorial.tutor": "Učitel",
   "tutorial.walk.hint": "Sem! Stoupni si na zářící značku.",

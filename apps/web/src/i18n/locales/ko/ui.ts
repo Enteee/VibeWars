@@ -1386,7 +1386,6 @@ export default {
   "tutorial.tunnel.hint": "계단을 내려가 터널을 지나 표시까지.",
   "tutorial.tunnel.how": "내려가는 계단을 클릭한 뒤, 반대편 끝 너머의 표시를 클릭해.",
   "tutorial.tunnel.intro": "쉿. 깨우지 마. 아래로 간다.",
-  "tutorial.tunnel.over": "위가 아니라 아래로. 계단으로 내려가.",
   "tutorial.tunnel.praise": "쥐 죽은 듯 조용했어. 터널은 위에 있는 자에게서 너를 숨겨 준다.",
   "tutorial.tutor": "스승",
   "tutorial.walk.hint": "이쪽이야! 빛나는 표식 위로 올라와.",

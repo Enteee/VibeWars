@@ -1397,7 +1397,6 @@ export default {
   "tutorial.tunnel.hint": "階段を下り、トンネルを抜けて、印まで。",
   "tutorial.tunnel.how": "下りの階段をクリックし、反対側の先の印をクリック。",
   "tutorial.tunnel.intro": "しーっ。起こすな。下を通るぞ。",
-  "tutorial.tunnel.over": "上じゃない、下だ。階段を下りろ。",
   "tutorial.tunnel.praise": "物音ひとつない。トンネルは上の者から君を隠す。",
   "tutorial.tutor": "師匠",
   "tutorial.walk.hint": "こっちだ!光る印の上に立て。",

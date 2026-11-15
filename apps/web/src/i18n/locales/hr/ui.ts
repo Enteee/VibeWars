@@ -1541,7 +1541,6 @@ export default {
   "tutorial.tunnel.hint": "Niz stepenice, kroz tunel, do oznake.",
   "tutorial.tunnel.how": "Klikni stepenice dolje, zatim oznaku iza drugog kraja.",
   "tutorial.tunnel.intro": "Pst. Ne budi ga. Idemo ispod.",
-  "tutorial.tunnel.over": "Ispod, ne preko. Siđi stepenicama.",
   "tutorial.tunnel.praise": "Ni glaska. Tuneli te skrivaju od onih gore.",
   "tutorial.tutor": "Učitelj",
   "tutorial.walk.hint": "Ovamo! Stani na svjetleću oznaku.",

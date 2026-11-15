@@ -1397,7 +1397,6 @@ export default {
   "tutorial.tunnel.hint": "Turuni tangga, lewati terowongan, ke tanda.",
   "tutorial.tunnel.how": "Klik tangga turun, lalu tanda di balik ujung satunya.",
   "tutorial.tunnel.intro": "Sst. Jangan bangunkan dia. Kita lewat bawah.",
-  "tutorial.tunnel.over": "Lewat bawah, bukan atas. Turuni tangganya.",
   "tutorial.tunnel.praise": "Tanpa suara. Terowongan menyembunyikanmu dari yang di atas.",
   "tutorial.tutor": "Guru",
   "tutorial.walk.hint": "Ke sini! Injak tanda yang bercahaya.",

@@ -1560,7 +1560,6 @@ export default {
   "tutorial.tunnel.how":
     "Haz clic en los escalones de bajada y luego en la marca tras el otro extremo.",
   "tutorial.tunnel.intro": "Chis. No lo despiertes. Vamos por debajo.",
-  "tutorial.tunnel.over": "Por debajo, no por encima. Baja los escalones.",
   "tutorial.tunnel.praise": "Ni un ruido. Los túneles te ocultan de quien está arriba.",
   "tutorial.tutor": "Tutor",
   "tutorial.walk.hint": "¡Aquí! Pisa la marca brillante.",

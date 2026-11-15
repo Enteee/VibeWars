@@ -1562,7 +1562,6 @@ export default {
   "tutorial.tunnel.hint": "Descends les marches, traverse le tunnel, jusqu'à la marque.",
   "tutorial.tunnel.how": "Clique les marches qui descendent, puis la marque après l'autre bout.",
   "tutorial.tunnel.intro": "Chut. Ne le réveille pas. On passe dessous.",
-  "tutorial.tunnel.over": "Dessous, pas dessus. Prends les marches.",
   "tutorial.tunnel.praise": "Pas un bruit. Les tunnels te cachent de ceux d'en haut.",
   "tutorial.tutor": "Tuteur",
   "tutorial.walk.hint": "Par ici ! Avance sur la marque lumineuse.",

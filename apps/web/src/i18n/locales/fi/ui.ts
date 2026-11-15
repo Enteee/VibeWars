@@ -1482,7 +1482,6 @@ export default {
   "tutorial.tunnel.hint": "Portaat alas, tunnelin läpi, merkille.",
   "tutorial.tunnel.how": "Napsauta portaita alas, sitten merkkiä toisen pään takana.",
   "tutorial.tunnel.intro": "Hys. Älä herätä häntä. Mennään alta.",
-  "tutorial.tunnel.over": "Alta, ei yli. Kulje portaat alas.",
   "tutorial.tunnel.praise": "Ei pihaustakaan. Tunnelit kätkevät sinut yläpuolisilta.",
   "tutorial.tutor": "Opettaja",
   "tutorial.walk.hint": "Tänne! Astu hehkuvalle merkille.",

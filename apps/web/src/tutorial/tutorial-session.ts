@@ -84,7 +84,7 @@ import {
 const MAX_STEP_SECONDS = 0.1;
 /** How long "more soon" stands before the menu. */
 const FAREWELL_MS = 2_500;
-/** Station 11's guard (#3326), asleep on the ground over the tunnel's middle. */
+/** Station 11's guard (#3326), asleep on the rock over the tunnel's middle. */
 const SLEEPER: SleeperProp = {
   id: "tutorial-sleeper",
   kind: "sleeper",

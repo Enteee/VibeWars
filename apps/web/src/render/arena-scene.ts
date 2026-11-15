@@ -729,8 +729,10 @@ export class ArenaScene extends Phaser.Scene {
    */
   private goals = new Map<string, { mark: GoalMark; goneAt: number | undefined }>();
   private readonly goalGraphics = new Map<number, Phaser.GameObjects.Graphics>();
-  /** Scenery the simulation does not know (#3326), drawn with the bodies of its layer. */
+  /** Scenery the simulation does not know (#3326), lying on the walls of its layer. */
   private props: readonly SleeperProp[] = [];
+  /** The props' graphics, one per wall-top depth. */
+  private readonly propGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Every caped body's cape (#1699), and where the body was drawn last frame. */
   private capes = new Map<string, { motion: CapeMotion; x: number; y: number }>();
   /**
@@ -1851,18 +1853,25 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The props (#3326) in the body pass of their layer's band, lifted to its
-   * height and lit where they lie, under the bodies that stand there.
+   * The props (#3326) on top of their layer's walls: lifted by the layer's
+   * height and the wall's, just over that wall's depth, and lit where they lie.
    */
   private drawProps(): void {
-    const ground = this.snapshot.structure.ground;
+    for (const graphics of this.propGraphics.values()) {
+      graphics.clear();
+    }
+    const { ground, layerCount } = this.snapshot.structure;
     for (const prop of this.props) {
-      const band = this.bandOf(prop.layer);
-      if (band === undefined) {
-        continue;
+      const depth = renderOrder({ kind: "wall-top", layer: prop.layer });
+      let g = this.propGraphics.get(depth);
+      if (g === undefined) {
+        g = this.add.graphics().setDepth(depth);
+        this.propGraphics.set(depth, g);
       }
-      const lift = elevationOf(prop.layer, ground);
+      const lift = elevationOf(prop.layer, ground) + (layerCount === 1 ? 0 : WALL_HEIGHT);
       const tint = this.tintAt(prop.position, prop.layer);
+      g.save();
+      g.translateCanvas(0, -lift);
       for (const command of sleeperCommands(
         prop.position,
         prop.facing,
@@ -1871,32 +1880,30 @@ export class ArenaScene extends Phaser.Scene {
       )) {
         switch (command.kind) {
           case "body":
-            band.body.save();
-            band.body.translateCanvas(0, -lift);
-            band.body.fillStyle(
+            g.fillStyle(
               tint === undefined ? command.colour : multiplyColour(command.colour, tint),
               1,
             );
-            tracePath(band.body, command.outline);
-            band.body.fillPath();
-            band.body.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
-            band.body.strokePath();
-            band.body.restore();
+            tracePath(g, command.outline);
+            g.fillPath();
+            g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+            g.strokePath();
             break;
           case "z": {
             const { at, size } = command;
             const half = size / 2;
-            band.marks.lineStyle(1.5, command.colour, command.alpha);
-            band.marks.beginPath();
-            band.marks.moveTo(at.x - half, at.y - lift - half);
-            band.marks.lineTo(at.x + half, at.y - lift - half);
-            band.marks.lineTo(at.x - half, at.y - lift + half);
-            band.marks.lineTo(at.x + half, at.y - lift + half);
-            band.marks.strokePath();
+            g.lineStyle(1.5, command.colour, command.alpha);
+            g.beginPath();
+            g.moveTo(at.x - half, at.y - half);
+            g.lineTo(at.x + half, at.y - half);
+            g.lineTo(at.x - half, at.y + half);
+            g.lineTo(at.x + half, at.y + half);
+            g.strokePath();
             break;
           }
         }
       }
+      g.restore();
     }
   }
 

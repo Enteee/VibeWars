@@ -1376,7 +1376,6 @@ export default {
   "tutorial.tunnel.hint": "ลงบันได ผ่านอุโมงค์ ไปที่เครื่องหมาย",
   "tutorial.tunnel.how": "คลิกบันไดลง แล้วคลิกเครื่องหมายเลยปลายอีกด้าน",
   "tutorial.tunnel.intro": "ชู่ว์ อย่าปลุกเขา เราไปทางข้างล่าง",
-  "tutorial.tunnel.over": "ข้างล่าง ไม่ใช่ข้างบน ลงบันไดไป",
   "tutorial.tunnel.praise": "เงียบกริบ อุโมงค์ซ่อนคุณจากคนที่อยู่ข้างบน",
   "tutorial.tutor": "ผู้สอน",
   "tutorial.walk.hint": "ทางนี้! ก้าวไปที่เครื่องหมายเรืองแสง",

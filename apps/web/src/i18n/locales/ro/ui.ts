@@ -1551,7 +1551,6 @@ export default {
   "tutorial.tunnel.how":
     "Dă clic pe treptele în jos, apoi pe semnul de dincolo de capătul celălalt.",
   "tutorial.tunnel.intro": "Ssst. Nu-l trezi. Trecem pe dedesubt.",
-  "tutorial.tunnel.over": "Pe dedesubt, nu pe deasupra. Coboară treptele.",
   "tutorial.tunnel.praise": "Niciun sunet. Tunelurile te ascund de cei de sus.",
   "tutorial.tutor": "Tutore",
   "tutorial.walk.hint": "Aici! Calcă pe semnul strălucitor.",

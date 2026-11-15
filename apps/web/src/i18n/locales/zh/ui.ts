@@ -1359,7 +1359,6 @@ export default {
   "tutorial.tunnel.hint": "走下台阶，穿过隧道，到标记处。",
   "tutorial.tunnel.how": "点击下行的台阶，再点击另一端外的标记。",
   "tutorial.tunnel.intro": "嘘。别吵醒他。我们从下面走。",
-  "tutorial.tunnel.over": "走下面，别走上面。走台阶下去。",
   "tutorial.tunnel.praise": "悄无声息。隧道让上面的人看不见你。",
   "tutorial.tutor": "导师",
   "tutorial.walk.hint": "这边!站到发光的标记上。",

@@ -1466,7 +1466,6 @@ export default {
   "tutorial.tunnel.hint": "از پله‌ها پایین، از تونل بگذر، تا نشانه.",
   "tutorial.tunnel.how": "روی پله‌های پایین کلیک کن، بعد روی نشانهٔ آن سرِ تونل.",
   "tutorial.tunnel.intro": "هیس. بیدارش نکن. از زیر می‌رویم.",
-  "tutorial.tunnel.over": "از زیر، نه از رو. از پله‌ها پایین برو.",
   "tutorial.tunnel.praise": "حتی یک صدا هم نه. تونل‌ها تو را از بالایی‌ها پنهان می‌کنند.",
   "tutorial.tutor": "معلم",
   "tutorial.walk.hint": "اینجا! روی نشان درخشان برو.",

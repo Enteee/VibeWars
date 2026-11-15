@@ -1593,7 +1593,6 @@ export default {
   "tutorial.tunnel.hint": "Униз сходами, крізь тунель, до позначки.",
   "tutorial.tunnel.how": "Клацни сходи вниз, потім позначку за дальнім кінцем.",
   "tutorial.tunnel.intro": "Тсс. Не розбуди його. Ідемо низом.",
-  "tutorial.tunnel.over": "Низом, не верхом. Спустися сходами.",
   "tutorial.tunnel.praise": "Ані звуку. Тунелі ховають тебе від тих, хто нагорі.",
   "tutorial.tutor": "Наставник",
   "tutorial.walk.hint": "Сюди! Стань на сяйливу позначку.",

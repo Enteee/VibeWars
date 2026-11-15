@@ -1469,7 +1469,6 @@ export const en = {
   "tutorial.tunnel.hint": "Down the steps, through the tunnel, to the mark.",
   "tutorial.tunnel.how": "Click the steps down, then the mark past the far end.",
   "tutorial.tunnel.intro": "Shh. Don't wake them. We go under.",
-  "tutorial.tunnel.over": "Under, not over. Use the steps down.",
   "tutorial.tunnel.praise": "Not a peep. Tunnels hide you from whoever's above.",
   "tutorial.tutor": "Tutor",
   "tutorial.walk.hint": "Over here! Step onto the glowing mark.",

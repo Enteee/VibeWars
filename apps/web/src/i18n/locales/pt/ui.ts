@@ -1541,7 +1541,6 @@ export default {
   "tutorial.tunnel.hint": "Desça os degraus, atravesse o túnel, até a marca.",
   "tutorial.tunnel.how": "Clique nos degraus que descem, depois na marca após a outra ponta.",
   "tutorial.tunnel.intro": "Psiu. Não o acorde. Vamos por baixo.",
-  "tutorial.tunnel.over": "Por baixo, não por cima. Desça os degraus.",
   "tutorial.tunnel.praise": "Nem um pio. Túneis o escondem de quem está em cima.",
   "tutorial.tutor": "Tutor",
   "tutorial.walk.hint": "Aqui! Pise a marca brilhante.",

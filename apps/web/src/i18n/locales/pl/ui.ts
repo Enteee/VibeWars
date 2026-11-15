@@ -1597,7 +1597,6 @@ export default {
   "tutorial.tunnel.hint": "W dół po stopniach, przez tunel, do znacznika.",
   "tutorial.tunnel.how": "Kliknij stopnie w dół, potem znacznik za drugim końcem.",
   "tutorial.tunnel.intro": "Ćśś. Nie budź go. Idziemy dołem.",
-  "tutorial.tunnel.over": "Dołem, nie górą. Zejdź po stopniach.",
   "tutorial.tunnel.praise": "Ani piśnięcia. Tunele kryją cię przed tymi na górze.",
   "tutorial.tutor": "Nauczyciel",
   "tutorial.walk.hint": "Tutaj! Wejdź na świecący znak.",
