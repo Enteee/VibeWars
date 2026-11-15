@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { pointInPolygon, type Uphill } from "@vibewars/game-core";
+import { pointInPolygon, type Uphill, type Vec2 } from "@vibewars/game-core";
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import { arenaPalette } from "./arena-palette.js";
@@ -379,6 +379,23 @@ describe("layerSurfaces", () => {
       expect(under(330, 630)).toBe(false);
       expect(roofedOver(tunnelled, 1)).toEqual([]);
       expect(roofedOver(HEIGHTS, 0)).toEqual([]);
+    });
+
+    it("lights all a cut-away cover shows with the tunnel's layer, its far wall too", () => {
+      // The cover's top step is the far wall: drawn a step down, so a step
+      // north on the tunnel's own map. Unlit, it read as a bright band over
+      // a floor its torch could only dim.
+      const own = (outlines: readonly (readonly Vec2[])[], x: number, drawnY: number): boolean =>
+        outlines.some((outline) => pointInPolygon({ x, y: drawnY - ELEVATION_STEP }, outline));
+      const surfaces = layerSurfaces(tunnelled, 0);
+      const roofed = roofedOver(tunnelled, 0);
+      for (const drawnY of [605, 640, 700, 730]) {
+        expect(own(surfaces, 450, drawnY)).toBe(true);
+        expect(own(roofed, 450, drawnY)).toBe(true);
+      }
+      // Over the shaft the wall is open, lit as the stair is, not roofed.
+      expect(own(roofed, 330, 620)).toBe(false);
+      expect(own(surfaces, 450, 595)).toBe(false);
     });
 
     it("lights the stair down the shaft with the tunnel's layer, where the ground's is cut", () => {

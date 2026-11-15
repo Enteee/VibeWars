@@ -790,6 +790,29 @@ export function tunnelRoof(
   );
 }
 
+/**
+ * `tunnel`'s far wall (#3329), in its own layer's coordinates: the step
+ * north of its footprint, which, lifted a step down, is the top of its
+ * cover box. Cut away, the cover shows it over the floor, so it takes the
+ * tunnel's light; where a shaft opens over it, the shaft is seen instead.
+ */
+export function tunnelFarWall(
+  structure: MapStructure,
+  tunnel: MapStructure["tunnels"][number],
+): readonly (readonly Vec2[])[] {
+  const lift = liftOf(structure, structure.ground - 1);
+  const box = boxOf(tunnel.footprint);
+  const wall = { ...box, top: box.top + lift, bottom: box.top };
+  const open = openingBoxes(structure, tunnel).map((hole) => ({
+    ...hole,
+    top: hole.top + lift,
+    bottom: hole.bottom + lift,
+  }));
+  return boxWithout(wall, open).map((piece) =>
+    boxOutline(piece.left, piece.top, piece.right, piece.bottom),
+  );
+}
+
 /** How far apart a tunnel cover's grating slots are, along its length (#3236). */
 export const TUNNEL_GRATING_STEP = 120;
 /** A grating slot's size along the tunnel, and its most across it. */

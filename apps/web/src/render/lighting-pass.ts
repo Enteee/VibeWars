@@ -11,6 +11,7 @@ import {
   rampDrawing,
   shapeOutline,
   tunnelCoverBox,
+  tunnelFarWall,
   tunnelOpenings,
   tunnelRoof,
 } from "./layer-surfaces.js";
@@ -232,18 +233,26 @@ export function layerSurfaces(
         y: p.y + elevationOf(layer, structure.ground),
       })),
     );
-  return [...decks, ...pits, ...ramps];
+  // A cut-away cover shows each tunnel's far wall over its floor: lit with it (#3329).
+  const walls =
+    layer === structure.ground - 1
+      ? structure.tunnels.flatMap((tunnel) => tunnelFarWall(structure, tunnel))
+      : [];
+  return [...decks, ...pits, ...ramps, ...walls];
 }
 
 /**
  * What of `layer` is under a roof, so no sun reaches it (#3329): on the
- * layer under the ground, each tunnel's floor but for its shafts, which
- * are open. It takes the indoor ambient, as `lighting.indoor` does, so a
- * torch in it shows its pool.
+ * layer under the ground, each tunnel's floor and far wall but for its
+ * shafts, which are open. It takes the indoor ambient, as
+ * `lighting.indoor` does, so a torch in it shows its pool.
  */
 export function roofedOver(structure: MapStructure, layer: number): readonly (readonly Vec2[])[] {
   return layer === structure.ground - 1
-    ? structure.tunnels.flatMap((tunnel) => tunnelRoof(structure, tunnel))
+    ? structure.tunnels.flatMap((tunnel) => [
+        ...tunnelRoof(structure, tunnel),
+        ...tunnelFarWall(structure, tunnel),
+      ])
     : [];
 }
 
