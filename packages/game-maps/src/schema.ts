@@ -66,7 +66,7 @@ const wallSchema = z.discriminatedUnion("kind", [
 ]);
 
 /** The materials a map is drawn in (#3172, docs/art/visual-style.md §1). */
-export const BIOMES = ["hall", "heights", "wilds", "desert", "volcanic"] as const;
+export const BIOMES = ["hall", "heights", "wilds", "desert", "volcanic", "snow"] as const;
 export type Biome = (typeof BIOMES)[number];
 
 /**
@@ -82,6 +82,7 @@ export const DECK_LOOKS = [
   "bridge-plank",
   "bridge-log",
   "ledge",
+  "drift",
   "ruin",
   "arch",
   "gatehouse-roof",

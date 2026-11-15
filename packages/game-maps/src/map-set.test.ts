@@ -22,6 +22,7 @@ import { describe, expect, it } from "vitest";
 import { allWallSegments, wallToSegments } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { matchLayers } from "./layers.js";
+import { mapNavGraphs } from "./nav-graphs.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
@@ -49,7 +50,7 @@ const NEW_ARENAS = new Set(["arena-crossroads", "arena-long-hall", "arena-canyon
  * The 2.5D rebuilds (#3064): asymmetric by design. Their fairness is the balance bench and the
  * walk and high-ground checks (map-balance.test.ts), not a half turn.
  */
-const REBUILT = new Set(["arena-canyon", "arena-crossroads", "ember-pits"]);
+const REBUILT = new Set(["arena-canyon", "arena-crossroads", "ember-pits", "frozen-crossing"]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
   ...map,
@@ -123,26 +124,30 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
         3,
       );
     }
-    const graph = buildNavGraph(walls, bounds, RADIUS, []);
-    for (const { position } of map.spawnPoints) {
-      for (const wall of walls) {
+    // Each on its own layer (#3344): clear of that layer's walls, on that layer's floor.
+    const layerWalls = matchLayers(map).walls;
+    const graphs = mapNavGraphs(map, RADIUS);
+    for (const { position, layer } of map.spawnPoints) {
+      for (const wall of layerWalls[layer] ?? []) {
         expect(
           distancePointToSegment(position, wall),
           JSON.stringify(position),
         ).toBeGreaterThanOrEqual(RADIUS);
       }
+      const graph = graphs[layer];
+      if (graph === undefined) throw new Error(`no layer ${String(layer)}`);
       // On the map, and not inside a wall's outline either.
       expect(nearestStandable(graph, position)).toEqual(position);
     }
   });
 
   it("lets every spawn walk to every other", () => {
-    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS, []));
+    const finder = layeredFinder(map, RADIUS);
     for (const from of map.spawnPoints) {
       for (const to of map.spawnPoints) {
         if (from !== to) {
           expect(
-            finder.find(from.position, to.position),
+            finder.find(from.position, from.layer, to.position, to.layer),
             `${JSON.stringify(from.position)} to ${JSON.stringify(to.position)}`,
           ).toBeDefined();
         }
@@ -173,9 +178,8 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
       const image = turned(map, spawn.position);
       const across = map.spawnPoints
         .filter((other) => other.team === 1)
-        .map((other) => other.position)
         .reduce((best, other) =>
-          Vec.distance(other, image) < Vec.distance(best, image) ? other : best,
+          Vec.distance(other.position, image) < Vec.distance(best.position, image) ? other : best,
         );
       const sim = new MatchSimulation({
         seed: `reach-${String(k)}`,
@@ -184,7 +188,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
         layers: matchLayers(map),
         bounds,
         participants: [
-          { id: "a", team: 0, at: spawn.position },
+          { id: "a", team: 0, at: spawn },
           { id: "b", team: 1, at: across },
         ].map(({ id, team, at }) => ({
           id,
@@ -194,7 +198,8 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
           equipment: resolved.weaponSets[0].equipment,
           baseEnergyPips: resolved.weaponSets[0].baseEnergyPips,
           maxHealth: 1e7,
-          spawn: at,
+          spawn: at.position,
+          layer: at.layer,
           facing: 0,
         })),
       });
@@ -764,9 +769,9 @@ describe("Hall of Heroes (#2552)", () => {
 const ROUTE_HALF_GAP = 100;
 
 // The medium arenas (#2604, #2605) cross the centre in three lanes, the large (#2607, #2609) in four.
+// Frozen Crossing, rebuilt in 2.5D (#3286), is proven by its walks and high ground instead (map-balance.test.ts).
 describe.each([
   ["sandstone-steps", 1, 3],
-  ["frozen-crossing", 2, 3],
   ["ashen-courtyard", 4, 3],
   ["moss-vale", 8, 3],
   ["canthan-terraces", 1, 4],
