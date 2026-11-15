@@ -518,3 +518,46 @@ export function rampStation(
     done: (view) => onMark(view, mark, layer),
   };
 }
+
+/**
+ * Station 11 (playbook §11), on the canyon's second map: through the
+ * `tunnel` on `under`, beneath the guard asleep on top, to the mark at
+ * `mark` on `above`. Each half of it, west and east of its middle, latches
+ * once the player has stood in it underground, in either order. Walking
+ * over the top gets one line once; nothing fails. Done on the mark with
+ * both halves walked.
+ */
+export function tunnelStation(tunnel: Shape, under: number, above: number, mark: Vec2): Station {
+  const middle = shapeCentre(tunnel).x;
+  /** The halves walked underground: once true, they stay true. */
+  let west = false;
+  let east = false;
+  const look = (view: TutorialView): boolean => {
+    if (view.selfLayer === under && pointInShape(view.self, tunnel)) {
+      if (view.self.x < middle) {
+        west = true;
+      } else {
+        east = true;
+      }
+    }
+    return west && east;
+  };
+  return {
+    id: "tunnel",
+    world: "canyon-2",
+    lines: {
+      intro: "tutorial.tunnel.intro",
+      hint: "tutorial.tunnel.hint",
+      praise: "tutorial.tunnel.praise",
+      how: "tutorial.tunnel.how",
+    },
+    highlight: { kind: "ground", at: mark, layer: above },
+    asides: [
+      {
+        line: "tutorial.tunnel.over",
+        when: (view) => view.selfLayer === above && pointInShape(view.self, tunnel),
+      },
+    ],
+    done: (view) => look(view) && onMark(view, mark, above),
+  };
+}

@@ -20,6 +20,7 @@ import {
   ratsStation,
   skillSlot,
   stepInStation,
+  tunnelStation,
   type TutorialView,
 } from "./stations.js";
 import { ASIDE_MS, createTutorialRunner } from "./tutorial-runner.js";
@@ -464,6 +465,74 @@ describe("rampStation (#3325)", () => {
       "tutorial.ramp.intro",
       undefined,
       "tutorial.ramp.landing",
+    ]);
+  });
+});
+
+describe("tunnelStation (#3326)", () => {
+  const TUNNEL = { kind: "rect", x: 2080, y: 450, width: 720, height: 500 } as const;
+  const UNDER = 0;
+  const ABOVE = 1;
+  const MARK = vec2(3240, 700);
+  const tunnel = () => tunnelStation(TUNNEL, UNDER, ABOVE, MARK);
+  const WEST_UNDER = { self: vec2(2200, 700), selfLayer: UNDER };
+  const EAST_UNDER = { self: vec2(2700, 700), selfLayer: UNDER };
+  const WEST_OVER = { self: vec2(2200, 700), selfLayer: ABOVE };
+  const EAST_OVER = { self: vec2(2700, 700), selfLayer: ABOVE };
+  const BEFORE = { self: vec2(1500, 700), selfLayer: ABOVE };
+  const ON_MARK = { self: MARK, selfLayer: ABOVE };
+
+  it("is done on the mark after both halves underground, then not before", () => {
+    const station = tunnel();
+    expect(station.done(view(ON_MARK))).toBe(false);
+    expect(station.done(view(WEST_UNDER))).toBe(false);
+    expect(station.done(view(EAST_UNDER))).toBe(false);
+    expect(station.done(view(ON_MARK))).toBe(true);
+  });
+
+  it("is done from the east mouth first too", () => {
+    const station = tunnel();
+    for (const over of [EAST_UNDER, WEST_UNDER]) {
+      station.done(view(over));
+    }
+    expect(station.done(view(ON_MARK))).toBe(true);
+  });
+
+  it("is not done over the top to the mark", () => {
+    const station = tunnel();
+    for (const over of [BEFORE, WEST_OVER, EAST_OVER]) {
+      station.done(view(over));
+    }
+    expect(station.done(view(ON_MARK))).toBe(false);
+  });
+
+  it("keeps the west half once walked, but wants the east half underground", () => {
+    const station = tunnel();
+    for (const over of [WEST_UNDER, WEST_OVER, EAST_OVER]) {
+      station.done(view(over));
+    }
+    expect(station.done(view(ON_MARK))).toBe(false);
+    station.done(view(EAST_UNDER));
+    expect(station.done(view(ON_MARK))).toBe(true);
+  });
+
+  it("marks the east mouth's top on the ground's layer", () => {
+    expect(tunnel().highlight).toEqual({ kind: "ground", at: MARK, layer: ABOVE });
+  });
+
+  it("whispers under, not over, once, the first time over the top", () => {
+    const runner = createTutorialRunner([tunnel()], () => KEYMAP_PRESETS.classic);
+    const looks = [BEFORE, WEST_OVER, BEFORE, EAST_OVER, WEST_UNDER, EAST_UNDER, ON_MARK];
+    // Past the over line's wait, inside the hint's.
+    const at = (k: number) => (k === 0 ? 0 : ASIDE_MS + (k - 1) * 1_500);
+    expect(looks.map((over, k) => runner.tick(view(over), at(k)).say?.key)).toEqual([
+      "tutorial.tunnel.intro",
+      "tutorial.tunnel.over",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      "tutorial.tunnel.praise",
     ]);
   });
 });

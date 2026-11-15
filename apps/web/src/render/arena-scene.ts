@@ -259,6 +259,7 @@ import {
   type Wisp,
 } from "./ground-effect-look.js";
 import { lyingPose } from "./lying-pose.js";
+import { sleeperCommands, type SleeperProp } from "./sleeper-prop.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import {
@@ -728,6 +729,8 @@ export class ArenaScene extends Phaser.Scene {
    */
   private goals = new Map<string, { mark: GoalMark; goneAt: number | undefined }>();
   private readonly goalGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** Scenery the simulation does not know (#3326), drawn with the bodies of its layer. */
+  private props: readonly SleeperProp[] = [];
   /** Every caped body's cape (#1699), and where the body was drawn last frame. */
   private capes = new Map<string, { motion: CapeMotion; x: number; y: number }>();
   /**
@@ -846,6 +849,11 @@ export class ArenaScene extends Phaser.Scene {
   /** Replace the snapshot to draw on the next frame. */
   public setSnapshot(snapshot: ArenaSnapshot): void {
     this.snapshot = snapshot;
+  }
+
+  /** Replace the props to draw from the next frame: none clears them. */
+  public setProps(props: readonly SleeperProp[]): void {
+    this.props = props;
   }
 
   /** Queue a floating number/label above a world position. */
@@ -1022,6 +1030,7 @@ export class ArenaScene extends Phaser.Scene {
         paintFormAura(phaserPainter(band.body), x, y, actor.radius, breath);
       }
     }
+    this.drawProps();
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
       if (band !== undefined) {
@@ -1838,6 +1847,56 @@ export class ArenaScene extends Phaser.Scene {
         }
       }
       g.restore();
+    }
+  }
+
+  /**
+   * The props (#3326) in the body pass of their layer's band, lifted to its
+   * height and lit where they lie, under the bodies that stand there.
+   */
+  private drawProps(): void {
+    const ground = this.snapshot.structure.ground;
+    for (const prop of this.props) {
+      const band = this.bandOf(prop.layer);
+      if (band === undefined) {
+        continue;
+      }
+      const lift = elevationOf(prop.layer, ground);
+      const tint = this.tintAt(prop.position, prop.layer);
+      for (const command of sleeperCommands(
+        prop.position,
+        prop.facing,
+        this.now,
+        this.reducedMotion,
+      )) {
+        switch (command.kind) {
+          case "body":
+            band.body.save();
+            band.body.translateCanvas(0, -lift);
+            band.body.fillStyle(
+              tint === undefined ? command.colour : multiplyColour(command.colour, tint),
+              1,
+            );
+            tracePath(band.body, command.outline);
+            band.body.fillPath();
+            band.body.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+            band.body.strokePath();
+            band.body.restore();
+            break;
+          case "z": {
+            const { at, size } = command;
+            const half = size / 2;
+            band.marks.lineStyle(1.5, command.colour, command.alpha);
+            band.marks.beginPath();
+            band.marks.moveTo(at.x - half, at.y - lift - half);
+            band.marks.lineTo(at.x + half, at.y - lift - half);
+            band.marks.lineTo(at.x - half, at.y - lift + half);
+            band.marks.lineTo(at.x + half, at.y - lift + half);
+            band.marks.strokePath();
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -2697,6 +2756,11 @@ export class ArenaScene extends Phaser.Scene {
   private bodyTint(actor: RenderableActor): number | undefined {
     // Drawn lifted and eased; the light is where it stands, on its own layer.
     const { position, layer } = this.standing.get(actor.id) ?? actor;
+    return this.tintAt(position, layer);
+  }
+
+  /** What the light at `position` on `layer` multiplies a body there by. */
+  private tintAt(position: Vec2, layer: number): number | undefined {
     const lit = this.bodyLight(position, layer);
     const structure = this.drawnMap?.structure;
     // Under a deck, in its shade (#3078): shape, not light, so with lighting off too.
