@@ -121,17 +121,20 @@ export function soundsForCombat(
 }
 
 /**
- * `cues` with the louder of each sound first, keeping their order
- * otherwise: the player's per-id throttle keeps the first and drops the
- * rest, so your minion's quiet death must not silence a teammate's.
+ * `cues` with each sound's copies, loudest first, in the places that
+ * sound held; every other sound keeps its place. The player's per-id
+ * throttle keeps the first and drops the rest, so your minion's quiet
+ * death must not silence a teammate's.
  */
-function loudestFirst(cues: Cue[]): Cue[] {
-  return cues
-    .map((cue, at) => ({ cue, at }))
-    .sort((a, b) =>
-      cueId(a.cue) === cueId(b.cue) ? cueGain(b.cue) - cueGain(a.cue) || a.at - b.at : a.at - b.at,
-    )
-    .map(({ cue }) => cue);
+function loudestFirst(cues: readonly Cue[]): Cue[] {
+  const louder = new Map<SoundId, Cue[]>();
+  for (const cue of cues) {
+    louder.set(cueId(cue), [...(louder.get(cueId(cue)) ?? []), cue]);
+  }
+  for (const copies of louder.values()) {
+    copies.sort((a, b) => cueGain(b) - cueGain(a));
+  }
+  return cues.map((cue) => louder.get(cueId(cue))?.shift() ?? cue);
 }
 
 /**

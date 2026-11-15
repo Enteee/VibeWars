@@ -225,6 +225,19 @@ describe("deaths and respawns, by whose they are (#3366)", () => {
     expect(soundsForCombat(both, ME, field)).toEqual(["death-ally", { id: "death-ally", db: -6 }]);
   });
 
+  it("keeps the louder death-ally first with a foe's death between them", () => {
+    const three = message("x", [
+      { kind: "death", targetId: "mine" },
+      { kind: "death", targetId: "foe" },
+      { kind: "death", targetId: "ally" },
+    ]);
+    expect(soundsForCombat(three, ME, field)).toEqual([
+      "death-ally",
+      "death-foe",
+      { id: "death-ally", db: -6 },
+    ]);
+  });
+
   it("is silent for a body it cannot place, but never for your own death", () => {
     expect(died("stranger")).toEqual([]);
     const unseen = (targetId: string) =>
