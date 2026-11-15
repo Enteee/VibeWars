@@ -303,7 +303,7 @@ not stand for.
 A layered map's frame cost in software GL, as a ratio to a frozen
 reference map drawn the same way on the same run. CI gates it at
 `BENCH_MAX_RATIO=2.7` on pull requests that touch the renderer or the
-maps (#3157, #3190, #3243, #3255).
+maps (#3157, #3190, #3243, #3255), in its own `render bench` job of `ci.yml` (#3382).
 
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
 synthetic medium arena in the real map schema: three layers, walls, three decks
