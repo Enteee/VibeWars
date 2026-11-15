@@ -43,6 +43,10 @@
  *                                    scale them to n (manager only, #1890)
  *   company runners logs [<runner>] [--lines <n>]  the supervisor's log and
  *                                    the runners', or one runner's (#2729)
+ *   company heavy [--max-wait <min>] <cmd...>  runs a heavy local job (bench,
+ *                                    Playwright) when it is its turn, one at a
+ *                                    time company-wide; `company heavy` alone
+ *                                    shows the holder and the queue (#3362)
  *     (`company` is this script with `company` as its first word)
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
@@ -50,10 +54,12 @@
  * without spending a round trip, and more importantly without having to
  * discover it by being refused.
  */
-import { spawnSync } from "node:child_process";
+import { execFile, spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { constants as osConstants } from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import {
@@ -67,6 +73,7 @@ import {
 import { HUBD_ALIVE, parseAlive } from "./hub-health.mjs";
 import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
+import { runHeavy } from "./heavy.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
 import { visible } from "./protocol.mjs";
 
@@ -158,6 +165,10 @@ if (argv[0] === "whoami") {
   console.log(
     `  ${runners.allow ? "yes" : "no "}  scale the company's CI runners (company runners <n>)`,
   );
+  const heavy = authorize(ROLE, { kind: "heavy", argv: ["status"] }, { acting: ACTING });
+  console.log(
+    `  ${heavy.allow ? "yes" : "no "}  run heavy jobs one at a time (company heavy <cmd>)`,
+  );
   const schedules = authorize(ROLE, { kind: "schedule", argv: ["ls"] }, { acting: ACTING });
   console.log(
     `  ${schedules.allow ? "yes" : "no "}  keep recurring reminders to yourself (hub schedule)`,
@@ -231,6 +242,67 @@ if (argv[0] === "push") {
 } else if (argv[0] === "board") {
   // Reads of hubd's copy of the board, for `board` (board.mjs).
   request = { kind: "board", argv: argv.slice(1) };
+} else if (argv[0] === "company" && argv[1] === "heavy") {
+  // One heavy local job at a time, company-wide (#3362). The lease lives in
+  // hubd; each call to it is this script run again as `company heavy-rpc`.
+  const self = fileURLToPath(import.meta.url);
+  const code = await runHeavy({
+    argv: argv.slice(2),
+    env: process.env,
+    request: (op, args) =>
+      new Promise((resolve, reject) => {
+        execFile(
+          process.execPath,
+          [self, "company", "heavy-rpc", op, ...args],
+          { encoding: "utf8" },
+          (error, stdout, stderr) => {
+            if (error !== null) {
+              reject(new Error(stderr.trim() || error.message));
+              return;
+            }
+            try {
+              /** @type {unknown} */
+              const parsed = JSON.parse(stdout);
+              resolve(/** @type {Record<string, unknown>} */ (parsed));
+            } catch {
+              reject(new Error("heavy: hubd gave no JSON"));
+            }
+          },
+        );
+      }),
+    spawnChild: (cmd, env) => {
+      const [file = "", ...args] = cmd;
+      const child = spawn(file, args, { stdio: "inherit", env });
+      return {
+        exited: new Promise((resolve) => {
+          child.on("error", (error) => {
+            console.error(`heavy: ${error.message}`);
+            resolve(127);
+          });
+          child.on("exit", (status, signal) => {
+            resolve(status ?? (signal === null ? 1 : 128 + osConstants.signals[signal]));
+          });
+        }),
+        kill: (signal) => child.kill(signal),
+      };
+    },
+    sleep: (ms) => sleep(ms),
+    now: () => Date.now(),
+    say: (line) => {
+      console.error(line);
+    },
+    onSignal: (handler) => {
+      for (const signal of /** @type {const} */ (["SIGINT", "SIGTERM"])) {
+        process.on(signal, () => {
+          handler(signal);
+        });
+      }
+    },
+  });
+  process.exit(code);
+} else if (argv[0] === "company" && argv[1] === "heavy-rpc") {
+  // Not for typing: one request to the lease, answered as JSON on stdout.
+  request = { kind: "heavy", argv: argv.slice(2) };
 } else if (argv[0] === "company") {
   // `company reboot "<reason>"`, `company reboot --abort` and
   // `company ready` (#21); `company hire` and `company fire` (#380);

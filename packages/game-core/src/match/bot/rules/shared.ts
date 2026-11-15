@@ -53,6 +53,40 @@ export function nearestLiving(
   return nearestTo(self.position, foes);
 }
 
+/** How many of the nearest foes by straight line `nearestToWalk` prices a walk to (#3353). */
+export const WALK_CANDIDATES = 3;
+
+/**
+ * Of `foes`, the one `self` walks to soonest, on its layer (#3353): a foe in
+ * a tunnel straight below is far by stairs. Only the `WALK_CANDIDATES`
+ * nearest by straight line are priced, a tie to the nearer of them; with
+ * none of them reachable, the nearest by straight line. With all of them on
+ * `self`'s layer nothing is priced: a route search per candidate per think
+ * is paid only where a layer can mislead the straight line.
+ */
+export function nearestToWalk(
+  self: Participant,
+  foes: readonly Participant[],
+  routeLength: (to: Vec2, layer: number) => number,
+): Participant | undefined {
+  const near = [...foes]
+    .sort((a, b) => distance(a.position, self.position) - distance(b.position, self.position))
+    .slice(0, WALK_CANDIDATES);
+  if (near.every((foe) => foe.layer === self.layer)) {
+    return near[0];
+  }
+  let best: Participant | undefined;
+  let bestWalk = Number.POSITIVE_INFINITY;
+  for (const foe of near) {
+    const walk = routeLength(foe.position, foe.layer);
+    if (walk < bestWalk) {
+      best = foe;
+      bestWalk = walk;
+    }
+  }
+  return best ?? near[0];
+}
+
 /** Of `bodies`, the one nearest `point`; a tie to the first. */
 export function nearestTo(point: Vec2, bodies: readonly Participant[]): Participant | undefined {
   let best: Participant | undefined;
