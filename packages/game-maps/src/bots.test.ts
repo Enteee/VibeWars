@@ -94,6 +94,7 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
       ruleset: RULESET,
       walls: allWallSegments(map.walls),
       bounds: { width: map.width, height: map.height },
+      layers: matchLayers(map),
       matchRules: ANNIHILATION_MATCH_RULES,
       participants,
     });

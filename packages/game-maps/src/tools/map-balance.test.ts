@@ -9,6 +9,7 @@ import {
   highGround,
   playBuildBot,
   runMapBalance,
+  walksTo,
   walksToCentre,
   type MapBalanceResult,
 } from "./map-balance.js";
@@ -80,6 +81,24 @@ describe("walks and high ground (#3070)", () => {
       const [ground0 = 0, ground1 = 0] = highGround(map);
       expect(ground0).toBeGreaterThan(0);
       expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.25);
+    }, 60_000);
+  });
+
+  // Ashen Courtyard (#3287): the centre is in the sunken well court, so the walks end on its floor.
+  // The west keeps the bigger tower by design: its high ground may exceed the east's by 40 %.
+  describe("Ashen Courtyard", () => {
+    const map = loadMap("ashen-courtyard");
+
+    it("walks each team from its spawn into the well court within 10 % of the other", () => {
+      const [walk0 = 0, walk1 = 0] = walksTo(map, { x: 1450, y: 1250 }, 0);
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.1);
+    });
+
+    it("gives the west no more than 40 % more high ground than the east", () => {
+      const [west = 0, east = 0] = highGround(map);
+      expect(east).toBeGreaterThan(0);
+      expect(west / east).toBeLessThanOrEqual(1.4);
     }, 60_000);
   });
 
