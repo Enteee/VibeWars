@@ -3,6 +3,7 @@
 // this is the only way a failure's page snapshot gets read. Runs only on
 // failure and always exits 0: it must never decide a job's result.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { inflateRawSync } from "node:zlib";
@@ -92,13 +93,7 @@ function failedDirs(root) {
  * @returns {string[]}
  */
 export function describeFailure(dir, title) {
-  const out = [
-    `::group::${title}`,
-    readFileSync(join(dir, "error-context.md"), "utf8")
-      .trimEnd()
-      // Page text must not open a workflow command.
-      .replace(/^::/gm, " ::"),
-  ];
+  const out = [readFileSync(join(dir, "error-context.md"), "utf8").trimEnd()];
   const tracePath = join(dir, "trace.zip");
   if (existsSync(tracePath)) {
     try {
@@ -114,8 +109,16 @@ export function describeFailure(dir, title) {
   const kept = lines.slice(0, MAX_TEST_LINES);
   if (lines.length > kept.length)
     kept.push("... " + String(lines.length - kept.length) + " lines cut");
-  kept.push("::endgroup::");
-  return kept;
+  // Page text is untrusted: stop-commands keeps a line of it from being run as
+  // a workflow command. The group lines stay outside, where they work.
+  const token = randomUUID();
+  return [
+    `::group::${title}`,
+    `::stop-commands::${token}`,
+    ...kept,
+    `::${token}::`,
+    "::endgroup::",
+  ];
 }
 
 /**

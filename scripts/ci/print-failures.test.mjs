@@ -96,7 +96,7 @@ describe("print-failures", () => {
   it("caps a test and the whole output", () => {
     const long = Array.from({ length: 900 }, (_, i) => "l" + String(i)).join("\n");
     const one = printFailures(fixture(undefined, long));
-    expect(one.length).toBeLessThanOrEqual(MAX_TEST_LINES + 2);
+    expect(one.length).toBeLessThanOrEqual(MAX_TEST_LINES + 5);
     const root = fixture(undefined, "x");
     for (let i = 0; i < 20; i++) {
       mkdirSync(join(root, "t" + String(i)));
@@ -107,9 +107,14 @@ describe("print-failures", () => {
 });
 
 describe("print-failures hardening", () => {
-  it("defuses a page line that looks like a workflow command", () => {
-    const out = printFailures(fixture(undefined, "::error::boom")).join("\n");
-    expect(out).not.toMatch(/^::error::/m);
-    expect(out).toContain(" ::error::boom");
+  it("wraps page text in stop-commands, with the group outside", () => {
+    const out = printFailures(fixture(undefined, "::error::boom"));
+    const stop = out.findIndex((l) => l.startsWith("::stop-commands::"));
+    const token = out[stop]?.slice("::stop-commands::".length);
+    expect(out[0]).toMatch(/^::group::/);
+    expect(stop).toBeGreaterThan(0);
+    expect(out.indexOf("::error::boom")).toBeGreaterThan(stop);
+    expect(out.indexOf("::" + String(token) + "::")).toBeGreaterThan(out.indexOf("::error::boom"));
+    expect(out.at(-1)).toBe("::endgroup::");
   });
 });
