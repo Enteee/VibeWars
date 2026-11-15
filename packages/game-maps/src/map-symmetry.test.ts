@@ -24,7 +24,6 @@ const SYMMETRIC = [
   "mosslit-cairns",
   "wardens-gallery",
   "brazen-causeway",
-  "ashen-courtyard",
   "moss-vale",
   "canthan-terraces",
   "sunken-bastion",

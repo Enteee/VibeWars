@@ -301,13 +301,22 @@ function homeSpawn(map: MapData, team: number): SpawnPoint {
  * (#3070), by team: an asymmetric map keeps them within 10 % of each other.
  */
 export function walksToCentre(map: MapData): number[] {
+  return walksTo(map, { x: map.width / 2, y: map.height / 2 }, map.groundLayer);
+}
+
+/**
+ * How far each team walks from its spawn to `to` on `layer`, by team: for a
+ * map whose centre is not on the ground, such as a sunken court (#3287).
+ */
+export function walksTo(map: MapData, to: Vec2, layer: number): number[] {
   const finder = layeredFinder(map, RULESET.collision.playerRadius);
-  const centre = { x: map.width / 2, y: map.height / 2 };
   return Array.from({ length: map.teams }, (_, team) => {
     const start = homeSpawn(map, team);
-    const route = finder.find(start.position, start.layer, centre, map.groundLayer);
+    const route = finder.find(start.position, start.layer, to, layer);
     if (route === undefined)
-      throw new Error(`${map.id}: team ${String(team)} cannot walk to the centre`);
+      throw new Error(
+        `${map.id}: team ${String(team)} cannot walk to (${String(to.x)},${String(to.y)})`,
+      );
     return route.reduce((walked, point, index) => {
       const from = route[index - 1] ?? start.position;
       return walked + Math.hypot(point.x - from.x, point.y - from.y);
