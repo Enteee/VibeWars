@@ -9,7 +9,7 @@ import type { Point } from "./weapon-mark-geometry.js";
  * it is there, so it cannot be clicked, targeted or hurt. Client-only and
  * yours alone.
  */
-export type TutorialProp = SleeperProp | ParasolProp;
+export type TutorialProp = SleeperProp | ParasolProp | MistGateProp;
 
 /** The tutorial's sleeping guard (#3326), lying on top of a wall. */
 export interface SleeperProp {
@@ -36,7 +36,7 @@ export interface ParasolProp {
 }
 
 /** One stroke of any prop, in world units, for the scene to paint in its light. */
-export type PropCommand = SleeperCommand | ParasolCommand;
+export type PropCommand = SleeperCommand | ParasolCommand | MistGateCommand;
 
 /** One stroke of the sleeper, in world units, for the scene to paint in its light. */
 export type SleeperCommand =
@@ -320,4 +320,124 @@ export function parasolCommands(position: Vec2): readonly ParasolCommand[] {
     colour: PARASOL_RIM,
   };
   return [shade, ...chair, pole, ...panels, edge];
+}
+
+/**
+ * The tutorial's mist gate (#3334), at the canyon's east end: a tall
+ * column of mist on the ground of `layer`, the fight beyond it showing
+ * through as foe silhouettes (`docs/art/3187-tutorial-canyon.md`).
+ */
+export interface MistGateProp {
+  readonly id: string;
+  readonly kind: "mist-gate";
+  /** The column's foot, where the pair walk in. */
+  readonly position: Vec2;
+  /** The map layer whose ground it stands on. */
+  readonly layer: number;
+}
+
+/** One stroke of the mist gate, in world units: its silhouettes lit, its mist the light. */
+export type MistGateCommand =
+  | Extract<ParasolCommand, { kind: "shape" }>
+  /** A soft ellipse, unlit: mist glows on its own. */
+  | {
+      readonly kind: "mist";
+      readonly at: Vec2;
+      readonly width: number;
+      readonly height: number;
+      readonly colour: number;
+      readonly alpha: number;
+    };
+
+/** The column's half width and how tall it stands: over a fighter's head twice over. */
+export const MIST_HALF_WIDTH = 70;
+export const MIST_HEIGHT = 240;
+/** Its two blurs, outer then core (art study, "Station 14's exit"). */
+export const MIST_OUTER = 0xe9e2dc;
+export const MIST_CORE = 0xffffff;
+/** How many rings each blur is drawn in, fading outward, so its edge is soft. */
+const MIST_RINGS = 4;
+/** The fight beyond: desaturated, so it reads as far off and as nobody near. */
+export const SILHOUETTE_GREY = 0x8d8a93;
+const SILHOUETTE_ALPHA = 0.6;
+/** The silhouettes, from the column's foot: staggered east, behind it, in rows. */
+const SILHOUETTES: readonly Vec2[] = [
+  { x: 30, y: -40 },
+  { x: 70, y: 10 },
+  { x: 55, y: 55 },
+  { x: 105, y: -15 },
+  { x: 120, y: 40 },
+];
+/** A silhouette's body and head, as a fighter's are wide. */
+const SILHOUETTE_BODY = 15;
+const SILHOUETTE_HEAD = 8;
+/** How many wisps swirl in the column, and how long one takes to go round. */
+export const MIST_WISPS = 3;
+export const MIST_SWIRL_SECONDS = 6;
+
+/**
+ * The mist gate at `position` at `seconds` on the scene's clock: the
+ * foe silhouettes beyond it, then the outer blur over them, its pale
+ * core, and the wisps swirling round inside. Under reduced motion the
+ * wisps stand still.
+ */
+export function mistGateCommands(
+  position: Vec2,
+  seconds: number,
+  reducedMotion: boolean,
+): readonly MistGateCommand[] {
+  const silhouettes = SILHOUETTES.flatMap(({ x, y }): MistGateCommand[] => {
+    const foot = { x: position.x + x, y: position.y + y };
+    const head = { x: foot.x, y: foot.y - SILHOUETTE_BODY * 2 - SILHOUETTE_HEAD };
+    return [
+      {
+        kind: "shape",
+        outline: arc(
+          { x: foot.x, y: foot.y - SILHOUETTE_BODY },
+          SILHOUETTE_BODY * 0.7,
+          1 / 0.7,
+          0,
+          2 * Math.PI,
+          16,
+        ),
+        colour: SILHOUETTE_GREY,
+        alpha: SILHOUETTE_ALPHA,
+      },
+      {
+        kind: "shape",
+        outline: arc(head, SILHOUETTE_HEAD, 1, 0, 2 * Math.PI, 12),
+        colour: SILHOUETTE_GREY,
+        alpha: SILHOUETTE_ALPHA,
+      },
+    ];
+  });
+  const middle = { x: position.x, y: position.y - MIST_HEIGHT / 2 };
+  const blur = (colour: number, scale: number, alpha: number): MistGateCommand[] =>
+    Array.from({ length: MIST_RINGS }, (_, k): MistGateCommand => {
+      const spread = scale * (1 - k / (MIST_RINGS * 2));
+      return {
+        kind: "mist",
+        at: middle,
+        width: MIST_HALF_WIDTH * 2 * spread,
+        height: MIST_HEIGHT * spread,
+        colour,
+        alpha: alpha / MIST_RINGS,
+      };
+    });
+  const wisps = Array.from({ length: MIST_WISPS }, (_, k): MistGateCommand => {
+    const turn = (reducedMotion ? 0 : seconds / MIST_SWIRL_SECONDS) + k / MIST_WISPS;
+    const angle = 2 * Math.PI * turn;
+    return {
+      kind: "mist",
+      at: {
+        x: middle.x + Math.cos(angle) * MIST_HALF_WIDTH * 0.45,
+        y: middle.y + Math.sin(angle) * MIST_HEIGHT * 0.3,
+      },
+      width: MIST_HALF_WIDTH * 0.8,
+      height: MIST_HALF_WIDTH * 0.5,
+      colour: MIST_CORE,
+      alpha: 0.35,
+    };
+  });
+  return [...silhouettes, ...blur(MIST_OUTER, 1, 0.9), ...blur(MIST_CORE, 0.55, 0.9), ...wisps];
 }

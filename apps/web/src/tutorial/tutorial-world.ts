@@ -1,4 +1,5 @@
 import {
+  BOT_REACTION,
   MINIMAL_GW_INSPIRED_PVP_V1 as RULESET,
   MatchSimulation,
   PROFESSIONS,
@@ -20,11 +21,14 @@ import {
   type Vec2,
 } from "@vibewars/game-core";
 
-import { hostMap, mapStructure } from "../net/maps.js";
+import { mapMatchRules } from "@vibewars/game-maps/match-fields";
+
+import { arenaMap, hostMap, mapStructure } from "../net/maps.js";
 import { DEFAULT_STEP, VIEW_ASPECT, VIEW_STEPS, type Size } from "../render/camera-rig.js";
 import { pickSurface, shapeOutline } from "../render/layer-surfaces.js";
 import { elevationOf } from "../render/render-order.js";
 import type { MapStructure } from "../render/arena-snapshot.js";
+import type { Professions } from "../training/local-connection.js";
 import {
   SPLASH_RULES,
   splashGraph,
@@ -329,7 +333,7 @@ export function tutorialWorld(
   if (map === undefined) {
     throw new Error(`no map ${mapId} for the tutorial`);
   }
-  const fight = { mapId, teamSize, still: false };
+  const fight = { mapId, teamSize, still: false } as const;
   const graph = splashGraph(map);
   const { structure } = mapStructure(mapId);
   const ground = structure.ground;
@@ -359,40 +363,165 @@ export function tutorialWorld(
         );
   const playerBuild = tutorialPlayerBuild();
   const tutorBuild = houseBuild(tutorProfession);
-  const builds = createRng(seedFromString(`builds-${seed}`));
   const foes: Guard[] = [];
-  const simulation = new MatchSimulation({
+  const { simulation } = fightOn(
+    map,
+    fight,
+    graph,
     seed,
-    ruleset: RULESET,
-    matchRules: SPLASH_RULES,
-    walls: map.walls,
-    bounds: map.bounds,
-    // Its layers, as a match has them: a walk on a map whose ground is not
-    // its lowest layer names that layer, which a flat world refuses.
-    layers: map.layers,
-    participants: [
-      ...splashParticipants(
-        map,
-        fight,
-        graph,
-        (team) => (team === 0 ? STARTER_BUILDS : FOE_BUILDS),
-        // The bots' builds follow the seed too, so a seed is one whole world.
-        () => builds.nextFloat(),
-      ).participants.map((bot) => {
-        if (bot.team === 0) {
-          return { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) };
-        }
-        const guard = guarding(bot.spawn, centre, [spawn, post, mark, teleporter, besidePad]);
-        foes.push(guard);
-        return { ...bot, behaviour: guard };
-      }),
+    "battlefield",
+    (bot) => {
+      if (bot.team === 0) {
+        return { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) };
+      }
+      const guard = guarding(bot.spawn, centre, [spawn, post, mark, teleporter, besidePad]);
+      foes.push(guard);
+      return { ...bot, behaviour: guard };
+    },
+    [
       body(SELF_ID, playerBuild, spawn, undefined),
       // Walked as a player is, so the session can send it on (#3222):
       // a behaviour would take its walk back every tick.
       body(TUTOR_ID, tutorBuild, tutorSpawn, undefined),
     ],
-  });
+  );
   // The tutor walks over and stays by the mark.
   simulation.walkTo(TUTOR_ID, post, ground);
   return { map, simulation, playerBuild, tutorBuild, mark, ground, teleporter, besidePad, foes };
+}
+
+/** Where a tutorial fight stands (#3334): the battlefield it begins on, or the front it ends at. */
+type FightKind = "battlefield" | "front";
+
+/**
+ * The menu's bots on `map`, `fight.teamSize` a side, their builds drawn
+ * from `seed`, each placed by `place`, then `pair`. On the battlefield
+ * the foes play only `FOE_BUILDS`, nobody wins and none of the map's
+ * objectives stand; the front (#3334) is the map's mode, whole, on every
+ * starter build.
+ */
+function fightOn(
+  map: SplashMap,
+  fight: { readonly mapId: string; readonly teamSize: number; readonly still: false },
+  graph: NavGraph,
+  seed: string,
+  kind: FightKind,
+  place: (bot: ParticipantSpec) => ParticipantSpec,
+  pair: readonly ParticipantSpec[],
+): {
+  readonly simulation: MatchSimulation;
+  readonly professions: ReadonlyMap<string, Professions>;
+} {
+  const builds = createRng(seedFromString(`builds-${seed}`));
+  const bots = splashParticipants(
+    map,
+    fight,
+    graph,
+    (team) => (team === 0 || kind === "front" ? STARTER_BUILDS : FOE_BUILDS),
+    // The bots' builds follow the seed too, so a seed is one whole world.
+    () => builds.nextFloat(),
+  );
+  const participants = [...bots.participants.map(place), ...pair];
+  const simulation =
+    kind === "battlefield"
+      ? new MatchSimulation({
+          seed,
+          ruleset: RULESET,
+          matchRules: SPLASH_RULES,
+          walls: map.walls,
+          bounds: map.bounds,
+          // Its layers, as a match has them: a walk on a map whose ground is not
+          // its lowest layer names that layer, which a flat world refuses.
+          layers: map.layers,
+          participants,
+        })
+      : new MatchSimulation({
+          seed,
+          ruleset: RULESET,
+          matchRules: mapMatchRules(arenaMap(fight.mapId), map.mode),
+          teamCount: map.descriptor.teamCount,
+          walls: map.walls,
+          gates: map.gates,
+          switches: map.switches,
+          teleports: map.teleports,
+          breakables: map.breakables,
+          switchedDecks: map.switchedDecks,
+          bounds: map.bounds,
+          layers: map.layers,
+          zones: map.zones,
+          shrines: map.shrines,
+          guildLords: map.guildLords,
+          flagField: map.flagField,
+          relicField: map.relicField,
+          ghostField: map.ghostField,
+          capturePoints: map.capturePoints,
+          startLine: map.startLine,
+          guards: map.guards,
+          participants,
+        });
+  return { simulation, professions: bots.professions };
+}
+
+/** How far behind the foes' spawn the pair arrive at the front (#3334), away from the centre. */
+export const BEHIND_THE_FOES = 300;
+/** Where the tutor stands beside the player as they arrive at the front. */
+const TUTOR_BESIDE = vec2(0, 70);
+
+/** The tutorial's last fight (#3334), built and not yet stepped. */
+export interface FrontWorld {
+  readonly map: SplashMap;
+  readonly simulation: MatchSimulation;
+  /** Each bot's, as a match's snapshot carries them. */
+  readonly professions: ReadonlyMap<string, Professions>;
+  /** Where the pair arrive: behind the foes, or at their own side's spawn. */
+  readonly arrival: Vec2;
+  readonly ground: number;
+}
+
+/**
+ * Back to the front (#3334): a fresh fight of the menu's bots on `mapId`,
+ * `teamSize` a side, played as the map's mode to its end. The pair are
+ * on the side they stood with on the battlefield, the tutor now one of
+ * its bots on `tutorBuild`. They arrive behind the foes: the foes' spawn,
+ * `BEHIND_THE_FOES` further from the map's centre, under open sky. Where
+ * that is no open ground, which is wrong data, at their own side's spawn.
+ */
+export function frontWorld(
+  seed: string,
+  mapId: string,
+  teamSize: number,
+  playerBuild: PlayerBuild,
+  tutorBuild: PlayerBuild,
+): FrontWorld {
+  // Two sides, as the battlefield has: a third team's objectives go.
+  const map = hostMap(mapId, 2);
+  if (map === undefined) {
+    throw new Error(`no map ${mapId} for the tutorial's front`);
+  }
+  const fight = { mapId, teamSize, still: false } as const;
+  const graph = splashGraph(map);
+  const { structure } = mapStructure(mapId);
+  const middle = (teamSize - 1) / 2;
+  const theirs = splashSpawn(graph, map, fight, 1, middle);
+  const centre = vec2(map.descriptor.width / 2, map.descriptor.height / 2);
+  const away = Math.max(Math.hypot(theirs.x - centre.x, theirs.y - centre.y), 1);
+  const behind = nearestStandable(
+    graph,
+    vec2(
+      theirs.x + ((theirs.x - centre.x) / away) * BEHIND_THE_FOES,
+      theirs.y + ((theirs.y - centre.y) / away) * BEHIND_THE_FOES,
+    ),
+  );
+  const open = openAround((at) => !inOpenView(structure, at));
+  const arrival = open(behind) ? behind : splashSpawn(graph, map, fight, 0, middle);
+  const tutorAt = nearestStandable(
+    graph,
+    vec2(arrival.x + TUTOR_BESIDE.x, arrival.y + TUTOR_BESIDE.y),
+  );
+  const bot = { kind: "play-build", reaction: BOT_REACTION } as const;
+  const { simulation, professions } = fightOn(map, fight, graph, seed, "front", (spec) => spec, [
+    body(SELF_ID, playerBuild, arrival, undefined),
+    body(TUTOR_ID, tutorBuild, tutorAt, bot),
+  ]);
+  return { map, simulation, professions, arrival, ground: structure.ground };
 }
