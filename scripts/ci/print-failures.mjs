@@ -10,11 +10,13 @@ import { inflateRawSync } from "node:zlib";
 export const MAX_TEST_LINES = 400;
 export const MAX_TOTAL_LINES = 3000;
 const TRACE_ACTIONS = 30;
+// Playwright names it trace.trace, or <n>-trace.trace in newer versions.
+const TRACE_ENTRY = /(^|-)trace\.trace$/;
 
 /**
  * Reads one file out of a zip: central directory, then stored/deflated data.
  * @param {Buffer} zip
- * @param {string} name
+ * @param {RegExp} name tested against each entry name
  * @returns {Buffer}
  */
 export function readZipEntry(zip, name) {
@@ -31,14 +33,14 @@ export function readZipEntry(zip, name) {
     const extraLen = zip.readUInt16LE(p + 30);
     const commentLen = zip.readUInt16LE(p + 32);
     const local = zip.readUInt32LE(p + 42);
-    if (zip.toString("utf8", p + 46, p + 46 + nameLen) === name) {
+    if (name.test(zip.toString("utf8", p + 46, p + 46 + nameLen))) {
       const start = local + 30 + zip.readUInt16LE(local + 26) + zip.readUInt16LE(local + 28);
       const data = zip.subarray(start, start + size);
       return method === 0 ? data : inflateRawSync(data);
     }
     p += 46 + nameLen + extraLen + commentLen;
   }
-  throw new Error(`no ${name} in zip`);
+  throw new Error(`no entry matching ${String(name)} in zip`);
 }
 
 /**
@@ -100,10 +102,10 @@ export function describeFailure(dir, title) {
   const tracePath = join(dir, "trace.zip");
   if (existsSync(tracePath)) {
     try {
-      const trace = readZipEntry(readFileSync(tracePath), "trace.trace").toString("utf8");
+      const trace = readZipEntry(readFileSync(tracePath), TRACE_ENTRY).toString("utf8");
       out.push("--- last actions (ms, action, target) ---", ...traceSummary(trace));
-    } catch {
-      out.push("trace unreadable");
+    } catch (e) {
+      out.push("trace unreadable: " + (e instanceof Error ? e.message : String(e)));
     }
   } else {
     out.push("trace unreadable");
