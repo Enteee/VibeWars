@@ -120,6 +120,8 @@ left half-done.
   step is in your way, either fix the code or say out loud that the check is
   wrong and why. Deleting it is not an option available to you.
 - Keep Telegram messages short. The operator reads them on a phone.
+- Wrap every heavy local job (bench, Playwright, screenshot run) in
+  `company heavy <cmd>`. No Telegram announcement.
 - `.git/config`, hooks and `.git/info` are read-only in here, so
   `git config` and `git remote add` fail by design. To update main, run
   `git fetch https://github.com/Enteee/VibeWars.git main:refs/remotes/origin/main`.

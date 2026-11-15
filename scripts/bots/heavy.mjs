@@ -1,0 +1,118 @@
+/**
+ * The client of `company heavy <cmd...>` (#3362): waits for hubd's single
+ * heavy-job lease, runs the command in this jail with the lease id in
+ * VIBEWARS_HEAVY, renews while it runs, releases when it ends. Pure apart
+ * from what is injected, so it can be tested without a daemon or a child.
+ */
+
+/** Exit status when the wait ran out: EX_TEMPFAIL. */
+export const EXIT_GAVE_UP = 75;
+/** Exit status when the command could not be started. */
+export const EXIT_NOT_FOUND = 127;
+export const POLL_MS = 5_000;
+export const RENEW_MS = 30_000;
+export const DEFAULT_MAX_WAIT_MIN = 30;
+
+/**
+ * @typedef {object} HeavyDeps
+ * @property {string[]} argv the words after `company heavy`
+ * @property {Record<string, string | undefined>} env
+ * @property {(op: string, args: string[]) => Promise<Record<string, unknown>>} request a hubd `heavy` request; resolves to its JSON answer, rejects if there was none
+ * @property {(argv: string[], env: Record<string, string | undefined>) => { exited: Promise<number>, kill: (signal: NodeJS.Signals) => void }} spawnChild
+ * @property {(ms: number) => Promise<void>} sleep
+ * @property {() => number} now
+ * @property {(line: string) => void} say
+ * @property {(handler: (signal: NodeJS.Signals) => void) => void} onSignal
+ */
+
+/**
+ * @param {string[]} argv
+ * @returns {{ maxWaitMin: number, cmd: string[] } | { error: string }}
+ */
+export const parseHeavy = (argv) => {
+  let maxWaitMin = DEFAULT_MAX_WAIT_MIN;
+  let rest = argv;
+  if (rest[0] === "--max-wait") {
+    const value = Number(rest[1]);
+    if (!Number.isFinite(value) || value <= 0) return { error: "--max-wait takes minutes" };
+    maxWaitMin = value;
+    rest = rest.slice(2);
+  }
+  return { maxWaitMin, cmd: rest };
+};
+
+/**
+ * @param {HeavyDeps} deps
+ * @returns {Promise<number>} the exit status
+ */
+export const runHeavy = async (deps) => {
+  const { env, request, spawnChild, sleep, now, say, onSignal } = deps;
+  const parsed = parseHeavy(deps.argv);
+  if ("error" in parsed) {
+    say(`heavy: ${parsed.error}`);
+    return 2;
+  }
+  const { maxWaitMin, cmd } = parsed;
+
+  if (cmd.length === 0) {
+    const status = await request("status", []);
+    const queue = Array.isArray(status.queue) ? /** @type {string[]} */ (status.queue) : [];
+    say(typeof status.holder === "string" ? `holder: ${status.holder}` : "holder: nobody (free)");
+    for (const entry of queue) say(`queued: ${entry}`);
+    return 0;
+  }
+
+  // Inside a heavy job already: one slot, no deadlock.
+  if (env.VIBEWARS_HEAVY !== undefined && env.VIBEWARS_HEAVY !== "") {
+    return spawnChild(cmd, env).exited;
+  }
+
+  /** Runs the command under the lease, renewing it until the command ends. */
+  const runLeased = async (/** @type {string} */ leaseId) => {
+    const child = spawnChild(cmd, { ...env, VIBEWARS_HEAVY: leaseId });
+    onSignal((signal) => {
+      child.kill(signal);
+    });
+    let warned = false;
+    for (;;) {
+      const ended = await Promise.race([
+        child.exited.then(() => true),
+        sleep(RENEW_MS).then(() => false),
+      ]);
+      if (ended) break;
+      const renewed = await request("renew", [leaseId]).catch(() => ({ ok: false }));
+      if (renewed.ok !== true && !warned) {
+        warned = true;
+        say("heavy: lost the lease; the job keeps running, unlocked");
+      }
+    }
+    const code = await child.exited;
+    await request("release", [leaseId]).catch(() => ({}));
+    return code;
+  };
+
+  const label = cmd.slice(0, 3).join(" ");
+  const deadline = now() + maxWaitMin * 60_000;
+  let lastAhead = -1;
+  for (;;) {
+    const answer = await request("acquire", [label]);
+    if (typeof answer.leaseId === "string" && answer.granted === true) {
+      return runLeased(answer.leaseId);
+    }
+    if (typeof answer.ahead !== "number") {
+      say(`heavy: unexpected answer from hubd: ${JSON.stringify(answer)}`);
+      return 1;
+    }
+    const holder = typeof answer.holder === "string" ? answer.holder : "nobody yet";
+    if (answer.ahead !== lastAhead) {
+      say(`heavy: queued, ${String(answer.ahead)} ahead (holder: ${holder})`);
+      lastAhead = answer.ahead;
+    }
+    if (now() >= deadline) {
+      await request("leave", []).catch(() => ({}));
+      say(`heavy: gave up after ${String(maxWaitMin)} min (holder: ${holder})`);
+      return EXIT_GAVE_UP;
+    }
+    await sleep(POLL_MS);
+  }
+};
