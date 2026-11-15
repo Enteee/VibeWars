@@ -497,12 +497,17 @@ test.describe("the first-time tutorial (#3218)", () => {
         const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
           .split(",")
           .map(Number);
-        expect(Math.hypot(cx - point.x, cy - point.y)).toBeLessThan(reach);
+        expect(
+          Math.hypot(cx - point.x, cy - point.y),
+          `at ${String(cx)},${String(cy)}, bound for ${String(point.x)},${String(point.y)}`,
+        ).toBeLessThan(reach);
       };
+      // On each waypoint, not just near it: there is no pathing, and a leg
+      // begun beside one can run its straight line into a corner (#3363).
       for (const waypoint of TO_THE_TUNNEL) {
         await expect(async () => {
           await walkTo(waypoint, LONG_STRIDE);
-          await near(waypoint, 150);
+          await near(waypoint, 40);
         }).toPass({ timeout: 90_000 });
       }
       // One click each, then a wait for the walk: an Alt click from inside
