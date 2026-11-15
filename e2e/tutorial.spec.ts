@@ -63,9 +63,9 @@ const UNDER_THE_HIGH_DECK = { x: 1980, y: 1700 };
 const OVER_THE_LANDING = { x: 2350, y: 1560 - 56 };
 /**
  * Station 11's way off the high deck (#3326): down both flights, west along
- * the south leg, north up the west one, to the top of the tunnel's west
- * steps. Each stride a long one: a short first one from the deck falls on
- * the rock round it.
+ * the south leg, north up the west one, onto the top of the tunnel's west
+ * steps, one long stride from the tunnel's west half. Each stride a long
+ * one: a short first one from the deck falls on the rock round it.
  */
 const TO_THE_TUNNEL = [
   { x: 2350, y: 1950 },
@@ -73,6 +73,7 @@ const TO_THE_TUNNEL = [
   { x: 1200, y: 1300 },
   { x: 1200, y: 800 },
   { x: 1600, y: 700 },
+  { x: 1720, y: 700 },
 ];
 /** How far each stride of station 11 (#3326) reaches, in world units: still inside the view. */
 const LONG_STRIDE = 500;
@@ -499,15 +500,18 @@ test.describe("the first-time tutorial (#3218)", () => {
           await near(waypoint, 150);
         }).toPass({ timeout: 90_000 });
       }
+      // One click each, then a wait for the walk: an Alt click from inside
+      // the tunnel goes back up onto the rock (#3234), where the guard bars
+      // the way east.
       await expect(async () => {
         await page.keyboard.down("Alt");
         await walkTo(IN_THE_TUNNEL_WEST, LONG_STRIDE);
         await page.keyboard.up("Alt");
-        await near(IN_THE_TUNNEL_WEST, 100);
+        await expect(() => near(IN_THE_TUNNEL_WEST, 100)).toPass({ timeout: 20_000 });
       }).toPass({ timeout: 60_000 });
       await expect(async () => {
         await walkTo(IN_THE_TUNNEL_EAST, LONG_STRIDE);
-        await near(IN_THE_TUNNEL_EAST, 100);
+        await expect(() => near(IN_THE_TUNNEL_EAST, 100)).toPass({ timeout: 20_000 });
       }).toPass({ timeout: 60_000 });
       const quiet = "Not a peep. Tunnels hide you from whoever's above.";
       await expect(async () => {
