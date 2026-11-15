@@ -1504,6 +1504,13 @@ export default {
   "training.soundOn": "Con sonido.",
   "training.you": "Tú",
 
+  "tutorial.call.hint": "Marca una rata y le pegaré a esa.",
+  "tutorial.call.how":
+    "Haz clic con la rueda en una rata, o en la barra de objetivo, para marcarla. {keys} apunta a lo que marcó tu equipo.",
+  "tutorial.call.intro": "Dos ratas. Tú eliges, yo golpeo. Marca una.",
+  "tutorial.call.other": "Marca la otra.",
+  "tutorial.call.praise": "Márcalo y el equipo golpea lo mismo.",
+  "tutorial.call.t": "Eso es. {keys} encuentra el objetivo marcado.",
   "tutorial.climb.hint": "Sube a la cornisa y luego baja al suelo que hay debajo.",
   "tutorial.climb.how":
     "Haz clic donde quieras estar. Alt+clic (Option en Mac) elige el suelo de abajo.",

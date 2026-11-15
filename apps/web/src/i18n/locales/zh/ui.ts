@@ -1308,6 +1308,12 @@ export default {
   "training.soundOn": "声音已开启。",
   "training.you": "你",
 
+  "tutorial.call.hint": "点名一只老鼠，我就打那只。",
+  "tutorial.call.how": "用滚轮点击老鼠，或点击目标栏，即可点名。{keys} 选中你的队伍点名的目标。",
+  "tutorial.call.intro": "两只老鼠。你来选，我来打。点名一只。",
+  "tutorial.call.other": "点名另一只。",
+  "tutorial.call.praise": "一点名，全队就打同一个目标。",
+  "tutorial.call.t": "就是这样。{keys} 找到点名的目标。",
   "tutorial.climb.hint": "登上岩台,再下到它下方的地面。",
   "tutorial.climb.how": "点击你要站的位置。Alt+点击(Mac 上用 Option)选择下方的地面。",
   "tutorial.climb.intro": "走上台阶。实线圆环就是你要站的地方。",

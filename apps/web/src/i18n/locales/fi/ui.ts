@@ -1430,6 +1430,13 @@ export default {
   "training.soundOn": "Ääni päällä.",
   "training.you": "Sinä",
 
+  "tutorial.call.hint": "Merkitse rotta, niin lyön sitä.",
+  "tutorial.call.how":
+    "Napsauta rottaa rullalla tai napsauta kohdepalkkia merkitäksesi sen. {keys} kohdistaa siihen, minkä tiimisi merkitsi.",
+  "tutorial.call.intro": "Kaksi rottaa. Sinä valitset, minä lyön. Merkitse yksi.",
+  "tutorial.call.other": "Merkitse se toinen.",
+  "tutorial.call.praise": "Merkitse se, niin tiimi lyö samaa.",
+  "tutorial.call.t": "Juuri noin. {keys} löytää merkityn kohteen.",
   "tutorial.climb.hint": "Ylös reunalle, sitten alas sen alla olevalle maalle.",
   "tutorial.climb.how":
     "Napsauta kohtaa, jossa haluat seistä. Alt+napsautus (Macissa Option) valitsee alemman maan.",

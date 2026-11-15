@@ -1507,6 +1507,13 @@ export default {
   "training.soundOn": "Son activé.",
   "training.you": "Toi",
 
+  "tutorial.call.hint": "Désigne un rat, et je frappe celui-là.",
+  "tutorial.call.how":
+    "Clic molette sur un rat, ou clic sur la barre de cible, pour le désigner. {keys} cible ce que ton équipe a désigné.",
+  "tutorial.call.intro": "Deux rats. Tu choisis, je frappe. Désigne-en un.",
+  "tutorial.call.other": "Désigne l'autre.",
+  "tutorial.call.praise": "Désigne-la, et l'équipe frappe la même cible.",
+  "tutorial.call.t": "C'est ça. {keys} trouve la cible désignée.",
   "tutorial.climb.hint": "Monte sur la corniche, puis descends au sol en dessous.",
   "tutorial.climb.how":
     "Clique là où tu veux te tenir. Alt+clic (Option sur Mac) choisit le sol du dessous.",

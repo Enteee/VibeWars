@@ -183,6 +183,8 @@ export type MatchViewOptions =
         readonly props: () => readonly SleeperProp[];
         /** Each walk a click sends, and whether it was an Alt walk, to the ground below (#3323). */
         readonly onWalk: (below: boolean) => void;
+        /** Each press of the `target-called` key while the team has a call (#3331). */
+        readonly onCalledTargeted: () => void;
       };
     }
   | {
@@ -984,9 +986,13 @@ export async function startMatchView(
         seat.sendIntent({ kind: "target", targetSessionId: closest });
       }
     } else if (action === "target-called") {
-      const intent = calledTargetIntent(seat.getSnapshot(), seat.getCalls());
+      const calls = seat.getCalls();
+      const intent = calledTargetIntent(seat.getSnapshot(), calls);
       if (intent !== undefined) {
         seat.sendIntent(intent);
+      }
+      if (calls.target !== null) {
+        tutorial?.onCalledTargeted();
       }
     } else if (action === "target-self") {
       const intent = selfTargetIntent(match.players, seat.selfSessionId);

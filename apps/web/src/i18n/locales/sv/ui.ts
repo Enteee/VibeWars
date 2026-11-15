@@ -1413,6 +1413,13 @@ export default {
   "training.soundOn": "Ljud på.",
   "training.you": "Du",
 
+  "tutorial.call.hint": "Ropa ut en råtta, så slår jag den.",
+  "tutorial.call.how":
+    "Klicka med hjulet på en råtta, eller klicka på målfältet, för att ropa ut den. {keys} siktar på det ditt lag ropade ut.",
+  "tutorial.call.intro": "Två råttor. Du väljer, jag slår. Ropa ut en.",
+  "tutorial.call.other": "Ropa ut den andra.",
+  "tutorial.call.praise": "Ropa ut det, så slår laget samma sak.",
+  "tutorial.call.t": "Just så. {keys} hittar det utropade målet.",
   "tutorial.climb.hint": "Upp på avsatsen, och sedan ner till marken under den.",
   "tutorial.climb.how":
     "Klicka där du vill stå. Alt+klick (Option på en Mac) väljer marken nedanför.",

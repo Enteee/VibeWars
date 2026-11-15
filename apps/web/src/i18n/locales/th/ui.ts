@@ -1325,6 +1325,13 @@ export default {
   "training.soundOn": "เปิดเสียงแล้ว",
   "training.you": "คุณ",
 
+  "tutorial.call.hint": "เรียกเป้าหนูสักตัว แล้วข้าจะตีตัวนั้น",
+  "tutorial.call.how":
+    "คลิกล้อเมาส์ที่หนู หรือคลิกแถบเป้าหมาย เพื่อเรียกเป้า {keys} เล็งสิ่งที่ทีมเรียกไว้",
+  "tutorial.call.intro": "หนูสองตัว เจ้าเลือก ข้าตี เรียกเป้ามาหนึ่งตัว",
+  "tutorial.call.other": "เรียกเป้าอีกตัว",
+  "tutorial.call.praise": "เรียกเป้า แล้วทั้งทีมจะตีตัวเดียวกัน",
+  "tutorial.call.t": "นั่นแหละ {keys} หาเป้าที่ถูกเรียกไว้",
   "tutorial.climb.hint": "ขึ้นไปบนชะง่อน แล้วลงไปที่พื้นข้างใต้",
   "tutorial.climb.how": "คลิกตรงที่จะยืน Alt+คลิก (Option บน Mac) จะเลือกพื้นข้างล่าง",
   "tutorial.climb.intro": "ขึ้นบันได วงทึบคือที่ที่คุณจะยืน",

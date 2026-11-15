@@ -1330,6 +1330,13 @@ export default {
   "training.soundOn": "Bật âm thanh.",
   "training.you": "Bạn",
 
+  "tutorial.call.hint": "Gọi một con chuột, ta sẽ đánh con đó.",
+  "tutorial.call.how":
+    "Nhấp con lăn vào một con chuột, hoặc nhấp thanh mục tiêu, để gọi nó. {keys} nhắm vào mục tiêu đội bạn đã gọi.",
+  "tutorial.call.intro": "Hai con chuột. Bạn chọn, ta đánh. Gọi một con.",
+  "tutorial.call.other": "Gọi con kia.",
+  "tutorial.call.praise": "Gọi mục tiêu, và cả đội đánh cùng một chỗ.",
+  "tutorial.call.t": "Đúng rồi. {keys} tìm mục tiêu đã gọi.",
   "tutorial.climb.hint": "Lên gờ đá, rồi xuống mặt đất bên dưới nó.",
   "tutorial.climb.how": "Nhấp vào chỗ muốn đứng. Alt+nhấp (Option trên Mac) chọn mặt đất bên dưới.",
   "tutorial.climb.intro": "Leo lên bậc thang. Vòng liền là nơi bạn sẽ đứng.",
