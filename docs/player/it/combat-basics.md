@@ -22,6 +22,8 @@ Un'abilità premuta mentre ne stai usando un'altra, o durante quella pausa, va *
 
 Un'**interruzione** ferma l'abilità di un nemico mentre la sta lanciando. La sua Energia è spesa e l'abilità va in ricarica; alcune interruzioni bloccano anche l'abilità per un po'. Se interrompi troppo presto o troppo tardi, non succede nulla.
 
+Ogni professione ha un suono proprio quando usa un'abilità; ascolta quello del tuo bersaglio.
+
 La maggior parte delle interruzioni ferma anche un semplice attacco a metà colpo: quel colpo non arriva e il movimento ricomincia. Un nemico che sta ancora camminando verso il bersaglio non ha nulla da interrompere. Un'interruzione la cui carta dice "un'abilità" o "un incantesimo" non tocca un semplice attacco.
 
 Alcune posizioni, come Mantra of Concentration, fermano un'interruzione diretta a te. Nessuna ferma un atterramento.

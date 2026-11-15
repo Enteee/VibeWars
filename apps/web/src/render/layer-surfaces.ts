@@ -452,7 +452,11 @@ export function plankLines(
 const OPEN_EDGE_REACH = 2;
 
 /** The share `[enter, leave]` of `from`-`to` inside `box`, if any (Liang-Barsky). */
-function clipToBox(from: Vec2, to: Vec2, box: Box): readonly [number, number] | undefined {
+export function segmentInBox(
+  from: Vec2,
+  to: Vec2,
+  box: Box,
+): readonly [number, number] | undefined {
   let enter = 0;
   let leave = 1;
   const dx = to.x - from.x;
@@ -501,7 +505,7 @@ export function openEdges(
     const to = outline[(k + 1) % outline.length] ?? from;
     const cuts = gaps
       .flatMap((box) => {
-        const cut = clipToBox(from, to, box);
+        const cut = segmentInBox(from, to, box);
         return cut === undefined ? [] : [cut];
       })
       .sort((a, b) => a[0] - b[0]);

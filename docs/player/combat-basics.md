@@ -43,6 +43,8 @@ An **interrupt** stops a foe's skill while they are casting it. Their
 Energy is spent and the skill recharges; some interrupts also lock the
 skill for a while. Interrupt too early or too late and nothing happens.
 
+Each profession's casts have their own sound; listen for your target's.
+
 Most interrupts also stop a plain attack mid-swing: that blow never
 lands and the swing starts over. A foe still walking up to its target
 has nothing to interrupt. An interrupt whose card says "a skill" or "a

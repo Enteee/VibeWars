@@ -1,7 +1,8 @@
 import { distancePointToSegment, pointInPolygon, type Vec2 } from "@vibewars/game-core";
 
 import type { MapWater } from "./arena-snapshot.js";
-import { boxWithout, shapeOutline, type Box } from "./layer-surfaces.js";
+import { coverPieces, outlineArea, type TunnelCoverBox } from "./cover-pieces.js";
+import { shapeOutline, type Box } from "./layer-surfaces.js";
 
 /**
  * What a body of water draws (#2984): its shore and the ripples on it,
@@ -136,67 +137,14 @@ export interface WaterPiece {
   readonly ripples: readonly Ripple[];
 }
 
-/** How far a corner may sit off a shore edge and still be on it, in world units. */
-const ON_SHORE = 1e-6;
-
 /**
- * `outline` clipped to `box` (Sutherland–Hodgman): what of it is inside,
- * empty when nothing is. A concave outline may come back with an edge run
- * back along the box's side, which has no area and so fills nothing.
- */
-export function clipToBox(outline: readonly Vec2[], box: Box): readonly Vec2[] {
-  const sides: readonly { readonly inside: (p: Vec2) => boolean; readonly cut: Cut }[] = [
-    { inside: (p) => p.x >= box.left, cut: (a, b) => alongX(a, b, box.left) },
-    { inside: (p) => p.x <= box.right, cut: (a, b) => alongX(a, b, box.right) },
-    { inside: (p) => p.y >= box.top, cut: (a, b) => alongY(a, b, box.top) },
-    { inside: (p) => p.y <= box.bottom, cut: (a, b) => alongY(a, b, box.bottom) },
-  ];
-  return sides.reduce<readonly Vec2[]>((points, { inside, cut }) => {
-    const kept: Vec2[] = [];
-    points.forEach((point, at) => {
-      const previous = points[(at + points.length - 1) % points.length] ?? point;
-      if (inside(point)) {
-        if (!inside(previous)) {
-          kept.push(cut(previous, point));
-        }
-        kept.push(point);
-      } else if (inside(previous)) {
-        kept.push(cut(previous, point));
-      }
-    });
-    return kept;
-  }, outline);
-}
-
-type Cut = (a: Vec2, b: Vec2) => Vec2;
-
-function alongX(a: Vec2, b: Vec2, x: number): Vec2 {
-  return { x, y: a.y + ((b.y - a.y) * (x - a.x)) / (b.x - a.x) };
-}
-
-function alongY(a: Vec2, b: Vec2, y: number): Vec2 {
-  return { x: a.x + ((b.x - a.x) * (y - a.y)) / (b.y - a.y), y };
-}
-
-/** The area `outline` encloses, by the shoelace formula. */
-export function outlineArea(outline: readonly Vec2[]): number {
-  let twice = 0;
-  outline.forEach((corner, at) => {
-    const next = outline[(at + 1) % outline.length] ?? corner;
-    twice += corner.x * next.y - next.x * corner.y;
-  });
-  return Math.abs(twice) / 2;
-}
-
-/**
- * `shape` split by the tunnel covers it lies over (#3350): one piece per
- * box of each cover it meets, and the rest of it in the boxes outside
- * every cover. Where two covers overlap, at a junction, the earlier owns
- * the overlap. Water over no cover is one piece, its whole self.
+ * `shape` split by the tunnel covers it lies over (#3350), as `coverPieces`
+ * splits it, each piece with the ripples whose centre is in its box. Water
+ * over no cover is one piece, its whole self.
  */
 export function waterPieces(
   shape: WaterShape,
-  covers: readonly { readonly tunnel: number; readonly box: Box }[],
+  covers: readonly TunnelCoverBox[],
 ): readonly WaterPiece[] {
   const { centre, width, height } = shape.anchor;
   const whole: Box = {
@@ -205,27 +153,15 @@ export function waterPieces(
     right: centre.x + width / 2,
     bottom: centre.y + height / 2,
   };
-  const met = covers.filter(({ box }) => overlaps(box, whole));
-  if (met.length === 0) {
+  const pieces = coverPieces(shape.outline, whole, covers);
+  const [only] = pieces;
+  if (pieces.length === 1 && only !== undefined && only.tunnel === undefined) {
     return [
-      {
-        tunnel: undefined,
-        outline: shape.outline,
-        shore: edges(shape.outline),
-        ripples: shape.ripples,
-      },
+      { tunnel: undefined, outline: only.outline, shore: only.shore, ripples: shape.ripples },
     ];
   }
-  const owned: Box[] = [];
-  const regions = met.flatMap(({ tunnel, box }) => {
-    const boxes = boxWithout(box, owned).map((piece) => ({ tunnel, box: piece }));
-    owned.push(box);
-    return boxes;
-  });
-  const rest = boxWithout(whole, owned).map((box) => ({ tunnel: undefined, box }));
   const placed = new Set<Ripple>();
-  return [...regions, ...rest].flatMap(({ tunnel, box }) => {
-    const outline = clipToBox(shape.outline, box);
+  return pieces.flatMap(({ tunnel, box, outline, shore }) => {
     if (outlineArea(outline) === 0) {
       return [];
     }
@@ -241,23 +177,6 @@ export function waterPieces(
     for (const ripple of ripples) {
       placed.add(ripple);
     }
-    const shore = edges(outline).filter(([a, b]) =>
-      edges(shape.outline).some(
-        ([from, to]) =>
-          distancePointToSegment(a, { a: from, b: to }) < ON_SHORE &&
-          distancePointToSegment(b, { a: from, b: to }) < ON_SHORE,
-      ),
-    );
     return [{ tunnel, outline, shore, ripples }];
   });
-}
-
-function overlaps(a: Box, b: Box): boolean {
-  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-}
-
-function edges(outline: readonly Vec2[]): readonly (readonly [Vec2, Vec2])[] {
-  return outline.map(
-    (corner, at) => [corner, outline[(at + 1) % outline.length] ?? corner] as const,
-  );
 }
