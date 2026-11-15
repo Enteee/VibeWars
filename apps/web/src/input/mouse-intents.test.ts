@@ -46,6 +46,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     team,
     dead: false,
     corpseExploited: false,
+    respawnIn: undefined,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,

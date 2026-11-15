@@ -38,6 +38,7 @@ lagets spökhjälte på altaret före till och med det. En bot som kommer
 långt före sitt lag väntar på resten innan den trycker på vidare.
 
 Bågskyttar och spjutkastare tar höjden när det är säkert.
+En bott som två fiender fokuserar på, eller som har under halva hälsan och tappar den snabbt, gömmer sig från deras syn i upp till tre sekunder: bakom en mur, under ett däck eller på höjden.
 När ingen fiende är nära drar en bot i en spak som öppnar en kortare väg till fienderna. Två bottar river också en mur som döljer en mycket kortare väg, genom att slå på den med sina vapen.
 
 Bottar som gör skada håller inne sina stora träffar, attackförmågor och

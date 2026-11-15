@@ -525,6 +525,8 @@ export default {
   "hud.relicScoredOurs": "Relik mencetak poin!",
   "hud.relicScoredTheirs": "Relik musuh mencetak poin",
   "hud.relicTheirs": "Relik musuh",
+  "hud.respawnIn": "Kembali dalam {seconds}",
+  "hud.respawnResurrectionOnly": "Tunggu dibangkitkan",
   "hud.shrinesBoth": "Kuil: +{ours}, musuh +{theirs}",
   "hud.shrinesOurs": "Kuil: +{ours}",
   "hud.shrinesTheirs": "Kuil musuh: +{theirs}",
@@ -1342,6 +1344,13 @@ export default {
   "training.soundOn": "Suara nyala.",
   "training.you": "Kamu",
 
+  "tutorial.call.hint": "Tandai seekor tikus, dan aku pukul yang itu.",
+  "tutorial.call.how":
+    "Klik roda pada tikus, atau klik bilah target, untuk menandainya. {keys} membidik yang ditandai timmu.",
+  "tutorial.call.intro": "Dua tikus. Kamu pilih, aku pukul. Tandai satu.",
+  "tutorial.call.other": "Tandai yang satunya.",
+  "tutorial.call.praise": "Tandai, dan tim memukul sasaran yang sama.",
+  "tutorial.call.t": "Begitu. {keys} menemukan sasaran yang ditandai.",
   "tutorial.climb.hint": "Naik ke tepian, lalu turun ke tanah di bawahnya.",
   "tutorial.climb.how":
     "Klik tempat kamu mau berdiri. Alt+klik (Option di Mac) memilih tanah di bawah.",
@@ -1394,6 +1403,10 @@ export default {
   "tutorial.stepIn.how": "Klik kiri landasannya, atau berjalan dengan {keys}.",
   "tutorial.stepIn.intro": "Ayo, masuk teleporter bersamaku!",
   "tutorial.stepIn.praise": "Bersama. Tahan napasmu.",
+  "tutorial.tunnel.hint": "Turuni tangga, lewati terowongan, ke tanda.",
+  "tutorial.tunnel.how": "Klik tangga turun, lalu tanda di balik ujung satunya.",
+  "tutorial.tunnel.intro": "Sst. Jangan bangunkan dia. Kita lewat bawah.",
+  "tutorial.tunnel.praise": "Tanpa suara. Terowongan menyembunyikanmu dari yang di atas.",
   "tutorial.tutor": "Guru",
   "tutorial.walk.hint": "Ke sini! Injak tanda yang bercahaya.",
   "tutorial.walk.how": "Klik kiri di tanah, atau berjalan dengan {keys}.",

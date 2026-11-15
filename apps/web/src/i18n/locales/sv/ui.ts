@@ -567,6 +567,8 @@ export default {
   "hud.relicScoredOurs": "Relik inlämnad!",
   "hud.relicScoredTheirs": "Fiendens relik inlämnad",
   "hud.relicTheirs": "Fiendens relik",
+  "hud.respawnIn": "Tillbaka om {seconds}",
+  "hud.respawnResurrectionOnly": "Vänta på att bli återupplivad",
   "hud.shrinesBoth": "Helgedomar: +{ours}, fienden +{theirs}",
   "hud.shrinesOurs": "Helgedomar: +{ours}",
   "hud.shrinesTheirs": "Fiendens helgedomar: +{theirs}",
@@ -1411,6 +1413,13 @@ export default {
   "training.soundOn": "Ljud på.",
   "training.you": "Du",
 
+  "tutorial.call.hint": "Ropa ut en råtta, så slår jag den.",
+  "tutorial.call.how":
+    "Klicka med hjulet på en råtta, eller klicka på målfältet, för att ropa ut den. {keys} siktar på det ditt lag ropade ut.",
+  "tutorial.call.intro": "Två råttor. Du väljer, jag slår. Ropa ut en.",
+  "tutorial.call.other": "Ropa ut den andra.",
+  "tutorial.call.praise": "Ropa ut det, så slår laget samma sak.",
+  "tutorial.call.t": "Just så. {keys} hittar det utropade målet.",
   "tutorial.climb.hint": "Upp på avsatsen, och sedan ner till marken under den.",
   "tutorial.climb.how":
     "Klicka där du vill stå. Alt+klick (Option på en Mac) väljer marken nedanför.",
@@ -1462,6 +1471,10 @@ export default {
   "tutorial.stepIn.how": "Vänsterklicka på plattan, eller gå med {keys}.",
   "tutorial.stepIn.intro": "Kom, in i teleportern med mig!",
   "tutorial.stepIn.praise": "Tillsammans. Håll andan.",
+  "tutorial.tunnel.hint": "Ner för trappstegen, genom tunneln, till märket.",
+  "tutorial.tunnel.how": "Klicka på stegen ner, sedan på märket bortom andra änden.",
+  "tutorial.tunnel.intro": "Sch. Väck inte vakten. Vi går under.",
+  "tutorial.tunnel.praise": "Inte ett ljud. Tunnlar döljer dig för den som är ovanför.",
   "tutorial.tutor": "Lärare",
   "tutorial.walk.hint": "Hitåt! Kliv på det glödande märket.",
   "tutorial.walk.how": "Vänsterklicka på marken, eller gå med {keys}.",

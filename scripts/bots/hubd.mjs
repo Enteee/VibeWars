@@ -221,6 +221,7 @@ import {
   parseRunnerLogsArgv,
   touchesGate,
 } from "./hub-policy.mjs";
+import { HeavyLeases } from "./heavy-lease.mjs";
 import { readRunnerLogs } from "./runner-logs.mjs";
 import {
   closedIssues,
@@ -3892,6 +3893,39 @@ function schedule(role, argv) {
   return { allow: true, code: 0, stdout: plan.stdout, stderr: "" };
 }
 
+/** The one heavy-job lease, in memory only (#3362). */
+const heavyLeases = new HeavyLeases();
+
+/**
+ * `company heavy` (#3362): acquire, renew, release, leave and status, each
+ * answered at once. Not audited per call: renewals and polls would flood it.
+ *
+ * @param {string} employee
+ * @param {string[]} argv
+ * @returns {Record<string, unknown>}
+ */
+function heavy(employee, argv) {
+  const [op = "", arg = ""] = argv;
+  const now = Date.now();
+  /** @type {Record<string, unknown>} */
+  let answer;
+  if (op === "acquire") {
+    answer = { ...heavyLeases.acquire(employee, arg.slice(0, 80), now) };
+  } else if (op === "renew") {
+    answer = { ok: heavyLeases.renew(employee, arg, now) };
+  } else if (op === "release") {
+    answer = { ok: heavyLeases.release(employee, arg, now) };
+  } else if (op === "leave") {
+    heavyLeases.leave(employee);
+    answer = { ok: true };
+  } else if (op === "status") {
+    answer = { ...heavyLeases.status(now) };
+  } else {
+    return { allow: false, reason: `heavy: unknown operation "${op}"`, code: 77 };
+  }
+  return { allow: true, code: 0, stdout: JSON.stringify(answer), stderr: "" };
+}
+
 /**
  * `hub note add|ls|read|rm` (#3129): the role's notepad, read from the
  * file on every request, since the briefing reads it too. Expired notes
@@ -4343,6 +4377,10 @@ async function serve(request, verdict, acting) {
 
   if (kind === "note") {
     return note(employee, role, argv);
+  }
+
+  if (kind === "heavy") {
+    return heavy(employee, argv);
   }
 
   if (kind === "rank") {

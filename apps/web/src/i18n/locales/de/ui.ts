@@ -572,6 +572,8 @@ export default {
   "hud.relicScoredOurs": "Relikt gewertet!",
   "hud.relicScoredTheirs": "Relikt für Gegner gewertet",
   "hud.relicTheirs": "Gegnerrelikt",
+  "hud.respawnIn": "Zurück in {seconds}",
+  "hud.respawnResurrectionOnly": "Warte auf eine Wiederbelebung",
   "hud.shrinesBoth": "Schreine: +{ours}, Gegner +{theirs}",
   "hud.shrinesOurs": "Schreine: +{ours}",
   "hud.shrinesTheirs": "Gegnerische Schreine: +{theirs}",
@@ -1434,6 +1436,13 @@ export default {
   "training.soundOn": "Ton an.",
   "training.you": "Du",
 
+  "tutorial.call.hint": "Ruf eine Ratte aus, dann schlage ich die.",
+  "tutorial.call.how":
+    "Klick eine Ratte mit dem Mausrad oder klick die Zielleiste, um sie auszurufen. {keys} zielt auf das, was dein Team ausgerufen hat.",
+  "tutorial.call.intro": "Zwei Ratten. Du wählst, ich schlage. Ruf eine aus.",
+  "tutorial.call.other": "Ruf die andere aus.",
+  "tutorial.call.praise": "Ausrufen, und das Team schlägt dasselbe.",
+  "tutorial.call.t": "Genau so. {keys} findet das ausgerufene Ziel.",
   "tutorial.climb.hint": "Rauf auf den Vorsprung, dann runter auf den Boden darunter.",
   "tutorial.climb.how":
     "Klick dorthin, wo du stehen willst. Alt+Klick (Option auf dem Mac) wählt den Boden darunter.",
@@ -1487,6 +1496,10 @@ export default {
   "tutorial.stepIn.how": "Linksklick auf die Plattform, oder geh mit {keys}.",
   "tutorial.stepIn.intro": "Komm, mit mir in den Teleporter!",
   "tutorial.stepIn.praise": "Zusammen. Halt die Luft an.",
+  "tutorial.tunnel.hint": "Die Stufen hinab, durch den Tunnel, zur Markierung.",
+  "tutorial.tunnel.how": "Klick die Stufen hinab, dann die Markierung hinter dem anderen Ende.",
+  "tutorial.tunnel.intro": "Pst. Weck die Wache nicht. Wir gehen unten durch.",
+  "tutorial.tunnel.praise": "Kein Mucks. Tunnel verbergen dich vor denen oben.",
   "tutorial.tutor": "Lehrer",
   "tutorial.walk.hint": "Hier drüben! Tritt auf die leuchtende Markierung.",
   "tutorial.walk.how": "Linksklick auf den Boden, oder geh mit {keys}.",

@@ -574,6 +574,8 @@ export default {
   "hud.relicScoredOurs": "Πόντος κειμηλίου!",
   "hud.relicScoredTheirs": "Εχθρικός πόντος κειμηλίου",
   "hud.relicTheirs": "Εχθρικό κειμήλιο",
+  "hud.respawnIn": "Επιστροφή σε {seconds}",
+  "hud.respawnResurrectionOnly": "Περίμενε να σε αναστήσουν",
   "hud.shrinesBoth": "Ιερά: +{ours}, εχθρός +{theirs}",
   "hud.shrinesOurs": "Ιερά: +{ours}",
   "hud.shrinesTheirs": "Εχθρικά ιερά: +{theirs}",
@@ -1435,6 +1437,13 @@ export default {
   "training.soundOn": "Ήχος ανοιχτός.",
   "training.you": "Εσύ",
 
+  "tutorial.call.hint": "Δήλωσε έναν αρουραίο και θα χτυπήσω αυτόν.",
+  "tutorial.call.how":
+    "Κάνε κλικ με τη ροδέλα σε αρουραίο ή κλικ στη μπάρα στόχου για να τον δηλώσεις. Το {keys} στοχεύει ό,τι δήλωσε η ομάδα σου.",
+  "tutorial.call.intro": "Δύο αρουραίοι. Εσύ διαλέγεις, εγώ χτυπάω. Δήλωσε έναν.",
+  "tutorial.call.other": "Δήλωσε τον άλλον.",
+  "tutorial.call.praise": "Δήλωσέ τον και η ομάδα χτυπά τον ίδιο στόχο.",
+  "tutorial.call.t": "Αυτό είναι. Το {keys} βρίσκει τον δηλωμένο στόχο.",
   "tutorial.climb.hint": "Πάνω στο πεζούλι, μετά κάτω στο έδαφος από κάτω του.",
   "tutorial.climb.how":
     "Κάνε κλικ εκεί που θες να σταθείς. Alt+κλικ (Option σε Mac) διαλέγει το έδαφος από κάτω.",
@@ -1489,6 +1498,10 @@ export default {
   "tutorial.stepIn.how": "Αριστερό κλικ στην πλατφόρμα, ή περπάτα με {keys}.",
   "tutorial.stepIn.intro": "Έλα, μέσα στον τηλεμεταφορέα μαζί μου!",
   "tutorial.stepIn.praise": "Μαζί. Κράτα την ανάσα σου.",
+  "tutorial.tunnel.hint": "Κάτω τα σκαλιά, μέσα από το τούνελ, ως το σημάδι.",
+  "tutorial.tunnel.how": "Κάνε κλικ στα σκαλιά κάτω, μετά στο σημάδι πέρα από την άλλη άκρη.",
+  "tutorial.tunnel.intro": "Σςς. Μην τον ξυπνήσεις. Πάμε από κάτω.",
+  "tutorial.tunnel.praise": "Ούτε κιχ. Τα τούνελ σε κρύβουν από όσους είναι πάνω.",
   "tutorial.tutor": "Δάσκαλος",
   "tutorial.walk.hint": "Εδώ! Πάτα πάνω στο φωτεινό σημάδι.",
   "tutorial.walk.how": "Αριστερό κλικ στο έδαφος ή περπάτα με {keys}.",

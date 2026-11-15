@@ -616,6 +616,8 @@ export default {
   "hud.relicScoredOurs": "Реликвия доставлена!",
   "hud.relicScoredTheirs": "Враг доставил реликвию",
   "hud.relicTheirs": "Вражеская реликвия",
+  "hud.respawnIn": "Возвращение через {seconds}",
+  "hud.respawnResurrectionOnly": "Ждите воскрешения",
   "hud.shrinesBoth": "Святилища: +{ours}, враг +{theirs}",
   "hud.shrinesOurs": "Святилища: +{ours}",
   "hud.shrinesTheirs": "Святилища врага: +{theirs}",
@@ -1532,6 +1534,13 @@ export default {
   "training.soundOn": "Звук включён.",
   "training.you": "Ты",
 
+  "tutorial.call.hint": "Отметь крысу, и я ударю её.",
+  "tutorial.call.how":
+    "Щёлкни колёсиком по крысе или по панели цели, чтобы отметить её. {keys} наводит на цель, отмеченную командой.",
+  "tutorial.call.intro": "Две крысы. Ты выбираешь, я бью. Отметь одну.",
+  "tutorial.call.other": "Отметь другую.",
+  "tutorial.call.praise": "Отметь цель, и команда бьёт в одну точку.",
+  "tutorial.call.t": "Вот так. {keys} находит отмеченную цель.",
   "tutorial.climb.hint": "Наверх на уступ, потом вниз на землю под ним.",
   "tutorial.climb.how":
     "Щёлкни там, где хочешь встать. Alt+щелчок (Option на Mac) выбирает землю внизу.",
@@ -1583,6 +1592,10 @@ export default {
   "tutorial.stepIn.how": "Щёлкни левой кнопкой по площадке или иди с помощью {keys}.",
   "tutorial.stepIn.intro": "Давай, в телепорт со мной!",
   "tutorial.stepIn.praise": "Вместе. Задержи дыхание.",
+  "tutorial.tunnel.hint": "Вниз по ступеням, через туннель, к метке.",
+  "tutorial.tunnel.how": "Щёлкни по ступеням вниз, затем по метке за дальним концом.",
+  "tutorial.tunnel.intro": "Тсс. Не разбуди его. Идём низом.",
+  "tutorial.tunnel.praise": "Ни звука. Туннели прячут тебя от тех, кто наверху.",
   "tutorial.tutor": "Наставник",
   "tutorial.walk.hint": "Сюда! Встань на светящуюся метку.",
   "tutorial.walk.how": "Левый клик по земле или иди клавишами {keys}.",

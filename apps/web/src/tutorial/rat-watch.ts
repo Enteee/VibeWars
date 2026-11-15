@@ -1,9 +1,11 @@
 import type { CombatMessage } from "@vibewars/game-session";
 
-/** What station 8 has seen so far (#3316): every field latches, it only grows. */
+/** What stations 8 and 12 have seen so far (#3316, #3331): every field latches, it only grows. */
 export interface RatTally {
   /** The rats the player has struck, with a skill or the plain attack. */
   readonly hitByPlayer: ReadonlySet<string>;
+  /** The rats the tutor has struck (#3331). */
+  readonly hitByTutor: ReadonlySet<string>;
   /** The skill ids from the player's bar that have landed on a rat. */
   readonly skillsOnRats: ReadonlySet<string>;
   /** The rats a knockdown has thrown. */
@@ -23,17 +25,20 @@ const LANDED: ReadonlySet<string> = new Set(["damage", "knocked-down", "status-a
 
 /**
  * Station 8's watch (#3316), over the combat messages: which of `ratIds`
- * `selfId` has struck, and which of `skillBar`'s skills landed on one. A
- * miss, a block or a stance on the player's own body lands on no rat, so
- * it counts for nothing. A knockdown is counted whoever threw it.
+ * `selfId` and `tutorId` have struck (#3331), and which of `skillBar`'s
+ * skills landed on one. A miss, a block or a stance on the player's own
+ * body lands on no rat, so it counts for nothing. A knockdown is counted
+ * whoever threw it.
  */
 export function createRatWatch(
   selfId: string,
+  tutorId: string,
   ratIds: readonly string[],
   skillBar: readonly (string | null)[],
 ): RatWatch {
   const rats = new Set(ratIds);
   const hitByPlayer = new Set<string>();
+  const hitByTutor = new Set<string>();
   const skillsOnRats = new Set<string>();
   const knockedDown = new Set<string>();
   return {
@@ -45,6 +50,9 @@ export function createRatWatch(
         }
         if (event.kind === "knocked-down") {
           knockedDown.add(event.targetId);
+        }
+        if (casterSessionId === tutorId) {
+          hitByTutor.add(event.targetId);
         }
         if (casterSessionId !== selfId) {
           continue;
@@ -58,6 +66,6 @@ export function createRatWatch(
     watch(ratId) {
       rats.add(ratId);
     },
-    tally: () => ({ hitByPlayer, skillsOnRats, knockedDown }),
+    tally: () => ({ hitByPlayer, hitByTutor, skillsOnRats, knockedDown }),
   };
 }

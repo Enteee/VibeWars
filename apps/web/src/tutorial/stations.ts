@@ -58,6 +58,14 @@ export interface TutorialView {
   readonly extraRat: boolean;
   /** The last walk the player sent was an Alt walk, to the ground under the click (#3323). */
   readonly belowClicked: boolean;
+  /** Whom the player's team has called (#3331), if anyone. */
+  readonly calledId: string | undefined;
+  /** The rats the tutor has struck at station 12: it only grows. */
+  readonly hitByTutor: ReadonlySet<string>;
+  /** The player has targeted the team's call with its key at station 12: once true, it stays true. */
+  readonly calledTargeted: boolean;
+  /** A rat called at station 12 died before the tutor struck it: once true, it stays true. */
+  readonly calledLost: boolean;
 }
 
 /** The statuses station 7's ground gives (#3310): the mire's, then the molten strip's. */
@@ -516,5 +524,75 @@ export function rampStation(
       },
     ],
     done: (view) => onMark(view, mark, layer),
+  };
+}
+
+/**
+ * Station 11 (playbook §11), on the canyon's second map: through the
+ * `tunnel` on `under`, beneath the guard asleep on top, to the mark at
+ * `mark` on `above`. Each half of it, west and east of its middle, latches
+ * once the player has stood in it underground, in either order. Done on
+ * the mark with both halves walked.
+ */
+export function tunnelStation(tunnel: Shape, under: number, above: number, mark: Vec2): Station {
+  const middle = shapeCentre(tunnel).x;
+  /** The halves walked underground: once true, they stay true. */
+  let west = false;
+  let east = false;
+  const look = (view: TutorialView): boolean => {
+    if (view.selfLayer === under && pointInShape(view.self, tunnel)) {
+      if (view.self.x < middle) {
+        west = true;
+      } else {
+        east = true;
+      }
+    }
+    return west && east;
+  };
+  return {
+    id: "tunnel",
+    world: "canyon-2",
+    lines: {
+      intro: "tutorial.tunnel.intro",
+      hint: "tutorial.tunnel.hint",
+      praise: "tutorial.tunnel.praise",
+      how: "tutorial.tunnel.how",
+    },
+    highlight: { kind: "ground", at: mark, layer: above },
+    done: (view) => look(view) && onMark(view, mark, above),
+  };
+}
+
+/**
+ * Station 12 (playbook §12), at the canyon's two rats: call one, and the
+ * tutor attacks it. The party window, where the tutor stands, is lit.
+ * Once the player targets the call with its key, that is said once; once
+ * a called rat died before the tutor struck it, the player is told to
+ * call the other. Done once the tutor has struck the rat called at the
+ * time: the watch counts only the station's rats, so a call on the tutor
+ * or on nothing never is.
+ */
+export function callStation(): Station {
+  /** The tutor has struck the called rat: once true, it stays true. */
+  let struck = false;
+  return {
+    id: "call",
+    world: "canyon-2",
+    lines: {
+      intro: "tutorial.call.intro",
+      hint: "tutorial.call.hint",
+      praise: "tutorial.call.praise",
+      how: "tutorial.call.how",
+    },
+    keys: ["target-called"],
+    highlight: { kind: "hud", element: ".party-window" },
+    asides: [
+      { line: "tutorial.call.t", when: (view) => view.calledTargeted },
+      { line: "tutorial.call.other", when: (view) => view.calledLost },
+    ],
+    done: (view) => {
+      struck ||= view.calledId !== undefined && view.hitByTutor.has(view.calledId);
+      return struck;
+    },
   };
 }

@@ -617,6 +617,8 @@ export default {
   "hud.relicScoredOurs": "Relikvia doručená!",
   "hud.relicScoredTheirs": "Nepriateľ doručil relikviu",
   "hud.relicTheirs": "Nepriateľská relikvia",
+  "hud.respawnIn": "Späť o {seconds}",
+  "hud.respawnResurrectionOnly": "Počkaj na oživenie",
   "hud.shrinesBoth": "Svätyne: +{ours}, nepriateľ +{theirs}",
   "hud.shrinesOurs": "Svätyne: +{ours}",
   "hud.shrinesTheirs": "Nepriateľské svätyne: +{theirs}",
@@ -1533,6 +1535,13 @@ export default {
   "training.soundOn": "Zvuk zapnutý.",
   "training.you": "Ty",
 
+  "tutorial.call.hint": "Označ potkana a ja udriem toho.",
+  "tutorial.call.how":
+    "Klikni kolieskom na potkana alebo klikni na lištu cieľa, aby si ho označil. {keys} zameria, čo tvoj tím označil.",
+  "tutorial.call.intro": "Dva potkany. Ty vyberáš, ja bijem. Označ jedného.",
+  "tutorial.call.other": "Označ toho druhého.",
+  "tutorial.call.praise": "Označ cieľ a celý tím bije do toho istého.",
+  "tutorial.call.t": "Presne tak. {keys} nájde označený cieľ.",
   "tutorial.climb.hint": "Hore na rímsu, potom dole na zem pod ňou.",
   "tutorial.climb.how":
     "Klikni, kam sa chceš postaviť. Alt+klik (Option na Macu) vyberie zem pod tebou.",
@@ -1585,6 +1594,10 @@ export default {
   "tutorial.stepIn.how": "Klikni ľavým na plošinu, alebo choď pomocou {keys}.",
   "tutorial.stepIn.intro": "Poď, do teleportu so mnou!",
   "tutorial.stepIn.praise": "Spolu. Zadrž dych.",
+  "tutorial.tunnel.hint": "Dolu po schodoch, tunelom, k značke.",
+  "tutorial.tunnel.how": "Klikni na schody dolu, potom na značku za druhým koncom.",
+  "tutorial.tunnel.intro": "Pst. Nezobuď ho. Pôjdeme spodom.",
+  "tutorial.tunnel.praise": "Ani muk. Tunely ťa skryjú pred tými hore.",
   "tutorial.tutor": "Učiteľ",
   "tutorial.walk.hint": "Sem! Stúp na žiariacu značku.",
   "tutorial.walk.how": "Klikni ľavým na zem, alebo choď klávesmi {keys}.",

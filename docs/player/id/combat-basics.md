@@ -96,6 +96,10 @@ Di kebanyakan mode yang mati tetap tergeletak sampai sekutu **membangkitkan** me
 skill, seperti Resurrection Signet, yang bisa diambil siapa saja. Sebagian mode
 menghidupkan kembali yang mati secara bergelombang, atau dengan sendirinya; lihat [Mode](modes.md).
 
+Selama kamu mati, sebuah baris di bawah papan skor menghitung mundur
+sampai kamu kembali, atau memintamu menunggu dibangkitkan. Jendela tim
+menampilkan hitungan itu di samping setiap sekutu yang mati.
+
 Setiap kematian membuatmu kehilangan 15% **moral**, sampai -60%: Darah maksimum
 dan Energi-mu menyusut bersamanya. Setiap musuh yang dibunuh timmu memulihkan 2%,
 sampai 0. Di Perang Guild, menguasai tiang bendera menaikkannya melebihi itu,

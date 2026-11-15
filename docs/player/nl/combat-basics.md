@@ -99,6 +99,10 @@ In de meeste modi blijven doden liggen tot een bondgenoot ze **reanimeert**
 met een skill, zoals Resurrection Signet, die iedereen kan meenemen. Sommige
 modi halen de doden in golven terug, of vanzelf; zie [Modi](modes.md).
 
+Zolang je dood bent, telt een regel onder het scorebord af tot je terug
+bent, of zegt hij dat je moet wachten tot je tot leven wordt gewekt. Het
+groepsvenster toont het aftellen naast elke dode bondgenoot.
+
 Elke dood kost je 15% **moraal**, tot -60%: je maximale Gezondheid en Energie
 krimpen mee. Elke vijand die je team doodt, levert 2% terug op, tot 0. In een
 Guild Battle tilt het vasthouden van de vlaggenstandaard het daarboven, tot

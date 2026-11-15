@@ -130,6 +130,16 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     );
   });
 
+  it("lays scenery on a wall just over it, under the deck above and over the bodies under it (#3326)", () => {
+    for (const layer of [0, 1, 2]) {
+      const top = renderOrder({ kind: "wall-top", layer });
+      expect(renderOrder({ kind: "wall", layer })).toBeLessThan(top);
+      expect(renderOrder({ kind: "character", band: layer, part: "bar" })).toBeLessThan(top);
+      expect(top).toBeLessThan(renderOrder({ kind: "support", deckLayer: layer + 1 }));
+      expect(top).toBeLessThan(renderOrder({ kind: "deck", deckLayer: layer + 1 }));
+    }
+  });
+
   it("leaves everyone in front of the walls on a map of one layer", () => {
     expect(renderOrder(character(characterBand(0, 1)))).toBeGreaterThan(
       renderOrder({ kind: "wall", layer: 0 }),

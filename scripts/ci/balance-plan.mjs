@@ -22,7 +22,7 @@ export const REFERENCE = [
   { map: "arena-crossroads", size: 2 },
 ];
 
-const MAP_PATH = /^packages\/game-maps\/maps\/([^/]+)\//;
+export const MAP_PATH = /^packages\/game-maps\/maps\/([^/]+)\//;
 
 /**
  * @param {string[]} files changed paths, relative to the repository root

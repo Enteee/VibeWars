@@ -569,6 +569,8 @@ export default {
   "hud.relicScoredOurs": "Ereklyepont!",
   "hud.relicScoredTheirs": "Ellenséges ereklyepont",
   "hud.relicTheirs": "Ellenséges ereklye",
+  "hud.respawnIn": "Vissza {seconds} mp múlva",
+  "hud.respawnResurrectionOnly": "Várd meg, hogy feltámasszanak",
   "hud.shrinesBoth": "Szentélyek: +{ours}, ellenség +{theirs}",
   "hud.shrinesOurs": "Szentélyek: +{ours}",
   "hud.shrinesTheirs": "Ellenséges szentélyek: +{theirs}",
@@ -1421,6 +1423,13 @@ export default {
   "training.soundOn": "Hang bekapcsolva.",
   "training.you": "Te",
 
+  "tutorial.call.hint": "Jelölj ki egy patkányt, és azt ütöm.",
+  "tutorial.call.how":
+    "Kattints görgővel egy patkányra, vagy kattints a célpontsávra, hogy kijelöld. A(z) {keys} arra céloz, amit a csapatod kijelölt.",
+  "tutorial.call.intro": "Két patkány. Te választasz, én ütök. Jelölj ki egyet.",
+  "tutorial.call.other": "Jelöld ki a másikat.",
+  "tutorial.call.praise": "Jelöld ki, és a csapat ugyanazt üti.",
+  "tutorial.call.t": "Ez az. A(z) {keys} megtalálja a kijelölt célpontot.",
   "tutorial.climb.hint": "Fel a párkányra, aztán le az alatta lévő földre.",
   "tutorial.climb.how":
     "Kattints oda, ahol állni akarsz. Az Alt+kattintás (Macen Option) az alsó talajt választja.",
@@ -1474,6 +1483,10 @@ export default {
   "tutorial.stepIn.how": "Bal klikk a talapzatra, vagy sétálj ezekkel: {keys}.",
   "tutorial.stepIn.intro": "Gyere, velem a teleportba!",
   "tutorial.stepIn.praise": "Együtt. Tartsd vissza a lélegzeted.",
+  "tutorial.tunnel.hint": "Le a lépcsőn, át az alagúton, a jelig.",
+  "tutorial.tunnel.how": "Kattints a lefelé vezető lépcsőre, aztán a túlsó vég mögötti jelre.",
+  "tutorial.tunnel.intro": "Pszt. Ne ébreszd fel. Alul megyünk.",
+  "tutorial.tunnel.praise": "Egy pisszenés se. Az alagút elrejt a fenti szemek elől.",
   "tutorial.tutor": "Tanító",
   "tutorial.walk.hint": "Ide! Lépj a világító jelre.",
   "tutorial.walk.how": "Bal kattintás a talajra, vagy sétálj ezekkel: {keys}.",

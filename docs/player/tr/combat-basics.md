@@ -106,6 +106,10 @@ Signet gibi bir beceriyle **diriltene** kadar yerde kalır. Bazı modlar
 ölüleri dalgalar halinde ya da kendiliğinden geri getirir; bkz.
 [Modlar](modes.md).
 
+Ölüyken skor tablosunun altındaki bir satır dönüşüne kadar geri sayar ya
+da diriltilmeyi beklemeni söyler. Grup penceresi, ölen her müttefikin
+yanında geri sayımı gösterir.
+
 Her ölüm sana %15 **moral** kaybettirir, -%60'a kadar: en yüksek Can ve
 Enerjin de onunla birlikte küçülür. Takımının öldürdüğü her düşman
 bunun %2'sini geri kazandırır, 0'a kadar. Bir Lonca Savaşı'nda bayrak

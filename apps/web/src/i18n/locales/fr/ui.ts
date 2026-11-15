@@ -602,6 +602,8 @@ export default {
   "hud.relicScoredOurs": "Relique marquée !",
   "hud.relicScoredTheirs": "Relique ennemie marquée",
   "hud.relicTheirs": "Relique ennemie",
+  "hud.respawnIn": "De retour dans {seconds}",
+  "hud.respawnResurrectionOnly": "Attends qu'on te ressuscite",
   "hud.shrinesBoth": "Sanctuaires : +{ours}, ennemi +{theirs}",
   "hud.shrinesOurs": "Sanctuaires : +{ours}",
   "hud.shrinesTheirs": "Sanctuaires ennemis : +{theirs}",
@@ -1505,6 +1507,13 @@ export default {
   "training.soundOn": "Son activé.",
   "training.you": "Toi",
 
+  "tutorial.call.hint": "Désigne un rat, et je frappe celui-là.",
+  "tutorial.call.how":
+    "Clic molette sur un rat, ou clic sur la barre de cible, pour le désigner. {keys} cible ce que ton équipe a désigné.",
+  "tutorial.call.intro": "Deux rats. Tu choisis, je frappe. Désigne-en un.",
+  "tutorial.call.other": "Désigne l'autre.",
+  "tutorial.call.praise": "Désigne-la, et l'équipe frappe la même cible.",
+  "tutorial.call.t": "C'est ça. {keys} trouve la cible désignée.",
   "tutorial.climb.hint": "Monte sur la corniche, puis descends au sol en dessous.",
   "tutorial.climb.how":
     "Clique là où tu veux te tenir. Alt+clic (Option sur Mac) choisit le sol du dessous.",
@@ -1559,6 +1568,10 @@ export default {
   "tutorial.stepIn.how": "Clic gauche sur le socle, ou marche avec {keys}.",
   "tutorial.stepIn.intro": "Viens, dans le téléporteur avec moi !",
   "tutorial.stepIn.praise": "Ensemble. Retiens ton souffle.",
+  "tutorial.tunnel.hint": "Descends les marches, traverse le tunnel, jusqu'à la marque.",
+  "tutorial.tunnel.how": "Clique les marches qui descendent, puis la marque après l'autre bout.",
+  "tutorial.tunnel.intro": "Chut. Ne le réveille pas. On passe dessous.",
+  "tutorial.tunnel.praise": "Pas un bruit. Les tunnels te cachent de ceux d'en haut.",
   "tutorial.tutor": "Tuteur",
   "tutorial.walk.hint": "Par ici ! Avance sur la marque lumineuse.",
   "tutorial.walk.how": "Clic gauche sur le sol, ou marche avec {keys}.",

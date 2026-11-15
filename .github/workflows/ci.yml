@@ -217,6 +217,14 @@ jobs:
           echo "e2e shard $k of 6"
           devenv shell -- node scripts/ci/shard-e2e.mjs "$k" 6
 
+      - name: Print failed tests
+        if: failure()
+        # Ends red on purpose: `hub run view --log-failed` shows only failed
+        # steps. The job is already red here (if: failure()), so this decides nothing.
+        run: |
+          devenv shell -- node scripts/ci/print-failures.mjs || true
+          exit 1
+
       - name: Upload Playwright output
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

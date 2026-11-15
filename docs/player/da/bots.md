@@ -37,6 +37,7 @@ Spøgelseshelt på alteret forud for selv det. En bot, der kommer langt
 foran sit hold, venter på resten, før den rykker videre.
 
 Bueskytter og spydkastere indtager det høje terræn, når det er sikkert.
+En bot, som to fjender går efter, eller som har under halvt helbred og hurtigt mister det, dukker sig ud af deres syn i op til tre sekunder: bag en mur, under et dæk eller op på højt terræn.
 Når ingen fjende er nær, trækker en bot i et håndtag, der åbner en kortere vej til fjenderne. To bots slår også en mur ned, der skjuler en meget kortere vej, ved at slå på den med deres våben.
 
 Bots, der giver skade, holder deres store slag, angrebsevner og

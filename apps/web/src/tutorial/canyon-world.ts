@@ -182,7 +182,7 @@ export function canyonWorld(
         vec2(arrival.x + TUTOR_BESIDE.x, arrival.y + TUTOR_BESIDE.y),
         undefined,
       ),
-      ...(part === 0 ? [] : RAT_POCKET.rats.map(ratAt)),
+      ...(part === 0 ? [] : [...RAT_POCKET.rats.map(ratAt), ...CALL_RATS.rats.map(callRatAt)]),
     ],
   });
   return {
@@ -401,10 +401,19 @@ export const RAT_POCKET: CanyonRats = ((): CanyonRats => {
 
 /** `rat` as `MatchSimulation` takes it: a rat of team 1 holding `post`, facing east. */
 function ratAt(rat: CanyonRat): ParticipantSpec {
-  return ratSpec(rat.id, rat.post, rat.post, rat.maxHealth, undefined);
+  return ratSpec(POCKET_GROUND, rat.id, rat.post, rat.post, rat.maxHealth, undefined);
 }
 
+/** Where a rat stands and how close it lets anyone come before it bites. */
+interface RatGround {
+  readonly layer: number;
+  readonly aggroUnits: number;
+}
+
+const POCKET_GROUND: RatGround = { layer: RAT_POCKET.layer, aggroUnits: RAT_AGGRO };
+
 function ratSpec(
+  ground: RatGround,
   id: string,
   at: Vec2,
   post: Vec2,
@@ -415,11 +424,11 @@ function ratSpec(
     id,
     1,
     at,
-    RAT_POCKET.layer,
+    ground.layer,
     {
       kind: "guard",
       post,
-      aggroUnits: RAT_AGGRO,
+      aggroUnits: ground.aggroUnits,
       leashUnits: RAT_LEASH,
       rooted: false,
       thinkSeconds: RAT_THINK_SECONDS,
@@ -496,6 +505,7 @@ export function ratPocket(
     simulation.remove(runner.id);
     simulation.add(
       ratSpec(
+        POCKET_GROUND,
         runner.id,
         position,
         vec2(position.x + RAT_FLEE.x, position.y + RAT_FLEE.y),
@@ -539,7 +549,93 @@ export function ratPocket(
         const id = `tutorial-rat-${String(ids.length + 1)}`;
         ids.push(id);
         watch.watch(id);
-        simulation.add(ratSpec(id, RAT_POCKET.extra, RAT_POCKET.extra, undefined, undefined));
+        simulation.add(
+          ratSpec(POCKET_GROUND, id, RAT_POCKET.extra, RAT_POCKET.extra, undefined, undefined),
+        );
+      }
+    },
+  };
+}
+
+/** Station 12's two rats (#3331), on the canyon's second map: they bite only once hit. */
+export interface CanyonCallRats {
+  readonly layer: number;
+  readonly rats: readonly [CanyonRat, CanyonRat];
+  /** Where one more rat comes, if both died with neither called and struck by the tutor. */
+  readonly extra: Vec2;
+  /** Where the tutor waits for the call: west of the rats, on the player's side. */
+  readonly tutorSpot: Vec2;
+}
+
+export const CALL_RATS: CanyonCallRats = ((): CanyonCallRats => {
+  const site = CANYON_SITES.get(12);
+  if (site === undefined) {
+    throw new Error("no site 12 for station 12");
+  }
+  const { position, layer } = site;
+  const at = (dx: number, dy: number): Vec2 => vec2(position.x + dx, position.y + dy);
+  return {
+    layer,
+    rats: [
+      { id: "tutorial-call-rat-1", post: at(0, -100), maxHealth: undefined },
+      { id: "tutorial-call-rat-2", post: at(0, 100), maxHealth: undefined },
+    ],
+    extra: at(0, 0),
+    tutorSpot: at(-250, 0),
+  };
+})();
+
+/** Station 12's rats hold their posts (#3331): no aggro, so they bite only once hit. */
+const CALL_GROUND: RatGround = { layer: CALL_RATS.layer, aggroUnits: 0 };
+
+function callRatAt(rat: CanyonRat): ParticipantSpec {
+  return ratSpec(CALL_GROUND, rat.id, rat.post, rat.post, rat.maxHealth, undefined);
+}
+
+/** Station 12 at the two rats (#3331), stepped once a frame with the team's call. */
+export interface CallTutor {
+  /** A called rat died before the tutor struck it: once true, it stays true. */
+  readonly lost: () => boolean;
+  readonly step: (calledId: string | undefined, tally: RatTally) => void;
+}
+
+/**
+ * Sends the tutor to wait by station 12's rats, then has it attack
+ * whichever rat the team calls, the latest call if it changes, and never
+ * one uncalled. Once both rats are dead with neither struck by the
+ * tutor, one more comes, watched by `watch`.
+ */
+export function callTutor(simulation: MatchSimulation, watch: RatWatch): CallTutor {
+  simulation.walkTo(TUTOR_ID, CALL_RATS.tutorSpot, CALL_RATS.layer);
+  const ids = CALL_RATS.rats.map(({ id }) => id);
+  /** The rats the team has called. */
+  const called = new Set<string>();
+  let lost = false;
+  const standing = (id: string): boolean => simulation.get(id)?.combatant.dead === false;
+  return {
+    lost: () => lost,
+    step: (calledId, tally) => {
+      if (calledId !== undefined && ids.includes(calledId)) {
+        called.add(calledId);
+      }
+      lost ||= ids.some((id) => called.has(id) && !standing(id) && !tally.hitByTutor.has(id));
+      const tutor = simulation.get(TUTOR_ID);
+      if (
+        tutor !== undefined &&
+        calledId !== undefined &&
+        ids.includes(calledId) &&
+        standing(calledId) &&
+        tutor.combatant.attack?.targetId !== calledId
+      ) {
+        simulation.requestAttack(TUTOR_ID, calledId);
+      }
+      if (ids.every((id) => !standing(id) && !tally.hitByTutor.has(id))) {
+        const id = `tutorial-call-rat-${String(ids.length + 1)}`;
+        ids.push(id);
+        watch.watch(id);
+        simulation.add(
+          ratSpec(CALL_GROUND, id, CALL_RATS.extra, CALL_RATS.extra, undefined, undefined),
+        );
       }
     },
   };
@@ -729,6 +825,119 @@ export function rampTutor(simulation: MatchSimulation): RampTutor {
         simulation.walkTo(TUTOR_ID, beside, layer);
       } else {
         simulation.walkTo(TUTOR_ID, onLanding, landing);
+      }
+    },
+  };
+}
+
+/** How far past the east stairs' top station 11's mark lies, and the tutor beside it. */
+const TUTOR_BESIDE_TUNNEL = 70;
+
+/** Station 11's tunnel (#3326), on the canyon's second map, under its sleeping guard. */
+export interface CanyonTunnel {
+  /** The tunnel's footprint: on `under` inside it is in the tunnel, on `above` over it. */
+  readonly footprint: Shape;
+  readonly under: number;
+  readonly above: number;
+  /** The mark, just past the east stairs' top, on `above`. */
+  readonly mark: Vec2;
+  /** Where the guard lies: on the rock over the tunnel's middle, a wall of `above`. */
+  readonly sleeper: Vec2;
+  /** The tutor's way through: the west stairs' top and foot, the east's foot and top. */
+  readonly westTop: Vec2;
+  readonly westFoot: Vec2;
+  readonly eastFoot: Vec2;
+  readonly eastTop: Vec2;
+}
+
+export const TUNNEL: CanyonTunnel = ((): CanyonTunnel => {
+  const map = TUTORIAL_CANYON[1];
+  const tunnel = map.tunnels.find(({ id }) => id === "tunnel");
+  const west = map.transitions.find(({ id }) => id === "tunnel-west-steps");
+  const east = map.transitions.find(({ id }) => id === "tunnel-east-steps");
+  if (
+    tunnel?.footprint.kind !== "rect" ||
+    west?.area.kind !== "rect" ||
+    east?.area.kind !== "rect"
+  ) {
+    throw new Error(`${map.id}: no tunnel and its steps for station 11`);
+  }
+  /** A flight's foot and top, each `PAST_THE_STAIRS` beyond its ends. */
+  const ends = (
+    area: { x: number; y: number; width: number; height: number },
+    uphill: "n" | "s" | "e" | "w",
+  ): { foot: Vec2; top: Vec2 } => {
+    const middle = vec2(area.x + area.width / 2, area.y + area.height / 2);
+    const along = { n: vec2(0, -1), s: vec2(0, 1), e: vec2(1, 0), w: vec2(-1, 0) }[uphill];
+    const half =
+      Math.abs(along.x) * (area.width / 2) +
+      Math.abs(along.y) * (area.height / 2) +
+      PAST_THE_STAIRS;
+    return {
+      foot: vec2(middle.x - along.x * half, middle.y - along.y * half),
+      top: vec2(middle.x + along.x * half, middle.y + along.y * half),
+    };
+  };
+  const westEnds = ends(west.area, west.uphill);
+  const eastEnds = ends(east.area, east.uphill);
+  const { x, y, width, height } = tunnel.footprint;
+  return {
+    footprint: tunnel.footprint,
+    under: east.from,
+    above: east.to,
+    mark: eastEnds.top,
+    sleeper: vec2(x + width / 2, y + height / 2),
+    westTop: westEnds.top,
+    westFoot: westEnds.foot,
+    eastFoot: eastEnds.foot,
+    eastTop: vec2(eastEnds.top.x + TUTOR_BESIDE_TUNNEL, eastEnds.top.y),
+  };
+})();
+
+/** The tutor at station 11 (#3326), stepped once a frame. */
+export interface TunnelTutor {
+  readonly step: () => void;
+}
+
+/**
+ * The tutor at station 11: waits at the west stairs' top, and once the
+ * player is down in the tunnel goes through it after them, waypoint by
+ * waypoint, to beside the mark. Never over the top, where the guard lies.
+ */
+export function tunnelTutor(simulation: MatchSimulation): TunnelTutor {
+  const { under, above, westTop, westFoot, eastFoot, eastTop } = TUNNEL;
+  let route: readonly { at: Vec2; layer: number }[] = [
+    { at: westFoot, layer: under },
+    { at: eastFoot, layer: under },
+    { at: eastTop, layer: above },
+  ];
+  let following = false;
+  simulation.walkTo(TUTOR_ID, westTop, above);
+  return {
+    step: () => {
+      const self = simulation.get(SELF_ID);
+      const tutor = simulation.get(TUTOR_ID);
+      if (self === undefined || tutor === undefined) {
+        return;
+      }
+      if (!following) {
+        if (self.layer !== under) {
+          return;
+        }
+        following = true;
+      } else {
+        const [next] = route;
+        if (
+          next === undefined ||
+          Math.hypot(tutor.position.x - next.at.x, tutor.position.y - next.at.y) > WAYPOINT_REACH
+        ) {
+          return;
+        }
+        route = route.slice(1);
+      }
+      const [next] = route;
+      if (next !== undefined) {
+        simulation.walkTo(TUTOR_ID, next.at, next.layer);
       }
     },
   };

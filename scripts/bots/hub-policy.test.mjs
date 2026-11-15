@@ -1180,6 +1180,16 @@ describe("hub schedule (#678)", () => {
   });
 });
 
+describe("hub heavy (#3362)", () => {
+  it("is open to every role", () => {
+    for (const role of ROLES) {
+      expect(authorize(role, { kind: "heavy", argv: ["status"] }), role).toMatchObject({
+        allow: true,
+      });
+    }
+  });
+});
+
 describe("hub note (#3129)", () => {
   it("is kept by every role, and only the manager reads another's with --role", () => {
     for (const role of ROLES) {

@@ -37,6 +37,7 @@ Bot koji jako odmakne od tima čeka ostale prije nego što krene
 dalje.
 
 Strijelci i kopljanici zauzmu uzvisinu kad je to sigurno.
+Bot na kojeg se usredotoče dva protivnika, ili koji ima manje od pola zdravlja i brzo ga gubi, skloni im se s vida do tri sekunde: iza zida, ispod platforme ili na uzvisinu.
 Kad nijedan neprijatelj nije blizu, bot povuče polugu koja otvara kraći put do neprijatelja. Dva bota također sruše zid koji skriva mnogo kraći put, udarajući ga svojim oružjem.
 
 Botovi koji nanose štetu čuvaju velike udarce, vještine napada i čarolije štete,

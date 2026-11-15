@@ -15,6 +15,7 @@ import { t } from "../i18n/index.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { startMatchView, type MatchView } from "../match-view.js";
 import type { GoalMark } from "../render/goal-mark.js";
+import type { SleeperProp } from "../render/sleeper-prop.js";
 import {
   NO_PROFESSIONS,
   createLocalConnection,
@@ -27,24 +28,30 @@ import { DEFAULT_STEP } from "../render/camera-rig.js";
 
 import {
   BAD_GROUND,
+  CALL_RATS,
   CRACKED_WALL,
   DODGE_MARK,
   LEDGE,
   RAMP,
   RAT_POCKET,
+  TUNNEL,
   allyHealSlot,
   badGroundTutor,
+  callTutor,
   canyonWorld,
   clearingTutor,
   ledgeTutor,
   rampTutor,
   ratPocket,
+  tunnelTutor,
   wallTutor,
   type BadGroundTutor,
+  type CallTutor,
   type ClearingTutor,
   type LedgeTutor,
   type RampTutor,
   type RatPocket,
+  type TunnelTutor,
   type WallTutor,
 } from "./canyon-world.js";
 import { createHealWatch, type HealWatch } from "./heal-watch.js";
@@ -54,6 +61,7 @@ import {
   ZONE_STATUSES,
   badGroundStation,
   breakWallStation,
+  callStation,
   climbStation,
   dodgeStation,
   healStation,
@@ -61,6 +69,7 @@ import {
   rampStation,
   ratsStation,
   stepInStation,
+  tunnelStation,
   walkStation,
   type StationHighlight,
   type TutorialWorldName,
@@ -79,6 +88,14 @@ import {
 const MAX_STEP_SECONDS = 0.1;
 /** How long "more soon" stands before the menu. */
 const FAREWELL_MS = 2_500;
+/** Station 11's guard (#3326), asleep on the rock over the tunnel's middle. */
+const SLEEPER: SleeperProp = {
+  id: "tutorial-sleeper",
+  kind: "sleeper",
+  position: TUNNEL.sleeper,
+  layer: TUNNEL.above,
+  facing: 0,
+};
 /** What a HUD element a station points at wears while it does (#3302). */
 const PULSE_CLASS = "tutorial-pulse";
 /** The fade back from white once the canyon stands (#3247), as `.tutorial-flash` animates it. */
@@ -86,6 +103,8 @@ const FLASH_MS = 800;
 
 /** No skill landed on a rat: what station 8 reads before its rats are there. */
 const NO_SKILLS: ReadonlySet<string> = new Set();
+/** No rat struck by the tutor: what station 12 reads before its rats are there. */
+const NO_HITS: ReadonlySet<string> = new Set();
 
 /** How a tutorial ended: through, skipped, or cut short with nothing to record. */
 export type TutorialEnd = "done" | "skipped";
@@ -122,6 +141,8 @@ interface Stage {
   readonly heals: HealWatch | undefined;
   /** Station 8's watch on the rats (#3316), on the canyon's second map only. */
   readonly rats: RatWatch | undefined;
+  /** Station 12's watch on its two rats (#3331), on the canyon's second map only. */
+  readonly callRats: RatWatch | undefined;
   /** Its zones, as the simulation applies them: the battlefield's play no part. */
   readonly zones: readonly MatchZone[];
 }
@@ -181,6 +202,7 @@ export async function startTutorialSession(
     dodges: undefined,
     heals: undefined,
     rats: undefined,
+    callRats: undefined,
     zones: [],
   };
   let highlight: StationHighlight | undefined;
@@ -246,6 +268,10 @@ export async function startTutorialSession(
   let belowClicked = false;
   let onLedge: LedgeTutor | undefined;
   let onRamp: RampTutor | undefined;
+  let inTunnel: TunnelTutor | undefined;
+  // Station 12's (#3331): whether the player has targeted the call with its key.
+  let calledTargeted = false;
+  let atCall: CallTutor | undefined;
   /** The station the last beat ran. */
   let running: string | undefined;
   /** The HUD element pulsing now, if any. */
@@ -276,7 +302,7 @@ export async function startTutorialSession(
     const skills = Object.fromEntries(
       Object.entries(line.skills).map(([slot, id]) => [slot, skillName(id)]),
     );
-    said.textContent = t(line.key, skills);
+    said.textContent = t(line.key, { ...skills, keys: line.keys.join(" ") });
     how.textContent = line.how === undefined ? "" : t(line.how, { keys: line.keys.join(" ") });
   };
   const open = (): Promise<MatchView> => {
@@ -294,8 +320,13 @@ export async function startTutorialSession(
         tutorial: {
           party: [SELF_ID, TUTOR_ID],
           goals,
+          // The guard asleep over the tunnel (#3326), only while station 11 runs.
+          props: () => (running === "tunnel" ? [SLEEPER] : []),
           onWalk: (below) => {
             belowClicked = below;
+          },
+          onCalledTargeted: () => {
+            calledTargeted ||= running === "call";
           },
         },
       },
@@ -325,6 +356,8 @@ export async function startTutorialSession(
       ),
       climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
       rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
+      tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
+      callStation(),
     ],
     loadKeymap,
   );
@@ -359,7 +392,17 @@ export async function startTutorialSession(
       part === 1
         ? createRatWatch(
             SELF_ID,
+            TUTOR_ID,
             RAT_POCKET.rats.map(({ id }) => id),
+            playerBuild.skillBar,
+          )
+        : undefined;
+    const callRats =
+      part === 1
+        ? createRatWatch(
+            SELF_ID,
+            TUTOR_ID,
+            CALL_RATS.rats.map(({ id }) => id),
             playerBuild.skillBar,
           )
         : undefined;
@@ -371,6 +414,7 @@ export async function startTutorialSession(
         heals?.observe(message);
       }
       rats?.observe(message);
+      callRats?.observe(message);
     });
     stage = {
       name: to,
@@ -381,6 +425,7 @@ export async function startTutorialSession(
       dodges: part === 0 ? createDodgeCounter(canyon.zones) : undefined,
       heals,
       rats,
+      callRats,
       zones: canyon.zones,
     };
     // The tutor goes on ahead, to wait by the mark.
@@ -410,7 +455,7 @@ export async function startTutorialSession(
       request = requestAnimationFrame(step);
       return;
     }
-    const { simulation: world, connection, dodges, heals, rats } = stage;
+    const { simulation: world, connection, dodges, heals, rats, callRats } = stage;
     connection.advance(last === undefined ? 0 : Math.min((now - last) / 1000, MAX_STEP_SECONDS));
     last = now;
     const self = world.get(SELF_ID);
@@ -453,6 +498,8 @@ export async function startTutorialSession(
       crossing && health !== undefined && healthBefore !== undefined && health < healthBefore;
     healthBefore = health;
     const ratTally = rats?.tally();
+    const callTally = callRats?.tally();
+    const calledId = connection.getCalls().target?.targetId;
     if (self !== undefined && tutor !== undefined && farewell === 0) {
       const beat = runner.tick(
         {
@@ -479,6 +526,10 @@ export async function startTutorialSession(
           bigRatDown: ratTally?.knockedDown.has(RAT_POCKET.rats[1].id) ?? false,
           extraRat: atRats?.extra() ?? false,
           belowClicked,
+          calledId,
+          hitByTutor: callTally?.hitByTutor ?? NO_HITS,
+          calledTargeted,
+          calledLost: atCall?.lost() ?? false,
         },
         now,
       );
@@ -530,6 +581,22 @@ export async function startTutorialSession(
         onRamp = rampTutor(world);
       }
       onRamp?.step();
+      // Station 11 is next: the tutor waits at the tunnel's west steps, then
+      // goes through it behind the player.
+      if (inTunnel === undefined && beat.station === "tunnel" && stage.name === "canyon-2") {
+        inTunnel = tunnelTutor(world);
+      }
+      // Only while it is on: the tutor walks on to station 12 from wherever it is.
+      if (beat.station === "tunnel") {
+        inTunnel?.step();
+      }
+      // Station 12 is next: the tutor waits by the two rats, and attacks the one called.
+      if (atCall === undefined && beat.station === "call" && callRats !== undefined) {
+        atCall = callTutor(world, callRats);
+      }
+      if (callTally !== undefined) {
+        atCall?.step(calledId, callTally);
+      }
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;
