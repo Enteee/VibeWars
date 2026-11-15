@@ -37,6 +37,7 @@ Bot yang terlalu jauh di depan timnya menunggu sisanya sebelum terus
 maju.
 
 Pemanah dan pelempar tombak mengambil tempat tinggi saat aman.
+Bot yang diincar dua lawan, atau yang nyawanya di bawah separuh dan cepat berkurang, bersembunyi dari pandangan mereka hingga tiga detik: di balik dinding, di bawah dek, atau di tempat tinggi.
 Saat tidak ada lawan di dekatnya, bot menarik tuas yang membuka jalan lebih pendek ke arah lawan. Dua bot juga merobohkan tembok yang menyembunyikan jalan yang jauh lebih pendek, dengan memukulnya memakai senjata mereka.
 
 Bot penyerang menahan pukulan besarnya, skill serangan dan mantra damage,
