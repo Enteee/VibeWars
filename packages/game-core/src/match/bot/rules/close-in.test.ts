@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { distance, vec2, type Vec2 } from "../../../vec2.js";
+import { createCursor, type BehaviourCursor } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import closeIn from "./close-in.js";
+import closeIn, { REPRICE_SECONDS } from "./close-in.js";
 import { WALK_CANDIDATES } from "./shared.js";
 import { body, match, ruleFor } from "./test-support.js";
 
@@ -10,6 +11,7 @@ import { body, match, ruleFor } from "./test-support.js";
 function closeInTo(
   foes: readonly (readonly [Vec2, number])[],
   routeLength: (to: Vec2, layer: number) => number,
+  { cursor = createCursor(), now = 0 }: { cursor?: BehaviourCursor; now?: number } = {},
 ) {
   const sim = match([
     body("bot", 0, vec2(100, 400)),
@@ -23,8 +25,8 @@ function closeInTo(
   const view = ruleFor(
     sim,
     "bot",
-    { foes: placed, self: { ...base.self, layer: 1 } },
-    { routeLength },
+    { foes: placed, self: { ...base.self, layer: 1 }, cursor },
+    { routeLength, now },
   );
   return closeIn.decide(view);
 }
@@ -109,5 +111,27 @@ describe("close-in: a bot walks to the foe nearest to walk to (#3353)", () => {
     );
     expect(priced).toBe(0);
     expect(intent?.moveTo).toEqual(tunnel);
+  });
+
+  it(`keeps a priced foe ${String(REPRICE_SECONDS)} s, then prices again`, () => {
+    const cursor = createCursor();
+    const foes = [
+      [tunnel, 0],
+      [deck, 1],
+    ] as const;
+    let priced = 0;
+    const tunnelCheap = (to: Vec2, layer: number): number => {
+      priced += 1;
+      return layer === 0 ? 0 : walk(to, layer);
+    };
+    expect(closeInTo(foes, walk, { cursor, now: 10 })?.moveTo).toEqual(deck);
+    expect(closeInTo(foes, tunnelCheap, { cursor, now: 10 + REPRICE_SECONDS / 2 })?.moveTo).toEqual(
+      deck,
+    );
+    expect(priced).toBe(0);
+    expect(closeInTo(foes, tunnelCheap, { cursor, now: 10 + REPRICE_SECONDS })?.moveTo).toEqual(
+      tunnel,
+    );
+    expect(priced).toBe(2);
   });
 });
