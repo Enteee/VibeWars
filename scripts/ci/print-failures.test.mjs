@@ -102,7 +102,12 @@ describe("print-failures", () => {
       mkdirSync(join(root, "t" + String(i)));
       writeFileSync(join(root, "t" + String(i), "error-context.md"), long);
     }
-    expect(printFailures(root).length).toBeLessThanOrEqual(MAX_TOTAL_LINES + 1);
+    const all = printFailures(root);
+    expect(all.length).toBeLessThanOrEqual(MAX_TOTAL_LINES + 1);
+    expect(all.at(-1)).toMatch(/more failed tests not shown/);
+    expect(all.filter((l) => l.startsWith("::group::"))).toHaveLength(
+      all.filter((l) => l === "::endgroup::").length,
+    );
   });
 });
 

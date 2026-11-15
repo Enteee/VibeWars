@@ -128,12 +128,18 @@ export function describeFailure(dir, title) {
 export function printFailures(root = "test-results") {
   const dirs = failedDirs(root);
   if (dirs.length === 0) return ["no failed test left an error-context.md"];
-  const all = dirs.flatMap((d) => describeFailure(d, d.slice(root.length + 1)));
-  if (all.length <= MAX_TOTAL_LINES) return all;
-  return [
-    ...all.slice(0, MAX_TOTAL_LINES),
-    "... " + String(all.length - MAX_TOTAL_LINES) + " lines cut",
-  ];
+  // Whole tests only: a cut through a block would leave stop-commands and the
+  // group open.
+  const all = [];
+  let left = dirs.length;
+  for (const d of dirs) {
+    const block = describeFailure(d, d.slice(root.length + 1));
+    if (all.length + block.length > MAX_TOTAL_LINES) break;
+    all.push(...block);
+    left--;
+  }
+  if (left > 0) all.push("... " + String(left) + " more failed tests not shown");
+  return all;
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
