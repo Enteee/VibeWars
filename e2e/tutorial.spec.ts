@@ -503,20 +503,27 @@ test.describe("the first-time tutorial (#3218)", () => {
         .poll(() => hasSaid("Shh. Don't wake them. We go under."), { timeout: 15_000 })
         .toBe(true);
       await expect(frame).toHaveAttribute("data-mark-layer", "1");
-      const near = async (point: { x: number; y: number }, reach: number): Promise<void> => {
+      // A walk that stuck says where (#3379): which leg, from where, and on
+      // which layer the mark is, so a flake explains itself in the log.
+      const near = async (
+        point: { x: number; y: number },
+        reach: number,
+        leg = "",
+      ): Promise<void> => {
         const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
           .split(",")
           .map(Number);
+        const markLayer = (await frame.getAttribute("data-mark-layer")) ?? "none";
         expect(
           Math.hypot(cx - point.x, cy - point.y),
-          `at ${String(cx)},${String(cy)}, bound for ${String(point.x)},${String(point.y)}`,
+          `${leg}at ${String(cx)},${String(cy)}, bound for ${String(point.x)},${String(point.y)}, the mark on layer ${markLayer}`,
         ).toBeLessThan(reach);
       };
       // On each waypoint, not just near it: there is no pathing, and a leg
       // begun beside one can run its straight line into a corner (#3363).
       // Stuck since the last try, the same click would never move it: a
       // short stride, a little to one side, instead.
-      for (const waypoint of TO_THE_TUNNEL) {
+      for (const [index, waypoint] of TO_THE_TUNNEL.entries()) {
         let last = "";
         let tries = 0;
         await expect(async () => {
@@ -537,7 +544,7 @@ test.describe("the first-time tutorial (#3218)", () => {
             await walkTo(waypoint, LONG_STRIDE);
           }
           last = camera;
-          await near(waypoint, 40);
+          await near(waypoint, 40, `TO_THE_TUNNEL[${String(index)}]: `);
         }).toPass({ timeout: 90_000 });
       }
       // One click each, then a wait for the walk: an Alt click from inside
