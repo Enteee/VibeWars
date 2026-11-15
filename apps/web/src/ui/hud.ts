@@ -2100,11 +2100,15 @@ export function updateFollowed(
 
 /**
  * What the centre line says while you are dead (#3367): when you are
- * back, or to wait for a resurrection; `undefined` alive, or while the
- * host has not said.
+ * back, or to wait for a resurrection; `undefined` alive, while the
+ * host has not said, and once the match is over: a finished match stops
+ * ticking, and its last count would stand frozen under the result.
  */
-export function respawnLine(self: PlayerSnapshot): string | undefined {
-  if (!self.dead || self.respawnIn === undefined) {
+export function respawnLine(
+  self: PlayerSnapshot,
+  phase: MatchSnapshot["phase"] | undefined,
+): string | undefined {
+  if (!self.dead || self.respawnIn === undefined || phase === "finished") {
     return undefined;
   }
   return self.respawnIn === null
@@ -2164,10 +2168,11 @@ export function updateHud(
   }
 
   if (self === undefined) {
+    setHidden(hud.respawn, true);
     return;
   }
 
-  const respawn = respawnLine(self);
+  const respawn = respawnLine(self, match?.phase);
   setHidden(hud.respawn, respawn === undefined);
   if (respawn !== undefined) {
     setText(hud.respawn, respawn);

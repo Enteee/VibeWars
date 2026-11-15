@@ -178,21 +178,26 @@ describe("invulnerableLabel (#1233)", () => {
 
 describe("respawnLine (#3367)", () => {
   it("says when you are back while you are dead, and nothing alive", () => {
-    expect(respawnLine(player({ dead: true, respawnIn: 3 }))).toBe(
+    expect(respawnLine(player({ dead: true, respawnIn: 3 }), "active")).toBe(
       t("hud.respawnIn", { seconds: 3 }),
     );
-    expect(respawnLine(player({ dead: true, respawnIn: 3 }))).toBe("Back in 3");
-    expect(respawnLine(player({ dead: false, respawnIn: undefined }))).toBeUndefined();
+    expect(respawnLine(player({ dead: true, respawnIn: 3 }), "active")).toBe("Back in 3");
+    expect(respawnLine(player({ dead: false, respawnIn: undefined }), "active")).toBeUndefined();
   });
 
   it("says to wait for a resurrection when you will not respawn", () => {
-    expect(respawnLine(player({ dead: true, respawnIn: null }))).toBe(
+    expect(respawnLine(player({ dead: true, respawnIn: null }), "active")).toBe(
       t("hud.respawnResurrectionOnly"),
     );
   });
 
   it("says nothing dead until the host has said", () => {
-    expect(respawnLine(player({ dead: true, respawnIn: undefined }))).toBeUndefined();
+    expect(respawnLine(player({ dead: true, respawnIn: undefined }), "active")).toBeUndefined();
+  });
+
+  it("says nothing once the match is over, whose last count would stand frozen", () => {
+    expect(respawnLine(player({ dead: true, respawnIn: 8 }), "finished")).toBeUndefined();
+    expect(respawnLine(player({ dead: true, respawnIn: null }), "finished")).toBeUndefined();
   });
 });
 
