@@ -7,12 +7,14 @@ import {
   DODGES_NEEDED,
   EFFECTS_MONITOR,
   HEALTH_BAR,
+  RAT_SKILLS,
   badGroundStation,
   breakWallStation,
   dodgeStation,
   healStation,
   lookStation,
   partyRow,
+  ratsStation,
   skillSlot,
   stepInStation,
   walkStation,
@@ -43,6 +45,12 @@ const CAMERA = {
   energySpent: false,
   zoneStatus: undefined,
   healthDropped: false,
+  ratsAlive: 0,
+  skillsOnRats: new Set<string>(),
+  selfTarget: undefined,
+  ratFled: false,
+  bigRatDown: false,
+  extraRat: false,
 };
 const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100), ...CAMERA };
 const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100), ...CAMERA };
@@ -134,11 +142,22 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground and finishes (#3247, #3302, #3303, #3310)", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats and finishes (#3247, #3302, #3303, #3310, #3316)", () => {
     const pad = vec2(200, -900);
     const goal = vec2(2850, 1800);
     const face = vec2(3480, 1800);
     const across = vec2(6900, 720);
+    const pocket = vec2(5200, 2100);
+    const bar = [
+      "warrior.enraged-smash",
+      RAT_SKILLS.bash,
+      RAT_SKILLS.crush,
+      RAT_SKILLS.runner,
+      "warrior.auspicious-blow",
+      "warrior.flail",
+      "warrior.sprint",
+      "monk.heal-other",
+    ];
     const runner = createTutorialRunner(
       [
         walkStation(MARK, 0),
@@ -148,6 +167,7 @@ describe("the tutorial runner", () => {
         breakWallStation(face, 400),
         healStation("tutor", 7),
         badGroundStation(across, 0),
+        ratsStation(pocket, { runner: "rat-1", big: "rat-2" }, bar),
       ],
       () => KEYMAP_PRESETS.classic,
       label,
@@ -156,6 +176,14 @@ describe("the tutorial runner", () => {
     const dodged = { ...looked, self: goal, rockfallDodges: DODGES_NEEDED };
     const broken = { ...dodged, wallHealth: 0, wallTargeted: true };
     const healed = { tutorHit: true, tutorTargeted: true, energySpent: true, healedTutor: true };
+    const rats: TutorialView = {
+      ...broken,
+      ...healed,
+      self: pocket,
+      ratsAlive: 3,
+      skillsOnRats: new Set([RAT_SKILLS.runner]),
+    };
+    const two = new Set([RAT_SKILLS.runner, RAT_SKILLS.bash]);
     const ticks: [TutorialView, number][] = [
       [AWAY, 0],
       [ON_MARK, 1_000],
@@ -181,6 +209,23 @@ describe("the tutorial runner", () => {
       [{ ...broken, ...healed }, 9_000 + 6 * PRAISE_MS + 3 * ASIDE_MS],
       [{ ...broken, ...healed, zoneStatus: "mired" }, 9_000 + 6 * PRAISE_MS + 4 * ASIDE_MS],
       [{ ...broken, ...healed, self: across }, 10_000 + 6 * PRAISE_MS + 5 * ASIDE_MS],
+      [{ ...rats }, 10_000 + 7 * PRAISE_MS + 5 * ASIDE_MS],
+      [{ ...rats, selfTarget: "rat-1" }, 11_000 + 7 * PRAISE_MS + 5 * ASIDE_MS],
+      [{ ...rats, selfTarget: "rat-1", ratFled: true }, 10_000 + 7 * PRAISE_MS + 6 * ASIDE_MS],
+      [{ ...rats, ratFled: true, selfTarget: "rat-2" }, 10_000 + 7 * PRAISE_MS + 7 * ASIDE_MS],
+      [
+        { ...rats, ratFled: true, selfTarget: "rat-2", bigRatDown: true },
+        11_000 + 7 * PRAISE_MS + 7 * ASIDE_MS,
+      ],
+      [{ ...rats, ratFled: true, ratsAlive: 0 }, 12_000 + 7 * PRAISE_MS + 7 * ASIDE_MS],
+      [
+        { ...rats, ratFled: true, ratsAlive: 1, extraRat: true },
+        10_000 + 7 * PRAISE_MS + 8 * ASIDE_MS,
+      ],
+      [
+        { ...rats, ratFled: true, ratsAlive: 0, extraRat: true, skillsOnRats: two },
+        11_000 + 7 * PRAISE_MS + 9 * ASIDE_MS,
+      ],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -205,6 +250,27 @@ describe("the tutorial runner", () => {
       "tutorial.ground.intro",
       "tutorial.ground.mired",
       "tutorial.ground.praise",
+      "tutorial.rats.intro",
+      undefined,
+      "tutorial.rats.runs",
+      "tutorial.rats.big",
+      undefined,
+      undefined,
+      "tutorial.rats.again",
+      "tutorial.rats.praise",
+    ]);
+    // The rats name their skills from the catalog; the runner lights its strike, the big rat
+    // Hammer Bash until it is down, then Crushing Blow; otherwise the pocket is marked.
+    expect(beats[23]?.say?.skills).toEqual({ skill: RAT_SKILLS.runner });
+    expect(beats[24]?.say?.skills).toEqual({ bash: RAT_SKILLS.bash, crush: RAT_SKILLS.crush });
+    expect(beats[21]?.say?.keys).toEqual(["Tab", "KeyC"]);
+    expect(beats.slice(21, 27).map((beat) => beat.highlight)).toEqual([
+      { kind: "ground", at: pocket },
+      { kind: "hud", element: skillSlot(3) },
+      { kind: "hud", element: skillSlot(3) },
+      { kind: "hud", element: skillSlot(1) },
+      { kind: "hud", element: skillSlot(2) },
+      { kind: "ground", at: pocket },
     ]);
     // The mark past the bad ground, then the effects monitor while the mud's status lasts.
     expect(beats.slice(18, 20).map((beat) => [beat.highlight, beat.mark])).toEqual([
@@ -240,9 +306,10 @@ describe("the tutorial runner", () => {
     // The world turns once, under the step in's praise, and stays turned.
     expect(beats.map((beat) => beat.world)).toEqual([
       ...Array<string>(5).fill("battlefield"),
-      ...Array<string>(16).fill("canyon"),
+      ...Array<string>(15).fill("canyon"),
+      ...Array<string>(9).fill("canyon-2"),
     ]);
-    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(20).fill(false), true]);
+    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(28).fill(false), true]);
   });
 
   it("says a station's reaction once, then no more hints until it is done (#3302)", () => {
