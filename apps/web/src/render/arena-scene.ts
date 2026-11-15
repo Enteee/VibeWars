@@ -2133,11 +2133,6 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * One actor on its band: its body, every mark on it over the body
-   * glyphs (#1037), and its health bar over those (#3292). In a clump a neighbour's weapon now crosses your
-   * body: the weapon is the more urgent read.
-   */
-  /**
    * Age the hit, death and return effects (#3365), and hand back the bodies
    * as they are drawn: a struck one nudged, a returning one rising to its
    * size. A body seen for the first time (a joiner's first snapshot) has no
@@ -2170,7 +2165,10 @@ export class ArenaScene extends Phaser.Scene {
       return {
         ...actor,
         position: { x: actor.position.x + nudge.x, y: actor.position.y + nudge.y },
-        radius: back === undefined ? actor.radius : actor.radius * respawnScale(back.ageSeconds),
+        radius:
+          back === undefined || this.reducedMotion
+            ? actor.radius
+            : actor.radius * respawnScale(back.ageSeconds),
       };
     });
   }
@@ -2234,6 +2232,11 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * One actor on its band: its body, every mark on it over the body
+   * glyphs (#1037), and its health bar over those (#3292). In a clump a neighbour's weapon now crosses your
+   * body: the weapon is the more urgent read.
+   */
   private drawActor(band: (typeof this.bands)[number], actor: RenderableActor): void {
     const { body: g, marks, bar } = band;
     const { x, y } = actor.position;
