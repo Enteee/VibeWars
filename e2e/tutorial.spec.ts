@@ -55,6 +55,12 @@ const SOUTH_OF_THE_FLIGHTS = { x: 2600, y: 2050 };
  * the deck is drawn, so from here a plain click on it is one stride.
  */
 const UNDER_THE_HIGH_DECK = { x: 1980, y: 1700 };
+/**
+ * Where the middle of station 10's landing (#3325) is drawn: the landing
+ * (x 2260-2440, y 1480-1640, layer 2) stands one layer, 56 world units,
+ * over the ground.
+ */
+const OVER_THE_LANDING = { x: 2350, y: 1560 - 56 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -431,29 +437,23 @@ test.describe("the first-time tutorial (#3218)", () => {
           expect(Math.hypot(cx - waypoint.x, cy - waypoint.y)).toBeLessThan(150);
         }).toPass({ timeout: 90_000 });
       }
-      // One click on the deck walks round to the first flight and up both,
-      // sent just after the hint: the landing, some 4 s on, then falls clear
-      // of the 2.5 s an aside waits on the line before it and of the next
-      // hint, 10 s on. The said log keeps no repeat, so count every line.
-      await frame.locator(".tutorial-said").evaluate((element) => {
-        let lines = 0;
-        new MutationObserver(() => {
-          lines += 1;
-          document.body.setAttribute("data-said-count", String(lines));
-        }).observe(element, { childList: true });
-      });
-      const linesSaid = async (): Promise<number> =>
-        Number((await saidLog.getAttribute("data-said-count")) ?? "0");
+      // A click on the landing climbs the first flight, and the landing,
+      // stood on, gets its line; a click on the deck from there, the second.
+      // One click from the ground taking both is the unit test's.
+      await expect(async () => {
+        if (await hasSaid("One more flight.")) {
+          return;
+        }
+        await walkTo(OVER_THE_LANDING);
+        await expect.poll(() => hasSaid("One more flight."), { timeout: 10_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
       await expect(async () => {
         if (await hasSaid(high)) {
           return;
         }
-        const before = await linesSaid();
-        await expect.poll(linesSaid, { timeout: 15_000 }).toBeGreaterThan(before);
         await walkTo(OVER_THE_HIGH_DECK);
-        await expect.poll(() => hasSaid(high), { timeout: 20_000 }).toBe(true);
-      }).toPass({ timeout: 90_000 });
-      expect(await hasSaid("One more flight."), "the landing gets its line").toBe(true);
+        await expect.poll(() => hasSaid(high), { timeout: 5_000 }).toBe(true);
+      }).toPass({ timeout: 60_000 });
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 
