@@ -160,8 +160,10 @@ the 95 % interval at 100 matches) and draws are at most a quarter of the
 matches. Otherwise it is FAIL, naming the favoured team, or the share of
 draws, or "no contact" when no match was decided at all.
 
-PASS is necessary, not sufficient. Bots do not yet value high ground or
-cover (#2542), so a map whose heights favour one side can still pass.
+PASS is necessary, not sufficient. Bots take high ground only with a bow
+or a spear (#3141), and duck behind walls, decks and tunnels only once
+focused (#3369); they never hold a choke or a height for its own sake.
+So a map whose heights favour one side can still pass.
 The operator's playtest is the final word on every map.
 
 ### The host tick on a whole map

@@ -10,7 +10,9 @@ import {
   PRIEST_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
+  deckBlocksSight,
   getSkill,
+  hasLineOfSight,
   isSpikeSkill,
   type ParticipantSpec,
 } from "@vibewars/game-core";
@@ -665,4 +667,74 @@ describe("a breakable wall the only way between the spawns (#3140)", () => {
     expect(died).toBe(true);
     expect(seconds).toBeLessThan(ANNIHILATION_MATCH_RULES.timeLimitSeconds);
   }, 60_000);
+});
+
+describe("a caster two bowmen focus on Sandstone Steps (#3369)", () => {
+  it("ducks behind the west row of houses, out of both bowmen's sight, within 3 s", () => {
+    const map = loadAllMaps().find((each) => each.id === "sandstone-steps");
+    if (map === undefined) throw new Error("no sandstone-steps");
+    const layers = matchLayers(map);
+    const build = (name: string) => {
+      const found = STARTER_BUILDS.find((candidate) => candidate.name === name);
+      if (found === undefined) throw new Error(`no starter build ${name}`);
+      return found;
+    };
+    // The street north of the houses, on the ground: the caster at its
+    // west end, the bowmen 500 east, all in the open.
+    const sim = new MatchSimulation({
+      seed: "duck",
+      ruleset: RULESET,
+      walls: allWallSegments(map.walls),
+      bounds: { width: map.width, height: map.height },
+      layers,
+      matchRules: ANNIHILATION_MATCH_RULES,
+      participants: [
+        playBuildBot(
+          build("Double Dragon (E)"),
+          "caster",
+          0,
+          { position: { x: 1000, y: 1400 }, layer: 1 },
+          0,
+        ),
+        playBuildBot(
+          build("Barrage (R)"),
+          "bow-1",
+          1,
+          { position: { x: 1500, y: 1400 }, layer: 1 },
+          0,
+        ),
+        playBuildBot(
+          build("Barrage (R)"),
+          "bow-2",
+          1,
+          { position: { x: 1600, y: 1360 }, layer: 1 },
+          0,
+        ),
+      ],
+    });
+    const bowmen = ["bow-1", "bow-2"].map((id) => {
+      const found = sim.get(id);
+      if (found === undefined) throw new Error(`no ${id}`);
+      return found;
+    });
+    const caster = sim.get("caster");
+    if (caster === undefined) throw new Error("no caster");
+    // ADR-0051's sight: the looker's layer's walls and the footprint rule.
+    const seen = () =>
+      bowmen.some(
+        (bow) =>
+          hasLineOfSight(bow.position, caster.position, layers.walls[bow.layer] ?? []) &&
+          !deckBlocksSight(layers.decks, bow.position, bow.layer, caster.position, caster.layer),
+      );
+    expect(seen()).toBe(true);
+    let focusedAt: number | undefined;
+    let hiddenAfter: number | undefined;
+    for (let t = 0; t < 6 && hiddenAfter === undefined; t += DT) {
+      sim.step(DT);
+      focusedAt ??= bowmen.every((bow) => bow.targetId === "caster") ? t : undefined;
+      if (focusedAt !== undefined && !seen()) hiddenAfter = t - focusedAt;
+    }
+    expect(focusedAt).toBeDefined();
+    expect(hiddenAfter).toBeLessThanOrEqual(3);
+  });
 });

@@ -1310,6 +1310,51 @@ export function highGroundSpots(
   return spots;
 }
 
+/** How far off a wall's middle `coverSpots` puts a spot on each side of it. */
+const COVER_OFFSET = 30;
+
+/**
+ * Where a bot may duck out of sight (#3369), besides the high ground: a
+ * point `COVER_OFFSET` off each sight wall's middle on both sides, on its
+ * layer, and the middle under each deck, a tunnel's or an overhang's, one
+ * layer down; those a body could stand on, in map order.
+ */
+export function coverSpots(
+  sightWalls: readonly (readonly Segment[])[],
+  decks: MatchLayers["decks"],
+  standable: (point: Vec2, layer: number) => boolean,
+): HighGroundSpot[] {
+  const spots: HighGroundSpot[] = [];
+  sightWalls.forEach((walls, layer) => {
+    for (const wall of walls) {
+      const along = normalize(sub(wall.b, wall.a));
+      if (along === ZERO) {
+        continue;
+      }
+      const middle = scale(add(wall.a, wall.b), 0.5);
+      const side = vec2(-along.y * COVER_OFFSET, along.x * COVER_OFFSET);
+      for (const point of [add(middle, side), sub(middle, side)]) {
+        if (standable(point, layer)) {
+          spots.push({ point, layer });
+        }
+      }
+    }
+  });
+  for (const { layer, footprint } of decks) {
+    if (footprint.length === 0) {
+      continue;
+    }
+    const point = scale(
+      footprint.reduce((sum, corner) => add(sum, corner), ZERO),
+      1 / footprint.length,
+    );
+    if (standable(point, layer - 1)) {
+      spots.push({ point, layer: layer - 1 });
+    }
+  }
+  return spots;
+}
+
 /** How far a body walks along `route` from `from`: a teleport's jump (#3030) costs nothing. */
 function walkLength(from: Vec2, route: readonly RouteWaypoint[]): number {
   let total = 0;
@@ -1417,6 +1462,8 @@ export class MatchSimulation {
   #standingDecks: MatchLayers["decks"] = NO_DECKS;
   /** Where bots may stand above the ground (#3141): see `highGroundSpots`. */
   readonly #highGround: readonly HighGroundSpot[];
+  /** Where bots may duck out of sight (#3369): see `coverSpots`; kept current as walls fall. */
+  #cover: readonly HighGroundSpot[] = [];
   /** Who reached a switch this step (#3025), in simulation order. */
   #switchArrivals: CarriedArrival[] = [];
   /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
@@ -1642,6 +1689,7 @@ export class MatchSimulation {
       this.#layers === undefined
         ? []
         : highGroundSpots(this.#layers, (point, layer) => isStandable(this.#graphOn(layer), point));
+    this.#cover = this.#coverSpots();
     this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
     this.#rng = createRng(this.#seed);
     this.#flagField = options.flagField;
@@ -4909,6 +4957,7 @@ export class MatchSimulation {
       seed: this.#seed,
       now: this.#elapsedSeconds,
       highGround: this.#highGround,
+      cover: this.#cover,
       routeLength: (to, layer) => {
         const route = this.#paths.find(record.position, record.layer, to, layer);
         return route === undefined ? Number.POSITIVE_INFINITY : walkLength(record.position, route);
@@ -7058,6 +7107,18 @@ export class MatchSimulation {
     return down.size === 0 ? decks : decks.filter((_, at) => !down.has(at));
   }
 
+  /** `coverSpots` for the walls and decks standing now; a map of one layer has its walls on the ground. */
+  #coverSpots(): HighGroundSpot[] {
+    return coverSpots(
+      this.#layers === undefined ? [this.#sightWalls] : this.#layerSight,
+      this.#standingDecks,
+      (point, layer) => {
+        const graph = this.#graphs[layer];
+        return graph !== undefined && isStandable(graph, point);
+      },
+    );
+  }
+
   /** The walls on `layer`: what stops bodies' blows and shots there. */
   #wallsOn(layer: number): readonly Segment[] {
     return this.#layerWalls[layer] ?? this.#walls;
@@ -7687,6 +7748,7 @@ export class MatchSimulation {
     this.#graphs = set.graphs;
     this.#paths = set.paths;
     this.#standingDecks = this.#decksStanding();
+    this.#cover = this.#coverSpots();
     for (const record of this.#participants.values()) {
       const deck = sinking.find(
         (each) => each.layer === record.layer && pointInPolygon(record.position, each.footprint),

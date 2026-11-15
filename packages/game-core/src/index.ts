@@ -244,7 +244,7 @@ export {
   MatchSimulation,
   walkableAreas,
 } from "./match/simulation.js";
-export { rampRims, UPHILL, type Uphill } from "./match/layer-rules.js";
+export { deckBlocksSight, rampRims, UPHILL, type Uphill } from "./match/layer-rules.js";
 export type { CorpseCandidate } from "./match/corpses.js";
 export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
 export {
