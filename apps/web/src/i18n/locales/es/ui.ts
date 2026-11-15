@@ -1556,6 +1556,11 @@ export default {
   "tutorial.stepIn.how": "Haz clic izquierdo en la plataforma, o camina con {keys}.",
   "tutorial.stepIn.intro": "¡Vamos, al teletransportador conmigo!",
   "tutorial.stepIn.praise": "Juntos. Contén la respiración.",
+  "tutorial.tunnel.hint": "Baja los escalones, cruza el túnel, hasta la marca.",
+  "tutorial.tunnel.how":
+    "Haz clic en los escalones de bajada y luego en la marca tras el otro extremo.",
+  "tutorial.tunnel.intro": "Chis. No lo despiertes. Vamos por debajo.",
+  "tutorial.tunnel.praise": "Ni un ruido. Los túneles te ocultan de quien está arriba.",
   "tutorial.tutor": "Tutor",
   "tutorial.walk.hint": "¡Aquí! Pisa la marca brillante.",
   "tutorial.walk.how": "Clic izquierdo en el suelo, o camina con {keys}.",
