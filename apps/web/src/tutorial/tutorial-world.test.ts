@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 import { mapStructure, teamArenaMapIds } from "../net/maps.js";
 import { pickSurface } from "../render/layer-surfaces.js";
 import { ELEVATION_STEP } from "../render/render-order.js";
-import { splashGraph } from "../ui/splash-fight.js";
+import { splashGraph, splashSpawn } from "../ui/splash-fight.js";
 
 import { MARK_REACH } from "./stations.js";
 import {
@@ -20,7 +20,9 @@ import {
   TUTORIAL_HEAL,
   TUTORIAL_HEAL_SLOT,
   FOE_KEEP_OFF,
+  BEHIND_THE_FOES,
   drawTutorProfession,
+  frontWorld,
   inOpenView,
   tutorialPlayerBuild,
   tutorialWorld,
@@ -35,6 +37,8 @@ const VIEWPORT = { width: 1000, height: 700 };
 /** How long, and how wide, the mark stays clear of every body but the pair. */
 const MARK_SECONDS = 30;
 const MARK_CLEAR = 150;
+/** How long the front plays before its foes must have left their spawn for the centre. */
+const FRONT_SECONDS = 60;
 
 describe("tutorialWorld (#3221)", () => {
   it("gives the bots the same builds for the same seed, so a seed is one world", () => {
@@ -286,4 +290,59 @@ describe("a walk along Crossroads' cellar-west (#3234)", () => {
     simulation.walkTo(SELF_ID, along.point, along.layer);
     expect(reaches(simulation, along.point, ground - 1, 15)).toBe(true);
   });
+});
+
+describe("frontWorld (#3334)", () => {
+  const front = (mapId: string, seed: string): ReturnType<typeof frontWorld> =>
+    frontWorld(seed, mapId, 4, tutorialPlayerBuild(), tutorialPlayerBuild());
+
+  it("puts the pair on the side they fought with, the tutor one of its bots", () => {
+    const { simulation } = front("arena-canyon", "sides");
+    const teams = [...simulation.participants()].map((body) => body.combatant.team);
+    expect(simulation.get(SELF_ID)?.combatant.team).toBe(0);
+    expect(simulation.get(TUTOR_ID)?.combatant.team).toBe(0);
+    expect(teams.filter((team) => team === 0)).toHaveLength(6);
+    expect(teams.filter((team) => team === 1)).toHaveLength(4);
+  });
+
+  it.each(teamArenaMapIds(8))("lands the pair behind the foes, under open sky, on %s", (mapId) => {
+    const { map, arrival } = front(mapId, `arrival-${mapId}`);
+    const graph = splashGraph(map);
+    const fight = { mapId, teamSize: 4, still: false };
+    const centre = { x: map.descriptor.width / 2, y: map.descriptor.height / 2 };
+    const theirs = splashSpawn(graph, map, fight, 1, 1.5);
+    const ours = splashSpawn(graph, map, fight, 0, 1.5);
+    const off = (at: { readonly x: number; readonly y: number }): number =>
+      Math.hypot(at.x - centre.x, at.y - centre.y);
+    expect(inOpenView(mapStructure(mapId).structure, arrival)).toBe(true);
+    // Behind the foes, or at the pair's own spawn where that is no open ground.
+    if (arrival.x !== ours.x || arrival.y !== ours.y) {
+      expect(off(arrival)).toBeGreaterThan(off(theirs));
+      expect(Math.hypot(arrival.x - theirs.x, arrival.y - theirs.y)).toBeLessThanOrEqual(
+        BEHIND_THE_FOES * 2,
+      );
+    }
+  });
+
+  // On the battlefield a leash keeps the foes off the pair's places; at
+  // the front they are the menu's bots, and they push for the centre.
+  it("sends the foes over to the centre, guarding nothing", () => {
+    const { map, simulation } = front("arena-canyon", "no-guards");
+    const centre = { x: map.descriptor.width / 2, y: map.descriptor.height / 2 };
+    const off = (at: { readonly x: number; readonly y: number }): number =>
+      Math.hypot(at.x - centre.x, at.y - centre.y);
+    const foes = (): Iterable<{ readonly position: { readonly x: number; readonly y: number } }> =>
+      [...simulation.participants()].filter(
+        (body) => body.combatant.team === 1 && !body.combatant.dead,
+      );
+    const start = Math.min(...[...foes()].map((foe) => off(foe.position)));
+    let nearest = start;
+    for (let tick = 0; tick < FRONT_SECONDS / TICK; tick += 1) {
+      simulation.step(TICK);
+      for (const foe of foes()) {
+        nearest = Math.min(nearest, off(foe.position));
+      }
+    }
+    expect(nearest).toBeLessThan(start / 2);
+  }, 60_000); // A minute of a 10-body match, ~8 s on a loaded runner.
 });

@@ -86,7 +86,7 @@ import {
   type TutorialWorldName,
   type ZoneStatus,
 } from "./stations.js";
-import { createTutorialRunner, type TutorLine } from "./tutorial-runner.js";
+import { PRAISE_MS, createTutorialRunner, type TutorLine } from "./tutorial-runner.js";
 import {
   SELF_ID,
   TUTORIAL_HEAL,
@@ -531,8 +531,11 @@ export async function startTutorialSession(
     for (const [id, bot] of front.professions) {
       professions.set(id, bot);
     }
-    said.textContent = "";
-    how.textContent = "";
+    // The gate's praise stands over the front a moment, then the tutor is quiet.
+    window.setTimeout(() => {
+      said.textContent = "";
+      how.textContent = "";
+    }, PRAISE_MS);
     highlight = undefined;
     besideHud = undefined;
     pulse(undefined);
