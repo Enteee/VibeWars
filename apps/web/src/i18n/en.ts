@@ -569,6 +569,8 @@ export const en = {
   "hud.relicScoredOurs": "Relic scored!",
   "hud.relicScoredTheirs": "Enemy relic scored",
   "hud.relicTheirs": "Enemy relic",
+  "hud.respawnIn": "Back in {seconds}",
+  "hud.respawnResurrectionOnly": "Wait for a resurrection",
   "hud.shrinesBoth": "Shrines: +{ours}, enemy +{theirs}",
   "hud.shrinesOurs": "Shrines: +{ours}",
   "hud.shrinesTheirs": "Enemy shrines: +{theirs}",
@@ -1415,6 +1417,13 @@ export const en = {
   "training.soundOn": "Sound on.",
   "training.you": "You",
 
+  "tutorial.call.hint": "Call a rat, and I'll hit that one.",
+  "tutorial.call.how":
+    "Wheel-click a rat, or click the target bar, to call it. {keys} targets what your team called.",
+  "tutorial.call.intro": "Two rats. You pick, I hit. Call one.",
+  "tutorial.call.other": "Call the other one.",
+  "tutorial.call.praise": "Call it, and the team hits the same thing.",
+  "tutorial.call.t": "That's it. {keys} finds the call.",
   "tutorial.climb.hint": "Onto the ledge, then down to the ground under it.",
   "tutorial.climb.how": "Click where to stand. Alt+click (Option on a Mac) picks the ground below.",
   "tutorial.climb.intro": "Up the steps. A solid ring is where you'll stand.",

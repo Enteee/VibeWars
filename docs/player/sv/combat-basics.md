@@ -102,6 +102,10 @@ dem med en förmåga, som Resurrection Signet, som vem som helst kan ta.
 Vissa lägen tar tillbaka de döda i vågor, eller av sig själva; se
 [Lägen](modes.md).
 
+Medan du är död räknar en rad under resultattavlan ned tills du är
+tillbaka, eller säger åt dig att vänta på att bli återupplivad.
+Gruppfönstret visar nedräkningen bredvid varje död allierad.
+
 Varje död kostar dig 15 % **moral**, ned till -60 %: din maximala hälsa
 och energi krymper med den. Varje fiende ditt lag dödar vinner tillbaka
 2 % av den, upp till 0. I en gillestrid lyfter innehavet av flaggstället

@@ -78,8 +78,15 @@ const TO_THE_TUNNEL = [
   { x: 1600, y: 700 },
   { x: 1720, y: 700 },
 ];
+/**
+ * How far above the view's middle a walk's click may land, in CSS px
+ * (#3363): below the target frame at the top, which a click calls.
+ */
+const CLEAR_ABOVE = 200;
 /** How far each stride of station 11 (#3326) reaches, in world units: still inside the view. */
 const LONG_STRIDE = 500;
+/** How far to one side station 11's walk clicks when a click has not moved it (#3363). */
+const SIDESTEP = 60;
 /**
  * In station 11's tunnel (#3326), west and east of its middle: the tunnel
  * (x 2080-2800, y 450-950, layer 0) is a layer, 56 world units, under the
@@ -89,6 +96,8 @@ const IN_THE_TUNNEL_WEST = { x: 2200, y: 700 + 56 };
 const IN_THE_TUNNEL_EAST = { x: 2700, y: 700 + 56 };
 /** Station 11's mark (#3326), just past the top of the tunnel's east steps. */
 const PAST_THE_TUNNEL = { x: 3240, y: 700 };
+/** Station 12's two rats (#3331), west of them: `site-12` on the canyon's second map. */
+const BY_THE_RATS = { x: 4000, y: 700 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -126,7 +135,7 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge, up to the high deck, through the tunnel: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge, up to the high deck, through the tunnel, call a rat: then the menu, and no offer again`, async ({
       page,
     }) => {
       // Four stations, each a walk or a drag in a sim that runs no faster than
@@ -252,7 +261,10 @@ test.describe("the first-time tutorial (#3218)", () => {
           .split(",")
           .map(Number);
         const far = Math.hypot(point.x - cx, point.y - cy);
-        const reach = Math.min(1, stride / Math.max(far, 1));
+        // Never up into the target frame, either: a click there calls the
+        // target, and a rat called on the way finishes station 12 (#3363).
+        const up = Math.max(0, (cy - point.y) * view.zoom);
+        const reach = Math.min(1, stride / Math.max(far, 1), CLEAR_ABOVE / Math.max(up, 1));
         const at = view.onPage({ x: cx + (point.x - cx) * reach, y: cy + (point.y - cy) * reach });
         await page.mouse.click(at.x, at.y);
       };
@@ -491,16 +503,48 @@ test.describe("the first-time tutorial (#3218)", () => {
         .poll(() => hasSaid("Shh. Don't wake them. We go under."), { timeout: 15_000 })
         .toBe(true);
       await expect(frame).toHaveAttribute("data-mark-layer", "1");
-      const near = async (point: { x: number; y: number }, reach: number): Promise<void> => {
+      // A walk that stuck says where (#3379): which leg, from where, and on
+      // which layer the mark is, so a flake explains itself in the log.
+      const near = async (
+        point: { x: number; y: number },
+        reach: number,
+        leg = "",
+      ): Promise<void> => {
         const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
           .split(",")
           .map(Number);
-        expect(Math.hypot(cx - point.x, cy - point.y)).toBeLessThan(reach);
+        const markLayer = (await frame.getAttribute("data-mark-layer")) ?? "none";
+        expect(
+          Math.hypot(cx - point.x, cy - point.y),
+          `${leg}at ${String(cx)},${String(cy)}, bound for ${String(point.x)},${String(point.y)}, the mark on layer ${markLayer}`,
+        ).toBeLessThan(reach);
       };
-      for (const waypoint of TO_THE_TUNNEL) {
+      // On each waypoint, not just near it: there is no pathing, and a leg
+      // begun beside one can run its straight line into a corner (#3363).
+      // Stuck since the last try, the same click would never move it: a
+      // short stride, a little to one side, instead.
+      for (const [index, waypoint] of TO_THE_TUNNEL.entries()) {
+        let last = "";
+        let tries = 0;
         await expect(async () => {
-          await walkTo(waypoint, LONG_STRIDE);
-          await near(waypoint, 150);
+          const camera = (await stage.getAttribute("data-camera")) ?? "";
+          const [cx = 0, cy = 0] = camera.split(",").map(Number);
+          if (camera === last) {
+            tries += 1;
+            const far = Math.max(Math.hypot(waypoint.x - cx, waypoint.y - cy), 1);
+            const side = tries % 2 === 0 ? SIDESTEP : -SIDESTEP;
+            await walkTo(
+              {
+                x: waypoint.x - ((waypoint.y - cy) / far) * side,
+                y: waypoint.y + ((waypoint.x - cx) / far) * side,
+              },
+              LONG_STRIDE / 2,
+            );
+          } else {
+            await walkTo(waypoint, LONG_STRIDE);
+          }
+          last = camera;
+          await near(waypoint, 40, `TO_THE_TUNNEL[${String(index)}]: `);
         }).toPass({ timeout: 90_000 });
       }
       // One click each, then a wait for the walk: an Alt click from inside
@@ -524,6 +568,36 @@ test.describe("the first-time tutorial (#3218)", () => {
         await walkTo(PAST_THE_TUNNEL, LONG_STRIDE);
         await expect.poll(() => hasSaid(quiet), { timeout: 5_000 }).toBe(true);
       }).toPass({ timeout: 60_000 });
+
+      // Station 12 (#3331): on to the two rats, the closest targeted and
+      // called with a click on the target frame, T on the call, and the
+      // tutor walks over and hits it. The party window is lit meanwhile.
+      await expect
+        .poll(() => hasSaid("Two rats. You pick, I hit. Call one."), { timeout: 15_000 })
+        .toBe(true);
+      await expect(page.locator(".party-window")).toHaveClass(/tutorial-pulse/);
+      await expect(async () => {
+        // Its view gone, the tutorial has ended under the walk (#3363):
+        // what the tutor said last says how.
+        await expect(
+          frame,
+          `said: ${(await saidLog.getAttribute("data-said-log")) ?? ""}`,
+        ).toHaveCount(1, { timeout: 1_000 });
+        await walkTo(BY_THE_RATS, LONG_STRIDE);
+        await near(BY_THE_RATS, 150);
+      }).toPass({ timeout: 90_000 });
+      await expect(async () => {
+        await page.keyboard.press("KeyC");
+        await expect(target).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 30_000 });
+      await target.click();
+      await page.keyboard.press("KeyT");
+      await expect
+        .poll(() => hasSaid("That's it. T finds the call."), { timeout: 10_000 })
+        .toBe(true);
+      await expect
+        .poll(() => hasSaid("Call it, and the team hits the same thing."), { timeout: 90_000 })
+        .toBe(true);
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 

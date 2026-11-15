@@ -142,6 +142,7 @@ export function contextFor(
     seed: CONTEXT_SEED,
     now: sim.elapsedSeconds,
     highGround: [],
+    cover: [],
     routeLength: (to) => distance(self.position, to),
     ...extra,
   };

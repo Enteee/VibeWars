@@ -182,7 +182,7 @@ export function canyonWorld(
         vec2(arrival.x + TUTOR_BESIDE.x, arrival.y + TUTOR_BESIDE.y),
         undefined,
       ),
-      ...(part === 0 ? [] : RAT_POCKET.rats.map(ratAt)),
+      ...(part === 0 ? [] : [...RAT_POCKET.rats.map(ratAt), ...CALL_RATS.rats.map(callRatAt)]),
     ],
   });
   return {
@@ -401,10 +401,19 @@ export const RAT_POCKET: CanyonRats = ((): CanyonRats => {
 
 /** `rat` as `MatchSimulation` takes it: a rat of team 1 holding `post`, facing east. */
 function ratAt(rat: CanyonRat): ParticipantSpec {
-  return ratSpec(rat.id, rat.post, rat.post, rat.maxHealth, undefined);
+  return ratSpec(POCKET_GROUND, rat.id, rat.post, rat.post, rat.maxHealth, undefined);
 }
 
+/** Where a rat stands and how close it lets anyone come before it bites. */
+interface RatGround {
+  readonly layer: number;
+  readonly aggroUnits: number;
+}
+
+const POCKET_GROUND: RatGround = { layer: RAT_POCKET.layer, aggroUnits: RAT_AGGRO };
+
 function ratSpec(
+  ground: RatGround,
   id: string,
   at: Vec2,
   post: Vec2,
@@ -415,11 +424,11 @@ function ratSpec(
     id,
     1,
     at,
-    RAT_POCKET.layer,
+    ground.layer,
     {
       kind: "guard",
       post,
-      aggroUnits: RAT_AGGRO,
+      aggroUnits: ground.aggroUnits,
       leashUnits: RAT_LEASH,
       rooted: false,
       thinkSeconds: RAT_THINK_SECONDS,
@@ -496,6 +505,7 @@ export function ratPocket(
     simulation.remove(runner.id);
     simulation.add(
       ratSpec(
+        POCKET_GROUND,
         runner.id,
         position,
         vec2(position.x + RAT_FLEE.x, position.y + RAT_FLEE.y),
@@ -539,7 +549,93 @@ export function ratPocket(
         const id = `tutorial-rat-${String(ids.length + 1)}`;
         ids.push(id);
         watch.watch(id);
-        simulation.add(ratSpec(id, RAT_POCKET.extra, RAT_POCKET.extra, undefined, undefined));
+        simulation.add(
+          ratSpec(POCKET_GROUND, id, RAT_POCKET.extra, RAT_POCKET.extra, undefined, undefined),
+        );
+      }
+    },
+  };
+}
+
+/** Station 12's two rats (#3331), on the canyon's second map: they bite only once hit. */
+export interface CanyonCallRats {
+  readonly layer: number;
+  readonly rats: readonly [CanyonRat, CanyonRat];
+  /** Where one more rat comes, if both died with neither called and struck by the tutor. */
+  readonly extra: Vec2;
+  /** Where the tutor waits for the call: west of the rats, on the player's side. */
+  readonly tutorSpot: Vec2;
+}
+
+export const CALL_RATS: CanyonCallRats = ((): CanyonCallRats => {
+  const site = CANYON_SITES.get(12);
+  if (site === undefined) {
+    throw new Error("no site 12 for station 12");
+  }
+  const { position, layer } = site;
+  const at = (dx: number, dy: number): Vec2 => vec2(position.x + dx, position.y + dy);
+  return {
+    layer,
+    rats: [
+      { id: "tutorial-call-rat-1", post: at(0, -100), maxHealth: undefined },
+      { id: "tutorial-call-rat-2", post: at(0, 100), maxHealth: undefined },
+    ],
+    extra: at(0, 0),
+    tutorSpot: at(-250, 0),
+  };
+})();
+
+/** Station 12's rats hold their posts (#3331): no aggro, so they bite only once hit. */
+const CALL_GROUND: RatGround = { layer: CALL_RATS.layer, aggroUnits: 0 };
+
+function callRatAt(rat: CanyonRat): ParticipantSpec {
+  return ratSpec(CALL_GROUND, rat.id, rat.post, rat.post, rat.maxHealth, undefined);
+}
+
+/** Station 12 at the two rats (#3331), stepped once a frame with the team's call. */
+export interface CallTutor {
+  /** A called rat died before the tutor struck it: once true, it stays true. */
+  readonly lost: () => boolean;
+  readonly step: (calledId: string | undefined, tally: RatTally) => void;
+}
+
+/**
+ * Sends the tutor to wait by station 12's rats, then has it attack
+ * whichever rat the team calls, the latest call if it changes, and never
+ * one uncalled. Once both rats are dead with neither struck by the
+ * tutor, one more comes, watched by `watch`.
+ */
+export function callTutor(simulation: MatchSimulation, watch: RatWatch): CallTutor {
+  simulation.walkTo(TUTOR_ID, CALL_RATS.tutorSpot, CALL_RATS.layer);
+  const ids = CALL_RATS.rats.map(({ id }) => id);
+  /** The rats the team has called. */
+  const called = new Set<string>();
+  let lost = false;
+  const standing = (id: string): boolean => simulation.get(id)?.combatant.dead === false;
+  return {
+    lost: () => lost,
+    step: (calledId, tally) => {
+      if (calledId !== undefined && ids.includes(calledId)) {
+        called.add(calledId);
+      }
+      lost ||= ids.some((id) => called.has(id) && !standing(id) && !tally.hitByTutor.has(id));
+      const tutor = simulation.get(TUTOR_ID);
+      if (
+        tutor !== undefined &&
+        calledId !== undefined &&
+        ids.includes(calledId) &&
+        standing(calledId) &&
+        tutor.combatant.attack?.targetId !== calledId
+      ) {
+        simulation.requestAttack(TUTOR_ID, calledId);
+      }
+      if (ids.every((id) => !standing(id) && !tally.hitByTutor.has(id))) {
+        const id = `tutorial-call-rat-${String(ids.length + 1)}`;
+        ids.push(id);
+        watch.watch(id);
+        simulation.add(
+          ratSpec(CALL_GROUND, id, CALL_RATS.extra, CALL_RATS.extra, undefined, undefined),
+        );
       }
     },
   };

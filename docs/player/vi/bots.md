@@ -35,6 +35,7 @@ kia trên tế đàn còn được ưu tiên hơn cả điều đó. Bot đi qu�
 chờ những người còn lại rồi mới tiến tiếp.
 
 Cung thủ và người dùng giáo chiếm chỗ cao khi an toàn.
+Bot bị hai đối thủ dồn đánh, hoặc còn dưới nửa máu và đang mất máu nhanh, sẽ nấp khỏi tầm nhìn của chúng tối đa ba giây: sau tường, dưới sàn hoặc lên chỗ cao.
 Khi không có kẻ địch nào ở gần, bot sẽ kéo cần gạt mở ra lối đi ngắn hơn tới kẻ địch. Hai bot cũng phá đổ bức tường che một lối đi ngắn hơn nhiều, bằng cách dùng vũ khí đánh vào nó.
 
 Bot gây sát thương giữ lại các đòn lớn, kỹ năng Tấn công và Phép sát thương,

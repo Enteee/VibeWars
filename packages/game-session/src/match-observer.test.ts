@@ -39,6 +39,7 @@ const HIDDEN: readonly Channel[] = [
   "chain",
   "calls",
   "traps",
+  "respawns",
   "refused",
 ];
 

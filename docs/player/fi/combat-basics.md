@@ -106,6 +106,10 @@ Useimmissa pelitiloissa kuolleet pysyvät maassa, kunnes liittolainen
 jonka kuka tahansa voi ottaa. Jotkin pelitilat tuovat kuolleet takaisin
 aaltoina tai itsestään; katso [Pelitilat](modes.md).
 
+Kun olet kuollut, tulostaulun alla oleva rivi laskee aikaa paluuseesi
+tai kehottaa odottamaan, että sinut herätetään henkiin. Ryhmäikkuna
+näyttää laskurin jokaisen kuolleen liittolaisen kohdalla.
+
 Jokainen kuolema vie sinulta 15 % **moraalia**, enintään -60 %:iin asti:
 enimmäisterveytesi ja -energiasi pienenevät sen mukana. Jokainen
 tiimisi tappama vihollinen voittaa siitä 2 % takaisin, enintään 0:aan

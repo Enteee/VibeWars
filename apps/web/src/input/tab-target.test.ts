@@ -37,6 +37,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     team: 1,
     dead: false,
     corpseExploited: false,
+    respawnIn: undefined,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,

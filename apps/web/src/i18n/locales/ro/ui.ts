@@ -600,6 +600,8 @@ export default {
   "hud.relicScoredOurs": "Relicvă adusă!",
   "hud.relicScoredTheirs": "Inamicul a adus relicva",
   "hud.relicTheirs": "Relicvă inamică",
+  "hud.respawnIn": "Revii în {seconds}",
+  "hud.respawnResurrectionOnly": "Așteaptă să fii reînviat",
   "hud.shrinesBoth": "Sanctuare: +{ours}, inamic +{theirs}",
   "hud.shrinesOurs": "Sanctuare: +{ours}",
   "hud.shrinesTheirs": "Sanctuare inamice: +{theirs}",
@@ -1493,6 +1495,13 @@ export default {
   "training.soundOn": "Sunet pornit.",
   "training.you": "Tu",
 
+  "tutorial.call.hint": "Semnalează un șobolan și îl lovesc pe acela.",
+  "tutorial.call.how":
+    "Clic cu rotița pe un șobolan sau clic pe bara țintei ca să-l semnalezi. {keys} țintește ce a semnalat echipa ta.",
+  "tutorial.call.intro": "Doi șobolani. Tu alegi, eu lovesc. Semnalează unul.",
+  "tutorial.call.other": "Semnalează-l pe celălalt.",
+  "tutorial.call.praise": "Semnalează-l, și echipa lovește aceeași țintă.",
+  "tutorial.call.t": "Exact. {keys} găsește ținta semnalată.",
   "tutorial.climb.hint": "Urcă pe cornișă, apoi coboară pe pământul de sub ea.",
   "tutorial.climb.how":
     "Dă clic unde vrei să stai. Alt+clic (Option pe Mac) alege terenul de dedesubt.",

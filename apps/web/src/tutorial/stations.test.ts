@@ -11,6 +11,7 @@ import {
   SKILLS_ON_RATS,
   badGroundStation,
   breakWallStation,
+  callStation,
   climbStation,
   rampStation,
   dodgeStation,
@@ -52,6 +53,10 @@ const view = (over: Partial<TutorialView> = {}): TutorialView => ({
   bigRatDown: false,
   extraRat: false,
   belowClicked: false,
+  calledId: undefined,
+  hitByTutor: new Set<string>(),
+  calledTargeted: false,
+  calledLost: false,
   ...over,
 });
 const sees =
@@ -518,5 +523,61 @@ describe("tunnelStation (#3326)", () => {
 
   it("marks the east mouth's top on the ground's layer", () => {
     expect(tunnel().highlight).toEqual({ kind: "ground", at: MARK, layer: ABOVE });
+  });
+});
+
+describe("callStation (#3331)", () => {
+  const RAT = "tutorial-call-rat-1";
+  const OTHER = "tutorial-call-rat-2";
+
+  it("is not done with a call the tutor has not struck, nor a strike on a rat not called", () => {
+    const station = callStation();
+    expect(station.done(view({ calledId: RAT }))).toBe(false);
+    expect(station.done(view({ calledId: OTHER, hitByTutor: new Set([RAT]) }))).toBe(false);
+    expect(station.done(view({ hitByTutor: new Set([RAT]) }))).toBe(false);
+  });
+
+  it("is done once the tutor has struck the rat called, and stays done", () => {
+    const station = callStation();
+    expect(station.done(view({ calledId: RAT, hitByTutor: new Set([RAT]) }))).toBe(true);
+    expect(station.done(view())).toBe(true);
+  });
+
+  it("is not done by a call on the tutor", () => {
+    expect(callStation().done(view({ calledId: "tutorial-tutor" }))).toBe(false);
+  });
+
+  it("lights the party window", () => {
+    expect(callStation().highlight).toEqual({ kind: "hud", element: ".party-window" });
+  });
+
+  it("says T finds the call once, the first time the player uses it", () => {
+    const runner = createTutorialRunner([callStation()], () => KEYMAP_PRESETS.classic);
+    const looks = [
+      {},
+      { calledId: RAT, calledTargeted: true },
+      { calledId: RAT, calledTargeted: true },
+    ];
+    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS))).toMatchObject([
+      { say: { key: "tutorial.call.intro" } },
+      { say: { key: "tutorial.call.t", keys: ["T"] } },
+      { say: undefined },
+    ]);
+  });
+
+  it("says call the other once, when the rat called died before the tutor struck it", () => {
+    const runner = createTutorialRunner([callStation()], () => KEYMAP_PRESETS.classic);
+    const looks = [
+      {},
+      { calledLost: true },
+      { calledLost: true },
+      { calledId: OTHER, calledLost: true, hitByTutor: new Set([OTHER]) },
+    ];
+    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
+      "tutorial.call.intro",
+      "tutorial.call.other",
+      undefined,
+      "tutorial.call.praise",
+    ]);
   });
 });

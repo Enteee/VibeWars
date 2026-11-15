@@ -894,6 +894,50 @@ test("the target frame shows the target's health and the skill it casts, filling
   await opponent.close();
 });
 
+test("dead in Kill Count, you read when you are back, counting down, until you are (#3367)", async ({
+  page,
+}) => {
+  // The starter build's spells take up to 90 s to kill a foe who stands
+  // still on a loaded runner; then 8 s of respawn to read.
+  test.setTimeout(150_000);
+  const opponent = await page.context().newPage();
+  await startLobbyMatch(page, [opponent]);
+  const respawn = page.locator(".hud-respawn");
+  await expect(respawn).toBeHidden();
+  // The opponent burns the host down, who stands still; the starter's
+  // spells, as in Random Arena's fight.
+  await opponent.keyboard.press(key("target-next"));
+  await opponent.keyboard.press(key("attack"));
+  const skills = [
+    "elementalist.glyph-of-lesser-energy",
+    "elementalist.fireball",
+    "elementalist.chain-lightning",
+    "elementalist.lightning-orb",
+  ];
+  await expect(async () => {
+    for (const skill of skills) {
+      await opponent.keyboard.press(starterKey("Elementalist/Mesmer", skill));
+    }
+    await expect(respawn).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 90_000 });
+  // Ember Pits' 8 s, whole seconds down; never a foe's count. Seen within
+  // a second of the death, it reads 2 at least, so it has a second to count:
+  // the count checked is the one counted down from, read once.
+  await expect(respawn).toHaveText(/^Back in [1-8]$/);
+  let first = 0;
+  await expect
+    .poll(async () => {
+      first = Number(/^Back in (\d)$/.exec((await respawn.textContent()) ?? "")?.[1]);
+      return first;
+    })
+    .toBeGreaterThanOrEqual(2);
+  await expect(respawn).toHaveText(`Back in ${String(first - 1)}`, { timeout: 3_000 });
+  await expect(opponent.locator(".hud-respawn")).toBeHidden();
+  // Back on its feet, the line goes.
+  await expect(respawn).toBeHidden({ timeout: 10_000 });
+  await opponent.close();
+});
+
 test("the HUD's energy bar shows its regeneration as arrows (#504)", async ({ page }) => {
   await startSoloMatch(page);
   // The Elementalist/Mesmer starter build: an Elementalist's 4 pips.

@@ -568,6 +568,8 @@ export default {
   "hud.relicScoredOurs": "Kalıntı puanı!",
   "hud.relicScoredTheirs": "Düşman kalıntı puanı",
   "hud.relicTheirs": "Düşman kalıntısı",
+  "hud.respawnIn": "{seconds} sonra dönüyorsun",
+  "hud.respawnResurrectionOnly": "Diriltilmeyi bekle",
   "hud.shrinesBoth": "Tapınaklar: +{ours}, düşman +{theirs}",
   "hud.shrinesOurs": "Tapınaklar: +{ours}",
   "hud.shrinesTheirs": "Düşman tapınakları: +{theirs}",
@@ -1415,6 +1417,13 @@ export default {
   "training.soundOn": "Ses açık.",
   "training.you": "Sen",
 
+  "tutorial.call.hint": "Bir sıçan çağır, ben onu vurayım.",
+  "tutorial.call.how":
+    "Bir sıçana tekerlekle tıkla ya da hedef çubuğuna tıkla, onu çağır. {keys} takımının çağırdığını hedefler.",
+  "tutorial.call.intro": "İki sıçan. Sen seç, ben vurayım. Birini çağır.",
+  "tutorial.call.other": "Ötekini çağır.",
+  "tutorial.call.praise": "Çağır, takım aynı hedefe vursun.",
+  "tutorial.call.t": "İşte bu. {keys} çağrılan hedefi bulur.",
   "tutorial.climb.hint": "Çıkıntıya çık, sonra altındaki zemine in.",
   "tutorial.climb.how":
     "Durmak istediğin yere tıkla. Alt+tık (Mac'te Option) alttaki zemini seçer.",

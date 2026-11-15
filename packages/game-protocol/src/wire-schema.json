@@ -49,6 +49,7 @@
     "calls",
     "strokes",
     "traps",
+    "respawns",
     "chat",
     "chat-line",
     "shared-track"
@@ -923,6 +924,7 @@
         { "literal": "relay-cred" },
         { "literal": "relay-holding" },
         { "literal": "relay-offers" },
+        { "literal": "respawns" },
         { "literal": "shared-track" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
@@ -8871,6 +8873,28 @@
         },
         { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+      ]
+    },
+    "WireRespawn": {
+      "properties": [
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "respawnIn", "optional": false, "type": { "union": ["null", "number"] } }
+      ]
+    },
+    "WireRespawns": {
+      "properties": [
+        {
+          "name": "respawns",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "respawnIn", "optional": false, "type": { "union": ["null", "number"] } }
+              ]
+            }
+          }
+        }
       ]
     },
     "WireSharedTrack": {

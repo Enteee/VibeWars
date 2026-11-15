@@ -596,6 +596,8 @@ export default {
   "hud.relicScoredOurs": "שריד הובקע!",
   "hud.relicScoredTheirs": "האויב הבקיע שריד",
   "hud.relicTheirs": "שריד האויב",
+  "hud.respawnIn": "חוזר בעוד {seconds}",
+  "hud.respawnResurrectionOnly": "המתן שיחיו אותך",
   "hud.shrinesBoth": "מקדשים: +{ours}, אויב +{theirs}",
   "hud.shrinesOurs": "מקדשים: +{ours}",
   "hud.shrinesTheirs": "מקדשי האויב: +{theirs}",
@@ -1477,6 +1479,13 @@ export default {
   "training.soundOn": "הצליל פועל.",
   "training.you": "אתה",
 
+  "tutorial.call.hint": "סמן עכברוש, ואני אכה אותו.",
+  "tutorial.call.how":
+    "לחץ בגלגלת על עכברוש, או לחץ על פס המטרה, כדי לסמן אותו. {keys} מכוון למה שהצוות שלך סימן.",
+  "tutorial.call.intro": "שני עכברושים. אתה בוחר, אני מכה. סמן אחד.",
+  "tutorial.call.other": "סמן את השני.",
+  "tutorial.call.praise": "סמן אותו, והצוות מכה באותה מטרה.",
+  "tutorial.call.t": "בדיוק. {keys} מוצא את המטרה המסומנת.",
   "tutorial.climb.hint": "עלה על המדף, ואז רד לקרקע שמתחתיו.",
   "tutorial.climb.how": "לחץ איפה שתרצה לעמוד. Alt+לחיצה (Option ב-Mac) בוחרת את הקרקע שמתחת.",
   "tutorial.climb.intro": "עלה במדרגות. טבעת מלאה מסמנת איפה תעמוד.",
