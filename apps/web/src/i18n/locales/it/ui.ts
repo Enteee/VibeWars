@@ -1493,6 +1493,13 @@ export default {
   "training.soundOn": "Audio attivo.",
   "training.you": "Tu",
 
+  "tutorial.call.hint": "Segnala un ratto e colpisco quello.",
+  "tutorial.call.how":
+    "Clic con la rotella su un ratto, o clic sulla barra del bersaglio, per segnalarlo. {keys} punta ciò che la tua squadra ha segnalato.",
+  "tutorial.call.intro": "Due ratti. Tu scegli, io colpisco. Segnalane uno.",
+  "tutorial.call.other": "Segnala l'altro.",
+  "tutorial.call.praise": "Segnalalo, e la squadra colpisce lo stesso bersaglio.",
+  "tutorial.call.t": "Esatto. {keys} trova il bersaglio segnalato.",
   "tutorial.climb.hint": "Sali sulla sporgenza, poi scendi a terra sotto di essa.",
   "tutorial.climb.how":
     "Clicca dove vuoi stare. Alt+clic (Option su Mac) sceglie il terreno sotto.",

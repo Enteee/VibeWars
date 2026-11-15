@@ -1333,6 +1333,13 @@ export default {
   "training.soundOn": "소리 켜짐.",
   "training.you": "나",
 
+  "tutorial.call.hint": "쥐 한 마리를 지목해. 내가 그놈을 칠게.",
+  "tutorial.call.how":
+    "쥐를 휠 클릭하거나 대상 표시줄을 클릭해 지목해. {keys}(으)로 팀이 지목한 대상을 노린다.",
+  "tutorial.call.intro": "쥐가 두 마리. 네가 고르면 내가 친다. 하나를 지목해.",
+  "tutorial.call.other": "다른 쪽을 지목해.",
+  "tutorial.call.praise": "지목하면 팀 전체가 같은 대상을 친다.",
+  "tutorial.call.t": "바로 그거야. {keys}(으)로 지목된 대상을 찾는다.",
   "tutorial.climb.hint": "턱 위로 올라간 다음, 그 아래 땅으로 내려가세요.",
   "tutorial.climb.how": "설 곳을 클릭하세요. Alt+클릭(Mac은 Option)하면 아래쪽 땅을 골라요.",
   "tutorial.climb.intro": "계단을 오르세요. 실선 고리가 설 자리예요.",

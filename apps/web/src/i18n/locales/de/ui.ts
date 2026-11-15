@@ -1434,6 +1434,13 @@ export default {
   "training.soundOn": "Ton an.",
   "training.you": "Du",
 
+  "tutorial.call.hint": "Ruf eine Ratte aus, dann schlage ich die.",
+  "tutorial.call.how":
+    "Klick eine Ratte mit dem Mausrad oder klick die Zielleiste, um sie auszurufen. {keys} zielt auf das, was dein Team ausgerufen hat.",
+  "tutorial.call.intro": "Zwei Ratten. Du wählst, ich schlage. Ruf eine aus.",
+  "tutorial.call.other": "Ruf die andere aus.",
+  "tutorial.call.praise": "Ausrufen, und das Team schlägt dasselbe.",
+  "tutorial.call.t": "Genau so. {keys} findet das ausgerufene Ziel.",
   "tutorial.climb.hint": "Rauf auf den Vorsprung, dann runter auf den Boden darunter.",
   "tutorial.climb.how":
     "Klick dorthin, wo du stehen willst. Alt+Klick (Option auf dem Mac) wählt den Boden darunter.",

@@ -1542,6 +1542,13 @@ export default {
   "training.soundOn": "Dźwięk wł.",
   "training.you": "Ty",
 
+  "tutorial.call.hint": "Wskaż szczura, a uderzę w niego.",
+  "tutorial.call.how":
+    "Kliknij kółkiem szczura albo kliknij pasek celu, by go wskazać. {keys} celuje w to, co wskazała twoja drużyna.",
+  "tutorial.call.intro": "Dwa szczury. Ty wybierasz, ja biję. Wskaż jednego.",
+  "tutorial.call.other": "Wskaż drugiego.",
+  "tutorial.call.praise": "Wskaż cel, a drużyna bije w to samo.",
+  "tutorial.call.t": "Właśnie tak. {keys} znajduje wskazany cel.",
   "tutorial.climb.hint": "Wejdź na półkę, a potem zejdź na ziemię pod nią.",
   "tutorial.climb.how":
     "Kliknij tam, gdzie chcesz stanąć. Alt+klik (Option na Macu) wybiera ziemię niżej.",

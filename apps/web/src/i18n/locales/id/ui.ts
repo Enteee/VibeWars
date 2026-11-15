@@ -1342,6 +1342,13 @@ export default {
   "training.soundOn": "Suara nyala.",
   "training.you": "Kamu",
 
+  "tutorial.call.hint": "Tandai seekor tikus, dan aku pukul yang itu.",
+  "tutorial.call.how":
+    "Klik roda pada tikus, atau klik bilah target, untuk menandainya. {keys} membidik yang ditandai timmu.",
+  "tutorial.call.intro": "Dua tikus. Kamu pilih, aku pukul. Tandai satu.",
+  "tutorial.call.other": "Tandai yang satunya.",
+  "tutorial.call.praise": "Tandai, dan tim memukul sasaran yang sama.",
+  "tutorial.call.t": "Begitu. {keys} menemukan sasaran yang ditandai.",
   "tutorial.climb.hint": "Naik ke tepian, lalu turun ke tanah di bawahnya.",
   "tutorial.climb.how":
     "Klik tempat kamu mau berdiri. Alt+klik (Option di Mac) memilih tanah di bawah.",

@@ -1344,6 +1344,13 @@ export default {
   "training.soundOn": "サウンドオン。",
   "training.you": "自分",
 
+  "tutorial.call.hint": "ネズミを1匹コールして。そいつを叩くよ。",
+  "tutorial.call.how":
+    "ネズミをホイールクリックするか、ターゲットバーをクリックしてコールしよう。{keys} でチームのコール先をターゲット。",
+  "tutorial.call.intro": "ネズミが2匹。君が選んで、僕が叩く。1匹コールして。",
+  "tutorial.call.other": "もう1匹をコールして。",
+  "tutorial.call.praise": "コールすれば、チームみんなで同じ敵を叩ける。",
+  "tutorial.call.t": "その通り。{keys} でコール先が見つかる。",
   "tutorial.climb.hint": "岩棚に上って、その下の地面へ降りよう。",
   "tutorial.climb.how": "立ちたい場所をクリック。Alt+クリック(MacはOption)で下の地面を選ぶ。",
   "tutorial.climb.intro": "階段を上ろう。実線の輪が立つ場所だ。",

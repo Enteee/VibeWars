@@ -1420,6 +1420,13 @@ export default {
   "training.soundOn": "Geluid aan.",
   "training.you": "Jij",
 
+  "tutorial.call.hint": "Roep een rat af, dan sla ik die.",
+  "tutorial.call.how":
+    "Klik met het wiel op een rat, of klik op de doelbalk, om hem af te roepen. {keys} richt op wat je team afriep.",
+  "tutorial.call.intro": "Twee ratten. Jij kiest, ik sla. Roep er één af.",
+  "tutorial.call.other": "Roep de andere af.",
+  "tutorial.call.praise": "Roep het af, en het team slaat hetzelfde.",
+  "tutorial.call.t": "Zo is het. {keys} vindt het afgeroepen doel.",
   "tutorial.climb.hint": "Op de richel, en dan omlaag naar de grond eronder.",
   "tutorial.climb.how":
     "Klik waar je wilt staan. Alt+klik (Option op een Mac) kiest de grond eronder.",

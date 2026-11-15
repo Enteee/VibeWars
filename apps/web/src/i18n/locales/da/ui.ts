@@ -1410,6 +1410,13 @@ export default {
   "training.soundOn": "Lyd til.",
   "training.you": "Dig",
 
+  "tutorial.call.hint": "Kald en rotte, så slår jeg den.",
+  "tutorial.call.how":
+    "Klik med hjulet på en rotte, eller klik på målbjælken, for at kalde den. {keys} sigter på det, dit hold har kaldt.",
+  "tutorial.call.intro": "To rotter. Du vælger, jeg slår. Kald én.",
+  "tutorial.call.other": "Kald den anden.",
+  "tutorial.call.praise": "Kald det, og holdet slår det samme.",
+  "tutorial.call.t": "Sådan. {keys} finder det kaldte mål.",
   "tutorial.climb.hint": "Op på afsatsen, og så ned på jorden under den.",
   "tutorial.climb.how":
     "Klik hvor du vil stå. Alt+klik (Option på en Mac) vælger jorden nedenunder.",
