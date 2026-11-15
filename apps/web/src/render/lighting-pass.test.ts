@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { Uphill } from "@vibewars/game-core";
+import { pointInPolygon, type Uphill, type Vec2 } from "@vibewars/game-core";
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import { arenaPalette } from "./arena-palette.js";
@@ -22,10 +22,16 @@ import {
   lightMapExtent,
   lightsByStability,
   litStructurePalette,
+  roofedOver,
   shownStage,
   stageShadows,
   sunShadowTint,
+  TUNNEL_GLOW_CAP,
+  tunnelGlow,
+  tunnelLightCover,
+  type LightMapBox,
 } from "./lighting-pass.js";
+import { shapeOutline } from "./layer-surfaces.js";
 import { ELEVATION_STEP } from "./render-order.js";
 
 // Phaser probes for a browser when it loads: only its constants are read here.
@@ -37,6 +43,9 @@ vi.mock("phaser", () => ({
   },
 }));
 
+/** The blend modes as the mock gives them. */
+const ADD = 1;
+const MULTIPLY = 2;
 const DARK = { colour: 0xffffff, intensity: 0 };
 const light = (id: string, layer: number, flicker: number) => ({
   id,
@@ -287,6 +296,120 @@ describe("layerSurfaces", () => {
     expect(cover.some((box) => holds(box, 10, 10))).toBe(true);
   });
 
+  it("lights a tunnel's floor under the ground, and none of that layer elsewhere (#3329)", () => {
+    const tunnel = { kind: "rect" as const, x: 200, y: 600, width: 400, height: 80 };
+    const stair = ramp(0, 1, [300, 560, 60, 100], "n");
+    const tunnelled: MapStructure = {
+      ...HEIGHTS,
+      ground: 1,
+      decks: [],
+      tunnels: [{ footprint: tunnel }],
+      transitions: [stair],
+    };
+    expect(layerSurfaces(tunnelled, 0)).toContainEqual(shapeOutline(tunnel));
+    const extent = lightMapExtent(tunnelled, 0, 1200, 800);
+    const cover = lightMapCover(tunnelled, [], 0, extent);
+    // In light map pixels (half a world unit), against the extent's corner.
+    const lit = (x: number, y: number): boolean =>
+      cover.some((box) => holds(box, x * 0.5 - extent.x, y * 0.5 - extent.y));
+    // A torch in the gallery's middle lights its cell; the bed far off is not this layer's.
+    expect(lit(450, 640)).toBe(true);
+    expect(lit(450, 300)).toBe(false);
+    // The ground over the stair is a hole: its light comes from the tunnel.
+    expect(groundHoles(tunnelled)).toContainEqual(
+      shapeOutline({ kind: "rect", x: 300, y: 600, width: 60, height: 60 }),
+    );
+  });
+
+  describe("a tunnel's light, seen through its cut-away roof (#3329)", () => {
+    const tunnel = { kind: "rect" as const, x: 200, y: 600, width: 400, height: 80 };
+    const tunnelled: MapStructure = {
+      ...HEIGHTS,
+      ground: 1,
+      decks: [],
+      tunnels: [{ footprint: tunnel }],
+      transitions: [ramp(0, 1, [300, 560, 60, 100], "n")],
+    };
+    const extent = lightMapExtent(tunnelled, 1, 1200, 800);
+    const [own] = tunnelLightCover(tunnelled, extent);
+    const meets = (a: LightMapBox, b: LightMapBox): boolean =>
+      a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    const area = (boxes: readonly LightMapBox[]): number =>
+      boxes.reduce((sum, { width, height }) => sum + width * height, 0);
+
+    it("gives the ground's light over a tunnel's cover an image of its own, to fade with it", () => {
+      // The footprint and the step south of it, in light map pixels.
+      expect(own).toEqual({
+        tunnel: 0,
+        boxes: [{ x: 100, y: 300, width: 200, height: (80 + ELEVATION_STEP) / 2 }],
+      });
+      // The rest of the ground's map never lies over it, so the tunnel's
+      // floor is not dimmed by the ground's light once the cover is cut away.
+      const cover = lightMapCover(tunnelled, [], 1, extent);
+      const owned = own?.boxes ?? [];
+      expect(cover.some((box) => owned.some((other) => meets(box, other)))).toBe(false);
+      // Together they still cover the whole ground.
+      expect(area([...cover, ...owned])).toBe(extent.width * extent.height);
+    });
+
+    it("lights the corner where two tunnels' covers cross once, with the earlier tunnel's", () => {
+      const crossed: MapStructure = {
+        ...tunnelled,
+        tunnels: [
+          { footprint: tunnel },
+          { footprint: { ...tunnel, x: 500, y: 400, width: 80, height: 400 } },
+        ],
+      };
+      const crossing = lightMapExtent(crossed, 1, 1200, 800);
+      const covers = tunnelLightCover(crossed, crossing);
+      expect(covers.map(({ tunnel: at }) => at)).toEqual([0, 1]);
+      const shown = [
+        ...lightMapCover(crossed, [], 1, crossing),
+        ...covers.flatMap(({ boxes }) => boxes),
+      ];
+      // No pixel is multiplied in twice, and none is left out.
+      expect(shown.some((box, at) => shown.slice(at + 1).some((other) => meets(box, other)))).toBe(
+        false,
+      );
+      expect(area(shown)).toBe(crossing.width * crossing.height);
+      // The earlier tunnel owns the corner they share.
+      expect(covers[0]?.boxes).toEqual(tunnelLightCover(tunnelled, crossing)[0]?.boxes);
+    });
+
+    it("roofs the tunnel's floor, but for its shaft, so a torch there shows its pool", () => {
+      const roofed = roofedOver(tunnelled, 0);
+      const under = (x: number, y: number): boolean =>
+        roofed.some((outline) => pointInPolygon({ x, y }, outline));
+      expect(under(450, 640)).toBe(true);
+      expect(under(330, 630)).toBe(false);
+      expect(roofedOver(tunnelled, 1)).toEqual([]);
+      expect(roofedOver(HEIGHTS, 0)).toEqual([]);
+    });
+
+    it("lights all a cut-away cover shows with the tunnel's layer, its far wall too", () => {
+      // The cover's top step is the far wall: drawn a step down, so a step
+      // north on the tunnel's own map. Unlit, it read as a bright band over
+      // a floor its torch could only dim.
+      const own = (outlines: readonly (readonly Vec2[])[], x: number, drawnY: number): boolean =>
+        outlines.some((outline) => pointInPolygon({ x, y: drawnY - ELEVATION_STEP }, outline));
+      const surfaces = layerSurfaces(tunnelled, 0);
+      const roofed = roofedOver(tunnelled, 0);
+      for (const drawnY of [605, 640, 700, 730]) {
+        expect(own(surfaces, 450, drawnY)).toBe(true);
+        expect(own(roofed, 450, drawnY)).toBe(true);
+      }
+      // Over the shaft the wall is open, lit as the stair is, not roofed.
+      expect(own(roofed, 330, 620)).toBe(false);
+      expect(own(surfaces, 450, 595)).toBe(false);
+    });
+
+    it("lights the stair down the shaft with the tunnel's layer, where the ground's is cut", () => {
+      const [, slope] = layerSurfaces(tunnelled, 0);
+      // Its top, at the ground's height, is on the tunnel layer's map a step down.
+      expect(slope?.map(({ y }) => y)).toContain(560 - ELEVATION_STEP);
+    });
+  });
+
   it("lights only the cells a raised layer's surfaces are in (#3162)", () => {
     const extent = lightMapExtent(HEIGHTS, 1, 1200, 800);
     const cover = lightMapCover(HEIGHTS, [], 1, extent);
@@ -367,12 +490,6 @@ describe("flickerRegions (#3157, #3254)", () => {
 });
 
 describe("LightingPass", () => {
-  /** Something whose every method does nothing and returns it, as a Phaser chain. */
-  function inert(): unknown {
-    const self: object = new Proxy(() => self, { get: () => () => self });
-    return self;
-  }
-
   /**
    * A scene whose light maps, as Phaser 4's DynamicTexture does, queue a
    * draw and run it only at `render()`: what each painted then, and
@@ -381,6 +498,7 @@ describe("LightingPass", () => {
   function fakeScene() {
     const destroyed = new Set<object>();
     const drawn: { colour: number; alive: boolean }[] = [];
+    const images: { key: string; alpha: number; blendMode: number }[] = [];
     const graphics = () => {
       const painter = {
         colour: -1,
@@ -425,13 +543,40 @@ describe("LightingPass", () => {
         exists: () => true,
         remove: () => undefined,
         addDynamicTexture: (_key: string, width: number, height: number) => texture(width, height),
+        // A raised or sunk layer's mask is a canvas: drawn on, never read here.
+        createCanvas: () => ({
+          context: new Proxy({}, { get: () => () => undefined, set: () => true }),
+          refresh: () => undefined,
+        }),
         get: () => ({ has: () => false, add: () => undefined }),
         getFrame: () => undefined,
       },
       make: { graphics },
-      add: { image: inert },
+      add: {
+        image: (_x: number, _y: number, key: string) => {
+          const image = {
+            key,
+            alpha: 1,
+            blendMode: -1,
+            setOrigin: () => image,
+            setScale: () => image,
+            setDepth: () => image,
+            setBlendMode(mode: number) {
+              image.blendMode = mode;
+              return image;
+            },
+            setAlpha(alpha: number) {
+              image.alpha = alpha;
+              return image;
+            },
+            destroy: () => undefined,
+          };
+          images.push(image);
+          return image;
+        },
+      },
     };
-    return { scene: scene as unknown as Phaser.Scene, drawn };
+    return { scene: scene as unknown as Phaser.Scene, drawn, images };
   }
 
   const STRUCTURE: MapStructure = {
@@ -464,5 +609,51 @@ describe("LightingPass", () => {
       { colour: sunShadowTint(SUNLIT), alive: true },
       { colour: baseTint(SUNLIT, true), alive: true },
     ]);
+  });
+
+  describe("a tunnel's lights (#3350)", () => {
+    const TUNNELLED: MapStructure = {
+      ...STRUCTURE,
+      layerCount: 2,
+      ground: 1,
+      tunnels: [{ footprint: { kind: "rect", x: 100, y: 100, width: 200, height: 80 } }],
+    };
+    const TORCH = { ...light("torch", 0, 0), colour: 0xffb060 };
+    const LIT: MapLighting = { ...BASE, lights: [TORCH] };
+
+    it("lift a pool past the lighting-off tone, and no further than the cap", () => {
+      const glow = tunnelGlow(TORCH.intensity);
+      expect(glow).toBeGreaterThan(0);
+      expect(glow).toBeLessThanOrEqual(TUNNEL_GLOW_CAP);
+      expect(tunnelGlow(10)).toBe(TUNNEL_GLOW_CAP);
+    });
+
+    it("add their pools over the tunnels' layer, and only there", () => {
+      const { scene, images } = fakeScene();
+      new LightingPass(scene).show(LIT, TUNNELLED, [], 400, 400, false);
+      const glows = images.filter(({ key }) => key.endsWith("-glow"));
+      expect(glows.length).toBeGreaterThan(0);
+      expect(glows.every(({ blendMode }) => blendMode === ADD)).toBe(true);
+    });
+
+    it("leave a map with no tunnels lit as before", () => {
+      const { scene, images } = fakeScene();
+      new LightingPass(scene).show(LIT, { ...STRUCTURE, layerCount: 2 }, [], 400, 400, false);
+      expect(images.some(({ key }) => key.endsWith("-glow"))).toBe(false);
+      expect(images.every(({ blendMode }) => blendMode === MULTIPLY)).toBe(true);
+    });
+
+    it("fade the ground's light over a tunnel to its cover's alpha (fadeTunnel)", () => {
+      const { scene, images } = fakeScene();
+      const pass = new LightingPass(scene);
+      pass.show(LIT, TUNNELLED, [], 400, 400, false);
+      const before = images.map(({ alpha }) => alpha);
+      pass.fadeTunnel(0, 0.15);
+      const faded = images.filter(({ alpha }) => alpha === 0.15);
+      expect(faded.length).toBeGreaterThan(0);
+      expect(faded.length).toBeLessThan(images.length);
+      expect(before.every((alpha) => alpha === 1)).toBe(true);
+      expect(faded.some(({ key }) => key.endsWith("-glow"))).toBe(false);
+    });
   });
 });

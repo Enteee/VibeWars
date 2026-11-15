@@ -1450,6 +1450,11 @@ export default {
   "tutorial.moreSoon": "Yakında daha fazla ders. Orada görüşürüz!",
   "tutorial.offer": "Yeni misin? Öğretmenin sana temelleri gösterecek.",
   "tutorial.offerTitle": "İlk kez mi?",
+  "tutorial.ramp.hint": "İki kat merdiveni çıkıp yüksek terastaki işarete git.",
+  "tutorial.ramp.how": "Yüksek terasa tıkla. Yolun basamakları senin için çıkar.",
+  "tutorial.ramp.intro": "Basamaklar katmanları birleştirir. Üstüne yürü, seni yukarı taşır.",
+  "tutorial.ramp.landing": "Bir kat daha.",
+  "tutorial.ramp.praise": "Yüksek zemin. Aşağıdaki düşmanlar sana zor ulaşır.",
   "tutorial.rats.again": "Bunda başka bir yetenek dene.",
   "tutorial.rats.big":
     "Büyük bir tane. {bash} yanana kadar vur, sonra onu yere ser ve {crush} kullan.",

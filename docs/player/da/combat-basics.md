@@ -47,6 +47,8 @@ Fjendens energi er brugt, og evnen genoplades; nogle afbrydelser låser
 også evnen et stykke tid. Afbryder du for tidligt eller for sent, sker
 der ingenting.
 
+Hver professions kast har sin egen lyd; lyt efter dit måls.
+
 De fleste afbrydelser stopper også et almindeligt angreb midt i svinget:
 det slag lander aldrig, og svinget starter forfra. En fjende, der stadig
 går hen mod sit mål, har intet at afbryde. En afbrydelse, hvis kort siger

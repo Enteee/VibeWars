@@ -85,9 +85,18 @@ export const OVERHANG_SHADE = { colour: 0x080b10, alpha: 0.2, offsets: [6, 14] }
 export const DECK_TINT = { colour: 0x0d131c, alpha: 0.55 };
 export const DECK_LIP = 0xffffff;
 
-/** A pit (#2973): its floor a step darker than the ground, its far wall darker still. */
-export const PIT_FLOOR = shade(0x26303f, 0.45);
-export const PIT_WALL = shade(0x4b5a70, 0.6);
+/**
+ * A pit (#2973): its floor, and a tunnel's (#3329), 45 % darker than the
+ * ground, in the biome's tone, so the light in it warms a floor and not a
+ * void.
+ */
+export function pitFloor(palette: ArenaPalette): number {
+  return shade(palette.floor ?? ARENA_BACKGROUND, 0.45);
+}
+/** Its far wall: the biome's rock, darker still. */
+export function pitWall(palette: ArenaPalette): number {
+  return shade(palette.wallTop, 0.6);
+}
 /** Where a tunnel leaves a pit: near black, so it reads as a way in. */
 export const TUNNEL_MOUTH = 0x05070a;
 

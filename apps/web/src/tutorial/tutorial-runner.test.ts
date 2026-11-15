@@ -11,6 +11,7 @@ import {
   badGroundStation,
   breakWallStation,
   climbStation,
+  rampStation,
   dodgeStation,
   healStation,
   lookStation,
@@ -144,7 +145,7 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats, climbs the ledge and finishes (#3247, #3302, #3303, #3310, #3316, #3323)", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats, climbs the ledge, climbs to the high deck and finishes (#3247, #3302, #3303, #3310, #3316, #3323, #3325)", () => {
     const pad = vec2(200, -900);
     const goal = vec2(2850, 1800);
     const face = vec2(3480, 1800);
@@ -153,6 +154,8 @@ describe("the tutorial runner", () => {
     const ledge = { kind: "rect", x: 3290, y: 1800, width: 620, height: 180 } as const;
     const stairs = { kind: "rect", x: 3890, y: 1800, width: 140, height: 180 } as const;
     const onLedge = vec2(3600, 1890);
+    const onDeck = vec2(1980, 1610);
+    const onLanding = vec2(2350, 1560);
     const bar = [
       "warrior.enraged-smash",
       RAT_SKILLS.bash,
@@ -174,6 +177,7 @@ describe("the tutorial runner", () => {
         badGroundStation(across, 0),
         ratsStation(pocket, { runner: "rat-1", big: "rat-2" }, bar),
         climbStation(ledge, stairs, 2, 1),
+        rampStation(onDeck, 3, { kind: "rect", x: 2260, y: 1480, width: 180, height: 160 }, 2),
       ],
       () => KEYMAP_PRESETS.classic,
       label,
@@ -244,6 +248,9 @@ describe("the tutorial runner", () => {
       [climb, 11_000 + 8 * PRAISE_MS + 9 * ASIDE_MS],
       [{ ...climb, self: onLedge, selfLayer: 2 }, 11_000 + 8 * PRAISE_MS + 10 * ASIDE_MS],
       [{ ...climb, self: onLedge, belowClicked: true }, 11_000 + 8 * PRAISE_MS + 11 * ASIDE_MS],
+      [{ ...climb, self: onLedge, belowClicked: true }, 11_000 + 9 * PRAISE_MS + 11 * ASIDE_MS],
+      [{ ...climb, self: onLanding, selfLayer: 2 }, 11_000 + 9 * PRAISE_MS + 12 * ASIDE_MS],
+      [{ ...climb, self: onDeck, selfLayer: 3 }, 11_000 + 9 * PRAISE_MS + 13 * ASIDE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -279,7 +286,12 @@ describe("the tutorial runner", () => {
       "tutorial.climb.intro",
       "tutorial.climb.under",
       "tutorial.climb.praise",
+      "tutorial.ramp.intro",
+      "tutorial.ramp.landing",
+      "tutorial.ramp.praise",
     ]);
+    // The high deck is marked on its layer.
+    expect(beats[32]?.highlight).toEqual({ kind: "ground", at: onDeck, layer: 3 });
     // The ledge is marked on its layer, then the ground under its middle.
     expect(beats.slice(29, 31).map((beat) => beat.highlight)).toEqual([
       { kind: "ground", at: onLedge, layer: 2 },
@@ -333,9 +345,9 @@ describe("the tutorial runner", () => {
     expect(beats.map((beat) => beat.world)).toEqual([
       ...Array<string>(5).fill("battlefield"),
       ...Array<string>(15).fill("canyon"),
-      ...Array<string>(12).fill("canyon-2"),
+      ...Array<string>(15).fill("canyon-2"),
     ]);
-    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(31).fill(false), true]);
+    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(34).fill(false), true]);
   });
 
   it("says a station's reaction once, then no more hints until it is done (#3302)", () => {

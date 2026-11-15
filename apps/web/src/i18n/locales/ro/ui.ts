@@ -1528,6 +1528,11 @@ export default {
   "tutorial.moreSoon": "Curând mai multe lecții. Ne vedem acolo!",
   "tutorial.offer": "Ești nou? Tutorele tău îți arată elementele de bază.",
   "tutorial.offerTitle": "Prima dată?",
+  "tutorial.ramp.hint": "Urcă ambele șiruri de trepte până la semnul de pe platforma înaltă.",
+  "tutorial.ramp.how": "Dă clic pe platforma înaltă. Drumul urcă treptele pentru tine.",
+  "tutorial.ramp.intro": "Treptele leagă straturile. Pășește și te urcă.",
+  "tutorial.ramp.landing": "Încă un șir de trepte.",
+  "tutorial.ramp.praise": "Teren înalt. Dușmanii de jos greu te ajung.",
   "tutorial.rats.again": "Încearcă altă abilitate pe acesta.",
   "tutorial.rats.big":
     "Unul mare. Lovește-l până se aprinde {bash}, apoi doboară-l și folosește {crush}.",

@@ -23,8 +23,10 @@ import {
 
 const BENCH = process.env.BENCH_BALANCE !== undefined;
 
+const percent = (share: number): string => (share * 100).toFixed(1);
+
 function result(wins: readonly number[], draws = 0): MapBalanceResult {
-  return { wins, draws, meanSeconds: 60 };
+  return { wins, draws, meanSeconds: 60, stuckShare: 0, apartShare: 0, stuckCells: [] };
 }
 
 describe("the balance verdict (#3065)", () => {
@@ -109,7 +111,7 @@ describe("a seated bot (#3344)", () => {
 describe.runIf(BENCH)("the map balance bench (#3065)", () => {
   it("plays every match of a smoke run", () => {
     const seeds = 4;
-    const { wins, draws, meanSeconds } = runMapBalance({
+    const { wins, draws, meanSeconds, stuckShare } = runMapBalance({
       map: loadMap("arena-crossroads"),
       size: 1,
       seeds,
@@ -117,6 +119,8 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
     expect(wins).toHaveLength(2);
     expect(wins.reduce((sum, count) => sum + count, 0) + draws).toBe(seeds * 2);
     expect(meanSeconds).toBeGreaterThan(0);
+    expect(stuckShare).toBeGreaterThanOrEqual(0);
+    expect(stuckShare).toBeLessThanOrEqual(1);
   });
 
   it(
@@ -126,22 +130,48 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
       const size = process.env.BENCH_SIZE;
       const seeds = Number(process.env.BENCH_SEEDS ?? 100);
       const maps = id === "all" ? loadAllMaps() : [loadMap(id)];
-      const rows = maps.flatMap((map) =>
-        (size === undefined ? map.teamSizes : [Number(size)]).map((perTeam) => {
-          const balance = runMapBalance({ map, size: perTeam, seeds });
-          const verdict = balanceVerdict(balance);
-          return [
-            map.id,
-            `${String(perTeam)}v${String(perTeam)}`,
-            String(seeds * 2),
-            balance.wins.join(" / "),
-            String(balance.draws),
-            balance.meanSeconds.toFixed(0),
-            verdict.pass ? "PASS" : `FAIL: ${verdict.reason}`,
-          ];
-        }),
+      const runs = maps.flatMap((map) =>
+        (size === undefined ? map.teamSizes : [Number(size)]).map((perTeam) => ({
+          map,
+          perTeam,
+          balance: runMapBalance({ map, size: perTeam, seeds }),
+        })),
       );
-      const header = ["map", "size", "matches", "wins by team", "draws", "mean s", "verdict"];
+      const rows = runs.map(({ map, perTeam, balance }) => {
+        const verdict = balanceVerdict(balance);
+        return [
+          map.id,
+          `${String(perTeam)}v${String(perTeam)}`,
+          String(seeds * 2),
+          balance.wins.join(" / "),
+          String(balance.draws),
+          balance.meanSeconds.toFixed(0),
+          percent(balance.stuckShare),
+          percent(balance.apartShare),
+          verdict.pass ? "PASS" : `FAIL: ${verdict.reason}`,
+        ];
+      });
+      const header = [
+        "map",
+        "size",
+        "matches",
+        "wins by team",
+        "draws",
+        "mean s",
+        "stuck %",
+        "apart %",
+        "verdict",
+      ];
+      if (process.env.BENCH_STUCK !== undefined) {
+        for (const { map, perTeam, balance } of runs) {
+          const worst = balance.stuckCells
+            .map((c) => `${String(c.x)},${String(c.y)}@${String(c.layer)} ${c.seconds.toFixed(0)}`)
+            .join("; ");
+          console.log(
+            `${map.id} ${String(perTeam)}v${String(perTeam)} stuck cells: ${worst === "" ? "-" : worst}`,
+          );
+        }
+      }
       console.log(
         [header, header.map(() => "---"), ...rows]
           .map((row) => `| ${row.join(" | ")} |`)

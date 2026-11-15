@@ -16,12 +16,14 @@ import {
   CRACKED_WALL,
   DODGE_MARK,
   LEDGE,
+  RAMP,
   RAT_AGGRO,
   RAT_POCKET,
   badGroundTutor,
   canyonWorld,
   clearingTutor,
   ledgeTutor,
+  rampTutor,
   ratPocket,
   wallTutor,
 } from "./canyon-world.js";
@@ -470,5 +472,73 @@ describe("ledgeTutor (#3323)", () => {
     expect(body(SELF_ID).layer).toBe(lower);
     expect(pointInShape(body(SELF_ID).position, footprint)).toBe(true);
     expect(body(TUTOR_ID).layer).toBe(lower);
+  });
+});
+
+describe("rampTutor (#3325)", () => {
+  const build = houseBuild(PLAYER_PROFESSION);
+
+  it("takes the player up both flights to the high deck's mark, the tutor behind", () => {
+    const { simulation } = canyonWorld("ramp-test", build, build, 1);
+    for (const { id } of RAT_POCKET.rats) {
+      simulation.remove(id);
+    }
+    const body = (id: string) => {
+      const found = simulation.get(id);
+      if (found === undefined) {
+        throw new Error(`no ${id}`);
+      }
+      return found;
+    };
+    const run = (seconds: number, step?: () => void): void => {
+      for (let elapsed = 0; elapsed < seconds; elapsed += TICK) {
+        simulation.step(TICK);
+        step?.();
+      }
+    };
+    const near = (id: string, point: Vec2): boolean =>
+      Math.hypot(body(id).position.x - point.x, body(id).position.y - point.y) < MARK_REACH;
+    // From the ground under the ledge, where station 9 leaves the player.
+    simulation.walkTo(SELF_ID, vec2(3600, 1890), LEDGE.lower);
+    run(40);
+    const tutor = rampTutor(simulation);
+    const layers = new Set<number>();
+    const climb = (): void => {
+      tutor.step();
+      layers.add(body(SELF_ID).layer);
+    };
+    // Along the ground to under the high deck, as the e2e walks it.
+    const underDeck = vec2(RAMP.mark.x, 1700);
+    simulation.walkTo(SELF_ID, underDeck, RAMP.ground);
+    run(40, climb);
+    expect(body(SELF_ID).layer).toBe(RAMP.ground);
+    expect(near(SELF_ID, underDeck)).toBe(true);
+    // One walk to the mark: round to the first flight, up both.
+    simulation.walkTo(SELF_ID, RAMP.mark, RAMP.layer);
+    run(60, climb);
+    expect([...layers]).toContain(RAMP.landing);
+    expect(body(SELF_ID).layer).toBe(RAMP.layer);
+    expect(near(SELF_ID, RAMP.mark)).toBe(true);
+    expect(body(TUTOR_ID).layer).toBe(RAMP.layer);
+  });
+
+  it("stays at the first flight's foot while the player stands on station 9's ledge", () => {
+    const { simulation } = canyonWorld("ramp-ledge-test", build, build, 1);
+    for (const { id } of RAT_POCKET.rats) {
+      simulation.remove(id);
+    }
+    const tutor = rampTutor(simulation);
+    simulation.walkTo(SELF_ID, vec2(3600, 1890), LEDGE.upper);
+    for (let elapsed = 0; elapsed < 40; elapsed += TICK) {
+      simulation.step(TICK);
+      tutor.step();
+    }
+    expect(simulation.get(SELF_ID)?.layer).toBe(LEDGE.upper);
+    expect(LEDGE.upper).toBe(RAMP.landing);
+    const at = simulation.get(TUTOR_ID);
+    expect(at?.layer).toBe(RAMP.ground);
+    expect(
+      Math.hypot((at?.position.x ?? 0) - RAMP.foot.x, (at?.position.y ?? 0) - RAMP.foot.y),
+    ).toBeLessThan(MARK_REACH);
   });
 });

@@ -11,7 +11,7 @@ import {
   type PlayerBuild,
   type Vec2,
 } from "@vibewars/game-core";
-import { allWallSegments } from "@vibewars/game-maps/geometry";
+import { allWallSegments, pointInShape } from "@vibewars/game-maps/geometry";
 import {
   matchBreakables,
   matchGates,
@@ -642,6 +642,93 @@ export function ledgeTutor(simulation: MatchSimulation): LedgeTutor {
       ) {
         route = route.slice(1);
         walk();
+      }
+    },
+  };
+}
+
+/** How far east of the mark the tutor waits on the high deck at station 10 (#3325). */
+const TUTOR_BESIDE_MARK = 90;
+
+/** Station 10's climb (#3325), on the canyon's second map: two flights to the high deck. */
+export interface CanyonRamp {
+  /** The mark, at the high deck's middle, on its layer. */
+  readonly mark: Vec2;
+  readonly layer: number;
+  /** The landing between the flights: its layer, its footprint and its middle. */
+  readonly landing: number;
+  readonly landingFootprint: Shape;
+  readonly onLanding: Vec2;
+  /** The first flight's foot, on the ground. */
+  readonly foot: Vec2;
+  readonly ground: number;
+}
+
+export const RAMP: CanyonRamp = ((): CanyonRamp => {
+  const map = TUTORIAL_CANYON[1];
+  const deck = map.decks.find(({ id }) => id === "deck");
+  const landing = map.decks.find(({ id }) => id === "landing");
+  const stairs = map.transitions.find(({ id }) => id === "landing-steps");
+  if (
+    deck?.footprint.kind !== "rect" ||
+    landing?.footprint.kind !== "rect" ||
+    stairs?.area.kind !== "rect"
+  ) {
+    throw new Error(`${map.id}: no deck, landing and landing-steps for station 10`);
+  }
+  const middle = (rect: { x: number; y: number; width: number; height: number }): Vec2 =>
+    vec2(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  const { x, y, width, height } = stairs.area;
+  // `uphill` is the way the stairs climb: the foot is the other way.
+  const along = { n: vec2(0, -1), s: vec2(0, 1), e: vec2(1, 0), w: vec2(-1, 0) }[stairs.uphill];
+  const half = Math.abs(along.x) * (width / 2) + Math.abs(along.y) * (height / 2) + PAST_THE_STAIRS;
+  const centre = middle({ x, y, width, height });
+  return {
+    mark: middle(deck.footprint),
+    layer: deck.layer,
+    landing: landing.layer,
+    landingFootprint: landing.footprint,
+    onLanding: middle(landing.footprint),
+    foot: vec2(centre.x - along.x * half, centre.y - along.y * half),
+    ground: stairs.from,
+  };
+})();
+
+/** The tutor at station 10 (#3325), stepped once a frame. */
+export interface RampTutor {
+  readonly step: () => void;
+}
+
+/**
+ * The tutor at station 10: waits at the first flight's foot, then climbs
+ * behind the player, to the landing once they are on it and to beside the
+ * mark once they are on the high deck. The walk finds the stairs itself.
+ */
+export function rampTutor(simulation: MatchSimulation): RampTutor {
+  const { mark, layer, landing, landingFootprint, onLanding, foot, ground } = RAMP;
+  const beside = vec2(mark.x + TUTOR_BESIDE_MARK, mark.y);
+  /** The highest layer the player has reached, which the tutor follows to. */
+  let reached = ground;
+  simulation.walkTo(TUTOR_ID, foot, ground);
+  return {
+    step: () => {
+      const self = simulation.get(SELF_ID);
+      if (
+        self === undefined ||
+        self.layer <= reached ||
+        // The ledge of station 9 is on the landing's layer: on the landing itself.
+        !(
+          (self.layer === landing && pointInShape(self.position, landingFootprint)) ||
+          self.layer === layer
+        )
+      ) {
+        return;
+      }
+      reached = self.layer;
+      if (reached === layer) {
+        simulation.walkTo(TUTOR_ID, beside, layer);
+      } else {
+        simulation.walkTo(TUTOR_ID, onLanding, landing);
       }
     },
   };

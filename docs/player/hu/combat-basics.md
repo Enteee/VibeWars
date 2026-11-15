@@ -48,6 +48,8 @@ Az Energiája elvész, és a készség újratöltődik; egyes megszakítások eg
 időre zárolják is a készséget. Ha túl korán vagy túl későn szakítasz
 meg, semmi sem történik.
 
+Minden hivatás képességének saját hangja van; figyelj a célpontodéra.
+
 A legtöbb megszakítás egy sima támadást is leállít suhintás közben: az
 az ütés sosem talál be, és a suhintás elölről kezdődik. Annál az
 ellenségnél, amely még a célpontja felé sétál, nincs mit megszakítani.

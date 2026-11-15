@@ -1454,6 +1454,11 @@ export default {
   "tutorial.moreSoon": "Binnenkort meer lessen. Tot daarbuiten!",
   "tutorial.offer": "Nieuw hier? Je leraar laat je de basis zien.",
   "tutorial.offerTitle": "Eerste keer?",
+  "tutorial.ramp.hint": "Beide trappen op naar de markering op het hoge platform.",
+  "tutorial.ramp.how": "Klik op het hoge platform. Je route neemt de treden voor je.",
+  "tutorial.ramp.intro": "Trappen verbinden lagen. Loop erop en ze dragen je omhoog.",
+  "tutorial.ramp.landing": "Nog één trap.",
+  "tutorial.ramp.praise": "Hoge grond. Vijanden beneden bereiken je moeilijk.",
   "tutorial.rats.again": "Probeer een andere vaardigheid op deze.",
   "tutorial.rats.big":
     "Een grote. Sla hem tot {bash} oplicht, sla hem dan neer en gebruik {crush}.",

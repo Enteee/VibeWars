@@ -128,7 +128,7 @@ Recipe (now): `{ colour: 0xffb060, radius: 150, intensity: 0.6, flicker: 0.2 }`,
   shadow at 35 % black, 5 right and 6 down at body size.
 - **Height is told in this order:** the top is the lightest plane; its edge
   carries a bright lip; its front face is darker; its shadow lands on the
-  ground. A **pit** is the reverse: the floor goes 45 % darker (`PIT_FLOOR`),
+  ground. A **pit** is the reverse: the floor goes 45 % darker (`pitFloor`),
   and its rim carries the lip. Ramp, wall and deck numbers are in
   [`art-direction.md`](art-direction.md#25d-graphic-layers-direction-d).
 - **One step is 56 units** (`ELEVATION_STEP`). There is no in-between height
@@ -281,7 +281,7 @@ pools, which add on every layer.
 ### Heights
 
 Pit, ground and deck at the same scale, with the four cues each time: tone,
-lip, face, shadow. Numbers (PIT_FLOOR, ELEVATION_STEP) are now.
+lip, face, shadow. Numbers (`pitFloor`, ELEVATION_STEP) are now.
 
 ![heights](visual-style/height-steps.svg)
 

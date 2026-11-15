@@ -45,6 +45,8 @@ Een **onderbreking** stopt de skill van een vijand terwijl die hem cast. Zijn
 Energie is verbruikt en de skill laadt op; sommige onderbrekingen blokkeren de
 skill ook een tijdje. Onderbreek je te vroeg of te laat, dan gebeurt er niets.
 
+Elk beroep klinkt anders bij het gebruiken van een skill; luister naar dat van je doelwit.
+
 De meeste onderbrekingen stoppen ook een gewone aanval halverwege de zwaai: die
 klap komt nooit aan en de zwaai begint opnieuw. Een vijand die nog naar zijn
 doelwit loopt, heeft niets om te onderbreken. Een onderbreking waarvan op de

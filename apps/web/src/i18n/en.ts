@@ -1447,6 +1447,11 @@ export const en = {
   "tutorial.moreSoon": "More lessons soon. See you out there!",
   "tutorial.offer": "New here? Your tutor can show you the ropes.",
   "tutorial.offerTitle": "First time?",
+  "tutorial.ramp.hint": "Up both flights of steps to the mark on the high deck.",
+  "tutorial.ramp.how": "Click the high deck. Your path takes the steps for you.",
+  "tutorial.ramp.intro": "Steps join layers. Walk on, and they carry you up.",
+  "tutorial.ramp.landing": "One more flight.",
+  "tutorial.ramp.praise": "High ground. Foes below can't easily reach you.",
   "tutorial.rats.again": "Try a different skill on this one.",
   "tutorial.rats.big":
     "A big one. Hit it until {bash} lights up, then knock it down and use {crush}.",
