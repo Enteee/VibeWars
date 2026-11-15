@@ -15,6 +15,7 @@ import { t } from "../i18n/index.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { startMatchView, type MatchView } from "../match-view.js";
 import type { GoalMark } from "../render/goal-mark.js";
+import type { SleeperProp } from "../render/sleeper-prop.js";
 import {
   NO_PROFESSIONS,
   createLocalConnection,
@@ -32,6 +33,7 @@ import {
   LEDGE,
   RAMP,
   RAT_POCKET,
+  TUNNEL,
   allyHealSlot,
   badGroundTutor,
   canyonWorld,
@@ -39,12 +41,14 @@ import {
   ledgeTutor,
   rampTutor,
   ratPocket,
+  tunnelTutor,
   wallTutor,
   type BadGroundTutor,
   type ClearingTutor,
   type LedgeTutor,
   type RampTutor,
   type RatPocket,
+  type TunnelTutor,
   type WallTutor,
 } from "./canyon-world.js";
 import { createHealWatch, type HealWatch } from "./heal-watch.js";
@@ -61,6 +65,7 @@ import {
   rampStation,
   ratsStation,
   stepInStation,
+  tunnelStation,
   walkStation,
   type StationHighlight,
   type TutorialWorldName,
@@ -79,6 +84,14 @@ import {
 const MAX_STEP_SECONDS = 0.1;
 /** How long "more soon" stands before the menu. */
 const FAREWELL_MS = 2_500;
+/** Station 11's guard (#3326), asleep on the rock over the tunnel's middle. */
+const SLEEPER: SleeperProp = {
+  id: "tutorial-sleeper",
+  kind: "sleeper",
+  position: TUNNEL.sleeper,
+  layer: TUNNEL.above,
+  facing: 0,
+};
 /** What a HUD element a station points at wears while it does (#3302). */
 const PULSE_CLASS = "tutorial-pulse";
 /** The fade back from white once the canyon stands (#3247), as `.tutorial-flash` animates it. */
@@ -246,6 +259,7 @@ export async function startTutorialSession(
   let belowClicked = false;
   let onLedge: LedgeTutor | undefined;
   let onRamp: RampTutor | undefined;
+  let inTunnel: TunnelTutor | undefined;
   /** The station the last beat ran. */
   let running: string | undefined;
   /** The HUD element pulsing now, if any. */
@@ -294,6 +308,8 @@ export async function startTutorialSession(
         tutorial: {
           party: [SELF_ID, TUTOR_ID],
           goals,
+          // The guard asleep over the tunnel (#3326), only while station 11 runs.
+          props: () => (running === "tunnel" ? [SLEEPER] : []),
           onWalk: (below) => {
             belowClicked = below;
           },
@@ -325,6 +341,7 @@ export async function startTutorialSession(
       ),
       climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
       rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
+      tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
     ],
     loadKeymap,
   );
@@ -530,6 +547,12 @@ export async function startTutorialSession(
         onRamp = rampTutor(world);
       }
       onRamp?.step();
+      // Station 11 is next: the tutor waits at the tunnel's west steps, then
+      // goes through it behind the player.
+      if (inTunnel === undefined && beat.station === "tunnel" && stage.name === "canyon-2") {
+        inTunnel = tunnelTutor(world);
+      }
+      inTunnel?.step();
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;
