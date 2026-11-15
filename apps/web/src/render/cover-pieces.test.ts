@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { clipToBox, coverPieces, outlineArea } from "./cover-pieces.js";
+import { clipToBox, coverPieces, liftedCovers, outlineArea } from "./cover-pieces.js";
 
 describe("clipToBox (#3350)", () => {
   const BOX = { left: 0, top: 0, right: 100, bottom: 100 };
@@ -96,4 +96,35 @@ describe("coverPieces (#3352)", () => {
       }
     }
   });
+});
+
+describe("liftedCovers (#3352)", () => {
+  // A layer's step, as `elevationOf` draws it, and a tunnel 80 deep whose
+  // cover box reaches the step south of it where a body in it draws.
+  const STEP = 56;
+  const TUNNEL = { left: 0, top: 100, right: 400, bottom: 180 };
+  const COVER = { tunnel: 0, box: { ...TUNNEL, bottom: TUNNEL.bottom + STEP } };
+  const DECK = [
+    { x: 0, y: 0 },
+    { x: 400, y: 0 },
+    { x: 400, y: 500 },
+    { x: 0, y: 500 },
+  ];
+  const WITHIN = { left: -1000, top: -1000, right: 2000, bottom: 2000 };
+  const at = (pieces: ReturnType<typeof coverPieces>, x: number, y: number) =>
+    pieces.find(({ box }) => x > box.left && x < box.right && y > box.top && y < box.bottom);
+
+  for (const layers of [1, 2]) {
+    it(`fades the deck rows ${String(layers)} layer(s) up that draw over a body in the tunnel`, () => {
+      const lift = layers * STEP;
+      const pieces = coverPieces(DECK, WITHIN, liftedCovers([COVER], lift));
+      // A body across the tunnel draws a step down; the deck row drawn over it is `lift` south.
+      for (let row = TUNNEL.top + 1; row < TUNNEL.bottom; row += 10) {
+        expect(at(pieces, 200, row + STEP + lift)?.tunnel).toBe(0);
+      }
+      // Straight over the tunnel fades too, and past the drawn body nothing does.
+      expect(at(pieces, 200, TUNNEL.top + 1)?.tunnel).toBe(0);
+      expect(at(pieces, 200, TUNNEL.bottom + STEP + lift + 1)?.tunnel).toBeUndefined();
+    });
+  }
 });

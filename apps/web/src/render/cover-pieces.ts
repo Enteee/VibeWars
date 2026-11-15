@@ -28,6 +28,19 @@ export interface CoverPiece {
   readonly shore: readonly (readonly [Vec2, Vec2])[];
 }
 
+/**
+ * The covers a deck drawn `lift` up is cut by (#3352): each box reaching
+ * `lift` further south, as the deck's rows that far south draw over the
+ * cover's screen area, where a body in the tunnel draws. The part straight
+ * over the tunnel stays in it too.
+ */
+export function liftedCovers(
+  covers: readonly TunnelCoverBox[],
+  lift: number,
+): readonly TunnelCoverBox[] {
+  return covers.map(({ tunnel, box }) => ({ tunnel, box: { ...box, bottom: box.bottom + lift } }));
+}
+
 /** How far a corner may sit off a shore edge and still be on it, in world units. */
 const ON_SHORE = 1e-6;
 

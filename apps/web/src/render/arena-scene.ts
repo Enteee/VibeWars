@@ -282,6 +282,7 @@ import {
 import {
   clippedPainter,
   coverPieces,
+  liftedCovers,
   outlineArea,
   type CoverPiece,
   type TunnelCoverBox,
@@ -3654,7 +3655,9 @@ export class ArenaScene extends Phaser.Scene {
       palette,
     };
     const pieces =
-      deck.layer > ground ? coverPieces(shapeOutline(deck.footprint), EVERYWHERE, covers) : [];
+      deck.layer > ground
+        ? coverPieces(shapeOutline(deck.footprint), EVERYWHERE, liftedCovers(covers, frame.top))
+        : [];
     if (pieces.some(({ tunnel, outline }) => tunnel !== undefined && outlineArea(outline) > 0)) {
       this.drawDeckOverTunnels(deck, frame, pieces);
       return;
