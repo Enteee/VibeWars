@@ -38,6 +38,7 @@ export type RenderItem =
   | { readonly kind: "character"; readonly band: number; readonly part: CharacterPart }
   | { readonly kind: "wall"; readonly layer: number }
   | { readonly kind: "wall-top"; readonly layer: number }
+  | { readonly kind: "breakable"; readonly layer: number }
   | { readonly kind: "support"; readonly deckLayer: number }
   | { readonly kind: "side-face"; readonly deckLayer: number }
   | { readonly kind: "tunnel-cover"; readonly deckLayer: number }
@@ -126,6 +127,8 @@ const WALL = 2;
  * just over its wall, under the next layer's supports and decks.
  */
 const WALL_TOP = 2.05;
+/** A breakable wall (#3370), drawn on its own as it cracks and falls: just over its layer's walls. */
+const BREAKABLE = 2.1;
 const SUPPORT = 3;
 const SIDE_FACE = 4;
 /**
@@ -192,6 +195,8 @@ export function renderOrder(item: RenderItem): number {
       return item.layer * LAYER_STACK + WALL;
     case "wall-top":
       return item.layer * LAYER_STACK + WALL_TOP;
+    case "breakable":
+      return item.layer * LAYER_STACK + BREAKABLE;
     case "support":
       return (item.deckLayer - 1) * LAYER_STACK + SUPPORT;
     case "side-face":

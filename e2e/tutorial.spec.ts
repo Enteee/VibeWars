@@ -98,6 +98,10 @@ const IN_THE_TUNNEL_EAST = { x: 2700, y: 700 + 56 };
 const PAST_THE_TUNNEL = { x: 3240, y: 700 };
 /** Station 12's two rats (#3331), west of them: `site-12` on the canyon's second map. */
 const BY_THE_RATS = { x: 4000, y: 700 };
+/** Station 13's fork (#3332), `site-13`, where its mark is drawn. */
+const AT_THE_FORK = { x: 5800, y: 700 };
+/** Down station 13's east branch (#3332), well clear of the pocket to the south-east. */
+const DOWN_THE_EAST_BRANCH = { x: 6150, y: 700 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -568,7 +572,8 @@ test.describe("the first-time tutorial (#3218)", () => {
 
     test(`Learn on ${mapId}, from the tunnel to the menu`, async ({ page }) => {
       // Seeded on the high deck, where station 10 leaves the player (#3383).
-      // The tunnel some two minutes (#3326), the call some 40 s (#3331).
+      // The tunnel some two minutes (#3326), the call some 40 s (#3331),
+      // the fork some 30 s (#3332).
       test.setTimeout(360_000);
       const { frame, stage, saidLog, hasSaid, walkTo } = await learn(page, mapId, 11);
       const target = page.locator(".hud-target");
@@ -674,6 +679,23 @@ test.describe("the first-time tutorial (#3218)", () => {
       await expect
         .poll(() => hasSaid("Call it, and the team hits the same thing."), { timeout: 90_000 })
         .toBe(true);
+
+      // Station 13 (#3332): on east to the fork, the compass lit, and a
+      // wheel-click down the east branch sends the tutor along it.
+      await expect
+        .poll(() => hasSaid("Left or right? You call it."), { timeout: 15_000 })
+        .toBe(true);
+      await expect(page.locator("canvas.compass")).toHaveClass(/tutorial-pulse/);
+      await expect(async () => {
+        await walkTo(AT_THE_FORK, LONG_STRIDE);
+        await near(AT_THE_FORK, 100);
+      }).toPass({ timeout: 90_000 });
+      await expect(async () => {
+        const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
+        const at = view.onPage(DOWN_THE_EAST_BRANCH);
+        await page.mouse.click(at.x, at.y, { button: "middle" });
+        await expect.poll(() => hasSaid("Good call. Onward."), { timeout: 15_000 }).toBe(true);
+      }).toPass({ timeout: 45_000 });
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 

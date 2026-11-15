@@ -1370,6 +1370,12 @@ export default {
   "tutorial.moreSoon": "Sắp có thêm bài học. Hẹn gặp ngoài kia!",
   "tutorial.offer": "Mới đến? Người hướng dẫn sẽ chỉ bạn những điều cơ bản.",
   "tutorial.offerTitle": "Lần đầu?",
+  "tutorial.ping.hint": "Ping con đường bạn muốn đi.",
+  "tutorial.ping.how":
+    "Nhấp chuột giữa lên mặt đất, nhấp vào la bàn, hoặc kéo trên la bàn để vẽ một đường.",
+  "tutorial.ping.intro": "Trái hay phải? Bạn quyết định.",
+  "tutorial.ping.pocket": "Cảnh đẹp đấy. Nhưng sai đường rồi.",
+  "tutorial.ping.praise": "Chọn hay lắm. Tiến lên.",
   "tutorial.ramp.hint": "Lên cả hai đợt bậc tới dấu trên sàn cao.",
   "tutorial.ramp.how": "Nhấp vào sàn cao. Đường đi tự leo bậc giúp bạn.",
   "tutorial.ramp.intro": "Bậc thang nối các tầng. Bước lên, chúng đưa bạn lên.",

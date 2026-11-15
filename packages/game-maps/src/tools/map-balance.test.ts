@@ -121,6 +121,24 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Moss Vale (#3288): the centre is the drawbridge over the mill race, a deck, so the walks end on
+  // it. The study (#3276) holds the walks within 5 % and high ground within 10 %.
+  describe("Moss Vale", () => {
+    const map = loadMap("moss-vale");
+
+    it("walks each team from its spawn onto the drawbridge within 5 % of the other", () => {
+      const [walk0 = 0, walk1 = 0] = walksTo(map, { x: 2500, y: 1300 }, 2);
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.05);
+    });
+
+    it("gives the teams high ground within 10 % of each other", () => {
+      const [ground0 = 0, ground1 = 0] = highGround(map);
+      expect(ground0).toBeGreaterThan(0);
+      expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.1);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

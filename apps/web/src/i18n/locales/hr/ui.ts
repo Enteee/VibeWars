@@ -1528,6 +1528,12 @@ export default {
   "tutorial.moreSoon": "Uskoro još lekcija. Vidimo se vani!",
   "tutorial.offer": "Novi si? Tvoj učitelj pokazat će ti osnove.",
   "tutorial.offerTitle": "Prvi put?",
+  "tutorial.ping.hint": "Označi put kojim želiš ići.",
+  "tutorial.ping.how":
+    "Klikni kotačićem na tlo, klikni na kompas ili povuci po kompasu da nacrtaš crtu.",
+  "tutorial.ping.intro": "Lijevo ili desno? Ti odlučuješ.",
+  "tutorial.ping.pocket": "Lijep pogled. Ali krivi put.",
+  "tutorial.ping.praise": "Dobar izbor. Naprijed.",
   "tutorial.ramp.hint": "Gore oba stubišta do oznake na visokoj platformi.",
   "tutorial.ramp.how": "Klikni visoku platformu. Put sam ide stubama.",
   "tutorial.ramp.intro": "Stube povezuju razine. Stani na njih i odnijet će te gore.",

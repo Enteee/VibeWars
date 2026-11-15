@@ -74,5 +74,8 @@ export const CANYON_SITES: ReadonlyMap<number, CanyonPoint> = new Map(
   }),
 );
 
+/** Station 13's pocket (#3332), the wrong way at the fork: south off the north leg. */
+export const CANYON_POCKET: CanyonPoint = marked(TUTORIAL_CANYON[1], "site-13b");
+
 /** The mist gate the trail leaves by, on the north leg. */
 export const CANYON_EXIT: CanyonPoint = CANYON_EXITS[1];

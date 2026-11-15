@@ -1477,6 +1477,12 @@ export default {
   "tutorial.moreSoon": "Bald mehr Lektionen. Wir sehen uns da draußen!",
   "tutorial.offer": "Neu hier? Dein Lehrer zeigt dir, wie es geht.",
   "tutorial.offerTitle": "Zum ersten Mal hier?",
+  "tutorial.ping.hint": "Pinge den Weg, den du gehen willst.",
+  "tutorial.ping.how":
+    "Klick mit dem Mausrad auf den Boden, klick auf den Kompass oder zieh auf dem Kompass eine Linie.",
+  "tutorial.ping.intro": "Links oder rechts? Du entscheidest.",
+  "tutorial.ping.pocket": "Schöne Aussicht. Aber falscher Weg.",
+  "tutorial.ping.praise": "Gute Wahl. Weiter.",
   "tutorial.ramp.hint": "Beide Treppen hinauf zur Markierung auf der hohen Plattform.",
   "tutorial.ramp.how": "Klick auf die hohe Plattform. Dein Weg nimmt die Stufen für dich.",
   "tutorial.ramp.intro": "Stufen verbinden Ebenen. Geh drauf, und sie tragen dich hinauf.",

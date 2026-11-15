@@ -11,6 +11,7 @@ import {
   badGroundStation,
   breakWallStation,
   callStation,
+  pingStation,
   climbStation,
   rampStation,
   tunnelStation,
@@ -60,6 +61,7 @@ const CAMERA = {
   hitByTutor: new Set<string>(),
   calledTargeted: false,
   calledLost: false,
+  lastPing: undefined,
 };
 const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100), ...CAMERA };
 const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100), ...CAMERA };
@@ -170,7 +172,7 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats, climbs the ledge, climbs to the high deck, goes through the tunnel, calls a rat and finishes (#3247, #3302, #3303, #3310, #3316, #3323, #3325, #3326, #3331)", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats, climbs the ledge, climbs to the high deck, goes through the tunnel, calls a rat, pings the way and finishes (#3247, #3302, #3303, #3310, #3316, #3323, #3325, #3326, #3331, #3332)", () => {
     const pad = vec2(200, -900);
     const goal = vec2(2850, 1800);
     const face = vec2(3480, 1800);
@@ -183,6 +185,10 @@ describe("the tutorial runner", () => {
     const onLanding = vec2(2350, 1560);
     const tunnel = { kind: "rect", x: 2080, y: 450, width: 720, height: 500 } as const;
     const pastTunnel = vec2(3240, 700);
+    const fork = vec2(5800, 700);
+    const eastEnd = vec2(6450, 700);
+    const lounge = vec2(6260, 1160);
+    const eastSide = vec2(6000, 700);
     const bar = [
       "warrior.enraged-smash",
       RAT_SKILLS.bash,
@@ -207,6 +213,7 @@ describe("the tutorial runner", () => {
         rampStation(onDeck, 3, { kind: "rect", x: 2260, y: 1480, width: 180, height: 160 }, 2),
         tunnelStation(tunnel, 0, 1, pastTunnel),
         callStation(),
+        pingStation(fork, eastEnd, lounge, eastSide),
       ],
       () => KEYMAP_PRESETS.classic,
       0,
@@ -291,6 +298,9 @@ describe("the tutorial runner", () => {
         { ...called, calledId: "call-rat-1", hitByTutor: new Set(["call-rat-1"]) },
         11_000 + 11 * PRAISE_MS + 17 * ASIDE_MS,
       ],
+      [{ ...called, tutor: fork }, 11_000 + 12 * PRAISE_MS + 17 * ASIDE_MS],
+      [{ ...called, lastPing: lounge, tutor: lounge }, 11_000 + 12 * PRAISE_MS + 18 * ASIDE_MS],
+      [{ ...called, lastPing: eastEnd, tutor: eastSide }, 11_000 + 12 * PRAISE_MS + 19 * ASIDE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -335,6 +345,14 @@ describe("the tutorial runner", () => {
       "tutorial.tunnel.praise",
       "tutorial.call.intro",
       "tutorial.call.praise",
+      "tutorial.ping.intro",
+      "tutorial.ping.pocket",
+      "tutorial.ping.praise",
+    ]);
+    // The compass is lit while a ping is wanted, the fork marked beside it.
+    expect([beats[41]?.highlight, beats[41]?.mark]).toEqual([
+      { kind: "hud", element: ".compass" },
+      fork,
     ]);
     // The party window, where the tutor stands, is lit while the call is wanted.
     expect(beats[39]?.highlight).toEqual({ kind: "hud", element: ".party-window" });
@@ -393,9 +411,9 @@ describe("the tutorial runner", () => {
     expect(beats.map((beat) => beat.world)).toEqual([
       ...Array<string>(5).fill("battlefield"),
       ...Array<string>(15).fill("canyon"),
-      ...Array<string>(21).fill("canyon-2"),
+      ...Array<string>(24).fill("canyon-2"),
     ]);
-    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(40).fill(false), true]);
+    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(43).fill(false), true]);
   });
 
   it("says a station's reaction once, then no more hints until it is done (#3302)", () => {

@@ -1571,6 +1571,12 @@ export default {
   "tutorial.moreSoon": "Brzy další lekce. Uvidíme se venku!",
   "tutorial.offer": "Jsi tu nový? Tvůj učitel ti ukáže základy.",
   "tutorial.offerTitle": "Poprvé?",
+  "tutorial.ping.hint": "Označ cestu, kudy chceš jít.",
+  "tutorial.ping.how":
+    "Klikni kolečkem na zem, klikni na kompas, nebo táhni po kompasu a nakresli čáru.",
+  "tutorial.ping.intro": "Doleva, nebo doprava? Rozhodni ty.",
+  "tutorial.ping.pocket": "Pěkný výhled. Ale špatná cesta.",
+  "tutorial.ping.praise": "Dobrá volba. Jdeme dál.",
   "tutorial.ramp.hint": "Nahoru po obou schodištích ke značce na vysoké plošině.",
   "tutorial.ramp.how": "Klikni na vysokou plošinu. Cesta vede po schodech sama.",
   "tutorial.ramp.intro": "Schody spojují patra. Vejdi na ně a vynesou tě nahoru.",

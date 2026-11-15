@@ -1645,6 +1645,12 @@ export default {
   "tutorial.moreSoon": "دروس أخرى قريبًا. نراك هناك!",
   "tutorial.offer": "جديد هنا؟ معلّمك سيريك الأساسيات.",
   "tutorial.offerTitle": "أول مرة؟",
+  "tutorial.ping.hint": "أشِر إلى الطريق الذي تريده.",
+  "tutorial.ping.how":
+    "انقر بعجلة الفأرة على الأرض، أو انقر على البوصلة، أو اسحب على البوصلة لترسم خطًا.",
+  "tutorial.ping.intro": "يسارًا أم يمينًا؟ القرار لك.",
+  "tutorial.ping.pocket": "منظر جميل. لكنه الطريق الخطأ.",
+  "tutorial.ping.praise": "اختيار موفق. إلى الأمام.",
   "tutorial.ramp.hint": "اصعد الدرجين إلى العلامة على المنصة العالية.",
   "tutorial.ramp.how": "انقر على المنصة العالية. طريقك يصعد الدرج عنك.",
   "tutorial.ramp.intro": "الدرج يصل الطبقات. امشِ عليه وسيرفعك.",

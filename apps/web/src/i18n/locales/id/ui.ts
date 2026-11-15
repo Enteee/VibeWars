@@ -1385,6 +1385,12 @@ export default {
   "tutorial.moreSoon": "Pelajaran lain segera hadir. Sampai jumpa di luar sana!",
   "tutorial.offer": "Baru di sini? Gurumu akan menunjukkan dasarnya.",
   "tutorial.offerTitle": "Pertama kali?",
+  "tutorial.ping.hint": "Ping jalan yang ingin kamu tempuh.",
+  "tutorial.ping.how":
+    "Klik roda di tanah, klik kompas, atau seret di kompas untuk menggambar garis.",
+  "tutorial.ping.intro": "Kiri atau kanan? Kamu yang tentukan.",
+  "tutorial.ping.pocket": "Pemandangan bagus. Tapi salah jalan.",
+  "tutorial.ping.praise": "Pilihan bagus. Lanjut.",
   "tutorial.ramp.hint": "Naiki kedua tangga ke tanda di dek tinggi.",
   "tutorial.ramp.how": "Klik dek tinggi. Jalurmu menaiki tangga untukmu.",
   "tutorial.ramp.intro": "Tangga menghubungkan lapisan. Melangkahlah, dan ia membawamu naik.",

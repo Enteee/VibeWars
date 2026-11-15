@@ -1464,6 +1464,12 @@ export default {
   "tutorial.moreSoon": "Hamarosan több lecke. Odakint találkozunk!",
   "tutorial.offer": "Új vagy? A tanítód megmutatja az alapokat.",
   "tutorial.offerTitle": "Először jársz itt?",
+  "tutorial.ping.hint": "Jelöld meg, merre mennél.",
+  "tutorial.ping.how":
+    "Kattints a görgővel a földre, kattints az iránytűre, vagy húzz vonalat az iránytűn.",
+  "tutorial.ping.intro": "Balra vagy jobbra? Te döntesz.",
+  "tutorial.ping.pocket": "Szép kilátás. De rossz irány.",
+  "tutorial.ping.praise": "Jó választás. Tovább.",
   "tutorial.ramp.hint": "Fel mindkét lépcsősoron a magas terasz jeléig.",
   "tutorial.ramp.how": "Kattints a magas teraszra. Az utad magától veszi a lépcsőket.",
   "tutorial.ramp.intro": "A lépcsők szinteket kötnek össze. Lépj rájuk, és felvisznek.",
