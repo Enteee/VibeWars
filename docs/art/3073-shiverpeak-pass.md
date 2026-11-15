@@ -27,8 +27,7 @@ drop-offs, wind and snow) is kept.
   ledge. The **chasm** itself is a drop too: the unwalkable band, drawn as a dark void
   with a lit lip, open at its south end (y 1250..1560), its tip at (1700,1560).
 - **Elements:** two brass **levers**, one on each cliff ledge ((1380,860) and (2080,840)), work the
-  **rope bridge** (L1 height, 420 long, 80 wide). The bridge **starts up** (raised) and a lever
-  lowers it. The **middle** is a stone **pier** (L1, 160 × 160, centred (1700,840)) standing in the chasm under the
+  **rope bridge** (L1 height, 420 long, 80 wide). The bridge **starts down** and a lever raises it. The **middle** is a stone **pier** (L1, 160 × 160, centred (1700,840)) standing in the chasm under the
   bridge's middle: the bridge is two spans to it. The **cave** runs under the chasm and ends in a stair
   up inside the pier (one more transition, five in all). A **breakable ice wall** (x 1688, y 1560..1920)
   runs from the chasm's tip to a rock **ridge** (y 1920 to the south outline), so the south pass is
@@ -53,11 +52,7 @@ pier, (1700,840). Walk from spawn to it is 7.5 s by the bridge (lowered), 9.1 s 
 | to the pier: cave (mouth, under the chasm, pier stair) | 1640 / 1657 u | 9.1 / 9.2 s   |
 | to the far stair foot: south pass (wall broken)        | 2572 / 2564 u | 14.3 / 14.2 s |
 
-**Worst case.** Bridge up and wall standing: each spawn still has the cave to the pier, and its own
-ledge by its own stair, but the far side is cut off until a lever is pulled or the wall is broken.
-The bridge is up at the start, so the opening is the cave (9.1 s) and the levers, which sit on ledges
-reached without the bridge. With the bridge down the pier has two routes per spawn (bridge, cave);
-with it up, one route to the pier (cave) but two ways to progress (lever, wall). Crossing needs a lever or the wall.
+**Worst case.** At the opening (bridge down, wall standing) each spawn has two routes to the pier: the bridge (7.5 s) and the cave (9.1 s). Bridge raised and wall standing leaves the cave, which runs mouth to mouth under the chasm and so still crosses: nobody is cut off (the Moss Vale rule). Breaking the wall adds the south pass (14.3 s).
 
 The walks are within 2 % T1 / T2. The sides differ on purpose: the west peak is smaller (111 k u²)
 than the east (132 k u², 16 % larger, so within 25 %), the ledges' outlines differ, the overhang sits
