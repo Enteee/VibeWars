@@ -16,8 +16,12 @@ import { VOLUME_RAMP_SECONDS } from "./volume-ramp.js";
  */
 
 export interface SoundPlayer {
-  /** Play one sound now. Silent while muted, and until its buffer has decoded. */
-  play(id: SoundId): void;
+  /**
+   * Play one sound now, at `gain` (1, full, unless given: a teammate's
+   * respawn is quieter than yours, #3366). Silent while muted, and until
+   * its buffer has decoded.
+   */
+  play(id: SoundId, gain?: number): void;
   /**
    * Play one cast's two layers together (#3298). At most `CAST_VOICE_LIMIT`
    * sound at once: past it, a voice that matters more cuts the one that
@@ -154,7 +158,7 @@ export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
   deps.gestures.addEventListener("keydown", onGesture);
 
   return {
-    play(id) {
+    play(id, gain = 1) {
       const buffer = buffers.get(id);
       if (muted || broken || output === undefined || buffer === undefined) {
         return;
@@ -166,9 +170,17 @@ export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
       }
       lastPlayed.set(id, now);
       try {
-        const source = output.context.createBufferSource();
+        const { context, sink } = output;
+        const source = context.createBufferSource();
         source.buffer = buffer;
-        source.connect(output.sink);
+        if (gain === 1) {
+          source.connect(sink);
+        } else {
+          const quieter = context.createGain();
+          quieter.gain.value = gain;
+          quieter.connect(sink);
+          source.connect(quieter);
+        }
         source.start();
       } catch (error) {
         fail(error);
