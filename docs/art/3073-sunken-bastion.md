@@ -32,7 +32,7 @@ over the water, a flooded cellar) is kept.
   flooded cellar), and nobody is cut off. A **breakable sluice wall** stands in the moat at
   (1300,1060), blocking the shallow channel south of the bridge. Zones: `foul-water` (a stagnant
   corner, west, (880,1160)) and `mire` (silt, east, (1860,760)), off all routes and ≥ 200 u from a
-  spawn; both teams lose nothing by walking round them. Atmosphere: ripples on the moat.
+  spawn; both teams lose nothing by walking round them. The **moat is deep water, impassable** (the existing water look, `WATER_LOOK.deep`: near-black `#0a1320` with a pale `#c4dcee` shore), which is why it has crossings. The two **shallow pools** (west of the west lever, south-east of the east one) are the shallow water look, `#8fb8d6` at 30 %: walkable, off every route, scenery with no zone. Atmosphere: ripples on the moat.
 - **Light:** the **Dusk** row (visual-style §2): sun from the NW, 25°, `#ffb87a` 0.5, ambient
   `#7f86a8` 0.35. Torches `#ffb060`, radius 140–170, at each cellar mouth, each stair head, both
   levers and the drawbridge, so nothing is dim enough to hide a body; the cellar carries its mouth torches.

@@ -31,8 +31,8 @@ const C = {
   roofFace: "#3a2d40",
   tunnel: "#0c1018",
   seam: "#6b7a90",
-  water: "#3f9fe8",
-  waterDeep: "#2a6fb0",
+  water: "#8fb8d6",
+  waterDeep: "#0a1320",
   foul: "#4a5a2a",
   silt: "#5a4a3a",
   wood: "#8a6a3e",
@@ -247,15 +247,15 @@ const world = () => {
   s += `<polygon points="${pts(OUTLINE)}" fill="${C.ground}" stroke="${INK}" stroke-width="8" stroke-linejoin="round"/>`;
   s += `<polygon points="${pts(OUTLINE)}" fill="url(#flag)" opacity=".6"/>`;
   // the moat: deep water, a lighter shallow rim, ripples
-  s += `<polygon points="${pts(MOAT)}" fill="${C.waterDeep}" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>`;
-  s += `<polygon points="${pts(MOAT)}" fill="${C.water}" opacity=".45" transform="translate(10,10) scale(.97)"/>`;
+  s += `<polygon points="${pts(MOAT)}" fill="${C.waterDeep}" stroke="#c4dcee" stroke-width="10" stroke-linejoin="round"/>`;
+  s += `<polygon points="${pts(MOAT)}" fill="none" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
   for (let k = 0; k < 14; k++)
     s += `<ellipse cx="${1180 + ((k * 97) % 360)}" cy="${240 + k * 110}" rx="46" ry="9" fill="#e6f4ff" opacity=".28"/>`;
   // L0 zones
   s += ell(FOUL.cx, FOUL.cy, FOUL.rx, FOUL.ry, C.foul, "#323d1c");
   s += ell(SILT.cx, SILT.cy, SILT.rx, SILT.ry, C.silt, "#3f3326");
   // the drowned courtyard: shallow water on both banks
-  s += `<ellipse cx="600" cy="800" rx="170" ry="60" fill="${C.water}" opacity=".5"/><ellipse cx="2000" cy="1200" rx="190" ry="65" fill="${C.water}" opacity=".5"/>`;
+  s += `<ellipse cx="600" cy="800" rx="170" ry="60" fill="${C.water}" opacity=".3"/><ellipse cx="2000" cy="1200" rx="190" ry="65" fill="${C.water}" opacity=".3"/>`;
   // cellar floor and cover seam on the ground, grating slots every 120
   for (let i = 1; i < TUNNEL_PATH.length; i++) {
     const a = /** @type {Pt} */ (TUNNEL_PATH[i - 1]),
@@ -355,7 +355,9 @@ const bodyAt = (p, col, e) => {
     tag("L2 gatehouse", [420, 240 - 2 * STEP], 30) +
     tag("L2 keep", [2080, 220 - 2 * STEP], 30);
   a +=
-    tag("moat", [1250, 1650]) +
+    tag("moat (deep)", [1250, 1650]) +
+    tag("shallow pool", [600, 880], 26) +
+    tag("shallow pool", [2000, 1290], 26) +
     tag("drawbridge (lever)", [1050, 850], 30) +
     tag("flooded cellar (tunnel)", [1050, 1240], 30);
   for (const l of LEVERS) a += tag("lever", [l.p[0] - 50, l.p[1] - 30], 28);
