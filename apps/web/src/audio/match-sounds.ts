@@ -3,14 +3,17 @@ import type { ConnectionState, MatchConnection, MatchSnapshot } from "@vibewars/
 
 import {
   castVoices,
+  cueGain,
+  cueId,
+  deathThrottle,
   instantCastVoice,
   soundsForCombat,
+  soundsForRespawn,
   soundsForSkillGround,
   soundsForSnapshot,
   soundsForWorld,
 } from "./combat-sounds.js";
-import type { CastListener, CastVoice } from "./combat-sounds.js";
-import type { SoundId } from "./sound-ids.js";
+import type { CastListener, CastVoice, Cue } from "./combat-sounds.js";
 import type { SoundPlayer } from "./sound-player.js";
 import type { WorldPlaces } from "./world-places.js";
 
@@ -45,18 +48,20 @@ export function attachMatchSounds(
   connection: MatchSoundSource,
   player: SoundPlayer,
   places: WorldPlaces,
+  now: () => number = () => performance.now(),
 ): MatchSounds {
   let prev: MatchSnapshot | undefined;
   let camera: Vec2 | undefined;
   let online = true;
   let disposed = false;
+  const throttle = deathThrottle();
 
-  const playAll = (ids: readonly SoundId[]): void => {
+  const playAll = (cues: readonly Cue[]): void => {
     if (disposed) {
       return;
     }
-    for (const id of ids) {
-      player.play(id);
+    for (const cue of throttle(cues, now())) {
+      player.play(cueId(cue), cueGain(cue));
     }
   };
   const castAll = (voices: readonly CastVoice[]): void => {
@@ -86,6 +91,7 @@ export function attachMatchSounds(
       camera = at;
       castAll(castVoices(prev, next, listener()));
       playAll(soundsForSnapshot(prev, next));
+      playAll(soundsForRespawn(prev, next, connection.selfSessionId));
       playAll(soundsForWorld(prev, next, connection.selfSessionId, places));
       playAll(soundsForSkillGround(prev, next, connection.selfSessionId));
       prev = next;

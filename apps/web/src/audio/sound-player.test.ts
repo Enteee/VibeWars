@@ -139,8 +139,18 @@ describe("createWebAudioPlayer", () => {
     const { player, context } = setup();
     await settle();
     player.play("hit-dealt");
-    player.play("death");
+    player.play("death-foe");
     expect(context.started).toBe(2);
+  });
+
+  it("plays a sound at the gain asked, through its own gain only when it is not full (#3366)", async () => {
+    const { player, context } = setup();
+    await settle();
+    player.play("death-ally");
+    expect(context.voices).toEqual([]);
+    player.play("respawn-you", 0.4);
+    expect(context.started).toBe(2);
+    expect(context.voices.map(({ value }) => value)).toEqual([0.4]);
   });
 
   it("plays a cast's two layers as one voice, and past the limit cuts the voice that matters least (#3298)", async () => {
