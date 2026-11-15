@@ -996,8 +996,12 @@
             "y": 1162
           },
           {
+            "x": 670,
+            "y": 1052
+          },
+          {
             "x": 790,
-            "y": 1084
+            "y": 1050
           },
           {
             "x": 992,
@@ -1049,7 +1053,11 @@
           },
           {
             "x": 810,
-            "y": 1136
+            "y": 1100
+          },
+          {
+            "x": 680,
+            "y": 1102
           },
           {
             "x": 565,
@@ -1370,10 +1378,10 @@
     },
     "lights": [
       {
-        "id": "junction-brazier",
+        "id": "fire-junction",
         "position": {
-          "x": 1160,
-          "y": 900
+          "x": 1170,
+          "y": 868
         },
         "layer": 0,
         "radius": 150,
@@ -1382,10 +1390,10 @@
         "flicker": 0.35
       },
       {
-        "id": "west-gallery-torch",
+        "id": "torch-west-gallery",
         "position": {
-          "x": 960,
-          "y": 970
+          "x": 880,
+          "y": 950
         },
         "layer": 0,
         "radius": 150,
@@ -1394,7 +1402,7 @@
         "flicker": 0.35
       },
       {
-        "id": "east-gallery-torch",
+        "id": "torch-east-gallery",
         "position": {
           "x": 1800,
           "y": 890
@@ -1406,7 +1414,7 @@
         "flicker": 0.35
       },
       {
-        "id": "south-east-gallery-torch",
+        "id": "torch-south-east-gallery",
         "position": {
           "x": 2165,
           "y": 935
