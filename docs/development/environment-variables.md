@@ -18,7 +18,7 @@ Read by Vite when it builds `apps/web`, not at runtime.
 | `VITE_VIBEWARS_LOBBY_SEED`       | unset      | A decimal integer that seeds each Team Lobby's random picks (preset foes, tied votes, maps), so every solo match meets the same foe (#2213). Only e2e sets it (`11`). Keys, tokens and matches stay on `crypto`. Anything that is not a decimal integer fails the build.               |
 | `VITE_VIBEWARS_SPLASH`           | unset      | `off` only in the e2e build: no splash screen (#2884) unless the URL has `?splash`.                                                                                                                                                                                                    |
 | `VITE_VIBEWARS_MENU_BACKGROUND`  | unset      | `off` only in the e2e build: the menu background draws no fight (#3156) unless the URL has `?menu-background`.                                                                                                                                                                         |
-| `VITE_VIBEWARS_TUTORIAL_STATION` | unset      | `on` only in the e2e build: the tutorial starts at the URL's `?tutorial-station=N`, 1 for the first, so each stage of its spec is its own test (#3383). A player build drops the check.                                                                                                |
+| `VITE_VIBEWARS_TUTORIAL_STATION` | unset      | `on` only in the e2e build: a URL with `?tutorial-station=N`, N above 1, opens straight on that station of the tutorial, on the `?menu-background` map, with no splash or offer, so each stage of its spec is its own test (#3383). A player build drops the check.                    |
 
 ## Development
 

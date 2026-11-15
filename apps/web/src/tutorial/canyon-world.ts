@@ -152,6 +152,15 @@ export interface CanyonStart {
 }
 
 /**
+ * The canyon's first map entered at station 5 (#3383), which only an e2e
+ * build's seeded start does: the pair on station 4's mark, where its
+ * dodges leave them.
+ */
+export function wallStart(): CanyonStart {
+  return { position: DODGE_MARK.position, layer: DODGE_MARK.layer, ratsSlain: false };
+}
+
+/**
  * The canyon's second map entered at station 11 (#3383), which only an e2e
  * build's seeded start does: the pair on the high deck, where station 10
  * leaves them, and station 8's rats slain.

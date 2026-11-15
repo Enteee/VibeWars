@@ -3295,7 +3295,12 @@ async function main(): Promise<void> {
     });
   };
   let splash: Splash | undefined;
-  if (
+  if (tutorialFirstStation() > 0) {
+    // An e2e build's seeded start (#3383) goes straight to its station,
+    // on the pinned menu map: no splash, no offer, no menu fight.
+    const { mapId, teamSize } = pinnedChoice(window.location.search);
+    void startTutorial(mapId, teamSize);
+  } else if (
     shouldShowSplash({
       forced: new URLSearchParams(window.location.search).has("splash"),
       seen: splashSeen(),

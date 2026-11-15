@@ -28,6 +28,7 @@ import {
   rampTutor,
   ratPocket,
   tunnelStart,
+  wallStart,
   wallTutor,
 } from "./canyon-world.js";
 import { DODGE_REACH } from "./dodge-count.js";
@@ -84,6 +85,16 @@ describe("canyonWorld (#3247)", () => {
       expect(simulation.get(id)?.layer).toBe(RAMP.layer);
     }
     expect(simulation.get(SELF_ID)?.position).toEqual(RAMP.mark);
+  });
+
+  it("starts the pair on station 4's mark, the wall still whole, for a seeded station 5 (#3383)", () => {
+    const { simulation } = canyonWorld("canyon-test", build, build, 0, wallStart());
+    expect(simulation.get(SELF_ID)?.position).toEqual(DODGE_MARK.position);
+    for (const id of [SELF_ID, TUTOR_ID]) {
+      expect(simulation.get(id)?.layer).toBe(DODGE_MARK.layer);
+    }
+    const wall = simulation.breakables.find(({ id }) => id === CRACKED_WALL.id);
+    expect(wall?.health).toBe(CRACKED_WALL.maxHealth);
   });
 
   it("puts station 4's mark where the player walks to, on the trail past the boulder run", () => {

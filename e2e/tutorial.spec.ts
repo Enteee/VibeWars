@@ -133,16 +133,23 @@ interface Lesson {
 }
 
 /**
- * Through the splash and "Learn to play" on `mapId`, the tutorial begun at
- * `station`, 1 for the first: the e2e build seeds a later one (#3383), so
- * each stage is its own test and the shards can spread them.
+ * The tutorial on `mapId` begun at `station`: the first through the splash
+ * and "Learn to play"; a later one seeded by the e2e build (#3383), which
+ * opens straight on it, so each stage is its own test and the shards can
+ * spread them.
  */
 async function learn(page: Page, mapId: string, station: number): Promise<Lesson> {
-  await pastTheSplash(page, mapId, `&tutorial-station=${String(station)}`);
-  await page.getByRole("button", { name: "Learn to play" }).click();
+  if (station === 1) {
+    await pastTheSplash(page, mapId);
+    await page.getByRole("button", { name: "Learn to play" }).click();
+  } else {
+    await page.goto(`./?menu-background=${mapId}&tutorial-station=${String(station)}`);
+  }
   const frame = page.locator(".tutorial-frame");
   const stage = page.locator("#viewport");
-  await expect(frame).toHaveCount(1);
+  // A seeded start shows it once its canyon map is built, which a slow
+  // runner takes a while over.
+  await expect(frame).toHaveCount(1, { timeout: 30_000 });
   // The guide's praise shows for 2.5 s only, which a slow runner can
   // outlast: keep every line said on the body, which outlives the frame,
   // starting with the one said already.
@@ -279,10 +286,8 @@ test.describe("the first-time tutorial (#3218)", () => {
     });
 
     test(`Learn on ${mapId}, from the canyon`, async ({ page }) => {
-      // The three dodges at least 18 s (#3247), the wall some 10 to 15 s
-      // (#3302), the clearing and the heal some 30 s (#3303), the bad ground
-      // some 20 s (#3310): slower where the page draws slowly.
-      test.setTimeout(300_000);
+      // The three dodges at least 18 s (#3247): slower where the page draws slowly.
+      test.setTimeout(240_000);
       const { frame, stage, hasSaid, walkTo } = await learn(page, mapId, 4);
       // Station 4 (#3247): the canyon, the player on its arrival.
       await expect(frame).toHaveAttribute("data-world", "canyon", { timeout: 15_000 });
@@ -317,7 +322,23 @@ test.describe("the first-time tutorial (#3218)", () => {
         await expect.poll(() => hasSaid(quick), { timeout: 3_000 }).toBe(true);
       }).toPass({ timeout: 90_000 });
 
-      // Station 5 (#3302): up to the wall's mark, target the wall, strike it until it falls.
+      // On to station 5 (#3302), by the wall.
+      await expect
+        .poll(() => hasSaid("A wall blocks the trail. Right click it, then hit it."), {
+          timeout: 10_000,
+        })
+        .toBe(true);
+    });
+
+    test(`Learn on ${mapId}, from the wall`, async ({ page }) => {
+      // The wall some 10 to 15 s (#3302), the clearing and the heal some 30 s
+      // (#3303), the bad ground some 20 s (#3310): slower where the page
+      // draws slowly.
+      test.setTimeout(300_000);
+      const { frame, stage, hasSaid, walkTo } = await learn(page, mapId, 5);
+      // Station 5 (#3302): from station 4's mark up to the wall's, target
+      // the wall, strike it until it falls.
+      await expect(frame).toHaveAttribute("data-world", "canyon", { timeout: 15_000 });
       await expect
         .poll(() => hasSaid("A wall blocks the trail. Right click it, then hit it."), {
           timeout: 10_000,

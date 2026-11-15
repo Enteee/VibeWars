@@ -45,6 +45,7 @@ import {
   ratPocket,
   tunnelStart,
   tunnelTutor,
+  wallStart,
   wallTutor,
   type BadGroundTutor,
   type CallTutor,
@@ -72,6 +73,7 @@ import {
   stepInStation,
   tunnelStation,
   walkStation,
+  type Station,
   type StationHighlight,
   type TutorialWorldName,
   type ZoneStatus,
@@ -337,34 +339,25 @@ export async function startTutorialSession(
     );
   };
 
-  view = await open();
-  mountSkipTutorial(frame, () => {
-    end("skipped");
-  });
-  parent.append(frame);
-
-  const runner = createTutorialRunner(
-    [
-      walkStation(mark, ground),
-      lookStation(teleporter),
-      stepInStation(teleporter, ground),
-      dodgeStation(DODGE_MARK.position, DODGE_MARK.layer),
-      breakWallStation(CRACKED_WALL.face, CRACKED_WALL.maxHealth),
-      healStation(TUTOR_ID, TUTORIAL_HEAL_SLOT),
-      badGroundStation(BAD_GROUND.mark, BAD_GROUND.layer),
-      ratsStation(
-        RAT_POCKET.pocket,
-        { runner: RAT_POCKET.rats[0].id, big: RAT_POCKET.rats[1].id },
-        playerBuild.skillBar,
-      ),
-      climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
-      rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
-      tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
-      callStation(),
-    ],
-    loadKeymap,
-    options.firstStation,
-  );
+  const stations: readonly Station[] = [
+    walkStation(mark, ground),
+    lookStation(teleporter),
+    stepInStation(teleporter, ground),
+    dodgeStation(DODGE_MARK.position, DODGE_MARK.layer),
+    breakWallStation(CRACKED_WALL.face, CRACKED_WALL.maxHealth),
+    healStation(TUTOR_ID, TUTORIAL_HEAL_SLOT),
+    badGroundStation(BAD_GROUND.mark, BAD_GROUND.layer),
+    ratsStation(
+      RAT_POCKET.pocket,
+      { runner: RAT_POCKET.rats[0].id, big: RAT_POCKET.rats[1].id },
+      playerBuild.skillBar,
+    ),
+    climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
+    rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
+    tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
+    callStation(),
+  ];
+  const runner = createTutorialRunner(stations, loadKeymap, options.firstStation);
   const inView = (point: Vec2): boolean => {
     const look = view?.camera();
     if (look === undefined) {
@@ -390,11 +383,13 @@ export async function startTutorialSession(
     await view?.dispose();
     view = undefined;
     const part = to === "canyon" ? 0 : 1;
-    // Only a seeded start enters the second map at station 11 (#3383).
+    // Only a seeded start enters a map at station 5 or 11 (#3383).
     const canyon =
-      running === "tunnel"
-        ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, tunnelStart())
-        : canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part);
+      running === "break-wall"
+        ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, wallStart())
+        : running === "tunnel"
+          ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, tunnelStart())
+          : canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part);
     const heals = part === 0 ? createHealWatch(SELF_ID, TUTOR_ID, TUTORIAL_HEAL) : undefined;
     const rats =
       part === 1
@@ -654,6 +649,19 @@ export async function startTutorialSession(
     }
     request = requestAnimationFrame(step);
   };
+  mountSkipTutorial(frame, () => {
+    end("skipped");
+  });
+  // An e2e build's seeded start past the battlefield (#3383) builds its
+  // station's world at once, and never draws the battlefield.
+  const first = stations[options.firstStation];
+  if (first === undefined || first.world === "battlefield") {
+    view = await open();
+    parent.append(frame);
+  } else {
+    running = first.id;
+    await swap(first.world);
+  }
   request = requestAnimationFrame(step);
   return { stop };
 }
