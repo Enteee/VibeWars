@@ -74,7 +74,7 @@ const TO_THE_TUNNEL = [
   { x: 1200, y: 800 },
   { x: 1600, y: 700 },
 ];
-/** How far each stride to station 11's tunnel reaches, in world units: still inside the view. */
+/** How far each stride of station 11 (#3326) reaches, in world units: still inside the view. */
 const LONG_STRIDE = 500;
 /**
  * In station 11's tunnel (#3326), west and east of its middle: the tunnel
@@ -133,8 +133,8 @@ test.describe("the first-time tutorial (#3218)", () => {
       // walk round the bad ground some 20 s more (#3310), and the walk to the
       // rats and their fight some 60 s more (#3316), and the ledge some 30 s
       // more (#3323), and the walk up to the high deck some 30 s more (#3325), and the walk
-      // round to the tunnel and through it some 60 s more (#3326).
-      test.setTimeout(600_000);
+      // round to the tunnel and through it two to five minutes more (#3326).
+      test.setTimeout(900_000);
       await pastTheSplash(page, mapId);
       await page.getByRole("button", { name: "Learn to play" }).click();
       const frame = page.locator(".tutorial-frame");
@@ -501,12 +501,12 @@ test.describe("the first-time tutorial (#3218)", () => {
       }
       await expect(async () => {
         await page.keyboard.down("Alt");
-        await walkTo(IN_THE_TUNNEL_WEST);
+        await walkTo(IN_THE_TUNNEL_WEST, LONG_STRIDE);
         await page.keyboard.up("Alt");
         await near(IN_THE_TUNNEL_WEST, 100);
       }).toPass({ timeout: 60_000 });
       await expect(async () => {
-        await walkTo(IN_THE_TUNNEL_EAST);
+        await walkTo(IN_THE_TUNNEL_EAST, LONG_STRIDE);
         await near(IN_THE_TUNNEL_EAST, 100);
       }).toPass({ timeout: 60_000 });
       const quiet = "Not a peep. Tunnels hide you from whoever's above.";
@@ -514,7 +514,7 @@ test.describe("the first-time tutorial (#3218)", () => {
         if (await hasSaid(quiet)) {
           return;
         }
-        await walkTo(PAST_THE_TUNNEL);
+        await walkTo(PAST_THE_TUNNEL, LONG_STRIDE);
         await expect.poll(() => hasSaid(quiet), { timeout: 5_000 }).toBe(true);
       }).toPass({ timeout: 60_000 });
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
