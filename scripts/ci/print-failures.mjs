@@ -90,7 +90,13 @@ function failedDirs(root) {
  * @returns {string[]}
  */
 export function describeFailure(dir, title) {
-  const out = [`::group::${title}`, readFileSync(join(dir, "error-context.md"), "utf8").trimEnd()];
+  const out = [
+    `::group::${title}`,
+    readFileSync(join(dir, "error-context.md"), "utf8")
+      .trimEnd()
+      // Page text must not open a workflow command.
+      .replace(/^::/gm, " ::"),
+  ];
   const tracePath = join(dir, "trace.zip");
   if (existsSync(tracePath)) {
     try {

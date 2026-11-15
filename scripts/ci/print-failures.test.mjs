@@ -103,3 +103,11 @@ describe("print-failures", () => {
     expect(printFailures(root).length).toBeLessThanOrEqual(MAX_TOTAL_LINES + 1);
   });
 });
+
+describe("print-failures hardening", () => {
+  it("defuses a page line that looks like a workflow command", () => {
+    const out = printFailures(fixture(undefined, "::error::boom")).join("\n");
+    expect(out).not.toMatch(/^::error::/m);
+    expect(out).toContain(" ::error::boom");
+  });
+});

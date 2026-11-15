@@ -219,7 +219,7 @@ jobs:
 
       - name: Print failed tests
         if: failure()
-        run: node scripts/ci/print-failures.mjs || true
+        run: devenv shell -- node scripts/ci/print-failures.mjs || true
 
       - name: Upload Playwright output
         if: failure()
