@@ -341,7 +341,13 @@
   "e2e/training.spec.ts › Wilds' scorched strip burns the dummy in it, logged by its kind (#3024, #3046)": 4.5,
   "e2e/traps.spec.ts › a trap you set is drawn round where you stood (#1105)": 11.7,
   "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › a guild link, even through a forced splash, is never offered it": 5.3,
-  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on arena-crossroads, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor: then the menu, and no offer again": 204,
-  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor: then the menu, and no offer again": 186,
+  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on arena-crossroads, stations 1 to 3: walk to the mark, look around, step in, on into the canyon": 77,
+  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on arena-crossroads, stations 4 to 7: dodge in the canyon, break the wall, heal the tutor, round the mud": 132,
+  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on arena-crossroads, stations 8 to 10: kill the rats, climb the ledge, up to the high deck": 143,
+  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on arena-crossroads, stations 11 and 12: through the tunnel, call a rat: then the menu, and no offer again": 187,
+  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, stations 1 to 3: walk to the mark, look around, step in, on into the canyon": 70,
+  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, stations 4 to 7: dodge in the canyon, break the wall, heal the tutor, round the mud": 120,
+  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, stations 8 to 10: kill the rats, climb the ledge, up to the high deck": 130,
+  "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Learn on jungle-ruins, stations 11 and 12: through the tunnel, call a rat: then the menu, and no offer again": 170,
   "e2e/tutorial.spec.ts › the first-time tutorial (#3218) › Skip opens the menu, and it is not offered again": 11.5
 }

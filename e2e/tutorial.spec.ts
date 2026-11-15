@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { projection } from "./camera.js";
 
@@ -120,6 +120,68 @@ async function pastTheSplash(page: Page, mapId: string, fragment = ""): Promise<
   await expect(splash).toHaveCount(0);
 }
 
+/** What a stage of the tutorial reads and does (#3383). */
+interface Lesson {
+  readonly frame: Locator;
+  /** The match view, its `data-camera` where the view looks. */
+  readonly stage: Locator;
+  /** The body, every line said kept on its `data-said-log`. */
+  readonly saidLog: Locator;
+  readonly hasSaid: (line: string) => Promise<boolean>;
+  /** A click toward `point`, `stride` away at most. */
+  readonly walkTo: (point: { x: number; y: number }, stride?: number) => Promise<void>;
+}
+
+/**
+ * Through the splash and "Learn to play" on `mapId`, the tutorial begun at
+ * `station`, 1 for the first: the e2e build seeds a later one (#3383), so
+ * each stage is its own test and the shards can spread them.
+ */
+async function learn(page: Page, mapId: string, station: number): Promise<Lesson> {
+  await pastTheSplash(page, mapId, `&tutorial-station=${String(station)}`);
+  await page.getByRole("button", { name: "Learn to play" }).click();
+  const frame = page.locator(".tutorial-frame");
+  const stage = page.locator("#viewport");
+  await expect(frame).toHaveCount(1);
+  // The guide's praise shows for 2.5 s only, which a slow runner can
+  // outlast: keep every line said on the body, which outlives the frame,
+  // starting with the one said already.
+  await frame.evaluate((element) => {
+    const keep = (): void => {
+      const text = element.querySelector(".tutorial-said")?.textContent ?? "";
+      const said = document.body.getAttribute("data-said-log") ?? "";
+      if (!said.endsWith(`|${text}`)) {
+        document.body.setAttribute("data-said-log", `${said}|${text}`);
+      }
+    };
+    keep();
+    new MutationObserver(keep).observe(element, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  });
+  const saidLog = page.locator("body");
+  const hasSaid = async (line: string): Promise<boolean> =>
+    ((await saidLog.getAttribute("data-said-log")) ?? "").split("|").includes(line);
+  const walkTo = async (point: { x: number; y: number }, stride = STRIDE): Promise<void> => {
+    // A stride toward it at most, so the click stays clear of the HUD
+    // at the screen's edges, whoever follows it up clicks again.
+    const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
+    const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+      .split(",")
+      .map(Number);
+    const far = Math.hypot(point.x - cx, point.y - cy);
+    // Never up into the target frame, either: a click there calls the
+    // target, and a rat called on the way finishes station 12 (#3363).
+    const up = Math.max(0, (cy - point.y) * view.zoom);
+    const reach = Math.min(1, stride / Math.max(far, 1), CLEAR_ABOVE / Math.max(up, 1));
+    const at = view.onPage({ x: cx + (point.x - cx) * reach, y: cy + (point.y - cy) * reach });
+    await page.mouse.click(at.x, at.y);
+  };
+  return { frame, stage, saidLog, hasSaid, walkTo };
+}
+
 test.describe("the first-time tutorial (#3218)", () => {
   test("Skip opens the menu, and it is not offered again", async ({ page }) => {
     await pastTheSplash(page, FLAT_MAP);
@@ -135,40 +197,17 @@ test.describe("the first-time tutorial (#3218)", () => {
   });
 
   for (const mapId of [FLAT_MAP, RAISED_MAP]) {
-    test(`Learn on ${mapId}, walk to the mark, look around, step in, dodge in the canyon, break the wall, heal the tutor, round the mud, kill the rats, climb the ledge, up to the high deck, through the tunnel, call a rat: then the menu, and no offer again`, async ({
+    test(`Learn on ${mapId}, stations 1 to 3: walk to the mark, look around, step in, on into the canyon`, async ({
       page,
     }) => {
-      // Four stations, each a walk or a drag in a sim that runs no faster than
-      // the page draws: a loaded runner takes most of a minute (#3222), and
-      // the canyon's three dodges at least 18 s more (#3247), and the wall
-      // some 10 to 15 s, slower where the page draws slowly (#3302), and the
-      // walk to the clearing and the heal some 30 s more (#3303), and the
-      // walk round the bad ground some 20 s more (#3310), and the walk to the
-      // rats and their fight some 60 s more (#3316), and the ledge some 30 s
-      // more (#3323), and the walk up to the high deck some 30 s more (#3325), and the walk
-      // round to the tunnel and through it two to five minutes more (#3326).
-      test.setTimeout(900_000);
-      await pastTheSplash(page, mapId);
-      await page.getByRole("button", { name: "Learn to play" }).click();
-      const frame = page.locator(".tutorial-frame");
+      // A walk, a drag and a walk in a sim that runs no faster than the page
+      // draws: a loaded runner takes most of a minute (#3222).
+      test.setTimeout(240_000);
+      const { frame, hasSaid } = await learn(page, mapId, 1);
       await expect(frame.locator(".tutorial-said")).toHaveText(
         "This war never ends. Walk with me; I have an idea.",
       );
       await expect(frame.locator(".tutorial-how")).toContainText("W");
-      // The guide's praise shows for 2.5 s only, which a slow runner can
-      // outlast: keep every line said on the body, which outlives the frame.
-      await frame.evaluate((element) => {
-        new MutationObserver(() => {
-          const text = element.querySelector(".tutorial-said")?.textContent ?? "";
-          const said = document.body.getAttribute("data-said-log") ?? "";
-          if (!said.endsWith(`|${text}`)) {
-            document.body.setAttribute("data-said-log", `${said}|${text}`);
-          }
-        }).observe(element, { childList: true, characterData: true, subtree: true });
-      });
-      const saidLog = page.locator("body");
-      const hasSaid = async (line: string): Promise<boolean> =>
-        ((await saidLog.getAttribute("data-said-log")) ?? "").split("|").includes(line);
       // Only the pair in the party window, and no scoreline (#3221).
       await expect(page.locator(".party-window .party-row")).toHaveCount(2);
       await expect(page.locator(".hud-scoreboard")).toBeHidden();
@@ -237,9 +276,20 @@ test.describe("the first-time tutorial (#3218)", () => {
         await expect.poll(() => hasSaid(together), { timeout: 5_000 }).toBe(true);
       }).toPass({ timeout: 60_000 });
 
+      // On to station 4 (#3247), in the canyon.
+      await expect(frame).toHaveAttribute("data-world", "canyon", { timeout: 15_000 });
+    });
+
+    test(`Learn on ${mapId}, stations 4 to 7: dodge in the canyon, break the wall, heal the tutor, round the mud`, async ({
+      page,
+    }) => {
+      // The three dodges at least 18 s (#3247), the wall some 10 to 15 s
+      // (#3302), the clearing and the heal some 30 s (#3303), the bad ground
+      // some 20 s (#3310): slower where the page draws slowly.
+      test.setTimeout(300_000);
+      const { frame, stage, hasSaid, walkTo } = await learn(page, mapId, 4);
       // Station 4 (#3247): the canyon, the player on its arrival.
       await expect(frame).toHaveAttribute("data-world", "canyon", { timeout: 15_000 });
-      const stage = page.locator("#viewport");
       await expect
         .poll(async () => {
           const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
@@ -253,21 +303,6 @@ test.describe("the first-time tutorial (#3218)", () => {
           timeout: 10_000,
         })
         .toBe(true);
-      const walkTo = async (point: { x: number; y: number }, stride = STRIDE): Promise<void> => {
-        // A stride toward it at most, so the click stays clear of the HUD
-        // at the screen's edges, whoever follows it up clicks again.
-        const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
-        const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
-          .split(",")
-          .map(Number);
-        const far = Math.hypot(point.x - cx, point.y - cy);
-        // Never up into the target frame, either: a click there calls the
-        // target, and a rat called on the way finishes station 12 (#3363).
-        const up = Math.max(0, (cy - point.y) * view.zoom);
-        const reach = Math.min(1, stride / Math.max(far, 1), CLEAR_ABOVE / Math.max(up, 1));
-        const at = view.onPage({ x: cx + (point.x - cx) * reach, y: cy + (point.y - cy) * reach });
-        await page.mouse.click(at.x, at.y);
-      };
       // Beside the first landing, until three of its strikes have missed.
       await expect(async () => {
         await walkTo(DODGE_SPOT);
@@ -381,6 +416,20 @@ test.describe("the first-time tutorial (#3218)", () => {
       // Round the mud, no status: the effects monitor was never pointed at.
       expect(await hasSaid("See that icon? Mud. It wears off.")).toBe(false);
 
+      // On to station 8 (#3316), on the canyon's second map.
+      await expect
+        .poll(() => hasSaid("Rats! Different skills, different jobs."), { timeout: 15_000 })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-world", "canyon-2");
+    });
+
+    test(`Learn on ${mapId}, stations 8 to 10: kill the rats, climb the ledge, up to the high deck`, async ({
+      page,
+    }) => {
+      // The rats some 60 s (#3316), the ledge some 30 s (#3323), the high
+      // deck some 30 s (#3325).
+      test.setTimeout(300_000);
+      const { frame, stage, hasSaid, walkTo } = await learn(page, mapId, 8);
       // Station 8 (#3316): on to the canyon's second map, its three rats at
       // the pocket west of the arrival; the closest targeted again and
       // again, two skills and the plain attack kill them all.
@@ -496,6 +545,20 @@ test.describe("the first-time tutorial (#3218)", () => {
         await expect.poll(() => hasSaid(high), { timeout: 5_000 }).toBe(true);
       }).toPass({ timeout: 60_000 });
 
+      // On to station 11 (#3326).
+      await expect
+        .poll(() => hasSaid("Shh. Don't wake them. We go under."), { timeout: 15_000 })
+        .toBe(true);
+    });
+
+    test(`Learn on ${mapId}, stations 11 and 12: through the tunnel, call a rat: then the menu, and no offer again`, async ({
+      page,
+    }) => {
+      // Seeded on the high deck, where station 10 leaves the player (#3383).
+      // The tunnel some two minutes (#3326), the call some 40 s (#3331).
+      test.setTimeout(360_000);
+      const { frame, stage, saidLog, hasSaid, walkTo } = await learn(page, mapId, 11);
+      const target = page.locator(".hud-target");
       // Station 11 (#3326): down off the deck, round to the tunnel's west
       // steps, an Alt walk down into its west half, on through its east half
       // under the sleeping guard, and up the far steps to the mark.

@@ -43,6 +43,7 @@ import {
   ledgeTutor,
   rampTutor,
   ratPocket,
+  tunnelStart,
   tunnelTutor,
   wallTutor,
   type BadGroundTutor,
@@ -117,6 +118,8 @@ export interface TutorialSessionOptions {
   readonly tutorProfession: ProfessionId;
   /** The player key's, for the Options window over it (#3235). */
   readonly signet: number;
+  /** The index of the station it starts at: 0 but in an e2e build's seeded start (#3383). */
+  readonly firstStation: number;
   /** Once, as it ends by itself, by Skip tutorial or by Leave; never after `stop`. */
   readonly onEnd: (end: TutorialEnd) => void;
 }
@@ -360,6 +363,7 @@ export async function startTutorialSession(
       callStation(),
     ],
     loadKeymap,
+    options.firstStation,
   );
   const inView = (point: Vec2): boolean => {
     const look = view?.camera();
@@ -386,7 +390,11 @@ export async function startTutorialSession(
     await view?.dispose();
     view = undefined;
     const part = to === "canyon" ? 0 : 1;
-    const canyon = canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part);
+    // Only a seeded start enters the second map at station 11 (#3383).
+    const canyon =
+      running === "tunnel"
+        ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, tunnelStart())
+        : canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part);
     const heals = part === 0 ? createHealWatch(SELF_ID, TUTOR_ID, TUTORIAL_HEAL) : undefined;
     const rats =
       part === 1

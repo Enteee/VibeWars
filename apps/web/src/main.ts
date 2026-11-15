@@ -251,6 +251,19 @@ function blankMember(): TeamCharacter {
   return teamCharacter(blank, blank.id);
 }
 
+/**
+ * The station the tutorial starts at, as an index (#3383): the URL's
+ * `?tutorial-station=N`, 1 for the first, in an e2e build only; 0 in a
+ * player's, whose build folds the check away.
+ */
+function tutorialFirstStation(): number {
+  if (import.meta.env.VITE_VIBEWARS_TUTORIAL_STATION !== "on") {
+    return 0;
+  }
+  const station = Number(new URLSearchParams(window.location.search).get("tutorial-station"));
+  return Number.isInteger(station) && station > 1 ? station - 1 : 0;
+}
+
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
   if (element === null) {
@@ -3214,6 +3227,7 @@ async function main(): Promise<void> {
         teamSize,
         tutorProfession: drawTutorProfession(Math.random),
         signet: ownSignet,
+        firstStation: tutorialFirstStation(),
         onEnd: (end) => {
           tutorialRun = undefined;
           tutorial = undefined;
