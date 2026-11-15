@@ -315,17 +315,31 @@ describe("frontWorld (#3334)", () => {
     const off = (at: { readonly x: number; readonly y: number }): number =>
       Math.hypot(at.x - centre.x, at.y - centre.y);
     expect(inOpenView(mapStructure(mapId).structure, arrival)).toBe(true);
-    // Behind the foes, or at the pair's own spawn where that is no open ground.
+    // Behind the foes a whole step, or at the pair's own spawn where that is
+    // no open ground or the map's edge leaves it nearer them (#3334).
+    const fromTheirs = Math.hypot(arrival.x - theirs.x, arrival.y - theirs.y);
     if (arrival.x !== ours.x || arrival.y !== ours.y) {
       expect(off(arrival)).toBeGreaterThan(off(theirs));
-      expect(Math.hypot(arrival.x - theirs.x, arrival.y - theirs.y)).toBeLessThanOrEqual(
-        BEHIND_THE_FOES * 2,
-      );
+      expect(fromTheirs).toBeGreaterThanOrEqual(BEHIND_THE_FOES - 1);
+      expect(fromTheirs).toBeLessThanOrEqual(BEHIND_THE_FOES * 2);
+    } else {
+      expect(fromTheirs).toBeGreaterThan(BEHIND_THE_FOES);
     }
+  });
+
+  it("lands behind the foes on a wide map, and at home where the edge is too near", () => {
+    const at = (mapId: string): { readonly x: number; readonly y: number } => {
+      const { map } = front(mapId, `home-${mapId}`);
+      const fight = { mapId, teamSize: 4, still: false };
+      return splashSpawn(splashGraph(map), map, fight, 0, 1.5);
+    };
+    expect(front("arena-crossroads", "home").arrival).not.toEqual(at("arena-crossroads"));
+    expect(front("arena-canyon", "home").arrival).toEqual(at("arena-canyon"));
   });
 
   // On the battlefield a leash keeps the foes off the pair's places; at
   // the front they are the menu's bots, and they push for the centre.
+  // A minute of a 10-body match, ~8 s on a loaded runner.
   it("sends the foes over to the centre, guarding nothing", () => {
     const { map, simulation } = front("arena-canyon", "no-guards");
     const centre = { x: map.descriptor.width / 2, y: map.descriptor.height / 2 };
@@ -344,5 +358,5 @@ describe("frontWorld (#3334)", () => {
       }
     }
     expect(nearest).toBeLessThan(start / 2);
-  }, 60_000); // A minute of a 10-body match, ~8 s on a loaded runner.
+  }, 60_000);
 });

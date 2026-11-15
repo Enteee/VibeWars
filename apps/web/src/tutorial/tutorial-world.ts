@@ -484,7 +484,9 @@ export interface FrontWorld {
  * on the side they stood with on the battlefield, the tutor now one of
  * its bots on `tutorBuild`. They arrive behind the foes: the foes' spawn,
  * `BEHIND_THE_FOES` further from the map's centre, under open sky. Where
- * that is no open ground, which is wrong data, at their own side's spawn.
+ * that is no open ground, or the map's edge leaves it nearer the foes
+ * than that, at their own side's spawn: landing among them is a death
+ * in seconds, the tutorial's last impression.
  */
 export function frontWorld(
   seed: string,
@@ -513,7 +515,10 @@ export function frontWorld(
     ),
   );
   const open = openAround((at) => !inOpenView(structure, at));
-  const arrival = open(behind) ? behind : splashSpawn(graph, map, fight, 0, middle);
+  // A step short of the whole 300 still counts: the nearest standable point
+  // is a hair off the line.
+  const clear = Math.hypot(behind.x - theirs.x, behind.y - theirs.y) >= BEHIND_THE_FOES - 1;
+  const arrival = clear && open(behind) ? behind : splashSpawn(graph, map, fight, 0, middle);
   const tutorAt = nearestStandable(
     graph,
     vec2(arrival.x + TUTOR_BESIDE.x, arrival.y + TUTOR_BESIDE.y),
