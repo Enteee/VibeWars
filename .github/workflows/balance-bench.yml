@@ -120,7 +120,7 @@ jobs:
           BENCH_STUCK: ${{ github.event_name == 'pull_request' && '1' || inputs.stuck && '1' || '' }}
         run: |
           devenv shell -- pnpm bench:balance -t "prints each map" | tee bench.log
-          grep '^|' bench.log > row.md
+          sed 's/\x1b\[[0-9;]*m//g' bench.log | grep '^|' > row.md
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
