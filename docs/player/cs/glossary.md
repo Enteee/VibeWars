@@ -23,7 +23,7 @@
 | Obnova               | Doba, než lze použitou dovednost znovu použít                                      |
 | Oživení              | Vrácení mrtvého spojence zpět                                                      |
 | Runa                 | Vylepšení brnění: hodnosti atributů, zdraví, energie nebo kratší stavy             |
-| Mělká voda           | Voda, kterou projdeš jako po suchu                                                 |
+| Mělká voda           | Voda, kterou se brodíš třemi čtvrtinami rychlosti                                  |
 | Pečeť (štít)         | Tvoje značka, malý štít z identity tvého prohlížeče, před tvým jménem              |
 | Startovní místo      | Kde tvůj tým začíná zápas                                                          |
 | Dotyková dovednost   | Dovednost použitá dotykem cíle; některé pokřiky způsobí, že dotyky nepřátel selžou |

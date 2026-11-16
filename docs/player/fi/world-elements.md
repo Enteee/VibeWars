@@ -28,6 +28,7 @@ vaikutuksen kuin sinä.
 - **Lähde** parantaa terveytesi palautumista. Kirkasta sinistä vettä, joka
   kimaltelee ja valaisee maan ympärillään.
 - **Lehto** saa sinut liikkumaan nopeammin. Ruohotupsuja ja pieniä kukkia.
+- **Matala vesi** hidastaa sinut kolmeen neljäsosaan nopeudestasi, kun kahlaat sen läpi.
 
 ## Tahdissa iskevät vaarat
 

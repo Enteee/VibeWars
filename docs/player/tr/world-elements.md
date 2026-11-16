@@ -31,6 +31,7 @@ senin gibi etkilenir.
   aydınlatan berrak mavi su.
 - **Bir koru** seni daha hızlı hareket ettirir. Çim öbekleri ve küçük
   çiçekler.
+- **Sığ su**, içinden geçerken seni hızının dörtte üçüne yavaşlatır.
 
 ## Belli aralıklarla vuran tehlikeler
 

@@ -23,7 +23,7 @@
 | Odnowienie           | Czas, zanim użytej umiejętności można użyć ponownie                                          |
 | Wskrzeszenie         | Przywrócenie poległego sojusznika                                                            |
 | Runa                 | Ulepszenie pancerza: rangi atrybutu, Zdrowie, Energia lub krótsze dolegliwości               |
-| Płytka woda          | Woda, przez którą idziesz jak po suchym lądzie                                               |
+| Płytka woda          | Woda, którą brodzisz z trzema czwartymi prędkości                                            |
 | Sygnet (tarcza)      | Twój znak, mała tarcza z tożsamości twojej przeglądarki, przed twoją nazwą                   |
 | Spawn                | Miejsce, w którym twoja drużyna zaczyna mecz                                                 |
 | Umiejętność dotykowa | Umiejętność użyta przez dotknięcie celu; niektóre okrzyki sprawiają, że dotyk wrogów zawodzi |

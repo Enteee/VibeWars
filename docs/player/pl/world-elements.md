@@ -29,6 +29,7 @@ jak ty.
 - **Źródło** podnosi twoją regenerację Zdrowia. Czysta niebieska woda, która
   skrzy się i oświetla ziemię wokół.
 - **Gaj** sprawia, że poruszasz się szybciej. Kępy trawy i drobne kwiaty.
+- **Płytka woda** spowalnia cię do trzech czwartych prędkości, gdy przez nią brodzisz.
 
 ## Pułapki cykliczne
 

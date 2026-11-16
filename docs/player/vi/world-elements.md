@@ -28,6 +28,7 @@ hưởng giống như bạn.
 - **Suối** tăng tốc độ hồi Máu của bạn. Nước xanh trong lấp lánh, soi
   sáng mặt đất quanh nó.
 - **Lùm cây** giúp bạn di chuyển nhanh hơn. Những khóm cỏ và hoa nhỏ.
+- **Nước nông** làm bạn chậm lại còn ba phần tư tốc độ khi lội qua.
 
 ## Mối nguy theo nhịp
 

@@ -29,6 +29,7 @@ per poco dopo che ne esci. Nemici e alleati ne subiscono l'effetto come te.
   limpida che scintilla e illumina il terreno intorno.
 - Un **boschetto** ti fa muovere più in fretta. Ciuffi d'erba e piccoli
   fiori.
+- L'**acqua bassa** ti rallenta a tre quarti della tua velocità mentre la guadi.
 
 ## Pericoli a intervalli
 

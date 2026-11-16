@@ -15,6 +15,7 @@ Když stojíš na jedné z těchto ploch, působí na tebe; její účinek chví
 - **Vysávající věž** snižuje ve své blízkosti tvoji regeneraci energie. Kamenný obelisk se zářící runou, stojící ve fialovém přísvitu s kruhy.
 - **Pramen** zvyšuje tvoji regeneraci zdraví. Čistá modrá voda, která se třpytí a osvětluje zem kolem sebe.
 - **Háj** tě zrychlí. Trsy trávy a drobné květiny.
+- **Mělká voda** tě při brodění zpomalí na tři čtvrtiny rychlosti.
 
 ## Nebezpečí v intervalech
 

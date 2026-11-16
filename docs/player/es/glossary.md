@@ -23,7 +23,7 @@
 | Recarga              | El tiempo hasta que una habilidad usada se puede usar de nuevo                      |
 | Resucitar            | Devolver a la vida a un aliado muerto                                               |
 | Runa                 | Una mejora de armadura: rangos de atributo, salud, energía o condiciones más cortas |
-| Agua poco profunda   | Agua que cruzas como si fuera tierra firme                                          |
+| Agua poco profunda   | Agua que vadeas a tres cuartos de tu velocidad                                      |
 | Sello (escudo)       | Tu marca, un pequeño escudo de la identidad de tu navegador, antes de tu nombre     |
 | Punto de inicio      | Donde tu equipo empieza la partida                                                  |
 | Habilidad de toque   | Se usa tocando al objetivo; algunos gritos hacen fallar los toques enemigos         |

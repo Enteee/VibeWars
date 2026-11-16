@@ -23,7 +23,7 @@
 | Dolum             | Kullanılmış bir becerinin yeniden kullanılabilmesine kadar geçen süre                 |
 | Diriltmek         | Ölü bir müttefiki geri getirmek                                                       |
 | Rün               | Bir zırh geliştirmesi: nitelik seviyeleri, Can, Enerji ya da kısa rahatsızlıklar      |
-| Sığ su            | Kuru zemindeymiş gibi içinden yürüdüğün su                                            |
+| Sığ su            | Hızının dörtte üçüyle içinden geçtiğin su                                             |
 | Mühür (kalkan)    | Adının önündeki, tarayıcının kimliğinden gelen küçük bir kalkan: senin işaretin       |
 | Doğma noktası     | Takımının maça başladığı yer                                                          |
 | Dokunma becerisi  | Hedefe dokunarak kullanılan beceri; bazı haykırışlar düşmanın dokunuşunu boşa çıkarır |

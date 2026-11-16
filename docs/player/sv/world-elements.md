@@ -29,6 +29,7 @@ samma sätt som du.
 - **En källa** höjer din hälsoregenerering. Klart blått vatten som
   glittrar och lyser upp marken runt omkring.
 - **En lund** får dig att röra dig snabbare. Grästuvor och små blommor.
+- **Grunt vatten** saktar ner dig till tre fjärdedelar av din fart medan du vadar genom det.
 
 ## Faror som slår till med jämna mellanrum
 

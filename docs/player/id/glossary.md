@@ -23,7 +23,7 @@
 | Cooldown             | Waktu sebelum skill yang sudah dipakai bisa dipakai lagi                                                    |
 | Bangkitkan           | Menghidupkan kembali sekutu yang mati                                                                       |
 | Rune                 | Upgrade armor: peringkat atribut, Darah, Energi atau kondisi yang lebih singkat                             |
-| Air dangkal          | Air yang bisa kamu lewati seperti di daratan                                                                |
+| Air dangkal          | Air yang kamu arungi dengan tiga perempat kecepatanmu                                                       |
 | Signet (perisai)     | Tandamu, perisai kecil dari identitas browser-mu, di depan namamu                                           |
 | Spawn                | Tempat timmu memulai laga                                                                                   |
 | Skill sentuh         | Skill yang dipakai dengan menyentuh target; sebagian teriakan menggagalkan sentuhan musuh                   |

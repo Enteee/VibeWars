@@ -23,7 +23,7 @@
 | Återladdning     | Tiden innan en använd förmåga kan användas igen                                                   |
 | Återuppliva      | Att ta tillbaka en död allierad                                                                   |
 | Runa             | En rustningsuppgradering: attributrang, hälsa, energi eller kortare åkommor                       |
-| Grunt vatten     | Vatten du går igenom som på torra land                                                            |
+| Grunt vatten     | Vatten du vadar genom i tre fjärdedelar av din fart                                               |
 | Sigill (sköld)   | Ditt märke, en liten sköld från webbläsarens identitet, framför ditt namn                         |
 | Startplats       | Där ditt lag börjar matchen                                                                       |
 | Beröringsförmåga | En förmåga som används genom att röra vid målet; vissa rop får fienders beröringar att misslyckas |

@@ -31,6 +31,7 @@ sama sepertimu.
   berkilauan dan menerangi tanah di sekitarnya.
 - **Hutan kecil** membuatmu bergerak lebih cepat. Rumpun rumput dan
   bunga-bunga kecil.
+- **Air dangkal** memperlambatmu menjadi tiga perempat kecepatan saat kamu mengarunginya.
 
 ## Bahaya berkala
 

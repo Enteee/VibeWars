@@ -28,6 +28,7 @@ mint rád.
 - A **forrás** növeli az Életerőd regenerálódását. Tiszta kék víz, amely
   csillog, és megvilágítja maga körül a talajt.
 - A **liget** gyorsabbá tesz. Fűcsomók és apró virágok.
+- A **sekély víz** a sebességed háromnegyedére lassít, amíg átgázolsz rajta.
 
 ## Időzített veszélyek
 

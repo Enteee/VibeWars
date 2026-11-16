@@ -23,7 +23,7 @@
 | Recharge              | Le temps avant qu'une compétence utilisée soit de nouveau disponible                             |
 | Ressusciter           | Ramener un allié mort                                                                            |
 | Rune                  | Une amélioration d'armure : rangs d'attribut, santé, énergie ou altérations plus courtes         |
-| Eau peu profonde      | De l'eau que tu traverses comme la terre ferme                                                   |
+| Eau peu profonde      | De l'eau que tu traverses aux trois quarts de ta vitesse                                         |
 | Sceau (bouclier)      | Ta marque, un petit bouclier issu de l'identité de ton navigateur, devant ton nom                |
 | Point de départ       | L'endroit où ton équipe commence le match                                                        |
 | Compétence de contact | Une compétence utilisée en touchant la cible ; certains cris font échouer les touchers ennemis   |
