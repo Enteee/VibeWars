@@ -154,8 +154,8 @@ const toPoint = (/** @type {number} */ i) => {
 
 const toCentre = /** @type {[string, (Pt | string)[]][]} */ ([
   ["west approach", ["C1", [1500, 1400], [AX - 650, 1400], M]],
-  ["north lane", ["C1", [1300, NI], [AX, NI], [AX, 1160], M]],
-  ["south lane", ["C1", [1300, SI], [AX, SI], [AX, 1640], M]],
+  ["north lane", ["C1", [1300, NI], [AX - 500, NI], [AX - 500, 1340], M]],
+  ["south lane", ["C1", [1300, SI], [AX - 500, SI], [AX - 500, 1440], M]],
 ]);
 
 /** The craters (pits), west half; the east is the x mirror. */
@@ -198,10 +198,10 @@ runStudy({
     ];
   }),
   zones: [
-    { kind: "mire", cx: 600, cy: 2000, rx: 150, ry: 60, fill: "#3a3326", edge: "#1e1a12" },
-    { kind: "mire", cx: MW - 600, cy: 2000, rx: 150, ry: 60, fill: "#3a3326", edge: "#1e1a12" },
-    { kind: "spring", cx: 600, cy: 700, rx: 140, ry: 58, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "spring", cx: MW - 600, cy: 700, rx: 140, ry: 58, fill: "#2f5a63", edge: "#9fdcff" },
+    { kind: "mire", cx: 1320, cy: 1620, rx: 150, ry: 60, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "mire", cx: MW - 1320, cy: 1620, rx: 150, ry: 60, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "spring", cx: 1000, cy: 1620, rx: 140, ry: 58, fill: "#2f5a63", edge: "#9fdcff" },
+    { kind: "spring", cx: MW - 1000, cy: 1620, rx: 140, ry: 58, fill: "#2f5a63", edge: "#9fdcff" },
   ],
   breakables: [
     { r: rect(950, 880, 24, 150), label: "wrecked palisade (breakable)" },
@@ -244,7 +244,7 @@ runStudy({
     ...[
       [700, 1600],
       [1500, 250],
-      [4100, 600],
+      [4300, 700],
       [3800, 1500],
       [4400, 2300],
       [AX - 500, 2500],
