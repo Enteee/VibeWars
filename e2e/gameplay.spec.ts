@@ -904,6 +904,28 @@ test("dead in Kill Count, you read when you are back, counting down, until you a
   await startLobbyMatch(page, [opponent]);
   const respawn = page.locator(".hud-respawn");
   await expect(respawn).toBeHidden();
+  // A loaded runner can spend most of the 8 s killing and polling before
+  // it reads the line once: keep every text it takes, in the page, from
+  // before the death (#3423).
+  await respawn.evaluate((node) => {
+    const texts: string[] = [];
+    new MutationObserver(() => {
+      const text = node.textContent;
+      if (texts.at(-1) !== text) {
+        texts.push(text);
+      }
+    }).observe(node, { childList: true, characterData: true, subtree: true });
+    Object.assign(window, { respawnTexts: texts });
+  });
+  const counts = async (): Promise<readonly number[]> =>
+    (
+      await page.evaluate(
+        () => (window as unknown as { respawnTexts: readonly string[] }).respawnTexts,
+      )
+    )
+      .map((text) => /^Back in (\d)$/.exec(text)?.[1])
+      .filter((count) => count !== undefined)
+      .map(Number);
   // The opponent burns the host down, who stands still; the starter's
   // spells, as in Random Arena's fight.
   await opponent.keyboard.press(key("target-next"));
@@ -920,18 +942,18 @@ test("dead in Kill Count, you read when you are back, counting down, until you a
     }
     await expect(respawn).toBeVisible({ timeout: 1_000 });
   }).toPass({ timeout: 90_000 });
-  // Ember Pits' 8 s, whole seconds down; never a foe's count. Seen within
-  // a second of the death, it reads 2 at least, so it has a second to count:
-  // the count checked is the one counted down from, read once.
-  await expect(respawn).toHaveText(/^Back in [1-8]$/);
-  let first = 0;
+  // Ember Pits' 8 s, whole seconds down to 1, each once; never a foe's
+  // count. Checked on the record, so when the test reads does not matter.
   await expect
-    .poll(async () => {
-      first = Number(/^Back in (\d)$/.exec((await respawn.textContent()) ?? "")?.[1]);
-      return first;
+    .poll(async () => (await counts()).includes(1) || (await respawn.isHidden()), {
+      timeout: 10_000,
     })
-    .toBeGreaterThanOrEqual(2);
-  await expect(respawn).toHaveText(`Back in ${String(first - 1)}`, { timeout: 3_000 });
+    .toBe(true);
+  const seen = await counts();
+  expect(seen.length).toBeGreaterThanOrEqual(2);
+  expect(Math.max(...seen)).toBeLessThanOrEqual(8);
+  expect(Math.min(...seen)).toBeGreaterThanOrEqual(1);
+  expect(seen.slice(1)).toEqual(seen.slice(0, -1).map((count) => count - 1));
   await expect(opponent.locator(".hud-respawn")).toBeHidden();
   // Back on its feet, the line goes.
   await expect(respawn).toBeHidden({ timeout: 10_000 });
