@@ -769,6 +769,7 @@
     "MAX_WIRE_STRING": { "literal": 64 },
     "MAX_WIRE_STROKES": { "literal": 64 },
     "MAX_WIRE_TEXT": { "literal": 256 },
+    "MAX_WIRE_TOGGLES": { "literal": 8 },
     "MAX_WIRE_WALLS": { "literal": 1024 },
     "MIN_WIRE_MORALE": { "literal": -60 },
     "NO_SHOW_IGNORE_MS": { "literal": 120000 },
