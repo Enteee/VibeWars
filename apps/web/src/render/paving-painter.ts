@@ -384,9 +384,10 @@ export interface PavingTunnelPiece {
 
 /**
  * The pieces of a paving on `layer` that lie over the tunnel covers
- * `covers` (#3272): one per cover on the same layer its texture overlaps,
- * the overlap rounded to the texture's pixels. A cover on another layer,
- * or one that misses the paving, makes none.
+ * `covers` (#3272): one per cover on its layer or under it (#3406) its
+ * texture overlaps, the overlap rounded to the texture's pixels: a deck's
+ * paving over a tunnel fades with it as the ground's does. A cover above
+ * the paving, or one that misses it, makes none.
  */
 export function pavingTunnelPieces(
   drawing: PavingDrawing,
@@ -399,7 +400,7 @@ export function pavingTunnelPieces(
   }[],
 ): PavingTunnelPiece[] {
   return covers.flatMap((cover) =>
-    pavingPixelsOver(drawing, layer, size, cover).map((pixels) => ({
+    (cover.layer > layer ? [] : pavingPixelsOver(drawing, size, cover)).map((pixels) => ({
       tunnel: cover.tunnel,
       pixels,
     })),
@@ -408,7 +409,8 @@ export function pavingTunnelPieces(
 
 /**
  * The rectangles of a paving on `layer`'s texture over the `holes` stairs
- * cut in the ground (#3329), rounded as `pavingTunnelPieces` rounds.
+ * cut in the ground (#3329), rounded as `pavingTunnelPieces` rounds. Only
+ * a hole on the paving's own layer cuts it.
  */
 export function pavingHoles(
   drawing: PavingDrawing,
@@ -416,17 +418,18 @@ export function pavingHoles(
   size: PavingTextureSize,
   holes: readonly { readonly layer: number; readonly outline: readonly Vec2[] }[],
 ): PavingPixels[] {
-  return holes.flatMap((hole) => pavingPixelsOver(drawing, layer, size, hole));
+  return holes.flatMap((hole) =>
+    hole.layer === layer ? pavingPixelsOver(drawing, size, hole) : [],
+  );
 }
 
-/** The whole pixels of the texture `area` on `layer` overlaps: none off it or on another layer. */
+/** The whole pixels of the texture `area` overlaps: none off it. */
 function pavingPixelsOver(
   drawing: PavingDrawing,
-  layer: number,
   size: PavingTextureSize,
-  area: { readonly layer: number; readonly outline: readonly Vec2[] },
+  area: { readonly outline: readonly Vec2[] },
 ): PavingPixels[] {
-  if (area.layer !== layer || area.outline.length === 0) {
+  if (area.outline.length === 0) {
     return [];
   }
   const { x, y } = drawing.bounds;

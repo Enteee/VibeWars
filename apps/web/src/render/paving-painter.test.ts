@@ -192,7 +192,7 @@ describe("pavingTunnelPieces (#3272)", () => {
     ]);
   });
 
-  it("makes a piece for each tunnel under it, and none for a tunnel on another layer", () => {
+  it("makes a piece for each tunnel under it, and none for a tunnel above it", () => {
     const covers = [
       { tunnel: 0, layer: 0, outline: box(120, 130, 160, 150) },
       { tunnel: 1, layer: 1, outline: box(200, 130, 240, 150) },
@@ -201,7 +201,17 @@ describe("pavingTunnelPieces (#3272)", () => {
     expect(pavingTunnelPieces(drawing, 0, size, covers).map(({ tunnel }) => tunnel)).toEqual([
       0, 2,
     ]);
-    expect(pavingTunnelPieces(drawing, 1, size, covers).map(({ tunnel }) => tunnel)).toEqual([1]);
+    expect(pavingTunnelPieces(drawing, 1, size, covers).map(({ tunnel }) => tunnel)).toEqual([
+      0, 1, 2,
+    ]);
+  });
+
+  it("fades a deck's paving over a tunnel in the ground, but cuts no ground stair hole in it (#3406)", () => {
+    const covers = [{ tunnel: 4, layer: 0, outline: box(150, 120, 190, 160) }];
+    expect(pavingTunnelPieces(drawing, 2, size, covers).map(({ tunnel }) => tunnel)).toEqual([4]);
+    expect(pavingHoles(drawing, 2, size, [{ layer: 0, outline: box(150, 120, 190, 160) }])).toEqual(
+      [],
+    );
   });
 
   it("cuts each piece out of the paving, and paints it on the same pixel grid", () => {
