@@ -1,7 +1,8 @@
 import { mapMatchRules } from "@vibewars/game-maps/match-fields";
-import { MAX_CAPTURE_POINTS, MAX_TOGGLES } from "@vibewars/game-maps/schema";
+import { MAX_BREAKABLES, MAX_CAPTURE_POINTS, MAX_TOGGLES } from "@vibewars/game-maps/schema";
 import {
   ASCENT_ROUNDS,
+  MAX_WIRE_BREAKABLES,
   MAX_WIRE_CAPTURE_POINTS,
   MAX_WIRE_TOGGLES,
   teamSizeOf,
@@ -61,6 +62,10 @@ describe("the wire and the map schema (#2698)", () => {
 
   it("carries every gate, deck and lift a map may have (#3453)", () => {
     expect(MAX_WIRE_TOGGLES).toBe(MAX_TOGGLES);
+  });
+
+  it("carries every breakable wall a map may have (#3453)", () => {
+    expect(MAX_WIRE_BREAKABLES).toBe(MAX_BREAKABLES);
   });
 });
 
