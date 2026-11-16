@@ -905,23 +905,43 @@ test("dead in Kill Count, you read when you are back, counting down, until you a
   const respawn = page.locator(".hud-respawn");
   await expect(respawn).toBeHidden();
   // The kill can take most of the 8 s to be seen on a loaded runner (#3423):
-  // keep every text the line takes, in the page, from before the death.
+  // keep every text the line takes, in the page, from before the death
+  // until it first hides again: a second death is not this one's count.
   await respawn.evaluate((node) => {
-    const texts: string[] = [];
-    new MutationObserver(() => {
-      const text = node.textContent;
-      if (texts.at(-1) !== text) {
-        texts.push(text);
+    const record = { texts: [] as string[], back: false };
+    const observer = new MutationObserver(() => {
+      if (node.hasAttribute("hidden")) {
+        if (record.texts.length > 0) {
+          record.back = true;
+          observer.disconnect();
+        }
+        return;
       }
-    }).observe(node, { childList: true, characterData: true, subtree: true });
-    Object.assign(window, { respawnTexts: texts });
+      const text = node.textContent;
+      if (record.texts.at(-1) !== text) {
+        record.texts.push(text);
+      }
+    });
+    observer.observe(node, {
+      attributes: true,
+      attributeFilter: ["hidden"],
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+    Object.assign(window, { respawnRecord: record });
   });
+  const recorded = (): Promise<{ readonly texts: readonly string[]; readonly back: boolean }> =>
+    page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            respawnRecord: { readonly texts: readonly string[]; readonly back: boolean };
+          }
+        ).respawnRecord,
+    );
   const counts = async (): Promise<readonly number[]> =>
-    (
-      await page.evaluate(
-        () => (window as unknown as { respawnTexts: readonly string[] }).respawnTexts,
-      )
-    ).flatMap((text) => {
+    (await recorded()).texts.flatMap((text) => {
       const count = /^Back in (\d)$/.exec(text)?.[1];
       return count === undefined ? [] : [Number(count)];
     });
@@ -941,13 +961,10 @@ test("dead in Kill Count, you read when you are back, counting down, until you a
     }
     await expect(respawn).toBeVisible({ timeout: 1_000 });
   }).toPass({ timeout: 90_000 });
-  // Ember Pits' 8 s, whole seconds down to 1; never a foe's count. However
-  // late it is read, the record holds every second the line counted.
-  await expect
-    .poll(async () => (await counts()).includes(1) || !(await respawn.isVisible()), {
-      timeout: 10_000,
-    })
-    .toBe(true);
+  // Ember Pits' 8 s, whole seconds down; never a foe's count. However late
+  // it is read, the record holds every second the line showed. A starved
+  // page can skip a second, so they only fall, never by a fixed step.
+  await expect.poll(async () => (await recorded()).back, { timeout: 12_000 }).toBe(true);
   const seen = await counts();
   expect(seen.length).toBeGreaterThanOrEqual(2);
   for (const count of seen) {
@@ -955,7 +972,7 @@ test("dead in Kill Count, you read when you are back, counting down, until you a
     expect(count).toBeLessThanOrEqual(8);
   }
   for (const [at, count] of seen.slice(1).entries()) {
-    expect(count).toBe((seen[at] ?? 0) - 1);
+    expect(count).toBeLessThan(seen[at] ?? 0);
   }
   await expect(opponent.locator(".hud-respawn")).toBeHidden();
   // Back on its feet, the line goes.
