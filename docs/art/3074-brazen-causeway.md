@@ -26,7 +26,7 @@ route, longer by walk) is kept.
   (2400,1040) to (2400,1760), east (3200,1000) to (3200,1800). They let a flanker cross under the
   deck without climbing. Cover shows the seam and grating slots (#3236), as wide as the walkable
   floor (#3179).
-- **Drop-offs (4):** the causeway's north and south edges (two places each side); each gatehouse also
+- **Drop-offs (6):** the causeway's north and south edges (two places each side); each gatehouse also
   drops to the causeway.
 - **Priest objectives, per team.** Shrine 1 (800,1100) with ghost-spawn (600,900) for team 1, shrine 2
   (4824,1684) with ghost-spawn (5024,1884) for team 2; spawn blocks T1 (440..560, 1600..1930) and T2
@@ -37,8 +37,8 @@ route, longer by walk) is kept.
 - **Elements:** two **bronze gates** across the causeway, west (1900,1400) and east (3724,1384),
   start shut. Two **levers**, one on each gatehouse's wall-walk (L2), work the far gate: the west
   lever (2150,1230) opens the east gate, the east lever (3480,1570) the west one. No lift is used
-  (bots read a lever lift as closed). A **breakable rotten palisade** (x 1750, y 2000..2220) closes a lane
-  in the south-west marsh. Zones: four `mire` patches on the two marsh routes
+  (bots read a lever lift as closed). Two **breakable rotten palisades**, (x 1700, y 2150..2350) and its
+  mirror (x 3900, y 434..634), each close a short lane between the marsh and a reed pool, ≥ 100 u off every route. Zones: four `mire` patches on the two marsh routes
   ((2200,880), (3500,900), (2200,1960), (3500,1920)), which drain Energy (they do not slow); each is
   ≥ 200 u from a spawn. Water: two **deep** black pools (north and south) and two shallow reed
   pools, no route crosses them. Atmosphere (existing, #3032): three mist banks, under bodies,
