@@ -184,7 +184,7 @@ const routes = {
       "north stair",
       ["C1", [1100, 1100], [1700, 820], [2370, 880], [2700, 1000], [2710, 1160], "M"],
     ],
-    ["cellar", ["C1", [1250, 1260], [1800, 1250], [2300, 1650], [2700, 1650], [2700, 1560], "M"]],
+    ["cellar", ["C1", [1250, 1260], [1530, 1390], [2300, 1650], [2700, 1650], [2700, 1560], "M"]],
   ]),
 };
 
@@ -192,8 +192,8 @@ const routes = {
 const relicWalk = {
   t1: /** @type {[string, (Pt | string)[]][]} */ ([
     ["south stair", ["R1", [1700, 1900], [2330, 1900], [2700, 1760], [2700, 1600], "M"]],
-    ["terrace", ["R1", [1800, 1500], [2100, 1500], [2300, 1450], [2700, 1560], "M"]],
-    ["cellar", ["R1", [1800, 1250], [2300, 1650], [2700, 1650], [2700, 1560], "M"]],
+    ["terrace", ["R1", [1800, 1500], [1870, 1420], [2100, 1250], [2300, 1100], [2710, 1100], "M"]],
+    ["cellar", ["R1", [1530, 1390], [2300, 1650], [2700, 1650], [2700, 1560], "M"]],
   ]),
 };
 // High ground overlooking the altar: the base's rim on each side (the lip of "tower base").
@@ -203,6 +203,12 @@ const high = {
     ["north base lip", ["C1", [1100, 1100], [1700, 820], [2370, 880], [2500, 1130]]],
   ]),
 };
+
+// The cellar is one tunnel, equal in length from both mouths, so team 2 walks its own mouth.
+/** @type {(Pt | string)[]} */
+const cellarE = ["C2", [4150, 1260], [3824, 1366], [3100, 1650], [2700, 1650], [2700, 1560], "M"];
+/** @type {(Pt | string)[]} */
+const relicCellarE = ["R2", [3824, 1366], [3100, 1650], [2700, 1650], [2700, 1560], "M"];
 
 runStudy({
   id: "broken-tower",
@@ -217,10 +223,10 @@ runStudy({
     {
       id: "cellar",
       path: [
-        [1800, 1250],
+        [1530, 1390],
         [2300, 1650],
         [3100, 1650],
-        [3600, 1160],
+        [3824, 1366],
       ],
       w: 110,
       label: "cellar (tunnel)",
@@ -253,21 +259,29 @@ runStudy({
     },
   ],
   zones: [
-    { kind: "mire", cx: 1000, cy: 2000, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
-    { kind: "spring", cx: 4300, cy: 700, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
+    ...[
+      { kind: "spring", cx: 1100, cy: 700, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
+      { kind: "mire", cx: 1100, cy: 2300, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    ].flatMap((z) => {
+      const [cx, cy] = /** @type {Pt} */ (m([z.cx, z.cy]));
+      return [z, { ...z, cx, cy }];
+    }),
   ],
-  breakables: [{ r: rect(1930, 1420, 24, 200), label: "rubble wall (breakable)" }],
+  breakables: [
+    { r: rect(1930, 1580, 24, 180), label: "rubble wall (breakable)" },
+    { r: rect(3470, 1024, 24, 180), label: "rubble wall (breakable)" },
+  ],
   gates: [
-    { p: [1800, 1250], label: "cellar door W" },
-    { p: [3600, 1160], label: "cellar door E" },
+    { p: [1530, 1390], label: "cellar door W" },
+    { p: [3824, 1366], label: "cellar door E" },
   ],
   levers: [
     { p: [2250, 1380], layer: 1, label: "lever → both doors" },
     { p: [3150, 1420], layer: 1, label: "lever → both doors" },
   ],
   lights: [
-    { p: [1800, 1250], r: 150 },
-    { p: [3600, 1160], r: 150 },
+    { p: [1530, 1390], r: 150 },
+    { p: [3824, 1366], r: 150 },
     { p: [2330, 1900], r: 150 },
     { p: [3080, 1900], r: 150 },
     { p: [2370, 880], r: 150 },
@@ -296,8 +310,8 @@ runStudy({
     ...[0, 1, 2, 3, 4, 5].map((i) => ({
       kind: /** @type {"pillar"} */ ("pillar"),
       p: /** @type {Pt} */ ([
-        2700 + Math.cos((i * Math.PI) / 3 + 0.4) * 420,
-        1400 + Math.sin((i * Math.PI) / 3 + 0.4) * 330,
+        2700 + Math.cos((i * Math.PI) / 3) * 320,
+        1400 + Math.sin((i * Math.PI) / 3) * 200,
       ]),
       r: 26,
       layer: 2,
@@ -316,7 +330,7 @@ runStudy({
       [1000, 900],
       [4500, 1900],
       [2000, 560],
-      [3400, 2250],
+      [3150, 2120],
     ].map((p) => ({ kind: /** @type {"bush"} */ ("bush"), p: /** @type {Pt} */ (p), r: 38 })),
   ],
   spawns: { t1: seats(480, 1260, 120, 110, 8, 1), t2: seats(4944, 1194, 120, 110, 8, -1) },
@@ -331,13 +345,13 @@ runStudy({
     { id: "altar", kind: "altar", p: [2700, 1400], layer: 3, label: "altar" },
   ],
   centre: [2700, 1400],
-  routes: { t1: routes.t1, t2: routes.t1.map(([n, r]) => [n, mir(r)]) },
+  routes: { t1: routes.t1, t2: routes.t1.map(([n, r]) => [n, n === "cellar" ? cellarE : mir(r)]) },
   objWalks: [
     {
       obj: "altar",
       what: "relic carry",
       t1: relicWalk.t1,
-      t2: relicWalk.t1.map(([n, r]) => [n, mir(r)]),
+      t2: relicWalk.t1.map(([n, r]) => [n, n === "cellar" ? relicCellarE : mir(r)]),
     },
     { obj: "altar", what: "high ground", t1: high.t1, t2: high.t1.map(([n, r]) => [n, mir(r)]) },
   ],
