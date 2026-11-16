@@ -20,6 +20,15 @@ import {
   type SwingFlash,
 } from "./arena-snapshot.js";
 import { impactsFor, type Impact } from "./body-impacts.js";
+import {
+  FLASH_SLIDE,
+  FLASH_SLIDE_CRITICAL,
+  FLASH_TINT,
+  FLASH_TINT_CRITICAL,
+  FLASH_TINT_TICK,
+  slideAway,
+  type BodyFlash,
+} from "./body-reactions.js";
 import { elevationOf } from "./render-order.js";
 import { shoutMarksFor, type ShoutMark } from "./shout-marks.js";
 
@@ -41,6 +50,8 @@ export interface FloatingTextSink {
   addImpacts(impacts: readonly Impact[]): void;
   /** A shout or chant went out (#3301). */
   addShoutMarks(marks: readonly ShoutMark[]): void;
+  /** A body was struck (#3365): it flashes white and gives way a little. */
+  addBodyFlash(flash: BodyFlash): void;
 }
 
 const COLOURS: Record<FloatingCue["tone"], number> = {
@@ -184,7 +195,29 @@ export function showCombatFeedback(
   // The health bar shows them, as GW1 does. A death by bleeding still says so.
   const ticking = message.cause === "degeneration";
 
+  const source = snapshot.players.find((p) => p.sessionId === message.casterSessionId);
   for (const event of message.events) {
+    if (event.kind === "damage") {
+      const struck = snapshot.players.find((p) => p.sessionId === event.targetId);
+      if (struck !== undefined) {
+        // Bleeding and the like have no body to give way from: tint only.
+        const sourceless = ticking || source === undefined || source === struck;
+        const tint = sourceless
+          ? FLASH_TINT_TICK
+          : event.critical
+            ? FLASH_TINT_CRITICAL
+            : FLASH_TINT;
+        const pixels = event.critical ? FLASH_SLIDE_CRITICAL : FLASH_SLIDE;
+        scene.addBodyFlash({
+          id: struck.sessionId,
+          ageSeconds: 0,
+          tint,
+          slide: sourceless
+            ? { x: 0, y: 0 }
+            : slideAway(vec2(struck.x, struck.y), vec2(source.x, source.y), pixels),
+        });
+      }
+    }
     if (ticking && (event.kind === "damage" || event.kind === "heal")) {
       continue;
     }

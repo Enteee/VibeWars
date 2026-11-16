@@ -147,6 +147,18 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     expect(characterBand(1, 2)).toBe(1);
     expect(characterBand(0, 2)).toBe(0);
   });
+
+  it("draws a lever, gate or portal end in its own layer's band, over its deck (#3409)", () => {
+    const body = (layer: number): number =>
+      renderOrder({ kind: "character", band: characterBand(layer, 2), part: "body" });
+    for (const under of [
+      { kind: "deck", deckLayer: 1 },
+      { kind: "paving", layer: 1 },
+    ] as const) {
+      expect(body(1)).toBeGreaterThan(renderOrder(under));
+      expect(body(0)).toBeLessThan(renderOrder(under));
+    }
+  });
 });
 
 describe("the elevation offset (ADR-0051)", () => {
