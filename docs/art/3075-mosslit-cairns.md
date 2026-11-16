@@ -30,7 +30,7 @@ moss on cairn hills: each point on a hilltop, the glow as light sources) is kept
 - **Tunnel:** the **root tunnel** on L0, 110 wide, between the two south hills, from the west mouth
   (2250,2150) to the east mouth (3150,2150): a cross-map bypass. Lever-driven (below). Cover shows the
   seam and grating slots (#3236), as wide as the walkable floor (#3179).
-- **Drop-offs (4):** the north-west and south-east hills' outer edges, and the great cairn's two sides.
+- **Drop-offs (4):** the north-west and north-east hills' outer edges, and the great cairn's two sides.
 - **Elements:** two **root gates** at the tunnel mouths start shut. Two brass **levers** on the two
   north hills, (1480,720) and (3920,720), **each opens both gates**: either team can open the tunnel,
   and a pulled lever opens it for both. No lift is used. Two **breakable root walls**, a mirrored pair (x 1650 and x 3726, y 1760..1900), each close a

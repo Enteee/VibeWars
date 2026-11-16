@@ -248,9 +248,9 @@ runStudy({
   overhangs: [{ r: rect(1200, 1720, 220, 70), label: "root arch" }],
   drops: [
     { at: [HX, 620], e: 1 },
-    { at: [MW - HX, 2400], e: 1 },
+    { at: [MW - HX, 620], e: 1 },
     { at: [AX - 420, 1700], e: 1 },
-    { at: [AX + 420, 1300], e: 1 },
+    { at: [AX + 420, 1700], e: 1 },
   ],
   props: [
     ...[
