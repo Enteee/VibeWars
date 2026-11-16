@@ -917,6 +917,22 @@
       "width": 16,
       "height": 176,
       "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 1200,
+      "y": 2840,
+      "width": 160,
+      "height": 64,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 3280,
+      "y": 2840,
+      "width": 160,
+      "height": 64,
+      "layer": 1
     }
   ],
   "water": [
@@ -1388,6 +1404,30 @@
         "kind": "rect",
         "x": 2894,
         "y": 1050,
+        "width": 26,
+        "height": 400,
+        "layer": 1
+      },
+      "health": 1200
+    },
+    {
+      "id": "timber-south-west",
+      "wall": {
+        "kind": "rect",
+        "x": 1980,
+        "y": 2440,
+        "width": 26,
+        "height": 400,
+        "layer": 1
+      },
+      "health": 1200
+    },
+    {
+      "id": "timber-south-east",
+      "wall": {
+        "kind": "rect",
+        "x": 2634,
+        "y": 2440,
         "width": 26,
         "height": 400,
         "layer": 1

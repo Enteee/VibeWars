@@ -493,7 +493,7 @@ const teleportSchema = z.object({
 });
 
 /** The most breakable walls on a map (#3031). */
-export const MAX_BREAKABLES = 4;
+export const MAX_BREAKABLES = 6;
 
 /** A wall with health (#3031): struck down, it is gone for the match. */
 const breakableSchema = z.object({

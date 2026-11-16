@@ -319,7 +319,7 @@ export const MAX_WIRE_OUTLINE_POINTS = 32;
 export const MAX_WIRE_TELEPORTS = 6;
 
 /** The most breakable walls a map holds (#3031), as `MAX_BREAKABLES` in game-maps. */
-export const MAX_WIRE_BREAKABLES = 4;
+export const MAX_WIRE_BREAKABLES = 6;
 
 /**
  * The widest area a combat message may draw: `AREA_EARSHOT` in game-core,
