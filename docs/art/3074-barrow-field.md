@@ -90,6 +90,10 @@ the barrows are open from every side, so the middle is contested, not owned.
 
 ## New art needed
 
-Nothing beyond the schema's elements: barrows are `decks` in an earth-moss look (a tint of the wilds,
+**Slow shallow water (not built).** Shallow water slows nothing in today's engine (no rule reads depth
+`shallow`); the bog pools are walked at base speed, as every table here assumes. A slow-water mechanic
+is the architect's to decide; no route here counts on it.
+
+Otherwise nothing beyond the schema's elements: barrows are `decks` in an earth-moss look (a tint of the wilds,
 no new row), standing stones are `rock`-look props, the gates use the existing gate look. Mechanics
 are not designed here.
