@@ -953,4 +953,49 @@ describe("harmful zones (#3026)", () => {
     const path = createPathFinder(buildNavGraph([], FIELD, 14, ford(80))).find(from, to);
     expect(path).toEqual([to]);
   });
+
+  // A harmful strip whose south end stands in a wide pool of shallow water
+  // (#3468): its corners on the water side are the only short way round.
+  const [pool] = shallowWaterZones([
+    [[vec2(150, 550), vec2(450, 550), vec2(450, 900), vec2(150, 900)]],
+  ]);
+  if (pool === undefined) throw new Error("no pool");
+  const offCorners = (zones: readonly CostArea[]): number =>
+    buildNavGraph([], FIELD, 14, zones).nodes.length;
+
+  it("goes round a harmful zone through the shallow water it stands in", () => {
+    const zone = strip(100, 600);
+    const zones = [harmful(zone), pool];
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, zones)).find(from, to);
+    if (path === undefined) throw new Error("no path");
+    expect(path.at(-1)).toEqual(to);
+    const costs = zones.map(costZone);
+    let at = from;
+    let cost = 0;
+    let wet = 0;
+    for (const point of path) {
+      expect(lengthInPolygon(at, point, zone)).toBe(0);
+      wet += lengthInPolygon(at, point, pool.polygon);
+      cost += walkCost(costs, at, point);
+      at = point;
+    }
+    expect(wet).toBeGreaterThan(0);
+    expect(cost).toBeLessThan(walkCost(costs, from, to));
+  });
+
+  it("drops a corner inside another area that costs as much", () => {
+    const zone = harmful(strip(400, 600));
+    const overlapping = harmful(strip(550, 650).map(({ x, y }) => vec2(x + 50, y)));
+    // Each loses the one corner that lies inside the other: the first's
+    // (365, 615) and the second's (285, 535). Three of each stay.
+    expect(offCorners([zone, overlapping])).toBe(offCorners([]) + 6);
+  });
+
+  it("drops a water corner inside a harmful zone", () => {
+    const zone = harmful(strip(100, 600));
+    const inside = shallowWaterZones([[strip(560, 900).map(({ x, y }) => vec2(x + 60, y))]]);
+    // The pool's north-west off-corner (295, 545) lies in the harmful strip
+    // and goes; the strip's (365, 615) lies in the cheaper pool and stays.
+    expect(offCorners([zone, ...inside])).toBe(offCorners([]) + 4 + 3);
+  });
 });
