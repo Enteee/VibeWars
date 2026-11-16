@@ -14,8 +14,10 @@ bridge) is kept.
 - **Bounds** 5400×2800 = 15.12 M u² (3.0× Canyon, long side 5400 > 4800, short side 2800 ≥ 1800).
   The ground outline fills 77 % of it, with `rock` (`OUTSIDE_KINDS`) outside. A river runs
   corner to corner (north-west to south-east) and splits the map; the stepped pyramid stands where it
-  meets the centre. T1 holds the south-west, T2 the north-east, so every way between them crosses
-  the river, the passage or the pyramid.
+  meets the centre. T1 holds the west, on the south side of the north-west arm; T2 holds the east,
+  on the north side of the south-east arm. The ways between them are the fords, the log bridges, the
+  passage and the pyramid; only the south approach to the pyramid needs no crossing for T1 (the
+  north approach, for T2).
 - **Biome: propose `jungle`** (the second new row; with `marsh` that is two across the four maps,
   the limit). Ground `#232c26` (dark, wet, a breath teal), rock `#5a5c52` (mossy stone), vine
   `#4a5a35` (olive, low chroma), clay earth `#5a4a30`. Visual-style §1 line: "the jungle is a dark
@@ -45,8 +47,11 @@ bridge) is kept.
   inside a 1400-radius ring round the summit. The rim and the shrines are the 8v8's. A 2v2's spawn to
   centre walk is 14.4 s (< 15 s), the south approach below.
 - **Elements:** two **hidden doors**, one at each end of the passage, (2250,1625) and (3174,1175),
-  start shut. Two brass **levers** on the courts work the far door: the west court's (1400,1150)
-  the north-east door, the east court's (4024,1400) the south-west door. No lift is used (bots read a
+  start shut. Two brass **levers**, one on each court, **each opens both doors**: the west court's
+  (1400,1150) and the east court's (4024,1400). Either team can open the passage for itself, and a
+  pulled lever opens it for both teams, so whoever pulls first shares it: that is the contest, a
+  lever is a risk and a lure into the court. "Gate open" in the walks below means both doors open.
+  No lift is used (bots read a
   lever lift as closed). A **breakable vine-choked wall** (x 1850, y 1500..1700) closes a lane at the
   west colonnade. Zones: `spring` (1000,2300) and `mire` (4400,500), off every route, ≥ 200 u from
   a spawn. Water: the **river**, deep (impassable), with a shallow **ford** on each arm
@@ -64,11 +69,11 @@ bridge) is kept.
 
 T1 centred (760,1405) in the west, T2 (4664,1379) in the east. Centre: the summit, (2700,1400).
 
-| Route to the centre (T1 / T2)                | Length        | Walk          |
-| -------------------------------------------- | ------------- | ------------- |
-| south approach (pyramid stairs, no crossing) | 2585 / 2600 u | 14.4 / 14.4 s |
-| north ford (shallow, north stairs)           | 2670 / 2653 u | 14.8 / 14.7 s |
-| log bridge (north-west or south-east)        | 3424 / 3407 u | 19.0 / 18.9 s |
+| Route to the centre (T1 / T2)                      | Length        | Walk          |
+| -------------------------------------------------- | ------------- | ------------- |
+| south approach (pyramid stairs, no river crossing) | 2585 / 2600 u | 14.4 / 14.4 s |
+| north ford (shallow, north stairs)                 | 2670 / 2653 u | 14.8 / 14.7 s |
+| log bridge (north-west or south-east)              | 3424 / 3407 u | 19.0 / 18.9 s |
 
 **Shrines.** A foe reaches a shrine three ways, equal on both sides (a foe's walk, from spawn centre):
 
@@ -97,6 +102,11 @@ and the summit are one stair each from either side.
   the cutaway (#3272).
 
 ## New art needed
+
+**Slow shallow water (not built).** Shallow water slows nothing in today's engine (no rule reads depth
+`shallow`), and `mire` drains Energy rather than slowing. The two fords and the mire patch are walked at base
+speed, as every table here assumes. A slow-water mechanic is the architect's to decide; no route
+here counts on it.
 
 The `jungle` biome row (above), added by the first build PR. The pyramid is stacked `decks` in the
 jungle stone; the doors are the existing gate look, vines the `canopy` overhang look.

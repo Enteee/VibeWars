@@ -226,8 +226,8 @@ runStudy({
     { p: [3174, 1175], label: "hidden door (north-east)" },
   ],
   levers: [
-    { p: [1400, 1150], layer: 1, label: "lever → north-east door" },
-    { p: [4024, 1400], layer: 1, label: "lever → south-west door" },
+    { p: [1400, 1150], layer: 1, label: "lever → both doors" },
+    { p: [4024, 1400], layer: 1, label: "lever → both doors" },
   ],
   lights: [
     { p: [2000, 1750], r: 150 },
