@@ -377,8 +377,10 @@ Pahlawan yang dimasuki lewat kode memainkan peta ronde 1.
 
 Party yang kurang dari 8 orang mengantre dengan bot di kursi-kursi kosongnya, memakai Build Tim-nya, tapi satu sisi selalu punya paling tidak satu manusia, dan tim yang seluruhnya bot tidak pernah menjadi lawan. Kalau manusia terakhir di satu sisi keluar dari laga, sisi itu menyerah dan perjalanannya berakhir.
 
-**Barrow Field** adalah arena Pendakian, dan juga pilihan di Game Host: Pemusnahan Pendeta 8v8 di antara gundukan
-tanah yang rendah, dengan pendeta menghidupkan kembali yang mati setiap 2 menit. Bawa benderamu
+**Barrow Field** (8v8, 5400x2600) adalah arena Pendakian, dan juga pilihan di Game Host: Pemusnahan Pendeta
+di padang gundukan makam saat senja, dengan pendeta menghidupkan kembali yang mati setiap 2 menit.
+Panjat sebuah gundukan untuk tempat tinggi, atau lewati jalur makam di bawahnya begitu tuas
+di gundukan seberang membuka gerbangnya. Bawa benderamu
 ke atas **Suar Badai** di tengah dan suar itu menyambar satu musuh acak dalam
 jangkauannya dengan 50 damage lightning setiap 2,5 detik, sampai tim lawan
 menancapkan benderanya di sana. Setiap sambaran adalah petir dari suar ke siapa pun yang terkena,

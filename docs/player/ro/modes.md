@@ -404,9 +404,11 @@ de echipă, dar o parte are mereu cel puțin un om, iar o echipă de boți nu es
 adversar. Dacă ultimul om al unei părți părăsește un meci, acea parte pierde prin
 neprezentare și cursa ei se încheie.
 
-**Barrow Field** este o arenă a Ascensiunii și poate fi aleasă și la un Joc găzduit: 8v8
-Anihilare cu preot printre movile joase de pământ, preotul ridicându-și morții la fiecare
-2 minute. Du-ți steagul pe **Farul Furtunii** din mijloc și acesta lovește un inamic
+**Barrow Field** (8v8, 5400x2600) este o arenă a Ascensiunii și poate fi aleasă și la un
+Joc găzduit: Anihilare cu preot pe o mlaștină cu movile funerare la amurg, preotul
+ridicându-și morții la fiecare 2 minute. Urcă pe o movilă pentru teren înalt sau mergi
+pe culoarul movilelor de sub ea, după ce o pârghie de pe movila îndepărtată îi deschide
+poarta. Du-ți steagul pe **Farul Furtunii** din mijloc și acesta lovește un inamic
 aleatoriu aflat în raza lui auditivă cu 50 de daune de fulger la fiecare 2,5 secunde,
 până când cealaltă echipă își plantează steagul acolo. Fiecare lovitură este un fulger
 de la far până la cel lovit, vizibil pentru ambele echipe.
