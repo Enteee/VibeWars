@@ -13,7 +13,13 @@ export type { Vec2 } from "./vec2.js";
 export * as Vec from "./vec2.js";
 export { ZERO, length, normalize, vec2 } from "./vec2.js";
 
-export { CLIMB_PACE, clampInputDirection, integrateMovement, type ClimbLook } from "./movement.js";
+export {
+  CLIMB_PACE,
+  SHALLOW_WATER_PACE,
+  clampInputDirection,
+  integrateMovement,
+  type ClimbLook,
+} from "./movement.js";
 
 export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
 export { beaconStrikeArea } from "./match/storm-stand.js";
@@ -50,10 +56,13 @@ export {
   nearestStandable,
   rampIsLinked,
   rampLength,
+  HARMFUL_ZONE_COST,
+  shallowWaterZones,
   walkCost,
   walkIsClear,
   type LayeredPathFinder,
   type NavGraph,
+  type CostArea,
   type NavZone,
   type NavLayer,
   type NavTransition,

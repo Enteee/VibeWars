@@ -27,6 +27,7 @@ que você sai. Inimigos e aliados são afetados do mesmo jeito que você.
 - **Uma fonte** aumenta sua regeneração de vida. Água azul e límpida que
   cintila e ilumina o chão ao redor.
 - **Um bosque** faz você se mover mais rápido. Tufos de grama e florzinhas.
+- **A água rasa** te desacelera para três quartos da sua velocidade, só enquanto você está nela. Água clara e luminosa através da qual você vê o fundo. A água funda te impede de passar.
 
 ## Perigos em intervalos
 

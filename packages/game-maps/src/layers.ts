@@ -52,6 +52,11 @@ export function matchLayers(map: MapData): MatchLayers {
         .filter((water) => water.layer === layer && water.depth === "deep")
         .flatMap((water) => wallToSegments(water.area)),
     ),
+    shallowWater: Array.from({ length: map.layers }, (_, layer) =>
+      (map.water ?? [])
+        .filter((water) => water.layer === layer && water.depth === "shallow")
+        .map((water) => shapeVertices(water.area)),
+    ),
     outline:
       map.bounds.kind === "rect"
         ? undefined

@@ -28,6 +28,7 @@ dig.
 - **En kilde** hæver din livsregeneration. Klart blåt vand, der funkler og
   lyser jorden op omkring sig.
 - **En lund** får dig til at bevæge dig hurtigere. Græstotter og små blomster.
+- **Lavt vand** sænker din fart til tre fjerdedele, kun mens du står i det. Klart, lyst vand, du kan se bunden igennem. Dybt vand stopper dig.
 
 ## Farer i takt
 

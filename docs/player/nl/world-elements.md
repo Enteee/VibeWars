@@ -28,6 +28,7 @@ manier geraakt als jij.
 - **Een bron** verhoogt je Gezondheidsregeneratie. Helder blauw water dat
   fonkelt en de grond eromheen verlicht.
 - **Een bosje** laat je sneller bewegen. Graspollen en kleine bloemen.
+- **Ondiep water** remt je af tot driekwart van je snelheid, alleen zolang je erin staat. Helder, licht water waardoor je de bodem ziet. Diep water houdt je tegen.
 
 ## Gevaren op een timer
 

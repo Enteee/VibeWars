@@ -28,6 +28,7 @@ na tebe.
 - **Izvor** povećava ti obnavljanje zdravlja. Bistra plava voda koja
   svjetluca i osvjetljava tlo oko sebe.
 - **Gaj** te ubrzava. Busenovi trave i sitno cvijeće.
+- **Plitka voda** usporava te na tri četvrtine tvoje brzine, samo dok si u njoj. Bistra, svijetla voda kroz koju vidiš dno. Duboka voda te zaustavlja.
 
 ## Opasnosti u razmacima
 

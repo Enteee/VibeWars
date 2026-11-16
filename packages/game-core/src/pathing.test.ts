@@ -6,6 +6,7 @@ import {
   distanceSegmentToSegment,
   lengthInPolygon,
   segment,
+  type Polygon,
   type Segment,
 } from "./geometry.js";
 import {
@@ -18,9 +19,12 @@ import {
   nearestStandable,
   RAMP_WAYPOINT_MOST_INSET,
   costZone,
+  shallowWaterZones,
   walkCost,
   walkIsClear,
+  type CostArea,
   type NavGraph,
+  type NavZone,
 } from "./pathing.js";
 import { createRng, type SimulationRng } from "./rng.js";
 import { DENSE_FIELD } from "./tools/tick-bench.js";
@@ -879,6 +883,7 @@ describe("harmful zones (#3026)", () => {
     vec2(350, bottom),
     vec2(250, bottom),
   ];
+  const harmful = (polygon: Polygon): CostArea => ({ polygon, cost: HARMFUL_ZONE_COST });
   const from = vec2(100, 500);
   const to = vec2(500, 500);
   const length = (path: readonly Vec2[]): number =>
@@ -888,14 +893,14 @@ describe("harmful zones (#3026)", () => {
     expect(lengthInPolygon(from, to, strip(0, 1000))).toBeCloseTo(100);
     expect(lengthInPolygon(vec2(300, 500), to, strip(0, 1000))).toBeCloseTo(50);
     expect(lengthInPolygon(from, vec2(200, 500), strip(0, 1000))).toBe(0);
-    expect(walkCost([costZone(strip(0, 1000))], from, to)).toBeCloseTo(
+    expect(walkCost([costZone(harmful(strip(0, 1000)))], from, to)).toBeCloseTo(
       400 + (HARMFUL_ZONE_COST - 1) * 100,
     );
   });
 
   it("goes round a strip when the way round is not much longer", () => {
     const zone = strip(400, 600);
-    const path = createPathFinder(buildNavGraph([], FIELD, 14, [zone])).find(from, to);
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, [harmful(zone)])).find(from, to);
     if (path === undefined) throw new Error("no path");
     expect(path.at(-1)).toEqual(to);
     // Round, not through: no part of it in the strip, and under 200 longer.
@@ -909,7 +914,7 @@ describe("harmful zones (#3026)", () => {
 
   it("crosses a strip when the way round is far longer, at its cost", () => {
     const zone = strip(100, 900);
-    const path = createPathFinder(buildNavGraph([], FIELD, 14, [zone])).find(from, to);
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, [harmful(zone)])).find(from, to);
     expect(path).toEqual([to]);
   });
 
@@ -917,9 +922,35 @@ describe("harmful zones (#3026)", () => {
     const walls = [segment(vec2(300, 300), vec2(300, 700))];
     const plain = createPathFinder(buildNavGraph(walls, FIELD, 14, [])).find(from, to);
     const elsewhere = createPathFinder(
-      buildNavGraph(walls, FIELD, 14, [strip(940, 990).map(({ x, y }) => vec2(x + 600, y))]),
+      buildNavGraph(walls, FIELD, 14, [
+        harmful(strip(940, 990).map(({ x, y }) => vec2(x + 600, y))),
+      ]),
     ).find(from, to);
     expect(plain).toBeDefined();
     expect(elsewhere).toEqual(plain);
+  });
+
+  // Crossing the 100-wide strip of shallow water costs 100 / 0.75 - 100 ≈ 33
+  // more than walking straight (#3463). Round its end, 15 out from each
+  // corner: 2 × hypot(135, half + 15) + 130 long.
+  const ford = (half: number): readonly NavZone[] =>
+    shallowWaterZones([[strip(500 - half, 500 + half)]]);
+
+  it("goes round shallow water when the way round is 30 longer", () => {
+    const [zone] = ford(50);
+    if (zone === undefined) throw new Error("no ford");
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, [zone])).find(from, to);
+    if (path === undefined) throw new Error("no path");
+    let at = from;
+    for (const point of path) {
+      expect(lengthInPolygon(at, point, zone.polygon)).toBe(0);
+      at = point;
+    }
+    expect(length(path)).toBeCloseTo(400 + 29.4, 0);
+  });
+
+  it("wades through shallow water when the way round is 60 longer", () => {
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, ford(80))).find(from, to);
+    expect(path).toEqual([to]);
   });
 });

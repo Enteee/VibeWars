@@ -32,6 +32,7 @@ touchés de la même façon que toi.
   qui scintille et éclaire le sol autour d'elle.
 - Un **bosquet** te fait avancer plus vite. Des touffes d'herbe et de petites
   fleurs.
+- **L'eau peu profonde** te ralentit aux trois quarts de ta vitesse, seulement tant que tu y es. Une eau claire et lumineuse à travers laquelle tu vois le fond. L'eau profonde t'arrête.
 
 ## Les dangers à intervalles
 
