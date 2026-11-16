@@ -45,9 +45,10 @@ med isklippor på båda stränderna. För de större lagen: **Ashen Courtyard**
 (4v4, 4400x2600), en förfallen borg vars muromgärdade borggård har fyra
 breschor, med ruiner på flankerna; och **Moss Vale** (8v8, 4800x2800),
 två skogsklädda åsar som delar dalen i tre filer, som möts i en glänta i
-mitten. Två stora arenor är ännu större: **Canthan Terraces** (1v1,
-5200x2800), risterrasser med murar från norr till söder och förskjutna
-öppningar, runt en förfallen pagod; och **Sunken Bastion** (2v2,
+mitten. **Canthan Terraces** (1v1, 2400x2100) är liten men brant:
+risfält som trappar sig uppför en sluttning till en förfallen pagod, med
+en översvämmad kulvert under som en slusspak öppnar som en tredje väg
+till mitten. En stor arena är ännu större: **Sunken Bastion** (2v2,
 5600x3000), en halvt översvämmad fästning vars genombrutna ringmur
 omger en borg med två portar, med träskklippor utanför.
 Och för de större lagen: **Shiverpeak Pass** (4v4, 6000x3400),

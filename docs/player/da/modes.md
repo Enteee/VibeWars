@@ -45,9 +45,10 @@ krydset af tre broer, med isklipper på hver bred. Til de større hold:
 gård har fire brud, med ruiner på flankerne; og **Moss Vale** (8v8,
 4800x2800), to skovklædte højderygge, der deler dalen i tre baner, som
 mødes i en lysning i midten.
-To store arenaer er endnu større: **Canthan Terraces** (1v1, 5200x2800),
-risterrasser med mure fra nord til syd og forskudte åbninger, rundt om en
-ruineret pagode; og **Sunken Bastion** (2v2, 5600x3000), en halvt
+**Canthan Terraces** (1v1, 2400x2100) er lille, men stejl: rismarker, der
+trapper op ad en skråning til en ruineret pagode, med en oversvømmet
+kulvert nedenunder, som et slusehåndtag åbner som en tredje vej til midten.
+Én stor arena er endnu større: **Sunken Bastion** (2v2, 5600x3000), en halvt
 oversvømmet fæstning, hvis gennembrudte ringmur omgiver en borg med to
 porte, med sumpklipper udenfor.
 Og til de større hold: **Shiverpeak Pass** (4v4, 6000x3400),

@@ -42,9 +42,10 @@ Crossing** (2v2, 4000x2200), un râu înghețat traversat de trei poduri, cu st�
 gheață pe fiecare mal. Pentru echipele mai mari: **Ashen Courtyard** (4v4, 4400x2600),
 o fortăreață în ruine a cărei curte împrejmuită are patru spărturi, cu ruine pe
 flancuri; și **Moss Vale** (8v8, 4800x2800), două creste împădurite care împart valea
-în trei culoare ce se întâlnesc într-un luminiș în mijloc. Două arene mari sunt și
-mai întinse: **Canthan Terraces** (1v1, 5200x2800), terase de orez cu ziduri de la
-nord la sud și deschideri decalate, în jurul unei pagode în ruine; și **Sunken
+în trei culoare ce se întâlnesc într-un luminiș în mijloc. **Canthan Terraces**
+(1v1, 2400x2100) este mică, dar abruptă: orezării care urcă pe un deal până la o
+pagodă în ruine, cu un podeț inundat dedesubt pe care o pârghie de stăvilar îl
+deschide ca a treia cale spre centru. O arenă mare este și mai întinsă: **Sunken
 Bastion** (2v2, 5600x3000), o fortăreață pe jumătate inundată a cărei incintă spartă
 înconjoară un donjon cu două porți, cu stânci de mlaștină în afară. Și pentru echipele
 mai mari: **Shiverpeak Pass** (4v4, 6000x3400), două masive de stâncă ce lasă o

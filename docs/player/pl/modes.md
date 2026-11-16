@@ -41,9 +41,10 @@ zamarznięta rzeka z trzema mostami i lodowymi skałami na obu brzegach. Dla wi�
 drużyn: **Ashen Courtyard** (4v4, 4400x2600), zrujnowana twierdza, której otoczony
 murem dziedziniec ma cztery wyłomy, z ruinami na flankach; oraz **Moss Vale** (8v8,
 4800x2800), dwa zalesione grzbiety dzielące dolinę na trzy tory, które spotykają się
-na polanie pośrodku. Dwie duże areny są jeszcze większe: **Canthan Terraces** (1v1,
-5200x2800), tarasy ryżowe obmurowane z północy na południe z mijającymi się
-przejściami, wokół zrujnowanej pagody; oraz **Sunken Bastion** (2v2, 5600x3000), na
+na polanie pośrodku. **Canthan Terraces** (1v1, 2400x2100) jest mała, ale stroma:
+pola ryżowe wspinają się po zboczu do zrujnowanej pagody, a pod nimi biegnie zalany
+przepust, który dźwignia śluzy otwiera jako trzecią drogę do środka. Jedna duża arena
+jest jeszcze większa: **Sunken Bastion** (2v2, 5600x3000), na
 wpół zalana forteca, której przełamana kurtyna otacza twierdzę z dwiema bramami,
 z bagiennymi skałami na zewnątrz.
 A dla większych drużyn: **Shiverpeak Pass** (4v4, 6000x3400), dwa masywy skalne

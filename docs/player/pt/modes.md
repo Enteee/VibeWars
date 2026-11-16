@@ -47,9 +47,10 @@ maiores: **Ashen Courtyard** (4v4, 4400x2600), uma fortaleza em ruínas
 cujo pátio murado tem quatro brechas, com ruínas nos flancos; e **Moss
 Vale** (8v8, 4800x2800), duas cristas arborizadas que dividem o vale em
 três corredores, que se encontram em uma clareira no meio.
-Duas arenas grandes são maiores ainda: **Canthan Terraces** (1v1,
-5200x2800), terraços de arroz murados de norte a sul com aberturas
-alternadas, em volta de um pagode em ruínas; e **Sunken Bastion** (2v2,
+**Canthan Terraces** (1v1, 2400x2100) é pequena, mas íngreme: arrozais
+subindo uma encosta até um pagode em ruínas, com um bueiro alagado por
+baixo que uma alavanca de comporta abre como terceiro caminho até o
+centro. Uma arena grande é maior ainda: **Sunken Bastion** (2v2,
 5600x3000), uma fortaleza meio alagada cuja muralha rompida cerca um
 torreão com dois portões, com rochas de pântano do lado de fora.
 E para equipes maiores: **Shiverpeak Pass** (4v4, 6000x3400), dois maciços

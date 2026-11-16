@@ -48,9 +48,10 @@ Isommille tiimeille: **Ashen Courtyard** (4v4, 4400x2600), raunioitunut
 linnake, jonka muurien ympäröimässä pihassa on neljä aukkoa ja raunioita
 sivustoilla; ja **Moss Vale** (8v8, 4800x2800), kaksi metsäistä harjua,
 jotka jakavat laakson kolmeen kaistaan, jotka kohtaavat keskellä olevalla
-aukealla. Kaksi suurta areenaa on vielä isompia: **Canthan Terraces**
-(1v1, 5200x2800), pohjoisesta etelään muurattuja riisiterasseja
-porrastetuin aukoin raunioituneen pagodin ympärillä; ja **Sunken
+aukealla. **Canthan Terraces** (1v1, 2400x2100) on pieni mutta jyrkkä:
+riisipeltoja, jotka nousevat rinnettä ylös raunioituneelle pagodille, ja
+niiden alla tulvinut rumpu, jonka sulkuluukun vipu avaa kolmanneksi
+reitiksi keskelle. Yksi suuri areena on vielä isompi: **Sunken
 Bastion** (2v2, 5600x3000), puoliksi tulvinut linnoitus, jonka murrettu
 ulkomuuri ympäröi kaksiporttista linnaketta, ja ulkopuolella
 suokiviä.
