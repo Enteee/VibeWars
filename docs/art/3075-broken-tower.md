@@ -21,8 +21,8 @@ tower on a hill: its stump a climbable ruin, rubble terraces, a cellar route) is
 - **Structures (9 + 1 tunnel):** the hill terrace, tower base, stump top, and two terraces and a
   ledge on each side (west rubble terrace and its east pair, north spill and south spill, south
   ledge and north ledge). Close to Moss Vale's count.
-- **Tunnel:** the **cellar** on L0, 110 wide, from the west mouth (1800,1250) under the hill's south
-  side to the east mouth (3600,1160), with a **cellar stair** (2630,1580) up into the hill terrace.
+- **Tunnel:** the **cellar** on L0, 110 wide, from the west mouth (1530,1390) under the hill's south
+  side to the east mouth (3824,1366), with a **cellar stair** (2630,1580) up into the hill terrace.
   Both mouths have a door (lever-driven, below). Cover shows the seam and grating slots (#3236), as
   wide as the walkable floor (#3179).
 - **Drop-offs (4):** the north spill, west rubble terrace, east terrace and south spill edges; the
@@ -34,15 +34,15 @@ tower on a hill: its stump a climbable ruin, rubble terraces, a cellar route) is
   1194..1524), eight seats a side.
 - **4v4:** uses the same map and the first four seats of each block (the two rows at the front); the
   fight is the hill, inside a 1500-radius ring round the altar. The relic spawns and routes are the 8v8's.
-- **Elements:** two **cellar doors** at the tunnel mouths, (1800,1250) and (3600,1160), start shut.
+- **Elements:** two **cellar doors** at the tunnel mouths, (1530,1390) and (3824,1366), start shut.
   Two brass **levers** on the hill terrace, (2250,1380) and (3150,1420), **each opens both doors**:
   either team can open the cellar, and a pulled lever opens it for both. No lift is used (bots read
-  a lever lift as closed). A **breakable rubble wall** (x 1930, y 1420..1620) closes a lane at the
-  west terrace. Zones: a `spring` and a `mire` for each team, the same on both sides (turned 180°):
+  a lever lift as closed). A **breakable rubble wall** on each side, (x 1930, y 1580..1760) and its turned pair (x 3470, y 1024..1204), closes a lane south of the
+  terrace stair, off every route. Zones: a `spring` and a `mire` for each team, the same on both sides (turned 180°):
   spring (1100,700) and mire (1100,2300) west, the pair turned east; off every route, ≥ 300 u from
   a relic spawn and ≥ 200 u from a spawn. Water: two shallow **meltwater pools**, off every route. Atmosphere (existing, #3032):
   three dust banks, under bodies, never over an altar, a stair or a lever. One `canopy` overhang
-  (a fallen beam) off every route. Six broken columns ring the tower base.
+  (a fallen beam) off every route. Six broken columns stand on the tower base, clear of its stairs.
 - **Light:** the **Day** row (visual-style §2), sun from the NW, 50°, `#fff1d6` 0.55. Torches
   `#ffb060`, radius 150, at each cellar mouth and hill stair; rings (220) at each relic spawn and the
   altar. 13 lights, under 16. Nothing is dim except the cellar, which has its mouth torches.
@@ -55,7 +55,7 @@ T1 centred (540,1425) in the west, T2 (4884,1359) in the east. Altar: (2700,1400
 
 | Spawn to the altar (T1 / T2) | Walk          |
 | ---------------------------- | ------------- |
-| cellar (door open)           | 14.3 / 14.4 s |
+| cellar (door open)           | 13.9 / 14.0 s |
 | south stair                  | 14.8 / 14.9 s |
 | north stair                  | 15.2 / 15.1 s |
 
@@ -63,9 +63,9 @@ T1 centred (540,1425) in the west, T2 (4884,1359) in the east. Altar: (2700,1400
 
 | Route (team 1 / team 2) | Walk          | Gap |
 | ----------------------- | ------------- | --- |
-| terrace                 | 10.9 / 11.0 s | 1 % |
+| terrace                 | 12.4 / 12.3 s | 1 % |
 | south stair             | 11.6 / 11.7 s | 1 % |
-| cellar (door open)      | 12.7 / 12.8 s | 1 % |
+| cellar (door open)      | 12.0 / 12.0 s | 0 % |
 
 A carrier has three routes; none is a lift. Spawn to fight stays under 15.3 s (< 25 s).
 
