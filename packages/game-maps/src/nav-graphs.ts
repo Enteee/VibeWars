@@ -1,8 +1,10 @@
 import {
   buildLayeredNavGraph,
+  HARMFUL_ZONE_COST,
   navGraphFor,
   rampIsLinked,
   rampRims,
+  shallowWaterZones,
   type NavGraph,
   type NavLayer,
   walkableAreas,
@@ -12,7 +14,7 @@ import { matchLayers, matchTeleports } from "./layers.js";
 import type { MapData } from "./schema.js";
 
 /**
- * `map`'s walls, deep water, floors and ramps as the path finder reads
+ * `map`'s walls, deep water, shallow water, floors and ramps as the path finder reads
  * them, one graph a layer, every gate open, for a body of `clearance`.
  */
 export function mapNavGraphs(map: MapData, clearance: number): readonly NavGraph[] {
@@ -24,13 +26,14 @@ export function mapNavGraphs(map: MapData, clearance: number): readonly NavGraph
     walkable: walkable[layer] ?? [],
     open: rims[layer] ?? [],
   }));
-  return buildLayeredNavGraph(
-    layers,
-    [],
-    { width: map.width, height: map.height },
-    clearance,
-    matchTeleports(map).map(({ from }) => ({ layer: from.layer, polygon: from.area })),
-  ).map((gated) => navGraphFor(gated, 0));
+  return buildLayeredNavGraph(layers, [], { width: map.width, height: map.height }, clearance, [
+    ...matchTeleports(map).map(({ from }) => ({
+      layer: from.layer,
+      polygon: from.area,
+      cost: HARMFUL_ZONE_COST,
+    })),
+    ...shallowWaterZones(match.shallowWater),
+  ]).map((gated) => navGraphFor(gated, 0));
 }
 
 /**

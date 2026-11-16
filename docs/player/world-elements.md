@@ -28,6 +28,9 @@ way you are.
 - **A spring** raises your Health regeneration. Clear blue water that
   sparkles and lights the ground around it.
 - **A grove** makes you move faster. Grass tufts and small flowers.
+- **Shallow water** slows you to three quarters of your speed, only
+  while you are in it. Clear, light water you can see the ground through.
+  Deep water stops you.
 
 ## Hazards on a timer
 

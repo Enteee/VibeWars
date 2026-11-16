@@ -28,6 +28,7 @@ corto después de salir. Enemigos y aliados se ven afectados igual que tú.
 - **Un manantial** aumenta tu regeneración de salud. Agua azul y clara que
   centellea e ilumina el suelo a su alrededor.
 - **Una arboleda** te hace moverte más rápido. Matas de hierba y florecillas.
+- **El agua poco profunda** te frena a tres cuartos de tu velocidad, solo mientras estás en ella. Agua clara y luminosa a través de la que ves el fondo. El agua profunda te detiene.
 
 ## Peligros a intervalos
 

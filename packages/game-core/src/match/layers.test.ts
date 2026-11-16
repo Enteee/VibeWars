@@ -50,6 +50,7 @@ const LAYERS: MatchLayers = {
   transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200), uphill: UPHILL.e, pace: 1 }],
   outline: undefined,
   deepWater: [[], []],
+  shallowWater: [[], []],
   dropOffs: [],
 };
 
@@ -154,6 +155,7 @@ describe("a body's layer (ADR-0051)", () => {
         ],
         outline: undefined,
         deepWater: [[], []],
+        shallowWater: [[], []],
         dropOffs: [],
       },
     });

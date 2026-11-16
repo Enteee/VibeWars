@@ -29,6 +29,7 @@ genauso wie dich.
 - **Eine Quelle** erhöht deine Lebensregeneration. Klares blaues Wasser, das
   funkelt und den Boden um sich erhellt.
 - **Ein Hain** lässt dich schneller laufen. Grasbüschel und kleine Blumen.
+- **Seichtes Wasser** bremst dich auf drei Viertel deiner Geschwindigkeit, nur solange du darin bist. Klares, helles Wasser, durch das du den Grund siehst. Tiefes Wasser hält dich auf.
 
 ## Gefahren im Takt
 

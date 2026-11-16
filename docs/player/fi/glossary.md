@@ -23,7 +23,7 @@
 | Lataus                 | Aika, jonka jälkeen käytettyä taitoa voi käyttää uudelleen                                                |
 | Henkiin herättäminen   | Kuolleen liittolaisen tuominen takaisin                                                                   |
 | Riimu                  | Panssarin päivitys: ominaisuustasoja, terveyttä, energiaa tai lyhyemmät vaivat                            |
-| Matala vesi            | Vesi, jonka läpi kävelet kuin kuivalla maalla                                                             |
+| Matala vesi            | Vesi, jossa kahlaat kolmella neljäsosalla nopeudestasi                                                    |
 | Sinetti (kilpi)        | Merkkisi, pieni selaimesi identiteetistä tehty kilpi nimesi edessä                                        |
 | Aloituspaikka          | Paikka, josta tiimisi aloittaa ottelun                                                                    |
 | Kosketustaito          | Taito, jota käytetään koskettamalla kohdetta; jotkin huudot saavat vihollisten kosketukset epäonnistumaan |

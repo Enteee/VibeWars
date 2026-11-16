@@ -28,6 +28,7 @@ rovnako ako na teba.
 - **Prameň** ti zvyšuje regeneráciu zdravia. Čistá modrá voda, ktorá iskrí
   a osvetľuje zem okolo.
 - **Háj** ťa zrýchli. Trsy trávy a drobné kvety.
+- **Plytká voda** ťa spomalí na tri štvrtiny tvojej rýchlosti, len kým si v nej. Čistá, svetlá voda, cez ktorú vidíš dno. Hlboká voda ťa zastaví.
 
 ## Nástrahy v intervaloch
 

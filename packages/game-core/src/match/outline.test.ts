@@ -44,6 +44,7 @@ const layers = (blocksSight: boolean): MatchLayers => ({
   transitions: [],
   outline: { polygon: GROUND, blocksSight },
   deepWater: [[]],
+  shallowWater: [[]],
   dropOffs: [],
 });
 

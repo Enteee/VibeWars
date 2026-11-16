@@ -57,6 +57,7 @@ export function flatLayers(walls: readonly Segment[]): MatchLayers {
     dropOffs: [],
     outline: undefined,
     deepWater: [[]],
+    shallowWater: [[]],
   };
 }
 

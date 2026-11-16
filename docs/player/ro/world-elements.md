@@ -27,6 +27,7 @@ după ce ieși. Inamicii și aliații sunt afectați la fel ca tine.
 - **Un izvor** îți crește regenerarea de Viață. Apă albastră, limpede, care
   sclipește și luminează solul din jur.
 - **Un crâng** te face să te miști mai repede. Smocuri de iarbă și flori mici.
+- **Apa mică** te încetinește la trei sferturi din viteza ta, doar cât timp ești în ea. Apă limpede și luminoasă prin care vezi fundul. Apa adâncă te oprește.
 
 ## Pericole la intervale
 

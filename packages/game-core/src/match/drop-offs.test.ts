@@ -30,6 +30,7 @@ const layersWith = (pace: number): MatchLayers => ({
   transitions: [{ from: 0, to: 1, area: RAMP, uphill: UPHILL.e, pace }],
   outline: undefined,
   deepWater: [[], []],
+  shallowWater: [[], []],
   dropOffs: [{ layer: 1, edge: { a: vec2(700, 300), b: vec2(900, 300) }, outward: vec2(0, -1) }],
 });
 

@@ -23,7 +23,7 @@
 | Dobíjanie          | Čas, kým sa použitá schopnosť dá znova použiť                                 |
 | Oživiť             | Vrátiť mŕtveho spojenca späť                                                  |
 | Runa               | Vylepšenie brnenia: hodnosti atribútov, zdravie, energia alebo kratšie neduhy |
-| Plytká voda        | Voda, cez ktorú prejdeš ako po suchu                                          |
+| Plytká voda        | Voda, ktorou sa brodíš tromi štvrtinami rýchlosti                             |
 | Pečať (štít)       | Tvoja značka, malý štít z identity tvojho prehliadača, pred tvojím menom      |
 | Miesto zrodu       | Miesto, kde tvoj tím začína zápas                                             |
 | Dotyková schopnosť | Schopnosť použitá dotykom cieľa; niektoré pokriky rušia dotyky nepriateľov    |

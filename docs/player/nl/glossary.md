@@ -23,7 +23,7 @@
 | Opladen               | De tijd voordat een gebruikte skill opnieuw kan                                                                 |
 | Reanimeren            | Een dode bondgenoot terughalen                                                                                  |
 | Rune                  | Een pantserupgrade: attribuutrangen, Gezondheid, Energie of kortere condities                                   |
-| Ondiep water          | Water waar je doorheen loopt als over droge grond                                                               |
+| Ondiep water          | Water waar je met driekwart van je snelheid doorheen waadt                                                      |
 | Zegel (schild)        | Jouw teken, een schildje uit de identiteit van je browser, voor je naam                                         |
 | Spawn                 | Waar je team de match begint                                                                                    |
 | Aanrakingsskill       | Een skill die je gebruikt door het doelwit aan te raken; sommige kreten doen vijandelijke aanrakingen mislukken |

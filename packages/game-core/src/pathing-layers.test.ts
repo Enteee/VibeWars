@@ -6,6 +6,7 @@ import {
   buildNavGraph,
   createLayeredPathFinder,
   createPathFinder,
+  HARMFUL_ZONE_COST,
   isStandable,
   navGraphFor,
   walkIsClear,
@@ -364,7 +365,7 @@ describe("a teleport's way (#3030)", () => {
   });
 
   it("goes round an on entry it does not mean to take, its area given as a zone", () => {
-    const graph = buildNavGraph([], BOUNDS, RADIUS, [ENTRY]);
+    const graph = buildNavGraph([], BOUNDS, RADIUS, [{ polygon: ENTRY, cost: HARMFUL_ZONE_COST }]);
     const path = createLayeredPathFinder([graph], [], [ACROSS]).find(
       vec2(300, 100),
       0,

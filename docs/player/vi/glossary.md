@@ -23,7 +23,7 @@
 | Hồi chiêu               | Thời gian trước khi kỹ năng đã dùng có thể dùng lại                                     |
 | Hồi sinh                | Đưa một đồng minh đã chết trở lại                                                       |
 | Rune                    | Nâng cấp giáp: cấp thuộc tính, Máu, Năng lượng hoặc Dị trạng ngắn hơn                   |
-| Nước nông               | Nước bạn đi qua như trên đất khô                                                        |
+| Nước nông               | Nước bạn lội qua với ba phần tư tốc độ                                                  |
 | Ấn ký (khiên)           | Dấu hiệu của bạn, một chiếc khiên nhỏ từ danh tính trình duyệt, đứng trước tên bạn      |
 | Điểm xuất phát          | Nơi đội bạn bắt đầu trận                                                                |
 | Kỹ năng chạm            | Kỹ năng dùng bằng cách chạm vào mục tiêu; một số tiếng hô làm cú chạm của địch thất bại |

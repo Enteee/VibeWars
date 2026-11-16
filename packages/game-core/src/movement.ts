@@ -45,6 +45,12 @@ export const CLIMB_PACE = {
   lift: 1,
 } as const satisfies Readonly<Record<string, number>>;
 
+/**
+ * How fast a body walks in shallow water (#3463, operator Q94), as a share
+ * of its speed: three quarters. Deep water is a wall.
+ */
+export const SHALLOW_WATER_PACE = 0.75;
+
 /** A look a transition is climbed by (#3069): what sets its pace. */
 export type ClimbLook = keyof typeof CLIMB_PACE;
 

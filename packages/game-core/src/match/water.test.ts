@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { WEAPONS } from "../equipment/weapons.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import type { Polygon, Segment } from "../geometry.js";
+import { NO_RANKS } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { BOUNDS, DT, ELEMENTALIST, fighter, RANGER, RULESET } from "./bot/rules/test-support.js";
 import { UPHILL } from "./layer-rules.js";
@@ -46,6 +47,7 @@ const LAYERS: MatchLayers = {
   transitions: [{ from: 0, to: 1, area: rect(950, 300, 170, 200), uphill: UPHILL.e, pace: 1 }],
   outline: undefined,
   deepWater: [POND, POOL_ON_DECK],
+  shallowWater: [[], []],
   dropOffs: [],
 };
 
@@ -154,5 +156,72 @@ describe("deep water (#2983)", () => {
     run(sim, 2);
     expect(get(sim, "up").position.x).toBeCloseTo(1300 - RADIUS, 0);
     expect(get(sim, "down").position.x).toBeGreaterThan(1400);
+  });
+});
+
+/**
+ * A ford across the ground from x 700 to 900, and a paddling pool on the
+ * deck, over open ground (#3463).
+ */
+const SHALLOW_LAYERS: MatchLayers = {
+  ...LAYERS,
+  deepWater: [[], []],
+  shallowWater: [[rect(700, 0, 200, 800)], [rect(1300, 320, 60, 160)]],
+};
+const FULL_STRIDE = RULESET.movement.maxSpeedUnitsPerSecond * DT;
+
+function ford(participants: readonly ParticipantSpec[]): MatchSimulation {
+  return new MatchSimulation({
+    seed: "ford",
+    ruleset: RULESET,
+    bounds: BOUNDS,
+    walls: [],
+    layers: SHALLOW_LAYERS,
+    participants,
+  });
+}
+
+/** How far `id` walks east in one tick from where it stands. */
+function stride(sim: MatchSimulation, id: string): number {
+  const before = get(sim, id).position.x;
+  sim.step(DT);
+  return get(sim, id).position.x - before;
+}
+
+describe("shallow water (#3463)", () => {
+  it("slows a body walking through it to three quarters, and only there", () => {
+    const sim = ford([spec("a", 0, vec2(600, 400), 0)]);
+    sim.setInputDirection("a", vec2(1, 0));
+    expect(stride(sim, "a")).toBeCloseTo(FULL_STRIDE, 5);
+    while (get(sim, "a").position.x < 750) sim.step(DT);
+    expect(stride(sim, "a")).toBeCloseTo(0.75 * FULL_STRIDE, 5);
+    while (get(sim, "a").position.x < 950) sim.step(DT);
+    expect(stride(sim, "a")).toBeCloseTo(FULL_STRIDE, 5);
+  });
+
+  it("on a deck slows a body on the deck, not one on the ground under it", () => {
+    const sim = ford([spec("up", 0, vec2(1320, 400), 1), spec("down", 0, vec2(1320, 400), 0)]);
+    sim.setInputDirection("up", vec2(1, 0));
+    sim.setInputDirection("down", vec2(1, 0));
+    expect(stride(sim, "up")).toBeCloseTo(0.75 * FULL_STRIDE, 5);
+    expect(get(sim, "down").position.x - 1320).toBeCloseTo(FULL_STRIDE, 5);
+  });
+
+  it("stacks with Cripple: half of three quarters", () => {
+    const sim = ford([spec("a", 0, vec2(800, 400), 0)]);
+    get(sim, "a").combatant.statuses.apply("crippled", 1e6, "x", NO_RANKS);
+    sim.setInputDirection("a", vec2(1, 0));
+    expect(stride(sim, "a")).toBeCloseTo(0.375 * FULL_STRIDE, 5);
+  });
+
+  it("slows a fast body by a quarter, inside the speed clamp", () => {
+    const sim = ford([spec("a", 0, vec2(500, 400), 0), spec("b", 0, vec2(800, 600), 0)]);
+    for (const id of ["a", "b"]) {
+      get(sim, id).combatant.statuses.apply("dash", 1e6, id, NO_RANKS);
+      sim.setInputDirection(id, vec2(1, 0));
+    }
+    // Dash's 1.5 is clamped to 1.33 on dry ground; in water 1.5 × 0.75 = 1.125.
+    expect(stride(sim, "a")).toBeCloseTo(1.33 * FULL_STRIDE, 5);
+    expect(get(sim, "b").position.x - 800).toBeCloseTo(1.125 * FULL_STRIDE, 5);
   });
 });

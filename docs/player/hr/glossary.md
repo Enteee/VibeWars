@@ -23,7 +23,7 @@
 | Obnavljanje          | Vrijeme prije nego što se upotrijebljena vještina može ponovno koristiti                  |
 | Uskrsnuti            | Vratiti mrtvog saveznika                                                                  |
 | Runa                 | Nadogradnja oklopa: razine atributa, zdravlje, energija ili kraća stanja                  |
-| Plitka voda          | Voda kroz koju hodaš kao po suhom                                                         |
+| Plitka voda          | Voda kroz koju gaziš trima četvrtinama brzine                                             |
 | Pečat (štit)         | Tvoj znak, mali štit iz identiteta tvog preglednika, ispred tvog imena                    |
 | Polazište            | Mjesto na kojem tvoj tim započinje meč                                                    |
 | Vještina dodira      | Vještina koja se koristi dodirom mete; neki povici čine da neprijateljski dodir ne uspije |

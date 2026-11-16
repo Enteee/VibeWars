@@ -23,7 +23,7 @@
 | Újratöltés             | Az idő, amíg egy használt készség újra használható lesz                                        |
 | Feltámasztás           | Egy halott szövetséges visszahozása                                                            |
 | Rúna                   | Páncélfejlesztés: tulajdonságszintek, Életerő, Energia vagy rövidebb kórok                     |
-| Sekély víz             | Víz, amelyen úgy sétálsz át, mint a szárazföldön                                               |
+| Sekély víz             | Víz, amelyben sebességed háromnegyedével gázolsz át                                            |
 | Címer (pajzs)          | A jeled, egy kis pajzs a böngésződ identitásából, a neved előtt                                |
 | Kezdőpont              | Ahol a csapatod a meccset kezdi                                                                |
 | Érintéses készség      | A célpont megérintésével használt készség; egyes kiáltások meghiúsítják az ellenség érintéseit |
