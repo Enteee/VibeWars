@@ -63,6 +63,11 @@ function commit(message, cwd) {
  * devenv stand-in's `claude-llc up` fails, as the real one does, while that
  * session is up, and also the first `failUp` times it runs.
  *
+ * The devenv stand-in uses shell builtins only: the restarter runs it on the
+ * host's PATH, without /nix/store, so on a runner whose coreutils are all in
+ * the store a `cat` is not there, and a counter read with it stays at 0
+ * (#3461).
+ *
  * The reboot names the new main as the commit the operator approved (#960),
  * unless `approved` names another; `movedOn` pushes one more company commit
  * to main after the approval.
@@ -139,6 +144,8 @@ function setup(options = {}) {
   const kills = path.join(dir, "kills");
   const ups = path.join(dir, "ups");
   fs.writeFileSync(alive, "");
+  fs.writeFileSync(kills, "0\n");
+  fs.writeFileSync(ups, "0\n");
   fake(
     "devenv",
     [
@@ -151,7 +158,7 @@ function setup(options = {}) {
       'case "$*" in *" up") ;; *) exit 0 ;; esac',
       `echo "up in $PWD locked=$VIBEWARS_LOCKED_SHA repo=$VIBEWARS_REPO" >>${calls}`,
       `[ -e ${alive} ] && exit 1`,
-      `n=$(($(cat ${ups} 2>/dev/null || echo 0) + 1)); echo $n >${ups}`,
+      `read n <${ups}; n=$((n + 1)); echo $n >${ups}`,
       `[ $n -le ${String(options.failUp ?? 0)} ] && exit 1`,
       "exit 0",
     ].join("\n"),
@@ -162,7 +169,7 @@ function setup(options = {}) {
       `echo "tmux $*" >>${calls}`,
       'case "$1" in',
       `  has-session) [ -e ${alive} ] ;;`,
-      `  kill-session) n=$(($(cat ${kills} 2>/dev/null || echo 0) + 1)); echo $n >${kills}; [ $n -gt ${String(options.survive ?? 0)} ] && rm -f ${alive}; exit 0 ;;`,
+      `  kill-session) read n <${kills}; n=$((n + 1)); echo $n >${kills}; [ $n -gt ${String(options.survive ?? 0)} ] && rm -f ${alive}; exit 0 ;;`,
       `  list-panes) echo ${String(options.panePid ?? 0)} ;;`,
       "esac",
     ].join("\n"),
