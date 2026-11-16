@@ -48,11 +48,13 @@ un patio amurallado y calcinado con adarves y torres arriba y un patio de pozo
 hundido abajo, cuyo rastrillo de la puerta se maneja desde las murallas; y
 **Moss Vale** (8v8, 5000x2600), un valle en terrazas partido en dos por un
 profundo canal de molino, que solo se cruza por el puente levadizo, el molino y
-el paso inferior que hay debajo. Dos arenas grandes son aún mayores:
+el paso inferior que hay debajo. Una arena grande es aún mayor:
 **Canthan Terraces** (1v1, 5200x2800), arrozales en terrazas con muros de norte
-a sur y huecos escalonados, alrededor de una pagoda en ruinas; y **Sunken
-Bastion** (2v2, 5600x3000), una fortaleza medio inundada cuya muralla con
-brechas rodea un torreón con dos puertas, con rocas de pantano fuera. Y para los
+a sur y huecos escalonados, alrededor de una pagoda en ruinas. **Sunken
+Bastion** (2v2, 2700x1900) es pequeña pero alta: una fortaleza medio inundada
+cuyo foso divide el patio; se cruza por un puente levadizo accionado con una
+palanca en cada orilla, por el adarve a lo largo de la muralla norte o por el
+sótano inundado de debajo. Y para los
 equipos más grandes: **Shiverpeak Pass** (4v4, 6000x3400), dos macizos de
 acantilados que dejan un amplio paso sembrado de rocas y un sendero estrecho en
 cada borde; y **Elonian Plateau** (8v8, 6400x3600), sabana abierta alrededor de

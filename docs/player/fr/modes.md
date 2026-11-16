@@ -49,12 +49,13 @@ de ronde et tours en haut et une cour de puits en contrebas, dont la herse du
 châtelet d'entrée se manœuvre depuis les remparts ; et **Moss Vale** (8v8,
 5000x2600), une vallée en terrasses coupée en deux par un profond bief de
 moulin, qu'on ne franchit qu'au pont-levis, au moulin et par le passage
-souterrain en dessous. Deux grandes arènes sont
-encore plus vastes : **Canthan Terraces** (1v1, 5200x2800), des rizières murées
-du nord au sud avec des passages décalés, autour d'une pagode en ruine ; et
-**Sunken Bastion** (2v2, 5600x3000), une forteresse à moitié inondée dont le
-rempart percé encercle un donjon à deux portes, avec des rochers de marais à
-l'extérieur.
+souterrain en dessous. Une grande arène est
+encore plus vaste : **Canthan Terraces** (1v1, 5200x2800), des rizières murées
+du nord au sud avec des passages décalés, autour d'une pagode en ruine.
+**Sunken Bastion** (2v2, 2700x1900) est petite mais haute : une forteresse à
+moitié inondée dont les douves coupent la cour en deux ; on les franchit par un
+pont-levis actionné par un levier sur chaque rive, par le chemin de ronde le
+long du rempart nord, ou par la cave inondée en dessous.
 Et pour les plus grandes équipes : **Shiverpeak Pass** (4v4, 6000x3400), deux
 massifs de falaises qui laissent un large col parsemé de rochers et un étroit
 sentier le long de chaque bord ; et **Elonian Plateau** (8v8, 6400x3600), une

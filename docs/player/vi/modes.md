@@ -45,12 +45,14 @@ tấm ván giữa được nâng lên bằng cần gạt. Cho các đội lớn 
 tường và tháp canh ở trên, một sân giếng trũng ở dưới, còn khung lưới sắt của
 cổng thành được điều khiển từ trên tường; và **Moss Vale** (8v8, 5000x2600), một
 thung lũng bậc thang bị một mương cối xay sâu cắt làm đôi, chỉ băng qua được ở
-cầu kéo, cối xay và lối ngầm bên dưới nó. Hai đấu trường
+cầu kéo, cối xay và lối ngầm bên dưới nó. Một đấu trường
 lớn còn lớn hơn nữa: **Canthan Terraces** (1v1, 5200x2800), ruộng bậc thang
 có tường chạy từ bắc xuống nam với các khe so le, quanh một ngôi chùa tháp
-đổ nát; và **Sunken Bastion** (2v2, 5600x3000), một pháo đài ngập nửa chừng
-có bức tường thành bị chọc thủng bao quanh một tòa tháp chính với hai cổng,
-đá đầm lầy bên ngoài. Và cho các đội lớn hơn: **Shiverpeak Pass** (4v4,
+đổ nát. **Sunken Bastion** (2v2, 2700x1900) nhỏ nhưng cao: một pháo đài
+ngập nửa chừng có hào nước chia đôi sân trong; có thể vượt hào qua cầu
+treo do cần gạt ở mỗi bờ điều khiển, qua lối đi trên tường dọc tường thành
+phía bắc, hoặc xuyên qua hầm ngập nước bên dưới. Và cho các đội lớn hơn:
+**Shiverpeak Pass** (4v4,
 6000x3400), hai khối vách đá chừa ra một con đèo rộng rải đầy tảng đá và một
 lối mòn hẹp dọc mỗi mép; và **Elonian Plateau** (8v8, 6400x3600), thảo
 nguyên trống trải quanh năm cao nguyên lớn, với tầm nhìn xa nhất trong mọi

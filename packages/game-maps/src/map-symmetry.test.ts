@@ -25,7 +25,6 @@ const SYMMETRIC = [
   "wardens-gallery",
   "brazen-causeway",
   "canthan-terraces",
-  "sunken-bastion",
   "shiverpeak-pass",
   "elonian-plateau",
 ];

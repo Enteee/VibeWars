@@ -47,11 +47,13 @@ mittplanka höjs av en spak. För de större lagen: **Ashen Courtyard** (4v4,
 nedsänkt brunnsgård nedanför, där porthusets fällgaller sköts från murarna; och
 **Moss Vale** (8v8, 5000x2600), en terrasserad dal som klyvs i två av en djup
 kvarnränna och bara kan korsas vid vindbryggan, kvarnen och underpassagen under
-den. Två stora arenor är ännu större: **Canthan Terraces** (1v1,
+den. En stor arena är ännu större: **Canthan Terraces** (1v1,
 5200x2800), risterrasser med murar från norr till söder och förskjutna
-öppningar, runt en förfallen pagod; och **Sunken Bastion** (2v2,
-5600x3000), en halvt översvämmad fästning vars genombrutna ringmur
-omger en borg med två portar, med träskklippor utanför.
+öppningar, runt en förfallen pagod. **Sunken Bastion** (2v2, 2700x1900)
+är liten men hög: en halvt översvämmad fästning vars vallgrav delar
+borggården; den korsas via en vindbrygga som manövreras med en spak på
+varje strand, via vallgången längs den norra ringmuren eller genom den
+översvämmade källaren under.
 Och för de större lagen: **Shiverpeak Pass** (4v4, 6000x3400),
 två klippmassiv som lämnar ett brett pass bestrött med stenblock och en
 smal stig längs varje kant; och **Elonian Plateau** (8v8, 6400x3600),

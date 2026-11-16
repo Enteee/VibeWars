@@ -45,11 +45,13 @@ mari: **Ashen Courtyard** (4v4, 3200x2400), o curte arsă, împrejmuită de zidu
 cu drumuri de strajă și turnuri deasupra și o curte cu fântână coborâtă dedesubt,
 iar grilajul porții e acționat de pe ziduri; și **Moss Vale** (8v8, 5000x2600), o
 vale în terase tăiată în două de un canal adânc de moară, ce se trece doar pe
-podul mobil, prin moară și prin pasajul subteran de sub ea. Două arene mari sunt și
-mai întinse: **Canthan Terraces** (1v1, 5200x2800), terase de orez cu ziduri de la
-nord la sud și deschideri decalate, în jurul unei pagode în ruine; și **Sunken
-Bastion** (2v2, 5600x3000), o fortăreață pe jumătate inundată a cărei incintă spartă
-înconjoară un donjon cu două porți, cu stânci de mlaștină în afară. Și pentru echipele
+podul mobil, prin moară și prin pasajul subteran de sub ea. O arenă mare este și
+mai întinsă: **Canthan Terraces** (1v1, 5200x2800), terase de orez cu ziduri de la
+nord la sud și deschideri decalate, în jurul unei pagode în ruine. **Sunken
+Bastion** (2v2, 2700x1900) e mică, dar înaltă: o fortăreață pe jumătate inundată al
+cărei șanț împarte curtea în două; îl treci pe un pod mobil acționat de o pârghie
+de pe fiecare mal, pe drumul de strajă de-a lungul zidului de nord sau prin pivnița
+inundată de dedesubt. Și pentru echipele
 mai mari: **Shiverpeak Pass** (4v4, 6000x3400), două masive de stâncă ce lasă o
 trecătoare largă presărată cu bolovani și o potecă îngustă pe fiecare margine; și
 **Elonian Plateau** (8v8, 6400x3600), savană deschisă în jurul a cinci mari platouri,

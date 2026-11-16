@@ -46,12 +46,13 @@ uitgebrande ommuurde binnenplaats met weergangen en torens erboven en een
 verzonken putplein eronder, met een valhek in het poortgebouw dat vanaf de
 muren wordt bediend; en **Moss Vale** (8v8, 5000x2600), een terrasvormig dal
 dat een diepe molenbeek in tweeën snijdt, alleen over te steken bij de
-ophaalbrug, de molen en de onderdoorgang daaronder.
-Twee grote arena's zijn
-nog groter: **Canthan Terraces** (1v1, 5200x2800), rijstterrassen met muren van
-noord naar zuid met verspreide openingen, rond een verwoeste pagode; en **Sunken
-Bastion** (2v2, 5600x3000), een half ondergelopen vesting waarvan de doorbroken
-ringmuur een burcht met twee poorten omringt, met moerasrotsen daarbuiten.
+ophaalbrug, de molen en de onderdoorgang daaronder. Eén grote arena is nog
+groter: **Canthan Terraces** (1v1, 5200x2800), rijstterrassen met muren van
+noord naar zuid met verspreide openingen, rond een verwoeste pagode. **Sunken
+Bastion** (2v2, 2700x1900) is klein maar hoog: een half ondergelopen vesting
+waarvan de slotgracht de binnenplaats splitst; je steekt over via een ophaalbrug
+die met een hendel op elke oever wordt bediend, via de weergang langs de
+noordelijke ringmuur of door de ondergelopen kelder eronder.
 En voor de grotere teams: **Shiverpeak Pass** (4v4, 6000x3400), twee rotsmassieven
 die een brede pas vol keien en een smal pad langs elke rand overlaten; en
 **Elonian Plateau** (8v8, 6400x3600), open savanne rond vijf grote mesa's, met de

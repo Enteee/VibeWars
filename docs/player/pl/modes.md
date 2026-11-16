@@ -43,12 +43,12 @@ dźwignia. Dla większych drużyn: **Ashen Courtyard** (4v4, 3200x2400), spalony
 otoczony murem, z gankami na murach i wieżami w górze oraz zagłębionym dziedzińcem ze studnią
 w dole, a broną bramy steruje się z murów; oraz **Moss Vale** (8v8, 5000x2600), tarasowa
 dolina przecięta na pół głęboką młynówką, przez którą można przejść tylko mostem
-zwodzonym, przez młyn albo przejściem pod nim.
-Dwie duże areny są jeszcze większe: **Canthan Terraces** (1v1,
+zwodzonym, przez młyn albo przejściem pod nim. Jedna duża arena jest jeszcze większa: **Canthan Terraces** (1v1,
 5200x2800), tarasy ryżowe obmurowane z północy na południe z mijającymi się
-przejściami, wokół zrujnowanej pagody; oraz **Sunken Bastion** (2v2, 5600x3000), na
-wpół zalana forteca, której przełamana kurtyna otacza twierdzę z dwiema bramami,
-z bagiennymi skałami na zewnątrz.
+przejściami, wokół zrujnowanej pagody. **Sunken Bastion** (2v2, 2700x1900) jest mała,
+ale wysoka: na wpół zalana forteca, której dziedziniec przecina fosa; przechodzi się
+przez nią zwodzonym mostem poruszanym dźwignią na każdym brzegu, chodnikiem na
+murach wzdłuż północnej kurtyny albo przez zalaną piwnicę pod spodem.
 A dla większych drużyn: **Shiverpeak Pass** (4v4, 6000x3400), dwa masywy skalne
 zostawiające szeroką przełęcz usianą głazami i wąską ścieżkę wzdłuż każdej krawędzi;
 oraz **Elonian Plateau** (8v8, 6400x3600), otwarta sawanna wokół pięciu wielkich

@@ -50,13 +50,13 @@ piha, jonka yllä on vallikäytäviä ja torneja ja alla upotettu kaivopiha ja
 jonka porttirakennuksen laskuristikkoa käytetään muureilta; ja **Moss Vale**
 (8v8, 5000x2600), porrastettu laakso, jonka syvä myllykouru halkaisee kahtia
 ja jonka yli pääsee vain laskusillalla, myllyn kautta ja sen alta kulkevaa
-alikulkua pitkin.
-Kaksi suurta areenaa on vielä isompia: **Canthan Terraces**
+alikulkua pitkin. Yksi suuri areena on vielä isompi: **Canthan Terraces**
 (1v1, 5200x2800), pohjoisesta etelään muurattuja riisiterasseja
-porrastetuin aukoin raunioituneen pagodin ympärillä; ja **Sunken
-Bastion** (2v2, 5600x3000), puoliksi tulvinut linnoitus, jonka murrettu
-ulkomuuri ympäröi kaksiporttista linnaketta, ja ulkopuolella
-suokiviä.
+porrastetuin aukoin raunioituneen pagodin ympärillä. **Sunken Bastion**
+(2v2, 2700x1900) on pieni mutta korkea: puoliksi tulvinut linnoitus,
+jonka vallihauta halkaisee pihan. Sen yli pääsee laskusiltaa pitkin,
+jota ohjataan vivulla kummaltakin rannalta, pohjoisen ulkomuurin
+vallikäytävää pitkin tai alla olevan tulvineen kellarin kautta.
 Ja isommille tiimeille: **Shiverpeak Pass** (4v4, 6000x3400),
 kaksi kalliojyrkännettä, joiden väliin jää leveä, lohkareiden täplittämä
 sola ja kapea polku kummankin reunan vierellä; ja **Elonian Plateau**
