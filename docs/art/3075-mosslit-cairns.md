@@ -40,7 +40,7 @@ moss on cairn hills: each point on a hilltop, the glow as light sources) is kept
   One `canopy` overhang (a root arch) off every route.
 - **Light:** the **Dusk** row (visual-style §2), sun from the NW, 25°, `#ffb87a` 0.5. A violet glow
   ring (220) on each hilltop, two on the banks, torches `#ffb060` at the gates, rings at the shrines
-  and levers. 16 lights, the cap. Nothing is dim except the tunnel, which has its torches.
+  and levers. 13 lights, under 16. Nothing is dim except the tunnel, which has its torches.
 - **Reduced motion:** the glow holds steady (it does not flutter), torch flicker steady, mist holds
   still, spring drift stops; the gates move once on a lever.
 - **8v8 tick budget:** 3 layers, 8 structures.
