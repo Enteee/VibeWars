@@ -14,7 +14,7 @@ describe("sizeClass (#444, #2547)", () => {
     expect(sizeClass({ width: 4801, height: 100 })).toBe("large");
   });
 
-  it("calls every arena today small, but Crossroads and Long Hall (#3071) medium, Shiverpeak Pass and Elonian Plateau (#2609) and Moss Vale (#3288) large", () => {
+  it("calls every arena today small, but Crossroads and Long Hall (#3071) medium, Shiverpeak Pass and Elonian Plateau (#2609), Moss Vale (#3288) and Ashen Courtyard (#3413) large", () => {
     expect(Object.fromEntries(loadAllMaps().map((map) => [map.id, sizeClass(map)]))).toEqual({
       "ember-pits": "small",
       "jungle-ruins": "small",
@@ -38,7 +38,7 @@ describe("sizeClass (#444, #2547)", () => {
       "scarred-earth": "small",
       "sandstone-steps": "small",
       "frozen-crossing": "small",
-      "ashen-courtyard": "small",
+      "ashen-courtyard": "large",
       "moss-vale": "large",
       "canthan-terraces": "small",
       "sunken-bastion": "small",
