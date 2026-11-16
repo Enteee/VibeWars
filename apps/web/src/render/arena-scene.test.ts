@@ -155,6 +155,52 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
     expect(side.alpha).toBe(1);
   });
 
+  it("fades a wall and a breakable over the viewer's tunnel with its cover, and nothing else (#3418)", async () => {
+    const { mapStructure } = await import("../net/maps.js");
+    const { structure } = mapStructure("arena-long-hall");
+    const fading = (): { alpha: number; setAlpha(alpha: number): unknown } => ({
+      alpha: 1,
+      setAlpha(alpha: number) {
+        this.alpha = alpha;
+        return this;
+      },
+    });
+    const cover = { ground: fading(), seam: fading() };
+    const [wallOver, tunnelWall] = [fading(), fading()];
+    const [iceOver, iceElsewhere] = [fading(), fading()];
+    const style = (tunnels: readonly number[]) => ({ tunnels });
+    const self = { team: "self", position: { x: 1620, y: 1450 }, layer: structure.ground - 1 };
+    const scene = Object.assign(new ArenaScene(), {
+      snapshot: { structure, actors: [self] },
+      tunnelCovers: new Map([[0, cover]]),
+      decksOverTunnels: new Map([[0, [wallOver]]]),
+      structureGraphics: new Map([["wall", tunnelWall]]),
+      breakableDrawings: new Map([
+        ["ice-wall", { graphics: iceOver }],
+        ["far-wall", { graphics: iceElsewhere }],
+      ]),
+      breakableStyle: {
+        walls: new Map([
+          ["ice-wall", style([0])],
+          ["far-wall", style([])],
+        ]),
+      },
+      reducedMotion: true,
+    }) as unknown as { cutAwayTunnels(dt: number): void };
+
+    scene.cutAwayTunnels(0.016);
+    expect(cover.ground.alpha).toBeLessThan(1);
+    expect(wallOver.alpha).toBe(cover.ground.alpha);
+    expect(iceOver.alpha).toBe(cover.ground.alpha);
+    expect(tunnelWall.alpha).toBe(1);
+    expect(iceElsewhere.alpha).toBe(1);
+
+    self.layer = structure.ground;
+    scene.cutAwayTunnels(0.016);
+    expect(wallOver.alpha).toBe(1);
+    expect(iceOver.alpha).toBe(1);
+  });
+
   it("gives a walked-under top over the viewer's tunnel the lower of its two fades (#3352)", async () => {
     const { mapStructure } = await import("../net/maps.js");
     const { OVERHANG_FADED_ALPHA } = await import("./overhang-art.js");

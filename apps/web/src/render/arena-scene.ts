@@ -313,12 +313,15 @@ import {
   type DeckFrame,
 } from "./structure-art.js";
 import {
+  EVERYWHERE,
   clippedPainter,
   coverPieces,
   liftedCovers,
   outlineArea,
+  wallPieces,
   type CoverPiece,
   type TunnelCoverBox,
+  type WallPiece,
 } from "./cover-pieces.js";
 import { liftFrame, liftPlatform, liftShaft, type LiftFrame } from "./lift-art.js";
 import { paintDeckShadows } from "./shadow-geometry.js";
@@ -789,6 +792,8 @@ export class ArenaScene extends Phaser.Scene {
             readonly palette: ArenaPalette;
             readonly network: CrackNetwork;
             readonly tumbles: readonly TumbleChunk[];
+            /** The tunnels it draws over, whose covers it fades with (#3418). */
+            readonly tunnels: readonly number[];
           }
         >;
       }
@@ -3611,6 +3616,15 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     this.liftFrames = lifts;
+    for (const { graphics } of this.coversDrawn) {
+      graphics.destroy();
+    }
+    this.coversDrawn = [];
+    for (const graphics of [...this.decksOverTunnels.values()].flat()) {
+      graphics.destroy();
+    }
+    this.decksOverTunnels.clear();
+    const covers = tunnelCoverBoxes(next.structure);
     for (const wall of next.walls) {
       const held = deckHeldBy(wall, next.structure);
       const g = this.structureAt(
@@ -3622,31 +3636,44 @@ export class ArenaScene extends Phaser.Scene {
       if (isBreakableWall(wall)) {
         continue;
       }
+      const base = elevationOf(wall.layer, ground);
+      // What of a wall is over a tunnel fades with the tunnel's cover (#3418).
+      const pieces =
+        next.structure.layerCount === 1 || held !== undefined || wall.layer < ground
+          ? []
+          : wallPieces(shapeOutline(wall), base, base + WALL_HEIGHT, covers);
+      const over = pieces.find(({ tunnel }) => tunnel !== undefined)?.tunnel;
       // A shut secret passage (#3068) is the rock wall it hides in.
       if (isDoor(wall) && wall.look !== "secret") {
         const flat = next.structure.layerCount === 1;
         const look = wall.look === "door" ? doorPalette(palette) : palette;
-        g.save();
-        g.translateCanvas(0, -elevationOf(wall.layer, ground));
-        GATE_ART.shut[wall.look](this.gatePainter(g), wall, {
+        // A shut gate over a tunnel fades whole with its cover: it is small (#3418).
+        const shut =
+          over === undefined ? g : this.overTunnel(over, { kind: "wall", layer: wall.layer });
+        shut.save();
+        shut.translateCanvas(0, -base);
+        GATE_ART.shut[wall.look](this.gatePainter(shut), wall, {
           height: flat ? 0 : WALL_HEIGHT,
           line,
           palette: litStructurePalette(look, next.lighting, wall, wall.layer),
         });
-        g.restore();
+        shut.restore();
         continue;
       }
       const lit = litStructurePalette(palette, next.lighting, wall, wall.layer);
       if (next.structure.layerCount === 1) {
         this.drawFlatWall(g, wall, line, lit);
       } else if (held === undefined) {
-        this.drawWallBox(g, wall, elevationOf(wall.layer, ground), line, lit);
+        if (over !== undefined) {
+          this.drawWallBoxOverTunnels(g, wall, base, line, lit, pieces);
+        } else {
+          this.drawWallBox(g, wall, base, line, lit);
+        }
       } else {
-        const low = elevationOf(wall.layer, ground);
         const depth = renderOrder({ kind: "support", deckLayer: held.layer });
         const hidden = deckCovers(next.structure, next.walls, depth);
         const high = deckSideLow(held, next.walls, ground);
-        this.drawColumn(g, wall, low, high, lit.support, false, hidden);
+        this.drawColumn(g, wall, base, high, lit.support, false, hidden);
       }
     }
     // Each breakable wall's material, cracks and fall, worked out once per
@@ -3672,6 +3699,15 @@ export class ArenaScene extends Phaser.Scene {
               ),
               network: crackNetwork(seed, breakable.wall, height),
               tumbles: tumbleChunks(seed, breakable.wall, height),
+              tunnels:
+                breakable.layer < ground
+                  ? []
+                  : wallPieces(
+                      shapeOutline(breakable.wall),
+                      elevationOf(breakable.layer, ground),
+                      elevationOf(breakable.layer, ground) + height,
+                      covers,
+                    ).flatMap(({ tunnel }) => (tunnel === undefined ? [] : [tunnel])),
             },
           ];
         }),
@@ -3691,15 +3727,6 @@ export class ArenaScene extends Phaser.Scene {
         g.restore();
       }
     }
-    for (const { graphics } of this.coversDrawn) {
-      graphics.destroy();
-    }
-    this.coversDrawn = [];
-    for (const graphics of [...this.decksOverTunnels.values()].flat()) {
-      graphics.destroy();
-    }
-    this.decksOverTunnels.clear();
-    const covers = tunnelCoverBoxes(next.structure);
     for (const deck of [...next.structure.decks, ...next.structure.downDecks]) {
       this.drawDeck(
         next.structure,
@@ -3866,8 +3893,8 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The ground over the tunnel the local body is in, and the paving on it
-   * (#3272), cut away (#3234): they fade to `TUNNEL_CUTAWAY_ALPHA` and stop
+   * The ground over the tunnel the local body is in, and the paving, decks,
+   * walls and breakables on it (#3272, #3352, #3418), cut away (#3234): they fade to `TUNNEL_CUTAWAY_ALPHA` and stop
    * hiding whoever is in that tunnel, and fade back in once the body leaves. At once under reduced
    * motion.
    */
@@ -3904,6 +3931,13 @@ export class ArenaScene extends Phaser.Scene {
       water?.surface.setAlpha(ground.alpha);
       water?.ripples.setAlpha(ground.alpha);
       this.lightingPass?.fadeTunnel(at, ground.alpha);
+    }
+    // A breakable over a tunnel fades whole, as its cover does (#3418).
+    for (const [id, { graphics }] of this.breakableDrawings) {
+      const tunnels = this.breakableStyle?.walls.get(id)?.tunnels ?? [];
+      graphics.setAlpha(
+        Math.min(1, ...tunnels.map((at) => this.tunnelCovers.get(at)?.ground.alpha ?? 1)),
+      );
     }
   }
 
@@ -4507,6 +4541,53 @@ export class ArenaScene extends Phaser.Scene {
       g.lineBetween(from.x, from.y, to.x, to.y);
     }
     g.restore();
+  }
+
+  /**
+   * A wall box split by the tunnel covers it draws over (#3418): the art of
+   * `drawWallBox`, lifts taken off, drawn once through each piece's box,
+   * its part over a tunnel into graphics faded with that tunnel's cover.
+   * A cut meets the next piece's exactly, so the wall shows no seam.
+   */
+  private drawWallBoxOverTunnels(
+    g: Phaser.GameObjects.Graphics,
+    wall: RenderableWall,
+    base: number,
+    line: number,
+    palette: ArenaPalette,
+    pieces: readonly WallPiece[],
+  ): void {
+    const top = base + WALL_HEIGHT;
+    const triangles = shapeTriangles(wall);
+    for (const { tunnel, box } of pieces) {
+      const painter = clippedPainter(
+        tunnel === undefined ? g : this.overTunnel(tunnel, { kind: "wall", layer: wall.layer }),
+        box,
+      );
+      painter.fillStyle(palette.wallFace, 1);
+      for (const [a, b, c, d] of sweptEdges(wall, base, top)) {
+        if (a !== undefined && b !== undefined && c !== undefined && d !== undefined) {
+          painter.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+          painter.fillTriangle(a.x, a.y, c.x, c.y, d.x, d.y);
+        }
+      }
+      painter.fillStyle(palette.wallTop, 1);
+      for (const [a, b, c] of triangles) {
+        if (a !== undefined && b !== undefined && c !== undefined) {
+          painter.fillTriangle(a.x, a.y - top, b.x, b.y - top, c.x, c.y - top);
+        }
+      }
+      painter.lineStyle(line, palette.wallStroke, 1);
+      const outline = shapeOutline(wall);
+      outline.forEach((from, at) => {
+        const to = outline[(at + 1) % outline.length] ?? from;
+        painter.lineBetween(from.x, from.y - top, to.x, to.y - top);
+      });
+      painter.lineStyle(line * WALL_LIT_WIDTH, palette.wallLit, 1);
+      for (const { from, to } of southFacingEdges(wall)) {
+        painter.lineBetween(from.x, from.y - top, to.x, to.y - top);
+      }
+    }
   }
 
   private fillShape(g: Phaser.GameObjects.Graphics, wall: RenderableShape): void {
@@ -5251,9 +5332,6 @@ function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[], clo
     g.closePath();
   }
 }
-
-/** The whole plane, as a box: what a deck's pieces tile (#3352). */
-const EVERYWHERE: Box = { left: -Infinity, top: -Infinity, right: Infinity, bottom: Infinity };
 
 /**
  * Where a split deck's side faces draw (#3352): a side face stands in
