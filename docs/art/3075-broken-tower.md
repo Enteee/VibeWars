@@ -38,8 +38,9 @@ tower on a hill: its stump a climbable ruin, rubble terraces, a cellar route) is
   Two brass **levers** on the hill terrace, (2250,1380) and (3150,1420), **each opens both doors**:
   either team can open the cellar, and a pulled lever opens it for both. No lift is used (bots read
   a lever lift as closed). A **breakable rubble wall** (x 1930, y 1420..1620) closes a lane at the
-  west terrace. Zones: `mire` (1000,2000) and `spring` (4300,700), off every route, ≥ 200 u from a
-  spawn. Water: two shallow **meltwater pools**, off every route. Atmosphere (existing, #3032):
+  west terrace. Zones: a `spring` and a `mire` for each team, the same on both sides (turned 180°):
+  spring (1100,700) and mire (1100,2300) west, the pair turned east; off every route, ≥ 300 u from
+  a relic spawn and ≥ 200 u from a spawn. Water: two shallow **meltwater pools**, off every route. Atmosphere (existing, #3032):
   three dust banks, under bodies, never over an altar, a stair or a lever. One `canopy` overhang
   (a fallen beam) off every route. Six broken columns ring the tower base.
 - **Light:** the **Day** row (visual-style §2), sun from the NW, 50°, `#fff1d6` 0.55. Torches
@@ -75,8 +76,7 @@ west and east rims are the two sides' high ground.
 altar. The altar, the stump top and every stair are reachable by both teams without passing the other's
 spawn.
 
-The sides differ on purpose: the east terrace is 6 % smaller than the west, the spring is
-north-east and the mire south-west, the beam sits on the south-west only.
+The sides differ on purpose: the east terrace is 6 % smaller than the west, the beam sits on the south-west only.
 
 ## Canyon lessons, on the plan
 
