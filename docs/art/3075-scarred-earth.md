@@ -35,14 +35,14 @@ battlefield: craters as pits, trenches as tunnels, wrecked siege towers as tower
   120 u from a trench centre line (y 900 and y 1900), the outer lanes on the field edge (y 330, 2470);
   a route only crosses a trench at right angles. Cover shows the seam and grating slots (#3236), as
   wide as the walkable floor (#3179).
-- **Drop-offs (4):** the great hulk's north and south edges, the NW hulk's west edge and the NE
-  hulk's east edge (x-mirrored).
+- **Drop-offs (4):** the great hulk's north-west and north-east edges (off its stairs), the NW hulk's
+  west edge and the NE hulk's east edge (x-mirrored).
 - **Elements:** four **trench gates** start shut. Two brass **levers** on the hulk bases, (1550,640)
   **opens both north gates** and (3850,2160) **both south gates**: either team can open a trench, and
   a pulled lever opens it for both. No lift is used. Two **breakable wrecked palisades**, a mirrored
   pair (x 950..974 and x 4426..4450, y 880..1030), each close a short-cut between the two lanes
   beside the shrine, 100 u or more off every route. Zones: a `mire` and a `spring` for each team,
-  the same on both sides (mire (1320,1620), spring (1000,1620) west, mirrored east), off every route
+  the same on both sides (mire (1320,1620), spring (1000,1250) west, mirrored east), off every route
   and ≥ 200 u from a spawn and a shrine. Atmosphere (existing, #3032): three smoke banks, under
   bodies, never over a point, a stair or a lever. One `canopy` overhang (a toppled beam) off every
   route.
@@ -73,7 +73,7 @@ the gap the structure gives, not a promise about the final art.
 | 4 / 5 own hulk, south | 13.2 s                 | 9.0 s      |
 | 2 / 1 far hulk, north | 23.8 s                 | 19.6 s     |
 | 5 / 4 far hulk, south | 23.8 s                 | 19.5 s     |
-| 3 great hulk (centre) | 12.0 s (west approach) | 15.4 s     |
+| 3 great hulk (centre) | 12.0 s (west approach) | 15.3 s     |
 
 A far hulk is a 19.5..23.8 s walk, under 25 s. **4v4 plays the whole map from 8v8's camps** (architect
 decision): no second spawn set; the fight with the centre is 12 s from a spawn.
