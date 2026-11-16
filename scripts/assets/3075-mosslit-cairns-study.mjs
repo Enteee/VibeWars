@@ -5,12 +5,14 @@ import { rect, runStudy, seats } from "./3075-study-lib.mjs";
 
 const MW = 5400,
   MH = 3000,
-  AX = 2700; // the axis the five hills stand on: equidistant from both teams
+  AX = 2700; // the great cairn stands on this axis; the other four hills are mirrored pairs
 /** @typedef {[number, number]} Pt */
 /** The map is mirrored in x (west team, east team); north and south differ. */
 /** @type {(p: Pt | string) => Pt | string} */
 const mx = (p) =>
-  typeof p === "string" ? (p === "C1" ? "C2" : p === "C2" ? "C1" : p) : [MW - p[0], p[1]];
+  typeof p === "string"
+    ? ({ C1: "C2", C2: "C1", P1: "P2", P2: "P1", P4: "P5", P5: "P4" }[p] ?? p)
+    : [MW - p[0], p[1]];
 /** @type {(r: (Pt | string)[]) => (Pt | string)[]} */
 const mxr = (r) => r.map(mx);
 /** @type {(poly: Pt[]) => Pt[]} */
@@ -55,38 +57,37 @@ const outline = [
   [200, 1900],
 ];
 
-// The five hills, north to south: centre y, half width, half height. The point stands on each.
+// The five hills. The great cairn (P3) is the centre point; P1/P2 (north) and P4/P5 (south) are two
+// mirrored pairs, each pair one hill nearer each base: P1 and P4 are team 1's, P2 and P5 team 2's.
+const HX = 1600; // a west hill's centre x; the east hill is its x mirror
 const hills = [
-  { id: "north cairn", cy: 440, a: 380, b: 130 },
-  { id: "moss cairn N", cy: 960, a: 430, b: 150 },
-  { id: "great cairn", cy: 1500, a: 520, b: 200 },
-  { id: "moss cairn S", cy: 2060, a: 430, b: 150 },
-  { id: "south cairn", cy: 2560, a: 380, b: 130 },
+  { id: "NW cairn", cx: HX, cy: 760, a: 400, b: 140 },
+  { id: "NE cairn", cx: MW - HX, cy: 760, a: 400, b: 140 },
+  { id: "great cairn", cx: AX, cy: 1500, a: 520, b: 200 },
+  { id: "SW cairn", cx: HX, cy: 2240, a: 440, b: 150 },
+  { id: "SE cairn", cx: MW - HX, cy: 2240, a: 440, b: 150 },
 ];
-/** @type {(cy: number, a: number, b: number) => Pt[]} */
-const ellipse = (cy, a, b) =>
+/** @type {(h: { cx: number; cy: number; a: number; b: number }) => Pt[]} */
+const ellipse = ({ cx, cy, a, b }) =>
   /** @type {Pt[]} */ (
     Array.from({ length: 12 }, (_, i) => {
       const t = (i / 12) * Math.PI * 2,
         r = 1 + 0.07 * Math.cos(2 * t);
-      return [Math.round(AX + a * r * Math.cos(t)), Math.round(cy + b * r * Math.sin(t))];
+      return [Math.round(cx + a * r * Math.cos(t)), Math.round(cy + b * r * Math.sin(t))];
     })
   );
-const lane = (/** @type {number} */ i) => {
-  const h0 = /** @type {{cy:number;b:number}} */ (hills[i]),
-    h1 = /** @type {{cy:number;b:number}} */ (hills[i + 1]);
-  return Math.round((h0.cy + h0.b + h1.cy - h1.b) / 2);
-};
+const NL = 1000, // north lane y (south of the north hills)
+  SL = 2000; // south lane y (north of the south hills)
 
 const shapes = [
   ...hills.map((h) => ({
     id: h.id,
     layer: 1,
     look: /** @type {"mound"} */ ("mound"),
-    poly: ellipse(h.cy, h.a, h.b),
+    poly: ellipse(h),
   })),
-  { id: "cairn top", layer: 2, poly: ellipse(1500, 250, 110) },
-  // side banks: the high ground each team holds a lane's length from the hills
+  { id: "cairn top", layer: 2, poly: ellipse({ cx: AX, cy: 1500, a: 250, b: 110 }) },
+  // side banks: the high ground each team holds beside the north lane
   {
     id: "west moss bank",
     layer: 1,
@@ -111,16 +112,17 @@ shapes.push({
 /** @type {{ id: string; r: Pt[]; from: number; north?: boolean }[]} */
 const stairs = [];
 hills.forEach((h, i) => {
-  stairs.push({ id: `${i + 1}-w`, r: rect(AX - h.a - 90, h.cy - 110, 140, 100), from: 0 });
-  stairs.push({ id: `${i + 1}-e`, r: rect(AX + h.a - 50, h.cy - 110, 140, 100), from: 0 });
-  if (i > 0)
+  const k = i + 1;
+  stairs.push({ id: `${k}-w`, r: rect(h.cx - h.a - 90, h.cy - 110, 140, 100), from: 0 });
+  stairs.push({ id: `${k}-e`, r: rect(h.cx + h.a - 50, h.cy - 110, 140, 100), from: 0 });
+  if (h.cy > 1000)
     stairs.push({
-      id: `${i + 1}-n`,
-      r: rect(AX - 70, h.cy - h.b - 100, 140, 100),
+      id: `${k}-n`,
+      r: rect(h.cx - 70, h.cy - h.b - 100, 140, 100),
       from: 0,
       north: true,
     });
-  if (i < 4) stairs.push({ id: `${i + 1}-s`, r: rect(AX - 70, h.cy + h.b, 140, 100), from: 0 });
+  if (h.cy < 2000) stairs.push({ id: `${k}-s`, r: rect(h.cx - 70, h.cy + h.b, 140, 100), from: 0 });
 });
 stairs.push({ id: "top-w", r: rect(AX - 330, 1480, 120, 80), from: 1 });
 stairs.push({ id: "top-e", r: rect(AX + 210, 1480, 120, 80), from: 1 });
@@ -129,27 +131,40 @@ stairs.push({ id: "bank-w", r: rect(1620, 1330, 140, 100), from: 0 });
 stairs.push({ id: "bank-e", r: rect(MW - 1760, 1330, 140, 100), from: 0 });
 
 const M = "M";
-const west = (/** @type {number} */ i) =>
-  /** @type {Pt} */ ([
-    AX - /** @type {{a:number}} */ (hills[i]).a - 20,
-    /** @type {{cy:number}} */ (hills[i]).cy - 60,
-  ]);
 const pointOf = (/** @type {number} */ i) => `P${i + 1}`;
-/** Spawn to point i: up the west stair, or from the lane beside it. */
+const hillW = (/** @type {number} */ i) => {
+  const h = /** @type {{cx:number;cy:number;a:number}} */ (hills[i]);
+  return /** @type {Pt} */ ([h.cx - h.a - 20, h.cy - 60]);
+};
+/** Spawn to hill i, two ways: by its outer (west) stair, or from the lane beside it. */
 const toPoint = (/** @type {number} */ i) => {
-  const h = /** @type {{cy:number;b:number}} */ (hills[i]);
-  const ln = i === 0 ? lane(0) : i === 4 ? lane(3) : i === 1 ? lane(1) : lane(i - 1);
-  const stairY = i < 2 ? h.cy + h.b + 50 : h.cy - h.b - 50;
+  const h = /** @type {{cx:number;cy:number;b:number}} */ (hills[i]);
+  const north = h.cy < 1500;
+  const ln = north ? NL : SL;
+  const far = h.cx > AX;
+  /** @type {(Pt | string)[]} */
+  const outer = far
+    ? [
+        "C1",
+        north ? [1100, 500] : [1100, 2600],
+        north ? [AX, 500] : [AX, 2600],
+        hillW(i),
+        pointOf(i),
+      ]
+    : ["C1", [1100, h.cy - 60], hillW(i), pointOf(i)];
   return /** @type {[string, (Pt | string)[]][]} */ ([
-    ["west stair", ["C1", [1500, 1500], west(i), pointOf(i)]],
-    ["lane stair", ["C1", [1500, ln], [AX, ln], [AX, stairY], pointOf(i)]],
+    [far ? "outer rim" : "west stair", outer],
+    [
+      "lane stair",
+      ["C1", [1300, ln], [h.cx, ln], [h.cx, north ? h.cy + h.b + 50 : h.cy - h.b - 50], pointOf(i)],
+    ],
   ]);
 };
 
 const toCentre = /** @type {[string, (Pt | string)[]][]} */ ([
-  ["west stair", ["C1", [1500, 1500], west(2), M]],
-  ["north lane", ["C1", [1400, lane(1)], [AX, lane(1)], [AX, 1280], [AX, 1400], M]],
-  ["south lane", ["C1", [1400, lane(2)], [AX, lane(2)], [AX, 1720], [AX, 1600], M]],
+  ["west stair", ["C1", [1500, 1500], [AX - 600, 1540], M]],
+  ["north lane", ["C1", [1300, NL], [AX, NL], [AX, 1280], [AX, 1400], M]],
+  ["south lane", ["C1", [1300, SL], [AX, SL], [AX, 1720], [AX, 1600], M]],
 ]);
 
 runStudy({
@@ -165,8 +180,8 @@ runStudy({
     {
       id: "root-tunnel",
       path: [
-        [2000, 2150],
-        [3400, 2150],
+        [2250, 2150],
+        [3150, 2150],
       ],
       w: 110,
       label: "root tunnel",
@@ -174,89 +189,66 @@ runStudy({
   ],
   water: [
     {
-      poly: [
-        [1250, 420],
-        [1800, 380],
-        [1950, 500],
-        [1650, 600],
-        [1300, 560],
-      ],
+      poly: /** @type {Pt[]} */ (
+        Array.from({ length: 10 }, (_, i) => [
+          Math.round(AX + 260 * Math.cos((i / 10) * Math.PI * 2)),
+          Math.round(330 + 70 * Math.sin((i / 10) * Math.PI * 2)),
+        ])
+      ),
       deep: false,
       label: "moss pool",
-      at: [1250, 660],
+      at: [AX - 100, 440],
     },
     {
-      poly: xPoly([
-        [1250, 420],
-        [1800, 380],
-        [1950, 500],
-        [1650, 600],
-        [1300, 560],
-      ]),
-      deep: false,
-      label: "moss pool",
-      at: [3700, 660],
-    },
-    {
-      poly: [
-        [1300, 2420],
-        [1750, 2380],
-        [1900, 2500],
-        [1650, 2620],
-        [1300, 2580],
-      ],
+      poly: /** @type {Pt[]} */ (
+        Array.from({ length: 10 }, (_, i) => [
+          Math.round(AX + 240 * Math.cos((i / 10) * Math.PI * 2)),
+          Math.round(2790 + 55 * Math.sin((i / 10) * Math.PI * 2)),
+        ])
+      ),
       deep: true,
       label: "sink pool",
-      at: [1250, 2700],
-    },
-    {
-      poly: xPoly([
-        [1300, 2420],
-        [1750, 2380],
-        [1900, 2500],
-        [1650, 2620],
-        [1300, 2580],
-      ]),
-      deep: true,
-      label: "sink pool",
-      at: [3700, 2700],
+      at: [AX - 100, 2720],
     },
   ],
   zones: [
-    { kind: "spring", cx: 1100, cy: 2100, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "spring", cx: MW - 1100, cy: 2100, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "mire", cx: 1000, cy: 900, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
-    { kind: "mire", cx: MW - 1000, cy: 900, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "spring", cx: 700, cy: 2650, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
+    { kind: "mire", cx: 900, cy: 1130, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "spring", cx: MW - 700, cy: 2650, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
+    { kind: "mire", cx: MW - 900, cy: 1130, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
   ],
-  breakables: [{ r: rect(1650, 1780, 24, 160), label: "root wall (breakable)" }],
+  breakables: [
+    { r: rect(1650, 1760, 24, 140), label: "root wall (breakable)" },
+    { r: rect(MW - 1674, 1760, 24, 140), label: "root wall (breakable)" },
+  ],
   gates: [
-    { p: [2000, 2150], label: "root gate W" },
-    { p: [3400, 2150], label: "root gate E" },
+    { p: [2250, 2150], label: "root gate W" },
+    { p: [3150, 2150], label: "root gate E" },
   ],
   levers: [
-    { p: [AX - 220, 960], layer: 1, label: "lever → both gates" },
-    { p: [AX + 220, 960], layer: 1, label: "lever → both gates" },
+    { p: [HX - 120, 720], layer: 1, label: "lever → both gates" },
+    { p: [MW - HX + 120, 720], layer: 1, label: "lever → both gates" },
   ],
   lights: [
-    ...hills.map((h) => ({ p: /** @type {Pt} */ ([AX, h.cy]), r: 220, col: "#a98cff" })),
-    { p: [2000, 2150], r: 150 },
-    { p: [3400, 2150], r: 150 },
-    { p: [700, 1000], r: 180 },
-    { p: [MW - 700, 1000], r: 180 },
-    { p: [AX - 220, 960], r: 130 },
-    { p: [AX + 220, 960], r: 130 },
+    ...hills.map((h) => ({ p: /** @type {Pt} */ ([h.cx, h.cy]), r: 220, col: "#a98cff" })),
+    { p: [2250, 2150], r: 150 },
+    { p: [3150, 2150], r: 150 },
+    { p: [700, 2300], r: 180 },
+    { p: [MW - 700, 2300], r: 180 },
+    { p: [HX - 120, 720], r: 130 },
+    { p: [MW - HX + 120, 720], r: 130 },
     { p: [1700, 1200], r: 160, col: "#a98cff" },
     { p: [MW - 1700, 1200], r: 160, col: "#a98cff" },
   ],
   atmo: [
-    { label: "mist bank", cx: 1500, cy: 900, rx: 300, ry: 120, col: "#c8d4e4", op: 0.2 },
-    { label: "mist bank", cx: 3900, cy: 2200, rx: 300, ry: 120, col: "#c8d4e4", op: 0.2 },
-    { label: "mist bank", cx: AX, cy: 2800, rx: 300, ry: 100, col: "#c8d4e4", op: 0.18 },
+    { label: "mist bank", cx: 1500, cy: 1750, rx: 300, ry: 100, col: "#c8d4e4", op: 0.2 },
+    { label: "mist bank", cx: MW - 1500, cy: 1750, rx: 300, ry: 100, col: "#c8d4e4", op: 0.2 },
+    { label: "mist bank", cx: AX, cy: 2550, rx: 300, ry: 90, col: "#c8d4e4", op: 0.18 },
   ],
   overhangs: [{ r: rect(1200, 1720, 220, 70), label: "root arch" }],
   drops: [
-    { at: [AX, 310], e: 1 },
-    { at: [AX, 2690], e: 1 },
+    { at: [HX, 620], e: 1 },
+    { at: [MW - HX, 2400], e: 1 },
     { at: [AX - 420, 1700], e: 1 },
     { at: [AX + 420, 1300], e: 1 },
   ],
@@ -281,23 +273,38 @@ runStudy({
     ].map((p) => ({ kind: /** @type {"bush"} */ ("bush"), p: /** @type {Pt} */ (p), r: 40 })),
   ],
   spawns: { t1: seats(480, 1330, 120, 110, 8, 1), t2: seats(4920, 1330, 120, 110, 8, -1) },
-  shrines: { t1: [700, 1000], t2: [MW - 700, 1000] },
+  shrines: { t1: [700, 2300], t2: [MW - 700, 2300] },
   objectives: hills.map((h, i) => ({
     id: pointOf(i),
     kind: /** @type {"capture-point"} */ ("capture-point"),
-    p: /** @type {Pt} */ ([AX, h.cy]),
+    p: /** @type {Pt} */ ([h.cx, h.cy]),
     layer: i === 2 ? 2 : 1,
     label: `capture-point ${i + 1}`,
   })),
   centre: [AX, 1500],
   routes: { t1: toCentre, t2: toCentre.map(([n, r]) => [n, mxr(r)]) },
-  objWalks: hills.map((_, i) => ({
-    obj: pointOf(i),
-    what: "spawn to point",
-    t1: toPoint(i),
-    t2: toPoint(i).map(([n, r]) => [n, mxr(r)]),
-  })),
+  objWalks: [
+    // Parity is per mirrored pair: team 1 to its own home hill, team 2 to its own.
+    ...[
+      [0, "home hill, north"],
+      [3, "home hill, south"],
+    ].map(([i, what]) => ({
+      obj: pointOf(/** @type {number} */ (i)),
+      what: `spawn to own ${what}`,
+      t1: toPoint(/** @type {number} */ (i)),
+      t2: toPoint(/** @type {number} */ (i)).map(([n, r]) => [n, mxr(r)]),
+    })),
+    ...[
+      [1, "far hill, north"],
+      [4, "far hill, south"],
+    ].map(([i, what]) => ({
+      obj: pointOf(/** @type {number} */ (i)),
+      what: `spawn to the ${what}`,
+      t1: toPoint(/** @type {number} */ (i)),
+      t2: toPoint(/** @type {number} */ (i)).map(([n, r]) => [n, mxr(r)]),
+    })),
+  ],
   layerTitles: { 0: "L0 lanes, root tunnel", 1: "L1 cairn hills, banks", 2: "L2 cairn top" },
   planNote:
-    "plan 5400×3000. Dashed: spawn to the great cairn (west stair, north lane, south lane). Five points on the centre line.",
+    "plan 5400×3000. Dashed: spawn to the great cairn (west stair, north lane, south lane). The centre point and two mirrored pairs, one hill nearer each base.",
 });
