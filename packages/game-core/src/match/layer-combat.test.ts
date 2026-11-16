@@ -53,6 +53,7 @@ const LAYERS: MatchLayers = {
   transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200), uphill: UPHILL.e, pace: 1 }],
   outline: undefined,
   deepWater: [[], []],
+  shallowWater: [[], []],
   dropOffs: [],
 };
 
@@ -585,6 +586,7 @@ describe("a pit and a tunnel below the ground (#2973)", () => {
     transitions: [{ from: 0, to: 1, area: rect(800, 350, 60, 100), uphill: UPHILL.w, pace: 1 }],
     outline: undefined,
     deepWater: [[], []],
+    shallowWater: [[], []],
     dropOffs: [],
   };
   const below = (participants: readonly ParticipantSpec[]): MatchSimulation =>

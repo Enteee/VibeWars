@@ -1804,13 +1804,23 @@ describe("water (#2983)", () => {
     refuses([pond({ area: atRamp })], /deep water pond covers a transition \(transitions\.0\)/);
   });
 
-  it("lets shallow water run into a ramp, and under a spawn", () => {
+  it("lets shallow water run into a ramp and round an objective, never under a spawn (Q94)", () => {
     const atRamp = { kind: "rect", x: 300, y: 450, width: 100, height: 100 };
-    const onSpawn = { kind: "rect", x: 150, y: 350, width: 100, height: 40 };
-    accepts([
-      pond({ depth: "shallow", area: atRamp }),
-      pond({ id: "puddle", depth: "shallow", area: onSpawn }),
-    ]);
+    accepts([pond({ depth: "shallow", area: atRamp })]);
+    accepts([pond({ depth: "shallow" })], {
+      objectives: [
+        {
+          kind: "start-line",
+          layer: 0,
+          area: { kind: "rect", x: 350, y: 650, width: 100, height: 20 },
+        },
+      ],
+    });
+    const onSpawn = { kind: "rect", x: 150, y: 350, width: 100, height: 100 };
+    refuses(
+      [pond({ depth: "shallow", area: onSpawn })],
+      /shallow water pond covers a spawn \(spawnPoints\.0\)/,
+    );
   });
 });
 

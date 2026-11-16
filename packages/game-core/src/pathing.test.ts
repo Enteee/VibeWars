@@ -6,6 +6,7 @@ import {
   distanceSegmentToSegment,
   lengthInPolygon,
   segment,
+  type Polygon,
   type Segment,
 } from "./geometry.js";
 import {
@@ -13,6 +14,7 @@ import {
   buildNavGraph,
   createPathFinder,
   HARMFUL_ZONE_COST,
+  SHALLOW_WATER_EXTRA,
   navGraphFor,
   minRampLength,
   nearestStandable,
@@ -20,6 +22,7 @@ import {
   costZone,
   walkCost,
   walkIsClear,
+  type CostArea,
   type NavGraph,
 } from "./pathing.js";
 import { createRng, type SimulationRng } from "./rng.js";
@@ -879,6 +882,7 @@ describe("harmful zones (#3026)", () => {
     vec2(350, bottom),
     vec2(250, bottom),
   ];
+  const harmful = (polygon: Polygon): CostArea => ({ polygon, extra: HARMFUL_ZONE_COST - 1 });
   const from = vec2(100, 500);
   const to = vec2(500, 500);
   const length = (path: readonly Vec2[]): number =>
@@ -888,14 +892,14 @@ describe("harmful zones (#3026)", () => {
     expect(lengthInPolygon(from, to, strip(0, 1000))).toBeCloseTo(100);
     expect(lengthInPolygon(vec2(300, 500), to, strip(0, 1000))).toBeCloseTo(50);
     expect(lengthInPolygon(from, vec2(200, 500), strip(0, 1000))).toBe(0);
-    expect(walkCost([costZone(strip(0, 1000))], from, to)).toBeCloseTo(
+    expect(walkCost([costZone(harmful(strip(0, 1000)))], from, to)).toBeCloseTo(
       400 + (HARMFUL_ZONE_COST - 1) * 100,
     );
   });
 
   it("goes round a strip when the way round is not much longer", () => {
     const zone = strip(400, 600);
-    const path = createPathFinder(buildNavGraph([], FIELD, 14, [zone])).find(from, to);
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, [harmful(zone)])).find(from, to);
     if (path === undefined) throw new Error("no path");
     expect(path.at(-1)).toEqual(to);
     // Round, not through: no part of it in the strip, and under 200 longer.
@@ -909,7 +913,7 @@ describe("harmful zones (#3026)", () => {
 
   it("crosses a strip when the way round is far longer, at its cost", () => {
     const zone = strip(100, 900);
-    const path = createPathFinder(buildNavGraph([], FIELD, 14, [zone])).find(from, to);
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, [harmful(zone)])).find(from, to);
     expect(path).toEqual([to]);
   });
 
@@ -917,9 +921,44 @@ describe("harmful zones (#3026)", () => {
     const walls = [segment(vec2(300, 300), vec2(300, 700))];
     const plain = createPathFinder(buildNavGraph(walls, FIELD, 14, [])).find(from, to);
     const elsewhere = createPathFinder(
-      buildNavGraph(walls, FIELD, 14, [strip(940, 990).map(({ x, y }) => vec2(x + 600, y))]),
+      buildNavGraph(walls, FIELD, 14, [
+        harmful(strip(940, 990).map(({ x, y }) => vec2(x + 600, y))),
+      ]),
     ).find(from, to);
     expect(plain).toBeDefined();
     expect(elsewhere).toEqual(plain);
+  });
+});
+
+describe("shallow water (Q94)", () => {
+  const FIELD = { width: 1000, height: 1000 };
+  /** A 100-wide pool across x 250..350, from the field's top edge down to `bottom`: the way round is under it. */
+  const pool = (bottom: number): CostArea => ({
+    polygon: [vec2(250, 0), vec2(350, 0), vec2(350, bottom), vec2(250, bottom)],
+    extra: SHALLOW_WATER_EXTRA,
+  });
+  const from = vec2(100, 500);
+  const to = vec2(500, 500);
+
+  it("costs a unit walked in it a third more, the time it takes at three quarters' pace", () => {
+    expect(walkCost([costZone(pool(1000))], from, to)).toBeCloseTo(300 + 100 / 0.75);
+  });
+
+  it("goes round a pool when the way round is about 30 longer", () => {
+    // Round its corner nodes, 15 off it: 2 × hypot(135, 65) + 130 ≈ 430, 30 over 400.
+    const water = pool(550);
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, [water])).find(from, to);
+    if (path === undefined) throw new Error("no path");
+    let at = from;
+    for (const point of path) {
+      expect(lengthInPolygon(at, point, water.polygon)).toBe(0);
+      at = point;
+    }
+  });
+
+  it("wades across a pool when the way round is about 60 longer", () => {
+    // 2 × hypot(135, 95) + 130 ≈ 460, over the 433 a walk across costs.
+    const path = createPathFinder(buildNavGraph([], FIELD, 14, [pool(580)])).find(from, to);
+    expect(path).toEqual([to]);
   });
 });

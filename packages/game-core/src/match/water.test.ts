@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { WEAPONS } from "../equipment/weapons.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import type { Polygon, Segment } from "../geometry.js";
+import { SHALLOW_WATER_PACE } from "../movement.js";
+import { NO_RANKS } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { BOUNDS, DT, ELEMENTALIST, fighter, RANGER, RULESET } from "./bot/rules/test-support.js";
 import { UPHILL } from "./layer-rules.js";
@@ -46,6 +48,7 @@ const LAYERS: MatchLayers = {
   transitions: [{ from: 0, to: 1, area: rect(950, 300, 170, 200), uphill: UPHILL.e, pace: 1 }],
   outline: undefined,
   deepWater: [POND, POOL_ON_DECK],
+  shallowWater: [[], []],
   dropOffs: [],
 };
 
@@ -154,5 +157,61 @@ describe("deep water (#2983)", () => {
     run(sim, 2);
     expect(get(sim, "up").position.x).toBeCloseTo(1300 - RADIUS, 0);
     expect(get(sim, "down").position.x).toBeGreaterThan(1400);
+  });
+});
+
+describe("shallow water (Q94)", () => {
+  /** A pool across the ground at x 300..500, and one on the deck to its east, over open ground. */
+  const WADING: MatchLayers = {
+    ...LAYERS,
+    deepWater: [[], []],
+    shallowWater: [[rect(300, 0, 200, 800)], [rect(1150, 320, 300, 160)]],
+  };
+
+  function wading(participants: readonly ParticipantSpec[]): MatchSimulation {
+    return new MatchSimulation({
+      seed: "wading",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      walls: [],
+      layers: WADING,
+      participants,
+    });
+  }
+
+  /** How far `id` walks east in one tick from where it stands. */
+  function stride(sim: MatchSimulation, id: string): number {
+    const before = get(sim, id).position.x;
+    sim.setInputDirection(id, vec2(1, 0));
+    sim.step(DT);
+    return get(sim, id).position.x - before;
+  }
+
+  const FULL = RULESET.movement.maxSpeedUnitsPerSecond * DT;
+
+  it("walks a body at three quarters of its pace inside, and at full pace outside", () => {
+    const sim = wading([spec("wet", 0, vec2(400, 400), 0), spec("dry", 1, vec2(100, 600), 0)]);
+    expect(stride(sim, "wet")).toBeCloseTo(FULL * SHALLOW_WATER_PACE);
+    expect(stride(sim, "dry")).toBeCloseTo(FULL);
+  });
+
+  it("slows a body on the deck's layer in the deck's pool, never one on the ground under it", () => {
+    const sim = wading([spec("deck", 0, vec2(1200, 400), 1), spec("under", 1, vec2(1200, 400), 0)]);
+    expect(stride(sim, "deck")).toBeCloseTo(FULL * SHALLOW_WATER_PACE);
+    expect(stride(sim, "under")).toBeCloseTo(FULL);
+  });
+
+  it("stacks with Cripple: half pace in water is 0.375", () => {
+    const sim = wading([spec("a", 0, vec2(400, 400), 0)]);
+    get(sim, "a").combatant.statuses.apply("crippled", 30, "a", NO_RANKS);
+    expect(stride(sim, "a")).toBeCloseTo(FULL * 0.5 * SHALLOW_WATER_PACE);
+  });
+
+  it("clamps a boost after the water: Dash in water is 1.5 × 0.75, not 1.33 × 0.75", () => {
+    const sim = wading([spec("a", 0, vec2(400, 400), 0), spec("b", 1, vec2(100, 600), 0)]);
+    get(sim, "a").combatant.statuses.apply("dash", 30, "a", NO_RANKS);
+    get(sim, "b").combatant.statuses.apply("dash", 30, "b", NO_RANKS);
+    expect(stride(sim, "a")).toBeCloseTo(FULL * 1.5 * SHALLOW_WATER_PACE);
+    expect(stride(sim, "b")).toBeCloseTo(FULL * 1.33);
   });
 });

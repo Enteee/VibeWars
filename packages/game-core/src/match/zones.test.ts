@@ -49,6 +49,7 @@ const LAYERS: MatchLayers = {
   transitions: [{ from: 0, to: 1, area: rect(150, 300, 170, 200), uphill: UPHILL.e, pace: 1 }],
   outline: undefined,
   deepWater: [[], []],
+  shallowWater: [[], []],
   dropOffs: [],
 };
 

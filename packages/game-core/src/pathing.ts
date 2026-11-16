@@ -10,6 +10,7 @@ import {
   type Polygon,
   type Segment,
 } from "./geometry.js";
+import { SHALLOW_WATER_PACE } from "./movement.js";
 import { add, distance, dot, length, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
 /**
@@ -40,16 +41,22 @@ export interface NavGraph {
   readonly nodes: readonly Vec2[];
   /** For each node, the nodes a body can walk to in a straight line. */
   readonly edges: readonly (readonly number[])[];
-  /** Beside `edges`: what each walk costs, its length with harmful ground counted `HARMFUL_ZONE_COST` times. */
+  /** Beside `edges`: what each walk costs, its length with what it walks through `zones` counted more. */
   readonly costs: readonly (readonly number[])[];
-  /** The harmful ground on this layer (#3026): walks through it cost more. */
+  /** The harmful ground (#3026) and shallow water (Q94) on this layer: walks through them cost more. */
   readonly zones: readonly CostZone[];
 }
 
-/** Harmful ground on a layer, as paths read it (#3026). */
-export interface NavZone {
-  readonly layer: number;
+/** Ground a route weighs, as paths read it: its polygon, and what a unit walked in it costs on top. */
+export interface CostArea {
   readonly polygon: Polygon;
+  /** What a unit walked inside costs a route beyond the unit itself. */
+  readonly extra: number;
+}
+
+/** Harmful ground (#3026) or shallow water (Q94) on a layer, as paths read it. */
+export interface NavZone extends CostArea {
+  readonly layer: number;
 }
 
 /**
@@ -59,17 +66,23 @@ export interface NavZone {
  */
 export const HARMFUL_ZONE_COST = 3;
 
-/** Harmful ground as `walkCost` reads it: its polygon and the box round it. */
-export interface CostZone {
-  readonly polygon: Polygon;
+/**
+ * What a unit walked in shallow water costs a route on top of the unit
+ * (Q94): the time it takes, a third more at `SHALLOW_WATER_PACE`. A bot
+ * goes round a 100-wide pool if that is at most about 33 longer.
+ */
+export const SHALLOW_WATER_EXTRA = 1 / SHALLOW_WATER_PACE - 1;
+
+/** A `CostArea` as `walkCost` reads it: with the box round it. */
+export interface CostZone extends CostArea {
   readonly left: number;
   readonly right: number;
   readonly top: number;
   readonly bottom: number;
 }
 
-/** `polygon` with its box, worked out once rather than on every walk. */
-export function costZone(polygon: Polygon): CostZone {
+/** `area` with its box, worked out once rather than on every walk. */
+export function costZone({ polygon, extra }: CostArea): CostZone {
   let left = Number.POSITIVE_INFINITY;
   let right = Number.NEGATIVE_INFINITY;
   let top = Number.POSITIVE_INFINITY;
@@ -80,12 +93,12 @@ export function costZone(polygon: Polygon): CostZone {
     top = Math.min(top, corner.y);
     bottom = Math.max(bottom, corner.y);
   }
-  return { polygon, left, right, top, bottom };
+  return { polygon, extra, left, right, top, bottom };
 }
 
-/** What the walk from `a` to `b` costs a route: its length, and twice more for each unit of it in `zones`. */
+/** What the walk from `a` to `b` costs a route: its length, and each zone's `extra` for each unit of it in that zone. */
 export function walkCost(zones: readonly CostZone[], a: Vec2, b: Vec2): number {
-  let inside = 0;
+  let extra = 0;
   for (const zone of zones) {
     // Nowhere near: the box test settles most walks.
     if (
@@ -94,10 +107,10 @@ export function walkCost(zones: readonly CostZone[], a: Vec2, b: Vec2): number {
       Math.max(a.y, b.y) > zone.top &&
       Math.min(a.y, b.y) < zone.bottom
     ) {
-      inside += lengthInPolygon(a, b, zone.polygon);
+      extra += zone.extra * lengthInPolygon(a, b, zone.polygon);
     }
   }
-  return distance(a, b) + (HARMFUL_ZONE_COST - 1) * inside;
+  return distance(a, b) + extra;
 }
 
 /**
@@ -330,14 +343,14 @@ function clearOf(
 
 /**
  * The graph for `walls` in a `bounds`-sized map, for bodies of radius
- * `clearance`, routing round harmful `zones` where that is shorter. Without
+ * `clearance`, routing round the ground `zones` weigh where that is shorter. Without
  * `bounds` the field has no edge.
  */
 export function buildNavGraph(
   walls: readonly Segment[],
   bounds: NavGraph["bounds"],
   clearance: number,
-  zones: readonly Polygon[],
+  zones: readonly CostArea[],
 ): NavGraph {
   return navGraphFor(buildGatedNavGraph(walls, [], bounds, clearance, zones), 0);
 }
@@ -463,7 +476,7 @@ export function buildGatedNavGraph(
   gates: readonly (readonly Segment[])[],
   bounds: NavGraph["bounds"],
   clearance: number,
-  zones: readonly Polygon[],
+  zones: readonly CostArea[],
   walkable: readonly Polygon[] = [],
   open: readonly Segment[] = [],
 ): GatedNavGraph {
@@ -567,12 +580,12 @@ export function buildGatedNavGraph(
       }
     }
   }
-  // A corner off each harmful zone's, outside every zone, or no route
+  // A corner off each zone's, harmful ground or shallow water, outside every zone, or no route
   // could go round one (#3026). Zone order, then corner order (#267).
-  for (const zone of zones) {
+  for (const { polygon: zone } of zones) {
     for (let at = 0; at < zone.length; at += 1) {
       const node = offZoneCorner(zone, at, offset);
-      if (node !== undefined && !zones.some((other) => pointInPolygon(node, other))) {
+      if (node !== undefined && !zones.some((other) => pointInPolygon(node, other.polygon))) {
         addNode(node, 0);
       }
     }
@@ -1033,7 +1046,7 @@ export function buildLayeredNavGraph(
       gates.map((gate) => (gate.layer === at ? gate.segments : [])),
       bounds,
       clearance,
-      zones.filter((zone) => zone.layer === at).map(({ polygon }) => polygon),
+      zones.filter((zone) => zone.layer === at),
       layer.walkable,
       layer.open,
     ),

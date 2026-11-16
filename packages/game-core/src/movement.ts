@@ -49,6 +49,13 @@ export const CLIMB_PACE = {
 export type ClimbLook = keyof typeof CLIMB_PACE;
 
 /**
+ * How fast a body walks in shallow water, as a share of its speed (Q94):
+ * three quarters, from the tick it steps in to the tick it steps out.
+ * Deep water stops a body; it has no pace.
+ */
+export const SHALLOW_WATER_PACE = 0.75;
+
+/**
  * Clamp a client-supplied direction vector to a unit disc before it is
  * trusted anywhere. A malicious or buggy client could otherwise send
  * `{dirX: 1e9, dirY: 1e9}` and move at an arbitrary multiple of the ruleset's

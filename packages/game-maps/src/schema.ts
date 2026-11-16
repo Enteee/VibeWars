@@ -246,7 +246,8 @@ export const MAX_WATER_BODIES = 32;
 
 /**
  * A body of water on one layer (#2983): deep water stops bodies as a wall
- * does, but not sight, shots or spells; shallow water changes nothing in play.
+ * does, but not sight, shots or spells; shallow water slows bodies to
+ * `SHALLOW_WATER_PACE` (Q94).
  */
 const waterSchema = z.object({
   id: z.string().min(1),
@@ -1625,6 +1626,16 @@ export const mapDataSchema = z
         }
       });
       if (body.depth === "shallow") {
+        // A team would start every life wading (Q94); an objective may stand in it.
+        map.spawnPoints.forEach((spawn, at) => {
+          if (spawn.layer === body.layer && bodyIn(spawn.position, body.area)) {
+            context.addIssue({
+              code: "custom",
+              path: ["water", index, "area"],
+              message: `shallow water ${body.id} covers a spawn (spawnPoints.${String(at)})`,
+            });
+          }
+        });
         return;
       }
       const blocked = (path: (string | number)[], what: string): void => {

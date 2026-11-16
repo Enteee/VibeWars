@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { pointInPolygon, type Polygon, type Segment } from "./geometry.js";
 import {
   buildLayeredNavGraph,
+  HARMFUL_ZONE_COST,
   buildNavGraph,
   createLayeredPathFinder,
   createPathFinder,
@@ -364,7 +365,9 @@ describe("a teleport's way (#3030)", () => {
   });
 
   it("goes round an on entry it does not mean to take, its area given as a zone", () => {
-    const graph = buildNavGraph([], BOUNDS, RADIUS, [ENTRY]);
+    const graph = buildNavGraph([], BOUNDS, RADIUS, [
+      { polygon: ENTRY, extra: HARMFUL_ZONE_COST - 1 },
+    ]);
     const path = createLayeredPathFinder([graph], [], [ACROSS]).find(
       vec2(300, 100),
       0,

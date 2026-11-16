@@ -199,6 +199,7 @@ describe("teleports in a match (#3030)", () => {
         ],
         outline: undefined,
         deepWater: [[], []],
+        shallowWater: [[], []],
         dropOffs: [],
       },
       teleports: [{ ...OUT, to: { layer: 1, position: vec2(800, 400) } }],

@@ -58,7 +58,7 @@ import {
   type TeamCount,
   type TeamStanding,
 } from "../match-rules.js";
-import { clampInputDirection, integrateMovement } from "../movement.js";
+import { SHALLOW_WATER_PACE, clampInputDirection, integrateMovement } from "../movement.js";
 import {
   atObjective,
   deckBlocksSight,
@@ -74,6 +74,8 @@ import {
 } from "./layer-rules.js";
 import {
   buildLayeredNavGraph,
+  HARMFUL_ZONE_COST,
+  SHALLOW_WATER_EXTRA,
   createLayeredPathFinder,
   navGraphFor,
   isStandable,
@@ -738,6 +740,11 @@ export interface MatchLayers {
    * stops bodies and paths as a wall does, but never sight or shots.
    */
   readonly deepWater: readonly (readonly Segment[])[];
+  /**
+   * Each layer's shallow water (Q94), indexed by layer, a polygon a body:
+   * a body in it walks at `SHALLOW_WATER_PACE`, and paths weigh it.
+   */
+  readonly shallowWater: readonly (readonly Polygon[])[];
   /**
    * The ground's outline (#3066), `undefined` for the whole rectangle:
    * nobody stands, walks or paths off it. Its edge stops bodies, and sight
@@ -1671,9 +1678,20 @@ export class MatchSimulation {
       this.#bounds,
       this.#ruleset.collision.playerRadius,
       [
-        ...this.#harmfulZones,
+        ...this.#harmfulZones.map(({ layer, polygon }) => ({
+          layer,
+          polygon,
+          extra: HARMFUL_ZONE_COST - 1,
+        })),
         // An entry is ground a route goes round unless it means to go in.
-        ...this.#teleports.map(({ from }) => ({ layer: from.layer, polygon: from.area })),
+        ...this.#teleports.map(({ from }) => ({
+          layer: from.layer,
+          polygon: from.area,
+          extra: HARMFUL_ZONE_COST - 1,
+        })),
+        ...(this.#layers?.shallowWater ?? []).flatMap((pools, layer) =>
+          pools.map((polygon) => ({ layer, polygon, extra: SHALLOW_WATER_EXTRA })),
+        ),
       ],
     );
     const walls = this.#currentWallSet();
@@ -6419,7 +6437,13 @@ export class MatchSimulation {
   #speedOf(record: ParticipantRecord): number {
     const statuses = aggregateModifiers(record.combatant.statuses.active).moveSpeedMultiplier;
     const burden = this.#carriesFlagOrRelic(record.id) ? FLAG_CARRIER_SPEED_MULTIPLIER : 1;
-    return clampMoveSpeed((statuses / burden) * this.#paceAt(record));
+    return clampMoveSpeed((statuses / burden) * this.#paceAt(record) * this.#waterPaceAt(record));
+  }
+
+  /** `SHALLOW_WATER_PACE` if `record` stands in shallow water on its layer (Q94), or 1. */
+  #waterPaceAt(record: ParticipantRecord): number {
+    const pools = this.#layers?.shallowWater[record.layer] ?? [];
+    return pools.some((pool) => pointInPolygon(record.position, pool)) ? SHALLOW_WATER_PACE : 1;
   }
 
   /** The pace of the ramp, stairs or ladder `record` is on (#3069), or 1 off any. */
