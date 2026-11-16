@@ -181,6 +181,59 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Shiverpeak Pass (#3401): the centre is the rope bridge over the chasm, so the walks end on it.
+  describe("Shiverpeak Pass", () => {
+    const loaded = loadMap("shiverpeak-pass");
+    const map = {
+      ...loaded,
+      walls: [...loaded.walls, ...(loaded.breakables ?? []).map(({ wall }) => wall)],
+    };
+    const bridge = { x: 2635, y: 1260 };
+    const shut = (from: typeof loaded, ids: readonly string[]): typeof loaded => ({
+      ...from,
+      transitions: from.transitions.filter(({ id }) => !ids.includes(id)),
+    });
+    const cave = ["cave-mouth-west", "cave-mouth-east"];
+    const ownStairs = [
+      ["ledge-stair-west", "bridgehead-stair-west"],
+      ["ledge-stair-east", "bridgehead-stair-east"],
+    ];
+    const routes: readonly (readonly [string, (team: number) => typeof loaded])[] = [
+      ["the rope bridge", () => shut(map, cave)],
+      ["the cave", (team) => shut(map, ownStairs[team] ?? [])],
+      [
+        "the south pass, the ice wall broken",
+        (team) => shut(loaded, [...cave, ...(ownStairs[team] ?? [])]),
+      ],
+    ];
+
+    it.each(routes)(
+      "walks each team from its spawn onto the rope bridge by %s within 5 % of the other",
+      (_route, closed) => {
+        const [walk0 = 0, walk1 = 0] = [0, 1].map((team) => walksTo(closed(team), bridge, 2)[team]);
+        expect(walk0).toBeGreaterThan(0);
+        expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.05);
+      },
+    );
+
+    it("still lets each team walk to the other with the rope bridge pulled", () => {
+      const pulled = { ...map, decks: map.decks.filter(({ id }) => id !== "rope-bridge") };
+      const spawn = (team: number) => {
+        const found = map.spawnPoints.find((point) => point.team === team);
+        if (found === undefined) throw new Error(`no spawn for team ${String(team)}`);
+        return found.position;
+      };
+      expect(walksTo(pulled, spawn(1), 1)[0]).toBeGreaterThan(0);
+      expect(walksTo(pulled, spawn(0), 1)[1]).toBeGreaterThan(0);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      const [ground0 = 0, ground1 = 0] = highGround(map);
+      expect(ground0).toBeGreaterThan(0);
+      expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

@@ -58,9 +58,11 @@ reitiksi keskelle. **Sunken Bastion**
 jonka vallihauta halkaisee pihan. Sen yli pääsee laskusiltaa pitkin,
 jota ohjataan vivulla kummaltakin rannalta, pohjoisen ulkomuurin
 vallikäytävää pitkin tai alla olevan tulvineen kellarin kautta.
-Ja isommille tiimeille: **Shiverpeak Pass** (4v4, 6000x3400),
-kaksi kalliojyrkännettä, joiden väliin jää leveä, lohkareiden täplittämä
-sola ja kapea polku kummankin reunan vierellä; ja **Elonian Plateau**
+Ja isommille tiimeille: **Shiverpeak Pass** (4v4, 5100x3450),
+luminen vuorisola, jonka halkaisee rotko ja jonka yli pääsee köysisiltaa
+pitkin kahden kallionkielekkeen välillä, jota vipu kummallakin
+kielekkeellä vetää, alla olevan luolan kautta tai rotkon kärjen ympäri,
+kun siellä oleva jääseinä on rikottu; ja **Elonian Plateau**
 (8v8, 6400x3600), avointa savannia viiden suuren pöytävuoren ympärillä,
 ja pisimmät näkölinjat kaikista areenoista.
 

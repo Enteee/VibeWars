@@ -56,9 +56,11 @@ savak kolunun merkeze üçüncü bir yol olarak açtığı su basmış bir menfe
 ikiye bölen, yarı su basmış bir hisar. Hendeğin karşısına, her iki
 kıyıdaki bir kolla çalışan asma köprüden, kuzey sur boyunca uzanan
 seğirdim yolundan ya da altındaki su basmış mahzenden geçilir.
-Ve daha büyük takımlar için: **Shiverpeak Pass** (4v4, 6000x3400), kaya
-parçalarıyla dolu geniş bir geçit ve her kenarında dar bir patika
-bırakan iki uçurum kütlesi; ve **Elonian Plateau** (8v8, 6400x3600),
+Ve daha büyük takımlar için: **Shiverpeak Pass** (4v4, 5100x3450), derin
+bir yarıkla ikiye bölünmüş karlı bir dağ geçidi; yarık, her iki çıkıntıdaki
+bir kolla çekilen, iki kayalık çıkıntı arasındaki bir halat köprüden,
+altındaki bir mağaradan ya da oradaki buz duvarı kırıldıktan sonra
+ucunun çevresinden aşılır; ve **Elonian Plateau** (8v8, 6400x3600),
 beş büyük platonun çevresinde açık bir savan, arenaların hepsinden uzun
 görüş hatlarıyla.
 

@@ -54,8 +54,10 @@ ngập nửa chừng có hào nước chia đôi sân trong; có thể vượt h
 treo do cần gạt ở mỗi bờ điều khiển, qua lối đi trên tường dọc tường thành
 phía bắc, hoặc xuyên qua hầm ngập nước bên dưới. Và cho các đội lớn hơn:
 **Shiverpeak Pass** (4v4,
-6000x3400), hai khối vách đá chừa ra một con đèo rộng rải đầy tảng đá và một
-lối mòn hẹp dọc mỗi mép; và **Elonian Plateau** (8v8, 6400x3600), thảo
+5100x3450), một đèo núi phủ tuyết bị một vực sâu chia đôi, có thể vượt qua
+bằng cầu dây giữa hai gờ vách đá do cần gạt ở mỗi gờ kéo lên, qua hang động
+bên dưới vực, hoặc vòng quanh mũi vực sau khi phá vỡ bức tường băng ở đó; và
+**Elonian Plateau** (8v8, 6400x3600), thảo
 nguyên trống trải quanh năm cao nguyên lớn, với tầm nhìn xa nhất trong mọi
 đấu trường.
 

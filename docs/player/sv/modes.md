@@ -55,9 +55,11 @@ till mitten. **Sunken Bastion** (2v2, 2700x1900)
 borggården; den korsas via en vindbrygga som manövreras med en spak på
 varje strand, via vallgången längs den norra ringmuren eller genom den
 översvämmade källaren under.
-Och för de större lagen: **Shiverpeak Pass** (4v4, 6000x3400),
-två klippmassiv som lämnar ett brett pass bestrött med stenblock och en
-smal stig längs varje kant; och **Elonian Plateau** (8v8, 6400x3600),
+Och för de större lagen: **Shiverpeak Pass** (4v4, 5100x3450),
+ett snötäckt bergspass kluvet av en klyfta, som korsas via en repbro
+mellan två klipphyllor, som en spak på vardera hyllan drar, genom en
+grotta under den eller runt dess spets när isväggen där har slagits
+sönder; och **Elonian Plateau** (8v8, 6400x3600),
 öppen savann runt fem stora mesor, med de längsta siktlinjerna av alla
 arenor.
 
