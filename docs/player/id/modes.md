@@ -50,9 +50,10 @@ yang dibuka oleh tuas pintu air sebagai jalan ketiga ke tengah.
 yang paritnya membelah halaman, diseberangi lewat jembatan angkat yang digerakkan tuas di
 setiap tepi, lewat jalan di atas tembok sepanjang dinding utara, atau melalui ruang bawah tanah
 yang terendam di bawahnya.
-Dan untuk tim yang lebih besar: **Shiverpeak Pass** (4v4, 6000x3400),
-dua gugusan tebing yang menyisakan celah lebar bertabur batu besar dan jalan setapak
-sempit di sepanjang setiap tepinya; dan **Elonian Plateau** (8v8, 6400x3600), sabana
+Dan untuk tim yang lebih besar: **Shiverpeak Pass** (4v4, 5100x3450),
+celah gunung bersalju yang terbelah oleh jurang, diseberangi lewat jembatan tali di antara dua
+langkan tebing yang ditarik oleh tuas di setiap langkan, lewat gua di bawahnya, atau memutari
+ujungnya setelah dinding es di sana dihancurkan; dan **Elonian Plateau** (8v8, 6400x3600), sabana
 terbuka di sekeliling lima mesa besar, dengan jarak pandang terpanjang di antara semua arena.
 
 ## Hitung Kill

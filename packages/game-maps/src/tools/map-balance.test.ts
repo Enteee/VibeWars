@@ -185,6 +185,63 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Shiverpeak Pass (#3401): the centre is the rope bridge over the chasm, so the walks end on it.
+  // Three routes: the team's own stairs up to the bridgehead, the cave under the chasm, and the
+  // south pass through the ice wall. A route is walked with the other two shut.
+  describe("Shiverpeak Pass", () => {
+    const loaded = loadMap("shiverpeak-pass");
+    const map = {
+      ...loaded,
+      walls: [...loaded.walls, ...(loaded.breakables ?? []).map(({ wall }) => wall)],
+    };
+    const bridge = { x: 2635, y: 1260 };
+    const cave = ["cave-mouth-west", "cave-mouth-east"];
+    const stairs = [
+      ["ledge-stair-west", "bridgehead-stair-west"],
+      ["ledge-stair-east", "bridgehead-stair-east"],
+    ];
+    const own = (team: number): readonly string[] => stairs[team] ?? [];
+    const head = (team: number): string => stairs[team]?.[1] ?? "";
+    const routes: readonly (readonly [string, (team: number) => Route])[] = [
+      ["the rope bridge", (team) => ({ through: [head(team)], shut: cave })],
+      ["the cave", (team) => ({ through: [...cave, head(1 - team)], shut: own(team) })],
+      [
+        "the south pass, the ice wall broken",
+        (team) => ({
+          through: [head(1 - team)],
+          shut: [...cave, ...own(team)],
+          broken: ["ice-wall"],
+        }),
+      ],
+    ];
+
+    it.each(routes)(
+      "walks each team from its spawn onto the rope bridge by %s within 5 % of the other",
+      (_route, route) => {
+        const [walk0 = 0, walk1 = 0] = walksByRoute(loaded, bridge, 2, route);
+        expect(walk0).toBeGreaterThan(0);
+        expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.05);
+      },
+    );
+
+    it("still lets each team walk to the other with the rope bridge pulled", () => {
+      const pulled = { ...map, decks: map.decks.filter(({ id }) => id !== "rope-bridge") };
+      const spawn = (team: number) => {
+        const found = map.spawnPoints.find((point) => point.team === team);
+        if (found === undefined) throw new Error(`no spawn for team ${String(team)}`);
+        return found.position;
+      };
+      expect(walksTo(pulled, spawn(1), 1)[0]).toBeGreaterThan(0);
+      expect(walksTo(pulled, spawn(0), 1)[1]).toBeGreaterThan(0);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      const [ground0 = 0, ground1 = 0] = highGround(map);
+      expect(ground0).toBeGreaterThan(0);
+      expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.25);
+    }, 60_000);
+  });
+
   // Canthan Terraces (#3399): three routes to the court by the drain shaft, each walked with the
   // other two shut, the mud-brick wall standing: the team's own stair across the terrace, the paddy
   // steps up the middle, and the culvert from the team's own mouth up the shaft (sluice open).

@@ -49,8 +49,10 @@ Durchlass, den ein Schleusenhebel als dritten Weg zur Mitte öffnet. **Sunken Ba
 deren Burggraben den Hof teilt; hinüber geht es über eine Zugbrücke, die ein Hebel an jedem Ufer
 bedient, über den Wehrgang entlang der nördlichen Ringmauer oder durch den gefluteten Keller
 darunter. Und für größere Teams:
-**Shiverpeak Pass** (4v4, 6000x3400), zwei Felsmassive, die einen breiten, mit Findlingen übersäten
-Pass und einen schmalen Pfad an jedem Rand lassen; und **Elonian Plateau** (8v8, 6400x3600), offene
+**Shiverpeak Pass** (4v4, 5100x3450), ein verschneiter Gebirgspass, von einer Schlucht geteilt, über die
+man auf einer Seilbrücke zwischen zwei Felsvorsprüngen kommt, die ein Hebel auf jedem Vorsprung
+zieht, durch eine Höhle darunter oder um ihr Ende herum, sobald die Eiswand dort zerbrochen ist;
+und **Elonian Plateau** (8v8, 6400x3600), offene
 Savanne rund um fünf große Tafelberge, mit den längsten Sichtlinien aller Arenen.
 
 ## Kill-Zähler

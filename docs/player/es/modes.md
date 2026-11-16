@@ -56,9 +56,11 @@ Bastion** (2v2, 2700x1900) es pequeña pero alta: una fortaleza medio inundada
 cuyo foso divide el patio; se cruza por un puente levadizo accionado con una
 palanca en cada orilla, por el adarve a lo largo de la muralla norte o por el
 sótano inundado de debajo. Y para los
-equipos más grandes: **Shiverpeak Pass** (4v4, 6000x3400), dos macizos de
-acantilados que dejan un amplio paso sembrado de rocas y un sendero estrecho en
-cada borde; y **Elonian Plateau** (8v8, 6400x3600), sabana abierta alrededor de
+equipos más grandes: **Shiverpeak Pass** (4v4, 5100x3450), un paso de
+montaña nevado partido por un abismo, que se cruza por un puente de cuerda entre
+dos repisas del acantilado, del que tira una palanca en cada repisa, por una
+cueva bajo él o rodeando su extremo una vez rota la pared de hielo que hay allí;
+y **Elonian Plateau** (8v8, 6400x3600), sabana abierta alrededor de
 cinco grandes mesetas, con las líneas de visión más largas de todas las arenas.
 
 ## Recuento de bajas

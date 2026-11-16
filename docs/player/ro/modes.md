@@ -53,8 +53,10 @@ Bastion** (2v2, 2700x1900) e mică, dar înaltă: o fortăreață pe jumătate i
 cărei șanț împarte curtea în două; îl treci pe un pod mobil acționat de o pârghie
 de pe fiecare mal, pe drumul de strajă de-a lungul zidului de nord sau prin pivnița
 inundată de dedesubt. Și pentru echipele
-mai mari: **Shiverpeak Pass** (4v4, 6000x3400), două masive de stâncă ce lasă o
-trecătoare largă presărată cu bolovani și o potecă îngustă pe fiecare margine; și
+mai mari: **Shiverpeak Pass** (4v4, 5100x3450), o trecătoare
+înzăpezită despicată de o prăpastie, pe care o treci pe un pod de frânghie între
+două cornișe de stâncă, tras de o pârghie de pe fiecare cornișă, printr-o peșteră
+de sub ea sau pe după capătul ei, după ce zidul de gheață de acolo e spart; și
 **Elonian Plateau** (8v8, 6400x3600), savană deschisă în jurul a cinci mari platouri,
 cu cele mai lungi linii de vedere dintre toate arenele.
 
