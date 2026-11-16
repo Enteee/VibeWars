@@ -47,7 +47,7 @@ the same block turned.
 
 - **4v4:** the same map and the first four seats of each block; the fight is the plinth.
 - **Elements:** three **crypt doors** at the mouths start shut. Three brass **levers**, one in each
-  team's court (2330,900) turned, **each opens all three doors**: a pulled lever opens the crypt for
+  team's court (2330,960) turned, **each opens all three doors**: a pulled lever opens the crypt for
   everyone. No lift is used (bots read a lever lift as closed). A **breakable colonnade wall** (180
   long) in front of each team (2410,1190), off every route. Zones: a `spring` and a `mire` per team
   (turned): spring r 1900 at -112°, mire r 1950 at -140°, off every route, ≥ 300 u from a spawn and

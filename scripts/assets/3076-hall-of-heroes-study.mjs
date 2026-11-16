@@ -178,7 +178,7 @@ const spec = {
     };
   }),
   gates: [0, 1, 2].map((k) => ({ p: loc(MOUTH + 120 * k, 1760), label: "crypt door" })),
-  levers: [0, 1, 2].map((k) => ({ p: rot([2330, 900], k), layer: 0, label: "lever → all doors" })),
+  levers: [0, 1, 2].map((k) => ({ p: rot([2330, 960], k), layer: 0, label: "lever → all doors" })),
   lights: [
     ...[0, 1, 2].map((k) => ({ p: loc(MOUTH + 120 * k, 1760), r: 150 })),
     ...[0, 1, 2].map((k) => ({ p: loc(GAL + 120 * k, 1150), r: 150 })),

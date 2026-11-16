@@ -293,7 +293,6 @@ const spec = {
     const t1 = seats(2440, 300, 120, 110, 8, 1);
     return { t1, t2: t1.map((p) => rot(p, 1)), t3: t1.map((p) => rot(p, 2)) };
   })(),
-  shrines: { t1: [2200, 700], t2: rot([2200, 700], 1), t3: rot([2200, 700], 2) },
   ghosts: { t1: [2820, 700], t2: rot([2820, 700], 1), t3: rot([2820, 700], 2) },
   objectives: [{ id: "altar", kind: "altar", p: [CX, CY], layer: 2, label: "altar" }],
   centre: [CX, CY],
