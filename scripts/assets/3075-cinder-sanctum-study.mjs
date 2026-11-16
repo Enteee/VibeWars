@@ -8,7 +8,9 @@ const MW = 5600,
 /** The main structure is four-fold symmetric (x mirror, y mirror, so point mirror too); props and zones are not. */
 /** @type {(p: Pt | string) => Pt | string} */
 const mx = (p) =>
-  typeof p === "string" ? (p === "C1" ? "C2" : p === "C2" ? "C1" : p) : [5624 - p[0], p[1]];
+  typeof p === "string"
+    ? ({ C1: "C2", C2: "C1", R1: "R2", R2: "R1" }[p] ?? p)
+    : [5624 - p[0], p[1]];
 /** @type {(p: Pt | string) => Pt | string} */
 const pm = (p) =>
   typeof p === "string"
@@ -124,6 +126,28 @@ const shapes = [
     ],
   },
   {
+    id: "relic knoll W",
+    layer: 1,
+    look: "mound",
+    poly: [
+      [820, 1150],
+      [1100, 1150],
+      [1130, 1230],
+      [790, 1230],
+    ],
+  },
+  {
+    id: "relic knoll E",
+    layer: 1,
+    look: "mound",
+    poly: xPoly([
+      [820, 1150],
+      [1100, 1150],
+      [1130, 1230],
+      [790, 1230],
+    ]),
+  },
+  {
     id: "north dais",
     layer: 1,
     poly: [
@@ -169,6 +193,9 @@ const stairs = [
   { id: "nave-s", r: rect(2742, 1650, 140, 100), from: 1 },
   { id: "top-n", r: rect(2752, 1200, 120, 80), from: 2, north: true },
   { id: "top-s", r: rect(2752, 1520, 120, 80), from: 2 },
+  // relic knolls: a stair on the face toward the relic
+  { id: "knoll-w", r: rect(860, 1230, 140, 100), from: 0 },
+  { id: "knoll-e", r: rect(4624, 1230, 140, 100), from: 0 },
   // daises
   { id: "dais-nw", r: rect(2500, 540, 140, 100), from: 0 },
   { id: "dais-ne", r: rect(2984, 540, 140, 100), from: 0 },
@@ -178,30 +205,85 @@ const stairs = [
 
 const M = "M";
 const toCentre = /** @type {[string, (Pt | string)[]][]} */ ([
-  ["causeway", ["C1", [1300, 1400], [2300, 1400], M]],
+  ["causeway", ["C1", [1300, 1400], [2300, 1400], [2400, 1110], [2810, 1100], [2810, 1160], M]],
   ["north bridge", ["C1", [1300, 900], [2000, 900], [2500, 880], [2500, 1000], [2700, 1150], M]],
   ["south bridge", ["C1", [1300, 1900], [2000, 1900], [2500, 1920], [2500, 1800], [2700, 1650], M]],
 ]);
-const toRelic1 = /** @type {[string, (Pt | string)[]][]} */ ([
-  ["north bridge", ["C1", [1300, 900], [2000, 900], [2500, 800], "R1"]],
-  ["forecourt, north stair", ["C1", [1300, 1400], [2300, 1400], [2500, 1000], [2600, 860], "R1"]],
-  ["passage (doors open)", ["C1", [1300, 1900], [2000, 1900], [2812, 1940], [2812, 860], "R1"]],
+// Relics stay home: relic 1 is team 1's, relic 2 team 2's. Defender walks are short, the thief's long.
+const toOwn = /** @type {[string, (Pt | string)[]][]} */ ([
+  ["direct", ["C1", "R1"]],
+  ["round the knoll", ["C1", [800, 1100], [1000, 1130], "R1"]],
 ]);
-const toDais = /** @type {[string, (Pt | string)[]][]} */ ([
-  ["north dais", ["C1", [1300, 900], [2000, 900], [2400, 700], [2570, 590], [2700, 470]]],
-  ["forecourt north rim", ["C1", [1300, 1400], [2300, 1400], [2500, 1100], [2700, 1070]]],
+// The thief (team 1) goes to relic 2, over a bridge, the forecourt rim or the south bridge, then home with it.
+const thief = /** @type {[string, (Pt | string)[]][]} */ ([
+  [
+    "north bridge",
+    ["C1", [1300, 900], [2000, 900], [2400, 700], [3224, 700], [3624, 900], [4300, 900], "R2"],
+  ],
+  [
+    "causeway (forecourt rim)",
+    [
+      "C1",
+      [1300, 1400],
+      [2400, 1400],
+      [2400, 1110],
+      [3224, 1110],
+      [3224, 1400],
+      [4300, 1400],
+      "R2",
+    ],
+  ],
+  [
+    "south bridge",
+    [
+      "C1",
+      [1300, 1900],
+      [2000, 1900],
+      [2300, 2100],
+      [3324, 2100],
+      [3624, 1900],
+      [4300, 1900],
+      "R2",
+    ],
+  ],
 ]);
-// Carry: team 1 takes relic 2 (south) to ghost-spawn 1 (north-west); team 2 takes relic 1 to ghost-spawn 2.
+const toKnoll = /** @type {[string, (Pt | string)[]][]} */ ([
+  ["knoll stair", ["C1", [900, 1330], [960, 1190]]],
+]);
+// Carry: team 1 takes relic 2 (east base) to ghost-spawn 1 (north-west), the reverse of the thief's way in.
 const carry = /** @type {[string, (Pt | string)[]][]} */ ([
   [
     "south bridge",
-    ["R2", [2500, 2000], [2000, 1900], [1300, 1900], [1100, 1300], [900, 1000], "G1"],
+    [
+      "R2",
+      [4300, 1900],
+      [3624, 1900],
+      [3324, 2100],
+      [2300, 2100],
+      [2000, 1900],
+      [1300, 1900],
+      [1100, 1300],
+      [900, 1000],
+      "G1",
+    ],
   ],
-  ["causeway", ["R2", [2812, 1800], [2300, 1400], [1300, 1400], [1000, 1100], "G1"]],
-  ["north bridge", ["R2", [2500, 1800], [2500, 1000], [2000, 900], [1300, 900], "G1"]],
   [
-    "passage (doors open)",
-    ["R2", [2812, 1940], [2812, 860], [2400, 880], [2000, 900], [1300, 900], "G1"],
+    "causeway (forecourt rim)",
+    [
+      "R2",
+      [4300, 1400],
+      [3224, 1400],
+      [3224, 1110],
+      [2400, 1110],
+      [2400, 1400],
+      [1300, 1400],
+      [1000, 1100],
+      "G1",
+    ],
+  ],
+  [
+    "north bridge",
+    ["R2", [4300, 900], [3624, 900], [3224, 700], [2400, 700], [2000, 900], [1300, 900], "G1"],
   ],
 ]);
 
@@ -229,8 +311,8 @@ runStudy({
   shapes,
   stairs,
   lifts: [
-    { id: "lift-w", r: [[2060, 1600]] },
-    { id: "lift-e", r: [[3444, 1600]] },
+    { id: "lift-w", r: [[2330, 1810]] },
+    { id: "lift-e", r: [[3294, 1810]] },
   ].map(({ id, r }) => ({ id, r: /** @type {Pt[]} */ (r) })),
   tunnels: [
     {
@@ -246,9 +328,14 @@ runStudy({
   zones: [
     ...lava,
     { kind: "spring", cx: 900, cy: 2350, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "mire", cx: 4700, cy: 480, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "mire", cx: 900, cy: 480, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "spring", cx: 4724, cy: 450, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
+    { kind: "mire", cx: 4724, cy: 2320, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
   ],
-  breakables: [{ r: rect(2380, 2000, 200, 24), label: "ash wall (breakable)" }],
+  breakables: [
+    { r: rect(2380, 2000, 200, 24), label: "ash wall (breakable)" },
+    { r: rect(3044, 776, 200, 24), label: "ash wall (breakable)" },
+  ],
   gates: [
     { p: [2812, 860], label: "passage door N" },
     { p: [2812, 1940], label: "passage door S" },
@@ -261,8 +348,8 @@ runStudy({
     { p: [2812, 860], r: 150 },
     { p: [2812, 1940], r: 150 },
     { p: [2812, 1400], r: 220, col: "#ffb060" },
-    { p: [2812, 720], r: 220 },
-    { p: [2812, 2080], r: 220 },
+    { p: [900, 1400], r: 220 },
+    { p: [4724, 1400], r: 220 },
     { p: [700, 860], r: 180 },
     { p: [4924, 1940], r: 180 },
     { p: [700, 1940], r: 180 },
@@ -287,16 +374,16 @@ runStudy({
     { at: [2300, 1100], e: 1 },
   ],
   props: [
-    ...[0, 1, 2, 3, 4, 5, 6, 7].map((i) => ({
+    ...[0, 1, 2, 3].map((i) => ({
       kind: /** @type {"pillar"} */ ("pillar"),
-      p: /** @type {Pt} */ ([2250 + (i % 4) * 365 + (i > 3 ? 20 : 0), i > 3 ? 1700 : 1100]),
+      p: /** @type {Pt} */ ([i < 2 ? 2290 : 3334, i % 2 ? 1550 : 1250]),
       r: 26,
       layer: 1,
     })),
     ...[
       [800, 1600],
       [1000, 500],
-      [4700, 1200],
+      [4824, 1100],
       [4300, 2300],
       [2000, 2300],
       [3700, 600],
@@ -312,20 +399,31 @@ runStudy({
   shrines: { t1: [700, 1940], t2: [4924, 860] },
   ghosts: { t1: [700, 860], t2: [4924, 1940] },
   objectives: [
-    { id: "R1", kind: "relic-spawn", p: [2812, 720], label: "relic-spawn 1" },
-    { id: "R2", kind: "relic-spawn", p: [2812, 2080], label: "relic-spawn 2" },
+    { id: "R1", kind: "relic-spawn", p: [900, 1400], label: "relic-spawn 1" },
+    { id: "R2", kind: "relic-spawn", p: [4724, 1400], label: "relic-spawn 2" },
   ],
   named: { G1: [700, 860], G2: [4924, 1940] },
   centre: [2812, 1400],
   routes: { t1: toCentre, t2: toCentre.map(([n, r]) => [n, mxr(r)]) },
   objWalks: [
     {
-      obj: "relic 1",
-      what: "spawn to relic",
-      t1: toRelic1,
-      t2: toRelic1.map(([n, r]) => [n, mxr(r)]),
+      obj: "relic",
+      what: "defender: own spawn to own relic",
+      t1: toOwn,
+      t2: toOwn.map(([n, r]) => [n, mxr(r)]),
     },
-    { obj: "relic 1", what: "high ground", t1: toDais, t2: toDais.map(([n, r]) => [n, mxr(r)]) },
+    {
+      obj: "relic",
+      what: "thief: spawn to the foe's relic",
+      t1: thief,
+      t2: thief.map(([n, r]) => [n, pmr(r)]),
+    },
+    {
+      obj: "relic",
+      what: "knoll over own relic",
+      t1: toKnoll,
+      t2: toKnoll.map(([n, r]) => [n, mxr(r)]),
+    },
     {
       obj: "carry",
       what: "T1 R2→G1 / T2 R1→G2",
@@ -340,5 +438,5 @@ runStudy({
     3: "L3 inner sanctum",
   },
   planNote:
-    "plan 5600×2800. Dashed: spawn to the sanctum (causeway, north bridge, south bridge). Relics mid-field; carry to the far ghost-spawn.",
+    "plan 5600×2800. Dashed: spawn to the sanctum (causeway, north bridge, south bridge). Relics at home; the thief crosses to the far one and carries it back.",
 });
