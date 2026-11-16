@@ -246,10 +246,10 @@ export function runStudy(S) {
         s += `<ellipse cx="${x}" cy="${y}" rx="76" ry="30" fill="#e8e2d2" opacity=".25" stroke="${C.brass}" stroke-width="6"/><line x1="${x}" y1="${y}" x2="${x}" y2="${y - 100}" stroke="${INK}" stroke-width="7"/><polygon points="${x},${y - 100} ${x + 50},${y - 82} ${x},${y - 64}" fill="${C.brass}" stroke="${INK}" stroke-width="4"/>`;
     }
     for (const side of /** @type {const} */ (["t1", "t2"])) {
-      if (!S.shrines || !S.ghosts) break;
+      if (!S.shrines) break;
       const [x, y] = S.shrines[side];
       s += `<ellipse cx="${x + 8}" cy="${y + 20}" rx="70" ry="24" fill="#080b10" opacity=".35"/><ellipse cx="${x}" cy="${y}" rx="64" ry="26" fill="${C.shrine}" stroke="${C.brass}" stroke-width="7"/><rect x="${x - 22}" y="${y - 58}" width="44" height="58" fill="${C.shrine}" stroke="${INK}" stroke-width="4"/><ellipse cx="${x}" cy="${y - 58}" rx="22" ry="9" fill="#fff8e0" stroke="${INK}" stroke-width="4"/>`;
-      const [gx, gy] = S.ghosts[side];
+      const [gx, gy] = S.ghosts?.[side] ?? [-999, -999];
       s += `<circle cx="${gx}" cy="${gy}" r="34" fill="none" stroke="${C.ghost}" stroke-width="6" stroke-dasharray="6 8"/><circle cx="${gx}" cy="${gy}" r="10" fill="${C.ghost}" opacity=".8"/>`;
     }
     for (const e of S.extras ?? []) {
@@ -310,11 +310,11 @@ export function runStudy(S) {
     for (const o of S.objectives)
       a += tag(o.label ?? o.id, [o.p[0] - 60, o.p[1] + 64 - (o.layer ?? 0) * STEP], 28);
     for (const k of /** @type {const} */ (["t1", "t2"])) {
-      if (!S.shrines || !S.ghosts) break;
+      if (!S.shrines) break;
       const sh = S.shrines[k];
-      a += tag(`shrine ${k === "t1" ? "1" : "2"} (priest)`, [sh[0] - 90, sh[1] + 62], 28);
-      const g = S.ghosts[k];
-      a += tag("ghost-spawn", [g[0] - 70, g[1] + 62], 24);
+      a += tag(`shrine ${k === "t1" ? "1" : "2"}`, [sh[0] - 60, sh[1] + 62], 28);
+      const g = S.ghosts?.[k];
+      if (g) a += tag("ghost-spawn", [g[0] - 70, g[1] + 62], 24);
     }
     for (const e of S.extras ?? [])
       a += tag(e.kind, [e.p[0] - 60, e.p[1] + 50 - (e.layer ?? 0) * STEP], 24);
