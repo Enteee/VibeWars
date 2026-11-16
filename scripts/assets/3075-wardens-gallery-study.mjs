@@ -5,13 +5,15 @@ import { rect, runStudy, seats } from "./3075-study-lib.mjs";
 
 const MW = 5200,
   MH = 2500,
-  AX = 2600, // the seven points stand on this line: equidistant from both teams
+  AX = 2600, // the centre point and the great plinth stand on this line; the other six are mirrored pairs
   CY = 1250;
 /** @typedef {[number, number]} Pt */
 /** Mirrored in x (west team, east team) and in y (north hall, south hall). */
 /** @type {(p: Pt | string) => Pt | string} */
 const mx = (p) =>
-  typeof p === "string" ? (p === "C1" ? "C2" : p === "C2" ? "C1" : p) : [MW - p[0], p[1]];
+  typeof p === "string"
+    ? ({ C1: "C2", C2: "C1", P1: "P5", P5: "P1", P2: "P6", P6: "P2", P3: "P7", P7: "P3" }[p] ?? p)
+    : [MW - p[0], p[1]];
 /** @type {(r: (Pt | string)[]) => (Pt | string)[]} */
 const mxr = (r) => r.map(mx);
 /** @type {(poly: Pt[]) => Pt[]} */
@@ -67,12 +69,22 @@ const ellipse = (cx, cy, a, b, n = 12) =>
     })
   );
 
-// The seven points, north to south, 300 apart. P2 and P6 stand on plinths (L1), P4 on the great
-// plinth's top (L2); P1, P3, P5, P7 on open floor in a skylight ring.
-const ys = [350, 650, 950, 1250, 1550, 1850, 2150];
+// The seven points. P4 is the centre, on the great plinth's top (L2). P1..P3 are team 1's, in its
+// half at x 1700 (P2 on a plinth, L1); P5..P7 are team 2's, mirrored at x 3500 (P6 on a plinth).
+const HX = 1700;
+const pts = /** @type {Pt[]} */ ([
+  [HX, 500],
+  [HX, CY],
+  [HX, 2000],
+  [AX, CY],
+  [MW - HX, 500],
+  [MW - HX, CY],
+  [MW - HX, 2000],
+]);
 const pointOf = (/** @type {number} */ i) => `P${i + 1}`;
 const plinthHalf = { w: 240, h: 105 };
 const plinths = [1, 5];
+const pointLayer = (/** @type {number} */ i) => (i === 3 ? 2 : i === 1 || i === 5 ? 1 : 0);
 
 /** @type {{ id: string; layer: number; poly: Pt[]; look?: "bridge" | "mound" | "stone" | "wood"; label?: string }[]} */
 const shapes = [
@@ -80,7 +92,12 @@ const shapes = [
     id: `plinth ${i + 1}`,
     layer: 1,
     look: /** @type {"stone"} */ ("stone"),
-    poly: rect(AX - plinthHalf.w, /** @type {number} */ (ys[i]) - plinthHalf.h, 480, 210),
+    poly: rect(
+      /** @type {Pt} */ (pts[i])[0] - plinthHalf.w,
+      /** @type {Pt} */ (pts[i])[1] - plinthHalf.h,
+      480,
+      210,
+    ),
   })),
   {
     id: "great plinth",
@@ -103,16 +120,16 @@ for (const poly of [balcNW, xPoly(balcNW), yPoly(balcNW), yPoly(xPoly(balcNW))])
 /** @type {{ id: string; r: Pt[]; from: number; north?: boolean }[]} */
 const stairs = [];
 for (const i of plinths) {
-  const y = /** @type {number} */ (ys[i]);
-  stairs.push({ id: `plinth${i + 1}-w`, r: rect(AX - 240 - 140, y - 50, 140, 100), from: 0 });
-  stairs.push({ id: `plinth${i + 1}-e`, r: rect(AX + 240, y - 50, 140, 100), from: 0 });
+  const [x, y] = /** @type {Pt} */ (pts[i]);
+  stairs.push({ id: `plinth${i + 1}-w`, r: rect(x - 240 - 140, y - 50, 140, 100), from: 0 });
+  stairs.push({ id: `plinth${i + 1}-e`, r: rect(x + 240, y - 50, 140, 100), from: 0 });
   stairs.push({
     id: `plinth${i + 1}-n`,
-    r: rect(AX - 70, y - 105 - 100, 140, 100),
+    r: rect(x - 70, y - 105 - 100, 140, 100),
     from: 0,
     north: true,
   });
-  stairs.push({ id: `plinth${i + 1}-s`, r: rect(AX - 70, y + 105, 140, 100), from: 0 });
+  stairs.push({ id: `plinth${i + 1}-s`, r: rect(x - 70, y + 105, 140, 100), from: 0 });
 }
 stairs.push({ id: "great-w", r: rect(AX - 340 - 140, CY - 50, 140, 100), from: 0 });
 stairs.push({ id: "great-e", r: rect(AX + 340, CY - 50, 140, 100), from: 0 });
@@ -145,15 +162,18 @@ for (const [id, r] of balcStairs) {
 }
 
 const M = "M";
-/** Spawn to point i, two ways: along the point's own latitude, or down the nave and along the axis. */
+/** Team 1 (west) spawn to point i: a home point by its latitude and by the nave; any other through a hall. */
 const toPoint = (/** @type {number} */ i, /** @type {string | Pt} */ from = "C1") => {
-  const y = /** @type {number} */ (ys[i]);
-  const onPlinth = i === 1 || i === 5;
-  const a = i === 3 ? 340 : onPlinth ? 240 : 0;
-  const nave = /** @type {number} */ (ys[i < 3 ? i + 1 : i - 1]);
+  const [x, y] = /** @type {Pt} */ (pts[i]);
+  const a = i === 3 ? 340 : i === 1 || i === 5 ? 240 : 0;
+  if (i < 3)
+    return /** @type {[string, (Pt | string)[]][]} */ ([
+      ["latitude approach", [from, [900, y], [x - a - 160, y], pointOf(i)]],
+      ["nave approach", [from, [1000, CY], [x - 500, CY], [x - a - 160, y], pointOf(i)]],
+    ]);
   return /** @type {[string, (Pt | string)[]][]} */ ([
-    ["latitude approach", [from, [900, y], [AX - a - 160, y], pointOf(i)]],
-    ["nave approach", [from, [1500, CY], [AX - 520, nave], [AX, nave], pointOf(i)]],
+    ["north hall", [from, [900, 800], [x - a - 300, 800], [x - a - 160, y], pointOf(i)]],
+    ["south hall", [from, [900, 1700], [x - a - 300, 1700], [x - a - 160, y], pointOf(i)]],
   ]);
 };
 
@@ -235,26 +255,26 @@ runStudy({
     { p: [4100, 1700], label: "undercroft gate SE" },
   ],
   levers: [
-    { p: [AX - 160, 650], layer: 1, label: "lever → north gates" },
-    { p: [AX + 160, 1850], layer: 1, label: "lever → south gates" },
+    { p: [AX - 270, CY - 130], layer: 1, label: "lever → north gates" },
+    { p: [AX + 270, CY + 130], layer: 1, label: "lever → south gates" },
   ],
   lights: [
-    ...ys.map((y) => ({ p: /** @type {Pt} */ ([AX, y]), r: 240, col: "#fff1d6" })),
+    ...pts.map((p) => ({ p, r: 240, col: "#fff1d6" })),
     { p: [1100, 800], r: 150 },
     { p: [4100, 800], r: 150 },
     { p: [1100, 1700], r: 150 },
     { p: [4100, 1700], r: 150 },
     { p: [620, CY], r: 190 },
     { p: [MW - 620, CY], r: 190 },
-    { p: [AX - 160, 650], r: 130 },
-    { p: [AX + 160, 1850], r: 130 },
+    { p: [AX - 270, CY - 130], r: 130 },
+    { p: [AX + 270, CY + 130], r: 130 },
   ],
   atmo: [
     { label: "dust in the light", cx: 1700, cy: 600, rx: 300, ry: 110, col: "#fff1d6", op: 0.14 },
     { label: "dust in the light", cx: 3500, cy: 1900, rx: 300, ry: 110, col: "#fff1d6", op: 0.14 },
     { label: "dust in the light", cx: 1500, cy: 1900, rx: 260, ry: 100, col: "#fff1d6", op: 0.12 },
   ],
-  overhangs: [{ r: rect(1500, 1220, 240, 70), label: "hanging banner" }],
+  overhangs: [{ r: rect(2480, 2250, 240, 70), label: "hanging banner" }],
   drops: [
     { at: [1700, 410], e: 1 },
     { at: [3500, 2090], e: 1 },
@@ -281,20 +301,20 @@ runStudy({
   ],
   spawns: { t1: seats(300, 1070, 120, 110, 8, 1), t2: seats(MW - 300, 1070, 120, 110, 8, -1) },
   shrines: { t1: [620, CY], t2: [MW - 620, CY] },
-  objectives: ys.map((y, i) => ({
+  objectives: pts.map(([x, y], i) => ({
     id: pointOf(i),
     kind: /** @type {"capture-point"} */ ("capture-point"),
-    p: /** @type {Pt} */ ([AX, y]),
-    layer: i === 3 ? 2 : i === 1 || i === 5 ? 1 : 0,
+    p: /** @type {Pt} */ ([x, y]),
+    layer: pointLayer(i),
     label: `capture-point ${i + 1}`,
   })),
   centre: [AX, CY],
   routes: { t1: toCentre, t2: toCentre.map(([n, r]) => [n, mxr(r)]) },
-  objWalks: ys.map((_, i) => ({
+  objWalks: pts.map((_, i) => ({
     obj: pointOf(i),
     what: "8v8 spawn to point",
     t1: toPoint(i),
-    t2: toPoint(i).map(([n, r]) => [n, mxr(r)]),
+    t2: toPoint(i < 3 ? i + 4 : i === 3 ? 3 : i - 4).map(([n, r]) => [n, mxr(r)]),
   })),
   layerTitles: {
     0: "L0 nave, side halls, undercrofts",
@@ -302,5 +322,5 @@ runStudy({
     2: "L2 great plinth top",
   },
   planNote:
-    "plan 5200×2500. Dashed: spawn to the great plinth (nave, north hall, south hall). Seven points on the centre line.",
+    "plan 5200×2500. Dashed: spawn to the great plinth (nave, north hall, south hall). Seven points: the centre and a home trio per team.",
 });

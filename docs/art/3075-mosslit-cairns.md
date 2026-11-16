@@ -27,7 +27,7 @@ moss on cairn hills: each point on a hilltop, the glow as light sources) is kept
   lane stair, so ≥ 2 routes reach it for either team, none through the other's spawn. None is in a
   tunnel, zone or water. Resurrection shrines 1 (700,2300) and 2 (4700,2300), each in its team's lit
   ring. The lanes between hills are 190..220 wide.
-- **Tunnel:** the **root tunnel** on L0, 110 wide, under the south moss cairn, from the west mouth
+- **Tunnel:** the **root tunnel** on L0, 110 wide, between the two south hills, from the west mouth
   (2250,2150) to the east mouth (3150,2150): a cross-map bypass. Lever-driven (below). Cover shows the
   seam and grating slots (#3236), as wide as the walkable floor (#3179).
 - **Drop-offs (4):** the north-west and south-east hills' outer edges, and the great cairn's two sides.

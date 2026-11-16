@@ -13,8 +13,7 @@ sculpture gallery with four gates, balconies, plinths as points, skylights) is k
 - **Bounds** 5200×2500 = 13.0 M u² (2.6× Canyon, long side 5200 > 4800, short side 2500 ≥ 1800,
   above the 12.6 M u² 8v8 bound). The ground outline fills 79 % (≥ 60 %), `rock` outside.
 - **It stays a gallery:** it grows on the short side (1400 → 2500) with a **north hall and a south
-  hall**, each lined by two balconies, a central **court** on the axis where the seven plinth points
-  stand, an end **vestibule** per team, and the two undercrofts. The long nave (west to east) is the
+  hall**, each lined by two balconies, a central **court** on the axis where the great plinth stands, an end **vestibule** per team, and the two undercrofts. The long nave (west to east) is the
   gallery; the court is the "courtyard" the card asks about.
 - **Biome: `hall`** (visual-style §1: ground `#26303f`, deck `#4b5a70`, stone and steel, no plants).
   No new row.
@@ -22,12 +21,13 @@ sculpture gallery with four gates, balconies, plinths as points, skylights) is k
   balconies (70 up); L2 the great plinth's top (140). 22 stairs.
 - **Structures (8 + 2 tunnels):** two plinths, the great plinth (base and top), four balconies.
   Below Moss Vale's count.
-- **Capture points (7, as today, placed anew):** all on x = 2600, 300 apart, so every point is the
-  same walk from both spawns. P1, P3, P5, P7 on open floor in a skylight ring; P2 (2600,650) and P6
-  (2600,1850) on plinths (L1); P4 (2600,1250) on the great plinth's top (L2). Each plinth has a stair
-  on all four faces (the top, two), so ≥ 2 routes reach it for either team, none through the other's
-  spawn. No point is in an undercroft, zone or pool, none on a deck one stair reaches. Resurrection
-  shrines 1 (620,1250) and 2 (4580,1250), in the vestibules.
+- **Capture points (7, home points: the centre and a mirrored trio per team):** **P4** the centre
+  (2600,1250) on the great plinth's top (L2). Team 1's **P1** (1700,500) floor, **P2** (1700,1250) on a
+  plinth (L1), **P3** (1700,2000) floor; team 2's **P5** (3500,500), **P6** (3500,1250) plinth, **P7**
+  (3500,2000), the x-mirrors of P1..P3, so each pair is the same walk from its own spawn. Each plinth
+  has a stair on all four faces (the great plinth's top, two), so ≥ 2 routes reach it for either team,
+  none through the other's spawn. No point is in an undercroft, zone or pool. Resurrection shrines 1
+  (620,1250) and 2 (4580,1250), in the vestibules.
 - **Tunnels (2):** the north and south **undercrofts** on L0, 120 wide, x 1100..4100 at y 800 and
   y 1700, a gate at each mouth. Cover shows the seam and grating slots (#3236), as wide as the
   walkable floor (#3179).
@@ -35,8 +35,8 @@ sculpture gallery with four gates, balconies, plinths as points, skylights) is k
   (below); see Questions.
 - **Drop-offs (4):** the north-west balcony's court edge, the south-east balcony's, the great
   plinth's north and south edges.
-- **Elements:** two brass **levers** on the plinths, (2440,650) **opens both north gates**,
-  (2760,1850) **both south gates**: either team opens them, and they stay open. No lift is used. Two
+- **Elements:** two brass **levers** on the great plinth's base, (2330,1120) **opens both north gates**,
+  (2870,1380) **both south gates**: either team opens them, and they stay open. No lift is used. Two
   **breakable toppled statue barricades** (x 1000, y 1010..1170 and its mirror at y 1330..1490) each
   close a short-cut from a vestibule into the court. Zones: `spring` and `mire`, two each, in the
   four corner alcoves, off every route and ≥ 200 u from a spawn. Four shallow **reflecting pools**
@@ -61,22 +61,20 @@ mirror makes the walk gap 0 %: the gap the structure gives, not a promise about 
 | north hall                          | 14.0 / 14.0 s |
 | south hall                          | 14.1 / 14.1 s |
 
-**Per capture point** (T1 = T2, gap 0 %; the middle point is 0 % from equidistant):
+**Per capture point** (own team / other team; the pairs mirror, so P1/P5, P2/P6, P3/P7 are equal for
+their owners, and the centre is 0 %):
 
-| Point            | latitude approach | nave approach |
-| ---------------- | ----------------- | ------------- |
-| 1 (floor, north) | 15.2 s            | 15.5 s        |
-| 2 (plinth)       | 13.9 s            | 14.5 s        |
-| 3 (floor)        | 12.8 s            | 14.1 s        |
-| 4 (great plinth) | 12.4 s            | 14.5 s        |
-| 5 (floor)        | 12.9 s            | 14.1 s        |
-| 6 (plinth)       | 14.0 s            | 14.5 s        |
-| 7 (floor, south) | 15.3 s            | 15.5 s        |
+| Point             | own spawn   | other spawn |
+| ----------------- | ----------- | ----------- |
+| P1 / P5 (floor)   | 9.5–10.1 s  | 19.4–24.3 s |
+| P2 / P6 (plinth)  | 7.4 s       | 20.1 s      |
+| P3 / P7 (floor)   | 9.6–10.1 s  | 19.5–24.2 s |
+| P4 (great plinth) | 15.1–15.2 s | 15.1–15.2 s |
 
-Spawn to fight stays under 16 s (< 25 s). Only 8v8 exists today (`teamSizes [8]`), so no 4v4 walks.
+Spawn to fight stays under 16 s at the centre (< 25 s). Only 8v8 exists today (`teamSizes [8]`).
 
-**High ground:** the great plinth's top overlooks P3, P4, P5; each plinth its point; the four balconies
-overlook P1/P2 and P6/P7 from both teams' sides (x 1250..2150 and 3050..3950), the same for each team
+**High ground:** the great plinth's top overlooks P4 and the nave; each plinth its point; the four balconies
+overlook P1/P3 and P5/P7 (x 1250..2150 and 3050..3950), the same for each team
 (mirrored). **Worst case:** the undercrofts shut change no point's routes (they are a bypass);
 unbroken barricades leave the nave and both halls.
 
@@ -98,5 +96,4 @@ shallow water, the gates the existing gate look. Mechanics are not designed here
 
 - Today's four gates open by plates (`opener: plate`), here by two levers; the card keeps the gate
   count. If plates are wanted (one per team in front of its mouths), the layout holds.
-- Today's points run along the long axis (two near each base). The card asks every point within 10 %
-  between teams, so all seven are on the centre line. If home points are wanted, say so.
+- Home points per the architect: the centre plus mirrored pairs, parity per pair, levers kept.
