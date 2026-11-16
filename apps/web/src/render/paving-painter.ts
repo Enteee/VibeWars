@@ -384,13 +384,17 @@ export interface PavingTunnelPiece {
 
 /**
  * The pieces of a paving on `layer` that lie over the tunnel covers
- * `covers` (#3272): one per cover on the same layer its texture overlaps,
- * the overlap rounded to the texture's pixels. A cover on another layer,
- * or one that misses the paving, makes none.
+ * `covers` (#3272): one per cover its texture overlaps on the cover's
+ * layer or above it, so paving raised on a deck over a tunnel fades too
+ * (#3406), the overlap rounded to the texture's pixels. A paving drawn
+ * `lift` up has each cover reach `lift` further south, as decks do
+ * (`liftedCovers`, #3352): its rows that far south draw over the tunnel.
+ * A cover on a higher layer, or one that misses the paving, makes none.
  */
 export function pavingTunnelPieces(
   drawing: PavingDrawing,
   layer: number,
+  lift: number,
   size: PavingTextureSize,
   covers: readonly {
     readonly tunnel: number;
@@ -398,12 +402,14 @@ export function pavingTunnelPieces(
     readonly outline: readonly Vec2[];
   }[],
 ): PavingTunnelPiece[] {
-  return covers.flatMap((cover) =>
-    pavingPixelsOver(drawing, layer, size, cover).map((pixels) => ({
-      tunnel: cover.tunnel,
-      pixels,
-    })),
-  );
+  return covers
+    .filter((cover) => layer >= cover.layer)
+    .flatMap((cover) =>
+      pavingPixelsOver(drawing, size, cover, lift).map((pixels) => ({
+        tunnel: cover.tunnel,
+        pixels,
+      })),
+    );
 }
 
 /**
@@ -416,17 +422,19 @@ export function pavingHoles(
   size: PavingTextureSize,
   holes: readonly { readonly layer: number; readonly outline: readonly Vec2[] }[],
 ): PavingPixels[] {
-  return holes.flatMap((hole) => pavingPixelsOver(drawing, layer, size, hole));
+  return holes
+    .filter((hole) => hole.layer === layer)
+    .flatMap((hole) => pavingPixelsOver(drawing, size, hole, 0));
 }
 
-/** The whole pixels of the texture `area` on `layer` overlaps: none off it or on another layer. */
+/** The whole pixels of the texture `area`, its bottom `lift` further south, overlaps: none off it. */
 function pavingPixelsOver(
   drawing: PavingDrawing,
-  layer: number,
   size: PavingTextureSize,
-  area: { readonly layer: number; readonly outline: readonly Vec2[] },
+  area: { readonly outline: readonly Vec2[] },
+  lift: number,
 ): PavingPixels[] {
-  if (area.layer !== layer || area.outline.length === 0) {
+  if (area.outline.length === 0) {
     return [];
   }
   const { x, y } = drawing.bounds;
@@ -438,7 +446,7 @@ function pavingPixelsOver(
   const left = pixel(Math.min(...xs), x, width);
   const right = pixel(Math.max(...xs), x, width);
   const top = pixel(Math.min(...ys), y, height);
-  const bottom = pixel(Math.max(...ys), y, height);
+  const bottom = pixel(Math.max(...ys) + lift, y, height);
   return right <= left || bottom <= top
     ? []
     : [{ left, top, width: right - left, height: bottom - top }];
