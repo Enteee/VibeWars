@@ -187,20 +187,29 @@ function setup(options = {}) {
   });
   /**
    * @param {number | null} code
-   * @returns {{ code: number | null, boot: Record<string, unknown>, calls: string[] }}
+   * @param {string} stderr
+   * @returns {Outcome}
    */
-  const outcome = (code) => {
+  const outcome = (code, stderr) => {
     const bootFile = path.join(root, "boot.json");
+    const logFile = path.join(root, "hub", "reboot.log");
     /** @type {unknown} */
     const written = fs.existsSync(bootFile) ? JSON.parse(fs.readFileSync(bootFile, "utf8")) : {};
     return {
       code,
       boot: obj(written),
       calls: fs.existsSync(calls) ? fs.readFileSync(calls, "utf8").split("\n") : [],
+      log: fs.existsSync(logFile) ? fs.readFileSync(logFile, "utf8") : "",
+      stderr,
     };
   };
-  const restart = (/** @type {Record<string, string>} */ env = {}) =>
-    outcome(spawnSync(process.execPath, [RESTART], { env: environment(env) }).status);
+  const restart = (/** @type {Record<string, string>} */ env = {}) => {
+    const child = spawnSync(process.execPath, [RESTART], {
+      env: environment(env),
+      encoding: "utf8",
+    });
+    return outcome(child.status, child.stderr);
+  };
   /**
    * For a test that serves something the restarter calls, such as a fake
    * Telegram: spawnSync would block the event loop that answers it.
@@ -208,9 +217,14 @@ function setup(options = {}) {
    * @param {Record<string, string>} env
    */
   const restartAsync = async (env) => {
-    const child = spawn(process.execPath, [RESTART], { env: environment(env), stdio: "ignore" });
-    await once(child, "exit");
-    return outcome(child.exitCode);
+    const child = spawn(process.execPath, [RESTART], {
+      env: environment(env),
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+    let stderr = "";
+    child.stderr.on("data", (chunk) => (stderr += String(chunk)));
+    await once(child, "close");
+    return outcome(child.exitCode, stderr);
   };
 
   /** @param {string} sha */
@@ -227,13 +241,40 @@ function setup(options = {}) {
   return { dir, bin, repo, remote, root, boot, target, tree, up, restart, restartAsync };
 }
 
+/**
+ * @typedef {{ code: number | null, boot: Record<string, unknown>, calls: string[], log: string, stderr: string }} Outcome
+ */
+
+/**
+ * The restarter exited with `code`; if not, the failure shows what it ran
+ * and logged, so a red CI run says why (#3461).
+ *
+ * @param {Outcome} result
+ * @param {number} code
+ * @returns {void}
+ */
+function expectCode(result, code) {
+  expect(
+    result.code,
+    [
+      `exit ${String(result.code)}`,
+      "calls:",
+      ...result.calls,
+      "reboot.log:",
+      result.log,
+      "stderr:",
+      result.stderr,
+    ].join("\n"),
+  ).toBe(code);
+}
+
 describe("the restarter", () => {
   it("stops the company, locks the new main, and starts it from its tree", () => {
     const company = setup();
 
     const result = company.restart();
 
-    expect(result.code).toBe(0);
+    expectCode(result, 0);
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
     expect(
       fs.existsSync(path.join(company.tree(company.target), "scripts", "bots", "new.mjs")),
@@ -267,7 +308,7 @@ describe("the restarter", () => {
       PATH: [company.bin, store, process.env.PATH ?? ""].join(path.delimiter),
     });
 
-    expect(result.code).toBe(0);
+    expectCode(result, 0);
     expect(result.calls).toEqual(expect.arrayContaining(company.up(company.target)));
     expect(result.calls).not.toContain("devenv saw a store PATH");
   });
@@ -293,7 +334,7 @@ describe("the restarter", () => {
 
     const result = company.restart({ VIBEWARS_TMUX: "" });
 
-    expect(result.code).toBe(1);
+    expectCode(result, 1);
     expect(result.calls).toEqual([]);
     expect(fs.readFileSync(path.join(company.root, "hub", "reboot.log"), "utf8")).toMatch(
       /restart failed: Error: VIBEWARS_TMUX is not set/,
@@ -307,7 +348,7 @@ describe("the restarter", () => {
     fs.writeFileSync(path.join(agent, "session-id"), "0f3c9a1e\n");
     fs.writeFileSync(path.join(agent, "between-turns"), "");
 
-    expect(company.restart().code).toBe(0);
+    expectCode(company.restart(), 0);
     expect(fs.existsSync(path.join(company.root, "agents"))).toBe(false);
   });
 
@@ -318,7 +359,7 @@ describe("the restarter", () => {
 
     const result = company.restart();
 
-    expect(result.code).toBe(0);
+    expectCode(result, 0);
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
     expect(sh(["symbolic-ref", "--short", "HEAD"], company.repo)).toBe("mine");
     expect(fs.readFileSync(path.join(company.repo, ".gitignore"), "utf8")).toBe("changed\n");
@@ -334,7 +375,7 @@ describe("the restarter", () => {
 
     const result = await company.restartAsync(telegram.env);
 
-    expect(result.code).toBe(1);
+    expectCode(result, 1);
     expect(String(result.boot.note)).toMatch(/^Reboot FAILED: company.lock is missing\./);
     expect(result.calls.some((c) => c.includes("claude-llc up"))).toBe(false);
     expect(String(obj(telegram.sent[0]?.body).text)).toMatch(/company.lock is missing/);
@@ -360,7 +401,7 @@ describe("the restarter", () => {
 
     const result = company.restart();
 
-    expect(result.code).toBe(0);
+    expectCode(result, 0);
     expect(
       fs.existsSync(path.join(company.tree(company.target), "scripts", "bots", "later.mjs")),
     ).toBe(false);
@@ -445,7 +486,7 @@ describe("the restarter, when the old session will not go (#315)", () => {
 
     const result = company.restart();
 
-    expect(result.code).toBe(0);
+    expectCode(result, 0);
     expect((await exited)[1]).toBe("SIGKILL");
     expect(result.calls.filter((c) => c === "tmux kill-session -t =restart-test")).toHaveLength(2);
     expect(fs.readFileSync(path.join(company.root, "hub", "reboot.log"), "utf8")).toMatch(
@@ -458,7 +499,7 @@ describe("the restarter, when the old session will not go (#315)", () => {
 
     const result = company.restart();
 
-    expect(result.code).toBe(0);
+    expectCode(result, 0);
     expect(result.calls.filter((c) => c.endsWith("claude-llc up rebooted=1"))).toHaveLength(2);
     expect(String(result.boot.note)).toMatch(
       /^Rebooted onto .* It came up on the second try: the first claude-llc up exited 1\.$/,
@@ -475,7 +516,7 @@ describe("the restarter, when the old session will not go (#315)", () => {
 
     const result = await company.restartAsync(telegram.env);
 
-    expect(result.code).toBe(1);
+    expectCode(result, 1);
     expect(String(result.boot.note)).toMatch(/^Reboot FAILED: claude-llc up exited 1, twice\./);
     expect(result.calls).not.toContain("devenv saw the bot token");
     expect(telegram.sent).toHaveLength(1);
@@ -494,7 +535,7 @@ describe("the restarter, when the old session will not go (#315)", () => {
 
     const result = await company.restartAsync(telegram.env);
 
-    expect(result.code).toBe(1);
+    expectCode(result, 1);
     expect(result.calls.some((c) => c.includes("claude-llc up"))).toBe(false);
     expect(result.calls.filter((c) => c === "tmux kill-session -t =restart-test")).toHaveLength(3);
     expect(fs.readFileSync(path.join(company.root, "hub", "reboot.log"), "utf8")).toMatch(
