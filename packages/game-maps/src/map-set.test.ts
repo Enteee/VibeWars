@@ -60,6 +60,7 @@ const REBUILT = new Set([
   "canthan-terraces",
   "moss-vale",
   "sunken-bastion",
+  "elonian-plateau",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
@@ -780,62 +781,62 @@ const ROUTE_HALF_GAP = 100;
 
 // The medium arenas (#2604, #2605) cross the centre in three lanes, the large (#2607, #2609) in four.
 // Sandstone Steps (#3278), Frozen Crossing (#3286), Ashen Courtyard (#3287), Moss Vale (#3288), Canthan Terraces
-// (#3399) and Sunken Bastion (#3400), rebuilt in 2.5D, are proven by their walks and high ground instead
-// (map-balance.test.ts).
-describe.each([
-  ["shiverpeak-pass", 4, 4],
-  ["elonian-plateau", 8, 4],
-] as const)("the new arena %s (#2604, #2605, #2607, #2609)", (id, size, lanes) => {
-  const map = MAPS.find((each) => each.id === id);
-  if (map === undefined) throw new Error(`no ${id}`);
-  const bounds = { width: map.width, height: map.height };
-  const centre = { x: map.width / 2, y: map.height / 2 };
+// (#3399), Sunken Bastion (#3400) and Elonian Plateau (#3402), rebuilt in 2.5D, are proven by their walks and
+// high ground instead (map-balance.test.ts).
+describe.each([["shiverpeak-pass", 4, 4]] as const)(
+  "the new arena %s (#2604, #2605, #2607, #2609)",
+  (id, size, lanes) => {
+    const map = MAPS.find((each) => each.id === id);
+    if (map === undefined) throw new Error(`no ${id}`);
+    const bounds = { width: map.width, height: map.height };
+    const centre = { x: map.width / 2, y: map.height / 2 };
 
-  it("is an Annihilation arena for its one team size, a spawn for each, team 0 by the west edge", () => {
-    expect(map.mode).toBe("annihilation");
-    expect(map.objectives).toEqual([]);
-    expect(map.teamSizes).toEqual([size]);
-    for (const team of [0, 1]) {
-      expect(map.spawnPoints.filter((spawn) => spawn.team === team).length).toBeGreaterThanOrEqual(
-        size,
-      );
-    }
-    for (const spawn of map.spawnPoints.filter((each) => each.team === 0)) {
-      expect(spawn.position.x).toBeLessThanOrEqual(400);
-    }
-  });
+    it("is an Annihilation arena for its one team size, a spawn for each, team 0 by the west edge", () => {
+      expect(map.mode).toBe("annihilation");
+      expect(map.objectives).toEqual([]);
+      expect(map.teamSizes).toEqual([size]);
+      for (const team of [0, 1]) {
+        expect(
+          map.spawnPoints.filter((spawn) => spawn.team === team).length,
+        ).toBeGreaterThanOrEqual(size);
+      }
+      for (const spawn of map.spawnPoints.filter((each) => each.team === 0)) {
+        expect(spawn.position.x).toBeLessThanOrEqual(400);
+      }
+    });
 
-  it(`has ${String(lanes)} routes between the bases, north to south, none through a gap under 200`, () => {
-    const from = map.spawnPoints.find((spawn) => spawn.team === 0)?.position ?? centre;
-    const to = turned(map, from);
-    const band = map.height / lanes;
-    const all = [...Array(lanes).keys()];
-    for (const lane of all) {
-      // Wall off the centre line but for one band: the way must cross it in this one.
-      const cuts = all
-        .filter((other) => other !== lane)
-        .map((other) => ({
-          kind: "rect" as const,
-          x: centre.x - 5,
-          y: other * band,
-          width: 10,
-          height: band,
-        }));
-      const finder = createPathFinder(
-        buildNavGraph(allWallSegments([...map.walls, ...cuts]), bounds, ROUTE_HALF_GAP, []),
-      );
-      expect(finder.find(from, to), `lane ${String(lane)}`).toBeDefined();
-    }
-  });
+    it(`has ${String(lanes)} routes between the bases, north to south, none through a gap under 200`, () => {
+      const from = map.spawnPoints.find((spawn) => spawn.team === 0)?.position ?? centre;
+      const to = turned(map, from);
+      const band = map.height / lanes;
+      const all = [...Array(lanes).keys()];
+      for (const lane of all) {
+        // Wall off the centre line but for one band: the way must cross it in this one.
+        const cuts = all
+          .filter((other) => other !== lane)
+          .map((other) => ({
+            kind: "rect" as const,
+            x: centre.x - 5,
+            y: other * band,
+            width: 10,
+            height: band,
+          }));
+        const finder = createPathFinder(
+          buildNavGraph(allWallSegments([...map.walls, ...cuts]), bounds, ROUTE_HALF_GAP, []),
+        );
+        expect(finder.find(from, to), `lane ${String(lane)}`).toBeDefined();
+      }
+    });
 
-  it("has three walls or more within spell range of the centre, cover for a fight there", () => {
-    expect(wallsNear(map, centre)).toBeGreaterThanOrEqual(3);
-  });
+    it("has three walls or more within spell range of the centre, cover for a fight there", () => {
+      expect(wallsNear(map, centre)).toBeGreaterThanOrEqual(3);
+    });
 
-  it("keeps its nav graph to 600 nodes", () => {
-    expect(layeredFinder(map, RADIUS).nodeCount).toBeLessThanOrEqual(600);
-  });
-});
+    it("keeps its nav graph to 600 nodes", () => {
+      expect(layeredFinder(map, RADIUS).nodeCount).toBeLessThanOrEqual(600);
+    });
+  },
+);
 
 describe("Cinder Sanctum (#2695)", () => {
   const sanctum = MAPS.find((each) => each.id === "cinder-sanctum");

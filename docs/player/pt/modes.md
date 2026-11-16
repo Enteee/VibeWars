@@ -61,9 +61,11 @@ uma alavanca em cada margem, pelo adarve ao longo da muralha norte ou
 pelo porão alagado logo abaixo.
 E para equipes maiores: **Shiverpeak Pass** (4v4, 6000x3400), dois maciços
 de penhasco que deixam uma passagem larga cheia de pedras e uma trilha
-estreita em cada borda; e **Elonian Plateau** (8v8, 6400x3600), savana
-aberta em volta de cinco grandes mesas, com as linhas de visão mais longas
-de todas as arenas.
+estreita em cada borda; e **Elonian Plateau** (8v8, 5520x3360), um planalto
+desértico com quatro mesas em volta do leito seco de um cânion: elevadores
+temporizados sobem a três delas, um arco natural liga as duas do norte e uma
+passagem corre sob a crista central, com um portão aberto por uma alavanca
+lá em cima.
 
 ## Contagem de Abates
 

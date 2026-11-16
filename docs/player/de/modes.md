@@ -50,8 +50,11 @@ deren Burggraben den Hof teilt; hinüber geht es über eine Zugbrücke, die ein 
 bedient, über den Wehrgang entlang der nördlichen Ringmauer oder durch den gefluteten Keller
 darunter. Und für größere Teams:
 **Shiverpeak Pass** (4v4, 6000x3400), zwei Felsmassive, die einen breiten, mit Findlingen übersäten
-Pass und einen schmalen Pfad an jedem Rand lassen; und **Elonian Plateau** (8v8, 6400x3600), offene
-Savanne rund um fünf große Tafelberge, mit den längsten Sichtlinien aller Arenen.
+Pass und einen schmalen Pfad an jedem Rand lassen; und **Elonian Plateau**
+(8v8, 5520x3360), ein Wüstenplateau mit vier Tafelbergen rund um ein
+trockenes Canyonbett: getaktete Aufzüge fahren auf drei davon, ein
+natürlicher Bogen verbindet die beiden im Norden, und unter dem mittleren
+Grat führt ein Gang hindurch, dessen Tor ein Hebel oben öffnet.
 
 ## Kill-Zähler
 

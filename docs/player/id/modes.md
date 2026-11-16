@@ -52,8 +52,11 @@ setiap tepi, lewat jalan di atas tembok sepanjang dinding utara, atau melalui ru
 yang terendam di bawahnya.
 Dan untuk tim yang lebih besar: **Shiverpeak Pass** (4v4, 6000x3400),
 dua gugusan tebing yang menyisakan celah lebar bertabur batu besar dan jalan setapak
-sempit di sepanjang setiap tepinya; dan **Elonian Plateau** (8v8, 6400x3600), sabana
-terbuka di sekeliling lima mesa besar, dengan jarak pandang terpanjang di antara semua arena.
+sempit di sepanjang setiap tepinya; dan **Elonian Plateau** (8v8,
+5520x3360), dataran tinggi gurun dengan empat mesa di sekeliling dasar
+ngarai yang kering: lift berwaktu naik ke tiga di antaranya, lengkung alami
+menghubungkan dua mesa di utara, dan lorong melintas di bawah punggung
+tengah dengan gerbang yang dibuka tuas di atasnya.
 
 ## Hitung Kill
 

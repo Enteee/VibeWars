@@ -56,9 +56,11 @@ en vindebro, der betjenes med et håndtag på hver bred, ad skyttegangen
 langs den nordlige ringmur eller gennem den oversvømmede kælder nedenunder.
 Og til de større hold: **Shiverpeak Pass** (4v4, 6000x3400),
 to klippemassiver, der efterlader et bredt pas fyldt med kampesten og en
-smal sti langs hver kant; og **Elonian Plateau** (8v8, 6400x3600), åben
-savanne rundt om fem store mesaer, med de længste sigtelinjer af alle
-arenaer.
+smal sti langs hver kant; og **Elonian Plateau** (8v8, 5520x3360), et
+ørkenplateau med fire mesaer rundt om et udtørret kløftleje: tidsstyrede
+elevatorer kører op på tre af dem, en naturlig bue forbinder de to nordlige,
+og en gang løber under midterkammen med en port, som et håndtag oppe på
+kammen åbner.
 
 ## Drabstælling
 

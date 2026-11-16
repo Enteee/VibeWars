@@ -54,9 +54,11 @@ cez ňu sa dá po padacom moste ovládanom pákou na každom brehu, po ochodzi
 pozdĺž severnej hradby alebo cez zaplavenú pivnicu pod ňou.
 A pre väčšie tímy: **Shiverpeak Pass** (4v4, 6000x3400),
 dva skalné masívy, medzi ktorými zostáva široký priesmyk posiaty balvanmi
-a úzky chodník pozdĺž každého okraja; a **Elonian Plateau** (8v8, 6400x3600),
-otvorená savana okolo piatich veľkých stolových hôr, s najdlhšími výhľadmi zo
-všetkých arén.
+a úzky chodník pozdĺž každého okraja; a **Elonian Plateau** (8v8,
+5520x3360), púštna náhorná plošina so štyrmi stolovými horami okolo
+vyschnutého koryta kaňonu: na tri z nich vyvážajú časované výťahy, dve
+severné spája prírodný oblúk a pod stredným hrebeňom vedie chodba, ktorej
+mrežu otvára páka hore.
 
 ## Počet zabití
 

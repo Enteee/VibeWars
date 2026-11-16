@@ -58,9 +58,11 @@ kıyıdaki bir kolla çalışan asma köprüden, kuzey sur boyunca uzanan
 seğirdim yolundan ya da altındaki su basmış mahzenden geçilir.
 Ve daha büyük takımlar için: **Shiverpeak Pass** (4v4, 6000x3400), kaya
 parçalarıyla dolu geniş bir geçit ve her kenarında dar bir patika
-bırakan iki uçurum kütlesi; ve **Elonian Plateau** (8v8, 6400x3600),
-beş büyük platonun çevresinde açık bir savan, arenaların hepsinden uzun
-görüş hatlarıyla.
+bırakan iki uçurum kütlesi; ve **Elonian Plateau** (8v8, 5520x3360), kuru
+bir kanyon yatağının çevresinde dört masa dağı olan bir çöl platosu: zamanlı
+asansörler üçüne çıkar, doğal bir kemer kuzeydeki ikisini birleştirir ve
+ortadaki sırtın altından, kapısını tepedeki bir kolun açtığı bir geçit
+uzanır.
 
 ## Leş Sayısı
 

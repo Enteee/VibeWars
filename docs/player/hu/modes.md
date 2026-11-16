@@ -61,8 +61,10 @@ lehet kelni rajta a mindkét parton karral működtetett felvonóhídon, az
 A nagyobb csapatoknak pedig: a **Shiverpeak Pass** (4v4, 6000x3400),
 két sziklatömb, amely széles, sziklatömbökkel teleszórt hágót és mindkét
 szélén egy-egy keskeny ösvényt hagy; és az **Elonian Plateau** (8v8,
-6400x3600), nyílt szavanna öt hatalmas tanúhegy körül, az összes aréna
-közül a leghosszabb rálátásokkal.
+5520x3360), sivatagi fennsík négy tanúheggyel egy kiszáradt kanyonmeder
+körül: időzített liftek visznek fel hármukra, természetes kőhíd köti össze a
+két északit, a középső gerinc alatt pedig átjáró fut, amelynek rácsát egy
+fenti kar nyitja.
 
 ## Ölésverseny
 

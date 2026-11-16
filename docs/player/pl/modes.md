@@ -53,8 +53,10 @@ przez nią zwodzonym mostem poruszanym dźwignią na każdym brzegu, chodnikiem 
 murach wzdłuż północnej kurtyny albo przez zalaną piwnicę pod spodem.
 A dla większych drużyn: **Shiverpeak Pass** (4v4, 6000x3400), dwa masywy skalne
 zostawiające szeroką przełęcz usianą głazami i wąską ścieżkę wzdłuż każdej krawędzi;
-oraz **Elonian Plateau** (8v8, 6400x3600), otwarta sawanna wokół pięciu wielkich
-stołowych gór, z najdłuższą linią widzenia ze wszystkich aren.
+oraz **Elonian Plateau** (8v8, 5520x3360), pustynny płaskowyż z czterema
+stołowymi górami wokół suchego koryta kanionu: windy na czas wjeżdżają na
+trzy z nich, naturalny łuk łączy dwie północne, a pod środkowym grzbietem
+biegnie przejście, którego kratę otwiera dźwignia na górze.
 
 ## Licznik zabójstw
 

@@ -57,9 +57,10 @@ varje strand, via vallgången längs den norra ringmuren eller genom den
 översvämmade källaren under.
 Och för de större lagen: **Shiverpeak Pass** (4v4, 6000x3400),
 två klippmassiv som lämnar ett brett pass bestrött med stenblock och en
-smal stig längs varje kant; och **Elonian Plateau** (8v8, 6400x3600),
-öppen savann runt fem stora mesor, med de längsta siktlinjerna av alla
-arenor.
+smal stig längs varje kant; och **Elonian Plateau** (8v8, 5520x3360), en
+ökenplatå med fyra mesor runt en uttorkad kanjonbädd: tidsstyrda hissar går
+upp på tre av dem, en naturlig valvbåge förenar de två i norr, och under
+mittkammen löper en gång vars galler öppnas med en spak där uppe.
 
 ## Dödsräkning
 

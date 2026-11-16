@@ -60,9 +60,11 @@ jota ohjataan vivulla kummaltakin rannalta, pohjoisen ulkomuurin
 vallikäytävää pitkin tai alla olevan tulvineen kellarin kautta.
 Ja isommille tiimeille: **Shiverpeak Pass** (4v4, 6000x3400),
 kaksi kalliojyrkännettä, joiden väliin jää leveä, lohkareiden täplittämä
-sola ja kapea polku kummankin reunan vierellä; ja **Elonian Plateau**
-(8v8, 6400x3600), avointa savannia viiden suuren pöytävuoren ympärillä,
-ja pisimmät näkölinjat kaikista areenoista.
+sola ja kapea polku kummankin reunan vierellä; ja **Elonian Plateau** (8v8,
+5520x3360), aavikkoylänkö, jonka neljä pöytävuorta ympäröi kuivaa
+kanjoninuomaa: ajastetut hissit nousevat kolmelle niistä, luonnonkaari
+yhdistää kaksi pohjoista, ja keskiharjanteen alitse kulkee käytävä, jonka
+portin avaa vipu harjanteen päällä.
 
 ## Tappolaskenta
 

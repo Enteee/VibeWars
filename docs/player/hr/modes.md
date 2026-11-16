@@ -54,8 +54,10 @@ kojim upravlja poluga na svakoj obali, bedemskom stazom uz sjeverni zid ili
 kroz poplavljeni podrum ispod.
 A za veće timove: **Shiverpeak Pass** (4v4, 6000x3400),
 dva masiva litica koji ostavljaju širok prijevoj posut gromadama i usku
-stazu uz svaki rub; i **Elonian Plateau** (8v8, 6400x3600), otvorena
-savana oko pet velikih mesa, s najduljim vidicima od svih arena.
+stazu uz svaki rub; i **Elonian Plateau** (8v8, 5520x3360), pustinjska
+visoravan s četiri mese oko suhog korita kanjona: dizala na vremenski pogon
+voze na tri od njih, prirodni luk spaja dvije sjeverne, a ispod središnjeg
+grebena vodi prolaz čija se rešetka otvara polugom na vrhu.
 
 ## Broj ubojstava
 

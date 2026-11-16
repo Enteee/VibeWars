@@ -58,9 +58,11 @@ pont-levis actionné par un levier sur chaque rive, par le chemin de ronde le
 long du rempart nord, ou par la cave inondée en dessous.
 Et pour les plus grandes équipes : **Shiverpeak Pass** (4v4, 6000x3400), deux
 massifs de falaises qui laissent un large col parsemé de rochers et un étroit
-sentier le long de chaque bord ; et **Elonian Plateau** (8v8, 6400x3600), une
-savane ouverte autour de cinq grandes mésas, avec les plus longues lignes de vue
-de toutes les arènes.
+sentier le long de chaque bord ; et **Elonian Plateau** (8v8, 5520x3360), un
+plateau désertique de quatre mésas autour d'un lit de canyon à sec : des
+ascenseurs minutés montent sur trois d'entre elles, une arche naturelle
+relie les deux du nord, et un passage court sous l'arête centrale, sa herse
+ouverte par un levier au sommet.
 
 ## Décompte
 

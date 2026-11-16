@@ -56,8 +56,10 @@ die met een hendel op elke oever wordt bediend, via de weergang langs de
 noordelijke ringmuur of door de ondergelopen kelder eronder.
 En voor de grotere teams: **Shiverpeak Pass** (4v4, 6000x3400), twee rotsmassieven
 die een brede pas vol keien en een smal pad langs elke rand overlaten; en
-**Elonian Plateau** (8v8, 6400x3600), open savanne rond vijf grote mesa's, met de
-langste zichtlijnen van alle arena's.
+**Elonian Plateau** (8v8, 5520x3360), een woestijnplateau met vier mesa's
+rond een droge kloofbedding: liften op een vaste tijd gaan omhoog naar drie
+ervan, een natuurlijke boog verbindt de twee in het noorden, en onder de
+middelste rug loopt een gang waarvan een hendel bovenop het hek opent.
 
 ## Kill Count
 

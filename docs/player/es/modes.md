@@ -58,8 +58,10 @@ palanca en cada orilla, por el adarve a lo largo de la muralla norte o por el
 sótano inundado de debajo. Y para los
 equipos más grandes: **Shiverpeak Pass** (4v4, 6000x3400), dos macizos de
 acantilados que dejan un amplio paso sembrado de rocas y un sendero estrecho en
-cada borde; y **Elonian Plateau** (8v8, 6400x3600), sabana abierta alrededor de
-cinco grandes mesetas, con las líneas de visión más largas de todas las arenas.
+cada borde; y **Elonian Plateau** (8v8, 5520x3360), una meseta desértica con
+cuatro mesas alrededor de un cauce seco de cañón: ascensores temporizados
+suben a tres de ellas, un arco natural une las dos del norte y un pasaje
+cruza bajo la cresta central, con una reja que abre una palanca en lo alto.
 
 ## Recuento de bajas
 
