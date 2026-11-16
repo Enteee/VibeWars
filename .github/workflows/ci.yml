@@ -163,6 +163,9 @@ jobs:
 
       - name: Render bench
         if: steps.applies.outputs.applies == 'true'
+        # 30 min bounds a hang, not a threshold (#3428): the ratio above is the
+        # gate. A passing run takes 16-19 min and grows with each map; nearing
+        # 30 is a card to speed the bench up, not another raise.
         timeout-minutes: 30
         run: BENCH_MAX_RATIO=2.7 devenv shell -- pnpm run bench:render
 
