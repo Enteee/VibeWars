@@ -34,14 +34,17 @@ nepatrí, oltár v zlatej. Vyplnená šípka hráča sa kreslí cez ňu.
 a každá smrť stojí morálku. Ak chceš vyhrať, vyhlaď druhý tím. Po 8 minútach
 vyhráva tím, ktorému zostalo najviac morálky.
 
-Hrá sa na Canyon, Crossroads a Long Hall a na dvoch väčších arénach strednej
-veľkosti: **Sandstone Steps** (1v1, 3600x2000), terasovité púštne rímsy
-okolo rozbitého kruhu obeliskov, so stĺpmi na vyhýbanie; a **Frozen
-Crossing** (2v2, 4000x2200), zamrznutá rieka s tromi mostami a ľadové
-skaly na oboch brehoch. Pre väčšie tímy: **Ashen Courtyard** (4v4,
-4400x2600), zrúcaná pevnosť, ktorej obohnané nádvorie má štyri prielomy, a ruiny
-na bokoch; a **Moss Vale** (8v8, 4800x2800), dva zalesnené chrbty,
-ktoré rozdeľujú údolie na tri koridory stretávajúce sa na čistine uprostred.
+Hrá sa na Canyon, Crossroads a Long Hall a na dvoch malých arénach zhruba
+takej veľkosti ako Canyon: **Sandstone Steps** (1v1, 2600x1940), terasovité
+púštne mestečko so zapusteným nádvorím so studňou, strechami nad uličkami a
+podchodom pod nimi, ktorý otvára páka; a **Frozen Crossing** (2v2, 2600x1940),
+zamrznutá rieka medzi dvoma vyvýšenými brehmi, ktorú prejdeš po kameňoch alebo
+po zrubovom moste, ktorého prostrednú dosku zdvíha páka. Pre väčšie tímy:
+**Ashen Courtyard** (4v4, 3200x2400), vypálené nádvorie obohnané hradbami, s
+ochodzami a vežami hore a zapusteným nádvorím so studňou dole, pričom padaciu
+mrežu brány ovládajú z hradieb; a **Moss Vale** (8v8, 5000x2600), terasovité
+údolie rozdelené na dve hlbokým mlynským náhonom, ktorý sa dá prejsť len po
+padacom moste, cez mlyn a podchodom pod ním.
 **Canthan Terraces** (1v1, 2400x2100) je malá, ale strmá: ryžové polia
 stúpajúce po svahu k zrúcanej pagode a pod nimi zaplavený priepust, ktorý
 páka stavidla otvára ako tretiu cestu do stredu.

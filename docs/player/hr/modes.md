@@ -34,14 +34,17 @@ ničije, oltar zlatan. Ispunjena strelica igrača crta se preko nje.
 a svaka smrt stoji morala. Zbriši drugi tim da pobijediš. Nakon 8 minuta
 pobjeđuje tim kojem je ostalo najviše morala.
 
-Canyon, Crossroads i Long Hall igraju ga, kao i dvije veće arene srednje
-veličine: **Sandstone Steps** (1v1, 3600x2000), terasaste pustinjske izbočine
-oko razbijenog kruga obeliska, sa stupovima oko kojih možeš vući neprijatelja; i **Frozen
-Crossing** (2v2, 4000x2200), zaleđena rijeka preko koje vode tri mosta,
-s ledenim stijenama na svakoj obali. Za veće timove: **Ashen Courtyard** (4v4,
-4400x2600), srušena utvrda čije ograđeno dvorište ima četiri proboja, s ruševinama
-na bokovima; i **Moss Vale** (8v8, 4800x2800), dva šumovita grebena
-koja dijele dolinu na tri staze što se sastaju na čistini u sredini.
+Canyon, Crossroads i Long Hall igraju ga, kao i dvije male arene otprilike
+veličine Canyona: **Sandstone Steps** (1v1, 2600x1940), terasasti pustinjski
+gradić s udubljenim dvorištem oko bunara, krovovima iznad ulica i prolazom
+ispod njih koji otvara poluga; i **Frozen Crossing** (2v2, 2600x1940),
+zaleđena rijeka između dviju povišenih obala, koja se prelazi preko kamenja
+za prijelaz ili preko mosta od debala čiju srednju dasku podiže poluga. Za
+veće timove: **Ashen Courtyard** (4v4, 3200x2400), spaljeno dvorište opasano
+zidom, sa zidnim stazama i kulama gore i udubljenim dvorištem oko bunara
+dolje, a rešetkom na ulaznoj kuli upravlja se sa zidina; i **Moss Vale** (8v8,
+5000x2600), terasasta dolina koju duboki mlinski kanal reže na dva dijela,
+a prelazi se samo na pokretnom mostu, kod mlina i kroz prolaz ispod njega.
 **Canthan Terraces** (1v1, 2400x2100) mala je, ali strma: rižina polja
 koja se penju uz padinu do srušene pagode, a ispod njih poplavljeni propust
 koji poluga ustave otvara kao treći put do sredine.

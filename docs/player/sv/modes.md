@@ -37,22 +37,24 @@ ovanpå.
 återupplivar dem, och varje död kostar moral. Utplåna det andra laget
 för att vinna. Efter 8 minuter vinner laget med mest moral kvar.
 
-Canyon, Crossroads och Long Hall spelar det, och två större, medelstora
-arenor: **Sandstone Steps** (1v1, 3600x2000), terrasserade ökenavsatser
-runt en trasig obeliskcirkel, med pelare att kita runt; och **Frozen
-Crossing** (2v2, 4000x2200), en frusen flod som korsas av tre broar,
-med isklippor på båda stränderna. För de större lagen: **Ashen Courtyard**
-(4v4, 4400x2600), en förfallen borg vars muromgärdade borggård har fyra
-breschor, med ruiner på flankerna; och **Moss Vale** (8v8, 4800x2800),
-två skogsklädda åsar som delar dalen i tre filer, som möts i en glänta i
-mitten. **Canthan Terraces** (1v1, 2400x2100) är liten men brant:
+Canyon, Crossroads och Long Hall spelar det, och två små arenor ungefär lika
+stora som Canyon: **Sandstone Steps** (1v1, 2600x1940), en terrasserad ökenstad
+med en nedsänkt brunnsgård, hustak ovanför gatorna och en spakstängd
+underpassage under dem; och **Frozen Crossing** (2v2, 2600x1940), en frusen flod
+mellan två upphöjda stränder, som korsas på trampstenar eller en stockbro vars
+mittplanka höjs av en spak. För de större lagen: **Ashen Courtyard** (4v4,
+3200x2400), en bränd muromgärdad borggård med vallgångar och torn ovanför och en
+nedsänkt brunnsgård nedanför, där porthusets fällgaller sköts från murarna; och
+**Moss Vale** (8v8, 5000x2600), en terrasserad dal som klyvs i två av en djup
+kvarnränna och bara kan korsas vid vindbryggan, kvarnen och underpassagen under
+den. **Canthan Terraces** (1v1, 2400x2100) är liten men brant:
 risfält som trappar sig uppför en sluttning till en förfallen pagod, med
 en översvämmad kulvert under som en slusspak öppnar som en tredje väg
-till mitten. **Sunken Bastion** (2v2, 2700x1900) är liten men hög: en
-halvt översvämmad fästning vars vallgrav delar borggården; den korsas
-via en vindbrygga som manövreras med en spak på varje strand, via
-vallgången längs den norra ringmuren eller genom den översvämmade
-källaren under.
+till mitten. **Sunken Bastion** (2v2, 2700x1900)
+är liten men hög: en halvt översvämmad fästning vars vallgrav delar
+borggården; den korsas via en vindbrygga som manövreras med en spak på
+varje strand, via vallgången längs den norra ringmuren eller genom den
+översvämmade källaren under.
 Och för de större lagen: **Shiverpeak Pass** (4v4, 6000x3400),
 två klippmassiv som lämnar ett brett pass bestrött med stenblock och en
 smal stig längs varje kant; och **Elonian Plateau** (8v8, 6400x3600),

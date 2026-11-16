@@ -39,15 +39,18 @@ egy szövetséges fel nem támasztja őket, és minden halál morálba kerül.
 Söpörd el a másik csapatot, hogy nyerj. 8 perc után az a csapat nyer,
 amelyiknek a legtöbb morálja maradt.
 
-A Canyon, a Crossroads és a Long Hall játssza, valamint két nagyobb,
-közepes méretű aréna: a **Sandstone Steps** (1v1, 3600x2000), teraszos
-sivatagi párkányok egy törött obeliszkkör körül, oszlopokkal, amelyek
-körül kitérhetsz; és a **Frozen Crossing** (2v2, 4000x2200), egy befagyott
-folyó három híddal, mindkét partján jégsziklákkal. A nagyobb
-csapatoknak: az **Ashen Courtyard** (4v4, 4400x2600), egy romos vár,
-amelynek fallal körülvett udvarán négy rés nyílik, oldalain romokkal; és a
-**Moss Vale** (8v8, 4800x2800), két erdős gerinc, amely a völgyet három
-sávra osztja, és ezek középen egy tisztáson találkoznak.
+A Canyon, a Crossroads és a Long Hall játssza, valamint két kis aréna,
+nagyjából a Canyon méretében: a **Sandstone Steps** (1v1, 2600x1940), egy
+teraszos sivatagi város süllyesztett kútudvarral, utcái fölött háztetőkkel,
+alattuk pedig karral nyitható aluljáróval; és a **Frozen Crossing** (2v2,
+2600x1940), egy befagyott folyó két magas part között, amelyen gázlóköveken
+vagy egy rönkhídon kelhetsz át, a híd középső pallóját egy kar emeli fel. A
+nagyobb csapatoknak: az **Ashen Courtyard** (4v4, 3200x2400), egy kiégett,
+fallal körülvett udvar, fent várfolyosókkal és tornyokkal, lent
+süllyesztett kútudvarral, kapuházának csapórácsát a falakról működtetik; és
+a **Moss Vale** (8v8, 5000x2600), egy teraszos völgy, amelyet egy mély
+malomárok kettévág, és csak a felvonóhídnál, a malomnál és az alatta futó
+aluljárón lehet átkelni rajta.
 A **Canthan Terraces** (1v1, 2400x2100) kicsi, de meredek: rizsföldek
 lépcsőznek fel egy domboldalon egy romos pagodáig, alattuk egy elárasztott
 átereszzel, amelyet egy zsilipkar nyit meg harmadik útként a középhez.

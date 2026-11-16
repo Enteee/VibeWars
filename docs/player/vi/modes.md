@@ -35,21 +35,25 @@ Mũi tên đặc của người chơi được vẽ đè lên nó.
 họ, và mỗi lần chết tốn sĩ khí. Quét sạch đội kia để thắng. Sau 8 phút, đội
 còn nhiều sĩ khí nhất sẽ thắng.
 
-Canyon, Crossroads và Long Hall chơi chế độ này, cùng hai đấu trường cỡ vừa
-lớn hơn: **Sandstone Steps** (1v1, 3600x2000), các gờ đá sa mạc bậc thang
-quanh một vòng tháp obelisk đổ nát, với cột để thả diều quanh; và **Frozen
-Crossing** (2v2, 4000x2200), một con sông đóng băng có ba cây cầu bắc qua,
-đá băng ở mỗi bờ. Cho các đội lớn hơn: **Ashen Courtyard** (4v4,
-4400x2600), một pháo đài đổ nát có sân trong bao tường với bốn lỗ thủng, tàn
-tích ở hai bên sườn; và **Moss Vale** (8v8, 4800x2800), hai dãy đồi rừng chia
-thung lũng thành ba làn, gặp nhau ở một khoảng trống ở giữa. **Canthan
+Canyon, Crossroads và Long Hall chơi chế độ này, cùng hai đấu trường nhỏ cỡ
+Canyon: **Sandstone Steps** (1v1, 2600x1940), một thị trấn sa mạc bậc thang có
+sân giếng trũng, mái nhà phía trên các con phố và một lối ngầm đóng mở bằng cần
+gạt bên dưới; và **Frozen Crossing** (2v2, 2600x1940), một con sông đóng băng
+giữa hai bờ cao, băng qua bằng những tảng đá kê chân hoặc một cây cầu gỗ súc có
+tấm ván giữa được nâng lên bằng cần gạt. Cho các đội lớn hơn: **Ashen Courtyard**
+(4v4, 3200x2400), một sân trong cháy sém có tường bao quanh, với lối đi trên
+tường và tháp canh ở trên, một sân giếng trũng ở dưới, còn khung lưới sắt của
+cổng thành được điều khiển từ trên tường; và **Moss Vale** (8v8, 5000x2600), một
+thung lũng bậc thang bị một mương cối xay sâu cắt làm đôi, chỉ băng qua được ở
+cầu kéo, cối xay và lối ngầm bên dưới nó. **Canthan
 Terraces** (1v1, 2400x2100) nhỏ nhưng dốc: ruộng lúa bậc thang leo lên sườn
 đồi tới một ngôi chùa tháp đổ nát, bên dưới có một cống ngập nước mà cần gạt
-cửa cống mở ra thành lối thứ ba vào trung tâm. **Sunken Bastion** (2v2,
-2700x1900) nhỏ nhưng cao: một pháo đài ngập nửa chừng có hào nước chia đôi
-sân trong; có thể vượt hào qua cầu treo do cần gạt ở mỗi bờ điều khiển, qua
-lối đi trên tường dọc tường thành phía bắc, hoặc xuyên qua hầm ngập nước bên
-dưới. Và cho các đội lớn hơn: **Shiverpeak Pass** (4v4,
+cửa cống mở ra thành lối thứ ba vào trung tâm. **Sunken Bastion** (2v2, 2700x1900) nhỏ nhưng cao:
+một pháo đài
+ngập nửa chừng có hào nước chia đôi sân trong; có thể vượt hào qua cầu
+treo do cần gạt ở mỗi bờ điều khiển, qua lối đi trên tường dọc tường thành
+phía bắc, hoặc xuyên qua hầm ngập nước bên dưới. Và cho các đội lớn hơn:
+**Shiverpeak Pass** (4v4,
 6000x3400), hai khối vách đá chừa ra một con đèo rộng rải đầy tảng đá và một
 lối mòn hẹp dọc mỗi mép; và **Elonian Plateau** (8v8, 6400x3600), thảo
 nguyên trống trải quanh năm cao nguyên lớn, với tầm nhìn xa nhất trong mọi

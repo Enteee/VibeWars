@@ -36,15 +36,17 @@ ejer den, alteret i guld. En spillers udfyldte pil tegnes oven på den.
 genopliver dem, og hver død koster moral. Udslet det andet hold for at
 vinde. Efter 8 minutter vinder det hold, der har mest moral tilbage.
 
-Canyon, Crossroads og Long Hall spiller den, og to større, mellemstore
-arenaer: **Sandstone Steps** (1v1, 3600x2000), terrasserede afsatser i
-ørkenen rundt om en ødelagt cirkel af obelisker, med søjler at kite
-rundt om; og **Frozen Crossing** (2v2, 4000x2200), en frossen flod
-krydset af tre broer, med isklipper på hver bred. Til de større hold:
-**Ashen Courtyard** (4v4, 4400x2600), en ruineret borg, hvis indmurede
-gård har fire brud, med ruiner på flankerne; og **Moss Vale** (8v8,
-4800x2800), to skovklædte højderygge, der deler dalen i tre baner, som
-mødes i en lysning i midten.
+Canyon, Crossroads og Long Hall spiller den, og to små arenaer på
+størrelse med Canyon: **Sandstone Steps** (1v1, 2600x1940), en terrasseret
+ørkenby med en nedsænket brøndgård, tage over gaderne og en underføring
+under dem, spærret af et håndtag; og **Frozen Crossing** (2v2, 2600x1940),
+en frossen flod mellem to hævede bredder, som krydses på trædesten eller
+ad en stammebro, hvis midterste planke hæves med et håndtag. Til de større
+hold: **Ashen Courtyard** (4v4, 3200x2400), en brændt, indmuret gård med
+vægtergange og tårne foroven og en nedsænket brøndgård forneden, hvis
+faldgitter i porthuset betjenes fra murene; og **Moss Vale** (8v8,
+5000x2600), en terrasseret dal skåret i to af et dybt mølleløb, som kun
+kan krydses ved vindebroen, ved møllen og ad underføringen under den.
 **Canthan Terraces** (1v1, 2400x2100) er lille, men stejl: rismarker, der
 trapper op ad en skråning til en ruineret pagode, med en oversvømmet
 kulvert nedenunder, som et slusehåndtag åbner som en tredje vej til midten.

@@ -34,14 +34,17 @@ nobody's, the altar in gold. A player's filled arrow draws over it.
 and each death costs morale. Wipe the other team to win. After 8 minutes,
 the team with the most morale left wins.
 
-Canyon, Crossroads and Long Hall play it, and two bigger, medium-sized
-arenas: **Sandstone Steps** (1v1, 3600x2000), terraced desert ledges
-round a broken obelisk circle, with pillars to kite round; and **Frozen
-Crossing** (2v2, 4000x2200), a frozen river crossed by three bridges,
-ice rocks on each bank. For the bigger teams: **Ashen Courtyard** (4v4,
-4400x2600), a ruined keep whose walled courtyard has four breaches, ruins
-on its flanks; and **Moss Vale** (8v8, 4800x2800), two wooded ridges
-that split the vale into three lanes, meeting in a clearing in the middle.
+Canyon, Crossroads and Long Hall play it, and two small arenas about
+Canyon's size: **Sandstone Steps** (1v1, 2600x1940), a terraced desert
+town with a sunken well court, rooftops above its streets and a
+lever-gated under-pass below them; and **Frozen Crossing** (2v2,
+2600x1940), a frozen river between two raised banks, crossed on stepping
+stones or a log bridge whose middle plank a lever raises. For the bigger
+teams: **Ashen Courtyard** (4v4, 3200x2400), a burnt walled courtyard
+with wall-walks and towers above and a sunken well court below, its
+gatehouse portcullis worked from the walls; and **Moss Vale** (8v8,
+5000x2600), a terraced valley cut in two by a deep mill race, crossed
+only at the drawbridge, the mill and the under-pass beneath it.
 **Canthan Terraces** (1v1, 2400x2100) is small but steep: rice paddies
 stepping up a hillside to a ruined pagoda, with a flooded culvert beneath
 that a sluice lever opens as a third way to the centre. **Sunken Bastion**

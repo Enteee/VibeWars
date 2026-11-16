@@ -39,21 +39,26 @@ ressuscitar, e cada morte custa moral. Elimine a outra equipe para vencer.
 Depois de 8 minutos, vence a equipe com mais moral restante.
 
 Canyon, Crossroads e Long Hall jogam esse modo, além de duas arenas
-maiores, de tamanho médio: **Sandstone Steps** (1v1, 3600x2000), terraços
-de deserto em volta de um círculo de obeliscos quebrados, com pilares para
-dar a volta; e **Frozen Crossing** (2v2, 4000x2200), um rio congelado
-cruzado por três pontes, com rochas de gelo em cada margem. Para equipes
-maiores: **Ashen Courtyard** (4v4, 4400x2600), uma fortaleza em ruínas
-cujo pátio murado tem quatro brechas, com ruínas nos flancos; e **Moss
-Vale** (8v8, 4800x2800), duas cristas arborizadas que dividem o vale em
-três corredores, que se encontram em uma clareira no meio.
+pequenas, mais ou menos do tamanho de Canyon: **Sandstone Steps** (1v1,
+2600x1940), uma cidade de deserto em terraços com um pátio de poço
+rebaixado, telhados acima das ruas e, abaixo delas, uma passagem
+subterrânea aberta por alavanca; e **Frozen Crossing** (2v2, 2600x1940),
+um rio congelado entre duas margens elevadas, atravessado por pedras de
+passagem ou por uma ponte de troncos cuja tábua do meio é erguida por
+uma alavanca. Para equipes maiores: **Ashen Courtyard** (4v4,
+3200x2400), um pátio murado queimado, com adarves e torres em cima e um
+pátio de poço rebaixado embaixo, e a grade levadiça do portão é acionada
+das muralhas; e **Moss Vale** (8v8, 5000x2600), um vale em terraços
+cortado ao meio por um canal de moinho profundo, atravessado só na ponte
+levadiça, no moinho e na passagem por baixo dele.
 **Canthan Terraces** (1v1, 2400x2100) é pequena, mas íngreme: arrozais
 subindo uma encosta até um pagode em ruínas, com um bueiro alagado por
 baixo que uma alavanca de comporta abre como terceiro caminho até o
-centro. **Sunken Bastion** (2v2, 2700x1900) é pequena, mas alta: uma
-fortaleza meio alagada cujo fosso divide o pátio; dá para atravessá-lo
-por uma ponte levadiça acionada por uma alavanca em cada margem, pelo
-adarve ao longo da muralha norte ou pelo porão alagado logo abaixo.
+centro. **Sunken Bastion** (2v2,
+2700x1900) é pequena, mas alta: uma fortaleza meio alagada cujo fosso
+divide o pátio; dá para atravessá-lo por uma ponte levadiça acionada por
+uma alavanca em cada margem, pelo adarve ao longo da muralha norte ou
+pelo porão alagado logo abaixo.
 E para equipes maiores: **Shiverpeak Pass** (4v4, 6000x3400), dois maciços
 de penhasco que deixam uma passagem larga cheia de pedras e uma trilha
 estreita em cada borda; e **Elonian Plateau** (8v8, 6400x3600), savana

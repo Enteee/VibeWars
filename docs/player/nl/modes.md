@@ -35,21 +35,25 @@ is, het altaar in goud. De gevulde pijl van een speler wordt eroverheen getekend
 en elke dood kost moraal. Veeg het andere team weg om te winnen. Na 8 minuten wint
 het team met de meeste moraal over.
 
-Canyon, Crossroads en Long Hall spelen het, en twee grotere, middelgrote arena's:
-**Sandstone Steps** (1v1, 3600x2000), terrasvormige woestijnrichels rond een
-gebroken cirkel obelisken, met pilaren om omheen te kiten; en **Frozen Crossing**
-(2v2, 4000x2200), een bevroren rivier met drie bruggen, ijsrotsen aan elke oever.
-Voor de grotere teams: **Ashen Courtyard** (4v4, 4400x2600), een verwoeste burcht
-waarvan de ommuurde binnenplaats vier bressen heeft, ruïnes aan de flanken; en
-**Moss Vale** (8v8, 4800x2800), twee beboste kammen die het dal in drie lanen
-splitsen, die in het midden samenkomen op een open plek. **Canthan Terraces**
+Canyon, Crossroads en Long Hall spelen het, en twee kleine arena's van ongeveer
+de grootte van Canyon: **Sandstone Steps** (1v1, 2600x1940), een terrasvormig
+woestijnstadje met een verzonken putplein, daken boven de straten en een
+onderdoorgang daaronder die met een hendel opengaat; en **Frozen Crossing**
+(2v2, 2600x1940), een bevroren rivier tussen twee hoge oevers, over te steken
+via stapstenen of een boomstambrug waarvan een hendel de middelste plank
+omhoogzet. Voor de grotere teams: **Ashen Courtyard** (4v4, 3200x2400), een
+uitgebrande ommuurde binnenplaats met weergangen en torens erboven en een
+verzonken putplein eronder, met een valhek in het poortgebouw dat vanaf de
+muren wordt bediend; en **Moss Vale** (8v8, 5000x2600), een terrasvormig dal
+dat een diepe molenbeek in tweeën snijdt, alleen over te steken bij de
+ophaalbrug, de molen en de onderdoorgang daaronder. **Canthan Terraces**
 (1v1, 2400x2100) is klein maar steil: rijstvelden die een heuvel op klimmen naar
 een verwoeste pagode, met daaronder een ondergelopen duiker die een sluishendel
-opent als derde weg naar het midden. **Sunken Bastion** (2v2, 2700x1900) is
-klein maar hoog: een half ondergelopen vesting waarvan de slotgracht de
-binnenplaats splitst; je steekt over via een ophaalbrug die met een hendel op
-elke oever wordt bediend, via de weergang langs de noordelijke ringmuur of door
-de ondergelopen kelder eronder.
+opent als derde weg naar het midden. **Sunken
+Bastion** (2v2, 2700x1900) is klein maar hoog: een half ondergelopen vesting
+waarvan de slotgracht de binnenplaats splitst; je steekt over via een ophaalbrug
+die met een hendel op elke oever wordt bediend, via de weergang langs de
+noordelijke ringmuur of door de ondergelopen kelder eronder.
 En voor de grotere teams: **Shiverpeak Pass** (4v4, 6000x3400), twee rotsmassieven
 die een brede pas vol keien en een smal pad langs elke rand overlaten; en
 **Elonian Plateau** (8v8, 6400x3600), open savanne rond vijf grote mesa's, met de
