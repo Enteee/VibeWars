@@ -51,9 +51,10 @@ sávra osztja, és ezek középen egy tisztáson találkoznak.
 A **Canthan Terraces** (1v1, 2400x2100) kicsi, de meredek: rizsföldek
 lépcsőznek fel egy domboldalon egy romos pagodáig, alattuk egy elárasztott
 átereszzel, amelyet egy zsilipkar nyit meg harmadik útként a középhez.
-Egy nagy aréna még nagyobb: a **Sunken Bastion** (2v2, 5600x3000), egy félig
-elárasztott erőd, amelynek áttört függönyfala két kapuval rendelkező
-öregtornyot vesz körül, kívül mocsári sziklákkal.
+A **Sunken Bastion** (2v2, 2700x1900) kicsi, de magas:
+egy félig elárasztott erőd, amelynek udvarát vizesárok szeli ketté; át
+lehet kelni rajta a mindkét parton karral működtetett felvonóhídon, az
+északi várfal mentén futó gyilokjárón vagy a lenti elárasztott pincén át.
 A nagyobb csapatoknak pedig: a **Shiverpeak Pass** (4v4, 6000x3400),
 két sziklatömb, amely széles, sziklatömbökkel teleszórt hágót és mindkét
 szélén egy-egy keskeny ösvényt hagy; és az **Elonian Plateau** (8v8,

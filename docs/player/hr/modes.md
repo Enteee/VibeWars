@@ -45,9 +45,10 @@ koja dijele dolinu na tri staze što se sastaju na čistini u sredini.
 **Canthan Terraces** (1v1, 2400x2100) mala je, ali strma: rižina polja
 koja se penju uz padinu do srušene pagode, a ispod njih poplavljeni propust
 koji poluga ustave otvara kao treći put do sredine.
-Jedna velika arena još je veća: **Sunken Bastion** (2v2, 5600x3000), napola poplavljena utvrda
-čiji probijeni bedem okružuje kulu s dvoja vrata, s močvarnim stijenama
-izvana.
+**Sunken Bastion** (2v2, 2700x1900) mala je, ali visoka: napola
+poplavljena utvrda čiji opkop dijeli dvorište; prelazi se pokretnim mostom
+kojim upravlja poluga na svakoj obali, bedemskom stazom uz sjeverni zid ili
+kroz poplavljeni podrum ispod.
 A za veće timove: **Shiverpeak Pass** (4v4, 6000x3400),
 dva masiva litica koji ostavljaju širok prijevoj posut gromadama i usku
 stazu uz svaki rub; i **Elonian Plateau** (8v8, 6400x3600), otvorena

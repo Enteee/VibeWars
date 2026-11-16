@@ -44,10 +44,11 @@ on its flanks; and **Moss Vale** (8v8, 4800x2800), two wooded ridges
 that split the vale into three lanes, meeting in a clearing in the middle.
 **Canthan Terraces** (1v1, 2400x2100) is small but steep: rice paddies
 stepping up a hillside to a ruined pagoda, with a flooded culvert beneath
-that a sluice lever opens as a third way to the centre.
-One large arena is bigger still: **Sunken Bastion** (2v2, 5600x3000), a half-flooded fortress
-whose breached curtain wall rings a keep with two gates, marsh rocks
-outside.
+that a sluice lever opens as a third way to the centre. **Sunken Bastion**
+(2v2, 2700x1900) is small but tall: a half-flooded fortress whose moat
+splits the courtyard, crossed by a drawbridge worked by a lever on either
+bank, by the wall-walk along the north curtain, or through the flooded
+cellar beneath.
 And for the bigger teams: **Shiverpeak Pass** (4v4, 6000x3400),
 two cliff massifs that leave a wide pass strewn with boulders and a narrow
 trail along each edge; and **Elonian Plateau** (8v8, 6400x3600), open

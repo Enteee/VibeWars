@@ -45,9 +45,11 @@ waarvan de ommuurde binnenplaats vier bressen heeft, ruïnes aan de flanken; en
 splitsen, die in het midden samenkomen op een open plek. **Canthan Terraces**
 (1v1, 2400x2100) is klein maar steil: rijstvelden die een heuvel op klimmen naar
 een verwoeste pagode, met daaronder een ondergelopen duiker die een sluishendel
-opent als derde weg naar het midden. Eén grote arena is nog groter: **Sunken
-Bastion** (2v2, 5600x3000), een half ondergelopen vesting waarvan de doorbroken
-ringmuur een burcht met twee poorten omringt, met moerasrotsen daarbuiten.
+opent als derde weg naar het midden. **Sunken Bastion** (2v2, 2700x1900) is
+klein maar hoog: een half ondergelopen vesting waarvan de slotgracht de
+binnenplaats splitst; je steekt over via een ophaalbrug die met een hendel op
+elke oever wordt bediend, via de weergang langs de noordelijke ringmuur of door
+de ondergelopen kelder eronder.
 En voor de grotere teams: **Shiverpeak Pass** (4v4, 6000x3400), twee rotsmassieven
 die een brede pas vol keien en een smal pad langs elke rand overlaten; en
 **Elonian Plateau** (8v8, 6400x3600), open savanne rond vijf grote mesa's, met de

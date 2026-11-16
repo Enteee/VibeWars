@@ -59,6 +59,7 @@ const REBUILT = new Set([
   "ashen-courtyard",
   "canthan-terraces",
   "moss-vale",
+  "sunken-bastion",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
@@ -778,10 +779,10 @@ describe("Hall of Heroes (#2552)", () => {
 const ROUTE_HALF_GAP = 100;
 
 // The medium arenas (#2604, #2605) cross the centre in three lanes, the large (#2607, #2609) in four.
-// Sandstone Steps (#3278), Frozen Crossing (#3286), Ashen Courtyard (#3287), Moss Vale (#3288) and Canthan
-// Terraces (#3399), rebuilt in 2.5D, are proven by their walks and high ground instead (map-balance.test.ts).
+// Sandstone Steps (#3278), Frozen Crossing (#3286), Ashen Courtyard (#3287), Moss Vale (#3288), Canthan Terraces
+// (#3399) and Sunken Bastion (#3400), rebuilt in 2.5D, are proven by their walks and high ground instead
+// (map-balance.test.ts).
 describe.each([
-  ["sunken-bastion", 2, 4],
   ["shiverpeak-pass", 4, 4],
   ["elonian-plateau", 8, 4],
 ] as const)("the new arena %s (#2604, #2605, #2607, #2609)", (id, size, lanes) => {

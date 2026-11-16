@@ -45,9 +45,10 @@ yang membelah lembah menjadi tiga jalur, bertemu di tanah lapang di tengah.
 **Canthan Terraces** (1v1, 2400x2100) kecil tetapi curam: sawah yang naik
 menyusuri lereng bukit menuju pagoda yang runtuh, dengan gorong-gorong tergenang di bawahnya
 yang dibuka oleh tuas pintu air sebagai jalan ketiga ke tengah.
-Satu arena besar lebih besar lagi: **Sunken Bastion** (2v2, 5600x3000), benteng setengah terendam
-yang tembok kelilingnya yang jebol melingkari sebuah keep dengan dua gerbang, batu-batu rawa
-di luarnya.
+**Sunken Bastion** (2v2, 2700x1900) kecil tetapi tinggi: benteng setengah terendam
+yang paritnya membelah halaman, diseberangi lewat jembatan angkat yang digerakkan tuas di
+setiap tepi, lewat jalan di atas tembok sepanjang dinding utara, atau melalui ruang bawah tanah
+yang terendam di bawahnya.
 Dan untuk tim yang lebih besar: **Shiverpeak Pass** (4v4, 6000x3400),
 dua gugusan tebing yang menyisakan celah lebar bertabur batu besar dan jalan setapak
 sempit di sepanjang setiap tepinya; dan **Elonian Plateau** (8v8, 6400x3600), sabana

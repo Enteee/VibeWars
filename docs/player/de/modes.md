@@ -41,9 +41,10 @@ zerstörte Burg, deren ummauerter Hof vier Breschen hat, mit Ruinen an den Flank
 (8v8, 4800x2800), zwei bewaldete Kämme, die das Tal in drei Bahnen teilen, die sich in einer
 Lichtung in der Mitte treffen. **Canthan Terraces** (1v1, 2400x2100) ist klein, aber steil:
 Reisfelder, die einen Hang hinauf zu einer zerstörten Pagode steigen, darunter ein gefluteter
-Durchlass, den ein Schleusenhebel als dritten Weg zur Mitte öffnet. Eine große Arena ist noch
-größer: **Sunken Bastion** (2v2, 5600x3000), eine halb überflutete Festung, deren durchbrochene
-Ringmauer einen Bergfried mit zwei Toren umschließt, außen Sumpffelsen. Und für größere Teams:
+Durchlass, den ein Schleusenhebel als dritten Weg zur Mitte öffnet. **Sunken Bastion** (2v2,
+2700x1900) ist klein, aber hoch: eine halb überflutete Festung, deren Burggraben den Hof teilt;
+hinüber geht es über eine Zugbrücke, die ein Hebel an jedem Ufer bedient, über den Wehrgang entlang
+der nördlichen Ringmauer oder durch den gefluteten Keller darunter. Und für größere Teams:
 **Shiverpeak Pass** (4v4, 6000x3400), zwei Felsmassive, die einen breiten, mit Findlingen übersäten
 Pass und einen schmalen Pfad an jedem Rand lassen; und **Elonian Plateau** (8v8, 6400x3600), offene
 Savanne rund um fünf große Tafelberge, mit den längsten Sichtlinien aller Arenen.

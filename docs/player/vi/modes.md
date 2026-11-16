@@ -45,10 +45,11 @@ tích ở hai bên sườn; và **Moss Vale** (8v8, 4800x2800), hai dãy đồi 
 thung lũng thành ba làn, gặp nhau ở một khoảng trống ở giữa. **Canthan
 Terraces** (1v1, 2400x2100) nhỏ nhưng dốc: ruộng lúa bậc thang leo lên sườn
 đồi tới một ngôi chùa tháp đổ nát, bên dưới có một cống ngập nước mà cần gạt
-cửa cống mở ra thành lối thứ ba vào trung tâm. Một đấu trường lớn còn lớn hơn
-nữa: **Sunken Bastion** (2v2, 5600x3000), một pháo đài ngập nửa chừng
-có bức tường thành bị chọc thủng bao quanh một tòa tháp chính với hai cổng,
-đá đầm lầy bên ngoài. Và cho các đội lớn hơn: **Shiverpeak Pass** (4v4,
+cửa cống mở ra thành lối thứ ba vào trung tâm. **Sunken Bastion** (2v2,
+2700x1900) nhỏ nhưng cao: một pháo đài ngập nửa chừng có hào nước chia đôi
+sân trong; có thể vượt hào qua cầu treo do cần gạt ở mỗi bờ điều khiển, qua
+lối đi trên tường dọc tường thành phía bắc, hoặc xuyên qua hầm ngập nước bên
+dưới. Và cho các đội lớn hơn: **Shiverpeak Pass** (4v4,
 6000x3400), hai khối vách đá chừa ra một con đèo rộng rải đầy tảng đá và một
 lối mòn hẹp dọc mỗi mép; và **Elonian Plateau** (8v8, 6400x3600), thảo
 nguyên trống trải quanh năm cao nguyên lớn, với tầm nhìn xa nhất trong mọi

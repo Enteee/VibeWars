@@ -50,9 +50,10 @@ três corredores, que se encontram em uma clareira no meio.
 **Canthan Terraces** (1v1, 2400x2100) é pequena, mas íngreme: arrozais
 subindo uma encosta até um pagode em ruínas, com um bueiro alagado por
 baixo que uma alavanca de comporta abre como terceiro caminho até o
-centro. Uma arena grande é maior ainda: **Sunken Bastion** (2v2,
-5600x3000), uma fortaleza meio alagada cuja muralha rompida cerca um
-torreão com dois portões, com rochas de pântano do lado de fora.
+centro. **Sunken Bastion** (2v2, 2700x1900) é pequena, mas alta: uma
+fortaleza meio alagada cujo fosso divide o pátio; dá para atravessá-lo
+por uma ponte levadiça acionada por uma alavanca em cada margem, pelo
+adarve ao longo da muralha norte ou pelo porão alagado logo abaixo.
 E para equipes maiores: **Shiverpeak Pass** (4v4, 6000x3400), dois maciços
 de penhasco que deixam uma passagem larga cheia de pedras e uma trilha
 estreita em cada borda; e **Elonian Plateau** (8v8, 6400x3600), savana

@@ -48,9 +48,11 @@ två skogsklädda åsar som delar dalen i tre filer, som möts i en glänta i
 mitten. **Canthan Terraces** (1v1, 2400x2100) är liten men brant:
 risfält som trappar sig uppför en sluttning till en förfallen pagod, med
 en översvämmad kulvert under som en slusspak öppnar som en tredje väg
-till mitten. En stor arena är ännu större: **Sunken Bastion** (2v2,
-5600x3000), en halvt översvämmad fästning vars genombrutna ringmur
-omger en borg med två portar, med träskklippor utanför.
+till mitten. **Sunken Bastion** (2v2, 2700x1900) är liten men hög: en
+halvt översvämmad fästning vars vallgrav delar borggården; den korsas
+via en vindbrygga som manövreras med en spak på varje strand, via
+vallgången längs den norra ringmuren eller genom den översvämmade
+källaren under.
 Och för de större lagen: **Shiverpeak Pass** (4v4, 6000x3400),
 två klippmassiv som lämnar ett brett pass bestrött med stenblock och en
 smal stig längs varje kant; och **Elonian Plateau** (8v8, 6400x3600),

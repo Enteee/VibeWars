@@ -51,10 +51,11 @@ jotka jakavat laakson kolmeen kaistaan, jotka kohtaavat keskellä olevalla
 aukealla. **Canthan Terraces** (1v1, 2400x2100) on pieni mutta jyrkkä:
 riisipeltoja, jotka nousevat rinnettä ylös raunioituneelle pagodille, ja
 niiden alla tulvinut rumpu, jonka sulkuluukun vipu avaa kolmanneksi
-reitiksi keskelle. Yksi suuri areena on vielä isompi: **Sunken
-Bastion** (2v2, 5600x3000), puoliksi tulvinut linnoitus, jonka murrettu
-ulkomuuri ympäröi kaksiporttista linnaketta, ja ulkopuolella
-suokiviä.
+reitiksi keskelle. **Sunken Bastion** (2v2, 2700x1900) on pieni mutta
+korkea: puoliksi tulvinut linnoitus, jonka vallihauta halkaisee pihan.
+Sen yli pääsee laskusiltaa pitkin, jota ohjataan vivulla kummaltakin
+rannalta, pohjoisen ulkomuurin vallikäytävää pitkin tai alla olevan
+tulvineen kellarin kautta.
 Ja isommille tiimeille: **Shiverpeak Pass** (4v4, 6000x3400),
 kaksi kalliojyrkännettä, joiden väliin jää leveä, lohkareiden täplittämä
 sola ja kapea polku kummankin reunan vierellä; ja **Elonian Plateau**

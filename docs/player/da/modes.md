@@ -48,9 +48,10 @@ mødes i en lysning i midten.
 **Canthan Terraces** (1v1, 2400x2100) er lille, men stejl: rismarker, der
 trapper op ad en skråning til en ruineret pagode, med en oversvømmet
 kulvert nedenunder, som et slusehåndtag åbner som en tredje vej til midten.
-Én stor arena er endnu større: **Sunken Bastion** (2v2, 5600x3000), en halvt
-oversvømmet fæstning, hvis gennembrudte ringmur omgiver en borg med to
-porte, med sumpklipper udenfor.
+**Sunken Bastion** (2v2, 2700x1900) er lille, men høj: en
+halvt oversvømmet fæstning, hvis voldgrav deler borggården; den krydses ad
+en vindebro, der betjenes med et håndtag på hver bred, ad skyttegangen
+langs den nordlige ringmur eller gennem den oversvømmede kælder nedenunder.
 Og til de større hold: **Shiverpeak Pass** (4v4, 6000x3400),
 to klippemassiver, der efterlader et bredt pas fyldt med kampesten og en
 smal sti langs hver kant; og **Elonian Plateau** (8v8, 6400x3600), åben
