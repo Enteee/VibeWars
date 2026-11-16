@@ -932,6 +932,10 @@ export class ArenaScene extends Phaser.Scene {
   public setArenaBounds(width: number, height: number): void {
     this.arena = { width, height };
     this.bodyMotion.clear();
+    this.wasDead.clear();
+    this.bodyFlashes.length = 0;
+    this.bodyDeaths.length = 0;
+    this.bodyRespawns.length = 0;
   }
 
   /**
@@ -2397,6 +2401,11 @@ export class ArenaScene extends Phaser.Scene {
       }
       this.wasDead.set(actor.id, actor.dead);
     }
+    for (const id of this.wasDead.keys()) {
+      if (!actors.some((actor) => actor.id === id)) {
+        this.wasDead.delete(id);
+      }
+    }
     if (this.bodyFlashes.length === 0 && this.bodyRespawns.length === 0) {
       return actors;
     }
@@ -2468,12 +2477,13 @@ export class ArenaScene extends Phaser.Scene {
     }
     const ground = arenaPalette(this.snapshot.structure).floor ?? 0x6b6f76;
     const dust = mixColour(ground, 0xffffff, 0.35);
+    if (death.ageSeconds >= DEATH_DUST_SECONDS) {
+      return;
+    }
     for (let i = 0; i < DUST_SPECKS; i += 1) {
       const speck = dustSpeck(i, actor.position, actor.radius, death.ageSeconds);
-      if (death.ageSeconds < DEATH_DUST_SECONDS) {
-        marks.fillStyle(dust, speck.alpha);
-        marks.fillCircle(speck.x, speck.y, 1.5);
-      }
+      marks.fillStyle(dust, speck.alpha);
+      marks.fillCircle(speck.x, speck.y, 1.5);
     }
   }
 
