@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { clipToBox, coverPieces, liftedCovers, outlineArea } from "./cover-pieces.js";
+import {
+  EVERYWHERE,
+  clipToBox,
+  coverPieces,
+  liftedCovers,
+  outlineArea,
+  wallPieces,
+} from "./cover-pieces.js";
 
 describe("clipToBox (#3350)", () => {
   const BOX = { left: 0, top: 0, right: 100, bottom: 100 };
@@ -127,4 +134,78 @@ describe("liftedCovers (#3352)", () => {
       expect(at(pieces, 200, TUNNEL.bottom + STEP + lift + 1)?.tunnel).toBeUndefined();
     });
   }
+});
+
+describe("wallPieces (#3418)", () => {
+  // A wall a layer's step up and as tall, over a tunnel whose cover box
+  // reaches a step south of it, where a body in it draws.
+  const STEP = 56;
+  const BASE = STEP;
+  const TOP = 2 * STEP;
+  const TUNNEL = { left: 1000, top: 400, right: 1400, bottom: 480 };
+  const COVER = { tunnel: 0, box: { ...TUNNEL, bottom: TUNNEL.bottom + STEP } };
+  const wall = (left: number, right: number, top = 420, bottom = 460) => [
+    { x: left, y: top },
+    { x: right, y: top },
+    { x: right, y: bottom },
+    { x: left, y: bottom },
+  ];
+  // What the wall's art covers as drawn, its lifts taken off.
+  const drawn = (outline: ReturnType<typeof wall>) => {
+    const [north, south] = [outline[0]?.y ?? 0, outline[2]?.y ?? 0];
+    return wall(outline[0]?.x ?? 0, outline[1]?.x ?? 0, north - TOP, south - BASE);
+  };
+  const share = (
+    outline: ReturnType<typeof wall>,
+    pieces: ReturnType<typeof wallPieces>,
+    tunnel: number | undefined,
+  ) =>
+    pieces
+      .filter((piece) => piece.tunnel === tunnel)
+      .reduce((sum, { box }) => sum + outlineArea(clipToBox(drawn(outline), box)), 0);
+
+  it("is one piece, the whole plane, for a wall over no cover", () => {
+    expect(wallPieces(wall(0, 400), BASE, TOP, [COVER])).toEqual([
+      { tunnel: undefined, box: EVERYWHERE },
+    ]);
+  });
+
+  it("puts a wall wholly over the cover all in its tunnel's pieces", () => {
+    const outline = wall(1100, 1300);
+    const pieces = wallPieces(outline, BASE, TOP, [COVER]);
+    expect(share(outline, pieces, 0)).toBeCloseTo(outlineArea(drawn(outline)));
+    expect(share(outline, pieces, undefined)).toBe(0);
+  });
+
+  for (const [crossing, left, right] of [
+    ["one edge", 800, 1200],
+    ["two edges", 800, 1600],
+  ] as const) {
+    it(`splits a wall crossing ${crossing} of the cover into pieces whose areas sum to the whole`, () => {
+      const outline = wall(left, right);
+      const pieces = wallPieces(outline, BASE, TOP, [COVER]);
+      const over = share(outline, pieces, 0);
+      expect(over).toBeCloseTo(
+        outlineArea(clipToBox(drawn(outline), { ...COVER.box, top: COVER.box.top - TOP })),
+      );
+      expect(over + share(outline, pieces, undefined)).toBeCloseTo(outlineArea(drawn(outline)));
+    });
+  }
+
+  it("gives each part of a wall over two tunnels to the cover it lies over", () => {
+    const other = { tunnel: 1, box: { ...COVER.box, left: 1600, right: 2000 } };
+    const outline = wall(1200, 1800);
+    const pieces = wallPieces(outline, BASE, TOP, [COVER, other]);
+    expect(share(outline, pieces, 0)).toBeCloseTo(200 * (460 - BASE - (420 - TOP)));
+    expect(share(outline, pieces, 1)).toBeCloseTo(200 * (460 - BASE - (420 - TOP)));
+  });
+
+  it("fades the wall's top drawn over a body in the tunnel, and its face", () => {
+    const pieces = wallPieces(wall(800, 1600), BASE, TOP, [COVER]);
+    const at = (x: number, y: number) =>
+      pieces.find(({ box }) => x > box.left && x < box.right && y > box.top && y < box.bottom);
+    expect(at(1200, 420 - TOP + 1)?.tunnel).toBe(0);
+    expect(at(1200, 460 - BASE - 1)?.tunnel).toBe(0);
+    expect(at(900, 420 - TOP + 1)?.tunnel).toBeUndefined();
+  });
 });

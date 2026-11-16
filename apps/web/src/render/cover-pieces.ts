@@ -41,6 +41,50 @@ export function liftedCovers(
   return covers.map(({ tunnel, box }) => ({ tunnel, box: { ...box, bottom: box.bottom + lift } }));
 }
 
+/** The whole plane, as a box: what a deck's or a wall's pieces tile (#3352). */
+export const EVERYWHERE: Box = {
+  left: -Infinity,
+  top: -Infinity,
+  right: Infinity,
+  bottom: Infinity,
+};
+
+/** A box a wall draws through (#3418): over tunnel `tunnel`, or of the rest when `undefined`. */
+export interface WallPiece {
+  readonly tunnel: number | undefined;
+  readonly box: Box;
+}
+
+/**
+ * Where a wall standing on `outline` from lift `base` up to `top` draws
+ * (#3418), in the coordinates it is drawn in, lifts taken off: one box per
+ * cover its art meets, each reaching `top` further north, as the rows of a
+ * deck drawn that far up do, and the rest of the plane. Its art drawn once
+ * through `clippedPainter` of each is the wall drawn whole. A wall over no
+ * cover is one piece, the whole plane.
+ */
+export function wallPieces(
+  outline: readonly Vec2[],
+  base: number,
+  top: number,
+  covers: readonly TunnelCoverBox[],
+): readonly WallPiece[] {
+  const { left, right, top: north, bottom } = boundsOf(outline);
+  const drawn = [
+    { x: left, y: north - top },
+    { x: right, y: north - top },
+    { x: right, y: bottom - base },
+    { x: left, y: bottom - base },
+  ];
+  const reaching = covers.map(({ tunnel, box }) => ({
+    tunnel,
+    box: { ...box, top: box.top - top },
+  }));
+  return coverPieces(drawn, EVERYWHERE, reaching)
+    .filter(({ tunnel, outline: piece }) => tunnel === undefined || outlineArea(piece) > 0)
+    .map(({ tunnel, box }) => ({ tunnel, box }));
+}
+
 /** How far a corner may sit off a shore edge and still be on it, in world units. */
 const ON_SHORE = 1e-6;
 
