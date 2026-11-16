@@ -6,16 +6,19 @@ import {
   loadoutOf,
   loadoutSpec,
   resolveLoadout,
+  segment,
+  segmentsIntersect,
   spawnFacing,
+  type LayeredPathFinder,
   type ParticipantSpec,
   type PlayerBuild,
   type Vec2,
 } from "@vibewars/game-core";
 
-import { pointInShape } from "../geometry.js";
+import { pointInShape, wallToSegments } from "../geometry.js";
 import { layeredFinder } from "../layered-finder.test-support.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
-import type { MapData, SpawnPoint } from "../schema.js";
+import type { MapData, Shape, SpawnPoint, Transition } from "../schema.js";
 import { StuckMeter, topStuckCells, type StuckCell, type StuckTotals } from "./stuck-meter.js";
 
 /**
@@ -310,18 +313,103 @@ export function walksToCentre(map: MapData): number[] {
  */
 export function walksTo(map: MapData, to: Vec2, layer: number): number[] {
   const finder = layeredFinder(map, RULESET.collision.playerRadius);
+  return Array.from({ length: map.teams }, (_, team) =>
+    pathLength(pathTo(map, finder, team, to, layer, "")),
+  );
+}
+
+/**
+ * A named way to the centre (#3415): the transitions that make it that
+ * route, the ones taken off the map so it cannot go another way, and the
+ * breakables that are down for it.
+ */
+export interface Route {
+  /** Transition ids the walk must pass through, in any order: what makes it this route. */
+  readonly through: readonly string[];
+  /** Transition ids taken off the map for this walk, so it cannot take another way. */
+  readonly shut?: readonly string[];
+  /** Breakable ids that are down for this walk; every other breakable stands as a wall. */
+  readonly broken?: readonly string[];
+}
+
+/**
+ * Each team's walk from its home spawn to `to` on `layer` along `route`,
+ * by team (#3415). `route` may differ by team, such as a route that shuts
+ * the team's own ramp so it climbs the far one. Throws, naming the map,
+ * team and route, when a team cannot get there (the route is sealed), when
+ * its path misses a `through` transition (it went another way: `shut` is
+ * incomplete), or when the route names an id the map lacks.
+ */
+export function walksByRoute(
+  map: MapData,
+  to: Vec2,
+  layer: number,
+  route: Route | ((team: number) => Route),
+): number[] {
   return Array.from({ length: map.teams }, (_, team) => {
-    const start = homeSpawn(map, team);
-    const route = finder.find(start.position, start.layer, to, layer);
-    if (route === undefined)
-      throw new Error(
-        `${map.id}: team ${String(team)} cannot walk to (${String(to.x)},${String(to.y)})`,
-      );
-    return route.reduce((walked, point, index) => {
-      const from = route[index - 1] ?? start.position;
-      return walked + Math.hypot(point.x - from.x, point.y - from.y);
-    }, 0);
+    const { through, shut = [], broken = [] } = typeof route === "function" ? route(team) : route;
+    const by = ` by the route through ${through.join(", ")}`;
+    const transition = (id: string): Transition | undefined =>
+      map.transitions.find((each) => each.id === id);
+    const unknown = [
+      ...[...through, ...shut].filter((id) => transition(id) === undefined),
+      ...broken.filter((id) => !(map.breakables ?? []).some((each) => each.id === id)),
+    ];
+    if (unknown.length > 0) throw new Error(`${map.id}: no ${unknown.join(", ")} on the map${by}`);
+    const walked: MapData = {
+      ...map,
+      transitions: map.transitions.filter(({ id }) => !shut.includes(id)),
+      walls: [
+        ...map.walls,
+        ...(map.breakables ?? []).filter(({ id }) => !broken.includes(id)).map(({ wall }) => wall),
+      ],
+    };
+    const finder = layeredFinder(walked, RULESET.collision.playerRadius);
+    const path = pathTo(walked, finder, team, to, layer, by);
+    const missed = through.filter((id) => {
+      const area = transition(id)?.area;
+      return area === undefined || !crosses(path, area);
+    });
+    if (missed.length > 0)
+      throw new Error(`${map.id}: team ${String(team)} did not pass ${missed.join(", ")}${by}`);
+    return pathLength(path);
   });
+}
+
+/** `team`'s path from its home spawn to `to` on `layer`, the spawn first; throws if there is none. */
+function pathTo(
+  map: MapData,
+  finder: LayeredPathFinder,
+  team: number,
+  to: Vec2,
+  layer: number,
+  by: string,
+): Vec2[] {
+  const start = homeSpawn(map, team);
+  const route = finder.find(start.position, start.layer, to, layer);
+  if (route === undefined)
+    throw new Error(
+      `${map.id}: team ${String(team)} cannot reach (${String(to.x)},${String(to.y)})${by}`,
+    );
+  return [start.position, ...route];
+}
+
+function pathLength(path: readonly Vec2[]): number {
+  return path.reduce((walked, point, index) => {
+    const from = path[index - 1] ?? point;
+    return walked + Math.hypot(point.x - from.x, point.y - from.y);
+  }, 0);
+}
+
+/** Whether `path` enters `area`: a point inside it, or a leg across one of its sides (the finder can step over a narrow ramp). */
+function crosses(path: readonly Vec2[], area: Shape): boolean {
+  const sides = wallToSegments(area);
+  return path.some(
+    (point, index) =>
+      pointInShape(point, area) ||
+      (index > 0 &&
+        sides.some((side) => segmentsIntersect(segment(path[index - 1] ?? point, point), side))),
+  );
 }
 
 /**
