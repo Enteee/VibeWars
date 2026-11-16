@@ -45,12 +45,13 @@ traversée par trois ponts, avec des rochers de glace sur chaque rive. Pour les
 plus grandes équipes : **Ashen Courtyard** (4v4, 4400x2600), un donjon en ruine
 dont la cour murée a quatre brèches, avec des ruines sur ses flancs ; et **Moss
 Vale** (8v8, 4800x2800), deux crêtes boisées qui divisent la vallée en trois
-couloirs, se rejoignant dans une clairière au centre. Deux grandes arènes sont
-encore plus vastes : **Canthan Terraces** (1v1, 5200x2800), des rizières murées
-du nord au sud avec des passages décalés, autour d'une pagode en ruine ; et
-**Sunken Bastion** (2v2, 5600x3000), une forteresse à moitié inondée dont le
-rempart percé encercle un donjon à deux portes, avec des rochers de marais à
-l'extérieur.
+couloirs, se rejoignant dans une clairière au centre. Une grande arène est
+encore plus vaste : **Canthan Terraces** (1v1, 5200x2800), des rizières murées
+du nord au sud avec des passages décalés, autour d'une pagode en ruine.
+**Sunken Bastion** (2v2, 2700x1900) est petite mais haute : une forteresse à
+moitié inondée dont les douves coupent la cour en deux ; on les franchit par un
+pont-levis actionné par un levier sur chaque rive, par le chemin de ronde le
+long du rempart nord, ou par la cave inondée en dessous.
 Et pour les plus grandes équipes : **Shiverpeak Pass** (4v4, 6000x3400), deux
 massifs de falaises qui laissent un large col parsemé de rochers et un étroit
 sentier le long de chaque bord ; et **Elonian Plateau** (8v8, 6400x3600), une

@@ -42,11 +42,12 @@ batu-batu es di setiap tepiannya. Untuk tim yang lebih besar: **Ashen Courtyard*
 4400x2600), benteng runtuh yang halaman bertembok-nya punya empat celah, reruntuhan
 di sisi-sisinya; dan **Moss Vale** (8v8, 4800x2800), dua punggung bukit berhutan
 yang membelah lembah menjadi tiga jalur, bertemu di tanah lapang di tengah.
-Dua arena besar lebih besar lagi: **Canthan Terraces** (1v1, 5200x2800),
+Satu arena besar lebih besar lagi: **Canthan Terraces** (1v1, 5200x2800),
 sawah berundak bertembok dari utara ke selatan dengan celah berselang-seling, mengelilingi pagoda
-yang runtuh; dan **Sunken Bastion** (2v2, 5600x3000), benteng setengah terendam
-yang tembok kelilingnya yang jebol melingkari sebuah keep dengan dua gerbang, batu-batu rawa
-di luarnya.
+yang runtuh. **Sunken Bastion** (2v2, 2700x1900) kecil tetapi tinggi: benteng setengah terendam
+yang paritnya membelah halaman, diseberangi lewat jembatan angkat yang digerakkan tuas di
+setiap tepi, lewat jalan di atas tembok sepanjang dinding utara, atau melalui ruang bawah tanah
+yang terendam di bawahnya.
 Dan untuk tim yang lebih besar: **Shiverpeak Pass** (4v4, 6000x3400),
 dua gugusan tebing yang menyisakan celah lebar bertabur batu besar dan jalan setapak
 sempit di sepanjang setiap tepinya; dan **Elonian Plateau** (8v8, 6400x3600), sabana

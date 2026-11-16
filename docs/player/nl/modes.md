@@ -42,11 +42,13 @@ gebroken cirkel obelisken, met pilaren om omheen te kiten; en **Frozen Crossing*
 Voor de grotere teams: **Ashen Courtyard** (4v4, 4400x2600), een verwoeste burcht
 waarvan de ommuurde binnenplaats vier bressen heeft, ruïnes aan de flanken; en
 **Moss Vale** (8v8, 4800x2800), twee beboste kammen die het dal in drie lanen
-splitsen, die in het midden samenkomen op een open plek. Twee grote arena's zijn
-nog groter: **Canthan Terraces** (1v1, 5200x2800), rijstterrassen met muren van
-noord naar zuid met verspreide openingen, rond een verwoeste pagode; en **Sunken
-Bastion** (2v2, 5600x3000), een half ondergelopen vesting waarvan de doorbroken
-ringmuur een burcht met twee poorten omringt, met moerasrotsen daarbuiten.
+splitsen, die in het midden samenkomen op een open plek. Eén grote arena is nog
+groter: **Canthan Terraces** (1v1, 5200x2800), rijstterrassen met muren van
+noord naar zuid met verspreide openingen, rond een verwoeste pagode. **Sunken
+Bastion** (2v2, 2700x1900) is klein maar hoog: een half ondergelopen vesting
+waarvan de slotgracht de binnenplaats splitst; je steekt over via een ophaalbrug
+die met een hendel op elke oever wordt bediend, via de weergang langs de
+noordelijke ringmuur of door de ondergelopen kelder eronder.
 En voor de grotere teams: **Shiverpeak Pass** (4v4, 6000x3400), twee rotsmassieven
 die een brede pas vol keien en een smal pad langs elke rand overlaten; en
 **Elonian Plateau** (8v8, 6400x3600), open savanne rond vijf grote mesa's, met de

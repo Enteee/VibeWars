@@ -46,12 +46,13 @@ köprüyle geçilen donmuş bir nehir, her kıyısında buz kayaları. Daha
 büyük takımlar için: **Ashen Courtyard** (4v4, 4400x2600), duvarlı
 avlusunda dört gedik olan, yanlarında harabeler bulunan yıkık bir kale;
 ve **Moss Vale** (8v8, 4800x2800), vadiyi üç şeride bölen ve ortada bir
-açıklıkta buluşan iki ormanlık sırt. İki geniş arena daha da büyüktür:
+açıklıkta buluşan iki ormanlık sırt. Geniş bir arena daha da büyüktür:
 **Canthan Terraces** (1v1, 5200x2800), yıkık bir pagodanın çevresinde,
-kuzeyden güneye kademeli boşluklarla duvarlanmış pirinç terasları; ve
-**Sunken Bastion** (2v2, 5600x3000), gedikli sur duvarı iki kapılı bir
-kaleyi çevreleyen, dışında bataklık kayaları olan yarı su basmış bir
-hisar.
+kuzeyden güneye kademeli boşluklarla duvarlanmış pirinç terasları.
+**Sunken Bastion** (2v2, 2700x1900) küçük ama yüksektir: hendeği avluyu
+ikiye bölen, yarı su basmış bir hisar. Hendeğin karşısına, her iki
+kıyıdaki bir kolla çalışan asma köprüden, kuzey sur boyunca uzanan
+seğirdim yolundan ya da altındaki su basmış mahzenden geçilir.
 Ve daha büyük takımlar için: **Shiverpeak Pass** (4v4, 6000x3400), kaya
 parçalarıyla dolu geniş bir geçit ve her kenarında dar bir patika
 bırakan iki uçurum kütlesi; ve **Elonian Plateau** (8v8, 6400x3600),

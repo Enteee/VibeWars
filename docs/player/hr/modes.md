@@ -42,11 +42,12 @@ s ledenim stijenama na svakoj obali. Za veće timove: **Ashen Courtyard** (4v4,
 4400x2600), srušena utvrda čije ograđeno dvorište ima četiri proboja, s ruševinama
 na bokovima; i **Moss Vale** (8v8, 4800x2800), dva šumovita grebena
 koja dijele dolinu na tri staze što se sastaju na čistini u sredini.
-Dvije velike arene još su veće: **Canthan Terraces** (1v1, 5200x2800),
+Jedna velika arena još je veća: **Canthan Terraces** (1v1, 5200x2800),
 rižine terase ograđene od sjevera prema jugu s razmaknutim prolazima, oko srušene
-pagode; i **Sunken Bastion** (2v2, 5600x3000), napola poplavljena utvrda
-čiji probijeni bedem okružuje kulu s dvoja vrata, s močvarnim stijenama
-izvana.
+pagode. **Sunken Bastion** (2v2, 2700x1900) mala je, ali visoka: napola
+poplavljena utvrda čiji opkop dijeli dvorište; prelazi se pokretnim mostom
+kojim upravlja poluga na svakoj obali, bedemskom stazom uz sjeverni zid ili
+kroz poplavljeni podrum ispod.
 A za veće timove: **Shiverpeak Pass** (4v4, 6000x3400),
 dva masiva litica koji ostavljaju širok prijevoj posut gromadama i usku
 stazu uz svaki rub; i **Elonian Plateau** (8v8, 6400x3600), otvorena

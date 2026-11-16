@@ -138,6 +138,48 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Sunken Bastion (#3400): the centre is the drawbridge over the moat, a deck on layer 2, so the
+  // walks end on it. Three routes cross the moat: the drawbridge, the flooded cellar under it and the
+  // north walk over it. A route is walked with the other two shut, the sluice wall standing; the
+  // cellar and the north walk with the team's own bridge ramp shut too, so they climb the far one.
+  describe("Sunken Bastion", () => {
+    const loaded = loadMap("sunken-bastion");
+    const map = {
+      ...loaded,
+      walls: [...loaded.walls, ...(loaded.breakables ?? []).map(({ wall }) => wall)],
+    };
+    const bridge = { x: 1350, y: 905 };
+    const shut = (ids: readonly string[]): typeof map => ({
+      ...map,
+      transitions: map.transitions.filter(({ id }) => !ids.includes(id)),
+    });
+    const cellar = ["cellar-west-steps", "cellar-east-steps"];
+    const northWalk = ["north-walk-stair-west", "north-walk-stair-east"];
+    const ownRamp = ["bridge-ramp-west", "bridge-ramp-east"];
+    const routes: readonly (readonly [string, (team: number) => readonly string[]])[] = [
+      ["the drawbridge", () => [...cellar, ...northWalk]],
+      ["the flooded cellar", (team) => [...northWalk, ownRamp[team] ?? ""]],
+      ["the north walk", (team) => [...cellar, ownRamp[team] ?? ""]],
+    ];
+
+    it.each(routes)(
+      "walks each team from its spawn onto the drawbridge by %s within 10 % of the other",
+      (_route, closed) => {
+        const [walk0 = 0, walk1 = 0] = [0, 1].map(
+          (team) => walksTo(shut(closed(team)), bridge, 2)[team],
+        );
+        expect(walk0).toBeGreaterThan(0);
+        expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.1);
+      },
+    );
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      const [ground0 = 0, ground1 = 0] = highGround(map);
+      expect(ground0).toBeGreaterThan(0);
+      expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

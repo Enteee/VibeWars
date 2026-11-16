@@ -48,11 +48,12 @@ csapatoknak: az **Ashen Courtyard** (4v4, 4400x2600), egy romos vár,
 amelynek fallal körülvett udvarán négy rés nyílik, oldalain romokkal; és a
 **Moss Vale** (8v8, 4800x2800), két erdős gerinc, amely a völgyet három
 sávra osztja, és ezek középen egy tisztáson találkoznak.
-Két nagy aréna még nagyobb: a **Canthan Terraces** (1v1, 5200x2800),
+Egy nagy aréna még nagyobb: a **Canthan Terraces** (1v1, 5200x2800),
 északtól délig fallal tagolt rizsteraszok elcsúsztatott résekkel, egy
-romos pagoda körül; és a **Sunken Bastion** (2v2, 5600x3000), egy félig
-elárasztott erőd, amelynek áttört függönyfala két kapuval rendelkező
-öregtornyot vesz körül, kívül mocsári sziklákkal.
+romos pagoda körül. A **Sunken Bastion** (2v2, 2700x1900) kicsi, de magas:
+egy félig elárasztott erőd, amelynek udvarát vizesárok szeli ketté; át
+lehet kelni rajta a mindkét parton karral működtetett felvonóhídon, az
+északi várfal mentén futó gyilokjárón vagy a lenti elárasztott pincén át.
 A nagyobb csapatoknak pedig: a **Shiverpeak Pass** (4v4, 6000x3400),
 két sziklatömb, amely széles, sziklatömbökkel teleszórt hágót és mindkét
 szélén egy-egy keskeny ösvényt hagy; és az **Elonian Plateau** (8v8,
