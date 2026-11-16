@@ -236,7 +236,10 @@ runStudy({
     { kind: "mire", cx: 2200, cy: 1960, rx: 190, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
     { kind: "mire", cx: 3500, cy: 1920, rx: 190, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
   ],
-  breakables: [{ r: rect(1750, 2000, 24, 220), label: "rotten palisade (breakable)" }],
+  breakables: [
+    { r: rect(1700, 2150, 24, 200), label: "rotten palisade (breakable)" },
+    { r: rect(3900, 434, 24, 200), label: "rotten palisade (breakable)" },
+  ],
   gates: [
     { p: [1900, 1400], label: "west bronze gate" },
     { p: [3724, 1384], label: "east bronze gate" },
@@ -271,6 +274,8 @@ runStudy({
     { at: [3100, 1620], e: 1 },
     { at: [1700, 1170], e: 1 },
     { at: [2200, 1600], e: 1 },
+    { at: [1990, 1250], e: 2 },
+    { at: [3640, 1550], e: 2 },
   ],
   props: [
     ...[2000, 2400, 3200, 3600].map((x, i) => ({
