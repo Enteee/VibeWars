@@ -159,7 +159,10 @@ export interface SplashFight {
 /**
  * The splash fight's simulation on `map`, with its layers as a match has
  * them (#3222): a bot's walk on a map whose ground is not its lowest layer
- * names that layer, which a flat world refuses. With its bots' professions.
+ * names that layer, which a flat world refuses. Its world elements too
+ * (#3407): gates, levers, teleports, breakables and zones, as a match has
+ * them; not its objectives, which `SPLASH_RULES` leave out. With its bots'
+ * professions.
  */
 export function splashSimulation(
   map: SplashMap,
@@ -171,9 +174,16 @@ export function splashSimulation(
     seed,
     ruleset: RULESET,
     matchRules: SPLASH_RULES,
+    teamCount: map.descriptor.teamCount,
     walls: map.walls,
+    gates: map.gates,
+    switches: map.switches,
+    teleports: map.teleports,
+    breakables: map.breakables,
+    switchedDecks: map.switchedDecks,
     bounds: map.bounds,
     layers: map.layers,
+    zones: map.zones,
     participants,
   });
   return { simulation, professions };
