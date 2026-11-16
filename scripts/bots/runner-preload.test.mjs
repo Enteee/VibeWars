@@ -217,4 +217,36 @@ describe("inputHash / readPreload", () => {
     expect(inputHash(a)).not.toBe(inputHash(b));
     expect(readPreload(tmp())).toBeNull();
   });
+
+  it("hashes every file under nix/, at any depth, by its path (#3460)", () => {
+    const dir = tmp();
+    const sub = path.join(dir, "nix", "sub");
+    fs.mkdirSync(sub, { recursive: true });
+    fs.writeFileSync(path.join(sub, "x.nix"), "1");
+    const before = inputHash(dir);
+
+    fs.writeFileSync(path.join(sub, "x.nix"), "2");
+    const edited = inputHash(dir);
+    expect(edited).not.toBe(before);
+
+    fs.renameSync(sub, path.join(dir, "nix", "other"));
+    expect(inputHash(dir)).not.toBe(edited);
+  });
+
+  it("ignores empty directories and a missing nix/ (#3460)", () => {
+    const dir = tmp();
+    const bare = inputHash(dir);
+    fs.mkdirSync(path.join(dir, "nix", "empty"), { recursive: true });
+    expect(inputHash(dir)).toBe(bare);
+  });
+
+  it("hashes a symlink under nix/ by its target, without following it (#3460)", () => {
+    const dir = tmp();
+    fs.mkdirSync(path.join(dir, "nix"));
+    fs.symlinkSync("a.nix", path.join(dir, "nix", "link.nix"));
+    const a = inputHash(dir);
+    fs.rmSync(path.join(dir, "nix", "link.nix"));
+    fs.symlinkSync("b.nix", path.join(dir, "nix", "link.nix"));
+    expect(inputHash(dir)).not.toBe(a);
+  });
 });

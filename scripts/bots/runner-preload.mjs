@@ -78,11 +78,28 @@ export function inputHash(dir) {
   }
   // devenv.nix imports the files under nix/.
   const nix = path.join(dir, "nix");
-  for (const name of fs.existsSync(nix) ? fs.readdirSync(nix).sort() : []) {
-    hash.update(`nix/${name}\0`);
-    hash.update(fs.readFileSync(path.join(nix, name)));
+  // The path is hashed too, so moving a file changes the hash. Directories
+  // add nothing themselves, so an empty one hashes as if it were absent.
+  for (const rel of fs.existsSync(nix) ? nixFiles(nix, "nix").sort() : []) {
+    const file = path.join(dir, ...rel.split("/"));
+    hash.update(`${rel}\0`);
+    hash.update(
+      fs.lstatSync(file).isSymbolicLink() ? `-> ${fs.readlinkSync(file)}` : fs.readFileSync(file),
+    );
   }
   return hash.digest("hex").slice(0, 16);
+}
+
+/**
+ * @param {string} dir
+ * @param {string} rel `dir`'s POSIX path relative to the checkout
+ * @returns {string[]} every file and symlink under `dir`, recursively, unsorted
+ */
+function nixFiles(dir, rel) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const child = `${rel}/${entry.name}`;
+    return entry.isDirectory() ? nixFiles(path.join(dir, entry.name), child) : [child];
+  });
 }
 
 /**
