@@ -233,10 +233,11 @@ describe("walks and high ground (#3070)", () => {
       expect(walk0).toBeGreaterThan(0);
       expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
     };
-    const highRoad = (on: typeof map): number[] => {
+    const highRoad = (on: typeof map, broken: readonly string[]): number[] => {
       const up = walksByRoute(on, arch, 2, (team) => ({
         through: [lifts[team] ?? ""],
         shut: ["arch-steps"],
+        broken,
       }));
       const atFoot = {
         ...on,
@@ -245,43 +246,54 @@ describe("walks and high ground (#3070)", () => {
       const down = walksByRoute(atFoot, arch, 2, (team) => ({
         through: [lifts[1 - team] ?? ""],
         shut: ["arch-steps", lifts[team] ?? ""],
+        broken,
       }));
       return up.map((walk, team) => walk + (down[team] ?? 0));
     };
 
-    it("walks each team from its spawn to the fin's foot by the wash within 10 % of the other", () => {
-      within(
-        walksByRoute(map, foot, 1, {
-          through: [],
-          shut: [...mouths, "passage-mouth-south", ...lifts, "south-east-lift"],
-        }),
-        0.1,
-      );
+    const wash = (broken: readonly string[]): Route => ({
+      through: [],
+      shut: [...mouths, "passage-mouth-south", ...lifts, "south-east-lift"],
+      broken,
+    });
+    const passage =
+      (broken: readonly string[]) =>
+      (team: number): Route => ({
+        through: [mouths[team] ?? ""],
+        broken,
+      });
+
+    it("walks each team from its spawn to the fin's foot by the wash within 5 % of the other", () => {
+      within(walksByRoute(map, foot, 1, wash([])), 0.05);
     });
 
-    it("walks each team through its own mouth to the passage's junction within 10 % of the other", () => {
-      within(
-        walksByRoute(map, junction, 0, (team) => ({ through: [mouths[team] ?? ""] })),
-        0.1,
-      );
+    it("walks each team through its own mouth to the passage's junction within 5 % of the other", () => {
+      within(walksByRoute(map, junction, 0, passage([])), 0.05);
     });
 
-    it("walks each team over the high road to the fin's foot within 10 % of the other", () => {
-      within(highRoad(map), 0.1);
+    it("walks each team over the high road to the fin's foot within 5 % of the other", () => {
+      within(highRoad(map, []), 0.05);
+    });
+
+    it("keeps the wash, the passage and the high road within 5 % with the sandstone wall broken", () => {
+      const broken = ["sandstone-wall"];
+      within(walksByRoute(map, foot, 1, wash(broken)), 0.05);
+      within(walksByRoute(map, junction, 0, passage(broken)), 0.05);
+      within(highRoad(map, broken), 0.05);
     });
 
     it("leaves each team the wash and the high road, and nobody the passage, with the gate shut", () => {
       const shut = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
-      within(walksByRoute(shut, foot, 1, { through: [] }), 0.1);
-      within(highRoad(shut), 0.1);
+      within(walksByRoute(shut, foot, 1, { through: [] }), 0.05);
+      within(highRoad(shut, []), 0.05);
       // The south mouth's foot, under the fin: open, each team walks to it along the passage; shut, nobody.
       const mouth = { x: 2705, y: 1880 };
-      const passage = (team: number): Route => ({
+      const toMouth = (team: number): Route => ({
         through: [mouths[team] ?? ""],
         shut: ["passage-mouth-south"],
       });
-      within(walksByRoute(map, mouth, 0, passage), 0.1);
-      expect(() => walksByRoute(shut, mouth, 0, passage)).toThrow(/cannot reach/);
+      within(walksByRoute(map, mouth, 0, toMouth), 0.05);
+      expect(() => walksByRoute(shut, mouth, 0, toMouth)).toThrow(/cannot reach/);
     });
 
     it("gives the teams high ground within 10 % of each other", () => {
