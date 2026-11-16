@@ -217,4 +217,44 @@ describe("inputHash / readPreload", () => {
     expect(inputHash(a)).not.toBe(inputHash(b));
     expect(readPreload(tmp())).toBeNull();
   });
+
+  describe("under nix/", () => {
+    const withLock = () => {
+      const dir = tmp();
+      fs.writeFileSync(path.join(dir, "devenv.lock"), "1");
+      return dir;
+    };
+    /**
+     * @param {string} dir
+     * @param {string} rel
+     * @param {string} text
+     */
+    const put = (dir, rel, text) => {
+      fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+      fs.writeFileSync(path.join(dir, rel), text);
+    };
+
+    it("reads a nested directory without throwing, and sees a change in it", () => {
+      const dir = withLock();
+      put(dir, "nix/sub/x.nix", "a");
+      const before = inputHash(dir);
+      put(dir, "nix/sub/x.nix", "b");
+      expect(inputHash(dir)).not.toBe(before);
+    });
+
+    it("hashes the path, so a renamed directory changes it", () => {
+      const dir = withLock();
+      put(dir, "nix/sub/x.nix", "a");
+      const before = inputHash(dir);
+      fs.renameSync(path.join(dir, "nix/sub"), path.join(dir, "nix/other"));
+      expect(inputHash(dir)).not.toBe(before);
+    });
+
+    it("ignores an empty directory; a missing nix/ does not throw", () => {
+      const dir = withLock();
+      const bare = inputHash(dir);
+      fs.mkdirSync(path.join(dir, "nix/empty"), { recursive: true });
+      expect(inputHash(dir)).toBe(bare);
+    });
+  });
 });

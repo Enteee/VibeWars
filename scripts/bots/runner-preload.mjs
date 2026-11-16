@@ -66,6 +66,35 @@ export const runCommand = (command, args, options = {}) =>
   });
 
 /**
+ * Every regular file and symlink under a directory, by POSIX path from
+ * `prefix`, sorted. A symlink is hashed by its target, not followed; a missing
+ * directory holds nothing.
+ *
+ * @param {string} root
+ * @param {string} prefix
+ * @returns {{ path: string, content: Buffer | string }[]}
+ */
+function nixFiles(root, prefix) {
+  if (!fs.existsSync(root)) {
+    return [];
+  }
+  /** @type {{ path: string, content: Buffer | string }[]} */
+  const found = [];
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    const rel = `${prefix}/${entry.name}`;
+    const full = path.join(root, entry.name);
+    if (entry.isSymbolicLink()) {
+      found.push({ path: rel, content: `-> ${fs.readlinkSync(full)}` });
+    } else if (entry.isDirectory()) {
+      found.push(...nixFiles(full, rel));
+    } else {
+      found.push({ path: rel, content: fs.readFileSync(full) });
+    }
+  }
+  return found.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+}
+
+/**
  * @param {string} dir a checkout of main
  * @returns {string} the hash the preload's directory is named by
  */
@@ -76,11 +105,10 @@ export function inputHash(dir) {
     hash.update(`${name}\0`);
     hash.update(fs.existsSync(file) ? fs.readFileSync(file) : "");
   }
-  // devenv.nix imports the files under nix/.
-  const nix = path.join(dir, "nix");
-  for (const name of fs.existsSync(nix) ? fs.readdirSync(nix).sort() : []) {
-    hash.update(`nix/${name}\0`);
-    hash.update(fs.readFileSync(path.join(nix, name)));
+  // devenv.nix imports the files under nix/, at any depth.
+  for (const file of nixFiles(path.join(dir, "nix"), "nix")) {
+    hash.update(`${file.path}\0`);
+    hash.update(file.content);
   }
   return hash.digest("hex").slice(0, 16);
 }
