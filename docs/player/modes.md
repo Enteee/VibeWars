@@ -56,8 +56,10 @@ And for the bigger teams: **Shiverpeak Pass** (4v4, 5100x3450), a
 snowy mountain pass split by a chasm, crossed on a rope bridge between
 two cliff ledges that a lever on either ledge pulls, through a cave
 beneath it, or round its tip once the ice wall there is broken; and
-**Elonian Plateau** (8v8, 6400x3600), open savanna round five great
-mesas, with the longest sightlines of any arena.
+**Elonian Plateau** (8v8, 5520x3360), a desert
+plateau of four mesas round a dry canyon wash: timed lifts climb three of
+them, a natural arch joins the two in the north, and a passage runs under
+the centre fin, its gate worked by a lever on top.
 
 ## Kill Count
 

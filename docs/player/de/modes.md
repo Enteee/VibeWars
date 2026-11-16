@@ -52,8 +52,11 @@ darunter. Und für größere Teams:
 **Shiverpeak Pass** (4v4, 5100x3450), ein verschneiter Gebirgspass, von einer Schlucht geteilt, über die
 man auf einer Seilbrücke zwischen zwei Felsvorsprüngen kommt, die ein Hebel auf jedem Vorsprung
 zieht, durch eine Höhle darunter oder um ihr Ende herum, sobald die Eiswand dort zerbrochen ist;
-und **Elonian Plateau** (8v8, 6400x3600), offene
-Savanne rund um fünf große Tafelberge, mit den längsten Sichtlinien aller Arenen.
+und **Elonian Plateau**
+(8v8, 5520x3360), ein Wüstenplateau mit vier Tafelbergen rund um ein
+trockenes Canyonbett: getaktete Aufzüge fahren auf drei davon, ein
+natürlicher Bogen verbindet die beiden im Norden, und unter dem mittleren
+Grat führt ein Gang hindurch, dessen Tor ein Hebel oben öffnet.
 
 ## Kill-Zähler
 

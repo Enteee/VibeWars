@@ -56,9 +56,11 @@ A pre väčšie tímy: **Shiverpeak Pass** (4v4, 5100x3450),
 zasnežený horský priesmyk rozdelený roklinou, cez ktorú sa dá prejsť po
 lanovom moste medzi dvoma skalnými rímsami, ktorý priťahuje páka na každej
 z nich, jaskyňou pod ňou alebo okolo jej konca, keď sa tam rozbije ľadová
-stena; a **Elonian Plateau** (8v8, 6400x3600),
-otvorená savana okolo piatich veľkých stolových hôr, s najdlhšími výhľadmi zo
-všetkých arén.
+stena; a **Elonian Plateau** (8v8,
+5520x3360), púštna náhorná plošina so štyrmi stolovými horami okolo
+vyschnutého koryta kaňonu: na tri z nich vyvážajú časované výťahy, dve
+severné spája prírodný oblúk a pod stredným hrebeňom vedie chodba, ktorej
+mrežu otvára páka hore.
 
 ## Počet zabití
 

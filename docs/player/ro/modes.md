@@ -57,8 +57,10 @@ mai mari: **Shiverpeak Pass** (4v4, 5100x3450), o trecătoare
 înzăpezită despicată de o prăpastie, pe care o treci pe un pod de frânghie între
 două cornișe de stâncă, tras de o pârghie de pe fiecare cornișă, printr-o peșteră
 de sub ea sau pe după capătul ei, după ce zidul de gheață de acolo e spart; și
-**Elonian Plateau** (8v8, 6400x3600), savană deschisă în jurul a cinci mari platouri,
-cu cele mai lungi linii de vedere dintre toate arenele.
+**Elonian Plateau** (8v8, 5520x3360), un platou deșertic cu patru mese în
+jurul albiei seci a unui canion: lifturi pe ceas urcă pe trei dintre ele, un
+arc natural le unește pe cele două din nord, iar pe sub creasta din mijloc
+trece un pasaj a cărui poartă o deschide o manetă de sus.
 
 ## Număr de ucideri
 

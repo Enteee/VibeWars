@@ -60,8 +60,10 @@ equipos más grandes: **Shiverpeak Pass** (4v4, 5100x3450), un paso de
 montaña nevado partido por un abismo, que se cruza por un puente de cuerda entre
 dos repisas del acantilado, del que tira una palanca en cada repisa, por una
 cueva bajo él o rodeando su extremo una vez rota la pared de hielo que hay allí;
-y **Elonian Plateau** (8v8, 6400x3600), sabana abierta alrededor de
-cinco grandes mesetas, con las líneas de visión más largas de todas las arenas.
+y **Elonian Plateau** (8v8, 5520x3360), una meseta desértica con
+cuatro mesas alrededor de un cauce seco de cañón: ascensores temporizados
+suben a tres de ellas, un arco natural une las dos del norte y un pasaje
+cruza bajo la cresta central, con una reja que abre una palanca en lo alto.
 
 ## Recuento de bajas
 

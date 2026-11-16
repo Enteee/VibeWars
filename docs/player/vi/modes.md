@@ -57,9 +57,10 @@ phía bắc, hoặc xuyên qua hầm ngập nước bên dưới. Và cho các �
 5100x3450), một đèo núi phủ tuyết bị một vực sâu chia đôi, có thể vượt qua
 bằng cầu dây giữa hai gờ vách đá do cần gạt ở mỗi gờ kéo lên, qua hang động
 bên dưới vực, hoặc vòng quanh mũi vực sau khi phá vỡ bức tường băng ở đó; và
-**Elonian Plateau** (8v8, 6400x3600), thảo
-nguyên trống trải quanh năm cao nguyên lớn, với tầm nhìn xa nhất trong mọi
-đấu trường.
+**Elonian Plateau** (8v8, 5520x3360), cao nguyên
+sa mạc với bốn khối núi đỉnh bằng quanh lòng hẻm núi khô: thang nâng chạy
+theo giờ đưa lên ba khối, một vòm đá tự nhiên nối hai khối phía bắc, và một
+lối đi chạy dưới sống đá ở giữa, cổng của nó mở bằng cần gạt trên đỉnh.
 
 ## Đếm hạ gục
 

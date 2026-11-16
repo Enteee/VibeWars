@@ -63,8 +63,10 @@ egy havas hegyi hágó, amelyet szakadék vág ketté; át lehet kelni rajta a
 két sziklapárkány közötti kötélhídon, amelyet mindkét párkányon egy kar
 húz be, a szakadék alatti barlangon át, vagy a vége körül, miután az
 ottani jégfalat szétverték; és az **Elonian Plateau** (8v8,
-6400x3600), nyílt szavanna öt hatalmas tanúhegy körül, az összes aréna
-közül a leghosszabb rálátásokkal.
+5520x3360), sivatagi fennsík négy tanúheggyel egy kiszáradt kanyonmeder
+körül: időzített liftek visznek fel hármukra, természetes kőhíd köti össze a
+két északit, a középső gerinc alatt pedig átjáró fut, amelynek rácsát egy
+fenti kar nyitja.
 
 ## Ölésverseny
 
