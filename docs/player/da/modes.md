@@ -42,7 +42,7 @@ størrelse med Canyon: **Sandstone Steps** (1v1, 2600x1940), en terrasseret
 under dem, spærret af et håndtag; og **Frozen Crossing** (2v2, 2600x1940),
 en frossen flod mellem to hævede bredder, som krydses på trædesten eller
 ad en stammebro, hvis midterste planke hæves med et håndtag. Til de større
-hold: **Ashen Courtyard** (4v4, 3200x2400), en brændt, indmuret gård med
+hold: **Ashen Courtyard** (4v4, 5120x3840), en brændt, indmuret gård med
 vægtergange og tårne foroven og en nedsænket brøndgård forneden, hvis
 faldgitter i porthuset betjenes fra murene; og **Moss Vale** (8v8,
 5000x2600), en terrasseret dal skåret i to af et dybt mølleløb, som kun

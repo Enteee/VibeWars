@@ -45,7 +45,7 @@ aavikkokaupunki, jossa on upotettu kaivopiha, katot katujen yllä ja niiden
 alla vivulla suljettava alikulku; ja **Frozen Crossing** (2v2, 2600x1940),
 jäätynyt joki kahden korotetun rannan välissä, ja sen yli pääsee astinkiviä
 pitkin tai tukkisiltaa, jonka keskimmäisen lankun vipu nostaa. Isommille
-tiimeille: **Ashen Courtyard** (4v4, 3200x2400), palanut muurien ympäröimä
+tiimeille: **Ashen Courtyard** (4v4, 5120x3840), palanut muurien ympäröimä
 piha, jonka yllä on vallikäytäviä ja torneja ja alla upotettu kaivopiha ja
 jonka porttirakennuksen laskuristikkoa käytetään muureilta; ja **Moss Vale**
 (8v8, 5000x2600), porrastettu laakso, jonka syvä myllykouru halkaisee kahtia

@@ -40,7 +40,7 @@ gradić s udubljenim dvorištem oko bunara, krovovima iznad ulica i prolazom
 ispod njih koji otvara poluga; i **Frozen Crossing** (2v2, 2600x1940),
 zaleđena rijeka između dviju povišenih obala, koja se prelazi preko kamenja
 za prijelaz ili preko mosta od debala čiju srednju dasku podiže poluga. Za
-veće timove: **Ashen Courtyard** (4v4, 3200x2400), spaljeno dvorište opasano
+veće timove: **Ashen Courtyard** (4v4, 5120x3840), spaljeno dvorište opasano
 zidom, sa zidnim stazama i kulama gore i udubljenim dvorištem oko bunara
 dolje, a rešetkom na ulaznoj kuli upravlja se sa zidina; i **Moss Vale** (8v8,
 5000x2600), terasasta dolina koju duboki mlinski kanal reže na dva dijela,

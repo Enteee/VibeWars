@@ -40,7 +40,7 @@ town with a sunken well court, rooftops above its streets and a
 lever-gated under-pass below them; and **Frozen Crossing** (2v2,
 2600x1940), a frozen river between two raised banks, crossed on stepping
 stones or a log bridge whose middle plank a lever raises. For the bigger
-teams: **Ashen Courtyard** (4v4, 3200x2400), a burnt walled courtyard
+teams: **Ashen Courtyard** (4v4, 5120x3840), a burnt walled courtyard
 with wall-walks and towers above and a sunken well court below, its
 gatehouse portcullis worked from the walls; and **Moss Vale** (8v8,
 5000x2600), a terraced valley cut in two by a deep mill race, crossed

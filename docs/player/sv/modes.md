@@ -43,7 +43,7 @@ med en nedsänkt brunnsgård, hustak ovanför gatorna och en spakstängd
 underpassage under dem; och **Frozen Crossing** (2v2, 2600x1940), en frusen flod
 mellan två upphöjda stränder, som korsas på trampstenar eller en stockbro vars
 mittplanka höjs av en spak. För de större lagen: **Ashen Courtyard** (4v4,
-3200x2400), en bränd muromgärdad borggård med vallgångar och torn ovanför och en
+5120x3840), en bränd muromgärdad borggård med vallgångar och torn ovanför och en
 nedsänkt brunnsgård nedanför, där porthusets fällgaller sköts från murarna; och
 **Moss Vale** (8v8, 5000x2600), en terrasserad dal som klyvs i två av en djup
 kvarnränna och bara kan korsas vid vindbryggan, kvarnen och underpassagen under

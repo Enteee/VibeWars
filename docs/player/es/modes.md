@@ -43,7 +43,7 @@ desértico en terrazas con un patio de pozo hundido, azoteas sobre sus calles y,
 bajo ellas, un paso inferior cerrado por una palanca; y **Frozen Crossing**
 (2v2, 2600x1940), un río helado entre dos orillas elevadas, que se cruza por
 piedras pasaderas o por un puente de troncos cuyo tablón central se levanta con
-una palanca. Para los equipos más grandes: **Ashen Courtyard** (4v4, 3200x2400),
+una palanca. Para los equipos más grandes: **Ashen Courtyard** (4v4, 5120x3840),
 un patio amurallado y calcinado con adarves y torres arriba y un patio de pozo
 hundido abajo, cuyo rastrillo de la puerta se maneja desde las murallas; y
 **Moss Vale** (8v8, 5000x2600), un valle en terrazas partido en dos por un

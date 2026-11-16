@@ -39,7 +39,7 @@ Canyon, Crossroads dan Long Hall memainkannya, juga dua arena kecil yang kira-ki
 atap-atap di atas jalanannya, dan lorong bawah yang dibuka dengan tuas di bawahnya; dan **Frozen
 Crossing** (2v2, 2600x1940), sungai beku di antara dua tepian yang tinggi, diseberangi lewat batu
 pijakan atau jembatan kayu gelondong yang papan tengahnya dinaikkan oleh tuas. Untuk tim yang lebih
-besar: **Ashen Courtyard** (4v4, 3200x2400), pelataran bertembok yang hangus, dengan jalan tembok dan
+besar: **Ashen Courtyard** (4v4, 5120x3840), pelataran bertembok yang hangus, dengan jalan tembok dan
 menara di atas serta pelataran sumur yang cekung di bawah, jeruji gerbangnya digerakkan dari atas
 tembok; dan **Moss Vale** (8v8, 5000x2600), lembah berundak yang terbelah dua oleh saluran kincir
 yang dalam, hanya bisa diseberangi di jembatan angkat, di kincir, dan lewat lorong bawah di bawahnya.
