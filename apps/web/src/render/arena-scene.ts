@@ -262,6 +262,28 @@ import {
   type Swirl,
   type Wisp,
 } from "./ground-effect-look.js";
+import {
+  DEATH_SECONDS,
+  DUST_SECONDS as DEATH_DUST_SECONDS,
+  DUST_SPECKS,
+  RESPAWN_COLUMN_HEIGHT,
+  RESPAWN_COLUMN_SECONDS,
+  RESPAWN_SECONDS,
+  FLASH_SECONDS,
+  decayReactions,
+  deathProgress,
+  dustSpeck,
+  flashAmount,
+  mixColour,
+  respawnColumnAlpha,
+  respawnRing,
+  respawnScale,
+  slideOffset,
+  startReaction,
+  type BodyDeath,
+  type BodyFlash,
+  type BodyRespawn,
+} from "./body-reactions.js";
 import { lyingPose } from "./lying-pose.js";
 import {
   SLEEPER_RIM_WIDTH,
@@ -787,6 +809,12 @@ export class ArenaScene extends Phaser.Scene {
   private beaconBolts: BeaconBolt[] = [];
   /** Skills landing on bodies (#1139), newest last; merged in on the next frame. */
   private impacts: Impact[] = [];
+  /** Bodies just struck, just dead, just back (#3365). */
+  private bodyFlashes: BodyFlash[] = [];
+  private bodyDeaths: BodyDeath[] = [];
+  private bodyRespawns: BodyRespawn[] = [];
+  /** Whether each body was dead in the last frame: a change is a death or a return. */
+  private wasDead = new Map<string, boolean>();
   private addedImpacts: Impact[] = [];
   /** Shout and chant rings and chevrons (#3301), aged in place. */
   private readonly shoutMarks: ShoutMark[] = [];
@@ -905,6 +933,10 @@ export class ArenaScene extends Phaser.Scene {
   public setArenaBounds(width: number, height: number): void {
     this.arena = { width, height };
     this.bodyMotion.clear();
+    this.wasDead.clear();
+    this.bodyFlashes.length = 0;
+    this.bodyDeaths.length = 0;
+    this.bodyRespawns.length = 0;
   }
 
   /**
@@ -963,6 +995,10 @@ export class ArenaScene extends Phaser.Scene {
 
   public addImpacts(impacts: readonly Impact[]): void {
     this.addedImpacts.push(...impacts);
+  }
+
+  public addBodyFlash(flash: BodyFlash): void {
+    startReaction(this.bodyFlashes, flash);
   }
 
   public addShoutMarks(marks: readonly ShoutMark[]): void {
@@ -1034,7 +1070,7 @@ export class ArenaScene extends Phaser.Scene {
     const { body: g, marks } = floor;
     this.now = time / 1000;
     this.reducedMotion = prefersReducedMotion();
-    this.drawnActors = this.liftActors(dt);
+    this.drawnActors = this.reactActors(this.liftActors(dt), dt);
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
     const lightAt = passStart();
@@ -1110,6 +1146,7 @@ export class ArenaScene extends Phaser.Scene {
         this.drawActor(band, actor);
       }
     }
+    this.drawFlashesAndReturns();
     const cutAt = passStart();
     this.cutAwayTunnels(dt);
     passEnd("cutAwayTunnels", cutAt);
@@ -2353,6 +2390,112 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * Age the hit, death and return effects (#3365), and hand back the bodies
+   * as they are drawn: a struck one nudged, a returning one rising to its
+   * size. A body seen for the first time (a joiner's first snapshot) has no
+   * effect. The nudge is behind reduced motion, the tint is not.
+   */
+  private reactActors(actors: readonly RenderableActor[], dt: number): readonly RenderableActor[] {
+    decayReactions(this.bodyFlashes, dt, FLASH_SECONDS);
+    decayReactions(this.bodyDeaths, dt, DEATH_SECONDS);
+    decayReactions(this.bodyRespawns, dt, RESPAWN_SECONDS);
+    for (const actor of actors) {
+      const before = this.wasDead.get(actor.id);
+      if (before !== undefined && before !== actor.dead) {
+        startReaction(actor.dead ? this.bodyDeaths : this.bodyRespawns, {
+          id: actor.id,
+          ageSeconds: 0,
+        });
+      }
+      this.wasDead.set(actor.id, actor.dead);
+    }
+    for (const id of this.wasDead.keys()) {
+      if (!actors.some((actor) => actor.id === id)) {
+        this.wasDead.delete(id);
+      }
+    }
+    if (this.bodyFlashes.length === 0 && this.bodyRespawns.length === 0) {
+      return actors;
+    }
+    return actors.map((actor) => {
+      const flash = this.bodyFlashes.find((f) => f.id === actor.id);
+      const back = this.bodyRespawns.find((r) => r.id === actor.id);
+      if (actor.dead || (flash === undefined && back === undefined)) {
+        return actor;
+      }
+      const nudge = flash === undefined || this.reducedMotion ? { x: 0, y: 0 } : slideOffset(flash);
+      return {
+        ...actor,
+        position: { x: actor.position.x + nudge.x, y: actor.position.y + nudge.y },
+        radius:
+          back === undefined || this.reducedMotion
+            ? actor.radius
+            : actor.radius * respawnScale(back.ageSeconds),
+      };
+    });
+  }
+
+  /** The white over a struck body, and the ring and light that stand where a body came back. */
+  private drawFlashesAndReturns(): void {
+    for (const actor of this.drawnActors) {
+      const band = this.bandOf(actor.layer);
+      if (band === undefined || actor.dead) {
+        continue;
+      }
+      const { x, y } = actor.position;
+      const flash = this.bodyFlashes.find((f) => f.id === actor.id);
+      if (flash !== undefined) {
+        band.marks.fillStyle(0xffffff, flashAmount(flash));
+        band.marks.fillCircle(x, y, actor.radius);
+      }
+      const back = this.bodyRespawns.find((r) => r.id === actor.id);
+      if (back !== undefined) {
+        const colour = teamColour(actor.team);
+        const ring = respawnRing(back.ageSeconds);
+        band.marks.lineStyle(2, colour, ring.alpha);
+        band.marks.strokeCircle(x, y, ring.radius);
+        if (!this.reducedMotion && back.ageSeconds < RESPAWN_COLUMN_SECONDS) {
+          band.marks.lineStyle(3, colour, respawnColumnAlpha(back.ageSeconds));
+          band.marks.lineBetween(x, y, x, y - RESPAWN_COLUMN_HEIGHT);
+        }
+      }
+    }
+  }
+
+  /**
+   * A body in the first moments of its death (#3365): it falls into the
+   * lying pose and drains to the corpse grey, with a ring of dust. Past
+   * that it is the corpse `drawActor` always drew.
+   */
+  private drawFalling(
+    band: (typeof this.bands)[number],
+    actor: RenderableActor,
+    death: BodyDeath,
+  ): void {
+    const { body: g, marks } = band;
+    const { x, y } = actor.position;
+    const p = deathProgress(death.ageSeconds);
+    const drained = mixColour(this.lit(teamColour(actor.team), actor), DEAD_COLOUR, p);
+    if (actor.creatureLook === undefined) {
+      g.fillStyle(drained, 1 - p);
+      tracePath(g, lyingPose(x, y, actor.radius, actor.facing).body);
+      g.fillPath();
+      g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1 - p);
+      g.strokePath();
+    }
+    const ground = arenaPalette(this.snapshot.structure).floor ?? 0x6b6f76;
+    const dust = mixColour(ground, 0xffffff, 0.35);
+    if (death.ageSeconds >= DEATH_DUST_SECONDS) {
+      return;
+    }
+    for (let i = 0; i < DUST_SPECKS; i += 1) {
+      const speck = dustSpeck(i, actor.position, actor.radius, death.ageSeconds);
+      marks.fillStyle(dust, speck.alpha);
+      marks.fillCircle(speck.x, speck.y, 1.5);
+    }
+  }
+
+  /**
    * One actor on its band: its body, every mark on it over the body
    * glyphs (#1037), and its health bar over those (#3292). In a clump a neighbour's weapon now crosses your
    * body: the weapon is the more urgent read.
@@ -2363,16 +2506,22 @@ export class ArenaScene extends Phaser.Scene {
 
     if (actor.dead) {
       this.bodyMotion.delete(actor.id);
+      const death = this.bodyDeaths.find((d) => d.id === actor.id);
+      if (death !== undefined) {
+        this.drawFalling(band, actor, death);
+      }
+      // The corpse ring comes up as the fall ends.
+      const settled = death === undefined ? 1 : deathProgress(death.ageSeconds);
       // A corpse stays visible but obviously inert: hollow, grey, no bars;
       // darker once a skill has exploited it (#466).
       const colour = actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR;
       if (actor.creatureLook === undefined) {
-        g.lineStyle(2, colour, 1);
+        g.lineStyle(2, colour, settled);
         g.strokeCircle(x, y, actor.radius);
         return;
       }
       // A lying pet keeps its shape, dashed (#1162): a creature's corpse at a glance.
-      g.lineStyle(BODY_EDGE_WIDTH, colour, 1);
+      g.lineStyle(BODY_EDGE_WIDTH, colour, settled);
       const outline = creatureOutline(x, y, actor.radius);
       for (const [from, to] of dashes(outline, actor.radius * DEAD_DASH, actor.radius * DEAD_GAP)) {
         g.lineBetween(from.x, from.y, to.x, to.y);
