@@ -35,14 +35,19 @@ is, het altaar in goud. De gevulde pijl van een speler wordt eroverheen getekend
 en elke dood kost moraal. Veeg het andere team weg om te winnen. Na 8 minuten wint
 het team met de meeste moraal over.
 
-Canyon, Crossroads en Long Hall spelen het, en twee grotere, middelgrote arena's:
-**Sandstone Steps** (1v1, 3600x2000), terrasvormige woestijnrichels rond een
-gebroken cirkel obelisken, met pilaren om omheen te kiten; en **Frozen Crossing**
-(2v2, 4000x2200), een bevroren rivier met drie bruggen, ijsrotsen aan elke oever.
-Voor de grotere teams: **Ashen Courtyard** (4v4, 4400x2600), een verwoeste burcht
-waarvan de ommuurde binnenplaats vier bressen heeft, ruïnes aan de flanken; en
-**Moss Vale** (8v8, 4800x2800), twee beboste kammen die het dal in drie lanen
-splitsen, die in het midden samenkomen op een open plek. Twee grote arena's zijn
+Canyon, Crossroads en Long Hall spelen het, en twee kleine arena's van ongeveer
+de grootte van Canyon: **Sandstone Steps** (1v1, 2600x1940), een terrasvormig
+woestijnstadje met een verzonken putplein, daken boven de straten en een
+onderdoorgang daaronder die met een hendel opengaat; en **Frozen Crossing**
+(2v2, 2600x1940), een bevroren rivier tussen twee hoge oevers, over te steken
+via stapstenen of een boomstambrug waarvan een hendel de middelste plank
+omhoogzet. Voor de grotere teams: **Ashen Courtyard** (4v4, 3200x2400), een
+uitgebrande ommuurde binnenplaats met weergangen en torens erboven en een
+verzonken putplein eronder, met een valhek in het poortgebouw dat vanaf de
+muren wordt bediend; en **Moss Vale** (8v8, 5000x2600), een terrasvormig dal
+dat een diepe molenbeek in tweeën snijdt, alleen over te steken bij de
+ophaalbrug, de molen en de onderdoorgang daaronder.
+Twee grote arena's zijn
 nog groter: **Canthan Terraces** (1v1, 5200x2800), rijstterrassen met muren van
 noord naar zuid met verspreide openingen, rond een verwoeste pagode; en **Sunken
 Bastion** (2v2, 5600x3000), een half ondergelopen vesting waarvan de doorbroken

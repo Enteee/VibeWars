@@ -37,15 +37,19 @@ joueur s'affiche par-dessus.
 les ressuscite, et chaque mort coûte du moral. Élimine toute l'autre équipe pour
 gagner. Après 8 minutes, l'équipe qui a le plus de moral restant gagne.
 
-Canyon, Crossroads et Long Hall le jouent, ainsi que deux arènes plus grandes,
-de taille moyenne : **Sandstone Steps** (1v1, 3600x2000), des corniches de
-désert en terrasses autour d'un cercle d'obélisques brisés, avec des piliers
-pour tourner autour ; et **Frozen Crossing** (2v2, 4000x2200), une rivière gelée
-traversée par trois ponts, avec des rochers de glace sur chaque rive. Pour les
-plus grandes équipes : **Ashen Courtyard** (4v4, 4400x2600), un donjon en ruine
-dont la cour murée a quatre brèches, avec des ruines sur ses flancs ; et **Moss
-Vale** (8v8, 4800x2800), deux crêtes boisées qui divisent la vallée en trois
-couloirs, se rejoignant dans une clairière au centre. Deux grandes arènes sont
+Canyon, Crossroads et Long Hall le jouent, ainsi que deux petites arènes à peu
+près de la taille de Canyon : **Sandstone Steps** (1v1, 2600x1940), une ville du
+désert en terrasses avec une cour de puits en contrebas, des toits au-dessus de
+ses rues et, sous celles-ci, un passage souterrain fermé par un levier ; et
+**Frozen Crossing** (2v2, 2600x1940), une rivière gelée entre deux berges
+surélevées, que l'on traverse sur des pierres de gué ou sur un pont de rondins
+dont un levier relève la planche du milieu. Pour les plus grandes équipes :
+**Ashen Courtyard** (4v4, 3200x2400), une cour fortifiée calcinée, avec chemins
+de ronde et tours en haut et une cour de puits en contrebas, dont la herse du
+châtelet d'entrée se manœuvre depuis les remparts ; et **Moss Vale** (8v8,
+5000x2600), une vallée en terrasses coupée en deux par un profond bief de
+moulin, qu'on ne franchit qu'au pont-levis, au moulin et par le passage
+souterrain en dessous. Deux grandes arènes sont
 encore plus vastes : **Canthan Terraces** (1v1, 5200x2800), des rizières murées
 du nord au sud avec des passages décalés, autour d'une pagode en ruine ; et
 **Sunken Bastion** (2v2, 5600x3000), une forteresse à moitié inondée dont le

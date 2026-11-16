@@ -39,16 +39,19 @@ liittolainen herättää heidät henkiin, ja jokainen kuolema vie moraalia.
 Pyyhi toinen tiimi pois voittaaksesi. 8 minuutin jälkeen voittaa tiimi,
 jolla on eniten moraalia jäljellä.
 
-Sitä pelaavat Canyon, Crossroads ja Long Hall sekä kaksi isompaa,
-keskikokoista areenaa: **Sandstone Steps** (1v1, 3600x2000), porrastettuja
-aavikkotasanteita rikkinäisen obeliskikehän ympärillä ja pylväitä, joiden
-ympäri voi juoksuttaa; ja **Frozen Crossing** (2v2, 4000x2200), jäätynyt
-joki, jonka yli kulkee kolme siltaa, ja jääkiviä kummallakin rannalla.
-Isommille tiimeille: **Ashen Courtyard** (4v4, 4400x2600), raunioitunut
-linnake, jonka muurien ympäröimässä pihassa on neljä aukkoa ja raunioita
-sivustoilla; ja **Moss Vale** (8v8, 4800x2800), kaksi metsäistä harjua,
-jotka jakavat laakson kolmeen kaistaan, jotka kohtaavat keskellä olevalla
-aukealla. Kaksi suurta areenaa on vielä isompia: **Canthan Terraces**
+Sitä pelaavat Canyon, Crossroads ja Long Hall sekä kaksi pientä, suunnilleen
+Canyonin kokoista areenaa: **Sandstone Steps** (1v1, 2600x1940), porrastettu
+aavikkokaupunki, jossa on upotettu kaivopiha, katot katujen yllä ja niiden
+alla vivulla suljettava alikulku; ja **Frozen Crossing** (2v2, 2600x1940),
+jäätynyt joki kahden korotetun rannan välissä, ja sen yli pääsee astinkiviä
+pitkin tai tukkisiltaa, jonka keskimmäisen lankun vipu nostaa. Isommille
+tiimeille: **Ashen Courtyard** (4v4, 3200x2400), palanut muurien ympäröimä
+piha, jonka yllä on vallikäytäviä ja torneja ja alla upotettu kaivopiha ja
+jonka porttirakennuksen laskuristikkoa käytetään muureilta; ja **Moss Vale**
+(8v8, 5000x2600), porrastettu laakso, jonka syvä myllykouru halkaisee kahtia
+ja jonka yli pääsee vain laskusillalla, myllyn kautta ja sen alta kulkevaa
+alikulkua pitkin.
+Kaksi suurta areenaa on vielä isompia: **Canthan Terraces**
 (1v1, 5200x2800), pohjoisesta etelään muurattuja riisiterasseja
 porrastetuin aukoin raunioituneen pagodin ympärillä; ja **Sunken
 Bastion** (2v2, 5600x3000), puoliksi tulvinut linnoitus, jonka murrettu
