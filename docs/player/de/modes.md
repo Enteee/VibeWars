@@ -33,13 +33,16 @@ Altar in Gold. Der gefüllte Pfeil eines Spielers wird darüber gezeichnet.
 Tod kostet Moral. Lösche das andere Team aus, um zu gewinnen. Nach 8 Minuten gewinnt das Team mit
 der meisten verbliebenen Moral.
 
-Canyon, Crossroads und Long Hall spielen es, dazu zwei größere, mittelgroße Arenen: **Sandstone
-Steps** (1v1, 3600x2000), terrassierte Wüstenvorsprünge rund um einen zerbrochenen Obeliskenkreis,
-mit Säulen zum Kiten; und **Frozen Crossing** (2v2, 4000x2200), ein gefrorener Fluss mit drei
-Brücken und Eisfelsen an jedem Ufer. Für größere Teams: **Ashen Courtyard** (4v4, 4400x2600), eine
-zerstörte Burg, deren ummauerter Hof vier Breschen hat, mit Ruinen an den Flanken; und **Moss Vale**
-(8v8, 4800x2800), zwei bewaldete Kämme, die das Tal in drei Bahnen teilen, die sich in einer
-Lichtung in der Mitte treffen. Eine große Arena ist noch größer: **Canthan Terraces** (1v1,
+Canyon, Crossroads und Long Hall spielen es, dazu zwei kleine Arenen etwa in der Größe von Canyon:
+**Sandstone Steps** (1v1, 2600x1940), eine terrassierte Wüstenstadt mit einem abgesenkten
+Brunnenhof, Dächern über ihren Gassen und einer per Hebel verschlossenen Unterführung darunter; und
+**Frozen Crossing** (2v2, 2600x1940), ein gefrorener Fluss zwischen zwei erhöhten Ufern, überquert
+auf Trittsteinen oder einer Baumstammbrücke, deren mittlere Planke ein Hebel anhebt. Für größere
+Teams: **Ashen Courtyard** (4v4, 3200x2400), ein verbrannter, ummauerter Hof mit Wehrgängen und
+Türmen oben und einem abgesenkten Brunnenhof unten, dessen Fallgatter am Torhaus von den Mauern aus
+bedient wird; und **Moss Vale** (8v8, 5000x2600), ein terrassiertes Tal, von einem tiefen Mühlgraben
+zweigeteilt, über den es nur an der Zugbrücke, an der Mühle und durch die Unterführung darunter
+hinübergeht. Eine große Arena ist noch größer: **Canthan Terraces** (1v1,
 5200x2800), Reisterrassen, von Nord nach Süd ummauert, mit versetzten Lücken, rund um eine zerstörte
 Pagode. **Sunken Bastion** (2v2, 2700x1900) ist klein, aber hoch: eine halb überflutete Festung,
 deren Burggraben den Hof teilt; hinüber geht es über eine Zugbrücke, die ein Hebel an jedem Ufer

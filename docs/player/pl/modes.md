@@ -34,14 +34,16 @@ Wypełniona strzałka gracza rysuje się na niej.
 każda śmierć kosztuje morale. Wybij drugą drużynę, aby wygrać. Po 8 minutach wygrywa
 drużyna, której zostało najwięcej morale.
 
-Grają w nią Canyon, Crossroads i Long Hall oraz dwie większe, średnie areny:
-**Sandstone Steps** (1v1, 3600x2000), tarasowe pustynne półki wokół rozbitego kręgu
-obelisków, z filarami do kitowania; oraz **Frozen Crossing** (2v2, 4000x2200),
-zamarznięta rzeka z trzema mostami i lodowymi skałami na obu brzegach. Dla większych
-drużyn: **Ashen Courtyard** (4v4, 4400x2600), zrujnowana twierdza, której otoczony
-murem dziedziniec ma cztery wyłomy, z ruinami na flankach; oraz **Moss Vale** (8v8,
-4800x2800), dwa zalesione grzbiety dzielące dolinę na trzy tory, które spotykają się
-na polanie pośrodku. Jedna duża arena jest jeszcze większa: **Canthan Terraces** (1v1,
+Grają w nią Canyon, Crossroads i Long Hall oraz dwie małe areny mniej więcej wielkości
+Canyonu: **Sandstone Steps** (1v1, 2600x1940), tarasowe pustynne miasteczko z zagłębionym
+dziedzińcem ze studnią, dachami nad ulicami i otwieranym dźwignią przejściem pod nimi; oraz
+**Frozen Crossing** (2v2, 2600x1940), zamarznięta rzeka między dwoma wysokimi brzegami, przez
+którą przechodzi się po kamieniach brodu albo po moście z pni, którego środkową deskę podnosi
+dźwignia. Dla większych drużyn: **Ashen Courtyard** (4v4, 3200x2400), spalony dziedziniec
+otoczony murem, z gankami na murach i wieżami w górze oraz zagłębionym dziedzińcem ze studnią
+w dole, a broną bramy steruje się z murów; oraz **Moss Vale** (8v8, 5000x2600), tarasowa
+dolina przecięta na pół głęboką młynówką, przez którą można przejść tylko mostem
+zwodzonym, przez młyn albo przejściem pod nim. Jedna duża arena jest jeszcze większa: **Canthan Terraces** (1v1,
 5200x2800), tarasy ryżowe obmurowane z północy na południe z mijającymi się
 przejściami, wokół zrujnowanej pagody. **Sunken Bastion** (2v2, 2700x1900) jest mała,
 ale wysoka: na wpół zalana forteca, której dziedziniec przecina fosa; przechodzi się

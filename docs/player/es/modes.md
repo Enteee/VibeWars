@@ -37,15 +37,18 @@ rellena de un jugador se dibuja encima.
 los resucita, y cada muerte cuesta moral. Elimina al otro equipo para ganar.
 Tras 8 minutos, gana el equipo con más moral.
 
-Se juega en Canyon, Crossroads y Long Hall, y en dos arenas más grandes, de
-tamaño medio: **Sandstone Steps** (1v1, 3600x2000), repisas de desierto en
-terrazas alrededor de un círculo de obeliscos rotos, con pilares para hacer
-kiting; y **Frozen Crossing** (2v2, 4000x2200), un río helado cruzado por tres
-puentes, con rocas de hielo en cada orilla. Para los equipos más grandes:
-**Ashen Courtyard** (4v4, 4400x2600), una fortaleza en ruinas cuyo patio
-amurallado tiene cuatro brechas, con ruinas en los flancos; y **Moss Vale**
-(8v8, 4800x2800), dos crestas boscosas que dividen el valle en tres carriles,
-que se encuentran en un claro en el centro. Una arena grande es aún mayor:
+Se juega en Canyon, Crossroads y Long Hall, y en dos arenas pequeñas de un
+tamaño parecido al de Canyon: **Sandstone Steps** (1v1, 2600x1940), un pueblo
+desértico en terrazas con un patio de pozo hundido, azoteas sobre sus calles y,
+bajo ellas, un paso inferior cerrado por una palanca; y **Frozen Crossing**
+(2v2, 2600x1940), un río helado entre dos orillas elevadas, que se cruza por
+piedras pasaderas o por un puente de troncos cuyo tablón central se levanta con
+una palanca. Para los equipos más grandes: **Ashen Courtyard** (4v4, 3200x2400),
+un patio amurallado y calcinado con adarves y torres arriba y un patio de pozo
+hundido abajo, cuyo rastrillo de la puerta se maneja desde las murallas; y
+**Moss Vale** (8v8, 5000x2600), un valle en terrazas partido en dos por un
+profundo canal de molino, que solo se cruza por el puente levadizo, el molino y
+el paso inferior que hay debajo. Una arena grande es aún mayor:
 **Canthan Terraces** (1v1, 5200x2800), arrozales en terrazas con muros de norte
 a sur y huecos escalonados, alrededor de una pagoda en ruinas. **Sunken
 Bastion** (2v2, 2700x1900) es pequeña pero alta: una fortaleza medio inundada
