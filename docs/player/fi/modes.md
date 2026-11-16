@@ -48,12 +48,13 @@ Isommille tiimeille: **Ashen Courtyard** (4v4, 4400x2600), raunioitunut
 linnake, jonka muurien ympäröimässä pihassa on neljä aukkoa ja raunioita
 sivustoilla; ja **Moss Vale** (8v8, 4800x2800), kaksi metsäistä harjua,
 jotka jakavat laakson kolmeen kaistaan, jotka kohtaavat keskellä olevalla
-aukealla. Kaksi suurta areenaa on vielä isompia: **Canthan Terraces**
+aukealla. Yksi suuri areena on vielä isompi: **Canthan Terraces**
 (1v1, 5200x2800), pohjoisesta etelään muurattuja riisiterasseja
-porrastetuin aukoin raunioituneen pagodin ympärillä; ja **Sunken
-Bastion** (2v2, 5600x3000), puoliksi tulvinut linnoitus, jonka murrettu
-ulkomuuri ympäröi kaksiporttista linnaketta, ja ulkopuolella
-suokiviä.
+porrastetuin aukoin raunioituneen pagodin ympärillä. **Sunken Bastion**
+(2v2, 2700x1900) on pieni mutta korkea: puoliksi tulvinut linnoitus,
+jonka vallihauta halkaisee pihan. Sen yli pääsee laskusiltaa pitkin,
+jota ohjataan vivulla kummaltakin rannalta, pohjoisen ulkomuurin
+vallikäytävää pitkin tai alla olevan tulvineen kellarin kautta.
 Ja isommille tiimeille: **Shiverpeak Pass** (4v4, 6000x3400),
 kaksi kalliojyrkännettä, joiden väliin jää leveä, lohkareiden täplittämä
 sola ja kapea polku kummankin reunan vierellä; ja **Elonian Plateau**

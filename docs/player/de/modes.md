@@ -39,10 +39,12 @@ mit Säulen zum Kiten; und **Frozen Crossing** (2v2, 4000x2200), ein gefrorener 
 Brücken und Eisfelsen an jedem Ufer. Für größere Teams: **Ashen Courtyard** (4v4, 4400x2600), eine
 zerstörte Burg, deren ummauerter Hof vier Breschen hat, mit Ruinen an den Flanken; und **Moss Vale**
 (8v8, 4800x2800), zwei bewaldete Kämme, die das Tal in drei Bahnen teilen, die sich in einer
-Lichtung in der Mitte treffen. Zwei große Arenen sind noch größer: **Canthan Terraces** (1v1,
+Lichtung in der Mitte treffen. Eine große Arena ist noch größer: **Canthan Terraces** (1v1,
 5200x2800), Reisterrassen, von Nord nach Süd ummauert, mit versetzten Lücken, rund um eine zerstörte
-Pagode; und **Sunken Bastion** (2v2, 5600x3000), eine halb überflutete Festung, deren durchbrochene
-Ringmauer einen Bergfried mit zwei Toren umschließt, außen Sumpffelsen. Und für größere Teams:
+Pagode. **Sunken Bastion** (2v2, 2700x1900) ist klein, aber hoch: eine halb überflutete Festung,
+deren Burggraben den Hof teilt; hinüber geht es über eine Zugbrücke, die ein Hebel an jedem Ufer
+bedient, über den Wehrgang entlang der nördlichen Ringmauer oder durch den gefluteten Keller
+darunter. Und für größere Teams:
 **Shiverpeak Pass** (4v4, 6000x3400), zwei Felsmassive, die einen breiten, mit Findlingen übersäten
 Pass und einen schmalen Pfad an jedem Rand lassen; und **Elonian Plateau** (8v8, 6400x3600), offene
 Savanne rund um fünf große Tafelberge, mit den längsten Sichtlinien aller Arenen.

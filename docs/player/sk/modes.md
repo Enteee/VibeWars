@@ -42,11 +42,12 @@ skaly na oboch brehoch. Pre väčšie tímy: **Ashen Courtyard** (4v4,
 4400x2600), zrúcaná pevnosť, ktorej obohnané nádvorie má štyri prielomy, a ruiny
 na bokoch; a **Moss Vale** (8v8, 4800x2800), dva zalesnené chrbty,
 ktoré rozdeľujú údolie na tri koridory stretávajúce sa na čistine uprostred.
-Dve veľké arény sú ešte väčšie: **Canthan Terraces** (1v1, 5200x2800),
+Jedna veľká aréna je ešte väčšia: **Canthan Terraces** (1v1, 5200x2800),
 ryžové terasy obohnané múrmi zo severu na juh s posunutými medzerami, okolo
-zrúcanej pagody; a **Sunken Bastion** (2v2, 5600x3000), napoly zaplavená
-pevnosť, ktorej prelomený hradobný múr obklopuje pevnosť s dvoma bránami,
-a močiarne skaly vonku.
+zrúcanej pagody. **Sunken Bastion** (2v2, 2700x1900) je malá, ale vysoká:
+napoly zaplavená pevnosť, ktorej nádvorie rozdeľuje vodná priekopa; prejsť
+cez ňu sa dá po padacom moste ovládanom pákou na každom brehu, po ochodzi
+pozdĺž severnej hradby alebo cez zaplavenú pivnicu pod ňou.
 A pre väčšie tímy: **Shiverpeak Pass** (4v4, 6000x3400),
 dva skalné masívy, medzi ktorými zostáva široký priesmyk posiaty balvanmi
 a úzky chodník pozdĺž každého okraja; a **Elonian Plateau** (8v8, 6400x3600),
