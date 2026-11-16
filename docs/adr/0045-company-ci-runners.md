@@ -172,7 +172,10 @@ whole number up to `maxRunners` counts as 0.
   live in one place, asked once. At 0 runners stay off and the supervisor
   makes no GitHub call. hubd reads it on every `company runners`; the
   supervisor reads it once at start, so changing it takes a supervisor
-  restart, and `company runners <n>` stays the live knob below it. A
+  restart, and `company runners <n>` stays the live knob below it. It
+  refuses a raise the host cannot carry now: each runner added needs 8 GiB
+  free memory and 4 CPUs free of load, the alive ones already being paid
+  for (#3466); lowering is always allowed. A
   `company.json` without a whole number ≥ 0 there is refused by both,
   never read as 0. `company.json` is host-only: `.bots` is 0700 and no
   jail binds it, so no agent can raise the cap.

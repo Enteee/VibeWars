@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   askMaxRunners,
+  hostRoomRefusal,
   maxRunners,
   parseMaxRunners,
   parseStatus,
@@ -218,5 +219,63 @@ describe("runners state", () => {
       "/s/vibewars/runner-supervisor",
     );
     expect(runnersStateDir({ VIBEWARS_RUNNERS_STATE: "/r" })).toBe("/r");
+  });
+});
+
+describe("hostRoomRefusal (#3466)", () => {
+  const GIB = 1024 ** 3;
+  /** @param {Partial<Parameters<typeof hostRoomRefusal>[0]>} over */
+  const ask = (over) =>
+    hostRoomRefusal({
+      n: 2,
+      target: 0,
+      alive: 0,
+      freeBytes: 20 * GIB,
+      load1: 2,
+      cpus: 16,
+      ...over,
+    });
+
+  it("lets runners start on a host with room for them", () => {
+    expect(ask({})).toBeNull();
+  });
+
+  it("names memory when there is too little of it", () => {
+    expect(ask({ n: 1, freeBytes: 5.1 * GIB })).toBe(
+      "1 is more than the host carries now: 5.1 GiB RAM free (8 GiB per runner); 0 fit, 0 running",
+    );
+  });
+
+  it("names the CPUs when the load leaves too few", () => {
+    expect(ask({ freeBytes: 32 * GIB, load1: 14 })).toBe(
+      "2 is more than the host carries now: 2.0 CPUs free (4 per runner); 0 fit, 0 running",
+    );
+  });
+
+  it("names both when both are short", () => {
+    expect(ask({ freeBytes: 5.1 * GIB, load1: 12.8 })).toBe(
+      "2 is more than the host carries now: 5.1 GiB RAM free (8 GiB per runner), 3.2 CPUs free (4 per runner); 0 fit, 0 running",
+    );
+  });
+
+  it("counts only the runners it adds", () => {
+    const host = { target: 1, alive: 1, freeBytes: 9 * GIB, load1: 11, cpus: 16 };
+    expect(ask({ ...host, n: 2 })).toBeNull();
+    expect(ask({ ...host, n: 3 })).toBe(
+      "3 is more than the host carries now: 9.0 GiB RAM free (8 GiB per runner), 5.0 CPUs free (4 per runner); 2 fit, 1 running",
+    );
+  });
+
+  it("never refuses lowering or keeping the target, nor a raise the alive runners already cover", () => {
+    const starved = { freeBytes: 1 * GIB, load1: 30, cpus: 16 };
+    expect(ask({ ...starved, target: 2, n: 1 })).toBeNull();
+    expect(ask({ ...starved, target: 2, n: 2 })).toBeNull();
+    expect(ask({ ...starved, target: 1, alive: 3, n: 3 })).toBeNull();
+  });
+
+  it("fits none when the load is above the CPUs", () => {
+    expect(ask({ n: 1, load1: 20 })).toBe(
+      "1 is more than the host carries now: -4.0 CPUs free (4 per runner); 0 fit, 0 running",
+    );
   });
 });
