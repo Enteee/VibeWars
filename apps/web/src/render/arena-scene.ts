@@ -266,6 +266,7 @@ import { lyingPose } from "./lying-pose.js";
 import {
   SLEEPER_RIM_WIDTH,
   SLEEPER_Z_WIDTH,
+  mistGateCommands,
   parasolCommands,
   sleeperCommands,
   type PropCommand,
@@ -2025,7 +2026,8 @@ export class ArenaScene extends Phaser.Scene {
   /**
    * The props (#3326) just over their layer's walls' depth, lit where they
    * lie: a sleeper on top of a wall, lifted by the layer's height and the
-   * wall's; a parasol (#3332) on the layer's ground, by the layer's alone.
+   * wall's; a parasol (#3332) or the mist gate (#3334) on the layer's
+   * ground, by the layer's alone.
    */
   private drawProps(): void {
     for (const graphics of this.propGraphics.values()) {
@@ -2047,7 +2049,9 @@ export class ArenaScene extends Phaser.Scene {
       const commands: readonly PropCommand[] =
         prop.kind === "sleeper"
           ? sleeperCommands(prop.position, prop.facing, this.now, this.reducedMotion)
-          : parasolCommands(prop.position);
+          : prop.kind === "mist-gate"
+            ? mistGateCommands(prop.position, this.now, this.reducedMotion)
+            : parasolCommands(prop.position);
       g.save();
       g.translateCanvas(0, -lift);
       for (const command of commands) {
@@ -2098,6 +2102,10 @@ export class ArenaScene extends Phaser.Scene {
             g.lineStyle(command.width, lit(command.colour), 1);
             tracePath(g, command.points, false);
             g.strokePath();
+            break;
+          case "mist":
+            g.fillStyle(command.colour, command.alpha);
+            g.fillEllipse(command.at.x, command.at.y, command.width, command.height);
             break;
         }
       }

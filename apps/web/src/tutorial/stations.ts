@@ -688,3 +688,29 @@ export function pingStation(fork: Vec2, east: Vec2, pocket: Vec2, eastSide: Vec2
     },
   };
 }
+
+/** How near the mist gate's middle the player counts as through it (#3334): it is wider than a mark. */
+export const GATE_REACH = 80;
+
+/**
+ * Station 14 (playbook §14), the last: through the mist gate at `gate`,
+ * on `layer`, at the canyon's east end, and out among its team. Done
+ * once the player stands in it; the front's fight is no station.
+ */
+export function gateStation(gate: Vec2, layer: number): Station {
+  return {
+    id: "gate",
+    world: "canyon-2",
+    lines: {
+      intro: "tutorial.gate.intro",
+      hint: "tutorial.gate.hint",
+      praise: "tutorial.gate.praise",
+      how: "tutorial.gate.how",
+    },
+    keys: ["move-up", "move-left", "move-down", "move-right"],
+    highlight: { kind: "ground", at: gate, layer },
+    done: (view) =>
+      view.selfLayer === layer &&
+      Math.hypot(view.self.x - gate.x, view.self.y - gate.y) <= GATE_REACH,
+  };
+}

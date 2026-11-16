@@ -171,6 +171,15 @@ export function tunnelStart(): CanyonStart {
 }
 
 /**
+ * The canyon's second map entered at station 14 (#3334), which only an
+ * e2e build's seeded start does: the pair a few steps down the east
+ * branch, where station 13 leaves the tutor, and station 8's rats slain.
+ */
+export function gateStart(): CanyonStart {
+  return { position: FORK.eastSide, layer: FORK.layer, ratsSlain: true };
+}
+
+/**
  * One of the tutorial canyon's two maps (#3245), `part` 0 or 1, as a world
  * for the pair: no bots, only its zones, which strike on their own clock,
  * and on the second the rat pocket's rats (#3316). The player stands on

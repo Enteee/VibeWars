@@ -18,8 +18,8 @@ real HUD is the authority.
 - **The story.** The war is endless. The **tutor**, a teammate from that fight, comes to the
   player and says so, and that there must be a better way to fight. The way: a **teleporter**
   in the north, outside the first view. It drops the pair into the **tutorial world**, a misty
-  canyon with lava, where everything is learnt by doing. At the end the canyon leads behind the
-  enemy lines and into the real fight. Name and profession of the tutor are an **open question
+  canyon with lava, where everything is learnt by doing. At the end a mist gate leads back to the
+  pair's own side and into the real fight. Name and profession of the tutor are an **open question
   for the operator review** (proposal: a Monk; no GW1 character names).
 - **Always.** A **Skip tutorial** button sits in a fixed corner on every station. Esc does not
   skip, because Esc means cancel in the game. Each station shows one short line and the key or
@@ -177,9 +177,10 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
 
 ## 14. Back to the front
 
-![Station 14: the pair emerges behind the enemy line, the fight ahead](img/14-front.png)
+![Station 14: the pair emerges at their own spawn, the fight ahead](img/14-front.png)
 
-- The canyon opens behind the enemy lines. The tutor: "Now we have the high ground. Follow me."
+- The mist gate at the canyon's east end opens on the pair's own spawn, among their team. The tutor:
+  "Our team fights beyond the mist. Follow me." Through the gate: "Now they're in front of us. Charge!"
   The player joins the background fight on the tutor's team (bots), now a normal bot match.
 - The mode is the background fight's. A win or loss screen ends it and leads to the menu.
   Record `done`.
