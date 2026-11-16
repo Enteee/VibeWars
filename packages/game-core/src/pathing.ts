@@ -587,12 +587,17 @@ export function buildGatedNavGraph(
       }
     }
   }
-  // A corner off each cost area's, outside every one, or no route
-  // could go round one (#3026). Zone order, then corner order (#267).
-  for (const { polygon: zone } of zones) {
+  // A corner off each cost area's, outside every area that costs as
+  // much, or no route could go round one (#3026). One inside a cheaper
+  // area stays: round a harmful zone through shallow water is a real
+  // way (#3468). Zone order, then corner order (#267).
+  for (const { polygon: zone, cost } of zones) {
     for (let at = 0; at < zone.length; at += 1) {
       const node = offZoneCorner(zone, at, offset);
-      if (node !== undefined && !zones.some((other) => pointInPolygon(node, other.polygon))) {
+      if (
+        node !== undefined &&
+        !zones.some((other) => other.cost >= cost && pointInPolygon(node, other.polygon))
+      ) {
         addNode(node, 0);
       }
     }
