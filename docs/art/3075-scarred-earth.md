@@ -69,13 +69,13 @@ the gap the structure gives, not a promise about the final art.
 
 | Point                 | outer lane             | inner lane |
 | --------------------- | ---------------------- | ---------- |
-| 1 / 2 own hulk, north | 14.3 s                 | 9.0 s      |
-| 4 / 5 own hulk, south | 14.3 s                 | 9.0 s      |
-| 2 / 1 far hulk, north | 24.9 s                 | 19.6 s     |
-| 5 / 4 far hulk, south | 24.8 s                 | 19.5 s     |
+| 1 / 2 own hulk, north | 13.3 s                 | 9.0 s      |
+| 4 / 5 own hulk, south | 13.2 s                 | 9.0 s      |
+| 2 / 1 far hulk, north | 23.8 s                 | 19.6 s     |
+| 5 / 4 far hulk, south | 23.8 s                 | 19.5 s     |
 | 3 great hulk (centre) | 12.0 s (west approach) | 15.6 s     |
 
-A far hulk is a 19.5..24.9 s walk, under 25 s. **4v4 plays the whole map from 8v8's camps** (architect
+A far hulk is a 19.5..23.8 s walk, under 25 s. **4v4 plays the whole map from 8v8's camps** (architect
 decision): no second spawn set; the fight with the centre is 12 s from a spawn.
 
 **High ground:** each hulk's base (L1) overlooks its point and the lanes beside it; the great

@@ -132,7 +132,7 @@ const toPoint = (/** @type {number} */ i) => {
   /** @type {(Pt | string)[]} */
   const outer = [
     "C1",
-    [560, outerLane],
+    [560, north ? 560 : 2240],
     [1100, outerLane],
     [h.cx, outerLane],
     [h.cx, north ? h.cy - h.b - 50 : h.cy + h.b + 50],
