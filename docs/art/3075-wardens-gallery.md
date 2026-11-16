@@ -33,11 +33,11 @@ sculpture gallery with four gates, balconies, plinths as points, skylights) is k
   walkable floor (#3179).
 - **Gates (4, as today):** the four undercroft gates. Today's plate openers are replaced by levers
   (below); see Questions.
-- **Drop-offs (4):** the north-west balcony's court edge, the south-east balcony's, the great
-  plinth's north and south edges.
+- **Drop-offs (4):** the north-west balcony's court edge, the north-east balcony's, the great
+  plinth's west and east edges.
 - **Elements:** two brass **levers** on the great plinth's base, (2330,1120) **opens both north gates**,
   (2870,1380) **both south gates**: either team opens them, and they stay open. No lift is used. Two
-  **breakable toppled statue barricades** (x 1000, y 1010..1170 and its mirror at y 1330..1490) each
+  **breakable toppled statue barricades** (x 1000, y 1010..1170 and its x-mirror at x 4176) each
   close a short-cut from a vestibule into the court. Zones: `spring` and `mire`, two each, in the
   four corner alcoves, off every route and ≥ 200 u from a spawn. Four shallow **reflecting pools**
   (walkable, clear water). Atmosphere (existing, #3032): three dust-in-the-light patches, under

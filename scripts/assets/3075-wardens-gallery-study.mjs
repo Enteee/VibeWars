@@ -246,7 +246,7 @@ runStudy({
   ],
   breakables: [
     { r: rect(1000, 1010, 24, 160), label: "toppled statue barricade (breakable)" },
-    { r: rect(MW - 1024, 1330, 24, 160), label: "toppled statue barricade (breakable)" },
+    { r: rect(MW - 1024, 1010, 24, 160), label: "toppled statue barricade (breakable)" },
   ],
   gates: [
     { p: [1100, 800], label: "undercroft gate NW" },
@@ -277,9 +277,9 @@ runStudy({
   overhangs: [{ r: rect(2480, 2250, 240, 70), label: "hanging banner" }],
   drops: [
     { at: [1700, 410], e: 1 },
-    { at: [3500, 2090], e: 1 },
+    { at: [3500, 410], e: 1 },
     { at: [AX - 340, 1100], e: 1 },
-    { at: [AX + 340, 1400], e: 1 },
+    { at: [AX + 340, 1100], e: 1 },
   ],
   props: [
     ...[
