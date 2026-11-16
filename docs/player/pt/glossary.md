@@ -23,7 +23,7 @@
 | Recarga              | O tempo até uma habilidade usada poder ser usada de novo                                   |
 | Ressuscitar          | Trazer de volta um aliado morto                                                            |
 | Runa                 | Uma melhoria de armadura: níveis de atributo, vida, energia ou condições mais curtas       |
-| Água rasa            | Água que você atravessa como terra firme                                                   |
+| Água rasa            | Água que você atravessa a três quartos da sua velocidade                                   |
 | Sinete (escudo)      | Sua marca, um pequeno escudo gerado pela identidade do seu navegador, antes do seu nome    |
 | Ponto de início      | Onde sua equipe começa a partida                                                           |
 | Habilidade de toque  | Uma habilidade usada tocando o alvo; alguns gritos fazem os toques inimigos falharem       |

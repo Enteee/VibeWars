@@ -23,7 +23,7 @@
 | Reîncărcare           | Timpul până când o abilitate folosită poate fi folosită din nou                             |
 | Înviere               | Readucerea la viață a unui aliat mort                                                       |
 | Rună                  | O îmbunătățire de armură: ranguri de atribut, Viață, Energie sau afecțiuni mai scurte       |
-| Apă mică              | Apă prin care mergi ca pe uscat                                                             |
+| Apă mică              | Apă prin care treci cu trei sferturi din viteză                                             |
 | Sigiliu (scut)        | Semnul tău, un mic scut derivat din identitatea browserului, înaintea numelui               |
 | Punct de start        | Locul în care echipa ta începe meciul                                                       |
 | Abilitate de atingere | O abilitate folosită atingând ținta; unele strigăte fac atingerile inamicilor să eșueze     |

@@ -23,7 +23,7 @@
 | Genopladning    | Tiden, før en brugt evne kan bruges igen                                                  |
 | Genoplive       | At bringe en død allieret tilbage                                                         |
 | Rune            | En rustningsopgradering: attributrang, liv, energi eller kortere tilstande                |
-| Lavt vand       | Vand, du går igennem som på tørt land                                                     |
+| Lavt vand       | Vand, du vader igennem med tre fjerdedele af din fart                                     |
 | Signet (skjold) | Dit mærke, et lille skjold ud fra din browsers identitet, foran dit navn                  |
 | Startområde     | Hvor dit hold starter kampen                                                              |
 | Berøringsevne   | En evne, der bruges ved at røre målet; nogle råb får fjenders berøringer til at mislykkes |

@@ -23,7 +23,7 @@
 | Aufladung            | Die Zeit, bis ein benutzter Skill wieder nutzbar ist                                 |
 | Wiederbeleben        | Einen toten Verbündeten zurückholen                                                  |
 | Rune                 | Ein Rüstungs-Upgrade: Attributränge, Leben, Energie oder kürzere Zustände            |
-| Seichtes Wasser      | Wasser, durch das du läufst wie über trockenen Boden                                 |
+| Seichtes Wasser      | Wasser, durch das du mit drei Vierteln deines Tempos watest                          |
 | Siegel (Schild)      | Dein Zeichen, ein kleines Schild aus deiner Browser-Identität, vor deinem Namen      |
 | Spawn                | Wo dein Team das Match beginnt                                                       |
 | Berührungs-Skill     | Ein Skill, der das Ziel berühren muss; manche Schreie lassen Berührungen scheitern   |

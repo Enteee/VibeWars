@@ -23,7 +23,7 @@
 | Ricarica               | Il tempo che deve passare prima di poter riusare un'abilità                                 |
 | Resuscitare            | Riportare in vita un alleato morto                                                          |
 | Runa                   | Un potenziamento dell'armatura: gradi di attributo, Salute, Energia o condizioni più brevi  |
-| Acqua bassa            | Acqua che attraversi come la terraferma                                                     |
+| Acqua bassa            | Acqua che guadi a tre quarti della tua velocità                                             |
 | Sigillo (scudo)        | Il tuo segno, un piccolo scudo ricavato dall'identità del tuo browser, davanti al tuo nome  |
 | Spawn                  | Il punto in cui la tua squadra inizia la partita                                            |
 | Abilità a tocco        | Un'abilità che si usa toccando il bersaglio; alcuni gridi fanno fallire i tocchi dei nemici |
