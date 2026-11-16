@@ -182,6 +182,17 @@ describe("corner nodes (#3451)", () => {
     expect(nodes.filter(({ x, y }) => Math.hypot(x - 400, y - 400) < 2 * offset)).toEqual([]);
   });
 
+  it("bends off a corner's sides when another wall crowds its outward node", () => {
+    // A second rock just off the first's corner at (200, 200): the outward
+    // node is too close to it, and the way between the two still needs a bend.
+    const near = 200 + offset + CLEARANCE / 2;
+    const walls = [...rect(100, 100, 100, 100), ...rect(near, near, 100, 100)];
+    const nodes = nodesOf(walls);
+    expect(nodes).not.toContainEqual(vec2(200 + offset, 200 + offset));
+    expect(nodes).toContainEqual(vec2(200 + offset, 200 - offset));
+    expect(nodes).toContainEqual(vec2(200 - offset, 200 + offset));
+  });
+
   it("keeps all four nodes off a lone segment's ends", () => {
     expect(nodesOf([segment(vec2(100, 0), vec2(100, 200))])).toHaveLength(8);
   });
@@ -447,6 +458,9 @@ function referenceBuildNavGraph(
             return across === 0 || (alongU > 0 && alongV > 0);
           }
         : (): boolean => true;
+    const outward: Vec2[] = [];
+    const aside: Vec2[] = [];
+    let open = false;
     for (const [dx, dy] of [
       [-1, -1],
       [1, -1],
@@ -455,10 +469,14 @@ function referenceBuildNavGraph(
     ] as const) {
       const node = vec2(corner.x + dx * offset, corner.y + dy * offset);
       const fits = walls.every((wall) => refDistancePointToSegment(node, wall) >= clearance);
-      if (fits && inside(node) && !inSolid(node) && bends(node)) {
-        nodes.push(node);
+      open ||= bends(node) && !inSolid(node);
+      if (fits && inside(node) && !inSolid(node)) {
+        (bends(node) ? outward : aside).push(node);
       }
     }
+    // No outward node fits, though one is in the open: the way past
+    // bends off the corner's sides.
+    nodes.push(...(outward.length > 0 || !open ? outward : aside));
   }
 
   const graph = { walls, clearance };

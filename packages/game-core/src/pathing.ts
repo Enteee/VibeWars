@@ -522,7 +522,7 @@ export function buildGatedNavGraph(
   const nodes: Vec2[] = [];
   const cornerOf: number[] = [];
   const nodeBlockedBy: number[] = [];
-  const addNode = (node: Vec2, gateBits: number): void => {
+  const addNode = (node: Vec2, gateBits: number): boolean => {
     if (
       inside(node) &&
       walls.every((wall) => distancePointToSegment(node, wall) >= clearance) &&
@@ -537,19 +537,33 @@ export function buildGatedNavGraph(
       nodes.push(node);
       cornerOf.push(gateBits);
       nodeBlockedBy.push(blockedBy);
+      return true;
     }
+    return false;
   };
   for (const corner of corners.values()) {
     const bend = convexBend(corner);
-    for (const [dx, dy] of [
-      [-1, -1],
-      [1, -1],
-      [-1, 1],
-      [1, 1],
-    ] as const) {
-      const node = vec2(corner.at.x + dx * offset, corner.at.y + dy * offset);
-      if (bend === undefined || bend(node)) {
-        addNode(node, corner.gates);
+    const candidates = (
+      [
+        [-1, -1],
+        [1, -1],
+        [-1, 1],
+        [1, 1],
+      ] as const
+    ).map(([dx, dy]) => vec2(corner.at.x + dx * offset, corner.at.y + dy * offset));
+    const outward = candidates.filter((node) => bend === undefined || bend(node));
+    // Its outward node out in the open but too close to another wall, a
+    // path squeezing past the corner bends at one off its side instead
+    // (#3451). Outward nodes all in rock: a concave corner, no bend there.
+    const kept = outward.filter((node) => addNode(node, corner.gates)).length;
+    const clear = outward.some(
+      (node) => !solids.shapes.some((solid) => pointInPolygon(node, solid)),
+    );
+    if (kept === 0 && clear) {
+      for (const node of candidates) {
+        if (!outward.includes(node)) {
+          addNode(node, corner.gates);
+        }
       }
     }
   }
