@@ -127,6 +127,7 @@ hills.forEach((h, i) => {
 stairs.push({ id: "top-w", r: rect(AX - 330, 1480, 120, 80), from: 1 });
 stairs.push({ id: "top-e", r: rect(AX + 210, 1480, 120, 80), from: 1 });
 stairs.push({ id: "top-n", r: rect(AX - 60, 1380, 120, 80), from: 1, north: true });
+stairs.push({ id: "top-s", r: rect(AX - 60, 1540, 120, 80), from: 1 });
 stairs.push({ id: "bank-w", r: rect(1620, 1330, 140, 100), from: 0 });
 stairs.push({ id: "bank-e", r: rect(MW - 1760, 1330, 140, 100), from: 0 });
 
@@ -213,9 +214,9 @@ runStudy({
   ],
   zones: [
     { kind: "spring", cx: 700, cy: 2650, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "mire", cx: 900, cy: 1130, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "mire", cx: 600, cy: 1950, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
     { kind: "spring", cx: MW - 700, cy: 2650, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "mire", cx: MW - 900, cy: 1130, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "mire", cx: MW - 600, cy: 1950, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
   ],
   breakables: [
     { r: rect(1650, 1760, 24, 140), label: "root wall (breakable)" },
@@ -248,20 +249,20 @@ runStudy({
   overhangs: [{ r: rect(1200, 1720, 220, 70), label: "root arch" }],
   drops: [
     { at: [HX, 620], e: 1 },
-    { at: [MW - HX, 2400], e: 1 },
+    { at: [MW - HX, 620], e: 1 },
     { at: [AX - 420, 1700], e: 1 },
-    { at: [AX + 420, 1300], e: 1 },
+    { at: [AX + 420, 1700], e: 1 },
   ],
   props: [
     ...[
       [900, 1700],
       [1300, 700],
-      [1500, 2200],
+      [1000, 2150],
       [4100, 700],
       [3900, 1800],
       [4500, 2300],
       [AX - 120, 200],
-      [AX + 140, 2800],
+      [AX + 140, 2560],
     ].map((p) => ({ kind: /** @type {"stone"} */ ("stone"), p: /** @type {Pt} */ (p), r: 40 })),
     ...[
       [800, 1300],

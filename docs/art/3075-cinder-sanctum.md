@@ -28,8 +28,8 @@ away, the place (a temple on a volcano flank: lava, a lift, a sanctum with a hid
 - **Tunnel:** the **hidden passage** on L0, 110 wide, straight under the sanctum from the north
   mouth (2812,860) to the south mouth (2812,1940), so it is a bypass between the north and south approaches to the forecourt. Lever-driven
   (below). Cover shows the seam and grating slots (#3236), as wide as the walkable floor (#3179).
-- **Lifts:** two **timer lifts** on the forecourt's west and east sides, (2380,1810) and
-  (3244,1810), a mirrored pair, each beside a stair (fore-sw, fore-se), so a lift is never a route's only way. No
+- **Lifts:** two **timer lifts** on the forecourt's west and east sides, (2330,1810) and
+  (3294,1810), a mirrored pair, each beside a stair (fore-sw, fore-se), so a lift is never a route's only way. No
   lever lift is used (bots read a lever lift as closed).
 - **Drop-offs (4):** both daises' back edges, the forecourt's south-east and north-west corners.
 - **Objectives (as today, relics at home):** the **relic runs on `own-ghost` with `foe` carry** (a
@@ -62,7 +62,7 @@ final art.
 
 | Spawn to the sanctum (T1 / T2) | Walk          |
 | ------------------------------ | ------------- |
-| causeway                       | 12.6 / 12.6 s |
+| causeway (by the nave stair)   | 15.4 / 15.4 s |
 | south bridge                   | 15.2 / 15.2 s |
 | north bridge                   | 15.4 / 15.4 s |
 

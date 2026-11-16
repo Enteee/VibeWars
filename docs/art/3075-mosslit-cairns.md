@@ -17,7 +17,7 @@ moss on cairn hills: each point on a hilltop, the glow as light sources) is kept
   `#5a4630`). No new row. The glow is light only: violet `#a98cff` (cold is magic), radius 220,
   flicker 0; no surface tone is near a signal hue.
 - **Layers (3):** L0 the lanes and the root tunnel; L1 the five cairn hills and two moss banks
-  (70 up); L2 the great cairn's top (140). 21 stairs.
+  (70 up); L2 the great cairn's top (140). 22 stairs.
 - **Structures (8 + 1 tunnel):** five hills, the cairn top, two banks. Below Moss Vale's count.
 - **Capture points (5, as today, home points):** the **great cairn** P3 (2700,1500, on the L2 top) is
   the centre, on the axis x = 2700, 0 % from equidistant. Two mirrored pairs, one hill nearer each
@@ -27,15 +27,15 @@ moss on cairn hills: each point on a hilltop, the glow as light sources) is kept
   lane stair, so ≥ 2 routes reach it for either team, none through the other's spawn. None is in a
   tunnel, zone or water. Resurrection shrines 1 (700,2300) and 2 (4700,2300), each in its team's lit
   ring. The lanes between hills are 190..220 wide.
-- **Tunnel:** the **root tunnel** on L0, 110 wide, under the south moss cairn, from the west mouth
+- **Tunnel:** the **root tunnel** on L0, 110 wide, between the two south hills, from the west mouth
   (2250,2150) to the east mouth (3150,2150): a cross-map bypass. Lever-driven (below). Cover shows the
   seam and grating slots (#3236), as wide as the walkable floor (#3179).
-- **Drop-offs (4):** the north-west and south-east hills' outer edges, and the great cairn's two sides.
+- **Drop-offs (4):** the north-west and north-east hills' outer edges, and the great cairn's two sides.
 - **Elements:** two **root gates** at the tunnel mouths start shut. Two brass **levers** on the two
   north hills, (1480,720) and (3920,720), **each opens both gates**: either team can open the tunnel,
   and a pulled lever opens it for both. No lift is used. Two **breakable root walls**, a mirrored pair (x 1650 and x 3726, y 1760..1900), each close a
   short-cut from a spawn to the south lane, 100 u off every route. Zones: a `spring` and a `mire`
-  for each team, the same on both sides (spring (700,2650), mire (900,1130) west, mirrored east), off every route and ≥ 200 u from a spawn.
+  for each team, the same on both sides (spring (700,2650), mire (600,1950) west, mirrored east), off every route and ≥ 200 u from a spawn.
   Water: one shallow **moss pool** (north) and one deep **sink pool** (south), on the axis, off every route.
   Atmosphere (existing, #3032): three mist banks, under bodies, never over a point, stair or lever.
   One `canopy` overhang (a root arch) off every route.
@@ -56,8 +56,8 @@ structure gives, not a promise about the final art.
 | Spawn to the great cairn (T1 / T2) | Walk          |
 | ---------------------------------- | ------------- |
 | west stair (up the hill)           | 12.0 / 12.0 s |
-| north lane (north stair)           | 13.9 / 13.9 s |
-| south lane (south stair)           | 14.0 / 14.0 s |
+| north lane (north stair)           | 15.6 / 15.6 s |
+| south lane (south stair)           | 15.6 / 15.6 s |
 
 **Per capture point** (T1 to its own hill = T2 to its own, the pair's mirror, gap 0 %; the centre is 0 %
 from equidistant):
@@ -68,7 +68,7 @@ from equidistant):
 | 4 / 5 home hill, south | 7.7 s west | 8.1 s lane  |
 | 2 / 1 far hill, north  | 21.5 s rim | 20.3 s lane |
 | 5 / 4 far hill, south  | 22.6 s rim | 20.3 s lane |
-| 3 great cairn          | 12.0 s     | 13.9 s      |
+| 3 great cairn          | 12.0 s     | 15.6 s      |
 
 **High ground:** the hilltop is the point, so it is its own high ground, equal for both teams; the
 great cairn top (L2) overlooks the lanes between the pairs, 12.0 s from either spawn; the two moss
