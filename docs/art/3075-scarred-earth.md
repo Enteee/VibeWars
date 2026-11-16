@@ -42,7 +42,7 @@ battlefield: craters as pits, trenches as tunnels, wrecked siege towers as tower
   a pulled lever opens it for both. No lift is used. Two **breakable wrecked palisades**, a mirrored
   pair (x 950..974 and x 4426..4450, y 880..1030), each close a short-cut between the two lanes
   beside the shrine, 100 u or more off every route. Zones: a `mire` and a `spring` for each team,
-  the same on both sides (mire (600,2000), spring (600,700) west, mirrored east), off every route
+  the same on both sides (mire (1320,1620), spring (1000,1620) west, mirrored east), off every route
   and ≥ 200 u from a spawn and a shrine. Atmosphere (existing, #3032): three smoke banks, under
   bodies, never over a point, a stair or a lever. One `canopy` overhang (a toppled beam) off every
   route.
@@ -62,8 +62,8 @@ the gap the structure gives, not a promise about the final art.
 | Spawn to the great siege tower (T1 / T2) | Walk          |
 | ---------------------------------------- | ------------- |
 | west approach (up the hulk)              | 12.0 / 12.0 s |
-| south lane                               | 15.6 / 15.6 s |
-| north lane                               | 15.6 / 15.6 s |
+| south lane (west hull stair)             | 15.4 / 15.4 s |
+| north lane (west hull stair)             | 15.3 / 15.3 s |
 
 **Per capture point** (T1 to its own hulk = T2 to its own, the pair's mirror, gap 0 %):
 
@@ -73,7 +73,7 @@ the gap the structure gives, not a promise about the final art.
 | 4 / 5 own hulk, south | 13.2 s                 | 9.0 s      |
 | 2 / 1 far hulk, north | 23.8 s                 | 19.6 s     |
 | 5 / 4 far hulk, south | 23.8 s                 | 19.5 s     |
-| 3 great hulk (centre) | 12.0 s (west approach) | 15.6 s     |
+| 3 great hulk (centre) | 12.0 s (west approach) | 15.4 s     |
 
 A far hulk is a 19.5..23.8 s walk, under 25 s. **4v4 plays the whole map from 8v8's camps** (architect
 decision): no second spawn set; the fight with the centre is 12 s from a spawn.
