@@ -17,7 +17,7 @@ moss on cairn hills: each point on a hilltop, the glow as light sources) is kept
   `#5a4630`). No new row. The glow is light only: violet `#a98cff` (cold is magic), radius 220,
   flicker 0; no surface tone is near a signal hue.
 - **Layers (3):** L0 the lanes and the root tunnel; L1 the five cairn hills and two moss banks
-  (70 up); L2 the great cairn's top (140). 21 stairs.
+  (70 up); L2 the great cairn's top (140). 22 stairs.
 - **Structures (8 + 1 tunnel):** five hills, the cairn top, two banks. Below Moss Vale's count.
 - **Capture points (5, as today, home points):** the **great cairn** P3 (2700,1500, on the L2 top) is
   the centre, on the axis x = 2700, 0 % from equidistant. Two mirrored pairs, one hill nearer each
@@ -57,7 +57,7 @@ structure gives, not a promise about the final art.
 | ---------------------------------- | ------------- |
 | west stair (up the hill)           | 12.0 / 12.0 s |
 | north lane (north stair)           | 15.6 / 15.6 s |
-| south lane (west deck stair)       | 15.5 / 15.5 s |
+| south lane (south stair)           | 15.6 / 15.6 s |
 
 **Per capture point** (T1 to its own hill = T2 to its own, the pair's mirror, gap 0 %; the centre is 0 %
 from equidistant):
@@ -68,7 +68,7 @@ from equidistant):
 | 4 / 5 home hill, south | 7.7 s west | 8.1 s lane  |
 | 2 / 1 far hill, north  | 21.5 s rim | 20.3 s lane |
 | 5 / 4 far hill, south  | 22.6 s rim | 20.3 s lane |
-| 3 great cairn          | 12.0 s     | 15.5 s      |
+| 3 great cairn          | 12.0 s     | 15.6 s      |
 
 **High ground:** the hilltop is the point, so it is its own high ground, equal for both teams; the
 great cairn top (L2) overlooks the lanes between the pairs, 12.0 s from either spawn; the two moss
