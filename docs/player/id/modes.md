@@ -53,8 +53,11 @@ yang terendam di bawahnya.
 Dan untuk tim yang lebih besar: **Shiverpeak Pass** (4v4, 5100x3450),
 celah gunung bersalju yang terbelah oleh jurang, diseberangi lewat jembatan tali di antara dua
 langkan tebing yang ditarik oleh tuas di setiap langkan, lewat gua di bawahnya, atau memutari
-ujungnya setelah dinding es di sana dihancurkan; dan **Elonian Plateau** (8v8, 6400x3600), sabana
-terbuka di sekeliling lima mesa besar, dengan jarak pandang terpanjang di antara semua arena.
+ujungnya setelah dinding es di sana dihancurkan; dan **Elonian Plateau** (8v8,
+5520x3360), dataran tinggi gurun dengan empat mesa di sekeliling dasar
+ngarai yang kering: lift berwaktu naik ke tiga di antaranya, lengkung alami
+menghubungkan dua mesa di utara, dan lorong melintas di bawah punggung
+tengah dengan gerbang yang dibuka tuas di atasnya.
 
 ## Hitung Kill
 

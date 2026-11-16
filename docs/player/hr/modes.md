@@ -56,8 +56,10 @@ A za veće timove: **Shiverpeak Pass** (4v4, 5100x3450),
 zasnježeni planinski prijevoj koji presijeca ponor, a prelazi se mostom od
 užadi između dviju stjenovitih izbočina, koji povlači poluga na svakoj
 izbočini, kroz špilju ispod njega ili oko njegova vrha kad se tamo
-razbije ledeni zid; i **Elonian Plateau** (8v8, 6400x3600), otvorena
-savana oko pet velikih mesa, s najduljim vidicima od svih arena.
+razbije ledeni zid; i **Elonian Plateau** (8v8, 5520x3360), pustinjska
+visoravan s četiri mese oko suhog korita kanjona: dizala na vremenski pogon
+voze na tri od njih, prirodni luk spaja dvije sjeverne, a ispod središnjeg
+grebena vodi prolaz čija se rešetka otvara polugom na vrhu.
 
 ## Broj ubojstava
 

@@ -64,9 +64,11 @@ passagem de montanha nevada cortada por um abismo, que se atravessa por uma
 ponte de corda entre duas saliências do penhasco, puxada por uma alavanca
 em cada saliência, por uma caverna embaixo dele ou contornando sua ponta
 depois que a parede de gelo dali é quebrada;
-e **Elonian Plateau** (8v8, 6400x3600), savana
-aberta em volta de cinco grandes mesas, com as linhas de visão mais longas
-de todas as arenas.
+e **Elonian Plateau** (8v8, 5520x3360), um planalto
+desértico com quatro mesas em volta do leito seco de um cânion: elevadores
+temporizados sobem a três delas, um arco natural liga as duas do norte e uma
+passagem corre sob a crista central, com um portão aberto por uma alavanca
+lá em cima.
 
 ## Contagem de Abates
 

@@ -62,9 +62,11 @@ Ja isommille tiimeille: **Shiverpeak Pass** (4v4, 5100x3450),
 luminen vuorisola, jonka halkaisee rotko ja jonka yli pääsee köysisiltaa
 pitkin kahden kallionkielekkeen välillä, jota vipu kummallakin
 kielekkeellä vetää, alla olevan luolan kautta tai rotkon kärjen ympäri,
-kun siellä oleva jääseinä on rikottu; ja **Elonian Plateau**
-(8v8, 6400x3600), avointa savannia viiden suuren pöytävuoren ympärillä,
-ja pisimmät näkölinjat kaikista areenoista.
+kun siellä oleva jääseinä on rikottu; ja **Elonian Plateau** (8v8,
+5520x3360), aavikkoylänkö, jonka neljä pöytävuorta ympäröi kuivaa
+kanjoninuomaa: ajastetut hissit nousevat kolmelle niistä, luonnonkaari
+yhdistää kaksi pohjoista, ja keskiharjanteen alitse kulkee käytävä, jonka
+portin avaa vipu harjanteen päällä.
 
 ## Tappolaskenta
 

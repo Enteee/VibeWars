@@ -61,9 +61,11 @@ col de montagne enneigé fendu par un gouffre, que l'on franchit par un pont de
 cordes entre deux corniches, tiré par un levier sur chaque corniche, par une
 grotte en dessous, ou en contournant sa pointe une fois brisé le mur de glace
 qui s'y trouve ;
-et **Elonian Plateau** (8v8, 6400x3600), une
-savane ouverte autour de cinq grandes mésas, avec les plus longues lignes de vue
-de toutes les arènes.
+et **Elonian Plateau** (8v8, 5520x3360), un
+plateau désertique de quatre mésas autour d'un lit de canyon à sec : des
+ascenseurs minutés montent sur trois d'entre elles, une arche naturelle
+relie les deux du nord, et un passage court sous l'arête centrale, sa herse
+ouverte par un levier au sommet.
 
 ## Décompte
 

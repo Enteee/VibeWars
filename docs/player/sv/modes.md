@@ -59,9 +59,10 @@ Och för de större lagen: **Shiverpeak Pass** (4v4, 5100x3450),
 ett snötäckt bergspass kluvet av en klyfta, som korsas via en repbro
 mellan två klipphyllor, som en spak på vardera hyllan drar, genom en
 grotta under den eller runt dess spets när isväggen där har slagits
-sönder; och **Elonian Plateau** (8v8, 6400x3600),
-öppen savann runt fem stora mesor, med de längsta siktlinjerna av alla
-arenor.
+sönder; och **Elonian Plateau** (8v8, 5520x3360), en
+ökenplatå med fyra mesor runt en uttorkad kanjonbädd: tidsstyrda hissar går
+upp på tre av dem, en naturlig valvbåge förenar de två i norr, och under
+mittkammen löper en gång vars galler öppnas med en spak där uppe.
 
 ## Dödsräkning
 
