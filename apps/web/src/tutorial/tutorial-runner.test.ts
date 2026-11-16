@@ -16,6 +16,7 @@ import {
   rampStation,
   tunnelStation,
   dodgeStation,
+  gateStation,
   healStation,
   lookStation,
   partyRow,
@@ -172,7 +173,7 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats, climbs the ledge, climbs to the high deck, goes through the tunnel, calls a rat, pings the way and finishes (#3247, #3302, #3303, #3310, #3316, #3323, #3325, #3326, #3331, #3332)", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats, climbs the ledge, climbs to the high deck, goes through the tunnel, calls a rat, pings the way, goes through the mist gate and finishes (#3247, #3302, #3303, #3310, #3316, #3323, #3325, #3326, #3331, #3332, #3334)", () => {
     const pad = vec2(200, -900);
     const goal = vec2(2850, 1800);
     const face = vec2(3480, 1800);
@@ -189,6 +190,7 @@ describe("the tutorial runner", () => {
     const eastEnd = vec2(6450, 700);
     const lounge = vec2(6260, 1160);
     const eastSide = vec2(6000, 700);
+    const gate = vec2(7600, 700);
     const bar = [
       "warrior.enraged-smash",
       RAT_SKILLS.bash,
@@ -214,6 +216,7 @@ describe("the tutorial runner", () => {
         tunnelStation(tunnel, 0, 1, pastTunnel),
         callStation(),
         pingStation(fork, eastEnd, lounge, eastSide),
+        gateStation(gate, 1),
       ],
       () => KEYMAP_PRESETS.classic,
       0,
@@ -301,6 +304,8 @@ describe("the tutorial runner", () => {
       [{ ...called, tutor: fork }, 11_000 + 12 * PRAISE_MS + 17 * ASIDE_MS],
       [{ ...called, lastPing: lounge, tutor: lounge }, 11_000 + 12 * PRAISE_MS + 18 * ASIDE_MS],
       [{ ...called, lastPing: eastEnd, tutor: eastSide }, 11_000 + 12 * PRAISE_MS + 19 * ASIDE_MS],
+      [{ ...called, lastPing: eastEnd, tutor: eastSide }, 11_000 + 13 * PRAISE_MS + 19 * ASIDE_MS],
+      [{ ...called, self: gate, tutor: gate }, 12_000 + 13 * PRAISE_MS + 19 * ASIDE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -348,6 +353,8 @@ describe("the tutorial runner", () => {
       "tutorial.ping.intro",
       "tutorial.ping.pocket",
       "tutorial.ping.praise",
+      "tutorial.gate.intro",
+      "tutorial.gate.praise",
     ]);
     // The compass is lit while a ping is wanted, the fork marked beside it.
     expect([beats[41]?.highlight, beats[41]?.mark]).toEqual([
@@ -411,9 +418,9 @@ describe("the tutorial runner", () => {
     expect(beats.map((beat) => beat.world)).toEqual([
       ...Array<string>(5).fill("battlefield"),
       ...Array<string>(15).fill("canyon"),
-      ...Array<string>(24).fill("canyon-2"),
+      ...Array<string>(26).fill("canyon-2"),
     ]);
-    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(43).fill(false), true]);
+    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(45).fill(false), true]);
   });
 
   it("says a station's reaction once, then no more hints until it is done (#3302)", () => {

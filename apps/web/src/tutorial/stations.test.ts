@@ -15,6 +15,8 @@ import {
   climbStation,
   rampStation,
   dodgeStation,
+  gateStation,
+  GATE_REACH,
   healStation,
   lookStation,
   partyRow,
@@ -666,5 +668,30 @@ describe("pingStation (#3332)", () => {
       undefined,
     ]);
     expect(ping.done(view({ ...past, tutor: EAST_SIDE }))).toBe(false);
+  });
+});
+
+describe("gateStation (#3334)", () => {
+  const GATE = vec2(7600, 700);
+  const LAYER = 1;
+
+  it("is done in the gate, within GATE_REACH, and not beyond", () => {
+    const station = gateStation(GATE, LAYER);
+    const at = (self: Vec2, selfLayer = LAYER): boolean => station.done(view({ self, selfLayer }));
+    expect(at(vec2(GATE.x - GATE_REACH, GATE.y))).toBe(true);
+    expect(at(vec2(GATE.x, GATE.y + GATE_REACH + 1))).toBe(false);
+    expect(at(vec2(GATE.x - 400, GATE.y))).toBe(false);
+  });
+
+  it("is not done under the gate or over it, on another layer", () => {
+    const station = gateStation(GATE, LAYER);
+    expect(station.done(view({ self: GATE, selfLayer: LAYER - 1 }))).toBe(false);
+    expect(station.done(view({ self: GATE, selfLayer: LAYER + 1 }))).toBe(false);
+  });
+
+  it("points at the gate, on the canyon's second map", () => {
+    const station = gateStation(GATE, LAYER);
+    expect(station.highlight).toEqual({ kind: "ground", at: GATE, layer: LAYER });
+    expect(station.world).toBe("canyon-2");
   });
 });

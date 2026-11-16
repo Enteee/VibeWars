@@ -102,6 +102,8 @@ const BY_THE_RATS = { x: 4000, y: 700 };
 const AT_THE_FORK = { x: 5800, y: 700 };
 /** Down station 13's east branch (#3332), well clear of the pocket to the south-east. */
 const DOWN_THE_EAST_BRANCH = { x: 6150, y: 700 };
+/** Station 14's mist gate (#3334), `CANYON_EXIT` at the east end of the canyon's second map. */
+const IN_THE_MIST_GATE = { x: 7600, y: 700 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
 /** The furthest a click in the canyon sends the player, in world units: well inside the view. */
@@ -570,11 +572,11 @@ test.describe("the first-time tutorial (#3218)", () => {
         .toBe(true);
     });
 
-    test(`Learn on ${mapId}, from the tunnel to the menu`, async ({ page }) => {
+    test(`Learn on ${mapId}, from the tunnel to the fork`, async ({ page }) => {
       // Seeded on the high deck, where station 10 leaves the player (#3383).
       // The tunnel some two minutes (#3326), the call some 40 s (#3331),
       // the fork some 30 s (#3332).
-      test.setTimeout(360_000);
+      test.setTimeout(420_000);
       const { frame, stage, saidLog, hasSaid, walkTo } = await learn(page, mapId, 11);
       const target = page.locator(".hud-target");
       // Station 11 (#3326): down off the deck, round to the tunnel's west
@@ -694,8 +696,44 @@ test.describe("the first-time tutorial (#3218)", () => {
         const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
         const at = view.onPage(DOWN_THE_EAST_BRANCH);
         await page.mouse.click(at.x, at.y, { button: "middle" });
-        await expect.poll(() => hasSaid("Good call. Onward."), { timeout: 15_000 }).toBe(true);
-      }).toPass({ timeout: 45_000 });
+        // The tutor walks the branch before the praise, which on a slow
+        // runner outlasts 15 s: the line stood a moment after a 45 s wait.
+        await expect.poll(() => hasSaid("Good call. Onward."), { timeout: 40_000 }).toBe(true);
+      }).toPass({ timeout: 90_000 });
+
+      // On to station 14 (#3334).
+      await expect
+        .poll(() => hasSaid("Our team fights beyond the mist. Follow me."), { timeout: 15_000 })
+        .toBe(true);
+    });
+
+    test(`Learn on ${mapId}, from the gate to the menu`, async ({ page }) => {
+      // Seeded down the east branch, where station 13 leaves the pair (#3334).
+      test.setTimeout(180_000);
+      const { frame, hasSaid, walkTo } = await learn(page, mapId, 14);
+      // Station 14 (#3334): east along the branch into the mist gate, the
+      // tutor ahead, and out among its team.
+      await expect
+        .poll(() => hasSaid("Our team fights beyond the mist. Follow me."), { timeout: 15_000 })
+        .toBe(true);
+      await expect(frame).toHaveAttribute("data-mark-layer", "1");
+      await expect(async () => {
+        if (await hasSaid("Now they're in front of us. Charge!")) {
+          return;
+        }
+        await walkTo(IN_THE_MIST_GATE, LONG_STRIDE);
+        await expect
+          .poll(() => hasSaid("Now they're in front of us. Charge!"), { timeout: 5_000 })
+          .toBe(true);
+      }).toPass({ timeout: 90_000 });
+
+      // The front: a match like any other, its HUD and no marks; Leave is
+      // the tutorial done, and the menu never offers it again.
+      await expect(page.locator(".hud-scoreboard")).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator(".tutorial-frame[data-mark]")).toHaveCount(0);
+      const leave = page.locator(".hud-leave");
+      await leave.getByRole("button", { name: "leave match" }).click();
+      await leave.getByRole("button", { name: "yes" }).click();
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
 

@@ -16,7 +16,7 @@ import { t } from "../i18n/index.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { startMatchView, type MatchView } from "../match-view.js";
 import type { GoalMark } from "../render/goal-mark.js";
-import type { ParasolProp, SleeperProp } from "../render/tutorial-props.js";
+import type { MistGateProp, ParasolProp, SleeperProp } from "../render/tutorial-props.js";
 import {
   NO_PROFESSIONS,
   createLocalConnection,
@@ -46,6 +46,7 @@ import {
   pingTutor,
   rampTutor,
   ratPocket,
+  gateStart,
   tunnelStart,
   tunnelTutor,
   wallStart,
@@ -60,6 +61,7 @@ import {
   type TunnelTutor,
   type WallTutor,
 } from "./canyon-world.js";
+import { CANYON_EXIT } from "./canyon-map.js";
 import { createHealWatch, type HealWatch } from "./heal-watch.js";
 import { createDodgeCounter, type DodgeCounter } from "./dodge-count.js";
 import { createRatWatch, type RatWatch } from "./rat-watch.js";
@@ -72,6 +74,7 @@ import {
   dodgeStation,
   healStation,
   lookStation,
+  gateStation,
   pingStation,
   rampStation,
   ratsStation,
@@ -83,19 +86,18 @@ import {
   type TutorialWorldName,
   type ZoneStatus,
 } from "./stations.js";
-import { createTutorialRunner, type TutorLine } from "./tutorial-runner.js";
+import { PRAISE_MS, createTutorialRunner, type TutorLine } from "./tutorial-runner.js";
 import {
   SELF_ID,
   TUTORIAL_HEAL,
   TUTORIAL_HEAL_SLOT,
   TUTOR_ID,
+  frontWorld,
   tutorialWorld,
 } from "./tutorial-world.js";
 
 /** A long frame is not caught up on, as in the splash fight. */
 const MAX_STEP_SECONDS = 0.1;
-/** How long "more soon" stands before the menu. */
-const FAREWELL_MS = 2_500;
 /** Station 11's guard (#3326), asleep on the rock over the tunnel's middle. */
 const SLEEPER: SleeperProp = {
   id: "tutorial-sleeper",
@@ -110,6 +112,13 @@ const PARASOL: ParasolProp = {
   kind: "parasol",
   position: FORK.pocket,
   layer: FORK.layer,
+};
+/** Station 14's mist gate (#3334), the canyon's way out, at the east end of its second map. */
+const MIST_GATE: MistGateProp = {
+  id: "tutorial-mist-gate",
+  kind: "mist-gate",
+  position: CANYON_EXIT.position,
+  layer: CANYON_EXIT.layer,
 };
 /** What a HUD element a station points at wears while it does (#3302). */
 const PULSE_CLASS = "tutorial-pulse";
@@ -145,7 +154,8 @@ export interface TutorialSession {
 
 /** A world the pair stands in, and the connection its view is drawn through. */
 interface Stage {
-  readonly name: TutorialWorldName;
+  /** A station's world, or the front (#3334), the match the tutorial ends in. */
+  readonly name: TutorialWorldName | "front";
   readonly simulation: MatchSimulation;
   readonly connection: LocalMatchConnection;
   /** The layer the pair and the station's mark stand on. */
@@ -259,7 +269,6 @@ export async function startTutorialSession(
   let ended = false;
   let view: MatchView | undefined;
   let request = 0;
-  let farewell = 0;
   // What the camera has done this run (#3222): once true, they stay true.
   let zoomedOut = false;
   let lookDragged = false;
@@ -295,6 +304,8 @@ export async function startTutorialSession(
   let pingSeen = -1;
   let strokeSeen = -1;
   let atFork: PingTutor | undefined;
+  // Station 14's (#3334): the tutor has been sent on to the gate.
+  let gateSent = false;
   /** The station the last beat ran. */
   let running: string | undefined;
   /** The HUD element pulsing now, if any. */
@@ -309,7 +320,6 @@ export async function startTutorialSession(
   const stop = async (): Promise<void> => {
     ended = true;
     cancelAnimationFrame(request);
-    window.clearTimeout(farewell);
     pulse(undefined);
     frame.remove();
     await view?.dispose();
@@ -330,6 +340,29 @@ export async function startTutorialSession(
   };
   const open = (): Promise<MatchView> => {
     const { connection } = stage;
+    if (stage.name === "front") {
+      // A match like any other (#3334): its HUD, its end, and no tutor.
+      // Out of it, by its end or by Leave, the canyon was done.
+      return startMatchView(
+        parent,
+        {
+          onLeave: () => {
+            end("done");
+          },
+          onFinished: () => {
+            view?.setEndLine({
+              text: t("tutorial.front.end"),
+              button: t("tutorial.front.menu"),
+              onPress: () => {
+                end("done");
+              },
+            });
+          },
+        },
+        { kind: "play", connect: () => Promise.resolve(connection) },
+        options.signet,
+      );
+    }
     return startMatchView(
       parent,
       {
@@ -344,8 +377,12 @@ export async function startTutorialSession(
           party: [SELF_ID, TUTOR_ID],
           goals,
           // The guard asleep over the tunnel (#3326), only while station 11
-          // runs; the parasol in the pocket (#3332), only while station 13 does.
-          props: () => (running === "tunnel" ? [SLEEPER] : running === "ping" ? [PARASOL] : []),
+          // runs; the parasol in the pocket (#3332), only while station 13 does;
+          // the mist gate (#3334) wherever the canyon's second map is.
+          props: () => [
+            ...(stage.name === "canyon-2" ? [MIST_GATE] : []),
+            ...(running === "tunnel" ? [SLEEPER] : running === "ping" ? [PARASOL] : []),
+          ],
           onWalk: (below) => {
             belowClicked = below;
           },
@@ -376,6 +413,7 @@ export async function startTutorialSession(
     tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
     callStation(),
     pingStation(FORK.fork, FORK.east, FORK.pocket, FORK.eastSide),
+    gateStation(CANYON_EXIT.position, CANYON_EXIT.layer),
   ];
   // A seeded start past the last station starts at the last (#3383).
   const firstStation = Math.min(options.firstStation, stations.length - 1);
@@ -393,25 +431,46 @@ export async function startTutorialSession(
   };
   let last: number | undefined;
   /**
-   * Into the canyon (#3247), or on to its second map (#3316): white over
-   * the world, its view and simulation dropped, `to` built and drawn,
-   * then the white fades.
+   * White over the world, its view and simulation dropped, the next one
+   * `build` makes built and drawn, then the white fades.
    */
-  const swap = async (to: Exclude<TutorialWorldName, "battlefield">): Promise<void> => {
+  const enter = async (build: () => Stage): Promise<void> => {
     swapping = true;
     const flash = document.createElement("div");
     flash.className = "tutorial-flash tutorial-flash-hold";
     frame.append(flash);
     await view?.dispose();
     view = undefined;
+    stage = build();
+    const opened = await open();
+    // Stopped while it was being built: `stop` had no view to drop.
+    if (ended) {
+      await opened.dispose();
+      return;
+    }
+    view = opened;
+    frame.dataset.world = stage.name;
+    // Over the new view, which was added after it.
+    parent.append(frame);
+    flash.className = "tutorial-flash tutorial-flash-out";
+    window.setTimeout(() => {
+      flash.remove();
+    }, FLASH_MS);
+    last = undefined;
+    swapping = false;
+  };
+  /** Into the canyon (#3247), or on to its second map (#3316). */
+  const canyonStage = (to: "canyon" | "canyon-2"): Stage => {
     const part = to === "canyon" ? 0 : 1;
-    // Only a seeded start enters a map at station 5 or 11 (#3383).
+    // Only a seeded start enters a map at station 5, 11 or 14 (#3383).
     const canyon =
       running === "break-wall"
         ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, wallStart())
         : running === "tunnel"
           ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, tunnelStart())
-          : canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part);
+          : running === "gate"
+            ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, gateStart())
+            : canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part);
     const heals = part === 0 ? createHealWatch(SELF_ID, TUTOR_ID, TUTORIAL_HEAL) : undefined;
     const rats =
       part === 1
@@ -441,7 +500,9 @@ export async function startTutorialSession(
       rats?.observe(message);
       callRats?.observe(message);
     });
-    stage = {
+    // The tutor goes on ahead, to wait by the mark.
+    canyon.simulation.walkTo(TUTOR_ID, canyon.besideMark, canyon.ground);
+    return {
       name: to,
       simulation: canyon.simulation,
       connection,
@@ -453,24 +514,43 @@ export async function startTutorialSession(
       callRats,
       zones: canyon.zones,
     };
-    // The tutor goes on ahead, to wait by the mark.
-    canyon.simulation.walkTo(TUTOR_ID, canyon.besideMark, canyon.ground);
-    const opened = await open();
-    // Stopped while it was being built: `stop` had no view to drop.
-    if (ended) {
-      await opened.dispose();
-      return;
+  };
+  /**
+   * Back to the front (#3334): a fresh match on the opening fight's map,
+   * the pair at their own side's spawn, the tutor one of the bots. No
+   * line stands over it, and nothing points.
+   */
+  const frontStage = (): Stage => {
+    const front = frontWorld(
+      `${seed}-front`,
+      options.mapId,
+      options.teamSize,
+      playerBuild,
+      tutorBuild,
+    );
+    for (const [id, bot] of front.professions) {
+      professions.set(id, bot);
     }
-    view = opened;
-    frame.dataset.world = stage.name;
-    // Over the new view, which was added after it.
-    parent.append(frame);
-    flash.className = "tutorial-flash tutorial-flash-out";
+    // The gate's praise stands over the front a moment, then the tutor is quiet.
     window.setTimeout(() => {
-      flash.remove();
-    }, FLASH_MS);
-    last = undefined;
-    swapping = false;
+      said.textContent = "";
+      how.textContent = "";
+    }, PRAISE_MS);
+    highlight = undefined;
+    besideHud = undefined;
+    pulse(undefined);
+    return {
+      name: "front",
+      simulation: front.simulation,
+      connection: connect(front.simulation, front.map.descriptor),
+      ground: front.ground,
+      fixed: [],
+      dodges: undefined,
+      heals: undefined,
+      rats: undefined,
+      callRats: undefined,
+      zones: [],
+    };
   };
   const step = (now: number): void => {
     if (ended) {
@@ -483,6 +563,11 @@ export async function startTutorialSession(
     const { simulation: world, connection, dodges, heals, rats, callRats } = stage;
     connection.advance(last === undefined ? 0 : Math.min((now - last) / 1000, MAX_STEP_SECONDS));
     last = now;
+    // The front is a match like any other: no station reads it.
+    if (stage.name === "front") {
+      request = requestAnimationFrame(step);
+      return;
+    }
     const self = world.get(SELF_ID);
     const tutor = world.get(TUTOR_ID);
     const look = view?.camera();
@@ -540,7 +625,7 @@ export async function startTutorialSession(
     }
     pingSeen = ping?.id ?? pingSeen;
     strokeSeen = stroke?.id ?? strokeSeen;
-    if (self !== undefined && tutor !== undefined && farewell === 0) {
+    if (self !== undefined && tutor !== undefined) {
       const beat = runner.tick(
         {
           self: self.position,
@@ -650,6 +735,11 @@ export async function startTutorialSession(
         tutorSent = true;
         world.walkTo(TUTOR_ID, besidePad, ground);
       }
+      // Station 14 has begun (#3334): the tutor goes on into the mist gate.
+      if (!gateSent && beat.station === "gate") {
+        gateSent = true;
+        world.walkTo(TUTOR_ID, CANYON_EXIT.position, CANYON_EXIT.layer);
+      }
       // How many rockfalls are dodged, for the e2e specs to wait on.
       if (dodges === undefined) {
         delete frame.dataset.dodges;
@@ -681,21 +771,19 @@ export async function startTutorialSession(
         say(beat.say);
       }
       if (beat.finished) {
-        farewell = window.setTimeout(() => {
-          said.textContent = t("tutorial.moreSoon");
-          farewell = window.setTimeout(() => {
-            end("done");
-          }, FAREWELL_MS);
-        }, FAREWELL_MS);
+        // Through the mist gate, under its praise, and out at the pair's own spawn.
+        void enter(frontStage);
       } else if (beat.world !== stage.name && beat.world !== "battlefield") {
         // Into the teleporter together, or on to the next map, under its praise.
-        void swap(beat.world);
+        const to = beat.world;
+        void enter(() => canyonStage(to));
       }
     }
     request = requestAnimationFrame(step);
   };
+  // Skipped at the front (#3334), the canyon was done.
   mountSkipTutorial(frame, () => {
-    end("skipped");
+    end(stage.name === "front" ? "done" : "skipped");
   });
   // An e2e build's seeded start past the battlefield (#3383) builds its
   // station's world at once, and never draws the battlefield.
@@ -705,7 +793,8 @@ export async function startTutorialSession(
     parent.append(frame);
   } else {
     running = first.id;
-    await swap(first.world);
+    const to = first.world;
+    await enter(() => canyonStage(to));
   }
   request = requestAnimationFrame(step);
   return { stop };
