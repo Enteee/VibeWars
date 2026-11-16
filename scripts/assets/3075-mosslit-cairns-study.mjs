@@ -164,7 +164,7 @@ const toPoint = (/** @type {number} */ i) => {
 const toCentre = /** @type {[string, (Pt | string)[]][]} */ ([
   ["west stair", ["C1", [1500, 1500], [AX - 600, 1540], M]],
   ["north lane", ["C1", [1300, NL], [AX, NL], [AX, 1280], [AX, 1400], M]],
-  ["south lane", ["C1", [1300, SL], [AX, SL], [AX, 1720], [AX, 1600], M]],
+  ["south lane", ["C1", [1300, SL], [AX - 450, SL], [AX - 450, 1520], M]],
 ]);
 
 runStudy({
@@ -213,9 +213,9 @@ runStudy({
   ],
   zones: [
     { kind: "spring", cx: 700, cy: 2650, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "mire", cx: 900, cy: 1130, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "mire", cx: 600, cy: 1950, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
     { kind: "spring", cx: MW - 700, cy: 2650, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "mire", cx: MW - 900, cy: 1130, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "mire", cx: MW - 600, cy: 1950, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
   ],
   breakables: [
     { r: rect(1650, 1760, 24, 140), label: "root wall (breakable)" },
@@ -256,12 +256,12 @@ runStudy({
     ...[
       [900, 1700],
       [1300, 700],
-      [1500, 2200],
+      [1000, 2150],
       [4100, 700],
       [3900, 1800],
       [4500, 2300],
       [AX - 120, 200],
-      [AX + 140, 2800],
+      [AX + 140, 2560],
     ].map((p) => ({ kind: /** @type {"stone"} */ ("stone"), p: /** @type {Pt} */ (p), r: 40 })),
     ...[
       [800, 1300],

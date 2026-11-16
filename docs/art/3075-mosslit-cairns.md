@@ -35,7 +35,7 @@ moss on cairn hills: each point on a hilltop, the glow as light sources) is kept
   north hills, (1480,720) and (3920,720), **each opens both gates**: either team can open the tunnel,
   and a pulled lever opens it for both. No lift is used. Two **breakable root walls**, a mirrored pair (x 1650 and x 3726, y 1760..1900), each close a
   short-cut from a spawn to the south lane, 100 u off every route. Zones: a `spring` and a `mire`
-  for each team, the same on both sides (spring (700,2650), mire (900,1130) west, mirrored east), off every route and ≥ 200 u from a spawn.
+  for each team, the same on both sides (spring (700,2650), mire (600,1950) west, mirrored east), off every route and ≥ 200 u from a spawn.
   Water: one shallow **moss pool** (north) and one deep **sink pool** (south), on the axis, off every route.
   Atmosphere (existing, #3032): three mist banks, under bodies, never over a point, stair or lever.
   One `canopy` overhang (a root arch) off every route.
@@ -56,8 +56,8 @@ structure gives, not a promise about the final art.
 | Spawn to the great cairn (T1 / T2) | Walk          |
 | ---------------------------------- | ------------- |
 | west stair (up the hill)           | 12.0 / 12.0 s |
-| north lane (north stair)           | 13.9 / 13.9 s |
-| south lane (south stair)           | 14.0 / 14.0 s |
+| north lane (north stair)           | 15.6 / 15.6 s |
+| south lane (west deck stair)       | 15.5 / 15.5 s |
 
 **Per capture point** (T1 to its own hill = T2 to its own, the pair's mirror, gap 0 %; the centre is 0 %
 from equidistant):
@@ -68,7 +68,7 @@ from equidistant):
 | 4 / 5 home hill, south | 7.7 s west | 8.1 s lane  |
 | 2 / 1 far hill, north  | 21.5 s rim | 20.3 s lane |
 | 5 / 4 far hill, south  | 22.6 s rim | 20.3 s lane |
-| 3 great cairn          | 12.0 s     | 13.9 s      |
+| 3 great cairn          | 12.0 s     | 15.5 s      |
 
 **High ground:** the hilltop is the point, so it is its own high ground, equal for both teams; the
 great cairn top (L2) overlooks the lanes between the pairs, 12.0 s from either spawn; the two moss
