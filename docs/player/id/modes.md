@@ -34,19 +34,22 @@ belum dimiliki siapa pun, altar dalam warna emas. Panah terisi milik pemain diga
 dan setiap kematian mengurangi moral. Habisi tim lawan untuk menang. Setelah 8 menit,
 tim dengan sisa moral terbanyak menang.
 
-Canyon, Crossroads dan Long Hall memainkannya, juga dua arena yang lebih besar, berukuran sedang:
-**Sandstone Steps** (1v1, 3600x2000), tebing gurun berundak
-mengelilingi lingkaran obelisk yang runtuh, dengan pilar untuk kiting berputar; dan **Frozen
-Crossing** (2v2, 4000x2200), sungai beku yang diseberangi tiga jembatan,
-batu-batu es di setiap tepiannya. Untuk tim yang lebih besar: **Ashen Courtyard** (4v4,
-4400x2600), benteng runtuh yang halaman bertembok-nya punya empat celah, reruntuhan
-di sisi-sisinya; dan **Moss Vale** (8v8, 4800x2800), dua punggung bukit berhutan
-yang membelah lembah menjadi tiga jalur, bertemu di tanah lapang di tengah.
-Dua arena besar lebih besar lagi: **Canthan Terraces** (1v1, 5200x2800),
-sawah berundak bertembok dari utara ke selatan dengan celah berselang-seling, mengelilingi pagoda
-yang runtuh; dan **Sunken Bastion** (2v2, 5600x3000), benteng setengah terendam
-yang tembok kelilingnya yang jebol melingkari sebuah keep dengan dua gerbang, batu-batu rawa
-di luarnya.
+Canyon, Crossroads dan Long Hall memainkannya, juga dua arena kecil yang kira-kira seukuran Canyon:
+**Sandstone Steps** (1v1, 2600x1940), kota gurun berundak dengan pelataran sumur yang cekung,
+atap-atap di atas jalanannya, dan lorong bawah yang dibuka dengan tuas di bawahnya; dan **Frozen
+Crossing** (2v2, 2600x1940), sungai beku di antara dua tepian yang tinggi, diseberangi lewat batu
+pijakan atau jembatan kayu gelondong yang papan tengahnya dinaikkan oleh tuas. Untuk tim yang lebih
+besar: **Ashen Courtyard** (4v4, 3200x2400), pelataran bertembok yang hangus, dengan jalan tembok dan
+menara di atas serta pelataran sumur yang cekung di bawah, jeruji gerbangnya digerakkan dari atas
+tembok; dan **Moss Vale** (8v8, 5000x2600), lembah berundak yang terbelah dua oleh saluran kincir
+yang dalam, hanya bisa diseberangi di jembatan angkat, di kincir, dan lewat lorong bawah di bawahnya.
+**Canthan Terraces** (1v1, 2400x2100) kecil tetapi curam: sawah yang naik
+menyusuri lereng bukit menuju pagoda yang runtuh, dengan gorong-gorong tergenang di bawahnya
+yang dibuka oleh tuas pintu air sebagai jalan ketiga ke tengah.
+**Sunken Bastion** (2v2, 2700x1900) kecil tetapi tinggi: benteng setengah terendam
+yang paritnya membelah halaman, diseberangi lewat jembatan angkat yang digerakkan tuas di
+setiap tepi, lewat jalan di atas tembok sepanjang dinding utara, atau melalui ruang bawah tanah
+yang terendam di bawahnya.
 Dan untuk tim yang lebih besar: **Shiverpeak Pass** (4v4, 6000x3400),
 dua gugusan tebing yang menyisakan celah lebar bertabur batu besar dan jalan setapak
 sempit di sepanjang setiap tepinya; dan **Elonian Plateau** (8v8, 6400x3600), sabana

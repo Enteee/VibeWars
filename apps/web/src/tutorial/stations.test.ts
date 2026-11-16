@@ -11,12 +11,15 @@ import {
   SKILLS_ON_RATS,
   badGroundStation,
   breakWallStation,
+  callStation,
   climbStation,
   rampStation,
   dodgeStation,
   healStation,
   lookStation,
   partyRow,
+  pingBranch,
+  pingStation,
   ratsStation,
   skillSlot,
   stepInStation,
@@ -52,6 +55,11 @@ const view = (over: Partial<TutorialView> = {}): TutorialView => ({
   bigRatDown: false,
   extraRat: false,
   belowClicked: false,
+  calledId: undefined,
+  hitByTutor: new Set<string>(),
+  calledTargeted: false,
+  calledLost: false,
+  lastPing: undefined,
   ...over,
 });
 const sees =
@@ -518,5 +526,145 @@ describe("tunnelStation (#3326)", () => {
 
   it("marks the east mouth's top on the ground's layer", () => {
     expect(tunnel().highlight).toEqual({ kind: "ground", at: MARK, layer: ABOVE });
+  });
+});
+
+describe("callStation (#3331)", () => {
+  const RAT = "tutorial-call-rat-1";
+  const OTHER = "tutorial-call-rat-2";
+
+  it("is not done with a call the tutor has not struck, nor a strike on a rat not called", () => {
+    const station = callStation();
+    expect(station.done(view({ calledId: RAT }))).toBe(false);
+    expect(station.done(view({ calledId: OTHER, hitByTutor: new Set([RAT]) }))).toBe(false);
+    expect(station.done(view({ hitByTutor: new Set([RAT]) }))).toBe(false);
+  });
+
+  it("is done once the tutor has struck the rat called, and stays done", () => {
+    const station = callStation();
+    expect(station.done(view({ calledId: RAT, hitByTutor: new Set([RAT]) }))).toBe(true);
+    expect(station.done(view())).toBe(true);
+  });
+
+  it("is not done by a call on the tutor", () => {
+    expect(callStation().done(view({ calledId: "tutorial-tutor" }))).toBe(false);
+  });
+
+  it("lights the party window", () => {
+    expect(callStation().highlight).toEqual({ kind: "hud", element: ".party-window" });
+  });
+
+  it("says T finds the call once, the first time the player uses it", () => {
+    const runner = createTutorialRunner([callStation()], () => KEYMAP_PRESETS.classic);
+    const looks = [
+      {},
+      { calledId: RAT, calledTargeted: true },
+      { calledId: RAT, calledTargeted: true },
+    ];
+    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS))).toMatchObject([
+      { say: { key: "tutorial.call.intro" } },
+      { say: { key: "tutorial.call.t", keys: ["T"] } },
+      { say: undefined },
+    ]);
+  });
+
+  it("says call the other once, when the rat called died before the tutor struck it", () => {
+    const runner = createTutorialRunner([callStation()], () => KEYMAP_PRESETS.classic);
+    const looks = [
+      {},
+      { calledLost: true },
+      { calledLost: true },
+      { calledId: OTHER, calledLost: true, hitByTutor: new Set([OTHER]) },
+    ];
+    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
+      "tutorial.call.intro",
+      "tutorial.call.other",
+      undefined,
+      "tutorial.call.praise",
+    ]);
+  });
+});
+
+describe("pingStation (#3332)", () => {
+  // As on the canyon: the pocket south-east of the fork, the east end as far east.
+  const FORK = vec2(0, 0);
+  const POCKET = vec2(400, 400);
+  const EAST = vec2(Math.hypot(400, 400), 0);
+  const EAST_SIDE = vec2(200, 0);
+  const station = (): ReturnType<typeof pingStation> => pingStation(FORK, EAST, POCKET, EAST_SIDE);
+  const ON_EAST = vec2(450, 20);
+  const ON_POCKET = vec2(380, 420);
+
+  it("calls the branch whose end a ping is nearer, and neither from behind the fork", () => {
+    expect(pingBranch(ON_EAST, FORK, EAST, POCKET)).toBe("east");
+    expect(pingBranch(vec2(150, 0), FORK, EAST, POCKET)).toBe("east");
+    expect(pingBranch(ON_POCKET, FORK, EAST, POCKET)).toBe("pocket");
+    expect(pingBranch(vec2(-300, 0), FORK, EAST, POCKET)).toBeUndefined();
+    expect(pingBranch(vec2(0, -400), FORK, EAST, POCKET)).toBeUndefined();
+  });
+
+  it("lights the compass, with the fork marked beside it", () => {
+    const ping = station();
+    expect(ping.highlight).toEqual({ kind: "hud", element: ".compass" });
+    expect(ping.mark?.(view())).toEqual(FORK);
+  });
+
+  it("is not done on a pocket ping: the tutor goes in, says its line there once, and it waits", () => {
+    const runner = createTutorialRunner([station()], () => KEYMAP_PRESETS.classic);
+    const looks: Partial<TutorialView>[] = [
+      {},
+      { lastPing: ON_POCKET, tutor: vec2(100, 100) },
+      { lastPing: ON_POCKET, tutor: vec2(330, 400) },
+      { lastPing: ON_POCKET, tutor: vec2(330, 400) },
+      { lastPing: ON_POCKET, tutor: FORK },
+    ];
+    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
+      "tutorial.ping.intro",
+      undefined,
+      "tutorial.ping.pocket",
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it("is done once the east branch is called and the tutor stands past the fork, a pocket ping first or not", () => {
+    for (const first of [undefined, ON_POCKET]) {
+      const ping = station();
+      expect(ping.done(view({ lastPing: first }))).toBe(false);
+      expect(ping.done(view({ lastPing: ON_EAST, tutor: FORK }))).toBe(false);
+      expect(ping.done(view({ lastPing: ON_EAST, tutor: EAST_SIDE }))).toBe(true);
+    }
+  });
+
+  it("holds the east call through a later pocket ping", () => {
+    const ping = station();
+    expect(ping.done(view({ lastPing: ON_EAST, tutor: FORK }))).toBe(false);
+    expect(ping.done(view({ lastPing: ON_POCKET, tutor: EAST_SIDE }))).toBe(true);
+  });
+
+  it("counts a ping far from both branches for neither, and says the hint once for it", () => {
+    const ping = station();
+    const runner = createTutorialRunner([ping], () => KEYMAP_PRESETS.classic);
+    const far = vec2(-300, 0);
+    const looks: Partial<TutorialView>[] = [{}, { lastPing: far }, { lastPing: far }];
+    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
+      "tutorial.ping.intro",
+      "tutorial.ping.hint",
+      undefined,
+    ]);
+    expect(ping.done(view({ lastPing: far, tutor: EAST_SIDE }))).toBe(false);
+  });
+
+  it("says the hint once when the player walks on east unpinged, and waits", () => {
+    const ping = station();
+    const runner = createTutorialRunner([ping], () => KEYMAP_PRESETS.classic);
+    const past = { self: vec2(FORK.x + 350, 0) };
+    const looks: Partial<TutorialView>[] = [{}, past, past];
+    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
+      "tutorial.ping.intro",
+      "tutorial.ping.hint",
+      undefined,
+    ]);
+    expect(ping.done(view({ ...past, tutor: EAST_SIDE }))).toBe(false);
   });
 });

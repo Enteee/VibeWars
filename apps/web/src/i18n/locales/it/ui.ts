@@ -601,6 +601,8 @@ export default {
   "hud.relicScoredOurs": "Reliquia a segno!",
   "hud.relicScoredTheirs": "Reliquia nemica a segno",
   "hud.relicTheirs": "Reliquia nemica",
+  "hud.respawnIn": "Di ritorno tra {seconds}",
+  "hud.respawnResurrectionOnly": "Aspetta che ti resuscitino",
   "hud.shrinesBoth": "Santuari: +{ours}, nemico +{theirs}",
   "hud.shrinesOurs": "Santuari: +{ours}",
   "hud.shrinesTheirs": "Santuari nemici: +{theirs}",
@@ -1493,6 +1495,13 @@ export default {
   "training.soundOn": "Audio attivo.",
   "training.you": "Tu",
 
+  "tutorial.call.hint": "Segnala un ratto e colpisco quello.",
+  "tutorial.call.how":
+    "Clic con la rotella su un ratto, o clic sulla barra del bersaglio, per segnalarlo. {keys} punta ciò che la tua squadra ha segnalato.",
+  "tutorial.call.intro": "Due ratti. Tu scegli, io colpisco. Segnalane uno.",
+  "tutorial.call.other": "Segnala l'altro.",
+  "tutorial.call.praise": "Segnalalo, e la squadra colpisce lo stesso bersaglio.",
+  "tutorial.call.t": "Esatto. {keys} trova il bersaglio segnalato.",
   "tutorial.climb.hint": "Sali sulla sporgenza, poi scendi a terra sotto di essa.",
   "tutorial.climb.how":
     "Clicca dove vuoi stare. Alt+clic (Option su Mac) sceglie il terreno sotto.",
@@ -1528,6 +1537,12 @@ export default {
   "tutorial.moreSoon": "Presto altre lezioni. Ci vediamo là fuori!",
   "tutorial.offer": "Nuovo qui? Il tuo tutor ti mostrerà le basi.",
   "tutorial.offerTitle": "Prima volta?",
+  "tutorial.ping.hint": "Segnala la strada che vuoi prendere.",
+  "tutorial.ping.how":
+    "Clic con la rotellina sul terreno, clic sulla bussola o trascina sulla bussola per tracciare una linea.",
+  "tutorial.ping.intro": "Sinistra o destra? Decidi tu.",
+  "tutorial.ping.pocket": "Bella vista. Ma è la strada sbagliata.",
+  "tutorial.ping.praise": "Ottima scelta. Avanti.",
   "tutorial.ramp.hint": "Su per entrambe le rampe fino al segno sulla piattaforma alta.",
   "tutorial.ramp.how": "Clicca la piattaforma alta. Il percorso sale i gradini per te.",
   "tutorial.ramp.intro": "I gradini uniscono i livelli. Salici e ti portano su.",

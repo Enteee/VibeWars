@@ -38,20 +38,24 @@ onun üstüne çizilir.
 yerde kalır ve her ölüm moral kaybettirir. Kazanmak için diğer takımı
 sil süpür. 8 dakika sonra en çok morali kalan takım kazanır.
 
-Canyon, Crossroads ve Long Hall bunu oynatır, ayrıca iki büyük, orta
-boy arena: **Sandstone Steps** (1v1, 3600x2000), etrafında uçurtma
-yapabileceğin sütunlarla, kırık bir dikilitaş halkasını çevreleyen
-basamaklı çöl çıkıntıları; ve **Frozen Crossing** (2v2, 4000x2200), üç
-köprüyle geçilen donmuş bir nehir, her kıyısında buz kayaları. Daha
-büyük takımlar için: **Ashen Courtyard** (4v4, 4400x2600), duvarlı
-avlusunda dört gedik olan, yanlarında harabeler bulunan yıkık bir kale;
-ve **Moss Vale** (8v8, 4800x2800), vadiyi üç şeride bölen ve ortada bir
-açıklıkta buluşan iki ormanlık sırt. İki geniş arena daha da büyüktür:
-**Canthan Terraces** (1v1, 5200x2800), yıkık bir pagodanın çevresinde,
-kuzeyden güneye kademeli boşluklarla duvarlanmış pirinç terasları; ve
-**Sunken Bastion** (2v2, 5600x3000), gedikli sur duvarı iki kapılı bir
-kaleyi çevreleyen, dışında bataklık kayaları olan yarı su basmış bir
-hisar.
+Canyon, Crossroads ve Long Hall bunu oynatır, ayrıca aşağı yukarı Canyon
+büyüklüğünde iki küçük arena: **Sandstone Steps** (1v1, 2600x1940), çökük bir
+kuyu avlusu, sokaklarının üstünde damları ve altlarında kolla açılan bir alt
+geçidi olan basamaklı bir çöl kasabası; ve **Frozen Crossing** (2v2, 2600x1940),
+iki yüksek kıyı arasında, basamak taşlarıyla ya da orta tahtasını bir kolun
+kaldırdığı bir kütük köprüyle geçilen donmuş bir nehir. Daha büyük takımlar
+için: **Ashen Courtyard** (4v4, 3200x2400), yukarıda sur yolları ve kuleler,
+aşağıda çökük bir kuyu avlusu bulunan, kapı kulesinin parmaklıklı kapısı
+surlardan işletilen yanık, duvarlı bir avlu; ve **Moss Vale** (8v8, 5000x2600),
+derin bir değirmen arkıyla ikiye bölünmüş, yalnızca asma köprüden, değirmenden
+ve onun altındaki alt geçitten geçilebilen basamaklı bir vadi. **Canthan Terraces** (1v1, 2400x2100)
+küçük ama diktir:
+bir yamaçtan yıkık bir pagodaya basamak basamak yükselen pirinç tarlaları ve altlarında, bir
+savak kolunun merkeze üçüncü bir yol olarak açtığı su basmış bir menfez. **Sunken Bastion** (2v2,
+2700x1900) küçük ama yüksektir: hendeği avluyu
+ikiye bölen, yarı su basmış bir hisar. Hendeğin karşısına, her iki
+kıyıdaki bir kolla çalışan asma köprüden, kuzey sur boyunca uzanan
+seğirdim yolundan ya da altındaki su basmış mahzenden geçilir.
 Ve daha büyük takımlar için: **Shiverpeak Pass** (4v4, 6000x3400), kaya
 parçalarıyla dolu geniş bir geçit ve her kenarında dar bir patika
 bırakan iki uçurum kütlesi; ve **Elonian Plateau** (8v8, 6400x3600),

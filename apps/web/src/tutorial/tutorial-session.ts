@@ -1,5 +1,6 @@
 import {
   ZONE_RULES,
+  vec2,
   zonesHolding,
   type MatchSimulation,
   type MatchZone,
@@ -15,7 +16,7 @@ import { t } from "../i18n/index.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { startMatchView, type MatchView } from "../match-view.js";
 import type { GoalMark } from "../render/goal-mark.js";
-import type { SleeperProp } from "../render/sleeper-prop.js";
+import type { ParasolProp, SleeperProp } from "../render/tutorial-props.js";
 import {
   NO_PROFESSIONS,
   createLocalConnection,
@@ -28,24 +29,32 @@ import { DEFAULT_STEP } from "../render/camera-rig.js";
 
 import {
   BAD_GROUND,
+  CALL_RATS,
   CRACKED_WALL,
   DODGE_MARK,
+  FORK,
   LEDGE,
   RAMP,
   RAT_POCKET,
   TUNNEL,
   allyHealSlot,
   badGroundTutor,
+  callTutor,
   canyonWorld,
   clearingTutor,
   ledgeTutor,
+  pingTutor,
   rampTutor,
   ratPocket,
+  tunnelStart,
   tunnelTutor,
+  wallStart,
   wallTutor,
   type BadGroundTutor,
+  type CallTutor,
   type ClearingTutor,
   type LedgeTutor,
+  type PingTutor,
   type RampTutor,
   type RatPocket,
   type TunnelTutor,
@@ -58,15 +67,18 @@ import {
   ZONE_STATUSES,
   badGroundStation,
   breakWallStation,
+  callStation,
   climbStation,
   dodgeStation,
   healStation,
   lookStation,
+  pingStation,
   rampStation,
   ratsStation,
   stepInStation,
   tunnelStation,
   walkStation,
+  type Station,
   type StationHighlight,
   type TutorialWorldName,
   type ZoneStatus,
@@ -92,6 +104,13 @@ const SLEEPER: SleeperProp = {
   layer: TUNNEL.above,
   facing: 0,
 };
+/** Station 13's parasol and deck chair (#3332), in the pocket, the wrong way at the fork. */
+const PARASOL: ParasolProp = {
+  id: "tutorial-parasol",
+  kind: "parasol",
+  position: FORK.pocket,
+  layer: FORK.layer,
+};
 /** What a HUD element a station points at wears while it does (#3302). */
 const PULSE_CLASS = "tutorial-pulse";
 /** The fade back from white once the canyon stands (#3247), as `.tutorial-flash` animates it. */
@@ -99,6 +118,8 @@ const FLASH_MS = 800;
 
 /** No skill landed on a rat: what station 8 reads before its rats are there. */
 const NO_SKILLS: ReadonlySet<string> = new Set();
+/** No rat struck by the tutor: what station 12 reads before its rats are there. */
+const NO_HITS: ReadonlySet<string> = new Set();
 
 /** How a tutorial ended: through, skipped, or cut short with nothing to record. */
 export type TutorialEnd = "done" | "skipped";
@@ -111,6 +132,8 @@ export interface TutorialSessionOptions {
   readonly tutorProfession: ProfessionId;
   /** The player key's, for the Options window over it (#3235). */
   readonly signet: number;
+  /** The index of the station it starts at: 0 but in an e2e build's seeded start (#3383). */
+  readonly firstStation: number;
   /** Once, as it ends by itself, by Skip tutorial or by Leave; never after `stop`. */
   readonly onEnd: (end: TutorialEnd) => void;
 }
@@ -135,6 +158,8 @@ interface Stage {
   readonly heals: HealWatch | undefined;
   /** Station 8's watch on the rats (#3316), on the canyon's second map only. */
   readonly rats: RatWatch | undefined;
+  /** Station 12's watch on its two rats (#3331), on the canyon's second map only. */
+  readonly callRats: RatWatch | undefined;
   /** Its zones, as the simulation applies them: the battlefield's play no part. */
   readonly zones: readonly MatchZone[];
 }
@@ -194,6 +219,7 @@ export async function startTutorialSession(
     dodges: undefined,
     heals: undefined,
     rats: undefined,
+    callRats: undefined,
     zones: [],
   };
   let highlight: StationHighlight | undefined;
@@ -260,6 +286,15 @@ export async function startTutorialSession(
   let onLedge: LedgeTutor | undefined;
   let onRamp: RampTutor | undefined;
   let inTunnel: TunnelTutor | undefined;
+  // Station 12's (#3331): whether the player has targeted the call with its key.
+  let calledTargeted = false;
+  let atCall: CallTutor | undefined;
+  // Station 13's (#3332): the player's newest ping or compass line end since
+  // it began, and the newest ping and line segment seen so far, by id.
+  let lastPing: Vec2 | undefined;
+  let pingSeen = -1;
+  let strokeSeen = -1;
+  let atFork: PingTutor | undefined;
   /** The station the last beat ran. */
   let running: string | undefined;
   /** The HUD element pulsing now, if any. */
@@ -290,7 +325,7 @@ export async function startTutorialSession(
     const skills = Object.fromEntries(
       Object.entries(line.skills).map(([slot, id]) => [slot, skillName(id)]),
     );
-    said.textContent = t(line.key, skills);
+    said.textContent = t(line.key, { ...skills, keys: line.keys.join(" ") });
     how.textContent = line.how === undefined ? "" : t(line.how, { keys: line.keys.join(" ") });
   };
   const open = (): Promise<MatchView> => {
@@ -308,10 +343,14 @@ export async function startTutorialSession(
         tutorial: {
           party: [SELF_ID, TUTOR_ID],
           goals,
-          // The guard asleep over the tunnel (#3326), only while station 11 runs.
-          props: () => (running === "tunnel" ? [SLEEPER] : []),
+          // The guard asleep over the tunnel (#3326), only while station 11
+          // runs; the parasol in the pocket (#3332), only while station 13 does.
+          props: () => (running === "tunnel" ? [SLEEPER] : running === "ping" ? [PARASOL] : []),
           onWalk: (below) => {
             belowClicked = below;
+          },
+          onCalledTargeted: () => {
+            calledTargeted ||= running === "call";
           },
         },
       },
@@ -319,32 +358,28 @@ export async function startTutorialSession(
     );
   };
 
-  view = await open();
-  mountSkipTutorial(frame, () => {
-    end("skipped");
-  });
-  parent.append(frame);
-
-  const runner = createTutorialRunner(
-    [
-      walkStation(mark, ground),
-      lookStation(teleporter),
-      stepInStation(teleporter, ground),
-      dodgeStation(DODGE_MARK.position, DODGE_MARK.layer),
-      breakWallStation(CRACKED_WALL.face, CRACKED_WALL.maxHealth),
-      healStation(TUTOR_ID, TUTORIAL_HEAL_SLOT),
-      badGroundStation(BAD_GROUND.mark, BAD_GROUND.layer),
-      ratsStation(
-        RAT_POCKET.pocket,
-        { runner: RAT_POCKET.rats[0].id, big: RAT_POCKET.rats[1].id },
-        playerBuild.skillBar,
-      ),
-      climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
-      rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
-      tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
-    ],
-    loadKeymap,
-  );
+  const stations: readonly Station[] = [
+    walkStation(mark, ground),
+    lookStation(teleporter),
+    stepInStation(teleporter, ground),
+    dodgeStation(DODGE_MARK.position, DODGE_MARK.layer),
+    breakWallStation(CRACKED_WALL.face, CRACKED_WALL.maxHealth),
+    healStation(TUTOR_ID, TUTORIAL_HEAL_SLOT),
+    badGroundStation(BAD_GROUND.mark, BAD_GROUND.layer),
+    ratsStation(
+      RAT_POCKET.pocket,
+      { runner: RAT_POCKET.rats[0].id, big: RAT_POCKET.rats[1].id },
+      playerBuild.skillBar,
+    ),
+    climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
+    rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
+    tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
+    callStation(),
+    pingStation(FORK.fork, FORK.east, FORK.pocket, FORK.eastSide),
+  ];
+  // A seeded start past the last station starts at the last (#3383).
+  const firstStation = Math.min(options.firstStation, stations.length - 1);
+  const runner = createTutorialRunner(stations, loadKeymap, firstStation);
   const inView = (point: Vec2): boolean => {
     const look = view?.camera();
     if (look === undefined) {
@@ -370,13 +405,29 @@ export async function startTutorialSession(
     await view?.dispose();
     view = undefined;
     const part = to === "canyon" ? 0 : 1;
-    const canyon = canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part);
+    // Only a seeded start enters a map at station 5 or 11 (#3383).
+    const canyon =
+      running === "break-wall"
+        ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, wallStart())
+        : running === "tunnel"
+          ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, tunnelStart())
+          : canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part);
     const heals = part === 0 ? createHealWatch(SELF_ID, TUTOR_ID, TUTORIAL_HEAL) : undefined;
     const rats =
       part === 1
         ? createRatWatch(
             SELF_ID,
+            TUTOR_ID,
             RAT_POCKET.rats.map(({ id }) => id),
+            playerBuild.skillBar,
+          )
+        : undefined;
+    const callRats =
+      part === 1
+        ? createRatWatch(
+            SELF_ID,
+            TUTOR_ID,
+            CALL_RATS.rats.map(({ id }) => id),
             playerBuild.skillBar,
           )
         : undefined;
@@ -388,6 +439,7 @@ export async function startTutorialSession(
         heals?.observe(message);
       }
       rats?.observe(message);
+      callRats?.observe(message);
     });
     stage = {
       name: to,
@@ -398,6 +450,7 @@ export async function startTutorialSession(
       dodges: part === 0 ? createDodgeCounter(canyon.zones) : undefined,
       heals,
       rats,
+      callRats,
       zones: canyon.zones,
     };
     // The tutor goes on ahead, to wait by the mark.
@@ -427,7 +480,7 @@ export async function startTutorialSession(
       request = requestAnimationFrame(step);
       return;
     }
-    const { simulation: world, connection, dodges, heals, rats } = stage;
+    const { simulation: world, connection, dodges, heals, rats, callRats } = stage;
     connection.advance(last === undefined ? 0 : Math.min((now - last) / 1000, MAX_STEP_SECONDS));
     last = now;
     const self = world.get(SELF_ID);
@@ -470,6 +523,23 @@ export async function startTutorialSession(
       crossing && health !== undefined && healthBefore !== undefined && health < healthBefore;
     healthBefore = health;
     const ratTally = rats?.tally();
+    const callTally = callRats?.tally();
+    const calls = connection.getCalls();
+    const calledId = calls.target?.targetId;
+    // Only what the player sends while station 13 runs counts there.
+    const ping = calls.pings.findLast(({ byId, id }) => byId === SELF_ID && id > pingSeen);
+    const stroke = calls.strokes.findLast(({ byId, id }) => byId === SELF_ID && id > strokeSeen);
+    const lineEnd = stroke?.points.at(-1);
+    if (running === "ping") {
+      lastPing =
+        lineEnd !== undefined
+          ? vec2(lineEnd[0], lineEnd[1])
+          : ping !== undefined
+            ? vec2(ping.x, ping.y)
+            : lastPing;
+    }
+    pingSeen = ping?.id ?? pingSeen;
+    strokeSeen = stroke?.id ?? strokeSeen;
     if (self !== undefined && tutor !== undefined && farewell === 0) {
       const beat = runner.tick(
         {
@@ -496,6 +566,11 @@ export async function startTutorialSession(
           bigRatDown: ratTally?.knockedDown.has(RAT_POCKET.rats[1].id) ?? false,
           extraRat: atRats?.extra() ?? false,
           belowClicked,
+          calledId,
+          hitByTutor: callTally?.hitByTutor ?? NO_HITS,
+          calledTargeted,
+          calledLost: atCall?.lost() ?? false,
+          lastPing,
         },
         now,
       );
@@ -552,7 +627,24 @@ export async function startTutorialSession(
       if (inTunnel === undefined && beat.station === "tunnel" && stage.name === "canyon-2") {
         inTunnel = tunnelTutor(world);
       }
-      inTunnel?.step();
+      // Only while it is on: the tutor walks on to station 12 from wherever it is.
+      if (beat.station === "tunnel") {
+        inTunnel?.step();
+      }
+      // Station 12 is next: the tutor waits by the two rats, and attacks the one called.
+      if (atCall === undefined && beat.station === "call" && callRats !== undefined) {
+        atCall = callTutor(world, callRats);
+      }
+      // Station 13 is next: once the called rat is down, the tutor walks to
+      // the fork and follows the player's pings; until then it fights on.
+      const callDown = calledId === undefined || world.get(calledId)?.combatant.dead !== false;
+      if (atFork === undefined && beat.station === "ping" && callDown) {
+        atFork = pingTutor(world);
+      }
+      if (callTally !== undefined && atFork === undefined) {
+        atCall?.step(calledId, callTally);
+      }
+      atFork?.step(beat.station === "ping" ? lastPing : undefined);
       // Station 3 has begun: the tutor goes to stand by the pad.
       if (!tutorSent && highlight?.kind === "ground" && highlight.at === teleporter) {
         tutorSent = true;
@@ -602,6 +694,19 @@ export async function startTutorialSession(
     }
     request = requestAnimationFrame(step);
   };
+  mountSkipTutorial(frame, () => {
+    end("skipped");
+  });
+  // An e2e build's seeded start past the battlefield (#3383) builds its
+  // station's world at once, and never draws the battlefield.
+  const first = stations[firstStation];
+  if (first === undefined || first.world === "battlefield") {
+    view = await open();
+    parent.append(frame);
+  } else {
+    running = first.id;
+    await swap(first.world);
+  }
   request = requestAnimationFrame(step);
   return { stop };
 }

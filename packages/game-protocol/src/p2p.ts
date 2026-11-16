@@ -99,6 +99,7 @@ export const CHANNELS = [
   "calls",
   "strokes",
   "traps",
+  "respawns",
   "chat",
   "chat-line",
   "shared-track",
@@ -984,6 +985,26 @@ export interface WireStrokes {
  */
 export interface WireTraps {
   readonly traps: readonly WireGroundEffect[];
+}
+
+/**
+ * When one of a team's dead bodies comes back (#3367): whole seconds,
+ * rounded up, or `null` for never, as under `"resurrection-only"`.
+ */
+export interface WireRespawn {
+  readonly id: string;
+  readonly respawnIn: number | null;
+}
+
+/**
+ * Host to each seated peer of one team, never the other (#3367): that
+ * team's dead bodies and when each comes back, a full replacement list;
+ * a body not in it is alive. A foe's respawn is hidden information, so it
+ * is never in a snapshot. Sent on the tick the list changes, and after a
+ * welcome.
+ */
+export interface WireRespawns {
+  readonly respawns: readonly WireRespawn[];
 }
 
 /** Who a chat line reaches (#479): everyone in the lobby, or your team. */
@@ -1983,6 +2004,20 @@ export function parseWireTraps(value: unknown): WireTraps | undefined {
       ? undefined
       : parseArray(raw.traps, MAX_WIRE_GROUND_EFFECTS, parseGroundEffect);
   return traps === undefined ? undefined : { traps };
+}
+
+function parseRespawn(value: unknown): WireRespawn | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.id) && (raw.respawnIn === null || isCount(raw.respawnIn))
+    ? { id: raw.id, respawnIn: raw.respawnIn }
+    : undefined;
+}
+
+export function parseWireRespawns(value: unknown): WireRespawns | undefined {
+  const raw = fields(value);
+  const respawns =
+    raw === undefined ? undefined : parseArray(raw.respawns, MAX_WIRE_ACTORS, parseRespawn);
+  return respawns === undefined ? undefined : { respawns };
 }
 
 export function parsePeerChat(value: unknown): PeerChat | undefined {

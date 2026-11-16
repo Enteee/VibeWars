@@ -569,6 +569,8 @@ export default {
   "hud.relicScoredOurs": "Ereklyepont!",
   "hud.relicScoredTheirs": "Ellenséges ereklyepont",
   "hud.relicTheirs": "Ellenséges ereklye",
+  "hud.respawnIn": "Vissza {seconds} mp múlva",
+  "hud.respawnResurrectionOnly": "Várd meg, hogy feltámasszanak",
   "hud.shrinesBoth": "Szentélyek: +{ours}, ellenség +{theirs}",
   "hud.shrinesOurs": "Szentélyek: +{ours}",
   "hud.shrinesTheirs": "Ellenséges szentélyek: +{theirs}",
@@ -1421,6 +1423,13 @@ export default {
   "training.soundOn": "Hang bekapcsolva.",
   "training.you": "Te",
 
+  "tutorial.call.hint": "Jelölj ki egy patkányt, és azt ütöm.",
+  "tutorial.call.how":
+    "Kattints görgővel egy patkányra, vagy kattints a célpontsávra, hogy kijelöld. A(z) {keys} arra céloz, amit a csapatod kijelölt.",
+  "tutorial.call.intro": "Két patkány. Te választasz, én ütök. Jelölj ki egyet.",
+  "tutorial.call.other": "Jelöld ki a másikat.",
+  "tutorial.call.praise": "Jelöld ki, és a csapat ugyanazt üti.",
+  "tutorial.call.t": "Ez az. A(z) {keys} megtalálja a kijelölt célpontot.",
   "tutorial.climb.hint": "Fel a párkányra, aztán le az alatta lévő földre.",
   "tutorial.climb.how":
     "Kattints oda, ahol állni akarsz. Az Alt+kattintás (Macen Option) az alsó talajt választja.",
@@ -1455,6 +1464,12 @@ export default {
   "tutorial.moreSoon": "Hamarosan több lecke. Odakint találkozunk!",
   "tutorial.offer": "Új vagy? A tanítód megmutatja az alapokat.",
   "tutorial.offerTitle": "Először jársz itt?",
+  "tutorial.ping.hint": "Jelöld meg, merre mennél.",
+  "tutorial.ping.how":
+    "Kattints a görgővel a földre, kattints az iránytűre, vagy húzz vonalat az iránytűn.",
+  "tutorial.ping.intro": "Balra vagy jobbra? Te döntesz.",
+  "tutorial.ping.pocket": "Szép kilátás. De rossz irány.",
+  "tutorial.ping.praise": "Jó választás. Tovább.",
   "tutorial.ramp.hint": "Fel mindkét lépcsősoron a magas terasz jeléig.",
   "tutorial.ramp.how": "Kattints a magas teraszra. Az utad magától veszi a lépcsőket.",
   "tutorial.ramp.intro": "A lépcsők szinteket kötnek össze. Lépj rájuk, és felvisznek.",

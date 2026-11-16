@@ -10,6 +10,8 @@ import {
   RAT_SKILLS,
   badGroundStation,
   breakWallStation,
+  callStation,
+  pingStation,
   climbStation,
   rampStation,
   tunnelStation,
@@ -55,6 +57,11 @@ const CAMERA = {
   bigRatDown: false,
   extraRat: false,
   belowClicked: false,
+  calledId: undefined,
+  hitByTutor: new Set<string>(),
+  calledTargeted: false,
+  calledLost: false,
+  lastPing: undefined,
 };
 const AWAY: TutorialView = { self: vec2(0, 0), tutor: vec2(180, 100), ...CAMERA };
 const ON_MARK: TutorialView = { self: MARK, tutor: vec2(180, 100), ...CAMERA };
@@ -65,6 +72,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [walkStation(MARK, 0)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const said = [0, 1_000, 9_999, HINT_REPEAT_MS, 15_000, 2 * HINT_REPEAT_MS, 25_000].map(
@@ -85,6 +93,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [walkStation(MARK, 0)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     expect(runner.tick(AWAY, 0)).toMatchObject({
@@ -107,6 +116,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [walkStation(MARK, 0), next],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     runner.tick(AWAY, 0);
@@ -121,9 +131,25 @@ describe("the tutorial runner", () => {
     });
   });
 
+  it("starts at station `first`, in that station's world (#3383)", () => {
+    const later: Station = { ...walkStation(vec2(400, 400), 0), id: "later", world: "canyon-2" };
+    const runner = createTutorialRunner(
+      [walkStation(MARK, 0), later],
+      () => KEYMAP_PRESETS.classic,
+      1,
+      label,
+    );
+    expect(runner.tick(AWAY, 0)).toMatchObject({
+      station: "later",
+      world: "canyon-2",
+      say: { key: "tutorial.walk.intro" },
+      highlight: { kind: "ground", at: vec2(400, 400) },
+    });
+  });
+
   it("shows the keys as bound in the keymap passed in, read again on every line", () => {
     let keymap: Keymap = KEYMAP_PRESETS.classic;
-    const runner = createTutorialRunner([walkStation(MARK, 0)], () => keymap, label);
+    const runner = createTutorialRunner([walkStation(MARK, 0)], () => keymap, 0, label);
     // Every first key, then every second.
     expect(runner.tick(AWAY, 0).say?.keys).toEqual([
       "KeyW",
@@ -146,7 +172,7 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats, climbs the ledge, climbs to the high deck, goes through the tunnel and finishes (#3247, #3302, #3303, #3310, #3316, #3323, #3325, #3326)", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats, climbs the ledge, climbs to the high deck, goes through the tunnel, calls a rat, pings the way and finishes (#3247, #3302, #3303, #3310, #3316, #3323, #3325, #3326, #3331, #3332)", () => {
     const pad = vec2(200, -900);
     const goal = vec2(2850, 1800);
     const face = vec2(3480, 1800);
@@ -159,6 +185,10 @@ describe("the tutorial runner", () => {
     const onLanding = vec2(2350, 1560);
     const tunnel = { kind: "rect", x: 2080, y: 450, width: 720, height: 500 } as const;
     const pastTunnel = vec2(3240, 700);
+    const fork = vec2(5800, 700);
+    const eastEnd = vec2(6450, 700);
+    const lounge = vec2(6260, 1160);
+    const eastSide = vec2(6000, 700);
     const bar = [
       "warrior.enraged-smash",
       RAT_SKILLS.bash,
@@ -182,8 +212,11 @@ describe("the tutorial runner", () => {
         climbStation(ledge, stairs, 2, 1),
         rampStation(onDeck, 3, { kind: "rect", x: 2260, y: 1480, width: 180, height: 160 }, 2),
         tunnelStation(tunnel, 0, 1, pastTunnel),
+        callStation(),
+        pingStation(fork, eastEnd, lounge, eastSide),
       ],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const looked = { ...ON_MARK, zoomedOut: true, lookDragged: true, inView: () => true };
@@ -207,6 +240,7 @@ describe("the tutorial runner", () => {
       self: vec2(3600, 2100),
       selfLayer: 1,
     };
+    const called: TutorialView = { ...climb, self: vec2(4200, 700), selfLayer: 1 };
     const ticks: [TutorialView, number][] = [
       [AWAY, 0],
       [ON_MARK, 1_000],
@@ -259,6 +293,14 @@ describe("the tutorial runner", () => {
       [{ ...climb, self: vec2(2200, 700), selfLayer: 0 }, 11_000 + 10 * PRAISE_MS + 14 * ASIDE_MS],
       [{ ...climb, self: vec2(2700, 700), selfLayer: 0 }, 11_000 + 10 * PRAISE_MS + 15 * ASIDE_MS],
       [{ ...climb, self: pastTunnel, selfLayer: 1 }, 11_000 + 10 * PRAISE_MS + 16 * ASIDE_MS],
+      [{ ...called, calledId: "call-rat-1" }, 11_000 + 11 * PRAISE_MS + 16 * ASIDE_MS],
+      [
+        { ...called, calledId: "call-rat-1", hitByTutor: new Set(["call-rat-1"]) },
+        11_000 + 11 * PRAISE_MS + 17 * ASIDE_MS,
+      ],
+      [{ ...called, tutor: fork }, 11_000 + 12 * PRAISE_MS + 17 * ASIDE_MS],
+      [{ ...called, lastPing: lounge, tutor: lounge }, 11_000 + 12 * PRAISE_MS + 18 * ASIDE_MS],
+      [{ ...called, lastPing: eastEnd, tutor: eastSide }, 11_000 + 12 * PRAISE_MS + 19 * ASIDE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -301,7 +343,19 @@ describe("the tutorial runner", () => {
       undefined,
       undefined,
       "tutorial.tunnel.praise",
+      "tutorial.call.intro",
+      "tutorial.call.praise",
+      "tutorial.ping.intro",
+      "tutorial.ping.pocket",
+      "tutorial.ping.praise",
     ]);
+    // The compass is lit while a ping is wanted, the fork marked beside it.
+    expect([beats[41]?.highlight, beats[41]?.mark]).toEqual([
+      { kind: "hud", element: ".compass" },
+      fork,
+    ]);
+    // The party window, where the tutor stands, is lit while the call is wanted.
+    expect(beats[39]?.highlight).toEqual({ kind: "hud", element: ".party-window" });
     // The high deck is marked on its layer.
     expect(beats[32]?.highlight).toEqual({ kind: "ground", at: onDeck, layer: 3 });
     // The ledge is marked on its layer, then the ground under its middle.
@@ -357,9 +411,9 @@ describe("the tutorial runner", () => {
     expect(beats.map((beat) => beat.world)).toEqual([
       ...Array<string>(5).fill("battlefield"),
       ...Array<string>(15).fill("canyon"),
-      ...Array<string>(19).fill("canyon-2"),
+      ...Array<string>(24).fill("canyon-2"),
     ]);
-    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(38).fill(false), true]);
+    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(43).fill(false), true]);
   });
 
   it("says a station's reaction once, then no more hints until it is done (#3302)", () => {
@@ -367,6 +421,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [breakWallStation(face, 700)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const wall = (wallHealth: number): TutorialView => ({
@@ -396,6 +451,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [healStation("tutor", 7)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const hit: TutorialView = { ...AWAY, tutorHit: true };
@@ -421,6 +477,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [badGroundStation(MARK, 0)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const lava: TutorialView = { ...AWAY, zoneStatus: "burning", healthDropped: true };
@@ -454,6 +511,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [healStation("tutor", 7)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const hit: TutorialView = { ...AWAY, tutorHit: true };
@@ -481,6 +539,7 @@ describe("the tutorial runner", () => {
     const runner = createTutorialRunner(
       [dodgeStation(goal, 0)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     const hit: TutorialView = { ...AWAY, hitBy: "rockfall" };
@@ -500,6 +559,7 @@ describe("the tutorial runner", () => {
     const walker = createTutorialRunner(
       [walkStation(MARK, 0)],
       () => KEYMAP_PRESETS.classic,
+      0,
       label,
     );
     walker.tick(AWAY, 0);

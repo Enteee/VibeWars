@@ -12,14 +12,19 @@ import {
   AREA_WARN_REACH,
   CAST_EARSHOT,
   CAST_VOICE_LIMIT,
+  MOTIF_DB,
   SPIRIT_EARSHOT,
   castLayers,
   castPitch,
   castPitchStep,
   castVoices,
+  DEATH_CUES_PER_WINDOW,
+  DEATH_WINDOW_MS,
+  deathThrottle,
   instantCastVoice,
   hitsForCombat,
   soundsForCombat,
+  soundsForRespawn,
   soundsForSkillGround,
   soundsForSnapshot,
   soundsForWorld,
@@ -86,12 +91,6 @@ describe("soundsForCombat", () => {
     expect(soundsForCombat(theirs, ME, undefined)).toEqual([]);
   });
 
-  it("plays a death for anyone's", () => {
-    expect(
-      soundsForCombat(message("a", [{ kind: "death", targetId: "b" }]), ME, undefined),
-    ).toEqual(["death"]);
-  });
-
   it("is silent for an ally's hit on an enemy, and for every other kind", () => {
     const elsewhere = message("ally", [
       { kind: "damage", targetId: "foe", amount: 9, critical: false },
@@ -140,7 +139,7 @@ describe("soundsForCombat", () => {
     };
     expect(soundsForCombat(burning, ME, undefined)).toEqual([]);
     expect(soundsForCombat(regen, ME, undefined)).toEqual([]);
-    expect(soundsForCombat(fatal, ME, undefined)).toEqual(["death"]);
+    expect(soundsForCombat(fatal, ME, undefined)).toEqual(["death-you"]);
   });
 
   it("cracks for a weapon hit you deal: no skill, but not a status tick either (#160)", () => {
@@ -161,7 +160,160 @@ describe("soundsForCombat", () => {
       { kind: "damage", targetId: "foe", amount: 90, critical: false },
       { kind: "death", targetId: "foe" },
     ]);
-    expect(soundsForCombat(kill, ME, undefined)).toEqual(["hit-dealt", "death"]);
+    expect(soundsForCombat(kill, ME, snapshot([player(ME), player("foe")]))).toEqual([
+      "hit-dealt",
+      "death-foe",
+    ]);
+  });
+
+  it("adds a crit's transient to a crit you deal or take, once per message (#3366)", () => {
+    const dealt = message(ME, [
+      { kind: "damage", targetId: "a", amount: 30, critical: true },
+      { kind: "damage", targetId: "b", amount: 30, critical: true },
+    ]);
+    const taken = message("foe", [{ kind: "damage", targetId: ME, amount: 30, critical: true }]);
+    const elsewhere = message("ally", [
+      { kind: "damage", targetId: "foe", amount: 30, critical: true },
+    ]);
+    expect(soundsForCombat(dealt, ME, undefined)).toEqual(["hit-dealt", "crit", "hit-dealt"]);
+    expect(soundsForCombat(taken, ME, undefined)).toEqual(["hit-taken", "crit"]);
+    expect(soundsForCombat(elsewhere, ME, undefined)).toEqual([]);
+  });
+});
+
+describe("deaths and respawns, by whose they are (#3366)", () => {
+  const minion = (sessionId: string, ownerId: string | null, team: number): PlayerSnapshot =>
+    player(sessionId, {
+      team,
+      creature: {
+        ownerId,
+        kind: "minion",
+        look: "bone-minion",
+        mode: null,
+        armedAttack: null,
+        leaderId: null,
+        auraRadius: null,
+      },
+    });
+  const field = snapshot([
+    player(ME),
+    player("ally", { team: 0 }),
+    player("foe"),
+    minion("mine", ME, 0),
+    minion("theirs", "foe", 1),
+    minion("allys", "ally", 0),
+  ]);
+  const died = (targetId: string) =>
+    soundsForCombat(message("x", [{ kind: "death", targetId }]), ME, field);
+
+  it("plays your own death, a teammate's and a foe's each their own way", () => {
+    expect(died(ME)).toEqual(["death-you"]);
+    expect(died("ally")).toEqual(["death-ally"]);
+    expect(died("foe")).toEqual(["death-foe"]);
+  });
+
+  it("is silent for a creature that is not yours, and plays yours as a quieter ally", () => {
+    expect(died("theirs")).toEqual([]);
+    expect(died("allys")).toEqual([]);
+    expect(died("mine")).toEqual([{ id: "death-ally", db: -6 }]);
+  });
+
+  it("puts a teammate's death before your minion's, so the throttle keeps the louder", () => {
+    const both = message("x", [
+      { kind: "death", targetId: "mine" },
+      { kind: "death", targetId: "ally" },
+    ]);
+    expect(soundsForCombat(both, ME, field)).toEqual(["death-ally", { id: "death-ally", db: -6 }]);
+  });
+
+  it("keeps the louder death-ally first with a foe's death between them", () => {
+    const three = message("x", [
+      { kind: "death", targetId: "mine" },
+      { kind: "death", targetId: "foe" },
+      { kind: "death", targetId: "ally" },
+    ]);
+    expect(soundsForCombat(three, ME, field)).toEqual([
+      "death-ally",
+      "death-foe",
+      { id: "death-ally", db: -6 },
+    ]);
+  });
+
+  it("is silent for a body it cannot place, but never for your own death", () => {
+    expect(died("stranger")).toEqual([]);
+    const unseen = (targetId: string) =>
+      soundsForCombat(message("x", [{ kind: "death", targetId }]), ME, undefined);
+    expect(unseen("foe")).toEqual([]);
+    expect(unseen(ME)).toEqual(["death-you"]);
+  });
+
+  it("judges a watcher's deaths against team 0, with no death of its own", () => {
+    const watched = snapshot([player("blue", { team: 0 }), player("red", { team: 1 })]);
+    expect(
+      soundsForCombat(message("x", [{ kind: "death", targetId: "blue" }]), ME, watched),
+    ).toEqual(["death-ally"]);
+    expect(
+      soundsForCombat(message("x", [{ kind: "death", targetId: "red" }]), ME, watched),
+    ).toEqual(["death-foe"]);
+  });
+
+  it(`lets ${String(DEATH_CUES_PER_WINDOW)} deaths through in ${String(DEATH_WINDOW_MS)} ms, dropping the newest, never your own`, () => {
+    const throttle = deathThrottle();
+    expect(throttle(["death-foe", "death-ally", "hit-dealt"], 0)).toEqual([
+      "death-foe",
+      "death-ally",
+      "hit-dealt",
+    ]);
+    expect(throttle(["death-foe", "death-foe", "crit"], 100)).toEqual(["death-foe", "crit"]);
+    expect(throttle(["death-you"], 200)).toEqual(["death-you"]);
+    expect(throttle([{ id: "death-ally", db: -6 }], DEATH_WINDOW_MS - 50)).toEqual([]);
+    expect(throttle(["death-foe"], DEATH_WINDOW_MS + 150)).toEqual(["death-foe"]);
+  });
+
+  const respawned = (sessionId: string, team: number, extra: Partial<PlayerSnapshot> = {}) =>
+    [
+      snapshot([
+        player(ME, { dead: sessionId === ME }),
+        player(sessionId, { team, dead: true, ...extra }),
+      ]),
+      snapshot([player(ME), player(sessionId, { team, ...extra })]),
+    ] as const;
+
+  it("chimes for your respawn, quieter for a teammate's, and not for a foe's", () => {
+    const [deadMe, backMe] = [snapshot([player(ME, { dead: true })]), snapshot([player(ME)])];
+    expect(soundsForRespawn(deadMe, backMe, ME)).toEqual(["respawn-you"]);
+    const [deadAlly, backAlly] = respawned("ally", 0);
+    expect(soundsForRespawn(deadAlly, backAlly, ME)).toEqual([{ id: "respawn-you", db: -8 }]);
+    const [deadFoe, backFoe] = respawned("foe", 1);
+    expect(soundsForRespawn(deadFoe, backFoe, ME)).toEqual([]);
+  });
+
+  it("chimes once for a wave, your own when you are in it", () => {
+    const wave = (dead: boolean) =>
+      snapshot([
+        player("ally", { team: 0, dead }),
+        player(ME, { dead }),
+        player("other", { team: 0, dead }),
+      ]);
+    expect(soundsForRespawn(wave(true), wave(false), ME)).toEqual(["respawn-you"]);
+    const allies = (dead: boolean) =>
+      snapshot([player(ME), player("ally", { team: 0, dead }), player("other", { team: 0, dead })]);
+    expect(soundsForRespawn(allies(true), allies(false), ME)).toEqual([
+      { id: "respawn-you", db: -8 },
+    ]);
+  });
+
+  it("is silent on the first snapshot, and for a creature raised again", () => {
+    expect(soundsForRespawn(undefined, snapshot([player(ME)]), ME)).toEqual([]);
+    const [deadMinion, backMinion] = [
+      snapshot(
+        [player(ME), minion("mine", ME, 0)].map((p) =>
+          p.sessionId === "mine" ? { ...p, dead: true } : p,
+        ),
+      ),
+      snapshot([player(ME), minion("mine", ME, 0)]),
+    ];
+    expect(soundsForRespawn(deadMinion, backMinion, ME)).toEqual([]);
   });
 });
 
@@ -235,6 +387,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     team: sessionId === ME ? 0 : 1,
     dead: false,
     corpseExploited: false,
+    respawnIn: undefined,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
@@ -757,6 +910,13 @@ describe("castVoices (#3298)", () => {
 });
 
 describe("castPitch (#3298)", () => {
+  it("plays the motif 4 dB under its base (#3371)", () => {
+    expect(MOTIF_DB).toBe(-4);
+    for (const skill of IMPLEMENTED_SKILLS) {
+      expect(castLayers(skill).motifTrim).toBeCloseTo(10 ** (-4 / 20), 6);
+    }
+  });
+
   it("pitches every catalog skill within -5 to +6 semitones", () => {
     for (const skill of IMPLEMENTED_SKILLS) {
       const semitones = castPitchStep(skill.id) / 2;

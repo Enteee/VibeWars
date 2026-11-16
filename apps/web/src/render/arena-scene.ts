@@ -54,7 +54,7 @@ import {
   type BeaconBolt,
   type SwingFlash,
   isDoor,
-  isCrackedWall,
+  isBreakableWall,
   selfLayer,
 } from "./arena-snapshot.js";
 import {
@@ -77,6 +77,8 @@ import {
   WALL_STROKE,
   arenaPalette,
   type ArenaPalette,
+  breakableLook,
+  type BreakableLook,
   pavingPalette,
   type PavingLookColours,
   type StonePavingLook,
@@ -286,9 +288,11 @@ import { lyingPose } from "./lying-pose.js";
 import {
   SLEEPER_RIM_WIDTH,
   SLEEPER_Z_WIDTH,
+  parasolCommands,
   sleeperCommands,
-  type SleeperProp,
-} from "./sleeper-prop.js";
+  type PropCommand,
+  type TutorialProp,
+} from "./tutorial-props.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import {
@@ -326,15 +330,29 @@ import { dotsAlong, switchFlashAlpha, switchLinkAlpha } from "./switch-link.js";
 import { doorPalette, GATE_ART, paintPlate, type GatePainter } from "./gate-mark.js";
 import {
   BARRIER_ART,
+  BREAK_SECONDS,
   BREAKABLE_ART,
   breakablePalette,
+  CHIP_SECONDS,
+  crackNetwork,
+  type CrackNetwork,
+  crackTip,
   DUST_SECONDS,
+  paintChips,
   paintDust,
   type StonePainter,
+  tumbleChunks,
+  type TumbleChunk,
 } from "./breakable-mark.js";
 import {
   breakableBarAnchor,
   breakableHealthFraction,
+  breakableSeed,
+  type BreakableSeen,
+  CRACK_GROW_SECONDS,
+  crackReveal,
+  drawnReveal,
+  observeBreakable,
   type RenderableBreakable,
 } from "./breakable-objects.js";
 import {
@@ -748,8 +766,32 @@ export class ArenaScene extends Phaser.Scene {
   private markGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Energy barriers' curtains (#3031), added over what is behind them. */
   private barrierGraphics: Phaser.GameObjects.Graphics | undefined;
-  /** Each breakable wall's last health seen, and when it fell, for its dust (#3031). */
-  private readonly wallFalls = new Map<string, { health: number; at: number | undefined }>();
+  /**
+   * Each breakable wall's own graphics (#3370), by id: what it has seen of
+   * the wall, and whether what is drawn is its settled look, so a wall
+   * redraws only while it cracks or falls.
+   */
+  private readonly breakableDrawings = new Map<
+    string,
+    { graphics: Phaser.GameObjects.Graphics; seen: BreakableSeen | undefined; settled: boolean }
+  >();
+  /** How each breakable wall draws, set when the map is drawn: its material, cracks and fall. */
+  private breakableStyle:
+    | {
+        readonly height: number;
+        readonly line: number;
+        readonly look: BreakableLook;
+        readonly walls: ReadonlyMap<
+          string,
+          {
+            readonly seed: number;
+            readonly palette: ArenaPalette;
+            readonly network: CrackNetwork;
+            readonly tumbles: readonly TumbleChunk[];
+          }
+        >;
+      }
+    | undefined;
   /** The off-screen markers, drawn in screen px over everything (#440). */
   private markerGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The hovered name's underline (#2738). */
@@ -783,7 +825,7 @@ export class ArenaScene extends Phaser.Scene {
   private goals = new Map<string, { mark: GoalMark; goneAt: number | undefined }>();
   private readonly goalGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Scenery the simulation does not know (#3326), lying on the walls of its layer. */
-  private props: readonly SleeperProp[] = [];
+  private props: readonly TutorialProp[] = [];
   /** The props' graphics, one per wall-top depth. */
   private readonly propGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Every caped body's cape (#1699), and where the body was drawn last frame. */
@@ -907,7 +949,7 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** Replace the props to draw from the next frame: none clears them. */
-  public setProps(props: readonly SleeperProp[]): void {
+  public setProps(props: readonly TutorialProp[]): void {
     this.props = props;
   }
 
@@ -1037,6 +1079,7 @@ export class ArenaScene extends Phaser.Scene {
     const view = this.cameraView();
     this.staticCull.cull(view);
     this.drawLifts();
+    this.drawBreakables();
     this.drawRipples();
     this.drawZones();
     this.drawAtmosphere(dt, view);
@@ -1343,23 +1386,117 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * Each breakable wall (#3370) on its own graphics: standing with its
+   * cracks, growing in as it is hit, chips falling off; sagging and
+   * tumbling as it falls; rubble. Redrawn only while something moves.
+   */
+  private drawBreakables(): void {
+    const style = this.breakableStyle;
+    const live = new Set(this.snapshot.breakables.map(({ id }) => id));
+    for (const [id, drawing] of this.breakableDrawings) {
+      if (!live.has(id)) {
+        drawing.graphics.destroy();
+        this.breakableDrawings.delete(id);
+      }
+    }
+    if (style === undefined) {
+      return;
+    }
+    const { ground } = this.snapshot.structure;
+    for (const breakable of this.snapshot.breakables) {
+      const wall = style.walls.get(breakable.id);
+      if (wall === undefined) {
+        continue;
+      }
+      let drawing = this.breakableDrawings.get(breakable.id);
+      if (drawing === undefined) {
+        drawing = {
+          graphics: this.add
+            .graphics()
+            .setDepth(renderOrder({ kind: "breakable", layer: breakable.layer })),
+          seen: undefined,
+          settled: false,
+        };
+        this.breakableDrawings.set(breakable.id, drawing);
+      }
+      const seen = observeBreakable(drawing.seen, breakable, this.now);
+      if (seen !== drawing.seen) {
+        drawing.seen = seen;
+        drawing.settled = false;
+      }
+      // Held still for reduced motion: each change shows at once.
+      const motion = !this.reducedMotion;
+      const hitAge = seen.hitAt === undefined || !motion ? Infinity : this.now - seen.hitAt;
+      const fallAge = seen.fellAt === undefined || !motion ? Infinity : this.now - seen.fellAt;
+      const moving = hitAge < Math.max(CRACK_GROW_SECONDS, CHIP_SECONDS) || fallAge < BREAK_SECONDS;
+      if (!moving && drawing.settled) {
+        continue;
+      }
+      drawing.settled = !moving;
+      const g = drawing.graphics;
+      g.clear();
+      g.save();
+      g.translateCanvas(0, -elevationOf(breakable.layer, ground));
+      const painter = this.stonePainter(g);
+      const frame = {
+        height: style.height,
+        line: style.line,
+        look: style.look,
+        palette: wall.palette,
+      };
+      const fraction = breakableHealthFraction(breakable);
+      if (breakable.health > 0) {
+        const reveal = motion
+          ? drawnReveal(seen, breakable.maxHealth, this.now)
+          : crackReveal(breakable.health, breakable.maxHealth);
+        BREAKABLE_ART.standing(
+          painter,
+          breakable.wall,
+          { network: wall.network, reveal, glow: fraction < 0.5 },
+          frame,
+        );
+        const tip = crackTip(wall.network, crackReveal(breakable.health, breakable.maxHealth));
+        if (tip !== undefined && hitAge < CHIP_SECONDS) {
+          paintChips(
+            painter,
+            { x: tip.x, y: tip.y - tip.up },
+            hitAge,
+            wall.seed + seen.hits,
+            style.look.face,
+          );
+        }
+      } else if (fallAge < BREAK_SECONDS) {
+        BREAKABLE_ART.falling(
+          painter,
+          breakable.wall,
+          { network: wall.network, reveal: 1, glow: true },
+          wall.tumbles,
+          fallAge,
+          frame,
+        );
+      } else {
+        BREAKABLE_ART.rubble(painter, breakable.wall, wall.tumbles, { ...frame, height: 0 });
+      }
+      g.restore();
+    }
+  }
+
+  /**
    * Over a breakable wall (#3031): the dust of its fall, and its health
-   * bar while it is hovered or your target. The wall and its rubble draw
-   * with the map.
+   * bar while it is hovered or your target. The wall itself draws on its
+   * own graphics (#3370).
    */
   private drawBreakableOverlay(
     g: Phaser.GameObjects.Graphics,
     breakable: RenderableBreakable,
   ): void {
-    const seen = this.wallFalls.get(breakable.id);
-    const fell = seen !== undefined && seen.health > 0 && breakable.health <= 0;
-    const at = fell ? this.now : seen?.at;
-    this.wallFalls.set(breakable.id, { health: breakable.health, at });
     const { structure } = this.snapshot;
-    if (at !== undefined && this.now - at < DUST_SECONDS) {
+    const fellAt = this.breakableDrawings.get(breakable.id)?.seen?.fellAt;
+    const look = this.breakableStyle?.look;
+    if (fellAt !== undefined && look !== undefined && this.now - fellAt < DUST_SECONDS) {
       g.save();
       g.translateCanvas(0, -elevationOf(breakable.layer, structure.ground));
-      paintDust(this.stonePainter(g), breakable.wall, this.now - at);
+      paintDust(this.stonePainter(g), breakable.wall, this.now - fellAt, look.dust);
       g.restore();
     }
     const shown = breakable.id === this.snapshot.targetId || breakable.id === this.snapshot.hoverId;
@@ -1919,8 +2056,9 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The props (#3326) on top of their layer's walls: lifted by the layer's
-   * height and the wall's, just over that wall's depth, and lit where they lie.
+   * The props (#3326) just over their layer's walls' depth, lit where they
+   * lie: a sleeper on top of a wall, lifted by the layer's height and the
+   * wall's; a parasol (#3332) on the layer's ground, by the layer's alone.
    */
   private drawProps(): void {
     for (const graphics of this.propGraphics.values()) {
@@ -1934,16 +2072,18 @@ export class ArenaScene extends Phaser.Scene {
         g = this.add.graphics().setDepth(depth);
         this.propGraphics.set(depth, g);
       }
-      const lift = elevationOf(prop.layer, ground) + (layerCount === 1 ? 0 : WALL_HEIGHT);
+      const onWall = prop.kind === "sleeper" && layerCount > 1;
+      const lift = elevationOf(prop.layer, ground) + (onWall ? WALL_HEIGHT : 0);
       const tint = this.tintAt(prop.position, prop.layer);
+      const lit = (colour: number): number =>
+        tint === undefined ? colour : multiplyColour(colour, tint);
+      const commands: readonly PropCommand[] =
+        prop.kind === "sleeper"
+          ? sleeperCommands(prop.position, prop.facing, this.now, this.reducedMotion)
+          : parasolCommands(prop.position);
       g.save();
       g.translateCanvas(0, -lift);
-      for (const command of sleeperCommands(
-        prop.position,
-        prop.facing,
-        this.now,
-        this.reducedMotion,
-      )) {
+      for (const command of commands) {
         switch (command.kind) {
           case "glow":
             g.fillStyle(command.colour, command.alpha / 2);
@@ -1982,6 +2122,16 @@ export class ArenaScene extends Phaser.Scene {
             g.strokePath();
             break;
           }
+          case "shape":
+            g.fillStyle(lit(command.colour), command.alpha);
+            tracePath(g, command.outline);
+            g.fillPath();
+            break;
+          case "stroke":
+            g.lineStyle(command.width, lit(command.colour), 1);
+            tracePath(g, command.points, false);
+            g.strokePath();
+            break;
         }
       }
       g.restore();
@@ -3426,15 +3576,8 @@ export class ArenaScene extends Phaser.Scene {
           ? { kind: "wall", layer: wall.layer }
           : { kind: "support", deckLayer: held.layer },
       );
-      if (isCrackedWall(wall)) {
-        g.save();
-        g.translateCanvas(0, -elevationOf(wall.layer, ground));
-        BREAKABLE_ART.standing(this.stonePainter(g), wall, wall.cracks, {
-          height: next.structure.layerCount === 1 ? 0 : WALL_HEIGHT,
-          line,
-          palette: litStructurePalette(breakablePalette(palette), next.lighting, wall, wall.layer),
-        });
-        g.restore();
+      // A breakable wall draws on its own (#3370), set up below.
+      if (isBreakableWall(wall)) {
         continue;
       }
       // A shut secret passage (#3068) is the rock wall it hides in.
@@ -3464,19 +3607,36 @@ export class ArenaScene extends Phaser.Scene {
         this.drawColumn(g, wall, low, high, lit.support, false, hidden);
       }
     }
-    // A wall's fall always swaps the wall list, so its rubble is drawn here.
-    for (const breakable of this.snapshot.breakables) {
-      if (breakable.health <= 0) {
-        const g = this.structureAt({ kind: "wall", layer: breakable.layer });
-        g.save();
-        g.translateCanvas(0, -elevationOf(breakable.layer, ground));
-        BREAKABLE_ART.rubble(this.stonePainter(g), breakable.wall, {
-          height: 0,
-          line,
-          palette: breakablePalette(palette),
-        });
-        g.restore();
-      }
+    // Each breakable wall's material, cracks and fall, worked out once per
+    // map drawn; `drawBreakables` draws it every frame it changes (#3370).
+    const look = breakableLook(next.structure);
+    const height = next.structure.layerCount === 1 ? 0 : WALL_HEIGHT;
+    this.breakableStyle = {
+      height,
+      line,
+      look,
+      walls: new Map(
+        this.snapshot.breakables.map((breakable) => {
+          const seed = breakableSeed(breakable.id);
+          return [
+            breakable.id,
+            {
+              seed,
+              palette: litStructurePalette(
+                breakablePalette(palette, look),
+                next.lighting,
+                breakable.wall,
+                breakable.layer,
+              ),
+              network: crackNetwork(seed, breakable.wall, height),
+              tumbles: tumbleChunks(seed, breakable.wall, height),
+            },
+          ];
+        }),
+      ),
+    };
+    for (const drawing of this.breakableDrawings.values()) {
+      drawing.settled = false;
     }
     // A torch stands with lighting off too: it is on the map, its light is not.
     for (const light of next.structure.lighting?.lights ?? []) {

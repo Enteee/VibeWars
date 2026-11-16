@@ -39,20 +39,25 @@ egy szövetséges fel nem támasztja őket, és minden halál morálba kerül.
 Söpörd el a másik csapatot, hogy nyerj. 8 perc után az a csapat nyer,
 amelyiknek a legtöbb morálja maradt.
 
-A Canyon, a Crossroads és a Long Hall játssza, valamint két nagyobb,
-közepes méretű aréna: a **Sandstone Steps** (1v1, 3600x2000), teraszos
-sivatagi párkányok egy törött obeliszkkör körül, oszlopokkal, amelyek
-körül kitérhetsz; és a **Frozen Crossing** (2v2, 4000x2200), egy befagyott
-folyó három híddal, mindkét partján jégsziklákkal. A nagyobb
-csapatoknak: az **Ashen Courtyard** (4v4, 4400x2600), egy romos vár,
-amelynek fallal körülvett udvarán négy rés nyílik, oldalain romokkal; és a
-**Moss Vale** (8v8, 4800x2800), két erdős gerinc, amely a völgyet három
-sávra osztja, és ezek középen egy tisztáson találkoznak.
-Két nagy aréna még nagyobb: a **Canthan Terraces** (1v1, 5200x2800),
-északtól délig fallal tagolt rizsteraszok elcsúsztatott résekkel, egy
-romos pagoda körül; és a **Sunken Bastion** (2v2, 5600x3000), egy félig
-elárasztott erőd, amelynek áttört függönyfala két kapuval rendelkező
-öregtornyot vesz körül, kívül mocsári sziklákkal.
+A Canyon, a Crossroads és a Long Hall játssza, valamint két kis aréna,
+nagyjából a Canyon méretében: a **Sandstone Steps** (1v1, 2600x1940), egy
+teraszos sivatagi város süllyesztett kútudvarral, utcái fölött háztetőkkel,
+alattuk pedig karral nyitható aluljáróval; és a **Frozen Crossing** (2v2,
+2600x1940), egy befagyott folyó két magas part között, amelyen gázlóköveken
+vagy egy rönkhídon kelhetsz át, a híd középső pallóját egy kar emeli fel. A
+nagyobb csapatoknak: az **Ashen Courtyard** (4v4, 3200x2400), egy kiégett,
+fallal körülvett udvar, fent várfolyosókkal és tornyokkal, lent
+süllyesztett kútudvarral, kapuházának csapórácsát a falakról működtetik; és
+a **Moss Vale** (8v8, 5000x2600), egy teraszos völgy, amelyet egy mély
+malomárok kettévág, és csak a felvonóhídnál, a malomnál és az alatta futó
+aluljárón lehet átkelni rajta.
+A **Canthan Terraces** (1v1, 2400x2100) kicsi, de meredek: rizsföldek
+lépcsőznek fel egy domboldalon egy romos pagodáig, alattuk egy elárasztott
+átereszzel, amelyet egy zsilipkar nyit meg harmadik útként a középhez.
+A **Sunken Bastion** (2v2, 2700x1900) kicsi, de magas:
+egy félig elárasztott erőd, amelynek udvarát vizesárok szeli ketté; át
+lehet kelni rajta a mindkét parton karral működtetett felvonóhídon, az
+északi várfal mentén futó gyilokjárón vagy a lenti elárasztott pincén át.
 A nagyobb csapatoknak pedig: a **Shiverpeak Pass** (4v4, 6000x3400),
 két sziklatömb, amely széles, sziklatömbökkel teleszórt hágót és mindkét
 szélén egy-egy keskeny ösvényt hagy; és az **Elonian Plateau** (8v8,

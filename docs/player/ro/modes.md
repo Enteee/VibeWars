@@ -35,18 +35,24 @@ nu e al nimănui, altarul în auriu. Săgeata plină a unui jucător se deseneaz
 fiecare moarte costă moral. Elimină toată cealaltă echipă ca să câștigi. După 8
 minute, câștigă echipa cu cel mai mult moral rămas.
 
-Se joacă pe Canyon, Crossroads și Long Hall și pe două arene mai mari, de mărime
-medie: **Sandstone Steps** (1v1, 3600x2000), terase de deșert în jurul unui cerc
-de obeliscuri sparte, cu coloane în jurul cărora poți face kiting; și **Frozen
-Crossing** (2v2, 4000x2200), un râu înghețat traversat de trei poduri, cu stânci de
-gheață pe fiecare mal. Pentru echipele mai mari: **Ashen Courtyard** (4v4, 4400x2600),
-o fortăreață în ruine a cărei curte împrejmuită are patru spărturi, cu ruine pe
-flancuri; și **Moss Vale** (8v8, 4800x2800), două creste împădurite care împart valea
-în trei culoare ce se întâlnesc într-un luminiș în mijloc. Două arene mari sunt și
-mai întinse: **Canthan Terraces** (1v1, 5200x2800), terase de orez cu ziduri de la
-nord la sud și deschideri decalate, în jurul unei pagode în ruine; și **Sunken
-Bastion** (2v2, 5600x3000), o fortăreață pe jumătate inundată a cărei incintă spartă
-înconjoară un donjon cu două porți, cu stânci de mlaștină în afară. Și pentru echipele
+Se joacă pe Canyon, Crossroads și Long Hall și pe două arene mici, cam cât
+Canyon: **Sandstone Steps** (1v1, 2600x1940), un oraș de deșert în terase, cu
+o curte cu fântână coborâtă, acoperișuri deasupra străzilor și un pasaj
+subteran închis cu pârghie sub ele; și **Frozen Crossing** (2v2, 2600x1940), un
+râu înghețat între două maluri înalte, traversat pe pietre de vad sau pe un pod
+de bușteni a cărui scândură din mijloc o ridică o pârghie. Pentru echipele mai
+mari: **Ashen Courtyard** (4v4, 3200x2400), o curte arsă, împrejmuită de ziduri,
+cu drumuri de strajă și turnuri deasupra și o curte cu fântână coborâtă dedesubt,
+iar grilajul porții e acționat de pe ziduri; și **Moss Vale** (8v8, 5000x2600), o
+vale în terase tăiată în două de un canal adânc de moară, ce se trece doar pe
+podul mobil, prin moară și prin pasajul subteran de sub ea. **Canthan Terraces** (1v1,
+2400x2100) este mică, dar abruptă: orezării care urcă pe un deal până la o pagodă în
+ruine, cu un podeț inundat dedesubt pe care o pârghie de stăvilar îl deschide ca a
+treia cale spre centru. **Sunken
+Bastion** (2v2, 2700x1900) e mică, dar înaltă: o fortăreață pe jumătate inundată al
+cărei șanț împarte curtea în două; îl treci pe un pod mobil acționat de o pârghie
+de pe fiecare mal, pe drumul de strajă de-a lungul zidului de nord sau prin pivnița
+inundată de dedesubt. Și pentru echipele
 mai mari: **Shiverpeak Pass** (4v4, 6000x3400), două masive de stâncă ce lasă o
 trecătoare largă presărată cu bolovani și o potecă îngustă pe fiecare margine; și
 **Elonian Plateau** (8v8, 6400x3600), savană deschisă în jurul a cinci mari platouri,

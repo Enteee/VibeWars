@@ -617,6 +617,8 @@ export default {
   "hud.relicScoredOurs": "Relikvia doručená!",
   "hud.relicScoredTheirs": "Nepriateľ doručil relikviu",
   "hud.relicTheirs": "Nepriateľská relikvia",
+  "hud.respawnIn": "Späť o {seconds}",
+  "hud.respawnResurrectionOnly": "Počkaj na oživenie",
   "hud.shrinesBoth": "Svätyne: +{ours}, nepriateľ +{theirs}",
   "hud.shrinesOurs": "Svätyne: +{ours}",
   "hud.shrinesTheirs": "Nepriateľské svätyne: +{theirs}",
@@ -1533,6 +1535,13 @@ export default {
   "training.soundOn": "Zvuk zapnutý.",
   "training.you": "Ty",
 
+  "tutorial.call.hint": "Označ potkana a ja udriem toho.",
+  "tutorial.call.how":
+    "Klikni kolieskom na potkana alebo klikni na lištu cieľa, aby si ho označil. {keys} zameria, čo tvoj tím označil.",
+  "tutorial.call.intro": "Dva potkany. Ty vyberáš, ja bijem. Označ jedného.",
+  "tutorial.call.other": "Označ toho druhého.",
+  "tutorial.call.praise": "Označ cieľ a celý tím bije do toho istého.",
+  "tutorial.call.t": "Presne tak. {keys} nájde označený cieľ.",
   "tutorial.climb.hint": "Hore na rímsu, potom dole na zem pod ňou.",
   "tutorial.climb.how":
     "Klikni, kam sa chceš postaviť. Alt+klik (Option na Macu) vyberie zem pod tebou.",
@@ -1567,6 +1576,12 @@ export default {
   "tutorial.moreSoon": "Čoskoro ďalšie lekcie. Uvidíme sa vonku!",
   "tutorial.offer": "Si tu nový? Tvoj učiteľ ti ukáže základy.",
   "tutorial.offerTitle": "Prvýkrát?",
+  "tutorial.ping.hint": "Označ cestu, kadiaľ chceš ísť.",
+  "tutorial.ping.how":
+    "Klikni kolieskom na zem, klikni na kompas alebo ťahaj po kompase a nakresli čiaru.",
+  "tutorial.ping.intro": "Doľava, alebo doprava? Rozhodni ty.",
+  "tutorial.ping.pocket": "Pekný výhľad. Ale zlá cesta.",
+  "tutorial.ping.praise": "Dobrá voľba. Ideme ďalej.",
   "tutorial.ramp.hint": "Hore po oboch schodiskách k značke na vysokej plošine.",
   "tutorial.ramp.how": "Klikni na vysokú plošinu. Cesta vedie po schodoch sama.",
   "tutorial.ramp.intro": "Schody spájajú poschodia. Vstúp na ne a vynesú ťa hore.",

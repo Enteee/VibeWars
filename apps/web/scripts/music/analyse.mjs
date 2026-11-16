@@ -159,6 +159,7 @@ const BOOKKEEPING = new Set([
  * @property {number | null} dspCost peak DSP cost of what sounds at once, reverbs included (#508)
  * @property {string} dspPeak who sounds at that peak, costliest first
  * @property {Register[]} registers per sound, over the form (#449)
+ * @property {Record<string, unknown>[]} values every event's controls, in time order
  */
 
 /**
@@ -537,6 +538,7 @@ export async function analyseTrack(
       distinctPhrases: distinctPhrasesOf(keysByCycle, formCycles, phraseCycles),
       eventsPerSecond: formSeconds === null ? null : formEvents / formSeconds,
       roomMixes: roomMixesOf(formValues),
+      values: events.map((e) => e.value),
       registers: [...seenRegister.values()]
         .map((r) => ({
           sound: r.sound,
@@ -751,6 +753,70 @@ export const SFX_CONTROLS = new Set(
   ),
 );
 
+/** No tonal voice of a cue sounds above this, at any moment (#3371). */
+export const SFX_MAX_HZ = 1200;
+/** A square or sawtooth voice is filtered at or under this. */
+const SFX_HARSH_LPF = 3000;
+/** So is a white-noise voice, at or under this. */
+const SFX_NOISE_LPF = 6000;
+/** The highest rate a cast motif plays at: +12 quarter-tones (#3298). */
+export const MOTIF_MAX_RATE = 2 ** (12 / 24);
+
+/**
+ * The highest pitch one event sounds, in Hz: its `freq` or `note`, at the
+ * peak of its pitch envelope. Null when it has no pitch to bound.
+ *
+ * @param {Record<string, unknown>} value
+ * @returns {number | null}
+ */
+export function peakHzOf(value) {
+  if (value.freq === undefined && value.note === undefined) return null;
+  const base =
+    typeof value.freq === "number"
+      ? value.freq
+      : typeof value.note === "number"
+        ? 440 * 2 ** ((value.note - 69) / 12)
+        : Note.freq(String(value.note));
+  if (typeof base !== "number" || !Number.isFinite(base)) return null;
+  const penv = typeof value.penv === "number" ? value.penv : 0;
+  return base * 2 ** (Math.max(penv, 0) / 12);
+}
+
+/**
+ * The pitch and harshness rules of a cue (#3371): nothing tonal above
+ * `SFX_MAX_HZ` (a motif, which the game pitches up, by that over its top
+ * rate), a square or sawtooth voice low-passed, white noise low-passed.
+ *
+ * @param {string} id
+ * @param {Record<string, unknown>[]} values
+ * @returns {string[]}
+ */
+function earRules(id, values) {
+  const at = `sfx ${id}`;
+  const ceiling = id.startsWith("cast-motif-") ? SFX_MAX_HZ / MOTIF_MAX_RATE : SFX_MAX_HZ;
+  /** @type {Set<string>} */
+  const problems = new Set();
+  for (const v of values) {
+    const sound = typeof v.s === "string" ? v.s : "default";
+    const tonal = sound !== "white" && sound !== "pink" && sound !== "brown" && sound !== "crackle";
+    const hz = peakHzOf(v);
+    if (tonal && hz === null) problems.add(`${at}: can't bound the pitch of a ${sound} voice`);
+    if (tonal && hz !== null && hz > ceiling) {
+      problems.add(
+        `${at}: a ${sound} voice reaches ${hz.toFixed(0)} Hz, over ${ceiling.toFixed(0)} Hz`,
+      );
+    }
+    const lpf = typeof v.lpf === "number" ? v.lpf : typeof v.cutoff === "number" ? v.cutoff : null;
+    if ((sound === "square" || sound === "sawtooth") && (lpf === null || lpf > SFX_HARSH_LPF)) {
+      problems.add(`${at}: a ${sound} voice needs lpf of ${String(SFX_HARSH_LPF)} or less`);
+    }
+    if (sound === "white" && (lpf === null || lpf > SFX_NOISE_LPF)) {
+      problems.add(`${at}: a white voice needs lpf of ${String(SFX_NOISE_LPF)} or less`);
+    }
+  }
+  return [...problems];
+}
+
 /**
  * Runs a sound effect (#2524) and applies the rules that hold for any
  * source: no evaluation error or warning, built-in synths and the music
@@ -797,5 +863,6 @@ export async function checkSfx(sfx, { allowedSounds: allowed }) {
     problems.push(`${at}: stack member #${String(m)} plays no event`);
   }
   if (a.events === 0) problems.push(`${at}: plays nothing`);
+  problems.push(...earRules(sfx.id, a.values));
   return problems;
 }

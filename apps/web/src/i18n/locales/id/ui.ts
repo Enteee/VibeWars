@@ -525,6 +525,8 @@ export default {
   "hud.relicScoredOurs": "Relik mencetak poin!",
   "hud.relicScoredTheirs": "Relik musuh mencetak poin",
   "hud.relicTheirs": "Relik musuh",
+  "hud.respawnIn": "Kembali dalam {seconds}",
+  "hud.respawnResurrectionOnly": "Tunggu dibangkitkan",
   "hud.shrinesBoth": "Kuil: +{ours}, musuh +{theirs}",
   "hud.shrinesOurs": "Kuil: +{ours}",
   "hud.shrinesTheirs": "Kuil musuh: +{theirs}",
@@ -1342,6 +1344,13 @@ export default {
   "training.soundOn": "Suara nyala.",
   "training.you": "Kamu",
 
+  "tutorial.call.hint": "Tandai seekor tikus, dan aku pukul yang itu.",
+  "tutorial.call.how":
+    "Klik roda pada tikus, atau klik bilah target, untuk menandainya. {keys} membidik yang ditandai timmu.",
+  "tutorial.call.intro": "Dua tikus. Kamu pilih, aku pukul. Tandai satu.",
+  "tutorial.call.other": "Tandai yang satunya.",
+  "tutorial.call.praise": "Tandai, dan tim memukul sasaran yang sama.",
+  "tutorial.call.t": "Begitu. {keys} menemukan sasaran yang ditandai.",
   "tutorial.climb.hint": "Naik ke tepian, lalu turun ke tanah di bawahnya.",
   "tutorial.climb.how":
     "Klik tempat kamu mau berdiri. Alt+klik (Option di Mac) memilih tanah di bawah.",
@@ -1376,6 +1385,12 @@ export default {
   "tutorial.moreSoon": "Pelajaran lain segera hadir. Sampai jumpa di luar sana!",
   "tutorial.offer": "Baru di sini? Gurumu akan menunjukkan dasarnya.",
   "tutorial.offerTitle": "Pertama kali?",
+  "tutorial.ping.hint": "Ping jalan yang ingin kamu tempuh.",
+  "tutorial.ping.how":
+    "Klik roda di tanah, klik kompas, atau seret di kompas untuk menggambar garis.",
+  "tutorial.ping.intro": "Kiri atau kanan? Kamu yang tentukan.",
+  "tutorial.ping.pocket": "Pemandangan bagus. Tapi salah jalan.",
+  "tutorial.ping.praise": "Pilihan bagus. Lanjut.",
   "tutorial.ramp.hint": "Naiki kedua tangga ke tanda di dek tinggi.",
   "tutorial.ramp.how": "Klik dek tinggi. Jalurmu menaiki tangga untukmu.",
   "tutorial.ramp.intro": "Tangga menghubungkan lapisan. Melangkahlah, dan ia membawamu naik.",

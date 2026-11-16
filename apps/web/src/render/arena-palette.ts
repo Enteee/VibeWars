@@ -214,18 +214,44 @@ export const GATE_PORTCULLIS_LOOK = {
   dark: 0x0b0e14,
 };
 
+/** How a breakable wall's face is laid (#3370): dressed blocks, small bricks, a sheet of ice, or field stones. */
+export type BreakableCourses = "blocks" | "bricks" | "ice" | "fieldstone";
+
+/** A breakable wall's material (#3370): its stone, its cracks, and what it falls to. */
+export interface BreakableLook {
+  readonly courses: BreakableCourses;
+  readonly top: number;
+  readonly face: number;
+  readonly lit: number;
+  /** The joints between its blocks, or the strata in its ice. */
+  readonly mortar: number;
+  readonly edge: number;
+  readonly crack: number;
+  /** What glows in its cracks once it is badly hurt; `undefined` where nothing does. */
+  readonly glow: number | undefined;
+  /** Moss on its top and upper face; `undefined` where none grows. */
+  readonly moss: number | undefined;
+  readonly rubble: number;
+  readonly rubbleFace: number;
+  readonly dust: number;
+  readonly shadow: number;
+}
+
 /**
- * A breakable wall (#3031, docs/art/3030-world-elements.md): chiselled
- * stone, warmer than a map wall's blue-grey, so it reads as one that can
- * break; dark cracks as it is struck, and rubble and dust once it falls.
+ * A breakable wall of chiselled stone (#3031, docs/art/3030-world-elements.md),
+ * warmer than a map wall's blue-grey, so it reads as one that can break:
+ * the hall's and the heights' look, and every map of one layer's.
  */
-export const BREAKABLE_WALL_LOOK = {
+export const BREAKABLE_WALL_LOOK: BreakableLook = {
+  courses: "blocks",
   top: 0xa69f92,
   face: 0x6f695f,
   lit: 0xc4bdb0,
   mortar: 0x4d4943,
   edge: 0x23211d,
   crack: 0x17150f,
+  glow: undefined,
+  moss: undefined,
   rubble: 0x8f887b,
   rubbleFace: 0x5e5850,
   dust: 0x9a948a,
@@ -709,6 +735,102 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   volcanic: biomeMaterials(BIOME_TONES.volcanic, TILED_GROUND.volcanic),
   snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
 };
+
+/**
+ * Each biome's breakable wall (#3370): a weaker patch of its own walls,
+ * tinted from its tones. Basalt with embers in its cracks, mud brick with
+ * straw-pale mortar, blue-white ice that cracks white, mossy field stone;
+ * the chiselled stone elsewhere.
+ */
+function breakableLookOf(biome: Biome): BreakableLook {
+  const tones = BIOME_TONES[biome];
+  switch (biome) {
+    case "volcanic":
+      return {
+        courses: "blocks",
+        top: mix(tones.rock, tones.stone, 0.18),
+        face: shade(tones.rock, 0.08),
+        lit: mix(tones.rock, tones.stone, 0.55),
+        mortar: shade(tones.rock, 0.62),
+        edge: shade(tones.rock, 0.8),
+        crack: 0x1c0d08,
+        glow: 0xe0662a,
+        moss: undefined,
+        rubble: mix(tones.rock, tones.stone, 0.12),
+        rubbleFace: shade(tones.rock, 0.4),
+        dust: mix(tones.ground, tones.stone, 0.45),
+        shadow: BREAKABLE_WALL_LOOK.shadow,
+      };
+    case "desert":
+      return {
+        courses: "bricks",
+        top: mix(tones.earth, tones.stone, 0.62),
+        face: mix(tones.earth, tones.stone, 0.3),
+        lit: mix(tones.stone, 0xffffff, 0.18),
+        mortar: mix(tones.stone, 0xeee0b4, 0.55),
+        edge: shade(tones.earth, 0.65),
+        crack: shade(tones.earth, 0.72),
+        glow: undefined,
+        moss: undefined,
+        rubble: mix(tones.earth, tones.stone, 0.5),
+        rubbleFace: mix(tones.earth, tones.ground, 0.3),
+        dust: mix(tones.stone, tones.earth, 0.4),
+        shadow: BREAKABLE_WALL_LOOK.shadow,
+      };
+    case "snow":
+      return {
+        courses: "ice",
+        top: mix(tones.stone, 0xd6ecfa, 0.7),
+        face: mix(tones.stone, 0x7fa9c6, 0.6),
+        lit: 0xf2faff,
+        mortar: mix(tones.stone, 0xc4e0f2, 0.6),
+        edge: mix(tones.rock, 0x2c4a60, 0.5),
+        crack: 0xf4fbff,
+        glow: undefined,
+        moss: undefined,
+        rubble: mix(tones.stone, 0xd6ecfa, 0.55),
+        rubbleFace: mix(tones.stone, 0x7fa9c6, 0.45),
+        dust: 0xe4eef4,
+        shadow: BREAKABLE_WALL_LOOK.shadow,
+      };
+    case "wilds":
+      return {
+        courses: "fieldstone",
+        top: mix(tones.rock, tones.stone, 0.4),
+        face: shade(tones.rock, 0.12),
+        lit: mix(tones.rock, tones.stone, 0.75),
+        mortar: shade(tones.rock, 0.5),
+        edge: shade(tones.rock, 0.75),
+        crack: shade(tones.rock, 0.8),
+        glow: undefined,
+        moss: mix(tones.plant, 0x7a9a4a, 0.35),
+        rubble: mix(tones.rock, tones.stone, 0.3),
+        rubbleFace: shade(tones.rock, 0.25),
+        dust: mix(tones.ground, tones.stone, 0.5),
+        shadow: BREAKABLE_WALL_LOOK.shadow,
+      };
+    case "hall":
+    case "heights":
+      return BREAKABLE_WALL_LOOK;
+  }
+}
+
+const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
+  hall: breakableLookOf("hall"),
+  heights: breakableLookOf("heights"),
+  wilds: breakableLookOf("wilds"),
+  desert: breakableLookOf("desert"),
+  volcanic: breakableLookOf("volcanic"),
+  snow: breakableLookOf("snow"),
+};
+
+/** The material a map's breakable walls are (#3370): a map of one layer's are stone whatever its biome. */
+export function breakableLook(map: {
+  readonly layerCount: number;
+  readonly biome: Biome;
+}): BreakableLook {
+  return map.layerCount > 1 ? BREAKABLE_LOOK[map.biome] : BREAKABLE_WALL_LOOK;
+}
 
 /** Paving on a map of one layer (#3210): laid in the flat palette's tones, on the scene's background. */
 const FLAT_PAVING = pavingColours({

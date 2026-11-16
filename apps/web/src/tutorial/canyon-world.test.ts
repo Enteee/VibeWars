@@ -12,19 +12,25 @@ import { describe, expect, it } from "vitest";
 import { CANYON_ARRIVAL, CANYON_ARRIVALS } from "./canyon-map.js";
 import {
   BAD_GROUND,
+  CALL_RATS,
   CLEARING,
   CRACKED_WALL,
   DODGE_MARK,
+  FORK,
   LEDGE,
   RAMP,
   RAT_AGGRO,
   RAT_POCKET,
   badGroundTutor,
+  callTutor,
   canyonWorld,
   clearingTutor,
   ledgeTutor,
+  pingTutor,
   rampTutor,
   ratPocket,
+  tunnelStart,
+  wallStart,
   wallTutor,
 } from "./canyon-world.js";
 import { DODGE_REACH } from "./dodge-count.js";
@@ -33,6 +39,21 @@ import { MARK_REACH } from "./stations.js";
 import { PLAYER_PROFESSION, SELF_ID, TUTOR_ID, houseBuild } from "./tutorial-world.js";
 
 const TICK = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
+
+/** One step, its log fed to `watch` as the connection would deliver it. */
+const stepWatched = (simulation: MatchSimulation, watch: RatWatch): void => {
+  for (const entry of simulation.step(TICK).log) {
+    watch.observe({
+      casterSessionId: entry.sourceId ?? "",
+      cause: entry.cause,
+      skillId: entry.skillId ?? "",
+      weaponId: entry.weaponId ?? "",
+      attributeId: entry.attributeId ?? "",
+      doubleStrike: entry.doubleStrike,
+      events: entry.events,
+    });
+  }
+};
 
 describe("canyonWorld (#3247)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
@@ -49,6 +70,33 @@ describe("canyonWorld (#3247)", () => {
     expect(tutor?.layer).toBe(CANYON_ARRIVAL.layer);
     expect(world.map.id).toBe(CANYON_ARRIVAL.map.id);
     expect(world.zones.filter(({ kind }) => kind === "rockfall").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("starts the pair on the high deck, with station 8's rats slain, for a seeded station 11 (#3383)", () => {
+    const world = canyonWorld("canyon-test", build, build, 1, tunnelStart());
+    const { simulation } = world;
+    for (let elapsed = 0; elapsed < 1; elapsed += TICK) {
+      simulation.step(TICK);
+    }
+    const ids = [...simulation.participants()].map(({ id }) => id);
+    expect(ids).toEqual(expect.arrayContaining(CALL_RATS.rats.map(({ id }) => id)));
+    for (const { id } of RAT_POCKET.rats) {
+      expect(ids).not.toContain(id);
+    }
+    for (const id of [SELF_ID, TUTOR_ID]) {
+      expect(simulation.get(id)?.layer).toBe(RAMP.layer);
+    }
+    expect(simulation.get(SELF_ID)?.position).toEqual(RAMP.mark);
+  });
+
+  it("starts the pair on station 4's mark, the wall still whole, for a seeded station 5 (#3383)", () => {
+    const { simulation } = canyonWorld("canyon-test", build, build, 0, wallStart());
+    expect(simulation.get(SELF_ID)?.position).toEqual(DODGE_MARK.position);
+    for (const id of [SELF_ID, TUTOR_ID]) {
+      expect(simulation.get(id)?.layer).toBe(DODGE_MARK.layer);
+    }
+    const wall = simulation.breakables.find(({ id }) => id === CRACKED_WALL.id);
+    expect(wall?.health).toBe(CRACKED_WALL.maxHealth);
   });
 
   it("puts station 4's mark where the player walks to, on the trail past the boulder run", () => {
@@ -308,21 +356,6 @@ describe("badGroundTutor (#3310)", () => {
 describe("ratPocket (#3316)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
   const ids = RAT_POCKET.rats.map(({ id }) => id);
-  /** One step, its log fed to `watch` as the connection would deliver it. */
-  const stepWatched = (simulation: MatchSimulation, watch: RatWatch): void => {
-    for (const entry of simulation.step(TICK).log) {
-      watch.observe({
-        casterSessionId: entry.sourceId ?? "",
-        cause: entry.cause,
-        skillId: entry.skillId ?? "",
-        weaponId: entry.weaponId ?? "",
-        attributeId: entry.attributeId ?? "",
-        doubleStrike: entry.doubleStrike,
-        events: entry.events,
-      });
-    }
-  };
-
   it("places three rats at the pocket on the second map, on team 1, the big one at 240", () => {
     const world = canyonWorld("rats-test", build, build, 1);
     const { simulation } = world;
@@ -368,7 +401,7 @@ describe("ratPocket (#3316)", () => {
   it("runs the runner off when the player hits it, the tutor joining only once it is hit", () => {
     const { simulation } = canyonWorld("rats-test", build, build, 1);
     const [runnerId = ""] = ids;
-    const watch = createRatWatch(SELF_ID, ids, build.skillBar);
+    const watch = createRatWatch(SELF_ID, TUTOR_ID, ids, build.skillBar);
     const pocket = ratPocket(simulation, watch, undefined);
     const runner = (): Vec2 => simulation.get(runnerId)?.position ?? vec2(0, 0);
     const post = runner();
@@ -400,10 +433,11 @@ describe("ratPocket (#3316)", () => {
 
   it("brings one more rat once all are dead with too few skills, and no more after two", () => {
     const { simulation } = canyonWorld("rats-test", build, build, 1);
-    const watch = createRatWatch(SELF_ID, ids, build.skillBar);
+    const watch = createRatWatch(SELF_ID, TUTOR_ID, ids, build.skillBar);
     const pocket = ratPocket(simulation, watch, undefined);
     const none: RatTally = {
       hitByPlayer: new Set(),
+      hitByTutor: new Set(),
       skillsOnRats: new Set(),
       knockedDown: new Set(),
     };
@@ -421,6 +455,64 @@ describe("ratPocket (#3316)", () => {
     pocket.step({ ...none, skillsOnRats: new Set(["warrior.hammer-bash", "warrior.sprint"]) });
     expect(pocket.alive()).toBe(0);
     expect(simulation.get("tutorial-rat-5")).toBeUndefined();
+  });
+});
+
+describe("callTutor (#3331)", () => {
+  const build = houseBuild(PLAYER_PROFESSION);
+  const [{ id: first }, { id: second }] = CALL_RATS.rats;
+  const none: RatTally = {
+    hitByPlayer: new Set(),
+    hitByTutor: new Set(),
+    skillsOnRats: new Set(),
+    knockedDown: new Set(),
+  };
+
+  it("places two rats on team 1 that bite no one who has not struck them", () => {
+    const { simulation } = canyonWorld("call-test", build, build, 1);
+    for (const { id, post } of CALL_RATS.rats) {
+      expect(simulation.get(id)?.combatant.team).toBe(1);
+      expect(simulation.get(id)?.position).toEqual(post);
+    }
+    const [a, b] = CALL_RATS.rats;
+    expect(Math.hypot(a.post.x - b.post.x, a.post.y - b.post.y)).toBe(200);
+  });
+
+  it("has the tutor strike the rat called, the latest call, and never the other", () => {
+    const { simulation } = canyonWorld("call-test", build, build, 1);
+    const watch = createRatWatch(SELF_ID, TUTOR_ID, [first, second], build.skillBar);
+    const tutor = callTutor(simulation, watch);
+    const attacking = (): string | undefined =>
+      simulation.get(TUTOR_ID)?.combatant.attack?.targetId;
+    tutor.step(undefined, watch.tally());
+    expect(attacking()).toBeUndefined();
+    tutor.step(TUTOR_ID, watch.tally());
+    expect(attacking()).toBeUndefined();
+    tutor.step(first, watch.tally());
+    expect(attacking()).toBe(first);
+    tutor.step(second, watch.tally());
+    expect(attacking()).toBe(second);
+    // The tutor walks from where the pair arrives, round through the tunnel.
+    for (let walked = 0; walked < 90 && !watch.tally().hitByTutor.has(second); walked += TICK) {
+      stepWatched(simulation, watch);
+      tutor.step(second, watch.tally());
+    }
+    expect(watch.tally().hitByTutor).toEqual(new Set([second]));
+    expect(tutor.lost()).toBe(false);
+  });
+
+  it("says a called rat was lost once it died unstruck by the tutor, and brings one more once both are", () => {
+    const { simulation } = canyonWorld("call-test", build, build, 1);
+    const watch = createRatWatch(SELF_ID, TUTOR_ID, [first, second], build.skillBar);
+    const tutor = callTutor(simulation, watch);
+    tutor.step(first, none);
+    simulation.remove(first);
+    tutor.step(undefined, none);
+    expect(tutor.lost()).toBe(true);
+    expect(simulation.get("tutorial-call-rat-3")).toBeUndefined();
+    simulation.remove(second);
+    tutor.step(undefined, none);
+    expect(simulation.get("tutorial-call-rat-3")?.position).toEqual(CALL_RATS.extra);
   });
 });
 
@@ -540,5 +632,60 @@ describe("rampTutor (#3325)", () => {
     expect(
       Math.hypot((at?.position.x ?? 0) - RAMP.foot.x, (at?.position.y ?? 0) - RAMP.foot.y),
     ).toBeLessThan(MARK_REACH);
+  });
+});
+
+describe("pingTutor (#3332)", () => {
+  const build = houseBuild(PLAYER_PROFESSION);
+  const { fork, east, pocket, eastSide, lounge } = FORK;
+  const at = (simulation: MatchSimulation, point: Vec2): boolean => {
+    const tutor = simulation.get(TUTOR_ID);
+    return (
+      tutor !== undefined &&
+      Math.hypot(tutor.position.x - point.x, tutor.position.y - point.y) < MARK_REACH
+    );
+  };
+  const run = (until: () => boolean, step: () => void, seconds = 120): void => {
+    for (let walked = 0; walked < seconds && !until(); walked += TICK) {
+      step();
+    }
+  };
+
+  it("marks the pocket off the north leg, the east end as far from the fork", () => {
+    expect(pocket.y).toBeGreaterThan(fork.y);
+    expect(Math.hypot(east.x - fork.x, east.y - fork.y)).toBeCloseTo(
+      Math.hypot(pocket.x - fork.x, pocket.y - fork.y),
+    );
+    expect(eastSide.x).toBeGreaterThan(fork.x);
+  });
+
+  it("goes into the pocket once on a pocket ping, back to the fork, and east on an east ping", () => {
+    const { simulation } = canyonWorld("ping-test", build, build, 1);
+    for (const { id } of [...RAT_POCKET.rats, ...CALL_RATS.rats]) {
+      simulation.remove(id);
+    }
+    const tutor = pingTutor(simulation);
+    let ping: Vec2 | undefined;
+    const step = (): void => {
+      simulation.step(TICK);
+      tutor.step(ping);
+    };
+    run(() => at(simulation, fork), step);
+    expect(at(simulation, fork)).toBe(true);
+    ping = pocket;
+    run(() => at(simulation, lounge), step, 30);
+    expect(at(simulation, lounge)).toBe(true);
+    run(() => at(simulation, fork), step, 30);
+    expect(at(simulation, fork)).toBe(true);
+    // Once back, the same pocket ping sends it nowhere.
+    run(() => !at(simulation, fork), step, 5);
+    expect(at(simulation, fork)).toBe(true);
+    ping = east;
+    run(() => at(simulation, eastSide), step, 30);
+    expect(at(simulation, eastSide)).toBe(true);
+    // East is for good: a pocket ping after it does not move it.
+    ping = pocket;
+    run(() => !at(simulation, eastSide), step, 5);
+    expect(at(simulation, eastSide)).toBe(true);
   });
 });

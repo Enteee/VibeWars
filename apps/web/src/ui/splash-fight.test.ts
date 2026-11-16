@@ -70,3 +70,24 @@ describe("the splash fight's professions (#3336)", () => {
     }
   });
 });
+
+describe("the splash fight's world (#3407)", () => {
+  it("stands the map's gates and breakable walls, as a match does", () => {
+    // Sandstone Steps: lever-worked gates on its under-pass and a mud-brick
+    // wall in its south alley (#3278). The splash once built neither.
+    const mapId = "sandstone-steps";
+    const map = hostMap(mapId);
+    if (map === undefined) {
+      throw new Error(`no map ${mapId}`);
+    }
+    const snapshot = splashConnection(
+      map,
+      { mapId, teamSize: 1, still: false },
+      "world",
+    ).getSnapshot();
+    expect(snapshot.gates).toHaveLength(map.descriptor.gates.length);
+    expect(snapshot.gates.length).toBeGreaterThan(0);
+    expect(snapshot.breakables).toHaveLength(map.descriptor.breakables.length);
+    expect(snapshot.breakables.every((health) => health > 0)).toBe(true);
+  });
+});

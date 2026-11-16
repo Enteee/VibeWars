@@ -31,12 +31,13 @@ import { SPLASH_RULES } from "../ui/splash-fight.js";
 import {
   CANYON_ARRIVAL,
   CANYON_ARRIVALS,
+  CANYON_POCKET,
   CANYON_SITES,
   TUTORIAL_CANYON,
   type CanyonPoint,
 } from "./canyon-map.js";
 import type { RatTally, RatWatch } from "./rat-watch.js";
-import { SKILLS_ON_RATS } from "./stations.js";
+import { SKILLS_ON_RATS, pingBranch } from "./stations.js";
 import { SELF_ID, TUTOR_ID, body } from "./tutorial-world.js";
 
 /** Where the tutor stands as the pair arrives: beside the player, to the north. */
@@ -144,20 +145,52 @@ export interface CanyonWorld {
   readonly besideMark: Vec2;
 }
 
+/** Where the pair stand as a canyon map is built (#3383), and whether its rat pocket is cleared. */
+export interface CanyonStart {
+  readonly position: Vec2;
+  readonly layer: number;
+  readonly ratsSlain: boolean;
+}
+
+/**
+ * The canyon's first map entered at station 5 (#3383), which only an e2e
+ * build's seeded start does: the pair on station 4's mark, where its
+ * dodges leave them.
+ */
+export function wallStart(): CanyonStart {
+  return { position: DODGE_MARK.position, layer: DODGE_MARK.layer, ratsSlain: false };
+}
+
+/**
+ * The canyon's second map entered at station 11 (#3383), which only an e2e
+ * build's seeded start does: the pair on the high deck, where station 10
+ * leaves them, and station 8's rats slain.
+ */
+export function tunnelStart(): CanyonStart {
+  return { position: RAMP.mark, layer: RAMP.layer, ratsSlain: true };
+}
+
 /**
  * One of the tutorial canyon's two maps (#3245), `part` 0 or 1, as a world
  * for the pair: no bots, only its zones, which strike on their own clock,
  * and on the second the rat pocket's rats (#3316). The player stands on
- * the map's arrival, the tutor beside them; both play the builds they
- * played on the battlefield.
+ * `start`, the map's arrival unless a seeded start says otherwise, the
+ * tutor beside them; both play the builds they played on the battlefield.
  */
 export function canyonWorld(
   seed: string,
   playerBuild: PlayerBuild,
   tutorBuild: PlayerBuild,
   part: 0 | 1,
+  start: CanyonStart = {
+    position: CANYON_ARRIVALS[part].position,
+    layer: CANYON_ARRIVALS[part].layer,
+    ratsSlain: false,
+  },
 ): CanyonWorld {
-  const { map: data, position: arrival, layer: ground } = CANYON_ARRIVALS[part];
+  const { map: data, layer: ground } = CANYON_ARRIVALS[part];
+  const { position: arrival, layer } = start;
+  const rats = start.ratsSlain ? [] : RAT_POCKET.rats.map(ratAt);
   const zones = matchZones(data);
   const simulation = new MatchSimulation({
     seed,
@@ -175,14 +208,17 @@ export function canyonWorld(
     switchedDecks: matchSwitchedDecks(data),
     lifts: matchLifts(data),
     participants: [
-      body(SELF_ID, playerBuild, arrival, undefined),
-      body(
-        TUTOR_ID,
-        tutorBuild,
-        vec2(arrival.x + TUTOR_BESIDE.x, arrival.y + TUTOR_BESIDE.y),
-        undefined,
-      ),
-      ...(part === 0 ? [] : RAT_POCKET.rats.map(ratAt)),
+      { ...body(SELF_ID, playerBuild, arrival, undefined), layer },
+      {
+        ...body(
+          TUTOR_ID,
+          tutorBuild,
+          vec2(arrival.x + TUTOR_BESIDE.x, arrival.y + TUTOR_BESIDE.y),
+          undefined,
+        ),
+        layer,
+      },
+      ...(part === 0 ? [] : [...rats, ...CALL_RATS.rats.map(callRatAt)]),
     ],
   });
   return {
@@ -401,10 +437,19 @@ export const RAT_POCKET: CanyonRats = ((): CanyonRats => {
 
 /** `rat` as `MatchSimulation` takes it: a rat of team 1 holding `post`, facing east. */
 function ratAt(rat: CanyonRat): ParticipantSpec {
-  return ratSpec(rat.id, rat.post, rat.post, rat.maxHealth, undefined);
+  return ratSpec(POCKET_GROUND, rat.id, rat.post, rat.post, rat.maxHealth, undefined);
 }
 
+/** Where a rat stands and how close it lets anyone come before it bites. */
+interface RatGround {
+  readonly layer: number;
+  readonly aggroUnits: number;
+}
+
+const POCKET_GROUND: RatGround = { layer: RAT_POCKET.layer, aggroUnits: RAT_AGGRO };
+
 function ratSpec(
+  ground: RatGround,
   id: string,
   at: Vec2,
   post: Vec2,
@@ -415,11 +460,11 @@ function ratSpec(
     id,
     1,
     at,
-    RAT_POCKET.layer,
+    ground.layer,
     {
       kind: "guard",
       post,
-      aggroUnits: RAT_AGGRO,
+      aggroUnits: ground.aggroUnits,
       leashUnits: RAT_LEASH,
       rooted: false,
       thinkSeconds: RAT_THINK_SECONDS,
@@ -496,6 +541,7 @@ export function ratPocket(
     simulation.remove(runner.id);
     simulation.add(
       ratSpec(
+        POCKET_GROUND,
         runner.id,
         position,
         vec2(position.x + RAT_FLEE.x, position.y + RAT_FLEE.y),
@@ -539,7 +585,93 @@ export function ratPocket(
         const id = `tutorial-rat-${String(ids.length + 1)}`;
         ids.push(id);
         watch.watch(id);
-        simulation.add(ratSpec(id, RAT_POCKET.extra, RAT_POCKET.extra, undefined, undefined));
+        simulation.add(
+          ratSpec(POCKET_GROUND, id, RAT_POCKET.extra, RAT_POCKET.extra, undefined, undefined),
+        );
+      }
+    },
+  };
+}
+
+/** Station 12's two rats (#3331), on the canyon's second map: they bite only once hit. */
+export interface CanyonCallRats {
+  readonly layer: number;
+  readonly rats: readonly [CanyonRat, CanyonRat];
+  /** Where one more rat comes, if both died with neither called and struck by the tutor. */
+  readonly extra: Vec2;
+  /** Where the tutor waits for the call: west of the rats, on the player's side. */
+  readonly tutorSpot: Vec2;
+}
+
+export const CALL_RATS: CanyonCallRats = ((): CanyonCallRats => {
+  const site = CANYON_SITES.get(12);
+  if (site === undefined) {
+    throw new Error("no site 12 for station 12");
+  }
+  const { position, layer } = site;
+  const at = (dx: number, dy: number): Vec2 => vec2(position.x + dx, position.y + dy);
+  return {
+    layer,
+    rats: [
+      { id: "tutorial-call-rat-1", post: at(0, -100), maxHealth: undefined },
+      { id: "tutorial-call-rat-2", post: at(0, 100), maxHealth: undefined },
+    ],
+    extra: at(0, 0),
+    tutorSpot: at(-250, 0),
+  };
+})();
+
+/** Station 12's rats hold their posts (#3331): no aggro, so they bite only once hit. */
+const CALL_GROUND: RatGround = { layer: CALL_RATS.layer, aggroUnits: 0 };
+
+function callRatAt(rat: CanyonRat): ParticipantSpec {
+  return ratSpec(CALL_GROUND, rat.id, rat.post, rat.post, rat.maxHealth, undefined);
+}
+
+/** Station 12 at the two rats (#3331), stepped once a frame with the team's call. */
+export interface CallTutor {
+  /** A called rat died before the tutor struck it: once true, it stays true. */
+  readonly lost: () => boolean;
+  readonly step: (calledId: string | undefined, tally: RatTally) => void;
+}
+
+/**
+ * Sends the tutor to wait by station 12's rats, then has it attack
+ * whichever rat the team calls, the latest call if it changes, and never
+ * one uncalled. Once both rats are dead with neither struck by the
+ * tutor, one more comes, watched by `watch`.
+ */
+export function callTutor(simulation: MatchSimulation, watch: RatWatch): CallTutor {
+  simulation.walkTo(TUTOR_ID, CALL_RATS.tutorSpot, CALL_RATS.layer);
+  const ids = CALL_RATS.rats.map(({ id }) => id);
+  /** The rats the team has called. */
+  const called = new Set<string>();
+  let lost = false;
+  const standing = (id: string): boolean => simulation.get(id)?.combatant.dead === false;
+  return {
+    lost: () => lost,
+    step: (calledId, tally) => {
+      if (calledId !== undefined && ids.includes(calledId)) {
+        called.add(calledId);
+      }
+      lost ||= ids.some((id) => called.has(id) && !standing(id) && !tally.hitByTutor.has(id));
+      const tutor = simulation.get(TUTOR_ID);
+      if (
+        tutor !== undefined &&
+        calledId !== undefined &&
+        ids.includes(calledId) &&
+        standing(calledId) &&
+        tutor.combatant.attack?.targetId !== calledId
+      ) {
+        simulation.requestAttack(TUTOR_ID, calledId);
+      }
+      if (ids.every((id) => !standing(id) && !tally.hitByTutor.has(id))) {
+        const id = `tutorial-call-rat-${String(ids.length + 1)}`;
+        ids.push(id);
+        watch.watch(id);
+        simulation.add(
+          ratSpec(CALL_GROUND, id, CALL_RATS.extra, CALL_RATS.extra, undefined, undefined),
+        );
       }
     },
   };
@@ -842,6 +974,94 @@ export function tunnelTutor(simulation: MatchSimulation): TunnelTutor {
       const [next] = route;
       if (next !== undefined) {
         simulation.walkTo(TUTOR_ID, next.at, next.layer);
+      }
+    },
+  };
+}
+
+/** How far east of the fork the tutor goes once the east branch is called at station 13 (#3332). */
+const A_FEW_STEPS = 200;
+/** How far west of the parasol the tutor stands in the pocket, and how long, for its line there. */
+const BESIDE_PARASOL = 70;
+const IN_THE_POCKET_SECONDS = 3;
+
+/** Station 13's fork (#3332), on the canyon's second map: the east branch and the pocket. */
+export interface CanyonFork {
+  readonly fork: Vec2;
+  readonly layer: number;
+  /**
+   * The east branch's end, as far east of the fork as the pocket is from
+   * it, so a ping along the trail just past the fork calls east.
+   */
+  readonly east: Vec2;
+  /** The pocket's middle, where the parasol stands. */
+  readonly pocket: Vec2;
+  /** Where the tutor goes once the east branch is called: a few steps past the fork. */
+  readonly eastSide: Vec2;
+  /** Where the tutor stands in the pocket: beside the parasol. */
+  readonly lounge: Vec2;
+}
+
+export const FORK: CanyonFork = ((): CanyonFork => {
+  const site = CANYON_SITES.get(13);
+  if (site === undefined) {
+    throw new Error("no site 13 for station 13");
+  }
+  const { position: fork, layer } = site;
+  const pocket = CANYON_POCKET.position;
+  return {
+    fork,
+    layer,
+    east: vec2(fork.x + Math.hypot(pocket.x - fork.x, pocket.y - fork.y), fork.y),
+    pocket,
+    eastSide: vec2(fork.x + A_FEW_STEPS, fork.y),
+    lounge: vec2(pocket.x - BESIDE_PARASOL, pocket.y),
+  };
+})();
+
+/** The tutor at station 13 (#3332), stepped once a frame with the player's latest ping. */
+export interface PingTutor {
+  readonly step: (ping: Vec2 | undefined) => void;
+}
+
+/**
+ * The tutor at station 13: waits at the fork, and follows the branch the
+ * player pings. The pocket, called first, gets one detour: in to the
+ * parasol, a while there, and back to the fork. The east branch, called
+ * at any time, sends it a few steps past the fork; after that it stays.
+ */
+export function pingTutor(simulation: MatchSimulation): PingTutor {
+  const { fork, layer, east, pocket, eastSide, lounge } = FORK;
+  /** Where the tutor is bound: waiting, in the pocket, back from it, or east for good. */
+  let state: "fork" | "pocket" | "back" | "east" = "fork";
+  /** When the tutor reached the parasol, on the match clock. */
+  let lounging: number | undefined;
+  simulation.walkTo(TUTOR_ID, fork, layer);
+  return {
+    step: (ping) => {
+      const branch = ping === undefined ? undefined : pingBranch(ping, fork, east, pocket);
+      if (state !== "east" && branch === "east") {
+        state = "east";
+        simulation.walkTo(TUTOR_ID, eastSide, layer);
+        return;
+      }
+      if (state === "fork" && branch === "pocket") {
+        state = "pocket";
+        simulation.walkTo(TUTOR_ID, lounge, layer);
+        return;
+      }
+      const tutor = simulation.get(TUTOR_ID);
+      if (state !== "pocket" || tutor === undefined) {
+        return;
+      }
+      const there =
+        Math.hypot(tutor.position.x - lounge.x, tutor.position.y - lounge.y) <= WAYPOINT_REACH;
+      if (lounging === undefined && there) {
+        lounging = simulation.elapsedSeconds;
+      }
+      if (lounging !== undefined && simulation.elapsedSeconds - lounging >= IN_THE_POCKET_SECONDS) {
+        state = "back";
+        simulation.walkTo(TUTOR_ID, fork, layer);
       }
     },
   };

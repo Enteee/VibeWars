@@ -566,6 +566,8 @@ export default {
   "hud.relicScoredOurs": "Relikwie gescoord!",
   "hud.relicScoredTheirs": "Vijand scoort relikwie",
   "hud.relicTheirs": "Vijandelijk relikwie",
+  "hud.respawnIn": "Terug over {seconds}",
+  "hud.respawnResurrectionOnly": "Wacht tot je tot leven wordt gewekt",
   "hud.shrinesBoth": "Schrijnen: +{ours}, vijand +{theirs}",
   "hud.shrinesOurs": "Schrijnen: +{ours}",
   "hud.shrinesTheirs": "Vijandelijke schrijnen: +{theirs}",
@@ -1420,6 +1422,13 @@ export default {
   "training.soundOn": "Geluid aan.",
   "training.you": "Jij",
 
+  "tutorial.call.hint": "Roep een rat af, dan sla ik die.",
+  "tutorial.call.how":
+    "Klik met het wiel op een rat, of klik op de doelbalk, om hem af te roepen. {keys} richt op wat je team afriep.",
+  "tutorial.call.intro": "Twee ratten. Jij kiest, ik sla. Roep er één af.",
+  "tutorial.call.other": "Roep de andere af.",
+  "tutorial.call.praise": "Roep het af, en het team slaat hetzelfde.",
+  "tutorial.call.t": "Zo is het. {keys} vindt het afgeroepen doel.",
   "tutorial.climb.hint": "Op de richel, en dan omlaag naar de grond eronder.",
   "tutorial.climb.how":
     "Klik waar je wilt staan. Alt+klik (Option op een Mac) kiest de grond eronder.",
@@ -1454,6 +1463,12 @@ export default {
   "tutorial.moreSoon": "Binnenkort meer lessen. Tot daarbuiten!",
   "tutorial.offer": "Nieuw hier? Je leraar laat je de basis zien.",
   "tutorial.offerTitle": "Eerste keer?",
+  "tutorial.ping.hint": "Ping de kant die je op wilt.",
+  "tutorial.ping.how":
+    "Klik met het wiel op de grond, klik op het kompas, of sleep over het kompas om een lijn te tekenen.",
+  "tutorial.ping.intro": "Links of rechts? Jij beslist.",
+  "tutorial.ping.pocket": "Mooi uitzicht. Maar verkeerde kant.",
+  "tutorial.ping.praise": "Goed gekozen. Verder.",
   "tutorial.ramp.hint": "Beide trappen op naar de markering op het hoge platform.",
   "tutorial.ramp.how": "Klik op het hoge platform. Je route neemt de treden voor je.",
   "tutorial.ramp.intro": "Trappen verbinden lagen. Loop erop en ze dragen je omhoog.",

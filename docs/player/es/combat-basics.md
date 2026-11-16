@@ -103,6 +103,10 @@ los **resucita** con una habilidad, como Resurrection Signet, que puede
 llevar cualquiera. Algunos modos devuelven a los muertos en oleadas, o por
 sí solos; consulta [Modos](modes.md).
 
+Mientras estás muerto, una línea bajo el marcador cuenta atrás hasta que
+vuelvas, o te dice que esperes a que te resuciten. La ventana del grupo
+muestra la cuenta atrás junto a cada aliado muerto.
+
 Cada muerte te cuesta un 15% de **moral**, hasta -60%: tu salud y energía
 máximas bajan con ella. Cada enemigo que mata tu equipo recupera un 2%,
 hasta 0. En una Batalla de gremios, controlar la base de bandera la sube por

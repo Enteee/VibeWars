@@ -566,6 +566,8 @@ export default {
   "hud.relicScoredOurs": "Relikvie i mål!",
   "hud.relicScoredTheirs": "Fjendens relikvie i mål",
   "hud.relicTheirs": "Fjendens relikvie",
+  "hud.respawnIn": "Tilbage om {seconds}",
+  "hud.respawnResurrectionOnly": "Vent på at blive genoplivet",
   "hud.shrinesBoth": "Helligdomme: +{ours}, fjenden +{theirs}",
   "hud.shrinesOurs": "Helligdomme: +{ours}",
   "hud.shrinesTheirs": "Fjendens helligdomme: +{theirs}",
@@ -1410,6 +1412,13 @@ export default {
   "training.soundOn": "Lyd til.",
   "training.you": "Dig",
 
+  "tutorial.call.hint": "Kald en rotte, så slår jeg den.",
+  "tutorial.call.how":
+    "Klik med hjulet på en rotte, eller klik på målbjælken, for at kalde den. {keys} sigter på det, dit hold har kaldt.",
+  "tutorial.call.intro": "To rotter. Du vælger, jeg slår. Kald én.",
+  "tutorial.call.other": "Kald den anden.",
+  "tutorial.call.praise": "Kald det, og holdet slår det samme.",
+  "tutorial.call.t": "Sådan. {keys} finder det kaldte mål.",
   "tutorial.climb.hint": "Op på afsatsen, og så ned på jorden under den.",
   "tutorial.climb.how":
     "Klik hvor du vil stå. Alt+klik (Option på en Mac) vælger jorden nedenunder.",
@@ -1443,6 +1452,12 @@ export default {
   "tutorial.moreSoon": "Flere lektioner snart. Vi ses derude!",
   "tutorial.offer": "Ny her? Din læremester viser dig det grundlæggende.",
   "tutorial.offerTitle": "Første gang?",
+  "tutorial.ping.hint": "Ping den vej, du vil gå.",
+  "tutorial.ping.how":
+    "Klik med hjulet på jorden, klik på kompasset, eller træk på kompasset for at tegne en linje.",
+  "tutorial.ping.intro": "Venstre eller højre? Du bestemmer.",
+  "tutorial.ping.pocket": "Flot udsigt. Men forkert vej.",
+  "tutorial.ping.praise": "Godt valgt. Videre.",
   "tutorial.ramp.hint": "Op ad begge trapper til mærket på den høje platform.",
   "tutorial.ramp.how": "Klik på den høje platform. Din vej tager trapperne for dig.",
   "tutorial.ramp.intro": "Trapper forbinder lag. Gå ud på dem, så bærer de dig op.",

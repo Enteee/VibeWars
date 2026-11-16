@@ -26,12 +26,29 @@ Regenerate with `node scripts/assets/world-elements-study.mjs docs/art`
 
 ## Destructible wall (#3031)
 
-- A block of the chiselled stone of the rock study (lit top `#a69f92`, face
-  `#6f695f`, mortar `#4d4943`), so it reads as a wall that can break, unlike
-  indestructible walls, which stay `wallTop` blue-grey.
-- Damage shows as cracks: none, a few at 45 % health, many near death. A
-  health bar shows on hover or when targeted.
-- Crumbled: rubble chunks and a dust puff; the wall is gone.
+- A block of its biome's material (#3370), a weaker patch of that biome's
+  walls: dark basalt blocks with embers in the cracks (volcanic), mud brick
+  with straw-pale mortar (desert), blue-white ice, translucent at its top
+  edge, that cracks white (snow), mossy field stone (wilds). The hall, the
+  heights and every map of one layer keep the chiselled stone of the rock
+  study (lit top `#a69f92`, face `#6f695f`, mortar `#4d4943`). Each is
+  tinted from its biome's tones and lit as walls are, with a lit top edge,
+  a darker face laid in its courses, an outline and a south-east shadow.
+- Damage shows as a crack network that grows with it: 2 to 4 origins along
+  the wall, about one per 160 units, each a branching line wandering up the
+  south face and over the lip onto the top. The first hairline shows at the
+  first hit, and most of the network by 20 % health. A hit's new length
+  draws in over 0.15 s, and 2 to 4 chips of the face fall off its tip and
+  fade. Cracks are 2 px at the origin and 1 px at the tips, with a 1 px lit
+  lip over each; volcanic ones glow faintly below half health. A health bar
+  shows on hover or when targeted.
+- Falling: over 0.6 s the wall sags to 35 % of its height, 8 to 14 blocks
+  tumble out on short arcs to both sides, and a dust puff of its material
+  hangs for 1 s. It stops blocking at once.
+- Crumbled: a pile of its material with the tumbled blocks lying where they
+  landed; the wall is gone.
+
+![The four biome materials, and the stone, whole, at 50 %, at 15 % and falling](3370-breakable-walls.png)
 
 ## Atmosphere (#3032)
 

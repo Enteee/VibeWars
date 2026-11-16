@@ -567,6 +567,8 @@ export default {
   "hud.relicScoredOurs": "Relik inlämnad!",
   "hud.relicScoredTheirs": "Fiendens relik inlämnad",
   "hud.relicTheirs": "Fiendens relik",
+  "hud.respawnIn": "Tillbaka om {seconds}",
+  "hud.respawnResurrectionOnly": "Vänta på att bli återupplivad",
   "hud.shrinesBoth": "Helgedomar: +{ours}, fienden +{theirs}",
   "hud.shrinesOurs": "Helgedomar: +{ours}",
   "hud.shrinesTheirs": "Fiendens helgedomar: +{theirs}",
@@ -1411,6 +1413,13 @@ export default {
   "training.soundOn": "Ljud på.",
   "training.you": "Du",
 
+  "tutorial.call.hint": "Ropa ut en råtta, så slår jag den.",
+  "tutorial.call.how":
+    "Klicka med hjulet på en råtta, eller klicka på målfältet, för att ropa ut den. {keys} siktar på det ditt lag ropade ut.",
+  "tutorial.call.intro": "Två råttor. Du väljer, jag slår. Ropa ut en.",
+  "tutorial.call.other": "Ropa ut den andra.",
+  "tutorial.call.praise": "Ropa ut det, så slår laget samma sak.",
+  "tutorial.call.t": "Just så. {keys} hittar det utropade målet.",
   "tutorial.climb.hint": "Upp på avsatsen, och sedan ner till marken under den.",
   "tutorial.climb.how":
     "Klicka där du vill stå. Alt+klick (Option på en Mac) väljer marken nedanför.",
@@ -1444,6 +1453,12 @@ export default {
   "tutorial.moreSoon": "Fler lektioner snart. Vi ses där ute!",
   "tutorial.offer": "Ny här? Din lärare visar dig grunderna.",
   "tutorial.offerTitle": "Första gången?",
+  "tutorial.ping.hint": "Pinga vägen du vill gå.",
+  "tutorial.ping.how":
+    "Klicka med hjulet på marken, klicka på kompassen eller dra på kompassen för att rita en linje.",
+  "tutorial.ping.intro": "Vänster eller höger? Du bestämmer.",
+  "tutorial.ping.pocket": "Fin utsikt. Men fel väg.",
+  "tutorial.ping.praise": "Bra val. Vidare.",
   "tutorial.ramp.hint": "Upp för båda trapporna till märket på den höga plattformen.",
   "tutorial.ramp.how": "Klicka på den höga plattformen. Din väg tar trappstegen åt dig.",
   "tutorial.ramp.intro": "Trappor binder ihop lager. Gå på dem så bär de dig upp.",

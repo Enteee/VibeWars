@@ -619,6 +619,8 @@ export default {
   "hud.relicScoredOurs": "Relikwia zdobyta!",
   "hud.relicScoredTheirs": "Wróg zdobył relikwię",
   "hud.relicTheirs": "Relikwia wroga",
+  "hud.respawnIn": "Powrót za {seconds}",
+  "hud.respawnResurrectionOnly": "Czekaj na wskrzeszenie",
   "hud.shrinesBoth": "Kapliczki: +{ours}, wróg +{theirs}",
   "hud.shrinesOurs": "Kapliczki: +{ours}",
   "hud.shrinesTheirs": "Kapliczki wroga: +{theirs}",
@@ -1542,6 +1544,13 @@ export default {
   "training.soundOn": "Dźwięk wł.",
   "training.you": "Ty",
 
+  "tutorial.call.hint": "Wskaż szczura, a uderzę w niego.",
+  "tutorial.call.how":
+    "Kliknij kółkiem szczura albo kliknij pasek celu, by go wskazać. {keys} celuje w to, co wskazała twoja drużyna.",
+  "tutorial.call.intro": "Dwa szczury. Ty wybierasz, ja biję. Wskaż jednego.",
+  "tutorial.call.other": "Wskaż drugiego.",
+  "tutorial.call.praise": "Wskaż cel, a drużyna bije w to samo.",
+  "tutorial.call.t": "Właśnie tak. {keys} znajduje wskazany cel.",
   "tutorial.climb.hint": "Wejdź na półkę, a potem zejdź na ziemię pod nią.",
   "tutorial.climb.how":
     "Kliknij tam, gdzie chcesz stanąć. Alt+klik (Option na Macu) wybiera ziemię niżej.",
@@ -1576,6 +1585,12 @@ export default {
   "tutorial.moreSoon": "Wkrótce więcej lekcji. Do zobaczenia na polu bitwy!",
   "tutorial.offer": "Nowy? Twój nauczyciel pokaże ci podstawy.",
   "tutorial.offerTitle": "Pierwszy raz?",
+  "tutorial.ping.hint": "Wskaż drogę, którą chcesz iść.",
+  "tutorial.ping.how":
+    "Kliknij kółkiem w ziemię, kliknij kompas albo przeciągnij po kompasie, by narysować linię.",
+  "tutorial.ping.intro": "W lewo czy w prawo? Ty decydujesz.",
+  "tutorial.ping.pocket": "Ładny widok. Ale zła droga.",
+  "tutorial.ping.praise": "Dobry wybór. Naprzód.",
   "tutorial.ramp.hint": "W górę po obu schodach do znacznika na wysokiej platformie.",
   "tutorial.ramp.how": "Kliknij wysoką platformę. Ścieżka sama poprowadzi po schodach.",
   "tutorial.ramp.intro": "Schody łączą poziomy. Wejdź na nie, a wyniosą cię w górę.",

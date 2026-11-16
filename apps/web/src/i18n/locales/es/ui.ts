@@ -599,6 +599,8 @@ export default {
   "hud.relicScoredOurs": "¡Reliquia anotada!",
   "hud.relicScoredTheirs": "Reliquia enemiga anotada",
   "hud.relicTheirs": "Reliquia enemiga",
+  "hud.respawnIn": "De vuelta en {seconds}",
+  "hud.respawnResurrectionOnly": "Espera a que te resuciten",
   "hud.shrinesBoth": "Santuarios: +{ours}, enemigo +{theirs}",
   "hud.shrinesOurs": "Santuarios: +{ours}",
   "hud.shrinesTheirs": "Santuarios enemigos: +{theirs}",
@@ -1502,6 +1504,13 @@ export default {
   "training.soundOn": "Con sonido.",
   "training.you": "Tú",
 
+  "tutorial.call.hint": "Marca una rata y le pegaré a esa.",
+  "tutorial.call.how":
+    "Haz clic con la rueda en una rata, o en la barra de objetivo, para marcarla. {keys} apunta a lo que marcó tu equipo.",
+  "tutorial.call.intro": "Dos ratas. Tú eliges, yo golpeo. Marca una.",
+  "tutorial.call.other": "Marca la otra.",
+  "tutorial.call.praise": "Márcalo y el equipo golpea lo mismo.",
+  "tutorial.call.t": "Eso es. {keys} encuentra el objetivo marcado.",
   "tutorial.climb.hint": "Sube a la cornisa y luego baja al suelo que hay debajo.",
   "tutorial.climb.how":
     "Haz clic donde quieras estar. Alt+clic (Option en Mac) elige el suelo de abajo.",
@@ -1538,6 +1547,12 @@ export default {
   "tutorial.moreSoon": "Pronto más lecciones. ¡Nos vemos ahí fuera!",
   "tutorial.offer": "¿Eres nuevo? Tu tutor te enseñará lo básico.",
   "tutorial.offerTitle": "¿Primera vez?",
+  "tutorial.ping.hint": "Marca el camino que quieres seguir.",
+  "tutorial.ping.how":
+    "Haz clic con la rueda en el suelo, haz clic en la brújula o arrastra sobre la brújula para trazar una línea.",
+  "tutorial.ping.intro": "¿Izquierda o derecha? Tú decides.",
+  "tutorial.ping.pocket": "Bonitas vistas. Pero no es por aquí.",
+  "tutorial.ping.praise": "Buena elección. Adelante.",
   "tutorial.ramp.hint": "Sube los dos tramos de escalera hasta la marca de la plataforma alta.",
   "tutorial.ramp.how": "Haz clic en la plataforma alta. Tu camino sube los escalones por ti.",
   "tutorial.ramp.intro": "Las escaleras unen niveles. Pisa y te llevan arriba.",

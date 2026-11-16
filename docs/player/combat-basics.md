@@ -96,6 +96,10 @@ In most modes the dead stay down until an ally **resurrects** them with a
 skill, such as Resurrection Signet, which anyone can take. Some modes
 bring the dead back in waves, or on their own; see [Modes](modes.md).
 
+While you are dead, a line under the scoreboard counts down to when you
+are back, or tells you to wait for a resurrection. Your party window
+shows each dead ally's count beside them.
+
 Every death costs you 15% **morale**, down to -60%: your maximum Health
 and Energy shrink with it. Each foe your team kills wins 2% of it back,
 up to 0. In a Guild Battle, holding the flag stand lifts it above that,

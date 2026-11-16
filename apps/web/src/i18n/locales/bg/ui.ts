@@ -570,6 +570,8 @@ export default {
   "hud.relicScoredOurs": "Точка от реликва!",
   "hud.relicScoredTheirs": "Вражеска точка от реликва",
   "hud.relicTheirs": "Вражеска реликва",
+  "hud.respawnIn": "Обратно след {seconds}",
+  "hud.respawnResurrectionOnly": "Изчакай възкресяване",
   "hud.shrinesBoth": "Светилища: +{ours}, врагът +{theirs}",
   "hud.shrinesOurs": "Светилища: +{ours}",
   "hud.shrinesTheirs": "Вражески светилища: +{theirs}",
@@ -1418,6 +1420,13 @@ export default {
   "training.soundOn": "Звукът е включен.",
   "training.you": "Ти",
 
+  "tutorial.call.hint": "Обяви плъх и аз ще ударя него.",
+  "tutorial.call.how":
+    "Щракни с колелцето върху плъх или щракни лентата на целта, за да го обявиш. {keys} избира целта, обявена от отбора ти.",
+  "tutorial.call.intro": "Два плъха. Ти избираш, аз удрям. Обяви един.",
+  "tutorial.call.other": "Обяви другия.",
+  "tutorial.call.praise": "Обяви я и целият отбор удря същото.",
+  "tutorial.call.t": "Точно така. {keys} намира обявената цел.",
   "tutorial.climb.hint": "Качи се на ръба, после слез на земята под него.",
   "tutorial.climb.how":
     "Кликни където искаш да застанеш. Alt+клик (Option на Mac) избира земята отдолу.",
@@ -1453,6 +1462,12 @@ export default {
   "tutorial.moreSoon": "Скоро още уроци. До скоро на бойното поле!",
   "tutorial.offer": "Нов си? Учителят ти ще ти покаже основите.",
   "tutorial.offerTitle": "За първи път?",
+  "tutorial.ping.hint": "Посочи пътя, по който искаш да тръгнеш.",
+  "tutorial.ping.how":
+    "Щракни с колелцето по земята, щракни по компаса или влачи по компаса, за да начертаеш линия.",
+  "tutorial.ping.intro": "Наляво или надясно? Ти решаваш.",
+  "tutorial.ping.pocket": "Хубава гледка. Но грешен път.",
+  "tutorial.ping.praise": "Добър избор. Напред.",
   "tutorial.ramp.hint": "Нагоре по двете стълбища до знака на високата площадка.",
   "tutorial.ramp.how": "Кликни високата площадка. Пътят ти сам минава по стъпалата.",
   "tutorial.ramp.intro": "Стъпалата свързват нивата. Тръгни и те ще те изкачат.",
