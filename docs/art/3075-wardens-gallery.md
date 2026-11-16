@@ -58,20 +58,20 @@ mirror makes the walk gap 0 %: the gap the structure gives, not a promise about 
 | Spawn to the great plinth (T1 / T2) | Walk          |
 | ----------------------------------- | ------------- |
 | nave                                | 12.4 / 12.4 s |
-| north hall                          | 14.0 / 14.0 s |
-| south hall                          | 14.1 / 14.1 s |
+| north hall                          | 15.2 / 15.2 s |
+| south hall                          | 15.4 / 15.4 s |
 
 **Per capture point** (own team / other team; the pairs mirror, so P1/P5, P2/P6, P3/P7 are equal for
 their owners, and the centre is 0 %):
 
 | Point             | own spawn   | other spawn |
 | ----------------- | ----------- | ----------- |
-| P1 / P5 (floor)   | 9.5–10.1 s  | 19.4–24.3 s |
-| P2 / P6 (plinth)  | 7.4 s       | 20.1 s      |
-| P3 / P7 (floor)   | 9.6–10.1 s  | 19.5–24.2 s |
-| P4 (great plinth) | 15.1–15.2 s | 15.1–15.2 s |
+| P1 / P5 (floor)   | 9.5–10.1 s  | 19.2–19.4 s |
+| P2 / P6 (plinth)  | 7.4 s       | 21.6–22.5 s |
+| P3 / P7 (floor)   | 9.6–10.1 s  | 19.4 s      |
+| P4 (great plinth) | 16.5–16.6 s | 16.5–16.6 s |
 
-Spawn to fight stays under 16 s at the centre (< 25 s). Only 8v8 exists today (`teamSizes [8]`).
+Spawn to the centre point is under 17 s, to a far point under 23 s (halls run at y 650 and 1850, beside the undercroft gates, not through them) (< 25 s). Only 8v8 exists today (`teamSizes [8]`).
 
 **High ground:** the great plinth's top overlooks P4 and the nave; each plinth its point; the four balconies
 overlook P1/P3 and P5/P7 (x 1250..2150 and 3050..3950), the same for each team

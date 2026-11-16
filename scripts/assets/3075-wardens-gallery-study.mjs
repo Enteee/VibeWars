@@ -171,16 +171,22 @@ const toPoint = (/** @type {number} */ i, /** @type {string | Pt} */ from = "C1"
       ["latitude approach", [from, [900, y], [x - a - 160, y], pointOf(i)]],
       ["nave approach", [from, [1000, CY], [x - 500, CY], [x - a - 160, y], pointOf(i)]],
     ]);
-  return /** @type {[string, (Pt | string)[]][]} */ ([
-    ["north hall", [from, [900, 800], [x - a - 300, 800], [x - a - 160, y], pointOf(i)]],
-    ["south hall", [from, [900, 1700], [x - a - 300, 1700], [x - a - 160, y], pointOf(i)]],
-  ]);
+  const hall = (/** @type {string} */ n, /** @type {number} */ hy) =>
+    /** @type {[string, (Pt | string)[]]} */ ([
+      n,
+      [from, [900, hy], [x - a - 300, hy], [x - a - 160, y], pointOf(i)],
+    ]);
+  // The centre by either hall; a far point by its own side: the inner hall lane and the outer one.
+  if (i === 3) return [hall("north hall", 650), hall("south hall", 1850)];
+  return y < CY
+    ? [hall("north hall", 650), hall("north hall, outer lane", 560)]
+    : [hall("south hall", 1850), hall("south hall, outer lane", 1940)];
 };
 
 const toCentre = /** @type {[string, (Pt | string)[]][]} */ ([
   ["nave", ["C1", [1500, CY], [AX - 520, CY], M]],
-  ["north hall", ["C1", [900, 800], [1800, 800], [AX - 520, 1050], M]],
-  ["south hall", ["C1", [900, 1700], [1800, 1700], [AX - 520, 1450], M]],
+  ["north hall", ["C1", [900, 650], [1800, 650], [AX - 520, 1050], M]],
+  ["south hall", ["C1", [900, 1850], [1800, 1850], [AX - 520, 1450], M]],
 ]);
 
 runStudy({
@@ -239,10 +245,10 @@ runStudy({
     },
   ],
   zones: [
-    { kind: "spring", cx: 900, cy: 480, rx: 140, ry: 58, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "spring", cx: MW - 900, cy: 2020, rx: 140, ry: 58, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "mire", cx: MW - 900, cy: 480, rx: 150, ry: 60, fill: "#33392f", edge: "#1a1e16" },
-    { kind: "mire", cx: 900, cy: 2020, rx: 150, ry: 60, fill: "#33392f", edge: "#1a1e16" },
+    { kind: "spring", cx: 700, cy: 300, rx: 140, ry: 58, fill: "#2f5a63", edge: "#9fdcff" },
+    { kind: "spring", cx: MW - 700, cy: 2200, rx: 140, ry: 58, fill: "#2f5a63", edge: "#9fdcff" },
+    { kind: "mire", cx: MW - 700, cy: 300, rx: 150, ry: 60, fill: "#33392f", edge: "#1a1e16" },
+    { kind: "mire", cx: 700, cy: 2200, rx: 150, ry: 60, fill: "#33392f", edge: "#1a1e16" },
   ],
   breakables: [
     { r: rect(1000, 1010, 24, 160), label: "toppled statue barricade (breakable)" },
@@ -289,14 +295,14 @@ runStudy({
       [4200, 1900],
       [AX - 700, 450],
       [AX + 700, 2050],
-      [AX - 700, 1250],
-      [AX + 700, 1250],
+      [AX - 500, 1000],
+      [AX + 500, 1500],
     ].map((p) => ({ kind: /** @type {"pillar"} */ ("pillar"), p: /** @type {Pt} */ (p), r: 36 })),
     ...[
-      [1300, 1250],
-      [3900, 1250],
-      [AX - 300, 280],
-      [AX + 300, 2220],
+      [1300, 1000],
+      [3900, 1000],
+      [AX - 200, 280],
+      [AX + 200, 2220],
     ].map((p) => ({ kind: /** @type {"stone"} */ ("stone"), p: /** @type {Pt} */ (p), r: 38 })),
   ],
   spawns: { t1: seats(300, 1070, 120, 110, 8, 1), t2: seats(MW - 300, 1070, 120, 110, 8, -1) },
