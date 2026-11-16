@@ -41,7 +41,7 @@ o curte cu fântână coborâtă, acoperișuri deasupra străzilor și un pasaj
 subteran închis cu pârghie sub ele; și **Frozen Crossing** (2v2, 2600x1940), un
 râu înghețat între două maluri înalte, traversat pe pietre de vad sau pe un pod
 de bușteni a cărui scândură din mijloc o ridică o pârghie. Pentru echipele mai
-mari: **Ashen Courtyard** (4v4, 3200x2400), o curte arsă, împrejmuită de ziduri,
+mari: **Ashen Courtyard** (4v4, 5120x3840), o curte arsă, împrejmuită de ziduri,
 cu drumuri de strajă și turnuri deasupra și o curte cu fântână coborâtă dedesubt,
 iar grilajul porții e acționat de pe ziduri; și **Moss Vale** (8v8, 5000x2600), o
 vale în terase tăiată în două de un canal adânc de moară, ce se trece doar pe

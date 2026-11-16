@@ -46,7 +46,7 @@ subterrânea aberta por alavanca; e **Frozen Crossing** (2v2, 2600x1940),
 um rio congelado entre duas margens elevadas, atravessado por pedras de
 passagem ou por uma ponte de troncos cuja tábua do meio é erguida por
 uma alavanca. Para equipes maiores: **Ashen Courtyard** (4v4,
-3200x2400), um pátio murado queimado, com adarves e torres em cima e um
+5120x3840), um pátio murado queimado, com adarves e torres em cima e um
 pátio de poço rebaixado embaixo, e a grade levadiça do portão é acionada
 das muralhas; e **Moss Vale** (8v8, 5000x2600), um vale em terraços
 cortado ao meio por um canal de moinho profundo, atravessado só na ponte

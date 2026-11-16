@@ -41,7 +41,7 @@ sân giếng trũng, mái nhà phía trên các con phố và một lối ngầm
 gạt bên dưới; và **Frozen Crossing** (2v2, 2600x1940), một con sông đóng băng
 giữa hai bờ cao, băng qua bằng những tảng đá kê chân hoặc một cây cầu gỗ súc có
 tấm ván giữa được nâng lên bằng cần gạt. Cho các đội lớn hơn: **Ashen Courtyard**
-(4v4, 3200x2400), một sân trong cháy sém có tường bao quanh, với lối đi trên
+(4v4, 5120x3840), một sân trong cháy sém có tường bao quanh, với lối đi trên
 tường và tháp canh ở trên, một sân giếng trũng ở dưới, còn khung lưới sắt của
 cổng thành được điều khiển từ trên tường; và **Moss Vale** (8v8, 5000x2600), một
 thung lũng bậc thang bị một mương cối xay sâu cắt làm đôi, chỉ băng qua được ở

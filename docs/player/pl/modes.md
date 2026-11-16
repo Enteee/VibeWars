@@ -39,7 +39,7 @@ Canyonu: **Sandstone Steps** (1v1, 2600x1940), tarasowe pustynne miasteczko z za
 dziedzińcem ze studnią, dachami nad ulicami i otwieranym dźwignią przejściem pod nimi; oraz
 **Frozen Crossing** (2v2, 2600x1940), zamarznięta rzeka między dwoma wysokimi brzegami, przez
 którą przechodzi się po kamieniach brodu albo po moście z pni, którego środkową deskę podnosi
-dźwignia. Dla większych drużyn: **Ashen Courtyard** (4v4, 3200x2400), spalony dziedziniec
+dźwignia. Dla większych drużyn: **Ashen Courtyard** (4v4, 5120x3840), spalony dziedziniec
 otoczony murem, z gankami na murach i wieżami w górze oraz zagłębionym dziedzińcem ze studnią
 w dole, a broną bramy steruje się z murów; oraz **Moss Vale** (8v8, 5000x2600), tarasowa
 dolina przecięta na pół głęboką młynówką, przez którą można przejść tylko mostem

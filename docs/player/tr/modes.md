@@ -44,7 +44,7 @@ kuyu avlusu, sokaklarının üstünde damları ve altlarında kolla açılan bir
 geçidi olan basamaklı bir çöl kasabası; ve **Frozen Crossing** (2v2, 2600x1940),
 iki yüksek kıyı arasında, basamak taşlarıyla ya da orta tahtasını bir kolun
 kaldırdığı bir kütük köprüyle geçilen donmuş bir nehir. Daha büyük takımlar
-için: **Ashen Courtyard** (4v4, 3200x2400), yukarıda sur yolları ve kuleler,
+için: **Ashen Courtyard** (4v4, 5120x3840), yukarıda sur yolları ve kuleler,
 aşağıda çökük bir kuyu avlusu bulunan, kapı kulesinin parmaklıklı kapısı
 surlardan işletilen yanık, duvarlı bir avlu; ve **Moss Vale** (8v8, 5000x2600),
 derin bir değirmen arkıyla ikiye bölünmüş, yalnızca asma köprüden, değirmenden

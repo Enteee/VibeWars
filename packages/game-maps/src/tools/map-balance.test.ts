@@ -88,17 +88,34 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
-  // Ashen Courtyard (#3287): the centre is in the sunken well court, so the walks end on its floor.
-  // The spawns and timber walls mirror each other about the well, so the walks are within 5 %.
-  // The west keeps the bigger tower by design: its high ground may exceed the east's by 40 %.
+  // Ashen Courtyard (#3287, large since #3413): the centre is in the sunken well court, so the walks
+  // end on its floor. The spawns and timber walls mirror each other about the well, so the walks are
+  // within 5 %, by the best way and by each ramp. The west keeps the bigger tower by design: its
+  // high ground may exceed the east's by 40 %.
   describe("Ashen Courtyard", () => {
     const map = loadMap("ashen-courtyard");
+    const well = { x: 2320, y: 2000 };
+    const ramps = ["pit-ramp-w", "pit-ramp-e"];
 
     it("walks each team from its spawn into the well court within 5 % of the other", () => {
-      const [walk0 = 0, walk1 = 0] = walksTo(map, { x: 1450, y: 1250 }, 0);
+      const [walk0 = 0, walk1 = 0] = walksTo(map, well, 0);
       expect(walk0).toBeGreaterThan(0);
       expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.05);
     });
+
+    const routes: [string, (team: number) => Route][] = [
+      ["its own ramp", (team) => ({ through: [ramps[team] ?? ""], shut: [ramps[1 - team] ?? ""] })],
+      ["the far ramp", (team) => ({ through: [ramps[1 - team] ?? ""], shut: [ramps[team] ?? ""] })],
+    ];
+
+    it.each(routes)(
+      "walks each team from its spawn into the well court by %s within 5 % of the other",
+      (_route, route) => {
+        const [walk0 = 0, walk1 = 0] = walksByRoute(map, well, 0, route);
+        expect(walk0).toBeGreaterThan(0);
+        expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.05);
+      },
+    );
 
     it("stands a timber wall of the same length the same way in front of each team's spawns", () => {
       const placed = map.spawnPoints.map(({ team, position }) => ({ team, ...position }));

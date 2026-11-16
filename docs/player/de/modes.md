@@ -38,7 +38,7 @@ Canyon, Crossroads und Long Hall spielen es, dazu zwei kleine Arenen etwa in der
 Brunnenhof, Dächern über ihren Gassen und einer per Hebel verschlossenen Unterführung darunter; und
 **Frozen Crossing** (2v2, 2600x1940), ein gefrorener Fluss zwischen zwei erhöhten Ufern, überquert
 auf Trittsteinen oder einer Baumstammbrücke, deren mittlere Planke ein Hebel anhebt. Für größere
-Teams: **Ashen Courtyard** (4v4, 3200x2400), ein verbrannter, ummauerter Hof mit Wehrgängen und
+Teams: **Ashen Courtyard** (4v4, 5120x3840), ein verbrannter, ummauerter Hof mit Wehrgängen und
 Türmen oben und einem abgesenkten Brunnenhof unten, dessen Fallgatter am Torhaus von den Mauern aus
 bedient wird; und **Moss Vale** (8v8, 5000x2600), ein terrassiertes Tal, von einem tiefen Mühlgraben
 zweigeteilt, über den es nur an der Zugbrücke, an der Mühle und durch die Unterführung darunter

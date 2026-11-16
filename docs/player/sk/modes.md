@@ -40,7 +40,7 @@ púštne mestečko so zapusteným nádvorím so studňou, strechami nad uličkam
 podchodom pod nimi, ktorý otvára páka; a **Frozen Crossing** (2v2, 2600x1940),
 zamrznutá rieka medzi dvoma vyvýšenými brehmi, ktorú prejdeš po kameňoch alebo
 po zrubovom moste, ktorého prostrednú dosku zdvíha páka. Pre väčšie tímy:
-**Ashen Courtyard** (4v4, 3200x2400), vypálené nádvorie obohnané hradbami, s
+**Ashen Courtyard** (4v4, 5120x3840), vypálené nádvorie obohnané hradbami, s
 ochodzami a vežami hore a zapusteným nádvorím so studňou dole, pričom padaciu
 mrežu brány ovládajú z hradieb; a **Moss Vale** (8v8, 5000x2600), terasovité
 údolie rozdelené na dve hlbokým mlynským náhonom, ktorý sa dá prejsť len po
