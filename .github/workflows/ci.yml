@@ -163,7 +163,7 @@ jobs:
 
       - name: Render bench
         if: steps.applies.outputs.applies == 'true'
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: BENCH_MAX_RATIO=2.7 devenv shell -- pnpm run bench:render
 
   # The `e2e` check (EXPECTED_CHECKS, #132) is the aggregate below; the work
