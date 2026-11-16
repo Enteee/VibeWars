@@ -75,11 +75,11 @@ const ellipse = (cx, cy, a, b, n = 12) =>
 // team 2's, each on a tower hulk's base (L1). Hull: base half width / height; top: the upper deck.
 const HX = 1750;
 const hulls = [
-  { id: "NW hulk", cx: HX, cy: 640, a: 330, b: 140, top: { a: 140, b: 60 } },
-  { id: "NE hulk", cx: MW - HX, cy: 640, a: 330, b: 140, top: { a: 140, b: 60 } },
+  { id: "NW hulk", cx: HX, cy: 640, a: 330, b: 140 },
+  { id: "NE hulk", cx: MW - HX, cy: 640, a: 330, b: 140 },
   { id: "great siege tower", cx: AX, cy: 1400, a: 480, b: 190, top: { a: 250, b: 100 } },
-  { id: "SW hulk", cx: HX, cy: 2160, a: 380, b: 150, top: { a: 160, b: 64 } },
-  { id: "SE hulk", cx: MW - HX, cy: 2160, a: 380, b: 150, top: { a: 160, b: 64 } },
+  { id: "SW hulk", cx: HX, cy: 2160, a: 380, b: 150 },
+  { id: "SE hulk", cx: MW - HX, cy: 2160, a: 380, b: 150 },
 ];
 const TY = [1020, 1780]; // trench rows
 const NL = 330, // north outer lane (north of the north hulks)
@@ -95,7 +95,9 @@ const shapes = [
       look: /** @type {"mound"} */ ("mound"),
       poly: ellipse(h.cx, h.cy, h.a, h.b),
     },
-    { id: `${h.id} deck`, layer: 2, poly: ellipse(h.cx, h.cy, h.top.a, h.top.b) },
+    ...(h.top
+      ? [{ id: `${h.id} deck`, layer: 2, poly: ellipse(h.cx, h.cy, h.top.a, h.top.b) }]
+      : []),
   ]),
 ];
 
@@ -112,8 +114,10 @@ hulls.forEach((h) => {
     north: true,
   });
   stairs.push({ id: `${id}-s`, r: rect(h.cx - 70, h.cy + h.b, 140, 100), from: 0 });
-  stairs.push({ id: `${id}-top-w`, r: rect(h.cx - h.top.a - 50, h.cy - 40, 100, 80), from: 1 });
-  stairs.push({ id: `${id}-top-e`, r: rect(h.cx + h.top.a - 50, h.cy - 40, 100, 80), from: 1 });
+  if (h.top) {
+    stairs.push({ id: `${id}-top-w`, r: rect(h.cx - h.top.a - 50, h.cy - 40, 100, 80), from: 1 });
+    stairs.push({ id: `${id}-top-e`, r: rect(h.cx + h.top.a - 50, h.cy - 40, 100, 80), from: 1 });
+  }
 });
 
 const M = "M";
@@ -128,6 +132,7 @@ const toPoint = (/** @type {number} */ i) => {
   /** @type {(Pt | string)[]} */
   const outer = [
     "C1",
+    [560, outerLane],
     [1100, outerLane],
     [h.cx, outerLane],
     [h.cx, north ? h.cy - h.b - 50 : h.cy + h.b + 50],
@@ -233,7 +238,7 @@ runStudy({
     { at: [AX, 1180], e: 1 },
     { at: [AX, 1620], e: 1 },
     { at: [HX - 430, 640], e: 1 },
-    { at: [MW - HX + 430, 2160], e: 1 },
+    { at: [MW - HX + 430, 640], e: 1 },
   ],
   props: [
     ...[
