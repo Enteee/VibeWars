@@ -9,9 +9,11 @@ import {
   highGround,
   playBuildBot,
   runMapBalance,
+  walksByRoute,
   walksTo,
   walksToCentre,
   type MapBalanceResult,
+  type Route,
 } from "./map-balance.js";
 
 /**
@@ -150,25 +152,27 @@ describe("walks and high ground (#3070)", () => {
       walls: [...loaded.walls, ...(loaded.breakables ?? []).map(({ wall }) => wall)],
     };
     const bridge = { x: 1350, y: 905 };
-    const shut = (ids: readonly string[]): typeof map => ({
-      ...map,
-      transitions: map.transitions.filter(({ id }) => !ids.includes(id)),
-    });
     const cellar = ["cellar-west-steps", "cellar-east-steps"];
     const northWalk = ["north-walk-stair-west", "north-walk-stair-east"];
-    const ownRamp = ["bridge-ramp-west", "bridge-ramp-east"];
-    const routes: readonly (readonly [string, (team: number) => readonly string[]])[] = [
-      ["the drawbridge", () => [...cellar, ...northWalk]],
-      ["the flooded cellar", (team) => [...northWalk, ownRamp[team] ?? ""]],
-      ["the north walk", (team) => [...cellar, ownRamp[team] ?? ""]],
+    const ramps = ["bridge-ramp-west", "bridge-ramp-east"];
+    const own = (team: number): string => ramps[team] ?? "";
+    const far = (team: number): string => ramps[1 - team] ?? "";
+    const routes: readonly (readonly [string, (team: number) => Route])[] = [
+      ["the drawbridge", (team) => ({ through: [own(team)], shut: [...cellar, ...northWalk] })],
+      [
+        "the flooded cellar",
+        (team) => ({ through: [...cellar, far(team)], shut: [...northWalk, own(team)] }),
+      ],
+      [
+        "the north walk",
+        (team) => ({ through: [...northWalk, far(team)], shut: [...cellar, own(team)] }),
+      ],
     ];
 
     it.each(routes)(
       "walks each team from its spawn onto the drawbridge by %s within 10 % of the other",
-      (_route, closed) => {
-        const [walk0 = 0, walk1 = 0] = [0, 1].map(
-          (team) => walksTo(shut(closed(team)), bridge, 2)[team],
-        );
+      (_route, route) => {
+        const [walk0 = 0, walk1 = 0] = walksByRoute(loaded, bridge, 2, route);
         expect(walk0).toBeGreaterThan(0);
         expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.1);
       },
@@ -181,8 +185,87 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Canthan Terraces (#3399): three routes to the court by the drain shaft, each walked with the
+  // other two shut, the mud-brick wall standing: the team's own stair across the terrace, the paddy
+  // steps up the middle, and the culvert from the team's own mouth up the shaft (sluice open).
+  describe("Canthan Terraces", () => {
+    const map = loadMap("canthan-terraces");
+    const court = { x: 1200, y: 1050 };
+    const stairs = ["stair-west", "stair-east"];
+    const mouths = ["culvert-west-steps", "culvert-east-steps"];
+    const routes: readonly (readonly [string, (team: number) => Route])[] = [
+      [
+        "its own stair",
+        (team) => ({ through: [stairs[team] ?? ""], shut: ["paddy-steps", ...mouths] }),
+      ],
+      ["the paddy steps", () => ({ through: ["paddy-steps"], shut: [...stairs, ...mouths] })],
+      [
+        "the culvert",
+        (team) => ({
+          through: [mouths[team] ?? "", "drain-shaft-ramp"],
+          shut: [...stairs, "paddy-steps"],
+        }),
+      ],
+    ];
+
+    it.each(routes)(
+      "walks each team from its spawn into the court by %s within 10 % of the other",
+      (_route, route) => {
+        const [walk0 = 0, walk1 = 0] = walksByRoute(map, court, 1, route);
+        expect(walk0).toBeGreaterThan(0);
+        expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.1);
+      },
+    );
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
+  });
+});
+
+describe("walks by route (#3415)", () => {
+  const map = loadMap("canthan-terraces");
+  const court = { x: 1200, y: 1050 };
+
+  it("walks each team along a route through its transitions", () => {
+    const walks = walksByRoute(map, court, 1, {
+      through: ["paddy-steps"],
+      shut: ["stair-west", "stair-east", "culvert-west-steps", "culvert-east-steps"],
+    });
+    expect(walks).toHaveLength(2);
+    for (const walk of walks) expect(walk).toBeGreaterThan(0);
+  });
+
+  it("throws when a route is sealed", () => {
+    expect(() =>
+      walksByRoute(map, court, 1, {
+        through: ["drain-shaft-ramp"],
+        shut: [
+          "stair-west",
+          "stair-east",
+          "paddy-steps",
+          "culvert-west-steps",
+          "culvert-east-steps",
+        ],
+      }),
+    ).toThrow(
+      /canthan-terraces: team 0 cannot reach \(1200,1050\) by the route through drain-shaft-ramp/,
+    );
+  });
+
+  it("throws when a walk goes round a transition it should pass", () => {
+    expect(() => walksByRoute(map, court, 1, { through: ["culvert-west-steps"] })).toThrow(
+      /canthan-terraces: team 0 did not pass culvert-west-steps/,
+    );
+  });
+
+  it("throws on an id the map lacks", () => {
+    expect(() => walksByRoute(map, court, 1, { through: ["paddy-stepz"] })).toThrow(
+      /canthan-terraces: no paddy-stepz on the map/,
+    );
+    expect(() =>
+      walksByRoute(map, court, 1, { through: ["paddy-steps"], broken: ["mud-brick"] }),
+    ).toThrow(/no mud-brick on the map/);
   });
 });
 
