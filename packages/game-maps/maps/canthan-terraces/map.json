@@ -465,11 +465,11 @@
       "area": {
         "kind": "rect",
         "x": 1155,
-        "y": 1080,
+        "y": 960,
         "width": 70,
         "height": 110
       },
-      "uphill": "s",
+      "uphill": "n",
       "look": "stairs",
       "lift": null
     },
@@ -480,11 +480,11 @@
       "area": {
         "kind": "rect",
         "x": 1335,
-        "y": 1080,
+        "y": 960,
         "width": 70,
         "height": 110
       },
-      "uphill": "s",
+      "uphill": "n",
       "look": "stairs",
       "lift": null
     },
@@ -1228,18 +1228,6 @@
             "y": 1768
           }
         ]
-      }
-    },
-    {
-      "id": "shaft-foot",
-      "layer": 0,
-      "depth": "shallow",
-      "area": {
-        "kind": "rect",
-        "x": 1235,
-        "y": 1120,
-        "width": 90,
-        "height": 70
       }
     },
     {
@@ -2245,34 +2233,10 @@
       "look": "flagstones",
       "area": {
         "kind": "rect",
-        "x": 1150,
+        "x": 1225,
         "y": 960,
-        "width": 260,
+        "width": 110,
         "height": 40
-      }
-    },
-    {
-      "id": "court-west",
-      "layer": 1,
-      "look": "flagstones",
-      "area": {
-        "kind": "rect",
-        "x": 1150,
-        "y": 1000,
-        "width": 85,
-        "height": 80
-      }
-    },
-    {
-      "id": "court-east",
-      "layer": 1,
-      "look": "flagstones",
-      "area": {
-        "kind": "rect",
-        "x": 1325,
-        "y": 1000,
-        "width": 85,
-        "height": 80
       }
     }
   ]
