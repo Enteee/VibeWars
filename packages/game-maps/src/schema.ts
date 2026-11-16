@@ -432,7 +432,7 @@ const atmosphereSchema = z.object({
  * (#3079) together.
  * The match keeps paths for each way they can stand.
  */
-const MAX_TOGGLES = 8;
+export const MAX_TOGGLES = 8;
 
 /** A pressure plate (#2691); `team` is whose plate it is, `null` for anyone's. */
 const plateOpenerSchema = z.object({

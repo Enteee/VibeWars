@@ -1,6 +1,11 @@
 import { mapMatchRules } from "@vibewars/game-maps/match-fields";
-import { MAX_CAPTURE_POINTS } from "@vibewars/game-maps/schema";
-import { ASCENT_ROUNDS, MAX_WIRE_CAPTURE_POINTS, teamSizeOf } from "@vibewars/game-protocol";
+import { MAX_CAPTURE_POINTS, MAX_TOGGLES } from "@vibewars/game-maps/schema";
+import {
+  ASCENT_ROUNDS,
+  MAX_WIRE_CAPTURE_POINTS,
+  MAX_WIRE_TOGGLES,
+  teamSizeOf,
+} from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import { mapName } from "../i18n/game-names.js";
@@ -52,6 +57,10 @@ describe("the render bench's reference map (#3255)", () => {
 describe("the wire and the map schema (#2698)", () => {
   it("carries every capture point a map may have", () => {
     expect(MAX_WIRE_CAPTURE_POINTS).toBe(MAX_CAPTURE_POINTS);
+  });
+
+  it("carries every gate, deck and lift a map may have (#3453)", () => {
+    expect(MAX_WIRE_TOGGLES).toBe(MAX_TOGGLES);
   });
 });
 
