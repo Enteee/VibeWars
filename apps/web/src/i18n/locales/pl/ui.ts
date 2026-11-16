@@ -1574,7 +1574,7 @@ export default {
   "tutorial.front.menu": "Wróć do menu",
   "tutorial.gate.hint": "W mgłę, za mną.",
   "tutorial.gate.how": "Kliknij lewym przyciskiem ziemię albo idź klawiszami {keys}.",
-  "tutorial.gate.intro": "Wyjdziemy za ich plecami. Za mną.",
+  "tutorial.gate.intro": "Nasza drużyna walczy za mgłą. Za mną.",
   "tutorial.gate.praise": "Teraz są przed nami. Do ataku!",
   "tutorial.heal.energy": "Ten niebieski pasek to energia. Umiejętności ją zużywają.",
   "tutorial.heal.hint": "Najpierw kliknij moje imię na liście drużyny.",

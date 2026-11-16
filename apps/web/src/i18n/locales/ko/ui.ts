@@ -1364,7 +1364,7 @@ export default {
   "tutorial.front.menu": "메뉴로",
   "tutorial.gate.hint": "안개 속으로, 날 따라와.",
   "tutorial.gate.how": "땅을 왼쪽 클릭하거나 {keys}(으)로 걸으세요.",
-  "tutorial.gate.intro": "적의 뒤로 나간다. 따라와.",
+  "tutorial.gate.intro": "우리 팀은 안개 너머에서 싸우고 있어. 따라와.",
   "tutorial.gate.praise": "이제 적이 앞에 있어. 돌격!",
   "tutorial.heal.energy": "저 파란 막대가 에너지야. 스킬이 그걸 써.",
   "tutorial.heal.hint": "먼저 파티 목록에서 내 이름을 클릭해.",

@@ -1564,7 +1564,7 @@ export default {
   "tutorial.front.menu": "В меню",
   "tutorial.gate.hint": "В туман, за мной.",
   "tutorial.gate.how": "Щёлкни левой кнопкой по земле или иди клавишами {keys}.",
-  "tutorial.gate.intro": "Выйдем у них в тылу. За мной.",
+  "tutorial.gate.intro": "Наша команда сражается за туманом. За мной.",
   "tutorial.gate.praise": "Теперь они перед нами. В атаку!",
   "tutorial.heal.energy": "Синяя полоса — это энергия. Навыки тратят её.",
   "tutorial.heal.hint": "Сначала щёлкни моё имя в списке отряда.",

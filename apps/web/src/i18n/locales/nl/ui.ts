@@ -1452,7 +1452,7 @@ export default {
   "tutorial.front.menu": "Naar menu",
   "tutorial.gate.hint": "De mist in, achter mij aan.",
   "tutorial.gate.how": "Klik met links op de grond, of loop met {keys}.",
-  "tutorial.gate.intro": "We komen achter ze uit. Volg mij.",
+  "tutorial.gate.intro": "Ons team vecht voorbij de mist. Volg mij.",
   "tutorial.gate.praise": "Nu staan ze voor ons. Aanvallen!",
   "tutorial.heal.energy": "Die blauwe balk is energie. Vaardigheden verbruiken die.",
   "tutorial.heal.hint": "Klik eerst op mijn naam in de groepslijst.",

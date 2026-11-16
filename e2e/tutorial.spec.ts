@@ -703,7 +703,7 @@ test.describe("the first-time tutorial (#3218)", () => {
 
       // On to station 14 (#3334).
       await expect
-        .poll(() => hasSaid("We come out behind them. Follow me."), { timeout: 15_000 })
+        .poll(() => hasSaid("Our team fights beyond the mist. Follow me."), { timeout: 15_000 })
         .toBe(true);
     });
 
@@ -712,9 +712,9 @@ test.describe("the first-time tutorial (#3218)", () => {
       test.setTimeout(180_000);
       const { frame, hasSaid, walkTo } = await learn(page, mapId, 14);
       // Station 14 (#3334): east along the branch into the mist gate, the
-      // tutor ahead, and out behind the foes.
+      // tutor ahead, and out among its team.
       await expect
-        .poll(() => hasSaid("We come out behind them. Follow me."), { timeout: 15_000 })
+        .poll(() => hasSaid("Our team fights beyond the mist. Follow me."), { timeout: 15_000 })
         .toBe(true);
       await expect(frame).toHaveAttribute("data-mark-layer", "1");
       await expect(async () => {

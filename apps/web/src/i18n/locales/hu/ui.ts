@@ -1453,7 +1453,7 @@ export default {
   "tutorial.front.menu": "Vissza a menübe",
   "tutorial.gate.hint": "Be a ködbe, utánam.",
   "tutorial.gate.how": "Kattints a földre bal gombbal, vagy járj ezekkel: {keys}.",
-  "tutorial.gate.intro": "Mögöttük bukkanunk elő. Kövess!",
+  "tutorial.gate.intro": "A csapatunk a ködön túl harcol. Kövess!",
   "tutorial.gate.praise": "Most előttünk vannak. Rohamra!",
   "tutorial.heal.energy": "Az a kék sáv az energia. A képességek azt fogyasztják.",
   "tutorial.heal.hint": "Előbb kattints a nevemre a csapatlistában.",

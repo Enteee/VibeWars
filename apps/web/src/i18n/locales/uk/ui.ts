@@ -1569,7 +1569,7 @@ export default {
   "tutorial.front.menu": "До меню",
   "tutorial.gate.hint": "У туман, за мною.",
   "tutorial.gate.how": "Клацни лівою кнопкою по землі або йди клавішами {keys}.",
-  "tutorial.gate.intro": "Вийдемо в них у тилу. За мною.",
+  "tutorial.gate.intro": "Наша команда б'ється за туманом. За мною.",
   "tutorial.gate.praise": "Тепер вони перед нами. В атаку!",
   "tutorial.heal.energy": "Синя смуга — це енергія. Навички її витрачають.",
   "tutorial.heal.hint": "Спершу клацни моє ім'я у списку загону.",

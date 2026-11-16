@@ -1467,7 +1467,7 @@ export default {
   "tutorial.front.menu": "Πίσω στο μενού",
   "tutorial.gate.hint": "Μέσα στην ομίχλη, πίσω μου.",
   "tutorial.gate.how": "Αριστερό κλικ στο έδαφος, ή περπάτα με {keys}.",
-  "tutorial.gate.intro": "Βγαίνουμε πίσω τους. Ακολούθησέ με.",
+  "tutorial.gate.intro": "Η ομάδα μας μάχεται πέρα από την ομίχλη. Ακολούθησέ με.",
   "tutorial.gate.praise": "Τώρα είναι μπροστά μας. Επίθεση!",
   "tutorial.heal.energy": "Η μπλε μπάρα είναι ενέργεια. Οι δεξιότητες την ξοδεύουν.",
   "tutorial.heal.hint": "Κάνε πρώτα κλικ στο όνομά μου στη λίστα της ομάδας.",

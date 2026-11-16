@@ -1374,7 +1374,7 @@ export default {
   "tutorial.front.menu": "Ke menu",
   "tutorial.gate.hint": "Masuk ke kabut, ikuti aku.",
   "tutorial.gate.how": "Klik kiri tanah, atau berjalan dengan {keys}.",
-  "tutorial.gate.intro": "Kita keluar di belakang mereka. Ikuti aku.",
+  "tutorial.gate.intro": "Tim kita bertarung di balik kabut. Ikuti aku.",
   "tutorial.gate.praise": "Sekarang mereka di depan kita. Serbu!",
   "tutorial.heal.energy": "Bilah biru itu energi. Keterampilan memakainya.",
   "tutorial.heal.hint": "Klik namaku di daftar regu dulu.",

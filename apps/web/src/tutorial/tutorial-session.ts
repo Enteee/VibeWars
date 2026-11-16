@@ -517,8 +517,8 @@ export async function startTutorialSession(
   };
   /**
    * Back to the front (#3334): a fresh match on the opening fight's map,
-   * the pair behind the foes, the tutor one of the bots. No line stands
-   * over it, and nothing points.
+   * the pair at their own side's spawn, the tutor one of the bots. No
+   * line stands over it, and nothing points.
    */
   const frontStage = (): Stage => {
     const front = frontWorld(
@@ -771,7 +771,7 @@ export async function startTutorialSession(
         say(beat.say);
       }
       if (beat.finished) {
-        // Through the mist gate, under its praise, and out behind the foes.
+        // Through the mist gate, under its praise, and out at the pair's own spawn.
         void enter(frontStage);
       } else if (beat.world !== stage.name && beat.world !== "battlefield") {
         // Into the teleporter together, or on to the next map, under its praise.

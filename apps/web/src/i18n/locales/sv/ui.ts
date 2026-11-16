@@ -1443,7 +1443,7 @@ export default {
   "tutorial.front.menu": "Till menyn",
   "tutorial.gate.hint": "In i dimman, efter mig.",
   "tutorial.gate.how": "Vänsterklicka på marken, eller gå med {keys}.",
-  "tutorial.gate.intro": "Vi kommer ut bakom dem. Följ mig.",
+  "tutorial.gate.intro": "Vårt lag strider bortom dimman. Följ mig.",
   "tutorial.gate.praise": "Nu är de framför oss. Anfall!",
   "tutorial.heal.energy": "Den blå mätaren är energi. Färdigheter förbrukar den.",
   "tutorial.heal.hint": "Klicka först på mitt namn i grupplistan.",

@@ -1442,7 +1442,7 @@ export default {
   "tutorial.front.menu": "Til menuen",
   "tutorial.gate.hint": "Ind i tågen, efter mig.",
   "tutorial.gate.how": "Venstreklik på jorden, eller gå med {keys}.",
-  "tutorial.gate.intro": "Vi kommer ud bag dem. Følg mig.",
+  "tutorial.gate.intro": "Vores hold kæmper på den anden side af tågen. Følg mig.",
   "tutorial.gate.praise": "Nu er de foran os. Angrib!",
   "tutorial.heal.energy": "Den blå bjælke er energi. Evner bruger den.",
   "tutorial.heal.hint": "Klik først på mit navn i gruppelisten.",

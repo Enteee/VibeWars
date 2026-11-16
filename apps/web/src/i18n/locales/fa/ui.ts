@@ -1443,7 +1443,7 @@ export default {
   "tutorial.front.menu": "بازگشت به منو",
   "tutorial.gate.hint": "به درون مه، پشت سر من.",
   "tutorial.gate.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
-  "tutorial.gate.intro": "از پشتشان بیرون می‌آییم. دنبالم بیا.",
+  "tutorial.gate.intro": "تیم ما آن سوی مه می‌جنگد. دنبالم بیا.",
   "tutorial.gate.praise": "حالا جلوی ما هستند. حمله!",
   "tutorial.heal.energy": "آن نوار آبی انرژی است. مهارت‌ها آن را خرج می‌کنند.",
   "tutorial.heal.hint": "اول روی نامم در فهرست گروه کلیک کن.",

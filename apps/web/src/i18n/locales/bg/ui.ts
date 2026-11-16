@@ -1450,7 +1450,7 @@ export default {
   "tutorial.front.menu": "Към менюто",
   "tutorial.gate.hint": "Към мъглата, след мен.",
   "tutorial.gate.how": "Кликни с левия бутон по земята или върви с {keys}.",
-  "tutorial.gate.intro": "Излизаме зад тях. Следвай ме.",
+  "tutorial.gate.intro": "Отборът ни се бие отвъд мъглата. Следвай ме.",
   "tutorial.gate.praise": "Сега са пред нас. Атака!",
   "tutorial.heal.energy": "Синята лента е енергия. Уменията я харчат.",
   "tutorial.heal.hint": "Първо щракни името ми в списъка на групата.",

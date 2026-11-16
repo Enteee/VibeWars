@@ -694,7 +694,7 @@ export const GATE_REACH = 80;
 
 /**
  * Station 14 (playbook §14), the last: through the mist gate at `gate`,
- * on `layer`, at the canyon's east end, and out behind the foes. Done
+ * on `layer`, at the canyon's east end, and out among its team. Done
  * once the player stands in it; the front's fight is no station.
  */
 export function gateStation(gate: Vec2, layer: number): Station {

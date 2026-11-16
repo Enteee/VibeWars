@@ -1518,7 +1518,7 @@ export default {
   "tutorial.front.menu": "Voltar ao menu",
   "tutorial.gate.hint": "Para a névoa, atrás de mim.",
   "tutorial.gate.how": "Clique com o botão esquerdo no chão, ou ande com {keys}.",
-  "tutorial.gate.intro": "Saímos por trás deles. Segue-me.",
+  "tutorial.gate.intro": "A nossa equipa luta para lá da névoa. Segue-me.",
   "tutorial.gate.praise": "Agora estão à nossa frente. Ao ataque!",
   "tutorial.heal.energy": "Essa barra azul é energia. As habilidades a gastam.",
   "tutorial.heal.hint": "Primeiro clique no meu nome na lista do grupo.",

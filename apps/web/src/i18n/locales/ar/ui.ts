@@ -1635,7 +1635,7 @@ export default {
   "tutorial.front.menu": "العودة إلى القائمة",
   "tutorial.gate.hint": "إلى الضباب، خلفي.",
   "tutorial.gate.how": "انقر بالزر الأيسر على الأرض، أو امشِ بـ {keys}.",
-  "tutorial.gate.intro": "سنخرج من خلفهم. اتبعني.",
+  "tutorial.gate.intro": "فريقنا يقاتل خلف الضباب. اتبعني.",
   "tutorial.gate.praise": "الآن هم أمامنا. هجوم!",
   "tutorial.heal.energy": "ذلك الشريط الأزرق هو الطاقة. المهارات تستهلكها.",
   "tutorial.heal.hint": "انقر اسمي في قائمة الفريق أولًا.",

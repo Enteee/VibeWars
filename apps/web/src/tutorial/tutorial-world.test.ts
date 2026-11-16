@@ -20,7 +20,6 @@ import {
   TUTORIAL_HEAL,
   TUTORIAL_HEAL_SLOT,
   FOE_KEEP_OFF,
-  BEHIND_THE_FOES,
   drawTutorProfession,
   frontWorld,
   inOpenView,
@@ -305,36 +304,23 @@ describe("frontWorld (#3334)", () => {
     expect(teams.filter((team) => team === 1)).toHaveLength(4);
   });
 
-  it.each(teamArenaMapIds(8))("lands the pair behind the foes, under open sky, on %s", (mapId) => {
-    const { map, arrival } = front(mapId, `arrival-${mapId}`);
-    const graph = splashGraph(map);
+  it.each(teamArenaMapIds(8))("lands the pair at their own side's spawn on %s", (mapId) => {
+    const { map, simulation, arrival } = front(mapId, `arrival-${mapId}`);
     const fight = { mapId, teamSize: 4, still: false };
-    const centre = { x: map.descriptor.width / 2, y: map.descriptor.height / 2 };
-    const theirs = splashSpawn(graph, map, fight, 1, 1.5);
-    const ours = splashSpawn(graph, map, fight, 0, 1.5);
-    const off = (at: { readonly x: number; readonly y: number }): number =>
-      Math.hypot(at.x - centre.x, at.y - centre.y);
-    expect(inOpenView(mapStructure(mapId).structure, arrival)).toBe(true);
-    // Behind the foes a whole step, or at the pair's own spawn where that is
-    // no open ground or the map's edge leaves it nearer them (#3334).
-    const fromTheirs = Math.hypot(arrival.x - theirs.x, arrival.y - theirs.y);
-    if (arrival.x !== ours.x || arrival.y !== ours.y) {
-      expect(off(arrival)).toBeGreaterThan(off(theirs));
-      expect(fromTheirs).toBeGreaterThanOrEqual(BEHIND_THE_FOES - 1);
-      expect(fromTheirs).toBeLessThanOrEqual(BEHIND_THE_FOES * 2);
-    } else {
-      expect(fromTheirs).toBeGreaterThan(BEHIND_THE_FOES);
-    }
+    expect(arrival).toEqual(splashSpawn(splashGraph(map), map, fight, 0, 1.5));
+    expect(simulation.get(SELF_ID)?.position).toEqual(arrival);
   });
 
-  it("lands behind the foes on a wide map, and at home where the edge is too near", () => {
-    const at = (mapId: string): { readonly x: number; readonly y: number } => {
-      const { map } = front(mapId, `home-${mapId}`);
-      const fight = { mapId, teamSize: 4, still: false };
-      return splashSpawn(splashGraph(map), map, fight, 0, 1.5);
-    };
-    expect(front("arena-crossroads", "home").arrival).not.toEqual(at("arena-crossroads"));
-    expect(front("arena-canyon", "home").arrival).toEqual(at("arena-canyon"));
+  // QA (#3334): landed behind the foes on Crossroads, the pair stood among
+  // eight bots with nobody else to fight, and died by 0:19 untouched.
+  it.each(teamArenaMapIds(8))("leaves the idle pair unhit for 5 s on %s", (mapId) => {
+    const { simulation } = front(mapId, `unhit-${mapId}`);
+    const health = (id: string): number | undefined => simulation.get(id)?.combatant.health;
+    const full = [health(SELF_ID), health(TUTOR_ID)];
+    for (let tick = 0; tick < 5 / TICK; tick += 1) {
+      simulation.step(TICK);
+    }
+    expect([health(SELF_ID), health(TUTOR_ID)]).toEqual(full);
   });
 
   // On the battlefield a leash keeps the foes off the pair's places; at

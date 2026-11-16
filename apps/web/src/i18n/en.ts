@@ -1446,7 +1446,7 @@ export const en = {
   "tutorial.front.menu": "Back to menu",
   "tutorial.gate.hint": "Into the mist, after me.",
   "tutorial.gate.how": "Left click the ground, or walk with {keys}.",
-  "tutorial.gate.intro": "We come out behind them. Follow me.",
+  "tutorial.gate.intro": "Our team fights beyond the mist. Follow me.",
   "tutorial.gate.praise": "Now they're in front of us. Charge!",
   "tutorial.heal.energy": "That blue bar is energy. Skills spend it.",
   "tutorial.heal.hint": "Click my name in the party list first.",

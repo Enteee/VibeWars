@@ -462,8 +462,6 @@ function fightOn(
   return { simulation, professions: bots.professions };
 }
 
-/** How far behind the foes' spawn the pair arrive at the front (#3334), away from the centre. */
-export const BEHIND_THE_FOES = 300;
 /** Where the tutor stands beside the player as they arrive at the front. */
 const TUTOR_BESIDE = vec2(0, 70);
 
@@ -473,7 +471,7 @@ export interface FrontWorld {
   readonly simulation: MatchSimulation;
   /** Each bot's, as a match's snapshot carries them. */
   readonly professions: ReadonlyMap<string, Professions>;
-  /** Where the pair arrive: behind the foes, or at their own side's spawn. */
+  /** Where the pair arrive: their own side's spawn. */
   readonly arrival: Vec2;
   readonly ground: number;
 }
@@ -482,11 +480,10 @@ export interface FrontWorld {
  * Back to the front (#3334): a fresh fight of the menu's bots on `mapId`,
  * `teamSize` a side, played as the map's mode to its end. The pair are
  * on the side they stood with on the battlefield, the tutor now one of
- * its bots on `tutorBuild`. They arrive behind the foes: the foes' spawn,
- * `BEHIND_THE_FOES` further from the map's centre, under open sky. Where
- * that is no open ground, or the map's edge leaves it nearer the foes
- * than that, at their own side's spawn: landing among them is a death
- * in seconds, the tutorial's last impression.
+ * its bots on `tutorBuild`. They arrive at their own side's spawn, with
+ * its bots as the match starts: behind the foes, the foes still stood on
+ * their spawn with nobody else to fight, was a death in seconds, the
+ * tutorial's last impression.
  */
 export function frontWorld(
   seed: string,
@@ -504,21 +501,7 @@ export function frontWorld(
   const graph = splashGraph(map);
   const { structure } = mapStructure(mapId);
   const middle = (teamSize - 1) / 2;
-  const theirs = splashSpawn(graph, map, fight, 1, middle);
-  const centre = vec2(map.descriptor.width / 2, map.descriptor.height / 2);
-  const away = Math.max(Math.hypot(theirs.x - centre.x, theirs.y - centre.y), 1);
-  const behind = nearestStandable(
-    graph,
-    vec2(
-      theirs.x + ((theirs.x - centre.x) / away) * BEHIND_THE_FOES,
-      theirs.y + ((theirs.y - centre.y) / away) * BEHIND_THE_FOES,
-    ),
-  );
-  const open = openAround((at) => !inOpenView(structure, at));
-  // A step short of the whole 300 still counts: the nearest standable point
-  // is a hair off the line.
-  const clear = Math.hypot(behind.x - theirs.x, behind.y - theirs.y) >= BEHIND_THE_FOES - 1;
-  const arrival = clear && open(behind) ? behind : splashSpawn(graph, map, fight, 0, middle);
+  const arrival = splashSpawn(graph, map, fight, 0, middle);
   const tutorAt = nearestStandable(
     graph,
     vec2(arrival.x + TUTOR_BESIDE.x, arrival.y + TUTOR_BESIDE.y),

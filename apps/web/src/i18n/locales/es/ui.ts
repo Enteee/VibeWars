@@ -1534,7 +1534,7 @@ export default {
   "tutorial.front.menu": "Volver al menú",
   "tutorial.gate.hint": "A la niebla, detrás de mí.",
   "tutorial.gate.how": "Haz clic izquierdo en el suelo o camina con {keys}.",
-  "tutorial.gate.intro": "Salimos detrás de ellos. Sígueme.",
+  "tutorial.gate.intro": "Nuestro equipo lucha más allá de la niebla. Sígueme.",
   "tutorial.gate.praise": "Ahora los tenemos delante. ¡A la carga!",
   "tutorial.heal.energy": "Esa barra azul es energía. Las habilidades la gastan.",
   "tutorial.heal.hint": "Primero haz clic en mi nombre en la lista del grupo.",

@@ -1354,7 +1354,7 @@ export default {
   "tutorial.front.menu": "กลับเมนู",
   "tutorial.gate.hint": "เข้าไปในหมอก ตามฉันมา",
   "tutorial.gate.how": "คลิกซ้ายที่พื้น หรือเดินด้วย {keys}",
-  "tutorial.gate.intro": "เราจะออกไปด้านหลังพวกมัน ตามฉันมา",
+  "tutorial.gate.intro": "ทีมของเรากำลังสู้อยู่หลังม่านหมอก ตามฉันมา",
   "tutorial.gate.praise": "ตอนนี้พวกมันอยู่ข้างหน้าเราแล้ว บุก!",
   "tutorial.heal.energy": "แถบสีฟ้านั้นคือพลังงาน สกิลจะใช้มัน",
   "tutorial.heal.hint": "คลิกชื่อของฉันในรายชื่อปาร์ตี้ก่อน",

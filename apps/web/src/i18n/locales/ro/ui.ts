@@ -1525,7 +1525,7 @@ export default {
   "tutorial.front.menu": "Înapoi la meniu",
   "tutorial.gate.hint": "În ceață, după mine.",
   "tutorial.gate.how": "Clic stânga pe teren sau mergi cu {keys}.",
-  "tutorial.gate.intro": "Ieșim în spatele lor. Urmează-mă.",
+  "tutorial.gate.intro": "Echipa noastră luptă dincolo de ceață. Urmează-mă.",
   "tutorial.gate.praise": "Acum sunt în fața noastră. La atac!",
   "tutorial.heal.energy": "Bara aceea albastră e energia. Abilitățile o consumă.",
   "tutorial.heal.hint": "Mai întâi dă clic pe numele meu în lista grupului.",

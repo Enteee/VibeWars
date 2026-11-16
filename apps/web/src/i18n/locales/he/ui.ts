@@ -1508,7 +1508,7 @@ export default {
   "tutorial.front.menu": "חזרה לתפריט",
   "tutorial.gate.hint": "אל תוך הערפל, אחריי.",
   "tutorial.gate.how": "לחץ לחיצה שמאלית על הקרקע, או לך עם {keys}.",
-  "tutorial.gate.intro": "נצא מאחוריהם. בוא אחריי.",
+  "tutorial.gate.intro": "הקבוצה שלנו נלחמת מעבר לערפל. בוא אחריי.",
   "tutorial.gate.praise": "עכשיו הם לפנינו. הסתער!",
   "tutorial.heal.energy": "הפס הכחול הוא אנרגיה. מיומנויות מוציאות אותה.",
   "tutorial.heal.hint": "קודם לחץ על השם שלי ברשימת הקבוצה.",

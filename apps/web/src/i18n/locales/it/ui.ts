@@ -1525,7 +1525,7 @@ export default {
   "tutorial.front.menu": "Torna al menu",
   "tutorial.gate.hint": "Nella nebbia, dietro di me.",
   "tutorial.gate.how": "Clic sinistro sul terreno, o cammina con {keys}.",
-  "tutorial.gate.intro": "Usciamo alle loro spalle. Seguimi.",
+  "tutorial.gate.intro": "La nostra squadra combatte oltre la nebbia. Seguimi.",
   "tutorial.gate.praise": "Ora sono davanti a noi. All'attacco!",
   "tutorial.heal.energy": "Quella barra blu è l'energia. Le abilità la consumano.",
   "tutorial.heal.hint": "Prima clicca il mio nome nella lista del gruppo.",

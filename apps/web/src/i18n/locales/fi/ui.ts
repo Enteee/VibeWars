@@ -1460,7 +1460,7 @@ export default {
   "tutorial.front.menu": "Takaisin valikkoon",
   "tutorial.gate.hint": "Sumuun, perässäni.",
   "tutorial.gate.how": "Napsauta maata vasemmalla, tai kävele näppäimillä {keys}.",
-  "tutorial.gate.intro": "Tulemme ulos heidän takanaan. Seuraa minua.",
+  "tutorial.gate.intro": "Joukkueemme taistelee sumun takana. Seuraa minua.",
   "tutorial.gate.praise": "Nyt he ovat edessämme. Hyökkäykseen!",
   "tutorial.heal.energy": "Tuo sininen palkki on energiaa. Taidot kuluttavat sitä.",
   "tutorial.heal.hint": "Napsauta ensin nimeäni ryhmän luettelossa.",

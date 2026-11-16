@@ -1537,7 +1537,7 @@ export default {
   "tutorial.front.menu": "Retour au menu",
   "tutorial.gate.hint": "Dans la brume, derrière moi.",
   "tutorial.gate.how": "Clic gauche sur le sol, ou marche avec {keys}.",
-  "tutorial.gate.intro": "On sort derrière eux. Suis-moi.",
+  "tutorial.gate.intro": "Notre équipe se bat de l'autre côté de la brume. Suis-moi.",
   "tutorial.gate.praise": "Ils sont devant nous maintenant. À l'attaque !",
   "tutorial.heal.energy": "Cette barre bleue, c'est l'énergie. Les compétences la dépensent.",
   "tutorial.heal.hint": "Clique d'abord sur mon nom dans la liste du groupe.",

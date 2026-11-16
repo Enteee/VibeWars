@@ -1518,7 +1518,7 @@ export default {
   "tutorial.front.menu": "U izbornik",
   "tutorial.gate.hint": "U maglu, za mnom.",
   "tutorial.gate.how": "Lijevi klik na tlo, ili hodaj s {keys}.",
-  "tutorial.gate.intro": "Izlazimo iza njih. Prati me.",
+  "tutorial.gate.intro": "Naš tim se bori iza magle. Prati me.",
   "tutorial.gate.praise": "Sad su ispred nas. Napad!",
   "tutorial.heal.energy": "Ta plava traka je energija. Vještine je troše.",
   "tutorial.heal.hint": "Prvo klikni moje ime na popisu skupine.",

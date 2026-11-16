@@ -1466,7 +1466,7 @@ export default {
   "tutorial.front.menu": "Zum Menü",
   "tutorial.gate.hint": "In den Nebel, mir nach.",
   "tutorial.gate.how": "Linksklick auf den Boden, oder geh mit {keys}.",
-  "tutorial.gate.intro": "Wir kommen hinter ihnen heraus. Folge mir.",
+  "tutorial.gate.intro": "Unser Team kämpft jenseits des Nebels. Folge mir.",
   "tutorial.gate.praise": "Jetzt sind sie vor uns. Angriff!",
   "tutorial.heal.energy": "Der blaue Balken ist Energie. Fertigkeiten verbrauchen sie.",
   "tutorial.heal.hint": "Klick zuerst meinen Namen in der Gruppenliste an.",

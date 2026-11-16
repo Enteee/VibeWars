@@ -1336,7 +1336,7 @@ export default {
   "tutorial.front.menu": "返回菜单",
   "tutorial.gate.hint": "进入雾中，跟着我。",
   "tutorial.gate.how": "左键点击地面,或用 {keys} 行走。",
-  "tutorial.gate.intro": "我们从他们背后出去。跟我来。",
+  "tutorial.gate.intro": "我们的队伍在迷雾那头作战。跟我来。",
   "tutorial.gate.praise": "现在他们就在我们面前。冲锋!",
   "tutorial.heal.energy": "那条蓝条是能量，技能会消耗它。",
   "tutorial.heal.hint": "先在队伍列表里点击我的名字。",

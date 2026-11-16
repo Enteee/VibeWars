@@ -1375,7 +1375,7 @@ export default {
   "tutorial.front.menu": "メニューへ戻る",
   "tutorial.gate.hint": "霧の中へ、私に続いて。",
   "tutorial.gate.how": "地面を左クリック、または {keys} で歩く。",
-  "tutorial.gate.intro": "敵の背後に出る。ついて来て。",
+  "tutorial.gate.intro": "味方は霧の向こうで戦っている。ついて来て。",
   "tutorial.gate.praise": "敵は目の前だ。突撃!",
   "tutorial.heal.energy": "あの青いバーがエネルギー。スキルで消費する。",
   "tutorial.heal.hint": "まずパーティリストで私の名前をクリックして。",

@@ -1359,7 +1359,7 @@ export default {
   "tutorial.front.menu": "Về menu",
   "tutorial.gate.hint": "Vào màn sương, theo sau ta.",
   "tutorial.gate.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",
-  "tutorial.gate.intro": "Ta sẽ ra phía sau chúng. Theo ta.",
+  "tutorial.gate.intro": "Đội ta đang chiến đấu bên kia màn sương. Theo ta.",
   "tutorial.gate.praise": "Giờ chúng ở trước mặt ta. Xung phong!",
   "tutorial.heal.energy": "Thanh màu xanh đó là năng lượng. Kỹ năng tiêu tốn nó.",
   "tutorial.heal.hint": "Bấm vào tên tôi trong danh sách nhóm trước.",

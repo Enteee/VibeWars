@@ -1447,7 +1447,7 @@ export default {
   "tutorial.front.menu": "Menüye dön",
   "tutorial.gate.hint": "Sisin içine, peşimden.",
   "tutorial.gate.how": "Zemine sol tıkla ya da {keys} ile yürü.",
-  "tutorial.gate.intro": "Arkalarından çıkacağız. Beni takip et.",
+  "tutorial.gate.intro": "Takımımız sisin ötesinde savaşıyor. Beni takip et.",
   "tutorial.gate.praise": "Şimdi önümüzdeler. Saldır!",
   "tutorial.heal.energy": "O mavi çubuk enerjidir. Yetenekler onu harcar.",
   "tutorial.heal.hint": "Önce grup listesinde adıma tıkla.",

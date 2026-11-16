@@ -1565,7 +1565,7 @@ export default {
   "tutorial.front.menu": "Späť do menu",
   "tutorial.gate.hint": "Do hmly, za mnou.",
   "tutorial.gate.how": "Klikni ľavým tlačidlom na zem, alebo choď pomocou {keys}.",
-  "tutorial.gate.intro": "Vyjdeme za nimi. Poď za mnou.",
+  "tutorial.gate.intro": "Náš tím bojuje za hmlou. Poď za mnou.",
   "tutorial.gate.praise": "Teraz sú pred nami. Do útoku!",
   "tutorial.heal.energy": "Ten modrý pás je energia. Zručnosti ju míňajú.",
   "tutorial.heal.hint": "Najprv klikni na moje meno v zozname družiny.",
