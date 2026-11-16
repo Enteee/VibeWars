@@ -1117,16 +1117,21 @@ export class ArenaScene extends Phaser.Scene {
     for (const gate of this.snapshot.gates) {
       this.drawGate(g, gate);
     }
+    // Each overlay on its own layer's band (#3409): over the deck it
+    // stands on, under the bodies there, covered as a body there would be.
     for (const lever of this.snapshot.switches) {
-      this.drawSwitch(g, lever);
+      const band = this.bandOf(lever.layer);
+      if (band !== undefined) {
+        this.drawSwitch(band.body, lever);
+      }
     }
     for (const teleport of this.snapshot.teleports) {
-      this.drawTeleport(g, teleport);
+      this.drawTeleport(teleport);
     }
     for (const breakable of this.snapshot.breakables) {
       this.drawBreakableOverlay(effects, breakable);
     }
-    this.drawArrivals(g);
+    this.drawArrivals();
     this.stepCapes(dt);
     this.drawShotShadows(time / 1000);
     // Every form's aura first, under every disc of its band (#3229): it
@@ -1345,22 +1350,27 @@ export class ArenaScene extends Phaser.Scene {
       g.strokeCircle(x, y, GATE_PLATE_REACH_UNITS);
       paintPlate(g, plate.position, gate.open, line);
     }
+    // The plate lies on the ground; the gate stands on its own layer (#3409).
+    const body = this.bandOf(gate.layer)?.body;
+    if (body === undefined) {
+      return;
+    }
     if (gate.blocks === "bodies-and-shots") {
-      this.drawBarrier(g, gate, line);
+      this.drawBarrier(body, gate, line);
       return;
     }
     // A shut gate is a wall of the map, and draws with them (#3061).
     if (gate.open) {
       const { layerCount, ground } = this.snapshot.structure;
-      g.save();
-      g.translateCanvas(0, -elevationOf(gate.layer, ground));
+      body.save();
+      body.translateCanvas(0, -elevationOf(gate.layer, ground));
       const palette = arenaPalette(this.snapshot.structure);
-      GATE_ART.open[gate.look](this.gatePainter(g), gate.wall, {
+      GATE_ART.open[gate.look](this.gatePainter(body), gate.wall, {
         height: layerCount === 1 ? 0 : WALL_HEIGHT,
         line,
         palette: gate.look === "door" ? doorPalette(palette) : palette,
       });
-      g.restore();
+      body.restore();
     }
   }
 
@@ -1612,18 +1622,27 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** A portal (#3030): its entry's swirl and its exit's ring, each on its own layer. */
-  private drawTeleport(g: Phaser.GameObjects.Graphics, teleport: RenderableTeleport): void {
+  /**
+   * A portal (#3030): its entry's swirl and its exit's ring, each on its
+   * own layer and in that layer's band (#3409).
+   */
+  private drawTeleport(teleport: RenderableTeleport): void {
     const { ground } = this.snapshot.structure;
     const time = this.reducedMotion ? 0 : this.now;
-    g.save();
-    g.translateCanvas(0, -elevationOf(teleport.from.layer, ground));
-    paintTeleportEntry(g, polygonCentre(teleport.from.area), teleport.on, time);
-    g.restore();
-    g.save();
-    g.translateCanvas(0, -elevationOf(teleport.to.layer, ground));
-    paintTeleportExit(g, teleport.to.position, teleport.on);
-    g.restore();
+    const entry = this.bandOf(teleport.from.layer)?.body;
+    if (entry !== undefined) {
+      entry.save();
+      entry.translateCanvas(0, -elevationOf(teleport.from.layer, ground));
+      paintTeleportEntry(entry, polygonCentre(teleport.from.area), teleport.on, time);
+      entry.restore();
+    }
+    const exit = this.bandOf(teleport.to.layer)?.body;
+    if (exit !== undefined) {
+      exit.save();
+      exit.translateCanvas(0, -elevationOf(teleport.to.layer, ground));
+      paintTeleportExit(exit, teleport.to.position, teleport.on);
+      exit.restore();
+    }
   }
 
   /**
@@ -1631,7 +1650,7 @@ export class ArenaScene extends Phaser.Scene {
    * ring that fades over the cooldown. A body first seen mid-cooldown
    * shows its ring where it stands; one that left takes its ring along.
    */
-  private drawArrivals(g: Phaser.GameObjects.Graphics): void {
+  private drawArrivals(): void {
     const { actors, clock, structure } = this.snapshot;
     const present = new Set<string>();
     for (const actor of actors) {
@@ -1643,6 +1662,11 @@ export class ArenaScene extends Phaser.Scene {
       if (arrival?.readyAt !== actor.teleportReadyAt) {
         arrival = { readyAt: actor.teleportReadyAt, at: actor.position, layer: actor.layer };
         this.arrivals.set(actor.id, arrival);
+      }
+      // On its own layer's band (#3409), as the body that arrived.
+      const g = this.bandOf(arrival.layer)?.body;
+      if (g === undefined) {
+        continue;
       }
       const age = clock - (arrival.readyAt - TELEPORT_COOLDOWN_SECONDS);
       g.save();
