@@ -17,15 +17,15 @@ battlefield: craters as pits, trenches as tunnels, wrecked siege towers as tower
   scrub `#5a5444`). No new row: the scorched field is the volcanic earth and ash, the craters are
   dark pits with a pale rim. `ash` is not proposed.
 - **Layers (3):** L0 the field, ten craters and two trenches; L1 the five tower hulks (70 up); L2
-  their five decks (140). 30 stairs.
-- **Structures (10 + 2 tunnels):** five siege-tower hulks, each a base and a deck. Below Moss
+  the great siege tower's deck (140). 22 stairs.
+- **Structures (5 + 2 tunnels):** five siege-tower hulks; only the great one has a deck. Below Moss
   Vale's count.
 - **Capture points (5, as today, home points):** **P3** the great siege tower (2700,1400, on its L2
   deck) is the centre, on the axis x = 2700, 0 % from equidistant. Two mirrored pairs, one hulk
   nearer each base, on the hulks' bases (L1): north **P1** (1750,640) for team 1 and **P2**
   (3650,640) for team 2; south **P4** (1750,2160) for team 1 and **P5** (3650,2160) for team 2.
   Parity is per pair: team 1's walk to P1 equals team 2's to P2, and so for P4/P5. Each hulk has a
-  stair on all four faces (its deck two), so ≥ 2 routes reach it for either team, none through the
+  stair on all four faces (the great deck two), so ≥ 2 routes reach it for either team, none through the
   other's spawn. No point is in a trench, zone or crater. Resurrection shrines 1 (700,1000) and 2
   (4700,1000).
 - **Craters (pits, 10):** five a side, 280..340 wide, off every route (the routes run on the open
@@ -35,8 +35,8 @@ battlefield: craters as pits, trenches as tunnels, wrecked siege towers as tower
   120 u from a trench centre line (y 900 and y 1900), the outer lanes on the field edge (y 330, 2470);
   a route only crosses a trench at right angles. Cover shows the seam and grating slots (#3236), as
   wide as the walkable floor (#3179).
-- **Drop-offs (4):** the great hulk's north and south edges, the NW hulk's west edge and the SE
-  hulk's east edge.
+- **Drop-offs (4):** the great hulk's north and south edges, the NW hulk's west edge and the NE
+  hulk's east edge (x-mirrored).
 - **Elements:** four **trench gates** start shut. Two brass **levers** on the hulk bases, (1550,640)
   **opens both north gates** and (3850,2160) **both south gates**: either team can open a trench, and
   a pulled lever opens it for both. No lift is used. Two **breakable wrecked palisades**, a mirrored
@@ -51,7 +51,7 @@ battlefield: craters as pits, trenches as tunnels, wrecked siege towers as tower
   13 lights, under 16. Nothing is dim except the trenches, which have their mouth torches.
 - **Reduced motion:** torch flicker steady, smoke holds still, spring drift stops; the gates move
   once on a lever.
-- **8v8 tick budget:** 3 layers, 10 structures.
+- **8v8 tick budget:** 3 layers, 5 structures.
 
 ## Routes and balance (base speed 180 u/s)
 
@@ -69,24 +69,24 @@ the gap the structure gives, not a promise about the final art.
 
 | Point                 | outer lane             | inner lane |
 | --------------------- | ---------------------- | ---------- |
-| 1 / 2 own hulk, north | 12.1 s                 | 9.0 s      |
-| 4 / 5 own hulk, south | 12.0 s                 | 9.0 s      |
-| 2 / 1 far hulk, north | 22.6 s                 | 19.6 s     |
-| 5 / 4 far hulk, south | 22.6 s                 | 19.5 s     |
+| 1 / 2 own hulk, north | 14.3 s                 | 9.0 s      |
+| 4 / 5 own hulk, south | 14.3 s                 | 9.0 s      |
+| 2 / 1 far hulk, north | 24.9 s                 | 19.6 s     |
+| 5 / 4 far hulk, south | 24.8 s                 | 19.5 s     |
 | 3 great hulk (centre) | 12.0 s (west approach) | 15.6 s     |
 
-A far hulk is a 19..23 s walk, under 25 s. **4v4 plays the whole map from 8v8's camps** (architect
+A far hulk is a 19.5..24.9 s walk, under 25 s. **4v4 plays the whole map from 8v8's camps** (architect
 decision): no second spawn set; the fight with the centre is 12 s from a spawn.
 
-**High ground:** each hulk's deck (L2) overlooks its point and the lanes beside it; the great
-hulk's deck overlooks both inner lanes. Both teams reach each deck in the same time (mirrored).
+**High ground:** each hulk's base (L1) overlooks its point and the lanes beside it; the great
+hulk's deck overlooks both inner lanes. Both teams reach each hulk in the same time (mirrored).
 **Worst case:** the trenches shut change no point's routes (no route runs in a trench); unbroken
 palisades leave every route open.
 
 ## Canyon lessons, on the plan
 
 - Every deck is reachable up and down by click-to-move (#3177): every hulk has a stair on each face
-  and each deck two.
+  and the great deck two.
 - No body is hidden without an outline (#3178/#3251): stairs are open steps, nothing stands north
   or south of one; the beam is thin and fades.
 - The trench cover is the walkable floor and nothing wider (#3179); the hulks over it fade with the
@@ -94,7 +94,7 @@ palisades leave every route open.
 
 ## New art needed / not built
 
-Nothing new: the hulks are stacked `decks` in the volcanic stone with a mound top, the craters the
+Nothing new: the hulks and the great deck are stacked `decks` in the volcanic stone with a mound top, the craters the
 existing pits, the gates the existing gate look. Mechanics are not designed here.
 
 ## Questions
