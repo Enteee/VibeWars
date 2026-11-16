@@ -43,8 +43,8 @@ away, the place (a temple on a volcano flank: lava, a lift, a sanctum with a hid
 - **Elements:** two **passage doors** at the mouths start shut. Two brass **levers** on the forecourt,
   (2300,1250) and (3324,1550), **each opens both doors**: whoever pulls first shares the passage.
   A **breakable ash wall** (x 2380..2580, y 2000) closes a lane south of the forecourt. Zones:
-  `molten` (the rivers) and `spring` (900,2350) and `mire` (4700,480), the last two off every route
-  and ≥ 200 u from a spawn. Atmosphere (existing, #3032): three ash drifts, under bodies, never
+  `molten` (the rivers) and a `spring` and a `mire` for each team, the same on both sides (turned 180°): west
+  (900,2350) and (900,480), east (4724,450) and (4724,2320); off every route and ≥ 200 u from a spawn. Atmosphere (existing, #3032): three ash drifts, under bodies, never
   over a relic, stair or lever. One `canopy` overhang (a fallen lintel) off every route.
 - **Light:** the **Dusk** row (visual-style §2), sun from the NW, 25°, `#ffb87a` 0.5. Lava glows
   `#ff9040` (radius 220..260 on the rivers), torches `#ffb060` at the passage mouths, rings (220)
@@ -55,8 +55,7 @@ away, the place (a temple on a volcano flank: lava, a lift, a sanctum with a hid
 ## Routes and balance (base speed 180 u/s)
 
 T1 centred (540,1425), T2 (5084,1425). Centre: the sanctum, (2812,1400). The layout is four-fold
-symmetric in its structure (bridges, forecourt, daises, rivers); props, zones and the spring/mire
-differ. A mirror makes the walk gap 0 %: it is the gap the structure gives, not a promise about
+symmetric in its structure (bridges, forecourt, daises, rivers); props differ; the zones are the same for both teams. A mirror makes the walk gap 0 %: it is the gap the structure gives, not a promise about
 final art.
 
 | Spawn to the sanctum (T1 / T2) | Walk          |

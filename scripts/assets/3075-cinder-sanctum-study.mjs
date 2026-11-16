@@ -246,7 +246,9 @@ runStudy({
   zones: [
     ...lava,
     { kind: "spring", cx: 900, cy: 2350, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
-    { kind: "mire", cx: 4700, cy: 480, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "mire", cx: 900, cy: 480, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    { kind: "spring", cx: 4724, cy: 450, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
+    { kind: "mire", cx: 4724, cy: 2320, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
   ],
   breakables: [{ r: rect(2380, 2000, 200, 24), label: "ash wall (breakable)" }],
   gates: [
