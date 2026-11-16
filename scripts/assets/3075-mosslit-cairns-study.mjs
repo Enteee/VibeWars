@@ -127,6 +127,7 @@ hills.forEach((h, i) => {
 stairs.push({ id: "top-w", r: rect(AX - 330, 1480, 120, 80), from: 1 });
 stairs.push({ id: "top-e", r: rect(AX + 210, 1480, 120, 80), from: 1 });
 stairs.push({ id: "top-n", r: rect(AX - 60, 1380, 120, 80), from: 1, north: true });
+stairs.push({ id: "top-s", r: rect(AX - 60, 1540, 120, 80), from: 1 });
 stairs.push({ id: "bank-w", r: rect(1620, 1330, 140, 100), from: 0 });
 stairs.push({ id: "bank-e", r: rect(MW - 1760, 1330, 140, 100), from: 0 });
 
@@ -164,7 +165,7 @@ const toPoint = (/** @type {number} */ i) => {
 const toCentre = /** @type {[string, (Pt | string)[]][]} */ ([
   ["west stair", ["C1", [1500, 1500], [AX - 600, 1540], M]],
   ["north lane", ["C1", [1300, NL], [AX, NL], [AX, 1280], [AX, 1400], M]],
-  ["south lane", ["C1", [1300, SL], [AX - 450, SL], [AX - 450, 1520], M]],
+  ["south lane", ["C1", [1300, SL], [AX, SL], [AX, 1720], [AX, 1600], M]],
 ]);
 
 runStudy({
