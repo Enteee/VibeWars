@@ -253,8 +253,13 @@ runStudy({
     },
   ],
   zones: [
-    { kind: "mire", cx: 1000, cy: 2000, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
-    { kind: "spring", cx: 4300, cy: 700, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
+    ...[
+      { kind: "spring", cx: 1100, cy: 700, rx: 150, ry: 62, fill: "#2f5a63", edge: "#9fdcff" },
+      { kind: "mire", cx: 1100, cy: 2300, rx: 160, ry: 66, fill: "#3a3326", edge: "#1e1a12" },
+    ].flatMap((z) => {
+      const [cx, cy] = /** @type {Pt} */ (m([z.cx, z.cy]));
+      return [z, { ...z, cx, cy }];
+    }),
   ],
   breakables: [{ r: rect(1930, 1420, 24, 200), label: "rubble wall (breakable)" }],
   gates: [
