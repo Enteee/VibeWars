@@ -51,8 +51,10 @@ przepust, który dźwignia śluzy otwiera jako trzecią drogę do środka. **Sun
 ale wysoka: na wpół zalana forteca, której dziedziniec przecina fosa; przechodzi się
 przez nią zwodzonym mostem poruszanym dźwignią na każdym brzegu, chodnikiem na
 murach wzdłuż północnej kurtyny albo przez zalaną piwnicę pod spodem.
-A dla większych drużyn: **Shiverpeak Pass** (4v4, 6000x3400), dwa masywy skalne
-zostawiające szeroką przełęcz usianą głazami i wąską ścieżkę wzdłuż każdej krawędzi;
+A dla większych drużyn: **Shiverpeak Pass** (4v4, 5100x3450), ośnieżona
+przełęcz górska przecięta przepaścią, przez którą przechodzi się mostem linowym
+między dwiema skalnymi półkami, przyciąganym dźwignią na każdej z nich, jaskinią
+pod nią albo wokół jej krańca, gdy rozbije się tam lodową ścianę;
 oraz **Elonian Plateau** (8v8, 5520x3360), pustynny płaskowyż z czterema
 stołowymi górami wokół suchego koryta kanionu: windy na czas wjeżdżają na
 trzy z nich, naturalny łuk łączy dwie północne, a pod środkowym grzbietem

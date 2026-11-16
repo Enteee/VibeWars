@@ -56,9 +56,12 @@ centre. **Sunken Bastion** (2v2, 2700x1900) est petite mais haute : une forteres
 moitié inondée dont les douves coupent la cour en deux ; on les franchit par un
 pont-levis actionné par un levier sur chaque rive, par le chemin de ronde le
 long du rempart nord, ou par la cave inondée en dessous.
-Et pour les plus grandes équipes : **Shiverpeak Pass** (4v4, 6000x3400), deux
-massifs de falaises qui laissent un large col parsemé de rochers et un étroit
-sentier le long de chaque bord ; et **Elonian Plateau** (8v8, 5520x3360), un
+Et pour les plus grandes équipes : **Shiverpeak Pass** (4v4, 5100x3450), un
+col de montagne enneigé fendu par un gouffre, que l'on franchit par un pont de
+cordes entre deux corniches, tiré par un levier sur chaque corniche, par une
+grotte en dessous, ou en contournant sa pointe une fois brisé le mur de glace
+qui s'y trouve ;
+et **Elonian Plateau** (8v8, 5520x3360), un
 plateau désertique de quatre mésas autour d'un lit de canyon à sec : des
 ascenseurs minutés montent sur trois d'entre elles, une arche naturelle
 relie les deux du nord, et un passage court sous l'arête centrale, sa herse

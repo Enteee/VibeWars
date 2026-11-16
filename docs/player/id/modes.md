@@ -50,9 +50,10 @@ yang dibuka oleh tuas pintu air sebagai jalan ketiga ke tengah.
 yang paritnya membelah halaman, diseberangi lewat jembatan angkat yang digerakkan tuas di
 setiap tepi, lewat jalan di atas tembok sepanjang dinding utara, atau melalui ruang bawah tanah
 yang terendam di bawahnya.
-Dan untuk tim yang lebih besar: **Shiverpeak Pass** (4v4, 6000x3400),
-dua gugusan tebing yang menyisakan celah lebar bertabur batu besar dan jalan setapak
-sempit di sepanjang setiap tepinya; dan **Elonian Plateau** (8v8,
+Dan untuk tim yang lebih besar: **Shiverpeak Pass** (4v4, 5100x3450),
+celah gunung bersalju yang terbelah oleh jurang, diseberangi lewat jembatan tali di antara dua
+langkan tebing yang ditarik oleh tuas di setiap langkan, lewat gua di bawahnya, atau memutari
+ujungnya setelah dinding es di sana dihancurkan; dan **Elonian Plateau** (8v8,
 5520x3360), dataran tinggi gurun dengan empat mesa di sekeliling dasar
 ngarai yang kering: lift berwaktu naik ke tiga di antaranya, lengkung alami
 menghubungkan dua mesa di utara, dan lorong melintas di bawah punggung

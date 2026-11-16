@@ -59,9 +59,12 @@ centro. **Sunken Bastion** (2v2,
 divide o pátio; dá para atravessá-lo por uma ponte levadiça acionada por
 uma alavanca em cada margem, pelo adarve ao longo da muralha norte ou
 pelo porão alagado logo abaixo.
-E para equipes maiores: **Shiverpeak Pass** (4v4, 6000x3400), dois maciços
-de penhasco que deixam uma passagem larga cheia de pedras e uma trilha
-estreita em cada borda; e **Elonian Plateau** (8v8, 5520x3360), um planalto
+E para equipes maiores: **Shiverpeak Pass** (4v4, 5100x3450), uma
+passagem de montanha nevada cortada por um abismo, que se atravessa por uma
+ponte de corda entre duas saliências do penhasco, puxada por uma alavanca
+em cada saliência, por uma caverna embaixo dele ou contornando sua ponta
+depois que a parede de gelo dali é quebrada;
+e **Elonian Plateau** (8v8, 5520x3360), um planalto
 desértico com quatro mesas em volta do leito seco de um cânion: elevadores
 temporizados sobem a três delas, um arco natural liga as duas do norte e uma
 passagem corre sob a crista central, com um portão aberto por uma alavanca

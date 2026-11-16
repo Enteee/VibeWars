@@ -54,9 +54,11 @@ kulvert nedenunder, som et slusehåndtag åbner som en tredje vej til midten.
 halvt oversvømmet fæstning, hvis voldgrav deler borggården; den krydses ad
 en vindebro, der betjenes med et håndtag på hver bred, ad skyttegangen
 langs den nordlige ringmur eller gennem den oversvømmede kælder nedenunder.
-Og til de større hold: **Shiverpeak Pass** (4v4, 6000x3400),
-to klippemassiver, der efterlader et bredt pas fyldt med kampesten og en
-smal sti langs hver kant; og **Elonian Plateau** (8v8, 5520x3360), et
+Og til de større hold: **Shiverpeak Pass** (4v4, 5100x3450),
+et snedækket bjergpas delt af en kløft, som krydses ad en rebbro mellem
+to klippehylder, der trækkes med et håndtag på hver hylde, gennem en hule
+under den eller rundt om dens spids, når isvæggen dér er slået i stykker;
+og **Elonian Plateau** (8v8, 5520x3360), et
 ørkenplateau med fire mesaer rundt om et udtørret kløftleje: tidsstyrede
 elevatorer kører op på tre af dem, en naturlig bue forbinder de to nordlige,
 og en gang løber under midterkammen med en port, som et håndtag oppe på

@@ -58,9 +58,11 @@ A **Sunken Bastion** (2v2, 2700x1900) kicsi, de magas:
 egy félig elárasztott erőd, amelynek udvarát vizesárok szeli ketté; át
 lehet kelni rajta a mindkét parton karral működtetett felvonóhídon, az
 északi várfal mentén futó gyilokjárón vagy a lenti elárasztott pincén át.
-A nagyobb csapatoknak pedig: a **Shiverpeak Pass** (4v4, 6000x3400),
-két sziklatömb, amely széles, sziklatömbökkel teleszórt hágót és mindkét
-szélén egy-egy keskeny ösvényt hagy; és az **Elonian Plateau** (8v8,
+A nagyobb csapatoknak pedig: a **Shiverpeak Pass** (4v4, 5100x3450),
+egy havas hegyi hágó, amelyet szakadék vág ketté; át lehet kelni rajta a
+két sziklapárkány közötti kötélhídon, amelyet mindkét párkányon egy kar
+húz be, a szakadék alatti barlangon át, vagy a vége körül, miután az
+ottani jégfalat szétverték; és az **Elonian Plateau** (8v8,
 5520x3360), sivatagi fennsík négy tanúheggyel egy kiszáradt kanyonmeder
 körül: időzített liftek visznek fel hármukra, természetes kőhíd köti össze a
 két északit, a középső gerinc alatt pedig átjáró fut, amelynek rácsát egy

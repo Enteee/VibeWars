@@ -52,9 +52,11 @@ koji poluga ustave otvara kao treći put do sredine.
 poplavljena utvrda čiji opkop dijeli dvorište; prelazi se pokretnim mostom
 kojim upravlja poluga na svakoj obali, bedemskom stazom uz sjeverni zid ili
 kroz poplavljeni podrum ispod.
-A za veće timove: **Shiverpeak Pass** (4v4, 6000x3400),
-dva masiva litica koji ostavljaju širok prijevoj posut gromadama i usku
-stazu uz svaki rub; i **Elonian Plateau** (8v8, 5520x3360), pustinjska
+A za veće timove: **Shiverpeak Pass** (4v4, 5100x3450),
+zasnježeni planinski prijevoj koji presijeca ponor, a prelazi se mostom od
+užadi između dviju stjenovitih izbočina, koji povlači poluga na svakoj
+izbočini, kroz špilju ispod njega ili oko njegova vrha kad se tamo
+razbije ledeni zid; i **Elonian Plateau** (8v8, 5520x3360), pustinjska
 visoravan s četiri mese oko suhog korita kanjona: dizala na vremenski pogon
 voze na tri od njih, prirodni luk spaja dvije sjeverne, a ispod središnjeg
 grebena vodi prolaz čija se rešetka otvara polugom na vrhu.

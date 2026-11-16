@@ -24,7 +24,6 @@ const SYMMETRIC = [
   "mosslit-cairns",
   "wardens-gallery",
   "brazen-causeway",
-  "shiverpeak-pass",
 ];
 
 /** How far apart a thing and its twin's rotation may be. */

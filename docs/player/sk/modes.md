@@ -52,9 +52,11 @@ páka stavidla otvára ako tretiu cestu do stredu.
 napoly zaplavená pevnosť, ktorej nádvorie rozdeľuje vodná priekopa; prejsť
 cez ňu sa dá po padacom moste ovládanom pákou na každom brehu, po ochodzi
 pozdĺž severnej hradby alebo cez zaplavenú pivnicu pod ňou.
-A pre väčšie tímy: **Shiverpeak Pass** (4v4, 6000x3400),
-dva skalné masívy, medzi ktorými zostáva široký priesmyk posiaty balvanmi
-a úzky chodník pozdĺž každého okraja; a **Elonian Plateau** (8v8,
+A pre väčšie tímy: **Shiverpeak Pass** (4v4, 5100x3450),
+zasnežený horský priesmyk rozdelený roklinou, cez ktorú sa dá prejsť po
+lanovom moste medzi dvoma skalnými rímsami, ktorý priťahuje páka na každej
+z nich, jaskyňou pod ňou alebo okolo jej konca, keď sa tam rozbije ľadová
+stena; a **Elonian Plateau** (8v8,
 5520x3360), púštna náhorná plošina so štyrmi stolovými horami okolo
 vyschnutého koryta kaňonu: na tri z nich vyvážajú časované výťahy, dve
 severné spája prírodný oblúk a pod stredným hrebeňom vedie chodba, ktorej

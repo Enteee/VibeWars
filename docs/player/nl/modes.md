@@ -54,8 +54,10 @@ Bastion** (2v2, 2700x1900) is klein maar hoog: een half ondergelopen vesting
 waarvan de slotgracht de binnenplaats splitst; je steekt over via een ophaalbrug
 die met een hendel op elke oever wordt bediend, via de weergang langs de
 noordelijke ringmuur of door de ondergelopen kelder eronder.
-En voor de grotere teams: **Shiverpeak Pass** (4v4, 6000x3400), twee rotsmassieven
-die een brede pas vol keien en een smal pad langs elke rand overlaten; en
+En voor de grotere teams: **Shiverpeak Pass** (4v4, 5100x3450), een besneeuwde
+bergpas die door een kloof wordt gespleten, over te steken via een touwbrug
+tussen twee rotsrichels, die een hendel op elke richel optrekt, door een grot
+eronder of om het uiteinde heen zodra de ijsmuur daar is gebroken; en
 **Elonian Plateau** (8v8, 5520x3360), een woestijnplateau met vier mesa's
 rond een droge kloofbedding: liften op een vaste tijd gaan omhoog naar drie
 ervan, een natuurlijke boog verbindt de twee in het noorden, en onder de
