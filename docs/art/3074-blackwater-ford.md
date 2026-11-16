@@ -92,6 +92,11 @@ only L2 is the mill loft, at the centre, reached by its one stair, contested not
 
 ## New art needed
 
+**Slow shallow water (not built).** Shallow water slows nothing in today's engine (no rule reads depth
+`shallow`), and `mire` drains Energy rather than slowing. The fords and mire banks are walked at base
+speed, as every table here assumes. A slow-ford mechanic is the architect's to decide; no route
+here counts on it.
+
 The `marsh` biome row (above), added by the first build PR. The mill is `decks` and `wood`-look
 props, the gates the existing gate look, the fords and race the existing deep and shallow water.
 Mechanics are not designed here.
