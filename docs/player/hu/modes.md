@@ -51,9 +51,10 @@ süllyesztett kútudvarral, kapuházának csapórácsát a falakról működteti
 a **Moss Vale** (8v8, 5000x2600), egy teraszos völgy, amelyet egy mély
 malomárok kettévág, és csak a felvonóhídnál, a malomnál és az alatta futó
 aluljárón lehet átkelni rajta.
-Egy nagy aréna még nagyobb: a **Canthan Terraces** (1v1, 5200x2800),
-északtól délig fallal tagolt rizsteraszok elcsúsztatott résekkel, egy
-romos pagoda körül. A **Sunken Bastion** (2v2, 2700x1900) kicsi, de magas:
+A **Canthan Terraces** (1v1, 2400x2100) kicsi, de meredek: rizsföldek
+lépcsőznek fel egy domboldalon egy romos pagodáig, alattuk egy elárasztott
+átereszzel, amelyet egy zsilipkar nyit meg harmadik útként a középhez.
+A **Sunken Bastion** (2v2, 2700x1900) kicsi, de magas:
 egy félig elárasztott erőd, amelynek udvarát vizesárok szeli ketté; át
 lehet kelni rajta a mindkét parton karral működtetett felvonóhídon, az
 északi várfal mentén futó gyilokjárón vagy a lenti elárasztott pincén át.

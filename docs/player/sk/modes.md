@@ -45,9 +45,10 @@ ochodzami a vežami hore a zapusteným nádvorím so studňou dole, pričom pada
 mrežu brány ovládajú z hradieb; a **Moss Vale** (8v8, 5000x2600), terasovité
 údolie rozdelené na dve hlbokým mlynským náhonom, ktorý sa dá prejsť len po
 padacom moste, cez mlyn a podchodom pod ním.
-Jedna veľká aréna je ešte väčšia: **Canthan Terraces** (1v1, 5200x2800),
-ryžové terasy obohnané múrmi zo severu na juh s posunutými medzerami, okolo
-zrúcanej pagody. **Sunken Bastion** (2v2, 2700x1900) je malá, ale vysoká:
+**Canthan Terraces** (1v1, 2400x2100) je malá, ale strmá: ryžové polia
+stúpajúce po svahu k zrúcanej pagode a pod nimi zaplavený priepust, ktorý
+páka stavidla otvára ako tretiu cestu do stredu.
+**Sunken Bastion** (2v2, 2700x1900) je malá, ale vysoká:
 napoly zaplavená pevnosť, ktorej nádvorie rozdeľuje vodná priekopa; prejsť
 cez ňu sa dá po padacom moste ovládanom pákou na každom brehu, po ochodzi
 pozdĺž severnej hradby alebo cez zaplavenú pivnicu pod ňou.

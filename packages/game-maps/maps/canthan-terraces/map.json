@@ -4,371 +4,2239 @@
   "mode": "annihilation",
   "teamSizes": [1],
   "teams": 2,
-  "width": 5200,
-  "height": 2800,
-  "bounds": { "kind": "rect" },
-  "layers": 1,
-  "biome": "hall",
-  "groundLayer": 0,
-  "pits": [],
-  "tunnels": [],
-  "decks": [],
-  "overhangs": [],
-  "transitions": [],
-  "dropOffs": [],
+  "width": 2400,
+  "height": 2100,
+  "bounds": {
+    "kind": "outline",
+    "outside": "rock",
+    "outline": [
+      {
+        "x": 240,
+        "y": 620
+      },
+      {
+        "x": 420,
+        "y": 420
+      },
+      {
+        "x": 700,
+        "y": 250
+      },
+      {
+        "x": 1100,
+        "y": 170
+      },
+      {
+        "x": 1700,
+        "y": 180
+      },
+      {
+        "x": 2060,
+        "y": 280
+      },
+      {
+        "x": 2260,
+        "y": 470
+      },
+      {
+        "x": 2330,
+        "y": 900
+      },
+      {
+        "x": 2300,
+        "y": 1300
+      },
+      {
+        "x": 2230,
+        "y": 1720
+      },
+      {
+        "x": 2000,
+        "y": 1900
+      },
+      {
+        "x": 1650,
+        "y": 1990
+      },
+      {
+        "x": 1250,
+        "y": 2040
+      },
+      {
+        "x": 850,
+        "y": 2010
+      },
+      {
+        "x": 500,
+        "y": 1930
+      },
+      {
+        "x": 230,
+        "y": 1780
+      },
+      {
+        "x": 110,
+        "y": 1450
+      },
+      {
+        "x": 130,
+        "y": 1000
+      }
+    ]
+  },
+  "layers": 4,
+  "biome": "wilds",
+  "groundLayer": 1,
+  "pits": [
+    {
+      "id": "culvert-west-mouth",
+      "footprint": {
+        "kind": "rect",
+        "x": 645,
+        "y": 1480,
+        "width": 110,
+        "height": 130
+      }
+    },
+    {
+      "id": "culvert-east-mouth",
+      "footprint": {
+        "kind": "rect",
+        "x": 1645,
+        "y": 1420,
+        "width": 110,
+        "height": 120
+      }
+    },
+    {
+      "id": "drain-shaft",
+      "footprint": {
+        "kind": "rect",
+        "x": 1235,
+        "y": 1000,
+        "width": 90,
+        "height": 140
+      }
+    }
+  ],
+  "tunnels": [
+    {
+      "id": "culvert-west",
+      "footprint": {
+        "kind": "rect",
+        "x": 645,
+        "y": 1080,
+        "width": 110,
+        "height": 430
+      }
+    },
+    {
+      "id": "culvert-north",
+      "footprint": {
+        "kind": "rect",
+        "x": 645,
+        "y": 1080,
+        "width": 1110,
+        "height": 110
+      }
+    },
+    {
+      "id": "culvert-east",
+      "footprint": {
+        "kind": "rect",
+        "x": 1645,
+        "y": 1080,
+        "width": 110,
+        "height": 370
+      }
+    }
+  ],
+  "decks": [
+    {
+      "id": "terrace-west",
+      "layer": 2,
+      "footprint": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 126,
+            "y": 1100
+          },
+          {
+            "x": 130,
+            "y": 1000
+          },
+          {
+            "x": 240,
+            "y": 620
+          },
+          {
+            "x": 420,
+            "y": 420
+          },
+          {
+            "x": 700,
+            "y": 250
+          },
+          {
+            "x": 1100,
+            "y": 170
+          },
+          {
+            "x": 1280,
+            "y": 173
+          },
+          {
+            "x": 1280,
+            "y": 960
+          },
+          {
+            "x": 1070,
+            "y": 960
+          },
+          {
+            "x": 1070,
+            "y": 1190
+          },
+          {
+            "x": 1280,
+            "y": 1190
+          },
+          {
+            "x": 1280,
+            "y": 1330
+          },
+          {
+            "x": 1160,
+            "y": 1330
+          },
+          {
+            "x": 1000,
+            "y": 1330
+          },
+          {
+            "x": 610,
+            "y": 1290
+          },
+          {
+            "x": 450,
+            "y": 1290
+          },
+          {
+            "x": 300,
+            "y": 1230
+          }
+        ]
+      },
+      "look": "terrace",
+      "switched": null
+    },
+    {
+      "id": "terrace-east",
+      "layer": 2,
+      "footprint": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1280,
+            "y": 173
+          },
+          {
+            "x": 1700,
+            "y": 180
+          },
+          {
+            "x": 2060,
+            "y": 280
+          },
+          {
+            "x": 2260,
+            "y": 470
+          },
+          {
+            "x": 2330,
+            "y": 900
+          },
+          {
+            "x": 2309,
+            "y": 1180
+          },
+          {
+            "x": 1890,
+            "y": 1270
+          },
+          {
+            "x": 1730,
+            "y": 1270
+          },
+          {
+            "x": 1560,
+            "y": 1330
+          },
+          {
+            "x": 1400,
+            "y": 1330
+          },
+          {
+            "x": 1280,
+            "y": 1330
+          },
+          {
+            "x": 1280,
+            "y": 1190
+          },
+          {
+            "x": 1490,
+            "y": 1190
+          },
+          {
+            "x": 1490,
+            "y": 960
+          },
+          {
+            "x": 1280,
+            "y": 960
+          }
+        ]
+      },
+      "look": "terrace",
+      "switched": null
+    },
+    {
+      "id": "paddy-terrace",
+      "layer": 3,
+      "footprint": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 330,
+            "y": 520
+          },
+          {
+            "x": 420,
+            "y": 420
+          },
+          {
+            "x": 700,
+            "y": 250
+          },
+          {
+            "x": 1000,
+            "y": 190
+          },
+          {
+            "x": 1025,
+            "y": 600
+          },
+          {
+            "x": 380,
+            "y": 600
+          }
+        ]
+      },
+      "look": "terrace",
+      "switched": null
+    },
+    {
+      "id": "pagoda-terrace",
+      "layer": 3,
+      "footprint": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1650,
+            "y": 179
+          },
+          {
+            "x": 1700,
+            "y": 180
+          },
+          {
+            "x": 2060,
+            "y": 280
+          },
+          {
+            "x": 2260,
+            "y": 470
+          },
+          {
+            "x": 2296,
+            "y": 690
+          },
+          {
+            "x": 1660,
+            "y": 690
+          }
+        ]
+      },
+      "look": "terrace",
+      "switched": null
+    },
+    {
+      "id": "lantern-bridge",
+      "layer": 3,
+      "footprint": {
+        "kind": "rect",
+        "x": 990,
+        "y": 400,
+        "width": 690,
+        "height": 90
+      },
+      "look": "bridge-plank",
+      "switched": null
+    }
+  ],
+  "overhangs": [
+    {
+      "id": "lantern-arch-west",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 1000,
+        "y": 1330,
+        "width": 160,
+        "height": 60
+      },
+      "look": "awning"
+    },
+    {
+      "id": "lantern-arch-east",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 1400,
+        "y": 1330,
+        "width": 160,
+        "height": 60
+      },
+      "look": "awning"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "stair-west",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 470,
+        "y": 1290,
+        "width": 120,
+        "height": 110
+      },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "stair-east",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1750,
+        "y": 1270,
+        "width": 120,
+        "height": 110
+      },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "paddy-steps",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1160,
+        "y": 1330,
+        "width": 240,
+        "height": 110
+      },
+      "uphill": "n",
+      "look": "stairs-landing",
+      "lift": null
+    },
+    {
+      "id": "court-steps-west",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1070,
+        "y": 960,
+        "width": 110,
+        "height": 110
+      },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "court-steps-east",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1380,
+        "y": 960,
+        "width": 110,
+        "height": 110
+      },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "bridge-ladder",
+      "from": 2,
+      "to": 3,
+      "area": {
+        "kind": "rect",
+        "x": 1306,
+        "y": 490,
+        "width": 48,
+        "height": 110
+      },
+      "uphill": "n",
+      "look": "ladder",
+      "lift": null
+    },
+    {
+      "id": "paddy-stair",
+      "from": 2,
+      "to": 3,
+      "area": {
+        "kind": "rect",
+        "x": 800,
+        "y": 600,
+        "width": 100,
+        "height": 110
+      },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "pagoda-stair",
+      "from": 2,
+      "to": 3,
+      "area": {
+        "kind": "rect",
+        "x": 1720,
+        "y": 690,
+        "width": 100,
+        "height": 110
+      },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "culvert-west-steps",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 645,
+        "y": 1480,
+        "width": 110,
+        "height": 130
+      },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "culvert-east-steps",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 1645,
+        "y": 1420,
+        "width": 110,
+        "height": 120
+      },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "drain-shaft-ramp",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 1235,
+        "y": 1000,
+        "width": 90,
+        "height": 140
+      },
+      "uphill": "n",
+      "look": "ramp",
+      "lift": null
+    }
+  ],
+  "dropOffs": [
+    {
+      "layer": 3,
+      "from": {
+        "x": 400,
+        "y": 600
+      },
+      "to": {
+        "x": 780,
+        "y": 600
+      }
+    },
+    {
+      "layer": 3,
+      "from": {
+        "x": 1840,
+        "y": 690
+      },
+      "to": {
+        "x": 2270,
+        "y": 690
+      }
+    },
+    {
+      "layer": 2,
+      "from": {
+        "x": 160,
+        "y": 1130
+      },
+      "to": {
+        "x": 290,
+        "y": 1225
+      }
+    },
+    {
+      "layer": 2,
+      "from": {
+        "x": 2240,
+        "y": 1195
+      },
+      "to": {
+        "x": 1960,
+        "y": 1255
+      }
+    }
+  ],
   "walls": [
     {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1280,
-      "y": 250,
-      "width": 40,
-      "height": 650
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 3880,
-      "y": 1900,
-      "width": 40,
-      "height": 650
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1280,
-      "y": 1200,
-      "width": 40,
-      "height": 400
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 3880,
-      "y": 1200,
-      "width": 40,
-      "height": 400
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1280,
-      "y": 1900,
-      "width": 40,
-      "height": 650
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 3880,
-      "y": 250,
-      "width": 40,
-      "height": 650
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1930,
-      "y": 250,
-      "width": 40,
-      "height": 400
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 3230,
-      "y": 2150,
-      "width": 40,
-      "height": 400
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1930,
-      "y": 950,
-      "width": 40,
-      "height": 900
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 3230,
-      "y": 950,
-      "width": 40,
-      "height": 900
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1930,
-      "y": 2150,
-      "width": 40,
-      "height": 400
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 3230,
-      "y": 250,
-      "width": 40,
-      "height": 400
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1450,
-      "y": 700,
-      "width": 340,
-      "height": 30
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 3410,
-      "y": 2070,
-      "width": 340,
-      "height": 30
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1450,
-      "y": 2050,
-      "width": 340,
-      "height": 30
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 3410,
-      "y": 720,
-      "width": 340,
-      "height": 30
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2270,
-      "y": 1120,
-      "width": 60,
-      "height": 60
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2870,
-      "y": 1620,
-      "width": 60,
-      "height": 60
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2870,
-      "y": 1120,
-      "width": 60,
-      "height": 60
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2270,
-      "y": 1620,
-      "width": 60,
-      "height": 60
-    },
-    {
       "kind": "polygon",
-      "layer": 0,
       "points": [
         {
-          "x": 620,
-          "y": 600
+          "x": 126,
+          "y": 1100
         },
         {
-          "x": 760,
-          "y": 560
+          "x": 130,
+          "y": 1000
         },
         {
-          "x": 820,
-          "y": 680
+          "x": 240,
+          "y": 620
+        },
+        {
+          "x": 420,
+          "y": 420
         },
         {
           "x": 700,
-          "y": 760
+          "y": 250
         },
         {
-          "x": 600,
-          "y": 700
-        }
-      ]
-    },
-    {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        {
-          "x": 4580,
-          "y": 2200
+          "x": 1100,
+          "y": 170
         },
         {
-          "x": 4440,
-          "y": 2240
+          "x": 1280,
+          "y": 173
         },
         {
-          "x": 4380,
-          "y": 2120
+          "x": 1280,
+          "y": 960
         },
         {
-          "x": 4500,
-          "y": 2040
+          "x": 1070,
+          "y": 960
         },
         {
-          "x": 4600,
-          "y": 2100
-        }
-      ]
-    },
-    {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        {
-          "x": 640,
-          "y": 2080
+          "x": 1070,
+          "y": 1190
         },
         {
-          "x": 780,
-          "y": 2050
+          "x": 1280,
+          "y": 1190
         },
         {
-          "x": 830,
-          "y": 2170
+          "x": 1280,
+          "y": 1330
         },
         {
-          "x": 720,
-          "y": 2240
+          "x": 1160,
+          "y": 1330
+        },
+        {
+          "x": 1000,
+          "y": 1330
         },
         {
           "x": 610,
-          "y": 2170
+          "y": 1290
+        },
+        {
+          "x": 450,
+          "y": 1290
+        },
+        {
+          "x": 300,
+          "y": 1230
         }
-      ]
+      ],
+      "layer": 1
     },
     {
       "kind": "polygon",
-      "layer": 0,
       "points": [
         {
-          "x": 4560,
-          "y": 720
+          "x": 1280,
+          "y": 173
         },
         {
-          "x": 4420,
-          "y": 750
+          "x": 1700,
+          "y": 180
         },
         {
-          "x": 4370,
-          "y": 630
+          "x": 2060,
+          "y": 280
         },
         {
-          "x": 4480,
-          "y": 560
+          "x": 2260,
+          "y": 470
         },
         {
-          "x": 4590,
-          "y": 630
+          "x": 2330,
+          "y": 900
+        },
+        {
+          "x": 2309,
+          "y": 1180
+        },
+        {
+          "x": 1890,
+          "y": 1270
+        },
+        {
+          "x": 1730,
+          "y": 1270
+        },
+        {
+          "x": 1560,
+          "y": 1330
+        },
+        {
+          "x": 1400,
+          "y": 1330
+        },
+        {
+          "x": 1280,
+          "y": 1330
+        },
+        {
+          "x": 1280,
+          "y": 1190
+        },
+        {
+          "x": 1490,
+          "y": 1190
+        },
+        {
+          "x": 1490,
+          "y": 960
+        },
+        {
+          "x": 1280,
+          "y": 960
         }
-      ]
+      ],
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 1000,
+      "y": 1330,
+      "width": 16,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 1144,
+      "y": 1330,
+      "width": 16,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 1400,
+      "y": 1330,
+      "width": 16,
+      "height": 60,
+      "layer": 1
+    },
+    {
+      "kind": "rect",
+      "x": 1544,
+      "y": 1330,
+      "width": 16,
+      "height": 60,
+      "layer": 1
     },
     {
       "kind": "polygon",
-      "layer": 0,
       "points": [
         {
-          "x": 2757,
-          "y": 1465
+          "x": 330,
+          "y": 520
         },
         {
-          "x": 2665,
-          "y": 1557
+          "x": 420,
+          "y": 420
         },
         {
-          "x": 2535,
-          "y": 1557
+          "x": 700,
+          "y": 250
         },
         {
-          "x": 2443,
-          "y": 1465
+          "x": 1000,
+          "y": 190
         },
         {
-          "x": 2443,
-          "y": 1335
+          "x": 1025,
+          "y": 600
         },
         {
-          "x": 2535,
-          "y": 1243
-        },
-        {
-          "x": 2665,
-          "y": 1243
-        },
-        {
-          "x": 2757,
-          "y": 1335
+          "x": 380,
+          "y": 600
         }
-      ]
+      ],
+      "layer": 2
+    },
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": 1650,
+          "y": 179
+        },
+        {
+          "x": 1700,
+          "y": 180
+        },
+        {
+          "x": 2060,
+          "y": 280
+        },
+        {
+          "x": 2260,
+          "y": 470
+        },
+        {
+          "x": 2296,
+          "y": 690
+        },
+        {
+          "x": 1660,
+          "y": 690
+        }
+      ],
+      "layer": 2
+    },
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": 1840,
+          "y": 200
+        },
+        {
+          "x": 2040,
+          "y": 260
+        },
+        {
+          "x": 2040,
+          "y": 380
+        },
+        {
+          "x": 1840,
+          "y": 380
+        }
+      ],
+      "layer": 3
     }
   ],
-  "gates": [],
-  "objectives": [],
+  "water": [
+    {
+      "id": "paddy-high-west",
+      "layer": 3,
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 790,
+            "y": 470
+          },
+          {
+            "x": 770,
+            "y": 505
+          },
+          {
+            "x": 715,
+            "y": 531
+          },
+          {
+            "x": 640,
+            "y": 540
+          },
+          {
+            "x": 565,
+            "y": 531
+          },
+          {
+            "x": 510,
+            "y": 505
+          },
+          {
+            "x": 490,
+            "y": 470
+          },
+          {
+            "x": 510,
+            "y": 435
+          },
+          {
+            "x": 565,
+            "y": 409
+          },
+          {
+            "x": 640,
+            "y": 400
+          },
+          {
+            "x": 715,
+            "y": 409
+          },
+          {
+            "x": 770,
+            "y": 435
+          }
+        ]
+      }
+    },
+    {
+      "id": "paddy-high-east",
+      "layer": 3,
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 2210,
+            "y": 520
+          },
+          {
+            "x": 2198,
+            "y": 545
+          },
+          {
+            "x": 2165,
+            "y": 563
+          },
+          {
+            "x": 2120,
+            "y": 570
+          },
+          {
+            "x": 2075,
+            "y": 563
+          },
+          {
+            "x": 2042,
+            "y": 545
+          },
+          {
+            "x": 2030,
+            "y": 520
+          },
+          {
+            "x": 2042,
+            "y": 495
+          },
+          {
+            "x": 2075,
+            "y": 477
+          },
+          {
+            "x": 2120,
+            "y": 470
+          },
+          {
+            "x": 2165,
+            "y": 477
+          },
+          {
+            "x": 2198,
+            "y": 495
+          }
+        ]
+      }
+    },
+    {
+      "id": "paddy-terrace-west",
+      "layer": 2,
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 910,
+            "y": 880
+          },
+          {
+            "x": 890,
+            "y": 908
+          },
+          {
+            "x": 835,
+            "y": 928
+          },
+          {
+            "x": 760,
+            "y": 935
+          },
+          {
+            "x": 685,
+            "y": 928
+          },
+          {
+            "x": 630,
+            "y": 908
+          },
+          {
+            "x": 610,
+            "y": 880
+          },
+          {
+            "x": 630,
+            "y": 853
+          },
+          {
+            "x": 685,
+            "y": 832
+          },
+          {
+            "x": 760,
+            "y": 825
+          },
+          {
+            "x": 835,
+            "y": 832
+          },
+          {
+            "x": 890,
+            "y": 853
+          }
+        ]
+      }
+    },
+    {
+      "id": "paddy-terrace-east",
+      "layer": 2,
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1960,
+            "y": 900
+          },
+          {
+            "x": 1939,
+            "y": 930
+          },
+          {
+            "x": 1880,
+            "y": 952
+          },
+          {
+            "x": 1800,
+            "y": 960
+          },
+          {
+            "x": 1720,
+            "y": 952
+          },
+          {
+            "x": 1661,
+            "y": 930
+          },
+          {
+            "x": 1640,
+            "y": 900
+          },
+          {
+            "x": 1661,
+            "y": 870
+          },
+          {
+            "x": 1720,
+            "y": 848
+          },
+          {
+            "x": 1800,
+            "y": 840
+          },
+          {
+            "x": 1880,
+            "y": 848
+          },
+          {
+            "x": 1939,
+            "y": 870
+          }
+        ]
+      }
+    },
+    {
+      "id": "paddy-floor-west",
+      "layer": 1,
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 715,
+            "y": 1820
+          },
+          {
+            "x": 700,
+            "y": 1843
+          },
+          {
+            "x": 658,
+            "y": 1859
+          },
+          {
+            "x": 600,
+            "y": 1865
+          },
+          {
+            "x": 543,
+            "y": 1859
+          },
+          {
+            "x": 500,
+            "y": 1843
+          },
+          {
+            "x": 485,
+            "y": 1820
+          },
+          {
+            "x": 500,
+            "y": 1798
+          },
+          {
+            "x": 543,
+            "y": 1781
+          },
+          {
+            "x": 600,
+            "y": 1775
+          },
+          {
+            "x": 658,
+            "y": 1781
+          },
+          {
+            "x": 700,
+            "y": 1798
+          }
+        ]
+      }
+    },
+    {
+      "id": "paddy-floor-east",
+      "layer": 1,
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1985,
+            "y": 1790
+          },
+          {
+            "x": 1970,
+            "y": 1813
+          },
+          {
+            "x": 1928,
+            "y": 1829
+          },
+          {
+            "x": 1870,
+            "y": 1835
+          },
+          {
+            "x": 1813,
+            "y": 1829
+          },
+          {
+            "x": 1770,
+            "y": 1813
+          },
+          {
+            "x": 1755,
+            "y": 1790
+          },
+          {
+            "x": 1770,
+            "y": 1768
+          },
+          {
+            "x": 1813,
+            "y": 1751
+          },
+          {
+            "x": 1870,
+            "y": 1745
+          },
+          {
+            "x": 1928,
+            "y": 1751
+          },
+          {
+            "x": 1970,
+            "y": 1768
+          }
+        ]
+      }
+    },
+    {
+      "id": "culvert-flood-west",
+      "layer": 0,
+      "depth": "shallow",
+      "area": {
+        "kind": "rect",
+        "x": 660,
+        "y": 1200,
+        "width": 80,
+        "height": 260
+      }
+    },
+    {
+      "id": "culvert-flood-east",
+      "layer": 0,
+      "depth": "shallow",
+      "area": {
+        "kind": "rect",
+        "x": 1660,
+        "y": 1200,
+        "width": 80,
+        "height": 200
+      }
+    }
+  ],
+  "zones": [
+    {
+      "id": "paddy-mud",
+      "kind": "mire",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 975,
+            "y": 1890
+          },
+          {
+            "x": 962,
+            "y": 1915
+          },
+          {
+            "x": 928,
+            "y": 1933
+          },
+          {
+            "x": 880,
+            "y": 1940
+          },
+          {
+            "x": 833,
+            "y": 1933
+          },
+          {
+            "x": 798,
+            "y": 1915
+          },
+          {
+            "x": 785,
+            "y": 1890
+          },
+          {
+            "x": 798,
+            "y": 1865
+          },
+          {
+            "x": 833,
+            "y": 1847
+          },
+          {
+            "x": 880,
+            "y": 1840
+          },
+          {
+            "x": 928,
+            "y": 1847
+          },
+          {
+            "x": 962,
+            "y": 1865
+          }
+        ]
+      }
+    },
+    {
+      "id": "hillside-spring",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1745,
+            "y": 1890
+          },
+          {
+            "x": 1734,
+            "y": 1915
+          },
+          {
+            "x": 1703,
+            "y": 1933
+          },
+          {
+            "x": 1660,
+            "y": 1940
+          },
+          {
+            "x": 1618,
+            "y": 1933
+          },
+          {
+            "x": 1586,
+            "y": 1915
+          },
+          {
+            "x": 1575,
+            "y": 1890
+          },
+          {
+            "x": 1586,
+            "y": 1865
+          },
+          {
+            "x": 1618,
+            "y": 1847
+          },
+          {
+            "x": 1660,
+            "y": 1840
+          },
+          {
+            "x": 1703,
+            "y": 1847
+          },
+          {
+            "x": 1734,
+            "y": 1865
+          }
+        ]
+      }
+    }
+  ],
   "spawnPoints": [
     {
       "team": 0,
-      "layer": 0,
+      "layer": 1,
       "position": {
-        "x": 240,
-        "y": 1300
+        "x": 500,
+        "y": 1690
       }
     },
     {
       "team": 0,
-      "layer": 0,
+      "layer": 1,
       "position": {
-        "x": 240,
-        "y": 1500
+        "x": 440,
+        "y": 1630
       }
     },
     {
       "team": 0,
-      "layer": 0,
+      "layer": 1,
       "position": {
-        "x": 360,
-        "y": 1400
+        "x": 440,
+        "y": 1750
       }
     },
     {
       "team": 1,
-      "layer": 0,
+      "layer": 1,
       "position": {
-        "x": 4960,
-        "y": 1500
+        "x": 2060,
+        "y": 1690
       }
     },
     {
       "team": 1,
-      "layer": 0,
+      "layer": 1,
       "position": {
-        "x": 4960,
-        "y": 1300
+        "x": 2120,
+        "y": 1630
       }
     },
     {
       "team": 1,
-      "layer": 0,
+      "layer": 1,
       "position": {
-        "x": 4840,
-        "y": 1400
+        "x": 2120,
+        "y": 1750
+      }
+    }
+  ],
+  "objectives": [],
+  "gates": [
+    {
+      "id": "sluice-gate-west",
+      "wall": {
+        "kind": "rect",
+        "x": 1205,
+        "y": 1080,
+        "width": 14,
+        "height": 110,
+        "layer": 0
+      },
+      "opener": {
+        "kind": "switch"
+      },
+      "blocks": "all",
+      "look": "portcullis"
+    },
+    {
+      "id": "sluice-gate-east",
+      "wall": {
+        "kind": "rect",
+        "x": 1341,
+        "y": 1080,
+        "width": 14,
+        "height": 110,
+        "layer": 0
+      },
+      "opener": {
+        "kind": "switch"
+      },
+      "blocks": "all",
+      "look": "portcullis"
+    }
+  ],
+  "switches": [
+    {
+      "id": "sluice-lever",
+      "layer": 1,
+      "position": {
+        "x": 1280,
+        "y": 978
+      },
+      "targets": ["sluice-gate-west", "sluice-gate-east"]
+    }
+  ],
+  "breakables": [
+    {
+      "id": "mud-brick-wall",
+      "wall": {
+        "kind": "rect",
+        "x": 1268,
+        "y": 1580,
+        "width": 24,
+        "height": 260,
+        "layer": 1
+      },
+      "health": 1200
+    }
+  ],
+  "lighting": {
+    "ambient": {
+      "colour": 11582676,
+      "intensity": 0.45
+    },
+    "indoorAmbient": {
+      "colour": 5924488,
+      "intensity": 0.3
+    },
+    "indoor": [],
+    "sun": {
+      "directionDeg": 315,
+      "elevationDeg": 50,
+      "colour": 16773590,
+      "intensity": 0.55
+    },
+    "lights": [
+      {
+        "id": "west-mouth-lantern",
+        "position": {
+          "x": 700,
+          "y": 1640
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "east-mouth-lantern",
+        "position": {
+          "x": 1700,
+          "y": 1570
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "culvert-west-lantern",
+        "position": {
+          "x": 700,
+          "y": 1300
+        },
+        "layer": 0,
+        "radius": 140,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "culvert-east-lantern",
+        "position": {
+          "x": 1700,
+          "y": 1300
+        },
+        "layer": 0,
+        "radius": 140,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "stair-west-head",
+        "position": {
+          "x": 530,
+          "y": 1270
+        },
+        "layer": 2,
+        "radius": 150,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "stair-east-head",
+        "position": {
+          "x": 1810,
+          "y": 1250
+        },
+        "layer": 2,
+        "radius": 150,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "paddy-steps-head",
+        "position": {
+          "x": 1280,
+          "y": 1310
+        },
+        "layer": 2,
+        "radius": 150,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "paddy-stair-head",
+        "position": {
+          "x": 850,
+          "y": 580
+        },
+        "layer": 3,
+        "radius": 150,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "pagoda-stair-head",
+        "position": {
+          "x": 1770,
+          "y": 670
+        },
+        "layer": 3,
+        "radius": 150,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "drain-shaft",
+        "position": {
+          "x": 1280,
+          "y": 1010
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "lantern-bridge",
+        "position": {
+          "x": 1335,
+          "y": 445
+        },
+        "layer": 3,
+        "radius": 150,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "pagoda",
+        "position": {
+          "x": 1940,
+          "y": 440
+        },
+        "layer": 3,
+        "radius": 220,
+        "colour": 16764800,
+        "intensity": 0.8,
+        "flicker": 0.2
+      },
+      {
+        "id": "spring-glow",
+        "position": {
+          "x": 1660,
+          "y": 1890
+        },
+        "layer": 1,
+        "radius": 160,
+        "colour": 6280388,
+        "intensity": 0.6,
+        "flicker": 0
+      }
+    ]
+  },
+  "atmosphere": {
+    "fog": [
+      {
+        "layer": 1,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            {
+              "x": 790,
+              "y": 1820
+            },
+            {
+              "x": 765,
+              "y": 1860
+            },
+            {
+              "x": 695,
+              "y": 1889
+            },
+            {
+              "x": 600,
+              "y": 1900
+            },
+            {
+              "x": 505,
+              "y": 1889
+            },
+            {
+              "x": 435,
+              "y": 1860
+            },
+            {
+              "x": 410,
+              "y": 1820
+            },
+            {
+              "x": 435,
+              "y": 1780
+            },
+            {
+              "x": 505,
+              "y": 1751
+            },
+            {
+              "x": 600,
+              "y": 1740
+            },
+            {
+              "x": 695,
+              "y": 1751
+            },
+            {
+              "x": 765,
+              "y": 1780
+            }
+          ]
+        }
+      },
+      {
+        "layer": 1,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            {
+              "x": 2060,
+              "y": 1790
+            },
+            {
+              "x": 2035,
+              "y": 1830
+            },
+            {
+              "x": 1965,
+              "y": 1859
+            },
+            {
+              "x": 1870,
+              "y": 1870
+            },
+            {
+              "x": 1775,
+              "y": 1859
+            },
+            {
+              "x": 1705,
+              "y": 1830
+            },
+            {
+              "x": 1680,
+              "y": 1790
+            },
+            {
+              "x": 1705,
+              "y": 1750
+            },
+            {
+              "x": 1775,
+              "y": 1721
+            },
+            {
+              "x": 1870,
+              "y": 1710
+            },
+            {
+              "x": 1965,
+              "y": 1721
+            },
+            {
+              "x": 2035,
+              "y": 1750
+            }
+          ]
+        }
+      }
+    ],
+    "plumes": [],
+    "weather": null
+  },
+  "paving": [
+    {
+      "id": "bund-high-west",
+      "layer": 3,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 812,
+            "y": 470
+          },
+          {
+            "x": 789,
+            "y": 513
+          },
+          {
+            "x": 726,
+            "y": 544
+          },
+          {
+            "x": 640,
+            "y": 556
+          },
+          {
+            "x": 554,
+            "y": 544
+          },
+          {
+            "x": 491,
+            "y": 513
+          },
+          {
+            "x": 468,
+            "y": 470
+          },
+          {
+            "x": 491,
+            "y": 427
+          },
+          {
+            "x": 554,
+            "y": 396
+          },
+          {
+            "x": 640,
+            "y": 384
+          },
+          {
+            "x": 726,
+            "y": 396
+          },
+          {
+            "x": 789,
+            "y": 427
+          }
+        ]
+      }
+    },
+    {
+      "id": "bund-high-east",
+      "layer": 3,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 2232,
+            "y": 520
+          },
+          {
+            "x": 2217,
+            "y": 553
+          },
+          {
+            "x": 2176,
+            "y": 577
+          },
+          {
+            "x": 2120,
+            "y": 586
+          },
+          {
+            "x": 2064,
+            "y": 577
+          },
+          {
+            "x": 2023,
+            "y": 553
+          },
+          {
+            "x": 2008,
+            "y": 520
+          },
+          {
+            "x": 2023,
+            "y": 487
+          },
+          {
+            "x": 2064,
+            "y": 463
+          },
+          {
+            "x": 2120,
+            "y": 454
+          },
+          {
+            "x": 2176,
+            "y": 463
+          },
+          {
+            "x": 2217,
+            "y": 487
+          }
+        ]
+      }
+    },
+    {
+      "id": "bund-terrace-west",
+      "layer": 2,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 932,
+            "y": 880
+          },
+          {
+            "x": 909,
+            "y": 916
+          },
+          {
+            "x": 846,
+            "y": 941
+          },
+          {
+            "x": 760,
+            "y": 951
+          },
+          {
+            "x": 674,
+            "y": 941
+          },
+          {
+            "x": 611,
+            "y": 916
+          },
+          {
+            "x": 588,
+            "y": 880
+          },
+          {
+            "x": 611,
+            "y": 845
+          },
+          {
+            "x": 674,
+            "y": 819
+          },
+          {
+            "x": 760,
+            "y": 809
+          },
+          {
+            "x": 846,
+            "y": 819
+          },
+          {
+            "x": 909,
+            "y": 845
+          }
+        ]
+      }
+    },
+    {
+      "id": "bund-terrace-east",
+      "layer": 2,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1982,
+            "y": 900
+          },
+          {
+            "x": 1958,
+            "y": 938
+          },
+          {
+            "x": 1891,
+            "y": 966
+          },
+          {
+            "x": 1800,
+            "y": 976
+          },
+          {
+            "x": 1709,
+            "y": 966
+          },
+          {
+            "x": 1642,
+            "y": 938
+          },
+          {
+            "x": 1618,
+            "y": 900
+          },
+          {
+            "x": 1642,
+            "y": 862
+          },
+          {
+            "x": 1709,
+            "y": 834
+          },
+          {
+            "x": 1800,
+            "y": 824
+          },
+          {
+            "x": 1891,
+            "y": 834
+          },
+          {
+            "x": 1958,
+            "y": 862
+          }
+        ]
+      }
+    },
+    {
+      "id": "bund-floor-west",
+      "layer": 1,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 737,
+            "y": 1820
+          },
+          {
+            "x": 719,
+            "y": 1851
+          },
+          {
+            "x": 669,
+            "y": 1873
+          },
+          {
+            "x": 600,
+            "y": 1881
+          },
+          {
+            "x": 532,
+            "y": 1873
+          },
+          {
+            "x": 481,
+            "y": 1851
+          },
+          {
+            "x": 463,
+            "y": 1820
+          },
+          {
+            "x": 481,
+            "y": 1790
+          },
+          {
+            "x": 532,
+            "y": 1767
+          },
+          {
+            "x": 600,
+            "y": 1759
+          },
+          {
+            "x": 669,
+            "y": 1767
+          },
+          {
+            "x": 719,
+            "y": 1790
+          }
+        ]
+      }
+    },
+    {
+      "id": "bund-floor-east",
+      "layer": 1,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 2007,
+            "y": 1790
+          },
+          {
+            "x": 1989,
+            "y": 1821
+          },
+          {
+            "x": 1939,
+            "y": 1843
+          },
+          {
+            "x": 1870,
+            "y": 1851
+          },
+          {
+            "x": 1802,
+            "y": 1843
+          },
+          {
+            "x": 1751,
+            "y": 1821
+          },
+          {
+            "x": 1733,
+            "y": 1790
+          },
+          {
+            "x": 1751,
+            "y": 1760
+          },
+          {
+            "x": 1802,
+            "y": 1737
+          },
+          {
+            "x": 1870,
+            "y": 1729
+          },
+          {
+            "x": 1939,
+            "y": 1737
+          },
+          {
+            "x": 1989,
+            "y": 1760
+          }
+        ]
+      }
+    },
+    {
+      "id": "valley-track",
+      "layer": 1,
+      "look": "dirt",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 250,
+            "y": 1600
+          },
+          {
+            "x": 380,
+            "y": 1430
+          },
+          {
+            "x": 470,
+            "y": 1400
+          },
+          {
+            "x": 590,
+            "y": 1400
+          },
+          {
+            "x": 640,
+            "y": 1450
+          },
+          {
+            "x": 1000,
+            "y": 1460
+          },
+          {
+            "x": 1160,
+            "y": 1440
+          },
+          {
+            "x": 1400,
+            "y": 1440
+          },
+          {
+            "x": 1600,
+            "y": 1420
+          },
+          {
+            "x": 1750,
+            "y": 1380
+          },
+          {
+            "x": 1870,
+            "y": 1380
+          },
+          {
+            "x": 1960,
+            "y": 1440
+          },
+          {
+            "x": 2200,
+            "y": 1500
+          },
+          {
+            "x": 2250,
+            "y": 1640
+          },
+          {
+            "x": 2150,
+            "y": 1760
+          },
+          {
+            "x": 1900,
+            "y": 1700
+          },
+          {
+            "x": 1300,
+            "y": 1720
+          },
+          {
+            "x": 700,
+            "y": 1720
+          },
+          {
+            "x": 380,
+            "y": 1760
+          },
+          {
+            "x": 260,
+            "y": 1700
+          }
+        ]
+      }
+    },
+    {
+      "id": "paddy-steps-apron",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "rect",
+        "x": 1140,
+        "y": 1440,
+        "width": 280,
+        "height": 60
+      }
+    },
+    {
+      "id": "court-north",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "rect",
+        "x": 1225,
+        "y": 960,
+        "width": 110,
+        "height": 40
       }
     }
   ]

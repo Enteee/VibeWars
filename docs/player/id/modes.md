@@ -43,9 +43,10 @@ besar: **Ashen Courtyard** (4v4, 3200x2400), pelataran bertembok yang hangus, de
 menara di atas serta pelataran sumur yang cekung di bawah, jeruji gerbangnya digerakkan dari atas
 tembok; dan **Moss Vale** (8v8, 5000x2600), lembah berundak yang terbelah dua oleh saluran kincir
 yang dalam, hanya bisa diseberangi di jembatan angkat, di kincir, dan lewat lorong bawah di bawahnya.
-Satu arena besar lebih besar lagi: **Canthan Terraces** (1v1, 5200x2800),
-sawah berundak bertembok dari utara ke selatan dengan celah berselang-seling, mengelilingi pagoda
-yang runtuh. **Sunken Bastion** (2v2, 2700x1900) kecil tetapi tinggi: benteng setengah terendam
+**Canthan Terraces** (1v1, 2400x2100) kecil tetapi curam: sawah yang naik
+menyusuri lereng bukit menuju pagoda yang runtuh, dengan gorong-gorong tergenang di bawahnya
+yang dibuka oleh tuas pintu air sebagai jalan ketiga ke tengah.
+**Sunken Bastion** (2v2, 2700x1900) kecil tetapi tinggi: benteng setengah terendam
 yang paritnya membelah halaman, diseberangi lewat jembatan angkat yang digerakkan tuas di
 setiap tepi, lewat jalan di atas tembok sepanjang dinding utara, atau melalui ruang bawah tanah
 yang terendam di bawahnya.

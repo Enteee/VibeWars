@@ -45,9 +45,10 @@ zidom, sa zidnim stazama i kulama gore i udubljenim dvorištem oko bunara
 dolje, a rešetkom na ulaznoj kuli upravlja se sa zidina; i **Moss Vale** (8v8,
 5000x2600), terasasta dolina koju duboki mlinski kanal reže na dva dijela,
 a prelazi se samo na pokretnom mostu, kod mlina i kroz prolaz ispod njega.
-Jedna velika arena još je veća: **Canthan Terraces** (1v1, 5200x2800),
-rižine terase ograđene od sjevera prema jugu s razmaknutim prolazima, oko srušene
-pagode. **Sunken Bastion** (2v2, 2700x1900) mala je, ali visoka: napola
+**Canthan Terraces** (1v1, 2400x2100) mala je, ali strma: rižina polja
+koja se penju uz padinu do srušene pagode, a ispod njih poplavljeni propust
+koji poluga ustave otvara kao treći put do sredine.
+**Sunken Bastion** (2v2, 2700x1900) mala je, ali visoka: napola
 poplavljena utvrda čiji opkop dijeli dvorište; prelazi se pokretnim mostom
 kojim upravlja poluga na svakoj obali, bedemskom stazom uz sjeverni zid ili
 kroz poplavljeni podrum ispod.

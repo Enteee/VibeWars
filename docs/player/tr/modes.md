@@ -48,10 +48,11 @@ için: **Ashen Courtyard** (4v4, 3200x2400), yukarıda sur yolları ve kuleler,
 aşağıda çökük bir kuyu avlusu bulunan, kapı kulesinin parmaklıklı kapısı
 surlardan işletilen yanık, duvarlı bir avlu; ve **Moss Vale** (8v8, 5000x2600),
 derin bir değirmen arkıyla ikiye bölünmüş, yalnızca asma köprüden, değirmenden
-ve onun altındaki alt geçitten geçilebilen basamaklı bir vadi. Geniş bir arena daha da büyüktür:
-**Canthan Terraces** (1v1, 5200x2800), yıkık bir pagodanın çevresinde,
-kuzeyden güneye kademeli boşluklarla duvarlanmış pirinç terasları.
-**Sunken Bastion** (2v2, 2700x1900) küçük ama yüksektir: hendeği avluyu
+ve onun altındaki alt geçitten geçilebilen basamaklı bir vadi. **Canthan Terraces** (1v1, 2400x2100)
+küçük ama diktir:
+bir yamaçtan yıkık bir pagodaya basamak basamak yükselen pirinç tarlaları ve altlarında, bir
+savak kolunun merkeze üçüncü bir yol olarak açtığı su basmış bir menfez. **Sunken Bastion** (2v2,
+2700x1900) küçük ama yüksektir: hendeği avluyu
 ikiye bölen, yarı su basmış bir hisar. Hendeğin karşısına, her iki
 kıyıdaki bir kolla çalışan asma köprüden, kuzey sur boyunca uzanan
 seğirdim yolundan ya da altındaki su basmış mahzenden geçilir.

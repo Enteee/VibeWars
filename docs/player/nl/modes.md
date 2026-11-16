@@ -46,9 +46,10 @@ uitgebrande ommuurde binnenplaats met weergangen en torens erboven en een
 verzonken putplein eronder, met een valhek in het poortgebouw dat vanaf de
 muren wordt bediend; en **Moss Vale** (8v8, 5000x2600), een terrasvormig dal
 dat een diepe molenbeek in tweeën snijdt, alleen over te steken bij de
-ophaalbrug, de molen en de onderdoorgang daaronder. Eén grote arena is nog
-groter: **Canthan Terraces** (1v1, 5200x2800), rijstterrassen met muren van
-noord naar zuid met verspreide openingen, rond een verwoeste pagode. **Sunken
+ophaalbrug, de molen en de onderdoorgang daaronder. **Canthan Terraces**
+(1v1, 2400x2100) is klein maar steil: rijstvelden die een heuvel op klimmen naar
+een verwoeste pagode, met daaronder een ondergelopen duiker die een sluishendel
+opent als derde weg naar het midden. **Sunken
 Bastion** (2v2, 2700x1900) is klein maar hoog: een half ondergelopen vesting
 waarvan de slotgracht de binnenplaats splitst; je steekt over via een ophaalbrug
 die met een hendel op elke oever wordt bediend, via de weergang langs de

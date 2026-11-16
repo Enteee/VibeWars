@@ -45,10 +45,11 @@ tấm ván giữa được nâng lên bằng cần gạt. Cho các đội lớn 
 tường và tháp canh ở trên, một sân giếng trũng ở dưới, còn khung lưới sắt của
 cổng thành được điều khiển từ trên tường; và **Moss Vale** (8v8, 5000x2600), một
 thung lũng bậc thang bị một mương cối xay sâu cắt làm đôi, chỉ băng qua được ở
-cầu kéo, cối xay và lối ngầm bên dưới nó. Một đấu trường
-lớn còn lớn hơn nữa: **Canthan Terraces** (1v1, 5200x2800), ruộng bậc thang
-có tường chạy từ bắc xuống nam với các khe so le, quanh một ngôi chùa tháp
-đổ nát. **Sunken Bastion** (2v2, 2700x1900) nhỏ nhưng cao: một pháo đài
+cầu kéo, cối xay và lối ngầm bên dưới nó. **Canthan
+Terraces** (1v1, 2400x2100) nhỏ nhưng dốc: ruộng lúa bậc thang leo lên sườn
+đồi tới một ngôi chùa tháp đổ nát, bên dưới có một cống ngập nước mà cần gạt
+cửa cống mở ra thành lối thứ ba vào trung tâm. **Sunken Bastion** (2v2, 2700x1900) nhỏ nhưng cao:
+một pháo đài
 ngập nửa chừng có hào nước chia đôi sân trong; có thể vượt hào qua cầu
 treo do cần gạt ở mỗi bờ điều khiển, qua lối đi trên tường dọc tường thành
 phía bắc, hoặc xuyên qua hầm ngập nước bên dưới. Và cho các đội lớn hơn:

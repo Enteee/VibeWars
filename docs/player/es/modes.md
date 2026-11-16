@@ -48,9 +48,10 @@ un patio amurallado y calcinado con adarves y torres arriba y un patio de pozo
 hundido abajo, cuyo rastrillo de la puerta se maneja desde las murallas; y
 **Moss Vale** (8v8, 5000x2600), un valle en terrazas partido en dos por un
 profundo canal de molino, que solo se cruza por el puente levadizo, el molino y
-el paso inferior que hay debajo. Una arena grande es aún mayor:
-**Canthan Terraces** (1v1, 5200x2800), arrozales en terrazas con muros de norte
-a sur y huecos escalonados, alrededor de una pagoda en ruinas. **Sunken
+el paso inferior que hay debajo. **Canthan Terraces** (1v1, 2400x2100)
+es pequeña pero empinada: arrozales que suben por una ladera hasta una pagoda en
+ruinas, con una alcantarilla inundada debajo que una palanca de compuerta abre
+como tercer camino al centro. **Sunken
 Bastion** (2v2, 2700x1900) es pequeña pero alta: una fortaleza medio inundada
 cuyo foso divide el patio; se cruza por un puente levadizo accionado con una
 palanca en cada orilla, por el adarve a lo largo de la muralla norte o por el

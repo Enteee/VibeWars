@@ -49,10 +49,10 @@ de ronde et tours en haut et une cour de puits en contrebas, dont la herse du
 châtelet d'entrée se manœuvre depuis les remparts ; et **Moss Vale** (8v8,
 5000x2600), une vallée en terrasses coupée en deux par un profond bief de
 moulin, qu'on ne franchit qu'au pont-levis, au moulin et par le passage
-souterrain en dessous. Une grande arène est
-encore plus vaste : **Canthan Terraces** (1v1, 5200x2800), des rizières murées
-du nord au sud avec des passages décalés, autour d'une pagode en ruine.
-**Sunken Bastion** (2v2, 2700x1900) est petite mais haute : une forteresse à
+souterrain en dessous. **Canthan Terraces** (1v1, 2400x2100) est
+petite mais escarpée : des rizières qui montent à flanc de colline jusqu'à une pagode en ruine,
+avec en dessous un ponceau inondé qu'un levier de vanne ouvre comme troisième voie vers le
+centre. **Sunken Bastion** (2v2, 2700x1900) est petite mais haute : une forteresse à
 moitié inondée dont les douves coupent la cour en deux ; on les franchit par un
 pont-levis actionné par un levier sur chaque rive, par le chemin de ronde le
 long du rempart nord, ou par la cave inondée en dessous.

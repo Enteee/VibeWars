@@ -42,9 +42,10 @@ Teams: **Ashen Courtyard** (4v4, 3200x2400), ein verbrannter, ummauerter Hof mit
 Türmen oben und einem abgesenkten Brunnenhof unten, dessen Fallgatter am Torhaus von den Mauern aus
 bedient wird; und **Moss Vale** (8v8, 5000x2600), ein terrassiertes Tal, von einem tiefen Mühlgraben
 zweigeteilt, über den es nur an der Zugbrücke, an der Mühle und durch die Unterführung darunter
-hinübergeht. Eine große Arena ist noch größer: **Canthan Terraces** (1v1,
-5200x2800), Reisterrassen, von Nord nach Süd ummauert, mit versetzten Lücken, rund um eine zerstörte
-Pagode. **Sunken Bastion** (2v2, 2700x1900) ist klein, aber hoch: eine halb überflutete Festung,
+hinübergeht. **Canthan Terraces** (1v1, 2400x2100) ist klein, aber steil:
+Reisfelder, die einen Hang hinauf zu einer zerstörten Pagode steigen, darunter ein gefluteter
+Durchlass, den ein Schleusenhebel als dritten Weg zur Mitte öffnet. **Sunken Bastion** (2v2,
+2700x1900) ist klein, aber hoch: eine halb überflutete Festung,
 deren Burggraben den Hof teilt; hinüber geht es über eine Zugbrücke, die ein Hebel an jedem Ufer
 bedient, über den Wehrgang entlang der nördlichen Ringmauer oder durch den gefluteten Keller
 darunter. Und für größere Teams:

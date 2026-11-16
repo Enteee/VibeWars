@@ -47,9 +47,10 @@ vægtergange og tårne foroven og en nedsænket brøndgård forneden, hvis
 faldgitter i porthuset betjenes fra murene; og **Moss Vale** (8v8,
 5000x2600), en terrasseret dal skåret i to af et dybt mølleløb, som kun
 kan krydses ved vindebroen, ved møllen og ad underføringen under den.
-En stor arena er endnu større: **Canthan Terraces** (1v1, 5200x2800),
-risterrasser med mure fra nord til syd og forskudte åbninger, rundt om en
-ruineret pagode. **Sunken Bastion** (2v2, 2700x1900) er lille, men høj: en
+**Canthan Terraces** (1v1, 2400x2100) er lille, men stejl: rismarker, der
+trapper op ad en skråning til en ruineret pagode, med en oversvømmet
+kulvert nedenunder, som et slusehåndtag åbner som en tredje vej til midten.
+**Sunken Bastion** (2v2, 2700x1900) er lille, men høj: en
 halvt oversvømmet fæstning, hvis voldgrav deler borggården; den krydses ad
 en vindebro, der betjenes med et håndtag på hver bred, ad skyttegangen
 langs den nordlige ringmur eller gennem den oversvømmede kælder nedenunder.

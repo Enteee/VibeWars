@@ -51,9 +51,10 @@ pátio de poço rebaixado embaixo, e a grade levadiça do portão é acionada
 das muralhas; e **Moss Vale** (8v8, 5000x2600), um vale em terraços
 cortado ao meio por um canal de moinho profundo, atravessado só na ponte
 levadiça, no moinho e na passagem por baixo dele.
-Uma arena grande é maior ainda: **Canthan Terraces** (1v1,
-5200x2800), terraços de arroz murados de norte a sul com aberturas
-alternadas, em volta de um pagode em ruínas. **Sunken Bastion** (2v2,
+**Canthan Terraces** (1v1, 2400x2100) é pequena, mas íngreme: arrozais
+subindo uma encosta até um pagode em ruínas, com um bueiro alagado por
+baixo que uma alavanca de comporta abre como terceiro caminho até o
+centro. **Sunken Bastion** (2v2,
 2700x1900) é pequena, mas alta: uma fortaleza meio alagada cujo fosso
 divide o pátio; dá para atravessá-lo por uma ponte levadiça acionada por
 uma alavanca em cada margem, pelo adarve ao longo da muralha norte ou

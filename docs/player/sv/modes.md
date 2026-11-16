@@ -47,9 +47,10 @@ mittplanka höjs av en spak. För de större lagen: **Ashen Courtyard** (4v4,
 nedsänkt brunnsgård nedanför, där porthusets fällgaller sköts från murarna; och
 **Moss Vale** (8v8, 5000x2600), en terrasserad dal som klyvs i två av en djup
 kvarnränna och bara kan korsas vid vindbryggan, kvarnen och underpassagen under
-den. En stor arena är ännu större: **Canthan Terraces** (1v1,
-5200x2800), risterrasser med murar från norr till söder och förskjutna
-öppningar, runt en förfallen pagod. **Sunken Bastion** (2v2, 2700x1900)
+den. **Canthan Terraces** (1v1, 2400x2100) är liten men brant:
+risfält som trappar sig uppför en sluttning till en förfallen pagod, med
+en översvämmad kulvert under som en slusspak öppnar som en tredje väg
+till mitten. **Sunken Bastion** (2v2, 2700x1900)
 är liten men hög: en halvt översvämmad fästning vars vallgrav delar
 borggården; den korsas via en vindbrygga som manövreras med en spak på
 varje strand, via vallgången längs den norra ringmuren eller genom den
