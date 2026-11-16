@@ -6,8 +6,8 @@ Study: `3074-brazen-causeway-plan.png` (outline, layers, routes, shrines, world 
 `node scripts/assets/3074-brazen-causeway-study.mjs docs/art` (needs inkscape; the SVGs are not
 committed; the drawing is shared in `scripts/assets/3074-study-lib.mjs`). The PNGs are a guide, not
 coordinates. The layout is new: today's map (2000×1600) is thrown away, the place (a raised
-bronze-age causeway over marsh, its two gates, wall-walks along it, the marsh below as a slower
-second route) is kept.
+bronze-age causeway over marsh, its two gates, wall-walks along it, the marsh below as a second
+route, longer by walk) is kept.
 
 ## Rules the study holds
 
@@ -39,7 +39,7 @@ second route) is kept.
   lever (2150,1230) opens the east gate, the east lever (3480,1570) the west one. No lift is used
   (bots read a lever lift as closed). A **breakable rotten palisade** (x 1750, y 2000..2220) closes a lane
   in the south-west marsh. Zones: four `mire` patches on the two marsh routes
-  ((2200,880), (3500,900), (2200,1960), (3500,1920)), which makes the marsh the slower route; each is
+  ((2200,880), (3500,900), (2200,1960), (3500,1920)), which drain Energy (they do not slow); each is
   ≥ 200 u from a spawn. Water: two **deep** black pools (north and south) and two shallow reed
   pools, no route crosses them. Atmosphere (existing, #3032): three mist banks, under bodies,
   never over a shrine, a stair or a lever.
@@ -59,8 +59,8 @@ T1 centred (500,1765), T2 (5124,1019). Centre: the causeway middle, (2800,1400).
 | north marsh (through the mire, centre stair) | 2925 / 2910 u | 16.3 / 16.2 s |
 | south marsh (through the mire, centre stair) | 2902 / 2905 u | 16.1 / 16.1 s |
 
-The marsh walks are lengths at base speed; the mire patches slow them further, which is the
-point of the second route.
+The marsh walks are lengths at base speed. Mire drains Energy and slows nothing in today's engine,
+so the marsh is the longer route, not a slower one.
 
 **Shrines.** A foe reaches a shrine three ways, equal on both sides (a foe's walk, from spawn centre):
 
@@ -92,6 +92,11 @@ reached by one stair each, at the centre side, so the middle is contested, not o
   the cutaway (#3272).
 
 ## New art needed
+
+**Slow shallow water (not built).** Shallow water slows nothing in today's engine (no rule reads depth
+`shallow`), and `mire` drains Energy rather than slowing. The reed pools and mire patches are walked at base
+speed, as every table here assumes. A slow-water mechanic is the architect's to decide; no route
+here counts on it.
 
 The `marsh` biome row (see Blackwater Ford). The gates are bronze, the existing gate look, the
 causeway `decks` in the marsh stone. Mechanics are not designed here.
