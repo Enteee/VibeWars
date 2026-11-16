@@ -62,7 +62,7 @@ the gap the structure gives, not a promise about the final art.
 | Spawn to the great siege tower (T1 / T2) | Walk          |
 | ---------------------------------------- | ------------- |
 | west approach (up the hulk)              | 12.0 / 12.0 s |
-| south lane (west hull stair)             | 15.4 / 15.4 s |
+| south lane (west hull stair)             | 15.9 / 15.9 s |
 | north lane (west hull stair)             | 15.3 / 15.3 s |
 
 **Per capture point** (T1 to its own hulk = T2 to its own, the pair's mirror, gap 0 %):
