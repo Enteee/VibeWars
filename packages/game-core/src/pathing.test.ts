@@ -144,9 +144,57 @@ describe("createPathFinder", () => {
   });
 });
 
+describe("corner nodes (#3451)", () => {
+  const offset = CLEARANCE + 1;
+  const nodesOf = (walls: readonly Segment[]): readonly Vec2[] =>
+    buildNavGraph(walls, undefined, CLEARANCE, []).nodes;
+
+  it("puts one node off a lone rect's corner, on its outward diagonal", () => {
+    expect(nodesOf(rect(200, 100, 40, 200))).toEqual([
+      vec2(200 - offset, 100 - offset),
+      vec2(240 + offset, 100 - offset),
+      vec2(240 + offset, 300 + offset),
+      vec2(200 - offset, 300 + offset),
+    ]);
+  });
+
+  it("puts no node inside a rect wide enough to hold one", () => {
+    const nodes = nodesOf(rect(200, 100, 200, 200));
+    expect(nodes).toHaveLength(4);
+    expect(nodes.filter(({ x, y }) => x > 200 && x < 400 && y > 100 && y < 300)).toEqual([]);
+  });
+
+  it("puts no node off a polygon's concave corner", () => {
+    // An L of rock: its inner corner, at (400, 400), faces the open ground.
+    const points = [
+      vec2(300, 300),
+      vec2(500, 300),
+      vec2(500, 400),
+      vec2(400, 400),
+      vec2(400, 500),
+      vec2(300, 500),
+    ];
+    const walls = points.map((point, at) =>
+      segment(point, points[(at + 1) % points.length] ?? point),
+    );
+    const nodes = nodesOf(walls);
+    expect(nodes).toHaveLength(5);
+    expect(nodes.filter(({ x, y }) => Math.hypot(x - 400, y - 400) < 2 * offset)).toEqual([]);
+  });
+
+  it("keeps all four nodes off a lone segment's ends", () => {
+    expect(nodesOf([segment(vec2(100, 0), vec2(100, 200))])).toHaveLength(8);
+  });
+});
+
 describe("gated graphs (#2691)", () => {
   const walls = [...rect(100, 100, 50, 50), ...rect(400, 300, 60, 40)];
-  const gates = [rect(200, 0, 10, 300), rect(300, 250, 10, 250), rect(120, 350, 200, 10)];
+  // Lone segments: a gate keeps every corner node, as walls they would too (#3451).
+  const gates = [
+    [segment(vec2(200, 0), vec2(200, 300))],
+    [segment(vec2(300, 250), vec2(300, 500))],
+    [segment(vec2(120, 350), vec2(320, 350))],
+  ];
   const bounds = { width: 600, height: 500 };
 
   it("reads each combination off as a full build would make it", () => {
@@ -340,14 +388,65 @@ function referenceBuildNavGraph(
       point.x <= bounds.width - clearance &&
       point.y <= bounds.height - clearance);
 
-  const corners = new Map<string, Vec2>();
-  for (const wall of walls) {
+  const key = (end: Vec2): string => `${String(end.x)},${String(end.y)}`;
+  const corners = new Map<string, { readonly at: Vec2; readonly walls: number[] }>();
+  walls.forEach((wall, at) => {
     for (const end of [wall.a, wall.b]) {
-      corners.set(`${String(end.x)},${String(end.y)}`, end);
+      const known = corners.get(key(end));
+      if (known === undefined) {
+        corners.set(key(end), { at: end, walls: [at] });
+      } else {
+        known.walls.push(at);
+      }
     }
+  });
+  // A solid (#3451): walls joined end to end, two at every corner, round.
+  const group = walls.map((_, at) => at);
+  const root = (at: number): number => {
+    let top = at;
+    while (group[top] !== top) top = group[top] ?? top;
+    return top;
+  };
+  for (const { walls: there } of corners.values()) {
+    for (const other of there) group[root(other)] = root(there[0] ?? other);
   }
+  const solid = new Set(walls.map((_, at) => root(at)));
+  corners.forEach(({ walls: there }) => {
+    if (there.length !== 2) solid.delete(root(there[0] ?? 0));
+  });
+  walls.forEach((_, at) => {
+    if (walls.filter((__, other) => root(other) === root(at)).length < 3) solid.delete(root(at));
+  });
+  const inSolid = (point: Vec2): boolean =>
+    [...solid].some(
+      (shape) =>
+        walls.filter(
+          (wall, at) =>
+            root(at) === shape &&
+            wall.a.y > point.y !== wall.b.y > point.y &&
+            point.x <
+              wall.a.x + ((point.y - wall.a.y) * (wall.b.x - wall.a.x)) / (wall.b.y - wall.a.y),
+        ).length %
+          2 ===
+        1,
+    );
   const nodes: Vec2[] = [];
-  for (const corner of corners.values()) {
+  for (const { at: corner, walls: there } of corners.values()) {
+    const [one, two] = there.map((at) => walls[at]);
+    // A solid's corner: only where the way round it bends, straight back
+    // through the corner into the wedge between its two sides.
+    const bends =
+      there.length === 2 && one !== undefined && two !== undefined && solid.has(root(there[0] ?? 0))
+        ? (node: Vec2): boolean => {
+            const u = sub(key(one.a) === key(corner) ? one.b : one.a, corner);
+            const v = sub(key(two.a) === key(corner) ? two.b : two.a, corner);
+            const back = sub(corner, node);
+            const across = u.x * v.y - u.y * v.x;
+            const alongU = (back.x * v.y - back.y * v.x) / across;
+            const alongV = (u.x * back.y - u.y * back.x) / across;
+            return across === 0 || (alongU > 0 && alongV > 0);
+          }
+        : (): boolean => true;
     for (const [dx, dy] of [
       [-1, -1],
       [1, -1],
@@ -356,7 +455,7 @@ function referenceBuildNavGraph(
     ] as const) {
       const node = vec2(corner.x + dx * offset, corner.y + dy * offset);
       const fits = walls.every((wall) => refDistancePointToSegment(node, wall) >= clearance);
-      if (fits && inside(node)) {
+      if (fits && inside(node) && !inSolid(node) && bends(node)) {
         nodes.push(node);
       }
     }

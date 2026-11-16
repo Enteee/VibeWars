@@ -5,16 +5,14 @@ import {
   type BenchField,
   type Vec2,
 } from "@vibewars/game-core";
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
+import { mapsIn } from "./maps-in.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
-import { validateMapData, type MapData } from "./schema.js";
+import type { MapData } from "./schema.js";
 import { timeMatchTicks } from "./tools/map-balance.js";
 
 /**
@@ -119,16 +117,6 @@ describe("the host tick on a whole map (#3240)", () => {
     expect(tickMs.length).toBeGreaterThan(WARM_UP);
   });
 });
-
-/** The training arenas (#2985) or the tutorial's maps (#3245), which `loadAllMaps` does not see. */
-function mapsIn(dir: "training" | "tutorial"): MapData[] {
-  const root = fileURLToPath(new URL(`../${dir}/`, import.meta.url));
-  return readdirSync(root, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) =>
-      validateMapData(JSON.parse(readFileSync(join(root, entry.name, "map.json"), "utf8"))),
-    );
-}
 
 describe("the nav graph on every map (#2544)", () => {
   /** The most wall corners a map's graph may have: what pathing stays cheap at. */

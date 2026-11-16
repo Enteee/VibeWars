@@ -10,7 +10,7 @@ import {
   type Polygon,
   type Segment,
 } from "./geometry.js";
-import { add, distance, scale, sub, vec2, type Vec2 } from "./vec2.js";
+import { add, distance, dot, length, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
 /**
  * Paths around walls, for the weapon attack's approach (#211, ADR-0026).
@@ -478,21 +478,43 @@ export function buildGatedNavGraph(
         point.x <= bounds.width - clearance &&
         point.y <= bounds.height - clearance));
 
-  const corners = new Map<string, { readonly at: Vec2; gates: number }>();
-  const addCorners = (segments: readonly Segment[], gateBit: number): void => {
-    for (const wall of segments) {
-      for (const end of [wall.a, wall.b]) {
+  // The solids among the map's walls (#3451): a rect or polygon wall, a
+  // deep water. The walkable outline is one more closed shape, never solid.
+  const solids = closedShapes(mapWalls);
+  const firstMapWall = outline.length + open.length;
+  const shapeOf = (wall: number): number =>
+    wall < outline.length
+      ? OUTLINE_SHAPE
+      : wall < firstMapWall
+        ? NO_SHAPE
+        : (solids.shapeOf[wall - firstMapWall] ?? NO_SHAPE);
+
+  const corners = new Map<string, Corner>();
+  const addCorners = (
+    segments: readonly Segment[],
+    gateBit: number,
+    shapeAt: (wall: number) => number = () => NO_SHAPE,
+  ): void => {
+    segments.forEach((wall, at) => {
+      for (const [end, other] of [
+        [wall.a, wall.b],
+        [wall.b, wall.a],
+      ] as const) {
         const key = `${String(end.x)},${String(end.y)}`;
+        const toward = { shape: shapeAt(at), other };
         const known = corners.get(key);
         if (known === undefined) {
-          corners.set(key, { at: end, gates: gateBit });
-        } else if (known.gates !== 0) {
-          known.gates |= gateBit;
+          corners.set(key, { at: end, gates: gateBit, ends: [toward] });
+        } else {
+          known.ends.push(toward);
+          if (known.gates !== 0) {
+            known.gates |= gateBit;
+          }
         }
       }
-    }
+    });
   };
-  addCorners(walls, 0);
+  addCorners(walls, 0, shapeOf);
   gates.forEach((segments, at) => {
     addCorners(segments, 1 << at);
   });
@@ -501,7 +523,11 @@ export function buildGatedNavGraph(
   const cornerOf: number[] = [];
   const nodeBlockedBy: number[] = [];
   const addNode = (node: Vec2, gateBits: number): void => {
-    if (inside(node) && walls.every((wall) => distancePointToSegment(node, wall) >= clearance)) {
+    if (
+      inside(node) &&
+      walls.every((wall) => distancePointToSegment(node, wall) >= clearance) &&
+      !solids.shapes.some((solid) => pointInPolygon(node, solid))
+    ) {
       let blockedBy = 0;
       gates.forEach((segments, at) => {
         if (segments.some((wall) => distancePointToSegment(node, wall) < clearance)) {
@@ -514,13 +540,17 @@ export function buildGatedNavGraph(
     }
   };
   for (const corner of corners.values()) {
+    const bend = convexBend(corner);
     for (const [dx, dy] of [
       [-1, -1],
       [1, -1],
       [-1, 1],
       [1, 1],
     ] as const) {
-      addNode(vec2(corner.at.x + dx * offset, corner.at.y + dy * offset), corner.gates);
+      const node = vec2(corner.at.x + dx * offset, corner.at.y + dy * offset);
+      if (bend === undefined || bend(node)) {
+        addNode(node, corner.gates);
+      }
     }
   }
   // A corner off each harmful zone's, outside every zone, or no route
@@ -576,6 +606,79 @@ export function buildGatedNavGraph(
     costs,
     zones: costZones,
   };
+}
+
+/** The shape a wall's segment belongs to, beyond the indices of `closedShapes`. */
+const OUTLINE_SHAPE = -1;
+const NO_SHAPE = -2;
+
+/** A wall or gate corner the nav graph puts its nodes round: each segment end there, and where it goes. */
+interface Corner {
+  readonly at: Vec2;
+  gates: number;
+  readonly ends: { readonly shape: number; readonly other: Vec2 }[];
+}
+
+/**
+ * The closed shapes among `walls` (#3451): each run of segments laid end
+ * to start that comes back to where it began, as a rect or polygon wall
+ * or a deep water's area is laid out, as a polygon; and for each segment
+ * the shape it is a side of, or `NO_SHAPE`.
+ */
+function closedShapes(walls: readonly Segment[]): {
+  readonly shapes: readonly Polygon[];
+  readonly shapeOf: readonly number[];
+} {
+  const same = (a: Vec2 | undefined, b: Vec2 | undefined): boolean =>
+    b !== undefined && a?.x === b.x && a.y === b.y;
+  const shapes: Polygon[] = [];
+  const shapeOf = walls.map(() => NO_SHAPE);
+  let start = 0;
+  while (start < walls.length) {
+    const first = walls[start]?.a;
+    let end = start;
+    while (!same(walls[end]?.b, first) && same(walls[end]?.b, walls[end + 1]?.a)) {
+      end += 1;
+    }
+    // A triangle at least: two sides there and back enclose nothing.
+    if (!same(walls[end]?.b, first) || end - start < 2) {
+      start += 1;
+      continue;
+    }
+    const run = walls.slice(start, end + 1);
+    for (let at = start; at <= end; at += 1) {
+      shapeOf[at] = shapes.length;
+    }
+    shapes.push(run.map((side) => side.a));
+    start = end + 1;
+  }
+  return { shapes, shapeOf };
+}
+
+/**
+ * At a corner where exactly two sides of one closed shape meet (#3451),
+ * the test a node off it must pass: beyond the corner, away from the
+ * angle its sides make, the only place a taut path bends round it. A
+ * rect's corner keeps its outward diagonal alone; a concave corner's
+ * nodes would all be inside the shape. `undefined` for any other corner, whose
+ * every candidate is kept: a lone segment's end, a junction, a corner
+ * shared by two shapes, a gate's.
+ */
+function convexBend(corner: Corner): ((node: Vec2) => boolean) | undefined {
+  const [one, two, ...more] = corner.ends;
+  if (one === undefined || two === undefined || more.length > 0 || corner.gates !== 0) {
+    return undefined;
+  }
+  if (one.shape === NO_SHAPE || one.shape !== two.shape) {
+    return undefined;
+  }
+  const u = sub(one.other, corner.at);
+  const v = sub(two.other, corner.at);
+  if (u.x * v.y - u.y * v.x === 0) {
+    return undefined;
+  }
+  const outward = scale(add(scale(u, 1 / length(u)), scale(v, 1 / length(v))), -1);
+  return (node) => dot(sub(node, corner.at), outward) > 0;
 }
 
 /**
