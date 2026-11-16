@@ -576,7 +576,7 @@ test.describe("the first-time tutorial (#3218)", () => {
       // Seeded on the high deck, where station 10 leaves the player (#3383).
       // The tunnel some two minutes (#3326), the call some 40 s (#3331),
       // the fork some 30 s (#3332).
-      test.setTimeout(360_000);
+      test.setTimeout(420_000);
       const { frame, stage, saidLog, hasSaid, walkTo } = await learn(page, mapId, 11);
       const target = page.locator(".hud-target");
       // Station 11 (#3326): down off the deck, round to the tunnel's west
@@ -696,8 +696,10 @@ test.describe("the first-time tutorial (#3218)", () => {
         const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
         const at = view.onPage(DOWN_THE_EAST_BRANCH);
         await page.mouse.click(at.x, at.y, { button: "middle" });
-        await expect.poll(() => hasSaid("Good call. Onward."), { timeout: 15_000 }).toBe(true);
-      }).toPass({ timeout: 45_000 });
+        // The tutor walks the branch before the praise, which on a slow
+        // runner outlasts 15 s: the line stood a moment after a 45 s wait.
+        await expect.poll(() => hasSaid("Good call. Onward."), { timeout: 40_000 }).toBe(true);
+      }).toPass({ timeout: 90_000 });
 
       // On to station 14 (#3334).
       await expect
