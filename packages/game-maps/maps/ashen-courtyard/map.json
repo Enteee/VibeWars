@@ -298,6 +298,32 @@
       },
       "look": "gatehouse-roof",
       "switched": null
+    },
+    {
+      "id": "rubble-south-west",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 1200,
+        "y": 2840,
+        "width": 160,
+        "height": 64
+      },
+      "look": "ruin",
+      "switched": null
+    },
+    {
+      "id": "rubble-south-east",
+      "layer": 2,
+      "footprint": {
+        "kind": "rect",
+        "x": 3280,
+        "y": 2840,
+        "width": 160,
+        "height": 64
+      },
+      "look": "ruin",
+      "switched": null
     }
   ],
   "overhangs": [
@@ -580,6 +606,36 @@
       },
       "uphill": "e",
       "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "rubble-south-west-steps",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1360,
+        "y": 2840,
+        "width": 120,
+        "height": 64
+      },
+      "uphill": "w",
+      "look": "rough-steps",
+      "lift": null
+    },
+    {
+      "id": "rubble-south-east-steps",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 3160,
+        "y": 2840,
+        "width": 120,
+        "height": 64
+      },
+      "uphill": "e",
+      "look": "rough-steps",
       "lift": null
     }
   ],
