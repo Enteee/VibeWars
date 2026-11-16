@@ -4913,7 +4913,13 @@ export class ArenaScene extends Phaser.Scene {
       const x = drawing.bounds.x;
       const y = drawing.bounds.y - elevationOf(paving.layer, structure.ground);
       const depth = renderOrder({ kind: "paving", layer: paving.layer });
-      const pieces = pavingTunnelPieces(drawing, paving.layer, size, covers);
+      const pieces = pavingTunnelPieces(
+        drawing,
+        paving.layer,
+        elevationOf(paving.layer, structure.ground),
+        size,
+        covers,
+      );
       const cut = pavingHoles(drawing, paving.layer, size, holes);
       const image = (
         width: number,

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { BIOME, pavingPalette } from "./arena-palette.js";
 import { tunnelCover, tunnelsHolding } from "./layer-surfaces.js";
+import { elevationOf } from "./render-order.js";
 import {
   MAX_PAVING_STONES,
   PAVING_EDGE,
@@ -175,12 +176,12 @@ describe("pavingTunnelPieces (#3272)", () => {
 
   it("makes none for a tunnel the paving misses", () => {
     const covers = [{ tunnel: 0, layer: 0, outline: box(900, 900, 1000, 1000) }];
-    expect(pavingTunnelPieces(drawing, 0, size, covers)).toEqual([]);
+    expect(pavingTunnelPieces(drawing, 0, 0, size, covers)).toEqual([]);
   });
 
   it("cuts only the overlap, in whole pixels of the paving's texture", () => {
     const covers = [{ tunnel: 3, layer: 0, outline: box(300.2, 150, 900, 200) }];
-    expect(pavingTunnelPieces(drawing, 0, size, covers)).toEqual([
+    expect(pavingTunnelPieces(drawing, 0, 0, size, covers)).toEqual([
       {
         tunnel: 3,
         pixels: {
@@ -199,25 +200,28 @@ describe("pavingTunnelPieces (#3272)", () => {
       { tunnel: 1, layer: 1, outline: box(200, 130, 240, 150) },
       { tunnel: 2, layer: 0, outline: box(300, 140, 340, 160) },
     ];
-    expect(pavingTunnelPieces(drawing, 0, size, covers).map(({ tunnel }) => tunnel)).toEqual([
+    expect(pavingTunnelPieces(drawing, 0, 0, size, covers).map(({ tunnel }) => tunnel)).toEqual([
       0, 2,
     ]);
   });
 
   // Sandstone Steps' plaza is flagstones on a deck (layer 2) over a
   // ground-layer tunnel cover: it stayed opaque while the deck faded.
-  it("makes pieces for paving raised above the cover's layer (#3406)", () => {
+  it("makes pieces for paving raised above the cover's layer, reaching its lift further south (#3406)", () => {
     const covers = [
       { tunnel: 0, layer: 0, outline: box(120, 130, 160, 150) },
       { tunnel: 1, layer: 1, outline: box(200, 130, 240, 150) },
     ];
-    const ground = pavingTunnelPieces(drawing, 0, size, covers.slice(0, 1));
-    const raised = pavingTunnelPieces(drawing, 2, size, covers);
+    const ground = pavingTunnelPieces(drawing, 0, 0, size, covers.slice(0, 1));
+    const raised = pavingTunnelPieces(drawing, 2, 10, size, covers);
     expect(raised.map(({ tunnel }) => tunnel)).toEqual([0, 1]);
-    expect(raised[0]).toEqual(ground[0]);
+    expect(raised[0]).toEqual({
+      tunnel: 0,
+      pixels: { ...ground[0]?.pixels, height: (ground[0]?.pixels.height ?? 0) + 10 * size.scale },
+    });
   });
 
-  it("cuts Sandstone Steps' plaza over under-pass-north, as the scene builds its covers (#3406)", async () => {
+  it("cuts Sandstone Steps' plaza over under-pass-north down to the cover's bottom plus its lift (#3406)", async () => {
     const { mapStructure } = await import("../net/maps.js");
     const { structure } = mapStructure("sandstone-steps");
     const covers = structure.tunnels.flatMap((tunnel, at) =>
@@ -238,16 +242,24 @@ describe("pavingTunnelPieces (#3272)", () => {
     }
     // under-pass-north, under the plaza.
     const [underPass] = tunnelsHolding(structure, { x: 1250, y: 1020 }, structure.ground - 1);
-    const tunnels = pavingTunnelPieces(plazaDrawing, plaza.layer, plazaSize, covers).map(
-      ({ tunnel }) => tunnel,
+    const lift = elevationOf(plaza.layer, structure.ground);
+    const pieces = pavingTunnelPieces(plazaDrawing, plaza.layer, lift, plazaSize, covers).filter(
+      ({ tunnel }) => tunnel === underPass,
     );
-    expect(plaza.layer).toBeGreaterThan(structure.ground);
-    expect(underPass).toBeDefined();
-    expect(tunnels).toContain(underPass);
+    const coverBottom = Math.max(
+      ...covers
+        .filter(({ tunnel }) => tunnel === underPass)
+        .flatMap(({ outline }) => outline.map((corner) => corner.y)),
+    );
+    expect(lift).toBeGreaterThan(0);
+    expect(pieces.length).toBeGreaterThan(0);
+    expect(Math.max(...pieces.map(({ pixels }) => pixels.top + pixels.height))).toBe(
+      Math.round((coverBottom + lift - plazaDrawing.bounds.y) * plazaSize.scale),
+    );
   });
 
   it("cuts each piece out of the paving, and paints it on the same pixel grid", () => {
-    const [piece] = pavingTunnelPieces(drawing, 0, size, [
+    const [piece] = pavingTunnelPieces(drawing, 0, 0, size, [
       { tunnel: 0, layer: 0, outline: box(150, 120, 260, 180) },
     ]);
     if (piece === undefined) {
