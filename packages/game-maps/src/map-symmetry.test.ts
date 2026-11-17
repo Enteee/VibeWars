@@ -21,7 +21,6 @@ const SYMMETRIC = [
   "hollow-deep",
   "mosslit-cairns",
   "wardens-gallery",
-  "brazen-causeway",
 ];
 
 /** How far apart a thing and its twin's rotation may be. */
