@@ -22,12 +22,14 @@ It drew the same pixels, and it was slower everywhere.
 
 | SwiftShader, 1280×720, rAF p50   | live     | baked     | baked, chunk images hidden | chunk px on screen |
 | -------------------------------- | -------- | --------- | -------------------------- | ------------------ |
-| jungle-ruins, still (flat)       | 16.7 ms¹ | 83–100 ms | 16.7 ms¹                   | 1.84 M (12 images) |
+| jungle-ruins², still (flat)      | 16.7 ms¹ | 83–100 ms | 16.7 ms¹                   | 1.84 M (12 images) |
 | arena-long-hall, still (layered) | 39.8 ms  | 333 ms    | 17.3 ms                    | 6.20 M (61 images) |
-| jungle-ruins, walked (bench)     | 35.0 ms  | 117 ms    |                            |                    |
+| jungle-ruins², walked (bench)    | 35.0 ms  | 117 ms    |                            |                    |
 | arena-long-hall, walked (bench)  | 215 ms   | 384 ms    |                            |                    |
 
 ¹ At the frame-rate cap.
+
+² The flat Jungle Ruins before #3436 made it layered. Every row was measured on the WIP branch, based on main at 49d050b0e.
 
 In the still rows nothing was being rebaked, so all of the extra cost is drawing the chunk images. A textured, alpha-blended pixel costs about 50 ns on SwiftShader, roughly 20 Mpix/s. Each run is a full-chunk quad wherever it touches. On long-hall that adds up to about six screens of textured fill, where the live static art it replaced cost about 23 ms.
 
