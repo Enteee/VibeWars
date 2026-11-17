@@ -39,7 +39,7 @@
  * measures itself under `?frametiming`, and each map's p50 over the flat
  * baseline's, both walked.
  *   BENCH_FOLLOW_SECONDS=12  how long each map walks, measured.
- *   BENCH_MAX_FOLLOW_RATIO=2 exit 1 when a map walked is more than this
+ *   BENCH_MAX_FOLLOW_RATIO=12 exit 1 when a map walked is more than this
  *                      many times the flat baseline walked.
  *
  * The menu background never draws faster than 30 fps (#3119): a map
