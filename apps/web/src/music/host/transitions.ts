@@ -43,10 +43,45 @@ export function switchLanding(
 /**
  * How loud one side of a crossfade is at `cycle`: the new track rises from
  * 0 to 1 over `[from, from + cycles)`, the old one falls the other way.
+ * Equal power, so the two together are as loud mid-fade as either alone:
+ * a linear fade dips about 3 dB in the middle (#3530).
  */
 export function fadeGain(cycle: number, from: number, cycles: number, side: "in" | "out"): number {
   const progress = cycles <= 0 ? 1 : Math.min(1, Math.max(0, (cycle - from) / cycles));
-  return side === "in" ? progress : 1 - progress;
+  const angle = (progress * Math.PI) / 2;
+  return side === "in" ? Math.sin(angle) : Math.cos(angle);
+}
+
+/** What the host plays, as far as a switch is concerned. */
+export interface SwitchState {
+  readonly playing: string;
+  /** A switch to `next`, landing on `from` and fading until it lands. */
+  readonly switching?: { readonly next: string; readonly from: number };
+}
+
+/**
+ * What a request to switch to `trackId` does (#3530), so that only two
+ * tracks are ever heard: the one playing and the newest asked for.
+ *
+ * - `start`: no switch is planned; crossfade from the playing track.
+ * - `replace`: the planned switch has not started yet; plan this one from
+ *   the playing track instead, so the replaced one never sounds.
+ * - `cancel`: back to the playing track before the switch starts; drop it.
+ * - `hold`: the switch is fading; start this one from it once it lands.
+ * - `keep`: already playing, or already the fading switch's target:
+ *   nothing to start, and a held request is dropped.
+ */
+export type SwitchPlan = "start" | "replace" | "cancel" | "hold" | "keep";
+
+export function planSwitch(state: SwitchState, trackId: string, position: number): SwitchPlan {
+  const { playing, switching } = state;
+  if (switching === undefined) {
+    return trackId === playing ? "keep" : "start";
+  }
+  if (position < switching.from) {
+    return trackId === playing ? "cancel" : "replace";
+  }
+  return trackId === switching.next ? "keep" : "hold";
 }
 
 /** An intensity, and the cycle it starts on. */
