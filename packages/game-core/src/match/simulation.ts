@@ -293,6 +293,7 @@ import {
   type ResetPolicy,
   idleAt,
 } from "./behaviour.js";
+import { LEVER_WORTH_UNITS } from "./bot/rules/levers.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { freshCorpsesWithin, nearestFreshCorpse } from "./corpses.js";
 import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
@@ -4901,8 +4902,36 @@ export class MatchSimulation {
         // No way to the foes either way: nothing won.
         return Number.isNaN(gain) ? 0 : gain;
       });
+    const best = this.#switches.map((lever) =>
+      gains(this.#currentWallSet([lever]), () => lever.position, lever.layer),
+    );
+    // Two gates in series (#3513): neither lever alone opens the way, so a
+    // lever also counts what it wins thrown with any one other, and both
+    // carry that pair's gain. Pairs only, never three; and only for a team
+    // no lever alone is already worth the walk for.
+    const short = ways
+      .map((_, team) => team)
+      .filter((team) => best.every((gain) => (gain[team] ?? 0) < LEVER_WORTH_UNITS));
+    const pairs = short.length === 0 ? [] : this.#switches;
+    pairs.forEach((first, a) => {
+      pairs.slice(a + 1).forEach((second, offset) => {
+        const after = this.#currentWallSet([first, second]);
+        for (const [lever, gain] of [
+          [first, best[a]],
+          [second, best[a + 1 + offset]],
+        ] as const) {
+          const paired = gains(after, () => lever.position, lever.layer);
+          for (const team of short) {
+            const won = paired[team] ?? 0;
+            if (gain !== undefined && won > 0 && won > (gain[team] ?? 0)) {
+              gain[team] = won;
+            }
+          }
+        }
+      });
+    });
     this.#botLevers.length = 0;
-    for (const lever of this.#switches) {
+    this.#switches.forEach((lever, at) => {
       this.#botLevers.push({
         targetId: switchTargetId(lever.id),
         position: lever.position,
@@ -4910,9 +4939,9 @@ export class MatchSimulation {
         flippedAt:
           lever.readyAt === 0 ? Number.NEGATIVE_INFINITY : lever.readyAt - SWITCH_COOLDOWN_SECONDS,
         readyAt: lever.readyAt,
-        gain: gains(this.#currentWallSet(lever), () => lever.position, lever.layer),
+        gain: best[at] ?? [],
       });
-    }
+    });
     this.#botBreakables.length = 0;
     const standoff = this.#ruleset.collision.playerRadius + 1;
     this.#breakables.forEach((wall, at) => {
@@ -4924,7 +4953,7 @@ export class MatchSimulation {
         field: wall,
         layer: wall.layer,
         gain: gains(
-          this.#currentWallSet(undefined, at),
+          this.#currentWallSet([], at),
           (from) => strikePointOf(wall, from, standoff),
           wall.layer,
         ),
@@ -7366,26 +7395,24 @@ export class MatchSimulation {
    * closed (#3079, #3117), then a bit for each switched teleport that is
    * on: one no switch names never changes. A lever lift is never a way
    * between its layers, only floor on the layer it rests at; a timer lift
-   * always is, and a walk over it waits for it. With `flip`, as they
-   * would stand were that lever thrown now (#3138): its gates, decks and
-   * teleports toggled; with `broken`, as though that breakable wall
+   * always is, and a walk over it waits for it. With `flips`, as they
+   * would stand were those levers thrown now (#3138, #3513): their gates,
+   * decks and teleports toggled; with `broken`, as though that breakable wall
    * (#3140) had crumbled.
    */
-  #currentWallSet(flip?: SwitchField, broken?: number): WallSet {
-    const gates =
-      flip === undefined
-        ? this.#gates
-        : this.#gates.map((gate, at) => stepGate(gate, gate.open, flip.gates.includes(at), 0));
-    const switchedDecks =
-      flip === undefined
-        ? this.#switchedDecks
-        : this.#switchedDecks.map((deck, at) => stepSwitchedDeck(deck, flip.decks.includes(at), 0));
-    const teleports =
-      flip === undefined
-        ? this.#teleports
-        : this.#teleports.map((teleport, at) =>
-            stepTeleport(teleport, flip.teleports.includes(at)),
-          );
+  #currentWallSet(flips: readonly SwitchField[] = [], broken?: number): WallSet {
+    let gates = this.#gates;
+    let switchedDecks = this.#switchedDecks;
+    let teleports = this.#teleports;
+    for (const flip of flips) {
+      gates = gates.map((gate, at) => stepGate(gate, gate.open, flip.gates.includes(at), 0));
+      switchedDecks = switchedDecks.map((deck, at) =>
+        stepSwitchedDeck(deck, flip.decks.includes(at), 0),
+      );
+      teleports = teleports.map((teleport, at) =>
+        stepTeleport(teleport, flip.teleports.includes(at)),
+      );
+    }
     let closed = 0;
     gates.forEach((gate, at) => {
       closed |= gate.open ? 0 : 1 << at;

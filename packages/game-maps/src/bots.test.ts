@@ -558,6 +558,62 @@ describe("a lever gate the only way between the spawns (#3138)", () => {
     expect(died).toBe(true);
     expect(seconds).toBeLessThan(ANNIHILATION_MATCH_RULES.timeLimitSeconds);
   }, 60_000);
+
+  describe("two lever gates in series (#3513)", () => {
+    it("bots throw both levers, then fight it out before the time limit", () => {
+      const build = (name: string) => {
+        const found = STARTER_BUILDS.find((candidate) => candidate.name === name);
+        if (found === undefined) throw new Error(`no starter build ${name}`);
+        return found;
+      };
+      // Each lever opens the far gate: neither alone is a way through.
+      const lever = (id: string, x: number, gate: number) => ({
+        id,
+        layer: 0,
+        position: { x, y: 650 },
+        gates: [gate],
+        teleports: [],
+        decks: [],
+        lifts: [],
+      });
+      const sim = new MatchSimulation({
+        seed: "lever-gates",
+        ruleset: RULESET,
+        walls: [600, 1000].flatMap((x) => [...wall(x, -10, 300), ...wall(x, 500, 810)]),
+        gates: [600, 1000].map((x) => ({
+          segments: wall(x, 300, 500),
+          opener: { kind: "switch" as const },
+          blocks: "all" as const,
+        })),
+        switches: [lever("west", 400, 1), lever("east", 1200, 0)],
+        bounds: { width: 1600, height: 800 },
+        matchRules: ANNIHILATION_MATCH_RULES,
+        participants: [0, 1].flatMap((team) =>
+          CASTERS.slice(0, 2).map((name, k) =>
+            playBuildBot(
+              build(name),
+              `${String(team)}-${String(k)}`,
+              team,
+              { position: { x: team === 0 ? 150 : 1450, y: 300 + 200 * k }, layer: 0 },
+              0,
+            ),
+          ),
+        ),
+      });
+      let opened = false;
+      let died = false;
+      let seconds = 0;
+      while (seconds <= ANNIHILATION_MATCH_RULES.timeLimitSeconds + 1 && !died) {
+        sim.step(DT);
+        seconds += DT;
+        opened ||= sim.gates.every(({ open }) => open);
+        died ||= [...sim.participants()].some(({ combatant }) => combatant.dead);
+      }
+      expect(opened).toBe(true);
+      expect(died).toBe(true);
+      expect(seconds).toBeLessThan(ANNIHILATION_MATCH_RULES.timeLimitSeconds);
+    }, 60_000);
+  });
 });
 
 /**
