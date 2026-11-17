@@ -487,6 +487,8 @@ export const AREA_LABELS = [
   "area:render",
   "area:game-core",
   "area:maps",
+  "area:maps-2",
+  "area:maps-3",
   "area:ui",
   "area:net",
   "area:i18n",
