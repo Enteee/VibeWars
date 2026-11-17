@@ -590,7 +590,7 @@ None.
 
 Accepted advisories, which `pnpm audit` ignores:
 
-- `GHSA-fc5q-39xc-vjpf` (#3525): picomatch <=4.0.7, ReDoS through repeated extglobs, high, no patched release. Dev-only, reached through typescript-eslint and tinyglobby, which match our own globs, never player input. Drop the ignore once picomatch ships a fix.
+- `GHSA-fc5q-39xc-vjpf` (#3525): picomatch <=4.0.7, ReDoS through repeated extglobs, high, no patched release. Dev-only, reached through tinyglobby and fdir from typescript-eslint, vite and vitest. They match our own globs, never player input, and none of them is in the player bundle. Drop the ignore once picomatch ships a fix.
 
 Three checks in CI (#133, #175):
 
