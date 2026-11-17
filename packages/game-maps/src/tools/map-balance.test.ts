@@ -410,7 +410,7 @@ describe("walks and high ground (#3070)", () => {
       expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
     };
     /** `on` with each team's one spawn at `points[team]` on `layer`. */
-    const from = (on: MapData, points: readonly Vec2[], layer = 0): MapData => ({
+    const from = (on: MapData, points: readonly Vec2[], layer = 1): MapData => ({
       ...on,
       spawnPoints: points.map((position, team) => ({ team, layer, position })),
     });
@@ -445,7 +445,7 @@ describe("walks and high ground (#3070)", () => {
         toOwn(
           on,
           drops.map(({ top }) => top),
-          1,
+          2,
           (team) => ({ through: [stairs[team] ?? ""] }),
         ),
         drops.map(() => 4 * RADIUS),
@@ -455,7 +455,7 @@ describe("walks and high ground (#3070)", () => {
             drops.map(({ landing }) => landing),
           ),
           stones,
-          0,
+          1,
           { through: [], shut: barrowStairs },
         ),
       );
@@ -463,11 +463,11 @@ describe("walks and high ground (#3070)", () => {
       const atGates = [0, 1].map(ownGate);
       return sum(
         toOwn(map, atGates, 0, () => ({ through: [] })),
-        toOwn(from(map, atGates), to, 0, () => ({ through: [] })),
+        toOwn(from(map, atGates, 0), to, 1, () => ({ through: [] })),
       );
     };
     const moorRoad = (on: MapData, to: readonly Vec2[]): number[] =>
-      toOwn(on, to, 0, () => ({ through: [], shut: barrowStairs }));
+      toOwn(on, to, 1, () => ({ through: [], shut: barrowStairs }));
     const foes = [shrines[1] ?? stones, shrines[0] ?? stones];
 
     it("walks each team from its spawn to the stones by the moor road, gates shut, within 10 % of the other", () => {
@@ -507,9 +507,9 @@ describe("walks and high ground (#3070)", () => {
 
     it("keeps the walks within 10 % with the gates open and the fallen stone broken", () => {
       const broken = ["fallen-stone"];
-      within(walksByRoute(map, stones, 0, { through: [], broken }), 0.1);
+      within(walksByRoute(map, stones, 1, { through: [], broken }), 0.1);
       within(
-        toOwn(map, foes, 0, () => ({ through: [], broken })),
+        toOwn(map, foes, 1, () => ({ through: [], broken })),
         0.1,
       );
     });
