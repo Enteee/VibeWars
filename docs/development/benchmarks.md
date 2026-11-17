@@ -197,7 +197,10 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
   each map's p50 over the baseline's. The `BENCH_MAX_RATIO` gate does not judge these
   rows: walking costs a frame about twice what standing does.
   `BENCH_MAX_FOLLOW_RATIO` fails a map walked that is over that many
-  times the baseline walked.
+  times the baseline walked. CI gates it at 12 (#3488): a cost every layered
+  map shares cancels out of the `BENCH_MAX_RATIO` ratio, but not out of this
+  one. 12 is the highest value in eight green pull-request runs (10.38,
+  arena-long-hall) times 1.15. A breach is a perf card, not a raise.
 
 The follow case measures the page through `?frametiming`
 (`render/frame-timing.ts`), which any client takes: open a match with
@@ -253,15 +256,24 @@ frames are dominated by software-GL pixel filling, not by these passes.
 | frozen-crossing  | 0.00                    | 0.29                        | 0.01                   | 0.42              | 1 %             |
 | sandstone-steps  | 0.02                    | 0.12                        | 0.00                   | 0.59              | 1 %             |
 
-| follow                    | frames | p50 ms | p95 ms | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | waypoints | p50 / flat |
-| ------------------------- | ------ | ------ | ------ | ------------- | ------------- | ------------ | --------------- | --------------- | ------------------ | --------- | ---------- |
-| arena-canyon (follow)     | 110    | 112.9  | 148.4  | 3.2           | 2.5           | 3 %          | 110.8           | 151.9           | 21.6               | 3         | 7.28       |
-| arena-crossroads (follow) | 114    | 109.5  | 135.5  | 2.3           | 2.0           | 2 %          | 110.8           | 145.5           | 20.8               | 3         | 7.06       |
-| arena-long-hall (follow)  | 85     | 142.9  | 203.5  | 2.4           | 3.0           | 2 %          | 144.0           | 261.6           | 36.8               | 2         | 9.22       |
-| ember-pits (follow)       | 101    | 118.7  | 156.2  | 4.3           | 2.3           | 4 %          | 121.1           | 231.3           | 25.6               | 2         | 7.66       |
-| frozen-crossing (follow)  | 117    | 104.2  | 121.5  | 2.4           | 3.6           | 2 %          | 105.1           | 214.4           | 26.3               | 3         | 6.72       |
-| sandstone-steps (follow)  | 102    | 123.6  | 153.8  | 2.3           | 1.9           | 2 %          | 124.4           | 264.1           | 36.0               | 3         | 7.97       |
-| jungle-ruins (follow)     | 775    | 15.5   | 35.1   | 1.0           | 1.2           | 7 %          | 52.5            | 110.8           | 18.0               | 1         | 1.00       |
+| follow                     | frames | p50 ms | p95 ms | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | waypoints | p50 / flat |
+| -------------------------- | ------ | ------ | ------ | ------------- | ------------- | ------------ | --------------- | --------------- | ------------------ | --------- | ---------- |
+| arena-canyon (follow)      | 119    | 103.7  | 130.5  | 2.6           | 1.9           | 3 %          | 105.3           | 169.6           | 22.1               | 3         | 9.26       |
+| arena-crossroads (follow)  | 136    | 92.4   | 121.8  | 2.1           | 1.5           | 2 %          | 93.5            | 186.8           | 25.1               | 3         | 8.25       |
+| arena-long-hall (follow)   | 107    | 116.3  | 154.5  | 2.1           | 2.1           | 2 %          | 117.8           | 181.8           | 25.7               | 2         | 10.38      |
+| ashen-courtyard (follow)   | 121    | 102.3  | 123.0  | 3.3           | 1.7           | 3 %          | 103.2           | 206.2           | 30.2               | 2         | 9.13       |
+| barrow-field (follow)      | 117    | 101.5  | 129.3  | 2.7           | 2.5           | 3 %          | 101.7           | 133.8           | 11.9               | 1         | 9.06       |
+| canthan-terraces (follow)  | 114    | 108.3  | 126.0  | 2.3           | 1.6           | 2 %          | 110.5           | 208.0           | 26.2               | 3         | 9.67       |
+| elonian-plateau (follow)   | 136    | 89.9   | 124.7  | 2.3           | 2.1           | 3 %          | 88.0            | 128.5           | 12.4               | 0         | 8.03       |
+| ember-pits (follow)        | 120    | 102.0  | 130.3  | 3.2           | 1.8           | 3 %          | 101.1           | 201.9           | 23.5               | 3         | 9.11       |
+| frozen-crossing (follow)   | 133    | 94.1   | 112.7  | 2.4           | 2.7           | 3 %          | 93.9            | 185.6           | 25.4               | 3         | 8.40       |
+| moss-vale (follow)         | 121    | 100.9  | 136.8  | 3.2           | 2.9           | 3 %          | 98.6            | 147.6           | 20.2               | 2         | 9.01       |
+| sandstone-steps (follow)   | 109    | 114.1  | 135.7  | 2.2           | 1.4           | 2 %          | 114.6           | 238.7           | 30.3               | 3         | 10.19      |
+| shiverpeak-pass (follow)   | 142    | 83.8   | 117.8  | 2.2           | 2.5           | 3 %          | 86.8            | 169.5           | 24.5               | 2         | 7.48       |
+| sunken-bastion (follow)    | 126    | 97.9   | 116.2  | 2.1           | 1.6           | 2 %          | 99.0            | 208.9           | 34.1               | 3         | 8.74       |
+| tutorial-canyon-1 (follow) | 118    | 102.8  | 120.1  | 2.0           | 0.8           | 2 %          | 104.1           | 210.9           | 25.2               | 0         | 9.18       |
+| tutorial-canyon-2 (follow) | 122    | 99.5   | 116.7  | 1.5           | 0.8           | 2 %          | 101.6           | 205.6           | 28.1               | 0         | 8.88       |
+| jungle-ruins (follow)      | 1053   | 11.2   | 28.4   | 0.9           | 0.8           | 9 %          | 52.6            | 157.2           | 31.5               | 1         | 1.00       |
 
 | passes (follow)           | cutAwayTunnels ms/frame | drawHiddenOutlines ms/frame | fadeOverhangs ms/frame | lighting ms/frame | passes % of p50 |
 | ------------------------- | ----------------------- | --------------------------- | ---------------------- | ----------------- | --------------- |
