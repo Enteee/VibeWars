@@ -50,6 +50,7 @@ import {
 import { isStaleChunkError } from "../build-check.js";
 import { keySignet } from "../identity/key-signet.js";
 import { TRACKS } from "../music/tracks/index.js";
+import { frameTiming } from "../render/frame-timing.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
 import {
@@ -376,8 +377,12 @@ export async function hostLobby(
           link.follow(reach);
           asks?.follow(needsRoom(reach));
         });
+  // `?frametiming` (#3499): what each host beat costs the page's main thread.
+  const timing = frameTiming();
   const stopClock = startHostClock((seconds) => {
+    const start = timing === undefined ? 0 : performance.now();
     host.advance(seconds);
+    timing?.host.push(performance.now() - start);
   });
   let closed = false;
   const close = async (moveTo?: string): Promise<void> => {

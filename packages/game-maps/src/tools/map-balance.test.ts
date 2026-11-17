@@ -702,6 +702,139 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // The Brazen Causeway (#3435): the centre is the storm beacon in the middle of the causeway.
+  // Three ways there: along the causeway from its end stair, through the team's own bronze gate
+  // (open), or across the marsh to a stair onto the causeway's middle, the near one or the far
+  // one (the far one by the culvert under the deck or round its end). As loaded the gates are shut.
+  describe("The Brazen Causeway", () => {
+    const map = loadMap("brazen-causeway");
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const centre = { x: 2800, y: 1400 };
+    const shrines = [
+      { x: 800, y: 1100 },
+      { x: 4824, y: 1684 },
+    ];
+    const foes = [shrines[1] ?? centre, shrines[0] ?? centre];
+    const onto = [
+      "west-end-south-stair",
+      "west-end-north-stair",
+      "centre-north-stair",
+      "centre-south-stair",
+      "east-end-north-stair",
+      "east-end-south-stair",
+    ];
+    /** A route through `through`, every other stair onto the causeway shut. */
+    const only = (through: readonly string[]): Route => ({
+      through,
+      shut: onto.filter((id) => !through.includes(id)),
+    });
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    const from = (on: MapData, points: readonly Vec2[], layer = 1): MapData => ({
+      ...on,
+      spawnPoints: points.map((position, team) => ({ team, layer, position })),
+    });
+    const toOwn = (
+      on: MapData,
+      to: readonly Vec2[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? centre, layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    const sum = (...legs: readonly (readonly number[])[]): number[] =>
+      [0, 1].map((team) => legs.reduce((total, leg) => total + (leg[team] ?? 0), 0));
+    const toCentre = (on: MapData, route: (team: number) => Route): number[] =>
+      toOwn(on, [centre, centre], 2, route);
+
+    it("walks each team along the causeway through its open gate within 10 % of the other", () => {
+      within(
+        toCentre(map, (team) =>
+          only([team === 0 ? "west-end-south-stair" : "east-end-north-stair"]),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team across the marsh to the near middle stair, gates shut, within 10 % of the other", () => {
+      within(
+        toCentre(shut, (team) => only([team === 0 ? "centre-south-stair" : "centre-north-stair"])),
+        0.1,
+      );
+    });
+
+    it("walks each team through its culvert to the far middle stair, gates shut, within 10 % of the other", () => {
+      // The walk tool would go round the causeway's end on open ground: to the culvert, and on from it.
+      const culverts = [
+        { x: 2400, y: 1400 },
+        { x: 3200, y: 1400 },
+      ];
+      within(
+        sum(
+          toOwn(shut, culverts, 0, () => ({ through: [] })),
+          toCentre(from(shut, culverts, 0), (team) =>
+            only(team === 0 ? ["centre-north-stair"] : ["centre-south-stair"]),
+          ),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team round the causeway's end to the far middle stair, gates shut, within 10 % of the other", () => {
+      within(
+        toCentre({ ...shut, tunnels: [], pits: [] }, (team) =>
+          only([team === 0 ? "centre-north-stair" : "centre-south-stair"]),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team to the foe's shrine across the marsh, gates shut, and along the causeway, gates open, within 10 % of the other", () => {
+      within(
+        toOwn(shut, foes, 1, () => only([])),
+        0.1,
+      );
+      // Along the causeway to its middle, then on along it and down its far end.
+      within(
+        sum(
+          toCentre(map, (team) =>
+            only([team === 0 ? "west-end-south-stair" : "east-end-north-stair"]),
+          ),
+          toOwn(from(map, [centre, centre], 2), foes, 1, (team) =>
+            only([team === 0 ? "east-end-south-stair" : "west-end-north-stair"]),
+          ),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each priest from its shrine to the centre within 10 % of the other", () => {
+      within(
+        toCentre(from(map, shrines), () => ({ through: [] })),
+        0.1,
+      );
+    });
+
+    it("keeps the walks within 10 % with the gates open and the palisades broken", () => {
+      const broken = ["west-rotten-palisade", "east-rotten-palisade"];
+      within(walksByRoute(map, centre, 2, { through: [], broken }), 0.1);
+      within(
+        toOwn(map, foes, 1, () => ({ through: [], broken })),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

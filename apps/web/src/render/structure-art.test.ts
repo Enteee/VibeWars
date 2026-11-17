@@ -185,7 +185,10 @@ describe("DECK_ART (#3067)", () => {
       bridge,
       frameOf({ ...towerDeck, look: "bridge-stone", switched: null }, []),
     );
-    expect(bridge.calls.filter(({ name }) => name === "fillRect").length).toBeGreaterThanOrEqual(2);
+    // Two triangles a pier, its foot along the edge (#3435).
+    expect(
+      bridge.calls.filter(({ name }) => name === "fillTriangle").length,
+    ).toBeGreaterThanOrEqual(4);
   });
 
   it("breaks a ruin: stones gone from its top, its brink and face fallen in, where a tower has none (#3078)", () => {

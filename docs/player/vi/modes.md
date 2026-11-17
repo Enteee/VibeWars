@@ -395,9 +395,7 @@ Ba đấu trường của Đỉnh cũng là lựa chọn của Trận tự tạo
 đứng trên các trụ phía trên cối xay, hoặc đi qua cống dưới cầu khi cần gạt trên cối xay mở cổng của nó;
 tư tế hồi sinh người chết của đội mỗi 2 phút) và
 **Mosslit Cairns** (Chiếm điểm 8v8, năm ụ đá xếp zig-zag nông giữa hai căn
-cứ). Đấu trường thứ tư là **The Brazen Causeway** (Diệt tư tế 8v8 trên một
-vòng đai quanh một cái hố trũng: một khe hẹp đi ngang cổng của mỗi căn cứ,
-cổng chỉ mở toang khi có một người trong đội đó giữ tấm nén Gate Lock).
+cứ). Đấu trường thứ tư là **The Brazen Causeway** (Diệt tư tế 8v8, 5600x2800, trên một con đường đắp bằng đá nhô cao giữa đầm lầy lúc hoàng hôn: hành quân dọc con đường khi cần gạt trong tháp cổng phía xa mở cổng đồng thau của nó, băng qua đầm lầy tới bậc thang ở giữa đường, hoặc lẻn qua cống bên dưới; tư tế hồi sinh người chết của đội mỗi 2 phút).
 
 Bản đồ có thể có **cổng**: những bức tường chặn cơ thể, đạn và tầm nhìn khi
 đóng. Đứng trên tấm nén của cổng để mở nó. Cổng đóng lại khi không còn ai trên

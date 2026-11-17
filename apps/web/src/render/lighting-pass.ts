@@ -6,6 +6,7 @@ import type { MapLighting } from "@vibewars/game-maps/schema";
 import type { ArenaPalette, OverhangLookColours } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { boxMeets, boxUnder, coverBoxes } from "./cell-cover.js";
+import type { Box } from "./graphics-cull.js";
 import {
   deckCovers,
   rampDrawing,
@@ -461,6 +462,27 @@ export function flickerRegions(
 }
 
 /**
+ * Of `regions` of a light map with `extent`, drawn `lift` world units up,
+ * those the camera's `view` meets (#3499). One off screen keeps its last
+ * flicker until it is next due in view: nobody sees it stand still.
+ */
+export function regionsInView(
+  regions: readonly FlickerRegion[],
+  extent: LightMapBox,
+  lift: number,
+  view: Box,
+): readonly FlickerRegion[] {
+  const left = view.left * LIGHT_MAP_SCALE - extent.x;
+  const top = (view.top + lift) * LIGHT_MAP_SCALE - extent.y;
+  const right = view.right * LIGHT_MAP_SCALE - extent.x;
+  const bottom = (view.bottom + lift) * LIGHT_MAP_SCALE - extent.y;
+  return regions.filter(
+    ({ box }) =>
+      box.x < right && left < box.x + box.width && box.y < bottom && top < box.y + box.height,
+  );
+}
+
+/**
  * Where the ground's light never falls (#2973): each pit's hole, and each
  * hole stairs cut down into a tunnel (#3329), lit by the layer under it, so
  * a body in one is not lit twice.
@@ -488,6 +510,8 @@ interface LayerMap {
   readonly glowKey: string | undefined;
   /** What of the arena it covers, in light map pixels. */
   readonly extent: LightMapBox;
+  /** How far up, in world units, its images are drawn. */
+  readonly lift: number;
   readonly flickering: readonly LightsOf[];
   /** What a flicker redraws, in its own pixels; none when nothing flickers. */
   readonly flickerRegions: readonly FlickerRegion[];
@@ -576,12 +600,12 @@ export class LightingPass {
     }
   }
 
-  /** Redraws what flickers, when it is due. */
-  public update(nowMs: number): void {
+  /** Redraws what flickers in the camera's `view`, when it is due. */
+  public update(nowMs: number, view: Box): void {
     for (const map of this.layers) {
       if (flickerRedrawDue(map.flickering, map.drawnAt, nowMs)) {
         const started = performance.now();
-        this.drawFlicker(map, nowMs, map.flickerRegions);
+        this.drawFlicker(map, nowMs, regionsInView(map.flickerRegions, map.extent, map.lift, view));
         this.budget.record(performance.now() - started);
       }
     }
@@ -767,6 +791,7 @@ export class LightingPass {
       outsideKey,
       glowKey,
       extent,
+      lift,
       flickering,
       flickerRegions: flickerRegions(flickering, extent),
       shadowed,
@@ -906,7 +931,9 @@ export class LightingPass {
   /**
    * The steady map, plus each flickering light as it is now: all of it the
    * first time, then only each of `regions`, where its lights reach (#3157,
-   * #3254).
+   * #3254). The regions never overlap, so each step is done for all of them
+   * before the next: every change of step ends a draw on the light map,
+   * which a software renderer pays for in full (#3499).
    */
   private drawFlicker(
     map: LayerMap,
@@ -915,12 +942,23 @@ export class LightingPass {
       { box: { ...map.extent, x: 0, y: 0 }, lights: map.flickering },
     ],
   ): void {
-    for (const { box, lights } of regions) {
-      const { x, y, width, height } = box;
-      const centreX = x + width / 2;
-      const centreY = y + height / 2;
-      map.shown.clear(x, y, width, height);
-      map.shown.stamp(map.baseKey, this.region(map.baseKey, x, y, width, height), centreX, centreY);
+    const centre = ({ x, y, width, height }: LightMapBox): Vec2 => ({
+      x: x + width / 2,
+      y: y + height / 2,
+    });
+    for (const { box } of regions) {
+      map.shown.clear(box.x, box.y, box.width, box.height);
+    }
+    for (const { box } of regions) {
+      const { x, y } = centre(box);
+      map.shown.stamp(
+        map.baseKey,
+        this.region(map.baseKey, box.x, box.y, box.width, box.height),
+        x,
+        y,
+      );
+    }
+    for (const { lights } of regions) {
       for (const light of lights) {
         this.stampLight(
           map.shown,
@@ -930,14 +968,21 @@ export class LightingPass {
           map.shadowed.get(light.id),
         );
       }
-      if (map.outsideKey !== undefined && lights.length > 0) {
+    }
+    const { outsideKey } = map;
+    if (outsideKey !== undefined) {
+      for (const { box, lights } of regions) {
+        if (lights.length === 0) {
+          continue;
+        }
+        const { x, y } = centre(box);
         map.shown.erase(
           this.scene.textures.getFrame(
-            map.outsideKey,
-            this.region(map.outsideKey, x, y, width, height),
+            outsideKey,
+            this.region(outsideKey, box.x, box.y, box.width, box.height),
           ),
-          centreX,
-          centreY,
+          x,
+          y,
         );
       }
     }

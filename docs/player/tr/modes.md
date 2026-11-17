@@ -458,9 +458,7 @@ değirmenin üstünde ayakları üzerinde duran yıkık köprüden ya da değirm
 köprünün altındaki menfezden geçilir; rahip ölülerini her 2 dakikada bir diriltir) ve
 **Mosslit Cairns** (8v8 Nokta Ele Geçirme, üsler arasında sığ bir
 zikzak çizen beş taş yığını). Dördüncüsü **The Brazen Causeway**'dir
-(çökük bir çukurun çevresindeki bir halkada 8v8 Rahip İmhası: dar bir
-geçit her üssün kapısının önünden geçer; kapı yalnızca takımından biri
-Gate Lock plakasını tuttuğu sürece ardına kadar açık durur).
+(8v8, 5600x2800, alacakaranlıkta bir bataklığın üzerinde yükseltilmiş taş bir set yolunda Rahip İmhası: uzaktaki kapı kulesindeki bir kol tunç kapısını açınca set yolu boyunca yürünür, bataklık geçilerek ortasındaki merdivenlere varılır ya da altındaki menfezden sızılır; rahip ölülerini her 2 dakikada bir diriltir).
 
 Bir haritada **kapılar** olabilir: kapalıyken bedenleri, atışları ve
 görüşü durduran duvarlar. Bir kapıyı açmak için basınç plakasının
