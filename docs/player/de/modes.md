@@ -311,8 +311,9 @@ Eine Gruppe mit weniger als 8 Spielern geht mit Bots auf den freien Plätzen in 
 **Barrow Field** (8v8, 5400x2600) ist eine Arena des Aufstiegs, die du auch in einem Gehosteten Spiel wählen kannst: Priestervernichtung auf einem Moor voller Hügelgräber in der Abenddämmerung, und der Priester erweckt alle 2 Minuten seine Toten. Steig auf ein Hügelgrab, um die Anhöhe zu halten, oder geh den Gräberweg darunter, sobald ein Hebel auf dem fernen Hügelgrab sein Tor öffnet. Trage deine Flagge auf das **Storm Beacon** in der Mitte, und es trifft alle 2,5 Sekunden einen zufälligen Gegner in Hörweite mit 50 Blitzschaden, bis das andere Team dort seine Flagge pflanzt. Jeder Einschlag ist ein Blitz vom Beacon zum Getroffenen, für beide Teams sichtbar.
 
 Drei Aufstiegs-Arenen kannst du auch in einem Gehosteten Spiel wählen: **The Hollow Deep** (8v8 Vernichtung, drei gewundene Tunnel um einen zentralen Felsen), **Blackwater
-Ford** (8v8 Priestervernichtung an einer winzigen Furt, die Basen fast in Sichtweite, der Priester holt alle 2 Minuten seine
-Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in einem flachen Zickzack zwischen den Basen). Dazu kommt als vierte **The Brazen Causeway** (8v8 Priestervernichtung auf einem Ring um eine Grube: An jedem Tor einer Basis führt eine schmale Lücke vorbei, und das Tor steht nur offen, solange jemand aus dem Team auf der Torschloss-Platte steht).
+Ford** (8v8, 5200x2800, Priestervernichtung an einer dunklen Flussfurt: Man watet durch eine seichte Furt, überquert die zerbrochene
+Brücke auf ihren Pfeilern über der Mühle oder nimmt einen Durchlass unter der Brücke, sobald ein Hebel an der Mühle
+sein Tor öffnet; der Priester holt alle 2 Minuten seine Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in einem flachen Zickzack zwischen den Basen). Dazu kommt als vierte **The Brazen Causeway** (8v8 Priestervernichtung auf einem Ring um eine Grube: An jedem Tor einer Basis führt eine schmale Lücke vorbei, und das Tor steht nur offen, solange jemand aus dem Team auf der Torschloss-Platte steht).
 
 Eine Karte kann **Tore** haben: Mauern, die im geschlossenen Zustand Körper, Schüsse und Sicht aufhalten. Stell dich auf die
 Druckplatte eines Tors, um es zu öffnen. Es schließt, wenn niemand mehr auf der Platte steht, schiebt jeden im Durchgang auf

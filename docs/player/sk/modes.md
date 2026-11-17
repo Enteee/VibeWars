@@ -394,8 +394,9 @@ viditeľný pre oba tímy.
 
 Tri arény Výstupu sa dajú vybrať aj vo Vlastnej hre: **The Hollow Deep** (8v8 Anihilácia, tri
 kľukaté tunely okolo centrálnej skaly),
-**Blackwater Ford** (8v8 Anihilácia
-kňaza na malom brode, základne takmer na dohľad, kňaz oživuje
+**Blackwater Ford** (8v8, 5200x2800, Anihilácia
+kňaza pri tmavom riečnom brode: dá sa prebrodiť plytký brod, prejsť po rozbitom moste na pilieroch nad mlynom
+alebo priepustom pod mostom, keď páka na mlyne otvorí jeho mrežu; kňaz oživuje
 svojich mŕtvych každé 2 minúty) a
 **Mosslit Cairns** (8v8 Dobývanie bodov, päť mohýl v plytkom cik-caku
 medzi základňami). Štvrtá je **The Brazen Causeway** (8v8 Anihilácia kňaza na kruhu okolo potopenej jamy: úzka medzera vedie popri bráne každej základne, ktorá je dokorán otvorená, len kým jeden člen jej tímu drží dosku Gate Lock).

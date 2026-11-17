@@ -162,6 +162,19 @@ describe("BIOME", () => {
     expect(deck.plinth.edgeTop).toBe(BIOME.hall.deck.plinth.edgeTop);
   });
 
+  it("draws the marsh as the wilds' ground a little cooler, low in chroma (#3434)", () => {
+    const { palette } = BIOME.marsh;
+    const blue = (colour: number): number => colour & 0xff;
+    expect(blue(palette.floor ?? 0)).toBeGreaterThan(blue(BIOME.wilds.palette.floor ?? 0));
+    const chroma = (colour: number): number => {
+      const channels = [colour >> 16, (colour >> 8) & 0xff, colour & 0xff];
+      return Math.max(...channels) - Math.min(...channels);
+    };
+    for (const colour of [palette.floor ?? 0, palette.wallTop, palette.wallFace]) {
+      expect(chroma(colour), `#${colour.toString(16)}`).toBeLessThan(0x20);
+    }
+  });
+
   it("lays no tile grid on the river ice, and keeps it on every tiled ground", () => {
     expect(BIOME.snow.palette.grid).toBeUndefined();
     for (const biome of BIOMES.filter((name) => name !== "snow")) {
@@ -169,7 +182,7 @@ describe("BIOME", () => {
     }
   });
 
-  it.each(["desert", "wilds", "snow"] as const)(
+  it.each(["desert", "wilds", "snow", "marsh"] as const)(
     "keeps every %s tone a hand's width from every signal",
     (biome) => {
       const hall = new Set(coloursOf("hall"));
@@ -193,14 +206,20 @@ describe("shade", () => {
 
 describe("breakableLook (#3370)", () => {
   it("makes each listed biome's breakable wall its own material, not the stone", () => {
-    const looks = (["volcanic", "desert", "snow", "wilds"] as const).map((biome) =>
+    const looks = (["volcanic", "desert", "snow", "wilds", "marsh"] as const).map((biome) =>
       breakableLook({ layerCount: 2, biome }),
     );
     for (const look of looks) {
       expect(look).not.toEqual(BREAKABLE_WALL_LOOK);
     }
     expect(new Set(looks.map(({ face }) => face)).size).toBe(looks.length);
-    expect(looks.map(({ courses }) => courses)).toEqual(["blocks", "bricks", "ice", "fieldstone"]);
+    expect(looks.map(({ courses }) => courses)).toEqual([
+      "blocks",
+      "bricks",
+      "ice",
+      "fieldstone",
+      "fieldstone",
+    ]);
   });
 
   it("glows only in the volcanic, and keeps the stone in the hall and heights", () => {

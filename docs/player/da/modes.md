@@ -421,9 +421,10 @@ ramte, synlig for begge hold.
 
 Tre arenaer fra Opstigningen kan også vælges i et Værtsspil: **The Hollow Deep** (8v8 Udslettelse, tre
 snoede tunneler rundt om en klippe i midten),
-**Blackwater Ford** (8v8
-Præsteudslettelse på et lillebitte vadested, baserne næsten inden for
-synsvidde, præsten genopliver sine døde hvert 2. minut) og
+**Blackwater Ford** (8v8, 5200x2800,
+Præsteudslettelse ved et mørkt vadested i en flod: man vader over et lavvandet vadested, går over den
+ødelagte bro på sine piller over møllen eller tager en kulvert under broen, når et håndtag på møllen
+åbner dens port; præsten genopliver sine døde hvert 2. minut) og
 **Mosslit Cairns** (8v8 Erobring, fem varder i en flad zigzag mellem
 baserne). En fjerde er **The Brazen Causeway** (8v8 Præsteudslettelse på en ring rundt om en sunket grube: en smal åbning passerer hver bases port, som kun står vidt åben, mens én fra dens hold står på Gate Lock-pladen).
 

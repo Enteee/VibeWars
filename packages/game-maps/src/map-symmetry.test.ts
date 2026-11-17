@@ -19,7 +19,6 @@ const SYMMETRIC = [
   "hall-of-heroes-relic",
   "hall-of-heroes-capture",
   "hollow-deep",
-  "blackwater-ford",
   "mosslit-cairns",
   "wardens-gallery",
   "brazen-causeway",
