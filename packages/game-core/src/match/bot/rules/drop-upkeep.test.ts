@@ -54,6 +54,7 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       highGround: [],
       cover: [],
       routeLength: () => 0,
+      leverHolder: () => undefined,
     });
   }
 

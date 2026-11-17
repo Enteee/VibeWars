@@ -1,5 +1,6 @@
 import type { BotLever } from "../../behaviour.js";
 import { countsForTeam } from "../../simulation.js";
+import { LEVER_GIVE_UP_SECONDS } from "./keep-lever.js";
 import { nearestTo, NOTHING, pressed } from "./shared.js";
 import type { BotRule } from "./types.js";
 
@@ -15,12 +16,15 @@ export const LEVER_SETTLE_SECONDS = 6;
  * as a player clicking it does. Opening a gate and turning on a teleport
  * both count: either way the route gets shorter. After `gates`, so a foe
  * in reach and a team's own plate both come first.
+ *
+ * Setting out, it commits (#3532): `keep-lever` walks it on from then,
+ * and no other bot of its team takes that lever while it does.
  */
 const levers: BotRule = {
   order: 106,
   name: "levers",
   decide: (rule) => {
-    const { context, self, allies } = rule;
+    const { context, self, allies, cursor } = rule;
     if (context.objectives.levers.length === 0 || pressed(rule)) {
       return undefined;
     }
@@ -32,6 +36,7 @@ const levers: BotRule = {
         gain >= LEVER_WORTH_UNITS &&
         context.now >= lever.readyAt &&
         context.now - lever.flippedAt >= LEVER_SETTLE_SECONDS &&
+        context.leverHolder(lever.targetId) === undefined &&
         (best === undefined || gain > (best.gain[team] ?? 0))
       ) {
         best = lever;
@@ -41,6 +46,18 @@ const levers: BotRule = {
     if (best === undefined || nearestTo(best.position, bots) !== self) {
       return undefined;
     }
+    const walk = context.routeLength(best.position, best.layer);
+    const speed = context.stepUnits / context.dt;
+    if (!Number.isFinite(walk)) {
+      return undefined;
+    }
+    cursor.lever = {
+      targetId: best.targetId,
+      flippedAt: best.flippedAt,
+      since: context.now,
+      until: context.now + (speed > 0 ? walk / speed : 0) + LEVER_GIVE_UP_SECONDS,
+      routedAt: context.now,
+    };
     return { ...NOTHING, attackTargetId: best.targetId };
   },
 };

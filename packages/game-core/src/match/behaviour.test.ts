@@ -375,6 +375,7 @@ describe("auto-attack", () => {
         highGround: [],
         cover: [],
         routeLength: () => 0,
+        leverHolder: () => undefined,
       },
     );
     expect(intent.attackTargetId).toBe("first");
@@ -446,6 +447,7 @@ describe("follow-and-attack (#467)", () => {
       highGround: [],
       cover: [],
       routeLength: () => 0,
+      leverHolder: () => undefined,
     });
   }
 

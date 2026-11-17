@@ -2,12 +2,23 @@ import { describe, expect, it } from "vitest";
 
 import type { Polygon, Segment } from "../../../geometry.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
-import { createCursor, decide, NO_OBJECTIVES, type BotLever } from "../../behaviour.js";
+import {
+  createCursor,
+  decide,
+  NO_OBJECTIVES,
+  type BehaviourContext,
+  type BehaviourCursor,
+  type BotLever,
+} from "../../behaviour.js";
 import type { GateField } from "../../gates.js";
 import { MatchSimulation, type MatchLayers, type ParticipantSpec } from "../../simulation.js";
 import { switchTargetId, type SwitchField } from "../../switches.js";
 import type { TeleportField } from "../../teleports.js";
-import levers, { LEVER_SETTLE_SECONDS, LEVER_WORTH_UNITS } from "./levers.js";
+import levers, {
+  LEVER_SETTLE_SECONDS,
+  LEVER_WORTH_UNITS,
+} from "./levers.js";
+import { LEVER_GIVE_UP_SECONDS, LEVER_REROUTE_SECONDS } from "./keep-lever.js";
 import {
   BOT,
   BOUNDS,
@@ -358,5 +369,90 @@ describe("levers, shot at from afar (#3150)", () => {
     if (foe === undefined) throw new Error("no foe");
     foe.targetId = "near";
     expect(levers.decide(shot())).toBeUndefined();
+  });
+});
+
+describe("levers, a bot set on one (#3532)", () => {
+  const sim = match([
+    fighter("near", 0, WARRIOR, vec2(200, 400)),
+    fighter("far", 0, RANGER, vec2(100, 200)),
+    fighter("foe", 1, WARRIOR, vec2(1500, 400)),
+  ]);
+  // From (200, 400) to the lever at (300, 400), at the test's one unit a tick.
+  const walk = 100 * DT;
+  /** `near`'s think at `now` with `list` as the levers, its memory in `cursor`. */
+  const set = (
+    cursor: BehaviourCursor,
+    list: readonly BotLever[],
+    now: number,
+    context: Partial<BehaviourContext> = {},
+  ) =>
+    levers.decide(
+      ruleFor(
+        sim,
+        "near",
+        { cursor },
+        { objectives: { ...NO_OBJECTIVES, levers: list }, now, ...context },
+      ),
+    );
+
+  it("keeps walking to its lever when the gain scores 0 on the way", () => {
+    const cursor = createCursor();
+    expect(set(cursor, [lever(LEVER_WORTH_UNITS)], 10)?.attackTargetId).toBe(LEVER_ID);
+    expect(set(cursor, [lever(0)], 11)?.attackTargetId).toBe(LEVER_ID);
+    // Without the commitment the same think walks nowhere.
+    expect(set(createCursor(), [lever(0)], 11)).toBeUndefined();
+  });
+
+  it("drops it once anyone throws it", () => {
+    const cursor = createCursor();
+    set(cursor, [lever(LEVER_WORTH_UNITS)], 10);
+    expect(set(cursor, [{ ...lever(0), flippedAt: 10.5, readyAt: 12 }], 11)).toBeUndefined();
+    expect(cursor.lever).toBeUndefined();
+  });
+
+  it("drops it when its walk there plus the give-up time runs out", () => {
+    const cursor = createCursor();
+    set(cursor, [lever(LEVER_WORTH_UNITS)], 10);
+    const end = 10 + walk + LEVER_GIVE_UP_SECONDS;
+    expect(set(cursor, [lever(0)], end - 0.01)?.attackTargetId).toBe(LEVER_ID);
+    expect(set(cursor, [lever(0)], end)).toBeUndefined();
+    expect(cursor.lever).toBeUndefined();
+  });
+
+  it("drops it when no route leads there any more", () => {
+    const cursor = createCursor();
+    set(cursor, [lever(LEVER_WORTH_UNITS)], 10);
+    const walled = { routeLength: () => Number.POSITIVE_INFINITY };
+    expect(set(cursor, [lever(0)], 10 + LEVER_REROUTE_SECONDS, walled)).toBeUndefined();
+    expect(cursor.lever).toBeUndefined();
+  });
+
+  it("drops it when a foe shoots at it", () => {
+    const shot = match([
+      fighter("near", 0, WARRIOR, vec2(200, 400)),
+      fighter("foe", 1, RANGER, vec2(700, 400)),
+    ]);
+    const cursor = createCursor();
+    const think = () =>
+      levers.decide(
+        ruleFor(
+          shot,
+          "near",
+          { cursor, foeReach: () => 600 },
+          { objectives: { ...NO_OBJECTIVES, levers: [lever(LEVER_WORTH_UNITS)] }, now: 10 },
+        ),
+      );
+    expect(think()?.attackTargetId).toBe(LEVER_ID);
+    const foe = shot.get("foe");
+    if (foe === undefined) throw new Error("no foe");
+    foe.targetId = "near";
+    expect(think()).toBeUndefined();
+    expect(cursor.lever).toBeUndefined();
+  });
+
+  it("leaves a lever a teammate is set on to that teammate", () => {
+    const held = { leverHolder: () => "far" };
+    expect(set(createCursor(), [lever(LEVER_WORTH_UNITS)], 10, held)).toBeUndefined();
   });
 });

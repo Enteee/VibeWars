@@ -14,6 +14,7 @@ import flee from "./flee.js";
 import fight from "./fight.js";
 import heal from "./heal.js";
 import interrupt from "./interrupt.js";
+import keepLever from "./keep-lever.js";
 import leadGhost from "./lead-ghost.js";
 import leaveZone from "./leave-zone.js";
 import levers from "./levers.js";
@@ -57,6 +58,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   fight,
   heal,
   interrupt,
+  keepLever,
   leadGhost,
   leaveZone,
   levers,
