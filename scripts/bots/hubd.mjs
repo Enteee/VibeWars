@@ -2885,6 +2885,23 @@ function serveLoad(cfg) {
 }
 
 /**
+ * The host's free memory, load and CPUs, read when a `company runners <n>`
+ * arrives (#3466). `HUBD_HOST_ROOM`, JSON of the same shape, stands in for
+ * the host in tests, whose CI machine has no room for a runner.
+ *
+ * @returns {{ freeBytes: number, load1: number, cpus: number }}
+ */
+function readHostRoom() {
+  const fixed = process.env.HUBD_HOST_ROOM;
+  if (fixed !== undefined) {
+    /** @type {unknown} */
+    const room = JSON.parse(fixed);
+    return /** @type {{ freeBytes: number, load1: number, cpus: number }} */ (room);
+  }
+  return { freeBytes: os.freemem(), load1: os.loadavg()[0] ?? 0, cpus: os.availableParallelism() };
+}
+
+/**
  * `company runners` (#1890): the supervisor's status, as the dashboard
  * shows it; `company runners <n>` sets the target it reads, within the
  * operator's max, `company.json`'s `maxRunners` (#2764), read on every
@@ -4412,11 +4429,7 @@ async function serve(request, verdict, acting) {
       audit({ role, kind, argv, decision: "refused", reason });
       return { allow: false, reason, code: 77 };
     }
-    const answered = serveRunners(argv, cfg.maxRunners, {
-      freeBytes: os.freemem(),
-      load1: os.loadavg()[0] ?? 0,
-      cpus: os.availableParallelism(),
-    });
+    const answered = serveRunners(argv, cfg.maxRunners, readHostRoom());
     audit({ role, kind, argv, decision: "allowed", code: answered.code });
     return { allow: true, ...answered };
   }
