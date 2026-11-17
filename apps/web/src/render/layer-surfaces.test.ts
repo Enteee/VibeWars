@@ -164,6 +164,12 @@ describe("a click on what a shallow deck draws (#3476)", () => {
       expect(occludersOf(WALLS, RUBBLE)).toContainEqual(part);
     }
   });
+
+  it("builds its drawing once while the walls stand, for the hover every frame", () => {
+    expect(deckDrawing(deck, WALLS, RUBBLE)).toBe(parts);
+    const fallen: readonly RenderableWall[] = [];
+    expect(deckDrawing(deck, fallen, RUBBLE)).toHaveLength(1);
+  });
 });
 
 describe("a click on a ramp (#2972)", () => {

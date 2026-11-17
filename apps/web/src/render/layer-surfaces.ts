@@ -1304,6 +1304,16 @@ function wallOccluder(
 }
 
 /**
+ * Each deck's drawing, by the structure and the walls standing (#3476): both
+ * are kept while nothing falls or opens, so the hover hit-test, run every
+ * frame, builds a drawing once.
+ */
+const deckDrawings = new WeakMap<
+  MapStructure,
+  WeakMap<readonly RenderableWall[], Map<MapDeck, readonly Occluder[]>>
+>();
+
+/**
  * Where `deck` is drawn (#3476): its own sweep and the walls that hold it
  * up. A click on any of it names the deck, and each hides a body as it
  * draws, so the two never disagree.
@@ -1313,12 +1323,27 @@ export function deckDrawing(
   walls: readonly RenderableWall[],
   structure: MapStructure,
 ): readonly Occluder[] {
-  return [
-    deckOccluder(deck, walls, structure),
-    ...walls
-      .filter((wall) => deckHeldBy(wall, structure) === deck)
-      .map((wall) => wallOccluder(wall, walls, structure)),
-  ];
+  let byWalls = deckDrawings.get(structure);
+  if (byWalls === undefined) {
+    byWalls = new WeakMap();
+    deckDrawings.set(structure, byWalls);
+  }
+  let byDeck = byWalls.get(walls);
+  if (byDeck === undefined) {
+    byDeck = new Map();
+    byWalls.set(walls, byDeck);
+  }
+  let drawing = byDeck.get(deck);
+  if (drawing === undefined) {
+    drawing = [
+      deckOccluder(deck, walls, structure),
+      ...walls
+        .filter((wall) => deckHeldBy(wall, structure) === deck)
+        .map((wall) => wallOccluder(wall, walls, structure)),
+    ];
+    byDeck.set(deck, drawing);
+  }
+  return drawing;
 }
 
 /**
