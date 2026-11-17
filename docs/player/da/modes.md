@@ -176,6 +176,8 @@ sejren til det hold, der scorede sidst. Hver base genopliver sine døde,
 og sit spøgelse, hvert 2. minut. Bots går samlet efter fjendens relikvie
 og bringer den hjem.
 
+Cinder Sanctum (8v8, 5600x2800) spiller det: et tempel på en vulkans skråning mellem to lavafloder. Gå over en bro eller dæmningen til helligdommen på dens forgård; et håndtag på forgården åbner den skjulte gang under helligdommen, og askevægge kan slås i stykker. Lava brænder.
+
 ## Kongen af bakken
 
 **Før din Spøgelseshelt op på alteret, og hold det.** Hvert hold har en

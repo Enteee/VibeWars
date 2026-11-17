@@ -144,6 +144,8 @@ Broken Tower spielt es: Der Altar steht in einem zerstörten Turm mit einem Durc
 
 Hier läuft der Reliktlauf des Aufstiegs der Helden andersherum. Jede Basis hat das Relikt ihres Teams und ihren Geisterhelden, einen Altar gibt es nicht. **Hol das gegnerische Relikt aus dessen Basis und bring es zu deinem eigenen Geisterhelden**, das gibt einen Punkt. Der Geist muss leben und bleibt auf seinem Posten. Dein eigenes Relikt kannst du nicht tragen: Hebst du es dort auf, wo es gefallen ist, geht es nach Hause. Ein Team mit **3 Punkten Vorsprung gewinnt sofort**. Nach 8 Minuten gewinnt das Team mit mehr Punkten, bei Gleichstand das Team, das zuletzt gepunktet hat. Jede Basis belebt alle 2 Minuten ihre Toten und ihren Geist wieder. Bots holen das gegnerische Relikt gemeinsam und bringen es heim.
 
+Cinder Sanctum (8v8, 5600x2800) spielt es: ein Tempel an der Flanke eines Vulkans zwischen zwei Lavaströmen. Überquere sie über eine Brücke oder den Damm zum Heiligtum auf seinem Vorhof; ein Hebel auf dem Vorhof öffnet den verborgenen Gang unter dem Heiligtum, und Aschewände lassen sich zerschlagen. Lava verbrennt.
+
 ## King of the Hill
 
 **Führe deinen Geisterhelden auf den Altar und halte ihn.** Jedes Team hat einen **Geisterhelden** in

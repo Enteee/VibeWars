@@ -176,6 +176,8 @@ och vid lika går segern till laget som fick poäng sist. Varje bas
 återupplivar sina döda, och sitt spöke, var 2:a minut. Bottar går på
 fiendens relik tillsammans och bär hem den.
 
+Cinder Sanctum (8v8, 5600x2800) spelar det: ett tempel på en vulkans sluttning mellan två lavafloder. Gå över en bro eller vägbanken till helgedomen på dess förgård; en spak på förgården öppnar den dolda gången under helgedomen, och askväggar kan slås sönder. Lava bränner.
+
 ## King of the Hill
 
 **Led din spökhjälte upp på altaret, och håll det.** Varje lag har en

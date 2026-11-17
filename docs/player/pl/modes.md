@@ -160,6 +160,8 @@ Po 8 minutach wygrywa najwięcej punktów, a remis przypada drużynie, która zd
 ostatnia. Każda baza co 2 minuty przywraca swoich poległych i swojego ducha. Boty idą
 razem po relikwię wroga i przynoszą ją do domu.
 
+Cinder Sanctum (8v8, 5600x2800) w to gra: świątynia na zboczu wulkanu między dwiema rzekami lawy. Przejdź mostem albo groblą do sanktuarium na jego dziedzińcu; dźwignia na dziedzińcu otwiera ukryte przejście pod sanktuarium, a ściany z popiołu da się rozbić. Lawa parzy.
+
 ## Król wzgórza
 
 **Zaprowadź Upiornego Bohatera na ołtarz i utrzymaj go.** Każda drużyna ma w bazie

@@ -187,6 +187,8 @@ pont nyer, egyenlőségnél pedig az a csapat, amelyik utoljára szerzett
 pontot. Minden bázis 2 percenként feltámasztja a halottait és a
 kísértetét. A botok együtt mennek az ellenség ereklyéjéért, és hazahozzák.
 
+A Cinder Sanctum (8v8, 5600x2800) ezt játssza: templom egy vulkán oldalán, két lávafolyó között. Kelj át egy hídon vagy a töltésen az előudvarán álló szentélyhez; az előudvar egyik karja megnyitja a szentély alatti rejtett átjárót, a hamufalak pedig szétverhetők. A láva éget.
+
 ## A domb ura
 
 **Vezesd a Kísértethősödet az oltárra, és tartsd meg.** Minden

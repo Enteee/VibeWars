@@ -165,6 +165,8 @@ seri dimenangkan tim yang terakhir mencetak poin. Setiap markas menghidupkan kem
 hantunya, setiap 2 menit. Bot mengejar relik musuh bersama-sama lalu membawanya
 pulang.
 
+Cinder Sanctum (8v8, 5600x2800) memainkannya: sebuah kuil di lereng gunung berapi di antara dua sungai lava. Seberangi lewat jembatan atau jalan tanggul menuju tempat suci di pelatarannya; tuas di pelataran membuka lorong tersembunyi di bawah tempat suci, dan dinding abu bisa dihancurkan. Lava membakar.
+
 ## Raja Bukit
 
 **Pimpin Pahlawan Hantu-mu ke altar, lalu kuasai.** Setiap tim punya
