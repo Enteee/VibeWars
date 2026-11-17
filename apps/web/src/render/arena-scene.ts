@@ -1,6 +1,12 @@
 import Phaser from "phaser";
 
-import type { MapAtmosphere, MapBounds, MapLighting, MapPaving } from "@vibewars/game-maps/schema";
+import type {
+  Biome,
+  MapAtmosphere,
+  MapBounds,
+  MapLighting,
+  MapPaving,
+} from "@vibewars/game-maps/schema";
 
 import {
   ALTAR_REACH_UNITS,
@@ -380,6 +386,7 @@ import {
   paintOutsideTile,
   type OutsidePainter,
 } from "./outside-land.js";
+import { GROUND_TILE, grainPixels, groundTileKey, paintDressing } from "./ground-dressing.js";
 import {
   isStonePaving,
   paintPaving,
@@ -592,6 +599,11 @@ const GROUND_DEPTH = renderOrder({ kind: "ground-effect", layer: 0 });
 /** A layered map's opaque floor and the grid: under the water and the ward and trap circles on it. */
 const OUTSIDE_DEPTH = renderOrder({ kind: "outside" });
 const FLOOR_DEPTH = renderOrder({ kind: "floor" });
+/** The ground's grain (#3484): the outline into the stencil, the grain, the outline out. */
+const GRAIN_STENCIL_DEPTH = renderOrder({ kind: "ground-grain", part: "stencil" });
+const GRAIN_DEPTH = renderOrder({ kind: "ground-grain", part: "grain" });
+const GRAIN_RELEASE_DEPTH = renderOrder({ kind: "ground-grain", part: "release" });
+const GRAIN_LINES_DEPTH = renderOrder({ kind: "ground-grain", part: "lines" });
 /** The wards on a lit map: over its light, which never darkens them (ADR-0052). */
 const LIT_GROUND_DEPTH = renderOrder({ kind: "lit-ground-effect" });
 const MAP_DEPTH = renderOrder({ kind: "terrain" });
@@ -620,6 +632,10 @@ export class ArenaScene extends Phaser.Scene {
 
   /** Wards on the floor (#1087), under the grid, walls and bodies. */
   private groundGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** The ground's grain and dressing (#3484), while the map is layered. */
+  private grain: GroundGrain | undefined;
+  /** The grain on each pit's near lip (#3484), redrawn with the pits. */
+  private lipGrain: Phaser.GameObjects.TileSprite[] = [];
   /** Each ward's icon, by ground effect id (#1087). */
   private groundIcons = new Map<number, Phaser.GameObjects.Image>();
   /** Wards on decks (#2979), one `Graphics` per layer above the ground, made when first needed. */
@@ -628,6 +644,8 @@ export class ArenaScene extends Phaser.Scene {
   private deckGroundIcons = new Map<number, Phaser.GameObjects.Image>();
   /** The opaque floor of a layered map, under the wards. */
   private floorGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** The floor's grid and the outline's edge, over its grain (#3484). */
+  private floorLines: Phaser.GameObjects.Graphics | undefined;
   /** The grid, the arena's edge and the walls (#1353), over the wards; drawn when they change. */
   private mapGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The land outside a ground outline (#3066), while the map has one. */
@@ -660,7 +678,13 @@ export class ArenaScene extends Phaser.Scene {
    */
   private readonly tunnelCovers = new Map<
     number,
-    { readonly ground: Phaser.GameObjects.Graphics; readonly seam: Phaser.GameObjects.Graphics }
+    {
+      readonly ground: Phaser.GameObjects.Graphics;
+      readonly seam: Phaser.GameObjects.Graphics;
+      /** The ground grain over its cover's pieces (#3484), faded with it, and the grid over that. */
+      grain: Phaser.GameObjects.TileSprite[];
+      readonly lines: Phaser.GameObjects.Graphics;
+    }
   >();
   /**
    * Each overhang (#3293) and arch top (#3312) as drawn, and where it
@@ -1040,6 +1064,7 @@ export class ArenaScene extends Phaser.Scene {
       this.shutdown();
     });
     this.floorGraphics = this.add.graphics().setDepth(FLOOR_DEPTH);
+    this.floorLines = this.add.graphics().setDepth(GRAIN_LINES_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
@@ -3549,6 +3574,7 @@ export class ArenaScene extends Phaser.Scene {
     const palette = arenaPalette(next.structure);
     const { ground } = next.structure;
     this.drawFloor(palette, line);
+    this.drawGrain(next.structure.bounds, next.structure.biome, palette);
     this.drawOutside(next.structure.bounds, next.lighting);
     this.drawPaving(next.structure);
     paintDeckShadows(
@@ -3751,9 +3777,14 @@ export class ArenaScene extends Phaser.Scene {
     this.drawnMap = next;
     this.staticCull.capture([
       ...(this.floorGraphics === undefined ? [] : [this.floorGraphics]),
+      ...(this.floorLines === undefined ? [] : [this.floorLines]),
       g,
       ...this.structureGraphics.values(),
-      ...[...this.tunnelCovers.values()].flatMap(({ ground, seam }) => [ground, seam]),
+      ...[...this.tunnelCovers.values()].flatMap(({ ground, lines, seam }) => [
+        ground,
+        lines,
+        seam,
+      ]),
       ...[...this.waterOverTunnels.values()].map(({ surface }) => surface),
       ...[...this.decksOverTunnels.values()].flat(),
       ...this.coversDrawn.map(({ graphics }) => graphics),
@@ -3912,7 +3943,7 @@ export class ArenaScene extends Phaser.Scene {
       this.occluders = seenFrom(this.mapOccluders, inside);
     }
     const step = this.reducedMotion ? 1 : (dt * (1 - TUNNEL_CUTAWAY_ALPHA)) / TUNNEL_CUTAWAY_FADE;
-    for (const [at, { ground, seam }] of this.tunnelCovers) {
+    for (const [at, { ground, seam, grain, lines }] of this.tunnelCovers) {
       const target = inside.has(at) ? TUNNEL_CUTAWAY_ALPHA : 1;
       const alpha = ground.alpha;
       if (alpha !== target) {
@@ -3920,6 +3951,8 @@ export class ArenaScene extends Phaser.Scene {
           alpha < target ? Math.min(target, alpha + step) : Math.max(target, alpha - step);
         ground.setAlpha(next);
         seam.setAlpha(next);
+        lines.setAlpha(next);
+        grain.forEach((piece) => piece.setAlpha(next));
       }
       for (const piece of this.pavingDrawn?.overTunnels.get(at) ?? []) {
         piece.setAlpha(ground.alpha);
@@ -4338,18 +4371,31 @@ export class ArenaScene extends Phaser.Scene {
    * so it covers them, each tunnel's seam over its paving (#3236).
    */
   private drawPits(structure: MapStructure, line: number, palette: ArenaPalette): void {
-    for (const [at, { ground, seam }] of this.tunnelCovers) {
+    for (const [at, { ground, seam, grain, lines }] of this.tunnelCovers) {
       if (at >= structure.tunnels.length) {
         ground.destroy();
         seam.destroy();
+        lines.destroy();
+        grain.forEach((piece) => {
+          piece.destroy();
+        });
         this.tunnelCovers.delete(at);
       }
     }
+    this.lipGrain.forEach((piece) => {
+      piece.destroy();
+    });
+    this.lipGrain = [];
     if (structure.pits.length === 0 && structure.tunnels.length === 0) {
       return;
     }
     const pit = this.structureAt({ kind: "pit" });
     const cover = this.structureAt({ kind: "deck", deckLayer: structure.ground });
+    const lipLines = this.structureAt({
+      kind: "lip-grain",
+      deckLayer: structure.ground,
+      part: "lines",
+    });
     // Under its cover, seen only while that is cut away (#3234); a pit draws over it.
     // A tunnel's floor is the ground's: its roof, and the light under it, make it dark (#3329).
     const tunnelGround = palette.floor ?? ARENA_BACKGROUND;
@@ -4373,9 +4419,13 @@ export class ArenaScene extends Phaser.Scene {
       for (const passage of drawing.passages) {
         this.fillFan(pit, passage);
       }
-      this.drawGroundPatch(cover, drawing.lip, line, palette);
-      cover.lineStyle(line, palette.wallStroke, 1);
-      this.strokeShape(cover, each.footprint);
+      this.drawGroundPatch(cover, lipLines, drawing.lip, line, palette);
+      const grain = this.groundPatchGrain(drawing.lip, structure, palette, "lip-grain");
+      if (grain !== undefined) {
+        this.lipGrain.push(grain);
+      }
+      lipLines.lineStyle(line, palette.wallStroke, 1);
+      this.strokeShape(lipLines, each.footprint);
     }
     for (const [at, tunnel] of structure.tunnels.entries()) {
       let drawn = this.tunnelCovers.get(at);
@@ -4384,13 +4434,26 @@ export class ArenaScene extends Phaser.Scene {
         drawn = {
           ground: this.add.graphics().setDepth(renderOrder({ kind: "tunnel-cover", deckLayer })),
           seam: this.add.graphics().setDepth(renderOrder({ kind: "tunnel-seam", deckLayer })),
+          grain: [],
+          lines: this.add
+            .graphics()
+            .setDepth(renderOrder({ kind: "tunnel-grain", deckLayer, part: "lines" })),
         };
         this.tunnelCovers.set(at, drawn);
       }
       drawn.ground.clear();
       drawn.seam.clear();
+      drawn.lines.clear();
+      drawn.grain.forEach((piece) => {
+        piece.destroy();
+      });
+      drawn.grain = [];
       for (const piece of tunnelCover(structure, tunnel)) {
-        this.drawGroundPatch(drawn.ground, piece, line, palette);
+        this.drawGroundPatch(drawn.ground, drawn.lines, piece, line, palette);
+        const grain = this.groundPatchGrain(piece, structure, palette, "tunnel-grain");
+        if (grain !== undefined) {
+          drawn.grain.push(grain.setAlpha(drawn.ground.alpha));
+        }
       }
       this.drawTunnelSeam(drawn.seam, structure, tunnel, line, palette);
     }
@@ -4443,9 +4506,38 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** The floor and its grid over the box `outline`, as `drawFloor` draws them there. */
+  /**
+   * The ground grain (#3484) over the box `outline`, as `drawGrain` lays
+   * it there, so a patch redrawn over a tunnel or in front of a pit
+   * matches the ground round it; none on a map of one layer.
+   */
+  private groundPatchGrain(
+    outline: readonly Vec2[],
+    structure: MapStructure,
+    palette: ArenaPalette,
+    kind: "tunnel-grain" | "lip-grain",
+  ): Phaser.GameObjects.TileSprite | undefined {
+    if (palette.floor === undefined) {
+      return undefined;
+    }
+    const xs = outline.map(({ x }) => x);
+    const ys = outline.map(({ y }) => y);
+    const [left, top] = [Math.min(...xs), Math.min(...ys)];
+    const [width, height] = [Math.max(...xs) - left, Math.max(...ys) - top];
+    return this.add
+      .tileSprite(left, top, width, height, this.groundTile(structure.biome))
+      .setOrigin(0, 0)
+      .setTilePosition(left, top)
+      .setDepth(renderOrder({ kind, deckLayer: structure.ground, part: "grain" }));
+  }
+
+  /**
+   * The floor over the box `outline`, as `drawFloor` draws it there, and
+   * its grid on `lines`, which draws over the patch's grain (#3484).
+   */
   private drawGroundPatch(
     g: Phaser.GameObjects.Graphics,
+    lines: Phaser.GameObjects.Graphics,
     outline: readonly Vec2[],
     line: number,
     palette: ArenaPalette,
@@ -4459,12 +4551,12 @@ export class ArenaScene extends Phaser.Scene {
     if (palette.grid === undefined) {
       return;
     }
-    g.lineStyle(line, palette.grid, 1);
+    lines.lineStyle(line, palette.grid, 1);
     for (let x = Math.ceil(left / GRID_STEP) * GRID_STEP; x <= right; x += GRID_STEP) {
-      g.lineBetween(x, top, x, bottom);
+      lines.lineBetween(x, top, x, bottom);
     }
     for (let y = Math.ceil(top / GRID_STEP) * GRID_STEP; y <= bottom; y += GRID_STEP) {
-      g.lineBetween(left, y, right, y);
+      lines.lineBetween(left, y, right, y);
     }
   }
 
@@ -4644,14 +4736,17 @@ export class ArenaScene extends Phaser.Scene {
   /**
    * The floor and its grid, under the water and the ward circles on it
    * (#2984). On a map with a ground outline (#3066) they are inside it,
-   * over the land outside, and its edge is traced over both.
+   * over the land outside, and its edge is traced over both. The grid and
+   * the edge are on `floorLines`, over the floor's grain (#3484).
    */
   private drawFloor(palette: ArenaPalette, line: number): void {
     const g = this.floorGraphics;
-    if (g === undefined) {
+    const lines = this.floorLines;
+    if (g === undefined || lines === undefined) {
       return;
     }
     g.clear();
+    lines.clear();
     const { bounds } = this.snapshot.structure;
     // What the decks cover of it, they draw over opaque (#3162).
     const hidden = deckCovers(this.snapshot.structure, this.snapshot.walls, FLOOR_DEPTH);
@@ -4663,13 +4758,13 @@ export class ArenaScene extends Phaser.Scene {
       const { width, height } = this.arena;
       this.fillShapeShown(g, { kind: "rect", x: 0, y: 0, width, height }, hidden);
     }
-    this.drawGrid(g, line, palette);
+    this.drawGrid(lines, line, palette);
     if (bounds.kind === "outline") {
       paintOutsideEdge(
         {
-          lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
+          lineStyle: (width, colour, alpha) => lines.lineStyle(width, colour, alpha),
           strokeOutline: (points) => {
-            this.strokeShape(g, { kind: "polygon", points });
+            this.strokeShape(lines, { kind: "polygon", points });
           },
         },
         bounds.outside,
@@ -4696,6 +4791,73 @@ export class ArenaScene extends Phaser.Scene {
     for (const band of this.outside?.frame ?? []) {
       band.setTint(tint);
     }
+  }
+
+  /**
+   * The ground's grain and dressing (#3484), over the floor and its grid:
+   * one sprite tiled from the world's origin with the biome's tile, and
+   * on a map with a ground outline (#3066) a stencil round it, so it
+   * stays inside. A map of one layer draws flat, so it has none. Built
+   * once per map.
+   */
+  private drawGrain(bounds: MapBounds, biome: Biome, palette: ArenaPalette): void {
+    if (this.grain?.bounds === bounds && this.grain.biome === biome) {
+      return;
+    }
+    this.dropGrain();
+    if (palette.floor === undefined) {
+      return;
+    }
+    const { width, height } = this.arena;
+    const sprite = this.add
+      .tileSprite(0, 0, width, height, this.groundTile(biome))
+      .setOrigin(0, 0)
+      .setDepth(GRAIN_DEPTH);
+    if (bounds.kind !== "outline") {
+      this.grain = { bounds, biome, objects: [sprite] };
+      return;
+    }
+    // One stencil blocks the land outside the outline; after the grain, a
+    // clear takes it off again. Neither fills the camera, which an
+    // inverted stencil does twice a frame: on a software renderer that
+    // doubled a frame's cost (#3484).
+    const outside = this.make.graphics({}, false);
+    outside.fillStyle(0xffffff, 1);
+    for (const [a, b, c] of outsideTriangles(bounds.outline, width, height)) {
+      outside.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+    }
+    const stencil = this.add.stencil(0, 0, [outside]).setDepth(GRAIN_STENCIL_DEPTH);
+    const release = this.add
+      .stencil(0, 0, [], { stencilLayerMode: "clear" })
+      .setDepth(GRAIN_RELEASE_DEPTH);
+    this.grain = { bounds, biome, objects: [stencil, sprite, release] };
+  }
+
+  /** The biome's ground tile (#3484), painted once per game. */
+  private groundTile(biome: Biome): string {
+    const key = groundTileKey(biome);
+    if (!this.textures.exists(key)) {
+      const texture = this.textures.createCanvas(key, GROUND_TILE, GROUND_TILE);
+      if (texture === null) {
+        throw new Error("ground: could not create a ground tile");
+      }
+      texture.context.putImageData(
+        new ImageData(grainPixels(biome), GROUND_TILE, GROUND_TILE),
+        0,
+        0,
+      );
+      paintDressing(texture.context, biome);
+      texture.refresh();
+    }
+    return key;
+  }
+
+  /** Drops the ground grain drawn last, if any. */
+  private dropGrain(): void {
+    for (const object of this.grain?.objects ?? []) {
+      object.destroy();
+    }
+    this.grain = undefined;
   }
 
   private buildOutside(bounds: OutlineBounds): OutsideLand {
@@ -4964,6 +5126,7 @@ export class ArenaScene extends Phaser.Scene {
     this.lightingPass?.destroy();
     this.lightingPass = undefined;
     this.dropOutside();
+    this.dropGrain();
     this.dropZoneGrounds();
     this.dropPaving();
     this.leverFlips.clear();
@@ -5265,8 +5428,47 @@ function shapeTriangles(shape: RenderableShape): readonly (readonly Vec2[])[] {
   return triangles;
 }
 
+/**
+ * The rectangle `width` by `height` less `outline`, as triangles: the
+ * outline is a hole in it (#3484).
+ */
+export function outsideTriangles(
+  outline: readonly Vec2[],
+  width: number,
+  height: number,
+): readonly (readonly [Vec2, Vec2, Vec2])[] {
+  const points: Vec2[] = [
+    { x: 0, y: 0 },
+    { x: width, y: 0 },
+    { x: width, y: height },
+    { x: 0, y: height },
+    ...outline,
+  ];
+  const corners = Phaser.Geom.Polygon.Earcut(
+    points.flatMap((p) => [p.x, p.y]),
+    [4],
+  );
+  const triangles: [Vec2, Vec2, Vec2][] = [];
+  for (let i = 0; i + 2 < corners.length; i += 3) {
+    const [a, b, c] = [corners[i], corners[i + 1], corners[i + 2]].map((index) =>
+      index === undefined ? undefined : points[index],
+    );
+    if (a !== undefined && b !== undefined && c !== undefined) {
+      triangles.push([a, b, c]);
+    }
+  }
+  return triangles;
+}
+
 /** A map's bounds when they are an outline. */
 type OutlineBounds = Extract<MapBounds, { readonly kind: "outline" }>;
+
+/** The ground's grain (#3484): one tiled sprite, and on a map with an outline the stencil that keeps it inside. */
+interface GroundGrain {
+  readonly bounds: MapBounds;
+  readonly biome: Biome;
+  readonly objects: readonly Phaser.GameObjects.GameObject[];
+}
 
 /** The land outside a ground outline (#3066), tiled. */
 interface OutsideLand {
