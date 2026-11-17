@@ -914,6 +914,17 @@ function authorizeAs(role, request, acting, employee) {
     // there to misuse.
     return { allow: true };
   }
+  if (request.kind === "branch") {
+    // `hub branch prune [--dry-run]` (#3533): anyone may ask what would go,
+    // only the manager makes hubd sweep now. hubd alone deletes.
+    const [verb, flag, ...rest] = argv;
+    if (verb !== "prune" || rest.length > 0 || (flag !== undefined && flag !== "--dry-run")) {
+      return { allow: false, reason: "usage: hub branch prune [--dry-run]" };
+    }
+    return flag === "--dry-run" || role === "manager"
+      ? { allow: true }
+      : { allow: false, reason: "only the manager prunes branches; --dry-run shows what would go" };
+  }
   if (request.kind === "rank") {
     // The Backlog's order is the manager's to keep (#351). hubd checks the
     // words and the cards; roles never get GraphQL of their own.

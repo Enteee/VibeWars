@@ -1,8 +1,9 @@
 /**
  * The music bus's gain around stop and play (#446). The scheduler works
  * `LEAD_SECONDS` ahead of the audio clock, so notes already handed to Web
- * Audio would sound for that long after a stop. A stop closes the bus at
- * once, and the next play opens it again when its first note can sound.
+ * Audio would sound for that long after a stop. A stop closes the bus, at
+ * once or over a fade-out, and the next play opens it again when its
+ * first note can sound.
  */
 
 /** The part of an `AudioParam` the gate drives. */
@@ -13,12 +14,17 @@ export interface GainParam {
   linearRampToValueAtTime(value: number, time: number): void;
 }
 
-/** How long a stop takes to close the bus: short enough to be a stop, long enough not to click. */
+/** The shortest a stop takes to close the bus: short enough to be a stop, long enough not to click. */
 export const STOP_RAMP_SECONDS = 0.05;
+/** How long music that ends fades out (#3530): no track, mode Off, a timed start over it, a host reset. */
+export const FADE_OUT_SECONDS = 1.0;
 
 export interface BusGate {
-  /** Close the bus now and hold it shut. */
-  stop(): void;
+  /**
+   * Close the bus over `rampSeconds`, never faster than `STOP_RAMP_SECONDS`,
+   * and hold it shut. Returns how long it takes.
+   */
+  stop(rampSeconds: number): number;
   /** Open the bus, if a stop closed it, when the first note of what plays next can sound. */
   open(): void;
   /** Move to `gain` over `rampSeconds`. Shut stays shut: only the level the next open restores changes. */
@@ -44,12 +50,14 @@ export function busGate(
   };
 
   return {
-    stop() {
+    stop(rampSeconds) {
       const time = now();
+      const ramp = Math.max(rampSeconds, STOP_RAMP_SECONDS);
       shut = true;
       opensAt = -Infinity;
       hold(time);
-      param.linearRampToValueAtTime(0, time + STOP_RAMP_SECONDS);
+      param.linearRampToValueAtTime(0, time + ramp);
+      return ramp;
     },
     open() {
       if (!shut) {

@@ -189,6 +189,8 @@ if (argv[0] === "whoami") {
   );
   const wiki = authorize(ROLE, { kind: "wiki", argv: ["get", "x"] }, { acting: ACTING });
   console.log(`  ${wiki.allow ? "yes" : "no "}  read GW1 wiki pages and their history (hub wiki)`);
+  const prune = authorize(ROLE, { kind: "branch", argv: ["prune"] }, { acting: ACTING });
+  console.log(`  ${prune.allow ? "yes" : "no "}  prune stale branches (hub branch prune)`);
   const ranks = authorize(ROLE, { kind: "rank", argv: ["1", "top"] }, { acting: ACTING });
   console.log(`  ${ranks.allow ? "yes" : "no "}  order the board (board rank)`);
 
@@ -236,6 +238,9 @@ if (argv[0] === "push") {
 } else if (argv[0] === "note") {
   // Your role's notepad (#3129): add, ls, read, rm. hubd checks the words.
   request = { kind: "note", argv: argv.slice(1) };
+} else if (argv[0] === "branch") {
+  // Pruning stale remote branches (#3533): hubd alone deletes.
+  request = { kind: "branch", argv: argv.slice(1) };
 } else if (argv[0] === "board" && argv[1] === "rank") {
   // The manager ordering the board (#351), for `board rank`.
   request = { kind: "rank", argv: argv.slice(2) };
