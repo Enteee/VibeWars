@@ -692,7 +692,7 @@ describe("lobbyPanel: the map (#1994)", () => {
           .status[0] as unknown as FakeElement
       ).textContent;
     expect(shown(undefined)).toBe("Map: Blackwater Ford (small)");
-    expect(shown(ASCENT_PROGRESSION[3])).toBe("Map: Cinder Sanctum (large)");
+    expect(shown(ASCENT_PROGRESSION[3])).toBe("Map: Cinder Sanctum (small)");
   });
 
   it("shows the lobby's map for a round a hostile host claims past the maps (#2686)", () => {

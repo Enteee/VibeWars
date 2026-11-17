@@ -805,22 +805,6 @@
     },
     {
       "kind": "rect",
-      "x": 1120,
-      "y": 2050,
-      "width": 80,
-      "height": 90,
-      "layer": 1
-    },
-    {
-      "kind": "rect",
-      "x": 4424,
-      "y": 660,
-      "width": 80,
-      "height": 90,
-      "layer": 1
-    },
-    {
-      "kind": "rect",
       "x": 2020,
       "y": 640,
       "width": 80,
