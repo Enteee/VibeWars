@@ -93,11 +93,11 @@ function marker(kind, x, y, s = 7) {
  * series: [{ label, colour, dash, values, area }]
  */
 function chart(x, y, w, h, series, o = {}) {
-  const left = 46,
+  const left = o.left ?? 46,
     right = 14,
     top = 14,
-    strip = 34,
-    bottom = 22;
+    strip = o.strip ?? 34,
+    bottom = o.labels === false ? 4 : o.compact ? 16 : 22;
   const px = x + left,
     pw = w - left - right,
     py = y + top,
@@ -110,12 +110,13 @@ function chart(x, y, w, h, series, o = {}) {
     g += `<line x1="${px}" x2="${px + pw}" y1="${yy}" y2="${yy}" stroke="${C.line}" stroke-width="1"${i === 4 ? "" : ' stroke-dasharray="2 4"'}/>`;
     g += text(px - 8, yy + 4, o.ticks?.[i] ?? "", { anchor: "end", fill: C.dim, size: 11 });
   }
-  for (let t = 0; t <= DURATION; t += 60) {
-    g += text(X(t), y + h - 6, `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`, {
-      anchor: "middle",
-      fill: C.dim,
-      size: 11,
-    });
+  for (let t = 0; t <= DURATION; t += o.compact ? 120 : 60) {
+    if (o.labels !== false)
+      g += text(X(t), y + h - 6, `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`, {
+        anchor: "middle",
+        fill: C.dim,
+        size: 11,
+      });
     g += `<line x1="${X(t)}" x2="${X(t)}" y1="${py}" y2="${py + ph + 4}" stroke="${C.line}" stroke-width="1"/>`;
   }
   for (const s of series) {
@@ -252,278 +253,298 @@ function scoreboard(x, y, w) {
   return g;
 }
 
-// ---- 1. Player chart, desktop ----
-function player() {
-  const W = 1280,
-    H = 720;
-  let g = header(W, "Victory", C.team1);
-  g += scoreboard(24, 104, 380);
-  const cx = 420,
-    cw = W - 24 - cx;
-  g += rect(cx, 104, cw, 596);
-  g += text(cx + 18, 134, "Aria Stormveil · your match", { size: 15, weight: "bold" });
-  // Tabs
-  const tabs = ["You", "Teams", "By skill"];
-  tabs.forEach((t, i) => {
-    const x = cx + cw - 18 - (tabs.length - i) * 104;
-    g += rect(x, 114, 96, 28, {
+// Same data in every option.
+const poolSeries = (start, drops) => {
+  const out = [];
+  let v = start;
+  for (let t = 0; t <= DURATION; t += 4) {
+    for (const [at, d] of drops) if (t === at) v -= d;
+    v += 0.0015;
+    out.push(Math.max(0, Math.min(1, v)));
+  }
+  return out;
+};
+const cumulative = (rate) => {
+  let acc = 0;
+  return burst(1, beats).map((v) => (acc += v * rate));
+};
+const POOL1 = poolSeries(1, [
+  [44, 0.1],
+  [84, 0.25],
+  [120, 0.1],
+  [180, 0.2],
+  [196, 0.15],
+]);
+const POOL2 = poolSeries(1, [
+  [40, 0.05],
+  [80, 0.2],
+  [96, 0.2],
+  [186, 0.25],
+  [196, 0.2],
+  [212, 0.1],
+]);
+const CUM1 = cumulative(0.012);
+const CUM2 = cumulative(0.01);
+const CUMMAX = Math.max(CUM1.at(-1), CUM2.at(-1));
+const TEAM_HEALTH = [
+  { colour: C.team1, values: POOL1, area: true },
+  { colour: C.team2, values: POOL2, area: true },
+];
+const TEAM_DAMAGE = [
+  { colour: C.team1, dash: "7 4", values: CUM1.map((v) => v / CUMMAX) },
+  { colour: C.team2, dash: "7 4", values: CUM2.map((v) => v / CUMMAX) },
+];
+const EVENT_TEXT = {
+  kill: "Aria killed Oswin",
+  death: "Brom died",
+  interrupt: "Aria interrupted Mistral",
+  capture: "Shrine captured",
+  raise: "Calindra raised Brom",
+};
+const LEGEND = [
+  ["kill", "Kill"],
+  ["death", "Death"],
+  ["interrupt", "Interrupt"],
+  ["capture", "Capture"],
+  ["raise", "Resurrection"],
+];
+const PANEL = { x: 420, y: 104, w: 1280 - 24 - 420, h: 596 };
+
+/** A segmented control of `labels`, the `on`th selected. */
+function segmented(x, y, labels, on, width = 96) {
+  let g = "";
+  labels.forEach((t, i) => {
+    const sx = x + i * (width + 8);
+    g += rect(sx, y, width, 28, {
       r: 14,
-      fill: i === 0 ? "#1b3a52" : C.bg,
-      stroke: i === 0 ? C.team1 : C.line,
+      fill: i === on ? "#1b3a52" : C.bg,
+      stroke: i === on ? C.team1 : C.line,
     });
-    g += text(x + 48, 133, t, { anchor: "middle", size: 12, fill: i === 0 ? C.team1 : C.dim });
+    g += text(sx + width / 2, y + 19, t, {
+      anchor: "middle",
+      size: 12,
+      fill: i === on ? C.team1 : C.dim,
+    });
   });
-  // Chips
-  let chx = cx + 18;
+  return g;
+}
+
+function chips(x, y, on = [true, true, true, false]) {
+  let g = "";
+  let cx = x;
   SERIES.forEach((s, i) => {
-    const c = chip(chx, 156, s.label, s.colour, i !== 3, s.dash);
+    const c = chip(cx, y, s.label, s.colour, on[i], s.dash);
     g += c.svg;
-    chx += c.w;
+    cx += c.w;
   });
-  const ch = chart(
-    cx + 12,
-    196,
-    cw - 24,
-    360,
+  return g;
+}
+
+function shell(title, label) {
+  let g = header(1280, "Victory", C.team1) + scoreboard(24, 104, 380);
+  g += rect(PANEL.x, PANEL.y, PANEL.w, PANEL.h);
+  g += text(PANEL.x + 18, 134, label, { size: 15, weight: "bold" });
+  return g;
+}
+
+// ---- A. Stacked: You on top, Teams below, ONE event lane for both ----
+function optionA() {
+  let g = shell("A", "Option A · one page, two stacked charts, one event lane");
+  const { x, w } = PANEL;
+  g += chips(x + 18, 150);
+  const cx = x + 12,
+    cw = w - 24;
+  const you = chart(
+    cx,
+    190,
+    cw,
+    190,
+    SERIES.filter((s) => s.id !== "energy"),
+    {
+      ticks: ["800", "600", "400", "200", "0"],
+      strip: 0,
+      events: [],
+      labels: false,
+    },
+  );
+  g += you.svg;
+  g +=
+    rect(cx + 50, 194, 40, 18, { r: 4, fill: C.panel, stroke: C.panel }) +
+    text(cx + 56, 207, "You", { size: 12, fill: C.ink, weight: "bold" });
+  const teams = chart(
+    cx,
+    388,
+    cw,
+    150,
+    [...TEAM_HEALTH, ...TEAM_DAMAGE.map((s) => ({ ...s }))].slice(0, 2),
+    {
+      ticks: ["100 %", "75 %", "50 %", "25 %", "0"],
+      strip: 0,
+      events: [],
+      labels: false,
+    },
+  );
+  g += teams.svg;
+  g +=
+    rect(cx + 50, 392, 188, 18, { r: 4, fill: C.panel, stroke: C.panel }) +
+    text(cx + 56, 405, "Both teams · health pool", { size: 12, fill: C.ink, weight: "bold" });
+  // The lane: events at the foot, rules up through both charts.
+  g += rect(cx, 546, cw, 100);
+  const laneY = 580;
+  g += `<line x1="${you.X(0)}" x2="${you.X(DURATION)}" y1="${laneY}" y2="${laneY}" stroke="${C.line}"/>`;
+  for (const [t, kind] of events) {
+    g += `<line x1="${you.X(t)}" x2="${you.X(t)}" y1="${you.py}" y2="${laneY - 9}" stroke="${C.dim}" stroke-width="1" opacity="0.28"/>`;
+    g += marker(kind, you.X(t), laneY);
+  }
+  for (let t = 0; t <= DURATION; t += 60) {
+    g += text(you.X(t), 612, `${Math.floor(t / 60)}:00`, {
+      anchor: "middle",
+      fill: C.dim,
+      size: 11,
+    });
+  }
+  g += legend(cx + 14, 624, LEGEND);
+  g += text(
+    cx,
+    672,
+    "One shared time axis: the same moment lines up in both charts. The lane carries every event.",
+    { size: 11, fill: C.dim },
+  );
+  g += text(
+    cx,
+    690,
+    "Energy and cumulative damage sit behind chips. Phone: the two charts stack as they are.",
+    { size: 11, fill: C.dim },
+  );
+  return frame(1280, 720, g, "Option A");
+}
+
+// ---- B. Small multiples: a card per measure, each with its own total ----
+function optionB() {
+  let g = shell("B", "Option B · a grid of small charts, one measure each");
+  const { x, w } = PANEL;
+  const pad = 12,
+    gap = 8;
+  const cols = 4;
+  const cw = (w - pad * 2 - gap * (cols - 1)) / cols;
+  g += text(x + 18, 160, "You", { size: 12, fill: C.dim, weight: "bold" });
+  const cards = [
+    ["Damage dealt", "4 812", dealt, C.dealt, undefined],
+    ["Damage taken", "3 190", taken, C.taken, "7 4"],
+    ["Healing", "1 044", heal, C.heal, "2 3"],
+    ["Energy", "avg 62 %", SERIES[3].values, C.energy, "10 3 2 3"],
+  ];
+  cards.forEach(([label, total, values, colour, dash], i) => {
+    const cx = x + pad + i * (cw + gap);
+    g += rect(cx, 168, cw, 186, { stroke: colour });
+    g += text(cx + 12, 190, label, { size: 12, fill: colour, weight: "bold" });
+    g += text(cx + 12, 214, total, { size: 20 });
+    const c = chart(cx + 2, 220, cw - 4, 130, [{ colour, dash, values, area: i === 0 }], {
+      left: 22,
+      strip: 16,
+      compact: true,
+      events: events.filter((e) => e[1] === "kill" || e[1] === "death"),
+    });
+    g += c.svg.replace(/^<rect[^>]*\/>/, "");
+  });
+  g += text(x + 18, 384, "Teams", { size: 12, fill: C.dim, weight: "bold" });
+  const wide = cw * 2 + gap;
+  const team = [
+    ["Health pool", "29 % · 34 %", TEAM_HEALTH, ["100 %", "75 %", "50 %", "25 %", "0"], true],
+    [
+      "Cumulative damage",
+      "10.0 k · 8.4 k",
+      TEAM_DAMAGE,
+      ["10 k", "7.5 k", "5 k", "2.5 k", "0"],
+      false,
+    ],
+  ];
+  team.forEach(([label, total, series, ticks, withEvents], i) => {
+    const cx = x + pad + i * (wide + gap);
+    g += rect(cx, 392, wide, 218, { stroke: C.accent ?? C.team1 });
+    g += text(cx + 12, 414, label, { size: 12, weight: "bold" });
+    g += text(cx + wide - 12, 414, total, { size: 12, anchor: "end", fill: C.dim });
+    const c = chart(cx + 2, 420, wide - 4, 186, series, {
+      ticks,
+      strip: 24,
+      compact: true,
+      events: withEvents ? events : [],
+    });
+    g += c.svg.replace(/^<rect[^>]*\/>/, "");
+  });
+  g += legend(x + 18, 630, LEGEND);
+  g += text(
+    x + 18,
+    666,
+    "Every measure has its own scale and its own total: nothing to toggle, nothing hidden.",
+    { size: 11, fill: C.dim },
+  );
+  g += text(x + 18, 684, "Tap a card to open it full width. Phone: two columns, then one.", {
+    size: 11,
+    fill: C.dim,
+  });
+  return frame(1280, 720, g, "Option B");
+}
+
+// ---- C. One big chart, overlay chips, an event list beside it ----
+function optionC() {
+  let g = shell("C", "Option C · one big chart, overlays by chips, the events as a list");
+  const { x, w } = PANEL;
+  const listW = 250;
+  g += segmented(x + 18, 150, ["You", "Teams", "Overlay"], 0, 84);
+  g += chips(x + 18, 190);
+  const cw = w - listW - 30;
+  const c = chart(
+    x + 12,
+    232,
+    cw,
+    330,
     SERIES.filter((s) => s.id !== "energy"),
     {
       ticks: ["800", "600", "400", "200", "0"],
       hover: 186,
     },
   );
-  g += ch.svg;
-  // Hover readout
-  const hx = ch.X(186) + 12;
-  g += rect(hx, 214, 190, 82, { r: 6, fill: "#0e1116", stroke: C.ink });
-  g += text(hx + 12, 234, "3:06", { size: 12, fill: C.dim });
-  g += text(hx + 12, 252, "Damage dealt   612", { size: 12, fill: C.dealt });
-  g += text(hx + 12, 268, "Damage taken   240", { size: 12, fill: C.taken });
-  g += text(hx + 12, 284, "Kill: Pale Rider Oswin", { size: 12, fill: C.ink });
-  g += legend(cx + 18, 572, [
-    ["kill", "Kill"],
-    ["death", "Death"],
-    ["interrupt", "Interrupt"],
-    ["capture", "Capture"],
-    ["raise", "Resurrection"],
-  ]);
-  g += text(cx + 18, 612, "Totals: dealt 4 812 · taken 3 190 · healed 1 044", {
-    size: 12,
-    fill: C.dim,
+  g += c.svg;
+  g += rect(x + 12 + c.X(186) - (x + 12) - 90 + 6, 246, 0, 0, { fill: "none", stroke: "none" });
+  // The teams view as a one-tap preview underneath.
+  g += rect(x + 12, 574, cw, 114, { fill: C.bg });
+  g += text(x + 26, 592, "Teams · tap to open", { size: 11, fill: C.dim });
+  const mini = chart(x + 120, 596, cw - 116, 88, TEAM_HEALTH, {
+    left: 6,
+    strip: 0,
+    events: [],
+    labels: false,
   });
-  g += text(
-    cx + 18,
-    632,
-    "Chips toggle a series; off = hollow and dim. Lines differ by dash, not only colour.",
-    { size: 11, fill: C.dim },
-  );
-  g += text(
-    cx + 18,
-    650,
-    "Energy is off here and one click away; its axis is 0–100 %, scaled to the same height.",
-    { size: 11, fill: C.dim },
-  );
-  return frame(W, H, g, "Post-match: your chart");
-}
-
-// ---- 2. Team chart, desktop ----
-function teams() {
-  const W = 1280,
-    H = 720;
-  let g = header(W, "Victory", C.team1);
-  g += scoreboard(24, 104, 380);
-  const cx = 420,
-    cw = W - 24 - cx;
-  g += rect(cx, 104, cw, 596);
-  g += text(cx + 18, 134, "Both teams", { size: 15, weight: "bold" });
-  const tabs = ["You", "Teams", "By skill"];
-  tabs.forEach((t, i) => {
-    const x = cx + cw - 18 - (tabs.length - i) * 104;
-    g += rect(x, 114, 96, 28, {
-      r: 14,
-      fill: i === 1 ? "#1b3a52" : C.bg,
-      stroke: i === 1 ? C.team1 : C.line,
+  g += mini.svg.replace(/^<rect[^>]*\/>/, "");
+  // The event list.
+  const lx = x + w - listW - 12;
+  g += rect(lx, 150, listW, 538, { fill: C.bg });
+  g += text(lx + 14, 174, "Events", { size: 13, weight: "bold" });
+  events.forEach(([t, kind], i) => {
+    const ry = 188 + i * 54;
+    const on = t === 186;
+    g += rect(lx + 6, ry, listW - 12, 48, {
+      r: 5,
+      fill: on ? "#1c232d" : C.bg,
+      stroke: on ? C.ink : C.bg,
     });
-    g += text(x + 48, 133, t, { anchor: "middle", size: 12, fill: i === 1 ? C.team1 : C.dim });
-  });
-  let chx = cx + 18;
-  for (const c of [
-    chip(chx, 156, "Your team", C.team1, true),
-    chip(chx + 130, 156, "Opponents", C.team2, true),
-  ])
-    g += c.svg;
-  // Metric segmented control
-  g += rect(cx + cw - 18 - 330, 156, 330, 28, { r: 14, fill: C.bg });
-  g += rect(cx + cw - 18 - 330 + 2, 158, 160, 24, { r: 12, fill: "#1b3a52", stroke: C.team1 });
-  g += text(cx + cw - 18 - 330 + 82, 175, "Health pool", {
-    anchor: "middle",
-    size: 12,
-    fill: C.team1,
-  });
-  g += text(cx + cw - 18 - 330 + 250, 175, "Cumulative damage", {
-    anchor: "middle",
-    size: 12,
-    fill: C.dim,
-  });
-  const pool = (start, drops) => {
-    const out = [];
-    let v = start;
-    for (let t = 0; t <= DURATION; t += 4) {
-      for (const [at, d] of drops) if (t === at) v -= d;
-      v += 0.0015;
-      out.push(Math.max(0, Math.min(1, v)));
-    }
-    return out;
-  };
-  const dmg = (rate) => {
-    let acc = 0;
-    return burst(1, beats).map((v) => (acc += v * rate));
-  };
-  const half = { top: 196, height: 250 };
-  const a = chart(
-    cx + 12,
-    half.top,
-    cw - 24,
-    half.height,
-    [
-      {
-        label: "t1",
-        colour: C.team1,
-        values: pool(1, [
-          [44, 0.1],
-          [84, 0.25],
-          [120, 0.1],
-          [180, 0.2],
-          [196, 0.15],
-        ]),
-        area: true,
-      },
-      {
-        label: "t2",
-        colour: C.team2,
-        values: pool(1, [
-          [40, 0.05],
-          [80, 0.2],
-          [96, 0.2],
-          [186, 0.25],
-          [196, 0.2],
-          [212, 0.1],
-        ]),
-        area: true,
-      },
-    ],
-    {
-      ticks: ["100 %", "75 %", "50 %", "25 %", "0"],
-      events: events.filter((e) => e[1] !== "interrupt" || true),
-    },
-  );
-  g += a.svg;
-  const raw1 = dmg(0.012),
-    raw2 = dmg(0.01);
-  const mx = Math.max(raw1.at(-1), raw2.at(-1));
-  const b = chart(
-    cx + 12,
-    half.top + half.height + 12,
-    cw - 24,
-    220,
-    [
-      { label: "t1", colour: C.team1, dash: "7 4", values: raw1.map((v) => v / mx) },
-      { label: "t2", colour: C.team2, dash: "7 4", values: raw2.map((v) => v / mx) },
-    ],
-    { ticks: ["10 k", "7.5 k", "5 k", "2.5 k", "0"], events: [] },
-  );
-  g += b.svg;
-  g += text(cx + 28, half.top + half.height + 4, "", {});
-  g += legend(cx + 18, 680, [
-    ["kill", "Kill"],
-    ["death", "Death"],
-    ["interrupt", "Interrupt"],
-    ["capture", "Capture"],
-    ["raise", "Resurrection"],
-  ]);
-  g += text(cx + cw - 18, 691, "Top: health pool, solid · bottom: cumulative damage, dashed", {
-    anchor: "end",
-    size: 11,
-    fill: C.dim,
-  });
-  return frame(W, H, g, "Post-match: both teams");
-}
-
-// ---- 3. Phone, fixed layout ----
-function phone() {
-  const W = 390,
-    H = 844;
-  let g = rect(10, 10, W - 20, 96, { fill: C.panel, stroke: C.team1 });
-  g += text(26, 48, "Victory", { size: 24, fill: C.team1, weight: "bold" });
-  g += text(26, 70, "Team Arena · Ember Pits · 4:00", { size: 11, fill: C.dim });
-  g += text(26, 90, "Your team won 12 – 9 on kills", { size: 11 });
-  // Scoreboard collapsed
-  g += rect(10, 116, W - 20, 150);
-  g += text(24, 138, "Scores", { size: 12, fill: C.dim });
-  const rr = [
-    ["Aria Stormveil (you)", false, "12 / 3", C.team1, true],
-    ["Brom Ironhide", false, "7 / 5", C.team1, false],
-    ["Wandering Ember Knight", true, "4 / 6", C.team1, false],
-  ];
-  rr.forEach(
-    ([n, bt, s, col, me], i) => (g += nameRow(14, 146 + i * 32, W - 28, n, bt, col, s, me)),
-  );
-  g += text(W / 2, 252, "Show all 8 ▾", { anchor: "middle", size: 12, fill: C.team1 });
-  // Chart card
-  g += rect(10, 276, W - 20, 486);
-  const tabs = ["You", "Teams", "By skill"];
-  tabs.forEach((t, i) => {
-    const x = 20 + i * 118;
-    g += rect(x, 286, 112, 30, {
-      r: 15,
-      fill: i === 0 ? "#1b3a52" : C.bg,
-      stroke: i === 0 ? C.team1 : C.line,
+    g += marker(kind, lx + 26, ry + 24);
+    g += text(lx + 46, ry + 20, `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`, {
+      size: 12,
+      fill: C.dim,
     });
-    g += text(x + 56, 306, t, { anchor: "middle", size: 12, fill: i === 0 ? C.team1 : C.dim });
+    g += text(lx + 46, ry + 37, EVENT_TEXT[kind].slice(0, 26), { size: 11 });
   });
-  let cx = 20,
-    cy = 328;
-  SERIES.forEach((s, i) => {
-    const c = chip(cx, cy, s.label.replace("Damage ", "Dmg "), s.colour, i !== 3, s.dash);
-    if (cx + c.w > W - 20) {
-      cx = 20;
-      cy += 34;
-    }
-    g += chip(cx, cy, s.label.replace("Damage ", "Dmg "), s.colour, i !== 3, s.dash).svg;
-    cx += c.w;
-  });
-  const ch = chart(
-    14,
-    cy + 40,
-    W - 28,
-    270,
-    SERIES.filter((s) => s.id !== "energy"),
-    {
-      ticks: ["800", "600", "400", "200", "0"],
-    },
-  );
-  g += ch.svg;
-  g += legend(20, cy + 322, [
-    ["kill", "Kill"],
-    ["death", "Death"],
-    ["interrupt", "Int."],
-  ]);
-  g += legend(20, cy + 344, [
-    ["capture", "Capture"],
-    ["raise", "Resurrect"],
-  ]);
-  g += text(20, cy + 378, "Tap the chart for a readout; chips toggle.", { size: 11, fill: C.dim });
-  // Sticky footer, clear of every chart
-  g += `<rect x="0" y="${H - 72}" width="${W}" height="72" fill="${C.bg}"/><line x1="0" x2="${W}" y1="${H - 72}" y2="${H - 72}" stroke="${C.line}"/>`;
-  g += button(12, H - 58, 170, "Rematch", true);
-  g += button(W - 12 - 170, H - 58, 170, "Back to lobby", false);
-  return frame(W, H, g, "Post-match: phone");
+  g += text(x + 18, 700, "", {});
+  return frame(1280, 720, g, "Option C");
 }
 
 fs.mkdirSync(OUT, { recursive: true });
 for (const [name, svg] of [
-  ["player", player()],
-  ["teams", teams()],
-  ["phone", phone()],
+  ["a-stacked", optionA()],
+  ["b-grid", optionB()],
+  ["c-list", optionC()],
 ]) {
   const file = path.join(OUT, `3561-postmatch-${name}`);
   fs.writeFileSync(`${file}.svg`, svg);

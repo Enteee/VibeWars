@@ -1,38 +1,34 @@
-# Post-match charts: mockups (#3561)
+# Post-match charts: three options (#3561)
 
-Three mockups, made by `scripts/assets/3561-postmatch-charts.mjs` (invented
-data, the UI's own palette: `--panel`, `--line`, `--ink`, `--accent`,
-`--damage`). Regenerate with `node scripts/assets/3561-postmatch-charts.mjs`.
+Three alternative designs for the post-match charts, same invented data and
+the UI's own palette (`--panel`, `--line`, `--ink`, `--accent`, `--damage`).
+Each shows the player view and the team view. Made by
+`scripts/assets/3561-postmatch-charts.mjs`; regenerate with
+`node scripts/assets/3561-postmatch-charts.mjs`.
 
-- `3561-postmatch-player.png`: desktop, the **You** tab. Four toggle chips
-  (damage dealt, damage taken, healing, energy), a hover readout, event
-  markers on the time axis.
-- `3561-postmatch-teams.png`: desktop, the **Teams** tab. Health pool of both
-  teams on top, cumulative damage below, one shared time axis and marker
-  strip. On a phone the two are one chart with the "Health pool / Cumulative
-  damage" control choosing which (the control is drawn in the mockup).
-- `3561-postmatch-phone.png`: 390 × 844. Banner, collapsed scores, chart
-  card, and a **sticky footer** with Rematch / Back to lobby, so the buttons
-  never overlap the banner or a chart.
+| Option | Picture                        | Idea                                                                                                                                                                                 |
+| ------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A      | `3561-postmatch-a-stacked.png` | One page: the player chart over the team chart, one shared time axis, **one event lane** under both. Chips toggle series.                                                            |
+| B      | `3561-postmatch-b-grid.png`    | **Small multiples:** a card per measure (damage dealt, taken, healing, energy; team health pool, cumulative damage), each with its own scale and total. Nothing to toggle.           |
+| C      | `3561-postmatch-c-list.png`    | **One big chart** with a You / Teams / Overlay switch and series chips, plus an **event list** beside it. The hovered moment highlights its row. A small Teams preview opens on tap. |
 
-## Rules the mockups hold
+## Common to all
 
-- **Layout.** Banner and its buttons are one row and never overlap. Scores on
-  the left, charts right; under 80 rem the scores collapse to "you + two" with
-  "Show all". Buttons stay clear of the charts (header on desktop, footer on
-  phone).
-- **Names.** The BOT tag is a separate chip; the name gets the rest and wraps
-  to a second line (ellipsis with a tooltip when it still does not fit).
-- **Series are told apart by dash, not only hue**: dealt solid + faint area,
-  taken dashed, healing dotted, energy dash-dot. Teams: your team `#59c2ff`,
-  opponents `#ff7b72`, as everywhere else.
-- **Toggles.** A chip is filled with its colour's outline when on, hollow and
-  dim when off; off series leave the plot. Energy is off by default (its axis
-  is 0–100 %, scaled to the same height).
-- **Event markers sit on a strip under the plot**, with a faint line up to the
-  data. Shape differs per kind: kill = diamond (ink), death = cross (red),
-  interrupt = bolt (gold), objective capture = flag (blue), resurrection =
-  triangle (green). Legend under the chart. 8 px half-size, 3 px strokes, so
-  readable on a phone.
-- **Readout.** Hover or tap draws a vertical rule and a small panel with the
-  values at that second and any event there.
+- Banner and its buttons are one row and never overlap; scores left, charts
+  right. Names: the BOT tag is a separate chip and never takes the name's room.
+- Series differ by dash as well as hue (dealt solid, taken dashed, healing
+  dotted, energy dash-dot). Teams keep `#59c2ff` (yours) and `#ff7b72`.
+- Event shapes differ: kill = diamond, death = cross, interrupt = bolt,
+  capture = flag, resurrection = triangle. Legend under the chart.
+- Phone: the footer carries Rematch / Back to lobby and stays clear of the
+  charts. A stacks as is, B goes two columns then one, C puts the event list
+  under the chart.
+
+## Trade-offs
+
+- **A** shows the whole match at once and lines events up across both views;
+  the plots are shorter, and energy and cumulative damage are one click away.
+- **B** is the easiest to read cold, and every number is on screen. Each plot
+  is small, and overlaying two measures is not possible.
+- **C** gives the biggest plot and the only readable event text; it shows one
+  view at a time.
