@@ -377,6 +377,162 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Blackwater Ford (#3434): the centre is the storm-beacon on the mill, in the middle of the broken
+  // bridge. Three ways there per team: the bridge road (its own approach's near stair), its own
+  // culvert (gate open) and up the approach's far stair, and the far ford, up the far approach's
+  // stair. A foe reaches a shrine by the near ford, over the bridge, or by the far ford. The walk
+  // tool walks at base speed: the shallow fords' 75 % (#3463) is the bench's to weigh, not this.
+  describe("Blackwater Ford", () => {
+    interface Point {
+      readonly x: number;
+      readonly y: number;
+    }
+    const map = loadMap("blackwater-ford");
+    const shut = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const beacon = { x: 2600, y: 1430 };
+    const shrines = [
+      { x: 800, y: 1000 },
+      { x: 4424, y: 1784 },
+    ];
+    const foes = [shrines[1] ?? beacon, shrines[0] ?? beacon];
+    // Each team's own near stair (bridge road) and far stair (off its culvert), west team first.
+    const near = ["west-approach-south-stair", "east-approach-north-stair"];
+    const far = ["west-approach-north-stair", "east-approach-south-stair"];
+    const culvert = [
+      ["west-culvert-south-steps", "west-culvert-north-steps"],
+      ["east-culvert-north-steps", "east-culvert-south-steps"],
+    ];
+    const bridgeStairs = [...near, ...far];
+    const culvertSteps = culvert.flat();
+    const all = [...bridgeStairs, ...culvertSteps];
+    const but = (...kept: readonly string[]): string[] => all.filter((id) => !kept.includes(id));
+    const of = (ids: readonly string[], team: number): string => ids[team] ?? "";
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** `on` with each team's one spawn at `points[team]` on `layer`. */
+    const from = (on: typeof map, points: readonly Point[], layer = 1): typeof map => ({
+      ...on,
+      spawnPoints: points.map((position, team) => ({ team, layer, position })),
+    });
+    /** Each team's walk to its own point of `to`, along its own route. */
+    const toOwn = (
+      on: typeof map,
+      to: readonly Point[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? beacon, layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    const sum = (...legs: readonly (readonly number[])[]): number[] =>
+      [0, 1].map((team) => legs.reduce((total, leg) => total + (leg[team] ?? 0), 0));
+    const toCentre: readonly (readonly [string, (team: number) => Route])[] = [
+      ["the bridge road", (team) => ({ through: [of(near, team)], shut: but(of(near, team)) })],
+      ["the far ford", (team) => ({ through: [of(far, 1 - team)], shut: but(of(far, 1 - team)) })],
+    ];
+    // The middle of each team's own culvert, west team first. The walk tool takes the shortest way,
+    // and round the approach's end is shorter than under it, so a culvert is walked in two legs.
+    const culverts = [
+      { x: 1750, y: 1410 },
+      { x: 3450, y: 1410 },
+    ];
+    const throughCulvert = (on: typeof map): number[] =>
+      sum(
+        toOwn(on, culverts, 0, (team) => ({
+          through: [(culvert[team] ?? [])[0] ?? ""],
+          shut: bridgeStairs,
+        })),
+        toOwn(from(on, culverts, 0), [beacon, beacon], 2, (team) => {
+          const out = [(culvert[team] ?? [])[1] ?? "", of(far, team)];
+          return { through: out, shut: but(...out) };
+        }),
+      );
+    // The far ford, for a foe: the north ford's middle for the west team, the south ford's for the east.
+    const fords = [
+      { x: 2600, y: 845 },
+      { x: 2600, y: 1985 },
+    ];
+
+    it.each(toCentre)(
+      "walks each team from its spawn to the beacon by %s within 10 % of the other",
+      (_route, route) => {
+        within(walksByRoute(map, beacon, 2, route), 0.1);
+      },
+    );
+
+    it("walks each team from its spawn to the beacon by its own culvert within 10 % of the other", () => {
+      within(throughCulvert(map), 0.1);
+    });
+
+    it("walks each team to the beacon by the bridge road in under 25 s", () => {
+      const speed = 180;
+      for (const walk of walksByRoute(
+        map,
+        beacon,
+        2,
+        toCentre[0]?.[1] ?? (() => ({ through: [] })),
+      )) {
+        expect(walk / speed).toBeLessThan(25);
+      }
+    });
+
+    it("leaves every spawn the bridge road and the far ford to the beacon with the gates shut", () => {
+      for (const [, route] of toCentre) {
+        within(walksByRoute(shut, beacon, 2, route), 0.1);
+      }
+    });
+
+    it("walks each team to the foe's shrine by the near ford, the bridge and the far ford, gates shut, within 10 % of the other", () => {
+      const ford = toOwn(shut, foes, 1, () => ({ through: [], shut: all }));
+      within(ford, 0.1);
+      // Over the bridge: up the team's own near stair to the beacon, down the foe's near stair.
+      within(
+        sum(
+          toOwn(shut, [beacon, beacon], 2, (team) => ({
+            through: [of(near, team)],
+            shut: but(of(near, team)),
+          })),
+          toOwn(from(shut, [beacon, beacon], 2), foes, 1, (team) => ({
+            through: [of(near, 1 - team)],
+            shut: but(of(near, 1 - team)),
+          })),
+        ),
+        0.1,
+      );
+      const farFord = sum(
+        toOwn(shut, fords, 1, () => ({ through: [], shut: all })),
+        toOwn(from(shut, fords), foes, 1, () => ({ through: [], shut: all })),
+      );
+      within(farFord, 0.1);
+      // A way of its own, not the near ford with a step aside.
+      [0, 1].forEach((team) => {
+        expect(farFord[team] ?? 0).toBeGreaterThan((ford[team] ?? 0) + 150);
+      });
+    });
+
+    it("walks each priest from its shrine to the beacon within 10 % of the other", () => {
+      within(walksTo(from(map, shrines), beacon, 2), 0.1);
+    });
+
+    it("keeps the walks within 10 % with the gates open and the weir broken", () => {
+      const broken = ["silted-weir"];
+      within(walksByRoute(map, beacon, 2, { through: [], broken }), 0.1);
+      within(
+        toOwn(map, foes, 1, () => ({ through: [], broken })),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });
