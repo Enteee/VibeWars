@@ -120,6 +120,12 @@ fades to the ambient, on a stand that carries it.
 Recipe (now): `{ colour: 0xffb060, radius: 150, intensity: 0.6, flicker: 0.2 }`,
 `id` starting `torch-`, placed on the stand's `position`.
 
+A fire light names what it comes from: `source: "brazier"` draws an iron bowl
+on three legs under it (`light-sources.ts`), ~28 units across, its top
+lifted 16. Iron is lit by the scene; coals (`#ff9040`) and flame (`#ffd23d`)
+are unlit, being the light. Static, scenery only: keep it off the walk lines
+and out of pits and water. No `source`: an ambient light with no drawn source.
+
 ## 3. Shadow and height
 
 - **The sun's shadow** is the footprint of what casts it, moved by the sun's

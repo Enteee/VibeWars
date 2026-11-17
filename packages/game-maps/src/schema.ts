@@ -361,6 +361,8 @@ const lightSchema = z.object({
   intensity: intensitySchema,
   /** How far it dims at its dimmest: 0 is steady, 1 goes dark. */
   flicker: z.number().min(0).max(1),
+  /** What the light visibly comes from, drawn under it; absent: an ambient light with no drawn source (a glow, a pool, magic). */
+  source: z.enum(["brazier"]).optional(),
 });
 
 /** How a map is lit (ADR-0052). Only the renderer reads it, never the simulation. */

@@ -1607,6 +1607,12 @@ describe("lighting (#2986, ADR-0052)", () => {
     expect(withLights([{ ...light, colour: 0x1000000 }])).toBe(false);
   });
 
+  it("accepts a known source and no source, and refuses an unknown one", () => {
+    expect(withLights([{ ...light, source: "brazier" }])).toBe(true);
+    expect(withLights([light])).toBe(true);
+    expect(withLights([{ ...light, source: "bonfire" }])).toBe(false);
+  });
+
   it("refuses two lights with one id", () => {
     expect(withLights([light, light])).toBe(false);
   });

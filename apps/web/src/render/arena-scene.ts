@@ -334,6 +334,7 @@ import { paintDeckShadows } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { passEnd, passStart } from "./pass-timing.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
+import { brazierCommands, SOURCE_EDGE, type SourceCommand } from "./light-sources.js";
 import { SWITCH_MARK_ART, leverThrown, switchMarkKey } from "./switch-mark.js";
 import { paintArrival, paintTeleportEntry, paintTeleportExit } from "./teleport-mark.js";
 import { dotsAlong, switchFlashAlpha, switchLinkAlpha } from "./switch-link.js";
@@ -3752,6 +3753,28 @@ export class ArenaScene extends Phaser.Scene {
         LIGHT_MARK_ART[key](g, light.position);
         g.restore();
       }
+      if (light.source === "brazier") {
+        const g = this.structureAt({ kind: "light-mark", layer: light.layer });
+        const iron =
+          next.lighting === undefined
+            ? undefined
+            : bodyTintOf(
+                lightAt(
+                  steadyLighting(next.lighting),
+                  light.position,
+                  light.layer,
+                  0,
+                  BODY_LIGHT_FLOOR,
+                  this.lightSample,
+                ),
+              );
+        g.save();
+        g.translateCanvas(0, -elevationOf(light.layer, ground));
+        for (const command of brazierCommands(light)) {
+          this.paintSource(g, command, iron);
+        }
+        g.restore();
+      }
     }
     for (const deck of [...next.structure.decks, ...next.structure.downDecks]) {
       this.drawDeck(
@@ -3789,6 +3812,38 @@ export class ArenaScene extends Phaser.Scene {
       ...[...this.decksOverTunnels.values()].flat(),
       ...this.coversDrawn.map(({ graphics }) => graphics),
     ]);
+  }
+
+  /** One stroke of a light's source (#3504); `iron` is the scene's light on what is lit. */
+  private paintSource(
+    g: Phaser.GameObjects.Graphics,
+    command: SourceCommand,
+    iron: number | undefined,
+  ): void {
+    const shade = (colour: number): number =>
+      command.lit && iron !== undefined ? multiplyColour(colour, iron) : colour;
+    switch (command.kind) {
+      case "ellipse":
+        g.fillStyle(shade(command.colour), command.alpha);
+        g.fillEllipse(command.at.x, command.at.y, command.width, command.height);
+        if (command.edge > 0) {
+          g.lineStyle(command.edge, SOURCE_EDGE, 1);
+          g.strokeEllipse(command.at.x, command.at.y, command.width, command.height);
+        }
+        break;
+      case "line":
+        g.lineStyle(command.width, shade(command.colour), 1);
+        g.beginPath();
+        g.moveTo(command.from.x, command.from.y);
+        g.lineTo(command.to.x, command.to.y);
+        g.strokePath();
+        break;
+      case "flame":
+        g.fillStyle(command.colour, 1);
+        tracePath(g, command.outline);
+        g.fillPath();
+        break;
+    }
   }
 
   /** What the camera shows this frame, in world units. */
