@@ -189,6 +189,38 @@ describe("the elevation offset (ADR-0051)", () => {
     );
   });
 
+  it("draws the ground's grain over the floor, its grid over the grain, both under the pits and the paving (#3484)", () => {
+    const order: readonly RenderItem[] = [
+      { kind: "floor" },
+      { kind: "ground-grain", part: "stencil" },
+      { kind: "ground-grain", part: "grain" },
+      { kind: "ground-grain", part: "release" },
+      { kind: "ground-grain", part: "lines" },
+      { kind: "pit" },
+      { kind: "paving", layer: 0 },
+    ];
+    const depths = order.map(renderOrder);
+    expect(depths).toEqual([...depths].sort((a, b) => a - b));
+    expect(new Set(depths).size).toBe(depths.length);
+  });
+
+  it("draws a patch's grain over its ground and its grid over the grain, under the deck (#3484)", () => {
+    for (const deckLayer of [1, 2]) {
+      const order: readonly RenderItem[] = [
+        { kind: "tunnel-cover", deckLayer },
+        { kind: "tunnel-grain", deckLayer, part: "grain" },
+        { kind: "tunnel-grain", deckLayer, part: "lines" },
+        { kind: "deck", deckLayer },
+        { kind: "lip-grain", deckLayer, part: "grain" },
+        { kind: "lip-grain", deckLayer, part: "lines" },
+        { kind: "paving", layer: deckLayer },
+      ];
+      const depths = order.map(renderOrder);
+      expect(depths).toEqual([...depths].sort((a, b) => a - b));
+      expect(new Set(depths).size).toBe(depths.length);
+    }
+  });
+
   it("eases a change of layer over about 150 ms, either way", () => {
     expect(ELEVATION_EASE_SECONDS).toBe(0.15);
     expect(easeElevation(0, ELEVATION_STEP, ELEVATION_EASE_SECONDS / 2)).toBeCloseTo(
