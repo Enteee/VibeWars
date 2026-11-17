@@ -12,6 +12,8 @@
  * @typedef {object} MapRow
  * @property {string} mapId
  * @property {number} p50 ms
+ * @property {number} before calibration window just before the map, ms
+ * @property {number} after calibration window just after the map, ms
  *
  * @typedef {object} Verdict
  * @property {string} mapId
@@ -19,7 +21,8 @@
  * @property {number} ratio the map's p50 over `base`
  * @property {number} spread the two windows' gap over `base`
  * @property {Ceiling | undefined} ceiling the map's entry in the ceilings, if it has one
- * @property {string[]} failures why the run fails, if it does
+ * @property {string[]} failures why the run fails on the map's own numbers (a breach)
+ * @property {string | undefined} noisy why the runner was too noisy to judge the map, if it was
  */
 
 /**
@@ -30,13 +33,12 @@
 export const STALE_MARGIN = 1.25;
 
 /**
- * Map i is bracketed by windows i and i + 1, so `windows` is one longer than
- * `maps`. A bracket whose windows differ by more than `maxSpread` of their
- * mean fails: the runner was too noisy to judge the map. A map over
+ * Each map carries the two calibration windows that bracket it. A bracket
+ * whose windows differ by more than `maxSpread` of their mean is `noisy`: the
+ * runner was too noisy to judge the map. A map over
  * `maxRatio` times its base fails too, when a ratio is set.
  *
  * @param {object} input
- * @param {readonly number[]} input.windows calibration p50s, ms, in run order
  * @param {readonly MapRow[]} input.maps in run order
  * @param {number | undefined} input.maxRatio
  * @param {number} input.maxSpread
@@ -45,23 +47,18 @@ export const STALE_MARGIN = 1.25;
  *   runner as the maps do, so a ratio that far under the default is the map's own (#3255).
  * @returns {Verdict[]}
  */
-export function verdict({ windows, maps, maxRatio, maxSpread, ceilings = [] }) {
-  if (windows.length !== maps.length + 1) {
-    throw new Error(`${String(maps.length)} maps need ${String(maps.length + 1)} windows`);
-  }
-  return maps.map((map, i) => {
-    const before = windows[i] ?? NaN;
-    const after = windows[i + 1] ?? NaN;
+export function verdict({ maps, maxRatio, maxSpread, ceilings = [] }) {
+  return maps.map((map) => {
+    const { before, after } = map;
     const base = (before + after) / 2;
     const spread = Math.abs(before - after) / base;
     const ratio = map.p50 / base;
     /** @type {string[]} */
     const failures = [];
-    if (!(spread <= maxSpread)) {
-      failures.push(
-        `calibration unstable around ${map.mapId} (w${String(i)} ${before.toFixed(1)} ms, w${String(i + 1)} ${after.toFixed(1)} ms, spread ${(spread * 100).toFixed(0)} % > ${String(maxSpread * 100)} %): the runner is too noisy to judge`,
-      );
-    }
+    const noisy =
+      spread <= maxSpread
+        ? undefined
+        : `calibration unstable around ${map.mapId} (${before.toFixed(1)} ms, ${after.toFixed(1)} ms, spread ${(spread * 100).toFixed(0)} % > ${String(maxSpread * 100)} %): the runner is too noisy to judge`;
     const ceiling = ceilings.find((c) => c.mapId === map.mapId);
     if (maxRatio !== undefined) {
       const limit = ceiling?.ratio ?? maxRatio;
@@ -77,8 +74,27 @@ export function verdict({ windows, maps, maxRatio, maxSpread, ceilings = [] }) {
         );
       }
     }
-    return { mapId: map.mapId, base, ratio, spread, ceiling, failures };
+    return { mapId: map.mapId, base, ratio, spread, ceiling, failures, noisy };
   });
+}
+
+/** EX_TEMPFAIL: the runner was too noisy to judge, and a rerun is the remedy. */
+export const EXIT_TOO_NOISY = 75;
+
+/**
+ * The bench's exit code. A breach wins over noise: a regression is never
+ * reported as a reason to rerun.
+ *
+ * Report-only (the hosted perf bench) prints a breach and passes, as its table
+ * still has numbers; a warm-up that never settled leaves no table, so it still fails.
+ *
+ * @param {{ breach: boolean, noisy: boolean, unsettled: boolean, reportOnly: boolean }} outcome
+ * @returns {number}
+ */
+export function exitCode({ breach, noisy, unsettled, reportOnly }) {
+  if (reportOnly) return unsettled ? EXIT_TOO_NOISY : 0;
+  if (breach) return 1;
+  return noisy ? EXIT_TOO_NOISY : 0;
 }
 
 /**

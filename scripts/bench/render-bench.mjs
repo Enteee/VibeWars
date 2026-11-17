@@ -18,7 +18,7 @@
  * (#3255). It is measured in windows interleaved with the maps (one
  * before each, one after, after an unmeasured warm-up). Each map is judged against the mean
  * of the two windows around it, and a pair of windows differing by over
- * `MAX_CALIBRATION_SPREAD` fails the run as too noisy to judge (`verdict.mjs`). Prints p50 and p95 per map
+ * `MAX_CALIBRATION_SPREAD` is measured again, twice at most, then fails the run as too noisy to judge (exit 75, `verdict.mjs`). Prints p50 and p95 per map
  * and the ratio of each to the calibration's. The percentiles weigh a frame by how long
  * it lasted: what a moment of the run is spent in, so a map that hangs
  * for a second between quick frames does not measure as quick.
@@ -58,7 +58,7 @@ import { parseArgs } from "node:util";
 import { chromium } from "@playwright/test";
 
 import { BENCH_CEILINGS } from "./ceilings.mjs";
-import { settled, verdict } from "./verdict.mjs";
+import { exitCode, settled, verdict } from "./verdict.mjs";
 
 /* global document, requestAnimationFrame, window -- in page.evaluate, which runs in the page */
 
@@ -76,6 +76,8 @@ const MIN_CALIBRATION_MS = 2000 / 60 + 0.1;
 
 /** The two calibration windows around a map may differ this much, of their mean. */
 const MAX_CALIBRATION_SPREAD = 0.2;
+/** A map whose bracket is unstable is measured again this many times at most (#3503). */
+const MAX_REMEASURES = 2;
 
 const PORT = 4322;
 /** Where the maps it measures live: the arenas, and the tutorial's (#3245). */
@@ -537,6 +539,9 @@ const executablePath = process.env.VIBEWARS_CHROMIUM;
 /** @type {import("@playwright/test").Browser | undefined} */
 let browser;
 let failed = false;
+let noisy = false;
+// The warm-up never settled, so nothing was measured: even report-only fails.
+let unsettled = false;
 try {
   browser = await chromium.launch({
     ...(executablePath === undefined ? {} : { executablePath }),
@@ -576,30 +581,47 @@ try {
     }
     const list = warm.map((w) => w.toFixed(1)).join(", ");
     if (after === undefined) {
-      throw new Error(
+      console.error(
         `calibration never settled in warm-up (${list}): the runner is too noisy to judge`,
       );
+      noisy = true;
+      unsettled = true;
+    } else {
+      console.log(
+        `warm-up: map ${warmMap} ${String(WARMUP_LOAD_SECONDS)} s; calibration ${list} ms (settled after ${String(after)} windows, ${((times[after - 1] ?? 0) / 1000).toFixed(0)} s, discarded)`,
+      );
     }
-    console.log(
-      `warm-up: map ${warmMap} ${String(WARMUP_LOAD_SECONDS)} s; calibration ${list} ms (settled after ${String(after)} windows, ${((times[after - 1] ?? 0) / 1000).toFixed(0)} s, discarded)`,
-    );
   }
-  const windows = [];
+  const windows = [await calibrationWindow()];
   const rows = [];
-  for (const mapId of mapIds) {
-    windows.push(await calibrationWindow());
-    const frames = await mapWindow(mapId, SECONDS);
-    rows.push({
-      passes: lastPasses,
-      mapId,
-      frames: frames.length,
-      p50: percentile(frames, 50),
-      p95: percentile(frames, 95),
-    });
+  for (const mapId of noisy ? [] : mapIds) {
+    // A bracket the runner moved under is measured again, with the window that
+    // closed it opening the next one: a few seconds, not a rerun (#3503).
+    for (let attempt = 1; ; attempt++) {
+      const before = windows.at(-1) ?? NaN;
+      const frames = await mapWindow(mapId, SECONDS);
+      const passes = lastPasses;
+      const after = await calibrationWindow();
+      windows.push(after);
+      const spread = Math.abs(before - after) / ((before + after) / 2);
+      if (spread > MAX_CALIBRATION_SPREAD && attempt <= MAX_REMEASURES) {
+        console.log(`re-measure ${mapId} (spread ${(spread * 100).toFixed(0)} %)`);
+        continue;
+      }
+      rows.push({
+        passes,
+        mapId,
+        frames: frames.length,
+        p50: percentile(frames, 50),
+        p95: percentile(frames, 95),
+        before,
+        after,
+      });
+      break;
+    }
   }
-  windows.push(await calibrationWindow());
   const followed = [];
-  for (const mapId of [...mapsToMeasure(), FLAT_BASELINE]) {
+  for (const mapId of noisy ? [] : [...mapsToMeasure(), FLAT_BASELINE]) {
     const match = await browser.newPage({ viewport });
     try {
       await match.goto(`${url}?frametiming`);
@@ -634,7 +656,6 @@ try {
     `calibration windows p50 ms: ${windows.map((w) => w.toFixed(1)).join(", ")} (whole-run spread ${(wholeRun * 100).toFixed(0)} %, not gated)`,
   );
   const verdicts = verdict({
-    windows,
     maps: rows,
     maxRatio: MAX_RATIO,
     maxSpread: MAX_CALIBRATION_SPREAD,
@@ -650,6 +671,10 @@ try {
     );
   }
   for (const v of verdicts) {
+    if (v.noisy !== undefined) {
+      console.error(v.noisy);
+      noisy = true;
+    }
     for (const failure of v.failures) {
       console.error(failure);
       failed = true;
@@ -702,4 +727,10 @@ try {
 // BENCH_REPORT_ONLY (the hosted perf bench, #3368): a ratio breach is printed
 // above and does not fail the run, so the table still reaches the report.
 // ci.yml, which enforces the ceilings, does not set it. A crash still fails.
-process.exitCode = failed && process.env.BENCH_REPORT_ONLY === undefined ? 1 : 0;
+// Exit 75 means the runner was too noisy to judge: a rerun is the remedy (#3503).
+process.exitCode = exitCode({
+  breach: failed,
+  noisy,
+  unsettled,
+  reportOnly: process.env.BENCH_REPORT_ONLY !== undefined,
+});
