@@ -702,6 +702,159 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Jungle Ruins (#3436): the centre is the storm beacon on the pyramid's summit. The river splits
+  // the map corner to corner; each team climbs its own face of the pyramid (the south approach for
+  // team 1, the north for team 2), or crosses the river to climb the far face, by the near ford or
+  // the log bridge. A foe reaches a shrine by either ford or through the hidden passage. As loaded,
+  // the passage's doors are shut and both vine walls stand.
+  describe("Jungle Ruins", () => {
+    const map = loadMap("jungle-ruins");
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const centre = { x: 2700, y: 1400 };
+    const shrines = [
+      { x: 900, y: 1000 },
+      { x: 4500, y: 1800 },
+    ];
+    const foes = [shrines[1] ?? centre, shrines[0] ?? centre];
+    const faces = ["pyramid-south-stair", "pyramid-north-stair"];
+    const bridges = [
+      "north-west-bridge-west-stair",
+      "north-west-bridge-east-stair",
+      "south-east-bridge-west-stair",
+      "south-east-bridge-east-stair",
+    ];
+    const passage = ["passage-west-steps", "passage-east-steps"];
+    /** The map with these fords deep: a walk that may not wade there. */
+    const deep = (on: MapData, fords: readonly string[]): MapData => ({
+      ...on,
+      water: (on.water ?? []).map((each) =>
+        fords.includes(each.id) ? { ...each, depth: "deep" as const } : each,
+      ),
+    });
+    /** The ford on the river's arm by `team`'s own face (north-west for team 1) and the far one. */
+    const nearFord = (team: number): string => (team === 0 ? "north-ford" : "south-ford");
+    const farFord = (team: number): string => (team === 0 ? "south-ford" : "north-ford");
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Each team's own walk to `to[team]`, on a map and by a route of its own. */
+    const each = (
+      on: (team: number) => MapData,
+      to: readonly Vec2[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on(team), to[team] ?? centre, layer, (other) =>
+            other === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    const toCentre = (on: (team: number) => MapData, route: (team: number) => Route): number[] =>
+      each(on, [centre, centre], 3, route);
+    const own = (team: number): string => faces[team] ?? "";
+    const far = (team: number): string => faces[1 - team] ?? "";
+
+    it("walks each team up its own face of the pyramid within 10 % of the other, in under 15 s", () => {
+      const walks = toCentre(
+        () => shut,
+        (team) => ({ through: [own(team)], shut: [far(team)] }),
+      );
+      within(walks, 0.1);
+      // A 2v2 fights round the summit: its walk there is under 15 s at base speed.
+      for (const walk of walks)
+        expect(walk / MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond).toBeLessThan(15);
+    });
+
+    it("walks each team across its near ford to the far face within 10 % of the other", () => {
+      within(
+        toCentre(
+          () => shut,
+          (team) => ({ through: [far(team)], shut: [own(team), ...bridges] }),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team over its log bridge to the far face within 10 % of the other", () => {
+      within(
+        toCentre(
+          () => deep(shut, ["north-ford", "south-ford"]),
+          (team) => ({
+            through: [far(team), team === 0 ? (bridges[0] ?? "") : (bridges[3] ?? "")],
+            shut: [own(team)],
+          }),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team to the foe's shrine by either ford, doors shut, within 10 % of the other", () => {
+      const round = { through: [], shut: [...faces, ...bridges] };
+      within(
+        each(
+          (team) => deep(shut, [farFord(team)]),
+          foes,
+          1,
+          () => round,
+        ),
+        0.1,
+      );
+      within(
+        each(
+          (team) => deep(shut, [nearFord(team)]),
+          foes,
+          1,
+          () => round,
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team to the foe's shrine through the hidden passage, doors open, within 10 % of the other", () => {
+      within(
+        each(
+          () => deep(map, ["north-ford", "south-ford"]),
+          foes,
+          1,
+          () => ({ through: passage, shut: [...faces, ...bridges] }),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each priest from its shrine to the centre within 10 % of the other", () => {
+      within(
+        walksByRoute(
+          { ...map, spawnPoints: shrines.map((position, team) => ({ team, layer: 1, position })) },
+          centre,
+          3,
+          { through: [] },
+        ),
+        0.1,
+      );
+    });
+
+    it("keeps the walks within 10 % with the doors open and the vine walls broken", () => {
+      const broken = ["west-vine-wall", "east-vine-wall"];
+      within(walksByRoute(map, centre, 3, { through: [], broken }), 0.1);
+      within(
+        each(
+          () => map,
+          foes,
+          1,
+          () => ({ through: [], broken }),
+        ),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

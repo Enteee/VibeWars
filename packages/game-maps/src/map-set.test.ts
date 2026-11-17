@@ -64,6 +64,7 @@ const REBUILT = new Set([
   "shiverpeak-pass",
   "blackwater-ford",
   "barrow-field",
+  "jungle-ruins",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
@@ -309,20 +310,6 @@ describe("the arena set (#444)", () => {
       "wardens-gallery",
     ]);
     expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 15);
-  });
-
-  it("puts each team's shrine on Jungle Ruins 150-250 behind its spawns (#1186, #2550)", () => {
-    const ruins = MAPS.find((map) => map.id === "jungle-ruins");
-    const centre = (ruins?.width ?? 0) / 2;
-    for (const shrine of ruins?.objectives ?? []) {
-      const spawns =
-        ruins?.spawnPoints.filter((spawn) => "team" in shrine && spawn.team === shrine.team) ?? [];
-      const rearmost = Math.max(...spawns.map((spawn) => Math.abs(spawn.position.x - centre)));
-      const behind = Math.abs(shrine.position.x - centre) - rearmost;
-      expect(behind).toBeGreaterThanOrEqual(150);
-      expect(behind).toBeLessThanOrEqual(250);
-    }
-    expect(ruins?.objectives).toHaveLength(2);
   });
 });
 

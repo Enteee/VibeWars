@@ -10,7 +10,6 @@ import type { MapData, Wall } from "./schema.js";
  * this list.
  */
 const SYMMETRIC = [
-  "jungle-ruins",
   "broken-tower",
   "cinder-sanctum",
   "scarred-earth",
