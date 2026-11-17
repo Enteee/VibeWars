@@ -387,7 +387,7 @@ carte de la manche 1.
 
 Un groupe de moins de 8 entre en file avec des bots aux places vides, selon son Build d'équipe, mais un camp compte toujours au moins un humain, et une équipe de bots n'est jamais un adversaire. Si le dernier humain d'un camp quitte un match, ce camp déclare forfait et sa course s'arrête.
 
-**Barrow Field** est une arène de l'Ascension que tu peux aussi choisir en Partie hébergée. C'est une Annihilation de prêtre en 8v8 parmi de basses buttes de terre, où le prêtre relève ses morts toutes les 2 minutes. Porte ton drapeau sur le **Storm Beacon** au centre : il frappe un ennemi au hasard à portée d'oreille pour 50 dégâts de foudre toutes les 2,5 secondes, jusqu'à ce que l'autre équipe y plante son drapeau. Chaque frappe est un éclair du phare vers sa victime, visible par les deux équipes.
+**Barrow Field** (8v8, 5400x2600) est une arène de l'Ascension que tu peux aussi choisir en Partie hébergée. C'est une Annihilation de prêtre sur une lande de tertres funéraires au crépuscule, où le prêtre relève ses morts toutes les 2 minutes. Grimpe sur un tertre pour tenir les hauteurs, ou prends le passage des tertres en dessous une fois qu'un levier sur le tertre lointain en ouvre la grille. Porte ton drapeau sur le **Storm Beacon** au centre : il frappe un ennemi au hasard à portée d'oreille pour 50 dégâts de foudre toutes les 2,5 secondes, jusqu'à ce que l'autre équipe y plante son drapeau. Chaque frappe est un éclair du phare vers sa victime, visible par les deux équipes.
 
 Trois arènes d'Ascension se choisissent aussi en Partie hébergée : **The Hollow Deep** (Annihilation
 8v8, trois tunnels sinueux autour d'un rocher central), **Blackwater Ford**

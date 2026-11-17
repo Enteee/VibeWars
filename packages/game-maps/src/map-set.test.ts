@@ -62,6 +62,7 @@ const REBUILT = new Set([
   "sunken-bastion",
   "elonian-plateau",
   "shiverpeak-pass",
+  "barrow-field",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
