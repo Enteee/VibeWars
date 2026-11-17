@@ -3157,7 +3157,7 @@ export class ArenaScene extends Phaser.Scene {
       this.arena.height,
       this.reducedMotion,
     );
-    pass.update(timeMs);
+    pass.update(timeMs, this.cameraView());
     const depth = lighting === undefined ? GROUND_DEPTH : LIT_GROUND_DEPTH;
     if (depth !== this.groundDepth) {
       this.groundDepth = depth;

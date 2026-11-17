@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { measuringFrames, snapshotCadence, type FrameTiming } from "./frame-timing.js";
+import {
+  isFrameTiming,
+  measuringFrames,
+  snapshotCadence,
+  type FrameTiming,
+} from "./frame-timing.js";
 
 describe("measuringFrames (#3240)", () => {
   it("measures only when the page asks", () => {
@@ -11,9 +16,17 @@ describe("measuringFrames (#3240)", () => {
   });
 });
 
+describe("isFrameTiming (#3499)", () => {
+  it("takes stats with every list, the host's included, and rejects them without it", () => {
+    expect(isFrameTiming({ update: [], render: [], snapshots: [], host: [] })).toBe(true);
+    expect(isFrameTiming({ update: [], render: [], snapshots: [] })).toBe(false);
+    expect(isFrameTiming({ update: [], render: [], snapshots: [], host: 3 })).toBe(false);
+  });
+});
+
 describe("snapshotCadence (#3240)", () => {
   it("records the time between frames that drew a new snapshot, not between frames", () => {
-    const stats: FrameTiming = { update: [], render: [], snapshots: [] };
+    const stats: FrameTiming = { update: [], render: [], snapshots: [], host: [] };
     let now = 0;
     const drawn = snapshotCadence(stats, () => now);
     // Frames every 16 ms; the clock moves at 0, 48 and 112 ms.
