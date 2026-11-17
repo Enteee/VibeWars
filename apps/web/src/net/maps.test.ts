@@ -488,13 +488,13 @@ describe("hostMap (#476)", () => {
 
   it("carries a Relic Run map's altar and relic spawns, and none elsewhere (#1374)", () => {
     expect(hostMap("broken-tower")?.relicField).toEqual({
-      altar: { x: 1600, y: 900 },
-      altarLayer: 0,
+      altar: { x: 2712, y: 1392 },
+      altarLayer: 3,
       relicTarget: "altar",
       relicCarry: "own",
       spawns: [
-        { team: 0, position: { x: 120, y: 900 }, layer: 0 },
-        { team: 1, position: { x: 3080, y: 900 }, layer: 0 },
+        { team: 0, position: { x: 1000, y: 1850 }, layer: 1 },
+        { team: 1, position: { x: 4424, y: 934 }, layer: 1 },
       ],
     });
     expect(mapRelicField("broken-tower", 2)).toEqual(hostMap("broken-tower")?.relicField);
