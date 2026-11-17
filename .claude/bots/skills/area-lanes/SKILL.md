@@ -8,15 +8,19 @@ description: One card per code area in flight, so parallel developers do not col
 Parallel developers editing the same subsystem produce conflicts, and
 conflicts mean re-done PRs. Labels keep them apart.
 
-Labels: `area:render`, `area:game-core`, `area:maps`, `area:ui`, `area:net`,
-`area:i18n`, `area:bots-ai`, `area:audio`, `area:tooling`.
+Labels: `area:render`, `area:game-core`, `area:maps`, `area:maps-2`,
+`area:maps-3`, `area:ui`, `area:net`, `area:i18n`, `area:bots-ai`,
+`area:audio`, `area:tooling`.
 
 - Labels are not shown by `board ls`/`board show`; read them with `hub issue view <n> --json labels`.
 - **Architect:** label every card you spec with the area(s) it mostly touches.
   Before `Ready`, `board ls Ready` and `board ls "In Progress"`: if a card
   with the same `area:` label is already there, leave yours in `Backlog` and
-  spec a card from another area instead. Epic chains (e.g. the 2.5D maps) are
-  one lane: they run serially.
+  spec a card from another area instead. Map builds run in up to three lanes
+  (`area:maps`, `area:maps-2`, `area:maps-3`, Q93): give each map card one
+  lane. Two maps in flight that both touch a shared map file (the biome
+  dressing, `net/maps.ts`, `docs/player/modes.md`) merge `main` before their
+  PR and rerun typecheck; #3493 shows what happens otherwise.
 - **Developer:** take a Ready card in an area no other `In Progress` card
   holds. Merge `main` into your branch whenever another PR in your area
   lands, open small PRs early, and fix your own conflicts at once.
