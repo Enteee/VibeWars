@@ -311,8 +311,7 @@ function piers(painter: StructurePainter, deck: DeckFrame): void {
   for (const edge of southFacingEdges(footprint)) {
     const count = Math.max(2, Math.round(lengthOf(edge) / PIER_EVERY) + 1);
     for (let k = 0; k < count; k += 1) {
-      const at = along(edge, (k + 0.5) / count);
-      painter.fillRect(at.x - PIER_WIDTH / 2, at.y - low, PIER_WIDTH, low - base);
+      support(painter, edge, (k + 0.5) / count, PIER_WIDTH, low, base);
     }
   }
 }
@@ -324,10 +323,29 @@ function posts(painter: StructurePainter, deck: DeckFrame): void {
   for (const edge of southFacingEdges(footprint)) {
     const count = Math.max(2, Math.round(lengthOf(edge) / POST_EVERY_PIER) + 1);
     for (let k = 0; k < count; k += 1) {
-      const at = along(edge, k / (count - 1));
-      painter.fillRect(at.x - PIER_POST_WIDTH / 2, at.y - low, PIER_POST_WIDTH, low - base);
+      support(painter, edge, k / (count - 1), PIER_POST_WIDTH, low, base);
     }
   }
+}
+
+/**
+ * One support `width` wide at `t` of the way along `edge`, from `base`
+ * up to `low`: its foot follows the edge, slanted or not, and it stays
+ * within the edge's ends, so nothing of it falls outside the footprint the
+ * side face hides with (#3435).
+ */
+function support(
+  painter: StructurePainter,
+  edge: Segment,
+  t: number,
+  width: number,
+  low: number,
+  base: number,
+): void {
+  const half = width / 2 / lengthOf(edge);
+  const centre = Math.min(Math.max(t, half), 1 - half);
+  const [left, right] = [along(edge, centre - half), along(edge, centre + half)];
+  fillQuad(painter, raised(left, low), raised(right, low), raised(right, base), raised(left, base));
 }
 
 /** The middle `OPENING_WIDTH` of `edge`: where an arch opens or a passage runs. */

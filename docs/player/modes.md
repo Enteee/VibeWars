@@ -395,7 +395,7 @@ ford: wade a shallow ford, cross the broken bridge over the mill on its piers,
 or take a culvert under the bridge once a lever on the mill opens its gate;
 the priest raises its dead every 2 minutes) and
 **Mosslit Cairns** (8v8 Capture Points, five cairns in a shallow zig-zag
-between the bases). A fourth is **The Brazen Causeway** (8v8 Priest Annihilation on a ring round a sunken pit: a narrow gap passes each base's gate, which stands wide open only while one of its team holds the Gate Lock plate).
+between the bases). A fourth is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation on a raised stone causeway over a marsh at dusk: march along the causeway once a lever in the far gatehouse opens its bronze gate, cross the marsh to the stairs at its middle, or slip through a culvert under it; the priest raises its dead every 2 minutes).
 
 A map may have **gates**: walls that stop bodies, shots and sight while
 closed. Stand on a gate's pressure plate to open it. It closes when

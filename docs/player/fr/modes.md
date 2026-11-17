@@ -394,7 +394,7 @@ Trois arènes d'Ascension se choisissent aussi en Partie hébergée : **The Holl
 (Annihilation de prêtre 8v8, 5200x2800, à un sombre gué de rivière : on traverse un haut-fond à gué, on franchit
 le pont brisé sur ses piles au-dessus du moulin, ou on prend un ponceau sous le pont une fois qu'un levier sur le
 moulin en ouvre la herse ; le prêtre relève ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de
-capture 8v8, cinq cairns en léger zigzag entre les bases). La quatrième est **The Brazen Causeway** (Annihilation de prêtre 8v8 sur un anneau autour d'une fosse : un passage étroit longe la porte de chaque base, qui ne reste ouverte que tant qu'un membre de son équipe se tient sur la plaque de la serrure).
+capture 8v8, cinq cairns en léger zigzag entre les bases). La quatrième est **The Brazen Causeway** (Annihilation de prêtre 8v8, 5600x2800, sur une chaussée de pierre surélevée au-dessus d'un marais au crépuscule : on marche le long de la chaussée une fois qu'un levier dans le châtelet du fond en ouvre la porte de bronze, on traverse le marais jusqu'aux escaliers en son milieu, ou on se glisse par un ponceau en dessous ; le prêtre relève ses morts toutes les 2 minutes).
 
 Une carte peut avoir des **portes** : des murs qui arrêtent les corps, les tirs et
 la vue quand ils sont fermés. Tiens-toi sur la plaque de pression d'une porte pour

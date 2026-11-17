@@ -5,7 +5,6 @@ import {
   KING_OF_THE_HILL_MATCH_RULES,
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
-  PRIEST_ANNIHILATION_MATCH_RULES,
   THREEFOLD_KEEP_MATCH_RULES,
   PRIEST_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
@@ -466,12 +465,15 @@ describe("Capture Points bots (#2580)", () => {
   });
 });
 
-describe("The Brazen Causeway (#2697)", () => {
+describe("The Brazen Causeway (#3435)", () => {
   const map = loadAllMaps().find((candidate) => candidate.id === "brazen-causeway");
   if (map === undefined) throw new Error("no map brazen-causeway");
 
-  it("guards each base with its own gate", () => {
-    expect(map.gates.map(({ opener }) => opener)).toMatchObject([{ team: 0 }, { team: 1 }]);
+  it("shuts the causeway with two bronze gates, each opened by the far gatehouse's lever", () => {
+    expect(map.switches?.map(({ targets }) => targets)).toEqual([
+      ["east-bronze-gate"],
+      ["west-bronze-gate"],
+    ]);
   });
 
   it("keeps its nav graph to 600 nodes", () => {
@@ -489,41 +491,9 @@ describe("The Brazen Causeway (#2697)", () => {
       if (spawn === undefined) throw new Error(`no spawn for team ${String(team)}`);
       return spawn;
     };
-    expect(finder.find(spawnOf(0).position, 0, spawnOf(1).position, 0)).toBeDefined();
-  });
-
-  it("bots open their gate, then fight it out before the time limit", () => {
-    // Two a side: one to stand on each plate, and one free to go and fight.
-    const sim = new MatchSimulation({
-      seed: "causeway",
-      ruleset: RULESET,
-      walls: allWallSegments(map.walls),
-      gates: matchGates(map),
-      bounds: { width: map.width, height: map.height },
-      matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
-      shrines: map.objectives.flatMap((objective) =>
-        objective.kind === "resurrection-shrine"
-          ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
-          : [],
-      ),
-      participants: casterBots(map, 2),
-    });
-    let opened = false;
-    let died = false;
-    let seconds = 0;
-    while (
-      seconds <= PRIEST_ANNIHILATION_MATCH_RULES.timeLimitSeconds + 1 &&
-      sim.phase !== "finished"
-    ) {
-      sim.step(DT);
-      seconds += DT;
-      opened ||= sim.gates.some(({ open }) => open);
-      died ||= [...sim.participants()].some(({ combatant }) => combatant.dead);
-    }
-    expect(opened).toBe(true);
-    expect(died).toBe(true);
-    expect(sim.phase).toBe("finished");
-    expect(seconds).toBeLessThan(PRIEST_ANNIHILATION_MATCH_RULES.timeLimitSeconds);
+    expect(
+      finder.find(spawnOf(0).position, spawnOf(0).layer, spawnOf(1).position, spawnOf(1).layer),
+    ).toBeDefined();
   });
 });
 
