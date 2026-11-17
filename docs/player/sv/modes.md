@@ -407,8 +407,9 @@ den träffade, synlig för båda lagen.
 
 Tre Ascent-arenor kan också väljas i ett eget spel: **The Hollow Deep** (8v8 Förintelse, tre
 slingrande tunnlar runt en klippa i mitten),
-**Blackwater Ford** (8v8
-Prästförintelse på ett litet vadställe, baserna nästan inom synhåll,
+**Blackwater Ford** (8v8, 5200x2800,
+Prästförintelse vid ett mörkt vadställe i en flod: man vadar över ett grunt vadställe, går över den trasiga
+bron på sina pelare ovanför kvarnen eller tar en kulvert under bron när en spak på kvarnen öppnar dess galler;
 prästen återupplivar sina döda var 2:a minut) och
 **Mosslit Cairns** (8v8 Erövringspunkter, fem stenrösen i ett grunt
 sicksack mellan baserna). En fjärde är **The Brazen Causeway** (8v8 Prästförintelse på en ring runt en nedsänkt grop: en smal passage går förbi varje bas port, som bara står vidöppen medan någon från dess lag håller Gate Lock-plattan).

@@ -413,8 +413,9 @@ de la far până la cel lovit, vizibil pentru ambele echipe.
 
 Trei arene ale Ascensiunii pot fi alese și la un Joc găzduit: **The Hollow Deep** (8v8
 Anihilare, trei tuneluri întortocheate în jurul unei stânci centrale), **Blackwater Ford**
-(8v8 Anihilare cu preot pe un vad minuscul, bazele aproape la vedere, preotul
-ridicându-și morții la fiecare 2 minute) și **Mosslit Cairns** (8v8 Capturare de puncte,
+(8v8, 5200x2800, Anihilare cu preot la un vad întunecat de râu: treci prin apa mică a vadului, pe podul rupt
+sprijinit pe pilonii săi deasupra morii sau printr-un podeț de sub pod, după ce o pârghie de pe moară îi deschide
+poarta; preotul își ridică morții la fiecare 2 minute) și **Mosslit Cairns** (8v8 Capturare de puncte,
 cinci movile de pietre într-un zig-zag ușor între baze). A patra este **The Brazen
 Causeway** (8v8 Anihilare cu preot pe un inel în jurul unei gropi adâncite: o trecere
 îngustă duce pe lângă poarta fiecărei baze, care stă larg deschisă doar cât timp unul

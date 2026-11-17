@@ -387,8 +387,9 @@ terlihat oleh kedua tim.
 Tiga arena Pendakian juga bisa dipilih di Game Host: **The Hollow Deep** (Pemusnahan 8v8, tiga
 terowongan berkelok di sekeliling batu di tengah),
 **Blackwater Ford** (Pemusnahan
-Pendeta 8v8 di sebuah arungan sungai yang mungil, markas-markasnya nyaris saling terlihat, dengan pendeta menghidupkan kembali
-yang mati setiap 2 menit) dan
+Pendeta 8v8, 5200x2800, di sebuah arungan sungai yang gelap: arungi arungan yang dangkal, seberangi jembatan rusak di atas
+kincir yang bertumpu pada pilar-pilarnya, atau lewati gorong-gorong di bawah jembatan setelah tuas di kincir membuka
+gerbangnya; pendeta menghidupkan kembali yang mati setiap 2 menit) dan
 **Mosslit Cairns** (Rebut Titik 8v8, lima tumpukan batu dalam zig-zag dangkal
 di antara markas-markas). Yang keempat adalah **The Brazen Causeway** (Pemusnahan Pendeta 8v8 di lingkaran yang mengelilingi lubang cekung: celah sempit melewati gerbang setiap markas, yang terbuka lebar hanya selama salah satu anggota timnya menduduki pelat Gate Lock).
 

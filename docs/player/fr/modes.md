@@ -391,8 +391,9 @@ Un groupe de moins de 8 entre en file avec des bots aux places vides, selon son 
 
 Trois arènes d'Ascension se choisissent aussi en Partie hébergée : **The Hollow Deep** (Annihilation
 8v8, trois tunnels sinueux autour d'un rocher central), **Blackwater Ford**
-(Annihilation de prêtre 8v8 sur un tout petit gué, les bases presque en vue, le
-prêtre relevant ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de
+(Annihilation de prêtre 8v8, 5200x2800, à un sombre gué de rivière : on traverse un haut-fond à gué, on franchit
+le pont brisé sur ses piles au-dessus du moulin, ou on prend un ponceau sous le pont une fois qu'un levier sur le
+moulin en ouvre la herse ; le prêtre relève ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de
 capture 8v8, cinq cairns en léger zigzag entre les bases). La quatrième est **The Brazen Causeway** (Annihilation de prêtre 8v8 sur un anneau autour d'une fosse : un passage étroit longe la porte de chaque base, qui ne reste ouverte que tant qu'un membre de son équipe se tient sur la plaque de la serrure).
 
 Une carte peut avoir des **portes** : des murs qui arrêtent les corps, les tirs et

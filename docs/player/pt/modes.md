@@ -390,8 +390,9 @@ Um grupo com menos de 8 entra na fila com bots nos lugares vazios, usando sua Bu
 
 Três arenas da Ascensão também podem ser escolhidas em uma Partida Hospedada: **The Hollow Deep** (8v8 de Aniquilação, três túneis sinuosos
 em volta de uma rocha central),
-**Blackwater Ford** (8v8 de Aniquilação de Sacerdotes em um vau minúsculo,
-com as bases quase à vista e o sacerdote trazendo os mortos a cada 2
+**Blackwater Ford** (8v8, 5200x2800, de Aniquilação de Sacerdotes em um vau escuro de rio:
+dá para atravessar a pé um vau raso, cruzar a ponte quebrada sobre o moinho, apoiada em seus pilares,
+ou pegar um bueiro sob a ponte assim que uma alavanca no moinho abre o portão dele; o sacerdote traz os mortos a cada 2
 minutos) e
 **Mosslit Cairns** (8v8 de Captura de Pontos, cinco montes de pedras em um
 leve zigue-zague entre as bases). A quarta é **The Brazen Causeway** (8v8 de Aniquilação de Sacerdotes em um anel ao redor de um fosso: uma passagem estreita contorna o portão de cada base, que só fica aberto enquanto alguém da equipe estiver na placa da fechadura).

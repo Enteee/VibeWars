@@ -450,8 +450,9 @@ iki takımın da gördüğü bir şimşektir.
 
 Üç Yükseliş arenası da Özel Oyun'da seçilebilir: **The Hollow Deep**
 (8v8 İmha, merkezi bir kayanın çevresinde üç kıvrımlı tünel),
-**Blackwater Ford** (minik bir sığlıkta 8v8 Rahip İmhası, üsler neredeyse
-birbirini görür, rahip ölülerini her 2 dakikada bir diriltir) ve
+**Blackwater Ford** (8v8, 5200x2800, karanlık bir nehir sığlığında Rahip İmhası: sığ geçitten yürüyerek,
+değirmenin üstünde ayakları üzerinde duran yıkık köprüden ya da değirmendeki bir kol kapısını açınca
+köprünün altındaki menfezden geçilir; rahip ölülerini her 2 dakikada bir diriltir) ve
 **Mosslit Cairns** (8v8 Nokta Ele Geçirme, üsler arasında sığ bir
 zikzak çizen beş taş yığını). Dördüncüsü **The Brazen Causeway**'dir
 (çökük bir çukurun çevresindeki bir halkada 8v8 Rahip İmhası: dar bir

@@ -371,8 +371,9 @@ Un grupo de menos de 8 entra en la cola con bots en los puestos vacíos, usando 
 
 Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow Deep** (Aniquilación
 8v8, tres túneles sinuosos alrededor de una roca central), **Blackwater Ford**
-(Aniquilación de sacerdote 8v8 en un vado diminuto, las bases casi a la vista, el
-sacerdote resucitando a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de
+(Aniquilación de sacerdote 8v8, 5200x2800, en un oscuro vado de río: se cruza vadeando un vado poco profundo,
+por el puente roto sobre sus pilares encima del molino o por una alcantarilla bajo el puente cuando una palanca
+del molino abre su compuerta; el sacerdote resucita a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de
 captura 8v8, cinco túmulos en un zigzag poco profundo entre las bases). La cuarta es **The Brazen Causeway** (Aniquilación de sacerdote 8v8 en un anillo alrededor de un foso: junto a la puerta de cada base pasa un hueco estrecho, y la puerta solo está abierta mientras alguien de su equipo pise la placa de la cerradura).
 
 Un mapa puede tener **puertas**: muros que detienen cuerpos, disparos y visión
