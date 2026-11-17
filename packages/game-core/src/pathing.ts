@@ -988,6 +988,49 @@ export interface NavDropOff {
   readonly outward: Vec2;
 }
 
+/** A drop-off's two ends: where a body steps off it, and where it lands. */
+export interface DropOffEnds {
+  readonly layer: number;
+  readonly top: Vec2;
+  readonly landing: Vec2;
+}
+
+/**
+ * Where a body walks off `dropOff` (#3069): a body's clearance in from
+ * its middle, on its layer, and as far out, on the layer below.
+ */
+export function dropOffEnds({ layer, edge, outward }: NavDropOff, clearance: number): DropOffEnds {
+  const middle = scale(add(edge.a, edge.b), 0.5);
+  return {
+    layer,
+    top: add(middle, scale(outward, -(clearance + 1))),
+    landing: add(middle, scale(outward, clearance + 1)),
+  };
+}
+
+/**
+ * The ends of each of `dropOffs` a body stands on at both, on `graphs`:
+ * the ones the path finder walks off. A shut gate may rightly take one
+ * away; on a map as built, none should be (#3481).
+ */
+export function usableDropOffs(
+  graphs: readonly NavGraph[],
+  dropOffs: readonly NavDropOff[],
+  clearance: number,
+): DropOffEnds[] {
+  return dropOffs.flatMap((dropOff) => {
+    const ends = dropOffEnds(dropOff, clearance);
+    const near = graphs[ends.layer];
+    const far = graphs[ends.layer - 1];
+    return near !== undefined &&
+      far !== undefined &&
+      isStandable(near, ends.top) &&
+      isStandable(far, ends.landing)
+      ? [ends]
+      : [];
+  });
+}
+
 /**
  * How far in from the end a body leaves a ramp by its waypoint sits, as a
  * share of its length: a body's clearance in, or the walk to it would run
@@ -1196,21 +1239,11 @@ class AStar implements LayeredPathFinder {
         ? [{ ...teleport, entry, near: -1, far: -1 }]
         : [];
     });
-    // A drop-off is two vertices: a body's clearance in from its middle,
-    // on its layer, and as far out, on the layer below.
-    const drops = dropOffs.flatMap(({ layer, edge, outward }) => {
-      const middle = scale(add(edge.a, edge.b), 0.5);
-      const top = add(middle, scale(outward, -(clearance + 1)));
-      const landing = add(middle, scale(outward, clearance + 1));
-      const near = graphs[layer];
-      const far = graphs[layer - 1];
-      return near !== undefined &&
-        far !== undefined &&
-        isStandable(near, top) &&
-        isStandable(far, landing)
-        ? [{ layer, top, landing, near: -1, far: -1 }]
-        : [];
-    });
+    const drops = usableDropOffs(graphs, dropOffs, clearance).map((drop) => ({
+      ...drop,
+      near: -1,
+      far: -1,
+    }));
     const layers: number[] = [];
     const portals: boolean[] = [];
     const firsts: number[] = [];
