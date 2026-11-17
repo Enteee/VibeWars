@@ -197,10 +197,11 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
   each map's p50 over the baseline's. The `BENCH_MAX_RATIO` gate does not judge these
   rows: walking costs a frame about twice what standing does.
   `BENCH_MAX_FOLLOW_RATIO` fails a map walked that is over that many
-  times the baseline walked. CI gates it at 12 (#3488): a cost every layered
+  times the baseline walked. CI gates it at 8 (#3488): a cost every layered
   map shares cancels out of the `BENCH_MAX_RATIO` ratio, but not out of this
-  one. 12 is the highest value in eight green pull-request runs (10.38,
-  arena-long-hall) times 1.15. A breach is a perf card, not a raise.
+  one. 8 is the highest value in a green pull-request run against the
+  `hollow-deep` baseline (6.32, sandstone-steps, #3436) times 1.15, rounded
+  up. A breach is a perf card, not a raise.
 
 The follow case measures the page through `?frametiming`
 (`render/frame-timing.ts`), which any client takes: open a match with
