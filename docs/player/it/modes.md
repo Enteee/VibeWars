@@ -60,7 +60,7 @@ Il tabellone mostra i punti, i tuoi per primi, e il tempo. Sotto, una riga per o
 
 Anche i bot corrono con la reliquia: il più vicino alla tua reliquia va a prenderla, a meno che non stia per prenderla tu. Parte per primo un bot fuori dallo scontro; se sono tutti impegnati, il più vicino lascia lo scontro per la reliquia, così una situazione di stallo all'altare non ferma mai i punti. Un guaritore o un bot gravemente ferito va solo se non può andare nessun altro, e mai durante uno scontro. Il più vicino a una reliquia nemica caduta la rimanda alla base, e gli altri aspettano vicino all'altare. Un bot che porta la tua reliquia la conduce dritto all'altare; gli altri la lasciano solo per combattere un nemico che arriva a portata d'incantesimo.
 
-Ci si gioca su Broken Tower: l'altare sta dentro una torre in rovina con un'apertura su ogni lato.
+Ci si gioca su Broken Tower (4v4 e 8v8, 5400x2800): una torre crollata su una collina degli altipiani. Sali le scale delle terrazze di macerie fino all'altare sul moncone della torre, oppure passa dalla cantina sotto la collina appena una leva sulla terrazza ne apre le porte; i muri di macerie si possono abbattere.
 
 ### Cinder Sanctum
 

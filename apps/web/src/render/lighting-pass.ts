@@ -418,6 +418,94 @@ function overlaps(a: LightMapBox, b: LightMapBox): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
+/** How far past a stamp or an outline, in light map pixels, its smoothing may colour (#3524). */
+const MARK_MARGIN = 2;
+
+/** How a light map's cover is shown (#3524), in its own pixels. */
+export interface LightMapCells {
+  /** Where the map is its plain outdoor tint, and nothing draws it but a flat fill. */
+  readonly flat: readonly LightMapBox[];
+  /** Where light varies, shown from the light map's texture. */
+  readonly textured: readonly LightMapBox[];
+  /** Where a light reaches, so the warm pools are not black (#3350). */
+  readonly lit: readonly LightMapBox[];
+}
+
+/**
+ * The cover of `layer`'s light map with `extent`, cut into cells of
+ * `LIGHT_MAP_CELL` (#3524). On a software renderer a textured pixel
+ * costs many flat ones, and far from every light the map is one colour:
+ * a cell nothing marks but the base tint is drawn as a flat fill. What
+ * marks a cell is decided from the same shapes the map is drawn from, by
+ * their boxes grown by `MARK_MARGIN`: a light's reach, steady or
+ * flickering (so nothing redrawn after the build lands in a flat cell),
+ * a sun shadow, the indoors, a roof, and the edge of what is erased.
+ * In doubt, a cell is textured.
+ */
+export function lightMapCells(
+  lighting: MapLighting,
+  structure: MapStructure,
+  walls: readonly RenderableWall[],
+  layer: number,
+  extent: LightMapBox,
+  stage: LightingStage,
+): LightMapCells {
+  const inMap = (outline: readonly Vec2[]): readonly Vec2[] =>
+    outline.map(({ x, y }) => ({
+      x: x * LIGHT_MAP_SCALE - extent.x,
+      y: y * LIGHT_MAP_SCALE - extent.y,
+    }));
+  const boxOf = (outline: readonly Vec2[]): LightMapBox => {
+    const xs = outline.map(({ x }) => x);
+    const ys = outline.map(({ y }) => y);
+    const left = Math.floor(Math.min(...xs)) - MARK_MARGIN;
+    const top = Math.floor(Math.min(...ys)) - MARK_MARGIN;
+    return {
+      x: left,
+      y: top,
+      width: Math.ceil(Math.max(...xs)) + MARK_MARGIN - left,
+      height: Math.ceil(Math.max(...ys)) + MARK_MARGIN - top,
+    };
+  };
+  const { steady, flickering } = lightsByStability(lighting, layer, stage);
+  const reach = [...steady, ...flickering].map(({ position, radius }) =>
+    boxOf(
+      inMap([
+        { x: position.x - radius, y: position.y - radius },
+        { x: position.x + radius, y: position.y + radius },
+      ]),
+    ),
+  );
+  const casters = stageShadows(stage) ? shadowCasters(walls, structure, layer) : [];
+  const ground = layer === structure.ground;
+  const marks = [
+    ...reach,
+    ...[
+      ...layerSunShadows(lighting, casters),
+      ...lighting.indoor.map(shapeOutline),
+      ...roofedOver(structure, layer),
+      // The ground's pits are erased; the rest is erased off any other layer.
+      ...(ground ? groundHoles(structure) : []),
+    ]
+      .filter((outline) => outline.length > 0)
+      .map((outline) => boxOf(inMap(outline))),
+  ];
+  const surfaces = ground ? [] : layerSurfaces(structure, layer).map(inMap);
+  const plain = (box: LightMapBox): boolean =>
+    !marks.some((mark) => overlaps(mark, box)) &&
+    (ground || surfaces.some((outline) => boxUnder(outline, box, MARK_MARGIN)));
+  const split = (box: LightMapBox, shows: (cell: LightMapBox) => boolean): readonly LightMapBox[] =>
+    coverBoxes(box.width, box.height, LIGHT_MAP_CELL, (cell) =>
+      shows({ ...cell, x: box.x + cell.x, y: box.y + cell.y }),
+    ).map((cell) => ({ ...cell, x: box.x + cell.x, y: box.y + cell.y }));
+  const cover = lightMapCover(structure, walls, layer, extent);
+  return {
+    flat: cover.flatMap((box) => split(box, plain)),
+    textured: cover.flatMap((box) => split(box, (cell) => !plain(cell))),
+    lit: cover.flatMap((box) => split(box, (cell) => reach.some((mark) => overlaps(mark, cell)))),
+  };
+}
+
 /**
  * What a flicker redraws of a light map with `extent` (#3157, #3254): a box
  * round each group of flickering lights whose reach overlaps, in the map's
@@ -503,6 +591,8 @@ interface LayerMap {
   readonly shown: Phaser.Textures.DynamicTexture;
   /** The map shown, one image per box of it a surface is in (#3162). */
   readonly images: readonly Phaser.GameObjects.Image[];
+  /** The map where it is one colour, as a flat fill (#3524). */
+  readonly flat: Phaser.GameObjects.Graphics;
   /** Of the ground's, the images over each tunnel's cover, by tunnel (#3329). */
   readonly tunnels: ReadonlyMap<number, readonly Phaser.GameObjects.Image[]>;
   readonly outsideKey: string | undefined;
@@ -622,6 +712,7 @@ export class LightingPass {
       for (const image of map.images) {
         image.destroy();
       }
+      map.flat.destroy();
       for (const key of [
         map.baseKey,
         map.shownKey,
@@ -768,11 +859,26 @@ export class LightingPass {
           .setBlendMode(blendMode)
           .setDepth(renderOrder({ kind: "lighting", layer }));
     const image = imageOf(shownKey, Phaser.BlendModes.MULTIPLY);
-    const cover = lightMapCover(structure, this.walls, layer, extent);
-    // The warm pools add over the lit floor, so they are made after it (#3350).
+    const cells = lightMapCells(lighting, structure, this.walls, layer, extent, this.stage);
+    // Where the map is one colour, that colour multiplied flat, untextured (#3524).
+    const flat = this.scene.add
+      .graphics()
+      .setBlendMode(Phaser.BlendModes.MULTIPLY)
+      .setDepth(renderOrder({ kind: "lighting", layer }))
+      .fillStyle(baseTint(lighting, false), 1);
+    for (const { x, y, width, height } of cells.flat) {
+      flat.fillRect(
+        (extent.x + x) / LIGHT_MAP_SCALE,
+        (extent.y + y) / LIGHT_MAP_SCALE - lift,
+        width / LIGHT_MAP_SCALE,
+        height / LIGHT_MAP_SCALE,
+      );
+    }
+    // The warm pools add over the lit floor, so they are made after it (#3350);
+    // where no light reaches they are black, and add nothing.
     const images = [
-      ...cover.map(image),
-      ...(glowKey === undefined ? [] : cover.map(imageOf(glowKey, Phaser.BlendModes.ADD))),
+      ...cells.textured.map(image),
+      ...(glowKey === undefined ? [] : cells.lit.map(imageOf(glowKey, Phaser.BlendModes.ADD))),
     ];
     // The ground's light over a tunnel fades with its cover (#3329).
     const tunnels = new Map(
@@ -787,6 +893,7 @@ export class LightingPass {
       shownKey,
       shown,
       images: [...images, ...[...tunnels.values()].flat()],
+      flat,
       tunnels,
       outsideKey,
       glowKey,

@@ -154,8 +154,7 @@ nepriateľskej relikvii ju pošle domov a ostatní čakajú pri oltári. Bot,
 ktorý nesie tvoju relikviu, s ňou ide rovno na oltár; ostatní opustia
 relikviu, len aby bojovali s nepriateľom, ktorý príde na dostrel kúzla.
 
-Hrá sa na Broken Tower: oltár stojí vo vnútri zrúcanej veže s
-priechodom na každej strane.
+Hrá sa na Broken Tower (4v4 a 8v8, 5400x2800): padnutá veža na kopci vo vysočine. Vyšplhaj sa po schodoch terás z trosiek k oltáru na pahýli veže, alebo choď pivnicou pod kopcom, keď páka na terase otvorí jej dvere; múry z trosiek sa dajú rozbiť.
 
 ### Cinder Sanctum
 

@@ -18,6 +18,7 @@ import {
   flickerRedrawDue,
   groundHoles,
   layerSurfaces,
+  lightMapCells,
   lightMapCover,
   lightMapExtent,
   lightsByStability,
@@ -527,16 +528,27 @@ describe("LightingPass", () => {
     const destroyed = new Set<object>();
     const drawn: { colour: number; alive: boolean }[] = [];
     const images: { key: string; alpha: number; blendMode: number }[] = [];
+    const flats: { colour: number; blendMode: number; rects: number }[] = [];
     const graphics = () => {
       const painter = {
         colour: -1,
+        blendMode: -1,
+        rects: 0,
         fillStyle(colour: number) {
           painter.colour = colour;
           return painter;
         },
         fillPoints: () => painter,
-        fillRect: () => painter,
+        fillRect() {
+          painter.rects += 1;
+          return painter;
+        },
         setScale: () => painter,
+        setDepth: () => painter,
+        setBlendMode(mode: number) {
+          painter.blendMode = mode;
+          return painter;
+        },
         destroy: () => destroyed.add(painter),
       };
       return painter;
@@ -581,6 +593,11 @@ describe("LightingPass", () => {
       },
       make: { graphics },
       add: {
+        graphics: () => {
+          const painter = graphics();
+          flats.push(painter);
+          return painter;
+        },
         image: (_x: number, _y: number, key: string) => {
           const image = {
             key,
@@ -604,7 +621,7 @@ describe("LightingPass", () => {
         },
       },
     };
-    return { scene: scene as unknown as Phaser.Scene, drawn, images };
+    return { scene: scene as unknown as Phaser.Scene, drawn, images, flats };
   }
 
   const STRUCTURE: MapStructure = {
@@ -637,6 +654,20 @@ describe("LightingPass", () => {
       { colour: sunShadowTint(SUNLIT), alive: true },
       { colour: baseTint(SUNLIT, true), alive: true },
     ]);
+  });
+
+  it("fills the plain outdoor tint flat, multiplied, and textures the rest (#3524)", () => {
+    const { scene, images, flats } = fakeScene();
+    const lit: MapLighting = {
+      ...SUNLIT,
+      lights: [{ ...light("lamp", 0, 0), position: { x: 300, y: 300 } }],
+    };
+    new LightingPass(scene).show(lit, STRUCTURE, [], 400, 400, false);
+    expect(flats.map(({ colour, blendMode }) => ({ colour, blendMode }))).toEqual([
+      { colour: baseTint(lit, false), blendMode: MULTIPLY },
+    ]);
+    expect(flats[0]?.rects).toBeGreaterThan(0);
+    expect(images.length).toBeGreaterThan(0);
   });
 
   describe("a tunnel's lights (#3350)", () => {
@@ -683,5 +714,87 @@ describe("LightingPass", () => {
       expect(before.every((alpha) => alpha === 1)).toBe(true);
       expect(faded.some(({ key }) => key.endsWith("-glow"))).toBe(false);
     });
+  });
+});
+
+describe("lightMapCells (#3524)", () => {
+  const ARENA = 1000;
+  const TUNNELLED: MapStructure = {
+    layerCount: 2,
+    biome: "hall",
+    bounds: { kind: "rect" },
+    ground: 1,
+    pits: [],
+    tunnels: [{ footprint: { kind: "rect", x: 100, y: 100, width: 200, height: 80 } }],
+    dropOffs: [],
+    downDecks: [],
+    overhangs: [],
+    decks: [],
+    transitions: [],
+    water: [],
+    zones: [],
+  };
+  const LAMP = { ...light("lamp", 1, 0), position: { x: 600, y: 600 } };
+  const CANDLE = { ...light("candle", 1, 1), position: { x: 800, y: 300 } };
+  const TORCH = { ...light("torch", 0, 0), position: { x: 150, y: 140 } };
+  const LIT: MapLighting = {
+    ...BASE,
+    ambient: { colour: 0xffffff, intensity: 0.5 },
+    lights: [LAMP, CANDLE, TORCH],
+  };
+  /** A light's reach in the light map's own pixels, as a box. */
+  const reach = ({ position, radius }: typeof LAMP, extent: LightMapBox): LightMapBox => ({
+    x: (position.x - radius) / 2 - extent.x,
+    y: (position.y - radius) / 2 - extent.y,
+    width: radius,
+    height: radius,
+  });
+  const meets = (a: LightMapBox, b: LightMapBox): boolean =>
+    a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  const area = (boxes: readonly LightMapBox[]): number =>
+    boxes.reduce((sum, { width, height }) => sum + width * height, 0);
+
+  it("splits the ground's cover into flat and textured, together the whole of it", () => {
+    const extent = lightMapExtent(TUNNELLED, 1, ARENA, ARENA);
+    const cells = lightMapCells(LIT, TUNNELLED, [], 1, extent, "full");
+    expect(area(cells.flat)).toBeGreaterThan(0);
+    expect(area(cells.flat) + area(cells.textured)).toBe(
+      area(lightMapCover(TUNNELLED, [], 1, extent)),
+    );
+    expect(cells.flat.some((cell) => cells.textured.some((other) => meets(cell, other)))).toBe(
+      false,
+    );
+  });
+
+  it("keeps every cell a light reaches textured, steady or flickering", () => {
+    const extent = lightMapExtent(TUNNELLED, 1, ARENA, ARENA);
+    const cells = lightMapCells(LIT, TUNNELLED, [], 1, extent, "full");
+    for (const lamp of [LAMP, CANDLE]) {
+      const box = reach(lamp, extent);
+      expect(cells.flat.some((cell) => meets(cell, box))).toBe(false);
+      expect(cells.textured.some((cell) => meets(cell, box))).toBe(true);
+    }
+  });
+
+  it("shows the warm pools only where a light reaches: the rest is black", () => {
+    const extent = lightMapExtent(TUNNELLED, 0, ARENA, ARENA);
+    const cells = lightMapCells(LIT, TUNNELLED, [], 0, extent, "full");
+    const box = reach(TORCH, extent);
+    expect(cells.lit.length).toBeGreaterThan(0);
+    expect(cells.lit.every((cell) => meets(cell, box))).toBe(true);
+    expect(area(cells.lit)).toBeLessThan(area(lightMapCover(TUNNELLED, [], 0, extent)));
+  });
+
+  it("textures a cell the indoors or a sun shadow marks", () => {
+    const extent = lightMapExtent(TUNNELLED, 1, ARENA, ARENA);
+    const indoor: MapLighting = {
+      ...LIT,
+      lights: [],
+      indoor: [{ kind: "rect", x: 400, y: 800, width: 100, height: 100 }],
+    };
+    const cells = lightMapCells(indoor, TUNNELLED, [], 1, extent, "full");
+    const box = { x: 200 - extent.x, y: 400 - extent.y, width: 50, height: 50 };
+    expect(cells.flat.some((cell) => meets(cell, box))).toBe(false);
+    expect(cells.textured.some((cell) => meets(cell, box))).toBe(true);
   });
 });

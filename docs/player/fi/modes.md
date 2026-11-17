@@ -169,8 +169,7 @@ alttarin luona. Reliikkiäsi kantava botti vie sen suoraan alttarille;
 muut jättävät reliikin vain taistellakseen loitsukantaman sisälle
 tulevaa vihollista vastaan.
 
-Sitä pelaa Broken Tower: alttari seisoo raunioituneen tornin sisällä,
-jossa on oviaukko kummallakin puolella.
+Sitä pelaa Broken Tower (4v4 ja 8v8, 5400x2800): kaatunut torni kukkulalla ylängöllä. Kiipeä raunioterassien portaita alttarille tornin tyngän päälle tai kulje kukkulan alla olevan kellarin kautta, kun terassin vipu avaa sen ovet; raunioseinät voi rikkoa.
 
 ### Cinder Sanctum
 
