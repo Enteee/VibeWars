@@ -410,8 +410,10 @@ runde 1's bane.
 
 En gruppe på færre end 8 stiller sig i kø med bots på sine tomme pladser og bruger sit Holdbuild, men en side har altid mindst ét menneske, og et hold af bots er aldrig en modstander. Hvis det sidste menneske på en side forlader en kamp, giver den side op, og dens løb slutter.
 
-**Barrow Field** er en arena i Opstigningen og kan også vælges i et Værtsspil: 8v8 Præsteudslettelse blandt lave
-jordhøje, hvor præsten genopliver sine døde hvert 2. minut. Bær dit flag
+**Barrow Field** (8v8, 5400x2600) er en arena i Opstigningen og kan også vælges i et Værtsspil: Præsteudslettelse
+på en hede fuld af gravhøje i skumringen, hvor præsten genopliver sine døde hvert 2. minut.
+Klatr op på en gravhøj for at få det høje terræn, eller gå gennem gravgangen under den,
+når et håndtag på den fjerne gravhøj åbner dens port. Bær dit flag
 op på **Stormfyr** i midten, så rammer det én tilfældig fjende inden for
 hørevidde af det med 50 lynskade hvert 2,5 sekund, indtil det andet hold
 planter sit flag der. Hvert slag er en lynstråle fra fyret til den, det

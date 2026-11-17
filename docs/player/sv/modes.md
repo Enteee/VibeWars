@@ -398,8 +398,10 @@ spelar runda 1:s karta.
 
 En grupp med färre än 8 köar med bottar på sina tomma platser, med sin lagbuild, men en sida har alltid minst en människa, och ett lag av bara bottar är aldrig motståndare. Om den sista människan på en sida lämnar en match ger den sidan upp och dess vandring tar slut.
 
-**Barrow Field** är en Ascent-arena, och kan också väljas i ett eget spel: 8v8 Prästförintelse bland låga
-jordkullar, där prästen återupplivar sina döda var 2:a minut. Bär din flagga
+**Barrow Field** (8v8, 5400x2600) är en Ascent-arena, och kan också väljas i ett eget spel: Prästförintelse
+på en hed full av gravhögar i skymningen, där prästen återupplivar sina döda var 2:a minut.
+Klättra upp på en gravhög för höjdläget, eller gå gravgången under den när en spak på den
+bortre gravhögen öppnar dess grind. Bär din flagga
 upp på **Stormfyren** i mitten så slår den en slumpad fiende inom
 hörhåll med 50 blixtskada var 2,5:e sekund, tills det andra laget
 sätter sin flagga där. Varje nedslag är en blixt från fyren till den

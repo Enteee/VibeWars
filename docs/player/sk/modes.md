@@ -383,8 +383,10 @@ hrdinov, ku ktorému si sa pripojil kódom, hrá mapu kola 1.
 
 Družina s menej než 8 hráčmi ide do fronty s botmi na prázdnych miestach a použije svoj tímový build, ale strana má vždy aspoň jedného človeka a tím botov nikdy nie je súperom. Ak posledný človek strany opustí zápas, strana sa vzdá a jej cesta sa končí.
 
-**Barrow Field** je aréna Výstupu a dá sa vybrať aj vo Vlastnej hre: 8v8 Anihilácia kňaza medzi nízkymi
-hlinenými mohylami, kňaz oživuje svojich mŕtvych každé 2 minúty. Odnes svoju vlajku
+**Barrow Field** (8v8, 5400x2600) je aréna Výstupu a dá sa vybrať aj vo Vlastnej hre: Anihilácia kňaza
+na vresovisku plnom hrobových mohýl za súmraku, kňaz oživuje svojich mŕtvych každé 2 minúty.
+Vylez na mohylu pre vyvýšené miesto, alebo prejdi mohylovou chodbou pod ňou, keď páka na
+vzdialenej mohyle otvorí jej bránu. Odnes svoju vlajku
 na **Storm Beacon** uprostred a každých 2,5 sekundy zasiahne jedného náhodného
 nepriateľa v jeho dosahu za 50 bleskového poškodenia, kým druhý tím
 nezapichne svoju vlajku tam. Každý zásah je blesk z majáka do toho, koho zasiahol,
