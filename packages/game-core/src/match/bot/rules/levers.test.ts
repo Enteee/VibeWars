@@ -14,11 +14,12 @@ import type { GateField } from "../../gates.js";
 import { MatchSimulation, type MatchLayers, type ParticipantSpec } from "../../simulation.js";
 import { switchTargetId, type SwitchField } from "../../switches.js";
 import type { TeleportField } from "../../teleports.js";
+import keepLever, { LEVER_REROUTE_SECONDS } from "./keep-lever.js";
 import levers, {
+  LEVER_GIVE_UP_SECONDS,
   LEVER_SETTLE_SECONDS,
   LEVER_WORTH_UNITS,
 } from "./levers.js";
-import { LEVER_GIVE_UP_SECONDS, LEVER_REROUTE_SECONDS } from "./keep-lever.js";
 import {
   BOT,
   BOUNDS,
@@ -372,7 +373,7 @@ describe("levers, shot at from afar (#3150)", () => {
   });
 });
 
-describe("levers, a bot set on one (#3532)", () => {
+describe("levers and keep-lever, a bot set on one (#3532)", () => {
   const sim = match([
     fighter("near", 0, WARRIOR, vec2(200, 400)),
     fighter("far", 0, RANGER, vec2(100, 200)),
@@ -380,21 +381,32 @@ describe("levers, a bot set on one (#3532)", () => {
   ]);
   // From (200, 400) to the lever at (300, 400), at the test's one unit a tick.
   const walk = 100 * DT;
-  /** `near`'s think at `now` with `list` as the levers, its memory in `cursor`. */
+  /**
+   * `near`'s think at `now` with `list` as the levers, its memory in
+   * `cursor`, out of combat for `calm` seconds: `keep-lever`, then
+   * `levers`, in rule order.
+   */
   const set = (
     cursor: BehaviourCursor,
     list: readonly BotLever[],
     now: number,
     context: Partial<BehaviourContext> = {},
-  ) =>
-    levers.decide(
-      ruleFor(
-        sim,
-        "near",
-        { cursor },
-        { objectives: { ...NO_OBJECTIVES, levers: list }, now, ...context },
-      ),
+    calm = now,
+  ) => {
+    const rule = ruleFor(
+      sim,
+      "near",
+      { cursor },
+      { objectives: { ...NO_OBJECTIVES, levers: list }, now, ...context },
     );
+    const self = { ...rule.self, outOfCombatSeconds: calm };
+    const view = {
+      ...rule,
+      self,
+      allies: rule.allies.map((ally) => (ally === rule.self ? self : ally)),
+    };
+    return keepLever.decide(view) ?? levers.decide(view);
+  };
 
   it("keeps walking to its lever when the gain scores 0 on the way", () => {
     const cursor = createCursor();
@@ -428,26 +440,11 @@ describe("levers, a bot set on one (#3532)", () => {
     expect(cursor.lever).toBeUndefined();
   });
 
-  it("drops it when a foe shoots at it", () => {
-    const shot = match([
-      fighter("near", 0, WARRIOR, vec2(200, 400)),
-      fighter("foe", 1, RANGER, vec2(700, 400)),
-    ]);
+  it("drops it when it is hit on the way", () => {
     const cursor = createCursor();
-    const think = () =>
-      levers.decide(
-        ruleFor(
-          shot,
-          "near",
-          { cursor, foeReach: () => 600 },
-          { objectives: { ...NO_OBJECTIVES, levers: [lever(LEVER_WORTH_UNITS)] }, now: 10 },
-        ),
-      );
-    expect(think()?.attackTargetId).toBe(LEVER_ID);
-    const foe = shot.get("foe");
-    if (foe === undefined) throw new Error("no foe");
-    foe.targetId = "near";
-    expect(think()).toBeUndefined();
+    set(cursor, [lever(LEVER_WORTH_UNITS)], 10);
+    // Hit half a second ago, after it set out at 10.
+    expect(set(cursor, [lever(0)], 11, {}, 0.5)).toBeUndefined();
     expect(cursor.lever).toBeUndefined();
   });
 

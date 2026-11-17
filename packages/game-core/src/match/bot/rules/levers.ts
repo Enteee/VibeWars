@@ -1,6 +1,5 @@
 import type { BotLever } from "../../behaviour.js";
 import { countsForTeam } from "../../simulation.js";
-import { LEVER_GIVE_UP_SECONDS } from "./keep-lever.js";
 import { nearestTo, NOTHING, pressed } from "./shared.js";
 import type { BotRule } from "./types.js";
 
@@ -9,6 +8,9 @@ export const LEVER_WORTH_UNITS = 300;
 
 /** A lever anyone threw this recently is left alone, so two teams' bots don't strobe a gate. */
 export const LEVER_SETTLE_SECONDS = 6;
+
+/** A bot set on a lever gives up this long after its walk there should have ended (#3532). */
+export const LEVER_GIVE_UP_SECONDS = 5;
 
 /**
  * Levers (#3138): with no foe near, the bot of its team nearest the lever

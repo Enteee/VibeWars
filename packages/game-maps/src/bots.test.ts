@@ -507,9 +507,18 @@ describe("The Brazen Causeway (#3435)", () => {
     }
   });
 
-  // #3532: a bot set on a lever throws it, though the gain falls as the teams close in.
-  it("opens both gates in a caster mirror before the time limit", () => {
-    const sim = match("brazen-causeway-gates");
+  // #3532: a bot set on a lever throws it, though the gain falls as it nears the foes. The foes
+  // hold back: in a mirror both teams' lever bots meet on the centre-north stair and fight there.
+  it("opens both gates before the time limit while the foes hold back", () => {
+    const sim = new MatchSimulation({
+      seed: "brazen-causeway-gates",
+      ruleset: RULESET,
+      matchRules: ANNIHILATION_MATCH_RULES,
+      ...mapSimulationFields(map, 2),
+      participants: casterBots(map, 2).map((spec) =>
+        spec.team === 1 ? { ...spec, behaviour: undefined } : spec,
+      ),
+    });
     for (
       let t = 0;
       t <= ANNIHILATION_MATCH_RULES.timeLimitSeconds &&

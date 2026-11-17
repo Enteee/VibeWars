@@ -2,9 +2,6 @@ import { distance } from "../../../vec2.js";
 import { ELBOW_DISTANCE, NOTHING } from "./shared.js";
 import type { BotRule } from "./types.js";
 
-/** A bot set on a lever gives up this long after its walk there should have ended (#3532). */
-export const LEVER_GIVE_UP_SECONDS = 5;
-
 /** How often a bot set on a lever looks again for a route to it (#3532), in match seconds. */
 export const LEVER_REROUTE_SECONDS = 1;
 
