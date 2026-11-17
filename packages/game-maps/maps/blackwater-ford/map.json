@@ -285,7 +285,7 @@
           }
         ]
       },
-      "look": "terrace",
+      "look": "platform",
       "switched": null
     },
     {
@@ -316,7 +316,7 @@
           }
         ]
       },
-      "look": "terrace",
+      "look": "platform",
       "switched": null
     },
     {
@@ -343,7 +343,7 @@
           }
         ]
       },
-      "look": "rooftop",
+      "look": "pier",
       "switched": null
     }
   ],
@@ -1803,6 +1803,30 @@
         "colour": 16756832,
         "intensity": 0.7,
         "flicker": 0
+      },
+      {
+        "id": "brazier-west-camp",
+        "position": {
+          "x": 640,
+          "y": 1785
+        },
+        "layer": 1,
+        "radius": 190,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "brazier-east-camp",
+        "position": {
+          "x": 4560,
+          "y": 999
+        },
+        "layer": 1,
+        "radius": 190,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
       }
     ]
   },
@@ -2063,6 +2087,30 @@
             "y": 990
           }
         ]
+      }
+    },
+    {
+      "id": "west-camp",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "rect",
+        "x": 380,
+        "y": 1570,
+        "width": 240,
+        "height": 440
+      }
+    },
+    {
+      "id": "east-camp",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "rect",
+        "x": 4604,
+        "y": 780,
+        "width": 240,
+        "height": 440
       }
     }
   ]
