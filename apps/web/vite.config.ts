@@ -4,6 +4,7 @@ import { defineConfig, type Plugin } from "vite";
 
 import { arenaAtlasPlugin } from "./plugins/arena-atlas.js";
 import { licencesPlugin } from "./plugins/licences.js";
+import { siteMetaPlugin } from "./plugins/site-meta.js";
 
 // The transport the client plays over (#403): see `src/net/transport/index.ts`.
 // A typo would otherwise build a client that quietly uses Trystero.
@@ -72,7 +73,7 @@ export default defineConfig({
   },
   // Every bundled npm package's licence, for Options (#1242, ADR-0039), and
   // the arena's icon sheet (#1671).
-  plugins: [licencesPlugin(), arenaAtlasPlugin(), buildFile()],
+  plugins: [licencesPlugin(), arenaAtlasPlugin(), siteMetaPlugin(), buildFile()],
   build: {
     outDir: "dist",
     emptyOutDir: true,
