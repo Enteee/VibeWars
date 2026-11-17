@@ -330,7 +330,7 @@ function frameTimes(page, seconds = SECONDS) {
 }
 
 /** `--follow`'s flat baseline beside the layered maps. */
-const FLAT_BASELINE = "elite-zaishen-battle";
+const FLAT_BASELINE = "hollow-deep";
 /** How long `--follow` walks its loop, measured. */
 const FOLLOW_SECONDS = Number(process.env.BENCH_FOLLOW_SECONDS ?? 12);
 /** One step of the walk: the pointer moves, and every `CLICK_EVERY`th step it clicks. */
