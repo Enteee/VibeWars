@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { branchesToPrune, formatPrune, formatSummary } from "./hub-branches.mjs";
+import {
+  branchesToPrune,
+  deleteBranches,
+  formatPrune,
+  formatSummary,
+  refPath,
+} from "./hub-branches.mjs";
 
 const DAY = 24 * 60 * 60_000;
 const NOW = Date.UTC(2026, 10, 17);
@@ -101,5 +107,74 @@ describe("formatting", () => {
     expect(formatSummary({ deleted: rows, kept: 4 })).toBe(
       "pruned 2 branches (1 merged, 1 idle); kept 4",
     );
+  });
+});
+
+describe("deleteBranches", () => {
+  const chosen = [
+    { name: "bot/a/one", sha: "1", rule: "merged #1" },
+    { name: "bot/a/two", sha: "2", rule: "idle 20d" },
+  ];
+
+  /**
+   * @param {Record<string, { sha: string } | "gone" | "error">} refs
+   * @param {Record<string, "deleted" | "gone" | "error">} removes
+   */
+  function github(refs, removes = {}) {
+    /** @type {string[]} */
+    const removed = [];
+    return {
+      removed,
+      readRef: (/** @type {string} */ name) => Promise.resolve(refs[name] ?? "error"),
+      remove: (/** @type {string} */ name) => {
+        removed.push(name);
+        return Promise.resolve(removes[name] ?? "deleted");
+      },
+    };
+  }
+
+  it("deletes a branch whose tip is where the sweep saw it", async () => {
+    const gh = github({ "bot/a/one": { sha: "1" }, "bot/a/two": { sha: "2" } });
+    const out = await deleteBranches(chosen, gh);
+    expect(gh.removed).toEqual(["bot/a/one", "bot/a/two"]);
+    expect(out.deleted).toHaveLength(2);
+  });
+
+  it("keeps a branch pushed to since", async () => {
+    const gh = github({ "bot/a/one": { sha: "9" }, "bot/a/two": { sha: "2" } });
+    const out = await deleteBranches(chosen, gh);
+    expect(gh.removed).toEqual(["bot/a/two"]);
+    expect(out.skipped).toBe(1);
+  });
+
+  it("counts a ref that is already gone without deleting it", async () => {
+    const gh = github({ "bot/a/one": "gone", "bot/a/two": { sha: "2" } });
+    const out = await deleteBranches(chosen, gh);
+    expect(gh.removed).toEqual(["bot/a/two"]);
+    expect(out.deleted).toHaveLength(2);
+  });
+
+  it("stops without deleting when the re-read fails", async () => {
+    const gh = github({ "bot/a/one": "error", "bot/a/two": { sha: "2" } });
+    const out = await deleteBranches(chosen, gh);
+    expect(gh.removed).toEqual([]);
+    expect(out.stoppedAt).toBe("bot/a/one");
+  });
+
+  it("stops when a delete fails", async () => {
+    const gh = github(
+      { "bot/a/one": { sha: "1" }, "bot/a/two": { sha: "2" } },
+      { "bot/a/one": "error" },
+    );
+    const out = await deleteBranches(chosen, gh);
+    expect(gh.removed).toEqual(["bot/a/one"]);
+    expect(out.deleted).toEqual([]);
+    expect(out.stoppedAt).toBe("bot/a/one");
+  });
+});
+
+describe("refPath", () => {
+  it("encodes each segment and keeps the slashes", () => {
+    expect(refPath("bot/a/x#1%")).toBe("bot/a/x%231%25");
   });
 });

@@ -110,3 +110,52 @@ export function formatSummary({ deleted, kept }) {
   const merged = deleted.filter((row) => row.rule.startsWith("merged")).length;
   return `pruned ${String(deleted.length)} branches (${String(merged)} merged, ${String(deleted.length - merged)} idle); kept ${String(kept)}`;
 }
+
+/**
+ * A branch name as a URL path: each segment encoded, the slashes kept.
+ *
+ * @param {string} name
+ * @returns {string}
+ */
+export function refPath(name) {
+  return name.split("/").map(encodeURIComponent).join("/");
+}
+
+/**
+ * Delete the chosen branches, one at a time. Just before each delete the ref
+ * is read again: a tip that moved since the sweep read it is kept, and only a
+ * confirmed "not found" counts as already gone. Anything else GitHub says
+ * (rate limit, 5xx, network) stops the sweep: never delete on a guess.
+ *
+ * @param {readonly Prune[]} chosen
+ * @param {{
+ *   readRef: (name: string) => Promise<{ sha: string } | "gone" | "error">,
+ *   remove: (name: string) => Promise<"deleted" | "gone" | "error">,
+ * }} github
+ * @returns {Promise<{ deleted: Prune[], skipped: number, stoppedAt: string | null }>}
+ */
+export async function deleteBranches(chosen, github) {
+  /** @type {Prune[]} */
+  const deleted = [];
+  let skipped = 0;
+  for (const row of chosen) {
+    const now = await github.readRef(row.name);
+    if (now === "error") {
+      return { deleted, skipped, stoppedAt: row.name };
+    }
+    if (now === "gone") {
+      deleted.push(row);
+      continue;
+    }
+    if (now.sha !== row.sha) {
+      skipped += 1;
+      continue;
+    }
+    const result = await github.remove(row.name);
+    if (result === "error") {
+      return { deleted, skipped, stoppedAt: row.name };
+    }
+    deleted.push(row);
+  }
+  return { deleted, skipped, stoppedAt: null };
+}

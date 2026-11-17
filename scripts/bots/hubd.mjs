@@ -225,7 +225,13 @@ import {
 } from "./hub-policy.mjs";
 import { HeavyLeases } from "./heavy-lease.mjs";
 import { readRunnerLogs } from "./runner-logs.mjs";
-import { branchesToPrune, formatPrune, formatSummary } from "./hub-branches.mjs";
+import {
+  branchesToPrune,
+  deleteBranches,
+  formatPrune,
+  formatSummary,
+  refPath,
+} from "./hub-branches.mjs";
 import {
   closedIssues,
   parseTracking,
@@ -1676,13 +1682,15 @@ async function sweepTracking(cfg) {
 /**
  * Pull requests of this repository, newest activity first, as far as
  * `MAX_PAGES` reaches. A branch whose PR is older than that is judged on
- * its own age.
+ * its own age. With `whole`, a list that does not fit is a failure, not a
+ * truncation.
  *
  * @param {string} state
  * @param {ReturnType<typeof company>} cfg
+ * @param {boolean} whole
  * @returns {Promise<unknown[] | undefined>}
  */
-async function readPulls(state, cfg) {
+async function readPulls(state, cfg, whole) {
   /** @type {unknown[]} */
   const rows = [];
   for (let page = 1; page <= MAX_PAGES; page += 1) {
@@ -1697,10 +1705,10 @@ async function readPulls(state, cfg) {
     const got = answer;
     rows.push(...got);
     if (got.length < 100) {
-      break;
+      return rows;
     }
   }
-  return rows;
+  return whole ? undefined : rows;
 }
 
 /**
@@ -1712,8 +1720,8 @@ async function readPulls(state, cfg) {
  */
 async function readBranches(cfg) {
   const listed = await restPages("branches", cfg);
-  const pulls = await readPulls("all", cfg);
-  const open = await readPulls("open", cfg);
+  const pulls = await readPulls("all", cfg, false);
+  const open = await readPulls("open", cfg, true);
   if (listed === undefined || pulls === undefined || open === undefined) {
     return null;
   }
@@ -1742,6 +1750,14 @@ async function readBranches(cfg) {
   }
   for (const row of open) {
     const pull = obj(row);
+    if (obj(obj(pull.head).repo).full_name === cfg.repo) {
+      add(String(obj(pull.head).ref), {
+        number: Number(pull.number),
+        state: "OPEN",
+        closedAt: null,
+        role: "head",
+      });
+    }
     add(String(obj(pull.base).ref), {
       number: Number(pull.number),
       state: "OPEN",
@@ -1772,47 +1788,67 @@ async function readBranches(cfg) {
   return rows;
 }
 
+/** The last read of the branches, so a run of dry-runs costs GitHub one read. */
+let branchPlan = { at: 0, rows: /** @type {import("./hub-branches.mjs").BranchRow[]} */ ([]) };
+const BRANCH_PLAN_FRESH_MS = 5 * 60_000;
+
 /**
  * Delete what the prune rules select (#3533), or only say what they would.
- * Just before each delete the ref is read again: a branch pushed to since is
- * kept. Stops at the first rate limit or server error; the next sweep goes on.
+ * See `deleteBranches` for what keeps a branch. A dry-run may use a read up
+ * to five minutes old; a real sweep always reads afresh.
  *
  * @param {ReturnType<typeof company>} cfg
  * @param {{ dryRun: boolean }} options
  * @returns {Promise<{ text: string, deleted: number } | { error: string }>}
  */
 async function sweepBranches(cfg, { dryRun }) {
-  const rows = await readBranches(cfg);
+  const cached = dryRun && Date.now() - branchPlan.at < BRANCH_PLAN_FRESH_MS;
+  const rows = cached ? branchPlan.rows : await readBranches(cfg);
   if (rows === null) {
     return { error: "GitHub could not be asked for the branches" };
+  }
+  if (!cached) {
+    branchPlan = { at: Date.now(), rows };
   }
   const chosen = branchesToPrune(rows, Date.now());
   if (dryRun) {
     return { text: formatPrune(chosen), deleted: 0 };
   }
-  /** @type {typeof chosen} */
-  const deleted = [];
-  for (const row of chosen) {
-    const now = obj(await rest(`git/ref/heads/${row.name}`, cfg));
-    if (obj(now.object).sha !== row.sha && now.ref !== undefined) {
-      continue;
-    }
-    const result = await gh([
-      "api",
-      "-X",
-      "DELETE",
-      `repos/${cfg.repo}/git/refs/heads/${row.name}`,
-    ]);
-    if (result.code !== 0 && !/HTTP (404|422)/.test(result.stderr)) {
-      console.error(`hubd: branches: stopped at ${row.name}: ${result.stderr.trim()}`);
-      break;
-    }
-    console.error(`hubd: pruned ${row.name} (${row.rule})`);
-    deleted.push(row);
+  const done = await deleteBranches(chosen, {
+    readRef: async (name) => {
+      const result = await gh(["api", `repos/${cfg.repo}/git/ref/heads/${refPath(name)}`]);
+      if (result.code !== 0) {
+        return result.stderr.includes("HTTP 404") ? "gone" : "error";
+      }
+      try {
+        const sha = obj(obj(JSON.parse(result.stdout)).object).sha;
+        return typeof sha === "string" ? { sha } : "error";
+      } catch {
+        return "error";
+      }
+    },
+    remove: async (name) => {
+      const result = await gh([
+        "api",
+        "-X",
+        "DELETE",
+        `repos/${cfg.repo}/git/refs/heads/${refPath(name)}`,
+      ]);
+      if (result.code !== 0 && !/HTTP (404|422)/.test(result.stderr)) {
+        console.error(`hubd: branches: could not delete ${name}: ${result.stderr.trim()}`);
+        return "error";
+      }
+      console.error(`hubd: pruned ${name}`);
+      return "deleted";
+    },
+  });
+  if (done.stoppedAt !== null) {
+    console.error(`hubd: branches: stopped at ${done.stoppedAt}; the next sweep goes on`);
   }
+  branchPlan = { at: 0, rows: [] };
   return {
-    text: formatSummary({ deleted, kept: rows.length - deleted.length }),
-    deleted: deleted.length,
+    text: formatSummary({ deleted: done.deleted, kept: rows.length - done.deleted.length }),
+    deleted: done.deleted.length,
   };
 }
 
@@ -1828,6 +1864,9 @@ const BRANCH_SWEEP_MS = Number(process.env.HUBD_BRANCH_SWEEP_MS ?? 24 * 60 * 60_
  * @returns {Promise<Record<string, unknown>>}
  */
 async function branchVerb(argv, cfg) {
+  if (Date.now() < limitedUntil) {
+    return limitedResponse();
+  }
   const answer = await sweepBranches(cfg, { dryRun: argv.includes("--dry-run") });
   return "error" in answer
     ? { allow: true, code: 1, stdout: "", stderr: `${answer.error}\n` }
@@ -6128,7 +6167,7 @@ async function main() {
   writeNudges();
   let lastKpis = 0;
   let lastTrackingSweep = 0;
-  let lastBranchSweep = Date.now();
+  let lastBranchSweep = 0;
   for (;;) {
     readStaffed();
     /** @type {[string, string | null][]} */
