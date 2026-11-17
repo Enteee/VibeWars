@@ -32,7 +32,8 @@
  *
  * Then the follow case: on every map measured and `FLAT_BASELINE`, a Hosted
  * 1v1 whose body walks `followLoop` while the camera follows it and the
- * pointer hovers the ground, uncapped. Its rows join the table, outside
+ * pointer hovers the ground, uncapped, the wheel zooming out and in on the
+ * way (#3545). Its rows join the table, outside
  * the calibration's gate: walking costs a frame about twice what standing
  * does. A second table gives the frame's update and render JS, the
  * update's share of the frame, the snapshot cadence, the host's ms per
@@ -349,6 +350,22 @@ const PROFILE = process.env.BENCH_PROFILE;
 /** One step of the walk: the pointer moves, and every `CLICK_EVERY`th step it clicks. */
 const STEP_MS = 50;
 const CLICK_EVERY = 6;
+/**
+ * The wheel during the walk (#3545), by step within each `ZOOM_EVERY`:
+ * out to Wide, in to Close, and back out to Default, a notch apiece, the
+ * notches further apart than the wheel's lockout. None on a click step.
+ */
+const ZOOM_EVERY = 80;
+const ZOOM_NOTCHES = new Map([
+  [10, 1],
+  [25, -1],
+  [28, -1],
+  [31, -1],
+  [55, 1],
+  [58, 1],
+]);
+/** One wheel notch's `deltaY` (`WHEEL_NOTCH_DELTA`). */
+const NOTCH_DELTA = 40;
 /** A waypoint this close, in world units, is reached. */
 const REACHED = 90;
 /** Where on the canvas the walk may click, as a share of its size: clear of the HUD. */
@@ -524,6 +541,10 @@ async function follow(page, mapId) {
           box.height *
             (CLICK_BOX.top + (CLICK_BOX.bottom - CLICK_BOX.top) * (((step * 53) % 100) / 100)),
       );
+      const notch = ZOOM_NOTCHES.get(step % ZOOM_EVERY);
+      if (notch !== undefined) {
+        await page.mouse.wheel(0, notch * NOTCH_DELTA);
+      }
     }
     await sleep(STEP_MS);
   }

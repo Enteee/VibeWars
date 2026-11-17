@@ -37,3 +37,34 @@ export function mapLayerChanged(drawn: MapLayer | undefined, next: MapLayer): bo
     drawn.zoom !== next.zoom
   );
 }
+
+/** A zoom this far from the drawn one, either way, draws the map again at once (#3545). */
+export const ZOOM_REDRAW_RATIO = 1.25;
+/** A zoom that moved less than this share of itself since last frame has stopped easing. */
+export const ZOOM_SETTLED = 1e-4;
+/** A stopped zoom this close to the drawn one keeps it: its lines are within 1 % of 1 CSS px. */
+export const ZOOM_DRIFT = 1e-2;
+
+/**
+ * The zoom the map layer is drawn at (#3545). The camera eases its zoom
+ * every frame, and drawing the whole map each of them is the lag of a
+ * zoom: the drawn zoom holds until the camera's is 25 % off, or has
+ * stopped. The ease only nears its end, so a stopped zoom within
+ * `ZOOM_DRIFT` of the drawn one keeps it, or its tail would redraw the
+ * map every frame for seconds.
+ */
+export function layerZoom(
+  drawn: number | undefined,
+  current: number,
+  previous: number | undefined,
+): number {
+  if (drawn === undefined) {
+    return current;
+  }
+  const ratio = current / drawn;
+  if (ratio > ZOOM_REDRAW_RATIO || ratio < 1 / ZOOM_REDRAW_RATIO) {
+    return current;
+  }
+  const settled = previous !== undefined && Math.abs(current - previous) <= ZOOM_SETTLED * current;
+  return settled && Math.abs(current - drawn) > ZOOM_DRIFT * current ? current : drawn;
+}
