@@ -367,7 +367,7 @@ de la ronda 1.
 
 Un grupo de menos de 8 entra en la cola con bots en los puestos vacíos, usando su build de equipo, pero un bando siempre tiene al menos un humano, y un equipo de bots nunca es rival. Si el último humano de un bando abandona una partida, ese bando se rinde y su recorrido termina.
 
-**Barrow Field** es una arena del Ascenso que también se elige en una Partida alojada: Aniquilación de sacerdote 8v8 entre túmulos bajos de tierra, y el sacerdote resucita a sus muertos cada 2 minutos. Lleva tu bandera al **Storm Beacon** del centro y golpeará a un enemigo al azar a distancia de oído con 50 de daño de rayo cada 2,5 segundos, hasta que el otro equipo plante allí su bandera. Cada golpe es un rayo del faro a quien alcanza, visible para ambos equipos.
+**Barrow Field** (8v8, 5400x2600) es una arena del Ascenso que también se elige en una Partida alojada: Aniquilación de sacerdote en un páramo de túmulos funerarios al anochecer, y el sacerdote resucita a sus muertos cada 2 minutos. Sube a un túmulo para tener la altura, o recorre el paso de los túmulos por debajo cuando una palanca en el túmulo lejano abra su puerta. Lleva tu bandera al **Storm Beacon** del centro y golpeará a un enemigo al azar a distancia de oído con 50 de daño de rayo cada 2,5 segundos, hasta que el otro equipo plante allí su bandera. Cada golpe es un rayo del faro a quien alcanza, visible para ambos equipos.
 
 Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow Deep** (Aniquilación
 8v8, tres túneles sinuosos alrededor de una roca central), **Blackwater Ford**

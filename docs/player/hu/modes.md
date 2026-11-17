@@ -477,9 +477,11 @@ Csapatbuildjét használva, de egy oldalon mindig van legalább egy ember,
 és botcsapat sosem ellenfél. Ha egy oldal utolsó embere kilép egy
 meccsből, az az oldal feladja, és az útja véget ér.
 
-A **Barrow Field** a Hősök Útja arénája, és a Saját játékban is
-választható: 8v8 Papirtás alacsony földhalmok között, ahol a pap 2
-percenként feltámasztja a halottait. Vidd fel a zászlódat a középen
+A **Barrow Field** (8v8, 5400x2600) a Hősök Útja arénája, és a Saját
+játékban is választható: Papirtás sírhalmokkal teli lápon, alkonyatkor,
+ahol a pap 2 percenként feltámasztja a halottait. Mássz fel egy halomra
+a magaslatért, vagy menj át alatta a halomjáraton, amint a túlsó halmon
+egy kar kinyitja a kapuját. Vidd fel a zászlódat a középen
 álló **Storm Beacon**-re, és az 2,5 másodpercenként lesújt egy
 véletlen, hallótávolságon belüli ellenségre 50 villámsebzéssel, amíg a
 másik csapat le nem szúrja ott a zászlaját. Minden csapás egy villám a

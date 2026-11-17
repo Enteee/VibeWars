@@ -386,7 +386,7 @@ rodada 1.
 
 Um grupo com menos de 8 entra na fila com bots nos lugares vazios, usando sua Build de Equipe, mas um lado sempre tem pelo menos um humano, e uma equipe de bots nunca é adversária. Se o último humano de um lado sair de uma partida, esse lado desiste e sua subida termina.
 
-**Barrow Field** é uma arena da Ascensão que você também pode escolher em uma Partida Hospedada: Aniquilação de Sacerdotes 8v8 entre montes baixos de terra, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
+**Barrow Field** (8v8, 5400x2600) é uma arena da Ascensão que você também pode escolher em uma Partida Hospedada: Aniquilação de Sacerdotes em um charco de túmulos ao entardecer, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Suba em um túmulo para ter o terreno alto, ou siga a passagem dos túmulos por baixo dele quando uma alavanca no túmulo distante abrir o portão. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
 
 Três arenas da Ascensão também podem ser escolhidas em uma Partida Hospedada: **The Hollow Deep** (8v8 de Aniquilação, três túneis sinuosos
 em volta de uma rocha central),

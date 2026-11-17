@@ -14,7 +14,7 @@ describe("sizeClass (#444, #2547)", () => {
     expect(sizeClass({ width: 4801, height: 100 })).toBe("large");
   });
 
-  it("calls every arena today small, but Crossroads and Long Hall (#3071) medium, Shiverpeak Pass and Elonian Plateau (#2609), Moss Vale (#3288) Ashen Courtyard (#3413) and Blackwater Ford (#3434) large", () => {
+  it("calls every arena today small, but Crossroads and Long Hall (#3071) medium, Shiverpeak Pass and Elonian Plateau (#2609), Moss Vale (#3288), Ashen Courtyard (#3413), Barrow Field (#3433) and Blackwater Ford (#3434) large", () => {
     expect(Object.fromEntries(loadAllMaps().map((map) => [map.id, sizeClass(map)]))).toEqual({
       "ember-pits": "small",
       "jungle-ruins": "small",
@@ -28,7 +28,7 @@ describe("sizeClass (#444, #2547)", () => {
       "hall-of-heroes-king": "small",
       "hall-of-heroes-relic": "small",
       "hall-of-heroes-capture": "small",
-      "barrow-field": "small",
+      "barrow-field": "large",
       "elite-zaishen-battle": "small",
       "hollow-deep": "medium",
       "blackwater-ford": "large",

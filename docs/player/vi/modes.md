@@ -380,9 +380,11 @@ bằng mã sẽ chơi bản đồ của vòng 1.
 
 Tổ đội ít hơn 8 người sẽ xếp hàng với bot ở các chỗ trống, dùng Build đội của mình, nhưng một bên luôn có ít nhất một người thật, và đối thủ không bao giờ là một đội toàn bot. Nếu người thật cuối cùng của một bên rời trận, bên đó bị xử thua và hành trình của họ kết thúc.
 
-**Barrow Field** là một đấu trường của Đỉnh, và cũng là lựa chọn của Trận tự
-tạo: Diệt tư tế 8v8 giữa những gò đất thấp, tư tế hồi sinh người chết của
-đội mỗi 2 phút. Mang cờ của bạn lên **Đèn Hiệu Bão Tố** ở giữa và nó sẽ đánh
+**Barrow Field** (8v8, 5400x2600) là một đấu trường của Đỉnh, và cũng là lựa
+chọn của Trận tự tạo: Diệt tư tế trên một vùng đồng hoang đầy mộ gò lúc hoàng
+hôn, tư tế hồi sinh người chết của đội mỗi 2 phút. Leo lên một gò mộ để chiếm
+chỗ cao, hoặc đi theo lối mộ bên dưới nó khi một cần gạt trên gò mộ phía xa mở
+cổng của nó. Mang cờ của bạn lên **Đèn Hiệu Bão Tố** ở giữa và nó sẽ đánh
 một địch ngẫu nhiên trong tầm nghe của nó, gây 50 sát thương sét mỗi 2,5
 giây, cho đến khi đội kia cắm cờ của mình lên đó. Mỗi cú đánh là một tia sét
 từ đèn hiệu tới người bị trúng, cả hai đội đều thấy.

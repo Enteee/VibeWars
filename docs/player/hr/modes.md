@@ -379,8 +379,10 @@ heroja u koju se uđe kôdom igra kartu runde 1.
 
 Grupa manja od 8 ulazi u red s botovima na praznim mjestima, koristeći svoj timski sastav, ali strana uvijek ima barem jednog čovjeka i tim samih botova nikad nije protivnik. Ako zadnji čovjek neke strane napusti meč, ta strana predaje i njezin uspon završava.
 
-**Barrow Field** je arena Uspona, a može je odabrati i Igra s domaćinom: 8v8 Uništenje sa svećenikom među niskim
-zemljanim humcima, svećenik diže svoje mrtve svake 2 minute. Nosi svoju zastavu
+**Barrow Field** (8v8, 5400x2600) je arena Uspona, a može je odabrati i Igra s domaćinom: Uništenje sa svećenikom
+na vrištini punoj grobnih humaka u sumrak, svećenik diže svoje mrtve svake 2 minute.
+Popni se na humak za višu poziciju ili prođi prolazom humaka ispod njega kad poluga na
+dalekom humku otvori njegova vrata. Nosi svoju zastavu
 na **Olujni svjetionik** u sredini i on svake 2,5 sekunde udara jednog nasumičnog neprijatelja u
 dosegu s 50 štete od munje, dok drugi tim ne
 postavi svoju zastavu tamo. Svaki udarac je munja od svjetionika do onoga koga je pogodila,

@@ -440,9 +440,12 @@ botlarla sıraya girer, ama bir tarafta her zaman en az bir insan olur ve
 hiçbir bot takımı asla rakip olmaz. Bir tarafın son insanı maçtan
 ayrılırsa o taraf hükmen kaybeder ve tırmanışı biter.
 
-**Barrow Field** bir Yükseliş arenasıdır ve aynı zamanda Özel Oyun'da
-seçilebilir: alçak toprak höyükler arasında 8v8 Rahip İmhası; rahip
-ölülerini her 2 dakikada bir diriltir. Bayrağını ortadaki **Fırtına
+**Barrow Field** (8v8, 5400x2600) bir Yükseliş arenasıdır ve aynı
+zamanda Özel Oyun'da seçilebilir: alacakaranlıkta mezar höyükleriyle
+dolu bir bozkırda Rahip İmhası; rahip ölülerini her 2 dakikada bir
+diriltir. Yüksek zemin için bir höyüğe tırman ya da uzaktaki höyükteki
+bir kol kapısını açınca altındaki höyük yolundan yürü. Bayrağını
+ortadaki **Fırtına
 İşareti**'ne taşı; diğer takım bayrağını oraya dikene kadar, işaretin
 duyma mesafesindeki rastgele bir düşmana her 2,5 saniyede bir 50
 yıldırım hasarıyla çarpar. Her çarpma, işaretten vurduğu kişiye uzanan,

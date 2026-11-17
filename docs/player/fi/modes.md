@@ -416,8 +416,10 @@ pelaa kierroksen 1 karttaa.
 
 Alle 8 hengen ryhmä jonottaa botit tyhjillä paikoillaan tiimibuildinsa mukaisesti, mutta puolella on aina vähintään yksi ihminen, eikä pelkkien bottien tiimi ole koskaan vastustaja. Jos puolen viimeinen ihminen poistuu ottelusta, se puoli luovuttaa ja sen nousu päättyy.
 
-**Barrow Field** on Nousun areena ja myös Isännöidyn pelin valinta: 8v8-Pappituho matalien
-maakumpujen keskellä, pappi herättää kuolleensa joka 2. minuutti. Kanna lippusi
+**Barrow Field** (8v8, 5400x2600) on Nousun areena ja myös Isännöidyn pelin valinta: Pappituho
+hautakumpujen nummella hämärässä, pappi herättää kuolleensa joka 2. minuutti. Kiipeä
+kummulle korkealle maalle, tai kulje sen alta kumpukäytävää, kun kaukaisen kummun vipu
+avaa sen portin. Kanna lippusi
 keskellä olevalle **Myrskymajakalle**, niin se iskee yhteen satunnaiseen
 kuuloetäisyydellä olevaan viholliseen 50 salamavahinkoa 2,5 sekunnin välein,
 kunnes toinen tiimi pystyttää lippunsa sinne. Jokainen isku on salama

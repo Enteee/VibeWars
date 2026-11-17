@@ -1,8 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { MatchSimulation, STARTER_BUILDS, vec2, type Vec2 } from "@vibewars/game-core";
+import {
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  MatchSimulation,
+  STARTER_BUILDS,
+  createLayeredPathFinder,
+  vec2,
+  type Vec2,
+} from "@vibewars/game-core";
 
+import { matchLayers } from "../layers.js";
 import { loadAllMaps, loadMap } from "../loader.js";
+import { mapNavGraphs } from "../nav-graphs.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
 import type { MapData } from "../schema.js";
 import {
@@ -376,6 +385,174 @@ describe("walks and high ground (#3070)", () => {
       expect(ground0).toBeGreaterThan(0);
       expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.1);
     }, 60_000);
+  });
+
+  // Barrow Field (#3433): the centre is the standing stones on the moor. Three ways there: the moor
+  // road, over the team's own barrow (its stair, across the top, off the drop-off facing the centre)
+  // and the barrow way under it, through the gate. The walk tool paths no drop-off, so the barrow is
+  // walked to the drop's top and on from its landing; the barrow way to the gate and on from there.
+  // As loaded the gates are shut and the fallen stone stands.
+  describe("Barrow Field", () => {
+    const map = loadMap("barrow-field");
+    const RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
+    const shut = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const stones = { x: 2700, y: 1300 };
+    const shrines = [
+      { x: 700, y: 980 },
+      { x: 4720, y: 1620 },
+    ];
+    const gates = [
+      { x: 1500, y: 760 },
+      { x: 3900, y: 1840 },
+    ];
+    const stairs = ["west-barrow-stair", "east-barrow-stair"];
+    const barrowStairs = [...stairs, "north-barrow-stair", "south-barrow-stair"];
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** `on` with each team's one spawn at `points[team]` on `layer`. */
+    const from = (on: MapData, points: readonly Vec2[], layer = 1): MapData => ({
+      ...on,
+      spawnPoints: points.map((position, team) => ({ team, layer, position })),
+    });
+    /** Each team's walk to its own point of `to`, along its own route. */
+    const toOwn = (
+      on: MapData,
+      to: readonly Vec2[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? stones, layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    const sum = (...legs: readonly (readonly number[])[]): number[] =>
+      [0, 1].map((team) => legs.reduce((total, leg) => total + (leg[team] ?? 0), 0));
+    // The drop-off off each team's own barrow facing the stones, two bodies' clearance either side.
+    const drops = matchLayers(map)
+      .dropOffs.slice(0, 2)
+      .map(({ edge, outward }) => {
+        const middle = { x: (edge.a.x + edge.b.x) / 2, y: (edge.a.y + edge.b.y) / 2 };
+        const by = 2 * RADIUS;
+        return {
+          top: { x: middle.x - outward.x * by, y: middle.y - outward.y * by },
+          landing: { x: middle.x + outward.x * by, y: middle.y + outward.y * by },
+        };
+      });
+    const overTheBarrow = (on: MapData): number[] =>
+      sum(
+        toOwn(
+          on,
+          drops.map(({ top }) => top),
+          2,
+          (team) => ({ through: [stairs[team] ?? ""] }),
+        ),
+        drops.map(() => 4 * RADIUS),
+        walksByRoute(
+          from(
+            on,
+            drops.map(({ landing }) => landing),
+          ),
+          stones,
+          1,
+          { through: [], shut: barrowStairs },
+        ),
+      );
+    const barrowWay = (to: readonly Vec2[], ownGate: (team: number) => Vec2): number[] => {
+      const atGates = [0, 1].map(ownGate);
+      return sum(
+        toOwn(map, atGates, 0, () => ({ through: [] })),
+        toOwn(from(map, atGates, 0), to, 1, () => ({ through: [] })),
+      );
+    };
+    const moorRoad = (on: MapData, to: readonly Vec2[]): number[] =>
+      toOwn(on, to, 1, () => ({ through: [], shut: barrowStairs }));
+    const foes = [shrines[1] ?? stones, shrines[0] ?? stones];
+
+    it("walks each team from its spawn to the stones by the moor road, gates shut, within 10 % of the other", () => {
+      within(moorRoad(shut, [stones, stones]), 0.1);
+    });
+
+    it("walks each team over its own barrow to the stones, gates shut, within 10 % of the other", () => {
+      within(overTheBarrow(shut), 0.1);
+    });
+
+    it("walks each team through its own barrow way to the stones within 10 % of the other", () => {
+      within(
+        barrowWay([stones, stones], (team) => gates[team] ?? stones),
+        0.1,
+      );
+    });
+
+    it("walks each team to the foe's shrine by the moor road, the south moor and the barrow way within 10 % of the other", () => {
+      // The moor road and the south moor with the gates shut: two ways to each shrine as loaded.
+      const road = moorRoad(shut, foes);
+      within(road, 0.1);
+      // The south moor: past the south barrow's east foot, south of the stones; its point-mirror past the north barrow's west foot.
+      const south = [
+        { x: 2600, y: 2000 },
+        { x: 2800, y: 600 },
+      ];
+      const moor = sum(moorRoad(shut, south), moorRoad(from(shut, south), foes));
+      within(moor, 0.1);
+      // A way of its own, not the moor road with a step aside.
+      [0, 1].forEach((team) => {
+        expect(moor[team] ?? 0).toBeGreaterThan((road[team] ?? 0) + 150);
+      });
+      // The barrow way under the foe's barrow, through its gate.
+      within(
+        barrowWay(foes, (team) => gates[1 - team] ?? stones),
+        0.1,
+      );
+    });
+
+    it("walks each priest from its shrine to the stones within 10 % of the other", () => {
+      within(moorRoad(from(map, shrines), [stones, stones]), 0.1);
+    });
+
+    it("keeps the walks within 10 % with the gates open and the fallen stone broken", () => {
+      const broken = ["fallen-stone"];
+      within(walksByRoute(map, stones, 1, { through: [], broken }), 0.1);
+      within(
+        toOwn(map, foes, 1, () => ({ through: [], broken })),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+
+    it("paths off every drop-off straight down, not round by the stairs", () => {
+      const layers = matchLayers(map);
+      const finder = createLayeredPathFinder(
+        mapNavGraphs(map, RADIUS),
+        layers.transitions,
+        [],
+        layers.dropOffs,
+      );
+      expect(layers.dropOffs).toHaveLength(map.dropOffs.length);
+      for (const { layer, edge, outward } of layers.dropOffs) {
+        const middle = { x: (edge.a.x + edge.b.x) / 2, y: (edge.a.y + edge.b.y) / 2 };
+        const top = { x: middle.x - outward.x * 3 * RADIUS, y: middle.y - outward.y * 3 * RADIUS };
+        const below = {
+          x: middle.x + outward.x * 5 * RADIUS,
+          y: middle.y + outward.y * 5 * RADIUS,
+        };
+        const path = finder.find(top, layer, below, layer - 1) ?? [];
+        expect(path.some(({ dropOff }) => dropOff === true)).toBe(true);
+        const length = path.reduce(
+          (total, point, at) =>
+            total +
+            Math.hypot(point.x - (path[at - 1] ?? top).x, point.y - (path[at - 1] ?? top).y),
+          0,
+        );
+        expect(length).toBeLessThan(2 * 8 * RADIUS);
+      }
+    });
   });
 
   // Blackwater Ford (#3434): the centre is the storm beacon on the mill deck, where the bridge
