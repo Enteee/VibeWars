@@ -43,10 +43,13 @@
  *                                    scale them to n (manager only, #1890)
  *   company runners logs [<runner>] [--lines <n>]  the supervisor's log and
  *                                    the runners', or one runner's (#2729)
- *   company heavy [--max-wait <min>] <cmd...>  runs a heavy local job (bench,
+ *   company heavy [--short] [--max-wait <min>] <cmd...>  runs a heavy local job (bench,
  *                                    Playwright) when it is its turn, one at a
  *                                    time company-wide; `company heavy` alone
- *                                    shows the holder and the queue (#3362)
+ *                                    shows the holder and the queue (#3362).
+ *                                    --short: under 5 min (a screenshot, one
+ *                                    spec); goes ahead of waiting long jobs,
+ *                                    killed at 10 min (#3582)
  *     (`company` is this script with `company` as its first word)
  *
  * `whoami` is answered locally, because the policy is pure and bundled in

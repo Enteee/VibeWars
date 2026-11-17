@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { EXIT_GAVE_UP, RENEW_MS, runHeavy } from "./heavy.mjs";
+import {
+  EXIT_GAVE_UP,
+  EXIT_SHORT_KILLED,
+  RENEW_MS,
+  SHORT_KILL_MS,
+  parseHeavy,
+  runHeavy,
+} from "./heavy.mjs";
 
 /**
  * A fake world: a clock that only sleep advances, a scripted hubd, a child
@@ -17,7 +24,9 @@ const world = (options = {}) => {
   /** @type {Record<string, unknown> | undefined} */
   let renewAnswer;
   let failures = options.failAcquires ?? 0;
+  const kills = /** @type {string[]} */ ([]);
   return {
+    kills,
     calls,
     said,
     spawned,
@@ -43,15 +52,20 @@ const world = (options = {}) => {
         spawnChild: (childArgv, env) => {
           spawned.push({ argv: childArgv, env });
           const started = clock;
+          let dead = false;
           return {
             exited: new Promise((resolve) => {
               const poll = () => {
-                if (clock - started >= (options.childMs ?? 0)) resolve(options.childCode ?? 0);
+                if (dead) resolve(143);
+                else if (clock - started >= (options.childMs ?? 0)) resolve(options.childCode ?? 0);
                 else setImmediate(poll);
               };
               poll();
             }),
-            kill: () => undefined,
+            kill: (signal) => {
+              kills.push(signal);
+              dead = true;
+            },
           };
         },
         sleep: (ms) => {
@@ -121,9 +135,47 @@ describe("runHeavy", () => {
     expect(w.said.filter((line) => line.includes("lost the lease"))).toHaveLength(1);
   });
 
+  it("asks for a short or a long slot", async () => {
+    const long = world();
+    await long.run(["x"]);
+    expect(long.calls[0]).toEqual(["acquire", ["x", "long"]]);
+    const short = world();
+    await short.run(["--short", "x"]);
+    expect(short.calls[0]).toEqual(["acquire", ["x", "short"]]);
+  });
+
+  it("kills a short job at 10 minutes, exits 124 and releases the lease", async () => {
+    const w = world({ childMs: SHORT_KILL_MS * 2 });
+    expect(await w.run(["--short", "x"])).toBe(EXIT_SHORT_KILLED);
+    expect(w.kills[0]).toBe("SIGTERM");
+    expect(w.said).toContain("heavy: short job killed at 10 min; run it without --short");
+    expect(w.calls.at(-1)).toEqual(["release", ["L1"]]);
+  });
+
+  it("sets no timer on a long job", async () => {
+    const w = world({ childMs: SHORT_KILL_MS * 2 });
+    expect(await w.run(["x"])).toBe(0);
+    expect(w.kills).toEqual([]);
+  });
+
   it("prints the holder and the queue with no command", async () => {
     const w = world();
     expect(await w.run([])).toBe(0);
     expect(w.said).toEqual(["holder: qa 3m: bench", "queued: dev x"]);
+  });
+});
+
+describe("parseHeavy", () => {
+  it("reads --short and --max-wait in either order", () => {
+    expect(parseHeavy(["--short", "--max-wait", "5", "x"])).toEqual({
+      maxWaitMin: 5,
+      short: true,
+      cmd: ["x"],
+    });
+    expect(parseHeavy(["--max-wait", "5", "--short", "x"])).toEqual({
+      maxWaitMin: 5,
+      short: true,
+      cmd: ["x"],
+    });
   });
 });
