@@ -487,13 +487,19 @@ describe("walks and high ground (#3070)", () => {
 
     it("walks each team to the foe's shrine by the moor road, the south moor and the barrow way within 10 % of the other", () => {
       // The moor road and the south moor with the gates shut: two ways to each shrine as loaded.
-      within(moorRoad(shut, foes), 0.1);
-      // The south moor: by the south barrow's brow, its twin by the north barrow's foot.
+      const road = moorRoad(shut, foes);
+      within(road, 0.1);
+      // The south moor: past the south barrow's east foot, south of the stones; its point-mirror past the north barrow's west foot.
       const south = [
-        { x: 3024, y: 1024 },
-        { x: 2400, y: 1560 },
+        { x: 2600, y: 2000 },
+        { x: 2800, y: 600 },
       ];
-      within(sum(moorRoad(shut, south), moorRoad(from(shut, south), foes)), 0.1);
+      const moor = sum(moorRoad(shut, south), moorRoad(from(shut, south), foes));
+      within(moor, 0.1);
+      // A way of its own, not the moor road with a step aside.
+      [0, 1].forEach((team) => {
+        expect(moor[team] ?? 0).toBeGreaterThan((road[team] ?? 0) + 150);
+      });
       // The barrow way under the foe's barrow, through its gate.
       within(
         barrowWay(foes, (team) => gates[1 - team] ?? stones),

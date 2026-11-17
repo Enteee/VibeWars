@@ -1804,7 +1804,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-west-way-mouth-east",
@@ -1816,7 +1816,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-east-way-mouth-east",
@@ -1828,7 +1828,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-east-way-mouth-west",
@@ -1840,31 +1840,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
-      },
-      {
-        "id": "torch-west-way-gate",
-        "position": {
-          "x": 1440,
-          "y": 760
-        },
-        "layer": 0,
-        "radius": 140,
-        "colour": 16756832,
-        "intensity": 0.75,
-        "flicker": 0.35
-      },
-      {
-        "id": "torch-east-way-gate",
-        "position": {
-          "x": 3960,
-          "y": 1840
-        },
-        "layer": 0,
-        "radius": 140,
-        "colour": 16756832,
-        "intensity": 0.75,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-west-barrow-stair",
@@ -1876,7 +1852,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-east-barrow-stair",
@@ -1888,7 +1864,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-north-barrow-stair",
@@ -1900,7 +1876,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-south-barrow-stair",
@@ -1912,7 +1888,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-west-cairn-stair",
@@ -1924,7 +1900,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-east-cairn-stair",
@@ -1936,7 +1912,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-south-barrow-lever",
@@ -1948,7 +1924,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "torch-north-barrow-lever",
@@ -1960,7 +1936,7 @@
         "radius": 150,
         "colour": 16756832,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0.2
       },
       {
         "id": "shrine-ring-west",
@@ -1970,9 +1946,9 @@
         },
         "layer": 1,
         "radius": 220,
-        "colour": 16756832,
+        "colour": 16748608,
         "intensity": 0.8,
-        "flicker": 0.2
+        "flicker": 0.35
       },
       {
         "id": "shrine-ring-east",
@@ -1982,9 +1958,9 @@
         },
         "layer": 1,
         "radius": 220,
-        "colour": 16756832,
+        "colour": 16748608,
         "intensity": 0.8,
-        "flicker": 0.2
+        "flicker": 0.35
       },
       {
         "id": "standing-stones",
@@ -1994,9 +1970,9 @@
         },
         "layer": 1,
         "radius": 200,
-        "colour": 16756832,
+        "colour": 16748608,
         "intensity": 0.8,
-        "flicker": 0.2
+        "flicker": 0.35
       }
     ]
   },
