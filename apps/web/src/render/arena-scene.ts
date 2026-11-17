@@ -4011,7 +4011,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */
   private drawHoverMarker(g: Phaser.GameObjects.Graphics): void {
-    const { structure } = this.snapshot;
+    const { structure, walls } = this.snapshot;
     const pointer = this.input.activePointer;
     if (structure.layerCount === 1 || !this.input.isOver) {
       return;
@@ -4019,6 +4019,7 @@ export class ArenaScene extends Phaser.Scene {
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
     const { layer } = pickSurface(
       structure,
+      walls,
       world,
       this.alt?.held() === true,
       selfLayer(this.snapshot),

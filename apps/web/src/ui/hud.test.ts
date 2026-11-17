@@ -280,8 +280,20 @@ describe("objectTargetName (#1225)", () => {
     });
   });
 
-  it("names a breakable wall a cracked wall (#3031)", () => {
-    expect(objectTargetName("breakable-gap", 0, NOBODY)).toBe(t("hud.breakableWall"));
+  it("names a standing breakable wall a cracked wall (#3031), a fallen one nothing (#3476)", () => {
+    const gap = (health: number): RenderableBreakable => ({
+      id: "breakable-gap",
+      layer: 0,
+      wall: { kind: "rect", x: 0, y: 0, width: 20, height: 100 },
+      outline: [],
+      health,
+      maxHealth: 700,
+    });
+    const named = (health: number) =>
+      objectTargetName("breakable-gap", 0, NOBODY, false, [], [gap(health)]);
+    expect(named(350)).toBe(t("hud.breakableWall"));
+    expect(named(0)).toBeUndefined();
+    expect(objectTargetName("breakable-gap", 0, NOBODY)).toBeUndefined();
   });
 });
 
@@ -339,6 +351,11 @@ describe("a breakable wall on the target frame (#3317)", () => {
     expect(targetWall("breakable-elsewhere", walls)).toBeUndefined();
     expect(targetWall(undefined, walls)).toBeUndefined();
     expect(targetWall("breakable-cracked-wall", [])).toBeUndefined();
+  });
+
+  it("finds no wall once it has fallen, so the frame shows no target (#3476)", () => {
+    expect(targetWall("breakable-cracked-wall", [wall(0)])).toBeUndefined();
+    expect(targetWall("breakable-cracked-wall", [wall(1)])).toBeDefined();
   });
 
   it("rounds as a body's does: full is 100%, a sliver never 0%", () => {

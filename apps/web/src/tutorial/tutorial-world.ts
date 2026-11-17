@@ -23,11 +23,12 @@ import {
 
 import { mapMatchRules } from "@vibewars/game-maps/match-fields";
 
+import { toRenderableWall } from "../match-view.js";
 import { arenaMap, hostMap, mapStructure } from "../net/maps.js";
 import { DEFAULT_STEP, VIEW_ASPECT, VIEW_STEPS, type Size } from "../render/camera-rig.js";
 import { pickSurface, shapeOutline } from "../render/layer-surfaces.js";
 import { elevationOf } from "../render/render-order.js";
-import type { MapStructure } from "../render/arena-snapshot.js";
+import type { MapStructure, RenderableWall } from "../render/arena-snapshot.js";
 import type { Professions } from "../training/local-connection.js";
 import {
   SPLASH_RULES,
@@ -237,9 +238,13 @@ function placesFrom(graph: NavGraph, from: Vec2): readonly [Vec2, Vec2, Vec2] {
  * down to the ground in front of it, and a click on it names the ground
  * there, not a floor drawn over it.
  */
-export function inOpenView(structure: MapStructure, at: Vec2): boolean {
+export function inOpenView(
+  structure: MapStructure,
+  walls: readonly RenderableWall[],
+  at: Vec2,
+): boolean {
   const { ground } = structure;
-  if (pickSurface(structure, at, false).layer !== ground) {
+  if (pickSurface(structure, walls, at, false).layer !== ground) {
     return false;
   }
   if (structure.transitions.some((ramp) => pointInPolygon(at, shapeOutline(ramp.area)))) {
@@ -335,11 +340,12 @@ export function tutorialWorld(
   }
   const fight = { mapId, teamSize, still: false } as const;
   const graph = splashGraph(map);
-  const { structure } = mapStructure(mapId);
+  const { structure, wallLayers } = mapStructure(mapId);
+  const walls = map.descriptor.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
   const ground = structure.ground;
   // Inward from the background's spawn, so the view is filled.
   const edge = splashSpawn(graph, map, fight, 0, teamSize);
-  const open = openAround((at) => !inOpenView(structure, at));
+  const open = openAround((at) => !inOpenView(structure, walls, at));
   const [spawn, post, mark] = openPlaces(graph, inwardStart(edge, map.descriptor, HALF_VIEW), open);
   const standable = (at: Vec2): Vec2 => nearestStandable(graph, at);
   const teleporter = teleporterSpot(spawn, viewport, standable, open);

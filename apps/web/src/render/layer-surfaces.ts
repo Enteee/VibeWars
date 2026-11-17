@@ -1059,29 +1059,86 @@ function inAny(shapes: readonly { readonly footprint: RenderableShape }[], point
 }
 
 /**
+ * The point of `footprint` nearest `point` straight above or below it, a
+ * world unit inside its outline; none if no column of it is under `point`.
+ */
+function nearestInColumn(footprint: RenderableShape, point: Vec2): Vec2 | undefined {
+  const outline = shapeOutline(footprint);
+  const box = boxOf(footprint);
+  const x = Math.min(Math.max(point.x, box.left + 1), box.right - 1);
+  const crossings = outline
+    .flatMap((a, k) => {
+      const b = outline[(k + 1) % outline.length];
+      return b === undefined || a.x <= x === b.x <= x
+        ? []
+        : [a.y + ((x - a.x) / (b.x - a.x)) * (b.y - a.y)];
+    })
+    .sort((a, b) => a - b);
+  let best: Vec2 | undefined;
+  for (let k = 0; k + 1 < crossings.length; k += 2) {
+    const top = (crossings[k] ?? 0) + 1;
+    const bottom = (crossings[k + 1] ?? 0) - 1;
+    if (top > bottom) {
+      continue;
+    }
+    const y = Math.min(Math.max(point.y, top), bottom);
+    if (best === undefined || Math.abs(y - point.y) < Math.abs(best.y - point.y)) {
+      best = { x, y };
+    }
+  }
+  return best;
+}
+
+/**
  * The surfaces drawn at `world`, the visible one first, one per layer. A
  * deck or ramp draws lifted, so the point on it lies below the cursor; a
  * pit or tunnel draws sunk (#2973), so the point on its floor lies above.
+ * A click on a deck's face or its art, where it hides a body (#3476),
+ * takes its nearest point, below any ramp drawn at the same click.
  */
-export function surfacesAt(structure: MapStructure, world: Vec2): readonly Surface[] {
+export function surfacesAt(
+  structure: MapStructure,
+  walls: readonly RenderableWall[],
+  world: Vec2,
+): readonly Surface[] {
   const { ground } = structure;
   const surfaces: (Surface & { readonly lift: number })[] = [];
+  const drawn: (Surface & { readonly lift: number })[] = [];
   for (let layer = structure.layerCount - 1; layer > ground; layer -= 1) {
-    const point = { x: world.x, y: world.y + liftOf(structure, layer) };
-    const here = structure.decks.some(
-      (deck) => deck.layer === layer && pointInPolygon(point, shapeOutline(deck.footprint)),
-    );
-    if (here) {
-      surfaces.push({ layer, point, lift: liftOf(structure, layer) });
+    const lift = liftOf(structure, layer);
+    const point = { x: world.x, y: world.y + lift };
+    const decks = structure.decks.filter((deck) => deck.layer === layer);
+    if (decks.some((deck) => pointInPolygon(point, shapeOutline(deck.footprint)))) {
+      surfaces.push({ layer, point, lift });
+      continue;
+    }
+    for (const deck of decks) {
+      const nearest = deckDrawing(deck, walls, structure).some((part) =>
+        hides(part, world.x, world.y),
+      )
+        ? nearestInColumn(deck.footprint, point)
+        : undefined;
+      if (nearest !== undefined) {
+        drawn.push({ layer, point: nearest, lift });
+        break;
+      }
     }
   }
   // A lift (#3079) is no slope: a click on it names the floor under the cursor.
+  const ramps: (Surface & { readonly lift: number })[] = [];
   for (const ramp of structure.transitions.filter(({ lift }) => lift === null)) {
     const surface = rampSurface(structure, ramp, world);
     if (surface !== undefined) {
-      surfaces.push(surface);
+      ramps.push(surface);
     }
   }
+  surfaces.push(...ramps);
+  const rampLow = Math.min(...ramps.map(({ lift }) => lift));
+  // Ranked as if no higher than the lowest ramp hit, and after it, so a ramp wins.
+  const ranked = (surface: Surface & { readonly lift: number }): number =>
+    drawn.includes(surface) ? Math.min(surface.lift, rampLow) : surface.lift;
+  const last = (surface: Surface & { readonly lift: number }): number =>
+    drawn.includes(surface) ? 1 : 0;
   // A pit's floor shows through its hole, under the ground's near lip; a
   // tunnel's only under the ground over it, so the cover drawn is what
   // names it (#3234), not its footprint sunk a step.
@@ -1099,9 +1156,10 @@ export function surfacesAt(structure: MapStructure, world: Vec2): readonly Surfa
   if (!inPit || !inAny(structure.pits, world)) {
     surfaces.push({ layer: ground, point: world, lift: 0 });
   }
+  surfaces.push(...drawn);
   const seen = new Set<number>();
   return surfaces
-    .sort((a, b) => b.lift - a.lift)
+    .sort((a, b) => ranked(b) - ranked(a) || last(a) - last(b))
     .filter(({ layer }) => !seen.has(layer) && seen.add(layer))
     .map(({ layer, point }) => ({ layer, point }));
 }
@@ -1164,12 +1222,13 @@ function coveredTunnelAt(
  */
 export function pickSurface(
   structure: MapStructure,
+  walls: readonly RenderableWall[],
   world: Vec2,
   below: boolean,
   from?: number,
 ): Surface {
   const { ground } = structure;
-  const found = surfacesAt(structure, world);
+  const found = surfacesAt(structure, walls, world);
   const tunnel = found.findIndex(({ layer }) => layer === ground - 1);
   // A deck over the cover keeps its place; the rule only orders these two.
   const surfaces =
@@ -1225,6 +1284,89 @@ function occluder(
   };
 }
 
+/** `wall` as it hides a body: a support of the deck it holds up draws with it (#3251). */
+function wallOccluder(
+  wall: RenderableWall,
+  walls: readonly RenderableWall[],
+  structure: MapStructure,
+): Occluder {
+  const base = liftOf(structure, wall.layer);
+  const held = deckHeldBy(wall, structure);
+  return held === undefined
+    ? occluder(shapeOutline(wall), base, base + WALL_HEIGHT, wall.layer, null)
+    : occluder(
+        shapeOutline(wall),
+        base,
+        deckSideLow(held, walls, structure.ground),
+        held.layer - 1,
+        null,
+      );
+}
+
+/**
+ * Each deck's drawing, by the structure and the walls standing (#3476): both
+ * are kept while nothing falls or opens, so the hover hit-test, run every
+ * frame, builds a drawing once.
+ */
+const deckDrawings = new WeakMap<
+  MapStructure,
+  WeakMap<readonly RenderableWall[], Map<MapDeck, readonly Occluder[]>>
+>();
+
+/**
+ * Where `deck` is drawn (#3476): its own sweep and the walls that hold it
+ * up. A click on any of it names the deck, and each hides a body as it
+ * draws, so the two never disagree.
+ */
+export function deckDrawing(
+  deck: MapDeck,
+  walls: readonly RenderableWall[],
+  structure: MapStructure,
+): readonly Occluder[] {
+  let byWalls = deckDrawings.get(structure);
+  if (byWalls === undefined) {
+    byWalls = new WeakMap();
+    deckDrawings.set(structure, byWalls);
+  }
+  let byDeck = byWalls.get(walls);
+  if (byDeck === undefined) {
+    byDeck = new Map();
+    byWalls.set(walls, byDeck);
+  }
+  let drawing = byDeck.get(deck);
+  if (drawing === undefined) {
+    drawing = [
+      deckOccluder(deck, walls, structure),
+      ...walls
+        .filter((wall) => deckHeldBy(wall, structure) === deck)
+        .map((wall) => wallOccluder(wall, walls, structure)),
+    ];
+    byDeck.set(deck, drawing);
+  }
+  return drawing;
+}
+
+/**
+ * `deck` as it hides a body (#3251): its footprint swept from the foot of
+ * its side, or of its art below it, up to its top and its art above.
+ */
+function deckOccluder(
+  deck: MapDeck,
+  walls: readonly RenderableWall[],
+  structure: MapStructure,
+): Occluder {
+  const reach = deckArtReach(deck.look);
+  return occluder(
+    shapeOutline(deck.footprint),
+    reach.below === "base"
+      ? liftOf(structure, deck.layer - 1)
+      : deckSideLow(deck, walls, structure.ground) - reach.below,
+    liftOf(structure, deck.layer) + reach.above,
+    deck.layer - 1,
+    null,
+  );
+}
+
 /**
  * The north edge of the strip along `pit`'s south edge that the ground's
  * near lip hides: nothing on the pit's floor may reach further south (#3081).
@@ -1246,31 +1388,8 @@ export function occludersOf(
   return [
     // A wall that holds a deck up draws with that deck's supports, over
     // everyone under the deck, whichever layer its foot is on (#3251).
-    ...walls.map((wall) => {
-      const base = liftOf(structure, wall.layer);
-      const held = deckHeldBy(wall, structure);
-      return held === undefined
-        ? occluder(shapeOutline(wall), base, base + WALL_HEIGHT, wall.layer, null)
-        : occluder(
-            shapeOutline(wall),
-            base,
-            deckSideLow(held, walls, ground),
-            held.layer - 1,
-            null,
-          );
-    }),
-    ...structure.decks.map((deck) => {
-      const reach = deckArtReach(deck.look);
-      return occluder(
-        shapeOutline(deck.footprint),
-        reach.below === "base"
-          ? liftOf(structure, deck.layer - 1)
-          : deckSideLow(deck, walls, ground) - reach.below,
-        liftOf(structure, deck.layer) + reach.above,
-        deck.layer - 1,
-        null,
-      );
-    }),
+    ...walls.map((wall) => wallOccluder(wall, walls, structure)),
+    ...structure.decks.map((deck) => deckOccluder(deck, walls, structure)),
     // A torch or a hearth draws over whoever is on a layer below its own (#3251).
     ...(structure.lighting?.lights ?? []).flatMap((light) => {
       const key = lightMarkKey(light.id);
