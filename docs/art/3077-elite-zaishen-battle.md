@@ -35,7 +35,7 @@ ceremonial arena with tiered stands, plinths and a sunken floor) is kept.
 - **Zones:** `spring` (two reflecting pools beside the start line) and `mire` (a sand pit at (800,1500)
   and (4600,900)): two kinds.
 - **Light:** torches at each undercroft mouth and stair, braziers along the stands, a warm ring (r 280)
-  on the start line, rings at the spawns; box awnings fade as overhangs (#3272, #3352, #3418). A dust
+  on the start line, rings at the spawns (15 lights, cap 16); box awnings fade as overhangs (#3272, #3352, #3418). A dust
   haze over the sand. Time of day: noon through an open top, no dim zone.
 - **Canyon lessons on the plan:** tunnels as wide as their floor (#3179); stairs touch both footprints
   (#3177); drop-offs marked (#3178/#3251).

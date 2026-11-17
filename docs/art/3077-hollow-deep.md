@@ -44,13 +44,12 @@ system with a chasm, rope bridges and glowing pools) is kept.
   doors, not lifts, so bots path round them. With both gates shut every spawn keeps three routes
   (ledge, north shelf, south shelf), and the chasms keep two crossings each way.
 - **Breakables:** a **stalagmite wall** beside each ghost-spawn, (780,560) and (5396,1600), 24×240.
-- **Zones:** `spring` (glowing pool, (1100,800), (5100,1600)) and `mire` (the chasm lips, (3100,760),
-  (3100,1640)): two kinds. Two shallow glow pools as set dressing (decorative water).
-- **Lights and atmosphere (#3272, #3352, #3418):** a cave is dark, so light is local. Every walkable area
-  is inside a ring: torches at each tunnel mouth, at both bridges and on the chamber, violet glow rings
+- **Zones:** `spring` (glowing pool, (1100,800), (5100,1600)) and `mire` (the north-west and south-east shelf, (2250,640),
+  (3950,1760), on shelf ground off the bridges): two kinds. Two shallow glow pools as set dressing (decorative water).
+- **Lights and atmosphere (#3272, #3352, #3418):** a cave is dark, so light is local. Light count: 15 (cap 16). Torches at each tunnel mouth, at both bridges and on the chamber, violet glow rings
   at the pools and at the centre (r 260). `ceiling lip` overhangs fade as the player walks under them;
-  there is no roof over the whole map. Mist over each chasm. Time of day: none (underground).
-  Every body reads against a ground of `#232a33` with a ring at least `#4a5260` bright.
+  there is no roof over the whole map. Mist over each chasm. Time of day: the Indoor row (#5a6688, 0.30, no sun).
+  Not every walkable area is inside a ring (shelves and the outer floor are not): readability comes from the Indoor ambient plus the body and surface floors (0.7 / 0.45).
 - **Canyon lessons on the plan:** tunnel as wide as its floor (#3179); stairs touch the lower and the
   upper footprint (#3177); a drop-off is marked where a ledge ends (#3178/#3251).
 - **Reduced motion:** the mist and the pool glow are static in the study; with reduced motion the

@@ -176,8 +176,8 @@ runStudy({
   zones: [
     { kind: "spring", cx: 1100, cy: 800, rx: 150, ry: 60, fill: "#4a3f78", edge: "#241d3e" },
     { kind: "spring", cx: 5100, cy: 1600, rx: 150, ry: 60, fill: "#4a3f78", edge: "#241d3e" },
-    { kind: "mire", cx: 3100, cy: 760, rx: 150, ry: 50, fill: "#2d2a38", edge: "#15131c" },
-    { kind: "mire", cx: 3100, cy: 1640, rx: 150, ry: 50, fill: "#2d2a38", edge: "#15131c" },
+    { kind: "mire", cx: 2250, cy: 640, rx: 150, ry: 50, fill: "#2d2a38", edge: "#15131c" },
+    { kind: "mire", cx: 3950, cy: 1760, rx: 150, ry: 50, fill: "#2d2a38", edge: "#15131c" },
   ],
   breakables: [
     { r: rect(780, 560, 24, 240), label: "stalagmite wall (breakable)" },
@@ -201,8 +201,6 @@ runStudy({
     { p: [3500, 1200], r: 150 },
     { p: [4300, 1200], r: 150 },
     { p: [3100, 1200], r: 260, col: "#8a6fc9" },
-    { p: [3100, 560], r: 160 },
-    { p: [3100, 1840], r: 160 },
     { p: [2000, 530], r: 150 },
     { p: [4200, 1870], r: 150 },
     { p: [600, 1200], r: 220 },

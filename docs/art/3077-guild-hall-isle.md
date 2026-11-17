@@ -49,7 +49,7 @@ with a beach, piers and a guild hall with a gatehouse) is kept.
 - **Zones:** `mire` (tidal flat, (1200,500), (4800,2100)) and `spring` ((2150,1000), (3850,1600)):
   two kinds. Shallow inlets north and south of the centre are the water.
 - **Light:** afternoon sun low from the west; torches at both gatehouse mouths, on the piers, round
-  both halls and the lords, a warm ring (r 260) on the flag dais, rings at the shrines. Hall eaves
+  both halls and the lords, a warm ring (r 260) on the flag dais, rings at the shrines (15 lights, cap 16). Hall eaves
   fade as overhangs (#3272, #3352, #3418). Sea mist in the inlets. Every body reads on sand `#7d7358`.
 - **Canyon lessons on the plan:** tunnels as wide as their floor (#3179); stairs touch both footprints
   (#3177); drop-offs marked (#3178/#3251).
