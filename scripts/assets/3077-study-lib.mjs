@@ -255,9 +255,13 @@ export function runStudy(S) {
     for (const e of S.extras ?? []) {
       const [x, y] = lift(e.p, (e.layer ?? 0) * STEP);
       s +=
-        e.kind === "storm-beacon"
-          ? `<rect x="${x - 16}" y="${y - 90}" width="32" height="90" fill="${C.faceE}" stroke="${INK}" stroke-width="4"/><circle cx="${x}" cy="${y - 100}" r="22" fill="${C.torch}" stroke="${INK}" stroke-width="4"/>`
-          : `<line x1="${x}" y1="${y}" x2="${x}" y2="${y - 100}" stroke="${INK}" stroke-width="8"/><polygon points="${x},${y - 100} ${x + 56},${y - 82} ${x},${y - 62}" fill="${C.shrine}" stroke="${INK}" stroke-width="4"/>`;
+        e.kind === "guard"
+          ? `<ellipse cx="${x + 4}" cy="${y + 6}" rx="22" ry="9" fill="#080b10" opacity=".35"/><circle cx="${x}" cy="${y - 22}" r="16" fill="${C.brass}" stroke="${INK}" stroke-width="3"/>`
+          : e.kind === "guild-lord"
+            ? `<ellipse cx="${x + 8}" cy="${y + 20}" rx="60" ry="22" fill="#080b10" opacity=".35"/><rect x="${x - 30}" y="${y - 90}" width="60" height="90" fill="${C.faceE}" stroke="${INK}" stroke-width="5"/><circle cx="${x}" cy="${y - 110}" r="26" fill="${C.brass}" stroke="${INK}" stroke-width="4"/>`
+            : e.kind === "storm-beacon"
+              ? `<rect x="${x - 16}" y="${y - 90}" width="32" height="90" fill="${C.faceE}" stroke="${INK}" stroke-width="4"/><circle cx="${x}" cy="${y - 100}" r="22" fill="${C.torch}" stroke="${INK}" stroke-width="4"/>`
+              : `<line x1="${x}" y1="${y}" x2="${x}" y2="${y - 100}" stroke="${INK}" stroke-width="8"/><polygon points="${x},${y - 100} ${x + 56},${y - 82} ${x},${y - 62}" fill="${C.shrine}" stroke="${INK}" stroke-width="4"/>`;
     }
     for (const l of S.lights)
       s += `<circle cx="${l.p[0]}" cy="${l.p[1]}" r="${l.r}" fill="${l.col ?? C.torch}" opacity=".18"/><circle cx="${l.p[0]}" cy="${l.p[1]}" r="9" fill="${l.col ?? C.torch}" stroke="${INK}" stroke-width="3"/>`;
@@ -316,7 +320,7 @@ export function runStudy(S) {
       const g = S.ghosts?.[k];
       if (g) a += tag("ghost-spawn", [g[0] - 70, g[1] + 62], 24);
     }
-    for (const e of S.extras ?? [])
+    for (const e of (S.extras ?? []).filter((q) => q.kind !== "guard"))
       a += tag(e.kind, [e.p[0] - 60, e.p[1] + 50 - (e.layer ?? 0) * STEP], 24);
     for (const sh of S.shapes)
       a += tag(sh.label ?? sh.id, [cen(sh.poly)[0] - 80, cen(sh.poly)[1] - sh.layer * STEP], 26);
