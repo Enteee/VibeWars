@@ -117,14 +117,23 @@ jobs:
           devenv shell -- node scripts/ci/lockfile-age.mjs "$RUNNER_TEMP/base-lock.yaml" pnpm-lock.yaml
 
   # The render bench (#3157), a job of its own so a renderer pull request
-  # waits for the longer of it and `ci`, not their sum. The job name is a
-  # required check (company-init.mjs EXPECTED_CHECKS). No `needs:`, no
-  # job-level `if:` and no `paths:`, for the reason given on `ci`: a skipped
-  # required check counts as passing. The pull-request condition and the path
-  # filter are inside the step, so any other run passes in seconds.
-  render-bench:
-    name: render bench
+  # waits for the longer of it and `ci`, not their sum. It is split into
+  # three shards by map (#3509), each with its own warm-up, calibration and
+  # flat baseline; the `render bench` aggregate below is the required check
+  # (company-init.mjs EXPECTED_CHECKS). No `needs:`, no job-level `if:` and no
+  # `paths:`, for the reason given on `ci`: a skipped required check counts as
+  # passing. The pull-request condition and the path filter are inside the
+  # step, so any other run passes in seconds.
+  render-bench-shard:
     runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('["self-hosted","vibewars-company"]') || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    concurrency:
+      group: ${{ github.event_name == 'push' && format('bench-{0}-{1}', github.ref_name, matrix.shard) || format('bench-{0}-{1}', github.run_id, matrix.shard) }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: ./.github/actions/devenv
@@ -163,9 +172,10 @@ jobs:
 
       - name: Render bench
         if: steps.applies.outputs.applies == 'true'
-        # 30 min bounds a hang, not a threshold (#3428): the ratio above is the
-        # gate. A passing run takes 16-19 min and grows with each map; nearing
-        # 30 is a card to speed the bench up, not another raise.
+        # 20 min bounds a hang, not a threshold (#3428): the ratio above is the
+        # gate. A shard takes about 8-9 min and grows with each map; when one
+        # nears 15 min, raise the shard count (matrix.shard, BENCH_SHARD's n
+        # and the job's timeout together), not the timeout.
         #
         # The follow gate (#3488) catches what the ratio misses: a cost every
         # layered map shares cancels out of the ratio, because the reference
@@ -173,8 +183,30 @@ jobs:
         # the flat baseline's. 12 is the highest p50 / flat in eight green
         # runs (10.38, arena-long-hall) x 1.15, rounded up. A breach is a perf
         # card, not a raise.
-        timeout-minutes: 30
+        # Exit 75 means the runner was too noisy to judge, even after the bench
+        # re-measured the unstable maps (#3503): a rerun is the remedy. Exit 1 is a
+        # breach or a crash. Both are red.
+        timeout-minutes: 20
+        env:
+          BENCH_SHARD: ${{ matrix.shard }}/3
         run: BENCH_MAX_RATIO=2.7 BENCH_MAX_FOLLOW_RATIO=12 devenv shell -- pnpm run bench:render
+
+  # Green only if every shard succeeded, as `e2e` below; a skipped shard step
+  # (the bench does not apply) still succeeds. On a main push a cancelled shard
+  # is one a newer push replaced while pending.
+  render-bench:
+    name: render bench
+    needs: render-bench-shard
+    if: always()
+    runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('["self-hosted","vibewars-company"]') || 'ubuntu-latest' }}
+    steps:
+      - name: Every shard succeeded
+        env:
+          RESULT: ${{ needs.render-bench-shard.result }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          echo "render-bench-shard: $RESULT"
+          [ "$RESULT" = success ] || { [ "$EVENT" = push ] && [ "$RESULT" = cancelled ]; }
 
   # The `e2e` check (EXPECTED_CHECKS, #132) is the aggregate below; the work
   # is spread over six shards (#1610, #1797) so a pull request waits one sixth of

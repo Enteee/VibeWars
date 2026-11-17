@@ -18,7 +18,7 @@
  * (#3255). It is measured in windows interleaved with the maps (one
  * before each, one after, after an unmeasured warm-up). Each map is judged against the mean
  * of the two windows around it, and a pair of windows differing by over
- * `MAX_CALIBRATION_SPREAD` fails the run as too noisy to judge (`verdict.mjs`). Prints p50 and p95 per map
+ * `MAX_CALIBRATION_SPREAD` is measured again, twice at most, then fails the run as too noisy to judge (exit 75, `verdict.mjs`). Prints p50 and p95 per map
  * and the ratio of each to the calibration's. The percentiles weigh a frame by how long
  * it lasted: what a moment of the run is spent in, so a map that hangs
  * for a second between quick frames does not measure as quick.
@@ -35,12 +35,16 @@
  * pointer hovers the ground, uncapped. Its rows join the table, outside
  * the calibration's gate: walking costs a frame about twice what standing
  * does. A second table gives the frame's update and render JS, the
- * update's share of the frame, the snapshot cadence, which the client
+ * update's share of the frame, the snapshot cadence, the host's ms per
+ * beat (a Hosted game ticks on the page's main thread), which the client
  * measures itself under `?frametiming`, and each map's p50 over the flat
  * baseline's, both walked.
  *   BENCH_FOLLOW_SECONDS=12  how long each map walks, measured.
  *   BENCH_MAX_FOLLOW_RATIO=12 exit 1 when a map walked is more than this
  *                      many times the flat baseline walked.
+ *   BENCH_PROFILE=<mapId> record a CPU profile of that map's walk to
+ *                      `bench-<mapId>.cpuprofile` and print its 15
+ *                      functions of most self time (#3499). Off in CI.
  *
  * The menu background never draws faster than 30 fps (#3119): a map
  * under that cap measures as the cap. Software GL is far over it.
@@ -58,7 +62,7 @@ import { parseArgs } from "node:util";
 import { chromium } from "@playwright/test";
 
 import { BENCH_CEILINGS } from "./ceilings.mjs";
-import { settled, verdict } from "./verdict.mjs";
+import { exitCode, settled, shardOf, verdict } from "./verdict.mjs";
 
 /* global document, requestAnimationFrame, window -- in page.evaluate, which runs in the page */
 
@@ -76,6 +80,8 @@ const MIN_CALIBRATION_MS = 2000 / 60 + 0.1;
 
 /** The two calibration windows around a map may differ this much, of their mean. */
 const MAX_CALIBRATION_SPREAD = 0.2;
+/** A map whose bracket is unstable is measured again this many times at most (#3503). */
+const MAX_REMEASURES = 2;
 
 const PORT = 4322;
 /** Where the maps it measures live: the arenas, and the tutorial's (#3245). */
@@ -131,7 +137,11 @@ function layeredMaps() {
     .sort();
 }
 
-/** The maps to measure. */
+/**
+ * The maps to measure: every one, or this shard's (BENCH_SHARD=i/n, #3509). A
+ * shard carries its own warm-up, calibration and flat baseline, as its ratios
+ * are taken on the runner that ran it.
+ */
 function mapsToMeasure() {
   const asked = process.env.BENCH_MAP;
   const ids =
@@ -141,7 +151,7 @@ function mapsToMeasure() {
           .split(",")
           .map((id) => id.trim())
           .filter((id) => id !== "");
-  return ids;
+  return shardOf(ids, process.env.BENCH_SHARD);
 }
 
 /**
@@ -153,7 +163,8 @@ async function serve() {
   const url = `http://127.0.0.1:${String(PORT)}/`;
   const out = fs.mkdtempSync(path.join(os.tmpdir(), "render-bench-"));
   const command =
-    `pnpm --filter @vibewars/web exec vite build --outDir ${out} --emptyOutDir && ` +
+    // A profile names its functions: unminified (#3499).
+    `pnpm --filter @vibewars/web exec vite build --outDir ${out} --emptyOutDir${PROFILE === undefined ? "" : " --minify false"} && ` +
     `pnpm --filter @vibewars/web exec vite preview --outDir ${out} ` +
     `--host 127.0.0.1 --port ${String(PORT)} --strictPort`;
   const child = spawn("sh", ["-c", command], {
@@ -333,6 +344,8 @@ function frameTimes(page, seconds = SECONDS) {
 const FLAT_BASELINE = "hollow-deep";
 /** How long `--follow` walks its loop, measured. */
 const FOLLOW_SECONDS = Number(process.env.BENCH_FOLLOW_SECONDS ?? 12);
+/** `--follow`'s map to take a CPU profile of while it walks (#3499), if any. */
+const PROFILE = process.env.BENCH_PROFILE;
 /** One step of the walk: the pointer moves, and every `CLICK_EVERY`th step it clicks. */
 const STEP_MS = 50;
 const CLICK_EVERY = 6;
@@ -359,7 +372,7 @@ const UPHILL = new Map([
 /**
  * What `?frametiming` measured in the page (apps/web/src/render/frame-timing.ts).
  *
- * @typedef {{ update: number[], render: number[], snapshots: number[] }} FrameTiming
+ * @typedef {{ update: number[], render: number[], snapshots: number[], host: number[] }} FrameTiming
  */
 
 /**
@@ -464,11 +477,16 @@ async function follow(page, mapId) {
     /** @type {unknown} */
     const shown = Reflect.get(window, "__frameTiming");
     const stats = /** @type {FrameTiming} */ (shown);
-    for (const times of [stats.update, stats.render, stats.snapshots]) {
+    for (const times of [stats.update, stats.render, stats.snapshots, stats.host]) {
       times.length = 0;
     }
   });
   await takePasses(page);
+  const profiler = PROFILE === mapId ? await page.context().newCDPSession(page) : undefined;
+  if (profiler !== undefined) {
+    await profiler.send("Profiler.enable");
+    await profiler.send("Profiler.start");
+  }
   const frames = frameTimes(page, FOLLOW_SECONDS);
   const end = Date.now() + FOLLOW_SECONDS * 1000;
   let next = 0;
@@ -510,6 +528,10 @@ async function follow(page, mapId) {
     await sleep(STEP_MS);
   }
   const measured = await frames;
+  if (profiler !== undefined) {
+    const { profile } = await profiler.send("Profiler.stop");
+    writeProfile(mapId, /** @type {CpuProfile} */ (profile));
+  }
   const passes = await takePasses(page);
   const stats = await page.evaluate(() => {
     /** @type {unknown} */
@@ -517,6 +539,45 @@ async function follow(page, mapId) {
     return /** @type {FrameTiming} */ (shown);
   });
   return { frames: measured, reached: next, passes, ...stats };
+}
+
+/**
+ * What a CDP `Profiler.stop` returns, as far as `writeProfile` reads it.
+ *
+ * @typedef {{ id: number, callFrame: { functionName: string, url: string, lineNumber: number } }} ProfileNode
+ * @typedef {{ nodes: ProfileNode[], samples?: number[], timeDeltas?: number[] }} CpuProfile
+ */
+
+/**
+ * Writes `profile` to `bench-<mapId>.cpuprofile` beside the report and
+ * prints its 15 functions of most self time, in ms.
+ *
+ * @param {string} mapId
+ * @param {CpuProfile} profile
+ */
+function writeProfile(mapId, profile) {
+  const file = `bench-${mapId}.cpuprofile`;
+  fs.writeFileSync(file, JSON.stringify(profile));
+  const { samples = [], timeDeltas = [] } = profile;
+  /** @type {Map<number, number>} */
+  const selfMs = new Map();
+  for (const [i, id] of samples.entries()) {
+    selfMs.set(id, (selfMs.get(id) ?? 0) + (timeDeltas[i] ?? 0) / 1000);
+  }
+  /** @type {Map<string, number>} */
+  const byFunction = new Map();
+  for (const node of profile.nodes) {
+    const { functionName, url, lineNumber } = node.callFrame;
+    const key = `${functionName === "" ? "(anonymous)" : functionName} ${url.split("/").at(-1) ?? ""}:${String(lineNumber + 1)}`;
+    byFunction.set(key, (byFunction.get(key) ?? 0) + (selfMs.get(node.id) ?? 0));
+  }
+  const total = [...byFunction.values()].reduce((a, b) => a + b, 0);
+  console.log();
+  console.log(`| ${mapId} self time (${file}) | ms | share |`);
+  console.log("|---|---|---|");
+  for (const [key, ms] of [...byFunction].sort((a, b) => b[1] - a[1]).slice(0, 15)) {
+    console.log(`| ${key} | ${ms.toFixed(0)} | ${((ms / total) * 100).toFixed(1)} % |`);
+  }
 }
 
 /**
@@ -537,6 +598,9 @@ const executablePath = process.env.VIBEWARS_CHROMIUM;
 /** @type {import("@playwright/test").Browser | undefined} */
 let browser;
 let failed = false;
+let noisy = false;
+// The warm-up never settled, so nothing was measured: even report-only fails.
+let unsettled = false;
 try {
   browser = await chromium.launch({
     ...(executablePath === undefined ? {} : { executablePath }),
@@ -559,6 +623,11 @@ try {
   /** One calibration window: the reference map, drawn as a map is, alone (#3255). */
   const calibrationWindow = async () => percentile(await mapWindow(REFERENCE_MAP, SECONDS), 50);
   const mapIds = options.follow === true ? [] : mapsToMeasure();
+  const runStart = Date.now();
+  /** @type {(phase: string, since: number) => void} */
+  const timed = (phase, since) => {
+    console.log(`phase ${phase} ${((Date.now() - since) / 1000).toFixed(0)} s`);
+  };
   // The runner is slow for the first 20-40 s of a run: load the first map, then
   // calibrate until the runner has had that long and two windows in a row agree,
   // and keep none of it (#3243).
@@ -576,30 +645,51 @@ try {
     }
     const list = warm.map((w) => w.toFixed(1)).join(", ");
     if (after === undefined) {
-      throw new Error(
+      console.error(
         `calibration never settled in warm-up (${list}): the runner is too noisy to judge`,
       );
+      noisy = true;
+      unsettled = true;
+    } else {
+      console.log(
+        `warm-up: map ${warmMap} ${String(WARMUP_LOAD_SECONDS)} s; calibration ${list} ms (settled after ${String(after)} windows, ${((times[after - 1] ?? 0) / 1000).toFixed(0)} s, discarded)`,
+      );
     }
-    console.log(
-      `warm-up: map ${warmMap} ${String(WARMUP_LOAD_SECONDS)} s; calibration ${list} ms (settled after ${String(after)} windows, ${((times[after - 1] ?? 0) / 1000).toFixed(0)} s, discarded)`,
-    );
   }
-  const windows = [];
+  timed("warm-up", runStart);
+  const stillStart = Date.now();
+  const windows = [await calibrationWindow()];
   const rows = [];
-  for (const mapId of mapIds) {
-    windows.push(await calibrationWindow());
-    const frames = await mapWindow(mapId, SECONDS);
-    rows.push({
-      passes: lastPasses,
-      mapId,
-      frames: frames.length,
-      p50: percentile(frames, 50),
-      p95: percentile(frames, 95),
-    });
+  for (const mapId of noisy ? [] : mapIds) {
+    // A bracket the runner moved under is measured again, with the window that
+    // closed it opening the next one: a few seconds, not a rerun (#3503).
+    for (let attempt = 1; ; attempt++) {
+      const before = windows.at(-1) ?? NaN;
+      const frames = await mapWindow(mapId, SECONDS);
+      const passes = lastPasses;
+      const after = await calibrationWindow();
+      windows.push(after);
+      const spread = Math.abs(before - after) / ((before + after) / 2);
+      if (spread > MAX_CALIBRATION_SPREAD && attempt <= MAX_REMEASURES) {
+        console.log(`re-measure ${mapId} (spread ${(spread * 100).toFixed(0)} %)`);
+        continue;
+      }
+      rows.push({
+        passes,
+        mapId,
+        frames: frames.length,
+        p50: percentile(frames, 50),
+        p95: percentile(frames, 95),
+        before,
+        after,
+      });
+      break;
+    }
   }
-  windows.push(await calibrationWindow());
+  timed("still", stillStart);
+  const followStart = Date.now();
   const followed = [];
-  for (const mapId of [...mapsToMeasure(), FLAT_BASELINE]) {
+  for (const mapId of noisy ? [] : [...mapsToMeasure(), FLAT_BASELINE]) {
     const match = await browser.newPage({ viewport });
     try {
       await match.goto(`${url}?frametiming`);
@@ -623,18 +713,20 @@ try {
           sum(run.snapshots.map((time) => (time - mean) ** 2)) / run.snapshots.length,
         ),
         reached: run.reached,
+        hostP50: percentile(sorted(run.host), 50),
+        hostP95: percentile(sorted(run.host), 95),
         passes: run.passes,
       });
     } finally {
       await match.close();
     }
   }
+  timed("follow", followStart);
   const wholeRun = (Math.max(...windows) - Math.min(...windows)) / median(windows);
   console.log(
     `calibration windows p50 ms: ${windows.map((w) => w.toFixed(1)).join(", ")} (whole-run spread ${(wholeRun * 100).toFixed(0)} %, not gated)`,
   );
   const verdicts = verdict({
-    windows,
     maps: rows,
     maxRatio: MAX_RATIO,
     maxSpread: MAX_CALIBRATION_SPREAD,
@@ -650,6 +742,10 @@ try {
     );
   }
   for (const v of verdicts) {
+    if (v.noisy !== undefined) {
+      console.error(v.noisy);
+      noisy = true;
+    }
     for (const failure of v.failures) {
       console.error(failure);
       failed = true;
@@ -678,14 +774,14 @@ try {
   if (rows.length > 0) printPasses("passes (still)", rows);
   console.log();
   console.log(
-    "| follow | frames | p50 ms | p95 ms | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | waypoints | p50 / flat |",
+    "| follow | frames | p50 ms | p95 ms | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | host p50 ms | host p95 ms | waypoints | p50 / flat |",
   );
-  console.log("|---|---|---|---|---|---|---|---|---|---|---|---|");
+  console.log("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
   const flat = followed.at(-1);
   for (const row of followed) {
     const ratio = flat === undefined ? Number.NaN : row.p50 / flat.p50;
     console.log(
-      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${row.update.toFixed(1)} | ${row.render.toFixed(1)} | ${(row.share * 100).toFixed(0)} % | ${row.snapshotP50.toFixed(1)} | ${row.snapshotP95.toFixed(1)} | ${row.jitter.toFixed(1)} | ${String(row.reached)} | ${ratio.toFixed(2)} |`,
+      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${row.update.toFixed(1)} | ${row.render.toFixed(1)} | ${(row.share * 100).toFixed(0)} % | ${row.snapshotP50.toFixed(1)} | ${row.snapshotP95.toFixed(1)} | ${row.jitter.toFixed(1)} | ${row.hostP50.toFixed(1)} | ${row.hostP95.toFixed(1)} | ${String(row.reached)} | ${ratio.toFixed(2)} |`,
     );
     if (MAX_FOLLOW_RATIO !== undefined && !(ratio <= MAX_FOLLOW_RATIO)) {
       console.error(
@@ -702,4 +798,10 @@ try {
 // BENCH_REPORT_ONLY (the hosted perf bench, #3368): a ratio breach is printed
 // above and does not fail the run, so the table still reaches the report.
 // ci.yml, which enforces the ceilings, does not set it. A crash still fails.
-process.exitCode = failed && process.env.BENCH_REPORT_ONLY === undefined ? 1 : 0;
+// Exit 75 means the runner was too noisy to judge: a rerun is the remedy (#3503).
+process.exitCode = exitCode({
+  breach: failed,
+  noisy,
+  unsettled,
+  reportOnly: process.env.BENCH_REPORT_ONLY !== undefined,
+});

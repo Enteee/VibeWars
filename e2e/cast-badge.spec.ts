@@ -31,7 +31,8 @@ async function badgeClip(page: Page): Promise<{
         self = (await stage.getAttribute("data-camera")) ?? "";
         return self !== "" && self === was;
       },
-      { message: "the camera holds still", timeout: 10_000 },
+      // One read can stall ~8 s while the match starts.
+      { message: "the camera holds still", timeout: 20_000 },
     )
     .toBe(true);
   const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));

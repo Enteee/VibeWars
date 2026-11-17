@@ -13,6 +13,8 @@ export interface FrameTiming {
   readonly render: number[];
   /** Between two frames that each drew a new snapshot, by its match clock. */
   readonly snapshots: number[];
+  /** Per host beat: one `host.advance` of a Hosted game, its ticks and sends (#3499). */
+  readonly host: number[];
 }
 
 /** Whether the page asked to measure its frames: `?frametiming`. */
@@ -29,12 +31,13 @@ export function frameTiming(): FrameTiming | undefined {
   if (isFrameTiming(shown)) {
     return shown;
   }
-  const stats: FrameTiming = { update: [], render: [], snapshots: [] };
+  const stats: FrameTiming = { update: [], render: [], snapshots: [], host: [] };
   Object.assign(window, { __frameTiming: stats });
   return stats;
 }
 
-function isFrameTiming(value: unknown): value is FrameTiming {
+/** Whether `value` is the page's stats, every list present. */
+export function isFrameTiming(value: unknown): value is FrameTiming {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -43,7 +46,9 @@ function isFrameTiming(value: unknown): value is FrameTiming {
     "render" in value &&
     Array.isArray(value.render) &&
     "snapshots" in value &&
-    Array.isArray(value.snapshots)
+    Array.isArray(value.snapshots) &&
+    "host" in value &&
+    Array.isArray(value.host)
   );
 }
 

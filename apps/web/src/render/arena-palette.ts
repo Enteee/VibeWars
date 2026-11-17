@@ -143,6 +143,16 @@ export const LIGHT_MARK_LOOK = {
   stone: 0x5a5650,
   flame: 0xffb347,
   core: 0xfff1c4,
+  /** A brazier's iron (#3504): its side, its rim where its own fire lights it, and its 2 px outline. */
+  iron: 0x3a3430,
+  ironRim: 0x7a6250,
+  outline: 0x120e0c,
+  /** A brazier's coals and flame: fire colours (docs/art/visual-style.md §2). */
+  coals: 0xff9040,
+  blaze: 0xffd23d,
+  /** The contact shadow under a brazier, and how dark. */
+  shadow: 0x000000,
+  shadowAlpha: 0.35,
 };
 
 /**

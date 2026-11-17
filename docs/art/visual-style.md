@@ -121,6 +121,13 @@ fades to the ambient, on a stand that carries it.
 Recipe (now): `{ colour: 0xffb060, radius: 150, intensity: 0.6, flicker: 0.2 }`,
 `id` starting `torch-`, placed on the stand's `position`.
 
+A fire light names what carries it by its `id`'s prefix, and that is drawn
+under it (`light-mark.ts`): `torch-` a post, `fire-` a ring of stones,
+`brazier-` an iron bowl ~28 units across on three short legs, coals and
+flame in it (`#ff9040`, `#ffd23d`). A light with no such prefix is a glow
+with no drawn source. Keep a brazier off walk lines, pits and water: it is
+scenery, with no collision.
+
 ## 3. Shadow and height
 
 - **The sun's shadow** is the footprint of what casts it, moved by the sun's
