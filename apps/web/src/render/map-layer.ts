@@ -37,3 +37,45 @@ export function mapLayerChanged(drawn: MapLayer | undefined, next: MapLayer): bo
     drawn.zoom !== next.zoom
   );
 }
+
+/** A zoom this far from the drawn one, either way, draws the map again mid-ease (#3545). */
+export const ZOOM_REDRAW_RATIO = 1.25;
+
+/**
+ * A zoom within this share of the drawn one is the same zoom to the map's
+ * lines (#3545). The ease toward a step is exponential, so it creeps on
+ * for seconds after it looks settled: without this each creep redrew it.
+ */
+export const ZOOM_SAME_SHARE = 0.01;
+
+/** A zoom that moved no more than this share in a frame has settled (#3545). */
+export const ZOOM_SETTLED_SHARE = 1e-3;
+
+/**
+ * The zoom the map layer is drawn at (#3545): `current`, the camera's, once
+ * nothing is drawn yet, once it has drifted `ZOOM_REDRAW_RATIO` from
+ * `drawn`, or once it settles (it moved under `ZOOM_SETTLED_SHARE` since
+ * `previous`, the last frame's). Otherwise `drawn`: redrawing the whole
+ * map on every frame of a zoom's ease was the lag, and lines up to 25 %
+ * off their 1 CSS px for a third of a second do not show.
+ */
+export function layerZoom(
+  drawn: number | undefined,
+  current: number,
+  previous: number | undefined,
+): number {
+  if (drawn === undefined) {
+    return current;
+  }
+  if (Math.abs(current - drawn) <= ZOOM_SAME_SHARE * current) {
+    return drawn;
+  }
+  const ratio = current / drawn;
+  if (ratio > ZOOM_REDRAW_RATIO || ratio < 1 / ZOOM_REDRAW_RATIO) {
+    return current;
+  }
+  if (previous !== undefined && Math.abs(current - previous) <= ZOOM_SETTLED_SHARE * current) {
+    return current;
+  }
+  return drawn;
+}
