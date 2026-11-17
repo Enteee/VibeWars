@@ -99,6 +99,57 @@ describe("the surface a click names (#2831)", () => {
   });
 });
 
+describe("Alt over a support and a tunnel (#3487)", () => {
+  // Blackwater Ford's west culvert: an approach deck, the ground its
+  // support fills, and a tunnel under both.
+  const STACK: MapStructure = {
+    ...BRIDGE,
+    layerCount: 3,
+    ground: 1,
+    tunnels: [{ footprint: { kind: "rect", x: 100, y: 0, width: 100, height: 400 } }],
+    decks: [
+      {
+        layer: 2,
+        footprint: { kind: "rect", x: 0, y: 100, width: 300, height: 100 },
+        look: "platform",
+        switched: null,
+      },
+    ],
+  };
+  const support = { kind: "rect", x: 0, y: 50, width: 300, height: 150 } as const;
+  const SUPPORTS: readonly RenderableWall[] = [{ ...support, layer: 1 }];
+  const world = { x: 150, y: 150 - ELEVATION_STEP };
+  const onGround = { layer: 1, point: world };
+  const inTunnel = { layer: 0, point: { x: 150, y: world.y - ELEVATION_STEP } };
+
+  it("passes the ground a support fills and names the tunnel", () => {
+    expect(pickSurface(STACK, SUPPORTS, world, true)).toEqual(inTunnel);
+    expect(pickSurface(STACK, SUPPORTS, world, true, 1)).toEqual(inTunnel);
+  });
+
+  it("names the open ground over the tunnel, one level down", () => {
+    expect(pickSurface(STACK, [], world, true)).toEqual(onGround);
+  });
+
+  it("names the ground under a support with no tunnel under it, as before", () => {
+    expect(pickSurface({ ...STACK, tunnels: [] }, SUPPORTS, world, true)).toEqual(onGround);
+  });
+
+  it("counts no gate or breakable as filling the ground", () => {
+    const door = { ...support, layer: 1, door: true, look: "door" } as const;
+    const cracked = { ...support, layer: 1, breakable: true } as const;
+    expect(pickSurface(STACK, [door], world, true)).toEqual(onGround);
+    expect(pickSurface(STACK, [cracked], world, true)).toEqual(onGround);
+  });
+
+  it("leaves a plain click on the deck", () => {
+    expect(pickSurface(STACK, SUPPORTS, world, false)).toEqual({
+      layer: 2,
+      point: { x: 150, y: 150 },
+    });
+  });
+});
+
 describe("a click on what a shallow deck draws (#3476)", () => {
   const rect = (x: number, y: number, width: number, height: number) =>
     ({ kind: "rect", x, y, width, height }) as const;
