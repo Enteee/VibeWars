@@ -312,32 +312,7 @@
       "switched": null
     }
   ],
-  "overhangs": [
-    {
-      "id": "west-reed-lean-to",
-      "layer": 2,
-      "footprint": {
-        "kind": "rect",
-        "x": 900,
-        "y": 1480,
-        "width": 220,
-        "height": 70
-      },
-      "look": "lean-to"
-    },
-    {
-      "id": "east-reed-lean-to",
-      "layer": 2,
-      "footprint": {
-        "kind": "rect",
-        "x": 4504,
-        "y": 1234,
-        "width": 220,
-        "height": 70
-      },
-      "look": "lean-to"
-    }
-  ],
+  "overhangs": [],
   "transitions": [
     {
       "id": "west-end-south-stair",
@@ -1696,7 +1671,7 @@
           "y": 1765
         },
         "layer": 1,
-        "radius": 260,
+        "radius": 340,
         "colour": 16756832,
         "intensity": 1,
         "flicker": 0.2
@@ -1708,7 +1683,7 @@
           "y": 1019
         },
         "layer": 1,
-        "radius": 260,
+        "radius": 340,
         "colour": 16756832,
         "intensity": 1,
         "flicker": 0.2
