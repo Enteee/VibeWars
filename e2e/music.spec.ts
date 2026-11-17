@@ -31,8 +31,9 @@ async function recordMessages(page: Page): Promise<void> {
     Object.assign(window, { musicMessages: seen, hostMessages: fromHost });
     addEventListener("message", (event: MessageEvent) => {
       seen.push(event.data);
-      const host = document.querySelector<HTMLIFrameElement>("iframe.music-host");
-      if (host !== null && event.source === host.contentWindow) {
+      // A renewed host fades out beside the new one (#3530): either is a host.
+      const hosts = document.querySelectorAll<HTMLIFrameElement>("iframe.music-host");
+      if ([...hosts].some((host) => event.source === host.contentWindow)) {
         fromHost.push(event.data);
       }
     });
