@@ -90,8 +90,11 @@ toute leur santé et leur énergie. Tue d'abord le prêtre et l'autre équipe re
 Une équipe perd quand tous ses joueurs et son prêtre sont morts. Après 12
 minutes, le plus de moral gagne.
 
-Jungle Ruins le joue : trois couloirs reliés par des passages transversaux au
-centre, chaque sanctuaire derrière un mur au fond de sa base.
+Jungle Ruins (2v2 à 8v8, 5400x2800) le joue : des ruines de temple envahies
+par la végétation, coupées par une rivière de jungle. Passe un gué, traverse
+un pont de rondins, grimpe sur la pyramide à degrés au centre, ou prends le
+passage caché en dessous une fois qu'un levier dans une cour en a ouvert les
+portes ; les murs de lianes peuvent être abattus.
 
 ## Bataille de guilde
 

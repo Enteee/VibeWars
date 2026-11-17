@@ -83,8 +83,11 @@ priester en het andere team blijft liggen.
 Een team verliest als al zijn spelers en zijn priester dood zijn. Na 12 minuten
 wint de meeste moraal.
 
-Jungle Ruins speelt het: drie lanen, in het midden verbonden door dwarspaden, elk
-schrijn achter een muur achterin zijn basis.
+Jungle Ruins (2v2 tot 8v8, 5400x2800) speelt het: overwoekerde tempelruïnes,
+gesplitst door een junglerivier. Waad door een voorde, steek een boomstambrug
+over, beklim de trappenpiramide in het midden of neem de verborgen gang eronder
+zodra een hendel op een binnenplaats de deuren opent; lianenmuren kun je
+omhakken.
 
 ## Guild Battle
 

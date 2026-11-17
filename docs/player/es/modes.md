@@ -88,8 +88,11 @@ caído.
 Un equipo pierde cuando todos sus jugadores y su sacerdote están muertos. Tras
 12 minutos, gana quien tenga más moral.
 
-Se juega en Jungle Ruins: tres carriles unidos por pasos transversales en el
-centro, cada santuario detrás de un muro al fondo de su base.
+Se juega en Jungle Ruins (de 2v2 a 8v8, 5400x2800): ruinas de un templo
+cubiertas de maleza, partidas por un río de la selva. Cruza por un vado, pasa
+por un puente de troncos, sube a la pirámide escalonada del centro o toma el
+pasaje oculto bajo ella cuando una palanca de un patio abra sus puertas; los
+muros de lianas se pueden cortar.
 
 ## Batalla de gremios
 

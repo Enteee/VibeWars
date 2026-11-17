@@ -80,8 +80,11 @@ zostanie na ziemi.
 Drużyna przegrywa, gdy wszyscy jej gracze i jej kapłan nie żyją. Po 12 minutach
 wygrywa najwięcej morale.
 
-Gra w nią Jungle Ruins: trzy tory połączone przejściami pośrodku, z każdą kapliczką
-za murem w tylnej części bazy.
+Gra w nią Jungle Ruins (od 2v2 do 8v8, 5400x2800): zarośnięte ruiny świątyni
+przecięte rzeką w dżungli. Przebrnij przez bród, przejdź po moście z bali, wespnij
+się na schodkową piramidę pośrodku albo skorzystaj z ukrytego przejścia pod nią,
+gdy dźwignia na jednym z dziedzińców otworzy jego drzwi; mury z pnączy można
+wyciąć.
 
 ## Bitwa gildii
 

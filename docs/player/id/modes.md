@@ -79,8 +79,11 @@ dan tim lawan tetap tergeletak.
 Sebuah tim kalah saat semua pemain dan pendetanya mati. Setelah 12
 menit moral terbanyak menang.
 
-Jungle Ruins memainkannya: tiga jalur yang dihubungkan jalan silang di tengah,
-setiap kuil di balik tembok di bagian belakang markasnya.
+Jungle Ruins (2v2 sampai 8v8, 5400x2800) memainkannya: reruntuhan kuil yang
+ditumbuhi tanaman lebat, terbelah oleh sungai hutan. Arungi sungai di tempat
+dangkal, seberangi jembatan batang kayu, daki piramida berundak di tengah,
+atau lewati lorong tersembunyi di bawahnya setelah tuas di sebuah halaman
+membuka pintunya; dinding sulur bisa ditebang.
 
 ## Perang Guild
 

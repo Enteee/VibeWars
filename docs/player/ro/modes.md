@@ -83,8 +83,10 @@ Ucide mai întâi preotul și cealaltă echipă rămâne la pământ.
 O echipă pierde când toți jucătorii și preotul ei sunt morți. După 12 minute câștigă
 cel mai mult moral.
 
-Se joacă pe Jungle Ruins: trei culoare unite de drumuri transversale în mijloc,
-fiecare sanctuar în spatele unui zid din fundul bazei lui.
+Se joacă pe Jungle Ruins (de la 2v2 la 8v8, 5400x2800): ruine de templu năpădite de
+vegetație, despărțite de un râu de junglă. Treci prin vad, traversează un pod din
+bușteni, urcă pe piramida în trepte din mijloc sau ia pasajul ascuns de sub ea după
+ce o pârghie dintr-o curte îi deschide ușile; zidurile de liane pot fi tăiate.
 
 ## Bătălie de bresle
 

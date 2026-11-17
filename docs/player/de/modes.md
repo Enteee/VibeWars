@@ -77,8 +77,10 @@ Leben und voller Energie. Töte zuerst den Priester, und das andere Team bleibt 
 Ein Team verliert, wenn alle Spieler und sein Priester tot sind. Nach 12 Minuten gewinnt die meiste
 Moral.
 
-Jungle Ruins spielt es: drei Bahnen, verbunden durch Querwege in der Mitte, jeder Schrein hinter
-einer Mauer am Ende seiner Basis.
+Jungle Ruins (2v2 bis 8v8, 5400x2800) spielt es: überwucherte Tempelruinen, geteilt von einem
+Dschungelfluss. Wate durch eine Furt, geh über eine Baumstammbrücke, steig auf die Stufenpyramide
+in der Mitte oder nimm den verborgenen Gang darunter, sobald ein Hebel in einem Hof seine Tore
+öffnet; Rankenwände lassen sich umhauen.
 
 ## Gildenschlacht
 

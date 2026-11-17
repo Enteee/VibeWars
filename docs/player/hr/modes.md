@@ -81,8 +81,11 @@ i drugi tim ostaje ležati.
 Tim gubi kad su mrtvi svi njegovi igrači i njegov svećenik. Nakon 12
 minuta pobjeđuje najviše morala.
 
-Jungle Ruins ga igra: tri staze spojene poprečnim putevima u sredini,
-svako svetište iza zida na stražnjoj strani baze.
+Jungle Ruins (od 2v2 do 8v8, 5400x2800) ga igra: obrasle ruševine
+hrama koje dijeli rijeka u džungli. Pregazi rijeku na gazu, prijeđi
+most od trupaca, popni se na stepenastu piramidu u sredini ili uđi u
+skriveni prolaz ispod nje kad poluga u jednom dvorištu otvori njegova
+vrata; zidovi od lijana mogu se posjeći.
 
 ## Bitka cehova
 

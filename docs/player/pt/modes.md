@@ -93,8 +93,11 @@ fica caída.
 Uma equipe perde quando todos os jogadores e o sacerdote dela estão
 mortos. Depois de 12 minutos, vence quem tiver mais moral.
 
-Jungle Ruins joga esse modo: três corredores ligados por caminhos
-transversais no meio, cada santuário atrás de um muro no fundo da base.
+Jungle Ruins (de 2v2 a 8v8, 5400x2800) joga esse modo: ruínas de templo
+tomadas pela vegetação, cortadas por um rio da selva. Atravesse um vau,
+cruze uma ponte de troncos, suba a pirâmide em degraus no meio ou pegue
+a passagem escondida embaixo dela quando uma alavanca num pátio abrir
+suas portas; os muros de cipó podem ser derrubados.
 
 ## Batalha de Guildas
 

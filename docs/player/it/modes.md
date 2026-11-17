@@ -36,7 +36,7 @@ Ci si gioca su Ember Pits: rivoli di lava attraversati da ponti di pietra, un tu
 
 Una squadra perde quando tutti i suoi giocatori e il suo sacerdote sono morti. Dopo 12 minuti vince chi ha più morale.
 
-Ci si gioca su Jungle Ruins: tre corsie unite da sentieri trasversali al centro, con ogni santuario dietro un muro in fondo alla base.
+Ci si gioca su Jungle Ruins (da 2v2 a 8v8, 5400x2800): rovine di templi invase dalla vegetazione, divise da un fiume della giungla. Attraversa un guado, passa su un ponte di tronchi, sali sulla piramide a gradoni al centro, oppure prendi il passaggio nascosto sotto di essa quando una leva in un cortile ne apre le porte; i muri di liane si possono abbattere.
 
 ## Battaglia di gilda
 

@@ -85,8 +85,11 @@ Döda prästen först så ligger det andra laget kvar.
 Ett lag förlorar när alla dess spelare och dess präst är döda. Efter 12
 minuter vinner mest moral.
 
-Jungle Ruins spelar det: tre filer förenade av tvärvägar i mitten, varje
-helgedom bakom en mur längst bak i sin bas.
+Jungle Ruins (2v2 till 8v8, 5400x2800) spelar det: igenvuxna
+tempelruiner, delade av en djungelflod. Vada över ett vadställe, gå över
+en stockbro, klättra upp på trappyramiden i mitten eller ta den dolda
+gången under den när en spak på en gård har öppnat dess dörrar;
+lianväggar kan huggas ner.
 
 ## Gillestrid
 

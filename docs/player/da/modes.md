@@ -85,8 +85,11 @@ og fuld energi. Dræb præsten først, så bliver det andet hold liggende.
 Et hold taber, når alle dets spillere og dets præst er døde. Efter 12
 minutter vinder mest moral.
 
-Jungle Ruins spiller den: tre baner forbundet af tværstier i midten, hver
-helligdom bag en mur bagerst i sin base.
+Jungle Ruins (2v2 til 8v8, 5400x2800) spiller den: tilgroede
+tempelruiner, delt af en flod gennem junglen. Vad over ved et vadested,
+gå over en bro af træstammer, klatr op ad trappepyramiden i midten, eller
+tag den skjulte gang under den, når et håndtag i en gård har åbnet dens
+døre; lianvægge kan hugges ned.
 
 ## Laugskamp
 

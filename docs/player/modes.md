@@ -81,8 +81,10 @@ and the other team stays down.
 A team loses when all its players and its priest are dead. After 12
 minutes the most morale wins.
 
-Jungle Ruins plays it: three lanes joined by cross-paths in the middle,
-each shrine behind a wall at the back of its base.
+Jungle Ruins (2v2 to 8v8, 5400x2800) plays it: overgrown temple ruins split
+by a jungle river. Wade a ford, cross a log bridge, climb the stepped pyramid
+in the middle, or take the hidden passage under it once a lever in a court
+opens its doors; vine walls can be cut down.
 
 ## Guild Battle
 
