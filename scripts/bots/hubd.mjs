@@ -179,9 +179,11 @@ import { SLEEP_REQUEST } from "./hub-sleep-units.mjs";
 import { loadLines } from "./company-load.mjs";
 import { peekRows } from "./peek.mjs";
 import {
+  hostRoomRefusal,
   maxRunners,
   readAlertTold as readRunnersAlertTold,
   readStatus as readRunnersStatus,
+  readTarget as readRunnersTarget,
   runnersLines,
   runnersStateDir,
   writeAlertTold as writeRunnersAlertTold,
@@ -2883,18 +2885,37 @@ function serveLoad(cfg) {
 }
 
 /**
+ * The host's free memory, load and CPUs, read when a `company runners <n>`
+ * arrives (#3466). `HUBD_HOST_ROOM`, JSON of the same shape, stands in for
+ * the host in tests, whose CI machine has no room for a runner.
+ *
+ * @returns {{ freeBytes: number, load1: number, cpus: number }}
+ */
+function readHostRoom() {
+  const fixed = process.env.HUBD_HOST_ROOM;
+  if (fixed !== undefined) {
+    /** @type {unknown} */
+    const room = JSON.parse(fixed);
+    return /** @type {{ freeBytes: number, load1: number, cpus: number }} */ (room);
+  }
+  return { freeBytes: os.freemem(), load1: os.loadavg()[0] ?? 0, cpus: os.availableParallelism() };
+}
+
+/**
  * `company runners` (#1890): the supervisor's status, as the dashboard
  * shows it; `company runners <n>` sets the target it reads, within the
  * operator's max, `company.json`'s `maxRunners` (#2764), read on every
  * request. The supervisor reads that max once, at start, and refuses a
  * target above its own; so while its status names a lower max, that one
- * caps the target too, until a restart applies the new one.
+ * caps the target too, until a restart applies the new one. Raising it is
+ * refused when the host has no room for the runners it adds (#3466).
  *
  * @param {string[]} argv `[]` or `[n]`, checked by the policy
  * @param {number} max
+ * @param {{ freeBytes: number, load1: number, cpus: number }} host read when the request arrives
  * @returns {{ code: number, stdout: string, stderr: string }}
  */
-function serveRunners(argv, max) {
+function serveRunners(argv, max, host) {
   const [word] = argv;
   const status = readRunnersStatus(RUNNERS_STATE);
   if (word !== undefined) {
@@ -2910,6 +2931,15 @@ function serveRunners(argv, max) {
         stdout: "",
         stderr: `company runners: ${String(n)} is above ${why}\n`,
       };
+    }
+    const refusal = hostRoomRefusal({
+      n,
+      target: readRunnersTarget(RUNNERS_STATE, max).n,
+      alive: status === null ? 0 : status.runners.length,
+      ...host,
+    });
+    if (refusal !== null) {
+      return { code: 1, stdout: "", stderr: `company runners: ${refusal}\n` };
     }
     writeRunnersTarget(RUNNERS_STATE, n);
     return {
@@ -4399,7 +4429,7 @@ async function serve(request, verdict, acting) {
       audit({ role, kind, argv, decision: "refused", reason });
       return { allow: false, reason, code: 77 };
     }
-    const answered = serveRunners(argv, cfg.maxRunners);
+    const answered = serveRunners(argv, cfg.maxRunners, readHostRoom());
     audit({ role, kind, argv, decision: "allowed", code: answered.code });
     return { allow: true, ...answered };
   }

@@ -107,7 +107,9 @@ Without that line, move the file once into the credential home.
 
 CI jobs can run on this host, each in a one-job jail (ADR-0045). The
 runner supervisor, a third daemon in the hub window, keeps as many alive
-as the manager asks for with `company runners <n>`. They are off until
+as the manager asks for with `company runners <n>`. Raising it is refused
+when the host lacks 8 GiB free memory and 4 free CPUs (CPUs less load)
+for each runner it would add (#3466). They are off until
 you turn them on, and you turn them on only after ADR-0045's spike has run
 a whole `ci` job in the jail:
 
