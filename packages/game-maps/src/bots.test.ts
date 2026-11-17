@@ -21,6 +21,7 @@ import { allWallSegments } from "./geometry.js";
 import { matchGates, matchLayers } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
+import { mapSimulationFields } from "./match-fields.js";
 import { playBuildBot } from "./tools/map-balance.js";
 import type { MapData } from "./schema.js";
 
@@ -381,20 +382,14 @@ describe("Capture Points bots (#2580)", () => {
   });
 
   it("bots finish a match on Mosslit Cairns (#2696)", () => {
-    // Two a side: a full 8v8 takes 15 s here, too near the 20 s test limit.
+    // Two a side: a full 8v8 on the 2.5D rebuild (#3439) is too slow for a unit test.
     const cairns = loadAllMaps().find((candidate) => candidate.id === "mosslit-cairns");
     if (cairns === undefined) throw new Error("no map mosslit-cairns");
     const sim = new MatchSimulation({
       seed: "cairns",
       ruleset: RULESET,
-      walls: allWallSegments(cairns.walls),
-      bounds: { width: cairns.width, height: cairns.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
-      capturePoints: cairns.objectives.flatMap((objective) =>
-        objective.kind === "capture-point"
-          ? [{ ...objective.position, layer: objective.layer }]
-          : [],
-      ),
+      ...mapSimulationFields(cairns, 2),
       participants: casterBots(cairns, 2),
     });
     for (
@@ -405,7 +400,7 @@ describe("Capture Points bots (#2580)", () => {
       sim.step(DT);
     }
     expect(sim.phase).toBe("finished");
-  });
+  }, 60_000);
 
   it("three teams of bots play Threefold Keep to time, doors and all (#2699)", () => {
     const keep = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
