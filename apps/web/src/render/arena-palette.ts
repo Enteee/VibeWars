@@ -814,6 +814,12 @@ export const GROUND_DRESSING: Record<Biome, GroundDressingTones> = {
     mix(BIOME_TONES.snow.ground, BIOME_TONES.snow.stone, 0.6),
     shade(BIOME_TONES.snow.ground, 0.12),
   ),
+  // Dry reed tufts and silt patches.
+  marsh: dressingTones(
+    BIOME_TONES.marsh,
+    mix(BIOME_TONES.marsh.plant, BIOME_TONES.marsh.ground, 0.3),
+    mix(BIOME_TONES.marsh.ground, BIOME_TONES.marsh.earth, 0.6),
+  ),
 };
 
 /**
