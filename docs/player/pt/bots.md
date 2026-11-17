@@ -34,7 +34,8 @@ alcançam e usam pilares como cobertura. Uma equipe se volta contra
 qualquer inimigo ao alcance que caia abaixo de 60% de vida, para
 acabar com ele. Em Rei da Colina, enquanto sua equipe não controla o
 altar, o Herói Fantasmagórico da outra equipe no altar vem antes até
-disso. Um bot que se adianta demais espera os outros antes de seguir.
+disso. Um bot que se adianta demais espera os outros antes de seguir,
+a menos que os outros sejam jogadores parados há algum tempo.
 
 Arqueiros e lanceiros tomam o terreno alto quando é seguro.
 Um bot que dois inimigos focam, ou que está abaixo de metade da vida e a perde depressa, esconde-se da vista deles até três segundos: atrás de um muro, sob uma plataforma ou em terreno alto.

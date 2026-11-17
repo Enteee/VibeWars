@@ -34,7 +34,8 @@ bruger søjler som dækning. Et hold vender sig mod enhver fjende inden for
 rækkevidde, der falder under 60 % liv, for at gøre det af med den. I
 Kongen af bakken, mens dit hold ikke holder alteret, går det andet holds
 Spøgelseshelt på alteret forud for selv det. En bot, der kommer langt
-foran sit hold, venter på resten, før den rykker videre.
+foran sit hold, venter på resten, før den rykker videre, medmindre resten
+er spillere, der har stået uvirksomme et stykke tid.
 
 Bueskytter og spydkastere indtager det høje terræn, når det er sikkert.
 En bot, som to fjender går efter, eller som har under halvt helbred og hurtigt mister det, dukker sig ud af deres syn i op til tre sekunder: bag en mur, under et dæk eller op på højt terræn.

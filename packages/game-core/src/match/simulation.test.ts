@@ -10,6 +10,7 @@ import { getSkill } from "../skills/catalog.js";
 import { NO_RANKS, ENERGY_PER_PIP } from "../skills/status.js";
 import { chargeAdrenaline, strikesOf } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
+import { HUMAN_IDLE_SECONDS, idleAt } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import type { GateField } from "./gates.js";
 import { MatchSimulation, WALL_SET_LIMIT, type ParticipantSpec } from "./simulation.js";
@@ -1222,5 +1223,31 @@ describe("wall sets past their limit (#3467)", () => {
 
   it("refuses a limit below one", () => {
     expect(() => new MatchSimulation({ seed: "wall-sets", wallSetLimit: 0 })).toThrow();
+  });
+});
+
+describe("a human's last command, for bots to tell an idle one (#3489)", () => {
+  const idle = (sim: MatchSimulation, id: string) =>
+    idleAt(participant(sim, id).lastCommandAt, sim.elapsedSeconds);
+
+  it("is idle before any command, active right after a walk, and idle again 10 s after it", () => {
+    const sim = duel();
+    stepFor(sim, 1);
+    expect(idle(sim, "a")).toBe(true);
+    sim.walkTo("a", vec2(0, 40));
+    expect(idle(sim, "a")).toBe(false);
+    stepFor(sim, 1);
+    expect(participant(sim, "a").walkGoal).toBeUndefined();
+    stepFor(sim, HUMAN_IDLE_SECONDS - 1.5);
+    expect(idle(sim, "a")).toBe(false);
+    stepFor(sim, 1);
+    expect(idle(sim, "a")).toBe(true);
+  });
+
+  it("stays active while a move key is held", () => {
+    const sim = duel();
+    sim.setInputDirection("a", vec2(0, 1));
+    stepFor(sim, HUMAN_IDLE_SECONDS + 2);
+    expect(idle(sim, "a")).toBe(false);
   });
 });

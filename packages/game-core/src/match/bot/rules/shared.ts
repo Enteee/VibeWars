@@ -285,6 +285,9 @@ export const REGROUP_SPREAD = 300;
 /** A bot waiting for its team walks on once this near the team's centre (#2621). */
 export const REGROUP_JOINED = 150;
 
+/** A bot waits for its team at most this many seconds, then walks on (#3489). */
+export const REGROUP_MAX_WAIT = 4;
+
 /**
  * A foe at `self`'s elbow, one to stand and fight (#2545): one with a
  * melee weapon within `ELBOW_DISTANCE`, on `self`: targeting or

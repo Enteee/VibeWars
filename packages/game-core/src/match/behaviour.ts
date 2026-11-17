@@ -254,6 +254,10 @@ export interface BehaviourCursor {
   highSpot: HighGroundSpot | undefined;
   /** `play-build`: waiting, ahead of its team, for the rest to catch up (#2621). */
   regrouping: boolean;
+  /** `play-build`: the match second the current wait for the team began (#3489), `undefined` while it waits for none. */
+  regroupSince: number | undefined;
+  /** `play-build`: it waited its longest and walked on (#3489), and waits no more until it joins the team or meets a foe. */
+  regroupSpent: boolean;
   /** `play-build`, foes of two teams or more: the team it fights, kept while that team still fights (#2685). */
   front: number | undefined;
   /** `play-build`: the team target it holds its spike skills for (#2631), `undefined` while it holds none. */
@@ -304,6 +308,11 @@ export interface BehaviourContext {
   check(skillId: string, targetId: string | undefined): ActivationCheck;
   /** Whether `participantId` is driven by `play-build` (#1189): a bot. */
   isBot(participantId: string): boolean;
+  /**
+   * Whether `participantId` is a human, not a bot, who has given no
+   * command in `HUMAN_IDLE_SECONDS`, or none at all yet (#3489).
+   */
+  isIdle(participantId: string): boolean;
   /** The foe `self`'s team called (#443), if any: a bot's target while it lives (#1193). */
   readonly calledTargetId: string | undefined;
   /** Whether nothing blocks the line of sight from `self` to `point` (#1222). */
@@ -328,6 +337,14 @@ export interface BehaviourContext {
   readonly cover: readonly HighGroundSpot[];
   /** How far `self` walks to `to` on `layer` (#3141), stairs and ramps included: Infinity with no route. */
   routeLength(to: Vec2, layer: number): number;
+}
+
+/** A human who has given no command for this many seconds is idle (#3489): bots do not wait for them. */
+export const HUMAN_IDLE_SECONDS = 10;
+
+/** Whether a human whose last command was at `lastCommandAt`, if ever, is idle at match second `now` (#3489). */
+export function idleAt(lastCommandAt: number | undefined, now: number): boolean {
+  return lastCommandAt === undefined || now - lastCommandAt >= HUMAN_IDLE_SECONDS;
 }
 
 /** A spot a bot may stand on above the ground (#3141). */
@@ -422,6 +439,8 @@ export function createCursor(): BehaviourCursor {
     coverSpot: undefined,
     highSpot: undefined,
     regrouping: false,
+    regroupSince: undefined,
+    regroupSpent: false,
     front: undefined,
     spikeTargetId: undefined,
     spikeHeldSeconds: 0,

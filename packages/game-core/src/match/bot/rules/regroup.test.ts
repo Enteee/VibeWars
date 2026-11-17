@@ -5,7 +5,7 @@ import { distance, vec2 } from "../../../vec2.js";
 import { createCursor, decide } from "../../behaviour.js";
 import { initialGates } from "../../gates.js";
 import regroup from "./regroup.js";
-import { NOTHING, REGROUP_SPREAD } from "./shared.js";
+import { NOTHING, REGROUP_MAX_WAIT, REGROUP_SPREAD } from "./shared.js";
 import {
   BOT,
   DT,
@@ -113,6 +113,59 @@ describe("regroup (#2621)", () => {
 
   it("leaves a guard to its post", () => {
     expect(regroup.decide({ ...rule(700, 100), role: undefined })).toBeUndefined();
+  });
+});
+
+describe("regroup leaves idle humans out and waits at most four seconds (#3489)", () => {
+  it("centres on its bot mate only, not on an idle human mate", () => {
+    const sim = match([
+      fighter("w", 0, WARRIOR, vec2(800, 400)),
+      fighter("bot", 0, RANGER, vec2(400, 400)),
+      fighter("human", 0, RANGER, vec2(100, 400), { behaviour: undefined }),
+      fighter("foe", 1, WARRIOR, vec2(1550, 400)),
+    ]);
+    const idle = (id: string) => id === "human";
+    expect(
+      regroup.decide(ruleFor(sim, "w", { cursor: createCursor() }, { isIdle: idle })),
+    ).toBeUndefined();
+    // The centre on the bot mate is 200 behind; with the human active it is 367.
+    expect(regroup.decide(ruleFor(sim, "w", { cursor: createCursor() }))).not.toBeUndefined();
+  });
+
+  /** `w` at `x`, its two mates at 100, a foe at `foe`, thinking at `now` with `cursor`. */
+  function at(cursor: ReturnType<typeof createCursor>, now: number, x = 700, foe = 1550) {
+    const sim = match([
+      fighter("w", 0, WARRIOR, vec2(x, 400)),
+      fighter("a", 0, RANGER, vec2(100, 400)),
+      fighter("b", 0, RANGER, vec2(100, 400)),
+      fighter("foe", 1, WARRIOR, vec2(foe, 400)),
+    ]);
+    return regroup.decide(ruleFor(sim, "w", { cursor }, { now }));
+  }
+
+  it("walks on after holding four seconds, and does not hold again while still far ahead", () => {
+    const cursor = createCursor();
+    expect(at(cursor, 10)).not.toBeUndefined();
+    expect(at(cursor, 10 + REGROUP_MAX_WAIT - DT)).not.toBeUndefined();
+    expect(at(cursor, 10 + REGROUP_MAX_WAIT)).toBeUndefined();
+    expect(cursor.regrouping).toBe(false);
+    expect(at(cursor, 30)).toBeUndefined();
+  });
+
+  it("holds again once it has joined the team", () => {
+    const cursor = createCursor();
+    at(cursor, 0);
+    at(cursor, REGROUP_MAX_WAIT);
+    expect(at(cursor, 5, 200)).toBeUndefined();
+    expect(at(cursor, 6)).not.toBeUndefined();
+  });
+
+  it("holds again once a foe has come into reach", () => {
+    const cursor = createCursor();
+    at(cursor, 0);
+    at(cursor, REGROUP_MAX_WAIT);
+    expect(at(cursor, 5, 700, 1000)).toBeUndefined();
+    expect(at(cursor, 6)).not.toBeUndefined();
   });
 });
 

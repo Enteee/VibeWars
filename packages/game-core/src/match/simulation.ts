@@ -291,6 +291,7 @@ import {
   type BotObjectives,
   type HighGroundSpot,
   type ResetPolicy,
+  idleAt,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { freshCorpsesWithin, nearestFreshCorpse } from "./corpses.js";
@@ -860,6 +861,12 @@ export interface Participant {
    * point as clicked.
    */
   walkGoal: Vec2 | undefined;
+  /**
+   * The match second of its last command (#3489): a move, a walk, an
+   * attack, a skill or a target. `undefined` until the first. Bots read
+   * it of a human, never of a bot.
+   */
+  lastCommandAt: number | undefined;
   /** The layer a click-to-walk named; `undefined` when it named none. Read only while walking. */
   walkLayer: number | undefined;
   /**
@@ -2041,6 +2048,7 @@ export class MatchSimulation {
       facing: spec.facing,
       inputDirection: ZERO,
       walkGoal: undefined,
+      lastCommandAt: undefined,
       walkLayer: undefined,
       pendingSkill: undefined,
       targetId: undefined,
@@ -3400,6 +3408,9 @@ export class MatchSimulation {
       record.inputDirection = clampInputDirection(direction);
       record.walkGoal = undefined;
       const moving = record.inputDirection.x !== 0 || record.inputDirection.y !== 0;
+      if (moving) {
+        record.lastCommandAt = this.#elapsedSeconds;
+      }
       if (moving && record.combatant.knockdownRemaining <= 0) {
         this.#moveInterrupts(record);
       }
@@ -3430,6 +3441,7 @@ export class MatchSimulation {
     if (record === undefined || record.combatant.dead || record.combatant.knockdownRemaining > 0) {
       return;
     }
+    record.lastCommandAt = this.#elapsedSeconds;
     record.inputDirection = ZERO;
     if (layer !== undefined && !this.#isOnLayer(point, layer)) {
       record.walkGoal = undefined;
@@ -3567,6 +3579,7 @@ export class MatchSimulation {
     if (record === undefined) {
       return undefined;
     }
+    record.lastCommandAt = this.#elapsedSeconds;
     if (
       isCarriedObjectId(targetId) ||
       switchIdOf(targetId) !== undefined ||
@@ -3631,6 +3644,7 @@ export class MatchSimulation {
     if (record === undefined) {
       return false;
     }
+    record.lastCommandAt = this.#elapsedSeconds;
     if (targetId === undefined) {
       record.targetId = undefined;
       return true;
@@ -3686,6 +3700,7 @@ export class MatchSimulation {
     if (record === undefined) {
       return undefined;
     }
+    record.lastCommandAt = this.#elapsedSeconds;
 
     // A copy standing in the slot (#469) is what the slot holds.
     const used = slotSkill(record.skillBar, record.combatant.cast, slot);
@@ -4233,6 +4248,14 @@ export class MatchSimulation {
     this.checkMatchEnd();
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
+      // A held move key or a walk under way is a command every tick (#3489).
+      if (
+        record.inputDirection.x !== 0 ||
+        record.inputDirection.y !== 0 ||
+        record.walkGoal !== undefined
+      ) {
+        record.lastCommandAt = this.#elapsedSeconds;
+      }
     }
     this.#countControlled();
     this.#advanceGroundEffects(dt);
@@ -4972,6 +4995,14 @@ export class MatchSimulation {
       },
       isBot: (participantId) =>
         this.#participants.get(participantId)?.behaviour?.kind === "play-build",
+      isIdle: (participantId) => {
+        const other = this.#participants.get(participantId);
+        return (
+          other !== undefined &&
+          other.behaviour?.kind !== "play-build" &&
+          idleAt(other.lastCommandAt, this.#elapsedSeconds)
+        );
+      },
       calledTargetId: this.#calledTargets.get(record.combatant.team),
       sees: (point, layer = record.layer) =>
         this.#seesAcross(record.position, record.layer, point, layer),

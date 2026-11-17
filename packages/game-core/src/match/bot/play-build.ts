@@ -349,6 +349,7 @@ function think(
       // Any other answer, a fight first among them, ends a wait for the team (#2621).
       if (each !== regroup) {
         cursor.regrouping = false;
+        cursor.regroupSince = undefined;
       }
       if (intent.endUpkeep !== undefined) {
         cursor.upkeepDropSeconds = UPKEEP_DROP_SECONDS;

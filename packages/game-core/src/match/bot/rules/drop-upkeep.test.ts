@@ -41,6 +41,7 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       stepUnits: 1,
       check: () => ({ ok: true }),
       isBot: () => true,
+      isIdle: () => false,
       calledTargetId: undefined,
       sees: () => true,
       seesBetween: () => true,

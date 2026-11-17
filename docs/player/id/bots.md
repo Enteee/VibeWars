@@ -34,7 +34,7 @@ sebagai perlindungan. Sebuah tim berbalik menyerang musuh mana pun dalam jangkau
 untuk menghabisinya. Di Raja Bukit, selama timmu tidak menguasai
 altar, Ghostly Hero tim lawan di altar didahulukan bahkan dari itu.
 Bot yang terlalu jauh di depan timnya menunggu sisanya sebelum terus
-maju.
+maju, kecuali sisanya adalah pemain yang sudah diam beberapa lama.
 
 Pemanah dan pelempar tombak mengambil tempat tinggi saat aman.
 Bot yang diincar dua lawan, atau yang nyawanya di bawah separuh dan cepat berkurang, bersembunyi dari pandangan mereka hingga tiga detik: di balik dinding, di bawah dek, atau di tempat tinggi.
