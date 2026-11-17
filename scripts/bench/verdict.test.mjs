@@ -69,15 +69,23 @@ describe("verdict", () => {
 });
 
 describe("exitCode", () => {
+  const gated = { unsettled: false, reportOnly: false };
+
+  it("fails report-only only when the warm-up never settled", () => {
+    const only = { breach: true, noisy: true, reportOnly: true };
+    expect(exitCode({ ...only, unsettled: false })).toBe(0);
+    expect(exitCode({ ...only, unsettled: true })).toBe(EXIT_TOO_NOISY);
+  });
+
   it("exits 0 clean, 1 on a breach, 75 on noise alone", () => {
-    expect(exitCode({ breach: false, noisy: false })).toBe(0);
-    expect(exitCode({ breach: true, noisy: false })).toBe(1);
-    expect(exitCode({ breach: false, noisy: true })).toBe(EXIT_TOO_NOISY);
+    expect(exitCode({ ...gated, breach: false, noisy: false })).toBe(0);
+    expect(exitCode({ ...gated, breach: true, noisy: false })).toBe(1);
+    expect(exitCode({ ...gated, breach: false, noisy: true })).toBe(EXIT_TOO_NOISY);
     expect(EXIT_TOO_NOISY).toBe(75);
   });
 
   it("lets a breach win over noise", () => {
-    expect(exitCode({ breach: true, noisy: true })).toBe(1);
+    expect(exitCode({ ...gated, breach: true, noisy: true })).toBe(1);
   });
 });
 

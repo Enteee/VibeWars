@@ -164,7 +164,7 @@ jobs:
       - name: Render bench
         if: steps.applies.outputs.applies == 'true'
         # 30 min bounds a hang, not a threshold (#3428): the ratio above is the
-        # gate. A passing run takes 16-19 min and grows with each map; nearing
+        # gate. A passing run takes 22-27 min and grows with each map; nearing
         # 30 is a card to speed the bench up, not another raise.
         #
         # The follow gate (#3488) catches what the ratio misses: a cost every

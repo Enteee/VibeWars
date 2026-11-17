@@ -85,10 +85,14 @@ export const EXIT_TOO_NOISY = 75;
  * The bench's exit code. A breach wins over noise: a regression is never
  * reported as a reason to rerun.
  *
- * @param {{ breach: boolean, noisy: boolean }} outcome
+ * Report-only (the hosted perf bench) prints a breach and passes, as its table
+ * still has numbers; a warm-up that never settled leaves no table, so it still fails.
+ *
+ * @param {{ breach: boolean, noisy: boolean, unsettled: boolean, reportOnly: boolean }} outcome
  * @returns {number}
  */
-export function exitCode({ breach, noisy }) {
+export function exitCode({ breach, noisy, unsettled, reportOnly }) {
+  if (reportOnly) return unsettled ? EXIT_TOO_NOISY : 0;
   if (breach) return 1;
   return noisy ? EXIT_TOO_NOISY : 0;
 }

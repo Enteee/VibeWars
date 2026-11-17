@@ -540,6 +540,8 @@ const executablePath = process.env.VIBEWARS_CHROMIUM;
 let browser;
 let failed = false;
 let noisy = false;
+// The warm-up never settled, so nothing was measured: even report-only fails.
+let unsettled = false;
 try {
   browser = await chromium.launch({
     ...(executablePath === undefined ? {} : { executablePath }),
@@ -583,11 +585,12 @@ try {
         `calibration never settled in warm-up (${list}): the runner is too noisy to judge`,
       );
       noisy = true;
-      // nothing is measured on a runner that never settled
+      unsettled = true;
+    } else {
+      console.log(
+        `warm-up: map ${warmMap} ${String(WARMUP_LOAD_SECONDS)} s; calibration ${list} ms (settled after ${String(after)} windows, ${((times[after - 1] ?? 0) / 1000).toFixed(0)} s, discarded)`,
+      );
     }
-    console.log(
-      `warm-up: map ${warmMap} ${String(WARMUP_LOAD_SECONDS)} s; calibration ${list} ms (settled after ${String(after)} windows, ${((times[after - 1] ?? 0) / 1000).toFixed(0)} s, discarded)`,
-    );
   }
   const windows = [await calibrationWindow()];
   const rows = [];
@@ -725,5 +728,9 @@ try {
 // above and does not fail the run, so the table still reaches the report.
 // ci.yml, which enforces the ceilings, does not set it. A crash still fails.
 // Exit 75 means the runner was too noisy to judge: a rerun is the remedy (#3503).
-process.exitCode =
-  process.env.BENCH_REPORT_ONLY === undefined ? exitCode({ breach: failed, noisy }) : 0;
+process.exitCode = exitCode({
+  breach: failed,
+  noisy,
+  unsettled,
+  reportOnly: process.env.BENCH_REPORT_ONLY !== undefined,
+});
