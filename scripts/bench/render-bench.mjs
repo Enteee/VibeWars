@@ -35,12 +35,16 @@
  * pointer hovers the ground, uncapped. Its rows join the table, outside
  * the calibration's gate: walking costs a frame about twice what standing
  * does. A second table gives the frame's update and render JS, the
- * update's share of the frame, the snapshot cadence, which the client
+ * update's share of the frame, the snapshot cadence, the host's ms per
+ * beat (a Hosted game ticks on the page's main thread), which the client
  * measures itself under `?frametiming`, and each map's p50 over the flat
  * baseline's, both walked.
  *   BENCH_FOLLOW_SECONDS=12  how long each map walks, measured.
  *   BENCH_MAX_FOLLOW_RATIO=12 exit 1 when a map walked is more than this
  *                      many times the flat baseline walked.
+ *   BENCH_PROFILE=<mapId> record a CPU profile of that map's walk to
+ *                      `bench-<mapId>.cpuprofile` and print its 15
+ *                      functions of most self time (#3499). Off in CI.
  *
  * The menu background never draws faster than 30 fps (#3119): a map
  * under that cap measures as the cap. Software GL is far over it.
@@ -153,7 +157,8 @@ async function serve() {
   const url = `http://127.0.0.1:${String(PORT)}/`;
   const out = fs.mkdtempSync(path.join(os.tmpdir(), "render-bench-"));
   const command =
-    `pnpm --filter @vibewars/web exec vite build --outDir ${out} --emptyOutDir && ` +
+    // A profile names its functions: unminified (#3499).
+    `pnpm --filter @vibewars/web exec vite build --outDir ${out} --emptyOutDir${PROFILE === undefined ? "" : " --minify false"} && ` +
     `pnpm --filter @vibewars/web exec vite preview --outDir ${out} ` +
     `--host 127.0.0.1 --port ${String(PORT)} --strictPort`;
   const child = spawn("sh", ["-c", command], {
@@ -333,6 +338,8 @@ function frameTimes(page, seconds = SECONDS) {
 const FLAT_BASELINE = "jungle-ruins";
 /** How long `--follow` walks its loop, measured. */
 const FOLLOW_SECONDS = Number(process.env.BENCH_FOLLOW_SECONDS ?? 12);
+/** `--follow`'s map to take a CPU profile of while it walks (#3499), if any. */
+const PROFILE = process.env.BENCH_PROFILE;
 /** One step of the walk: the pointer moves, and every `CLICK_EVERY`th step it clicks. */
 const STEP_MS = 50;
 const CLICK_EVERY = 6;
@@ -359,7 +366,7 @@ const UPHILL = new Map([
 /**
  * What `?frametiming` measured in the page (apps/web/src/render/frame-timing.ts).
  *
- * @typedef {{ update: number[], render: number[], snapshots: number[] }} FrameTiming
+ * @typedef {{ update: number[], render: number[], snapshots: number[], host: number[] }} FrameTiming
  */
 
 /**
@@ -464,11 +471,16 @@ async function follow(page, mapId) {
     /** @type {unknown} */
     const shown = Reflect.get(window, "__frameTiming");
     const stats = /** @type {FrameTiming} */ (shown);
-    for (const times of [stats.update, stats.render, stats.snapshots]) {
+    for (const times of [stats.update, stats.render, stats.snapshots, stats.host]) {
       times.length = 0;
     }
   });
   await takePasses(page);
+  const profiler = PROFILE === mapId ? await page.context().newCDPSession(page) : undefined;
+  if (profiler !== undefined) {
+    await profiler.send("Profiler.enable");
+    await profiler.send("Profiler.start");
+  }
   const frames = frameTimes(page, FOLLOW_SECONDS);
   const end = Date.now() + FOLLOW_SECONDS * 1000;
   let next = 0;
@@ -510,6 +522,10 @@ async function follow(page, mapId) {
     await sleep(STEP_MS);
   }
   const measured = await frames;
+  if (profiler !== undefined) {
+    const { profile } = await profiler.send("Profiler.stop");
+    writeProfile(mapId, /** @type {CpuProfile} */ (profile));
+  }
   const passes = await takePasses(page);
   const stats = await page.evaluate(() => {
     /** @type {unknown} */
@@ -517,6 +533,45 @@ async function follow(page, mapId) {
     return /** @type {FrameTiming} */ (shown);
   });
   return { frames: measured, reached: next, passes, ...stats };
+}
+
+/**
+ * What a CDP `Profiler.stop` returns, as far as `writeProfile` reads it.
+ *
+ * @typedef {{ id: number, callFrame: { functionName: string, url: string, lineNumber: number } }} ProfileNode
+ * @typedef {{ nodes: ProfileNode[], samples?: number[], timeDeltas?: number[] }} CpuProfile
+ */
+
+/**
+ * Writes `profile` to `bench-<mapId>.cpuprofile` beside the report and
+ * prints its 15 functions of most self time, in ms.
+ *
+ * @param {string} mapId
+ * @param {CpuProfile} profile
+ */
+function writeProfile(mapId, profile) {
+  const file = `bench-${mapId}.cpuprofile`;
+  fs.writeFileSync(file, JSON.stringify(profile));
+  const { samples = [], timeDeltas = [] } = profile;
+  /** @type {Map<number, number>} */
+  const selfMs = new Map();
+  for (const [i, id] of samples.entries()) {
+    selfMs.set(id, (selfMs.get(id) ?? 0) + (timeDeltas[i] ?? 0) / 1000);
+  }
+  /** @type {Map<string, number>} */
+  const byFunction = new Map();
+  for (const node of profile.nodes) {
+    const { functionName, url, lineNumber } = node.callFrame;
+    const key = `${functionName === "" ? "(anonymous)" : functionName} ${url.split("/").at(-1) ?? ""}:${String(lineNumber + 1)}`;
+    byFunction.set(key, (byFunction.get(key) ?? 0) + (selfMs.get(node.id) ?? 0));
+  }
+  const total = [...byFunction.values()].reduce((a, b) => a + b, 0);
+  console.log();
+  console.log(`| ${mapId} self time (${file}) | ms | share |`);
+  console.log("|---|---|---|");
+  for (const [key, ms] of [...byFunction].sort((a, b) => b[1] - a[1]).slice(0, 15)) {
+    console.log(`| ${key} | ${ms.toFixed(0)} | ${((ms / total) * 100).toFixed(1)} % |`);
+  }
 }
 
 /**
@@ -623,6 +678,8 @@ try {
           sum(run.snapshots.map((time) => (time - mean) ** 2)) / run.snapshots.length,
         ),
         reached: run.reached,
+        hostP50: percentile(sorted(run.host), 50),
+        hostP95: percentile(sorted(run.host), 95),
         passes: run.passes,
       });
     } finally {
@@ -678,14 +735,14 @@ try {
   if (rows.length > 0) printPasses("passes (still)", rows);
   console.log();
   console.log(
-    "| follow | frames | p50 ms | p95 ms | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | waypoints | p50 / flat |",
+    "| follow | frames | p50 ms | p95 ms | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | host p50 ms | host p95 ms | waypoints | p50 / flat |",
   );
-  console.log("|---|---|---|---|---|---|---|---|---|---|---|---|");
+  console.log("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
   const flat = followed.at(-1);
   for (const row of followed) {
     const ratio = flat === undefined ? Number.NaN : row.p50 / flat.p50;
     console.log(
-      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${row.update.toFixed(1)} | ${row.render.toFixed(1)} | ${(row.share * 100).toFixed(0)} % | ${row.snapshotP50.toFixed(1)} | ${row.snapshotP95.toFixed(1)} | ${row.jitter.toFixed(1)} | ${String(row.reached)} | ${ratio.toFixed(2)} |`,
+      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${row.update.toFixed(1)} | ${row.render.toFixed(1)} | ${(row.share * 100).toFixed(0)} % | ${row.snapshotP50.toFixed(1)} | ${row.snapshotP95.toFixed(1)} | ${row.jitter.toFixed(1)} | ${row.hostP50.toFixed(1)} | ${row.hostP95.toFixed(1)} | ${String(row.reached)} | ${ratio.toFixed(2)} |`,
     );
     if (MAX_FOLLOW_RATIO !== undefined && !(ratio <= MAX_FOLLOW_RATIO)) {
       console.error(
