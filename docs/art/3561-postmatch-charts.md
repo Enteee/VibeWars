@@ -1,34 +1,33 @@
 # Post-match charts: three options (#3561)
 
-Three alternative designs for the post-match charts, same invented data and
-the UI's own palette (`--panel`, `--line`, `--ink`, `--accent`, `--damage`).
-Each shows the player view and the team view. Made by
-`scripts/assets/3561-postmatch-charts.mjs`; regenerate with
-`node scripts/assets/3561-postmatch-charts.mjs`.
+Option A is the first mockup the operator liked. B and C are variations on
+it: the same banner, tabs (You / Teams / By skill), series chips, dash styles
+and event shapes, with a different answer to "where do the events go, and how
+big is the chart". Same invented data, the UI's own palette. Each option has
+a You view and a Teams view. Made by `scripts/assets/3561-postmatch-charts.mjs`
+(`node scripts/assets/3561-postmatch-charts.mjs` regenerates them).
 
-| Option | Picture                        | Idea                                                                                                                                                                                 |
-| ------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| A      | `3561-postmatch-a-stacked.png` | One page: the player chart over the team chart, one shared time axis, **one event lane** under both. Chips toggle series.                                                            |
-| B      | `3561-postmatch-b-grid.png`    | **Small multiples:** a card per measure (damage dealt, taken, healing, energy; team health pool, cumulative damage), each with its own scale and total. Nothing to toggle.           |
-| C      | `3561-postmatch-c-list.png`    | **One big chart** with a You / Teams / Overlay switch and series chips, plus an **event list** beside it. The hovered moment highlights its row. A small Teams preview opens on tap. |
+| Option | Pictures                                   | Idea                                                                                                                                                                                                     |
+| ------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A      | `3561-postmatch-a-you.png`, `-a-teams.png` | The original: scores left, chart right, events as markers on one strip under the time axis, a legend below. Teams stacks health pool over cumulative damage.                                             |
+| B      | `3561-postmatch-b-you.png`, `-b-teams.png` | **Swim lanes.** Scores shrink to one compact row so the chart is full width; events get **one lane per kind**, so markers never overlap. Teams shows the health pool, cumulative damage behind a toggle. |
+| C      | `3561-postmatch-c-you.png`, `-c-teams.png` | **Event list.** As A, but the events are also a list beside the chart (time, icon, words); the hovered moment highlights its row.                                                                        |
 
 ## Common to all
 
-- Banner and its buttons are one row and never overlap; scores left, charts
-  right. Names: the BOT tag is a separate chip and never takes the name's room.
+- Banner and its buttons are one row and never overlap. The BOT tag is its
+  own chip and never takes the name's room.
 - Series differ by dash as well as hue (dealt solid, taken dashed, healing
   dotted, energy dash-dot). Teams keep `#59c2ff` (yours) and `#ff7b72`.
 - Event shapes differ: kill = diamond, death = cross, interrupt = bolt,
-  capture = flag, resurrection = triangle. Legend under the chart.
-- Phone: the footer carries Rematch / Back to lobby and stays clear of the
-  charts. A stacks as is, B goes two columns then one, C puts the event list
-  under the chart.
+  capture = flag, resurrection = triangle.
+- Phone: Rematch / Back to lobby sit in a footer clear of the charts; the
+  scores collapse to "you + two"; B's lanes and C's list go under the chart.
 
 ## Trade-offs
 
-- **A** shows the whole match at once and lines events up across both views;
-  the plots are shorter, and energy and cumulative damage are one click away.
-- **B** is the easiest to read cold, and every number is on screen. Each plot
-  is small, and overlaying two measures is not possible.
-- **C** gives the biggest plot and the only readable event text; it shows one
-  view at a time.
+- **A** is the simplest; markers crowd when events cluster.
+- **B** gives the widest chart and untangles clustered events; it costs
+  vertical space and drops the full scoreboard to a row.
+- **C** is the only one that says what an event was in words; it narrows the
+  chart.
