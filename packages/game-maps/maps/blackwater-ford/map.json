@@ -1783,25 +1783,25 @@
       {
         "id": "brazier-west-camp",
         "position": {
-          "x": 640,
+          "x": 500,
           "y": 1785
         },
         "layer": 1,
-        "radius": 190,
+        "radius": 260,
         "colour": 16756832,
-        "intensity": 0.85,
+        "intensity": 1,
         "flicker": 0.2
       },
       {
         "id": "brazier-east-camp",
         "position": {
-          "x": 4560,
+          "x": 4724,
           "y": 999
         },
         "layer": 1,
-        "radius": 190,
+        "radius": 260,
         "colour": 16756832,
-        "intensity": 0.85,
+        "intensity": 1,
         "flicker": 0.2
       }
     ]
