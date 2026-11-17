@@ -35,7 +35,8 @@ sütunları siper olarak kullanır. Bir takım, onu bitirmek için erişimdeki
 canı %60'ın altına düşen her düşmana yönelir. Tepenin Kralı'nda, takımın
 sunağı elinde tutmuyorken, diğer takımın sunaktaki Ghostly Hero'su bundan
 bile önce gelir. Takımının çok önüne geçen bir bot, ilerlemeden önce
-diğerlerini bekler.
+diğerlerini bekler; ancak diğerleri bir süredir boşta duran oyuncularsa
+beklemez.
 
 Okçular ve mızrakçılar güvenli olduğunda yüksek yeri tutar.
 İki rakibin odaklandığı ya da canı yarının altında olup hızla azalan bir bot, en fazla üç saniye onların görüşünden saklanır: bir duvarın arkasına, bir platformun altına ya da yüksek yere.

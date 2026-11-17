@@ -35,7 +35,8 @@ los pilares como cobertura. Un equipo se lanza contra cualquier enemigo a
 su alcance que baje del 60% de salud, para rematarlo. En Rey de la colina,
 mientras tu equipo no controla el altar, el Héroe Fantasmal del otro equipo
 sobre el altar va incluso antes. Un bot que se adelanta mucho a su equipo
-espera al resto antes de seguir.
+espera al resto antes de seguir, salvo que el resto sean jugadores que
+llevan un rato quietos.
 
 Los arqueros y lanceros toman el terreno elevado cuando es seguro.
 Un bot al que atacan dos enemigos, o que está por debajo de la mitad de su salud y la pierde rápido, se oculta de su vista hasta tres segundos: tras un muro, bajo una plataforma o en terreno elevado.

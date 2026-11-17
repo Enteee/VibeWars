@@ -37,7 +37,8 @@ kääntyy minkä tahansa ulottuvilla olevan vihollisen kimppuun, jonka
 terveys putoaa alle 60 %:n, viimeistelläkseen sen. Kukkulan kuninkaassa,
 kun tiimisi ei hallitse alttaria, toisen tiimin alttarilla oleva
 aavesankari menee jopa sen edelle. Botti, joka etenee kauas tiiminsä
-edelle, odottaa muita ennen kuin jatkaa.
+edelle, odottaa muita ennen kuin jatkaa, paitsi jos muut ovat pelaajia,
+jotka ovat seisoneet toimettomina jo jonkin aikaa.
 
 Jousiampujat ja keihäänheittäjät ottavat korkean maaston, kun se on turvallista.
 Botti, johon kaksi vihollista keskittyy tai jonka terveys on alle puolet ja hupenee nopeasti, piiloutuu heidän näkyvistään enintään kolmeksi sekunniksi: muurin taakse, tasanteen alle tai korkealle maastolle.

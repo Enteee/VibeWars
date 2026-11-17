@@ -32,7 +32,8 @@ Bot tầm xa và bot hồi máu bước tới chỗ ít địch với tới đư
 làm chỗ nấp. Cả đội quay sang bất kỳ địch nào trong tầm có máu dưới 60%, để
 kết liễu. Trong Vua đồi, khi đội bạn không giữ tế đàn, Anh hùng Ma của đội
 kia trên tế đàn còn được ưu tiên hơn cả điều đó. Bot đi quá xa đội của nó sẽ
-chờ những người còn lại rồi mới tiến tiếp.
+chờ những người còn lại rồi mới tiến tiếp, trừ khi đó là những người chơi
+đã đứng yên không làm gì một lúc.
 
 Cung thủ và người dùng giáo chiếm chỗ cao khi an toàn.
 Bot bị hai đối thủ dồn đánh, hoặc còn dưới nửa máu và đang mất máu nhanh, sẽ nấp khỏi tầm nhìn của chúng tối đa ba giây: sau tường, dưới sàn hoặc lên chỗ cao.

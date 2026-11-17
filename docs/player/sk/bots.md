@@ -34,7 +34,7 @@ používajú ako kryt. Tím sa obráti proti každému nepriateľovi v dosahu, k
 klesne pod 60 % zdravia, aby ho dorazil. V Kráľovi kopca, kým tvoj tím nedrží
 oltár, má ešte pred tým prednosť Prízračný hrdina druhého tímu na oltári.
 Bot, ktorý sa dostane ďaleko pred svoj tím, počká na ostatných, kým pôjde
-ďalej.
+ďalej, pokiaľ ostatní nie sú hráči, ktorí už nejaký čas nečinne stoja.
 
 Lukostrelci a kopijníci zaujmú vyvýšené miesto, keď je to bezpečné.
 Bot, na ktorého sa zameria dvaja nepriatelia alebo ktorý má menej ako polovicu zdravia a rýchlo ho stráca, sa im až na tri sekundy skryje z dohľadu: za múr, pod plošinu alebo na vyvýšené miesto.

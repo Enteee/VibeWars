@@ -35,7 +35,8 @@ atteindre, et utilisent les piliers comme abri. Une équipe se retourne sur
 tout ennemi à portée qui passe sous 60% de santé, pour l'achever. En Roi de
 la colline, tant que ton équipe ne tient pas l'autel, le Héros fantomatique
 adverse sur l'autel passe même avant. Un bot qui prend trop d'avance sur son
-équipe attend les autres avant de continuer.
+équipe attend les autres avant de continuer, sauf si les autres sont des
+joueurs restés inactifs depuis un moment.
 
 Les archers et les lanciers prennent les hauteurs quand c'est sans danger.
 Un bot que deux adversaires prennent pour cible, ou qui est sous la moitié de sa santé et la perd vite, se met hors de leur vue jusqu'à trois secondes : derrière un mur, sous une plateforme ou sur les hauteurs.

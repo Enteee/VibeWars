@@ -132,6 +132,7 @@ export function contextFor(
     stepUnits: 1,
     check: () => ({ ok: true }),
     isBot: () => true,
+    isIdle: () => false,
     calledTargetId: undefined,
     sees: () => true,
     seesBetween: () => true,

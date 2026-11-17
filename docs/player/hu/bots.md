@@ -37,7 +37,8 @@ oszlopokat fedezéknek használják. A csapat ráfordul minden elérhető
 ellenségre, akinek az életereje 60% alá esik, hogy végezzen vele. A
 domb urában, amíg a csapatod nem tartja az oltárt, a másik csapat
 oltáron álló Kísértethőse még ennél is előbbre való. Az a bot, amelyik
-messze a csapata elé kerül, megvárja a többieket, mielőtt továbbnyomul.
+messze a csapata elé kerül, megvárja a többieket, mielőtt továbbnyomul,
+hacsak a többiek nem olyan játékosok, akik már egy ideje tétlenül állnak.
 
 Az íjászok és a dárdások elfoglalják a magaslatot, ha az biztonságos.
 Az a bot, amelyre két ellenfél összpontosít, vagy amelynek az élete fél alatt van és gyorsan fogy, legfeljebb három másodpercre eltűnik a szemük elől: fal mögé, emelvény alá vagy magaslatra.

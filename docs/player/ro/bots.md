@@ -35,7 +35,8 @@ pot ajunge mai puțini inamici și folosesc coloanele drept acoperire. O echipă
 termine. În Regele dealului, cât timp echipa ta nu deține altarul, Eroul
 Fantomatic al celeilalte echipe de pe altar are prioritate chiar și față de asta.
 Un bot care ajunge mult înaintea echipei îi așteaptă pe ceilalți înainte să
-înainteze.
+înainteze, în afară de cazul în care ceilalți sunt jucători care stau inactivi
+de ceva vreme.
 
 Arcașii și lăncierii ocupă înălțimile când e sigur.
 Un bot asupra căruia se concentrează doi adversari, sau care are sub jumătate din viață și o pierde repede, se ascunde din vederea lor până la trei secunde: după un zid, sub o platformă sau pe înălțimi.

@@ -35,7 +35,8 @@ dem, och använder pelare som skydd. Ett lag vänder sig mot varje fiende
 inom räckhåll som faller under 60 % hälsa, för att göra slut på hen. I
 King of the Hill, medan ditt lag inte håller altaret, går det andra
 lagets spökhjälte på altaret före till och med det. En bot som kommer
-långt före sitt lag väntar på resten innan den trycker på vidare.
+långt före sitt lag väntar på resten innan den trycker på vidare, om inte
+resten är spelare som har stått overksamma ett tag.
 
 Bågskyttar och spjutkastare tar höjden när det är säkert.
 En bott som två fiender fokuserar på, eller som har under halva hälsan och tappar den snabbt, gömmer sig från deras syn i upp till tre sekunder: bakom en mur, under ett däck eller på höjden.

@@ -34,7 +34,7 @@ kao zaklon. Tim se okreće na svakog neprijatelja u dosegu koji padne ispod 60% 
 da ga dokrajči. U Kralju brda, dok tvoj tim ne drži oltar,
 Sablasni heroj drugog tima na oltaru dolazi čak i prije toga.
 Bot koji jako odmakne od tima čeka ostale prije nego što krene
-dalje.
+dalje, osim ako su ostali igrači koji već neko vrijeme stoje neaktivni.
 
 Strijelci i kopljanici zauzmu uzvisinu kad je to sigurno.
 Bot na kojeg se usredotoče dva protivnika, ili koji ima manje od pola zdravlja i brzo ga gubi, skloni im se s vida do tri sekunde: iza zida, ispod platforme ili na uzvisinu.

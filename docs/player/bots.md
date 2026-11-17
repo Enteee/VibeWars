@@ -34,7 +34,7 @@ as cover. A team turns on any foe in reach who drops below 60% health,
 to finish them. In King of the Hill, while your team does not hold the
 altar, the other team's Ghostly Hero on the altar comes before even that.
 A bot that gets far ahead of its team waits for the rest before it pushes
-on.
+on, unless the rest are players who have stood idle a while.
 
 Archers and spearmen take the high ground when it is safe.
 A bot that two foes focus on, or that is below half health and losing it fast, ducks out of their sight for up to three seconds: behind a wall, under a deck or onto high ground.
