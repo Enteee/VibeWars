@@ -13,6 +13,7 @@ import {
   getSkill,
   hasLineOfSight,
   isSpikeSkill,
+  LEVER_WORTH_UNITS,
   type ParticipantSpec,
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
@@ -21,6 +22,7 @@ import { allWallSegments } from "./geometry.js";
 import { matchGates, matchLayers } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
+import { mapSimulationFields } from "./match-fields.js";
 import { playBuildBot } from "./tools/map-balance.js";
 import type { MapData } from "./schema.js";
 
@@ -481,6 +483,26 @@ describe("The Brazen Causeway (#3435)", () => {
     expect(layeredFinder(closed, RULESET.collision.playerRadius).nodeCount).toBeLessThanOrEqual(
       600,
     );
+  });
+
+  // #3521: the marsh is the slow way, so each gate's lever, thrown with the other, is worth the walk.
+  const match = (seed: string) =>
+    new MatchSimulation({
+      seed,
+      ruleset: RULESET,
+      matchRules: ANNIHILATION_MATCH_RULES,
+      ...mapSimulationFields(map, 2),
+      participants: casterBots(map, 2),
+    });
+
+  it("makes each lever, paired, worth the walk to each team at match start", () => {
+    const sim = match("brazen-causeway-levers");
+    sim.step(DT);
+    expect(sim.botLevers).toHaveLength(2);
+    for (const { gain } of sim.botLevers) {
+      expect(gain[0]).toBeGreaterThanOrEqual(LEVER_WORTH_UNITS);
+      expect(gain[1]).toBeGreaterThanOrEqual(LEVER_WORTH_UNITS);
+    }
   });
 
   it("leaves a way from base to base with both gates closed", () => {
