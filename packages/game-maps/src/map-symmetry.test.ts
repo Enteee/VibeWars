@@ -11,7 +11,6 @@ import type { MapData, Wall } from "./schema.js";
  */
 const SYMMETRIC = [
   "broken-tower",
-  "cinder-sanctum",
   "scarred-earth",
   "threefold-keep",
   "hall-of-heroes-king",

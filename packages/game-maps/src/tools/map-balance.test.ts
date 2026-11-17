@@ -988,6 +988,149 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  describe("Cinder Sanctum", () => {
+    const loaded = loadMap("cinder-sanctum");
+    // The walks here read no zone costs, but a bot wades lava at three times the cost
+    // (HARMFUL_ZONE_COST) and takes a bridge: a route is a bridge, so the rivers are walls.
+    const map: MapData = {
+      ...loaded,
+      walls: [
+        ...loaded.walls,
+        ...(loaded.zones ?? [])
+          .filter((zone) => zone.kind === "molten")
+          .map(({ area, layer }) => ({ ...area, layer })),
+      ],
+    };
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const sanctum = { x: 2812, y: 1400 };
+    const relics = [
+      { x: 900, y: 1400 },
+      { x: 4724, y: 1400 },
+    ];
+    const ghosts = [
+      { x: 700, y: 860 },
+      { x: 4924, y: 1940 },
+    ];
+    /** The map with each team's seats moved onto the foe's relic spawn: the carrier's walk. */
+    const carrier = (on: MapData): MapData => ({
+      ...on,
+      spawnPoints: relics.map((_, team) => ({
+        team,
+        layer: 1,
+        position: relics[1 - team] ?? sanctum,
+      })),
+    });
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Each team's walk to its own `to` on `layer`, by a route of its own. */
+    const walks = (
+      on: MapData,
+      to: readonly Vec2[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? sanctum, layer, (other) =>
+            other === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    // Every bank stair of both rivers, and the passage: a route opens only its own.
+    const banks = {
+      north: ["north-bridge-west-bank", "north-bridge-east-bank"],
+      causeway: ["causeway-west-bank", "causeway-east-bank"],
+      south: ["south-bridge-west-bank", "south-bridge-east-bank"],
+    };
+    const passage = ["passage-north-steps", "passage-south-steps"];
+    const allBanks = Object.values(banks).flat();
+    /**
+     * Team 1's route over `bridge`, and team 2's turned: the study's north bridge is team 1's
+     * north and, turned half round, team 2's south.
+     */
+    const over = (
+      bridge: keyof typeof banks,
+      extra: (team: number) => readonly string[] = () => [],
+    ) => {
+      const turned = { north: "south", causeway: "causeway", south: "north" } as const;
+      return (team: number): Route => {
+        const through = [...banks[team === 0 ? bridge : turned[bridge]], ...extra(team)];
+        return { through, shut: [...allBanks.filter((id) => !through.includes(id)), ...passage] };
+      };
+    };
+    const routes = [
+      ["the causeway", over("causeway")],
+      ["the north bridge", over("north")],
+      ["the south bridge", over("south")],
+    ] as const;
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+
+    it.each(routes)(
+      "walks each team to the sanctum by %s within 10 % of the other, in under 25 s",
+      (_, route) => {
+        // To the sanctum a team crosses its own river only.
+        const own = (team: number): Route => {
+          const { through, shut: closed = [] } = route(team);
+          const mine = through.filter((id) => id.includes(team === 0 ? "west" : "east"));
+          return { through: mine, shut: closed };
+        };
+        const walked = walks(map, [sanctum, sanctum], 3, own);
+        within(walked, 0.1);
+        for (const walk of walked) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it.each(routes)(
+      "walks each thief to the foe's relic by %s within 10 % of the other",
+      (_, route) => {
+        within(walks(map, [relics[1] ?? sanctum, relics[0] ?? sanctum], 1, route), 0.1);
+      },
+    );
+
+    it.each(routes)(
+      "walks each carrier from the foe's relic to its own ghost by %s within 10 % of the other",
+      (_, route) => {
+        within(walks(carrier(map), ghosts, 1, route), 0.1);
+      },
+    );
+
+    it("walks each team to its own relic spawn within 10 % of the other", () => {
+      within(
+        [0, 1].map((team) => walksTo(map, relics[team] ?? sanctum, 1)[team] ?? 0),
+        0.1,
+      );
+    });
+
+    it("keeps all three bridges for every thief and carrier with the passage doors shut, and the passage shut with them", () => {
+      for (const [, route] of routes) {
+        within(walks(shut, [relics[1] ?? sanctum, relics[0] ?? sanctum], 1, route), 0.1);
+        within(walks(carrier(shut), ghosts, 1, route), 0.1);
+      }
+      // From the north mouth's landing to the south one's: under the sanctum while the doors are open.
+      const atMouth = (on: MapData): MapData => ({
+        ...on,
+        spawnPoints: [0, 1].map((team) => ({ team, layer: 1, position: { x: 2812, y: 680 } })),
+      });
+      const south = { x: 2812, y: 2120 };
+      expect(walksByRoute(atMouth(map), south, 1, { through: passage })[0]).toBeGreaterThan(0);
+      expect(() => walksByRoute(atMouth(shut), south, 1, { through: passage })).toThrow();
+    });
+
+    it("keeps the walks within 10 % with the doors open and the ash walls broken", () => {
+      const broken = ["south-west-ash-wall", "north-east-ash-wall"];
+      within(walksByRoute(map, sanctum, 3, { through: [], broken }), 0.1);
+      within(
+        walks(carrier(map), ghosts, 1, () => ({ through: [], broken })),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });
