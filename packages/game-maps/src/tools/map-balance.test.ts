@@ -988,6 +988,103 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  describe("Broken Tower", () => {
+    const map = loadMap("broken-tower");
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const altar = { x: 2712, y: 1392 };
+    const relics = [
+      { x: 1000, y: 1850 },
+      { x: 4424, y: 934 },
+    ];
+    /** The map with each team's seats moved onto its relic spawn: the carrier's walk. */
+    const carrier = (on: MapData): MapData => ({
+      ...on,
+      spawnPoints: relics.map((position, team) => ({ team, layer: 1, position })),
+    });
+    const hill = [
+      "hill-south-west-stair",
+      "hill-north-west-stair",
+      "hill-north-east-stair",
+      "hill-south-east-stair",
+    ];
+    const terraces = ["west-terrace-stair", "east-terrace-stair"];
+    const mouths = ["cellar-west-steps", "cellar-east-steps"];
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Each team's own walk to the altar on `on`, by a route of its own. */
+    const toAltar = (on: MapData, route: (team: number) => Route): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, altar, 3, (other) => (other === team ? route(team) : { through: [] }))[
+            team
+          ] ?? 0,
+      );
+    /** Up one hill stair, every other way onto the hill shut. */
+    const byStair = (stairs: readonly string[]) => (team: number) => ({
+      through: [stairs[team] ?? ""],
+      shut: [...hill.filter((each) => each !== stairs[team]), ...terraces, ...mouths],
+    });
+    // The study's south stair is team 1's south-west face and, turned, team 2's north-east one.
+    const south = byStair(["hill-south-west-stair", "hill-north-east-stair"]);
+    const north = byStair(["hill-north-west-stair", "hill-south-east-stair"]);
+    const cellar = (team: number): Route => ({
+      through: [mouths[team] ?? "", "cellar-stair"],
+      shut: [...hill, ...terraces],
+    });
+    const terrace = (team: number): Route => ({
+      through: [terraces[team] ?? ""],
+      shut: [...hill, ...mouths],
+    });
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+
+    it.each([
+      ["the cellar", cellar],
+      ["the south stair", south],
+      ["the north stair", north],
+    ])("walks each team to the altar by %s within 10 % of the other, in under 25 s", (_, route) => {
+      const walks = toAltar(map, route);
+      within(walks, 0.1);
+      for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+    });
+
+    it.each([
+      ["the terrace", terrace],
+      ["the south stair", south],
+      ["the cellar", cellar],
+    ])(
+      "walks each carrier from its relic spawn to the altar by %s within 10 % of the other",
+      (_, route) => {
+        within(toAltar(carrier(map), route), 0.1);
+      },
+    );
+
+    it("walks each team to its own relic spawn within 10 % of the other", () => {
+      within(
+        [0, 1].map((team) => walksTo(map, relics[team] ?? altar, 1)[team] ?? 0),
+        0.1,
+      );
+    });
+
+    it("keeps two stair routes to the altar with the cellar doors shut, and the cellar shut with them", () => {
+      within(toAltar(shut, south), 0.1);
+      within(toAltar(shut, north), 0.1);
+      within(toAltar(carrier(shut), terrace), 0.1);
+      expect(() => toAltar(shut, cellar)).toThrow(/cannot reach/);
+    });
+
+    it("keeps the walks within 10 % with the doors open and the rubble walls broken", () => {
+      const broken = ["west-rubble-wall", "east-rubble-wall"];
+      within(walksByRoute(map, altar, 3, { through: [], broken }), 0.1);
+      within(walksByRoute(carrier(map), altar, 3, { through: [], broken }), 0.1);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

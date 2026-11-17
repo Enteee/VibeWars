@@ -161,8 +161,7 @@ vid altaret. En bot som bär er relik går rakt till altaret; de andra
 lämnar reliken bara för att slåss mot en fiende som kommer inom
 besvärjelseräckhåll.
 
-Broken Tower spelar det: altaret står inne i ett förfallet torn med en
-dörröppning på varje sida.
+Broken Tower spelar det (4v4 och 8v8, 5400x2800): ett fallet torn på en kulle i höglandet. Gå uppför spillrorterrassernas trappor till altaret på tornstumpen, eller ta källaren under kullen när en spak på terrassen öppnar dess dörrar; spillrorväggar går att slå sönder.
 
 ### Cinder Sanctum
 

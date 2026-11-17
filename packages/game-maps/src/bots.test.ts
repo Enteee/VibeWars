@@ -163,6 +163,8 @@ describe("Relic Run bots (#2581)", () => {
       ruleset: RULESET,
       walls: allWallSegments(map.walls),
       bounds: { width: map.width, height: map.height },
+      layers: matchLayers(map),
+      gates: matchGates(map),
       matchRules: RELIC_RUN_MATCH_RULES,
       relicField: {
         altar: altar.position,

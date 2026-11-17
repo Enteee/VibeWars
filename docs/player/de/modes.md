@@ -138,7 +138,7 @@ nur, wenn kein anderer kann, und nie aus einem Kampf. Der nächste zu einem fall
 schickt es nach Hause, und der Rest wartet am Altar. Ein Bot, der dein Relikt trägt, läuft direkt zum
 Altar; die anderen verlassen das Relikt nur, um gegen einen Gegner in Zauberreichweite zu kämpfen.
 
-Broken Tower spielt es: Der Altar steht in einem zerstörten Turm mit einem Durchgang auf jeder Seite.
+Broken Tower (4v4 und 8v8, 5400x2800) spielt es: ein gestürzter Turm auf einem Hügel im Hochland. Steig über die Treppen der Trümmerterrassen zum Altar auf dem Turmstumpf oder nimm den Keller unter dem Hügel, sobald ein Hebel auf der Terrasse seine Tore öffnet; Trümmerwände lassen sich zerschlagen.
 
 ### Cinder Sanctum
 

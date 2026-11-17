@@ -66,6 +66,7 @@ const REBUILT = new Set([
   "barrow-field",
   "jungle-ruins",
   "brazen-causeway",
+  "broken-tower",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
@@ -441,94 +442,6 @@ const wallsNear = (map: MapData, point: Vec2): number =>
   map.walls.filter((wall) =>
     allWallSegments([wall]).some((side) => distancePointToSegment(point, side) <= RANGE_SPELL),
   ).length;
-
-describe("Broken Tower (#2551)", () => {
-  const tower = MAPS.find((map) => map.id === "broken-tower");
-  if (tower === undefined) throw new Error("no broken-tower");
-  const walls = allWallSegments(tower.walls);
-  const bounds = { width: tower.width, height: tower.height };
-  const altar = tower.objectives.find((objective) => objective.kind === "altar");
-  const relics = tower.objectives.filter((objective) => objective.kind === "relic-spawn");
-  if (altar === undefined) throw new Error("no altar");
-
-  it("puts the altar at the centre, and each relic 100-150 inside its own edge, behind its spawns", () => {
-    expect(altar.position).toEqual({ x: tower.width / 2, y: tower.height / 2 });
-    expect(relics.map((relic) => relic.team).sort()).toEqual([0, 1]);
-    for (const relic of relics) {
-      const edge = Math.min(relic.position.x, tower.width - relic.position.x);
-      expect(edge).toBeGreaterThanOrEqual(100);
-      expect(edge).toBeLessThanOrEqual(150);
-      for (const spawn of tower.spawnPoints.filter((each) => each.team === relic.team)) {
-        expect(Math.abs(spawn.position.x - altar.position.x)).toBeLessThan(
-          Math.abs(relic.position.x - altar.position.x),
-        );
-      }
-    }
-  });
-
-  it("walls the altar in a tower: no straight line out of it to the north, south, east or west but through a doorway", () => {
-    const { x, y } = altar.position;
-    for (const [dx, dy] of [
-      [1, 1],
-      [1, -1],
-      [-1, 1],
-      [-1, -1],
-    ] as const) {
-      expect(hasLineOfSight(altar.position, { x: x + 400 * dx, y: y + 400 * dy }, walls)).toBe(
-        false,
-      );
-    }
-    for (const [dx, dy] of [
-      [1, 0],
-      [-1, 0],
-      [0, 1],
-      [0, -1],
-    ] as const) {
-      expect(hasLineOfSight(altar.position, { x: x + 400 * dx, y: y + 400 * dy }, walls)).toBe(
-        true,
-      );
-    }
-  });
-
-  it("runs each relic to the altar the same length, at least 1300", () => {
-    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS, []));
-    const lengths = relics.map((relic) => {
-      const path = finder.find(relic.position, altar.position);
-      if (path === undefined) throw new Error(`no run for team ${String(relic.team)}`);
-      return walked(relic.position, path);
-    });
-    expect(lengths[0]).toBeCloseTo(lengths[1] ?? 0, 3);
-    expect(lengths[0]).toBeGreaterThanOrEqual(1300);
-  });
-
-  it("has two routes from each base: walled off the one, the run goes round the other way", () => {
-    for (const relic of relics) {
-      const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS, []));
-      const path = finder.find(relic.position, altar.position) ?? [];
-      const north = path.some((point) => point.y < altar.position.y - 50);
-      // A wall across the half of the map the run took, from the centre line to the edge.
-      const cut = {
-        kind: "rect" as const,
-        x: relic.position.x < altar.position.x ? 760 : tower.width - 840,
-        y: north ? 0 : altar.position.y,
-        width: 80,
-        height: altar.position.y,
-      };
-      const blocked = createPathFinder(
-        buildNavGraph(allWallSegments([...tower.walls, cut]), bounds, RADIUS, []),
-      );
-      const detour = blocked.find(relic.position, altar.position);
-      expect(detour, JSON.stringify(relic)).toBeDefined();
-      expect(detour?.some((point) => point.y < altar.position.y - 50)).toBe(!north);
-    }
-  });
-
-  it("has three walls or more within spell range of the altar and of each relic", () => {
-    for (const objective of tower.objectives) {
-      expect(wallsNear(tower, objective.position), objective.kind).toBeGreaterThanOrEqual(3);
-    }
-  });
-});
 
 describe("Scarred Earth (#2551)", () => {
   const earth = MAPS.find((map) => map.id === "scarred-earth");

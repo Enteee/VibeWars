@@ -36,7 +36,7 @@ function polygon(points: readonly Vec2[]): Segment[] {
   return points.map((point, index) => segment(point, points[(index + 1) % points.length] ?? point));
 }
 
-/** Broken Tower's walls (packages/game-maps/maps/broken-tower). */
+/** A walled altar and its relic bases: Broken Tower as it was before its 2.5D rebuild (#3437). */
 const WALLS = [
   ...polygon([
     vec2(1320, 620),
