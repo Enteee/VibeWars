@@ -269,8 +269,7 @@ Boti sa rozídu po svätyniach, ktoré tvoj tím ešte nevlastní, a stoja
 na nich, kým nie sú obsadené. Nepriateľ na dostrel kúzla ich
 neodláka: vstúpia na svätyňu v dosahu a bojujú z nej.
 
-Hrá sa na Scarred Earth: každá svätyňa stojí v rozbitom kruhu múrov,
-otvorenom na západ a východ.
+Hrá sa na Scarred Earth (4v4 a 8v8, 5400x2800): bojisko posiate krátermi za súmraku. Svätyne stoja na rozbitých obliehacích vežiach, prostredná na plošine veľkej veže, každá vedľa krátera; páky na vežiach otvárajú dva zákopy pod bojiskom a rozbité palisády sa dajú zbúrať.
 
 ## Tímové lobby
 

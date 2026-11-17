@@ -266,8 +266,7 @@ Los bots se reparten por los santuarios que tu equipo aún no controla y se qued
 hasta que se toman. Un enemigo en alcance de hechizo no los aparta: suben a un
 santuario a su alcance y luchan desde él.
 
-Se juega en Scarred Earth: cada santuario está en un anillo de muros rotos,
-abierto al oeste y al este.
+Se juega en Scarred Earth (4v4 y 8v8, 5400x2800): un campo de batalla lleno de cráteres al atardecer. Los santuarios están sobre torres de asedio destrozadas, el central en la plataforma de la gran torre, cada uno junto a un cráter; unas palancas en las torres abren dos trincheras bajo el campo, y las empalizadas destrozadas se pueden romper.
 
 ## Sala de equipo
 

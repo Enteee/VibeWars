@@ -276,8 +276,7 @@ Os bots se espalham pelos santuários que sua equipe ainda não tem e ficam
 sobre eles até serem tomados. Um inimigo ao alcance de feitiço não os
 afasta: eles vão para um santuário ao alcance e lutam dali.
 
-Scarred Earth joga esse modo: cada santuário fica em um anel quebrado de
-muros, aberto a oeste e a leste.
+Scarred Earth (4v4 e 8v8, 5400x2800) joga esse modo: um campo de batalha cheio de crateras ao entardecer. Os santuários ficam sobre torres de cerco destruídas, o do centro na plataforma da grande torre, cada um ao lado de uma cratera; alavancas nas torres abrem duas trincheiras sob o campo, e as paliçadas destruídas podem ser quebradas.
 
 ## Sala de Equipe
 

@@ -280,8 +280,7 @@ Botlar takımının henüz sahip olmadığı tapınaklara dağılır ve alınana
 kadar üstlerinde durur. Büyü menzilindeki bir düşman onları oradan
 çekmez: erişebildikleri bir tapınağa çıkar ve oradan dövüşürler.
 
-Scarred Earth bunu oynatır: her tapınak, batıya ve doğuya açık, kırık
-bir duvar halkasının içinde durur.
+Scarred Earth (4v4 ve 8v8, 5400x2800) bunu oynatır: alacakaranlıkta kraterlerle dolu bir savaş alanı. Tapınaklar yıkık kuşatma kulelerinin üstünde durur, ortadaki büyük kulenin güvertesinde, her biri bir kraterin yanında; kulelerdeki kollar alanın altındaki iki siperi açar ve yıkık çit duvarları kırılabilir.
 
 ## Takım Lobisi
 

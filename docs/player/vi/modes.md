@@ -263,8 +263,7 @@ Bot tản ra các đền mà đội bạn chưa sở hữu và đứng trên đ�
 được. Địch trong tầm Phép không kéo được chúng đi: chúng bước lên một đền
 trong tầm và đánh từ đó.
 
-Scarred Earth chơi chế độ này: mỗi đền nằm trong một vòng tường đổ nát, mở
-về phía tây và phía đông.
+Scarred Earth (4v4 và 8v8, 5400x2800) chơi chế độ này: một chiến trường đầy hố bom lúc chạng vạng. Các đền nằm trên những tháp công thành đổ nát, đền giữa trên sàn của tháp lớn, mỗi đền cạnh một hố; cần gạt trên các tháp mở hai chiến hào dưới chiến trường, và hàng rào cọc đổ nát có thể phá được.
 
 ## Sảnh Đội
 

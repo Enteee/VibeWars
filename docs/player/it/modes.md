@@ -94,7 +94,7 @@ Ogni santuario è un anello a terra nel colore del proprietario, grigio se non �
 
 I bot si distribuiscono sui santuari che la tua squadra non ha ancora e ci restano sopra finché non vengono presi. Un nemico a portata d'incantesimo non li distrae: salgono su un santuario a portata e combattono da lì.
 
-Ci si gioca su Scarred Earth: ogni santuario sta in un anello di mura spezzate, aperto a ovest e a est.
+Ci si gioca su Scarred Earth (4v4 e 8v8, 5400x2800): un campo di battaglia crivellato di crateri al crepuscolo. I santuari stanno su torri d'assedio distrutte, quello centrale sulla piattaforma della grande torre, ognuno accanto a un cratere; leve sulle torri aprono due trincee sotto il campo, e le palizzate distrutte si possono abbattere.
 
 ## Lobby squadra
 

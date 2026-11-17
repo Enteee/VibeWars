@@ -286,8 +286,7 @@ på dem, indtil de er taget. En fjende inden for besværgelsesrækkevidde
 trækker dem ikke væk: de træder op på en helligdom inden for rækkevidde og
 kæmper derfra.
 
-Scarred Earth spiller den: hver helligdom står i en brudt ring af mure,
-åben mod vest og øst.
+Scarred Earth (4v4 og 8v8, 5400x2800) spiller den: en kraterfyldt slagmark i skumringen. Helligdommene står på ødelagte belejringstårne, den midterste på det store tårns dæk, hver ved siden af et krater; håndtag på tårnene åbner to skyttegrave under marken, og ødelagte palisader kan slås ned.
 
 ## Holdlobby
 

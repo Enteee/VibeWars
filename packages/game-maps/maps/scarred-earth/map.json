@@ -4,290 +4,823 @@
   "mode": "capture-points",
   "teamSizes": [4, 8],
   "teams": 2,
-  "width": 3200,
-  "height": 2000,
-  "bounds": { "kind": "rect" },
-  "layers": 1,
-  "biome": "hall",
-  "groundLayer": 0,
-  "pits": [],
-  "tunnels": [],
-  "decks": [],
-  "overhangs": [],
-  "transitions": [],
-  "dropOffs": [],
-  "walls": [
+  "width": 5400,
+  "height": 2800,
+  "bounds": {
+    "kind": "outline",
+    "outline": [
+      { "x": 2700, "y": 160 },
+      { "x": 2200, "y": 140 },
+      { "x": 1300, "y": 195 },
+      { "x": 560, "y": 470 },
+      { "x": 210, "y": 1040 },
+      { "x": 240, "y": 1420 },
+      { "x": 195, "y": 1800 },
+      { "x": 520, "y": 2310 },
+      { "x": 1300, "y": 2610 },
+      { "x": 2200, "y": 2665 },
+      { "x": 2700, "y": 2635 },
+      { "x": 3200, "y": 2665 },
+      { "x": 4100, "y": 2610 },
+      { "x": 4880, "y": 2310 },
+      { "x": 5205, "y": 1800 },
+      { "x": 5160, "y": 1420 },
+      { "x": 5190, "y": 1040 },
+      { "x": 4840, "y": 470 },
+      { "x": 4100, "y": 195 },
+      { "x": 3200, "y": 140 }
+    ],
+    "outside": "rock"
+  },
+  "layers": 4,
+  "biome": "volcanic",
+  "groundLayer": 1,
+  "pits": [
     {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        { "x": 1340, "y": 740 },
-        { "x": 1860, "y": 740 },
-        { "x": 1860, "y": 880 },
-        { "x": 1820, "y": 880 },
-        { "x": 1820, "y": 780 },
-        { "x": 1380, "y": 780 },
-        { "x": 1380, "y": 880 },
-        { "x": 1340, "y": 880 }
-      ]
+      "id": "far-west-crater",
+      "footprint": { "kind": "rect", "x": 700, "y": 550, "width": 300, "height": 180 }
     },
     {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        { "x": 1860, "y": 1260 },
-        { "x": 1340, "y": 1260 },
-        { "x": 1340, "y": 1120 },
-        { "x": 1380, "y": 1120 },
-        { "x": 1380, "y": 1220 },
-        { "x": 1820, "y": 1220 },
-        { "x": 1820, "y": 1120 },
-        { "x": 1860, "y": 1120 }
-      ]
+      "id": "far-east-crater",
+      "footprint": { "kind": "rect", "x": 4400, "y": 550, "width": 300, "height": 180 }
     },
     {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        { "x": 320, "y": 800 },
-        { "x": 720, "y": 800 },
-        { "x": 720, "y": 880 },
-        { "x": 680, "y": 880 },
-        { "x": 680, "y": 840 },
-        { "x": 360, "y": 840 },
-        { "x": 360, "y": 880 },
-        { "x": 320, "y": 880 }
-      ]
+      "id": "north-west-crater",
+      "footprint": { "kind": "rect", "x": 2250, "y": 430, "width": 340, "height": 180 }
     },
     {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        { "x": 2880, "y": 1200 },
-        { "x": 2480, "y": 1200 },
-        { "x": 2480, "y": 1120 },
-        { "x": 2520, "y": 1120 },
-        { "x": 2520, "y": 1160 },
-        { "x": 2840, "y": 1160 },
-        { "x": 2840, "y": 1120 },
-        { "x": 2880, "y": 1120 }
-      ]
+      "id": "north-east-crater",
+      "footprint": { "kind": "rect", "x": 2810, "y": 430, "width": 340, "height": 180 }
     },
     {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        { "x": 720, "y": 1200 },
-        { "x": 320, "y": 1200 },
-        { "x": 320, "y": 1120 },
-        { "x": 360, "y": 1120 },
-        { "x": 360, "y": 1160 },
-        { "x": 680, "y": 1160 },
-        { "x": 680, "y": 1120 },
-        { "x": 720, "y": 1120 }
-      ]
+      "id": "west-crater",
+      "footprint": { "kind": "rect", "x": 1740, "y": 1140, "width": 320, "height": 180 }
     },
     {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        { "x": 2480, "y": 800 },
-        { "x": 2880, "y": 800 },
-        { "x": 2880, "y": 880 },
-        { "x": 2840, "y": 880 },
-        { "x": 2840, "y": 840 },
-        { "x": 2520, "y": 840 },
-        { "x": 2520, "y": 880 },
-        { "x": 2480, "y": 880 }
-      ]
+      "id": "east-crater",
+      "footprint": { "kind": "rect", "x": 3340, "y": 1140, "width": 320, "height": 180 }
     },
     {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        { "x": 1380, "y": 80 },
-        { "x": 1820, "y": 80 },
-        { "x": 1820, "y": 180 },
-        { "x": 1780, "y": 180 },
-        { "x": 1780, "y": 120 },
-        { "x": 1420, "y": 120 },
-        { "x": 1420, "y": 180 },
-        { "x": 1380, "y": 180 }
-      ]
+      "id": "south-west-crater",
+      "footprint": { "kind": "rect", "x": 2300, "y": 2240, "width": 320, "height": 180 }
     },
     {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        { "x": 1820, "y": 1920 },
-        { "x": 1380, "y": 1920 },
-        { "x": 1380, "y": 1820 },
-        { "x": 1420, "y": 1820 },
-        { "x": 1420, "y": 1880 },
-        { "x": 1780, "y": 1880 },
-        { "x": 1780, "y": 1820 },
-        { "x": 1820, "y": 1820 }
-      ]
+      "id": "south-east-crater",
+      "footprint": { "kind": "rect", "x": 2780, "y": 2240, "width": 320, "height": 180 }
     },
     {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        { "x": 1820, "y": 520 },
-        { "x": 1380, "y": 520 },
-        { "x": 1380, "y": 420 },
-        { "x": 1420, "y": 420 },
-        { "x": 1420, "y": 480 },
-        { "x": 1780, "y": 480 },
-        { "x": 1780, "y": 420 },
-        { "x": 1820, "y": 420 }
-      ]
+      "id": "low-west-crater",
+      "footprint": { "kind": "rect", "x": 760, "y": 1910, "width": 280, "height": 180 }
     },
     {
-      "kind": "polygon",
-      "layer": 0,
-      "points": [
-        { "x": 1380, "y": 1480 },
-        { "x": 1820, "y": 1480 },
-        { "x": 1820, "y": 1580 },
-        { "x": 1780, "y": 1580 },
-        { "x": 1780, "y": 1520 },
-        { "x": 1420, "y": 1520 },
-        { "x": 1420, "y": 1580 },
-        { "x": 1380, "y": 1580 }
-      ]
+      "id": "low-east-crater",
+      "footprint": { "kind": "rect", "x": 4360, "y": 1910, "width": 280, "height": 180 }
     },
-    { "kind": "rect", "layer": 0, "x": 1140, "y": 960, "width": 60, "height": 80 },
-    { "kind": "rect", "layer": 0, "x": 2000, "y": 960, "width": 60, "height": 80 },
-    { "kind": "rect", "layer": 0, "x": 1140, "y": 260, "width": 60, "height": 80 },
-    { "kind": "rect", "layer": 0, "x": 2000, "y": 1660, "width": 60, "height": 80 },
-    { "kind": "rect", "layer": 0, "x": 1140, "y": 1660, "width": 60, "height": 80 },
-    { "kind": "rect", "layer": 0, "x": 2000, "y": 260, "width": 60, "height": 80 },
-    { "kind": "rect", "layer": 0, "x": 880, "y": 700, "width": 60, "height": 120 },
-    { "kind": "rect", "layer": 0, "x": 2260, "y": 1180, "width": 60, "height": 120 },
-    { "kind": "rect", "layer": 0, "x": 880, "y": 1180, "width": 60, "height": 120 },
-    { "kind": "rect", "layer": 0, "x": 2260, "y": 700, "width": 60, "height": 120 }
+    {
+      "id": "north-trench-west-mouth",
+      "footprint": { "kind": "rect", "x": 1360, "y": 965, "width": 140, "height": 110 }
+    },
+    {
+      "id": "north-trench-east-mouth",
+      "footprint": { "kind": "rect", "x": 3900, "y": 965, "width": 140, "height": 110 }
+    },
+    {
+      "id": "south-trench-west-mouth",
+      "footprint": { "kind": "rect", "x": 1360, "y": 1725, "width": 140, "height": 110 }
+    },
+    {
+      "id": "south-trench-east-mouth",
+      "footprint": { "kind": "rect", "x": 3900, "y": 1725, "width": 140, "height": 110 }
+    }
   ],
-  "gates": [],
-  "objectives": [
+  "tunnels": [
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": { "x": 520, "y": 1000 }
+      "id": "north-trench",
+      "footprint": { "kind": "rect", "x": 1500, "y": 965, "width": 2400, "height": 110 }
     },
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": { "x": 1600, "y": 300 }
+      "id": "south-trench",
+      "footprint": { "kind": "rect", "x": 1500, "y": 1725, "width": 2400, "height": 110 }
+    }
+  ],
+  "decks": [
+    {
+      "id": "north-west-hulk",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 1420, "y": 500, "width": 660, "height": 280 },
+      "look": "ruin",
+      "switched": null
     },
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": { "x": 1600, "y": 1000 }
+      "id": "north-east-hulk",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 3320, "y": 500, "width": 660, "height": 280 },
+      "look": "ruin",
+      "switched": null
     },
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": { "x": 1600, "y": 1700 }
+      "id": "great-hulk",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 2220, "y": 1210, "width": 960, "height": 380 },
+      "look": "ruin",
+      "switched": null
     },
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": { "x": 2680, "y": 1000 }
+      "id": "south-west-hulk",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 1370, "y": 2010, "width": 760, "height": 300 },
+      "look": "ruin",
+      "switched": null
     },
     {
-      "kind": "resurrection-shrine",
-      "layer": 0,
-      "team": 0,
-      "position": { "x": 200, "y": 1000 }
+      "id": "south-east-hulk",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 3270, "y": 2010, "width": 760, "height": 300 },
+      "look": "ruin",
+      "switched": null
     },
     {
-      "kind": "resurrection-shrine",
-      "layer": 0,
-      "team": 1,
-      "position": { "x": 3000, "y": 1000 }
+      "id": "great-deck",
+      "layer": 3,
+      "footprint": { "kind": "rect", "x": 2450, "y": 1300, "width": 500, "height": 200 },
+      "look": "platform",
+      "switched": null
+    }
+  ],
+  "overhangs": [
+    {
+      "id": "toppled-beam",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 1500, "y": 120, "width": 220, "height": 75 },
+      "look": "canopy"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "north-west-hulk-north-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 1690, "y": 390, "width": 120, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-west-hulk-south-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 1690, "y": 780, "width": 120, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-east-hulk-north-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3590, "y": 390, "width": 120, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-east-hulk-south-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3590, "y": 780, "width": 120, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "great-hulk-west-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 2110, "y": 1350, "width": 110, "height": 100 },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "great-hulk-east-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3180, "y": 1350, "width": 110, "height": 100 },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-west-hulk-north-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 1690, "y": 1900, "width": 120, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-west-hulk-south-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 1690, "y": 2310, "width": 120, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-east-hulk-north-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3590, "y": 1900, "width": 120, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-east-hulk-south-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3590, "y": 2310, "width": 120, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "great-deck-west-stair",
+      "from": 2,
+      "to": 3,
+      "area": { "kind": "rect", "x": 2340, "y": 1360, "width": 110, "height": 80 },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "great-deck-east-stair",
+      "from": 2,
+      "to": 3,
+      "area": { "kind": "rect", "x": 2950, "y": 1360, "width": 110, "height": 80 },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "far-west-crater-slope",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 700, "y": 550, "width": 300, "height": 180 },
+      "uphill": "e",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "far-east-crater-slope",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 4400, "y": 550, "width": 300, "height": 180 },
+      "uphill": "w",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "north-west-crater-slope",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 2250, "y": 430, "width": 340, "height": 180 },
+      "uphill": "w",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "north-east-crater-slope",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 2810, "y": 430, "width": 340, "height": 180 },
+      "uphill": "e",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "west-crater-slope",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 1740, "y": 1140, "width": 320, "height": 180 },
+      "uphill": "s",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "east-crater-slope",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 3340, "y": 1140, "width": 320, "height": 180 },
+      "uphill": "s",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "south-west-crater-slope",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 2300, "y": 2240, "width": 320, "height": 180 },
+      "uphill": "w",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "south-east-crater-slope",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 2780, "y": 2240, "width": 320, "height": 180 },
+      "uphill": "e",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "low-west-crater-slope",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 760, "y": 1910, "width": 280, "height": 180 },
+      "uphill": "e",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "low-east-crater-slope",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 4360, "y": 1910, "width": 280, "height": 180 },
+      "uphill": "w",
+      "look": "ramp",
+      "lift": null
+    },
+    {
+      "id": "north-trench-west-steps",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 1360, "y": 965, "width": 140, "height": 110 },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-trench-east-steps",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 3900, "y": 965, "width": 140, "height": 110 },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-trench-west-steps",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 1360, "y": 1725, "width": 140, "height": 110 },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-trench-east-steps",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 3900, "y": 1725, "width": 140, "height": 110 },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    }
+  ],
+  "dropOffs": [
+    { "layer": 2, "from": { "x": 2240, "y": 1210 }, "to": { "x": 2600, "y": 1210 } },
+    { "layer": 2, "from": { "x": 2800, "y": 1210 }, "to": { "x": 3160, "y": 1210 } },
+    { "layer": 2, "from": { "x": 1420, "y": 760 }, "to": { "x": 1420, "y": 520 } },
+    { "layer": 2, "from": { "x": 3980, "y": 520 }, "to": { "x": 3980, "y": 760 } }
+  ],
+  "walls": [
+    { "kind": "rect", "x": 1420, "y": 500, "width": 660, "height": 280, "layer": 1 },
+    { "kind": "rect", "x": 3320, "y": 500, "width": 660, "height": 280, "layer": 1 },
+    { "kind": "rect", "x": 2220, "y": 1210, "width": 960, "height": 380, "layer": 1 },
+    { "kind": "rect", "x": 1370, "y": 2010, "width": 760, "height": 300, "layer": 1 },
+    { "kind": "rect", "x": 3270, "y": 2010, "width": 760, "height": 300, "layer": 1 },
+    { "kind": "rect", "x": 2450, "y": 1300, "width": 500, "height": 200, "layer": 2 }
+  ],
+  "zones": [
+    {
+      "id": "west-mire",
+      "kind": "mire",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 1470, "y": 1620 },
+          { "x": 1449.9, "y": 1650 },
+          { "x": 1395, "y": 1671.96 },
+          { "x": 1320, "y": 1680 },
+          { "x": 1245, "y": 1671.96 },
+          { "x": 1190.1, "y": 1650 },
+          { "x": 1170, "y": 1620 },
+          { "x": 1190.1, "y": 1590 },
+          { "x": 1245, "y": 1568.04 },
+          { "x": 1320, "y": 1560 },
+          { "x": 1395, "y": 1568.04 },
+          { "x": 1449.9, "y": 1590 }
+        ]
+      }
+    },
+    {
+      "id": "east-mire",
+      "kind": "mire",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 4230, "y": 1620 },
+          { "x": 4209.9, "y": 1650 },
+          { "x": 4155, "y": 1671.96 },
+          { "x": 4080, "y": 1680 },
+          { "x": 4005, "y": 1671.96 },
+          { "x": 3950.1, "y": 1650 },
+          { "x": 3930, "y": 1620 },
+          { "x": 3950.1, "y": 1590 },
+          { "x": 4005, "y": 1568.04 },
+          { "x": 4080, "y": 1560 },
+          { "x": 4155, "y": 1568.04 },
+          { "x": 4209.9, "y": 1590 }
+        ]
+      }
+    },
+    {
+      "id": "west-spring",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 1140, "y": 1250 },
+          { "x": 1121.24, "y": 1279 },
+          { "x": 1070, "y": 1300.23 },
+          { "x": 1000, "y": 1308 },
+          { "x": 930, "y": 1300.23 },
+          { "x": 878.76, "y": 1279 },
+          { "x": 860, "y": 1250 },
+          { "x": 878.76, "y": 1221 },
+          { "x": 930, "y": 1199.77 },
+          { "x": 1000, "y": 1192 },
+          { "x": 1070, "y": 1199.77 },
+          { "x": 1121.24, "y": 1221 }
+        ]
+      }
+    },
+    {
+      "id": "east-spring",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 4540, "y": 1250 },
+          { "x": 4521.24, "y": 1279 },
+          { "x": 4470, "y": 1300.23 },
+          { "x": 4400, "y": 1308 },
+          { "x": 4330, "y": 1300.23 },
+          { "x": 4278.76, "y": 1279 },
+          { "x": 4260, "y": 1250 },
+          { "x": 4278.76, "y": 1221 },
+          { "x": 4330, "y": 1199.77 },
+          { "x": 4400, "y": 1192 },
+          { "x": 4470, "y": 1199.77 },
+          { "x": 4521.24, "y": 1221 }
+        ]
+      }
     }
   ],
   "spawnPoints": [
+    { "team": 0, "layer": 1, "position": { "x": 600, "y": 1240 } },
+    { "team": 0, "layer": 1, "position": { "x": 600, "y": 1350 } },
+    { "team": 0, "layer": 1, "position": { "x": 600, "y": 1460 } },
+    { "team": 0, "layer": 1, "position": { "x": 600, "y": 1570 } },
+    { "team": 0, "layer": 1, "position": { "x": 480, "y": 1240 } },
+    { "team": 0, "layer": 1, "position": { "x": 480, "y": 1350 } },
+    { "team": 0, "layer": 1, "position": { "x": 480, "y": 1460 } },
+    { "team": 0, "layer": 1, "position": { "x": 480, "y": 1570 } },
+    { "team": 1, "layer": 1, "position": { "x": 4800, "y": 1240 } },
+    { "team": 1, "layer": 1, "position": { "x": 4800, "y": 1350 } },
+    { "team": 1, "layer": 1, "position": { "x": 4800, "y": 1460 } },
+    { "team": 1, "layer": 1, "position": { "x": 4800, "y": 1570 } },
+    { "team": 1, "layer": 1, "position": { "x": 4920, "y": 1240 } },
+    { "team": 1, "layer": 1, "position": { "x": 4920, "y": 1350 } },
+    { "team": 1, "layer": 1, "position": { "x": 4920, "y": 1460 } },
+    { "team": 1, "layer": 1, "position": { "x": 4920, "y": 1570 } }
+  ],
+  "objectives": [
+    { "kind": "capture-point", "layer": 2, "position": { "x": 1750, "y": 640 } },
+    { "kind": "capture-point", "layer": 2, "position": { "x": 3650, "y": 640 } },
+    { "kind": "capture-point", "layer": 3, "position": { "x": 2700, "y": 1400 } },
+    { "kind": "capture-point", "layer": 2, "position": { "x": 1750, "y": 2160 } },
+    { "kind": "capture-point", "layer": 2, "position": { "x": 3650, "y": 2160 } },
+    { "kind": "resurrection-shrine", "layer": 1, "team": 0, "position": { "x": 700, "y": 1000 } },
+    { "kind": "resurrection-shrine", "layer": 1, "team": 1, "position": { "x": 4700, "y": 1000 } }
+  ],
+  "gates": [
     {
-      "team": 0,
-      "layer": 0,
-      "position": { "x": 160, "y": 700 }
+      "id": "north-west-trench-gate",
+      "wall": { "kind": "rect", "x": 1560, "y": 965, "width": 14, "height": 110, "layer": 0 },
+      "opener": { "kind": "switch" },
+      "blocks": "all",
+      "look": "portcullis"
     },
     {
-      "team": 0,
-      "layer": 0,
-      "position": { "x": 160, "y": 860 }
+      "id": "north-east-trench-gate",
+      "wall": { "kind": "rect", "x": 3826, "y": 965, "width": 14, "height": 110, "layer": 0 },
+      "opener": { "kind": "switch" },
+      "blocks": "all",
+      "look": "portcullis"
     },
     {
-      "team": 0,
-      "layer": 0,
-      "position": { "x": 160, "y": 1140 }
+      "id": "south-west-trench-gate",
+      "wall": { "kind": "rect", "x": 1560, "y": 1725, "width": 14, "height": 110, "layer": 0 },
+      "opener": { "kind": "switch" },
+      "blocks": "all",
+      "look": "portcullis"
     },
     {
-      "team": 0,
-      "layer": 0,
-      "position": { "x": 160, "y": 1300 }
+      "id": "south-east-trench-gate",
+      "wall": { "kind": "rect", "x": 3826, "y": 1725, "width": 14, "height": 110, "layer": 0 },
+      "opener": { "kind": "switch" },
+      "blocks": "all",
+      "look": "portcullis"
+    }
+  ],
+  "switches": [
+    {
+      "id": "north-trench-lever",
+      "layer": 2,
+      "position": { "x": 1550, "y": 640 },
+      "targets": ["north-west-trench-gate", "north-east-trench-gate"]
     },
     {
-      "team": 0,
-      "layer": 0,
-      "position": { "x": 280, "y": 620 }
+      "id": "south-trench-lever",
+      "layer": 2,
+      "position": { "x": 3850, "y": 2160 },
+      "targets": ["south-west-trench-gate", "south-east-trench-gate"]
+    }
+  ],
+  "breakables": [
+    {
+      "id": "west-palisade",
+      "wall": { "kind": "rect", "x": 950, "y": 880, "width": 24, "height": 150, "layer": 1 },
+      "health": 1500
     },
     {
-      "team": 0,
-      "layer": 0,
-      "position": { "x": 280, "y": 760 }
+      "id": "east-palisade",
+      "wall": { "kind": "rect", "x": 4426, "y": 880, "width": 24, "height": 150, "layer": 1 },
+      "health": 1500
+    }
+  ],
+  "lighting": {
+    "ambient": { "colour": 8357544, "intensity": 0.35 },
+    "indoorAmbient": { "colour": 5924488, "intensity": 0.3 },
+    "indoor": [
+      { "kind": "rect", "x": 1500, "y": 965, "width": 2400, "height": 110 },
+      { "kind": "rect", "x": 1500, "y": 1725, "width": 2400, "height": 110 }
+    ],
+    "sun": { "directionDeg": 315, "elevationDeg": 25, "colour": 16758906, "intensity": 0.5 },
+    "lights": [
+      {
+        "id": "brazier-north-west-hulk",
+        "position": { "x": 1620, "y": 565 },
+        "layer": 2,
+        "radius": 220,
+        "colour": 16748608,
+        "intensity": 0.8,
+        "flicker": 0.35
+      },
+      {
+        "id": "brazier-north-east-hulk",
+        "position": { "x": 3780, "y": 565 },
+        "layer": 2,
+        "radius": 220,
+        "colour": 16748608,
+        "intensity": 0.8,
+        "flicker": 0.35
+      },
+      {
+        "id": "brazier-great-deck",
+        "position": { "x": 2600, "y": 1338 },
+        "layer": 3,
+        "radius": 220,
+        "colour": 16748608,
+        "intensity": 0.8,
+        "flicker": 0.35
+      },
+      {
+        "id": "brazier-south-west-hulk",
+        "position": { "x": 1620, "y": 2080 },
+        "layer": 2,
+        "radius": 220,
+        "colour": 16748608,
+        "intensity": 0.8,
+        "flicker": 0.35
+      },
+      {
+        "id": "brazier-south-east-hulk",
+        "position": { "x": 3780, "y": 2080 },
+        "layer": 2,
+        "radius": 220,
+        "colour": 16748608,
+        "intensity": 0.8,
+        "flicker": 0.35
+      },
+      {
+        "id": "torch-north-trench-west-mouth",
+        "position": { "x": 1340, "y": 945 },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-north-trench-east-mouth",
+        "position": { "x": 4060, "y": 945 },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-south-trench-west-mouth",
+        "position": { "x": 1340, "y": 1705 },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-south-trench-east-mouth",
+        "position": { "x": 4060, "y": 1705 },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "fire-west-shrine",
+        "position": { "x": 620, "y": 930 },
+        "layer": 1,
+        "radius": 180,
+        "colour": 16748608,
+        "intensity": 0.8,
+        "flicker": 0.35
+      },
+      {
+        "id": "fire-east-shrine",
+        "position": { "x": 4780, "y": 930 },
+        "layer": 1,
+        "radius": 180,
+        "colour": 16748608,
+        "intensity": 0.8,
+        "flicker": 0.35
+      },
+      {
+        "id": "torch-north-trench-lever",
+        "position": { "x": 1550, "y": 575 },
+        "layer": 2,
+        "radius": 130,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-south-trench-lever",
+        "position": { "x": 3850, "y": 2225 },
+        "layer": 2,
+        "radius": 130,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
+      }
+    ]
+  },
+  "atmosphere": {
+    "fog": [
+      {
+        "layer": 1,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            { "x": 1320, "y": 1720 },
+            { "x": 1290.53, "y": 1765 },
+            { "x": 1210, "y": 1797.94 },
+            { "x": 1100, "y": 1810 },
+            { "x": 990, "y": 1797.94 },
+            { "x": 909.47, "y": 1765 },
+            { "x": 880, "y": 1720 },
+            { "x": 909.47, "y": 1675 },
+            { "x": 990, "y": 1642.06 },
+            { "x": 1100, "y": 1630 },
+            { "x": 1210, "y": 1642.06 },
+            { "x": 1290.53, "y": 1675 }
+          ]
+        }
+      },
+      {
+        "layer": 1,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            { "x": 4520, "y": 1720 },
+            { "x": 4490.53, "y": 1765 },
+            { "x": 4410, "y": 1797.94 },
+            { "x": 4300, "y": 1810 },
+            { "x": 4190, "y": 1797.94 },
+            { "x": 4109.47, "y": 1765 },
+            { "x": 4080, "y": 1720 },
+            { "x": 4109.47, "y": 1675 },
+            { "x": 4190, "y": 1642.06 },
+            { "x": 4300, "y": 1630 },
+            { "x": 4410, "y": 1642.06 },
+            { "x": 4490.53, "y": 1675 }
+          ]
+        }
+      },
+      {
+        "layer": 1,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            { "x": 3000, "y": 2540 },
+            { "x": 2959.81, "y": 2585 },
+            { "x": 2850, "y": 2617.94 },
+            { "x": 2700, "y": 2630 },
+            { "x": 2550, "y": 2617.94 },
+            { "x": 2440.19, "y": 2585 },
+            { "x": 2400, "y": 2540 },
+            { "x": 2440.19, "y": 2495 },
+            { "x": 2550, "y": 2462.06 },
+            { "x": 2700, "y": 2450 },
+            { "x": 2850, "y": 2462.06 },
+            { "x": 2959.81, "y": 2495 }
+          ]
+        }
+      }
+    ],
+    "plumes": [
+      {
+        "id": "far-west-crater-smoke",
+        "layer": 0,
+        "position": { "x": 850, "y": 640 },
+        "kind": "smoke"
+      },
+      {
+        "id": "far-east-crater-smoke",
+        "layer": 0,
+        "position": { "x": 4550, "y": 640 },
+        "kind": "smoke"
+      },
+      {
+        "id": "low-west-crater-smoke",
+        "layer": 0,
+        "position": { "x": 900, "y": 2000 },
+        "kind": "smoke"
+      },
+      {
+        "id": "low-east-crater-smoke",
+        "layer": 0,
+        "position": { "x": 4500, "y": 2000 },
+        "kind": "smoke"
+      }
+    ],
+    "weather": null
+  },
+  "paving": [
+    {
+      "id": "west-camp",
+      "layer": 1,
+      "look": "dirt",
+      "area": { "kind": "rect", "x": 420, "y": 1180, "width": 240, "height": 450 }
     },
     {
-      "team": 0,
-      "layer": 0,
-      "position": { "x": 280, "y": 1240 }
+      "id": "east-camp",
+      "layer": 1,
+      "look": "dirt",
+      "area": { "kind": "rect", "x": 4740, "y": 1180, "width": 240, "height": 450 }
     },
     {
-      "team": 0,
-      "layer": 0,
-      "position": { "x": 280, "y": 1380 }
+      "id": "west-approach",
+      "layer": 1,
+      "look": "dirt",
+      "area": { "kind": "rect", "x": 660, "y": 1360, "width": 1450, "height": 80 }
     },
     {
-      "team": 1,
-      "layer": 0,
-      "position": { "x": 3040, "y": 1300 }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": { "x": 3040, "y": 1140 }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": { "x": 3040, "y": 860 }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": { "x": 3040, "y": 700 }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": { "x": 2920, "y": 1380 }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": { "x": 2920, "y": 1240 }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": { "x": 2920, "y": 760 }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": { "x": 2920, "y": 620 }
+      "id": "east-approach",
+      "layer": 1,
+      "look": "dirt",
+      "area": { "kind": "rect", "x": 3290, "y": 1360, "width": 1450, "height": 80 }
     }
   ]
 }
