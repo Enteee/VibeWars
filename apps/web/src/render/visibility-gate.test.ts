@@ -64,6 +64,7 @@ interface GatedScene {
   mapGraphics: RecordingGraphics | undefined;
   floorGraphics: RecordingGraphics | undefined;
   add: unknown;
+  make: unknown;
   textures: unknown;
   occluders: readonly Occluder[];
   coversDrawn: readonly { cover: OverhangCover; graphics: RecordingGraphics }[];
@@ -92,6 +93,8 @@ function paint(
     { graphics },
     { get: (_object, key) => (key === "graphics" ? graphics : () => recordingGraphics()) },
   );
+  // The grain's stencil shapes mask, they paint nothing: not recorded.
+  scene.make = { graphics: () => recordingGraphics() };
   // The land outside a map's outline is a texture, under the floor: none is made.
   scene.textures = { exists: () => true };
   // Roads are a canvas texture on their layer's ground, not a Graphics fill: not recorded.
