@@ -169,7 +169,7 @@ describe("BIOME", () => {
     }
   });
 
-  it.each(["desert", "wilds", "snow"] as const)(
+  it.each(["desert", "wilds", "snow", "marsh"] as const)(
     "keeps every %s tone a hand's width from every signal",
     (biome) => {
       const hall = new Set(coloursOf("hall"));
@@ -193,19 +193,25 @@ describe("shade", () => {
 
 describe("breakableLook (#3370)", () => {
   it("makes each listed biome's breakable wall its own material, not the stone", () => {
-    const looks = (["volcanic", "desert", "snow", "wilds"] as const).map((biome) =>
+    const looks = (["volcanic", "desert", "snow", "wilds", "marsh"] as const).map((biome) =>
       breakableLook({ layerCount: 2, biome }),
     );
     for (const look of looks) {
       expect(look).not.toEqual(BREAKABLE_WALL_LOOK);
     }
     expect(new Set(looks.map(({ face }) => face)).size).toBe(looks.length);
-    expect(looks.map(({ courses }) => courses)).toEqual(["blocks", "bricks", "ice", "fieldstone"]);
+    expect(looks.map(({ courses }) => courses)).toEqual([
+      "blocks",
+      "bricks",
+      "ice",
+      "fieldstone",
+      "fieldstone",
+    ]);
   });
 
   it("glows only in the volcanic, and keeps the stone in the hall and heights", () => {
     expect(breakableLook({ layerCount: 2, biome: "volcanic" }).glow).toBeDefined();
-    for (const biome of ["desert", "snow", "wilds", "hall"] as const) {
+    for (const biome of ["desert", "snow", "wilds", "marsh", "hall"] as const) {
       expect(breakableLook({ layerCount: 2, biome }).glow).toBeUndefined();
     }
     expect(breakableLook({ layerCount: 2, biome: "hall" })).toBe(BREAKABLE_WALL_LOOK);

@@ -516,6 +516,20 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     earth: 0x6a6050,
     plant: 0x6a6a58,
   },
+  /**
+   * A dark river ford (#3434, docs/art/3074-blackwater-ford.md): the wilds'
+   * ground a little cooler, dry olive reed and silt, all low chroma and well
+   * away from the friend blue, the foe red and the nature green.
+   */
+  marsh: {
+    ...HALL_TONES,
+    ground: 0x2a3430,
+    rock: 0x54594f,
+    /** Silt. */
+    earth: 0x4a4034,
+    /** Dry reed. */
+    plant: 0x5c5a3a,
+  },
 };
 
 /** What each colour of the arena is made of. */
@@ -713,6 +727,7 @@ const TILED_GROUND: Record<Biome, boolean> = {
   desert: true,
   volcanic: true,
   snow: false,
+  marsh: true,
 };
 
 function biomeMaterials(tones: BiomeTones, tiled: boolean): BiomeMaterials {
@@ -734,6 +749,7 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   desert: biomeMaterials(BIOME_TONES.desert, TILED_GROUND.desert),
   volcanic: biomeMaterials(BIOME_TONES.volcanic, TILED_GROUND.volcanic),
   snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
+  marsh: biomeMaterials(BIOME_TONES.marsh, TILED_GROUND.marsh),
 };
 
 /**
@@ -809,6 +825,22 @@ function breakableLookOf(biome: Biome): BreakableLook {
         dust: mix(tones.ground, tones.stone, 0.5),
         shadow: BREAKABLE_WALL_LOOK.shadow,
       };
+    case "marsh":
+      return {
+        courses: "fieldstone",
+        top: mix(tones.earth, tones.rock, 0.35),
+        face: shade(tones.earth, 0.15),
+        lit: mix(tones.rock, tones.stone, 0.6),
+        mortar: shade(tones.earth, 0.5),
+        edge: shade(tones.earth, 0.75),
+        crack: shade(tones.earth, 0.8),
+        glow: undefined,
+        moss: mix(tones.plant, tones.earth, 0.4),
+        rubble: mix(tones.earth, tones.rock, 0.3),
+        rubbleFace: shade(tones.earth, 0.3),
+        dust: mix(tones.ground, tones.earth, 0.6),
+        shadow: BREAKABLE_WALL_LOOK.shadow,
+      };
     case "hall":
     case "heights":
       return BREAKABLE_WALL_LOOK;
@@ -822,6 +854,7 @@ const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
   desert: breakableLookOf("desert"),
   volcanic: breakableLookOf("volcanic"),
   snow: breakableLookOf("snow"),
+  marsh: breakableLookOf("marsh"),
 };
 
 /** The material a map's breakable walls are (#3370): a map of one layer's are stone whatever its biome. */
