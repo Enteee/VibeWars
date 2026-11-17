@@ -173,6 +173,9 @@ jobs:
         # the flat baseline's. 12 is the highest p50 / flat in eight green
         # runs (10.38, arena-long-hall) x 1.15, rounded up. A breach is a perf
         # card, not a raise.
+        # Exit 75 means the runner was too noisy to judge, even after the bench
+        # re-measured the unstable maps (#3503): a rerun is the remedy. Exit 1 is a
+        # breach or a crash. Both are red.
         timeout-minutes: 30
         run: BENCH_MAX_RATIO=2.7 BENCH_MAX_FOLLOW_RATIO=12 devenv shell -- pnpm run bench:render
 
