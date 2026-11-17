@@ -236,6 +236,72 @@ describe("bots and a lever gate (#3138)", () => {
   });
 });
 
+/**
+ * Two lever gates in series (#3513), at x 600 and 1000, each in a wall
+ * with a way round over the top unless `sealed`: the west lever opens the
+ * east gate and the east lever the west one.
+ */
+function series(participants: readonly ParticipantSpec[], sealed = false): MatchSimulation {
+  const gate = (x: number): GateField => ({
+    segments: wall(x, 300, 500),
+    opener: { kind: "switch" },
+    blocks: "all",
+  });
+  const lever = (id: string, x: number, opens: number): SwitchField => ({
+    id,
+    layer: 0,
+    position: vec2(x, 700),
+    gates: [opens],
+    teleports: [],
+    decks: [],
+    lifts: [],
+  });
+  return new MatchSimulation({
+    seed: "levers",
+    ruleset: RULESET,
+    bounds: BOUNDS,
+    participants,
+    walls: [600, 1000].flatMap((x) => [...wall(x, sealed ? -10 : 60, 300), ...wall(x, 500, 810)]),
+    gates: [gate(600), gate(1000)],
+    switches: [lever("west", 300, 1), lever("east", 1300, 0)],
+  });
+}
+
+describe("two lever gates in series (#3513)", () => {
+  it("count each lever with its partner, and the second alone once the first is thrown", () => {
+    const sim = series([
+      // A player on team 1, so only team 0's bot throws a lever.
+      fighter("a", 0, WARRIOR, vec2(200, 650)),
+      fighter("b", 1, WARRIOR, vec2(1400, 650), { behaviour: undefined }),
+    ]);
+    sim.step(DT);
+    expect(sim.botLevers).toHaveLength(2);
+    for (const read of sim.botLevers) {
+      expect(read.gain[0]).toBeGreaterThanOrEqual(LEVER_WORTH_UNITS);
+      expect(read.gain[1]).toBeGreaterThanOrEqual(LEVER_WORTH_UNITS);
+    }
+    run(sim, 5, () => sim.gates[1]?.open === true);
+    expect(sim.gates.map((gate) => gate.open)).toEqual([false, true]);
+    sim.step(DT);
+    const east = sim.botLevers.find((read) => read.targetId === switchTargetId("east"));
+    expect(east?.gain[0]).toBeGreaterThanOrEqual(LEVER_WORTH_UNITS);
+  });
+
+  it("get both thrown by bots when they are the only way to the foes", () => {
+    const sim = series(
+      [
+        fighter("a", 0, WARRIOR, vec2(200, 650)),
+        fighter("a2", 0, RANGER, vec2(150, 600)),
+        fighter("b", 1, WARRIOR, vec2(1400, 650)),
+        fighter("b2", 1, RANGER, vec2(1450, 600)),
+      ],
+      true,
+    );
+    run(sim, 30, () => sim.gates.every((gate) => gate.open));
+    expect(sim.gates.map((gate) => gate.open)).toEqual([true, true]);
+  });
+});
+
 describe("levers, shot at from afar (#3150)", () => {
   it("drops the lever for a foe shooting at it from beyond 420", () => {
     const sim = match([
