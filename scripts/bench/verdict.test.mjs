@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { EXIT_TOO_NOISY, exitCode, settled, verdict } from "./verdict.mjs";
+import { EXIT_TOO_NOISY, exitCode, settled, shardOf, verdict } from "./verdict.mjs";
 
 /**
  * Maps in a row, each bracketed by the windows either side of it.
@@ -141,5 +141,31 @@ describe("settled", () => {
 
   it("never settles on a steady fall", () => {
     expect(settled([72, 60, 50, 42, 35, 30, 25, 21, 18, 15], every(10), rule)).toBeUndefined();
+  });
+});
+
+describe("shardOf", () => {
+  const list = ["a", "b", "c", "d", "e", "f", "g"];
+
+  it("is the whole list without a spec", () => {
+    expect(shardOf(list, undefined)).toEqual(list);
+    expect(shardOf(list, "")).toEqual(list);
+  });
+
+  it("splits round-robin, and the shards together are the whole list", () => {
+    expect(shardOf(list, "1/3")).toEqual(["a", "d", "g"]);
+    expect(shardOf(list, "2/3")).toEqual(["b", "e"]);
+    const all = [1, 2, 3].flatMap((i) => shardOf(list, `${String(i)}/3`));
+    expect([...all].sort()).toEqual(list);
+  });
+
+  it("throws on a bad spec, and never reads it as 1/1", () => {
+    for (const bad of ["0/3", "4/3", "1", "a/b", "1/0", "1/3/2", "-1/3"]) {
+      expect(() => shardOf(list, bad)).toThrow(/BENCH_SHARD/);
+    }
+  });
+
+  it("throws on a shard with no map", () => {
+    expect(() => shardOf(["a", "b"], "3/3")).toThrow(/no map/);
   });
 });

@@ -62,7 +62,7 @@ import { parseArgs } from "node:util";
 import { chromium } from "@playwright/test";
 
 import { BENCH_CEILINGS } from "./ceilings.mjs";
-import { exitCode, settled, verdict } from "./verdict.mjs";
+import { exitCode, settled, shardOf, verdict } from "./verdict.mjs";
 
 /* global document, requestAnimationFrame, window -- in page.evaluate, which runs in the page */
 
@@ -137,7 +137,11 @@ function layeredMaps() {
     .sort();
 }
 
-/** The maps to measure. */
+/**
+ * The maps to measure: every one, or this shard's (BENCH_SHARD=i/n, #3509). A
+ * shard carries its own warm-up, calibration and flat baseline, as its ratios
+ * are taken on the runner that ran it.
+ */
 function mapsToMeasure() {
   const asked = process.env.BENCH_MAP;
   const ids =
@@ -147,7 +151,7 @@ function mapsToMeasure() {
           .split(",")
           .map((id) => id.trim())
           .filter((id) => id !== "");
-  return ids;
+  return shardOf(ids, process.env.BENCH_SHARD);
 }
 
 /**
@@ -619,6 +623,11 @@ try {
   /** One calibration window: the reference map, drawn as a map is, alone (#3255). */
   const calibrationWindow = async () => percentile(await mapWindow(REFERENCE_MAP, SECONDS), 50);
   const mapIds = options.follow === true ? [] : mapsToMeasure();
+  const runStart = Date.now();
+  /** @type {(phase: string, since: number) => void} */
+  const timed = (phase, since) => {
+    console.log(`phase ${phase} ${((Date.now() - since) / 1000).toFixed(0)} s`);
+  };
   // The runner is slow for the first 20-40 s of a run: load the first map, then
   // calibrate until the runner has had that long and two windows in a row agree,
   // and keep none of it (#3243).
@@ -647,6 +656,8 @@ try {
       );
     }
   }
+  timed("warm-up", runStart);
+  const stillStart = Date.now();
   const windows = [await calibrationWindow()];
   const rows = [];
   for (const mapId of noisy ? [] : mapIds) {
@@ -675,6 +686,8 @@ try {
       break;
     }
   }
+  timed("still", stillStart);
+  const followStart = Date.now();
   const followed = [];
   for (const mapId of noisy ? [] : [...mapsToMeasure(), FLAT_BASELINE]) {
     const match = await browser.newPage({ viewport });
@@ -708,6 +721,7 @@ try {
       await match.close();
     }
   }
+  timed("follow", followStart);
   const wholeRun = (Math.max(...windows) - Math.min(...windows)) / median(windows);
   console.log(
     `calibration windows p50 ms: ${windows.map((w) => w.toFixed(1)).join(", ")} (whole-run spread ${(wholeRun * 100).toFixed(0)} %, not gated)`,
