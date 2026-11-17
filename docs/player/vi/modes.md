@@ -82,8 +82,11 @@ tế trước thì đội kia sẽ nằm yên.
 Một đội thua khi mọi người chơi và tư tế của đội đều đã chết. Sau 12 phút,
 nhiều sĩ khí nhất sẽ thắng.
 
-Jungle Ruins chơi chế độ này: ba làn nối với nhau bằng lối cắt ngang ở giữa,
-mỗi đền nằm sau một bức tường ở cuối căn cứ.
+Jungle Ruins (2v2 đến 8v8, 5400x2800) chơi chế độ này: tàn tích đền đài phủ
+đầy cây cỏ, bị một con sông rừng chia cắt. Lội qua chỗ nước cạn, đi qua cầu
+bằng thân cây, leo lên kim tự tháp bậc thang ở giữa, hoặc đi lối bí mật bên
+dưới nó khi một cần gạt trong sân mở cửa lối ấy; tường dây leo có thể chặt
+đổ.
 
 ## Chiến Bang
 

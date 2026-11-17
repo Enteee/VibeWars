@@ -90,8 +90,11 @@ a másik csapat fekve marad.
 Egy csapat akkor veszít, amikor minden játékosa és a papja is halott.
 12 perc után a legtöbb morál nyer.
 
-A Jungle Ruins játssza: három sáv, amelyeket középen keresztutak kötnek
-össze, mindegyik szentély egy fal mögött a bázisa hátulján.
+A Jungle Ruins (2v2-től 8v8-ig, 5400x2800) játssza: benőtt
+templomromok, amelyeket egy dzsungelfolyó szel ketté. Gázolj át egy
+gázlón, kelj át egy rönkhídon, mássz fel a középső lépcsős piramisra,
+vagy menj át az alatta húzódó rejtett járaton, amint egy udvaron egy
+kar kinyitja az ajtajait; az indafalak kivághatók.
 
 ## Céhcsata
 

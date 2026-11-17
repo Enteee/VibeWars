@@ -341,7 +341,7 @@ function frameTimes(page, seconds = SECONDS) {
 }
 
 /** `--follow`'s flat baseline beside the layered maps. */
-const FLAT_BASELINE = "jungle-ruins";
+const FLAT_BASELINE = "hollow-deep";
 /** How long `--follow` walks its loop, measured. */
 const FOLLOW_SECONDS = Number(process.env.BENCH_FOLLOW_SECONDS ?? 12);
 /** `--follow`'s map to take a CPU profile of while it walks (#3499), if any. */

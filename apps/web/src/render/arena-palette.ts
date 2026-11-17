@@ -539,6 +539,21 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     /** Dry reed: green would be nature's. */
     plant: 0x5c5a3a,
   },
+  /**
+   * Overgrown temple ruins (#3436, docs/art/3074-jungle-ruins.md): a dark wet
+   * floor with mossy grey stone, olive vine and clay, all low chroma, so the
+   * nature green and the friend blue stay the loudest things.
+   */
+  jungle: {
+    ...HALL_TONES,
+    ground: 0x232c26,
+    /** Mossy stone. */
+    rock: 0x5a5c52,
+    /** Clay. */
+    earth: 0x5a4a30,
+    /** Vine: olive, never nature's green. */
+    plant: 0x545a38,
+  },
 };
 
 /** What each colour of the arena is made of. */
@@ -737,6 +752,7 @@ const TILED_GROUND: Record<Biome, boolean> = {
   volcanic: true,
   snow: false,
   marsh: true,
+  jungle: true,
 };
 
 function biomeMaterials(tones: BiomeTones, tiled: boolean): BiomeMaterials {
@@ -759,6 +775,7 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   volcanic: biomeMaterials(BIOME_TONES.volcanic, TILED_GROUND.volcanic),
   snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
   marsh: biomeMaterials(BIOME_TONES.marsh, TILED_GROUND.marsh),
+  jungle: biomeMaterials(BIOME_TONES.jungle, TILED_GROUND.jungle),
 };
 
 /** A biome's ground grain and the marks scattered on it (#3484), from its own tones. */
@@ -830,6 +847,12 @@ export const GROUND_DRESSING: Record<Biome, GroundDressingTones> = {
     mix(BIOME_TONES.marsh.plant, BIOME_TONES.marsh.ground, 0.3),
     mix(BIOME_TONES.marsh.ground, BIOME_TONES.marsh.earth, 0.6),
   ),
+  // Vine leaves and clay crumbs.
+  jungle: dressingTones(
+    BIOME_TONES.jungle,
+    mix(BIOME_TONES.jungle.plant, BIOME_TONES.jungle.ground, 0.3),
+    mix(BIOME_TONES.jungle.ground, BIOME_TONES.jungle.earth, 0.6),
+  ),
 };
 
 /**
@@ -891,6 +914,7 @@ function breakableLookOf(biome: Biome): BreakableLook {
       };
     case "wilds":
     case "marsh":
+    case "jungle":
       return {
         courses: "fieldstone",
         top: mix(tones.rock, tones.stone, 0.4),
@@ -920,6 +944,7 @@ const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
   volcanic: breakableLookOf("volcanic"),
   snow: breakableLookOf("snow"),
   marsh: breakableLookOf("marsh"),
+  jungle: breakableLookOf("jungle"),
 };
 
 /** The material a map's breakable walls are (#3370): a map of one layer's are stone whatever its biome. */

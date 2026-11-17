@@ -36,7 +36,7 @@ Hraje ho Ember Pits: lávové stružky s kamennými mosty, lávový tunel, výta
 
 Tým prohrává, když jsou mrtví všichni jeho hráči i jeho kněz. Po 12 minutách vyhrává největší morálka.
 
-Hraje ho Jungle Ruins: tři cesty spojené příčkami uprostřed, každá svatyně za zdí vzadu ve své základně.
+Hraje ho Jungle Ruins (od 2v2 do 8v8, 5400x2800): zarostlé ruiny chrámu rozdělené řekou v džungli. Přebroď řeku, přejdi po mostě z kmenů, vylez na stupňovitou pyramidu uprostřed, nebo jdi skrytou chodbou pod ní, jakmile páka na jednom z nádvoří otevře její dveře; zdi z lián se dají posekat.
 
 ## Bitva cechů
 

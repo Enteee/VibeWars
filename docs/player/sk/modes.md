@@ -82,8 +82,11 @@ ako prvého a druhý tím zostane ležať.
 Tím prehráva, keď sú mŕtvi všetci jeho hráči aj kňaz. Po 12
 minútach vyhráva najviac morálky.
 
-Hrá sa na Jungle Ruins: tri koridory spojené priečnymi cestami uprostred,
-každá svätyňa za múrom v zadnej časti svojej základne.
+Hrá sa na Jungle Ruins (od 2v2 do 8v8, 5400x2800): zarastené ruiny
+chrámu, ktoré rozdeľuje rieka v džungli. Prebroď rieku, prejdi po moste z
+kmeňov, vylez na stupňovitú pyramídu uprostred alebo choď skrytou chodbou
+pod ňou, keď páka na jednom z nádvorí otvorí jej dvere; steny z lián sa
+dajú vysekať.
 
 ## Cechová bitka
 

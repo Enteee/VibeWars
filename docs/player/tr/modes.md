@@ -86,8 +86,11 @@ Enerjiyle geri alır. Önce rahibi öldürürsen diğer takım yerde kalır.
 Bir takım, tüm oyuncuları ve rahibi ölünce kaybeder. 12 dakika sonra en
 çok moral kazanır.
 
-Jungle Ruins bunu oynatır: ortada çapraz yollarla birleşen üç şerit,
-her tapınak üssünün arkasında bir duvarın gerisinde.
+Jungle Ruins (2v2'den 8v8'e, 5400x2800) bunu oynatır: bir orman
+nehriyle bölünmüş, bitkilerle kaplı tapınak kalıntıları. Bir sığlıktan
+yürüyerek karşıya geç, kütük köprüden yürü, ortadaki basamaklı piramide
+tırman ya da bir avludaki kol kapılarını açınca altındaki gizli geçidi
+kullan; sarmaşık duvarlar kesilip yıkılabilir.
 
 ## Lonca Savaşı
 

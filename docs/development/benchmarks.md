@@ -185,7 +185,7 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
 - **The menu background** on every layered map: the bots' fight, the
   camera still, at the menu's 30 fps cap.
 - **Follow** (`--follow` runs only this one) on every layered map and
-  one flat map, `jungle-ruins`, the baseline. A Hosted 1v1 there, its
+  one flat map, `hollow-deep`, the baseline. A Hosted match there at the smallest size it seats, its
   body walking a fixed loop by left clicks: over the transition nearest
   its spawn, to the map's centre, and back. The camera follows, the
   pointer sweeps the ground every 50 ms so hover runs, and nothing caps
@@ -197,10 +197,11 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
   each map's p50 over the baseline's. The `BENCH_MAX_RATIO` gate does not judge these
   rows: walking costs a frame about twice what standing does.
   `BENCH_MAX_FOLLOW_RATIO` fails a map walked that is over that many
-  times the baseline walked. CI gates it at 12 (#3488): a cost every layered
+  times the baseline walked. CI gates it at 10 (#3488): a cost every layered
   map shares cancels out of the `BENCH_MAX_RATIO` ratio, but not out of this
-  one. 12 is the highest value in eight green pull-request runs (10.38,
-  arena-long-hall) times 1.15. A breach is a perf card, not a raise.
+  one. 10 is the highest value in a green pull-request run against the
+  `hollow-deep` baseline (7.87, sandstone-steps, #3436) times 1.15, rounded
+  up. A breach is a perf card, not a raise.
 
 The follow case measures the page through `?frametiming`
 (`render/frame-timing.ts`), which any client takes: open a match with

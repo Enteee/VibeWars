@@ -89,8 +89,11 @@ pysyy maassa.
 Tiimi häviää, kun kaikki sen pelaajat ja sen pappi ovat kuolleet.
 12 minuutin jälkeen eniten moraalia voittaa.
 
-Sitä pelaa Jungle Ruins: kolme kaistaa, joita yhdistävät keskellä
-poikkipolut, ja kumpikin pyhäkkö muurin takana tukikohtansa perällä.
+Sitä pelaa Jungle Ruins (2v2–8v8, 5400x2800): umpeen kasvaneet
+temppelin rauniot, joita halkoo viidakkojoki. Kahlaa joen yli
+kahlaamosta, kulje tukkisiltaa pitkin, kiipeä keskellä olevalle
+porraspyramidille tai käytä sen alla kulkevaa salakäytävää, kun
+jonkin pihan vipu avaa sen ovet; köynnösseinät voi hakata alas.
 
 ## Kiltataistelu
 
