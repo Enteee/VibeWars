@@ -381,6 +381,7 @@ import {
   type Lift,
   type LiftField,
 } from "./lifts.js";
+import { LruCache } from "./lru-cache.js";
 import {
   flipSwitch,
   initialSwitches,
@@ -642,6 +643,14 @@ function creaturePips(participant: Participant): number {
 
 /** Below this past a whole second, the clock is read as on it: dt sums drift (#1223). */
 const WHOLE_SECOND_EPSILON = 1e-6;
+
+/**
+ * The wall sets a match keeps, one for each recent open-or-closed
+ * combination of its toggles (#3467): each costs about 1 MB, and up to
+ * 256 combinations can be reached (perf-sec-qa, #3459). A miss rebuilds
+ * the same set, so this bounds memory and never changes the game.
+ */
+export const WALL_SET_LIMIT = 32;
 
 /**
  * At most this many summoned creatures in a match at once (#1052): a
@@ -993,6 +1002,8 @@ export interface MatchSimulationOptions {
    * lives. Omitted or `[]`: none.
    */
   readonly guards?: readonly BaseGuard[];
+  /** How many wall sets to keep (#3467); a test lowers it to force evictions. Omitted: `WALL_SET_LIMIT`. */
+  readonly wallSetLimit?: number;
 }
 
 export interface StepResult {
@@ -1446,8 +1457,8 @@ export class MatchSimulation {
   #graphs: readonly NavGraph[];
   /** Paths round this match's walls, for the attack's approach and for a walk (#211, #267, #310). */
   #paths: LayeredPathFinder;
-  /** Walls and paths for each open-or-closed combination of the gates (#2691), built once. */
-  readonly #wallSets = new Map<number, WallSet>();
+  /** Walls and paths for the latest open-or-closed combinations of the gates (#2691), each rebuilt if evicted (#3467). */
+  readonly #wallSets: LruCache<number, WallSet>;
   /** Filled in place, so a bot's objectives see each change (#2691). */
   readonly #gates: Gate[];
   readonly #switches: Switch[];
@@ -1631,6 +1642,7 @@ export class MatchSimulation {
     }
     this.#score = emptyScore(teamIds(this.#teamCount));
     this.#bounds = options.bounds;
+    this.#wallSets = new LruCache(options.wallSetLimit ?? WALL_SET_LIMIT);
     this.#gates = initialGates(options.gates ?? []);
     this.#switches = initialSwitches(options.switches ?? []);
     this.#teleports = initialTeleports(options.teleports ?? []);
