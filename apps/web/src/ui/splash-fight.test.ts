@@ -2,6 +2,7 @@ import { STARTER_BUILDS } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { hostMap, mapStructure, teamArenaMapIds } from "../net/maps.js";
+import { toRenderableWall } from "../match-view.js";
 import { pickSurface } from "../render/layer-surfaces.js";
 import { splashConnection, splashParticipants, splashSimulation } from "./splash-fight.js";
 
@@ -14,12 +15,15 @@ describe("the splash fight's simulation (#3222)", () => {
       throw new Error(`no map ${mapId}`);
     }
     const { simulation } = splashSimulation(map, { mapId, teamSize: 8, still: false }, "walk");
-    const { structure } = mapStructure(mapId);
+    const { structure, wallLayers } = mapStructure(mapId);
+    const walls = map.descriptor.walls.map((wall, at) =>
+      toRenderableWall(wall, wallLayers[at] ?? 0),
+    );
     const bodies = [...simulation.participants()];
     // #3250: a flat world stood Crossroads' bots on layer 0, under its fountain.
     expect(bodies.map((body) => body.layer)).toEqual(bodies.map(() => structure.ground));
     const taken = bodies.filter((body) => {
-      const picked = pickSurface(structure, body.position, false);
+      const picked = pickSurface(structure, walls, body.position, false);
       simulation.walkTo(body.id, picked.point, picked.layer);
       return simulation.get(body.id)?.walkLayer === picked.layer;
     });

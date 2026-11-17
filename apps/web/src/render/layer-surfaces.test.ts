@@ -8,6 +8,7 @@ import {
   FLAT_STRUCTURE,
   type MapStructure,
   type RenderableActor,
+  type RenderableWall,
 } from "./arena-snapshot.js";
 import {
   trackAlt,
@@ -19,6 +20,7 @@ import {
   HIDDEN_DASH,
   HIDDEN_GAP,
   type HiddenPiece,
+  deckDrawing,
   drawnLayerAt,
   liftAt,
   occludersOf,
@@ -84,16 +86,83 @@ describe("the surface a click names (#2831)", () => {
   const onDeck = { x: 200, y: 150 - ELEVATION_STEP };
 
   it("is the deck where one is drawn, at the point on it", () => {
-    expect(pickSurface(BRIDGE, onDeck, false)).toEqual({ layer: 1, point: { x: 200, y: 150 } });
+    expect(pickSurface(BRIDGE, [], onDeck, false)).toEqual({ layer: 1, point: { x: 200, y: 150 } });
   });
 
   it("is the ground under it with Alt", () => {
-    expect(pickSurface(BRIDGE, onDeck, true)).toEqual({ layer: 0, point: onDeck });
+    expect(pickSurface(BRIDGE, [], onDeck, true)).toEqual({ layer: 0, point: onDeck });
   });
 
   it("acts as a plain click where there is nothing below", () => {
     const open = { x: 10, y: 10 };
-    expect(pickSurface(BRIDGE, open, true)).toEqual({ layer: 0, point: open });
+    expect(pickSurface(BRIDGE, [], open, true)).toEqual({ layer: 0, point: open });
+  });
+});
+
+describe("a click on what a shallow deck draws (#3476)", () => {
+  const rect = (x: number, y: number, width: number, height: number) =>
+    ({ kind: "rect", x, y, width, height }) as const;
+  // Ashen Courtyard's south rubble: a ruin 64 deep, on a wall of its size,
+  // here with its steps in front of its face.
+  const heap = rect(1200, 2840, 160, 64);
+  const WALLS: readonly RenderableWall[] = [{ ...heap, layer: 0 }];
+  const RUBBLE: MapStructure = {
+    ...BRIDGE,
+    decks: [{ layer: 1, footprint: heap, look: "ruin", switched: null }],
+    transitions: [
+      {
+        from: 0,
+        to: 1,
+        area: rect(1240, 2904, 80, 120),
+        uphill: "n",
+        look: "rough-steps",
+        lift: null,
+      },
+    ],
+  };
+  const deck = RUBBLE.decks[0];
+  if (deck === undefined) {
+    throw new Error("no deck");
+  }
+  const parts = deckDrawing(deck, WALLS, RUBBLE);
+  const drawn = { bottom: Math.max(...parts.map(({ bottom }) => bottom)) };
+  const inHeap = (point: Vec2) => pointInPolygon(point, shapeOutline(heap));
+  const topBottom = heap.y + heap.height - ELEVATION_STEP;
+
+  it.each([
+    ["its top", topBottom - 10],
+    ["its front face", topBottom + 4],
+    ["the rubble at its foot", topBottom + 20],
+    ["the wall it stands on", drawn.bottom - 1],
+  ])("takes the deck on %s, at a point of it", (_, y) => {
+    const picked = pickSurface(RUBBLE, WALLS, { x: 1220, y }, false);
+    expect(picked.layer).toBe(1);
+    expect(inHeap(picked.point)).toBe(true);
+  });
+
+  it("takes the ground just past what it draws", () => {
+    const world = { x: 1220, y: drawn.bottom + 1 };
+    expect(pickSurface(RUBBLE, WALLS, world, false)).toEqual({ layer: 0, point: world });
+    expect(pickSurface(RUBBLE, WALLS, { x: heap.x - 1, y: topBottom + 4 }, false).layer).toBe(0);
+  });
+
+  it("puts the ground second, for Alt", () => {
+    const world = { x: 1220, y: topBottom + 4 };
+    expect(pickSurface(RUBBLE, WALLS, world, true)).toEqual({ layer: 0, point: world });
+  });
+
+  it("leaves a click on the steps in front of its face to the steps", () => {
+    const world = { x: 1280, y: topBottom + 4 };
+    const steps = pickSurface({ ...RUBBLE, decks: [] }, WALLS, world, false);
+    expect(steps.point).not.toEqual(world);
+    expect(pickSurface(RUBBLE, WALLS, world, false)).toEqual(steps);
+  });
+
+  it("hides a body where a click takes it: one sweep for both", () => {
+    expect(parts).toHaveLength(2);
+    for (const part of parts) {
+      expect(occludersOf(WALLS, RUBBLE)).toContainEqual(part);
+    }
   });
 });
 
@@ -128,19 +197,19 @@ describe("a click on a ramp (#2972)", () => {
 
   it("lands where the 0→1 ramp is drawn, its upper half on the upper layer", () => {
     const point = { x: 180, y: 150 };
-    const picked = pickSurface(STAIRS, drawnAt(point, 1), false);
+    const picked = pickSurface(STAIRS, [], drawnAt(point, 1), false);
     expect(picked.layer).toBe(1);
     expect(picked.point.x).toBeCloseTo(180, 5);
     expect(picked.point.y).toBeCloseTo(150, 5);
   });
 
   it("is the lower layer in the lower half", () => {
-    expect(pickSurface(STAIRS, drawnAt({ x: 130, y: 150 }, 0), false).layer).toBe(0);
+    expect(pickSurface(STAIRS, [], drawnAt({ x: 130, y: 150 }, 0), false).layer).toBe(0);
   });
 
   it("lands where the 1→2 ramp is drawn, a slope along y", () => {
     const point = { x: 300, y: 30 };
-    const picked = pickSurface(STAIRS, drawnAt(point, 2), false);
+    const picked = pickSurface(STAIRS, [], drawnAt(point, 2), false);
     expect(picked.layer).toBe(2);
     expect(picked.point.x).toBeCloseTo(300, 5);
     expect(picked.point.y).toBeCloseTo(30, 3);
@@ -148,7 +217,7 @@ describe("a click on a ramp (#2972)", () => {
 
   it("gives the surface beneath with Alt", () => {
     const at = drawnAt({ x: 180, y: 150 }, 1);
-    expect(pickSurface(STAIRS, at, true)).toEqual({ layer: 0, point: at });
+    expect(pickSurface(STAIRS, [], at, true)).toEqual({ layer: 0, point: at });
   });
 });
 
@@ -741,19 +810,25 @@ describe("a level under the ground (#2973)", () => {
 
   it("names the pit's floor where it is drawn, and nothing above it", () => {
     const world = { x: 650, y: 600 };
-    expect(surfacesAt(SUNK, world)).toEqual([{ layer: 0, point: { x: 650, y: 600 - STEP } }]);
-    expect(pickSurface(SUNK, world, true)).toEqual({ layer: 0, point: { x: 650, y: 600 - STEP } });
+    expect(surfacesAt(SUNK, [], world)).toEqual([{ layer: 0, point: { x: 650, y: 600 - STEP } }]);
+    expect(pickSurface(SUNK, [], world, true)).toEqual({
+      layer: 0,
+      point: { x: 650, y: 600 - STEP },
+    });
   });
 
   it("names the ground over the tunnel, and the tunnel's floor with Alt", () => {
     const world = { x: 840, y: 610 };
-    expect(pickSurface(SUNK, world, false)).toEqual({ layer: 1, point: world });
-    expect(pickSurface(SUNK, world, true)).toEqual({ layer: 0, point: { x: 840, y: 610 - STEP } });
+    expect(pickSurface(SUNK, [], world, false)).toEqual({ layer: 1, point: world });
+    expect(pickSurface(SUNK, [], world, true)).toEqual({
+      layer: 0,
+      point: { x: 840, y: 610 - STEP },
+    });
   });
 
   it("names the ground on the near lip, and the pit's floor behind it with Alt", () => {
     const world = { x: 600, y: 680 };
-    expect(surfacesAt(SUNK, world)).toEqual([
+    expect(surfacesAt(SUNK, [], world)).toEqual([
       { layer: 1, point: world },
       { layer: 0, point: { x: 600, y: 680 - STEP } },
     ]);
@@ -1127,14 +1202,26 @@ describe("a click over a tunnel (#3234)", () => {
 
   it("goes to the level the body is on: the ground from above, the tunnel from in it", () => {
     expect(structure.ground).toBe(GROUND);
-    expect(pickSurface(structure, world, false, GROUND)).toEqual({ layer: GROUND, point: world });
-    expect(pickSurface(structure, world, false, TUNNEL)).toEqual({ layer: TUNNEL, point: inWest });
-    expect(pickSurface(structure, world, false)).toEqual({ layer: GROUND, point: world });
+    expect(pickSurface(structure, [], world, false, GROUND)).toEqual({
+      layer: GROUND,
+      point: world,
+    });
+    expect(pickSurface(structure, [], world, false, TUNNEL)).toEqual({
+      layer: TUNNEL,
+      point: inWest,
+    });
+    expect(pickSurface(structure, [], world, false)).toEqual({ layer: GROUND, point: world });
   });
 
   it("goes to the other level with Alt", () => {
-    expect(pickSurface(structure, world, true, GROUND)).toEqual({ layer: TUNNEL, point: inWest });
-    expect(pickSurface(structure, world, true, TUNNEL)).toEqual({ layer: GROUND, point: world });
+    expect(pickSurface(structure, [], world, true, GROUND)).toEqual({
+      layer: TUNNEL,
+      point: inWest,
+    });
+    expect(pickSurface(structure, [], world, true, TUNNEL)).toEqual({
+      layer: GROUND,
+      point: world,
+    });
   });
 
   it("names the tunnel wherever its cover is drawn, not a step south of it", () => {
@@ -1142,16 +1229,19 @@ describe("a click over a tunnel (#3234)", () => {
     // footprint sunk a step lies wholly south of this point.
     const { top } = south;
     const atCover = { x: south.centre.x, y: top + STEP / 2 };
-    expect(pickSurface(structure, atCover, true, GROUND)).toEqual({
+    expect(pickSurface(structure, [], atCover, true, GROUND)).toEqual({
       layer: TUNNEL,
       point: { x: atCover.x, y: top },
     });
-    expect(pickSurface(structure, atCover, false, TUNNEL).layer).toBe(TUNNEL);
+    expect(pickSurface(structure, [], atCover, false, TUNNEL).layer).toBe(TUNNEL);
   });
 
   it("goes to the ground outside every tunnel, from in one", () => {
     const beside = { x: world.x - 200, y: world.y };
-    expect(pickSurface(structure, beside, false, TUNNEL)).toEqual({ layer: GROUND, point: beside });
+    expect(pickSurface(structure, [], beside, false, TUNNEL)).toEqual({
+      layer: GROUND,
+      point: beside,
+    });
   });
 
   // The ground over a body's own tunnel is cut away; every other still hides.
