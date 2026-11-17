@@ -315,7 +315,7 @@ Eine Gruppe mit weniger als 8 Spielern geht mit Bots auf den freien Plätzen in 
 Drei Aufstiegs-Arenen kannst du auch in einem Gehosteten Spiel wählen: **The Hollow Deep** (8v8 Vernichtung, drei gewundene Tunnel um einen zentralen Felsen), **Blackwater
 Ford** (8v8, 5200x2800, Priestervernichtung an einer dunklen Flussfurt: Man watet durch eine seichte Furt, überquert die zerbrochene
 Brücke auf ihren Pfeilern über der Mühle oder nimmt einen Durchlass unter der Brücke, sobald ein Hebel an der Mühle
-sein Tor öffnet; der Priester holt alle 2 Minuten seine Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in einem flachen Zickzack zwischen den Basen). Dazu kommt als vierte **The Brazen Causeway** (8v8 Priestervernichtung auf einem Ring um eine Grube: An jedem Tor einer Basis führt eine schmale Lücke vorbei, und das Tor steht nur offen, solange jemand aus dem Team auf der Torschloss-Platte steht).
+sein Tor öffnet; der Priester holt alle 2 Minuten seine Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in einem flachen Zickzack zwischen den Basen). Dazu kommt als vierte **The Brazen Causeway** (8v8, 5600x2800, Priestervernichtung auf einem erhöhten Steindamm über einem Sumpf in der Abenddämmerung: Man marschiert über den Damm, sobald ein Hebel im fernen Torhaus sein Bronzetor öffnet, durchquert den Sumpf bis zur Treppe in seiner Mitte oder schlüpft durch einen Durchlass darunter; der Priester holt alle 2 Minuten seine Toten zurück).
 
 Eine Karte kann **Tore** haben: Mauern, die im geschlossenen Zustand Körper, Schüsse und Sicht aufhalten. Stell dich auf die
 Druckplatte eines Tors, um es zu öffnen. Es schließt, wenn niemand mehr auf der Platte steht, schiebt jeden im Durchgang auf

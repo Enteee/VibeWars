@@ -377,7 +377,7 @@ Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow 
 (Aniquilación de sacerdote 8v8, 5200x2800, en un oscuro vado de río: se cruza vadeando un vado poco profundo,
 por el puente roto sobre sus pilares encima del molino o por una alcantarilla bajo el puente cuando una palanca
 del molino abre su compuerta; el sacerdote resucita a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de
-captura 8v8, cinco túmulos en un zigzag poco profundo entre las bases). La cuarta es **The Brazen Causeway** (Aniquilación de sacerdote 8v8 en un anillo alrededor de un foso: junto a la puerta de cada base pasa un hueco estrecho, y la puerta solo está abierta mientras alguien de su equipo pise la placa de la cerradura).
+captura 8v8, cinco túmulos en un zigzag poco profundo entre las bases). La cuarta es **The Brazen Causeway** (Aniquilación de sacerdote 8v8, 5600x2800, en una calzada de piedra elevada sobre una marisma al anochecer: se avanza por la calzada cuando una palanca de la torre de la puerta del otro extremo abre su puerta de bronce, se cruza la marisma hasta las escaleras de su centro o uno se escabulle por una alcantarilla bajo ella; el sacerdote resucita a sus muertos cada 2 minutos).
 
 Un mapa puede tener **puertas**: muros que detienen cuerpos, disparos y visión
 mientras están cerradas. Colócate en la placa de presión de una puerta para abrirla.

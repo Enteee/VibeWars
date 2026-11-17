@@ -421,9 +421,7 @@ Anihilare, trei tuneluri întortocheate în jurul unei stânci centrale), **Blac
 sprijinit pe pilonii săi deasupra morii sau printr-un podeț de sub pod, după ce o pârghie de pe moară îi deschide
 poarta; preotul își ridică morții la fiecare 2 minute) și **Mosslit Cairns** (8v8 Capturare de puncte,
 cinci movile de pietre într-un zig-zag ușor între baze). A patra este **The Brazen
-Causeway** (8v8 Anihilare cu preot pe un inel în jurul unei gropi adâncite: o trecere
-îngustă duce pe lângă poarta fiecărei baze, care stă larg deschisă doar cât timp unul
-din echipa ei ține placa Gate Lock).
+Causeway** (8v8, 5600x2800, Anihilare cu preot pe un drum de piatră înălțat deasupra unei mlaștini, în amurg: mărșăluiești pe drum după ce o pârghie din turnul porții de departe îi deschide poarta de bronz, traversezi mlaștina până la scările de la mijlocul lui sau te strecori printr-un podeț de sub el; preotul își ridică morții la fiecare 2 minute).
 
 O hartă poate avea **porți**: ziduri care opresc corpurile, proiectilele și vederea cât
 timp sunt închise. Stai pe placa de presiune a unei porți ca s-o deschizi. Se închide

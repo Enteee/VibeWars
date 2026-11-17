@@ -417,7 +417,7 @@ Prästförintelse vid ett mörkt vadställe i en flod: man vadar över ett grunt
 bron på sina pelare ovanför kvarnen eller tar en kulvert under bron när en spak på kvarnen öppnar dess galler;
 prästen återupplivar sina döda var 2:a minut) och
 **Mosslit Cairns** (8v8 Erövringspunkter, fem stenrösen i ett grunt
-sicksack mellan baserna). En fjärde är **The Brazen Causeway** (8v8 Prästförintelse på en ring runt en nedsänkt grop: en smal passage går förbi varje bas port, som bara står vidöppen medan någon från dess lag håller Gate Lock-plattan).
+sicksack mellan baserna). En fjärde är **The Brazen Causeway** (8v8, 5600x2800, Prästförintelse på en upphöjd vägbank av sten över ett kärr i skymningen: man marscherar längs vägbanken när en spak i det bortre porthuset öppnar dess bronsport, korsar kärret till trappan mitt på den eller slinker genom en kulvert under den; prästen återupplivar sina döda var 2:a minut).
 
 En karta kan ha **portar**: murar som stoppar kroppar, skott och sikt när
 de är stängda. Stå på en ports tryckplatta för att öppna den. Den stängs

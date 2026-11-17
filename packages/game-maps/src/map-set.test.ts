@@ -65,6 +65,7 @@ const REBUILT = new Set([
   "blackwater-ford",
   "barrow-field",
   "jungle-ruins",
+  "brazen-causeway",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({

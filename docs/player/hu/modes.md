@@ -497,9 +497,7 @@ folyami gázlónál: át lehet gázolni egy sekély gázlón, át lehet kelni a 
 vagy a híd alatti áteresszel, miután a malmon lévő kar kinyitja a kapuját; a pap 2 percenként
 feltámasztja a halottait) és a **Mosslit Cairns** (8v8 Pontfoglalás, öt
 kőhalom sekély cikcakkban a bázisok között). A negyedik a **The Brazen
-Causeway** (8v8 Papirtás egy süllyesztett gödör körüli gyűrűn: egy
-keskeny rés halad el minden bázis kapuja előtt, amely csak addig áll
-tárva-nyitva, amíg a csapat egyik tagja a Gate Lock lapon áll).
+Causeway** (8v8, 5600x2800, Papirtás egy mocsár fölé emelt kőtöltésen alkonyatkor: lehet menetelni a töltésen, miután a túlsó kapuház karja kinyitja a bronzkapuját, át lehet kelni a mocsáron a közepén lévő lépcsőhöz, vagy át lehet osonni az alatta lévő áteresszel; a pap 2 percenként feltámasztja a halottait).
 
 Egy pályán lehetnek **kapuk**: falak, amelyek zárva megállítják a
 testeket, a lövéseket és a látást. Állj egy kapu nyomólapjára, hogy

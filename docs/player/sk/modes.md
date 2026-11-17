@@ -402,7 +402,7 @@ kňaza pri tmavom riečnom brode: dá sa prebrodiť plytký brod, prejsť po roz
 alebo priepustom pod mostom, keď páka na mlyne otvorí jeho mrežu; kňaz oživuje
 svojich mŕtvych každé 2 minúty) a
 **Mosslit Cairns** (8v8 Dobývanie bodov, päť mohýl v plytkom cik-caku
-medzi základňami). Štvrtá je **The Brazen Causeway** (8v8 Anihilácia kňaza na kruhu okolo potopenej jamy: úzka medzera vedie popri bráne každej základne, ktorá je dokorán otvorená, len kým jeden člen jej tímu drží dosku Gate Lock).
+medzi základňami). Štvrtá je **The Brazen Causeway** (8v8, 5600x2800, Anihilácia kňaza na vyvýšenej kamennej hrádzi nad močiarom za súmraku: dá sa pochodovať po hrádzi, keď páka vo vzdialenej vrátnici otvorí jej bronzovú bránu, prejsť močiar k schodom v jej strede alebo prekĺznuť priepustom pod ňou; kňaz oživuje svojich mŕtvych každé 2 minúty).
 
 Mapa môže mať **brány**: múry, ktoré zastavujú telá, strely a výhľad, kým sú
 zatvorené. Stoj na tlakovej doske brány, aby si ju otvoril. Zatvorí sa, keď na

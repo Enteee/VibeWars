@@ -482,7 +482,7 @@ describe("hostMap (#476)", () => {
     expect(mapFlagField("guild-hall-isle")).toEqual(hostMap("guild-hall-isle")?.flagField);
     expect(hostMap("barrow-field")?.flagField?.beacon).toBe(true);
     expect(hostMap("jungle-ruins")?.flagField?.beacon).toBe(true);
-    expect(hostMap("brazen-causeway")?.flagField).toBeUndefined();
+    expect(hostMap("hollow-deep")?.flagField).toBeUndefined();
     expect(mapFlagField("training-hall")).toBeUndefined();
   });
 

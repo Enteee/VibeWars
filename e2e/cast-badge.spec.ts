@@ -1,6 +1,4 @@
-import { readFileSync } from "node:fs";
-
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { CAST_BADGE_SIZE, castBadgeLayout } from "../apps/web/src/render/cast-badge.js";
 import { projection } from "./camera.js";
@@ -13,32 +11,47 @@ const TROLL_UNGUENT = starterKey(UNGUENT_BUILD, "ranger.troll-unguent");
 /** A player's body radius (#166). */
 const RADIUS = 14;
 
-const arena = JSON.parse(
-  readFileSync(new URL("../packages/game-maps/maps/ember-pits/map.json", import.meta.url), "utf8"),
-) as {
-  readonly spawnPoints: readonly {
-    readonly team: number;
-    readonly position: { readonly x: number; readonly y: number };
-  }[];
-};
-
-/** Your cast badge's square, left of your cast bar (#1125). */
-async function badgeSpot(page: Page): Promise<Buffer> {
-  const self = arena.spawnPoints.find((spawn) => spawn.team === 0)?.position;
-  if (self === undefined) {
-    throw new Error("ember-pits has no team 0 spawn");
-  }
-  const view = await projection(
-    page.locator("#viewport"),
-    page.locator("#viewport canvas:not(.compass)"),
-  );
-  const centre = castBadgeLayout(self.x, self.y, RADIUS);
+/**
+ * Your cast badge's square, left of your cast bar (#1125), as a page clip.
+ * You are where the camera centres: the follow camera holds on you once it
+ * reads the same twice, and Ember Pits' spawn is clear of the arena's edge,
+ * which would clamp it. Read once: a clip per sample is too slow to catch a
+ * 3 s cast on a slow runner (#3501).
+ */
+async function badgeClip(page: Page): Promise<{
+  readonly self: string;
+  readonly clip: { x: number; y: number; width: number; height: number };
+}> {
+  const stage = page.locator("#viewport");
+  let self = "";
+  await expect
+    .poll(
+      async () => {
+        const was = self;
+        self = (await stage.getAttribute("data-camera")) ?? "";
+        return self !== "" && self === was;
+      },
+      { message: "the camera holds still", timeout: 10_000 },
+    )
+    .toBe(true);
+  const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
+  const [x = 0, y = 0] = self.split(",").map(Number);
+  const centre = castBadgeLayout(x, y, RADIUS);
   const half = CAST_BADGE_SIZE / 2;
   const from = view.onPage({ x: centre.x - half, y: centre.y - half });
   const to = view.onPage({ x: centre.x + half, y: centre.y + half });
-  return page.screenshot({
-    clip: { x: from.x, y: from.y, width: to.x - from.x, height: to.y - from.y },
-  });
+  return { self, clip: { x: from.x, y: from.y, width: to.x - from.x, height: to.y - from.y } };
+}
+
+/** Whether the skill casts, recharges or is ready, for a red run to say. */
+async function skillState(button: Locator): Promise<string> {
+  if ((await button.count()) === 0) {
+    return "not on the bar";
+  }
+  if ((await button.getAttribute("class"))?.split(" ").includes("is-casting") === true) {
+    return "casting";
+  }
+  return (await button.locator(".recharge-overlay").count()) > 0 ? "recharging" : "ready";
 }
 
 test("a cast bar wears the casting skill's type badge, and loses it with the bar (#1125)", async ({
@@ -49,25 +62,33 @@ test("a cast bar wears the casting skill's type badge, and loses it with the bar
   await bringStarter(page, UNGUENT_BUILD);
   await page.goto("./");
   await startSoloMatch(page);
-  const before = await badgeSpot(page);
+  const { self, clip } = await badgeClip(page);
+  const badgeSpot = () => page.screenshot({ clip });
+  const before = await badgeSpot();
 
   // Look for the badge straight after the press, not once the HUD shows
   // the cast: at a slow frame rate the 3 s cast can be over by then (#3270).
   // The first match of a cold run can take the key before its skill bar
   // does; press again only after 2 s with the skill neither casting nor
   // recharging, as a press mid-cast queues.
+  const unguent = page.getByRole("button", { name: /^Troll Unguent/ });
   const taken = page.locator(".hud-skill.is-casting, .hud-skill .recharge-overlay");
   await page.keyboard.press(TROLL_UNGUENT);
   let pressed = Date.now();
+  let presses = 1;
   await expect(async () => {
     if (Date.now() - pressed > 2_000 && (await taken.count()) === 0) {
       await page.keyboard.press(TROLL_UNGUENT);
       pressed = Date.now();
+      presses += 1;
     }
-    expect((await badgeSpot(page)).equals(before)).toBe(false);
-  }).toPass({ intervals: [0] });
+    const shown = !(await badgeSpot()).equals(before);
+    const state = shown ? "" : await skillState(unguent);
+    expect(
+      shown,
+      `no badge at you (${self}) after ${String(presses)} press(es); the skill: ${state}`,
+    ).toBe(true);
+  }).toPass({ intervals: [0], timeout: 20_000 });
 
-  await expect
-    .poll(async () => (await badgeSpot(page)).equals(before), { timeout: 10_000 })
-    .toBe(true);
+  await expect.poll(async () => (await badgeSpot()).equals(before), { timeout: 10_000 }).toBe(true);
 });

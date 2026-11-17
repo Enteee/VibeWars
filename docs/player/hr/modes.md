@@ -398,7 +398,7 @@ svećenikom na tamnom riječnom gazu: prelazi se gazeći plitki gaz, slomljenim 
 ili kroz propust ispod mosta kad poluga na mlinu otvori njegovu rešetku; svećenik diže
 svoje mrtve svake 2 minute) i
 **Mosslit Cairns** (8v8 Zauzimanje točaka, pet kamenih gomila u plitkom cik-caku
-između baza). Četvrta je **The Brazen Causeway** (8v8 Uništenje sa svećenikom na prstenu oko potopljene jame: uski prolaz vodi pokraj vrata svake baze, koja stoje širom otvorena samo dok netko iz njezina tima drži ploču Gate Lock).
+između baza). Četvrta je **The Brazen Causeway** (8v8, 5600x2800, Uništenje sa svećenikom na uzdignutom kamenom nasipu iznad močvare u sumrak: maršira se nasipom kad poluga u dalekoj ulaznoj kuli otvori njegova brončana vrata, prelazi se močvara do stepenica na njegovoj sredini ili se provlači kroz propust ispod njega; svećenik diže svoje mrtve svake 2 minute).
 
 Karta može imati **vrata**: zidove koji zaustavljaju tijela, hice i pogled dok su
 zatvoreni. Stani na ploču vrata da ih otvoriš. Zatvaraju se kad

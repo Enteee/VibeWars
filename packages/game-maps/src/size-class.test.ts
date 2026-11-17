@@ -34,7 +34,7 @@ describe("sizeClass (#444, #2547)", () => {
       "blackwater-ford": "large",
       "mosslit-cairns": "small",
       "wardens-gallery": "small",
-      "brazen-causeway": "small",
+      "brazen-causeway": "large",
       "scarred-earth": "small",
       "sandstone-steps": "small",
       "frozen-crossing": "small",
