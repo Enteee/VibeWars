@@ -185,7 +185,7 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
 - **The menu background** on every layered map: the bots' fight, the
   camera still, at the menu's 30 fps cap.
 - **Follow** (`--follow` runs only this one) on every layered map and
-  one flat map, `jungle-ruins`, the baseline. A Hosted 1v1 there, its
+  one flat map, `elite-zaishen-battle`, the baseline. A Hosted match there at the smallest size it seats, its
   body walking a fixed loop by left clicks: over the transition nearest
   its spawn, to the map's centre, and back. The camera follows, the
   pointer sweeps the ground every 50 ms so hover runs, and nothing caps

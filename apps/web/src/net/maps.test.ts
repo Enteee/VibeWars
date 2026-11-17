@@ -481,7 +481,8 @@ describe("hostMap (#476)", () => {
     });
     expect(mapFlagField("guild-hall-isle")).toEqual(hostMap("guild-hall-isle")?.flagField);
     expect(hostMap("barrow-field")?.flagField?.beacon).toBe(true);
-    expect(hostMap("jungle-ruins")?.flagField).toBeUndefined();
+    expect(hostMap("jungle-ruins")?.flagField?.beacon).toBe(true);
+    expect(hostMap("brazen-causeway")?.flagField).toBeUndefined();
     expect(mapFlagField("training-hall")).toBeUndefined();
   });
 
@@ -571,8 +572,8 @@ describe("a Hall match of two teams (#2700)", () => {
 describe("mapShrines (#1199)", () => {
   it("reads each team's shrine from a priest map's file", () => {
     expect(mapShrines("jungle-ruins", 2)).toEqual([
-      { team: 0, position: { x: 170, y: 800 }, layer: 0 },
-      { team: 1, position: { x: 2830, y: 800 }, layer: 0 },
+      { team: 0, position: { x: 900, y: 1000 }, layer: 1 },
+      { team: 1, position: { x: 4500, y: 1800 }, layer: 1 },
     ]);
   });
 

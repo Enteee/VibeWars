@@ -6,7 +6,7 @@ import { projection } from "./camera.js";
  * A map whose ground is layer 0, and one whose ground is layer 1 (#3248):
  * the tutorial walks on either.
  */
-const FLAT_MAP = "jungle-ruins";
+const FLAT_MAP = "elite-zaishen-battle";
 const RAISED_MAP = "arena-crossroads";
 /** Where the pair arrives in the canyon (#3247), its first map's arrival pad. */
 const CANYON_ARRIVAL = { x: 1000, y: 1800 };
