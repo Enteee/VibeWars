@@ -150,8 +150,7 @@ relik musuh yang terjatuh memulangkannya, dan sisanya menunggu di dekat altar. B
 membawa relikmu langsung membawanya ke altar; yang lain meninggalkan
 relik hanya untuk melawan musuh yang masuk ke jangkauan mantra.
 
-Broken Tower memainkannya: altar berdiri di dalam menara runtuh dengan
-pintu di setiap sisinya.
+Broken Tower memainkannya (4v4 dan 8v8, 5400x2800): menara runtuh di atas bukit di dataran tinggi. Naiki tangga teras reruntuhan ke altar di puncak tunggul menara, atau lewati ruang bawah tanah di bawah bukit setelah tuas di teras membuka pintunya; dinding reruntuhan bisa dihancurkan.
 
 ### Cinder Sanctum
 

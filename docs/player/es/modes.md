@@ -160,8 +160,7 @@ reliquia enemiga caída la manda a casa, y los demás esperan junto al altar. Un
 bot que lleva tu reliquia va directo al altar; los demás solo la dejan para
 luchar contra un enemigo que entre en alcance de hechizo.
 
-Se juega en Broken Tower: el altar está dentro de una torre en ruinas con una
-entrada a cada lado.
+Se juega en Broken Tower (4v4 y 8v8, 5400x2800): una torre caída sobre una colina en las tierras altas. Sube por las escaleras de las terrazas de escombros hasta el altar en el muñón de la torre, o ve por la bodega bajo la colina cuando una palanca de la terraza abra sus puertas; los muros de escombros se pueden romper.
 
 ### Cinder Sanctum
 

@@ -115,8 +115,9 @@ The dead stay down and pay the death penalty; a wipe loses at once. At
 and no number of points ends it early. Kills score nothing. The
 scoreboard reads the points as Kill Count reads kills, `2 – 1 · 6:40`,
 and the line under it names each relic's place: `✦ Name`, `✦ dropped`
-or `✦ at base`. Broken Tower plays it: the altar stands inside a ruined tower, four doorways
-in. No Random Arena does.
+or `✦ at base`. Broken Tower plays it: a fallen tower on a hill, the altar
+on the stump top, reached by the terrace stairs and a lever-opened cellar
+under the hill. No Random Arena does.
 
 **King of the Hill** (GW1's Heroes' Ascent, #1377): lead your Ghostly
 Hero onto the altar and hold it. Each team has a **Ghostly Hero** at a

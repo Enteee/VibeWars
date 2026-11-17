@@ -151,8 +151,10 @@ dropped foe relic sends it home, and the rest wait by the altar. A bot
 carrying your relic walks it straight to the altar; the others leave the
 relic only to fight a foe that comes within spell range.
 
-Broken Tower plays it: the altar stands inside a ruined tower with a
-doorway on each side.
+Broken Tower (4v4 and 8v8, 5400x2800) plays it: a fallen tower on a hill
+in the heights. Climb the rubble terraces by their stairs to the altar on
+the stump, or take the cellar under the hill once a lever on the terrace
+opens its doors; rubble walls can be broken.
 
 ### Cinder Sanctum
 

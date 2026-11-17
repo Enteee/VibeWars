@@ -172,8 +172,7 @@ oltárnál várnak. Az ereklyédet vivő bot egyenesen az oltárhoz viszi; a
 többiek csak akkor hagyják ott az ereklyét, ha egy ellenség
 varázslattávolságon belülre jön, hogy megküzdjenek vele.
 
-A Broken Tower játssza: az oltár egy romos toronyban áll, mindkét
-oldalán egy-egy ajtónyílással.
+A Broken Tower játssza (4v4 és 8v8, 5400x2800): egy ledőlt torony egy dombon a hegyvidéken. Menj fel a romteraszok lépcsőin az oltárhoz a toronycsonkon, vagy menj át a domb alatti pincén, amint egy kar a teraszon kinyitja az ajtajait; a romfalak összetörhetők.
 
 ### Cinder Sanctum
 
