@@ -890,8 +890,10 @@ function step(point: Vec2Data, way: Vec2Data, by: number): Vec2Data {
 
 /**
  * Why a drop-off (#3069) is wrong, or `undefined`: it is a stretch of a
- * raised layer's edge, and a body stands clear on the layer below one
- * radius and one diameter past it, all along it, out of `deep` water.
+ * raised layer's edge, and a body stands clear on the layer below where
+ * the path finder lands it, a unit past one radius, and one diameter past
+ * it, all along it, out of `deep` water. A wall below right under the
+ * edge, as a mound's, is then clear of the landing, not a rounding off it.
  */
 function dropOffFault(
   map: LayeredMap,
@@ -907,7 +909,7 @@ function dropOffFault(
   }
   const below = dropOff.layer - 1;
   const lands = alongDropOff(dropOff).every((point) =>
-    [BODY_RADIUS, 2 * BODY_RADIUS].every((by) => {
+    [BODY_RADIUS + 1, 2 * BODY_RADIUS].every((by) => {
       const landing = step(point, out, by);
       return standsClear(map, landing, below) && !deep(landing);
     }),

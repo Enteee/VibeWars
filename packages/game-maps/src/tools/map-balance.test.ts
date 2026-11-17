@@ -4,12 +4,14 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
   STARTER_BUILDS,
+  createLayeredPathFinder,
   vec2,
   type Vec2,
 } from "@vibewars/game-core";
 
 import { matchLayers } from "../layers.js";
 import { loadAllMaps, loadMap } from "../loader.js";
+import { mapNavGraphs } from "../nav-graphs.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
 import type { MapData } from "../schema.js";
 import {
@@ -523,6 +525,34 @@ describe("walks and high ground (#3070)", () => {
     it("gives the teams high ground within 25 % of each other", () => {
       within(highGround(map), 0.25);
     }, 60_000);
+
+    it("paths off every drop-off straight down, not round by the stairs", () => {
+      const layers = matchLayers(map);
+      const finder = createLayeredPathFinder(
+        mapNavGraphs(map, RADIUS),
+        layers.transitions,
+        [],
+        layers.dropOffs,
+      );
+      expect(layers.dropOffs).toHaveLength(map.dropOffs.length);
+      for (const { layer, edge, outward } of layers.dropOffs) {
+        const middle = { x: (edge.a.x + edge.b.x) / 2, y: (edge.a.y + edge.b.y) / 2 };
+        const top = { x: middle.x - outward.x * 3 * RADIUS, y: middle.y - outward.y * 3 * RADIUS };
+        const below = {
+          x: middle.x + outward.x * 5 * RADIUS,
+          y: middle.y + outward.y * 5 * RADIUS,
+        };
+        const path = finder.find(top, layer, below, layer - 1) ?? [];
+        expect(path.some(({ dropOff }) => dropOff === true)).toBe(true);
+        const length = path.reduce(
+          (total, point, at) =>
+            total +
+            Math.hypot(point.x - (path[at - 1] ?? top).x, point.y - (path[at - 1] ?? top).y),
+          0,
+        );
+        expect(length).toBeLessThan(2 * 8 * RADIUS);
+      }
+    });
   });
 
   it("counts no high ground on a map without decks", () => {
