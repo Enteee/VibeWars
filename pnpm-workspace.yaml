@@ -21,7 +21,7 @@ overrides:
   minimatch: ^11.0.1
 
 # picomatch <=4.0.7 has a high ReDoS advisory with no patched release
-# (GHSA-fc5q-39xc-vjpf, #3525). Dev-only: typescript-eslint -> tinyglobby
+# (GHSA-fc5q-39xc-vjpf, #3525). Dev-only: typescript-eslint, vite and vitest -> tinyglobby
 # matches our own globs, never player input. Drop this once picomatch ships a fix.
 auditConfig:
   ignoreGhsas:
