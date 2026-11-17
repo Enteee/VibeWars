@@ -556,6 +556,9 @@ export async function startEngine(): Promise<void> {
     startAtEpochMs: number | null,
     askedAt: number,
   ): Promise<void> => {
+    // At once, before any await: a switch held before this load must not
+    // land after it (#3530).
+    held = undefined;
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     await ensureAudio();
     if (startAtEpochMs !== null) {
@@ -576,7 +579,6 @@ export async function startEngine(): Promise<void> {
           ? Math.floor(position())
           : 0;
     switching = undefined;
-    held = undefined;
     // A sting belongs to the music it was played over.
     sting = undefined;
     playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
@@ -675,11 +677,16 @@ export async function startEngine(): Promise<void> {
       playing = planned.next;
       pins.reset();
       void schedule(planned.next.pattern.late(planned.next.clock.origin));
-      const waiting = held;
-      held = undefined;
-      if (waiting !== undefined) {
-        enqueue(() => crossfadeTo(waiting.track, waiting.cycles, waiting.landOn, waiting.askedAt));
-      }
+      // `held` is read when its turn comes, not now: a load or an evaluate
+      // queued before it clears it, and an older switch must not land after
+      // a newer message (#3530).
+      enqueue(async () => {
+        const waiting = held;
+        held = undefined;
+        if (waiting !== undefined) {
+          await crossfadeTo(waiting.track, waiting.cycles, waiting.landOn, waiting.askedAt);
+        }
+      });
     }
   }, SWITCH_POLL_MS);
 
