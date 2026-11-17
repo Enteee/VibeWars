@@ -22,6 +22,7 @@ import {
   lightMapExtent,
   lightsByStability,
   litStructurePalette,
+  regionsInView,
   roofedOver,
   shownStage,
   stageShadows,
@@ -486,6 +487,33 @@ describe("flickerRegions (#3157, #3254)", () => {
         expect(apart).toBe(true);
       }
     }
+  });
+});
+
+describe("regionsInView (#3499)", () => {
+  const extent = { x: 100, y: 50, width: 200, height: 100 };
+  const at = (id: string, x: number, y: number) => ({ ...light(id, 1, 1), position: { x, y } });
+  // a's reach is 200..300 by 100..200 in the arena, b's 400..500 by 100..200.
+  const regions = flickerRegions([at("a", 250, 150), at("b", 450, 150)], extent);
+  const ids = (shown: ReturnType<typeof regionsInView>) =>
+    shown.flatMap(({ lights }) => lights.map(({ id }) => id));
+
+  it("redraws only the regions the camera sees", () => {
+    expect(
+      ids(regionsInView(regions, extent, 0, { left: 150, top: 80, right: 320, bottom: 220 })),
+    ).toEqual(["a"]);
+    expect(
+      ids(regionsInView(regions, extent, 0, { left: 0, top: 0, right: 1000, bottom: 1000 })),
+    ).toEqual(["a", "b"]);
+    expect(
+      ids(regionsInView(regions, extent, 0, { left: 320, top: 80, right: 380, bottom: 220 })),
+    ).toEqual([]);
+  });
+
+  it("finds a raised map's regions where its images are drawn, lifted", () => {
+    const view = { left: 150, top: -200, right: 320, bottom: -120 };
+    expect(ids(regionsInView(regions, extent, 300, view))).toEqual(["a"]);
+    expect(ids(regionsInView(regions, extent, 0, view))).toEqual([]);
   });
 });
 
