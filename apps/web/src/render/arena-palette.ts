@@ -516,6 +516,19 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     earth: 0x6a6050,
     plant: 0x6a6a58,
   },
+  /**
+   * A river marsh (#3434, docs/art/3074-blackwater-ford.md): the wilds' dark
+   * ground a little cooler, with dry olive reed and silt, all low chroma.
+   */
+  marsh: {
+    ...HALL_TONES,
+    ground: 0x2a3430,
+    rock: 0x54594f,
+    /** Silt. */
+    earth: 0x4a4034,
+    /** Dry reed: green would be nature's. */
+    plant: 0x5c5a3a,
+  },
 };
 
 /** What each colour of the arena is made of. */
@@ -713,6 +726,7 @@ const TILED_GROUND: Record<Biome, boolean> = {
   desert: true,
   volcanic: true,
   snow: false,
+  marsh: true,
 };
 
 function biomeMaterials(tones: BiomeTones, tiled: boolean): BiomeMaterials {
@@ -734,12 +748,13 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   desert: biomeMaterials(BIOME_TONES.desert, TILED_GROUND.desert),
   volcanic: biomeMaterials(BIOME_TONES.volcanic, TILED_GROUND.volcanic),
   snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
+  marsh: biomeMaterials(BIOME_TONES.marsh, TILED_GROUND.marsh),
 };
 
 /**
  * Each biome's breakable wall (#3370): a weaker patch of its own walls,
  * tinted from its tones. Basalt with embers in its cracks, mud brick with
- * straw-pale mortar, blue-white ice that cracks white, mossy field stone;
+ * straw-pale mortar, blue-white ice that cracks white, mossy field stone, silt-caked marsh stone;
  * the chiselled stone elsewhere.
  */
 function breakableLookOf(biome: Biome): BreakableLook {
@@ -809,6 +824,22 @@ function breakableLookOf(biome: Biome): BreakableLook {
         dust: mix(tones.ground, tones.stone, 0.5),
         shadow: BREAKABLE_WALL_LOOK.shadow,
       };
+    case "marsh":
+      return {
+        courses: "fieldstone",
+        top: mix(tones.earth, tones.rock, 0.45),
+        face: shade(tones.earth, 0.15),
+        lit: mix(tones.rock, tones.plant, 0.5),
+        mortar: shade(tones.earth, 0.5),
+        edge: shade(tones.earth, 0.75),
+        crack: shade(tones.earth, 0.8),
+        glow: undefined,
+        moss: mix(tones.plant, tones.earth, 0.3),
+        rubble: mix(tones.earth, tones.rock, 0.35),
+        rubbleFace: shade(tones.earth, 0.3),
+        dust: mix(tones.ground, tones.earth, 0.6),
+        shadow: BREAKABLE_WALL_LOOK.shadow,
+      };
     case "hall":
     case "heights":
       return BREAKABLE_WALL_LOOK;
@@ -822,6 +853,7 @@ const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
   desert: breakableLookOf("desert"),
   volcanic: breakableLookOf("volcanic"),
   snow: breakableLookOf("snow"),
+  marsh: breakableLookOf("marsh"),
 };
 
 /** The material a map's breakable walls are (#3370): a map of one layer's are stone whatever its biome. */

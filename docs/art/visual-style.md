@@ -37,6 +37,7 @@ layer draws flat whatever its biome, until its family card rebuilds it.
 | Desert   | `#3b3226` | `#6e6252` | earth `#6e5a40`, scrub `#6a6448`       |
 | Volcanic | `#2b2421` | `#4a4340` | earth `#4a3426`, ash scrub `#5a5444`   |
 | Snow     | `#7d8a8e` | `#4d4a4a` | slush earth `#6a6050`, plant `#6a6a58` |
+| Marsh    | `#2a3430` | `#54594f` | silt `#4a4034`, reed `#5c5a3a`         |
 
 The heights still draw in the hall's tones. The wilds (#3071, Crossroads) keep
 the hall's dressed stone and wood, and its moss: a greener moss sits too near
@@ -47,7 +48,7 @@ Frozen Crossing) is neutral grey at low chroma: its ground is the river ice,
 the only floor that shows (the banks are decks), its decks `#9ea4ab`. Snow
 stays mid-grey so the friend blue keeps its contrast. The ice is the study's
 `#7d8a94` with a little less blue, because the hall's blue grid tinted from
-it came too near the friend blue. Open water is the shared deep water look.
+it came too near the friend blue. Open water is the shared deep water look. The marsh (#3434, Blackwater Ford) keeps the wilds' dark ground a little cooler, with dry olive reed and silt; its tones are all low chroma and well away from the friend blue, the foe red and the nature green; open water is the shared look.
 
 **Overhangs** (#3293) are roofs nobody stands on. They hang at their layer's
 height over whoever is under them, with a thin eave below their front edge and
