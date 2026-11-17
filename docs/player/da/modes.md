@@ -427,8 +427,7 @@ snoede tunneler rundt om en klippe i midten),
 Præsteudslettelse ved et mørkt vadested i en flod: man vader over et lavvandet vadested, går over den
 ødelagte bro på sine piller over møllen eller tager en kulvert under broen, når et håndtag på møllen
 åbner dens port; præsten genopliver sine døde hvert 2. minut) og
-**Mosslit Cairns** (8v8 Erobring, fem varder i en flad zigzag mellem
-baserne). En fjerde er **The Brazen Causeway** (8v8, 5600x2800, Præsteudslettelse på en hævet stendæmning over en marsk i skumringen: man marcherer ad dæmningen, når et håndtag i det fjerne porthus åbner dens bronzeport, krydser marsken til trappen midt på den eller smutter gennem en kulvert under den; præsten genopliver sine døde hvert 2. minut).
+**Mosslit Cairns** (8v8, 5400x3000, Erobring på fem varde-høje, der gløder af mos i skumringen: man klatrer op på en varde ad dens trapper, holder den store varde i midten eller tager rodtunnelen under de sydlige høje, når et håndtag på en nordlig varde åbner dens porte; rodmure kan brydes ned). En fjerde er **The Brazen Causeway** (8v8, 5600x2800, Præsteudslettelse på en hævet stendæmning over en marsk i skumringen: man marcherer ad dæmningen, når et håndtag i det fjerne porthus åbner dens bronzeport, krydser marsken til trappen midt på den eller smutter gennem en kulvert under den; præsten genopliver sine døde hvert 2. minut).
 
 En bane kan have **porte**: mure, der stopper kroppe, skud og udsyn, mens
 de er lukkede. Stå på en ports trykplade for at åbne den. Den lukker, når

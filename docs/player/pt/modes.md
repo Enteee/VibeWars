@@ -396,8 +396,7 @@ em volta de uma rocha central),
 dá para atravessar a pé um vau raso, cruzar a ponte quebrada sobre o moinho, apoiada em seus pilares,
 ou pegar um bueiro sob a ponte assim que uma alavanca no moinho abre o portão dele; o sacerdote traz os mortos a cada 2
 minutos) e
-**Mosslit Cairns** (8v8 de Captura de Pontos, cinco montes de pedras em um
-leve zigue-zague entre as bases). A quarta é **The Brazen Causeway** (8v8, 5600x2800, de Aniquilação de Sacerdotes em uma calçada de pedra elevada sobre um pântano ao entardecer: dá para marchar pela calçada assim que uma alavanca na casa da guarda do outro lado abre o portão de bronze dela, atravessar o pântano até as escadas no meio dela, ou escapulir por um bueiro sob ela; o sacerdote traz os mortos a cada 2 minutos).
+**Mosslit Cairns** (8v8, 5400x3000, de Captura de Pontos em cinco colinas de montes de pedras que brilham com musgo ao entardecer: dá para subir num monte pelas escadas dele, segurar o grande monte do meio, ou pegar o túnel de raízes sob as colinas do sul assim que uma alavanca num monte do norte abre os portões dele; os muros de raízes podem ser quebrados). A quarta é **The Brazen Causeway** (8v8, 5600x2800, de Aniquilação de Sacerdotes em uma calçada de pedra elevada sobre um pântano ao entardecer: dá para marchar pela calçada assim que uma alavanca na casa da guarda do outro lado abre o portão de bronze dela, atravessar o pântano até as escadas no meio dela, ou escapulir por um bueiro sob ela; o sacerdote traz os mortos a cada 2 minutos).
 
 Um mapa pode ter **portões**: muros que param corpos, disparos e visão
 enquanto fechados. Fique sobre a placa de pressão de um portão para
