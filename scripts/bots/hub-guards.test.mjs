@@ -611,7 +611,7 @@ describe("boardMoveAllowed (#349)", () => {
 
   describe("signOffAreaRefusal (#3124)", () => {
     const noArea =
-      "#7 has no area label: add one or more of area:render, area:game-core, area:maps, area:ui, area:net, area:i18n, area:bots-ai, area:audio, area:tooling (skill area-lanes)";
+      "#7 has no area label: add one or more of area:render, area:game-core, area:maps, area:maps-2, area:maps-3, area:ui, area:net, area:i18n, area:bots-ai, area:audio, area:tooling (skill area-lanes)";
 
     it("refuses a card with no known area label", () => {
       expect(signOffAreaRefusal({ number: 7, labels: [], onBoard: [] })).toBe(noArea);
@@ -630,6 +630,23 @@ describe("boardMoveAllowed (#349)", () => {
       ).toBe(
         "area:maps is taken by #5 (In Progress): one card per area in flight. Spec another area, or wait for #5 (skill area-lanes)",
       );
+    });
+
+    it("runs map builds in three lanes, one card each (Q93, #3510)", () => {
+      expect(
+        signOffAreaRefusal({
+          number: 7,
+          labels: ["area:maps-2"],
+          onBoard: [{ number: 5, column: "In Progress", labels: ["area:maps"] }],
+        }),
+      ).toBeNull();
+      expect(
+        signOffAreaRefusal({
+          number: 7,
+          labels: ["area:maps-2"],
+          onBoard: [{ number: 5, column: "Ready", labels: ["area:maps-2"] }],
+        }),
+      ).toMatch(/^area:maps-2 is taken by #5 \(Ready\)/);
     });
 
     it("lets a lane held only by a card past In Progress go", () => {

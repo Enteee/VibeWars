@@ -482,11 +482,16 @@ export function boardMoveAllowed({ role, from, to, blockedFrom = null }) {
   return { ok: true };
 }
 
-/** The area lanes (#3124, skill area-lanes): one card per area in flight. */
+/**
+ * The area lanes (#3124, skill area-lanes): one card per area in flight.
+ * Map builds have three lanes (Q93, #3510), so three maps can be in flight.
+ */
 export const AREA_LABELS = [
   "area:render",
   "area:game-core",
   "area:maps",
+  "area:maps-2",
+  "area:maps-3",
   "area:ui",
   "area:net",
   "area:i18n",
