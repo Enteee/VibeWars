@@ -146,8 +146,7 @@ z walki. Najbliższy upuszczonej relikwii wroga odsyła ją do domu, a reszta cz
 ołtarzu. Bot niosący twoją relikwię idzie prosto na ołtarz; pozostałe opuszczają
 relikwię tylko po to, by walczyć z wrogiem w zasięgu czaru.
 
-Gra w niego Broken Tower: ołtarz stoi wewnątrz zrujnowanej wieży z wejściem z każdej
-strony.
+Gra w niego Broken Tower (4v4 i 8v8, 5400x2800): przewrócona wieża na wzgórzu w wyżynach. Wejdź schodami tarasów z gruzu do ołtarza na kikucie wieży albo przejdź piwnicą pod wzgórzem, gdy dźwignia na tarasie otworzy jej drzwi; ściany z gruzu można rozbić.
 
 ### Cinder Sanctum
 

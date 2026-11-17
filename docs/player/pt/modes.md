@@ -169,8 +169,7 @@ para casa, e os outros esperam junto ao altar. Um bot carregando sua
 relíquia vai direto ao altar; os outros só largam a relíquia para lutar
 contra um inimigo que chegue ao alcance de feitiço.
 
-Broken Tower joga esse modo: o altar fica dentro de uma torre em ruínas
-com uma porta de cada lado.
+Broken Tower joga esse modo (4v4 e 8v8, 5400x2800): uma torre caída numa colina das terras altas. Suba pelas escadas dos terraços de entulho até o altar no toco da torre, ou vá pelo porão sob a colina assim que uma alavanca no terraço abrir as portas; as paredes de entulho podem ser quebradas.
 
 ### Cinder Sanctum
 

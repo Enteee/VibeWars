@@ -151,8 +151,7 @@ tranh. Bot gần thánh tích địch bị rơi nhất sẽ đưa nó về nhà,
 tế đàn. Bot mang thánh tích của bạn đi thẳng tới tế đàn; các bot khác chỉ rời
 thánh tích để đánh địch tiến vào tầm Phép.
 
-Broken Tower chơi chế độ này: tế đàn đứng bên trong một tòa tháp đổ nát có
-lối vào ở mỗi phía.
+Broken Tower chơi chế độ này (4v4 và 8v8, 5400x2800): một tòa tháp đổ trên ngọn đồi ở vùng cao. Leo cầu thang của các bậc thềm đổ nát lên tế đàn trên gốc tháp, hoặc đi qua hầm dưới đồi khi một cần gạt trên bậc thềm mở cửa hầm; tường đổ nát có thể bị phá vỡ.
 
 ### Cinder Sanctum
 

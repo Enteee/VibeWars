@@ -152,8 +152,7 @@ ispuštenoj neprijateljskoj relikviji šalje je kući, a ostali čekaju kod olta
 koji nosi tvoju relikviju nosi je ravno na oltar; ostali napuštaju
 relikviju samo da se bore s neprijateljem koji dođe u domet čarolije.
 
-Broken Tower ga igra: oltar stoji unutar srušene kule s
-vratima sa svake strane.
+Broken Tower ga igra (4v4 i 8v8, 5400x2800): srušena kula na brdu u visoravni. Popni se stubama terasa od ruševina do oltara na batrljku kule ili idi podrumom ispod brda kad poluga na terasi otvori njegova vrata; zidovi od ruševina mogu se razbiti.
 
 ### Cinder Sanctum
 
