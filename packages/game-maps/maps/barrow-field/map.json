@@ -488,7 +488,7 @@
         "height": 110
       },
       "uphill": "w",
-      "look": "rough-steps",
+      "look": "stairs",
       "lift": null
     },
     {
@@ -503,7 +503,7 @@
         "height": 110
       },
       "uphill": "e",
-      "look": "rough-steps",
+      "look": "stairs",
       "lift": null
     },
     {
@@ -518,7 +518,7 @@
         "height": 110
       },
       "uphill": "w",
-      "look": "rough-steps",
+      "look": "stairs",
       "lift": null
     },
     {
@@ -533,7 +533,7 @@
         "height": 110
       },
       "uphill": "e",
-      "look": "rough-steps",
+      "look": "stairs",
       "lift": null
     }
   ],
