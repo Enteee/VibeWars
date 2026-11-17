@@ -118,3 +118,30 @@ export function settled(windows, times, { minMs, tol }) {
   }
   return undefined;
 }
+
+/**
+ * This shard's share of a sorted list: every n-th entry from the i-th,
+ * for `spec` "i/n" (1-based, #3509). No spec is the whole list. A spec that is
+ * not two integers with 1 <= i <= n throws, and so does a shard left empty.
+ *
+ * @template T
+ * @param {readonly T[]} list
+ * @param {string | undefined} spec
+ * @returns {T[]}
+ */
+export function shardOf(list, spec) {
+  if (spec === undefined || spec === "") return [...list];
+  const match = /^(\d+)\/(\d+)$/.exec(spec);
+  const i = Number(match?.[1]);
+  const n = Number(match?.[2]);
+  if (match === null || i < 1 || i > n) {
+    throw new Error(`BENCH_SHARD must be i/n with 1 <= i <= n, got "${spec}"`);
+  }
+  const mine = list.filter((_, index) => index % n === i - 1);
+  if (mine.length === 0) {
+    throw new Error(
+      `BENCH_SHARD ${spec} has no map: ${String(list.length)} maps for ${String(n)} shards`,
+    );
+  }
+  return mine;
+}
