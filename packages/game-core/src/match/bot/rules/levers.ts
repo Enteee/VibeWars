@@ -3,7 +3,7 @@ import { countsForTeam } from "../../simulation.js";
 import { nearestTo, NOTHING, pressed } from "./shared.js";
 import type { BotRule } from "./types.js";
 
-/** How much shorter a lever must make the team's way to the foes to be worth the walk. */
+/** How much cheaper a lever must make the team's way to the foes to walk, in units at base pace (#3521), to be worth the walk. */
 export const LEVER_WORTH_UNITS = 300;
 
 /** A lever anyone threw this recently is left alone, so two teams' bots don't strobe a gate. */

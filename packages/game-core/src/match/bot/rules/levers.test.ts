@@ -4,7 +4,7 @@ import type { Polygon, Segment } from "../../../geometry.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import { createCursor, decide, NO_OBJECTIVES, type BotLever } from "../../behaviour.js";
 import type { GateField } from "../../gates.js";
-import { MatchSimulation, type ParticipantSpec } from "../../simulation.js";
+import { MatchSimulation, type MatchLayers, type ParticipantSpec } from "../../simulation.js";
 import { switchTargetId, type SwitchField } from "../../switches.js";
 import type { TeleportField } from "../../teleports.js";
 import levers, { LEVER_SETTLE_SECONDS, LEVER_WORTH_UNITS } from "./levers.js";
@@ -209,6 +209,49 @@ describe("a lever's gain (#3138)", () => {
     expect(sim.botLevers[0]?.gain[0]).toBeGreaterThan(900);
     // Team 1 has no teleport back: its way is the same.
     expect(sim.botLevers[0]?.gain[1]).toBeCloseTo(0);
+  });
+
+  it("counts walk cost: a gate opening a longer, dry way past a shorter one through shallow water wins (#3521)", () => {
+    // Over the top is ~1210 long, ~700 of it wading; through the gate is
+    // ~1280 long and dry: ~70 longer, but ~160 cheaper to walk.
+    const layers: MatchLayers = {
+      count: 1,
+      ground: 0,
+      pits: [],
+      walls: [[...wall(800, 60, 300), ...wall(800, 500, 810)]],
+      decks: [],
+      transitions: [],
+      outline: undefined,
+      deepWater: [[]],
+      shallowWater: [[[vec2(450, -10), vec2(1150, -10), vec2(1150, 190), vec2(450, 190)]]],
+      dropOffs: [],
+    };
+    const sim = new MatchSimulation({
+      seed: "levers",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      participants: [
+        fighter("a", 0, WARRIOR, vec2(200, 100)),
+        fighter("b", 1, WARRIOR, vec2(1400, 100)),
+      ],
+      layers,
+      walls: [...wall(800, 60, 300), ...wall(800, 500, 810)],
+      gates: [{ segments: wall(800, 300, 500), opener: { kind: "switch" }, blocks: "all" }],
+      switches: [
+        {
+          id: "lever",
+          layer: 0,
+          position: vec2(600, 650),
+          gates: [0],
+          teleports: [],
+          decks: [],
+          lifts: [],
+        },
+      ],
+    });
+    sim.step(DT);
+    expect(sim.botLevers[0]?.gain[0]).toBeGreaterThan(100);
+    expect(sim.botLevers[0]?.gain[1]).toBeGreaterThan(100);
   });
 });
 
