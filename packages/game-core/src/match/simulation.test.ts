@@ -11,7 +11,8 @@ import { NO_RANKS, ENERGY_PER_PIP } from "../skills/status.js";
 import { chargeAdrenaline, strikesOf } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import type { GateField } from "./gates.js";
+import { MatchSimulation, WALL_SET_LIMIT, type ParticipantSpec } from "./simulation.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -1157,5 +1158,69 @@ describe("Cancel Action cancels the cast and the attack (#300)", () => {
     expect(stepFor(sim, DT)).toEqual([]);
     expect(a.combatant.energy).toBeGreaterThanOrEqual(energy);
     expect(a.combatant.attack).toBeUndefined();
+  });
+});
+
+describe("wall sets past their limit (#3467)", () => {
+  /** A gate right across the map at `x`, opened by a team 0 plate. */
+  const gate = (x: number, plate: Vec2): GateField => {
+    const corners = [vec2(x - 4, -10), vec2(x + 4, -10), vec2(x + 4, 810), vec2(x - 4, 810)];
+    return {
+      segments: corners.map((a, at) => segment(a, corners[(at + 1) % corners.length] ?? a)),
+      opener: { kind: "plate", plate, team: null },
+      blocks: "all",
+    };
+  };
+  const PLATE_A = vec2(100, 400);
+  const PLATE_B = vec2(100, 100);
+
+  /** The holder goes from plate A to plate B and back, then the walker crosses gate A: every position, each tick. */
+  function trace(wallSetLimit: number): string[] {
+    const sim = new MatchSimulation({
+      seed: "wall-sets",
+      ruleset: RULES,
+      bounds: { width: 1600, height: 800 },
+      participants: [spec("holder", 0, PLATE_A), spec("walker", 0, vec2(300, 600))],
+      gates: [gate(400, PLATE_A), gate(1000, PLATE_B)],
+      wallSetLimit,
+    });
+    const positions: string[] = [];
+    const run = (seconds: number): void => {
+      for (let t = 0; t < seconds; t += DT) {
+        sim.step(DT);
+        positions.push(
+          ["holder", "walker"]
+            .map((id) => {
+              const at = sim.get(id)?.position ?? vec2(Number.NaN, Number.NaN);
+              return `${at.x.toFixed(3)},${at.y.toFixed(3)}`;
+            })
+            .join(" ") + ` ${sim.gates.map((each) => String(each.open)).join(",")}`,
+        );
+      }
+    };
+    run(0.5);
+    sim.walkTo("holder", PLATE_B);
+    run(3);
+    sim.walkTo("holder", PLATE_A);
+    run(3);
+    sim.walkTo("walker", vec2(700, 600));
+    run(4);
+    return positions;
+  }
+
+  it("rebuilds an evicted set equal to the first: the same walls and the same paths", () => {
+    const evicting = trace(1);
+    // Three combinations through one slot: A open, both shut, B open.
+    expect(evicting.some((line) => line.endsWith("false,false"))).toBe(true);
+    expect(evicting.some((line) => line.endsWith("false,true"))).toBe(true);
+    const last = evicting.at(-1) ?? "";
+    // Back on plate A, gate A open again from a rebuilt set, and the walker through it.
+    expect(last.endsWith("true,false")).toBe(true);
+    expect(Number(last.split(" ")[1]?.split(",")[0])).toBeGreaterThan(650);
+    expect(evicting).toEqual(trace(WALL_SET_LIMIT));
+  });
+
+  it("refuses a limit below one", () => {
+    expect(() => new MatchSimulation({ seed: "wall-sets", wallSetLimit: 0 })).toThrow();
   });
 });
