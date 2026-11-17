@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { MatchSimulation, STARTER_BUILDS, vec2 } from "@vibewars/game-core";
+import { MatchSimulation, STARTER_BUILDS, vec2, type Vec2 } from "@vibewars/game-core";
 
 import { loadAllMaps, loadMap } from "../loader.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
+import type { MapData } from "../schema.js";
 import {
   balanceVerdict,
   highGround,
@@ -374,6 +375,140 @@ describe("walks and high ground (#3070)", () => {
       const [ground0 = 0, ground1 = 0] = highGround(map);
       expect(ground0).toBeGreaterThan(0);
       expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.1);
+    }, 60_000);
+  });
+
+  // Blackwater Ford (#3434): the centre is the storm beacon on the mill deck, over the race. Four
+  // ways there: the bridge road (up the team's own approach), the culvert under it (gate open, up
+  // the approach's far stair), the far ford (across, up the other approach) and the near ford (up
+  // the mill's jetty). As loaded the culvert gates are shut and the silted weir stands. A culvert
+  // and a ford are walked through a point in them; the walk tool takes the shortest way to a point.
+  describe("Blackwater Ford", () => {
+    const map = loadMap("blackwater-ford");
+    const shut = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const beacon = { x: 2612, y: 1455 };
+    const shrines = [
+      { x: 800, y: 1000 },
+      { x: 4424, y: 1784 },
+    ];
+    const foes = [shrines[1] ?? beacon, shrines[0] ?? beacon];
+    // Each team's own point in the ford nearer it, and in the far one.
+    const nearFord = [
+      { x: 2624, y: 1983 },
+      { x: 2600, y: 785 },
+    ];
+    const farFord = [nearFord[1] ?? beacon, nearFord[0] ?? beacon];
+    // Each team's own culvert: the mouth it walks in at, and the one it leaves by.
+    const culvertIn = [
+      { x: 1750, y: 1680 },
+      { x: 3450, y: 1088 },
+    ];
+    const culvertOut = [
+      { x: 1750, y: 1130 },
+      { x: 3450, y: 1638 },
+    ];
+    const ownStair = ["west-approach-south-stair", "east-approach-north-stair"];
+    const farStair = ["west-approach-north-stair", "east-approach-south-stair"];
+    const jetties = ["mill-south-pier-stair", "mill-north-pier-stair"];
+    const approachStairs = [...ownStair, ...farStair];
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** `on` with each team's one spawn at `points[team]` on `layer`. */
+    const from = (on: MapData, points: readonly Vec2[], layer = 0): MapData => ({
+      ...on,
+      spawnPoints: points.map((position, team) => ({ team, layer, position })),
+    });
+    /** Each team's walk to its own point of `to`, along its own route. */
+    const toOwn = (
+      on: MapData,
+      to: readonly Vec2[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? beacon, layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    const sum = (...legs: readonly (readonly number[])[]): number[] =>
+      [0, 1].map((team) => legs.reduce((total, leg) => total + (leg[team] ?? 0), 0));
+    const onGround = (): Route => ({ through: [], shut: [...approachStairs, ...jetties] });
+    const both = [beacon, beacon];
+
+    const bridgeRoad = (on: MapData): number[] =>
+      toOwn(on, both, 1, (team) => ({ through: [ownStair[team] ?? ""], shut: jetties }));
+    const culvert = (): number[] =>
+      sum(
+        toOwn(map, culvertIn, 0, onGround),
+        toOwn(from(map, culvertIn), culvertOut, 0, onGround),
+        toOwn(from(map, culvertOut), both, 1, (team) => ({
+          through: [farStair[team] ?? ""],
+          shut: jetties,
+        })),
+      );
+    const acrossTheFord = (on: MapData): number[] =>
+      sum(
+        toOwn(on, nearFord, 0, onGround),
+        toOwn(from(on, nearFord), both, 1, (team) => ({
+          through: [farStair[1 - team] ?? ""],
+          shut: jetties,
+        })),
+      );
+    const jetty = (on: MapData): number[] =>
+      toOwn(on, both, 1, (team) => ({ through: [jetties[team] ?? ""], shut: approachStairs }));
+
+    it("walks each team to the beacon by the bridge road, gates shut, within 10 % of the other", () => {
+      within(bridgeRoad(shut), 0.1);
+    });
+
+    it("walks each team through its own culvert to the beacon within 10 % of the other", () => {
+      within(culvert(), 0.1);
+    });
+
+    it("walks each team across the near ford and up the other approach, gates shut, within 10 % of the other", () => {
+      within(acrossTheFord(shut), 0.1);
+    });
+
+    it("walks each team up the mill's jetty from the near ford, gates shut, within 10 % of the other", () => {
+      within(jetty(shut), 0.1);
+    });
+
+    it("walks each team to the foe's shrine by each ford and over the bridge within 10 % of the other", () => {
+      const byFord = (ford: readonly Vec2[]): number[] =>
+        sum(toOwn(shut, ford, 0, onGround), toOwn(from(shut, ford), foes, 0, onGround));
+      within(byFord(nearFord), 0.1);
+      within(byFord(farFord), 0.1);
+      // Over the bridge: up the team's own approach to the beacon, down the other's far stair.
+      within(
+        sum(
+          bridgeRoad(shut),
+          toOwn(from(shut, both, 1), foes, 0, (team) => ({
+            through: [farStair[1 - team] ?? ""],
+            shut: [...ownStair, farStair[team] ?? "", ...jetties],
+          })),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each priest from its shrine to the beacon within 10 % of the other", () => {
+      within(walksTo(from(shut, shrines), beacon, 1), 0.1);
+    });
+
+    it("keeps the walks within 10 % with the gates open and the silted weir broken", () => {
+      const broken = ["silted-weir"];
+      within(walksByRoute(map, beacon, 1, { through: [], broken }), 0.1);
+      within(
+        toOwn(map, foes, 0, () => ({ through: [], broken })),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
     }, 60_000);
   });
 
