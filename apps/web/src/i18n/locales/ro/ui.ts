@@ -884,7 +884,6 @@ export default {
     other: "{sign}{count} de gradații",
   },
 
-  "player.applies": "Se aplică din următorul lobby.",
   "player.cape": "Pelerină",
   "player.colourBlack": "negru",
   "player.colourGold": "auriu",

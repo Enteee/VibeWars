@@ -828,7 +828,6 @@ export default {
 
   "pips.title": { one: "{sign}{count} pips", other: "{sign}{count} pips" },
 
-  "player.applies": "Gælder fra din næste lobby.",
   "player.cape": "Kappe",
   "player.colourBlack": "sort",
   "player.colourGold": "guld",

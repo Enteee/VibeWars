@@ -830,7 +830,6 @@ export default {
 
   "pips.title": { one: "{sign}{count} pips", other: "{sign}{count} pips" },
 
-  "player.applies": "Geldt vanaf je volgende lobby.",
   "player.cape": "Cape",
   "player.colourBlack": "zwart",
   "player.colourGold": "goud",

@@ -7934,6 +7934,75 @@
         },
         {
           "properties": [
+            {
+              "name": "guildCape",
+              "optional": false,
+              "type": {
+                "union": [
+                  "null",
+                  {
+                    "properties": [
+                      {
+                        "name": "emblem",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            { "literal": "bar" },
+                            { "literal": "chevron" },
+                            { "literal": "cross" },
+                            { "literal": "diamond" },
+                            { "literal": "disc" },
+                            { "literal": "half-disc" },
+                            { "literal": "ring" },
+                            { "literal": "triangle" }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "main",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            { "literal": "black" },
+                            { "literal": "gold" },
+                            { "literal": "lime" },
+                            { "literal": "orange" },
+                            { "literal": "pink" },
+                            { "literal": "teal" },
+                            { "literal": "violet" },
+                            { "literal": "white" }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "trim",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            { "literal": "black" },
+                            { "literal": "gold" },
+                            { "literal": "lime" },
+                            { "literal": "orange" },
+                            { "literal": "pink" },
+                            { "literal": "teal" },
+                            { "literal": "violet" },
+                            { "literal": "white" }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
+            { "name": "heroRank", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "set-profile" } },
+            { "name": "name", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "id", "optional": false, "type": "string" },
             { "name": "kind", "optional": false, "type": { "literal": "remove-member" } }
           ]

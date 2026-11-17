@@ -868,19 +868,7 @@ async function main(): Promise<void> {
         // a new cape redraws it: a redraw would swallow the press outside
         // that closed the window (#2386).
         const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
-        if (renamedAlone()) {
-          // Nobody else is in it to keep its code for: the lobby is opened
-          // again under the new name and tag (#1526).
-          void (async () => {
-            await closeLobby();
-            if (menu) {
-              showMenu();
-            } else {
-              openOwnLobby();
-            }
-          })();
-          return;
-        }
+        sendProfile();
         if (menu && menuCape !== JSON.stringify(playerGuild().guildCape)) {
           showMenu();
         }
@@ -1246,12 +1234,27 @@ async function main(): Promise<void> {
       teamQueue !== undefined,
   );
 
-  /** Whether this player is alone in its own lobby, under another name or guild than now. */
-  const renamedAlone = (): boolean =>
-    hosted !== undefined &&
-    lobby === hosted.lobby &&
-    isAlone(railParty()) &&
-    (lobbyName !== loadPlayerName() || !sameTypedGuild(lobbyEntrant?.guild, playerGuild()));
+  /**
+   * The name and guild just set in Options, to the lobby this tab is in
+   * (#3548), which shows them at once; nothing when they are the same. A
+   * match on keeps the ones it started with, and the next plays these.
+   */
+  const sendProfile = (): void => {
+    const name = loadPlayerName();
+    const guild = playerGuild();
+    if (
+      lobby === undefined ||
+      lobbyEntrant === undefined ||
+      (name === lobbyName &&
+        sameTypedGuild(lobbyEntrant.guild, guild) &&
+        lobbyEntrant.guild.heroRank === guild.heroRank)
+    ) {
+      return;
+    }
+    lobby.setProfile({ name, ...guild });
+    lobbyName = name;
+    lobbyEntrant = { ...lobbyEntrant, guild };
+  };
 
   /**
    * Out of the lobby this tab is in, ending it for everyone if it is this

@@ -788,7 +788,6 @@ export default {
 
   "pips.title": { other: "{sign}{count}ピップ" },
 
-  "player.applies": "次のロビーから適用されます。",
   "player.cape": "ケープ",
   "player.colourBlack": "黒",
   "player.colourGold": "金",

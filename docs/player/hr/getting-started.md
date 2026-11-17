@@ -179,8 +179,7 @@ nosi plašt u svakom meču: skuplja se u tanku traku na tvom rubu dok
 stojiš i vijori se iza tebe dok se krećeš. Prikazuju ga i tvoji likovi u
 izborniku. **Bez plašta** ga skida.
 
-Promjena vrijedi od sljedeće sobe u koju uđeš ili sljedeće nove:
-ona u kojoj već jesi zadržava ono s čime si ušao.
+Promjena odmah vrijedi za sobu u kojoj si.
 
 **Kopiraj poveznicu ceha**, ispod dizajnera plašta, kopira poveznicu s tvojom oznakom i plaštom. Tko je otvori, dobije pitanje **Pridružiti se cehu [VIBE]?**: **Pridruži se** daje mu tvoju oznaku i plašt, **Ne** ne mijenja ništa. Takvu poveznicu može poslati bilo tko i nitko nije vlasnik oznake, pa igra uvijek prvo pita.
 

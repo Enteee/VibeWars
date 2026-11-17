@@ -1235,6 +1235,16 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["vote (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: "peer-2" }],
   ["claim (#1458)", parseWireLobbyCommand, { kind: "claim", slot: 1 }],
   [
+    "set-profile (#3548)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", name: "Mhenlo", guildTag: "vb", heroRank: 3, guildCape: CAPE },
+  ],
+  [
+    "set-profile with no guild (#3548)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", name: "Mhenlo", guildTag: null, heroRank: 0, guildCape: null },
+  ],
+  [
     "a team plan's human seat (ADR-0042)",
     parseWireLobbyCommand,
     { kind: "team-plan", slot: 0, size: 4, memberKey: "ab".repeat(32), build: { name: "Devona" } },
@@ -1290,6 +1300,21 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["a call of an unknown kind (#443)", parsePeerCall, { kind: "focus", targetId: "peer-2" }],
   ["a call with no target (#443)", parsePeerCall, { kind: "target" }],
   ["a remove-member with no id (#2746)", parseWireLobbyCommand, { kind: "remove-member" }],
+  [
+    "a set-profile with no name (#3548)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", guildTag: null, heroRank: 0, guildCape: null },
+  ],
+  [
+    "a set-profile past the top hero rank (#3548)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", name: "Mhenlo", guildTag: null, heroRank: 16, guildCape: null },
+  ],
+  [
+    "a set-profile with a numeric guild tag (#3548)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", name: "Mhenlo", guildTag: 7, heroRank: 0, guildCape: null },
+  ],
   [
     "a remove-member with an id past the wire's (#2746)",
     parseWireLobbyCommand,

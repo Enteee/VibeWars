@@ -884,7 +884,6 @@ export default {
     other: "{sign}{count} pipova",
   },
 
-  "player.applies": "Primjenjuje se od sljedeće sobe.",
   "player.cape": "Plašt",
   "player.colourBlack": "crna",
   "player.colourGold": "zlatna",

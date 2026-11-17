@@ -186,9 +186,7 @@ tunnus, ja hahmosi kantaa viittaa jokaisessa ottelussa: se taittuu
 ohueksi nauhaksi reunallesi, kun seisot, ja liehuu perässäsi, kun
 liikut. Myös valikon hahmosi näyttävät sen. **Ei viittaa** riisuu sen.
 
-Muutos tulee voimaan seuraavasta aulasta, johon liityt, tai seuraavasta
-uudesta omasta aulastasi: aula, jossa jo olet, säilyttää sen, millä
-liityit.
+Muutos tulee voimaan heti siinä aulassa, jossa olet.
 
 Viittasuunnittelijan alla oleva **Kopioi kiltalinkki** kopioi linkin, jossa on tunnuksesi ja viittasi. Sen avaajalta kysytään **Liitytäänkö kiltaan [VIBE]?**: **Liity** antaa hänelle tunnuksesi ja viittasi, **Ei** ei muuta mitään. Kuka tahansa voi lähettää tällaisen linkin, eikä kukaan omista tunnusta, joten peli kysyy aina ensin.
 

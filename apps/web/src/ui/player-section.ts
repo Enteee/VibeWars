@@ -306,7 +306,6 @@ function mountPlayer(container: HTMLElement, signet: number): () => void {
   showCape();
   panel.appendChild(designer.root);
   panel.append(copy, link.element);
-  panel.appendChild(h("p", "player-applies", t("player.applies")));
   return () => {
     panel.remove();
   };

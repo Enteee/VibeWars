@@ -920,7 +920,6 @@ export default {
     other: "{sign}{count} pipa",
   },
 
-  "player.applies": "Działa od następnego lobby.",
   "player.cape": "Peleryna",
   "player.colourBlack": "czarny",
   "player.colourGold": "złoty",
