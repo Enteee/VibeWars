@@ -160,6 +160,21 @@ describe("DECK_ART (#3067)", () => {
     );
   });
 
+  it("draws a platform deck as a raised block: a coursed side face, and a lit trim on its open edges (#3484)", () => {
+    if (platformDeck === undefined) throw new Error("no platform");
+    const side = recorder();
+    DECK_ART.platform.side(side, frameOf(platformDeck, []));
+    expect(side.calls.filter(({ name }) => name === "lineBetween").length).toBeGreaterThan(4);
+    const trim = (open: readonly Segment[]): number => {
+      const painter = recorder();
+      DECK_ART.platform.top(painter, frameOf(platformDeck, open));
+      const { wallLit } = frameOf(platformDeck, open).palette;
+      return painter.calls.filter(({ colour }) => colour === wallLit).length;
+    };
+    expect(trim([])).toBe(0);
+    expect(trim(openEdges(STRUCTURE, platformDeck))).toBeGreaterThan(0);
+  });
+
   it("courses a tower's masonry down to the layer under it, piers a stone bridge's", () => {
     if (towerDeck === undefined) throw new Error("no tower");
     const tower = recorder();

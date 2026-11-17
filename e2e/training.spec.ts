@@ -355,24 +355,25 @@ test("Wilds: a double right click on the lever opens the side room's door, and y
     return r > g && g > b && r - b > 40;
   };
   const lever = { x: 330, y: 640 };
-  const pull = async (): Promise<void> => {
+  // A dummy in a zone flashes every tick, so the arena never holds still
+  // (#3496): wait on the door's own look instead.
+  const pull = async (shut: boolean): Promise<void> => {
     const at = (await trainingView(page, canvas)).onPage(lever);
     await page.mouse.dblclick(at.x, at.y, { button: "right" });
     // FLAG_REACH_UNITS: a switch is reached as a flag is.
     await expect.poll(() => near(lever, 60), { timeout: 20_000 }).toBe(true);
-    await stillArena(page, canvas);
+    await expect.poll(amber, { timeout: 15_000 }).toBe(shut);
   };
 
-  await pull();
-  expect(await amber()).toBe(false);
+  await pull(false);
 
   const room = { x: 130, y: 720 };
-  await walkTo(page, canvas, room);
+  const inRoom = (await trainingView(page, canvas)).onPage(room);
+  await page.mouse.click(inRoom.x, inRoom.y);
   await expect.poll(() => near(room, 5), { timeout: 20_000 }).toBe(true);
 
   // Back out through it, and shut it behind you.
-  await pull();
-  expect(await amber()).toBe(true);
+  await pull(true);
 });
 
 test("Heights draws its water: the deep pond darker than the floor, a puddle paler (#2985)", async ({

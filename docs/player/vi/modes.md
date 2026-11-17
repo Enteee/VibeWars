@@ -391,8 +391,9 @@ từ đèn hiệu tới người bị trúng, cả hai đội đều thấy.
 
 Ba đấu trường của Đỉnh cũng là lựa chọn của Trận tự tạo: **The Hollow Deep**
 (Hủy diệt 8v8, ba đường hầm uốn lượn quanh một khối đá trung tâm),
-**Blackwater Ford** (Diệt tư tế 8v8 trên một khúc sông cạn nhỏ, các căn cứ gần
-như nhìn thấy nhau, tư tế hồi sinh người chết của đội mỗi 2 phút) và
+**Blackwater Ford** (Diệt tư tế 8v8, 5200x2800, tại một khúc sông cạn tối tăm: lội qua chỗ nước nông, băng qua cây cầu gãy
+đứng trên các trụ phía trên cối xay, hoặc đi qua cống dưới cầu khi cần gạt trên cối xay mở cổng của nó;
+tư tế hồi sinh người chết của đội mỗi 2 phút) và
 **Mosslit Cairns** (Chiếm điểm 8v8, năm ụ đá xếp zig-zag nông giữa hai căn
 cứ). Đấu trường thứ tư là **The Brazen Causeway** (Diệt tư tế 8v8 trên một
 vòng đai quanh một cái hố trũng: một khe hẹp đi ngang cổng của mỗi căn cứ,

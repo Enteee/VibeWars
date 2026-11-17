@@ -390,8 +390,9 @@ vidljiva obama timovima.
 
 Tri arene Uspona može odabrati i Igra s domaćinom: **The Hollow Deep** (8v8 Uništenje, tri
 vijugava tunela oko središnje stijene),
-**Blackwater Ford** (8v8 Uništenje sa
-svećenikom na malenom gazu, baze gotovo na vidiku, svećenik diže
+**Blackwater Ford** (8v8, 5200x2800, Uništenje sa
+svećenikom na tamnom riječnom gazu: prelazi se gazeći plitki gaz, slomljenim mostom na stupovima iznad mlina
+ili kroz propust ispod mosta kad poluga na mlinu otvori njegovu rešetku; svećenik diže
 svoje mrtve svake 2 minute) i
 **Mosslit Cairns** (8v8 Zauzimanje točaka, pet kamenih gomila u plitkom cik-caku
 između baza). Četvrta je **The Brazen Causeway** (8v8 Uništenje sa svećenikom na prstenu oko potopljene jame: uski prolaz vodi pokraj vrata svake baze, koja stoje širom otvorena samo dok netko iz njezina tima drži ploču Gate Lock).

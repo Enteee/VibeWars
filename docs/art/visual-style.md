@@ -37,6 +37,7 @@ layer draws flat whatever its biome, until its family card rebuilds it.
 | Desert   | `#3b3226` | `#6e6252` | earth `#6e5a40`, scrub `#6a6448`       |
 | Volcanic | `#2b2421` | `#4a4340` | earth `#4a3426`, ash scrub `#5a5444`   |
 | Snow     | `#7d8a8e` | `#4d4a4a` | slush earth `#6a6050`, plant `#6a6a58` |
+| Marsh    | `#2a3430` | `#54594f` | reed `#5c5a3a`, silt `#4a4034`         |
 
 The heights still draw in the hall's tones. The wilds (#3071, Crossroads) keep
 the hall's dressed stone and wood, and its moss: a greener moss sits too near
@@ -47,7 +48,7 @@ Frozen Crossing) is neutral grey at low chroma: its ground is the river ice,
 the only floor that shows (the banks are decks), its decks `#9ea4ab`. Snow
 stays mid-grey so the friend blue keeps its contrast. The ice is the study's
 `#7d8a94` with a little less blue, because the hall's blue grid tinted from
-it came too near the friend blue. Open water is the shared deep water look.
+it came too near the friend blue. Open water is the shared deep water look. The marsh biome (#3434, Blackwater Ford) keeps the wilds' dark ground a little cooler, with dry olive reed and silt; its tones are all low chroma and well away from the friend blue, the foe red and the nature green; open water is the shared look.
 
 **Overhangs** (#3293) are roofs nobody stands on. They hang at their layer's
 height over whoever is under them, with a thin eave below their front edge and
@@ -148,7 +149,8 @@ shaded 40 %, lit edge `#a9bbd0`, stroke `#3b4759`. **Target**: the noise fill
 - **A body** has a 1.5 to 2.5 px dark outline (`#0b0f14`) so it parts from any
   floor. **A wall** and a prop have a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
-- **No fill is flat** (a zone's is not: `zone-painter.ts`, #3052; walls and floors still are). Use noise: fractal noise, 3 octaves, at a scale of
+- **No fill is flat** (a zone's is not: `zone-painter.ts`, #3052; nor a layered
+  map's floor: `ground-dressing.ts`, #3484; walls still are). Use noise: fractal noise, 3 octaves, at a scale of
   about **one feature per body** (30 units): grain finer than that is lost at
   zoom 1, coarser reads as a blotch. Keep it at 50 to 80 % opacity over the
   base tone, so the base still names the material.
@@ -166,6 +168,22 @@ rim in a lighter tone.
 Recipe (now): `ZONE_LOOK.mire` (edge `0x9c7a46`, `painter: "mud"`):
 `zone-painter.ts` paints mottled mud with dark pools once per map, and
 bubbles swell and pop every frame.
+
+Worked example, ground (`ground-grain.png`, Arena Crossroads, before and
+after): the floor mottled in its own tones, grass tufts and stones scattered
+on it, the grid over both.
+
+![ground grain](visual-style/ground-grain.png)
+
+Recipe (now): `ground-dressing.ts` paints one 256-unit tile per biome, once
+per game: value noise in 3 octaves (about one feature per 30 units) between
+the biome's `GROUND_DRESSING` grain tones (`arena-palette.ts`) at
+`GRAIN_ALPHA` 0.65, then its marks, each one shape, one tone and one outline
+and at most `MARK_MAX` 16 units. `arena-scene.ts` lays it as a tile sprite
+from the world's origin, stencilled to the ground's outline, under paving,
+pits and bodies; the grid and the outline's edge draw over it. A patch of
+ground redrawn over a tunnel or in front of a pit gets the same tile at the
+same place. A map of one layer draws flat, so it has none.
 
 ## 5. Animation timing
 
@@ -266,7 +284,7 @@ wash, and soft puffs that drift inside the edge, never over it.
 
 The scene sheets come first: they show the 2.5D look this page asks for, as a
 whole, before the single elements. Textures (noise, planks, blocks) are
-**target**: today the renderer fills walls and ground flat, so a sheet shows
+**target**: today the renderer fills walls flat, so a sheet shows
 where #3052 and #3053 are heading, and a recipe line says "now" only where a
 developer can copy the value from main.
 

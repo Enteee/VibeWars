@@ -6,12 +6,14 @@ import {
   type Vec2,
 } from "@vibewars/game-core";
 
-import type {
-  MapDeck,
-  MapStructure,
-  RenderableLift,
-  RenderableShape,
-  RenderableWall,
+import {
+  isBreakableWall,
+  isDoor,
+  type MapDeck,
+  type MapStructure,
+  type RenderableLift,
+  type RenderableShape,
+  type RenderableWall,
 } from "./arena-snapshot.js";
 import { creatureOutline } from "./creature-shape.js";
 import { LIGHT_MARK_BOX, lightMarkKey } from "./light-mark.js";
@@ -1215,8 +1217,24 @@ function coveredTunnelAt(
 }
 
 /**
+ * Whether a body could stand at `surface`: no wall of the map on its
+ * layer, a deck's support among them, fills the point. A gate or a
+ * breakable can open, so neither counts.
+ */
+function standable(walls: readonly RenderableWall[], { layer, point }: Surface): boolean {
+  return !walls.some(
+    (wall) =>
+      wall.layer === layer &&
+      !isDoor(wall) &&
+      !isBreakableWall(wall) &&
+      pointInPolygon(point, shapeOutline(wall)),
+  );
+}
+
+/**
  * Where a click at `world` goes: the visible surface, or with `below` the
- * one under it, if any. Over a tunnel's cover (#3234), the visible one is
+ * first under it a body could stand on (#3487), past a support filling
+ * the level between; the one just under it if none is. Over a tunnel's cover (#3234), the visible one is
  * the level `from`, the clicking body's layer, is on: the tunnel from in
  * it, its pit or its stair, the ground from anywhere else or no body.
  */
@@ -1241,7 +1259,10 @@ export function pickSurface(
             found[at === tunnel ? at - 1 : at === tunnel - 1 ? tunnel : at] ?? surface,
         )
       : found;
-  return (below ? surfaces[1] : undefined) ?? surfaces[0] ?? { layer: ground, point: world };
+  const under = below
+    ? (surfaces.slice(1).find((surface) => standable(walls, surface)) ?? surfaces[1])
+    : undefined;
+  return under ?? surfaces[0] ?? { layer: ground, point: world };
 }
 
 /** A structure as it hides bodies: its outline, the lifts it is drawn at, whom it covers. */

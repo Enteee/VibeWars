@@ -516,6 +516,19 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     earth: 0x6a6050,
     plant: 0x6a6a58,
   },
+  /**
+   * A dark river ford (#3434, docs/art/3074-blackwater-ford.md): the wilds'
+   * dark ground a little cooler, dry olive reed and silt, all low chroma.
+   */
+  marsh: {
+    ...HALL_TONES,
+    ground: 0x2a3430,
+    rock: 0x54594f,
+    /** Silt. */
+    earth: 0x4a4034,
+    /** Dry reed: green would be nature's. */
+    plant: 0x5c5a3a,
+  },
 };
 
 /** What each colour of the arena is made of. */
@@ -713,6 +726,7 @@ const TILED_GROUND: Record<Biome, boolean> = {
   desert: true,
   volcanic: true,
   snow: false,
+  marsh: true,
 };
 
 function biomeMaterials(tones: BiomeTones, tiled: boolean): BiomeMaterials {
@@ -734,6 +748,78 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   desert: biomeMaterials(BIOME_TONES.desert, TILED_GROUND.desert),
   volcanic: biomeMaterials(BIOME_TONES.volcanic, TILED_GROUND.volcanic),
   snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
+  marsh: biomeMaterials(BIOME_TONES.marsh, TILED_GROUND.marsh),
+};
+
+/** A biome's ground grain and the marks scattered on it (#3484), from its own tones. */
+export interface GroundDressingTones {
+  /** The grain's two ends, either side of the ground's own tone. */
+  readonly grain: readonly [dark: number, light: number];
+  /** The biome's first mark: a crack, a pebble, a tuft, a cinder or a drift. */
+  readonly mark: number;
+  /** Its second: grit, stones, ripples or cracks. */
+  readonly accent: number;
+  /** Every mark's outline: the ground, much darker. */
+  readonly outline: number;
+}
+
+function dressingTones(tones: BiomeTones, mark: number, accent: number): GroundDressingTones {
+  return {
+    grain: [shade(tones.ground, 0.22), mix(tones.ground, tones.stone, 0.14)],
+    mark,
+    accent,
+    outline: shade(tones.ground, 0.55),
+  };
+}
+
+/**
+ * Each biome's ground dressing (#3484, visual-style §4): its grain and
+ * its marks, all near its ground, so none reads as a signal, a pickup
+ * or a zone.
+ */
+export const GROUND_DRESSING: Record<Biome, GroundDressingTones> = {
+  // Cracked flags and grit.
+  hall: dressingTones(
+    HALL_TONES,
+    shade(HALL_TONES.ground, 0.4),
+    mix(HALL_TONES.ground, HALL_TONES.rock, 0.5),
+  ),
+  // Pebbles of the rock, and its chips.
+  heights: dressingTones(
+    BIOME_TONES.heights,
+    mix(BIOME_TONES.heights.ground, BIOME_TONES.heights.rock, 0.55),
+    shade(BIOME_TONES.heights.rock, 0.25),
+  ),
+  // Grass tufts and field stones.
+  wilds: dressingTones(
+    BIOME_TONES.wilds,
+    mix(BIOME_TONES.wilds.plant, BIOME_TONES.wilds.ground, 0.25),
+    mix(BIOME_TONES.wilds.ground, BIOME_TONES.wilds.rock, 0.55),
+  ),
+  // Pebbles, and ripple lines the wind leaves.
+  desert: dressingTones(
+    BIOME_TONES.desert,
+    mix(BIOME_TONES.desert.ground, BIOME_TONES.desert.rock, 0.55),
+    mix(BIOME_TONES.desert.ground, BIOME_TONES.desert.stone, 0.22),
+  ),
+  // Cinders and cracks in the crust: cold, never an ember.
+  volcanic: dressingTones(
+    BIOME_TONES.volcanic,
+    mix(BIOME_TONES.volcanic.ground, BIOME_TONES.volcanic.stone, 0.3),
+    shade(BIOME_TONES.volcanic.ground, 0.5),
+  ),
+  // Drift ridges on the ice, and its frost.
+  snow: dressingTones(
+    BIOME_TONES.snow,
+    mix(BIOME_TONES.snow.ground, BIOME_TONES.snow.stone, 0.6),
+    shade(BIOME_TONES.snow.ground, 0.12),
+  ),
+  // Dry reed tufts and silt patches.
+  marsh: dressingTones(
+    BIOME_TONES.marsh,
+    mix(BIOME_TONES.marsh.plant, BIOME_TONES.marsh.ground, 0.3),
+    mix(BIOME_TONES.marsh.ground, BIOME_TONES.marsh.earth, 0.6),
+  ),
 };
 
 /**
@@ -794,6 +880,7 @@ function breakableLookOf(biome: Biome): BreakableLook {
         shadow: BREAKABLE_WALL_LOOK.shadow,
       };
     case "wilds":
+    case "marsh":
       return {
         courses: "fieldstone",
         top: mix(tones.rock, tones.stone, 0.4),
@@ -822,6 +909,7 @@ const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
   desert: breakableLookOf("desert"),
   volcanic: breakableLookOf("volcanic"),
   snow: breakableLookOf("snow"),
+  marsh: breakableLookOf("marsh"),
 };
 
 /** The material a map's breakable walls are (#3370): a map of one layer's are stone whatever its biome. */

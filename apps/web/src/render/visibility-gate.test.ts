@@ -40,7 +40,7 @@ vi.mock("phaser", async () => {
   return { default: { Scene: Object, Geom: { Polygon: { Earcut } }, Math: { Vector2 } } };
 });
 
-const { ArenaScene } = await import("./arena-scene.js");
+const { ArenaScene, outsideTriangles } = await import("./arena-scene.js");
 const { gateWalls, toRenderableWall } = await import("../match-view.js");
 const { ARENA_MAPS, breakableDescriptors, gateDescriptor, mapStructure, wallDescriptor } =
   await import("../net/maps.js");
@@ -64,6 +64,7 @@ interface GatedScene {
   mapGraphics: RecordingGraphics | undefined;
   floorGraphics: RecordingGraphics | undefined;
   add: unknown;
+  make: unknown;
   textures: unknown;
   occluders: readonly Occluder[];
   coversDrawn: readonly { cover: OverhangCover; graphics: RecordingGraphics }[];
@@ -92,6 +93,8 @@ function paint(
     { graphics },
     { get: (_object, key) => (key === "graphics" ? graphics : () => recordingGraphics()) },
   );
+  // The grain's stencil shapes mask, they paint nothing: not recorded.
+  scene.make = { graphics: () => recordingGraphics() };
   // The land outside a map's outline is a texture, under the floor: none is made.
   scene.textures = { exists: () => true };
   // Roads are a canvas texture on their layer's ground, not a Graphics fill: not recorded.
@@ -339,4 +342,36 @@ describe("the visibility gate's sweep (#3251)", () => {
       }
     },
   );
+});
+
+describe("outsideTriangles (#3484)", () => {
+  const area = ([a, b, c]: readonly [Vec2, Vec2, Vec2]): number =>
+    Math.abs((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)) / 2;
+  const notch = [
+    { x: 100, y: 100 },
+    { x: 900, y: 100 },
+    { x: 900, y: 500 },
+    { x: 500, y: 300 },
+    { x: 100, y: 500 },
+  ];
+
+  it.each([
+    ["clockwise", notch],
+    ["counter-clockwise", [...notch].reverse()],
+  ])("covers the rectangle less a %s outline, and nothing inside it", (_winding, outline) => {
+    const triangles = outsideTriangles(outline, 1000, 600);
+    const sum = triangles.reduce((total, triangle) => total + area(triangle), 0);
+    // The notch: 800 by 400, less the triangle cut out of its bottom edge.
+    expect(sum).toBeCloseTo(1000 * 600 - (800 * 400 - (800 * 200) / 2));
+    for (const [a, b, c] of triangles) {
+      const middle = { x: (a.x + b.x + c.x) / 3, y: (a.y + b.y + c.y) / 3 };
+      const inside =
+        middle.x > 100 &&
+        middle.x < 900 &&
+        middle.y > 100 &&
+        middle.y < 500 &&
+        middle.y < 300 + (200 * Math.abs(middle.x - 500)) / 400;
+      expect(inside).toBe(false);
+    }
+  });
 });

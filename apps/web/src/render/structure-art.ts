@@ -739,12 +739,20 @@ const nothing = (): void => undefined;
 export const FADING_TOP_LOOKS: ReadonlySet<DeckLook> = new Set<DeckLook>(["arch"]);
 
 export const DECK_ART: Record<DeckLook, DeckArt> = {
-  /** Today's deck: built stone, planked north to south. */
+  /**
+   * A raised block of built stone (#3484): planked north to south, a lit
+   * trim round its open edges, coursed masonry down its face, and no
+   * crenellations, which are a tower's.
+   */
   platform: {
-    side: nothing,
-    top: (painter, { footprint, line, palette }) => {
+    side: (painter, deck) => {
+      courses(painter, deck, true);
+    },
+    top: (painter, { footprint, open, line, palette }) => {
       painter.lineStyle(line, palette.plank, 1);
       strokeSegments(painter, plankLines(footprint, DECK_PLANK));
+      painter.lineStyle(line * 2, palette.wallLit, 1);
+      strokeSegments(painter, open);
     },
   },
   /** Flagstones on top, crenellations round it, coursed masonry all the way down. */

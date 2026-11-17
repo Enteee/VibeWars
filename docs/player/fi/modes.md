@@ -427,8 +427,9 @@ majakasta osumakohteeseen, ja se näkyy molemmille tiimeille.
 
 Kolme Nousun areenaa on myös Isännöidyn pelin valintoja: **The Hollow Deep** (8v8-Tuho, kolme
 mutkittelevaa tunnelia keskeisen kallion ympärillä),
-**Blackwater Ford** (8v8-Pappituho
-pienellä kahlaamolla, tukikohdat lähes näköetäisyydellä, pappi herättää
+**Blackwater Ford** (8v8, 5200x2800, Pappituho
+tummalla joen kahlaamolla: yli pääsee kahlaamalla matalan kahlaamon, myllyn yllä pilareillaan seisovaa
+rikkinäistä siltaa pitkin tai sillan alla olevan rummun kautta, kun myllyn vipu avaa sen portin; pappi herättää
 kuolleensa joka 2. minuutti) ja
 **Mosslit Cairns** (8v8-Valtauspisteet, viisi kiviröykkiötä matalassa siksakissa
 tukikohtien välillä). Neljäs on **The Brazen Causeway** (8v8-Pappituho kehällä upotetun kuopan ympärillä: kapea rako kulkee kunkin tukikohdan portin ohi, ja portti on selällään vain, kun joku sen tiimistä pitää Gate Lock -laattaa).

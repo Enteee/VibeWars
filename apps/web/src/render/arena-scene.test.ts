@@ -43,7 +43,7 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
         return this;
       },
     });
-    const cover = { ground: fading(), seam: fading() };
+    const cover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
     const over = fading();
     const elsewhere = fading();
     const self = { team: "self", position: { x: 1620, y: 1450 }, layer: structure.ground - 1 };
@@ -63,6 +63,9 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
     expect(over.alpha).toBe(cover.ground.alpha);
     expect(over.alpha).toBeLessThan(1);
     expect(elsewhere.alpha).toBe(1);
+    // Its grain and grid go with it (#3484).
+    expect(cover.grain[0]?.alpha).toBe(cover.ground.alpha);
+    expect(cover.lines.alpha).toBe(cover.ground.alpha);
 
     self.layer = structure.ground;
     scene.cutAwayTunnels(0.016);
@@ -79,8 +82,8 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
         return this;
       },
     });
-    const cover = { ground: fading(), seam: fading() };
-    const otherCover = { ground: fading(), seam: fading() };
+    const cover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
+    const otherCover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
     const over = { surface: fading(), ripples: fading() };
     const overOther = { surface: fading(), ripples: fading() };
     const outside = fading();
@@ -122,8 +125,8 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
         return this;
       },
     });
-    const cover = { ground: fading(), seam: fading() };
-    const otherCover = { ground: fading(), seam: fading() };
+    const cover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
+    const otherCover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
     const [top, side] = [fading(), fading()];
     const overOther = fading();
     const solid = fading();
@@ -165,7 +168,7 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
         return this;
       },
     });
-    const cover = { ground: fading(), seam: fading() };
+    const cover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
     const [wallOver, tunnelWall] = [fading(), fading()];
     const [iceOver, iceElsewhere] = [fading(), fading()];
     const style = (tunnels: readonly number[]) => ({ tunnels });
@@ -212,7 +215,7 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
         return this;
       },
     });
-    const cover = { ground: fading(), seam: fading() };
+    const cover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
     const arch = fading();
     const self = {
       id: "me",

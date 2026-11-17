@@ -390,9 +390,10 @@ visible to both teams.
 
 Three Ascent arenas are a Hosted Game's pick too: **The Hollow Deep** (8v8 Annihilation, three
 winding tunnels round a central rock),
-**Blackwater Ford** (8v8 Priest
-Annihilation on a tiny ford, bases nearly in sight, the priest raising
-its dead every 2 minutes) and
+**Blackwater Ford** (8v8, 5200x2800, Priest Annihilation at a dark river
+ford: wade a shallow ford, cross the broken bridge over the mill on its piers,
+or take a culvert under the bridge once a lever on the mill opens its gate;
+the priest raises its dead every 2 minutes) and
 **Mosslit Cairns** (8v8 Capture Points, five cairns in a shallow zig-zag
 between the bases). A fourth is **The Brazen Causeway** (8v8 Priest Annihilation on a ring round a sunken pit: a narrow gap passes each base's gate, which stands wide open only while one of its team holds the Gate Lock plate).
 
