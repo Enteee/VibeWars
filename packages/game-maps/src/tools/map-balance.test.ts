@@ -9,6 +9,8 @@ import {
   type Vec2,
 } from "@vibewars/game-core";
 
+import { pointInShape } from "../geometry.js";
+import { layeredFinder } from "../layered-finder.test-support.js";
 import { matchLayers } from "../layers.js";
 import { loadAllMaps, loadMap } from "../loader.js";
 import { mapNavGraphs } from "../nav-graphs.js";
@@ -981,6 +983,164 @@ describe("walks and high ground (#3070)", () => {
         ),
         0.1,
       );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
+  // Broken Tower (#3437): a relic run on a hill, the altar on the stump top. Each team climbs the
+  // hill by its own stair on the north face or the south face, then the stump; or goes under it,
+  // through the cellar to a cellar stair at the hill's foot. As loaded, the cellar doors are shut
+  // and both rubble walls stand. A carrier walks from its relic spawn by the same ways.
+  describe("Broken Tower", () => {
+    const map = loadMap("broken-tower");
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const altar = { x: 2700, y: 1400 };
+    const relics = [0, 1].map(
+      (team) =>
+        map.objectives.flatMap((objective) =>
+          objective.kind === "relic-spawn" && objective.team === team ? [objective.position] : [],
+        )[0] ?? altar,
+    );
+    const seconds = (walk: number): number =>
+      walk / MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** `on` with each team's only spawn on its relic spawn: the carrier's walk. */
+    const carrying = (on: MapData): MapData => ({
+      ...on,
+      spawnPoints: [0, 1].map((team) => ({ team, layer: 1, position: relics[team] ?? altar })),
+    });
+    /** Each team's own walk to `to(team)` on `layer`, by a route of its own. */
+    const each = (
+      on: MapData,
+      to: (team: number) => Vec2,
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to(team), layer, (other) =>
+            other === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    const hill = [
+      "hill-north-west-stair",
+      "hill-north-east-stair",
+      "hill-south-west-stair",
+      "hill-south-east-stair",
+    ];
+    const cellarStairs = ["cellar-north-steps", "cellar-south-steps"];
+    // Team 2's side is team 1's turned: its north-face stair is the south-east one.
+    const faces = [
+      ["hill-north-west-stair", "hill-south-west-stair"],
+      ["hill-south-east-stair", "hill-north-east-stair"],
+    ];
+    const byFace = (on: MapData, face: number): number[] =>
+      each(
+        on,
+        () => altar,
+        3,
+        (team) => {
+          const stair = faces[team]?.[face] ?? "";
+          return {
+            through: [stair],
+            shut: [...hill.filter((id) => id !== stair), ...cellarStairs],
+          };
+        },
+      );
+
+    it("walks each team up either face of the hill to the altar within 10 % of the other, in under 25 s", () => {
+      for (const face of [0, 1]) {
+        const walks = byFace(shut, face);
+        within(walks, 0.1);
+        for (const walk of walks) expect(seconds(walk)).toBeLessThan(25);
+      }
+    });
+
+    it("walks each carrier from its relic spawn up either face to the altar within 10 % of the other", () => {
+      for (const face of [0, 1]) within(byFace(carrying(shut), face), 0.1);
+    });
+
+    it("walks each team and each carrier through the cellar, doors open, to the altar within 10 % of the other", () => {
+      const clearance = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
+      const finder = layeredFinder(map, clearance);
+      const mouths = ["cellar-west-steps", "cellar-east-steps"];
+      // Past the mouths, the climb cannot turn back out of the cellar.
+      const inside = layeredFinder(
+        { ...map, transitions: map.transitions.filter(({ id }) => !mouths.includes(id)) },
+        clearance,
+      );
+      // Just past each team's own cellar door.
+      const floors = [
+        { x: 1800, y: 1400 },
+        { x: 3600, y: 1400 },
+      ];
+      const arms = map.tunnels.filter(({ id }) => id !== "cellar");
+      const length = (path: readonly Vec2[]): number =>
+        path.reduce(
+          (walked, point, at) =>
+            walked +
+            Math.hypot(point.x - (path[at - 1] ?? point).x, point.y - (path[at - 1] ?? point).y),
+          0,
+        );
+      const starts = [
+        [0, 1].map(
+          (team) => map.spawnPoints.find((spawn) => spawn.team === team)?.position ?? altar,
+        ),
+        relics,
+      ];
+      for (const from of starts) {
+        const walks = [0, 1].map((team) => {
+          const start = from[team] ?? altar;
+          const floor = floors[team] ?? altar;
+          const down = finder.find(start, 1, floor, 0);
+          const up = inside.find(floor, 0, altar, 3);
+          expect(down).toBeDefined();
+          // Up a cellar arm: a leg of the climb runs through one.
+          const legs = (up ?? []).map((point, at) => ({
+            x: (point.x + (up?.[at - 1] ?? point).x) / 2,
+            y: (point.y + (up?.[at - 1] ?? point).y) / 2,
+          }));
+          expect(
+            legs.some((point) => arms.some(({ footprint }) => pointInShape(point, footprint))),
+          ).toBe(true);
+          return length([start, ...(down ?? [])]) + length([floor, ...(up ?? [])]);
+        });
+        within(walks, 0.1);
+        for (const walk of walks) expect(seconds(walk)).toBeLessThan(25);
+      }
+    });
+
+    it("walks each team to its own relic spawn, and to the foe's, within 10 % of the other", () => {
+      within(
+        each(
+          shut,
+          (team) => relics[team] ?? altar,
+          1,
+          () => ({ through: [] }),
+        ),
+        0.1,
+      );
+      within(
+        each(
+          shut,
+          (team) => relics[1 - team] ?? altar,
+          1,
+          () => ({ through: [] }),
+        ),
+        0.1,
+      );
+    });
+
+    it("keeps the walks within 10 % with the doors open and the rubble walls broken", () => {
+      const broken = ["west-rubble-wall", "east-rubble-wall"];
+      within(walksByRoute(map, altar, 3, { through: [], broken }), 0.1);
+      within(walksByRoute(carrying(map), altar, 3, { through: [], broken }), 0.1);
     });
 
     it("gives the teams high ground within 25 % of each other", () => {

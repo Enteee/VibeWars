@@ -48,6 +48,7 @@ describe("listMapIds", () => {
 });
 
 describe("the maps the browser imports", () => {
+  // Every map validated twice: each 2.5D rebuild costs about half a second (#3437).
   it("are the maps the server loads from disk", () => {
     // The browser imports map JSON directly (#8); the server reads it with
     // fs. One file, so this only fails if the two ever stop being the same
@@ -86,7 +87,7 @@ describe("the maps the browser imports", () => {
     for (const map of imported) {
       expect(loadMap(map.id)).toEqual(map);
     }
-  });
+  }, 30_000);
 });
 
 describe("loadMap", () => {

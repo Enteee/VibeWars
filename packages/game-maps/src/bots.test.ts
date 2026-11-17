@@ -21,6 +21,7 @@ import { allWallSegments } from "./geometry.js";
 import { matchGates, matchLayers } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
+import { mapSimulationFields } from "./match-fields.js";
 import { playBuildBot } from "./tools/map-balance.js";
 import type { MapData } from "./schema.js";
 
@@ -156,25 +157,11 @@ describe("Relic Run bots (#2581)", () => {
   /** The score after up to 180 s of a 1v1 of bots, and when the first point fell. */
   const play = (seed: string) => {
     if (map === undefined) throw new Error("no map with relics");
-    const altar = map.objectives.find((objective) => objective.kind === "altar");
-    if (altar === undefined) throw new Error("no altar");
     const sim = new MatchSimulation({
       seed,
       ruleset: RULESET,
-      walls: allWallSegments(map.walls),
-      bounds: { width: map.width, height: map.height },
+      ...mapSimulationFields(map, 2),
       matchRules: RELIC_RUN_MATCH_RULES,
-      relicField: {
-        altar: altar.position,
-        altarLayer: altar.layer,
-        relicTarget: "altar",
-        relicCarry: "own",
-        spawns: map.objectives.flatMap((objective) =>
-          objective.kind === "relic-spawn"
-            ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
-            : [],
-        ),
-      },
       participants: casterBots(map, 1),
     });
     let scoredAt: number | undefined;
