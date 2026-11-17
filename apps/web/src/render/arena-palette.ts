@@ -736,6 +736,71 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
 };
 
+/** A biome's ground grain and the marks scattered on it (#3484), from its own tones. */
+export interface GroundDressingTones {
+  /** The grain's two ends, either side of the ground's own tone. */
+  readonly grain: readonly [dark: number, light: number];
+  /** The biome's first mark: a crack, a pebble, a tuft, a cinder or a drift. */
+  readonly mark: number;
+  /** Its second: grit, stones, ripples or cracks. */
+  readonly accent: number;
+  /** Every mark's outline: the ground, much darker. */
+  readonly outline: number;
+}
+
+function dressingTones(tones: BiomeTones, mark: number, accent: number): GroundDressingTones {
+  return {
+    grain: [shade(tones.ground, 0.22), mix(tones.ground, tones.stone, 0.14)],
+    mark,
+    accent,
+    outline: shade(tones.ground, 0.55),
+  };
+}
+
+/**
+ * Each biome's ground dressing (#3484, visual-style §4): its grain and
+ * its marks, all near its ground, so none reads as a signal, a pickup
+ * or a zone.
+ */
+export const GROUND_DRESSING: Record<Biome, GroundDressingTones> = {
+  // Cracked flags and grit.
+  hall: dressingTones(
+    HALL_TONES,
+    shade(HALL_TONES.ground, 0.4),
+    mix(HALL_TONES.ground, HALL_TONES.rock, 0.5),
+  ),
+  // Pebbles of the rock, and its chips.
+  heights: dressingTones(
+    BIOME_TONES.heights,
+    mix(BIOME_TONES.heights.ground, BIOME_TONES.heights.rock, 0.55),
+    shade(BIOME_TONES.heights.rock, 0.25),
+  ),
+  // Grass tufts and field stones.
+  wilds: dressingTones(
+    BIOME_TONES.wilds,
+    mix(BIOME_TONES.wilds.plant, BIOME_TONES.wilds.ground, 0.25),
+    mix(BIOME_TONES.wilds.ground, BIOME_TONES.wilds.rock, 0.55),
+  ),
+  // Pebbles, and ripple lines the wind leaves.
+  desert: dressingTones(
+    BIOME_TONES.desert,
+    mix(BIOME_TONES.desert.ground, BIOME_TONES.desert.rock, 0.55),
+    mix(BIOME_TONES.desert.ground, BIOME_TONES.desert.stone, 0.22),
+  ),
+  // Cinders and cracks in the crust: cold, never an ember.
+  volcanic: dressingTones(
+    BIOME_TONES.volcanic,
+    mix(BIOME_TONES.volcanic.ground, BIOME_TONES.volcanic.stone, 0.3),
+    shade(BIOME_TONES.volcanic.ground, 0.5),
+  ),
+  // Drift ridges on the ice, and its frost.
+  snow: dressingTones(
+    BIOME_TONES.snow,
+    mix(BIOME_TONES.snow.ground, BIOME_TONES.snow.stone, 0.6),
+    shade(BIOME_TONES.snow.ground, 0.12),
+  ),
+};
+
 /**
  * Each biome's breakable wall (#3370): a weaker patch of its own walls,
  * tinted from its tones. Basalt with embers in its cracks, mud brick with
