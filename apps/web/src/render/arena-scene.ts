@@ -4817,19 +4817,18 @@ export class ArenaScene extends Phaser.Scene {
       this.grain = { bounds, biome, objects: [sprite] };
       return;
     }
-    // One stencil blocks everywhere but the outline; after the grain, a
-    // second takes that layer off again (a StencilReference has no depth).
-    const outline = (): Phaser.GameObjects.Graphics => {
-      const shape = this.make.graphics({}, false);
-      shape.fillStyle(0xffffff, 1);
-      this.fillShape(shape, { kind: "polygon", points: bounds.outline });
-      return shape;
-    };
-    const stencil = this.add
-      .stencil(0, 0, [outline()], { stencilInvert: true })
-      .setDepth(GRAIN_STENCIL_DEPTH);
+    // One stencil blocks the land outside the outline; after the grain, a
+    // clear takes it off again. Neither fills the camera, which an
+    // inverted stencil does twice a frame: on a software renderer that
+    // doubled a frame's cost (#3484).
+    const outside = this.make.graphics({}, false);
+    outside.fillStyle(0xffffff, 1);
+    for (const [a, b, c] of outsideTriangles(bounds.outline, width, height)) {
+      outside.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+    }
+    const stencil = this.add.stencil(0, 0, [outside]).setDepth(GRAIN_STENCIL_DEPTH);
     const release = this.add
-      .stencil(0, 0, [outline()], { stencilInvert: true, stencilLayerMode: "subtractLayer" })
+      .stencil(0, 0, [], { stencilLayerMode: "clear" })
       .setDepth(GRAIN_RELEASE_DEPTH);
     this.grain = { bounds, biome, objects: [stencil, sprite, release] };
   }
@@ -5424,6 +5423,38 @@ function shapeTriangles(shape: RenderableShape): readonly (readonly Vec2[])[] {
     });
     if (triangle.length === 3) {
       triangles.push(triangle);
+    }
+  }
+  return triangles;
+}
+
+/**
+ * The rectangle `width` by `height` less `outline`, as triangles: the
+ * outline is a hole in it (#3484).
+ */
+export function outsideTriangles(
+  outline: readonly Vec2[],
+  width: number,
+  height: number,
+): readonly (readonly [Vec2, Vec2, Vec2])[] {
+  const points: Vec2[] = [
+    { x: 0, y: 0 },
+    { x: width, y: 0 },
+    { x: width, y: height },
+    { x: 0, y: height },
+    ...outline,
+  ];
+  const corners = Phaser.Geom.Polygon.Earcut(
+    points.flatMap((p) => [p.x, p.y]),
+    [4],
+  );
+  const triangles: [Vec2, Vec2, Vec2][] = [];
+  for (let i = 0; i + 2 < corners.length; i += 3) {
+    const [a, b, c] = [corners[i], corners[i + 1], corners[i + 2]].map((index) =>
+      index === undefined ? undefined : points[index],
+    );
+    if (a !== undefined && b !== undefined && c !== undefined) {
+      triangles.push([a, b, c]);
     }
   }
   return triangles;
