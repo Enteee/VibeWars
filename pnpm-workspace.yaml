@@ -19,3 +19,10 @@ trustPolicy: no-downgrade
 # in. Drop this once all three depend on minimatch ^11 themselves.
 overrides:
   minimatch: ^11.0.1
+
+# picomatch <=4.0.7 has a high ReDoS advisory with no patched release
+# (GHSA-fc5q-39xc-vjpf, #3525). Dev-only: typescript-eslint -> tinyglobby
+# matches our own globs, never player input. Drop this once picomatch ships a fix.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf
