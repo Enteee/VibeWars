@@ -225,6 +225,7 @@ import {
 } from "./hub-policy.mjs";
 import { HeavyLeases } from "./heavy-lease.mjs";
 import { readRunnerLogs } from "./runner-logs.mjs";
+import { branchesToPrune, formatPrune, formatSummary } from "./hub-branches.mjs";
 import {
   closedIssues,
   parseTracking,
@@ -1670,6 +1671,167 @@ async function sweepTracking(cfg) {
         : `hubd: tracking issue #${String(issue.number)} not closed: ${failed}`,
     );
   }
+}
+
+/**
+ * Pull requests of this repository, newest activity first, as far as
+ * `MAX_PAGES` reaches. A branch whose PR is older than that is judged on
+ * its own age.
+ *
+ * @param {string} state
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<unknown[] | undefined>}
+ */
+async function readPulls(state, cfg) {
+  /** @type {unknown[]} */
+  const rows = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const answer = await rest(
+      `pulls?state=${state}&sort=updated&direction=desc&per_page=100&page=${String(page)}`,
+      cfg,
+    );
+    if (!Array.isArray(answer)) {
+      return undefined;
+    }
+    /** @type {unknown[]} */
+    const got = answer;
+    rows.push(...got);
+    if (got.length < 100) {
+      break;
+    }
+  }
+  return rows;
+}
+
+/**
+ * Every remote branch with what the prune rules need (#3533), read over REST:
+ * nothing is charged to the GraphQL budget.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<import("./hub-branches.mjs").BranchRow[] | null>} `null` if GitHub cannot be asked
+ */
+async function readBranches(cfg) {
+  const listed = await restPages("branches", cfg);
+  const pulls = await readPulls("all", cfg);
+  const open = await readPulls("open", cfg);
+  if (listed === undefined || pulls === undefined || open === undefined) {
+    return null;
+  }
+  /** @type {Map<string, import("./hub-branches.mjs").BranchPr[]>} */
+  const byBranch = new Map();
+  /**
+   * @param {string} name
+   * @param {import("./hub-branches.mjs").BranchPr} entry
+   */
+  const add = (name, entry) => {
+    byBranch.set(name, [...(byBranch.get(name) ?? []), entry]);
+  };
+  for (const row of pulls) {
+    const pull = obj(row);
+    const head = obj(pull.head);
+    if (obj(head.repo).full_name !== cfg.repo) {
+      continue;
+    }
+    const merged = typeof pull.merged_at === "string";
+    add(String(head.ref), {
+      number: Number(pull.number),
+      state: merged ? "MERGED" : pull.state === "open" ? "OPEN" : "CLOSED",
+      closedAt: typeof pull.closed_at === "string" ? Date.parse(pull.closed_at) : null,
+      role: "head",
+    });
+  }
+  for (const row of open) {
+    const pull = obj(row);
+    add(String(obj(pull.base).ref), {
+      number: Number(pull.number),
+      state: "OPEN",
+      closedAt: null,
+      role: "base",
+    });
+  }
+  /** @type {import("./hub-branches.mjs").BranchRow[]} */
+  const rows = [];
+  for (const entry of listed) {
+    const branch = obj(entry);
+    const name = String(branch.name);
+    const sha = String(obj(branch.commit).sha);
+    const prs = byBranch.get(name) ?? [];
+    // Dates and ancestry are only worth a call for the branches they decide.
+    const decided = !name.startsWith("bot/") || prs.some((pr) => pr.state === "OPEN");
+    const commit = decided ? undefined : obj(await rest(`commits/${sha}`, cfg));
+    const compared =
+      decided || prs.length > 0 ? undefined : obj(await rest(`compare/main...${sha}`, cfg));
+    rows.push({
+      name,
+      sha,
+      committedAt: Date.parse(String(obj(obj(commit?.commit).committer).date)) || Date.now(),
+      inMain: compared?.status === "behind" || compared?.status === "identical",
+      prs,
+    });
+  }
+  return rows;
+}
+
+/**
+ * Delete what the prune rules select (#3533), or only say what they would.
+ * Just before each delete the ref is read again: a branch pushed to since is
+ * kept. Stops at the first rate limit or server error; the next sweep goes on.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @param {{ dryRun: boolean }} options
+ * @returns {Promise<{ text: string, deleted: number } | { error: string }>}
+ */
+async function sweepBranches(cfg, { dryRun }) {
+  const rows = await readBranches(cfg);
+  if (rows === null) {
+    return { error: "GitHub could not be asked for the branches" };
+  }
+  const chosen = branchesToPrune(rows, Date.now());
+  if (dryRun) {
+    return { text: formatPrune(chosen), deleted: 0 };
+  }
+  /** @type {typeof chosen} */
+  const deleted = [];
+  for (const row of chosen) {
+    const now = obj(await rest(`git/ref/heads/${row.name}`, cfg));
+    if (obj(now.object).sha !== row.sha && now.ref !== undefined) {
+      continue;
+    }
+    const result = await gh([
+      "api",
+      "-X",
+      "DELETE",
+      `repos/${cfg.repo}/git/refs/heads/${row.name}`,
+    ]);
+    if (result.code !== 0 && !/HTTP (404|422)/.test(result.stderr)) {
+      console.error(`hubd: branches: stopped at ${row.name}: ${result.stderr.trim()}`);
+      break;
+    }
+    console.error(`hubd: pruned ${row.name} (${row.rule})`);
+    deleted.push(row);
+  }
+  return {
+    text: formatSummary({ deleted, kept: rows.length - deleted.length }),
+    deleted: deleted.length,
+  };
+}
+
+/** How often the branches are pruned (#3533). */
+const BRANCH_SWEEP_MS = Number(process.env.HUBD_BRANCH_SWEEP_MS ?? 24 * 60 * 60_000);
+
+/**
+ * `hub branch prune [--dry-run]`: policy says who may. The real run is the
+ * same sweep the daily timer does.
+ *
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function branchVerb(argv, cfg) {
+  const answer = await sweepBranches(cfg, { dryRun: argv.includes("--dry-run") });
+  return "error" in answer
+    ? { allow: true, code: 1, stdout: "", stderr: `${answer.error}\n` }
+    : { allow: true, code: 0, stdout: `${answer.text}\n`, stderr: "" };
 }
 
 /** How often the tracking issues of published releases are closed (#3125). */
@@ -4413,6 +4575,11 @@ async function serve(request, verdict, acting) {
     return heavy(employee, argv);
   }
 
+  if (kind === "branch") {
+    audit({ role, kind, argv, decision: "allowed" });
+    return branchVerb(argv, cfg);
+  }
+
   if (kind === "rank") {
     return rank(role, argv, cfg);
   }
@@ -5961,6 +6128,7 @@ async function main() {
   writeNudges();
   let lastKpis = 0;
   let lastTrackingSweep = 0;
+  let lastBranchSweep = Date.now();
   for (;;) {
     readStaffed();
     /** @type {[string, string | null][]} */
@@ -6010,6 +6178,17 @@ async function main() {
         await sweepTracking(cfg);
       } catch (error) {
         console.error(`hubd: tracking: ${error instanceof Error ? error.message : "failed"}`);
+      }
+    }
+    if (Date.now() - lastBranchSweep >= BRANCH_SWEEP_MS && Date.now() >= limitedUntil) {
+      lastBranchSweep = Date.now();
+      try {
+        const swept = await sweepBranches(cfg, { dryRun: false });
+        if ("text" in swept && swept.deleted > 0) {
+          tellCompany(`branches-${String(Date.now())}`, swept.text, { to: "manager" });
+        }
+      } catch (error) {
+        console.error(`hubd: branches: ${error instanceof Error ? error.message : "failed"}`);
       }
     }
     if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {
