@@ -1745,30 +1745,6 @@
         "flicker": 0.2
       },
       {
-        "id": "lamp-mill-lever-west",
-        "position": {
-          "x": 2770,
-          "y": 1300
-        },
-        "layer": 2,
-        "radius": 140,
-        "colour": 16756832,
-        "intensity": 0.85,
-        "flicker": 0.2
-      },
-      {
-        "id": "lamp-mill-lever-east",
-        "position": {
-          "x": 2430,
-          "y": 1500
-        },
-        "layer": 2,
-        "radius": 140,
-        "colour": 16756832,
-        "intensity": 0.85,
-        "flicker": 0.2
-      },
-      {
         "id": "shrine-1-ring",
         "position": {
           "x": 800,
@@ -1799,7 +1775,7 @@
           "y": 1400
         },
         "layer": 2,
-        "radius": 220,
+        "radius": 260,
         "colour": 16756832,
         "intensity": 0.7,
         "flicker": 0
