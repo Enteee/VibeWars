@@ -149,7 +149,8 @@ shaded 40 %, lit edge `#a9bbd0`, stroke `#3b4759`. **Target**: the noise fill
 - **A body** has a 1.5 to 2.5 px dark outline (`#0b0f14`) so it parts from any
   floor. **A wall** and a prop have a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
-- **No fill is flat** (a zone's is not: `zone-painter.ts`, #3052; walls and floors still are). Use noise: fractal noise, 3 octaves, at a scale of
+- **No fill is flat** (a zone's is not: `zone-painter.ts`, #3052; nor a layered
+  map's floor: `ground-dressing.ts`, #3484; walls still are). Use noise: fractal noise, 3 octaves, at a scale of
   about **one feature per body** (30 units): grain finer than that is lost at
   zoom 1, coarser reads as a blotch. Keep it at 50 to 80 % opacity over the
   base tone, so the base still names the material.
@@ -167,6 +168,22 @@ rim in a lighter tone.
 Recipe (now): `ZONE_LOOK.mire` (edge `0x9c7a46`, `painter: "mud"`):
 `zone-painter.ts` paints mottled mud with dark pools once per map, and
 bubbles swell and pop every frame.
+
+Worked example, ground (`ground-grain.png`, Arena Crossroads, before and
+after): the floor mottled in its own tones, grass tufts and stones scattered
+on it, the grid over both.
+
+![ground grain](visual-style/ground-grain.png)
+
+Recipe (now): `ground-dressing.ts` paints one 256-unit tile per biome, once
+per game: value noise in 3 octaves (about one feature per 30 units) between
+the biome's `GROUND_DRESSING` grain tones (`arena-palette.ts`) at
+`GRAIN_ALPHA` 0.65, then its marks, each one shape, one tone and one outline
+and at most `MARK_MAX` 16 units. `arena-scene.ts` lays it as a tile sprite
+from the world's origin, stencilled to the ground's outline, under paving,
+pits and bodies; the grid and the outline's edge draw over it. A patch of
+ground redrawn over a tunnel or in front of a pit gets the same tile at the
+same place. A map of one layer draws flat, so it has none.
 
 ## 5. Animation timing
 
@@ -267,7 +284,7 @@ wash, and soft puffs that drift inside the edge, never over it.
 
 The scene sheets come first: they show the 2.5D look this page asks for, as a
 whole, before the single elements. Textures (noise, planks, blocks) are
-**target**: today the renderer fills walls and ground flat, so a sheet shows
+**target**: today the renderer fills walls flat, so a sheet shows
 where #3052 and #3053 are heading, and a recipe line says "now" only where a
 developer can copy the value from main.
 

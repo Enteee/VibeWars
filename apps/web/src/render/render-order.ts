@@ -18,10 +18,19 @@ export type WaterPart = "surface" | "ripples";
 
 /** An effect zone's parts (#3052): its painted ground, then its moving marks and edge. */
 export type ZonePart = "ground" | "marks";
+/**
+ * The ground grain's steps (#3484): the outline into the stencil, the
+ * grain through it, the outline out, then the grid and the outline's
+ * edge over the grain.
+ */
+export type GrainPart = "stencil" | "grain" | "release" | "lines";
+/** The grain on a patch of ground redrawn over a tunnel or a pit (#3484), then its grid. */
+export type PatchGrainPart = "grain" | "lines";
 
 export type RenderItem =
   | { readonly kind: "outside" }
   | { readonly kind: "floor" }
+  | { readonly kind: "ground-grain"; readonly part: GrainPart }
   | { readonly kind: "pit" }
   | { readonly kind: "paving"; readonly layer: number }
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
@@ -42,6 +51,8 @@ export type RenderItem =
   | { readonly kind: "support"; readonly deckLayer: number }
   | { readonly kind: "side-face"; readonly deckLayer: number }
   | { readonly kind: "tunnel-cover"; readonly deckLayer: number }
+  | { readonly kind: "tunnel-grain"; readonly deckLayer: number; readonly part: PatchGrainPart }
+  | { readonly kind: "lip-grain"; readonly deckLayer: number; readonly part: PatchGrainPart }
   | { readonly kind: "tunnel-seam"; readonly deckLayer: number }
   | { readonly kind: "deck"; readonly deckLayer: number }
   | { readonly kind: "overhang"; readonly layer: number }
@@ -61,6 +72,17 @@ const OUTSIDE = -3;
  * water, wards and bodies in it, and under the ground's lip in front of it.
  */
 const PIT = -1.8;
+/**
+ * The ground's grain and dressing (#3484): over the floor, kept inside
+ * the ground's outline by a stencil, its grid over it, all under the
+ * pits, the paving and everything on the ground.
+ */
+const GROUND_GRAIN: Record<GrainPart, number> = {
+  stencil: -1.97,
+  grain: -1.95,
+  release: -1.93,
+  lines: -1.91,
+};
 /** Over the grid and deck shadows, under the first body; the wards draw just over it. */
 const GROUND_LIGHTING = 0.5;
 const LIT_GROUND_EFFECT = 0.6;
@@ -136,7 +158,11 @@ const SIDE_FACE = 4;
  * own, so it can be cut away for whoever is in it, under the deck.
  */
 const TUNNEL_COVER = 4.9;
+/** The grain on the ground over a tunnel (#3484), then its grid: over its cover, faded with it, under the deck. */
+const TUNNEL_GRAIN: Record<PatchGrainPart, number> = { grain: 4.92, lines: 4.94 };
 const DECK = 5;
+/** The grain on a pit's near lip (#3484), then its grid and the pit's edge: over the lip, drawn with the deck. */
+const LIP_GRAIN: Record<PatchGrainPart, number> = { grain: 5.01, lines: 5.02 };
 const RAMP = 5.5;
 /**
  * An awning, lean-to or canopy (#3293): at its layer's height, over the
@@ -159,6 +185,8 @@ export function renderOrder(item: RenderItem): number {
       return OUTSIDE;
     case "floor":
       return -2;
+    case "ground-grain":
+      return GROUND_GRAIN[item.part];
     case "pit":
       return PIT;
     case "paving":
@@ -203,6 +231,10 @@ export function renderOrder(item: RenderItem): number {
       return (item.deckLayer - 1) * LAYER_STACK + SIDE_FACE;
     case "tunnel-cover":
       return (item.deckLayer - 1) * LAYER_STACK + TUNNEL_COVER;
+    case "tunnel-grain":
+      return (item.deckLayer - 1) * LAYER_STACK + TUNNEL_GRAIN[item.part];
+    case "lip-grain":
+      return (item.deckLayer - 1) * LAYER_STACK + LIP_GRAIN[item.part];
     case "tunnel-seam":
       return (item.deckLayer - 1) * LAYER_STACK + TUNNEL_SEAM;
     case "deck":
