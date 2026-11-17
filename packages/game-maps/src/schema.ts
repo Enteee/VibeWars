@@ -433,7 +433,7 @@ const atmosphereSchema = z.object({
  * (#3079) together.
  * The match keeps paths for each way they can stand.
  */
-const MAX_TOGGLES = 6;
+export const MAX_TOGGLES = 8;
 
 /** A pressure plate (#2691); `team` is whose plate it is, `null` for anyone's. */
 const plateOpenerSchema = z.object({
@@ -494,7 +494,7 @@ const teleportSchema = z.object({
 });
 
 /** The most breakable walls on a map (#3031). */
-export const MAX_BREAKABLES = 4;
+export const MAX_BREAKABLES = 6;
 
 /** A wall with health (#3031): struck down, it is gone for the match. */
 const breakableSchema = z.object({

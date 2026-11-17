@@ -301,7 +301,7 @@ export const MAX_WIRE_POINTS = 256;
  * The most gates a map holds (#2691), switched decks (#3068) or lifts (#3079), as
  * `MAX_TOGGLES` in game-maps; a peer keeps walls per combination.
  */
-export const MAX_WIRE_TOGGLES = 6;
+export const MAX_WIRE_TOGGLES = 8;
 
 /**
  * The most cracks a switched deck shows (#3068), as `MAX_AFTER_CROSSINGS`
@@ -319,7 +319,7 @@ export const MAX_WIRE_OUTLINE_POINTS = 32;
 export const MAX_WIRE_TELEPORTS = 6;
 
 /** The most breakable walls a map holds (#3031), as `MAX_BREAKABLES` in game-maps. */
-export const MAX_WIRE_BREAKABLES = 4;
+export const MAX_WIRE_BREAKABLES = 6;
 
 /**
  * The widest area a combat message may draw: `AREA_EARSHOT` in game-core,

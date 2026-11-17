@@ -1114,18 +1114,18 @@ describe("ghost maps (#2689)", () => {
       );
     });
 
-    it("counts a switched portal against the gates' six", () => {
-      const gates = Array.from({ length: 6 }, (_, at) => ({
+    it("counts a switched portal against the gates' eight", () => {
+      const gates = Array.from({ length: 8 }, (_, at) => ({
         id: `gate-${String(at)}`,
-        wall: { kind: "rect", layer: 0, x: 90, y: 5 + at * 15, width: 4, height: 8 },
+        wall: { kind: "rect", layer: 0, x: 90, y: 5 + at * 11, width: 4, height: 8 },
         opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
         blocks: "all",
         look: "door",
       }));
-      expect(validateMapData({ ...validMap, gates, teleports: [teleport] }).gates).toHaveLength(6);
+      expect(validateMapData({ ...validMap, gates, teleports: [teleport] }).gates).toHaveLength(8);
       expect(() =>
         validateMapData({ ...validMap, gates, teleports: [teleport], switches: [lever] }),
-      ).toThrow(/7 gates, breakables, switched teleports, switched decks and lifts, more than 6/);
+      ).toThrow(/9 gates, breakables, switched teleports, switched decks and lifts, more than 8/);
     });
   });
 
@@ -1178,20 +1178,20 @@ describe("ghost maps (#2689)", () => {
       );
     });
 
-    it("counts each breakable against the gates' six", () => {
-      const gates = Array.from({ length: 5 }, (_, at) => ({
+    it("counts each breakable against the gates' eight", () => {
+      const gates = Array.from({ length: 7 }, (_, at) => ({
         ...barrier,
         id: `gate-${String(at)}`,
-        wall: { kind: "rect", layer: 0, x: 90, y: 5 + at * 15, width: 4, height: 8 },
+        wall: { kind: "rect", layer: 0, x: 90, y: 5 + at * 11, width: 4, height: 8 },
       }));
-      expect(validateMapData({ ...validMap, gates, breakables: [crack] }).gates).toHaveLength(5);
+      expect(validateMapData({ ...validMap, gates, breakables: [crack] }).gates).toHaveLength(7);
       expect(() =>
         validateMapData({
           ...validMap,
           gates,
           breakables: [crack, { ...crack, id: "crack-2" }],
         }),
-      ).toThrow(/7 gates, breakables, switched teleports, switched decks and lifts, more than 6/);
+      ).toThrow(/9 gates, breakables, switched teleports, switched decks and lifts, more than 8/);
     });
   });
 });
@@ -2169,9 +2169,11 @@ describe("switched decks and gate looks (#3068)", () => {
           ...switchedTest.gates,
           { ...gate, id: "spare-a", wall: { ...gate?.wall, y: 100 } },
           { ...gate, id: "spare-b", wall: { ...gate?.wall, y: 500 } },
+          { ...gate, id: "spare-c", wall: { ...gate?.wall, y: 700 } },
+          { ...gate, id: "spare-d", wall: { ...gate?.wall, y: 900 } },
         ],
       },
-      /7 gates, breakables, switched teleports, switched decks and lifts, more than 6/,
+      /9 gates, breakables, switched teleports, switched decks and lifts, more than 8/,
     );
   });
 
@@ -2279,8 +2281,8 @@ describe("lifts (#3079)", () => {
       look: "portcullis",
     });
     refuses(
-      { gates: [0, 1, 2, 3, 4].map(spare) },
-      /7 gates, breakables, switched teleports, switched decks and lifts, more than 6/,
+      { gates: [0, 1, 2, 3, 4, 5, 6].map(spare) },
+      /9 gates, breakables, switched teleports, switched decks and lifts, more than 8/,
     );
   });
 });

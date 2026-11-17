@@ -11,6 +11,7 @@ import {
   MAX_WIRE_EVENTS,
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_CAPTURE_POINTS,
+  MAX_WIRE_TOGGLES,
   MAX_WIRE_PINGS,
   MAX_STROKE_POINTS,
   MAX_WIRE_STROKES,
@@ -1623,7 +1624,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
       ...welcome,
       map: {
         ...welcome.map,
-        gates: Array.from({ length: 7 }, () => ({
+        gates: Array.from({ length: MAX_WIRE_TOGGLES + 1 }, () => ({
           wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
           opener: { kind: "plate", plate: { x: 50, y: 50 }, team: null },
           blocks: "all",
