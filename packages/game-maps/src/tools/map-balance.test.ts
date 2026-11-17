@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { MatchSimulation, STARTER_BUILDS, vec2 } from "@vibewars/game-core";
+import { MatchSimulation, STARTER_BUILDS, vec2, type Vec2 } from "@vibewars/game-core";
 
 import { loadAllMaps, loadMap } from "../loader.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
+import type { MapData } from "../schema.js";
 import {
   balanceVerdict,
   highGround,
@@ -374,6 +375,153 @@ describe("walks and high ground (#3070)", () => {
       const [ground0 = 0, ground1 = 0] = highGround(map);
       expect(ground0).toBeGreaterThan(0);
       expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.1);
+    }, 60_000);
+  });
+
+  // Blackwater Ford (#3434): the centre is the storm beacon on the mill deck, where the bridge
+  // broke. Four ways there: the bridge road (the approach's near stair, along it to the mill), the
+  // culvert under the approach (gate open) and up its far stair, the bank stair onto the mill's own
+  // footing, and the ford (wading across, up the far approach). As loaded the gates are shut.
+  describe("Blackwater Ford", () => {
+    const map = loadMap("blackwater-ford");
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const mill = { x: 2600, y: 1512 };
+    const shrines = [
+      { x: 800, y: 1000 },
+      { x: 4424, y: 1784 },
+    ];
+    const foes = [shrines[1] ?? mill, shrines[0] ?? mill];
+    // The ford across from each team's own: the north ford for team 1, its point mirror the south.
+    const farFords = [
+      { x: 2624, y: 799 },
+      { x: 2600, y: 1985 },
+    ];
+    const bridge = [
+      "west-approach-south-stair",
+      "west-approach-north-stair",
+      "east-approach-south-stair",
+      "east-approach-north-stair",
+      "mill-west-stair",
+      "mill-east-stair",
+    ];
+    /** A route through `through`, every other stair onto the bridge shut. */
+    const only = (through: readonly string[]): Route => ({
+      through,
+      shut: bridge.filter((id) => !through.includes(id)),
+    });
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    const from = (on: MapData, points: readonly Vec2[], layer = 1): MapData => ({
+      ...on,
+      spawnPoints: points.map((position, team) => ({ team, layer, position })),
+    });
+    const toOwn = (
+      on: MapData,
+      to: readonly Vec2[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? mill, layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    const sum = (...legs: readonly (readonly number[])[]): number[] =>
+      [0, 1].map((team) => legs.reduce((total, leg) => total + (leg[team] ?? 0), 0));
+    const toMill = (on: MapData, route: (team: number) => Route): number[] =>
+      toOwn(on, [mill, mill], 2, route);
+
+    it("walks each team by the bridge road to the mill, gates shut, within 10 % of the other", () => {
+      within(
+        toMill(shut, (team) =>
+          only([team === 0 ? "west-approach-south-stair" : "east-approach-north-stair"]),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team through its culvert and up the approach's far stair within 10 % of the other", () => {
+      // The walk tool would go round the approach on open ground: to the gate, and on from it.
+      const gates = [
+        { x: 1750, y: 1507 },
+        { x: 3450, y: 1327 },
+      ];
+      within(
+        sum(
+          toOwn(map, gates, 0, () => ({ through: [] })),
+          toMill(from(map, gates, 0), (team) =>
+            only(
+              team === 0
+                ? ["west-culvert-north-steps", "west-approach-north-stair"]
+                : ["east-culvert-south-steps", "east-approach-south-stair"],
+            ),
+          ),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team up its bank stair onto the mill, gates shut, within 10 % of the other", () => {
+      within(
+        toMill(shut, (team) => only([team === 0 ? "mill-west-stair" : "mill-east-stair"])),
+        0.1,
+      );
+    });
+
+    it("walks each team across its ford and up the far approach, gates shut, within 10 % of the other", () => {
+      within(
+        toMill(shut, (team) =>
+          only([team === 0 ? "east-approach-south-stair" : "west-approach-north-stair"]),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team to the foe's shrine by either ford and over the bridge within 10 % of the other", () => {
+      const nearFord = toOwn(shut, foes, 1, () => only([]));
+      within(nearFord, 0.1);
+      const farFord = sum(
+        toOwn(shut, farFords, 1, () => only([])),
+        toOwn(from(shut, farFords), foes, 1, () => only([])),
+      );
+      within(farFord, 0.1);
+      // A way of its own, not the near ford with a step aside.
+      [0, 1].forEach((team) => {
+        expect(farFord[team] ?? 0).toBeGreaterThan((nearFord[team] ?? 0) + 150);
+      });
+      within(
+        toOwn(shut, foes, 1, (team) =>
+          only(
+            team === 0
+              ? ["west-approach-south-stair", "east-approach-south-stair"]
+              : ["east-approach-north-stair", "west-approach-north-stair"],
+          ),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each priest from its shrine to the mill within 10 % of the other", () => {
+      within(
+        toMill(from(map, shrines), () => ({ through: [] })),
+        0.1,
+      );
+    });
+
+    it("keeps the walks within 10 % with the gates open and the weir broken", () => {
+      const broken = ["silted-weir"];
+      within(walksByRoute(map, mill, 2, { through: [], broken }), 0.1);
+      within(
+        toOwn(map, foes, 1, () => ({ through: [], broken })),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
     }, 60_000);
   });
 
