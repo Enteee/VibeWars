@@ -367,6 +367,8 @@ async function startHubd(remaining, before, extra) {
     HUBD_WATCH_POLL_MS: "300",
     // Short, so CI on a release head is told within the test (#2707).
     HUBD_RELEASE_POLL_MS: "300",
+    // A host with room for any runner a test asks for (#3466).
+    HUBD_HOST_ROOM: JSON.stringify({ freeBytes: 64 * 1024 ** 3, load1: 0, cpus: 64 }),
     ...extra?.({ root, remote: path.join(dir, "remote.git") }),
   };
   const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
@@ -3057,6 +3059,25 @@ describe("hubd hiring and firing", () => {
     expect(read.stdout).toBe("runners: 1/2 (busy 1, max 2)\n");
     const refused = await hubd.request("business-analyst", "runners", ["1"]);
     expect(refused.allow).toBe(false);
+  }, 20_000);
+
+  it("company runners: refuses runners the host has no room for, and never a lower target (#3466)", async () => {
+    const hubd = await startHubd(5000, undefined, () => ({
+      HUBD_HOST_ROOM: JSON.stringify({ freeBytes: 9 * 1024 ** 3, load1: 1, cpus: 6 }),
+    }));
+    capRunners(hubd, 3);
+    const state = path.join(path.dirname(hubd.root), "runners");
+
+    const one = await hubd.request("manager", "runners", ["1"]);
+    expect(one.code, String(one.stderr)).toBe(0);
+    const two = await hubd.request("manager", "runners", ["2"]);
+    expect(two.code).toBe(1);
+    expect(String(two.stderr)).toBe(
+      "company runners: 2 is more than the host carries now: 9.0 GiB RAM free (8 GiB per runner), 5.0 CPUs free (4 per runner); 1 fit, 0 running\n",
+    );
+    expect(fs.readFileSync(path.join(state, "target"), "utf8")).toBe("1\n");
+    const none = await hubd.request("manager", "runners", ["0"]);
+    expect(none.code).toBe(0);
   }, 20_000);
 
   it("company runners: a cap changed without a restart holds to the lower of company.json's and the supervisor's (#2764)", async () => {

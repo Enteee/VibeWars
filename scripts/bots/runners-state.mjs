@@ -252,6 +252,49 @@ export function writeTarget(dir, n) {
   writePrivate(path.join(dir, TARGET_FILE), `${String(n)}\n`);
 }
 
+/** What a runner added by `company runners <n>` needs free on the host (#3466). */
+export const RUNNER_ROOM_BYTES = 8 * 1024 ** 3;
+export const RUNNER_ROOM_CPUS = 4;
+
+/**
+ * Why the host cannot carry the runners `company runners <n>` would add, or
+ * null when it can (#3466). Runners already alive are paid for in free memory
+ * and load, so only the added ones are counted; lowering the target, or
+ * keeping it, is never refused.
+ *
+ * @param {object} request
+ * @param {number} request.n the target asked for
+ * @param {number} request.target the target now
+ * @param {number} request.alive runners the supervisor reports alive
+ * @param {number} request.freeBytes the host's free memory
+ * @param {number} request.load1 the host's one-minute load average
+ * @param {number} request.cpus the host's available parallelism
+ * @returns {string | null}
+ */
+export function hostRoomRefusal({ n, target, alive, freeBytes, load1, cpus }) {
+  const add = n - alive;
+  if (n <= target || add <= 0) {
+    return null;
+  }
+  const freeCpus = cpus - load1;
+  const byRam = Math.max(0, Math.floor(freeBytes / RUNNER_ROOM_BYTES));
+  const byCpus = Math.max(0, Math.floor(freeCpus / RUNNER_ROOM_CPUS));
+  const fits = alive + Math.min(byRam, byCpus);
+  if (n <= fits) {
+    return null;
+  }
+  const short = [];
+  if (byRam < add) {
+    short.push(
+      `${(freeBytes / 1024 ** 3).toFixed(1)} GiB RAM free (${String(RUNNER_ROOM_BYTES / 1024 ** 3)} GiB per runner)`,
+    );
+  }
+  if (byCpus < add) {
+    short.push(`${freeCpus.toFixed(1)} CPUs free (${String(RUNNER_ROOM_CPUS)} per runner)`);
+  }
+  return `${String(n)} is more than the host carries now: ${short.join(", ")}; ${String(fits)} fit, ${String(alive)} running`;
+}
+
 /**
  * @typedef {object} RunnerRow
  * @property {string} name its GitHub name, `vibewars-<host>-<seq>`
