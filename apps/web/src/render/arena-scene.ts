@@ -301,6 +301,7 @@ import {
   type TutorialProp,
 } from "./tutorial-props.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
+import { BandBake, bakingBands } from "./band-bake.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import {
   LightingPass,
@@ -705,6 +706,8 @@ export class ArenaScene extends Phaser.Scene {
   private readonly decksOverTunnels = new Map<number, Phaser.GameObjects.Graphics[]>();
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
   private readonly staticCull = new StaticGraphicsCull();
+  /** Static map art baked into chunk images (#3522); `undefined` with `?nobake`. */
+  private bandBake: BandBake | undefined;
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
   private readonly liftGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Each lift as its art draws it, in the snapshot's `lifts` order; set when the map is drawn. */
@@ -760,6 +763,8 @@ export class ArenaScene extends Phaser.Scene {
           readonly image: Phaser.GameObjects.Image;
           readonly key: string;
         }[];
+        /** Each stone paving whole, but for its pieces over tunnels: it never changes (#3522). */
+        readonly steady: readonly Phaser.GameObjects.Image[];
         /** The pieces over each tunnel (#3272), by its index: they fade with its cover. */
         readonly overTunnels: ReadonlyMap<number, readonly Phaser.GameObjects.Image[]>;
       }
@@ -1066,6 +1071,7 @@ export class ArenaScene extends Phaser.Scene {
     this.floorGraphics = this.add.graphics().setDepth(FLOOR_DEPTH);
     this.floorLines = this.add.graphics().setDepth(GRAIN_LINES_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
+    this.bandBake = bakingBands(location.search) ? new BandBake(this, this.staticCull) : undefined;
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
       marks: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "marks" })),
@@ -1113,6 +1119,7 @@ export class ArenaScene extends Phaser.Scene {
     // a while, the zones and the fog, drawn every frame, every frame.
     const view = this.cameraView();
     this.staticCull.cull(view);
+    this.bandBake?.update(view);
     this.drawLifts();
     this.drawBreakables();
     this.drawRipples();
@@ -3789,6 +3796,22 @@ export class ArenaScene extends Phaser.Scene {
       ...[...this.decksOverTunnels.values()].flat(),
       ...this.coversDrawn.map(({ graphics }) => graphics),
     ]);
+    // Only what nothing fades, moves or redraws until the next redraw:
+    // whatever is left out stays live (#3522).
+    this.bandBake?.plan(
+      [
+        ...(this.floorGraphics === undefined ? [] : [this.floorGraphics]),
+        ...(this.floorLines === undefined ? [] : [this.floorLines]),
+        g,
+        ...this.structureGraphics.values(),
+        ...(this.outside === undefined ? [] : [...this.outside.inside, ...this.outside.frame]),
+        ...(this.grain?.objects ?? []),
+        ...(this.pavingDrawn?.steady ?? []),
+        ...this.lipGrain,
+      ],
+      next.structure.layerCount,
+      next.zoom,
+    );
   }
 
   /** What the camera shows this frame, in world units. */
@@ -5123,6 +5146,8 @@ export class ArenaScene extends Phaser.Scene {
    * restart, so a lever seen last match is first seen afresh (#3087).
    */
   private shutdown(): void {
+    this.bandBake?.destroy();
+    this.bandBake = undefined;
     this.lightingPass?.destroy();
     this.lightingPass = undefined;
     this.dropOutside();
@@ -5172,6 +5197,7 @@ export class ArenaScene extends Phaser.Scene {
       tunnelOpenings(structure, tunnel).map((outline) => ({ layer: structure.ground, outline })),
     );
     const overTunnels = new Map<number, Phaser.GameObjects.Image[]>();
+    const steady: Phaser.GameObjects.Image[] = [];
     const painted = pavings.flatMap((paving, at) => {
       const drawing = drawings[at];
       const size = sizes[at];
@@ -5215,6 +5241,7 @@ export class ArenaScene extends Phaser.Scene {
       const whole = image(size.width, size.height, (context) => {
         paintPaving(context, drawing, scale, pieces, cut);
       });
+      steady.push(whole.image);
       return [
         whole,
         ...pieces.map((piece) => {
@@ -5232,6 +5259,7 @@ export class ArenaScene extends Phaser.Scene {
       paving: structure.paving,
       colours,
       painted: [...painted, ...lava],
+      steady,
       overTunnels,
     };
   }

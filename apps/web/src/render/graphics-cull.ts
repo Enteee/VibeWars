@@ -340,6 +340,37 @@ export class StaticGraphicsCull {
     this.cut = undefined;
   }
 
+  /**
+   * What `graphics` draws over, draw by draw (#3522); `undefined` when it
+   * was not captured or its list could not be planned, so anywhere.
+   */
+  public covers(graphics: Phaser.GameObjects.Graphics): readonly Box[] | undefined {
+    const plan = this.plans.get(graphics);
+    if (plan === undefined || (plan.boxes.length === 0 && plan.commands.length > 0)) {
+      return undefined;
+    }
+    return plan.boxes.filter((box) => box !== undefined);
+  }
+
+  /**
+   * `graphics` cut to `box` for one draw into a texture (#3522), whatever
+   * the camera's cut; call what this returns to put the camera's back.
+   */
+  public cutTo(graphics: readonly Phaser.GameObjects.Graphics[], box: Box): () => void {
+    const before = graphics.map((g) => g.commandBuffer);
+    for (const g of graphics) {
+      const plan = this.plans.get(g);
+      if (plan !== undefined) {
+        g.commandBuffer = culledCommands(plan, box);
+      }
+    }
+    return () => {
+      graphics.forEach((g, at) => {
+        g.commandBuffer = before[at] ?? g.commandBuffer;
+      });
+    };
+  }
+
   /** Cut every captured graphics to `view` and its reach, unless the last cut still covers it. */
   public cull(view: Box): void {
     if (this.cut !== undefined && contains(this.cut, grown(view, SLACK))) {

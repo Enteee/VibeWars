@@ -45,6 +45,8 @@
  *   BENCH_PROFILE=<mapId> record a CPU profile of that map's walk to
  *                      `bench-<mapId>.cpuprofile` and print its 15
  *                      functions of most self time (#3499). Off in CI.
+ *   BENCH_NOBAKE=1     draw every map live, unbaked (#3522): the before
+ *                      of a baking change, on the same build.
  *
  * The menu background never draws faster than 30 fps (#3119): a map
  * under that cap measures as the cap. Software GL is far over it.
@@ -346,6 +348,8 @@ const FLAT_BASELINE = "jungle-ruins";
 const FOLLOW_SECONDS = Number(process.env.BENCH_FOLLOW_SECONDS ?? 12);
 /** `--follow`'s map to take a CPU profile of while it walks (#3499), if any. */
 const PROFILE = process.env.BENCH_PROFILE;
+/** `BENCH_NOBAKE=1`: every page under `?nobake`, the map drawn live as before #3522, to compare. */
+const NOBAKE = process.env.BENCH_NOBAKE === "1";
 /** One step of the walk: the pointer moves, and every `CLICK_EVERY`th step it clicks. */
 const STEP_MS = 50;
 const CLICK_EVERY = 6;
@@ -611,7 +615,7 @@ try {
   const mapWindow = async (/** @type {string} */ mapId, /** @type {number} */ seconds) => {
     const page = await browser.newPage({ viewport });
     try {
-      await page.goto(url);
+      await page.goto(NOBAKE ? `${url}?nobake` : url);
       return await measure(page, mapId, seconds);
     } finally {
       const session = await page.context().newCDPSession(page);
@@ -692,7 +696,7 @@ try {
   for (const mapId of noisy ? [] : [...mapsToMeasure(), FLAT_BASELINE]) {
     const match = await browser.newPage({ viewport });
     try {
-      await match.goto(`${url}?frametiming`);
+      await match.goto(`${url}?frametiming${NOBAKE ? "&nobake" : ""}`);
       const run = await follow(match, mapId);
       /** @type {(times: number[]) => number} */
       const sum = (times) => times.reduce((total, time) => total + time, 0);
