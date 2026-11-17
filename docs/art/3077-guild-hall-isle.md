@@ -44,7 +44,7 @@ with two guild halls, piers, a beach, a gatehouse and rooftops, the sea as the o
 ## Objectives (counts as today)
 
 Guild lord 2: (1700,1700) and its mirror (3500,1700), inside each team's own hall (L1). Guards 16:
-eight round each lord in its hall, ten of them inside the hall floor and two at each corner
+eight round each lord, all inside that team's hall floor
 (see the plan). Flag stand 1: the mound at the centre (2600,1700, L1). Flag spawn 2: (1500,880)
 and (3700,880), one per team on its north beach. Resurrection shrines 2: (500,1200) and (4700,1200)
 behind each team's spawn.
