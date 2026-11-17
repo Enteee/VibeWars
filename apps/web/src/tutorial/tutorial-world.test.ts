@@ -6,7 +6,9 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { mapStructure, teamArenaMapIds } from "../net/maps.js";
+import { toRenderableWall } from "../match-view.js";
+import { hostMap, mapStructure, teamArenaMapIds } from "../net/maps.js";
+import type { RenderableWall } from "../render/arena-snapshot.js";
 import { pickSurface } from "../render/layer-surfaces.js";
 import { ELEVATION_STEP } from "../render/render-order.js";
 import { splashGraph, splashSpawn } from "../ui/splash-fight.js";
@@ -38,6 +40,15 @@ const MARK_SECONDS = 30;
 const MARK_CLEAR = 150;
 /** How long the front plays before its foes must have left their spawn for the centre. */
 const FRONT_SECONDS = 60;
+
+/** `mapId`'s walls, as the scene draws them. */
+function wallsOf(mapId: string): readonly RenderableWall[] {
+  const map = hostMap(mapId);
+  const { wallLayers } = mapStructure(mapId);
+  return (map?.descriptor.walls ?? []).map((wall, at) =>
+    toRenderableWall(wall, wallLayers[at] ?? 0),
+  );
+}
 
 describe("tutorialWorld (#3221)", () => {
   it("gives the bots the same builds for the same seed, so a seed is one world", () => {
@@ -134,14 +145,15 @@ describe("tutorialWorld (#3221)", () => {
         VIEWPORT,
       );
       const { structure } = mapStructure(mapId);
+      const walls = wallsOf(mapId);
       const self = simulation.get(SELF_ID);
       if (self === undefined) {
         throw new Error("no player in the tutorial");
       }
-      expect(inOpenView(structure, self.position)).toBe(true);
-      expect(inOpenView(structure, mark)).toBe(true);
+      expect(inOpenView(structure, walls, self.position)).toBe(true);
+      expect(inOpenView(structure, walls, mark)).toBe(true);
       // QA on Canyon (#3221): the click named a terrace's top, not the mark.
-      expect(pickSurface(structure, mark, false)).toEqual({ layer: ground, point: mark });
+      expect(pickSurface(structure, walls, mark, false)).toEqual({ layer: ground, point: mark });
       expect(createPathFinder(splashGraph(map)).find(self.position, mark)).toBeDefined();
     },
   );
@@ -157,16 +169,17 @@ describe("tutorialWorld (#3221)", () => {
         VIEWPORT,
       );
       const { structure } = mapStructure(mapId);
+      const walls = wallsOf(mapId);
       const self = simulation.get(SELF_ID);
       if (self === undefined) {
         throw new Error("no player in the tutorial");
       }
       expect(teleporter.y).toBeLessThan(self.position.y);
-      expect(inOpenView(structure, teleporter)).toBe(true);
+      expect(inOpenView(structure, walls, teleporter)).toBe(true);
       // A click on the pad names the ground, and a point the walk there
       // counts as on the pad: by a ramp's foot that is not the pad's own
       // point (Canyon, 8v8).
-      const picked = pickSurface(structure, teleporter, false);
+      const picked = pickSurface(structure, walls, teleporter, false);
       expect(picked.layer).toBe(ground);
       expect(
         Math.hypot(picked.point.x - teleporter.x, picked.point.y - teleporter.y),
@@ -200,7 +213,8 @@ describe("tutorialWorld (#3221)", () => {
   // on layer 1; its pad stood on it, drawn under the arch.
   it("counts no spot on a ramp as open", () => {
     const { structure } = mapStructure("arena-canyon");
-    expect(inOpenView(structure, { x: 905, y: 750 })).toBe(false);
+    const walls = wallsOf("arena-canyon");
+    expect(inOpenView(structure, walls, { x: 905, y: 750 })).toBe(false);
   });
 
   // QA (#3222): on canyon the pad stood on the arch's ramp, drawn under the
@@ -214,7 +228,8 @@ describe("tutorialWorld (#3221)", () => {
       VIEWPORT,
     );
     const { structure } = mapStructure(mapId);
-    const picked = pickSurface(structure, teleporter, false);
+    const walls = wallsOf(mapId);
+    const picked = pickSurface(structure, walls, teleporter, false);
     simulation.walkTo(SELF_ID, picked.point, picked.layer);
     let reached = false;
     for (let t = 0; t < 20 && !reached; t += TICK) {
@@ -279,12 +294,19 @@ describe("a walk along Crossroads' cellar-west (#3234)", () => {
   it("takes a plain click from in the tunnel 300 further along it", () => {
     const { simulation, ground } = tutorialWorld("arena-crossroads", 8, "tunnel", "monk", VIEWPORT);
     const { structure } = mapStructure("arena-crossroads");
+    const walls = wallsOf("arena-crossroads");
     // Into it first: Alt over its cover, from the ground.
-    const into = pickSurface(structure, { x: 1815, y: 1350 + ELEVATION_STEP }, true, ground);
+    const into = pickSurface(structure, walls, { x: 1815, y: 1350 + ELEVATION_STEP }, true, ground);
     expect(into.layer).toBe(ground - 1);
     simulation.walkTo(SELF_ID, into.point, into.layer);
     expect(reaches(simulation, into.point, ground - 1, 60)).toBe(true);
-    const along = pickSurface(structure, { x: 1815, y: 1650 + ELEVATION_STEP }, false, ground - 1);
+    const along = pickSurface(
+      structure,
+      walls,
+      { x: 1815, y: 1650 + ELEVATION_STEP },
+      false,
+      ground - 1,
+    );
     expect(along).toEqual({ layer: ground - 1, point: { x: 1815, y: 1650 } });
     simulation.walkTo(SELF_ID, along.point, along.layer);
     expect(reaches(simulation, along.point, ground - 1, 15)).toBe(true);

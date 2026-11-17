@@ -72,7 +72,13 @@ export function primaryClickIntents(
   if (hit !== undefined) {
     return [{ kind: "target", targetSessionId: hit.id }, ...attackClickIntents(snapshot, hit.id)];
   }
-  const { layer, point } = pickSurface(arena.structure, world, below, selfLayer(arena));
+  const { layer, point } = pickSurface(
+    arena.structure,
+    arena.walls,
+    world,
+    below,
+    selfLayer(arena),
+  );
   return [{ kind: "walk-to", x: point.x, y: point.y, layer }];
 }
 

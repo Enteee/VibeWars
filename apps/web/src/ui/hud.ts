@@ -770,8 +770,8 @@ export function leverName(targets: readonly LinkedTarget[]): string {
 /**
  * The target frame's name for a flag or the stand selected (#1225),
  * which are no body, the stand with its holder (#1226), a relic
- * (#1374), a switch (#3025) or a breakable wall (#3031); `undefined`
- * for any other id.
+ * (#1374), a switch (#3025) or a breakable wall (#3031) still standing
+ * (#3476); `undefined` for any other id.
  */
 export function objectTargetName(
   targetId: string | undefined,
@@ -781,6 +781,8 @@ export function objectTargetName(
   beacon = false,
   /** The map's levers, which say what they work (#3236). */
   switches: readonly RenderableSwitch[] = [],
+  /** The map's breakable walls: a fallen one is no target. */
+  breakables: readonly RenderableBreakable[] = [],
 ): string | undefined {
   if (targetId === FLAG_STAND_ID) {
     if (stand?.holder === undefined) {
@@ -795,7 +797,7 @@ export function objectTargetName(
     return leverName(switches.find((lever) => lever.id === targetId)?.targets ?? []);
   }
   if (targetId !== undefined && breakableIdOf(targetId) !== undefined) {
-    return t("hud.breakableWall");
+    return targetWall(targetId, breakables) === undefined ? undefined : t("hud.breakableWall");
   }
   const relic = targetId === undefined ? undefined : relicTeamOf(targetId);
   if (relic !== undefined) {
@@ -1503,7 +1505,8 @@ export function targetHealthPercent(target: PlayerSnapshot): number {
 
 /**
  * The breakable wall `targetId` names, among the map's (#3317); `undefined`
- * for any other target, and for a wall the map does not have.
+ * for any other target, for a wall the map does not have, and for one that
+ * has fallen (#3476): the server may still name it, but there is nothing left.
  */
 export function targetWall(
   targetId: string | undefined,
@@ -1511,7 +1514,7 @@ export function targetWall(
 ): RenderableBreakable | undefined {
   return targetId === undefined || breakableIdOf(targetId) === undefined
     ? undefined
-    : breakables.find(({ id }) => id === targetId);
+    : breakables.find(({ id, health }) => id === targetId && health > 0);
 }
 
 /**
@@ -2003,7 +2006,7 @@ function renderTarget(
     (target === undefined ? undefined : bodyName(target)) ??
     (self === undefined
       ? undefined
-      : objectTargetName(self.targetSessionId, self.team, stand, beacon, switches));
+      : objectTargetName(self.targetSessionId, self.team, stand, beacon, switches, breakables));
   setHidden(hud.targetPanel, name === undefined && !hud.showsNoTarget);
   setText(hud.targetText, name ?? t("hud.noTarget"));
   setHidden(hud.targetBot, target?.bot !== true);
