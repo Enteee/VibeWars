@@ -268,6 +268,18 @@ function tutorialFirstStation(): number {
   return Number.isInteger(station) && station > 1 ? station - 1 : 0;
 }
 
+/**
+ * Whether to show the HUD's end of a match from a fixed summary (#3563):
+ * the URL's `?summary-fixture`, in an e2e build only; never in a
+ * player's, whose build folds the check and the fixture away.
+ */
+function summaryFixtureAsked(): boolean {
+  if (import.meta.env.VITE_VIBEWARS_SUMMARY_FIXTURE !== "on") {
+    return false;
+  }
+  return new URLSearchParams(window.location.search).has("summary-fixture");
+}
+
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
   if (element === null) {
@@ -3324,7 +3336,13 @@ async function main(): Promise<void> {
     });
   };
   let splash: Splash | undefined;
-  if (tutorialFirstStation() > 0) {
+  if (summaryFixtureAsked()) {
+    // An e2e build's fixed end of a match (#3563), over no arena.
+    showViewport(true);
+    void import("./ui/summary-fixture.js").then(({ mountSummaryFixture }) => {
+      mountSummaryFixture(viewport);
+    });
+  } else if (tutorialFirstStation() > 0) {
     // An e2e build's seeded start (#3383) goes straight to its station,
     // on the pinned menu map: no splash, no offer, no menu fight.
     const { mapId, teamSize } = pinnedChoice(window.location.search);
