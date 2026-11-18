@@ -91,7 +91,6 @@ try {
   // A key starts it, and the fight runs until the name arrives.
   await page.keyboard.press("Space");
   await sleep(Number(options.wait) * 1000);
-  await page.keyboard.press("Space");
   await splash.locator(".splash-prompt").waitFor({ timeout: 30_000 });
   // The name and its rule stay; "Press any key" does not belong on a card.
   await page.addStyleTag({ content: ".splash-prompt{visibility:hidden!important}" });
