@@ -13,6 +13,12 @@ outline, layers and structures; the objective table says what each file puts whe
 one piece turned by 120° three times (team 1 north, team 2 south-east, team 3 south-west), so every
 walk below is the same for all three teams, and the numbers are quoted once.
 
+**As built (#3442): rotations snapped to axes.** The schema has axis-aligned rects only for
+tunnels, pits and stairs, and stairs climb n/e/s/w, so the built crypts are L-shaped runs of
+equal length, the stairs face the nearest cardinal and the dais has two stairs on its east and
+west faces; the turn is not exact, and fairness is shown by walks within 10 % across the teams
+(`tools/map-balance.test.ts`) instead.
+
 ## Rules the study holds
 
 - **Bounds** 5000×4400 = 22.0 M u² (long side 5000 > 4800, short side 4400 ≥ 1800, above the 12.6 M u²
