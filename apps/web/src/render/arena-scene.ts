@@ -301,7 +301,7 @@ import {
   type TutorialProp,
 } from "./tutorial-props.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
-import { mapLayerChanged, type MapLayer } from "./map-layer.js";
+import { layerZoom, mapLayerChanged, type MapLayer } from "./map-layer.js";
 import {
   LightingPass,
   litOverhangColours,
@@ -652,6 +652,8 @@ export class ArenaScene extends Phaser.Scene {
   private outside: OutsideLand | undefined;
   /** What `mapGraphics` shows; `undefined` until it is first drawn. */
   private drawnMap: MapLayer | undefined;
+  /** The camera's zoom at the last `drawMap`, to tell a settled zoom from an easing one (#3545). */
+  private lastViewZoom: number | undefined;
   /** What hides a body on the drawn map (#2831). */
   private mapOccluders: readonly Occluder[] = [];
   /** `mapOccluders` as the local body sees them: its own tunnel cut away (#3234). */
@@ -3553,14 +3555,18 @@ export class ArenaScene extends Phaser.Scene {
   /**
    * The grid and the walls, drawn again only when the bounds, the wall
    * list or the zoom change (#1353): their lines are 1 CSS px at any zoom.
+   * Mid-ease the zoom is held, as `layerZoom` says (#3545).
    */
   private drawMap(): void {
     const g = this.mapGraphics;
+    const viewZoom = this.view?.zoom ?? 1;
+    const zoom = layerZoom(this.drawnMap?.zoom, viewZoom, this.lastViewZoom);
+    this.lastViewZoom = viewZoom;
     const next: MapLayer = {
       ...this.arena,
       walls: this.snapshot.walls,
       structure: this.snapshot.structure,
-      zoom: this.view?.zoom ?? 1,
+      zoom,
       lighting: this.activeLighting(),
       lightShadows: this.lightingPass?.shadows === true,
     };
