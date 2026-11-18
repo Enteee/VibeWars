@@ -554,13 +554,25 @@
   ],
   "switches": [
     {
-      "id": "north-trench-lever",
+      "id": "north-west-trench-lever",
       "layer": 2,
       "position": { "x": 1550, "y": 640 },
       "targets": ["north-west-trench-gate", "north-east-trench-gate"]
     },
     {
-      "id": "south-trench-lever",
+      "id": "north-east-trench-lever",
+      "layer": 2,
+      "position": { "x": 3850, "y": 640 },
+      "targets": ["north-west-trench-gate", "north-east-trench-gate"]
+    },
+    {
+      "id": "south-west-trench-lever",
+      "layer": 2,
+      "position": { "x": 1550, "y": 2160 },
+      "targets": ["south-west-trench-gate", "south-east-trench-gate"]
+    },
+    {
+      "id": "south-east-trench-lever",
       "layer": 2,
       "position": { "x": 3850, "y": 2160 },
       "targets": ["south-west-trench-gate", "south-east-trench-gate"]
@@ -687,7 +699,7 @@
         "flicker": 0.35
       },
       {
-        "id": "torch-north-trench-lever",
+        "id": "torch-north-west-trench-lever",
         "position": { "x": 1550, "y": 575 },
         "layer": 2,
         "radius": 130,
@@ -696,7 +708,25 @@
         "flicker": 0.2
       },
       {
-        "id": "torch-south-trench-lever",
+        "id": "torch-north-east-trench-lever",
+        "position": { "x": 3850, "y": 575 },
+        "layer": 2,
+        "radius": 130,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-south-west-trench-lever",
+        "position": { "x": 1550, "y": 2225 },
+        "layer": 2,
+        "radius": 130,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-south-east-trench-lever",
         "position": { "x": 3850, "y": 2225 },
         "layer": 2,
         "radius": 130,

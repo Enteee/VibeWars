@@ -521,6 +521,19 @@ describe("Scarred Earth (#3440)", () => {
     }
   });
 
+  it("mirrors every lever, the twin opening the same trench's gates", () => {
+    const levers = earth.switches ?? [];
+    expect(levers).toHaveLength(4);
+    for (const lever of levers) {
+      const image = mirrored(lever.position);
+      const twin = levers.find(
+        ({ position }) => Math.abs(position.x - image.x) < 1 && Math.abs(position.y - image.y) < 1,
+      );
+      expect(twin?.layer, lever.id).toBe(lever.layer);
+      expect(twin?.targets, lever.id).toEqual(lever.targets);
+    }
+  });
+
   it("puts a crater beside every point's hulk, ten craters in all, each with a slope out", () => {
     expect(craters).toHaveLength(10);
     for (const crater of craters) {
