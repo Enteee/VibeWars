@@ -5,6 +5,7 @@ import {
   levelAt,
   nextBoundary,
   nextCycle,
+  planSwitch,
   scheduleLevel,
   switchLanding,
 } from "./transitions.js";
@@ -50,18 +51,56 @@ describe("switchLanding (#2530)", () => {
 });
 
 describe("fadeGain", () => {
-  it("fades linearly across the crossfade, and holds outside it", () => {
+  it("fades across the crossfade, and holds outside it", () => {
     expect(fadeGain(7, 8, 2, "in")).toBe(0);
-    expect(fadeGain(9, 8, 2, "in")).toBe(0.5);
+    expect(fadeGain(9, 8, 2, "in")).toBeCloseTo(Math.SQRT1_2);
     expect(fadeGain(11, 8, 2, "in")).toBe(1);
     expect(fadeGain(7, 8, 2, "out")).toBe(1);
-    expect(fadeGain(9, 8, 2, "out")).toBe(0.5);
-    expect(fadeGain(10, 8, 2, "out")).toBe(0);
+    expect(fadeGain(9, 8, 2, "out")).toBeCloseTo(Math.SQRT1_2);
+    expect(fadeGain(10, 8, 2, "out")).toBeCloseTo(0);
+  });
+
+  it("is equal power: no dip in the middle (#3530)", () => {
+    for (const progress of [0, 0.25, 0.5, 0.75, 1]) {
+      const cycle = 8 + progress * 2;
+      const power = fadeGain(cycle, 8, 2, "in") ** 2 + fadeGain(cycle, 8, 2, "out") ** 2;
+      expect(power).toBeCloseTo(1);
+    }
   });
 
   it("switches at once with no fade", () => {
     expect(fadeGain(8, 8, 0, "in")).toBe(1);
-    expect(fadeGain(8, 8, 0, "out")).toBe(0);
+    expect(fadeGain(8, 8, 0, "out")).toBeCloseTo(0);
+  });
+});
+
+describe("planSwitch", () => {
+  const planned = { playing: "a", switching: { next: "b", from: 8 } };
+
+  it("starts a crossfade when nothing is planned, and keeps the track already playing", () => {
+    expect(planSwitch({ playing: "a" }, "b", 3)).toBe("start");
+    expect(planSwitch({ playing: "a" }, "a", 3)).toBe("keep");
+  });
+
+  it("replaces a switch that has not started, so the replaced track never sounds", () => {
+    expect(planSwitch(planned, "c", 7.5)).toBe("replace");
+    expect(planSwitch(planned, "b", 7.5)).toBe("replace");
+  });
+
+  it("cancels a switch that has not started when the playing track is asked for again", () => {
+    expect(planSwitch(planned, "a", 7.5)).toBe("cancel");
+  });
+
+  it("holds a change during the fade, the latest winning, until the switch lands", () => {
+    expect(planSwitch(planned, "c", 8)).toBe("hold");
+    expect(planSwitch(planned, "d", 9.5)).toBe("hold");
+    expect(planSwitch(planned, "a", 9.5)).toBe("hold");
+    // Back to the fading switch's target: nothing held any more.
+    expect(planSwitch(planned, "b", 9.5)).toBe("keep");
+  });
+
+  it("starts the held change from the landed track", () => {
+    expect(planSwitch({ playing: "b" }, "e", 10)).toBe("start");
   });
 });
 
