@@ -754,6 +754,7 @@ export interface BiomeMaterials {
   readonly paving: Record<StonePavingLook, PavingLookColours>;
   readonly overhang: Record<OverhangLook, OverhangLookColours>;
   readonly dressing: GroundDressingTones;
+  readonly breakable: BreakableLook;
 }
 
 function lookColours<
@@ -844,6 +845,7 @@ function biomeMaterials(biome: Biome, tones: BiomeTones, tiled: boolean): BiomeM
     paving: pavingColours(tones),
     overhang: overhangColours(tones),
     dressing: dressingTones(tones, ...GROUND_MARKS[biome](tones)),
+    breakable: breakableLookOf(biome, tones),
   };
 }
 
@@ -907,10 +909,9 @@ export function materialsOf(map: MapLook): BiomeMaterials {
  * Each biome's breakable wall (#3370): a weaker patch of its own walls,
  * tinted from its tones. Basalt with embers in its cracks, mud brick with
  * straw-pale mortar, blue-white ice that cracks white, mossy field stone;
- * the chiselled stone elsewhere.
+ * the chiselled stone elsewhere, in its rock.
  */
-function breakableLookOf(biome: Biome): BreakableLook {
-  const tones = BIOME_TONES[biome];
+function breakableLookOf(biome: Biome, tones: BiomeTones): BreakableLook {
   switch (biome) {
     case "volcanic":
       return {
@@ -980,29 +981,19 @@ function breakableLookOf(biome: Biome): BreakableLook {
         shadow: BREAKABLE_WALL_LOOK.shadow,
       };
     case "hall":
-    case "heights":
-      return BREAKABLE_WALL_LOOK;
+    case "heights": {
+      const { courses, glow, moss, ...colours } = BREAKABLE_WALL_LOOK;
+      return { courses, glow, moss, ...tintAll(colours, () => "rock", tones) };
+    }
   }
 }
 
-const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
-  hall: breakableLookOf("hall"),
-  heights: breakableLookOf("heights"),
-  wilds: breakableLookOf("wilds"),
-  desert: breakableLookOf("desert"),
-  volcanic: breakableLookOf("volcanic"),
-  snow: breakableLookOf("snow"),
-  marsh: breakableLookOf("marsh"),
-  jungle: breakableLookOf("jungle"),
-  coast: breakableLookOf("coast"),
-};
-
-/** The material a map's breakable walls are (#3370): a map of one layer's are stone whatever its biome. */
-export function breakableLook(map: {
-  readonly layerCount: number;
-  readonly biome: Biome;
-}): BreakableLook {
-  return map.layerCount > 1 ? BREAKABLE_LOOK[map.biome] : BREAKABLE_WALL_LOOK;
+/**
+ * The material a map's breakable walls are (#3370), under its Ascent act's
+ * rock (#3618): a map of one layer's are stone whatever its biome.
+ */
+export function breakableLook(map: MapLook & { readonly layerCount: number }): BreakableLook {
+  return map.layerCount > 1 ? materialsOf(map).breakable : BREAKABLE_WALL_LOOK;
 }
 
 /** Paving on a map of one layer (#3210): laid in the flat palette's tones, on the scene's background. */

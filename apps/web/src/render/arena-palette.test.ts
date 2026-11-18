@@ -238,7 +238,7 @@ describe("breakableLook (#3370)", () => {
   it("makes each listed biome's breakable wall its own material, not the stone", () => {
     const looks = (
       ["volcanic", "desert", "snow", "wilds", "marsh", "jungle", "coast"] as const
-    ).map((biome) => breakableLook({ layerCount: 2, biome }));
+    ).map((biome) => breakableLook({ layerCount: 2, biome, ascentAct: null }));
     for (const look of looks) {
       expect(look).not.toEqual(BREAKABLE_WALL_LOOK);
     }
@@ -255,17 +255,37 @@ describe("breakableLook (#3370)", () => {
   });
 
   it("glows only in the volcanic, and keeps the stone in the hall and heights", () => {
-    expect(breakableLook({ layerCount: 2, biome: "volcanic" }).glow).toBeDefined();
+    expect(breakableLook({ layerCount: 2, biome: "volcanic", ascentAct: null }).glow).toBeDefined();
     for (const biome of ["desert", "snow", "wilds", "hall"] as const) {
-      expect(breakableLook({ layerCount: 2, biome }).glow).toBeUndefined();
+      expect(breakableLook({ layerCount: 2, biome, ascentAct: null }).glow).toBeUndefined();
     }
-    expect(breakableLook({ layerCount: 2, biome: "hall" })).toBe(BREAKABLE_WALL_LOOK);
-    expect(breakableLook({ layerCount: 2, biome: "heights" })).toBe(BREAKABLE_WALL_LOOK);
+    expect(breakableLook({ layerCount: 2, biome: "hall", ascentAct: null })).toEqual(
+      BREAKABLE_WALL_LOOK,
+    );
+    expect(breakableLook({ layerCount: 2, biome: "heights", ascentAct: null })).toEqual(
+      BREAKABLE_WALL_LOOK,
+    );
+  });
+
+  it("is a patch of the act's rock on an Ascent map (#3618)", () => {
+    for (const biome of ["hall", "marsh"] as const) {
+      const look = breakableLook({ layerCount: 2, biome, ascentAct: "heavenly" });
+      expect(look, biome).toEqual(materialsOf({ biome, ascentAct: "heavenly" }).breakable);
+      expect(look.face, biome).not.toBe(
+        breakableLook({ layerCount: 2, biome, ascentAct: null }).face,
+      );
+    }
+    const hall = breakableLook({ layerCount: 2, biome: "hall", ascentAct: "heavenly" });
+    // The hall's stone, tinted from its rock to the act's pale one.
+    const sum = (colour: number): number =>
+      ((colour >> 16) & 0xff) + ((colour >> 8) & 0xff) + (colour & 0xff);
+    expect(sum(hall.face)).toBeGreaterThan(sum(BREAKABLE_WALL_LOOK.face));
+    expect(hall.courses).toBe(BREAKABLE_WALL_LOOK.courses);
   });
 
   it("is the stone on a map of one layer, whatever its biome", () => {
     for (const biome of BIOMES) {
-      expect(breakableLook({ layerCount: 1, biome })).toBe(BREAKABLE_WALL_LOOK);
+      expect(breakableLook({ layerCount: 1, biome, ascentAct: null })).toBe(BREAKABLE_WALL_LOOK);
     }
   });
 });
