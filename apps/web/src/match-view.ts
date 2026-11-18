@@ -9,6 +9,7 @@ import type {
   MapDescriptor,
   WallDescriptor,
   WireDeck,
+  WireMatchChart,
 } from "@vibewars/game-protocol";
 import type {
   CombatMessage,
@@ -266,6 +267,8 @@ export interface EndLine {
 export interface MatchView {
   /** The match summary's tables once the host has sent them (#1057), for the queue screen. */
   summary(): readonly SummaryTable[] | undefined;
+  /** The match's charts once the host has sent them all (#3564), for the queue screen. */
+  chart(): WireMatchChart | undefined;
   /** Shows `line` over the result, or none. */
   setEndLine(line: EndLine | undefined): void;
   /** What the camera shows (#3222), or nothing before its first frame or without a canvas. */
@@ -1330,6 +1333,7 @@ export async function startMatchView(
 
   return {
     summary: () => summary?.tables,
+    chart: () => lastMatch?.chart,
     camera: () => camera?.look(),
     setEndLine(line) {
       if (line === undefined) {

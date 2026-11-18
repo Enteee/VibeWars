@@ -233,6 +233,7 @@ import {
   teamSizeOf,
   type LobbyMode,
   type QueueMode,
+  type WireMatchChart,
 } from "@vibewars/game-protocol";
 import { type PlayerBuild, zaishenMoraleBoost } from "@vibewars/game-core";
 
@@ -681,6 +682,8 @@ async function main(): Promise<void> {
   let endedOutcome: string | undefined;
   /** The ended view's match summary (#1057), while it is up. */
   let endedSummary: readonly SummaryTable[] | undefined;
+  /** The ended view's charts (#3564), while it is up. */
+  let endedChart: WireMatchChart | undefined;
   /**
    * *Stay together* after a queued win (#882), while it is offered: the
    * lobby the vote goes through, the hosted lobby when this tab hosts it,
@@ -752,6 +755,7 @@ async function main(): Promise<void> {
     closeStay();
     endedOutcome = undefined;
     endedSummary = undefined;
+    endedChart = undefined;
     queue?.place.leave();
     queue?.screen?.dispose();
     queue = undefined;
@@ -1927,6 +1931,7 @@ async function main(): Promise<void> {
       outcome: endedOutcome,
       streak: queueStreak,
       summary: endedSummary,
+      chart: endedChart,
       ...(offer === undefined ? {} : { stay: offer }),
     });
   };
@@ -2751,6 +2756,7 @@ async function main(): Promise<void> {
     hallWatch.resume();
     // Read before the view goes: the table moves with the player (#1057).
     const summary = leaving.summary();
+    const chart = leaving.chart();
     await leaving.dispose();
     enteringMatch = false;
     const leavingLobby = lobby;
@@ -2788,6 +2794,7 @@ async function main(): Promise<void> {
     music().menu("main");
     endedOutcome = outcome;
     endedSummary = summary;
+    endedChart = chart;
     idleScreen = true;
     if (offered && leavingLobby !== undefined) {
       offerStay(leavingLobby, ending);

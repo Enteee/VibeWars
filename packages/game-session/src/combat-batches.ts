@@ -1,4 +1,12 @@
-import type { WireCombat, WireCombatBatch } from "@vibewars/game-protocol";
+import {
+  MAX_CHART_PARTS,
+  type WireChartEvent,
+  type WireChartSeries,
+  type WireCombat,
+  type WireCombatBatch,
+  type WireMatchChart,
+  type WireMatchChartPart,
+} from "@vibewars/game-protocol";
 
 import { messageBytes } from "./transport.js";
 
@@ -35,4 +43,47 @@ export function packCombat(
     batches.push(batch);
   }
   return batches;
+}
+
+/**
+ * A match's charts cut into the parts the host sends as `"match-chart"`
+ * (#3564), each at most `maxBytes` as JSON, as `packCombat` cuts a tick's
+ * combat: series first, then events, in order. Always at least one part.
+ */
+export function packMatchChart(chart: WireMatchChart, maxBytes: number): WireMatchChartPart[] {
+  const { period, dropped } = chart;
+  const envelope = messageBytes({
+    period,
+    parts: MAX_CHART_PARTS,
+    players: [],
+    events: [],
+    dropped,
+  });
+  const groups: { players: WireChartSeries[]; events: WireChartEvent[] }[] = [];
+  let group = { players: [] as WireChartSeries[], events: [] as WireChartEvent[] };
+  let bytes = envelope;
+  const add = (size: number): void => {
+    if (group.players.length + group.events.length > 0 && bytes + 1 + size > maxBytes) {
+      groups.push(group);
+      group = { players: [], events: [] };
+      bytes = envelope;
+    }
+    bytes += 1 + size;
+  };
+  for (const series of chart.players) {
+    add(messageBytes(series));
+    group.players.push(series);
+  }
+  for (const event of chart.events) {
+    add(messageBytes(event));
+    group.events.push(event);
+  }
+  groups.push(group);
+  return groups.map(({ players, events }) => ({
+    period,
+    parts: groups.length,
+    players,
+    events,
+    dropped,
+  }));
 }

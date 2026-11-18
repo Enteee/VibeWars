@@ -189,6 +189,8 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
         const snapshot: ObservedSnapshot = {
           ...observedSnapshot(latest.wire, latest.players),
           summary: ended?.summary,
+          // A watcher is sent no charts (#3564).
+          chart: undefined,
         };
         // An `ended` may land before the snapshot that says so.
         return ended === undefined

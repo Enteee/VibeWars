@@ -433,6 +433,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     decks: [],
     lifts: [],
     summary: undefined,
+    chart: undefined,
   };
 }
 

@@ -884,7 +884,8 @@ export function observedSnapshot(
       capturer,
       progress,
     })),
-    // Only the host's `ended` carries it.
+    // Only the host's `ended` carries it, and `match-chart` after it.
     summary: undefined,
+    chart: undefined,
   };
 }
