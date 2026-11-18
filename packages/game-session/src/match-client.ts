@@ -13,6 +13,7 @@ import {
   parseWireMatchReplayPart,
   parseWireTraps,
   parseWireRespawns,
+  parseWireCapes,
   parseWireCombatBatch,
   parseWireEnded,
   parseWireMatchChartPart,
@@ -34,6 +35,7 @@ import {
   type PeerWelcome,
   type RechargeMessage,
   type WireCalls,
+  type WireCape,
   type WireStroke,
   type WireMatchReplayPart,
   type WireTraps,
@@ -222,6 +224,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let traps: WireTraps["traps"] = [];
   /** When each of your team's dead comes back, as last sent (#3367), by id. */
   let respawns = new Map<string, number | null>();
+  /** Each seat's cape as last sent (#3554), by id. */
+  let capes = new Map<string, WireCape>();
   let lost = false;
   /** When the host's peer went, by `Date.now`, while waiting for it back. */
   let droppedAt: number | undefined;
@@ -312,7 +316,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         return;
       }
       // One naming a status this build has no index for is malformed (#632).
-      const players = playerSnapshots(snapshot);
+      const players = playerSnapshots(snapshot, capes);
       if (players !== undefined) {
         latest = { wire: snapshot, players };
       }
@@ -362,6 +366,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   });
   fromHost("respawns", parseWireRespawns, (message) => {
     respawns = new Map(message.respawns.map(({ id, respawnIn }) => [id, respawnIn]));
+  });
+  fromHost("capes", parseWireCapes, (message) => {
+    capes = new Map(message.capes.map(({ id, cape }) => [id, cape]));
   });
   fromHost(
     "ended",

@@ -22,7 +22,6 @@ function player(index: number): WirePlayer {
     name: "x".repeat(64),
     guildTag: null,
     heroRank: 0,
-    guildCape: null,
     team: index % 2 === 0 ? 0 : 1,
     x: 1000 / 3,
     y: 1000 / 3,

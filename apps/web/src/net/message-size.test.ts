@@ -16,6 +16,8 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_CHART_EVENTS,
+  packEmblem,
+  type WireCapes,
   MAX_CHART_PARTS,
   MAX_CHART_SAMPLES,
   MAX_LOBBY_PLAYERS,
@@ -100,8 +102,8 @@ const PEER_ID = "abcdefghijklmnopqrst/local";
 const NAME = sanitizeName("👩‍🚀".repeat(40), "player");
 /** A guild tag as long as `sanitizeGuildTag` lets through (#1406). */
 const GUILD_TAG = sanitizeGuildTag("WWWW");
-/** A cape of the longest colour and emblem names (#1422). */
-const CAPE: WireCape = { main: "violet", trim: "orange", emblem: "half-disc" };
+/** A cape of the longest colour names (#1422); every emblem is as long (#3554). */
+const CAPE: WireCape = { main: "violet", trim: "orange", emblem: packEmblem([]) };
 
 const SKILL_IDS = IMPLEMENTED_SKILLS.map((skill) => skill.id);
 const STATUS_IDS = Object.keys(STATUS_DEFINITIONS);
@@ -150,7 +152,6 @@ function player(index: number): WirePlayer {
     name: NAME,
     guildTag: GUILD_TAG,
     heroRank: 0,
-    guildCape: CAPE,
     team: index % 2 === 0 ? 0 : 1,
     x: FLOAT + index,
     y: FLOAT + index,
@@ -483,6 +484,16 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(bar)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
+  it("every seat's cape: a full lobby's, longest ids (#3554)", () => {
+    const capes: WireCapes = {
+      capes: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, index) => ({
+        id: `${PEER_ID}${String(index)}`,
+        cape: CAPE,
+      })),
+    };
+    expect(messageBytes(capes)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
   it("a hello with a full build", () => {
     const build = fullBuild();
     const hello: PeerHello = {
@@ -534,7 +545,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         name: NAME,
         guildTag: GUILD_TAG,
         heroRank: 0,
-        guildCape: CAPE,
         team: i % 3 === 0 ? null : i % 3 === 1 ? 0 : 1,
         ready: true,
         isHost: i === 0,
@@ -604,7 +614,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         name: NAME,
         guildTag: GUILD_TAG,
         heroRank: 0,
-        guildCape: CAPE,
         team: i % 2 === 0 ? 0 : 1,
         ready: true,
         isHost: i === 0,

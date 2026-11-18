@@ -650,7 +650,6 @@ export type WireIdentity = Pick<
   | "name"
   | "guildTag"
   | "heroRank"
-  | "guildCape"
   | "team"
   | "primaryProfession"
   | "secondaryProfession"
@@ -666,8 +665,6 @@ export interface SeatIdentity {
   readonly guildTag: string | null;
   /** 0 for none (#2702). */
   readonly heroRank: number;
-  /** `null` for none (#1422). */
-  readonly guildCape: WireCape | null;
   readonly team: WireTeam;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
@@ -698,7 +695,6 @@ export function wireIdentity(
       name: seat.name,
       guildTag: seat.guildTag,
       heroRank: seat.heroRank,
-      guildCape: seat.guildCape,
       team: seat.team,
       primaryProfession: seat.primaryProfession,
       secondaryProfession: seat.secondaryProfession ?? null,
@@ -725,7 +721,6 @@ export function wireIdentity(
         name: creature.name,
         guildTag: null,
         heroRank: 0,
-        guildCape: null,
         team: sentTeam,
         primaryProfession: null,
         secondaryProfession: null,
@@ -744,12 +739,16 @@ export function wireIdentity(
 }
 
 /**
- * Each `PlayerSnapshot` field from its `WirePlayer` field. Typed both ways,
+ * Each `PlayerSnapshot` field from its `WirePlayer` field, and its cape
+ * from `capes`, the host's last `"capes"` by id (#3554). Typed both ways,
  * so a field added to either type without the other does not compile.
  * `undefined` for a status index past the table's end, or an armed
  * attack that is not a pet attack this build knows (#1167): malformed.
  */
-export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
+export function playerSnapshot(
+  player: WirePlayer,
+  capes: ReadonlyMap<string, WireCape>,
+): PlayerSnapshot | undefined {
   const armed = player.creature?.armedAttack ?? null;
   if (armed !== null && getSkill(armed.skillId)?.type !== "pet-attack") {
     return undefined;
@@ -767,7 +766,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     name: player.name,
     guildTag: absent(player.guildTag),
     heroRank: player.heroRank,
-    guildCape: absent(player.guildCape),
+    guildCape: capes.get(player.id),
     x: player.x,
     y: player.y,
     facing: player.facing,
@@ -817,11 +816,14 @@ function projectileSnapshot(shot: WireProjectile): ProjectileSnapshot {
   return { ...shot, skillId: absent(shot.skillId) };
 }
 
-/** Every player in `snapshot`, or `undefined` if any is malformed. */
-export function playerSnapshots(snapshot: WireSnapshot): PlayerSnapshot[] | undefined {
+/** Every player in `snapshot`, wearing `capes`, or `undefined` if any is malformed. */
+export function playerSnapshots(
+  snapshot: WireSnapshot,
+  capes: ReadonlyMap<string, WireCape>,
+): PlayerSnapshot[] | undefined {
   const players: PlayerSnapshot[] = [];
   for (const wire of snapshot.players) {
-    const player = playerSnapshot(wire);
+    const player = playerSnapshot(wire, capes);
     if (player === undefined) {
       return undefined;
     }

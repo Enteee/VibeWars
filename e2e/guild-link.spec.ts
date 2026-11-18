@@ -5,6 +5,12 @@ import { expect, test, type Page } from "@playwright/test";
  * player's Options, but only once they say Join.
  */
 
+/** A cross, as `packEmblem` packs it (#3554). */
+const CROSS =
+  "AAAAARAAAAAAAAABEAAAAAAAAAEQAAAAAAAAARAAAAAAAAABEAAAAAAAAAEQAAAAAAAAARAAAAARERERERERERERERERERERAAAAARAAAAAAAAABEAAAAAAAAAEQAAAAAAAAARAAAAAAAAABEAAAAAAAAAEQAAAAAAAAARAAAAA"; // pragma: allowlist secret
+/** No emblem at all. */
+const EMPTY = "A".repeat(171);
+
 async function expectGuild(page: Page, tag: string, main: string): Promise<void> {
   await page.locator(".topbar-options").click();
   await expect(page.locator(".options-screen")).toBeVisible();
@@ -19,7 +25,7 @@ async function expectGuild(page: Page, tag: string, main: string): Promise<void>
 test("a guild link asks first: Join wears its tag and cape, No changes nothing", async ({
   page,
 }) => {
-  await page.goto("./#guild=VW.gold.black.cross");
+  await page.goto(`./#guild=VW.gold.black.${CROSS}`);
   const prompt = page.getByRole("dialog", { name: "Guild link" });
   await expect(prompt).toContainText("Join guild [VW]?");
   // Taken out of the address bar at once, so a reload never asks again.
@@ -30,14 +36,14 @@ test("a guild link asks first: Join wears its tag and cape, No changes nothing",
   await expectGuild(page, "VW", "gold");
 
   // Opened again in this tab, another guild's link names the one it would replace.
-  await page.goto("./#guild=AB.teal.white.ring");
+  await page.goto(`./#guild=AB.teal.white.${EMPTY}`);
   await expect(prompt).toContainText("Replace [VW] with [AB]?");
   await prompt.getByRole("button", { name: "No" }).click();
   await expect(prompt).toHaveCount(0);
   await expectGuild(page, "VW", "gold");
 
   // The guild the player already wears asks nothing.
-  await page.goto("./#guild=VW.gold.black.cross");
+  await page.goto(`./#guild=VW.gold.black.${CROSS}`);
   await page.goto("./#guild=V!");
   await expect(page.locator(".toast")).toHaveText("That guild link is broken.");
   await expect(prompt).toHaveCount(0);
@@ -48,7 +54,7 @@ test("framed by another page, a guild link asks nothing: it says to open it in i
 }) => {
   // A framing page could lay a decoy over Join (#972).
   await page.goto("./");
-  const src = new URL("./#guild=VW.gold.black.cross", page.url()).href;
+  const src = new URL(`./#guild=VW.gold.black.${CROSS}`, page.url()).href;
   await page.setContent(`<iframe src="${src}" width="1024" height="768"></iframe>`);
   const game = page.frameLocator("iframe");
   await expect(
