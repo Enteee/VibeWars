@@ -1639,9 +1639,9 @@ describe("walks and high ground (#3070)", () => {
       const finder = layeredFinder(king, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
       within(
         TEAMS.map((team) => {
-          const ghost = king.objectives.find(
-            (each) => each.kind === "ghost-spawn" && each.team === team,
-          );
+          const ghost = king.objectives
+            .flatMap((each) => (each.kind === "ghost-spawn" ? [each] : []))
+            .find((each) => each.team === team);
           if (ghost === undefined) throw new Error(`no ghost for team ${String(team)}`);
           return walkedFrom(ghost.position, finder.find(ghost.position, ghost.layer, altar, 3));
         }),
@@ -1653,9 +1653,9 @@ describe("walks and high ground (#3070)", () => {
       const finder = layeredFinder(relic, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
       within(
         TEAMS.map((team) => {
-          const spawn = relic.objectives.find(
-            (each) => each.kind === "relic-spawn" && each.team === team,
-          );
+          const spawn = relic.objectives
+            .flatMap((each) => (each.kind === "relic-spawn" ? [each] : []))
+            .find((each) => each.team === team);
           if (spawn === undefined) throw new Error(`no relic for team ${String(team)}`);
           return walkedFrom(spawn.position, finder.find(spawn.position, spawn.layer, altar, 3));
         }),
@@ -1664,8 +1664,8 @@ describe("walks and high ground (#3070)", () => {
     });
 
     it("plays a two-team capture on the dais and the gallery teams 0 and 1 share, as far for both", () => {
-      const points = capture.objectives.filter(
-        (each) => each.kind === "capture-point" && each.base !== 2,
+      const points = capture.objectives.flatMap((each) =>
+        each.kind === "capture-point" && each.base !== 2 ? [each] : [],
       );
       expect(points).toHaveLength(2);
       for (const point of points) {

@@ -805,8 +805,10 @@ describe("the Hall's three maps (#2700, #3442)", () => {
     for (const map of halls) {
       expect(
         map.objectives.some(
-          ({ kind, layer, position }) =>
-            (kind === "altar" || kind === "capture-point") && layer === 3 && near(position, centre),
+          (each) =>
+            (each.kind === "altar" || each.kind === "capture-point") &&
+            each.layer === 3 &&
+            near(each.position, centre),
         ),
         map.id,
       ).toBe(true);
