@@ -489,7 +489,7 @@ describe("The Brazen Causeway (#3435)", () => {
     );
   });
 
-  // #3521: the marsh is the slow way, so each gate's lever, thrown with the other, is worth the walk.
+  // #3521: the marsh is the slow way, so a lever is worth the walk to a team.
   const match = (seed: string) =>
     new MatchSimulation({
       seed,
@@ -499,14 +499,17 @@ describe("The Brazen Causeway (#3435)", () => {
       participants: casterBots(map, 2),
     });
 
-  it("makes each lever, paired, worth the walk to each team at match start", () => {
+  it("makes each team's own gatehouse lever worth the walk to it at match start (#3549)", () => {
     const sim = match("brazen-causeway-levers");
-    sim.step(DT);
-    expect(sim.botLevers).toHaveLength(2);
-    for (const { gain } of sim.botLevers) {
-      expect(gain[0]).toBeGreaterThanOrEqual(LEVER_WORTH_UNITS);
-      expect(gain[1]).toBeGreaterThanOrEqual(LEVER_WORTH_UNITS);
+    // A pricing comes out one lever, pair or wall a tick (#3599).
+    for (let tick = 0; tick < 60 && !sim.botLevers.some(({ gain }) => gain.length > 0); tick += 1) {
+      sim.step(DT);
     }
+    expect(sim.botLevers).toHaveLength(2);
+    // Team 0 holds the west gatehouse, the map's first lever; team 1 the east.
+    sim.botLevers.forEach(({ gain }, team) => {
+      expect(gain[team]).toBeGreaterThanOrEqual(LEVER_WORTH_UNITS);
+    });
   });
 
   it("leaves a way from base to base with both gates closed", () => {
