@@ -1476,6 +1476,14 @@ export default {
   "tutorial.ground.praise": "Över! Nu vet du vad marken kan göra.",
   "tutorial.front.end": "Nu kan du grunderna. Vi ses där ute!",
   "tutorial.front.menu": "Till menyn",
+  "tutorial.menu.gotIt": "Uppfattat",
+  "tutorial.menu.menu.characters":
+    "I Karaktärer skapar och ändrar du vem du spelar: yrke, färdigheter och utrustning.",
+  "tutorial.menu.menu.rail":
+    "Det här är huvudmenyn. Längs sidan finns sätten att spela: välj ett för att öppna det.",
+  "tutorial.menu.menu.teams": "I Lag sätter du ihop karaktärer till ett lag för lagstriderna.",
+  "tutorial.menu.menu.title": "För att gå vidare måste du byta din spec.",
+  "tutorial.menu.skipAsk": "Hoppa över resten av guiden?",
   "tutorial.gate.hint": "In i dimman, efter mig.",
   "tutorial.gate.how": "Vänsterklicka på marken, eller gå med {keys}.",
   "tutorial.gate.intro": "Vårt lag strider bortom dimman. Följ mig.",

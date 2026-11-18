@@ -1570,6 +1570,15 @@ export default {
   "tutorial.ground.praise": "De l'autre côté ! Tu sais ce que fait le sol.",
   "tutorial.front.end": "Tu connais les bases maintenant. À tout à l'heure là-bas !",
   "tutorial.front.menu": "Retour au menu",
+  "tutorial.menu.gotIt": "Compris",
+  "tutorial.menu.menu.characters":
+    "Dans Personnages, tu crées et modifies qui tu joues : profession, compétences et équipement.",
+  "tutorial.menu.menu.rail":
+    "Voici le menu principal. Sur le côté, les façons de jouer : choisis-en une pour l'ouvrir.",
+  "tutorial.menu.menu.teams":
+    "Dans Équipes, tu réunis des personnages en une équipe pour les combats en équipe.",
+  "tutorial.menu.menu.title": "Pour continuer, tu dois changer ta spécialisation.",
+  "tutorial.menu.skipAsk": "Passer le reste du tutoriel ?",
   "tutorial.gate.hint": "Dans la brume, derrière moi.",
   "tutorial.gate.how": "Clic gauche sur le sol, ou marche avec {keys}.",
   "tutorial.gate.intro": "Notre équipe se bat de l'autre côté de la brume. Suis-moi.",

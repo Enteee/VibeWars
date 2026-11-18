@@ -269,6 +269,8 @@ santuario a su alcance y luchan desde él.
 
 Se juega en Scarred Earth (4v4 y 8v8, 5400x2800): un campo de batalla lleno de cráteres al atardecer. Los santuarios están sobre torres de asedio destrozadas, el central en la plataforma de la gran torre, cada uno junto a un cráter; unas palancas en las torres abren dos trincheras bajo el campo, y las empalizadas destrozadas se pueden romper.
 
+En el Ascenso de los Héroes se juega en The Warden's Gallery (8v8, 5200x2500): una galería de esculturas soleada bajo claraboyas. El santuario central está en lo alto del gran pedestal, y cada equipo tiene tres cerca de su vestíbulo, uno sobre un pedestal; unas palancas en el gran pedestal abren dos criptas bajo el suelo, y las estatuas derribadas se pueden romper.
+
 ## Sala de equipo
 
 Una sala alojada no empieza la partida cuando todos están listos. Primero abre la

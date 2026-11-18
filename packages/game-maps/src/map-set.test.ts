@@ -73,6 +73,7 @@ const REBUILT = new Set([
   "cinder-sanctum",
   "broken-tower",
   "scarred-earth",
+  "wardens-gallery",
   "guild-hall-isle",
   "threefold-keep",
 ]);
@@ -811,9 +812,6 @@ describe("Hall of Heroes (#2552)", () => {
   });
 });
 
-/** Half the narrowest gap a route may squeeze through (#2544): a 200-wide gap passes, a narrower one does not. */
-const ROUTE_HALF_GAP = 100;
-
 describe("Cinder Sanctum (#2695)", () => {
   const sanctum = MAPS.find((each) => each.id === "cinder-sanctum");
   if (sanctum === undefined) throw new Error("no cinder-sanctum");
@@ -847,54 +845,141 @@ describe("the ramps of every layered map (ADR-0051)", () => {
   );
 });
 
-describe("The Warden's Gallery (#2698)", () => {
-  const map = MAPS.find((candidate) => candidate.id === "wardens-gallery");
-  if (map === undefined) throw new Error("no map wardens-gallery");
-  const points = map.objectives.flatMap((objective) =>
-    objective.kind === "capture-point" ? [objective.position] : [],
+describe("The Warden's Gallery (#3441)", () => {
+  const gallery = loadMap("wardens-gallery");
+  const middle = gallery.width / 2;
+  const points = gallery.objectives.flatMap((objective) =>
+    objective.kind === "capture-point" ? [objective] : [],
   );
-  const shrines = map.objectives.flatMap((objective) =>
-    objective.kind === "resurrection-shrine" ? [objective.position] : [],
-  );
+  const mirrored = (point: Vec2): Vec2 => ({ x: gallery.width - point.x, y: point.y });
+  /** The map as loaded: every undercroft gate shut, every statue standing. */
+  const shut: MapData = {
+    ...gallery,
+    walls: [
+      ...gallery.walls,
+      ...gallery.gates.map(({ wall }) => wall),
+      ...(gallery.breakables ?? []).map(({ wall }) => wall),
+    ],
+  };
 
-  it("has seven points: five along the gallery and one by each base's shrine", () => {
-    expect(points).toHaveLength(7);
-    for (const shrine of shrines) {
+  it("seats eight a team on the floor for 8v8, the east vestibule the west's mirror", () => {
+    expect(gallery.teamSizes).toEqual([8]);
+    for (const team of [0, 1]) {
+      const own = gallery.spawnPoints.filter((spawn) => spawn.team === team);
+      expect(own).toHaveLength(8);
+      for (const spawn of own) expect(spawn.layer).toBe(gallery.groundLayer);
+    }
+    for (const spawn of gallery.spawnPoints.filter((each) => each.team === 0)) {
       expect(
-        points.some((point) => Math.abs(point.x - shrine.x) < 200 && point.y === shrine.y),
+        gallery.spawnPoints.some(
+          (other) => other.team === 1 && near(other.position, mirrored(spawn.position)),
+        ),
+        JSON.stringify(spawn),
       ).toBe(true);
     }
   });
 
-  it("gives each team its own gates, each the other's twin", () => {
-    const openers = map.gates.map(plated);
-    const turned = openers.map(({ plate, team }) => ({
-      x: map.width - plate.x,
-      y: map.height - plate.y,
-      team: team === null ? null : 1 - team,
-    }));
-    expect(openers.filter(({ team }) => team === 0)).toHaveLength(2);
-    expect(openers.filter(({ team }) => team === 1)).toHaveLength(2);
-    for (const twin of turned) {
-      expect(openers).toContainEqual(
-        expect.objectContaining({ plate: { x: twin.x, y: twin.y }, team: twin.team }),
-      );
+  it("has seven points: the centre on the great plinth's top, a mirrored trio a team", () => {
+    expect(points).toHaveLength(7);
+    expect(points.filter((point) => point.position.x === middle)).toEqual([
+      { kind: "capture-point", layer: 3, position: { x: middle, y: 1250 } },
+    ]);
+    const west = points.filter((point) => point.position.x < middle);
+    expect(west.map(({ layer }) => layer)).toEqual([1, 2, 1]);
+    for (const point of points.filter((each) => each.position.x !== middle)) {
+      expect(
+        points.some(
+          (other) => other.layer === point.layer && near(other.position, mirrored(point.position)),
+        ),
+        JSON.stringify(point),
+      ).toBe(true);
     }
   });
 
-  it("reaches every point from both bases with every gate shut", () => {
-    const finder = createPathFinder(
-      buildNavGraph(
-        allWallSegments([...map.walls, ...map.gates.map((gate) => gate.wall)]),
-        { width: map.width, height: map.height },
-        ROUTE_HALF_GAP,
-        [],
-      ),
-    );
-    for (const spawn of map.spawnPoints) {
-      for (const point of points) {
-        expect(finder.find(spawn.position, point), String(spawn.team)).toBeDefined();
+  it("is the same map mirrored east to west: walls, decks, stairs, pits, undercrofts and gates", () => {
+    const image = (shape: Parameters<typeof wallToSegments>[0]) =>
+      wallToSegments(shape).map(({ a, b }) => ({ a: mirrored(a), b: mirrored(b) }));
+    const all = [
+      ...gallery.walls,
+      ...gallery.decks.map(({ footprint }) => footprint),
+      ...gallery.transitions.map(({ area }) => area),
+      ...gallery.pits.map(({ footprint }) => footprint),
+      ...gallery.tunnels.map(({ footprint }) => footprint),
+      ...gallery.gates.map(({ wall }) => wall),
+      ...(gallery.breakables ?? []).map(({ wall }) => wall),
+      ...(gallery.water ?? []).map(({ area }) => area),
+    ];
+    const sides = all.flatMap((shape) => wallToSegments(shape));
+    for (const shape of all) {
+      for (const side of image(shape)) {
+        expect(
+          sides.some((other) => sameSegment(other, side)),
+          JSON.stringify(shape),
+        ).toBe(true);
       }
+    }
+  });
+
+  it("puts four levers on the great plinth's base, each twin opening the same undercroft's gates", () => {
+    const levers = gallery.switches ?? [];
+    const base = gallery.decks.find(({ id }) => id === "great-plinth-base");
+    if (base === undefined) throw new Error("no great-plinth-base");
+    expect(levers).toHaveLength(4);
+    for (const lever of levers) {
+      expect(lever.layer, lever.id).toBe(base.layer);
+      expect(pointInShape(lever.position, base.footprint), lever.id).toBe(true);
+      const image = mirrored(lever.position);
+      const twin = levers.find(
+        ({ position }) => Math.abs(position.x - image.x) < 1 && Math.abs(position.y - image.y) < 1,
+      );
+      expect(twin?.targets, lever.id).toEqual(lever.targets);
+    }
+  });
+
+  it("keeps every spawn 200 or more from every zone and pool", () => {
+    const keepOff = [
+      ...(gallery.zones ?? []).map(({ area }) => area),
+      ...(gallery.water ?? []).map(({ area }) => area),
+    ];
+    for (const { position } of gallery.spawnPoints) {
+      for (const area of keepOff) {
+        expect(pointInShape(position, area)).toBe(false);
+        for (const side of wallToSegments(area)) {
+          expect(
+            distancePointToSegment(position, side),
+            JSON.stringify(position),
+          ).toBeGreaterThanOrEqual(200);
+        }
+      }
+    }
+  });
+
+  it("lets every spawn walk to every point with the undercroft gates shut and the statues standing", () => {
+    const finder = layeredFinder(shut, RADIUS);
+    for (const spawn of gallery.spawnPoints) {
+      for (const point of points) {
+        expect(
+          finder.find(spawn.position, spawn.layer, point.position, point.layer),
+          JSON.stringify([spawn, point]),
+        ).toBeDefined();
+      }
+    }
+  });
+
+  it("climbs each plinth by a stair on every face, the great plinth's top by two, each balcony by one at each end", () => {
+    const stairsOnto = (id: string): number => {
+      const deck = gallery.decks.find((each) => each.id === id);
+      if (deck === undefined) throw new Error(`no ${id}`);
+      return gallery.transitions.filter(
+        ({ to, area }) => to === deck.layer && shapesOverlap(area, deck.footprint),
+      ).length;
+    };
+    for (const id of ["west-plinth", "east-plinth", "great-plinth-base"]) {
+      expect(stairsOnto(id), id).toBe(4);
+    }
+    expect(stairsOnto("great-plinth-top")).toBe(2);
+    for (const id of gallery.decks.map((deck) => deck.id).filter((id) => id.endsWith("-balcony"))) {
+      expect(stairsOnto(id), id).toBe(2);
     }
   });
 });

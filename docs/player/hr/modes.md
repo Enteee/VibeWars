@@ -268,6 +268,8 @@ ih: stupaju na svetište u dosegu i bore se s njega.
 
 Scarred Earth (4v4 i 8v8, 5400x2800) ga igra: bojište puno kratera u sumrak. Svetišta stoje na razrušenim opsadnim tornjevima, srednje na palubi velikog tornja, svako pokraj kratera; poluge na tornjevima otvaraju dva rova ispod polja, a razrušene palisade mogu se razbiti.
 
+U Usponu heroja igra ga The Warden's Gallery (8v8, 5200x2500): sunčana galerija skulptura pod krovnim prozorima. Srednje svetište stoji na vrhu velikog postolja, a svaki tim ima tri blizu svog predvorja, jedno na postolju; poluge na velikom postolju otvaraju dvije kripte ispod poda, a srušeni kipovi mogu se razbiti.
+
 ## Timska soba
 
 Soba s domaćinom ne pokreće meč kad su svi spremni. Najprije otvara Timsku sobu, u kojoj svaka strana zajedno bira jedan timski

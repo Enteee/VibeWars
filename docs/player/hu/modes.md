@@ -307,6 +307,8 @@ belüli ellenség nem csalja el őket: fellépnek egy elérhető szentélyre,
 
 A Scarred Earth (4v4 és 8v8, 5400x2800) játssza: kráterekkel szabdalt csatatér alkonyatkor. A szentélyek összetört ostromtornyokon állnak, a középső a nagy torony fedélzetén, mindegyik egy kráter mellett; a tornyokon lévő karok két lövészárkot nyitnak a mező alatt, a rommá lett cölöpkerítések pedig szétverhetők.
 
+A Hősök Útján a The Warden's Gallery (8v8, 5200x2500) játssza: napfényes szoborcsarnok tetőablakok alatt. A középső szentély a nagy talapzat tetején áll, és minden csapatnak három van az előcsarnoka közelében, egy közülük talapzaton; a nagy talapzaton lévő karok két kriptát nyitnak a padló alatt, a ledőlt szobrok pedig szétverhetők.
+
 ## Csapatlobbi
 
 A létrehozott lobbi nem indítja el a meccset, amikor mindenki kész.

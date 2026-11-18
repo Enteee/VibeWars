@@ -1558,6 +1558,15 @@ export default {
   "tutorial.ground.praise": "Ai trecut! Acum știi ce poate solul.",
   "tutorial.front.end": "Acum știi elementele de bază. Ne vedem acolo!",
   "tutorial.front.menu": "Înapoi la meniu",
+  "tutorial.menu.gotIt": "Am înțeles",
+  "tutorial.menu.menu.characters":
+    "La Personaje creezi și schimbi cu cine joci: profesie, abilități și echipament.",
+  "tutorial.menu.menu.rail":
+    "Acesta este meniul principal. Pe margine sunt felurile de a juca: alege unul ca să-l deschizi.",
+  "tutorial.menu.menu.teams":
+    "La Echipe pui personaje laolaltă într-o echipă pentru luptele pe echipe.",
+  "tutorial.menu.menu.title": "Ca să mergi mai departe, trebuie să-ți schimbi specializarea.",
+  "tutorial.menu.skipAsk": "Sari peste restul tutorialului?",
   "tutorial.gate.hint": "În ceață, după mine.",
   "tutorial.gate.how": "Clic stânga pe teren sau mergi cu {keys}.",
   "tutorial.gate.intro": "Echipa noastră luptă dincolo de ceață. Urmează-mă.",

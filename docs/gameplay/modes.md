@@ -185,6 +185,8 @@ reads kills. Each shrine draws as the flag stand's ring in its owner's
 colour, grey while neutral, with an arc of its progress in the
 capturer's colour. Scarred Earth plays it: a cratered battlefield, four shrines on wrecked
 siege towers and the centre one on the great tower's deck, each beside a crater, two
-lever-gated trenches under the field. No Random Arena does.
+lever-gated trenches under the field. In the Heroes' Ascent, The Warden's Gallery plays it:
+a sunlit sculpture gallery, the centre shrine on the great plinth's top, a trio a team near its
+vestibule, two lever-gated undercrofts under the floor. No Random Arena does.
 
 How each one ends, in full, is in [combat](combat.md#match-end).

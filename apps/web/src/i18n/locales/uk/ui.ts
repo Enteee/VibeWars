@@ -1602,6 +1602,14 @@ export default {
   "tutorial.ground.praise": "Перейшов! Тепер ти знаєш, що може земля.",
   "tutorial.front.end": "Тепер ти знаєш основи. Побачимось на полі бою!",
   "tutorial.front.menu": "До меню",
+  "tutorial.menu.gotIt": "Зрозуміло",
+  "tutorial.menu.menu.characters":
+    "У «Персонажах» ти створюєш і змінюєш того, ким граєш: професію, навички та спорядження.",
+  "tutorial.menu.menu.rail":
+    "Це головне меню. Збоку — способи грати: обери один, щоб відкрити його.",
+  "tutorial.menu.menu.teams": "У «Командах» ти збираєш персонажів у команду для командних боїв.",
+  "tutorial.menu.menu.title": "Щоб іти далі, треба змінити спеціалізацію.",
+  "tutorial.menu.skipAsk": "Пропустити решту навчання?",
   "tutorial.gate.hint": "У туман, за мною.",
   "tutorial.gate.how": "Клацни лівою кнопкою по землі або йди клавішами {keys}.",
   "tutorial.gate.intro": "Наша команда б'ється за туманом. За мною.",

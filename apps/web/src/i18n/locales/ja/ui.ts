@@ -1408,6 +1408,14 @@ export default {
   "tutorial.ground.praise": "渡れた！これで地面のことがわかったね。",
   "tutorial.front.end": "これで基本は身についた。戦場で会おう!",
   "tutorial.front.menu": "メニューへ戻る",
+  "tutorial.menu.gotIt": "わかった",
+  "tutorial.menu.menu.characters":
+    "「キャラクター」では、使うキャラクターを作ったり変えたりできる。職業、スキル、装備だ。",
+  "tutorial.menu.menu.rail":
+    "これがメインメニュー。横に並んでいるのが遊び方だ。ひとつ選んで開こう。",
+  "tutorial.menu.menu.teams": "「チーム」では、キャラクターを集めてチーム戦用のチームを組む。",
+  "tutorial.menu.menu.title": "先へ進むには、スペックを変えなければならない。",
+  "tutorial.menu.skipAsk": "チュートリアルの残りをスキップしますか？",
   "tutorial.gate.hint": "霧の中へ、私に続いて。",
   "tutorial.gate.how": "地面を左クリック、または {keys} で歩く。",
   "tutorial.gate.intro": "味方は霧の向こうで戦っている。ついて来て。",

@@ -266,6 +266,8 @@ pergi: mereka naik ke kuil yang terjangkau dan bertarung dari sana.
 
 Scarred Earth (4v4 dan 8v8, 5400x2800) memainkannya: medan perang penuh kawah saat senja. Kuil-kuilnya berdiri di atas menara pengepungan yang hancur, yang di tengah di geladak menara besar, masing-masing di samping kawah; tuas di menara membuka dua parit di bawah medan, dan pagar kayu yang hancur bisa dirobohkan.
 
+Di Pendakian Pahlawan, The Warden's Gallery (8v8, 5200x2500) memainkannya: galeri patung bermandikan cahaya matahari di bawah jendela atap. Kuil tengah berdiri di puncak alas besar, dan tiap tim punya tiga di dekat serambinya, satu di atas alas; tuas di alas besar membuka dua ruang bawah tanah di bawah lantai, dan patung yang roboh bisa dihancurkan.
+
 ## Lobi Tim
 
 Lobi yang di-host tidak memulai laga saat semua orang siap. Lobi itu membuka Lobi Tim lebih dulu, tempat setiap sisi memilih satu Build
