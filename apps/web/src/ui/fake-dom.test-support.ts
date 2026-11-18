@@ -58,6 +58,10 @@ export class FakeElement {
 
   setAttribute(name: string, value: string): void {
     this.attributes.set(name, value);
+    // An SVG element has no writable `className`: its class is an attribute.
+    if (name === "class") {
+      this.className = value;
+    }
   }
 
   getAttribute(name: string): string | null {
@@ -143,6 +147,19 @@ export class FakeElement {
 
   insertAdjacentHTML(): void {
     // Markup (icons, badges) is not under test.
+  }
+
+  /** A table's parts, for the summary tables (#3565). */
+  createTHead(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
+  createTBody(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
+  insertRow(): FakeElement {
+    return this.appendChild(new FakeElement());
   }
 
   focus(): void {

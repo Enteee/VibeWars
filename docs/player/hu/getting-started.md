@@ -87,6 +87,16 @@ Amikor a meccs véget ér, választhatod az **Újra sorba** lehetőséget,
 vagy azt, hogy **Együtt maradunk** azzal a csapattal, amellyel épp
 játszottál.
 
+Az eredmények mellett két diagram meséli el a meccs menetét. A **Te** a
+kiosztott sebzésedet, az elszenvedett sebzést, a gyógyítást és az Energiát
+rajzolja; a **Csapatok** minden csapat életerő-készletét rajzolja az
+összesített sebzése fölé. Az időtengely alatti jelek az öléseket, halálokat,
+megszakításokat, foglalásokat és feltámasztásokat mutatják: mutass rá egyre,
+vagy lépj rá Tabbal, hogy elolvasd, mi történt. Nyomj meg egy
+jelmagyarázat-elemet a vonala elrejtéséhez vagy megjelenítéséhez. Telefonon a
+diagramok az eredmények alatt vannak, amelyek téged és két másik játékost
+mutatnak, amíg meg nem nyomod az **Összes mutatása** gombot.
+
 ## Meccs indítása vagy csatlakozás
 
 Mindig egy lobbiban vagy: attól a pillanattól, hogy az oldal megnyílik,

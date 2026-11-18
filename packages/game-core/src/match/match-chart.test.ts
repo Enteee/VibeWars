@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { CombatEvent } from "../skills/effects.js";
 import { MatchTally, type CombatLogEntry } from "./combat-log.js";
 import {
-  EVENT_CAP,
+  EVENT_CAPS,
   MatchChart,
   SAMPLE_CAP,
   samplePeriod,
@@ -191,12 +191,67 @@ describe("MatchChart (#3564)", () => {
       { t: 3, kind: "death", id: "bob", by: null },
     ]);
 
-    const deaths = Array.from({ length: EVENT_CAP + 7 }, () =>
+    // Two deaths already kept above.
+    const deaths = Array.from({ length: EVENT_CAPS.death + 7 }, () =>
       entry(5, "ann", [{ kind: "death", targetId: "cat" }]),
     );
     chart.add(deaths, match.state);
     const { events, dropped } = chart.result(["ann", "bob", "cat"]);
-    expect(events).toHaveLength(EVENT_CAP);
-    expect(dropped).toBe(12);
+    expect(events.filter(({ kind }) => kind === "death")).toHaveLength(EVENT_CAPS.death);
+    expect(events).toHaveLength(EVENT_CAPS.death + 3);
+    expect(dropped).toBe(9);
+  });
+
+  it("caps each kind on its own: 300 interrupts never crowd out the deaths after them", () => {
+    const match = fakeMatch();
+    const chart = new MatchChart(teamOf, isMember, 1680);
+    match.at(1);
+    const interrupt = entry(1, "ann", [
+      { kind: "interrupted", targetId: "cat", skillId: "healing-breeze" },
+    ]);
+    chart.add(
+      Array.from({ length: 300 }, () => interrupt),
+      match.state,
+    );
+    match.at(900);
+    chart.add(
+      Array.from({ length: 10 }, () => entry(900, "cat", [{ kind: "death", targetId: "ann" }])),
+      match.state,
+    );
+    const { events, dropped } = chart.result(["ann", "bob", "cat"]);
+    expect(events.filter(({ kind }) => kind === "interrupt")).toHaveLength(EVENT_CAPS.interrupt);
+    expect(events.filter(({ kind }) => kind === "death")).toHaveLength(10);
+    expect(dropped).toBe(300 - EVENT_CAPS.interrupt);
+  });
+
+  it("stops each kind at its own cap", () => {
+    const match = fakeMatch();
+    const chart = new MatchChart(teamOf, isMember, 1680);
+    const over = 5;
+    const raise = entry(1, "bob", [
+      { kind: "resurrected", targetId: "bob", healthFraction: 0.25, energyFraction: 0.25 },
+    ]);
+    chart.add(
+      [
+        ...Array.from({ length: EVENT_CAPS.death + over }, () =>
+          entry(1, "ann", [{ kind: "death", targetId: "cat" }]),
+        ),
+        ...Array.from({ length: EVENT_CAPS.resurrected + over }, () => raise),
+        ...Array.from({ length: EVENT_CAPS.interrupt + over }, () =>
+          entry(1, "ann", [{ kind: "interrupted", targetId: "cat", skillId: "healing-breeze" }]),
+        ),
+      ],
+      match.state,
+    );
+    for (let second = 1; second <= EVENT_CAPS.objective + over; second += 1) {
+      match.at(second);
+      match.owners[0] = second % 2;
+      chart.add([], match.state);
+    }
+    const { events, dropped } = chart.result(["ann", "bob", "cat"]);
+    for (const kind of ["death", "resurrected", "interrupt", "objective"] as const) {
+      expect(events.filter((event) => event.kind === kind)).toHaveLength(EVENT_CAPS[kind]);
+    }
+    expect(dropped).toBe(4 * over);
   });
 });
