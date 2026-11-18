@@ -88,13 +88,13 @@ opens its doors; vine walls can be cut down.
 
 ## Guild Battle
 
-**Kill the enemy Guild Lord**, 8 against 8. Each base sits behind a wall
-with two gates; the Guild Lord stands at the back of its lord room and
-shoots any foe it sees with a bow. Guards hold each base: Knights and a
-Bodyguard by the lord, an Archer at the back of the lord room, a Footman
-and an Archer at each gate. They fight foes near their post and walk back
-to it. While the Bodyguard lives, its lord takes 20% less damage, so kill
-it first. Every 2 minutes, each team's shrine brings its dead back.
+**Kill the enemy Guild Lord**, 8 against 8. Each base sits behind a
+rampart with a gatehouse; the Guild Lord stands on its hall floor and
+shoots any foe it sees with a bow. Guards hold each base: Knights, a
+Bodyguard and an Archer by the lord, two Footmen and two Archers at the
+gatehouse. They fight foes near their post and walk back to it. While the
+Bodyguard lives, its lord takes 20% less damage, so kill it first. Every
+2 minutes, each team's shrine brings its dead back.
 
 Each team has a **flag** in its base, and the **flag stand** is in the
 centre. Target your flag and press **Space** to take it up; carry it to
@@ -116,7 +116,7 @@ lord. Under it, a line names whoever carries a flag. A boost pops up as
 "Morale boost! +10%", or "Enemy morale boost". On the compass, ♛ marks
 each Guild Lord, ⚑ each flag and ◎ the stand.
 
-Guild Hall Isle plays it.
+Guild Hall Isle (8v8, 6000x2600) plays it: an island in the afternoon sun, each team's guild hall behind a rampart. A gatehouse tunnel runs under each rampart, its door opened by a lever on the far rampart; piers cross the tidal channels at the rampart ends, and driftwood barricades can be broken.
 
 ## Relic Run
 

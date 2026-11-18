@@ -554,6 +554,26 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     /** Vine: olive, never nature's green. */
     plant: 0x545a38,
   },
+  /**
+   * An island beach (#3445, docs/art/3077-guild-hall-isle.md): wet sand and
+   * grey sea rock with dry olive plants beside a deep teal sea; no tone near
+   * the friend blue, the foe red or the nature green.
+   */
+  coast: {
+    ...HALL_TONES,
+    /** Wet sand. */
+    ground: 0x7d7358,
+    /** Grey sea rock. */
+    rock: 0x5b6770,
+    /** Weathered pale stone, a step above the sand so a deck reads on it. */
+    stone: 0xa49c88,
+    /** Driftwood, sun-greyed. */
+    wood: 0x7a6a52,
+    /** Damp dark sand. */
+    earth: 0x6a5e46,
+    /** Dry olive dune grass: never nature's green. */
+    plant: 0x6d6a3e,
+  },
 };
 
 /** What each colour of the arena is made of. */
@@ -742,7 +762,7 @@ function lookColours<
 
 /**
  * Whether a biome's ground is laid in tiles, and drawn with the grid on it:
- * dressed stone and packed earth are; river ice is one sheet (#3286).
+ * dressed stone and packed earth are; river ice (#3286) and wet sand (#3445) are one sheet.
  */
 const TILED_GROUND: Record<Biome, boolean> = {
   hall: true,
@@ -753,6 +773,8 @@ const TILED_GROUND: Record<Biome, boolean> = {
   snow: false,
   marsh: true,
   jungle: true,
+  /** Wet sand is one sheet, as the river ice (#3445). */
+  coast: false,
 };
 
 function biomeMaterials(tones: BiomeTones, tiled: boolean): BiomeMaterials {
@@ -776,6 +798,7 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
   marsh: biomeMaterials(BIOME_TONES.marsh, TILED_GROUND.marsh),
   jungle: biomeMaterials(BIOME_TONES.jungle, TILED_GROUND.jungle),
+  coast: biomeMaterials(BIOME_TONES.coast, TILED_GROUND.coast),
 };
 
 /** A biome's ground grain and the marks scattered on it (#3484), from its own tones. */
@@ -853,6 +876,12 @@ export const GROUND_DRESSING: Record<Biome, GroundDressingTones> = {
     mix(BIOME_TONES.jungle.plant, BIOME_TONES.jungle.ground, 0.3),
     mix(BIOME_TONES.jungle.ground, BIOME_TONES.jungle.earth, 0.6),
   ),
+  // Dune grass tufts and shell grit.
+  coast: dressingTones(
+    BIOME_TONES.coast,
+    mix(BIOME_TONES.coast.plant, BIOME_TONES.coast.ground, 0.3),
+    mix(BIOME_TONES.coast.ground, BIOME_TONES.coast.stone, 0.4),
+  ),
 };
 
 /**
@@ -915,6 +944,7 @@ function breakableLookOf(biome: Biome): BreakableLook {
     case "wilds":
     case "marsh":
     case "jungle":
+    case "coast":
       return {
         courses: "fieldstone",
         top: mix(tones.rock, tones.stone, 0.4),
@@ -945,6 +975,7 @@ const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
   snow: breakableLookOf("snow"),
   marsh: breakableLookOf("marsh"),
   jungle: breakableLookOf("jungle"),
+  coast: breakableLookOf("coast"),
 };
 
 /** The material a map's breakable walls are (#3370): a map of one layer's are stone whatever its biome. */

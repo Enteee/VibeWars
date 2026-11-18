@@ -98,14 +98,14 @@ kar kinyitja az ajtajait; az indafalak kivághatók.
 
 ## Céhcsata
 
-**Öld meg az ellenséges Céhurat**, 8 a 8 ellen. Minden bázis egy két
-kapus fal mögött áll; a Céhúr a nagyúri terme hátulján áll, és íjjal
-lő minden ellenségre, akit lát. Őrök védik mindegyik bázist: Lovagok és
-egy Testőr a nagyúr mellett, egy Íjász a nagyúri terem hátulján, egy
-Gyalogos és egy Íjász mindegyik kapunál. A posztjuk közelében lévő
-ellenségekkel harcolnak, és visszasétálnak oda. Amíg a Testőr él, a
-nagyura 20%-kal kevesebb sebzést kap, ezért őt öld meg először. 2
-percenként minden csapat szentélye visszahozza a halottait.
+**Öld meg az ellenséges Céhurat**, 8 a 8 ellen. Minden bázis egy
+kaputornyos sánc mögött fekszik; a Céhúr a csarnoka padlóján áll, és
+íjjal lő minden ellenségre, akit lát. Őrök védik mindegyik bázist:
+Lovagok, egy Testőr és egy Íjász a nagyúr mellett, két Gyalogos és két
+Íjász a kaputoronynál. A posztjuk közelében lévő ellenségekkel
+harcolnak, és visszasétálnak oda. Amíg a Testőr él, a nagyura 20%-kal
+kevesebb sebzést kap, ezért őt öld meg először. 2 percenként minden
+csapat szentélye visszahozza a halottait.
 
 Minden csapatnak van egy **zászlója** a bázisán, a **zászlótartó**
 pedig középen van. Vedd célba a zászlódat, és nyomd meg a **Space**
@@ -132,7 +132,7 @@ megnevezi, ki visz zászlót. A növelés „Morálnövelés! +10%” vagy
 „Ellenséges morálnövelés” felirattal ugrik fel. Az iránytűn ♛ jelöl
 minden Céhurat, ⚑ minden zászlót és ◎ a tartót.
 
-A Guild Hall Isle játssza.
+A Guild Hall Isle (8v8, 6000x2600) játssza: sziget a délutáni napfényben, mindkét csapat céhcsarnoka egy sánc mögött. Minden sánc alatt kapualagút fut, ajtaját a szemközti sáncon lévő kar nyitja; mólók ívelnek át az árapálycsatornák fölött a sáncok végén, és az uszadékfa torlaszok szétverhetők.
 
 ## Ereklyefutam
 

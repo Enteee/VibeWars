@@ -99,13 +99,13 @@ portes ; les murs de lianes peuvent être abattus.
 ## Bataille de guilde
 
 **Tue le Seigneur de guilde ennemi**, 8 contre 8. Chaque base se trouve derrière
-un mur à deux portes ; le Seigneur de guilde se tient au fond de sa salle et
-tire à l'arc sur tout ennemi qu'il voit. Des gardes tiennent chaque base : des
-Knights et un Bodyguard près du seigneur, un Archer au fond de la salle du
-seigneur, un Footman et un Archer à chaque porte. Ils combattent les ennemis
-près de leur poste puis y reviennent. Tant que le Bodyguard vit, son seigneur
-subit 20% de dégâts en moins : tue-le d'abord. Toutes les 2 minutes, le
-sanctuaire de chaque équipe ramène ses morts.
+un rempart doté d'un châtelet ; le Seigneur de guilde se tient sur le sol de sa
+salle et tire à l'arc sur tout ennemi qu'il voit. Des gardes tiennent chaque
+base : des Knights, un Bodyguard et un Archer près du seigneur, deux Footmen et
+deux Archers au châtelet. Ils combattent les ennemis près de leur poste puis y
+reviennent. Tant que le Bodyguard vit, son seigneur subit 20% de dégâts en moins
+: tue-le d'abord. Toutes les 2 minutes, le sanctuaire de chaque équipe ramène
+ses morts.
 
 Chaque équipe a un **drapeau** dans sa base, et le **Socle du drapeau** est au
 centre. Cible ton drapeau et appuie sur **Space** pour le prendre ; porte-le
@@ -129,7 +129,7 @@ drapeau. Un bonus s'affiche « Bonus de moral ! +10% », ou « Bonus de moral
 ennemi ». Sur la boussole, ♛ marque chaque Seigneur de guilde, ⚑ chaque drapeau
 et ◎ le socle.
 
-Guild Hall Isle le joue.
+Guild Hall Isle (8v8, 6000x2600) le joue : une île au soleil de l'après-midi, la salle de chaque équipe derrière un rempart. Un tunnel de corps de garde passe sous chaque rempart, sa porte ouverte par un levier sur le rempart d'en face ; des jetées franchissent les chenaux de marée au bout des remparts, et les barricades de bois flotté se brisent.
 
 ## Course aux reliques
 

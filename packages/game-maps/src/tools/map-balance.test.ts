@@ -1385,6 +1385,136 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Guild Hall Isle (#3445): one island turned half round its centre, team 1 west, team 2 east.
+  // Each courtyard is shut by a rampart, crossed by its gatehouse tunnel, over its top, or round
+  // its end by a pier over the tidal channel. A body may wade a channel at three-quarter pace; the
+  // pier is the dry way over it, so for the routes below the channels are walls.
+  describe("Guild Hall Isle", () => {
+    const loaded = loadMap("guild-hall-isle");
+    const map: MapData = {
+      ...loaded,
+      walls: [
+        ...loaded.walls,
+        ...(loaded.water ?? [])
+          .filter(({ id }) => id.endsWith("-channel"))
+          .map(({ area, layer }) => ({ ...area, layer })),
+      ],
+    };
+    /** As loaded: both gatehouse doors shut (the barricades stand in every walk unless broken). */
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const stand = { x: 3000, y: 1300 };
+    const lords = [
+      { x: 1350, y: 1300 },
+      { x: 4650, y: 1300 },
+    ];
+    const foes = [lords[1] ?? stand, lords[0] ?? stand];
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Team 1's id or, for team 2, its turned twin's. */
+    const of = (team: number, west: string, east: string): string => (team === 0 ? west : east);
+    const gatehouse = (team: number): string[] => [
+      of(team, "west-gatehouse-west-steps", "east-gatehouse-east-steps"),
+      of(team, "west-gatehouse-east-steps", "east-gatehouse-west-steps"),
+    ];
+    const rampart = (team: number): string[] => [
+      of(team, "west-rampart-outer-stair", "east-rampart-outer-stair"),
+      of(team, "west-rampart-inner-stair", "east-rampart-inner-stair"),
+    ];
+    /** The pier over a team's own channel north of its rampart, as team 1 sees it, and turned. */
+    const northPier = (team: number): string[] => [
+      of(team, "north-west-pier-west-stair", "south-east-pier-east-stair"),
+      of(team, "north-west-pier-east-stair", "south-east-pier-west-stair"),
+    ];
+    /** The pier over a team's own channel south of its rampart, and turned. */
+    const southPier = (team: number): string[] => [
+      of(team, "south-west-pier-west-stair", "north-east-pier-east-stair"),
+      of(team, "south-west-pier-east-stair", "north-east-pier-west-stair"),
+    ];
+    /** Every way past a rampart: a route opens only its own. */
+    const ways = map.transitions
+      .map(({ id }) => id)
+      .filter((id) => id.includes("gatehouse") || id.includes("rampart") || id.includes("pier"));
+    const by =
+      (...legs: ((team: number) => string[])[]) =>
+      (team: number): Route => {
+        const through = legs.flatMap((leg) => leg(team));
+        return { through, shut: ways.filter((id) => !through.includes(id)) };
+      };
+    /** Each team's walk to its own `to` on layer 2 by `route`. */
+    const walks = (on: MapData, to: readonly Vec2[], route: (team: number) => Route): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? stand, 2, (other) =>
+            other === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    const toStand = [
+      ["its gatehouse", by(gatehouse)],
+      ["its rampart", by(rampart)],
+      ["its north pier", by(northPier)],
+    ] as const;
+    // To the foe's lord: through both gatehouses, over both ramparts, or by the piers north of
+    // the foe's hall (team 1's south pier is team 2's north, turned).
+    const toLord = [
+      ["the gatehouses", by(gatehouse, (team) => gatehouse(1 - team))],
+      ["the ramparts", by(rampart, (team) => rampart(1 - team))],
+      ["the piers", by(southPier, (team) => northPier(1 - team))],
+    ] as const;
+
+    it.each(toStand)(
+      "walks each team from its spawn to the flag stand by %s within 5 % of the other, in under 25 s",
+      (_, route) => {
+        const walked = walks(map, [stand, stand], route);
+        within(walked, 0.05);
+        for (const walk of walked) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it.each(toLord)(
+      "walks each team from its spawn to the foe's Guild Lord by %s within 10 % of the other",
+      (_, route) => {
+        within(walks(map, foes, route), 0.1);
+      },
+    );
+
+    it("keeps the flag stand within 5 % and the foe's lord within 10 % by the best way", () => {
+      within(walksTo(loaded, stand, 2), 0.05);
+      within(
+        [0, 1].map((team) => walksTo(loaded, foes[team] ?? stand, 2)[team] ?? 0),
+        0.1,
+      );
+    });
+
+    it("keeps the ramparts and the piers to the stand and to the foe's lord with both doors shut, and the gatehouses shut with them", () => {
+      for (const [, route] of toStand.filter(([name]) => !name.includes("gate"))) {
+        within(walks(shut, [stand, stand], route), 0.1);
+      }
+      for (const [, route] of toLord.filter(([name]) => !name.includes("gate"))) {
+        within(walks(shut, foes, route), 0.1);
+      }
+      expect(() => walks(shut, [stand, stand], by(gatehouse))).toThrow();
+    });
+
+    it("keeps the walks within 10 % with the doors open and the barricades broken", () => {
+      const broken = ["west-driftwood-barricade", "east-driftwood-barricade"];
+      within(walksByRoute(loaded, stand, 2, { through: [], broken }), 0.05);
+      within(
+        [0, 1].map(
+          (team) =>
+            walksByRoute(loaded, foes[team] ?? stand, 2, { through: [], broken })[team] ?? 0,
+        ),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(loaded), 0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

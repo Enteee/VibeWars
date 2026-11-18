@@ -91,12 +91,12 @@ omhakken.
 
 ## Guild Battle
 
-**Dood de vijandelijke Gildeheer**, 8 tegen 8. Elke basis ligt achter een muur met
-twee poorten; de Gildeheer staat achterin zijn heerkamer en schiet met een boog op
-elke vijand die hij ziet. Bewakers houden elke basis: Knights en een Bodyguard bij
-de heer, een Archer achterin de heerkamer, een Footman en een Archer bij elke
-poort. Ze vechten met vijanden bij hun post en lopen daarnaar terug. Zolang de
-Bodyguard leeft, krijgt zijn heer 20% minder schade, dus dood hem eerst. Elke 2
+**Dood de vijandelijke Gildeheer**, 8 tegen 8. Elke basis ligt achter een wal met
+een poortgebouw; de Gildeheer staat op de vloer van zijn hal en schiet met een
+boog op elke vijand die hij ziet. Bewakers houden elke basis: Knights, een
+Bodyguard en een Archer bij de heer, twee Footmen en twee Archers bij het
+poortgebouw. Ze vechten met vijanden bij hun post en lopen daarnaar terug. Zolang
+de Bodyguard leeft, krijgt zijn heer 20% minder schade, dus dood hem eerst. Elke 2
 minuten brengt het schrijn van elk team zijn doden terug.
 
 Elk team heeft een **vlag** in zijn basis, en de **vlaggenstandaard** staat in het
@@ -120,7 +120,7 @@ vijandelijke heer. Daaronder noemt een regel wie een vlag draagt. Een boost
 verschijnt als "Moraalboost! +10%", of "Moraalboost vijand". Op het kompas markeert
 ♛ elke Gildeheer, ⚑ elke vlag en ◎ de standaard.
 
-Guild Hall Isle speelt het.
+Guild Hall Isle (8v8, 6000x2600) speelt het: een eiland in de middagzon, de gildehal van elk team achter een wal. Onder elke wal loopt een poorttunnel, waarvan de deur opengaat met een hendel op de wal aan de overkant; steigers kruisen de getijdengeulen aan de uiteinden van de wallen, en barricades van drijfhout kun je kapotslaan.
 
 ## Relic Run
 

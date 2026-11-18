@@ -75,6 +75,7 @@ const REBUILT = new Set([
   "cinder-sanctum",
   "broken-tower",
   "scarred-earth",
+  "guild-hall-isle",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
@@ -323,33 +324,88 @@ describe("the arena set (#444)", () => {
   });
 });
 
-describe("Guild Hall Isle (#1222)", () => {
-  const isle = MAPS.find((map) => map.id === "guild-hall-isle");
-  if (isle === undefined) throw new Error("no guild-hall-isle");
-  const walls = allWallSegments(isle.walls);
+describe("Guild Hall Isle (#3445)", () => {
+  const isle = loadMap("guild-hall-isle");
+  const centre = { x: isle.width / 2, y: isle.height / 2 };
+  const objectives = isle.objectives;
+  /** The map as loaded: both gatehouse doors shut, both driftwood barricades standing. */
+  const shut: MapData = {
+    ...isle,
+    walls: [
+      ...isle.walls,
+      ...isle.gates.map(({ wall }) => wall),
+      ...(isle.breakables ?? []).map(({ wall }) => wall),
+    ],
+  };
+  const lordOf = (team: number) => {
+    const lord = objectives
+      .flatMap((objective) => (objective.kind === "guild-lord" ? [objective] : []))
+      .find((objective) => objective.team === team);
+    if (lord === undefined) throw new Error(`no lord for team ${String(team)}`);
+    return lord;
+  };
 
-  it("seats eight a team, for an 8v8", () => {
+  it("seats eight a team on the beach, for an 8v8, each team's spawns the other's turned", () => {
+    expect(isle.teamSizes).toEqual([8]);
     for (const team of [0, 1]) {
-      expect(isle.spawnPoints.filter((spawn) => spawn.team === team)).toHaveLength(8);
+      const own = isle.spawnPoints.filter((spawn) => spawn.team === team);
+      expect(own).toHaveLength(8);
+      for (const spawn of own) expect(spawn.layer).toBe(isle.groundLayer);
+    }
+    for (const spawn of isle.spawnPoints.filter((each) => each.team === 0)) {
+      expect(
+        isle.spawnPoints.some(
+          (other) => other.team === 1 && near(other.position, turned(isle, spawn.position)),
+        ),
+        JSON.stringify(spawn),
+      ).toBe(true);
     }
   });
 
-  it("lets every spawn walk to the enemy Guild Lord", () => {
-    const finder = createPathFinder(
-      buildNavGraph(walls, { width: isle.width, height: isle.height }, RADIUS, []),
-    );
-    for (const spawn of isle.spawnPoints) {
-      const lord = isle.objectives.find(
-        (objective) => objective.kind === "guild-lord" && objective.team !== spawn.team,
-      );
-      if (lord === undefined) throw new Error(`no enemy lord for team ${String(spawn.team)}`);
-      expect(finder.find(spawn.position, lord.position), JSON.stringify(spawn)).toBeDefined();
+  it("is the same island turned half round its centre: walls, decks, stairs, pits, tunnels, doors, barricades, water and zones", () => {
+    const image = (shape: Parameters<typeof wallToSegments>[0]) =>
+      wallToSegments(shape).map(({ a, b }) => ({ a: turned(isle, a), b: turned(isle, b) }));
+    const all = [
+      ...isle.walls,
+      ...isle.decks.map(({ footprint }) => footprint),
+      ...isle.transitions.map(({ area }) => area),
+      ...isle.pits.map(({ footprint }) => footprint),
+      ...isle.tunnels.map(({ footprint }) => footprint),
+      ...isle.gates.map(({ wall }) => wall),
+      ...(isle.breakables ?? []).map(({ wall }) => wall),
+      ...(isle.water ?? []).map(({ area }) => area),
+      ...(isle.zones ?? []).map(({ area }) => area),
+    ];
+    const sides = all.flatMap((shape) => wallToSegments(shape));
+    for (const shape of all) {
+      for (const side of image(shape)) {
+        expect(
+          sides.some((other) => sameSegment(other, side)),
+          JSON.stringify(shape),
+        ).toBe(true);
+      }
     }
   });
 
-  it("guards each base as GW1 does, point-symmetric (#1223)", () => {
-    const centre = { x: isle.width / 2, y: isle.height / 2 };
-    const guards = isle.objectives.flatMap((objective) =>
+  it("puts each Guild Lord on its hall floor, the flag stand on the dais at the centre", () => {
+    expect(lordOf(0).position).toEqual({ x: 1350, y: 1300 });
+    expect(lordOf(1).position).toEqual({ x: 4650, y: 1300 });
+    const stand = objectives.find((objective) => objective.kind === "flag-stand");
+    expect(stand).toEqual({ kind: "flag-stand", layer: 2, position: centre });
+    for (const [deckId, at] of [
+      ["west-hall", lordOf(0)],
+      ["east-hall", lordOf(1)],
+      ["flag-dais", stand],
+    ] as const) {
+      const deck = isle.decks.find(({ id }) => id === deckId);
+      if (deck === undefined || at === undefined) throw new Error(`no ${deckId}`);
+      expect(at.layer).toBe(deck.layer);
+      expect(pointInShape(at.position, deck.footprint), deckId).toBe(true);
+    }
+  });
+
+  it("guards each base as GW1 does, four round the lord and four at the gatehouse, point-symmetric (#1223)", () => {
+    const guards = objectives.flatMap((objective) =>
       objective.kind === "guard" ? [objective] : [],
     );
     for (const team of [0, 1]) {
@@ -364,75 +420,93 @@ describe("Guild Hall Isle (#1222)", () => {
         "knight",
         "knight",
       ]);
-      const lord = isle.objectives.find(
-        (objective) => objective.kind === "guild-lord" && objective.team === team,
+      const lord = lordOf(team);
+      const own = guards.filter((each) => each.team === team);
+      const withLord = own.filter((each) => Vec.distance(each.position, lord.position) <= 150);
+      expect(withLord.map(({ role }) => role).sort()).toEqual([
+        "archer",
+        "bodyguard",
+        "knight",
+        "knight",
+      ]);
+      for (const guard of withLord) expect(guard.layer).toBe(lord.layer);
+      // The rest stand on the beach before their own gatehouse's outer mouth.
+      const mouth = isle.pits.find(
+        ({ id }) => id === (team === 0 ? "west-gatehouse-west-mouth" : "east-gatehouse-east-mouth"),
       );
-      if (lord === undefined) throw new Error(`no lord for team ${String(team)}`);
-      for (const near of guards.filter(
-        (each) => each.team === team && (each.role === "bodyguard" || each.role === "knight"),
-      )) {
-        expect(
-          Math.hypot(near.position.x - lord.position.x, near.position.y - lord.position.y),
-        ).toBeLessThanOrEqual(150);
+      if (mouth === undefined) throw new Error("no mouth");
+      const { x, y, width, height } = mouth.footprint;
+      const middle = { x: x + width / 2, y: y + height / 2 };
+      for (const guard of own.filter((each) => !withLord.includes(each))) {
+        expect(guard.layer).toBe(isle.groundLayer);
+        expect(Vec.distance(guard.position, middle), JSON.stringify(guard)).toBeLessThan(400);
       }
     }
     for (const each of guards.filter((guard) => guard.team === 0)) {
-      const mirror = {
-        x: 2 * centre.x - each.position.x,
-        y: 2 * centre.y - each.position.y,
-      };
       expect(
         guards.some(
           (other) =>
             other.team === 1 &&
             other.role === each.role &&
-            other.position.x === mirror.x &&
-            other.position.y === mirror.y,
+            other.layer === each.layer &&
+            near(other.position, turned(isle, each.position)),
         ),
         JSON.stringify(each),
       ).toBe(true);
     }
   });
 
-  it("leaves every spawn a clear walk out of its base (#1294)", () => {
-    const { creatureRadius, playerRadius } = MINIMAL_GW_INSPIRED_PVP_V1.collision;
-    for (const spawn of isle.spawnPoints) {
-      const out: Segment = {
-        a: spawn.position,
-        b: { x: isle.width / 2, y: spawn.position.y },
-      };
-      for (const guard of isle.objectives) {
-        if (guard.kind !== "guard" || guard.team !== spawn.team) continue;
-        expect(
-          distancePointToSegment(guard.position, out),
-          JSON.stringify({ spawn, guard }),
-        ).toBeGreaterThanOrEqual(playerRadius + creatureRadius);
+  it("shuts each gatehouse with a door its foe's rampart lever opens", () => {
+    expect(isle.gates.map(({ id, look }) => [id, look])).toEqual([
+      ["west-gatehouse-door", "door"],
+      ["east-gatehouse-door", "door"],
+    ]);
+    const ramparts = isle.decks.filter(({ id }) => id.endsWith("-rampart"));
+    for (const gate of isle.gates) {
+      const tunnel = isle.tunnels.find(({ footprint }) => shapesOverlap(footprint, gate.wall));
+      expect(tunnel?.id, gate.id).toBe(gate.id.replace("-door", "-tunnel"));
+      const levers = (isle.switches ?? []).filter(({ targets }) => targets.includes(gate.id));
+      expect(levers, gate.id).toHaveLength(1);
+      const [lever] = levers;
+      if (lever === undefined) throw new Error("no lever");
+      const on = ramparts.find(({ footprint }) => pointInShape(lever.position, footprint));
+      expect(on?.id, lever.id).toBe(gate.id.startsWith("west") ? "east-rampart" : "west-rampart");
+      expect(lever.layer).toBe(on?.layer);
+    }
+  });
+
+  it("keeps every spawn 200 or more from every zone, and out of the water", () => {
+    for (const { position } of isle.spawnPoints) {
+      for (const { area } of isle.zones ?? []) {
+        expect(pointInShape(position, area)).toBe(false);
+        for (const side of wallToSegments(area)) {
+          expect(
+            distancePointToSegment(position, side),
+            JSON.stringify(position),
+          ).toBeGreaterThanOrEqual(200);
+        }
+      }
+      for (const { area } of isle.water ?? []) {
+        expect(pointInShape(position, area), JSON.stringify(position)).toBe(false);
       }
     }
   });
 
-  it("keeps a 200-unit circle at its centre clear, for the flag stand", () => {
-    const centre = { x: isle.width / 2, y: isle.height / 2 };
-    for (const wall of walls) {
-      expect(distancePointToSegment(centre, wall)).toBeGreaterThan(200);
-    }
-  });
-
-  it("puts the flag stand at the centre, and lets each flag walk to it (#1225)", () => {
-    const stand = isle.objectives.find((objective) => objective.kind === "flag-stand");
-    expect(stand?.position).toEqual({ x: isle.width / 2, y: isle.height / 2 });
-    const finder = createPathFinder(
-      buildNavGraph(walls, { width: isle.width, height: isle.height }, RADIUS, []),
+  it("lets every spawn walk to both lords, the flag stand and its flag spawn, the doors shut and the barricades standing", () => {
+    const finder = layeredFinder(shut, RADIUS);
+    const goals = objectives.filter(
+      (objective) =>
+        objective.kind === "guild-lord" ||
+        objective.kind === "flag-stand" ||
+        objective.kind === "flag-spawn",
     );
-    const spawns = isle.objectives.filter((objective) => objective.kind === "flag-spawn");
-    expect(spawns.map((spawn) => spawn.team).sort()).toEqual([0, 1]);
-    for (const spawn of spawns) {
-      const shrine = isle.objectives.find(
-        (objective) => objective.kind === "resurrection-shrine" && objective.team === spawn.team,
-      );
-      if (shrine === undefined || stand === undefined) throw new Error("no shrine or stand");
-      expect(Vec.distance(spawn.position, shrine.position)).toBeLessThan(200);
-      expect(finder.find(spawn.position, stand.position), JSON.stringify(spawn)).toBeDefined();
+    for (const spawn of isle.spawnPoints) {
+      for (const goal of goals) {
+        expect(
+          finder.find(spawn.position, spawn.layer, goal.position, goal.layer),
+          JSON.stringify([spawn.position, goal]),
+        ).toBeDefined();
+      }
     }
   });
 });

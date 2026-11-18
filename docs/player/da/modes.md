@@ -93,14 +93,13 @@ døre; lianvægge kan hugges ned.
 
 ## Laugskamp
 
-**Dræb fjendens Laugsherre**, 8 mod 8. Hver base ligger bag en mur med to
-porte; Laugsherren står bagerst i sit herrekammer og skyder med bue på
-enhver fjende, den ser. Vagter holder hver base: Riddere og en Livvagt
-ved herren, en Bueskytte bagerst i herrekammeret, en Fodsoldat og en
-Bueskytte ved hver port. De kæmper mod fjender nær deres post og går
-tilbage til den. Mens Livvagten lever, tager dens herre 20 % mindre
-skade, så dræb den først. Hvert 2. minut bringer hvert holds helligdom
-dets døde tilbage.
+**Dræb fjendens Laugsherre**, 8 mod 8. Hver base ligger bag en vold med
+et porttårn; Laugsherren står på gulvet i sin hal og skyder med bue på
+enhver fjende, den ser. Vagter holder hver base: Riddere, en Livvagt og
+en Bueskytte ved herren, to Fodsoldater og to Bueskytter ved porttårnet.
+De kæmper mod fjender nær deres post og går tilbage til den. Mens
+Livvagten lever, tager dens herre 20 % mindre skade, så dræb den først.
+Hvert 2. minut bringer hvert holds helligdom dets døde tilbage.
 
 Hvert hold har et **flag** i sin base, og **flagstanden** står i midten.
 Vælg dit flag som mål, og tryk på **Mellemrum** for at tage det op; bær
@@ -123,7 +122,7 @@ på fjendens herre. Under den nævner en linje den, der bærer et flag. Et
 løft dukker op som "Moralløft! +10%" eller "Fjendens moralløft". På
 kompasset markerer ♛ hver Laugsherre, ⚑ hvert flag og ◎ standen.
 
-Guild Hall Isle spiller den.
+Guild Hall Isle (8v8, 6000x2600) spiller den: en ø i eftermiddagssolen, hvert holds lavshal bag en vold. En porttunnel løber under hver vold, og dens dør åbnes af et håndtag på den modsatte vold; moler krydser tidevandskanalerne ved voldenes ender, og barrikader af drivtømmer kan slås i stykker.
 
 ## Relikvieløb
 

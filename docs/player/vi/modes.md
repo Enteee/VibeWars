@@ -90,13 +90,13 @@ dưới nó khi một cần gạt trong sân mở cửa lối ấy; tường dâ
 
 ## Chiến Bang
 
-**Hạ Lãnh chúa Bang của địch**, 8 đấu 8. Mỗi căn cứ nằm sau một bức tường
-có hai cổng; Lãnh chúa Bang đứng ở cuối phòng lãnh chúa và bắn cung vào bất
-kỳ địch nào nó thấy. Lính gác giữ mỗi căn cứ: các Knight và một Bodyguard bên
-cạnh lãnh chúa, một Archer ở cuối phòng lãnh chúa, một Footman và một Archer
-ở mỗi cổng. Chúng đánh địch ở gần vị trí của mình và đi về lại vị trí. Khi
-Bodyguard còn sống, lãnh chúa của nó nhận ít hơn 20% sát thương, nên hãy hạ
-nó trước. Mỗi 2 phút, đền của mỗi đội đưa người chết của đội trở lại.
+**Hạ Lãnh chúa Bang của địch**, 8 đấu 8. Mỗi căn cứ nằm sau một bức thành lũy
+có tháp cổng; Lãnh chúa Bang đứng trên sàn sảnh của mình và bắn cung vào bất
+kỳ địch nào nó thấy. Lính gác giữ mỗi căn cứ: các Knight, một Bodyguard và
+một Archer bên cạnh lãnh chúa, hai Footman và hai Archer ở tháp cổng. Chúng
+đánh địch ở gần vị trí của mình và đi về lại vị trí. Khi Bodyguard còn sống,
+lãnh chúa của nó nhận ít hơn 20% sát thương, nên hãy hạ nó trước. Mỗi 2 phút,
+đền của mỗi đội đưa người chết của đội trở lại.
 
 Mỗi đội có một **lá cờ** trong căn cứ, và **bệ cờ** ở trung tâm. Nhắm lá cờ
 của bạn và nhấn **Space** để nhặt lên; mang nó tới bệ, nhắm bệ và nhấn
@@ -117,7 +117,7 @@ Bên dưới, một dòng ghi tên ai đang mang cờ. Lần tăng sĩ khí hi�
 "Tăng sĩ khí! +10%", hoặc "Địch tăng sĩ khí". Trên la bàn, ♛ đánh dấu mỗi
 Lãnh chúa Bang, ⚑ mỗi lá cờ và ◎ bệ cờ.
 
-Guild Hall Isle chơi chế độ này.
+Guild Hall Isle (8v8, 6000x2600) chơi chế độ này: một hòn đảo dưới nắng chiều, sảnh bang hội của mỗi đội nằm sau một tường thành. Dưới mỗi tường thành có một đường hầm cổng, cửa của nó được mở bằng cần gạt trên tường thành phía đối diện; các cầu tàu bắc qua kênh thủy triều ở hai đầu tường thành, và rào chắn bằng gỗ trôi dạt có thể bị phá.
 
 ## Vận chuyển thánh tích
 

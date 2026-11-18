@@ -94,14 +94,14 @@ kullan; sarmaşık duvarlar kesilip yıkılabilir.
 
 ## Lonca Savaşı
 
-**Düşman Lonca Lordu'nu öldür**, 8'e karşı 8. Her üs iki kapılı bir
-duvarın arkasındadır; Lonca Lordu lord odasının arkasında durur ve
-gördüğü her düşmanı yayla vurur. Her üssü muhafızlar tutar: lordun
-yanında Şövalyeler ve bir Koruma, lord odasının arkasında bir Okçu, her
-kapıda bir Piyade ve bir Okçu. Görev yerlerinin yakınındaki düşmanlarla
-dövüşür ve oraya geri yürürler. Koruma yaşadığı sürece lordu %20 daha
-az hasar alır, bu yüzden önce onu öldür. Her 2 dakikada bir her takımın
-tapınağı ölülerini geri getirir.
+**Düşman Lonca Lordu'nu öldür**, 8'e karşı 8. Her üs kapı kuleli bir
+surun arkasındadır; Lonca Lordu salonunun zemininde durur ve gördüğü
+her düşmanı yayla vurur. Her üssü muhafızlar tutar: lordun yanında
+Şövalyeler, bir Koruma ve bir Okçu, kapı kulesinde iki Piyade ve iki
+Okçu. Görev yerlerinin yakınındaki düşmanlarla dövüşür ve oraya geri
+yürürler. Koruma yaşadığı sürece lordu %20 daha az hasar alır, bu
+yüzden önce onu öldür. Her 2 dakikada bir her takımın tapınağı
+ölülerini geri getirir.
 
 Her takımın üssünde bir **bayrak** vardır ve **Bayrak Direği**
 merkezdedir. Bayrağını hedef al ve almak için **Space**'e bas; onu
@@ -125,7 +125,7 @@ kişinin adını verir. Bir artış "Moral Artışı! +%10" ya da "Düşmana Mor
 Artışı" olarak belirir. Pusulada ♛ her Lonca Lordu'nu, ⚑ her bayrağı, ◎
 da direği işaretler.
 
-Guild Hall Isle bunu oynatır.
+Guild Hall Isle (8v8, 6000x2600) bunu oynatır: öğleden sonra güneşinde bir ada, her takımın lonca salonu bir surun ardında. Her surun altından bir kapı tüneli geçer, kapısını karşı surdaki bir kol açar; iskeleler surların uçlarındaki gelgit kanallarının üzerinden geçer ve sürüklenmiş odundan barikatlar kırılabilir.
 
 ## Kalıntı Koşusu
 

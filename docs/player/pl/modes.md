@@ -88,13 +88,13 @@ wyciąć.
 
 ## Bitwa gildii
 
-**Zabij wrogiego Lorda Gildii**, 8 na 8. Każda baza leży za murem z dwiema bramami;
-Lord Gildii stoi w tylnej części swojej komnaty i strzela z łuku do każdego wroga,
-którego widzi. Każdej bazy strzegą strażnicy: Rycerze i Ochroniarz przy lordzie,
-Łucznik w tylnej części komnaty, Piechur i Łucznik przy każdej bramie. Walczą
-z wrogami w pobliżu posterunku i wracają na niego. Dopóki Ochroniarz żyje, jego lord
-otrzymuje o 20% mniej obrażeń, więc zabij go pierwszego. Co 2 minuty kapliczka
-każdej drużyny przywraca jej poległych.
+**Zabij wrogiego Lorda Gildii**, 8 na 8. Każda baza leży za wałem z bramą wieżową;
+Lord Gildii stoi na posadzce swojej sali i strzela z łuku do każdego wroga, którego
+widzi. Każdej bazy strzegą strażnicy: Rycerze, Ochroniarz i Łucznik przy lordzie,
+dwóch Piechurów i dwóch Łuczników przy bramie wieżowej. Walczą z wrogami w pobliżu
+posterunku i wracają na niego. Dopóki Ochroniarz żyje, jego lord otrzymuje o 20%
+mniej obrażeń, więc zabij go pierwszego. Co 2 minuty kapliczka każdej drużyny
+przywraca jej poległych.
 
 Każda drużyna ma w bazie **flagę**, a **stojak flagi** jest pośrodku. Obierz swoją
 flagę na cel i naciśnij **Space**, aby ją podnieść; zanieś ją do stojaka, obierz
@@ -116,7 +116,7 @@ Pod nią wiersz wymienia, kto niesie flagę. Premia wyskakuje jako „Premia mor
 albo „Premia morale wroga”. Na kompasie ♛ oznacza każdego Lorda Gildii, ⚑ każdą flagę,
 a ◎ stojak.
 
-Gra w nią Guild Hall Isle.
+Gra w nią Guild Hall Isle (8v8, 6000x2600): wyspa w popołudniowym słońcu, sala każdej drużyny za wałem. Pod każdym wałem biegnie tunel bramny, którego drzwi otwiera dźwignia na wale naprzeciwko; pomosty przechodzą nad kanałami pływowymi na końcach wałów, a barykady z wyrzuconego przez morze drewna można rozbić.
 
 ## Wyścig relikwii
 

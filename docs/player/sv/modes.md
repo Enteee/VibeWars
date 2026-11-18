@@ -93,14 +93,13 @@ lianväggar kan huggas ner.
 
 ## Gillestrid
 
-**Dräp fiendens gillesherre**, 8 mot 8. Varje bas ligger bakom en mur
-med två portar; gillesherren står längst bak i sitt herrerum och skjuter
-med båge på varje fiende den ser. Vakter håller varje bas: riddare och en
-livvakt vid herren, en bågskytt längst bak i herrerummet, en fotsoldat
-och en bågskytt vid varje port. De slåss mot fiender nära sin post och
-går tillbaka till den. Medan livvakten lever tar dess herre 20 % mindre
-skada, så döda den först. Var 2:a minut tar varje lags helgedom tillbaka
-dess döda.
+**Dräp fiendens gillesherre**, 8 mot 8. Varje bas ligger bakom en vall
+med ett porttorn; gillesherren står på golvet i sin hall och skjuter med
+båge på varje fiende den ser. Vakter håller varje bas: riddare, en
+livvakt och en bågskytt vid herren, två fotsoldater och två bågskyttar
+vid porttornet. De slåss mot fiender nära sin post och går tillbaka till
+den. Medan livvakten lever tar dess herre 20 % mindre skada, så döda den
+först. Var 2:a minut tar varje lags helgedom tillbaka dess döda.
 
 Varje lag har en **flagga** i sin bas, och **flaggstället** står i
 mitten. Välj din flagga som mål och tryck på **Space** för att ta upp
@@ -124,7 +123,7 @@ flagga. En höjning visas som "Moralhöjning! +10 %", eller "Fiendens
 moralhöjning". På kompassen markerar ♛ varje gillesherre, ⚑ varje
 flagga och ◎ stället.
 
-Guild Hall Isle spelar det.
+Guild Hall Isle (8v8, 6000x2600) spelar det: en ö i eftermiddagssolen, varje lags gillesal bakom en vall. Under varje vall går en porttunnel, vars dörr öppnas av en spak på den motsatta vallen; bryggor korsar tidvattenrännorna vid vallarnas ändar, och barrikader av drivved kan slås sönder.
 
 ## Reliklöpning
 

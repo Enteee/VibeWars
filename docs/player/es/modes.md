@@ -96,14 +96,14 @@ muros de lianas se pueden cortar.
 
 ## Batalla de gremios
 
-**Mata al Señor del Gremio enemigo**, 8 contra 8. Cada base está detrás de un
-muro con dos puertas; el Señor del Gremio está al fondo de su sala y dispara con
-un arco a cualquier enemigo que vea. Los guardias protegen cada base: Knights y
-un Bodyguard junto al señor, un Archer al fondo de la sala del señor, y un
-Footman y un Archer en cada puerta. Luchan contra los enemigos cercanos a su
-puesto y vuelven a él. Mientras el Bodyguard siga vivo, su señor recibe un 20%
-menos de daño, así que mátalo primero. Cada 2 minutos, el santuario de cada
-equipo devuelve a sus muertos.
+**Mata al Señor del Gremio enemigo**, 8 contra 8. Cada base está detrás de una
+muralla con una torre de entrada; el Señor del Gremio está en el suelo de su
+sala y dispara con un arco a cualquier enemigo que vea. Los guardias protegen
+cada base: Knights, un Bodyguard y un Archer junto al señor, y dos Footmen y dos
+Archers en la torre de entrada. Luchan contra los enemigos cercanos a su puesto
+y vuelven a él. Mientras el Bodyguard siga vivo, su señor recibe un 20% menos de
+daño, así que mátalo primero. Cada 2 minutos, el santuario de cada equipo
+devuelve a sus muertos.
 
 Cada equipo tiene una **bandera** en su base, y la **base de bandera** está en
 el centro. Selecciona tu bandera y pulsa **Space** para cogerla; llévala a la
@@ -126,7 +126,7 @@ señor enemigo. Debajo, una línea nombra a quien lleva una bandera. Un bonus
 aparece como "¡Bonus de moral! +10%" o "Bonus de moral enemigo". En la brújula,
 ♛ marca a cada Señor del Gremio, ⚑ cada bandera y ◎ la base de bandera.
 
-Se juega en Guild Hall Isle.
+Se juega en Guild Hall Isle (8v8, 6000x2600): una isla al sol de la tarde, con la sala de cada equipo tras una muralla. Bajo cada muralla pasa un túnel de puerta, cuya puerta abre una palanca en la muralla de enfrente; unos muelles cruzan los canales de marea en los extremos de las murallas, y las barricadas de madera de deriva se pueden romper.
 
 ## Carrera de reliquias
 

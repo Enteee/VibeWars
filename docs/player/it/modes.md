@@ -40,7 +40,7 @@ Ci si gioca su Jungle Ruins (da 2v2 a 8v8, 5400x2800): rovine di templi invase d
 
 ## Battaglia di gilda
 
-**Uccidi il Signore della gilda nemico**, 8 contro 8. Ogni base sta dietro un muro con due porte; il Signore della gilda sta in fondo alla sua sala e tira con l'arco a ogni nemico che vede. Le guardie difendono ogni base: Knight e un Bodyguard accanto al signore, un Archer in fondo alla sala, un Footman e un Archer a ogni porta. Combattono i nemici vicini al loro posto e poi tornano lì. Finché il Bodyguard è vivo, il suo signore subisce il 20% di danni in meno, quindi uccidilo per primo. Ogni 2 minuti, il santuario di ogni squadra riporta i suoi morti.
+**Uccidi il Signore della gilda nemico**, 8 contro 8. Ogni base sta dietro un bastione con un torrione d'ingresso; il Signore della gilda sta sul pavimento della sua sala e tira con l'arco a ogni nemico che vede. Le guardie difendono ogni base: Knight, un Bodyguard e un Archer accanto al signore, due Footman e due Archer al torrione d'ingresso. Combattono i nemici vicini al loro posto e poi tornano lì. Finché il Bodyguard è vivo, il suo signore subisce il 20% di danni in meno, quindi uccidilo per primo. Ogni 2 minuti, il santuario di ogni squadra riporta i suoi morti.
 
 Ogni squadra ha una **bandiera** nella sua base, e la **Base bandiera** è al centro. Bersaglia la tua bandiera e premi **Space** per prenderla; portala alla Base bandiera, bersagliala e premi **Space** per piantarla. Chi la porta cammina più lentamente e non può attaccare né usare abilità d'attacco; la lascia cadere quando muore, cambia armi o preme **Lascia bandiera** sopra la barra della Salute. Piantare la tua sulla Base bandiera rimanda a casa la bandiera nemica che vi si trova. Ogni 2 minuti in cui la tua bandiera tiene la Base bandiera, la tua squadra guadagna il 10% di morale.
 
@@ -48,7 +48,7 @@ La squadra il cui Signore della gilda muore perde subito, e lo stesso vale per u
 
 Il tabellone mostra la Salute di ogni Signore della gilda, la tua prima, chi tiene la Base bandiera e quanto manca al suo bonus, quando i santuari riporteranno i morti e, negli ultimi 3 minuti, i danni di ogni squadra al signore nemico. Sotto, una riga indica chi porta una bandiera. Un bonus appare come "Bonus morale! +10%", o "Bonus morale nemico". Sulla bussola, ♛ segna ogni Signore della gilda, ⚑ ogni bandiera e ◎ la Base bandiera.
 
-Ci si gioca su Guild Hall Isle.
+Ci si gioca su Guild Hall Isle (8v8, 6000x2600): un'isola nel sole del pomeriggio, la sala di ogni squadra dietro un bastione. Sotto ogni bastione corre un tunnel della porta, la cui porta si apre con una leva sul bastione di fronte; pontili attraversano i canali di marea alle estremità dei bastioni, e le barricate di legno portato dal mare si possono abbattere.
 
 ## Corsa alla reliquia
 

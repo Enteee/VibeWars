@@ -90,11 +90,11 @@ ce o pârghie dintr-o curte îi deschide ușile; zidurile de liane pot fi tăiat
 
 ## Bătălie de bresle
 
-**Ucide Lordul breslei inamice**, 8 contra 8. Fiecare bază stă în spatele unui zid cu
-două porți; Lordul breslei stă în fundul camerei lui și trage cu arcul în orice inamic
-vede. Gărzi păzesc fiecare bază: Cavaleri și o Gardă de corp lângă lord, un Arcaș în
-fundul camerei lordului, un Pedestraș și un Arcaș la fiecare poartă. Luptă cu inamicii
-de lângă postul lor și se întorc la el. Cât timp Garda de corp trăiește, lordul ei
+**Ucide Lordul breslei inamice**, 8 contra 8. Fiecare bază stă în spatele unui meterez
+cu un turn de poartă; Lordul breslei stă pe podeaua sălii lui și trage cu arcul în
+orice inamic vede. Gărzi păzesc fiecare bază: Cavaleri, o Gardă de corp și un Arcaș
+lângă lord, doi Pedestrași și doi Arcași la turnul de poartă. Luptă cu inamicii de
+lângă postul lor și se întorc la el. Cât timp Garda de corp trăiește, lordul ei
 primește cu 20% mai puține daune, așa că ucide-o prima. La fiecare 2 minute, sanctuarul
 fiecărei echipe își readuce morții.
 
@@ -118,7 +118,7 @@ pe oricine poartă un steag. Un impuls apare ca „Impuls de moral! +10%” sau 
 moral inamic”. Pe busolă, ♛ marchează fiecare Lord al breslei, ⚑ fiecare steag și ◎
 suportul.
 
-Se joacă pe Guild Hall Isle.
+Se joacă pe Guild Hall Isle (8v8, 6000x2600): o insulă în soarele după-amiezii, sala fiecărei echipe în spatele unui meterez. Sub fiecare meterez trece un tunel de poartă, a cărui ușă o deschide o pârghie de pe meterezul din față; debarcadere traversează canalele de maree de la capetele meterezelor, iar baricadele din lemn adus de mare pot fi sparte.
 
 ## Cursa relicvelor
 

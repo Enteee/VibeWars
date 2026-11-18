@@ -89,13 +89,13 @@ vrata; zidovi od lijana mogu se posjeći.
 
 ## Bitka cehova
 
-**Ubij neprijateljskog Gospodara ceha**, 8 protiv 8. Svaka baza stoji iza zida
-s dvoja vrata; Gospodar ceha stoji na stražnjem dijelu svoje dvorane i
-lukom gađa svakog neprijatelja kojeg vidi. Stražari drže svaku bazu: Vitezovi i
-Tjelohranitelj uz gospodara, Strijelac na stražnjem dijelu dvorane, Pješak
-i Strijelac na svakim vratima. Bore se s neprijateljima blizu svog položaja i vraćaju
-mu se. Dok je Tjelohranitelj živ, njegov gospodar prima 20% manje štete, pa ga
-ubij prvog. Svake 2 minute svetište svakog tima vraća njegove mrtve.
+**Ubij neprijateljskog Gospodara ceha**, 8 protiv 8. Svaka baza stoji iza bedema s
+kulom nad vratima; Gospodar ceha stoji na podu svoje dvorane i lukom gađa svakog
+neprijatelja kojeg vidi. Stražari drže svaku bazu: Vitezovi, Tjelohranitelj i
+Strijelac uz gospodara, dva Pješaka i dva Strijelca kod kule nad vratima. Bore se s
+neprijateljima blizu svog položaja i vraćaju mu se. Dok je Tjelohranitelj živ, njegov
+gospodar prima 20% manje štete, pa ga ubij prvog. Svake 2 minute svetište svakog tima
+vraća njegove mrtve.
 
 Svaki tim ima **zastavu** u svojoj bazi, a **stalak za zastavu** je u
 središtu. Ciljaj svoju zastavu i pritisni **Space** da je podigneš; nosi je do
@@ -117,7 +117,7 @@ gospodaru. Ispod njega redak navodi tko nosi zastavu. Pojačanje iskače kao
 "Podizanje morala! +10%" ili "Neprijateljsko podizanje morala". Na kompasu ♛ označava
 svakog Gospodara ceha, ⚑ svaku zastavu, a ◎ stalak.
 
-Guild Hall Isle ga igra.
+Guild Hall Isle (8v8, 6000x2600) ga igra: otok na popodnevnom suncu, dvorana svakog tima iza bedema. Ispod svakog bedema prolazi tunel kule s vratima koja otvara poluga na suprotnom bedemu; molovi prelaze plimne kanale na krajevima bedema, a barikade od naplavljenog drva mogu se razbiti.
 
 ## Utrka za relikvijom
 

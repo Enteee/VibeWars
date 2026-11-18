@@ -84,12 +84,12 @@ in der Mitte oder nimm den verborgenen Gang darunter, sobald ein Hebel in einem 
 
 ## Gildenschlacht
 
-**Töte den gegnerischen Gildenlord**, 8 gegen 8. Jede Basis liegt hinter einer Mauer mit zwei Toren;
-der Gildenlord steht hinten in seinem Lordraum und schießt mit einem Bogen auf jeden Gegner, den er
-sieht. Wachen halten jede Basis: Knights und ein Bodyguard beim Lord, ein Archer hinten im Lordraum,
-ein Footman und ein Archer an jedem Tor. Sie kämpfen gegen Gegner nahe ihrem Posten und laufen dorthin
-zurück. Solange der Bodyguard lebt, nimmt sein Lord 20 % weniger Schaden, also töte ihn zuerst. Alle
-2 Minuten holt der Schrein jedes Teams seine Toten zurück.
+**Töte den gegnerischen Gildenlord**, 8 gegen 8. Jede Basis liegt hinter einem Wall mit Torhaus; der
+Gildenlord steht auf dem Boden seiner Halle und schießt mit einem Bogen auf jeden Gegner, den er
+sieht. Wachen halten jede Basis: Knights, ein Bodyguard und ein Archer beim Lord, zwei Footmen und
+zwei Archers am Torhaus. Sie kämpfen gegen Gegner nahe ihrem Posten und laufen dorthin zurück. Solange
+der Bodyguard lebt, nimmt sein Lord 20 % weniger Schaden, also töte ihn zuerst. Alle 2 Minuten holt
+der Schrein jedes Teams seine Toten zurück.
 
 Jedes Team hat eine **Flagge** in seiner Basis, und der **Flaggenstand** ist in der Mitte. Visiere
 deine Flagge an und drück **Space**, um sie aufzunehmen; trag sie zum Stand, visiere den Stand an und
@@ -109,7 +109,7 @@ den Schaden jedes Teams am gegnerischen Lord. Darunter nennt eine Zeile, wer ein
 Schub erscheint als „Moralschub! +10%“ oder „Moralschub beim Gegner“. Auf dem Kompass markiert ♛ jeden
 Gildenlord, ⚑ jede Flagge und ◎ den Stand.
 
-Guild Hall Isle spielt es.
+Guild Hall Isle (8v8, 6000x2600) spielt es: eine Insel in der Nachmittagssonne, die Gildenhalle jedes Teams hinter einem Wall. Unter jedem Wall führt ein Torhaustunnel hindurch, dessen Tür ein Hebel auf dem gegenüberliegenden Wall öffnet; Stege überqueren die Gezeitenrinnen an den Wallenden, und Barrikaden aus Treibholz lassen sich zerschlagen.
 
 ## Reliktlauf
 

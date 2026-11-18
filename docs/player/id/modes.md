@@ -87,13 +87,12 @@ membuka pintunya; dinding sulur bisa ditebang.
 
 ## Perang Guild
 
-**Bunuh Penguasa Guild musuh**, 8 lawan 8. Setiap markas berada di balik tembok
-dengan dua gerbang; Penguasa Guild berdiri di bagian belakang ruangannya dan
-menembak musuh mana pun yang dilihatnya dengan busur. Para penjaga menjaga setiap markas: Knight dan seorang
-Bodyguard di dekat penguasa, seorang Archer di belakang ruangan penguasa, seorang Footman
-dan seorang Archer di setiap gerbang. Mereka melawan musuh di dekat posnya lalu berjalan kembali
-ke sana. Selama Bodyguard hidup, penguasanya menerima damage 20% lebih kecil, jadi bunuh
-Bodyguard dulu. Setiap 2 menit, kuil setiap tim menghidupkan kembali anggotanya yang mati.
+**Bunuh Penguasa Guild musuh**, 8 lawan 8. Setiap markas berada di balik benteng dengan menara gerbang;
+Penguasa Guild berdiri di lantai aulanya dan menembak musuh mana pun yang dilihatnya dengan busur. Para
+penjaga menjaga setiap markas: Knight, seorang Bodyguard, dan seorang Archer di dekat penguasa, dua Footman
+dan dua Archer di menara gerbang. Mereka melawan musuh di dekat posnya lalu berjalan kembali ke sana. Selama
+Bodyguard hidup, penguasanya menerima damage 20% lebih kecil, jadi bunuh Bodyguard dulu. Setiap 2 menit,
+kuil setiap tim menghidupkan kembali anggotanya yang mati.
 
 Setiap tim punya **bendera** di markasnya, dan **tiang bendera** ada di
 tengah. Targetkan benderamu lalu tekan **Space** untuk mengangkatnya; bawa ke
@@ -115,7 +114,7 @@ musuh. Di bawahnya, sebaris teks menyebut siapa pun yang membawa bendera. Dorong
 "Dorongan Moral! +10%", atau "Dorongan Moral musuh". Di kompas, ♛ menandai
 setiap Penguasa Guild, ⚑ setiap bendera dan ◎ tiangnya.
 
-Guild Hall Isle memainkannya.
+Guild Hall Isle (8v8, 6000x2600) memainkannya: pulau di bawah matahari sore, aula tiap tim di balik benteng. Terowongan gerbang melintas di bawah tiap benteng, pintunya dibuka tuas di benteng seberang; dermaga melintasi kanal pasang di ujung-ujung benteng, dan barikade kayu apung bisa dihancurkan.
 
 ## Lari Relik
 

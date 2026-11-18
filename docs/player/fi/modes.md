@@ -98,14 +98,14 @@ jonkin pihan vipu avaa sen ovet; köynnösseinät voi hakata alas.
 ## Kiltataistelu
 
 **Surmaa vihollisen killanherra**, 8 vastaan 8. Jokainen tukikohta on
-muurin takana, jossa on kaksi porttia; killanherra seisoo
-herrahuoneensa perällä ja ampuu jousella jokaista näkemäänsä vihollista.
-Vartijat pitävät kutakin tukikohtaa: ritarit ja henkivartija herran
-luona, jousiampuja herrahuoneen perällä, jalkamies ja jousiampuja
-kummallakin portilla. Ne taistelevat vartiopaikkansa lähellä olevia
-vihollisia vastaan ja kävelevät takaisin sinne. Niin kauan kuin
-henkivartija elää, sen herra ottaa 20 % vähemmän vahinkoa, joten tapa se
-ensin. Joka 2. minuutti kunkin tiimin pyhäkkö tuo sen kuolleet takaisin.
+vallin takana, jossa on porttitorni; killanherra seisoo salinsa
+lattialla ja ampuu jousella jokaista näkemäänsä vihollista. Vartijat
+pitävät kutakin tukikohtaa: ritarit, henkivartija ja jousiampuja herran
+luona, kaksi jalkamiestä ja kaksi jousiampujaa porttitornilla. Ne
+taistelevat vartiopaikkansa lähellä olevia vihollisia vastaan ja
+kävelevät takaisin sinne. Niin kauan kuin henkivartija elää, sen herra
+ottaa 20 % vähemmän vahinkoa, joten tapa se ensin. Joka 2. minuutti
+kunkin tiimin pyhäkkö tuo sen kuolleet takaisin.
 
 Jokaisella tiimillä on **lippu** tukikohdassaan, ja **lipputeline** on
 keskellä. Kohdista lippuusi ja paina **Space** nostaaksesi sen; kanna se
@@ -130,7 +130,7 @@ nimeää jokaisen lipun kantajan. Moraalinnousu ponnahtaa esiin tekstinä
 "Moraalinnousu! +10%" tai "Vihollisen moraalinnousu". Kompassissa ♛
 merkitsee kumpaakin killanherraa, ⚑ kumpaakin lippua ja ◎ telinettä.
 
-Sitä pelaa Guild Hall Isle.
+Sitä pelaa Guild Hall Isle (8v8, 6000x2600): saari iltapäivän auringossa, kummankin joukkueen kiltasali vallin takana. Kunkin vallin alta kulkee porttitunneli, jonka oven avaa vipu vastakkaisella vallilla; laiturit ylittävät vuorovesiuomat vallien päissä, ja ajopuusta kasatut barrikadit voi rikkoa.
 
 ## Reliikkijuoksu
 

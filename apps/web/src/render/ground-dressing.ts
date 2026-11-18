@@ -89,6 +89,10 @@ export const DRESSING: Record<Biome, readonly Scatter[]> = {
     { kind: "tuft", tone: "mark", count: 14, size: [8, 14] },
     { kind: "pebble", tone: "accent", count: 7, size: [5, 10] },
   ],
+  coast: [
+    { kind: "ripple", tone: "accent", count: 8, size: [12, 16] },
+    { kind: "tuft", tone: "mark", count: 8, size: [8, 14] },
+  ],
 };
 
 /** The texture a biome's tile is kept under. */

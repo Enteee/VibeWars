@@ -90,14 +90,13 @@ dajú vysekať.
 
 ## Cechová bitka
 
-**Zabi nepriateľského Pána cechu**, 8 proti 8. Každá základňa leží za múrom
-s dvoma bránami; Pán cechu stojí v zadnej časti svojej siene a
-strieľa z luku na každého nepriateľa, ktorého vidí. Každú základňu držia stráže:
-Rytieri a Telesný strážca pri pánovi, Lukostrelec v zadnej časti siene, Pešiak
-a Lukostrelec pri každej bráne. Bojujú s nepriateľmi pri svojom stanovišti a
-vracajú sa naň. Kým Telesný strážca žije, jeho pán dostáva o 20 % menšie
-poškodenie, takže ho zabi ako prvého. Každé 2 minúty svätyňa každého tímu
-vráti jeho mŕtvych.
+**Zabi nepriateľského Pána cechu**, 8 proti 8. Každá základňa leží za valom s
+bránovou vežou; Pán cechu stojí na podlahe svojej siene a strieľa z luku na
+každého nepriateľa, ktorého vidí. Každú základňu držia stráže: Rytieri, Telesný
+strážca a Lukostrelec pri pánovi, dvaja Pešiaci a dvaja Lukostrelci pri bránovej
+veži. Bojujú s nepriateľmi pri svojom stanovišti a vracajú sa naň. Kým Telesný
+strážca žije, jeho pán dostáva o 20 % menšie poškodenie, takže ho zabi ako
+prvého. Každé 2 minúty svätyňa každého tímu vráti jeho mŕtvych.
 
 Každý tím má vo svojej základni **vlajku** a **stojan na vlajku** je v
 strede. Zameraj svoju vlajku a stlačením **Space** ju zdvihni; odnes ju k
@@ -119,7 +118,7 @@ posledných 3 minútach poškodenie každého tímu voči nepriateľskému páno
 „Posila morálky! +10 %“ alebo „Nepriateľská posila morálky“. Na kompase ♛
 označuje každého Pána cechu, ⚑ každú vlajku a ◎ stojan.
 
-Hrá sa na Guild Hall Isle.
+Hrá sa na Guild Hall Isle (8v8, 6000x2600): ostrov v popoludňajšom slnku, sieň každého tímu za hradbou. Pod každou hradbou vedie tunel brány, ktorého dvere otvára páka na protiľahlej hradbe; mólá prechádzajú ponad prílivové kanály na koncoch hradieb a barikády z naplaveného dreva sa dajú rozbiť.
 
 ## Beh s relikviou
 

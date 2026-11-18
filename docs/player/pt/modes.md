@@ -102,13 +102,13 @@ suas portas; os muros de cipó podem ser derrubados.
 ## Batalha de Guildas
 
 **Mate o Lorde da Guilda inimigo**, 8 contra 8. Cada base fica atrás de
-um muro com dois portões; o Lorde da Guilda fica no fundo da sala dele e
-atira com arco em qualquer inimigo que veja. Guardas defendem cada base:
-Knights e um Bodyguard junto ao lorde, um Archer no fundo da sala do
-lorde, um Footman e um Archer em cada portão. Eles lutam contra inimigos
-perto do posto e voltam para ele. Enquanto o Bodyguard vive, seu lorde
-recebe 20% menos dano, então mate-o primeiro. A cada 2 minutos, o
-santuário de cada equipe traz seus mortos de volta.
+uma muralha com uma torre de portão; o Lorde da Guilda fica no piso do
+salão dele e atira com arco em qualquer inimigo que veja. Guardas
+defendem cada base: Knights, um Bodyguard e um Archer junto ao lorde,
+dois Footmen e dois Archers na torre de portão. Eles lutam contra
+inimigos perto do posto e voltam para ele. Enquanto o Bodyguard vive,
+seu lorde recebe 20% menos dano, então mate-o primeiro. A cada 2
+minutos, o santuário de cada equipe traz seus mortos de volta.
 
 Cada equipe tem uma **bandeira** na base, e o **Suporte da Bandeira** fica
 no centro. Mire na sua bandeira e pressione **Space** para pegá-la; leve
@@ -133,7 +133,7 @@ bandeira. Um bônus aparece como "Bônus de moral! +10%" ou "Bônus de moral
 inimigo". Na bússola, ♛ marca cada Lorde da Guilda, ⚑ cada bandeira e ◎ o
 suporte.
 
-Guild Hall Isle joga esse modo.
+Guild Hall Isle (8v8, 6000x2600) joga esse modo: uma ilha ao sol da tarde, com o salão de cada equipe atrás de uma muralha. Sob cada muralha passa um túnel de portão, cuja porta é aberta por uma alavanca na muralha em frente; píeres cruzam os canais de maré nas pontas das muralhas, e as barricadas de madeira trazida pelo mar podem ser quebradas.
 
 ## Corrida da Relíquia
 

@@ -40,7 +40,7 @@ Hraje ho Jungle Ruins (od 2v2 do 8v8, 5400x2800): zarostlé ruiny chrámu rozdě
 
 ## Bitva cechů
 
-**Zabij nepřátelského Pána cechu**, 8 proti 8. Každá základna leží za zdí se dvěma branami; Pán cechu stojí vzadu ve své komnatě a střílí z luku na každého nepřítele, kterého vidí. Každou základnu hlídají stráže: Knights a Bodyguard u pána, Archer vzadu v komnatě pána, Footman a Archer u každé brány. Bojují s nepřáteli poblíž svého stanoviště a vracejí se na něj. Dokud Bodyguard žije, jeho pán dostává o 20 % méně poškození, takže ho zabij jako prvního. Každé 2 minuty svatyně každého týmu vrátí jeho mrtvé.
+**Zabij nepřátelského Pána cechu**, 8 proti 8. Každá základna leží za valem s branskou věží; Pán cechu stojí na podlaze své síně a střílí z luku na každého nepřítele, kterého vidí. Každou základnu hlídají stráže: Knights, Bodyguard a Archer u pána, dva Footmen a dva Archers u branské věže. Bojují s nepřáteli poblíž svého stanoviště a vracejí se na něj. Dokud Bodyguard žije, jeho pán dostává o 20 % méně poškození, takže ho zabij jako prvního. Každé 2 minuty svatyně každého týmu vrátí jeho mrtvé.
 
 Každý tým má ve své základně **vlajku** a **stojan vlajky** je uprostřed. Zaměř svou vlajku a stiskni **Space**, abys ji vzal; odnes ji ke stojanu, zaměř stojan a stisknutím **Space** ji zasaď. Nosič chodí pomaleji a nemůže útočit ani používat útočné dovednosti; vlajku upustí, když zemře, vymění zbraně nebo stiskne **Odhodit vlajku** nad svým ukazatelem zdraví. Zasazení tvojí vlajky na stojan pošle nepřátelskou vlajku domů. Každé 2 minuty, kdy tvoje vlajka drží stojan, získá tvůj tým 10 % morálky.
 
@@ -48,7 +48,7 @@ Tým, jehož Pán cechu zemře, okamžitě prohrává, stejně jako tým, jehož
 
 Výsledková tabule ukazuje zdraví každého Pána cechu, tvého jako prvního, kdo drží stojan a za jak dlouho přijde jeho zvýšení, kdy svatyně příště vrátí mrtvé a v posledních 3 minutách poškození každého týmu nepřátelskému pánovi. Pod ní řádek jmenuje každého, kdo nese vlajku. Zvýšení vyskočí jako "Zvýšení morálky! +10 %" nebo "Zvýšení morálky nepřátel". Na kompasu ♛ značí každého Pána cechu, ⚑ každou vlajku a ◎ stojan.
 
-Hraje ho Guild Hall Isle.
+Hraje ho Guild Hall Isle (8v8, 6000x2600): ostrov v odpoledním slunci, síň každého týmu za hradbou. Pod každou hradbou vede tunel brány, jehož dveře otevírá páka na protější hradbě; mola překračují přílivové kanály na koncích hradeb a barikády z naplaveného dřeva lze rozbít.
 
 ## Běh s relikvií
 
