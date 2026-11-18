@@ -159,7 +159,7 @@ describe("BIOME", () => {
     }
   });
 
-  it.each(["desert", "wilds", "snow", "marsh", "jungle"] as const)(
+  it.each(["desert", "wilds", "snow", "marsh", "jungle", "coast"] as const)(
     "keeps every %s tone a hand's width from every signal",
     (biome) => {
       const hall = new Set(coloursOf("hall"));
@@ -183,9 +183,9 @@ describe("shade", () => {
 
 describe("breakableLook (#3370)", () => {
   it("makes each listed biome's breakable wall its own material, not the stone", () => {
-    const looks = (["volcanic", "desert", "snow", "wilds", "marsh", "jungle"] as const).map(
-      (biome) => breakableLook({ layerCount: 2, biome }),
-    );
+    const looks = (
+      ["volcanic", "desert", "snow", "wilds", "marsh", "jungle", "coast"] as const
+    ).map((biome) => breakableLook({ layerCount: 2, biome }));
     for (const look of looks) {
       expect(look).not.toEqual(BREAKABLE_WALL_LOOK);
     }
@@ -194,6 +194,7 @@ describe("breakableLook (#3370)", () => {
       "blocks",
       "bricks",
       "ice",
+      "fieldstone",
       "fieldstone",
       "fieldstone",
       "fieldstone",
