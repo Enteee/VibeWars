@@ -365,6 +365,8 @@ interface Panel {
 const PAD_LEFT = 44;
 const PAD_RIGHT = 36;
 const AXIS_PX = 16;
+/** Above the first panel: room for the upper half of its top tick label. */
+const PAD_TOP = 12;
 /** Between stacked panels: room for the upper one's 0 and the lower one's top label. */
 const PANEL_GAP = 20;
 
@@ -386,6 +388,8 @@ export interface PlotGeometry {
   readonly x: (seconds: number) => number;
   readonly left: number;
   readonly right: number;
+  /** Where the first panel begins. */
+  readonly panelsTop: number;
   /** Where the panels end and the time axis begins. */
   readonly panelsBottom: number;
 }
@@ -405,7 +409,7 @@ export function renderPlot(input: PlotInput): { svg: SVGSVGElement; geometry: Pl
   const markX = marks.map(({ t: at }) => x(at));
   const rows = markRows(markX);
   const stripRows = Math.max(1, ...rows.map((row) => row + 1));
-  const panelsPx = 8 + panels.length * panelHeight + (panels.length - 1) * PANEL_GAP;
+  const panelsPx = PAD_TOP + 4 + panels.length * panelHeight + (panels.length - 1) * PANEL_GAP;
   const height = panelsPx + AXIS_PX + stripRows * ROW_PX + 6;
   const root = svg("svg", {
     class: "match-charts-svg",
@@ -415,7 +419,7 @@ export function renderPlot(input: PlotInput): { svg: SVGSVGElement; geometry: Pl
   });
 
   panels.forEach((panel, p) => {
-    const top = 4 + p * (panelHeight + PANEL_GAP);
+    const top = PAD_TOP + p * (panelHeight + PANEL_GAP);
     const bottom = top + panelHeight;
     const shown = panel.lines.filter(({ key }) => !hidden.has(key));
     const leftMax = panel.leftPercent
@@ -494,7 +498,10 @@ export function renderPlot(input: PlotInput): { svg: SVGSVGElement; geometry: Pl
     g.appendChild(glyph(mark.kind, mark.colour));
     root.appendChild(g);
   });
-  return { svg: root, geometry: { x, left, right, panelsBottom: panelsPx - 4 } };
+  return {
+    svg: root,
+    geometry: { x, left, right, panelsTop: PAD_TOP, panelsBottom: panelsPx - 4 },
+  };
 }
 
 /** 1200 as 1.2 k, so the axis stays narrow. */
@@ -630,7 +637,7 @@ export function renderMatchCharts(
     });
     geometry = drawn.geometry;
     cursorLine = drawn.svg.appendChild(
-      svg("line", { class: "chart-cursor", y1: 4, y2: geometry.panelsBottom }),
+      svg("line", { class: "chart-cursor", y1: geometry.panelsTop, y2: geometry.panelsBottom }),
     );
     plot.replaceChildren(drawn.svg);
     for (const mark of drawn.svg.querySelectorAll<SVGGElement>(".chart-mark")) {

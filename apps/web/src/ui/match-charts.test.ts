@@ -201,4 +201,22 @@ describe("the match charts panel (#3565)", () => {
     expect(kill?.getAttribute("aria-label")).toBe("0:14 — Bot Ash died (killed by Mira)");
     expect(kill?.getAttribute("tabindex")).toBe("0");
   });
+
+  it("leaves room above the top tick labels so they are not clipped", () => {
+    const { svg } = renderPlot({
+      width: 600,
+      panelHeight: 160,
+      period: 10,
+      samples: 4,
+      panels: [{ lines: [], leftPercent: true }],
+      marks: [],
+      hidden: new Set(),
+    });
+    const labels = fake(svg)
+      .all("chart-grid")
+      .flatMap(({ children }) => children.filter(({ textContent }) => textContent !== ""));
+    const topBaseline = Math.min(...labels.map((label) => Number(label.getAttribute("y"))));
+    // 10 px labels: the glyphs reach about a font size above the baseline.
+    expect(topBaseline).toBeGreaterThanOrEqual(10);
+  });
 });
