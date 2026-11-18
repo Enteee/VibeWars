@@ -140,12 +140,13 @@ async function uiScenes(browser, url, wanted) {
     const shots = {
       "team-arena-size": () => Promise.resolve(),
       "team-arena-signup": async () => {
-        await page.getByRole("button", { name: /open to friends/i }).click();
-        await page.locator(".lobby-panel").waitFor();
-      },
-      "team-arena-queue": async () => {
-        await page.locator("#topbar .topbar-queue").click();
-        await page.locator("#topbar .queue-window").waitFor();
+        const lobby = page.locator("#topbar .topbar-lobby-button");
+        const more = page.locator("#topbar .topbar-more");
+        if (!(await lobby.isVisible()) && (await more.isVisible())) {
+          await more.click();
+        }
+        await lobby.click();
+        await page.locator("#topbar .lobby-window").waitFor();
       },
     };
     for (const scene of UI_SCENES) {

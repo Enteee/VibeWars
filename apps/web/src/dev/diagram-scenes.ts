@@ -29,7 +29,7 @@ export interface DiagramScene {
 /** A diagram of a screen, taken through the e2e helpers. */
 export interface UiScene {
   readonly id: string;
-  readonly ui: "team-arena-size" | "team-arena-signup" | "team-arena-queue";
+  readonly ui: "team-arena-size" | "team-arena-signup";
 }
 
 /**
@@ -76,5 +76,4 @@ export const DIAGRAM_SCENES: readonly DiagramScene[] = [
 export const UI_SCENES: readonly UiScene[] = [
   { id: "team-arena-1", ui: "team-arena-size" },
   { id: "team-arena-2", ui: "team-arena-signup" },
-  { id: "team-arena-3", ui: "team-arena-queue" },
 ];
