@@ -19,7 +19,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { STORAGE_NAMESPACE } from "../../storage/namespace.js";
 import { arenaIds } from "../maps.js";
 import { inviteUrl } from "../../ui/lobby-screen.js";
-import { guildLink } from "../../ui/player-section.js";
+import { FIRST_CAPE, guildLink } from "../../ui/player-section.js";
 
 import { matchRecordEvent, publishableEvent } from "./match-records.js";
 import { loadPlayerKey, verifyPlayerProof } from "./player-key.js";
@@ -248,7 +248,7 @@ describe("the player key's secret never leaves this browser's storage (#3227)", 
       [
         inviteUrl(CODE, where),
         guildLink("VIBE", null, where),
-        guildLink("VIBE", { main: "gold", trim: "teal", emblem: "ring" }, where),
+        guildLink("VIBE", FIRST_CAPE, where),
       ],
       SECRET,
     );

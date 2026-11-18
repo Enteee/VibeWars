@@ -724,10 +724,6 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
   };
 
-  /**
-   * `team`'s dead and when each comes back (#3367): a foe's respawn is
-   * hidden information, so this is all a peer ever hears of them.
-   */
   /** Every seat's cape (#3554): told once, not in every snapshot. */
   const capes = (): WireCapes => ({
     capes: [...seats.values()].flatMap((seat) =>
@@ -735,6 +731,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     ),
   });
 
+  /**
+   * `team`'s dead and when each comes back (#3367): a foe's respawn is
+   * hidden information, so this is all a peer ever hears of them.
+   */
   const respawnsOf = (team: Team): WireRespawns => ({
     respawns: [...sim.participants()]
       .flatMap((participant) => {
