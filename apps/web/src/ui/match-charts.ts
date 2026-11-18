@@ -100,6 +100,11 @@ export function niceCeil(value: number): number {
   return step * power;
 }
 
+/** A count axis maximum of four equal whole steps, so its five tick labels are distinct integers. */
+export function countCeiling(value: number): number {
+  return 4 * Math.ceil(niceCeil(value / 4));
+}
+
 /** Seconds since the match began of sample `index`: one is taken every `period`. */
 export function sampleSeconds(index: number, period: number): number {
   return (index + 1) * period;
@@ -424,7 +429,7 @@ export function renderPlot(input: PlotInput): { svg: SVGSVGElement; geometry: Pl
     const shown = panel.lines.filter(({ key }) => !hidden.has(key));
     const leftMax = panel.leftPercent
       ? 100
-      : niceCeil(Math.max(0, ...shown.filter((l) => !l.percent).flatMap((l) => l.values)));
+      : countCeiling(Math.max(0, ...shown.filter((l) => !l.percent).flatMap((l) => l.values)));
     const yLeft = scale(0, leftMax, bottom, top);
     const yPercent = scale(0, 100, bottom, top);
     const grid = root.appendChild(svg("g", { class: "chart-grid" }));

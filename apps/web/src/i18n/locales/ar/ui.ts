@@ -1668,6 +1668,13 @@ export default {
   "tutorial.ground.praise": "عبرت! الآن تعرف ما تفعله الأرض.",
   "tutorial.front.end": "أنت تعرف الأساسيات الآن. نراك هناك!",
   "tutorial.front.menu": "العودة إلى القائمة",
+  "tutorial.menu.gotIt": "فهمت",
+  "tutorial.menu.menu.characters":
+    "في «الشخصيات» تصنع من تلعب به وتغيّره: المهنة والمهارات والعتاد.",
+  "tutorial.menu.menu.rail": "هذه هي القائمة الرئيسية. على الجانب طرق اللعب: اختر واحدة لتفتحها.",
+  "tutorial.menu.menu.teams": "في «الفرق» تجمع الشخصيات في فريق لمعارك الفرق.",
+  "tutorial.menu.menu.title": "لتتابع، عليك أن تغيّر تخصصك.",
+  "tutorial.menu.skipAsk": "تخطي بقية الدرس التعليمي؟",
   "tutorial.gate.hint": "إلى الضباب، خلفي.",
   "tutorial.gate.how": "انقر بالزر الأيسر على الأرض، أو امشِ بـ {keys}.",
   "tutorial.gate.intro": "فريقنا يقاتل خلف الضباب. اتبعني.",

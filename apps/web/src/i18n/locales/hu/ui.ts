@@ -1486,6 +1486,15 @@ export default {
   "tutorial.ground.praise": "Átértél! Most már tudod, mire képes a talaj.",
   "tutorial.front.end": "Most már tudod az alapokat. Odakint találkozunk!",
   "tutorial.front.menu": "Vissza a menübe",
+  "tutorial.menu.gotIt": "Értem",
+  "tutorial.menu.menu.characters":
+    "A Karakterekben hozod létre és módosítod, kivel játszol: szakma, képességek és felszerelés.",
+  "tutorial.menu.menu.rail":
+    "Ez a főmenü. Oldalt a játékmódok vannak: válassz egyet a megnyitásához.",
+  "tutorial.menu.menu.teams":
+    "A Csapatokban karaktereket raksz össze egy csapatba a csapatharcokhoz.",
+  "tutorial.menu.menu.title": "A továbblépéshez meg kell változtatnod a specializációdat.",
+  "tutorial.menu.skipAsk": "Kihagyod az oktatóanyag hátralévő részét?",
   "tutorial.gate.hint": "Be a ködbe, utánam.",
   "tutorial.gate.how": "Kattints a földre bal gombbal, vagy járj ezekkel: {keys}.",
   "tutorial.gate.intro": "A csapatunk a ködön túl harcol. Kövess!",

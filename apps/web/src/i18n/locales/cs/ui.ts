@@ -1594,6 +1594,14 @@ export default {
   "tutorial.ground.praise": "Jsi na druhé straně! Teď víš, co umí zem.",
   "tutorial.front.end": "Teď už víš, jak na to. Uvidíme se venku!",
   "tutorial.front.menu": "Zpět do menu",
+  "tutorial.menu.gotIt": "Rozumím",
+  "tutorial.menu.menu.characters":
+    "V Postavách vytváříš a měníš, za koho hraješ: profesi, dovednosti a výbavu.",
+  "tutorial.menu.menu.rail":
+    "Toto je hlavní nabídka. Na straně jsou způsoby hry: vyber jeden a otevři ho.",
+  "tutorial.menu.menu.teams": "V Týmech skládáš postavy do týmu pro týmové boje.",
+  "tutorial.menu.menu.title": "Abys mohl pokračovat, musíš změnit svou specializaci.",
+  "tutorial.menu.skipAsk": "Přeskočit zbytek výuky?",
   "tutorial.gate.hint": "Do mlhy, za mnou.",
   "tutorial.gate.how": "Klikni levým tlačítkem na zem, nebo choď pomocí {keys}.",
   "tutorial.gate.intro": "Náš tým bojuje za mlhou. Pojď za mnou.",

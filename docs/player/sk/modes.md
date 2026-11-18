@@ -273,6 +273,8 @@ neodláka: vstúpia na svätyňu v dosahu a bojujú z nej.
 
 Hrá sa na Scarred Earth (4v4 a 8v8, 5400x2800): bojisko posiate krátermi za súmraku. Svätyne stoja na rozbitých obliehacích vežiach, prostredná na plošine veľkej veže, každá vedľa krátera; páky na vežiach otvárajú dva zákopy pod bojiskom a rozbité palisády sa dajú zbúrať.
 
+Vo Výstupe hrdinov sa hrá na The Warden's Gallery (8v8, 5200x2500): slnečná galéria sôch pod svetlíkmi. Prostredná svätyňa stojí na vrchole veľkého podstavca a každý tím má tri pri svojom vestibule, jednu na podstavci; páky na veľkom podstavci otvárajú dve krypty pod podlahou a prevrátené sochy sa dajú rozbiť.
+
 ## Tímové lobby
 
 Hostené lobby nespustí zápas, keď sú všetci pripravení. Najprv otvorí tímové lobby, kde si každá strana spoločne vyberie jeden tímový

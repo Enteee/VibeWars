@@ -1475,6 +1475,14 @@ export default {
   "tutorial.ground.praise": "Ovre! Nu ved du, hvad jorden kan.",
   "tutorial.front.end": "Nu kender du det grundlæggende. Vi ses derude!",
   "tutorial.front.menu": "Til menuen",
+  "tutorial.menu.gotIt": "Forstået",
+  "tutorial.menu.menu.characters":
+    "I Figurer laver og ændrer du, hvem du spiller: profession, færdigheder og udstyr.",
+  "tutorial.menu.menu.rail":
+    "Dette er hovedmenuen. I siden er måderne at spille på: vælg en for at åbne den.",
+  "tutorial.menu.menu.teams": "I Hold sætter du figurer sammen til et hold til holdkampene.",
+  "tutorial.menu.menu.title": "For at komme videre skal du ændre din spec.",
+  "tutorial.menu.skipAsk": "Spring resten af vejledningen over?",
   "tutorial.gate.hint": "Ind i tågen, efter mig.",
   "tutorial.gate.how": "Venstreklik på jorden, eller gå med {keys}.",
   "tutorial.gate.intro": "Vores hold kæmper på den anden side af tågen. Følg mig.",

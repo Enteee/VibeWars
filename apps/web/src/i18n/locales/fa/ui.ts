@@ -1476,6 +1476,15 @@ export default {
   "tutorial.ground.praise": "رد شدی! حالا می‌دانی زمین چه می‌کند.",
   "tutorial.front.end": "حالا اصول کار را بلدی. آن بیرون می‌بینمت!",
   "tutorial.front.menu": "بازگشت به منو",
+  "tutorial.menu.gotIt": "فهمیدم",
+  "tutorial.menu.menu.characters":
+    "در «شخصیت‌ها» کسی را که با او بازی می‌کنی می‌سازی و تغییر می‌دهی: حرفه، مهارت‌ها و تجهیزات.",
+  "tutorial.menu.menu.rail":
+    "این منوی اصلی است. در کنار، راه‌های بازی هست: یکی را برگزین تا باز شود.",
+  "tutorial.menu.menu.teams":
+    "در «تیم‌ها» شخصیت‌ها را برای نبردهای تیمی در یک تیم کنار هم می‌گذاری.",
+  "tutorial.menu.menu.title": "برای ادامه، باید تخصصت را عوض کنی.",
+  "tutorial.menu.skipAsk": "بقیهٔ آموزش رد شود؟",
   "tutorial.gate.hint": "به درون مه، پشت سر من.",
   "tutorial.gate.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
   "tutorial.gate.intro": "تیم ما آن سوی مه می‌جنگد. دنبالم بیا.",
