@@ -722,6 +722,8 @@ describe("walks and high ground (#3070)", () => {
       "centre-south-stair",
       "east-end-north-stair",
       "east-end-south-stair",
+      "west-lever-stair",
+      "east-lever-stair",
     ];
     /** A route through `through`, every other stair onto the causeway shut. */
     const only = (through: readonly string[]): Route => ({
@@ -757,6 +759,19 @@ describe("walks and high ground (#3070)", () => {
       within(
         toCentre(map, (team) =>
           only([team === 0 ? "west-end-south-stair" : "east-end-north-stair"]),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team by its own lever stair to its gatehouse lever, gates shut, within 10 % of the other (#3549)", () => {
+      const levers = [
+        { x: 2150, y: 1230 },
+        { x: 3480, y: 1570 },
+      ];
+      within(
+        toOwn(shut, levers, 3, (team) =>
+          only([team === 0 ? "west-lever-stair" : "east-lever-stair"]),
         ),
         0.1,
       );

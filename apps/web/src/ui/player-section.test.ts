@@ -149,8 +149,11 @@ class FakeElement {
   alt = "";
   width = 0;
   height = 0;
+  tabIndex = -1;
+  disabled = false;
   readonly dataset: Record<string, string> = {};
-  readonly style = { setProperty: () => undefined };
+  readonly style = { setProperty: () => undefined, removeProperty: () => undefined };
+  readonly classList = { add: () => undefined, toggle: () => undefined };
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
   readonly listeners = new Map<string, () => void>();
@@ -272,6 +275,25 @@ describe("the Player section of Options (#1513)", () => {
     expect(cape.hidden).toBe(true);
     expect(hint?.hidden).toBe(false);
     expect(tag.attributes.get("aria-invalid")).toBe("true");
+  });
+
+  it("opens the emblem editor from Edit emblem, shown only with the cape designer (#3555)", () => {
+    const { tag, cape, shown } = mount();
+    const edit = shown.find((node) => node.textContent === "Edit emblem");
+    expect(edit).toBeDefined();
+    expect(cape.hidden).toBe(true);
+    tag.typeIn("VIBE");
+    expect(cape.hidden).toBe(false);
+    edit?.click();
+    const editor = cape.all().find((node) => node.className === "emblem-editor");
+    expect(editor).toBeDefined();
+    expect(cape.all().find((node) => node.className === "player-cape-picks")?.hidden).toBe(true);
+    // Done keeps the grid it opened with: the sample's.
+    editor
+      ?.all()
+      .find((node) => node.textContent === "Done")
+      ?.click();
+    expect(loadGuildCape()).toEqual(FIRST_CAPE);
   });
 
   it("saves a cape on every pick", () => {
