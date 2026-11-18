@@ -113,8 +113,8 @@ export async function showScene(parent: HTMLElement, scene: DiagramScene): Promi
     professionsOf: (id) => professions.get(id) ?? NO_PROFESSIONS,
   });
   // Nothing but the map in the frame: the menus' room goes to the viewport.
-  document.querySelector("#screens")?.setAttribute("hidden", "");
-  document.querySelector("#topbar")?.setAttribute("hidden", "");
+  document.querySelector<HTMLElement>("#screens")?.style.setProperty("display", "none");
+  document.querySelector<HTMLElement>("#topbar")?.style.setProperty("display", "none");
   const viewport = await createArenaViewport(parent);
   const { structure, wallLayers } = mapStructure(map.descriptor.id);
   const walls = map.descriptor.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));

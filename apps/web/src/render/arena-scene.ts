@@ -4069,8 +4069,8 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** Rings fixed on the map, for the docs' diagrams (#3557); empty in a match. */
-  private fixedMarkers: readonly SceneMarker[] = [];
+  /** Rings fixed on the map, for the docs' diagrams (#3557); unset in a match, and set, it is the only ring. */
+  private fixedMarkers: readonly SceneMarker[] | undefined;
 
   /** Draws `markers` with the hover ring's own drawing, instead of waiting on a pointer. */
   setFixedMarkers(markers: readonly SceneMarker[]): void {
@@ -4079,12 +4079,12 @@ export class ArenaScene extends Phaser.Scene {
 
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */
   private drawHoverMarker(g: Phaser.GameObjects.Graphics): void {
-    for (const marker of this.fixedMarkers) {
+    for (const marker of this.fixedMarkers ?? []) {
       drawRing(g, marker.x, marker.y, marker.dashed);
     }
     const { structure, walls } = this.snapshot;
     const pointer = this.input.activePointer;
-    if (structure.layerCount === 1 || !this.input.isOver) {
+    if (structure.layerCount === 1 || !this.input.isOver || this.fixedMarkers !== undefined) {
       return;
     }
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
