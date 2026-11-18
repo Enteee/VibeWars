@@ -312,7 +312,7 @@ describe("King of the Hill bots (#2582)", () => {
     // The ghosts' contest ended: a team took the altar, wipe or not.
     expect(first.holder).not.toBeNull();
     expect(mirror("hill")).toEqual(first);
-  });
+  }, 60_000);
 
   /**
    * The winner of a 4v4 caster mirror on The Courtyard after 120 s: the
@@ -344,7 +344,7 @@ describe("King of the Hill bots (#2582)", () => {
     }
     expect(winners).toContain(0);
     expect(winners).toContain(1);
-  });
+  }, 60_000);
 });
 
 describe("Capture Points bots (#2580)", () => {

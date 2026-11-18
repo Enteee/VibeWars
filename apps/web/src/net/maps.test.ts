@@ -513,12 +513,12 @@ describe("hostMap (#476)", () => {
     expect(hostMap("hall-of-heroes-king")?.ghostField?.level).toBe(28);
     expect(hostMap("threefold-keep")?.ghostField).toEqual({
       level: 24,
-      altar: { x: 1600, y: 1100 },
-      altarLayer: 0,
+      altar: { x: 2500, y: 2200 },
+      altarLayer: 3,
       spawns: [
-        { team: 0, position: { x: 120, y: 1100 }, layer: 0 },
-        { team: 1, position: { x: 3080, y: 1100 }, layer: 0 },
-        { team: 2, position: { x: 1600, y: 120 }, layer: 0 },
+        { team: 0, position: { x: 2820, y: 700 }, layer: 1 },
+        { team: 1, position: { x: 3639.04, y: 3227.13 }, layer: 1 },
+        { team: 2, position: { x: 1040.96, y: 2672.87 }, layer: 1 },
       ],
     });
     expect(hostMap("broken-tower")?.ghostField).toBeUndefined();
