@@ -1362,6 +1362,13 @@ export default {
   "tutorial.ground.praise": "ข้ามมาได้! ตอนนี้รู้แล้วว่าพื้นทำอะไรได้",
   "tutorial.front.end": "ตอนนี้คุณรู้พื้นฐานแล้ว แล้วพบกันข้างนอก!",
   "tutorial.front.menu": "กลับเมนู",
+  "tutorial.menu.gotIt": "เข้าใจแล้ว",
+  "tutorial.menu.menu.characters":
+    "ในตัวละคร คุณสร้างและเปลี่ยนตัวที่จะเล่น: อาชีพ สกิล และอุปกรณ์",
+  "tutorial.menu.menu.rail": "นี่คือเมนูหลัก ด้านข้างคือวิธีเล่นต่างๆ เลือกหนึ่งอย่างเพื่อเปิด",
+  "tutorial.menu.menu.teams": "ในทีม คุณรวมตัวละครเป็นทีมสำหรับการต่อสู้แบบทีม",
+  "tutorial.menu.menu.title": "หากจะไปต่อ คุณต้องเปลี่ยนสเปกของคุณ",
+  "tutorial.menu.skipAsk": "ข้ามบทแนะนำที่เหลือไหม?",
   "tutorial.gate.hint": "เข้าไปในหมอก ตามฉันมา",
   "tutorial.gate.how": "คลิกซ้ายที่พื้น หรือเดินด้วย {keys}",
   "tutorial.gate.intro": "ทีมของเรากำลังสู้อยู่หลังม่านหมอก ตามฉันมา",

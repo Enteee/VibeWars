@@ -8351,6 +8351,118 @@ body:has(#screens[style*="none"]) .now-playing {
   border-color: var(--accent);
 }
 
+/*
+ * The menu quest's coach (#3540): the menu dimmed under a lit cut-out
+ * round the control a beat points at, below toasts (z 60) so an error
+ * stays readable and usable. The lock is the coach's own listeners; the
+ * dim takes no pointer itself.
+ */
+.coach {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+}
+
+.coach-dim {
+  position: absolute;
+  inset: 0;
+  background: var(--menu-scrim);
+}
+
+/* The rest of the window's dim is this cut-out's shadow. */
+.coach-hole {
+  position: absolute;
+  border-radius: 8px;
+  box-shadow: 0 0 0 100vmax var(--menu-scrim);
+}
+
+.coach-dim[hidden],
+.coach-hole[hidden],
+.coach-bubble[hidden] {
+  display: none;
+}
+
+.coach-bubble {
+  position: absolute;
+  width: min(18rem, calc(100vw - 2rem));
+  padding: 0.7rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  color: var(--ink);
+  pointer-events: auto;
+}
+
+.coach-bubble-line,
+.coach-panel-line {
+  margin: 0;
+}
+
+.coach-panel {
+  position: absolute;
+  bottom: 16px;
+  inset-inline-end: 16px;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  pointer-events: auto;
+}
+
+.coach-panel[data-corner="start"] {
+  inset-inline: 16px auto;
+}
+
+.coach-panel-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.coach-checklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coach-checklist:empty {
+  display: none;
+}
+
+.coach-checklist li::before {
+  content: "☐ ";
+  color: var(--ink-dim);
+}
+
+.coach-checklist li.is-done::before {
+  content: "☑ ";
+  color: var(--accent);
+}
+
+.coach-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+/* A narrow window docks the panel to its bottom edge. */
+@media (max-width: 899px) {
+  .coach-panel,
+  .coach-panel[data-corner="start"] {
+    inset-inline: 0;
+    bottom: 0;
+    width: auto;
+  }
+}
+
 /* The splash screen (#2884): over everything until it ends. */
 /* Its fight is the menu background's (#3119), seen through it; the menu
    waits underneath until it ends. */

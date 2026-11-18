@@ -727,8 +727,8 @@ test.describe("the first-time tutorial (#3218)", () => {
           .toBe(true);
       }).toPass({ timeout: 90_000 });
 
-      // The front: a match like any other, its HUD and no marks; Leave is
-      // the tutorial done, and the menu never offers it again.
+      // The front: a match like any other, its HUD and no marks; Leave
+      // leads into the menu quest (#3540), and the menu never offers it again.
       await expect(page.locator(".hud-scoreboard")).toBeVisible({ timeout: 30_000 });
       await expect(page.locator(".tutorial-frame[data-mark]")).toHaveCount(0);
       const leave = page.locator(".hud-leave");
@@ -736,6 +736,7 @@ test.describe("the first-time tutorial (#3218)", () => {
       await leave.getByRole("button", { name: "yes" }).click();
       await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });
       await expect(frame).toHaveCount(0);
+      await expect(page.locator(".coach-panel")).toBeVisible();
 
       await pastTheSplash(page, mapId);
       await expect(page.locator(".tutorial-offer")).toHaveCount(0);
@@ -745,6 +746,49 @@ test.describe("the first-time tutorial (#3218)", () => {
   test("a guild link, even through a forced splash, is never offered it", async ({ page }) => {
     await pastTheSplash(page, FLAT_MAP, `#guild=VW.gold.black.${"A".repeat(171)}`);
     await expect(page.locator(".screen-rail")).toBeVisible();
+    await expect(page.locator(".tutorial-offer")).toHaveCount(0);
+  });
+});
+
+test.describe("the menu quest (#3540)", () => {
+  test("dims the menu but the beat's target, and walks the main menu", async ({ page }) => {
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=menu`);
+    const panel = page.locator(".coach-panel");
+    await expect(panel).toContainText("To go on, you must change your spec.");
+    const rail = page.locator('[data-tutorial="rail"]');
+    await expect(rail).toHaveClass(/tutorial-pulse/);
+    await expect(page.locator(".coach-hole")).toBeVisible();
+
+    const bubble = page.locator(".coach-bubble");
+    await bubble.getByRole("button", { name: "Got it" }).click();
+    const characters = page.locator('[data-tutorial="rail-characters"]');
+    await expect(characters).toHaveClass(/tutorial-pulse/);
+    await expect(rail).not.toHaveClass(/tutorial-pulse/);
+
+    // Teams is dimmed: a click on it never reaches the menu.
+    const teams = page.locator('[data-tutorial="rail-teams"]');
+    await expect(teams).toHaveAttribute("aria-pressed", "false");
+    await teams.click({ force: true });
+    await expect(page.locator(".screen-teams")).toHaveCount(0);
+
+    await bubble.getByRole("button", { name: "Got it" }).click();
+    await expect(teams).toHaveClass(/tutorial-pulse/);
+    await bubble.getByRole("button", { name: "Got it" }).click();
+    await expect(page.locator(".coach")).toHaveCount(0);
+    await expect(teams).not.toHaveClass(/tutorial-pulse/);
+  });
+
+  test("Skip tutorial, confirmed, ends it for good", async ({ page }) => {
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=menu`);
+    const panel = page.locator(".coach-panel");
+    await panel.getByRole("button", { name: "Skip tutorial" }).click();
+    await panel.getByRole("button", { name: "Skip", exact: true }).click();
+    await expect(page.locator(".coach")).toHaveCount(0);
+    await expect(page.locator(".screen-rail")).toBeVisible();
+
+    await pastTheSplash(page, FLAT_MAP);
+    await expect(page.locator(".screen-rail")).toBeVisible();
+    await expect(page.locator(".coach")).toHaveCount(0);
     await expect(page.locator(".tutorial-offer")).toHaveCount(0);
   });
 });

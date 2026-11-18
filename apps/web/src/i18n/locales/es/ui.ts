@@ -1542,6 +1542,15 @@ export default {
   "tutorial.ground.praise": "¡Al otro lado! Ya sabes lo que hace el suelo.",
   "tutorial.front.end": "Ya sabes lo básico. ¡Nos vemos ahí fuera!",
   "tutorial.front.menu": "Volver al menú",
+  "tutorial.menu.gotIt": "Entendido",
+  "tutorial.menu.menu.characters":
+    "En Personajes creas y cambias con quién juegas: profesión, habilidades y equipo.",
+  "tutorial.menu.menu.rail":
+    "Este es el menú principal. En el lateral están las formas de jugar: elige una para abrirla.",
+  "tutorial.menu.menu.teams":
+    "En Equipos juntas personajes en un equipo para los combates por equipos.",
+  "tutorial.menu.menu.title": "Para seguir, tienes que cambiar tu especialización.",
+  "tutorial.menu.skipAsk": "¿Saltar el resto del tutorial?",
   "tutorial.gate.hint": "A la niebla, detrás de mí.",
   "tutorial.gate.how": "Haz clic izquierdo en el suelo o camina con {keys}.",
   "tutorial.gate.intro": "Nuestro equipo lucha más allá de la niebla. Sígueme.",

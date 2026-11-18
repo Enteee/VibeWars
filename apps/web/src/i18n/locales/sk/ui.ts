@@ -1573,6 +1573,14 @@ export default {
   "tutorial.ground.praise": "Si na druhej strane! Teraz vieš, čo dokáže zem.",
   "tutorial.front.end": "Teraz už vieš, ako na to. Uvidíme sa vonku!",
   "tutorial.front.menu": "Späť do menu",
+  "tutorial.menu.gotIt": "Rozumiem",
+  "tutorial.menu.menu.characters":
+    "V Postavách vytváraš a meníš, za koho hráš: profesiu, schopnosti a výstroj.",
+  "tutorial.menu.menu.rail":
+    "Toto je hlavná ponuka. Na boku sú spôsoby hry: vyber jeden a otvor ho.",
+  "tutorial.menu.menu.teams": "V Tímoch skladáš postavy do tímu na tímové boje.",
+  "tutorial.menu.menu.title": "Aby si mohol pokračovať, musíš zmeniť svoju špecializáciu.",
+  "tutorial.menu.skipAsk": "Preskočiť zvyšok návodu?",
   "tutorial.gate.hint": "Do hmly, za mnou.",
   "tutorial.gate.how": "Klikni ľavým tlačidlom na zem, alebo choď pomocou {keys}.",
   "tutorial.gate.intro": "Náš tím bojuje za hmlou. Poď za mnou.",

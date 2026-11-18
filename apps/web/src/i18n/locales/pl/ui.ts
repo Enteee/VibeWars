@@ -1582,6 +1582,14 @@ export default {
   "tutorial.ground.praise": "Po drugiej stronie! Teraz wiesz, co potrafi grunt.",
   "tutorial.front.end": "Znasz już podstawy. Do zobaczenia na polu bitwy!",
   "tutorial.front.menu": "Wróć do menu",
+  "tutorial.menu.gotIt": "Rozumiem",
+  "tutorial.menu.menu.characters":
+    "W Postaciach tworzysz i zmieniasz, kim grasz: profesję, umiejętności i ekwipunek.",
+  "tutorial.menu.menu.rail":
+    "To jest menu główne. Z boku są sposoby gry: wybierz jeden, aby go otworzyć.",
+  "tutorial.menu.menu.teams": "W Drużynach łączysz postacie w drużynę do walk drużynowych.",
+  "tutorial.menu.menu.title": "Aby iść dalej, musisz zmienić swoją specjalizację.",
+  "tutorial.menu.skipAsk": "Pominąć resztę samouczka?",
   "tutorial.gate.hint": "W mgłę, za mną.",
   "tutorial.gate.how": "Kliknij lewym przyciskiem ziemię albo idź klawiszami {keys}.",
   "tutorial.gate.intro": "Nasza drużyna walczy za mgłą. Za mną.",

@@ -1460,6 +1460,15 @@ export default {
   "tutorial.ground.praise": "Overgestoken! Nu weet je wat de grond kan.",
   "tutorial.front.end": "Nu ken je de basis. Tot daarbuiten!",
   "tutorial.front.menu": "Naar menu",
+  "tutorial.menu.gotIt": "Begrepen",
+  "tutorial.menu.menu.characters":
+    "Bij Personages maak en wijzig je met wie je speelt: beroep, vaardigheden en uitrusting.",
+  "tutorial.menu.menu.rail":
+    "Dit is het hoofdmenu. Aan de zijkant staan de manieren om te spelen: kies er een om hem te openen.",
+  "tutorial.menu.menu.teams":
+    "Bij Teams zet je personages samen in een team voor de teamgevechten.",
+  "tutorial.menu.menu.title": "Om verder te gaan, moet je je specialisatie veranderen.",
+  "tutorial.menu.skipAsk": "De rest van de tutorial overslaan?",
   "tutorial.gate.hint": "De mist in, achter mij aan.",
   "tutorial.gate.how": "Klik met links op de grond, of loop met {keys}.",
   "tutorial.gate.intro": "Ons team vecht voorbij de mist. Volg mij.",

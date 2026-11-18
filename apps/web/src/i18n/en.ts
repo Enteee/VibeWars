@@ -1454,6 +1454,15 @@ export const en = {
   "tutorial.ground.praise": "Across! Now you know what the ground can do.",
   "tutorial.front.end": "You know the ropes now. See you out there!",
   "tutorial.front.menu": "Back to menu",
+  "tutorial.menu.gotIt": "Got it",
+  "tutorial.menu.menu.characters":
+    "Characters is where you make and change who you play: profession, skills and gear.",
+  "tutorial.menu.menu.rail":
+    "This is the main menu. Down the side are the ways to play: pick one to open it.",
+  "tutorial.menu.menu.teams":
+    "Teams is where you put characters together into a team for the team fights.",
+  "tutorial.menu.menu.title": "To go on, you must change your spec.",
+  "tutorial.menu.skipAsk": "Skip the rest of the tutorial?",
   "tutorial.gate.hint": "Into the mist, after me.",
   "tutorial.gate.how": "Left click the ground, or walk with {keys}.",
   "tutorial.gate.intro": "Our team fights beyond the mist. Follow me.",

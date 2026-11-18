@@ -1367,6 +1367,13 @@ export default {
   "tutorial.ground.praise": "Qua rồi! Giờ bạn biết mặt đất làm được gì.",
   "tutorial.front.end": "Giờ bạn đã nắm được cơ bản. Hẹn gặp ngoài kia!",
   "tutorial.front.menu": "Về menu",
+  "tutorial.menu.gotIt": "Đã hiểu",
+  "tutorial.menu.menu.characters":
+    "Ở Nhân vật, bạn tạo và thay đổi nhân vật mình chơi: nghề, kỹ năng và trang bị.",
+  "tutorial.menu.menu.rail": "Đây là menu chính. Bên cạnh là các cách chơi: chọn một để mở.",
+  "tutorial.menu.menu.teams": "Ở Đội, bạn ghép các nhân vật thành một đội cho các trận đấu đội.",
+  "tutorial.menu.menu.title": "Để đi tiếp, bạn phải đổi chuyên môn của mình.",
+  "tutorial.menu.skipAsk": "Bỏ qua phần còn lại của hướng dẫn?",
   "tutorial.gate.hint": "Vào màn sương, theo sau ta.",
   "tutorial.gate.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",
   "tutorial.gate.intro": "Đội ta đang chiến đấu bên kia màn sương. Theo ta.",
