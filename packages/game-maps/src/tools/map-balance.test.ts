@@ -1400,6 +1400,186 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // The Hollow Deep (#3444): a cavern turned half round its centre, team 0 in the west lobe and
+  // team 1 in the east. A lobe reaches the centre chamber only over its mid ledge or a shelf, or
+  // under the ledge through the undercroft once a lever on a shelf opens its gate; the crown on the
+  // dais is the centre. A shelf route drops off the shelf's inner edge, so it is walked in two legs.
+  // Each team's shelves are named from the map: the one with its lever first, then the other.
+  describe("The Hollow Deep", () => {
+    const map = loadMap("hollow-deep");
+    const RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const crown = { x: 3100, y: 1200 };
+    const ghosts = map.objectives.flatMap((objective) =>
+      objective.kind === "ghost-spawn" ? [objective.position] : [],
+    );
+    const foes = [ghosts[1] ?? crown, ghosts[0] ?? crown];
+    const sides = ["west", "east"];
+    const shelves = [
+      ["north-west", "south-west"],
+      ["south-east", "north-east"],
+    ];
+    const shelfStair = (team: number, which: number): string =>
+      `${shelves[team]?.[which] ?? ""}-shelf-stair`;
+    const ledge = (team: number): string[] =>
+      ["outer", "inner"].map((end) => `${sides[team] ?? ""}-mid-ledge-${end}-stair`);
+    const undercroft = (team: number): string[] =>
+      ["outer", "inner"].map((end) => `${sides[team] ?? ""}-undercroft-${end}-steps`);
+    // Every way between a lobe and the chamber; the dais and crown stairs stay open.
+    const ways = map.transitions
+      .map(({ id }) => id)
+      .filter((id) => !id.startsWith("dais-") && !id.startsWith("crown-"));
+    const only = (...through: string[]): Route => ({
+      through,
+      shut: ways.filter((id) => !through.includes(id)),
+    });
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    const under = (walks: readonly number[], cap: number): void => {
+      for (const walk of walks) expect(walk / seconds).toBeLessThan(cap);
+    };
+    /** `on` with each team's one spawn at `points[team]` on `layer`. */
+    const from = (on: MapData, points: readonly Vec2[], layer = 1): MapData => ({
+      ...on,
+      spawnPoints: points.map((position, team) => ({ team, layer, position })),
+    });
+    /** Each team's walk to its own point of `to`, along its own route. */
+    const toOwn = (
+      on: MapData,
+      to: readonly Vec2[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? crown, layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    const sum = (...legs: readonly (readonly number[])[]): number[] =>
+      [0, 1].map((team) => legs.reduce((total, leg) => total + (leg[team] ?? 0), 0));
+    // The shelves' inner-edge drop-offs, in map order: team 0's two shelves, then team 1's.
+    const drops = matchLayers(map).dropOffs.map(({ edge, outward }) => {
+      const middle = { x: (edge.a.x + edge.b.x) / 2, y: (edge.a.y + edge.b.y) / 2 };
+      const by = 2 * RADIUS;
+      return {
+        top: { x: middle.x - outward.x * by, y: middle.y - outward.y * by },
+        landing: { x: middle.x + outward.x * by, y: middle.y + outward.y * by },
+      };
+    });
+    const drop = (team: number, which: number): (typeof drops)[number] => {
+      const each = drops[2 * team + which];
+      if (each === undefined) throw new Error("missing drop-off");
+      return each;
+    };
+    /** Up a shelf's outer stair, along it, off its inner edge, and on to the crown. */
+    const overShelf = (which: number): number[] =>
+      sum(
+        toOwn(
+          shut,
+          [0, 1].map((team) => drop(team, which).top),
+          2,
+          (team) => only(shelfStair(team, which)),
+        ),
+        [4 * RADIUS, 4 * RADIUS],
+        walksByRoute(
+          from(
+            shut,
+            [0, 1].map((team) => drop(team, which).landing),
+          ),
+          crown,
+          3,
+          only(),
+        ),
+      );
+
+    it("draws four drop-offs, one off each shelf's inner edge", () => {
+      expect(drops).toHaveLength(4);
+    });
+
+    it("walks each team through its own undercroft to the crown within 10 % of the other, in under 25 s, once the lever opens the gate", () => {
+      const walks = toOwn(map, [crown, crown], 3, (team) => only(...undercroft(team)));
+      within(walks, 0.1);
+      under(walks, 25);
+      expect(() => toOwn(shut, [crown, crown], 3, (team) => only(...undercroft(team)))).toThrow(
+        /cannot reach/,
+      );
+    });
+
+    it("walks each team over its own mid ledge to the crown, gates shut, within 10 % of the other, in under 25 s", () => {
+      const walks = toOwn(shut, [crown, crown], 3, (team) => only(...ledge(team)));
+      within(walks, 0.1);
+      under(walks, 25);
+    });
+
+    it.each([
+      ["the shelf with its lever", 0],
+      ["its other shelf", 1],
+    ])(
+      "walks each team over %s and off its inner edge to the crown, gates shut, within 10 % of the other, in under 25 s",
+      (_, which) => {
+        const walks = overShelf(which);
+        within(walks, 0.1);
+        under(walks, 25);
+      },
+    );
+
+    it("keeps each team's four routes to the crown within 15 % of each other", () => {
+      const routes = [
+        toOwn(map, [crown, crown], 3, (team) => only(...undercroft(team))),
+        toOwn(shut, [crown, crown], 3, (team) => only(...ledge(team))),
+        overShelf(0),
+        overShelf(1),
+      ];
+      for (const team of [0, 1]) {
+        const walks = routes.map((walk) => walk[team] ?? 0);
+        expect((Math.max(...walks) - Math.min(...walks)) / Math.max(...walks)).toBeLessThanOrEqual(
+          0.15,
+        );
+      }
+    });
+
+    it.each([
+      [
+        "the near rope bridge",
+        (team: number) => only(shelfStair(team, 1), shelfStair(1 - team, 0)),
+      ],
+      ["the far rope bridge", (team: number) => only(shelfStair(team, 0), shelfStair(1 - team, 1))],
+      [
+        "the middle, over both mid ledges",
+        (team: number) => only(...ledge(team), ...ledge(1 - team)),
+      ],
+    ])(
+      "walks each team to the foe's ghost-spawn by %s, gates shut, within 10 % of the other",
+      (_, route) => {
+        const walks = toOwn(shut, foes, 1, route);
+        within(walks, 0.1);
+        under(walks, 40);
+      },
+    );
+
+    it("walks each team from its ghost-spawn to the crown, and from its spawn to its ghost-spawn, within 10 % of the other", () => {
+      const fromGhost = toOwn(from(map, ghosts), [crown, crown], 3, () => ({ through: [] }));
+      within(fromGhost, 0.1);
+      under(fromGhost, 25);
+      within(
+        walksTo(map, ghosts[0] ?? crown, 1)
+          .slice(0, 1)
+          .concat(walksTo(map, ghosts[1] ?? crown, 1).slice(1)),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other, the crown the highest deck", () => {
+      within(highGround(map), 0.25);
+      const top = Math.max(...map.decks.map(({ layer }) => layer));
+      expect(map.decks.filter(({ layer }) => layer === top).map(({ id }) => id)).toEqual(["crown"]);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

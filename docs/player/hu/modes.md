@@ -491,8 +491,7 @@ másik csapat le nem szúrja ott a zászlaját. Minden csapás egy villám a
 jelzőtűztől ahhoz, akit eltalált, és mindkét csapat látja.
 
 Három további aréna a Hősök Útjából a Saját játékban is választható:
-a **The Hollow Deep** (8v8 Megsemmisítés, három kanyargós alagút egy
-központi szikla körül), a **Blackwater Ford** (8v8, 5200x2800, Papirtás egy sötét
+a **The Hollow Deep** (8v8 Megsemmisítés, 6200x2400, egy sötét barlangban: kelj át egy kötélhídon egy szakadék felett, mássz át a középső párkányon, vagy menj át alatta a kriptán, miután egy sziklapárkányon lévő kar kinyitja a kapuját), a **Blackwater Ford** (8v8, 5200x2800, Papirtás egy sötét
 folyami gázlónál: át lehet gázolni egy sekély gázlón, át lehet kelni a malom fölött a pillérein álló romos hídon,
 vagy a híd alatti áteresszel, miután a malmon lévő kar kinyitja a kapuját; a pap 2 percenként
 feltámasztja a halottait) és a **Mosslit Cairns** (8v8 Pontfoglalás, öt

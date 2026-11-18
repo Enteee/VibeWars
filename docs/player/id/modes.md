@@ -389,8 +389,7 @@ jangkauannya dengan 50 damage lightning setiap 2,5 detik, sampai tim lawan
 menancapkan benderanya di sana. Setiap sambaran adalah petir dari suar ke siapa pun yang terkena,
 terlihat oleh kedua tim.
 
-Tiga arena Pendakian juga bisa dipilih di Game Host: **The Hollow Deep** (Pemusnahan 8v8, tiga
-terowongan berkelok di sekeliling batu di tengah),
+Tiga arena Pendakian juga bisa dipilih di Game Host: **The Hollow Deep** (Pemusnahan 8v8, 6200x2400, di gua gelap: seberangi jembatan tali di atas jurang, panjat langkan tengah, atau lewati ruang bawah tanah di bawahnya setelah tuas di sebuah teras batu membuka gerbangnya),
 **Blackwater Ford** (Pemusnahan
 Pendeta 8v8, 5200x2800, di sebuah arungan sungai yang gelap: arungi arungan yang dangkal, seberangi jembatan rusak di atas
 kincir yang bertumpu pada pilar-pilarnya, atau lewati gorong-gorong di bawah jembatan setelah tuas di kincir membuka

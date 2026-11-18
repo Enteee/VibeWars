@@ -74,6 +74,7 @@ const REBUILT = new Set([
   "brazen-causeway",
   "cinder-sanctum",
   "broken-tower",
+  "hollow-deep",
   "scarred-earth",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.

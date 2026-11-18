@@ -395,8 +395,7 @@ nepriateľa v jeho dosahu za 50 bleskového poškodenia, kým druhý tím
 nezapichne svoju vlajku tam. Každý zásah je blesk z majáka do toho, koho zasiahol,
 viditeľný pre oba tímy.
 
-Tri arény Výstupu sa dajú vybrať aj vo Vlastnej hre: **The Hollow Deep** (8v8 Anihilácia, tri
-kľukaté tunely okolo centrálnej skaly),
+Tri arény Výstupu sa dajú vybrať aj vo Vlastnej hre: **The Hollow Deep** (8v8 Anihilácia, 6200x2400, v temnej jaskyni: prejdi lanový most nad priepasťou, vylez cez strednú rímsu alebo prejdi podzemnou chodbou pod ňou, keď páka na skalnej polici otvorí jej bránu),
 **Blackwater Ford** (8v8, 5200x2800, Anihilácia
 kňaza pri tmavom riečnom brode: dá sa prebrodiť plytký brod, prejsť po rozbitom moste na pilieroch nad mlynom
 alebo priepustom pod mostom, keď páka na mlyne otvorí jeho mrežu; kňaz oživuje

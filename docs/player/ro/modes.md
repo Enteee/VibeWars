@@ -415,8 +415,7 @@ aleatoriu aflat în raza lui auditivă cu 50 de daune de fulger la fiecare 2,5 s
 până când cealaltă echipă își plantează steagul acolo. Fiecare lovitură este un fulger
 de la far până la cel lovit, vizibil pentru ambele echipe.
 
-Trei arene ale Ascensiunii pot fi alese și la un Joc găzduit: **The Hollow Deep** (8v8
-Anihilare, trei tuneluri întortocheate în jurul unei stânci centrale), **Blackwater Ford**
+Trei arene ale Ascensiunii pot fi alese și la un Joc găzduit: **The Hollow Deep** (8v8 Anihilare, 6200x2400, într-o peșteră întunecată: treci pe un pod de frânghie peste o prăpastie, urci peste o cornișă din mijloc sau iei cripta de sub ea după ce o manetă de pe o terasă de stâncă îi deschide poarta), **Blackwater Ford**
 (8v8, 5200x2800, Anihilare cu preot la un vad întunecat de râu: treci prin apa mică a vadului, pe podul rupt
 sprijinit pe pilonii săi deasupra morii sau printr-un podeț de sub pod, după ce o pârghie de pe moară îi deschide
 poarta; preotul își ridică morții la fiecare 2 minute) și **Mosslit Cairns** (8v8 Capturare de puncte,

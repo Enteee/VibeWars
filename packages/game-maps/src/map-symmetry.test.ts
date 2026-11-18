@@ -14,7 +14,6 @@ const SYMMETRIC = [
   "hall-of-heroes-king",
   "hall-of-heroes-relic",
   "hall-of-heroes-capture",
-  "hollow-deep",
   "mosslit-cairns",
   "wardens-gallery",
 ];

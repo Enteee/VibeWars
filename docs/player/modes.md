@@ -393,8 +393,7 @@ earshot of it for 50 lightning damage every 2.5 seconds, until the other team
 plants its flag there. Each strike is a bolt from the beacon to whoever it hit,
 visible to both teams.
 
-Three Ascent arenas are a Hosted Game's pick too: **The Hollow Deep** (8v8 Annihilation, three
-winding tunnels round a central rock),
+Three Ascent arenas are a Hosted Game's pick too: **The Hollow Deep** (8v8, 6200x2400, Annihilation in a dark cavern: cross a rope bridge over a chasm, climb over a mid ledge, or take the undercroft beneath it once a lever on a shelf opens its gate),
 **Blackwater Ford** (8v8, 5200x2800, Priest Annihilation at a dark river
 ford: wade a shallow ford, cross the broken bridge over the mill on its piers,
 or take a culvert under the bridge once a lever on the mill opens its gate;

@@ -422,8 +422,7 @@ hørevidde af det med 50 lynskade hvert 2,5 sekund, indtil det andet hold
 planter sit flag der. Hvert slag er en lynstråle fra fyret til den, det
 ramte, synlig for begge hold.
 
-Tre arenaer fra Opstigningen kan også vælges i et Værtsspil: **The Hollow Deep** (8v8 Udslettelse, tre
-snoede tunneler rundt om en klippe i midten),
+Tre arenaer fra Opstigningen kan også vælges i et Værtsspil: **The Hollow Deep** (8v8, 6200x2400, Udslettelse i en mørk hule: gå over en rebbro over en kløft, klatr over en afsats i midten, eller tag krypten under den, når et håndtag på en klippehylde åbner dens port),
 **Blackwater Ford** (8v8, 5200x2800,
 Præsteudslettelse ved et mørkt vadested i en flod: man vader over et lavvandet vadested, går over den
 ødelagte bro på sine piller over møllen eller tager en kulvert under broen, når et håndtag på møllen
