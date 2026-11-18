@@ -920,6 +920,18 @@ describe("board reads", () => {
     }
   });
 
+  it("lets every role ask what branch pruning would delete, and only the manager run it (#3533)", () => {
+    for (const role of ROLES) {
+      expect(authorize(role, { kind: "branch", argv: ["prune", "--dry-run"] }).allow, role).toBe(
+        true,
+      );
+      expect(authorize(role, { kind: "branch", argv: ["prune"] }).allow, role).toBe(
+        role === "manager",
+      );
+      expect(authorize(role, { kind: "branch", argv: ["delete", "x"] }).allow, role).toBe(false);
+    }
+  });
+
   it("lets every role but the business-analyst and the release manager read code-scanning alerts (#184, #893, #2707)", () => {
     for (const role of ROLES) {
       expect(authorize(role, { kind: "alerts", argv: ["--pr", "183"] }).allow, role).toBe(

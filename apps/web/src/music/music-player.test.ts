@@ -7,6 +7,7 @@ import {
   HOST_MESSAGES_PER_SECOND,
   HEARTBEAT_MS,
   HEARTBEAT_TIMEOUT_MS,
+  RETIRE_MS,
   createMusicPlayer,
   measuringMusic,
   type MusicError,
@@ -26,6 +27,7 @@ function setup(overrides: Partial<MusicPlayerDeps> = {}) {
   const gestures = new EventTarget();
   let now = 0;
   let tick: (() => void) | undefined;
+  const timeouts: { at: number; run: () => void }[] = [];
   const player = createMusicPlayer({
     createFrame: (receive) => {
       const frame = { sent: [] as GameToHost[], destroyed: false, receive };
@@ -48,15 +50,22 @@ function setup(overrides: Partial<MusicPlayerDeps> = {}) {
         tick = undefined;
       };
     },
+    after: (ms, run) => {
+      timeouts.push({ at: now + ms, run });
+    },
     ...overrides,
   });
   return {
     player,
     frames,
     click: () => gestures.dispatchEvent(new Event("pointerdown")),
-    /** Let `ms` pass without a heartbeat. */
+    /** Let `ms` pass without a heartbeat, running what was due by then. */
     pass: (ms: number) => {
       now += ms;
+      for (const due of timeouts.filter((timeout) => timeout.at <= now)) {
+        timeouts.splice(timeouts.indexOf(due), 1);
+        due.run();
+      }
     },
     /** Let `ms` pass, ticking the heartbeat each second. */
     advance: (ms: number) => {
@@ -164,6 +173,44 @@ describe("createMusicPlayer", () => {
     frames[0]?.receive({ type: "error", message: "Unexpected token (1:0)", line: 1, seq: second });
     expect(evaluated).toEqual([first]);
     expect(errors).toEqual([{ message: "Unexpected token (1:0)", line: 1, evaluation: second }]);
+  });
+
+  it("lets a renewed host fade its music out before it goes, bounded (#3530)", () => {
+    const { player, frames, pass } = opened();
+    const playing: string[] = [];
+    player.onNowPlaying((trackId) => playing.push(trackId));
+    frames[0]?.receive({ type: "ready" });
+    player.load(track, null);
+
+    player.renew();
+    expect(frames[0]?.sent.at(-1)).toEqual({ type: "stop" });
+    expect(frames[0]?.destroyed).toBe(false);
+    // The next track loads in a new host while the old one fades.
+    player.load({ ...track, id: "shared" }, null);
+    expect(frames).toHaveLength(2);
+    // What the old host still says is not heard.
+    frames[0]?.receive({
+      type: "playing",
+      trackId: "first-light",
+      cycle: 0,
+      cps: 1,
+      heardAtEpochMs: 0,
+    });
+    expect(playing).toEqual([]);
+
+    pass(RETIRE_MS - 1);
+    expect(frames[0]?.destroyed).toBe(false);
+    pass(1);
+    expect(frames[0]?.destroyed).toBe(true);
+    expect(frames[1]?.destroyed).toBe(false);
+  });
+
+  it("destroys a renewed host at once if it never came up: it has nothing to fade", () => {
+    const { player, frames } = opened();
+    player.load(track, null);
+    player.renew();
+    expect(frames[0]?.destroyed).toBe(true);
+    expect(frames[0]?.sent).toEqual([]);
   });
 
   it("tears down a host that stops answering, and makes a new one for the next track", () => {

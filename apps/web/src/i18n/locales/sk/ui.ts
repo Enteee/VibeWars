@@ -917,7 +917,6 @@ export default {
     other: "{sign}{count} dielikov",
   },
 
-  "player.applies": "Platí od tvojho ďalšieho lobby.",
   "player.cape": "Plášť",
   "player.colourBlack": "čierna",
   "player.colourGold": "zlatá",

@@ -916,7 +916,6 @@ export default {
     other: "{sign}{count} dílků",
   },
 
-  "player.applies": "Platí od tvého příštího lobby.",
   "player.cape": "Plášť",
   "player.colourBlack": "černá",
   "player.colourGold": "zlatá",

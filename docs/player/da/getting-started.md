@@ -184,8 +184,7 @@ krop kappen i hver kamp: den foldes til et tyndt bånd på din kant, når du
 står stille, og flagrer bag dig, når du bevæger dig. Dine figurer i
 menuen viser den også. **Ingen kappe** tager den af.
 
-En ændring gælder fra den næste lobby, du deltager i, eller din næste
-friske: en, du allerede er i, beholder det, du deltog med.
+En ændring gælder med det samme for den lobby, du er i.
 
 **Kopiér laugslink** under kappedesigneren kopierer et link med dit mærke og din kappe. Den, der åbner det, bliver spurgt **Bliv medlem af lauget [VIBE]?**: **Bliv medlem** giver vedkommende dit mærke og din kappe, **Nej** ændrer intet. Alle kan sende sådan et link, og ingen ejer et mærke, så spillet spørger altid først.
 

@@ -832,7 +832,6 @@ export default {
 
   "pips.title": { one: "{sign}{count} деление", other: "{sign}{count} деления" },
 
-  "player.applies": "Важи от следващото ти лоби.",
   "player.cape": "Наметало",
   "player.colourBlack": "черно",
   "player.colourGold": "златно",

@@ -1,4 +1,4 @@
-import type { QueueMode } from "@vibewars/game-protocol";
+import type { QueueMode, WireMatchChart } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
 import { mapName } from "../i18n/game-names.js";
@@ -171,6 +171,8 @@ export type QueueView =
       readonly streak: number;
       /** The match summary (#1057); `undefined` if the host never sent one. */
       readonly summary: readonly SummaryTable[] | undefined;
+      /** The match's charts (#3564); `undefined` if the host never sent them all. */
+      readonly chart: WireMatchChart | undefined;
       readonly stay?: StayOffer;
     };
 

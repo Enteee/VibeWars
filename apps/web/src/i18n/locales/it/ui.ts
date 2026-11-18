@@ -882,7 +882,6 @@ export default {
     other: "{sign}{count} tacche",
   },
 
-  "player.applies": "Vale dalla prossima lobby.",
   "player.cape": "Mantello",
   "player.colourBlack": "nero",
   "player.colourGold": "oro",

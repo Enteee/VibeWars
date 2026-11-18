@@ -12,6 +12,7 @@ import type {
   PeerRelayAdmit,
   PeerRelayCredIn,
   PeerRelayOffers,
+  WireCape,
   WireTeamLobby,
 } from "@vibewars/game-protocol";
 
@@ -175,6 +176,16 @@ export interface LobbyConnection {
    * with every other member (#2745). The host relays it, or not.
    */
   shareTrack(trackId: string, source: string): void;
+  /**
+   * This player's name and guild, changed in Options (#3548): the lobby
+   * shows them at once. A match on keeps the ones it started with.
+   */
+  setProfile(profile: {
+    readonly name: string;
+    readonly guildTag: string | null;
+    readonly heroRank: number;
+    readonly guildCape: WireCape | null;
+  }): void;
   onChange(handler: () => void): void;
   onMatchStarting(handler: (start: MatchStarting) => void): void;
   /** The match on now, to watch (#480); `undefined` while none is. */

@@ -11,7 +11,9 @@ Since #404 there is no server. A match runs in its host's browser, in
 
 On the company host, run a heavy job (a bench, Playwright) wrapped in
 `company heavy <cmd>` (#3362): the host runs one at a time and queues the
-rest.
+rest. A job under 5 minutes (a screenshot, one spec) goes
+`company heavy --short <cmd>`: it is granted ahead of waiting long jobs (at most
+3 in a row, so long ones are not starved) and is killed at 10 minutes (#3582).
 
 ```sh
 pnpm exec vitest run packages/game-session/src/benchmark.test.ts

@@ -781,7 +781,6 @@ export default {
 
   "pips.title": { other: "{sign}{count} pip" },
 
-  "player.applies": "มีผลตั้งแต่ล็อบบี้ถัดไป",
   "player.cape": "ผ้าคลุม",
   "player.colourBlack": "ดำ",
   "player.colourGold": "ทอง",

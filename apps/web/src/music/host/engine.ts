@@ -3,6 +3,7 @@ import * as mini from "@strudel/mini";
 import * as tonal from "@strudel/tonal";
 import { evaluate, transpiler } from "@strudel/transpiler";
 import {
+  getSound,
   getSuperdoughAudioController,
   initAudio,
   registerSynthSounds,
@@ -24,12 +25,13 @@ import { samplesBaseUrl } from "../music-urls.js";
 import {
   levelAt,
   nextCycle,
+  planSwitch,
   scheduleLevel,
   switchLanding,
   type LevelChange,
 } from "./transitions.js";
-import { busGate, type BusGate } from "./bus-gate.js";
-import { crossfade, isTempoMark, overTrack } from "./crossfade.js";
+import { busGate, FADE_OUT_SECONDS, STOP_RAMP_SECONDS, type BusGate } from "./bus-gate.js";
+import { crossfade, isTempoMark, overTrack, type Rings } from "./crossfade.js";
 import { dropLate } from "./late-notes.js";
 import { catchUpTick, leadClock } from "./lead-clock.js";
 import { firstBeatDelay } from "./first-beat.js";
@@ -114,6 +116,14 @@ interface Switch {
   announced: boolean;
 }
 
+/** A switch to `track` waiting for the one fading to land. */
+interface HeldSwitch {
+  readonly track: HostTrack;
+  readonly cycles: number;
+  readonly landOn: LandOn;
+  readonly askedAt: number;
+}
+
 /** A sting as it plays (#2523): placed in cycles, silent outside its own. */
 interface StingLayer {
   readonly pattern: core.Pattern;
@@ -132,6 +142,17 @@ function startingIn(pattern: core.Pattern, from: number, until: number): core.Pa
 function record(value: unknown): Readonly<Record<string, unknown>> | null {
   return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
 }
+
+/**
+ * A sample with nothing to end it but its own length: superdough plays one
+ * with no `release`, `clip` or `loop` to its end, whatever its hold.
+ */
+const rings: Rings = (fields) =>
+  fields.release === undefined &&
+  fields.clip === undefined &&
+  fields.loop === undefined &&
+  typeof fields.s === "string" &&
+  getSound(fields.s)?.data.type === "sample";
 
 /** An error as the protocol carries it. */
 function describe(error: unknown): Extract<HostToGame, { type: "error" }> {
@@ -173,6 +194,8 @@ export async function startEngine(): Promise<void> {
   const underruns = createUnderrunProbe(context);
   /** The bus limiter, made with the bus once the first track plays. */
   let limiter: DynamicsCompressorNode | undefined;
+  /** A switch asked for during a fade, started when it lands (#3530): the latest wins. */
+  let held: HeldSwitch | undefined;
   const measurement = createMeasurement(
     (stats) => {
       post({ type: "stats", ...stats });
@@ -437,7 +460,23 @@ export async function startEngine(): Promise<void> {
   const halt = (): void => {
     levels = [{ from: 0, level: levelAt(levels, position()) }];
     scheduler.stop();
-    gate?.stop();
+    gate?.stop(STOP_RAMP_SECONDS);
+  };
+
+  const sleep = (ms: number): Promise<void> =>
+    new Promise((resolve) => {
+      const id = timers.setInterval(() => {
+        timers.clearInterval(id);
+        resolve();
+      }, ms);
+    });
+
+  /** Fade the music out over about `seconds` (#3530), then stop the scheduler. */
+  const fadeOut = async (seconds: number): Promise<void> => {
+    if (gate !== undefined && scheduler.started) {
+      await sleep(gate.stop(seconds) * 1000);
+    }
+    halt();
   };
 
   /** Play `pattern`, with the sting, if one plays, on top. */
@@ -517,13 +556,19 @@ export async function startEngine(): Promise<void> {
     startAtEpochMs: number | null,
     askedAt: number,
   ): Promise<void> => {
+    // At once, before any await: a switch held before this load must not
+    // land after it (#3530).
+    held = undefined;
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     await ensureAudio();
     if (startAtEpochMs !== null) {
       await prefetch(pattern, cps);
       // A cold start, so that the times the scheduler counts from are fresh.
+      // What plays fades out first, inside the notice the start gives.
       if (scheduler.started) {
-        halt();
+        const notice =
+          (startAtEpochMs - Date.now()) / 1000 - LEAD_SECONDS - FIRST_BEAT_MARGIN_SECONDS;
+        await fadeOut(Math.min(FADE_OUT_SECONDS, notice));
       }
     }
     scheduler.setCps(cps);
@@ -559,9 +604,29 @@ export async function startEngine(): Promise<void> {
       await load(track, null, askedAt);
       return;
     }
+    const plan = planSwitch(
+      {
+        playing: playing.trackId,
+        ...(switching === undefined
+          ? {}
+          : { switching: { next: switching.next.trackId, from: switching.next.clock.origin } }),
+      },
+      track.trackId,
+      position(),
+    );
+    held = plan === "hold" ? { track, cycles, landOn, askedAt } : undefined;
+    if (plan === "keep" || plan === "hold") {
+      return;
+    }
+    const outgoing = placedAt(playing.pattern, playing.clock.origin);
+    if (plan === "cancel") {
+      switching = undefined;
+      await schedule(outgoing);
+      return;
+    }
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     // A switch still planned is replaced: this one lands where it would have.
-    const current = switching?.next ?? playing;
+    const current = plan === "replace" ? (switching?.next ?? playing) : playing;
     const from = switchLanding(landOn, position(), current.clock.origin, current.phraseCycles);
     clock.origin = from;
     const next: Playing = {
@@ -573,14 +638,26 @@ export async function startEngine(): Promise<void> {
     };
     const until = from + cycles;
     switching = { next, until, announced: false };
-    // What plays fades out, even if that is a crossfade still under way.
     heard("switch", askedAt, (from - position()) / scheduler.cps);
-    await schedule(crossfade(scheduled, pattern, from, cycles, cps));
+    // Only the playing track fades out, never a replaced switch.
+    await schedule(
+      crossfade(outgoing, pattern, from, cycles, { before: playing.cps, after: cps }, rings),
+    );
+  };
+
+  // One message at a time, in order: a switch must not race the load
+  // before it.
+  let queue = Promise.resolve();
+  const enqueue = (run: () => Promise<void>): void => {
+    queue = queue.then(run).catch((error: unknown) => {
+      post(describe(error));
+    });
   };
 
   /**
    * Land a planned switch: announce it on its boundary, then play the new
-   * track alone. Drop a sting that has ended.
+   * track alone, and start the switch held while it faded. Drop a sting
+   * that has ended.
    */
   timers.setInterval(() => {
     if (sting !== undefined && position() >= sting.until) {
@@ -600,6 +677,16 @@ export async function startEngine(): Promise<void> {
       playing = planned.next;
       pins.reset();
       void schedule(planned.next.pattern.late(planned.next.clock.origin));
+      // `held` is read when its turn comes, not now: a load or an evaluate
+      // queued before it clears it, and an older switch must not land after
+      // a newer message (#3530).
+      enqueue(async () => {
+        const waiting = held;
+        held = undefined;
+        if (waiting !== undefined) {
+          await crossfadeTo(waiting.track, waiting.cycles, waiting.landOn, waiting.askedAt);
+        }
+      });
     }
   }, SWITCH_POLL_MS);
 
@@ -620,7 +707,8 @@ export async function startEngine(): Promise<void> {
         }
         return;
       case "stop":
-        halt();
+        held = undefined;
+        await fadeOut(FADE_OUT_SECONDS);
         if (switching !== undefined) {
           playing = switching.next;
           switching = undefined;
@@ -646,6 +734,7 @@ export async function startEngine(): Promise<void> {
           const { pattern, cps, clock } = await compile(message.source, track.phraseCycles);
           clock.origin = track.clock.origin;
           switching = undefined;
+          held = undefined;
           playing = { ...track, pattern, cps, clock };
           pins.reset();
           scheduler.setCps(cps);
@@ -672,10 +761,8 @@ export async function startEngine(): Promise<void> {
     }
   };
 
-  // One message at a time, in order: a switch must not race the load
-  // before it. The heartbeat is answered at once, outside the queue, so
-  // the watchdog sees a hung thread and not a slow sample.
-  let queue = Promise.resolve();
+  // The heartbeat is answered at once, outside the queue, so the watchdog
+  // sees a hung thread and not a slow sample.
   addEventListener("message", (event: MessageEvent) => {
     if (event.source !== parent) {
       return;
@@ -690,11 +777,7 @@ export async function startEngine(): Promise<void> {
     }
     // When it came in, not when its turn in the queue came: for `heard`.
     const askedAt = context.currentTime;
-    queue = queue
-      .then(() => handle(message, askedAt))
-      .catch((error: unknown) => {
-        post(describe(error));
-      });
+    enqueue(() => handle(message, askedAt));
   });
   post({ type: "ready" });
 }

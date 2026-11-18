@@ -831,7 +831,6 @@ export const en = {
 
   "pips.title": { one: "{sign}{count} pips", other: "{sign}{count} pips" },
 
-  "player.applies": "Applies from your next lobby.",
   "player.cape": "Cape",
   "player.colourBlack": "black",
   "player.colourGold": "gold",

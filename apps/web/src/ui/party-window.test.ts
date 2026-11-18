@@ -82,6 +82,7 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     decks: [],
     lifts: [],
     summary: undefined,
+    chart: undefined,
   };
 }
 

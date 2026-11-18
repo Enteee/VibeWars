@@ -226,6 +226,13 @@ import {
 import { HeavyLeases } from "./heavy-lease.mjs";
 import { readRunnerLogs } from "./runner-logs.mjs";
 import {
+  branchesToPrune,
+  deleteBranches,
+  formatPrune,
+  formatSummary,
+  refPath,
+} from "./hub-branches.mjs";
+import {
   closedIssues,
   parseTracking,
   refuseReleaseRange,
@@ -1670,6 +1677,200 @@ async function sweepTracking(cfg) {
         : `hubd: tracking issue #${String(issue.number)} not closed: ${failed}`,
     );
   }
+}
+
+/**
+ * Pull requests of this repository, newest activity first, as far as
+ * `MAX_PAGES` reaches. A branch whose PR is older than that is judged on
+ * its own age. With `whole`, a list that does not fit is a failure, not a
+ * truncation.
+ *
+ * @param {string} state
+ * @param {ReturnType<typeof company>} cfg
+ * @param {boolean} whole
+ * @returns {Promise<unknown[] | undefined>}
+ */
+async function readPulls(state, cfg, whole) {
+  /** @type {unknown[]} */
+  const rows = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const answer = await rest(
+      `pulls?state=${state}&sort=updated&direction=desc&per_page=100&page=${String(page)}`,
+      cfg,
+    );
+    if (!Array.isArray(answer)) {
+      return undefined;
+    }
+    /** @type {unknown[]} */
+    const got = answer;
+    rows.push(...got);
+    if (got.length < 100) {
+      return rows;
+    }
+  }
+  return whole ? undefined : rows;
+}
+
+/**
+ * Every remote branch with what the prune rules need (#3533), read over REST:
+ * nothing is charged to the GraphQL budget.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<import("./hub-branches.mjs").BranchRow[] | null>} `null` if GitHub cannot be asked
+ */
+async function readBranches(cfg) {
+  const listed = await restPages("branches", cfg);
+  const pulls = await readPulls("all", cfg, false);
+  const open = await readPulls("open", cfg, true);
+  if (listed === undefined || pulls === undefined || open === undefined) {
+    return null;
+  }
+  /** @type {Map<string, import("./hub-branches.mjs").BranchPr[]>} */
+  const byBranch = new Map();
+  /**
+   * @param {string} name
+   * @param {import("./hub-branches.mjs").BranchPr} entry
+   */
+  const add = (name, entry) => {
+    byBranch.set(name, [...(byBranch.get(name) ?? []), entry]);
+  };
+  for (const row of pulls) {
+    const pull = obj(row);
+    const head = obj(pull.head);
+    if (obj(head.repo).full_name !== cfg.repo) {
+      continue;
+    }
+    const merged = typeof pull.merged_at === "string";
+    add(String(head.ref), {
+      number: Number(pull.number),
+      state: merged ? "MERGED" : pull.state === "open" ? "OPEN" : "CLOSED",
+      closedAt: typeof pull.closed_at === "string" ? Date.parse(pull.closed_at) : null,
+      role: "head",
+    });
+  }
+  for (const row of open) {
+    const pull = obj(row);
+    if (obj(obj(pull.head).repo).full_name === cfg.repo) {
+      add(String(obj(pull.head).ref), {
+        number: Number(pull.number),
+        state: "OPEN",
+        closedAt: null,
+        role: "head",
+      });
+    }
+    add(String(obj(pull.base).ref), {
+      number: Number(pull.number),
+      state: "OPEN",
+      closedAt: null,
+      role: "base",
+    });
+  }
+  /** @type {import("./hub-branches.mjs").BranchRow[]} */
+  const rows = [];
+  for (const entry of listed) {
+    const branch = obj(entry);
+    const name = String(branch.name);
+    const sha = String(obj(branch.commit).sha);
+    const prs = byBranch.get(name) ?? [];
+    // Dates and ancestry are only worth a call for the branches they decide.
+    const decided = !name.startsWith("bot/") || prs.some((pr) => pr.state === "OPEN");
+    const commit = decided ? undefined : obj(await rest(`commits/${sha}`, cfg));
+    const compared =
+      decided || prs.length > 0 ? undefined : obj(await rest(`compare/main...${sha}`, cfg));
+    rows.push({
+      name,
+      sha,
+      committedAt: Date.parse(String(obj(obj(commit?.commit).committer).date)) || Date.now(),
+      inMain: compared?.status === "behind" || compared?.status === "identical",
+      prs,
+    });
+  }
+  return rows;
+}
+
+/** The last read of the branches, so a run of dry-runs costs GitHub one read. */
+let branchPlan = { at: 0, rows: /** @type {import("./hub-branches.mjs").BranchRow[]} */ ([]) };
+const BRANCH_PLAN_FRESH_MS = 5 * 60_000;
+
+/**
+ * Delete what the prune rules select (#3533), or only say what they would.
+ * See `deleteBranches` for what keeps a branch. A dry-run may use a read up
+ * to five minutes old; a real sweep always reads afresh.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @param {{ dryRun: boolean }} options
+ * @returns {Promise<{ text: string, deleted: number } | { error: string }>}
+ */
+async function sweepBranches(cfg, { dryRun }) {
+  const cached = dryRun && Date.now() - branchPlan.at < BRANCH_PLAN_FRESH_MS;
+  const rows = cached ? branchPlan.rows : await readBranches(cfg);
+  if (rows === null) {
+    return { error: "GitHub could not be asked for the branches" };
+  }
+  if (!cached) {
+    branchPlan = { at: Date.now(), rows };
+  }
+  const chosen = branchesToPrune(rows, Date.now());
+  if (dryRun) {
+    return { text: formatPrune(chosen), deleted: 0 };
+  }
+  const done = await deleteBranches(chosen, {
+    readRef: async (name) => {
+      const result = await gh(["api", `repos/${cfg.repo}/git/ref/heads/${refPath(name)}`]);
+      if (result.code !== 0) {
+        return result.stderr.includes("HTTP 404") ? "gone" : "error";
+      }
+      try {
+        const sha = obj(obj(JSON.parse(result.stdout)).object).sha;
+        return typeof sha === "string" ? { sha } : "error";
+      } catch {
+        return "error";
+      }
+    },
+    remove: async (name) => {
+      const result = await gh([
+        "api",
+        "-X",
+        "DELETE",
+        `repos/${cfg.repo}/git/refs/heads/${refPath(name)}`,
+      ]);
+      if (result.code !== 0 && !/HTTP (404|422)/.test(result.stderr)) {
+        console.error(`hubd: branches: could not delete ${name}: ${result.stderr.trim()}`);
+        return "error";
+      }
+      console.error(`hubd: pruned ${name}`);
+      return "deleted";
+    },
+  });
+  if (done.stoppedAt !== null) {
+    console.error(`hubd: branches: stopped at ${done.stoppedAt}; the next sweep goes on`);
+  }
+  branchPlan = { at: 0, rows: [] };
+  return {
+    text: formatSummary({ deleted: done.deleted, kept: rows.length - done.deleted.length }),
+    deleted: done.deleted.length,
+  };
+}
+
+/** How often the branches are pruned (#3533). */
+const BRANCH_SWEEP_MS = Number(process.env.HUBD_BRANCH_SWEEP_MS ?? 24 * 60 * 60_000);
+
+/**
+ * `hub branch prune [--dry-run]`: policy says who may. The real run is the
+ * same sweep the daily timer does.
+ *
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function branchVerb(argv, cfg) {
+  if (Date.now() < limitedUntil) {
+    return limitedResponse();
+  }
+  const answer = await sweepBranches(cfg, { dryRun: argv.includes("--dry-run") });
+  return "error" in answer
+    ? { allow: true, code: 1, stdout: "", stderr: `${answer.error}\n` }
+    : { allow: true, code: 0, stdout: `${answer.text}\n`, stderr: "" };
 }
 
 /** How often the tracking issues of published releases are closed (#3125). */
@@ -3935,12 +4136,15 @@ const heavyLeases = new HeavyLeases();
  * @returns {Record<string, unknown>}
  */
 function heavy(employee, argv) {
-  const [op = "", arg = ""] = argv;
+  const [op = "", arg = "", kind = ""] = argv;
   const now = Date.now();
   /** @type {Record<string, unknown>} */
   let answer;
   if (op === "acquire") {
-    answer = { ...heavyLeases.acquire(employee, arg.slice(0, 80), now) };
+    if (kind !== "short" && kind !== "long") {
+      return { allow: false, reason: `heavy: unknown job kind "${kind}"`, code: 77 };
+    }
+    answer = { ...heavyLeases.acquire(employee, arg.slice(0, 80), kind === "short", now) };
   } else if (op === "renew") {
     answer = { ok: heavyLeases.renew(employee, arg, now) };
   } else if (op === "release") {
@@ -4411,6 +4615,11 @@ async function serve(request, verdict, acting) {
 
   if (kind === "heavy") {
     return heavy(employee, argv);
+  }
+
+  if (kind === "branch") {
+    audit({ role, kind, argv, decision: "allowed" });
+    return branchVerb(argv, cfg);
   }
 
   if (kind === "rank") {
@@ -5961,6 +6170,7 @@ async function main() {
   writeNudges();
   let lastKpis = 0;
   let lastTrackingSweep = 0;
+  let lastBranchSweep = 0;
   for (;;) {
     readStaffed();
     /** @type {[string, string | null][]} */
@@ -6010,6 +6220,17 @@ async function main() {
         await sweepTracking(cfg);
       } catch (error) {
         console.error(`hubd: tracking: ${error instanceof Error ? error.message : "failed"}`);
+      }
+    }
+    if (Date.now() - lastBranchSweep >= BRANCH_SWEEP_MS && Date.now() >= limitedUntil) {
+      lastBranchSweep = Date.now();
+      try {
+        const swept = await sweepBranches(cfg, { dryRun: false });
+        if ("text" in swept && swept.deleted > 0) {
+          tellCompany(`branches-${String(Date.now())}`, swept.text, { to: "manager" });
+        }
+      } catch (error) {
+        console.error(`hubd: branches: ${error instanceof Error ? error.message : "failed"}`);
       }
     }
     if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {

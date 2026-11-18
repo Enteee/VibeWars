@@ -5,7 +5,7 @@
  */
 
 export { MAX_MESSAGE_BYTES, messageBytes, sizeChecked } from "./transport.js";
-export { packCombat } from "./combat-batches.js";
+export { packCombat, packMatchChart } from "./combat-batches.js";
 export { packSnapshot, snapshotAssembler } from "./snapshot-parts.js";
 export type { Transport, TransportTrouble } from "./transport.js";
 
@@ -81,6 +81,7 @@ export type {
 export {
   LOBBY_PROOF_MS,
   PARTY_CONSENT_MS,
+  PROFILE_INTERVAL_MS,
   SHARE_INTERVAL_MS,
   canStart,
   createLobbyHost,

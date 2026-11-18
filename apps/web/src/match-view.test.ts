@@ -85,6 +85,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     decks: [],
     lifts: [],
     summary: undefined,
+    chart: undefined,
   };
 }
 
