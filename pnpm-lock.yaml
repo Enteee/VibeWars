@@ -107,6 +107,9 @@ importers:
       '@vibewars/game-session':
         specifier: workspace:*
         version: link:../../packages/game-session
+      '@vibewars/ranking':
+        specifier: workspace:*
+        version: link:../../packages/ranking
       marked:
         specifier: 18.1.1
         version: 18.1.1
@@ -153,6 +156,18 @@ importers:
       '@vibewars/game-protocol':
         specifier: workspace:*
         version: link:../game-protocol
+      '@vibewars/ranking':
+        specifier: workspace:*
+        version: link:../ranking
+
+  packages/ranking:
+    devDependencies:
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
+      '@noble/secp256k1':
+        specifier: 3.2.0
+        version: 3.2.0
 
 packages:
 

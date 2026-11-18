@@ -1,3 +1,14 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { hexToBytes } from "@noble/hashes/utils.js";
+import { schnorr } from "@noble/secp256k1";
+import {
+  type RankedResult,
+  type RankedStart,
+  resultDigest,
+  startDigest,
+  startHash,
+  ZERO_HASH,
+} from "@vibewars/ranking";
 import { describe, expect, it } from "vitest";
 
 import { STORAGE_NAMESPACE } from "../../storage/namespace.js";
@@ -35,6 +46,21 @@ const FIELDS = {
   roomId: "ACDEFG",
   nonce: "5c".repeat(32),
 };
+
+/** A ranked 1v1 of `pubkey` (ADR-0055). */
+function rankedStart(pubkey: string): RankedStart {
+  const seat = { pubkey, characterId: "char-1", name: "Seat", claimedRating: 800, prev: ZERO_HASH };
+  return {
+    matchId: "group-1",
+    buildHash: "build-abc",
+    mode: "team-arena",
+    map: "isle-of-the-nameless",
+    seed: 7,
+    startedAt: 1_795_000_000,
+    leaderboardAsOf: 1_794_999_000,
+    teams: [[seat], [{ ...seat, pubkey: "ab".repeat(32) }]],
+  };
+}
 
 /** The ui and render modules' sources, to check none reaches the key. */
 const shown = import.meta.glob<string>(["../../ui/**/*.ts", "../../render/**/*.ts"], {
@@ -78,10 +104,15 @@ describe("the player key (#2706)", () => {
     expect(loadPlayerKey(broken).pubkey).toMatch(/^[0-9a-f]{64}$/);
   });
 
-  it("exposes its key and a lobby proof, never a raw sign or the secret", () => {
+  it("exposes its key and purpose-named signers, never a raw sign or the secret", () => {
     expect(Object.keys(playerKeyModule).sort()).toEqual(["loadPlayerKey", "verifyPlayerProof"]);
     const key = loadPlayerKey(memoryStorage());
-    expect(Object.keys(key).sort()).toEqual(["pubkey", "signLobbyProof"]);
+    expect(Object.keys(key).sort()).toEqual([
+      "pubkey",
+      "signLobbyProof",
+      "signRankedResult",
+      "signRankedStart",
+    ]);
     expect("sign" in key).toBe(false);
   });
 
@@ -101,6 +132,28 @@ describe("the player key (#2706)", () => {
       expect(verifyPlayerProof(key.pubkey, other, sig)).toBe(false);
     }
     expect(verifyPlayerProof(loadPlayerKey(memoryStorage()).pubkey, FIELDS, sig)).toBe(false);
+  });
+
+  it("signs a ranked start and result under their own tags, neither a lobby proof (ADR-0055)", () => {
+    const key = loadPlayerKey(memoryStorage());
+    const start = rankedStart(key.pubkey);
+    const result: RankedResult = {
+      startHash: startHash(start, sha256),
+      winningTeam: 0,
+      endReason: "annihilation",
+      leavers: [],
+      durationSeconds: 300,
+      replayHash: "cd".repeat(32),
+    };
+    const pubkey = hexToBytes(key.pubkey);
+    const startSig = key.signRankedStart(start);
+    const resultSig = key.signRankedResult(result);
+    expect(startSig).toMatch(/^[0-9a-f]{128}$/);
+    expect(schnorr.verify(hexToBytes(startSig), startDigest(start, sha256), pubkey)).toBe(true);
+    expect(schnorr.verify(hexToBytes(resultSig), resultDigest(result, sha256), pubkey)).toBe(true);
+    expect(schnorr.verify(hexToBytes(startSig), resultDigest(result, sha256), pubkey)).toBe(false);
+    expect(verifyPlayerProof(key.pubkey, FIELDS, startSig)).toBe(false);
+    expect(verifyPlayerProof(key.pubkey, FIELDS, resultSig)).toBe(false);
   });
 
   it("verifies nothing malformed, and never throws", () => {
