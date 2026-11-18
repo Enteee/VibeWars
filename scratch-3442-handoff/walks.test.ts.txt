@@ -1,0 +1,67 @@
+import { it } from "vitest";
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
+import { layeredFinder } from "./layered-finder.test-support.js";
+import { loadMap } from "./loader.js";
+import type { MapData } from "./schema.js";
+import { walksByRoute, walksTo, type Route } from "./tools/map-balance.js";
+
+it("numbers", () => {
+  const map = loadMap("hall-of-heroes-capture");
+  console.log(
+    "nodes",
+    layeredFinder(map, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius).nodeCount,
+  );
+  const v = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+  const fmt = (w: number[]) =>
+    w.map((x) => (x / v).toFixed(1)).join(" / ") +
+    " s  spread " +
+    ((100 * (Math.max(...w) - Math.min(...w))) / Math.max(...w)).toFixed(1) +
+    " %";
+  const open: MapData = { ...map, gates: [] };
+  const altar = { x: 2500, y: 2200 };
+  const gal = [
+    "east-gallery-stair",
+    "south-gallery-stair",
+    "west-gallery-stair",
+    "east-gallery-north-stair",
+    "west-gallery-north-stair",
+  ];
+  const crypt = ["north-east-crypt", "south-east-crypt", "west-crypt"];
+  // team k's clockwise gallery: 0→east(-30), 1→south(90), 2→west(210); ccw: 0→west, 1→east, 2→south
+  const cw = (t: number) =>
+    ["east-gallery-north-stair", "south-gallery-stair", "west-gallery-stair"][t] ?? "";
+  const ccw = (t: number) =>
+    ["west-gallery-north-stair", "east-gallery-stair", "south-gallery-stair"][t] ?? "";
+  const only =
+    (keep: string) =>
+    (t: number): Route => ({
+      through: [keep],
+      shut: [...gal, ...crypt.map((c) => `${c}-plinth-stair`)].filter((g) => g !== keep),
+    });
+  const viaGal = (f: (t: number) => string) => (t: number) => only(f(t))(t);
+  const viaCrypt = (t: number): Route => ({
+    through: [`${crypt[t]}-plinth-stair`],
+    shut: [...gal, ...crypt.filter((_, i) => i !== t).map((c) => `${c}-plinth-stair`)],
+  });
+  console.log("altar cw gallery ", fmt(walksByRoute(map, altar, 3, viaGal(cw))));
+  console.log("altar ccw gallery", fmt(walksByRoute(map, altar, 3, viaGal(ccw))));
+  console.log("altar own crypt  ", fmt(walksByRoute(open, altar, 3, viaCrypt)));
+  console.log("altar best open  ", fmt(walksTo(open, altar, 3)));
+  console.log("altar best shut  ", fmt(walksTo(map, altar, 3)));
+  const mid = (a: number) => ({
+    x: 2500 + 1150 * Math.cos((a * Math.PI) / 180),
+    y: 2200 + 1150 * Math.sin((a * Math.PI) / 180),
+  });
+  const A = [-30, 90, 210];
+  console.log(
+    "cw gallery mid ",
+    fmt([0, 1, 2].map((t) => walksTo(map, mid(A[t] ?? 0), 2)[t] ?? 0)),
+  );
+  console.log(
+    "ccw gallery mid",
+    fmt([0, 1, 2].map((t) => walksTo(map, mid(A[(t + 2) % 3] ?? 0), 2)[t] ?? 0)),
+  );
+  const relic = loadMap("hall-of-heroes-relic");
+  const rs = relic.objectives.filter((o) => o.kind === "relic-spawn");
+  console.log("relic spawns", JSON.stringify(rs.map((o) => o.position)));
+}, 600_000);

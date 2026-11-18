@@ -1,0 +1,558 @@
+// Generator for packages/game-maps/maps/hall-of-heroes-{capture,king,relic}/map.json (#3442). Not committed.
+// Usage: node .scratch-3442/gen.mjs   (writes the three maps, prettier-formatted)
+import { execFileSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const P_ = JSON.parse(process.env.HOH ?? "{}");
+const W = 5000;
+const H = 4400;
+const C = { x: 2500, y: 2200 };
+const round = (v) => Math.round(v * 10) / 10;
+const P = (x, y) => ({ x: round(x), y: round(y) });
+const deg = (d) => (d * Math.PI) / 180;
+const polar = (r, a) => P(C.x + r * Math.cos(deg(a)), C.y + r * Math.sin(deg(a)));
+/** Turn a point about the centre by k × 120° (team 0 → 1 → 2, clockwise on screen). */
+const turn = (p, k) => {
+  const a = deg(120 * k);
+  const dx = p.x - C.x;
+  const dy = p.y - C.y;
+  return P(C.x + dx * Math.cos(a) - dy * Math.sin(a), C.y + dx * Math.sin(a) + dy * Math.cos(a));
+};
+const rect = (x, y, width, height) => ({
+  kind: "rect",
+  x: round(x),
+  y: round(y),
+  width: round(width),
+  height: round(height),
+});
+const poly = (points) => ({ kind: "polygon", points });
+const turnPoly = (shape, k) => poly(shape.points.map((p) => turn(p, k)));
+const rectPoly = (r) =>
+  poly([
+    P(r.x, r.y),
+    P(r.x + r.width, r.y),
+    P(r.x + r.width, r.y + r.height),
+    P(r.x, r.y + r.height),
+  ]);
+const ellipse = (cx, cy, a, b, n = 10) =>
+  poly(
+    Array.from({ length: n }, (_, i) =>
+      P(cx + a * Math.cos((i / n) * 2 * Math.PI), cy + b * Math.sin((i / n) * 2 * Math.PI)),
+    ),
+  );
+const TEAM = ["north", "south-east", "south-west"];
+const K = [0, 1, 2];
+
+// ---- outline: a 12-gon of radius 2200, a corner due north ----------------------------------
+const outline = Array.from({ length: 12 }, (_, i) => polar(2200, -90 + 30 * i));
+
+// ---- plinth and galleries: one deck on layer 2 (70 up) -------------------------------------
+// The plinth is a 12-gon of radius 720; a gallery (360 wide) leaves it at -30°, 90° and 210°, out
+// to r 1500. A gallery's outer end is cut square to the nearer axis, where its stair stands.
+const PLINTH_R = 720;
+const GAL_HALF = 180;
+const GAL_END = 1500;
+const GALLERY = [-30, 90, 210];
+const STAIR = 112; // long, uphill (the least a body routes over is 107.1)
+const STAIR_W = P_.stairW ?? 170;
+/** A gallery's two side lines at radius r: [left, right] looking outward. */
+const side = (a, r, s) => {
+  const d = { x: Math.cos(deg(a)), y: Math.sin(deg(a)) };
+  const n = { x: -d.y, y: d.x };
+  return P(C.x + d.x * r + n.x * s, C.y + d.y * r + n.y * s);
+};
+/** Where a gallery's side line `s` meets the line x = X (or y = Y). */
+const sideAt = (a, s, axis, value) => {
+  const d = { x: Math.cos(deg(a)), y: Math.sin(deg(a)) };
+  const n = { x: -d.y, y: d.x };
+  const r = axis === "x" ? (value - C.x - n.x * s) / d.x : (value - C.y - n.y * s) / d.y;
+  return P(C.x + d.x * r + n.x * s, C.y + d.y * r + n.y * s);
+};
+// The crypts come up through notches in the plinth at -60°, 60° and 180°, each notch 120 wide on
+// the axis its crypt runs along; see below.
+const CRYPT = [-60, 60, 180];
+const NOTCH_W = 130;
+const NOTCH_IN = 2 * 112; // from the rim inward: the well stair, then the plinth stair
+const plinthPts = [];
+const stairs = [];
+const galleryEnds = [];
+for (let i = 0; i < 12; i++) {
+  const a = -90 + 30 * i;
+  if (GALLERY.includes(a)) {
+    const join = Math.sqrt(PLINTH_R ** 2 - GAL_HALF ** 2) - 20;
+    // end square to the nearer axis
+    const d = { x: Math.cos(deg(a)), y: Math.sin(deg(a)) };
+    const tip = polar(GAL_END, a);
+    const axis = Math.abs(d.x) > Math.abs(d.y) ? "x" : "y";
+    const value = axis === "x" ? tip.x : tip.y;
+    const left = sideAt(a, -GAL_HALF, axis, value);
+    const right = sideAt(a, GAL_HALF, axis, value);
+    // the east and west galleries also step down on their north side: a short edge facing north,
+    // for a stair from team 0's side; the end face carries the other team's
+    const STEP = (P_.step ?? { "-30": 120, 210: 80 })[a] ?? 0;
+    if (axis === "x" && STEP > 0) {
+      const out = value > C.x ? 1 : -1;
+      const s = out > 0 ? -GAL_HALF : GAL_HALF; // the north side line
+      const A = sideAt(a, s, "x", value - out * STEP);
+      const B = P(value, A.y);
+      if (out > 0) plinthPts.push(side(a, join, -GAL_HALF), A, B, right, side(a, join, GAL_HALF));
+      else plinthPts.push(side(a, join, -GAL_HALF), left, B, A, side(a, join, GAL_HALF));
+      galleryEnds.push({
+        a,
+        axis,
+        value,
+        tip,
+        left: out > 0 ? B : left,
+        right: out > 0 ? right : B,
+        step: { A, B },
+      });
+    } else {
+      plinthPts.push(side(a, join, -GAL_HALF), left, right, side(a, join, GAL_HALF));
+      galleryEnds.push({ a, axis, value, tip, left, right });
+    }
+  } else if (CRYPT.includes(a)) {
+    // notch on the axis its crypt climbs: -60/60 come in from north/south, 180 from the west
+    const rim = polar(PLINTH_R, a);
+    if (a === 180) {
+      const y0 = C.y - NOTCH_W / 2;
+      const x0 = C.x - Math.sqrt(PLINTH_R ** 2 - (NOTCH_W / 2) ** 2);
+      plinthPts.push(
+        P(x0, y0 + NOTCH_W),
+        P(x0 + NOTCH_IN, y0 + NOTCH_W),
+        P(x0 + NOTCH_IN, y0),
+        P(x0, y0),
+      );
+    } else {
+      const sgn = a < 0 ? -1 : 1;
+      const xL = rim.x - NOTCH_W / 2;
+      const xR = rim.x + NOTCH_W / 2;
+      const yAt = (x) => C.y + sgn * Math.sqrt(PLINTH_R ** 2 - (x - C.x) ** 2);
+      // clockwise order on screen: -60 runs left→right, 60 right→left
+      if (sgn < 0)
+        plinthPts.push(
+          P(xL, yAt(xL)),
+          P(xL, yAt(rim.x) - sgn * NOTCH_IN),
+          P(xR, yAt(rim.x) - sgn * NOTCH_IN),
+          P(xR, yAt(xR)),
+        );
+      else
+        plinthPts.push(
+          P(xR, yAt(xR)),
+          P(xR, yAt(rim.x) - sgn * NOTCH_IN),
+          P(xL, yAt(rim.x) - sgn * NOTCH_IN),
+          P(xL, yAt(xL)),
+        );
+    }
+  } else {
+    plinthPts.push(polar(PLINTH_R, a));
+  }
+}
+const plinth = poly(plinthPts);
+
+// gallery stairs: on the square outer end, climbing inward
+for (const [k, g] of galleryEnds.entries()) {
+  const id = `${["east", "south", "west"][k]}-gallery-stair`;
+  const off = (P_.galOff ?? [0, 0, 0])[k];
+  if (g.axis === "x") {
+    const out = g.value > C.x ? 1 : -1;
+    const midY = (g.left.y + g.right.y) / 2 + off;
+    stairs.push({
+      id,
+      from: 1,
+      to: 2,
+      area: rect(out > 0 ? g.value : g.value - STAIR, midY - STAIR_W / 2, STAIR, STAIR_W),
+      uphill: out > 0 ? "w" : "e",
+      look: "stairs",
+      lift: null,
+    });
+    if (g.step) {
+      const { A, B } = g.step;
+      const x0 = Math.min(A.x, B.x);
+      const w = Math.abs(B.x - A.x);
+      stairs.push({
+        id: `${["east", "south", "west"][k]}-gallery-north-stair`,
+        from: 1,
+        to: 2,
+        area: rect(
+          x0 + (w - Math.min(STAIR_W, w - 10)) / 2,
+          A.y - STAIR,
+          Math.min(STAIR_W, w - 10),
+          STAIR,
+        ),
+        uphill: "s",
+        look: "stairs",
+        lift: null,
+      });
+    }
+  } else {
+    const midX = (g.left.x + g.right.x) / 2 + off;
+    stairs.push({
+      id,
+      from: 1,
+      to: 2,
+      area: rect(midX - STAIR_W / 2, g.value, STAIR_W, STAIR),
+      uphill: "n",
+      look: "stairs",
+      lift: null,
+    });
+  }
+}
+
+// ---- the dais: an octagon of radius 330 on layer 3, a stair on each axis face --------------
+const DAIS_R = 330;
+const daisPts = Array.from({ length: 8 }, (_, i) =>
+  polar(DAIS_R / Math.cos(deg(22.5)), -90 + 22.5 + 45 * i),
+);
+const dais = poly(daisPts);
+const DAIS_STAIR_W = 140;
+for (const [face, uphill] of [
+  ["north", "s"],
+  ["east", "w"],
+  ["south", "n"],
+  ["west", "e"],
+]) {
+  const area =
+    face === "north"
+      ? rect(C.x - DAIS_STAIR_W / 2, C.y - DAIS_R - STAIR, DAIS_STAIR_W, STAIR)
+      : face === "south"
+        ? rect(C.x - DAIS_STAIR_W / 2, C.y + DAIS_R, DAIS_STAIR_W, STAIR)
+        : face === "east"
+          ? rect(C.x + DAIS_R, C.y - DAIS_STAIR_W / 2, STAIR, DAIS_STAIR_W)
+          : rect(C.x - DAIS_R - STAIR, C.y - DAIS_STAIR_W / 2, STAIR, DAIS_STAIR_W);
+  stairs.push({
+    id: `dais-${face}-stair`,
+    from: 2,
+    to: 3,
+    area,
+    uphill,
+    look: "stairs",
+    lift: null,
+  });
+}
+// four pillars on the dais's corners between its stairs
+const pillars = [45, 135, 225, 315].map((a) => {
+  const p = polar(DAIS_R - 55, a);
+  return { ...rect(p.x - 22, p.y - 22, 44, 44), layer: 3 };
+});
+
+// ---- crypts: L0 tunnels under the floor, 110 wide, from a mouth out in the hall to a notch in
+// the plinth, where a stair comes up to the floor's height and a second onto the plinth. Each
+// crypt is a straight leg on the axis it enters the notch by and, for the two that leave it at
+// 30° off an axis, a second leg out to its mouth. The legs are tuned (HOH env) so every team's
+// walk by its own crypt is the same.
+const CW = 110;
+const tunnels = [];
+const pits = [];
+const gates = [];
+const crypts = [];
+{
+  // team 0's crypt at -60°: in from the north at the notch, up a leg to y0, east to its mouth
+  const cfg = P_.crypt ?? { y0: [650, 3650], mouth: [170, 470], west: 1200 };
+  for (const [k, sgn] of [
+    [0, -1],
+    [1, 1],
+  ]) {
+    const a = CRYPT[k];
+    const x = polar(PLINTH_R, a).x;
+    const yRim = C.y + sgn * Math.sqrt(PLINTH_R ** 2 - (x - C.x) ** 2);
+    const y0 = cfg.y0[k];
+    const leg = cfg.mouth[k];
+    // the well stair (L0→L1, a pit) from the rim inward, the plinth stair (L1→L2) beyond it
+    const up0 =
+      sgn < 0 ? rect(x - CW / 2, yRim, CW, STAIR) : rect(x - CW / 2, yRim - STAIR, CW, STAIR);
+    const up1 =
+      sgn < 0
+        ? rect(x - CW / 2, yRim + STAIR, CW, STAIR)
+        : rect(x - CW / 2, yRim - 2 * STAIR, CW, STAIR);
+    const footY = yRim;
+    const vert =
+      sgn < 0
+        ? rect(x - CW / 2, y0 - CW / 2, CW, footY - (y0 - CW / 2))
+        : rect(x - CW / 2, footY, CW, y0 + CW / 2 - footY);
+    const horiz = rect(x + CW / 2, y0 - CW / 2, leg, CW);
+    const mouth = rect(x + CW / 2 + leg, y0 - CW / 2, 140, CW);
+    crypts.push({
+      k,
+      a,
+      x,
+      up0,
+      up1,
+      legs: [vert, horiz],
+      mouth,
+      mouthUphill: "e",
+      inward: sgn < 0 ? "s" : "n",
+      door: rect(x + CW / 2 + leg - 20, y0 - CW / 2, 14, CW),
+    });
+  }
+  // team 2's crypt at 180°: straight in from the west
+  const y = C.y;
+  const xRim = C.x - Math.sqrt(PLINTH_R ** 2 - (NOTCH_W / 2) ** 2);
+  const up0 = rect(xRim, y - CW / 2, STAIR, CW);
+  const up1 = rect(xRim + STAIR, y - CW / 2, STAIR, CW);
+  const len = cfg.west;
+  const leg = rect(up0.x - len, y - CW / 2, len, CW);
+  const mouth = rect(leg.x - 140, y - CW / 2, 140, CW);
+  crypts.push({
+    k: 2,
+    a: 180,
+    up0,
+    up1,
+    legs: [leg],
+    mouth,
+    mouthUphill: "w",
+    inward: "e",
+    door: rect(leg.x + 6, y - CW / 2, 14, CW),
+  });
+}
+const cryptName = ["north-east", "south-east", "west"];
+for (const c of crypts) {
+  const name = `${cryptName[c.k]}-crypt`;
+  c.legs.forEach((leg, i) =>
+    tunnels.push({
+      id: c.legs.length > 1 ? `${name}-${i === 0 ? "inner" : "outer"}` : name,
+      footprint: leg,
+    }),
+  );
+  pits.push({ id: `${name}-well`, footprint: c.up0 });
+  pits.push({ id: `${name}-mouth`, footprint: c.mouth });
+  stairs.push({
+    id: `${name}-mouth-stair`,
+    from: 0,
+    to: 1,
+    area: c.mouth,
+    uphill: c.mouthUphill,
+    look: "stairs",
+    lift: null,
+  });
+  stairs.push({
+    id: `${name}-stair`,
+    from: 0,
+    to: 1,
+    area: c.up0,
+    uphill: c.inward,
+    look: "stairs",
+    lift: null,
+  });
+  stairs.push({
+    id: `${name}-plinth-stair`,
+    from: 1,
+    to: 2,
+    area: c.up1,
+    uphill: c.inward,
+    look: "stairs",
+    lift: null,
+  });
+  gates.push({
+    id: `${name}-door`,
+    wall: { ...c.door, layer: 0 },
+    opener: { kind: "switch" },
+    blocks: "all",
+    look: "door",
+  });
+}
+
+// ---- walls ----------------------------------------------------------------------------------
+const walls = [{ ...plinth, layer: 1 }, { ...dais, layer: 2 }, ...pillars];
+
+// ---- per team (team 0's piece, turned) ------------------------------------------------------
+const spawnPoints = [];
+const seat = [];
+for (const y of [320, 420, 520, 620]) for (const x of [2445, 2555]) seat.push(P(x, y));
+for (const k of K)
+  for (const p of seat) spawnPoints.push({ team: k, layer: 1, position: turn(p, k) });
+
+// colonnade: a breakable wall 180 long, 30 deep, square to the team's axis
+const colonnade = rectPoly(rect(2410 - 90, 1190 - 15, 180, 30));
+const breakables = K.map((k) => ({
+  id: `${TEAM[k]}-colonnade`,
+  wall: { ...turnPoly(colonnade, k), layer: 1 },
+  health: 1500,
+}));
+const LEVER = P(2330, 960);
+const switches = K.map((k) => ({
+  id: `${TEAM[k]}-crypt-lever`,
+  layer: 1,
+  position: turn(LEVER, k),
+  targets: gates.map((g) => g.id),
+}));
+
+const zones = [];
+const water = [];
+for (const k of K) {
+  const s = polar(1900, -112 + 120 * k);
+  zones.push({
+    id: `${TEAM[k]}-spring`,
+    kind: "spring",
+    layer: 1,
+    area: ellipse(s.x, s.y, 120, 120, 8),
+  });
+  const m = polar(1950, -140 + 120 * k);
+  zones.push({
+    id: `${TEAM[k]}-mire`,
+    kind: "mire",
+    layer: 1,
+    area: ellipse(m.x, m.y, 130, 130, 8),
+  });
+  const w = polar(1980, -72 + 120 * k);
+  water.push({
+    id: `${TEAM[k]}-pool`,
+    layer: 1,
+    depth: "shallow",
+    area: ellipse(w.x, w.y, 120, 120, 10),
+  });
+}
+
+// drop-offs: the plinth edge on each team's axis, and each gallery's two flanks
+const dropOffs = [];
+for (const k of K) {
+  const a = -90 + 120 * k;
+  const [u, w] = [polar(PLINTH_R, a - 30), polar(PLINTH_R, a)];
+  const lerp = (t) => P(u.x + (w.x - u.x) * t, u.y + (w.y - u.y) * t);
+  dropOffs.push({ layer: 2, from: lerp(0.2), to: lerp(0.8) });
+}
+for (const a of GALLERY) {
+  dropOffs.push({ layer: 2, from: side(a, 1250, -GAL_HALF), to: side(a, 950, -GAL_HALF) });
+  dropOffs.push({ layer: 2, from: side(a, 950, GAL_HALF), to: side(a, 1250, GAL_HALF) });
+}
+
+// ---- light and atmosphere (heavenly act, an indoor hall) ------------------------------------
+const hex = (s) => parseInt(s.replace("#", ""), 16);
+const TORCH = hex("#ffb060");
+const GOLD = hex("#ffd98a");
+const light = (id, p, layer, radius, colour, flicker, intensity = 0.85) => ({
+  id,
+  position: p,
+  layer,
+  radius,
+  colour,
+  intensity,
+  flicker,
+});
+const lights = [light("altar-ring", P(C.x, C.y), 3, 220, GOLD, 0)];
+for (const c of crypts) {
+  const m = c.mouth;
+  const p = c.mouthUphill === "e" ? P(m.x + m.width + 30, m.y - 30) : P(m.x - 30, m.y - 30);
+  lights.push(light(`torch-${cryptName[c.k]}-crypt-mouth`, p, 1, 150, TORCH, 0.2));
+}
+for (const [i, g] of galleryEnds.entries())
+  lights.push(
+    light(`torch-${["east", "south", "west"][i]}-gallery`, polar(1150, g.a), 2, 150, TORCH, 0.2),
+  );
+for (const k of K) lights.push(light(`${TEAM[k]}-lever-light`, turn(LEVER, k), 1, 130, GOLD, 0));
+const lighting = {
+  ambient: { colour: hex("#fff1cc"), intensity: 0.8 },
+  indoorAmbient: { colour: hex("#d8c8a0"), intensity: 0.55 },
+  indoor: [...tunnels.map((t) => t.footprint)],
+  sun: { directionDeg: 315, elevationDeg: 65, colour: hex("#fff4d6"), intensity: 0.9 },
+  lights,
+};
+const atmosphere = {
+  fog: K.map((k) => ({ layer: 1, area: turnPoly(ellipse(2500, 1250, 260, 90, 10), k) })),
+  plumes: [],
+  shafts: [
+    { id: "altar-shaft", layer: 3, position: P(C.x, C.y), radius: 240 },
+    ...K.map((k) => ({
+      id: `${TEAM[k]}-court-shaft`,
+      layer: 1,
+      position: turn(P(2500, 820), k),
+      radius: 180,
+    })),
+  ],
+  weather: { kind: "motes", intensity: 0.6 },
+};
+const overhangs = [
+  { id: "fallen-lintel", layer: 2, footprint: rect(1050, 830, 220, 70), look: "canopy" },
+];
+const decks = [
+  { id: "plinth", layer: 2, footprint: plinth, look: "terrace", switched: null },
+  { id: "dais", layer: 3, footprint: dais, look: "platform", switched: null },
+];
+
+// ---- objectives per file --------------------------------------------------------------------
+const galleryMid = (a) => polar(1150, a);
+const perTeam = (kind, p) => K.map((k) => ({ kind, layer: 1, team: k, position: turn(p, k) }));
+const files = {
+  capture: {
+    name: "hall-of-heroes-capture",
+    mode: { mode: "capture-points" },
+    objectives: [
+      ...GALLERY.map((a) => ({
+        kind: "capture-point",
+        layer: 2,
+        ...(a !== -30 ? { base: 2 } : {}),
+        position: galleryMid(a),
+      })),
+      { kind: "capture-point", layer: 3, position: P(C.x, C.y) },
+      ...perTeam("resurrection-shrine", P(2200, 740)),
+    ],
+  },
+  king: {
+    name: "hall-of-heroes-king",
+    mode: { mode: "king-of-the-hill" },
+    extra: { ghostLevel: 28 },
+    objectives: [
+      ...perTeam("ghost-spawn", P(2160, 420)),
+      { kind: "altar", layer: 3, position: P(C.x, C.y) },
+    ],
+  },
+  relic: {
+    name: "hall-of-heroes-relic",
+    mode: { mode: "relic-run", relicTarget: "altar", relicCarry: "own" },
+    objectives: [
+      ...perTeam("relic-spawn", P(2800, 740)),
+      { kind: "altar", layer: 3, position: P(C.x, C.y) },
+    ],
+  },
+};
+
+const area = (pts) =>
+  Math.abs(
+    pts.reduce(
+      (s, p, i) => s + p.x * pts[(i + 1) % pts.length].y - pts[(i + 1) % pts.length].x * p.y,
+      0,
+    ),
+  ) / 2;
+console.error(
+  `fill ${((100 * area(outline)) / (W * H)).toFixed(1)} %, ${lights.length} lights, ${stairs.length} stairs, ${gates.length + breakables.length} toggles`,
+);
+
+for (const f of Object.values(files)) {
+  const map = {
+    id: f.name,
+    name: "Hall of Heroes",
+    ...f.mode,
+    teamSizes: [8],
+    teams: 3,
+    halls: true,
+    width: W,
+    height: H,
+    bounds: { kind: "outline", outline, outside: "rock" },
+    layers: 4,
+    biome: "hall",
+    ascentAct: "heavenly",
+    groundLayer: 1,
+    pits,
+    tunnels,
+    decks,
+    overhangs,
+    transitions: stairs,
+    dropOffs,
+    ...(f.extra ?? {}),
+    walls,
+    water,
+    zones,
+    spawnPoints,
+    objectives: f.objectives,
+    gates,
+    switches,
+    breakables,
+    lighting,
+    atmosphere,
+  };
+  const out = join(ROOT, "packages/game-maps/maps", f.name, "map.json");
+  writeFileSync(out, JSON.stringify(map));
+  execFileSync("pnpm", ["exec", "prettier", "--write", out], { cwd: ROOT, stdio: "ignore" });
+}
