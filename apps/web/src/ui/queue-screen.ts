@@ -9,6 +9,7 @@ import { cssColour } from "./character-preview.js";
 import { RANDOM_ARENA_MODES } from "./menu.js";
 import { button, h, screenBar } from "./kit.js";
 import { SIGNET_ROW_PX, playerLabelElement, signetElement, signetOf } from "./player-label.js";
+import { chartRoster, renderMatchCharts } from "./match-charts.js";
 import { renderSummary, type SummaryTable } from "./match-summary.js";
 
 /**
@@ -400,6 +401,33 @@ export function flashTitle(doc: Document): () => void {
   return stop;
 }
 
+/**
+ * On a phone the scores collapse to your row and the next two (#3565):
+ * the rest, and a table left with none, wait for *Show all*. Wider, the
+ * stylesheet shows every row and no button.
+ */
+function collapseOnPhone(host: HTMLElement, summary: HTMLElement): void {
+  let others = 0;
+  for (const panel of summary.querySelectorAll(".match-summary-panel")) {
+    let kept = 0;
+    for (const row of panel.querySelectorAll("tbody tr")) {
+      const extra = !row.classList.contains("is-self") && (others += 1) > 2;
+      row.classList.toggle("is-extra", extra);
+      kept += extra ? 0 : 1;
+    }
+    panel.classList.toggle("is-extra", kept === 0);
+  }
+  if (others <= 2) {
+    return;
+  }
+  summary.classList.add("is-collapsed");
+  const all = button(t("summary.showAll"), "queue-summary-all", () => {
+    summary.classList.remove("is-collapsed");
+    all.remove();
+  });
+  host.appendChild(all);
+}
+
 export function mountQueueScreen(
   root: HTMLElement,
   options: QueueScreenOptions,
@@ -429,6 +457,13 @@ export function mountQueueScreen(
 
   let stopFlash: (() => void) | undefined;
   let found = false;
+  /** What the results show; the ended view repaints each second while a stay is offered. */
+  let drawn:
+    | {
+        readonly summary: readonly SummaryTable[] | undefined;
+        readonly chart: WireMatchChart | undefined;
+      }
+    | undefined;
 
   const set = (lines: QueueLines, splash?: HTMLElement): void => {
     status.textContent = lines.status;
@@ -436,7 +471,6 @@ export function mountQueueScreen(
     problem.hidden = lines.problem === undefined;
     streak.textContent = lines.streak ?? "";
     streak.hidden = lines.streak === undefined;
-    summaryHost.replaceChildren();
     if (splash === undefined) {
       splashHost.replaceChildren();
     } else {
@@ -453,6 +487,27 @@ export function mountQueueScreen(
     again.classList.toggle("primary", lines.stay === undefined);
   };
 
+  const clearResults = (): void => {
+    drawn = undefined;
+    summaryHost.replaceChildren();
+  };
+
+  /** Under the outcome line (#3565): the scores, and beside or under them the charts. */
+  const drawResults = (
+    summary: readonly SummaryTable[] | undefined,
+    chart: WireMatchChart | undefined,
+  ): void => {
+    summaryHost.replaceChildren();
+    const results = h("div", "queue-results");
+    summaryHost.appendChild(results);
+    if (summary !== undefined) {
+      const scores = h("div", "queue-scores");
+      results.appendChild(scores);
+      collapseOnPhone(scores, renderSummary(scores, summary));
+    }
+    renderMatchCharts(results, chart, summary === undefined ? undefined : chartRoster(summary));
+  };
+
   /** Flash the title once per match found, not on every repaint of it. */
   const matchFound = (): void => {
     if (!found) {
@@ -467,19 +522,21 @@ export function mountQueueScreen(
       switch (view.kind) {
         case "splash":
           matchFound();
+          clearResults();
           set(
             { status: t("queue.matchFound"), action: "none" },
             renderVersusSplash(view.snapshot, options.mapName),
           );
           return;
         case "refused":
+          clearResults();
           set({ status: t("queue.couldNotJoin"), problem: view.notice, action: "back" });
           return;
         case "ended":
           set(endedLines(view.outcome, view.streak, view.stay));
-          // Under the outcome line, as it was under the result banner.
-          if (view.summary !== undefined) {
-            renderSummary(summaryHost, view.summary);
+          if (drawn === undefined || drawn.summary !== view.summary || drawn.chart !== view.chart) {
+            drawn = { summary: view.summary, chart: view.chart };
+            drawResults(view.summary, view.chart);
           }
           return;
       }
