@@ -226,6 +226,8 @@ Ein Gegner in Zauberreichweite lockt sie nicht weg: Sie gehen auf einen Schrein 
 
 Scarred Earth (4v4 und 8v8, 5400x2800) spielt es: ein von Kratern zerfurchtes Schlachtfeld in der Dämmerung. Die Schreine stehen auf zerstörten Belagerungstürmen, der mittlere auf dem Deck des großen Turms, jeder neben einem Krater; Hebel auf den Türmen öffnen zwei Gräben unter dem Feld, und zerstörte Palisaden lassen sich zerschlagen.
 
+Im Aufstieg der Helden spielt es The Warden's Gallery (8v8, 5200x2500): eine sonnige Skulpturengalerie unter Oberlichtern. Der mittlere Schrein steht oben auf dem großen Sockel, und jedes Team hat drei nahe seinem Vestibül, einen davon auf einem Sockel; Hebel auf dem großen Sockel öffnen zwei Gewölbe unter dem Boden, und umgestürzte Statuen lassen sich zerschlagen.
+
 ## Team-Lobby
 
 Eine gehostete Lobby startet das Match nicht, wenn alle bereit sind. Sie öffnet zuerst die Team-Lobby, in der jede
