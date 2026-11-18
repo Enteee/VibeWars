@@ -163,7 +163,7 @@
           }
         ]
       },
-      "look": "terrace",
+      "look": "ruin",
       "switched": null
     },
     {
@@ -198,7 +198,7 @@
           }
         ]
       },
-      "look": "terrace",
+      "look": "ruin",
       "switched": null
     },
     {
@@ -229,7 +229,7 @@
           }
         ]
       },
-      "look": "ledge",
+      "look": "terrace",
       "switched": null
     },
     {
@@ -272,7 +272,7 @@
           }
         ]
       },
-      "look": "terrace",
+      "look": "ruin",
       "switched": null
     },
     {
@@ -307,7 +307,7 @@
           }
         ]
       },
-      "look": "terrace",
+      "look": "ruin",
       "switched": null
     },
     {
@@ -338,7 +338,7 @@
           }
         ]
       },
-      "look": "ledge",
+      "look": "terrace",
       "switched": null
     },
     {
@@ -373,7 +373,7 @@
           }
         ]
       },
-      "look": "terrace",
+      "look": "ruin",
       "switched": null
     },
     {
@@ -1823,9 +1823,9 @@
           "y": 760
         },
         "layer": 2,
-        "radius": 220,
-        "colour": 14215376,
-        "intensity": 0.8,
+        "radius": 440,
+        "colour": 8454112,
+        "intensity": 1,
         "flicker": 0
       },
       {
@@ -1835,21 +1835,9 @@
           "y": 760
         },
         "layer": 2,
-        "radius": 220,
-        "colour": 14215376,
-        "intensity": 0.8,
-        "flicker": 0
-      },
-      {
-        "id": "great-cairn-glow",
-        "position": {
-          "x": 2700,
-          "y": 1500
-        },
-        "layer": 3,
-        "radius": 260,
-        "colour": 14215376,
-        "intensity": 0.85,
+        "radius": 440,
+        "colour": 8454112,
+        "intensity": 1,
         "flicker": 0
       },
       {
@@ -1859,9 +1847,9 @@
           "y": 2240
         },
         "layer": 2,
-        "radius": 220,
-        "colour": 14215376,
-        "intensity": 0.8,
+        "radius": 470,
+        "colour": 8454112,
+        "intensity": 1,
         "flicker": 0
       },
       {
@@ -1871,9 +1859,57 @@
           "y": 2240
         },
         "layer": 2,
-        "radius": 220,
-        "colour": 14215376,
-        "intensity": 0.8,
+        "radius": 470,
+        "colour": 8454112,
+        "intensity": 1,
+        "flicker": 0
+      },
+      {
+        "id": "south-west-crown-glow",
+        "position": {
+          "x": 1600,
+          "y": 2240
+        },
+        "layer": 3,
+        "radius": 260,
+        "colour": 8454112,
+        "intensity": 1,
+        "flicker": 0
+      },
+      {
+        "id": "south-east-crown-glow",
+        "position": {
+          "x": 3800,
+          "y": 2240
+        },
+        "layer": 3,
+        "radius": 260,
+        "colour": 8454112,
+        "intensity": 1,
+        "flicker": 0
+      },
+      {
+        "id": "great-cairn-glow",
+        "position": {
+          "x": 2700,
+          "y": 1500
+        },
+        "layer": 2,
+        "radius": 600,
+        "colour": 8454112,
+        "intensity": 1,
+        "flicker": 0
+      },
+      {
+        "id": "cairn-top-glow",
+        "position": {
+          "x": 2700,
+          "y": 1500
+        },
+        "layer": 3,
+        "radius": 300,
+        "colour": 8454112,
+        "intensity": 1,
         "flicker": 0
       },
       {
@@ -1883,9 +1919,9 @@
           "y": 1200
         },
         "layer": 2,
-        "radius": 160,
-        "colour": 14215376,
-        "intensity": 0.6,
+        "radius": 330,
+        "colour": 8454112,
+        "intensity": 0.9,
         "flicker": 0
       },
       {
@@ -1895,46 +1931,58 @@
           "y": 1200
         },
         "layer": 2,
-        "radius": 160,
-        "colour": 14215376,
-        "intensity": 0.6,
+        "radius": 330,
+        "colour": 8454112,
+        "intensity": 0.9,
         "flicker": 0
       },
       {
-        "id": "torch-root-gate-west",
+        "id": "torch-root-gate-west-north",
         "position": {
-          "x": 2200,
-          "y": 2070
-        },
-        "layer": 1,
-        "radius": 150,
-        "colour": 16756832,
-        "intensity": 0.85,
-        "flicker": 0.2
-      },
-      {
-        "id": "torch-root-gate-east",
-        "position": {
-          "x": 3200,
-          "y": 2070
-        },
-        "layer": 1,
-        "radius": 150,
-        "colour": 16756832,
-        "intensity": 0.85,
-        "flicker": 0.2
-      },
-      {
-        "id": "torch-root-tunnel",
-        "position": {
-          "x": 2700,
-          "y": 2150
+          "x": 2336,
+          "y": 2104
         },
         "layer": 0,
-        "radius": 200,
+        "radius": 240,
         "colour": 16756832,
-        "intensity": 0.7,
-        "flicker": 0.15
+        "intensity": 1,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-root-gate-west-south",
+        "position": {
+          "x": 2336,
+          "y": 2196
+        },
+        "layer": 0,
+        "radius": 240,
+        "colour": 16756832,
+        "intensity": 1,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-root-gate-east-north",
+        "position": {
+          "x": 3064,
+          "y": 2104
+        },
+        "layer": 0,
+        "radius": 240,
+        "colour": 16756832,
+        "intensity": 1,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-root-gate-east-south",
+        "position": {
+          "x": 3064,
+          "y": 2196
+        },
+        "layer": 0,
+        "radius": 240,
+        "colour": 16756832,
+        "intensity": 1,
+        "flicker": 0.2
       },
       {
         "id": "shrine-1-ring",
@@ -1958,30 +2006,6 @@
         "radius": 180,
         "colour": 16767136,
         "intensity": 0.7,
-        "flicker": 0
-      },
-      {
-        "id": "north-west-lever-ring",
-        "position": {
-          "x": 1480,
-          "y": 720
-        },
-        "layer": 2,
-        "radius": 130,
-        "colour": 16767136,
-        "intensity": 0.6,
-        "flicker": 0
-      },
-      {
-        "id": "north-east-lever-ring",
-        "position": {
-          "x": 3920,
-          "y": 720
-        },
-        "layer": 2,
-        "radius": 130,
-        "colour": 16767136,
-        "intensity": 0.6,
         "flicker": 0
       }
     ]
