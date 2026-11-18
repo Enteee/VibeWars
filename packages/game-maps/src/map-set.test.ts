@@ -32,14 +32,7 @@ import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
 import structuresData from "../test-maps/structures/map.json" with { type: "json" };
 import heightsData from "../training/training-heights/map.json" with { type: "json" };
-import {
-  MAX_OUTLINE_POINTS,
-  OUTSIDE_KINDS,
-  mapDataSchema,
-  type Gate,
-  type GateOpener,
-  type MapData,
-} from "./schema.js";
+import { MAX_OUTLINE_POINTS, OUTSIDE_KINDS, mapDataSchema, type MapData } from "./schema.js";
 
 /**
  * Every arena, old and new (#444): valid, fair by a half turn about its
@@ -94,14 +87,6 @@ const ofThirdBase = (objective: MapData["objectives"][number]): boolean =>
   ("team" in objective && objective.team === 2) || ("base" in objective && objective.base === 2);
 
 const near = (a: Vec2, b: Vec2): boolean => Vec.distance(a, b) <= TOLERANCE;
-
-/** `gate`'s plate opener (#3025): every gate on the arena maps has one. */
-function plated(gate: Gate): Extract<GateOpener, { kind: "plate" }> {
-  if (gate.opener.kind !== "plate") {
-    throw new Error(`gate ${gate.id} opens by switch`);
-  }
-  return gate.opener;
-}
 
 const sameSegment = (a: Segment, b: Segment): boolean =>
   (near(a.a, b.a) && near(a.b, b.b)) || (near(a.a, b.b) && near(a.b, b.a));
