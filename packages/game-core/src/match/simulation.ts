@@ -1404,7 +1404,6 @@ function faceToward(record: Participant, point: Vec2): void {
 /** What an approach, a reach or a sight line measures to: a body, or a breakable wall's nearest point (#3031). */
 type Aim = Pick<ParticipantRecord, "id" | "position" | "layer" | "floors">;
 
-/** The walls of one combination of gates, and the paths round them (#2691). */
 /** One end of a team's way to the foes (#3138): where a body stood, on its layer. */
 interface WayEnd {
   readonly position: Vec2;
@@ -1439,6 +1438,7 @@ interface BotWaysPricing {
   readonly wallGains: Map<number, readonly number[]>;
 }
 
+/** The walls of one combination of gates, and the paths round them (#2691). */
 interface WallSet {
   /** What stops bodies and shots. */
   readonly walls: readonly Segment[];
