@@ -151,6 +151,7 @@ const BRIDGE: RenderableShape = { kind: "rect", x: 100, y: 100, width: 200, heig
 const STRUCTURE: MapStructure = {
   layerCount: 2,
   biome: "hall",
+  ascentAct: null,
   bounds: { kind: "rect" },
   ground: 0,
   pits: [],
@@ -169,6 +170,7 @@ const SUNK: MapStructure = {
   ...STRUCTURE,
   layerCount: 3,
   biome: "hall",
+  ascentAct: null,
   bounds: { kind: "rect" },
   ground: 1,
   decks: [{ layer: 2, footprint: BRIDGE, look: "platform", switched: null }],

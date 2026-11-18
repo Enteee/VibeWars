@@ -94,6 +94,7 @@
   },
   "layers": 4,
   "biome": "marsh",
+  "ascentAct": "underworld",
   "groundLayer": 1,
   "pits": [
     {
@@ -1978,6 +1979,7 @@
       }
     ],
     "plumes": [],
+    "shafts": [],
     "weather": null
   },
   "paving": [

@@ -7,7 +7,7 @@ import { seeded } from "./zone-painter.js";
 
 /**
  * A map's atmosphere (#3032): fog banks, smoke and steam plumes, rain and
- * snow. Render only: nothing here reaches the simulation, and none of it
+ * snow, and an Ascent act's embers, motes and light shafts (#3589). Render only: nothing here reaches the simulation, and none of it
  * hides a body, a name or a ring. Lighting off means none of it; reduced
  * motion holds the fog still and lets nothing fall or rise.
  */
@@ -15,7 +15,7 @@ import { seeded } from "./zone-painter.js";
 /** The most live particles a map has, its plumes and weather together. */
 export const PARTICLE_BUDGET = 400;
 
-/** The most weather particles at intensity 1, ripples included: the rest is the plumes'. */
+/** The most weather particles at intensity 1, ripples, embers and motes included: the rest is the plumes'. */
 const WEATHER_MOST = 280;
 /** World units round the view a plume still emits from: its puffs rise into sight. */
 const PLUME_MARGIN = 120;
@@ -23,8 +23,12 @@ const PLUME_MARGIN = 120;
 export type FogBank = MapAtmosphere["fog"][number];
 export type Plume = MapAtmosphere["plumes"][number];
 export type Weather = NonNullable<MapAtmosphere["weather"]>;
+export type Shaft = MapAtmosphere["shafts"][number];
 
-export type ParticleKind = "smoke" | "steam" | "rain" | "ripple" | "snow";
+export type ParticleKind = "smoke" | "steam" | "rain" | "ripple" | "snow" | "ember" | "mote";
+
+/** The kinds that fill the view as weather, and die when they leave it. */
+const WEATHER_KINDS: ReadonlySet<ParticleKind> = new Set(["rain", "snow", "ember", "mote"]);
 
 /** One live particle, in world units, on its layer before its lift. */
 export interface Particle {
@@ -118,7 +122,7 @@ export class AtmosphereParticles {
       particle.age += dt;
       particle.x += particle.vx * dt;
       particle.y += particle.vy * dt;
-      const weather = particle.kind === "rain" || particle.kind === "snow";
+      const weather = WEATHER_KINDS.has(particle.kind);
       if (particle.age < particle.life && (!weather || inView(particle, view, 0))) {
         this.live[kept] = particle;
         kept += 1;
@@ -184,13 +188,49 @@ export class AtmosphereParticles {
       return;
     }
     const target = Math.round(WEATHER_MOST * weather.intensity);
-    let count = this.live.filter(
-      (particle) => particle.kind === "rain" || particle.kind === "snow",
-    ).length;
+    let count = this.live.filter((particle) => WEATHER_KINDS.has(particle.kind)).length;
+    const make = {
+      rain: () => this.raindrop(view),
+      snow: () => this.flake(view),
+      embers: () => this.ember(view),
+      motes: () => this.mote(view),
+    }[weather.kind];
     while (count < target && this.live.length < PARTICLE_BUDGET) {
       count += 1;
-      this.live.push(weather.kind === "rain" ? this.raindrop(view) : this.flake(view));
+      this.live.push(make());
     }
+  }
+
+  /** A spark rising from the lava below, drifting a little, for a few seconds. */
+  private ember(view: ViewRect): Particle {
+    return {
+      kind: "ember",
+      layer: 0,
+      x: view.x + this.random() * view.width,
+      y: view.y + this.random() * view.height,
+      vx: -8 + this.random() * 16,
+      vy: -(24 + this.random() * 26),
+      age: 0,
+      life: 1.5 + this.random() * 2.5,
+      size: 0.6 + this.random() * 0.6,
+      phase: this.random() * Math.PI * 2,
+    };
+  }
+
+  /** A speck of gold dust, hanging in the light and drifting slowly. */
+  private mote(view: ViewRect): Particle {
+    return {
+      kind: "mote",
+      layer: 0,
+      x: view.x + this.random() * view.width,
+      y: view.y + this.random() * view.height,
+      vx: -5 + this.random() * 10,
+      vy: -4 + this.random() * 6,
+      age: 0,
+      life: 4 + this.random() * 4,
+      size: 0.6 + this.random() * 0.7,
+      phase: this.random() * Math.PI * 2,
+    };
   }
 
   /** A slanted streak somewhere in view, falling for under a second. */
@@ -232,12 +272,30 @@ const SMOKE_COLOUR = 0x8c8a86;
 const STEAM_COLOUR = 0xf4f6f8;
 const RAIN_COLOUR = 0xbcd4f0;
 const SNOW_COLOUR = 0xffffff;
+/** Embers' hot core and cooler glow (visual-style §1b, volcanic): smaller and fainter than any strike edge. */
+const EMBER_CORE = 0xffb070;
+const EMBER_GLOW = 0xff6a1a;
+/** Motes' and shafts' gold (visual-style §1b, heavenly). */
+const MOTE_COLOUR = 0xffcc4d;
+const SHAFT_COLOUR = 0xfff4d6;
+/** How many soft discs a light shaft is drawn in, from the ground to the sky. */
+const SHAFT_DISCS = 12;
+/** How high a shaft reaches, in radii. */
+const SHAFT_REACH = 4;
+/** The most one shaft disc adds: the beam stacks to about a third, never hiding a body. */
+const SHAFT_ALPHA = 0.05;
 const VENT_STONE = 0x6b6459;
 const VENT_MOUTH = 0x1d1b19;
 /** The most a weather mark covers what is under it (§6 rule 3): a body always shows through. */
 export const WEATHER_ALPHA = 0.6;
 /** The paler top of a fog puff, where the sky lights it. */
-const FOG_CROWN = 0xe6edf5;
+export const FOG_CROWN = 0xe6edf5;
+
+/** A fog bank's colour and its puffs' paler crown: an Ascent act tints them (#3589). */
+export interface FogTint {
+  readonly body: number;
+  readonly crown: number;
+}
 /** How many soft rings a fog puff is drawn in. */
 const FOG_RINGS = 4;
 /** Seconds a fog puff takes round its drift. */
@@ -319,6 +377,7 @@ export function paintFog(
   now: number,
   reducedMotion: boolean,
   view: Box,
+  tint: FogTint,
 ): void {
   for (const puff of art.puffs) {
     const at = fogPuffAt(puff, now, reducedMotion);
@@ -333,10 +392,10 @@ export function paintFog(
     }
     // Rings shrinking inward: the puff is densest at its heart, its edge melts away.
     for (let ring = 0; ring < FOG_RINGS; ring += 1) {
-      painter.fillStyle(FOG_COLOUR, puff.alpha / FOG_RINGS);
+      painter.fillStyle(tint.body, puff.alpha / FOG_RINGS);
       painter.fillCircle(at.x, y, puff.radius * (1 - ring * 0.2));
     }
-    painter.fillStyle(FOG_CROWN, puff.alpha * 0.3);
+    painter.fillStyle(tint.crown, puff.alpha * 0.3);
     painter.fillCircle(at.x - puff.radius * 0.2, y - puff.radius * 0.25, puff.radius * 0.45);
   }
 }
@@ -407,6 +466,55 @@ export function paintParticle(
       painter.fillCircle(particle.x + sway, particle.y, particle.size * 2 * line);
       return;
     }
+    case "ember": {
+      // Flickers as it rises, and cools out at the end of its life.
+      const flicker = 0.6 + 0.4 * Math.sin(particle.age * 14 + particle.phase);
+      const fade = WEATHER_ALPHA * flicker * (1 - t);
+      painter.fillStyle(EMBER_GLOW, fade * 0.4);
+      painter.fillCircle(particle.x, particle.y, particle.size * 3 * line);
+      painter.fillStyle(EMBER_CORE, fade);
+      painter.fillCircle(particle.x, particle.y, particle.size * line);
+      return;
+    }
+    case "mote": {
+      // Fades in and out over its life, glinting gently.
+      const glint = 0.7 + 0.3 * Math.sin(particle.age * 3 + particle.phase);
+      painter.fillStyle(MOTE_COLOUR, WEATHER_ALPHA * glint * Math.sin(Math.PI * t));
+      painter.fillCircle(particle.x, particle.y, particle.size * 1.6 * line);
+      return;
+    }
+  }
+}
+
+/**
+ * A light shaft `lift` world units up (#3589): a pool of light on the
+ * ground and a soft beam of stacked discs slanting up towards the sun,
+ * thinner and fainter as it climbs. Static, so reduced motion keeps it.
+ * `toSun` is the ground offset towards the sun per unit of height, none
+ * for a map without one, and the beam stands straight up.
+ */
+export function paintShaft(
+  painter: AtmospherePainter,
+  shaft: Shaft,
+  lift: number,
+  toSun: Vec2,
+): void {
+  const { x, y } = shaft.position;
+  const ground = y - lift;
+  painter.fillStyle(SHAFT_COLOUR, SHAFT_ALPHA * 2);
+  painter.fillEllipse(x, ground, shaft.radius * 2, shaft.radius);
+  const reach = shaft.radius * SHAFT_REACH;
+  for (let disc = 0; disc < SHAFT_DISCS; disc += 1) {
+    const along = disc / (SHAFT_DISCS - 1);
+    const height = reach * along;
+    const radius = shaft.radius * (1 - along * 0.35);
+    painter.fillStyle(SHAFT_COLOUR, SHAFT_ALPHA * (1 - along * 0.8));
+    painter.fillEllipse(
+      x + toSun.x * height,
+      ground + toSun.y * height - height,
+      radius * 2,
+      radius * 1.2,
+    );
   }
 }
 

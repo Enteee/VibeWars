@@ -15,6 +15,7 @@ import {
   MAX_PAVING,
   MAX_OUTLINE_POINTS,
   MAX_PLUMES,
+  MAX_SHAFTS,
   MAX_WATER_BODIES,
   MAX_WATER_POINTS,
   MAX_HARMFUL_ZONE_POINTS,
@@ -44,6 +45,7 @@ const validMap = {
   bounds: { kind: "rect" },
   layers: 1,
   biome: "hall",
+  ascentAct: null,
   groundLayer: 0,
   pits: [],
   tunnels: [],
@@ -1622,13 +1624,18 @@ describe("lighting (#2986, ADR-0052)", () => {
 describe("atmosphere (#3032)", () => {
   const bank = { layer: 0, area: { kind: "rect", x: 10, y: 10, width: 40, height: 30 } };
   const plume = { id: "vent", layer: 0, position: { x: 50, y: 50 }, kind: "steam" };
-  const atmosphere = { fog: [bank], plumes: [plume], weather: { kind: "rain", intensity: 0.5 } };
+  const atmosphere = {
+    fog: [bank],
+    plumes: [plume],
+    shafts: [],
+    weather: { kind: "rain", intensity: 0.5 },
+  };
   const accepts = (value: unknown): boolean =>
     mapDataSchema.safeParse({ ...validMap, atmosphere: value }).success;
 
   it("is optional, and may be empty", () => {
     expect(mapDataSchema.safeParse(validMap).success).toBe(true);
-    expect(accepts({ fog: [], plumes: [], weather: null })).toBe(true);
+    expect(accepts({ fog: [], plumes: [], shafts: [], weather: null })).toBe(true);
     expect(accepts(atmosphere)).toBe(true);
   });
 
@@ -1662,6 +1669,78 @@ describe("atmosphere (#3032)", () => {
     expect(accepts({ ...atmosphere, fog: Array(MAX_FOG_BANKS + 1).fill(bank) })).toBe(false);
     expect(accepts({ ...atmosphere, plumes: plumes(MAX_PLUMES) })).toBe(true);
     expect(accepts({ ...atmosphere, plumes: plumes(MAX_PLUMES + 1) })).toBe(false);
+  });
+});
+
+describe("the Ascent's acts (#3589)", () => {
+  const bank = { layer: 0, area: { kind: "rect", x: 10, y: 10, width: 40, height: 30 } };
+  const shaft = { id: "shaft", layer: 0, position: { x: 50, y: 50 }, radius: 20 };
+  const weather = (kind: string) => ({ kind, intensity: 0.5 });
+  const accepts = (ascentAct: unknown, atmosphere?: unknown): boolean =>
+    mapDataSchema.safeParse({
+      ...validMap,
+      ascentAct,
+      ...(atmosphere === undefined ? {} : { atmosphere }),
+    }).success;
+  const air = (fog: unknown[], shafts: unknown[], kind: string | null) => ({
+    fog,
+    plumes: [],
+    shafts,
+    weather: kind === null ? null : weather(kind),
+  });
+
+  it("is required, an act or null", () => {
+    const { ascentAct: _, ...without } = validMap;
+    expect(mapDataSchema.safeParse(without).success).toBe(false);
+    expect(accepts("purgatory")).toBe(false);
+    for (const act of [null, "volcanic", "underworld", "heavenly"]) {
+      expect(accepts(act), String(act)).toBe(true);
+    }
+  });
+
+  it("asks a volcanic map with an atmosphere for embers", () => {
+    expect(accepts("volcanic", air([], [], "embers"))).toBe(true);
+    expect(accepts("volcanic", air([], [], null))).toBe(false);
+    expect(accepts("volcanic", air([], [], "rain"))).toBe(false);
+  });
+
+  it("asks an underworld map for fog, and no weather but rain", () => {
+    expect(accepts("underworld", air([bank], [], null))).toBe(true);
+    expect(accepts("underworld", air([bank], [], "rain"))).toBe(true);
+    expect(accepts("underworld", air([], [], null))).toBe(false);
+    expect(accepts("underworld", air([bank], [], "snow"))).toBe(false);
+    expect(accepts("underworld", air([bank], [], "embers"))).toBe(false);
+  });
+
+  it("asks a heavenly map for motes and a shaft", () => {
+    expect(accepts("heavenly", air([], [shaft], "motes"))).toBe(true);
+    expect(accepts("heavenly", air([], [], "motes"))).toBe(false);
+    expect(accepts("heavenly", air([], [shaft], null))).toBe(false);
+  });
+
+  it("keeps embers, motes and shafts to the act that asks for them", () => {
+    expect(accepts(null, air([], [], "snow"))).toBe(true);
+    expect(accepts(null, air([], [], "embers"))).toBe(false);
+    expect(accepts(null, air([], [], "motes"))).toBe(false);
+    expect(accepts(null, air([], [shaft], null))).toBe(false);
+    expect(accepts("underworld", air([bank], [shaft], null))).toBe(false);
+  });
+
+  it(`refuses a shaft off the map or on a layer it lacks, two with one id, and more than ${String(MAX_SHAFTS)}`, () => {
+    const heaven = (shafts: unknown[]) => accepts("heavenly", air([], shafts, "motes"));
+    const shafts = (count: number): unknown[] =>
+      Array.from({ length: count }, (_, index) => ({ ...shaft, id: `shaft-${String(index)}` }));
+    expect(heaven([{ ...shaft, position: { x: 101, y: 5 } }])).toBe(false);
+    expect(heaven([{ ...shaft, layer: 1 }])).toBe(false);
+    expect(heaven([{ ...shaft, radius: 0 }])).toBe(false);
+    expect(heaven([shaft, shaft])).toBe(false);
+    expect(heaven(shafts(MAX_SHAFTS))).toBe(true);
+    expect(heaven(shafts(MAX_SHAFTS + 1))).toBe(false);
+  });
+
+  it("asks nothing of a map without an atmosphere", () => {
+    expect(accepts("heavenly")).toBe(true);
+    expect(accepts("volcanic")).toBe(true);
   });
 });
 
