@@ -27,31 +27,42 @@ const text = (bytes: Uint8Array): string => String.fromCharCode(...bytes);
 /** Two teams of two: `red[0]`, `red[1]` against `blue[0]`, `blue[1]`. */
 type Pair = [TestSigner, TestSigner];
 
+const seat = (signer: TestSigner, i: number) => ({
+  pubkey: signer.pubkey,
+  characterId: `char-${String(i)}`,
+  name: `Seat ${String(i)}`,
+  claimedRating: 800 + i,
+  prev: ZERO_HASH,
+});
+
+/** A start whose team `t` is seated by `teams[t]`. */
+function startFor(teams: readonly (readonly TestSigner[])[]): RankedStart {
+  let i = 0;
+  return {
+    matchId: "group-1",
+    buildHash: "build-abc",
+    mode: "team-arena",
+    map: "isle-of-the-nameless",
+    seed: 1234,
+    startedAt: 1_795_000_000,
+    leaderboardAsOf: 1_794_999_000,
+    teams: teams.map((team) => team.map((signer) => seat(signer, i++))),
+  };
+}
+
 function match(): { red: Pair; blue: Pair; start: RankedStart } {
   const red: Pair = [testSigner(), testSigner()];
   const blue: Pair = [testSigner(), testSigner()];
-  const seat = (signer: TestSigner, i: number) => ({
-    pubkey: signer.pubkey,
-    characterId: `char-${String(i)}`,
-    name: `Seat ${String(i)}`,
-    claimedRating: 800 + i,
-    prev: ZERO_HASH,
-  });
-  return {
-    red,
-    blue,
-    start: {
-      matchId: "group-1",
-      buildHash: "build-abc",
-      mode: "team-arena",
-      map: "isle-of-the-nameless",
-      seed: 1234,
-      startedAt: 1_795_000_000,
-      leaderboardAsOf: 1_794_999_000,
-      teams: [red.map(seat), blue.map((signer, i) => seat(signer, i + 2))],
-    },
-  };
+  return { red, blue, start: startFor([red, blue]) };
 }
+
+/** Fresh signers in teams of `sizes`, and the start they sit in. */
+function teamsOf(...sizes: number[]): { teams: TestSigner[][]; start: RankedStart } {
+  const teams = sizes.map((size) => Array.from({ length: size }, () => testSigner()));
+  return { teams, start: startFor(teams) };
+}
+
+const keys = (signers: readonly TestSigner[]): string[] => signers.map((s) => s.pubkey);
 
 function resultOf(start: RankedStart, overrides: Partial<RankedResult> = {}): RankedResult {
   return {
@@ -318,7 +329,70 @@ describe("validateReceipt", () => {
     });
   });
 
-  it("does not void a host-left result for the departed host's team of one", () => {
+  it("voids a 4v4 the host's team signs alone, every opponent named a leaver", () => {
+    const { teams, start } = teamsOf(4, 4);
+    const [hosts = [], opponents = []] = teams;
+    const forged = resultOf(start, { leavers: keys(opponents) });
+    expect(validateReceipt(receipt(start, forged, teams.flat(), hosts), crypto)).toEqual({
+      ok: true,
+      void: true,
+    });
+  });
+
+  it("rates a 4v4 the host's team and one opponent sign: five of eight", () => {
+    const { teams, start } = teamsOf(4, 4);
+    const [hosts = [], [opponent, ...rest] = []] = teams;
+    if (opponent === undefined) {
+      throw new Error("no opponent");
+    }
+    const left = resultOf(start, { leavers: keys(rest) });
+    const signers = [...hosts, opponent];
+    expect(validateReceipt(receipt(start, left, teams.flat(), signers), crypto)).toEqual({
+      ok: true,
+      void: false,
+    });
+  });
+
+  it("rates a 2v2v2 two teams sign while the third signs nothing", () => {
+    const { teams, start } = teamsOf(2, 2, 2);
+    const [red = [], blue = [], green = []] = teams;
+    const left = resultOf(start, { leavers: keys(green) });
+    expect(validateReceipt(receipt(start, left, teams.flat(), [...red, ...blue]), crypto)).toEqual({
+      ok: true,
+      void: false,
+    });
+  });
+
+  it("voids exactly half signing, however the signers are spread over the teams", () => {
+    const { red, blue, all, start } = fullReceipt();
+    const left = resultOf(start, { leavers: [red[1].pubkey, blue[1].pubkey] });
+    expect(validateReceipt(receipt(start, left, all, [red[0], blue[0]]), crypto)).toEqual({
+      ok: true,
+      void: true,
+    });
+  });
+
+  it("counts no signature of an unseated key toward the majority", () => {
+    const { red, blue, all, start } = fullReceipt();
+    const strangers = [testSigner(), testSigner()];
+    const left = resultOf(start, { leavers: keys(blue) });
+    const signers = [...red, ...strangers];
+    expect(validateReceipt(receipt(start, left, all, signers), crypto)).toEqual({
+      ok: true,
+      void: true,
+    });
+  });
+
+  it("counts a leaver who signed anyway toward the majority", () => {
+    const { red, blue, all, start } = fullReceipt();
+    const left = resultOf(start, { leavers: [blue[0].pubkey, blue[1].pubkey] });
+    expect(validateReceipt(receipt(start, left, all, [...red, blue[0]]), crypto)).toEqual({
+      ok: true,
+      void: false,
+    });
+  });
+
+  it("rates a host-left result every seat but the departed host signed", () => {
     const { red, blue, start: pair } = fullReceipt();
     const host = red[0];
     const [hostSeat] = pair.teams[0] ?? [];

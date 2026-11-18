@@ -323,15 +323,16 @@ What it does not defend against:
 
 - **A host bending the match within what peers sign.** Peers sign the
   replay hash without re-simulating it. Replay disputes are a later card.
-- **Collusion across teams.** One seat on each team can sign a second
-  result that names everyone else a leaver. That voids the match, but it
-  cannot win it.
+- **Collusion across teams.** A result rates once more than half of the
+  seats sign it, so the host's team plus one colluding opponent in a 4v4
+  can sign a result that names the other opponents leavers, and win it.
+  Colluders who are not a majority of the seats only void the match.
 - **`startedAt` is the host's word.** Nothing ties it to when a receipt
   was published, and the job re-rates from scratch, so a receipt published
   late changes history. The fork rule above keeps that from erasing a
   result.
-- **A whole team leaving** escapes the loss: that is the price of
-  opponent consent.
+- **A whole team leaving** escapes the loss when it is at least half of
+  the seats: that is the price of majority consent.
 - **A large, well-connected sybil ring.** Trust rises only with distinct,
   connected opponents, so enough keys that play each other widely look
   like a real community. Clique detection is a later card.
