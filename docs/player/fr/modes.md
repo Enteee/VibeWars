@@ -279,8 +279,7 @@ Les bots se répartissent sur les sanctuaires que ton équipe n'a pas encore et
 s'y tiennent jusqu'à leur prise. Un ennemi à portée de sort ne les attire pas :
 ils montent sur un sanctuaire à portée et combattent depuis celui-ci.
 
-Scarred Earth le joue : chaque sanctuaire se trouve dans un anneau de murs brisés,
-ouvert à l'ouest et à l'est.
+Scarred Earth (4v4 et 8v8, 5400x2800) le joue : un champ de bataille criblé de cratères au crépuscule. Les sanctuaires se dressent sur des tours de siège détruites, celui du centre sur la plate-forme de la grande tour, chacun près d'un cratère ; des leviers sur les tours ouvrent deux tranchées sous le champ, et les palissades détruites peuvent être brisées.
 
 ## Salon d'équipe
 

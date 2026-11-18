@@ -269,8 +269,7 @@ Bots spread out over the shrines your team does not own yet and stand
 on them until they are taken. A foe in spell range does not draw them
 off: they step onto a shrine in reach and fight from it.
 
-Scarred Earth plays it: each shrine stands in a broken ring of walls,
-open to the west and east.
+Scarred Earth (4v4 and 8v8, 5400x2800) plays it: a cratered battlefield at dusk. The shrines stand on wrecked siege towers, the centre one on the great tower's deck, each beside a crater; levers on the towers open two trenches under the field, and wrecked palisades can be broken.
 
 ## Team Lobby
 

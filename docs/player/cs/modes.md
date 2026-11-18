@@ -96,7 +96,7 @@ Každá svatyně je kruh na zemi v barvě vlastníka, šedý, když ji nikdo nev
 
 Boti se rozptýlí po svatyních, které tvůj tým ještě nevlastní, a stojí na nich, dokud nejsou dobyté. Nepřítel na dostřel kouzla je neodláká: vstoupí na svatyni v dosahu a bojují z ní.
 
-Hraje ho Scarred Earth: každá svatyně stojí v rozbitém kruhu zdí, otevřeném na západ a východ.
+Hraje ho Scarred Earth (4v4 a 8v8, 5400x2800): bojiště poseté krátery za soumraku. Svatyně stojí na rozbitých obléhacích věžích, prostřední na plošině velké věže, každá vedle kráteru; páky na věžích otevírají dva zákopy pod bojištěm a rozbité palisády lze zbořit.
 
 ## Týmové lobby
 

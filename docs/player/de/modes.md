@@ -224,7 +224,7 @@ die Uhr.
 Bots verteilen sich auf die Schreine, die dein Team noch nicht besitzt, und stehen darauf, bis sie eingenommen sind.
 Ein Gegner in Zauberreichweite lockt sie nicht weg: Sie gehen auf einen Schrein in Reichweite und kämpfen von dort.
 
-Scarred Earth spielt es: Jeder Schrein steht in einem zerbrochenen Mauerring, offen nach Westen und Osten.
+Scarred Earth (4v4 und 8v8, 5400x2800) spielt es: ein von Kratern zerfurchtes Schlachtfeld in der Dämmerung. Die Schreine stehen auf zerstörten Belagerungstürmen, der mittlere auf dem Deck des großen Turms, jeder neben einem Krater; Hebel auf den Türmen öffnen zwei Gräben unter dem Feld, und zerstörte Palisaden lassen sich zerschlagen.
 
 ## Team-Lobby
 

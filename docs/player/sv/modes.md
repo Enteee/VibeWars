@@ -281,8 +281,7 @@ Bottar sprider ut sig över helgedomarna ditt lag inte äger än och står
 på dem tills de är tagna. En fiende inom besvärjelseräckhåll lockar inte
 bort dem: de kliver upp på en helgedom inom räckhåll och slåss därifrån.
 
-Scarred Earth spelar det: varje helgedom står i en trasig ring av murar,
-öppen åt väster och öster.
+Scarred Earth (4v4 och 8v8, 5400x2800) spelar det: ett kraterfyllt slagfält i skymningen. Helgedomarna står på förstörda belägringstorn, den mittersta på det stora tornets däck, var och en bredvid en krater; spakar på tornen öppnar två skyttegravar under fältet, och förstörda palissader går att slå sönder.
 
 ## Laglobby
 

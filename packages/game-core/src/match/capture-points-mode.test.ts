@@ -27,7 +27,7 @@ import { NO_RANKS } from "../skills/status.js";
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 
-/** Scarred Earth's shrines (packages/game-maps/maps/scarred-earth). */
+/** Five shrines on open ground: Scarred Earth as it was before its 2.5D rebuild (#3440). */
 const SHRINES = [
   vec2(520, 1000),
   vec2(1600, 300),
