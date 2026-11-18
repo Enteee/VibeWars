@@ -112,14 +112,22 @@ export async function showScene(parent: HTMLElement, scene: DiagramScene): Promi
     guildOf: () => NO_GUILD,
     professionsOf: (id) => professions.get(id) ?? NO_PROFESSIONS,
   });
+  // Nothing but the map in the frame: the menus' room goes to the viewport.
+  document.querySelector("#screens")?.setAttribute("hidden", "");
+  document.querySelector("#topbar")?.setAttribute("hidden", "");
   const viewport = await createArenaViewport(parent);
   const { structure, wallLayers } = mapStructure(map.descriptor.id);
   const walls = map.descriptor.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
   viewport.setArenaBounds(map.descriptor.width, map.descriptor.height);
   viewport.scene.setFixedMarkers(scene.markers);
-  let snapshotSet = false;
+  let framesSince = -1;
   viewport.onFrame(() => {
-    if (snapshotSet) {
+    if (framesSince >= 0) {
+      framesSince += 1;
+      // A few frames after the snapshot, so the draw has reached the canvas.
+      if (framesSince < 4) {
+        return;
+      }
       window.__sceneReady = true;
       viewport.hold();
       return;
@@ -136,6 +144,6 @@ export async function showScene(parent: HTMLElement, scene: DiagramScene): Promi
         structure,
       ),
     );
-    snapshotSet = true;
+    framesSince = 0;
   });
 }
