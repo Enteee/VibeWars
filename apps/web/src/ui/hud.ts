@@ -190,6 +190,8 @@ export interface HudElements {
   readonly respawn: HTMLElement;
   /** A Guild Battle's flag carriers under the scoreboard, a line a flag (#1226), or a Relic Run's relics (#1374). */
   readonly carriers: HTMLElement;
+  /** The end of a match, one column (#3563): the end line, `result`, the summary. */
+  readonly end: HTMLElement;
   readonly result: HTMLElement;
   /** The match's buttons, top right, as one cluster (#454): the five below. */
   readonly controls: HTMLElement;
@@ -261,7 +263,8 @@ export function createHud(
   respawn.setAttribute("role", "status");
   respawn.hidden = true;
   const carriers = element("div", "hud-carriers", top);
-  const result = element("div", "hud-result", parent);
+  const end = element("div", "hud-end", parent);
+  const result = element("div", "hud-result", end);
   result.style.display = "none";
   // One cluster, top right (#454): leave and mute on top, Help, Options,
   // fullscreen and music under them.
@@ -428,6 +431,7 @@ export function createHud(
     enemies,
     respawn,
     carriers,
+    end,
     result,
     controls,
     mute,

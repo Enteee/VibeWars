@@ -125,7 +125,8 @@ import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
-import { button, setToastHost, toast } from "./ui/kit.js";
+import { mountEndLine, type EndLineElements } from "./ui/end-line.js";
+import { setToastHost, toast } from "./ui/kit.js";
 import { signedText } from "./ui/player-label.js";
 
 /**
@@ -1171,7 +1172,7 @@ export async function startMatchView(
         match.winningTeam,
         bots,
       );
-      const panel = renderSummary(parent, tables);
+      const panel = renderSummary(hud.end, tables);
       panel.classList.add("hud-summary");
       summary = { tables, panel };
     }
@@ -1326,9 +1327,7 @@ export async function startMatchView(
   });
 
   /** The end line (#1997), made the first time it is set. */
-  let endLine:
-    | { readonly root: HTMLElement; readonly text: HTMLElement; readonly press: HTMLElement }
-    | undefined;
+  let endLine: EndLineElements | undefined;
   let onEndPress: (() => void) | undefined;
 
   return {
@@ -1341,18 +1340,9 @@ export async function startMatchView(
         endLine = undefined;
         return;
       }
-      if (endLine === undefined) {
-        const root = document.createElement("div");
-        root.className = "hud-end-line";
-        const text = root.appendChild(document.createElement("span"));
-        const press = root.appendChild(
-          button("", "", () => {
-            onEndPress?.();
-          }),
-        );
-        parent.appendChild(root);
-        endLine = { root, text, press };
-      }
+      endLine ??= mountEndLine(hud.end, () => {
+        onEndPress?.();
+      });
       onEndPress = line.onPress;
       endLine.text.textContent = line.text;
       endLine.press.textContent = line.button;
