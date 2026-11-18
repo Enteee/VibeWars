@@ -1371,18 +1371,16 @@ export async function startMatchView(
       matchMusic.dispose();
       reconnectCountdown.dispose();
       reconnectOverlay.destroy();
-      // The scoreboard and target frame, result and mute button sit beside
-      // the HUD root, in the shared viewport, so they go one by one or pile
-      // up per match.
+      // The scoreboard and target frame, the end-of-match column (result,
+      // end line, summary) and mute button sit beside the HUD root, in the
+      // shared viewport, so they go one by one or pile up per match.
       hud.root.remove();
       hud.slotTips.dispose();
       hud.effects.dispose();
       hud.targetEffects.dispose();
       setToastHost(null);
       hud.top.remove();
-      hud.result.remove();
-      summary?.panel.remove();
-      endLine?.root.remove();
+      hud.end.remove();
       waiting?.remove();
       offMute();
       jukebox.dispose();
