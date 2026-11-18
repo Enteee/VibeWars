@@ -1,5 +1,10 @@
 import { mapMatchRules } from "@vibewars/game-maps/match-fields";
-import { MAX_BREAKABLES, MAX_CAPTURE_POINTS, MAX_TOGGLES } from "@vibewars/game-maps/schema";
+import {
+  ASCENT_ACTS,
+  MAX_BREAKABLES,
+  MAX_CAPTURE_POINTS,
+  MAX_TOGGLES,
+} from "@vibewars/game-maps/schema";
 import {
   ASCENT_ROUNDS,
   MAX_WIRE_BREAKABLES,
@@ -7,6 +12,7 @@ import {
   MAX_WIRE_TOGGLES,
   teamSizeOf,
 } from "@vibewars/game-protocol";
+import { ELITE_ZAISHEN_MAP } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { mapName } from "../i18n/game-names.js";
@@ -696,5 +702,31 @@ describe("perf plan", () => {
         .filter((id) => !hosted.includes(id))
         .sort(),
     );
+  });
+});
+
+describe("the Ascent's three-act look (#3589)", () => {
+  const actOf = (id: string) => ARENA_MAPS.find((map) => map.id === id)?.ascentAct;
+  const climb = [ELITE_ZAISHEN_MAP, ...ASCENT_PROGRESSION, ...HALL_OF_HEROES_MAPS];
+
+  it("gives every map of the climb an act, Elite Zaishen's to the Hall of Heroes", () => {
+    for (const id of climb) {
+      expect(actOf(id), id).toEqual(expect.any(String));
+    }
+  });
+
+  it("never goes back an act along the climb", () => {
+    const order = climb.map((id) => ASCENT_ACTS.indexOf(actOf(id) ?? "volcanic"));
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+    expect(actOf(ELITE_ZAISHEN_MAP)).toBe("volcanic");
+    for (const id of HALL_OF_HEROES_MAPS) {
+      expect(actOf(id), id).toBe("heavenly");
+    }
+  });
+
+  it("gives every other map none", () => {
+    for (const map of ARENA_MAPS.filter(({ id }) => !climb.includes(id))) {
+      expect(map.ascentAct, map.id).toBeNull();
+    }
   });
 });
