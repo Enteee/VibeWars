@@ -302,9 +302,9 @@ What a receipt defends against:
   needs a start signature from every seat, and a key may sit only once
   (`duplicate-seat`).
 - **A host deciding the result alone.** A result counts only with a
-  signature from every non-leaver, and from at least one seat on every
-  team. A host that lists every opponent as a leaver voids the match
-  instead of winning it.
+  signature from every non-leaver, and is void unless more than half of
+  the seats signed it. A host whose team lists every opponent as a leaver
+  voids the match instead of winning it.
 - **A forged copy spoiling an honest one.** Copies of one start are merged
   keeping only signatures that verify, so a forged copy can neither fork
   nor void the honest receipt. Two different valid results for one start
