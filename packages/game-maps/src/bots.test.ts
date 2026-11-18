@@ -564,7 +564,10 @@ describe("The Brazen Causeway (#3435)", () => {
       ...(map.water ?? []).filter(({ depth }) => depth === "shallow"),
       ...(map.zones ?? []).filter(({ kind }) => kind === "mire"),
     ];
-    const beacon = map.objectives.find(({ kind }) => kind === "storm-beacon");
+    const beacon = map.objectives.find(
+      (objective): objective is Extract<typeof objective, { kind: "storm-beacon" }> =>
+        objective.kind === "storm-beacon",
+    );
     if (beacon === undefined) throw new Error("no storm beacon");
     const keepOff: { readonly id: string; readonly area: WallShape }[] = [
       ...map.transitions.map(({ id, area }) => ({ id, area })),
