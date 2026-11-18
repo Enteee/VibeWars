@@ -1551,6 +1551,15 @@ export default {
   "tutorial.ground.praise": "Atravessou! Agora você sabe o que o chão faz.",
   "tutorial.front.end": "Já sabes o básico. Até lá fora!",
   "tutorial.front.menu": "Voltar ao menu",
+  "tutorial.menu.gotIt": "Entendi",
+  "tutorial.menu.menu.characters":
+    "Em Personagens você cria e muda com quem joga: profissão, habilidades e equipamento.",
+  "tutorial.menu.menu.rail":
+    "Este é o menu principal. Na lateral estão os modos de jogar: escolha um para abri-lo.",
+  "tutorial.menu.menu.teams":
+    "Em Equipes você junta personagens numa equipe para as lutas em equipe.",
+  "tutorial.menu.menu.title": "Para continuar, você precisa mudar sua especialização.",
+  "tutorial.menu.skipAsk": "Pular o resto do tutorial?",
   "tutorial.gate.hint": "Para a névoa, atrás de mim.",
   "tutorial.gate.how": "Clique com o botão esquerdo no chão, ou ande com {keys}.",
   "tutorial.gate.intro": "A nossa equipa luta para lá da névoa. Segue-me.",

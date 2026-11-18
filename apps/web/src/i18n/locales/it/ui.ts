@@ -1558,6 +1558,15 @@ export default {
   "tutorial.ground.praise": "Dall'altra parte! Ora sai cosa fa il terreno.",
   "tutorial.front.end": "Ora conosci le basi. Ci vediamo là fuori!",
   "tutorial.front.menu": "Torna al menu",
+  "tutorial.menu.gotIt": "Capito",
+  "tutorial.menu.menu.characters":
+    "In Personaggi crei e modifichi chi giochi: professione, abilità ed equipaggiamento.",
+  "tutorial.menu.menu.rail":
+    "Questo è il menu principale. Di lato ci sono i modi di giocare: scegline uno per aprirlo.",
+  "tutorial.menu.menu.teams":
+    "In Squadre metti insieme personaggi in una squadra per i combattimenti a squadre.",
+  "tutorial.menu.menu.title": "Per andare avanti, devi cambiare la tua specializzazione.",
+  "tutorial.menu.skipAsk": "Saltare il resto del tutorial?",
   "tutorial.gate.hint": "Nella nebbia, dietro di me.",
   "tutorial.gate.how": "Clic sinistro sul terreno, o cammina con {keys}.",
   "tutorial.gate.intro": "La nostra squadra combatte oltre la nebbia. Seguimi.",

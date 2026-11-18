@@ -183,11 +183,35 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
   "Our team fights beyond the mist. Follow me." Through the gate: "Now they're in front of us. Charge!"
   The player joins the background fight on the tutor's team (bots), now a normal bot match.
 - The mode is the background fight's. A win or loss screen ends it and leads to the menu.
-  Record `done`.
+  It leads into the menu quest (15).
 - **Out.** The tutorial is never offered again unless the record is cleared. **Options →
   Replay tutorial** is a proposal for the review.
 - **Down, not out** (resurrecting a fallen ally) was dropped from this storyboard; it can be
   added to the canyon as a station before 14 if the operator wants it.
+
+## 15. The menu quest
+
+Out of the front, the menu opens with the **menu quest** (#3538, #3540) running over it.
+It teaches the menu one step at a time, and the record is `done` only once its last step is.
+
+- **Lock (operator Q103).** While a step points at a control, the menu is dimmed and only a lit
+  cut-out round that control takes the pointer; Tab cycles only the control and the quest
+  panel. A toast or a dialog the game opens itself stays above the dim, and usable. Escape
+  does nothing: **Skip tutorial** in the panel, confirmed, is the way out, and records
+  `skipped`.
+- **Steps are data** (`apps/web/src/tutorial/menu-quest.ts`): a step is an id, a title and a
+  list of beats. A beat points at the control with `data-tutorial="<id>"`, never at a CSS
+  class, and is either an explanation, dismissed by **Got it**, or a thing to do, whose
+  objectives tick live in the panel as the menu reports what happened (a screen shown, a
+  character or team saved, a team size, a team picked, a queue joined). A step is complete
+  when all its objectives hold.
+- **Resume.** Every step saves `menu:<step-id>` as it starts. A launch that finds one
+  resumes at the start of that step, after the splash; a link takes the quest down and keeps
+  the record. A step id the quest no longer has is deleted, and the tutorial is offered
+  again.
+- **The main menu** (first step): three explanations, on the mode rail, Characters and
+  Teams, under the quest title "To go on, you must change your spec." The steps after it are
+  their own cards.
 
 ## Cross-cutting rules for the build cards
 

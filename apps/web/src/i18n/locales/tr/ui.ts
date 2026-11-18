@@ -1480,6 +1480,14 @@ export default {
   "tutorial.ground.praise": "Geçtin! Artık zeminin neler yaptığını biliyorsun.",
   "tutorial.front.end": "Artık temelleri biliyorsun. Orada görüşürüz!",
   "tutorial.front.menu": "Menüye dön",
+  "tutorial.menu.gotIt": "Anladım",
+  "tutorial.menu.menu.characters":
+    "Karakterler'de kiminle oynadığını oluşturur ve değiştirirsin: meslek, beceriler ve teçhizat.",
+  "tutorial.menu.menu.rail": "Bu ana menü. Yanda oynama yolları var: açmak için birini seç.",
+  "tutorial.menu.menu.teams":
+    "Takımlar'da karakterleri takım dövüşleri için bir takımda toplarsın.",
+  "tutorial.menu.menu.title": "Devam etmek için uzmanlığını değiştirmelisin.",
+  "tutorial.menu.skipAsk": "Eğitimin geri kalanı atlansın mı?",
   "tutorial.gate.hint": "Sisin içine, peşimden.",
   "tutorial.gate.how": "Zemine sol tıkla ya da {keys} ile yürü.",
   "tutorial.gate.intro": "Takımımız sisin ötesinde savaşıyor. Beni takip et.",

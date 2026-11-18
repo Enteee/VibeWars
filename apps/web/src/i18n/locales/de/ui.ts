@@ -1499,6 +1499,15 @@ export default {
   "tutorial.ground.praise": "Drüben! Jetzt weißt du, was der Boden kann.",
   "tutorial.front.end": "Jetzt kennst du dich aus. Wir sehen uns da draußen!",
   "tutorial.front.menu": "Zum Menü",
+  "tutorial.menu.gotIt": "Verstanden",
+  "tutorial.menu.menu.characters":
+    "Unter Charaktere erstellst und änderst du, wen du spielst: Beruf, Fertigkeiten und Ausrüstung.",
+  "tutorial.menu.menu.rail":
+    "Das ist das Hauptmenü. An der Seite stehen die Spielarten: Wähle eine, um sie zu öffnen.",
+  "tutorial.menu.menu.teams":
+    "Unter Teams stellst du Charaktere zu einem Team für die Teamkämpfe zusammen.",
+  "tutorial.menu.menu.title": "Um weiterzukommen, musst du deine Spezialisierung ändern.",
+  "tutorial.menu.skipAsk": "Den Rest des Tutorials überspringen?",
   "tutorial.gate.hint": "In den Nebel, mir nach.",
   "tutorial.gate.how": "Linksklick auf den Boden, oder geh mit {keys}.",
   "tutorial.gate.intro": "Unser Team kämpft jenseits des Nebels. Folge mir.",

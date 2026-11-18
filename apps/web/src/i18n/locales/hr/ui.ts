@@ -1551,6 +1551,14 @@ export default {
   "tutorial.ground.praise": "Prešao si! Sad znaš što tlo može.",
   "tutorial.front.end": "Sad znaš osnove. Vidimo se vani!",
   "tutorial.front.menu": "U izbornik",
+  "tutorial.menu.gotIt": "Razumijem",
+  "tutorial.menu.menu.characters":
+    "U Likovima stvaraš i mijenjaš s kim igraš: zanimanje, vještine i opremu.",
+  "tutorial.menu.menu.rail":
+    "Ovo je glavni izbornik. Sa strane su načini igre: odaberi jedan da ga otvoriš.",
+  "tutorial.menu.menu.teams": "U Timovima slažeš likove u tim za timske borbe.",
+  "tutorial.menu.menu.title": "Da bi nastavio, moraš promijeniti svoju specijalizaciju.",
+  "tutorial.menu.skipAsk": "Preskočiti ostatak vodiča?",
   "tutorial.gate.hint": "U maglu, za mnom.",
   "tutorial.gate.how": "Lijevi klik na tlo, ili hodaj s {keys}.",
   "tutorial.gate.intro": "Naš tim se bori iza magle. Prati me.",
