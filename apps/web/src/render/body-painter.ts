@@ -111,7 +111,7 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
 
 /**
  * The cape (#1422, #1699) under the disc, which covers its root: the cloth, its
- * `edge` outline, the trim along the hem, then the emblem in the trim colour.
+ * `edge` outline, the trim along the hem, then the emblem grid in its own colours.
  * Folded, all of it hides under the disc but the emblem's edge.
  */
 function paintCape(painter: Painter, shape: CapeShape, cape: CapeLook): void {
@@ -121,7 +121,7 @@ function paintCape(painter: Painter, shape: CapeShape, cape: CapeLook): void {
   tracePoints(painter, shape.cloth, true);
   painter.lineStyle(CAPE_TRIM_WIDTH, cape.trim, 1);
   tracePoints(painter, shape.trim, false);
-  paintEmblem(painter, shape.emblem, cape.trim);
+  paintEmblem(painter, shape.emblem, cape.palette);
 }
 
 /** The band on the rim, over the disc's edge: an `edge` casing under the cape's colour. */
@@ -138,15 +138,14 @@ function paintCapeBand(painter: Painter, band: CapeBand, cape: CapeLook): void {
 }
 
 /** An emblem's parts in `colour`: on a cape, and on the designer's buttons (#1422). */
-export function paintEmblem(painter: Painter, parts: readonly EmblemPart[], colour: number): void {
-  painter.fillStyle(colour, 1);
+export function paintEmblem(
+  painter: Painter,
+  parts: readonly EmblemPart[],
+  palette: readonly number[],
+): void {
   for (const part of parts) {
-    if (part.kind === "fill") {
-      painter.fillPoints(part.points);
-    } else {
-      painter.lineStyle(part.width, colour, 1);
-      tracePoints(painter, part.points, true);
-    }
+    painter.fillStyle(palette[part.pixel - 1] ?? 0, 1);
+    painter.fillPoints(part.points);
   }
 }
 
@@ -215,9 +214,14 @@ export const ASH = 0x7a7672;
 /** How far towards `ASH`: enough to read as ash, little enough to tell whose. */
 const ASH_SHARE = 0.7;
 
-/** `look` toned to ash for a body in a form (#3229): its colours greyed, its emblem kept. */
+/** `look` toned to ash for a body in a form (#3229): its colours greyed, its emblem's too. */
 export function ashCape(look: CapeLook): CapeLook {
-  return { main: towardsAsh(look.main), trim: towardsAsh(look.trim), emblem: look.emblem };
+  return {
+    main: towardsAsh(look.main),
+    trim: towardsAsh(look.trim),
+    emblem: look.emblem,
+    palette: look.palette.map(towardsAsh),
+  };
 }
 
 function towardsAsh(colour: number): number {

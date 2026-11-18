@@ -12,6 +12,7 @@ import {
   MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_STATUS_INDEX,
+  packEmblem,
   type WireMatchReplayPart,
   type WirePlayer,
 } from "@vibewars/game-protocol";
@@ -435,7 +436,6 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     name: "name",
     guildTag: "guildTag",
     heroRank: "heroRank",
-    guildCape: "guildCape",
     team: "team",
     x: "x",
     y: "y",
@@ -476,10 +476,11 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
   it("have one field for each field of the other", () => {
     // Every WirePlayer key is above (`satisfies`), and every
     // PlayerSnapshot key is one of the names: a field added to either
-    // without the other stops this compiling. `respawnIn` alone is no
-    // snapshot field: its team hears it on `"respawns"` (#3367).
+    // without the other stops this compiling. `respawnIn` is no
+    // snapshot field: its team hears it on `"respawns"` (#3367); nor is
+    // `guildCape`: every seat's comes once on `"capes"` (#3554).
     expectTypeOf<(typeof FIELDS)[keyof typeof FIELDS]>().toEqualTypeOf<
-      Exclude<keyof PlayerSnapshot, "respawnIn">
+      Exclude<keyof PlayerSnapshot, "respawnIn" | "guildCape">
     >();
     expect(new Set(Object.values(FIELDS)).size).toBe(Object.keys(FIELDS).length);
   });
@@ -491,7 +492,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
         { status: statusWireIndex("burning"), endsAt: 7.5, durationSeconds: 3, casterId: "p2" },
       ],
     };
-    const snapshot = playerSnapshot(wire);
+    const snapshot = playerSnapshot(wire, new Map());
     for (const [wireKey, snapshotKey] of Object.entries(FIELDS)) {
       const sent = wire[wireKey as keyof WirePlayer];
       const got = snapshot?.[snapshotKey];
@@ -507,6 +508,12 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     }
   });
 
+  it('wear the cape its id has on the host\'s last "capes", and none without one (#3554)', () => {
+    const cape = { main: "teal", trim: "white", emblem: packEmblem([]) } as const;
+    expect(playerSnapshot(WIRE_PLAYER, new Map([["p1", cape]]))?.guildCape).toEqual(cape);
+    expect(playerSnapshot(WIRE_PLAYER, new Map([["p2", cape]]))?.guildCape).toBeUndefined();
+  });
+
   it("keep a creature's owner and kind (#1052)", () => {
     const creature = {
       ownerId: "p2",
@@ -517,7 +524,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       leaderId: null,
       auraRadius: null,
     } as const;
-    expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
+    expect(playerSnapshot({ ...WIRE_PLAYER, creature }, new Map())?.creature).toEqual(creature);
   });
 
   it("keep a rat, nobody's critter (#3315)", () => {
@@ -530,7 +537,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       auraRadius: null,
       leaderId: null,
     } as const;
-    expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
+    expect(playerSnapshot({ ...WIRE_PLAYER, creature }, new Map())?.creature).toEqual(creature);
   });
 
   it("keep a pet's armed attack, and refuse one that is not a known pet attack (#1167)", () => {
@@ -546,12 +553,12 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
         auraRadius: null,
       },
     });
-    expect(playerSnapshot(pet("ranger.brutal-strike"))?.creature?.armedAttack).toEqual({
+    expect(playerSnapshot(pet("ranger.brutal-strike"), new Map())?.creature?.armedAttack).toEqual({
       skillId: "ranger.brutal-strike",
       endsAt: 12.1,
     });
-    expect(playerSnapshot(pet("ranger.no-such-skill"))).toBeUndefined();
-    expect(playerSnapshot(pet("warrior.swift-chop"))).toBeUndefined();
+    expect(playerSnapshot(pet("ranger.no-such-skill"), new Map())).toBeUndefined();
+    expect(playerSnapshot(pet("warrior.swift-chop"), new Map())).toBeUndefined();
   });
 
   it("hold the wire's creature cap to game-core's summons and map creatures (#1052, #1281)", () => {
@@ -578,7 +585,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       durationSeconds: 1,
       casterId: "p2",
     };
-    expect(playerSnapshot({ ...WIRE_PLAYER, statuses: [unknown] })).toBeUndefined();
+    expect(playerSnapshot({ ...WIRE_PLAYER, statuses: [unknown] }, new Map())).toBeUndefined();
   });
 });
 
@@ -588,7 +595,6 @@ const WIRE_PLAYER: WirePlayer = {
   name: "Mhenlo",
   guildTag: "VIBE",
   heroRank: 0,
-  guildCape: { main: "teal", trim: "white", emblem: "cross" },
   team: 1,
   x: 1,
   y: 2,
