@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { REFERENCE_MAPS, planPerf } from "./perf-plan.mjs";
+import { REFERENCE_MAPS, benchable, planPerf } from "./perf-plan.mjs";
 
 const all = () => true;
 
@@ -33,5 +33,19 @@ describe("planPerf", () => {
   it("skips a deleted map", () => {
     const { maps } = planPerf(["packages/game-maps/maps/gone/map.json"], (id) => id !== "gone");
     expect(maps).toEqual(REFERENCE_MAPS);
+  });
+});
+
+describe("benchable", () => {
+  it("accepts a two-team map", () => {
+    expect(benchable("arena-canyon")).toBe(true);
+  });
+
+  it("refuses a three-team map: the menu background never fights it", () => {
+    expect(benchable("hall-of-heroes-king")).toBe(false);
+  });
+
+  it("refuses a map with no folder", () => {
+    expect(benchable("no-such-map")).toBe(false);
   });
 });

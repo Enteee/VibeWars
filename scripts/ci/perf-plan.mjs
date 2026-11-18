@@ -10,7 +10,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { MAP_PATH } from "./balance-plan.mjs";
@@ -19,17 +19,30 @@ import { MAP_PATH } from "./balance-plan.mjs";
 export const REFERENCE_MAPS = ["arena-canyon", "sandstone-steps"];
 
 /** The Hosted lobby never offers it, so the bench cannot select it: ELITE_ZAISHEN_MAP (#3589). */
-const UNOFFERED_MAPS = ["elite-zaishen-battle"];
+export const UNHOSTED_MAPS = ["elite-zaishen-battle"];
+
+/**
+ * Whether the bench can measure a map: it has a map.json, and two teams, for the
+ * menu background only fights two-team maps, so the bench times out on any other.
+ * @param {string} id
+ */
+export const benchable = (id) => {
+  const file = `packages/game-maps/maps/${id}/map.json`;
+  if (!existsSync(file)) return false;
+  /** @type {unknown} */
+  const map = JSON.parse(readFileSync(file, "utf8"));
+  return typeof map === "object" && map !== null && "teams" in map && map.teams === 2;
+};
 
 /**
  * @param {string[]} files changed paths, relative to the repository root
- * @param {(id: string) => boolean} exists whether a map still has a folder; one the lobby never offers is skipped too
+ * @param {(id: string) => boolean} canBench whether the bench can measure a map; one the lobby never offers is skipped too
  * @returns {{ maps: string[] }}
  */
-export const planPerf = (files, exists) => {
+export const planPerf = (files, canBench) => {
   const touched = files
     .flatMap((file) => MAP_PATH.exec(file)?.[1] ?? [])
-    .filter((id) => exists(id) && !UNOFFERED_MAPS.includes(id));
+    .filter((id) => canBench(id) && !UNHOSTED_MAPS.includes(id));
   return { maps: [...new Set([...REFERENCE_MAPS, ...touched])] };
 };
 
@@ -40,7 +53,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   })
     .split("\n")
     .filter((line) => line !== "");
-  console.log(
-    JSON.stringify(planPerf(files, (id) => existsSync(`packages/game-maps/maps/${id}/map.json`))),
-  );
+  console.log(JSON.stringify(planPerf(files, benchable)));
 }

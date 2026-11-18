@@ -690,6 +690,21 @@ describe("structureOf's water (#2984)", () => {
   });
 });
 
+describe("perf plan", () => {
+  it("UNHOSTED_MAPS is exactly the arena maps the Hosted lobby never offers", async () => {
+    // @ts-expect-error a plain script, it has no declarations
+    const { UNHOSTED_MAPS } = (await import("../../../../scripts/ci/perf-plan.mjs")) as {
+      UNHOSTED_MAPS: string[];
+    };
+    const hosted = modeMapIds()["hosted-game"];
+    expect([...UNHOSTED_MAPS].sort()).toEqual(
+      arenaIds()
+        .filter((id) => !hosted.includes(id))
+        .sort(),
+    );
+  });
+});
+
 describe("the Ascent's three-act look (#3589)", () => {
   const actOf = (id: string) => ARENA_MAPS.find((map) => map.id === id)?.ascentAct;
   const climb = [ELITE_ZAISHEN_MAP, ...ASCENT_PROGRESSION, ...HALL_OF_HEROES_MAPS];
