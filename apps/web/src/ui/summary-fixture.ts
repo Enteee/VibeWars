@@ -73,7 +73,7 @@ function fixtureChart(): WireMatchChart {
       kind: "interrupt",
       by: "p1-2",
       id: "p0-0",
-      skillId: "healing-breeze",
+      skillId: "monk.healing-breeze",
     });
   }
   events.push({ t: 400, kind: "death", id: "p0-0", by: "p1-3" });

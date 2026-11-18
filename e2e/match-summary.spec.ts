@@ -114,3 +114,51 @@ for (const [width, height] of [
     }
   });
 }
+
+for (const [width, height] of [
+  [360, 640],
+  [1280, 720],
+] as const) {
+  test(`at ${String(width)}x${String(height)} the queue screen's charts stay clear of its buttons (#3565)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto("./?summary-fixture=queue");
+    const charts = page.locator(".match-charts");
+    await expect(charts.locator(".match-charts-svg")).toBeVisible();
+    const actions = page.locator(".queue-actions");
+    const buttons = await box(actions);
+    for (const tab of ["You", "Teams"]) {
+      await charts.getByRole("tab", { name: tab }).click();
+      await expect(charts.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true");
+      // Scrolled into view as far as it goes, the chart is still clear of the footer.
+      await charts.locator(".match-charts-marks").scrollIntoViewIfNeeded();
+      const chart = await box(charts);
+      expect(apart(chart, await box(actions)), `${tab}: chart and buttons do not overlap`).toBe(
+        true,
+      );
+      expect(
+        apart(chart, await box(page.locator(".queue-scores"))),
+        `${tab}: chart and scores do not overlap`,
+      ).toBe(true);
+      // On a phone the charts use the whole width and stay at least 160 px tall.
+      const plot = await box(charts.locator(".match-charts-svg"));
+      expect(plot.height).toBeGreaterThanOrEqual(160);
+      expect(chart.x + chart.width).toBeLessThanOrEqual(width);
+    }
+    expect(buttons.y + buttons.height).toBeLessThanOrEqual(height);
+
+    // A legend chip hides its line and says so.
+    await charts.getByRole("tab", { name: "You" }).click();
+    const chip = charts.locator(".match-charts-chip", { hasText: "Damage dealt" });
+    await chip.click();
+    await expect(chip).toHaveAttribute("aria-pressed", "false");
+    await expect(charts.locator(".chart-line-dealt")).toHaveCount(0);
+
+    // A mark is reached by keyboard and says what happened.
+    const mark = charts.locator(".chart-mark").first();
+    await mark.focus();
+    await expect(charts.locator(".match-charts-tip")).toBeVisible();
+    await expect(charts.locator(".match-charts-tip")).toHaveText(/^\d+:\d\d — /);
+  });
+}

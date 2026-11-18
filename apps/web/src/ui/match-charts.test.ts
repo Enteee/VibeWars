@@ -40,7 +40,7 @@ const chart: WireMatchChart = {
   players: [series("mira"), series("tam"), series("ash")],
   events: [
     { t: 14, kind: "death", id: "ash", by: "mira" },
-    { t: 15, kind: "interrupt", by: "ash", id: "mira", skillId: "healing-breeze" },
+    { t: 15, kind: "interrupt", by: "ash", id: "mira", skillId: "monk.healing-breeze" },
     { t: 30, kind: "death", id: "mira", by: "ash" },
     { t: 33, kind: "resurrected", id: "mira" },
     { t: 38, kind: "objective", team: 1, what: "point" },
@@ -101,7 +101,7 @@ describe("match chart helpers (#3565)", () => {
     expect(raised).toBe("0:33 — Mira was resurrected");
     expect(objective).toBe("0:38 — Their team took a shrine");
     expect(alone).toBe("0:39 — Tam died");
-    expect(interrupt).toMatch(/^0:15 — Bot Ash interrupted Mira: /);
+    expect(interrupt).toBe("0:15 — Bot Ash interrupted Mira: Healing Breeze");
   });
 
   it("shows your own events on the You chart, not a teammate's death", () => {

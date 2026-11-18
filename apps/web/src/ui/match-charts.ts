@@ -68,7 +68,7 @@ export interface ChartMark {
 
 /** The size of a mark, and the height of a strip row: crowded marks go up one. */
 export const MARK_PX = 14;
-const ROW_PX = 12;
+const ROW_PX = MARK_PX;
 
 /** The series' colours and dashes (asset-designer, #3565); the hues are the UI's. */
 const DEALT = { colour: "#ff7b72", dash: "" };
@@ -365,6 +365,8 @@ interface Panel {
 const PAD_LEFT = 44;
 const PAD_RIGHT = 36;
 const AXIS_PX = 16;
+/** Between stacked panels: room for the upper one's 0 and the lower one's top label. */
+const PANEL_GAP = 20;
 
 /** What the plot is drawn from. */
 export interface PlotInput {
@@ -403,7 +405,7 @@ export function renderPlot(input: PlotInput): { svg: SVGSVGElement; geometry: Pl
   const markX = marks.map(({ t: at }) => x(at));
   const rows = markRows(markX);
   const stripRows = Math.max(1, ...rows.map((row) => row + 1));
-  const panelsPx = panels.length * (panelHeight + 8);
+  const panelsPx = 8 + panels.length * panelHeight + (panels.length - 1) * PANEL_GAP;
   const height = panelsPx + AXIS_PX + stripRows * ROW_PX + 6;
   const root = svg("svg", {
     class: "match-charts-svg",
@@ -413,7 +415,7 @@ export function renderPlot(input: PlotInput): { svg: SVGSVGElement; geometry: Pl
   });
 
   panels.forEach((panel, p) => {
-    const top = 4 + p * (panelHeight + 8);
+    const top = 4 + p * (panelHeight + PANEL_GAP);
     const bottom = top + panelHeight;
     const shown = panel.lines.filter(({ key }) => !hidden.has(key));
     const leftMax = panel.leftPercent
@@ -488,7 +490,7 @@ export function renderPlot(input: PlotInput): { svg: SVGSVGElement; geometry: Pl
       "aria-label": mark.text,
       "data-row": rows[index] ?? 0,
     });
-    g.appendChild(svg("circle", { class: "chart-mark-ring", r: MARK_PX / 2 + 1 }));
+    g.appendChild(svg("circle", { class: "chart-mark-ring", r: MARK_PX / 2 }));
     g.appendChild(glyph(mark.kind, mark.colour));
     root.appendChild(g);
   });
