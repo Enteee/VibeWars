@@ -38,7 +38,7 @@
     },
     {
       "id": "north-east-crypt-mouth",
-      "footprint": { "kind": "rect", "x": 3035, "y": 595, "width": 140, "height": 110 }
+      "footprint": { "kind": "rect", "x": 3085, "y": 595, "width": 140, "height": 110 }
     },
     {
       "id": "south-east-crypt-well",
@@ -64,7 +64,7 @@
     },
     {
       "id": "north-east-crypt-outer",
-      "footprint": { "kind": "rect", "x": 2915, "y": 595, "width": 120, "height": 110 }
+      "footprint": { "kind": "rect", "x": 2915, "y": 595, "width": 170, "height": 110 }
     },
     {
       "id": "south-east-crypt-inner",
@@ -92,8 +92,8 @@
           { "x": 2925, "y": 1800.5 },
           { "x": 2925, "y": 1618.8 },
           { "x": 2996.4, "y": 1705.5 },
-          { "x": 3689, "y": 1305.7 },
-          { "x": 3799, "y": 1305.7 },
+          { "x": 3679, "y": 1311.5 },
+          { "x": 3799, "y": 1311.5 },
           { "x": 3799, "y": 1657.9 },
           { "x": 3176.4, "y": 2017.3 },
           { "x": 3220, "y": 2200 },
@@ -114,8 +114,8 @@
           { "x": 1782.9, "y": 2135 },
           { "x": 1823.6, "y": 2017.3 },
           { "x": 1201, "y": 1657.9 },
-          { "x": 1201, "y": 1294.1 },
-          { "x": 1291, "y": 1294.1 },
+          { "x": 1201, "y": 1288.4 },
+          { "x": 1281, "y": 1288.4 },
           { "x": 2003.6, "y": 1705.5 },
           { "x": 2140, "y": 1576.5 }
         ]
@@ -156,7 +156,7 @@
       "id": "east-gallery-stair",
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 3799, "y": 1396.8, "width": 112, "height": 170 },
+      "area": { "kind": "rect", "x": 3799, "y": 1399.7, "width": 112, "height": 170 },
       "uphill": "w",
       "look": "stairs",
       "lift": null
@@ -165,7 +165,7 @@
       "id": "east-gallery-north-stair",
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 3694, "y": 1193.7, "width": 100, "height": 112 },
+      "area": { "kind": "rect", "x": 3684, "y": 1199.5, "width": 110, "height": 112 },
       "uphill": "s",
       "look": "stairs",
       "lift": null
@@ -183,7 +183,7 @@
       "id": "west-gallery-stair",
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 1089, "y": 1391, "width": 112, "height": 170 },
+      "area": { "kind": "rect", "x": 1089, "y": 1388.2, "width": 112, "height": 170 },
       "uphill": "e",
       "look": "stairs",
       "lift": null
@@ -192,7 +192,7 @@
       "id": "west-gallery-north-stair",
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 1206, "y": 1182.1, "width": 80, "height": 112 },
+      "area": { "kind": "rect", "x": 1206, "y": 1176.4, "width": 70, "height": 112 },
       "uphill": "s",
       "look": "stairs",
       "lift": null
@@ -207,10 +207,19 @@
       "lift": null
     },
     {
-      "id": "dais-east-stair",
+      "id": "dais-east-north-stair",
       "from": 2,
       "to": 3,
-      "area": { "kind": "rect", "x": 2830, "y": 2130, "width": 112, "height": 140 },
+      "area": { "kind": "rect", "x": 2830, "y": 2065, "width": 112, "height": 110 },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "dais-east-south-stair",
+      "from": 2,
+      "to": 3,
+      "area": { "kind": "rect", "x": 2830, "y": 2225, "width": 112, "height": 110 },
       "uphill": "w",
       "look": "stairs",
       "lift": null
@@ -225,10 +234,19 @@
       "lift": null
     },
     {
-      "id": "dais-west-stair",
+      "id": "dais-west-south-stair",
       "from": 2,
       "to": 3,
-      "area": { "kind": "rect", "x": 2058, "y": 2130, "width": 112, "height": 140 },
+      "area": { "kind": "rect", "x": 2058, "y": 2225, "width": 112, "height": 110 },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "dais-west-north-stair",
+      "from": 2,
+      "to": 3,
+      "area": { "kind": "rect", "x": 2058, "y": 2065, "width": 112, "height": 110 },
       "uphill": "e",
       "look": "stairs",
       "lift": null
@@ -237,7 +255,7 @@
       "id": "north-east-crypt-mouth-stair",
       "from": 0,
       "to": 1,
-      "area": { "kind": "rect", "x": 3035, "y": 595, "width": 140, "height": 110 },
+      "area": { "kind": "rect", "x": 3085, "y": 595, "width": 140, "height": 110 },
       "uphill": "e",
       "look": "stairs",
       "lift": null
@@ -336,8 +354,8 @@
         { "x": 2925, "y": 1800.5 },
         { "x": 2925, "y": 1618.8 },
         { "x": 2996.4, "y": 1705.5 },
-        { "x": 3689, "y": 1305.7 },
-        { "x": 3799, "y": 1305.7 },
+        { "x": 3679, "y": 1311.5 },
+        { "x": 3799, "y": 1311.5 },
         { "x": 3799, "y": 1657.9 },
         { "x": 3176.4, "y": 2017.3 },
         { "x": 3220, "y": 2200 },
@@ -358,8 +376,8 @@
         { "x": 1782.9, "y": 2135 },
         { "x": 1823.6, "y": 2017.3 },
         { "x": 1201, "y": 1657.9 },
-        { "x": 1201, "y": 1294.1 },
-        { "x": 1291, "y": 1294.1 },
+        { "x": 1201, "y": 1288.4 },
+        { "x": 1281, "y": 1288.4 },
         { "x": 2003.6, "y": 1705.5 },
         { "x": 2140, "y": 1576.5 }
       ],
@@ -379,10 +397,12 @@
       ],
       "layer": 2
     },
-    { "kind": "rect", "x": 2672.5, "y": 2372.5, "width": 44, "height": 44, "layer": 3 },
-    { "kind": "rect", "x": 2283.5, "y": 2372.5, "width": 44, "height": 44, "layer": 3 },
-    { "kind": "rect", "x": 2283.5, "y": 1983.5, "width": 44, "height": 44, "layer": 3 },
-    { "kind": "rect", "x": 2672.5, "y": 1983.5, "width": 44, "height": 44, "layer": 3 }
+    { "kind": "rect", "x": 2692.1, "y": 2392.1, "width": 36, "height": 36, "layer": 3 },
+    { "kind": "rect", "x": 2271.9, "y": 2392.1, "width": 36, "height": 36, "layer": 3 },
+    { "kind": "rect", "x": 2271.9, "y": 1971.9, "width": 36, "height": 36, "layer": 3 },
+    { "kind": "rect", "x": 2692.1, "y": 1971.9, "width": 36, "height": 36, "layer": 3 },
+    { "kind": "rect", "x": 2778, "y": 2182, "width": 36, "height": 36, "layer": 3 },
+    { "kind": "rect", "x": 2186, "y": 2182, "width": 36, "height": 36, "layer": 3 }
   ],
   "water": [
     {
@@ -591,7 +611,7 @@
   "gates": [
     {
       "id": "north-east-crypt-door",
-      "wall": { "kind": "rect", "x": 3015, "y": 595, "width": 14, "height": 110, "layer": 0 },
+      "wall": { "kind": "rect", "x": 3065, "y": 595, "width": 14, "height": 110, "layer": 0 },
       "opener": { "kind": "switch" },
       "blocks": "all",
       "look": "door"
@@ -680,7 +700,7 @@
     "indoorAmbient": { "colour": 14207136, "intensity": 0.55 },
     "indoor": [
       { "kind": "rect", "x": 2805, "y": 595, "width": 110, "height": 981.5 },
-      { "kind": "rect", "x": 2915, "y": 595, "width": 120, "height": 110 },
+      { "kind": "rect", "x": 2915, "y": 595, "width": 170, "height": 110 },
       { "kind": "rect", "x": 2805, "y": 2823.5, "width": 110, "height": 881.5 },
       { "kind": "rect", "x": 2915, "y": 3595, "width": 470, "height": 110 },
       { "kind": "rect", "x": 582.9, "y": 2145, "width": 1200, "height": 110 }
@@ -697,8 +717,8 @@
         "flicker": 0
       },
       {
-        "id": "torch-north-east-crypt-mouth",
-        "position": { "x": 3205, "y": 565 },
+        "id": "brazier-north-east-crypt-mouth",
+        "position": { "x": 3185, "y": 540 },
         "layer": 1,
         "radius": 150,
         "colour": 16756832,
@@ -706,8 +726,8 @@
         "flicker": 0.2
       },
       {
-        "id": "torch-south-east-crypt-mouth",
-        "position": { "x": 3555, "y": 3565 },
+        "id": "brazier-south-east-crypt-mouth",
+        "position": { "x": 3485, "y": 3540 },
         "layer": 1,
         "radius": 150,
         "colour": 16756832,
@@ -715,8 +735,8 @@
         "flicker": 0.2
       },
       {
-        "id": "torch-west-crypt-mouth",
-        "position": { "x": 412.9, "y": 2115 },
+        "id": "brazier-west-crypt-mouth",
+        "position": { "x": 482.9, "y": 2090 },
         "layer": 1,
         "radius": 150,
         "colour": 16756832,
@@ -724,8 +744,8 @@
         "flicker": 0.2
       },
       {
-        "id": "torch-east-gallery",
-        "position": { "x": 3495.9, "y": 1625 },
+        "id": "brazier-east-gallery",
+        "position": { "x": 3765.1, "y": 1631.2 },
         "layer": 2,
         "radius": 150,
         "colour": 16756832,
@@ -733,8 +753,8 @@
         "flicker": 0.2
       },
       {
-        "id": "torch-south-gallery",
-        "position": { "x": 2500, "y": 3350 },
+        "id": "brazier-south-gallery",
+        "position": { "x": 2360, "y": 3580 },
         "layer": 2,
         "radius": 150,
         "colour": 16756832,
@@ -742,8 +762,8 @@
         "flicker": 0.2
       },
       {
-        "id": "torch-west-gallery",
-        "position": { "x": 1504.1, "y": 1625 },
+        "id": "brazier-west-gallery",
+        "position": { "x": 1374.9, "y": 1388.8 },
         "layer": 2,
         "radius": 150,
         "colour": 16756832,
@@ -775,6 +795,33 @@
         "radius": 130,
         "colour": 16767370,
         "intensity": 0.85,
+        "flicker": 0
+      },
+      {
+        "id": "north-relic-spawn-ring",
+        "position": { "x": 2800, "y": 740 },
+        "layer": 1,
+        "radius": 220,
+        "colour": 16767370,
+        "intensity": 0.7,
+        "flicker": 0
+      },
+      {
+        "id": "south-east-relic-spawn-ring",
+        "position": { "x": 3614.4, "y": 3189.8 },
+        "layer": 1,
+        "radius": 220,
+        "colour": 16767370,
+        "intensity": 0.7,
+        "flicker": 0
+      },
+      {
+        "id": "south-west-relic-spawn-ring",
+        "position": { "x": 1085.6, "y": 2670.2 },
+        "layer": 1,
+        "radius": 220,
+        "colour": 16767370,
+        "intensity": 0.7,
         "flicker": 0
       }
     ]
@@ -854,5 +901,49 @@
       }
     ],
     "weather": { "kind": "motes", "intensity": 0.6 }
-  }
+  },
+  "paving": [
+    {
+      "id": "north-court",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 2080, "y": 290 },
+          { "x": 2920, "y": 290 },
+          { "x": 2920, "y": 1030 },
+          { "x": 2080, "y": 1030 }
+        ]
+      }
+    },
+    {
+      "id": "south-east-court",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 4364.1, "y": 2791.3 },
+          { "x": 3944.1, "y": 3518.7 },
+          { "x": 3303.2, "y": 3148.7 },
+          { "x": 3723.2, "y": 2421.3 }
+        ]
+      }
+    },
+    {
+      "id": "south-west-court",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 1055.9, "y": 3518.7 },
+          { "x": 635.9, "y": 2791.3 },
+          { "x": 1276.8, "y": 2421.3 },
+          { "x": 1696.8, "y": 3148.7 }
+        ]
+      }
+    }
+  ]
 }
