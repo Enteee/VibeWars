@@ -526,6 +526,11 @@ describe("walks and high ground (#3070)", () => {
       within(highGround(map), 0.25);
     }, 60_000);
 
+    it("stands the south points a layer above the north ones, so the outer cairns are not four equal plinths", () => {
+      expect([northWest, northEast].map((point) => point?.layer)).toEqual([2, 2]);
+      expect([southWest, southEast].map((point) => point?.layer)).toEqual([3, 3]);
+    });
+
     it("paths off every drop-off straight down, not round by the stairs", () => {
       const layers = matchLayers(map);
       const finder = createLayeredPathFinder(
