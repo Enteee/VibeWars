@@ -1581,6 +1581,15 @@ describe("walks and high ground (#3070)", () => {
       };
       return offsets[stair.uphill];
     };
+    /** How far a body walks from `from` along `path`; throws when there is no path. */
+    const walkedFrom = (from: Vec2, path: readonly Vec2[] | undefined): number => {
+      if (path === undefined) throw new Error(`no way from (${String(from.x)},${String(from.y)})`);
+      const walk = [from, ...path];
+      return walk.reduce((walked, point, index) => {
+        const last = walk[index - 1] ?? point;
+        return walked + Math.hypot(point.x - last.x, point.y - last.y);
+      }, 0);
+    };
     const within = (walks: readonly number[], share: number): void => {
       expect(walks.length).toBeGreaterThanOrEqual(2);
       for (const walk of walks) expect(walk).toBeGreaterThan(0);
@@ -1626,6 +1635,20 @@ describe("walks and high ground (#3070)", () => {
       );
     });
 
+    it("leads each ghost from its court to the altar within 10 %", () => {
+      const finder = layeredFinder(king, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      within(
+        TEAMS.map((team) => {
+          const ghost = king.objectives.find(
+            (each) => each.kind === "ghost-spawn" && each.team === team,
+          );
+          if (ghost === undefined) throw new Error(`no ghost for team ${String(team)}`);
+          return walkedFrom(ghost.position, finder.find(ghost.position, ghost.layer, altar, 3));
+        }),
+        0.1,
+      );
+    });
+
     it("walks each carrier from its relic to the altar within 10 %", () => {
       const finder = layeredFinder(relic, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
       within(
@@ -1634,13 +1657,7 @@ describe("walks and high ground (#3070)", () => {
             (each) => each.kind === "relic-spawn" && each.team === team,
           );
           if (spawn === undefined) throw new Error(`no relic for team ${String(team)}`);
-          const path = finder.find(spawn.position, spawn.layer, altar, 3);
-          if (path === undefined) throw new Error(`no carry for team ${String(team)}`);
-          const walk: Vec2[] = [spawn.position, ...path];
-          return walk.reduce((walked, point, index) => {
-            const from = walk[index - 1] ?? point;
-            return walked + Math.hypot(point.x - from.x, point.y - from.y);
-          }, 0);
+          return walkedFrom(spawn.position, finder.find(spawn.position, spawn.layer, altar, 3));
         }),
         0.1,
       );
