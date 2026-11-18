@@ -80,6 +80,14 @@ Zatvorením karty počas čakania okamžite opustíš frontu.
 Keď sa zápas skončí, môžeš zvoliť **Znova do fronty** alebo **Zostať spolu**
 s tímom, s ktorým si práve hral.
 
+Vedľa skóre rozprávajú dva grafy priebeh zápasu v čase. **Ty** kreslí tvoje
+spôsobené poškodenie, prijaté poškodenie, liečenie a Energiu; **Tímy** kreslí
+zásobu zdravia každého tímu nad jeho celkovým poškodením. Značky pod časovou
+osou ukazujú zabitia, smrti, prerušenia, obsadenia a oživenia: ukáž na jednu
+alebo na ňu prejdi klávesom Tab a prečítaš si, čo sa stalo. Stlačením položky
+legendy skryješ alebo zobrazíš jej čiaru. Na telefóne sú grafy pod skóre, ktoré
+ukazuje teba a dvoch ďalších, kým nestlačíš **Zobraziť všetko**.
+
 ## Hostiť zápas alebo sa pripojiť
 
 Vždy si v lobby: od chvíle, keď sa stránka otvorí, hostí jedno

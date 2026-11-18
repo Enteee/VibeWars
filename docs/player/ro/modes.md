@@ -118,7 +118,7 @@ pe oricine poartă un steag. Un impuls apare ca „Impuls de moral! +10%” sau 
 moral inamic”. Pe busolă, ♛ marchează fiecare Lord al breslei, ⚑ fiecare steag și ◎
 suportul.
 
-Se joacă pe Guild Hall Isle.
+Se joacă pe Guild Hall Isle (8v8, 6000x2600): o insulă în mare. Fiecare Guild Lord stă în vârful unei săli, în spatele unui meterez; ieșirea e prin poartă, peste meterez sau de-a lungul unui debarcader. Ușa porții se deschide de la o manetă de pe meterezul inamic. Suportul steagului e pe un podium în mijloc.
 
 ## Cursa relicvelor
 
@@ -264,6 +264,8 @@ până sunt cucerite. Un inamic aflat la distanță de vrajă nu îi trage de ac
 un sanctuar la îndemână și luptă de pe el.
 
 Se joacă pe Scarred Earth (4v4 și 8v8, 5400x2800): un câmp de luptă ciuruit de cratere, la amurg. Sanctuarele stau pe turnuri de asediu distruse, cel din mijloc pe puntea turnului mare, fiecare lângă un crater; manete de pe turnuri deschid două tranșee sub câmp, iar palisadele distruse pot fi sparte.
+
+În Ascensiunea Eroilor se joacă pe The Warden's Gallery (8v8, 5200x2500): o galerie de sculpturi însorită, sub luminatoare. Sanctuarul din mijloc stă în vârful soclului mare, iar fiecare echipă are trei lângă vestibulul ei, unul pe un soclu; manete de pe soclul mare deschid două cripte sub podea, iar statuile răsturnate pot fi sparte.
 
 ## Lobby de echipă
 

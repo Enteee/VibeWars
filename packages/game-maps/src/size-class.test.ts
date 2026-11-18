@@ -14,14 +14,14 @@ describe("sizeClass (#444, #2547)", () => {
     expect(sizeClass({ width: 4801, height: 100 })).toBe("large");
   });
 
-  it("calls every arena today small, but Crossroads and Long Hall (#3071) medium, Shiverpeak Pass and Elonian Plateau (#2609), Moss Vale (#3288), Ashen Courtyard (#3413), Barrow Field (#3433), Blackwater Ford (#3434), Jungle Ruins (#3436), Broken Tower (#3437), Cinder Sanctum (#3438), Mosslit Cairns (#3439) and Scarred Earth (#3440) large", () => {
+  it("calls every arena today small, but Crossroads and Long Hall (#3071) medium, Shiverpeak Pass and Elonian Plateau (#2609), Moss Vale (#3288), Ashen Courtyard (#3413), Barrow Field (#3433), Blackwater Ford (#3434), Jungle Ruins (#3436), Broken Tower (#3437), Cinder Sanctum (#3438), Mosslit Cairns (#3439), Scarred Earth (#3440) and Guild Hall Isle (#3445) large", () => {
     expect(Object.fromEntries(loadAllMaps().map((map) => [map.id, sizeClass(map)]))).toEqual({
       "ember-pits": "small",
       "jungle-ruins": "large",
       "arena-crossroads": "medium",
       "arena-canyon": "small",
       "arena-long-hall": "medium",
-      "guild-hall-isle": "small",
+      "guild-hall-isle": "large",
       "broken-tower": "large",
       "cinder-sanctum": "large",
       "threefold-keep": "small",
@@ -33,7 +33,7 @@ describe("sizeClass (#444, #2547)", () => {
       "hollow-deep": "medium",
       "blackwater-ford": "large",
       "mosslit-cairns": "large",
-      "wardens-gallery": "small",
+      "wardens-gallery": "large",
       "brazen-causeway": "large",
       "scarred-earth": "large",
       "sandstone-steps": "small",

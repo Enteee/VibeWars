@@ -129,7 +129,7 @@ drapeau. Un bonus s'affiche « Bonus de moral ! +10% », ou « Bonus de moral
 ennemi ». Sur la boussole, ♛ marque chaque Seigneur de guilde, ⚑ chaque drapeau
 et ◎ le socle.
 
-Guild Hall Isle le joue.
+Guild Hall Isle (8v8, 6000x2600) le joue : une île en mer. Chaque Guild Lord se tient au sommet d'une salle, derrière un rempart ; on sort par la porterie, par-dessus le rempart ou le long d'un ponton. Une porte de porterie s'ouvre par un levier sur le rempart ennemi. Le support du drapeau est sur une estrade au centre.
 
 ## Course aux reliques
 
@@ -280,6 +280,8 @@ s'y tiennent jusqu'à leur prise. Un ennemi à portée de sort ne les attire pas
 ils montent sur un sanctuaire à portée et combattent depuis celui-ci.
 
 Scarred Earth (4v4 et 8v8, 5400x2800) le joue : un champ de bataille criblé de cratères au crépuscule. Les sanctuaires se dressent sur des tours de siège détruites, celui du centre sur la plate-forme de la grande tour, chacun près d'un cratère ; des leviers sur les tours ouvrent deux tranchées sous le champ, et les palissades détruites peuvent être brisées.
+
+Dans l'Ascension des héros, The Warden's Gallery (8v8, 5200x2500) le joue : une galerie de sculptures ensoleillée sous des verrières. Le sanctuaire du centre se dresse au sommet du grand socle, et chaque équipe en a trois près de son vestibule, dont un sur un socle ; des leviers sur le grand socle ouvrent deux cryptes sous le sol, et les statues renversées peuvent être brisées.
 
 ## Salon d'équipe
 

@@ -109,7 +109,7 @@ den Schaden jedes Teams am gegnerischen Lord. Darunter nennt eine Zeile, wer ein
 Schub erscheint als „Moralschub! +10%“ oder „Moralschub beim Gegner“. Auf dem Kompass markiert ♛ jeden
 Gildenlord, ⚑ jede Flagge und ◎ den Stand.
 
-Guild Hall Isle spielt es.
+Guild Hall Isle (8v8, 6000x2600) spielt es: eine Insel im Meer. Jeder Guild Lord steht oben auf einer Halle, hinter einem Wall; hinaus geht es durch das Torhaus, über den Wall oder einen Steg entlang. Eine Torhaustür öffnet ein Hebel auf dem Wall des Gegners. Der Fahnenständer steht auf einem Podest in der Mitte.
 
 ## Reliktlauf
 
@@ -225,6 +225,8 @@ Bots verteilen sich auf die Schreine, die dein Team noch nicht besitzt, und steh
 Ein Gegner in Zauberreichweite lockt sie nicht weg: Sie gehen auf einen Schrein in Reichweite und kämpfen von dort.
 
 Scarred Earth (4v4 und 8v8, 5400x2800) spielt es: ein von Kratern zerfurchtes Schlachtfeld in der Dämmerung. Die Schreine stehen auf zerstörten Belagerungstürmen, der mittlere auf dem Deck des großen Turms, jeder neben einem Krater; Hebel auf den Türmen öffnen zwei Gräben unter dem Feld, und zerstörte Palisaden lassen sich zerschlagen.
+
+Im Aufstieg der Helden spielt es The Warden's Gallery (8v8, 5200x2500): eine sonnige Skulpturengalerie unter Oberlichtern. Der mittlere Schrein steht oben auf dem großen Sockel, und jedes Team hat drei nahe seinem Vestibül, einen davon auf einem Sockel; Hebel auf dem großen Sockel öffnen zwei Gewölbe unter dem Boden, und umgestürzte Statuen lassen sich zerschlagen.
 
 ## Team-Lobby
 

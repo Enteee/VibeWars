@@ -124,7 +124,7 @@ flagga. En höjning visas som "Moralhöjning! +10 %", eller "Fiendens
 moralhöjning". På kompassen markerar ♛ varje gillesherre, ⚑ varje
 flagga och ◎ stället.
 
-Guild Hall Isle spelar det.
+Guild Hall Isle (8v8, 6000x2600) spelar det: en ö i havet. Varje Guild Lord står uppe på en hall, bakom en vall; vägen ut går genom porthuset, över vallen eller längs en brygga. En portdörr öppnas med en spak på fiendens vall. Flaggstället står på en upphöjning i mitten.
 
 ## Reliklöpning
 
@@ -282,6 +282,8 @@ på dem tills de är tagna. En fiende inom besvärjelseräckhåll lockar inte
 bort dem: de kliver upp på en helgedom inom räckhåll och slåss därifrån.
 
 Scarred Earth (4v4 och 8v8, 5400x2800) spelar det: ett kraterfyllt slagfält i skymningen. Helgedomarna står på förstörda belägringstorn, den mittersta på det stora tornets däck, var och en bredvid en krater; spakar på tornen öppnar två skyttegravar under fältet, och förstörda palissader går att slå sönder.
+
+I Heroes' Ascent spelar The Warden's Gallery (8v8, 5200x2500) det: ett solbelyst skulpturgalleri under takfönster. Den mittersta helgedomen står på toppen av den stora sockeln, och varje lag har tre nära sin vestibul, en på en sockel; spakar på den stora sockeln öppnar två kryptor under golvet, och vältade statyer går att slå sönder.
 
 ## Laglobby
 

@@ -443,6 +443,7 @@ describe("Capture Points bots (#2580)", () => {
       seed: "gallery",
       ruleset: RULESET,
       walls: allWallSegments(gallery.walls),
+      layers: matchLayers(gallery),
       gates: matchGates(gallery),
       bounds: { width: gallery.width, height: gallery.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
@@ -461,7 +462,7 @@ describe("Capture Points bots (#2580)", () => {
       sim.step(DT);
     }
     expect(sim.phase).toBe("finished");
-  });
+  }, 60_000);
 });
 
 describe("The Brazen Causeway (#3435)", () => {

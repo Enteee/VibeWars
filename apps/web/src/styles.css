@@ -8018,20 +8018,219 @@ body:has(#screens[style*="none"]) .now-playing {
   color: var(--accent);
 }
 
-/* After a match (#3563): the summary scrolls inside its block, and the
-   buttons under it stay in sight at any size. */
-.queue-summary {
-  max-width: 100%;
-  max-height: 60dvh;
-  overflow-y: auto;
-}
-
 .queue-actions {
   position: sticky;
   bottom: 0;
   justify-content: center;
   padding-block: 0.5rem;
   background: var(--bg);
+}
+
+/* After a match (#3565): the scores on the left, the charts on the right;
+   under 1000 px the charts go under the scores. The screen widens for them. */
+.screen-queue.has-results {
+  align-self: stretch;
+  width: min(1240px, 100%);
+  min-height: 0;
+}
+
+/* The results scroll; Rematch and Back stay a footer under them, never over them. */
+.screen-queue.has-results .queue-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-block: 0.5rem;
+}
+
+.screen-queue.has-results .queue-actions {
+  position: static;
+}
+
+.queue-results {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 0.75rem;
+  align-items: start;
+  width: 100%;
+}
+
+.queue-results:empty {
+  display: none;
+}
+
+.queue-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  max-height: 60dvh;
+  overflow-y: auto;
+}
+
+.queue-scores-toggle {
+  display: none;
+}
+
+@media (width < 1000px) {
+  .queue-results {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .queue-scores {
+    max-height: none;
+  }
+}
+
+/* A phone: your row and two more until *Show all*. */
+@media (width < 600px) {
+  .queue-scores.is-collapsed .is-extra {
+    display: none;
+  }
+
+  .queue-scores-toggle {
+    display: inline-flex;
+  }
+}
+
+/* The charts' panel (#3565): tabs, the legend's toggles, the plot, the
+   event strip and what its marks mean. Colours are the UI's own. */
+.match-charts {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.match-charts-tabs {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.match-charts-tab.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.match-charts-none {
+  margin: 0;
+  color: var(--ink-dim);
+}
+
+.match-charts-view {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.match-charts-legend,
+.match-charts-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+}
+
+.match-charts-chip {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+/* Off: hollow and dim. */
+.match-charts-chip[aria-pressed="false"] {
+  opacity: 0.45;
+}
+
+.match-charts-plot {
+  min-width: 0;
+  outline: none;
+}
+
+.match-charts-plot:focus-visible {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.match-charts-svg {
+  display: block;
+  max-width: 100%;
+}
+
+.chart-grid line {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart-grid text,
+.chart-title {
+  fill: var(--ink-dim);
+  font-size: 10px;
+}
+
+.chart-line {
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.chart-cursor {
+  stroke: var(--ink-dim);
+  stroke-width: 1;
+}
+
+.chart-mark {
+  cursor: default;
+  outline: none;
+}
+
+.chart-mark-ring {
+  fill: none;
+  stroke: none;
+}
+
+.chart-mark:hover .chart-mark-ring,
+.chart-mark:focus-visible .chart-mark-ring {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.match-charts-readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.75rem;
+  min-height: 1.1rem;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.match-charts-readout-item {
+  color: var(--chart-colour);
+}
+
+.match-charts-tip {
+  position: absolute;
+  z-index: 2;
+  max-width: 16rem;
+  padding: 0.25rem 0.45rem;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.match-charts-mark-key {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+  color: var(--ink-dim);
 }
 
 .versus-splash {
@@ -8349,6 +8548,128 @@ body:has(#screens[style*="none"]) .now-playing {
 .tutorial-skip-tutorial:hover,
 .tutorial-skip-tutorial:focus-visible {
   border-color: var(--accent);
+}
+
+/*
+ * The menu quest's coach (#3540): the menu dimmed under a lit cut-out
+ * round the control a beat points at, below toasts (z 60) so an error
+ * stays readable and usable. The lock is the coach's own listeners; the
+ * dim takes no pointer itself.
+ */
+.coach {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+}
+
+.coach-dim {
+  position: absolute;
+  inset: 0;
+  background: var(--menu-scrim);
+}
+
+/* The rest of the window's dim is this cut-out's shadow. */
+.coach-hole {
+  position: absolute;
+  border-radius: 8px;
+  box-shadow: 0 0 0 100vmax var(--menu-scrim);
+}
+
+.coach-dim[hidden],
+.coach-hole[hidden],
+.coach-bubble[hidden] {
+  display: none;
+}
+
+.coach-bubble {
+  position: absolute;
+  width: min(18rem, calc(100vw - 2rem));
+  padding: 0.7rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  color: var(--ink);
+  pointer-events: auto;
+}
+
+.coach-bubble-line,
+.coach-panel-line {
+  margin: 0;
+}
+
+.coach-panel {
+  position: absolute;
+  bottom: 16px;
+  inset-inline-end: 16px;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  pointer-events: auto;
+}
+
+.coach-panel[data-edge="top"] {
+  top: 16px;
+  bottom: auto;
+}
+
+.coach-panel[data-corner="start"] {
+  inset-inline: 16px auto;
+}
+
+.coach-panel-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.coach-checklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coach-checklist:empty {
+  display: none;
+}
+
+.coach-checklist li::before {
+  content: "☐ ";
+  color: var(--ink-dim);
+}
+
+.coach-checklist li.is-done::before {
+  content: "☑ ";
+  color: var(--accent);
+}
+
+.coach-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+/* A narrow window docks the panel to its bottom edge, or its top one. */
+@media (max-width: 899px) {
+  .coach-panel,
+  .coach-panel[data-corner="start"] {
+    inset-inline: 0;
+    bottom: 0;
+    width: auto;
+  }
+
+  .coach-panel[data-edge="top"] {
+    top: 0;
+    bottom: auto;
+  }
 }
 
 /* The splash screen (#2884): over everything until it ends. */

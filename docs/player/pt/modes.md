@@ -133,7 +133,7 @@ bandeira. Um bônus aparece como "Bônus de moral! +10%" ou "Bônus de moral
 inimigo". Na bússola, ♛ marca cada Lorde da Guilda, ⚑ cada bandeira e ◎ o
 suporte.
 
-Guild Hall Isle joga esse modo.
+Guild Hall Isle (8v8, 6000x2600) joga esse modo: uma ilha no mar. Cada Guild Lord fica no topo de um salão, atrás de uma muralha; sai-se pela guarita, por cima da muralha ou ao longo de um cais. A porta da guarita abre com uma alavanca na muralha inimiga. O suporte da bandeira fica num estrado no centro.
 
 ## Corrida da Relíquia
 
@@ -279,6 +279,8 @@ sobre eles até serem tomados. Um inimigo ao alcance de feitiço não os
 afasta: eles vão para um santuário ao alcance e lutam dali.
 
 Scarred Earth (4v4 e 8v8, 5400x2800) joga esse modo: um campo de batalha cheio de crateras ao entardecer. Os santuários ficam sobre torres de cerco destruídas, o do centro na plataforma da grande torre, cada um ao lado de uma cratera; alavancas nas torres abrem duas trincheiras sob o campo, e as paliçadas destruídas podem ser quebradas.
+
+Na Ascensão dos Heróis, The Warden's Gallery (8v8, 5200x2500) joga esse modo: uma galeria de esculturas ensolarada sob claraboias. O santuário do centro fica no topo do grande pedestal, e cada equipe tem três perto do seu vestíbulo, um sobre um pedestal; alavancas no grande pedestal abrem duas criptas sob o piso, e as estátuas tombadas podem ser quebradas.
 
 ## Sala de Equipe
 

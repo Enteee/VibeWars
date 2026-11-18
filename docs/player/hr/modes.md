@@ -117,7 +117,7 @@ gospodaru. Ispod njega redak navodi tko nosi zastavu. Pojačanje iskače kao
 "Podizanje morala! +10%" ili "Neprijateljsko podizanje morala". Na kompasu ♛ označava
 svakog Gospodara ceha, ⚑ svaku zastavu, a ◎ stalak.
 
-Guild Hall Isle ga igra.
+Guild Hall Isle (8v8, 6000x2600) ga igra: otok u moru. Svaki Guild Lord stoji na vrhu dvorane, iza bedema; van se ide kroz kulu s vratima, preko bedema ili duž mola. Vrata kule otvara poluga na neprijateljskom bedemu. Stalak za zastavu je na podiju u sredini.
 
 ## Utrka za relikvijom
 
@@ -268,6 +268,8 @@ na njima dok se ne zauzmu. Neprijatelj u dometu čarolije ne odvlači
 ih: stupaju na svetište u dosegu i bore se s njega.
 
 Scarred Earth (4v4 i 8v8, 5400x2800) ga igra: bojište puno kratera u sumrak. Svetišta stoje na razrušenim opsadnim tornjevima, srednje na palubi velikog tornja, svako pokraj kratera; poluge na tornjevima otvaraju dva rova ispod polja, a razrušene palisade mogu se razbiti.
+
+U Usponu heroja igra ga The Warden's Gallery (8v8, 5200x2500): sunčana galerija skulptura pod krovnim prozorima. Srednje svetište stoji na vrhu velikog postolja, a svaki tim ima tri blizu svog predvorja, jedno na postolju; poluge na velikom postolju otvaraju dvije kripte ispod poda, a srušeni kipovi mogu se razbiti.
 
 ## Timska soba
 

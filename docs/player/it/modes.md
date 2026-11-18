@@ -48,7 +48,7 @@ La squadra il cui Signore della gilda muore perde subito, e lo stesso vale per u
 
 Il tabellone mostra la Salute di ogni Signore della gilda, la tua prima, chi tiene la Base bandiera e quanto manca al suo bonus, quando i santuari riporteranno i morti e, negli ultimi 3 minuti, i danni di ogni squadra al signore nemico. Sotto, una riga indica chi porta una bandiera. Un bonus appare come "Bonus morale! +10%", o "Bonus morale nemico". Sulla bussola, ♛ segna ogni Signore della gilda, ⚑ ogni bandiera e ◎ la Base bandiera.
 
-Ci si gioca su Guild Hall Isle.
+Ci si gioca su Guild Hall Isle (8v8, 6000x2600): un'isola nel mare. Ogni Guild Lord sta in cima a una sala, dietro un bastione; si esce dal corpo di guardia, sopra il bastione o lungo un molo. Una porta del corpo di guardia si apre con una leva sul bastione nemico. Il supporto della bandiera è su una pedana al centro.
 
 ## Corsa alla reliquia
 
@@ -97,6 +97,8 @@ Ogni santuario è un anello a terra nel colore del proprietario, grigio se non �
 I bot si distribuiscono sui santuari che la tua squadra non ha ancora e ci restano sopra finché non vengono presi. Un nemico a portata d'incantesimo non li distrae: salgono su un santuario a portata e combattono da lì.
 
 Ci si gioca su Scarred Earth (4v4 e 8v8, 5400x2800): un campo di battaglia crivellato di crateri al crepuscolo. I santuari stanno su torri d'assedio distrutte, quello centrale sulla piattaforma della grande torre, ognuno accanto a un cratere; leve sulle torri aprono due trincee sotto il campo, e le palizzate distrutte si possono abbattere.
+
+Nell'Ascesa degli Eroi ci si gioca su The Warden's Gallery (8v8, 5200x2500): una galleria di sculture assolata sotto i lucernari. Il santuario centrale sta in cima al grande piedistallo, e ogni squadra ne ha tre vicino al proprio vestibolo, uno su un piedistallo; leve sul grande piedistallo aprono due cripte sotto il pavimento, e le statue abbattute si possono distruggere.
 
 ## Lobby squadra
 

@@ -1,7 +1,7 @@
 import { ASCENT_PROGRESSION } from "../net/maps.js";
 import { describe, expect, it, vi } from "vitest";
 
-import type { LobbySnapshot } from "@vibewars/game-session";
+import type { LobbySnapshot, MatchSummaryRow } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
 import { FakeElement } from "./fake-dom.test-support.js";
@@ -20,10 +20,14 @@ import {
   requeuedSince,
   teamEndAction,
   teamEndLine,
+  mountQueueScreen,
+  type QueueView,
   renderVersusSplash,
   versusTeams,
   waitedLabel,
 } from "./queue-screen.js";
+import { summaryTables } from "./match-summary.js";
+import { describeOutcome } from "./hud.js";
 
 function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapshot {
   return {
@@ -314,5 +318,60 @@ describe("nextHallHold (#2701)", () => {
     expect(nextHallHold(5_000, HALL, "loss", 9_000)).toBeNull();
     expect(nextHallHold(5_000, HALL, "forfeit", 9_000)).toBeNull();
     expect(nextHallHold(5_000, HALL, "host-left", 9_000)).toBe(5_000);
+  });
+});
+
+describe("the queue screen's results (#3565)", () => {
+  it("keeps its scores and charts across the stay countdown's repaints", () => {
+    vi.stubGlobal("HTMLElement", FakeElement);
+    vi.stubGlobal("document", {
+      createElement: () => new FakeElement(),
+      createElementNS: () => new FakeElement(),
+      createTextNode: (text: string) => Object.assign(new FakeElement(), { textContent: text }),
+    });
+    vi.stubGlobal("window", { addEventListener: () => undefined });
+    try {
+      const root = new FakeElement();
+      const noop = (): void => undefined;
+      const screen = mountQueueScreen(
+        root as unknown as HTMLElement,
+        { mode: "team-arena-8v8", characterName: "Me", mapName: (id) => id },
+        { onBack: noop, onQueueAgain: noop, onStayTogether: noop },
+      );
+      const row = (id: string, team: number): MatchSummaryRow => ({
+        id,
+        name: id,
+        guildTag: null,
+        heroRank: 0,
+        team,
+        signet: null,
+        damage: 0,
+        healing: 0,
+        taken: 0,
+        kills: 0,
+        deaths: 0,
+        interrupts: 0,
+      });
+      const summary = summaryTables([row("me", 0), row("foe", 1)], "me", 0, 0, new Set());
+      const ended = (secondsLeft: number): QueueView => ({
+        kind: "ended",
+        outcome: describeOutcome(0, "time", 0, []),
+        streak: 1,
+        summary,
+        chart: undefined,
+        stay: { kind: "offer", secondsLeft },
+      });
+      screen.show(ended(9));
+      const scores = root.querySelector(".queue-scores");
+      const charts = root.querySelector(".match-charts");
+      expect(scores).not.toBeNull();
+      screen.show(ended(8));
+      expect(root.querySelector(".queue-scores")).toBe(scores);
+      expect(root.querySelector(".match-charts")).toBe(charts);
+      screen.show({ kind: "refused", notice: "gone" });
+      expect(root.querySelector(".queue-scores")).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
