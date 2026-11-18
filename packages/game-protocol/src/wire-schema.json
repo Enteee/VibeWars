@@ -747,7 +747,7 @@
     "MAX_LOBBY_PLAYERS": { "literal": 24 },
     "MAX_RELAY_PEER_ID": { "literal": 64 },
     "MAX_RELAY_SEAL_CHARS": { "literal": 2048 },
-    "MAX_REPLAY_PARTS": { "literal": 512 },
+    "MAX_REPLAY_PARTS": { "literal": 1000 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_STROKE_POINTS": { "literal": 16 },
     "MAX_TEAM_LOBBY_SIDE": { "literal": 8 },
