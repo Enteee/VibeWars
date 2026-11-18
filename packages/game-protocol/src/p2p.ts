@@ -65,6 +65,7 @@ export const CHANNELS = [
   "chain",
   "ended",
   "match-replay",
+  "match-chart",
   "bye",
   "lobby-join",
   "lobby-challenge",
@@ -1066,6 +1067,69 @@ export interface WireEnded {
   readonly summary: readonly WireSummaryRow[];
   /** Seconds on the Elite Zaishen Battle's clock (#2692); `null` in any other match. */
   readonly clearSeconds: number | null;
+}
+
+/** The most samples a `WireMatchChart` series holds (#3564). */
+export const MAX_CHART_SAMPLES = 120;
+
+/** The most events a `WireMatchChart` holds (#3564). */
+export const MAX_CHART_EVENTS = 200;
+
+/** What changed hands: a shrine, the flag stand or the altar (#3564). */
+export const CHART_OBJECTIVES = ["point", "stand", "altar"] as const;
+
+/** One thing that happened in a match, `t` whole seconds after it began (#3564). */
+export type WireChartEvent =
+  | { readonly t: number; readonly kind: "death"; readonly id: string; readonly by: string | null }
+  | { readonly t: number; readonly kind: "resurrected"; readonly id: string }
+  | {
+      readonly t: number;
+      readonly kind: "interrupt";
+      readonly by: string;
+      readonly id: string;
+      readonly skillId: string;
+    }
+  | {
+      readonly t: number;
+      readonly kind: "objective";
+      readonly team: WireTeam;
+      readonly what: (typeof CHART_OBJECTIVES)[number];
+    };
+
+/** One player's series (#3564): every array one entry per sample. */
+export interface WireChartSeries {
+  readonly id: string;
+  /** Damage dealt to foes, taken and healing done; cumulative whole numbers. */
+  readonly dealt: readonly number[];
+  readonly taken: readonly number[];
+  readonly healed: readonly number[];
+  /** Percent of maximum, 0 to 100. */
+  readonly health: readonly number[];
+  readonly energy: readonly number[];
+}
+
+/**
+ * A match's time series and events (#3564), for the charts after it. A
+ * sample every `period` seconds; `dropped` events past `MAX_CHART_EVENTS`.
+ */
+export interface WireMatchChart {
+  readonly period: number;
+  readonly players: readonly WireChartSeries[];
+  readonly events: readonly WireChartEvent[];
+  readonly dropped: number;
+}
+
+/** The most parts a `WireMatchChart` is sent in. */
+export const MAX_CHART_PARTS = 16;
+
+/**
+ * Host to every client, right after `ended` (#3564): one of `parts`
+ * messages that together are the match's `WireMatchChart`. A whole one
+ * is too big for one message (#403), so each part carries some of its
+ * series and events, and every part the same `period` and `dropped`.
+ */
+export interface WireMatchChartPart extends WireMatchChart {
+  readonly parts: number;
 }
 
 /**
@@ -2914,6 +2978,129 @@ export function parseWireEnded(value: unknown, teamCount: WireTeamCount): WireEn
         summary,
         clearSeconds: raw.clearSeconds,
       }
+    : undefined;
+}
+
+function isPercent(value: unknown): value is number {
+  return isCount(value) && value <= 100;
+}
+
+function parseChartSeries(
+  value: unknown,
+  roster: ReadonlySet<string>,
+): WireChartSeries | undefined {
+  const raw = fields(value);
+  if (raw === undefined || !isString(raw.id) || !roster.has(raw.id)) {
+    return undefined;
+  }
+  const counts = (series: unknown): number[] | undefined =>
+    parseArray(series, MAX_CHART_SAMPLES, (item) => (isCount(item) ? item : undefined));
+  const percents = (series: unknown): number[] | undefined =>
+    parseArray(series, MAX_CHART_SAMPLES, (item) => (isPercent(item) ? item : undefined));
+  const dealt = counts(raw.dealt);
+  const taken = counts(raw.taken);
+  const healed = counts(raw.healed);
+  const health = percents(raw.health);
+  const energy = percents(raw.energy);
+  return dealt !== undefined &&
+    taken !== undefined &&
+    healed !== undefined &&
+    health !== undefined &&
+    energy !== undefined
+    ? { id: raw.id, dealt, taken, healed, health, energy }
+    : undefined;
+}
+
+function parseChartEvent(
+  value: unknown,
+  roster: ReadonlySet<string>,
+  teamCount: WireTeamCount,
+): WireChartEvent | undefined {
+  const raw = fields(value);
+  if (raw === undefined || !isCount(raw.t)) {
+    return undefined;
+  }
+  const t = raw.t;
+  const member = (id: unknown): id is string => isString(id) && roster.has(id);
+  switch (raw.kind) {
+    case "death":
+      return member(raw.id) && (raw.by === null || member(raw.by))
+        ? { t, kind: "death", id: raw.id, by: raw.by }
+        : undefined;
+    case "resurrected":
+      return member(raw.id) ? { t, kind: "resurrected", id: raw.id } : undefined;
+    case "interrupt":
+      return member(raw.by) && member(raw.id) && isString(raw.skillId)
+        ? { t, kind: "interrupt", by: raw.by, id: raw.id, skillId: raw.skillId }
+        : undefined;
+    case "objective":
+      return isTeam(raw.team) && raw.team < teamCount && isOneOf(raw.what, CHART_OBJECTIVES)
+        ? { t, kind: "objective", team: raw.team, what: raw.what }
+        : undefined;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * One part of a match's charts (#3564), between the ids of `roster`, its
+ * summary's. `joinMatchChart` checks the parts against each other.
+ */
+export function parseWireMatchChartPart(
+  value: unknown,
+  roster: ReadonlySet<string>,
+  teamCount: WireTeamCount,
+): WireMatchChartPart | undefined {
+  const raw = fields(value);
+  if (
+    raw === undefined ||
+    !isCount(raw.period) ||
+    raw.period < 1 ||
+    !isCount(raw.dropped) ||
+    !isCount(raw.parts) ||
+    raw.parts < 1 ||
+    raw.parts > MAX_CHART_PARTS
+  ) {
+    return undefined;
+  }
+  const players = parseArray(raw.players, roster.size, (item) => parseChartSeries(item, roster));
+  const events = parseArray(raw.events, MAX_CHART_EVENTS, (item) =>
+    parseChartEvent(item, roster, teamCount),
+  );
+  return players !== undefined && events !== undefined
+    ? { period: raw.period, parts: raw.parts, players, events, dropped: raw.dropped }
+    : undefined;
+}
+
+/**
+ * The whole chart, once every one of its parts has come: `undefined`
+ * while one is missing, and for parts that disagree, name a player twice,
+ * hold series of different lengths or more than `MAX_CHART_EVENTS`.
+ */
+export function joinMatchChart(parts: readonly WireMatchChartPart[]): WireMatchChart | undefined {
+  const first = parts[0];
+  if (
+    parts.length !== first?.parts ||
+    parts.some(
+      (part) =>
+        part.parts !== first.parts ||
+        part.period !== first.period ||
+        part.dropped !== first.dropped,
+    )
+  ) {
+    return undefined;
+  }
+  const players = parts.flatMap((part) => part.players);
+  const events = parts.flatMap((part) => part.events);
+  const length = players[0]?.dealt.length ?? 0;
+  return events.length <= MAX_CHART_EVENTS &&
+    new Set(players.map(({ id }) => id)).size === players.length &&
+    players.every((series) =>
+      [series.dealt, series.taken, series.healed, series.health, series.energy].every(
+        (samples) => samples.length === length,
+      ),
+    )
+    ? { period: first.period, players, events, dropped: first.dropped }
     : undefined;
 }
 

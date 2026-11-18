@@ -90,6 +90,7 @@ const MATCH: MatchSnapshot = {
   decks: [],
   lifts: [],
   summary: undefined,
+  chart: undefined,
 };
 
 function body(id: string, x: number, team: RenderableActor["team"]): RenderableActor {

@@ -15,6 +15,8 @@ import {
   parseWireRespawns,
   parseWireCombatBatch,
   parseWireEnded,
+  parseWireMatchChartPart,
+  joinMatchChart,
   parseWireSkillBar,
   parseWireWeaponSets,
   parseWireSnapshotPart,
@@ -36,6 +38,8 @@ import {
   type WireMatchReplayPart,
   type WireTraps,
   type WireEnded,
+  type WireMatchChart,
+  type WireMatchChartPart,
   type WireSkillBar,
   type WireWeaponSets,
   type WireSnapshot,
@@ -190,6 +194,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let ended: WireEnded | undefined;
   /** The host's summary from any `ended`, a host leaving's included (#1057). */
   let summary: WireEnded["summary"] | undefined;
+  /** The parts of the host's charts so far (#3564), and the whole once they have all come. */
+  const chartParts: WireMatchChartPart[] = [];
+  let chart: WireMatchChart | undefined;
   let recharges: Recharges = { message: { slots: [], spent: [], queued: null }, at: 0 };
   /**
    * Your own adrenaline per slot as last sent (#463), with when its loss
@@ -396,6 +403,24 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
       }
     });
   });
+  // Sent after `ended` on the same room, so the summary names the roster
+  // the parts are checked against; a part before it is no part.
+  fromHost(
+    "match-chart",
+    (value) =>
+      ended === undefined
+        ? undefined
+        : parseWireMatchChartPart(value, new Set(ended.summary.map(({ id }) => id)), teamCount()),
+    (part) => {
+      if (chart !== undefined || chartParts.length >= part.parts) {
+        return;
+      }
+      chartParts.push(part);
+      if (chartParts.length === part.parts) {
+        chart = joinMatchChart(chartParts);
+      }
+    },
+  );
   unsubscribe.push(
     transport.onPeerLeave((peerId) => {
       if (peerId === hostId) {
@@ -514,6 +539,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 lifts: [],
                 traps,
                 summary,
+                chart,
               }
             : {
                 ...matchSnapshot(
@@ -523,6 +549,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 ),
                 traps,
                 summary,
+                chart,
               };
         // An `ended` may land before the snapshot that says so.
         return ended === undefined

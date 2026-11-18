@@ -10,6 +10,9 @@ import {
   MAX_WIRE_CRACKS,
   MAX_WIRE_EVENTS,
   MAX_SNAPSHOT_PARTS,
+  MAX_CHART_EVENTS,
+  MAX_CHART_PARTS,
+  MAX_CHART_SAMPLES,
   MAX_WIRE_CAPTURE_POINTS,
   MAX_WIRE_TOGGLES,
   MAX_WIRE_PINGS,
@@ -59,6 +62,8 @@ import {
   parseRecharge,
   parseWireCombatBatch,
   parseWireEnded as parseWireEndedOf,
+  parseWireMatchChartPart,
+  joinMatchChart,
   parseWireSkillBar,
   parseWireSnapshotPart as parseWireSnapshotPartOf,
   parseWireWeaponSets,
@@ -95,6 +100,9 @@ import type {
   WireCombat,
   WireCombatBatch,
   WireEnded,
+  WireChartEvent,
+  WireChartSeries,
+  WireMatchChartPart,
   WirePlayer,
   WireStatus,
   WireSkillBar,
@@ -3159,5 +3167,116 @@ describe("heroRank (#2702)", () => {
 
   it.each([16, -1, 1.5, "3", null, undefined])("refuses %s in a hello", (heroRank) => {
     expect(parsePeerHello({ ...hello, heroRank })).toBeUndefined();
+  });
+});
+
+describe("the match's charts (#3564)", () => {
+  const roster = new Set(["ann", "bob", "cat"]);
+  const series = (id: string): WireChartSeries => ({
+    id,
+    dealt: [0, 10, 30],
+    taken: [5, 5, 40],
+    healed: [0, 0, 12],
+    health: [100, 64, 0],
+    energy: [80, 20, 0],
+  });
+  const death: WireChartEvent = { t: 3, kind: "death", id: "cat", by: "ann" };
+  const part: WireMatchChartPart = {
+    period: 14,
+    parts: 1,
+    players: [series("ann"), series("bob"), series("cat")],
+    events: [
+      death,
+      { t: 4, kind: "death", id: "bob", by: null },
+      { t: 9, kind: "resurrected", id: "bob" },
+      { t: 12, kind: "interrupt", by: "ann", id: "cat", skillId: "monk.healing-breeze" },
+      { t: 20, kind: "objective", team: 1, what: "point" },
+    ],
+    dropped: 2,
+  };
+  const parse = (value: unknown, teamCount: 2 | 3 = 2) =>
+    parseWireMatchChartPart(value, roster, teamCount);
+
+  it("round trips a part, and joins its parts into the whole", () => {
+    expect(parse(JSON.parse(JSON.stringify(part)))).toEqual(part);
+    const halves: WireMatchChartPart[] = [
+      { ...part, parts: 2, players: [series("ann"), series("bob")], events: [] },
+      { ...part, parts: 2, players: [series("cat")] },
+    ];
+    expect(joinMatchChart(halves)).toEqual({
+      period: 14,
+      players: part.players,
+      events: part.events,
+      dropped: 2,
+    });
+  });
+
+  it("takes a third team's objective in a three-team match only", () => {
+    const third = { ...part, events: [{ t: 1, kind: "objective", team: 2, what: "altar" }] };
+    expect(parse(third)).toBeUndefined();
+    expect(parse(third, 3)).toEqual(third);
+  });
+
+  const long = Array.from({ length: MAX_CHART_SAMPLES + 1 }, () => 1);
+  it.each([
+    ["a period of 0", { ...part, period: 0 }],
+    ["a fractional dropped", { ...part, dropped: 1.5 }],
+    ["0 parts", { ...part, parts: 0 }],
+    ["more than MAX_CHART_PARTS parts", { ...part, parts: MAX_CHART_PARTS + 1 }],
+    ["a stranger's series", { ...part, players: [series("eve")] }],
+    ["more series than the roster", { ...part, players: [...part.players, series("ann")] }],
+    ["a series past MAX_CHART_SAMPLES", { ...part, players: [{ ...series("ann"), dealt: long }] }],
+    ["a negative sample", { ...part, players: [{ ...series("ann"), taken: [-1, 0, 0] }] }],
+    ["a fractional sample", { ...part, players: [{ ...series("ann"), healed: [0.5, 1, 2] }] }],
+    ["health over 100", { ...part, players: [{ ...series("ann"), health: [101, 0, 0] }] }],
+    ["an infinite energy", { ...part, players: [{ ...series("ann"), energy: [Infinity, 0, 0] }] }],
+    [
+      "more than MAX_CHART_EVENTS events",
+      {
+        ...part,
+        events: Array.from({ length: MAX_CHART_EVENTS + 1 }, () => death),
+      },
+    ],
+    ["a stranger's death", { ...part, events: [{ t: 1, kind: "death", id: "eve", by: null }] }],
+    ["a stranger's kill", { ...part, events: [{ t: 1, kind: "death", id: "ann", by: "eve" }] }],
+    ["an unknown kind", { ...part, events: [{ t: 1, kind: "vanished", id: "ann" }] }],
+    [
+      "an unknown objective",
+      { ...part, events: [{ t: 1, kind: "objective", team: 0, what: "lever" }] },
+    ],
+    ["a negative time", { ...part, events: [{ t: -1, kind: "resurrected", id: "ann" }] }],
+  ])("refuses %s", (_, value) => {
+    expect(parse(value)).toBeUndefined();
+  });
+
+  it.each<[string, WireMatchChartPart[]]>([
+    ["a part missing", [{ ...part, parts: 2 }]],
+    [
+      "parts of different periods",
+      [
+        { ...part, parts: 2 },
+        { ...part, parts: 2, period: 7, players: [] },
+      ],
+    ],
+    [
+      "a player twice",
+      [
+        { ...part, parts: 2 },
+        { ...part, parts: 2, events: [] },
+      ],
+    ],
+    [
+      "series of different lengths",
+      [{ ...part, players: [series("ann"), { ...series("bob"), health: [100, 100] }] }],
+    ],
+    [
+      "more than MAX_CHART_EVENTS events in all",
+      [
+        { ...part, parts: 2, events: Array.from({ length: MAX_CHART_EVENTS }, () => death) },
+        { ...part, parts: 2, players: [] },
+      ],
+    ],
+  ])("joins nothing from %s", (_, parts) => {
+    expect(joinMatchChart(parts)).toBeUndefined();
   });
 });

@@ -4136,12 +4136,15 @@ const heavyLeases = new HeavyLeases();
  * @returns {Record<string, unknown>}
  */
 function heavy(employee, argv) {
-  const [op = "", arg = ""] = argv;
+  const [op = "", arg = "", kind = ""] = argv;
   const now = Date.now();
   /** @type {Record<string, unknown>} */
   let answer;
   if (op === "acquire") {
-    answer = { ...heavyLeases.acquire(employee, arg.slice(0, 80), now) };
+    if (kind !== "short" && kind !== "long") {
+      return { allow: false, reason: `heavy: unknown job kind "${kind}"`, code: 77 };
+    }
+    answer = { ...heavyLeases.acquire(employee, arg.slice(0, 80), kind === "short", now) };
   } else if (op === "renew") {
     answer = { ok: heavyLeases.renew(employee, arg, now) };
   } else if (op === "release") {

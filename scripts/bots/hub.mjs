@@ -43,10 +43,13 @@
  *                                    scale them to n (manager only, #1890)
  *   company runners logs [<runner>] [--lines <n>]  the supervisor's log and
  *                                    the runners', or one runner's (#2729)
- *   company heavy [--max-wait <min>] <cmd...>  runs a heavy local job (bench,
+ *   company heavy [--short] [--max-wait <min>] <cmd...>  runs a heavy local job (bench,
  *                                    Playwright) when it is its turn, one at a
  *                                    time company-wide; `company heavy` alone
- *                                    shows the holder and the queue (#3362)
+ *                                    shows the holder and the queue (#3362).
+ *                                    --short: under 5 min (a screenshot, one
+ *                                    spec); goes ahead of waiting long jobs,
+ *                                    killed at 10 min (#3582)
  *     (`company` is this script with `company` as its first word)
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
@@ -54,9 +57,8 @@
  * without spending a round trip, and more importantly without having to
  * discover it by being refused.
  */
-import { execFile, spawn, spawnSync } from "node:child_process";
+import { execFile, spawnSync } from "node:child_process";
 import fs from "node:fs";
-import { constants as osConstants } from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -73,7 +75,7 @@ import {
 import { HUBD_ALIVE, parseAlive } from "./hub-health.mjs";
 import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
-import { runHeavy } from "./heavy.mjs";
+import { runHeavy, spawnInGroup } from "./heavy.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
 import { visible } from "./protocol.mjs";
 
@@ -275,29 +277,14 @@ if (argv[0] === "push") {
           },
         );
       }),
-    spawnChild: (cmd, env) => {
-      const [file = "", ...args] = cmd;
-      const child = spawn(file, args, { stdio: "inherit", env });
-      return {
-        exited: new Promise((resolve) => {
-          child.on("error", (error) => {
-            console.error(`heavy: ${error.message}`);
-            resolve(127);
-          });
-          child.on("exit", (status, signal) => {
-            resolve(status ?? (signal === null ? 1 : 128 + osConstants.signals[signal]));
-          });
-        }),
-        kill: (signal) => child.kill(signal),
-      };
-    },
+    spawnChild: spawnInGroup,
     sleep: (ms) => sleep(ms),
     now: () => Date.now(),
     say: (line) => {
       console.error(line);
     },
     onSignal: (handler) => {
-      for (const signal of /** @type {const} */ (["SIGINT", "SIGTERM"])) {
+      for (const signal of /** @type {const} */ (["SIGINT", "SIGTERM", "SIGHUP"])) {
         process.on(signal, () => {
           handler(signal);
         });
