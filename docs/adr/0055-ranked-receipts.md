@@ -83,7 +83,7 @@ A receipt nobody but its host signed cannot exist, because the start round needs
 - **Farming weights.** Each game's contribution to the Glicko sums is multiplied by a weight w in [0, 1]:
   - The k-th match against the same opposing identity set within one day weighs 1/k. Only the first 3 such matches count at all.
   - At most 20 rated matches per identity per day count.
-  - Trust: w is multiplied by the opponents' average trust, where trust(id) = min(1, D/12)³, and D is the number of distinct opponents of `id` who themselves have at least 3 distinct opponents. Cubed, because a Glicko step is not linear in its weight: a closed ring of four keys (D = 3) keeps under 5 % of a real gain in a day, where a plain D/20 kept 27 %.
+  - Trust: w is multiplied by the opponents' average trust, where trust(id) = min(1, D/min(12, P−1))³, D is the number of distinct opponents of `id` who themselves have at least 3 distinct opponents, and P the number of keys with at least one valid receipt up to that day, so a young ladder of five keys who all play each other rates normally. Cubed, because a Glicko step is not linear in its weight: a closed ring of four keys (D = 3) keeps under 5 % of a real gain in a day, where a plain D/20 kept 27 %.
 - **Forks.** A receipt whose `prev` for some key repeats one already used on that key's chain is a fork. Only the earliest receipt in canonical order stays on the chain. Later ones are void for everyone in them, and the key is marked forked on the leaderboard.
 
 Floats are evaluated in a single engine: the job runs on Node, and players run the same code on the same Node major when they recompute. The output records the engine version beside its hash.

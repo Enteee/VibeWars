@@ -28,7 +28,10 @@ export const RATING = {
   maxRepeats: 3,
   /** Only this many rated matches per identity per day count. */
   maxMatchesPerDay: 20,
-  /** Trust is full at this many distinct, themselves-connected opponents. */
+  /**
+   * Trust is full at this many distinct, themselves-connected opponents, or
+   * at every other key when fewer than that have played at all.
+   */
   trustOpponents: 12,
   /** An opponent counts toward trust once it has met this many distinct opponents. */
   trustedOpponentMin: 3,
@@ -358,19 +361,33 @@ function rdBefore(state: State, day: number): number {
 }
 
 /**
- * Step 5's trust for the identities whose opponents changed: min(1, D/12)³,
- * where D counts the distinct opponents that met ≥ 3 distinct opponents
- * themselves. Cubed, because Glicko's step is not linear in a weight: a
- * ring of four at a plain D/12 would still keep a third of a real gain.
+ * Step 5's trust: min(1, D/min(12, P−1))³, where D counts the distinct
+ * opponents that met ≥ 3 distinct opponents themselves and P the keys with
+ * a receipt so far. Cubed, because Glicko's step is not linear in a weight:
+ * a ring of four at a plain D/12 would still keep a third of a real gain.
+ * Recomputed for the identities whose opponents changed, or for everyone
+ * when P did. Returns the new P.
  */
-function updateTrust(states: Map<string, State>, touched: ReadonlySet<string>): void {
+function updateTrust(
+  states: Map<string, State>,
+  touched: ReadonlySet<string>,
+  population: number,
+): number {
+  const players = [...states].filter(([, state]) => state.opponents.size > 0);
   const stale = new Set<string>();
-  for (const pubkey of touched) {
-    stale.add(pubkey);
-    for (const opponent of stateOf(states, pubkey).opponents) {
-      stale.add(opponent);
+  if (players.length === population) {
+    for (const pubkey of touched) {
+      stale.add(pubkey);
+      for (const opponent of stateOf(states, pubkey).opponents) {
+        stale.add(opponent);
+      }
+    }
+  } else {
+    for (const [pubkey] of players) {
+      stale.add(pubkey);
     }
   }
+  const full = Math.min(RATING.trustOpponents, players.length - 1);
   for (const pubkey of stale) {
     const state = stateOf(states, pubkey);
     let connected = 0;
@@ -379,8 +396,9 @@ function updateTrust(states: Map<string, State>, touched: ReadonlySet<string>): 
         connected += 1;
       }
     }
-    state.trust = Math.min(1, connected / RATING.trustOpponents) ** 3;
+    state.trust = Math.min(1, connected / full) ** 3;
   }
+  return players.length;
 }
 
 const mean = (values: readonly number[]): number =>
@@ -410,6 +428,7 @@ export function rate(
       days.set(match.day, [match]);
     }
   }
+  let population = 0;
   for (const [day, today] of days) {
     // Who met whom, up to and including today, before anyone is weighted.
     const touched = new Set<string>();
@@ -429,7 +448,7 @@ export function rate(
         }
       });
     }
-    updateTrust(states, touched);
+    population = updateTrust(states, touched, population);
 
     // Every opponent is seen as it was before today began.
     const before = new Map<string, GlickoPlayer>();

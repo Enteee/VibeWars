@@ -272,11 +272,29 @@ describe("rate", () => {
       ledger.play(1, [[a], [b]], { winningTeam: a === ring[0] ? 0 : i % 2 });
     }
     const ratings = rate(ledger.receipts, 1, crypto);
+    // Enough keys that the bound is the full 12, not P − 1.
+    expect(ratings.size).toBeGreaterThanOrEqual(26);
     const real = of(ratings, honest).rating - RATING.initialRating;
     const farmed = of(ratings, ring[0]).rating - RATING.initialRating;
     expect(Math.abs(farmed)).toBeLessThan(0.05 * Math.abs(real));
     expect(of(ratings, ring[0]).wins).toBe(0);
     expect(of(ratings, honest)).toMatchObject({ wins: 20, streak: 20 });
+  });
+
+  it("gives full trust to 5 keys that all play each other, when nobody else has played", () => {
+    const ledger = new Ledger();
+    const five = keys("five", 5);
+    roundRobin(ledger, 0, five);
+    for (const other of five.slice(1)) {
+      ledger.play(1, [[five[0]], [other]], { winningTeam: 0 });
+    }
+    const ratings = rate(ledger.receipts, 1, crypto);
+    for (const pubkey of five) {
+      expect(of(ratings, pubkey).trust).toBe(1);
+    }
+    // At the old D/12 bound, (4/12)³ would have kept this to a few points.
+    const before = of(rate(ledger.receipts, 0, crypto), five[0]).rating;
+    expect(of(ratings, five[0]).rating - before).toBeGreaterThan(50);
   });
 
   it("voids a fork for everyone in it and marks the key, keeping the earlier receipt", () => {
