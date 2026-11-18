@@ -309,7 +309,7 @@ describe("openIndexedDbStore and other tabs (#1404)", () => {
     const request = stubOpen(stores);
     void openIndexedDbStore(() => undefined);
     request.onupgradeneeded?.();
-    expect([...stores].sort()).toEqual(["characters", "replays", "teams"]);
+    expect([...stores].sort()).toEqual(["characters", "replay-dates", "replays", "teams"]);
   });
 
   it("drops an older build's match store and keeps characters, teams and replays (#2019)", () => {
@@ -317,6 +317,6 @@ describe("openIndexedDbStore and other tabs (#1404)", () => {
     const request = stubOpen(stores);
     void openIndexedDbStore(() => undefined);
     request.onupgradeneeded?.();
-    expect([...stores].sort()).toEqual(["characters", "replays", "teams"]);
+    expect([...stores].sort()).toEqual(["characters", "replay-dates", "replays", "teams"]);
   });
 });

@@ -2,7 +2,12 @@ import type { MatchReplay } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import { KEPT_REPLAYS, ReplayStore } from "./replays.js";
-import { REPLAY_STORE, createMemoryStore } from "./repository.js";
+import {
+  REPLAY_DATE_STORE,
+  REPLAY_STORE,
+  createMemoryStore,
+  type KeyValueStore,
+} from "./repository.js";
 
 function replay(seed: string): MatchReplay {
   return {
@@ -38,13 +43,39 @@ describe("ReplayStore (#3572)", () => {
     expect(await replays.list()).toHaveLength(1);
   });
 
-  it("deletes a record that is not a replay (ADR-0016)", async () => {
+  it("deletes a record that is not a replay, or has no date (ADR-0016)", async () => {
     const store = createMemoryStore();
     const replays = new ReplayStore(store);
-    await store.put(REPLAY_STORE, "no-envelope", { replay: replay("seed") });
-    await store.put(REPLAY_STORE, "not-a-replay", { keptAt: 1, replay: { seed: 3 } });
+    await store.put(REPLAY_STORE, "no-date", replay("seed"));
+    await store.put(REPLAY_STORE, "not-a-replay", { seed: 3 });
+    await store.put(REPLAY_DATE_STORE, "not-a-replay", 1);
+    await store.put(REPLAY_DATE_STORE, "bad-date", "yesterday");
     await replays.keep({ hash: "good", replay: replay("seed") });
     expect(await replays.list()).toEqual([{ hash: "good", replay: replay("seed") }]);
     expect((await store.list(REPLAY_STORE)).map(({ key }) => key)).toEqual(["good"]);
+    expect((await store.list(REPLAY_DATE_STORE)).map(({ key }) => key)).toEqual(["good"]);
+  });
+
+  it("prunes by the dates alone, never reading a replay (perf-sec-qa on #3592)", async () => {
+    const store = createMemoryStore();
+    const read: string[] = [];
+    const watched: KeyValueStore = {
+      ...store,
+      get: (name, key) => {
+        read.push(name);
+        return store.get(name, key);
+      },
+      list: (name) => {
+        read.push(name);
+        return store.list(name);
+      },
+    };
+    let now = 0;
+    const replays = new ReplayStore(watched, () => (now += 1));
+    for (let i = 0; i <= KEPT_REPLAYS; i += 1) {
+      await replays.keep({ hash: `hash-${String(i)}`, replay: replay(`seed-${String(i)}`) });
+    }
+    expect(read).not.toContain(REPLAY_STORE);
+    expect(await store.list(REPLAY_STORE)).toHaveLength(KEPT_REPLAYS);
   });
 });

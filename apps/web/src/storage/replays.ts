@@ -1,20 +1,17 @@
 import { parseReplay, type RecordedReplay } from "@vibewars/game-session";
 
-import { REPLAY_STORE, type KeyValueStore } from "./repository.js";
+import { REPLAY_DATE_STORE, REPLAY_STORE, type KeyValueStore } from "./repository.js";
 
 /** How many replays a player keeps (#3572): the newest, by when they came. */
 export const KEPT_REPLAYS = 50;
 
-/** A replay as stored, under its hash: when it came, in ms, orders the pruning. */
-interface StoredReplay {
-  readonly keptAt: number;
-  readonly replay: unknown;
-}
-
 /**
  * The replays of the matches this player played (#3572, ADR-0054), kept
- * for a dispute later. Nothing shows them yet. A record of the wrong
- * shape is deleted, as `repository.ts` does with characters (ADR-0016).
+ * for a dispute later. Nothing shows them yet. Each is stored under its
+ * hash, and when it came, in ms, under the same hash in a store of its
+ * own: pruning reads those dates and never a replay, which can be
+ * megabytes. A record of the wrong shape is deleted, as `repository.ts`
+ * does with characters (ADR-0016).
  */
 export class ReplayStore {
   readonly #store: KeyValueStore;
@@ -27,48 +24,60 @@ export class ReplayStore {
 
   /** Keeps `recorded`, then drops the oldest past `KEPT_REPLAYS`. */
   async keep(recorded: RecordedReplay): Promise<void> {
-    const stored: StoredReplay = { keptAt: this.#now(), replay: recorded.replay };
-    await this.#store.put(REPLAY_STORE, recorded.hash, stored);
-    // By the envelope alone: parsing every replay on each keep would cost a
-    // second of main thread after a match.
+    await this.#store.put(REPLAY_STORE, recorded.hash, recorded.replay);
+    await this.#store.put(REPLAY_DATE_STORE, recorded.hash, this.#now());
     const kept: { readonly key: string; readonly keptAt: number }[] = [];
-    for (const { key, value } of await this.#store.list(REPLAY_STORE)) {
-      const row = storedReplay(value);
-      if (row === undefined) {
-        await this.#store.delete(REPLAY_STORE, key);
+    for (const { key, value } of await this.#store.list(REPLAY_DATE_STORE)) {
+      const at = keptAt(value);
+      if (at === undefined) {
+        await this.#drop(key);
       } else {
-        kept.push({ key, keptAt: row.keptAt });
+        kept.push({ key, keptAt: at });
       }
     }
-    kept.sort((a, b) => b.keptAt - a.keptAt || (a.key < b.key ? -1 : 1));
-    for (const old of kept.slice(KEPT_REPLAYS)) {
-      await this.#store.delete(REPLAY_STORE, old.key);
+    for (const old of newestFirst(kept).slice(KEPT_REPLAYS)) {
+      await this.#drop(old.key);
     }
   }
 
-  /** Every kept replay, newest first; any that is not one is deleted. */
+  /** Every kept replay, newest first; any that is not one, or has no date, is deleted. */
   async list(): Promise<RecordedReplay[]> {
-    const rows: { readonly keptAt: number; readonly recorded: RecordedReplay }[] = [];
+    const dates = new Map<string, number>();
+    for (const { key, value } of await this.#store.list(REPLAY_DATE_STORE)) {
+      const at = keptAt(value);
+      if (at !== undefined) {
+        dates.set(key, at);
+      }
+    }
+    const rows: {
+      readonly key: string;
+      readonly keptAt: number;
+      readonly recorded: RecordedReplay;
+    }[] = [];
     for (const { key, value } of await this.#store.list(REPLAY_STORE)) {
-      const stored = storedReplay(value);
-      const replay = stored === undefined ? undefined : parseReplay(stored.replay);
-      if (stored === undefined || replay === undefined) {
-        await this.#store.delete(REPLAY_STORE, key);
+      const at = dates.get(key);
+      const replay = parseReplay(value);
+      if (at === undefined || replay === undefined) {
+        await this.#drop(key);
         continue;
       }
-      rows.push({ keptAt: stored.keptAt, recorded: { hash: key, replay } });
+      rows.push({ key, keptAt: at, recorded: { hash: key, replay } });
     }
-    return rows
-      .sort((a, b) => b.keptAt - a.keptAt || (a.recorded.hash < b.recorded.hash ? -1 : 1))
-      .map(({ recorded }) => recorded);
+    return newestFirst(rows).map(({ recorded }) => recorded);
+  }
+
+  async #drop(key: string): Promise<void> {
+    await this.#store.delete(REPLAY_STORE, key);
+    await this.#store.delete(REPLAY_DATE_STORE, key);
   }
 }
 
-function storedReplay(value: unknown): StoredReplay | undefined {
-  if (typeof value !== "object" || value === null || !("keptAt" in value) || !("replay" in value)) {
-    return undefined;
-  }
-  return typeof value.keptAt === "number" && Number.isFinite(value.keptAt)
-    ? { keptAt: value.keptAt, replay: value.replay }
-    : undefined;
+function keptAt(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function newestFirst<Row extends { readonly key: string; readonly keptAt: number }>(
+  rows: Row[],
+): Row[] {
+  return rows.sort((a, b) => b.keptAt - a.keptAt || (a.key < b.key ? -1 : 1));
 }
