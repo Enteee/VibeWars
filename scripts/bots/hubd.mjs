@@ -4136,7 +4136,7 @@ const heavyLeases = new HeavyLeases();
  * @returns {Record<string, unknown>}
  */
 function heavy(employee, argv) {
-  const [op = "", arg = "", kind = "long"] = argv;
+  const [op = "", arg = "", kind = ""] = argv;
   const now = Date.now();
   /** @type {Record<string, unknown>} */
   let answer;

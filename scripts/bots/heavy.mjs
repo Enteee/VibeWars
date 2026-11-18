@@ -5,6 +5,9 @@
  * from what is injected, so it can be tested without a daemon or a child.
  */
 
+import { spawn } from "node:child_process";
+import { constants as osConstants } from "node:os";
+
 /** Exit status when the wait ran out: EX_TEMPFAIL. */
 export const EXIT_GAVE_UP = 75;
 /** Exit status when the command could not be started. */
@@ -155,3 +158,33 @@ export const runHeavy = async (deps) => {
     await sleep(POLL_MS);
   }
 };
+
+/**
+ * Start the command as its own process group, so a signal reaches what a
+ * wrapper (`bash -c`, `pnpm run`) started too and not only the wrapper.
+ * @param {string[]} cmd
+ * @param {Record<string, string | undefined>} env
+ * @returns {{ exited: Promise<number>, kill: (signal: NodeJS.Signals) => void }}
+ */
+export function spawnInGroup(cmd, env) {
+  const [file = "", ...args] = cmd;
+  const child = spawn(file, args, { stdio: "inherit", env, detached: true });
+  return {
+    exited: new Promise((resolve) => {
+      child.on("error", (error) => {
+        console.error(`heavy: ${error.message}`);
+        resolve(EXIT_NOT_FOUND);
+      });
+      child.on("exit", (status, signal) => {
+        resolve(status ?? (signal === null ? 1 : 128 + osConstants.signals[signal]));
+      });
+    }),
+    kill: (signal) => {
+      try {
+        process.kill(-(child.pid ?? 0), signal);
+      } catch {
+        // the group is already gone
+      }
+    },
+  };
+}

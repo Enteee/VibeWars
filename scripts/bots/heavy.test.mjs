@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -7,6 +8,7 @@ import {
   SHORT_KILL_MS,
   parseHeavy,
   runHeavy,
+  spawnInGroup,
 } from "./heavy.mjs";
 
 /**
@@ -177,5 +179,25 @@ describe("parseHeavy", () => {
       short: true,
       cmd: ["x"],
     });
+  });
+});
+
+describe("spawnInGroup", () => {
+  it("kills what a wrapper started, not only the wrapper", async () => {
+    const marker = `sleep ${String(4000 + (process.pid % 1000))}`;
+    const child = spawnInGroup(["bash", "-c", `${marker}; true`], process.env);
+    await new Promise((r) => setTimeout(r, 300));
+    const alive = () => {
+      try {
+        return execFileSync("pgrep", ["-f", marker]).length > 0;
+      } catch {
+        return false;
+      }
+    };
+    expect(alive()).toBe(true);
+    child.kill("SIGTERM");
+    await child.exited;
+    await new Promise((r) => setTimeout(r, 200));
+    expect(alive()).toBe(false);
   });
 });

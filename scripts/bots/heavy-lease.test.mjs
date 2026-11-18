@@ -25,7 +25,7 @@ describe("HeavyLeases", () => {
     const leases = new HeavyLeases();
     leases.acquire("a", "x", false, 0);
     leases.acquire("b", "x", false, 1);
-    expect(leases.acquire("b", "x", TTL_MS - 1).granted).toBe(false);
+    expect(leases.acquire("b", "x", false, TTL_MS - 1).granted).toBe(false);
     expect(leases.acquire("b", "x", false, TTL_MS + 1).granted).toBe(true);
   });
 
@@ -34,7 +34,7 @@ describe("HeavyLeases", () => {
     const first = leases.acquire("a", "x", false, 0);
     if (!first.granted) throw new Error("not granted");
     expect(leases.renew("a", first.leaseId, 60_000)).toBe(true);
-    expect(leases.acquire("b", "x", 100_000).granted).toBe(false);
+    expect(leases.acquire("b", "x", false, 100_000).granted).toBe(false);
   });
 
   it("drops a queue entry that stops polling", () => {

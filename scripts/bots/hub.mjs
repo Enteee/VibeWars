@@ -57,9 +57,8 @@
  * without spending a round trip, and more importantly without having to
  * discover it by being refused.
  */
-import { execFile, spawn, spawnSync } from "node:child_process";
+import { execFile, spawnSync } from "node:child_process";
 import fs from "node:fs";
-import { constants as osConstants } from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -76,7 +75,7 @@ import {
 import { HUBD_ALIVE, parseAlive } from "./hub-health.mjs";
 import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
-import { runHeavy } from "./heavy.mjs";
+import { runHeavy, spawnInGroup } from "./heavy.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
 import { visible } from "./protocol.mjs";
 
@@ -278,22 +277,7 @@ if (argv[0] === "push") {
           },
         );
       }),
-    spawnChild: (cmd, env) => {
-      const [file = "", ...args] = cmd;
-      const child = spawn(file, args, { stdio: "inherit", env });
-      return {
-        exited: new Promise((resolve) => {
-          child.on("error", (error) => {
-            console.error(`heavy: ${error.message}`);
-            resolve(127);
-          });
-          child.on("exit", (status, signal) => {
-            resolve(status ?? (signal === null ? 1 : 128 + osConstants.signals[signal]));
-          });
-        }),
-        kill: (signal) => child.kill(signal),
-      };
-    },
+    spawnChild: spawnInGroup,
     sleep: (ms) => sleep(ms),
     now: () => Date.now(),
     say: (line) => {
