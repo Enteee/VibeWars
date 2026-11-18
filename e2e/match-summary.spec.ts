@@ -65,6 +65,10 @@ for (const [width, height] of [
     for (const [index, panel] of (await panels.all()).entries()) {
       parts.push([`panel ${String(index + 1)}`, await box(panel)]);
     }
+    // The HUD corner buttons stay clear of the column too.
+    for (const [index, row] of (await page.locator(".hud-controls-row").all()).entries()) {
+      parts.push([`corner row ${String(index + 1)}`, await box(row)]);
+    }
     for (const [i, [nameA, a]] of parts.entries()) {
       for (const [nameB, b] of parts.slice(i + 1)) {
         if (nameA === "summary" || nameB === "summary") {
@@ -78,6 +82,8 @@ for (const [width, height] of [
     }
     // The summary fits what is left of the view, and scrolls inside.
     expect(whole.y + whole.height).toBeLessThanOrEqual(height);
+    // Its first panel is where it starts, not spilled above what it can scroll to.
+    expect((await box(panels.first())).y).toBeGreaterThanOrEqual(whole.y);
     // The end line's button is what a click on it reaches.
     const reached = await page.evaluate(
       ([x, y]) => document.elementFromPoint(x, y)?.closest(".hud-end-line button") !== null,

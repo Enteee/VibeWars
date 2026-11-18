@@ -4657,7 +4657,18 @@ body:has(> .splash) #menu-background::after {
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
+    justify-content: flex-start;
     width: 100%;
+  }
+
+  /* Each table its full height; the summary around them scrolls. */
+  .match-summary-panel {
+    flex: none;
+  }
+
+  /* Wide enough that a name of two words wraps between them. */
+  .match-summary-table .match-summary-name {
+    min-width: 9rem;
   }
 
   .match-summary-table .match-summary-name,
@@ -4690,6 +4701,14 @@ body:has(> .splash) #menu-background::after {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+}
+
+/* A phone stacks the HUD corner buttons in two rows; the column starts
+   under them. */
+@media (width < 600px) {
+  .hud-end {
+    inset-block-start: 6rem;
+  }
 }
 
 /* Over the result banner after a team match (#1997): the countdown to what
