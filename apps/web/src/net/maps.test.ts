@@ -683,3 +683,18 @@ describe("structureOf's water (#2984)", () => {
     expect(structure.zones.filter((zone) => "path" in zone)).toHaveLength(1);
   });
 });
+
+describe("perf plan", () => {
+  it("UNHOSTED_MAPS is exactly the arena maps the Hosted lobby never offers", async () => {
+    // @ts-expect-error a plain script, it has no declarations
+    const { UNHOSTED_MAPS } = (await import("../../../../scripts/ci/perf-plan.mjs")) as {
+      UNHOSTED_MAPS: string[];
+    };
+    const hosted = modeMapIds()["hosted-game"];
+    expect([...UNHOSTED_MAPS].sort()).toEqual(
+      arenaIds()
+        .filter((id) => !hosted.includes(id))
+        .sort(),
+    );
+  });
+});
