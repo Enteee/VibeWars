@@ -8417,6 +8417,11 @@ body:has(#screens[style*="none"]) .now-playing {
   pointer-events: auto;
 }
 
+.coach-panel[data-edge="top"] {
+  top: 16px;
+  bottom: auto;
+}
+
 .coach-panel[data-corner="start"] {
   inset-inline: 16px auto;
 }
@@ -8453,13 +8458,18 @@ body:has(#screens[style*="none"]) .now-playing {
   justify-content: flex-end;
 }
 
-/* A narrow window docks the panel to its bottom edge. */
+/* A narrow window docks the panel to its bottom edge, or its top one. */
 @media (max-width: 899px) {
   .coach-panel,
   .coach-panel[data-corner="start"] {
     inset-inline: 0;
     bottom: 0;
     width: auto;
+  }
+
+  .coach-panel[data-edge="top"] {
+    top: 0;
+    bottom: auto;
   }
 }
 

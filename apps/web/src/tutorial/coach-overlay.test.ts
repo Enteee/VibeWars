@@ -7,9 +7,10 @@ import {
   cutOut,
   cycleFocus,
   lockLets,
-  panelCorner,
+  panelSpot,
   tutorialTargetSelector,
 } from "./coach-overlay.js";
+import type { PanelSpot } from "./coach-overlay.js";
 
 const VIEWPORT = { width: 1280, height: 800 };
 const PANEL = { width: 320, height: 200 };
@@ -81,22 +82,61 @@ describe("the coach's layout", () => {
   });
 
   it("puts the panel in the bottom end corner, and in the other when the cut-out is there", () => {
-    expect(panelCorner(undefined, PANEL, VIEWPORT, false)).toBe("end");
-    expect(panelCorner({ left: 0, top: 0, width: 80, height: 800 }, PANEL, VIEWPORT, false)).toBe(
-      "end",
-    );
+    const bottom = (corner: "end" | "start"): PanelSpot => ({ edge: "bottom", corner });
+    expect(panelSpot([], PANEL, VIEWPORT, false)).toEqual(bottom("end"));
     expect(
-      panelCorner({ left: 1100, top: 650, width: 100, height: 60 }, PANEL, VIEWPORT, false),
-    ).toBe("start");
+      panelSpot([{ left: 0, top: 0, width: 80, height: 800 }], PANEL, VIEWPORT, false),
+    ).toEqual(bottom("end"));
+    expect(
+      panelSpot([{ left: 1100, top: 650, width: 100, height: 60 }], PANEL, VIEWPORT, false),
+    ).toEqual(bottom("start"));
   });
 
   it("reads the end corner as the left one right to left", () => {
-    expect(panelCorner({ left: 0, top: 650, width: 80, height: 100 }, PANEL, VIEWPORT, true)).toBe(
-      "start",
-    );
     expect(
-      panelCorner({ left: 1100, top: 650, width: 100, height: 60 }, PANEL, VIEWPORT, true),
-    ).toBe("end");
+      panelSpot([{ left: 0, top: 650, width: 80, height: 100 }], PANEL, VIEWPORT, true),
+    ).toEqual({ edge: "bottom", corner: "start" });
+    expect(
+      panelSpot([{ left: 1100, top: 650, width: 100, height: 60 }], PANEL, VIEWPORT, true),
+    ).toEqual({ edge: "bottom", corner: "end" });
+  });
+
+  it("moves the panel up when the cut-out and bubble fill both bottom corners", () => {
+    const hole = { left: 0, top: 650, width: 80, height: 100 };
+    const bubble = { left: 1000, top: 650, width: 280, height: 120 };
+    expect(panelSpot([hole, bubble], PANEL, VIEWPORT, false)).toEqual({
+      edge: "top",
+      corner: "end",
+    });
+  });
+
+  it("docks a full-width panel to the top edge when the bubble is at the bottom (800x600)", () => {
+    const viewport = { width: 800, height: 600 };
+    const docked = { width: 800, height: 103 };
+    const hole = { left: 0, top: 120, width: 200, height: 60 };
+    const bubble = { left: 216, top: 520, width: 288, height: 64 };
+    expect(panelSpot([], docked, viewport, false).edge).toBe("bottom");
+    expect(panelSpot([hole, bubble], docked, viewport, false).edge).toBe("top");
+    expect(
+      panelSpot([{ left: 0, top: 540, width: 200, height: 50 }], docked, viewport, false).edge,
+    ).toBe("top");
+  });
+
+  it("leaves the cut-out clear when nothing clears both", () => {
+    const viewport = { width: 800, height: 600 };
+    const docked = { width: 800, height: 103 };
+    const hole = { left: 0, top: 540, width: 200, height: 50 };
+    const bubble = { left: 0, top: 0, width: 800, height: 600 };
+    expect(panelSpot([hole, bubble], docked, viewport, false).edge).toBe("top");
+  });
+
+  it("keeps the bubble clear when the cut-out is as tall as the window", () => {
+    const viewport = { width: 800, height: 600 };
+    const docked = { width: 800, height: 103 };
+    const rail = { left: 0, top: 0, width: 200, height: 600 };
+    const bubble = { left: 216, top: 16, width: 288, height: 64 };
+    expect(panelSpot([rail, bubble], docked, viewport, false).edge).toBe("bottom");
+    expect(panelSpot([rail, { ...bubble, top: 520 }], docked, viewport, false).edge).toBe("top");
   });
 
   it("sets the bubble beside the cut-out, before it where there is no room after", () => {

@@ -91,24 +91,51 @@ function overlaps(a: CoachRect, b: CoachRect): boolean {
   );
 }
 
+/** Where the panel sits: a corner, or the whole edge in a narrow window. */
+export interface PanelSpot {
+  readonly edge: "bottom" | "top";
+  readonly corner: "end" | "start";
+}
+
+const PANEL_SPOTS: readonly PanelSpot[] = [
+  { edge: "bottom", corner: "end" },
+  { edge: "bottom", corner: "start" },
+  { edge: "top", corner: "end" },
+  { edge: "top", corner: "start" },
+];
+
 /**
- * The corner the panel sits in: the bottom one at the inline end, unless
- * the cut-out reaches into it, then the one at the start. `rtl` puts
- * the inline end on the left.
+ * Where the panel goes: the bottom corner at the inline end, else the
+ * first of the bottom start, top end and top start corners that covers
+ * none of `clear` (the cut-out, then the bubble). Nothing clear, the
+ * first that leaves the cut-out alone, else the bubble (a cut-out as
+ * tall as the window). A panel as wide as the window is docked to its
+ * bottom or top edge. `rtl` puts the inline end on the left.
  */
-export function panelCorner(
-  hole: CoachRect | undefined,
+export function panelSpot(
+  clear: readonly CoachRect[],
   panel: { readonly width: number; readonly height: number },
   viewport: CoachViewport,
   rtl: boolean,
-): "end" | "start" {
-  const atEnd = {
-    left: rtl ? EDGE : viewport.width - EDGE - panel.width,
-    top: viewport.height - EDGE - panel.height,
+): PanelSpot {
+  const docked = panel.width > viewport.width - 2 * EDGE;
+  const inset = docked ? 0 : EDGE;
+  const rect = ({ edge, corner }: PanelSpot): CoachRect => ({
+    left: docked ? 0 : (corner === "end") !== rtl ? viewport.width - EDGE - panel.width : EDGE,
+    top: edge === "top" ? inset : viewport.height - inset - panel.height,
     width: panel.width,
     height: panel.height,
-  };
-  return hole !== undefined && overlaps(hole, atEnd) ? "start" : "end";
+  });
+  const covers = (spot: PanelSpot, rects: readonly CoachRect[]): boolean =>
+    rects.some((each) => overlaps(each, rect(spot)));
+  return (
+    PANEL_SPOTS.find((spot) => !covers(spot, clear)) ??
+    PANEL_SPOTS.find((spot) => !covers(spot, clear.slice(0, 1))) ??
+    PANEL_SPOTS.find((spot) => !covers(spot, clear.slice(1))) ?? {
+      edge: "bottom",
+      corner: "end",
+    }
+  );
 }
 
 /**
@@ -208,6 +235,8 @@ export function mountCoachOverlay(
   let view: CoachView | undefined;
   let target: HTMLElement | undefined;
   let shownHole: CoachRect | undefined;
+  // A new beat re-places everything, even round the same cut-out.
+  let stale = true;
   let frame = 0;
   let removed = false;
 
@@ -251,13 +280,17 @@ export function mountCoachOverlay(
     const viewport = { width: window.innerWidth, height: window.innerHeight };
     const box = target?.getBoundingClientRect();
     const next = box === undefined ? undefined : cutOut(box);
-    if (sameRect(next, shownHole) && !hole.hidden === (next !== undefined)) {
+    if (!stale && sameRect(next, shownHole) && !hole.hidden === (next !== undefined)) {
       return;
     }
     shownHole = next;
+    stale = false;
     dim.hidden = next !== undefined;
     hole.hidden = next === undefined;
     bubble.hidden = next === undefined || view === undefined;
+    // The bubble says the line; the panel says it only when there is none.
+    panelLine.hidden = !bubble.hidden;
+    const clear: CoachRect[] = [];
     if (next !== undefined) {
       Object.assign(hole.style, {
         left: `${String(next.left)}px`,
@@ -265,16 +298,23 @@ export function mountCoachOverlay(
         width: `${String(next.width)}px`,
         height: `${String(next.height)}px`,
       });
-      const at = bubblePlace(next, bubble.getBoundingClientRect(), viewport);
+      const size = bubble.getBoundingClientRect();
+      const at = bubblePlace(next, size, viewport);
       bubble.style.left = `${String(at.left)}px`;
       bubble.style.top = `${String(at.top)}px`;
+      clear.push(
+        next,
+        ...(bubble.hidden ? [] : [{ ...at, width: size.width, height: size.height }]),
+      );
     }
-    panel.dataset.corner = panelCorner(
-      next,
+    const spot = panelSpot(
+      clear,
       panel.getBoundingClientRect(),
       viewport,
       getComputedStyle(panel).direction === "rtl",
     );
+    panel.dataset.edge = spot.edge;
+    panel.dataset.corner = spot.corner;
   };
   // The target is looked up every frame, so the cut-out follows it as it
   // moves or is drawn anew; one not drawn yet is the dim, without a hole.
@@ -319,6 +359,7 @@ export function mountCoachOverlay(
       );
       gotIt.hidden = next.gotIt === undefined;
       onGotIt = next.gotIt;
+      stale = true;
       // A new beat may point elsewhere: look it up now, not a frame late.
       cancelAnimationFrame(frame);
       follow();

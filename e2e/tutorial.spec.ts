@@ -778,6 +778,35 @@ test.describe("the menu quest (#3540)", () => {
     await expect(teams).not.toHaveClass(/tutorial-pulse/);
   });
 
+  test("at 800x600 the docked panel never covers the bubble or the cut-out", async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=menu`);
+    const panel = page.locator(".coach-panel");
+    const bubble = page.locator(".coach-bubble");
+    for (const target of ["rail", "rail-characters", "rail-teams"]) {
+      await expect(page.locator(`[data-tutorial="${target}"]`)).toHaveClass(/tutorial-pulse/);
+      const panelBox = await panel.boundingBox();
+      // The whole rail is as tall as the window: no edge clears it, so
+      // that beat keeps only its bubble clear.
+      const clear = target === "rail" ? [bubble] : [bubble, page.locator(".coach-hole")];
+      for (const other of clear) {
+        const box = await other.boundingBox();
+        const apart =
+          panelBox === null ||
+          box === null ||
+          panelBox.y >= box.y + box.height ||
+          box.y >= panelBox.y + panelBox.height;
+        expect(
+          apart,
+          `the panel clears ${target}'s ${String(await other.getAttribute("class"))}`,
+        ).toBe(true);
+      }
+      // A real click, not forced: nothing may sit on top of Got it.
+      await bubble.getByRole("button", { name: "Got it" }).click();
+    }
+    await expect(page.locator(".coach")).toHaveCount(0);
+  });
+
   test("Skip tutorial, confirmed, ends it for good", async ({ page }) => {
     await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=menu`);
     const panel = page.locator(".coach-panel");
