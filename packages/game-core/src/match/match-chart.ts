@@ -14,8 +14,17 @@ import type { MatchPhase } from "../match-rules.js";
 /** The most samples a series holds: a whole match's worth, however long. */
 export const SAMPLE_CAP = 120;
 
-/** The most events the list holds; the rest are counted, not kept. */
-export const EVENT_CAP = 200;
+/**
+ * The most events of each kind the list holds; the rest are counted, not
+ * kept. One cap per kind, so a long match's interrupts cannot crowd out
+ * its late deaths. They sum to the wire's `MAX_CHART_EVENTS`.
+ */
+export const EVENT_CAPS: Readonly<Record<ChartEvent["kind"], number>> = {
+  death: 80,
+  resurrected: 30,
+  interrupt: 60,
+  objective: 30,
+};
 
 /** Seconds between samples, so a match run to its time limit fills `SAMPLE_CAP`. */
 export function samplePeriod(timeLimitSeconds: number): number {
@@ -60,7 +69,7 @@ export interface MatchChartResult {
   readonly period: number;
   readonly players: readonly ChartSeries[];
   readonly events: readonly ChartEvent[];
-  /** Events past `EVENT_CAP`, not kept. */
+  /** Events past their kind's `EVENT_CAPS`, not kept. */
   readonly dropped: number;
 }
 
@@ -101,6 +110,12 @@ export class MatchChart {
   readonly #seen = new Set<string>();
   readonly #samples: ReadonlyMap<string, Point>[] = [];
   readonly #events: ChartEvent[] = [];
+  readonly #kept: Record<ChartEvent["kind"], number> = {
+    death: 0,
+    resurrected: 0,
+    interrupt: 0,
+    objective: 0,
+  };
   #dropped = 0;
   #finished = false;
   #owners: readonly (number | null)[] = [];
@@ -216,7 +231,8 @@ export class MatchChart {
   }
 
   #push(event: ChartEvent): void {
-    if (this.#events.length < EVENT_CAP) {
+    if (this.#kept[event.kind] < EVENT_CAPS[event.kind]) {
+      this.#kept[event.kind] += 1;
       this.#events.push(event);
     } else {
       this.#dropped += 1;

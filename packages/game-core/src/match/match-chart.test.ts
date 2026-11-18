@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { CombatEvent } from "../skills/effects.js";
 import { MatchTally, type CombatLogEntry } from "./combat-log.js";
 import {
-  EVENT_CAP,
+  EVENT_CAPS,
   MatchChart,
   SAMPLE_CAP,
   samplePeriod,
@@ -160,7 +160,7 @@ describe("MatchChart (#3564)", () => {
     expect(ann?.health.at(-1)).toBe(20);
   });
 
-  it("keeps deaths, raisings, interrupts and shrines between members, and counts what passes the cap", () => {
+  it("keeps deaths, raisings, interrupts and shrines between members", () => {
     const match = fakeMatch();
     const chart = new MatchChart(teamOf, isMember, 180);
     match.at(3.7);
@@ -190,13 +190,48 @@ describe("MatchChart (#3564)", () => {
       { t: 3, kind: "death", id: "cat", by: null },
       { t: 3, kind: "death", id: "bob", by: null },
     ]);
+  });
 
-    const deaths = Array.from({ length: EVENT_CAP + 7 }, () =>
-      entry(5, "ann", [{ kind: "death", targetId: "cat" }]),
+  it("caps each kind of event on its own, and counts what passes its cap", () => {
+    const match = fakeMatch();
+    const chart = new MatchChart(teamOf, isMember, 1800);
+    match.at(5);
+    const many = (count: number, make: () => CombatLogEntry): CombatLogEntry[] =>
+      Array.from({ length: count }, make);
+    chart.add(
+      many(300, () =>
+        entry(5, "ann", [{ kind: "interrupted", targetId: "cat", skillId: "healing-breeze" }]),
+      ),
+      match.state,
     );
-    chart.add(deaths, match.state);
+    match.at(1500);
+    chart.add(
+      many(10, () => entry(1500, "ann", [{ kind: "death", targetId: "cat" }])),
+      match.state,
+    );
+    const late = chart.result(["ann", "bob", "cat"]);
+    expect(late.events.filter(({ kind }) => kind === "interrupt")).toHaveLength(
+      EVENT_CAPS.interrupt,
+    );
+    expect(late.events.filter(({ kind }) => kind === "death")).toHaveLength(10);
+    expect(late.dropped).toBe(300 - EVENT_CAPS.interrupt);
+
+    chart.add(
+      [
+        ...many(EVENT_CAPS.death, () => entry(1501, "ann", [{ kind: "death", targetId: "cat" }])),
+        ...many(EVENT_CAPS.resurrected + 3, () =>
+          entry(1501, "bob", [
+            { kind: "resurrected", targetId: "cat", healthFraction: 0.25, energyFraction: 0.25 },
+          ]),
+        ),
+      ],
+      match.state,
+    );
     const { events, dropped } = chart.result(["ann", "bob", "cat"]);
-    expect(events).toHaveLength(EVENT_CAP);
-    expect(dropped).toBe(12);
+    expect(events.filter(({ kind }) => kind === "death")).toHaveLength(EVENT_CAPS.death);
+    expect(events.filter(({ kind }) => kind === "resurrected")).toHaveLength(
+      EVENT_CAPS.resurrected,
+    );
+    expect(dropped).toBe(300 - EVENT_CAPS.interrupt + 10 + 3);
   });
 });
