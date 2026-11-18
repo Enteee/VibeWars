@@ -96,6 +96,7 @@ import {
   renderMute,
   refreshSkillBar,
   objectiveScoreToast,
+  placeEnd,
   ghostLeaderToast,
   ghostNameplate,
   renderSkillBar,
@@ -737,6 +738,7 @@ export async function startMatchView(
     } else {
       parent.style.removeProperty("--chat-room");
     }
+    placeEnd(hud);
     const keepOut = [compass.element, partyWindow.element]
       .map((element) => element.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0)

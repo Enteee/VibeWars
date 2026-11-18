@@ -1445,6 +1445,16 @@ const OUTCOME_REASONS: Readonly<Record<string, MessageKey>> = {
 };
 
 /**
+ * Starts the end-of-match column under the top cluster (#3563), however
+ * tall the target frame and the carriers make it; call it whenever that
+ * cluster resizes.
+ */
+export function placeEnd(hud: Pick<HudElements, "top" | "end">): void {
+  const bottom = hud.top.hidden ? 0 : hud.top.offsetTop + hud.top.offsetHeight;
+  hud.end.style.setProperty("--hud-top-bottom", `${String(bottom)}px`);
+}
+
+/**
  * The end-of-match line a player reads, from their own team's point of
  * view. An annihilation match nobody won is lost by every team (GW1,
  * #846), and so is a Guild Battle (#1222); only kill-count draws. A

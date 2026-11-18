@@ -2,7 +2,7 @@ import type { MatchSummaryRow } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
 import { mountEndLine } from "./end-line.js";
-import { createHud, describeOutcome } from "./hud.js";
+import { createHud, describeOutcome, placeEnd } from "./hud.js";
 import { renderSummary, summaryTables } from "./match-summary.js";
 
 /**
@@ -15,6 +15,11 @@ export function mountSummaryFixture(parent: HTMLElement): void {
   // Nothing here is a match: the HUD's controls do nothing.
   const noop = (): void => undefined;
   const hud = createHud(parent, noop, noop, noop);
+  // A match ends with your last foe still targeted, a bot here.
+  hud.targetText.textContent = seat(1, 3).name;
+  new ResizeObserver(() => {
+    placeEnd(hud);
+  }).observe(hud.top);
   hud.result.style.display = "";
   hud.result.textContent = describeOutcome(1, "time", 0, []);
   const line = mountEndLine(hud.end, noop);

@@ -4689,12 +4689,13 @@ body:has(> .splash) #menu-background::after {
 }
 
 /* The end of a match, one column in the middle of the HUD (#3563): the
-   end line, the result banner, the summary. Only the summary gives way,
+   end line, the result banner, the summary, under the top cluster
+   (`placeEnd` measures it into --hud-top-bottom). Only the summary gives way,
    scrolling inside what is left, so nothing of it covers the line's button.
    It takes no clicks but the line's button and the summary's scroll. */
 .hud-end {
   position: absolute;
-  inset: 3.5rem 1rem 1rem;
+  inset: max(3.5rem, calc(var(--hud-top-bottom, 0px) + 0.6rem)) 1rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -4707,7 +4708,7 @@ body:has(> .splash) #menu-background::after {
    under them. */
 @media (width < 600px) {
   .hud-end {
-    inset-block-start: 6rem;
+    inset-block-start: max(6rem, calc(var(--hud-top-bottom, 0px) + 0.6rem));
   }
 }
 

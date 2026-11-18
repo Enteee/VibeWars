@@ -61,6 +61,8 @@ for (const [width, height] of [
       ["banner", banner],
       ["end line", line],
       ["summary", whole],
+      // The top cluster: the scoreboard and the target frame, your last foe in it.
+      ["top", await box(page.locator(".hud-top"))],
     ];
     for (const [index, panel] of (await panels.all()).entries()) {
       parts.push([`panel ${String(index + 1)}`, await box(panel)]);
