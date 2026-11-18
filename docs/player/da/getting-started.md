@@ -80,6 +80,14 @@ Lukker du fanen, mens du venter, forlader du køen med det samme.
 Når kampen slutter, kan du vælge **I kø igen** eller **Bliv sammen** med
 det hold, du lige har spillet med.
 
+Ved siden af resultaterne fortæller to diagrammer kampen over tid. **Dig**
+tegner din uddelte skade, modtagne skade, heling og Energi; **Hold** tegner
+hvert holds helbredspulje over dets samlede skade. Mærker under tidsaksen viser
+drab, dødsfald, afbrydelser, erobringer og genoplivninger: peg på et, eller gå
+til det med Tab, for at læse, hvad der skete. Tryk på et punkt i
+signaturforklaringen for at skjule eller vise dets linje. På en telefon står
+diagrammerne under resultaterne, som viser dig og to andre indtil **Vis alle**.
+
 ## Vær vært for eller deltag i en kamp
 
 Du er altid i en lobby: fra det øjeblik siden åbner, er den vært for din

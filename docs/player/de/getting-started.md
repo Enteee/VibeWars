@@ -79,6 +79,15 @@ sofort aus der Warteschlange.
 Wenn das Match endet, kannst du **Nochmal** wählen oder mit dem Team von eben
 **Zusammenbleiben**.
 
+Neben den Punkten erzählen zwei Diagramme das Match im Zeitverlauf. **Du**
+zeigt deinen verursachten Schaden, erlittenen Schaden, deine Heilung und
+Energie; **Teams** zeigt den Lebenspool jedes Teams über seinem Gesamtschaden.
+Markierungen unter der Zeitachse zeigen Kills, Tode, Unterbrechungen,
+Eroberungen und Wiederbelebungen: Zeig auf eine oder spring mit Tab zu ihr, um
+zu lesen, was passiert ist. Drück auf einen Legendeneintrag, um seine Linie
+aus- oder einzublenden. Auf dem Handy stehen die Diagramme unter den Punkten,
+die dich und zwei andere zeigen, bis du **Alle zeigen** drückst.
+
 ## Match hosten oder beitreten
 
 Du bist immer in einer Lobby: Ab dem Moment, in dem die Seite öffnet, hostet sie eine

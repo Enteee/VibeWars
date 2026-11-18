@@ -82,6 +82,15 @@ instante.
 Cuando termina la partida puedes pulsar **Otra vez** o **Seguir juntos** con
 el equipo con el que acabas de jugar.
 
+Junto a las puntuaciones, dos gráficos cuentan la partida a lo largo del
+tiempo. **Tú** traza tu daño infligido, daño recibido, curación y Energía;
+**Equipos** traza la reserva de salud de cada equipo sobre su daño total. Las
+marcas bajo el eje del tiempo muestran bajas, muertes, interrupciones, capturas
+y resurrecciones: señala una, o llega a ella con Tab, para leer qué pasó. Pulsa
+una entrada de la leyenda para ocultar o mostrar su línea. En el móvil los
+gráficos quedan bajo las puntuaciones, que te muestran a ti y a otros dos hasta
+que pulses **Mostrar todo**.
+
 ## Alojar o unirse a una partida
 
 Siempre estás en una sala: desde que se abre la página aloja una propia. La

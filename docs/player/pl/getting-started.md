@@ -74,6 +74,15 @@ usuwa cię z kolejki.
 Po zakończeniu meczu możesz wybrać **Szukaj ponownie** albo **Zostańmy razem**
 z drużyną, z którą właśnie grałeś.
 
+Obok wyników dwa wykresy opowiadają przebieg meczu w czasie. **Ty** rysuje
+zadane obrażenia, otrzymane obrażenia, leczenie i Energię; **Drużyny** rysuje
+pulę zdrowia każdej drużyny nad jej łącznymi obrażeniami. Znaczniki pod osią
+czasu pokazują zabójstwa, śmierci, przerwania, przejęcia i wskrzeszenia: wskaż
+jeden lub przejdź do niego klawiszem Tab, aby przeczytać, co się stało.
+Naciśnij pozycję legendy, aby ukryć lub pokazać jej linię. Na telefonie wykresy
+są pod wynikami, które pokazują ciebie i dwie inne osoby, dopóki nie wybierzesz
+**Pokaż wszystko**.
+
 ## Hostuj mecz lub dołącz
 
 Zawsze jesteś w lobby: od chwili otwarcia strony hostujesz własne. Lobby to twoja
