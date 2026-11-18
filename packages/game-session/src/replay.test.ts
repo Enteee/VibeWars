@@ -202,7 +202,7 @@ describe("a match's replay (#3572)", () => {
           (tick / 20 + i) % 3 === 0
             ? { kind: "move", dirX: Math.cos(angle), dirY: Math.sin(angle) }
             : (tick / 20 + i) % 3 === 1
-              ? { kind: "use-skill", slot: (tick + i) % 8, targetId: seats[(i + 1) % 16] }
+              ? { kind: "use-skill", slot: (tick + i) % 8 }
               : { kind: "attack", targetId: seats[(i + 3) % 16] ?? seat };
         inputs.push([tick, "intent", seat, intent]);
       }
