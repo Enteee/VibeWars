@@ -74,6 +74,7 @@
   },
   "layers": 3,
   "biome": "snow",
+  "ascentAct": null,
   "groundLayer": 0,
   "pits": [],
   "tunnels": [],
@@ -1816,6 +1817,7 @@
         "kind": "smoke"
       }
     ],
+    "shafts": [],
     "weather": null
   },
   "paving": [

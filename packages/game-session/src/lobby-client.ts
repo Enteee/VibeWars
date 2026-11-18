@@ -523,6 +523,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       shareTrack(trackId, source) {
         send({ kind: "share-track", trackId, source });
       },
+      setProfile(profile) {
+        send({ kind: "set-profile", ...profile });
+      },
       onChange(handler) {
         changeHandlers.push(handler);
       },

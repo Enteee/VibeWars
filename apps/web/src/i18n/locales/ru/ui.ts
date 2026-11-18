@@ -915,7 +915,6 @@ export default {
     other: "{sign}{count} деления",
   },
 
-  "player.applies": "Действует со следующего лобби.",
   "player.cape": "Плащ",
   "player.colourBlack": "чёрный",
   "player.colourGold": "золотой",

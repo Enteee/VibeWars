@@ -41,7 +41,7 @@ Ezek a billentyűk rögzítettek:
 ## Egér
 
 - **Bal kattintás** a talajra: odasétálsz. Shift nélkül a bal gomb csak sétál.
-- Megemelt platformokkal rendelkező pályákon a bal kattintás a látott felületre visz, az **Alt + bal kattintás** pedig az alatta lévő talajra. A kurzor alatti gyűrű platformot jelöl, a szaggatott gyűrű a talajt. Alagút fölött a bal kattintás arra a szintre visz, ahol vagy, az **Alt + bal kattintás** a másikra.
+- Megemelt platformokkal rendelkező pályákon a bal kattintás a látott felületre visz, az **Alt + bal kattintás** pedig az alatta lévő talajra. A kurzor alatti gyűrű platformot jelöl, a szaggatott gyűrű a talajt. Alagút fölött a bal kattintás arra a szintre visz, ahol vagy. Az **Alt + bal kattintás** sosem visz annál a szintnél feljebb, amelyen állsz: a talajról az alagútba visz, alagútban pedig ott marad.
 - **Jobb kattintás** egy ellenségen vagy szövetségesen: célba veszed.
   Kattints jobb gombbal ugyanarra az ellenségre újra, gyorsan, hogy
   megtámadd.

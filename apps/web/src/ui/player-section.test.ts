@@ -1,7 +1,7 @@
 import { sanitizeName } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { t } from "../i18n/index.js";
+import { EMBLEM_PRESET_NAMES, presetEmblem } from "../render/cape-shape.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import {
   FIRST_CAPE,
@@ -93,11 +93,12 @@ describe("the cape designer (#1422)", () => {
       ...FIRST_CAPE,
       main: "gold",
       trim: "gold",
+      emblem: presetEmblem("diamond", "gold"),
     });
-    expect(pickCape(gold, { part: "emblem", emblem: "ring" })).toEqual({
+    expect(pickCape(gold, { part: "emblem", preset: "ring" })).toEqual({
       ...FIRST_CAPE,
       main: "gold",
-      emblem: "ring",
+      emblem: presetEmblem("ring", "white"),
     });
     expect(pickCape(gold, { part: "none" })).toBeNull();
   });
@@ -118,16 +119,18 @@ describe("the cape designer (#1422)", () => {
     expect(loadGuildCape()).toBeNull();
   });
 
-  it("reads anything stored that is no cape as none", () => {
+  it("replaces anything stored that is no cape, a shape emblem's too, with the sample (#3554)", () => {
     const stored = storage();
     for (const corrupt of [
       "{",
       "null",
       '"violet"',
       JSON.stringify({ ...FIRST_CAPE, main: "red" }),
+      JSON.stringify({ main: "violet", trim: "white", emblem: "diamond" }),
     ]) {
       stored.set(`${STORAGE_NAMESPACE}.guildCape`, corrupt);
-      expect(loadGuildCape()).toBeNull();
+      expect(loadGuildCape()).toEqual(FIRST_CAPE);
+      expect(stored.get(`${STORAGE_NAMESPACE}.guildCape`)).toBe(JSON.stringify(FIRST_CAPE));
     }
   });
 });
@@ -231,8 +234,8 @@ describe("the Player section of Options (#1513)", () => {
     return { name, tag, cape, shown };
   }
 
-  it("says when a change applies", () => {
-    expect(mount().shown.some((node) => node.textContent === t("player.applies"))).toBe(true);
+  it("no longer says a change waits for the next lobby (#3548)", () => {
+    expect(mount().shown.some((node) => node.className === "player-applies")).toBe(false);
   });
 
   it("shows the key's signet just left of the name (#3235)", () => {
@@ -282,6 +285,17 @@ describe("the Player section of Options (#1513)", () => {
     expect(loadGuildCape()).toBeNull();
   });
 
+  it("sets each starting emblem's grid in the trim colour, and marks it picked (#3554)", () => {
+    stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
+    const { shown } = mount();
+    for (const name of EMBLEM_PRESET_NAMES) {
+      const preset = shown.find((node) => node.dataset.emblem === name);
+      preset?.click();
+      expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, emblem: presetEmblem(name, "white") });
+      expect(preset?.attributes.get("aria-pressed")).toBe("true");
+    }
+  });
+
   it("offers the guild link only with a valid tag, and copies the tag and cape (#3167)", async () => {
     stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VW");
     stored.set(`${STORAGE_NAMESPACE}.guildCape`, JSON.stringify(FIRST_CAPE));
@@ -298,7 +312,7 @@ describe("the Player section of Options (#1513)", () => {
     copy?.click();
     await vi.waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(
-        "https://vibewars.example/#guild=VW.violet.white.diamond",
+        `https://vibewars.example/#guild=VW.violet.white.${FIRST_CAPE.emblem}`,
       );
     });
     tag.typeIn("V!");

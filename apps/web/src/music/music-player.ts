@@ -7,6 +7,7 @@ import {
   type MusicLevel,
   type MusicStats,
 } from "./host-protocol.js";
+import { FADE_OUT_SECONDS } from "./host/bus-gate.js";
 import { musicHostUrl } from "./music-urls.js";
 import type { StingId } from "./stings/ids.js";
 import { STRESS_BUILD, audioStressMs } from "./stress.js";
@@ -56,9 +57,9 @@ export interface MusicPlayer {
    */
   sting(sting: { id: StingId; source: string; key: string; cycles: number }): void;
   /**
-   * A fresh host (#2745): this one is destroyed, not asked to stop, and
-   * whatever it ran with it; the next track loads in a new one. Not a
-   * teardown: nothing is reported.
+   * A fresh host (#2745): this one fades its music out (#3530) and is
+   * destroyed, and whatever it ran with it; the next track loads in a new
+   * one. Not a teardown: nothing is reported.
    */
   renew(): void;
   /** Start again what `stop` stopped. */
@@ -100,6 +101,8 @@ export interface MusicPlayerDeps {
   readonly now: () => number;
   /** Call `tick` every `ms` until the returned function is called. */
   readonly every: (ms: number, tick: () => void) => () => void;
+  /** Call `run` once, `ms` from now. */
+  readonly after: (ms: number, run: () => void) => void;
   /** Ask every host to count what the music costs (`?musicstats`, #420). */
   readonly measure: boolean;
   /** Ask every host to busy-wait this long per render quantum (`?audiostress=`, #519), or `null`. */
@@ -112,6 +115,8 @@ export const CROSSFADE_CYCLES = 2;
 export const HEARTBEAT_MS = 1_000;
 /** A ping unanswered for this long means the host is hung, by a pattern or anything else. */
 export const HEARTBEAT_TIMEOUT_MS = 5_000;
+/** How long a renewed host is given to fade out before it is destroyed anyway (#3530). */
+export const RETIRE_MS = (FADE_OUT_SECONDS + 0.2) * 1000;
 
 /**
  * More messages than this from the host in one second, and it is torn down
@@ -159,19 +164,32 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     }
   };
 
-  const close = (): void => {
+  /** Let the host go: at once, or once a host that is up has faded its music out. */
+  const close = (fade: boolean): void => {
+    const old = frame;
+    const fading = fade && ready;
     stopHeartbeat?.();
     stopHeartbeat = undefined;
-    frame?.destroy();
     frame = undefined;
     ready = false;
     queue = [];
     outstanding = undefined;
     received = 0;
+    if (old === undefined) {
+      return;
+    }
+    if (!fading) {
+      old.destroy();
+      return;
+    }
+    old.post({ type: "stop" });
+    deps.after(RETIRE_MS, () => {
+      old.destroy();
+    });
   };
 
   const teardown = (reason: TeardownReason): void => {
-    close();
+    close(false);
     report({ message: reason === "hung" ? t("music.hung") : t("music.flooded") });
     for (const handler of tornDown) {
       handler(reason);
@@ -273,7 +291,13 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     if (frame !== undefined) {
       return;
     }
-    frame = deps.createFrame(receive);
+    // A renewed host still fading out is not heard from.
+    const made = deps.createFrame((message) => {
+      if (frame === made) {
+        receive(message);
+      }
+    });
+    frame = made;
     queue = [
       ...(deps.measure ? [{ type: "measure" } as const] : []),
       ...(deps.audioStress === null
@@ -347,7 +371,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
       }
     },
     renew() {
-      close();
+      close(true);
     },
     play() {
       send({ type: "play" });
@@ -433,6 +457,9 @@ export function musicPlayer(): MusicPlayer {
       return () => {
         window.clearInterval(id);
       };
+    },
+    after: (ms, run) => {
+      window.setTimeout(run, ms);
     },
     measure,
     audioStress: audioStressMs(location.search, STRESS_BUILD),

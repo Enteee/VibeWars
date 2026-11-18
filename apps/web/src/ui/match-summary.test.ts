@@ -177,11 +177,53 @@ describe("renderSummary: signets (#2822)", () => {
         new Set(["cat"]),
       ),
     );
-    const [human, bot] = parent.all("match-summary-name");
+    const [human, bot] = parent.all("match-summary-who");
     expect(human?.children[0]?.className).toBe("signet");
     expect(human?.children[0]?.hidden).toBe(false);
     expect(human?.children[0]?.src).toBe(signetUrl(7, SIGNET_ROW_PX));
     expect(bot?.children[0]?.className).toBe("signet");
     expect(bot?.children[0]?.hidden).toBe(true);
+  });
+});
+
+describe("renderSummary: the name cell (#3563)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("sets signet, label and BOT chip side by side, the chip never inside the label", () => {
+    vi.stubGlobal("document", { createElement: () => new FakeElement() });
+    const parent = new FakeElement();
+    renderSummary(
+      parent as unknown as HTMLElement,
+      summaryTables([row("ann", 0), row("cat", 1)], "ann", 0, undefined, new Set(["cat"])),
+    );
+    const [human, bot] = parent.all("match-summary-name");
+    expect(human?.children.map((child) => child.className)).toEqual(["match-summary-who"]);
+    expect(human?.children[0]?.children.map((child) => child.className)).toEqual([
+      "signet",
+      "player-label",
+    ]);
+    expect(bot?.children[0]?.children.map((child) => child.className)).toEqual([
+      "signet",
+      "player-label",
+      "bot-tag match-summary-bot",
+    ]);
+    expect(bot?.all("player-label")[0]?.all("bot-tag")).toEqual([]);
+    expect(bot?.title).toBe("cat");
+  });
+
+  it("puts each team's table in a panel of its own", () => {
+    vi.stubGlobal("document", { createElement: () => new FakeElement() });
+    const parent = new FakeElement();
+    renderSummary(
+      parent as unknown as HTMLElement,
+      summaryTables([row("ann", 0), row("cat", 1)], "ann", 0, undefined, NO_BOTS),
+    );
+    const panels = parent.all("match-summary-panel");
+    expect(panels).toHaveLength(2);
+    for (const panel of panels) {
+      expect(panel.children.map((child) => child.className)).toEqual(["match-summary-table"]);
+    }
   });
 });

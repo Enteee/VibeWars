@@ -4,6 +4,8 @@
  * code of its own, and never holds the secret half.
  */
 
+import type { RankedResult, RankedStart } from "@vibewars/ranking";
+
 /**
  * What a lobby proof names (#2706), each from the prover's or verifier's
  * own connection, never from the challenge: the host the joiner is
@@ -30,6 +32,10 @@ export interface PlayerKey {
   readonly pubkey: string;
   /** A BIP-340 signature of the `vibewars/lobby-proof` digest of `fields`, as 128 lowercase hex digits. */
   signLobbyProof(fields: LobbyProofFields): string;
+  /** A BIP-340 signature of `start`'s `vibewars/ranked-start` digest (ADR-0055), as 128 lowercase hex digits. */
+  signRankedStart(start: RankedStart): string;
+  /** A BIP-340 signature of `result`'s `vibewars/ranked-result` digest (ADR-0055), as 128 lowercase hex digits. */
+  signRankedResult(result: RankedResult): string;
 }
 
 /**

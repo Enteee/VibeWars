@@ -184,6 +184,8 @@ tasatilanteessa voittaa tiimi, joka teki pisteen viimeisenä. Jokainen
 tukikohta herättää kuolleensa ja aaveensa joka 2. minuutti. Botit
 lähtevät yhdessä vihollisen reliikin perään ja tuovat sen kotiin.
 
+Cinder Sanctum (8v8, 5600x2800) pelaa sitä: temppeli tulivuoren rinteellä kahden laavavirran välissä. Ylitä ne sillalla tai pengertiellä esipihalla seisovaan pyhäkköön; esipihan vipu avaa pyhäkön alla kulkevan salakäytävän, ja tuhkaseinät voi rikkoa. Laava polttaa.
+
 ## Kukkulan kuningas
 
 **Johda aavesankarisi alttarille ja pidä se.** Jokaisella tiimillä on
@@ -295,8 +297,7 @@ seisovat niillä, kunnes ne on vallattu. Loitsukantaman sisällä oleva
 vihollinen ei houkuttele niitä pois: ne astuvat ulottuvilla olevalle
 pyhäkölle ja taistelevat siltä.
 
-Sitä pelaa Scarred Earth: jokainen pyhäkkö seisoo rikkinäisen muurikehän
-sisällä, joka on avoin lännessä ja idässä.
+Sitä pelaa Scarred Earth (4v4 ja 8v8, 5400x2800): kraatterien täplittämä taistelukenttä hämärässä. Pyhäköt seisovat tuhoutuneilla piiritystorneilla, keskimmäinen suuren tornin kannella, kukin kraatterin vieressä; tornien vivut avaavat kaksi juoksuhautaa kentän alla, ja tuhoutuneet paalutukset voi murskata.
 
 ## Tiimiaula
 

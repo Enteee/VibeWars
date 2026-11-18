@@ -168,6 +168,8 @@ a pri rovnosti tím, ktorý bodoval naposledy. Každá základňa oživuje svoji
 mŕtvych a svoj prízrak každé 2 minúty. Boti idú po nepriateľskú relikviu spolu
 a prinesú ju domov.
 
+Cinder Sanctum (8v8, 5600x2800) ho hrá: chrám na úbočí sopky medzi dvoma lávovými riekami. Prejdi po moste alebo po hrádzi k svätyni na jej nádvorí; páka na nádvorí otvorí skrytú chodbu pod svätyňou a popolové steny sa dajú rozbiť. Láva páli.
+
 ## Kráľ kopca
 
 **Doveď svojho Prízračného hrdinu na oltár a drž ho.** Každý tím má vo
@@ -269,8 +271,7 @@ Boti sa rozídu po svätyniach, ktoré tvoj tím ešte nevlastní, a stoja
 na nich, kým nie sú obsadené. Nepriateľ na dostrel kúzla ich
 neodláka: vstúpia na svätyňu v dosahu a bojujú z nej.
 
-Hrá sa na Scarred Earth: každá svätyňa stojí v rozbitom kruhu múrov,
-otvorenom na západ a východ.
+Hrá sa na Scarred Earth (4v4 a 8v8, 5400x2800): bojisko posiate krátermi za súmraku. Svätyne stoja na rozbitých obliehacích vežiach, prostredná na plošine veľkej veže, každá vedľa krátera; páky na vežiach otvárajú dva zákopy pod bojiskom a rozbité palisády sa dajú zbúrať.
 
 ## Tímové lobby
 

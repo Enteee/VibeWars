@@ -175,6 +175,8 @@ gönderir. **3 puan öne geçen** takım **hemen kazanır**. 8 dakikada en
 ölülerini ve hayaletini her 2 dakikada bir diriltir. Botlar düşmanın
 kalıntısına birlikte gider ve onu eve getirir.
 
+Cinder Sanctum (8v8, 5600x2800) bunu oynatır: iki lav nehri arasında, bir yanardağın yamacında bir tapınak. Bir köprüden ya da set yolundan geçerek avlusundaki mabede ulaş; avludaki bir kol mabedin altındaki gizli geçidi açar, kül duvarlar da kırılabilir. Lav yakar.
+
 ## Tepenin Kralı
 
 **Hayalet Kahramanını sunağa götür ve orayı tut.** Her takımın üssünde
@@ -280,8 +282,7 @@ Botlar takımının henüz sahip olmadığı tapınaklara dağılır ve alınana
 kadar üstlerinde durur. Büyü menzilindeki bir düşman onları oradan
 çekmez: erişebildikleri bir tapınağa çıkar ve oradan dövüşürler.
 
-Scarred Earth bunu oynatır: her tapınak, batıya ve doğuya açık, kırık
-bir duvar halkasının içinde durur.
+Scarred Earth (4v4 ve 8v8, 5400x2800) bunu oynatır: alacakaranlıkta kraterlerle dolu bir savaş alanı. Tapınaklar yıkık kuşatma kulelerinin üstünde durur, ortadaki büyük kulenin güvertesinde, her biri bir kraterin yanında; kulelerdeki kollar alanın altındaki iki siperi açar ve yıkık çit duvarları kırılabilir.
 
 ## Takım Lobisi
 

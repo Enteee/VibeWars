@@ -106,6 +106,7 @@ function snapshot(
     decks: [],
     lifts: [],
     summary: undefined,
+    chart: undefined,
   };
 }
 

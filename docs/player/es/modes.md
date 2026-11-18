@@ -166,6 +166,8 @@ Se juega en Broken Tower (4v4 y 8v8, 5400x2800): una torre caída sobre una coli
 
 Aquí la Carrera de reliquias del Ascenso de los Héroes se juega al revés. Cada base tiene la reliquia de su equipo y su Héroe Fantasmal, y no hay altar. **Coge la reliquia enemiga de su base y llévala a tu propio Héroe Fantasmal** para sumar un punto. El fantasma debe estar vivo y no se mueve de su puesto. No puedes llevar tu propia reliquia: si la recoges donde cayó, vuelve a casa. Un equipo con **3 puntos de ventaja gana al instante**. A los 8 minutos gana quien tenga más puntos, y un empate es para el último equipo que puntuó. Cada base resucita a sus muertos, y a su fantasma, cada 2 minutos. Los bots van juntos a por la reliquia enemiga y la traen a casa.
 
+Cinder Sanctum (8v8, 5600x2800) lo juega: un templo en la ladera de un volcán entre dos ríos de lava. Cruza por un puente o por la calzada hasta el santuario sobre su atrio; una palanca en el atrio abre el pasadizo oculto bajo el santuario, y los muros de ceniza se pueden romper. La lava quema.
+
 ## Rey de la colina
 
 **Lleva a tu Héroe Fantasmal al altar y mantenlo.** Cada equipo tiene un **Héroe
@@ -266,8 +268,7 @@ Los bots se reparten por los santuarios que tu equipo aún no controla y se qued
 hasta que se toman. Un enemigo en alcance de hechizo no los aparta: suben a un
 santuario a su alcance y luchan desde él.
 
-Se juega en Scarred Earth: cada santuario está en un anillo de muros rotos,
-abierto al oeste y al este.
+Se juega en Scarred Earth (4v4 y 8v8, 5400x2800): un campo de batalla lleno de cráteres al atardecer. Los santuarios están sobre torres de asedio destrozadas, el central en la plataforma de la gran torre, cada uno junto a un cráter; unas palancas en las torres abren dos trincheras bajo el campo, y las empalizadas destrozadas se pueden romper.
 
 ## Sala de equipo
 

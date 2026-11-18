@@ -19,7 +19,13 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { allWallSegments, wallToSegments } from "./geometry.js";
+import {
+  allWallSegments,
+  pointInShape,
+  shapesOverlap,
+  shapeVertices,
+  wallToSegments,
+} from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { matchLayers } from "./layers.js";
 import { mapNavGraphs } from "./nav-graphs.js";
@@ -66,8 +72,10 @@ const REBUILT = new Set([
   "barrow-field",
   "jungle-ruins",
   "brazen-causeway",
+  "cinder-sanctum",
   "broken-tower",
   "mosslit-cairns",
+  "scarred-earth",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
@@ -444,53 +452,158 @@ const wallsNear = (map: MapData, point: Vec2): number =>
     allWallSegments([wall]).some((side) => distancePointToSegment(point, side) <= RANGE_SPELL),
   ).length;
 
-describe("Scarred Earth (#2551)", () => {
-  const earth = MAPS.find((map) => map.id === "scarred-earth");
-  if (earth === undefined) throw new Error("no scarred-earth");
-  const walls = allWallSegments(earth.walls);
-  const bounds = { width: earth.width, height: earth.height };
-  const points = earth.objectives
-    .filter((objective) => objective.kind === "capture-point")
-    .map((objective) => objective.position);
+describe("Scarred Earth (#3440)", () => {
+  const earth = loadMap("scarred-earth");
   const middle = earth.width / 2;
+  const points = earth.objectives.flatMap((objective) =>
+    objective.kind === "capture-point" ? [objective] : [],
+  );
+  const mirrored = (point: Vec2): Vec2 => ({ x: earth.width - point.x, y: point.y });
+  const craters = earth.pits.filter((pit) => pit.id.endsWith("-crater"));
+  /** The map as loaded: every trench gate shut, every palisade standing. */
+  const shut: MapData = {
+    ...earth,
+    walls: [
+      ...earth.walls,
+      ...earth.gates.map(({ wall }) => wall),
+      ...(earth.breakables ?? []).map(({ wall }) => wall),
+    ],
+  };
 
-  it("has five shrines: one about 500 in from each base's edge, three on the middle column 600 apart", () => {
+  it("seats eight a team on the ground for 4v4 and 8v8, the east camp the west's mirror", () => {
+    expect(earth.teamSizes).toEqual([4, 8]);
+    for (const team of [0, 1]) {
+      const own = earth.spawnPoints.filter((spawn) => spawn.team === team);
+      expect(own).toHaveLength(8);
+      for (const spawn of own) expect(spawn.layer).toBe(earth.groundLayer);
+    }
+    for (const spawn of earth.spawnPoints.filter((each) => each.team === 0)) {
+      expect(
+        earth.spawnPoints.some(
+          (other) => other.team === 1 && near(other.position, mirrored(spawn.position)),
+        ),
+        JSON.stringify(spawn),
+      ).toBe(true);
+    }
+  });
+
+  it("has five points: the centre on the great deck on the axis, two mirrored pairs on the hulks", () => {
     expect(points).toHaveLength(5);
-    const column = points.filter((point) => point.x === middle).map((point) => point.y);
-    expect(column).toHaveLength(3);
-    expect(column).toContain(earth.height / 2);
-    const [north = 0, centre = 0, south = 0] = [...column].sort((a, b) => a - b);
-    expect(centre - north).toBeGreaterThanOrEqual(600);
-    expect(south - centre).toBeGreaterThanOrEqual(600);
-    for (const base of points.filter((point) => point.x !== middle)) {
-      expect(base.y).toBe(earth.height / 2);
-      expect(Math.min(base.x, earth.width - base.x)).toBeGreaterThanOrEqual(450);
-      expect(Math.min(base.x, earth.width - base.x)).toBeLessThanOrEqual(550);
+    const centre = points.filter((point) => point.position.x === middle);
+    expect(centre).toEqual([{ kind: "capture-point", layer: 3, position: { x: middle, y: 1400 } }]);
+    for (const point of points.filter((each) => each.position.x !== middle)) {
+      expect(point.layer).toBe(2);
+      expect(
+        points.some((other) => other !== point && near(other.position, mirrored(point.position))),
+        JSON.stringify(point),
+      ).toBe(true);
     }
   });
 
-  it("rings every shrine: walled to the north and south, open to the west and east", () => {
-    for (const point of points) {
-      const out = (dx: number, dy: number): boolean =>
-        hasLineOfSight(point, { x: point.x + 300 * dx, y: point.y + 300 * dy }, walls);
-      expect([out(0, -1), out(0, 1)], JSON.stringify(point)).toEqual([false, false]);
-      expect([out(-1, 0), out(1, 0)], JSON.stringify(point)).toEqual([true, true]);
-    }
-  });
-
-  it("has three walls or more within spell range of every shrine", () => {
-    for (const point of points) {
-      expect(wallsNear(earth, point), JSON.stringify(point)).toBeGreaterThanOrEqual(3);
-    }
-  });
-
-  it("lets every spawn walk to every shrine", () => {
-    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS, []));
-    for (const spawn of earth.spawnPoints) {
-      for (const point of points) {
-        expect(finder.find(spawn.position, point), JSON.stringify([spawn, point])).toBeDefined();
+  it("is the same map mirrored east to west: walls, decks, ramps, pits, tunnels and gates", () => {
+    const image = (shape: Parameters<typeof wallToSegments>[0]) =>
+      wallToSegments(shape).map(({ a, b }) => ({ a: mirrored(a), b: mirrored(b) }));
+    const all = [
+      ...earth.walls,
+      ...earth.decks.map(({ footprint }) => footprint),
+      ...earth.transitions.map(({ area }) => area),
+      ...earth.pits.map(({ footprint }) => footprint),
+      ...earth.tunnels.map(({ footprint }) => footprint),
+      ...earth.gates.map(({ wall }) => wall),
+      ...(earth.breakables ?? []).map(({ wall }) => wall),
+    ];
+    const sides = all.flatMap((shape) => wallToSegments(shape));
+    for (const shape of all) {
+      for (const side of image(shape)) {
+        expect(
+          sides.some((other) => sameSegment(other, side)),
+          JSON.stringify(shape),
+        ).toBe(true);
       }
     }
+  });
+
+  it("mirrors every lever, the twin opening the same trench's gates", () => {
+    const levers = earth.switches ?? [];
+    expect(levers).toHaveLength(4);
+    for (const lever of levers) {
+      const image = mirrored(lever.position);
+      const twin = levers.find(
+        ({ position }) => Math.abs(position.x - image.x) < 1 && Math.abs(position.y - image.y) < 1,
+      );
+      expect(twin?.layer, lever.id).toBe(lever.layer);
+      expect(twin?.targets, lever.id).toEqual(lever.targets);
+    }
+  });
+
+  it("puts a crater beside every point's hulk, ten craters in all, each with a slope out", () => {
+    expect(craters).toHaveLength(10);
+    for (const crater of craters) {
+      expect(
+        earth.transitions.filter(
+          ({ to, area }) => to === earth.groundLayer && shapesOverlap(area, crater.footprint),
+        ),
+        crater.id,
+      ).not.toHaveLength(0);
+    }
+    for (const point of points) {
+      const hulk = earth.decks.find(
+        (deck) => deck.layer === 2 && pointInShape(point.position, deck.footprint),
+      );
+      if (hulk === undefined) throw new Error(`no hulk under ${JSON.stringify(point)}`);
+      const gap = Math.min(
+        ...craters.flatMap((crater) =>
+          shapeVertices(crater.footprint).flatMap((corner) =>
+            wallToSegments(hulk.footprint).map((side) => distancePointToSegment(corner, side)),
+          ),
+        ),
+      );
+      expect(gap, hulk.id).toBeLessThanOrEqual(200);
+    }
+  });
+
+  it("keeps every spawn 200 or more from every zone and crater", () => {
+    const keepOff = [
+      ...(earth.zones ?? []).map(({ area }) => area),
+      ...craters.map(({ footprint }) => footprint),
+    ];
+    for (const { position } of earth.spawnPoints) {
+      for (const area of keepOff) {
+        expect(pointInShape(position, area)).toBe(false);
+        for (const side of wallToSegments(area)) {
+          expect(
+            distancePointToSegment(position, side),
+            JSON.stringify(position),
+          ).toBeGreaterThanOrEqual(200);
+        }
+      }
+    }
+  });
+
+  it("lets every spawn walk to every point with the trench gates shut and the palisades standing", () => {
+    const finder = layeredFinder(shut, RADIUS);
+    for (const spawn of earth.spawnPoints) {
+      for (const point of points) {
+        expect(
+          finder.find(spawn.position, spawn.layer, point.position, point.layer),
+          JSON.stringify([spawn, point]),
+        ).toBeDefined();
+      }
+    }
+  });
+
+  it("gives each hulk point two stairs up, and the great deck one from each side", () => {
+    for (const point of points.filter(({ layer }) => layer === 2)) {
+      const hulk = earth.decks.find(
+        (deck) => deck.layer === 2 && pointInShape(point.position, deck.footprint),
+      );
+      if (hulk === undefined) throw new Error("no hulk");
+      expect(
+        earth.transitions.filter(({ to, area }) => to === 2 && shapesOverlap(area, hulk.footprint)),
+        hulk.id,
+      ).toHaveLength(2);
+    }
+    expect(earth.transitions.filter(({ to }) => to === 3)).toHaveLength(2);
   });
 });
 

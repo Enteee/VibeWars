@@ -830,7 +830,6 @@ export default {
 
   "pips.title": { one: "{sign}{count} birim", other: "{sign}{count} birim" },
 
-  "player.applies": "Sonraki lobinden itibaren geçerli.",
   "player.cape": "Pelerin",
   "player.colourBlack": "siyah",
   "player.colourGold": "altın",

@@ -838,7 +838,6 @@ export default {
 
   "pips.title": { one: "{sign}{count} Pip", other: "{sign}{count} Pips" },
 
-  "player.applies": "Gilt ab deiner nächsten Lobby.",
   "player.cape": "Umhang",
   "player.colourBlack": "schwarz",
   "player.colourGold": "gold",

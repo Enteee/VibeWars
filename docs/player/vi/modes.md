@@ -165,6 +165,8 @@ nó về nhà. Đội **dẫn trước 3 điểm thắng ngay lập tức**. Ở
 sinh người chết của đội, và con ma của đội, mỗi 2 phút. Bot cùng đi lấy thánh
 tích của địch và mang nó về.
 
+Cinder Sanctum (8v8, 5600x2800) chơi chế độ này: một ngôi đền trên sườn núi lửa giữa hai dòng sông dung nham. Băng qua bằng một cây cầu hoặc con đê đến thánh điện trên sân trước của nó; một cần gạt trên sân trước mở lối đi bí mật dưới thánh điện, và tường tro có thể đập vỡ. Dung nham gây bỏng.
+
 ## Vua đồi
 
 **Dẫn Anh hùng Ma của bạn lên tế đàn, và giữ nó.** Mỗi đội có một **Anh hùng
@@ -263,8 +265,7 @@ Bot tản ra các đền mà đội bạn chưa sở hữu và đứng trên đ�
 được. Địch trong tầm Phép không kéo được chúng đi: chúng bước lên một đền
 trong tầm và đánh từ đó.
 
-Scarred Earth chơi chế độ này: mỗi đền nằm trong một vòng tường đổ nát, mở
-về phía tây và phía đông.
+Scarred Earth (4v4 và 8v8, 5400x2800) chơi chế độ này: một chiến trường đầy hố bom lúc chạng vạng. Các đền nằm trên những tháp công thành đổ nát, đền giữa trên sàn của tháp lớn, mỗi đền cạnh một hố; cần gạt trên các tháp mở hai chiến hào dưới chiến trường, và hàng rào cọc đổ nát có thể phá được.
 
 ## Sảnh Đội
 

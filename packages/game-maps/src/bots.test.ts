@@ -359,6 +359,8 @@ describe("Capture Points bots (#2580)", () => {
       ruleset: RULESET,
       walls: allWallSegments(map.walls),
       bounds: { width: map.width, height: map.height },
+      layers: matchLayers(map),
+      gates: matchGates(map),
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       capturePoints: map.objectives.flatMap((objective) =>
         objective.kind === "capture-point"

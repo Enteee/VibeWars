@@ -1,4 +1,5 @@
 import {
+  ANNIHILATION_MATCH_RULES,
   CAPTURE_POINTS_MATCH_RULES,
   HALLS_MATCH_RULES,
   NO_UPGRADES,
@@ -19,6 +20,7 @@ import {
   type WireCape,
   type WireEnded,
   type LobbyMode,
+  packEmblem,
 } from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
@@ -47,7 +49,7 @@ import type { MatchSnapshot } from "./match-connection.js";
 import { MAX_MESSAGE_BYTES, messageBytes } from "./transport.js";
 
 /** A guild cape (#1422), as the designer makes one. */
-const CAPE: WireCape = { main: "violet", trim: "white", emblem: "diamond" };
+const CAPE: WireCape = { main: "violet", trim: "white", emblem: packEmblem([0, 4, 4, 0]) };
 
 /** One entry of a lobby's plan. */
 type PlannedSeat = NonNullable<ReturnType<PlannedSeats["get"]>>;
@@ -207,7 +209,7 @@ describe("guild tags (#1406)", () => {
 });
 
 describe("guild capes (#1422)", () => {
-  it("seats a hello's cape in every snapshot, and none without a valid tag or for a bad one", async () => {
+  it("tells every player a hello's cape, joined before or after it, and none without a valid tag or for a bad one (#3554)", async () => {
     const match = startMatch();
     const { connection: ann } = await match.join(
       hello({ name: "Ann", guildTag: "Vb1", heroRank: 0, guildCape: CAPE }),
@@ -869,5 +871,44 @@ describe("a map's layers (#3017)", () => {
     await match.step(0.05);
     expect(self(local)?.layer).toBe(1);
     expect(self(remote)?.layer).toBe(1);
+  });
+});
+
+describe("the match's charts (#3564)", () => {
+  it("are sent right after `ended`, a series a seat, and joined by every client", async () => {
+    const match = startMatch({ matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 3 } });
+    const { connection: ann } = await match.join(hello({ name: "Ann" }));
+    const { connection: bob } = await match.join(hello({ name: "Bob" }));
+    const send = vi.spyOn(match.hostTransport, "send");
+
+    await match.step(4);
+    await settle();
+
+    const channels = send.mock.calls.map(([channel]) => channel);
+    expect(channels[channels.indexOf("ended") + 1]).toBe("match-chart");
+    const seats = [ann.selfSessionId, bob.selfSessionId].sort();
+    for (const connection of [ann, bob]) {
+      const chart = connection.getSnapshot().chart;
+      expect(chart?.period).toBe(1);
+      expect(chart?.players.map(({ id }) => id).sort()).toEqual(seats);
+      // A sample on each second's boundary up to the end, and full health throughout.
+      for (const series of chart?.players ?? []) {
+        expect(series.health.length).toBeGreaterThanOrEqual(3);
+        expect(series.health.every((percent) => percent === 100)).toBe(true);
+      }
+    }
+    vi.restoreAllMocks();
+  });
+
+  it("are not sent when the host leaves", async () => {
+    const match = startMatch();
+    const { connection } = await match.join();
+    await match.step(1);
+    const send = vi.spyOn(match.hostTransport, "send");
+    await match.host.close("host-left");
+    await settle();
+    expect(send.mock.calls.map(([channel]) => channel)).not.toContain("match-chart");
+    expect(connection.getSnapshot().chart).toBeUndefined();
+    vi.restoreAllMocks();
   });
 });

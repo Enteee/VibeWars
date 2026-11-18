@@ -32,7 +32,8 @@
  *
  * Then the follow case: on every map measured and `FLAT_BASELINE`, a Hosted
  * 1v1 whose body walks `followLoop` while the camera follows it and the
- * pointer hovers the ground, uncapped. Its rows join the table, outside
+ * pointer hovers the ground, uncapped, and the wheel zooms all the way out
+ * and in again and again (#3545). Its rows join the table, outside
  * the calibration's gate: walking costs a frame about twice what standing
  * does. A second table gives the frame's update and render JS, the
  * update's share of the frame, the snapshot cadence, the host's ms per
@@ -349,6 +350,15 @@ const PROFILE = process.env.BENCH_PROFILE;
 /** One step of the walk: the pointer moves, and every `CLICK_EVERY`th step it clicks. */
 const STEP_MS = 50;
 const CLICK_EVERY = 6;
+/**
+ * Every `ZOOM_EVERY`th step of the walk the wheel turns one notch, these
+ * ways in turn: from the default step out to the widest, in to the
+ * closest, and back (#3545). Half a second apart, so each ease runs out.
+ */
+const ZOOM_EVERY = 10;
+const ZOOM_NOTCHES = [1, -1, -1, -1, 1, 1];
+/** `deltaY` of one wheel notch: past the client's notch threshold. */
+const WHEEL_DELTA_Y = 100;
 /** A waypoint this close, in world units, is reached. */
 const REACHED = 90;
 /** Where on the canvas the walk may click, as a share of its size: clear of the HUD. */
@@ -436,7 +446,8 @@ async function camera(page) {
 /**
  * `--follow` on `mapId`: a Hosted 1v1 there, its frames timed while the
  * self walks `followLoop` with left clicks, the camera following, and the
- * pointer crosses the ground every step so hover runs. The client measures
+ * pointer crosses the ground every step so hover runs, and the wheel
+ * zooms out and in (`ZOOM_NOTCHES`, #3545). The client measures
  * itself through `?frametiming`: the update and render of each frame, and
  * the time between snapshots.
  *
@@ -514,6 +525,9 @@ async function follow(page, mapId) {
             box.height * CLICK_BOX.bottom,
           ),
       );
+    } else if (step % ZOOM_EVERY === ZOOM_EVERY / 2) {
+      const notch = ZOOM_NOTCHES[Math.floor(step / ZOOM_EVERY) % ZOOM_NOTCHES.length] ?? 1;
+      await page.mouse.wheel(0, notch * WHEEL_DELTA_Y);
     } else {
       // A fixed sweep over the ground, as a hovering player's pointer.
       await page.mouse.move(

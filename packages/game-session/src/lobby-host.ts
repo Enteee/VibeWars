@@ -110,6 +110,9 @@ export const CHAT_BURST = 5;
 /** A peer shares one music track in this long (#2745). */
 export const SHARE_INTERVAL_MS = 10_000;
 
+/** A member changes its name and guild once in this long (#3548): more are dropped. */
+export const PROFILE_INTERVAL_MS = 2000;
+
 /**
  * From a party's proposal, on the lobby's clock, until each member must
  * have sent a consent that verifies, or the team splits (#1078).
@@ -601,6 +604,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
   const chatBudget = new MessageBudget(CHAT_LINES_PER_SECOND, CHAT_BURST, () => undefined);
   const shareBudget = new MessageBudget(1000 / SHARE_INTERVAL_MS, 1, () => undefined);
+  const profileBudget = new MessageBudget(1000 / PROFILE_INTERVAL_MS, 1, () => undefined);
   const trackIds = new Set(options.trackIds);
   /** Peers already told their lines are dropped, until one gets through: once a burst. */
   const throttled = new Set<string>();
@@ -818,7 +822,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       name: member.name,
       guildTag: member.guildTag,
       heroRank: member.heroRank,
-      guildCape: member.guildCape,
       team: member.team,
       ready: isReady(member),
       isHost: member.id === local.selfId,
@@ -1841,6 +1844,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       case "share-track":
         // Relayed as it came (#2745), never a choice of the lobby's.
         return false;
+      case "set-profile":
+        // Taken before any phase's commands (#3548).
+        return false;
     }
   };
 
@@ -2393,6 +2399,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       shareTrack(from, command.trackId, command.source);
       return;
     }
+    // In any phase: a match's seats keep the names it started with (#3548).
+    if (command.kind === "set-profile") {
+      if (profileBudget.take(from, nowMs())) {
+        setProfile(member, command);
+      }
+      return;
+    }
     // A side's seat plan counts until the match starts, through the countdown.
     if (queued !== undefined && command.kind === "team-plan") {
       takeTeamPlan(queued, member, command);
@@ -2427,6 +2440,23 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       broadcast();
     }
   });
+
+  /**
+   * `member`'s new name and guild (#3548), sanitised as at its join; an
+   * empty name keeps the one it had. Its planned seat, if any, keeps the
+   * name the match was planned with.
+   */
+  const setProfile = (
+    member: Member,
+    profile: Extract<WireLobbyCommand, { kind: "set-profile" }>,
+  ): void => {
+    member.name = sanitizeName(profile.name, member.name);
+    const guild = sanitizeGuild(profile);
+    member.guildTag = guild.guildTag;
+    member.heroRank = guild.heroRank;
+    member.guildCape = guild.guildCape;
+    broadcast();
+  };
 
   /**
    * `from`'s music track, for every other human member (#2745), the host
@@ -3005,6 +3035,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     budget.forget(peerId);
     chatBudget.forget(peerId);
     shareBudget.forget(peerId);
+    profileBudget.forget(peerId);
     throttled.delete(peerId);
     welcomed.delete(peerId);
     judged.delete(peerId);

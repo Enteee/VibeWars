@@ -175,6 +175,8 @@ sejren til det hold, der scorede sidst. Hver base genopliver sine døde,
 og sit spøgelse, hvert 2. minut. Bots går samlet efter fjendens relikvie
 og bringer den hjem.
 
+Cinder Sanctum (8v8, 5600x2800) spiller det: et tempel på en vulkans skråning mellem to lavafloder. Gå over en bro eller dæmningen til helligdommen på dens forgård; et håndtag på forgården åbner den skjulte gang under helligdommen, og askevægge kan slås i stykker. Lava brænder.
+
 ## Kongen af bakken
 
 **Før din Spøgelseshelt op på alteret, og hold det.** Hvert hold har en
@@ -286,8 +288,7 @@ på dem, indtil de er taget. En fjende inden for besværgelsesrækkevidde
 trækker dem ikke væk: de træder op på en helligdom inden for rækkevidde og
 kæmper derfra.
 
-Scarred Earth spiller den: hver helligdom står i en brudt ring af mure,
-åben mod vest og øst.
+Scarred Earth (4v4 og 8v8, 5400x2800) spiller den: en kraterfyldt slagmark i skumringen. Helligdommene står på ødelagte belejringstårne, den midterste på det store tårns dæk, hver ved siden af et krater; håndtag på tårnene åbner to skyttegrave under marken, og ødelagte palisader kan slås ned.
 
 ## Holdlobby
 

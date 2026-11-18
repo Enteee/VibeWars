@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { busGate, STOP_RAMP_SECONDS, type GainParam } from "./bus-gate.js";
+import { busGate, FADE_OUT_SECONDS, STOP_RAMP_SECONDS, type GainParam } from "./bus-gate.js";
 
 type Call = readonly [string, ...number[]];
 
@@ -47,7 +47,7 @@ function setup(volume = 0.6) {
 describe("bus gate", () => {
   it("ramps to silence on stop, from where the gain is", () => {
     const s = setup();
-    s.gate.stop();
+    s.gate.stop(STOP_RAMP_SECONDS);
     expect(s.last()).toEqual([
       ["cancel", 10],
       ["set", 0.6, 10],
@@ -57,7 +57,7 @@ describe("bus gate", () => {
 
   it("restores the volume when the first note can sound", () => {
     const s = setup();
-    s.gate.stop();
+    s.gate.stop(STOP_RAMP_SECONDS);
     s.last();
     s.land(0);
     s.at(20);
@@ -77,7 +77,7 @@ describe("bus gate", () => {
 
   it("stays silent through a volume change while stopped, and applies it on open", () => {
     const s = setup();
-    s.gate.stop();
+    s.gate.stop(STOP_RAMP_SECONDS);
     s.last();
     s.land(0);
     s.gate.setVolume(0.3, 0.2);
@@ -99,7 +99,7 @@ describe("bus gate", () => {
 
   it("opens to the new level when the volume changes before an open lands", () => {
     const s = setup();
-    s.gate.stop();
+    s.gate.stop(STOP_RAMP_SECONDS);
     s.land(0);
     s.at(20);
     s.gate.open();
@@ -115,18 +115,35 @@ describe("bus gate", () => {
 
   it("cancels a pending open when it is stopped again", () => {
     const s = setup();
-    s.gate.stop();
+    s.gate.stop(STOP_RAMP_SECONDS);
     s.land(0);
     s.at(20);
     s.gate.open();
     s.land(0);
     s.last();
     s.at(20.1);
-    s.gate.stop();
+    s.gate.stop(STOP_RAMP_SECONDS);
     expect(s.last()).toEqual([
       ["cancel", 20.1],
       ["set", 0, 20.1],
       ["ramp", 0, 20.1 + STOP_RAMP_SECONDS],
     ]);
+  });
+
+  it("fades out over FADE_OUT_SECONDS, and says how long it takes (#3530)", () => {
+    const s = setup();
+    expect(s.gate.stop(FADE_OUT_SECONDS)).toBe(FADE_OUT_SECONDS);
+    expect(s.last()).toEqual([
+      ["cancel", 10],
+      ["set", 0.6, 10],
+      ["ramp", 0, 10 + FADE_OUT_SECONDS],
+    ]);
+  });
+
+  it("never closes faster than STOP_RAMP_SECONDS, however short the fade asked for", () => {
+    const s = setup();
+    expect(s.gate.stop(0.01)).toBe(STOP_RAMP_SECONDS);
+    expect(s.gate.stop(-2)).toBe(STOP_RAMP_SECONDS);
+    expect(s.last().at(-1)).toEqual(["ramp", 0, 10 + STOP_RAMP_SECONDS]);
   });
 });

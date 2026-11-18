@@ -197,6 +197,7 @@ describe("layerSurfaces", () => {
   const HEIGHTS: MapStructure = {
     layerCount: 3,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 0,
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
@@ -627,6 +628,7 @@ describe("LightingPass", () => {
   const STRUCTURE: MapStructure = {
     layerCount: 1,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 0,
     pits: [],
@@ -722,6 +724,7 @@ describe("lightMapCells (#3524)", () => {
   const TUNNELLED: MapStructure = {
     layerCount: 2,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 1,
     pits: [],

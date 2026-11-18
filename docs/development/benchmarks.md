@@ -11,7 +11,9 @@ Since #404 there is no server. A match runs in its host's browser, in
 
 On the company host, run a heavy job (a bench, Playwright) wrapped in
 `company heavy <cmd>` (#3362): the host runs one at a time and queues the
-rest.
+rest. A job under 5 minutes (a screenshot, one spec) goes
+`company heavy --short <cmd>`: it is granted ahead of waiting long jobs (at most
+3 in a row, so long ones are not starved) and is killed at 10 minutes (#3582).
 
 ```sh
 pnpm exec vitest run packages/game-session/src/benchmark.test.ts
@@ -122,6 +124,15 @@ its branch and on `main` and puts both counts in the PR. Deaths at or
 above `main`'s are the bar. The counts are deterministic, so a
 difference is a real one, but a seed set is small: read a few deaths
 either way as noise.
+
+## The ranking bench
+
+`pnpm run bench:ranking` (#3571) rates 10 000 2v2 receipts among 400
+keys over 100 days with `rate` (ADR-0055) and prints how long it took.
+Signatures are checked by a stand-in hash, not BIP-340, so it measures
+the rating, not the curve. Without `BENCH_RANKING` the test file runs
+and the bench is skipped. On a dev machine it takes about 6 s; the hourly
+leaderboard job can afford far more.
 
 ## The map balance bench
 

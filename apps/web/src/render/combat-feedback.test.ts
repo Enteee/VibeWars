@@ -90,6 +90,7 @@ const SNAPSHOT: MatchSnapshot = {
   decks: [],
   lifts: [],
   summary: undefined,
+  chart: undefined,
 };
 
 /** The texts a scene would have been asked to float, for these events. */

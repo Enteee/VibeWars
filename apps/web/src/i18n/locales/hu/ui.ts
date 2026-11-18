@@ -832,7 +832,6 @@ export default {
 
   "pips.title": { one: "{sign}{count} csík", other: "{sign}{count} csík" },
 
-  "player.applies": "A következő lobbidtól érvényes.",
   "player.cape": "Köpeny",
   "player.colourBlack": "fekete",
   "player.colourGold": "arany",

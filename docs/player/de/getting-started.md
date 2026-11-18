@@ -170,8 +170,7 @@ Umhang in jedem Match: Er faltet sich an deinem Rand zu einem schmalen Band, wen
 und weht hinter dir, wenn du läufst. Deine Charaktere im Menü zeigen ihn auch. **Kein Umhang**
 nimmt ihn ab.
 
-Eine Änderung gilt ab der nächsten Lobby, der du beitrittst, oder deiner nächsten neuen: Eine,
-in der du schon bist, behält, womit du beigetreten bist.
+Eine Änderung gilt sofort für die Lobby, in der du bist.
 
 **Gildenlink kopieren** unter dem Umhang-Designer kopiert einen Link mit deinem Kürzel und Umhang. Wer ihn öffnet, wird gefragt **Der Gilde [VIBE] beitreten?**: **Beitreten** gibt ihm dein Kürzel und deinen Umhang, **Nein** ändert nichts. Jeder kann so einen Link schicken, und niemandem gehört ein Kürzel, darum fragt das Spiel immer zuerst.
 

@@ -167,8 +167,7 @@ nosi pelerynę w każdym meczu: składa się w cienki pas przy krawędzi, gdy st
 powiewa za tobą, gdy się ruszasz. Pokazują ją też twoje postacie w menu. **Bez
 peleryny** ją zdejmuje.
 
-Zmiana działa od następnego lobby, do którego dołączysz, lub twojego następnego
-nowego: lobby, w którym już jesteś, zachowuje to, z czym dołączyłeś.
+Zmiana działa od razu w lobby, w którym jesteś.
 
 **Kopiuj link gildii**, pod projektantem peleryny, kopiuje link z twoim tagiem i peleryną. Kto go otworzy, zobaczy pytanie **Dołączyć do gildii [VIBE]?**: **Dołącz** daje mu twój tag i pelerynę, **Nie** niczego nie zmienia. Każdy może wysłać taki link i nikt nie jest właścicielem tagu, więc gra zawsze najpierw pyta.
 
