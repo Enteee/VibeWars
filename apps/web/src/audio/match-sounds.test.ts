@@ -84,6 +84,7 @@ function snapshot(castingSkillId: string | undefined, switches: boolean[] = []):
     decks: [],
     lifts: [],
     summary: undefined,
+    chart: undefined,
   };
 }
 

@@ -336,13 +336,7 @@ export type {
   MatchChartResult,
   MatchChartState,
 } from "./match/match-chart.js";
-export {
-  CHART_OBJECTIVES,
-  EVENT_CAP,
-  MatchChart,
-  SAMPLE_CAP,
-  samplePeriod,
-} from "./match/match-chart.js";
+export { EVENT_CAP, MatchChart, SAMPLE_CAP, samplePeriod } from "./match/match-chart.js";
 export { creatureSummonerOf } from "./match/creature-id.js";
 
 export type {

@@ -15,6 +15,9 @@ import {
   type PlayerBuild,
 } from "@vibewars/game-core";
 import {
+  MAX_CHART_EVENTS,
+  MAX_CHART_PARTS,
+  MAX_CHART_SAMPLES,
   MAX_LOBBY_PLAYERS,
   MAX_TEAM_LOBBY_SIDE,
   MAX_WIRE_CHAT_TEXT,
@@ -44,6 +47,8 @@ import {
   type WireLobbyState,
   type WireTeamSide,
   type WireTeamProposalBuilds,
+  type WireMatchChart,
+  joinMatchChart,
   type WireCape,
   type WirePlayer,
   type WireProjectile,
@@ -55,6 +60,7 @@ import {
   MAX_MESSAGE_BYTES,
   messageBytes,
   packCombat,
+  packMatchChart,
   packSnapshot,
   sanitizeChatText,
   sanitizeGuildTag,
@@ -667,5 +673,46 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       expect(messageBytes(command), piece).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
       expect(messageBytes(shared), piece).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
     }
+  });
+
+  /** A match's charts (#3564): `players` series of `MAX_CHART_SAMPLES`, cumulative to `top`. */
+  function chart(players: number, top: number, events: number): WireMatchChart {
+    const ramp = Array.from({ length: MAX_CHART_SAMPLES }, (_, i) =>
+      Math.round((top * (i + 1)) / MAX_CHART_SAMPLES),
+    );
+    const vitals = Array.from({ length: MAX_CHART_SAMPLES }, (_, i) => (i * 37) % 101);
+    return {
+      period: 14,
+      players: Array.from({ length: players }, (_, i) => ({
+        id: `${PEER_ID}${String(i)}`,
+        dealt: ramp,
+        taken: ramp,
+        healed: ramp,
+        health: vitals,
+        energy: vitals,
+      })),
+      events: Array.from({ length: events }, (_, i) => ({
+        t: 1_000_000 + i,
+        kind: "interrupt",
+        by: `${PEER_ID}${String(i % 10)}`,
+        id: `${PEER_ID}${String((i + 1) % 10)}`,
+        skillId: SKILL_ID,
+      })),
+      dropped: 1_000_000,
+    };
+  }
+
+  it("match charts: 16 players at 120 samples, damage to 99,999, are at most 48 KB (#3564)", () => {
+    expect(messageBytes(chart(16, 99_999, 0))).toBeLessThanOrEqual(48 * 1024);
+  });
+
+  it("match charts: a full roster's, every event kept, go in MAX_CHART_PARTS parts or fewer that each fit (#3564)", () => {
+    const whole = chart(MAX_LOBBY_PLAYERS, 9_999_999, MAX_CHART_EVENTS);
+    const parts = packMatchChart(whole, MAX_MESSAGE_BYTES);
+    expect(parts.length).toBeLessThanOrEqual(MAX_CHART_PARTS);
+    for (const part of parts) {
+      expect(messageBytes(part)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    }
+    expect(joinMatchChart(parts)).toEqual(whole);
   });
 });

@@ -180,15 +180,15 @@ describe("MatchChart (#3564)", () => {
     );
     expect(chart.result(["ann", "bob", "cat"]).events).toEqual([
       { t: 3, kind: "death", id: "cat", by: "ann" },
-      { t: 3, kind: "death", id: "bob" },
+      { t: 3, kind: "death", id: "bob", by: null },
       { t: 3, kind: "resurrected", id: "bob" },
       { t: 3, kind: "interrupt", by: "ann", id: "cat", skillId: "healing-breeze" },
       { t: 3, kind: "objective", team: 1, what: "point" },
     ]);
     // Ann gone from the roster: her kill names no killer, her interrupt is no event.
     expect(chart.result(["bob", "cat"]).events.slice(0, 2)).toEqual([
-      { t: 3, kind: "death", id: "cat" },
-      { t: 3, kind: "death", id: "bob" },
+      { t: 3, kind: "death", id: "cat", by: null },
+      { t: 3, kind: "death", id: "bob", by: null },
     ]);
 
     const deaths = Array.from({ length: EVENT_CAP + 7 }, () =>

@@ -28,7 +28,7 @@ export type ChartObjective = (typeof CHART_OBJECTIVES)[number];
 
 /** One thing that happened, at `t` whole seconds since the match began. */
 export type ChartEvent =
-  | { readonly t: number; readonly kind: "death"; readonly id: string; readonly by?: string }
+  | { readonly t: number; readonly kind: "death"; readonly id: string; readonly by: string | null }
   | { readonly t: number; readonly kind: "resurrected"; readonly id: string }
   | {
       readonly t: number;
@@ -146,8 +146,8 @@ export class MatchChart {
       if (event.kind === "objective") {
         events.push(event);
       } else if (members.has(event.id)) {
-        if (event.kind === "death" && event.by !== undefined && !members.has(event.by)) {
-          events.push({ t: event.t, kind: "death", id: event.id });
+        if (event.kind === "death" && event.by !== null && !members.has(event.by)) {
+          events.push({ t: event.t, kind: "death", id: event.id, by: null });
         } else if (event.kind !== "interrupt" || members.has(event.by)) {
           events.push(event);
         }
@@ -183,7 +183,7 @@ export class MatchChart {
         this.#push(
           by !== undefined && by !== event.targetId && this.#isMember(by)
             ? { t, kind: "death", id: event.targetId, by }
-            : { t, kind: "death", id: event.targetId },
+            : { t, kind: "death", id: event.targetId, by: null },
         );
       } else if (event.kind === "resurrected") {
         this.#push({ t, kind: "resurrected", id: event.targetId });
