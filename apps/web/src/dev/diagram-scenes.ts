@@ -40,7 +40,7 @@ export const DIAGRAM_SCENES: readonly DiagramScene[] = [
   {
     id: "layers-deck",
     map: "canthan-terraces",
-    camera: { x: 520, y: 1330, zoom: 1.1 },
+    camera: { x: 520, y: 1290, zoom: 1.1 },
     actors: [
       { profession: "warrior", team: 0, x: 520, y: 1200, layer: 2 },
       { profession: "monk", team: 1, x: 520, y: 1450, layer: 1 },
@@ -50,14 +50,14 @@ export const DIAGRAM_SCENES: readonly DiagramScene[] = [
   {
     id: "layers-tunnel",
     map: "canthan-terraces",
-    camera: { x: 1000, y: 1135, zoom: 0.9 },
-    actors: [{ profession: "ranger", team: 0, x: 1000, y: 1135, layer: 0 }],
+    camera: { x: 700, y: 1380, zoom: 1.2 },
+    actors: [{ profession: "ranger", team: 0, x: 700, y: 1330, layer: 0 }],
     markers: [],
   },
   {
     id: "alt-click",
     map: "canthan-terraces",
-    camera: { x: 520, y: 1330, zoom: 1.1 },
+    camera: { x: 520, y: 1290, zoom: 1.1 },
     actors: [{ profession: "warrior", team: 0, x: 520, y: 1450, layer: 1 }],
     markers: [
       { x: 520, y: 1200, dashed: false },
@@ -65,10 +65,17 @@ export const DIAGRAM_SCENES: readonly DiagramScene[] = [
     ],
   },
   {
-    id: "world-elements",
+    id: "world-lever-gate",
     map: "canthan-terraces",
-    camera: { x: 900, y: 1400, zoom: 0.5 },
+    camera: { x: 1280, y: 1060, zoom: 1.1 },
     actors: [{ profession: "elementalist", team: 0, x: 1280, y: 1010, layer: 1 }],
+    markers: [],
+  },
+  {
+    id: "world-wall-mire",
+    map: "canthan-terraces",
+    camera: { x: 1080, y: 1760, zoom: 0.9 },
+    actors: [{ profession: "warrior", team: 0, x: 1150, y: 1700, layer: 1 }],
     markers: [],
   },
 ];
