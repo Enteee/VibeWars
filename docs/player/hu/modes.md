@@ -195,8 +195,7 @@ csapatnak van egy **Kísértethőse** a bázisán, egy baltával harcoló
 kísértet, akit senki sem irányít. Az **oltár** középen van, mindkét
 bázistól ugyanakkora sétára. A **Threefold Keep** pályán három csapat
 (kettő, ha nincs szabad harmadik) harcol érte egy fallal körülvett
-várban. Az ajtói csak belülről nyílnak, egy belső lappal: sétálj körbe
-egy nyitott sarokig, hogy bejuss. Csapatonként legfeljebb 12 pont, és
+vár tornyán. Csapatonként legfeljebb 12 pont, és
 ha minden ellenség -60% morálon áll, azonnal nyersz. A **Hősök
 Csarnoka**, A domb ura pálya, amely a Hősök Útját zárja, egy nyugatról
 és keletről fallal határolt emelvényre emeli, amelyre egy északi vagy
@@ -260,7 +259,7 @@ először a másik csapat Kísértethősét öli meg, amint az az oltáron áll 
 hatótávjukon belül: ez az egyetlen ellenség, amely megakadályozza, hogy
 a kísértetetek elfoglalja.
 
-A Threefold Keep játssza.
+A Threefold Keep játssza (4v4 és 8v8, 5000x4400): egy vár egy dombon a hegyvidéken, három csapatnak. Menj fel a kapud melletti lépcsőn a gyilokjáróra, és kelj át egy töltésúton a dombra, aztán mássz fel a torony tetején álló oltárhoz. Minden udvarban egy kar mind a négy kaput kinyitja: a saját kapuátjáródat a fal alatt, és az altemplomot, a hosszú utat a domb alatt.
 
 ## Pontfoglalás
 

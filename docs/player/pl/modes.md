@@ -166,8 +166,7 @@ Cinder Sanctum (8v8, 5600x2800) w to gra: świątynia na zboczu wulkanu między 
 **Zaprowadź Upiornego Bohatera na ołtarz i utrzymaj go.** Każda drużyna ma w bazie
 **Upiornego Bohatera**, ducha walczącego toporem, którym nikt nie gra. **Ołtarz** jest
 pośrodku, tak samo daleko od obu baz. Na **Threefold Keep** walczą o niego trzy drużyny
-(dwie, gdy nie ma wolnej trzeciej) wewnątrz otoczonej murem twierdzy. Jej drzwi otwierają
-się tylko od środka, płytą wewnątrz: obejdź do otwartego narożnika, aby wejść. Maksymalnie
+(dwie, gdy nie ma wolnej trzeciej) na wieży otoczonej murem twierdzy. Maksymalnie
 12 punktów na drużynę, a jeśli każdy wróg ma -60% morale, wygrywasz od razu. **Sala
 Bohaterów**, mapa Króla wzgórza kończąca Szczyt Bohaterów, wznosi ołtarz na podwyższeniu
 obmurowanym od zachodu i wschodu, z północnym lub południowym podejściem wśród filarów.
@@ -217,7 +216,7 @@ ołtarza, każdy bot najpierw zabija Upiornego Bohatera drugiej drużyny, gdy ty
 stanie on na ołtarzu w ich zasięgu: to jedyny wróg, który nie pozwala twojemu duchowi go
 przejąć.
 
-Gra w niego Threefold Keep.
+Gra w niego Threefold Keep (4v4 i 8v8, 5000x4400): twierdza na wzgórzu w wyżynach, dla trzech drużyn. Wejdź na chodnik obronny schodami obok swojej bramy i przejdź groblą na wzgórze, a potem wespnij się do ołtarza na wieży. Dźwignia na każdym dziedzińcu otwiera wszystkie cztery bramy: przejście twojej bramy pod murem oraz podziemia, długą drogę pod wzgórzem.
 
 ## Punkty kontrolne
 

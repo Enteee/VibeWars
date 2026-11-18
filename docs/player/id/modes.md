@@ -172,8 +172,7 @@ Cinder Sanctum (8v8, 5600x2800) memainkannya: sebuah kuil di lereng gunung berap
 **Pahlawan Hantu** di markasnya, hantu yang bertarung dengan kapak dan yang
 tidak dimainkan siapa pun. **Altar** ada di tengah, sama jauhnya dari kedua
 markas. Di **Threefold Keep**, tiga tim (dua kalau tak ada tim ketiga yang tersedia) memperebutkannya
-di dalam sebuah keep bertembok. Pintu-pintunya hanya bisa dibuka dari dalam, lewat sebuah pelat di dalamnya: jalan
-memutar ke sudut yang terbuka untuk masuk. Paling banyak 12 poin per tim, dan kalau setiap musuh
+di atas menara sebuah keep bertembok. Paling banyak 12 poin per tim, dan kalau setiap musuh
 berada di moral -60% kamu langsung menang. **Aula
 Pahlawan**, peta Raja Bukit yang mengakhiri Pendakian Pahlawan, meninggikan
 altar di atas panggung bertembok di barat dan timur, naik lewat jalan utara atau selatan
@@ -229,7 +228,7 @@ jangkauan mantra. Selama timmu tidak menguasai altar, setiap bot membunuh Pahlaw
 tim lawan lebih dulu begitu hantu itu berdiri di altar dalam jangkauan mereka:
 dialah satu-satunya musuh yang mencegah hantumu merebutnya.
 
-Threefold Keep memainkannya.
+Threefold Keep memainkannya (4v4 dan 8v8, 5000x4400): sebuah keep di atas bukit di dataran tinggi, untuk tiga tim. Naiki jalan di atas tembok lewat tangga di samping gerbangmu lalu seberangi jalan lintas ke bukit, kemudian naik ke altar di atas menara. Sebuah tuas di tiap pelataran membuka keempat gerbang: lorong gerbangmu di bawah tembok, dan ruang bawah tanah, jalan panjang di bawah bukit.
 
 ## Rebut Titik
 

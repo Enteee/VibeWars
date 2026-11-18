@@ -173,9 +173,8 @@ Cinder Sanctum (8v8, 5600x2800) lo juega: un templo en la ladera de un volcán e
 **Lleva a tu Héroe Fantasmal al altar y mantenlo.** Cada equipo tiene un **Héroe
 Fantasmal** en su base, un fantasma que lucha con un hacha y que nadie juega. El
 **altar** está en el centro, a la misma distancia de ambas bases. En **Threefold
-Keep**, tres equipos (dos si no hay un tercero libre) luchan por él dentro de un
-recinto amurallado. Sus puertas solo se abren desde dentro, con una placa: para
-entrar, rodéalo hasta una esquina abierta. Como máximo 12 puntos por equipo, y si
+Keep**, tres equipos (dos si no hay un tercero libre) luchan por él en la torre de
+un recinto amurallado. Como máximo 12 puntos por equipo, y si
 todos los rivales están a -60 % de moral, ganas al instante. **Hall of Heroes**, el mapa de Rey de la colina
 que cierra el Ascenso de los Héroes, lo eleva sobre un estrado amurallado al
 oeste y al este, con una subida norte y otra sur flanqueadas de pilares.
@@ -230,7 +229,7 @@ tu equipo no controla el altar, cada bot mata primero al Héroe Fantasmal del ot
 equipo en cuanto esté sobre el altar a su alcance: es el único enemigo que impide
 que tu fantasma lo reclame.
 
-Se juega en Threefold Keep.
+Se juega en Threefold Keep (4v4 y 8v8, 5000x4400): una fortaleza sobre una colina en las alturas, para tres equipos. Sube al adarve por las escaleras junto a tu puerta y cruza una calzada hasta la colina; luego sube al altar en la torre. Una palanca en cada patio abre las cuatro puertas: el paso de tu puerta bajo la muralla, y la cripta, el camino largo bajo la colina.
 
 ## Puntos de captura
 

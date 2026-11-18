@@ -175,9 +175,8 @@ Cinder Sanctum (8v8, 5600x2800) speelt het: een tempel op de flank van een vulka
 **Leid je Spookheld op het altaar, en houd het vast.** Elk team heeft een
 **Spookheld** in zijn basis, een geest die met een bijl vecht en die niemand speelt.
 Het **altaar** staat in het midden, even ver van beide basissen. Op **Threefold
-Keep** vechten drie teams (twee als er geen derde vrij is) erom binnen een ommuurde
-burcht. De deuren gaan alleen van binnenuit open, met een plaat aan de binnenkant:
-loop om naar een open hoek om binnen te komen. Maximaal 12 punten per team, en als
+Keep** vechten drie teams (twee als er geen derde vrij is) erom op de toren van een
+ommuurde burcht. Maximaal 12 punten per team, en als
 elke vijand op -60% moraal staat, win je meteen. De **Hall of Heroes**, de King of
 the Hill-map die de Heroes' Ascent afsluit, tilt het op een podium met muren aan
 west- en oostkant, via een noordelijke of zuidelijke toegang met pilaren. Kies je
@@ -231,7 +230,7 @@ houdt, doodt elke bot eerst de Spookheld van het andere team zodra die binnen hu
 bereik op het altaar staat: dat is de enige vijand die je geest ervan weerhoudt het
 te claimen.
 
-Threefold Keep speelt het.
+Threefold Keep speelt het (4v4 en 8v8, 5000x4400): een burcht op een heuvel in het hoogland, voor drie teams. Klim via de trap naast je poort de weergang op en steek over een dam naar de heuvel over, en klim dan naar het altaar op de toren. Een hendel op elk binnenhof opent alle vier de poorten: je poortgang onder de muur, en de crypte, de lange weg onder de heuvel.
 
 ## Capture Points
 
