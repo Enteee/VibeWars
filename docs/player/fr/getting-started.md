@@ -201,6 +201,8 @@ menu la montrent aussi. **Sans cape** la retire.
 
 Un changement s'applique tout de suite au salon où tu es.
 
+**Dessine ton propre emblème.** **Modifier l'emblème**, sous les emblèmes de départ, ouvre à leur place une grille de 16×16. Choisis une couleur ou **Vide**, puis dessine au **Crayon**, efface à la **Gomme** ou colore une zone avec **Remplir**. **Miroir** peint les moitiés gauche et droite à la fois. **Tout effacer** vide la grille et **Défaire** revient d'un pas. La petite vue à côté de la grille montre l'emblème à sa taille en match. **OK** le garde, **Annuler** jette le dessin. Les flèches et Espace dessinent aussi au clavier.
+
 **Copier le lien de guilde**, sous le créateur de cape, copie un lien qui porte ton tag et ta cape. Qui l'ouvre voit **Rejoindre la guilde [VIBE] ?** : **Rejoindre** lui donne ton tag et ta cape, **Non** ne change rien. N'importe qui peut envoyer un tel lien et personne ne possède un tag, donc le jeu demande toujours d'abord.
 
 ## Langue

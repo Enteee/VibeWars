@@ -212,6 +212,8 @@ A menüben a karaktereid is mutatják. A **Nincs köpeny** leveszi.
 
 A módosítás azonnal érvényes abban a lobbiban, amelyikben vagy.
 
+**Rajzold meg a saját emblémádat.** A kezdő emblémák alatti **Embléma szerkesztése** a helyükön megnyit egy 16×16-os rácsot. Válassz színt vagy **Üres** mezőt, majd rajzolj a **Ceruza** eszközzel, radírozz a **Radír** eszközzel, vagy színezz ki egy területet a **Kitöltés** eszközzel. A **Tükrözés** egyszerre festi a bal és a jobb felet. A **Törlés** kiüríti a rácsot, a **Vissza** egy lépést visszalép. A rács melletti kis nézet akkorának mutatja az emblémát, mint egy meccsen. A **Kész** megtartja, a **Mégse** eldobja a rajzot. A nyilak és a szóköz billentyűzetről is rajzolnak.
+
 A köpenytervező alatti **Céhlink másolása** egy linket másol, amely a céhjeledet és a köpenyedet viszi. Aki megnyitja, ezt a kérdést kapja: **Csatlakozol a(z) [VIBE] céhhez?**: a **Csatlakozás** megadja neki a céhjeledet és a köpenyedet, a **Nem** semmit sem változtat. Bárki küldhet ilyen linket, és senkié sem egy céhjel, ezért a játék mindig előbb kérdez.
 
 ## Nyelv

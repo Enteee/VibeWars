@@ -189,6 +189,8 @@ veje za tebou. Ukazujú ho aj tvoje postavy v menu. **Bez plášťa** ho zloží
 
 Zmena platí okamžite pre lobby, v ktorom si.
 
+**Nakresli si vlastný znak.** **Upraviť znak** pod východiskovými znakmi otvorí na ich mieste mriežku 16×16. Vyber farbu alebo **Prázdne** a kresli nástrojom **Ceruzka**, gumuj nástrojom **Guma** alebo vyfarbi plochu nástrojom **Výplň**. **Zrkadliť** maľuje ľavú a pravú polovicu naraz. **Vymazať** mriežku vyprázdni a **Späť** vráti krok. Malý náhľad vedľa mriežky ukazuje znak taký veľký ako v zápase. **Hotovo** ho ponechá, **Zrušiť** kresbu zahodí. Šípky a medzerník kreslia aj z klávesnice.
+
 **Kopírovať odkaz na cech** pod návrhárom plášťa skopíruje odkaz s tvojou značkou a plášťom. Kto ho otvorí, dostane otázku **Pridať sa do cechu [VIBE]?**: **Pridať sa** mu dá tvoju značku a plášť, **Nie** nič nezmení. Taký odkaz môže poslať ktokoľvek a značku nikto nevlastní, preto sa hra vždy najprv opýta.
 
 ## Jazyk

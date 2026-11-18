@@ -1569,7 +1569,7 @@ body:has(> .splash) #menu-background::after {
    sharing rows: label, input, hint. The tag fits four wide letters. */
 .player-identity {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.25rem 0.5rem;
 }
 
@@ -1577,6 +1577,7 @@ body:has(> .splash) #menu-background::after {
   display: grid;
   grid-row: span 3;
   grid-template-rows: subgrid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
 }
 
@@ -1658,6 +1659,152 @@ body:has(> .splash) #menu-background::after {
 }
 
 .screen .player-cape-none[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.player-cape-picks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.player-cape-picks[hidden] {
+  display: none;
+}
+
+.screen .player-cape-edit {
+  align-self: flex-start;
+  padding: 0.15rem 0.6rem;
+}
+
+/*
+ * The emblem editor (#3555), in place of the cape designer's rows: the
+ * 16x16 grid on the cape's cloth, the emblem at game size beside it, the
+ * palette, the tools, Done and Cancel. Picks are ringed in ink, as above.
+ * On a phone the cells shrink to the pane and the preview wraps under the
+ * grid, so nothing scrolls sideways.
+ */
+.emblem-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-self: flex-start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.emblem-editor-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+/* 16 cells of 16 px, 15 gaps, the padding and the border at most. */
+.emblem-editor-grid {
+  position: relative;
+  display: grid;
+  flex: 0 1 calc(16 * 16px + 15px + 2px + 4px);
+  min-width: 0;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  background: var(--line);
+  border: 2px solid var(--cape-trim);
+  border-radius: 3px;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+.emblem-editor-grid:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.emblem-editor-cell {
+  aspect-ratio: 1;
+  background: var(--pixel, var(--cape-main));
+}
+
+.emblem-editor-grid:focus-visible .emblem-editor-cursor {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* Mirror on: the axis between columns 7 and 8. */
+.emblem-editor-mirrored::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: calc(50% - 1px);
+  width: 2px;
+  background: var(--accent);
+  opacity: 0.6;
+  content: "";
+  pointer-events: none;
+}
+
+.emblem-editor-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: center;
+}
+
+.emblem-editor-preview {
+  width: 24px;
+  height: 24px;
+}
+
+.emblem-editor-caption {
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.emblem-editor-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.screen .emblem-editor-swatch {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: var(--swatch);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+
+/* Empty: the cloth with a stroke through it. */
+.screen .emblem-editor-swatch.emblem-editor-empty {
+  background: linear-gradient(
+    to top right,
+    var(--cape-main) calc(50% - 1px),
+    var(--ink-dim) calc(50% - 1px) calc(50% + 1px),
+    var(--cape-main) calc(50% + 1px)
+  );
+}
+
+.screen .emblem-editor-swatch[aria-pressed="true"] {
+  border: 2px solid var(--ink);
+}
+
+.screen .emblem-editor-tool,
+.screen .emblem-editor-done,
+.screen .emblem-editor-cancel {
+  padding: 0.15rem 0.6rem;
+}
+
+.screen .emblem-editor-tool[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.screen .emblem-editor-done {
   border-color: var(--accent);
   color: var(--accent);
 }

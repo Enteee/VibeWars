@@ -181,8 +181,9 @@ The operator's playtest is the final word on every map.
 
 `BENCH_TICKS=600 BENCH_HOST=arena-canyon,arena-crossroads pnpm run
 bench:ticks` (#3240) times the host's step of a 4v4 of bots on each map
-named: every layer, structure and objective, as a match plays it. It
-prints p50, p95 and max per map. Report-only; CI runs only a short smoke
+named: every layer, structure and objective, as a match plays it;
+`BENCH_SIZE=8` makes it an 8v8 (#3599). It prints p50, p95 and max per
+map. Report-only; CI runs only a short smoke
 of it.
 
 ## The render bench

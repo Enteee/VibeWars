@@ -194,6 +194,8 @@ muestran. **Sin capa** te la quita.
 
 Un cambio se aplica al instante a la sala en la que estás.
 
+**Dibuja tu propio emblema.** **Editar emblema**, bajo los emblemas iniciales, abre en su lugar una cuadrícula de 16×16. Elige un color o **Vacío**, y dibuja con el **Lápiz**, borra con el **Borrador** o rellena una zona con **Rellenar**. **Espejo** pinta a la vez la mitad izquierda y la derecha. **Borrar todo** vacía la cuadrícula y **Deshacer** retrocede un paso. La vista pequeña junto a la cuadrícula muestra el emblema tan grande como en una partida. **Listo** lo guarda, **Cancelar** descarta el dibujo. Las flechas y Espacio también dibujan con el teclado.
+
 **Copiar enlace del gremio**, bajo el diseñador de capa, copia un enlace con tu etiqueta y tu capa. Quien lo abra verá **¿Unirte al gremio [VIBE]?**: **Unirme** le da tu etiqueta y tu capa, **No** no cambia nada. Cualquiera puede enviar un enlace así y nadie es dueño de una etiqueta, por eso el juego siempre pregunta antes.
 
 ## Idioma

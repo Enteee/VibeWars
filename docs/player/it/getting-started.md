@@ -55,6 +55,8 @@ Apri **Opzioni** con la ⚙ nella barra superiore: la sezione **giocatore** cont
 
 Una modifica vale subito per la lobby in cui sei.
 
+**Disegna il tuo emblema.** **Modifica emblema**, sotto gli emblemi iniziali, apre al loro posto una griglia 16×16. Scegli un colore o **Vuoto**, poi disegna con la **Matita**, cancella con la **Gomma** o colora un'area con **Riempi**. **Specchio** dipinge insieme la metà sinistra e la destra. **Cancella tutto** svuota la griglia e **Indietro** torna indietro di un passo. La piccola vista accanto alla griglia mostra l'emblema grande come in partita. **Fatto** lo tiene, **Annulla** butta via il disegno. Frecce e Spazio disegnano anche da tastiera.
+
 **Copia link della gilda**, sotto il designer del mantello, copia un link con il tuo tag e il tuo mantello. Chi lo apre si vede chiedere **Unirti alla gilda [VIBE]?**: **Unisciti** gli dà il tuo tag e il tuo mantello, **No** non cambia nulla. Chiunque può inviare un link così e nessuno possiede un tag, quindi il gioco chiede sempre prima.
 
 ## Lingua

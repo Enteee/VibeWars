@@ -194,6 +194,8 @@ menuen viser den også. **Ingen kappe** tager den af.
 
 En ændring gælder med det samme for den lobby, du er i.
 
+**Tegn dit eget emblem.** **Rediger emblem** under start-emblemerne åbner et gitter på 16×16 i deres sted. Vælg en farve eller **Tom**, og tegn med **Blyant**, visk ud med **Viskelæder** eller farv et område med **Udfyld**. **Spejl** maler venstre og højre halvdel på én gang. **Ryd** tømmer gitteret, og **Fortryd** går et skridt tilbage. Den lille visning ved siden af gitteret viser emblemet så stort som i en kamp. **Færdig** beholder det, **Annuller** smider tegningen væk. Piletaster og mellemrum tegner også med tastaturet.
+
 **Kopiér laugslink** under kappedesigneren kopierer et link med dit mærke og din kappe. Den, der åbner det, bliver spurgt **Bliv medlem af lauget [VIBE]?**: **Bliv medlem** giver vedkommende dit mærke og din kappe, **Nej** ændrer intet. Alle kan sende sådan et link, og ingen ejer et mærke, så spillet spørger altid først.
 
 ## Sprog

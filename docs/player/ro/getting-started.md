@@ -184,6 +184,8 @@ personajele tale din meniu. **Fără pelerină** o scoate.
 
 O schimbare se aplică imediat lobby-ului în care ești.
 
+**Desenează-ți propria emblemă.** **Editează emblema**, sub emblemele de pornire, deschide în locul lor o grilă de 16×16. Alege o culoare sau **Gol**, apoi desenează cu **Creion**, șterge cu **Radieră** sau umple o zonă cu **Umplere**. **Oglindă** pictează deodată jumătatea stângă și cea dreaptă. **Golește** golește grila, iar **Înapoi** revine cu un pas. Vederea mică de lângă grilă arată emblema la fel de mare ca într-un meci. **Gata** o păstrează, **Anulează** aruncă desenul. Săgețile și Spațiu desenează și de la tastatură.
+
 **Copiază linkul breslei**, sub designerul de pelerină, copiază un link cu tagul și pelerina ta. Cine îl deschide e întrebat **Te alături breslei [VIBE]?**: **Alătură-te** îi dă tagul și pelerina ta, **Nu** nu schimbă nimic. Oricine poate trimite un astfel de link și nimeni nu deține un tag, așa că jocul întreabă mereu întâi.
 
 ## Limbă
