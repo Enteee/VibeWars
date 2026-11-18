@@ -122,14 +122,7 @@
       "switched": null
     }
   ],
-  "overhangs": [
-    {
-      "id": "hanging-banner",
-      "layer": 2,
-      "footprint": { "kind": "rect", "x": 2480, "y": 2190, "width": 240, "height": 60 },
-      "look": "canopy"
-    }
-  ],
+  "overhangs": [],
   "transitions": [
     {
       "id": "west-plinth-north-stair",
