@@ -10,10 +10,7 @@ import {
   splashPhase,
   type SplashPhase,
 } from "./splash-timeline.js";
-
-/** The game's name, in its two colours: not translated. */
-const NAME_VIBE = "Vibe";
-const NAME_WARS = "Wars";
+import { wordmark } from "./kit.js";
 
 const SEEN_KEY = `${STORAGE_NAMESPACE}.splash-seen`;
 
@@ -79,22 +76,15 @@ export function showSplash(parent: HTMLElement, options: SplashOptions): Splash 
   hint.textContent = t("splash.clickToStart");
   const title = document.createElement("div");
   title.className = "splash-title";
-  const vibe = document.createElement("span");
-  vibe.className = "splash-vibe";
-  vibe.textContent = NAME_VIBE;
-  const wars = document.createElement("span");
-  wars.className = "splash-wars";
-  wars.textContent = NAME_WARS;
-  const wordmark = document.createElement("h1");
-  wordmark.className = "splash-wordmark";
-  wordmark.setAttribute("dir", "ltr");
-  wordmark.append(vibe, wars);
+  const name = document.createElement("h1");
+  name.className = "splash-wordmark";
+  name.append(wordmark("splash-name"));
   const rule = document.createElement("div");
   rule.className = "splash-rule";
   const prompt = document.createElement("p");
   prompt.className = "splash-prompt";
   prompt.textContent = t("splash.pressAnyKey");
-  title.append(wordmark, rule, prompt);
+  title.append(name, rule, prompt);
   const flash = document.createElement("div");
   flash.className = "splash-flash";
   root.append(scrim, hint, title, flash);

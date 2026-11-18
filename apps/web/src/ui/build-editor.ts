@@ -93,6 +93,7 @@ import {
   toast,
   type ChipProblem,
   type InlineConfirm,
+  wordmark,
 } from "./kit.js";
 import { mountPaperDoll, type PaperDoll } from "./paper-doll.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
@@ -1187,7 +1188,7 @@ function mountCommandBar(
   };
   // The name is the last crumb: the place is the character (#1272).
   screenBar({
-    crumbs: ["VibeWars", nameInput],
+    crumbs: [wordmark("topbar-wordmark"), nameInput],
     escape: () => {
       leave(callbacks.onClose);
     },
