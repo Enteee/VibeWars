@@ -101,6 +101,7 @@ export const CHANNELS = [
   "strokes",
   "traps",
   "respawns",
+  "capes",
   "chat",
   "chat-line",
   "shared-track",
@@ -206,23 +207,77 @@ export const CAPE_COLOURS = [
   "pink",
 ] as const;
 
-/** A guild cape's emblems (#1422): eight plain shapes. */
-export const CAPE_EMBLEMS = [
-  "disc",
-  "bar",
-  "chevron",
-  "diamond",
-  "triangle",
-  "cross",
-  "ring",
-  "half-disc",
-] as const;
+/** A guild emblem's side in pixels (#3554): it is a square grid of `EMBLEM_GRID`². */
+export const EMBLEM_GRID = 16;
 
-/** A guild cape (#1422): its cloth, its trim and the emblem on it, in the trim colour. */
+/** An emblem's length on the wire: 128 bytes as base64url without padding. */
+const EMBLEM_TEXT_LENGTH = 171;
+
+const BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+/**
+ * An emblem grid (#3554) as the wire carries it: `EMBLEM_GRID`² pixels,
+ * row-major, each 0 for empty or `i` for `CAPE_COLOURS[i - 1]`, packed
+ * two to a byte, high nibble first, as base64url without padding, the
+ * convention of the public keys. Pure, so this package needs neither
+ * `Buffer` nor `atob`.
+ */
+export function packEmblem(pixels: readonly number[]): string {
+  const bytes: number[] = [];
+  for (let index = 0; index < EMBLEM_GRID * EMBLEM_GRID; index += 2) {
+    bytes.push(((pixels[index] ?? 0) << 4) | (pixels[index + 1] ?? 0));
+  }
+  let text = "";
+  for (let index = 0; index < bytes.length; index += 3) {
+    const chunk =
+      ((bytes[index] ?? 0) << 16) | ((bytes[index + 1] ?? 0) << 8) | (bytes[index + 2] ?? 0);
+    const digits = Math.min(4, Math.ceil(((bytes.length - index) * 8) / 6));
+    for (let digit = 0; digit < digits; digit += 1) {
+      text += BASE64URL.charAt((chunk >> (18 - digit * 6)) & 63);
+    }
+  }
+  return text;
+}
+
+/**
+ * The pixels of a packed emblem, or `undefined` for a string of the wrong
+ * length, a character outside base64url, trailing bits that are not 0
+ * (so each grid has one spelling), or a pixel past `CAPE_COLOURS`.
+ */
+export function unpackEmblem(text: string): number[] | undefined {
+  if (text.length !== EMBLEM_TEXT_LENGTH) {
+    return undefined;
+  }
+  const bytes: number[] = [];
+  let bits = 0;
+  let held = 0;
+  for (const char of text) {
+    const digit = BASE64URL.indexOf(char);
+    if (digit < 0) {
+      return undefined;
+    }
+    held = ((held << 6) | digit) & 0xfff;
+    bits += 6;
+    if (bits >= 8) {
+      bits -= 8;
+      bytes.push((held >> bits) & 0xff);
+    }
+  }
+  if ((held & ((1 << bits) - 1)) !== 0) {
+    return undefined;
+  }
+  const pixels: number[] = [];
+  for (const byte of bytes) {
+    pixels.push(byte >> 4, byte & 15);
+  }
+  return pixels.every((pixel) => pixel <= CAPE_COLOURS.length) ? pixels : undefined;
+}
+
+/** A guild cape (#1422): its cloth, its trim, and its emblem grid as `packEmblem` packs it (#3554). */
 export interface WireCape {
   readonly main: (typeof CAPE_COLOURS)[number];
   readonly trim: (typeof CAPE_COLOURS)[number];
-  readonly emblem: (typeof CAPE_EMBLEMS)[number];
+  readonly emblem: string;
 }
 
 /**
@@ -519,8 +574,6 @@ export interface WirePlayer {
   readonly guildTag: string | null;
   /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
   readonly heroRank: number;
-  /** Worn behind the body (#1422); `null` for none, and whenever `guildTag` is. */
-  readonly guildCape: WireCape | null;
   /** A match team, or `MASTERLESS_WIRE_TEAM` for a masterless creature (#2092). */
   readonly team: WireTeam | typeof MASTERLESS_WIRE_TEAM;
   readonly x: number;
@@ -1008,6 +1061,23 @@ export interface WireRespawns {
   readonly respawns: readonly WireRespawn[];
 }
 
+/** One seated player's cape (#3554). */
+export interface WireSeatCape {
+  readonly id: string;
+  readonly cape: WireCape;
+}
+
+/**
+ * Host to its players and its observers (#3554): every seat's cape, a
+ * full replacement list; a seat not in it wears none. An emblem is 171
+ * bytes, too many to send per body per snapshot, and a seat's cape never
+ * changes in a match, so it is sent after a welcome or an observe, and
+ * whenever a seat with a cape sits down.
+ */
+export interface WireCapes {
+  readonly capes: readonly WireSeatCape[];
+}
+
 /** Who a chat line reaches (#479): everyone in the lobby, or your team. */
 export const CHAT_CHANNELS = ["all", "team"] as const;
 
@@ -1386,7 +1456,7 @@ export interface WireLobbyPlayer {
   readonly guildTag: string | null;
   /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
   readonly heroRank: number;
-  /** As `WirePlayer.guildCape` (#1422). */
+  /** As `PeerHello.guildCape` (#1422). */
   readonly guildCape: WireCape | null;
   /** `null` spectates. */
   readonly team: WireTeam | null;
@@ -1831,7 +1901,8 @@ export function parseWireCape(value: unknown): WireCape | undefined {
     Object.keys(raw).length === 3 &&
     isOneOf(raw.main, CAPE_COLOURS) &&
     isOneOf(raw.trim, CAPE_COLOURS) &&
-    isOneOf(raw.emblem, CAPE_EMBLEMS)
+    typeof raw.emblem === "string" &&
+    unpackEmblem(raw.emblem) !== undefined
     ? { main: raw.main, trim: raw.trim, emblem: raw.emblem }
     : undefined;
 }
@@ -2093,6 +2164,21 @@ export function parseWireRespawns(value: unknown): WireRespawns | undefined {
   const respawns =
     raw === undefined ? undefined : parseArray(raw.respawns, MAX_WIRE_ACTORS, parseRespawn);
   return respawns === undefined ? undefined : { respawns };
+}
+
+function parseSeatCape(value: unknown): WireSeatCape | undefined {
+  const raw = fields(value);
+  const cape = raw === undefined ? undefined : parseWireCape(raw.cape);
+  return raw !== undefined && isString(raw.id) && cape !== undefined
+    ? { id: raw.id, cape }
+    : undefined;
+}
+
+export function parseWireCapes(value: unknown): WireCapes | undefined {
+  const raw = fields(value);
+  const capes =
+    raw === undefined ? undefined : parseArray(raw.capes, MAX_LOBBY_PLAYERS, parseSeatCape);
+  return capes === undefined ? undefined : { capes };
 }
 
 export function parsePeerChat(value: unknown): PeerChat | undefined {
@@ -2410,15 +2496,13 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
   }
   const statuses = parseArray(raw.statuses, MAX_WIRE_STATUSES, parseStatus);
   const creature = raw.creature === null ? null : parseCreature(raw.creature);
-  const guildCape = parseNullableCape(raw.guildCape);
-  return statuses === undefined || creature === undefined || guildCape === undefined
+  return statuses === undefined || creature === undefined
     ? undefined
     : {
         id: raw.id,
         name: raw.name,
         guildTag: raw.guildTag,
         heroRank: raw.heroRank,
-        guildCape,
         team: raw.team,
         x: raw.x,
         y: raw.y,
