@@ -297,23 +297,38 @@ describe("rate", () => {
     expect(of(ratings, five[0]).rating - before).toBeGreaterThan(50);
   });
 
-  it("voids a fork for everyone in it and marks the key, keeping the earlier receipt", () => {
+  it("counts a fork for the others and as a loss for the forker, and marks the key", () => {
     const ledger = new Ledger();
     const pool = trustedPool(ledger);
     const [a, b, c] = pool;
     const kept = ledger.play(1, [[a], [b]]);
-    const fork = ledger.play(1, [[a], [c]], { prev: { [a]: prevOf(kept, a) } });
+    const without = rate(ledger.receipts, 1, crypto);
+    // a forks its chain to play c, and its receipt says a won.
+    ledger.play(1, [[a], [c]], { prev: { [a]: prevOf(kept, a) } });
     const ratings = rate(ledger.receipts, 1, crypto);
-    const without = rate(
-      ledger.receipts.filter((receipt) => receipt !== fork),
-      1,
-      crypto,
-    );
     expect(of(ratings, a).forked).toBe(true);
     expect(of(ratings, c).forked).toBe(false);
     expect(of(ratings, a).lastReceiptHash).toBe(receiptHash(kept, sha256));
-    expect(of(ratings, c)).toEqual(of(without, c));
-    expect(of(ratings, a).rating).toBe(of(without, a).rating);
+    expect(of(ratings, a)).toMatchObject({ matches: of(without, a).matches + 1, streak: 0 });
+    expect(of(ratings, c)).toMatchObject({ matches: of(without, c).matches + 1 });
+    expect(of(ratings, a).rating).toBeLessThan(of(without, a).rating);
+    expect(of(ratings, c).rating).toBeLessThan(of(without, c).rating);
+  });
+
+  it("keeps a real loss counted when the loser backdates a fork against its own alt key", () => {
+    const ledger = new Ledger();
+    const [honest, cheat] = trustedPool(ledger);
+    const noLoss = rate(ledger.receipts, 2, crypto);
+    const loss = ledger.play(2, [[honest], [cheat]], { winningTeam: 0 });
+    ledger.play(1, [[cheat], [key("cheat-alt")]], {
+      prev: { [cheat]: prevOf(loss, cheat) },
+      offChain: true,
+    });
+    const ratings = rate(ledger.receipts, 2, crypto);
+    expect(of(ratings, cheat).forked).toBe(true);
+    expect(of(ratings, honest).rating).toBeGreaterThan(of(noLoss, honest).rating);
+    expect(of(ratings, honest).wins).toBe(of(noLoss, honest).wins + 1);
+    expect(of(ratings, cheat).streak).toBe(0);
   });
 
   it("does not let a void forgery sorted first fork the honest receipt", () => {

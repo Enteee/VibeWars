@@ -239,24 +239,31 @@ function matchesOf(
   );
 }
 
+/** A match, and the keys that forked their chain to play it. */
+interface Chained extends Match {
+  readonly forkers: ReadonlySet<string>;
+}
+
 /**
  * Step 2: each key's chain, walked in canonical order. A receipt whose
- * `prev` for some key was already used on that key's chain is void for
- * everyone and marks the key forked. A `prev` nobody has heard of is
- * fine: relays forget.
+ * `prev` for some key was already used on that key's chain is a fork by
+ * that key: it still counts for every other seat, is a loss for the
+ * forker, and marks it forked. So a backdated fork can never erase a
+ * result. A `prev` nobody has heard of is fine: relays forget.
  */
-function unforked(matches: readonly Match[]): { kept: Match[]; forked: Set<string> } {
+function chained(matches: readonly Match[]): { kept: Chained[]; forked: Set<string> } {
   const used = new Map<string, Set<string>>();
   const forked = new Set<string>();
-  const kept: Match[] = [];
+  const kept: Chained[] = [];
   for (const match of matches) {
     const seats = match.receipt.start.teams.flat();
-    const forks = seats.filter((seat) => used.get(seat.pubkey)?.has(seat.prev) === true);
-    if (forks.length > 0) {
-      for (const seat of forks) {
-        forked.add(seat.pubkey);
-      }
-      continue;
+    const forkers = new Set(
+      seats
+        .filter((seat) => used.get(seat.pubkey)?.has(seat.prev) === true)
+        .map((seat) => seat.pubkey),
+    );
+    for (const pubkey of forkers) {
+      forked.add(pubkey);
     }
     for (const seat of seats) {
       const chain = used.get(seat.pubkey);
@@ -266,7 +273,7 @@ function unforked(matches: readonly Match[]): { kept: Match[]; forked: Set<strin
         used.set(seat.pubkey, new Set([seat.prev]));
       }
     }
-    kept.push(match);
+    kept.push({ ...match, forkers });
   }
   return { kept, forked };
 }
@@ -297,11 +304,12 @@ interface Part {
 }
 
 /**
- * The rated parts of a match (step 4). A leaver scores 0, everyone else
- * scores the result against each other team, and a team that all left
- * loses to everyone. In a `host-left` match only the host is rated.
+ * The rated parts of a match (step 4). A leaver or a forker scores 0,
+ * everyone else scores the result against each other team, and a team
+ * that all left loses to everyone. In a `host-left` match only the host,
+ * and any forker, is rated.
  */
-function partsOf(receipt: RankedReceipt): Part[] {
+function partsOf(receipt: RankedReceipt, forkers: ReadonlySet<string>): Part[] {
   const { teams } = receipt.start;
   const { winningTeam, endReason } = receipt.result;
   const leavers = new Set(receipt.result.leavers);
@@ -311,20 +319,13 @@ function partsOf(receipt: RankedReceipt): Part[] {
   keys.forEach((team, t) => {
     const others = keys.flatMap((other, u) => (u === t ? [] : [{ other, u }]));
     for (const pubkey of team) {
-      if (endReason === "host-left" && !leavers.has(pubkey)) {
+      const lost = leavers.has(pubkey) || forkers.has(pubkey);
+      if (endReason === "host-left" && !lost) {
         continue;
       }
       const games = others.map(({ other, u }) => ({
         team: other,
-        score: leavers.has(pubkey)
-          ? 0
-          : allLeft[u]
-            ? 1
-            : winningTeam === null
-              ? 0.5
-              : winningTeam === t
-                ? 1
-                : 0,
+        score: lost ? 0 : allLeft[u] ? 1 : winningTeam === null ? 0.5 : winningTeam === t ? 1 : 0,
       }));
       parts.push({ pubkey, games });
     }
@@ -414,12 +415,12 @@ export function rate(
   asOfDay: number,
   crypto: ReceiptCrypto,
 ): Ratings {
-  const { kept, forked } = unforked(matchesOf(receipts, asOfDay, crypto));
+  const { kept, forked } = chained(matchesOf(receipts, asOfDay, crypto));
   const states = new Map<string, State>();
   for (const pubkey of forked) {
     stateOf(states, pubkey);
   }
-  const days = new Map<number, Match[]>();
+  const days = new Map<number, Chained[]>();
   for (const match of kept) {
     const today = days.get(match.day);
     if (today) {
@@ -464,14 +465,16 @@ export function rate(
     const games = new Map<string, GlickoGame[]>();
     const counted = new Map<string, number>();
     const repeats = new Map<string, number>();
-    for (const { receipt, hash } of today) {
+    for (const { receipt, hash, forkers } of today) {
       for (const seat of receipt.start.teams.flat()) {
         const state = stateOf(states, seat.pubkey);
         state.name = seat.name;
         state.characterId = seat.characterId;
-        state.lastReceiptHash = hash;
+        if (!forkers.has(seat.pubkey)) {
+          state.lastReceiptHash = hash;
+        }
       }
-      for (const part of partsOf(receipt)) {
+      for (const part of partsOf(receipt, forkers)) {
         const n = (counted.get(part.pubkey) ?? 0) + 1;
         counted.set(part.pubkey, n);
         const opposingSet = `${part.pubkey}|${part.games
