@@ -120,7 +120,7 @@ vijandelijke heer. Daaronder noemt een regel wie een vlag draagt. Een boost
 verschijnt als "Moraalboost! +10%", of "Moraalboost vijand". Op het kompas markeert
 ♛ elke Gildeheer, ⚑ elke vlag en ◎ de standaard.
 
-Guild Hall Isle speelt het.
+Guild Hall Isle (8v8, 6000x2600) speelt het: een eiland in zee. Elke Guild Lord staat boven op een hal, achter een wal; naar buiten gaat door het poortgebouw, over de wal of langs een steiger. Een poortdeur gaat open met een hendel op de wal van de vijand. De vlaggenstandaard staat op een podium in het midden.
 
 ## Relic Run
 

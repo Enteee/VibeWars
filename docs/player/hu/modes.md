@@ -132,7 +132,7 @@ megnevezi, ki visz zászlót. A növelés „Morálnövelés! +10%” vagy
 „Ellenséges morálnövelés” felirattal ugrik fel. Az iránytűn ♛ jelöl
 minden Céhurat, ⚑ minden zászlót és ◎ a tartót.
 
-A Guild Hall Isle játssza.
+A Guild Hall Isle (8v8, 6000x2600) játssza: egy sziget a tengerben. Minden Guild Lord egy csarnok tetején áll, sánc mögött; kifelé a kaputornyon át, a sáncon át vagy egy móló mentén vezet az út. A kapu ajtaját az ellenfél sáncán lévő kar nyitja. A zászlótartó egy emelvényen áll középen.
 
 ## Ereklyefutam
 

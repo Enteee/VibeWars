@@ -75,6 +75,7 @@ const REBUILT = new Set([
   "cinder-sanctum",
   "broken-tower",
   "scarred-earth",
+  "guild-hall-isle",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
@@ -323,10 +324,10 @@ describe("the arena set (#444)", () => {
   });
 });
 
-describe("Guild Hall Isle (#1222)", () => {
+describe("Guild Hall Isle (#1222, #3445)", () => {
   const isle = MAPS.find((map) => map.id === "guild-hall-isle");
   if (isle === undefined) throw new Error("no guild-hall-isle");
-  const walls = allWallSegments(isle.walls);
+  const finder = layeredFinder(isle, RADIUS);
 
   it("seats eight a team, for an 8v8", () => {
     for (const team of [0, 1]) {
@@ -334,16 +335,16 @@ describe("Guild Hall Isle (#1222)", () => {
     }
   });
 
-  it("lets every spawn walk to the enemy Guild Lord", () => {
-    const finder = createPathFinder(
-      buildNavGraph(walls, { width: isle.width, height: isle.height }, RADIUS, []),
-    );
+  it("lets every spawn walk to the enemy Guild Lord, up on his hall", () => {
     for (const spawn of isle.spawnPoints) {
       const lord = isle.objectives.find(
         (objective) => objective.kind === "guild-lord" && objective.team !== spawn.team,
       );
       if (lord === undefined) throw new Error(`no enemy lord for team ${String(spawn.team)}`);
-      expect(finder.find(spawn.position, lord.position), JSON.stringify(spawn)).toBeDefined();
+      expect(
+        finder.find(spawn.position, spawn.layer, lord.position, lord.layer),
+        JSON.stringify(spawn),
+      ).toBeDefined();
     }
   });
 
@@ -394,36 +395,40 @@ describe("Guild Hall Isle (#1222)", () => {
     }
   });
 
-  it("leaves every spawn a clear walk out of its base (#1294)", () => {
+  it("leaves every spawn a clear walk out of its base, past its own guards (#1294)", () => {
     const { creatureRadius, playerRadius } = MINIMAL_GW_INSPIRED_PVP_V1.collision;
+    const stand = isle.objectives.find((objective) => objective.kind === "flag-stand");
+    if (stand === undefined) throw new Error("no flag stand");
     for (const spawn of isle.spawnPoints) {
-      const out: Segment = {
-        a: spawn.position,
-        b: { x: isle.width / 2, y: spawn.position.y },
-      };
-      for (const guard of isle.objectives) {
-        if (guard.kind !== "guard" || guard.team !== spawn.team) continue;
-        expect(
-          distancePointToSegment(guard.position, out),
-          JSON.stringify({ spawn, guard }),
-        ).toBeGreaterThanOrEqual(playerRadius + creatureRadius);
-      }
+      const path = finder.find(spawn.position, spawn.layer, stand.position, stand.layer);
+      if (path === undefined) throw new Error(`no way out from ${JSON.stringify(spawn)}`);
+      path.forEach((point, index) => {
+        const from = index === 0 ? { ...spawn.position, layer: spawn.layer } : path[index - 1];
+        if (from === undefined) return;
+        const out: Segment = { a: from, b: point };
+        for (const guard of isle.objectives) {
+          if (guard.kind !== "guard" || guard.team !== spawn.team) continue;
+          if (guard.layer !== from.layer && guard.layer !== point.layer) continue;
+          expect(
+            distancePointToSegment(guard.position, out),
+            JSON.stringify({ spawn, guard }),
+          ).toBeGreaterThanOrEqual(playerRadius + creatureRadius);
+        }
+      });
     }
   });
 
-  it("keeps a 200-unit circle at its centre clear, for the flag stand", () => {
-    const centre = { x: isle.width / 2, y: isle.height / 2 };
-    for (const wall of walls) {
-      expect(distancePointToSegment(centre, wall)).toBeGreaterThan(200);
+  it("keeps a 200-unit circle round the flag stand clear on its dais's layer", () => {
+    const stand = isle.objectives.find((objective) => objective.kind === "flag-stand");
+    if (stand === undefined) throw new Error("no flag stand");
+    for (const wall of allWallSegments(isle.walls.filter((each) => each.layer === stand.layer))) {
+      expect(distancePointToSegment(stand.position, wall)).toBeGreaterThan(200);
     }
   });
 
   it("puts the flag stand at the centre, and lets each flag walk to it (#1225)", () => {
     const stand = isle.objectives.find((objective) => objective.kind === "flag-stand");
     expect(stand?.position).toEqual({ x: isle.width / 2, y: isle.height / 2 });
-    const finder = createPathFinder(
-      buildNavGraph(walls, { width: isle.width, height: isle.height }, RADIUS, []),
-    );
     const spawns = isle.objectives.filter((objective) => objective.kind === "flag-spawn");
     expect(spawns.map((spawn) => spawn.team).sort()).toEqual([0, 1]);
     for (const spawn of spawns) {
@@ -432,7 +437,10 @@ describe("Guild Hall Isle (#1222)", () => {
       );
       if (shrine === undefined || stand === undefined) throw new Error("no shrine or stand");
       expect(Vec.distance(spawn.position, shrine.position)).toBeLessThan(200);
-      expect(finder.find(spawn.position, stand.position), JSON.stringify(spawn)).toBeDefined();
+      expect(
+        finder.find(spawn.position, spawn.layer, stand.position, stand.layer),
+        JSON.stringify(spawn),
+      ).toBeDefined();
     }
   });
 });

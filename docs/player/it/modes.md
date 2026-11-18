@@ -48,7 +48,7 @@ La squadra il cui Signore della gilda muore perde subito, e lo stesso vale per u
 
 Il tabellone mostra la Salute di ogni Signore della gilda, la tua prima, chi tiene la Base bandiera e quanto manca al suo bonus, quando i santuari riporteranno i morti e, negli ultimi 3 minuti, i danni di ogni squadra al signore nemico. Sotto, una riga indica chi porta una bandiera. Un bonus appare come "Bonus morale! +10%", o "Bonus morale nemico". Sulla bussola, ♛ segna ogni Signore della gilda, ⚑ ogni bandiera e ◎ la Base bandiera.
 
-Ci si gioca su Guild Hall Isle.
+Ci si gioca su Guild Hall Isle (8v8, 6000x2600): un'isola nel mare. Ogni Guild Lord sta in cima a una sala, dietro un bastione; si esce dal corpo di guardia, sopra il bastione o lungo un molo. Una porta del corpo di guardia si apre con una leva sul bastione nemico. Il supporto della bandiera è su una pedana al centro.
 
 ## Corsa alla reliquia
 

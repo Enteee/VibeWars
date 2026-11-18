@@ -116,7 +116,7 @@ lord. Under it, a line names whoever carries a flag. A boost pops up as
 "Morale boost! +10%", or "Enemy morale boost". On the compass, ♛ marks
 each Guild Lord, ⚑ each flag and ◎ the stand.
 
-Guild Hall Isle plays it.
+Guild Hall Isle (8v8, 6000x2600) plays it: an island in the sea. Each Guild Lord stands on top of a hall, behind a rampart; the way out is through the gatehouse, over the rampart or along a pier. A gatehouse door opens from a lever on the enemy's rampart. The flag stand is on a dais in the middle.
 
 ## Relic Run
 

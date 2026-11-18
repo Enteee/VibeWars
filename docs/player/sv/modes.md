@@ -124,7 +124,7 @@ flagga. En höjning visas som "Moralhöjning! +10 %", eller "Fiendens
 moralhöjning". På kompassen markerar ♛ varje gillesherre, ⚑ varje
 flagga och ◎ stället.
 
-Guild Hall Isle spelar det.
+Guild Hall Isle (8v8, 6000x2600) spelar det: en ö i havet. Varje Guild Lord står uppe på en hall, bakom en vall; vägen ut går genom porthuset, över vallen eller längs en brygga. En portdörr öppnas med en spak på fiendens vall. Flaggstället står på en upphöjning i mitten.
 
 ## Reliklöpning
 

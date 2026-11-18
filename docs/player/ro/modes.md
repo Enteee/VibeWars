@@ -118,7 +118,7 @@ pe oricine poartă un steag. Un impuls apare ca „Impuls de moral! +10%” sau 
 moral inamic”. Pe busolă, ♛ marchează fiecare Lord al breslei, ⚑ fiecare steag și ◎
 suportul.
 
-Se joacă pe Guild Hall Isle.
+Se joacă pe Guild Hall Isle (8v8, 6000x2600): o insulă în mare. Fiecare Guild Lord stă în vârful unei săli, în spatele unui meterez; ieșirea e prin poartă, peste meterez sau de-a lungul unui debarcader. Ușa porții se deschide de la o manetă de pe meterezul inamic. Suportul steagului e pe un podium în mijloc.
 
 ## Cursa relicvelor
 
