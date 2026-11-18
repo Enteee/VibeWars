@@ -551,12 +551,12 @@ describe("mapMode (#1200)", () => {
 });
 
 describe("a Hall match of two teams (#2700)", () => {
-  it("goes without the third base: its spawns, ghost, relic, shrine and point", () => {
+  it("goes without the third base: its spawns, ghost, relic, shrine and its two galleries' points (#3442)", () => {
     expect(hostMap("hall-of-heroes-king", 2)?.ghostField?.spawns.map((s) => s.team)).toEqual([
       0, 1,
     ]);
     expect(hostMap("hall-of-heroes-relic", 2)?.relicField?.spawns).toHaveLength(2);
-    expect(hostMap("hall-of-heroes-capture", 2)?.capturePoints).toHaveLength(3);
+    expect(hostMap("hall-of-heroes-capture", 2)?.capturePoints).toHaveLength(2);
     expect(hostMap("hall-of-heroes-capture", 2)?.shrines).toHaveLength(2);
     expect(hostMap("hall-of-heroes-capture", 2)?.spawns.every((s) => s.team < 2)).toBe(true);
     expect(mapRelicField("hall-of-heroes-relic", 2)?.spawns).toHaveLength(2);
