@@ -1599,12 +1599,6 @@ body:has(> .splash) #menu-background::after {
   border-color: var(--damage);
 }
 
-.player-applies {
-  margin: 0.75rem 0 0;
-  color: var(--ink-dim);
-  font-size: 0.8rem;
-}
-
 /*
  * The cape designer (#1422), under the guild tag: a row of swatches for
  * the cape, one for its trim, one of emblems, and No cape. What is picked

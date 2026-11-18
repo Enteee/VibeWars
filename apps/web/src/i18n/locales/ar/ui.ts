@@ -968,7 +968,6 @@ export default {
     other: "{sign}{count} وحدة",
   },
 
-  "player.applies": "يُطبّق بدءًا من ردهتك التالية.",
   "player.cape": "العباءة",
   "player.colourBlack": "أسود",
   "player.colourGold": "ذهبي",

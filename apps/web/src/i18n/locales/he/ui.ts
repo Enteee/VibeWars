@@ -887,7 +887,6 @@ export default {
     other: "{sign}{count} פיפים",
   },
 
-  "player.applies": "ייכנס לתוקף בלובי הבא שלך.",
   "player.cape": "גלימה",
   "player.colourBlack": "שחור",
   "player.colourGold": "זהב",

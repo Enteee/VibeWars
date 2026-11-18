@@ -173,8 +173,7 @@ o emblemă, iar corpul tău poartă pelerina în fiecare meci: se strânge într
 subțire pe margine când stai și flutură în spatele tău când te miști. O arată și
 personajele tale din meniu. **Fără pelerină** o scoate.
 
-O schimbare se aplică de la următorul lobby în care intri sau de la următorul nou:
-cel în care ești deja păstrează ce aveai când ai intrat.
+O schimbare se aplică imediat lobby-ului în care ești.
 
 **Copiază linkul breslei**, sub designerul de pelerină, copiază un link cu tagul și pelerina ta. Cine îl deschide e întrebat **Te alături breslei [VIBE]?**: **Alătură-te** îi dă tagul și pelerina ta, **Nu** nu schimbă nimic. Oricine poate trimite un astfel de link și nimeni nu deține un tag, așa că jocul întreabă mereu întâi.
 

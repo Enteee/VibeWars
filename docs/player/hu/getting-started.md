@@ -200,9 +200,7 @@ egy címert, és a tested minden meccsen viseli a köpenyt: álló helyzetben
 vékony csíkká hajtódik a peremeden, mozgás közben pedig mögötted lobog.
 A menüben a karaktereid is mutatják. A **Nincs köpeny** leveszi.
 
-A módosítás a következő lobbitól érvényes, amelybe belépsz, vagy a
-következő friss sajátodtól: abban, amelyikben már vagy, az marad, amivel
-beléptél.
+A módosítás azonnal érvényes abban a lobbiban, amelyikben vagy.
 
 A köpenytervező alatti **Céhlink másolása** egy linket másol, amely a céhjeledet és a köpenyedet viszi. Aki megnyitja, ezt a kérdést kapja: **Csatlakozol a(z) [VIBE] céhhez?**: a **Csatlakozás** megadja neki a céhjeledet és a köpenyedet, a **Nem** semmit sem változtat. Bárki küldhet ilyen linket, és senkié sem egy céhjel, ezért a játék mindig előbb kérdez.
 
