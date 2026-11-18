@@ -150,6 +150,7 @@ describe("walking down from a deck (#3177)", () => {
         const sim = new MatchSimulation({
           seed: `walks-down:${map.id}`,
           ruleset: RULESET,
+          teamCount: map.teams,
           ...mapSimulationFields(map, map.teams),
           // The walk is under test, not a fight: a foe's guards (#3445) would hold the walker at their hall's stair.
           guards: [],
