@@ -1565,9 +1565,9 @@
           "y": 420
         },
         "layer": 1,
-        "radius": 220,
+        "radius": 240,
         "colour": 9072585,
-        "intensity": 0.8,
+        "intensity": 1,
         "flicker": 0
       },
       {
@@ -1577,9 +1577,9 @@
           "y": 1290
         },
         "layer": 1,
-        "radius": 280,
+        "radius": 320,
         "colour": 9072585,
-        "intensity": 0.75,
+        "intensity": 1,
         "flicker": 0
       },
       {
@@ -1589,9 +1589,9 @@
           "y": 800
         },
         "layer": 1,
-        "radius": 220,
+        "radius": 240,
         "colour": 9072585,
-        "intensity": 0.8,
+        "intensity": 1,
         "flicker": 0
       },
       {
@@ -1649,9 +1649,9 @@
           "y": 1980
         },
         "layer": 1,
-        "radius": 220,
+        "radius": 240,
         "colour": 9072585,
-        "intensity": 0.8,
+        "intensity": 1,
         "flicker": 0
       },
       {
@@ -1661,9 +1661,9 @@
           "y": 1110
         },
         "layer": 1,
-        "radius": 280,
+        "radius": 320,
         "colour": 9072585,
-        "intensity": 0.75,
+        "intensity": 1,
         "flicker": 0
       },
       {
@@ -1673,9 +1673,9 @@
           "y": 1600
         },
         "layer": 1,
-        "radius": 220,
+        "radius": 240,
         "colour": 9072585,
-        "intensity": 0.8,
+        "intensity": 1,
         "flicker": 0
       },
       {
