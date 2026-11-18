@@ -173,8 +173,8 @@ samme. Når et andet hold i kø i samme spiltilstand dukker op, spiller I
 mod dem på en af spiltilstandens baner, hver side med sine egne builds,
 og vender tilbage til jeres lobby bagefter. Værten kan til enhver tid
 forlade køen fra ringens vindue; en gæst, der forlader den, tager hele
-gruppen ud af den. Er der intet andet hold efter et minut, kan værten
-også trykke på **Spil mod bots**: en kamp i jeres egen lobby mod et
+gruppen ud af den. Efter 10 s i køen kan værten også trykke på
+**Spil mod bots** i ringens vindue: en kamp i jeres egen lobby mod et
 tilfældigt forudindstillet hold af bots, undtagen i
 [Heltenes opstigning](modes.md#heltenes-opstigning), som venter på et hold
 i jeres runde.

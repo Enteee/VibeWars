@@ -180,8 +180,8 @@ Arène d'équipe combien d'équipes cherchent, la tienne comprise :
 de l'hôte retire aussitôt le groupe de la file. Quand une autre équipe en file
 du même mode arrive, vous jouez sur l'une des cartes du mode, chaque camp avec
 ses propres builds, puis vous revenez à votre salon. L'hôte peut quitter la file depuis la fenêtre de l'anneau à tout moment ; un invité qui part retire tout le groupe de
-la file. Sans autre équipe au bout d'une minute, l'hôte peut aussi appuyer sur
-**Jouer contre des bots** : un match dans ton propre salon contre une équipe
+la file. Après 10 s dans la file, l'hôte peut aussi appuyer sur
+**Jouer contre des bots** depuis la fenêtre de l'anneau : un match dans ton propre salon contre une équipe
 préréglée de bots au hasard, sauf en
 [Ascension des héros](modes.md#ascension-des-héros), qui attend une équipe de
 ta manche.

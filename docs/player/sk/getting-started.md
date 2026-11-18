@@ -168,8 +168,8 @@ Tímovej aréne aj počtom hľadajúcich tímov vrátane tvojho: `2 tímy hľada
 **Opustiť frontu** tam má len hostiteľ. Zatvorením karty hostiteľa družina
 okamžite opustí frontu. Keď sa objaví iný tím vo fronte toho istého režimu,
 hráte proti nemu na jednej z máp režimu, každá strana so svojimi buildmi, a
-potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek opustiť frontu v okne krúžku; hosť, ktorý odíde, vyradí z fronty celú družinu. Ak sa
-do minúty neobjaví žiadny iný tím, hostiteľ môže stlačiť aj
+potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek opustiť frontu v okne krúžku; hosť, ktorý odíde, vyradí z fronty celú družinu. Po
+10 s vo fronte môže hostiteľ v okne krúžku stlačiť aj
 **Hrať proti botom**: zápas vo vlastnom lobby proti náhodnému
 prednastavenému tímu botov,
 okrem [Výstupu hrdinov](modes.md#výstup-hrdinov), ktorý čaká na tím
