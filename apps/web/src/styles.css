@@ -1569,7 +1569,7 @@ body:has(> .splash) #menu-background::after {
    sharing rows: label, input, hint. The tag fits four wide letters. */
 .player-identity {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.25rem 0.5rem;
 }
 
@@ -1577,6 +1577,7 @@ body:has(> .splash) #menu-background::after {
   display: grid;
   grid-row: span 3;
   grid-template-rows: subgrid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
 }
 
@@ -1681,25 +1682,32 @@ body:has(> .splash) #menu-background::after {
  * The emblem editor (#3555), in place of the cape designer's rows: the
  * 16x16 grid on the cape's cloth, the emblem at game size beside it, the
  * palette, the tools, Done and Cancel. Picks are ringed in ink, as above.
+ * On a phone the cells shrink to the pane and the preview wraps under the
+ * grid, so nothing scrolls sideways.
  */
 .emblem-editor {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   align-self: flex-start;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .emblem-editor-top {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.6rem;
   align-items: flex-start;
 }
 
+/* 16 cells of 16 px, 15 gaps, the padding and the border at most. */
 .emblem-editor-grid {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(16, 16px);
-  grid-auto-rows: 16px;
+  flex: 0 1 calc(16 * 16px + 15px + 2px + 4px);
+  min-width: 0;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
   gap: 1px;
   padding: 1px;
   background: var(--line);
@@ -1716,6 +1724,7 @@ body:has(> .splash) #menu-background::after {
 }
 
 .emblem-editor-cell {
+  aspect-ratio: 1;
   background: var(--pixel, var(--cape-main));
 }
 
