@@ -280,6 +280,8 @@ afasta: eles vão para um santuário ao alcance e lutam dali.
 
 Scarred Earth (4v4 e 8v8, 5400x2800) joga esse modo: um campo de batalha cheio de crateras ao entardecer. Os santuários ficam sobre torres de cerco destruídas, o do centro na plataforma da grande torre, cada um ao lado de uma cratera; alavancas nas torres abrem duas trincheiras sob o campo, e as paliçadas destruídas podem ser quebradas.
 
+Na Ascensão dos Heróis, The Warden's Gallery (8v8, 5200x2500) joga esse modo: uma galeria de esculturas ensolarada sob claraboias. O santuário do centro fica no topo do grande pedestal, e cada equipe tem três perto do seu vestíbulo, um sobre um pedestal; alavancas no grande pedestal abrem duas criptas sob o piso, e as estátuas tombadas podem ser quebradas.
+
 ## Sala de Equipe
 
 Uma sala hospedada não começa a partida quando todos estão prontos. Ela abre primeiro a Sala de Equipe, onde cada lado escolhe uma Build

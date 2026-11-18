@@ -299,6 +299,8 @@ pyhäkölle ja taistelevat siltä.
 
 Sitä pelaa Scarred Earth (4v4 ja 8v8, 5400x2800): kraatterien täplittämä taistelukenttä hämärässä. Pyhäköt seisovat tuhoutuneilla piiritystorneilla, keskimmäinen suuren tornin kannella, kukin kraatterin vieressä; tornien vivut avaavat kaksi juoksuhautaa kentän alla, ja tuhoutuneet paalutukset voi murskata.
 
+Sankarien nousussa sitä pelaa The Warden's Gallery (8v8, 5200x2500): aurinkoinen veistosgalleria kattoikkunoiden alla. Keskimmäinen pyhäkkö seisoo suuren jalustan huipulla, ja kullakin joukkueella on kolme eteishallinsa lähellä, yksi jalustalla; suuren jalustan vivut avaavat kaksi holvikellaria lattian alla, ja kaatuneet patsaat voi murskata.
+
 ## Tiimiaula
 
 Isännöity aula ei aloita ottelua, kun kaikki ovat valmiita. Se avaa ensin tiimiaulan, jossa kumpikin puoli valitsee yhdessä yhden

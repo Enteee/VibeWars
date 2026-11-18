@@ -281,6 +281,8 @@ ils montent sur un sanctuaire à portée et combattent depuis celui-ci.
 
 Scarred Earth (4v4 et 8v8, 5400x2800) le joue : un champ de bataille criblé de cratères au crépuscule. Les sanctuaires se dressent sur des tours de siège détruites, celui du centre sur la plate-forme de la grande tour, chacun près d'un cratère ; des leviers sur les tours ouvrent deux tranchées sous le champ, et les palissades détruites peuvent être brisées.
 
+Dans l'Ascension des héros, The Warden's Gallery (8v8, 5200x2500) le joue : une galerie de sculptures ensoleillée sous des verrières. Le sanctuaire du centre se dresse au sommet du grand socle, et chaque équipe en a trois près de son vestibule, dont un sur un socle ; des leviers sur le grand socle ouvrent deux cryptes sous le sol, et les statues renversées peuvent être brisées.
+
 ## Salon d'équipe
 
 Un salon hébergé ne lance pas le match quand tout le monde est prêt. Il ouvre

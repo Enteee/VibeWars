@@ -4,443 +4,913 @@
   "mode": "capture-points",
   "teamSizes": [8],
   "teams": 2,
-  "width": 3200,
-  "height": 1400,
-  "bounds": { "kind": "rect" },
-  "layers": 1,
+  "width": 5200,
+  "height": 2500,
+  "bounds": {
+    "kind": "outline",
+    "outline": [
+      { "x": 2600, "y": 140 },
+      { "x": 1100, "y": 140 },
+      { "x": 520, "y": 170 },
+      { "x": 330, "y": 330 },
+      { "x": 240, "y": 700 },
+      { "x": 220, "y": 1250 },
+      { "x": 240, "y": 1800 },
+      { "x": 330, "y": 2170 },
+      { "x": 520, "y": 2330 },
+      { "x": 1100, "y": 2360 },
+      { "x": 2600, "y": 2360 },
+      { "x": 4100, "y": 2360 },
+      { "x": 4680, "y": 2330 },
+      { "x": 4870, "y": 2170 },
+      { "x": 4960, "y": 1800 },
+      { "x": 4980, "y": 1250 },
+      { "x": 4960, "y": 700 },
+      { "x": 4870, "y": 330 },
+      { "x": 4680, "y": 170 },
+      { "x": 4100, "y": 140 }
+    ],
+    "outside": "rock"
+  },
+  "layers": 4,
   "biome": "hall",
   "ascentAct": "heavenly",
-  "groundLayer": 0,
-  "pits": [],
-  "tunnels": [],
-  "decks": [],
-  "overhangs": [],
-  "transitions": [],
-  "gates": [
+  "groundLayer": 1,
+  "pits": [
     {
-      "id": "door-west",
-      "wall": {
-        "kind": "rect",
-        "layer": 0,
-        "x": 500,
-        "y": 580,
-        "width": 40,
-        "height": 240
-      },
-      "opener": {
-        "kind": "plate",
-        "plate": { "x": 430, "y": 500 },
-        "team": 0
-      },
-      "blocks": "all",
-      "look": "door"
+      "id": "north-undercroft-west-mouth",
+      "footprint": { "kind": "rect", "x": 1100, "y": 740, "width": 140, "height": 120 }
     },
     {
-      "id": "door-east",
-      "wall": {
-        "kind": "rect",
-        "layer": 0,
-        "x": 2660,
-        "y": 580,
-        "width": 40,
-        "height": 240
-      },
-      "opener": {
-        "kind": "plate",
-        "plate": { "x": 2770, "y": 900 },
-        "team": 1
-      },
-      "blocks": "all",
-      "look": "door"
+      "id": "north-undercroft-east-mouth",
+      "footprint": { "kind": "rect", "x": 3960, "y": 740, "width": 140, "height": 120 }
     },
     {
-      "id": "walk-west",
-      "wall": {
-        "kind": "rect",
-        "layer": 0,
-        "x": 1580,
-        "y": 0,
-        "width": 40,
-        "height": 340
-      },
-      "opener": {
-        "kind": "plate",
-        "plate": { "x": 1480, "y": 170 },
-        "team": 0
-      },
-      "blocks": "all",
-      "look": "door"
+      "id": "south-undercroft-west-mouth",
+      "footprint": { "kind": "rect", "x": 1100, "y": 1640, "width": 140, "height": 120 }
     },
     {
-      "id": "walk-east",
-      "wall": {
-        "kind": "rect",
-        "layer": 0,
-        "x": 1580,
-        "y": 1060,
-        "width": 40,
-        "height": 340
-      },
-      "opener": {
-        "kind": "plate",
-        "plate": { "x": 1720, "y": 1230 },
-        "team": 1
-      },
-      "blocks": "all",
-      "look": "door"
+      "id": "south-undercroft-east-mouth",
+      "footprint": { "kind": "rect", "x": 3960, "y": 1640, "width": 140, "height": 120 }
     }
   ],
-  "objectives": [
+  "tunnels": [
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": {
-        "x": 300,
-        "y": 700
+      "id": "north-undercroft",
+      "footprint": { "kind": "rect", "x": 1240, "y": 740, "width": 2720, "height": 120 }
+    },
+    {
+      "id": "south-undercroft",
+      "footprint": { "kind": "rect", "x": 1240, "y": 1640, "width": 2720, "height": 120 }
+    }
+  ],
+  "decks": [
+    {
+      "id": "west-plinth",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 1520, "y": 1110, "width": 360, "height": 280 },
+      "look": "platform",
+      "switched": null
+    },
+    {
+      "id": "east-plinth",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 3320, "y": 1110, "width": 360, "height": 280 },
+      "look": "platform",
+      "switched": null
+    },
+    {
+      "id": "great-plinth-base",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 2260, "y": 1020, "width": 680, "height": 460 },
+      "look": "platform",
+      "switched": null
+    },
+    {
+      "id": "great-plinth-top",
+      "layer": 3,
+      "footprint": { "kind": "rect", "x": 2430, "y": 1140, "width": 340, "height": 220 },
+      "look": "platform",
+      "switched": null
+    },
+    {
+      "id": "north-west-balcony",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 1250, "y": 140, "width": 900, "height": 240 },
+      "look": "terrace",
+      "switched": null
+    },
+    {
+      "id": "north-east-balcony",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 3050, "y": 140, "width": 900, "height": 240 },
+      "look": "terrace",
+      "switched": null
+    },
+    {
+      "id": "south-west-balcony",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 1250, "y": 2120, "width": 900, "height": 240 },
+      "look": "terrace",
+      "switched": null
+    },
+    {
+      "id": "south-east-balcony",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 3050, "y": 2120, "width": 900, "height": 240 },
+      "look": "terrace",
+      "switched": null
+    }
+  ],
+  "overhangs": [
+    {
+      "id": "hanging-banner",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 2480, "y": 2190, "width": 240, "height": 60 },
+      "look": "canopy"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "west-plinth-north-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 1650, "y": 1000, "width": 100, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "west-plinth-south-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 1650, "y": 1390, "width": 100, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "west-plinth-west-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 1410, "y": 1200, "width": 110, "height": 100 },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "west-plinth-east-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 1880, "y": 1200, "width": 110, "height": 100 },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "east-plinth-north-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3450, "y": 1000, "width": 100, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "east-plinth-south-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3450, "y": 1390, "width": 100, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "east-plinth-west-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3210, "y": 1200, "width": 110, "height": 100 },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "east-plinth-east-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3680, "y": 1200, "width": 110, "height": 100 },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "great-plinth-base-north-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 2550, "y": 910, "width": 100, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "great-plinth-base-south-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 2550, "y": 1480, "width": 100, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "great-plinth-base-west-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 2150, "y": 1200, "width": 110, "height": 100 },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "great-plinth-base-east-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 2940, "y": 1200, "width": 110, "height": 100 },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "great-plinth-top-north-stair",
+      "from": 2,
+      "to": 3,
+      "area": { "kind": "rect", "x": 2550, "y": 1030, "width": 100, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "great-plinth-top-south-stair",
+      "from": 2,
+      "to": 3,
+      "area": { "kind": "rect", "x": 2550, "y": 1360, "width": 100, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-west-balcony-west-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 1270, "y": 380, "width": 100, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-west-balcony-east-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 2030, "y": 380, "width": 100, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-east-balcony-west-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3070, "y": 380, "width": 100, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-east-balcony-east-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3830, "y": 380, "width": 100, "height": 110 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-west-balcony-west-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 1270, "y": 2010, "width": 100, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-west-balcony-east-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 2030, "y": 2010, "width": 100, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-east-balcony-west-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3070, "y": 2010, "width": 100, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-east-balcony-east-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 3830, "y": 2010, "width": 100, "height": 110 },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-undercroft-west-steps",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 1100, "y": 740, "width": 140, "height": 120 },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "north-undercroft-east-steps",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 3960, "y": 740, "width": 140, "height": 120 },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-undercroft-west-steps",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 1100, "y": 1640, "width": 140, "height": 120 },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-undercroft-east-steps",
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 3960, "y": 1640, "width": 140, "height": 120 },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    }
+  ],
+  "dropOffs": [
+    { "layer": 2, "from": { "x": 2150, "y": 160 }, "to": { "x": 2150, "y": 360 } },
+    { "layer": 2, "from": { "x": 3050, "y": 360 }, "to": { "x": 3050, "y": 160 } },
+    { "layer": 3, "from": { "x": 2430, "y": 1340 }, "to": { "x": 2430, "y": 1160 } },
+    { "layer": 3, "from": { "x": 2770, "y": 1160 }, "to": { "x": 2770, "y": 1340 } }
+  ],
+  "walls": [
+    { "kind": "rect", "x": 1520, "y": 1110, "width": 360, "height": 280, "layer": 1 },
+    { "kind": "rect", "x": 3320, "y": 1110, "width": 360, "height": 280, "layer": 1 },
+    { "kind": "rect", "x": 2260, "y": 1020, "width": 680, "height": 460, "layer": 1 },
+    { "kind": "rect", "x": 2430, "y": 1140, "width": 340, "height": 220, "layer": 2 },
+    { "kind": "rect", "x": 1250, "y": 140, "width": 900, "height": 240, "layer": 1 },
+    { "kind": "rect", "x": 3050, "y": 140, "width": 900, "height": 240, "layer": 1 },
+    { "kind": "rect", "x": 1250, "y": 2120, "width": 900, "height": 240, "layer": 1 },
+    { "kind": "rect", "x": 3050, "y": 2120, "width": 900, "height": 240, "layer": 1 }
+  ],
+  "water": [
+    {
+      "id": "north-west-pool",
+      "layer": 1,
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 2170, "y": 1010 },
+          { "x": 2137.78, "y": 1045.36 },
+          { "x": 2060, "y": 1060 },
+          { "x": 1982.22, "y": 1045.36 },
+          { "x": 1950, "y": 1010 },
+          { "x": 1982.22, "y": 974.64 },
+          { "x": 2060, "y": 960 },
+          { "x": 2137.78, "y": 974.64 }
+        ]
       }
     },
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": {
-        "x": 850,
-        "y": 700
+      "id": "north-east-pool",
+      "layer": 1,
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 3062.22, "y": 974.64 },
+          { "x": 3140, "y": 960 },
+          { "x": 3217.7799999999997, "y": 974.64 },
+          { "x": 3250, "y": 1010 },
+          { "x": 3217.7799999999997, "y": 1045.36 },
+          { "x": 3140, "y": 1060 },
+          { "x": 3062.22, "y": 1045.36 },
+          { "x": 3030, "y": 1010 }
+        ]
       }
     },
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": {
-        "x": 1225,
-        "y": 700
+      "id": "south-west-pool",
+      "layer": 1,
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 2170, "y": 1490 },
+          { "x": 2137.78, "y": 1525.36 },
+          { "x": 2060, "y": 1540 },
+          { "x": 1982.22, "y": 1525.36 },
+          { "x": 1950, "y": 1490 },
+          { "x": 1982.22, "y": 1454.64 },
+          { "x": 2060, "y": 1440 },
+          { "x": 2137.78, "y": 1454.64 }
+        ]
       }
     },
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": {
-        "x": 1600,
-        "y": 700
+      "id": "south-east-pool",
+      "layer": 1,
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 3062.22, "y": 1454.64 },
+          { "x": 3140, "y": 1440 },
+          { "x": 3217.7799999999997, "y": 1454.64 },
+          { "x": 3250, "y": 1490 },
+          { "x": 3217.7799999999997, "y": 1525.36 },
+          { "x": 3140, "y": 1540 },
+          { "x": 3062.22, "y": 1525.36 },
+          { "x": 3030, "y": 1490 }
+        ]
+      }
+    }
+  ],
+  "zones": [
+    {
+      "id": "north-west-spring",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 870, "y": 330 },
+          { "x": 849.9, "y": 365 },
+          { "x": 795, "y": 390.62 },
+          { "x": 720, "y": 400 },
+          { "x": 645, "y": 390.62 },
+          { "x": 590.1, "y": 365 },
+          { "x": 570, "y": 330 },
+          { "x": 590.1, "y": 295 },
+          { "x": 645, "y": 269.38 },
+          { "x": 720, "y": 260 },
+          { "x": 795, "y": 269.38 },
+          { "x": 849.9, "y": 295 }
+        ]
       }
     },
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": {
-        "x": 1975,
-        "y": 700
+      "id": "north-east-mire",
+      "kind": "mire",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 4630, "y": 330 },
+          { "x": 4609.9, "y": 365 },
+          { "x": 4555, "y": 390.62 },
+          { "x": 4480, "y": 400 },
+          { "x": 4405, "y": 390.62 },
+          { "x": 4350.1, "y": 365 },
+          { "x": 4330, "y": 330 },
+          { "x": 4350.1, "y": 295 },
+          { "x": 4405, "y": 269.38 },
+          { "x": 4480, "y": 260 },
+          { "x": 4555, "y": 269.38 },
+          { "x": 4609.9, "y": 295 }
+        ]
       }
     },
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": {
-        "x": 2350,
-        "y": 700
+      "id": "south-west-mire",
+      "kind": "mire",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 870, "y": 2170 },
+          { "x": 849.9, "y": 2205 },
+          { "x": 795, "y": 2230.62 },
+          { "x": 720, "y": 2240 },
+          { "x": 645, "y": 2230.62 },
+          { "x": 590.1, "y": 2205 },
+          { "x": 570, "y": 2170 },
+          { "x": 590.1, "y": 2135 },
+          { "x": 645, "y": 2109.38 },
+          { "x": 720, "y": 2100 },
+          { "x": 795, "y": 2109.38 },
+          { "x": 849.9, "y": 2135 }
+        ]
       }
     },
     {
-      "kind": "capture-point",
-      "layer": 0,
-      "position": {
-        "x": 2900,
-        "y": 700
-      }
-    },
-    {
-      "kind": "resurrection-shrine",
-      "layer": 0,
-      "team": 0,
-      "position": {
-        "x": 160,
-        "y": 700
-      }
-    },
-    {
-      "kind": "resurrection-shrine",
-      "layer": 0,
-      "team": 1,
-      "position": {
-        "x": 3040,
-        "y": 700
+      "id": "south-east-spring",
+      "kind": "spring",
+      "layer": 1,
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 4630, "y": 2170 },
+          { "x": 4609.9, "y": 2205 },
+          { "x": 4555, "y": 2230.62 },
+          { "x": 4480, "y": 2240 },
+          { "x": 4405, "y": 2230.62 },
+          { "x": 4350.1, "y": 2205 },
+          { "x": 4330, "y": 2170 },
+          { "x": 4350.1, "y": 2135 },
+          { "x": 4405, "y": 2109.38 },
+          { "x": 4480, "y": 2100 },
+          { "x": 4555, "y": 2109.38 },
+          { "x": 4609.9, "y": 2135 }
+        ]
       }
     }
   ],
   "spawnPoints": [
+    { "team": 0, "layer": 1, "position": { "x": 330, "y": 1085 } },
+    { "team": 0, "layer": 1, "position": { "x": 330, "y": 1185 } },
+    { "team": 0, "layer": 1, "position": { "x": 330, "y": 1285 } },
+    { "team": 0, "layer": 1, "position": { "x": 330, "y": 1385 } },
+    { "team": 0, "layer": 1, "position": { "x": 430, "y": 1085 } },
+    { "team": 0, "layer": 1, "position": { "x": 430, "y": 1185 } },
+    { "team": 0, "layer": 1, "position": { "x": 430, "y": 1285 } },
+    { "team": 0, "layer": 1, "position": { "x": 430, "y": 1385 } },
+    { "team": 1, "layer": 1, "position": { "x": 4870, "y": 1085 } },
+    { "team": 1, "layer": 1, "position": { "x": 4870, "y": 1185 } },
+    { "team": 1, "layer": 1, "position": { "x": 4870, "y": 1285 } },
+    { "team": 1, "layer": 1, "position": { "x": 4870, "y": 1385 } },
+    { "team": 1, "layer": 1, "position": { "x": 4770, "y": 1085 } },
+    { "team": 1, "layer": 1, "position": { "x": 4770, "y": 1185 } },
+    { "team": 1, "layer": 1, "position": { "x": 4770, "y": 1285 } },
+    { "team": 1, "layer": 1, "position": { "x": 4770, "y": 1385 } }
+  ],
+  "objectives": [
+    { "kind": "capture-point", "layer": 1, "position": { "x": 1700, "y": 500 } },
+    { "kind": "capture-point", "layer": 2, "position": { "x": 1700, "y": 1250 } },
+    { "kind": "capture-point", "layer": 1, "position": { "x": 1700, "y": 2000 } },
+    { "kind": "capture-point", "layer": 3, "position": { "x": 2600, "y": 1250 } },
+    { "kind": "capture-point", "layer": 1, "position": { "x": 3500, "y": 500 } },
+    { "kind": "capture-point", "layer": 2, "position": { "x": 3500, "y": 1250 } },
+    { "kind": "capture-point", "layer": 1, "position": { "x": 3500, "y": 2000 } },
+    { "kind": "resurrection-shrine", "layer": 1, "team": 0, "position": { "x": 620, "y": 1250 } },
+    { "kind": "resurrection-shrine", "layer": 1, "team": 1, "position": { "x": 4580, "y": 1250 } }
+  ],
+  "gates": [
     {
-      "team": 0,
-      "layer": 0,
-      "position": {
-        "x": 160,
-        "y": 420
-      }
+      "id": "north-west-undercroft-gate",
+      "wall": { "kind": "rect", "x": 1300, "y": 740, "width": 14, "height": 120, "layer": 0 },
+      "opener": { "kind": "switch" },
+      "blocks": "all",
+      "look": "portcullis"
     },
     {
-      "team": 0,
-      "layer": 0,
-      "position": {
-        "x": 160,
-        "y": 540
-      }
+      "id": "north-east-undercroft-gate",
+      "wall": { "kind": "rect", "x": 3886, "y": 740, "width": 14, "height": 120, "layer": 0 },
+      "opener": { "kind": "switch" },
+      "blocks": "all",
+      "look": "portcullis"
     },
     {
-      "team": 0,
-      "layer": 0,
-      "position": {
-        "x": 160,
-        "y": 860
-      }
+      "id": "south-west-undercroft-gate",
+      "wall": { "kind": "rect", "x": 1300, "y": 1640, "width": 14, "height": 120, "layer": 0 },
+      "opener": { "kind": "switch" },
+      "blocks": "all",
+      "look": "portcullis"
     },
     {
-      "team": 0,
-      "layer": 0,
-      "position": {
-        "x": 160,
-        "y": 980
-      }
-    },
-    {
-      "team": 0,
-      "layer": 0,
-      "position": {
-        "x": 290,
-        "y": 360
-      }
-    },
-    {
-      "team": 0,
-      "layer": 0,
-      "position": {
-        "x": 290,
-        "y": 500
-      }
-    },
-    {
-      "team": 0,
-      "layer": 0,
-      "position": {
-        "x": 290,
-        "y": 900
-      }
-    },
-    {
-      "team": 0,
-      "layer": 0,
-      "position": {
-        "x": 290,
-        "y": 1040
-      }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": {
-        "x": 3040,
-        "y": 980
-      }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": {
-        "x": 3040,
-        "y": 860
-      }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": {
-        "x": 3040,
-        "y": 540
-      }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": {
-        "x": 3040,
-        "y": 420
-      }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": {
-        "x": 2910,
-        "y": 1040
-      }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": {
-        "x": 2910,
-        "y": 900
-      }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": {
-        "x": 2910,
-        "y": 500
-      }
-    },
-    {
-      "team": 1,
-      "layer": 0,
-      "position": {
-        "x": 2910,
-        "y": 360
-      }
+      "id": "south-east-undercroft-gate",
+      "wall": { "kind": "rect", "x": 3886, "y": 1640, "width": 14, "height": 120, "layer": 0 },
+      "opener": { "kind": "switch" },
+      "blocks": "all",
+      "look": "portcullis"
     }
   ],
-  "dropOffs": [],
-  "walls": [
+  "switches": [
     {
-      "kind": "rect",
-      "layer": 0,
-      "x": 500,
-      "y": 340,
-      "width": 400,
-      "height": 40
+      "id": "north-west-undercroft-lever",
+      "layer": 2,
+      "position": { "x": 2330, "y": 1110 },
+      "targets": ["north-west-undercroft-gate", "north-east-undercroft-gate"]
     },
     {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1160,
-      "y": 340,
-      "width": 790,
-      "height": 40
+      "id": "north-east-undercroft-lever",
+      "layer": 2,
+      "position": { "x": 2870, "y": 1110 },
+      "targets": ["north-west-undercroft-gate", "north-east-undercroft-gate"]
     },
     {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2210,
-      "y": 340,
-      "width": 490,
-      "height": 40
+      "id": "south-west-undercroft-lever",
+      "layer": 2,
+      "position": { "x": 2330, "y": 1390 },
+      "targets": ["south-west-undercroft-gate", "south-east-undercroft-gate"]
     },
     {
-      "kind": "rect",
-      "layer": 0,
-      "x": 500,
-      "y": 380,
-      "width": 40,
-      "height": 200
+      "id": "south-east-undercroft-lever",
+      "layer": 2,
+      "position": { "x": 2870, "y": 1390 },
+      "targets": ["south-west-undercroft-gate", "south-east-undercroft-gate"]
+    }
+  ],
+  "breakables": [
+    {
+      "id": "west-statue",
+      "wall": { "kind": "rect", "x": 988, "y": 1010, "width": 24, "height": 160, "layer": 1 },
+      "health": 1500
     },
     {
-      "kind": "rect",
-      "layer": 0,
-      "x": 500,
-      "y": 820,
-      "width": 40,
-      "height": 200
+      "id": "east-statue",
+      "wall": { "kind": "rect", "x": 4188, "y": 1010, "width": 24, "height": 160, "layer": 1 },
+      "health": 1500
+    }
+  ],
+  "lighting": {
+    "ambient": { "colour": 16773580, "intensity": 0.8 },
+    "indoorAmbient": { "colour": 14207136, "intensity": 0.55 },
+    "indoor": [
+      { "kind": "rect", "x": 1240, "y": 740, "width": 2720, "height": 120 },
+      { "kind": "rect", "x": 1240, "y": 1640, "width": 2720, "height": 120 }
+    ],
+    "sun": { "directionDeg": 315, "elevationDeg": 65, "colour": 16774358, "intensity": 0.9 },
+    "lights": [
+      {
+        "id": "skylight-north-west-point",
+        "position": { "x": 1700, "y": 500 },
+        "layer": 1,
+        "radius": 240,
+        "colour": 16773590,
+        "intensity": 0.7,
+        "flicker": 0
+      },
+      {
+        "id": "skylight-west-plinth",
+        "position": { "x": 1700, "y": 1250 },
+        "layer": 2,
+        "radius": 240,
+        "colour": 16773590,
+        "intensity": 0.7,
+        "flicker": 0
+      },
+      {
+        "id": "skylight-south-west-point",
+        "position": { "x": 1700, "y": 2000 },
+        "layer": 1,
+        "radius": 240,
+        "colour": 16773590,
+        "intensity": 0.7,
+        "flicker": 0
+      },
+      {
+        "id": "skylight-great-plinth",
+        "position": { "x": 2600, "y": 1250 },
+        "layer": 3,
+        "radius": 240,
+        "colour": 16773590,
+        "intensity": 0.7,
+        "flicker": 0
+      },
+      {
+        "id": "skylight-north-east-point",
+        "position": { "x": 3500, "y": 500 },
+        "layer": 1,
+        "radius": 240,
+        "colour": 16773590,
+        "intensity": 0.7,
+        "flicker": 0
+      },
+      {
+        "id": "skylight-east-plinth",
+        "position": { "x": 3500, "y": 1250 },
+        "layer": 2,
+        "radius": 240,
+        "colour": 16773590,
+        "intensity": 0.7,
+        "flicker": 0
+      },
+      {
+        "id": "skylight-south-east-point",
+        "position": { "x": 3500, "y": 2000 },
+        "layer": 1,
+        "radius": 240,
+        "colour": 16773590,
+        "intensity": 0.7,
+        "flicker": 0
+      },
+      {
+        "id": "torch-north-undercroft-west-mouth",
+        "position": { "x": 1060, "y": 710 },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16767136,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-north-undercroft-east-mouth",
+        "position": { "x": 4140, "y": 710 },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16767136,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-south-undercroft-west-mouth",
+        "position": { "x": 1060, "y": 1790 },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16767136,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-south-undercroft-east-mouth",
+        "position": { "x": 4140, "y": 1790 },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16767136,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "ring-west-shrine",
+        "position": { "x": 620, "y": 1250 },
+        "layer": 1,
+        "radius": 180,
+        "colour": 16773590,
+        "intensity": 0.75,
+        "flicker": 0
+      },
+      {
+        "id": "ring-east-shrine",
+        "position": { "x": 4580, "y": 1250 },
+        "layer": 1,
+        "radius": 180,
+        "colour": 16773590,
+        "intensity": 0.75,
+        "flicker": 0
+      },
+      {
+        "id": "ring-west-levers",
+        "position": { "x": 2330, "y": 1250 },
+        "layer": 2,
+        "radius": 200,
+        "colour": 16767136,
+        "intensity": 0.6,
+        "flicker": 0
+      },
+      {
+        "id": "ring-east-levers",
+        "position": { "x": 2870, "y": 1250 },
+        "layer": 2,
+        "radius": 200,
+        "colour": 16767136,
+        "intensity": 0.6,
+        "flicker": 0
+      }
+    ]
+  },
+  "atmosphere": {
+    "fog": [
+      {
+        "layer": 1,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            { "x": 1320, "y": 560 },
+            { "x": 1297.22, "y": 595 },
+            { "x": 1235, "y": 620.62 },
+            { "x": 1150, "y": 630 },
+            { "x": 1065, "y": 620.62 },
+            { "x": 1002.78, "y": 595 },
+            { "x": 980, "y": 560 },
+            { "x": 1002.78, "y": 525 },
+            { "x": 1065, "y": 499.38 },
+            { "x": 1150, "y": 490 },
+            { "x": 1235, "y": 499.38 },
+            { "x": 1297.22, "y": 525 }
+          ]
+        }
+      },
+      {
+        "layer": 1,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            { "x": 1320, "y": 1940 },
+            { "x": 1297.22, "y": 1975 },
+            { "x": 1235, "y": 2000.62 },
+            { "x": 1150, "y": 2010 },
+            { "x": 1065, "y": 2000.62 },
+            { "x": 1002.78, "y": 1975 },
+            { "x": 980, "y": 1940 },
+            { "x": 1002.78, "y": 1905 },
+            { "x": 1065, "y": 1879.38 },
+            { "x": 1150, "y": 1870 },
+            { "x": 1235, "y": 1879.38 },
+            { "x": 1297.22, "y": 1905 }
+          ]
+        }
+      },
+      {
+        "layer": 1,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            { "x": 4220, "y": 1940 },
+            { "x": 4197.22, "y": 1975 },
+            { "x": 4135, "y": 2000.62 },
+            { "x": 4050, "y": 2010 },
+            { "x": 3965, "y": 2000.62 },
+            { "x": 3902.78, "y": 1975 },
+            { "x": 3880, "y": 1940 },
+            { "x": 3902.78, "y": 1905 },
+            { "x": 3965, "y": 1879.38 },
+            { "x": 4050, "y": 1870 },
+            { "x": 4135, "y": 1879.38 },
+            { "x": 4197.22, "y": 1905 }
+          ]
+        }
+      }
+    ],
+    "plumes": [],
+    "shafts": [
+      {
+        "id": "great-plinth-shaft",
+        "layer": 3,
+        "position": { "x": 2600, "y": 1250 },
+        "radius": 260
+      },
+      {
+        "id": "west-plinth-shaft",
+        "layer": 2,
+        "position": { "x": 1700, "y": 1250 },
+        "radius": 200
+      },
+      {
+        "id": "east-plinth-shaft",
+        "layer": 2,
+        "position": { "x": 3500, "y": 1250 },
+        "radius": 200
+      },
+      {
+        "id": "west-vestibule-shaft",
+        "layer": 1,
+        "position": { "x": 620, "y": 1250 },
+        "radius": 180
+      },
+      {
+        "id": "east-vestibule-shaft",
+        "layer": 1,
+        "position": { "x": 4580, "y": 1250 },
+        "radius": 180
+      }
+    ],
+    "weather": { "kind": "motes", "intensity": 0.6 }
+  },
+  "paving": [
+    {
+      "id": "west-vestibule",
+      "layer": 1,
+      "look": "flagstones",
+      "area": { "kind": "rect", "x": 280, "y": 980, "width": 520, "height": 540 }
     },
     {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1007,
-      "y": 470,
-      "width": 60,
-      "height": 120
+      "id": "east-vestibule",
+      "layer": 1,
+      "look": "flagstones",
+      "area": { "kind": "rect", "x": 4400, "y": 980, "width": 520, "height": 540 }
     },
     {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1007,
-      "y": 810,
-      "width": 60,
-      "height": 120
+      "id": "west-nave",
+      "layer": 1,
+      "look": "flagstones",
+      "area": { "kind": "rect", "x": 700, "y": 1190, "width": 780, "height": 120 }
     },
     {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1382,
-      "y": 470,
-      "width": 60,
-      "height": 120
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1382,
-      "y": 810,
-      "width": 60,
-      "height": 120
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2300,
-      "y": 1020,
-      "width": 400,
-      "height": 40
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1250,
-      "y": 1020,
-      "width": 790,
-      "height": 40
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 500,
-      "y": 1020,
-      "width": 490,
-      "height": 40
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2660,
-      "y": 820,
-      "width": 40,
-      "height": 200
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2660,
-      "y": 380,
-      "width": 40,
-      "height": 200
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2133,
-      "y": 810,
-      "width": 60,
-      "height": 120
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 2133,
-      "y": 470,
-      "width": 60,
-      "height": 120
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1758,
-      "y": 810,
-      "width": 60,
-      "height": 120
-    },
-    {
-      "kind": "rect",
-      "layer": 0,
-      "x": 1758,
-      "y": 470,
-      "width": 60,
-      "height": 120
+      "id": "east-nave",
+      "layer": 1,
+      "look": "flagstones",
+      "area": { "kind": "rect", "x": 3720, "y": 1190, "width": 780, "height": 120 }
     }
   ]
 }

@@ -147,7 +147,7 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
 
   it("plays the same for the same seed", () => {
     expect(spikes("a", true)).toEqual(spikes("a", true));
-  }, 120_000);
+  }, 60_000);
 });
 
 describe("Relic Run bots (#2581)", () => {
@@ -448,6 +448,7 @@ describe("Capture Points bots (#2580)", () => {
       seed: "gallery",
       ruleset: RULESET,
       walls: allWallSegments(gallery.walls),
+      layers: matchLayers(gallery),
       gates: matchGates(gallery),
       bounds: { width: gallery.width, height: gallery.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
@@ -466,7 +467,7 @@ describe("Capture Points bots (#2580)", () => {
       sim.step(DT);
     }
     expect(sim.phase).toBe("finished");
-  });
+  }, 60_000);
 });
 
 describe("The Brazen Causeway (#3435)", () => {
