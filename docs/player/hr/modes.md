@@ -117,7 +117,7 @@ gospodaru. Ispod njega redak navodi tko nosi zastavu. Pojačanje iskače kao
 "Podizanje morala! +10%" ili "Neprijateljsko podizanje morala". Na kompasu ♛ označava
 svakog Gospodara ceha, ⚑ svaku zastavu, a ◎ stalak.
 
-Guild Hall Isle ga igra.
+Guild Hall Isle (8v8, 6000x2600) ga igra: otok u moru. Svaki Guild Lord stoji na vrhu dvorane, iza bedema; van se ide kroz kulu s vratima, preko bedema ili duž mola. Vrata kule otvara poluga na neprijateljskom bedemu. Stalak za zastavu je na podiju u sredini.
 
 ## Utrka za relikvijom
 

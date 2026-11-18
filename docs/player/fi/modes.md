@@ -130,7 +130,7 @@ nimeää jokaisen lipun kantajan. Moraalinnousu ponnahtaa esiin tekstinä
 "Moraalinnousu! +10%" tai "Vihollisen moraalinnousu". Kompassissa ♛
 merkitsee kumpaakin killanherraa, ⚑ kumpaakin lippua ja ◎ telinettä.
 
-Sitä pelaa Guild Hall Isle.
+Sitä pelaa Guild Hall Isle (8v8, 6000x2600): saari meressä. Kukin Guild Lord seisoo salin päällä vallin takana; ulos pääsee porttitornin läpi, vallin yli tai laituria pitkin. Porttitornin oven avaa vipu vihollisen vallilla. Lipputeline on korokkeella keskellä.
 
 ## Reliikkijuoksu
 

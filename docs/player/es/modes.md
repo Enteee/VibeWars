@@ -126,7 +126,7 @@ señor enemigo. Debajo, una línea nombra a quien lleva una bandera. Un bonus
 aparece como "¡Bonus de moral! +10%" o "Bonus de moral enemigo". En la brújula,
 ♛ marca a cada Señor del Gremio, ⚑ cada bandera y ◎ la base de bandera.
 
-Se juega en Guild Hall Isle.
+Se juega en Guild Hall Isle (8v8, 6000x2600): una isla en el mar. Cada Guild Lord está en lo alto de una sala, tras una muralla; se sale por la puerta fortificada, por encima de la muralla o por un muelle. La puerta de cada portón se abre con una palanca en la muralla enemiga. El soporte de la bandera está en un estrado en el centro.
 
 ## Carrera de reliquias
 

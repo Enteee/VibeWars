@@ -129,7 +129,7 @@ drapeau. Un bonus s'affiche « Bonus de moral ! +10% », ou « Bonus de moral
 ennemi ». Sur la boussole, ♛ marque chaque Seigneur de guilde, ⚑ chaque drapeau
 et ◎ le socle.
 
-Guild Hall Isle le joue.
+Guild Hall Isle (8v8, 6000x2600) le joue : une île en mer. Chaque Guild Lord se tient au sommet d'une salle, derrière un rempart ; on sort par la porterie, par-dessus le rempart ou le long d'un ponton. Une porte de porterie s'ouvre par un levier sur le rempart ennemi. Le support du drapeau est sur une estrade au centre.
 
 ## Course aux reliques
 

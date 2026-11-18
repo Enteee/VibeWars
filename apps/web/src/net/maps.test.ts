@@ -459,24 +459,24 @@ describe("hostMap (#476)", () => {
 
   it("carries a Guild Battle map's Guild Lords and shrines apart, and none elsewhere (#1222)", () => {
     expect(hostMap("guild-hall-isle")?.guildLords).toEqual([
-      { team: 0, position: { x: 80, y: 1000 }, layer: 0 },
-      { team: 1, position: { x: 2920, y: 1000 }, layer: 0 },
+      { team: 0, position: { x: 1400, y: 1300 }, layer: 2 },
+      { team: 1, position: { x: 4600, y: 1300 }, layer: 2 },
     ]);
     expect(hostMap("guild-hall-isle")?.shrines).toEqual([
-      { team: 0, position: { x: 450, y: 1000 }, layer: 0 },
-      { team: 1, position: { x: 2550, y: 1000 }, layer: 0 },
+      { team: 0, position: { x: 650, y: 800 }, layer: 1 },
+      { team: 1, position: { x: 5350, y: 1800 }, layer: 1 },
     ]);
     expect(hostMap("jungle-ruins")?.guildLords).toEqual([]);
   });
 
   it("carries a Guild Battle map's flag stand and flag spawns, and none elsewhere (#1225)", () => {
     expect(hostMap("guild-hall-isle")?.flagField).toEqual({
-      stand: { x: 1500, y: 1000 },
-      standLayer: 0,
+      stand: { x: 3000, y: 1300 },
+      standLayer: 2,
       beacon: false,
       spawns: [
-        { team: 0, position: { x: 560, y: 1000 }, layer: 0 },
-        { team: 1, position: { x: 2440, y: 1000 }, layer: 0 },
+        { team: 0, position: { x: 780, y: 900 }, layer: 1 },
+        { team: 1, position: { x: 5220, y: 1700 }, layer: 1 },
       ],
     });
     expect(mapFlagField("guild-hall-isle")).toEqual(hostMap("guild-hall-isle")?.flagField);
@@ -525,8 +525,8 @@ describe("hostMap (#476)", () => {
     expect(guards[0]).toEqual({
       team: 0,
       role: "bodyguard",
-      position: { x: 170, y: 1000 },
-      layer: 0,
+      position: { x: 1480, y: 1300 },
+      layer: 2,
     });
     expect(hostMap("jungle-ruins")?.guards).toEqual([]);
   });

@@ -109,7 +109,7 @@ den Schaden jedes Teams am gegnerischen Lord. Darunter nennt eine Zeile, wer ein
 Schub erscheint als „Moralschub! +10%“ oder „Moralschub beim Gegner“. Auf dem Kompass markiert ♛ jeden
 Gildenlord, ⚑ jede Flagge und ◎ den Stand.
 
-Guild Hall Isle spielt es.
+Guild Hall Isle (8v8, 6000x2600) spielt es: eine Insel im Meer. Jeder Guild Lord steht oben auf einer Halle, hinter einem Wall; hinaus geht es durch das Torhaus, über den Wall oder einen Steg entlang. Eine Torhaustür öffnet ein Hebel auf dem Wall des Gegners. Der Fahnenständer steht auf einem Podest in der Mitte.
 
 ## Reliktlauf
 

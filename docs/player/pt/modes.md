@@ -133,7 +133,7 @@ bandeira. Um bônus aparece como "Bônus de moral! +10%" ou "Bônus de moral
 inimigo". Na bússola, ♛ marca cada Lorde da Guilda, ⚑ cada bandeira e ◎ o
 suporte.
 
-Guild Hall Isle joga esse modo.
+Guild Hall Isle (8v8, 6000x2600) joga esse modo: uma ilha no mar. Cada Guild Lord fica no topo de um salão, atrás de uma muralha; sai-se pela guarita, por cima da muralha ou ao longo de um cais. A porta da guarita abre com uma alavanca na muralha inimiga. O suporte da bandeira fica num estrado no centro.
 
 ## Corrida da Relíquia
 

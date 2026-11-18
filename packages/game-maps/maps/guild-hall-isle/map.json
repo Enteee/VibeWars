@@ -99,14 +99,14 @@
     {
       "id": "west-rampart",
       "layer": 2,
-      "footprint": { "kind": "rect", "x": 2300, "y": 750, "width": 300, "height": 1100 },
+      "footprint": { "kind": "rect", "x": 2300, "y": 590, "width": 300, "height": 1420 },
       "look": "wall-walk",
       "switched": null
     },
     {
       "id": "east-rampart",
       "layer": 2,
-      "footprint": { "kind": "rect", "x": 3400, "y": 750, "width": 300, "height": 1100 },
+      "footprint": { "kind": "rect", "x": 3400, "y": 590, "width": 300, "height": 1420 },
       "look": "wall-walk",
       "switched": null
     },
@@ -398,43 +398,41 @@
   ],
   "dropOffs": [
     { "layer": 2, "from": { "x": 1450, "y": 850 }, "to": { "x": 1760, "y": 850 } },
-    { "layer": 2, "from": { "x": 4550, "y": 1750 }, "to": { "x": 4240, "y": 1750 } },
-    { "layer": 2, "from": { "x": 2320, "y": 750 }, "to": { "x": 2580, "y": 750 } },
-    { "layer": 2, "from": { "x": 3680, "y": 1850 }, "to": { "x": 3420, "y": 1850 } }
+    { "layer": 2, "from": { "x": 4550, "y": 1750 }, "to": { "x": 4240, "y": 1750 } }
   ],
   "walls": [
     { "kind": "rect", "x": 900, "y": 850, "width": 900, "height": 900, "layer": 1 },
     { "kind": "rect", "x": 4200, "y": 850, "width": 900, "height": 900, "layer": 1 },
     { "kind": "rect", "x": 950, "y": 950, "width": 250, "height": 700, "layer": 2 },
     { "kind": "rect", "x": 4800, "y": 950, "width": 250, "height": 700, "layer": 2 },
-    { "kind": "rect", "x": 2300, "y": 750, "width": 300, "height": 1100, "layer": 1 },
-    { "kind": "rect", "x": 3400, "y": 750, "width": 300, "height": 1100, "layer": 1 },
+    { "kind": "rect", "x": 2300, "y": 590, "width": 300, "height": 1420, "layer": 1 },
+    { "kind": "rect", "x": 3400, "y": 590, "width": 300, "height": 1420, "layer": 1 },
     { "kind": "rect", "x": 2850, "y": 1150, "width": 300, "height": 300, "layer": 1 }
   ],
   "water": [
     {
-      "id": "north-west-pier-shallows",
+      "id": "north-west-pier-deep",
       "layer": 1,
-      "depth": "shallow",
-      "area": { "kind": "rect", "x": 1950, "y": 380, "width": 700, "height": 210 }
+      "depth": "deep",
+      "area": { "kind": "rect", "x": 1950, "y": 60, "width": 700, "height": 530 }
     },
     {
-      "id": "south-east-pier-shallows",
+      "id": "south-east-pier-deep",
       "layer": 1,
-      "depth": "shallow",
-      "area": { "kind": "rect", "x": 3350, "y": 2010, "width": 700, "height": 210 }
+      "depth": "deep",
+      "area": { "kind": "rect", "x": 3350, "y": 2010, "width": 700, "height": 530 }
     },
     {
-      "id": "south-west-pier-shallows",
+      "id": "south-west-pier-deep",
       "layer": 1,
-      "depth": "shallow",
-      "area": { "kind": "rect", "x": 1950, "y": 2010, "width": 700, "height": 210 }
+      "depth": "deep",
+      "area": { "kind": "rect", "x": 1950, "y": 2010, "width": 700, "height": 530 }
     },
     {
-      "id": "north-east-pier-shallows",
+      "id": "north-east-pier-deep",
       "layer": 1,
-      "depth": "shallow",
-      "area": { "kind": "rect", "x": 3350, "y": 380, "width": 700, "height": 210 }
+      "depth": "deep",
+      "area": { "kind": "rect", "x": 3350, "y": 60, "width": 700, "height": 530 }
     }
   ],
   "zones": [
@@ -574,8 +572,8 @@
     { "kind": "guild-lord", "layer": 2, "team": 1, "position": { "x": 4600, "y": 1300 } },
     { "kind": "resurrection-shrine", "layer": 1, "team": 0, "position": { "x": 650, "y": 800 } },
     { "kind": "resurrection-shrine", "layer": 1, "team": 1, "position": { "x": 5350, "y": 1800 } },
-    { "kind": "flag-spawn", "layer": 1, "team": 0, "position": { "x": 1100, "y": 2050 } },
-    { "kind": "flag-spawn", "layer": 1, "team": 1, "position": { "x": 4900, "y": 550 } },
+    { "kind": "flag-spawn", "layer": 1, "team": 0, "position": { "x": 780, "y": 900 } },
+    { "kind": "flag-spawn", "layer": 1, "team": 1, "position": { "x": 5220, "y": 1700 } },
     { "kind": "flag-stand", "layer": 2, "position": { "x": 3000, "y": 1300 } },
     {
       "kind": "guard",
