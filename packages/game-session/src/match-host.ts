@@ -2,7 +2,9 @@ import {
   BOT_REACTION,
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
+  MatchChart,
   MatchTally,
+  type MatchChartResult,
   ZERO,
   adrenalineLossIn,
   applyIntent,
@@ -66,7 +68,9 @@ import {
   type RechargeMessage,
   type SkillBarSlot,
   type WireCombatBatch,
+  type WireChartEvent,
   type WireEnded,
+  type WireMatchChart,
   type WirePlayer,
   type WireSkillBar,
   type WireSnapshot,
@@ -80,7 +84,7 @@ import {
 } from "@vibewars/game-protocol";
 
 import { createCallBoard, type Team } from "./calls.js";
-import { packCombat } from "./combat-batches.js";
+import { packCombat, packMatchChart } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import {
   MATCH_RECORD_VERSION,
@@ -347,6 +351,20 @@ function wireTeam(team: number | null | undefined): WireTeam | null {
   return team === 0 || team === 1 || team === 2 ? team : null;
 }
 
+/** The charts as the wire carries them (#3564): a team there is a `WireTeam`. */
+function wireChart(chart: MatchChartResult): WireMatchChart {
+  return {
+    ...chart,
+    events: chart.events.flatMap((event): WireChartEvent[] => {
+      if (event.kind !== "objective") {
+        return [event];
+      }
+      const team = wireTeam(event.team);
+      return team === null ? [] : [{ ...event, team }];
+    }),
+  };
+}
+
 export function createMatchHost(options: MatchHostOptions): MatchHost {
   const { transport, map, random, maxPlayers, seats: planned } = options;
   const sim = new MatchSimulation({
@@ -457,6 +475,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const tally = new MatchTally(
     (id) => everSeated.get(id)?.team ?? teams.get(id),
     (id) => everSeated.has(id),
+  );
+  /** The match's series and events, for the charts at its end (#3564). */
+  const chart = new MatchChart(
+    (id) => everSeated.get(id)?.team ?? teams.get(id),
+    (id) => everSeated.has(id),
+    options.matchRules.timeLimitSeconds,
   );
   /** One whole-number line per seat the match ever had. */
   const summary = (): WireSummaryRow[] =>
@@ -1371,6 +1395,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       transport.send("snapshot", part, live);
     }
     tally.add(result.log);
+    chart.add(result.log, sim);
     const batches = packCombat(wireCombat(result.log), MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS);
     for (const batch of batches) {
       transport.send("combat", batch, live);
@@ -1392,6 +1417,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         clearSeconds: sim.clearSeconds,
       };
       transport.send("ended", ended, live);
+      // After the summary, so its size never holds the summary up.
+      for (const part of packMatchChart(
+        wireChart(chart.result([...everSeated.keys()])),
+        MAX_MESSAGE_BYTES,
+      )) {
+        transport.send("match-chart", part, live);
+      }
       // The Elite Zaishen Battle has no opposing players to record (#2692).
       if (map.startLine === undefined) {
         options.publishRecord(record(sim.outcome.reason ?? "time"));

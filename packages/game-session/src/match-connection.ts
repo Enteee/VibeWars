@@ -26,6 +26,7 @@ import type {
   WireDeck,
   WireLift,
   WirePing,
+  WireMatchChart,
   WireStroke,
   WireWeaponSets,
 } from "@vibewars/game-protocol";
@@ -216,6 +217,8 @@ export interface MatchSnapshot {
   readonly lifts: readonly WireLift[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
+  /** The match's charts, from the host's `match-chart` after `ended` (#3564); `undefined` until they have all come. */
+  readonly chart: WireMatchChart | undefined;
 }
 
 /**
