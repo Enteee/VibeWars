@@ -8178,52 +8178,6 @@
       "properties": [
         { "name": "away", "optional": false, "type": "boolean" },
         { "name": "bot", "optional": false, "type": "boolean" },
-        {
-          "name": "guildCape",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "emblem", "optional": false, "type": "string" },
-                  {
-                    "name": "main",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "black" },
-                        { "literal": "gold" },
-                        { "literal": "lime" },
-                        { "literal": "orange" },
-                        { "literal": "pink" },
-                        { "literal": "teal" },
-                        { "literal": "violet" },
-                        { "literal": "white" }
-                      ]
-                    }
-                  },
-                  {
-                    "name": "trim",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "black" },
-                        { "literal": "gold" },
-                        { "literal": "lime" },
-                        { "literal": "orange" },
-                        { "literal": "pink" },
-                        { "literal": "teal" },
-                        { "literal": "violet" },
-                        { "literal": "white" }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        },
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "heroRank", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
@@ -8310,52 +8264,6 @@
               "properties": [
                 { "name": "away", "optional": false, "type": "boolean" },
                 { "name": "bot", "optional": false, "type": "boolean" },
-                {
-                  "name": "guildCape",
-                  "optional": false,
-                  "type": {
-                    "union": [
-                      "null",
-                      {
-                        "properties": [
-                          { "name": "emblem", "optional": false, "type": "string" },
-                          {
-                            "name": "main",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "black" },
-                                { "literal": "gold" },
-                                { "literal": "lime" },
-                                { "literal": "orange" },
-                                { "literal": "pink" },
-                                { "literal": "teal" },
-                                { "literal": "violet" },
-                                { "literal": "white" }
-                              ]
-                            }
-                          },
-                          {
-                            "name": "trim",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "black" },
-                                { "literal": "gold" },
-                                { "literal": "lime" },
-                                { "literal": "orange" },
-                                { "literal": "pink" },
-                                { "literal": "teal" },
-                                { "literal": "violet" },
-                                { "literal": "white" }
-                              ]
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
                 { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "heroRank", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },

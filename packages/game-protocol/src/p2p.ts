@@ -1456,8 +1456,6 @@ export interface WireLobbyPlayer {
   readonly guildTag: string | null;
   /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
   readonly heroRank: number;
-  /** As `PeerHello.guildCape` (#1422). */
-  readonly guildCape: WireCape | null;
   /** `null` spectates. */
   readonly team: WireTeam | null;
   readonly ready: boolean;
@@ -1905,11 +1903,6 @@ export function parseWireCape(value: unknown): WireCape | undefined {
     unpackEmblem(raw.emblem) !== undefined
     ? { main: raw.main, trim: raw.trim, emblem: raw.emblem }
     : undefined;
-}
-
-/** A host's cape (#1422): `null` or a cape; anything else is malformed. */
-function parseNullableCape(value: unknown): WireCape | null | undefined {
-  return value === null ? null : parseWireCape(value);
 }
 
 function isRejoinToken(value: unknown): value is string {
@@ -3544,7 +3537,6 @@ function parseLobbyTeam(value: unknown): LobbyTeam | null | undefined {
 function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
   const raw = fields(value);
   const team = parseNullableTeam(raw?.team);
-  const guildCape = parseNullableCape(raw?.guildCape);
   // A bot has no key, and every human one (#2706).
   const playerPubkey =
     raw?.bot === true
@@ -3559,7 +3551,6 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     isString(raw.name) &&
     isNullableString(raw.guildTag) &&
     isHeroRank(raw.heroRank) &&
-    guildCape !== undefined &&
     team !== undefined &&
     typeof raw.ready === "boolean" &&
     typeof raw.isHost === "boolean" &&
@@ -3571,7 +3562,6 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         name: raw.name,
         guildTag: raw.guildTag,
         heroRank: raw.heroRank,
-        guildCape,
         team,
         ready: raw.ready,
         isHost: raw.isHost,

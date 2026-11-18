@@ -567,7 +567,6 @@ const lobbyState: WireLobbyState = {
       name: "Host",
       guildTag: "VIBE",
       heroRank: 0,
-      guildCape: CAPE,
       team: 0,
       ready: true,
       isHost: true,
@@ -580,7 +579,6 @@ const lobbyState: WireLobbyState = {
       name: "Watcher",
       guildTag: null,
       heroRank: 0,
-      guildCape: null,
       team: null,
       ready: false,
       isHost: false,
@@ -593,7 +591,6 @@ const lobbyState: WireLobbyState = {
       name: "Monk Bot",
       guildTag: null,
       heroRank: 0,
-      guildCape: null,
       team: 1,
       ready: true,
       isHost: false,
@@ -1515,17 +1512,6 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { capes: [{ id: "p1", cape: { ...CAPE, main: "red" } }] },
   ],
   ["capes of a seat in no cape (#3554)", parseWireCapes, { capes: [{ id: "p1", cape: null }] }],
-  [
-    "lobby-state of a member in a cape of no such emblem (#1422)",
-    parseWireLobbyState,
-    {
-      ...lobbyState,
-      players: lobbyState.players.map((member) => ({
-        ...member,
-        guildCape: { ...CAPE, emblem: "skull" },
-      })),
-    },
-  ],
   [
     "summary row without a guild tag (#1406)",
     parseWireEnded,

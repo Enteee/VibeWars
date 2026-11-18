@@ -312,7 +312,7 @@ describe("the Player section of Options (#1513)", () => {
     copy?.click();
     await vi.waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(
-        "https://vibewars.example/#guild=VW.violet.white.diamond",
+        `https://vibewars.example/#guild=VW.violet.white.${FIRST_CAPE.emblem}`,
       );
     });
     tag.typeIn("V!");

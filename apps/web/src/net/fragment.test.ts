@@ -196,7 +196,7 @@ describe("parseGuildFragment (#3167)", () => {
 
   it("leaves lobby= and turn= to their own readers", () => {
     const turn = "turn=abc";
-    const read = parseGuildFragment(`#lobby=${KEY}&guild=VW.gold.black.cross&${turn}`);
+    const read = parseGuildFragment(`#lobby=${KEY}&guild=VW.gold.black.${GRID}&${turn}`);
     expect(read.kind === "none" ? undefined : read.rest).toBe(`lobby=${KEY}&${turn}`);
     expect(parseLobbyFragment(read.kind === "none" ? "" : read.rest)).toEqual({
       kind: "invite",

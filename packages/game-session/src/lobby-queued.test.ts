@@ -557,7 +557,6 @@ describe("a queued lobby", () => {
               isHost: false,
               guildTag: null,
               heroRank: 0,
-              guildCape: null,
               bot: false,
               away: false,
               playerPubkey: "ab".repeat(32),
