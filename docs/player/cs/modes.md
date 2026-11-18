@@ -48,7 +48,7 @@ Tým, jehož Pán cechu zemře, okamžitě prohrává, stejně jako tým, jehož
 
 Výsledková tabule ukazuje zdraví každého Pána cechu, tvého jako prvního, kdo drží stojan a za jak dlouho přijde jeho zvýšení, kdy svatyně příště vrátí mrtvé a v posledních 3 minutách poškození každého týmu nepřátelskému pánovi. Pod ní řádek jmenuje každého, kdo nese vlajku. Zvýšení vyskočí jako "Zvýšení morálky! +10 %" nebo "Zvýšení morálky nepřátel". Na kompasu ♛ značí každého Pána cechu, ⚑ každou vlajku a ◎ stojan.
 
-Hraje ho Guild Hall Isle.
+Hraje ho Guild Hall Isle (8v8, 6000x2600): ostrov v moři. Každý Guild Lord stojí na vrcholu síně za hradbou; ven se jde branou, přes hradbu nebo po molu. Dveře brány otevírá páka na nepřátelské hradbě. Stojan na vlajku je na pódiu uprostřed.
 
 ## Běh s relikvií
 

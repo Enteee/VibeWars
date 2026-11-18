@@ -115,7 +115,7 @@ musuh. Di bawahnya, sebaris teks menyebut siapa pun yang membawa bendera. Dorong
 "Dorongan Moral! +10%", atau "Dorongan Moral musuh". Di kompas, ♛ menandai
 setiap Penguasa Guild, ⚑ setiap bendera dan ◎ tiangnya.
 
-Guild Hall Isle memainkannya.
+Guild Hall Isle (8v8, 6000x2600) memainkannya: sebuah pulau di laut. Setiap Guild Lord berdiri di atas aula, di balik benteng; jalan keluar lewat gerbang, melewati atas benteng, atau menyusuri dermaga. Pintu gerbang dibuka oleh tuas di benteng lawan. Tiang bendera ada di panggung di tengah.
 
 ## Lari Relik
 

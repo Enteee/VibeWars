@@ -51,8 +51,11 @@ Guild Lord dies loses at once; a team all dead at -60% loses too. After
 **28 minutes** the team with the most **aggression** wins: the damage
 its members and their creatures dealt to the enemy Guild Lord, after
 armor, degeneration and life stealing not counted. Equal aggression,
-or both lords dying together, and both lose. Guild Hall Isle plays it,
-and no Random Arena does.
+or both lords dying together, and both lose. Guild Hall Isle plays it:
+an island, each Guild Lord on top of a hall behind a rampart that runs
+sea to sea, so a base is left through the gatehouse, over the rampart or
+along a pier; a lever on the enemy rampart opens each gatehouse door,
+and the flag stand is on a dais in the middle. No Random Arena does.
 
 Each base is **guarded** (#1223), by `"guard"` objectives naming a
 role: a Bodyguard and two Knights by the Guild Lord, an Archer at the

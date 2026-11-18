@@ -80,6 +80,15 @@ wachtrij.
 Als de match afloopt, kun je **Opnieuw zoeken**, of **Bij elkaar** blijven met
 het team waarmee je net speelde.
 
+Naast de scores vertellen twee grafieken het verloop van de match. **Jij**
+tekent je toegebrachte schade, ontvangen schade, genezing en Energie; **Teams**
+tekent de levenspool van elk team boven zijn totale schade. Markeringen onder
+de tijdas tonen kills, doden, onderbrekingen, veroveringen en
+wederopstandingen: wijs er een aan, of ga er met Tab naartoe, om te lezen wat
+er gebeurde. Druk op een legenda-item om de lijn te verbergen of te tonen. Op
+een telefoon staan de grafieken onder de scores, die jou en twee anderen tonen
+tot **Alles tonen**.
+
 ## Een match hosten of meedoen
 
 Je zit altijd in een lobby: vanaf het moment dat de pagina opent, host hij er

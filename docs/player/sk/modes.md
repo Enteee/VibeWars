@@ -119,7 +119,7 @@ posledných 3 minútach poškodenie každého tímu voči nepriateľskému páno
 „Posila morálky! +10 %“ alebo „Nepriateľská posila morálky“. Na kompase ♛
 označuje každého Pána cechu, ⚑ každú vlajku a ◎ stojan.
 
-Hrá sa na Guild Hall Isle.
+Hrá sa na Guild Hall Isle (8v8, 6000x2600): ostrov v mori. Každý Guild Lord stojí na vrchole siene za valom; von sa ide bránou, cez val alebo po móle. Dvere brány otvára páka na nepriateľskom vale. Stojan na vlajku je na pódiu v strede.
 
 ## Beh s relikviou
 

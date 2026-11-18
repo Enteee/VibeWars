@@ -1516,6 +1516,124 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Guild Hall Isle (#3445): team 1's half is team 0's turned 180° about the flag dais, so every
+  // walk below is the same both ways. Out of a base three ways: under the rampart by the
+  // gatehouse, over it by its stairs, or round its end, dry along a pier or wading the inlet.
+  describe("Guild Hall Isle", () => {
+    const map = loadMap("guild-hall-isle");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const stand = { x: 3000, y: 1300 };
+    /** Team `team`'s own `id`, named as team 0's: team 1's is its turn, west for east, north for south. */
+    const own = (team: number, id: string): string =>
+      team === 0
+        ? id
+        : id
+            .replace(/west/g, "@")
+            .replace(/east/g, "west")
+            .replace(/@/g, "east")
+            .replace(/north/g, "@")
+            .replace(/south/g, "north")
+            .replace(/@/g, "south");
+    const gatehouse = ["west-gatehouse-west-steps", "west-gatehouse-east-steps"];
+    const rampart = ["west-rampart-west-stair", "west-rampart-east-stair"];
+    const northPier = ["north-west-pier-west-stair", "north-west-pier-east-stair"];
+    const southPier = ["south-west-pier-west-stair", "south-west-pier-east-stair"];
+    const ways = [gatehouse, rampart, northPier, southPier];
+    /** The inlet a pier crosses, team 0's: wading it is the wet way round that end. */
+    const inlets = new Map<readonly string[], string>([
+      [northPier, "north-west-pier-inlet"],
+      [southPier, "south-west-pier-inlet"],
+    ]);
+    /**
+     * Through `way`, every other way out of the team's base shut. Round an end, the walk may
+     * take the pier or wade the inlet under it, so it need pass none of the pier's stairs.
+     */
+    const by =
+      (way: readonly string[]) =>
+      (team: number): Route => ({
+        through: way === northPier || way === southPier ? [] : way.map((id) => own(team, id)),
+        shut: ways
+          .filter((each) => each !== way)
+          .flatMap((each) => each.map((id) => own(team, id))),
+      });
+    /**
+     * Each team's walk to the stand by `way` on `on`. Round an end, the other end's inlet is
+     * made deep, so the walk goes round this end, by its pier or its wade.
+     */
+    const walksBy = (on: MapData, way: readonly string[]): number[] =>
+      [0, 1].map((team) => {
+        const other = [...inlets].filter(([end]) => end !== way).map(([, id]) => own(team, id));
+        const walled: MapData = {
+          ...on,
+          water: (on.water ?? []).map((each) =>
+            inlets.has(way) && other.includes(each.id) ? { ...each, depth: "deep" as const } : each,
+          ),
+        };
+        return walksByRoute(walled, stand, 2, by(way))[team] ?? 0;
+      });
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    const lords = map.objectives.flatMap((objective) =>
+      objective.kind === "guild-lord" ? [objective] : [],
+    );
+    const flags = map.objectives.flatMap((objective) =>
+      objective.kind === "flag-spawn" ? [objective] : [],
+    );
+
+    it.each([
+      ["the gatehouse", gatehouse],
+      ["the rampart", rampart],
+      ["the north end", northPier],
+      ["the south end", southPier],
+    ])(
+      "walks each team to the flag stand by %s within 10 % of the other, in under 30 s",
+      (_, way) => {
+        const walks = walksBy(map, way);
+        within(walks, 0.1);
+        for (const walk of walks) expect(walk / seconds).toBeLessThan(30);
+      },
+    );
+
+    it("walks each team to the enemy Guild Lord within 10 % of the other", () => {
+      within(
+        [0, 1].map((team) => {
+          const lord = lords.find((each) => each.team !== team);
+          if (lord === undefined) throw new Error("no enemy lord");
+          return walksTo(map, lord.position, lord.layer)[team] ?? 0;
+        }),
+        0.1,
+      );
+    });
+
+    it("walks each team to its own flag within 10 % of the other", () => {
+      within(
+        [0, 1].map((team) => {
+          const flag = flags.find((each) => each.team === team);
+          if (flag === undefined) throw new Error("no flag");
+          return walksTo(map, flag.position, flag.layer)[team] ?? 0;
+        }),
+        0.1,
+      );
+    });
+
+    it("keeps the rampart and the ends open with the gatehouse doors shut", () => {
+      const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+      within(walksBy(shut, rampart), 0.1);
+      within(walksBy(shut, northPier), 0.1);
+      within(walksBy(shut, southPier), 0.1);
+      // The shut doors turn the walk away from the gatehouse: it wades round an end instead.
+      expect(() => walksByRoute(shut, stand, 2, by(gatehouse))).toThrow(
+        /did not pass west-gatehouse-west-steps, west-gatehouse-east-steps/,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

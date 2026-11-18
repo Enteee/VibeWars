@@ -123,7 +123,7 @@ på fjendens herre. Under den nævner en linje den, der bærer et flag. Et
 løft dukker op som "Moralløft! +10%" eller "Fjendens moralløft". På
 kompasset markerer ♛ hver Laugsherre, ⚑ hvert flag og ◎ standen.
 
-Guild Hall Isle spiller den.
+Guild Hall Isle (8v8, 6000x2600) spiller den: en ø i havet. Hver Guild Lord står oven på en hal bag en ringmur; vejen ud går gennem porthuset, over muren eller langs en mole. En portdør åbnes med et håndtag på fjendens mur. Flagstanden står på en forhøjning i midten.
 
 ## Relikvieløb
 

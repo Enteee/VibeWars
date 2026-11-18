@@ -77,6 +77,15 @@ Khi tìm thấy trận, bạn được đưa tới màn hình đối đầu củ
 Khi trận kết thúc, bạn có thể **Xếp lại**, hoặc **Ở cùng nhau** với đội bạn
 vừa chơi cùng.
 
+Bên cạnh điểm số, hai biểu đồ kể lại trận đấu theo thời gian. **Bạn** vẽ sát
+thương bạn gây ra, sát thương bạn nhận, lượng hồi máu và Năng lượng;
+**Các đội** vẽ tổng máu của mỗi đội phía trên tổng sát thương của đội đó. Các
+dấu dưới trục thời gian cho thấy hạ gục, cái chết, ngắt chiêu, chiếm giữ và hồi
+sinh: trỏ vào một dấu, hoặc dùng Tab để đến nó, để đọc chuyện gì đã xảy ra.
+Nhấn một mục chú giải để ẩn hoặc hiện đường của nó. Trên điện thoại, biểu đồ
+nằm dưới điểm số, nơi hiện bạn và hai người khác cho đến khi bạn nhấn
+**Hiện tất cả**.
+
 ## Tạo hoặc vào trận
 
 Bạn luôn ở trong một sảnh: ngay từ lúc trang mở ra, nó đã tạo một sảnh của

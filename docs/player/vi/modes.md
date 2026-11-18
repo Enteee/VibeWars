@@ -117,7 +117,7 @@ Bên dưới, một dòng ghi tên ai đang mang cờ. Lần tăng sĩ khí hi�
 "Tăng sĩ khí! +10%", hoặc "Địch tăng sĩ khí". Trên la bàn, ♛ đánh dấu mỗi
 Lãnh chúa Bang, ⚑ mỗi lá cờ và ◎ bệ cờ.
 
-Guild Hall Isle chơi chế độ này.
+Guild Hall Isle (8v8, 6000x2600) chơi chế độ này: một hòn đảo giữa biển. Mỗi Guild Lord đứng trên đỉnh một sảnh, sau một bức tường thành; lối ra là qua cổng thành, vượt lên tường thành hoặc dọc theo một cầu tàu. Cửa cổng thành mở bằng một cần gạt trên tường thành của đối phương. Giá cắm cờ nằm trên một bục ở giữa.
 
 ## Vận chuyển thánh tích
 

@@ -125,7 +125,7 @@ kişinin adını verir. Bir artış "Moral Artışı! +%10" ya da "Düşmana Mor
 Artışı" olarak belirir. Pusulada ♛ her Lonca Lordu'nu, ⚑ her bayrağı, ◎
 da direği işaretler.
 
-Guild Hall Isle bunu oynatır.
+Guild Hall Isle (8v8, 6000x2600) bunu oynatır: denizde bir ada. Her Guild Lord bir surun ardında, bir salonun tepesinde durur; dışarı kapı kulesinden, surun üstünden ya da bir iskele boyunca çıkılır. Kapı kulesinin kapısı, düşmanın surundaki bir kolla açılır. Bayrak sehpası ortadaki bir kürsünün üstündedir.
 
 ## Kalıntı Koşusu
 
