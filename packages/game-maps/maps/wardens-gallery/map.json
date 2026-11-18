@@ -122,7 +122,14 @@
       "switched": null
     }
   ],
-  "overhangs": [],
+  "overhangs": [
+    {
+      "id": "hanging-banner",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 2150, "y": 150, "width": 900, "height": 60 },
+      "look": "canopy"
+    }
+  ],
   "transitions": [
     {
       "id": "west-plinth-north-stair",
@@ -767,7 +774,7 @@
         "position": { "x": 2330, "y": 1250 },
         "layer": 2,
         "radius": 200,
-        "colour": 16767136,
+        "colour": 16773590,
         "intensity": 0.6,
         "flicker": 0
       },
@@ -776,7 +783,7 @@
         "position": { "x": 2870, "y": 1250 },
         "layer": 2,
         "radius": 200,
-        "colour": 16767136,
+        "colour": 16773590,
         "intensity": 0.6,
         "flicker": 0
       }

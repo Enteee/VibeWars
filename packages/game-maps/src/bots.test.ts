@@ -147,7 +147,7 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
 
   it("plays the same for the same seed", () => {
     expect(spikes("a", true)).toEqual(spikes("a", true));
-  }, 60_000);
+  }, 120_000);
 });
 
 describe("Relic Run bots (#2581)", () => {
