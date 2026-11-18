@@ -10,7 +10,8 @@
  * 1200×630. ImageMagick then quantises the PNG under 300 KB.
  *
  *   --map <id>     the arena behind the title (default arena-canyon)
- *   --wait <s>     seconds to let the fight run first (default 14)
+ *   --wait <s>     seconds to let the fight run before the shot (default 14)
+ *   --sweep        also keep a frame every 2 s in $TMPDIR/share-sweep, to pick --wait
  *   --url <url>    shoot a client already served there
  *
  * Wrap in `company heavy`. Browser: VIBEWARS_CHROMIUM, else Playwright's.
@@ -26,12 +27,16 @@ import { parseArgs } from "node:util";
 import { chromium } from "@playwright/test";
 
 const PORT = 4322;
+const SWEEP = path.join(os.tmpdir(), "share-sweep");
+/** Where the fight is on the canyon at 1200×630 CSS px: shot at 2×, so its bodies are readable. */
+const CROP = { x: 300, y: 162, width: 600, height: 315 };
 const OUT = path.join(import.meta.dirname, "..", "apps", "web", "public", "share.png");
 const { values: options } = parseArgs({
   options: {
     url: { type: "string" },
     map: { type: "string", default: "arena-canyon" },
     wait: { type: "string", default: "14" },
+    sweep: { type: "boolean", default: false },
   },
 });
 
@@ -75,7 +80,10 @@ try {
     executablePath: process.env.VIBEWARS_CHROMIUM,
     args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
   });
-  const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
+  const page = await browser.newPage({
+    viewport: { width: 1200, height: 630 },
+    deviceScaleFactor: 2,
+  });
   await page.goto(`${server.url}?splash&menu-background=${options.map}`);
   const splash = page.locator(".splash");
   page.on("pageerror", (error) => {
@@ -90,12 +98,27 @@ try {
   }
   // A key starts it, and the fight runs until the name arrives.
   await page.keyboard.press("Space");
-  await sleep(Number(options.wait) * 1000);
-  await splash.locator(".splash-prompt").waitFor({ timeout: 30_000 });
-  // The name and its rule stay; "Press any key" does not belong on a card.
-  await page.addStyleTag({ content: ".splash-prompt{visibility:hidden!important}" });
-  await sleep(1500);
-  await page.screenshot({ path: path.join(work, "shot.png") });
+  // The title is put up over the fight while it still runs: at the prompt the
+  // fight is over, and a card with a title and no battle says nothing.
+  await page.addStyleTag({
+    content:
+      ".splash-title{visibility:visible!important;background:rgba(0,0,0,.5);top:62%!important;padding-block:.75rem!important}" +
+      ".splash-wordmark{font-size:3rem!important}" +
+      ".splash-prompt,.splash-hint{visibility:hidden!important}",
+  });
+  if (options.sweep) {
+    fs.mkdirSync(SWEEP, { recursive: true });
+    for (let second = 2; second <= Number(options.wait); second += 2) {
+      await sleep(2000);
+      await page.screenshot({
+        path: path.join(SWEEP, `${String(second).padStart(2, "0")}.png`),
+        clip: CROP,
+      });
+    }
+  } else {
+    await sleep(Number(options.wait) * 1000);
+  }
+  await page.screenshot({ path: path.join(work, "shot.png"), clip: CROP });
   await browser.close();
 
   execFileSync("magick", [path.join(work, "shot.png"), "-colors", "192", "-strip", OUT]);
