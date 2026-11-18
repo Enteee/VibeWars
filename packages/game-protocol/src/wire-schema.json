@@ -14,6 +14,7 @@
     "adrenaline",
     "chain",
     "ended",
+    "match-replay",
     "match-chart",
     "bye",
     "lobby-join",
@@ -746,6 +747,7 @@
     "MAX_LOBBY_PLAYERS": { "literal": 24 },
     "MAX_RELAY_PEER_ID": { "literal": 64 },
     "MAX_RELAY_SEAL_CHARS": { "literal": 2048 },
+    "MAX_REPLAY_PARTS": { "literal": 6400 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_STROKE_POINTS": { "literal": 16 },
     "MAX_TEAM_LOBBY_SIDE": { "literal": 8 },
@@ -915,6 +917,7 @@
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
         { "literal": "match-chart" },
+        { "literal": "match-replay" },
         { "literal": "match-start" },
         { "literal": "observe" },
         { "literal": "observing" },
@@ -8828,6 +8831,14 @@
             }
           }
         }
+      ]
+    },
+    "WireMatchReplayPart": {
+      "properties": [
+        { "name": "hash", "optional": false, "type": "string" },
+        { "name": "of", "optional": false, "type": "number" },
+        { "name": "part", "optional": false, "type": "number" },
+        { "name": "text", "optional": false, "type": "string" }
       ]
     },
     "WireMatchStart": {

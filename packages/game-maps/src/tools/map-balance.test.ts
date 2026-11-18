@@ -1228,6 +1228,163 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Scarred Earth (#3440): mirrored east to west, so every walk below is the same both ways. The
+  // centre is on the great deck (layer 3), up the great hulk's own-side stair, then the deck's.
+  describe("Scarred Earth", () => {
+    const map = loadMap("scarred-earth");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const centre = { x: 2700, y: 1400 };
+    const own = ["west", "east"];
+    /** A team's own side, and the far one. */
+    const side = (team: number, far = false): string => own[far ? 1 - team : team] ?? "";
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Up the great hulk's stair on `face` and the deck's on the same face, the other face shut. */
+    const up = (face: (team: number) => string) => (team: number) => {
+      const other = face(team) === "west" ? "east" : "west";
+      return {
+        through: [`great-hulk-${face(team)}-stair`, `great-deck-${face(team)}-stair`],
+        shut: [`great-hulk-${other}-stair`, `great-deck-${other}-stair`],
+      };
+    };
+    /**
+     * A cut across each half of the field, on the ground and the crater floors under it, from the
+     * north or south edge to the middle of the field: the walk to the great hulk goes round its
+     * open end, along the other lane.
+     */
+    const cut = (north: boolean): MapData => ({
+      ...map,
+      walls: [
+        ...map.walls,
+        ...[1700, map.width - 1720].flatMap((x) =>
+          [0, 1].map((layer) => ({
+            kind: "rect" as const,
+            x,
+            y: north ? 1100 : 0,
+            width: 20,
+            height: north ? map.height - 1100 : 1700,
+            layer,
+          })),
+        ),
+      ],
+    });
+    /** A hulk point's walk by the stair on `face` of `hulk`, its other stair shut. */
+    const byLane =
+      (hulk: (team: number) => string, face: "north" | "south") =>
+      (team: number): Route => ({
+        through: [`${hulk(team)}-${face}-stair`],
+        shut: [`${hulk(team)}-${face === "north" ? "south" : "north"}-stair`],
+      });
+    const points = [
+      ["own north", (team: number) => `north-${side(team)}-hulk`, { x: 1750, y: 640 }],
+      ["own south", (team: number) => `south-${side(team)}-hulk`, { x: 1750, y: 2160 }],
+      ["far north", (team: number) => `north-${side(team, true)}-hulk`, { x: 1750, y: 640 }],
+      ["far south", (team: number) => `south-${side(team, true)}-hulk`, { x: 1750, y: 2160 }],
+    ] as const;
+    /** Where team `team` finds a point given by its west image: its own, or the far team's. */
+    const at = (team: number, point: { x: number; y: number }, far: boolean) => {
+      const west = team === 0 ? !far : far;
+      return west ? point : { x: map.width - point.x, y: point.y };
+    };
+    /** Each team's walk to its own image of `point` by `route`. */
+    const toPoint = (
+      on: MapData,
+      point: { x: number; y: number },
+      far: boolean,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, at(team, point, far), 2, (other) =>
+            other === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+
+    it.each([
+      ["the west approach", map],
+      ["the north lane", cut(false)],
+      ["the south lane", cut(true)],
+    ])("walks each team to the centre by %s within 10 % of the other, in under 25 s", (_, on) => {
+      const walks = walksByRoute(
+        on,
+        centre,
+        3,
+        up((team) => side(team)),
+      );
+      within(walks, 0.1);
+      for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+    });
+
+    it("walks each team to the centre round by the far stair within 10 % of the other", () => {
+      within(
+        walksByRoute(
+          map,
+          centre,
+          3,
+          up((team) => side(team, true)),
+        ),
+        0.1,
+      );
+    });
+
+    it.each(
+      points.flatMap(([name, hulk, point]) =>
+        (["north", "south"] as const).map((face) => {
+          const outer = name.endsWith("north") === (face === "north");
+          return [name, outer ? "outer" : "inner", hulk, point, face] as const;
+        }),
+      ),
+    )(
+      "walks each team to the %s point by the %s lane within 10 % of the other",
+      (name, _, hulk, point, face) => {
+        within(toPoint(map, point, name.startsWith("far"), byLane(hulk, face)), 0.1);
+      },
+    );
+
+    it("walks each team to the centre and every point within 10 % of the other", () => {
+      within(walksTo(map, centre, 3), 0.1);
+      for (const [name, , point] of points) {
+        const far = name.startsWith("far");
+        within(
+          [0, 1].map((team) => walksTo(map, at(team, point, far), 2)[team] ?? 0),
+          0.1,
+        );
+      }
+    });
+
+    it("keeps every walk within 10 % as loaded, the trench gates shut and the palisades standing", () => {
+      const shut: MapData = {
+        ...map,
+        walls: [...map.walls, ...map.gates.map(({ wall }) => wall)],
+      };
+      within(
+        walksByRoute(
+          shut,
+          centre,
+          3,
+          up((team) => side(team)),
+        ),
+        0.1,
+      );
+      for (const [name, hulk, point] of points) {
+        for (const face of ["north", "south"] as const) {
+          within(toPoint(shut, point, name.startsWith("far"), byLane(hulk, face)), 0.1);
+        }
+      }
+    });
+
+    it("keeps the walks within 10 % with the gates open and the palisades broken", () => {
+      const broken = ["west-palisade", "east-palisade"];
+      within(walksByRoute(map, centre, 3, { through: [], broken }), 0.1);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

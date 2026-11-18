@@ -267,8 +267,7 @@ Botovi se raspoređuju po svetištima koja tvoj tim još ne posjeduje i stoje
 na njima dok se ne zauzmu. Neprijatelj u dometu čarolije ne odvlači
 ih: stupaju na svetište u dosegu i bore se s njega.
 
-Scarred Earth ga igra: svako svetište stoji u slomljenom prstenu zidova,
-otvorenom prema zapadu i istoku.
+Scarred Earth (4v4 i 8v8, 5400x2800) ga igra: bojište puno kratera u sumrak. Svetišta stoje na razrušenim opsadnim tornjevima, srednje na palubi velikog tornja, svako pokraj kratera; poluge na tornjevima otvaraju dva rova ispod polja, a razrušene palisade mogu se razbiti.
 
 ## Timska soba
 

@@ -262,8 +262,7 @@ Bots verspreiden zich over de schrijnen die je team nog niet heeft en blijven er
 staan tot ze zijn ingenomen. Een vijand binnen spreukbereik trekt ze er niet vanaf:
 ze stappen op een schrijn binnen bereik en vechten van daaruit.
 
-Scarred Earth speelt het: elk schrijn staat in een gebroken ring van muren, open aan
-west- en oostkant.
+Scarred Earth (4v4 en 8v8, 5400x2800) speelt het: een met kraters bezaaid slagveld in de schemering. De schrijnen staan op verwoeste belegeringstorens, het middelste op het dek van de grote toren, elk naast een krater; hendels op de torens openen twee loopgraven onder het veld, en verwoeste palissaden kun je kapotslaan.
 
 ## Teamlobby
 

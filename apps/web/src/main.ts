@@ -5,6 +5,7 @@ import type {
   LobbySnapshot,
   MatchRecordTeam,
   MatchStarting,
+  RecordedReplay,
   QueueState,
 } from "@vibewars/game-session";
 
@@ -85,6 +86,7 @@ import {
   openIndexedDbStore,
   type KeyValueStore,
 } from "./storage/repository.js";
+import { ReplayStore } from "./storage/replays.js";
 import { cloneCharacter } from "./storage/clone-character.js";
 import { missingSkillsNote } from "./storage/gw1-template.js";
 import { characterFromMatch, teamFromMatch } from "./storage/match-team.js";
@@ -454,6 +456,13 @@ async function main(): Promise<void> {
     notices.add(t("app.framedRelayLink"));
   }
   const characters = new CharacterRepository(store);
+  // The last matches' replays (#3572), for a dispute later; nothing shows them yet.
+  const replays = new ReplayStore(store);
+  const keepReplay = (recorded: RecordedReplay): void => {
+    replays.keep(recorded).catch((error: unknown) => {
+      console.warn("[web] could not keep the match replay", error);
+    });
+  };
   const teams = new TeamRepository(store);
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
@@ -3093,7 +3102,8 @@ async function main(): Promise<void> {
         },
         {
           kind: "play",
-          connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build),
+          connect: () =>
+            connectMatchFor(from, start, name, entrant.guild, entrant.build, keepReplay),
         },
         ownSignet,
       );

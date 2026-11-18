@@ -306,8 +306,7 @@ A botok szétszóródnak azokon a szentélyeken, amelyek még nem a csapatodéi,
 belüli ellenség nem csalja el őket: fellépnek egy elérhető szentélyre,
 és onnan harcolnak.
 
-A Scarred Earth játssza: minden szentély egy törött falgyűrűben áll,
-amely nyugat és kelet felé nyitott.
+A Scarred Earth (4v4 és 8v8, 5400x2800) játssza: kráterekkel szabdalt csatatér alkonyatkor. A szentélyek összetört ostromtornyokon állnak, a középső a nagy torony fedélzetén, mindegyik egy kráter mellett; a tornyokon lévő karok két lövészárkot nyitnak a mező alatt, a rommá lett cölöpkerítések pedig szétverhetők.
 
 ## Csapatlobbi
 

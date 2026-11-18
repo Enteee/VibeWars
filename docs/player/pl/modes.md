@@ -250,8 +250,7 @@ Boty rozchodzą się po kapliczkach, których twoja drużyna jeszcze nie posiada
 na nich, aż zostaną przejęte. Wróg w zasięgu czaru ich nie odciąga: wchodzą na kapliczkę
 w zasięgu i walczą z niej.
 
-Gra w nie Scarred Earth: każda kapliczka stoi w rozbitym kręgu murów, otwartym od
-zachodu i wschodu.
+Gra w nie Scarred Earth (4v4 i 8v8, 5400x2800): pole bitwy usiane kraterami o zmierzchu. Kapliczki stoją na zniszczonych wieżach oblężniczych, środkowa na pomoście wielkiej wieży, każda obok krateru; dźwignie na wieżach otwierają dwa okopy pod polem, a zniszczone palisady można rozbić.
 
 ## Lobby drużyny
 

@@ -10,6 +10,7 @@ import {
   parseRecharge,
   parseWireCalls,
   parseWireStrokes,
+  parseWireMatchReplayPart,
   parseWireTraps,
   parseWireRespawns,
   parseWireCombatBatch,
@@ -34,6 +35,7 @@ import {
   type RechargeMessage,
   type WireCalls,
   type WireStroke,
+  type WireMatchReplayPart,
   type WireTraps,
   type WireEnded,
   type WireMatchChart,
@@ -56,6 +58,7 @@ import {
 } from "./match-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { rejoinProof } from "./rejoin-proof.js";
+import { joinReplay, type RecordedReplay, type Sha256 } from "./replay.js";
 import { snapshotAssembler } from "./snapshot-parts.js";
 import type { Transport } from "./transport.js";
 import { combatMessage, matchSnapshot, playerSnapshots } from "./wire.js";
@@ -115,12 +118,23 @@ export interface PeerMatchConnection extends MatchConnection {
   readonly rejoinToken: string;
 }
 
+/** What a client keeps a replay with (#3572). */
+export interface ReplayKeeper {
+  readonly sha256: Sha256;
+  readonly keep: (recorded: RecordedReplay) => void;
+}
+
 export interface ConnectMatchOptions {
   readonly transport: Transport;
   readonly hostId: string;
   readonly hello: PeerHello;
   /** How long to wait for `welcome` and `skill-bar`. */
   readonly timeoutMs: number;
+  /**
+   * Where the match's replay goes (#3572), once the host has sent all of
+   * it and it checks out against its hash; `null` drops it.
+   */
+  readonly replays: ReplayKeeper | null;
 }
 
 /**
@@ -370,6 +384,25 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
       }
     },
   );
+  // After `ended`, its replay (#3572): kept once every part has come and it checks out.
+  const replayParts = new Map<number, WireMatchReplayPart>();
+  let replayDone = false;
+  fromHost("match-replay", parseWireMatchReplayPart, (part) => {
+    const keeper = options.replays;
+    if (keeper === null || ended === undefined || replayDone || replayParts.has(part.part)) {
+      return;
+    }
+    replayParts.set(part.part, part);
+    if (replayParts.size < part.of) {
+      return;
+    }
+    replayDone = true;
+    void joinReplay([...replayParts.values()], keeper.sha256).then((recorded) => {
+      if (recorded !== undefined) {
+        keeper.keep(recorded);
+      }
+    });
+  });
   // Sent after `ended` on the same room, so the summary names the roster
   // the parts are checked against; a part before it is no part.
   fromHost(
