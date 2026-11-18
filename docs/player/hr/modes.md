@@ -166,6 +166,8 @@ izjednačenje ide timu koji je zadnji bodovao. Svaka baza uskrsava svoje mrtve i
 sablast svake 2 minute. Botovi zajedno idu po neprijateljsku relikviju i donose je
 kući.
 
+Cinder Sanctum (8v8, 5600x2800) ga igra: hram na obronku vulkana između dviju rijeka lave. Prijeđi mostom ili nasipom do svetišta na njegovu predvorju; poluga na predvorju otvara skriveni prolaz ispod svetišta, a zidovi od pepela mogu se razbiti. Lava peče.
+
 ## Kralj brda
 
 **Odvedi svog Sablasnog heroja na oltar i drži ga.** Svaki tim ima

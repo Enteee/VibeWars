@@ -168,6 +168,8 @@ a pri rovnosti tím, ktorý bodoval naposledy. Každá základňa oživuje svoji
 mŕtvych a svoj prízrak každé 2 minúty. Boti idú po nepriateľskú relikviu spolu
 a prinesú ju domov.
 
+Cinder Sanctum (8v8, 5600x2800) ho hrá: chrám na úbočí sopky medzi dvoma lávovými riekami. Prejdi po moste alebo po hrádzi k svätyni na jej nádvorí; páka na nádvorí otvorí skrytú chodbu pod svätyňou a popolové steny sa dajú rozbiť. Láva páli.
+
 ## Kráľ kopca
 
 **Doveď svojho Prízračného hrdinu na oltár a drž ho.** Každý tím má vo

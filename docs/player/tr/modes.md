@@ -175,6 +175,8 @@ gönderir. **3 puan öne geçen** takım **hemen kazanır**. 8 dakikada en
 ölülerini ve hayaletini her 2 dakikada bir diriltir. Botlar düşmanın
 kalıntısına birlikte gider ve onu eve getirir.
 
+Cinder Sanctum (8v8, 5600x2800) bunu oynatır: iki lav nehri arasında, bir yanardağın yamacında bir tapınak. Bir köprüden ya da set yolundan geçerek avlusundaki mabede ulaş; avludaki bir kol mabedin altındaki gizli geçidi açar, kül duvarlar da kırılabilir. Lav yakar.
+
 ## Tepenin Kralı
 
 **Hayalet Kahramanını sunağa götür ve orayı tut.** Her takımın üssünde
