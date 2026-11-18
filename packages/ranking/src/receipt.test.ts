@@ -152,7 +152,55 @@ describe("parseReceipt", () => {
     }
   });
 
-  it("refuses more than 16 seats, and more than 8 KB", () => {
+  it("reads the largest receipt there can be", () => {
+    // Every bound at its worst: escaped ids and names, extreme integers,
+    // 16 leavers, and both signature maps full.
+    const escaped = (length: number) => "\u0001".repeat(length);
+    const seats = Array.from({ length: 16 }, (_, i) => ({
+      pubkey: `${"f".repeat(62)}${i.toString(16).padStart(2, "0")}`,
+      characterId: escaped(64),
+      name: escaped(40),
+      claimedRating: Number.MIN_SAFE_INTEGER,
+      prev: "f".repeat(64),
+    }));
+    const sigs = Object.fromEntries(seats.map((seat) => [seat.pubkey, "f".repeat(128)]));
+    const largest: RankedReceipt = {
+      start: {
+        matchId: escaped(64),
+        buildHash: escaped(64),
+        mode: escaped(64),
+        map: escaped(64),
+        seed: Number.MAX_SAFE_INTEGER,
+        startedAt: Number.MAX_SAFE_INTEGER,
+        leaderboardAsOf: Number.MAX_SAFE_INTEGER,
+        teams: [seats.slice(0, 8), seats.slice(8)],
+      },
+      startSigs: sigs,
+      result: {
+        startHash: "f".repeat(64),
+        winningTeam: Number.MAX_SAFE_INTEGER,
+        endReason: "guild-lord",
+        leavers: seats.map((seat) => seat.pubkey),
+        durationSeconds: Number.MAX_SAFE_INTEGER,
+        replayHash: "f".repeat(64),
+      },
+      resultSigs: sigs,
+    };
+    const json = text(canonicalBytes(largest));
+    expect(json.length).toBeGreaterThan(20_000);
+    expect(parseReceipt(json)).toEqual(largest);
+  });
+
+  it("drops the signatures of keys that are not seated", () => {
+    const { all, start, receipt: good } = fullReceipt();
+    const stranger = testSigner();
+    const extra = receipt(start, good.result, [...all, stranger], [...all, stranger]);
+    const parsed = parseReceipt(text(canonicalBytes(extra)));
+    expect(parsed && Object.keys(parsed.startSigs)).not.toContain(stranger.pubkey);
+    expect(parsed && Object.keys(parsed.resultSigs)).not.toContain(stranger.pubkey);
+  });
+
+  it("refuses more than 16 seats, and more than MAX_RECEIPT_BYTES", () => {
     const { receipt: good } = fullReceipt();
     const seat = good.start.teams[0]?.[0];
     const nine = Array.from({ length: 9 }, () => seat);
@@ -161,6 +209,23 @@ describe("parseReceipt", () => {
     ).toBeUndefined();
     const padded = JSON.stringify({ ...good, pad: "x".repeat(MAX_RECEIPT_BYTES) });
     expect(parseReceipt(padded)).toBeUndefined();
+  });
+});
+
+describe("receiptHash", () => {
+  it("names the match, whichever signatures a copy of it holds", () => {
+    const { red, blue, all, start, receipt: good } = fullReceipt();
+    const stranger = testSigner();
+    const resigned = receipt(start, good.result, all, all);
+    const partial = receipt(start, good.result, all, [red[0]]);
+    const extra = receipt(start, good.result, [...all, stranger], [...all, blue[1], stranger]);
+    const hash = receiptHash(good, crypto.sha256);
+    expect(hash).toMatch(/^[0-9a-f]{64}$/);
+    for (const copy of [resigned, partial, extra]) {
+      expect(receiptHash(copy, crypto.sha256)).toBe(hash);
+    }
+    const draw = receipt(start, resultOf(start, { winningTeam: null }), all, all);
+    expect(receiptHash(draw, crypto.sha256)).not.toBe(hash);
   });
 });
 
@@ -286,6 +351,7 @@ describe("mergeReceipts", () => {
     expect(validateReceipt(mine, crypto)).toEqual({ ok: false, reason: "result-signature" });
     const merged = mergeReceipts(mine, theirs, crypto);
     expect(merged && validateReceipt(merged, crypto)).toEqual({ ok: true });
+    expect(merged && receiptHash(merged, crypto.sha256)).toBe(receiptHash(mine, crypto.sha256));
   });
 
   it("refuses receipts whose results differ, and drops a signature that does not verify", () => {
@@ -295,5 +361,14 @@ describe("mergeReceipts", () => {
     const pubkey = blue[0].pubkey;
     const forged = { ...good, resultSigs: { ...good.resultSigs, [pubkey]: "00".repeat(64) } };
     expect(mergeReceipts(forged, good, crypto)?.resultSigs[pubkey]).toBe(good.resultSigs[pubkey]);
+  });
+
+  it("keeps no signature of a key that is not seated", () => {
+    const { all, start, receipt: good } = fullReceipt();
+    const stranger = testSigner();
+    const extra = receipt(start, good.result, [...all, stranger], [...all, stranger]);
+    const merged = mergeReceipts(extra, good, crypto);
+    expect(merged && Object.keys(merged.startSigs)).not.toContain(stranger.pubkey);
+    expect(merged && Object.keys(merged.resultSigs)).not.toContain(stranger.pubkey);
   });
 });

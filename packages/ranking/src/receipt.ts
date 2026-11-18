@@ -10,6 +10,8 @@
 export const RANKED_START_TAG = "vibewars/ranked-start";
 /** BIP-340 tag of the result digest every non-leaver signs. */
 export const RANKED_RESULT_TAG = "vibewars/ranked-result";
+/** BIP-340 tag of a receipt's hash: the match it records, whoever's copy. */
+export const RANKED_RECEIPT_TAG = "vibewars/ranked-receipt";
 /** A `prev` with no receipt before it, and a `host-left` result's `replayHash`. */
 export const ZERO_HASH = "0".repeat(64);
 
@@ -17,8 +19,14 @@ export const ZERO_HASH = "0".repeat(64);
 export const MAX_RANKED_SEATS = 16;
 /** The longest seat name, in UTF-16 units: a character name (`names.ts`). */
 export const MAX_SEAT_NAME_LENGTH = 40;
-/** The largest receipt `parseReceipt` reads, in UTF-8 bytes. An 8v8 one is about 7 KB. */
-export const MAX_RECEIPT_BYTES = 8 * 1024;
+/**
+ * The largest receipt `parseReceipt` reads, in UTF-8 bytes: the canonical
+ * encoding of the largest there can be is 22.8 KB. That is 16 seats with
+ * every id, name and integer at its bound in `\uXXXX` escapes, 16 leavers,
+ * and both signature maps full, at about 200 bytes an entry. A common 8v8
+ * one is about 11 KB.
+ */
+export const MAX_RECEIPT_BYTES = 24 * 1024;
 /** The longest id: a match, a build, a mode, a map or a character. */
 const MAX_ID_LENGTH = 64;
 
@@ -180,9 +188,16 @@ export function resultDigest(result: RankedResult, sha256: Sha256): Uint8Array {
   return taggedHash(sha256, RANKED_RESULT_TAG, canonicalBytes(result));
 }
 
-/** SHA-256 of the receipt's canonical bytes, as 64 lowercase hex digits: the next receipt's `prev`. */
+/**
+ * The hash of the match a receipt records, as 64 lowercase hex digits:
+ * its start and result under `vibewars/ranked-receipt`, and none of its
+ * signatures. Every copy of one match hashes the same, whichever
+ * signatures it holds, so a player's next `prev` is the hash the
+ * leaderboard keeps.
+ */
 export function receiptHash(receipt: RankedReceipt, sha256: Sha256): string {
-  return toHex(sha256(canonicalBytes(receipt)));
+  const { start, result } = receipt;
+  return toHex(taggedHash(sha256, RANKED_RECEIPT_TAG, canonicalBytes({ start, result })));
 }
 
 type Json = Readonly<Record<string, unknown>>;
@@ -289,7 +304,11 @@ function parseResult(value: unknown): RankedResult | undefined {
   return { startHash, winningTeam, endReason, leavers, durationSeconds, replayHash };
 }
 
-function parseSigs(value: unknown): Record<string, string> | undefined {
+/** The signatures in `value` of the keys in `seated`; anyone else's are dropped. */
+function parseSigs(
+  value: unknown,
+  seated: ReadonlySet<string>,
+): Record<string, string> | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
@@ -298,7 +317,9 @@ function parseSigs(value: unknown): Record<string, string> | undefined {
     if (!HEX_32.test(pubkey) || typeof sig !== "string" || !HEX_64.test(sig)) {
       return undefined;
     }
-    sigs[pubkey] = sig;
+    if (seated.has(pubkey)) {
+      sigs[pubkey] = sig;
+    }
   }
   return sigs;
 }
@@ -306,7 +327,8 @@ function parseSigs(value: unknown): Record<string, string> | undefined {
 /**
  * The receipt `json` encodes, or `undefined` for anything that is not
  * one: too large, not JSON, a field missing, out of bounds or of an
- * unknown `endReason`. Total. Fields it does not know are dropped.
+ * unknown `endReason`. Total. Fields it does not know, and signatures of
+ * keys that are not seated, are dropped.
  * Whether the receipt is *valid* is `validateReceipt`'s question.
  */
 export function parseReceipt(json: string): RankedReceipt | undefined {
@@ -326,15 +348,14 @@ export function parseReceipt(json: string): RankedReceipt | undefined {
     return undefined;
   }
   const start = parseStart(value.start);
-  const startSigs = parseSigs(value.startSigs);
+  if (start === undefined) {
+    return undefined;
+  }
+  const seated = new Set(start.teams.flat().map((seat) => seat.pubkey));
+  const startSigs = parseSigs(value.startSigs, seated);
   const result = parseResult(value.result);
-  const resultSigs = parseSigs(value.resultSigs);
-  if (
-    start === undefined ||
-    startSigs === undefined ||
-    result === undefined ||
-    resultSigs === undefined
-  ) {
+  const resultSigs = parseSigs(value.resultSigs, seated);
+  if (startSigs === undefined || result === undefined || resultSigs === undefined) {
     return undefined;
   }
   return { start, startSigs, result, resultSigs };
@@ -408,13 +429,14 @@ export function validateReceipt(receipt: RankedReceipt, crypto: ReceiptCrypto): 
 }
 
 function mergeSigs(
+  seats: readonly string[],
   a: Readonly<Record<string, string>>,
   b: Readonly<Record<string, string>>,
   digest: Uint8Array,
   verify: VerifySchnorr,
 ): Record<string, string> {
   const merged: Record<string, string> = {};
-  for (const pubkey of new Set([...Object.keys(a), ...Object.keys(b)])) {
+  for (const pubkey of seats) {
     const sig = [a[pubkey], b[pubkey]].find(
       (candidate) => candidate !== undefined && verify(pubkey, digest, candidate),
     );
@@ -429,9 +451,9 @@ function mergeSigs(
  * One receipt of two partial ones over the same match, as players who
  * each signed a `host-left` result alone publish them: the union of
  * their signatures when start and result are byte for byte the same,
- * otherwise `undefined`. A signature is kept only if it verifies, so a
- * forged one published beside a good one cannot displace it; `a`'s wins
- * where both do.
+ * otherwise `undefined`. A signature is kept only if it is a seat's and
+ * verifies, so a forged one published beside a good one cannot displace
+ * it; `a`'s wins where both do.
  */
 export function mergeReceipts(
   a: RankedReceipt,
@@ -444,9 +466,11 @@ export function mergeReceipts(
   ) {
     return undefined;
   }
+  const seats = a.start.teams.flat().map((seat) => seat.pubkey);
   return {
     start: a.start,
     startSigs: mergeSigs(
+      seats,
       a.startSigs,
       b.startSigs,
       startDigest(a.start, crypto.sha256),
@@ -454,6 +478,7 @@ export function mergeReceipts(
     ),
     result: a.result,
     resultSigs: mergeSigs(
+      seats,
       a.resultSigs,
       b.resultSigs,
       resultDigest(a.result, crypto.sha256),
