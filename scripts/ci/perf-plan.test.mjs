@@ -25,6 +25,11 @@ describe("planPerf", () => {
     expect(maps).toEqual(REFERENCE_MAPS);
   });
 
+  it("skips a map the Hosted lobby never offers", () => {
+    const { maps } = planPerf(["packages/game-maps/maps/elite-zaishen-battle/map.json"], all);
+    expect(maps).toEqual(REFERENCE_MAPS);
+  });
+
   it("skips a deleted map", () => {
     const { maps } = planPerf(["packages/game-maps/maps/gone/map.json"], (id) => id !== "gone");
     expect(maps).toEqual(REFERENCE_MAPS);
