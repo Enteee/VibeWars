@@ -574,24 +574,6 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     /** Dry olive: green would be nature's. */
     plant: 0x6d6a3e,
   },
-  /**
-   * A heavenly hall (#3441, visual-style §1b): pale marble underfoot and warm
-   * pale stone walls, the one pale floor; gold stays trim and light, never a fill.
-   */
-  celestial: {
-    ...HALL_TONES,
-    /** Pale marble. */
-    ground: 0xe8dfc8,
-    /** Warm pale stone. */
-    rock: 0xb9ad92,
-    /** Polished marble, a breath brighter than the floor. */
-    stone: 0xf4eedf,
-    wood: 0x9a7a52,
-    /** Sand. */
-    earth: 0x9a7850,
-    /** Pale olive: green would be nature.s. */
-    plant: 0x9a9670,
-  },
 };
 
 /** What each colour of the arena is made of. */
@@ -792,31 +774,13 @@ const TILED_GROUND: Record<Biome, boolean> = {
   marsh: true,
   jungle: true,
   coast: true,
-  // One polished sheet: the hall grid, tinted this pale, clips to white.
-  celestial: false,
 };
 
-/**
- * The trim on every deck's top edge in a biome that has one: the heavenly
- * marble's is the plinth's brass, a thin line, so gold is never a fill (§1b).
- */
-const DECK_TRIM: Partial<Record<Biome, number>> = {
-  celestial: DECK_LOOK.plinth.edgeTop,
-};
-
-function biomeMaterials(biome: Biome): BiomeMaterials {
-  const tones = BIOME_TONES[biome];
+function biomeMaterials(tones: BiomeTones, tiled: boolean): BiomeMaterials {
   const palette = tintAll(GRAPHIC_LAYERS, (slot) => PALETTE_MATERIAL[slot], tones);
-  const deck = lookColours(DECK_LOOK, DECK_MATERIAL, tones);
-  const trim = DECK_TRIM[biome];
   return {
-    palette: TILED_GROUND[biome] ? palette : { ...palette, grid: undefined },
-    deck:
-      trim === undefined
-        ? deck
-        : (Object.fromEntries(
-            Object.entries(deck).map(([look, colours]) => [look, { ...colours, edgeTop: trim }]),
-          ) as typeof deck),
+    palette: tiled ? palette : { ...palette, grid: undefined },
+    deck: lookColours(DECK_LOOK, DECK_MATERIAL, tones),
     transition: lookColours(TRANSITION_LOOK, TRANSITION_MATERIAL, tones),
     paving: pavingColours(tones),
     overhang: overhangColours(tones),
@@ -825,16 +789,15 @@ function biomeMaterials(biome: Biome): BiomeMaterials {
 
 /** Each biome's materials (#3172), tinted from the hall's by its tones. */
 export const BIOME: Record<Biome, BiomeMaterials> = {
-  hall: biomeMaterials("hall"),
-  heights: biomeMaterials("heights"),
-  wilds: biomeMaterials("wilds"),
-  desert: biomeMaterials("desert"),
-  volcanic: biomeMaterials("volcanic"),
-  snow: biomeMaterials("snow"),
-  marsh: biomeMaterials("marsh"),
-  jungle: biomeMaterials("jungle"),
-  coast: biomeMaterials("coast"),
-  celestial: biomeMaterials("celestial"),
+  hall: biomeMaterials(BIOME_TONES.hall, TILED_GROUND.hall),
+  heights: biomeMaterials(BIOME_TONES.heights, TILED_GROUND.heights),
+  wilds: biomeMaterials(BIOME_TONES.wilds, TILED_GROUND.wilds),
+  desert: biomeMaterials(BIOME_TONES.desert, TILED_GROUND.desert),
+  volcanic: biomeMaterials(BIOME_TONES.volcanic, TILED_GROUND.volcanic),
+  snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
+  marsh: biomeMaterials(BIOME_TONES.marsh, TILED_GROUND.marsh),
+  jungle: biomeMaterials(BIOME_TONES.jungle, TILED_GROUND.jungle),
+  coast: biomeMaterials(BIOME_TONES.coast, TILED_GROUND.coast),
 };
 
 /** A biome's ground grain and the marks scattered on it (#3484), from its own tones. */
@@ -918,12 +881,6 @@ export const GROUND_DRESSING: Record<Biome, GroundDressingTones> = {
     mix(BIOME_TONES.coast.ground, BIOME_TONES.coast.rock, 0.55),
     mix(BIOME_TONES.coast.ground, BIOME_TONES.coast.earth, 0.6),
   ),
-  // Veins in the marble, and its grit.
-  celestial: dressingTones(
-    BIOME_TONES.celestial,
-    mix(BIOME_TONES.celestial.ground, BIOME_TONES.celestial.rock, 0.6),
-    shade(BIOME_TONES.celestial.ground, 0.12),
-  ),
 };
 
 /**
@@ -983,22 +940,6 @@ function breakableLookOf(biome: Biome): BreakableLook {
         dust: 0xe4eef4,
         shadow: BREAKABLE_WALL_LOOK.shadow,
       };
-    case "celestial":
-      return {
-        courses: "blocks",
-        top: mix(tones.rock, tones.stone, 0.45),
-        face: shade(tones.rock, 0.18),
-        lit: tones.stone,
-        mortar: shade(tones.rock, 0.4),
-        edge: shade(tones.rock, 0.6),
-        crack: shade(tones.rock, 0.7),
-        glow: undefined,
-        moss: undefined,
-        rubble: mix(tones.rock, tones.stone, 0.3),
-        rubbleFace: shade(tones.rock, 0.3),
-        dust: mix(tones.ground, tones.stone, 0.5),
-        shadow: BREAKABLE_WALL_LOOK.shadow,
-      };
     case "wilds":
     case "marsh":
     case "jungle":
@@ -1034,7 +975,6 @@ const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
   marsh: breakableLookOf("marsh"),
   jungle: breakableLookOf("jungle"),
   coast: breakableLookOf("coast"),
-  celestial: breakableLookOf("celestial"),
 };
 
 /** The material a map's breakable walls are (#3370): a map of one layer's are stone whatever its biome. */

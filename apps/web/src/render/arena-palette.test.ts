@@ -152,28 +152,14 @@ describe("BIOME", () => {
     expect(palette.floor).not.toBe(BIOME.marsh.palette.floor);
   });
 
-  it("draws the celestial as the one pale floor, gold only as the trim on its decks (#3441)", () => {
-    const { palette, deck } = BIOME.celestial;
-    const light = (colour: number): number =>
-      ((colour >> 16) & 0xff) + ((colour >> 8) & 0xff) + (colour & 0xff);
-    for (const biome of BIOMES.filter((name) => name !== "celestial")) {
-      expect(light(palette.floor ?? 0)).toBeGreaterThan(light(BIOME[biome].palette.floor ?? 0));
-    }
-    for (const colours of Object.values(deck)) {
-      expect(colours.edgeTop).toBe(BIOME.hall.deck.plinth.edgeTop);
-    }
-    expect(BIOME.hall.deck.platform.edgeTop).not.toBe(BIOME.hall.deck.plinth.edgeTop);
-  });
-
-  it("lays no tile grid on the river ice or the marble, and keeps it on every tiled ground", () => {
+  it("lays no tile grid on the river ice, and keeps it on every tiled ground", () => {
     expect(BIOME.snow.palette.grid).toBeUndefined();
-    expect(BIOME.celestial.palette.grid).toBeUndefined();
-    for (const biome of BIOMES.filter((name) => name !== "snow" && name !== "celestial")) {
+    for (const biome of BIOMES.filter((name) => name !== "snow")) {
       expect(BIOME[biome].palette.grid, biome).toBeTypeOf("number");
     }
   });
 
-  it.each(["desert", "wilds", "snow", "marsh", "jungle", "coast", "celestial"] as const)(
+  it.each(["desert", "wilds", "snow", "marsh", "jungle", "coast"] as const)(
     "keeps every %s tone a hand's width from every signal",
     (biome) => {
       const hall = new Set(coloursOf("hall"));
@@ -198,7 +184,7 @@ describe("shade", () => {
 describe("breakableLook (#3370)", () => {
   it("makes each listed biome's breakable wall its own material, not the stone", () => {
     const looks = (
-      ["volcanic", "desert", "snow", "wilds", "marsh", "jungle", "coast", "celestial"] as const
+      ["volcanic", "desert", "snow", "wilds", "marsh", "jungle", "coast"] as const
     ).map((biome) => breakableLook({ layerCount: 2, biome }));
     for (const look of looks) {
       expect(look).not.toEqual(BREAKABLE_WALL_LOOK);
@@ -212,7 +198,6 @@ describe("breakableLook (#3370)", () => {
       "fieldstone",
       "fieldstone",
       "fieldstone",
-      "blocks",
     ]);
   });
 

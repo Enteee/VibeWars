@@ -275,10 +275,9 @@ const SNOW_COLOUR = 0xffffff;
 /** Embers' hot core and cooler glow (visual-style §1b, volcanic): smaller and fainter than any strike edge. */
 const EMBER_CORE = 0xffb070;
 const EMBER_GLOW = 0xff6a1a;
-/** Motes' gold (visual-style §1b, heavenly). */
+/** Motes' and shafts' gold (visual-style §1b, heavenly). */
 const MOTE_COLOUR = 0xffcc4d;
-/** The sun warmed toward the gold, so a beam reads as sunlight, not haze, on dark ground or pale. */
-const SHAFT_COLOUR = 0xffe08a;
+const SHAFT_COLOUR = 0xfff4d6;
 /** How many soft discs a light shaft is drawn in, from the ground to the sky. */
 const SHAFT_DISCS = 12;
 /** How high a shaft reaches, in radii. */

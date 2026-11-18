@@ -33,7 +33,7 @@
     "outside": "rock"
   },
   "layers": 4,
-  "biome": "celestial",
+  "biome": "hall",
   "ascentAct": "heavenly",
   "groundLayer": 1,
   "pits": [
@@ -97,28 +97,28 @@
       "id": "north-west-balcony",
       "layer": 2,
       "footprint": { "kind": "rect", "x": 1250, "y": 140, "width": 900, "height": 240 },
-      "look": "platform",
+      "look": "terrace",
       "switched": null
     },
     {
       "id": "north-east-balcony",
       "layer": 2,
       "footprint": { "kind": "rect", "x": 3050, "y": 140, "width": 900, "height": 240 },
-      "look": "platform",
+      "look": "terrace",
       "switched": null
     },
     {
       "id": "south-west-balcony",
       "layer": 2,
       "footprint": { "kind": "rect", "x": 1250, "y": 2120, "width": 900, "height": 240 },
-      "look": "platform",
+      "look": "terrace",
       "switched": null
     },
     {
       "id": "south-east-balcony",
       "layer": 2,
       "footprint": { "kind": "rect", "x": 3050, "y": 2120, "width": 900, "height": 240 },
-      "look": "platform",
+      "look": "terrace",
       "switched": null
     }
   ],
