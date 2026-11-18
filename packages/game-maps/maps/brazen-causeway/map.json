@@ -1509,12 +1509,12 @@
   ],
   "lighting": {
     "ambient": {
-      "colour": 8357544,
-      "intensity": 0.35
+      "colour": 16773580,
+      "intensity": 0.8
     },
     "indoorAmbient": {
-      "colour": 5924488,
-      "intensity": 0.3
+      "colour": 14207136,
+      "intensity": 0.55
     },
     "indoor": [
       {
@@ -1534,9 +1534,9 @@
     ],
     "sun": {
       "directionDeg": 315,
-      "elevationDeg": 25,
-      "colour": 16758906,
-      "intensity": 0.5
+      "elevationDeg": 65,
+      "colour": 16774358,
+      "intensity": 0.9
     },
     "lights": [
       {
@@ -1547,7 +1547,7 @@
         },
         "layer": 2,
         "radius": 150,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 0.85,
         "flicker": 0.2
       },
@@ -1559,7 +1559,7 @@
         },
         "layer": 2,
         "radius": 150,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 0.85,
         "flicker": 0.2
       },
@@ -1571,7 +1571,7 @@
         },
         "layer": 1,
         "radius": 150,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 0.85,
         "flicker": 0.2
       },
@@ -1583,7 +1583,7 @@
         },
         "layer": 1,
         "radius": 150,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 0.85,
         "flicker": 0.2
       },
@@ -1595,7 +1595,7 @@
         },
         "layer": 1,
         "radius": 150,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 0.85,
         "flicker": 0.2
       },
@@ -1607,7 +1607,7 @@
         },
         "layer": 1,
         "radius": 150,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 0.85,
         "flicker": 0.2
       },
@@ -1619,7 +1619,7 @@
         },
         "layer": 1,
         "radius": 150,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 0.85,
         "flicker": 0.2
       },
@@ -1631,7 +1631,7 @@
         },
         "layer": 1,
         "radius": 150,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 0.85,
         "flicker": 0.2
       },
@@ -1643,7 +1643,7 @@
         },
         "layer": 1,
         "radius": 220,
-        "colour": 16756832,
+        "colour": 16763981,
         "intensity": 0.7,
         "flicker": 0
       },
@@ -1655,7 +1655,7 @@
         },
         "layer": 1,
         "radius": 220,
-        "colour": 16756832,
+        "colour": 16763981,
         "intensity": 0.7,
         "flicker": 0
       },
@@ -1667,7 +1667,7 @@
         },
         "layer": 2,
         "radius": 220,
-        "colour": 16756832,
+        "colour": 16763981,
         "intensity": 0.7,
         "flicker": 0
       },
@@ -1679,7 +1679,7 @@
         },
         "layer": 3,
         "radius": 140,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 0.8,
         "flicker": 0
       },
@@ -1691,7 +1691,7 @@
         },
         "layer": 3,
         "radius": 140,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 0.8,
         "flicker": 0
       },
@@ -1703,7 +1703,7 @@
         },
         "layer": 1,
         "radius": 340,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 1,
         "flicker": 0.2
       },
@@ -1715,7 +1715,7 @@
         },
         "layer": 1,
         "radius": 340,
-        "colour": 16756832,
+        "colour": 16769184,
         "intensity": 1,
         "flicker": 0.2
       }
@@ -1785,52 +1785,52 @@
           "kind": "polygon",
           "points": [
             {
-              "x": 4060,
-              "y": 360
+              "x": 3500,
+              "y": 380
             },
             {
-              "x": 4025.17,
-              "y": 410
+              "x": 3534.83,
+              "y": 330
             },
             {
-              "x": 3930,
-              "y": 446.6
+              "x": 3630,
+              "y": 293.4
             },
             {
-              "x": 3800,
-              "y": 460
+              "x": 3760,
+              "y": 280
             },
             {
-              "x": 3670,
-              "y": 446.6
+              "x": 3890,
+              "y": 293.4
             },
             {
-              "x": 3574.83,
-              "y": 410
+              "x": 3985.17,
+              "y": 330
             },
             {
-              "x": 3540,
-              "y": 360
+              "x": 4020,
+              "y": 380
             },
             {
-              "x": 3574.83,
-              "y": 310
+              "x": 3985.17,
+              "y": 430
             },
             {
-              "x": 3670,
-              "y": 273.4
+              "x": 3890,
+              "y": 466.6
             },
             {
-              "x": 3800,
-              "y": 260
+              "x": 3760,
+              "y": 480
             },
             {
-              "x": 3930,
-              "y": 273.4
+              "x": 3630,
+              "y": 466.6
             },
             {
-              "x": 4025.17,
-              "y": 310
+              "x": 3534.83,
+              "y": 430
             }
           ]
         }
@@ -1890,6 +1890,62 @@
             }
           ]
         }
+      },
+      {
+        "layer": 1,
+        "area": {
+          "kind": "polygon",
+          "points": [
+            {
+              "x": 2540,
+              "y": 2040
+            },
+            {
+              "x": 2574.83,
+              "y": 1995
+            },
+            {
+              "x": 2670,
+              "y": 1962.06
+            },
+            {
+              "x": 2800,
+              "y": 1950
+            },
+            {
+              "x": 2930,
+              "y": 1962.06
+            },
+            {
+              "x": 3025.17,
+              "y": 1995
+            },
+            {
+              "x": 3060,
+              "y": 2040
+            },
+            {
+              "x": 3025.17,
+              "y": 2085
+            },
+            {
+              "x": 2930,
+              "y": 2117.94
+            },
+            {
+              "x": 2800,
+              "y": 2130
+            },
+            {
+              "x": 2670,
+              "y": 2117.94
+            },
+            {
+              "x": 2574.83,
+              "y": 2085
+            }
+          ]
+        }
       }
     ],
     "plumes": [],
@@ -1897,11 +1953,35 @@
       {
         "id": "causeway-shaft",
         "layer": 1,
-        "position": { "x": 2800, "y": 1400 },
+        "position": {
+          "x": 2800,
+          "y": 1400
+        },
         "radius": 260
+      },
+      {
+        "id": "west-gatehouse-shaft",
+        "layer": 2,
+        "position": {
+          "x": 1930,
+          "y": 1480
+        },
+        "radius": 200
+      },
+      {
+        "id": "east-gatehouse-shaft",
+        "layer": 2,
+        "position": {
+          "x": 3670,
+          "y": 1320
+        },
+        "radius": 200
       }
     ],
-    "weather": { "kind": "motes", "intensity": 0.5 }
+    "weather": {
+      "kind": "motes",
+      "intensity": 0.7
+    }
   },
   "paving": [
     {
