@@ -96,8 +96,10 @@ describe("the host tick on a whole map (#3240)", () => {
   /**
    * `BENCH_TICKS=600 BENCH_HOST=arena-canyon,arena-crossroads pnpm run
    * bench:ticks`: a 4v4 of bots on every layer, structure and objective of
-   * each map, as the host steps it. Report-only.
+   * each map, as the host steps it; `BENCH_SIZE=8` for an 8v8 (#3599).
+   * Report-only.
    */
+  const size = Number(process.env.BENCH_SIZE ?? "4");
   const ticks = Number(process.env.BENCH_TICKS ?? "0");
   const ids = (process.env.BENCH_HOST ?? "")
     .split(",")
@@ -108,14 +110,17 @@ describe("the host tick on a whole map (#3240)", () => {
     expect(timeMatchTicks(loadMap("arena-crossroads"), 4, 20, now)).toHaveLength(20);
   });
 
-  it.runIf(ticks > WARM_UP).each(ids)(`times ${String(ticks)} 4v4 ticks on %s`, (id) => {
-    const tickMs = timeMatchTicks(loadMap(id), 4, ticks, now);
-    const { p50, p95, max } = tickStats(tickMs.slice(WARM_UP));
-    console.log(
-      `host ${id}, ticks ${String(WARM_UP)}–${String(tickMs.length)}: p50 ${p50.toFixed(3)} ms, p95 ${p95.toFixed(3)} ms, max ${max.toFixed(3)} ms`,
-    );
-    expect(tickMs.length).toBeGreaterThan(WARM_UP);
-  });
+  it.runIf(ticks > WARM_UP).each(ids)(
+    `times ${String(ticks)} ${String(size)}v${String(size)} ticks on %s`,
+    (id) => {
+      const tickMs = timeMatchTicks(loadMap(id), size, ticks, now);
+      const { p50, p95, max } = tickStats(tickMs.slice(WARM_UP));
+      console.log(
+        `host ${id} ${String(size)}v${String(size)}, ticks ${String(WARM_UP)}–${String(tickMs.length)}: p50 ${p50.toFixed(3)} ms, p95 ${p95.toFixed(3)} ms, max ${max.toFixed(3)} ms`,
+      );
+      expect(tickMs.length).toBeGreaterThan(WARM_UP);
+    },
+  );
 });
 
 describe("the nav graph on every map (#2544)", () => {

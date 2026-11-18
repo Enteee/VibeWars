@@ -188,6 +188,8 @@ ederken arkanda dalgalanır. Menüdeki karakterlerin de onu gösterir.
 
 Bir değişiklik, içinde olduğun lobide hemen geçerli olur.
 
+**Kendi amblemini çiz.** Başlangıç amblemlerinin altındaki **Amblemi düzenle**, onların yerinde 16×16'lık bir ızgara açar. Bir renk ya da **Boş** seç, sonra **Kalem** ile çiz, **Silgi** ile sil ya da **Doldur** ile bir alanı boya. **Ayna** sol ve sağ yarıyı aynı anda boyar. **Temizle** ızgarayı boşaltır, **Geri al** bir adım geri gider. Izgaranın yanındaki küçük görünüm amblemi bir maçtaki boyutunda gösterir. **Tamam** onu tutar, **İptal** çizimi atar. Ok tuşları ve Boşluk klavyeyle de çizer.
+
 Pelerin tasarımcısının altındaki **Lonca bağlantısını kopyala**, etiketini ve pelerinini taşıyan bir bağlantı kopyalar. Bağlantıyı açan kişiye **[VIBE] loncasına katılınsın mı?** diye sorulur: **Katıl** ona etiketini ve pelerinini verir, **Hayır** hiçbir şeyi değiştirmez. Böyle bir bağlantıyı herkes gönderebilir ve hiç kimse bir etiketin sahibi değildir, bu yüzden oyun her zaman önce sorar.
 
 ## Dil

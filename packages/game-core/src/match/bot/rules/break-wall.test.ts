@@ -126,13 +126,24 @@ function run(sim: MatchSimulation, seconds: number, until: () => boolean = () =>
   }
 }
 
+/** Steps `sim` until a whole pricing of its levers and walls is out (#3599): one lever, pair or wall a tick. */
+function priced(sim: MatchSimulation): void {
+  for (let tick = 0; tick < 60; tick += 1) {
+    sim.step(DT);
+    const reads = [...sim.botLevers, ...sim.botBreakables];
+    if (reads.length > 0 && reads.every((read) => read.gain.length > 0)) {
+      return;
+    }
+  }
+}
+
 describe("a breakable wall's gain (#3140)", () => {
   it("is what its fall shortens each team's way by", () => {
     const sim = cracked([
       fighter("a", 0, WARRIOR, vec2(200, 780)),
       fighter("b", 1, WARRIOR, vec2(1400, 780)),
     ]);
-    sim.step(DT);
+    priced(sim);
     const [read] = sim.botBreakables;
     expect(read).toMatchObject({ targetId: WALL_ID, layer: 0 });
     expect(read?.gain[0]).toBeGreaterThan(0);
@@ -145,7 +156,7 @@ describe("a breakable wall's gain (#3140)", () => {
       [fighter("a", 0, WARRIOR, vec2(200, 400)), fighter("b", 1, WARRIOR, vec2(1400, 400))],
       true,
     );
-    sim.step(DT);
+    priced(sim);
     expect(sim.botBreakables[0]?.gain).toEqual([
       Number.POSITIVE_INFINITY,
       Number.POSITIVE_INFINITY,

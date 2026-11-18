@@ -937,20 +937,23 @@ export function stripsEnchantment(skill: Skill): boolean {
   );
 }
 
-/** The statuses a `defence` skill puts on its target, read once on first use. */
-let defenceStatuses: ReadonlySet<StatusId> | undefined;
-
 /**
  * Whether `statusId` is one a `defence` skill applies (#2634): Protective
  * Spirit's, Aegis's. A spike strips it first; a damage self-buff is left.
  */
 export function isDefenceStatus(statusId: StatusId): boolean {
-  defenceStatuses ??= new Set(
-    IMPLEMENTED_SKILLS.filter((skill) => botUses(skill).includes("defence")).flatMap((skill) =>
-      skill.effects
-        .flatMap(flatten)
-        .flatMap((effect) => (effect.kind === "apply-status" ? [effect.statusId] : [])),
-    ),
-  );
-  return defenceStatuses.has(statusId);
+  return DEFENCE_STATUSES.has(statusId);
 }
+
+/**
+ * The statuses a `defence` skill puts on its target (#2634), read as the
+ * module loads (#3599): read on first use, it cost that tick about 25 ms.
+ * Last in the file, so every helper `botUses` calls is already defined.
+ */
+const DEFENCE_STATUSES: ReadonlySet<StatusId> = new Set(
+  IMPLEMENTED_SKILLS.filter((skill) => botUses(skill).includes("defence")).flatMap((skill) =>
+    skill.effects
+      .flatMap(flatten)
+      .flatMap((effect) => (effect.kind === "apply-status" ? [effect.statusId] : [])),
+  ),
+);

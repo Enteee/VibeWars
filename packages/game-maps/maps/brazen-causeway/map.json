@@ -466,6 +466,36 @@
       "lift": null
     },
     {
+      "id": "west-lever-stair",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1920,
+        "y": 1640,
+        "width": 140,
+        "height": 110
+      },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "east-lever-stair",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 3564,
+        "y": 1050,
+        "width": 140,
+        "height": 110
+      },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
       "id": "west-culvert-north-steps",
       "from": 0,
       "to": 1,

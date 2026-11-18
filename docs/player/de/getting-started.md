@@ -172,6 +172,8 @@ nimmt ihn ab.
 
 Eine Änderung gilt sofort für die Lobby, in der du bist.
 
+**Zeichne dein eigenes Emblem.** **Emblem bearbeiten** unter den Start-Emblemen öffnet an ihrer Stelle ein Raster aus 16×16 Feldern. Wähle eine Farbe oder **Leer**, dann zeichne mit dem **Stift**, radiere mit dem **Radierer** oder färbe eine Fläche mit **Füllen**. **Spiegeln** malt die linke und die rechte Hälfte zugleich. **Leeren** leert das Raster, **Rückgängig** geht einen Schritt zurück. Die kleine Ansicht neben dem Raster zeigt das Emblem so groß wie im Match. **Fertig** behält es, **Abbrechen** verwirft die Zeichnung. Mit Pfeiltasten und Leertaste zeichnest du auch per Tastatur.
+
 **Gildenlink kopieren** unter dem Umhang-Designer kopiert einen Link mit deinem Kürzel und Umhang. Wer ihn öffnet, wird gefragt **Der Gilde [VIBE] beitreten?**: **Beitreten** gibt ihm dein Kürzel und deinen Umhang, **Nein** ändert nichts. Jeder kann so einen Link schicken, und niemandem gehört ein Kürzel, darum fragt das Spiel immer zuerst.
 
 ## Sprache
