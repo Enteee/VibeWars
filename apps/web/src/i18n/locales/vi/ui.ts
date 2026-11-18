@@ -1227,7 +1227,6 @@ export default {
   "teamPlay.edit": "Sửa",
   "teamPlay.loadLine": "mã đội để tải",
   "teamPlay.loadPlaceholder": "Dán mã đội được chia sẻ",
-  "teamPlay.loadTeam": "Tải đội",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Build đội mới",
   "teamPlay.noTeamBuilds": "Chưa có Build đội {size}.",

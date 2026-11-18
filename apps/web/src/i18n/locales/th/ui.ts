@@ -1223,7 +1223,6 @@ export default {
   "teamPlay.edit": "แก้ไข",
   "teamPlay.loadLine": "โค้ดทีมที่จะโหลด",
   "teamPlay.loadPlaceholder": "วางโค้ดทีมที่แชร์มา",
-  "teamPlay.loadTeam": "โหลดทีม",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "ทีมบิลด์ใหม่",
   "teamPlay.noTeamBuilds": "ยังไม่มีทีมบิลด์ {size}",

@@ -1493,7 +1493,6 @@ export default {
   "teamPlay.edit": "تعديل",
   "teamPlay.loadLine": "كود الفريق للتحميل",
   "teamPlay.loadPlaceholder": "الصق كود فريق مُشارَك",
-  "teamPlay.loadTeam": "تحميل فريق",
   "teamPlay.memberLabel": "{name}، {professions}",
   "teamPlay.newTeamBuild": "بنية فريق جديدة",
   "teamPlay.noTeamBuilds": "لا بنى فرق بحجم {size} بعد.",

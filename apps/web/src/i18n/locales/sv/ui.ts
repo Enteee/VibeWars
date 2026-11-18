@@ -1304,7 +1304,6 @@ export default {
   "teamPlay.edit": "Ändra",
   "teamPlay.loadLine": "lagkod att ladda",
   "teamPlay.loadPlaceholder": "Klistra in en delad lagkod",
-  "teamPlay.loadTeam": "Ladda lag",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Ny lagbuild",
   "teamPlay.noTeamBuilds": "Inga lagbuilds för {size} än.",

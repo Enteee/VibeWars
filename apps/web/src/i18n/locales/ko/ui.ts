@@ -1233,7 +1233,6 @@ export default {
   "teamPlay.edit": "편집",
   "teamPlay.loadLine": "불러올 팀 코드",
   "teamPlay.loadPlaceholder": "공유된 팀 코드를 붙여넣으세요",
-  "teamPlay.loadTeam": "팀 불러오기",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "새 팀 빌드",
   "teamPlay.noTeamBuilds": "아직 {size} 팀 빌드가 없어요.",

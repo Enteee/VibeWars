@@ -1325,7 +1325,6 @@ export default {
   "teamPlay.edit": "Ändern",
   "teamPlay.loadLine": "zu ladender Team-Code",
   "teamPlay.loadPlaceholder": "Geteilten Team-Code einfügen",
-  "teamPlay.loadTeam": "Team laden",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Neuer Team-Build",
   "teamPlay.noTeamBuilds": "Noch keine {size}er-Team-Builds.",

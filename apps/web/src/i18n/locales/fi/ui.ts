@@ -1321,7 +1321,6 @@ export default {
   "teamPlay.edit": "Muokkaa",
   "teamPlay.loadLine": "ladattava tiimikoodi",
   "teamPlay.loadPlaceholder": "Liitä jaettu tiimikoodi",
-  "teamPlay.loadTeam": "Lataa tiimi",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Uusi tiimibuildi",
   "teamPlay.noTeamBuilds": "Ei vielä {size} pelaajan tiimibuildeja.",

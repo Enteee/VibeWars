@@ -1326,7 +1326,6 @@ export default {
   "teamPlay.edit": "Αλλαγή",
   "teamPlay.loadLine": "κώδικας ομάδας για φόρτωση",
   "teamPlay.loadPlaceholder": "Επικόλλησε έναν κοινόχρηστο κώδικα ομάδας",
-  "teamPlay.loadTeam": "Φόρτωση ομάδας",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Νέα σύνθεση ομάδας",
   "teamPlay.noTeamBuilds": "Καμία Σύνθεση ομάδας {size} ακόμη.",

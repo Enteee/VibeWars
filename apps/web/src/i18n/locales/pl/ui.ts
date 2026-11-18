@@ -1430,7 +1430,6 @@ export default {
   "teamPlay.edit": "Edytuj",
   "teamPlay.loadLine": "kod drużyny do wczytania",
   "teamPlay.loadPlaceholder": "Wklej udostępniony kod drużyny",
-  "teamPlay.loadTeam": "Wczytaj drużynę",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Nowy build drużyny",
   "teamPlay.noTeamBuilds": "Nie ma jeszcze buildów drużyn: {size}.",

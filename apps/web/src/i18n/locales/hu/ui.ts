@@ -1312,7 +1312,6 @@ export default {
   "teamPlay.edit": "Szerk.",
   "teamPlay.loadLine": "betöltendő csapatkód",
   "teamPlay.loadPlaceholder": "Illessz be egy megosztott csapatkódot",
-  "teamPlay.loadTeam": "Csapat betöltése",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Új csapatbuild",
   "teamPlay.noTeamBuilds": "Még nincs {size} fős csapatbuild.",

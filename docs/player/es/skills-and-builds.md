@@ -153,15 +153,14 @@ es tuya cuando pulsas **Guardar**.
 guardar, y pregunta antes si has cambiado algo. **Compartir**, **Cargar código
 GW1**, **Duplicar** y **Eliminar** están en **⋯**.
 
-Un código de equipo se carga en **Creador de equipos**: pulsa **Cargar equipo**,
-pega el código y pulsa **Cargar**, o pégalo en cualquier parte de Creador de
-equipos.
+Un código de equipo se carga en **Creador de equipos**: pégalo en cualquier parte
+ahí, o abre una build de equipo y usa su **⋯** → **Cargar equipo**.
 
 ## Builds de equipo
 
 Una **build de equipo** es un equipo de personajes propios, hecho en **Creador
 de equipos** y separado de tus personajes. Cada una es una carta ahí, y solo
-ahí: **Nueva build** crea una, **Cargar equipo** carga una que te han
+ahí: **Nueva build** crea una, un código de equipo pegado ahí carga una que te han
 compartido, y un clic en una carta, o su **Editar**, la abre. Propones una en la [Sala de equipo](modes.md#sala-de-equipo).
 
 Cada build de equipo tiene un tamaño, 2v2, 4v4 u 8v8 (no hay builds de equipo

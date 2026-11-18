@@ -1372,7 +1372,6 @@ export default {
   "teamPlay.edit": "ערוך",
   "teamPlay.loadLine": "קוד צוות לטעינה",
   "teamPlay.loadPlaceholder": "הדבק קוד צוות משותף",
-  "teamPlay.loadTeam": "טען צוות",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "מבנה קבוצה חדש",
   "teamPlay.noTeamBuilds": "אין עדיין מבני קבוצה של {size}.",

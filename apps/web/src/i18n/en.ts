@@ -1308,7 +1308,6 @@ export const en = {
   "teamPlay.edit": "Edit",
   "teamPlay.loadLine": "team code to load",
   "teamPlay.loadPlaceholder": "Paste a shared team code",
-  "teamPlay.loadTeam": "Load team",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "New team build",
   "teamPlay.noTeamBuilds": "No {size} Team Builds yet.",

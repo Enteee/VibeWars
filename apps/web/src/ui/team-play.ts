@@ -7,7 +7,7 @@ import { looksLikeBuild } from "../storage/build-transfer.js";
 import { importTeam, looksLikeTeam, type TeamImportResult } from "../storage/team-transfer.js";
 import { lookOfCharacter, teamFigureCard } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
-import { button, h, listenForPaste, loadLine, screenBar, toast } from "./kit.js";
+import { button, h, listenForPaste, screenBar, toast } from "./kit.js";
 import { mapLabel, type LobbyMap, type LobbyPanel } from "./lobby-screen.js";
 import {
   loadTeamBuildSize,
@@ -201,24 +201,6 @@ function teamCards(
   cards.appendChild(
     button(t("teamPlay.newTeamBuild"), "play-card play-card-new", callbacks.onNewTeam),
   );
-  // Load team (#3181): a shared team line, typed or pasted, opens as a
-  // paste on the screen does.
-  const load = loadLine(t("teamPlay.loadLine"), t("teamPlay.loadPlaceholder"), (text) => {
-    const result = loadTeamCode(text, () => crypto.randomUUID(), Date.now());
-    if (!result.ok) {
-      return result.problems;
-    }
-    callbacks.onLoadTeam(result.team);
-    return [];
-  });
-  const loadCard = h("div", "team-play-load");
-  loadCard.append(
-    button(t("teamPlay.loadTeam"), "play-card play-card-load", () => {
-      load.show();
-    }),
-    load.element,
-  );
-  cards.appendChild(loadCard);
   section.appendChild(cards);
   if (shown.length === 0) {
     section.appendChild(h("p", "team-play-hint", noTeamBuilds(size)));

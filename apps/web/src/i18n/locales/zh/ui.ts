@@ -1212,7 +1212,6 @@ export default {
   "teamPlay.edit": "编辑",
   "teamPlay.loadLine": "要载入的队伍代码",
   "teamPlay.loadPlaceholder": "粘贴分享的队伍代码",
-  "teamPlay.loadTeam": "载入队伍",
   "teamPlay.memberLabel": "{name}，{professions}",
   "teamPlay.newTeamBuild": "新建队伍配置",
   "teamPlay.noTeamBuilds": "暂无 {size} 队伍配置。",

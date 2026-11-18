@@ -153,14 +153,14 @@ Buildet er dit, når du trykker på **Gem**.
 går uden at gemme og spørger først, hvis du har ændret noget. **Del**,
 **Indlæs GW1-kode**, **Duplikér** og **Slet** ligger under **⋯**.
 
-En holdkode indlæses i stedet i **Holdeditor**: tryk på **Indlæs hold**, indsæt
-koden og tryk på **Indlæs**, eller indsæt den hvor som helst i Holdeditor.
+En holdkode indlæses i stedet i **Holdeditor**: indsæt den hvor som helst der, eller
+åbn et holdbuild og brug dets **⋯** → **Indlæs hold**.
 
 ## Holdbuilds
 
 Et **holdbuild** er et hold af sine egne figurer, lavet i **Holdeditor**
 og holdt adskilt fra dine egne figurer. Hvert er et kort der, og kun der:
-**Nyt holdbuild** laver et, **Indlæs hold** indlæser et, der er delt med dig,
+**Nyt holdbuild** laver et, en holdkode indsat der indlæser et, der er delt med dig,
 og et klik på et kort, eller dets **Ret**, åbner det. Du foreslår et i [Holdlobbyen](modes.md#holdlobby).
 
 Hvert holdbuild har en størrelse, 2v2, 4v4 eller 8v8 (der findes ingen

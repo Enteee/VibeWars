@@ -1421,7 +1421,6 @@ export default {
   "teamPlay.edit": "Изменить",
   "teamPlay.loadLine": "код команды для загрузки",
   "teamPlay.loadPlaceholder": "Вставь присланный код команды",
-  "teamPlay.loadTeam": "Загрузить команду",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Новый билд команды",
   "teamPlay.noTeamBuilds": "Пока нет командных билдов на {size}.",

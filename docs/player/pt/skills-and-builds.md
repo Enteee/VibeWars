@@ -158,16 +158,16 @@ como um espaço vazio. A build é sua quando você pressiona **Salvar**.
 **Compartilhar**, **Carregar código GW1**, **Duplicar** e **Excluir**
 ficam em **⋯**.
 
-Um código de equipe é carregado no **Criador de Equipes**: pressione
-**Carregar equipe**, cole o código e pressione **Carregar**, ou cole-o em
-qualquer lugar do Criador de Equipes.
+Um código de equipe é carregado no **Criador de Equipes**: cole-o em
+qualquer lugar ali, ou abra uma build de equipe e use o **⋯** →
+**Carregar equipe** dela.
 
 ## Builds de Equipe
 
 Uma **Build de Equipe** é uma equipe com personagens próprios, feita no
 **Criador de Equipes** e guardada separada dos seus personagens. Cada uma
 é um cartão ali, e só ali: **Nova build de equipe** cria uma,
-**Carregar equipe** carrega uma compartilhada com você, e um clique em um cartão, ou em **Editar**, a abre. Você propõe uma na
+um código de equipe colado ali carrega uma compartilhada com você, e um clique em um cartão, ou em **Editar**, a abre. Você propõe uma na
 [Sala de Equipe](modes.md#sala-de-equipe).
 
 Toda Build de Equipe tem um tamanho, 2v2, 4v4 ou 8v8 (não existe Build de
