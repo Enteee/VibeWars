@@ -121,11 +121,16 @@ export type ReceiptFault =
   | "winning-team"
   | "leavers"
   | "host-left"
-  | "result-signature"
-  | "team-unsigned";
+  | "result-signature";
 
+/**
+ * Whether a receipt is valid, and if so whether it is void: valid, but
+ * without a result signature on every team, so it rates nobody. A host
+ * that lists all its opponents as leavers gets this, not a win.
+ */
 export type ReceiptValidity =
-  { readonly ok: true } | { readonly ok: false; readonly reason: ReceiptFault };
+  | { readonly ok: true; readonly void: boolean }
+  | { readonly ok: false; readonly reason: ReceiptFault };
 
 const HEX_32 = /^[0-9a-f]{64}$/;
 const HEX_64 = /^[0-9a-f]{128}$/;
@@ -373,9 +378,11 @@ const signed = (
 
 /**
  * Whether `receipt` is valid (ADR-0055): every seat signed the start,
- * every non-leaver signed the result that ends that start, and each team
- * with a non-leaver has a result signature. A signature from a key that
- * is not seated is ignored. A team of leavers alone needs none.
+ * and every non-leaver signed the result that ends that start. A
+ * signature from a key that is not seated is ignored. It is void when a
+ * team has no result signature (opponent consent): the host cannot win
+ * alone by naming every opponent a leaver. In a `host-left` result, a
+ * team of only the departed host is exempt.
  */
 export function validateReceipt(receipt: RankedReceipt, crypto: ReceiptCrypto): ReceiptValidity {
   const { start, startSigs, result, resultSigs } = receipt;
@@ -419,13 +426,14 @@ export function validateReceipt(receipt: RankedReceipt, crypto: ReceiptCrypto): 
   if (!seats.every((pubkey) => leavers.has(pubkey) || signedResult(pubkey))) {
     return { ok: false, reason: "result-signature" };
   }
-  for (const team of start.teams) {
-    const stayed = team.filter((seat) => !leavers.has(seat.pubkey));
-    if (stayed.length > 0 && !stayed.some((seat) => signedResult(seat.pubkey))) {
-      return { ok: false, reason: "team-unsigned" };
-    }
-  }
-  return { ok: true };
+  // Opponent consent: a seat of every team signed, or nobody is rated. In
+  // a host-left result, a team of only the departed host has nobody to.
+  const consented = start.teams.every(
+    (team) =>
+      team.some((seat) => signedResult(seat.pubkey)) ||
+      (result.endReason === "host-left" && team.every((seat) => leavers.has(seat.pubkey))),
+  );
+  return { ok: true, void: !consented };
 }
 
 function mergeSigs(

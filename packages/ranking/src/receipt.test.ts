@@ -231,7 +231,7 @@ describe("receiptHash", () => {
 
 describe("validateReceipt", () => {
   it("passes a receipt every seat signed twice", () => {
-    expect(validateReceipt(fullReceipt().receipt, crypto)).toEqual({ ok: true });
+    expect(validateReceipt(fullReceipt().receipt, crypto)).toEqual({ ok: true, void: false });
   });
 
   it("fails a pubkey seated twice", () => {
@@ -290,20 +290,60 @@ describe("validateReceipt", () => {
       reason: "result-signature",
     });
     const left = resultOf(start, { leavers: [quitter.pubkey] });
-    expect(validateReceipt(receipt(start, left, all, signers), crypto)).toEqual({ ok: true });
+    expect(validateReceipt(receipt(start, left, all, signers), crypto)).toEqual({
+      ok: true,
+      void: false,
+    });
   });
 
-  it("passes a team all of whose members left, with no signature from it", () => {
+  it("voids, not passes, a team all of whose members left, with no signature from it", () => {
     const { red, blue, all, start } = fullReceipt();
     const left = resultOf(start, { leavers: blue.map((s) => s.pubkey) });
-    expect(validateReceipt(receipt(start, left, all, red), crypto)).toEqual({ ok: true });
+    expect(validateReceipt(receipt(start, left, all, red), crypto)).toEqual({
+      ok: true,
+      void: true,
+    });
+  });
+
+  it("voids a host that names every other seat a leaver and signs a win alone (#3594)", () => {
+    const { red, all, start } = fullReceipt();
+    const host = red[0];
+    const forged = resultOf(start, {
+      winningTeam: 0,
+      leavers: all.filter((s) => s !== host).map((s) => s.pubkey),
+    });
+    expect(validateReceipt(receipt(start, forged, all, [host]), crypto)).toEqual({
+      ok: true,
+      void: true,
+    });
+  });
+
+  it("does not void a host-left result for the departed host's team of one", () => {
+    const { red, blue, start: pair } = fullReceipt();
+    const host = red[0];
+    const [hostSeat] = pair.teams[0] ?? [];
+    if (hostSeat === undefined) {
+      throw new Error("no host seat");
+    }
+    const start: RankedStart = { ...pair, teams: [[hostSeat], pair.teams[1] ?? []] };
+    const hostLeft = resultOf(start, {
+      endReason: "host-left",
+      leavers: [host.pubkey],
+      winningTeam: null,
+      durationSeconds: 0,
+      replayHash: ZERO_HASH,
+    });
+    expect(validateReceipt(receipt(start, hostLeft, [host, ...blue], blue), crypto)).toEqual({
+      ok: true,
+      void: false,
+    });
   });
 
   it("ignores a signature from a key that is not seated", () => {
     const { all, start, receipt: good } = fullReceipt();
     const stranger = testSigner();
     const extra = receipt(start, good.result, [...all, stranger], [...all, stranger]);
-    expect(validateReceipt(extra, crypto)).toEqual({ ok: true });
+    expect(validateReceipt(extra, crypto)).toEqual({ ok: true, void: false });
   });
 
   it("holds a host-left result to one leaver, no winner, no time and no replay", () => {
@@ -318,7 +358,10 @@ describe("validateReceipt", () => {
       replayHash: ZERO_HASH,
     } as const;
     expect(validateReceipt(receipt(start, resultOf(start, hostLeft), all, stayed), crypto)).toEqual(
-      { ok: true },
+      {
+        ok: true,
+        void: false,
+      },
     );
     for (const bad of [
       { leavers: [host.pubkey, blue[0].pubkey] },
@@ -350,7 +393,7 @@ describe("mergeReceipts", () => {
     const theirs = receipt(start, result, all, blue);
     expect(validateReceipt(mine, crypto)).toEqual({ ok: false, reason: "result-signature" });
     const merged = mergeReceipts(mine, theirs, crypto);
-    expect(merged && validateReceipt(merged, crypto)).toEqual({ ok: true });
+    expect(merged && validateReceipt(merged, crypto)).toEqual({ ok: true, void: false });
     expect(merged && receiptHash(merged, crypto.sha256)).toBe(receiptHash(mine, crypto.sha256));
   });
 

@@ -61,7 +61,7 @@ It is valid when:
 
 - every start signature verifies;
 - every non-leaver's result signature verifies;
-- at least one result signature exists on each team that had a non-leaver.
+- at least one result signature on every team (a `host-left` result exempts a team holding only the departed host); without it the match is void (unrated for every seat), whatever the leavers list says.
 
 A receipt nobody but its host signed cannot exist, because the start round needs every player. So nobody can fabricate a match against a key that never agreed to play it.
 
@@ -118,6 +118,7 @@ Floats are evaluated in a single engine: the job runs on Node, and players run t
 
 ## Consequences
 
+- **What a host decides.** The host proposes who left, but cannot win alone: a result counts only if at least one seat on every team signed it, so a host listing all opponents as leavers voids the match instead of winning it (#3594 review, Q109). A host can still name some opponents as leavers while one of their teammates signs; that teammate's client signs only a result whose leavers it has itself seen drop from the snapshot. A team that leaves whole escapes a loss: the price of opponent consent.
 - **A host can still forge its peers' inputs.** Players sign the replay hash without re-simulating it. The host is chosen by hash, not by itself (ADR-0032), which limits this. Replay disputes (re-simulating and penalising a lying host) are a later card, and so is offline clique detection.
 - **Ranked play publishes who played whom**, by key and character name. The queue screen says so before the first queue.
 - **The leaderboard lags** by up to an hour. Matchmaking tolerates this because claims are checked against a stated `asOf`.
