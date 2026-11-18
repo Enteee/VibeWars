@@ -95,3 +95,37 @@ describe("the splash fight's world (#3407)", () => {
     expect(snapshot.breakables.every((health) => health > 0)).toBe(true);
   });
 });
+
+describe("the splash fight on a three-team map (#3633)", () => {
+  const mapId = "threefold-keep";
+  const map = hostMap(mapId);
+  if (map === undefined) {
+    throw new Error(`no map ${mapId}`);
+  }
+
+  it.each([false, true])("seats three sides of the size, still %s", (still) => {
+    const fight = { mapId, teamSize: 8, still };
+    const { participants } = splashParticipants(map, fight);
+    expect(participants).toHaveLength(24);
+    expect(new Set(participants.map((bot) => bot.team))).toEqual(new Set([0, 1, 2]));
+    // The third side comes in from below the others, facing up.
+    const third = participants.filter((bot) => bot.team === 2);
+    const others = participants.filter((bot) => bot.team !== 2);
+    const lowest = Math.max(...others.map((bot) => bot.spawn.y));
+    for (const bot of third) {
+      expect(bot.spawn.y).toBeGreaterThan(lowest);
+      expect(bot.facing).toBe(-Math.PI / 2);
+    }
+  });
+
+  it("fights on, its three sides walking in", () => {
+    const { simulation } = splashSimulation(map, { mapId, teamSize: 8, still: false }, "three");
+    for (let tick = 0; tick < 100; tick += 1) {
+      simulation.step(0.1);
+    }
+    expect(simulation.outcome.phase).not.toBe("finished");
+    expect(new Set([...simulation.participants()].map((body) => body.combatant.team))).toEqual(
+      new Set([0, 1, 2]),
+    );
+  });
+});

@@ -1,7 +1,7 @@
 import { LOBBY_MODES } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { teamArenaMapIds } from "../net/maps.js";
+import { arenaMap, modeMapIds, teamArenaMapIds } from "../net/maps.js";
 import {
   FIRST_CHOICE,
   RANDOM_MAP,
@@ -36,10 +36,28 @@ describe("menuBackgroundMap (#3119)", () => {
     expect(menuBackgroundMap({ mapId: RANDOM_MAP, teamSize: size }, seeded(0)).mapId).toBe(pool[0]);
   });
 
-  it("draws for the size when the chosen map does not seat it, or seats three sides", () => {
+  it("fights on a three-team map, never drawing (#3633)", () => {
+    const rng = (): number => {
+      throw new Error("drew for a map it can fight on");
+    };
+    expect(menuBackgroundMap({ mapId: "threefold-keep", teamSize: 8 }, rng)).toEqual({
+      mapId: "threefold-keep",
+      teamSize: 8,
+    });
+  });
+
+  // #3633: a three-team Hosted map was drawn over with a random Team Arena one.
+  it("fights on every Hosted map at every size it seats", () => {
+    for (const mapId of modeMapIds()["hosted-game"]) {
+      for (const teamSize of arenaMap(mapId)?.teamSizes ?? []) {
+        expect(menuBackgroundMap({ mapId, teamSize }, seeded(0.5)).mapId).toBe(mapId);
+      }
+    }
+  });
+
+  it("draws for the size when the chosen map does not seat it, or is unknown", () => {
     for (const choice of [
       { mapId: "sandstone-steps", teamSize: 8 },
-      { mapId: "hall-of-heroes-king", teamSize: 8 },
       { mapId: "no-such-map", teamSize: 8 },
     ]) {
       const drawn = menuBackgroundMap(choice, seeded(0.5));
@@ -74,7 +92,11 @@ describe("hostedChoice (#3131)", () => {
 });
 
 describe("pinnedChoice (#3248)", () => {
-  it("fights on a pinned map at the largest size it seats", () => {
+  it("fights on a pinned map at the largest size it seats, three-team ones too", () => {
+    expect(pinnedChoice("?menu-background=threefold-keep")).toEqual({
+      mapId: "threefold-keep",
+      teamSize: 8,
+    });
     expect(pinnedChoice("?splash&menu-background=arena-crossroads")).toEqual({
       mapId: "arena-crossroads",
       teamSize: 8,
@@ -85,13 +107,12 @@ describe("pinnedChoice (#3248)", () => {
     });
   });
 
-  it("is the first choice for a bare param, none, or a map it cannot fight on", () => {
+  it("is the first choice for a bare param, none, or a map it does not know", () => {
     for (const search of [
       "?menu-background",
       "?menu-background=",
       "",
       "?menu-background=no-such-map",
-      "?menu-background=threefold-keep",
     ]) {
       expect(pinnedChoice(search)).toBe(FIRST_CHOICE);
     }
