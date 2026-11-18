@@ -309,6 +309,9 @@ What it defends against:
   as a replay. Anything else is dropped, never kept in part.
 - **Parts outside a match.** A client takes parts only after `ended`,
   only once per match, and ignores a duplicate part.
+- **A host flooding parts.** A peer holds at most `MAX_REPLAY_CHARS` of
+  parts; past it, or on a part whose hash or count differs, it drops them
+  all and takes no more.
 
 What it does not defend against:
 
@@ -318,7 +321,6 @@ What it does not defend against:
 - **A host filling a peer's storage.** A hostile host can send a valid
   32 M-character replay every match, and 50 are kept, so it can grow a
   peer's IndexedDB by over a gigabyte across many matches with it.
-- **Buffering past the bound** (gap 9 below).
 
 ## Ranked receipts
 
@@ -538,13 +540,8 @@ saying so in the same PR. Keep the numbers: issues cite them.
    unescaped (#115).
 8. **Fixed by #178:** display names could carry invisible and
    direction-changing characters (#174).
-9. **Replay parts outgrow the replay bound** (#3620, found at `dc2ff0f`,
-   2026-11-18). `parseWireMatchReplayPart` takes 16 384 characters a part
-   and up to `MAX_REPLAY_PARTS` (6400) parts, although the host slices
-   `REPLAY_SLICE` (5000). `match-client.ts` buffers every part before
-   `joinReplay` checks `MAX_REPLAY_CHARS`, so a hostile host can make
-   each peer hold about 105 M characters (~210 MB) after a match, 3.3×
-   the 32 M the design means. Fix: stop buffering past `MAX_REPLAY_CHARS`.
+9. **Fixed by #3620:** replay parts could outgrow `MAX_REPLAY_CHARS`
+   before `joinReplay` checked it.
 
 ## Music patterns are code
 

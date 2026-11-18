@@ -24,6 +24,7 @@ import {
   MatchRefusedError,
   MatchTimeoutError,
   connectMatch,
+  createReplayParts,
 } from "./match-client.js";
 import type { PlayerSnapshot } from "./match-connection.js";
 import { RECONNECT_WINDOW_SECONDS, createMatchHost } from "./match-host.js";
@@ -42,6 +43,7 @@ import {
 import { createMemoryNetwork } from "./memory-transport.js";
 import {
   encodeReplay,
+  MAX_REPLAY_CHARS,
   packReplay,
   replayHash,
   type MatchReplay,
@@ -277,6 +279,52 @@ describe("connectMatch", () => {
       send(parts.map((part, i) => (i === 0 ? { ...part, text: `~${part.text.slice(1)}` } : part)));
       await cryptoTurns();
       expect(kept).toEqual([]);
+    });
+  });
+
+  describe("replay parts (#3620)", () => {
+    const hash = "1".repeat(64);
+    const text = "a".repeat(16 * 1024);
+
+    it("hold up to MAX_REPLAY_CHARS, are dropped past it, and stay dropped", () => {
+      const parts = createReplayParts();
+      const fit = Math.floor(MAX_REPLAY_CHARS / text.length);
+      for (let part = 0; part < fit; part += 1) {
+        expect(parts.add({ hash, part, of: fit + 2, text })).toBeUndefined();
+      }
+      expect(parts.chars).toBe(fit * text.length);
+      expect(parts.add({ hash, part: fit, of: fit + 2, text })).toBeUndefined();
+      expect(parts.chars).toBe(0);
+      parts.add({ hash, part: 0, of: fit + 2, text });
+      expect(parts.chars).toBe(0);
+    });
+
+    it("hold exactly MAX_REPLAY_CHARS", () => {
+      const parts = createReplayParts();
+      const half = "b".repeat(MAX_REPLAY_CHARS / 2);
+      parts.add({ hash, part: 0, of: 3, text: half });
+      parts.add({ hash, part: 1, of: 3, text: half });
+      expect(parts.chars).toBe(MAX_REPLAY_CHARS);
+    });
+
+    it("are dropped on a part whose hash or count differs from the first", () => {
+      for (const odd of [{ hash: "2".repeat(64) }, { of: 4 }]) {
+        const parts = createReplayParts();
+        parts.add({ hash, part: 0, of: 3, text });
+        expect(parts.add({ hash, part: 1, of: 3, text, ...odd })).toBeUndefined();
+        expect(parts.chars).toBe(0);
+        parts.add({ hash, part: 1, of: 3, text });
+        expect(parts.chars).toBe(0);
+      }
+    });
+
+    it("count a repeated part once, and hand out every part once complete", () => {
+      const parts = createReplayParts();
+      parts.add({ hash, part: 1, of: 2, text });
+      parts.add({ hash, part: 1, of: 2, text });
+      expect(parts.chars).toBe(text.length);
+      expect(parts.add({ hash, part: 0, of: 2, text })?.map((p) => p.part)).toEqual([1, 0]);
+      expect(parts.chars).toBe(0);
     });
   });
 
