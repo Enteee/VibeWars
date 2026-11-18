@@ -1,7 +1,5 @@
 import {
-  BOT_REACTION,
   MINIMAL_GW_INSPIRED_PVP_V1,
-  MatchSimulation,
   MatchTally,
   ZERO,
   adrenalineLossIn,
@@ -10,11 +8,8 @@ import {
   teamIds,
   loadoutOf,
   resolveJoinLoadout,
-  loadoutSpec,
   raisedMaxEnergy,
   raisedMaxHealth,
-  resolveLoadout,
-  spawnFacing,
   swingProgress,
   type MatchMode,
   type MatchEndReason,
@@ -41,6 +36,7 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_WIRE_COMBATS,
+  MAX_REPLAY_PARTS,
   MAX_LOBBY_PLAYERS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_ACTORS,
@@ -92,9 +88,21 @@ import { NO_GUILD, sanitizeGuild, sanitizeName, type Guild } from "./names.js";
 import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 import { chainMarks, chainMarksPredicted } from "./chain-marks.js";
 import { rechargePredicted, rechargeState } from "./recharge.js";
+import { createMatchSimulation, participantSpec, type SeatSetup } from "./match-setup.js";
 import { rejoinProof } from "./rejoin-proof.js";
+import {
+  MAX_REPLAY_CHARS,
+  MAX_REPLAY_INPUTS,
+  encodeReplay,
+  packReplay,
+  textHash,
+  type MatchReplay,
+  type RecordedReplay,
+  type ReplayInput,
+  type Sha256,
+} from "./replay.js";
 import { packSnapshot } from "./snapshot-parts.js";
-import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
+import type { SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
 import {
   groundEffectSnapshot,
@@ -220,6 +228,11 @@ export interface MatchHostOptions {
    * app's generator, which this package cannot import. Run once per seat.
    */
   readonly signetOf: (pubkey: string) => number;
+  /**
+   * Record the match for a replay (#3572): what the ranked flow sets. Off,
+   * a match keeps nothing and pays nothing. `sha256` hashes its encoding.
+   */
+  readonly recordReplay: false | ReplayRecording;
 }
 
 /**
@@ -253,6 +266,13 @@ export type PlannedSeat = {
 export const WEAPON_SWAPS_PER_SECOND = 4;
 export const WEAPON_SWAP_BURST = 4;
 
+/** What a host records a replay with (#3572). */
+export interface ReplayRecording {
+  /** The build playing, which a replay is only good under. */
+  readonly buildHash: string;
+  readonly sha256: Sha256;
+}
+
 export interface MatchHost {
   /** Run as many whole ticks as `seconds` holds, carrying the rest. */
   advance(seconds: number): void;
@@ -267,6 +287,11 @@ export interface MatchHost {
   readonly abandoned: boolean;
   /** Weapon-set intents dropped over `WEAPON_SWAPS_PER_SECOND` (#489), every seat together. */
   readonly droppedWeaponSwaps: number;
+  /**
+   * The finished match's replay and its hash (#3572), once hashed and sent to
+   * its players; `null` before, and always for a match not recording one.
+   */
+  readonly replay: RecordedReplay | null;
   /**
    * Finished, and its observers not yet sent the end, which reaches them
    * `OBSERVER_DELAY_SECONDS` late (#480): keep advancing it until then.
@@ -349,29 +374,20 @@ function wireTeam(team: number | null | undefined): WireTeam | null {
 
 export function createMatchHost(options: MatchHostOptions): MatchHost {
   const { transport, map, random, maxPlayers, seats: planned } = options;
-  const sim = new MatchSimulation({
-    seed: options.seed,
-    ruleset: RULESET,
-    matchRules: options.matchRules,
-    teamCount: map.descriptor.teamCount,
-    walls: map.walls,
-    gates: map.gates,
-    switches: map.switches,
-    teleports: map.teleports,
-    breakables: map.breakables,
-    switchedDecks: map.switchedDecks,
-    bounds: map.bounds,
-    layers: map.layers,
-    zones: map.zones,
-    shrines: map.shrines,
-    guildLords: map.guildLords,
-    flagField: map.flagField,
-    relicField: map.relicField,
-    ghostField: map.ghostField,
-    capturePoints: map.capturePoints,
-    startLine: map.startLine,
-    guards: map.guards,
-  });
+  const sim = createMatchSimulation(map, options.seed, options.matchRules);
+  /**
+   * Everything done to `sim` between ticks, for the replay (#3572): `null`
+   * when not recording, and once past `MAX_REPLAY_INPUTS`, a match too
+   * long to keep.
+   */
+  let replayLog: ReplayInput[] | null = options.recordReplay === false ? null : [];
+  const logInput = (input: ReplayInput): void => {
+    if (replayLog !== null && replayLog.length >= MAX_REPLAY_INPUTS) {
+      replayLog = null;
+    }
+    replayLog?.push(input);
+  };
+  let recorded: RecordedReplay | null = null;
   const seats = new Map<string, Seat>();
   const seatOfPeer = new Map<string, Seat>();
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
@@ -397,9 +413,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   );
   /** A team with a member still on the way is not empty (#2890). */
   const syncAwaitedTeams = (): void => {
-    sim.setAwaitedTeams(
-      new Set([...awaited].flatMap((peerId) => planned?.get(peerId)?.team ?? [])),
-    );
+    const teams = new Set([...awaited].flatMap((peerId) => planned?.get(peerId)?.team ?? []));
+    sim.setAwaitedTeams(teams);
+    logInput([sim.tick, "awaited", [...teams]]);
   };
   syncAwaitedTeams();
   /** At most one per peer: a new rejoin hello kills the old nonce. */
@@ -831,36 +847,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const signet = pubkey === null ? null : options.signetOf(pubkey);
     const playerId = `player-${String(seated)}`;
     const loadout = loadoutOf(build);
-    // Gear becomes numbers exactly once, before the combatant exists (ADR-0012).
-    const resolved = resolveLoadout(
-      {
-        primaryProfession: loadout.primaryProfession,
-        secondaryProfession: loadout.secondaryProfession,
-        allocatedRanks: loadout.attributeRanks,
-        equipment: loadout.equipment,
-      },
-      RULESET.combat,
-    );
     // Counted on the team, so each side fills its own points in turn
     // rather than every other player of a team landing on one.
     const teammates = [...seats.values()].filter((seat) => seat.team === team).length;
-    const spawn = spawnPoint(map.spawns, team, teammates);
-    sim.add({
-      id: playerId,
-      team,
-      skillBar: loadout.skillBar,
-      ...loadoutSpec(resolved),
-      spawn: spawn.position,
-      layer: spawn.layer,
-      facing: spawnFacing(
-        spawn.position,
-        map.spawns.filter((point) => point.team !== team).map((point) => point.position),
-        map.spawns.map((point) => point.position),
-      ),
-      startMorale,
-      // A human-like moment to react, not the same tick (#2606).
-      behaviour: bot ? { kind: "play-build", reaction: BOT_REACTION } : undefined,
-    });
+    const setup: SeatSetup = { id: playerId, team, build, teammates, bot, startMorale };
+    sim.add(participantSpec(map, setup));
+    logInput([sim.tick, "add", setup]);
     const seat: Seat = {
       playerId,
       team,
@@ -1116,6 +1108,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     if (refusal !== null) {
       // Only the caster hears it: why a key did nothing is nobody else's business.
       transport.send("refused", refusal, from);
+    } else {
+      logInput([sim.tick, "intent", seat.playerId, intent]);
     }
   });
 
@@ -1142,6 +1136,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       seatOfPeer.delete(seat.peerId);
     }
     sim.remove(seat.playerId);
+    logInput([sim.tick, "remove", seat.playerId]);
     seats.delete(seat.playerId);
     swapBudget.forget(seat.playerId);
     if (!seat.bot) {
@@ -1153,7 +1148,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * Henchmen never carry a Heroes' Ascent side alone (#2688): a side with
    * no human seated and none still on the way is out, and its bots go.
    */
-  const forfeitIfNoHumans = (team: number): void => {
+  const forfeitIfNoHumans = (team: WireTeam): void => {
     const side = [...seats.values()].filter((seat) => seat.team === team);
     if (
       options.mode !== "heroes-ascent" ||
@@ -1169,6 +1164,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     const teams = [...(planned?.values() ?? []), ...seats.values()].map((seat) => seat.team);
     sim.forfeit(team, new Set(teams));
+    logInput([sim.tick, "forfeit", team, [...new Set(teams)]]);
   };
 
   transport.on("bye", (data, from) => {
@@ -1217,6 +1213,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // Frozen, not left running into a wall while away.
     sim.setInputDirection(seat.playerId, ZERO);
     sim.get(seat.playerId)?.combatant.cast.cancelCast();
+    logInput([sim.tick, "drop", seat.playerId]);
   });
 
   const wirePlayer = (participant: Participant, who: WireIdentity): WirePlayer => {
@@ -1329,6 +1326,42 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     })),
   });
 
+  /**
+   * The finished match's replay to `to` (#3572), once hashed; none
+   * when not recording, past `MAX_REPLAY_INPUTS` or `MAX_REPLAY_CHARS`.
+   */
+  const sendReplay = (to: readonly string[]): void => {
+    const recording = options.recordReplay;
+    if (recording === false || replayLog === null) {
+      return;
+    }
+    const replay: MatchReplay = {
+      buildHash: recording.buildHash,
+      seed: options.seed,
+      map: map.descriptor.id,
+      teamCount: map.descriptor.teamCount,
+      mode: options.mode,
+      ticks: sim.tick,
+      inputs: replayLog,
+    };
+    // Finished: nothing done after it is part of it.
+    replayLog = null;
+    const text = encodeReplay(replay);
+    if (text.length > MAX_REPLAY_CHARS) {
+      return;
+    }
+    void textHash(text, recording.sha256).then((hash) => {
+      const parts = packReplay(text, hash, MAX_MESSAGE_BYTES);
+      if (parts.length > MAX_REPLAY_PARTS) {
+        return;
+      }
+      recorded = { hash, replay };
+      for (const part of parts) {
+        transport.send("match-replay", part, to);
+      }
+    });
+  };
+
   /** Drop the seats whose players did not come back in time. */
   const expireDropped = (): void => {
     for (const seat of seats.values()) {
@@ -1352,7 +1385,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     for (const team of callsDirty) {
       // Its bots fight the called foe (#1193).
-      sim.setCalledTarget(team, calls.view(team, sim.elapsedSeconds).target?.targetId);
+      const target = calls.view(team, sim.elapsedSeconds).target?.targetId;
+      sim.setCalledTarget(team, target);
+      logInput([sim.tick, "called", team, target ?? null]);
       sendCalls(team);
     }
     callsDirty.clear();
@@ -1392,6 +1427,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         clearSeconds: sim.clearSeconds,
       };
       transport.send("ended", ended, live);
+      sendReplay(live);
       // The Elite Zaishen Battle has no opposing players to record (#2692).
       if (map.startLine === undefined) {
         options.publishRecord(record(sim.outcome.reason ?? "time"));
@@ -1445,6 +1481,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     },
     get abandoned() {
       return planned !== null && awaited.size === 0 && seats.size === 0;
+    },
+    get replay() {
+      return recorded;
     },
     get droppedWeaponSwaps() {
       return droppedWeaponSwaps;

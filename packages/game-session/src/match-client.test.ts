@@ -217,7 +217,7 @@ describe("connectMatch", () => {
     network.join("host");
     const transport = network.join();
     await expect(
-      connectMatch({ transport, hostId: "host", hello: hello(), timeoutMs: 20 }),
+      connectMatch({ transport, hostId: "host", hello: hello(), timeoutMs: 20, replays: null }),
     ).rejects.toThrow(MatchTimeoutError);
   });
 
@@ -226,7 +226,13 @@ describe("connectMatch", () => {
     const host = network.join("host");
     const transport = network.join();
     await settle();
-    const joining = connectMatch({ transport, hostId: "host", hello: hello(), timeoutMs: 10_000 });
+    const joining = connectMatch({
+      transport,
+      hostId: "host",
+      hello: hello(),
+      timeoutMs: 10_000,
+      replays: null,
+    });
     await host.leave();
     await expect(joining).rejects.toThrow(HostLeftError);
   });
@@ -712,7 +718,13 @@ describe("connectMatch, before the host's match listens (#1805)", () => {
     const transport = network.join();
     await settle();
     const sent = vi.spyOn(transport, "send");
-    const joining = connectMatch({ transport, hostId: "host", hello: hello(), timeoutMs: 10_000 });
+    const joining = connectMatch({
+      transport,
+      hostId: "host",
+      hello: hello(),
+      timeoutMs: 10_000,
+      replays: null,
+    });
     const hellos = (): number => sent.mock.calls.filter(([type]) => type === "hello").length;
     return { hostTransport, joining, hellos };
   }
@@ -733,6 +745,7 @@ describe("connectMatch, before the host's match listens (#1805)", () => {
       publishRecord: () => undefined,
       nowSeconds: () => 0,
       signetOf: testSignet,
+      recordReplay: false,
     });
   }
 

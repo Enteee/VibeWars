@@ -58,6 +58,7 @@ function intrude(who: Member, name = "Stranger") {
     hostId: "host",
     hello: hello({ name }),
     timeoutMs: 1000,
+    replays: null,
   });
 }
 
@@ -95,6 +96,7 @@ describe("a lobby's own match", () => {
       hostId: "host",
       hello: hello({ build: toJson(pyro) }),
       timeoutMs: 1000,
+      replays: null,
     });
     await lobby.step(0.05);
     // A starter build fills all eight slots: only this build has the gaps (#852).

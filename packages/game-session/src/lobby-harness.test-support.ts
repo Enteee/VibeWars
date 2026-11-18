@@ -157,6 +157,7 @@ export async function openLobby(
           publishRecord: () => undefined,
           nowSeconds: () => 0,
           signetOf: testSignet,
+          recordReplay: false,
         });
       matches.push({ plan, host });
       return host;
@@ -301,5 +302,6 @@ export async function play(who: Member, name = "Whoever"): Promise<PeerMatchConn
     hostId: who.connection.getSnapshot().hostId,
     hello: hello({ name }),
     timeoutMs: 1000,
+    replays: null,
   });
 }

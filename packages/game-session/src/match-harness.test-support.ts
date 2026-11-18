@@ -264,6 +264,7 @@ export function startMatch(
     publishRecord: options.publishRecord ?? (() => undefined),
     nowSeconds: () => TEST_NOW_SECONDS,
     signetOf: options.signetOf ?? testSignet,
+    recordReplay: false,
   });
   return {
     network,
@@ -285,6 +286,7 @@ export function startMatch(
         hostId: "host",
         hello: peerHello,
         timeoutMs: 1000,
+        replays: null,
       });
       return { connection, transport };
     },
@@ -297,12 +299,19 @@ export function startMatch(
         hostId: "host",
         hello: hello({ rejoin: { playerId: dropped.selfSessionId } }),
         timeoutMs: 1000,
+        replays: null,
       });
       return { connection, transport };
     },
     async joinLocal(peerHello = hello()) {
       await settle();
-      return connectMatch({ transport: local, hostId: "host", hello: peerHello, timeoutMs: 1000 });
+      return connectMatch({
+        transport: local,
+        hostId: "host",
+        hello: peerHello,
+        timeoutMs: 1000,
+        replays: null,
+      });
     },
   };
 }
