@@ -786,7 +786,6 @@ export default {
 
   "pips.title": { other: "{sign}{count} pip" },
 
-  "player.applies": "Berlaku mulai lobi berikutnya.",
   "player.cape": "Jubah",
   "player.colourBlack": "hitam",
   "player.colourGold": "emas",

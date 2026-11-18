@@ -780,7 +780,6 @@ export default {
 
   "pips.title": { other: "{sign}{count} vạch" },
 
-  "player.applies": "Áp dụng từ sảnh tiếp theo.",
   "player.cape": "Áo choàng",
   "player.colourBlack": "đen",
   "player.colourGold": "vàng",

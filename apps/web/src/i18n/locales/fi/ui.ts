@@ -841,7 +841,6 @@ export default {
 
   "pips.title": { one: "{sign}{count} pykälä", other: "{sign}{count} pykälää" },
 
-  "player.applies": "Tulee voimaan seuraavassa aulassasi.",
   "player.cape": "Viitta",
   "player.colourBlack": "musta",
   "player.colourGold": "kulta",

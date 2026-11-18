@@ -1588,6 +1588,17 @@ export type WireLobbyCommand =
       readonly size: number;
       readonly memberKey: string | null;
       readonly build: JsonValue;
+    }
+  /**
+   * The member's own name and guild, changed in Options (#3548): as its
+   * `PeerLobbyJoin` carried them, sanitised by the host as at a join.
+   */
+  | {
+      readonly kind: "set-profile";
+      readonly name: string;
+      readonly guildTag: string | null;
+      readonly heroRank: number;
+      readonly guildCape: WireCape | null;
     };
 
 /**
@@ -3686,6 +3697,19 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
             size: raw.size,
             memberKey: raw.memberKey,
             build,
+          }
+        : undefined;
+    }
+    case "set-profile": {
+      // As `parsePeerLobbyJoin` reads the same four fields.
+      const guildTag = parseRawGuildTag(raw.guildTag);
+      return typeof raw.name === "string" && guildTag !== undefined && isHeroRank(raw.heroRank)
+        ? {
+            kind: "set-profile",
+            name: raw.name.slice(0, MAX_WIRE_TEXT),
+            guildTag,
+            heroRank: raw.heroRank,
+            guildCape: parseWireCape(raw.guildCape) ?? null,
           }
         : undefined;
     }

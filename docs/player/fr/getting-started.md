@@ -189,8 +189,7 @@ cape dans chaque match : elle se replie en une fine bande sur ton bord quand tu
 es immobile et flotte derrière toi quand tu bouges. Tes personnages dans le
 menu la montrent aussi. **Sans cape** la retire.
 
-Un changement s'applique à partir du prochain salon que tu rejoins, ou de ton
-prochain nouveau salon : celui où tu es déjà garde ce avec quoi tu es entré.
+Un changement s'applique tout de suite au salon où tu es.
 
 **Copier le lien de guilde**, sous le créateur de cape, copie un lien qui porte ton tag et ta cape. Qui l'ouvre voit **Rejoindre la guilde [VIBE] ?** : **Rejoindre** lui donne ton tag et ta cape, **Non** ne change rien. N'importe qui peut envoyer un tel lien et personne ne possède un tag, donc le jeu demande toujours d'abord.
 

@@ -186,9 +186,7 @@ pelerini giyer: dururken kenarında ince bir şeride katlanır, hareket
 ederken arkanda dalgalanır. Menüdeki karakterlerin de onu gösterir.
 **Pelerin yok** onu çıkarır.
 
-Bir değişiklik katıldığın bir sonraki lobiden ya da bir sonraki yeni
-lobinden itibaren geçerli olur: zaten içinde olduğun lobi, katıldığın
-haliyle kalır.
+Bir değişiklik, içinde olduğun lobide hemen geçerli olur.
 
 Pelerin tasarımcısının altındaki **Lonca bağlantısını kopyala**, etiketini ve pelerinini taşıyan bir bağlantı kopyalar. Bağlantıyı açan kişiye **[VIBE] loncasına katılınsın mı?** diye sorulur: **Katıl** ona etiketini ve pelerinini verir, **Hayır** hiçbir şeyi değiştirmez. Böyle bir bağlantıyı herkes gönderebilir ve hiç kimse bir etiketin sahibi değildir, bu yüzden oyun her zaman önce sorar.
 

@@ -181,8 +181,7 @@ wears the cape in every match: it folds to a thin band on your rim when
 you stand and streams out behind you when you move. Your characters in
 the menu show it too. **No cape** takes it off.
 
-A change applies from the next lobby you join, or your next fresh one:
-one you are already in keeps what you joined with.
+A change applies at once to the lobby you are in.
 
 **Copy guild link**, under the cape designer, copies a link that carries
 your tag and cape. Whoever opens it is asked **Join guild [VIBE]?**:

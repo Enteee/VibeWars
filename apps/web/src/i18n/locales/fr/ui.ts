@@ -890,7 +890,6 @@ export default {
     other: "{sign}{count} pips",
   },
 
-  "player.applies": "S'applique à ton prochain salon.",
   "player.cape": "Cape",
   "player.colourBlack": "noir",
   "player.colourGold": "or",
