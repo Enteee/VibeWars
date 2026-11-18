@@ -3768,8 +3768,8 @@ export function parseWireMatchStart(value: unknown): WireMatchStart | undefined 
     : undefined;
 }
 
-/** The most parts a match's replay is sent in (#3572). */
-export const MAX_REPLAY_PARTS = 512;
+/** The most parts a match's replay is sent in (#3572): 5 M characters, 5000 a part. */
+export const MAX_REPLAY_PARTS = 1000;
 
 /**
  * Host to each player, after `ended` (#3572): one of `of` slices of the

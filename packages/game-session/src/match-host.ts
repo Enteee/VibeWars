@@ -95,6 +95,13 @@ import { rechargePredicted, rechargeState } from "./recharge.js";
 import { createMatchSimulation, participantSpec, type SeatSetup } from "./match-setup.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import {
+  CALLED_CHARS,
+  FORFEIT_CHARS,
+  ReplayBudget,
+  inputChars,
+  latestInputChars,
+} from "./replay-budget.js";
+import {
   MAX_REPLAY_CHARS,
   MAX_REPLAY_INPUTS,
   encodeReplay,
@@ -395,8 +402,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const sim = createMatchSimulation(map, options.seed, options.matchRules);
   /**
    * Everything done to `sim` between ticks, for the replay (#3572): `null`
-   * when not recording, and once past `MAX_REPLAY_INPUTS`, a match too
-   * long to keep.
+   * when not recording, and once past `MAX_REPLAY_INPUTS`: only ever a
+   * match without a lobby, where `replayBudget` has no fixed slots.
    */
   let replayLog: ReplayInput[] | null = options.recordReplay === false ? null : [];
   const logInput = (input: ReplayInput): void => {
@@ -406,6 +413,21 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     replayLog?.push(input);
   };
   let recorded: RecordedReplay | null = null;
+  /**
+   * Each player's share of the replay (#3572), by slot: a lobby's peer,
+   * or without a lobby the player. `null` when not recording.
+   */
+  const replayBudget =
+    options.recordReplay === false
+      ? null
+      : new ReplayBudget(
+          planned === null ? maxPlayers : [...planned.values()].filter((plan) => !plan.bot).length,
+          options.matchRules.timeLimitSeconds,
+        );
+  const slotOf = new Map<string, string>();
+  /** Spend `chars` of `slot`'s share of the replay; false if it has not got them. */
+  const pay = (slot: string, chars: number): boolean =>
+    replayBudget?.take(slot, chars, sim.elapsedSeconds) ?? true;
   const seats = new Map<string, Seat>();
   const seatOfPeer = new Map<string, Seat>();
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
@@ -430,10 +452,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     [...(planned ?? [])].flatMap(([peerId, plan]) => (plan.bot ? [] : [peerId])),
   );
   /** A team with a member still on the way is not empty (#2890). */
+  let awaitedLogged: string | undefined;
   const syncAwaitedTeams = (): void => {
     const teams = new Set([...awaited].flatMap((peerId) => planned?.get(peerId)?.team ?? []));
     sim.setAwaitedTeams(teams);
-    logInput([sim.tick, "awaited", [...teams]]);
+    // Only a change: `awaited` only shrinks, so the replay holds a few.
+    const logged = [...teams].join();
+    if (logged !== awaitedLogged) {
+      awaitedLogged = logged;
+      logInput([sim.tick, "awaited", [...teams]]);
+    }
   };
   syncAwaitedTeams();
   /** At most one per peer: a new rejoin hello kills the old nonce. */
@@ -854,6 +882,23 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("respawns", respawnsOf(seat.team), peerId);
   };
 
+  /** What the next seat on `team` playing `build` is set up as. */
+  const nextSetup = (
+    build: PlayerBuild,
+    team: WireTeam,
+    bot: boolean,
+    startMorale: number,
+  ): SeatSetup => ({
+    id: `player-${String(seated + 1)}`,
+    team,
+    build,
+    // Counted on the team, so each side fills its own points in turn
+    // rather than every other player of a team landing on one.
+    teammates: [...seats.values()].filter((seat) => seat.team === team).length,
+    bot,
+    startMorale,
+  });
+
   /**
    * A new seat on `team` playing `loadout`, named by `nameOf` its player
    * id and of `guild`, marked with `signet`, at `startMorale`; a bot's if `bot`.
@@ -867,14 +912,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     pubkey: string | null,
     startMorale: number,
   ): Seat => {
+    const setup = nextSetup(build, team, bot, startMorale);
     seated += 1;
     const signet = pubkey === null ? null : options.signetOf(pubkey);
-    const playerId = `player-${String(seated)}`;
+    const playerId = setup.id;
     const loadout = loadoutOf(build);
-    // Counted on the team, so each side fills its own points in turn
-    // rather than every other player of a team landing on one.
-    const teammates = [...seats.values()].filter((seat) => seat.team === team).length;
-    const setup: SeatSetup = { id: playerId, team, build, teammates, bot, startMorale };
     sim.add(participantSpec(map, setup));
     logInput([sim.tick, "add", setup]);
     const seat: Seat = {
@@ -1026,13 +1068,27 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       refuse(from, "match-full");
       return;
     }
-    awaited.delete(from);
-    syncAwaitedTeams();
     // The lobby's build if it assigned one, whatever the hello brings (#1458).
     const build = plan?.build ?? resolveJoinLoadout(hello.build, RULESET.attributes, random).build;
     // Without a plan, teams alternate as players arrive, so a 1v1 is
     // adversarial by default.
     const team: WireTeam = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
+    // A lobby's carried Heroes' Ascent morale (#2686); without a lobby, none.
+    const startMorale = plan === undefined ? 0 : plan.startMorale;
+    // The seat pays for its add, and for its remove, drop and forfeit to come.
+    const setup = nextSetup(build, team, false, startMorale);
+    const slot = plan === undefined ? setup.id : from;
+    const joinChars =
+      inputChars([sim.tick, "add", setup]) +
+      latestInputChars("remove", setup.id) +
+      latestInputChars("drop", setup.id) +
+      FORFEIT_CHARS;
+    if (!pay(slot, joinChars)) {
+      refuse(from, "match-full");
+      return;
+    }
+    awaited.delete(from);
+    syncAwaitedTeams();
     // The lobby's name, tag and cape, whatever the hello says (#53,
     // #1406, #1422). Without a lobby they are the peer's to choose, so
     // they are sanitised before anyone sees them.
@@ -1043,9 +1099,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       plan ?? sanitizeGuild(hello),
       false,
       plan?.playerPubkey ?? null,
-      // A lobby's carried Heroes' Ascent morale (#2686); without a lobby, none.
-      plan === undefined ? 0 : plan.startMorale,
+      startMorale,
     );
+    slotOf.set(seat.playerId, slot);
     welcome(seat, from);
   };
 
@@ -1100,7 +1156,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       held.token !== token ||
       playerId !== challenge.playerId ||
       proof !== expected ||
-      !claimable(held, from)
+      !claimable(held, from) ||
+      // Each rejoin pays for the drop that may follow it.
+      !pay(slotOf.get(held.playerId) ?? held.playerId, latestInputChars("drop", held.playerId))
     ) {
       join(challenge.hello, from);
       return;
@@ -1128,9 +1186,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       droppedWeaponSwaps += 1;
       return;
     }
+    const input: ReplayInput = [sim.tick, "intent", seat.playerId, intent];
+    // Past its share of the replay, the sim never hears it either.
+    if (!pay(slotOf.get(seat.playerId) ?? seat.playerId, inputChars(input))) {
+      return;
+    }
     const refusal = applyIntent(sim, seat.playerId, intent);
     // Refused ones too: the sim heard them, and a refusal can still change it.
-    logInput([sim.tick, "intent", seat.playerId, intent]);
+    logInput(input);
     if (refusal !== null) {
       // Only the caster hears it: why a key did nothing is nobody else's business.
       transport.send("refused", refusal, from);
@@ -1145,6 +1208,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const call = parsePeerCall(data);
     // The dead call nothing; a malformed one is dropped without a word.
     if (call === undefined || !isAlive(seat.playerId)) {
+      return;
+    }
+    // It may change the team's call twice: now, and when it lapses.
+    if (!pay(slotOf.get(seat.playerId) ?? seat.playerId, 2 * CALLED_CHARS)) {
       return;
     }
     const isLiveEnemy = (targetId: string): boolean =>
@@ -1398,6 +1465,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
   };
 
+  /** Each team's call as the replay last has it: a stroke changes no target. */
+  const calledLogged = new Map<WireTeam, string | null>();
   const tick = (): void => {
     for (const participant of sim.participants()) {
       teams.set(participant.id, participant.combatant.team);
@@ -1411,7 +1480,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       // Its bots fight the called foe (#1193).
       const target = calls.view(team, sim.elapsedSeconds).target?.targetId;
       sim.setCalledTarget(team, target);
-      logInput([sim.tick, "called", team, target ?? null]);
+      if (calledLogged.get(team) !== (target ?? null)) {
+        calledLogged.set(team, target ?? null);
+        logInput([sim.tick, "called", team, target ?? null]);
+      }
       sendCalls(team);
     }
     callsDirty.clear();

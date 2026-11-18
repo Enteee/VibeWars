@@ -13,6 +13,7 @@ import type { PlannedSeat } from "./match-host.js";
 import { rerun } from "./replay-run.js";
 import {
   encodeReplay,
+  MAX_REPLAY_CHARS,
   joinReplay,
   packReplay,
   parseReplay,
@@ -186,6 +187,71 @@ describe("a match's replay (#3572)", () => {
       }
       // And a second rerun is the first: nothing in it reads a clock or Math.random.
       expect(rerun(replay, ARENA, RULES)).toEqual(again);
+    },
+  );
+
+  it(
+    "is kept when a player floods the host at the full message rate, and still runs again to the same end",
+    { timeout: 60_000 },
+    async () => {
+      const kept: RecordedReplay[] = [];
+      const seats = new Map<string, PlannedSeat>([
+        botSeat(0, 0),
+        [
+          "host/local",
+          {
+            team: 1,
+            name: "Me",
+            guildTag: null,
+            heroRank: 0,
+            guildCape: null,
+            bot: false,
+            playerPubkey: "ab".repeat(32),
+            startMorale: 0,
+            build: starterBuild("Warrior/Monk"),
+          },
+        ],
+      ]);
+      const match = startMatch({
+        seats,
+        matchRules: RULES,
+        recordReplay: RECORDING,
+        replays: { sha256, keep: (recorded) => kept.push(recorded) },
+      });
+      const local = await match.joinLocal();
+      // Three a tick is the 60 a second the host handles, each as long as
+      // a message goes: far more than one player's share of the replay.
+      const flood: ClientIntent = { kind: "target", targetSessionId: "x".repeat(15_000) };
+      let sent = 0;
+      for (let tick = 0; match.host.phase === "active" && tick < 2 * 60 * 20; tick += 1) {
+        for (let i = 0; i < 3; i += 1) {
+          local.sendIntent(
+            i === 0 ? { kind: "move", dirX: tick % 40 < 20 ? 1 : -1, dirY: 0 } : flood,
+          );
+          sent += 1;
+        }
+        await match.step(TICK_SECONDS);
+      }
+      expect(match.host.phase).toBe("finished");
+      await until(() => match.host.replay !== null && kept.length > 0);
+      const recorded = match.host.replay;
+      if (recorded === null) {
+        throw new Error("no replay");
+      }
+      expect(kept).toEqual([recorded]);
+      const { replay } = recorded;
+      const intents = replay.inputs.filter((input) => input[1] === "intent").length;
+      // What it could not pay for, the simulation never heard.
+      expect(intents).toBeGreaterThan(0);
+      expect(intents).toBeLessThan(sent);
+      expect(encodeReplay(replay).length).toBeLessThanOrEqual(MAX_REPLAY_CHARS);
+
+      const again = rerun(replay, ARENA, RULES);
+      expect(again.ticks).toBe(replay.ticks);
+      expect(again.outcome.winningTeam ?? null).toBe(match.host.winningTeam);
+      for (const player of local.getSnapshot().players) {
+        expect(Math.round(again.health.get(player.sessionId) ?? Number.NaN)).toBe(player.health);
+      }
     },
   );
 

@@ -45,11 +45,15 @@ export interface MatchReplay {
   readonly inputs: readonly ReplayInput[];
 }
 
-/** The most inputs a replay holds; a host past it keeps none for that match. */
-export const MAX_REPLAY_INPUTS = 100_000;
+/**
+ * The longest a replay's encoding is, in characters: what a client takes.
+ * A lobby match's host never records more: `ReplayBudget` shares it out
+ * among the players, whatever they send.
+ */
+export const MAX_REPLAY_CHARS = 5_000_000;
 
-/** The longest a replay's encoding is, in characters: what a client takes. */
-export const MAX_REPLAY_CHARS = 4_000_000;
+/** The most inputs a replay holds: none encodes in fewer than 16 characters. */
+export const MAX_REPLAY_INPUTS = MAX_REPLAY_CHARS / 16;
 
 /** Sorted keys at every depth, so one replay has one encoding. */
 function sortKeys(_key: string, value: unknown): unknown {
@@ -226,8 +230,12 @@ export interface RecordedReplay {
   readonly replay: MatchReplay;
 }
 
-/** The most characters a part's slice starts at; fewer when they encode long. */
-const REPLAY_SLICE = 8000;
+/**
+ * The most characters a part's slice holds. A character is at most 3 bytes
+ * in a message, so 5000 always fit one, and `MAX_REPLAY_CHARS` always fits
+ * `MAX_REPLAY_PARTS` parts.
+ */
+export const REPLAY_SLICE = 5000;
 
 /**
  * `text`, a replay's encoding with hash `hash`, as messages of at most
