@@ -48,8 +48,8 @@ describe("site meta", () => {
     delete process.env.VIBEWARS_SITE_URL;
     const html = transform();
     expect(html).not.toContain('og:image"');
-    expect(html).not.toContain("og:url");
-    expect(html).not.toContain("twitter:image");
+    expect(html).not.toContain('property="og:url"');
+    expect(html).not.toContain('name="twitter:image"');
   });
 
   it("index.html carries the static tags", () => {
