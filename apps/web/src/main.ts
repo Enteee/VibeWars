@@ -375,6 +375,16 @@ interface Entrant {
 }
 
 async function main(): Promise<void> {
+  // A docs diagram (#3557): dev builds only, so the scene table is not in production.
+  if (import.meta.env.DEV) {
+    const wanted = new URLSearchParams(window.location.search).get("scene");
+    const { sceneNamed, showScene } = await import("./dev/scene.js");
+    const scene = sceneNamed(wanted);
+    if (scene !== undefined) {
+      await showScene(requireElement("#viewport"), scene);
+      return;
+    }
+  }
   // Before anything mounts or waits.
   const relayLink = takeRelayLink();
   const guildLink = takeGuildLink();
