@@ -2016,8 +2016,8 @@ Architect seams for:
 - internet hosting;
 - authentication;
 - persistent accounts;
-- ranked matchmaking;
-- leaderboards;
+- ranked matchmaking (now decided: [ADR-0055](../adr/0055-ranked-receipts.md));
+- leaderboards (now decided: [ADR-0055](../adr/0055-ranked-receipts.md));
 - tournaments;
 - server-side persistence;
 - additional rulesets;

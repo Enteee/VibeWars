@@ -31,11 +31,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** No lobby is met here, so the key never signs (#2706). */
+/** No lobby is met and no match is played here, so the key never signs (#2706). */
 const PLAYER_KEY: PlayerKey = {
   pubkey: "ab".repeat(32),
   signLobbyProof: () => {
     throw new Error("no lobby is met");
+  },
+  signRankedStart: () => {
+    throw new Error("no match is played");
+  },
+  signRankedResult: () => {
+    throw new Error("no match is played");
   },
 };
 

@@ -205,6 +205,31 @@ export default defineConfig([
     },
   },
 
+  // Receipts are checked in a page and by the leaderboard job in Node alike
+  // (ADR-0055), with the curve code handed in: no Node built-ins, no
+  // transport, and no crypto library outside its tests.
+  {
+    files: ["packages/ranking/src/**/*.ts"],
+    ignores: ["packages/ranking/src/**/*.test.ts", "packages/ranking/src/**/*.test-support.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["node:*", ...builtinModules],
+              message: "ranking runs in the browser too; keep Node out.",
+            },
+            {
+              group: ["trystero", "trystero/*", "@trystero-p2p/*", "@noble/*"],
+              message: "ranking is handed its hash and signature check; it imports no library.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Player-facing text goes through t() (#2648, ADR-0050).
   {
     files: ["apps/web/src/**/*.ts"],
