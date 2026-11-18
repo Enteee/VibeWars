@@ -36,7 +36,7 @@
     },
     {
       "id": "north-east-crypt-mouth",
-      "footprint": { "kind": "rect", "x": 3085, "y": 595, "width": 140, "height": 110 }
+      "footprint": { "kind": "rect", "x": 3375, "y": 786.5, "width": 140, "height": 110 }
     },
     {
       "id": "south-east-crypt-well",
@@ -44,7 +44,7 @@
     },
     {
       "id": "south-east-crypt-mouth",
-      "footprint": { "kind": "rect", "x": 3385, "y": 3595, "width": 140, "height": 110 }
+      "footprint": { "kind": "rect", "x": 2965, "y": 3913.5, "width": 140, "height": 110 }
     },
     {
       "id": "west-crypt-well",
@@ -52,29 +52,33 @@
     },
     {
       "id": "west-crypt-mouth",
-      "footprint": { "kind": "rect", "x": 442.9, "y": 2145, "width": 140, "height": 110 }
+      "footprint": { "kind": "rect", "x": 582.9, "y": 1955, "width": 110, "height": 140 }
     }
   ],
   "tunnels": [
     {
       "id": "north-east-crypt-inner",
-      "footprint": { "kind": "rect", "x": 2805, "y": 595, "width": 110, "height": 981.5 }
+      "footprint": { "kind": "rect", "x": 2805, "y": 786.5, "width": 110, "height": 790 }
     },
     {
       "id": "north-east-crypt-outer",
-      "footprint": { "kind": "rect", "x": 2915, "y": 595, "width": 170, "height": 110 }
+      "footprint": { "kind": "rect", "x": 2915, "y": 786.5, "width": 460, "height": 110 }
     },
     {
       "id": "south-east-crypt-inner",
-      "footprint": { "kind": "rect", "x": 2805, "y": 2823.5, "width": 110, "height": 881.5 }
+      "footprint": { "kind": "rect", "x": 2805, "y": 2823.5, "width": 110, "height": 1200 }
     },
     {
       "id": "south-east-crypt-outer",
-      "footprint": { "kind": "rect", "x": 2915, "y": 3595, "width": 470, "height": 110 }
+      "footprint": { "kind": "rect", "x": 2915, "y": 3913.5, "width": 50, "height": 110 }
     },
     {
-      "id": "west-crypt",
+      "id": "west-crypt-inner",
       "footprint": { "kind": "rect", "x": 582.9, "y": 2145, "width": 1200, "height": 110 }
+    },
+    {
+      "id": "west-crypt-outer",
+      "footprint": { "kind": "rect", "x": 582.9, "y": 2095, "width": 110, "height": 50 }
     }
   ],
   "decks": [
@@ -253,7 +257,7 @@
       "id": "north-east-crypt-mouth-stair",
       "from": 0,
       "to": 1,
-      "area": { "kind": "rect", "x": 3085, "y": 595, "width": 140, "height": 110 },
+      "area": { "kind": "rect", "x": 3375, "y": 786.5, "width": 140, "height": 110 },
       "uphill": "e",
       "look": "stairs",
       "lift": null
@@ -280,7 +284,7 @@
       "id": "south-east-crypt-mouth-stair",
       "from": 0,
       "to": 1,
-      "area": { "kind": "rect", "x": 3385, "y": 3595, "width": 140, "height": 110 },
+      "area": { "kind": "rect", "x": 2965, "y": 3913.5, "width": 140, "height": 110 },
       "uphill": "e",
       "look": "stairs",
       "lift": null
@@ -307,8 +311,8 @@
       "id": "west-crypt-mouth-stair",
       "from": 0,
       "to": 1,
-      "area": { "kind": "rect", "x": 442.9, "y": 2145, "width": 140, "height": 110 },
-      "uphill": "w",
+      "area": { "kind": "rect", "x": 582.9, "y": 1955, "width": 110, "height": 140 },
+      "uphill": "n",
       "look": "stairs",
       "lift": null
     },
@@ -610,21 +614,21 @@
   "gates": [
     {
       "id": "north-east-crypt-door",
-      "wall": { "kind": "rect", "x": 3065, "y": 595, "width": 14, "height": 110, "layer": 0 },
+      "wall": { "kind": "rect", "x": 3355, "y": 786.5, "width": 14, "height": 110, "layer": 0 },
       "opener": { "kind": "switch" },
       "blocks": "all",
       "look": "door"
     },
     {
       "id": "south-east-crypt-door",
-      "wall": { "kind": "rect", "x": 3365, "y": 3595, "width": 14, "height": 110, "layer": 0 },
+      "wall": { "kind": "rect", "x": 2945, "y": 3913.5, "width": 14, "height": 110, "layer": 0 },
       "opener": { "kind": "switch" },
       "blocks": "all",
       "look": "door"
     },
     {
       "id": "west-crypt-door",
-      "wall": { "kind": "rect", "x": 588.9, "y": 2145, "width": 14, "height": 110, "layer": 0 },
+      "wall": { "kind": "rect", "x": 582.9, "y": 2101, "width": 110, "height": 14, "layer": 0 },
       "opener": { "kind": "switch" },
       "blocks": "all",
       "look": "door"
@@ -698,11 +702,12 @@
     "ambient": { "colour": 16773580, "intensity": 0.8 },
     "indoorAmbient": { "colour": 14207136, "intensity": 0.55 },
     "indoor": [
-      { "kind": "rect", "x": 2805, "y": 595, "width": 110, "height": 981.5 },
-      { "kind": "rect", "x": 2915, "y": 595, "width": 170, "height": 110 },
-      { "kind": "rect", "x": 2805, "y": 2823.5, "width": 110, "height": 881.5 },
-      { "kind": "rect", "x": 2915, "y": 3595, "width": 470, "height": 110 },
-      { "kind": "rect", "x": 582.9, "y": 2145, "width": 1200, "height": 110 }
+      { "kind": "rect", "x": 2805, "y": 786.5, "width": 110, "height": 790 },
+      { "kind": "rect", "x": 2915, "y": 786.5, "width": 460, "height": 110 },
+      { "kind": "rect", "x": 2805, "y": 2823.5, "width": 110, "height": 1200 },
+      { "kind": "rect", "x": 2915, "y": 3913.5, "width": 50, "height": 110 },
+      { "kind": "rect", "x": 582.9, "y": 2145, "width": 1200, "height": 110 },
+      { "kind": "rect", "x": 582.9, "y": 2095, "width": 110, "height": 50 }
     ],
     "sun": { "directionDeg": 315, "elevationDeg": 65, "colour": 16774358, "intensity": 0.9 },
     "lights": [
@@ -717,7 +722,7 @@
       },
       {
         "id": "brazier-north-east-crypt-mouth",
-        "position": { "x": 3185, "y": 540 },
+        "position": { "x": 3475, "y": 731.5 },
         "layer": 1,
         "radius": 150,
         "colour": 16756832,
@@ -726,7 +731,7 @@
       },
       {
         "id": "brazier-south-east-crypt-mouth",
-        "position": { "x": 3485, "y": 3540 },
+        "position": { "x": 3065, "y": 3858.5 },
         "layer": 1,
         "radius": 150,
         "colour": 16756832,
@@ -735,7 +740,7 @@
       },
       {
         "id": "brazier-west-crypt-mouth",
-        "position": { "x": 482.9, "y": 2090 },
+        "position": { "x": 747.9, "y": 1995 },
         "layer": 1,
         "radius": 150,
         "colour": 16756832,

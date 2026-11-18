@@ -204,6 +204,7 @@ describe("King of the Hill bots (#2582)", () => {
       seed,
       ruleset: RULESET,
       walls: allWallSegments(arena.walls),
+      layers: matchLayers(arena),
       bounds: { width: arena.width, height: arena.height },
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
       ghostField: {
@@ -251,7 +252,7 @@ describe("King of the Hill bots (#2582)", () => {
     // This seed's ghosts die together on the altar before either claim ends.
     const sim = hill(
       twoTeams,
-      "a",
+      process.env.SEED ?? "a",
       casterBots(hall, 8, 1).map((spec) =>
         spec.id === "0-0" ? { ...spec, behaviour: undefined } : spec,
       ),

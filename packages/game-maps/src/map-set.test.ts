@@ -76,6 +76,9 @@ const REBUILT = new Set([
   "broken-tower",
   "scarred-earth",
   "guild-hall-isle",
+  "hall-of-heroes-capture",
+  "hall-of-heroes-king",
+  "hall-of-heroes-relic",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
@@ -638,12 +641,6 @@ const sightLines = (
     hasLineOfSight(from, { x: from.x + 400 * dx, y: from.y + 400 * dy }, walls),
   );
 
-const CARDINALS = [
-  [1, 0],
-  [-1, 0],
-  [0, 1],
-  [0, -1],
-] as const;
 const DIAGONALS = [
   [1, 1],
   [1, -1],
@@ -751,52 +748,126 @@ describe("Threefold Keep (#2699)", () => {
   });
 });
 
-describe("the Hall's three maps (#2700)", () => {
+describe("the Hall's three maps (#2700, #3442)", () => {
   const halls = ["king", "relic", "capture"].map((mode) => loadMap(`hall-of-heroes-${mode}`));
+  const [king] = halls;
+  if (king === undefined) throw new Error("no hall-of-heroes-king");
 
-  it("are one place: the same name, size, walls and spawns, for three teams", () => {
+  it("are one place: the same outline, layers, structures, walls and spawns, for three teams", () => {
     for (const map of halls) {
       expect(map).toMatchObject({
         name: "Hall of Heroes",
         teams: 3,
+        teamSizes: [8],
         halls: true,
-        width: halls[0]?.width,
-        height: halls[0]?.height,
-        walls: halls[0]?.walls,
-        spawnPoints: halls[0]?.spawnPoints,
+        width: 5000,
+        height: 4400,
+        biome: "hall",
+        ascentAct: "heavenly",
+        layers: 4,
+        groundLayer: 1,
+        bounds: king.bounds,
+        pits: king.pits,
+        tunnels: king.tunnels,
+        decks: king.decks,
+        overhangs: king.overhangs,
+        transitions: king.transitions,
+        dropOffs: king.dropOffs,
+        walls: king.walls,
+        water: king.water,
+        zones: king.zones,
+        gates: king.gates,
+        switches: king.switches,
+        breakables: king.breakables,
+        spawnPoints: king.spawnPoints,
       });
     }
   });
 
-  it("has 4 capture points of which one is the third base's", () => {
-    const points = halls[2]?.objectives.filter((each) => each.kind === "capture-point") ?? [];
-    expect(points).toHaveLength(4);
-    expect(points.filter((each) => each.base === 2)).toHaveLength(1);
-  });
-});
-
-describe("Hall of Heroes (#2552)", () => {
-  holdsTheHill("hall-of-heroes-king", [8]);
-  const { map, altar, ghosts, walls, finder } = hill("hall-of-heroes-king");
-
-  it("raises the altar on a dais walled west and east, open to the north and south", () => {
-    expect(sightLines(altar, CARDINALS, walls)).toEqual([false, false, true, true]);
-  });
-
-  it("leads every base's way in round the dais, by the north or the south approach", () => {
-    for (const ghost of ghosts.filter((each) => each.team !== 2)) {
-      const path = finder.find(ghost.position, altar) ?? [];
-      expect(path.some((point) => Math.abs(point.y - altar.y) > 220)).toBe(true);
+  it("keeps each file's own objectives: the dais centre and a court spot per team", () => {
+    const centre = { x: 2500, y: 2200 };
+    const kinds = halls.map((map) =>
+      map.objectives.map(({ kind }) => kind).sort((a, b) => a.localeCompare(b)),
+    );
+    expect(kinds).toEqual([
+      ["altar", "ghost-spawn", "ghost-spawn", "ghost-spawn"],
+      ["altar", "relic-spawn", "relic-spawn", "relic-spawn"],
+      [
+        "capture-point",
+        "capture-point",
+        "capture-point",
+        "capture-point",
+        "resurrection-shrine",
+        "resurrection-shrine",
+        "resurrection-shrine",
+      ],
+    ]);
+    for (const map of halls) {
+      expect(
+        map.objectives.some(
+          ({ kind, layer, position }) =>
+            (kind === "altar" || kind === "capture-point") && layer === 3 && near(position, centre),
+        ),
+        map.id,
+      ).toBe(true);
     }
   });
 
-  it("puts the third base (#2700) north of the altar, behind its spawns, with a way to it", () => {
-    const third = ghosts.find((ghost) => ghost.team === 2);
-    if (third === undefined) throw new Error("no third ghost");
-    expect(third.position.y).toBeLessThan(altar.y);
-    expect(finder.find(third.position, altar)).toBeDefined();
-    for (const spawn of map.spawnPoints.filter((each) => each.team === 2)) {
-      expect(third.position.y).toBeLessThan(spawn.position.y);
+  it("has 4 capture points: the dais and the three galleries, two of them the third base's", () => {
+    const points = halls[2]?.objectives.filter((each) => each.kind === "capture-point") ?? [];
+    expect(points).toHaveLength(4);
+    // A two-team match keeps the dais and the gallery between the first two bases.
+    expect(points.filter((each) => each.base === 2)).toHaveLength(2);
+    expect(points.filter((each) => each.layer === 2)).toHaveLength(3);
+  });
+
+  it("puts each court objective nearer its own spawns than any other team's", () => {
+    for (const map of halls) {
+      for (const objective of map.objectives) {
+        if (!("team" in objective)) continue;
+        const nearest = map.spawnPoints.reduce((best, spawn) =>
+          Vec.distance(spawn.position, objective.position) <
+          Vec.distance(best.position, objective.position)
+            ? spawn
+            : best,
+        );
+        expect(nearest.team, `${map.id} ${objective.kind}`).toBe(objective.team);
+      }
+    }
+  });
+
+  it("has a crypt door at each mouth, shut as loaded, and each team's lever opens all three", () => {
+    expect(king.gates).toHaveLength(3);
+    expect(king.switches).toHaveLength(3);
+    const doors = king.gates.map(({ id }) => id).sort((a, b) => a.localeCompare(b));
+    for (const lever of king.switches ?? []) {
+      expect(
+        [...lever.targets].sort((a, b) => a.localeCompare(b)),
+        lever.id,
+      ).toEqual(doors);
+    }
+    for (const gate of king.gates) {
+      expect(gate.wall.layer, gate.id).toBe(0);
+      expect(
+        king.tunnels.some(({ footprint }) => shapesOverlap(footprint, gate.wall)) ||
+          king.pits.some(({ footprint }) => shapesOverlap(footprint, gate.wall)),
+        gate.id,
+      ).toBe(true);
+    }
+  });
+
+  it("uses no lift, and counts 3 doors and 3 breakable walls: 6 toggles", () => {
+    expect(king.transitions.filter(({ lift }) => lift !== null)).toEqual([]);
+    expect(king.gates.length + (king.breakables?.length ?? 0)).toBe(6);
+  });
+
+  it("raises the altar on a dais of six stairs over a plinth, every team reaching it", () => {
+    expect(king.transitions.filter(({ to }) => to === 3)).toHaveLength(6);
+    const finder = layeredFinder(king, RADIUS);
+    for (const team of [0, 1, 2]) {
+      const spawn = king.spawnPoints.find((each) => each.team === team);
+      if (spawn === undefined) throw new Error(`no spawn for team ${String(team)}`);
+      expect(finder.find(spawn.position, spawn.layer, { x: 2500, y: 2200 }, 3)).toBeDefined();
     }
   });
 });
