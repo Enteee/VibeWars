@@ -98,6 +98,7 @@
   },
   "layers": 4,
   "biome": "volcanic",
+  "ascentAct": null,
   "groundLayer": 1,
   "pits": [
     {
@@ -1544,6 +1545,7 @@
         "kind": "steam"
       }
     ],
+    "shafts": [],
     "weather": null
   }
 }

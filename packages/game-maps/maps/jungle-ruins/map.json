@@ -78,6 +78,7 @@
   },
   "layers": 4,
   "biome": "jungle",
+  "ascentAct": null,
   "groundLayer": 1,
   "pits": [
     {
@@ -1851,6 +1852,7 @@
       }
     ],
     "plumes": [],
+    "shafts": [],
     "weather": null
   },
   "paving": [

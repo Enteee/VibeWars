@@ -9,6 +9,7 @@
   "bounds": { "kind": "rect" },
   "layers": 1,
   "biome": "hall",
+  "ascentAct": "underworld",
   "groundLayer": 0,
   "pits": [],
   "tunnels": [],

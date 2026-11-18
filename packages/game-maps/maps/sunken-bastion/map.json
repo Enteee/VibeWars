@@ -118,6 +118,7 @@
   },
   "layers": 4,
   "biome": "hall",
+  "ascentAct": null,
   "groundLayer": 1,
   "pits": [
     {
@@ -1189,6 +1190,7 @@
   "atmosphere": {
     "fog": [],
     "plumes": [],
+    "shafts": [],
     "weather": null
   },
   "paving": [

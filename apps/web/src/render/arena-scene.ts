@@ -330,7 +330,7 @@ import {
   type WallPiece,
 } from "./cover-pieces.js";
 import { liftFrame, liftPlatform, liftShaft, type LiftFrame } from "./lift-art.js";
-import { paintDeckShadows } from "./shadow-geometry.js";
+import { paintDeckShadows, sunShadowOffset } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { passEnd, passStart } from "./pass-timing.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
@@ -403,11 +403,13 @@ import {
   fogArtOf,
   paintFog,
   paintParticle,
+  paintShaft,
   paintVent,
   paintWeatherWash,
   type AtmospherePainter,
   type FogArt,
 } from "./atmosphere.js";
+import { fogTintOf } from "./ascent-act.js";
 import { fillDisc, strokeDisc } from "./disc.js";
 import { dashedCircle } from "./dashed-circle.js";
 import {
@@ -744,6 +746,8 @@ export class ArenaScene extends Phaser.Scene {
   /** Fog banks and vents by layer, plumes by band, and the weather over all (#3032). */
   private readonly fogGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   private readonly plumeGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** Light shafts by layer (#3589), added onto what is under them. */
+  private readonly shaftGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   private weatherGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The map's atmosphere as drawn (#3032), made again when the map changes. */
   private atmosphereDrawn:
@@ -4996,11 +5000,15 @@ export class ArenaScene extends Phaser.Scene {
    * vents stand either way: they are stone on the ground, as torches are.
    */
   private drawAtmosphere(dt: number, view: Box): void {
-    for (const graphics of [...this.fogGraphics.values(), ...this.plumeGraphics.values()]) {
+    for (const graphics of [
+      ...this.fogGraphics.values(),
+      ...this.plumeGraphics.values(),
+      ...this.shaftGraphics.values(),
+    ]) {
       graphics.clear();
     }
     this.weatherGraphics?.clear();
-    const { atmosphere, ground, layerCount } = this.snapshot.structure;
+    const { atmosphere, ground, layerCount, ascentAct, lighting } = this.snapshot.structure;
     if (atmosphere === undefined) {
       this.atmosphereDrawn = undefined;
       return;
@@ -5023,6 +5031,7 @@ export class ArenaScene extends Phaser.Scene {
     if (!on) {
       return;
     }
+    const tint = fogTintOf(ascentAct);
     for (const art of fog) {
       paintFog(
         this.atmospherePainter(this.fogAt(art.layer), line),
@@ -5031,7 +5040,14 @@ export class ArenaScene extends Phaser.Scene {
         this.now,
         this.reducedMotion,
         view,
+        tint,
       );
+    }
+    // A unit of height leans this far towards the sun: the sun's shadow, turned round.
+    const shadow = lighting?.sun === undefined ? { x: 0, y: 0 } : sunShadowOffset(lighting.sun, 1);
+    const toSun = { x: -shadow.x, y: -shadow.y };
+    for (const shaft of atmosphere.shafts) {
+      paintShaft(this.shaftAt(shaft.layer), shaft, elevationOf(shaft.layer, ground), toSun);
     }
     const weather = (this.weatherGraphics ??= this.add
       .graphics()
@@ -5052,6 +5068,19 @@ export class ArenaScene extends Phaser.Scene {
         paintParticle(weather, particle, 0, line);
       }
     }
+  }
+
+  /** The graphics `layer`'s light shafts draw into: above its fog, added onto it. */
+  private shaftAt(layer: number): Phaser.GameObjects.Graphics {
+    let g = this.shaftGraphics.get(layer);
+    if (g === undefined) {
+      g = this.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "fog", layer }))
+        .setBlendMode(Phaser.BlendModes.ADD);
+      this.shaftGraphics.set(layer, g);
+    }
+    return g;
   }
 
   /** The graphics `layer`'s fog banks and vents draw into. */

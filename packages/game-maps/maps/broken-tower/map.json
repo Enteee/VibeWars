@@ -88,6 +88,7 @@
   },
   "layers": 4,
   "biome": "heights",
+  "ascentAct": null,
   "groundLayer": 1,
   "pits": [
     {
@@ -1994,6 +1995,7 @@
       }
     ],
     "plumes": [],
+    "shafts": [],
     "weather": null
   },
   "paving": [

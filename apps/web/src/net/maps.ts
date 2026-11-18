@@ -431,6 +431,7 @@ export function structureOf(map: MapData): LoadedStructure {
         : {
             layerCount: map.layers,
             biome: map.biome,
+            ascentAct: map.ascentAct,
             bounds: map.bounds,
             ground: map.groundLayer,
             ...placedDecks(mapDecks(map)),

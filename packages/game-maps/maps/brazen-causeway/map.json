@@ -94,6 +94,7 @@
   },
   "layers": 4,
   "biome": "marsh",
+  "ascentAct": "heavenly",
   "groundLayer": 1,
   "pits": [
     {
@@ -1862,7 +1863,15 @@
       }
     ],
     "plumes": [],
-    "weather": null
+    "shafts": [
+      {
+        "id": "causeway-shaft",
+        "layer": 1,
+        "position": { "x": 2800, "y": 1400 },
+        "radius": 260
+      }
+    ],
+    "weather": { "kind": "motes", "intensity": 0.5 }
   },
   "paving": [
     {

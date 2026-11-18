@@ -18,13 +18,18 @@ import { MAP_PATH } from "./balance-plan.mjs";
 /** Measured on every pull request, next to the touched maps. */
 export const REFERENCE_MAPS = ["arena-canyon", "sandstone-steps"];
 
+/** The Hosted lobby never offers it, so the bench cannot select it: ELITE_ZAISHEN_MAP (#3589). */
+const UNOFFERED_MAPS = ["elite-zaishen-battle"];
+
 /**
  * @param {string[]} files changed paths, relative to the repository root
- * @param {(id: string) => boolean} exists whether a map still has a folder
+ * @param {(id: string) => boolean} exists whether a map still has a folder; one the lobby never offers is skipped too
  * @returns {{ maps: string[] }}
  */
 export const planPerf = (files, exists) => {
-  const touched = files.flatMap((file) => MAP_PATH.exec(file)?.[1] ?? []).filter(exists);
+  const touched = files
+    .flatMap((file) => MAP_PATH.exec(file)?.[1] ?? [])
+    .filter((id) => exists(id) && !UNOFFERED_MAPS.includes(id));
   return { maps: [...new Set([...REFERENCE_MAPS, ...touched])] };
 };
 

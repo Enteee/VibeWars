@@ -113,6 +113,7 @@
   },
   "layers": 4,
   "biome": "volcanic",
+  "ascentAct": "underworld",
   "groundLayer": 1,
   "pits": [
     {
@@ -1856,6 +1857,7 @@
       }
     ],
     "plumes": [],
+    "shafts": [],
     "weather": null
   },
   "paving": [
