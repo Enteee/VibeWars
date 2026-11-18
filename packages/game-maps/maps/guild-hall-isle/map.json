@@ -154,20 +154,7 @@
       "switched": null
     }
   ],
-  "overhangs": [
-    {
-      "id": "west-hall-eaves",
-      "layer": 3,
-      "footprint": { "kind": "rect", "x": 1200, "y": 870, "width": 120, "height": 70 },
-      "look": "awning"
-    },
-    {
-      "id": "east-hall-eaves",
-      "layer": 3,
-      "footprint": { "kind": "rect", "x": 4680, "y": 1660, "width": 120, "height": 70 },
-      "look": "awning"
-    }
-  ],
+  "overhangs": [],
   "transitions": [
     {
       "id": "west-hall-east-stair",
