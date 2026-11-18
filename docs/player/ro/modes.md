@@ -162,6 +162,8 @@ La 8 minute câștigă cele mai multe puncte, iar o egalitate revine ultimei ech
 a marcat. Fiecare bază își ridică morții și fantoma la fiecare 2 minute. Boții merg
 împreună după relicva inamicului și o aduc acasă.
 
+Cinder Sanctum (8v8, 5600x2800) îl joacă: un templu pe coasta unui vulcan, între două râuri de lavă. Treci pe un pod sau pe dig până la sanctuarul de pe curtea lui; o pârghie din curte deschide pasajul ascuns de sub sanctuar, iar zidurile de cenușă pot fi sparte. Lava arde.
+
 ## Regele dealului
 
 **Condu-ți Eroul Fantomatic pe altar și ține-l.** Fiecare echipă are un **Erou

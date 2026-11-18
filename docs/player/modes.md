@@ -168,6 +168,8 @@ tie goes to the last team to score. Each base raises its dead, and its
 ghost, every 2 minutes. Bots go for the foe's relic together and bring it
 home.
 
+Cinder Sanctum (8v8, 5600x2800) plays it: a temple on a volcano flank between two lava rivers. Cross by a bridge or the causeway to the sanctum on its forecourt; a lever on the forecourt opens the hidden passage under the sanctum, and ash walls can be broken. Lava burns.
+
 ## King of the Hill
 
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
