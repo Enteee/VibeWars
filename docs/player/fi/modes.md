@@ -196,10 +196,12 @@ kolmatta ei ole vapaana) taistelee siitä muurien ympäröimän linnakkeen
 sisällä. Sen ovet aukeavat vain sisältä, sisäpuolella olevasta laatasta:
 kävele ympäri avoimeen kulmaan päästäksesi sisään. Enintään 12 pistettä
 tiimiä kohden, ja jos jokaisen vihollisen moraali on -60 %, voitat heti.
-**Sankarien sali**, Kukkulan kuningas -kartta, joka päättää Sankarien
-nousun, nostaa sen korokkeelle, jota muurit rajaavat lännessä ja
-idässä, ja jonne johtaa pohjoinen tai eteläinen pylväin reunustettu
-nousu. Kohdista aaveeseesi
+**Sankarien sali** (8v8, 5000x4400), kartta, joka päättää Sankarien
+nousun, on kultainen sali kolmelle tiimille: alttari seisoo pylväin
+reunustetulla kuusiportaisella korokkeella, jalustalla, josta lähtee
+galleria jokaisen tukikohtaparin väliin, ja jokaisesta tukikohdasta kulkee
+krypta lattian alta ylös jalustaan. Kryptojen ovet ovat alussa kiinni, ja
+minkä tahansa tiimin vipu avaa ne kaikki kolme. Kohdista aaveeseesi
 **oikealla napsautuksella** ja paina **Space** käskeäksesi sitä seuraamaan
 sinua: se kävelee kanssasi ja taistelee sitä vastaan, mitä sinä
 taistelet. Paina siihen uudelleen Space, niin se jää paikalleen ja
@@ -392,7 +394,7 @@ ilmesty aulaan. Voita, niin ryhmäsi nousee itsestään seuraavalle kartalle
 alkaa uudelleen kierrokselta 1; samoin käy, jos poistut jonosta tai ryhmästä. Ottelu,
 joka hävittiin isännän poistumisen vuoksi, säilyttää kierroksesi.
 
-Sali arpoo jokaiseen otteluun yhden kolmesta pelitilasta: Kukkulan kuningas, Reliikkijuoksu tai Valtauspisteet, kahdelle tai kolmelle tiimille. Kahdella tiimillä kolmas tukikohta pysyy suljettuna ja sen mukana sen valtauspiste. Salin ottelu kestää 11 minuuttia ja eniten pisteitä voittaa; Valtauspisteet päättyy myös aikaisemmin 20 pisteen johtoon. Kuolema ei vie moraalia. Kuolleet palaavat yhdessä tukikohtaansa ottelukellon jokaisella täydellä minuutilla, joten pyyhitty tiimi ei ole lyöty, mutta tiimi, jonka kaikki pelaajat ovat poistuneet, on ulkona. Kukkulan kuninkaassa alttaria pitävä tiimi saa yhä pisteitä aaveensa kuoltua, kunnes toinen tiimi valtaa sen, ja sen kuolleet palaavat alttarille. Tasatilanteessa voittaa tiimi, joka teki pisteen viimeisenä, tai Valtauspisteissä tiimi, jolla on tuorein tappo.
+Sali arpoo jokaiseen otteluun yhden kolmesta pelitilasta: Kukkulan kuningas, Reliikkijuoksu tai Valtauspisteet, kahdelle tai kolmelle tiimille. Kahdella tiimillä kolmas tukikohta pysyy suljettuna ja sen mukana sen kahden gallerian valtauspisteet. Salin ottelu kestää 11 minuuttia ja eniten pisteitä voittaa; Valtauspisteet päättyy myös aikaisemmin 20 pisteen johtoon. Kuolema ei vie moraalia. Kuolleet palaavat yhdessä tukikohtaansa ottelukellon jokaisella täydellä minuutilla, joten pyyhitty tiimi ei ole lyöty, mutta tiimi, jonka kaikki pelaajat ovat poistuneet, on ulkona. Kukkulan kuninkaassa alttaria pitävä tiimi saa yhä pisteitä aaveensa kuoltua, kunnes toinen tiimi valtaa sen, ja sen kuolleet palaavat alttarille. Tasatilanteessa voittaa tiimi, joka teki pisteen viimeisenä, tai Valtauspisteissä tiimi, jolla on tuorein tappo.
 
 **Holvi.** Sali muodostuu vain joka 12. minuutti UTC-kellon mukaan, kello :00, :12, :24, :36 ja :48. Siihen asti ryhmäsi odottaa Holvissa: jonokuvake näyttää ajan seuraavaan avautumiseen ja sen, kuka hallitsee Salia. Jokaisessa avautumisessa hallitsija kohtaa enintään kaksi haastajaa, tai enintään kolme haastajaa kohtaa toisensa, jos kukaan ei hallitse sitä. Vain ennen avautumista odottaneet ryhmät osallistuvat, ja paikkojen ulkopuolelle jäävät odottavat seuraavaa. Hallitsija, jolla ei ole ketään vastustajaa, pitää Salin ja odottaa ilman laskettua voittoa, ja yksinäinen haastaja odottaa myös. Kun ryhmä voittaa Salin, jokainen avoin peli kertoo, kuka sitä nyt hallitsee: sen johtaja tai sen kiltatunnus, kun yli puolella ryhmästä on sama.
 

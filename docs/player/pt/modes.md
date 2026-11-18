@@ -186,9 +186,11 @@ das duas bases. Em **Threefold Keep**, três equipes (duas se não houver uma te
 disputam dentro de uma fortaleza murada. As portas só abrem por dentro, com uma
 placa: para entrar, contorne até um canto aberto. No máximo 12 pontos por
 equipe, e se todos os rivais estiverem a -60% de moral, você vence na hora. O **Hall of
-Heroes**, o mapa de Rei da Colina que encerra a Ascensão dos Heróis, o
-ergue em um estrado murado a oeste e a leste, com subida ao norte ou ao
-sul ladeada de pilares. Mire no seu fantasma com o **botão direito** e
+Heroes** (8v8, 5000x4400), o mapa que encerra a Ascensão dos Heróis, é um
+salão dourado para três equipes: o altar fica sobre um estrado com pilares e
+seis escadarias, num pedestal com uma galeria entre cada par de bases, e uma
+cripta corre sob o piso de cada base até dentro do pedestal. As portas das
+criptas começam fechadas, e a alavanca de qualquer equipe abre as três. Mire no seu fantasma com o **botão direito** e
 pressione **Space** para mandá-lo seguir você: ele anda com você e luta
 contra o que você luta. Pressione Space nele de novo e ele fica onde está,
 lutando contra qualquer inimigo que chegue perto. Se você morrer ou sair,
@@ -366,7 +368,7 @@ do fim, e sua próxima Ascensão recomeça na rodada 1; o mesmo vale para
 sair da fila ou do grupo. Uma partida perdida porque o host saiu mantém
 sua rodada.
 
-O Hall sorteia um de três modos para cada partida: Rei da Colina, Corrida da Relíquia ou Captura de Pontos, para duas ou três equipes. Com duas, a terceira base fica fechada, e com ela seu ponto de captura. Uma partida no Hall dura 11 minutos e vence quem tiver mais pontos; a Captura de Pontos também termina antes com uma vantagem de 20. Morrer não custa moral. Os mortos voltam juntos à sua base a cada minuto cheio do relógio da partida, então uma equipe eliminada não está derrotada, mas uma equipe cujos jogadores saíram todos está fora. No Rei da Colina, a equipe que controla o altar continua pontuando depois que seu fantasma morre, até outra equipe tomá-lo, e seus mortos voltam no altar. Um empate vai para a equipe que pontuou por último ou, na Captura de Pontos, para a que fez a eliminação mais recente.
+O Hall sorteia um de três modos para cada partida: Rei da Colina, Corrida da Relíquia ou Captura de Pontos, para duas ou três equipes. Com duas, a terceira base fica fechada, e com ela os pontos de captura das suas duas galerias. Uma partida no Hall dura 11 minutos e vence quem tiver mais pontos; a Captura de Pontos também termina antes com uma vantagem de 20. Morrer não custa moral. Os mortos voltam juntos à sua base a cada minuto cheio do relógio da partida, então uma equipe eliminada não está derrotada, mas uma equipe cujos jogadores saíram todos está fora. No Rei da Colina, a equipe que controla o altar continua pontuando depois que seu fantasma morre, até outra equipe tomá-lo, e seus mortos voltam no altar. Um empate vai para a equipe que pontuou por último ou, na Captura de Pontos, para a que fez a eliminação mais recente.
 
 **A Câmara.** O Hall só se forma a cada 12 minutos no horário UTC, às :00, :12, :24, :36 e :48. Até lá, seu grupo espera na Câmara: o ícone da fila mostra o tempo até a próxima abertura e quem domina o Hall. Em cada abertura, quem o domina enfrenta até dois desafiantes, ou até três desafiantes se enfrentam se ninguém o dominar. Só participam os grupos que já esperavam antes da abertura, e os que ficarem sem vaga esperam a seguinte. Quem domina sem adversário mantém o Hall e espera, sem contar vitória, e um desafiante sozinho também espera. Quando um grupo vence o Hall, todos os jogos abertos dizem quem o domina: seu líder, ou a sigla da guilda se mais da metade do grupo a compartilhar.
 

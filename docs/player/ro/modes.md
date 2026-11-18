@@ -172,9 +172,11 @@ Fantomatic** în bază, o fantomă care luptă cu un topor și pe care nu o joac
 trei echipe (două când nu e liberă a treia) luptă pentru el într-o fortăreață
 împrejmuită. Ușile ei se deschid doar din interior, printr-o placă dinăuntru: ocolește
 până la un colț deschis ca să intri. Cel mult 12 puncte pe echipă, iar dacă fiecare
-inamic e la -60% moral, câștigi imediat. **Sala Eroilor**, harta de Regele dealului
-care încheie Ascensiunea Eroilor, îl ridică pe un podium împrejmuit la vest și est,
-la capătul unei urcări dinspre nord sau sud mărginită de coloane. Țintește-ți fantoma
+inamic e la -60% moral, câștigi imediat. **Sala Eroilor** (8v8, 5000x4400), harta
+care încheie Ascensiunea Eroilor, e o sală aurie pentru trei echipe: altarul stă pe un
+podium cu coloane și șase scări, pe un soclu cu o galerie între fiecare pereche de baze,
+iar din fiecare bază o criptă trece pe sub podea și urcă în soclu. Ușile criptelor
+încep închise, iar pârghia oricărei echipe le deschide pe toate trei. Țintește-ți fantoma
 cu **clic dreapta** și apasă **Space** ca să-i spui să te urmeze: merge cu tine și
 luptă cu ce lupți tu. Apasă din nou Space pe ea și rămâne unde stă, luptând cu orice
 inamic care se apropie. Dacă mori sau pleci, rămâne pe loc. Cu fantoma țintită, cadrul
@@ -352,7 +354,7 @@ coadă sau din grup. Un meci pierdut pentru că a plecat gazda îți păstrează
 
 Sala trage la sorți unul din trei moduri pentru fiecare meci: Regele dealului, Cursa
 relicvelor sau Capturare de puncte, pentru două sau trei echipe. Cu două, a treia bază
-rămâne închisă și, odată cu ea, punctul ei de capturare. Un meci în Sală durează 11
+rămâne închisă și, odată cu ea, punctele de capturare de pe cele două galerii ale ei. Un meci în Sală durează 11
 minute și câștigă cele mai multe puncte; Capturare de puncte se termină și mai devreme
 la un avans de 20. Moartea nu costă moral. Morții revin împreună la baza lor la fiecare
 minut întreg de pe ceasul meciului, așa că o echipă eliminată nu e învinsă, dar o echipă

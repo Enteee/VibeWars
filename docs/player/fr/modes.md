@@ -181,10 +181,12 @@ personne ne joue. L'**autel** est au centre, à la même distance des deux bases
 Sur **Threefold Keep**, trois équipes (deux si aucune troisième n'est libre) se le
 disputent dans un donjon muré. Ses portes ne s'ouvrent que de l'intérieur, par
 une plaque : pour entrer, contourne-le jusqu'à un coin ouvert. Au plus 12 points
-par équipe, et si tous les adversaires sont à -60 % de moral, tu gagnes aussitôt. Le **Hall of Heroes**, la
-carte de Roi de la colline qui clôt l'Ascension des héros, le dresse sur une
-estrade murée à l'ouest et à l'est, par une approche nord ou sud bordée de
-piliers. Cible ton fantôme avec un **clic droit** et appuie sur **Space** pour
+par équipe, et si tous les adversaires sont à -60 % de moral, tu gagnes aussitôt. Le **Hall of Heroes** (8v8, 5000x4400), la
+carte qui clôt l'Ascension des héros, est une salle dorée pour trois équipes :
+l'autel se dresse sur une estrade à piliers de six escaliers, sur un socle d'où
+part une galerie entre chaque paire de bases, et une crypte court sous le sol
+de chaque base jusque dans le socle. Les portes des cryptes sont d'abord
+fermées, et le levier de n'importe quelle équipe les ouvre toutes les trois. Cible ton fantôme avec un **clic droit** et appuie sur **Space** pour
 lui dire de te suivre : il marche avec toi et combat ce que tu combats. Appuie
 de nouveau sur Space sur lui et il reste où il est, en combattant tout ennemi
 qui s'approche. Si tu meurs ou pars, il reste. Quand ton fantôme est ciblé, son
@@ -366,7 +368,7 @@ défendre. Perds, ou quitte un match avant sa fin, et ta prochaine Ascension
 recommence à la manche 1 ; pareil si tu quittes la file ou le groupe. Un match
 perdu parce que son hôte est parti garde ta manche.
 
-Le Hall tire au sort un de trois modes pour chaque match : Roi de la colline, Course aux reliques ou Points de capture, pour deux ou trois équipes. À deux, la troisième base reste fermée, et son point de capture avec elle. Un match dans le Hall dure 11 minutes et le plus de points gagne ; les Points de capture se terminent aussi plus tôt sur une avance de 20. La mort ne coûte pas de moral. Les morts reviennent ensemble à leur base à chaque minute pleine de l'horloge du match : une équipe décimée n'est donc pas battue, mais une équipe dont tous les joueurs sont partis est éliminée. Au Roi de la colline, l'équipe qui tient l'autel continue de marquer après la mort de son fantôme, jusqu'à ce qu'une autre équipe le prenne, et ses morts reviennent sur l'autel. Une égalité va à l'équipe qui a marqué en dernier ou, aux Points de capture, à celle qui a fait le dernier kill.
+Le Hall tire au sort un de trois modes pour chaque match : Roi de la colline, Course aux reliques ou Points de capture, pour deux ou trois équipes. À deux, la troisième base reste fermée, et avec elle les points de capture de ses deux galeries. Un match dans le Hall dure 11 minutes et le plus de points gagne ; les Points de capture se terminent aussi plus tôt sur une avance de 20. La mort ne coûte pas de moral. Les morts reviennent ensemble à leur base à chaque minute pleine de l'horloge du match : une équipe décimée n'est donc pas battue, mais une équipe dont tous les joueurs sont partis est éliminée. Au Roi de la colline, l'équipe qui tient l'autel continue de marquer après la mort de son fantôme, jusqu'à ce qu'une autre équipe le prenne, et ses morts reviennent sur l'autel. Une égalité va à l'équipe qui a marqué en dernier ou, aux Points de capture, à celle qui a fait le dernier kill.
 
 **La Chambre forte.** Le Hall ne se forme que toutes les 12 minutes à l'heure UTC, à :00, :12, :24, :36 et :48. D'ici là, votre groupe attend dans la Chambre forte : l'icône de file indique le temps avant la prochaine ouverture et qui tient le Hall. À chaque ouverture, le détenteur affronte jusqu'à deux prétendants, ou jusqu'à trois prétendants s'affrontent si personne ne le tient. Seuls les groupes qui attendaient avant l'ouverture participent, et ceux qui restent sans place attendent la suivante. Un détenteur sans adversaire garde le Hall et attend, sans victoire comptée, et un prétendant seul attend aussi. Quand un groupe gagne le Hall, chaque jeu ouvert annonce qui le tient : son chef, ou son tag de guilde si plus de la moitié du groupe le partage.
 

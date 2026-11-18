@@ -175,9 +175,11 @@ markas. Di **Threefold Keep**, tiga tim (dua kalau tak ada tim ketiga yang terse
 di dalam sebuah keep bertembok. Pintu-pintunya hanya bisa dibuka dari dalam, lewat sebuah pelat di dalamnya: jalan
 memutar ke sudut yang terbuka untuk masuk. Paling banyak 12 poin per tim, dan kalau setiap musuh
 berada di moral -60% kamu langsung menang. **Aula
-Pahlawan**, peta Raja Bukit yang mengakhiri Pendakian Pahlawan, meninggikan
-altar di atas panggung bertembok di barat dan timur, naik lewat jalan utara atau selatan
-yang dijajari pilar. Targetkan hantumu dengan
+Pahlawan** (8v8, 5000x4400), peta yang mengakhiri Pendakian Pahlawan, adalah aula emas
+untuk tiga tim: altar berdiri di atas panggung berpilar dengan enam tangga, di atas alas dengan
+sebuah galeri di antara setiap pasang markas, dan sebuah kripta membentang di bawah lantai dari
+setiap markas naik ke dalam alas. Pintu-pintu kripta mulai tertutup, dan tuas tim mana pun
+membuka ketiganya. Targetkan hantumu dengan
 **klik kanan** lalu tekan **Space** untuk menyuruhnya mengikutimu: ia berjalan
 bersamamu dan melawan apa yang kamu lawan. Tekan Space padanya lagi dan ia
 diam di tempatnya berdiri, melawan musuh mana pun yang mendekat. Kalau kamu mati atau
@@ -354,7 +356,7 @@ detik; menang di Aula, dan kamu tetap di sana untuk mempertahankannya. Kalah, at
 dimulai lagi dari ronde 1; begitu juga kalau kamu keluar dari antrean atau party. Laga
 yang kalah karena host-nya keluar mempertahankan rondemu.
 
-Aula mengundi satu dari tiga mode untuk setiap laga: Raja Bukit, Lari Relik atau Rebut Titik, untuk dua atau tiga tim. Dengan dua tim, markas ketiga tetap tertutup, begitu juga titik rebutnya. Laga di Aula berlangsung 11 menit dan poin terbanyak menang; Rebut Titik juga berakhir lebih cepat kalau ada keunggulan 20 poin. Kematian tidak mengurangi moral. Yang mati kembali bersama-sama di markasnya setiap menit penuh waktu laga, jadi tim yang habis tidak otomatis kalah, tapi tim yang semua pemainnya sudah keluar tersingkir. Di Raja Bukit, tim yang menguasai altar terus mencetak poin setelah hantunya mati, sampai tim lain merebutnya, dan anggotanya yang mati kembali di altar. Kalau seri, kemenangan jatuh ke tim yang terakhir mencetak poin, atau di Rebut Titik ke tim dengan kill paling akhir.
+Aula mengundi satu dari tiga mode untuk setiap laga: Raja Bukit, Lari Relik atau Rebut Titik, untuk dua atau tiga tim. Dengan dua tim, markas ketiga tetap tertutup, begitu juga titik rebut di kedua galerinya. Laga di Aula berlangsung 11 menit dan poin terbanyak menang; Rebut Titik juga berakhir lebih cepat kalau ada keunggulan 20 poin. Kematian tidak mengurangi moral. Yang mati kembali bersama-sama di markasnya setiap menit penuh waktu laga, jadi tim yang habis tidak otomatis kalah, tapi tim yang semua pemainnya sudah keluar tersingkir. Di Raja Bukit, tim yang menguasai altar terus mencetak poin setelah hantunya mati, sampai tim lain merebutnya, dan anggotanya yang mati kembali di altar. Kalau seri, kemenangan jatuh ke tim yang terakhir mencetak poin, atau di Rebut Titik ke tim dengan kill paling akhir.
 
 **Ruang Besi.** Aula hanya terbentuk setiap 12 menit menurut jam UTC, pada :00, :12, :24, :36 dan :48. Sampai saat itu party-mu menunggu di Ruang Besi: ikon antrean menampilkan waktu sampai pembukaan berikutnya dan siapa yang menguasai Aula. Pada setiap pembukaan, penguasa Aula bertemu sampai dua penantang, atau sampai tiga penantang bertemu kalau tak ada yang menguasainya. Hanya party yang sudah menunggu sebelum pembukaan yang ikut, dan sisanya di luar kursi itu menunggu pembukaan berikutnya. Penguasa yang tak punya lawan tetap menguasai Aula dan menunggu, tanpa kemenangan yang dihitung, dan penantang tunggal juga menunggu. Saat sebuah party memenangkan Aula, setiap game yang terbuka menyebutkan siapa yang kini menguasainya: pemimpinnya, atau tag guild-nya kalau lebih dari separuh party memakai tag yang sama.
 

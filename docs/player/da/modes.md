@@ -186,9 +186,11 @@ På **Threefold Keep** kæmper tre hold (to, når intet tredje er ledigt) om
 det inde i en indmuret borg. Dens døre åbner kun indefra, med en plade
 indenfor: gå rundt til et åbent hjørne for at komme ind. Højst 12 point
 pr. hold, og står alle fjender på -60 % moral, vinder du med det samme.
-**Heltenes Hal**, den Kongen af bakken-bane, der afslutter Heltenes
-opstigning, hæver det på en forhøjning med mure mod vest og øst, op ad en
-nordlig eller en sydlig tilgang med søjler langs. Vælg dit spøgelse som
+**Heltenes Hal** (8v8, 5000x4400), den bane, der afslutter Heltenes
+opstigning, er en gylden hal for tre hold: alteret står på en forhøjning
+med søjler og seks trapper, på en sokkel med et galleri ud mellem hvert
+par baser, og en krypt løber under gulvet fra hver base op i soklen.
+Kryptdørene starter lukket, og ethvert holds håndtag åbner alle tre. Vælg dit spøgelse som
 mål med et **højreklik**, og tryk på **Mellemrum** for at bede det følge
 dig: det går med dig og kæmper mod det, du kæmper mod. Tryk på Mellemrum
 på det igen, så bliver det stående, hvor det står, og kæmper mod enhver
@@ -386,7 +388,7 @@ kamp, før den er slut, starter din næste Opstigning igen i runde 1; det
 samme gælder, hvis du forlader køen eller gruppen. En kamp, der tabes,
 fordi dens vært gik, beholder din runde.
 
-Hallen trækker en af tre spiltilstande til hver kamp: Kongen af bakken, Relikvieløb eller Erobring, for to eller tre hold. Med to forbliver den tredje base lukket, og med den dens erobringspunkt. En kamp i Hallen varer 11 minutter, og flest point vinder; Erobring slutter også tidligt ved et forspring på 20. Død koster ingen moral. De døde vender samlet tilbage ved deres base ved hvert hele minut på kampuret, så et udslettet hold er ikke slået, men et hold, hvis spillere alle er gået, er ude. I Kongen af bakken bliver det hold, der holder alteret, ved med at score, efter dets spøgelse dør, indtil et andet hold gør krav på det, og dets døde vender tilbage på alteret. Står det lige, går sejren til det hold, der scorede sidst, eller i Erobring til holdet med det seneste drab.
+Hallen trækker en af tre spiltilstande til hver kamp: Kongen af bakken, Relikvieløb eller Erobring, for to eller tre hold. Med to forbliver den tredje base lukket, og med den erobringspunkterne på dens to gallerier. En kamp i Hallen varer 11 minutter, og flest point vinder; Erobring slutter også tidligt ved et forspring på 20. Død koster ingen moral. De døde vender samlet tilbage ved deres base ved hvert hele minut på kampuret, så et udslettet hold er ikke slået, men et hold, hvis spillere alle er gået, er ude. I Kongen af bakken bliver det hold, der holder alteret, ved med at score, efter dets spøgelse dør, indtil et andet hold gør krav på det, og dets døde vender tilbage på alteret. Står det lige, går sejren til det hold, der scorede sidst, eller i Erobring til holdet med det seneste drab.
 
 **Hvælvingen.** Hallen dannes kun hvert 12. minut efter UTC-uret, kl. :00, :12, :24, :36 og :48. Indtil da venter din gruppe i Hvælvingen: køikonet viser tiden til næste åbning, og hvem der holder Hallen. Ved hver åbning møder holderen op til to udfordrere, eller op til tre udfordrere mødes, hvis ingen holder den. Kun grupper, der venter før åbningen, er med, og dem ud over de pladser venter til den næste. En holder uden nogen at kæmpe mod beholder Hallen og venter, uden at en sejr tælles, og en enlig udfordrer venter også. Når en gruppe vinder Hallen, siger hvert åbent spil, hvem der holder den nu: dens leder, eller dens laugsmærke, når mere end halvdelen af gruppen deler ét.
 

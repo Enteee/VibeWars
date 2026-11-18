@@ -198,9 +198,11 @@ bázistól ugyanakkora sétára. A **Threefold Keep** pályán három csapat
 várban. Az ajtói csak belülről nyílnak, egy belső lappal: sétálj körbe
 egy nyitott sarokig, hogy bejuss. Csapatonként legfeljebb 12 pont, és
 ha minden ellenség -60% morálon áll, azonnal nyersz. A **Hősök
-Csarnoka**, A domb ura pálya, amely a Hősök Útját zárja, egy nyugatról
-és keletről fallal határolt emelvényre emeli, amelyre egy északi vagy
-egy déli, oszlopokkal szegélyezett feljáró vezet. Vedd célba a
+Csarnoka** (8v8, 5000x4400), a pálya, amely a Hősök Útját zárja, egy arany
+csarnok három csapatnak: az oltár egy oszlopos, hat lépcsős emelvényen áll,
+egy talapzaton, amelyből minden két bázis között egy karzat nyúlik ki, és
+minden bázistól egy kripta fut a padló alatt fel a talapzatba. A kripták
+ajtajai zárva kezdenek, és bármelyik csapat karja kinyitja mind a hármat. Vedd célba a
 kísértetedet **jobb kattintással**, és nyomd meg a **Space**
 billentyűt, hogy kövessen: veled sétál, és azzal harcol, amivel te.
 Nyomd meg rajta újra a Space billentyűt, és ott marad, ahol áll, és
@@ -416,7 +418,7 @@ kilépett, megtartja a körödet.
 
 A Csarnok minden meccsre három mód közül sorsol egyet: A domb ura,
 Ereklyefutam vagy Pontfoglalás, két vagy három csapatnak. Kettőnél a
-harmadik bázis zárva marad, és vele a foglalási pontja is. A Csarnok
+harmadik bázis zárva marad, és vele a két karzatán lévő foglalási pontok is. A Csarnok
 meccse 11 percig tart, és a legtöbb pont nyer; a Pontfoglalás 20 pontos
 előnnyel korábban is véget ér. A halál nem kerül morálba. A halottak a
 meccsóra minden egész percében együtt térnek vissza a bázisukon, így az

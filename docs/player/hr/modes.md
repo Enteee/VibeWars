@@ -177,9 +177,10 @@ baze. Na **Threefold Keepu** tri tima (dva kad treći nije slobodan) bore se za 
 unutar ograđene utvrde. Njezina se vrata otvaraju samo iznutra, pločom unutra: obiđi
 do otvorenog ugla da uđeš. Najviše 12 bodova po timu, a ako svi neprijatelji
 stoje na -60% morala, odmah pobjeđuješ. **Hall of
-Heroes**, karta Kralja brda koja završava Uspon heroja, diže
-ga na podij ograđen sa zapada i istoka, do kojeg se stiže sjevernim ili južnim prilazom
-obrubljenim stupovima. Ciljaj svoju sablast
+Heroes** (8v8, 5000x4400), karta koja završava Uspon heroja, zlatna je dvorana
+za tri tima: oltar stoji na podiju sa stupovima i šest stubišta, na postolju s galerijom
+između svakog para baza, a iz svake baze ispod poda vodi kripta gore u postolje.
+Vrata kripti na početku su zatvorena, a poluga bilo kojeg tima otvara sva troja. Ciljaj svoju sablast
 **desnim klikom** i pritisni **Space** da joj kažeš da te slijedi: hoda
 s tobom i bori se s onim s čime se boriš. Ponovno pritisni Space na njoj i
 ostaje gdje stoji, boreći se sa svakim neprijateljem koji priđe. Ako umreš ili
@@ -356,7 +357,7 @@ sekundi; pobijedi u Hall of Heroes i ostaješ ga braniti. Izgubi ili napusti me�
 počinje opet od runde 1; isto vrijedi za napuštanje reda ili grupe. Meč
 izgubljen zato što je domaćin otišao zadržava tvoju rundu.
 
-Hall of Heroes za svaki meč izvlači jedan od tri načina: Kralj brda, Utrka za relikvijom ili Zauzimanje točaka, za dva ili tri tima. S dva tima treća baza ostaje zatvorena, a s njom i njezina točka za zauzimanje. Meč u Hall of Heroes traje 11 minuta i pobjeđuje najviše bodova; Zauzimanje točaka završava i ranije pri vodstvu od 20. Smrt ne stoji morala. Mrtvi se zajedno vraćaju u svoju bazu svake pune minute sata meča, pa zbrisani tim nije poražen, ali tim čiji su svi igrači otišli ispada. U Kralju brda tim koji drži oltar nastavlja bodovati i nakon što mu sablast umre, dok ga drugi tim ne zauzme, a njegovi se mrtvi vraćaju na oltar. Izjednačenje ide timu koji je zadnji bodovao, a u Zauzimanju točaka timu s najnovijim ubojstvom.
+Hall of Heroes za svaki meč izvlači jedan od tri načina: Kralj brda, Utrka za relikvijom ili Zauzimanje točaka, za dva ili tri tima. S dva tima treća baza ostaje zatvorena, a s njom i točke za zauzimanje na njezinim dvjema galerijama. Meč u Hall of Heroes traje 11 minuta i pobjeđuje najviše bodova; Zauzimanje točaka završava i ranije pri vodstvu od 20. Smrt ne stoji morala. Mrtvi se zajedno vraćaju u svoju bazu svake pune minute sata meča, pa zbrisani tim nije poražen, ali tim čiji su svi igrači otišli ispada. U Kralju brda tim koji drži oltar nastavlja bodovati i nakon što mu sablast umre, dok ga drugi tim ne zauzme, a njegovi se mrtvi vraćaju na oltar. Izjednačenje ide timu koji je zadnji bodovao, a u Zauzimanju točaka timu s najnovijim ubojstvom.
 
 **Trezor.** Hall of Heroes otvara se samo svakih 12 minuta po UTC satu, u :00, :12, :24, :36 i :48. Do tada tvoja grupa čeka u Trezoru: ikona reda prikazuje vrijeme do sljedećeg otvaranja i tko drži Hall of Heroes. Pri svakom otvaranju držač se susreće s najviše dva izazivača, a ako ga nitko ne drži, susreću se najviše tri izazivača. Sudjeluju samo grupe koje su čekale prije otvaranja, a sve izvan tih mjesta čekaju sljedeće. Držač bez protivnika zadržava Hall of Heroes i čeka, bez računanja pobjede, a čeka i usamljeni izazivač. Kad grupa osvoji Hall of Heroes, svaka otvorena igra kaže tko ga sad drži: njezin vođa ili oznaka ceha kad je dijeli više od pola grupe.
 
