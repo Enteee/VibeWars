@@ -1387,7 +1387,7 @@ describe("walks and high ground (#3070)", () => {
 
   // Guild Hall Isle (#3445): team 2's half is team 1's turned 180° about the flag dais, so every
   // walk below is the same both ways. Out of a base three ways: under the rampart by the
-  // gatehouse, over it by its stairs, or round it along a pier.
+  // gatehouse, over it by its stairs, or round its end, dry along a pier or wading the inlet.
   describe("Guild Hall Isle", () => {
     const map = loadMap("guild-hall-isle");
     const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
@@ -1400,11 +1400,14 @@ describe("walks and high ground (#3070)", () => {
     const northPier = ["north-west-pier-west-stair", "north-west-pier-east-stair"];
     const southPier = ["south-west-pier-west-stair", "south-west-pier-east-stair"];
     const ways = [gatehouse, rampart, northPier, southPier];
-    /** Through `way`, every other way out of the team's base shut. */
+    /**
+     * Through `way`, every other way out of the team's base shut. Round an end, the walk may
+     * take the pier or wade the inlet under it, so it need pass none of the pier's stairs.
+     */
     const by =
       (way: readonly string[]) =>
       (team: number): Route => ({
-        through: way.map((id) => own(team, id)),
+        through: way === northPier || way === southPier ? [] : way.map((id) => own(team, id)),
         shut: ways
           .filter((each) => each !== way)
           .flatMap((each) => each.map((id) => own(team, id))),
@@ -1423,8 +1426,8 @@ describe("walks and high ground (#3070)", () => {
     it.each([
       ["the gatehouse", gatehouse],
       ["the rampart", rampart],
-      ["the north pier", northPier],
-      ["the south pier", southPier],
+      ["the north end", northPier],
+      ["the south end", southPier],
     ])(
       "walks each team to the flag stand by %s within 10 % of the other, in under 30 s",
       (_, way) => {
@@ -1456,11 +1459,14 @@ describe("walks and high ground (#3070)", () => {
       );
     });
 
-    it("keeps the rampart and the piers open with the gatehouse doors shut", () => {
+    it("keeps the rampart and the ends open with the gatehouse doors shut", () => {
       const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
       within(walksByRoute(shut, stand, 2, by(rampart)), 0.1);
       within(walksByRoute(shut, stand, 2, by(northPier)), 0.1);
-      expect(() => walksByRoute(shut, stand, 2, by(gatehouse))).toThrow(/cannot reach/);
+      // The shut doors turn the walk away from the gatehouse: it wades round an end instead.
+      expect(() => walksByRoute(shut, stand, 2, by(gatehouse))).toThrow(
+        /did not pass west-gatehouse-west-steps, west-gatehouse-east-steps/,
+      );
     });
 
     it("gives the teams high ground within 25 % of each other", () => {
