@@ -17,6 +17,7 @@ function replay(seed: string): MatchReplay {
     teamCount: 2,
     mode: "random-arena",
     ticks: 2,
+    overrunBy: null,
     inputs: [[1, "intent", "player-1", { kind: "stop" }]],
   };
 }

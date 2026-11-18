@@ -406,11 +406,15 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * match without a lobby, where `replayBudget` has no fixed slots.
    */
   let replayLog: ReplayInput[] | null = options.recordReplay === false ? null : [];
+  /** Where the recording stopped (#3572): the tick a player overran its share, and who. */
+  let overrun: { readonly tick: number; readonly by: string } | null = null;
   const logInput = (input: ReplayInput): void => {
     if (replayLog !== null && replayLog.length >= MAX_REPLAY_INPUTS) {
       replayLog = null;
     }
-    replayLog?.push(input);
+    if (overrun === null) {
+      replayLog?.push(input);
+    }
   };
   let recorded: RecordedReplay | null = null;
   /**
@@ -425,9 +429,20 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
           options.matchRules.timeLimitSeconds,
         );
   const slotOf = new Map<string, string>();
-  /** Spend `chars` of `slot`'s share of the replay; false if it has not got them. */
-  const pay = (slot: string, chars: number): boolean =>
-    replayBudget?.take(slot, chars, sim.elapsedSeconds) ?? true;
+  /**
+   * Charge `chars` to `playerId`'s slot's share of the replay. Past it,
+   * the player has overrun: what it does is still played, and the
+   * recording stops here, naming it.
+   */
+  const charge = (
+    playerId: string,
+    chars: number,
+    slot = slotOf.get(playerId) ?? playerId,
+  ): void => {
+    if (overrun === null && replayBudget?.take(slot, chars, sim.elapsedSeconds) === false) {
+      overrun = { tick: sim.tick, by: playerId };
+    }
+  };
   const seats = new Map<string, Seat>();
   const seatOfPeer = new Map<string, Seat>();
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
@@ -1083,10 +1098,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       latestInputChars("remove", setup.id) +
       latestInputChars("drop", setup.id) +
       FORFEIT_CHARS;
-    if (!pay(slot, joinChars)) {
-      refuse(from, "match-full");
-      return;
-    }
+    charge(setup.id, joinChars, slot);
     awaited.delete(from);
     syncAwaitedTeams();
     // The lobby's name, tag and cape, whatever the hello says (#53,
@@ -1156,9 +1168,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       held.token !== token ||
       playerId !== challenge.playerId ||
       proof !== expected ||
-      !claimable(held, from) ||
-      // Each rejoin pays for the drop that may follow it.
-      !pay(slotOf.get(held.playerId) ?? held.playerId, latestInputChars("drop", held.playerId))
+      !claimable(held, from)
     ) {
       join(challenge.hello, from);
       return;
@@ -1169,6 +1179,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     if (held.peerId !== undefined) {
       seatOfPeer.delete(held.peerId);
     }
+    // Each rejoin pays for the drop that may follow it.
+    charge(held.playerId, latestInputChars("drop", held.playerId));
     welcome(held, from);
   };
 
@@ -1187,10 +1199,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     const input: ReplayInput = [sim.tick, "intent", seat.playerId, intent];
-    // Past its share of the replay, the sim never hears it either.
-    if (!pay(slotOf.get(seat.playerId) ?? seat.playerId, inputChars(input))) {
-      return;
-    }
+    charge(seat.playerId, inputChars(input));
     const refusal = applyIntent(sim, seat.playerId, intent);
     // Refused ones too: the sim heard them, and a refusal can still change it.
     logInput(input);
@@ -1211,9 +1220,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     // It may change the team's call twice: now, and when it lapses.
-    if (!pay(slotOf.get(seat.playerId) ?? seat.playerId, 2 * CALLED_CHARS)) {
-      return;
-    }
+    charge(seat.playerId, 2 * CALLED_CHARS);
     const isLiveEnemy = (targetId: string): boolean =>
       isAlive(targetId) && sim.get(targetId)?.combatant.team !== seat.team;
     if (calls.call(seat.team, seat.playerId, call, sim.elapsedSeconds, isLiveEnemy)) {
@@ -1418,8 +1425,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   });
 
   /**
-   * The finished match's replay to `to` (#3572), once hashed; none
-   * when not recording, past `MAX_REPLAY_INPUTS` or `MAX_REPLAY_CHARS`.
+   * The finished match's replay to `to` (#3572), once hashed, up to where
+   * a player overran; none when not recording, past `MAX_REPLAY_INPUTS`
+   * or `MAX_REPLAY_CHARS`.
    */
   const sendReplay = (to: readonly string[]): void => {
     const recording = options.recordReplay;
@@ -1432,7 +1440,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       map: map.descriptor.id,
       teamCount: map.descriptor.teamCount,
       mode: options.mode,
-      ticks: sim.tick,
+      ticks: overrun?.tick ?? sim.tick,
+      overrunBy: overrun?.by ?? null,
       inputs: replayLog,
     };
     // Finished: nothing done after it is part of it.

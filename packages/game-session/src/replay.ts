@@ -40,17 +40,23 @@ export interface MatchReplay {
   readonly map: string;
   readonly teamCount: WireTeamCount;
   readonly mode: LobbyMode;
-  /** The tick the match finished at. */
+  /**
+   * The tick the match finished at; or, when a player overran its share
+   * of the replay, the tick it did, where the recording stops.
+   */
   readonly ticks: number;
+  /** The player whose input overran its share (`ReplayBudget`), or `null`: the whole match. */
+  readonly overrunBy: string | null;
   readonly inputs: readonly ReplayInput[];
 }
 
 /**
  * The longest a replay's encoding is, in characters: what a client takes.
  * A lobby match's host never records more: `ReplayBudget` shares it out
- * among the players, whatever they send.
+ * among the players, whatever they send. It fits 16 players at
+ * `REPLAY_INPUTS_PER_SEAT_SECOND` for a whole Guild Battle.
  */
-export const MAX_REPLAY_CHARS = 5_000_000;
+export const MAX_REPLAY_CHARS = 32_000_000;
 
 /** The most inputs a replay holds: none encodes in fewer than 16 characters. */
 export const MAX_REPLAY_INPUTS = MAX_REPLAY_CHARS / 16;
@@ -197,6 +203,7 @@ export function parseReplay(value: unknown): MatchReplay | undefined {
     (raw.teamCount !== 2 && raw.teamCount !== 3) ||
     !isMode(raw.mode) ||
     !isCount(raw.ticks) ||
+    (raw.overrunBy !== null && !isText(raw.overrunBy)) ||
     !Array.isArray(raw.inputs) ||
     raw.inputs.length > MAX_REPLAY_INPUTS
   ) {
@@ -220,6 +227,7 @@ export function parseReplay(value: unknown): MatchReplay | undefined {
     teamCount,
     mode: raw.mode,
     ticks,
+    overrunBy: isText(raw.overrunBy) ? raw.overrunBy : null,
     inputs,
   };
 }

@@ -32,13 +32,26 @@ export const CALLED_CHARS = inputChars([LATEST_TICK, "called", 2, "x".repeat(64)
 export const FORFEIT_CHARS = inputChars([LATEST_TICK, "forfeit", 2, [0, 1, 2]]);
 
 /**
+ * How many inputs a second each player may put in a match's replay, on
+ * average over the match (#3572): GW1 play averages well under one, and
+ * peaks near 25 for a few seconds, which the burst covers.
+ */
+export const REPLAY_INPUTS_PER_SEAT_SECOND = 10;
+
+/** What an input is budgeted at, in characters: a move at any angle is about 100. */
+export const REPLAY_CHARS_PER_INPUT = 100;
+
+/**
  * What each player may put in a match's replay (#3572), in characters of
- * its encoding: a token bucket per slot, refilled by match time and never
- * past the time limit. A slot gets at most its share over a whole match,
- * so the slots' inputs and the reserve fit `MAX_REPLAY_CHARS` whatever
- * they send, and a player who floods the host cannot make it keep no
- * replay. What a player cannot pay for is ignored before the simulation
- * hears it, so the replay and the match never disagree.
+ * its encoding: a token bucket per slot, refilled by match time at
+ * `REPLAY_INPUTS_PER_SEAT_SECOND` inputs a second, and never past the time
+ * limit. A slot gets at most its share over a whole match, so the slots'
+ * inputs and the reserve fit `MAX_REPLAY_CHARS` whatever they send; with
+ * more slots than that rate fits, the rate shrinks to fit.
+ *
+ * A slot that runs out has overrun: the host still plays its input, and
+ * stops recording there, naming it (`MatchReplay.overrunBy`). Nobody's
+ * play is cut short, and a flood leaves a replay that says who flooded.
  *
  * A slot is a lobby's seat, its peer: a rejoin or a second join is the
  * same slot, with what is left of its share.
@@ -52,7 +65,10 @@ export class ReplayBudget {
   public constructor(slots: number, timeLimitSeconds: number) {
     const share = Math.floor((MAX_REPLAY_CHARS - REPLAY_RESERVE_CHARS) / Math.max(1, slots));
     this.#burst = Math.min(REPLAY_BURST_CHARS, Math.floor(share / 2));
-    this.#ratePerSecond = (share - this.#burst) / timeLimitSeconds;
+    this.#ratePerSecond = Math.min(
+      REPLAY_INPUTS_PER_SEAT_SECOND * REPLAY_CHARS_PER_INPUT,
+      (share - this.#burst) / timeLimitSeconds,
+    );
     this.#timeLimitSeconds = timeLimitSeconds;
   }
 

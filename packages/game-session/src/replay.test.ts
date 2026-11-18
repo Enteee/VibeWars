@@ -58,6 +58,7 @@ function sample(): MatchReplay {
     teamCount: 2,
     mode: "random-arena",
     ticks: 3,
+    overrunBy: null,
     inputs: [
       [0, "awaited", [0, 1]],
       [1, "intent", "p1", { kind: "stop" }],
@@ -73,6 +74,7 @@ describe("a match's replay (#3572)", () => {
     const shuffled: MatchReplay = {
       inputs: replay.inputs,
       ticks: replay.ticks,
+      overrunBy: replay.overrunBy,
       mode: replay.mode,
       teamCount: replay.teamCount,
       map: replay.map,
@@ -191,7 +193,7 @@ describe("a match's replay (#3572)", () => {
   );
 
   it(
-    "is kept when a player floods the host at the full message rate, and still runs again to the same end",
+    "names a player who floods the host, plays every input it sends, and runs again to where it overran",
     { timeout: 60_000 },
     async () => {
       const kept: RecordedReplay[] = [];
@@ -219,20 +221,27 @@ describe("a match's replay (#3572)", () => {
         replays: { sha256, keep: (recorded) => kept.push(recorded) },
       });
       const local = await match.joinLocal();
+      const self = (): number =>
+        local.getSnapshot().players.find((player) => player.sessionId === local.selfSessionId)?.x ??
+        Number.NaN;
       // Three a tick is the 60 a second the host handles, each as long as
       // a message goes: far more than one player's share of the replay.
       const flood: ClientIntent = { kind: "target", targetSessionId: "x".repeat(15_000) };
-      let sent = 0;
-      for (let tick = 0; match.host.phase === "active" && tick < 2 * 60 * 20; tick += 1) {
-        for (let i = 0; i < 3; i += 1) {
-          local.sendIntent(
-            i === 0 ? { kind: "move", dirX: tick % 40 < 20 ? 1 : -1, dirY: 0 } : flood,
-          );
-          sent += 1;
-        }
+      for (let tick = 0; tick < 200; tick += 1) {
+        local.sendIntent(flood);
+        local.sendIntent(flood);
         await match.step(TICK_SECONDS);
       }
-      expect(match.host.phase).toBe("finished");
+      // Long past its share, what it sends is still played.
+      const before = self();
+      local.sendIntent({ kind: "move", dirX: 1, dirY: 0 });
+      for (let tick = 0; tick < 20; tick += 1) {
+        await match.step(TICK_SECONDS);
+      }
+      expect(self()).toBeGreaterThan(before);
+      while (match.host.phase === "active") {
+        await match.step(TICK_SECONDS);
+      }
       await until(() => match.host.replay !== null && kept.length > 0);
       const recorded = match.host.replay;
       if (recorded === null) {
@@ -240,18 +249,14 @@ describe("a match's replay (#3572)", () => {
       }
       expect(kept).toEqual([recorded]);
       const { replay } = recorded;
-      const intents = replay.inputs.filter((input) => input[1] === "intent").length;
-      // What it could not pay for, the simulation never heard.
-      expect(intents).toBeGreaterThan(0);
-      expect(intents).toBeLessThan(sent);
+      expect(replay.overrunBy).toBe(local.selfSessionId);
+      expect(replay.ticks).toBeGreaterThan(0);
+      expect(replay.ticks).toBeLessThan(200);
       expect(encodeReplay(replay).length).toBeLessThanOrEqual(MAX_REPLAY_CHARS);
-
+      // Up to where it overran, the replay is the match: a rerun gets there twice alike.
       const again = rerun(replay, ARENA, RULES);
       expect(again.ticks).toBe(replay.ticks);
-      expect(again.outcome.winningTeam ?? null).toBe(match.host.winningTeam);
-      for (const player of local.getSnapshot().players) {
-        expect(Math.round(again.health.get(player.sessionId) ?? Number.NaN)).toBe(player.health);
-      }
+      expect(rerun(replay, ARENA, RULES)).toEqual(again);
     },
   );
 

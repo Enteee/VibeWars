@@ -3,7 +3,12 @@ import { MAX_LOBBY_PLAYERS } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import { MESSAGES_PER_SECOND } from "./intent-budget.js";
-import { REPLAY_RESERVE_CHARS, ReplayBudget } from "./replay-budget.js";
+import {
+  REPLAY_CHARS_PER_INPUT,
+  REPLAY_INPUTS_PER_SEAT_SECOND,
+  REPLAY_RESERVE_CHARS,
+  ReplayBudget,
+} from "./replay-budget.js";
 import { MAX_REPLAY_CHARS } from "./replay.js";
 
 /** How many characters one slot gets in, sending `chars` an input `perSecond` times a second for `seconds`. */
@@ -30,21 +35,22 @@ describe("a match's replay budget (#3572)", () => {
     }
   });
 
-  it("never refuses a busy player of a full Guild Battle", () => {
-    // An input a second for the whole 28 minutes, as a busy GW1 player
-    // sends, and on top of it a two-minute fight at three a second.
+  it("never runs out for a busy player of a full Guild Battle", () => {
+    // Nine inputs a second for the whole 28 minutes, and on top of it a
+    // twenty-second fight at 25 a second, as the host's busiest player
+    // sends (perf-sec-qa on #3592).
     const budget = new ReplayBudget(16, GUILD_BATTLE_MATCH_RULES.timeLimitSeconds);
     const seconds = GUILD_BATTLE_MATCH_RULES.timeLimitSeconds;
     let refused = 0;
     for (let second = 0; second < seconds; second += 1) {
-      const inputs = second >= 600 && second < 720 ? 3 : 1;
+      const inputs = second >= 600 && second < 620 ? 25 : 9;
       for (let i = 0; i < inputs; i += 1) {
-        // A move at any angle is about 100 characters.
-        if (!budget.take("busy", 100, second + i / inputs)) {
+        if (!budget.take("busy", REPLAY_CHARS_PER_INPUT, second + i / inputs)) {
           refused += 1;
         }
       }
     }
+    expect(REPLAY_INPUTS_PER_SEAT_SECOND).toBe(10);
     expect(refused).toBe(0);
   });
 

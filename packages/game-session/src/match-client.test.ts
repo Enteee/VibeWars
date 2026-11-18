@@ -232,6 +232,7 @@ describe("connectMatch", () => {
       teamCount: 2,
       mode: "random-arena",
       ticks: 2,
+      overrunBy: null,
       inputs: [[1, "intent", "player-1", { kind: "stop" }]],
     };
     const ENDED = { winningTeam: 1, endReason: "score", summary: [], clearSeconds: null };
