@@ -1129,11 +1129,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     const refusal = applyIntent(sim, seat.playerId, intent);
+    // Refused ones too: the sim heard them, and a refusal can still change it.
+    logInput([sim.tick, "intent", seat.playerId, intent]);
     if (refusal !== null) {
       // Only the caster hears it: why a key did nothing is nobody else's business.
       transport.send("refused", refusal, from);
-    } else {
-      logInput([sim.tick, "intent", seat.playerId, intent]);
     }
   });
 

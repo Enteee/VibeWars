@@ -12,6 +12,7 @@ import {
   MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_STATUS_INDEX,
+  type WireMatchReplayPart,
   type WirePlayer,
 } from "@vibewars/game-protocol";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
@@ -33,10 +34,19 @@ import {
   self,
   settle,
   startMatch,
+  cryptoTurns,
   testSignet,
   until,
 } from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
+import {
+  encodeReplay,
+  packReplay,
+  replayHash,
+  type MatchReplay,
+  type RecordedReplay,
+  type Sha256,
+} from "./replay.js";
 import type { Transport } from "./transport.js";
 import { WIRE_STATUS_IDS, playerSnapshot, statusFromWire, statusWireIndex } from "./wire.js";
 
@@ -210,6 +220,62 @@ describe("connectMatch", () => {
     expect(over.host.phase).toBe("finished");
     const refused = over.join();
     await expect(refused).rejects.toMatchObject({ reason: "match-over" });
+  });
+
+  describe("a match's replay (#3572)", () => {
+    const sha256: Sha256 = async (bytes) =>
+      new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    const replay: MatchReplay = {
+      buildHash: "test-build",
+      seed: "seed",
+      map: "Test Arena",
+      teamCount: 2,
+      mode: "random-arena",
+      ticks: 2,
+      inputs: [[1, "intent", "player-1", { kind: "stop" }]],
+    };
+    const ENDED = { winningTeam: 1, endReason: "score", summary: [], clearSeconds: null };
+
+    async function joined() {
+      const kept: RecordedReplay[] = [];
+      const match = startMatch({ replays: { sha256, keep: (recorded) => kept.push(recorded) } });
+      await match.joinLocal();
+      const text = encodeReplay(replay);
+      const hash = await replayHash(replay, sha256);
+      const send = (parts: readonly WireMatchReplayPart[], from = match.hostTransport): void => {
+        for (const part of parts) {
+          from.send("match-replay", part, match.local.selfId);
+        }
+      };
+      return { match, kept, hash, parts: packReplay(text, hash, 100), send };
+    }
+
+    it("is kept once all its parts are in, in any order, after the end", async () => {
+      const { match, kept, hash, parts, send } = await joined();
+      expect(parts.length).toBeGreaterThan(2);
+      // Before the end it is no replay, and a stranger's never is.
+      send(parts);
+      await cryptoTurns();
+      match.hostTransport.send("ended", ENDED, match.local.selfId);
+      send(parts, match.network.join());
+      await cryptoTurns();
+      expect(kept).toEqual([]);
+
+      const [first, ...rest] = [...parts].reverse();
+      send([first, first, ...rest].flatMap((part) => (part === undefined ? [] : [part])));
+      await until(() => kept.length > 0);
+      send(parts);
+      await cryptoTurns();
+      expect(kept).toEqual([{ hash, replay }]);
+    });
+
+    it("is dropped when its text does not hash to what its parts say", async () => {
+      const { match, kept, parts, send } = await joined();
+      match.hostTransport.send("ended", ENDED, match.local.selfId);
+      send(parts.map((part, i) => (i === 0 ? { ...part, text: `~${part.text.slice(1)}` } : part)));
+      await cryptoTurns();
+      expect(kept).toEqual([]);
+    });
   });
 
   it("gives up on a host that never answers", async () => {
