@@ -15,7 +15,7 @@ sculpture gallery with four gates, balconies, plinths as points, skylights) is k
 - **It stays a gallery:** it grows on the short side (1400 → 2500) with a **north hall and a south
   hall**, each lined by two balconies, a central **court** on the axis where the great plinth stands, an end **vestibule** per team, and the two undercrofts. The long nave (west to east) is the
   gallery; the court is the "courtyard" the card asks about.
-- **Biome: `hall`** (visual-style §1: ground `#26303f`, deck `#4b5a70`, stone and steel, no plants).
+- **Biome: `celestial`** (visual-style §1b, heavenly: pale marble ground `#e8dfc8`, warm stone `#b9ad92`, gold trim on every deck edge, no tile grid).
   No new row.
 - **Layers (3):** L0 the floor and two undercrofts; L1 two plinths, the great plinth and four
   balconies (70 up); L2 the great plinth's top (140). 22 stairs.

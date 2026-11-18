@@ -81,6 +81,7 @@ export const BIOMES = [
   "marsh",
   "jungle",
   "coast",
+  "celestial",
 ] as const;
 export type Biome = (typeof BIOMES)[number];
 
