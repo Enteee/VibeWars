@@ -315,8 +315,9 @@ What a receipt defends against:
   key cannot erase a result (#3571).
 - **Farming with alt keys.** Repeats against one opposing set weigh 1/k
   (none after 3), only 20 matches a day count, and every game is weighted
-  by the opponents' trust, min(1, D/min(12, P−1))³. A closed ring of four
-  keys keeps under 5 % of a real gain and earns no cosmetic wins.
+  by the opponents' trust, min(1, D/min(12, P−1))³. On a ladder of at least
+  13 keys, a closed ring of four keeps under 5 % of a real gain and earns no
+  cosmetic wins. A ring that is the whole ladder is fully trusted, by design.
 
 What it does not defend against:
 
