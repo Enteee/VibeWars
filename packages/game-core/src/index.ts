@@ -329,6 +329,14 @@ export type {
   MatchTallyRow,
 } from "./match/combat-log.js";
 export { CombatMeter, MatchTally, tallyCombat } from "./match/combat-log.js";
+export type {
+  ChartEvent,
+  ChartObjective,
+  ChartSeries,
+  MatchChartResult,
+  MatchChartState,
+} from "./match/match-chart.js";
+export { EVENT_CAP, MatchChart, SAMPLE_CAP, samplePeriod } from "./match/match-chart.js";
 export { creatureSummonerOf } from "./match/creature-id.js";
 
 export type {

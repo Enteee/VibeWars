@@ -876,7 +876,6 @@ export default {
     other: "{sign}{count} marcas",
   },
 
-  "player.applies": "Vale a partir da sua próxima sala.",
   "player.cape": "Capa",
   "player.colourBlack": "preto",
   "player.colourGold": "dourado",

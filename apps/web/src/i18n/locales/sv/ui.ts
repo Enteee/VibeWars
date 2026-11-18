@@ -829,7 +829,6 @@ export default {
 
   "pips.title": { one: "{sign}{count} pip", other: "{sign}{count} pip" },
 
-  "player.applies": "Gäller från din nästa lobby.",
   "player.cape": "Mantel",
   "player.colourBlack": "svart",
   "player.colourGold": "guld",

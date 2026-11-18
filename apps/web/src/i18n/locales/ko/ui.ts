@@ -783,7 +783,6 @@ export default {
 
   "pips.title": { other: "{sign}{count}핍" },
 
-  "player.applies": "다음 로비부터 적용돼요.",
   "player.cape": "망토",
   "player.colourBlack": "검정",
   "player.colourGold": "금색",

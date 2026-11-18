@@ -183,8 +183,7 @@ den viks ihop till ett smalt band vid din kant när du står still och
 fladdrar ut bakom dig när du rör dig. Dina karaktärer i menyn visar den
 också. **Ingen mantel** tar av den.
 
-En ändring gäller från nästa lobby du går med i, eller din nästa nya:
-en du redan är med i behåller det du gick med med.
+En ändring gäller direkt i den lobby du är i.
 
 **Kopiera gilleslänk**, under mantelverktyget, kopierar en länk med din tagg och din mantel. Den som öppnar den får frågan **Gå med i gillet [VIBE]?**: **Gå med** ger hen din tagg och din mantel, **Nej** ändrar ingenting. Vem som helst kan skicka en sådan länk och ingen äger en tagg, så spelet frågar alltid först.
 

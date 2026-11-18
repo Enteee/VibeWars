@@ -72,6 +72,7 @@ const REBUILT = new Set([
   "barrow-field",
   "jungle-ruins",
   "brazen-causeway",
+  "cinder-sanctum",
   "broken-tower",
   "scarred-earth",
 ]);

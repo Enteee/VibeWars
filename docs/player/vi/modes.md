@@ -165,6 +165,8 @@ nó về nhà. Đội **dẫn trước 3 điểm thắng ngay lập tức**. Ở
 sinh người chết của đội, và con ma của đội, mỗi 2 phút. Bot cùng đi lấy thánh
 tích của địch và mang nó về.
 
+Cinder Sanctum (8v8, 5600x2800) chơi chế độ này: một ngôi đền trên sườn núi lửa giữa hai dòng sông dung nham. Băng qua bằng một cây cầu hoặc con đê đến thánh điện trên sân trước của nó; một cần gạt trên sân trước mở lối đi bí mật dưới thánh điện, và tường tro có thể đập vỡ. Dung nham gây bỏng.
+
 ## Vua đồi
 
 **Dẫn Anh hùng Ma của bạn lên tế đàn, và giữ nó.** Mỗi đội có một **Anh hùng

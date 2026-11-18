@@ -839,7 +839,6 @@ export default {
 
   "pips.title": { one: "{sign}{count} ένδειξη", other: "{sign}{count} ενδείξεις" },
 
-  "player.applies": "Ισχύει από το επόμενο λόμπι σου.",
   "player.cape": "Κάπα",
   "player.colourBlack": "μαύρο",
   "player.colourGold": "χρυσό",

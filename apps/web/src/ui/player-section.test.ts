@@ -1,7 +1,6 @@
 import { sanitizeName } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { t } from "../i18n/index.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import {
   FIRST_CAPE,
@@ -231,8 +230,8 @@ describe("the Player section of Options (#1513)", () => {
     return { name, tag, cape, shown };
   }
 
-  it("says when a change applies", () => {
-    expect(mount().shown.some((node) => node.textContent === t("player.applies"))).toBe(true);
+  it("no longer says a change waits for the next lobby (#3548)", () => {
+    expect(mount().shown.some((node) => node.className === "player-applies")).toBe(false);
   });
 
   it("shows the key's signet just left of the name (#3235)", () => {

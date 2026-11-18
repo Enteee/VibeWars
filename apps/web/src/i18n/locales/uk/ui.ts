@@ -918,7 +918,6 @@ export default {
     other: "{sign}{count} поділки",
   },
 
-  "player.applies": "Застосується з наступного лобі.",
   "player.cape": "Плащ",
   "player.colourBlack": "чорний",
   "player.colourGold": "золотий",

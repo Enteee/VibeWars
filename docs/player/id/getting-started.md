@@ -181,8 +181,7 @@ memakai jubah itu di setiap laga: jubah terlipat menjadi pita tipis di tepi tubu
 kamu berdiri dan berkibar di belakangmu saat kamu bergerak. Karakter-karaktermu di
 menu juga menampilkannya. **Tanpa jubah** melepasnya.
 
-Perubahan berlaku mulai lobi berikutnya yang kamu masuki, atau lobi barumu berikutnya:
-lobi yang sedang kamu tempati tetap memakai apa yang kamu bawa saat bergabung.
+Perubahan langsung berlaku di lobi tempat kamu berada.
 
 **Salin link guild**, di bawah perancang jubah, menyalin link yang membawa tag dan jubahmu. Siapa pun yang membukanya akan ditanya **Gabung ke guild [VIBE]?**: **Gabung** memberinya tag dan jubahmu, **Tidak** tidak mengubah apa pun. Siapa saja bisa mengirim link seperti itu dan tidak ada yang memiliki sebuah tag, jadi game selalu bertanya dulu.
 

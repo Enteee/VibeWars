@@ -777,7 +777,6 @@ export default {
 
   "pips.title": { other: "{sign}{count} 格" },
 
-  "player.applies": "从下一个大厅开始生效。",
   "player.cape": "披风",
   "player.colourBlack": "黑色",
   "player.colourGold": "金色",

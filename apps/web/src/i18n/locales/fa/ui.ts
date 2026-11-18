@@ -833,7 +833,6 @@ export default {
 
   "pips.title": { one: "{sign}{count} نقطه", other: "{sign}{count} نقطه" },
 
-  "player.applies": "از لابی بعدی‌ات اعمال می‌شود.",
   "player.cape": "شنل",
   "player.colourBlack": "مشکی",
   "player.colourGold": "طلایی",
