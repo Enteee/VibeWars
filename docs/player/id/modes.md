@@ -115,7 +115,7 @@ musuh. Di bawahnya, sebaris teks menyebut siapa pun yang membawa bendera. Dorong
 "Dorongan Moral! +10%", atau "Dorongan Moral musuh". Di kompas, ♛ menandai
 setiap Penguasa Guild, ⚑ setiap bendera dan ◎ tiangnya.
 
-Guild Hall Isle memainkannya.
+Guild Hall Isle (8v8, 6000x2600) memainkannya: sebuah pulau di laut. Setiap Guild Lord berdiri di atas aula, di balik benteng; jalan keluar lewat gerbang, melewati atas benteng, atau menyusuri dermaga. Pintu gerbang dibuka oleh tuas di benteng lawan. Tiang bendera ada di panggung di tengah.
 
 ## Lari Relik
 
@@ -266,6 +266,8 @@ di sana sampai kuil itu direbut. Musuh dalam jangkauan mantra tidak memancing me
 pergi: mereka naik ke kuil yang terjangkau dan bertarung dari sana.
 
 Scarred Earth (4v4 dan 8v8, 5400x2800) memainkannya: medan perang penuh kawah saat senja. Kuil-kuilnya berdiri di atas menara pengepungan yang hancur, yang di tengah di geladak menara besar, masing-masing di samping kawah; tuas di menara membuka dua parit di bawah medan, dan pagar kayu yang hancur bisa dirobohkan.
+
+Di Pendakian Pahlawan, The Warden's Gallery (8v8, 5200x2500) memainkannya: galeri patung bermandikan cahaya matahari di bawah jendela atap. Kuil tengah berdiri di puncak alas besar, dan tiap tim punya tiga di dekat serambinya, satu di atas alas; tuas di alas besar membuka dua ruang bawah tanah di bawah lantai, dan patung yang roboh bisa dihancurkan.
 
 ## Lobi Tim
 

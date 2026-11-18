@@ -46,6 +46,7 @@ import {
   syncList,
   toast,
   type InlineConfirm,
+  wordmark,
 } from "./kit.js";
 import {
   moveMember,
@@ -527,7 +528,7 @@ export function mountTeamEditor(
   );
 
   screenBar({
-    crumbs: ["VibeWars", t("teamEditor.crumb"), nameInput],
+    crumbs: [wordmark("topbar-wordmark"), t("teamEditor.crumb"), nameInput],
     escape: () => {
       leave(callbacks.onClose);
     },

@@ -132,7 +132,7 @@ megnevezi, ki visz zászlót. A növelés „Morálnövelés! +10%” vagy
 „Ellenséges morálnövelés” felirattal ugrik fel. Az iránytűn ♛ jelöl
 minden Céhurat, ⚑ minden zászlót és ◎ a tartót.
 
-A Guild Hall Isle játssza.
+A Guild Hall Isle (8v8, 6000x2600) játssza: egy sziget a tengerben. Minden Guild Lord egy csarnok tetején áll, sánc mögött; kifelé a kaputornyon át, a sáncon át vagy egy móló mentén vezet az út. A kapu ajtaját az ellenfél sáncán lévő kar nyitja. A zászlótartó egy emelvényen áll középen.
 
 ## Ereklyefutam
 
@@ -307,6 +307,8 @@ belüli ellenség nem csalja el őket: fellépnek egy elérhető szentélyre,
 és onnan harcolnak.
 
 A Scarred Earth (4v4 és 8v8, 5400x2800) játssza: kráterekkel szabdalt csatatér alkonyatkor. A szentélyek összetört ostromtornyokon állnak, a középső a nagy torony fedélzetén, mindegyik egy kráter mellett; a tornyokon lévő karok két lövészárkot nyitnak a mező alatt, a rommá lett cölöpkerítések pedig szétverhetők.
+
+A Hősök Útján a The Warden's Gallery (8v8, 5200x2500) játssza: napfényes szoborcsarnok tetőablakok alatt. A középső szentély a nagy talapzat tetején áll, és minden csapatnak három van az előcsarnoka közelében, egy közülük talapzaton; a nagy talapzaton lévő karok két kriptát nyitnak a padló alatt, a ledőlt szobrok pedig szétverhetők.
 
 ## Csapatlobbi
 

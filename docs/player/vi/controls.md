@@ -19,7 +19,7 @@ Mẫu mặc định là **Classic**, dành cho tay chơi GW1. **VibeWars** dùng
 | Địch kế tiếp (Shift: trước đó) | Tab                        | Tab              |
 | Địch gần nhất                  | C                          | C                |
 | Địch được đội bạn gọi          | T                          | T                |
-| Bản thân                       | G                          | G                |
+| Bản thân                       | F hoặc G                   | G                |
 | Hiện tên (giữ)                 | Shift                      | Shift            |
 | Tắt tiếng                      | M                          | M                |
 | Thả cờ, thánh tích hoặc tro    | không có                   | không có         |

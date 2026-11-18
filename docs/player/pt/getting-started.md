@@ -83,6 +83,15 @@ espera tira você da fila na hora.
 Quando a partida acaba, você pode usar **Entrar de novo** ou **Ficar
 juntos** com a equipe com que acabou de jogar.
 
+Ao lado das pontuações, dois gráficos contam a partida ao longo do tempo.
+**Tu** mostra seu dano causado, dano recebido, cura e Energia; **Equipas**
+mostra a reserva de vida de cada equipe acima do seu dano total. Marcas abaixo
+do eixo do tempo indicam abates, mortes, interrupções, capturas e
+ressurreições: aponte para uma, ou chegue a ela com Tab, para ler o que
+aconteceu. Pressione um item da legenda para ocultar ou mostrar sua linha. No
+celular, os gráficos ficam abaixo das pontuações, que mostram você e mais dois
+até **Mostrar tudo**.
+
 ## Hospedar ou entrar em uma partida
 
 Você está sempre em uma sala: desde que a página abre, ela hospeda uma

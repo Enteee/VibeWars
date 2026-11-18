@@ -91,6 +91,13 @@ describe("the splash's meeting with the music (#2936)", () => {
     expect(root.dataset.phase).toBe("flash");
   });
 
+  it("names the game with the top bar's wordmark, one colour source (#3636)", () => {
+    const { root } = start(() => true);
+    const name = root.querySelector(".splash-wordmark");
+    expect(name?.querySelector(".wordmark-vibe")?.textContent).toBe("Vibe");
+    expect(name?.querySelector(".wordmark-wars")?.textContent).toBe("Wars");
+  });
+
   it("holds the words until the music says, and flashes on the crash", () => {
     let heard: ((at: number) => void) | undefined;
     const { root } = start((_at, onHeard) => {

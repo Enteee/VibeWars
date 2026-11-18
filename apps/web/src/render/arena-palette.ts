@@ -555,6 +555,26 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     plant: 0x545a38,
   },
   /**
+   * An island guild hall (#3445, docs/art/3077-guild-hall-isle.md): wet sand
+   * and grey sea rock with dry olive plants, beside a deep teal sea; no tone
+   * near the friend blue, the foe red or the nature green.
+   */
+  coast: {
+    ...HALL_TONES,
+    /** Wet sand. */
+    ground: 0x7d7358,
+    /** Grey sea rock. */
+    rock: 0x5b6770,
+    /** Weathered pale stone. */
+    stone: 0xa49c88,
+    /** Driftwood. */
+    wood: 0x7a6a56,
+    /** Dark tide sand. */
+    earth: 0x5e5644,
+    /** Dry olive: green would be nature's. */
+    plant: 0x6d6a3e,
+  },
+  /**
    * A cavern under a thin ceiling (#3444, docs/art/3077-hollow-deep.md): cold
    * slate, its only colour the violet glow of its pools, which is light, not
    * a tone. Every tone is low chroma, well away from the friend blue, the foe
@@ -771,6 +791,7 @@ const TILED_GROUND: Record<Biome, boolean> = {
   snow: false,
   marsh: true,
   jungle: true,
+  coast: true,
   cavern: true,
 };
 
@@ -795,6 +816,7 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
   marsh: biomeMaterials(BIOME_TONES.marsh, TILED_GROUND.marsh),
   jungle: biomeMaterials(BIOME_TONES.jungle, TILED_GROUND.jungle),
+  coast: biomeMaterials(BIOME_TONES.coast, TILED_GROUND.coast),
   cavern: biomeMaterials(BIOME_TONES.cavern, TILED_GROUND.cavern),
 };
 
@@ -873,6 +895,12 @@ export const GROUND_DRESSING: Record<Biome, GroundDressingTones> = {
     mix(BIOME_TONES.jungle.plant, BIOME_TONES.jungle.ground, 0.3),
     mix(BIOME_TONES.jungle.ground, BIOME_TONES.jungle.earth, 0.6),
   ),
+  // Shells and pebbles of the sea rock, and tide ripples.
+  coast: dressingTones(
+    BIOME_TONES.coast,
+    mix(BIOME_TONES.coast.ground, BIOME_TONES.coast.rock, 0.55),
+    mix(BIOME_TONES.coast.ground, BIOME_TONES.coast.earth, 0.6),
+  ),
   // Fallen stone chips and silt grit.
   cavern: dressingTones(
     BIOME_TONES.cavern,
@@ -941,6 +969,7 @@ function breakableLookOf(biome: Biome): BreakableLook {
     case "wilds":
     case "marsh":
     case "jungle":
+    case "coast":
       return {
         courses: "fieldstone",
         top: mix(tones.rock, tones.stone, 0.4),
@@ -988,6 +1017,7 @@ const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
   snow: breakableLookOf("snow"),
   marsh: breakableLookOf("marsh"),
   jungle: breakableLookOf("jungle"),
+  coast: breakableLookOf("coast"),
   cavern: breakableLookOf("cavern"),
 };
 

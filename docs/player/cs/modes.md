@@ -48,7 +48,7 @@ Tým, jehož Pán cechu zemře, okamžitě prohrává, stejně jako tým, jehož
 
 Výsledková tabule ukazuje zdraví každého Pána cechu, tvého jako prvního, kdo drží stojan a za jak dlouho přijde jeho zvýšení, kdy svatyně příště vrátí mrtvé a v posledních 3 minutách poškození každého týmu nepřátelskému pánovi. Pod ní řádek jmenuje každého, kdo nese vlajku. Zvýšení vyskočí jako "Zvýšení morálky! +10 %" nebo "Zvýšení morálky nepřátel". Na kompasu ♛ značí každého Pána cechu, ⚑ každou vlajku a ◎ stojan.
 
-Hraje ho Guild Hall Isle.
+Hraje ho Guild Hall Isle (8v8, 6000x2600): ostrov v moři. Každý Guild Lord stojí na vrcholu síně za hradbou; ven se jde branou, přes hradbu nebo po molu. Dveře brány otevírá páka na nepřátelské hradbě. Stojan na vlajku je na pódiu uprostřed.
 
 ## Běh s relikvií
 
@@ -97,6 +97,8 @@ Každá svatyně je kruh na zemi v barvě vlastníka, šedý, když ji nikdo nev
 Boti se rozptýlí po svatyních, které tvůj tým ještě nevlastní, a stojí na nich, dokud nejsou dobyté. Nepřítel na dostřel kouzla je neodláká: vstoupí na svatyni v dosahu a bojují z ní.
 
 Hraje ho Scarred Earth (4v4 a 8v8, 5400x2800): bojiště poseté krátery za soumraku. Svatyně stojí na rozbitých obléhacích věžích, prostřední na plošině velké věže, každá vedle kráteru; páky na věžích otevírají dva zákopy pod bojištěm a rozbité palisády lze zbořit.
+
+Ve Výstupu hrdinů ho hraje The Warden's Gallery (8v8, 5200x2500): slunná galerie soch pod světlíky. Prostřední svatyně stojí na vrcholu velkého podstavce a každý tým má tři u svého vestibulu, jednu na podstavci; páky na velkém podstavci otevírají dvě krypty pod podlahou a povalené sochy lze rozbít.
 
 ## Týmové lobby
 

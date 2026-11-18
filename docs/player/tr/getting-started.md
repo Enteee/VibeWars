@@ -81,6 +81,15 @@ götürülürsün. Beklerken sekmeyi kapatmak seni hemen sıradan çıkarır.
 Maç bitince **Yeniden sıraya gir** diyebilir ya da az önce oynadığın
 takımla **Birlikte kal** diyebilirsin.
 
+Skorların yanında iki grafik maçı zaman içinde anlatır. **Sen** verdiğin
+hasarı, aldığın hasarı, iyileştirmeyi ve Enerjiyi çizer; **Takımlar** her
+takımın can havuzunu toplam hasarının üstünde çizer. Zaman ekseninin altındaki
+işaretler öldürmeleri, ölümleri, kesintileri, ele geçirmeleri ve dirilişleri
+gösterir: ne olduğunu okumak için birinin üzerine gel ya da Tab ile ona git.
+Çizgisini gizlemek ya da göstermek için bir gösterge girdisine bas. Telefonda
+grafikler skorların altında durur; skorlar **Tümünü göster** basılana kadar
+seni ve iki kişiyi daha gösterir.
+
 ## Maç kur ya da katıl
 
 Her zaman bir lobidesin: sayfa açıldığı andan itibaren kendine ait bir

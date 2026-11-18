@@ -79,6 +79,15 @@ din coadă.
 Când se termină meciul, poți alege **Din nou în coadă** sau **Rămâneți împreună**
 cu echipa cu care tocmai ai jucat.
 
+Lângă scoruri, două grafice spun povestea meciului în timp. **Tu** desenează
+daunele tale provocate, daunele primite, vindecarea și Energia; **Echipe**
+desenează rezerva de viață a fiecărei echipe deasupra daunelor ei totale.
+Marcajele de sub axa timpului arată eliminări, morți, întreruperi, capturi și
+învieri: indică unul sau ajungi la el cu Tab ca să citești ce s-a întâmplat.
+Apasă o intrare din legendă ca să ascunzi sau să arăți linia ei. Pe telefon
+graficele stau sub scoruri, care te arată pe tine și pe încă doi până la
+**Arată tot**.
+
 ## Găzduiește un meci sau intră într-unul
 
 Ești mereu într-un lobby: din clipa în care se deschide pagina, găzduiește unul al

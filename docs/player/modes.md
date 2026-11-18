@@ -116,7 +116,7 @@ lord. Under it, a line names whoever carries a flag. A boost pops up as
 "Morale boost! +10%", or "Enemy morale boost". On the compass, ♛ marks
 each Guild Lord, ⚑ each flag and ◎ the stand.
 
-Guild Hall Isle plays it.
+Guild Hall Isle (8v8, 6000x2600) plays it: an island in the sea. Each Guild Lord stands on top of a hall, behind a rampart; the way out is through the gatehouse, over the rampart or along a pier. A gatehouse door opens from a lever on the enemy's rampart. The flag stand is on a dais in the middle.
 
 ## Relic Run
 
@@ -270,6 +270,8 @@ on them until they are taken. A foe in spell range does not draw them
 off: they step onto a shrine in reach and fight from it.
 
 Scarred Earth (4v4 and 8v8, 5400x2800) plays it: a cratered battlefield at dusk. The shrines stand on wrecked siege towers, the centre one on the great tower's deck, each beside a crater; levers on the towers open two trenches under the field, and wrecked palisades can be broken.
+
+In the Heroes' Ascent, The Warden's Gallery (8v8, 5200x2500) plays it: a sunlit sculpture gallery under skylights. The centre shrine stands on the great plinth's top, and each team has three near its vestibule, one on a plinth; levers on the great plinth open two undercrofts under the floor, and toppled statues can be broken.
 
 ## Team Lobby
 

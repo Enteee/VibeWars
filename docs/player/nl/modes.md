@@ -120,7 +120,7 @@ vijandelijke heer. Daaronder noemt een regel wie een vlag draagt. Een boost
 verschijnt als "Moraalboost! +10%", of "Moraalboost vijand". Op het kompas markeert
 ♛ elke Gildeheer, ⚑ elke vlag en ◎ de standaard.
 
-Guild Hall Isle speelt het.
+Guild Hall Isle (8v8, 6000x2600) speelt het: een eiland in zee. Elke Guild Lord staat boven op een hal, achter een wal; naar buiten gaat door het poortgebouw, over de wal of langs een steiger. Een poortdeur gaat open met een hendel op de wal van de vijand. De vlaggenstandaard staat op een podium in het midden.
 
 ## Relic Run
 
@@ -263,6 +263,8 @@ staan tot ze zijn ingenomen. Een vijand binnen spreukbereik trekt ze er niet van
 ze stappen op een schrijn binnen bereik en vechten van daaruit.
 
 Scarred Earth (4v4 en 8v8, 5400x2800) speelt het: een met kraters bezaaid slagveld in de schemering. De schrijnen staan op verwoeste belegeringstorens, het middelste op het dek van de grote toren, elk naast een krater; hendels op de torens openen twee loopgraven onder het veld, en verwoeste palissaden kun je kapotslaan.
+
+In de Heroes' Ascent speelt The Warden's Gallery (8v8, 5200x2500) het: een zonnige beeldengalerij onder daklichten. Het middelste schrijn staat boven op de grote sokkel, en elk team heeft er drie bij zijn vestibule, één op een sokkel; hendels op de grote sokkel openen twee crypten onder de vloer, en omgevallen beelden kun je kapotslaan.
 
 ## Teamlobby
 

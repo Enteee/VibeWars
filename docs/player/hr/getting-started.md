@@ -79,6 +79,14 @@ zaslon sučeljavanja s bilo kojeg mjesta. Zatvaranje kartice dok
 Kad meč završi, možeš **Opet u red** ili **Ostanite zajedno** s
 timom s kojim si upravo igrao.
 
+Uz rezultate dva grafikona pričaju tijek meča kroz vrijeme. **Ti** crta tvoju
+nanesenu štetu, primljenu štetu, liječenje i Energiju; **Timovi** crta zalihu
+zdravlja svakog tima iznad njegove ukupne štete. Oznake ispod vremenske osi
+prikazuju ubojstva, smrti, prekide, osvajanja i uskrsnuća: pokaži na jednu ili
+dođi do nje tipkom Tab da pročitaš što se dogodilo. Pritisni stavku legende da
+sakriješ ili prikažeš njezinu liniju. Na mobitelu su grafikoni ispod rezultata,
+koji prikazuju tebe i još dvoje dok ne pritisneš **Prikaži sve**.
+
 ## Budi domaćin ili se pridruži meču
 
 Uvijek si u sobi: od trenutka kad se stranica otvori vodi jednu

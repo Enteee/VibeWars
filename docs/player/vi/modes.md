@@ -117,7 +117,7 @@ Bên dưới, một dòng ghi tên ai đang mang cờ. Lần tăng sĩ khí hi�
 "Tăng sĩ khí! +10%", hoặc "Địch tăng sĩ khí". Trên la bàn, ♛ đánh dấu mỗi
 Lãnh chúa Bang, ⚑ mỗi lá cờ và ◎ bệ cờ.
 
-Guild Hall Isle chơi chế độ này.
+Guild Hall Isle (8v8, 6000x2600) chơi chế độ này: một hòn đảo giữa biển. Mỗi Guild Lord đứng trên đỉnh một sảnh, sau một bức tường thành; lối ra là qua cổng thành, vượt lên tường thành hoặc dọc theo một cầu tàu. Cửa cổng thành mở bằng một cần gạt trên tường thành của đối phương. Giá cắm cờ nằm trên một bục ở giữa.
 
 ## Vận chuyển thánh tích
 
@@ -266,6 +266,8 @@ Bot tản ra các đền mà đội bạn chưa sở hữu và đứng trên đ�
 trong tầm và đánh từ đó.
 
 Scarred Earth (4v4 và 8v8, 5400x2800) chơi chế độ này: một chiến trường đầy hố bom lúc chạng vạng. Các đền nằm trên những tháp công thành đổ nát, đền giữa trên sàn của tháp lớn, mỗi đền cạnh một hố; cần gạt trên các tháp mở hai chiến hào dưới chiến trường, và hàng rào cọc đổ nát có thể phá được.
+
+Trong Đỉnh Anh Hùng, The Warden's Gallery (8v8, 5200x2500) chơi chế độ này: một phòng trưng bày tượng ngập nắng dưới các giếng trời. Đền giữa nằm trên đỉnh bệ lớn, và mỗi đội có ba đền gần tiền sảnh của mình, một đền trên bệ; cần gạt trên bệ lớn mở hai hầm ngầm dưới sàn, và những bức tượng đổ có thể phá được.
 
 ## Sảnh Đội
 

@@ -125,7 +125,7 @@ kişinin adını verir. Bir artış "Moral Artışı! +%10" ya da "Düşmana Mor
 Artışı" olarak belirir. Pusulada ♛ her Lonca Lordu'nu, ⚑ her bayrağı, ◎
 da direği işaretler.
 
-Guild Hall Isle bunu oynatır.
+Guild Hall Isle (8v8, 6000x2600) bunu oynatır: denizde bir ada. Her Guild Lord bir surun ardında, bir salonun tepesinde durur; dışarı kapı kulesinden, surun üstünden ya da bir iskele boyunca çıkılır. Kapı kulesinin kapısı, düşmanın surundaki bir kolla açılır. Bayrak sehpası ortadaki bir kürsünün üstündedir.
 
 ## Kalıntı Koşusu
 
@@ -283,6 +283,8 @@ kadar üstlerinde durur. Büyü menzilindeki bir düşman onları oradan
 çekmez: erişebildikleri bir tapınağa çıkar ve oradan dövüşürler.
 
 Scarred Earth (4v4 ve 8v8, 5400x2800) bunu oynatır: alacakaranlıkta kraterlerle dolu bir savaş alanı. Tapınaklar yıkık kuşatma kulelerinin üstünde durur, ortadaki büyük kulenin güvertesinde, her biri bir kraterin yanında; kulelerdeki kollar alanın altındaki iki siperi açar ve yıkık çit duvarları kırılabilir.
+
+Kahramanların Yükselişi'nde The Warden's Gallery (8v8, 5200x2500) bunu oynatır: tavan pencerelerinin altında güneşli bir heykel galerisi. Ortadaki tapınak büyük kaidenin tepesinde durur ve her takımın giriş holünün yakınında üç tapınağı vardır, biri bir kaidenin üstünde; büyük kaidedeki kollar zeminin altındaki iki mahzeni açar ve devrilmiş heykeller kırılabilir.
 
 ## Takım Lobisi
 

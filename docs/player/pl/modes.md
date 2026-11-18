@@ -116,7 +116,7 @@ Pod nią wiersz wymienia, kto niesie flagę. Premia wyskakuje jako „Premia mor
 albo „Premia morale wroga”. Na kompasie ♛ oznacza każdego Lorda Gildii, ⚑ każdą flagę,
 a ◎ stojak.
 
-Gra w nią Guild Hall Isle.
+Gra w nią Guild Hall Isle (8v8, 6000x2600): wyspa na morzu. Każdy Guild Lord stoi na szczycie sali, za wałem; na zewnątrz wychodzi się przez bramę, po wale albo wzdłuż pomostu. Drzwi bramy otwiera dźwignia na wale wroga. Stojak na flagę stoi na podwyższeniu pośrodku.
 
 ## Wyścig relikwii
 
@@ -251,6 +251,8 @@ na nich, aż zostaną przejęte. Wróg w zasięgu czaru ich nie odciąga: wchodz
 w zasięgu i walczą z niej.
 
 Gra w nie Scarred Earth (4v4 i 8v8, 5400x2800): pole bitwy usiane kraterami o zmierzchu. Kapliczki stoją na zniszczonych wieżach oblężniczych, środkowa na pomoście wielkiej wieży, każda obok krateru; dźwignie na wieżach otwierają dwa okopy pod polem, a zniszczone palisady można rozbić.
+
+W Szczycie Bohaterów gra w nie The Warden's Gallery (8v8, 5200x2500): słoneczna galeria rzeźb pod świetlikami. Środkowa kapliczka stoi na szczycie wielkiego cokołu, a każda drużyna ma trzy przy swoim przedsionku, jedną na cokole; dźwignie na wielkim cokole otwierają dwie krypty pod posadzką, a przewrócone posągi można rozbić.
 
 ## Lobby drużyny
 

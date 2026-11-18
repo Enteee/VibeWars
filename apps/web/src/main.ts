@@ -228,7 +228,18 @@ import { watchHall } from "./ui/vault-screen.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
 import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
 import { showTutorialOffer } from "./tutorial/tutorial-offer.js";
-import { loadTutorialRecord, saveTutorialRecord } from "./tutorial/tutorial-preference.js";
+import { mountCoachOverlay } from "./tutorial/coach-overlay.js";
+import {
+  MENU_QUEST_STEPS,
+  isMenuQuestStepId,
+  type MenuQuestStepId,
+} from "./tutorial/menu-quest.js";
+import { startMenuQuest, type MenuQuestSession } from "./tutorial/menu-quest-session.js";
+import {
+  loadTutorialRecord,
+  menuQuestStepOf,
+  saveTutorialRecord,
+} from "./tutorial/tutorial-preference.js";
 import { startTutorialSession, type TutorialSession } from "./tutorial/tutorial-session.js";
 import { drawTutorProfession } from "./tutorial/tutorial-world.js";
 import {
@@ -266,6 +277,18 @@ function tutorialFirstStation(): number {
   }
   const station = Number(new URLSearchParams(window.location.search).get("tutorial-station"));
   return Number.isInteger(station) && station > 1 ? station - 1 : 0;
+}
+
+/**
+ * The menu quest step to start at (#3540): the URL's `?tutorial-menu=<step>`,
+ * in an e2e build only; none in a player's, whose build folds the check away.
+ */
+function tutorialMenuStep(): MenuQuestStepId | undefined {
+  if (import.meta.env.VITE_VIBEWARS_TUTORIAL_STATION !== "on") {
+    return undefined;
+  }
+  const step = new URLSearchParams(window.location.search).get("tutorial-menu") ?? "";
+  return isMenuQuestStepId(step) ? step : undefined;
 }
 
 /**
@@ -845,6 +868,8 @@ async function main(): Promise<void> {
    * build may reload away. Every screen change clears it first.
    */
   let idleScreen = false;
+  /** The menu quest (#3540) while it runs: told about every screen the rail shows. */
+  let menuQuest: MenuQuestSession | undefined;
   /** The cape the menu was last drawn with (#1513), to redraw it only for a new one (#2386). */
   let menuCape = "";
 
@@ -1041,6 +1066,7 @@ async function main(): Promise<void> {
     drawnParty = party === undefined ? "" : `${party.mode}:${String(party.isHost)}`;
     const entry = railEntry();
     drawnEntry = entry;
+    menuQuest?.event({ kind: "screen-shown", screen: entry });
     if (entry === "matches") {
       matchesScreen?.close();
       matchesScreen = renderMatchesScreen(screenRoot, {
@@ -3257,6 +3283,38 @@ async function main(): Promise<void> {
   /** A lobby, relay or guild link came with this tab or in it: it is what the player is here for. */
   let linked =
     lobbyLink.kind === "invite" || relayLink.kind === "config" || guildLink.kind === "guild";
+  /** The menu quest from the start of `from` (#3540), on the menu shown. */
+  const startMenuQuestAt = (from: MenuQuestStepId): void => {
+    menuQuest?.stop();
+    const quest = startMenuQuest({
+      from,
+      coach: (callbacks) => mountCoachOverlay(document.body, callbacks),
+      onEnd: () => {
+        if (menuQuest === quest) {
+          menuQuest = undefined;
+        }
+      },
+    });
+    menuQuest = quest;
+    quest.event({ kind: "screen-shown", screen: railEntry() });
+  };
+  /** Nobody on a touch device gets the tutorial (#3218), nor its menu quest. */
+  const onTouch = (): boolean =>
+    needsTouchNotice(
+      (query) => matchMedia(query).matches,
+      () => false,
+    );
+  /**
+   * The menu, and the menu quest at the start of the step it got to if a
+   * launch finds it under way (#3540), unless a link came or on touch.
+   */
+  const enterMenuOrQuest = (): void => {
+    enterMenu();
+    const step = menuQuestStepOf(loadTutorialRecord());
+    if (step !== undefined && !linked && !onTouch()) {
+      startMenuQuestAt(step);
+    }
+  };
   const startTutorial = async (mapId: string, teamSize: number): Promise<void> => {
     const run = {};
     tutorialRun = run;
@@ -3272,8 +3330,13 @@ async function main(): Promise<void> {
         onEnd: (end) => {
           tutorialRun = undefined;
           tutorial = undefined;
-          saveTutorialRecord(end);
           enterMenu();
+          // Out of the front, the menu quest (#3540), which saves `done` at its end.
+          if (end === "done") {
+            startMenuQuestAt(MENU_QUEST_STEPS[0].id);
+          } else {
+            saveTutorialRecord(end);
+          }
         },
       });
       if (tutorialRun === run) {
@@ -3291,8 +3354,13 @@ async function main(): Promise<void> {
       }
     }
   };
-  /** A link came: the offer or the tutorial goes, nothing recorded, so it is offered again. */
+  /**
+   * A link came: the offer or the tutorial goes, nothing recorded, so it
+   * is offered again; the menu quest goes too, and keeps its step (#3540).
+   */
   const dropTutorial = (): void => {
+    menuQuest?.stop();
+    menuQuest = undefined;
     if (closeOffer === undefined && tutorialRun === undefined) {
       return;
     }
@@ -3306,7 +3374,7 @@ async function main(): Promise<void> {
   /**
    * After the splash, a first-timer is offered the tutorial (#3218) over
    * its fight; nobody is on a touch device, without a fight to stand in,
-   * or once a link has come.
+   * or once a link has come. One into the menu quest resumes it (#3540).
    */
   const afterSplash = (): void => {
     const { map: mapId, teamSize } = requireElement("#menu-background").dataset;
@@ -3315,12 +3383,9 @@ async function main(): Promise<void> {
       loadTutorialRecord() !== undefined ||
       mapId === undefined ||
       teamSize === undefined ||
-      needsTouchNotice(
-        (query) => matchMedia(query).matches,
-        () => false,
-      )
+      onTouch()
     ) {
-      enterMenu();
+      enterMenuOrQuest();
       return;
     }
     closeOffer = showTutorialOffer(document.body, {
@@ -3336,17 +3401,29 @@ async function main(): Promise<void> {
     });
   };
   let splash: Splash | undefined;
+  const seededMenuStep = tutorialMenuStep();
   if (summaryFixtureAsked()) {
     // An e2e build's fixed end of a match (#3563), over no arena.
-    showViewport(true);
-    void import("./ui/summary-fixture.js").then(({ mountSummaryFixture }) => {
-      mountSummaryFixture(viewport);
-    });
+    if (new URLSearchParams(window.location.search).get("summary-fixture") === "queue") {
+      // The queue screen after it (#3565), its scores beside its charts.
+      void import("./ui/summary-fixture.js").then(({ mountQueueFixture }) => {
+        mountQueueFixture(screenRoot);
+      });
+    } else {
+      showViewport(true);
+      void import("./ui/summary-fixture.js").then(({ mountSummaryFixture }) => {
+        mountSummaryFixture(viewport);
+      });
+    }
   } else if (tutorialFirstStation() > 0) {
     // An e2e build's seeded start (#3383) goes straight to its station,
     // on the pinned menu map: no splash, no offer, no menu fight.
     const { mapId, teamSize } = pinnedChoice(window.location.search);
     void startTutorial(mapId, teamSize);
+  } else if (seededMenuStep !== undefined) {
+    // An e2e build's seeded menu quest (#3540): the menu, no splash, no offer.
+    enterMenu();
+    startMenuQuestAt(seededMenuStep);
   } else if (
     shouldShowSplash({
       forced: new URLSearchParams(window.location.search).has("splash"),
@@ -3372,7 +3449,7 @@ async function main(): Promise<void> {
       onDone: afterSplash,
     });
   } else {
-    enterMenu();
+    enterMenuOrQuest();
   }
   // A lobby or relay link opened in this tab, once any guild link with it is answered (#3167).
   const askLobbyAndRelay = (invited: LobbyFragment, pasted: TurnFragment): void => {

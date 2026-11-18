@@ -126,7 +126,7 @@ señor enemigo. Debajo, una línea nombra a quien lleva una bandera. Un bonus
 aparece como "¡Bonus de moral! +10%" o "Bonus de moral enemigo". En la brújula,
 ♛ marca a cada Señor del Gremio, ⚑ cada bandera y ◎ la base de bandera.
 
-Se juega en Guild Hall Isle.
+Se juega en Guild Hall Isle (8v8, 6000x2600): una isla en el mar. Cada Guild Lord está en lo alto de una sala, tras una muralla; se sale por la puerta fortificada, por encima de la muralla o por un muelle. La puerta de cada portón se abre con una palanca en la muralla enemiga. El soporte de la bandera está en un estrado en el centro.
 
 ## Carrera de reliquias
 
@@ -269,6 +269,8 @@ hasta que se toman. Un enemigo en alcance de hechizo no los aparta: suben a un
 santuario a su alcance y luchan desde él.
 
 Se juega en Scarred Earth (4v4 y 8v8, 5400x2800): un campo de batalla lleno de cráteres al atardecer. Los santuarios están sobre torres de asedio destrozadas, el central en la plataforma de la gran torre, cada uno junto a un cráter; unas palancas en las torres abren dos trincheras bajo el campo, y las empalizadas destrozadas se pueden romper.
+
+En el Ascenso de los Héroes se juega en The Warden's Gallery (8v8, 5200x2500): una galería de esculturas soleada bajo claraboyas. El santuario central está en lo alto del gran pedestal, y cada equipo tiene tres cerca de su vestíbulo, uno sobre un pedestal; unas palancas en el gran pedestal abren dos criptas bajo el suelo, y las estatuas derribadas se pueden romper.
 
 ## Sala de equipo
 

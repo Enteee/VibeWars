@@ -7,7 +7,7 @@ import type { StoredCharacter } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
 import { characterFigureCard, lookOfCharacter } from "./character-card.js";
 import { equippedCount, professionLabel } from "./character-preview.js";
-import { button, emptyState, findMatchButton, h, playCard, screenBar } from "./kit.js";
+import { button, emptyState, findMatchButton, h, playCard, screenBar, wordmark } from "./kit.js";
 import { loadPlayerName, playerGuild } from "./player-section.js";
 import { isAlone } from "./lobby-window.js";
 import { loadTeamSize, railParty, railScreen, type RailEntry, type TeamSize } from "./rail.js";
@@ -239,7 +239,7 @@ export function renderRandomArena(
         }
       });
   screenBar({
-    crumbs: ["VibeWars"],
+    crumbs: [wordmark("topbar-wordmark")],
     actions: [],
     ...(find === undefined ? {} : { queueAction: find }),
     join: true,
@@ -329,7 +329,7 @@ export function renderCharacterBuilder(
   // A Reroll redraws the screen under its own button (#1425): the new
   // card's Reroll takes the focus back.
   const rerolled = document.activeElement?.classList.contains("roster-reroll") === true;
-  screenBar({ crumbs: ["VibeWars"], actions: [], join: true });
+  screenBar({ crumbs: [wordmark("topbar-wordmark")], actions: [], join: true });
   const body = railScreen(root, "characters", callbacks.onSwitch);
 
   if (connectionNotice !== undefined) {
