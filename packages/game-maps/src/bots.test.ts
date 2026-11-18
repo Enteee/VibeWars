@@ -10,6 +10,7 @@ import {
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
   deckBlocksSight,
+  distanceSegmentToSegment,
   getSkill,
   hasLineOfSight,
   isSpikeSkill,
@@ -18,7 +19,14 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { allWallSegments } from "./geometry.js";
+import {
+  allWallSegments,
+  pointInShape,
+  shapesOverlap,
+  shapeVertices,
+  wallToSegments,
+  type WallShape,
+} from "./geometry.js";
 import { matchGates, matchLayers } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
@@ -523,6 +531,75 @@ describe("The Brazen Causeway (#3435)", () => {
     expect(
       finder.find(spawnOf(0).position, spawnOf(0).layer, spawnOf(1).position, spawnOf(1).layer),
     ).toBeDefined();
+  });
+
+  // #3521: slow ground starts where a player can see it start, never under a foot coming off a
+  // stair, at a lever, at the beacon or at a gatehouse, and never runs under the causeway.
+  it("keeps every reed pool and mire clear of the stairs, levers, beacon, gatehouses and causeway (#3521)", () => {
+    const clear = 2 * RULESET.collision.playerRadius;
+    /** How far apart `a` and `b` are: 0 if they touch or overlap. */
+    const gap = (a: WallShape, b: WallShape): number => {
+      if (
+        shapeVertices(a).some((point) => pointInShape(point, b)) ||
+        shapeVertices(b).some((point) => pointInShape(point, a))
+      ) {
+        return 0;
+      }
+      const sides = wallToSegments(b);
+      return Math.min(
+        ...wallToSegments(a).flatMap((side) =>
+          sides.map((other) => distanceSegmentToSegment(side, other)),
+        ),
+      );
+    };
+    /** A point as a tiny square, so it measures as a shape. */
+    const spot = ({ x, y }: { readonly x: number; readonly y: number }): WallShape => ({
+      kind: "rect",
+      x: x - 0.5,
+      y: y - 0.5,
+      width: 1,
+      height: 1,
+    });
+    const slow = [
+      ...(map.water ?? []).filter(({ depth }) => depth === "shallow"),
+      ...(map.zones ?? []).filter(({ kind }) => kind === "mire"),
+    ];
+    const beacon = map.objectives.find(({ kind }) => kind === "storm-beacon");
+    if (beacon === undefined) throw new Error("no storm beacon");
+    const keepOff: { readonly id: string; readonly area: WallShape }[] = [
+      ...map.transitions.map(({ id, area }) => ({ id, area })),
+      ...(map.switches ?? []).map(({ id, position }) => ({ id, area: spot(position) })),
+      { id: "storm-beacon", area: spot(beacon.position) },
+      ...map.decks
+        .filter(({ id }) => id.endsWith("-gatehouse"))
+        .map(({ id, footprint }) => ({ id, area: footprint })),
+    ];
+    expect(slow.map(({ id }) => id)).toEqual(
+      expect.arrayContaining([
+        ...["north", "south"].flatMap((side) =>
+          ["west", "middle", "east"].map((pool) => `${side}-reed-pool-${pool}`),
+        ),
+        "north-east-mire",
+        "south-west-mire",
+      ]),
+    );
+    const causeway = map.decks.find(({ id }) => id === "causeway");
+    if (causeway?.footprint.kind !== "polygon") throw new Error("no causeway");
+    // Its foot may be a bank of the marsh; a hair inside it is under it.
+    const centre = { x: 2812, y: 1400 };
+    const under: WallShape = {
+      kind: "polygon",
+      points: causeway.footprint.points.map(({ x, y }) => ({
+        x: x + Math.sign(centre.x - x) * 2,
+        y: y + Math.sign(centre.y - y) * 2,
+      })),
+    };
+    for (const { id, area } of slow) {
+      for (const each of keepOff) {
+        expect(gap(area, each.area), `${id} by ${each.id}`).toBeGreaterThanOrEqual(clear);
+      }
+      expect(shapesOverlap(area, under), `${id} under the causeway`).toBe(false);
+    }
   });
 
   it("walks each team to its own gatehouse lever by its own stair, sharing none with the other (#3549)", () => {
