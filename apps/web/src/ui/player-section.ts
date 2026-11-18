@@ -23,6 +23,7 @@ import { heroRankOf, loadFame } from "../storage/fame.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { canvasPainter } from "./character-figure.js";
 import { cssColour } from "./character-preview.js";
+import { COLOUR_NAMES, emblemEditor } from "./emblem-editor.js";
 import { button, h, shareLine, toast, type ShareLine } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
 import { SIGNET_HEADING_PX, signetElement } from "./player-label.js";
@@ -205,6 +206,7 @@ async function copyGuildLink(url: string, share: ShareLine): Promise<void> {
 export type CapePick =
   | { readonly part: "main" | "trim"; readonly colour: CapeColour }
   | { readonly part: "emblem"; readonly preset: EmblemPresetName }
+  | { readonly part: "drawn"; readonly emblem: string }
   | { readonly part: "none" };
 
 /** What a first pick starts from: the study's sample of variant B (#1410). */
@@ -234,19 +236,10 @@ export function pickCape(cape: WireCape | null, pick: CapePick): WireCape | null
       };
     case "emblem":
       return { ...from, emblem: presetEmblem(pick.preset, from.trim) };
+    case "drawn":
+      return { ...from, emblem: pick.emblem };
   }
 }
-
-const COLOUR_NAMES: Readonly<Record<CapeColour, MessageKey>> = {
-  gold: "player.colourGold",
-  violet: "player.colourViolet",
-  white: "player.colourWhite",
-  black: "player.colourBlack",
-  lime: "player.colourLime",
-  orange: "player.colourOrange",
-  teal: "player.colourTeal",
-  pink: "player.colourPink",
-};
 
 const EMBLEM_NAMES: Readonly<Record<EmblemPresetName, MessageKey>> = {
   disc: "player.emblemDisc",
@@ -349,8 +342,10 @@ const EMBLEM_BUTTON_PX = 20;
 
 /**
  * The cape designer (#1422): a row of eight swatches each for the cape's
- * colour and its trim's, eight starting emblems (#3554), and *No cape*. `show` marks what
- * `cape` has picked; with none, only *No cape* is pressed.
+ * colour and its trim's, eight starting emblems (#3554), *Edit emblem*
+ * (#3555) and *No cape*. `show` marks what `cape` has picked; with none,
+ * only *No cape* is pressed. *Edit emblem* puts the emblem editor in
+ * place of the rows until Done or Cancel; Done is a pick.
  */
 function capeDesigner(onPick: (pick: CapePick) => void): {
   readonly root: HTMLElement;
@@ -358,6 +353,9 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
 } {
   const root = h("div", "player-cape");
   root.appendChild(h("span", "field-label", t("player.guildCape")));
+  const picks = h("div", "player-cape-picks");
+  root.appendChild(picks);
+  let shown: WireCape | null = null;
   const pressed: {
     readonly button: HTMLButtonElement;
     readonly on: (cape: WireCape) => boolean;
@@ -378,7 +376,7 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
       row.appendChild(swatch);
       pressed.push({ button: swatch, on: (cape) => cape[part] === colour });
     }
-    root.appendChild(row);
+    picks.appendChild(row);
   };
   swatchRow("main", t("player.cape"));
   swatchRow("trim", t("player.trim"));
@@ -398,14 +396,26 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
     emblems.appendChild(choice);
     pressed.push({ button: choice, on: (cape) => cape.emblem === presetEmblem(preset, cape.trim) });
   }
-  root.appendChild(emblems);
+  picks.appendChild(emblems);
+  const edit = button(t("player.editEmblem"), "player-cape-edit", () => {
+    const editor = emblemEditor(shown ?? FIRST_CAPE, (emblem) => {
+      editor.remove();
+      picks.hidden = false;
+      if (emblem !== null) {
+        onPick({ part: "drawn", emblem });
+      }
+    });
+    picks.hidden = true;
+    root.appendChild(editor);
+  });
   const none = button(t("player.noCape"), "player-cape-none", () => {
     onPick({ part: "none" });
   });
-  root.appendChild(none);
+  picks.append(edit, none);
   return {
     root,
     show: (cape) => {
+      shown = cape;
       for (const { button: each, on } of pressed) {
         each.setAttribute("aria-pressed", String(cape !== null && on(cape)));
       }

@@ -53,6 +53,8 @@ Otevři **Možnosti** přes ⚙ v horní liště: jejich sekce **hráč** obsahu
 
 Změna platí okamžitě pro lobby, ve které jsi.
 
+**Nakresli si vlastní znak.** **Upravit znak** pod výchozími znaky otevře na jejich místě mřížku 16×16. Vyber barvu nebo **Prázdné** a kresli nástrojem **Tužka**, gumuj nástrojem **Guma** nebo vybarvi plochu nástrojem **Výplň**. **Zrcadlit** maluje levou a pravou polovinu najednou. **Vymazat** mřížku vyprázdní a **Zpět** vrátí krok. Malý náhled vedle mřížky ukazuje znak tak velký jako v zápase. **Hotovo** ho ponechá, **Zrušit** kresbu zahodí. Šipky a mezerník kreslí i z klávesnice.
+
 **Kopírovat odkaz na cech** pod návrhářem pláště zkopíruje odkaz s tvou značkou a pláštěm. Kdo ho otevře, dostane otázku **Přidat se do cechu [VIBE]?**: **Přidat se** mu dá tvou značku a plášť, **Ne** nic nezmění. Takový odkaz může poslat kdokoli a značku nikdo nevlastní, proto se hra vždy nejdřív zeptá.
 
 ## Jazyk

@@ -183,6 +183,8 @@ menu juga menampilkannya. **Tanpa jubah** melepasnya.
 
 Perubahan langsung berlaku di lobi tempat kamu berada.
 
+**Gambar lambangmu sendiri.** **Sunting lambang**, di bawah lambang awal, membuka kisi 16×16 di tempatnya. Pilih warna atau **Kosong**, lalu gambar dengan **Pensil**, hapus dengan **Penghapus**, atau warnai satu area dengan **Isi**. **Cermin** mewarnai belahan kiri dan kanan sekaligus. **Bersihkan** mengosongkan kisi dan **Urung** mundur satu langkah. Tampilan kecil di samping kisi menunjukkan lambang sebesar di dalam pertandingan. **Beres** menyimpannya, **Batal** membuang gambarnya. Tombol panah dan Spasi juga menggambar dari keyboard.
+
 **Salin link guild**, di bawah perancang jubah, menyalin link yang membawa tag dan jubahmu. Siapa pun yang membukanya akan ditanya **Gabung ke guild [VIBE]?**: **Gabung** memberinya tag dan jubahmu, **Tidak** tidak mengubah apa pun. Siapa saja bisa mengirim link seperti itu dan tidak ada yang memiliki sebuah tag, jadi game selalu bertanya dulu.
 
 ## Bahasa

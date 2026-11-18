@@ -307,3 +307,42 @@ test("Options and the Lobby window shut each other: one top-bar window at a time
   await expect(options).toBeVisible();
   await expect(lobby).toHaveCount(0);
 });
+
+for (const width of [320, 360]) {
+  test(`the emblem editor fits a ${String(width)} px phone: no sideways scroll, preview and Mirror in the pane (#3555)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("./");
+    await page.locator("#topbar .topbar-more").click();
+    await page.locator("#topbar .topbar-options").click();
+    await expect(page.locator(".options-screen")).toBeVisible();
+    // The cape designer shows once there is a guild tag.
+    await page.getByRole("textbox", { name: "Guild tag", exact: true }).fill("VW");
+    await page.getByRole("button", { name: "Edit emblem", exact: true }).click();
+    const pane = page.locator(".options-pane");
+    await expect(page.locator(".emblem-editor-grid")).toBeVisible();
+
+    const overflow = await pane.evaluate((element) => element.scrollWidth - element.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    const paneBox = await pane.boundingBox();
+    expect(paneBox).not.toBeNull();
+    for (const part of [
+      page.locator(".emblem-editor-grid"),
+      page.locator(".emblem-editor-preview"),
+      page.getByRole("button", { name: "Mirror", exact: true }),
+    ]) {
+      const box = await part.boundingBox();
+      expect(box).not.toBeNull();
+      if (box !== null && paneBox !== null) {
+        expect(box.x).toBeGreaterThanOrEqual(paneBox.x);
+        expect(box.x + box.width).toBeLessThanOrEqual(paneBox.x + paneBox.width + 0.5);
+      }
+    }
+    // The cells stay square as they shrink.
+    const grid = await page.locator(".emblem-editor-grid").boundingBox();
+    if (grid !== null) {
+      expect(Math.abs(grid.width - grid.height)).toBeLessThanOrEqual(1);
+    }
+  });
+}
