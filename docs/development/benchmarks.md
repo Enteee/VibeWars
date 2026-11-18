@@ -125,6 +125,15 @@ above `main`'s are the bar. The counts are deterministic, so a
 difference is a real one, but a seed set is small: read a few deaths
 either way as noise.
 
+## The ranking bench
+
+`pnpm run bench:ranking` (#3571) rates 10 000 2v2 receipts among 400
+keys over 100 days with `rate` (ADR-0055) and prints how long it took.
+Signatures are checked by a stand-in hash, not BIP-340, so it measures
+the rating, not the curve. Without `BENCH_RANKING` the test file runs
+and the bench is skipped. On a dev machine it takes about 6 s; the hourly
+leaderboard job can afford far more.
+
 ## The map balance bench
 
 `BENCH_MAP=<id> BENCH_SIZE=<n> company heavy pnpm run bench:balance` (#3065) plays

@@ -72,6 +72,7 @@ import {
   type WireSnapshot,
   type WireSnapshotPart,
   type WireRespawns,
+  type WireCapes,
   type WireStrokes,
   type WireTraps,
   type WireCape,
@@ -785,6 +786,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
   };
 
+  /** Every seat's cape (#3554): told once, not in every snapshot. */
+  const capes = (): WireCapes => ({
+    capes: [...seats.values()].flatMap((seat) =>
+      seat.guildCape === null ? [] : [{ id: seat.playerId, cape: seat.guildCape }],
+    ),
+  });
+
   /**
    * `team`'s dead and when each comes back (#3367): a foe's respawn is
    * hidden information, so this is all a peer ever hears of them.
@@ -898,6 +906,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("strokes", { segments: calls.strokes(seat.team, sim.elapsedSeconds) }, peerId);
     transport.send("traps", trapsOf(seat.team), peerId);
     transport.send("respawns", respawnsOf(seat.team), peerId);
+    transport.send("capes", capes(), peerId);
   };
 
   /** What the next seat on `team` playing `build` is set up as. */
@@ -958,6 +967,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       weaponSets: undefined,
     };
     seats.set(playerId, seat);
+    if (seat.guildCape !== null) {
+      transport.send("capes", capes(), [...players(), ...observers]);
+    }
     everSeated.set(playerId, {
       name: seat.name,
       guildTag: seat.guildTag,
@@ -1056,6 +1068,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       map: map.descriptor,
     };
     transport.send("observing", message, from);
+    transport.send("capes", capes(), from);
   });
 
   /** Whether `peerId` may take `seat`: no bot plays it, and it plays no other seat. */

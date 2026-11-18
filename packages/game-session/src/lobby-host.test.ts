@@ -24,6 +24,7 @@ import {
   type WireLobbyNote,
   type WireLobbyCommand,
   type WireLobbyState,
+  packEmblem,
 } from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
@@ -159,7 +160,7 @@ describe("lobby host", () => {
 
   it("plays a member's cape in the lobby's match, and none without a valid tag (#1422)", async () => {
     const lobby = await openLobby();
-    const cape = { main: "gold", trim: "black", emblem: "ring" } as const;
+    const cape = { main: "gold", trim: "black", emblem: packEmblem([7, 7, 7]) } as const;
     const ann = await lobby.join("Ann", "Vb", cape);
     const bob = await lobby.join("Bob", null, cape);
     const cy = await lobby.join("Cy", "[x]", cape);

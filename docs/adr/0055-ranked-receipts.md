@@ -74,7 +74,7 @@ A receipt nobody but its host signed cannot exist, because the start round needs
 
 ### The rating
 
-`rate(receipts, asOfDay)` in `packages/ranking` is a pure function:
+`rate(receipts, asOfDay, crypto)` in `packages/ranking` is a pure function (`crypto` checks the signatures, as `validateReceipt` does):
 
 - **Order.** Receipts are sorted by `(startedAt, receipt hash)`. They are grouped into rating periods of one UTC day.
 - **Glicko-2**, τ = 0.5, starting at 1500 / RD 350 / σ 0.06. A team match counts, for each player, as one game against the opposing team's average rating and RD.
@@ -83,8 +83,8 @@ A receipt nobody but its host signed cannot exist, because the start round needs
 - **Farming weights.** Each game's contribution to the Glicko sums is multiplied by a weight w in [0, 1]:
   - The k-th match against the same opposing identity set within one day weighs 1/k. Only the first 3 such matches count at all.
   - At most 20 rated matches per identity per day count.
-  - Trust: w is multiplied by the opponents' average trust, where trust(id) = min(1, D/20), and D is the number of distinct opponents of `id` who themselves have at least 3 distinct opponents. A closed ring of a handful of keys earns almost nothing.
-- **Forks.** A receipt whose `prev` for some key repeats one already used on that key's chain is a fork. Only the earliest receipt in canonical order stays on the chain. Later ones are void for everyone in them, and the key is marked forked on the leaderboard.
+  - Trust: w is multiplied by the opponents' average trust, where trust(id) = min(1, D/min(12, P−1))³, D is the number of distinct opponents of `id` who themselves have at least 3 distinct opponents, and P the number of keys with at least one valid receipt up to that day, so a young ladder of five keys who all play each other rates normally. Cubed, because a Glicko step is not linear in its weight: a closed ring of four keys (D = 3) keeps under 5 % of a real gain in a day, where a plain D/20 kept 27 %.
+- **Forks.** A receipt whose `prev` for some key repeats one already used on that key's chain is a fork. Only the earliest receipt in canonical order stays on the chain. A later one still counts normally for every other seat in it, counts as a loss for the forker whatever its result says, and marks the forker forked on the leaderboard. A fork can never erase anyone else's result, so backdating a match against an alt key to void a real loss gains nothing (perf-sec-qa, #3600).
 
 Floats are evaluated in a single engine: the job runs on Node, and players run the same code on the same Node major when they recompute. The output records the engine version beside its hash.
 

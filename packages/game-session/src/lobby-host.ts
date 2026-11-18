@@ -822,7 +822,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       name: member.name,
       guildTag: member.guildTag,
       heroRank: member.heroRank,
-      guildCape: member.guildCape,
       team: member.team,
       ready: isReady(member),
       isHost: member.id === local.selfId,
