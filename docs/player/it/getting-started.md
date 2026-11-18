@@ -30,6 +30,8 @@ Il modo più rapido per entrare in uno scontro. In **Arena casuale**, clicca sul
 
 A fine partita puoi scegliere **Di nuovo in coda**, o **Restate uniti** con la squadra con cui hai appena giocato.
 
+Accanto ai punteggi, due grafici raccontano la partita nel tempo. **Tu** traccia i danni inflitti, i danni subiti, le cure e l'Energia; **Squadre** traccia la riserva di salute di ogni squadra sopra i suoi danni totali. I segni sotto l'asse del tempo mostrano uccisioni, morti, interruzioni, conquiste e resurrezioni: punta su uno, o raggiungilo con Tab, per leggere cosa è successo. Premi una voce della legenda per nascondere o mostrare la sua linea. Su telefono i grafici stanno sotto i punteggi, che mostrano te e altri due finché non premi **Mostra tutto**.
+
 ## Ospita o entra in una partita
 
 Sei sempre in una lobby: dal momento in cui apri la pagina ne ospiti una tua. La lobby è il tuo gruppo: **Lobby** nella barra superiore, tra Opzioni e Musica, apre una finestra con il link d'invito, Aperta/Chiusa ed Esci, e l'elenco di chi c'è; il badge li conta.

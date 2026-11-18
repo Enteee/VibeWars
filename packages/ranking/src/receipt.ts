@@ -125,8 +125,9 @@ export type ReceiptFault =
 
 /**
  * Whether a receipt is valid, and if so whether it is void: valid, but
- * without a result signature on every team, so it rates nobody. A host
- * that lists all its opponents as leavers gets this, not a win.
+ * signed for its result by no more than half of its seats, so it rates
+ * nobody. A host team that lists all its opponents as leavers gets this,
+ * not a win.
  */
 export type ReceiptValidity =
   | { readonly ok: true; readonly void: boolean }
@@ -379,10 +380,10 @@ const signed = (
 /**
  * Whether `receipt` is valid (ADR-0055): every seat signed the start,
  * and every non-leaver signed the result that ends that start. A
- * signature from a key that is not seated is ignored. It is void when a
- * team has no result signature (opponent consent): the host cannot win
- * alone by naming every opponent a leaver. In a `host-left` result, a
- * team of only the departed host is exempt.
+ * signature from a key that is not seated is ignored. It is void unless
+ * more than half of the seats signed the result (consent, Q109 B): the
+ * host's team cannot win alone by naming every opponent a leaver. A
+ * departed host counts among the seats and does not sign.
  */
 export function validateReceipt(receipt: RankedReceipt, crypto: ReceiptCrypto): ReceiptValidity {
   const { start, startSigs, result, resultSigs } = receipt;
@@ -426,14 +427,10 @@ export function validateReceipt(receipt: RankedReceipt, crypto: ReceiptCrypto): 
   if (!seats.every((pubkey) => leavers.has(pubkey) || signedResult(pubkey))) {
     return { ok: false, reason: "result-signature" };
   }
-  // Opponent consent: a seat of every team signed, or nobody is rated. In
-  // a host-left result, a team of only the departed host has nobody to.
-  const consented = start.teams.every(
-    (team) =>
-      team.some((seat) => signedResult(seat.pubkey)) ||
-      (result.endReason === "host-left" && team.every((seat) => leavers.has(seat.pubkey))),
-  );
-  return { ok: true, void: !consented };
+  // Consent: more than half of the seats signed, or nobody is rated.
+  // Seats are distinct, so no key counts twice.
+  const signers = seats.filter(signedResult).length;
+  return { ok: true, void: 2 * signers <= seats.length };
 }
 
 function mergeSigs(

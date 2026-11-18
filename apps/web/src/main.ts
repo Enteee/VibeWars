@@ -3404,10 +3404,17 @@ async function main(): Promise<void> {
   const seededMenuStep = tutorialMenuStep();
   if (summaryFixtureAsked()) {
     // An e2e build's fixed end of a match (#3563), over no arena.
-    showViewport(true);
-    void import("./ui/summary-fixture.js").then(({ mountSummaryFixture }) => {
-      mountSummaryFixture(viewport);
-    });
+    if (new URLSearchParams(window.location.search).get("summary-fixture") === "queue") {
+      // The queue screen after it (#3565), its scores beside its charts.
+      void import("./ui/summary-fixture.js").then(({ mountQueueFixture }) => {
+        mountQueueFixture(screenRoot);
+      });
+    } else {
+      showViewport(true);
+      void import("./ui/summary-fixture.js").then(({ mountSummaryFixture }) => {
+        mountSummaryFixture(viewport);
+      });
+    }
   } else if (tutorialFirstStation() > 0) {
     // An e2e build's seeded start (#3383) goes straight to its station,
     // on the pinned menu map: no splash, no offer, no menu fight.
