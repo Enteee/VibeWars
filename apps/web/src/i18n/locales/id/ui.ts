@@ -1407,6 +1407,15 @@ export default {
   "tutorial.ground.praise": "Sampai! Sekarang kamu tahu ulah tanah ini.",
   "tutorial.front.end": "Sekarang kamu tahu dasarnya. Sampai jumpa di luar sana!",
   "tutorial.front.menu": "Ke menu",
+  "tutorial.menu.gotIt": "Mengerti",
+  "tutorial.menu.menu.characters":
+    "Di Karakter kamu membuat dan mengubah siapa yang kamu mainkan: profesi, skill, dan perlengkapan.",
+  "tutorial.menu.menu.rail":
+    "Ini menu utama. Di samping ada cara-cara bermain: pilih satu untuk membukanya.",
+  "tutorial.menu.menu.teams":
+    "Di Tim kamu menggabungkan karakter menjadi satu tim untuk pertarungan tim.",
+  "tutorial.menu.menu.title": "Untuk lanjut, kamu harus mengganti spesialisasimu.",
+  "tutorial.menu.skipAsk": "Lewati sisa tutorial?",
   "tutorial.gate.hint": "Masuk ke kabut, ikuti aku.",
   "tutorial.gate.how": "Klik kiri tanah, atau berjalan dengan {keys}.",
   "tutorial.gate.intro": "Tim kita bertarung di balik kabut. Ikuti aku.",

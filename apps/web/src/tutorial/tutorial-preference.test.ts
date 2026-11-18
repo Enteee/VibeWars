@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 
-import { loadTutorialRecord, saveTutorialRecord } from "./tutorial-preference.js";
+import { loadTutorialRecord, menuQuestStepOf, saveTutorialRecord } from "./tutorial-preference.js";
 
 function memoryStorage(): Pick<Storage, "getItem" | "setItem" | "removeItem"> {
   const items = new Map<string, string>();
@@ -48,5 +48,22 @@ describe("the tutorial record", () => {
     expect(() => {
       saveTutorialRecord("done");
     }).not.toThrow();
+  });
+
+  it("keeps a menu quest step, and discards one the quest no longer has", () => {
+    const storage = memoryStorage();
+    vi.stubGlobal("localStorage", storage);
+    saveTutorialRecord("menu:menu");
+    expect(loadTutorialRecord()).toBe("menu:menu");
+    expect(menuQuestStepOf(loadTutorialRecord())).toBe("menu");
+    storage.setItem(`${STORAGE_NAMESPACE}.tutorial`, "menu:x");
+    expect(loadTutorialRecord()).toBeUndefined();
+    expect(storage.getItem(`${STORAGE_NAMESPACE}.tutorial`)).toBeNull();
+  });
+
+  it("names no menu quest step for a finished or skipped one", () => {
+    expect(menuQuestStepOf("done")).toBeUndefined();
+    expect(menuQuestStepOf("skipped")).toBeUndefined();
+    expect(menuQuestStepOf(undefined)).toBeUndefined();
   });
 });

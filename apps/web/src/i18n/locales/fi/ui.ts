@@ -1493,6 +1493,14 @@ export default {
   "tutorial.ground.praise": "Perillä! Nyt tiedät, mitä maa voi tehdä.",
   "tutorial.front.end": "Nyt osaat perusteet. Nähdään siellä!",
   "tutorial.front.menu": "Takaisin valikkoon",
+  "tutorial.menu.gotIt": "Selvä",
+  "tutorial.menu.menu.characters":
+    "Hahmoissa luot ja muutat, kenellä pelaat: ammatin, taidot ja varusteet.",
+  "tutorial.menu.menu.rail":
+    "Tämä on päävalikko. Sivussa ovat pelitavat: valitse yksi avataksesi sen.",
+  "tutorial.menu.menu.teams": "Joukkueissa kokoat hahmot joukkueeksi joukkuetaisteluihin.",
+  "tutorial.menu.menu.title": "Jatkaaksesi sinun on vaihdettava erikoistumisesi.",
+  "tutorial.menu.skipAsk": "Ohitetaanko loput opastuksesta?",
   "tutorial.gate.hint": "Sumuun, perässäni.",
   "tutorial.gate.how": "Napsauta maata vasemmalla, tai kävele näppäimillä {keys}.",
   "tutorial.gate.intro": "Joukkueemme taistelee sumun takana. Seuraa minua.",

@@ -1401,6 +1401,122 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  describe("The Warden's Gallery", () => {
+    const map = loadMap("wardens-gallery");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const centre = { x: 2600, y: 1250 };
+    const own = ["west", "east"];
+    const faces = ["north", "south", "west", "east"] as const;
+    /** A team's own side, and the far one. */
+    const side = (team: number, far = false): string => own[far ? 1 - team : team] ?? "";
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Onto `deck` by its stair on `face`, its other stairs shut. */
+    const by = (deck: string, face: string): Route => ({
+      through: [`${deck}-${face}-stair`],
+      shut: faces.filter((other) => other !== face).map((other) => `${deck}-${other}-stair`),
+    });
+    /**
+     * The routes of the study to the great plinth: the nave climbs its base on the team's own
+     * face, the north and south halls on the north and south faces.
+     */
+    const routes = [
+      ["the nave", (team: number) => by("great-plinth-base", side(team))],
+      ["the north hall", () => by("great-plinth-base", "north")],
+      ["the south hall", () => by("great-plinth-base", "south")],
+    ] as const;
+    /** A point by name, its west image, its layer, and whether it is the far team's. */
+    type Point = readonly [string, { x: number; y: number }, number, boolean];
+    const points: readonly Point[] = [
+      ["own north", { x: 1700, y: 500 }, 1, false],
+      ["own plinth", { x: 1700, y: 1250 }, 2, false],
+      ["own south", { x: 1700, y: 2000 }, 1, false],
+      ["far north", { x: 1700, y: 500 }, 1, true],
+      ["far plinth", { x: 1700, y: 1250 }, 2, true],
+      ["far south", { x: 1700, y: 2000 }, 1, true],
+    ];
+    /** Where team `team` finds a point given by its west image: its own, or the far team's. */
+    const at = (team: number, point: { x: number; y: number }, far: boolean) => {
+      const west = team === 0 ? !far : far;
+      return west ? point : { x: map.width - point.x, y: point.y };
+    };
+    /** Each team's walk to its image of `point`, by `route` or the best way. */
+    const toPoint = (
+      on: MapData,
+      [, point, layer, far]: Point,
+      route?: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          (route === undefined
+            ? walksTo(on, at(team, point, far), layer)
+            : walksByRoute(on, at(team, point, far), layer, (other) =>
+                other === team ? route(team) : { through: [] },
+              ))[team] ?? 0,
+      );
+    /** The plinth face a team climbs: its own west is the far team's east. */
+    const mirroredFace = (team: number, face: string): string =>
+      team === 1 && (face === "west" || face === "east")
+        ? face === "west"
+          ? "east"
+          : "west"
+        : face;
+    /** As loaded: every undercroft gate shut, every statue standing. */
+    const shut: MapData = {
+      ...map,
+      walls: [
+        ...map.walls,
+        ...map.gates.map(({ wall }) => wall),
+        ...(map.breakables ?? []).map(({ wall }) => wall),
+      ],
+    };
+
+    it.each(routes)(
+      "walks each team to the centre by %s within 10 % of the other, in under 25 s",
+      (_, route) => {
+        for (const on of [map, shut]) {
+          const walks = walksByRoute(on, centre, 3, route);
+          within(walks, 0.1);
+          for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+        }
+      },
+    );
+
+    it.each(points)(
+      "walks each team to the %s point within 10 % of the other, as loaded and opened",
+      (...point) => {
+        within(toPoint(map, point), 0.1);
+        within(toPoint(shut, point), 0.1);
+      },
+    );
+
+    it.each(points.filter(([, , layer]) => layer === 2))(
+      "walks each team onto the %s point by each of its four stairs within 10 % of the other",
+      (...point) => {
+        const far = point[3];
+        for (const face of faces) {
+          within(
+            toPoint(map, point, (team) =>
+              by(`${side(team, far)}-plinth`, mirroredFace(team, face)),
+            ),
+            0.1,
+          );
+        }
+      },
+    );
+
+    it("keeps the centre walk within 10 % with the gates open and the statues broken", () => {
+      const broken = ["west-statue", "east-statue"];
+      within(walksByRoute(map, centre, 3, { through: [], broken }), 0.1);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
   // Guild Hall Isle (#3445): team 1's half is team 0's turned 180° about the flag dais, so every
   // walk below is the same both ways. Out of a base three ways: under the rampart by the
   // gatehouse, over it by its stairs, or round its end, dry along a pier or wading the inlet.

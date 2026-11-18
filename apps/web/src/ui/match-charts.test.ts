@@ -7,6 +7,7 @@ import {
   MARK_PX,
   chartUsable,
   clock,
+  countCeiling,
   eventText,
   firstSample,
   linePath,
@@ -60,6 +61,10 @@ describe("match chart helpers (#3565)", () => {
 
   it("rounds an axis maximum up to 1, 2, 2.5 or 5 times a power of ten", () => {
     expect([0, 1, 7, 13, 22, 240, 4100].map(niceCeil)).toEqual([1, 1, 10, 20, 25, 250, 5000]);
+  });
+
+  it("gives a count axis four whole steps, so small maxima do not repeat labels", () => {
+    expect([0, 2, 7, 10, 22, 4100].map(countCeiling)).toEqual([4, 4, 8, 12, 40, 8000]);
   });
 
   it("writes times as m:ss", () => {
@@ -200,6 +205,28 @@ describe("the match charts panel (#3565)", () => {
     expect(kill?.getAttribute("transform")).toContain(geometry.x(14).toFixed(1));
     expect(kill?.getAttribute("aria-label")).toBe("0:14 — Bot Ash died (killed by Mira)");
     expect(kill?.getAttribute("tabindex")).toBe("0");
+  });
+
+  it("labels a small count axis with five distinct whole numbers", () => {
+    for (const max of [0, 2, 10]) {
+      const line = { key: "dealt", label: "Dealt", values: [max], start: 0, colour: "#fff" };
+      const { svg } = renderPlot({
+        width: 600,
+        panelHeight: 160,
+        period: 10,
+        samples: 1,
+        panels: [{ lines: [{ ...line, dash: "", percent: false }], leftPercent: false }],
+        marks: [],
+        hidden: new Set(),
+      });
+      const labels = fake(svg)
+        .all("chart-grid")
+        .flatMap(({ children }) => children.map(({ textContent }) => textContent))
+        // The time axis shares the grid; its labels are m:ss.
+        .filter((text) => text !== "" && !text.includes(":"));
+      expect(new Set(labels).size).toBe(5);
+      expect(labels.every((text) => /^\d+$/.test(text))).toBe(true);
+    }
   });
 
   it("leaves room above the top tick labels so they are not clipped", () => {

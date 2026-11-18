@@ -1397,6 +1397,14 @@ export default {
   "tutorial.ground.praise": "건넜다! 이제 땅이 뭘 하는지 알겠지.",
   "tutorial.front.end": "이제 기본은 다 알았어. 전장에서 만나요!",
   "tutorial.front.menu": "메뉴로",
+  "tutorial.menu.gotIt": "알겠어요",
+  "tutorial.menu.menu.characters":
+    "캐릭터에서는 플레이할 캐릭터를 만들고 바꿉니다: 직업, 스킬, 장비.",
+  "tutorial.menu.menu.rail":
+    "여기가 메인 메뉴입니다. 옆에 플레이 방식이 있어요: 하나를 골라 여세요.",
+  "tutorial.menu.menu.teams": "팀에서는 캐릭터를 모아 팀 전투용 팀을 꾸립니다.",
+  "tutorial.menu.menu.title": "계속하려면 스펙을 바꿔야 합니다.",
+  "tutorial.menu.skipAsk": "튜토리얼의 나머지를 건너뛸까요?",
   "tutorial.gate.hint": "안개 속으로, 날 따라와.",
   "tutorial.gate.how": "땅을 왼쪽 클릭하거나 {keys}(으)로 걸으세요.",
   "tutorial.gate.intro": "우리 팀은 안개 너머에서 싸우고 있어. 따라와.",

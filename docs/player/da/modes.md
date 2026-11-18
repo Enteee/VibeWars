@@ -292,6 +292,8 @@ kæmper derfra.
 
 Scarred Earth (4v4 og 8v8, 5400x2800) spiller den: en kraterfyldt slagmark i skumringen. Helligdommene står på ødelagte belejringstårne, den midterste på det store tårns dæk, hver ved siden af et krater; håndtag på tårnene åbner to skyttegrave under marken, og ødelagte palisader kan slås ned.
 
+I Heltenes opstigning spiller The Warden's Gallery (8v8, 5200x2500) den: et solbeskinnet skulpturgalleri under ovenlysvinduer. Den midterste helligdom står på toppen af den store sokkel, og hvert hold har tre nær sin forhal, én på en sokkel; håndtag på den store sokkel åbner to krypter under gulvet, og væltede statuer kan slås ned.
+
 ## Holdlobby
 
 En lobby med en vært starter ikke kampen, når alle er klar. Den åbner

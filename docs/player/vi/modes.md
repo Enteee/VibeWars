@@ -269,6 +269,8 @@ trong tầm và đánh từ đó.
 
 Scarred Earth (4v4 và 8v8, 5400x2800) chơi chế độ này: một chiến trường đầy hố bom lúc chạng vạng. Các đền nằm trên những tháp công thành đổ nát, đền giữa trên sàn của tháp lớn, mỗi đền cạnh một hố; cần gạt trên các tháp mở hai chiến hào dưới chiến trường, và hàng rào cọc đổ nát có thể phá được.
 
+Trong Đỉnh Anh Hùng, The Warden's Gallery (8v8, 5200x2500) chơi chế độ này: một phòng trưng bày tượng ngập nắng dưới các giếng trời. Đền giữa nằm trên đỉnh bệ lớn, và mỗi đội có ba đền gần tiền sảnh của mình, một đền trên bệ; cần gạt trên bệ lớn mở hai hầm ngầm dưới sàn, và những bức tượng đổ có thể phá được.
+
 ## Sảnh Đội
 
 Một sảnh tự tạo không bắt đầu trận khi mọi người đã sẵn sàng. Nó mở Sảnh Đội

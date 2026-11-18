@@ -33,7 +33,7 @@ describe("sizeClass (#444, #2547)", () => {
       "hollow-deep": "medium",
       "blackwater-ford": "large",
       "mosslit-cairns": "small",
-      "wardens-gallery": "small",
+      "wardens-gallery": "large",
       "brazen-causeway": "large",
       "scarred-earth": "large",
       "sandstone-steps": "small",

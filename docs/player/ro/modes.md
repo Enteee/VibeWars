@@ -267,6 +267,8 @@ un sanctuar la îndemână și luptă de pe el.
 
 Se joacă pe Scarred Earth (4v4 și 8v8, 5400x2800): un câmp de luptă ciuruit de cratere, la amurg. Sanctuarele stau pe turnuri de asediu distruse, cel din mijloc pe puntea turnului mare, fiecare lângă un crater; manete de pe turnuri deschid două tranșee sub câmp, iar palisadele distruse pot fi sparte.
 
+În Ascensiunea Eroilor se joacă pe The Warden's Gallery (8v8, 5200x2500): o galerie de sculpturi însorită, sub luminatoare. Sanctuarul din mijloc stă în vârful soclului mare, iar fiecare echipă are trei lângă vestibulul ei, unul pe un soclu; manete de pe soclul mare deschid două cripte sub podea, iar statuile răsturnate pot fi sparte.
+
 ## Lobby de echipă
 
 Un lobby găzduit nu pornește meciul când toată lumea e gata. Deschide mai întâi Lobby-ul
