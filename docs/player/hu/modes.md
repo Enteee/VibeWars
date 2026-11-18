@@ -186,6 +186,8 @@ pont nyer, egyenlőségnél pedig az a csapat, amelyik utoljára szerzett
 pontot. Minden bázis 2 percenként feltámasztja a halottait és a
 kísértetét. A botok együtt mennek az ellenség ereklyéjéért, és hazahozzák.
 
+A Cinder Sanctum (8v8, 5600x2800) ezt játssza: templom egy vulkán oldalán, két lávafolyó között. Kelj át egy hídon vagy a töltésen az előudvarán álló szentélyhez; az előudvar egyik karja megnyitja a szentély alatti rejtett átjárót, a hamufalak pedig szétverhetők. A láva éget.
+
 ## A domb ura
 
 **Vezesd a Kísértethősödet az oltárra, és tartsd meg.** Minden
@@ -304,8 +306,7 @@ A botok szétszóródnak azokon a szentélyeken, amelyek még nem a csapatodéi,
 belüli ellenség nem csalja el őket: fellépnek egy elérhető szentélyre,
 és onnan harcolnak.
 
-A Scarred Earth játssza: minden szentély egy törött falgyűrűben áll,
-amely nyugat és kelet felé nyitott.
+A Scarred Earth (4v4 és 8v8, 5400x2800) játssza: kráterekkel szabdalt csatatér alkonyatkor. A szentélyek összetört ostromtornyokon állnak, a középső a nagy torony fedélzetén, mindegyik egy kráter mellett; a tornyokon lévő karok két lövészárkot nyitnak a mező alatt, a rommá lett cölöpkerítések pedig szétverhetők.
 
 ## Csapatlobbi
 

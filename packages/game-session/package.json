@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@vibewars/game-core": "workspace:*",
-    "@vibewars/game-protocol": "workspace:*"
+    "@vibewars/game-protocol": "workspace:*",
+    "@vibewars/ranking": "workspace:*"
   }
 }

@@ -17,6 +17,7 @@ import {
 } from "./lobby-harness.test-support.js";
 import { MatchRefusedError, connectMatch } from "./match-client.js";
 import { OBSERVER_DELAY_SECONDS, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
+import type { RecordedReplay, Sha256 } from "./replay.js";
 import { connectObserver } from "./match-observer.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { hello, playerIn, self, settle, toJson, until } from "./match-harness.test-support.js";
@@ -58,6 +59,7 @@ function intrude(who: Member, name = "Stranger") {
     hostId: "host",
     hello: hello({ name }),
     timeoutMs: 1000,
+    replays: null,
   });
 }
 
@@ -95,6 +97,7 @@ describe("a lobby's own match", () => {
       hostId: "host",
       hello: hello({ build: toJson(pyro) }),
       timeoutMs: 1000,
+      replays: null,
     });
     await lobby.step(0.05);
     // A starter build fills all eight slots: only this build has the gaps (#852).
@@ -475,5 +478,33 @@ describe("a lobby's match played to its end (#403)", () => {
     }
     expect(lobby.host.connection.getSnapshot().phase).toBe("waiting");
     expect(at(members, 1).connection.getSnapshot().phase).toBe("waiting");
+  });
+});
+
+describe("a lobby's match recording a replay (#3572)", () => {
+  it("leaves each player holding the replay, though the lobby moves on before it is hashed", async () => {
+    const sha256: Sha256 = async (bytes) =>
+      new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    const lobby = await openLobby({ recordReplay: { buildHash: "test-build", sha256 } });
+    const guest = await lobby.join("Guest 1");
+    await seat([lobby.host, guest], [0, 1]);
+    await start(lobby);
+    const kept: RecordedReplay[] = [];
+    const keeper = { sha256, keep: (recorded: RecordedReplay) => kept.push(recorded) };
+    const [hunter, prey] = [
+      await play(lobby.host, "Hunter", keeper),
+      await play(guest, "Prey", keeper),
+    ];
+    await lobby.step(0.05);
+    hunter.sendIntent({ kind: "attack", targetId: prey.selfSessionId });
+    for (let i = 0; i < 1200 && hunter.getSnapshot().phase === "active"; i += 1) {
+      await lobby.step(0.1);
+    }
+    expect(lobby.host.connection.getSnapshot().phase).toBe("waiting");
+
+    await until(() => kept.length === 2);
+    const [first, second] = kept;
+    expect(first?.hash).toBe(second?.hash);
+    expect(first?.replay.inputs.length).toBeGreaterThan(0);
   });
 });

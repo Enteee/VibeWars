@@ -130,7 +130,8 @@ process.stdout.write(
 
 // Only the packages: building apps/web here too would emit a second copy
 // of the client that Vite does not use. game-session references
-// game-core and game-protocol; game-maps and game-data stand alone.
+// game-core, game-protocol and ranking; game-maps and game-data stand
+// alone.
 const PACKAGES = [
   "packages/game-session/tsconfig.build.json",
   "packages/game-maps/tsconfig.build.json",
