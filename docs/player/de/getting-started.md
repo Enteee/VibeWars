@@ -162,7 +162,7 @@ suchen, deines eingeschlossen: `2 Teams suchen`. Nur der Host hat dort **Abmelde
 der Host den Tab, ist die Gruppe sofort aus der Warteschlange. Taucht ein anderes wartendes
 Team desselben Modus auf, spielt ihr auf einer der Karten des Modus gegeneinander, jede Seite
 mit ihren eigenen Builds, und kommt danach in eure Lobby zurück. Der Host kann die Warteschlange jederzeit im Fenster des Rings verlassen; ein Gast, der geht, nimmt die ganze Gruppe aus der
-Warteschlange. Ist nach einer Minute kein anderes Team da, kann der Host auch **Gegen Bots
+Warteschlange. Nach 10 s in der Warteschlange kann der Host auch im Fenster des Rings **Gegen Bots
 spielen** drücken: ein Match in deiner eigenen Lobby gegen ein zufälliges vorgefertigtes
 Team aus Bots, außer im [Aufstieg der Helden](modes.md#aufstieg-der-helden), der auf ein Team
 in deiner Runde wartet.

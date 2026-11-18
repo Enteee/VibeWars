@@ -665,7 +665,8 @@ body {
   margin: 0;
 }
 
-.queue-window-waited {
+.queue-window-waited,
+.queue-play-bots {
   font-variant-numeric: tabular-nums;
 }
 

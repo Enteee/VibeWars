@@ -971,6 +971,7 @@ export default {
   "queue.matchFoundTitle": "Partita trovata!",
   "queue.nextMatchIn": "Prossima partita tra {seconds} s",
   "queue.now": "Ora",
+  "queue.playBotsIn": "Gioca contro i bot ({seconds} s)",
   "queue.queueAgain": "Di nuovo in coda",
   "queue.randomArena": "Arena casuale {size}",
   "queue.searchingCount": "{searching} in ricerca · {needed} necessari",

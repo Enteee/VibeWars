@@ -68,6 +68,8 @@ export interface TopbarCallbacks {
   readonly onRemoveMember: (id: string) => void;
   /** The queue flyout's Leave Queue (#2743): out of whichever queue this tab is in. */
   readonly onLeaveQueue: () => void;
+  /** The queue flyout's Play against bots (#3547): the host's party fights bots instead. */
+  readonly onPlayBots: () => void;
 }
 
 /** The lobby the bar names (#1526): this tab's own, or the one it joined. */
@@ -516,7 +518,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks, signet
   });
 
   // Left of Help while in any queue (#2743).
-  const queue = queueButton(bar, callbacks.onLeaveQueue);
+  const queue = queueButton(bar, callbacks.onLeaveQueue, callbacks.onPlayBots);
 
   const options = iconButton("topbar-options", t("topbar.options"), settingsIcon());
   attachOptionsWindow(options, bar, signet, callbacks.onOptionsClosed);
