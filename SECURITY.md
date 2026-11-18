@@ -538,7 +538,7 @@ saying so in the same PR. Keep the numbers: issues cite them.
    unescaped (#115).
 8. **Fixed by #178:** display names could carry invisible and
    direction-changing characters (#174).
-9. **Replay parts outgrow the replay bound** (found at `dc2ff0f`,
+9. **Replay parts outgrow the replay bound** (#3620, found at `dc2ff0f`,
    2026-11-18). `parseWireMatchReplayPart` takes 16 384 characters a part
    and up to `MAX_REPLAY_PARTS` (6400) parts, although the host slices
    `REPLAY_SLICE` (5000). `match-client.ts` buffers every part before
