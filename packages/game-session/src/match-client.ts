@@ -10,10 +10,14 @@ import {
   parseRecharge,
   parseWireCalls,
   parseWireStrokes,
+  parseWireMatchReplayPart,
   parseWireTraps,
   parseWireRespawns,
+  parseWireCapes,
   parseWireCombatBatch,
   parseWireEnded,
+  parseWireMatchChartPart,
+  joinMatchChart,
   parseWireSkillBar,
   parseWireWeaponSets,
   parseWireSnapshotPart,
@@ -31,9 +35,13 @@ import {
   type PeerWelcome,
   type RechargeMessage,
   type WireCalls,
+  type WireCape,
   type WireStroke,
+  type WireMatchReplayPart,
   type WireTraps,
   type WireEnded,
+  type WireMatchChart,
+  type WireMatchChartPart,
   type WireSkillBar,
   type WireWeaponSets,
   type WireSnapshot,
@@ -52,6 +60,7 @@ import {
 } from "./match-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { rejoinProof } from "./rejoin-proof.js";
+import { joinReplay, type RecordedReplay, type Sha256 } from "./replay.js";
 import { snapshotAssembler } from "./snapshot-parts.js";
 import type { Transport } from "./transport.js";
 import { combatMessage, matchSnapshot, playerSnapshots } from "./wire.js";
@@ -111,12 +120,23 @@ export interface PeerMatchConnection extends MatchConnection {
   readonly rejoinToken: string;
 }
 
+/** What a client keeps a replay with (#3572). */
+export interface ReplayKeeper {
+  readonly sha256: Sha256;
+  readonly keep: (recorded: RecordedReplay) => void;
+}
+
 export interface ConnectMatchOptions {
   readonly transport: Transport;
   readonly hostId: string;
   readonly hello: PeerHello;
   /** How long to wait for `welcome` and `skill-bar`. */
   readonly timeoutMs: number;
+  /**
+   * Where the match's replay goes (#3572), once the host has sent all of
+   * it and it checks out against its hash; `null` drops it.
+   */
+  readonly replays: ReplayKeeper | null;
 }
 
 /**
@@ -176,6 +196,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let ended: WireEnded | undefined;
   /** The host's summary from any `ended`, a host leaving's included (#1057). */
   let summary: WireEnded["summary"] | undefined;
+  /** The parts of the host's charts so far (#3564), and the whole once they have all come. */
+  const chartParts: WireMatchChartPart[] = [];
+  let chart: WireMatchChart | undefined;
   let recharges: Recharges = { message: { slots: [], spent: [], queued: null }, at: 0 };
   /**
    * Your own adrenaline per slot as last sent (#463), with when its loss
@@ -201,6 +224,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let traps: WireTraps["traps"] = [];
   /** When each of your team's dead comes back, as last sent (#3367), by id. */
   let respawns = new Map<string, number | null>();
+  /** Each seat's cape as last sent (#3554), by id. */
+  let capes = new Map<string, WireCape>();
   let lost = false;
   /** When the host's peer went, by `Date.now`, while waiting for it back. */
   let droppedAt: number | undefined;
@@ -291,7 +316,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         return;
       }
       // One naming a status this build has no index for is malformed (#632).
-      const players = playerSnapshots(snapshot);
+      const players = playerSnapshots(snapshot, capes);
       if (players !== undefined) {
         latest = { wire: snapshot, players };
       }
@@ -342,6 +367,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   fromHost("respawns", parseWireRespawns, (message) => {
     respawns = new Map(message.respawns.map(({ id, respawnIn }) => [id, respawnIn]));
   });
+  fromHost("capes", parseWireCapes, (message) => {
+    capes = new Map(message.capes.map(({ id, cape }) => [id, cape]));
+  });
   fromHost(
     "ended",
     (value) => parseWireEnded(value, teamCount()),
@@ -360,6 +388,43 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         loseHost("host-left");
       } else {
         ended = message;
+      }
+    },
+  );
+  // After `ended`, its replay (#3572): kept once every part has come and it checks out.
+  const replayParts = new Map<number, WireMatchReplayPart>();
+  let replayDone = false;
+  fromHost("match-replay", parseWireMatchReplayPart, (part) => {
+    const keeper = options.replays;
+    if (keeper === null || ended === undefined || replayDone || replayParts.has(part.part)) {
+      return;
+    }
+    replayParts.set(part.part, part);
+    if (replayParts.size < part.of) {
+      return;
+    }
+    replayDone = true;
+    void joinReplay([...replayParts.values()], keeper.sha256).then((recorded) => {
+      if (recorded !== undefined) {
+        keeper.keep(recorded);
+      }
+    });
+  });
+  // Sent after `ended` on the same room, so the summary names the roster
+  // the parts are checked against; a part before it is no part.
+  fromHost(
+    "match-chart",
+    (value) =>
+      ended === undefined
+        ? undefined
+        : parseWireMatchChartPart(value, new Set(ended.summary.map(({ id }) => id)), teamCount()),
+    (part) => {
+      if (chart !== undefined || chartParts.length >= part.parts) {
+        return;
+      }
+      chartParts.push(part);
+      if (chartParts.length === part.parts) {
+        chart = joinMatchChart(chartParts);
       }
     },
   );
@@ -481,6 +546,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 lifts: [],
                 traps,
                 summary,
+                chart,
               }
             : {
                 ...matchSnapshot(
@@ -490,6 +556,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 ),
                 traps,
                 summary,
+                chart,
               };
         // An `ended` may land before the snapshot that says so.
         return ended === undefined

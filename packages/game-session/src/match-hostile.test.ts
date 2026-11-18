@@ -775,6 +775,7 @@ describe("a P2P host against peers claiming a dropped player's seat (#593)", () 
       hostId: "host",
       hello: hello(),
       timeoutMs: 1000,
+      replays: null,
     });
     const states: string[] = [];
     guest.onConnectionChange((state) => states.push(state));

@@ -304,19 +304,19 @@ describe("openIndexedDbStore and other tabs (#1404)", () => {
     expect(request.result.close).toHaveBeenCalledOnce();
   });
 
-  it("creates only the character and team stores on a first run (#2019)", () => {
+  it("creates only the character, team and replay stores on a first run (#2019, #3572)", () => {
     const stores = new Set<string>();
     const request = stubOpen(stores);
     void openIndexedDbStore(() => undefined);
     request.onupgradeneeded?.();
-    expect([...stores].sort()).toEqual(["characters", "teams"]);
+    expect([...stores].sort()).toEqual(["characters", "replay-dates", "replays", "teams"]);
   });
 
-  it("drops an older build's match store and keeps characters and teams (#2019)", () => {
+  it("drops an older build's match store and keeps characters, teams and replays (#2019)", () => {
     const stores = new Set(["characters", "teams", "matches"]);
     const request = stubOpen(stores);
     void openIndexedDbStore(() => undefined);
     request.onupgradeneeded?.();
-    expect([...stores].sort()).toEqual(["characters", "teams"]);
+    expect([...stores].sort()).toEqual(["characters", "replay-dates", "replays", "teams"]);
   });
 });

@@ -9,6 +9,7 @@ import type {
   MapDescriptor,
   WallDescriptor,
   WireDeck,
+  WireMatchChart,
 } from "@vibewars/game-protocol";
 import type {
   CombatMessage,
@@ -95,6 +96,7 @@ import {
   renderMute,
   refreshSkillBar,
   objectiveScoreToast,
+  placeEnd,
   ghostLeaderToast,
   ghostNameplate,
   renderSkillBar,
@@ -124,7 +126,8 @@ import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
-import { button, setToastHost, toast } from "./ui/kit.js";
+import { mountEndLine, type EndLineElements } from "./ui/end-line.js";
+import { setToastHost, toast } from "./ui/kit.js";
 import { signedText } from "./ui/player-label.js";
 
 /**
@@ -266,6 +269,8 @@ export interface EndLine {
 export interface MatchView {
   /** The match summary's tables once the host has sent them (#1057), for the queue screen. */
   summary(): readonly SummaryTable[] | undefined;
+  /** The match's charts once the host has sent them all (#3564), for the queue screen. */
+  chart(): WireMatchChart | undefined;
   /** Shows `line` over the result, or none. */
   setEndLine(line: EndLine | undefined): void;
   /** What the camera shows (#3222), or nothing before its first frame or without a canvas. */
@@ -733,6 +738,7 @@ export async function startMatchView(
     } else {
       parent.style.removeProperty("--chat-room");
     }
+    placeEnd(hud);
     const keepOut = [compass.element, partyWindow.element]
       .map((element) => element.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0)
@@ -1168,7 +1174,7 @@ export async function startMatchView(
         match.winningTeam,
         bots,
       );
-      const panel = renderSummary(parent, tables);
+      const panel = renderSummary(hud.end, tables);
       panel.classList.add("hud-summary");
       summary = { tables, panel };
     }
@@ -1323,13 +1329,12 @@ export async function startMatchView(
   });
 
   /** The end line (#1997), made the first time it is set. */
-  let endLine:
-    | { readonly root: HTMLElement; readonly text: HTMLElement; readonly press: HTMLElement }
-    | undefined;
+  let endLine: EndLineElements | undefined;
   let onEndPress: (() => void) | undefined;
 
   return {
     summary: () => summary?.tables,
+    chart: () => lastMatch?.chart,
     camera: () => camera?.look(),
     setEndLine(line) {
       if (line === undefined) {
@@ -1337,18 +1342,9 @@ export async function startMatchView(
         endLine = undefined;
         return;
       }
-      if (endLine === undefined) {
-        const root = document.createElement("div");
-        root.className = "hud-end-line";
-        const text = root.appendChild(document.createElement("span"));
-        const press = root.appendChild(
-          button("", "", () => {
-            onEndPress?.();
-          }),
-        );
-        parent.appendChild(root);
-        endLine = { root, text, press };
-      }
+      endLine ??= mountEndLine(hud.end, () => {
+        onEndPress?.();
+      });
       onEndPress = line.onPress;
       endLine.text.textContent = line.text;
       endLine.press.textContent = line.button;
@@ -1377,18 +1373,16 @@ export async function startMatchView(
       matchMusic.dispose();
       reconnectCountdown.dispose();
       reconnectOverlay.destroy();
-      // The scoreboard and target frame, result and mute button sit beside
-      // the HUD root, in the shared viewport, so they go one by one or pile
-      // up per match.
+      // The scoreboard and target frame, the end-of-match column (result,
+      // end line, summary) and mute button sit beside the HUD root, in the
+      // shared viewport, so they go one by one or pile up per match.
       hud.root.remove();
       hud.slotTips.dispose();
       hud.effects.dispose();
       hud.targetEffects.dispose();
       setToastHost(null);
       hud.top.remove();
-      hud.result.remove();
-      summary?.panel.remove();
-      endLine?.root.remove();
+      hud.end.remove();
       waiting?.remove();
       offMute();
       jukebox.dispose();

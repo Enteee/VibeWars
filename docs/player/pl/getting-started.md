@@ -167,8 +167,9 @@ nosi pelerynę w każdym meczu: składa się w cienki pas przy krawędzi, gdy st
 powiewa za tobą, gdy się ruszasz. Pokazują ją też twoje postacie w menu. **Bez
 peleryny** ją zdejmuje.
 
-Zmiana działa od następnego lobby, do którego dołączysz, lub twojego następnego
-nowego: lobby, w którym już jesteś, zachowuje to, z czym dołączyłeś.
+Zmiana działa od razu w lobby, w którym jesteś.
+
+**Narysuj własny emblemat.** **Edytuj emblemat** pod emblematami startowymi otwiera w ich miejscu siatkę 16×16. Wybierz kolor lub **Puste**, a potem rysuj narzędziem **Ołówek**, ścieraj narzędziem **Gumka** albo zalej obszar narzędziem **Wypełnij**. **Lustro** maluje jednocześnie lewą i prawą połowę. **Wyczyść** opróżnia siatkę, a **Cofnij** wraca o krok. Mały podgląd obok siatki pokazuje emblemat tak duży jak w meczu. **Gotowe** go zachowuje, **Anuluj** wyrzuca rysunek. Strzałki i spacja rysują też z klawiatury.
 
 **Kopiuj link gildii**, pod projektantem peleryny, kopiuje link z twoim tagiem i peleryną. Kto go otworzy, zobaczy pytanie **Dołączyć do gildii [VIBE]?**: **Dołącz** daje mu twój tag i pelerynę, **Nie** niczego nie zmienia. Każdy może wysłać taki link i nikt nie jest właścicielem tagu, więc gra zawsze najpierw pyta.
 

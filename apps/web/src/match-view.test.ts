@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CREATURE_LOOKS, MINIMAL_GW_INSPIRED_PVP_V1, type StatusId } from "@vibewars/game-core";
 import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
+import { packEmblem } from "@vibewars/game-protocol";
 
 import { gateWalls, outcomeArrived, switchedStructure, toArenaSnapshot } from "./match-view.js";
 import {
@@ -85,6 +86,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     decks: [],
     lifts: [],
     summary: undefined,
+    chart: undefined,
   };
 }
 
@@ -262,7 +264,7 @@ describe("toArenaSnapshot", () => {
       durationSeconds: 10,
       casterId: "me",
     };
-    const cape = { main: "violet", trim: "white", emblem: "diamond" } as const;
+    const cape = { main: "violet", trim: "white", emblem: packEmblem([0, 1, 2]) } as const;
     const formed = {
       ...player("formed", 0),
       x: 0,
@@ -275,7 +277,7 @@ describe("toArenaSnapshot", () => {
     const [body, corpse] = arena.actors;
     expect(body?.formed).toBe(true);
     expect(body?.radius).toBeCloseTo(ACTOR_RADIUS * 1.35, 9);
-    expect(body?.cape?.emblem).toBe("diamond");
+    expect(body?.cape?.emblem).toBe(cape.emblem);
     expect(body?.cape?.main).not.toBe(0xa078e0);
     expect(corpse?.formed).toBe(false);
     expect(corpse?.radius).toBe(ACTOR_RADIUS);

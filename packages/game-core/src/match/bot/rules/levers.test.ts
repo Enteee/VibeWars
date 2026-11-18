@@ -156,6 +156,17 @@ function run(sim: MatchSimulation, seconds: number, until: () => boolean = () =>
   }
 }
 
+/** Steps `sim` until a whole pricing of its levers and walls is out (#3599): one lever, pair or wall a tick. */
+function priced(sim: MatchSimulation): void {
+  for (let tick = 0; tick < 60; tick += 1) {
+    sim.step(DT);
+    const reads = [...sim.botLevers, ...sim.botBreakables];
+    if (reads.length > 0 && reads.every((read) => read.gain.length > 0)) {
+      return;
+    }
+  }
+}
+
 describe("a lever's gain (#3138)", () => {
   const teams = [
     fighter("a", 0, WARRIOR, vec2(200, 650)),
@@ -164,7 +175,7 @@ describe("a lever's gain (#3138)", () => {
 
   it("is what opening its gate shortens each team's way by, and nothing for a team that cannot reach it", () => {
     const sim = gated(teams);
-    sim.step(DT);
+    priced(sim);
     const [read] = sim.botLevers;
     expect(read).toMatchObject({ targetId: LEVER_ID, flippedAt: Number.NEGATIVE_INFINITY });
     expect(read?.gain[0]).toBeGreaterThan(LEVER_WORTH_UNITS);
@@ -175,7 +186,7 @@ describe("a lever's gain (#3138)", () => {
 
   it("is everything when the gate is the only way, and nothing to a team walled off from the lever", () => {
     const sim = gated(teams, true);
-    sim.step(DT);
+    priced(sim);
     expect(sim.botLevers[0]?.gain).toEqual([Number.POSITIVE_INFINITY, 0]);
   });
 
@@ -184,9 +195,24 @@ describe("a lever's gain (#3138)", () => {
     sim.requestAttack("a", LEVER_ID);
     run(sim, 5, () => sim.gates[0]?.open === true);
     expect(sim.gates[0]?.open).toBe(true);
-    sim.step(DT);
+    priced(sim);
     expect(sim.botLevers[0]?.gain[0]).toBeLessThan(0);
     expect(sim.botLevers[0]?.flippedAt).toBeGreaterThan(0);
+  });
+
+  it("is priced over the ticks after a think, and dropped the moment the lever is thrown (#3599)", () => {
+    const sim = gated(teams);
+    sim.step(DT);
+    // The first think only finds the ways; the lever is priced on a later tick.
+    expect(sim.botLevers).toEqual([]);
+    priced(sim);
+    expect(sim.botLevers[0]?.gain).toHaveLength(2);
+    sim.requestAttack("a", LEVER_ID);
+    run(sim, 5, () => (sim.botLevers[0]?.flippedAt ?? 0) > 0);
+    // What it won with the gate shut is stale: nothing until the next pricing is out.
+    expect(sim.botLevers[0]?.gain).toEqual([]);
+    priced(sim);
+    expect(sim.botLevers[0]?.gain[0]).toBeLessThan(0);
   });
 
   it("counts a teleport it turns on, a jump costing nothing", () => {
@@ -216,7 +242,7 @@ describe("a lever's gain (#3138)", () => {
       teleports: [out],
       switches: [throws],
     });
-    sim.step(DT);
+    priced(sim);
     // 1200 walked, against ~70 to the entry and 100 from the exit.
     expect(sim.botLevers[0]?.gain[0]).toBeGreaterThan(900);
     // Team 1 has no teleport back: its way is the same.
@@ -261,7 +287,7 @@ describe("a lever's gain (#3138)", () => {
         },
       ],
     });
-    sim.step(DT);
+    priced(sim);
     expect(sim.botLevers[0]?.gain[0]).toBeGreaterThan(100);
     expect(sim.botLevers[0]?.gain[1]).toBeGreaterThan(100);
   });
@@ -329,7 +355,7 @@ describe("two lever gates in series (#3513)", () => {
       fighter("a", 0, WARRIOR, vec2(200, 650)),
       fighter("b", 1, WARRIOR, vec2(1400, 650), { behaviour: undefined }),
     ]);
-    sim.step(DT);
+    priced(sim);
     expect(sim.botLevers).toHaveLength(2);
     for (const read of sim.botLevers) {
       expect(read.gain[0]).toBeGreaterThanOrEqual(LEVER_WORTH_UNITS);
@@ -337,7 +363,7 @@ describe("two lever gates in series (#3513)", () => {
     }
     run(sim, 5, () => sim.gates[1]?.open === true);
     expect(sim.gates.map((gate) => gate.open)).toEqual([false, true]);
-    sim.step(DT);
+    priced(sim);
     const east = sim.botLevers.find((read) => read.targetId === switchTargetId("east"));
     expect(east?.gain[0]).toBeGreaterThanOrEqual(LEVER_WORTH_UNITS);
   });

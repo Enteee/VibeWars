@@ -51,7 +51,9 @@ V **Týmové aréně** (2, 4 nebo 8 na stranu, podle **Velikosti týmu** hostite
 
 Otevři **Možnosti** přes ⚙ v horní liště: jejich sekce **hráč** obsahuje to, co je tvoje bez ohledu na to, co hraješ. Hra ti při první návštěvě přidělí **Jméno**, například `AshenWolf`; přepsáním ho změníš. Když ho necháš prázdné, hraješ jako `Player`. Vedle něj napiš **Značku cechu** ze 2 až 4 písmen nebo číslic a každý ji uvidí za tvým jménem, například `Ente [VIBE]`. S nastavenou značkou se pod ní objeví návrhář **Pláště cechu**: vyber barvu pláště, barvu lemu a znak a tvoje tělo bude plášť nosit v každém zápase: když stojíš, složí se do tenkého proužku na tvém okraji, a když se pohybuješ, vlaje za tebou. Ukazují ho i tvoje postavy v menu. **Bez pláště** ho sundá.
 
-Změna platí od další lobby, ke které se připojíš, nebo od tvojí další nové: ta, ve které už jsi, si nechá to, s čím ses připojil.
+Změna platí okamžitě pro lobby, ve které jsi.
+
+**Nakresli si vlastní znak.** **Upravit znak** pod výchozími znaky otevře na jejich místě mřížku 16×16. Vyber barvu nebo **Prázdné** a kresli nástrojem **Tužka**, gumuj nástrojem **Guma** nebo vybarvi plochu nástrojem **Výplň**. **Zrcadlit** maluje levou a pravou polovinu najednou. **Vymazat** mřížku vyprázdní a **Zpět** vrátí krok. Malý náhled vedle mřížky ukazuje znak tak velký jako v zápase. **Hotovo** ho ponechá, **Zrušit** kresbu zahodí. Šipky a mezerník kreslí i z klávesnice.
 
 **Kopírovat odkaz na cech** pod návrhářem pláště zkopíruje odkaz s tvou značkou a pláštěm. Kdo ho otevře, dostane otázku **Přidat se do cechu [VIBE]?**: **Přidat se** mu dá tvou značku a plášť, **Ne** nic nezmění. Takový odkaz může poslat kdokoli a značku nikdo nevlastní, proto se hra vždy nejdřív zeptá.
 

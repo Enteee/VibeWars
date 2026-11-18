@@ -71,10 +71,11 @@ channels, as often as they like.
   cheat"). It sees every intent before it acts on it, can drop, delay or
   forge any message it relays, can kick anyone, and controls the match
   clock. Nothing a peer runs can tell a fair host from a cheating one. P2P
-  is for playing with people you would let host; there is no ranked play,
-  and none is planned without a server. Random Arena (ADR-0032) puts
-  strangers together, so it stays unranked; its public match record
-  (#2528) is the host's word, not a result anyone checked.
+  is for playing with people you would let host. Ranked play (ADR-0055)
+  does not change this: every player signs the result, but nobody
+  re-simulates the match, so a host can still bend it within what its
+  peers will sign (see "Ranked receipts" below). Random Arena's public
+  match record (#2528) is the host's word, not a result anyone checked.
 - **Choosing to host a Random Arena.** The host of a queued match is the
   ticket whose `sha256(groupId ‖ ticketId)` is lowest, and tickets are
   public, so a player can grind fresh ticket keys (about 2 × team size
@@ -162,7 +163,8 @@ channels, as often as they like.
   invent a match or leave one out. Each record is signed by a throwaway
   key: the signature proves the event is intact, not who sent it, and ties
   no two records to one host. Anyone can publish a well-formed fake on the
-  same topic. Nothing may be ranked on these records.
+  same topic. Nothing may be ranked on these records: ranked play uses
+  the signed receipts instead.
 - **What is said in chat** (#479). The host reads every line, its own
   team's and the other team's, and could drop or forge one. There is no
   moderation and no report button, only a mute each player sets for the
@@ -284,6 +286,56 @@ channels, as often as they like.
 - **Everything in a snapshot.** A peer receives every snapshot field the
   host sends, for every player. Anything that must stay hidden from a
   player must not be in the snapshot at all.
+
+## Ranked receipts
+
+A ranked match (ADR-0055, `packages/ranking`) ends in a receipt that every
+seat signs twice with its player key: once on the start, once on the
+result. Anyone can publish a receipt to the relays. A rating is a pure
+function, `rate`, of every valid receipt, and the hourly leaderboard job
+only caches it. The attacker here is anyone who can sign with keys they
+own, as many keys as they like, and publish whatever they like.
+
+What a receipt defends against:
+
+- **A match against a key that never agreed to play.** `validateReceipt`
+  needs a start signature from every seat, and a key may sit only once
+  (`duplicate-seat`).
+- **A host deciding the result alone.** A result counts only with a
+  signature from every non-leaver, and from at least one seat on every
+  team. A host that lists every opponent as a leaver voids the match
+  instead of winning it.
+- **A forged copy spoiling an honest one.** Copies of one start are merged
+  keeping only signatures that verify, so a forged copy can neither fork
+  nor void the honest receipt. Two different valid results for one start
+  void the match for everyone and mark nobody forked.
+- **Erasing a loss by forking.** A key that signs two starts on one `prev`
+  is marked `forked`. The later receipt still counts for every other seat
+  and is a loss for the forker, so a backdated match against one's own alt
+  key cannot erase a result (#3571).
+- **Farming with alt keys.** Repeats against one opposing set weigh 1/k
+  (none after 3), only 20 matches a day count, and every game is weighted
+  by the opponents' trust, min(1, D/min(12, P−1))³. On a ladder of at least
+  13 keys, a closed ring of four keeps under 5 % of a real gain and earns no
+  cosmetic wins. A ring that is the whole ladder is fully trusted, by design.
+
+What it does not defend against:
+
+- **A host bending the match within what peers sign.** Peers sign the
+  replay hash without re-simulating it. Replay disputes are a later card.
+- **Collusion across teams.** One seat on each team can sign a second
+  result that names everyone else a leaver. That voids the match, but it
+  cannot win it.
+- **`startedAt` is the host's word.** Nothing ties it to when a receipt
+  was published, and the job re-rates from scratch, so a receipt published
+  late changes history. The fork rule above keeps that from erasing a
+  result.
+- **A whole team leaving** escapes the loss: that is the price of
+  opponent consent.
+- **A large, well-connected sybil ring.** Trust rises only with distinct,
+  connected opponents, so enough keys that play each other widely look
+  like a real community. Clique detection is a later card.
+- **Who played whom is public**, by key and character name, for good.
 
 ## How the host and its peers check each other
 

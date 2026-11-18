@@ -5,7 +5,7 @@
  */
 
 export { MAX_MESSAGE_BYTES, messageBytes, sizeChecked } from "./transport.js";
-export { packCombat } from "./combat-batches.js";
+export { packCombat, packMatchChart } from "./combat-batches.js";
 export { packSnapshot, snapshotAssembler } from "./snapshot-parts.js";
 export type { Transport, TransportTrouble } from "./transport.js";
 
@@ -81,6 +81,7 @@ export type {
 export {
   LOBBY_PROOF_MS,
   PARTY_CONSENT_MS,
+  PROFILE_INTERVAL_MS,
   SHARE_INTERVAL_MS,
   canStart,
   createLobbyHost,
@@ -135,3 +136,16 @@ export {
   validateMatchRecord,
 } from "./match-record.js";
 export type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "./match-record.js";
+export {
+  MAX_REPLAY_CHARS,
+  MAX_REPLAY_INPUTS,
+  encodeReplay,
+  joinReplay,
+  packReplay,
+  parseReplay,
+  replayHash,
+} from "./replay.js";
+export type { MatchReplay, RecordedReplay, ReplayInput, Sha256 } from "./replay.js";
+export { rerun } from "./replay-run.js";
+export type { Rerun } from "./replay-run.js";
+export type { SeatSetup } from "./match-setup.js";

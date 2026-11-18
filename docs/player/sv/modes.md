@@ -175,6 +175,8 @@ och vid lika går segern till laget som fick poäng sist. Varje bas
 återupplivar sina döda, och sitt spöke, var 2:a minut. Bottar går på
 fiendens relik tillsammans och bär hem den.
 
+Cinder Sanctum (8v8, 5600x2800) spelar det: ett tempel på en vulkans sluttning mellan två lavafloder. Gå över en bro eller vägbanken till helgedomen på dess förgård; en spak på förgården öppnar den dolda gången under helgedomen, och askväggar kan slås sönder. Lava bränner.
+
 ## King of the Hill
 
 **Led din spökhjälte upp på altaret, och håll det.** Varje lag har en
@@ -279,8 +281,7 @@ Bottar sprider ut sig över helgedomarna ditt lag inte äger än och står
 på dem tills de är tagna. En fiende inom besvärjelseräckhåll lockar inte
 bort dem: de kliver upp på en helgedom inom räckhåll och slåss därifrån.
 
-Scarred Earth spelar det: varje helgedom står i en trasig ring av murar,
-öppen åt väster och öster.
+Scarred Earth (4v4 och 8v8, 5400x2800) spelar det: ett kraterfyllt slagfält i skymningen. Helgedomarna står på förstörda belägringstorn, den mittersta på det stora tornets däck, var och en bredvid en krater; spakar på tornen öppnar två skyttegravar under fältet, och förstörda palissader går att slå sönder.
 
 ## Laglobby
 

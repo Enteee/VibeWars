@@ -11,6 +11,7 @@
   },
   "layers": 3,
   "biome": "hall",
+  "ascentAct": null,
   "groundLayer": 1,
   "pits": [
     {

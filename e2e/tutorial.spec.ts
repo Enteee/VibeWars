@@ -743,7 +743,7 @@ test.describe("the first-time tutorial (#3218)", () => {
   }
 
   test("a guild link, even through a forced splash, is never offered it", async ({ page }) => {
-    await pastTheSplash(page, FLAT_MAP, "#guild=VW.gold.black.cross");
+    await pastTheSplash(page, FLAT_MAP, `#guild=VW.gold.black.${"A".repeat(171)}`);
     await expect(page.locator(".screen-rail")).toBeVisible();
     await expect(page.locator(".tutorial-offer")).toHaveCount(0);
   });

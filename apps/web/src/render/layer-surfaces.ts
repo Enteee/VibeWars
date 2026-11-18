@@ -1237,6 +1237,8 @@ function standable(walls: readonly RenderableWall[], { layer, point }: Surface):
  * the level between; the one just under it if none is. Over a tunnel's cover (#3234), the visible one is
  * the level `from`, the clicking body's layer, is on: the tunnel from in
  * it, its pit or its stair, the ground from anywhere else or no body.
+ * Alt never names a level above `from` (#3546): in a tunnel it stays there,
+ * and with nothing lower it is a plain click.
  */
 export function pickSurface(
   structure: MapStructure,
@@ -1259,10 +1261,11 @@ export function pickSurface(
             found[at === tunnel ? at - 1 : at === tunnel - 1 ? tunnel : at] ?? surface,
         )
       : found;
-  const under = below
-    ? (surfaces.slice(1).find((surface) => standable(walls, surface)) ?? surfaces[1])
-    : undefined;
-  return under ?? surfaces[0] ?? { layer: ground, point: world };
+  const shown = surfaces[0] ?? { layer: ground, point: world };
+  const lower = below
+    ? surfaces.slice(1).filter(({ layer }) => layer < shown.layer && layer <= (from ?? Infinity))
+    : [];
+  return lower.find((surface) => standable(walls, surface)) ?? lower[0] ?? shown;
 }
 
 /** A structure as it hides bodies: its outline, the lifts it is drawn at, whom it covers. */

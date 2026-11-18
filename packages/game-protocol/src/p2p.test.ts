@@ -10,6 +10,9 @@ import {
   MAX_WIRE_CRACKS,
   MAX_WIRE_EVENTS,
   MAX_SNAPSHOT_PARTS,
+  MAX_CHART_EVENTS,
+  MAX_CHART_PARTS,
+  MAX_CHART_SAMPLES,
   MAX_WIRE_CAPTURE_POINTS,
   MAX_WIRE_TOGGLES,
   MAX_WIRE_PINGS,
@@ -42,6 +45,10 @@ import {
   parseWireStrokes,
   parseWireTraps,
   parseWireRespawns,
+  parseWireCapes,
+  packEmblem,
+  unpackEmblem,
+  EMBLEM_GRID,
   parseWireChatLine,
   parseWireSharedTrack,
   parsePeerHello,
@@ -59,6 +66,8 @@ import {
   parseRecharge,
   parseWireCombatBatch,
   parseWireEnded as parseWireEndedOf,
+  parseWireMatchChartPart,
+  joinMatchChart,
   parseWireSkillBar,
   parseWireSnapshotPart as parseWireSnapshotPartOf,
   parseWireWeaponSets,
@@ -95,6 +104,9 @@ import type {
   WireCombat,
   WireCombatBatch,
   WireEnded,
+  WireChartEvent,
+  WireChartSeries,
+  WireMatchChartPart,
   WirePlayer,
   WireStatus,
   WireSkillBar,
@@ -113,7 +125,11 @@ const parseWireSnapshotPart = (value: unknown) => parseWireSnapshotPartOf(value,
 const parseWireEnded = (value: unknown) => parseWireEndedOf(value, 2);
 
 /** A guild cape (#1422), as the designer makes one. */
-const CAPE = { main: "violet", trim: "white", emblem: "diamond" } as const;
+const CAPE = {
+  main: "violet",
+  trim: "white",
+  emblem: packEmblem(Array.from({ length: EMBLEM_GRID * EMBLEM_GRID }, (_, index) => index % 9)),
+} as const;
 
 const hello: PeerHello = {
   protocolVersion: PROTOCOL_VERSION,
@@ -196,7 +212,6 @@ const player: WirePlayer = {
   name: "Mhenlo",
   guildTag: "VIBE",
   heroRank: 0,
-  guildCape: CAPE,
   team: 0,
   x: 120.5,
   y: -3,
@@ -552,7 +567,6 @@ const lobbyState: WireLobbyState = {
       name: "Host",
       guildTag: "VIBE",
       heroRank: 0,
-      guildCape: CAPE,
       team: 0,
       ready: true,
       isHost: true,
@@ -565,7 +579,6 @@ const lobbyState: WireLobbyState = {
       name: "Watcher",
       guildTag: null,
       heroRank: 0,
-      guildCape: null,
       team: null,
       ready: false,
       isHost: false,
@@ -578,7 +591,6 @@ const lobbyState: WireLobbyState = {
       name: "Monk Bot",
       guildTag: null,
       heroRank: 0,
-      guildCape: null,
       team: 1,
       ready: true,
       isHost: false,
@@ -1069,6 +1081,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   ["no respawns (#3367)", parseWireRespawns, { respawns: [] }],
+  ["capes (#3554)", parseWireCapes, { capes: [{ id: "p1", cape: CAPE }] }],
+  ["no capes (#3554)", parseWireCapes, { capes: [] }],
   ["chat (#479)", parsePeerChat, { channel: "team", text: "spike the monk" }],
   ["shared-track (#2745)", parseWireSharedTrack, sharedTrack],
   [
@@ -1235,6 +1249,16 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["vote (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: "peer-2" }],
   ["claim (#1458)", parseWireLobbyCommand, { kind: "claim", slot: 1 }],
   [
+    "set-profile (#3548)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", name: "Mhenlo", guildTag: "vb", heroRank: 3, guildCape: CAPE },
+  ],
+  [
+    "set-profile with no guild (#3548)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", name: "Mhenlo", guildTag: null, heroRank: 0, guildCape: null },
+  ],
+  [
     "a team plan's human seat (ADR-0042)",
     parseWireLobbyCommand,
     { kind: "team-plan", slot: 0, size: 4, memberKey: "ab".repeat(32), build: { name: "Devona" } },
@@ -1290,6 +1314,21 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["a call of an unknown kind (#443)", parsePeerCall, { kind: "focus", targetId: "peer-2" }],
   ["a call with no target (#443)", parsePeerCall, { kind: "target" }],
   ["a remove-member with no id (#2746)", parseWireLobbyCommand, { kind: "remove-member" }],
+  [
+    "a set-profile with no name (#3548)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", guildTag: null, heroRank: 0, guildCape: null },
+  ],
+  [
+    "a set-profile past the top hero rank (#3548)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", name: "Mhenlo", guildTag: null, heroRank: 16, guildCape: null },
+  ],
+  [
+    "a set-profile with a numeric guild tag (#3548)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", name: "Mhenlo", guildTag: 7, heroRank: 0, guildCape: null },
+  ],
   [
     "a remove-member with an id past the wire's (#2746)",
     parseWireLobbyCommand,
@@ -1466,27 +1505,13 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, guildTag: undefined }] },
   ],
+  ["capes of a seat with no id (#3554)", parseWireCapes, { capes: [{ cape: CAPE }] }],
   [
-    "snapshot of a player without a guild cape (#1422)",
-    parseWireSnapshotPart,
-    { ...snapshot, players: [{ ...player, guildCape: undefined }] },
+    "capes of a seat in a cape of no such colour (#3554)",
+    parseWireCapes,
+    { capes: [{ id: "p1", cape: { ...CAPE, main: "red" } }] },
   ],
-  [
-    "snapshot of a player in a cape of no such colour (#1422)",
-    parseWireSnapshotPart,
-    { ...snapshot, players: [{ ...player, guildCape: { ...CAPE, main: "red" } }] },
-  ],
-  [
-    "lobby-state of a member in a cape of no such emblem (#1422)",
-    parseWireLobbyState,
-    {
-      ...lobbyState,
-      players: lobbyState.players.map((member) => ({
-        ...member,
-        guildCape: { ...CAPE, emblem: "skull" },
-      })),
-    },
-  ],
+  ["capes of a seat in no cape (#3554)", parseWireCapes, { capes: [{ id: "p1", cape: null }] }],
   [
     "summary row without a guild tag (#1406)",
     parseWireEnded,
@@ -3029,7 +3054,14 @@ describe("the P2P validators (#82)", () => {
   });
 
   it("read what a client sends that is no cape as none, never a refused join (#1422)", () => {
-    for (const guildCape of [undefined, "violet", { ...CAPE, trim: "red" }, { ...CAPE, x: 1 }]) {
+    for (const guildCape of [
+      undefined,
+      "violet",
+      { ...CAPE, trim: "red" },
+      { ...CAPE, x: 1 },
+      { ...CAPE, emblem: "diamond" },
+      { ...CAPE, emblem: CAPE.emblem.slice(1) },
+    ]) {
       expect(parsePeerHello({ ...hello, guildCape })?.guildCape).toBeNull();
       expect(parsePeerLobbyJoin({ ...lobbyJoin, guildCape })?.guildCape).toBeNull();
     }
@@ -3159,5 +3191,158 @@ describe("heroRank (#2702)", () => {
 
   it.each([16, -1, 1.5, "3", null, undefined])("refuses %s in a hello", (heroRank) => {
     expect(parsePeerHello({ ...hello, heroRank })).toBeUndefined();
+  });
+});
+
+describe("the match's charts (#3564)", () => {
+  const roster = new Set(["ann", "bob", "cat"]);
+  const series = (id: string): WireChartSeries => ({
+    id,
+    dealt: [0, 10, 30],
+    taken: [5, 5, 40],
+    healed: [0, 0, 12],
+    health: [100, 64, 0],
+    energy: [80, 20, 0],
+  });
+  const death: WireChartEvent = { t: 3, kind: "death", id: "cat", by: "ann" };
+  const part: WireMatchChartPart = {
+    period: 14,
+    parts: 1,
+    players: [series("ann"), series("bob"), series("cat")],
+    events: [
+      death,
+      { t: 4, kind: "death", id: "bob", by: null },
+      { t: 9, kind: "resurrected", id: "bob" },
+      { t: 12, kind: "interrupt", by: "ann", id: "cat", skillId: "monk.healing-breeze" },
+      { t: 20, kind: "objective", team: 1, what: "point" },
+    ],
+    dropped: 2,
+  };
+  const parse = (value: unknown, teamCount: 2 | 3 = 2) =>
+    parseWireMatchChartPart(value, roster, teamCount);
+
+  it("round trips a part, and joins its parts into the whole", () => {
+    expect(parse(JSON.parse(JSON.stringify(part)))).toEqual(part);
+    const halves: WireMatchChartPart[] = [
+      { ...part, parts: 2, players: [series("ann"), series("bob")], events: [] },
+      { ...part, parts: 2, players: [series("cat")] },
+    ];
+    expect(joinMatchChart(halves)).toEqual({
+      period: 14,
+      players: part.players,
+      events: part.events,
+      dropped: 2,
+    });
+  });
+
+  it("takes a third team's objective in a three-team match only", () => {
+    const third = { ...part, events: [{ t: 1, kind: "objective", team: 2, what: "altar" }] };
+    expect(parse(third)).toBeUndefined();
+    expect(parse(third, 3)).toEqual(third);
+  });
+
+  const long = Array.from({ length: MAX_CHART_SAMPLES + 1 }, () => 1);
+  it.each([
+    ["a period of 0", { ...part, period: 0 }],
+    ["a fractional dropped", { ...part, dropped: 1.5 }],
+    ["0 parts", { ...part, parts: 0 }],
+    ["more than MAX_CHART_PARTS parts", { ...part, parts: MAX_CHART_PARTS + 1 }],
+    ["a stranger's series", { ...part, players: [series("eve")] }],
+    ["more series than the roster", { ...part, players: [...part.players, series("ann")] }],
+    ["a series past MAX_CHART_SAMPLES", { ...part, players: [{ ...series("ann"), dealt: long }] }],
+    ["a negative sample", { ...part, players: [{ ...series("ann"), taken: [-1, 0, 0] }] }],
+    ["a fractional sample", { ...part, players: [{ ...series("ann"), healed: [0.5, 1, 2] }] }],
+    ["health over 100", { ...part, players: [{ ...series("ann"), health: [101, 0, 0] }] }],
+    ["an infinite energy", { ...part, players: [{ ...series("ann"), energy: [Infinity, 0, 0] }] }],
+    [
+      "more than MAX_CHART_EVENTS events",
+      {
+        ...part,
+        events: Array.from({ length: MAX_CHART_EVENTS + 1 }, () => death),
+      },
+    ],
+    ["a stranger's death", { ...part, events: [{ t: 1, kind: "death", id: "eve", by: null }] }],
+    ["a stranger's kill", { ...part, events: [{ t: 1, kind: "death", id: "ann", by: "eve" }] }],
+    ["an unknown kind", { ...part, events: [{ t: 1, kind: "vanished", id: "ann" }] }],
+    [
+      "an unknown objective",
+      { ...part, events: [{ t: 1, kind: "objective", team: 0, what: "lever" }] },
+    ],
+    ["a negative time", { ...part, events: [{ t: -1, kind: "resurrected", id: "ann" }] }],
+  ])("refuses %s", (_, value) => {
+    expect(parse(value)).toBeUndefined();
+  });
+
+  it.each<[string, WireMatchChartPart[]]>([
+    ["a part missing", [{ ...part, parts: 2 }]],
+    [
+      "parts of different periods",
+      [
+        { ...part, parts: 2 },
+        { ...part, parts: 2, period: 7, players: [] },
+      ],
+    ],
+    [
+      "a player twice",
+      [
+        { ...part, parts: 2 },
+        { ...part, parts: 2, events: [] },
+      ],
+    ],
+    [
+      "series of different lengths",
+      [{ ...part, players: [series("ann"), { ...series("bob"), health: [100, 100] }] }],
+    ],
+    [
+      "more than MAX_CHART_EVENTS events in all",
+      [
+        { ...part, parts: 2, events: Array.from({ length: MAX_CHART_EVENTS }, () => death) },
+        { ...part, parts: 2, players: [] },
+      ],
+    ],
+  ])("joins nothing from %s", (_, parts) => {
+    expect(joinMatchChart(parts)).toBeUndefined();
+  });
+});
+
+describe("packEmblem and unpackEmblem (#3554)", () => {
+  const PIXELS = EMBLEM_GRID * EMBLEM_GRID;
+
+  /** A grid of pixels 0 to 8 from a small linear congruential sequence, so a failure reproduces. */
+  function grid(seed: number): number[] {
+    let state = seed;
+    return Array.from({ length: PIXELS }, () => {
+      state = (state * 1103515245 + 12345) % 2147483648;
+      return state % 9;
+    });
+  }
+
+  it.each([1, 2, 3, 4, 5, 6, 7, 8])("round trip a random grid, seed %i", (seed) => {
+    const packed = packEmblem(grid(seed));
+    expect(packed).toHaveLength(171);
+    expect(packed).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(unpackEmblem(packed)).toEqual(grid(seed));
+  });
+
+  it("round trip an empty grid and a grid all of the last colour", () => {
+    for (const pixel of [0, 8]) {
+      const pixels = new Array<number>(PIXELS).fill(pixel);
+      expect(unpackEmblem(packEmblem(pixels))).toEqual(pixels);
+    }
+  });
+
+  it("refuse a wrong length, a bad character, a nibble of 9 and stray trailing bits", () => {
+    const packed = packEmblem(grid(1));
+    expect(unpackEmblem(packed.slice(1))).toBeUndefined();
+    expect(unpackEmblem(`${packed}A`)).toBeUndefined();
+    expect(unpackEmblem("")).toBeUndefined();
+    expect(unpackEmblem(`=${packed.slice(1)}`)).toBeUndefined();
+    expect(unpackEmblem(`.${packed.slice(1)}`)).toBeUndefined();
+    // "o" is 0b101000: the first pixel 10, past CAPE_COLOURS.
+    expect(unpackEmblem(`o${packed.slice(1)}`)).toBeUndefined();
+    // "kA" sets the first pixel to 9: 0b100100 0b000000.
+    expect(unpackEmblem(`kA${packed.slice(2)}`)).toBeUndefined();
+    // The last character carries 4 bits of the last byte and 2 bits beyond it.
+    expect(unpackEmblem(`${packed.slice(0, -1)}B`)).toBeUndefined();
   });
 });

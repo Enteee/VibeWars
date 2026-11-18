@@ -102,6 +102,7 @@
   },
   "layers": 4,
   "biome": "wilds",
+  "ascentAct": null,
   "groundLayer": 1,
   "pits": [
     {
@@ -2095,6 +2096,7 @@
         "kind": "smoke"
       }
     ],
+    "shafts": [],
     "weather": null
   },
   "paving": [

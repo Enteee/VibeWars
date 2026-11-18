@@ -189,9 +189,9 @@ partida: ela se dobra em uma faixa fina na borda quando você para e
 esvoaça atrás de você quando anda. Seus personagens no menu também a
 mostram. **Sem capa** a remove.
 
-Uma mudança vale a partir da próxima sala em que você entrar, ou da
-próxima sala nova: uma em que você já está mantém o que você tinha ao
-entrar.
+Uma mudança vale na hora para a sala em que você está.
+
+**Desenhe seu próprio emblema.** **Editar emblema**, abaixo dos emblemas iniciais, abre no lugar deles uma grade de 16×16. Escolha uma cor ou **Vazio**, depois desenhe com o **Lápis**, apague com a **Borracha** ou pinte uma área com **Preencher**. **Espelhar** pinta as metades esquerda e direita ao mesmo tempo. **Limpar** esvazia a grade e **Desfazer** volta um passo. A pequena vista ao lado da grade mostra o emblema do tamanho que ele tem numa partida. **Concluir** fica com ele, **Cancelar** descarta o desenho. As setas e o Espaço também desenham pelo teclado.
 
 **Copiar link da guilda**, abaixo do designer de capa, copia um link com sua tag e sua capa. Quem abrir verá **Entrar na guilda [VIBE]?**: **Entrar** dá a essa pessoa sua tag e sua capa, **Não** não muda nada. Qualquer pessoa pode enviar um link assim e ninguém é dono de uma tag, por isso o jogo sempre pergunta antes.
 

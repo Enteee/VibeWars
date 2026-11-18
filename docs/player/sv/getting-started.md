@@ -183,8 +183,9 @@ den viks ihop till ett smalt band vid din kant när du står still och
 fladdrar ut bakom dig när du rör dig. Dina karaktärer i menyn visar den
 också. **Ingen mantel** tar av den.
 
-En ändring gäller från nästa lobby du går med i, eller din nästa nya:
-en du redan är med i behåller det du gick med med.
+En ändring gäller direkt i den lobby du är i.
+
+**Rita ditt eget emblem.** **Redigera emblem** under startemblemen öppnar ett rutnät på 16×16 i deras ställe. Välj en färg eller **Tom**, och rita med **Penna**, sudda med **Suddgummi** eller fyll en yta med **Fyll**. **Spegla** målar vänster och höger halva på en gång. **Rensa** tömmer rutnätet och **Ångra** går ett steg tillbaka. Den lilla vyn bredvid rutnätet visar emblemet lika stort som i en match. **Klar** behåller det, **Avbryt** kastar teckningen. Piltangenter och mellanslag ritar också med tangentbordet.
 
 **Kopiera gilleslänk**, under mantelverktyget, kopierar en länk med din tagg och din mantel. Den som öppnar den får frågan **Gå med i gillet [VIBE]?**: **Gå med** ger hen din tagg och din mantel, **Nej** ändrar ingenting. Vem som helst kan skicka en sådan länk och ingen äger en tagg, så spelet frågar alltid först.
 

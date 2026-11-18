@@ -23,7 +23,7 @@ import { matchGates, matchLayers } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import { mapSimulationFields } from "./match-fields.js";
-import { playBuildBot } from "./tools/map-balance.js";
+import { playBuildBot, transitionsWalked } from "./tools/map-balance.js";
 import type { MapData } from "./schema.js";
 
 /**
@@ -360,6 +360,8 @@ describe("Capture Points bots (#2580)", () => {
       ruleset: RULESET,
       walls: allWallSegments(map.walls),
       bounds: { width: map.width, height: map.height },
+      layers: matchLayers(map),
+      gates: matchGates(map),
       matchRules: CAPTURE_POINTS_MATCH_RULES,
       capturePoints: map.objectives.flatMap((objective) =>
         objective.kind === "capture-point"
@@ -542,6 +544,23 @@ describe("The Brazen Causeway (#3435)", () => {
     expect(
       finder.find(spawnOf(0).position, spawnOf(0).layer, spawnOf(1).position, spawnOf(1).layer),
     ).toBeDefined();
+  });
+
+  it("walks each team to its own gatehouse lever by its own stair, sharing none with the other (#3549)", () => {
+    const closed = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const levers = ["west-gatehouse-lever", "east-gatehouse-lever"].map((id) => {
+      const lever = map.switches?.find((candidate) => candidate.id === id);
+      if (lever === undefined) throw new Error(`no lever ${id}`);
+      return lever;
+    });
+    const [west = [], east = []] = transitionsWalked(
+      closed,
+      levers.map(({ position }) => position),
+      3,
+    );
+    expect(west).toContain("west-lever-stair");
+    expect(east).toContain("east-lever-stair");
+    expect(west.filter((id) => east.includes(id))).toEqual([]);
   });
 });
 

@@ -122,6 +122,7 @@
   },
   "layers": 4,
   "biome": "snow",
+  "ascentAct": null,
   "groundLayer": 1,
   "pits": [
     {
@@ -1744,6 +1745,7 @@
       }
     ],
     "plumes": [],
+    "shafts": [],
     "weather": {
       "kind": "snow",
       "intensity": 0.55

@@ -66,6 +66,8 @@ Hraje ho Broken Tower (4v4 a 8v8, 5400x2800): padlá věž na kopci ve vysočin�
 
 Běh s relikvií ve Výstupu hrdinů se tady hraje obráceně. Každá základna drží relikvii svého týmu a jeho Přízračného hrdinu a žádný oltář tu není. **Vezmi nepřátelskou relikvii z jejich základny a přines ji ke svému Přízračnému hrdinovi** za bod. Duch musí být naživu a zůstává na svém stanovišti. Vlastní relikvii nosit nemůžeš: zvednutí tam, kde spadla, ji pošle domů. Tým s **náskokem 3 bodů okamžitě vyhrává**. Po 8 minutách vyhrává nejvíc bodů a shodu rozhodne tým, který skóroval naposledy. Každá základna oživuje své mrtvé i svého ducha každé 2 minuty. Boti jdou pro nepřátelskou relikvii společně a přinesou ji domů.
 
+Cinder Sanctum (8v8, 5600x2800) ho hraje: chrám na úbočí sopky mezi dvěma lávovými řekami. Přejdi po mostě nebo po hrázi ke svatyni na jejím nádvoří; páka na nádvoří otevře skrytou chodbu pod svatyní a popelové zdi se dají rozbít. Láva pálí.
+
 ## Král kopce
 
 **Doveď svého Přízračného hrdinu na oltář a udrž ho.** Každý tým má ve své základně **Přízračného hrdinu**, ducha bojujícího sekerou, kterého nikdo nehraje. **Oltář** je uprostřed, stejně daleko z obou základen. Na **Threefold Keep** o něj bojují tři týmy (dva, když není třetí volný) uvnitř opevněné tvrze. Její dveře se otevírají jen zevnitř, plošinou uvnitř: dostaneš se dovnitř obejitím k otevřenému rohu. Nejvýše 12 bodů na tým, a pokud všichni nepřátelé stojí na -60 % morálky, okamžitě vyhráváš. **Síň hrdinů**, mapa Krále kopce, kterou Výstup hrdinů končí, ho zvedá na pódium obezděné na západě a východě, přístupné severní nebo jižní cestou lemovanou sloupy. Zaměř svého ducha **kliknutím pravým** a stiskni **Space**, abys mu řekl, ať tě následuje: jde s tebou a bojuje s tím, s čím bojuješ ty. Další Space na něm a zůstane stát, kde je, a bojuje s každým nepřítelem, který se přiblíží. Když zemřeš nebo odejdeš, zůstane. Se zaměřeným duchem jeho rámeček říká, koho následuje, nebo že zůstává. Oznámení řekne, koho tvůj Přízračný hrdina následuje, kdykoli se to změní, a jméno nad jeho hlavou ukazuje jeho vůdce.
@@ -94,7 +96,7 @@ Každá svatyně je kruh na zemi v barvě vlastníka, šedý, když ji nikdo nev
 
 Boti se rozptýlí po svatyních, které tvůj tým ještě nevlastní, a stojí na nich, dokud nejsou dobyté. Nepřítel na dostřel kouzla je neodláká: vstoupí na svatyni v dosahu a bojují z ní.
 
-Hraje ho Scarred Earth: každá svatyně stojí v rozbitém kruhu zdí, otevřeném na západ a východ.
+Hraje ho Scarred Earth (4v4 a 8v8, 5400x2800): bojiště poseté krátery za soumraku. Svatyně stojí na rozbitých obléhacích věžích, prostřední na plošině velké věže, každá vedle kráteru; páky na věžích otevírají dva zákopy pod bojištěm a rozbité palisády lze zbořit.
 
 ## Týmové lobby
 

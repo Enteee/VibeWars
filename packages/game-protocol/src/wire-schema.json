@@ -14,6 +14,8 @@
     "adrenaline",
     "chain",
     "ended",
+    "match-replay",
+    "match-chart",
     "bye",
     "lobby-join",
     "lobby-challenge",
@@ -50,6 +52,7 @@
     "strokes",
     "traps",
     "respawns",
+    "capes",
     "chat",
     "chat-line",
     "shared-track"
@@ -732,16 +735,21 @@
   ],
   "constants": {
     "ASCENT_ROUNDS": { "literal": 10 },
+    "EMBLEM_GRID": { "literal": 16 },
     "FORMATION_SETTLE_MS": { "literal": 3000 },
     "FORMATION_TIMEOUT_MS": { "literal": 20000 },
     "LOBBY_CODE_LENGTH": { "literal": 43 },
     "LOBBY_KEY_SALT": { "literal": "vibewars-lobby-key" },
     "MASTERLESS_WIRE_TEAM": { "literal": -1 },
+    "MAX_CHART_EVENTS": { "literal": 200 },
+    "MAX_CHART_PARTS": { "literal": 16 },
+    "MAX_CHART_SAMPLES": { "literal": 120 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_HERO_RANK": { "literal": 15 },
     "MAX_LOBBY_PLAYERS": { "literal": 24 },
     "MAX_RELAY_PEER_ID": { "literal": 64 },
     "MAX_RELAY_SEAL_CHARS": { "literal": 2048 },
+    "MAX_REPLAY_PARTS": { "literal": 6400 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_STROKE_POINTS": { "literal": 16 },
     "MAX_TEAM_LOBBY_SIDE": { "literal": 8 },
@@ -888,6 +896,7 @@
         { "literal": "bye" },
         { "literal": "call" },
         { "literal": "calls" },
+        { "literal": "capes" },
         { "literal": "chain" },
         { "literal": "chat" },
         { "literal": "chat-line" },
@@ -910,6 +919,8 @@
         { "literal": "lobby-seat" },
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
+        { "literal": "match-chart" },
+        { "literal": "match-replay" },
         { "literal": "match-start" },
         { "literal": "observe" },
         { "literal": "observing" },
@@ -6124,22 +6135,7 @@
               "null",
               {
                 "properties": [
-                  {
-                    "name": "emblem",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "bar" },
-                        { "literal": "chevron" },
-                        { "literal": "cross" },
-                        { "literal": "diamond" },
-                        { "literal": "disc" },
-                        { "literal": "half-disc" },
-                        { "literal": "ring" },
-                        { "literal": "triangle" }
-                      ]
-                    }
-                  },
+                  { "name": "emblem", "optional": false, "type": "string" },
                   {
                     "name": "main",
                     "optional": false,
@@ -6223,22 +6219,7 @@
               "null",
               {
                 "properties": [
-                  {
-                    "name": "emblem",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "bar" },
-                        { "literal": "chevron" },
-                        { "literal": "cross" },
-                        { "literal": "diamond" },
-                        { "literal": "disc" },
-                        { "literal": "half-disc" },
-                        { "literal": "ring" },
-                        { "literal": "triangle" }
-                      ]
-                    }
-                  },
+                  { "name": "emblem", "optional": false, "type": "string" },
                   {
                     "name": "main",
                     "optional": false,
@@ -7403,22 +7384,7 @@
     },
     "WireCape": {
       "properties": [
-        {
-          "name": "emblem",
-          "optional": false,
-          "type": {
-            "union": [
-              { "literal": "bar" },
-              { "literal": "chevron" },
-              { "literal": "cross" },
-              { "literal": "diamond" },
-              { "literal": "disc" },
-              { "literal": "half-disc" },
-              { "literal": "ring" },
-              { "literal": "triangle" }
-            ]
-          }
-        },
+        { "name": "emblem", "optional": false, "type": "string" },
         {
           "name": "main",
           "optional": false,
@@ -7449,6 +7415,62 @@
               { "literal": "violet" },
               { "literal": "white" }
             ]
+          }
+        }
+      ]
+    },
+    "WireCapes": {
+      "properties": [
+        {
+          "name": "capes",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "cape",
+                  "optional": false,
+                  "type": {
+                    "properties": [
+                      { "name": "emblem", "optional": false, "type": "string" },
+                      {
+                        "name": "main",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            { "literal": "black" },
+                            { "literal": "gold" },
+                            { "literal": "lime" },
+                            { "literal": "orange" },
+                            { "literal": "pink" },
+                            { "literal": "teal" },
+                            { "literal": "violet" },
+                            { "literal": "white" }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "trim",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            { "literal": "black" },
+                            { "literal": "gold" },
+                            { "literal": "lime" },
+                            { "literal": "orange" },
+                            { "literal": "pink" },
+                            { "literal": "teal" },
+                            { "literal": "violet" },
+                            { "literal": "white" }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                { "name": "id", "optional": false, "type": "string" }
+              ]
+            }
           }
         }
       ]
@@ -7500,6 +7522,62 @@
     },
     "WireChainRole": {
       "union": [{ "literal": "dual" }, { "literal": "lead" }, { "literal": "off-hand" }]
+    },
+    "WireChartEvent": {
+      "union": [
+        {
+          "properties": [
+            { "name": "by", "optional": false, "type": "string" },
+            { "name": "id", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "interrupt" } },
+            { "name": "skillId", "optional": false, "type": "string" },
+            { "name": "t", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "by", "optional": false, "type": { "union": ["null", "string"] } },
+            { "name": "id", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "death" } },
+            { "name": "t", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "id", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "resurrected" } },
+            { "name": "t", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "objective" } },
+            { "name": "t", "optional": false, "type": "number" },
+            {
+              "name": "team",
+              "optional": false,
+              "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
+            },
+            {
+              "name": "what",
+              "optional": false,
+              "type": {
+                "union": [{ "literal": "altar" }, { "literal": "point" }, { "literal": "stand" }]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "WireChartSeries": {
+      "properties": [
+        { "name": "dealt", "optional": false, "type": { "array": "number" } },
+        { "name": "energy", "optional": false, "type": { "array": "number" } },
+        { "name": "healed", "optional": false, "type": { "array": "number" } },
+        { "name": "health", "optional": false, "type": { "array": "number" } },
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "taken", "optional": false, "type": { "array": "number" } }
+      ]
     },
     "WireChatLine": {
       "properties": [
@@ -7934,6 +8012,60 @@
         },
         {
           "properties": [
+            {
+              "name": "guildCape",
+              "optional": false,
+              "type": {
+                "union": [
+                  "null",
+                  {
+                    "properties": [
+                      { "name": "emblem", "optional": false, "type": "string" },
+                      {
+                        "name": "main",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            { "literal": "black" },
+                            { "literal": "gold" },
+                            { "literal": "lime" },
+                            { "literal": "orange" },
+                            { "literal": "pink" },
+                            { "literal": "teal" },
+                            { "literal": "violet" },
+                            { "literal": "white" }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "trim",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            { "literal": "black" },
+                            { "literal": "gold" },
+                            { "literal": "lime" },
+                            { "literal": "orange" },
+                            { "literal": "pink" },
+                            { "literal": "teal" },
+                            { "literal": "violet" },
+                            { "literal": "white" }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
+            { "name": "heroRank", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "set-profile" } },
+            { "name": "name", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "id", "optional": false, "type": "string" },
             { "name": "kind", "optional": false, "type": { "literal": "remove-member" } }
           ]
@@ -8049,67 +8181,6 @@
       "properties": [
         { "name": "away", "optional": false, "type": "boolean" },
         { "name": "bot", "optional": false, "type": "boolean" },
-        {
-          "name": "guildCape",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  {
-                    "name": "emblem",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "bar" },
-                        { "literal": "chevron" },
-                        { "literal": "cross" },
-                        { "literal": "diamond" },
-                        { "literal": "disc" },
-                        { "literal": "half-disc" },
-                        { "literal": "ring" },
-                        { "literal": "triangle" }
-                      ]
-                    }
-                  },
-                  {
-                    "name": "main",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "black" },
-                        { "literal": "gold" },
-                        { "literal": "lime" },
-                        { "literal": "orange" },
-                        { "literal": "pink" },
-                        { "literal": "teal" },
-                        { "literal": "violet" },
-                        { "literal": "white" }
-                      ]
-                    }
-                  },
-                  {
-                    "name": "trim",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "black" },
-                        { "literal": "gold" },
-                        { "literal": "lime" },
-                        { "literal": "orange" },
-                        { "literal": "pink" },
-                        { "literal": "teal" },
-                        { "literal": "violet" },
-                        { "literal": "white" }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        },
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "heroRank", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
@@ -8196,67 +8267,6 @@
               "properties": [
                 { "name": "away", "optional": false, "type": "boolean" },
                 { "name": "bot", "optional": false, "type": "boolean" },
-                {
-                  "name": "guildCape",
-                  "optional": false,
-                  "type": {
-                    "union": [
-                      "null",
-                      {
-                        "properties": [
-                          {
-                            "name": "emblem",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "bar" },
-                                { "literal": "chevron" },
-                                { "literal": "cross" },
-                                { "literal": "diamond" },
-                                { "literal": "disc" },
-                                { "literal": "half-disc" },
-                                { "literal": "ring" },
-                                { "literal": "triangle" }
-                              ]
-                            }
-                          },
-                          {
-                            "name": "main",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "black" },
-                                { "literal": "gold" },
-                                { "literal": "lime" },
-                                { "literal": "orange" },
-                                { "literal": "pink" },
-                                { "literal": "teal" },
-                                { "literal": "violet" },
-                                { "literal": "white" }
-                              ]
-                            }
-                          },
-                          {
-                            "name": "trim",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "black" },
-                                { "literal": "gold" },
-                                { "literal": "lime" },
-                                { "literal": "orange" },
-                                { "literal": "pink" },
-                                { "literal": "teal" },
-                                { "literal": "violet" },
-                                { "literal": "white" }
-                              ]
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
                 { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "heroRank", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
@@ -8543,6 +8553,171 @@
     "WireLobbyWelcome": {
       "properties": [{ "name": "hostSig", "optional": false, "type": "string" }]
     },
+    "WireMatchChart": {
+      "properties": [
+        { "name": "dropped", "optional": false, "type": "number" },
+        {
+          "name": "events",
+          "optional": false,
+          "type": {
+            "array": {
+              "union": [
+                {
+                  "properties": [
+                    { "name": "by", "optional": false, "type": "string" },
+                    { "name": "id", "optional": false, "type": "string" },
+                    { "name": "kind", "optional": false, "type": { "literal": "interrupt" } },
+                    { "name": "skillId", "optional": false, "type": "string" },
+                    { "name": "t", "optional": false, "type": "number" }
+                  ]
+                },
+                {
+                  "properties": [
+                    { "name": "by", "optional": false, "type": { "union": ["null", "string"] } },
+                    { "name": "id", "optional": false, "type": "string" },
+                    { "name": "kind", "optional": false, "type": { "literal": "death" } },
+                    { "name": "t", "optional": false, "type": "number" }
+                  ]
+                },
+                {
+                  "properties": [
+                    { "name": "id", "optional": false, "type": "string" },
+                    { "name": "kind", "optional": false, "type": { "literal": "resurrected" } },
+                    { "name": "t", "optional": false, "type": "number" }
+                  ]
+                },
+                {
+                  "properties": [
+                    { "name": "kind", "optional": false, "type": { "literal": "objective" } },
+                    { "name": "t", "optional": false, "type": "number" },
+                    {
+                      "name": "team",
+                      "optional": false,
+                      "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
+                    },
+                    {
+                      "name": "what",
+                      "optional": false,
+                      "type": {
+                        "union": [
+                          { "literal": "altar" },
+                          { "literal": "point" },
+                          { "literal": "stand" }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        { "name": "period", "optional": false, "type": "number" },
+        {
+          "name": "players",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "dealt", "optional": false, "type": { "array": "number" } },
+                { "name": "energy", "optional": false, "type": { "array": "number" } },
+                { "name": "healed", "optional": false, "type": { "array": "number" } },
+                { "name": "health", "optional": false, "type": { "array": "number" } },
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "taken", "optional": false, "type": { "array": "number" } }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "WireMatchChartPart": {
+      "properties": [
+        { "name": "dropped", "optional": false, "type": "number" },
+        {
+          "name": "events",
+          "optional": false,
+          "type": {
+            "array": {
+              "union": [
+                {
+                  "properties": [
+                    { "name": "by", "optional": false, "type": "string" },
+                    { "name": "id", "optional": false, "type": "string" },
+                    { "name": "kind", "optional": false, "type": { "literal": "interrupt" } },
+                    { "name": "skillId", "optional": false, "type": "string" },
+                    { "name": "t", "optional": false, "type": "number" }
+                  ]
+                },
+                {
+                  "properties": [
+                    { "name": "by", "optional": false, "type": { "union": ["null", "string"] } },
+                    { "name": "id", "optional": false, "type": "string" },
+                    { "name": "kind", "optional": false, "type": { "literal": "death" } },
+                    { "name": "t", "optional": false, "type": "number" }
+                  ]
+                },
+                {
+                  "properties": [
+                    { "name": "id", "optional": false, "type": "string" },
+                    { "name": "kind", "optional": false, "type": { "literal": "resurrected" } },
+                    { "name": "t", "optional": false, "type": "number" }
+                  ]
+                },
+                {
+                  "properties": [
+                    { "name": "kind", "optional": false, "type": { "literal": "objective" } },
+                    { "name": "t", "optional": false, "type": "number" },
+                    {
+                      "name": "team",
+                      "optional": false,
+                      "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
+                    },
+                    {
+                      "name": "what",
+                      "optional": false,
+                      "type": {
+                        "union": [
+                          { "literal": "altar" },
+                          { "literal": "point" },
+                          { "literal": "stand" }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        { "name": "parts", "optional": false, "type": "number" },
+        { "name": "period", "optional": false, "type": "number" },
+        {
+          "name": "players",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "dealt", "optional": false, "type": { "array": "number" } },
+                { "name": "energy", "optional": false, "type": { "array": "number" } },
+                { "name": "healed", "optional": false, "type": { "array": "number" } },
+                { "name": "health", "optional": false, "type": { "array": "number" } },
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "taken", "optional": false, "type": { "array": "number" } }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "WireMatchReplayPart": {
+      "properties": [
+        { "name": "hash", "optional": false, "type": "string" },
+        { "name": "of", "optional": false, "type": "number" },
+        { "name": "part", "optional": false, "type": "number" },
+        { "name": "text", "optional": false, "type": "string" }
+      ]
+    },
     "WireMatchStart": {
       "properties": [
         { "name": "mapId", "optional": false, "type": "string" },
@@ -8691,67 +8866,6 @@
         { "name": "energy", "optional": false, "type": "number" },
         { "name": "energyPips", "optional": false, "type": "number" },
         { "name": "facing", "optional": false, "type": "number" },
-        {
-          "name": "guildCape",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  {
-                    "name": "emblem",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "bar" },
-                        { "literal": "chevron" },
-                        { "literal": "cross" },
-                        { "literal": "diamond" },
-                        { "literal": "disc" },
-                        { "literal": "half-disc" },
-                        { "literal": "ring" },
-                        { "literal": "triangle" }
-                      ]
-                    }
-                  },
-                  {
-                    "name": "main",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "black" },
-                        { "literal": "gold" },
-                        { "literal": "lime" },
-                        { "literal": "orange" },
-                        { "literal": "pink" },
-                        { "literal": "teal" },
-                        { "literal": "violet" },
-                        { "literal": "white" }
-                      ]
-                    }
-                  },
-                  {
-                    "name": "trim",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "black" },
-                        { "literal": "gold" },
-                        { "literal": "lime" },
-                        { "literal": "orange" },
-                        { "literal": "pink" },
-                        { "literal": "teal" },
-                        { "literal": "violet" },
-                        { "literal": "white" }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        },
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "health", "optional": false, "type": "number" },
         { "name": "healthPips", "optional": false, "type": "number" },
@@ -8897,6 +9011,52 @@
             }
           }
         }
+      ]
+    },
+    "WireSeatCape": {
+      "properties": [
+        {
+          "name": "cape",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "emblem", "optional": false, "type": "string" },
+              {
+                "name": "main",
+                "optional": false,
+                "type": {
+                  "union": [
+                    { "literal": "black" },
+                    { "literal": "gold" },
+                    { "literal": "lime" },
+                    { "literal": "orange" },
+                    { "literal": "pink" },
+                    { "literal": "teal" },
+                    { "literal": "violet" },
+                    { "literal": "white" }
+                  ]
+                }
+              },
+              {
+                "name": "trim",
+                "optional": false,
+                "type": {
+                  "union": [
+                    { "literal": "black" },
+                    { "literal": "gold" },
+                    { "literal": "lime" },
+                    { "literal": "orange" },
+                    { "literal": "pink" },
+                    { "literal": "teal" },
+                    { "literal": "violet" },
+                    { "literal": "white" }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        { "name": "id", "optional": false, "type": "string" }
       ]
     },
     "WireSharedTrack": {
@@ -9223,67 +9383,6 @@
                 { "name": "energy", "optional": false, "type": "number" },
                 { "name": "energyPips", "optional": false, "type": "number" },
                 { "name": "facing", "optional": false, "type": "number" },
-                {
-                  "name": "guildCape",
-                  "optional": false,
-                  "type": {
-                    "union": [
-                      "null",
-                      {
-                        "properties": [
-                          {
-                            "name": "emblem",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "bar" },
-                                { "literal": "chevron" },
-                                { "literal": "cross" },
-                                { "literal": "diamond" },
-                                { "literal": "disc" },
-                                { "literal": "half-disc" },
-                                { "literal": "ring" },
-                                { "literal": "triangle" }
-                              ]
-                            }
-                          },
-                          {
-                            "name": "main",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "black" },
-                                { "literal": "gold" },
-                                { "literal": "lime" },
-                                { "literal": "orange" },
-                                { "literal": "pink" },
-                                { "literal": "teal" },
-                                { "literal": "violet" },
-                                { "literal": "white" }
-                              ]
-                            }
-                          },
-                          {
-                            "name": "trim",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "black" },
-                                { "literal": "gold" },
-                                { "literal": "lime" },
-                                { "literal": "orange" },
-                                { "literal": "pink" },
-                                { "literal": "teal" },
-                                { "literal": "violet" },
-                                { "literal": "white" }
-                              ]
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
                 { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "health", "optional": false, "type": "number" },
                 { "name": "healthPips", "optional": false, "type": "number" },
@@ -9738,67 +9837,6 @@
                 { "name": "energy", "optional": false, "type": "number" },
                 { "name": "energyPips", "optional": false, "type": "number" },
                 { "name": "facing", "optional": false, "type": "number" },
-                {
-                  "name": "guildCape",
-                  "optional": false,
-                  "type": {
-                    "union": [
-                      "null",
-                      {
-                        "properties": [
-                          {
-                            "name": "emblem",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "bar" },
-                                { "literal": "chevron" },
-                                { "literal": "cross" },
-                                { "literal": "diamond" },
-                                { "literal": "disc" },
-                                { "literal": "half-disc" },
-                                { "literal": "ring" },
-                                { "literal": "triangle" }
-                              ]
-                            }
-                          },
-                          {
-                            "name": "main",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "black" },
-                                { "literal": "gold" },
-                                { "literal": "lime" },
-                                { "literal": "orange" },
-                                { "literal": "pink" },
-                                { "literal": "teal" },
-                                { "literal": "violet" },
-                                { "literal": "white" }
-                              ]
-                            }
-                          },
-                          {
-                            "name": "trim",
-                            "optional": false,
-                            "type": {
-                              "union": [
-                                { "literal": "black" },
-                                { "literal": "gold" },
-                                { "literal": "lime" },
-                                { "literal": "orange" },
-                                { "literal": "pink" },
-                                { "literal": "teal" },
-                                { "literal": "violet" },
-                                { "literal": "white" }
-                              ]
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
                 { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "health", "optional": false, "type": "number" },
                 { "name": "healthPips", "optional": false, "type": "number" },

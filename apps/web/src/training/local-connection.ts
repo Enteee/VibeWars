@@ -330,6 +330,7 @@ export function createLocalConnection(options: {
         lifts: simulation.lifts.map(({ phase, progress }) => ({ phase, progress })),
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
+        chart: undefined,
       };
     },
     onCombat(handler) {

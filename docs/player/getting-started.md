@@ -181,8 +181,9 @@ wears the cape in every match: it folds to a thin band on your rim when
 you stand and streams out behind you when you move. Your characters in
 the menu show it too. **No cape** takes it off.
 
-A change applies from the next lobby you join, or your next fresh one:
-one you are already in keeps what you joined with.
+A change applies at once to the lobby you are in.
+
+**Draw your own emblem.** **Edit emblem**, under the starting emblems, opens a 16×16 grid in their place. Pick a colour or **Empty**, then draw with the **Pencil**, rub out with the **Eraser**, or flood an area with **Fill**. **Mirror** paints the left and right halves at once. **Clear** empties the grid and **Undo** goes back a step. The small view beside the grid shows the emblem as big as in a match. **Done** keeps it, **Cancel** throws the drawing away. Arrow keys and Space draw from the keyboard too.
 
 **Copy guild link**, under the cape designer, copies a link that carries
 your tag and cape. Whoever opens it is asked **Join guild [VIBE]?**:

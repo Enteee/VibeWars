@@ -1,5 +1,5 @@
 import { randomPlayerName } from "@vibewars/game-core";
-import { CAPE_COLOURS, CAPE_EMBLEMS, type WireCape } from "@vibewars/game-protocol";
+import { CAPE_COLOURS, type WireCape } from "@vibewars/game-protocol";
 import {
   sanitizeGuild,
   sanitizeGuildCape,
@@ -12,14 +12,18 @@ import { GUILD_FRAGMENT_KEY } from "../net/fragment.js";
 import { SELF_RIM, paintEmblem } from "../render/body-painter.js";
 import {
   CAPE_PALETTE,
+  EMBLEM_PRESET_NAMES,
   emblemShape,
+  presetEmblem,
+  recolourEmblem,
   type CapeColour,
-  type CapeEmblem,
+  type EmblemPresetName,
 } from "../render/cape-shape.js";
 import { heroRankOf, loadFame } from "../storage/fame.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { canvasPainter } from "./character-figure.js";
 import { cssColour } from "./character-preview.js";
+import { COLOUR_NAMES, emblemEditor } from "./emblem-editor.js";
 import { button, h, shareLine, toast, type ShareLine } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
 import { SIGNET_HEADING_PX, signetElement } from "./player-label.js";
@@ -108,15 +112,33 @@ const GUILD_CAPE_STORAGE_KEY = `${STORAGE_NAMESPACE}.guildCape`;
 
 /**
  * The cape last designed (#1422), kept even while there is no valid tag
- * to wear it with; `null` for none, and for anything stored that is not
- * a cape.
+ * to wear it with; `null` for none. One stored that is not a cape, such
+ * as one from before the emblem was a grid (#3554), is replaced by
+ * `FIRST_CAPE`: no migration (ADR-0016).
  */
 export function loadGuildCape(): WireCape | null {
   try {
     const stored = localStorage.getItem(GUILD_CAPE_STORAGE_KEY);
-    return stored === null ? null : sanitizeGuildCape(JSON.parse(stored));
+    if (stored === null) {
+      return null;
+    }
+    const cape = storedCape(stored);
+    if (cape === null) {
+      saveGuildCape(FIRST_CAPE);
+      return FIRST_CAPE;
+    }
+    return cape;
   } catch {
-    // Unparseable, or the name's reasoning: no cape.
+    // The name's reasoning: no cape.
+    return null;
+  }
+}
+
+/** `stored` as a cape, or `null` if it is not JSON or not a cape. */
+function storedCape(stored: string): WireCape | null {
+  try {
+    return sanitizeGuildCape(JSON.parse(stored));
+  } catch {
     return null;
   }
 }
@@ -183,13 +205,22 @@ async function copyGuildLink(url: string, share: ShareLine): Promise<void> {
 /** One press in the cape designer (#1422). */
 export type CapePick =
   | { readonly part: "main" | "trim"; readonly colour: CapeColour }
-  | { readonly part: "emblem"; readonly emblem: CapeEmblem }
+  | { readonly part: "emblem"; readonly preset: EmblemPresetName }
+  | { readonly part: "drawn"; readonly emblem: string }
   | { readonly part: "none" };
 
 /** What a first pick starts from: the study's sample of variant B (#1410). */
-export const FIRST_CAPE: WireCape = { main: "violet", trim: "white", emblem: "diamond" };
+export const FIRST_CAPE: WireCape = {
+  main: "violet",
+  trim: "white",
+  emblem: presetEmblem("diamond", "white"),
+};
 
-/** The cape after `pick`; a pick on no cape starts from `FIRST_CAPE`. */
+/**
+ * The cape after `pick`; a pick on no cape starts from `FIRST_CAPE`. A
+ * preset is drawn in the trim colour, and a new trim takes the emblem's
+ * pixels in the old one along (#3554), as the emblem followed the trim.
+ */
 export function pickCape(cape: WireCape | null, pick: CapePick): WireCape | null {
   const from = cape ?? FIRST_CAPE;
   switch (pick.part) {
@@ -198,24 +229,19 @@ export function pickCape(cape: WireCape | null, pick: CapePick): WireCape | null
     case "main":
       return { ...from, main: pick.colour };
     case "trim":
-      return { ...from, trim: pick.colour };
+      return {
+        ...from,
+        trim: pick.colour,
+        emblem: recolourEmblem(from.emblem, from.trim, pick.colour),
+      };
     case "emblem":
+      return { ...from, emblem: presetEmblem(pick.preset, from.trim) };
+    case "drawn":
       return { ...from, emblem: pick.emblem };
   }
 }
 
-const COLOUR_NAMES: Readonly<Record<CapeColour, MessageKey>> = {
-  gold: "player.colourGold",
-  violet: "player.colourViolet",
-  white: "player.colourWhite",
-  black: "player.colourBlack",
-  lime: "player.colourLime",
-  orange: "player.colourOrange",
-  teal: "player.colourTeal",
-  pink: "player.colourPink",
-};
-
-const EMBLEM_NAMES: Readonly<Record<CapeEmblem, MessageKey>> = {
+const EMBLEM_NAMES: Readonly<Record<EmblemPresetName, MessageKey>> = {
   disc: "player.emblemDisc",
   bar: "player.emblemBar",
   chevron: "player.emblemChevron",
@@ -306,7 +332,6 @@ function mountPlayer(container: HTMLElement, signet: number): () => void {
   showCape();
   panel.appendChild(designer.root);
   panel.append(copy, link.element);
-  panel.appendChild(h("p", "player-applies", t("player.applies")));
   return () => {
     panel.remove();
   };
@@ -317,8 +342,10 @@ const EMBLEM_BUTTON_PX = 20;
 
 /**
  * The cape designer (#1422): a row of eight swatches each for the cape's
- * colour and its trim's, eight emblems, and *No cape*. `show` marks what
- * `cape` has picked; with none, only *No cape* is pressed.
+ * colour and its trim's, eight starting emblems (#3554), *Edit emblem*
+ * (#3555) and *No cape*. `show` marks what `cape` has picked; with none,
+ * only *No cape* is pressed. *Edit emblem* puts the emblem editor in
+ * place of the rows until Done or Cancel; Done is a pick.
  */
 function capeDesigner(onPick: (pick: CapePick) => void): {
   readonly root: HTMLElement;
@@ -326,6 +353,9 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
 } {
   const root = h("div", "player-cape");
   root.appendChild(h("span", "field-label", t("player.guildCape")));
+  const picks = h("div", "player-cape-picks");
+  root.appendChild(picks);
+  let shown: WireCape | null = null;
   const pressed: {
     readonly button: HTMLButtonElement;
     readonly on: (cape: WireCape) => boolean;
@@ -346,7 +376,7 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
       row.appendChild(swatch);
       pressed.push({ button: swatch, on: (cape) => cape[part] === colour });
     }
-    root.appendChild(row);
+    picks.appendChild(row);
   };
   swatchRow("main", t("player.cape"));
   swatchRow("trim", t("player.trim"));
@@ -354,25 +384,38 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
   emblems.setAttribute("role", "group");
   emblems.setAttribute("aria-label", t("player.emblem"));
   emblems.appendChild(h("span", "player-cape-row-label", t("player.emblem")));
-  for (const emblem of CAPE_EMBLEMS) {
+  for (const preset of EMBLEM_PRESET_NAMES) {
     const choice = button("", "player-cape-emblem", () => {
-      onPick({ part: "emblem", emblem });
+      onPick({ part: "emblem", preset });
     });
-    choice.setAttribute("aria-label", t(EMBLEM_NAMES[emblem]));
-    choice.title = t(EMBLEM_NAMES[emblem]);
-    choice.dataset.emblem = emblem;
-    choice.appendChild(emblemIcon(emblem));
+    choice.setAttribute("aria-label", t(EMBLEM_NAMES[preset]));
+    choice.title = t(EMBLEM_NAMES[preset]);
+    choice.dataset.emblem = preset;
+    // Drawn in one ink, whatever its pixel: the shape is what is picked.
+    choice.appendChild(emblemIcon(presetEmblem(preset, "white"), INK));
     emblems.appendChild(choice);
-    pressed.push({ button: choice, on: (cape) => cape.emblem === emblem });
+    pressed.push({ button: choice, on: (cape) => cape.emblem === presetEmblem(preset, cape.trim) });
   }
-  root.appendChild(emblems);
+  picks.appendChild(emblems);
+  const edit = button(t("player.editEmblem"), "player-cape-edit", () => {
+    const editor = emblemEditor(shown ?? FIRST_CAPE, (emblem) => {
+      editor.remove();
+      picks.hidden = false;
+      if (emblem !== null) {
+        onPick({ part: "drawn", emblem });
+      }
+    });
+    picks.hidden = true;
+    root.appendChild(editor);
+  });
   const none = button(t("player.noCape"), "player-cape-none", () => {
     onPick({ part: "none" });
   });
-  root.appendChild(none);
+  picks.append(edit, none);
   return {
     root,
     show: (cape) => {
+      shown = cape;
       for (const { button: each, on } of pressed) {
         each.setAttribute("aria-pressed", String(cape !== null && on(cape)));
       }
@@ -390,21 +433,32 @@ export function capePreview(cape: WireCape): HTMLElement {
   banner.style.setProperty("--cape-main", cssColour(CAPE_PALETTE[cape.main]));
   banner.style.setProperty("--cape-trim", cssColour(CAPE_PALETTE[cape.trim]));
   banner.setAttribute("role", "img");
+  const preset = EMBLEM_PRESET_NAMES.find((name) => presetEmblem(name, cape.trim) === cape.emblem);
   banner.setAttribute(
     "aria-label",
-    [t(COLOUR_NAMES[cape.main]), t(COLOUR_NAMES[cape.trim]), t(EMBLEM_NAMES[cape.emblem])].join(
-      ", ",
+    [
+      t(COLOUR_NAMES[cape.main]),
+      t(COLOUR_NAMES[cape.trim]),
+      ...(preset === undefined ? [] : [t(EMBLEM_NAMES[preset])]),
+    ].join(", "),
+  );
+  banner.appendChild(
+    emblemIcon(
+      cape.emblem,
+      CAPE_COLOURS.map((colour) => CAPE_PALETTE[colour]),
     ),
   );
-  banner.appendChild(emblemIcon(cape.emblem));
   return banner;
 }
 
+/** A preset button's one ink for every pixel. */
+const INK: readonly number[] = CAPE_COLOURS.map(() => SELF_RIM);
+
 /**
- * `emblem` in `ink`, upright, sharp at the device's pixel ratio. An image of a
- * canvas, not the canvas: Options keeps no canvases of its own (#1422).
+ * `emblem` in `palette`, upright, sharp at the device's pixel ratio. An image
+ * of a canvas, not the canvas: Options keeps no canvases of its own (#1422).
  */
-function emblemIcon(emblem: CapeEmblem): HTMLImageElement {
+function emblemIcon(emblem: string, palette: readonly number[]): HTMLImageElement {
   const ratio = window.devicePixelRatio;
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(EMBLEM_BUTTON_PX * ratio);
@@ -416,7 +470,7 @@ function emblemIcon(emblem: CapeEmblem): HTMLImageElement {
     paintEmblem(
       canvasPainter(context),
       emblemShape(emblem, { x: half, y: half }, 0, EMBLEM_BUTTON_PX - 4),
-      SELF_RIM,
+      palette,
     );
   }
   const image = document.createElement("img");

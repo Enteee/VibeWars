@@ -52,6 +52,7 @@ const bridge = { kind: "rect", x: 100, y: 100, width: 200, height: 100 } as cons
 const BRIDGE: MapStructure = {
   layerCount: 2,
   biome: "hall",
+  ascentAct: null,
   bounds: { kind: "rect" },
   ground: 0,
   pits: [],
@@ -93,9 +94,15 @@ describe("the surface a click names (#2831)", () => {
     expect(pickSurface(BRIDGE, [], onDeck, true)).toEqual({ layer: 0, point: onDeck });
   });
 
+  it("is the ground with Alt from the ground or from the deck (#3546)", () => {
+    expect(pickSurface(BRIDGE, [], onDeck, true, 0)).toEqual({ layer: 0, point: onDeck });
+    expect(pickSurface(BRIDGE, [], onDeck, true, 1)).toEqual({ layer: 0, point: onDeck });
+  });
+
   it("acts as a plain click where there is nothing below", () => {
     const open = { x: 10, y: 10 };
     expect(pickSurface(BRIDGE, [], open, true)).toEqual({ layer: 0, point: open });
+    expect(pickSurface(BRIDGE, [], open, true, 0)).toEqual({ layer: 0, point: open });
   });
 });
 
@@ -140,6 +147,10 @@ describe("Alt over a support and a tunnel (#3487)", () => {
     const cracked = { ...support, layer: 1, breakable: true } as const;
     expect(pickSurface(STACK, [door], world, true)).toEqual(onGround);
     expect(pickSurface(STACK, [cracked], world, true)).toEqual(onGround);
+  });
+
+  it("goes from the deck to the ground over the tunnel, the next level down (#3546)", () => {
+    expect(pickSurface(STACK, [], world, true, 2)).toEqual(onGround);
   });
 
   it("leaves a plain click on the deck", () => {
@@ -229,6 +240,7 @@ describe("a click on a ramp (#2972)", () => {
   const STAIRS: MapStructure = {
     layerCount: 3,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 0,
     pits: [],
@@ -356,6 +368,7 @@ describe("a body under a raised ramp (#2975)", () => {
   const HEIGHTS: MapStructure = {
     layerCount: 3,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 0,
     pits: [],
@@ -587,6 +600,7 @@ describe("liftAt (#2958)", () => {
   const HEIGHTS: MapStructure = {
     layerCount: 3,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 0,
     pits: [],
@@ -836,6 +850,7 @@ describe("a level under the ground (#2973)", () => {
     ...FLAT_STRUCTURE,
     layerCount: 3,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 1,
     pits: [{ footprint: rect(500, 520, 200, 130) }],
@@ -1270,14 +1285,14 @@ describe("a click over a tunnel (#3234)", () => {
     expect(pickSurface(structure, [], world, false)).toEqual({ layer: GROUND, point: world });
   });
 
-  it("goes to the other level with Alt", () => {
+  it("goes down to the tunnel with Alt, and stays in it from in it (#3546)", () => {
     expect(pickSurface(structure, [], world, true, GROUND)).toEqual({
       layer: TUNNEL,
       point: inWest,
     });
     expect(pickSurface(structure, [], world, true, TUNNEL)).toEqual({
-      layer: GROUND,
-      point: world,
+      layer: TUNNEL,
+      point: inWest,
     });
   });
 

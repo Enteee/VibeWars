@@ -5,6 +5,7 @@ import type {
   LobbySnapshot,
   MatchRecordTeam,
   MatchStarting,
+  RecordedReplay,
   QueueState,
 } from "@vibewars/game-session";
 
@@ -67,6 +68,7 @@ import {
   type BuildWatch,
 } from "./build-check.js";
 import { keySignet } from "./identity/key-signet.js";
+import { createProfilePacer } from "./profile-pacer.js";
 import { mapName } from "./i18n/game-names.js";
 import { t } from "./i18n/index.js";
 import { loadLocale } from "./i18n/load-locale.js";
@@ -84,6 +86,7 @@ import {
   openIndexedDbStore,
   type KeyValueStore,
 } from "./storage/repository.js";
+import { ReplayStore } from "./storage/replays.js";
 import { cloneCharacter } from "./storage/clone-character.js";
 import { missingSkillsNote } from "./storage/gw1-template.js";
 import { characterFromMatch, teamFromMatch } from "./storage/match-team.js";
@@ -233,6 +236,7 @@ import {
   teamSizeOf,
   type LobbyMode,
   type QueueMode,
+  type WireMatchChart,
 } from "@vibewars/game-protocol";
 import { type PlayerBuild, zaishenMoraleBoost } from "@vibewars/game-core";
 
@@ -262,6 +266,18 @@ function tutorialFirstStation(): number {
   }
   const station = Number(new URLSearchParams(window.location.search).get("tutorial-station"));
   return Number.isInteger(station) && station > 1 ? station - 1 : 0;
+}
+
+/**
+ * Whether to show the HUD's end of a match from a fixed summary (#3563):
+ * the URL's `?summary-fixture`, in an e2e build only; never in a
+ * player's, whose build folds the check and the fixture away.
+ */
+function summaryFixtureAsked(): boolean {
+  if (import.meta.env.VITE_VIBEWARS_SUMMARY_FIXTURE !== "on") {
+    return false;
+  }
+  return new URLSearchParams(window.location.search).has("summary-fixture");
 }
 
 function requireElement(selector: string): HTMLElement {
@@ -452,6 +468,13 @@ async function main(): Promise<void> {
     notices.add(t("app.framedRelayLink"));
   }
   const characters = new CharacterRepository(store);
+  // The last matches' replays (#3572), for a dispute later; nothing shows them yet.
+  const replays = new ReplayStore(store);
+  const keepReplay = (recorded: RecordedReplay): void => {
+    replays.keep(recorded).catch((error: unknown) => {
+      console.warn("[web] could not keep the match replay", error);
+    });
+  };
   const teams = new TeamRepository(store);
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
@@ -681,6 +704,8 @@ async function main(): Promise<void> {
   let endedOutcome: string | undefined;
   /** The ended view's match summary (#1057), while it is up. */
   let endedSummary: readonly SummaryTable[] | undefined;
+  /** The ended view's charts (#3564), while it is up. */
+  let endedChart: WireMatchChart | undefined;
   /**
    * *Stay together* after a queued win (#882), while it is offered: the
    * lobby the vote goes through, the hosted lobby when this tab hosts it,
@@ -752,6 +777,7 @@ async function main(): Promise<void> {
     closeStay();
     endedOutcome = undefined;
     endedSummary = undefined;
+    endedChart = undefined;
     queue?.place.leave();
     queue?.screen?.dispose();
     queue = undefined;
@@ -868,19 +894,7 @@ async function main(): Promise<void> {
         // a new cape redraws it: a redraw would swallow the press outside
         // that closed the window (#2386).
         const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
-        if (renamedAlone()) {
-          // Nobody else is in it to keep its code for: the lobby is opened
-          // again under the new name and tag (#1526).
-          void (async () => {
-            await closeLobby();
-            if (menu) {
-              showMenu();
-            } else {
-              openOwnLobby();
-            }
-          })();
-          return;
-        }
+        profilePacer.request();
         if (menu && menuCape !== JSON.stringify(playerGuild().guildCape)) {
           showMenu();
         }
@@ -1246,12 +1260,30 @@ async function main(): Promise<void> {
       teamQueue !== undefined,
   );
 
-  /** Whether this player is alone in its own lobby, under another name or guild than now. */
-  const renamedAlone = (): boolean =>
-    hosted !== undefined &&
-    lobby === hosted.lobby &&
-    isAlone(railParty()) &&
-    (lobbyName !== loadPlayerName() || !sameTypedGuild(lobbyEntrant?.guild, playerGuild()));
+  /**
+   * The name and guild just set in Options, to the lobby this tab is in
+   * (#3548), which shows them at once; nothing when they are the same. A
+   * match on keeps the ones it started with, and the next plays these.
+   */
+  const sendProfile = (): boolean => {
+    const name = loadPlayerName();
+    const guild = playerGuild();
+    if (
+      lobby === undefined ||
+      lobbyEntrant === undefined ||
+      (name === lobbyName &&
+        sameTypedGuild(lobbyEntrant.guild, guild) &&
+        lobbyEntrant.guild.heroRank === guild.heroRank)
+    ) {
+      return false;
+    }
+    lobby.setProfile({ name, ...guild });
+    lobbyName = name;
+    lobbyEntrant = { ...lobbyEntrant, guild };
+    return true;
+  };
+  // The host takes one a PROFILE_INTERVAL_MS: a quicker change waits, not dropped.
+  const profilePacer = createProfilePacer({ send: sendProfile });
 
   /**
    * Out of the lobby this tab is in, ending it for everyone if it is this
@@ -1271,6 +1303,7 @@ async function main(): Promise<void> {
     syncShares();
     hosted = undefined;
     lobbyEntrant = undefined;
+    profilePacer.reset();
     lobbyName = undefined;
     closeChat();
     syncParty(undefined);
@@ -1927,6 +1960,7 @@ async function main(): Promise<void> {
       outcome: endedOutcome,
       streak: queueStreak,
       summary: endedSummary,
+      chart: endedChart,
       ...(offer === undefined ? {} : { stay: offer }),
     });
   };
@@ -2214,6 +2248,7 @@ async function main(): Promise<void> {
     if (current.partyClosed !== undefined) {
       menuNotice = current.partyClosed;
       lobbyEntrant = undefined;
+      profilePacer.reset();
       lobbyName = undefined;
       endTeamQueue();
       syncParty(undefined);
@@ -2223,6 +2258,7 @@ async function main(): Promise<void> {
     publishRelayStatus();
     hosted = parked.hosted;
     lobbyEntrant = parked.entrant;
+    profilePacer.reset();
     lobbyName = parked.name;
     mountLobbyChat(current.party);
     syncParty(current.party.getSnapshot());
@@ -2573,6 +2609,7 @@ async function main(): Promise<void> {
     lobby = joined;
     publishRelayStatus();
     lobbyEntrant = entrant;
+    profilePacer.reset();
     lobbyName = name;
     lobbyNotice = undefined;
     if (matchmade) {
@@ -2675,7 +2712,7 @@ async function main(): Promise<void> {
     joined.onMatchStarting((start) => {
       // Only players on a team are sent this; a spectator stays here.
       if (lobby === joined) {
-        void enterMatch(name, start, lobbyEntrant ?? entrant);
+        void enterMatch(lobbyName ?? name, start, lobbyEntrant ?? entrant);
       } else {
         console.warn("[web] a match started in a lobby this page has left");
       }
@@ -2699,6 +2736,7 @@ async function main(): Promise<void> {
       syncShares();
       hosted = undefined;
       lobbyEntrant = undefined;
+      profilePacer.reset();
       closeChat();
       if (teamQueue?.parked !== undefined && match === undefined && !enteringMatch) {
         // A team's match's lobby fell through (#1766): the party lobby, still queued.
@@ -2751,6 +2789,7 @@ async function main(): Promise<void> {
     hallWatch.resume();
     // Read before the view goes: the table moves with the player (#1057).
     const summary = leaving.summary();
+    const chart = leaving.chart();
     await leaving.dispose();
     enteringMatch = false;
     const leavingLobby = lobby;
@@ -2788,6 +2827,7 @@ async function main(): Promise<void> {
     music().menu("main");
     endedOutcome = outcome;
     endedSummary = summary;
+    endedChart = chart;
     idleScreen = true;
     if (offered && leavingLobby !== undefined) {
       offerStay(leavingLobby, ending);
@@ -3074,7 +3114,8 @@ async function main(): Promise<void> {
         },
         {
           kind: "play",
-          connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build),
+          connect: () =>
+            connectMatchFor(from, start, name, entrant.guild, entrant.build, keepReplay),
         },
         ownSignet,
       );
@@ -3295,7 +3336,13 @@ async function main(): Promise<void> {
     });
   };
   let splash: Splash | undefined;
-  if (tutorialFirstStation() > 0) {
+  if (summaryFixtureAsked()) {
+    // An e2e build's fixed end of a match (#3563), over no arena.
+    showViewport(true);
+    void import("./ui/summary-fixture.js").then(({ mountSummaryFixture }) => {
+      mountSummaryFixture(viewport);
+    });
+  } else if (tutorialFirstStation() > 0) {
     // An e2e build's seeded start (#3383) goes straight to its station,
     // on the pinned menu map: no splash, no offer, no menu fight.
     const { mapId, teamSize } = pinnedChoice(window.location.search);

@@ -180,7 +180,8 @@ holding the most shrines, then the one that last led every other alone;
 tied teams none of which ever led alone draw. Kills score nothing. The scoreboard reads the points as Kill Count
 reads kills. Each shrine draws as the flag stand's ring in its owner's
 colour, grey while neutral, with an arc of its progress in the
-capturer's colour. Scarred Earth plays it: each shrine stands in a broken ring of walls, open
-to the west and east. No Random Arena does.
+capturer's colour. Scarred Earth plays it: a cratered battlefield, four shrines on wrecked
+siege towers and the centre one on the great tower's deck, each beside a crater, two
+lever-gated trenches under the field. No Random Arena does.
 
 How each one ends, in full, is in [combat](combat.md#match-end).
