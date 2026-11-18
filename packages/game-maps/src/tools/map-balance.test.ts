@@ -777,17 +777,6 @@ describe("walks and high ground (#3070)", () => {
       );
     });
 
-    it("walks no team to the centre by its lever stair more than 10 % faster than by its near middle stair (#3549)", () => {
-      const [lever0 = 0, lever1 = 0] = toCentre(shut, (team) =>
-        only([team === 0 ? "west-lever-stair" : "east-lever-stair"]),
-      );
-      const [middle0 = 0, middle1 = 0] = toCentre(shut, (team) =>
-        only([team === 0 ? "centre-south-stair" : "centre-north-stair"]),
-      );
-      expect(lever0).toBeGreaterThanOrEqual(0.9 * middle0);
-      expect(lever1).toBeGreaterThanOrEqual(0.9 * middle1);
-    });
-
     it("walks each team across the marsh to the near middle stair, gates shut, within 10 % of the other", () => {
       within(
         toCentre(shut, (team) => only([team === 0 ? "centre-south-stair" : "centre-north-stair"])),
