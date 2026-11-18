@@ -919,6 +919,7 @@ export default {
   "queue.matchFoundTitle": "Match gevonden!",
   "queue.nextMatchIn": "Volgende match over {seconds} s",
   "queue.now": "Nu",
+  "queue.playBotsIn": "Tegen bots spelen ({seconds} s)",
   "queue.queueAgain": "Opnieuw zoeken",
   "queue.randomArena": "Random Arena {size}",
   "queue.searchingCount": "{searching} zoeken · {needed} nodig",

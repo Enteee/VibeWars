@@ -917,6 +917,7 @@ export default {
   "queue.matchFoundTitle": "Match hittad!",
   "queue.nextMatchIn": "Nästa match om {seconds} s",
   "queue.now": "Nu",
+  "queue.playBotsIn": "Spela mot bottar ({seconds} s)",
   "queue.queueAgain": "Köa igen",
   "queue.randomArena": "Slumparena {size}",
   "queue.searchingCount": "{searching} söker · {needed} behövs",

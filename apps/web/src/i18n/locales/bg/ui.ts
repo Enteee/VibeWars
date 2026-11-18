@@ -920,6 +920,7 @@ export default {
   "queue.matchFoundTitle": "Намерен е мач!",
   "queue.nextMatchIn": "Следващ мач след {seconds} с",
   "queue.now": "Сега",
+  "queue.playBotsIn": "Играй срещу ботове ({seconds} с)",
   "queue.queueAgain": "Пак на опашка",
   "queue.randomArena": "Случайна арена {size}",
   "queue.searchingCount": "{searching} търсят · нужни {needed}",

@@ -176,8 +176,8 @@ omasi mukaan lukien: `2 tiimiä etsii`. Vain isännällä on siellä
 heti. Kun toinen saman pelitilan jonottava tiimi ilmaantuu, pelaatte sitä
 vastaan yhdellä pelitilan kartoista, kumpikin puoli omilla
 buildeillaan, ja palaatte sen jälkeen aulaasi. Isäntä voi poistua renkaan ikkunasta milloin tahansa; vieras, joka poistuu, vie koko
-ryhmän pois jonosta. Jos muuta tiimiä ei löydy minuutissa, isäntä voi
-myös painaa **Pelaa botteja vastaan**: ottelu omassa aulassasi
+ryhmän pois jonosta. Kun jonossa on oltu 10 s, isäntä voi myös painaa
+renkaan ikkunasta **Pelaa botteja vastaan**: ottelu omassa aulassasi
 satunnaista valmista bottitiimiä vastaan,
 paitsi [Sankarien nousussa](modes.md#sankarien-nousu), joka odottaa
 tiimiä sinun kierrokseltasi.

@@ -178,9 +178,9 @@ incluindo a sua: `2 equipes
 buscando`. Só o host tem **Sair da fila** ali. Fechar a aba do host tira
 o grupo da fila na hora. Quando aparece outra equipe na fila do mesmo
 modo, vocês jogam em um dos mapas do modo, cada lado com suas builds, e
-voltam à sua sala depois. O host pode sair da fila pela janela do anel a qualquer momento; um convidado que sai tira todo o grupo dela. Se depois
-de um minuto não houver outra equipe, o host também pode pressionar
-**Jogar contra bots**: uma partida na sua própria sala contra uma equipe
+voltam à sua sala depois. O host pode sair da fila pela janela do anel a qualquer momento; um convidado que sai tira todo o grupo dela. Depois
+de 10 s na fila, o host também pode pressionar
+**Jogar contra bots** na janela do anel: uma partida na sua própria sala contra uma equipe
 predefinida aleatória de bots, exceto em
 [Ascensão dos Heróis](modes.md#ascensão-dos-heróis), que espera uma
 equipe da sua rodada.

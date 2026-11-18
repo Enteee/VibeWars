@@ -177,8 +177,8 @@ sekmesini kapatmak grubu hemen sıradan çıkarır. Aynı modda sıradaki
 başka bir takım çıkınca, onlarla modun haritalarından birinde, her taraf
 kendi dizilimleriyle oynarsın ve ardından lobine dönersin. Kurucu
 halkanın penceresinden istediği an çıkabilir; çıkan bir misafir bütün
-grubu sıradan çıkarır. Bir dakika sonra başka takım yoksa kurucu
-**Botlara karşı oyna**'ya da basabilir: kendi lobinde rastgele hazır bir
+grubu sıradan çıkarır. Sırada 10 sn geçtikten sonra kurucu halkanın
+penceresinde **Botlara karşı oyna**'ya da basabilir: kendi lobinde rastgele hazır bir
 bot takımına karşı bir maç; ancak senin turundaki bir takımı bekleyen
 [Kahramanların Yükselişi](modes.md#kahramanların-yükselişi) hariç.
 
