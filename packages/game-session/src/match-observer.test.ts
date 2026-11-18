@@ -342,6 +342,7 @@ describe("an observe said again (#1805)", () => {
       publishRecord: () => undefined,
       nowSeconds: () => 0,
       signetOf: testSignet,
+      recordReplay: false,
     });
     await vi.advanceTimersByTimeAsync(HELLO_RESEND_MS);
     await viewing;

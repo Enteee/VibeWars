@@ -134,6 +134,7 @@ function fakeMatch(): FakeMatch {
     },
     abandoned: false,
     droppedWeaponSwaps: 0,
+    replay: null,
     draining: false,
     retire: () => undefined,
     close: () => Promise.resolve(),
@@ -265,6 +266,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
         publishRecord: () => undefined,
         nowSeconds: () => 0,
         signetOf: testSignet,
+        recordReplay: false,
       });
     },
     queued: {

@@ -373,6 +373,7 @@ describe("a P2P match host, as the match room (#375)", () => {
         // Armor of Earth on its bar (#852).
         hello: helloAs("Elementalist/Mesmer"),
         timeoutMs: 1000,
+        replays: null,
       });
       return { connection, received };
     }
@@ -417,6 +418,7 @@ describe("a P2P match host, as the match room (#375)", () => {
         hostId: "host",
         hello: hello(),
         timeoutMs: 1000,
+        replays: null,
       });
       await settle();
       expect(received).toEqual([

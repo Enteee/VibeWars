@@ -64,6 +64,7 @@ export const CHANNELS = [
   "adrenaline",
   "chain",
   "ended",
+  "match-replay",
   "match-chart",
   "bye",
   "lobby-join",
@@ -3764,5 +3765,38 @@ export function parseWireMatchStart(value: unknown): WireMatchStart | undefined 
     isString(raw.matchId) &&
     typeof raw.teamPlanRejected === "boolean"
     ? { mapId: raw.mapId, matchId: raw.matchId, teamPlanRejected: raw.teamPlanRejected }
+    : undefined;
+}
+
+/** The most parts a match's replay is sent in (#3572): 32 M characters, 5000 a part. */
+export const MAX_REPLAY_PARTS = 6400;
+
+/**
+ * Host to each player, after `ended` (#3572): one of `of` slices of the
+ * match's replay, encoded. Joined in `part` order, the slices are the
+ * text whose sha256 is `hash`, hex. The replay itself is game-session's.
+ */
+export interface WireMatchReplayPart {
+  readonly hash: string;
+  readonly part: number;
+  readonly of: number;
+  readonly text: string;
+}
+
+/** A replay part, or `undefined`: its text bounded by one message (#403). */
+export function parseWireMatchReplayPart(value: unknown): WireMatchReplayPart | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    typeof raw.hash === "string" &&
+    /^[0-9a-f]{64}$/.test(raw.hash) &&
+    isCount(raw.of) &&
+    raw.of >= 1 &&
+    raw.of <= MAX_REPLAY_PARTS &&
+    isCount(raw.part) &&
+    raw.part < raw.of &&
+    typeof raw.text === "string" &&
+    raw.text.length > 0 &&
+    raw.text.length <= 16 * 1024
+    ? { hash: raw.hash, part: raw.part, of: raw.of, text: raw.text }
     : undefined;
 }
