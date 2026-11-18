@@ -305,7 +305,8 @@ export interface MatchHost {
   readonly replay: RecordedReplay | null;
   /**
    * Finished, and its observers not yet sent the end, which reaches them
-   * `OBSERVER_DELAY_SECONDS` late (#480): keep advancing it until then.
+   * `OBSERVER_DELAY_SECONDS` late (#480), or its replay still hashing
+   * (#3572): keep advancing it, and its room open, until then.
    */
   readonly draining: boolean;
   /**
@@ -588,6 +589,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   let finished = false;
   /** Handed its room on: see `MatchHost.retire`. */
   let retired = false;
+  /** Its replay hashing, not yet sent (#3572): the room stays until it is. */
+  let replaySending = false;
   /** The peers watching (#480): no seat, and nothing sent but `delayed`. */
   const observers = new Set<string>();
   /**
@@ -1450,16 +1453,21 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     if (text.length > MAX_REPLAY_CHARS) {
       return;
     }
-    void textHash(text, recording.sha256).then((hash) => {
-      const parts = packReplay(text, hash, MAX_MESSAGE_BYTES);
-      if (parts.length > MAX_REPLAY_PARTS) {
-        return;
-      }
-      recorded = { hash, replay };
-      for (const part of parts) {
-        transport.send("match-replay", part, to);
-      }
-    });
+    replaySending = true;
+    void textHash(text, recording.sha256)
+      .then((hash) => {
+        const parts = packReplay(text, hash, MAX_MESSAGE_BYTES);
+        if (parts.length > MAX_REPLAY_PARTS) {
+          return;
+        }
+        recorded = { hash, replay };
+        for (const part of parts) {
+          transport.send("match-replay", part, to);
+        }
+      })
+      .finally(() => {
+        replaySending = false;
+      });
   };
 
   /** Drop the seats whose players did not come back in time. */
@@ -1602,7 +1610,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return droppedWeaponSwaps;
     },
     get draining() {
-      return finished && delayed.length > 0;
+      return finished && (delayed.length > 0 || replaySending);
     },
     retire() {
       retired = true;
