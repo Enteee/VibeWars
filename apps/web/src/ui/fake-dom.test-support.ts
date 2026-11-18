@@ -149,6 +149,19 @@ export class FakeElement {
     // Markup (icons, badges) is not under test.
   }
 
+  /** A table's parts, for the summary tables (#3565). */
+  createTHead(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
+  createTBody(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
+  insertRow(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
   focus(): void {
     // Focus is not under test.
   }

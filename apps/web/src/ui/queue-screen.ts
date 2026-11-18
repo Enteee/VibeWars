@@ -461,6 +461,26 @@ export function mountQueueScreen(
 
   let stopFlash: (() => void) | undefined;
   let found = false;
+  // What the results show: kept across repaints, so the tabs, toggles, *Show all*
+  // and focus survive the stay countdown's ticks (#3565).
+  let results: { summary: readonly SummaryTable[]; chart: WireMatchChart | undefined } | undefined;
+
+  /** The scores and charts of `summary`, built again only when they change; none for `undefined`. */
+  const showResults = (
+    summary: readonly SummaryTable[] | undefined,
+    chart: WireMatchChart | undefined,
+  ): void => {
+    if (summary === results?.summary && chart === results?.chart) {
+      return;
+    }
+    results = summary === undefined ? undefined : { summary, chart };
+    summaryHost.replaceChildren();
+    panel.classList.toggle("has-results", summary !== undefined);
+    if (summary !== undefined) {
+      renderScores(summaryHost, summary);
+      renderMatchCharts(summaryHost, chart, chartRoster(summary));
+    }
+  };
 
   const set = (lines: QueueLines, splash?: HTMLElement): void => {
     status.textContent = lines.status;
@@ -468,8 +488,6 @@ export function mountQueueScreen(
     problem.hidden = lines.problem === undefined;
     streak.textContent = lines.streak ?? "";
     streak.hidden = lines.streak === undefined;
-    summaryHost.replaceChildren();
-    panel.classList.remove("has-results");
     if (splash === undefined) {
       splashHost.replaceChildren();
     } else {
@@ -500,22 +518,20 @@ export function mountQueueScreen(
       switch (view.kind) {
         case "splash":
           matchFound();
+          showResults(undefined, undefined);
           set(
             { status: t("queue.matchFound"), action: "none" },
             renderVersusSplash(view.snapshot, options.mapName),
           );
           return;
         case "refused":
+          showResults(undefined, undefined);
           set({ status: t("queue.couldNotJoin"), problem: view.notice, action: "back" });
           return;
         case "ended":
           set(endedLines(view.outcome, view.streak, view.stay));
           // Under the outcome line: the scores, and the charts beside them (#3565).
-          if (view.summary !== undefined) {
-            panel.classList.add("has-results");
-            renderScores(summaryHost, view.summary);
-            renderMatchCharts(summaryHost, view.chart, chartRoster(view.summary));
-          }
+          showResults(view.summary, view.chart);
           return;
       }
     },
