@@ -152,6 +152,19 @@ describe("BIOME", () => {
     expect(palette.floor).not.toBe(BIOME.marsh.palette.floor);
   });
 
+  it("draws the cavern as cold slate, low in chroma, its violet only in light (#3444)", () => {
+    const { palette } = BIOME.cavern;
+    const chroma = (colour: number): number => {
+      const channels = [colour >> 16, (colour >> 8) & 0xff, colour & 0xff];
+      return Math.max(...channels) - Math.min(...channels);
+    };
+    for (const colour of [palette.floor ?? 0, palette.wallTop, palette.wallFace]) {
+      expect(chroma(colour), `#${colour.toString(16)}`).toBeLessThan(0x20);
+    }
+    expect(palette.floor).toBe(0x232a33);
+    expect(palette.wallTop).toBe(0x4a5260);
+  });
+
   it("lays no tile grid on the river ice, and keeps it on every tiled ground", () => {
     expect(BIOME.snow.palette.grid).toBeUndefined();
     for (const biome of BIOMES.filter((name) => name !== "snow")) {
@@ -159,7 +172,7 @@ describe("BIOME", () => {
     }
   });
 
-  it.each(["desert", "wilds", "snow", "marsh", "jungle"] as const)(
+  it.each(["desert", "wilds", "snow", "marsh", "jungle", "cavern"] as const)(
     "keeps every %s tone a hand's width from every signal",
     (biome) => {
       const hall = new Set(coloursOf("hall"));
@@ -183,9 +196,9 @@ describe("shade", () => {
 
 describe("breakableLook (#3370)", () => {
   it("makes each listed biome's breakable wall its own material, not the stone", () => {
-    const looks = (["volcanic", "desert", "snow", "wilds", "marsh", "jungle"] as const).map(
-      (biome) => breakableLook({ layerCount: 2, biome }),
-    );
+    const looks = (
+      ["volcanic", "desert", "snow", "wilds", "marsh", "jungle", "cavern"] as const
+    ).map((biome) => breakableLook({ layerCount: 2, biome }));
     for (const look of looks) {
       expect(look).not.toEqual(BREAKABLE_WALL_LOOK);
     }
@@ -197,6 +210,7 @@ describe("breakableLook (#3370)", () => {
       "fieldstone",
       "fieldstone",
       "fieldstone",
+      "blocks",
     ]);
   });
 

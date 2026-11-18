@@ -554,6 +554,24 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     /** Vine: olive, never nature's green. */
     plant: 0x545a38,
   },
+  /**
+   * A cavern under a thin ceiling (#3444, docs/art/3077-hollow-deep.md): cold
+   * slate, its only colour the violet glow of its pools, which is light, not
+   * a tone. Every tone is low chroma, well away from the friend blue, the foe
+   * red, the nature green and the magic violet.
+   */
+  cavern: {
+    ground: 0x232a33,
+    rock: 0x4a5260,
+    /** Dressed slate: the shelves, the dais and the stairs. */
+    stone: 0x8a909c,
+    /** Old rope-bridge timber, grey with damp. */
+    wood: 0x6a6052,
+    /** Cave silt. */
+    earth: 0x403428,
+    /** Lichen: a dull violet grey, the glow's ghost. */
+    plant: 0x4f4a5c,
+  },
 };
 
 /** What each colour of the arena is made of. */
@@ -753,6 +771,7 @@ const TILED_GROUND: Record<Biome, boolean> = {
   snow: false,
   marsh: true,
   jungle: true,
+  cavern: true,
 };
 
 function biomeMaterials(tones: BiomeTones, tiled: boolean): BiomeMaterials {
@@ -776,6 +795,7 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
   marsh: biomeMaterials(BIOME_TONES.marsh, TILED_GROUND.marsh),
   jungle: biomeMaterials(BIOME_TONES.jungle, TILED_GROUND.jungle),
+  cavern: biomeMaterials(BIOME_TONES.cavern, TILED_GROUND.cavern),
 };
 
 /** A biome's ground grain and the marks scattered on it (#3484), from its own tones. */
@@ -852,6 +872,12 @@ export const GROUND_DRESSING: Record<Biome, GroundDressingTones> = {
     BIOME_TONES.jungle,
     mix(BIOME_TONES.jungle.plant, BIOME_TONES.jungle.ground, 0.3),
     mix(BIOME_TONES.jungle.ground, BIOME_TONES.jungle.earth, 0.6),
+  ),
+  // Fallen stone chips and silt grit.
+  cavern: dressingTones(
+    BIOME_TONES.cavern,
+    mix(BIOME_TONES.cavern.ground, BIOME_TONES.cavern.rock, 0.55),
+    mix(BIOME_TONES.cavern.ground, BIOME_TONES.cavern.earth, 0.6),
   ),
 };
 
@@ -930,6 +956,23 @@ function breakableLookOf(biome: Biome): BreakableLook {
         dust: mix(tones.ground, tones.stone, 0.5),
         shadow: BREAKABLE_WALL_LOOK.shadow,
       };
+    case "cavern":
+      // A stalagmite wall: the slate in rough blocks, no moss, no glow.
+      return {
+        courses: "blocks",
+        top: mix(tones.rock, tones.stone, 0.22),
+        face: shade(tones.rock, 0.1),
+        lit: mix(tones.rock, tones.stone, 0.6),
+        mortar: shade(tones.rock, 0.6),
+        edge: shade(tones.rock, 0.8),
+        crack: shade(tones.rock, 0.85),
+        glow: undefined,
+        moss: undefined,
+        rubble: mix(tones.rock, tones.stone, 0.15),
+        rubbleFace: shade(tones.rock, 0.4),
+        dust: mix(tones.ground, tones.stone, 0.45),
+        shadow: BREAKABLE_WALL_LOOK.shadow,
+      };
     case "hall":
     case "heights":
       return BREAKABLE_WALL_LOOK;
@@ -945,6 +988,7 @@ const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
   snow: breakableLookOf("snow"),
   marsh: breakableLookOf("marsh"),
   jungle: breakableLookOf("jungle"),
+  cavern: breakableLookOf("cavern"),
 };
 
 /** The material a map's breakable walls are (#3370): a map of one layer's are stone whatever its biome. */
