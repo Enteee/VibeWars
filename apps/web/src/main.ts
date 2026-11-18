@@ -67,6 +67,7 @@ import {
   type BuildWatch,
 } from "./build-check.js";
 import { keySignet } from "./identity/key-signet.js";
+import { createProfilePacer } from "./profile-pacer.js";
 import { mapName } from "./i18n/game-names.js";
 import { t } from "./i18n/index.js";
 import { loadLocale } from "./i18n/load-locale.js";
@@ -868,7 +869,7 @@ async function main(): Promise<void> {
         // a new cape redraws it: a redraw would swallow the press outside
         // that closed the window (#2386).
         const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
-        sendProfile();
+        profilePacer.request();
         if (menu && menuCape !== JSON.stringify(playerGuild().guildCape)) {
           showMenu();
         }
@@ -1239,7 +1240,7 @@ async function main(): Promise<void> {
    * (#3548), which shows them at once; nothing when they are the same. A
    * match on keeps the ones it started with, and the next plays these.
    */
-  const sendProfile = (): void => {
+  const sendProfile = (): boolean => {
     const name = loadPlayerName();
     const guild = playerGuild();
     if (
@@ -1249,12 +1250,15 @@ async function main(): Promise<void> {
         sameTypedGuild(lobbyEntrant.guild, guild) &&
         lobbyEntrant.guild.heroRank === guild.heroRank)
     ) {
-      return;
+      return false;
     }
     lobby.setProfile({ name, ...guild });
     lobbyName = name;
     lobbyEntrant = { ...lobbyEntrant, guild };
+    return true;
   };
+  // The host takes one a PROFILE_INTERVAL_MS: a quicker change waits, not dropped.
+  const profilePacer = createProfilePacer({ send: sendProfile });
 
   /**
    * Out of the lobby this tab is in, ending it for everyone if it is this
@@ -1274,6 +1278,7 @@ async function main(): Promise<void> {
     syncShares();
     hosted = undefined;
     lobbyEntrant = undefined;
+    profilePacer.reset();
     lobbyName = undefined;
     closeChat();
     syncParty(undefined);
@@ -2217,6 +2222,7 @@ async function main(): Promise<void> {
     if (current.partyClosed !== undefined) {
       menuNotice = current.partyClosed;
       lobbyEntrant = undefined;
+      profilePacer.reset();
       lobbyName = undefined;
       endTeamQueue();
       syncParty(undefined);
@@ -2226,6 +2232,7 @@ async function main(): Promise<void> {
     publishRelayStatus();
     hosted = parked.hosted;
     lobbyEntrant = parked.entrant;
+    profilePacer.reset();
     lobbyName = parked.name;
     mountLobbyChat(current.party);
     syncParty(current.party.getSnapshot());
@@ -2576,6 +2583,7 @@ async function main(): Promise<void> {
     lobby = joined;
     publishRelayStatus();
     lobbyEntrant = entrant;
+    profilePacer.reset();
     lobbyName = name;
     lobbyNotice = undefined;
     if (matchmade) {
@@ -2678,7 +2686,7 @@ async function main(): Promise<void> {
     joined.onMatchStarting((start) => {
       // Only players on a team are sent this; a spectator stays here.
       if (lobby === joined) {
-        void enterMatch(name, start, lobbyEntrant ?? entrant);
+        void enterMatch(lobbyName ?? name, start, lobbyEntrant ?? entrant);
       } else {
         console.warn("[web] a match started in a lobby this page has left");
       }
@@ -2702,6 +2710,7 @@ async function main(): Promise<void> {
       syncShares();
       hosted = undefined;
       lobbyEntrant = undefined;
+      profilePacer.reset();
       closeChat();
       if (teamQueue?.parked !== undefined && match === undefined && !enteringMatch) {
         // A team's match's lobby fell through (#1766): the party lobby, still queued.

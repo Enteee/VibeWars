@@ -81,6 +81,7 @@ export type {
 export {
   LOBBY_PROOF_MS,
   PARTY_CONSENT_MS,
+  PROFILE_INTERVAL_MS,
   SHARE_INTERVAL_MS,
   canStart,
   createLobbyHost,
