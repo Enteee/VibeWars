@@ -569,10 +569,11 @@ export function renderMatchCharts(
   }
   const view = root.appendChild(h("div", "match-charts-view"));
   view.setAttribute("role", "tabpanel");
-  const legend = view.appendChild(h("div", "match-charts-legend"));
   const plot = view.appendChild(h("div", "match-charts-plot"));
   plot.tabIndex = 0;
   plot.setAttribute("aria-label", t("charts.label"));
+  // Under the event strip, as in mockup A.
+  const legend = view.appendChild(h("div", "match-charts-legend"));
   const readout = view.appendChild(h("div", "match-charts-readout"));
   readout.setAttribute("aria-live", "polite");
   const tip = view.appendChild(h("div", "match-charts-tip"));

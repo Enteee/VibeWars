@@ -58,6 +58,10 @@ export class FakeElement {
 
   setAttribute(name: string, value: string): void {
     this.attributes.set(name, value);
+    // An SVG element has no writable `className`: its class is an attribute.
+    if (name === "class") {
+      this.className = value;
+    }
   }
 
   getAttribute(name: string): string | null {
