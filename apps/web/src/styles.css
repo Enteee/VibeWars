@@ -1686,6 +1686,7 @@ body:has(> .splash) #menu-background::after {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  align-self: flex-start;
 }
 
 .emblem-editor-top {
@@ -1783,7 +1784,9 @@ body:has(> .splash) #menu-background::after {
   border: 2px solid var(--ink);
 }
 
-.screen .emblem-editor-tool {
+.screen .emblem-editor-tool,
+.screen .emblem-editor-done,
+.screen .emblem-editor-cancel {
   padding: 0.15rem 0.6rem;
 }
 

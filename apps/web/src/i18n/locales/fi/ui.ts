@@ -861,6 +861,7 @@ export default {
   "player.emblemTriangle": "kolmio",
   "player.editEmblem": "Muokkaa tunnusta",
   "player.emblemPencil": "Kynä",
+  "player.emblemUndo": "Kumoa",
   "player.emblemEraser": "Pyyhekumi",
   "player.emblemFill": "Täyttö",
   "player.emblemMirror": "Peilaus",

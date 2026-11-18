@@ -803,6 +803,7 @@ export default {
   "player.emblemTriangle": "삼각형",
   "player.editEmblem": "문장 편집",
   "player.emblemPencil": "연필",
+  "player.emblemUndo": "실행 취소",
   "player.emblemEraser": "지우개",
   "player.emblemFill": "채우기",
   "player.emblemMirror": "대칭",

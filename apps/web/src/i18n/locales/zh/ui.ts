@@ -797,6 +797,7 @@ export default {
   "player.emblemTriangle": "三角",
   "player.editEmblem": "编辑纹饰",
   "player.emblemPencil": "铅笔",
+  "player.emblemUndo": "撤销",
   "player.emblemEraser": "橡皮擦",
   "player.emblemFill": "填充",
   "player.emblemMirror": "镜像",

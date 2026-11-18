@@ -246,7 +246,7 @@ export function emblemEditor(
       render();
     }
   };
-  const undoButton = button(t("kit.undo"), "emblem-editor-tool", undo);
+  const undoButton = button(t("player.emblemUndo"), "emblem-editor-tool", undo);
   undoButton.setAttribute("aria-keyshortcuts", "Control+Z");
   tools.append(mirrorButton, clear, undoButton);
 

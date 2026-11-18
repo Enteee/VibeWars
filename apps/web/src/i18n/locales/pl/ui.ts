@@ -940,6 +940,7 @@ export default {
   "player.emblemTriangle": "trójkąt",
   "player.editEmblem": "Edytuj emblemat",
   "player.emblemPencil": "Ołówek",
+  "player.emblemUndo": "Cofnij",
   "player.emblemEraser": "Gumka",
   "player.emblemFill": "Wypełnij",
   "player.emblemMirror": "Lustro",

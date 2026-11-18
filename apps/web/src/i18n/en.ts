@@ -851,6 +851,7 @@ export const en = {
   "player.emblemTriangle": "triangle",
   "player.editEmblem": "Edit emblem",
   "player.emblemPencil": "Pencil",
+  "player.emblemUndo": "Undo",
   "player.emblemEraser": "Eraser",
   "player.emblemFill": "Fill",
   "player.emblemMirror": "Mirror",

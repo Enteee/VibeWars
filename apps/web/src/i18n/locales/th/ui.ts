@@ -801,6 +801,7 @@ export default {
   "player.emblemTriangle": "สามเหลี่ยม",
   "player.editEmblem": "แก้ไขตรา",
   "player.emblemPencil": "ดินสอ",
+  "player.emblemUndo": "เลิกทำ",
   "player.emblemEraser": "ยางลบ",
   "player.emblemFill": "เติมสี",
   "player.emblemMirror": "สะท้อน",

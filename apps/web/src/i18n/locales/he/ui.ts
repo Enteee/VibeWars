@@ -907,6 +907,7 @@ export default {
   "player.emblemTriangle": "משולש",
   "player.editEmblem": "עריכת סמלון",
   "player.emblemPencil": "עיפרון",
+  "player.emblemUndo": "בטל",
   "player.emblemEraser": "מחק",
   "player.emblemFill": "מילוי",
   "player.emblemMirror": "מראה",

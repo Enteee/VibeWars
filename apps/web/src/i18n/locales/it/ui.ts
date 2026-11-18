@@ -902,6 +902,7 @@ export default {
   "player.emblemTriangle": "triangolo",
   "player.editEmblem": "Modifica emblema",
   "player.emblemPencil": "Matita",
+  "player.emblemUndo": "Indietro",
   "player.emblemEraser": "Gomma",
   "player.emblemFill": "Riempi",
   "player.emblemMirror": "Specchio",

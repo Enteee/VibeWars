@@ -938,6 +938,7 @@ export default {
   "player.emblemTriangle": "трикутник",
   "player.editEmblem": "Змінити емблему",
   "player.emblemPencil": "Олівець",
+  "player.emblemUndo": "Відмінити",
   "player.emblemEraser": "Гумка",
   "player.emblemFill": "Заливка",
   "player.emblemMirror": "Дзеркало",

@@ -859,6 +859,7 @@ export default {
   "player.emblemTriangle": "τρίγωνο",
   "player.editEmblem": "Επεξεργασία εμβλήματος",
   "player.emblemPencil": "Μολύβι",
+  "player.emblemUndo": "Αναίρεση",
   "player.emblemEraser": "Γόμα",
   "player.emblemFill": "Γέμισμα",
   "player.emblemMirror": "Κατοπτρισμός",

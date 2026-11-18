@@ -852,6 +852,7 @@ export default {
   "player.emblemTriangle": "триъгълник",
   "player.editEmblem": "Редактирай емблемата",
   "player.emblemPencil": "Молив",
+  "player.emblemUndo": "Отмени",
   "player.emblemEraser": "Гума",
   "player.emblemFill": "Запълване",
   "player.emblemMirror": "Огледално",

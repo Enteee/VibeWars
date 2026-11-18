@@ -988,6 +988,7 @@ export default {
   "player.emblemTriangle": "مثلث",
   "player.editEmblem": "تعديل الشعار",
   "player.emblemPencil": "قلم",
+  "player.emblemUndo": "تراجع",
   "player.emblemEraser": "ممحاة",
   "player.emblemFill": "تعبئة",
   "player.emblemMirror": "مرآة",

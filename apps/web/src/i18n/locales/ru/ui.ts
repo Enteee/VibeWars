@@ -935,6 +935,7 @@ export default {
   "player.emblemTriangle": "треугольник",
   "player.editEmblem": "Изменить эмблему",
   "player.emblemPencil": "Карандаш",
+  "player.emblemUndo": "Отменить",
   "player.emblemEraser": "Ластик",
   "player.emblemFill": "Заливка",
   "player.emblemMirror": "Зеркало",

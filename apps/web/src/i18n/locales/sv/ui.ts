@@ -849,6 +849,7 @@ export default {
   "player.emblemTriangle": "triangel",
   "player.editEmblem": "Redigera emblem",
   "player.emblemPencil": "Penna",
+  "player.emblemUndo": "Ångra",
   "player.emblemEraser": "Suddgummi",
   "player.emblemFill": "Fyll",
   "player.emblemMirror": "Spegla",

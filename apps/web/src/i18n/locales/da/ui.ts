@@ -848,6 +848,7 @@ export default {
   "player.emblemTriangle": "trekant",
   "player.editEmblem": "Rediger emblem",
   "player.emblemPencil": "Blyant",
+  "player.emblemUndo": "Fortryd",
   "player.emblemEraser": "Viskelæder",
   "player.emblemFill": "Udfyld",
   "player.emblemMirror": "Spejl",

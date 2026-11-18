@@ -852,6 +852,7 @@ export default {
   "player.emblemTriangle": "háromszög",
   "player.editEmblem": "Embléma szerkesztése",
   "player.emblemPencil": "Ceruza",
+  "player.emblemUndo": "Vissza",
   "player.emblemEraser": "Radír",
   "player.emblemFill": "Kitöltés",
   "player.emblemMirror": "Tükrözés",

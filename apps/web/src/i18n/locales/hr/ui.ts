@@ -904,6 +904,7 @@ export default {
   "player.emblemTriangle": "trokut",
   "player.editEmblem": "Uredi amblem",
   "player.emblemPencil": "Olovka",
+  "player.emblemUndo": "Poništi",
   "player.emblemEraser": "Gumica",
   "player.emblemFill": "Ispuna",
   "player.emblemMirror": "Zrcaljenje",

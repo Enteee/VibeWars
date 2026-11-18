@@ -808,6 +808,7 @@ export default {
   "player.emblemTriangle": "三角",
   "player.editEmblem": "紋章を編集",
   "player.emblemPencil": "鉛筆",
+  "player.emblemUndo": "元に戻す",
   "player.emblemEraser": "消しゴム",
   "player.emblemFill": "塗りつぶし",
   "player.emblemMirror": "左右対称",

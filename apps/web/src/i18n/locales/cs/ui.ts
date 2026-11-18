@@ -936,6 +936,7 @@ export default {
   "player.emblemTriangle": "trojúhelník",
   "player.editEmblem": "Upravit znak",
   "player.emblemPencil": "Tužka",
+  "player.emblemUndo": "Zpět",
   "player.emblemEraser": "Guma",
   "player.emblemFill": "Výplň",
   "player.emblemMirror": "Zrcadlit",

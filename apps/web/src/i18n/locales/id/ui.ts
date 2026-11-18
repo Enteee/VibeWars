@@ -806,6 +806,7 @@ export default {
   "player.emblemTriangle": "segitiga",
   "player.editEmblem": "Sunting lambang",
   "player.emblemPencil": "Pensil",
+  "player.emblemUndo": "Urung",
   "player.emblemEraser": "Penghapus",
   "player.emblemFill": "Isi",
   "player.emblemMirror": "Cermin",

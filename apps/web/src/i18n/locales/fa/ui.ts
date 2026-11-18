@@ -853,6 +853,7 @@ export default {
   "player.emblemTriangle": "مثلث",
   "player.editEmblem": "ویرایش نماد",
   "player.emblemPencil": "مداد",
+  "player.emblemUndo": "واگرد",
   "player.emblemEraser": "پاک‌کن",
   "player.emblemFill": "پرکردن",
   "player.emblemMirror": "قرینه",

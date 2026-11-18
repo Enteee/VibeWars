@@ -850,6 +850,7 @@ export default {
   "player.emblemTriangle": "üçgen",
   "player.editEmblem": "Amblemi düzenle",
   "player.emblemPencil": "Kalem",
+  "player.emblemUndo": "Geri al",
   "player.emblemEraser": "Silgi",
   "player.emblemFill": "Doldur",
   "player.emblemMirror": "Ayna",

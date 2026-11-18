@@ -910,6 +910,7 @@ export default {
   "player.emblemTriangle": "triangle",
   "player.editEmblem": "Modifier l'emblème",
   "player.emblemPencil": "Crayon",
+  "player.emblemUndo": "Défaire",
   "player.emblemEraser": "Gomme",
   "player.emblemFill": "Remplir",
   "player.emblemMirror": "Miroir",

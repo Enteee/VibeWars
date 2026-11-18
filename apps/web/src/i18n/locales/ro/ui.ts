@@ -904,6 +904,7 @@ export default {
   "player.emblemTriangle": "triunghi",
   "player.editEmblem": "Editează emblema",
   "player.emblemPencil": "Creion",
+  "player.emblemUndo": "Înapoi",
   "player.emblemEraser": "Radieră",
   "player.emblemFill": "Umplere",
   "player.emblemMirror": "Oglindă",

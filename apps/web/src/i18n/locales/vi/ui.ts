@@ -800,6 +800,7 @@ export default {
   "player.emblemTriangle": "tam giác",
   "player.editEmblem": "Sửa biểu tượng",
   "player.emblemPencil": "Bút chì",
+  "player.emblemUndo": "Hoàn tác",
   "player.emblemEraser": "Tẩy",
   "player.emblemFill": "Tô màu",
   "player.emblemMirror": "Đối xứng",

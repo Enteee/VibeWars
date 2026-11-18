@@ -850,6 +850,7 @@ export default {
   "player.emblemTriangle": "driehoek",
   "player.editEmblem": "Embleem bewerken",
   "player.emblemPencil": "Potlood",
+  "player.emblemUndo": "Ongedaan",
   "player.emblemEraser": "Gum",
   "player.emblemFill": "Vullen",
   "player.emblemMirror": "Spiegelen",

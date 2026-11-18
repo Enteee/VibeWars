@@ -858,6 +858,7 @@ export default {
   "player.emblemTriangle": "Dreieck",
   "player.editEmblem": "Emblem bearbeiten",
   "player.emblemPencil": "Stift",
+  "player.emblemUndo": "Rückgängig",
   "player.emblemEraser": "Radierer",
   "player.emblemFill": "Füllen",
   "player.emblemMirror": "Spiegeln",
