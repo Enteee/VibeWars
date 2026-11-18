@@ -175,6 +175,8 @@ Broken Tower joga esse modo (4v4 e 8v8, 5400x2800): uma torre caída numa colina
 
 Aqui a Corrida da Relíquia da Ascensão dos Heróis é jogada ao contrário. Cada base tem a relíquia da sua equipe e o seu Herói Fantasmagórico, e não há altar. **Pegue a relíquia inimiga na base dela e leve-a ao seu próprio Herói Fantasmagórico** para marcar um ponto. O fantasma precisa estar vivo e fica no seu posto. Você não pode carregar a própria relíquia: pegá-la onde caiu a manda de volta para casa. Uma equipe com **3 pontos de vantagem vence na hora**. Aos 8 minutos vence quem tiver mais pontos, e um empate fica com a última equipe a marcar. Cada base revive seus mortos, e seu fantasma, a cada 2 minutos. Os bots vão juntos atrás da relíquia inimiga e a trazem para casa.
 
+Cinder Sanctum (8v8, 5600x2800) o joga: um templo na encosta de um vulcão entre dois rios de lava. Atravesse por uma ponte ou pela calçada até o santuário em seu adro; uma alavanca no adro abre a passagem oculta sob o santuário, e os muros de cinza podem ser quebrados. A lava queima.
+
 ## Rei da Colina
 
 **Leve seu Herói Fantasmagórico até o altar e controle-o.** Cada equipe

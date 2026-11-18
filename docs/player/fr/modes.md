@@ -171,6 +171,8 @@ Broken Tower le joue (4v4 et 8v8, 5400x2800) : une tour effondrée sur une colli
 
 Ici, la Course aux reliques de l'Ascension des Héros se joue à l'envers. Chaque base abrite la relique de son équipe et son Héros fantomatique, et il n'y a pas d'autel. **Prenez la relique adverse dans sa base et apportez-la à votre propre Héros fantomatique** pour marquer un point. Le fantôme doit être vivant, et il reste à son poste. Vous ne pouvez pas porter votre propre relique : la ramasser là où elle est tombée la renvoie chez vous. Une équipe qui mène de **3 points gagne aussitôt**. Après 8 minutes, le plus de points l'emporte, et une égalité revient à la dernière équipe à avoir marqué. Chaque base relève ses morts, et son fantôme, toutes les 2 minutes. Les bots vont ensemble chercher la relique adverse et la ramènent.
 
+Cinder Sanctum (8v8, 5600x2800) le joue : un temple au flanc d'un volcan entre deux rivières de lave. Traversez par un pont ou par la chaussée jusqu'au sanctuaire sur son parvis ; un levier sur le parvis ouvre le passage caché sous le sanctuaire, et les murs de cendre peuvent être brisés. La lave brûle.
+
 ## Roi de la colline
 
 **Mène ton Héros fantomatique sur l'autel, et tiens-le.** Chaque équipe a un
