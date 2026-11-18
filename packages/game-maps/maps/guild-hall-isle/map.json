@@ -14,12 +14,8 @@
       { "x": 540, "y": 660 },
       { "x": 880, "y": 410 },
       { "x": 1950, "y": 180 },
-      { "x": 1950, "y": 590 },
-      { "x": 2650, "y": 590 },
       { "x": 2650, "y": 140 },
       { "x": 3350, "y": 140 },
-      { "x": 3350, "y": 590 },
-      { "x": 4050, "y": 590 },
       { "x": 4050, "y": 180 },
       { "x": 4520, "y": 215 },
       { "x": 5120, "y": 410 },
@@ -30,12 +26,8 @@
       { "x": 5460, "y": 1940 },
       { "x": 5120, "y": 2190 },
       { "x": 4050, "y": 2420 },
-      { "x": 4050, "y": 2010 },
-      { "x": 3350, "y": 2010 },
       { "x": 3350, "y": 2460 },
       { "x": 2650, "y": 2460 },
-      { "x": 2650, "y": 2010 },
-      { "x": 1950, "y": 2010 },
       { "x": 1950, "y": 2420 },
       { "x": 1480, "y": 2385 },
       { "x": 880, "y": 2190 },
@@ -407,28 +399,68 @@
   ],
   "water": [
     {
-      "id": "north-west-pier-bay",
+      "id": "north-west-pier-inlet",
       "layer": 1,
-      "depth": "deep",
-      "area": { "kind": "rect", "x": 1950, "y": 60, "width": 700, "height": 530 }
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 1960, "y": 200 },
+          { "x": 2640, "y": 165 },
+          { "x": 2660, "y": 420 },
+          { "x": 2560, "y": 590 },
+          { "x": 2050, "y": 590 },
+          { "x": 1940, "y": 420 }
+        ]
+      }
     },
     {
-      "id": "south-east-pier-bay",
+      "id": "south-east-pier-inlet",
       "layer": 1,
-      "depth": "deep",
-      "area": { "kind": "rect", "x": 3350, "y": 2010, "width": 700, "height": 530 }
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 4040, "y": 2400 },
+          { "x": 3360, "y": 2435 },
+          { "x": 3340, "y": 2180 },
+          { "x": 3440, "y": 2010 },
+          { "x": 3950, "y": 2010 },
+          { "x": 4060, "y": 2180 }
+        ]
+      }
     },
     {
-      "id": "south-west-pier-bay",
+      "id": "south-west-pier-inlet",
       "layer": 1,
-      "depth": "deep",
-      "area": { "kind": "rect", "x": 1950, "y": 2010, "width": 700, "height": 530 }
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 1960, "y": 2400 },
+          { "x": 2640, "y": 2435 },
+          { "x": 2660, "y": 2180 },
+          { "x": 2560, "y": 2010 },
+          { "x": 2050, "y": 2010 },
+          { "x": 1940, "y": 2180 }
+        ]
+      }
     },
     {
-      "id": "north-east-pier-bay",
+      "id": "north-east-pier-inlet",
       "layer": 1,
-      "depth": "deep",
-      "area": { "kind": "rect", "x": 3350, "y": 60, "width": 700, "height": 530 }
+      "depth": "shallow",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          { "x": 4040, "y": 200 },
+          { "x": 3360, "y": 165 },
+          { "x": 3340, "y": 420 },
+          { "x": 3440, "y": 590 },
+          { "x": 3950, "y": 590 },
+          { "x": 4060, "y": 420 }
+        ]
+      }
     }
   ],
   "zones": [
@@ -728,6 +760,24 @@
         "colour": 16758888,
         "intensity": 0.85,
         "flicker": 0.2
+      },
+      {
+        "id": "torch-west-gatehouse-door",
+        "position": { "x": 2450, "y": 1300 },
+        "layer": 0,
+        "radius": 140,
+        "colour": 16758888,
+        "intensity": 1,
+        "flicker": 0.15
+      },
+      {
+        "id": "torch-east-gatehouse-door",
+        "position": { "x": 3550, "y": 1300 },
+        "layer": 0,
+        "radius": 140,
+        "colour": 16758888,
+        "intensity": 1,
+        "flicker": 0.15
       },
       {
         "id": "brazier-west-lord",
