@@ -18,7 +18,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
-import { matchGates, matchLayers } from "./layers.js";
+import { matchGates, matchLayers, matchSwitches } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import { playBuildBot, transitionsWalked } from "./tools/map-balance.js";
@@ -204,6 +204,7 @@ describe("King of the Hill bots (#2582)", () => {
       seed,
       ruleset: RULESET,
       walls: allWallSegments(arena.walls),
+      layers: matchLayers(arena),
       bounds: { width: arena.width, height: arena.height },
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
       ghostField: {
@@ -420,7 +421,9 @@ describe("Capture Points bots (#2580)", () => {
       ruleset: RULESET,
       teamCount: 3,
       walls: allWallSegments(keep.walls),
+      layers: matchLayers(keep),
       gates: matchGates(keep),
+      switches: matchSwitches(keep),
       bounds: { width: keep.width, height: keep.height },
       matchRules: rules,
       ghostField: {

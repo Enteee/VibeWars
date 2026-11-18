@@ -7,8 +7,6 @@ import {
   createPathFinder,
   Vec,
   distancePointToSegment,
-  firstHit,
-  GATE_PLATE_REACH_UNITS,
   hasLineOfSight,
   loadoutOf,
   nearestStandable,
@@ -76,6 +74,7 @@ const REBUILT = new Set([
   "broken-tower",
   "scarred-earth",
   "guild-hall-isle",
+  "threefold-keep",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
@@ -644,12 +643,6 @@ const CARDINALS = [
   [0, 1],
   [0, -1],
 ] as const;
-const DIAGONALS = [
-  [1, 1],
-  [1, -1],
-  [-1, 1],
-  [-1, -1],
-] as const;
 
 /** The checks every King of the Hill map of #2552 passes. */
 function holdsTheHill(id: string, seats: readonly number[]): void {
@@ -723,31 +716,48 @@ function holdsTheHill(id: string, seats: readonly number[]): void {
   });
 }
 
-describe("Threefold Keep (#2699)", () => {
-  holdsTheHill("threefold-keep", [4, 8]);
-  const { map, altar, walls } = hill("threefold-keep");
+describe("Threefold Keep (#2699, #3443)", () => {
+  const keep = MAPS.find((map) => map.id === "threefold-keep");
+  if (keep === undefined) throw new Error("no threefold-keep");
+  const altar = keep.objectives.find((objective) => objective.kind === "altar");
+  if (altar === undefined) throw new Error("no altar on threefold-keep");
+  const gates = keep.gates.map((gate) => gate.id).sort();
 
-  it("seats three teams, each with a ghost, and plays the Keep's rules", () => {
-    expect(map).toMatchObject({ teams: 3, keep: true });
-    expect(map.spawnPoints.filter((spawn) => spawn.team === 2)).toHaveLength(8);
-  });
-
-  it("opens every door only from inside: its plate is out of reach from the far side", () => {
-    expect(map.gates).toHaveLength(4);
-    for (const gate of map.gates) {
-      const opener = plated(gate);
-      expect(opener.oneWay, gate.id).toBe(true);
-      expect(opener.team, gate.id).toBeNull();
-      expect(firstHit(opener.plate, altar, wallToSegments(gate.wall)), gate.id).toBeUndefined();
-      const nearest = Math.min(
-        ...wallToSegments(gate.wall).map((side) => distancePointToSegment(opener.plate, side)),
-      );
-      expect(nearest, gate.id).toBeGreaterThan(GATE_PLATE_REACH_UNITS);
+  it("seats three teams of eight, each with a ghost, and plays the Keep's rules", () => {
+    expect(keep).toMatchObject({ teams: 3, keep: true, teamSizes: [4, 8] });
+    for (const team of [0, 1, 2]) {
+      expect(keep.spawnPoints.filter((spawn) => spawn.team === team)).toHaveLength(8);
+      expect(
+        keep.objectives.filter(
+          (objective) => objective.kind === "ghost-spawn" && objective.team === team,
+        ),
+      ).toHaveLength(1);
     }
   });
 
-  it("leaves the keep's four corners open: with every door shut the altar is reachable", () => {
-    expect(sightLines(altar, DIAGONALS, walls)).toEqual([true, true, true, true]);
+  it("raises the altar on the tower over the hill, at the centre", () => {
+    expect(altar).toMatchObject({ layer: 3, position: { x: keep.width / 2, y: keep.height / 2 } });
+    expect(keep.decks.find((deck) => deck.id === "tower")?.layer).toBe(3);
+    expect(keep.decks.find((deck) => deck.id === "hill")?.layer).toBe(2);
+  });
+
+  it("shuts the three approaches' gates and the keep gate, and any one lever opens all four", () => {
+    expect(gates).toEqual(["keep-gate", "north-gate", "south-east-gate", "south-west-gate"]);
+    for (const gate of keep.gates) expect(gate.opener, gate.id).toEqual({ kind: "switch" });
+    expect(keep.switches).toHaveLength(3);
+    for (const lever of keep.switches ?? [])
+      expect([...lever.targets].sort(), lever.id).toEqual(gates);
+  });
+
+  it("lets every spawn walk up to the altar with every gate shut", () => {
+    const shut = { ...keep, walls: [...keep.walls, ...keep.gates.map((gate) => gate.wall)] };
+    const finder = layeredFinder(shut, RADIUS);
+    for (const spawn of keep.spawnPoints) {
+      expect(
+        finder.find(spawn.position, spawn.layer, altar.position, altar.layer),
+        JSON.stringify(spawn),
+      ).toBeDefined();
+    }
   });
 });
 
