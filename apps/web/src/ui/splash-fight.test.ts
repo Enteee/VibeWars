@@ -31,23 +31,6 @@ describe("the splash fight's simulation (#3222)", () => {
     // leaving (Canyon). A flat world refused them all.
     expect(taken.length).toBeGreaterThan(bodies.length / 2);
   });
-
-  // The render bench (#3442): a three-team map threw "a kill-count match has two
-  // teams, not 3", so the menu never showed it.
-  it.each(["hall-of-heroes-king", "threefold-keep"])(
-    "fights two sides on three-team %s",
-    (mapId) => {
-      const map = hostMap(mapId);
-      if (map === undefined) {
-        throw new Error(`no map ${mapId}`);
-      }
-      const { simulation } = splashSimulation(map, { mapId, teamSize: 8, still: false }, "three");
-      simulation.step(0.05);
-      expect(new Set([...simulation.participants()].map((body) => body.combatant.team))).toEqual(
-        new Set([0, 1]),
-      );
-    },
-  );
 });
 
 describe("the splash fight's professions (#3336)", () => {

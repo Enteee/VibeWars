@@ -161,9 +161,8 @@ export interface SplashFight {
  * them (#3222): a bot's walk on a map whose ground is not its lowest layer
  * names that layer, which a flat world refuses. Its world elements too
  * (#3407): gates, levers, teleports, breakables and zones, as a match has
- * them; not its objectives, which `SPLASH_RULES` leave out. Two sides on
- * any map, a three-team one too (#3442): a kill-count match has two. With
- * its bots' professions.
+ * them; not its objectives, which `SPLASH_RULES` leave out. With its bots'
+ * professions.
  */
 export function splashSimulation(
   map: SplashMap,
@@ -175,7 +174,7 @@ export function splashSimulation(
     seed,
     ruleset: RULESET,
     matchRules: SPLASH_RULES,
-    teamCount: 2,
+    teamCount: map.descriptor.teamCount,
     walls: map.walls,
     gates: map.gates,
     switches: map.switches,
