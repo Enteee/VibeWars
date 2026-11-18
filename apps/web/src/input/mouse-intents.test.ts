@@ -319,6 +319,7 @@ describe("clicks with Show names held (#2738)", () => {
     const structure = {
       layerCount: 2,
       biome: "hall" as const,
+      ascentAct: null,
       bounds: { kind: "rect" as const },
       ground: 0,
       pits: [],
@@ -343,6 +344,7 @@ describe("clicks with Show names held (#2738)", () => {
   const CULVERT = {
     layerCount: 3,
     biome: "hall" as const,
+    ascentAct: null,
     bounds: { kind: "rect" as const },
     ground: 1,
     pits: [],

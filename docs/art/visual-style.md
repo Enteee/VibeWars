@@ -88,6 +88,42 @@ on screen. Shallow water is `#8fb8d6` at 30 %, paler and greyer than a spring.
 Colour never decides alone: danger is also **warm** (damage; poison and drain have their own hues, §6), help is
 **cool and still**, and each zone kind should have its own outline pattern (target, see §6).
 
+## 1b. Ascent acts
+
+The Heroes' Ascent is a climb with a three-act look (#3589): **volcanic**,
+then **underworld**, then **heavenly**. The act belongs to the map, set by
+`ascentAct` in its `map.json` (`null` for every map outside the Ascent), and a
+map looks the same in every mode. It is a palette and atmosphere arc, not a
+copy of any GW1 level, and it is render-only: play stays symmetric.
+
+| Act        | Ground    | Wall / rock | Accent    | Ambient (colour, intensity) | Sun                     | Fog             | View particle |
+| ---------- | --------- | ----------- | --------- | --------------------------- | ----------------------- | --------------- | ------------- |
+| Volcanic   | `#2b2320` | `#4a4340`   | `#ff6a1a` | `#5a3a2a`, 0.35 to 0.5      | warm, low, `#ffb070`    | none, ash haze  | embers        |
+| Underworld | `#1f2428` | `#38424a`   | `#4fd1b5` | `#2a3a44`, 0.25 to 0.4      | none, or weak moonlike  | `#3d5560` banks | none or rain  |
+| Heavenly   | `#e8dfc8` | `#b9ad92`   | `#ffcc4d` | `#fff1cc`, 0.7 to 0.9       | strong, high, `#fff4d6` | thin gold haze  | motes, shafts |
+
+- **Volcanic.** Basalt crust lit from below. Lava is the warm rim light; embers
+  rise over the view as small, slow, flickering points, never larger than a
+  body's hand and always fainter than a strike edge.
+- **Underworld.** Slate, cold blue-green light, at least two fog banks per
+  layer-0 play area. The world darkens, the actors do not: bodies, team marks,
+  rings and telegraphs keep their §1 hex and §6 contrast. Lava here is cooled to
+  a dull glow (Cinder Sanctum), so it is the descent from act 1, not a second
+  act 1.
+- **Heavenly.** Pale stone, gold trim, strong high sun. Motes are slow gold dust;
+  at least one light shaft slants from the sun direction onto a point of the
+  map. Brightness comes from light, motes and shafts, not from a bloom pass.
+
+**Reserved colours still win.** The accents are trim, light and particles, never
+a ground or wall fill: magma `#ff6a1a` and gold `#ffcc4d` sit near the danger
+warm pair, so on a harmless surface they stay thin lines or points, and on
+screen the real hazard edge must remain the loudest warm thing. The teal
+`#4fd1b5` sits between help blue and nature green and is limited the same way.
+Ground and wall tones keep their chroma low, so the signal check against
+`arena-palette.test.ts` biome tones holds. The heavenly ground is the one pale
+floor; friend blue `#59c2ff` and foe red `#ff7b72` bodies still need an
+outline on it (§4) to stay clear.
+
 ## 2. Light
 
 One sun for every map: **from the north-west (`directionDeg` 315)**, so every
@@ -412,6 +448,7 @@ A reviewer or QA ticks these on a map or world-art PR, from a screenshot.
 - [ ] 16 lights or fewer; fire is warm, magic is cold.
 - [ ] Every height step reads: lit top, lip, darker face, shadow or pit.
 - [ ] The map names its biome.
+- [ ] An Ascent map states its `ascentAct` and follows the §1b palette; bodies and signals read as well in the dark act as in the bright one.
 - [ ] Every zone has a visible edge, over water and light.
 - [ ] Hue follows signal class (§6 rule 2): harmful never wears help blue or green.
 - [ ] Hazards telegraph by edge width within 0.3 s.

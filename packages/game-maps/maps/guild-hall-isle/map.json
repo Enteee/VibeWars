@@ -46,6 +46,7 @@
   },
   "layers": 4,
   "biome": "coast",
+  "ascentAct": null,
   "groundLayer": 1,
   "pits": [
     {
@@ -847,7 +848,7 @@
       }
     ]
   },
-  "atmosphere": { "fog": [], "plumes": [], "weather": null },
+  "atmosphere": { "fog": [], "plumes": [], "shafts": [], "weather": null },
   "paving": [
     {
       "id": "west-courtyard",
