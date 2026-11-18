@@ -25,9 +25,9 @@ import {
   type LobbyMatchmakingOptions,
   type MatchPlan,
 } from "./lobby-host.js";
-import { connectMatch, type PeerMatchConnection } from "./match-client.js";
+import { connectMatch, type PeerMatchConnection, type ReplayKeeper } from "./match-client.js";
 import { ARENA, TICK_SECONDS, hello, settle, testSignet } from "./match-harness.test-support.js";
-import { createMatchHost, type MatchHost } from "./match-host.js";
+import { createMatchHost, type MatchHost, type ReplayRecording } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import type { PlayerKey, VerifyPlayerProof } from "./player-key.js";
 import { testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
@@ -118,6 +118,8 @@ export async function openLobby(
     hostedTeamSize?: LobbyTeamSize;
     /** The proof check (#2706): the test key's by default. */
     verifyPlayerProof?: VerifyPlayerProof;
+    /** Its matches record a replay (#3572): none by default. */
+    recordReplay?: false | ReplayRecording;
   } = {},
 ): Promise<TestLobby> {
   const network = createMemoryNetwork();
@@ -157,6 +159,7 @@ export async function openLobby(
           publishRecord: () => undefined,
           nowSeconds: () => 0,
           signetOf: testSignet,
+          recordReplay: options.recordReplay ?? false,
         });
       matches.push({ plan, host });
       return host;
@@ -291,7 +294,11 @@ export async function start(lobby: TestLobby): Promise<void> {
 }
 
 /** Walk `who` into the latest match it was handed, as its own name says. */
-export async function play(who: Member, name = "Whoever"): Promise<PeerMatchConnection> {
+export async function play(
+  who: Member,
+  name = "Whoever",
+  replays: ReplayKeeper | null = null,
+): Promise<PeerMatchConnection> {
   const starting = who.starts.at(-1);
   if (starting === undefined) {
     throw new Error("this member was handed no match");
@@ -301,5 +308,6 @@ export async function play(who: Member, name = "Whoever"): Promise<PeerMatchConn
     hostId: who.connection.getSnapshot().hostId,
     hello: hello({ name }),
     timeoutMs: 1000,
+    replays,
   });
 }

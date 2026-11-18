@@ -29,7 +29,7 @@ import {
 } from "@vibewars/game-protocol";
 
 import { createLocalPeer } from "./local-peer.js";
-import { connectMatch, type PeerMatchConnection } from "./match-client.js";
+import { connectMatch, type PeerMatchConnection, type ReplayKeeper } from "./match-client.js";
 import type { MatchSnapshot, PlayerSnapshot } from "./match-connection.js";
 import {
   createMatchHost,
@@ -37,6 +37,7 @@ import {
   type HostMap,
   type MatchHost,
   type PlannedSeats,
+  type ReplayRecording,
 } from "./match-host.js";
 import type { MatchRecord } from "./match-record.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
@@ -243,6 +244,10 @@ export function startMatch(
     signetOf?: (pubkey: string) => number;
     /** What the lobby is for (#2528); Random Arena by default. */
     mode?: LobbyMode;
+    /** Record a replay (#3572); off by default. */
+    recordReplay?: false | ReplayRecording;
+    /** Where `joinLocal`'s player keeps the replay (#3572); nowhere by default. */
+    replays?: ReplayKeeper;
   } = {},
 ): TestMatch {
   const network = createMemoryNetwork();
@@ -264,6 +269,7 @@ export function startMatch(
     publishRecord: options.publishRecord ?? (() => undefined),
     nowSeconds: () => TEST_NOW_SECONDS,
     signetOf: options.signetOf ?? testSignet,
+    recordReplay: options.recordReplay ?? false,
   });
   return {
     network,
@@ -285,6 +291,7 @@ export function startMatch(
         hostId: "host",
         hello: peerHello,
         timeoutMs: 1000,
+        replays: null,
       });
       return { connection, transport };
     },
@@ -297,12 +304,19 @@ export function startMatch(
         hostId: "host",
         hello: hello({ rejoin: { playerId: dropped.selfSessionId } }),
         timeoutMs: 1000,
+        replays: null,
       });
       return { connection, transport };
     },
     async joinLocal(peerHello = hello()) {
       await settle();
-      return connectMatch({ transport: local, hostId: "host", hello: peerHello, timeoutMs: 1000 });
+      return connectMatch({
+        transport: local,
+        hostId: "host",
+        hello: peerHello,
+        timeoutMs: 1000,
+        replays: options.replays ?? null,
+      });
     },
   };
 }

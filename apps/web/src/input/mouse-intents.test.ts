@@ -90,6 +90,7 @@ const MATCH: MatchSnapshot = {
   decks: [],
   lifts: [],
   summary: undefined,
+  chart: undefined,
 };
 
 function body(id: string, x: number, team: RenderableActor["team"]): RenderableActor {
@@ -318,6 +319,7 @@ describe("clicks with Show names held (#2738)", () => {
     const structure = {
       layerCount: 2,
       biome: "hall" as const,
+      ascentAct: null,
       bounds: { kind: "rect" as const },
       ground: 0,
       pits: [],
@@ -339,34 +341,46 @@ describe("clicks with Show names held (#2738)", () => {
     ).toEqual([{ kind: "walk-to", layer: 0, x: 150, y: 150 - ELEVATION_STEP }]);
   });
 
+  const CULVERT = {
+    layerCount: 3,
+    biome: "hall" as const,
+    ascentAct: null,
+    bounds: { kind: "rect" as const },
+    ground: 1,
+    pits: [],
+    tunnels: [{ footprint: { kind: "rect" as const, x: 100, y: 0, width: 100, height: 400 } }],
+    dropOffs: [],
+    downDecks: [],
+    overhangs: [],
+    decks: [
+      {
+        layer: 2,
+        footprint: { kind: "rect" as const, x: 0, y: 100, width: 300, height: 100 },
+        look: "platform" as const,
+        switched: null,
+      },
+    ],
+    transitions: [],
+    water: [],
+    zones: [],
+  };
+
   it("walks into the tunnel under a deck's support with Alt (#3487)", () => {
-    const structure = {
-      layerCount: 3,
-      biome: "hall" as const,
-      bounds: { kind: "rect" as const },
-      ground: 1,
-      pits: [],
-      tunnels: [{ footprint: { kind: "rect" as const, x: 100, y: 0, width: 100, height: 400 } }],
-      dropOffs: [],
-      downDecks: [],
-      overhangs: [],
-      decks: [
-        {
-          layer: 2,
-          footprint: { kind: "rect" as const, x: 0, y: 100, width: 300, height: 100 },
-          look: "platform" as const,
-          switched: null,
-        },
-      ],
-      transitions: [],
-      water: [],
-      zones: [],
-    };
+    const structure = CULVERT;
     const walls = [{ kind: "rect" as const, x: 0, y: 50, width: 300, height: 150, layer: 1 }];
     const layered = { ...NAMED, actors: [], structure, walls };
     expect(
       primaryClickIntents(MATCH, layered, vec2(150, 150 - ELEVATION_STEP), false, true),
     ).toEqual([{ kind: "walk-to", layer: 0, x: 150, y: 150 - 2 * ELEVATION_STEP }]);
+  });
+
+  it("stays in the tunnel with Alt from in it (#3546)", () => {
+    const me = { ...body("me", 150, "self"), position: vec2(150, 300), layer: 0 };
+    const layered = { ...NAMED, actors: [me], structure: CULVERT };
+    const world = vec2(150, 300 + ELEVATION_STEP);
+    const inTunnel = [{ kind: "walk-to", layer: 0, x: 150, y: 300 }];
+    expect(primaryClickIntents(MATCH, layered, world, false, false)).toEqual(inTunnel);
+    expect(primaryClickIntents(MATCH, layered, world, false, true)).toEqual(inTunnel);
   });
 
   it("calls a foe on a wheel click on its name", () => {

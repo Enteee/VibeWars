@@ -166,6 +166,8 @@ izjednačenje ide timu koji je zadnji bodovao. Svaka baza uskrsava svoje mrtve i
 sablast svake 2 minute. Botovi zajedno idu po neprijateljsku relikviju i donose je
 kući.
 
+Cinder Sanctum (8v8, 5600x2800) ga igra: hram na obronku vulkana između dviju rijeka lave. Prijeđi mostom ili nasipom do svetišta na njegovu predvorju; poluga na predvorju otvara skriveni prolaz ispod svetišta, a zidovi od pepela mogu se razbiti. Lava peče.
+
 ## Kralj brda
 
 **Odvedi svog Sablasnog heroja na oltar i drži ga.** Svaki tim ima
@@ -265,8 +267,7 @@ Botovi se raspoređuju po svetištima koja tvoj tim još ne posjeduje i stoje
 na njima dok se ne zauzmu. Neprijatelj u dometu čarolije ne odvlači
 ih: stupaju na svetište u dosegu i bore se s njega.
 
-Scarred Earth ga igra: svako svetište stoji u slomljenom prstenu zidova,
-otvorenom prema zapadu i istoku.
+Scarred Earth (4v4 i 8v8, 5400x2800) ga igra: bojište puno kratera u sumrak. Svetišta stoje na razrušenim opsadnim tornjevima, srednje na palubi velikog tornja, svako pokraj kratera; poluge na tornjevima otvaraju dva rova ispod polja, a razrušene palisade mogu se razbiti.
 
 ## Timska soba
 

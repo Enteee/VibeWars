@@ -2,6 +2,7 @@ import {
   PROTOCOL_VERSION,
   parsePeerObserving,
   parsePeerRefuse,
+  parseWireCapes,
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSnapshotPart,
@@ -10,6 +11,7 @@ import {
   type PeerBye,
   type PeerObserve,
   type PeerObserving,
+  type WireCape,
   type WireEnded,
   type WireSnapshot,
   type WireTeamCount,
@@ -63,6 +65,8 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   let latest:
     { readonly wire: WireSnapshot; readonly players: readonly PlayerSnapshot[] } | undefined;
   let ended: WireEnded | undefined;
+  /** Each seat's cape as last sent (#3554), by id. */
+  let capes = new Map<string, WireCape>();
   let lost = false;
   /** Set once `connectObserver` has resolved or rejected. */
   let settled = false;
@@ -116,12 +120,15 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
         return;
       }
       // One naming a status this build has no index for is malformed (#632).
-      const players = playerSnapshots(snapshot);
+      const players = playerSnapshots(snapshot, capes);
       if (players !== undefined) {
         latest = { wire: snapshot, players };
       }
     },
   );
+  fromHost("capes", parseWireCapes, (message) => {
+    capes = new Map(message.capes.map(({ id, cape }) => [id, cape]));
+  });
   fromHost("combat", parseWireCombatBatch, (batch) => {
     if (!settled) {
       return;
@@ -189,6 +196,8 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
         const snapshot: ObservedSnapshot = {
           ...observedSnapshot(latest.wire, latest.players),
           summary: ended?.summary,
+          // A watcher is sent no charts (#3564).
+          chart: undefined,
         };
         // An `ended` may land before the snapshot that says so.
         return ended === undefined

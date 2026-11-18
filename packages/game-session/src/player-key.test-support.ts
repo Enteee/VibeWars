@@ -24,6 +24,9 @@ export function testPlayerKey(pubkey: string = randomHex(32)): PlayerKey {
       made.set(sig, proofOf(pubkey, fields));
       return sig;
     },
+    // Nothing in a session verifies a ranked signature yet (ADR-0055).
+    signRankedStart: () => randomHex(64),
+    signRankedResult: () => randomHex(64),
   };
 }
 

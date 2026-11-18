@@ -1569,7 +1569,7 @@ body:has(> .splash) #menu-background::after {
    sharing rows: label, input, hint. The tag fits four wide letters. */
 .player-identity {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.25rem 0.5rem;
 }
 
@@ -1577,6 +1577,7 @@ body:has(> .splash) #menu-background::after {
   display: grid;
   grid-row: span 3;
   grid-template-rows: subgrid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
 }
 
@@ -1597,12 +1598,6 @@ body:has(> .splash) #menu-background::after {
 
 .field-input[aria-invalid="true"] {
   border-color: var(--damage);
-}
-
-.player-applies {
-  margin: 0.75rem 0 0;
-  color: var(--ink-dim);
-  font-size: 0.8rem;
 }
 
 /*
@@ -1664,6 +1659,152 @@ body:has(> .splash) #menu-background::after {
 }
 
 .screen .player-cape-none[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.player-cape-picks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.player-cape-picks[hidden] {
+  display: none;
+}
+
+.screen .player-cape-edit {
+  align-self: flex-start;
+  padding: 0.15rem 0.6rem;
+}
+
+/*
+ * The emblem editor (#3555), in place of the cape designer's rows: the
+ * 16x16 grid on the cape's cloth, the emblem at game size beside it, the
+ * palette, the tools, Done and Cancel. Picks are ringed in ink, as above.
+ * On a phone the cells shrink to the pane and the preview wraps under the
+ * grid, so nothing scrolls sideways.
+ */
+.emblem-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-self: flex-start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.emblem-editor-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+/* 16 cells of 16 px, 15 gaps, the padding and the border at most. */
+.emblem-editor-grid {
+  position: relative;
+  display: grid;
+  flex: 0 1 calc(16 * 16px + 15px + 2px + 4px);
+  min-width: 0;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  background: var(--line);
+  border: 2px solid var(--cape-trim);
+  border-radius: 3px;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+.emblem-editor-grid:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.emblem-editor-cell {
+  aspect-ratio: 1;
+  background: var(--pixel, var(--cape-main));
+}
+
+.emblem-editor-grid:focus-visible .emblem-editor-cursor {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* Mirror on: the axis between columns 7 and 8. */
+.emblem-editor-mirrored::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: calc(50% - 1px);
+  width: 2px;
+  background: var(--accent);
+  opacity: 0.6;
+  content: "";
+  pointer-events: none;
+}
+
+.emblem-editor-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: center;
+}
+
+.emblem-editor-preview {
+  width: 24px;
+  height: 24px;
+}
+
+.emblem-editor-caption {
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.emblem-editor-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.screen .emblem-editor-swatch {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: var(--swatch);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+
+/* Empty: the cloth with a stroke through it. */
+.screen .emblem-editor-swatch.emblem-editor-empty {
+  background: linear-gradient(
+    to top right,
+    var(--cape-main) calc(50% - 1px),
+    var(--ink-dim) calc(50% - 1px) calc(50% + 1px),
+    var(--cape-main) calc(50% + 1px)
+  );
+}
+
+.screen .emblem-editor-swatch[aria-pressed="true"] {
+  border: 2px solid var(--ink);
+}
+
+.screen .emblem-editor-tool,
+.screen .emblem-editor-done,
+.screen .emblem-editor-cancel {
+  padding: 0.15rem 0.6rem;
+}
+
+.screen .emblem-editor-tool[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.screen .emblem-editor-done {
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -4541,10 +4682,6 @@ body:has(> .splash) #menu-background::after {
 }
 
 .hud-result {
-  position: absolute;
-  top: 38%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   padding: 0.7rem 1.6rem;
   background: rgb(14 17 22 / 92%);
   border: 1px solid var(--accent);
@@ -4553,32 +4690,42 @@ body:has(> .splash) #menu-background::after {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   pointer-events: none;
-  /* As wide as its line, not half the view its left: 50% leaves it, so a
-     Guild Battle's line stays one at 1100 px (#1226); a phone wraps. */
+  /* As wide as its line, so a Guild Battle's line stays one at 1100 px
+     (#1226); a phone wraps. */
   width: max-content;
-  max-width: calc(100% - 2rem);
+  max-width: 100%;
   text-align: center;
 }
 
 /* The match summary (#1057): both teams side by side under the result
    banner, compact enough for 8v8 at 1024 px without a scroll. Your row has
-   the friend border; each column's best is ink bold, zeros ink-dim. */
+   the friend border; each column's best is ink bold, zeros ink-dim. Each
+   table is a panel of its own, which scrolls sideways rather than squeeze
+   its numbers (#3563). */
 .match-summary {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  align-items: flex-start;
   justify-content: center;
+  max-width: 100%;
   font-size: 0.75rem;
+}
+
+.match-summary-panel {
+  max-width: 100%;
+  overflow-x: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
 }
 
 .match-summary-table {
   border-collapse: collapse;
-  background: rgb(14 17 22 / 92%);
-  border: 1px solid var(--line);
 }
 
 .match-summary-table caption {
-  padding: 0.25rem 0;
+  padding: 0.25rem 0.4rem;
   color: var(--ink-dim);
   text-align: start;
   letter-spacing: 0.1em;
@@ -4603,6 +4750,7 @@ body:has(> .splash) #menu-background::after {
 }
 
 .match-summary-table td {
+  min-width: 3ch;
   color: var(--ink);
   text-align: end;
   font-variant-numeric: tabular-nums;
@@ -4610,12 +4758,10 @@ body:has(> .splash) #menu-background::after {
 
 .match-summary-table .match-summary-name {
   max-width: 9rem;
-  overflow: hidden;
   color: var(--ink);
   font-weight: normal;
   text-align: start;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
   border-inline-start: 3px solid transparent;
 }
 
@@ -4623,8 +4769,62 @@ body:has(> .splash) #menu-background::after {
   border-inline-start-color: var(--accent);
 }
 
+.match-summary-who {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.match-summary-who .signet {
+  margin-inline-end: 0;
+}
+
+/* Two lines, then an ellipsis; the cell's title has it whole. A name with
+   no spaces breaks anywhere rather than run out of its cell. */
+.match-summary-who .player-label {
+  display: -webkit-box;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
 .match-summary-bot {
-  margin-inline-start: 0.35rem;
+  flex: none;
+}
+
+/* A phone: the tables one under the other, full width, each scrolling
+   sideways under a name column that stays put. */
+@media (width < 600px) {
+  .match-summary {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  /* Each table its full height; the summary around them scrolls. */
+  .match-summary-panel {
+    flex: none;
+  }
+
+  /* Wide enough that a name of two words wraps between them. */
+  .match-summary-table .match-summary-name {
+    min-width: 9rem;
+  }
+
+  .match-summary-table .match-summary-name,
+  .match-summary-table thead th:first-child {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    background: var(--panel);
+  }
 }
 
 .match-summary-table td.is-top {
@@ -4635,13 +4835,34 @@ body:has(> .splash) #menu-background::after {
   color: var(--ink-dim);
 }
 
+/* The end of a match, one column in the middle of the HUD (#3563): the
+   end line, the result banner, the summary, under the top cluster
+   (`placeEnd` measures it into --hud-top-bottom). Only the summary gives way,
+   scrolling inside what is left, so nothing of it covers the line's button.
+   It takes no clicks but the line's button and the summary's scroll. */
+.hud-end {
+  position: absolute;
+  inset: max(3.5rem, calc(var(--hud-top-bottom, 0px) + 0.6rem)) 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* A phone stacks the HUD corner buttons in two rows; the column starts
+   under them. */
+@media (width < 600px) {
+  .hud-end {
+    inset-block-start: max(6rem, calc(var(--hud-top-bottom, 0px) + 0.6rem));
+  }
+}
+
 /* Over the result banner after a team match (#1997): the countdown to what
    comes next, and its one button, which takes clicks the banner does not. */
 .hud-end-line {
-  position: absolute;
-  top: calc(38% - 3.4rem);
-  left: 50%;
-  transform: translateX(-50%);
+  flex: none;
   display: flex;
   gap: 0.75rem;
   align-items: center;
@@ -4650,19 +4871,17 @@ body:has(> .splash) #menu-background::after {
   border: 1px solid var(--line);
   color: var(--ink);
   width: max-content;
-  max-width: calc(100% - 2rem);
+  max-width: 100%;
   pointer-events: auto;
 }
 
-/* In the match, under the result banner; it takes no clicks. */
+/* In the match, under the result banner: it scrolls inside what the column
+   leaves it. */
 .hud-summary {
-  position: absolute;
-  top: calc(38% + 2.6rem);
-  left: 50%;
-  width: max-content;
-  max-width: calc(100% - 2rem);
-  transform: translateX(-50%);
-  pointer-events: none;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  pointer-events: auto;
 }
 
 /* Over the arena and the HUD while a guest reconnects (#602); it takes no
@@ -7799,8 +8018,20 @@ body:has(#screens[style*="none"]) .now-playing {
   color: var(--accent);
 }
 
+/* After a match (#3563): the summary scrolls inside its block, and the
+   buttons under it stay in sight at any size. */
+.queue-summary {
+  max-width: 100%;
+  max-height: 60dvh;
+  overflow-y: auto;
+}
+
 .queue-actions {
+  position: sticky;
+  bottom: 0;
   justify-content: center;
+  padding-block: 0.5rem;
+  background: var(--bg);
 }
 
 .versus-splash {

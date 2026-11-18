@@ -57,6 +57,7 @@ describe("a goal mark under a deck (#3342)", () => {
   const BRIDGE: MapStructure = {
     layerCount: 2,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 0,
     pits: [],

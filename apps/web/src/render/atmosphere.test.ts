@@ -10,6 +10,7 @@ import {
   fogArtOf,
   fogPuffAt,
   paintParticle,
+  paintShaft,
   type AtmospherePainter,
   type Particle,
 } from "./atmosphere.js";
@@ -25,6 +26,7 @@ const plume = (index: number, kind: "smoke" | "steam" = "steam") => ({
 const atmosphere = (overrides: Partial<MapAtmosphere> = {}): MapAtmosphere => ({
   fog: [],
   plumes: [plume(0)],
+  shafts: [],
   weather: { kind: "rain", intensity: 0.5 },
   ...overrides,
 });
@@ -160,5 +162,66 @@ describe("painting a particle (#3032)", () => {
     }
     expect(alphas.length).toBeGreaterThan(0);
     expect(Math.max(...alphas)).toBeLessThanOrEqual(WEATHER_ALPHA);
+  });
+});
+
+describe("an Ascent act's embers, motes and shafts (#3589)", () => {
+  const alphasOf = () => {
+    const alphas: number[] = [];
+    const painter: AtmospherePainter = {
+      fillStyle: (_colour, alpha) => alphas.push(alpha),
+      lineStyle: (_width, _colour, alpha) => alphas.push(alpha),
+      fillCircle: () => undefined,
+      fillEllipse: () => undefined,
+      strokeEllipse: () => undefined,
+      lineBetween: () => undefined,
+      fillRect: () => undefined,
+    };
+    return { alphas, painter };
+  };
+
+  for (const [kind, particle, rises] of [
+    ["embers", "ember", true],
+    ["motes", "mote", false],
+  ] as const) {
+    it(`fills the view with ${kind} as weather, within the budget, and none under reduced motion`, () => {
+      const air = atmosphere({ plumes: [], weather: { kind, intensity: 1 } });
+      const particles = new AtmosphereParticles(air);
+      run(particles, 240);
+      const made = particles.particles.filter((each) => each.kind === particle);
+      expect(made.length).toBeGreaterThan(100);
+      expect(particles.particles.length).toBeLessThanOrEqual(PARTICLE_BUDGET);
+      // Embers rise from the lava; motes hang and drift, never falling fast.
+      expect(made.every((each) => (rises ? each.vy < 0 : Math.abs(each.vy) < 10))).toBe(true);
+      const still = new AtmosphereParticles(air);
+      run(still, 120, { on: true, reducedMotion: true });
+      expect(still.particles).toHaveLength(0);
+    });
+
+    it(`never paints ${kind} over WEATHER_ALPHA`, () => {
+      const { alphas, painter } = alphasOf();
+      const particles = new AtmosphereParticles(
+        atmosphere({ plumes: [], weather: { kind, intensity: 1 } }),
+      );
+      run(particles, 240);
+      for (const each of particles.particles) {
+        paintParticle(painter, each, 0, 1);
+      }
+      expect(alphas.length).toBeGreaterThan(0);
+      expect(Math.max(...alphas)).toBeLessThanOrEqual(WEATHER_ALPHA);
+    });
+  }
+
+  it("draws a shaft as a faint pool and a beam leaning towards the sun", () => {
+    const { alphas, painter } = alphasOf();
+    const discs: { x: number; y: number }[] = [];
+    painter.fillEllipse = (x, y) => discs.push({ x, y });
+    const shaft = { id: "shaft", layer: 0, position: { x: 400, y: 300 }, radius: 50 };
+    paintShaft(painter, shaft, 0, { x: 0.5, y: 0 });
+    expect(discs.length).toBeGreaterThan(2);
+    const top = discs[discs.length - 1] ?? { x: 0, y: 0 };
+    expect(top.x).toBeGreaterThan(shaft.position.x);
+    expect(top.y).toBeLessThan(shaft.position.y);
+    expect(alphas.reduce((sum, alpha) => sum + alpha, 0)).toBeLessThanOrEqual(WEATHER_ALPHA);
   });
 });

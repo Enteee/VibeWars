@@ -97,11 +97,16 @@ export function summaryTables(
   }));
 }
 
-/** Build the tables once, into a new `.match-summary` element appended to `parent`. */
+/**
+ * Build the tables once, into a new `.match-summary` element appended to
+ * `parent`: each in its own panel, which scrolls sideways when the table is
+ * wider than it (#3563).
+ */
 export function renderSummary(parent: HTMLElement, tables: readonly SummaryTable[]): HTMLElement {
   const root = h("div", "match-summary");
   for (const { caption, lines } of tables) {
-    const table = document.createElement("table");
+    const panel = h("div", "match-summary-panel");
+    const table = panel.appendChild(document.createElement("table"));
     table.className = "match-summary-table";
     table.appendChild(h("caption", undefined, caption));
     const head = table.createTHead().insertRow();
@@ -118,10 +123,13 @@ export function renderSummary(parent: HTMLElement, tables: readonly SummaryTable
       const tr = body.insertRow();
       tr.classList.toggle("is-self", self);
       const name = h("th", "match-summary-name");
-      name.appendChild(signetElement(row.signet ?? undefined, SIGNET_ROW_PX));
-      name.appendChild(playerLabelElement("player-label", row.name, row.guildTag, row.heroRank));
+      // Signet, label and BOT chip side by side (#3563): only the label
+      // gives way, to two lines and an ellipsis; the chip is never on it.
+      const who = name.appendChild(h("div", "match-summary-who"));
+      who.appendChild(signetElement(row.signet ?? undefined, SIGNET_ROW_PX));
+      who.appendChild(playerLabelElement("player-label", row.name, row.guildTag, row.heroRank));
       if (bot) {
-        name.appendChild(botTagElement("match-summary-bot"));
+        who.appendChild(botTagElement("match-summary-bot"));
       }
       // A bot's is its build's, up to 40 characters (#2636): cut, whole here.
       name.title = row.name;
@@ -135,7 +143,7 @@ export function renderSummary(parent: HTMLElement, tables: readonly SummaryTable
         tr.appendChild(cell);
       }
     }
-    root.appendChild(table);
+    root.appendChild(panel);
   }
   parent.appendChild(root);
   return root;

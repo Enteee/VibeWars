@@ -770,6 +770,7 @@ describe("carriedBundle (#1225, #1374)", () => {
     decks: [],
     lifts: [],
     summary: undefined,
+    chart: undefined,
   });
 
   it("shows the Drop button only to the flag's carrier", () => {

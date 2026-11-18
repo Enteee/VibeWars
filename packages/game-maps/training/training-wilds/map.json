@@ -11,6 +11,7 @@
   },
   "layers": 3,
   "biome": "wilds",
+  "ascentAct": null,
   "groundLayer": 1,
   "pits": [
     {
@@ -887,6 +888,7 @@
         "kind": "steam"
       }
     ],
+    "shafts": [],
     "weather": {
       "kind": "rain",
       "intensity": 0.4

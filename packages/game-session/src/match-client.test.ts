@@ -12,6 +12,8 @@ import {
   MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_STATUS_INDEX,
+  packEmblem,
+  type WireMatchReplayPart,
   type WirePlayer,
 } from "@vibewars/game-protocol";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
@@ -33,10 +35,19 @@ import {
   self,
   settle,
   startMatch,
+  cryptoTurns,
   testSignet,
   until,
 } from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
+import {
+  encodeReplay,
+  packReplay,
+  replayHash,
+  type MatchReplay,
+  type RecordedReplay,
+  type Sha256,
+} from "./replay.js";
 import type { Transport } from "./transport.js";
 import { WIRE_STATUS_IDS, playerSnapshot, statusFromWire, statusWireIndex } from "./wire.js";
 
@@ -212,12 +223,69 @@ describe("connectMatch", () => {
     await expect(refused).rejects.toMatchObject({ reason: "match-over" });
   });
 
+  describe("a match's replay (#3572)", () => {
+    const sha256: Sha256 = async (bytes) =>
+      new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    const replay: MatchReplay = {
+      buildHash: "test-build",
+      seed: "seed",
+      map: "Test Arena",
+      teamCount: 2,
+      mode: "random-arena",
+      ticks: 2,
+      overrunBy: null,
+      inputs: [[1, "intent", "player-1", { kind: "stop" }]],
+    };
+    const ENDED = { winningTeam: 1, endReason: "score", summary: [], clearSeconds: null };
+
+    async function joined() {
+      const kept: RecordedReplay[] = [];
+      const match = startMatch({ replays: { sha256, keep: (recorded) => kept.push(recorded) } });
+      await match.joinLocal();
+      const text = encodeReplay(replay);
+      const hash = await replayHash(replay, sha256);
+      const send = (parts: readonly WireMatchReplayPart[], from = match.hostTransport): void => {
+        for (const part of parts) {
+          from.send("match-replay", part, match.local.selfId);
+        }
+      };
+      return { match, kept, hash, parts: packReplay(text, hash, 100), send };
+    }
+
+    it("is kept once all its parts are in, in any order, after the end", async () => {
+      const { match, kept, hash, parts, send } = await joined();
+      expect(parts.length).toBeGreaterThan(2);
+      // Before the end it is no replay, and a stranger's never is.
+      send(parts);
+      await cryptoTurns();
+      match.hostTransport.send("ended", ENDED, match.local.selfId);
+      send(parts, match.network.join());
+      await cryptoTurns();
+      expect(kept).toEqual([]);
+
+      const [first, ...rest] = [...parts].reverse();
+      send([first, first, ...rest].flatMap((part) => (part === undefined ? [] : [part])));
+      await until(() => kept.length > 0);
+      send(parts);
+      await cryptoTurns();
+      expect(kept).toEqual([{ hash, replay }]);
+    });
+
+    it("is dropped when its text does not hash to what its parts say", async () => {
+      const { match, kept, parts, send } = await joined();
+      match.hostTransport.send("ended", ENDED, match.local.selfId);
+      send(parts.map((part, i) => (i === 0 ? { ...part, text: `~${part.text.slice(1)}` } : part)));
+      await cryptoTurns();
+      expect(kept).toEqual([]);
+    });
+  });
+
   it("gives up on a host that never answers", async () => {
     const network = createMemoryNetwork();
     network.join("host");
     const transport = network.join();
     await expect(
-      connectMatch({ transport, hostId: "host", hello: hello(), timeoutMs: 20 }),
+      connectMatch({ transport, hostId: "host", hello: hello(), timeoutMs: 20, replays: null }),
     ).rejects.toThrow(MatchTimeoutError);
   });
 
@@ -226,7 +294,13 @@ describe("connectMatch", () => {
     const host = network.join("host");
     const transport = network.join();
     await settle();
-    const joining = connectMatch({ transport, hostId: "host", hello: hello(), timeoutMs: 10_000 });
+    const joining = connectMatch({
+      transport,
+      hostId: "host",
+      hello: hello(),
+      timeoutMs: 10_000,
+      replays: null,
+    });
     await host.leave();
     await expect(joining).rejects.toThrow(HostLeftError);
   });
@@ -362,7 +436,6 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     name: "name",
     guildTag: "guildTag",
     heroRank: "heroRank",
-    guildCape: "guildCape",
     team: "team",
     x: "x",
     y: "y",
@@ -403,10 +476,11 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
   it("have one field for each field of the other", () => {
     // Every WirePlayer key is above (`satisfies`), and every
     // PlayerSnapshot key is one of the names: a field added to either
-    // without the other stops this compiling. `respawnIn` alone is no
-    // snapshot field: its team hears it on `"respawns"` (#3367).
+    // without the other stops this compiling. `respawnIn` is no
+    // snapshot field: its team hears it on `"respawns"` (#3367); nor is
+    // `guildCape`: every seat's comes once on `"capes"` (#3554).
     expectTypeOf<(typeof FIELDS)[keyof typeof FIELDS]>().toEqualTypeOf<
-      Exclude<keyof PlayerSnapshot, "respawnIn">
+      Exclude<keyof PlayerSnapshot, "respawnIn" | "guildCape">
     >();
     expect(new Set(Object.values(FIELDS)).size).toBe(Object.keys(FIELDS).length);
   });
@@ -418,7 +492,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
         { status: statusWireIndex("burning"), endsAt: 7.5, durationSeconds: 3, casterId: "p2" },
       ],
     };
-    const snapshot = playerSnapshot(wire);
+    const snapshot = playerSnapshot(wire, new Map());
     for (const [wireKey, snapshotKey] of Object.entries(FIELDS)) {
       const sent = wire[wireKey as keyof WirePlayer];
       const got = snapshot?.[snapshotKey];
@@ -434,6 +508,12 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     }
   });
 
+  it('wear the cape its id has on the host\'s last "capes", and none without one (#3554)', () => {
+    const cape = { main: "teal", trim: "white", emblem: packEmblem([]) } as const;
+    expect(playerSnapshot(WIRE_PLAYER, new Map([["p1", cape]]))?.guildCape).toEqual(cape);
+    expect(playerSnapshot(WIRE_PLAYER, new Map([["p2", cape]]))?.guildCape).toBeUndefined();
+  });
+
   it("keep a creature's owner and kind (#1052)", () => {
     const creature = {
       ownerId: "p2",
@@ -444,7 +524,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       leaderId: null,
       auraRadius: null,
     } as const;
-    expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
+    expect(playerSnapshot({ ...WIRE_PLAYER, creature }, new Map())?.creature).toEqual(creature);
   });
 
   it("keep a rat, nobody's critter (#3315)", () => {
@@ -457,7 +537,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       auraRadius: null,
       leaderId: null,
     } as const;
-    expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
+    expect(playerSnapshot({ ...WIRE_PLAYER, creature }, new Map())?.creature).toEqual(creature);
   });
 
   it("keep a pet's armed attack, and refuse one that is not a known pet attack (#1167)", () => {
@@ -473,12 +553,12 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
         auraRadius: null,
       },
     });
-    expect(playerSnapshot(pet("ranger.brutal-strike"))?.creature?.armedAttack).toEqual({
+    expect(playerSnapshot(pet("ranger.brutal-strike"), new Map())?.creature?.armedAttack).toEqual({
       skillId: "ranger.brutal-strike",
       endsAt: 12.1,
     });
-    expect(playerSnapshot(pet("ranger.no-such-skill"))).toBeUndefined();
-    expect(playerSnapshot(pet("warrior.swift-chop"))).toBeUndefined();
+    expect(playerSnapshot(pet("ranger.no-such-skill"), new Map())).toBeUndefined();
+    expect(playerSnapshot(pet("warrior.swift-chop"), new Map())).toBeUndefined();
   });
 
   it("hold the wire's creature cap to game-core's summons and map creatures (#1052, #1281)", () => {
@@ -505,7 +585,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       durationSeconds: 1,
       casterId: "p2",
     };
-    expect(playerSnapshot({ ...WIRE_PLAYER, statuses: [unknown] })).toBeUndefined();
+    expect(playerSnapshot({ ...WIRE_PLAYER, statuses: [unknown] }, new Map())).toBeUndefined();
   });
 });
 
@@ -515,7 +595,6 @@ const WIRE_PLAYER: WirePlayer = {
   name: "Mhenlo",
   guildTag: "VIBE",
   heroRank: 0,
-  guildCape: { main: "teal", trim: "white", emblem: "cross" },
   team: 1,
   x: 1,
   y: 2,
@@ -712,7 +791,13 @@ describe("connectMatch, before the host's match listens (#1805)", () => {
     const transport = network.join();
     await settle();
     const sent = vi.spyOn(transport, "send");
-    const joining = connectMatch({ transport, hostId: "host", hello: hello(), timeoutMs: 10_000 });
+    const joining = connectMatch({
+      transport,
+      hostId: "host",
+      hello: hello(),
+      timeoutMs: 10_000,
+      replays: null,
+    });
     const hellos = (): number => sent.mock.calls.filter(([type]) => type === "hello").length;
     return { hostTransport, joining, hellos };
   }
@@ -733,6 +818,7 @@ describe("connectMatch, before the host's match listens (#1805)", () => {
       publishRecord: () => undefined,
       nowSeconds: () => 0,
       signetOf: testSignet,
+      recordReplay: false,
     });
   }
 

@@ -33,6 +33,8 @@ interface ImportMetaEnv {
   readonly VITE_VIBEWARS_MENU_BACKGROUND?: string;
   /** `on` starts the tutorial at the URL's `?tutorial-station=N`, 1 for the first (#3383): e2e only. */
   readonly VITE_VIBEWARS_TUTORIAL_STATION?: string;
+  /** `on` shows the HUD's end of a match from a fixed summary at the URL's `?summary-fixture` (#3563): e2e only. */
+  readonly VITE_VIBEWARS_SUMMARY_FIXTURE?: string;
 }
 
 interface ImportMeta {

@@ -106,6 +106,7 @@ export default defineConfig({
       VITE_VIBEWARS_SPLASH: "off",
       VITE_VIBEWARS_MENU_BACKGROUND: "off",
       VITE_VIBEWARS_TUTORIAL_STATION: "on",
+      VITE_VIBEWARS_SUMMARY_FIXTURE: "on",
       VIBEWARS_BUILD: E2E_BUILD,
     },
     reuseExistingServer: false,

@@ -723,6 +723,8 @@ describe("walks and high ground (#3070)", () => {
       "centre-south-stair",
       "east-end-north-stair",
       "east-end-south-stair",
+      "west-lever-stair",
+      "east-lever-stair",
     ];
     /** A route through `through`, every other stair onto the causeway shut. */
     const only = (through: readonly string[]): Route => ({
@@ -758,6 +760,19 @@ describe("walks and high ground (#3070)", () => {
       within(
         toCentre(map, (team) =>
           only([team === 0 ? "west-end-south-stair" : "east-end-north-stair"]),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team by its own lever stair to its gatehouse lever, gates shut, within 10 % of the other (#3549)", () => {
+      const levers = [
+        { x: 2150, y: 1230 },
+        { x: 3480, y: 1570 },
+      ];
+      within(
+        toOwn(shut, levers, 3, (team) =>
+          only([team === 0 ? "west-lever-stair" : "east-lever-stair"]),
         ),
         0.1,
       );
@@ -1140,6 +1155,306 @@ describe("walks and high ground (#3070)", () => {
       const broken = ["west-rubble-wall", "east-rubble-wall"];
       within(walksByRoute(map, altar, 3, { through: [], broken }), 0.1);
       within(walksByRoute(carrier(map), altar, 3, { through: [], broken }), 0.1);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
+  describe("Cinder Sanctum", () => {
+    const loaded = loadMap("cinder-sanctum");
+    // The walks here read no zone costs, but a bot wades lava at three times the cost
+    // (HARMFUL_ZONE_COST) and takes a bridge: a route is a bridge, so the rivers are walls.
+    const map: MapData = {
+      ...loaded,
+      walls: [
+        ...loaded.walls,
+        ...(loaded.zones ?? [])
+          .filter((zone) => zone.kind === "molten")
+          .map(({ area, layer }) => ({ ...area, layer })),
+      ],
+    };
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const sanctum = { x: 2812, y: 1400 };
+    const relics = [
+      { x: 900, y: 1400 },
+      { x: 4724, y: 1400 },
+    ];
+    const ghosts = [
+      { x: 700, y: 860 },
+      { x: 4924, y: 1940 },
+    ];
+    /** The map with each team's seats moved onto the foe's relic spawn: the carrier's walk. */
+    const carrier = (on: MapData): MapData => ({
+      ...on,
+      spawnPoints: relics.map((_, team) => ({
+        team,
+        layer: 1,
+        position: relics[1 - team] ?? sanctum,
+      })),
+    });
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Each team's walk to its own `to` on `layer`, by a route of its own. */
+    const walks = (
+      on: MapData,
+      to: readonly Vec2[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? sanctum, layer, (other) =>
+            other === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    // Every bank stair of both rivers, and the passage: a route opens only its own.
+    const banks = {
+      north: ["north-bridge-west-bank", "north-bridge-east-bank"],
+      causeway: ["causeway-west-bank", "causeway-east-bank"],
+      south: ["south-bridge-west-bank", "south-bridge-east-bank"],
+    };
+    const passage = ["passage-north-steps", "passage-south-steps"];
+    const allBanks = Object.values(banks).flat();
+    /**
+     * Team 1's route over `bridge`, and team 2's turned: the study's north bridge is team 1's
+     * north and, turned half round, team 2's south.
+     */
+    const over = (
+      bridge: keyof typeof banks,
+      extra: (team: number) => readonly string[] = () => [],
+    ) => {
+      const turned = { north: "south", causeway: "causeway", south: "north" } as const;
+      return (team: number): Route => {
+        const through = [...banks[team === 0 ? bridge : turned[bridge]], ...extra(team)];
+        return { through, shut: [...allBanks.filter((id) => !through.includes(id)), ...passage] };
+      };
+    };
+    const routes = [
+      ["the causeway", over("causeway")],
+      ["the north bridge", over("north")],
+      ["the south bridge", over("south")],
+    ] as const;
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+
+    it.each(routes)(
+      "walks each team to the sanctum by %s within 10 % of the other, in under 25 s",
+      (_, route) => {
+        // To the sanctum a team crosses its own river only.
+        const own = (team: number): Route => {
+          const { through, shut: closed = [] } = route(team);
+          const mine = through.filter((id) => id.includes(team === 0 ? "west" : "east"));
+          return { through: mine, shut: closed };
+        };
+        const walked = walks(map, [sanctum, sanctum], 3, own);
+        within(walked, 0.1);
+        for (const walk of walked) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it.each(routes)(
+      "walks each thief to the foe's relic by %s within 10 % of the other",
+      (_, route) => {
+        within(walks(map, [relics[1] ?? sanctum, relics[0] ?? sanctum], 1, route), 0.1);
+      },
+    );
+
+    it.each(routes)(
+      "walks each carrier from the foe's relic to its own ghost by %s within 10 % of the other",
+      (_, route) => {
+        within(walks(carrier(map), ghosts, 1, route), 0.1);
+      },
+    );
+
+    it("walks each team to its own relic spawn within 10 % of the other", () => {
+      within(
+        [0, 1].map((team) => walksTo(map, relics[team] ?? sanctum, 1)[team] ?? 0),
+        0.1,
+      );
+    });
+
+    it("keeps all three bridges for every thief and carrier with the passage doors shut, and the passage shut with them", () => {
+      for (const [, route] of routes) {
+        within(walks(shut, [relics[1] ?? sanctum, relics[0] ?? sanctum], 1, route), 0.1);
+        within(walks(carrier(shut), ghosts, 1, route), 0.1);
+      }
+      // From the north mouth's landing to the south one's: under the sanctum while the doors are open.
+      const atMouth = (on: MapData): MapData => ({
+        ...on,
+        spawnPoints: [0, 1].map((team) => ({ team, layer: 1, position: { x: 2812, y: 680 } })),
+      });
+      const south = { x: 2812, y: 2120 };
+      expect(walksByRoute(atMouth(map), south, 1, { through: passage })[0]).toBeGreaterThan(0);
+      expect(() => walksByRoute(atMouth(shut), south, 1, { through: passage })).toThrow();
+    });
+
+    it("keeps the walks within 10 % with the doors open and the ash walls broken", () => {
+      const broken = ["south-west-ash-wall", "north-east-ash-wall"];
+      within(walksByRoute(map, sanctum, 3, { through: [], broken }), 0.1);
+      within(
+        walks(carrier(map), ghosts, 1, () => ({ through: [], broken })),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
+  // Scarred Earth (#3440): mirrored east to west, so every walk below is the same both ways. The
+  // centre is on the great deck (layer 3), up the great hulk's own-side stair, then the deck's.
+  describe("Scarred Earth", () => {
+    const map = loadMap("scarred-earth");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const centre = { x: 2700, y: 1400 };
+    const own = ["west", "east"];
+    /** A team's own side, and the far one. */
+    const side = (team: number, far = false): string => own[far ? 1 - team : team] ?? "";
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Up the great hulk's stair on `face` and the deck's on the same face, the other face shut. */
+    const up = (face: (team: number) => string) => (team: number) => {
+      const other = face(team) === "west" ? "east" : "west";
+      return {
+        through: [`great-hulk-${face(team)}-stair`, `great-deck-${face(team)}-stair`],
+        shut: [`great-hulk-${other}-stair`, `great-deck-${other}-stair`],
+      };
+    };
+    /**
+     * A cut across each half of the field, on the ground and the crater floors under it, from the
+     * north or south edge to the middle of the field: the walk to the great hulk goes round its
+     * open end, along the other lane.
+     */
+    const cut = (north: boolean): MapData => ({
+      ...map,
+      walls: [
+        ...map.walls,
+        ...[1700, map.width - 1720].flatMap((x) =>
+          [0, 1].map((layer) => ({
+            kind: "rect" as const,
+            x,
+            y: north ? 1100 : 0,
+            width: 20,
+            height: north ? map.height - 1100 : 1700,
+            layer,
+          })),
+        ),
+      ],
+    });
+    /** A hulk point's walk by the stair on `face` of `hulk`, its other stair shut. */
+    const byLane =
+      (hulk: (team: number) => string, face: "north" | "south") =>
+      (team: number): Route => ({
+        through: [`${hulk(team)}-${face}-stair`],
+        shut: [`${hulk(team)}-${face === "north" ? "south" : "north"}-stair`],
+      });
+    const points = [
+      ["own north", (team: number) => `north-${side(team)}-hulk`, { x: 1750, y: 640 }],
+      ["own south", (team: number) => `south-${side(team)}-hulk`, { x: 1750, y: 2160 }],
+      ["far north", (team: number) => `north-${side(team, true)}-hulk`, { x: 1750, y: 640 }],
+      ["far south", (team: number) => `south-${side(team, true)}-hulk`, { x: 1750, y: 2160 }],
+    ] as const;
+    /** Where team `team` finds a point given by its west image: its own, or the far team's. */
+    const at = (team: number, point: { x: number; y: number }, far: boolean) => {
+      const west = team === 0 ? !far : far;
+      return west ? point : { x: map.width - point.x, y: point.y };
+    };
+    /** Each team's walk to its own image of `point` by `route`. */
+    const toPoint = (
+      on: MapData,
+      point: { x: number; y: number },
+      far: boolean,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, at(team, point, far), 2, (other) =>
+            other === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+
+    it.each([
+      ["the west approach", map],
+      ["the north lane", cut(false)],
+      ["the south lane", cut(true)],
+    ])("walks each team to the centre by %s within 10 % of the other, in under 25 s", (_, on) => {
+      const walks = walksByRoute(
+        on,
+        centre,
+        3,
+        up((team) => side(team)),
+      );
+      within(walks, 0.1);
+      for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+    });
+
+    it("walks each team to the centre round by the far stair within 10 % of the other", () => {
+      within(
+        walksByRoute(
+          map,
+          centre,
+          3,
+          up((team) => side(team, true)),
+        ),
+        0.1,
+      );
+    });
+
+    it.each(
+      points.flatMap(([name, hulk, point]) =>
+        (["north", "south"] as const).map((face) => {
+          const outer = name.endsWith("north") === (face === "north");
+          return [name, outer ? "outer" : "inner", hulk, point, face] as const;
+        }),
+      ),
+    )(
+      "walks each team to the %s point by the %s lane within 10 % of the other",
+      (name, _, hulk, point, face) => {
+        within(toPoint(map, point, name.startsWith("far"), byLane(hulk, face)), 0.1);
+      },
+    );
+
+    it("walks each team to the centre and every point within 10 % of the other", () => {
+      within(walksTo(map, centre, 3), 0.1);
+      for (const [name, , point] of points) {
+        const far = name.startsWith("far");
+        within(
+          [0, 1].map((team) => walksTo(map, at(team, point, far), 2)[team] ?? 0),
+          0.1,
+        );
+      }
+    });
+
+    it("keeps every walk within 10 % as loaded, the trench gates shut and the palisades standing", () => {
+      const shut: MapData = {
+        ...map,
+        walls: [...map.walls, ...map.gates.map(({ wall }) => wall)],
+      };
+      within(
+        walksByRoute(
+          shut,
+          centre,
+          3,
+          up((team) => side(team)),
+        ),
+        0.1,
+      );
+      for (const [name, hulk, point] of points) {
+        for (const face of ["north", "south"] as const) {
+          within(toPoint(shut, point, name.startsWith("far"), byLane(hulk, face)), 0.1);
+        }
+      }
+    });
+
+    it("keeps the walks within 10 % with the gates open and the palisades broken", () => {
+      const broken = ["west-palisade", "east-palisade"];
+      within(walksByRoute(map, centre, 3, { through: [], broken }), 0.1);
     });
 
     it("gives the teams high ground within 25 % of each other", () => {

@@ -359,7 +359,7 @@ export function createMusicFollower(
       if (share === null && sharing === null) {
         return;
       }
-      // Never asked to stop: the old host goes, and what it ran with it.
+      // The old host fades out and goes, and what it ran with it.
       player.renew();
       playingId = null;
       sharing = null;

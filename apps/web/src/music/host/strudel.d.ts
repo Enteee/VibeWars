@@ -8,6 +8,8 @@ declare module "@strudel/core" {
   }
   export interface Hap {
     readonly whole: { readonly begin: Fraction } | undefined;
+    /** In cycles: the whole, or the `duration` its value sets, times its `clip`. */
+    readonly duration: Fraction;
     readonly value: unknown;
     wholeOrPart(): { readonly begin: Fraction };
     withValue(func: (value: unknown) => unknown): Hap;
@@ -100,6 +102,8 @@ declare module "@strudel/webaudio" {
     cps: number,
   ): Promise<void>;
   export function initAudio(options?: object): Promise<void>;
+  /** A registered sound: a synth, or a sample bank `samples()` loaded. */
+  export function getSound(s: string): { readonly data: { readonly type?: string } } | undefined;
   export function getSuperdoughAudioController(): {
     readonly output: { readonly destinationGain: GainNode };
   };

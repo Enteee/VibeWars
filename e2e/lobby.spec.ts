@@ -124,6 +124,27 @@ test("a second player joins with the invite link and both see each other", async
   }
 });
 
+test("a guest renamed in Options shows under the new name in the lobby at once (#3548)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    const invite = await hostLobby(host, "Host");
+    await joinLobby(guest, "Guest", invite);
+    await expect(host.locator(".lobby-panel")).toContainText("Guest");
+
+    await namePlayer(guest, "Renamed");
+    await expect(host.locator(".lobby-panel")).toContainText("Renamed");
+    // Still the host's lobby: the guest was not sent anywhere.
+    await expect(guest.locator(".lobby-panel")).toContainText("Host");
+    await expect(guest.locator(".lobby-panel")).toContainText("Renamed");
+  } finally {
+    await context.close();
+  }
+});
+
 test("a host with a guest who joins another lobby is asked once, and its guest follows it there (#1553)", async ({
   browser,
 }) => {

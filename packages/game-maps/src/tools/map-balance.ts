@@ -416,6 +416,20 @@ function pathByRoute(
   return path;
 }
 
+/**
+ * The ids of the transitions each team's shortest walk from its home spawn
+ * to its own `to[team]` on `layer` passes, by team (#3549).
+ */
+export function transitionsWalked(map: MapData, to: readonly Vec2[], layer: number): string[][] {
+  const finder = layeredFinder(map, RULESET.collision.playerRadius);
+  return Array.from({ length: map.teams }, (_, team) => {
+    const point = to[team];
+    if (point === undefined) throw new Error(`${map.id}: no point for team ${String(team)}`);
+    const path = pathTo(map, finder, team, point, layer, "");
+    return map.transitions.filter(({ area }) => crosses(path, area)).map(({ id }) => id);
+  });
+}
+
 /** `team`'s path from its home spawn to `to` on `layer`, the spawn first; throws if there is none. */
 function pathTo(
   map: MapData,

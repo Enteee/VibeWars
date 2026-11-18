@@ -64,6 +64,8 @@ export const CHANNELS = [
   "adrenaline",
   "chain",
   "ended",
+  "match-replay",
+  "match-chart",
   "bye",
   "lobby-join",
   "lobby-challenge",
@@ -100,6 +102,7 @@ export const CHANNELS = [
   "strokes",
   "traps",
   "respawns",
+  "capes",
   "chat",
   "chat-line",
   "shared-track",
@@ -205,23 +208,77 @@ export const CAPE_COLOURS = [
   "pink",
 ] as const;
 
-/** A guild cape's emblems (#1422): eight plain shapes. */
-export const CAPE_EMBLEMS = [
-  "disc",
-  "bar",
-  "chevron",
-  "diamond",
-  "triangle",
-  "cross",
-  "ring",
-  "half-disc",
-] as const;
+/** A guild emblem's side in pixels (#3554): it is a square grid of `EMBLEM_GRID`². */
+export const EMBLEM_GRID = 16;
 
-/** A guild cape (#1422): its cloth, its trim and the emblem on it, in the trim colour. */
+/** An emblem's length on the wire: 128 bytes as base64url without padding. */
+const EMBLEM_TEXT_LENGTH = 171;
+
+const BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+/**
+ * An emblem grid (#3554) as the wire carries it: `EMBLEM_GRID`² pixels,
+ * row-major, each 0 for empty or `i` for `CAPE_COLOURS[i - 1]`, packed
+ * two to a byte, high nibble first, as base64url without padding, the
+ * convention of the public keys. Pure, so this package needs neither
+ * `Buffer` nor `atob`.
+ */
+export function packEmblem(pixels: readonly number[]): string {
+  const bytes: number[] = [];
+  for (let index = 0; index < EMBLEM_GRID * EMBLEM_GRID; index += 2) {
+    bytes.push(((pixels[index] ?? 0) << 4) | (pixels[index + 1] ?? 0));
+  }
+  let text = "";
+  for (let index = 0; index < bytes.length; index += 3) {
+    const chunk =
+      ((bytes[index] ?? 0) << 16) | ((bytes[index + 1] ?? 0) << 8) | (bytes[index + 2] ?? 0);
+    const digits = Math.min(4, Math.ceil(((bytes.length - index) * 8) / 6));
+    for (let digit = 0; digit < digits; digit += 1) {
+      text += BASE64URL.charAt((chunk >> (18 - digit * 6)) & 63);
+    }
+  }
+  return text;
+}
+
+/**
+ * The pixels of a packed emblem, or `undefined` for a string of the wrong
+ * length, a character outside base64url, trailing bits that are not 0
+ * (so each grid has one spelling), or a pixel past `CAPE_COLOURS`.
+ */
+export function unpackEmblem(text: string): number[] | undefined {
+  if (text.length !== EMBLEM_TEXT_LENGTH) {
+    return undefined;
+  }
+  const bytes: number[] = [];
+  let bits = 0;
+  let held = 0;
+  for (const char of text) {
+    const digit = BASE64URL.indexOf(char);
+    if (digit < 0) {
+      return undefined;
+    }
+    held = ((held << 6) | digit) & 0xfff;
+    bits += 6;
+    if (bits >= 8) {
+      bits -= 8;
+      bytes.push((held >> bits) & 0xff);
+    }
+  }
+  if ((held & ((1 << bits) - 1)) !== 0) {
+    return undefined;
+  }
+  const pixels: number[] = [];
+  for (const byte of bytes) {
+    pixels.push(byte >> 4, byte & 15);
+  }
+  return pixels.every((pixel) => pixel <= CAPE_COLOURS.length) ? pixels : undefined;
+}
+
+/** A guild cape (#1422): its cloth, its trim, and its emblem grid as `packEmblem` packs it (#3554). */
 export interface WireCape {
   readonly main: (typeof CAPE_COLOURS)[number];
   readonly trim: (typeof CAPE_COLOURS)[number];
-  readonly emblem: (typeof CAPE_EMBLEMS)[number];
+  readonly emblem: string;
 }
 
 /**
@@ -518,8 +575,6 @@ export interface WirePlayer {
   readonly guildTag: string | null;
   /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
   readonly heroRank: number;
-  /** Worn behind the body (#1422); `null` for none, and whenever `guildTag` is. */
-  readonly guildCape: WireCape | null;
   /** A match team, or `MASTERLESS_WIRE_TEAM` for a masterless creature (#2092). */
   readonly team: WireTeam | typeof MASTERLESS_WIRE_TEAM;
   readonly x: number;
@@ -1007,6 +1062,23 @@ export interface WireRespawns {
   readonly respawns: readonly WireRespawn[];
 }
 
+/** One seated player's cape (#3554). */
+export interface WireSeatCape {
+  readonly id: string;
+  readonly cape: WireCape;
+}
+
+/**
+ * Host to its players and its observers (#3554): every seat's cape, a
+ * full replacement list; a seat not in it wears none. An emblem is 171
+ * bytes, too many to send per body per snapshot, and a seat's cape never
+ * changes in a match, so it is sent after a welcome or an observe, and
+ * whenever a seat with a cape sits down.
+ */
+export interface WireCapes {
+  readonly capes: readonly WireSeatCape[];
+}
+
 /** Who a chat line reaches (#479): everyone in the lobby, or your team. */
 export const CHAT_CHANNELS = ["all", "team"] as const;
 
@@ -1065,6 +1137,69 @@ export interface WireEnded {
   readonly summary: readonly WireSummaryRow[];
   /** Seconds on the Elite Zaishen Battle's clock (#2692); `null` in any other match. */
   readonly clearSeconds: number | null;
+}
+
+/** The most samples a `WireMatchChart` series holds (#3564). */
+export const MAX_CHART_SAMPLES = 120;
+
+/** The most events a `WireMatchChart` holds (#3564). */
+export const MAX_CHART_EVENTS = 200;
+
+/** What changed hands: a shrine, the flag stand or the altar (#3564). */
+export const CHART_OBJECTIVES = ["point", "stand", "altar"] as const;
+
+/** One thing that happened in a match, `t` whole seconds after it began (#3564). */
+export type WireChartEvent =
+  | { readonly t: number; readonly kind: "death"; readonly id: string; readonly by: string | null }
+  | { readonly t: number; readonly kind: "resurrected"; readonly id: string }
+  | {
+      readonly t: number;
+      readonly kind: "interrupt";
+      readonly by: string;
+      readonly id: string;
+      readonly skillId: string;
+    }
+  | {
+      readonly t: number;
+      readonly kind: "objective";
+      readonly team: WireTeam;
+      readonly what: (typeof CHART_OBJECTIVES)[number];
+    };
+
+/** One player's series (#3564): every array one entry per sample. */
+export interface WireChartSeries {
+  readonly id: string;
+  /** Damage dealt to foes, taken and healing done; cumulative whole numbers. */
+  readonly dealt: readonly number[];
+  readonly taken: readonly number[];
+  readonly healed: readonly number[];
+  /** Percent of maximum, 0 to 100. */
+  readonly health: readonly number[];
+  readonly energy: readonly number[];
+}
+
+/**
+ * A match's time series and events (#3564), for the charts after it. A
+ * sample every `period` seconds; `dropped` events past `MAX_CHART_EVENTS`.
+ */
+export interface WireMatchChart {
+  readonly period: number;
+  readonly players: readonly WireChartSeries[];
+  readonly events: readonly WireChartEvent[];
+  readonly dropped: number;
+}
+
+/** The most parts a `WireMatchChart` is sent in. */
+export const MAX_CHART_PARTS = 16;
+
+/**
+ * Host to every client, right after `ended` (#3564): one of `parts`
+ * messages that together are the match's `WireMatchChart`. A whole one
+ * is too big for one message (#403), so each part carries some of its
+ * series and events, and every part the same `period` and `dropped`.
+ */
+export interface WireMatchChartPart extends WireMatchChart {
+  readonly parts: number;
 }
 
 /**
@@ -1322,8 +1457,6 @@ export interface WireLobbyPlayer {
   readonly guildTag: string | null;
   /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
   readonly heroRank: number;
-  /** As `WirePlayer.guildCape` (#1422). */
-  readonly guildCape: WireCape | null;
   /** `null` spectates. */
   readonly team: WireTeam | null;
   readonly ready: boolean;
@@ -1524,6 +1657,17 @@ export type WireLobbyCommand =
       readonly size: number;
       readonly memberKey: string | null;
       readonly build: JsonValue;
+    }
+  /**
+   * The member's own name and guild, changed in Options (#3548): as its
+   * `PeerLobbyJoin` carried them, sanitised by the host as at a join.
+   */
+  | {
+      readonly kind: "set-profile";
+      readonly name: string;
+      readonly guildTag: string | null;
+      readonly heroRank: number;
+      readonly guildCape: WireCape | null;
     };
 
 /**
@@ -1756,14 +1900,10 @@ export function parseWireCape(value: unknown): WireCape | undefined {
     Object.keys(raw).length === 3 &&
     isOneOf(raw.main, CAPE_COLOURS) &&
     isOneOf(raw.trim, CAPE_COLOURS) &&
-    isOneOf(raw.emblem, CAPE_EMBLEMS)
+    typeof raw.emblem === "string" &&
+    unpackEmblem(raw.emblem) !== undefined
     ? { main: raw.main, trim: raw.trim, emblem: raw.emblem }
     : undefined;
-}
-
-/** A host's cape (#1422): `null` or a cape; anything else is malformed. */
-function parseNullableCape(value: unknown): WireCape | null | undefined {
-  return value === null ? null : parseWireCape(value);
 }
 
 function isRejoinToken(value: unknown): value is string {
@@ -2018,6 +2158,21 @@ export function parseWireRespawns(value: unknown): WireRespawns | undefined {
   const respawns =
     raw === undefined ? undefined : parseArray(raw.respawns, MAX_WIRE_ACTORS, parseRespawn);
   return respawns === undefined ? undefined : { respawns };
+}
+
+function parseSeatCape(value: unknown): WireSeatCape | undefined {
+  const raw = fields(value);
+  const cape = raw === undefined ? undefined : parseWireCape(raw.cape);
+  return raw !== undefined && isString(raw.id) && cape !== undefined
+    ? { id: raw.id, cape }
+    : undefined;
+}
+
+export function parseWireCapes(value: unknown): WireCapes | undefined {
+  const raw = fields(value);
+  const capes =
+    raw === undefined ? undefined : parseArray(raw.capes, MAX_LOBBY_PLAYERS, parseSeatCape);
+  return capes === undefined ? undefined : { capes };
 }
 
 export function parsePeerChat(value: unknown): PeerChat | undefined {
@@ -2335,15 +2490,13 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
   }
   const statuses = parseArray(raw.statuses, MAX_WIRE_STATUSES, parseStatus);
   const creature = raw.creature === null ? null : parseCreature(raw.creature);
-  const guildCape = parseNullableCape(raw.guildCape);
-  return statuses === undefined || creature === undefined || guildCape === undefined
+  return statuses === undefined || creature === undefined
     ? undefined
     : {
         id: raw.id,
         name: raw.name,
         guildTag: raw.guildTag,
         heroRank: raw.heroRank,
-        guildCape,
         team: raw.team,
         x: raw.x,
         y: raw.y,
@@ -2916,6 +3069,129 @@ export function parseWireEnded(value: unknown, teamCount: WireTeamCount): WireEn
     : undefined;
 }
 
+function isPercent(value: unknown): value is number {
+  return isCount(value) && value <= 100;
+}
+
+function parseChartSeries(
+  value: unknown,
+  roster: ReadonlySet<string>,
+): WireChartSeries | undefined {
+  const raw = fields(value);
+  if (raw === undefined || !isString(raw.id) || !roster.has(raw.id)) {
+    return undefined;
+  }
+  const counts = (series: unknown): number[] | undefined =>
+    parseArray(series, MAX_CHART_SAMPLES, (item) => (isCount(item) ? item : undefined));
+  const percents = (series: unknown): number[] | undefined =>
+    parseArray(series, MAX_CHART_SAMPLES, (item) => (isPercent(item) ? item : undefined));
+  const dealt = counts(raw.dealt);
+  const taken = counts(raw.taken);
+  const healed = counts(raw.healed);
+  const health = percents(raw.health);
+  const energy = percents(raw.energy);
+  return dealt !== undefined &&
+    taken !== undefined &&
+    healed !== undefined &&
+    health !== undefined &&
+    energy !== undefined
+    ? { id: raw.id, dealt, taken, healed, health, energy }
+    : undefined;
+}
+
+function parseChartEvent(
+  value: unknown,
+  roster: ReadonlySet<string>,
+  teamCount: WireTeamCount,
+): WireChartEvent | undefined {
+  const raw = fields(value);
+  if (raw === undefined || !isCount(raw.t)) {
+    return undefined;
+  }
+  const t = raw.t;
+  const member = (id: unknown): id is string => isString(id) && roster.has(id);
+  switch (raw.kind) {
+    case "death":
+      return member(raw.id) && (raw.by === null || member(raw.by))
+        ? { t, kind: "death", id: raw.id, by: raw.by }
+        : undefined;
+    case "resurrected":
+      return member(raw.id) ? { t, kind: "resurrected", id: raw.id } : undefined;
+    case "interrupt":
+      return member(raw.by) && member(raw.id) && isString(raw.skillId)
+        ? { t, kind: "interrupt", by: raw.by, id: raw.id, skillId: raw.skillId }
+        : undefined;
+    case "objective":
+      return isTeam(raw.team) && raw.team < teamCount && isOneOf(raw.what, CHART_OBJECTIVES)
+        ? { t, kind: "objective", team: raw.team, what: raw.what }
+        : undefined;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * One part of a match's charts (#3564), between the ids of `roster`, its
+ * summary's. `joinMatchChart` checks the parts against each other.
+ */
+export function parseWireMatchChartPart(
+  value: unknown,
+  roster: ReadonlySet<string>,
+  teamCount: WireTeamCount,
+): WireMatchChartPart | undefined {
+  const raw = fields(value);
+  if (
+    raw === undefined ||
+    !isCount(raw.period) ||
+    raw.period < 1 ||
+    !isCount(raw.dropped) ||
+    !isCount(raw.parts) ||
+    raw.parts < 1 ||
+    raw.parts > MAX_CHART_PARTS
+  ) {
+    return undefined;
+  }
+  const players = parseArray(raw.players, roster.size, (item) => parseChartSeries(item, roster));
+  const events = parseArray(raw.events, MAX_CHART_EVENTS, (item) =>
+    parseChartEvent(item, roster, teamCount),
+  );
+  return players !== undefined && events !== undefined
+    ? { period: raw.period, parts: raw.parts, players, events, dropped: raw.dropped }
+    : undefined;
+}
+
+/**
+ * The whole chart, once every one of its parts has come: `undefined`
+ * while one is missing, and for parts that disagree, name a player twice,
+ * hold series of different lengths or more than `MAX_CHART_EVENTS`.
+ */
+export function joinMatchChart(parts: readonly WireMatchChartPart[]): WireMatchChart | undefined {
+  const first = parts[0];
+  if (
+    parts.length !== first?.parts ||
+    parts.some(
+      (part) =>
+        part.parts !== first.parts ||
+        part.period !== first.period ||
+        part.dropped !== first.dropped,
+    )
+  ) {
+    return undefined;
+  }
+  const players = parts.flatMap((part) => part.players);
+  const events = parts.flatMap((part) => part.events);
+  const length = players[0]?.dealt.length ?? 0;
+  return events.length <= MAX_CHART_EVENTS &&
+    new Set(players.map(({ id }) => id)).size === players.length &&
+    players.every((series) =>
+      [series.dealt, series.taken, series.healed, series.health, series.energy].every(
+        (samples) => samples.length === length,
+      ),
+    )
+    ? { period: first.period, players, events, dropped: first.dropped }
+    : undefined;
+}
+
 /** The `"refused"` channel: a `CastRefusedMessage`, to the caster alone. */
 export function parseCastRefused(value: unknown): CastRefusedMessage | undefined {
   const raw = fields(value);
@@ -3262,7 +3538,6 @@ function parseLobbyTeam(value: unknown): LobbyTeam | null | undefined {
 function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
   const raw = fields(value);
   const team = parseNullableTeam(raw?.team);
-  const guildCape = parseNullableCape(raw?.guildCape);
   // A bot has no key, and every human one (#2706).
   const playerPubkey =
     raw?.bot === true
@@ -3277,7 +3552,6 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     isString(raw.name) &&
     isNullableString(raw.guildTag) &&
     isHeroRank(raw.heroRank) &&
-    guildCape !== undefined &&
     team !== undefined &&
     typeof raw.ready === "boolean" &&
     typeof raw.isHost === "boolean" &&
@@ -3289,7 +3563,6 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         name: raw.name,
         guildTag: raw.guildTag,
         heroRank: raw.heroRank,
-        guildCape,
         team,
         ready: raw.ready,
         isHost: raw.isHost,
@@ -3502,6 +3775,19 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
           }
         : undefined;
     }
+    case "set-profile": {
+      // As `parsePeerLobbyJoin` reads the same four fields.
+      const guildTag = parseRawGuildTag(raw.guildTag);
+      return typeof raw.name === "string" && guildTag !== undefined && isHeroRank(raw.heroRank)
+        ? {
+            kind: "set-profile",
+            name: raw.name.slice(0, MAX_WIRE_TEXT),
+            guildTag,
+            heroRank: raw.heroRank,
+            guildCape: parseWireCape(raw.guildCape) ?? null,
+          }
+        : undefined;
+    }
     default:
       return undefined;
   }
@@ -3553,5 +3839,38 @@ export function parseWireMatchStart(value: unknown): WireMatchStart | undefined 
     isString(raw.matchId) &&
     typeof raw.teamPlanRejected === "boolean"
     ? { mapId: raw.mapId, matchId: raw.matchId, teamPlanRejected: raw.teamPlanRejected }
+    : undefined;
+}
+
+/** The most parts a match's replay is sent in (#3572): 32 M characters, 5000 a part. */
+export const MAX_REPLAY_PARTS = 6400;
+
+/**
+ * Host to each player, after `ended` (#3572): one of `of` slices of the
+ * match's replay, encoded. Joined in `part` order, the slices are the
+ * text whose sha256 is `hash`, hex. The replay itself is game-session's.
+ */
+export interface WireMatchReplayPart {
+  readonly hash: string;
+  readonly part: number;
+  readonly of: number;
+  readonly text: string;
+}
+
+/** A replay part, or `undefined`: its text bounded by one message (#403). */
+export function parseWireMatchReplayPart(value: unknown): WireMatchReplayPart | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    typeof raw.hash === "string" &&
+    /^[0-9a-f]{64}$/.test(raw.hash) &&
+    isCount(raw.of) &&
+    raw.of >= 1 &&
+    raw.of <= MAX_REPLAY_PARTS &&
+    isCount(raw.part) &&
+    raw.part < raw.of &&
+    typeof raw.text === "string" &&
+    raw.text.length > 0 &&
+    raw.text.length <= 16 * 1024
+    ? { hash: raw.hash, part: raw.part, of: raw.of, text: raw.text }
     : undefined;
 }

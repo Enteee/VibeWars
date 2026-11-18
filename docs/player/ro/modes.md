@@ -162,6 +162,8 @@ La 8 minute câștigă cele mai multe puncte, iar o egalitate revine ultimei ech
 a marcat. Fiecare bază își ridică morții și fantoma la fiecare 2 minute. Boții merg
 împreună după relicva inamicului și o aduc acasă.
 
+Cinder Sanctum (8v8, 5600x2800) îl joacă: un templu pe coasta unui vulcan, între două râuri de lavă. Treci pe un pod sau pe dig până la sanctuarul de pe curtea lui; o pârghie din curte deschide pasajul ascuns de sub sanctuar, iar zidurile de cenușă pot fi sparte. Lava arde.
+
 ## Regele dealului
 
 **Condu-ți Eroul Fantomatic pe altar și ține-l.** Fiecare echipă are un **Erou
@@ -261,8 +263,7 @@ Boții se împrăștie pe sanctuarele pe care echipa ta nu le deține încă și
 până sunt cucerite. Un inamic aflat la distanță de vrajă nu îi trage de acolo: urcă pe
 un sanctuar la îndemână și luptă de pe el.
 
-Se joacă pe Scarred Earth: fiecare sanctuar stă într-un cerc spart de ziduri, deschis
-la vest și la est.
+Se joacă pe Scarred Earth (4v4 și 8v8, 5400x2800): un câmp de luptă ciuruit de cratere, la amurg. Sanctuarele stau pe turnuri de asediu distruse, cel din mijloc pe puntea turnului mare, fiecare lângă un crater; manete de pe turnuri deschid două tranșee sub câmp, iar palisadele distruse pot fi sparte.
 
 ## Lobby de echipă
 

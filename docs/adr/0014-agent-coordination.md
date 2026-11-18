@@ -192,6 +192,18 @@ The other three are worth naming because they are design-level, not typos:
   exceptional; an `ECONNRESET` killed the process. Network failures now retry
   with backoff while Telegram-level errors still propagate.
 
+### Branch pruning (#3533)
+
+The repository collects a remote branch per pull request. hubd prunes them
+(`scripts/bots/hub-branches.mjs`): heads of merged PRs, heads of PRs closed
+unmerged over 14 days ago, `bot/*` branches already in main, and `bot/*`
+branches idle for 14 days. Branches of open PRs, `main` and `release/*` are
+never touched. Agents never delete: the `--delete-branch` ban stays, because
+a branch an agent deletes can be work another agent was about to push. Only
+hubd deletes, over REST with its own credential, and re-reads each ref just
+before so a branch pushed to since is kept. `hub branch prune --dry-run` shows
+what would go; the manager's `hub branch prune` runs the daily sweep now.
+
 ## Alternatives Considered
 
 - **One shared bot token, all roles posting through it.** Simpler to

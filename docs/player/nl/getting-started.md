@@ -181,8 +181,9 @@ tot een dunne band op je rand als je stilstaat en wappert achter je aan als je
 beweegt. Ook je personages in het menu laten hem zien. **Geen cape** doet hem
 af.
 
-Een wijziging geldt vanaf de volgende lobby waar je binnenkomt, of je volgende
-nieuwe: in een lobby waar je al in zit, houd je wat je had toen je erin kwam.
+Een wijziging geldt meteen voor de lobby waar je in zit.
+
+**Teken je eigen embleem.** **Embleem bewerken**, onder de start-emblemen, opent op hun plek een raster van 16×16. Kies een kleur of **Leeg** en teken met het **Potlood**, gum uit met de **Gum** of kleur een vlak met **Vullen**. **Spiegelen** schildert de linker- en rechterhelft tegelijk. **Wissen** maakt het raster leeg en **Ongedaan** gaat een stap terug. Het kleine beeld naast het raster toont het embleem zo groot als in een match. **Klaar** houdt het, **Annuleren** gooit de tekening weg. Pijltjestoetsen en spatie tekenen ook met het toetsenbord.
 
 **Gildelink kopiëren**, onder de capeontwerper, kopieert een link met je tag en cape. Wie hem opent, krijgt de vraag **Lid worden van gilde [VIBE]?**: **Lid worden** geeft diegene je tag en cape, **Nee** verandert niets. Iedereen kan zo'n link sturen en niemand is eigenaar van een tag, dus het spel vraagt het altijd eerst.
 

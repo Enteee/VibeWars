@@ -168,6 +168,8 @@ voorsprong wint meteen**. Op 8 minuten wint de meeste punten, en bij gelijke sta
 het team dat het laatst scoorde. Elke basis reanimeert zijn doden, en zijn geest,
 elke 2 minuten. Bots gaan samen op het vijandelijke relikwie af en brengen het thuis.
 
+Cinder Sanctum (8v8, 5600x2800) speelt het: een tempel op de flank van een vulkaan tussen twee lavarivieren. Steek over via een brug of de dam naar het heiligdom op zijn voorplein; een hendel op het voorplein opent de verborgen gang onder het heiligdom, en aswanden kun je kapotslaan. Lava brandt.
+
 ## King of the Hill
 
 **Leid je Spookheld op het altaar, en houd het vast.** Elk team heeft een
@@ -260,8 +262,7 @@ Bots verspreiden zich over de schrijnen die je team nog niet heeft en blijven er
 staan tot ze zijn ingenomen. Een vijand binnen spreukbereik trekt ze er niet vanaf:
 ze stappen op een schrijn binnen bereik en vechten van daaruit.
 
-Scarred Earth speelt het: elk schrijn staat in een gebroken ring van muren, open aan
-west- en oostkant.
+Scarred Earth (4v4 en 8v8, 5400x2800) speelt het: een met kraters bezaaid slagveld in de schemering. De schrijnen staan op verwoeste belegeringstorens, het middelste op het dek van de grote toren, elk naast een krater; hendels op de torens openen twee loopgraven onder het veld, en verwoeste palissaden kun je kapotslaan.
 
 ## Teamlobby
 

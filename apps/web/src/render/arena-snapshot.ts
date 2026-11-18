@@ -24,6 +24,7 @@ import type {
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
 import type {
+  AscentAct,
   Biome,
   MapAtmosphere,
   MapBounds,
@@ -252,6 +253,8 @@ export interface MapStructure {
   readonly layerCount: number;
   /** What it is drawn in (#3172); a map of one layer is drawn flat whatever its biome. */
   readonly biome: Biome;
+  /** Its act of the Ascent's look (#3589), which tints its fog; `null` off the Ascent. */
+  readonly ascentAct: AscentAct | null;
   /** Its ground: its rectangle, or an outline with natural land outside (#3066). */
   readonly bounds: MapBounds;
   /** The ground's layer: 1 on a map with pits and tunnels under it (#2973). */
@@ -295,6 +298,7 @@ export interface MapStructure {
 export const FLAT_STRUCTURE: MapStructure = {
   layerCount: 1,
   biome: "hall",
+  ascentAct: null,
   bounds: { kind: "rect" },
   ground: 0,
   decks: [],

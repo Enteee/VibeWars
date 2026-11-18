@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { NO_RANKS, getTrainingScenario } from "@vibewars/game-core";
-import type { CastRefusedMessage, WireCape } from "@vibewars/game-protocol";
+import { packEmblem, type CastRefusedMessage, type WireCape } from "@vibewars/game-protocol";
 import { NO_GUILD, type CombatMessage } from "@vibewars/game-session";
 
 import { AttackClock } from "../render/attack-clock.js";
@@ -17,7 +17,7 @@ function pyro() {
   return setSkill(character, 0, "elementalist.fireball");
 }
 
-const CAPE: WireCape = { main: "violet", trim: "white", emblem: "diamond" };
+const CAPE: WireCape = { main: "violet", trim: "white", emblem: packEmblem([0, 1, 2]) };
 
 function targetDummy(character = pyro()) {
   const scenario = getTrainingScenario("target-dummy");

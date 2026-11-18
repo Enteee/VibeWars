@@ -190,6 +190,8 @@ export interface HudElements {
   readonly respawn: HTMLElement;
   /** A Guild Battle's flag carriers under the scoreboard, a line a flag (#1226), or a Relic Run's relics (#1374). */
   readonly carriers: HTMLElement;
+  /** The end of a match, one column (#3563): the end line, `result`, the summary. */
+  readonly end: HTMLElement;
   readonly result: HTMLElement;
   /** The match's buttons, top right, as one cluster (#454): the five below. */
   readonly controls: HTMLElement;
@@ -261,7 +263,8 @@ export function createHud(
   respawn.setAttribute("role", "status");
   respawn.hidden = true;
   const carriers = element("div", "hud-carriers", top);
-  const result = element("div", "hud-result", parent);
+  const end = element("div", "hud-end", parent);
+  const result = element("div", "hud-result", end);
   result.style.display = "none";
   // One cluster, top right (#454): leave and mute on top, Help, Options,
   // fullscreen and music under them.
@@ -428,6 +431,7 @@ export function createHud(
     enemies,
     respawn,
     carriers,
+    end,
     result,
     controls,
     mute,
@@ -1439,6 +1443,16 @@ const OUTCOME_REASONS: Readonly<Record<string, MessageKey>> = {
   morale: "hud.outcomeMorale",
   "guild-lord": "hud.outcomeGuildLord",
 };
+
+/**
+ * Starts the end-of-match column under the top cluster (#3563), however
+ * tall the target frame and the carriers make it; call it whenever that
+ * cluster resizes.
+ */
+export function placeEnd(hud: Pick<HudElements, "top" | "end">): void {
+  const bottom = hud.top.hidden ? 0 : hud.top.offsetTop + hud.top.offsetHeight;
+  hud.end.style.setProperty("--hud-top-bottom", `${String(bottom)}px`);
+}
 
 /**
  * The end-of-match line a player reads, from their own team's point of

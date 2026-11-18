@@ -1,4 +1,4 @@
-import { MAX_CHAT_GRAPHEMES } from "@vibewars/game-protocol";
+import { MAX_CHAT_GRAPHEMES, packEmblem } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -270,7 +270,7 @@ describe("sanitizeGuildTag (#1406)", () => {
 });
 
 describe("sanitizeGuildCape (#1422)", () => {
-  const cape = { main: "teal", trim: "teal", emblem: "half-disc" } as const;
+  const cape = { main: "teal", trim: "teal", emblem: packEmblem([8]) } as const;
 
   it("keeps a cape of the palette's colours and an emblem, the same colour twice too", () => {
     expect(sanitizeGuildCape(cape)).toEqual(cape);

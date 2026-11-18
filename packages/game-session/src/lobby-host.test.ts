@@ -24,6 +24,7 @@ import {
   type WireLobbyNote,
   type WireLobbyCommand,
   type WireLobbyState,
+  packEmblem,
 } from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
@@ -45,7 +46,7 @@ import {
   type Member,
   type TestLobby,
 } from "./lobby-harness.test-support.js";
-import { canStart, type MatchPlan } from "./lobby-host.js";
+import { canStart, PROFILE_INTERVAL_MS, type MatchPlan } from "./lobby-host.js";
 import { cryptoTurns, settle, starterBuild, until } from "./match-harness.test-support.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
@@ -159,7 +160,7 @@ describe("lobby host", () => {
 
   it("plays a member's cape in the lobby's match, and none without a valid tag (#1422)", async () => {
     const lobby = await openLobby();
-    const cape = { main: "gold", trim: "black", emblem: "ring" } as const;
+    const cape = { main: "gold", trim: "black", emblem: packEmblem([7, 7, 7]) } as const;
     const ann = await lobby.join("Ann", "Vb", cape);
     const bob = await lobby.join("Bob", null, cape);
     const cy = await lobby.join("Cy", "[x]", cape);
@@ -2538,5 +2539,71 @@ describe("the host removes a member (#2746)", () => {
     expect(again).toEqual(new LobbyRefusedError("removed"));
     await lobby.join("Bo");
     expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Bo"]);
+  });
+});
+
+describe("a member's profile changed in Options (#3548)", () => {
+  const PROFILE = { name: "Ann", guildTag: "Vb", heroRank: 3, guildCape: null } as const;
+
+  /** What `who`'s roster says of each member: name and tag. */
+  const rosterOf = (who: Member) =>
+    who.connection.getSnapshot().players.map(({ name, guildTag }) => ({ name, guildTag }));
+
+  it("shows a guest's new name and tag to every member at once", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    guest.connection.setProfile(PROFILE);
+    await settle();
+    for (const who of [lobby.host, guest]) {
+      expect(rosterOf(who)).toEqual([
+        { name: "Host", guildTag: null },
+        { name: "Ann", guildTag: "Vb" },
+      ]);
+    }
+  });
+
+  it("shows the host's own new name to its guests", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    lobby.host.connection.setProfile({ ...PROFILE, name: "Hoster", guildTag: null });
+    await settle();
+    expect(playersOf(guest)[0]?.name).toBe("Hoster");
+  });
+
+  it("sanitises the name as at a join, and keeps the old one for an empty name", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    guest.connection.setProfile({ ...PROFILE, name: "A".repeat(200) });
+    await settle();
+    const long = playersOf(lobby.host)[1]?.name ?? "";
+    expect(long.length).toBeLessThan(200);
+    expect(long.startsWith("AAA")).toBe(true);
+    lobby.lobby.advance(PROFILE_INTERVAL_MS / 1000);
+    guest.connection.setProfile({ ...PROFILE, name: "   " });
+    await settle();
+    expect(playersOf(lobby.host)[1]?.name).toBe(long);
+  });
+
+  it("drops a second change within the interval, and takes one after it", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    guest.connection.setProfile(PROFILE);
+    await settle();
+    guest.connection.setProfile({ ...PROFILE, name: "Bo" });
+    await settle();
+    expect(playersOf(lobby.host)[1]?.name).toBe("Ann");
+    lobby.lobby.advance(PROFILE_INTERVAL_MS / 1000);
+    guest.connection.setProfile({ ...PROFILE, name: "Bo" });
+    await settle();
+    expect(playersOf(lobby.host)[1]?.name).toBe("Bo");
+  });
+
+  it("leaves a running match's seat with the name it started with", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Ann", "Vb");
+    await seat([lobby.host, guest], [0, 1]);
+    await start(lobby);
+    guest.connection.setProfile({ ...PROFILE, name: "Bo", guildTag: null });
+    await settle();
+    const seated = lobby.matches[0]?.plan.seats.get(guest.transport.selfId);
+    expect(seated?.name).toBe("Ann");
+    expect(seated?.guildTag).toBe("Vb");
+    expect(playersOf(lobby.host)[1]?.name).toBe("Bo");
   });
 });

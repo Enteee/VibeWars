@@ -35,6 +35,7 @@ import {
   type MatchStarting,
   type MatchToWatch,
   type ObserverConnection,
+  type RecordedReplay,
   type PartyPlanSeat,
   type PeerMatchConnection,
   type QueueClient,
@@ -171,6 +172,11 @@ export function lobbyRandom(seed: string | undefined): () => number {
   return () => rng.nextFloat();
 }
 
+/** SHA-256 by the page's Web Crypto: a replay's hash (#3572). */
+async function sha256(bytes: Uint8Array<ArrayBuffer>): Promise<Uint8Array> {
+  return new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+}
+
 /** Build the match the lobby planned, on its map and by its mode. Throws for a map it does not have. */
 function startMatch(plan: MatchPlan) {
   const map = hostMap(plan.mapId, plan.teamCount);
@@ -207,6 +213,8 @@ function startMatch(plan: MatchPlan) {
       }
     },
     nowSeconds: () => Date.now() / 1000,
+    // Every match for now (#3572): the ranked flow (#3569) will set it for its own.
+    recordReplay: { buildHash: __VIBEWARS_BUILD__, sha256 },
   });
 }
 
@@ -1051,6 +1059,7 @@ export function connectMatchFor(
   name: string,
   guild: Guild,
   build: PlayerBuild | undefined,
+  keepReplay: (recorded: RecordedReplay) => void,
 ): Promise<PeerMatchConnection> {
   const hello: PeerHello = {
     protocolVersion: PROTOCOL_VERSION,
@@ -1064,6 +1073,7 @@ export function connectMatchFor(
     hostId: lobby.getSnapshot().hostId,
     hello,
     timeoutMs: MATCH_TIMEOUT_MS,
+    replays: { sha256, keep: keepReplay },
   });
 }
 

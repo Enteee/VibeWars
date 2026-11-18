@@ -43,6 +43,9 @@ async function play(pattern: core.Pattern, cps: number, seconds: number): Promis
   return fired;
 }
 
+/** No sound in these tests rings past its hold. */
+const silent = (): boolean => false;
+
 describe("crossfade", () => {
   // Three voices on every cycle, as a track's downbeat has.
   const voices = (name: string): core.Pattern =>
@@ -54,7 +57,11 @@ describe("crossfade", () => {
 
   it("plays the new track's whole downbeat, on time, at the new tempo", async () => {
     // From 0.5 cycles a second to 1.25, on cycle 4: second 8.
-    const fired = await play(crossfade(voices("old"), voices("new"), 4, 2, 1.25), 0.5, 14);
+    const fired = await play(
+      crossfade(voices("old"), voices("new"), 4, 2, { before: 0.5, after: 1.25 }, silent),
+      0.5,
+      14,
+    );
 
     // Nothing is handed over after its onset, which superdough would drop.
     expect(fired.filter((event) => event.t < event.now)).toEqual([]);
@@ -71,7 +78,11 @@ describe("crossfade", () => {
   });
 
   it("fades the old track out over the crossfade and stops it there", async () => {
-    const fired = await play(crossfade(voices("old"), voices("new"), 4, 2, 0.5), 0.5, 20);
+    const fired = await play(
+      crossfade(voices("old"), voices("new"), 4, 2, { before: 0.5, after: 0.5 }, silent),
+      0.5,
+      20,
+    );
     const old = fired.filter((event) => String(event.sound).startsWith("old"));
     expect(Math.max(...old.map((event) => event.begin))).toBe(5);
   });
@@ -81,7 +92,10 @@ describe("crossfade", () => {
       .pure({ s: "sting" })
       .filterHaps((hap) => hap.wholeOrPart().begin.valueOf() === 4);
     const fired = await play(
-      overTrack(crossfade(voices("old"), voices("new"), 4, 2, 1.25), sting),
+      overTrack(
+        crossfade(voices("old"), voices("new"), 4, 2, { before: 0.5, after: 1.25 }, silent),
+        sting,
+      ),
       0.5,
       14,
     );
@@ -89,5 +103,79 @@ describe("crossfade", () => {
     const onset = fired.find((event) => event.sound === "sting");
     expect(onset?.begin).toBe(4);
     expect(onset?.t).toBeCloseTo(8.1, 1);
+  });
+});
+
+describe("crossfade's outgoing side (#3530)", () => {
+  const tempo = { before: 0.5, after: 1 };
+  /** Seconds from `cycle` to the end of a fade over [4, 6), the tempo changing on 4. */
+  const left = (cycle: number): number => (cycle < 4 ? (4 - cycle) / 0.5 + 2 : 6 - cycle);
+  const at = (cycle: number): number => (cycle < 4 ? tempo.before : tempo.after);
+
+  const sounding = (pattern: core.Pattern, name: string) =>
+    pattern
+      .queryArc(0, 10)
+      .filter((hap) => (hap.value as Record<string, unknown>).s === name)
+      .map((hap) => {
+        const value = hap.value as Record<string, unknown>;
+        const begin = hap.whole?.begin.valueOf() ?? Number.NaN;
+        return {
+          begin,
+          value,
+          // Hold, release and superdough's 10 ms after it, in seconds.
+          lasts: hap.duration.valueOf() / at(begin) + Number(value.release ?? 0.01) + 0.01,
+        };
+      });
+
+  it("ends a long pad with a long release by the end of the fade", () => {
+    // A 2-cycle pad with release(1.6), as the tracks have.
+    const pad = core.pure({ s: "pad", release: 1.6, duration: 2 });
+    const notes = sounding(crossfade(pad, core.silence, 4, 2, tempo, silent), "pad");
+    expect(notes.map((note) => note.begin)).toEqual([0, 1, 2, 3, 4, 5]);
+    for (const note of notes) {
+      expect(note.lasts).toBeLessThanOrEqual(left(note.begin) + 1e-9);
+    }
+    // Inside the fade it keeps its envelope's shape: half the time left to release.
+    const last = notes.at(-1);
+    expect(last?.value.release).toBeCloseTo(0.495);
+  });
+
+  it("leaves a note alone that ends in time anyway", () => {
+    const notes = sounding(
+      crossfade(core.pure({ s: "pluck", release: 0.2 }), core.silence, 4, 2, tempo, silent),
+      "pluck",
+    );
+    expect(notes[0]?.value).toEqual({ s: "pluck", release: 0.2, velocity: 1 });
+  });
+
+  it("gives a sample that rings to its end a release that ends it in time", () => {
+    const crash = core.pure({ s: "crash" });
+    const notes = sounding(
+      crossfade(crash, core.silence, 4, 2, tempo, (fields) => fields.s === "crash"),
+      "crash",
+    );
+    for (const note of notes) {
+      expect(note.value.release).toBeTypeOf("number");
+      expect(note.lasts).toBeLessThanOrEqual(left(note.begin) + 1e-9);
+    }
+    // Far from the fade, held as it was and fading out over the rest.
+    expect(notes[0]?.value.duration).toBeCloseTo(1);
+    expect(notes[0]?.value.release).toBeCloseTo(left(0) - 2 - 0.01);
+  });
+
+  it("plays nothing of the old track from the end of the fade on", () => {
+    const notes = sounding(
+      crossfade(core.pure({ s: "pad", release: 1.6 }), core.silence, 4, 2, tempo, silent),
+      "pad",
+    );
+    expect(notes.filter((note) => note.begin >= 6)).toEqual([]);
+  });
+
+  it("leaves the incoming side as it is but for the curve", () => {
+    const incoming = core.pure({ s: "new", release: 3 });
+    const notes = sounding(crossfade(core.silence, incoming, 4, 2, tempo, silent), "new");
+    expect(notes.map((note) => note.begin)).toEqual([4, 5, 6, 7, 8, 9]);
+    expect(notes[1]?.value).toEqual({ s: "new", release: 3, velocity: Math.sin(Math.PI / 4) });
+    expect(notes[2]?.value).toEqual({ s: "new", release: 3, velocity: 1 });
   });
 });

@@ -1421,6 +1421,40 @@ function faceToward(record: Participant, point: Vec2): void {
 /** What an approach, a reach or a sight line measures to: a body, or a breakable wall's nearest point (#3031). */
 type Aim = Pick<ParticipantRecord, "id" | "position" | "layer" | "floors">;
 
+/** One end of a team's way to the foes (#3138): where a body stood, on its layer. */
+interface WayEnd {
+  readonly position: Vec2;
+  readonly layer: number;
+}
+
+/** A team's way to the foes (#3138), as it stood when a pricing began. */
+interface Way {
+  readonly from: WayEnd;
+  readonly to: WayEnd;
+}
+
+/**
+ * A pricing of the levers and breakable walls for bots under way (#3599):
+ * one lever, pair of levers or wall a tick, so no tick pays for them all.
+ */
+interface BotWaysPricing {
+  readonly ways: readonly (Way | undefined)[];
+  /** Each team's way length as the walls stand. */
+  readonly before: readonly number[];
+  /** Per lever priced so far: whether each team can walk to it now. */
+  readonly reached: (readonly boolean[])[];
+  /** Per lever priced so far: what throwing it wins each team. */
+  readonly best: number[][];
+  /** The lever pairs still to price (#3513); `undefined` until every lever is. */
+  pairs: (readonly [number, number])[] | undefined;
+  /** The teams no lever alone is worth the walk for. */
+  short: readonly number[];
+  /** The standing walls still to price, by index. */
+  readonly walls: number[];
+  /** What felling each priced wall wins each team, by index. */
+  readonly wallGains: Map<number, readonly number[]>;
+}
+
 /** The walls of one combination of gates, and the paths round them (#2691). */
 interface WallSet {
   /** What stops bodies and shots. */
@@ -1638,8 +1672,12 @@ export class MatchSimulation {
   readonly #botLevers: BotLever[] = [];
   /** What bots read of the standing breakable walls (#3140): refilled with `#botLevers`. */
   readonly #botBreakables: BotBreakable[] = [];
-  /** The match second `#botLevers` and `#botBreakables` were last filled; -Infinity to refill on the next think. */
+  /** The match second the latest pricing of `#botLevers` and `#botBreakables` began; -Infinity to begin one on the next think. */
   #botWaysAt = Number.NEGATIVE_INFINITY;
+  /** The pricing under way (#3599), if any. */
+  #botWaysPricing: BotWaysPricing | undefined;
+  /** The tick the pricing last took a step on: one a tick. */
+  #botWaysTick = -1;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
   #pointTicks = 0;
   /** When each team last led every other alone on shrine points (#2690), match clock. */
@@ -4889,64 +4927,162 @@ export class MatchSimulation {
    * each team: how much cheaper its way to the foes gets to walk. A team's way
    * runs from its living player nearest its centroid to the foe nearest
    * the foes' centroid, each on its own layer, so both ends stand on
-   * ground. At most once a match second, and again after any flip or fall.
+   * ground. A pricing begins at most once a match second, and again after
+   * any flip or fall, and takes one step a tick (#3599): the ways, then
+   * each lever, each pair of levers, each wall. Bots read the last whole
+   * pricing until the next is done.
    */
   #refreshBotWays(): void {
     if (
       (this.#switches.length === 0 && this.#breakables.length === 0) ||
-      this.#elapsedSeconds - this.#botWaysAt < 1
+      this.#botWaysTick === this.#tick
     ) {
       return;
     }
-    this.#botWaysAt = this.#elapsedSeconds;
+    const pricing = this.#botWaysPricing;
+    if (pricing === undefined) {
+      if (this.#elapsedSeconds - this.#botWaysAt >= 1) {
+        this.#botWaysTick = this.#tick;
+        this.#botWaysAt = this.#elapsedSeconds;
+        this.#botWaysPricing = this.#beginBotWays();
+      }
+      return;
+    }
+    this.#botWaysTick = this.#tick;
+    this.#priceBotWays(pricing);
+    if (
+      pricing.reached.length === this.#switches.length &&
+      pricing.pairs?.length === 0 &&
+      pricing.walls.length === 0
+    ) {
+      this.#publishBotWays(pricing.best, pricing.wallGains);
+      this.#botWaysPricing = undefined;
+    }
+  }
+
+  /** A pricing's first step: each team's way, as the walls stand and as they are walked now. */
+  #beginBotWays(): BotWaysPricing {
     const teams = Math.max(-1, ...this.#teams) + 1;
-    const ways = Array.from({ length: teams }, (_, team) => this.#wayToFoes(team));
+    const ways = Array.from({ length: teams }, (_, team): Way | undefined => {
+      const way = this.#wayToFoes(team);
+      return way === undefined
+        ? undefined
+        : {
+            from: { position: { ...way.from.position }, layer: way.from.layer },
+            to: { position: { ...way.to.position }, layer: way.to.layer },
+          };
+    });
     const now = this.#currentWallSet();
-    const before = ways.map((way) =>
-      way === undefined ? Number.POSITIVE_INFINITY : this.#wayCost(now, way),
-    );
-    // What `after` wins each team, if it can walk to `reach` on `layer` now.
-    const gains = (after: WallSet, reach: (from: Vec2) => Vec2, layer: number): number[] =>
+    return {
+      ways,
+      before: ways.map((way) =>
+        way === undefined ? Number.POSITIVE_INFINITY : this.#wayCost(now, way),
+      ),
+      reached: [],
+      best: [],
+      pairs: undefined,
+      short: [],
+      walls: this.#breakables.flatMap((wall, at) => (standing(wall) ? [at] : [])),
+      wallGains: new Map(),
+    };
+  }
+
+  /** One step of `pricing`: the next lever, else the next pair of levers, else the next wall. */
+  #priceBotWays(pricing: BotWaysPricing): void {
+    const { ways, before, reached, best } = pricing;
+    const now = this.#currentWallSet();
+    // How much cheaper `after` makes the way of each team `asked` names:
+    // 0 for the rest, and with no way either way.
+    const shorter = (after: WallSet, asked: readonly boolean[]): number[] =>
       ways.map((way, team) => {
-        if (
-          way === undefined ||
-          now.paths.find(way.from.position, way.from.layer, reach(way.from.position), layer) ===
-            undefined
-        ) {
+        if (way === undefined || asked[team] !== true) {
           return 0;
         }
         const gain = (before[team] ?? Number.POSITIVE_INFINITY) - this.#wayCost(after, way);
-        // No way to the foes either way: nothing won.
         return Number.isNaN(gain) ? 0 : gain;
       });
-    const best = this.#switches.map((lever) =>
-      gains(this.#currentWallSet([lever]), () => lever.position, lever.layer),
-    );
-    // Two gates in series (#3513): neither lever alone opens the way, so a
-    // lever also counts what it wins thrown with any one other, and both
-    // carry that pair's gain. Pairs only, never three; and only for a team
-    // no lever alone is already worth the walk for.
-    const short = ways
-      .map((_, team) => team)
-      .filter((team) => best.every((gain) => (gain[team] ?? 0) < LEVER_WORTH_UNITS));
-    const pairs = short.length === 0 ? [] : this.#switches;
-    pairs.forEach((first, a) => {
-      pairs.slice(a + 1).forEach((second, offset) => {
-        const after = this.#currentWallSet([first, second]);
-        for (const [lever, gain] of [
-          [first, best[a]],
-          [second, best[a + 1 + offset]],
-        ] as const) {
-          const paired = gains(after, () => lever.position, lever.layer);
-          for (const team of short) {
-            const won = paired[team] ?? 0;
-            if (gain !== undefined && won > 0 && won > (gain[team] ?? 0)) {
-              gain[team] = won;
-            }
+    // Whether each team can walk to `reach` on `layer` now: one search per
+    // lever or wall and team, however many combinations it is priced in.
+    const reaches = (reach: (from: Vec2) => Vec2, layer: number): boolean[] =>
+      ways.map(
+        (way) =>
+          way !== undefined &&
+          now.paths.find(way.from.position, way.from.layer, reach(way.from.position), layer) !==
+            undefined,
+      );
+    const lever = this.#switches[reached.length];
+    if (lever !== undefined) {
+      const reachable = reaches(() => lever.position, lever.layer);
+      reached.push(reachable);
+      best.push(shorter(this.#currentWallSet([lever]), reachable));
+      return;
+    }
+    if (pricing.pairs === undefined) {
+      // Two gates in series (#3513): neither lever alone opens the way, so a
+      // lever also counts what it wins thrown with any one other, and both
+      // carry that pair's gain. Pairs only, never three; and only for a team
+      // no lever alone is already worth the walk for.
+      pricing.short = ways
+        .map((_, team) => team)
+        .filter((team) => best.every((gain) => (gain[team] ?? 0) < LEVER_WORTH_UNITS));
+      pricing.pairs =
+        pricing.short.length === 0
+          ? []
+          : this.#switches.flatMap((_, a) =>
+              this.#switches.slice(a + 1).map((_, offset) => [a, a + 1 + offset] as const),
+            );
+    }
+    const pair = pricing.pairs.shift();
+    if (pair !== undefined) {
+      const [a, b] = pair;
+      const first = this.#switches[a];
+      const second = this.#switches[b];
+      if (first === undefined || second === undefined) {
+        return;
+      }
+      const { short } = pricing;
+      // One search per team for the pair, whichever of its levers the team reaches.
+      const won = shorter(
+        this.#currentWallSet([first, second]),
+        ways.map(
+          (_, team) =>
+            short.includes(team) && (reached[a]?.[team] === true || reached[b]?.[team] === true),
+        ),
+      );
+      for (const at of pair) {
+        const gain = best[at];
+        for (const team of short) {
+          const more = reached[at]?.[team] === true ? (won[team] ?? 0) : 0;
+          if (gain !== undefined && more > 0 && more > (gain[team] ?? 0)) {
+            gain[team] = more;
           }
         }
-      });
-    });
+      }
+      return;
+    }
+    const at = pricing.walls.shift();
+    const wall = at === undefined ? undefined : this.#breakables[at];
+    if (at === undefined || wall === undefined) {
+      return;
+    }
+    const standoff = this.#ruleset.collision.playerRadius + 1;
+    pricing.wallGains.set(
+      at,
+      shorter(
+        this.#currentWallSet([], at),
+        reaches((from) => strikePointOf(wall, from, standoff), wall.layer),
+      ),
+    );
+  }
+
+  /**
+   * Fill `#botLevers` and `#botBreakables` from how the levers and walls
+   * stand now, with what a pricing found each wins: nothing where none did.
+   */
+  #publishBotWays(
+    best: readonly (readonly number[])[],
+    wallGains: ReadonlyMap<number, readonly number[]>,
+  ): void {
     this.#botLevers.length = 0;
     this.#switches.forEach((lever, at) => {
       this.#botLevers.push({
@@ -4960,7 +5096,6 @@ export class MatchSimulation {
       });
     });
     this.#botBreakables.length = 0;
-    const standoff = this.#ruleset.collision.playerRadius + 1;
     this.#breakables.forEach((wall, at) => {
       if (!standing(wall)) {
         return;
@@ -4969,13 +5104,20 @@ export class MatchSimulation {
         targetId: breakableTargetId(wall.id),
         field: wall,
         layer: wall.layer,
-        gain: gains(
-          this.#currentWallSet([], at),
-          (from) => strikePointOf(wall, from, standoff),
-          wall.layer,
-        ),
+        gain: wallGains.get(at) ?? [],
       });
     });
+  }
+
+  /**
+   * A lever flipped or a wall fell (#3138, #3140): what bots read is
+   * stale, so until a new pricing is done every lever and wall wins
+   * nothing, and one begins on the next think.
+   */
+  #botWaysChanged(): void {
+    this.#botWaysAt = Number.NEGATIVE_INFINITY;
+    this.#botWaysPricing = undefined;
+    this.#publishBotWays([], new Map());
   }
 
   /** `team`'s two ends of its way to the foes (#3138); `undefined` when either side has nobody living. */
@@ -5011,10 +5153,7 @@ export class MatchSimulation {
   }
 
   /** What `way` costs to walk under `walls` (#3138, #3521): Infinity with no route. */
-  #wayCost(
-    walls: WallSet,
-    { from, to }: { readonly from: Participant; readonly to: Participant },
-  ): number {
+  #wayCost(walls: WallSet, { from, to }: Way): number {
     const route = walls.paths.find(from.position, from.layer, to.position, to.layer);
     return route === undefined
       ? Number.POSITIVE_INFINITY
@@ -6916,7 +7055,7 @@ export class MatchSimulation {
         continue;
       }
       this.#switches[at] = next;
-      this.#botWaysAt = Number.NEGATIVE_INFINITY;
+      this.#botWaysChanged();
       for (const kind of ["gates", "teleports", "decks", "lifts"] as const) {
         for (const target of next[kind]) {
           toggles[kind].set(target, (toggles[kind].get(target) ?? 0) + 1);
@@ -7677,7 +7816,7 @@ export class MatchSimulation {
       critical: false,
     });
     if (!standing(next)) {
-      this.#botWaysAt = Number.NEGATIVE_INFINITY;
+      this.#botWaysChanged();
       this.#refreshWalls([], []);
     }
   }
