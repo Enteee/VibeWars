@@ -127,6 +127,8 @@ export const KEYMAP_PRESETS: Readonly<Record<"vibewars" | "classic", Keymap>> = 
     "weapon-set-3": ["F3"],
     "weapon-set-4": ["F4"],
     ...SHARED,
+    // F is Yourself in GW1 (#3629); G stays, as in VibeWars.
+    "target-self": ["KeyF", "KeyG"],
   },
   // The left hand casts on two rows; the right moves, on the arrows (and,
   // with #310, the mouse).

@@ -19,7 +19,7 @@ Standardförvalet är **Klassisk**, för GW1-händer. **VibeWars** kastar med v�
 | Nästa fiende (Shift: föregående)  | Tab                         | Tab              |
 | Närmaste fiende                   | C                           | C                |
 | Ditt lags utpekade fiende         | T                           | T                |
-| Dig själv                         | G                           | G                |
+| Dig själv                         | F eller G                   | G                |
 | Visa namn (håll in)               | Shift                       | Shift            |
 | Ljud av                           | M                           | M                |
 | Släpp flagga, relik eller aska    | ingen                       | ingen            |
