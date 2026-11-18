@@ -284,7 +284,7 @@ if (argv[0] === "push") {
       console.error(line);
     },
     onSignal: (handler) => {
-      for (const signal of /** @type {const} */ (["SIGINT", "SIGTERM"])) {
+      for (const signal of /** @type {const} */ (["SIGINT", "SIGTERM", "SIGHUP"])) {
         process.on(signal, () => {
           handler(signal);
         });

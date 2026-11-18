@@ -181,7 +181,7 @@ export function spawnInGroup(cmd, env) {
     }),
     kill: (signal) => {
       try {
-        process.kill(-(child.pid ?? 0), signal);
+        if (child.pid !== undefined) process.kill(-child.pid, signal);
       } catch {
         // the group is already gone
       }
