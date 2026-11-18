@@ -325,7 +325,6 @@ export default {
   "controls.presetClassic": "Klasik (1-8 beceri, WASD hareket)",
   "controls.presetVibeWars": "VibeWars (Q-F beceri, ok tuşları hareket)",
   "controls.pressAKey": "bir tuşa bas...",
-  "controls.reset": "VibeWars'a sıfırla",
   "controls.shortcutRefusal":
     "Ctrl, Alt ve Windows/Command tuşu asla kullanılmaz: bunlar tarayıcıya ait.",
   "controls.showNames": "Adları göster (basılı tut)",

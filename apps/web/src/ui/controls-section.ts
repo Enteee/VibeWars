@@ -138,10 +138,6 @@ export class KeysEditor {
     this.#change(KEYMAP_PRESETS[name]);
   }
 
-  reset(): void {
-    this.choosePreset("vibewars");
-  }
-
   /**
    * Wait for a key for `cell`. Asking again for the cell already waiting
    * changes nothing, so the Enter that a refused press lets through to
@@ -275,17 +271,6 @@ function mountControls(container: HTMLElement): () => void {
   const line = h("p", "keys-line");
   line.setAttribute("role", "status");
   panel.appendChild(line);
-
-  const actions = h("div", "menu-row");
-  const reset = document.createElement("button");
-  reset.type = "button";
-  reset.textContent = t("controls.reset");
-  reset.addEventListener("click", () => {
-    editor.reset();
-    paint();
-  });
-  actions.append(reset);
-  panel.appendChild(actions);
 
   const cells: { readonly cell: KeyCell; readonly button: HTMLButtonElement }[] = [];
   const warnings: { readonly action: KeyAction; readonly node: HTMLElement }[] = [];

@@ -333,7 +333,6 @@ export default {
   "controls.presetClassic": "Κλασικό (ικανότητες 1-8, κίνηση WASD)",
   "controls.presetVibeWars": "VibeWars (ικανότητες Q-F, κίνηση με βέλη)",
   "controls.pressAKey": "πάτα ένα πλήκτρο...",
-  "controls.reset": "Επαναφορά σε VibeWars",
   "controls.shortcutRefusal":
     "Τα Ctrl, Alt και το πλήκτρο Windows/Command δεν χρησιμοποιούνται ποτέ: ανήκουν στον browser.",
   "controls.showNames": "Εμφάνιση ονομάτων (κράτα)",

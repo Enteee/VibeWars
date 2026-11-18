@@ -344,7 +344,6 @@ export default {
   "controls.presetClassic": "קלאסי (מיומנויות 1-8, תנועה ב-WASD)",
   "controls.presetVibeWars": "VibeWars (מיומנויות Q-F, תנועה בחיצים)",
   "controls.pressAKey": "לחץ על מקש...",
-  "controls.reset": "איפוס ל-VibeWars",
   "controls.shortcutRefusal": "Ctrl, Alt ומקש Windows/Command אינם בשימוש: הם שייכים לדפדפן.",
   "controls.showNames": "הצג שמות (החזק)",
   "controls.skill1": "מיומנות 1",

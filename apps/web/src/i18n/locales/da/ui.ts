@@ -326,7 +326,6 @@ export default {
   "controls.presetClassic": "Klassisk (evner 1-8, WASD flytter)",
   "controls.presetVibeWars": "VibeWars (evner Q-F, piletaster flytter)",
   "controls.pressAKey": "tryk på en tast...",
-  "controls.reset": "Nulstil til VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt og Windows/Command-tasten bruges aldrig: de tilhører browseren.",
   "controls.showNames": "Vis navne (hold)",

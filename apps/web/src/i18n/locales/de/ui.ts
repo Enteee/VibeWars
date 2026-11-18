@@ -330,7 +330,6 @@ export default {
   "controls.presetClassic": "Klassisch (1-8 Skills, WASD laufen)",
   "controls.presetVibeWars": "VibeWars (Q-F Skills, Pfeiltasten laufen)",
   "controls.pressAKey": "Taste drücken...",
-  "controls.reset": "Auf VibeWars zurücksetzen",
   "controls.shortcutRefusal":
     "Ctrl, Alt und die Windows-/Command-Taste werden nie genutzt: Sie gehören dem Browser.",
   "controls.showNames": "Namen zeigen (halten)",

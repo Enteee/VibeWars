@@ -296,7 +296,6 @@ export default {
   "controls.presetClassic": "Classic (kỹ năng 1-8, đi bằng WASD)",
   "controls.presetVibeWars": "VibeWars (kỹ năng Q-F, đi bằng mũi tên)",
   "controls.pressAKey": "nhấn một phím...",
-  "controls.reset": "Đặt lại VibeWars",
   "controls.shortcutRefusal":
     "Không dùng Ctrl, Alt và phím Windows/Command: chúng thuộc về trình duyệt.",
   "controls.showNames": "Hiện tên (giữ)",

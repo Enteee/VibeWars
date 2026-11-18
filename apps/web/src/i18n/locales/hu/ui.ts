@@ -326,7 +326,6 @@ export default {
   "controls.presetClassic": "Klasszikus (1-8 készségek, WASD mozgás)",
   "controls.presetVibeWars": "VibeWars (Q-F készségek, nyilak mozgás)",
   "controls.pressAKey": "nyomj meg egy billentyűt...",
-  "controls.reset": "VibeWars visszaállítása",
   "controls.shortcutRefusal":
     "A Ctrl, az Alt és a Windows/Command billentyű nem használható: ezek a böngészőé.",
   "controls.showNames": "Nevek mutatása (nyomva tartva)",

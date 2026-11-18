@@ -300,7 +300,6 @@ export default {
   "controls.presetClassic": "클래식 (스킬 1-8, WASD 이동)",
   "controls.presetVibeWars": "VibeWars (스킬 Q-F, 화살표 이동)",
   "controls.pressAKey": "키를 누르세요...",
-  "controls.reset": "VibeWars 기본값으로",
   "controls.shortcutRefusal": "Ctrl, Alt, Windows/Command 키는 쓸 수 없어요: 브라우저가 사용해요.",
   "controls.showNames": "이름 표시 (누르고 있기)",
   "controls.skill1": "스킬 1",

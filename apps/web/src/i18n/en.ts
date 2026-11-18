@@ -329,7 +329,6 @@ export const en = {
   "controls.presetClassic": "Classic (1-8 skills, WASD move)",
   "controls.presetVibeWars": "VibeWars (Q-F skills, arrows move)",
   "controls.pressAKey": "press a key...",
-  "controls.reset": "Reset to VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt and the Windows/Command key are never used: the browser owns them.",
   "controls.showNames": "Show names (hold)",

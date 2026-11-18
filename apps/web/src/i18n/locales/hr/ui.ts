@@ -347,7 +347,6 @@ export default {
   "controls.presetClassic": "Klasično (vještine 1-8, kretanje WASD)",
   "controls.presetVibeWars": "VibeWars (vještine Q-F, kretanje strelicama)",
   "controls.pressAKey": "pritisni tipku...",
-  "controls.reset": "Vrati na VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt i tipka Windows/Command nikad se ne koriste: pripadaju pregledniku.",
   "controls.showNames": "Prikaži imena (drži)",

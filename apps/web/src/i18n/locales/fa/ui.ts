@@ -327,7 +327,6 @@ export default {
   "controls.presetClassic": "کلاسیک (مهارت‌ها 1-8، حرکت WASD)",
   "controls.presetVibeWars": "VibeWars (مهارت‌ها Q-F، حرکت با پیکان‌ها)",
   "controls.pressAKey": "کلیدی را بزن...",
-  "controls.reset": "بازنشانی به VibeWars",
   "controls.shortcutRefusal":
     "Ctrl، Alt و کلید Windows/Command هرگز استفاده نمی‌شوند: متعلق به مرورگرند.",
   "controls.showNames": "نمایش نام‌ها (نگه دار)",
