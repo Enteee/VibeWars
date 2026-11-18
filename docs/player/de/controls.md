@@ -19,7 +19,7 @@ Die Standardvorlage heißt **Klassisch**, für GW1-Hände. **VibeWars** wirkt Sk
 | Nächstes Ziel (Shift: vorheriges)       | Tab                      | Tab              |
 | Nächsten Gegner anvisieren              | C                        | C                |
 | Angesagten Gegner anvisieren            | T                        | T                |
-| Dich anvisieren                         | G                        | G                |
+| Dich anvisieren                         | F oder G                 | G                |
 | Namen zeigen (halten)                   | Shift                    | Shift            |
 | Stumm                                   | M                        | M                |
 | Flagge, Relikt oder Asche fallen lassen | keine Taste              | keine Taste      |

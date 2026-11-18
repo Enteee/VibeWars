@@ -19,7 +19,7 @@ Domyślny układ to **Klasyczny**, dla rąk przyzwyczajonych do GW1. **VibeWars*
 | Następny wróg (Shift: poprzedni) | Tab                  | Tab              |
 | Najbliższy wróg                  | C                    | C                |
 | Wróg wskazany przez drużynę      | T                    | T                |
-| Ty                               | G                    | G                |
+| Ty                               | F lub G              | G                |
 | Pokaż nazwy (przytrzymaj)        | Shift                | Shift            |
 | Wycisz                           | M                    | M                |
 | Upuść flagę, relikwię lub prochy | brak                 | brak             |
