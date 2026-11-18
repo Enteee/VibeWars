@@ -1716,7 +1716,7 @@
       "id": "root-gate-west",
       "wall": {
         "kind": "rect",
-        "x": 2360,
+        "x": 2346,
         "y": 2095,
         "width": 14,
         "height": 110,
@@ -1732,7 +1732,7 @@
       "id": "root-gate-east",
       "wall": {
         "kind": "rect",
-        "x": 3026,
+        "x": 3040,
         "y": 2095,
         "width": 14,
         "height": 110,
