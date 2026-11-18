@@ -722,6 +722,8 @@ describe("walks and high ground (#3070)", () => {
       "centre-south-stair",
       "east-end-north-stair",
       "east-end-south-stair",
+      "west-lever-stair",
+      "east-lever-stair",
     ];
     /** A route through `through`, every other stair onto the causeway shut. */
     const only = (through: readonly string[]): Route => ({
@@ -760,6 +762,30 @@ describe("walks and high ground (#3070)", () => {
         ),
         0.1,
       );
+    });
+
+    it("walks each team by its own lever stair to its gatehouse lever, gates shut, within 10 % of the other (#3549)", () => {
+      const levers = [
+        { x: 2150, y: 1230 },
+        { x: 3480, y: 1570 },
+      ];
+      within(
+        toOwn(shut, levers, 3, (team) =>
+          only([team === 0 ? "west-lever-stair" : "east-lever-stair"]),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks no team to the centre by its lever stair more than 10 % faster than by its near middle stair (#3549)", () => {
+      const [lever0 = 0, lever1 = 0] = toCentre(shut, (team) =>
+        only([team === 0 ? "west-lever-stair" : "east-lever-stair"]),
+      );
+      const [middle0 = 0, middle1 = 0] = toCentre(shut, (team) =>
+        only([team === 0 ? "centre-south-stair" : "centre-north-stair"]),
+      );
+      expect(lever0).toBeGreaterThanOrEqual(0.9 * middle0);
+      expect(lever1).toBeGreaterThanOrEqual(0.9 * middle1);
     });
 
     it("walks each team across the marsh to the near middle stair, gates shut, within 10 % of the other", () => {
