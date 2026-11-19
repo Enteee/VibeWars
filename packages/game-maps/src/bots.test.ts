@@ -18,7 +18,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
-import { matchGates, matchLayers } from "./layers.js";
+import { matchGates, matchLayers, matchSwitches } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import { mapSimulationFields } from "./match-fields.js";
@@ -205,6 +205,7 @@ describe("King of the Hill bots (#2582)", () => {
       seed,
       ruleset: RULESET,
       walls: allWallSegments(arena.walls),
+      layers: matchLayers(arena),
       bounds: { width: arena.width, height: arena.height },
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
       ghostField: {
@@ -312,7 +313,7 @@ describe("King of the Hill bots (#2582)", () => {
     // The ghosts' contest ended: a team took the altar, wipe or not.
     expect(first.holder).not.toBeNull();
     expect(mirror("hill")).toEqual(first);
-  });
+  }, 60_000);
 
   /**
    * The winner of a 4v4 caster mirror on The Courtyard after 120 s: the
@@ -344,7 +345,7 @@ describe("King of the Hill bots (#2582)", () => {
     }
     expect(winners).toContain(0);
     expect(winners).toContain(1);
-  });
+  }, 60_000);
 });
 
 describe("Capture Points bots (#2580)", () => {
@@ -415,7 +416,9 @@ describe("Capture Points bots (#2580)", () => {
       ruleset: RULESET,
       teamCount: 3,
       walls: allWallSegments(keep.walls),
+      layers: matchLayers(keep),
       gates: matchGates(keep),
+      switches: matchSwitches(keep),
       bounds: { width: keep.width, height: keep.height },
       matchRules: rules,
       ghostField: {

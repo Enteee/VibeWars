@@ -150,7 +150,7 @@ Cinder Sanctum (8v8, 5600x2800) spielt es: ein Tempel an der Flanke eines Vulkan
 
 **Führe deinen Geisterhelden auf den Altar und halte ihn.** Jedes Team hat einen **Geisterhelden** in
 seiner Basis, einen Geist, der mit einer Axt kämpft und den niemand spielt. Der **Altar** ist in der
-Mitte, von beiden Basen gleich weit. In **Threefold Keep** kämpfen drei Teams (zwei, wenn kein drittes frei ist) in einer ummauerten Feste um ihn. Ihre Tore öffnen sich nur von innen, über eine Platte: Der Weg hinein führt um die Feste zu einer offenen Ecke. Höchstens 12 Punkte pro Team, und stehen alle Gegner bei -60 % Moral, gewinnst du sofort. Die **Hall of Heroes**, die King-of-the-Hill-Karte
+Mitte, von beiden Basen gleich weit. In **Threefold Keep** kämpfen drei Teams (zwei, wenn kein drittes frei ist) auf dem Turm einer ummauerten Feste um ihn. Höchstens 12 Punkte pro Team, und stehen alle Gegner bei -60 % Moral, gewinnst du sofort. Die **Hall of Heroes**, die King-of-the-Hill-Karte
 am Ende des Aufstiegs der Helden, hebt ihn auf ein Podest mit Mauern im Westen und Osten, über einen von
 Säulen gesäumten Aufgang im Norden oder Süden. Visiere deinen Geist mit **Rechtsklick** an und drück
 **Space**, damit er dir folgt: Er läuft mit dir und kämpft gegen das, was du bekämpfst. Drück noch einmal
@@ -195,7 +195,7 @@ Zauberreichweite zu kämpfen. Solange dein Team den Altar nicht hält, tötet je
 anderen Teams, sobald er auf dem Altar in ihrer Reichweite steht: Er ist der einzige Gegner, der deinen Geist am
 Einnehmen hindert.
 
-Threefold Keep spielt es.
+Threefold Keep (4v4 und 8v8, 5000x4400) spielt es: eine Feste auf einem Hügel im Hochland, für drei Teams. Steig über die Treppe neben deinem Tor auf den Wehrgang und überquere einen Damm zum Hügel, dann steig zum Altar auf dem Turm. Ein Hebel in jedem Hof öffnet alle vier Tore: deinen Torgang unter der Mauer und das Gewölbe, den langen Weg unter dem Hügel.
 
 ## Punkte erobern
 

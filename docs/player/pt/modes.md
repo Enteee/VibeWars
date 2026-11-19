@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) o joga: um templo na encosta de um vulcão entre
 tem um **Herói Fantasmagórico** na base, um fantasma que luta com um
 machado e que ninguém joga. O **altar** fica no centro, a mesma caminhada
 das duas bases. Em **Threefold Keep**, três equipes (duas se não houver uma terceira livre) o
-disputam dentro de uma fortaleza murada. As portas só abrem por dentro, com uma
-placa: para entrar, contorne até um canto aberto. No máximo 12 pontos por
+disputam na torre de uma fortaleza murada. No máximo 12 pontos por
 equipe, e se todos os rivais estiverem a -60% de moral, você vence na hora. O **Hall of
 Heroes**, o mapa de Rei da Colina que encerra a Ascensão dos Heróis, o
 ergue em um estrado murado a oeste e a leste, com subida ao norte ou ao
@@ -243,7 +242,7 @@ altar, todo bot mata primeiro o Herói Fantasmagórico da outra equipe assim
 que ele estiver no altar ao alcance deles: é o único inimigo que impede
 seu fantasma de tomá-lo.
 
-Threefold Keep joga esse modo.
+Threefold Keep joga esse modo (4v4 e 8v8, 5000x4400): uma fortaleza numa colina das terras altas, para três equipes. Suba ao adarve pela escada ao lado do seu portão e atravesse uma calçada até a colina, depois suba até o altar na torre. Uma alavanca em cada pátio abre os quatro portões: a passagem do seu portão sob a muralha, e a cripta, o caminho longo sob a colina.
 
 ## Captura de Pontos
 
