@@ -113,6 +113,38 @@ files["rock-wall.svg"] = svg(
 ${body(85, 186)}`,
 );
 
+// ---- portcullis: shut it is a grid with two rails; open the grid hangs above the lintel ----
+/** @param {number} x0 @param {number} y0 @param {number} len bars from y0 down, 8 across 128 px */
+const pcBars = (x0, y0, len, rails) => {
+  let g = "";
+  for (let i = 0; i < 8; i++) {
+    const x = x0 + 8 + i * 16;
+    g += `<path d="M${String(x)},${String(y0)} v${String(len)}" stroke="#3b4759" stroke-width="4"/>`;
+  }
+  for (const share of rails)
+    g += `<path d="M${String(x0)},${String(y0 + len * share)} h128" stroke="#3b4759" stroke-width="3"/>`;
+  return g;
+};
+files["portcullis.svg"] = svg(
+  "",
+  `${floor()}
+<rect x="30" y="80" width="140" height="100" fill="#10151c" fill-opacity="0.4"/>
+<rect x="34" y="90" width="132" height="76" fill="#0b0f14"/>
+${pcBars(36, 90, 76, [0.3, 0.7])}
+${Array.from({ length: 8 }, (_, i) => `<path d="M${String(44 + i * 16)},166 l-3,8 h6z" fill="#a9bbd0"/>`).join("")}
+<rect x="34" y="90" width="132" height="76" fill="none" stroke="#3b4759" stroke-width="3"/>
+<path d="M34,166 H166" stroke="#a9bbd0" stroke-width="3"/>
+<rect x="190" y="80" width="140" height="100" fill="#10151c" fill-opacity="0.4"/>
+<rect x="194" y="90" width="132" height="76" fill="#0b0f14"/>
+<rect x="190" y="86" width="10" height="84" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
+<rect x="320" y="86" width="10" height="84" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
+<rect x="194" y="166" width="132" height="6" fill="#6a6560"/>
+<rect x="190" y="80" width="140" height="8" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
+<path d="M206,90 v19 M222,90 v19 M238,90 v19 M254,90 v19 M270,90 v19 M286,90 v19 M302,90 v19" stroke="#3b4759" stroke-width="4"/>
+${pcBars(192, 20, 54, [0.3, 0.7])}
+<g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="40" y="72">shut: grid, two rails, spiked</text><text x="200" y="12">open: grid above the lintel</text></g>`,
+);
+
 // ---- door: shut it is a bar across the way; open it is two stubs and a clear gap ----
 files["door.svg"] = svg(
   "",

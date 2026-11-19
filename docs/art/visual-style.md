@@ -458,10 +458,10 @@ and sills, a `STUB` of bars a quarter of its depth at its north
 or west side, and hangs the grid above the lintel: only the part of it
 that lands north of the footprint is drawn, so a strip deeper than the
 lift shows its top end and nothing of it lands in the gap. On a flat map
-the hung grid is left out. The study SVG is made by
-`scripts/assets/portcullis-svg.sh`.
+the hung grid is left out. The study SVG is drawn in
+`scripts/assets/visual-style.mjs`.
 
-Every other SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
+Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
 `node scripts/assets/visual-style.mjs`.
 
 ## 8. Review checklist
