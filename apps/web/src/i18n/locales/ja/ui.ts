@@ -302,7 +302,6 @@ export default {
   "controls.presetClassic": "クラシック (スキル1-8、WASD移動)",
   "controls.presetVibeWars": "VibeWars (スキルQ-F、矢印キー移動)",
   "controls.pressAKey": "キーを押してください...",
-  "controls.reset": "VibeWarsに戻す",
   "controls.shortcutRefusal":
     "Ctrl、Alt、Windows/Commandキーはブラウザが使用するため割り当てられません。",
   "controls.showNames": "名前を表示 (長押し)",
@@ -642,7 +641,7 @@ export default {
   "lobby.joinTeamLabel": "チーム{team}に参加",
   "lobby.leaveTeam": "離脱",
   "lobby.leaveTeamLabel": "チーム{team}を離脱",
-  "lobby.map": "マップ",
+  "lobby.map": "マップ:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "マップ: ランダム (チームアリーナ)",
   "lobby.mapShown": "マップ: {map}",

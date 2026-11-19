@@ -300,7 +300,6 @@ export default {
   "controls.presetClassic": "Klasik (skill 1-8, gerak WASD)",
   "controls.presetVibeWars": "VibeWars (skill Q-F, gerak panah)",
   "controls.pressAKey": "tekan tombol...",
-  "controls.reset": "Reset ke VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt, dan tombol Windows/Command tidak pernah dipakai: itu milik browser.",
   "controls.showNames": "Tampilkan nama (tahan)",
@@ -639,7 +638,7 @@ export default {
   "lobby.joinTeamLabel": "Gabung ke tim {team}",
   "lobby.leaveTeam": "Keluar",
   "lobby.leaveTeamLabel": "Keluar dari tim {team}",
-  "lobby.map": "Peta",
+  "lobby.map": "Peta:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Peta: acak (Arena Tim)",
   "lobby.mapShown": "Peta: {map}",

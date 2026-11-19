@@ -357,7 +357,6 @@ export default {
   "controls.presetClassic": "Klasické (schopnosti 1-8, pohyb WASD)",
   "controls.presetVibeWars": "VibeWars (schopnosti Q-F, pohyb šípkami)",
   "controls.pressAKey": "stlač kláves...",
-  "controls.reset": "Obnoviť na VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt a kláves Windows/Command sa nikdy nepoužívajú: patria prehliadaču.",
   "controls.showNames": "Zobraziť mená (podržať)",
@@ -741,7 +740,7 @@ export default {
   "lobby.joinTeamLabel": "Pridať sa k tímu {team}",
   "lobby.leaveTeam": "Odísť",
   "lobby.leaveTeamLabel": "Opustiť tím {team}",
-  "lobby.map": "Mapa",
+  "lobby.map": "Mapa:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Mapa: náhodná (Tímová aréna)",
   "lobby.mapShown": "Mapa: {map}",

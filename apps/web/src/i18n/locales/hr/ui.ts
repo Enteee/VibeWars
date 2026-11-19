@@ -347,7 +347,6 @@ export default {
   "controls.presetClassic": "Klasično (vještine 1-8, kretanje WASD)",
   "controls.presetVibeWars": "VibeWars (vještine Q-F, kretanje strelicama)",
   "controls.pressAKey": "pritisni tipku...",
-  "controls.reset": "Vrati na VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt i tipka Windows/Command nikad se ne koriste: pripadaju pregledniku.",
   "controls.showNames": "Prikaži imena (drži)",
@@ -714,7 +713,7 @@ export default {
   "lobby.joinTeamLabel": "Uđi u tim {team}",
   "lobby.leaveTeam": "Izađi",
   "lobby.leaveTeamLabel": "Izađi iz tima {team}",
-  "lobby.map": "Karta",
+  "lobby.map": "Karta:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Karta: nasumična (Timska arena)",
   "lobby.mapShown": "Karta: {map}",

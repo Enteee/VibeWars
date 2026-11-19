@@ -348,7 +348,6 @@ export default {
   "controls.presetClassic": "Classico (abilità 1-8, movimento WASD)",
   "controls.presetVibeWars": "VibeWars (abilità Q-F, movimento frecce)",
   "controls.pressAKey": "premi un tasto...",
-  "controls.reset": "Ripristina VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt e il tasto Windows/Command non si usano mai: appartengono al browser.",
   "controls.showNames": "Nomi (tieni premuto)",
@@ -723,7 +722,7 @@ export default {
   "lobby.joinTeamLabel": "Entra nella squadra {team}",
   "lobby.leaveTeam": "Esci",
   "lobby.leaveTeamLabel": "Esci dalla squadra {team}",
-  "lobby.map": "Mappa",
+  "lobby.map": "Mappa:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Mappa: casuale (Arena a squadre)",
   "lobby.mapShown": "Mappa: {map}",

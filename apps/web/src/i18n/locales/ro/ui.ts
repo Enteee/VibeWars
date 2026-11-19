@@ -347,7 +347,6 @@ export default {
   "controls.presetClassic": "Clasic (abilități 1-8, mișcare WASD)",
   "controls.presetVibeWars": "VibeWars (abilități Q-F, mișcare din săgeți)",
   "controls.pressAKey": "apasă o tastă...",
-  "controls.reset": "Resetează la VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt și tasta Windows/Command nu se folosesc niciodată: aparțin browserului.",
   "controls.showNames": "Arată nume (ține)",
@@ -722,7 +721,7 @@ export default {
   "lobby.joinTeamLabel": "Intră în echipa {team}",
   "lobby.leaveTeam": "Ieși",
   "lobby.leaveTeamLabel": "Ieși din echipa {team}",
-  "lobby.map": "Hartă",
+  "lobby.map": "Hartă:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Hartă: aleatorie (Arenă de echipe)",
   "lobby.mapShown": "Hartă: {map}",

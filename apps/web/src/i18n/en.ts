@@ -329,7 +329,6 @@ export const en = {
   "controls.presetClassic": "Classic (1-8 skills, WASD move)",
   "controls.presetVibeWars": "VibeWars (Q-F skills, arrows move)",
   "controls.pressAKey": "press a key...",
-  "controls.reset": "Reset to VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt and the Windows/Command key are never used: the browser owns them.",
   "controls.showNames": "Show names (hold)",
@@ -683,7 +682,7 @@ export const en = {
   "lobby.joinTeamLabel": "Join team {team}",
   "lobby.leaveTeam": "Leave",
   "lobby.leaveTeamLabel": "Leave team {team}",
-  "lobby.map": "Map",
+  "lobby.map": "Map:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Map: random (Team Arena)",
   "lobby.mapShown": "Map: {map}",

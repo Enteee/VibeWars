@@ -579,6 +579,21 @@ describe("lobbyPanel: the map (#1994)", () => {
     expect(selects(mapPart("hosted-game"))).toHaveLength(1);
   });
 
+  it("labels the host's picker Map:, as a guest's map reads (#3626)", () => {
+    const [label] = mapPart("hosted-game").children;
+    expect(label?.textContent).toBe(t("lobby.map"));
+    expect(t("lobby.map")).toBe("Map:");
+  });
+
+  it("gives the host Ready, then Start match (#3626)", () => {
+    const { actions } = lobbyPanel(snapshot("waiting"), callbacks, undefined, maps);
+    expect(actions.map((action) => action.className)).toEqual([
+      expect.stringContaining("screen-ready"),
+      "primary",
+    ]);
+    expect(actions[1]?.textContent).toBe(t("lobby.startMatch"));
+  });
+
   it("lists only the maps made for a Hosted Game's team size (#2104)", () => {
     const [select] = selects(mapPart("hosted-game"));
     expect(select?.children.map((option) => option.value)).toEqual([

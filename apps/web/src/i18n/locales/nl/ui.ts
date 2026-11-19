@@ -326,7 +326,6 @@ export default {
   "controls.presetClassic": "Klassiek (skills 1-8, bewegen WASD)",
   "controls.presetVibeWars": "VibeWars (skills Q-F, bewegen pijltjes)",
   "controls.pressAKey": "druk op een toets...",
-  "controls.reset": "Terug naar VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt en de Windows/Command-toets worden nooit gebruikt: die zijn van de browser.",
   "controls.showNames": "Namen tonen (ingedrukt)",
@@ -680,7 +679,7 @@ export default {
   "lobby.joinTeamLabel": "Team {team} joinen",
   "lobby.leaveTeam": "Weg",
   "lobby.leaveTeamLabel": "Team {team} verlaten",
-  "lobby.map": "Map",
+  "lobby.map": "Map:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Map: willekeurig (Team Arena)",
   "lobby.mapShown": "Map: {map}",
