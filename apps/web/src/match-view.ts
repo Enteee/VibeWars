@@ -119,7 +119,7 @@ import {
 import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice, watchingNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
-import { closeHelpOverlay, isHelpOverlayOpen, openHelpOverlay } from "./ui/help-screen.js";
+import { attachHelpWindow, isHelpOpen } from "./ui/help-screen.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
 import { attachOptionsWindow, isOptionsWindowOpen } from "./ui/options-screen.js";
 import { createPartyWindow } from "./ui/party-window.js";
@@ -825,20 +825,7 @@ export async function startMatchView(
   // match goes on underneath.
   const optionsWindow = attachOptionsWindow(hud.options, parent, signet);
   // Help over the match too (#1257), the same way.
-  const openHelp = (): void => {
-    // A press while Help is open closes it (#2724).
-    if (isHelpOverlayOpen()) {
-      closeHelpOverlay();
-      return;
-    }
-    openHelpOverlay(parent, () => {
-      hud.help.setAttribute("aria-expanded", "false");
-      hud.help.focus();
-    });
-    hud.help.setAttribute("aria-expanded", "true");
-  };
-  hud.help.setAttribute("aria-expanded", "false");
-  hud.help.addEventListener("click", openHelp);
+  const helpWindow = attachHelpWindow(hud.help);
   const detachFullscreen = attachFullscreenButton(hud.fullscreen, fullscreenTarget());
 
   const detachMovement =
@@ -897,7 +884,7 @@ export async function startMatchView(
       event.stopPropagation();
       // Not under Options (#454) or Help (#1257): their keys are their
       // own, so no question opens beneath them.
-      if (!event.repeat && !isOptionsWindowOpen() && !isHelpOverlayOpen()) {
+      if (!event.repeat && !isOptionsWindowOpen() && !isHelpOpen()) {
         if (leave.isOpen()) {
           leave.close();
         } else {
@@ -930,7 +917,7 @@ export async function startMatchView(
     // keys still move.
     if (
       isOptionsWindowOpen() ||
-      isHelpOverlayOpen() ||
+      isHelpOpen() ||
       (event.key === "Escape" && event.defaultPrevented)
     ) {
       return;
@@ -1389,7 +1376,7 @@ export async function startMatchView(
       offMute();
       jukebox.dispose();
       optionsWindow.dispose();
-      closeHelpOverlay();
+      helpWindow.dispose();
       detachFullscreen();
       hud.controls.remove();
       void viewport?.destroy();
