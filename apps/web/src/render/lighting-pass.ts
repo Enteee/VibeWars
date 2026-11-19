@@ -5,7 +5,7 @@ import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import type { ArenaPalette, OverhangLookColours } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
-import { boxMeets, boxUnder, clipConvex, coverBoxes } from "./cell-cover.js";
+import { boxMeets, boxUnder, coverBoxes } from "./cell-cover.js";
 import type { Box } from "./graphics-cull.js";
 import {
   deckCovers,
@@ -425,17 +425,6 @@ const MARK_MARGIN = 2;
 export interface LightMapCells {
   /** Where the map is its plain outdoor tint, and nothing draws it but a flat fill. */
   readonly flat: readonly LightMapBox[];
-  /** Wholly in a sun shadow no light reaches: its tint, flat (#3660). */
-  readonly shaded: readonly LightMapBox[];
-  /** Wholly indoors or roofed, where no light reaches: the indoor tint, flat (#3660). */
-  readonly indoors: readonly LightMapBox[];
-  /**
-   * On a layer other than the ground, a cell nothing marks that one
-   * surface's edge crosses: the convex piece of that surface in the cell,
-   * in the map's pixels, drawn as a flat fill too (#3660). The rest of the
-   * cell is erased.
-   */
-  readonly edges: readonly (readonly Vec2[])[];
   /** Where light varies, shown from the light map's texture. */
   readonly textured: readonly LightMapBox[];
   /** Where a light reaches, so the warm pools are not black (#3350). */
@@ -446,9 +435,7 @@ export interface LightMapCells {
  * The cover of `layer`'s light map with `extent`, cut into cells of
  * `LIGHT_MAP_CELL` (#3524). On a software renderer a textured pixel
  * costs many flat ones, and far from every light the map is one colour:
- * a cell nothing marks but the base tint is drawn as a flat fill, and so
- * is one wholly in a sun shadow or wholly indoors, each painted one colour
- * over the base. What
+ * a cell nothing marks but the base tint is drawn as a flat fill. What
  * marks a cell is decided from the same shapes the map is drawn from,
  * grown by `MARK_MARGIN`: a light's reach, by its box, steady or
  * flickering (so nothing redrawn after the build lands in a flat cell),
@@ -492,96 +479,37 @@ export function lightMapCells(
   );
   const casters = stageShadows(stage) ? shadowCasters(walls, structure, layer) : [];
   const ground = layer === structure.ground;
-  const marks = (outlines: readonly (readonly Vec2[])[]) =>
-    outlines
-      .filter((outline) => outline.length > 0)
-      .map((shape) => {
-        const outline = inMap(shape);
-        return { outline, box: boxOf(outline) };
-      });
-  const sun = marks(layerSunShadows(lighting, casters));
-  const inside = marks([...lighting.indoor.map(shapeOutline), ...roofedOver(structure, layer)]);
-  // The ground's pits are erased; the rest is erased off any other layer.
-  const holes = marks(ground ? groundHoles(structure) : []);
-  const shapes = [...sun, ...inside, ...holes];
+  const shapes = [
+    ...layerSunShadows(lighting, casters),
+    ...lighting.indoor.map(shapeOutline),
+    ...roofedOver(structure, layer),
+    // The ground's pits are erased; the rest is erased off any other layer.
+    ...(ground ? groundHoles(structure) : []),
+  ]
+    .filter((outline) => outline.length > 0)
+    .map((shape) => {
+      const outline = inMap(shape);
+      return { outline, box: boxOf(outline) };
+    });
   const surfaces = ground ? [] : layerSurfaces(structure, layer).map(inMap);
   // A shape marks only the cells it meets, not all its box does (#3660): a
   // long shadow across the map has a box of half of it.
-  type Shape = (typeof shapes)[number];
-  const meets = (box: LightMapBox) => (shape: Shape) =>
-    overlaps(shape.box, box) && boxMeets(shape.outline, box, MARK_MARGIN);
-  const under = (box: LightMapBox) => (shape: Shape) =>
-    overlaps(shape.box, box) && boxUnder(shape.outline, box, MARK_MARGIN);
-  const unlit = (box: LightMapBox): boolean => !reach.some((mark) => overlaps(mark, box));
-  const unmarked = (box: LightMapBox): boolean => unlit(box) && !shapes.some(meets(box));
-  const onSurface = (box: LightMapBox): boolean =>
-    ground || surfaces.some((outline) => boxUnder(outline, box, MARK_MARGIN));
-  const plain = (box: LightMapBox): boolean => unmarked(box) && onSurface(box);
-  // The indoors is painted over the sun's shadows, each one colour.
-  const indoorsOnly = (box: LightMapBox): boolean =>
-    unlit(box) && onSurface(box) && !holes.some(meets(box)) && inside.some(under(box));
-  const shadedOnly = (box: LightMapBox): boolean =>
-    unlit(box) &&
-    onSurface(box) &&
-    !holes.some(meets(box)) &&
-    !inside.some(meets(box)) &&
-    sun.some(under(box));
-  const flatOnly = (box: LightMapBox): boolean => plain(box) || indoorsOnly(box) || shadedOnly(box);
-  // Two surfaces in one cell would multiply twice where they overlap, and
-  // a clip of a concave one is only one piece when it comes out convex.
-  const edgeOf = (box: LightMapBox): readonly Vec2[] | undefined => {
-    if (ground || !unmarked(box)) {
-      return undefined;
-    }
-    const meeting = surfaces.filter((outline) => boxMeets(outline, box, MARK_MARGIN));
-    const [only] = meeting;
-    if (meeting.length !== 1 || only === undefined) {
-      return undefined;
-    }
-    const piece = clipConvex(only, box);
-    return convex(piece) ? piece : undefined;
-  };
+  const plain = (box: LightMapBox): boolean =>
+    !reach.some((mark) => overlaps(mark, box)) &&
+    !shapes.some(
+      (shape) => overlaps(shape.box, box) && boxMeets(shape.outline, box, MARK_MARGIN),
+    ) &&
+    (ground || surfaces.some((outline) => boxUnder(outline, box, MARK_MARGIN)));
   const split = (box: LightMapBox, shows: (cell: LightMapBox) => boolean): readonly LightMapBox[] =>
     coverBoxes(box.width, box.height, LIGHT_MAP_CELL, (cell) =>
       shows({ ...cell, x: box.x + cell.x, y: box.y + cell.y }),
     ).map((cell) => ({ ...cell, x: box.x + cell.x, y: box.y + cell.y }));
   const cover = lightMapCover(structure, walls, layer, extent);
-  const edges = cover.flatMap((box) =>
-    split(box, (cell) => !flatOnly(cell) && edgeOf(cell) !== undefined).flatMap((merged) =>
-      coverBoxes(merged.width, merged.height, LIGHT_MAP_CELL, () => true).flatMap((cell) => {
-        const at = { ...cell, x: merged.x + cell.x, y: merged.y + cell.y };
-        const piece = edgeOf(at) ?? [];
-        return piece.length < 3 ? [] : [piece];
-      }),
-    ),
-  );
   return {
     flat: cover.flatMap((box) => split(box, plain)),
-    shaded: cover.flatMap((box) => split(box, shadedOnly)),
-    indoors: cover.flatMap((box) => split(box, indoorsOnly)),
-    edges,
-    textured: cover.flatMap((box) =>
-      split(box, (cell) => !flatOnly(cell) && edgeOf(cell) === undefined),
-    ),
+    textured: cover.flatMap((box) => split(box, (cell) => !plain(cell))),
     lit: cover.flatMap((box) => split(box, (cell) => reach.some((mark) => overlaps(mark, cell)))),
   };
-}
-
-/** Whether `outline` turns one way only: one convex piece. */
-function convex(outline: readonly Vec2[]): boolean {
-  let turn = 0;
-  return outline.every((a, k) => {
-    const b = outline[(k + 1) % outline.length] ?? a;
-    const c = outline[(k + 2) % outline.length] ?? a;
-    const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
-    if (cross === 0) {
-      return true;
-    }
-    if (turn === 0) {
-      turn = Math.sign(cross);
-    }
-    return Math.sign(cross) === turn;
-  });
 }
 
 /**
@@ -959,30 +887,14 @@ export class LightingPass {
     const flat = this.scene.add
       .graphics()
       .setBlendMode(Phaser.BlendModes.MULTIPLY)
-      .setDepth(renderOrder({ kind: "lighting", layer }));
-    const fillCells = (boxes: readonly LightMapBox[], tint: number): void => {
-      flat.fillStyle(tint, 1);
-      for (const { x, y, width, height } of boxes) {
-        flat.fillRect(
-          (extent.x + x) / LIGHT_MAP_SCALE,
-          (extent.y + y) / LIGHT_MAP_SCALE - lift,
-          width / LIGHT_MAP_SCALE,
-          height / LIGHT_MAP_SCALE,
-        );
-      }
-    };
-    fillCells(cells.shaded, sunShadowTint(lighting));
-    fillCells(cells.indoors, baseTint(lighting, true));
-    fillCells(cells.flat, baseTint(lighting, false));
-    for (const piece of cells.edges) {
-      fillOutline(
-        flat,
-        piece.map(({ x, y }) => ({
-          x: (extent.x + x) / LIGHT_MAP_SCALE,
-          y: (extent.y + y) / LIGHT_MAP_SCALE,
-        })),
-        0,
-        -lift,
+      .setDepth(renderOrder({ kind: "lighting", layer }))
+      .fillStyle(baseTint(lighting, false), 1);
+    for (const { x, y, width, height } of cells.flat) {
+      flat.fillRect(
+        (extent.x + x) / LIGHT_MAP_SCALE,
+        (extent.y + y) / LIGHT_MAP_SCALE - lift,
+        width / LIGHT_MAP_SCALE,
+        height / LIGHT_MAP_SCALE,
       );
     }
     // The warm pools add over the lit floor, so they are made after it (#3350);

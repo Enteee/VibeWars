@@ -1665,8 +1665,31 @@ body:has(> .splash) #menu-background::after {
   gap: 0.3rem;
 }
 
-.player-cape-picks[hidden] {
+/*
+ * The cape on a figure (#3551) beside the picks; on a narrow screen,
+ * above them.
+ */
+.player-cape-body {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.player-cape-body[hidden] {
   display: none;
+}
+
+.player-cape-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+@media (max-width: 479px) {
+  .player-cape-body {
+    flex-direction: column-reverse;
+  }
 }
 
 .screen .player-cape-edit {
