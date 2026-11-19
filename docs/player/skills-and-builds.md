@@ -147,15 +147,15 @@ press **Save**.
 **Esc** leaves without saving, and asks first if you changed anything.
 **Share**, **Load GW1 code**, **Duplicate** and **Delete** are under **⋯**.
 
-A team code loads on **Team Builder** instead: press **Load team**, paste
-the code and press **Load**, or paste it anywhere on Team Builder.
+A team code loads on **Team Builder** instead: paste it anywhere there, or
+open a team build and use its **⋯** → **Load team**.
 
 ## Team Builds
 
 A **team build** is a team of its own characters, made on **Team
 Builder** and kept apart from your own characters. Each one is a card
-there, and only there: **New team build** makes one, **Load team**
-loads one shared with you, and a click on a card, or its **Edit**, opens it. You propose one in the
+there, and only there: **New team build** makes one, a team code pasted
+there loads one shared with you, and a click on a card, or its **Edit**, opens it. You propose one in the
 [Team Lobby](modes.md#team-lobby).
 
 Every team build has a size, 2v2, 4v4 or 8v8 (there are no 1v1 team builds): the **Team size** in

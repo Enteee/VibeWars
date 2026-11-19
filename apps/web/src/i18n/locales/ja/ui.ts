@@ -1246,7 +1246,6 @@ export default {
   "teamPlay.edit": "編集",
   "teamPlay.loadLine": "読み込むチームコード",
   "teamPlay.loadPlaceholder": "共有されたチームコードを貼り付け",
-  "teamPlay.loadTeam": "チームを読み込む",
   "teamPlay.memberLabel": "{name}、{professions}",
   "teamPlay.newTeamBuild": "新規チームビルド",
   "teamPlay.noTeamBuilds": "{size}人用チームビルドはまだありません。",

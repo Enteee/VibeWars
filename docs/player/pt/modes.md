@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) o joga: um templo na encosta de um vulcão entre
 tem um **Herói Fantasmagórico** na base, um fantasma que luta com um
 machado e que ninguém joga. O **altar** fica no centro, a mesma caminhada
 das duas bases. Em **Threefold Keep**, três equipes (duas se não houver uma terceira livre) o
-disputam dentro de uma fortaleza murada. As portas só abrem por dentro, com uma
-placa: para entrar, contorne até um canto aberto. No máximo 12 pontos por
+disputam na torre de uma fortaleza murada. No máximo 12 pontos por
 equipe, e se todos os rivais estiverem a -60% de moral, você vence na hora. O **Hall of
 Heroes**, o mapa de Rei da Colina que encerra a Ascensão dos Heróis, o
 ergue em um estrado murado a oeste e a leste, com subida ao norte ou ao
@@ -243,7 +242,7 @@ altar, todo bot mata primeiro o Herói Fantasmagórico da outra equipe assim
 que ele estiver no altar ao alcance deles: é o único inimigo que impede
 seu fantasma de tomá-lo.
 
-Threefold Keep joga esse modo.
+Threefold Keep joga esse modo (4v4 e 8v8, 5000x4400): uma fortaleza numa colina das terras altas, para três equipes. Suba ao adarve pela escada ao lado do seu portão e atravesse uma calçada até a colina, depois suba até o altar na torre. Uma alavanca em cada pátio abre os quatro portões: a passagem do seu portão sob a muralha, e a cripta, o caminho longo sob a colina.
 
 ## Captura de Pontos
 
@@ -398,8 +397,7 @@ Três arenas da Ascensão também podem ser escolhidas em uma Partida Hospedada:
 dá para atravessar a pé um vau raso, cruzar a ponte quebrada sobre o moinho, apoiada em seus pilares,
 ou pegar um bueiro sob a ponte assim que uma alavanca no moinho abre o portão dele; o sacerdote traz os mortos a cada 2
 minutos) e
-**Mosslit Cairns** (8v8 de Captura de Pontos, cinco montes de pedras em um
-leve zigue-zague entre as bases). A quarta é **The Brazen Causeway** (8v8, 5600x2800, de Aniquilação de Sacerdotes em uma calçada de pedra elevada sobre um pântano ao entardecer: dá para marchar pela calçada assim que uma alavanca na casa da guarda do outro lado abre o portão de bronze dela, atravessar o pântano até as escadas no meio dela, ou escapulir por um bueiro sob ela; o sacerdote traz os mortos a cada 2 minutos).
+**Mosslit Cairns** (8v8, 5400x3000, de Captura de Pontos em cinco colinas de montes de pedras que brilham com musgo ao entardecer: dá para subir num monte pelas escadas dele, segurar o grande monte do meio, ou pegar o túnel de raízes sob as colinas do sul assim que uma alavanca num monte do norte abre os portões dele; os muros de raízes podem ser quebrados). A quarta é **The Brazen Causeway** (8v8, 5600x2800, de Aniquilação de Sacerdotes em uma calçada de pedra elevada sobre um pântano ao entardecer: dá para marchar pela calçada assim que uma alavanca na casa da guarda do outro lado abre o portão de bronze dela, atravessar o pântano até as escadas no meio dela, ou escapulir por um bueiro sob ela; o sacerdote traz os mortos a cada 2 minutos).
 
 Um mapa pode ter **portões**: muros que param corpos, disparos e visão
 enquanto fechados. Fique sobre a placa de pressão de um portão para

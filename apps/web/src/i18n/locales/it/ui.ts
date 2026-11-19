@@ -1383,7 +1383,6 @@ export default {
   "teamPlay.edit": "Modifica",
   "teamPlay.loadLine": "codice squadra da caricare",
   "teamPlay.loadPlaceholder": "Incolla un codice squadra condiviso",
-  "teamPlay.loadTeam": "Carica squadra",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Nuova build",
   "teamPlay.noTeamBuilds": "Ancora nessuna Build di squadra da {size}.",

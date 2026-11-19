@@ -1378,7 +1378,6 @@ export default {
   "teamPlay.edit": "Uredi",
   "teamPlay.loadLine": "kôd tima za učitavanje",
   "teamPlay.loadPlaceholder": "Zalijepi podijeljeni kôd tima",
-  "teamPlay.loadTeam": "Učitaj tim",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Novi timski sastav",
   "teamPlay.noTeamBuilds": "Još nema timskih sastava za {size}.",

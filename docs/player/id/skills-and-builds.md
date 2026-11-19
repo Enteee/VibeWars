@@ -147,14 +147,14 @@ menekan **Simpan**.
 **Esc** keluar tanpa menyimpan, dan bertanya dulu kalau kamu mengubah sesuatu.
 **Bagikan**, **Muat kode GW1**, **Duplikat** dan **Hapus** ada di bawah **⋯**.
 
-Kode tim dimuat di **Pembuat Tim** sebagai gantinya: tekan **Muat tim**, tempel
-kodenya lalu tekan **Muat**, atau tempel di mana saja di Pembuat Tim.
+Kode tim dimuat di **Pembuat Tim** sebagai gantinya: tempel di mana saja di sana,
+atau buka sebuah build tim dan pakai **⋯** → **Muat tim**-nya.
 
 ## Build Tim
 
 **Build tim** adalah tim berisi karakter-karakternya sendiri, dibuat di **Pembuat
 Tim** dan dipisahkan dari karakter-karaktermu sendiri. Masing-masing adalah sebuah kartu
-di sana, dan hanya di sana: **Build tim baru** membuatnya, **Muat tim**
+di sana, dan hanya di sana: **Build tim baru** membuatnya, kode tim yang ditempel di sana
 memuat build yang dibagikan kepadamu, dan klik pada kartu, atau **Edit**-nya, membukanya. Kamu mengusulkannya di
 [Lobi Tim](modes.md#lobi-tim).
 

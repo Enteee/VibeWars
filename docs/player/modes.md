@@ -176,8 +176,7 @@ Cinder Sanctum (8v8, 5600x2800) plays it: a temple on a volcano flank between tw
 **Ghostly Hero** in its base, a ghost that fights with an axe and that
 nobody plays. The **altar** is in the centre, the same walk from both
 bases. On **Threefold Keep**, three teams (two when no third is free) fight for it
-inside a walled keep. Its doors open only from within, by a plate inside: walk
-round to an open corner to get in. At most 12 points a team, and if every foe
+on the tower of a walled keep. At most 12 points a team, and if every foe
 stands at -60% morale you win at once. The **Hall of
 Heroes**, the King of the Hill map that ends the Heroes' Ascent, raises
 it on a dais walled to the west and east, up a north or a south approach
@@ -233,7 +232,7 @@ spell range. While your team does not hold the altar, every bot kills the other
 team's Ghostly Hero first once it stands on the altar in their range:
 it is the one foe that keeps your ghost from claiming it.
 
-Threefold Keep plays it.
+Threefold Keep (4v4 and 8v8, 5000x4400) plays it: a keep on a hill in the heights, for three teams. Climb the wall-walk by the stairs beside your gate and cross a causeway to the hill, then climb to the altar on the tower. A lever in each court opens all four gates: your gate passage under the wall, and the undercroft, the long way under the hill.
 
 ## Capture Points
 
@@ -400,8 +399,10 @@ Three Ascent arenas are a Hosted Game's pick too: **The Hollow Deep** (8v8, 6200
 ford: wade a shallow ford, cross the broken bridge over the mill on its piers,
 or take a culvert under the bridge once a lever on the mill opens its gate;
 the priest raises its dead every 2 minutes) and
-**Mosslit Cairns** (8v8 Capture Points, five cairns in a shallow zig-zag
-between the bases). A fourth is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation on a raised stone causeway over a marsh at dusk: march along the causeway once a lever in the far gatehouse opens its bronze gate, cross the marsh to the stairs at its middle, or slip through a culvert under it; the priest raises its dead every 2 minutes).
+**Mosslit Cairns** (8v8, 5400x3000, Capture Points on five cairn hills
+glowing with moss at dusk: climb a cairn by its stairs, hold the great cairn
+in the middle, or take the root tunnel under the south hills once a lever on
+a north cairn opens its gates; root walls can be broken). A fourth is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation on a raised stone causeway over a marsh at dusk: march along the causeway once a lever in the far gatehouse opens its bronze gate, cross the marsh to the stairs at its middle, or slip through a culvert under it; the priest raises its dead every 2 minutes).
 
 A map may have **gates**: walls that stop bodies, shots and sight while
 closed. Stand on a gate's pressure plate to open it. It closes when

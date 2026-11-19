@@ -1303,7 +1303,6 @@ export default {
   "teamPlay.edit": "Ret",
   "teamPlay.loadLine": "holdkode, der skal indlæses",
   "teamPlay.loadPlaceholder": "Indsæt en delt holdkode",
-  "teamPlay.loadTeam": "Indlæs hold",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Nyt holdbuild",
   "teamPlay.noTeamBuilds": "Ingen Holdbuilds til {size} endnu.",

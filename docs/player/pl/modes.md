@@ -166,8 +166,7 @@ Cinder Sanctum (8v8, 5600x2800) w to gra: świątynia na zboczu wulkanu między 
 **Zaprowadź Upiornego Bohatera na ołtarz i utrzymaj go.** Każda drużyna ma w bazie
 **Upiornego Bohatera**, ducha walczącego toporem, którym nikt nie gra. **Ołtarz** jest
 pośrodku, tak samo daleko od obu baz. Na **Threefold Keep** walczą o niego trzy drużyny
-(dwie, gdy nie ma wolnej trzeciej) wewnątrz otoczonej murem twierdzy. Jej drzwi otwierają
-się tylko od środka, płytą wewnątrz: obejdź do otwartego narożnika, aby wejść. Maksymalnie
+(dwie, gdy nie ma wolnej trzeciej) na wieży otoczonej murem twierdzy. Maksymalnie
 12 punktów na drużynę, a jeśli każdy wróg ma -60% morale, wygrywasz od razu. **Sala
 Bohaterów**, mapa Króla wzgórza kończąca Szczyt Bohaterów, wznosi ołtarz na podwyższeniu
 obmurowanym od zachodu i wschodu, z północnym lub południowym podejściem wśród filarów.
@@ -217,7 +216,7 @@ ołtarza, każdy bot najpierw zabija Upiornego Bohatera drugiej drużyny, gdy ty
 stanie on na ołtarzu w ich zasięgu: to jedyny wróg, który nie pozwala twojemu duchowi go
 przejąć.
 
-Gra w niego Threefold Keep.
+Gra w niego Threefold Keep (4v4 i 8v8, 5000x4400): twierdza na wzgórzu w wyżynach, dla trzech drużyn. Wejdź na chodnik obronny schodami obok swojej bramy i przejdź groblą na wzgórze, a potem wespnij się do ołtarza na wieży. Dźwignia na każdym dziedzińcu otwiera wszystkie cztery bramy: przejście twojej bramy pod murem oraz podziemia, długą drogę pod wzgórzem.
 
 ## Punkty kontrolne
 
@@ -292,7 +291,7 @@ Grupa mniejsza niż 8 staje w kolejce z botami na pustych miejscach, używając 
 
 **Barrow Field** (8v8, 5400x2600) to arena Szczytu i wybór Gry prywatnej: Anihilacja kapłana na wrzosowisku pełnym kurhanów o zmierzchu, z kapłanem wskrzeszającym poległych co 2 minuty. Wejdź na kurhan, by zająć wzniesienie, albo przejdź korytarzem kurhanów pod nim, gdy dźwignia na dalekim kurhanie otworzy jego bramę. Zanieś flagę na **Latarnię Burzy** pośrodku, a co 2,5 sekundy uderzy ona jednego losowego wroga w swoim zasięgu za 50 obrażeń od błyskawic, dopóki druga drużyna nie postawi tam swojej flagi. Każde uderzenie to piorun z latarni do trafionego, widoczny dla obu drużyn.
 
-Trzy areny Szczytu to także wybór Gry prywatnej: **The Hollow Deep** (8v8 Anihilacja, 6200x2400, w ciemnej jaskini: można przejść mostem linowym nad przepaścią, wspiąć się na środkową półkę skalną albo przejść kryptą pod nią, gdy dźwignia na skalnym występie otworzy jej kratę), **Blackwater Ford** (8v8, 5200x2800, Anihilacja kapłana przy ciemnym brodzie na rzece: można przebrnąć płytki bród, przejść złamanym mostem wspartym na filarach nad młynem albo przepustem pod mostem, gdy dźwignia na młynie otworzy jego kratę; kapłan wskrzesza poległych co 2 minuty) i **Mosslit Cairns** (8v8 Punkty kontrolne, pięć kopców w płytkim zygzaku między bazami). Czwarta to **The Brazen Causeway** (8v8, 5600x2800, Anihilacja kapłana na wyniesionej kamiennej grobli nad bagnem o zmierzchu: można przemaszerować groblą, gdy dźwignia w odległym budynku bramnym otworzy jej brązową bramę, przejść przez bagno do schodów pośrodku grobli albo prześlizgnąć się przepustem pod nią; kapłan wskrzesza poległych co 2 minuty).
+Trzy areny Szczytu to także wybór Gry prywatnej: **The Hollow Deep** (8v8 Anihilacja, 6200x2400, w ciemnej jaskini: można przejść mostem linowym nad przepaścią, wspiąć się na środkową półkę skalną albo przejść kryptą pod nią, gdy dźwignia na skalnym występie otworzy jej kratę), **Blackwater Ford** (8v8, 5200x2800, Anihilacja kapłana przy ciemnym brodzie na rzece: można przebrnąć płytki bród, przejść złamanym mostem wspartym na filarach nad młynem albo przepustem pod mostem, gdy dźwignia na młynie otworzy jego kratę; kapłan wskrzesza poległych co 2 minuty) i **Mosslit Cairns** (8v8, 5400x3000, Punkty kontrolne na pięciu kopcowych wzgórzach lśniących mchem o zmierzchu: można wspiąć się na kopiec po jego schodach, utrzymać wielki kopiec pośrodku albo przejść tunelem korzeni pod południowymi wzgórzami, gdy dźwignia na północnym kopcu otworzy jego bramy; ściany z korzeni można rozbić). Czwarta to **The Brazen Causeway** (8v8, 5600x2800, Anihilacja kapłana na wyniesionej kamiennej grobli nad bagnem o zmierzchu: można przemaszerować groblą, gdy dźwignia w odległym budynku bramnym otworzy jej brązową bramę, przejść przez bagno do schodów pośrodku grobli albo prześlizgnąć się przepustem pod nią; kapłan wskrzesza poległych co 2 minuty).
 
 Mapa może mieć **bramy**: mury zatrzymujące ciała, pociski i wzrok, gdy są zamknięte. Stań na płycie naciskowej bramy, aby ją otworzyć. Zamyka się, gdy nikogo nie ma już na płycie, spychając każdego w przejściu na bliższą stronę i zatrzymując pociski w locie, i przez pół sekundy nie można jej znów otworzyć. Płyta w kolorze drużyny reaguje tylko na tę drużynę. Boty stają na płycie swojej drużyny, gdy w pobliżu nie ma wroga.
 

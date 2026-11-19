@@ -1420,7 +1420,6 @@ export default {
   "teamPlay.edit": "Upravit",
   "teamPlay.loadLine": "kód týmu k načtení",
   "teamPlay.loadPlaceholder": "Vlož sdílený kód týmu",
-  "teamPlay.loadTeam": "Načíst tým",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Nový týmový build",
   "teamPlay.noTeamBuilds": "Zatím žádné Týmové buildy pro {size}.",

@@ -173,9 +173,8 @@ Cinder Sanctum (8v8, 5600x2800) lo juega: un templo en la ladera de un volcán e
 **Lleva a tu Héroe Fantasmal al altar y mantenlo.** Cada equipo tiene un **Héroe
 Fantasmal** en su base, un fantasma que lucha con un hacha y que nadie juega. El
 **altar** está en el centro, a la misma distancia de ambas bases. En **Threefold
-Keep**, tres equipos (dos si no hay un tercero libre) luchan por él dentro de un
-recinto amurallado. Sus puertas solo se abren desde dentro, con una placa: para
-entrar, rodéalo hasta una esquina abierta. Como máximo 12 puntos por equipo, y si
+Keep**, tres equipos (dos si no hay un tercero libre) luchan por él en la torre de
+un recinto amurallado. Como máximo 12 puntos por equipo, y si
 todos los rivales están a -60 % de moral, ganas al instante. **Hall of Heroes**, el mapa de Rey de la colina
 que cierra el Ascenso de los Héroes, lo eleva sobre un estrado amurallado al
 oeste y al este, con una subida norte y otra sur flanqueadas de pilares.
@@ -230,7 +229,7 @@ tu equipo no controla el altar, cada bot mata primero al Héroe Fantasmal del ot
 equipo en cuanto esté sobre el altar a su alcance: es el único enemigo que impide
 que tu fantasma lo reclame.
 
-Se juega en Threefold Keep.
+Se juega en Threefold Keep (4v4 y 8v8, 5000x4400): una fortaleza sobre una colina en las alturas, para tres equipos. Sube al adarve por las escaleras junto a tu puerta y cruza una calzada hasta la colina; luego sube al altar en la torre. Una palanca en cada patio abre las cuatro puertas: el paso de tu puerta bajo la muralla, y la cripta, el camino largo bajo la colina.
 
 ## Puntos de captura
 
@@ -377,8 +376,7 @@ Un grupo de menos de 8 entra en la cola con bots en los puestos vacíos, usando 
 Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow Deep** (Aniquilación 8v8, 6200x2400, en una caverna oscura: cruza un puente colgante sobre un abismo, trepa por una cornisa central o toma la cripta bajo ella cuando una palanca en un saliente abra su reja), **Blackwater Ford**
 (Aniquilación de sacerdote 8v8, 5200x2800, en un oscuro vado de río: se cruza vadeando un vado poco profundo,
 por el puente roto sobre sus pilares encima del molino o por una alcantarilla bajo el puente cuando una palanca
-del molino abre su compuerta; el sacerdote resucita a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de
-captura 8v8, cinco túmulos en un zigzag poco profundo entre las bases). La cuarta es **The Brazen Causeway** (Aniquilación de sacerdote 8v8, 5600x2800, en una calzada de piedra elevada sobre una marisma al anochecer: se avanza por la calzada cuando una palanca de la torre de la puerta del otro extremo abre su puerta de bronce, se cruza la marisma hasta las escaleras de su centro o uno se escabulle por una alcantarilla bajo ella; el sacerdote resucita a sus muertos cada 2 minutos).
+del molino abre su compuerta; el sacerdote resucita a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de captura 8v8, 5400x3000, en cinco colinas de túmulos que brillan con musgo al anochecer: se sube a un túmulo por sus escaleras, se defiende el gran túmulo del centro o se toma el túnel de raíces bajo las colinas del sur cuando una palanca de un túmulo del norte abre sus puertas; los muros de raíces se pueden romper). La cuarta es **The Brazen Causeway** (Aniquilación de sacerdote 8v8, 5600x2800, en una calzada de piedra elevada sobre una marisma al anochecer: se avanza por la calzada cuando una palanca de la torre de la puerta del otro extremo abre su puerta de bronce, se cruza la marisma hasta las escaleras de su centro o uno se escabulle por una alcantarilla bajo ella; el sacerdote resucita a sus muertos cada 2 minutos).
 
 Un mapa puede tener **puertas**: muros que detienen cuerpos, disparos y visión
 mientras están cerradas. Colócate en la placa de presión de una puerta para abrirla.

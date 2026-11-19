@@ -176,8 +176,7 @@ Cinder Sanctum (8v8, 5600x2800) ho hrá: chrám na úbočí sopky medzi dvoma l�
 svojej základni **Prízračného hrdinu**, prízrak, ktorý bojuje sekerou a ktorého
 nikto nehrá. **Oltár** je v strede, rovnako ďaleko od oboch
 základní. Na **Threefold Keep** oň bojujú tri tímy (dva, keď tretí nie je voľný)
-vo vnútri opevnenej pevnosti. Jej dvere sa otvárajú len zvnútra, doskou vo
-vnútri: obíď ju k otvorenému rohu, aby si sa dostal dnu. Najviac 12 bodov na
+na veži opevnenej pevnosti. Najviac 12 bodov na
 tím, a ak každý nepriateľ stojí na -60 % morálky, vyhrávaš okamžite. **Hall of
 Heroes**, mapa Kráľa kopca, ktorá končí Výstup hrdinov, ho vyvyšuje
 na pódiu obohnanom múrmi na západe a východe, so severným alebo južným prístupom
@@ -234,7 +233,7 @@ dostrel kúzla. Kým tvoj tím nedrží oltár, každý bot zabije Prízračnéh
 druhého tímu ako prvého, keď stojí na oltári v ich dosahu:
 je to ten jediný nepriateľ, ktorý tvojmu prízraku bráni si ho nárokovať.
 
-Hrá sa na Threefold Keep.
+Hrá sa na Threefold Keep (4v4 a 8v8, 5000x4400): pevnosť na kopci vo vysočine, pre tri tímy. Vystúp po schodoch vedľa svojej brány na ochodzu hradieb a prejdi po hrádzi na kopec, potom vyšplhaj k oltáru na veži. Páka na každom nádvorí otvorí všetky štyri brány: priechod tvojou bránou pod hradbou a podzemie, dlhú cestu pod kopcom.
 
 ## Dobývanie bodov
 
@@ -402,8 +401,7 @@ Tri arény Výstupu sa dajú vybrať aj vo Vlastnej hre: **The Hollow Deep** (8v
 kňaza pri tmavom riečnom brode: dá sa prebrodiť plytký brod, prejsť po rozbitom moste na pilieroch nad mlynom
 alebo priepustom pod mostom, keď páka na mlyne otvorí jeho mrežu; kňaz oživuje
 svojich mŕtvych každé 2 minúty) a
-**Mosslit Cairns** (8v8 Dobývanie bodov, päť mohýl v plytkom cik-caku
-medzi základňami). Štvrtá je **The Brazen Causeway** (8v8, 5600x2800, Anihilácia kňaza na vyvýšenej kamennej hrádzi nad močiarom za súmraku: dá sa pochodovať po hrádzi, keď páka vo vzdialenej vrátnici otvorí jej bronzovú bránu, prejsť močiar k schodom v jej strede alebo prekĺznuť priepustom pod ňou; kňaz oživuje svojich mŕtvych každé 2 minúty).
+**Mosslit Cairns** (8v8, 5400x3000, Dobývanie bodov na piatich mohylových kopcoch žiariacich za súmraku machom: dá sa vystúpiť na mohylu po jej schodoch, držať veľkú mohylu v strede alebo prejsť koreňovým tunelom pod južnými kopcami, keď páka na severnej mohyle otvorí jeho brány; koreňové múry sa dajú rozbiť). Štvrtá je **The Brazen Causeway** (8v8, 5600x2800, Anihilácia kňaza na vyvýšenej kamennej hrádzi nad močiarom za súmraku: dá sa pochodovať po hrádzi, keď páka vo vzdialenej vrátnici otvorí jej bronzovú bránu, prejsť močiar k schodom v jej strede alebo prekĺznuť priepustom pod ňou; kňaz oživuje svojich mŕtvych každé 2 minúty).
 
 Mapa môže mať **brány**: múry, ktoré zastavujú telá, strely a výhľad, kým sú
 zatvorené. Stoj na tlakovej doske brány, aby si ju otvoril. Zatvorí sa, keď na

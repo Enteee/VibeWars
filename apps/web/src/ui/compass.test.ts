@@ -208,16 +208,24 @@ describe("compassView (#1056)", () => {
           actor("carrier", 150, 1000, { team: "enemy" }),
         ],
         flags: [
-          { id: "flag/0", side: "ally", position: vec2(150, 1000), carried: true, onStand: false },
+          {
+            id: "flag/0",
+            side: "ally",
+            position: vec2(150, 1000),
+            layer: 0,
+            carried: true,
+            onStand: false,
+          },
           {
             id: "flag/1",
             side: "enemy",
             position: vec2(3000, 1000),
+            layer: 0,
             carried: false,
             onStand: false,
           },
         ],
-        stand: { id: "flag-stand", position: vec2(1000, 150), holder: "enemy" },
+        stand: { id: "flag-stand", position: vec2(1000, 150), layer: 0, holder: "enemy" },
       }),
       "me",
       SIZE,
@@ -232,7 +240,7 @@ describe("compassView (#1056)", () => {
   });
 
   it("marks no stand held by nobody in a side's colour, and none on another map (#1226)", () => {
-    const stand = { id: "flag-stand", position: vec2(1000, 150), holder: undefined };
+    const stand = { id: "flag-stand", position: vec2(1000, 150), layer: 0, holder: undefined };
     expect(compassView(arena({ stand }), "me", SIZE, RANGE_COMPASS)?.stand).toEqual({
       x: 0,
       y: -40,

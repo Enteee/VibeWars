@@ -172,8 +172,7 @@ Cinder Sanctum (8v8, 5600x2800) memainkannya: sebuah kuil di lereng gunung berap
 **Pahlawan Hantu** di markasnya, hantu yang bertarung dengan kapak dan yang
 tidak dimainkan siapa pun. **Altar** ada di tengah, sama jauhnya dari kedua
 markas. Di **Threefold Keep**, tiga tim (dua kalau tak ada tim ketiga yang tersedia) memperebutkannya
-di dalam sebuah keep bertembok. Pintu-pintunya hanya bisa dibuka dari dalam, lewat sebuah pelat di dalamnya: jalan
-memutar ke sudut yang terbuka untuk masuk. Paling banyak 12 poin per tim, dan kalau setiap musuh
+di atas menara sebuah keep bertembok. Paling banyak 12 poin per tim, dan kalau setiap musuh
 berada di moral -60% kamu langsung menang. **Aula
 Pahlawan**, peta Raja Bukit yang mengakhiri Pendakian Pahlawan, meninggikan
 altar di atas panggung bertembok di barat dan timur, naik lewat jalan utara atau selatan
@@ -229,7 +228,7 @@ jangkauan mantra. Selama timmu tidak menguasai altar, setiap bot membunuh Pahlaw
 tim lawan lebih dulu begitu hantu itu berdiri di altar dalam jangkauan mereka:
 dialah satu-satunya musuh yang mencegah hantumu merebutnya.
 
-Threefold Keep memainkannya.
+Threefold Keep memainkannya (4v4 dan 8v8, 5000x4400): sebuah keep di atas bukit di dataran tinggi, untuk tiga tim. Naiki jalan di atas tembok lewat tangga di samping gerbangmu lalu seberangi jalan lintas ke bukit, kemudian naik ke altar di atas menara. Sebuah tuas di tiap pelataran membuka keempat gerbang: lorong gerbangmu di bawah tembok, dan ruang bawah tanah, jalan panjang di bawah bukit.
 
 ## Rebut Titik
 
@@ -396,8 +395,7 @@ Tiga arena Pendakian juga bisa dipilih di Game Host: **The Hollow Deep** (Pemusn
 Pendeta 8v8, 5200x2800, di sebuah arungan sungai yang gelap: arungi arungan yang dangkal, seberangi jembatan rusak di atas
 kincir yang bertumpu pada pilar-pilarnya, atau lewati gorong-gorong di bawah jembatan setelah tuas di kincir membuka
 gerbangnya; pendeta menghidupkan kembali yang mati setiap 2 menit) dan
-**Mosslit Cairns** (Rebut Titik 8v8, lima tumpukan batu dalam zig-zag dangkal
-di antara markas-markas). Yang keempat adalah **The Brazen Causeway** (Pemusnahan Pendeta 8v8, 5600x2800, di jalan lintas batu yang ditinggikan di atas rawa saat senja: berbaris menyusuri jalan lintas itu setelah tuas di rumah gerbang di ujung sana membuka gerbang perunggunya, seberangi rawa menuju tangga di tengahnya, atau menyelinap lewat gorong-gorong di bawahnya; pendeta menghidupkan kembali yang mati setiap 2 menit).
+**Mosslit Cairns** (Rebut Titik 8v8, 5400x3000, di lima bukit tumpukan batu yang berpendar oleh lumut saat senja: panjat tumpukan batu lewat tangganya, kuasai tumpukan batu besar di tengah, atau ambil terowongan akar di bawah bukit-bukit selatan setelah tuas di tumpukan batu utara membuka gerbangnya; dinding akar bisa dihancurkan). Yang keempat adalah **The Brazen Causeway** (Pemusnahan Pendeta 8v8, 5600x2800, di jalan lintas batu yang ditinggikan di atas rawa saat senja: berbaris menyusuri jalan lintas itu setelah tuas di rumah gerbang di ujung sana membuka gerbang perunggunya, seberangi rawa menuju tangga di tengahnya, atau menyelinap lewat gorong-gorong di bawahnya; pendeta menghidupkan kembali yang mati setiap 2 menit).
 
 Sebuah peta bisa punya **gerbang**: tembok yang menghentikan tubuh, tembakan dan pandangan selagi
 tertutup. Berdirilah di pelat penekan sebuah gerbang untuk membukanya. Gerbang menutup saat

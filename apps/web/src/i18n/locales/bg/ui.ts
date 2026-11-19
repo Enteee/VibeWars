@@ -1310,7 +1310,6 @@ export default {
   "teamPlay.edit": "Промени",
   "teamPlay.loadLine": "код на отбор за зареждане",
   "teamPlay.loadPlaceholder": "Постави споделен код на отбор",
-  "teamPlay.loadTeam": "Зареди отбор",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Нов отборен билд",
   "teamPlay.noTeamBuilds": "Още няма отборни билдове за {size}.",

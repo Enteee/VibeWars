@@ -64,11 +64,11 @@ Per importarne una, scegli **Carica codice GW1** in **⋯**, incolla il codice e
 
 **Salva** tiene la build e ti riporta da dove sei venuto. **Esc** esce senza salvare e, se hai cambiato qualcosa, prima chiede. **Condividi**, **Carica codice GW1**, **Duplica** ed **Elimina** sono in **⋯**.
 
-Un codice squadra si carica invece su **Editor squadre**: premi **Carica squadra**, incolla il codice e premi **Carica**, oppure incollalo in qualsiasi punto di Editor squadre.
+Un codice squadra si carica invece su **Editor squadre**: incollalo in qualsiasi punto lì, oppure apri una build di squadra e usa il suo **⋯** → **Carica squadra**.
 
 ## Build di squadra
 
-Una **Build di squadra** è una squadra con i suoi personaggi, creata su **Editor squadre** e separata dai tuoi personaggi. Ognuna è una carta lì, e solo lì: **Nuova build** ne crea una, **Carica squadra** ne carica una condivisa con te, e un clic su una carta, o il suo **Modifica**, la apre. La proponi nella [Lobby squadra](modes.md#lobby-squadra).
+Una **Build di squadra** è una squadra con i suoi personaggi, creata su **Editor squadre** e separata dai tuoi personaggi. Ognuna è una carta lì, e solo lì: **Nuova build** ne crea una, un codice squadra incollato lì ne carica una condivisa con te, e un clic su una carta, o il suo **Modifica**, la apre. La proponi nella [Lobby squadra](modes.md#lobby-squadra).
 
 Ogni Build di squadra ha una dimensione, 2v2, 4v4 o 8v8 (non esistono Build di squadra 1v1): la **Dim. squadra** nella barra laterale. Editor squadre elenca le Build di squadra della dimensione scelta lì, e **Nuova build** ne crea una di quella dimensione. La dimensione di una Build di squadra è fissa: il suo editor la mostra bloccata, e per giocare un'altra dimensione devi crearne un'altra. Una squadra incollata mantiene la sua dimensione, e la barra laterale passa a quella.
 

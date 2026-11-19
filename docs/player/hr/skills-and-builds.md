@@ -147,14 +147,14 @@ pritisneš **Spremi**.
 **Esc** izlazi bez spremanja i najprije pita ako si nešto promijenio.
 **Podijeli**, **Učitaj GW1 kôd**, **Dupliciraj** i **Obriši** nalaze se pod **⋯**.
 
-Timski kôd učitava se umjesto toga u **Uređivaču timova**: pritisni **Učitaj tim**,
-zalijepi kôd i pritisni **Učitaj**, ili ga zalijepi bilo gdje u Uređivaču timova.
+Timski kôd učitava se umjesto toga u **Uređivaču timova**: zalijepi ga bilo gdje tamo,
+ili otvori timski sastav i upotrijebi njegov **⋯** → **Učitaj tim**.
 
 ## Timski sastavi
 
 **Timski sastav** je tim s vlastitim likovima, napravljen u **Uređivaču
 timova** i odvojen od tvojih likova. Svaki je kartica
-tamo i samo tamo: **Novi timski sastav** stvara jedan, **Učitaj tim**
+tamo i samo tamo: **Novi timski sastav** stvara jedan, timski kôd zalijepljen tamo
 učitava onaj koji je netko podijelio s tobom, a klik na karticu ili njezin **Uredi** ga otvara. Predlažeš ga u
 [Timskoj sobi](modes.md#timska-soba).
 
