@@ -19,7 +19,7 @@ De standaardpreset is **Klassiek**, voor GW1-handen. **VibeWars** cast met de li
 | Volgende vijand (Shift: vorige) | Tab                         | Tab              |
 | Dichtstbijzijnde vijand         | C                           | C                |
 | Aangewezen vijand van je team   | T                           | T                |
-| Jezelf                          | G                           | G                |
+| Jezelf                          | F of G                      | G                |
 | Namen tonen (ingedrukt)         | Shift                       | Shift            |
 | Dempen                          | M                           | M                |
 | Vlag, relikwie of as neerleggen | geen toets                  | geen toets       |

@@ -15,7 +15,7 @@ Výchozí předvolba je **Klasické**, pro ruce zvyklé na GW1. **VibeWars** ses
 | Další nepřítel (Shift: předchozí)   | Tab                | Tab              |
 | Nejbližší nepřítel                  | C                  | C                |
 | Nepřítel nahlášený tvým týmem       | T                  | T                |
-| Ty sám                              | G                  | G                |
+| Ty sám                              | F nebo G           | G                |
 | Ukázat jména (držet)                | Shift              | Shift            |
 | Ztlumit                             | M                  | M                |
 | Odhodit vlajku, relikvii nebo popel | žádná              | žádná            |

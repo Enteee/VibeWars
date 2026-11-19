@@ -286,6 +286,41 @@ channels, as often as they like.
 - **Everything in a snapshot.** A peer receives every snapshot field the
   host sends, for every player. Anything that must stay hidden from a
   player must not be in the snapshot at all.
+- **Everything anyone did, after the match.** The replay (#3572)
+  the host sends every player once the match has ended holds
+  the seed and every seat's inputs, so a rerun shows each player's every
+  move, target and call. Nothing in it may be something a player must
+  never learn, even after the match.
+
+## Replays
+
+The host records a match's inputs and, after `ended`, sends each player
+the encoding in `match-replay` parts (`packages/game-session/src/replay.ts`).
+A player keeps the newest `KEPT_REPLAYS` (50) in IndexedDB.
+
+What it defends against:
+
+- **A player bloating the replay.** `ReplayBudget` gives each seat a share
+  of `MAX_REPLAY_CHARS` (32 M characters) with a burst cap. A seat that
+  overruns it stops the recording at that tick and is named in
+  `overrunBy`; nobody else's share is spent, and the match plays on.
+- **A garbled or spliced replay.** Parts must agree on `hash` and `of`,
+  and the joined text must hash to it, re-encode byte for byte and parse
+  as a replay. Anything else is dropped, never kept in part.
+- **Parts outside a match.** A client takes parts only after `ended`,
+  only once per match, and ignores a duplicate part.
+- **A host flooding parts.** A peer holds at most `MAX_REPLAY_CHARS` of
+  parts; past it, or on a part whose hash or count differs, it drops them
+  all and takes no more.
+
+What it does not defend against:
+
+- **A host lying in the replay.** The hash proves the parts are what the
+  host meant to send, not what was played. Nothing re-simulates it on
+  receipt; ranked receipts sign its hash on the host's word.
+- **A host filling a peer's storage.** A hostile host can send a valid
+  32 M-character replay every match, and 50 are kept, so it can grow a
+  peer's IndexedDB by over a gigabyte across many matches with it.
 
 ## Ranked receipts
 
@@ -505,6 +540,8 @@ saying so in the same PR. Keep the numbers: issues cite them.
    unescaped (#115).
 8. **Fixed by #178:** display names could carry invisible and
    direction-changing characters (#174).
+9. **Fixed by #3620:** replay parts could outgrow `MAX_REPLAY_CHARS`
+   before `joinReplay` checked it.
 
 ## Music patterns are code
 

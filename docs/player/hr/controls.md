@@ -19,7 +19,7 @@ Zadani predložak je **Klasično**, za ruke naviknute na GW1. **VibeWars** baca 
 | Sljedeći neprijatelj (Shift: prethodni) | Tab                  | Tab              |
 | Najbliži neprijatelj                    | C                    | C                |
 | Označeni neprijatelj tvog tima          | T                    | T                |
-| Ti sam                                  | G                    | G                |
+| Ti sam                                  | F ili G              | G                |
 | Prikaži imena (drži)                    | Shift                | Shift            |
 | Utišaj                                  | M                    | M                |
 | Ispusti zastavu, relikviju ili pepeo    | bez tipke            | bez tipke        |

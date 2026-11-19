@@ -20,7 +20,7 @@ becerileri sol elle kullanır ve ok tuşlarıyla hareket eder.
 | Sonraki düşman (Shift: önceki)         | Tab                      | Tab              |
 | En yakın düşman                        | C                        | C                |
 | Takımının bildirdiği düşman            | T                        | T                |
-| Kendin                                 | G                        | G                |
+| Kendin                                 | F ya da G                | G                |
 | Adları göster (basılı tut)             | Shift                    | Shift            |
 | Sesi kapat                             | M                        | M                |
 | Bayrağı, kalıntıyı ya da külleri bırak | yok                      | yok              |

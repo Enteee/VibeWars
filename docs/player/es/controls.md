@@ -19,7 +19,7 @@ El preajuste por defecto es **Clásico**, para manos de GW1. **VibeWars** lanza 
 | Siguiente enemigo (Shift: anterior) | Tab                | Tab              |
 | Enemigo más cercano                 | C                  | C                |
 | Enemigo marcado por tu equipo       | T                  | T                |
-| Tú mismo                            | G                  | G                |
+| Tú mismo                            | F o G              | G                |
 | Ver nombres (mantener)              | Shift              | Shift            |
 | Silenciar                           | M                  | M                |
 | Soltar bandera, reliquia o cenizas  | ninguna            | ninguna          |

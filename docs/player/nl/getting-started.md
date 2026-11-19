@@ -172,8 +172,8 @@ tabblad, dan gaat de groep meteen uit de wachtrij. Als er een ander team van
 dezelfde modus in de wachtrij opduikt, speel je tegen hen op een van de maps
 van de modus, elke kant met zijn eigen builds, en kom je daarna terug in je
 lobby. De host kan op elk moment de wachtrij verlaten via het venster van de ring; een gast die
-vertrekt, haalt de hele groep eruit. Is er na een minuut geen ander team, dan
-kan de host ook op **Tegen bots spelen** drukken: een match in je eigen lobby
+vertrekt, haalt de hele groep eruit. Na 10 s in de wachtrij kan de host ook
+in het venster van de ring op **Tegen bots spelen** drukken: een match in je eigen lobby
 tegen een willekeurig kant-en-klaar team van bots, behalve in
 [Heroes' Ascent](modes.md#heroes-ascent), dat wacht op een team van jouw ronde.
 
