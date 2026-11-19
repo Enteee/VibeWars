@@ -352,6 +352,7 @@ describe("⋯ → Load team (#3181, #3638)", () => {
       onDelete: () => undefined,
       onClose: () => undefined,
       onOpenMember: () => undefined,
+      onDraft: undefined,
       onImportTeam: (team) => {
         imported.push(team);
       },

@@ -1517,6 +1517,24 @@ export default {
   "tutorial.menu.spec.title": "Változtasd meg a specializációdat.",
   "tutorial.menu.spec.weapons": "Válassz a listából fegyvert a fegyverkészletedhez.",
   "tutorial.menu.spec.weaponsDone": "Cserélj fegyvert",
+  "tutorial.menu.team.build":
+    "Egy tag neve megnyitja a buildjét a buildszerkesztőben. Visszatérve megmarad, amit módosítottál, mentetlenül.",
+  "tutorial.menu.team.character":
+    "Húzd a karakteredet a Karaktereim közül egy tagra. A tag a másolata lesz.",
+  "tutorial.menu.team.characterDone": "Tedd a karakteredet a csapatba",
+  "tutorial.menu.team.fill": "Adj buildet minden tagnak, amíg a csapatnak nem marad problémája.",
+  "tutorial.menu.team.fillDone": "Töltsd fel a csapatot",
+  "tutorial.menu.team.members":
+    "Egy csapatnak mindig annyi tagja van, amekkora a mérete. Tagot sosem adsz hozzá: lecserélsz egyet.",
+  "tutorial.menu.team.new": "Állítsd a csapatméretet 2v2-re, majd készíts új csapatbuildet.",
+  "tutorial.menu.team.newDone": "Indíts egy 2 fős csapatot",
+  "tutorial.menu.team.open": "Nyisd meg a Csapatokat, ahol a csapatbuildjeid vannak.",
+  "tutorial.menu.team.openDone": "Nyisd meg a Csapatokat",
+  "tutorial.menu.team.problems":
+    "A Mentés mindig eltárolja a csapatot. A tippje megnevezi az első dolgot, ami miatt a csapat nem játszható.",
+  "tutorial.menu.team.save": "Mentsd el a csapatod.",
+  "tutorial.menu.team.saveDone": "Mentés",
+  "tutorial.menu.team.title": "Építs csapatot a sikerhez.",
   "tutorial.gate.hint": "Be a ködbe, utánam.",
   "tutorial.gate.how": "Kattints a földre bal gombbal, vagy járj ezekkel: {keys}.",
   "tutorial.gate.intro": "A csapatunk a ködön túl harcol. Kövess!",

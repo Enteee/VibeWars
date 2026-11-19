@@ -1588,6 +1588,24 @@ export default {
   "tutorial.menu.spec.title": "Schimbă-ți specializarea.",
   "tutorial.menu.spec.weapons": "Alege din listă o armă pentru setul tău de arme.",
   "tutorial.menu.spec.weaponsDone": "Schimbă o armă",
+  "tutorial.menu.team.build":
+    "Numele unui membru îi deschide build-ul în editorul de build-uri. Când revii, schimbările rămân, nesalvate.",
+  "tutorial.menu.team.character":
+    "Trage personajul tău din Personajele mele pe un membru. Membrul devine o copie a lui.",
+  "tutorial.menu.team.characterDone": "Pune-ți personajul în echipă",
+  "tutorial.menu.team.fill": "Dă fiecărui membru un build, până când echipa nu mai are probleme.",
+  "tutorial.menu.team.fillDone": "Completează echipa",
+  "tutorial.menu.team.members":
+    "O echipă are mereu atâția membri cât îi e mărimea. Nu adaugi niciodată un membru: înlocuiești unul.",
+  "tutorial.menu.team.new": "Setează mărimea echipei la 2v2, apoi creează un build de echipă nou.",
+  "tutorial.menu.team.newDone": "Pornește o echipă de 2",
+  "tutorial.menu.team.open": "Deschide Echipe, unde sunt build-urile tale de echipă.",
+  "tutorial.menu.team.openDone": "Deschide Echipe",
+  "tutorial.menu.team.problems":
+    "Salvează păstrează mereu echipa. Indiciul său numește primul lucru care împiedică jocul cu echipa.",
+  "tutorial.menu.team.save": "Salvează-ți echipa.",
+  "tutorial.menu.team.saveDone": "Salvează",
+  "tutorial.menu.team.title": "Construiește o echipă ca să reușești.",
   "tutorial.gate.hint": "În ceață, după mine.",
   "tutorial.gate.how": "Clic stânga pe teren sau mergi cu {keys}.",
   "tutorial.gate.intro": "Echipa noastră luptă dincolo de ceață. Urmează-mă.",

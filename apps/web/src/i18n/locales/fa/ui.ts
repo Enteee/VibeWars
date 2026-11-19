@@ -1506,6 +1506,24 @@ export default {
   "tutorial.menu.spec.title": "تخصصت را عوض کن.",
   "tutorial.menu.spec.weapons": "از فهرست سلاحی برای ست سلاحت انتخاب کن.",
   "tutorial.menu.spec.weaponsDone": "یک سلاح را عوض کن",
+  "tutorial.menu.team.build":
+    "نام هر عضو بیلدش را در ویرایشگر بیلد باز می‌کند. وقتی برگردی، تغییراتت می‌مانند، ذخیره‌نشده.",
+  "tutorial.menu.team.character":
+    "شخصیتت را از «شخصیت‌های من» روی یک عضو بکش. آن عضو کپی‌ای از آن می‌شود.",
+  "tutorial.menu.team.characterDone": "شخصیتت را در تیم بگذار",
+  "tutorial.menu.team.fill": "به هر عضو یک بیلد بده، تا تیم دیگر هیچ مشکلی نداشته باشد.",
+  "tutorial.menu.team.fillDone": "تیم را کامل کن",
+  "tutorial.menu.team.members":
+    "یک تیم همیشه به اندازهٔ خودش عضو دارد. هرگز عضوی اضافه نمی‌کنی: یکی را جایگزین می‌کنی.",
+  "tutorial.menu.team.new": "اندازهٔ تیم را روی 2v2 بگذار، بعد یک بیلد تیمی جدید بساز.",
+  "tutorial.menu.team.newDone": "یک تیم دونفره شروع کن",
+  "tutorial.menu.team.open": "«تیم‌ها» را باز کن، جایی که بیلدهای تیمی‌ات هستند.",
+  "tutorial.menu.team.openDone": "«تیم‌ها» را باز کن",
+  "tutorial.menu.team.problems":
+    "«ذخیره» همیشه تیم را نگه می‌دارد. راهنمایش اولین چیزی را که مانع بازی تیم می‌شود نام می‌برد.",
+  "tutorial.menu.team.save": "تیمت را ذخیره کن.",
+  "tutorial.menu.team.saveDone": "ذخیره",
+  "tutorial.menu.team.title": "برای موفقیت یک تیم بساز.",
   "tutorial.gate.hint": "به درون مه، پشت سر من.",
   "tutorial.gate.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
   "tutorial.gate.intro": "تیم ما آن سوی مه می‌جنگد. دنبالم بیا.",

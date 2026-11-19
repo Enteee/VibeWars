@@ -1626,6 +1626,24 @@ export default {
   "tutorial.menu.spec.title": "Смени специализацию.",
   "tutorial.menu.spec.weapons": "Выбери из списка оружие для своего набора оружия.",
   "tutorial.menu.spec.weaponsDone": "Смени оружие",
+  "tutorial.menu.team.build":
+    "Имя участника открывает его билд в редакторе билдов. Когда вернёшься, изменения останутся несохранёнными.",
+  "tutorial.menu.team.character":
+    "Перетащи своего персонажа из «Мои персонажи» на участника. Участник станет его копией.",
+  "tutorial.menu.team.characterDone": "Поставь персонажа в команду",
+  "tutorial.menu.team.fill": "Дай билд каждому участнику, пока у команды не останется проблем.",
+  "tutorial.menu.team.fillDone": "Заполни команду",
+  "tutorial.menu.team.members":
+    "В команде всегда столько участников, каков её размер. Участника не добавляют: его заменяют.",
+  "tutorial.menu.team.new": "Поставь размер команды 2v2, затем создай новый билд команды.",
+  "tutorial.menu.team.newDone": "Начни команду из 2",
+  "tutorial.menu.team.open": "Открой «Команды», где лежат билды команд.",
+  "tutorial.menu.team.openDone": "Открой «Команды»",
+  "tutorial.menu.team.problems":
+    "«Сохранить» всегда сохраняет команду. Подсказка кнопки называет первое, что мешает играть командой.",
+  "tutorial.menu.team.save": "Сохрани команду.",
+  "tutorial.menu.team.saveDone": "Сохранить",
+  "tutorial.menu.team.title": "Собери команду, чтобы побеждать.",
   "tutorial.gate.hint": "В туман, за мной.",
   "tutorial.gate.how": "Щёлкни левой кнопкой по земле или иди клавишами {keys}.",
   "tutorial.gate.intro": "Наша команда сражается за туманом. За мной.",

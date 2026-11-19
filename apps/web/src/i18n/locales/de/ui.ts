@@ -1530,6 +1530,25 @@ export default {
   "tutorial.menu.spec.title": "Ändere deine Spezialisierung.",
   "tutorial.menu.spec.weapons": "Wähle aus der Liste eine Waffe für dein Waffenset.",
   "tutorial.menu.spec.weaponsDone": "Ändere eine Waffe",
+  "tutorial.menu.team.build":
+    "Der Name eines Mitglieds öffnet seinen Build im Build-Editor. Beim Zurückkehren bleibt, was du geändert hast, ungespeichert.",
+  "tutorial.menu.team.character":
+    "Zieh deinen Charakter aus Meine Charaktere auf ein Mitglied. Das Mitglied wird eine Kopie davon.",
+  "tutorial.menu.team.characterDone": "Setz deinen Charakter ins Team",
+  "tutorial.menu.team.fill":
+    "Gib jedem Mitglied einen Build, bis das Team keine Probleme mehr hat.",
+  "tutorial.menu.team.fillDone": "Füll das Team",
+  "tutorial.menu.team.members":
+    "Ein Team hat immer so viele Mitglieder wie seine Größe. Du fügst nie ein Mitglied hinzu: Du ersetzt eines.",
+  "tutorial.menu.team.new": "Stell die Teamgröße auf 2v2 und erstelle dann einen neuen Team-Build.",
+  "tutorial.menu.team.newDone": "Starte ein Team zu zweit",
+  "tutorial.menu.team.open": "Öffne Teams, wo deine Team-Builds sind.",
+  "tutorial.menu.team.openDone": "Öffne Teams",
+  "tutorial.menu.team.problems":
+    "Speichern speichert das Team immer. Sein Hinweis nennt das Erste, was das Team am Spielen hindert.",
+  "tutorial.menu.team.save": "Speichere dein Team.",
+  "tutorial.menu.team.saveDone": "Speichern",
+  "tutorial.menu.team.title": "Bau ein Team, um erfolgreich zu sein.",
   "tutorial.gate.hint": "In den Nebel, mir nach.",
   "tutorial.gate.how": "Linksklick auf den Boden, oder geh mit {keys}.",
   "tutorial.gate.intro": "Unser Team kämpft jenseits des Nebels. Folge mir.",

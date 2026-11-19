@@ -1424,6 +1424,24 @@ export default {
   "tutorial.menu.spec.title": "스펙을 바꾸세요.",
   "tutorial.menu.spec.weapons": "목록에서 무기 세트에 쓸 무기를 고르세요.",
   "tutorial.menu.spec.weaponsDone": "무기 바꾸기",
+  "tutorial.menu.team.build":
+    "멤버 이름을 누르면 빌드 편집기에서 그 빌드가 열립니다. 돌아와도 바꾼 내용은 저장되지 않은 채 남습니다.",
+  "tutorial.menu.team.character":
+    "내 캐릭터에서 캐릭터를 멤버 위로 끌어다 놓으세요. 그 멤버가 캐릭터의 복사본이 됩니다.",
+  "tutorial.menu.team.characterDone": "캐릭터를 팀에 넣기",
+  "tutorial.menu.team.fill": "팀에 문제가 남지 않을 때까지 모든 멤버에게 빌드를 주세요.",
+  "tutorial.menu.team.fillDone": "팀 채우기",
+  "tutorial.menu.team.members":
+    "팀은 항상 규모만큼 멤버가 있습니다. 멤버를 추가하지 않고, 교체합니다.",
+  "tutorial.menu.team.new": "팀 규모를 2v2로 정한 뒤, 새 팀 빌드를 만드세요.",
+  "tutorial.menu.team.newDone": "2인 팀 시작하기",
+  "tutorial.menu.team.open": "팀 빌드가 있는 팀을 여세요.",
+  "tutorial.menu.team.openDone": "팀 열기",
+  "tutorial.menu.team.problems":
+    "저장은 항상 팀을 저장합니다. 그 힌트는 팀을 플레이하지 못하게 하는 첫 번째 이유를 알려 줍니다.",
+  "tutorial.menu.team.save": "팀을 저장하세요.",
+  "tutorial.menu.team.saveDone": "저장",
+  "tutorial.menu.team.title": "성공하려면 팀을 꾸리세요.",
   "tutorial.gate.hint": "안개 속으로, 날 따라와.",
   "tutorial.gate.how": "땅을 왼쪽 클릭하거나 {keys}(으)로 걸으세요.",
   "tutorial.gate.intro": "우리 팀은 안개 너머에서 싸우고 있어. 따라와.",

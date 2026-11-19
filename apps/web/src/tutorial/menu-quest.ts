@@ -2,8 +2,9 @@ import type { QueueMode } from "@vibewars/game-protocol";
 
 import type { MessageKey } from "../i18n/index.js";
 import { validateBuild } from "../storage/build-validation.js";
-import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
+import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
 import type { RailEntry } from "../ui/rail.js";
+import { validateTeam } from "../ui/team-builder.js";
 
 /**
  * The menu quest (#3538, #3540): after the canyon's front, the tutorial
@@ -28,6 +29,16 @@ export type MenuQuestEvent =
       readonly kind: "character-saved";
       readonly before: StoredCharacter | undefined;
       readonly after: StoredCharacter;
+    }
+  /**
+   * The team editor's draft (#3542), on opening and after every edit;
+   * `isNew` for a team never stored, `characters` the player's own, to copy.
+   */
+  | {
+      readonly kind: "team-draft";
+      readonly draft: StoredTeam;
+      readonly isNew: boolean;
+      readonly characters: readonly StoredCharacter[];
     }
   | { readonly kind: "team-saved"; readonly team: StoredTeam; readonly isNew: boolean }
   | { readonly kind: "team-size"; readonly size: number }
@@ -57,7 +68,13 @@ export interface MenuQuestState {
     readonly before: StoredCharacter | undefined;
     readonly after: StoredCharacter;
   }[];
+  /** The team editor's draft, as last reported (#3542). */
+  readonly teamDraft: { readonly team: StoredTeam; readonly isNew: boolean } | undefined;
+  /** Whether a draft ever held a copy of the player's character (#3542). */
+  readonly characterInTeam: boolean;
   readonly teamsSaved: readonly { readonly team: StoredTeam; readonly isNew: boolean }[];
+  /** The team the quest had saved (#3542), for the modes step to pick. */
+  readonly questTeamId: string | undefined;
   readonly teamSize: number | undefined;
   readonly teamPicked: string | undefined;
   readonly queueJoined: { readonly mode: QueueMode; readonly size: number } | undefined;
@@ -199,6 +216,76 @@ export const MENU_QUEST_STEPS = [
       },
     ],
   },
+  {
+    id: "team",
+    title: "tutorial.menu.team.title",
+    beats: [
+      {
+        kind: "do",
+        target: "rail-teams",
+        line: "tutorial.menu.team.open",
+        objectives: [
+          {
+            id: "open",
+            label: "tutorial.menu.team.openDone",
+            done: (state) => state.screensShown.includes("teams"),
+          },
+        ],
+      },
+      {
+        kind: "do",
+        // The sidebar's size and New team build: a new team takes that size.
+        target: "team-new",
+        line: "tutorial.menu.team.new",
+        objectives: [
+          {
+            id: "new",
+            label: "tutorial.menu.team.newDone",
+            done: (state) => state.teamDraft?.isNew === true && state.teamDraft.team.size === 2,
+          },
+        ],
+      },
+      { kind: "explain", target: "team-members", line: "tutorial.menu.team.members" },
+      { kind: "explain", target: "team-member-build", line: "tutorial.menu.team.build" },
+      { kind: "explain", target: "team-problems", line: "tutorial.menu.team.problems" },
+      {
+        kind: "do",
+        target: "team-character",
+        line: "tutorial.menu.team.character",
+        objectives: [
+          {
+            id: "character",
+            label: "tutorial.menu.team.characterDone",
+            done: (state) => state.characterInTeam,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "team-character",
+        line: "tutorial.menu.team.fill",
+        objectives: [
+          {
+            id: "fill",
+            label: "tutorial.menu.team.fillDone",
+            done: (state) => state.teamDraft !== undefined && teamFilled(state.teamDraft.team),
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "team-save",
+        line: "tutorial.menu.team.save",
+        objectives: [
+          {
+            id: "save",
+            label: "tutorial.menu.team.saveDone",
+            done: (state) => state.questTeamId !== undefined,
+          },
+        ],
+      },
+    ],
+  },
 ] as const satisfies readonly MenuQuestStep[];
 
 export type MenuQuestStepId = (typeof MENU_QUEST_STEPS)[number]["id"];
@@ -229,7 +316,10 @@ export const NO_MENU_QUEST_EVENTS: MenuQuestState = {
     gear: false,
   },
   charactersSaved: [],
+  teamDraft: undefined,
+  characterInTeam: false,
   teamsSaved: [],
+  questTeamId: undefined,
   teamSize: undefined,
   teamPicked: undefined,
   queueJoined: undefined,
@@ -270,6 +360,41 @@ export function foldBuildDraft(
   };
 }
 
+/**
+ * Whether `team` can be played (#3542): every member has a skill on its
+ * bar, and the team editor reports no problem.
+ */
+export function teamFilled(team: StoredTeam): boolean {
+  return (
+    team.members.every(({ character }) => character.skillBar.some((skill) => skill !== null)) &&
+    validateTeam(team).length === 0
+  );
+}
+
+/** Whether `member` is a copy of `character`: its professions and skill bar. */
+function copies(member: TeamCharacter, character: TeamCharacter): boolean {
+  return (
+    member.primaryProfession === character.primaryProfession &&
+    member.secondaryProfession === character.secondaryProfession &&
+    sameJson(member.skillBar, character.skillBar)
+  );
+}
+
+/**
+ * Whether `team` holds a copy of the player's character (#3542): the one
+ * saved in the spec step, or, in a quest resumed at the team step, which
+ * saw no save, any of `characters`.
+ */
+function holdsCharacter(
+  state: MenuQuestState,
+  team: StoredTeam,
+  characters: readonly StoredCharacter[],
+): boolean {
+  const saved = state.charactersSaved.map(({ after }) => after);
+  const sources = saved.length > 0 ? saved : characters;
+  return team.members.some(({ character }) => sources.some((source) => copies(character, source)));
+}
+
 export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent): MenuQuestState {
   switch (event.kind) {
     case "screen-shown":
@@ -290,10 +415,23 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
         ...state,
         charactersSaved: [...state.charactersSaved, { before: event.before, after: event.after }],
       };
+    case "team-draft":
+      return {
+        ...state,
+        teamDraft: { team: event.draft, isNew: event.isNew },
+        characterInTeam:
+          state.characterInTeam ||
+          (event.isNew && holdsCharacter(state, event.draft, event.characters)),
+      };
     case "team-saved":
       return {
         ...state,
         teamsSaved: [...state.teamsSaved, { team: event.team, isNew: event.isNew }],
+        // A new team of two, playable: the one the modes step picks.
+        questTeamId:
+          event.isNew && event.team.size === 2 && teamFilled(event.team)
+            ? event.team.id
+            : state.questTeamId,
       };
     case "team-size":
       return { ...state, teamSize: event.size };

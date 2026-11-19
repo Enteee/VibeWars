@@ -1693,6 +1693,23 @@ export default {
   "tutorial.menu.spec.title": "غيّر تخصصك.",
   "tutorial.menu.spec.weapons": "اختر سلاحًا لمجموعة أسلحتك من القائمة.",
   "tutorial.menu.spec.weaponsDone": "غيّر سلاحًا",
+  "tutorial.menu.team.build":
+    "اسم العضو يفتح بنيته في محرر البنى. عند عودتك تبقى تغييراتك، دون حفظ.",
+  "tutorial.menu.team.character": "اسحب شخصيتك من «شخصياتي» إلى عضو. يصبح العضو نسخة منها.",
+  "tutorial.menu.team.characterDone": "ضع شخصيتك في الفريق",
+  "tutorial.menu.team.fill": "امنح كل عضو بنية، حتى لا تبقى في الفريق أي مشكلة.",
+  "tutorial.menu.team.fillDone": "املأ الفريق",
+  "tutorial.menu.team.members":
+    "للفريق دائمًا عدد أعضاء يساوي حجمه. لا تضيف عضوًا أبدًا: بل تستبدل واحدًا.",
+  "tutorial.menu.team.new": "اضبط حجم الفريق على 2v2، ثم أنشئ بنية فريق جديدة.",
+  "tutorial.menu.team.newDone": "ابدأ فريقًا من اثنين",
+  "tutorial.menu.team.open": "افتح «الفرق»، حيث بنى فرقك.",
+  "tutorial.menu.team.openDone": "افتح «الفرق»",
+  "tutorial.menu.team.problems":
+    "«حفظ» يخزّن الفريق دائمًا. تلميحه يسمّي أول ما يمنع الفريق من اللعب.",
+  "tutorial.menu.team.save": "احفظ فريقك.",
+  "tutorial.menu.team.saveDone": "حفظ",
+  "tutorial.menu.team.title": "ابنِ فريقًا لتنجح.",
   "tutorial.gate.hint": "إلى الضباب، خلفي.",
   "tutorial.gate.how": "انقر بالزر الأيسر على الأرض، أو امشِ بـ {keys}.",
   "tutorial.gate.intro": "فريقنا يقاتل خلف الضباب. اتبعني.",
