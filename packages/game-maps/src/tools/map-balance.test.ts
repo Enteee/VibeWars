@@ -1872,6 +1872,76 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Threefold Keep (#3443): one piece turned by 120° for three teams, its stairs fitted anew to each
+  // team's axis, so proven by numbers for all three. Every route ends on the altar, up on the tower.
+  describe("Threefold Keep", () => {
+    const map = loadMap("threefold-keep");
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const altar = { x: 2500, y: 2200 };
+    const teams = ["north", "south-east", "south-west"];
+    const wallWalks = teams.flatMap((team) => [
+      `${team}-wall-walk-left-stair`,
+      `${team}-wall-walk-right-stair`,
+    ]);
+    const gateSteps = teams.map((team) => `${team}-gate-outer-steps`);
+    const within = (walks: readonly number[], share: number): void => {
+      expect(Math.min(...walks)).toBeGreaterThan(0);
+      expect((Math.max(...walks) - Math.min(...walks)) / Math.max(...walks)).toBeLessThanOrEqual(
+        share,
+      );
+    };
+    /** Up one of its wall-walk's stairs, every other way onto the wall-walk shut. */
+    const wallWalk = (side: string) => (team: number) => {
+      const stair = `${teams[team] ?? ""}-wall-walk-${side}-stair`;
+      return { through: [stair], shut: wallWalks.filter((each) => each !== stair) };
+    };
+    const gate = (team: number): Route => ({
+      through: [gateSteps[team] ?? ""],
+      shut: [...wallWalks, "undercroft-stair"],
+    });
+    const undercroft = (): Route => ({
+      through: ["undercroft-stair"],
+      shut: [...wallWalks, ...gateSteps],
+    });
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+
+    it.each([
+      ["its gate", map, gate],
+      ["its wall-walk's left stair", shut, wallWalk("left")],
+      ["its wall-walk's right stair", shut, wallWalk("right")],
+      ["the undercroft", map, undercroft],
+    ] as const)(
+      "walks each team to the altar by %s within 10 % of the others, in under 25 s",
+      (_, on, route) => {
+        const walks = walksByRoute(on, altar, 3, route);
+        within(walks, 0.1);
+        for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it("keeps both wall-walk routes with every gate shut, the gates and the undercroft shut with them", () => {
+      expect(() => walksByRoute(shut, altar, 3, gate)).toThrow(/cannot reach/);
+      expect(() => walksByRoute(shut, altar, 3, undercroft)).toThrow(/cannot reach/);
+    });
+
+    it("keeps the walks within 10 % as loaded, and with the gates open and the palisades broken", () => {
+      within(walksTo(shut, altar, 3), 0.1);
+      const broken = (map.breakables ?? []).map(({ id }) => id);
+      within(walksByRoute(map, altar, 3, { through: [], broken }), 0.1);
+    });
+
+    it("brings each team to the tower's rim on its side within 25 % of the others", () => {
+      const rim = (team: number) => {
+        const angle = ((-90 + 120 * team) * Math.PI) / 180;
+        return { x: altar.x + 420 * Math.cos(angle), y: altar.y + 420 * Math.sin(angle) };
+      };
+      within(
+        [0, 1, 2].map((team) => walksTo(shut, rim(team), 2)[team] ?? 0),
+        0.25,
+      );
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });

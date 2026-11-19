@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) spiller det: et tempel på en vulkans skråning 
 **Spøgelseshelt** i sin base, et spøgelse, der kæmper med økse, og som
 ingen spiller. **Alteret** står i midten, samme gåtur fra begge baser.
 På **Threefold Keep** kæmper tre hold (to, når intet tredje er ledigt) om
-det inde i en indmuret borg. Dens døre åbner kun indefra, med en plade
-indenfor: gå rundt til et åbent hjørne for at komme ind. Højst 12 point
+det på tårnet i en indmuret borg. Højst 12 point
 pr. hold, og står alle fjender på -60 % moral, vinder du med det samme.
 **Heltenes Hal**, den Kongen af bakken-bane, der afslutter Heltenes
 opstigning, hæver det på en forhøjning med mure mod vest og øst, op ad en
@@ -245,7 +244,7 @@ alteret, dræber hver bot først det andet holds Spøgelseshelt, så snart
 den står på alteret inden for deres rækkevidde: den er den ene fjende,
 der forhindrer dit spøgelse i at gøre krav på det.
 
-Threefold Keep spiller den.
+Threefold Keep (4v4 og 8v8, 5000x4400) spiller den: en borg på en bakke i højlandet, for tre hold. Gå op på murgangen ad trappen ved din port og kryds en dæmning til bakken, og klatr så op til alteret på tårnet. Et håndtag i hver gård åbner alle fire porte: din portgang under muren, og krypten, den lange vej under bakken.
 
 ## Erobring
 

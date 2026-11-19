@@ -169,9 +169,8 @@ Cinder Sanctum (8v8, 5600x2800) îl joacă: un templu pe coasta unui vulcan, în
 **Condu-ți Eroul Fantomatic pe altar și ține-l.** Fiecare echipă are un **Erou
 Fantomatic** în bază, o fantomă care luptă cu un topor și pe care nu o joacă nimeni.
 **Altarul** se află în centru, la același drum de ambele baze. Pe **Threefold Keep**,
-trei echipe (două când nu e liberă a treia) luptă pentru el într-o fortăreață
-împrejmuită. Ușile ei se deschid doar din interior, printr-o placă dinăuntru: ocolește
-până la un colț deschis ca să intri. Cel mult 12 puncte pe echipă, iar dacă fiecare
+trei echipe (două când nu e liberă a treia) luptă pentru el pe turnul unei
+fortărețe împrejmuite. Cel mult 12 puncte pe echipă, iar dacă fiecare
 inamic e la -60% moral, câștigi imediat. **Sala Eroilor**, harta de Regele dealului
 care încheie Ascensiunea Eroilor, îl ridică pe un podium împrejmuit la vest și est,
 la capătul unei urcări dinspre nord sau sud mărginită de coloane. Țintește-ți fantoma
@@ -224,7 +223,7 @@ inamic care ajunge la distanță de vrajă. Cât timp echipa ta nu deține altar
 bot ucide mai întâi Eroul Fantomatic al celeilalte echipe după ce ajunge pe altar în
 raza lor: este singurul inamic care îți împiedică fantoma să-l revendice.
 
-Se joacă pe Threefold Keep.
+Se joacă pe Threefold Keep (4v4 și 8v8, 5000x4400): o fortăreață pe un deal din ținuturile înalte, pentru trei echipe. Urcă pe drumul de strajă al zidului pe scările de lângă poarta ta și traversează un dig până la deal, apoi urcă la altarul de pe turn. O pârghie din fiecare curte deschide toate cele patru porți: pasajul porții tale pe sub zid, și cripta, drumul lung pe sub deal.
 
 ## Capturare de puncte
 

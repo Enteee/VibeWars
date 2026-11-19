@@ -176,8 +176,7 @@ Cinder Sanctum (8v8, 5600x2800) ho hrá: chrám na úbočí sopky medzi dvoma l�
 svojej základni **Prízračného hrdinu**, prízrak, ktorý bojuje sekerou a ktorého
 nikto nehrá. **Oltár** je v strede, rovnako ďaleko od oboch
 základní. Na **Threefold Keep** oň bojujú tri tímy (dva, keď tretí nie je voľný)
-vo vnútri opevnenej pevnosti. Jej dvere sa otvárajú len zvnútra, doskou vo
-vnútri: obíď ju k otvorenému rohu, aby si sa dostal dnu. Najviac 12 bodov na
+na veži opevnenej pevnosti. Najviac 12 bodov na
 tím, a ak každý nepriateľ stojí na -60 % morálky, vyhrávaš okamžite. **Hall of
 Heroes**, mapa Kráľa kopca, ktorá končí Výstup hrdinov, ho vyvyšuje
 na pódiu obohnanom múrmi na západe a východe, so severným alebo južným prístupom
@@ -234,7 +233,7 @@ dostrel kúzla. Kým tvoj tím nedrží oltár, každý bot zabije Prízračnéh
 druhého tímu ako prvého, keď stojí na oltári v ich dosahu:
 je to ten jediný nepriateľ, ktorý tvojmu prízraku bráni si ho nárokovať.
 
-Hrá sa na Threefold Keep.
+Hrá sa na Threefold Keep (4v4 a 8v8, 5000x4400): pevnosť na kopci vo vysočine, pre tri tímy. Vystúp po schodoch vedľa svojej brány na ochodzu hradieb a prejdi po hrádzi na kopec, potom vyšplhaj k oltáru na veži. Páka na každom nádvorí otvorí všetky štyri brány: priechod tvojou bránou pod hradbou a podzemie, dlhú cestu pod kopcom.
 
 ## Dobývanie bodov
 

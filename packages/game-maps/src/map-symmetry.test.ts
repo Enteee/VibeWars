@@ -10,7 +10,6 @@ import type { MapData } from "./schema.js";
  * this list.
  */
 const SYMMETRIC = [
-  "threefold-keep",
   "hall-of-heroes-king",
   "hall-of-heroes-relic",
   "hall-of-heroes-capture",

@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) bunu oynatır: iki lav nehri arasında, bir yana
 bir **Hayalet Kahraman** vardır: baltayla dövüşen ve kimsenin oynamadığı
 bir hayalet. **Sunak** merkezdedir, iki üsten de aynı yürüme
 mesafesinde. **Threefold Keep**'te üç takım (üçüncüsü boşta değilse iki)
-duvarlı bir kalenin içinde onun için dövüşür. Kapıları yalnızca içeriden,
-içerideki bir plakayla açılır: içeri girmek için açık bir köşeye dolan.
+duvarlı bir kalenin kulesinde onun için dövüşür.
 Takım başına en fazla 12 puan; her düşman -%60 moraldeyse hemen
 kazanırsın. Kahramanların Yükselişi'ni bitiren Tepenin Kralı haritası
 **Kahramanlar Salonu**, sunağı batıda ve doğuda duvarlı, sütunlarla
@@ -241,7 +240,7 @@ Takımın sunağı tutmuyorken, her bot diğer takımın Hayalet Kahramanını,
 menzillerinde sunağa çıktığı an ilk olarak öldürür: hayaletinin onu ele
 geçirmesini engelleyen tek düşman odur.
 
-Threefold Keep bunu oynatır.
+Threefold Keep bunu oynatır (4v4 ve 8v8, 5000x4400): yaylalarda bir tepenin üstünde, üç takım için bir kale. Kapının yanındaki merdivenlerden sur yoluna çık ve bir geçit yolundan tepeye geç, sonra kulenin üstündeki sunağa tırman. Her avludaki bir kol dört kapının hepsini açar: surun altındaki kendi kapı geçidin ve tepenin altından uzun yol olan mahzen.
 
 ## Nokta Ele Geçirme
 
