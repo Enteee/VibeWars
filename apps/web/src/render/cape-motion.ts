@@ -160,8 +160,37 @@ const BAND_OUT = 0.9;
 /** The band's half span, folded, and how much of it the tab takes. */
 const BAND_SPAN = (52 * Math.PI) / 180;
 const BAND_SPAN_TAKEN = (22 * Math.PI) / 180;
-/** The study draws its chevron 1.1 times the cape emblem's size. */
-const EMBLEM_SCALE = 1.1;
+/** Half the band's casing (`body-painter.ts`), which the emblem keeps clear of. */
+const BAND_CASING_HALF = 1.5;
+/** How far the emblem keeps inside the cloth's outline and trim. */
+const EMBLEM_INSET = 0.75;
+
+/**
+ * The emblem on a tab of `len` at `unfold` (#3627): the largest square up
+ * to `EMBLEM_SIZE` that lies on the cloth, its near edge clear of the disc
+ * and its band, its far edge short of the notch, and how far out along the
+ * tab its centre is. A folded cape has no cloth past the band, so no emblem.
+ */
+export function capeEmblemFit(
+  r: number,
+  len: number,
+  unfold: number,
+): { readonly size: number; readonly along: number } {
+  const clear = r + BAND_OUT + BAND_CASING_HALF;
+  const notch = len - 4.5 * unfold - EMBLEM_INSET;
+  // The cloth's half width narrows from the root to the hem: at the far
+  // edge, `clear + 2·half` out, it still holds the square.
+  const width = 3 + 4.5 * unfold;
+  const rootHalf = (3 + 5 * unfold) * 1.4;
+  const root = r - 3;
+  const narrowing = (width - rootHalf) / Math.max(1e-6, len - root);
+  const half = Math.min(
+    EMBLEM_SIZE / 2,
+    (notch - clear) / 2,
+    (rootHalf + narrowing * (clear - root) - EMBLEM_INSET) / (1 - 2 * narrowing),
+  );
+  return half > 0 ? { size: half * 2, along: clear + half } : { size: 0, along: clear };
+}
 
 /**
  * The cape on `body` as `state` has it: the study's `shapeA`, a tab from
@@ -190,16 +219,20 @@ export function capeMotionShape(
   const notch = at(len - 4.5 * u, 0);
   const hemRight = at(len, width);
   const span = BAND_SPAN - BAND_SPAN_TAKEN * u;
+  const fit = capeEmblemFit(r, len, u);
   return {
     band: { x, y, radius: r + BAND_OUT, from: angle - span, to: angle + span },
     cloth: [at(r - 3, -rootHalf), hemLeft, notch, hemRight, at(r - 3, rootHalf)],
     trim: [hemLeft, notch, hemRight],
     // Its up is the tab's left side, as the study turns it.
-    emblem: emblemShape(
-      emblem,
-      { x: x + dx * (r + 4 * u), y: y + dy * (r + 4 * u) },
-      angle + Math.PI / 2,
-      EMBLEM_SIZE * EMBLEM_SCALE,
-    ),
+    emblem:
+      fit.size > 0
+        ? emblemShape(
+            emblem,
+            { x: x + dx * fit.along, y: y + dy * fit.along },
+            angle + Math.PI / 2,
+            fit.size,
+          )
+        : [],
   };
 }

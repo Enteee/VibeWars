@@ -46,8 +46,8 @@ export function capeLook(cape: WireCape): CapeLook {
   };
 }
 
-/** How wide an emblem is on a cape. */
-export const EMBLEM_SIZE = 5;
+/** How wide an emblem is at most on a cape (#3627): on a full tab it fills most of the cloth. */
+export const EMBLEM_SIZE = 8.25;
 
 /** The starting emblems (#3554), in the order the cape designer shows them. */
 export const EMBLEM_PRESET_NAMES = [

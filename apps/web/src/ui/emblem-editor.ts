@@ -127,8 +127,8 @@ export function emptyGrid(): EmblemGrid {
 
 /** The 8 px view's side, CSS px: the emblem as big as on a cape in a match, on its cloth. */
 const PREVIEW_PX = 24;
-/** The emblem's size inside it, CSS px. */
-const IN_GAME_EMBLEM_PX = 8;
+/** The emblem's size inside it, CSS px: scaled with `EMBLEM_SIZE` on a full tab (#3627). */
+const IN_GAME_EMBLEM_PX = 12;
 
 const TOOLS: readonly {
   readonly tool: EmblemTool;
