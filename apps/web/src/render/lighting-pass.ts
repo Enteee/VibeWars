@@ -24,6 +24,7 @@ import {
   tintOf,
 } from "./lighting-model.js";
 import { elevationOf, renderOrder } from "./render-order.js";
+import { FADING_TOP_LOOKS } from "./structure-art.js";
 import {
   layerLightShadows,
   layerSunShadows,
@@ -322,11 +323,14 @@ export function lightMapExtent(
 
 /**
  * The boxes of a light map with `extent` that are shown (#3162), in its own
- * pixels: the cells no deck drawn over the layer stands over (#3671), as
- * the deck draws over them opaque, so they would be lit for nothing. Of
- * any layer but the ground, only those its surfaces are in: elsewhere it
- * is erased. Either way leaving the rest out shows the same, and a deck
- * spread over the arena does not cost a light map a full screen.
+ * pixels. Of the ground's, the cells no raised deck stands over: the deck
+ * draws over them opaque, so they would be lit for nothing. Of any other
+ * layer, only the cells its surfaces are in, as elsewhere it is erased,
+ * and of one above the ground, only those no deck drawn over it hides for
+ * good (#3671): an arch fades over whoever walks under it, and a deck over
+ * a tunnel is cut away for whoever is in it, so the light under either is
+ * seen. Either way leaving the rest out shows the same, and a deck spread
+ * over the arena does not cost a light map a full screen.
  */
 export function lightMapCover(
   structure: MapStructure,
@@ -339,19 +343,28 @@ export function lightMapCover(
       x: x * LIGHT_MAP_SCALE - extent.x,
       y: y * LIGHT_MAP_SCALE - extent.y,
     }));
-  // A deck's cover is where it is drawn; the map is drawn lifted whole.
-  const lift = elevationOf(layer, structure.ground);
-  const decks = deckCovers(structure, walls, renderOrder({ kind: "lighting", layer })).map(
-    (outline) => inMap(outline.map(({ x, y }) => ({ x, y: y + lift }))),
-  );
-  const open = (box: LightMapBox): boolean => !decks.some((outline) => boxUnder(outline, box, 2));
   if (layer === structure.ground) {
+    const decks = deckCovers(structure, walls, renderOrder({ kind: "lighting", layer })).map(inMap);
     const tunnels = tunnelLightCover(structure, extent).flatMap(({ boxes }) => boxes);
-    return coverBoxes(extent.width, extent.height, LIGHT_MAP_CELL, open).flatMap((box) =>
-      boxesWithout(box, tunnels),
-    );
+    return coverBoxes(
+      extent.width,
+      extent.height,
+      LIGHT_MAP_CELL,
+      (box) => !decks.some((outline) => boxUnder(outline, box, 2)),
+    ).flatMap((box) => boxesWithout(box, tunnels));
   }
   const surfaces = layerSurfaces(structure, layer).map(inMap);
+  // A deck's cover is where it is drawn; the map is drawn lifted whole.
+  const lift = elevationOf(layer, structure.ground);
+  const hiding =
+    layer < structure.ground
+      ? []
+      : deckCovers(
+          { ...structure, decks: structure.decks.filter((deck) => !deckFades(structure, deck)) },
+          walls,
+          renderOrder({ kind: "lighting", layer }),
+        ).map((outline) => inMap(outline.map(({ x, y }) => ({ x, y: y + lift }))));
+  const open = (box: LightMapBox): boolean => !hiding.some((outline) => boxUnder(outline, box, 2));
   // A few pixels past each surface, for its smoothed edge.
   return coverBoxes(
     extent.width,
@@ -359,6 +372,35 @@ export function lightMapCover(
     LIGHT_MAP_CELL,
     (box) => open(box) && surfaces.some((outline) => boxMeets(outline, box, 3)),
   );
+}
+
+/**
+ * Whether `deck` is ever drawn faded (#3671): an arch's top over a body
+ * under it (#3312), or any deck whose drawn box meets a tunnel's cover,
+ * cut away with it (#3352). In doubt, it fades.
+ */
+function deckFades(structure: MapStructure, deck: MapStructure["decks"][number]): boolean {
+  if (FADING_TOP_LOOKS.has(deck.look)) {
+    return true;
+  }
+  const outline = shapeOutline(deck.footprint);
+  const ys = outline.map(({ y }) => y);
+  const xs = outline.map(({ x }) => x);
+  const drawn = {
+    left: Math.min(...xs),
+    right: Math.max(...xs),
+    top: Math.min(...ys) - elevationOf(deck.layer, structure.ground),
+    bottom: Math.max(...ys),
+  };
+  return structure.tunnels.some((tunnel) => {
+    const cover = tunnelCoverBox(structure, tunnel);
+    return (
+      cover.left < drawn.right &&
+      drawn.left < cover.right &&
+      cover.top < drawn.bottom &&
+      drawn.top < cover.bottom
+    );
+  });
 }
 
 /**

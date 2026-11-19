@@ -444,6 +444,32 @@ describe("layerSurfaces", () => {
     expect(lit(open, 580, 350 - ELEVATION_STEP)).toBe(true);
     expect(lit(under, 580, 350 - ELEVATION_STEP)).toBe(false);
     expect(lit(under, 440, 430)).toBe(true);
+    // An arch fades over whoever walks under it, so what it stands over stays lit.
+    const arch = { ...deck(2, 500, 300, 160, 100), look: "arch" as const };
+    const arched = lightMapCover(
+      { ...stacked, decks: [deck(1, 420, 250, 360, 200), arch] },
+      [],
+      1,
+      extent,
+    );
+    expect(lit(arched, 580, 350 - ELEVATION_STEP)).toBe(true);
+  });
+
+  it("lights a tunnel's floor under a deck over it, seen once it is cut away (#3671)", () => {
+    const tunnel = { kind: "rect" as const, x: 200, y: 600, width: 400, height: 80 };
+    const walled: MapStructure = {
+      ...HEIGHTS,
+      ground: 1,
+      decks: [deck(2, 180, 560, 440, 160)],
+      tunnels: [{ footprint: tunnel }],
+      transitions: [ramp(0, 1, [300, 560, 60, 100], "n")],
+    };
+    const extent = lightMapExtent(walled, 0, 1200, 800);
+    const cover = lightMapCover(walled, [], 0, extent);
+    const lit = (x: number, y: number): boolean =>
+      cover.some((box) => holds(box, x * 0.5 - extent.x, y * 0.5 - extent.y));
+    expect(lit(450, 640)).toBe(true);
+    expect(lit(250, 620)).toBe(true);
   });
 });
 
