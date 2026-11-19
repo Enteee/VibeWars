@@ -55,6 +55,11 @@ export interface MapBalanceOptions {
   readonly size: number;
   /** Seeds; each is played twice, the second time with the builds rotated. */
   readonly seeds: number;
+  /**
+   * Each team on the next team's spawns (#3596): what a side wins apart
+   * from what a team does.
+   */
+  readonly swapSides?: boolean;
 }
 
 export interface MapBalanceResult {
@@ -79,7 +84,12 @@ export type BalanceVerdict =
   { readonly pass: true } | { readonly pass: false; readonly reason: string };
 
 /** `seeds` seeds of mirror matches on `map`, `size` a team, each played twice. */
-export function runMapBalance({ map, size, seeds }: MapBalanceOptions): MapBalanceResult {
+export function runMapBalance({
+  map,
+  size,
+  seeds,
+  swapSides = false,
+}: MapBalanceOptions): MapBalanceResult {
   const wins: number[] = Array.from({ length: map.teams }, () => 0);
   let draws = 0;
   let seconds = 0;
@@ -87,7 +97,11 @@ export function runMapBalance({ map, size, seeds }: MapBalanceOptions): MapBalan
   for (let seed = 0; seed < seeds; seed += 1) {
     // Rotated by one, so no build keeps one spawn, and a 1v1 plays a second build.
     for (const rotation of [0, 1]) {
-      const { winningTeam, elapsedSeconds, stuck: totals } = playMatch(map, size, seed, rotation);
+      const {
+        winningTeam,
+        elapsedSeconds,
+        stuck: totals,
+      } = playMatch(map, size, seed, rotation, swapSides);
       stuck.push(totals);
       if (winningTeam === undefined) {
         draws += 1;
@@ -164,17 +178,22 @@ export function playBuildBot(
   };
 }
 
-/** The mirror match `playMatch` plays on `map`, `size` a team, ready to step. */
+/**
+ * The mirror match `playMatch` plays on `map`, `size` a team, ready to
+ * step; `swapSides`, each team on the next team's spawns.
+ */
 function mirrorMatch(
   map: MapData,
   size: number,
   seed: number,
   rotation: number,
+  swapSides: boolean,
 ): { readonly sim: MatchSimulation; readonly timeLimitSeconds: number } {
   const rules = mapMatchRules(map, map.mode);
   const participants = Array.from({ length: map.teams }, (_, team) => {
-    const spawns = map.spawnPoints.filter((spawn) => spawn.team === team);
-    const others = map.spawnPoints.filter((spawn) => spawn.team !== team);
+    const side = swapSides ? (team + 1) % map.teams : team;
+    const spawns = map.spawnPoints.filter((spawn) => spawn.team === side);
+    const others = map.spawnPoints.filter((spawn) => spawn.team !== side);
     return Array.from({ length: size }, (_, k) => {
       // As the host seats them: each teammate on the team's next spawn.
       const spawn = spawns[k % spawns.length];
@@ -207,12 +226,13 @@ function playMatch(
   size: number,
   seed: number,
   rotation: number,
+  swapSides: boolean,
 ): {
   readonly winningTeam: number | undefined;
   readonly elapsedSeconds: number;
   readonly stuck: StuckTotals;
 } {
-  const { sim, timeLimitSeconds } = mirrorMatch(map, size, seed, rotation);
+  const { sim, timeLimitSeconds } = mirrorMatch(map, size, seed, rotation, swapSides);
   const meter = new StuckMeter(RULESET.tickRateHz);
   // The time limit ends every match; the margin only guards against a mode that would not.
   while (sim.phase === "active" && sim.elapsedSeconds < timeLimitSeconds + 1) {
@@ -274,7 +294,7 @@ export function timeMatchTicks(
   ticks: number,
   now: () => number,
 ): number[] {
-  const { sim } = mirrorMatch(map, size, 0, 0);
+  const { sim } = mirrorMatch(map, size, 0, 0, false);
   const tickMs: number[] = [];
   while (tickMs.length < ticks && sim.phase === "active") {
     const start = now();
