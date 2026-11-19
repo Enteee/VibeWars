@@ -49,16 +49,18 @@ function sizesOf(id: string): readonly number[] {
   return map.teamSizes;
 }
 
-describe("the render bench's reference map (#3255)", () => {
-  it("is in no list of a build without VIBEWARS_BENCH_REFERENCE", () => {
-    const REFERENCE = "bench-reference";
-    expect(ARENA_MAPS.map((map) => map.id)).not.toContain(REFERENCE);
-    expect(arenaIds()).not.toContain(REFERENCE);
-    for (const size of [1, 2, 4, 8]) {
-      expect(teamArenaMapIds(size)).not.toContain(REFERENCE);
-    }
-    expect(Object.values(modeMapIds()).flat()).not.toContain(REFERENCE);
-  });
+describe("the render bench's maps (#3255, #3444)", () => {
+  it.each(["bench-reference", "bench-flat"])(
+    "%s is in no list of a build without VIBEWARS_BENCH_REFERENCE",
+    (bench) => {
+      expect(ARENA_MAPS.map((map) => map.id)).not.toContain(bench);
+      expect(arenaIds()).not.toContain(bench);
+      for (const size of [1, 2, 4, 8]) {
+        expect(teamArenaMapIds(size)).not.toContain(bench);
+      }
+      expect(Object.values(modeMapIds()).flat()).not.toContain(bench);
+    },
+  );
 });
 
 describe("the wire and the map schema (#2698)", () => {

@@ -11,6 +11,7 @@ import { linkTargets, type SwitchTarget } from "../render/switch-link.js";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
 import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
+import benchFlat from "@vibewars/game-maps/bench/flat-map.json" with { type: "json" };
 import benchReference from "@vibewars/game-maps/bench/reference-map.json" with { type: "json" };
 import tutorialCanyon1 from "@vibewars/game-maps/tutorial/tutorial-canyon-1/map.json" with { type: "json" };
 import tutorialCanyon2 from "@vibewars/game-maps/tutorial/tutorial-canyon-2/map.json" with { type: "json" };
@@ -111,11 +112,12 @@ export const ARENA_MAPS: readonly MapData[] = [
   brazenCauseway,
   // Capture Points' (#1378, #2551).
   scarredEarth,
-  // The render bench's yardstick (#3255), and the tutorial's canyon it
+  // The render bench's yardstick (#3255), its flat baseline, which the
+  // tutorial's e2e also walks (#3444), and the tutorial's canyon it
   // measures (#3245): in its build only. A player build folds this to false
   // and drops the JSON; Node (vitest, e2e) has no define.
   ...(typeof __VIBEWARS_BENCH_REFERENCE__ !== "undefined" && __VIBEWARS_BENCH_REFERENCE__
-    ? [benchReference, tutorialCanyon1, tutorialCanyon2]
+    ? [benchReference, benchFlat, tutorialCanyon1, tutorialCanyon2]
     : []),
 ].map((raw) => validateMapData(raw));
 
@@ -180,6 +182,12 @@ const ASCENT_ONLY: readonly string[] = [
 ];
 
 /**
+ * The render bench's maps (#3255, #3444), in its build only: the Hosted lobby
+ * offers them, which is how the bench picks one, but no draw ever does.
+ */
+const BENCH_ONLY: readonly string[] = ["bench-reference", "bench-flat"];
+
+/**
  * Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them: a
  * team mode's only those that suit its team size (#2108), so its draw never seats 8 on a map
  * for 4. A Hosted Game's and a Team Arena's are every one of every size: the lobby keeps those
@@ -191,7 +199,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
     return arenaIds().filter(
       (id) =>
         id !== ELITE_ZAISHEN_MAP &&
-        (mode === "hosted-game" || !ASCENT_ONLY.includes(id)) &&
+        (mode === "hosted-game" || (!ASCENT_ONLY.includes(id) && !BENCH_ONLY.includes(id))) &&
         (modes === undefined || modes.includes(mapMode(id))) &&
         (size === undefined || suits(id, size)),
     );
@@ -209,7 +217,11 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
 export function teamArenaMapIds(size: number): string[] {
   const modes = LOBBY_MODE_MATCH_MODES["team-arena"] ?? [];
   return arenaIds().filter(
-    (id) => !ASCENT_ONLY.includes(id) && modes.includes(mapMode(id)) && suits(id, size),
+    (id) =>
+      !ASCENT_ONLY.includes(id) &&
+      !BENCH_ONLY.includes(id) &&
+      modes.includes(mapMode(id)) &&
+      suits(id, size),
   );
 }
 
@@ -238,7 +250,12 @@ function suits(mapId: string, size: number): boolean {
  */
 export function randomArenaMapPool(mode: QueueMode): string[] {
   return mapsForSize(ARENA_MAPS, teamSizeOf(mode))
-    .filter((map) => !NOT_RANDOM.includes(map.mode) && !ASCENT_ONLY.includes(map.id))
+    .filter(
+      (map) =>
+        !NOT_RANDOM.includes(map.mode) &&
+        !ASCENT_ONLY.includes(map.id) &&
+        !BENCH_ONLY.includes(map.id),
+    )
     .map((map) => map.id);
 }
 

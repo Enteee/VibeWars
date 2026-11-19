@@ -197,7 +197,9 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
 - **The menu background** on every layered map: the bots' fight, the
   camera still, at the menu's 30 fps cap.
 - **Follow** (`--follow` runs only this one) on every layered map and
-  one flat map, `wardens-gallery`, the baseline (`hollow-deep` until its 2.5D rebuild, #3444). A Hosted match there at the smallest size it seats, its
+  one flat map, the baseline: `bench-flat`, the frozen
+  `packages/game-maps/bench/flat-map.json` (#3444), as no player map stays
+  flat. A Hosted match there at the smallest size it seats, its
   body walking a fixed loop by left clicks: over the transition nearest
   its spawn, to the map's centre, and back. The camera follows, the
   pointer sweeps the ground every 50 ms so hover runs, and nothing caps
@@ -213,8 +215,11 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
   map shares cancels out of the `BENCH_MAX_RATIO` ratio, but not out of this
   one. 10 is the highest value in a green pull-request run against the
   `hollow-deep` baseline (7.87, sandstone-steps, #3436) times 1.15, rounded
-  up. The baseline moved to `wardens-gallery` with #3444 and the gate was
-  not re-measured against it. A breach is a perf card, not a raise.
+  up. The baseline moved to `bench-flat` with #3444: an edit to
+  `flat-map.json` re-derives the gate in the same pull request, as an edit
+  to the reference map does. Against `bench-flat`, walked 8v8 on a local
+  run of seven maps, the highest was 6.34 (guild-hall-isle), so 6.34 x
+  1.15 rounds up to 8. A breach is a perf card, not a raise.
 
 The follow case measures the page through `?frametiming`
 (`render/frame-timing.ts`), which any client takes: open a match with
@@ -334,7 +339,9 @@ maps (#3157, #3190, #3243, #3255), in its own `render bench` job of `ci.yml` (#3
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
 synthetic medium arena in the real map schema: three layers, walls, three decks
 and a ramp, a pit with a tunnel, lights and a zone. Only the bench's build
-(`VIBEWARS_BENCH_REFERENCE=1`) offers it in the lobby, and it is
+(`VIBEWARS_BENCH_REFERENCE=1`) offers it, and `bench-flat`, in the Hosted
+lobby, never in a draw; the e2e build sets it too, for the tutorial spec's
+flat map. It is
 drawn through the menu background like any map, so whatever bounds a
 runner (fill, geometry, JS) bounds the reference and the maps alike. It
 is frozen: a pull request that edits it re-derives the gate below in the

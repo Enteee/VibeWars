@@ -89,6 +89,16 @@ const PORT = 4322;
 const MAP_DIRS = ["maps", "tutorial"].map((dir) =>
   path.join(import.meta.dirname, "..", "..", "packages", "game-maps", dir),
 );
+/** `FLAT_BASELINE`'s map, beside the reference map rather than in `MAP_DIRS`. */
+const FLAT_BASELINE_FILE = path.join(
+  import.meta.dirname,
+  "..",
+  "..",
+  "packages",
+  "game-maps",
+  "bench",
+  "flat-map.json",
+);
 const SETTLE_MS = 1000;
 /** The first map is loaded this long, unmeasured, before the warm-up calibration. */
 const WARMUP_LOAD_SECONDS = 5;
@@ -112,12 +122,15 @@ const { values: options } = parseArgs({
 });
 
 /**
- * `mapId`'s `map.json`, in whichever of `MAP_DIRS` holds it.
+ * `mapId`'s `map.json`, in whichever of `MAP_DIRS` holds it, or the flat baseline's file.
  *
  * @param {string} mapId
  * @returns {string}
  */
 function mapFile(mapId) {
+  if (mapId === FLAT_BASELINE) {
+    return FLAT_BASELINE_FILE;
+  }
   const file = MAP_DIRS.map((dir) => path.join(dir, mapId, "map.json")).find((each) =>
     fs.existsSync(each),
   );
@@ -341,8 +354,13 @@ function frameTimes(page, seconds = SECONDS) {
   );
 }
 
-/** `--follow`'s flat baseline beside the layered maps. */
-const FLAT_BASELINE = "wardens-gallery";
+/**
+ * `--follow`'s flat baseline beside the layered maps: the frozen
+ * `packages/game-maps/bench/flat-map.json` (#3444), offered only by the
+ * build this script makes. An edit to it moves every follow ratio, so
+ * re-derive `BENCH_MAX_FOLLOW_RATIO` in the same change.
+ */
+const FLAT_BASELINE = "bench-flat";
 /** How long `--follow` walks its loop, measured. */
 const FOLLOW_SECONDS = Number(process.env.BENCH_FOLLOW_SECONDS ?? 12);
 /** `--follow`'s map to take a CPU profile of while it walks (#3499), if any. */
