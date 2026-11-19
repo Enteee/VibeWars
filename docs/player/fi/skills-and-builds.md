@@ -158,15 +158,15 @@ tyhjänä paikkana. Buildi on sinun, kun painat **Tallenna**.
 **Esc** poistuu tallentamatta ja kysyy ensin, jos muutit jotain.
 **Jaa**, **Lataa GW1-koodi**, **Kopioi** ja **Poista** ovat **⋯**-valikossa.
 
-Tiimikoodi ladataan sen sijaan **Tiimieditorissa**: paina **Lataa tiimi**, liitä
-koodi ja paina **Lataa**, tai liitä se mihin tahansa Tiimieditorissa.
+Tiimikoodi ladataan sen sijaan **Tiimieditorissa**: liitä se mihin tahansa siellä,
+tai avaa tiimibuildi ja käytä sen **⋯** → **Lataa tiimi**.
 
 ## Tiimibuildit
 
 **Tiimibuildi** on omista hahmoistaan koostuva tiimi, joka tehdään
 **Tiimieditorissa** ja pidetään erillään omista hahmoistasi. Jokainen on
 siellä kortti, ja vain siellä: **Uusi tiimibuildi** luo sellaisen,
-**Lataa tiimi** lataa sinulle jaetun, ja kortin napsautus tai sen **Muokkaa** avaa sen. Ehdotat sellaista
+sinne liitetty tiimikoodi lataa sinulle jaetun, ja kortin napsautus tai sen **Muokkaa** avaa sen. Ehdotat sellaista
 [tiimiaulassa](modes.md#tiimiaula).
 
 Jokaisella tiimibuildilla on koko, 2v2, 4v4 tai 8v8 (1v1-tiimibuildeja ei ole): sivupalkin

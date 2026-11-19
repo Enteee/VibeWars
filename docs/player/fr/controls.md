@@ -20,7 +20,7 @@ Le profil par défaut est **Classique**, fait pour les mains habituées à GW1.
 | Ennemi suivant (Shift : précédent) | Tab                 | Tab              |
 | Ennemi le plus proche              | C                   | C                |
 | Ennemi annoncé par ton équipe      | T                   | T                |
-| Toi-même                           | G                   | G                |
+| Toi-même                           | F ou G              | G                |
 | Noms (maintenir)                   | Shift               | Shift            |
 | Muet                               | M                   | M                |
 | Lâcher drapeau, relique ou cendres | aucune              | aucune           |

@@ -499,8 +499,7 @@ a **The Hollow Deep** (8v8 Megsemmisítés, három kanyargós alagút egy
 központi szikla körül), a **Blackwater Ford** (8v8, 5200x2800, Papirtás egy sötét
 folyami gázlónál: át lehet gázolni egy sekély gázlón, át lehet kelni a malom fölött a pillérein álló romos hídon,
 vagy a híd alatti áteresszel, miután a malmon lévő kar kinyitja a kapuját; a pap 2 percenként
-feltámasztja a halottait) és a **Mosslit Cairns** (8v8 Pontfoglalás, öt
-kőhalom sekély cikcakkban a bázisok között). A negyedik a **The Brazen
+feltámasztja a halottait) és a **Mosslit Cairns** (8v8, 5400x3000, Pontfoglalás öt kőhalmos dombon, amelyek alkonyatkor mohától izzanak: fel lehet mászni egy kőhalomra a lépcsőin, meg lehet tartani a középső nagy kőhalmot, vagy át lehet jutni a déli dombok alatti gyökéralagúton, miután egy északi kőhalmon lévő kar kinyitja a kapuit; a gyökérfalak összetörhetők). A negyedik a **The Brazen
 Causeway** (8v8, 5600x2800, Papirtás egy mocsár fölé emelt kőtöltésen alkonyatkor: lehet menetelni a töltésen, miután a túlsó kapuház karja kinyitja a bronzkapuját, át lehet kelni a mocsáron a közepén lévő lépcsőhöz, vagy át lehet osonni az alatta lévő áteresszel; a pap 2 percenként feltámasztja a halottait).
 
 Egy pályán lehetnek **kapuk**: falak, amelyek zárva megállítják a

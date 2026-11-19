@@ -146,15 +146,15 @@ de cod funcționează în ambele feluri. O abilitate GW1 pe care VibeWars nu o a
 iese fără să salveze și întreabă mai întâi dacă ai schimbat ceva. **Trimite**,
 **Încarcă cod GW1**, **Duplică** și **Șterge** sunt în **⋯**.
 
-Un cod de echipă se încarcă în schimb în **Constructor de echipe**: apasă
-**Încarcă echipa**, lipește codul și apasă **Încarcă**, sau lipește-l oriunde în
-Constructor de echipe.
+Un cod de echipă se încarcă în schimb în **Constructor de echipe**: lipește-l
+oriunde acolo, sau deschide un build de echipă și folosește **⋯** →
+**Încarcă echipa** al lui.
 
 ## Builduri de echipă
 
 Un **build de echipă** este o echipă cu personaje proprii, făcută în **Constructor
 de echipe** și ținută separat de personajele tale. Fiecare este o carte acolo și
-numai acolo: **Build de echipă nou** creează unul, **Încarcă echipa** încarcă unul
+numai acolo: **Build de echipă nou** creează unul, un cod de echipă lipit acolo încarcă unul
 partajat cu tine, iar un clic pe o carte sau pe **Editează** o deschide. Propui unul în
 [Lobby-ul de echipă](modes.md#lobby-de-echipă).
 

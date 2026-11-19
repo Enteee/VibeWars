@@ -18,7 +18,7 @@ import {
   type TeamFigureMember,
 } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
-import { button, h, playCard, screenBar } from "./kit.js";
+import { button, h, playCard, screenBar, wordmark } from "./kit.js";
 import { SIGNET_ROW_PX, signetElement, signetOf } from "./player-label.js";
 import { memberCount, validateTeam } from "./team-builder.js";
 
@@ -388,7 +388,7 @@ export function renderTeamLobbyScreen(
   const actions: HTMLElement[] = [];
   screenBar({
     crumbs: [
-      "VibeWars",
+      wordmark("topbar-wordmark"),
       team === null ? t("teamLobby.crumb") : t("teamLobby.crumbTeam", { team: team + 1 }),
     ],
     back: { label: t("teamLobby.leave"), onBack: callbacks.onLeave },

@@ -158,7 +158,7 @@ describe("baseTint", () => {
 });
 
 describe("litStructurePalette", () => {
-  const palette = arenaPalette({ layerCount: 2, biome: "hall" });
+  const palette = arenaPalette({ layerCount: 2, biome: "hall", ascentAct: null });
 
   it("leaves an unlit map's colours alone", () => {
     expect(litStructurePalette(palette, undefined, WALL, 0)).toBe(palette);

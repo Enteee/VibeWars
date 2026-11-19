@@ -20,7 +20,7 @@ the left hand and moves on the arrow keys.
 | Next foe (Shift: previous) | Tab                    | Tab              |
 | Closest foe                | C                      | C                |
 | Your team's called foe     | T                      | T                |
-| Yourself                   | G                      | G                |
+| Yourself                   | F or G                 | G                |
 | Show names (hold)          | Shift                  | Shift            |
 | Mute                       | M                      | M                |
 | Drop flag, relic or ashes  | none                   | none             |

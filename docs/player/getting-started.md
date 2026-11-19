@@ -170,8 +170,8 @@ host's tab takes the party out of the queue at once. When another
 queued team of the same mode turns up, you play them on one of the
 mode's maps, each side with its own builds, and come back to your lobby
 afterwards. The host can leave from the ring's window at any time; a guest who leaves takes the whole
-party out of it. With no other team after a minute, the host can also
-press **Play against bots**: a match in your own lobby against a
+party out of it. After 10 s in the queue, the host can also press
+**Play against bots** in the ring's window: a match in your own lobby against a
 random preset team of bots,
 except in [Heroes' Ascent](modes.md#heroes-ascent), which waits for a
 team at your round.

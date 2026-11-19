@@ -403,8 +403,10 @@ winding tunnels round a central rock),
 ford: wade a shallow ford, cross the broken bridge over the mill on its piers,
 or take a culvert under the bridge once a lever on the mill opens its gate;
 the priest raises its dead every 2 minutes) and
-**Mosslit Cairns** (8v8 Capture Points, five cairns in a shallow zig-zag
-between the bases). A fourth is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation on a raised stone causeway over a marsh at dusk: march along the causeway once a lever in the far gatehouse opens its bronze gate, cross the marsh to the stairs at its middle, or slip through a culvert under it; the priest raises its dead every 2 minutes).
+**Mosslit Cairns** (8v8, 5400x3000, Capture Points on five cairn hills
+glowing with moss at dusk: climb a cairn by its stairs, hold the great cairn
+in the middle, or take the root tunnel under the south hills once a lever on
+a north cairn opens its gates; root walls can be broken). A fourth is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation on a raised stone causeway over a marsh at dusk: march along the causeway once a lever in the far gatehouse opens its bronze gate, cross the marsh to the stairs at its middle, or slip through a culvert under it; the priest raises its dead every 2 minutes).
 
 A map may have **gates**: walls that stop bodies, shots and sight while
 closed. Stand on a gate's pressure plate to open it. It closes when

@@ -165,8 +165,8 @@ a ta: `2 echipe caută`. Doar gazda are acolo **Ieși din coadă**. Dacă închi
 fila, grupul iese imediat din coadă. Când apare altă echipă la coada aceluiași mod,
 joci cu ea pe una dintre hărțile modului, fiecare parte cu buildurile ei, și te
 întorci apoi în lobby. Gazda poate ieși oricând din coadă, din fereastra cercului; un invitat care
-pleacă scoate tot grupul din ea. Dacă după un minut nu apare altă echipă, gazda poate
-apăsa și **Joacă contra boților**: un meci în propriul lobby contra unei echipe
+pleacă scoate tot grupul din ea. După 10 s în coadă, gazda poate
+apăsa și **Joacă contra boților** în fereastra cercului: un meci în propriul lobby contra unei echipe
 presetate aleatorii de boți, cu excepția [Ascensiunii Eroilor](modes.md#ascensiunea-eroilor),
 care așteaptă o echipă de la runda ta.
 

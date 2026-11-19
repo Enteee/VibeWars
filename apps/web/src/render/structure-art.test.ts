@@ -82,7 +82,7 @@ function frameOf(deck: MapStructure["decks"][number], open: readonly Segment[]):
     base: elevationOf(deck.layer - 1, STRUCTURE.ground),
     line: 1,
     palette: deckPalette(
-      arenaPalette({ layerCount: 4, biome: "hall" }),
+      arenaPalette({ layerCount: 4, biome: "hall", ascentAct: null }),
       BIOME.hall.deck[deck.look],
     ),
   };
@@ -221,7 +221,7 @@ describe("TRANSITION_ART (#3067)", () => {
         frame: rampFrame(STRUCTURE, ramp),
         line: 1,
         palette: transitionPalette(
-          arenaPalette({ layerCount: 4, biome: "hall" }),
+          arenaPalette({ layerCount: 4, biome: "hall", ascentAct: null }),
           BIOME.hall.transition[look],
         ),
       });
@@ -238,7 +238,7 @@ describe("TRANSITION_ART (#3067)", () => {
       frame,
       line: 1,
       palette: transitionPalette(
-        arenaPalette({ layerCount: 4, biome: "hall" }),
+        arenaPalette({ layerCount: 4, biome: "hall", ascentAct: null }),
         BIOME.hall.transition.ladder,
       ),
     });

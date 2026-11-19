@@ -420,8 +420,7 @@ slingrande tunnlar runt en klippa i mitten),
 Prästförintelse vid ett mörkt vadställe i en flod: man vadar över ett grunt vadställe, går över den trasiga
 bron på sina pelare ovanför kvarnen eller tar en kulvert under bron när en spak på kvarnen öppnar dess galler;
 prästen återupplivar sina döda var 2:a minut) och
-**Mosslit Cairns** (8v8 Erövringspunkter, fem stenrösen i ett grunt
-sicksack mellan baserna). En fjärde är **The Brazen Causeway** (8v8, 5600x2800, Prästförintelse på en upphöjd vägbank av sten över ett kärr i skymningen: man marscherar längs vägbanken när en spak i det bortre porthuset öppnar dess bronsport, korsar kärret till trappan mitt på den eller slinker genom en kulvert under den; prästen återupplivar sina döda var 2:a minut).
+**Mosslit Cairns** (8v8, 5400x3000, Erövringspunkter på fem röseskullar som lyser av mossa i skymningen: man klättrar upp på ett röse via dess trappor, håller det stora röset i mitten eller tar rottunneln under de södra kullarna när en spak på ett norra röse öppnar dess portar; rotmurar kan brytas ner). En fjärde är **The Brazen Causeway** (8v8, 5600x2800, Prästförintelse på en upphöjd vägbank av sten över ett kärr i skymningen: man marscherar längs vägbanken när en spak i det bortre porthuset öppnar dess bronsport, korsar kärret till trappan mitt på den eller slinker genom en kulvert under den; prästen återupplivar sina döda var 2:a minut).
 
 En karta kan ha **portar**: murar som stoppar kroppar, skott och sikt när
 de är stängda. Stå på en ports tryckplatta för att öppna den. Den stängs

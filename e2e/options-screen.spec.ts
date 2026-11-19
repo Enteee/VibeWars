@@ -101,7 +101,10 @@ test("(2) taking a key from another action empties its cell and says so", async 
   await expect(cell(page, "skill-3")).toHaveText(label("skill-3"));
   await expect(page.locator(".keys-screen")).toBeVisible();
 
-  await page.getByRole("button", { name: "reset to VibeWars" }).click();
+  // The Preset list is the way back to a preset; there is no reset button (#3631).
+  await expect(page.locator(".keys-preset")).toHaveValue("custom");
+  await expect(page.getByRole("button", { name: /reset/i })).toHaveCount(0);
+  await page.locator(".keys-preset").selectOption("vibewars");
   await expect(cell(page, "skill-1")).toHaveText("Q");
   await expect(page.locator(".keys-preset")).toHaveValue("vibewars");
 });

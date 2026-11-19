@@ -11,6 +11,9 @@
   --accent: #59c2ff;
   /* Harm: damage numbers, errors, an interrupted cast (art direction). */
   --damage: #ff7b72;
+  /* The two sides, as the wordmark's Vibe and Wars wear them (#3636). */
+  --friend: #59c2ff;
+  --foe: #ff7b72;
   /* Darkens whatever is under it: a luminance change, never a hue (#152). */
   --recharge-shade: rgb(0 0 0 / 55%);
   /* A cast's progress on its slot: --ink at low alpha (#485). */
@@ -141,6 +144,17 @@ body {
   color: var(--ink);
   font-weight: 700;
   text-overflow: ellipsis;
+}
+
+/* The game's name (#3636): its two colours wherever it is shown, on one line. */
+.wordmark {
+  white-space: nowrap;
+}
+.wordmark-vibe {
+  color: var(--friend);
+}
+.wordmark-wars {
+  color: var(--foe);
 }
 
 .topbar-crumb-separator {
@@ -665,7 +679,8 @@ body {
   margin: 0;
 }
 
-.queue-window-waited {
+.queue-window-waited,
+.queue-play-bots {
   font-variant-numeric: tabular-nums;
 }
 
@@ -2439,21 +2454,14 @@ body:has(> .splash) #menu-background::after {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-/* New and Load team (#3181) are no card of yours: dashed, centred. */
-.screen .play-card-new,
-.screen .play-card-load {
+/* New team build is no card of yours: dashed, centred. */
+.screen .play-card-new {
   align-items: center;
   justify-content: center;
   min-height: 8.5rem;
   border-style: dashed;
   color: var(--accent);
   text-align: center;
-}
-
-/* Load team's line hangs below its card. */
-.team-play-load {
-  position: relative;
-  display: grid;
 }
 
 .play-card-head {
@@ -3903,6 +3911,25 @@ body:has(> .splash) #menu-background::after {
   align-items: center;
   gap: 0.6rem;
   white-space: nowrap;
+}
+
+/* Ready and Start match at the bar's end, before the lobby's code and
+   the icons (#3626): one auto margin, so the free space is not split.
+   A phone's bar keeps its ⋯ where it is. */
+@media (width > 45rem) {
+  #topbar:has(.topbar-status .lobby-map) .topbar-screen-actions {
+    margin-inline-start: auto;
+  }
+
+  #topbar:has(.topbar-status .lobby-map) :is(.topbar-join, .topbar-queue-action),
+  #topbar:has(.topbar-status .lobby-map) .topbar-queue-action:empty + .topbar-actions {
+    margin-inline-start: 0;
+  }
+}
+
+/* The host's picker reads "Map:", as a guest's map does. */
+#topbar .lobby-map .field-label {
+  text-transform: none;
 }
 
 .lobby-code-label {
@@ -8730,20 +8757,14 @@ body:has(> .splash) #app {
   font-size: clamp(3.5rem, 12vw, 9rem);
   line-height: 1;
 }
-.splash-vibe,
-.splash-wars {
+.splash-wordmark .wordmark-vibe,
+.splash-wordmark .wordmark-wars {
   display: inline-block;
 }
-.splash-vibe {
-  color: #59c2ff;
-}
-.splash-wars {
-  color: #ff7b72;
-}
-.splash[data-phase="flying"] .splash-vibe {
+.splash[data-phase="flying"] .wordmark-vibe {
   animation: splash-from-left 2s ease-in both;
 }
-.splash[data-phase="flying"] .splash-wars {
+.splash[data-phase="flying"] .wordmark-wars {
   animation: splash-from-right 2s ease-in both;
 }
 @keyframes splash-from-left {
@@ -8760,7 +8781,7 @@ body:has(> .splash) #app {
   height: 3px;
   width: min(60vw, 40rem);
   margin: 1rem auto;
-  background: linear-gradient(to right, #59c2ff 50%, #ff7b72 50%);
+  background: linear-gradient(to right, var(--friend) 50%, var(--foe) 50%);
   visibility: hidden;
 }
 .splash-prompt {
