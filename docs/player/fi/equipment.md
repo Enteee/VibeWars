@@ -7,7 +7,7 @@ yhtä varustaaksesi sen. Panssari valitaan hahmokuvasta, alla.
 ## Asesarjat
 
 Kannat enintään **neljää asesarjaa**, joista jokainen on ase ja, jos ase
-jättää käden vapaaksi, sivukäden esine, kuten kilpi tai fokus. Sarja 1
+jättää käden vapaaksi, sivukäden esine, kuten ![Kilpi](../../../apps/web/public/icons/offhand/shield.svg) **kilpi** tai ![Fokus](../../../apps/web/public/icons/offhand/focus.svg) **fokus**. Sarja 1
 on se, jolla aloitat; muut voivat jäädä tyhjiksi.
 
 Ottelussa vaihda sarjaa näppäimillä **1–4** (Klassinen-näppäimillä
@@ -17,8 +17,8 @@ Hyökkäyksesi, tiettyä asetta vaativat taidot ja enimmäisenergiasi
 seuraavat kaikki kädessä olevaa sarjaa.
 
 Ase vaatii ominaisuudessaan tason 9: sen alapuolella se osuu kolmasosalla
-vahingostaan, ja editori kertoo sen punaisella. Miekka on aina
-Swordsmanship, mutta sauva, taikasauva, kilpi tai fokus tehdään
+vahingostaan, ja editori kertoo sen punaisella. ![Miekka](../../../apps/web/public/icons/weapon/sword.svg) **Miekka** on aina
+Swordsmanship, mutta ![Sauva](../../../apps/web/public/icons/weapon/staff.svg) **sauva**, ![Taikasauva](../../../apps/web/public/icons/weapon/wand.svg) **taikasauva**, kilpi tai fokus tehdään
 valitsemallesi ominaisuudelle: napsauta sen kättä hahmokuvassa (**6**
 aseelle, **7** sivukädelle) ja valitse yksi.
 
@@ -27,40 +27,40 @@ aseelle, **7** sivukädelle) ja valitse yksi.
 Jokaisessa aseessa ja sivukäden esineessä on paikat modeille:
 **etuliite**, **jälkiliite** ja **kaiverrus**. Napsauta kättä hahmokuvassa
 tai sen vieressä olevaa riviä valitaksesi ne; kukin kertoo, mitä se
-tekee. Taikasauva, kilpi ja fokus eivät ota etuliitettä; paljaat kädet
+tekee. ![Taikasauva](../../../apps/web/public/icons/weapon/wand.svg) **Taikasauva**, ![Kilpi](../../../apps/web/public/icons/offhand/shield.svg) **kilpi** ja ![Fokus](../../../apps/web/public/icons/offhand/focus.svg) **fokus** eivät ota etuliitettä; paljaat kädet
 eivät ota yhtään. Modi on aina parhaassa arvossaan, ja jokaisella
 asesarjalla on omansa, joten sarjan vaihtaminen vaihtaa myös niiden
 modit: enimmäisterveys ja -energia muuttuvat kädessä olevan sarjan
 mukana. Aseen vaihtaminen säilyttää modit, jotka yhä sopivat siihen, ja
 kertoo, mitkä se pudotti.
 
-| Modi                      | Paikka     | Sopii                                         | Vaikutus                                   |
-| ------------------------- | ---------- | --------------------------------------------- | ------------------------------------------ |
-| Defensive                 | Etuliite   | Sauva                                         | Panssari +5                                |
-| Hale                      | Etuliite   | Sauva                                         | +30 terveyttä                              |
-| Insightful                | Etuliite   | Sauva                                         | Energia +5                                 |
-| of Defense                | Jälkiliite | mikä tahansa taisteluase, sauva               | Panssari +5                                |
-| of Fortitude              | Jälkiliite | mikä tahansa taisteluase, sauva, kilpi, fokus | +30 terveyttä                              |
-| of Shelter                | Jälkiliite | mikä tahansa taisteluase, sauva               | Panssari +7 (fyysistä vahinkoa vastaan)    |
-| of Warding                | Jälkiliite | mikä tahansa taisteluase, sauva               | Panssari +7 (elementtivahinkoa vastaan)    |
-| "Cast Out the Unclean"    | Kaiverrus  | Kilpi, fokus                                  | Lyhentää Diseasen kestoa sinussa 20 %      |
-| "Fear Cuts Deeper"        | Kaiverrus  | Kilpi, fokus                                  | Lyhentää Bleedingin kestoa sinussa 20 %    |
-| "I Can See Clearly Now"   | Kaiverrus  | Kilpi, fokus                                  | Lyhentää Blindedin kestoa sinussa 20 %     |
-| "I have the power!"       | Kaiverrus  | mikä tahansa taisteluase                      | Energia +5                                 |
-| "Leaf on the Wind"        | Kaiverrus  | Kilpi, fokus                                  | Panssari +10 (kylmävahinkoa vastaan)       |
-| "Like a Rolling Stone"    | Kaiverrus  | Kilpi, fokus                                  | Panssari +10 (maavahinkoa vastaan)         |
-| "Live for Today"          | Kaiverrus  | Fokus                                         | Energia +15, energian palautuminen -1      |
-| "Not the face!"           | Kaiverrus  | Kilpi, fokus                                  | Panssari +10 (murskaavaa vahinkoa vastaan) |
-| "Only the Strong Survive" | Kaiverrus  | Kilpi, fokus                                  | Lyhentää Weaknessin kestoa sinussa 20 %    |
-| "Pure of Heart"           | Kaiverrus  | Kilpi, fokus                                  | Lyhentää Poisonin kestoa sinussa 20 %      |
-| "Riders on the Storm"     | Kaiverrus  | Kilpi, fokus                                  | Panssari +10 (salamavahinkoa vastaan)      |
-| "Seize the Day"           | Kaiverrus  | Sauva, taikasauva                             | Energia +15, energian palautuminen -1      |
-| "Sleep Now in the Fire"   | Kaiverrus  | Kilpi, fokus                                  | Panssari +10 (tulivahinkoa vastaan)        |
-| "Soundness of Mind"       | Kaiverrus  | Kilpi, fokus                                  | Lyhentää Dazedin kestoa sinussa 20 %       |
-| "Strength of Body"        | Kaiverrus  | Kilpi, fokus                                  | Lyhentää Deep Woundin kestoa sinussa 20 %  |
-| "Swift as the Wind"       | Kaiverrus  | Kilpi, fokus                                  | Lyhentää Crippledin kestoa sinussa 20 %    |
-| "The Riddle of Steel"     | Kaiverrus  | Kilpi, fokus                                  | Panssari +10 (viiltävää vahinkoa vastaan)  |
-| "Through Thick and Thin"  | Kaiverrus  | Kilpi, fokus                                  | Panssari +10 (lävistävää vahinkoa vastaan) |
+| Modi                      | Paikka     | Sopii                                                               | Vaikutus                                                                                                          |
+| ------------------------- | ---------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Etuliite   | ![Sauva](../../../apps/web/public/icons/weapon/staff.svg) **Sauva** | Panssari +5                                                                                                       |
+| Hale                      | Etuliite   | Sauva                                                               | +30 terveyttä                                                                                                     |
+| Insightful                | Etuliite   | Sauva                                                               | Energia +5                                                                                                        |
+| of Defense                | Jälkiliite | mikä tahansa taisteluase, sauva                                     | Panssari +5                                                                                                       |
+| of Fortitude              | Jälkiliite | mikä tahansa taisteluase, sauva, kilpi, fokus                       | +30 terveyttä                                                                                                     |
+| of Shelter                | Jälkiliite | mikä tahansa taisteluase, sauva                                     | Panssari +7 (fyysistä vahinkoa vastaan)                                                                           |
+| of Warding                | Jälkiliite | mikä tahansa taisteluase, sauva                                     | Panssari +7 (elementtivahinkoa vastaan)                                                                           |
+| "Cast Out the Unclean"    | Kaiverrus  | Kilpi, fokus                                                        | Lyhentää ![Disease](../../../apps/web/public/icons/status/disease.svg) **Diseasen** kestoa sinussa 20 %           |
+| "Fear Cuts Deeper"        | Kaiverrus  | Kilpi, fokus                                                        | Lyhentää ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleedingin** kestoa sinussa 20 %       |
+| "I Can See Clearly Now"   | Kaiverrus  | Kilpi, fokus                                                        | Lyhentää ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blindedin** kestoa sinussa 20 %            |
+| "I have the power!"       | Kaiverrus  | mikä tahansa taisteluase                                            | Energia +5                                                                                                        |
+| "Leaf on the Wind"        | Kaiverrus  | Kilpi, fokus                                                        | Panssari +10 (kylmävahinkoa vastaan)                                                                              |
+| "Like a Rolling Stone"    | Kaiverrus  | Kilpi, fokus                                                        | Panssari +10 (maavahinkoa vastaan)                                                                                |
+| "Live for Today"          | Kaiverrus  | Fokus                                                               | Energia +15, energian palautuminen -1                                                                             |
+| "Not the face!"           | Kaiverrus  | Kilpi, fokus                                                        | Panssari +10 (murskaavaa vahinkoa vastaan)                                                                        |
+| "Only the Strong Survive" | Kaiverrus  | Kilpi, fokus                                                        | Lyhentää ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weaknessin** kestoa sinussa 20 %       |
+| "Pure of Heart"           | Kaiverrus  | Kilpi, fokus                                                        | Lyhentää ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poisonin** kestoa sinussa 20 %             |
+| "Riders on the Storm"     | Kaiverrus  | Kilpi, fokus                                                        | Panssari +10 (salamavahinkoa vastaan)                                                                             |
+| "Seize the Day"           | Kaiverrus  | Sauva, taikasauva                                                   | Energia +15, energian palautuminen -1                                                                             |
+| "Sleep Now in the Fire"   | Kaiverrus  | Kilpi, fokus                                                        | Panssari +10 (tulivahinkoa vastaan)                                                                               |
+| "Soundness of Mind"       | Kaiverrus  | Kilpi, fokus                                                        | Lyhentää ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazedin** kestoa sinussa 20 %                |
+| "Strength of Body"        | Kaiverrus  | Kilpi, fokus                                                        | Lyhentää ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Woundin** kestoa sinussa 20 % |
+| "Swift as the Wind"       | Kaiverrus  | Kilpi, fokus                                                        | Lyhentää ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippledin** kestoa sinussa 20 %       |
+| "The Riddle of Steel"     | Kaiverrus  | Kilpi, fokus                                                        | Panssari +10 (viiltävää vahinkoa vastaan)                                                                         |
+| "Through Thick and Thin"  | Kaiverrus  | Kilpi, fokus                                                        | Panssari +10 (lävistävää vahinkoa vastaan)                                                                        |
 
 ### Taisteluaseiden etuliitteet osumassa
 
@@ -156,16 +156,16 @@ aseita modeineen.
 
 ## Riimut
 
-| Riimu                                  | Mitä se antaa                                   |
-| -------------------------------------- | ----------------------------------------------- |
-| Pieni ominaisuusriimu                  | +1 ominaisuuteen                                |
-| Suuri ominaisuusriimu                  | +2 ominaisuuteen, -35 terveyttä                 |
-| Ylivertainen ominaisuusriimu           | +3 ominaisuuteen, -75 terveyttä                 |
-| Vigor                                  | lisää terveyttä (+30, +41 tai +50)              |
-| Vitae                                  | +10 terveyttä                                   |
-| Attunement                             | lisää energiaa (+3, +6 tai +9)                  |
-| Clarity, Purity, Recovery, Restoration | kaksi vaivaa kumpikin kuluu pois 20 % nopeammin |
-| Absorption (Warrior)                   | vähemmän fyysistä vahinkoa jokaisesta osumasta  |
+| Riimu                                                                                                                                                                                                                                                                                                          | Mitä se antaa                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Pieni ominaisuusriimu                                                                                                                                                                                                                                                                                          | +1 ominaisuuteen                                |
+| Suuri ominaisuusriimu                                                                                                                                                                                                                                                                                          | +2 ominaisuuteen, -35 terveyttä                 |
+| Ylivertainen ominaisuusriimu                                                                                                                                                                                                                                                                                   | +3 ominaisuuteen, -75 terveyttä                 |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | lisää terveyttä (+30, +41 tai +50)              |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 terveyttä                                   |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | lisää energiaa (+3, +6 tai +9)                  |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | kaksi vaivaa kumpikin kuluu pois 20 % nopeammin |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | vähemmän fyysistä vahinkoa jokaisesta osumasta  |
 
 Valitset osan riimun samasta paikasta kuin sen arvomerkin: napsauta osaa
 hahmokuvassa.

@@ -20,6 +20,8 @@ import { z } from "zod";
 import {
   allWallSegments,
   pointInShape,
+  segmentsCross,
+  shapesOverlapInterior,
   shapeVertices,
   shapeInBounds,
   shapesOverlap,
@@ -873,16 +875,6 @@ function shapeOnGround(bounds: MapBounds, shape: Shape): boolean {
   );
 }
 
-/** Whether two segments cross, touching at an end not counted: a ramp may run along the edge. */
-function segmentsCross(first: Segment, second: Segment): boolean {
-  const side = (point: Vec2Data, { a, b }: Segment): number =>
-    Math.sign((b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x));
-  return (
-    side(first.a, second) * side(first.b, second) < 0 &&
-    side(second.a, first) * side(second.b, first) < 0
-  );
-}
-
 /** Whether an outline is simple (#3066): no side crosses or touches another but its neighbours at a corner. */
 function outlineSimple(outline: readonly Vec2Data[]): boolean {
   const sides = wallToSegments({ kind: "polygon", points: outline });
@@ -1538,6 +1530,39 @@ export const mapDataSchema = z
         });
       }
     });
+    // A body keeps its layer until well up or down a ramp, so it walks through
+    // a wall inside one that pathing routes round (#3665). Along an edge is fine.
+    const blockers = [
+      ...map.walls.map((wall, index) => ({
+        wall,
+        path: ["walls", index],
+        name: `wall ${String(index)}`,
+      })),
+      ...map.gates.map(({ wall, id }, index) => ({
+        wall,
+        path: ["gates", index, "wall"],
+        name: `gate ${id}`,
+      })),
+      ...(map.breakables ?? []).map(({ wall, id }, index) => ({
+        wall,
+        path: ["breakables", index, "wall"],
+        name: `breakable ${id}`,
+      })),
+    ];
+    for (const transition of map.transitions) {
+      for (const { wall, path, name } of blockers) {
+        if (
+          (wall.layer === transition.from || wall.layer === transition.to) &&
+          shapesOverlapInterior(wall, transition.area)
+        ) {
+          context.addIssue({
+            code: "custom",
+            path,
+            message: `${map.id}: ${name} stands inside transition ${transition.id} on its layer ${String(wall.layer)}, so bodies walk through it while pathing goes round`,
+          });
+        }
+      }
+    }
     for (let layer = map.groundLayer + 1; layer < map.layers; layer += 1) {
       if (!map.decks.some((deck) => deck.layer === layer)) {
         context.addIssue({

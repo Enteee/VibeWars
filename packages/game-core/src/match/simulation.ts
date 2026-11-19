@@ -5223,6 +5223,20 @@ export class MatchSimulation {
         const route = this.#paths.find(record.position, record.layer, to, layer);
         return route === undefined ? Number.POSITIVE_INFINITY : walkLength(record.position, route);
       },
+      leverHolder: (targetId) => {
+        for (const other of this.#participants.values()) {
+          if (
+            other.combatant.team === record.combatant.team &&
+            !other.combatant.dead &&
+            other.behaviour?.kind === "play-build" &&
+            other.cursor.lever?.targetId === targetId &&
+            other.cursor.lever.until > this.#elapsedSeconds
+          ) {
+            return other.id;
+          }
+        }
+        return undefined;
+      },
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;

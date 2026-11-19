@@ -3,19 +3,19 @@
 ## Zdravie a energia
 
 Začínaš s 500 **zdravia** a 50 **energie**; runy a morálka menia obe
-hodnoty. Schopnosti stoja energiu a tá sa pomaly vracia sama. Warriori
-a Paragoni ju získavajú najpomalšie, Rangeri o niečo rýchlejšie, všetci
+hodnoty. Schopnosti stoja energiu a tá sa pomaly vracia sama. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriori**
+a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** ju získavajú najpomalšie, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangeri** o niečo rýchlejšie, všetci
 ostatní najrýchlejšie.
 
 Šípky na tvojich lištách sú **pipy**: každá znamená zdravie alebo energiu,
-ktoré sa každú sekundu po troche vracajú alebo strácajú. Bleeding, Burning
-a Poison uberajú zdravie; Regeneration a liečivé kúzla ho pridávajú. Keď si
+ktoré sa každú sekundu po troche vracajú alebo strácajú. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**
+a ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** uberajú zdravie; Regeneration a liečivé kúzla ho pridávajú. Keď si
 5 sekúnd mimo boja, zdravie sa ti začne vracať samo, a to tým rýchlejšie, čím
 dlhšie mimo boja zostaneš.
 
 ## Adrenalín
 
-Warriori, Paragoni a iní majú schopnosti, ktoré namiesto energie stoja
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriori**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** a iní majú schopnosti, ktoré namiesto energie stoja
 **adrenalín**. Každá taká schopnosť sa nabíja sama: každý zásah zbraňou, ktorý
 dáš, pridá každej z nich jeden úder a rovnako aj to, keď dostaneš veľký zásah.
 Použitie jednej ju vyprázdni a ostatným vezme jeden úder. Po 25 sekundách
@@ -26,7 +26,7 @@ mimo boja sa vyprázdnia všetky.
 Schopnosť sa môže chvíľu **zosielať** a potom potrebuje čas na **dobíjanie**,
 kým ju môžeš znova použiť. Ak je cieľ mimo dosahu, najprv k nemu dôjdeš.
 Pohyb alebo Esc zoslanie zruší: energia je preč, ale schopnosť sa
-nedobíja. Po každej schopnosti s časom zoslania, okrem útočnej schopnosti,
+nedobíja. Po každej schopnosti s časom zoslania, okrem ![Útočná schopnosť](../../../apps/web/public/icons/skill-type/attack.svg) **útočnej schopnosti**,
 nasleduje krátka pauza, počas ktorej nemôžeš konať.
 
 Schopnosť, ktorú stlačíš počas používania inej alebo počas tej pauzy, sa
@@ -34,7 +34,7 @@ Schopnosť, ktorú stlačíš počas používania inej alebo počas tej pauzy, s
 Čaká len jedna; stlačením ďalšej sa nahradí. Pohyb, Esc, prerušenie alebo
 zrazenie ju zrušia.
 
-**Pokriky a postoje** sa nikdy nezaraďujú: spustia sa okamžite, aj keď
+![Pokrik](../../../apps/web/public/icons/skill-type/shout.svg) **Pokriky** a ![Postoj](../../../apps/web/public/icons/skill-type/stance.svg) **postoje** sa nikdy nezaraďujú: spustia sa okamžite, aj keď
 zosielaš inú schopnosť, počas tej pauzy alebo keď si zrazený. Zosielanie
 pokračuje. Takto použité ťa k cieľu nedovedú: mimo dosahu sa odmietnu.
 
@@ -52,30 +52,30 @@ nedopadne a švih začne odznova. Nepriateľ, ktorý k cieľu ešte len kráča,
 nemá čo prerušiť. Prerušenie, ktoré má na karte „a skill“ alebo „a spell“,
 obyčajný útok nechá tak.
 
-Niektoré postoje, napríklad Mantra of Concentration, zastavia prerušenie
+Niektoré ![Postoj](../../../apps/web/public/icons/skill-type/stance.svg) **postoje**, napríklad Mantra of Concentration, zastavia prerušenie
 mierené na teba. Žiadny z nich nezastaví zrazenie.
 
 **Zrazený** sa na chvíľu nemôžeš hýbať, útočiť ani použiť schopnosť,
-okrem pokriku alebo postoja, a prebiehajúce zosielanie zlyhá.
+okrem ![Pokrik](../../../apps/web/public/icons/skill-type/shout.svg) **pokriku** alebo postoja, a prebiehajúce zosielanie zlyhá.
 
 ## Neduhy, kliatby a očarovania
 
 **Neduhy** ti škodia, kým nevypršia alebo kým sa neodstránia:
 
-| Neduh         | Čo robí                                             |
-| ------------- | --------------------------------------------------- |
-| Bleeding      | uberá zdravie                                       |
-| Burning       | rýchlo uberá zdravie                                |
-| Poison        | uberá zdravie                                       |
-| Disease       | uberá zdravie a šíri sa na každého vedľa teba       |
-| Crippled      | pohybuješ sa polovičnou rýchlosťou                  |
-| Blind         | väčšina tvojich útokov minie                        |
-| Weakness      | tvoja zbraň zasahuje oveľa slabšie                  |
-| Cracked Armor | menej brnenia                                       |
-| Deep Wound    | menej maximálneho zdravia a liečenie účinkuje menej |
-| Dazed         | kúzla zosielaš pomaly; každý útok ich preruší       |
+| Neduh                                                                                       | Čo robí                                             |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | uberá zdravie                                       |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | rýchlo uberá zdravie                                |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | uberá zdravie                                       |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | uberá zdravie a šíri sa na každého vedľa teba       |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | pohybuješ sa polovičnou rýchlosťou                  |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | väčšina tvojich útokov minie                        |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | tvoja zbraň zasahuje oveľa slabšie                  |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | menej brnenia                                       |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | menej maximálneho zdravia a liečenie účinkuje menej |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | kúzla zosielaš pomaly; každý útok ich preruší       |
 
-**Kliatby** na teba zosielajú nepriatelia; **očarovania** ty sám alebo tvoji
+![Kliatba](../../../apps/web/public/icons/skill-type/hex.svg) **Kliatby** na teba zosielajú nepriatelia; ![Očarovanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarovania** ty sám alebo tvoji
 spojenci. Každé z nich odstraňuje vlastný druh schopnosti. Niektoré očarovania
 sú **udržiavané**: trvajú, kým ich neukončíš, a kým bežia, stoja jeden pip
 energie. Ukončíš ich dvojitým kliknutím na ich ikonu.
@@ -86,8 +86,8 @@ už nie si. Schopnosť, ktorá trvá na tvojich „ďalších N útokov“, poč
 
 ## Brnenie a poškodenie
 
-Warriori a Paragoni nosia najviac brnenia; Rangeri, Assassini a
-Dervishi menej; zosielatelia najmenej. Brnenie znižuje poškodenie zbraňou,
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriori** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** nosia najviac brnenia; ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangeri**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassini** a
+![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervishi** menej; zosielatelia najmenej. Brnenie znižuje poškodenie zbraňou,
 elementálne, chaotické a temné poškodenie. Sväté, tieňové a bezdruhové
 poškodenie, uberanie zdravia a kradnutie života ho ignorujú. Kritické môžu
 byť len zásahy zbraňou. Niektoré očarovania robia svojho nositeľa imúnnym voči

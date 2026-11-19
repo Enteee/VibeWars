@@ -7,7 +7,7 @@ tage det på. Rustning vælges på figuren nedenfor.
 ## Våbensæt
 
 Du har op til **fire våbensæt** med, hvert et våben og, hvis våbnet
-efterlader en hånd fri, en sekundærhånd såsom et skjold eller et fokus.
+efterlader en hånd fri, en sekundærhånd såsom et ![Skjold](../../../apps/web/public/icons/offhand/shield.svg) **skjold** eller et ![Fokus](../../../apps/web/public/icons/offhand/focus.svg) **fokus**.
 Sæt 1 er det, du starter med; de andre må gerne være tomme.
 
 I en kamp skifter du sæt med **1 til 4** (**F1 til F4** med de klassiske
@@ -17,8 +17,8 @@ ingen nedkøling. Dine angreb, de evner, der kræver et bestemt våben, og
 din maksimale energi følger alle det sæt, du har i hånden.
 
 Et våben kræver rang 9 i sin attribut: under det rammer det med en
-tredjedel af sin skade, og editoren siger det med rødt. Et sværd er altid
-Swordsmanship, men en stav, en tryllestav, et skjold eller et fokus laves
+tredjedel af sin skade, og editoren siger det med rødt. Et ![Sværd](../../../apps/web/public/icons/weapon/sword.svg) **sværd** er altid
+Swordsmanship, men en ![Stav](../../../apps/web/public/icons/weapon/staff.svg) **stav**, en ![Tryllestav](../../../apps/web/public/icons/weapon/wand.svg) **tryllestav**, et skjold eller et fokus laves
 til en attribut, du vælger: klik på dens hånd på figuren (**6** for
 våbnet, **7** for sekundærhånden), og vælg en.
 
@@ -27,40 +27,40 @@ våbnet, **7** for sekundærhånden), og vælg en.
 Hvert våben og hver sekundærhånd har pladser til mods: et **præfiks**, et
 **suffiks** og en **inskription**. Klik på hånden på figuren, eller dens
 række ved siden af, for at vælge dem; hver siger, hvad den gør. En
-tryllestav, et skjold og et fokus tager intet præfiks; bare hænder tager
+![Tryllestav](../../../apps/web/public/icons/weapon/wand.svg) **tryllestav**, et ![Skjold](../../../apps/web/public/icons/offhand/shield.svg) **skjold** og et ![Fokus](../../../apps/web/public/icons/offhand/focus.svg) **fokus** tager intet præfiks; bare hænder tager
 ingen. En mod har altid sin bedste værdi, og hvert våbensæt har sine
 egne, så skifter du sæt, skifter du også deres mods: maksimalt liv og
 maksimal energi følger det sæt, du har i hånden. Skifter du et våben,
 beholdes de mods, der stadig passer til det, og du får at vide, hvilke
 der faldt fra.
 
-| Mod                       | Plads       | Passer til                              | Effekt                                            |
-| ------------------------- | ----------- | --------------------------------------- | ------------------------------------------------- |
-| Defensive                 | Præfiks     | Staff                                   | Rustning +5                                       |
-| Hale                      | Præfiks     | Staff                                   | +30 liv                                           |
-| Insightful                | Præfiks     | Staff                                   | Energi +5                                         |
-| of Defense                | Suffiks     | ethvert kampvåben, Staff                | Rustning +5                                       |
-| of Fortitude              | Suffiks     | ethvert kampvåben, Staff, Shield, Focus | +30 liv                                           |
-| of Shelter                | Suffiks     | ethvert kampvåben, Staff                | Rustning +7 (mod fysisk skade)                    |
-| of Warding                | Suffiks     | ethvert kampvåben, Staff                | Rustning +7 (mod elementarskade)                  |
-| "Cast Out the Unclean"    | Inskription | Shield, Focus                           | Mindsker varigheden af Disease på dig med 20 %    |
-| "Fear Cuts Deeper"        | Inskription | Shield, Focus                           | Mindsker varigheden af Bleeding på dig med 20 %   |
-| "I Can See Clearly Now"   | Inskription | Shield, Focus                           | Mindsker varigheden af Blinded på dig med 20 %    |
-| "I have the power!"       | Inskription | ethvert kampvåben                       | Energi +5                                         |
-| "Leaf on the Wind"        | Inskription | Shield, Focus                           | Rustning +10 (mod kuldeskade)                     |
-| "Like a Rolling Stone"    | Inskription | Shield, Focus                           | Rustning +10 (mod jordskade)                      |
-| "Live for Today"          | Inskription | Focus                                   | Energi +15, energiregeneration -1                 |
-| "Not the face!"           | Inskription | Shield, Focus                           | Rustning +10 (mod stumpskade)                     |
-| "Only the Strong Survive" | Inskription | Shield, Focus                           | Mindsker varigheden af Weakness på dig med 20 %   |
-| "Pure of Heart"           | Inskription | Shield, Focus                           | Mindsker varigheden af Poison på dig med 20 %     |
-| "Riders on the Storm"     | Inskription | Shield, Focus                           | Rustning +10 (mod lynskade)                       |
-| "Seize the Day"           | Inskription | Staff, Wand                             | Energi +15, energiregeneration -1                 |
-| "Sleep Now in the Fire"   | Inskription | Shield, Focus                           | Rustning +10 (mod ildskade)                       |
-| "Soundness of Mind"       | Inskription | Shield, Focus                           | Mindsker varigheden af Dazed på dig med 20 %      |
-| "Strength of Body"        | Inskription | Shield, Focus                           | Mindsker varigheden af Deep Wound på dig med 20 % |
-| "Swift as the Wind"       | Inskription | Shield, Focus                           | Mindsker varigheden af Crippled på dig med 20 %   |
-| "The Riddle of Steel"     | Inskription | Shield, Focus                           | Rustning +10 (mod hugskade)                       |
-| "Through Thick and Thin"  | Inskription | Shield, Focus                           | Rustning +10 (mod stikskade)                      |
+| Mod                       | Plads       | Passer til                                                          | Effekt                                                                                                                    |
+| ------------------------- | ----------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Præfiks     | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Rustning +5                                                                                                               |
+| Hale                      | Præfiks     | Staff                                                               | +30 liv                                                                                                                   |
+| Insightful                | Præfiks     | Staff                                                               | Energi +5                                                                                                                 |
+| of Defense                | Suffiks     | ethvert kampvåben, Staff                                            | Rustning +5                                                                                                               |
+| of Fortitude              | Suffiks     | ethvert kampvåben, Staff, Shield, Focus                             | +30 liv                                                                                                                   |
+| of Shelter                | Suffiks     | ethvert kampvåben, Staff                                            | Rustning +7 (mod fysisk skade)                                                                                            |
+| of Warding                | Suffiks     | ethvert kampvåben, Staff                                            | Rustning +7 (mod elementarskade)                                                                                          |
+| "Cast Out the Unclean"    | Inskription | Shield, Focus                                                       | Mindsker varigheden af ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** på dig med 20 %          |
+| "Fear Cuts Deeper"        | Inskription | Shield, Focus                                                       | Mindsker varigheden af ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** på dig med 20 %       |
+| "I Can See Clearly Now"   | Inskription | Shield, Focus                                                       | Mindsker varigheden af ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** på dig med 20 %            |
+| "I have the power!"       | Inskription | ethvert kampvåben                                                   | Energi +5                                                                                                                 |
+| "Leaf on the Wind"        | Inskription | Shield, Focus                                                       | Rustning +10 (mod kuldeskade)                                                                                             |
+| "Like a Rolling Stone"    | Inskription | Shield, Focus                                                       | Rustning +10 (mod jordskade)                                                                                              |
+| "Live for Today"          | Inskription | Focus                                                               | Energi +15, energiregeneration -1                                                                                         |
+| "Not the face!"           | Inskription | Shield, Focus                                                       | Rustning +10 (mod stumpskade)                                                                                             |
+| "Only the Strong Survive" | Inskription | Shield, Focus                                                       | Mindsker varigheden af ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** på dig med 20 %       |
+| "Pure of Heart"           | Inskription | Shield, Focus                                                       | Mindsker varigheden af ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** på dig med 20 %             |
+| "Riders on the Storm"     | Inskription | Shield, Focus                                                       | Rustning +10 (mod lynskade)                                                                                               |
+| "Seize the Day"           | Inskription | Staff, Wand                                                         | Energi +15, energiregeneration -1                                                                                         |
+| "Sleep Now in the Fire"   | Inskription | Shield, Focus                                                       | Rustning +10 (mod ildskade)                                                                                               |
+| "Soundness of Mind"       | Inskription | Shield, Focus                                                       | Mindsker varigheden af ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** på dig med 20 %                |
+| "Strength of Body"        | Inskription | Shield, Focus                                                       | Mindsker varigheden af ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** på dig med 20 % |
+| "Swift as the Wind"       | Inskription | Shield, Focus                                                       | Mindsker varigheden af ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** på dig med 20 %       |
+| "The Riddle of Steel"     | Inskription | Shield, Focus                                                       | Rustning +10 (mod hugskade)                                                                                               |
+| "Through Thick and Thin"  | Inskription | Shield, Focus                                                       | Rustning +10 (mod stikskade)                                                                                              |
 
 ### Kampvåbnenes præfikser ved et træf
 
@@ -154,16 +154,16 @@ holder våbnene fra det sæt, du ser på, med deres mods.
 
 ## Runer
 
-| Rune                                   | Hvad den giver                                |
-| -------------------------------------- | --------------------------------------------- |
-| Mindre attributrune                    | +1 til en attribut                            |
-| Større attributrune                    | +2 til en attribut, -35 liv                   |
-| Overlegen attributrune                 | +3 til en attribut, -75 liv                   |
-| Vigor                                  | mere liv (+30, +41 eller +50)                 |
-| Vitae                                  | +10 liv                                       |
-| Attunement                             | mere energi (+3, +6 eller +9)                 |
-| Clarity, Purity, Recovery, Restoration | to tilstande hver fortager sig 20 % hurtigere |
-| Absorption (Warrior)                   | mindre fysisk skade fra hvert træf            |
+| Rune                                                                                                                                                                                                                                                                                                           | Hvad den giver                                |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Mindre attributrune                                                                                                                                                                                                                                                                                            | +1 til en attribut                            |
+| Større attributrune                                                                                                                                                                                                                                                                                            | +2 til en attribut, -35 liv                   |
+| Overlegen attributrune                                                                                                                                                                                                                                                                                         | +3 til en attribut, -75 liv                   |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | mere liv (+30, +41 eller +50)                 |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 liv                                       |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mere energi (+3, +6 eller +9)                 |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | to tilstande hver fortager sig 20 % hurtigere |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | mindre fysisk skade fra hvert træf            |
 
 Du vælger en dels rune samme sted som dens insignie: klik på delen på
 figuren.

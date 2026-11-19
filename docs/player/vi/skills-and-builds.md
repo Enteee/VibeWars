@@ -6,8 +6,8 @@
 
 ## Lớp
 
-Có mười lớp: Warrior, Ranger, Monk, Necromancer, Mesmer, Elementalist,
-Assassin, Ritualist, Paragon và Dervish. Lớp **chính** là lớp bạn thuộc về:
+Có mười lớp: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**,
+![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** và ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Lớp **chính** là lớp bạn thuộc về:
 kỹ năng của nó, và **thuộc tính chính** của nó (đánh dấu ★), thứ chỉ lớp
 chính mới có. Lớp **phụ** cho bạn mượn kỹ năng của nó, nhưng không cho thuộc
 tính chính của nó.
@@ -18,12 +18,12 @@ Thanh có **tám ô**. Mỗi thanh chỉ chứa được một kỹ năng **Tinh
 vàng): trang bị kỹ năng thứ hai thì nó sẽ thay kỹ năng thứ nhất. Nhấn **×**
 trên một ô để làm trống ô đó.
 
-**Phù phép chớp nhoáng** (flash enchantment, Dervish) có hiệu lực tức thì:
+![Phù phép chớp nhoáng](../../../apps/web/public/icons/skill-type/enchantment.svg) **Phù phép chớp nhoáng** (flash enchantment, ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) có hiệu lực tức thì:
 dùng một cái vẫn giữ nguyên cú vung và bước chân của bạn, nên bạn có thể đan
 chúng xen giữa các đòn đánh. Mỗi cái tắt các Phù phép chớp nhoáng khác của
 bạn trong 1 giây.
 
-**Hình thái** (form, năm Avatar của Dervish: Balthazar, Dwayna, Grenth, Lyssa
+![Hình thái](../../../apps/web/public/icons/skill-type/form.svg) **Hình thái** (form, năm Avatar của Dervish: Balthazar, Dwayna, Grenth, Lyssa
 và Melandru) biến đổi bạn trong hơn một phút. Hình thái không phải Phù phép,
 nên không ai gỡ được, và mỗi lúc bạn chỉ ở trong một hình thái. Dùng một hình
 thái sẽ vô hiệu hóa nó trong 45 giây. Khi hình thái kết thúc, bạn dừng việc
@@ -32,7 +32,7 @@ một phím di chuyển để đi tiếp.
 
 **Một số phát bắn vô hiệu hóa các đòn tấn công khác của bạn.** Focused Shot
 và Needling Shot bay nhanh hơn một mũi tên thường, nhưng mỗi phát trúng sẽ
-tắt các kỹ năng Tấn công khác của bạn trong vài giây. Phép không bị ảnh
+tắt các ![Kỹ năng Tấn công](../../../apps/web/public/icons/skill-type/attack.svg) **kỹ năng Tấn công** khác của bạn trong vài giây. ![Phép](../../../apps/web/public/icons/skill-type/spell.svg) **Phép** không bị ảnh
 hưởng.
 
 ## Thuộc tính
@@ -44,10 +44,10 @@ xem [Trang bị](equipment.md). Nâng thuộc tính mà một kỹ năng dùng s
 năng đó mạnh hơn: các con số tăng theo thuộc tính được hiển thị màu xanh lá
 và in đậm, theo cấp hiện tại của bạn tính cả rune và mũ.
 
-Trong trận, cấp của bạn có thể thay đổi một lúc. Weakness trừ một cấp ở mỗi
-thuộc tính. Một số Nguyền đặt thuộc tính của địch về 0, và Master of Magic
+Trong trận, cấp của bạn có thể thay đổi một lúc. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** trừ một cấp ở mỗi
+thuộc tính. Một số ![Nguyền](../../../apps/web/public/icons/skill-type/hex.svg) **Nguyền** đặt thuộc tính của địch về 0, và Master of Magic
 đặt các thuộc tính nguyên tố của bạn thành 13: cấp được đặt theo cách này ghi
-đè cả rune lẫn Weakness. Signet of Illusions cho các Phép kế tiếp thuộc thuộc
+đè cả rune lẫn Weakness. Signet of Illusions cho các ![Phép](../../../apps/web/public/icons/skill-type/spell.svg) **Phép** kế tiếp thuộc thuộc
 tính khác dùng cấp Illusion Magic của bạn. Một số kỹ năng nâng thuộc tính của
 bạn trong một thời gian hoặc cho các Phép kế tiếp, như Glyph of Elemental
 Power và Ritual Lord, kể cả thuộc tính bạn để ở 0; cấp được đặt cố định, như
@@ -55,19 +55,19 @@ của Master of Magic, thắng kiểu tăng cường đó.
 
 ## Tiếng vọng
 
-**Tiếng vọng** (echo) của Paragon là các hiệu ứng tăng cường dài trên một
+![Tiếng vọng](../../../apps/web/public/icons/skill-type/echo.svg) **Tiếng vọng** (echo) của ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** là các hiệu ứng tăng cường dài trên một
 đồng minh. **Điệp khúc** (refrain) làm mới lại toàn bộ thời lượng, và **khúc
-kết** (finale) phát huy tác dụng, mỗi khi một khúc ca hoặc tiếng hô kết thúc
+kết** (finale) phát huy tác dụng, mỗi khi một ![Khúc ca](../../../apps/web/public/icons/skill-type/chant.svg) **khúc ca** hoặc ![Tiếng hô](../../../apps/web/public/icons/skill-type/shout.svg) **tiếng hô** kết thúc
 trên đồng minh đó. Khúc ca hoặc tiếng hô được dùng lại trước khi kết thúc thì
 chưa tính là kết thúc. Không gì gỡ được tiếng vọng: nó kết thúc khi hết giờ
 hoặc khi người mang nó chết. Hầu hết không thể nhắm vào Linh thể.
 
 ## Kỹ năng biến thành kỹ năng khác
 
-Một số kỹ năng Mesmer đặt một kỹ năng khác vào chính ô của chúng một lúc.
-Arcane Echo và Echo sao chép kỹ năng tiếp theo bạn dùng. **Inspired
-Enchantment** và **Inspired Hex** trở thành kỹ năng đã thi triển Phù phép hoặc
-Nguyền mà chúng gỡ bỏ, trong 20 giây. **Arcane Thievery** trở thành Phép mà
+Một số kỹ năng ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** đặt một kỹ năng khác vào chính ô của chúng một lúc.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** và ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** sao chép kỹ năng tiếp theo bạn dùng. **Inspired
+Enchantment** và **Inspired Hex** trở thành kỹ năng đã thi triển ![Phù phép](../../../apps/web/public/icons/skill-type/enchantment.svg) **Phù phép** hoặc
+![Nguyền](../../../apps/web/public/icons/skill-type/hex.svg) **Nguyền** mà chúng gỡ bỏ, trong 20 giây. **Arcane Thievery** trở thành ![Phép](../../../apps/web/public/icons/skill-type/spell.svg) **Phép** mà
 nó đã vô hiệu hóa trên địch, chừng nào sự vô hiệu hóa còn kéo dài. Bản sao
 có Hồi chiêu riêng. Khi nó kết thúc, kỹ năng gốc trở lại và bắt đầu Hồi chiêu
 của chính nó, và lần thi triển bản sao đang dở sẽ thất bại. Trạng thái do Linh
@@ -76,11 +76,11 @@ bạn Năng lượng.
 
 ## Giếng và ký tự
 
-**Giếng** (well) của Necromancer khai thác xác chết gần nhất. Nếu không có xác
+![Giếng](../../../apps/web/public/icons/skill-type/well.svg) **Giếng** (well) của ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** khai thác xác chết gần nhất. Nếu không có xác
 nào gần, giếng sẽ hy sinh 66% Máu của bạn thay thế và xuất hiện nơi bạn
 đứng.
 
-**Ký tự** (glyph) của Elementalist thay đổi Phép tiếp theo của bạn: nó không
+![Ký tự](../../../apps/web/public/icons/skill-type/glyph.svg) **Ký tự** (glyph) của ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** thay đổi ![Phép](../../../apps/web/public/icons/skill-type/spell.svg) **Phép** tiếp theo của bạn: nó không
 thể bị ngắt, thi triển tức thì, hồi chiêu ngay, hoặc tốn ít hơn. Ký tự mới
 thay thế ký tự bạn đang có.
 
@@ -89,9 +89,9 @@ thay thế ký tự bạn đang có.
 Kỹ năng phản ứng với "lần tới sát thương làm Máu xuống dưới N%" sẽ phản ứng
 với bất kỳ đòn đánh hay hút sinh lực nào để bạn còn sống và dưới ngưỡng đó,
 kể cả khi bạn đã ở dưới ngưỡng trước đòn đánh, và không bao giờ với lượng máu
-bạn hy sinh hoặc mất do suy giảm. Bảo vệ khỏi sát thương chí tử, như Judge's
-Intervention, bỏ qua toàn bộ đòn kết liễu: không sát thương, không chết.
-Faithful Intervention và Illusion of Weakness không có thời lượng: chúng kéo
+bạn hy sinh hoặc mất do suy giảm. Bảo vệ khỏi sát thương chí tử, như
+![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, bỏ qua toàn bộ đòn kết liễu: không sát thương, không chết.
+![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** và ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** không có thời lượng: chúng kéo
 dài đến khi sát thương, việc gỡ bỏ hoặc cái chết kết thúc chúng, và hồi máu
 cho bạn khi chúng hết.
 
@@ -118,19 +118,19 @@ là của bạn.
 
 ## Phép vật phẩm
 
-**Phép vật phẩm** (item spell) của Ritualist đặt **tro** của một Linh thể vào
+![Phép vật phẩm](../../../apps/web/public/icons/skill-type/item-spell.svg) **Phép vật phẩm** (item spell) của ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** đặt **tro** của một Linh thể vào
 tay bạn: một hiệu ứng có lợi khi bạn cầm, và một **hiệu ứng khi thả** khi tro
 rơi xuống. Tro rơi khi hết giờ, khi bạn chết, khi bạn nhấn **Thả tro** phía
 trên thanh Máu, thi triển một Phép vật phẩm khác, dịch chuyển bóng tối, đổi
 vũ khí hoặc nhặt cờ hay thánh tích. Tay bạn bận khi cầm tro: không tấn công
-và không dùng kỹ năng Tấn công, nhưng bạn đi với tốc độ đầy đủ và vẫn thi
-triển Phép được. Không gì gỡ được tro; mọi kết thúc đều là thả xuống.
+và không dùng ![Kỹ năng Tấn công](../../../apps/web/public/icons/skill-type/attack.svg) **kỹ năng Tấn công**, nhưng bạn đi với tốc độ đầy đủ và vẫn thi
+triển ![Phép](../../../apps/web/public/icons/skill-type/spell.svg) **Phép** được. Không gì gỡ được tro; mọi kết thúc đều là thả xuống.
 
 ## Dịch chuyển bóng tối
 
 **Dịch chuyển bóng tối** (shadow step) đưa bạn đi ngay lập tức, không đi bộ ở
 giữa. Hầu hết đưa bạn tới mục tiêu; một số đưa bạn về chỗ bạn đã thi triển
-khi chúng kết thúc, như Shadow of Haste và Shadow Walk. **Recall** chỉ đưa bạn
+khi chúng kết thúc, như Shadow of Haste và Shadow Walk. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** chỉ đưa bạn
 tới đồng minh của nó khi nó kết thúc, và vô hiệu hóa mọi kỹ năng của bạn trong
 3 giây. **Swap** đổi chỗ với một Linh thể hoặc Thuộc hạ phe bạn.
 

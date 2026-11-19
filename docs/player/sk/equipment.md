@@ -7,7 +7,7 @@ klikni, aby si ho vybavil. Brnenie sa vyberá na figúre, pozri nižšie.
 ## Sady zbraní
 
 Nosíš až **štyri sady zbraní**, každú so zbraňou a, ak zbraň nechá jednu
-ruku voľnú, s predmetom do druhej ruky, ako je štít alebo ohnisko. Sada 1 je
+ruku voľnú, s predmetom do druhej ruky, ako je ![Štít](../../../apps/web/public/icons/offhand/shield.svg) **štít** alebo ![Ohnisko](../../../apps/web/public/icons/offhand/focus.svg) **ohnisko**. Sada 1 je
 tá, s ktorou začínaš; ostatné môžu zostať prázdne.
 
 V zápase prepínaš sady klávesmi **1 až 4** (**F1 až F4** pri klávesoch
@@ -17,8 +17,8 @@ schopnosti, ktoré vyžadujú určitú zbraň, a tvoja maximálna energia sa ria
 sadou, ktorú držíš v ruke.
 
 Zbraň vyžaduje hodnosť 9 vo svojom atribúte: pod ňou zasahuje za tretinu
-svojho poškodenia a editor to povie červenou. Meč je vždy
-Swordsmanship, ale palica, prútik, štít alebo ohnisko sa vyrába pre atribút,
+svojho poškodenia a editor to povie červenou. ![Meč](../../../apps/web/public/icons/weapon/sword.svg) **Meč** je vždy
+Swordsmanship, ale ![Palica](../../../apps/web/public/icons/weapon/staff.svg) **palica**, ![Prútik](../../../apps/web/public/icons/weapon/wand.svg) **prútik**, štít alebo ohnisko sa vyrába pre atribút,
 ktorý si vyberieš: klikni na jeho ruku na figúre (**6** pre zbraň,
 **7** pre druhú ruku) a jeden vyber.
 
@@ -26,40 +26,40 @@ ktorý si vyberieš: klikni na jeho ruku na figúre (**6** pre zbraň,
 
 Každá zbraň a predmet do druhej ruky má pozície na vylepšenia: **prefix**,
 **sufix** a **nápis**. Vyberieš ich kliknutím na ruku na figúre alebo na jej
-riadok vedľa nej; každé hovorí, čo robí. Prútik, štít
-a ohnisko neberú prefix; holé ruky neberú nič. Vylepšenie má vždy svoju
+riadok vedľa nej; každé hovorí, čo robí. ![Prútik](../../../apps/web/public/icons/weapon/wand.svg) **Prútik**, ![Štít](../../../apps/web/public/icons/offhand/shield.svg) **štít**
+a ![Ohnisko](../../../apps/web/public/icons/offhand/focus.svg) **ohnisko** neberú prefix; holé ruky neberú nič. Vylepšenie má vždy svoju
 najlepšiu hodnotu a každá sada zbraní nosí vlastné, takže výmenou sád sa
 vymenia aj ich vylepšenia: maximálne zdravie a energia sa menia podľa sady v
 ruke. Pri výmene zbrane sa zachovajú vylepšenia, ktoré na ňu stále sedia, a
 povie sa ti, ktoré odpadli.
 
-| Vylepšenie                | Pozícia | Sedí na                                  | Účinok                                      |
-| ------------------------- | ------- | ---------------------------------------- | ------------------------------------------- |
-| Defensive                 | Prefix  | Staff                                    | Brnenie +5                                  |
-| Hale                      | Prefix  | Staff                                    | +30 zdravia                                 |
-| Insightful                | Prefix  | Staff                                    | Energia +5                                  |
-| of Defense                | Sufix   | každá bojová zbraň, Staff                | Brnenie +5                                  |
-| of Fortitude              | Sufix   | každá bojová zbraň, Staff, Shield, Focus | +30 zdravia                                 |
-| of Shelter                | Sufix   | každá bojová zbraň, Staff                | Brnenie +7 (proti fyzickému poškodeniu)     |
-| of Warding                | Sufix   | každá bojová zbraň, Staff                | Brnenie +7 (proti elementálnemu poškodeniu) |
-| "Cast Out the Unclean"    | Nápis   | Shield, Focus                            | Skracuje trvanie Disease na tebe o 20 %     |
-| "Fear Cuts Deeper"        | Nápis   | Shield, Focus                            | Skracuje trvanie Bleeding na tebe o 20 %    |
-| "I Can See Clearly Now"   | Nápis   | Shield, Focus                            | Skracuje trvanie Blinded na tebe o 20 %     |
-| "I have the power!"       | Nápis   | každá bojová zbraň                       | Energia +5                                  |
-| "Leaf on the Wind"        | Nápis   | Shield, Focus                            | Brnenie +10 (proti poškodeniu chladom)      |
-| "Like a Rolling Stone"    | Nápis   | Shield, Focus                            | Brnenie +10 (proti poškodeniu zemou)        |
-| "Live for Today"          | Nápis   | Focus                                    | Energia +15, regenerácia energie -1         |
-| "Not the face!"           | Nápis   | Shield, Focus                            | Brnenie +10 (proti tupému poškodeniu)       |
-| "Only the Strong Survive" | Nápis   | Shield, Focus                            | Skracuje trvanie Weakness na tebe o 20 %    |
-| "Pure of Heart"           | Nápis   | Shield, Focus                            | Skracuje trvanie Poison na tebe o 20 %      |
-| "Riders on the Storm"     | Nápis   | Shield, Focus                            | Brnenie +10 (proti poškodeniu bleskom)      |
-| "Seize the Day"           | Nápis   | Staff, Wand                              | Energia +15, regenerácia energie -1         |
-| "Sleep Now in the Fire"   | Nápis   | Shield, Focus                            | Brnenie +10 (proti poškodeniu ohňom)        |
-| "Soundness of Mind"       | Nápis   | Shield, Focus                            | Skracuje trvanie Dazed na tebe o 20 %       |
-| "Strength of Body"        | Nápis   | Shield, Focus                            | Skracuje trvanie Deep Wound na tebe o 20 %  |
-| "Swift as the Wind"       | Nápis   | Shield, Focus                            | Skracuje trvanie Crippled na tebe o 20 %    |
-| "The Riddle of Steel"     | Nápis   | Shield, Focus                            | Brnenie +10 (proti sečnému poškodeniu)      |
-| "Through Thick and Thin"  | Nápis   | Shield, Focus                            | Brnenie +10 (proti bodnému poškodeniu)      |
+| Vylepšenie                | Pozícia | Sedí na                                                             | Účinok                                                                                                             |
+| ------------------------- | ------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Defensive                 | Prefix  | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Brnenie +5                                                                                                         |
+| Hale                      | Prefix  | Staff                                                               | +30 zdravia                                                                                                        |
+| Insightful                | Prefix  | Staff                                                               | Energia +5                                                                                                         |
+| of Defense                | Sufix   | každá bojová zbraň, Staff                                           | Brnenie +5                                                                                                         |
+| of Fortitude              | Sufix   | každá bojová zbraň, Staff, Shield, Focus                            | +30 zdravia                                                                                                        |
+| of Shelter                | Sufix   | každá bojová zbraň, Staff                                           | Brnenie +7 (proti fyzickému poškodeniu)                                                                            |
+| of Warding                | Sufix   | každá bojová zbraň, Staff                                           | Brnenie +7 (proti elementálnemu poškodeniu)                                                                        |
+| "Cast Out the Unclean"    | Nápis   | Shield, Focus                                                       | Skracuje trvanie ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** na tebe o 20 %          |
+| "Fear Cuts Deeper"        | Nápis   | Shield, Focus                                                       | Skracuje trvanie ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** na tebe o 20 %       |
+| "I Can See Clearly Now"   | Nápis   | Shield, Focus                                                       | Skracuje trvanie ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** na tebe o 20 %            |
+| "I have the power!"       | Nápis   | každá bojová zbraň                                                  | Energia +5                                                                                                         |
+| "Leaf on the Wind"        | Nápis   | Shield, Focus                                                       | Brnenie +10 (proti poškodeniu chladom)                                                                             |
+| "Like a Rolling Stone"    | Nápis   | Shield, Focus                                                       | Brnenie +10 (proti poškodeniu zemou)                                                                               |
+| "Live for Today"          | Nápis   | Focus                                                               | Energia +15, regenerácia energie -1                                                                                |
+| "Not the face!"           | Nápis   | Shield, Focus                                                       | Brnenie +10 (proti tupému poškodeniu)                                                                              |
+| "Only the Strong Survive" | Nápis   | Shield, Focus                                                       | Skracuje trvanie ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** na tebe o 20 %       |
+| "Pure of Heart"           | Nápis   | Shield, Focus                                                       | Skracuje trvanie ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** na tebe o 20 %             |
+| "Riders on the Storm"     | Nápis   | Shield, Focus                                                       | Brnenie +10 (proti poškodeniu bleskom)                                                                             |
+| "Seize the Day"           | Nápis   | Staff, Wand                                                         | Energia +15, regenerácia energie -1                                                                                |
+| "Sleep Now in the Fire"   | Nápis   | Shield, Focus                                                       | Brnenie +10 (proti poškodeniu ohňom)                                                                               |
+| "Soundness of Mind"       | Nápis   | Shield, Focus                                                       | Skracuje trvanie ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** na tebe o 20 %                |
+| "Strength of Body"        | Nápis   | Shield, Focus                                                       | Skracuje trvanie ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** na tebe o 20 % |
+| "Swift as the Wind"       | Nápis   | Shield, Focus                                                       | Skracuje trvanie ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** na tebe o 20 %       |
+| "The Riddle of Steel"     | Nápis   | Shield, Focus                                                       | Brnenie +10 (proti sečnému poškodeniu)                                                                             |
+| "Through Thick and Thin"  | Nápis   | Shield, Focus                                                       | Brnenie +10 (proti bodnému poškodeniu)                                                                             |
 
 ### Bojové prefixy pri zásahu
 
@@ -153,16 +153,16 @@ drží zbrane sady, na ktorú sa pozeráš, s ich vylepšeniami.
 
 ## Runy
 
-| Runa                                   | Čo dáva                                     |
-| -------------------------------------- | ------------------------------------------- |
-| Minor attribute rune                   | +1 k atribútu                               |
-| Major attribute rune                   | +2 k atribútu, -35 zdravia                  |
-| Superior attribute rune                | +3 k atribútu, -75 zdravia                  |
-| Vigor                                  | viac zdravia (+30, +41 alebo +50)           |
-| Vitae                                  | +10 zdravia                                 |
-| Attunement                             | viac energie (+3, +6 alebo +9)              |
-| Clarity, Purity, Recovery, Restoration | dva neduhy zmiznú o 20 % skôr               |
-| Absorption (Warrior)                   | menej fyzického poškodenia z každého zásahu |
+| Runa                                                                                                                                                                                                                                                                                                           | Čo dáva                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Minor attribute rune                                                                                                                                                                                                                                                                                           | +1 k atribútu                               |
+| Major attribute rune                                                                                                                                                                                                                                                                                           | +2 k atribútu, -35 zdravia                  |
+| Superior attribute rune                                                                                                                                                                                                                                                                                        | +3 k atribútu, -75 zdravia                  |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | viac zdravia (+30, +41 alebo +50)           |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 zdravia                                 |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | viac energie (+3, +6 alebo +9)              |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | dva neduhy zmiznú o 20 % skôr               |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | menej fyzického poškodenia z každého zásahu |
 
 Runu kusu vyberáš na tom istom mieste ako jeho insígniu: klikni na kus
 na figúre.
