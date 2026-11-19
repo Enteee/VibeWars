@@ -79,8 +79,10 @@ biểu tượng này và các nút khác của màn hình được gộp vào **
 của nó còn ở ngoài. ⚙ mở Tùy chọn thành một cửa sổ dưới thanh, màn hình vẫn
 ở phía sau; Esc, × hoặc nhấn ra ngoài sẽ đóng nó. Trong **Hiển thị**, **Ánh
 sáng** bật hoặc tắt ánh sáng và bóng đổ của bản đồ có chiếu sáng, ngay lập
-tức, kể cả trong trận. Hỗ trợ đóng bằng dấu × ở góc trên bên phải, Esc, hoặc
-nhấn [?] lần nữa.
+tức, kể cả trong trận. [?] mở Hỗ trợ theo cùng
+cách, thành một cửa sổ dưới nó với bộ chọn trang ở trên cùng; trận vẫn tiếp
+diễn phía sau. Hỗ trợ đóng bằng dấu × của nó, Esc, nhấn ra ngoài, hoặc nhấn
+[?] lần nữa.
 
 **Chia sẻ beat với sảnh.** Trong trình sửa beat (♪, rồi **Sửa**), **Chia sẻ
 với sảnh** gửi những gì bạn đã gõ, đã lưu hay chưa, tới mọi người khác trong

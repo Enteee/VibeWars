@@ -69,7 +69,8 @@ Di luar laga, bilah atas berisi **[?]** (Bantuan ini), **⚙** (Opsi),
 kecuali Lobi, ada di kanan atas layar. Di jendela yang sempit, ikon-ikon ini dan
 tombol-tombol lain di layar terlipat ke dalam **⋯**; hanya tombol utamanya yang tetap di luar.
 ⚙ membuka Opsi sebagai jendela di bawah bilah, dengan layar tetap di belakangnya; Esc, × atau klik di luarnya menutupnya. Di bagian **tampilan**, **Pencahayaan** menyalakan atau mematikan cahaya dan bayangan peta yang diterangi, seketika, bahkan di dalam laga.
-Bantuan ditutup dengan × di kanan atasnya, Esc, atau menekan [?] sekali lagi.
+[?] membuka Bantuan dengan cara yang sama, sebagai jendela di bawahnya dengan pemilih halaman di atas; laga tetap berjalan di belakangnya.
+Bantuan ditutup dengan ×-nya, Esc, klik di luarnya, atau menekan [?] sekali lagi.
 
 **Bagikan beat ke lobimu.** Di editor beat (♪, lalu **Edit**),
 **Bagikan ke lobi** mengirim apa yang sudah kamu ketik, tersimpan atau belum, ke semua orang

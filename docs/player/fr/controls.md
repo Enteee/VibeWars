@@ -76,7 +76,8 @@ sauf Salon, sont en haut à droite de l'écran. Dans une fenêtre étroite, ces
 icônes et les autres boutons de l'écran se replient dans **⋯** ; seul son
 bouton principal reste visible. ⚙ ouvre les Options dans une fenêtre sous la
 barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme. Sous **Affichage**, **Éclairage** active ou coupe la lumière et l'ombre d'une carte éclairée, aussitôt, même en match.
-L'Aide se ferme avec le × en haut à droite, Esc, ou un nouvel appui sur [?].
+[?] ouvre l'Aide de la même façon, dans une fenêtre sous lui avec un sélecteur de page en haut ; un match continue derrière.
+L'Aide se ferme avec son ×, Esc, un clic à l'extérieur, ou un nouvel appui sur [?].
 
 **Partage un beat avec ton salon.** Dans l'éditeur de beat (♪, puis
 **Éditer**), **Partager au salon** envoie ce que tu as tapé, enregistré ou

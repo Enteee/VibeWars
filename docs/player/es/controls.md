@@ -76,8 +76,9 @@ botones, menos Sala, están arriba a la derecha de la pantalla. En una ventana
 estrecha, estos iconos y los demás botones de la pantalla se pliegan en
 **⋯**; solo su botón principal se queda fuera. ⚙ abre Opciones como una
 ventana bajo la barra, con la pantalla aún detrás; Esc, × o un clic fuera la
-cierran. En **Pantalla**, **Iluminación** enciende o apaga la luz y la sombra de un mapa iluminado, al instante, incluso en una partida. La Ayuda se cierra con la × de arriba a la derecha, Esc u otra
-pulsación de [?].
+cierran. En **Pantalla**, **Iluminación** enciende o apaga la luz y la sombra de un mapa iluminado, al instante, incluso en una partida. [?] abre la Ayuda igual, como una
+ventana bajo él con un selector de página arriba; la partida sigue detrás. La
+Ayuda se cierra con su ×, Esc, un clic fuera u otra pulsación de [?].
 
 **Comparte un ritmo con tu sala.** En el editor de ritmos (♪, luego
 **Editar**), **Compartir en la sala** envía lo que has escrito, guardado o
