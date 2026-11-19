@@ -781,7 +781,7 @@ export default {
   "lobby.joinTeamLabel": "الانضمام إلى الفريق {team}",
   "lobby.leaveTeam": "مغادرة",
   "lobby.leaveTeamLabel": "مغادرة الفريق {team}",
-  "lobby.map": "الخريطة",
+  "lobby.map": "الخريطة:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "الخريطة: عشوائية (ساحة الفرق)",
   "lobby.mapShown": "الخريطة: {map}",

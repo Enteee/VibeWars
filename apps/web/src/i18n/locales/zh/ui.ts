@@ -632,7 +632,7 @@ export default {
   "lobby.joinTeamLabel": "加入 {team} 队",
   "lobby.leaveTeam": "离开",
   "lobby.leaveTeamLabel": "离开 {team} 队",
-  "lobby.map": "地图",
+  "lobby.map": "地图：",
   "lobby.mapLabel": "{name}（{size}）",
   "lobby.mapRandom": "地图：随机（团队竞技场）",
   "lobby.mapShown": "地图：{map}",

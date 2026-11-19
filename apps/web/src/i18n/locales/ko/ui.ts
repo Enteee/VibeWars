@@ -638,7 +638,7 @@ export default {
   "lobby.joinTeamLabel": "{team} 팀 참가",
   "lobby.leaveTeam": "나가기",
   "lobby.leaveTeamLabel": "{team} 팀 나가기",
-  "lobby.map": "맵",
+  "lobby.map": "맵:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "맵: 무작위 (팀 아레나)",
   "lobby.mapShown": "맵: {map}",

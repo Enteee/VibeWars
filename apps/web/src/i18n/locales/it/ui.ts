@@ -723,7 +723,7 @@ export default {
   "lobby.joinTeamLabel": "Entra nella squadra {team}",
   "lobby.leaveTeam": "Esci",
   "lobby.leaveTeamLabel": "Esci dalla squadra {team}",
-  "lobby.map": "Mappa",
+  "lobby.map": "Mappa:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Mappa: casuale (Arena a squadre)",
   "lobby.mapShown": "Mappa: {map}",

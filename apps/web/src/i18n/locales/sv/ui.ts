@@ -681,7 +681,7 @@ export default {
   "lobby.joinTeamLabel": "Gå med i lag {team}",
   "lobby.leaveTeam": "Lämna",
   "lobby.leaveTeamLabel": "Lämna lag {team}",
-  "lobby.map": "Karta",
+  "lobby.map": "Karta:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Karta: slumpad (Lagarena)",
   "lobby.mapShown": "Karta: {map}",

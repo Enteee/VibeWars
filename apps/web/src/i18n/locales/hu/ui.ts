@@ -683,7 +683,7 @@ export default {
   "lobby.joinTeamLabel": "Belépés a csapatba: {team}",
   "lobby.leaveTeam": "Kilép",
   "lobby.leaveTeamLabel": "Kilépés a csapatból: {team}",
-  "lobby.map": "Pálya",
+  "lobby.map": "Pálya:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Pálya: véletlen (Csapataréna)",
   "lobby.mapShown": "Pálya: {map}",

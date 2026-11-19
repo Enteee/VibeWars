@@ -683,7 +683,7 @@ export const en = {
   "lobby.joinTeamLabel": "Join team {team}",
   "lobby.leaveTeam": "Leave",
   "lobby.leaveTeamLabel": "Leave team {team}",
-  "lobby.map": "Map",
+  "lobby.map": "Map:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Map: random (Team Arena)",
   "lobby.mapShown": "Map: {map}",

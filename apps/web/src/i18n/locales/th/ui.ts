@@ -636,7 +636,7 @@ export default {
   "lobby.joinTeamLabel": "เข้าร่วมทีม {team}",
   "lobby.leaveTeam": "ออก",
   "lobby.leaveTeamLabel": "ออกจากทีม {team}",
-  "lobby.map": "แมป",
+  "lobby.map": "แมป:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "แมป: สุ่ม (อารีนาทีม)",
   "lobby.mapShown": "แมป: {map}",
