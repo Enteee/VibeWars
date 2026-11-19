@@ -76,7 +76,8 @@ Ottelun ulkopuolella yläpalkissa ovat **[?]** (tämä Ohje), **⚙** (Asetukset
 Aulaa lukuun ottamatta ovat näytön oikeassa yläkulmassa. Kapeassa ikkunassa nämä kuvakkeet ja
 näkymän muut painikkeet taittuvat **⋯**-valikkoon; vain sen pääpainike jää näkyviin.
 ⚙ avaa Asetukset ikkunana palkin alle, näkymä yhä sen takana; Esc, × tai napsautus ikkunan ulkopuolelle sulkee sen. Kohdassa **näyttö** **Valaistus** kytkee valaistun kartan valon ja varjot päälle tai pois, heti, myös ottelussa.
-Ohje sulkeutuu sen oikean yläkulman ×:llä, Escillä tai painamalla [?] uudelleen.
+[?] avaa Ohjeen samalla tavalla, ikkunana sen alle, ylimpänä sivuvalitsin; ottelu jatkuu sen takana.
+Ohje sulkeutuu sen ×:llä, Escillä, napsautuksella ikkunan ulkopuolelle tai painamalla [?] uudelleen.
 
 **Jaa biitti aulasi kanssa.** Biittieditorissa (♪, sitten **Muokkaa**)
 **Jaa aulaan** lähettää kirjoittamasi, tallennettuna tai ei, kaikille

@@ -699,25 +699,6 @@ body {
   letter-spacing: normal;
 }
 
-/* Help over a screen or a match (#1257): the match runs on behind it. */
-.options-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  overflow-y: auto;
-  padding: 3.5rem 1rem 2rem;
-  background: rgb(14 17 22 / 70%);
-}
-
-/* An overlay window (#2381): its × at its own top right, not in the top
-   bar. The window holds it; its body keeps clear of it. */
-.options-overlay > .screen {
-  position: relative;
-}
-
 .options-window .options-body {
   padding-inline-end: 2.25rem;
 }
@@ -1684,8 +1665,31 @@ body:has(> .splash) #menu-background::after {
   gap: 0.3rem;
 }
 
-.player-cape-picks[hidden] {
+/*
+ * The cape on a figure (#3551) beside the picks; on a narrow screen,
+ * above them.
+ */
+.player-cape-body {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.player-cape-body[hidden] {
   display: none;
+}
+
+.player-cape-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+@media (max-width: 479px) {
+  .player-cape-body {
+    flex-direction: column-reverse;
+  }
 }
 
 .screen .player-cape-edit {
@@ -3761,16 +3765,48 @@ body:has(> .splash) #menu-background::after {
 
 /* --- help (#1257) ------------------------------------------------------- */
 
-/* As wide as Options: the page list beside a page of prose. */
-.screen.help-screen {
-  width: min(52rem, 100%);
+/* A window just under the [?] that opened it (#3552), no backdrop: the
+   screen or match goes on beside it. Fixed, so it sits over the tutorial's
+   dim (`.coach`, z 55) from the bar and the HUD alike. It scrolls inside. */
+.screen.help-screen.help-window {
+  position: fixed;
+  top: calc(var(--help-top, 3rem) + 0.3rem);
+  inset-inline-end: 8px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: min(640px, calc(100vw - 16px));
+  max-height: calc(100vh - var(--help-top, 3rem) - 0.3rem - 8px);
+  overflow-y: auto;
   padding: 1rem;
-  background: var(--bg);
+  background: rgb(14 17 22 / 96%);
   border: 1px solid var(--line);
+  /* The size it has in a match, not the slim bar's. */
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* The page scrolls between the picker and the foot, which stay put. */
+.help-window .help-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Clear of the × at the window's top right. */
+.help-picker {
+  align-self: flex-start;
+  max-width: calc(100% - 2.5rem);
+}
+
+.help-footer {
+  border-top: 1px solid var(--line);
+  padding-top: 0.4rem;
 }
 
 .help-source {
-  margin-top: 0.6rem;
   color: var(--ink-dim);
   font-size: 0.85rem;
 }

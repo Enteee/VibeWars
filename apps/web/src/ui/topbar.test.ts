@@ -64,7 +64,7 @@ describe("the top bar's ⋯ on a repaint (#1305)", () => {
   it("goes away on another place, or an overlay over the same place", () => {
     expect(putsMoreAway(lobby, { ...lobby, place: "VibeWars / Teams" }, true)).toBe(true);
     expect(putsMoreAway(lobby, { ...lobby, overlay: true }, true)).toBe(true);
-    expect(putsMoreAway(lobby, { ...lobby, own: "help" }, true)).toBe(true);
+    expect(putsMoreAway(lobby, { ...lobby, own: "music" }, true)).toBe(true);
   });
 
   it("goes away on the first bar, and when nothing is left in it", () => {
@@ -140,17 +140,15 @@ class FakeElement {
   }
 }
 
-describe("the top bar's own icons (#1272, #2724)", () => {
-  it("keeps Help's [?], shown open while Help is the bar, and hides the ♪ in the beat editor", () => {
-    const help = new FakeElement("button");
+describe("the top bar's own icons (#1272)", () => {
+  it("hides the ♪ in the beat editor, and nowhere else", () => {
     const music = new FakeElement("button");
-    const paint = (own: Kit.OwnIcon | undefined): unknown[] => {
-      paintOwnIcons(help, music, own);
-      return [help.hidden, help.getAttribute("aria-expanded"), music.hidden];
+    const paint = (own: Kit.OwnIcon | undefined): boolean => {
+      paintOwnIcons(music, own);
+      return music.hidden;
     };
-    expect(paint("help")).toEqual([false, "true", false]);
-    expect(paint(undefined)).toEqual([false, "false", false]);
-    expect(paint("music")).toEqual([false, "false", true]);
+    expect(paint(undefined)).toBe(false);
+    expect(paint("music")).toBe(true);
   });
 });
 

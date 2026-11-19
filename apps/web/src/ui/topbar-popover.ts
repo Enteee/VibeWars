@@ -32,13 +32,14 @@ export function isTopbarPopoverOpen(): boolean {
 /**
  * Hang a popover off `trigger`, in `parent`: `build` makes its content each
  * time it opens, handed the popover's own close, and the content is disposed
- * of each time it shuts. The popover keeps no state of its own.
+ * of each time it shuts. The popover keeps no state of its own. `open`
+ * opens it as a press on `trigger` would, and leaves it be if it is open.
  */
 export function attachTopbarPopover(
   trigger: HTMLButtonElement,
   parent: HTMLElement,
   build: (close: () => void) => PopoverContent,
-): { dispose(): void } {
+): { readonly open: () => void; dispose(): void } {
   let open: PopoverContent | undefined;
   const onKeydown = (event: KeyboardEvent): void => {
     // Esc here is this popover's, never an overlay's under it.
@@ -71,9 +72,8 @@ export function attachTopbarPopover(
   const quiet = (): void => {
     shut(false);
   };
-  const toggle = (): void => {
+  const show = (): void => {
     if (open !== undefined) {
-      close();
       return;
     }
     closeTopbarPopover();
@@ -84,6 +84,13 @@ export function attachTopbarPopover(
     shutOpen = quiet;
     trigger.setAttribute("aria-expanded", "true");
     open.focus.focus();
+  };
+  const toggle = (): void => {
+    if (open !== undefined) {
+      close();
+    } else {
+      show();
+    }
   };
   const onOutside = (event: PointerEvent): void => {
     const target = event.target;
@@ -102,6 +109,7 @@ export function attachTopbarPopover(
   trigger.addEventListener("click", toggle);
   document.addEventListener("pointerdown", onOutside);
   return {
+    open: show,
     dispose() {
       trigger.removeEventListener("click", toggle);
       document.removeEventListener("pointerdown", onOutside);

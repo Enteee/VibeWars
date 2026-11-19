@@ -3,7 +3,7 @@ import type { ActivationCheck } from "../skills/activation.js";
 import type { Projectile } from "../skills/projectile.js";
 import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
-import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
+import { distance, dot, normalize, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
 import type { BreakableField } from "./breakables.js";
 import type { CapturePoint } from "./capture-points.js";
@@ -301,6 +301,8 @@ export interface BehaviourContext {
    * Movement is always at that speed, so "arrived" means "within one step".
    */
   readonly stepUnits: number;
+  /** How far apart `self`'s centre and `other`'s are when their bodies touch. */
+  readonly touchUnits: (other: Participant) => number;
   /**
    * Whether `self` may cast `skillId` at `targetId` right now, and why not:
    * the same `canActivate` check `requestSkill` makes, asked without casting.
@@ -762,10 +764,11 @@ function followAndAttack(
       : STAND_STILL;
   }
   const mode = self.creature?.mode;
+  const aside = makeWay(owner, context);
   if (behaviour.engage === "owner-target" && mode === "heel") {
     return d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits
       ? toOwner
-      : STAND_STILL;
+      : (aside ?? STAND_STILL);
   }
   if (behaviour.engage === "owner-target") {
     // Guard goes for what its owner attacks, Fight for what its owner
@@ -790,7 +793,37 @@ function followAndAttack(
   if (d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits) {
     return toOwner;
   }
-  return STAND_STILL;
+  return aside ?? STAND_STILL;
+}
+
+/**
+ * A pet at rest that its owner walks into steps aside (#3666): owner and
+ * pet block each other, as in GW1 PvP, so without it an owner walking
+ * dead into its pet stands still for as long as the key is held. It steps
+ * square to the owner's walk, to the side it already leans to, else its
+ * owner's right; `undefined` when it is not in the way.
+ */
+function makeWay(owner: Participant, context: BehaviourContext): BehaviourIntent | undefined {
+  const self = context.self;
+  const walk = owner.inputDirection;
+  if (
+    self.creature?.kind !== "pet" ||
+    owner.combatant.dead ||
+    owner.layer !== self.layer ||
+    (walk.x === 0 && walk.y === 0)
+  ) {
+    return undefined;
+  }
+  const ahead = normalize(walk);
+  const right = vec2(-ahead.y, ahead.x);
+  const offset = sub(self.position, owner.position);
+  const along = dot(offset, ahead);
+  const across = dot(offset, right);
+  const touch = context.touchUnits(owner);
+  if (along <= 0 || along > touch + context.stepUnits || Math.abs(across) >= touch) {
+    return undefined;
+  }
+  return { ...STAND_STILL, moveDirection: across < 0 ? vec2(-right.x, -right.y) : right };
 }
 
 /** How often a follower with skills looks for one to use (#2689): a guard's think. */

@@ -189,7 +189,7 @@ designverktyget **Gillesmantel** under den: välj mantelns färg,
 kantens färg och ett emblem, så bär din kropp manteln i varje match:
 den viks ihop till ett smalt band vid din kant när du står still och
 fladdrar ut bakom dig när du rör dig. Dina karaktärer i menyn visar den
-också. **Ingen mantel** tar av den.
+också. **Ingen mantel** tar av den. En figur visar manteln som den ser ut i spelet.
 
 En ändring gäller direkt i den lobby du är i.
 

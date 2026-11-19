@@ -130,6 +130,7 @@ export function contextFor(
     participants,
     dt: DT,
     stepUnits: 1,
+    touchUnits: () => 28,
     check: () => ({ ok: true }),
     isBot: () => true,
     isIdle: () => false,

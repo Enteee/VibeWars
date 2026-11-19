@@ -915,6 +915,7 @@ export default {
   },
 
   "player.cape": "Cape",
+  "player.capePreview": "Aperçu",
   "player.colourBlack": "noir",
   "player.colourGold": "or",
   "player.colourLime": "lime",
@@ -1580,6 +1581,25 @@ export default {
     "Dans Équipes, tu réunis des personnages en une équipe pour les combats en équipe.",
   "tutorial.menu.menu.title": "Pour continuer, tu dois changer ta spécialisation.",
   "tutorial.menu.skipAsk": "Passer le reste du tutoriel ?",
+  "tutorial.menu.spec.attributes":
+    "Dépense tes points d'attribut. Chaque rang renforce les compétences de cet attribut.",
+  "tutorial.menu.spec.attributesDone": "Change un attribut",
+  "tutorial.menu.spec.gear":
+    "Armure, runes et insignes : choisis une pièce sur la figurine, puis ce qui va dessus.",
+  "tutorial.menu.spec.gearDone": "Change une pièce d'équipement",
+  "tutorial.menu.spec.open": "Ouvre Personnages, puis un personnage pour changer son build.",
+  "tutorial.menu.spec.openDone": "Ouvre un personnage",
+  "tutorial.menu.spec.professions":
+    "Ta profession principale donne tes attributs et compétences ; ta secondaire te prête aussi ses compétences.",
+  "tutorial.menu.spec.professionsDone": "Change de profession",
+  "tutorial.menu.spec.save": "Sauve ton personnage pour garder le nouveau build.",
+  "tutorial.menu.spec.saveDone": "Sauver",
+  "tutorial.menu.spec.skills":
+    "Ouvre un groupe de la liste, puis fais glisser une compétence sur un emplacement de ta barre pour l'échanger.",
+  "tutorial.menu.spec.skillsDone": "Mets une compétence dans ta barre",
+  "tutorial.menu.spec.title": "Change ta spécialisation.",
+  "tutorial.menu.spec.weapons": "Choisis dans la liste une arme pour ton set d'armes.",
+  "tutorial.menu.spec.weaponsDone": "Change une arme",
   "tutorial.gate.hint": "Dans la brume, derrière moi.",
   "tutorial.gate.how": "Clic gauche sur le sol, ou marche avec {keys}.",
   "tutorial.gate.intro": "Notre équipe se bat de l'autre côté de la brume. Suis-moi.",

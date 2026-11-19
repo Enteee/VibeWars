@@ -2,7 +2,7 @@ import { MAX_CHAT_GRAPHEMES, type ChatChannel } from "@vibewars/game-protocol";
 import type { ChatLine } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
-import { isHelpOverlayOpen } from "./help-screen.js";
+import { isHelpOpen } from "./help-screen.js";
 import { chatIcon } from "./icons.js";
 import { button, h, iconButton } from "./kit.js";
 import { isOptionsWindowOpen } from "./options-screen.js";
@@ -317,7 +317,7 @@ export function mountChat(deps: ChatDeps): ChatPanel {
       event.metaKey ||
       isControl(event.target) ||
       isOptionsWindowOpen() ||
-      isHelpOverlayOpen() ||
+      isHelpOpen() ||
       !root.isConnected
     ) {
       return;

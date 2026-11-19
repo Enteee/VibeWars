@@ -187,7 +187,8 @@ or digits beside it, and everyone sees it after your name, like
 it: pick the cape colour, the trim colour and an emblem, and your body
 wears the cape in every match: it folds to a thin band on your rim when
 you stand and streams out behind you when you move. Your characters in
-the menu show it too. **No cape** takes it off.
+the menu show it too. **No cape** takes it off. A figure shows the cape as
+it looks in the game.
 
 A change applies at once to the lobby you are in.
 

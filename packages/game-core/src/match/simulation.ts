@@ -5188,6 +5188,7 @@ export class MatchSimulation {
       // The same slowed speed advanceMovement will move it at, so a
       // crippled dummy plans with the step it will really take.
       stepUnits: this.#stepUnits(record, dt),
+      touchUnits: (other) => this.#radiusOf(record) + this.#radiusOf(other),
       check: (skillId, targetId) => {
         const skill = getSkill(skillId);
         return skill === undefined
@@ -10782,15 +10783,13 @@ export class MatchSimulation {
 
   /**
    * Whether `mover` walks through `other` rather than round it: its own
-   * team's spirit, its own pet or its pet's owner (#3649), or any of its
-   * own team while it carries a relic (#2581), so an escort on its route
-   * never holds the run up.
+   * team's spirit, or any of its own team while it carries a relic
+   * (#2581), so an escort on its route never holds the run up. An owner
+   * and its pet block each other, as in GW1 PvP (#3666).
    */
   #walksThrough(mover: ParticipantRecord, other: ParticipantRecord): boolean {
     return (
       this.#ownSpirit(mover, other) ||
-      (other.creature?.kind === "pet" && other.creature.ownerId === mover.id) ||
-      (mover.creature?.kind === "pet" && mover.creature.ownerId === other.id) ||
       (other.combatant.team === mover.combatant.team &&
         carriedRelic(this.relics, mover.id) !== undefined)
     );

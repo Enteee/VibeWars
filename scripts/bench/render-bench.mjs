@@ -62,6 +62,8 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
+import { UNHOSTED_MAPS } from "../ci/perf-plan.mjs";
+
 import { BENCH_CEILINGS } from "./ceilings.mjs";
 import { exitCode, settled, shardOf, verdict } from "./verdict.mjs";
 
@@ -127,11 +129,15 @@ function mapFile(mapId) {
   return file;
 }
 
-/** Every arena and tutorial map of more than one layer, read from its `map.json`. */
+/**
+ * Every arena and tutorial map of more than one layer, read from its `map.json`,
+ * but one the Hosted lobby never offers (#3446).
+ */
 function layeredMaps() {
   return MAP_DIRS.flatMap((dir) =>
     fs.readdirSync(dir).filter((id) => fs.existsSync(path.join(dir, id, "map.json"))),
   )
+    .filter((id) => !UNHOSTED_MAPS.includes(id))
     .filter(
       (id) => Number(/"layers":\s*(\d+)/.exec(fs.readFileSync(mapFile(id), "utf8"))?.[1] ?? 1) > 1,
     )
