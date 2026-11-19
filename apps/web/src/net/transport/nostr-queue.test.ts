@@ -76,6 +76,8 @@ function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket
     ascentRound: null,
     hardNat: false,
     holdsHallSince: null,
+    claims: { [key.ticketId]: 800 },
+    leaderboardAsOf: 0,
     ...extra,
   };
 }
@@ -394,6 +396,7 @@ describe("party consents on the Nostr queue board (#1078)", () => {
     }
     return ticketOf(leader, {
       members: members.map((key) => key.ticketId),
+      claims: Object.fromEntries(members.map((key) => [key.ticketId, 800])),
       party: { groupId: GROUP_WON, consents },
       ...extra,
     });
@@ -529,6 +532,7 @@ describe("party consents on the Nostr queue board (#1078)", () => {
     const swapped = {
       ...ticket,
       members: [forger.ticketId, follower.ticketId],
+      claims: { [forger.ticketId]: 800, [follower.ticketId]: 800 },
       heartbeatAt: NOW + 5_000,
     };
     deliver(sockets[0], remoteEvent(forger, swapped));
