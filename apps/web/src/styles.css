@@ -3829,10 +3829,14 @@ body:has(> .splash) #menu-background::after {
   max-width: 100%;
 }
 
-/* A game icon in prose (#3556): a line high, centred on the text. */
-.doc-icon {
+/* A game icon in prose (#3556): a line high, centred on the text. Every
+   icon is square, and a fixed box keeps a narrow table column or a full
+   chip from squashing it. */
+.help-page .doc-icon {
+  width: 1.4em;
   height: 1.4em;
-  width: auto;
+  max-width: none;
+  flex-shrink: 0;
   vertical-align: middle;
 }
 
@@ -3846,15 +3850,16 @@ body:has(> .splash) #menu-background::after {
   padding-block: 0.1em;
   padding-inline: 0.15em 0.6em;
   vertical-align: middle;
-  white-space: nowrap;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 0.9em;
 }
 
+/* A long name wraps inside its chip rather than being cut: the name is the
+   one thing a reader must be able to read. */
 .doc-chip > strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  overflow-wrap: break-word;
   color: var(--ink);
 }
 
@@ -4866,7 +4871,7 @@ body:has(> .splash) #menu-background::after {
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -7994,7 +7999,7 @@ body:has(#screens[style*="none"]) .now-playing {
   max-height: 12rem;
   overflow-y: auto;
   padding: 0.3rem 0.5rem;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .chat-lines:empty {
@@ -8463,7 +8468,7 @@ body:has(#screens[style*="none"]) .now-playing {
 }
 
 .touch-notice-url {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   color: var(--ink);
 }
 
