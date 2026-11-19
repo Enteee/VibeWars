@@ -871,4 +871,65 @@ describe("lightMapCells (#3524)", () => {
     expect(cells.flat.some((cell) => meets(cell, box))).toBe(false);
     expect(cells.textured.some((cell) => meets(cell, box))).toBe(true);
   });
+
+  describe("on a layer above the ground (#3660)", () => {
+    const deck = (points: readonly Vec2[]) => ({
+      layer: 1,
+      footprint: { kind: "polygon" as const, points },
+      look: "platform" as const,
+      switched: null,
+    });
+    // A diamond: every edge crosses its cells on the slant.
+    const DIAMOND = [
+      { x: 500, y: 100 },
+      { x: 900, y: 500 },
+      { x: 500, y: 900 },
+      { x: 100, y: 500 },
+    ];
+    const RAISED: MapStructure = {
+      ...TUNNELLED,
+      ground: 0,
+      tunnels: [],
+      decks: [deck(DIAMOND)],
+    };
+    const shoelace = (points: readonly Vec2[]): number =>
+      Math.abs(
+        points.reduce((sum, a, k) => {
+          const b = points[(k + 1) % points.length] ?? a;
+          return sum + a.x * b.y - b.x * a.y;
+        }, 0),
+      ) / 2;
+
+    it("draws the cells a convex deck's edge crosses flat, clipped to the deck", () => {
+      const extent = lightMapExtent(RAISED, 1, ARENA, ARENA);
+      const cells = lightMapCells(BASE, RAISED, [], 1, extent, "full");
+      expect(cells.edges.length).toBeGreaterThan(0);
+      expect(cells.textured).toEqual([]);
+      const drawn = area(cells.flat) + cells.edges.reduce((sum, piece) => sum + shoelace(piece), 0);
+      expect(drawn).toBeCloseTo(shoelace(DIAMOND) / 4, 3);
+    });
+
+    it("keeps an edge cell a light reaches textured", () => {
+      const extent = lightMapExtent(RAISED, 1, ARENA, ARENA);
+      const lamp = { ...LAMP, layer: 1, position: { x: 300, y: 300 } };
+      const cells = lightMapCells({ ...LIT, lights: [lamp] }, RAISED, [], 1, extent, "full");
+      const box = reach(lamp, extent);
+      expect(cells.textured.some((cell) => meets(cell, box))).toBe(true);
+      expect(
+        cells.edges.some((piece) =>
+          piece.every(
+            ({ x, y }) => box.x < x && x < box.x + box.width && box.y < y && y < box.y + box.height,
+          ),
+        ),
+      ).toBe(false);
+    });
+
+    it("keeps a cell two decks cross in textured: they would darken twice where they overlap", () => {
+      const twice: MapStructure = { ...RAISED, decks: [deck(DIAMOND), deck(DIAMOND)] };
+      const extent = lightMapExtent(twice, 1, ARENA, ARENA);
+      const cells = lightMapCells(BASE, twice, [], 1, extent, "full");
+      expect(cells.edges).toEqual([]);
+      expect(cells.textured.length).toBeGreaterThan(0);
+    });
+  });
 });

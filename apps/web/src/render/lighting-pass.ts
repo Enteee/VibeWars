@@ -5,7 +5,7 @@ import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import type { ArenaPalette, OverhangLookColours } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
-import { boxMeets, boxUnder, coverBoxes } from "./cell-cover.js";
+import { boxMeets, boxUnder, clipConvex, coverBoxes } from "./cell-cover.js";
 import type { Box } from "./graphics-cull.js";
 import {
   deckCovers,
@@ -425,6 +425,13 @@ const MARK_MARGIN = 2;
 export interface LightMapCells {
   /** Where the map is its plain outdoor tint, and nothing draws it but a flat fill. */
   readonly flat: readonly LightMapBox[];
+  /**
+   * On a layer other than the ground, a cell nothing marks that one
+   * surface's edge crosses: the convex piece of that surface in the cell,
+   * in the map's pixels, drawn as a flat fill too (#3660). The rest of the
+   * cell is erased.
+   */
+  readonly edges: readonly (readonly Vec2[])[];
   /** Where light varies, shown from the light map's texture. */
   readonly textured: readonly LightMapBox[];
   /** Where a light reaches, so the warm pools are not black (#3350). */
@@ -494,22 +501,64 @@ export function lightMapCells(
   const surfaces = ground ? [] : layerSurfaces(structure, layer).map(inMap);
   // A shape marks only the cells it meets, not all its box does (#3660): a
   // long shadow across the map has a box of half of it.
-  const plain = (box: LightMapBox): boolean =>
+  const unmarked = (box: LightMapBox): boolean =>
     !reach.some((mark) => overlaps(mark, box)) &&
-    !shapes.some(
-      (shape) => overlaps(shape.box, box) && boxMeets(shape.outline, box, MARK_MARGIN),
-    ) &&
-    (ground || surfaces.some((outline) => boxUnder(outline, box, MARK_MARGIN)));
+    !shapes.some((shape) => overlaps(shape.box, box) && boxMeets(shape.outline, box, MARK_MARGIN));
+  const plain = (box: LightMapBox): boolean =>
+    unmarked(box) && (ground || surfaces.some((outline) => boxUnder(outline, box, MARK_MARGIN)));
+  // Two surfaces in one cell would multiply twice where they overlap, and
+  // a clip of a concave one is only one piece when it comes out convex.
+  const edgeOf = (box: LightMapBox): readonly Vec2[] | undefined => {
+    if (ground || !unmarked(box)) {
+      return undefined;
+    }
+    const meeting = surfaces.filter((outline) => boxMeets(outline, box, MARK_MARGIN));
+    const [only] = meeting;
+    if (meeting.length !== 1 || only === undefined) {
+      return undefined;
+    }
+    const piece = clipConvex(only, box);
+    return convex(piece) ? piece : undefined;
+  };
   const split = (box: LightMapBox, shows: (cell: LightMapBox) => boolean): readonly LightMapBox[] =>
     coverBoxes(box.width, box.height, LIGHT_MAP_CELL, (cell) =>
       shows({ ...cell, x: box.x + cell.x, y: box.y + cell.y }),
     ).map((cell) => ({ ...cell, x: box.x + cell.x, y: box.y + cell.y }));
   const cover = lightMapCover(structure, walls, layer, extent);
+  const edges = cover.flatMap((box) =>
+    split(box, (cell) => !plain(cell) && edgeOf(cell) !== undefined).flatMap((merged) =>
+      coverBoxes(merged.width, merged.height, LIGHT_MAP_CELL, () => true).flatMap((cell) => {
+        const at = { ...cell, x: merged.x + cell.x, y: merged.y + cell.y };
+        const piece = edgeOf(at) ?? [];
+        return piece.length < 3 ? [] : [piece];
+      }),
+    ),
+  );
   return {
     flat: cover.flatMap((box) => split(box, plain)),
-    textured: cover.flatMap((box) => split(box, (cell) => !plain(cell))),
+    edges,
+    textured: cover.flatMap((box) =>
+      split(box, (cell) => !plain(cell) && edgeOf(cell) === undefined),
+    ),
     lit: cover.flatMap((box) => split(box, (cell) => reach.some((mark) => overlaps(mark, cell)))),
   };
+}
+
+/** Whether `outline` turns one way only: one convex piece. */
+function convex(outline: readonly Vec2[]): boolean {
+  let turn = 0;
+  return outline.every((a, k) => {
+    const b = outline[(k + 1) % outline.length] ?? a;
+    const c = outline[(k + 2) % outline.length] ?? a;
+    const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+    if (cross === 0) {
+      return true;
+    }
+    if (turn === 0) {
+      turn = Math.sign(cross);
+    }
+    return Math.sign(cross) === turn;
+  });
 }
 
 /**
@@ -895,6 +944,17 @@ export class LightingPass {
         (extent.y + y) / LIGHT_MAP_SCALE - lift,
         width / LIGHT_MAP_SCALE,
         height / LIGHT_MAP_SCALE,
+      );
+    }
+    for (const piece of cells.edges) {
+      fillOutline(
+        flat,
+        piece.map(({ x, y }) => ({
+          x: (extent.x + x) / LIGHT_MAP_SCALE,
+          y: (extent.y + y) / LIGHT_MAP_SCALE,
+        })),
+        0,
+        -lift,
       );
     }
     // The warm pools add over the lit floor, so they are made after it (#3350);
