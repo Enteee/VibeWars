@@ -45,6 +45,15 @@ import {
   type WireChainMark,
 } from "./protocol.js";
 import { ASCENT_ROUNDS, inPartyOrder, isQueueMode, type QueueMode } from "./queue.js";
+import {
+  MAX_RANKED_SEATS,
+  parseRankedReceipt,
+  parseRankedResult,
+  parseRankedStart,
+  type RankedReceipt,
+  type RankedResult,
+  type RankedStart,
+} from "@vibewars/ranking";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -106,6 +115,13 @@ export const CHANNELS = [
   "chat",
   "chat-line",
   "shared-track",
+  "ranked-start",
+  "ranked-start-sig",
+  "ranked-start-sigs",
+  "ranked-result",
+  "ranked-result-sig",
+  "ranked-receipt",
+  "ranked-cancel",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -1246,6 +1262,20 @@ export interface PeerLobbyJoin {
    * clamps it, and seats it only in a queued Heroes' Ascent.
    */
   readonly ascentMorale: number;
+  /**
+   * What its seat of a ranked match says of it (ADR-0055, #3573): the
+   * character it plays and `prev`, the hash of its own last receipt, or
+   * 64 zeros for its first. `null` from a page that plays no ranked match.
+   */
+  readonly ranked: WireRankedJoin | null;
+}
+
+/** A joiner's part of its ranked seat (#3573): see `PeerLobbyJoin.ranked`. */
+export interface WireRankedJoin {
+  /** 1 to `MAX_WIRE_STRING` characters. */
+  readonly characterId: string;
+  /** 64 lowercase hex digits. */
+  readonly prev: string;
 }
 
 /**
@@ -3302,11 +3332,26 @@ function parseAdmission(value: unknown): WireAdmission | null | undefined {
     : undefined;
 }
 
+/** A join's ranked seat; `null` is none, a malformed one is `undefined`. */
+function parseRankedJoin(value: unknown): WireRankedJoin | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const raw = fields(value);
+  return raw !== undefined &&
+    isString(raw.characterId) &&
+    raw.characterId.length > 0 &&
+    isTicketId(raw.prev)
+    ? { characterId: raw.characterId, prev: raw.prev }
+    : undefined;
+}
+
 /** The `"lobby-join"` channel. */
 export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   const raw = fields(value);
   const guildTag = parseRawGuildTag(raw?.guildTag);
   const admission = parseAdmission(raw?.admission);
+  const ranked = parseRankedJoin(raw?.ranked);
   if (
     raw === undefined ||
     !isString(raw.protocolVersion) ||
@@ -3317,7 +3362,8 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     (raw.rejoinToken !== null && !isRejoinToken(raw.rejoinToken)) ||
     (raw.relayPub !== null && !isRelayPub(raw.relayPub)) ||
     !isTicketId(raw.playerPubkey) ||
-    typeof raw.ascentMorale !== "number"
+    typeof raw.ascentMorale !== "number" ||
+    ranked === undefined
   ) {
     return undefined;
   }
@@ -3333,6 +3379,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     relayPub: raw.relayPub,
     playerPubkey: raw.playerPubkey,
     ascentMorale: raw.ascentMorale,
+    ranked,
   };
 }
 
@@ -3872,5 +3919,128 @@ export function parseWireMatchReplayPart(value: unknown): WireMatchReplayPart | 
     raw.text.length > 0 &&
     raw.text.length <= 16 * 1024
     ? { hash: raw.hash, part: raw.part, of: raw.of, text: raw.text }
+    : undefined;
+}
+
+/**
+ * Host to every seat of a ranked match (ADR-0055, #3573), before its
+ * first tick: sign this. Each player checks it against the group it
+ * formed and its own seat first.
+ */
+export interface WireRankedStart {
+  readonly start: RankedStart;
+}
+
+/** A seat to its host (#3573): its BIP-340 signature of the start's digest. */
+export interface PeerRankedStartSig {
+  /** The start's `matchId`. */
+  readonly matchId: string;
+  /** 128 lowercase hex digits. */
+  readonly sig: string;
+}
+
+/** Host to every seat (#3573): every seat's start signature, the match on. */
+export interface WireRankedStartSigs {
+  readonly matchId: string;
+  /** By pubkey, 128 lowercase hex digits each. */
+  readonly sigs: Readonly<Record<string, string>>;
+}
+
+/** Host to every seat (#3573), after the match: sign this, unless you left. */
+export interface WireRankedResult {
+  readonly result: RankedResult;
+}
+
+/** A seat to its host (#3573): its BIP-340 signature of the result's digest. */
+export interface PeerRankedResultSig {
+  /** The result's `startHash`. */
+  readonly startHash: string;
+  /** 128 lowercase hex digits. */
+  readonly sig: string;
+}
+
+/** Host to every seat (#3573): the whole receipt, every signature in. */
+export interface WireRankedReceipt {
+  readonly receipt: RankedReceipt;
+}
+
+/**
+ * Host to every seat (#3573): a start signature never came, or did not
+ * verify, so the match is not played, and everybody queues again.
+ */
+export interface WireRankedCancel {
+  readonly matchId: string;
+}
+
+const RANKED_HASH = /^[0-9a-f]{64}$/;
+
+/** The `"ranked-start"` channel. */
+export function parseWireRankedStart(value: unknown): WireRankedStart | undefined {
+  const start = parseRankedStart(fields(value)?.start);
+  return start === undefined ? undefined : { start };
+}
+
+/** The `"ranked-start-sig"` channel. */
+export function parsePeerRankedStartSig(value: unknown): PeerRankedStartSig | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isString(raw.matchId) &&
+    raw.matchId.length > 0 &&
+    isTicketSig(raw.sig)
+    ? { matchId: raw.matchId, sig: raw.sig }
+    : undefined;
+}
+
+/** The `"ranked-start-sigs"` channel: one signature a seat at most. */
+export function parseWireRankedStartSigs(value: unknown): WireRankedStartSigs | undefined {
+  const raw = fields(value);
+  const sigs = fields(raw?.sigs);
+  if (
+    raw === undefined ||
+    !isString(raw.matchId) ||
+    raw.matchId.length === 0 ||
+    sigs === undefined ||
+    Object.keys(sigs).length > MAX_RANKED_SEATS
+  ) {
+    return undefined;
+  }
+  const parsed: Record<string, string> = {};
+  for (const [pubkey, sig] of Object.entries(sigs)) {
+    if (!RANKED_HASH.test(pubkey) || !isTicketSig(sig)) {
+      return undefined;
+    }
+    parsed[pubkey] = sig;
+  }
+  return { matchId: raw.matchId, sigs: parsed };
+}
+
+/** The `"ranked-result"` channel. */
+export function parseWireRankedResult(value: unknown): WireRankedResult | undefined {
+  const result = parseRankedResult(fields(value)?.result);
+  return result === undefined ? undefined : { result };
+}
+
+/** The `"ranked-result-sig"` channel. */
+export function parsePeerRankedResultSig(value: unknown): PeerRankedResultSig | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    typeof raw.startHash === "string" &&
+    RANKED_HASH.test(raw.startHash) &&
+    isTicketSig(raw.sig)
+    ? { startHash: raw.startHash, sig: raw.sig }
+    : undefined;
+}
+
+/** The `"ranked-receipt"` channel: shape only; `validateReceipt` says whether it holds. */
+export function parseWireRankedReceipt(value: unknown): WireRankedReceipt | undefined {
+  const receipt = parseRankedReceipt(fields(value)?.receipt);
+  return receipt === undefined ? undefined : { receipt };
+}
+
+/** The `"ranked-cancel"` channel. */
+export function parseWireRankedCancel(value: unknown): WireRankedCancel | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.matchId) && raw.matchId.length > 0
+    ? { matchId: raw.matchId }
     : undefined;
 }

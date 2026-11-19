@@ -5,6 +5,7 @@ import {
   PROTOCOL_VERSION,
   TICKET_HEARTBEAT_MS,
   TICKET_TTL_MS,
+  UNLISTED_CLAIM,
   type QueueMode,
   type QueueTicket,
 } from "@vibewars/game-protocol";
@@ -99,6 +100,8 @@ class Queue {
       ascentRound: this.round,
       hardNat: false,
       holdsHallSince: null,
+      claims: { [ticket.ticketId]: UNLISTED_CLAIM },
+      leaderboardAsOf: 0,
       ...ticket,
     });
     await deliver();

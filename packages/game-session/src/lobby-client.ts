@@ -20,6 +20,12 @@ import {
   parsePeerRelayAdmit,
   parsePeerRelayCredIn,
   parsePeerRelayOffers,
+  parseWireRankedCancel,
+  parseWireRankedReceipt,
+  parseWireRankedResult,
+  parseWireRankedStart,
+  parseWireRankedStartSigs,
+  parseWireEnded,
   teamQueueModeOf,
   type JsonValue,
   type LobbyRefusal,
@@ -39,7 +45,20 @@ import {
   type PeerRelayCredIn,
   type PeerRelayCredOut,
   type PeerRelayOffers,
+  type PeerRankedResultSig,
+  type PeerRankedStartSig,
+  type WireTeam,
 } from "@vibewars/game-protocol";
+import {
+  ZERO_HASH,
+  startDigest,
+  startHash,
+  validateReceipt,
+  type RankedReceipt,
+  type RankedResult,
+  type RankedStart,
+  type ReceiptCrypto,
+} from "@vibewars/ranking";
 
 import { MessageBudget } from "./intent-budget.js";
 import { keyGated } from "./key-gate.js";
@@ -144,6 +163,100 @@ export interface JoinLobbyOptions {
   readonly relayPub: string | null;
   /** This browser's player key (#2706): every join proves it to the host. */
   readonly playerKey: PlayerKey;
+  /**
+   * How this player plays a ranked match (ADR-0055, #3573): only a queued
+   * group that is `ranked` uses it. Without it, this player signs nothing,
+   * and the host cancels a ranked match it is seated in.
+   */
+  readonly ranked?: RankedPlay;
+}
+
+/** What this player plays a ranked match with (ADR-0055, #3573), when its queued group is ranked. */
+export interface RankedPlay {
+  /** The character it plays: its seat's `characterId`. */
+  readonly characterId: string;
+  /** `receiptHash` of this player's own last receipt, or `ZERO_HASH` for its first. */
+  readonly prev: string;
+  /** This page's build: a start naming another is not signed. */
+  readonly buildHash: string;
+  /** What the host's and the other seats' signatures are checked with. */
+  readonly crypto: ReceiptCrypto;
+  /**
+   * The match's receipt, `partial` false: the host's, every signature in
+   * and valid. Or, `partial` true, the `host-left` one this player built
+   * and signed alone when its host went mid-match: every remaining player
+   * hands on its own, and `mergeReceipts` joins them into one that holds.
+   * At most once a lobby.
+   */
+  readonly onReceipt: (receipt: RankedReceipt, partial: boolean) => void;
+  /**
+   * This player signed `partial`'s result, a round of it: the start, every
+   * start signature, that result and this player's signature alone. Every
+   * round it signs, at once, for the app to publish: should a later round
+   * name this player a leaver, it is the evidence that it did sign.
+   * `round` counts the results this player signed for the match, from 0,
+   * so the app can publish each partial under its own address: a later
+   * round must not replace an earlier one's evidence.
+   */
+  readonly onResultSigned: (partial: RankedReceipt, round: number) => void;
+  /** The host cancelled the match before it began: some seat never signed its start. */
+  readonly onCancel: () => void;
+}
+
+/**
+ * `start`'s problem as `seat` of `group` sees it, signing with `pubkey`
+ * (ADR-0055): `undefined` when it names this lobby's group, its seed,
+ * map, mode and leaderboard, `play`'s build, the formed teams seat for
+ * seat with each seat key's claim, and this player in its own seat as it
+ * joined. Claims are only compared with the tickets' until #3575 checks
+ * them against the leaderboard.
+ */
+function rankedStartFault(
+  start: RankedStart,
+  seat: QueuedSeat,
+  play: RankedPlay,
+  pubkey: string,
+): string | undefined {
+  const { group } = seat;
+  if (
+    start.matchId !== group.groupId ||
+    start.buildHash !== play.buildHash ||
+    start.seed !== group.seed ||
+    start.mode !== group.mode ||
+    start.map !== group.mapId ||
+    start.leaderboardAsOf !== group.leaderboardAsOf ||
+    start.teams.length !== group.teams.length
+  ) {
+    return "not this group's match";
+  }
+  const pubkeys = new Set<string>();
+  for (const [t, team] of group.teams.entries()) {
+    const seats = start.teams[t] ?? [];
+    if (seats.length !== team.length) {
+      return "not the formed teams";
+    }
+    for (const [i, seatKey] of team.entries()) {
+      const ranked = seats[i];
+      if (ranked === undefined || ranked.claimedRating !== group.claims[seatKey]) {
+        return "a claim not its ticket's";
+      }
+      const own = seatKey === seat.key.ticketId;
+      if (
+        own &&
+        (ranked.pubkey !== pubkey ||
+          ranked.characterId !== play.characterId ||
+          ranked.prev !== play.prev)
+      ) {
+        return "not this player's seat";
+      }
+      // Only this player's own key may be in its seat, and no key twice.
+      if ((!own && ranked.pubkey === pubkey) || pubkeys.has(ranked.pubkey)) {
+        return "a key seated twice";
+      }
+      pubkeys.add(ranked.pubkey);
+    }
+  }
+  return undefined;
 }
 
 function isRefusal(reason: string): reason is LobbyRefusal {
@@ -167,6 +280,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       : keyGated(options.transport, options.proofKey, "guest", () => hostId);
   const selfId = transport.selfId;
   const code = options.code;
+  /** What this player plays its ranked match with: only in a ranked group. */
+  const rankedPlay = queued?.group.ranked === true ? options.ranked : undefined;
   const base = {
     protocolVersion: PROTOCOL_VERSION,
     name: options.name,
@@ -181,6 +296,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     ...base,
     admission: null,
     ascentMorale: 0,
+    ranked: null,
   };
   /** A queued join, and what the planned host's welcome to this peer signs. */
   const proof =
@@ -199,6 +315,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
             ...base,
             admission: { seatKey: queued.key.ticketId, admissionSig: queued.key.sign(admit) },
             ascentMorale: queued.ascentMorale,
+            ranked:
+              rankedPlay === undefined
+                ? null
+                : { characterId: rankedPlay.characterId, prev: rankedPlay.prev },
           } satisfies Omit<PeerLobbyJoin, "rejoinToken">,
           hostDigest,
         }));
@@ -258,6 +378,112 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   let droppedAt: number | undefined;
   let closeTimer: unknown;
   let stopped = false;
+  /**
+   * The ranked start this player signed (#3573), its hash, and the host's
+   * key in it; then every seat's signature of it, once the host sent them
+   * all and they verify: the match is on.
+   */
+  let ranked:
+    | {
+        readonly start: RankedStart;
+        readonly hash: string;
+        readonly hostPubkey: string;
+        startSigs: Readonly<Record<string, string>> | undefined;
+      }
+    | undefined;
+  /** This player's ranked match is over for it: a receipt was handed on, or the match cancelled. */
+  let rankedOver = false;
+  /**
+   * The seats of the ranked match this player saw go once it signed the
+   * start (ADR-0055), by pubkey: a peer that left the room, a member the
+   * lobby listed away, or one it stopped listing. A result naming any
+   * other leaver is not signed, unless a re-round named it (see
+   * `rankedLeaversHold`).
+   */
+  const seenGone = new Set<string>();
+  /** The winner the host's `ended` told this player, once it came: what a result must say. */
+  let endedWinner: WireTeam | null | undefined;
+  /** The last ranked result this player signed: a re-round's is compared with it. */
+  let signedResult: RankedResult | undefined;
+  /** How many results this player signed: the next partial's round. */
+  let resultsSigned = 0;
+
+  /** Note the seats `state` lists away, or no longer lists, as gone. */
+  const noteGone = (state: WireLobbyState): void => {
+    if (ranked === undefined) {
+      return;
+    }
+    const listed = new Map(state.players.map((player) => [player.playerPubkey, player]));
+    for (const seat of ranked.start.teams.flat()) {
+      const player = listed.get(seat.pubkey);
+      const wasListed = latest?.players.some((each) => each.playerPubkey === seat.pubkey) === true;
+      if (player?.away === true || (player === undefined && wasListed)) {
+        seenGone.add(seat.pubkey);
+      }
+    }
+  };
+
+  /**
+   * Whether `result`'s leavers are ones this player may sign for
+   * (ADR-0055, "What a host decides"). Before it signed any, each must be
+   * one it saw go. After, only a re-round of the result it signed: that
+   * result with more leavers, which the host says did not sign it, and
+   * nothing else changed. Refusing to sign is leaving, and nobody else can
+   * see a refusal, so the new ones are taken on the host's word. A host
+   * that names a seat that did sign is caught by that seat's published
+   * signature of the earlier round (`onResultSigned`); a result this
+   * player refused is never an earlier round, so it can leave none.
+   */
+  const rankedLeaversHold = (result: RankedResult): boolean => {
+    if (signedResult === undefined) {
+      return result.leavers.every((pubkey) => seenGone.has(pubkey));
+    }
+    const leavers = new Set(result.leavers);
+    return (
+      signedResult.leavers.every((pubkey) => leavers.has(pubkey)) &&
+      result.winningTeam === signedResult.winningTeam &&
+      result.endReason === signedResult.endReason &&
+      result.durationSeconds === signedResult.durationSeconds &&
+      result.replayHash === signedResult.replayHash
+    );
+  };
+
+  /**
+   * The host went mid-match, its start signed by every seat (ADR-0055): the
+   * match is over, and the host lost. This player builds the `host-left`
+   * result every remaining player builds alike, signs it, and hands on its
+   * partial receipt. Not the host's own player, which is the leaver.
+   */
+  const rankedHostLeft = (): void => {
+    const signed = ranked;
+    if (
+      rankedPlay === undefined ||
+      signed?.startSigs === undefined ||
+      rankedOver ||
+      latest?.phase !== "in-match" ||
+      queued?.key.ticketId === queued?.group.hostTicketId
+    ) {
+      return;
+    }
+    rankedOver = true;
+    const result: RankedResult = {
+      startHash: signed.hash,
+      winningTeam: null,
+      endReason: "host-left",
+      leavers: [signed.hostPubkey],
+      durationSeconds: 0,
+      replayHash: ZERO_HASH,
+    };
+    rankedPlay.onReceipt(
+      {
+        start: signed.start,
+        startSigs: signed.startSigs,
+        result,
+        resultSigs: { [options.playerKey.pubkey]: options.playerKey.signRankedResult(result) },
+      },
+      true,
+    );
+  };
 
   const stop = (): void => {
     stopped = true;
@@ -296,6 +522,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const close = (reason: LobbyClosedReason): void => {
     if (closed) {
       return;
+    }
+    if (reason === "host-left" || reason === "connection-lost") {
+      rankedHostLeft();
     }
     closed = true;
     const handlers = [...closedHandlers];
@@ -699,6 +928,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           resolve(connection);
           return;
         }
+        noteGone(state);
         latest = state;
         forgetProposals(state);
         noteQueueing(state);
@@ -893,6 +1123,152 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           }
         }
       }),
+      // A ranked start (#3573): signed only once checked against this
+      // player's own group and seat, and only the first.
+      transport.on("ranked-start", (data, from) => {
+        const said = parseWireRankedStart(data);
+        if (
+          from !== hostId ||
+          said === undefined ||
+          rankedPlay === undefined ||
+          queued === undefined ||
+          ranked !== undefined ||
+          rankedOver ||
+          rankedStartFault(said.start, queued, rankedPlay, options.playerKey.pubkey) !== undefined
+        ) {
+          return;
+        }
+        const hostSeat = queued.group.teams.flatMap((team, t) =>
+          team.flatMap((seatKey, i) =>
+            seatKey === queued.group.hostTicketId ? (said.start.teams[t]?.[i] ?? []) : [],
+          ),
+        )[0];
+        if (hostSeat === undefined) {
+          return;
+        }
+        ranked = {
+          start: said.start,
+          hash: startHash(said.start, rankedPlay.crypto.sha256),
+          hostPubkey: hostSeat.pubkey,
+          startSigs: undefined,
+        };
+        const signed: PeerRankedStartSig = {
+          matchId: said.start.matchId,
+          sig: options.playerKey.signRankedStart(said.start),
+        };
+        transport.send("ranked-start-sig", signed, from);
+      }),
+      // Every seat's start signature: kept only if each verifies.
+      transport.on("ranked-start-sigs", (data, from) => {
+        const said = parseWireRankedStartSigs(data);
+        const signed = ranked;
+        if (
+          from !== hostId ||
+          said === undefined ||
+          rankedPlay === undefined ||
+          signed === undefined ||
+          signed.startSigs !== undefined ||
+          said.matchId !== signed.start.matchId
+        ) {
+          return;
+        }
+        const digest = startDigest(signed.start, rankedPlay.crypto.sha256);
+        const seats = signed.start.teams.flat();
+        if (
+          Object.keys(said.sigs).length !== seats.length ||
+          !seats.every(({ pubkey }) => {
+            const sig = said.sigs[pubkey];
+            return sig !== undefined && rankedPlay.crypto.verify(pubkey, digest, sig);
+          })
+        ) {
+          return;
+        }
+        signed.startSigs = said.sigs;
+      }),
+      // The result to sign: of this start, and not one naming this player a
+      // leaver, whose signature nobody needs. A host never writes `host-left`.
+      transport.on("ranked-result", (data, from) => {
+        const said = parseWireRankedResult(data);
+        const signed = ranked;
+        if (
+          from !== hostId ||
+          said === undefined ||
+          signed?.startSigs === undefined ||
+          rankedOver ||
+          said.result.startHash !== signed.hash ||
+          said.result.endReason === "host-left"
+        ) {
+          return;
+        }
+        const holds =
+          !said.result.leavers.includes(options.playerKey.pubkey) &&
+          said.result.winningTeam === endedWinner &&
+          rankedLeaversHold(said.result);
+        if (!holds) {
+          return;
+        }
+        signedResult = said.result;
+        const reply: PeerRankedResultSig = {
+          startHash: signed.hash,
+          sig: options.playerKey.signRankedResult(said.result),
+        };
+        transport.send("ranked-result-sig", reply, from);
+        rankedPlay?.onResultSigned(
+          {
+            start: signed.start,
+            startSigs: signed.startSigs,
+            result: said.result,
+            resultSigs: { [options.playerKey.pubkey]: reply.sig },
+          },
+          resultsSigned,
+        );
+        resultsSigned += 1;
+      }),
+      // How the ranked match ended, as the host told this player: a result
+      // naming another winner is not signed.
+      transport.on("ended", (data, from) => {
+        const signed = ranked;
+        if (from !== hostId || signed?.startSigs === undefined || endedWinner !== undefined) {
+          return;
+        }
+        const ended = parseWireEnded(data, signed.start.teams.length === 3 ? 3 : 2);
+        if (ended !== undefined && ended.endReason !== "host-left") {
+          endedWinner = ended.winningTeam;
+        }
+      }),
+      // The receipt: handed on only if it is of this start and valid.
+      transport.on("ranked-receipt", (data, from) => {
+        const said = parseWireRankedReceipt(data);
+        const signed = ranked;
+        if (
+          from !== hostId ||
+          said === undefined ||
+          rankedPlay === undefined ||
+          signed === undefined ||
+          rankedOver ||
+          startHash(said.receipt.start, rankedPlay.crypto.sha256) !== signed.hash ||
+          !validateReceipt(said.receipt, rankedPlay.crypto).ok
+        ) {
+          return;
+        }
+        rankedOver = true;
+        rankedPlay.onReceipt(said.receipt, false);
+      }),
+      transport.on("ranked-cancel", (data, from) => {
+        const said = parseWireRankedCancel(data);
+        if (
+          from !== hostId ||
+          said === undefined ||
+          rankedPlay === undefined ||
+          queued === undefined ||
+          rankedOver ||
+          said.matchId !== queued.group.groupId
+        ) {
+          return;
+        }
+        rankedOver = true;
+        rankedPlay.onCancel();
+      }),
       transport.on("match-start", (data, from) => {
         const start = parseWireMatchStart(data);
         // Only for the match the lobby says is on, and only once: a late
@@ -937,6 +1313,11 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         sendJoin(hostId);
       }),
       transport.onPeerLeave((peerId) => {
+        // A seat of the ranked match gone from the room, as this player saw it.
+        const gone = latest?.players.find((player) => player.id === peerId)?.playerPubkey;
+        if (ranked !== undefined && peerId !== hostId && gone !== undefined && gone !== null) {
+          seenGone.add(gone);
+        }
         // A blip, in the lobby or a match (#1764): a host that goes on
         // purpose says `host-left` first, and that closes at once.
         if (peerId !== hostId || droppedAt !== undefined) {

@@ -269,7 +269,8 @@ function parseTeams(value: unknown): RankedSeat[][] | undefined {
   return teams;
 }
 
-function parseStart(value: unknown): RankedStart | undefined {
+/** The start `value` encodes, or `undefined`: the shape `parseReceipt` checks it for (#3573). */
+export function parseRankedStart(value: unknown): RankedStart | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
@@ -290,7 +291,8 @@ function parseStart(value: unknown): RankedStart | undefined {
   return { matchId, buildHash, mode, map, seed, startedAt, leaderboardAsOf, teams };
 }
 
-function parseResult(value: unknown): RankedResult | undefined {
+/** The result `value` encodes, or `undefined`: the shape `parseReceipt` checks it for (#3573). */
+export function parseRankedResult(value: unknown): RankedResult | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
@@ -350,16 +352,25 @@ export function parseReceipt(json: string): RankedReceipt | undefined {
   } catch {
     return undefined;
   }
+  return parseRankedReceipt(value);
+}
+
+/**
+ * The receipt `value` encodes, or `undefined`: `parseReceipt` of a value
+ * already parsed, as a lobby message carries it (#3573). Its size is the
+ * caller's to bound.
+ */
+export function parseRankedReceipt(value: unknown): RankedReceipt | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
-  const start = parseStart(value.start);
+  const start = parseRankedStart(value.start);
   if (start === undefined) {
     return undefined;
   }
   const seated = new Set(start.teams.flat().map((seat) => seat.pubkey));
   const startSigs = parseSigs(value.startSigs, seated);
-  const result = parseResult(value.result);
+  const result = parseRankedResult(value.result);
   const resultSigs = parseSigs(value.resultSigs, seated);
   if (startSigs === undefined || result === undefined || resultSigs === undefined) {
     return undefined;

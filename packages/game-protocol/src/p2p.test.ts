@@ -38,6 +38,13 @@ import {
   MAX_WIRE_JSON_VALUES,
   helloProtocolVersion,
   parseCastRefused,
+  parsePeerRankedResultSig,
+  parsePeerRankedStartSig,
+  parseWireRankedCancel,
+  parseWireRankedReceipt,
+  parseWireRankedResult,
+  parseWireRankedStart,
+  parseWireRankedStartSigs,
   parsePeerBye,
   parsePeerCall,
   parsePeerChat,
@@ -534,6 +541,7 @@ const lobbyJoin: PeerLobbyJoin = {
   relayPub: null,
   playerPubkey: "9a".repeat(32),
   ascentMorale: 0,
+  ranked: null,
 };
 
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
@@ -1104,6 +1112,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["chat-line from a spectator (#479)", parseWireChatLine, { ...chatLine, team: null }],
   ["chat-throttled (#479)", parseWireLobbyNote, { kind: "chat-throttled", reason: "" }],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
+  [
+    "lobby-join of a ranked seat (#3573)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, ranked: { characterId: "char-1", prev: "0".repeat(64) } },
+  ],
   ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
   ["untagged lobby-join (#1406)", parsePeerLobbyJoin, { ...lobbyJoin, guildTag: null }],
   ["returning lobby-join (#2157)", parsePeerLobbyJoin, { ...lobbyJoin, rejoinToken: TOKEN }],
@@ -1495,6 +1508,21 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello with hero rank 16 (#2702)", parsePeerHello, { ...hello, heroRank: 16 }],
   ["hello with a fractional hero rank (#2702)", parsePeerHello, { ...hello, heroRank: 1.5 }],
   ["lobby-join with hero rank 16 (#2702)", parsePeerLobbyJoin, { ...lobbyJoin, heroRank: 16 }],
+  [
+    "lobby-join with no ranked field (#3573)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, ranked: undefined },
+  ],
+  [
+    "lobby-join of a ranked seat with no character (#3573)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, ranked: { characterId: "", prev: "0".repeat(64) } },
+  ],
+  [
+    "lobby-join of a ranked seat with a short prev (#3573)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, ranked: { characterId: "char-1", prev: "0".repeat(63) } },
+  ],
   [
     "lobby-join without a guild tag (#1406)",
     parsePeerLobbyJoin,
@@ -3344,5 +3372,115 @@ describe("packEmblem and unpackEmblem (#3554)", () => {
     expect(unpackEmblem(`kA${packed.slice(2)}`)).toBeUndefined();
     // The last character carries 4 bits of the last byte and 2 bits beyond it.
     expect(unpackEmblem(`${packed.slice(0, -1)}B`)).toBeUndefined();
+  });
+});
+
+describe("the ranked rounds' messages (#3573)", () => {
+  const seat = (digit: string) => ({
+    pubkey: digit.repeat(64),
+    characterId: `char-${digit}`,
+    name: `Seat ${digit}`,
+    claimedRating: 800,
+    prev: "0".repeat(64),
+  });
+  const start = {
+    matchId: "a".repeat(64),
+    buildHash: "build-1",
+    mode: "random-arena-2v2",
+    map: "test-arena",
+    seed: 4_000_000_000,
+    startedAt: 1_795_000_000,
+    leaderboardAsOf: 0,
+    teams: [
+      [seat("1"), seat("2")],
+      [seat("3"), seat("4")],
+    ],
+  };
+  const result = {
+    startHash: "b".repeat(64),
+    winningTeam: 1,
+    endReason: "annihilation",
+    leavers: ["3".repeat(64)],
+    durationSeconds: 300,
+    replayHash: "c".repeat(64),
+  };
+  const sig = "d".repeat(128);
+  const receipt = {
+    start,
+    startSigs: { ["1".repeat(64)]: sig },
+    result,
+    resultSigs: { ["2".repeat(64)]: sig },
+  };
+
+  it.each<[string, (value: unknown) => unknown, unknown]>([
+    ["ranked-start", parseWireRankedStart, { start }],
+    ["ranked-start-sig", parsePeerRankedStartSig, { matchId: start.matchId, sig }],
+    [
+      "ranked-start-sigs",
+      parseWireRankedStartSigs,
+      { matchId: start.matchId, sigs: receipt.startSigs },
+    ],
+    ["ranked-result", parseWireRankedResult, { result }],
+    ["a draw's ranked-result", parseWireRankedResult, { result: { ...result, winningTeam: null } }],
+    ["ranked-result-sig", parsePeerRankedResultSig, { startHash: result.startHash, sig }],
+    ["ranked-receipt", parseWireRankedReceipt, { receipt }],
+    ["ranked-cancel", parseWireRankedCancel, { matchId: start.matchId }],
+  ])("accept a %s that survives a JSON round trip unchanged", (_, parse, fixture) => {
+    const wire: unknown = JSON.parse(JSON.stringify(fixture));
+    expect(parse(wire)).toEqual(fixture);
+  });
+
+  it.each<[string, (value: unknown) => unknown, unknown]>([
+    [
+      "a ranked-start of one team",
+      parseWireRankedStart,
+      { start: { ...start, teams: [start.teams[0]] } },
+    ],
+    [
+      "a ranked-start with a fractional seed",
+      parseWireRankedStart,
+      { start: { ...start, seed: 1.5 } },
+    ],
+    [
+      "a ranked-start with a fractional claim",
+      parseWireRankedStart,
+      { start: { ...start, teams: [[{ ...seat("1"), claimedRating: 800.5 }], start.teams[1]] } },
+    ],
+    ["a ranked-start with no start", parseWireRankedStart, {}],
+    [
+      "a ranked-start-sig with a short sig",
+      parsePeerRankedStartSig,
+      { matchId: "m", sig: "d".repeat(127) },
+    ],
+    ["a ranked-start-sig with no match", parsePeerRankedStartSig, { matchId: "", sig }],
+    [
+      "a ranked-start-sigs keyed by a non-key",
+      parseWireRankedStartSigs,
+      { matchId: "m", sigs: { seat: sig } },
+    ],
+    [
+      "a ranked-start-sigs of more than 16 seats",
+      parseWireRankedStartSigs,
+      {
+        matchId: "m",
+        sigs: Object.fromEntries(
+          Array.from({ length: 17 }, (_, i) => [i.toString(16).padStart(64, "0"), sig]),
+        ),
+      },
+    ],
+    [
+      "a ranked-result of an unknown end",
+      parseWireRankedResult,
+      { result: { ...result, endReason: "boredom" } },
+    ],
+    ["a ranked-result-sig with no start hash", parsePeerRankedResultSig, { startHash: "", sig }],
+    [
+      "a ranked-receipt with no result",
+      parseWireRankedReceipt,
+      { receipt: { ...receipt, result: null } },
+    ],
+    ["a ranked-cancel with a numeric match", parseWireRankedCancel, { matchId: 7 }],
+  ])("reject %s", (_, parse, value) => {
+    expect(parse(value)).toBeUndefined();
   });
 });
