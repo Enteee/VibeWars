@@ -334,7 +334,6 @@ export default {
   "controls.presetClassic": "Klassinen (taidot 1-8, liike WASD)",
   "controls.presetVibeWars": "VibeWars (taidot Q-F, liike nuolilla)",
   "controls.pressAKey": "paina näppäintä...",
-  "controls.reset": "Palauta VibeWars",
   "controls.shortcutRefusal":
     "Ctrl-, Alt- ja Windows/Command-näppäimiä ei käytetä koskaan: ne kuuluvat selaimelle.",
   "controls.showNames": "Näytä nimet (pidä pohjassa)",

@@ -295,7 +295,6 @@ export default {
   "controls.presetClassic": "经典（1-8 技能，WASD 移动）",
   "controls.presetVibeWars": "VibeWars（Q-F 技能，方向键移动）",
   "controls.pressAKey": "请按键...",
-  "controls.reset": "恢复 VibeWars 预设",
   "controls.shortcutRefusal": "Ctrl、Alt 和 Windows/Command 键由浏览器占用，无法使用。",
   "controls.showNames": "显示名称（按住）",
   "controls.skill1": "技能 1",

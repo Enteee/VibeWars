@@ -356,7 +356,6 @@ export default {
   "controls.presetClassic": "Классика (навыки 1-8, WASD — движение)",
   "controls.presetVibeWars": "VibeWars (навыки Q-F, стрелки — движение)",
   "controls.pressAKey": "нажми клавишу...",
-  "controls.reset": "Сброс к VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt и клавиша Windows/Command не используются: они заняты браузером.",
   "controls.showNames": "Имена (удержание)",

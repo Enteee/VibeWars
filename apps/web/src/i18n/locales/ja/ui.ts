@@ -302,7 +302,6 @@ export default {
   "controls.presetClassic": "クラシック (スキル1-8、WASD移動)",
   "controls.presetVibeWars": "VibeWars (スキルQ-F、矢印キー移動)",
   "controls.pressAKey": "キーを押してください...",
-  "controls.reset": "VibeWarsに戻す",
   "controls.shortcutRefusal":
     "Ctrl、Alt、Windows/Commandキーはブラウザが使用するため割り当てられません。",
   "controls.showNames": "名前を表示 (長押し)",

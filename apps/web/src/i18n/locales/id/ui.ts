@@ -300,7 +300,6 @@ export default {
   "controls.presetClassic": "Klasik (skill 1-8, gerak WASD)",
   "controls.presetVibeWars": "VibeWars (skill Q-F, gerak panah)",
   "controls.pressAKey": "tekan tombol...",
-  "controls.reset": "Reset ke VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt, dan tombol Windows/Command tidak pernah dipakai: itu milik browser.",
   "controls.showNames": "Tampilkan nama (tahan)",

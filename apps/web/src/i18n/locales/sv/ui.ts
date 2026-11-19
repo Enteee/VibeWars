@@ -327,7 +327,6 @@ export default {
   "controls.presetClassic": "Klassisk (1-8 förmågor, WASD rörelse)",
   "controls.presetVibeWars": "VibeWars (Q-F förmågor, piltangenter rörelse)",
   "controls.pressAKey": "tryck på en tangent...",
-  "controls.reset": "Återställ till VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt och Windows-/Command-tangenten används aldrig: de tillhör webbläsaren.",
   "controls.showNames": "Visa namn (håll in)",

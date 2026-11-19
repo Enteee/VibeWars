@@ -380,7 +380,6 @@ export default {
   "controls.presetClassic": "كلاسيكي (مهارات 1-8، حركة WASD)",
   "controls.presetVibeWars": "VibeWars (مهارات Q-F، حركة بالأسهم)",
   "controls.pressAKey": "اضغط مفتاحًا...",
-  "controls.reset": "استعادة VibeWars",
   "controls.shortcutRefusal": "لا تُستخدم Ctrl وAlt ومفتاح Windows/Command أبدًا: فهي تخص المتصفح.",
   "controls.showNames": "إظهار الأسماء (مع الضغط)",
   "controls.skill1": "المهارة 1",

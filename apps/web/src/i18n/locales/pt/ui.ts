@@ -346,7 +346,6 @@ export default {
   "controls.presetClassic": "Clássico (habilidades 1-8, mover com WASD)",
   "controls.presetVibeWars": "VibeWars (habilidades Q-F, mover com setas)",
   "controls.pressAKey": "pressione uma tecla...",
-  "controls.reset": "Restaurar VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt e a tecla Windows/Command nunca são usadas: pertencem ao navegador.",
   "controls.showNames": "Mostrar nomes (segurar)",

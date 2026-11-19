@@ -298,7 +298,6 @@ export default {
   "controls.presetClassic": "คลาสสิก (สกิล 1-8, เดิน WASD)",
   "controls.presetVibeWars": "VibeWars (สกิล Q-F, เดินปุ่มลูกศร)",
   "controls.pressAKey": "กดปุ่ม...",
-  "controls.reset": "คืนค่า VibeWars",
   "controls.shortcutRefusal": "ไม่ใช้ปุ่ม Ctrl, Alt และ Windows/Command: เป็นของเบราว์เซอร์",
   "controls.showNames": "แสดงชื่อ (กดค้าง)",
   "controls.skill1": "สกิล 1",

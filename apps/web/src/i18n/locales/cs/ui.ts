@@ -357,7 +357,6 @@ export default {
   "controls.presetClassic": "Klasické (dovednosti 1-8, pohyb WASD)",
   "controls.presetVibeWars": "VibeWars (dovednosti Q-F, pohyb šipkami)",
   "controls.pressAKey": "stiskni klávesu...",
-  "controls.reset": "Obnovit VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt a klávesa Windows/Command se nikdy nepoužívají: patří prohlížeči.",
   "controls.showNames": "Ukázat jména (držet)",
