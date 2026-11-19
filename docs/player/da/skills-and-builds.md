@@ -6,8 +6,8 @@ og attributpointene bag dem. Åbn et med **Ret** i hovedmenuen, eller
 
 ## Klasser
 
-Der er ti: Warrior, Ranger, Monk, Necromancer, Mesmer, Elementalist,
-Assassin, Ritualist, Paragon og Dervish. Din **primære** klasse er det, du
+Der er ti: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**,
+![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** og ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Din **primære** klasse er det, du
 er: dens evner og dens **primære attribut** (markeret ★), som kun en
 primær får. Din **sekundære** låner dig sine evner, men ikke sin primære
 attribut.
@@ -18,11 +18,11 @@ Bjælken har **otte pladser**. Kun én **eliteevne** (guldramme) kan være på
 en bjælke: sætter du en anden på, erstatter den den første. Tryk på **×**
 på en plads for at tømme den.
 
-**Lynfortryllelser** (Dervish) er øjeblikkelige: at bruge en bevarer dit
+![Fortryllelse](../../../apps/web/public/icons/skill-type/enchantment.svg) **Lynfortryllelser** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) er øjeblikkelige: at bruge en bevarer dit
 sving og dine skridt, så du kan flette dem ind mellem slagene. Hver af dem
 slår dine andre lynfortryllelser fra i 1 sekund.
 
-**Skikkelser** (de fem Dervish-avatarer: Balthazar, Dwayna, Grenth, Lyssa
+![Skikkelse](../../../apps/web/public/icons/skill-type/form.svg) **Skikkelser** (de fem Dervish-avatarer: Balthazar, Dwayna, Grenth, Lyssa
 og Melandru) forvandler dig i over et minut. En skikkelse er ikke en
 fortryllelse, så ingen kan fjerne den, og du kan være i én skikkelse ad
 gangen. At bruge en slår den fra i 45 sekunder. Når en skikkelse slutter,
@@ -31,7 +31,7 @@ du var ved at aktivere. Tryk på en bevægelsestast igen for at gå videre.
 
 **Nogle skud slår dine andre angreb fra.** Focused Shot og Needling Shot
 flyver hurtigere, end en pil burde, men hver af dem, der rammer, slår dine
-andre angrebsevner fra i et par sekunder. Besværgelser påvirkes ikke.
+andre ![Angrebsevne](../../../apps/web/public/icons/skill-type/attack.svg) **angrebsevner** fra i et par sekunder. ![Besværgelse](../../../apps/web/public/icons/skill-type/spell.svg) **Besværgelser** påvirkes ikke.
 
 ## Attributter
 
@@ -42,31 +42,31 @@ rang mere oveni; se [Udstyr](equipment.md). At hæve den attribut, en evne
 bruger, gør den stærkere: tal, der vokser med attributten, vises i grønt
 og fed, ved dine nuværende rang inklusive runer og hovedbeklædning.
 
-I en kamp kan dine rang ændre sig et stykke tid. Weakness trækker én fra
-hver. Nogle forbandelser sætter en fjendes attributter til 0, og Master of
+I en kamp kan dine rang ændre sig et stykke tid. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** trækker én fra
+hver. Nogle ![Forbandelse](../../../apps/web/public/icons/skill-type/hex.svg) **forbandelser** sætter en fjendes attributter til 0, og Master of
 Magic sætter dine elementære til 13: en rang, der sættes sådan, går forud
 for både runer og Weakness. Signet of Illusions lader dine næste
-besværgelser fra andre attributter bruge din rang i Illusion Magic. Nogle
+![Besværgelse](../../../apps/web/public/icons/skill-type/spell.svg) **besværgelser** fra andre attributter bruge din rang i Illusion Magic. Nogle
 evner hæver dine attributter et stykke tid eller for dine næste
 besværgelser, som Glyph of Elemental Power og Ritual Lord gør, også en,
 du lod stå på 0; en sat rang, som Master of Magics, slår et sådant løft.
 
 ## Ekkoer
 
-En Paragons **ekkoer** er lange forstærkninger på én allieret. Et
+En ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** ![Ekko](../../../apps/web/public/icons/skill-type/echo.svg) **ekkoer** er lange forstærkninger på én allieret. Et
 **omkvæd** fornyes til sin fulde længde, og en **finale** træder i kraft,
-hver gang en sang eller et råb slutter på den allierede. En sang eller et
+hver gang en ![Sang](../../../apps/web/public/icons/skill-type/chant.svg) **sang** eller et ![Råb](../../../apps/web/public/icons/skill-type/shout.svg) **råb** slutter på den allierede. En sang eller et
 råb, der lægges på igen, før det slutter, er ikke sluttet. Intet fjerner
 et ekko: det slutter, når det løber ud, eller dets bærer dør. De fleste
 kan ikke have en ånd som mål.
 
 ## Evner, der bliver til en anden evne
 
-Nogle Mesmer-evner sætter en anden evne på deres egen plads et stykke
-tid. Arcane Echo og Echo kopierer den næste evne, du bruger. **Inspired
+Nogle ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**-evner sætter en anden evne på deres egen plads et stykke
+tid. ![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** og ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** kopierer den næste evne, du bruger. **Inspired
 Enchantment** og **Inspired Hex** bliver til den evne, der kastede den
-fortryllelse eller forbandelse, de fjernede, i 20 sekunder. **Arcane
-Thievery** bliver til den besværgelse, den slog fra hos din fjende, så
+![Fortryllelse](../../../apps/web/public/icons/skill-type/enchantment.svg) **fortryllelse** eller ![Forbandelse](../../../apps/web/public/icons/skill-type/hex.svg) **forbandelse**, de fjernede, i 20 sekunder. **Arcane
+Thievery** bliver til den ![Besværgelse](../../../apps/web/public/icons/skill-type/spell.svg) **besværgelse**, den slog fra hos din fjende, så
 længe den er slået fra. Kopien har sin egen genopladning. Når den
 slutter, kommer den oprindelige evne tilbage og starter sin egen
 genopladning, og et kast af kopien, der stadig er i gang, mislykkes. En
@@ -75,11 +75,11 @@ at fjerne den giver dig stadig energien.
 
 ## Brønde og glyffer
 
-En Necromancers **brønde** udnytter det nærmeste lig. Er der intet i
+En ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancers** ![Brønd](../../../apps/web/public/icons/skill-type/well.svg) **brønde** udnytter det nærmeste lig. Er der intet i
 nærheden, ofrer en brønd i stedet 66 % af dit liv og dukker op, hvor du
 står.
 
-En Elementalists **glyffer** ændrer din næste besværgelse: den kan ikke
+En ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalists** ![Glyf](../../../apps/web/public/icons/skill-type/glyph.svg) **glyffer** ændrer din næste ![Besværgelse](../../../apps/web/public/icons/skill-type/spell.svg) **besværgelse**: den kan ikke
 afbrydes, kastes øjeblikkeligt, genoplades med det samme eller koster
 mindre. En ny glyf erstatter den, du havde.
 
@@ -89,8 +89,8 @@ En evne, der reagerer "næste gang skade får liv under N %", reagerer på
 ethvert slag eller enhver livstjæling, der efterlader dig i live og under
 grænsen, også når du allerede var under den før slaget, og aldrig på liv,
 du ofrer eller mister til degeneration. Beskyttelse mod dødelig skade,
-som Judge's Intervention, fjerner hele det dræbende slag: ingen skade,
-ingen død. Faithful Intervention og Illusion of Weakness har ingen
+som ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, fjerner hele det dræbende slag: ingen skade,
+ingen død. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** og ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** har ingen
 varighed: de varer, indtil skade, en fjernelse eller død afslutter dem,
 og helbreder dig undervejs.
 
@@ -118,20 +118,20 @@ helbredelsen fra dine ånder, undersåtter og dit kæledyr som din.
 
 ## Genstandsbesværgelser
 
-En Ritualists **genstandsbesværgelser** lægger en ånds **aske** i dine
+En ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualists** ![Genstandsbesværgelse](../../../apps/web/public/icons/skill-type/item-spell.svg) **genstandsbesværgelser** lægger en ånds **aske** i dine
 hænder: en bonus, mens du holder den, og en **slip-effekt**, når den
 falder. Den falder, når den løber ud, når du dør, når du trykker på
 **Slip aske** over din livbjælke, kaster en anden genstandsbesværgelse,
 skyggespringer, skifter våben eller tager et flag eller en relikvie op.
 Dine hænder er fulde, mens du holder den: ingen angreb og ingen
-angrebsevner, men du går med fuld fart og kan stadig kaste
-besværgelser. Intet fjerner aske; hver afslutning er et slip.
+![Angrebsevne](../../../apps/web/public/icons/skill-type/attack.svg) **angrebsevner**, men du går med fuld fart og kan stadig kaste
+![Besværgelse](../../../apps/web/public/icons/skill-type/spell.svg) **besværgelser**. Intet fjerner aske; hver afslutning er et slip.
 
 ## Skyggespring
 
 Et **skyggespring** flytter dig med det samme, uden gang imellem. De
 fleste flytter dig til dit mål; nogle tager dig tilbage, hvor du kastede
-dem, når de slutter, som Shadow of Haste og Shadow Walk gør. **Recall**
+dem, når de slutter, som Shadow of Haste og Shadow Walk gør. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall**
 flytter dig først til sin allierede, når den slutter, og slår alle dine
 evner fra i 3 sekunder. **Swap** bytter plads med en af din sides ånder
 eller undersåtter.

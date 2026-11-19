@@ -7,7 +7,7 @@ echipezi. Armura se alege pe figură, mai jos.
 ## Seturi de arme
 
 Porți până la **patru seturi de arme**, fiecare cu o armă și, dacă arma lasă o
-mână liberă, o mână secundară, precum un Shield sau un Focus. Setul 1 este cel
+mână liberă, o mână secundară, precum un ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** sau un ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus**. Setul 1 este cel
 cu care începi; celelalte pot rămâne goale.
 
 Într-un meci, schimbi seturile cu **1 la 4** (**F1 la F4** la tastele Clasic).
@@ -16,8 +16,8 @@ Esc schimbă imediat. Nu există timp de așteptare. Atacurile tale, abilități
 care cer o anumită armă și Energia ta maximă urmează toate setul din mână.
 
 O armă cere rangul 9 la atributul ei: sub acesta lovește cu o treime din daune,
-iar editorul îți spune asta cu roșu. O Sword ține mereu de Swordsmanship, dar un
-Staff, un Wand, un Shield sau un Focus sunt făcute pentru un atribut pe care îl
+iar editorul îți spune asta cu roșu. O ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** ține mereu de Swordsmanship, dar un
+![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff**, un ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, un Shield sau un Focus sunt făcute pentru un atribut pe care îl
 alegi: dă clic pe mâna respectivă de pe figură (**6** pentru armă, **7** pentru
 mâna secundară) și alege unul.
 
@@ -25,40 +25,40 @@ mâna secundară) și alege unul.
 
 Fiecare armă și mână secundară are locuri pentru modificatori: un **prefix**, un
 **sufix** și o **inscripție**. Dă clic pe mâna de pe figură sau pe rândul de
-lângă ea ca să-i alegi; fiecare spune ce face. Un Wand, un Shield și un Focus nu
+lângă ea ca să-i alegi; fiecare spune ce face. Un ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, un ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** și un ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus** nu
 primesc prefix; mâinile goale nu primesc niciunul. Un modificator are mereu cea
 mai bună valoare, iar fiecare set de arme îi poartă pe ai lui, așa că schimbarea
 setului schimbă și modificatorii: Viața și Energia maximă urmează setul din
 mână. La schimbarea unei arme se păstrează modificatorii care încă i se
 potrivesc, și ți se spune care au fost scoși.
 
-| Modificator               | Loc        | Se potrivește pe                          | Efect                                     |
-| ------------------------- | ---------- | ----------------------------------------- | ----------------------------------------- |
-| Defensive                 | Prefix     | Staff                                     | Armură +5                                 |
-| Hale                      | Prefix     | Staff                                     | +30 Viață                                 |
-| Insightful                | Prefix     | Staff                                     | Energie +5                                |
-| of Defense                | Sufix      | orice armă de luptă, Staff                | Armură +5                                 |
-| of Fortitude              | Sufix      | orice armă de luptă, Staff, Shield, Focus | +30 Viață                                 |
-| of Shelter                | Sufix      | orice armă de luptă, Staff                | Armură +7 (contra daunelor fizice)        |
-| of Warding                | Sufix      | orice armă de luptă, Staff                | Armură +7 (contra daunelor elementale)    |
-| "Cast Out the Unclean"    | Inscripție | Shield, Focus                             | Reduce cu 20% durata Disease asupra ta    |
-| "Fear Cuts Deeper"        | Inscripție | Shield, Focus                             | Reduce cu 20% durata Bleeding asupra ta   |
-| "I Can See Clearly Now"   | Inscripție | Shield, Focus                             | Reduce cu 20% durata Blinded asupra ta    |
-| "I have the power!"       | Inscripție | orice armă de luptă                       | Energie +5                                |
-| "Leaf on the Wind"        | Inscripție | Shield, Focus                             | Armură +10 (contra daunelor de frig)      |
-| "Like a Rolling Stone"    | Inscripție | Shield, Focus                             | Armură +10 (contra daunelor de pământ)    |
-| "Live for Today"          | Inscripție | Focus                                     | Energie +15, regenerare de Energie -1     |
-| "Not the face!"           | Inscripție | Shield, Focus                             | Armură +10 (contra daunelor contondente)  |
-| "Only the Strong Survive" | Inscripție | Shield, Focus                             | Reduce cu 20% durata Weakness asupra ta   |
-| "Pure of Heart"           | Inscripție | Shield, Focus                             | Reduce cu 20% durata Poison asupra ta     |
-| "Riders on the Storm"     | Inscripție | Shield, Focus                             | Armură +10 (contra daunelor de fulger)    |
-| "Seize the Day"           | Inscripție | Staff, Wand                               | Energie +15, regenerare de Energie -1     |
-| "Sleep Now in the Fire"   | Inscripție | Shield, Focus                             | Armură +10 (contra daunelor de foc)       |
-| "Soundness of Mind"       | Inscripție | Shield, Focus                             | Reduce cu 20% durata Dazed asupra ta      |
-| "Strength of Body"        | Inscripție | Shield, Focus                             | Reduce cu 20% durata Deep Wound asupra ta |
-| "Swift as the Wind"       | Inscripție | Shield, Focus                             | Reduce cu 20% durata Crippled asupra ta   |
-| "The Riddle of Steel"     | Inscripție | Shield, Focus                             | Armură +10 (contra daunelor tăioase)      |
-| "Through Thick and Thin"  | Inscripție | Shield, Focus                             | Armură +10 (contra daunelor perforante)   |
+| Modificator               | Loc        | Se potrivește pe                                                    | Efect                                                                                                             |
+| ------------------------- | ---------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Prefix     | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Armură +5                                                                                                         |
+| Hale                      | Prefix     | Staff                                                               | +30 Viață                                                                                                         |
+| Insightful                | Prefix     | Staff                                                               | Energie +5                                                                                                        |
+| of Defense                | Sufix      | orice armă de luptă, Staff                                          | Armură +5                                                                                                         |
+| of Fortitude              | Sufix      | orice armă de luptă, Staff, Shield, Focus                           | +30 Viață                                                                                                         |
+| of Shelter                | Sufix      | orice armă de luptă, Staff                                          | Armură +7 (contra daunelor fizice)                                                                                |
+| of Warding                | Sufix      | orice armă de luptă, Staff                                          | Armură +7 (contra daunelor elementale)                                                                            |
+| "Cast Out the Unclean"    | Inscripție | Shield, Focus                                                       | Reduce cu 20% durata ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** asupra ta          |
+| "Fear Cuts Deeper"        | Inscripție | Shield, Focus                                                       | Reduce cu 20% durata ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** asupra ta       |
+| "I Can See Clearly Now"   | Inscripție | Shield, Focus                                                       | Reduce cu 20% durata ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** asupra ta            |
+| "I have the power!"       | Inscripție | orice armă de luptă                                                 | Energie +5                                                                                                        |
+| "Leaf on the Wind"        | Inscripție | Shield, Focus                                                       | Armură +10 (contra daunelor de frig)                                                                              |
+| "Like a Rolling Stone"    | Inscripție | Shield, Focus                                                       | Armură +10 (contra daunelor de pământ)                                                                            |
+| "Live for Today"          | Inscripție | Focus                                                               | Energie +15, regenerare de Energie -1                                                                             |
+| "Not the face!"           | Inscripție | Shield, Focus                                                       | Armură +10 (contra daunelor contondente)                                                                          |
+| "Only the Strong Survive" | Inscripție | Shield, Focus                                                       | Reduce cu 20% durata ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** asupra ta       |
+| "Pure of Heart"           | Inscripție | Shield, Focus                                                       | Reduce cu 20% durata ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** asupra ta             |
+| "Riders on the Storm"     | Inscripție | Shield, Focus                                                       | Armură +10 (contra daunelor de fulger)                                                                            |
+| "Seize the Day"           | Inscripție | Staff, Wand                                                         | Energie +15, regenerare de Energie -1                                                                             |
+| "Sleep Now in the Fire"   | Inscripție | Shield, Focus                                                       | Armură +10 (contra daunelor de foc)                                                                               |
+| "Soundness of Mind"       | Inscripție | Shield, Focus                                                       | Reduce cu 20% durata ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** asupra ta                |
+| "Strength of Body"        | Inscripție | Shield, Focus                                                       | Reduce cu 20% durata ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** asupra ta |
+| "Swift as the Wind"       | Inscripție | Shield, Focus                                                       | Reduce cu 20% durata ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** asupra ta       |
+| "The Riddle of Steel"     | Inscripție | Shield, Focus                                                       | Armură +10 (contra daunelor tăioase)                                                                              |
+| "Through Thick and Thin"  | Inscripție | Shield, Focus                                                       | Armură +10 (contra daunelor perforante)                                                                           |
 
 ### Prefixe de luptă la lovire
 
@@ -153,16 +153,16 @@ care te uiți, cu modificatorii lor.
 
 ## Rune
 
-| Rună                                   | Ce oferă                                      |
-| -------------------------------------- | --------------------------------------------- |
-| Rună de atribut Minoră                 | +1 la un atribut                              |
-| Rună de atribut Majoră                 | +2 la un atribut, -35 Viață                   |
-| Rună de atribut Superioară             | +3 la un atribut, -75 Viață                   |
-| Vigor                                  | mai multă Viață (+30, +41 sau +50)            |
-| Vitae                                  | +10 Viață                                     |
-| Attunement                             | mai multă Energie (+3, +6 sau +9)             |
-| Clarity, Purity, Recovery, Restoration | câte două afecțiuni expiră cu 20% mai devreme |
-| Absorption (Warrior)                   | mai puține daune fizice la fiecare lovitură   |
+| Rună                                                                                                                                                                                                                                                                                                           | Ce oferă                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Rună de atribut Minoră                                                                                                                                                                                                                                                                                         | +1 la un atribut                              |
+| Rună de atribut Majoră                                                                                                                                                                                                                                                                                         | +2 la un atribut, -35 Viață                   |
+| Rună de atribut Superioară                                                                                                                                                                                                                                                                                     | +3 la un atribut, -75 Viață                   |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | mai multă Viață (+30, +41 sau +50)            |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Viață                                     |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mai multă Energie (+3, +6 sau +9)             |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | câte două afecțiuni expiră cu 20% mai devreme |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | mai puține daune fizice la fiecare lovitură   |
 
 Alegi runa unei piese în același loc cu însemnul: dă clic pe piesă pe figură.
 

@@ -7,7 +7,7 @@ anzulegen. Rüstung wählst du an der Figur, siehe unten.
 ## Waffensets
 
 Du trägst bis zu **vier Waffensets**, jedes aus einer Waffe und, wenn die Waffe eine
-Hand frei lässt, einer Zweithand wie einem Shield oder einem Focus. Mit Set 1 startest
+Hand frei lässt, einer Zweithand wie einem ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** oder einem ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus**. Mit Set 1 startest
 du; die anderen dürfen leer bleiben.
 
 Im Match wechselst du die Sets mit **1 bis 4** (**F1 bis F4** bei den Klassisch-Tasten).
@@ -16,8 +16,8 @@ Laufen oder Esc wechselt sofort. Es gibt keine Abklingzeit. Deine Angriffe, die 
 die eine bestimmte Waffe brauchen, und deine maximale Energie folgen dem Set in der Hand.
 
 Eine Waffe braucht Rang 9 in ihrem Attribut: Darunter macht sie nur ein Drittel ihres
-Schadens, und der Editor sagt das in Rot. Ein Sword ist immer Swordsmanship, aber ein
-Staff, ein Wand, ein Shield oder ein Focus ist für ein Attribut gemacht, das du wählst:
+Schadens, und der Editor sagt das in Rot. Ein ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** ist immer Swordsmanship, aber ein
+![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff**, ein ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, ein Shield oder ein Focus ist für ein Attribut gemacht, das du wählst:
 Klick auf seine Hand an der Figur (**6** für die Waffe, **7** für die Zweithand) und such
 eines aus.
 
@@ -25,39 +25,39 @@ eines aus.
 
 Jede Waffe und jede Zweithand hat Plätze für Mods: ein **Präfix**, ein **Suffix** und eine
 **Inschrift**. Klick auf die Hand an der Figur oder ihre Zeile daneben, um sie zu wählen;
-jede sagt, was sie tut. Ein Wand, ein Shield und ein Focus nehmen kein Präfix; bloße Hände
+jede sagt, was sie tut. Ein ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, ein ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** und ein ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus** nehmen kein Präfix; bloße Hände
 gar keines. Ein Mod hat immer seinen besten Wert, und jedes Waffenset trägt seine eigenen,
 ein Set-Wechsel tauscht also auch die Mods: Maximales Leben und maximale Energie folgen dem
 Set in der Hand. Beim Wechsel einer Waffe bleiben die Mods, die noch passen, und du erfährst,
 welche weggefallen sind.
 
-| Mod                       | Platz     | Passt auf                             | Wirkung                               |
-| ------------------------- | --------- | ------------------------------------- | ------------------------------------- |
-| Defensive                 | Präfix    | Staff                                 | Rüstung +5                            |
-| Hale                      | Präfix    | Staff                                 | +30 Leben                             |
-| Insightful                | Präfix    | Staff                                 | Energie +5                            |
-| of Defense                | Suffix    | jede Kampfwaffe, Staff                | Rüstung +5                            |
-| of Fortitude              | Suffix    | jede Kampfwaffe, Staff, Shield, Focus | +30 Leben                             |
-| of Shelter                | Suffix    | jede Kampfwaffe, Staff                | Rüstung +7 (gegen physischen Schaden) |
-| of Warding                | Suffix    | jede Kampfwaffe, Staff                | Rüstung +7 (gegen Elementarschaden)   |
-| "Cast Out the Unclean"    | Inschrift | Shield, Focus                         | Disease auf dir dauert 20 % kürzer    |
-| "Fear Cuts Deeper"        | Inschrift | Shield, Focus                         | Bleeding auf dir dauert 20 % kürzer   |
-| "I Can See Clearly Now"   | Inschrift | Shield, Focus                         | Blinded auf dir dauert 20 % kürzer    |
-| "I have the power!"       | Inschrift | jede Kampfwaffe                       | Energie +5                            |
-| "Leaf on the Wind"        | Inschrift | Shield, Focus                         | Rüstung +10 (gegen Kälteschaden)      |
-| "Like a Rolling Stone"    | Inschrift | Shield, Focus                         | Rüstung +10 (gegen Erdschaden)        |
-| "Live for Today"          | Inschrift | Focus                                 | Energie +15, Energieregeneration -1   |
-| "Not the face!"           | Inschrift | Shield, Focus                         | Rüstung +10 (gegen stumpfen Schaden)  |
-| "Only the Strong Survive" | Inschrift | Shield, Focus                         | Weakness auf dir dauert 20 % kürzer   |
-| "Pure of Heart"           | Inschrift | Shield, Focus                         | Poison auf dir dauert 20 % kürzer     |
-| "Riders on the Storm"     | Inschrift | Shield, Focus                         | Rüstung +10 (gegen Blitzschaden)      |
-| "Seize the Day"           | Inschrift | Staff, Wand                           | Energie +15, Energieregeneration -1   |
-| "Sleep Now in the Fire"   | Inschrift | Shield, Focus                         | Rüstung +10 (gegen Feuerschaden)      |
-| "Soundness of Mind"       | Inschrift | Shield, Focus                         | Dazed auf dir dauert 20 % kürzer      |
-| "Strength of Body"        | Inschrift | Shield, Focus                         | Deep Wound auf dir dauert 20 % kürzer |
-| "Swift as the Wind"       | Inschrift | Shield, Focus                         | Crippled auf dir dauert 20 % kürzer   |
-| "The Riddle of Steel"     | Inschrift | Shield, Focus                         | Rüstung +10 (gegen Schnittschaden)    |
-| "Through Thick and Thin"  | Inschrift | Shield, Focus                         | Rüstung +10 (gegen Stichschaden)      |
+| Mod                       | Platz     | Passt auf                                                           | Wirkung                                                                                                       |
+| ------------------------- | --------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Präfix    | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Rüstung +5                                                                                                    |
+| Hale                      | Präfix    | Staff                                                               | +30 Leben                                                                                                     |
+| Insightful                | Präfix    | Staff                                                               | Energie +5                                                                                                    |
+| of Defense                | Suffix    | jede Kampfwaffe, Staff                                              | Rüstung +5                                                                                                    |
+| of Fortitude              | Suffix    | jede Kampfwaffe, Staff, Shield, Focus                               | +30 Leben                                                                                                     |
+| of Shelter                | Suffix    | jede Kampfwaffe, Staff                                              | Rüstung +7 (gegen physischen Schaden)                                                                         |
+| of Warding                | Suffix    | jede Kampfwaffe, Staff                                              | Rüstung +7 (gegen Elementarschaden)                                                                           |
+| "Cast Out the Unclean"    | Inschrift | Shield, Focus                                                       | ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** auf dir dauert 20 % kürzer          |
+| "Fear Cuts Deeper"        | Inschrift | Shield, Focus                                                       | ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** auf dir dauert 20 % kürzer       |
+| "I Can See Clearly Now"   | Inschrift | Shield, Focus                                                       | ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** auf dir dauert 20 % kürzer            |
+| "I have the power!"       | Inschrift | jede Kampfwaffe                                                     | Energie +5                                                                                                    |
+| "Leaf on the Wind"        | Inschrift | Shield, Focus                                                       | Rüstung +10 (gegen Kälteschaden)                                                                              |
+| "Like a Rolling Stone"    | Inschrift | Shield, Focus                                                       | Rüstung +10 (gegen Erdschaden)                                                                                |
+| "Live for Today"          | Inschrift | Focus                                                               | Energie +15, Energieregeneration -1                                                                           |
+| "Not the face!"           | Inschrift | Shield, Focus                                                       | Rüstung +10 (gegen stumpfen Schaden)                                                                          |
+| "Only the Strong Survive" | Inschrift | Shield, Focus                                                       | ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** auf dir dauert 20 % kürzer       |
+| "Pure of Heart"           | Inschrift | Shield, Focus                                                       | ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** auf dir dauert 20 % kürzer             |
+| "Riders on the Storm"     | Inschrift | Shield, Focus                                                       | Rüstung +10 (gegen Blitzschaden)                                                                              |
+| "Seize the Day"           | Inschrift | Staff, Wand                                                         | Energie +15, Energieregeneration -1                                                                           |
+| "Sleep Now in the Fire"   | Inschrift | Shield, Focus                                                       | Rüstung +10 (gegen Feuerschaden)                                                                              |
+| "Soundness of Mind"       | Inschrift | Shield, Focus                                                       | ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** auf dir dauert 20 % kürzer                |
+| "Strength of Body"        | Inschrift | Shield, Focus                                                       | ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** auf dir dauert 20 % kürzer |
+| "Swift as the Wind"       | Inschrift | Shield, Focus                                                       | ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** auf dir dauert 20 % kürzer       |
+| "The Riddle of Steel"     | Inschrift | Shield, Focus                                                       | Rüstung +10 (gegen Schnittschaden)                                                                            |
+| "Through Thick and Thin"  | Inschrift | Shield, Focus                                                       | Rüstung +10 (gegen Stichschaden)                                                                              |
 
 ### Kampf-Präfixe bei einem Treffer
 
@@ -149,16 +149,16 @@ und Rune jedes Teils und hält die Waffen des Sets, das du gerade ansiehst, mit 
 
 ## Runen
 
-| Rune                                   | Was sie gibt                            |
-| -------------------------------------- | --------------------------------------- |
-| Minor-Attributrune                     | +1 auf ein Attribut                     |
-| Major-Attributrune                     | +2 auf ein Attribut, -35 Leben          |
-| Superior-Attributrune                  | +3 auf ein Attribut, -75 Leben          |
-| Vigor                                  | mehr Leben (+30, +41 oder +50)          |
-| Vitae                                  | +10 Leben                               |
-| Attunement                             | mehr Energie (+3, +6 oder +9)           |
-| Clarity, Purity, Recovery, Restoration | zwei Zustände laufen je 20 % früher aus |
-| Absorption (Warrior)                   | weniger physischer Schaden pro Treffer  |
+| Rune                                                                                                                                                                                                                                                                                                           | Was sie gibt                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Minor-Attributrune                                                                                                                                                                                                                                                                                             | +1 auf ein Attribut                     |
+| Major-Attributrune                                                                                                                                                                                                                                                                                             | +2 auf ein Attribut, -35 Leben          |
+| Superior-Attributrune                                                                                                                                                                                                                                                                                          | +3 auf ein Attribut, -75 Leben          |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | mehr Leben (+30, +41 oder +50)          |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Leben                               |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mehr Energie (+3, +6 oder +9)           |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | zwei Zustände laufen je 20 % früher aus |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | weniger physischer Schaden pro Treffer  |
 
 Die Rune eines Teils wählst du am selben Ort wie seine Insignie: Klick auf das Teil an der
 Figur.
