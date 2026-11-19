@@ -48,6 +48,7 @@ export { closestPointOnPolygon, pointInPolygon, polygonCentre, progressAlong } f
 export {
   buildLayeredNavGraph,
   buildNavGraph,
+  costZone,
   createLayeredPathFinder,
   createPathFinder,
   dropOffEnds,
@@ -356,6 +357,7 @@ export {
   resolveTargeting,
 } from "./match/behaviour.js";
 export { isSpikeSkill } from "./match/bot/skill-intent.js";
+export { LEVER_WORTH_UNITS } from "./match/bot/rules/levers.js";
 
 export type {
   TrainingDummy,

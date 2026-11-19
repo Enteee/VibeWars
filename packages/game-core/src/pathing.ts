@@ -750,6 +750,11 @@ function offZoneCorner(zone: Polygon, at: number, offset: number): Vec2 | undefi
   const sinHalf = length < 1e-9 ? 1 : Math.sqrt(Math.max(0, 1 - (length / 2) ** 2));
   const reach = offset / Math.max(sinHalf, 1 / 3);
   const outside = add(corner, scale(out, reach));
+  if (length >= 1e-9) {
+    // Off a concave corner, the bisector's far side is inside the zone:
+    // no route round the zone bends in its notch, so no node there (#3521).
+    return pointInPolygon(outside, zone) ? undefined : outside;
+  }
   if (!pointInPolygon(outside, zone)) {
     return outside;
   }
@@ -1203,12 +1208,20 @@ class AStar implements LayeredPathFinder {
   readonly #state: Uint8Array;
   readonly #seesGoal: Uint8Array;
   /**
-   * The open vertices, in the order they were first opened: on a tie the
-   * earliest wins, as it did when this was a `Set`, so every path stays
-   * the same (#267).
+   * The open vertices, a binary heap on their estimate; on a tie the one
+   * first opened wins, as it did when this was a `Set`, so every path
+   * stays the same (#267). A heap, not a scan, so a graph of many nodes
+   * stays cheap to search (#3521).
    */
   readonly #open: Int32Array;
   #openCount = 0;
+  /** Each open vertex's place in `#open`. */
+  readonly #heapAt: Int32Array;
+  /** Each open vertex's cost so far plus its estimate. */
+  readonly #estimated: Float64Array;
+  /** When each open vertex was first opened: its tie-break. */
+  readonly #openedAt: Int32Array;
+  #openings = 0;
   #from: Vec2 = { x: 0, y: 0 };
   #to: Vec2 = { x: 0, y: 0 };
   #toLayer = 0;
@@ -1356,6 +1369,9 @@ class AStar implements LayeredPathFinder {
     this.#state = new Uint8Array(count + 2);
     this.#seesGoal = new Uint8Array(count);
     this.#open = new Int32Array(count + 2);
+    this.#heapAt = new Int32Array(count + 2);
+    this.#estimated = new Float64Array(count + 2);
+    this.#openedAt = new Int32Array(count + 2);
   }
 
   /** Each portal to the nodes and the other portals it sees on its own layer. */
@@ -1449,34 +1465,22 @@ class AStar implements LayeredPathFinder {
     this.#state.fill(UNSEEN);
     this.#seesGoal.fill(GOAL_UNKNOWN);
     this.#openCount = 0;
+    this.#openings = 0;
 
     const start = this.#start;
     const goal = this.#goal;
     this.#cost[start] = 0;
     this.#opened(start);
     while (this.#openCount > 0) {
-      let current = start;
-      let at = -1;
-      let best = Number.POSITIVE_INFINITY;
-      for (let k = 0; k < this.#openCount; k += 1) {
-        const i = this.#open[k] ?? start;
-        const estimate = (this.#cost[i] ?? Number.POSITIVE_INFINITY) + this.#estimate(i);
-        if (estimate < best) {
-          best = estimate;
-          current = i;
-          at = k;
-        }
-      }
-      if (at < 0) {
+      const current = this.#open[0] ?? start;
+      if (!Number.isFinite(this.#estimated[current] ?? Number.POSITIVE_INFINITY)) {
         // Nothing open is reachable at a finite cost: it never would be.
         return undefined;
       }
       if (current === goal) {
         return this.#path(from, fromLayer);
       }
-      // Ordered removal, so the rest keep the order they were opened in.
-      this.#open.copyWithin(at, at + 1, this.#openCount);
-      this.#openCount -= 1;
+      this.#popOpen();
       this.#state[current] = CLOSED;
 
       const here = this.#cost[current] ?? Number.POSITIVE_INFINITY;
@@ -1547,8 +1551,68 @@ class AStar implements LayeredPathFinder {
 
   #opened(i: number): void {
     this.#state[i] = OPEN;
+    this.#openedAt[i] = this.#openings;
+    this.#openings += 1;
+    this.#estimated[i] = (this.#cost[i] ?? Number.POSITIVE_INFINITY) + this.#estimate(i);
     this.#open[this.#openCount] = i;
+    this.#heapAt[i] = this.#openCount;
     this.#openCount += 1;
+    this.#siftUp(this.#openCount - 1);
+  }
+
+  /** Whether open vertex `a` comes out of the heap before `b`. */
+  #before(a: number, b: number): boolean {
+    const ea = this.#estimated[a] ?? Number.POSITIVE_INFINITY;
+    const eb = this.#estimated[b] ?? Number.POSITIVE_INFINITY;
+    return ea < eb || (ea === eb && (this.#openedAt[a] ?? 0) < (this.#openedAt[b] ?? 0));
+  }
+
+  #place(at: number, i: number): void {
+    this.#open[at] = i;
+    this.#heapAt[i] = at;
+  }
+
+  #siftUp(from: number): void {
+    const i = this.#open[from] ?? 0;
+    let at = from;
+    while (at > 0) {
+      const up = (at - 1) >> 1;
+      const parent = this.#open[up] ?? 0;
+      if (!this.#before(i, parent)) {
+        break;
+      }
+      this.#place(at, parent);
+      at = up;
+    }
+    this.#place(at, i);
+  }
+
+  /** Takes the first vertex off the heap. */
+  #popOpen(): void {
+    this.#openCount -= 1;
+    const i = this.#open[this.#openCount] ?? 0;
+    if (this.#openCount === 0) {
+      return;
+    }
+    let at = 0;
+    for (;;) {
+      const left = 2 * at + 1;
+      if (left >= this.#openCount) {
+        break;
+      }
+      const right = left + 1;
+      let child = left;
+      if (right < this.#openCount && this.#before(this.#open[right] ?? 0, this.#open[left] ?? 0)) {
+        child = right;
+      }
+      const next = this.#open[child] ?? 0;
+      if (!this.#before(next, i)) {
+        break;
+      }
+      this.#place(at, next);
+      at = child;
+    }
+    this.#place(at, i);
   }
 
   /** Reaches `next` from `current` at a cost of `through` from the start, if that is cheaper. */
@@ -1561,6 +1625,9 @@ class AStar implements LayeredPathFinder {
       this.#cameFrom[next] = current;
       if (this.#state[next] === UNSEEN) {
         this.#opened(next);
+      } else {
+        this.#estimated[next] = through + this.#estimate(next);
+        this.#siftUp(this.#heapAt[next] ?? 0);
       }
     }
   }

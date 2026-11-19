@@ -3,19 +3,24 @@ import {
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
   STARTER_BUILDS,
+  costZone,
   loadoutOf,
   loadoutSpec,
   resolveLoadout,
   segment,
   segmentsIntersect,
+  shallowWaterZones,
   spawnFacing,
+  walkCost,
   type LayeredPathFinder,
   type ParticipantSpec,
+  type RouteWaypoint,
   type PlayerBuild,
   type Vec2,
 } from "@vibewars/game-core";
 
 import { pointInShape, wallToSegments } from "../geometry.js";
+import { matchLayers } from "../layers.js";
 import { layeredFinder } from "../layered-finder.test-support.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
 import type { MapData, Shape, SpawnPoint, Transition } from "../schema.js";
@@ -346,34 +351,69 @@ export function walksByRoute(
   layer: number,
   route: Route | ((team: number) => Route),
 ): number[] {
+  return Array.from({ length: map.teams }, (_, team) =>
+    pathLength(pathByRoute(map, team, to, layer, route, false)),
+  );
+}
+
+/**
+ * Each team's walk time in seconds along `route`, as `walksByRoute` walks
+ * it but round harmful zones as a bot goes, counting shallow water at
+ * `SHALLOW_WATER_PACE` (#3521): the marsh is slower than its length says.
+ */
+export function walkSecondsByRoute(
+  map: MapData,
+  to: Vec2,
+  layer: number,
+  route: Route | ((team: number) => Route),
+): number[] {
+  const zones = shallowWaterZones(matchLayers(map).shallowWater);
   return Array.from({ length: map.teams }, (_, team) => {
-    const { through, shut = [], broken = [] } = typeof route === "function" ? route(team) : route;
-    const by = ` by the route through ${through.join(", ")}`;
-    const transition = (id: string): Transition | undefined =>
-      map.transitions.find((each) => each.id === id);
-    const unknown = [
-      ...[...through, ...shut].filter((id) => transition(id) === undefined),
-      ...broken.filter((id) => !(map.breakables ?? []).some((each) => each.id === id)),
-    ];
-    if (unknown.length > 0) throw new Error(`${map.id}: no ${unknown.join(", ")} on the map${by}`);
-    const walked: MapData = {
-      ...map,
-      transitions: map.transitions.filter(({ id }) => !shut.includes(id)),
-      walls: [
-        ...map.walls,
-        ...(map.breakables ?? []).filter(({ id }) => !broken.includes(id)).map(({ wall }) => wall),
-      ],
-    };
-    const finder = layeredFinder(walked, RULESET.collision.playerRadius);
-    const path = pathTo(walked, finder, team, to, layer, by);
-    const missed = through.filter((id) => {
-      const area = transition(id)?.area;
-      return area === undefined || !crosses(path, area);
-    });
-    if (missed.length > 0)
-      throw new Error(`${map.id}: team ${String(team)} did not pass ${missed.join(", ")}${by}`);
-    return pathLength(path);
+    const path = pathByRoute(map, team, to, layer, route, true);
+    const units = path.reduce((walked, point, index) => {
+      const from = path[index - 1] ?? point;
+      const wet = zones.filter((zone) => zone.layer === point.layer).map(costZone);
+      return walked + walkCost(wet, from, point);
+    }, 0);
+    return units / RULESET.movement.maxSpeedUnitsPerSecond;
   });
+}
+
+/** `team`'s path along `route`, as `walksByRoute` describes it, the spawn first; round harmful zones if `harmful`. */
+function pathByRoute(
+  map: MapData,
+  team: number,
+  to: Vec2,
+  layer: number,
+  route: Route | ((team: number) => Route),
+  harmful: boolean,
+): RouteWaypoint[] {
+  const { through, shut = [], broken = [] } = typeof route === "function" ? route(team) : route;
+  const by = ` by the route through ${through.join(", ")}`;
+  const transition = (id: string): Transition | undefined =>
+    map.transitions.find((each) => each.id === id);
+  const unknown = [
+    ...[...through, ...shut].filter((id) => transition(id) === undefined),
+    ...broken.filter((id) => !(map.breakables ?? []).some((each) => each.id === id)),
+  ];
+  if (unknown.length > 0) throw new Error(`${map.id}: no ${unknown.join(", ")} on the map${by}`);
+  const walked: MapData = {
+    ...map,
+    transitions: map.transitions.filter(({ id }) => !shut.includes(id)),
+    walls: [
+      ...map.walls,
+      ...(map.breakables ?? []).filter(({ id }) => !broken.includes(id)).map(({ wall }) => wall),
+    ],
+  };
+  const finder = layeredFinder(walked, RULESET.collision.playerRadius, { harmful });
+  const path = pathTo(walked, finder, team, to, layer, by);
+  const missed = through.filter((id) => {
+    const area = transition(id)?.area;
+    return area === undefined || !crosses(path, area);
+  });
+  if (missed.length > 0)
+    throw new Error(`${map.id}: team ${String(team)} did not pass ${missed.join(", ")}${by}`);
+  return path;
 }
 
 /**
@@ -398,14 +438,14 @@ function pathTo(
   to: Vec2,
   layer: number,
   by: string,
-): Vec2[] {
+): RouteWaypoint[] {
   const start = homeSpawn(map, team);
   const route = finder.find(start.position, start.layer, to, layer);
   if (route === undefined)
     throw new Error(
       `${map.id}: team ${String(team)} cannot reach (${String(to.x)},${String(to.y)})${by}`,
     );
-  return [start.position, ...route];
+  return [{ ...start.position, layer: start.layer }, ...route];
 }
 
 function pathLength(path: readonly Vec2[]): number {
