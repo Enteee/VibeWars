@@ -641,10 +641,17 @@ describe("Guard, Fight and Heel (#1110)", () => {
 describe("a pet and its owner (#3649, #3666)", () => {
   const GAP = RULES.collision.playerRadius + RULES.collision.creatureRadius;
   const SPEED = RULES.movement.maxSpeedUnitsPerSecond;
-  // East, west and north are free from spawn. South, through the pet, it
-  // is held like any ally; slanting past it, it slides round. Nearer
-  // dead-on than ~25°, the slide is too slow to count (#291's push-outs).
-  const DIRECTIONS = [vec2(1, 0), vec2(-1, 0), vec2(0, -1), vec2(1, 1), vec2(-1, 1)];
+  // East, west and north are free from spawn. South, through the pet, the
+  // pet steps aside; slanting past it, the owner slides round.
+  const DIRECTIONS = [
+    vec2(1, 0),
+    vec2(-1, 0),
+    vec2(0, -1),
+    vec2(0, 1),
+    vec2(0.09, 1),
+    vec2(1, 1),
+    vec2(-1, 1),
+  ];
   const SEEDS = ["0", "1", "2", "3", "4"];
   /** How far a push-out may leave two bodies overlapping, a tick. */
   const TOLERANCE = 1;
@@ -665,7 +672,7 @@ describe("a pet and its owner (#3649, #3666)", () => {
     }
   });
 
-  it("never wedges its owner: away from it, or slanting past it, it walks on, over five seeds", () => {
+  it("never wedges its owner: away from it, past it or straight into it, it walks on, over five seeds", () => {
     for (const seed of SEEDS) {
       for (const direction of DIRECTIONS) {
         const sim = match([ranger()], undefined, seed);

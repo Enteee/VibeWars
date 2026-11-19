@@ -5188,6 +5188,7 @@ export class MatchSimulation {
       // The same slowed speed advanceMovement will move it at, so a
       // crippled dummy plans with the step it will really take.
       stepUnits: this.#stepUnits(record, dt),
+      touchUnits: (other) => this.#radiusOf(record) + this.#radiusOf(other),
       check: (skillId, targetId) => {
         const skill = getSkill(skillId);
         return skill === undefined
