@@ -6,8 +6,8 @@ päävalikon **Muokkaa**-painikkeella tai **Uusi hahmo** -painikkeella.
 
 ## Ammatit
 
-Niitä on kymmenen: Warrior, Ranger, Monk, Necromancer, Mesmer,
-Elementalist, Assassin, Ritualist, Paragon ja Dervish. **Pääammattisi** on
+Niitä on kymmenen: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**,
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ja ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. **Pääammattisi** on
 se, mikä olet: sen taidot ja sen **pääominaisuus** (merkitty ★), jonka saa
 vain pääammatti. **Sivuammattisi** lainaa sinulle taitonsa, mutta ei
 pääominaisuuttaan.
@@ -18,11 +18,11 @@ Palkissa on **kahdeksan paikkaa**. Palkkiin mahtuu vain yksi
 **eliittitaito** (kultainen kehys): varusta toinen, niin se korvaa
 ensimmäisen. Paina paikan **×** tyhjentääksesi sen.
 
-**Välähdyslumoukset** (Dervish) ovat välittömiä: sellaisen käyttäminen
+![Lumous](../../../apps/web/public/icons/skill-type/enchantment.svg) **Välähdyslumoukset** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) ovat välittömiä: sellaisen käyttäminen
 säilyttää lyöntisi ja askeleesi, joten voit punoa niitä iskujen väliin.
 Jokainen niistä kytkee muut välähdyslumouksesi pois 1 sekunniksi.
 
-**Muodot** (viisi Dervishin avataria: Balthazar, Dwayna, Grenth, Lyssa
+![Muoto](../../../apps/web/public/icons/skill-type/form.svg) **Muodot** (viisi Dervishin avataria: Balthazar, Dwayna, Grenth, Lyssa
 ja Melandru) muuttavat sinut yli minuutiksi. Muoto ei ole lumous, joten
 kukaan ei voi riisua sitä, ja voit olla yhdessä muodossa kerrallaan.
 Sellaisen käyttäminen estää sen käytön 45 sekunniksi. Kun muoto päättyy,
@@ -32,7 +32,7 @@ jatkaaksesi kävelyä.
 
 **Jotkin laukaukset estävät muut hyökkäyksesi.** Focused Shot ja Needling
 Shot lentävät nopeammin kuin nuolen pitäisi, mutta jokainen osuva
-laukaus kytkee muut hyökkäystaitosi pois muutamaksi sekunniksi. Loitsuihin
+laukaus kytkee muut ![Hyökkäystaito](../../../apps/web/public/icons/skill-type/attack.svg) **hyökkäystaitosi** pois muutamaksi sekunniksi. ![Loitsu](../../../apps/web/public/icons/skill-type/spell.svg) **Loitsuihin**
 tämä ei vaikuta.
 
 ## Ominaisuudet
@@ -46,11 +46,11 @@ nostaminen vahvistaa taitoa: ominaisuuden mukana kasvavat luvut näytetään
 vihreinä ja lihavoituina nykyisillä tasoillasi riimut ja päähine mukaan
 lukien.
 
-Taistelussa tasosi voivat muuttua hetkeksi. Weakness vie kustakin yhden.
-Jotkin kiroukset asettavat vihollisen ominaisuudet 0:aan, ja Master of
+Taistelussa tasosi voivat muuttua hetkeksi. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** vie kustakin yhden.
+Jotkin ![Kirous](../../../apps/web/public/icons/skill-type/hex.svg) **kiroukset** asettavat vihollisen ominaisuudet 0:aan, ja Master of
 Magic asettaa elementtiominaisuutesi 13:een: näin asetettu taso ohittaa
 sekä riimut että Weaknessin. Signet of Illusions antaa seuraavien muiden
-ominaisuuksien loitsujesi käyttää Illusion Magic -tasoasi. Jotkin taidot
+ominaisuuksien ![Loitsu](../../../apps/web/public/icons/skill-type/spell.svg) **loitsujesi** käyttää Illusion Magic -tasoasi. Jotkin taidot
 nostavat ominaisuuksiasi hetkeksi tai seuraavia loitsujasi varten, kuten
 Glyph of Elemental Power ja Ritual Lord tekevät, jopa sellaista, jonka
 jätit 0:aan; asetettu taso, kuten Master of Magicin, voittaa tällaisen
@@ -58,20 +58,20 @@ lisäyksen.
 
 ## Kaiut
 
-Paragonin **kaiut** ovat pitkiä vahvistuksia yhdelle liittolaiselle.
+![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragonin** ![Kaiku](../../../apps/web/public/icons/skill-type/echo.svg) **kaiut** ovat pitkiä vahvistuksia yhdelle liittolaiselle.
 **Kertosäe** uusiutuu täyteen pituuteensa ja **finaali** tulee voimaan aina,
-kun laulu tai huuto päättyy kyseisellä liittolaisella. Laulu tai huuto,
+kun ![Laulu](../../../apps/web/public/icons/skill-type/chant.svg) **laulu** tai ![Huuto](../../../apps/web/public/icons/skill-type/shout.svg) **huuto** päättyy kyseisellä liittolaisella. Laulu tai huuto,
 joka asetetaan uudelleen ennen kuin se päättyy, ei ole päättynyt. Mikään
 ei poista kaikua: se päättyy, kun se loppuu tai sen kantaja kuolee.
 Useimmat eivät voi kohdistua henkeen.
 
 ## Taidot, joista tulee toinen taito
 
-Jotkin Mesmerin taidot laittavat omaan paikkaansa hetkeksi toisen taidon.
-Arcane Echo ja Echo kopioivat seuraavan käyttämäsi taidon. **Inspired
+Jotkin ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmerin** taidot laittavat omaan paikkaansa hetkeksi toisen taidon.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** ja ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** kopioivat seuraavan käyttämäsi taidon. **Inspired
 Enchantment** ja **Inspired Hex** muuttuvat 20 sekunniksi taidoksi, joka
-loitsi niiden poistaman lumouksen tai kirouksen. **Arcane Thievery**
-muuttuu loitsuksi, jonka se esti viholliseltasi, niin pitkäksi aikaa
+loitsi niiden poistaman ![Lumous](../../../apps/web/public/icons/skill-type/enchantment.svg) **lumouksen** tai ![Kirous](../../../apps/web/public/icons/skill-type/hex.svg) **kirouksen**. **Arcane Thievery**
+muuttuu ![Loitsu](../../../apps/web/public/icons/skill-type/spell.svg) **loitsuksi**, jonka se esti viholliseltasi, niin pitkäksi aikaa
 kuin esto kestää. Kopiolla on oma latauksensa. Kun se päättyy,
 alkuperäinen taito palaa ja aloittaa oman latauksensa, ja kesken oleva
 kopion käyttö epäonnistuu. Hengen tai toisen tilan asettamaa tilaa ei
@@ -79,11 +79,11 @@ voi kopioida, mutta sen poistaminen antaa silti energian.
 
 ## Kaivot ja merkit
 
-Necromancerin **kaivot** hyödyntävät lähintä ruumista. Jos lähellä ei ole
+![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancerin** ![Kaivo](../../../apps/web/public/icons/skill-type/well.svg) **kaivot** hyödyntävät lähintä ruumista. Jos lähellä ei ole
 yhtään, kaivo uhraa sen sijaan 66 % terveydestäsi ja ilmestyy siihen,
 missä seisot.
 
-Elementalistin **merkit** muuttavat seuraavaa loitsuasi: sitä ei voi
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalistin** ![Merkki](../../../apps/web/public/icons/skill-type/glyph.svg) **merkit** muuttavat seuraavaa ![Loitsu](../../../apps/web/public/icons/skill-type/spell.svg) **loitsuasi**: sitä ei voi
 keskeyttää, se käytetään välittömästi, latautuu heti tai maksaa
 vähemmän. Uusi merkki korvaa aiemman.
 
@@ -93,9 +93,9 @@ Taito, joka reagoi "seuraavan kerran, kun vahinko pudottaa terveyden alle
 N %:n", reagoi mihin tahansa iskuun tai elämän varastamiseen, joka jättää
 sinut eloon ja rajan alle, vaikka olisit ollut sen alla jo ennen osumaa,
 eikä koskaan terveyteen, jonka uhraat tai menetät rappeutumiseen.
-Suojaus kuolettavalta vahingolta, kuten Judge's Intervention, pudottaa
-koko tappavan iskun: ei vahinkoa, ei kuolemaa. Faithful Intervention
-ja Illusion of Weakness eivät kestä tiettyä aikaa: ne kestävät, kunnes
+Suojaus kuolettavalta vahingolta, kuten ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, pudottaa
+koko tappavan iskun: ei vahinkoa, ei kuolemaa. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention**
+ja ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** eivät kestä tiettyä aikaa: ne kestävät, kunnes
 vahinko, riisuminen tai kuolema päättää ne, ja parantavat sinua samalla.
 
 ## Kirjasto
@@ -124,13 +124,13 @@ kätyriesi ja lemmikkisi vahingon ja parannuksen sinun omaksesi.
 
 ## Esineloitsut
 
-Ritualistin **esineloitsut** antavat käsiisi hengen **tuhkat**: bonuksen,
+![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualistin** ![Esineloitsu](../../../apps/web/public/icons/skill-type/item-spell.svg) **esineloitsut** antavat käsiisi hengen **tuhkat**: bonuksen,
 kun pidät niitä, ja **pudotusvaikutuksen**, kun ne putoavat. Ne putoavat,
 kun ne loppuvat, kun kuolet, kun painat terveyspalkkisi yläpuolella
 olevaa **Pudota tuhkat**, käytät toista esineloitsua, teet varjoaskeleen,
 vaihdat asetta tai nostat lipun tai reliikin. Kätesi ovat täynnä, kun
-pidät niitä: ei hyökkäyksiä eikä hyökkäystaitoja, mutta kävelet täydellä
-nopeudella ja voit yhä käyttää loitsuja. Mikään ei poista tuhkia; jokainen
+pidät niitä: ei hyökkäyksiä eikä ![Hyökkäystaito](../../../apps/web/public/icons/skill-type/attack.svg) **hyökkäystaitoja**, mutta kävelet täydellä
+nopeudella ja voit yhä käyttää ![Loitsu](../../../apps/web/public/icons/skill-type/spell.svg) **loitsuja**. Mikään ei poista tuhkia; jokainen
 loppu on pudotus.
 
 ## Varjoaskeleet
@@ -138,7 +138,7 @@ loppu on pudotus.
 **Varjoaske** siirtää sinut heti, ilman kävelyä välissä. Useimmat vievät
 sinut kohteesi luo; jotkin vievät sinut takaisin sinne, missä käytit
 ne, kun ne päättyvät, kuten Shadow of Haste ja Shadow Walk tekevät.
-**Recall** siirtää sinut liittolaisensa luo vasta päättyessään ja estää
+![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** siirtää sinut liittolaisensa luo vasta päättyessään ja estää
 kaikki taitosi 3 sekunniksi. **Swap** vaihtaa paikkaa yhden puolesi
 hengen tai kätyrin kanssa.
 

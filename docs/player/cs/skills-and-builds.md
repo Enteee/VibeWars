@@ -4,41 +4,41 @@
 
 ## Povolání
 
-Je jich deset: Warrior, Ranger, Monk, Necromancer, Mesmer, Elementalist, Assassin, Ritualist, Paragon a Dervish. **Primární** povolání je to, čím jsi: jeho dovednosti a jeho **primární atribut** (označený ★), který má jen primární povolání. **Sekundární** ti propůjčí své dovednosti, ale ne svůj primární atribut.
+Je jich deset: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** a ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. **Primární** povolání je to, čím jsi: jeho dovednosti a jeho **primární atribut** (označený ★), který má jen primární povolání. **Sekundární** ti propůjčí své dovednosti, ale ne svůj primární atribut.
 
 ## Lišta dovedností
 
 Lišta má **osm pozic**. Na lištu se vejde jen jedna **elitní** dovednost (zlatý rámeček): vybav druhou a nahradí první. Stisknutím **×** na pozici ji vyprázdníš.
 
-**Bleskové očarování** (Dervish) je okamžité: jeho použití ti zachová máchnutí i krok, takže je můžeš vplétat mezi rány. Každé z nich vypne tvá ostatní blesková očarování na 1 sekundu.
+![Očarování](../../../apps/web/public/icons/skill-type/enchantment.svg) **Bleskové očarování** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) je okamžité: jeho použití ti zachová máchnutí i krok, takže je můžeš vplétat mezi rány. Každé z nich vypne tvá ostatní blesková očarování na 1 sekundu.
 
-**Podoby** (pět avatarů Dervishe: Balthazar, Dwayna, Grenth, Lyssa a Melandru) tě promění na déle než minutu. Podoba není očarování, takže ti ji nikdo nesebere, a můžeš být vždy jen v jedné. Použití ji znepřístupní na 45 sekund. Když podoba skončí, přestaneš dělat to, co jsi dělal: útok, chůzi i každou dovednost, kterou jsi aktivoval. Dalším stisknutím klávesy pohybu jdeš dál.
+![Podoba](../../../apps/web/public/icons/skill-type/form.svg) **Podoby** (pět avatarů Dervishe: Balthazar, Dwayna, Grenth, Lyssa a Melandru) tě promění na déle než minutu. Podoba není očarování, takže ti ji nikdo nesebere, a můžeš být vždy jen v jedné. Použití ji znepřístupní na 45 sekund. Když podoba skončí, přestaneš dělat to, co jsi dělal: útok, chůzi i každou dovednost, kterou jsi aktivoval. Dalším stisknutím klávesy pohybu jdeš dál.
 
-**Některé střely vypínají tvé další útoky.** Focused Shot a Needling Shot letí rychleji, než by šíp měl, ale každý zásah vypne tvé ostatní útočné dovednosti na několik sekund. Kouzla to neovlivní.
+**Některé střely vypínají tvé další útoky.** Focused Shot a Needling Shot letí rychleji, než by šíp měl, ale každý zásah vypne tvé ostatní ![Útočná dovednost](../../../apps/web/public/icons/skill-type/attack.svg) **útočné dovednosti** na několik sekund. ![Kouzlo](../../../apps/web/public/icons/skill-type/spell.svg) **Kouzla** to neovlivní.
 
 ## Atributy
 
 Můžeš utratit **200 bodů**. Každá hodnost atributu stojí víc než předchozí, až do hodnosti 12; řádek ukazuje, kolik stojí další. Dvanáct, dvanáct a tři utratí všechno. Runy a pokrývka hlavy mohou přidat až čtyři další hodnosti navrch; viz [Vybavení](equipment.md). Zvýšením atributu, který dovednost používá, ji posílíš: čísla rostoucí s atributem se ukazují zeleně a tučně, podle tvých aktuálních hodností včetně run a pokrývky hlavy.
 
-V boji se tvoje hodnosti mohou na čas změnit. Weakness z každé ubere jednu. Některá prokletí nastaví atributy nepřítele na 0 a Master of Magic nastaví tvoje elementální na 13: hodnost nastavená tímto způsobem přebije runy i Weakness. Signet of Illusions umožní tvým dalším kouzlům jiných atributů použít tvou hodnost Illusion Magic. Některé dovednosti zvyšují tvoje atributy na čas nebo pro tvá další kouzla, jako Glyph of Elemental Power a Ritual Lord, dokonce i ten, který jsi nechal na 0; nastavená hodnost, jako u Master of Magic, takové zvýšení přebije.
+V boji se tvoje hodnosti mohou na čas změnit. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** z každé ubere jednu. Některá ![Prokletí](../../../apps/web/public/icons/skill-type/hex.svg) **prokletí** nastaví atributy nepřítele na 0 a Master of Magic nastaví tvoje elementální na 13: hodnost nastavená tímto způsobem přebije runy i Weakness. Signet of Illusions umožní tvým dalším ![Kouzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kouzlům** jiných atributů použít tvou hodnost Illusion Magic. Některé dovednosti zvyšují tvoje atributy na čas nebo pro tvá další kouzla, jako Glyph of Elemental Power a Ritual Lord, dokonce i ten, který jsi nechal na 0; nastavená hodnost, jako u Master of Magic, takové zvýšení přebije.
 
 ## Ozvěny
 
-**Ozvěny** Paragona jsou dlouhá posílení na jednom spojenci. **Refrén** se obnoví na plnou délku a **finále** se projeví, kdykoli na tom spojenci skončí popěvek nebo pokřik. Popěvek nebo pokřik znovu použitý před svým koncem neskončil. Ozvěnu nic neodstraní: skončí vypršením nebo smrtí nositele. Většina nemůže cílit na ducha.
+![Ozvěna](../../../apps/web/public/icons/skill-type/echo.svg) **Ozvěny** ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragona** jsou dlouhá posílení na jednom spojenci. **Refrén** se obnoví na plnou délku a **finále** se projeví, kdykoli na tom spojenci skončí ![Popěvek](../../../apps/web/public/icons/skill-type/chant.svg) **popěvek** nebo ![Pokřik](../../../apps/web/public/icons/skill-type/shout.svg) **pokřik**. Popěvek nebo pokřik znovu použitý před svým koncem neskončil. Ozvěnu nic neodstraní: skončí vypršením nebo smrtí nositele. Většina nemůže cílit na ducha.
 
 ## Dovednosti, které se mění na jinou dovednost
 
-Některé dovednosti Mesmera na čas vloží na svou pozici jinou dovednost. Arcane Echo a Echo kopírují další dovednost, kterou použiješ. **Inspired Enchantment** a **Inspired Hex** se na 20 sekund změní na dovednost, která seslala odstraněné očarování nebo prokletí. **Arcane Thievery** se změní na kouzlo, které nepříteli zablokovala, po dobu trvání zablokování. Kopie má vlastní obnovu. Když skončí, původní dovednost se vrátí a začne vlastní obnovu a sesílání kopie, které ještě probíhá, selže. Status nasazený duchem nebo jiným statusem nelze kopírovat, i když jeho odstranění ti energii stále dá.
+Některé dovednosti ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmera** na čas vloží na svou pozici jinou dovednost. ![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** a ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** kopírují další dovednost, kterou použiješ. **Inspired Enchantment** a **Inspired Hex** se na 20 sekund změní na dovednost, která seslala odstraněné ![Očarování](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarování** nebo ![Prokletí](../../../apps/web/public/icons/skill-type/hex.svg) **prokletí**. **Arcane Thievery** se změní na ![Kouzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kouzlo**, které nepříteli zablokovala, po dobu trvání zablokování. Kopie má vlastní obnovu. Když skončí, původní dovednost se vrátí a začne vlastní obnovu a sesílání kopie, které ještě probíhá, selže. Status nasazený duchem nebo jiným statusem nelze kopírovat, i když jeho odstranění ti energii stále dá.
 
 ## Studny a glyfy
 
-**Studny** Necromancera využívají nejbližší mrtvolu. Když žádná není poblíž, studna místo toho obětuje 66 % tvého zdraví a objeví se tam, kde stojíš.
+![Studna](../../../apps/web/public/icons/skill-type/well.svg) **Studny** ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancera** využívají nejbližší mrtvolu. Když žádná není poblíž, studna místo toho obětuje 66 % tvého zdraví a objeví se tam, kde stojíš.
 
-**Glyfy** Elementalisty mění tvé další kouzlo: nelze ho přerušit, sešle se okamžitě, hned se obnoví nebo stojí méně. Nový glyf nahradí ten, který jsi měl.
+![Glyf](../../../apps/web/public/icons/skill-type/glyph.svg) **Glyfy** ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalisty** mění tvé další ![Kouzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kouzlo**: nelze ho přerušit, sešle se okamžitě, hned se obnoví nebo stojí méně. Nový glyf nahradí ten, který jsi měl.
 
 ## Zásahy
 
-Dovednost, která reaguje na "příští pokles zdraví pod N % po poškození", reaguje na každou ránu nebo krádež života, po které zůstaneš naživu a pod hranicí, i když už jsi pod ní byl před zásahem, a nikdy na zdraví, které obětuješ nebo ztratíš degenerací. Ochrana před smrtelným poškozením, jako Judge's Intervention, zruší celou smrtící ránu: žádné poškození, žádná smrt. Faithful Intervention a Illusion of Weakness nemají dobu trvání: trvají, dokud je neukončí poškození, odstranění nebo smrt, a průběžně tě léčí.
+Dovednost, která reaguje na "příští pokles zdraví pod N % po poškození", reaguje na každou ránu nebo krádež života, po které zůstaneš naživu a pod hranicí, i když už jsi pod ní byl před zásahem, a nikdy na zdraví, které obětuješ nebo ztratíš degenerací. Ochrana před smrtelným poškozením, jako ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, zruší celou smrtící ránu: žádné poškození, žádná smrt. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** a ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** nemají dobu trvání: trvají, dokud je neukončí poškození, odstranění nebo smrt, a průběžně tě léčí.
 
 ## Knihovna
 
@@ -50,11 +50,11 @@ Vedle editoru ti **cvičiště** umožní vyzkoušet lištu na cvičných cílec
 
 ## Předmětová kouzla
 
-**Předmětová kouzla** Ritualisty ti dají do rukou **popel** ducha: bonus, dokud ho držíš, a **účinek při odhození**, když spadne. Spadne, když vyprší, když zemřeš, když stiskneš **Odhodit popel** nad ukazatelem zdraví, sešleš jiné předmětové kouzlo, provedeš krok stínem, vyměníš zbraně nebo vezmeš vlajku či relikvii. Dokud ho držíš, máš plné ruce: žádné útoky ani útočné dovednosti, ale chodíš plnou rychlostí a kouzla sesílat můžeš. Popel nic neodstraní; každý konec je odhození.
+![Předmětové kouzlo](../../../apps/web/public/icons/skill-type/item-spell.svg) **Předmětová kouzla** ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualisty** ti dají do rukou **popel** ducha: bonus, dokud ho držíš, a **účinek při odhození**, když spadne. Spadne, když vyprší, když zemřeš, když stiskneš **Odhodit popel** nad ukazatelem zdraví, sešleš jiné předmětové kouzlo, provedeš krok stínem, vyměníš zbraně nebo vezmeš vlajku či relikvii. Dokud ho držíš, máš plné ruce: žádné útoky ani ![Útočná dovednost](../../../apps/web/public/icons/skill-type/attack.svg) **útočné dovednosti**, ale chodíš plnou rychlostí a ![Kouzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kouzla** sesílat můžeš. Popel nic neodstraní; každý konec je odhození.
 
 ## Kroky stínem
 
-**Krok stínem** tě okamžitě přemístí, bez chůze mezi tím. Většina tě přenese k cíli; některé tě po skončení vrátí tam, kde jsi je seslal, jako Shadow of Haste a Shadow Walk. **Recall** tě ke svému spojenci přenese až při skončení a na 3 sekundy zablokuje všechny tvé dovednosti. **Swap** si vymění místo s jedním duchem nebo přisluhovačem tvojí strany.
+**Krok stínem** tě okamžitě přemístí, bez chůze mezi tím. Většina tě přenese k cíli; některé tě po skončení vrátí tam, kde jsi je seslal, jako Shadow of Haste a Shadow Walk. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** tě ke svému spojenci přenese až při skončení a na 3 sekundy zablokuje všechny tvé dovednosti. **Swap** si vymění místo s jedním duchem nebo přisluhovačem tvojí strany.
 
 ## Sdílení buildů
 

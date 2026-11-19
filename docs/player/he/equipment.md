@@ -7,7 +7,7 @@
 ## סטים של נשק
 
 אתה נושא עד **ארבעה סטים של נשק**, כל אחד נשק, ואם הנשק משאיר יד פנויה,
-יד משנית כמו Shield או Focus. סט 1 הוא זה שאתה מתחיל איתו; האחרים יכולים
+יד משנית כמו ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** או ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus**. סט 1 הוא זה שאתה מתחיל איתו; האחרים יכולים
 להישאר ריקים.
 
 במשחק, החלף סטים עם **1 עד 4** (**F1 עד F4** במקשים הקלאסיים). החלפה
@@ -16,7 +16,7 @@
 שלך כולן עוקבות אחרי הסט שביד.
 
 נשק דורש דרגה 9 בתכונה שלו: מתחת לזה הוא פוגע בשליש מהנזק שלו, והעורך
-אומר את זה באדום. Sword הוא תמיד Swordsmanship, אבל Staff, Wand, Shield
+אומר את זה באדום. ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** הוא תמיד Swordsmanship, אבל ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff**, ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, Shield
 או Focus מיוצרים לתכונה שאתה בוחר: לחץ על היד שלהם על הדמות (**6** לנשק,
 **7** ליד המשנית) ובחר אחת.
 
@@ -24,39 +24,39 @@
 
 לכל נשק ויד משנית יש משבצות לשדרוגים: **קידומת**, **סיומת**
 ו**כתובת**. לחץ על היד על הדמות, או על השורה שלה לידה, כדי לבחור אותם;
-כל אחד אומר מה הוא עושה. Wand, Shield ו-Focus לא מקבלים קידומת; ידיים
+כל אחד אומר מה הוא עושה. ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** ו-![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus** לא מקבלים קידומת; ידיים
 חשופות לא מקבלות שום שדרוג. שדרוג תמיד בערך הטוב ביותר שלו, וכל סט נשק
 נושא שדרוגים משלו, כך שהחלפת סטים מחליפה גם את השדרוגים שלהם: החיים
 והאנרגיה המרביים זזים עם הסט שביד. החלפת נשק שומרת את השדרוגים שעדיין
 מתאימים לו ואומרת לך אילו הוסרו.
 
-| שדרוג                     | משבצת  | מתאים ל                            | השפעה                             |
-| ------------------------- | ------ | ---------------------------------- | --------------------------------- |
-| Defensive                 | קידומת | Staff                              | שריון +5                          |
-| Hale                      | קידומת | Staff                              | +30 חיים                          |
-| Insightful                | קידומת | Staff                              | אנרגיה +5                         |
-| of Defense                | סיומת  | כל נשק לחימה, Staff                | שריון +5                          |
-| of Fortitude              | סיומת  | כל נשק לחימה, Staff, Shield, Focus | +30 חיים                          |
-| of Shelter                | סיומת  | כל נשק לחימה, Staff                | שריון +7 (מול נזק פיזי)           |
-| of Warding                | סיומת  | כל נשק לחימה, Staff                | שריון +7 (מול נזק יסודי)          |
-| "Cast Out the Unclean"    | כתובת  | Shield, Focus                      | מקצר ב-20% את משך Disease עליך    |
-| "Fear Cuts Deeper"        | כתובת  | Shield, Focus                      | מקצר ב-20% את משך Bleeding עליך   |
-| "I Can See Clearly Now"   | כתובת  | Shield, Focus                      | מקצר ב-20% את משך Blinded עליך    |
-| "I have the power!"       | כתובת  | כל נשק לחימה                       | אנרגיה +5                         |
-| "Leaf on the Wind"        | כתובת  | Shield, Focus                      | שריון +10 (מול נזק קור)           |
-| "Like a Rolling Stone"    | כתובת  | Shield, Focus                      | שריון +10 (מול נזק אדמה)          |
-| "Live for Today"          | כתובת  | Focus                              | אנרגיה +15, התחדשות אנרגיה -1     |
-| "Not the face!"           | כתובת  | Shield, Focus                      | שריון +10 (מול נזק הלם)           |
-| "Only the Strong Survive" | כתובת  | Shield, Focus                      | מקצר ב-20% את משך Weakness עליך   |
-| "Pure of Heart"           | כתובת  | Shield, Focus                      | מקצר ב-20% את משך Poison עליך     |
-| "Riders on the Storm"     | כתובת  | Shield, Focus                      | שריון +10 (מול נזק ברק)           |
-| "Seize the Day"           | כתובת  | Staff, Wand                        | אנרגיה +15, התחדשות אנרגיה -1     |
-| "Sleep Now in the Fire"   | כתובת  | Shield, Focus                      | שריון +10 (מול נזק אש)            |
-| "Soundness of Mind"       | כתובת  | Shield, Focus                      | מקצר ב-20% את משך Dazed עליך      |
-| "Strength of Body"        | כתובת  | Shield, Focus                      | מקצר ב-20% את משך Deep Wound עליך |
-| "Swift as the Wind"       | כתובת  | Shield, Focus                      | מקצר ב-20% את משך Crippled עליך   |
-| "The Riddle of Steel"     | כתובת  | Shield, Focus                      | שריון +10 (מול נזק חיתוך)         |
-| "Through Thick and Thin"  | כתובת  | Shield, Focus                      | שריון +10 (מול נזק דקירה)         |
+| שדרוג                     | משבצת  | מתאים ל                                                             | השפעה                                                                                                     |
+| ------------------------- | ------ | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Defensive                 | קידומת | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | שריון +5                                                                                                  |
+| Hale                      | קידומת | Staff                                                               | +30 חיים                                                                                                  |
+| Insightful                | קידומת | Staff                                                               | אנרגיה +5                                                                                                 |
+| of Defense                | סיומת  | כל נשק לחימה, Staff                                                 | שריון +5                                                                                                  |
+| of Fortitude              | סיומת  | כל נשק לחימה, Staff, Shield, Focus                                  | +30 חיים                                                                                                  |
+| of Shelter                | סיומת  | כל נשק לחימה, Staff                                                 | שריון +7 (מול נזק פיזי)                                                                                   |
+| of Warding                | סיומת  | כל נשק לחימה, Staff                                                 | שריון +7 (מול נזק יסודי)                                                                                  |
+| "Cast Out the Unclean"    | כתובת  | Shield, Focus                                                       | מקצר ב-20% את משך ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** עליך          |
+| "Fear Cuts Deeper"        | כתובת  | Shield, Focus                                                       | מקצר ב-20% את משך ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** עליך       |
+| "I Can See Clearly Now"   | כתובת  | Shield, Focus                                                       | מקצר ב-20% את משך ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** עליך            |
+| "I have the power!"       | כתובת  | כל נשק לחימה                                                        | אנרגיה +5                                                                                                 |
+| "Leaf on the Wind"        | כתובת  | Shield, Focus                                                       | שריון +10 (מול נזק קור)                                                                                   |
+| "Like a Rolling Stone"    | כתובת  | Shield, Focus                                                       | שריון +10 (מול נזק אדמה)                                                                                  |
+| "Live for Today"          | כתובת  | Focus                                                               | אנרגיה +15, התחדשות אנרגיה -1                                                                             |
+| "Not the face!"           | כתובת  | Shield, Focus                                                       | שריון +10 (מול נזק הלם)                                                                                   |
+| "Only the Strong Survive" | כתובת  | Shield, Focus                                                       | מקצר ב-20% את משך ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** עליך       |
+| "Pure of Heart"           | כתובת  | Shield, Focus                                                       | מקצר ב-20% את משך ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** עליך             |
+| "Riders on the Storm"     | כתובת  | Shield, Focus                                                       | שריון +10 (מול נזק ברק)                                                                                   |
+| "Seize the Day"           | כתובת  | Staff, Wand                                                         | אנרגיה +15, התחדשות אנרגיה -1                                                                             |
+| "Sleep Now in the Fire"   | כתובת  | Shield, Focus                                                       | שריון +10 (מול נזק אש)                                                                                    |
+| "Soundness of Mind"       | כתובת  | Shield, Focus                                                       | מקצר ב-20% את משך ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** עליך                |
+| "Strength of Body"        | כתובת  | Shield, Focus                                                       | מקצר ב-20% את משך ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** עליך |
+| "Swift as the Wind"       | כתובת  | Shield, Focus                                                       | מקצר ב-20% את משך ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** עליך       |
+| "The Riddle of Steel"     | כתובת  | Shield, Focus                                                       | שריון +10 (מול נזק חיתוך)                                                                                 |
+| "Through Thick and Thin"  | כתובת  | Shield, Focus                                                       | שריון +10 (מול נזק דקירה)                                                                                 |
 
 ### קידומות לחימה בפגיעה
 
@@ -147,16 +147,16 @@
 
 ## רונות
 
-| רונה                                   | מה היא נותנת                           |
-| -------------------------------------- | -------------------------------------- |
-| רונת תכונה Minor                       | +1 לתכונה                              |
-| רונת תכונה Major                       | +2 לתכונה, חיים -35                    |
-| רונת תכונה Superior                    | +3 לתכונה, חיים -75                    |
-| Vigor                                  | יותר חיים (+30, +41 או +50)            |
-| Vitae                                  | +10 חיים                               |
-| Attunement                             | יותר אנרגיה (+3, +6 או +9)             |
-| Clarity, Purity, Recovery, Restoration | שני פגעים כל אחת חולפים מהר יותר ב-20% |
-| Absorption (Warrior)                   | פחות נזק פיזי מכל פגיעה                |
+| רונה                                                                                                                                                                                                                                                                                                           | מה היא נותנת                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| רונת תכונה Minor                                                                                                                                                                                                                                                                                               | +1 לתכונה                              |
+| רונת תכונה Major                                                                                                                                                                                                                                                                                               | +2 לתכונה, חיים -35                    |
+| רונת תכונה Superior                                                                                                                                                                                                                                                                                            | +3 לתכונה, חיים -75                    |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | יותר חיים (+30, +41 או +50)            |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 חיים                               |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | יותר אנרגיה (+3, +6 או +9)             |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | שני פגעים כל אחת חולפים מהר יותר ב-20% |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | פחות נזק פיזי מכל פגיעה                |
 
 את הרונה של חלק בוחרים באותו מקום כמו את הסמל שלו: לחץ על החלק על
 הדמות.

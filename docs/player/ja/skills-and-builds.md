@@ -4,41 +4,41 @@
 
 ## 職業
 
-職業は10あります: Warrior、Ranger、Monk、Necromancer、Mesmer、Elementalist、Assassin、Ritualist、Paragon、Dervish。**メイン**職業はあなたが何者かを表します。そのスキルと、メイン職業だけが得られる**メイン属性**（★の印が付きます）です。**サブ**職業はスキルを貸してくれますが、メイン属性は貸してくれません。
+職業は10あります: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**、![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**、![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**、![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**、![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**、![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**、![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**、![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**、![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**、![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**。**メイン**職業はあなたが何者かを表します。そのスキルと、メイン職業だけが得られる**メイン属性**（★の印が付きます）です。**サブ**職業はスキルを貸してくれますが、メイン属性は貸してくれません。
 
 ## スキルバー
 
 バーには**8つのスロット**があります。1つのバーに入る**エリート**スキル（金色の枠）は1つだけです。2つ目を装備すると、1つ目と入れ替わります。スロットの **×** を押すと空にできます。
 
-**フラッシュエンチャント**（Dervish）は即時です。使っても攻撃の振りと歩みが止まらないので、攻撃の合間に織り交ぜられます。1つ使うごとに、ほかのフラッシュエンチャントが1秒間使えなくなります。
+![エンチャント](../../../apps/web/public/icons/skill-type/enchantment.svg) **フラッシュエンチャント**（![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**）は即時です。使っても攻撃の振りと歩みが止まらないので、攻撃の合間に織り交ぜられます。1つ使うごとに、ほかのフラッシュエンチャントが1秒間使えなくなります。
 
-**フォーム**（DervishのAvatar 5種: Balthazar、Dwayna、Grenth、Lyssa、Melandru）は、1分以上あなたを変身させます。フォームはエンチャントではないので誰にも除去されず、一度に1つのフォームにしかなれません。使うと45秒間使用不能になります。フォームが終わると、していたこと（攻撃、移動、発動中のスキル）が止まります。歩き続けるには、移動キーをもう一度押してください。
+![フォーム](../../../apps/web/public/icons/skill-type/form.svg) **フォーム**（DervishのAvatar 5種: Balthazar、Dwayna、Grenth、Lyssa、Melandru）は、1分以上あなたを変身させます。フォームはエンチャントではないので誰にも除去されず、一度に1つのフォームにしかなれません。使うと45秒間使用不能になります。フォームが終わると、していたこと（攻撃、移動、発動中のスキル）が止まります。歩き続けるには、移動キーをもう一度押してください。
 
-**一部の射撃はほかの攻撃を使用不能にします。** Focused ShotとNeedling Shotは矢としてはありえない速さで飛びますが、当たるたびに、ほかの攻撃スキルが数秒間使えなくなります。スペルは影響を受けません。
+**一部の射撃はほかの攻撃を使用不能にします。** Focused ShotとNeedling Shotは矢としてはありえない速さで飛びますが、当たるたびに、ほかの![攻撃スキル](../../../apps/web/public/icons/skill-type/attack.svg) **攻撃スキル**が数秒間使えなくなります。![スペル](../../../apps/web/public/icons/skill-type/spell.svg) **スペル**は影響を受けません。
 
 ## 属性
 
 割り振れるのは**200ポイント**です。属性のランクは上げるほど1ランクあたりのコストが増え、最大ランク12です。行には次のランクのコストが表示されます。12、12、3で全ポイントを使い切ります。ルーンと頭装備で、さらに最大4ランクを上乗せできます。[装備](equipment.md)を参照してください。スキルが使う属性を上げると、そのスキルが強くなります。属性に応じて増える数値は、ルーンと頭装備を含めた現在のランクで、緑色の太字で表示されます。
 
-戦闘中は、ランクが一時的に変わることがあります。Weaknessは各属性を1ずつ下げます。一部の呪いは敵の属性を0にし、Master of Magicはあなたの属性系の属性を13にします。このように設定されたランクは、ルーンとWeaknessのどちらよりも優先されます。Signet of Illusionsを使うと、ほかの属性の次のスペルにIllusion Magicのランクが使われます。Glyph of Elemental PowerやRitual Lordのように、一定時間または次のスペルの間、属性を上げるスキルもあります。0のままにした属性でも上がります。Master of Magicのような設定されたランクは、そうした上昇よりも優先されます。
+戦闘中は、ランクが一時的に変わることがあります。![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**は各属性を1ずつ下げます。一部の![呪い](../../../apps/web/public/icons/skill-type/hex.svg) **呪い**は敵の属性を0にし、Master of Magicはあなたの属性系の属性を13にします。このように設定されたランクは、ルーンとWeaknessのどちらよりも優先されます。Signet of Illusionsを使うと、ほかの属性の次の![スペル](../../../apps/web/public/icons/skill-type/spell.svg) **スペル**にIllusion Magicのランクが使われます。Glyph of Elemental PowerやRitual Lordのように、一定時間または次のスペルの間、属性を上げるスキルもあります。0のままにした属性でも上がります。Master of Magicのような設定されたランクは、そうした上昇よりも優先されます。
 
 ## エコー
 
-Paragonの**エコー**は、1人の味方にかかる長時間のバフです。その味方の上でチャントやシャウトが終わるたびに、**リフレイン**は全期間に更新され、**フィナーレ**は効果を発揮します。終わる前にかけ直されたチャントやシャウトは、終わったことになりません。エコーを除去するものはありません。時間切れになるか、受けた者が死ぬと終わります。ほとんどはスピリットをターゲットにできません。
+![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**の![エコー](../../../apps/web/public/icons/skill-type/echo.svg) **エコー**は、1人の味方にかかる長時間のバフです。その味方の上で![チャント](../../../apps/web/public/icons/skill-type/chant.svg) **チャント**や![シャウト](../../../apps/web/public/icons/skill-type/shout.svg) **シャウト**が終わるたびに、**リフレイン**は全期間に更新され、**フィナーレ**は効果を発揮します。終わる前にかけ直されたチャントやシャウトは、終わったことになりません。エコーを除去するものはありません。時間切れになるか、受けた者が死ぬと終わります。ほとんどはスピリットをターゲットにできません。
 
 ## 別のスキルに変わるスキル
 
-一部のMesmerのスキルは、しばらくの間、自分のスロットに別のスキルを入れます。Arcane EchoとEchoは、次に使ったスキルをコピーします。**Inspired Enchantment**と**Inspired Hex**は、除去したエンチャントや呪いをかけたスキルに、20秒間変わります。**Arcane Thievery**は、敵の使用不能にしたスペルに、その使用不能が続く間変わります。コピーには独自のリチャージがあります。終わると元のスキルが戻ってきて、自身のリチャージを始めます。進行中のコピーの詠唱は失敗します。スピリットやほかの効果によってかけられた効果はコピーできませんが、それを除去すればエナジーは得られます。
+一部の![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**のスキルは、しばらくの間、自分のスロットに別のスキルを入れます。![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo**と![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo**は、次に使ったスキルをコピーします。**Inspired Enchantment**と**Inspired Hex**は、除去した![エンチャント](../../../apps/web/public/icons/skill-type/enchantment.svg) **エンチャント**や![呪い](../../../apps/web/public/icons/skill-type/hex.svg) **呪い**をかけたスキルに、20秒間変わります。**Arcane Thievery**は、敵の使用不能にした![スペル](../../../apps/web/public/icons/skill-type/spell.svg) **スペル**に、その使用不能が続く間変わります。コピーには独自のリチャージがあります。終わると元のスキルが戻ってきて、自身のリチャージを始めます。進行中のコピーの詠唱は失敗します。スピリットやほかの効果によってかけられた効果はコピーできませんが、それを除去すればエナジーは得られます。
 
 ## ウェルとグリフ
 
-Necromancerの**ウェル**は、最も近い死体を利用します。近くに死体がないと、ウェルは代わりにあなたのヘルスの66%を犠牲にし、あなたの立っている場所に現れます。
+![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**の![ウェル](../../../apps/web/public/icons/skill-type/well.svg) **ウェル**は、最も近い死体を利用します。近くに死体がないと、ウェルは代わりにあなたのヘルスの66%を犠牲にし、あなたの立っている場所に現れます。
 
-Elementalistの**グリフ**は、次のスペルを変えます。中断されなくなる、即座に詠唱される、すぐにリチャージされる、またはコストが下がる、のいずれかです。新しいグリフは、それまでのグリフと入れ替わります。
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**の![グリフ](../../../apps/web/public/icons/skill-type/glyph.svg) **グリフ**は、次の![スペル](../../../apps/web/public/icons/skill-type/spell.svg) **スペル**を変えます。中断されなくなる、即座に詠唱される、すぐにリチャージされる、またはコストが下がる、のいずれかです。新しいグリフは、それまでのグリフと入れ替わります。
 
 ## インターベンション
 
-「次にダメージでヘルスがN%を下回ったとき」に反応するスキルは、あなたを生かしたままその線より下にするあらゆる攻撃や生命力の吸収に反応します。攻撃の前からすでに線より下だった場合も同じです。ただし、自分で犠牲にしたヘルスや減少で失ったヘルスには反応しません。Judge's Interventionのような致死ダメージからの保護は、とどめの一撃を丸ごと防ぎます。ダメージも死亡もありません。Faithful InterventionとIllusion of Weaknessには持続時間がありません。ダメージ、除去、死亡によって終わるまで続き、その間あなたを回復します。
+「次にダメージでヘルスがN%を下回ったとき」に反応するスキルは、あなたを生かしたままその線より下にするあらゆる攻撃や生命力の吸収に反応します。攻撃の前からすでに線より下だった場合も同じです。ただし、自分で犠牲にしたヘルスや減少で失ったヘルスには反応しません。![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**のような致死ダメージからの保護は、とどめの一撃を丸ごと防ぎます。ダメージも死亡もありません。![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention**と![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness**には持続時間がありません。ダメージ、除去、死亡によって終わるまで続き、その間あなたを回復します。
 
 ## ライブラリ
 
@@ -50,11 +50,11 @@ Elementalistの**グリフ**は、次のスペルを変えます。中断され�
 
 ## アイテムスペル
 
-Ritualistの**アイテムスペル**は、スピリットの**遺灰**をあなたの手に持たせます。持っている間はボーナスがあり、落ちたときに**ドロップ効果**が発動します。遺灰が落ちるのは、時間切れになったとき、死んだとき、ヘルスバーの上の**遺灰を捨てる**を押したとき、別のアイテムスペルを詠唱したとき、シャドウステップしたとき、武器を持ち替えたとき、旗やレリックを拾ったときです。持っている間は両手がふさがっています。攻撃も攻撃スキルもできませんが、通常の速さで歩け、スペルも詠唱できます。遺灰を除去するものはなく、どんな終わり方もドロップです。
+![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**の![アイテムスペル](../../../apps/web/public/icons/skill-type/item-spell.svg) **アイテムスペル**は、スピリットの**遺灰**をあなたの手に持たせます。持っている間はボーナスがあり、落ちたときに**ドロップ効果**が発動します。遺灰が落ちるのは、時間切れになったとき、死んだとき、ヘルスバーの上の**遺灰を捨てる**を押したとき、別のアイテムスペルを詠唱したとき、シャドウステップしたとき、武器を持ち替えたとき、旗やレリックを拾ったときです。持っている間は両手がふさがっています。攻撃も![攻撃スキル](../../../apps/web/public/icons/skill-type/attack.svg) **攻撃スキル**もできませんが、通常の速さで歩け、![スペル](../../../apps/web/public/icons/skill-type/spell.svg) **スペル**も詠唱できます。遺灰を除去するものはなく、どんな終わり方もドロップです。
 
 ## シャドウステップ
 
-**シャドウステップ**は、間を歩くことなく、あなたを即座に移動させます。ほとんどはターゲットのところへ移動させます。Shadow of HasteやShadow Walkのように、終わったときに詠唱した場所へ戻すものもあります。**Recall**は、終わったときにだけ味方のところへ移動させ、3秒間すべてのスキルを使用不能にします。**Swap**は、自陣のスピリットやミニオンの1体と位置を入れ替えます。
+**シャドウステップ**は、間を歩くことなく、あなたを即座に移動させます。ほとんどはターゲットのところへ移動させます。Shadow of HasteやShadow Walkのように、終わったときに詠唱した場所へ戻すものもあります。![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall**は、終わったときにだけ味方のところへ移動させ、3秒間すべてのスキルを使用不能にします。**Swap**は、自陣のスピリットやミニオンの1体と位置を入れ替えます。
 
 ## ビルドの共有
 

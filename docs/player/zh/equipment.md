@@ -4,43 +4,43 @@
 
 ## 武器组
 
-你最多携带 **四个武器组**，每组包含一件武器，以及在武器空出一只手时的一件副手，例如盾牌或聚能器。第 1 组是你开局使用的；其他组可以留空。
+你最多携带 **四个武器组**，每组包含一件武器，以及在武器空出一只手时的一件副手，例如 ![盾牌](../../../apps/web/public/icons/offhand/shield.svg) **盾牌** 或 ![聚能器](../../../apps/web/public/icons/offhand/focus.svg) **聚能器**。第 1 组是你开局使用的；其他组可以留空。
 
 在对局中，用 **1 至 4**（经典按键中为 **F1 至 F4**）切换武器组。切换会等待你当前的施放或挥击完成；移动或 Esc 会立即切换。切换没有冷却。你的攻击、需要特定武器的技能以及你的最大能量都取决于手中的武器组。
 
-武器需要其属性达到 9 级：低于此等级时，它只能造成三分之一的伤害，编辑器会以红色提示。剑始终对应 Swordsmanship，但法杖、魔杖、盾牌或聚能器是为你选择的属性而制作的：在人形图上点击它所在的手（武器为 **6**，副手为 **7**）并选择一个属性。
+武器需要其属性达到 9 级：低于此等级时，它只能造成三分之一的伤害，编辑器会以红色提示。![剑](../../../apps/web/public/icons/weapon/sword.svg) **剑** 始终对应 Swordsmanship，但 ![法杖](../../../apps/web/public/icons/weapon/staff.svg) **法杖**、![魔杖](../../../apps/web/public/icons/weapon/wand.svg) **魔杖**、盾牌或聚能器是为你选择的属性而制作的：在人形图上点击它所在的手（武器为 **6**，副手为 **7**）并选择一个属性。
 
 ## 武器改造
 
-每件武器和副手都有改造栏位：一个 **前缀**、一个 **后缀** 和一个 **铭文**。点击人形图上的手或旁边的对应行来选择它们；每个都会说明其效果。魔杖、盾牌和聚能器不能装前缀；徒手则什么都不能装。改造始终处于其最佳数值，并且每个武器组都有自己的改造，所以切换武器组也会切换它们的改造：最大生命和能量会随手中的武器组变化。更换武器会保留仍然适用的改造，并告诉你丢弃了哪些。
+每件武器和副手都有改造栏位：一个 **前缀**、一个 **后缀** 和一个 **铭文**。点击人形图上的手或旁边的对应行来选择它们；每个都会说明其效果。![魔杖](../../../apps/web/public/icons/weapon/wand.svg) **魔杖**、![盾牌](../../../apps/web/public/icons/offhand/shield.svg) **盾牌** 和 ![聚能器](../../../apps/web/public/icons/offhand/focus.svg) **聚能器** 不能装前缀；徒手则什么都不能装。改造始终处于其最佳数值，并且每个武器组都有自己的改造，所以切换武器组也会切换它们的改造：最大生命和能量会随手中的武器组变化。更换武器会保留仍然适用的改造，并告诉你丢弃了哪些。
 
-| 改造                      | 栏位 | 适用                             | 效果                                 |
-| ------------------------- | ---- | -------------------------------- | ------------------------------------ |
-| Defensive                 | 前缀 | 法杖                             | 护甲 +5                              |
-| Hale                      | 前缀 | 法杖                             | +30 生命                             |
-| Insightful                | 前缀 | 法杖                             | 能量 +5                              |
-| of Defense                | 后缀 | 任何近战武器、法杖               | 护甲 +5                              |
-| of Fortitude              | 后缀 | 任何近战武器、法杖、盾牌、聚能器 | +30 生命                             |
-| of Shelter                | 后缀 | 任何近战武器、法杖               | 护甲 +7（对物理伤害）                |
-| of Warding                | 后缀 | 任何近战武器、法杖               | 护甲 +7（对元素伤害）                |
-| "Cast Out the Unclean"    | 铭文 | 盾牌、聚能器                     | 你身上的 Disease 持续时间减少 20%    |
-| "Fear Cuts Deeper"        | 铭文 | 盾牌、聚能器                     | 你身上的 Bleeding 持续时间减少 20%   |
-| "I Can See Clearly Now"   | 铭文 | 盾牌、聚能器                     | 你身上的 Blinded 持续时间减少 20%    |
-| "I have the power!"       | 铭文 | 任何近战武器                     | 能量 +5                              |
-| "Leaf on the Wind"        | 铭文 | 盾牌、聚能器                     | 护甲 +10（对冰冷伤害）               |
-| "Like a Rolling Stone"    | 铭文 | 盾牌、聚能器                     | 护甲 +10（对大地伤害）               |
-| "Live for Today"          | 铭文 | 聚能器                           | 能量 +15，能量恢复 -1                |
-| "Not the face!"           | 铭文 | 盾牌、聚能器                     | 护甲 +10（对钝击伤害）               |
-| "Only the Strong Survive" | 铭文 | 盾牌、聚能器                     | 你身上的 Weakness 持续时间减少 20%   |
-| "Pure of Heart"           | 铭文 | 盾牌、聚能器                     | 你身上的 Poison 持续时间减少 20%     |
-| "Riders on the Storm"     | 铭文 | 盾牌、聚能器                     | 护甲 +10（对闪电伤害）               |
-| "Seize the Day"           | 铭文 | 法杖、魔杖                       | 能量 +15，能量恢复 -1                |
-| "Sleep Now in the Fire"   | 铭文 | 盾牌、聚能器                     | 护甲 +10（对火焰伤害）               |
-| "Soundness of Mind"       | 铭文 | 盾牌、聚能器                     | 你身上的 Dazed 持续时间减少 20%      |
-| "Strength of Body"        | 铭文 | 盾牌、聚能器                     | 你身上的 Deep Wound 持续时间减少 20% |
-| "Swift as the Wind"       | 铭文 | 盾牌、聚能器                     | 你身上的 Crippled 持续时间减少 20%   |
-| "The Riddle of Steel"     | 铭文 | 盾牌、聚能器                     | 护甲 +10（对劈砍伤害）               |
-| "Through Thick and Thin"  | 铭文 | 盾牌、聚能器                     | 护甲 +10（对穿刺伤害）               |
+| 改造                      | 栏位 | 适用                                                              | 效果                                                                                                         |
+| ------------------------- | ---- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Defensive                 | 前缀 | ![法杖](../../../apps/web/public/icons/weapon/staff.svg) **法杖** | 护甲 +5                                                                                                      |
+| Hale                      | 前缀 | 法杖                                                              | +30 生命                                                                                                     |
+| Insightful                | 前缀 | 法杖                                                              | 能量 +5                                                                                                      |
+| of Defense                | 后缀 | 任何近战武器、法杖                                                | 护甲 +5                                                                                                      |
+| of Fortitude              | 后缀 | 任何近战武器、法杖、盾牌、聚能器                                  | +30 生命                                                                                                     |
+| of Shelter                | 后缀 | 任何近战武器、法杖                                                | 护甲 +7（对物理伤害）                                                                                        |
+| of Warding                | 后缀 | 任何近战武器、法杖                                                | 护甲 +7（对元素伤害）                                                                                        |
+| "Cast Out the Unclean"    | 铭文 | 盾牌、聚能器                                                      | 你身上的 ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** 持续时间减少 20%          |
+| "Fear Cuts Deeper"        | 铭文 | 盾牌、聚能器                                                      | 你身上的 ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** 持续时间减少 20%       |
+| "I Can See Clearly Now"   | 铭文 | 盾牌、聚能器                                                      | 你身上的 ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** 持续时间减少 20%            |
+| "I have the power!"       | 铭文 | 任何近战武器                                                      | 能量 +5                                                                                                      |
+| "Leaf on the Wind"        | 铭文 | 盾牌、聚能器                                                      | 护甲 +10（对冰冷伤害）                                                                                       |
+| "Like a Rolling Stone"    | 铭文 | 盾牌、聚能器                                                      | 护甲 +10（对大地伤害）                                                                                       |
+| "Live for Today"          | 铭文 | 聚能器                                                            | 能量 +15，能量恢复 -1                                                                                        |
+| "Not the face!"           | 铭文 | 盾牌、聚能器                                                      | 护甲 +10（对钝击伤害）                                                                                       |
+| "Only the Strong Survive" | 铭文 | 盾牌、聚能器                                                      | 你身上的 ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** 持续时间减少 20%       |
+| "Pure of Heart"           | 铭文 | 盾牌、聚能器                                                      | 你身上的 ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** 持续时间减少 20%             |
+| "Riders on the Storm"     | 铭文 | 盾牌、聚能器                                                      | 护甲 +10（对闪电伤害）                                                                                       |
+| "Seize the Day"           | 铭文 | 法杖、魔杖                                                        | 能量 +15，能量恢复 -1                                                                                        |
+| "Sleep Now in the Fire"   | 铭文 | 盾牌、聚能器                                                      | 护甲 +10（对火焰伤害）                                                                                       |
+| "Soundness of Mind"       | 铭文 | 盾牌、聚能器                                                      | 你身上的 ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** 持续时间减少 20%                |
+| "Strength of Body"        | 铭文 | 盾牌、聚能器                                                      | 你身上的 ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** 持续时间减少 20% |
+| "Swift as the Wind"       | 铭文 | 盾牌、聚能器                                                      | 你身上的 ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** 持续时间减少 20%       |
+| "The Riddle of Steel"     | 铭文 | 盾牌、聚能器                                                      | 护甲 +10（对劈砍伤害）                                                                                       |
+| "Through Thick and Thin"  | 铭文 | 盾牌、聚能器                                                      | 护甲 +10（对穿刺伤害）                                                                                       |
 
 ### 命中时生效的近战前缀
 
@@ -120,16 +120,16 @@
 
 ## 符文
 
-| 符文                                   | 提供                        |
-| -------------------------------------- | --------------------------- |
-| 初级属性符文                           | 一项属性 +1                 |
-| 高级属性符文                           | 一项属性 +2，生命 -35       |
-| 极品属性符文                           | 一项属性 +3，生命 -75       |
-| Vigor                                  | 更多生命（+30、+41 或 +50） |
-| Vitae                                  | +10 生命                    |
-| Attunement                             | 更多能量（+3、+6 或 +9）    |
-| Clarity, Purity, Recovery, Restoration | 两种异常状态各提前 20% 消退 |
-| Absorption（Warrior）                  | 每次受击的物理伤害降低      |
+| 符文                                                                                                                                                                                                                                                                                                           | 提供                        |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 初级属性符文                                                                                                                                                                                                                                                                                                   | 一项属性 +1                 |
+| 高级属性符文                                                                                                                                                                                                                                                                                                   | 一项属性 +2，生命 -35       |
+| 极品属性符文                                                                                                                                                                                                                                                                                                   | 一项属性 +3，生命 -75       |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | 更多生命（+30、+41 或 +50） |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 生命                    |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | 更多能量（+3、+6 或 +9）    |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | 两种异常状态各提前 20% 消退 |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption**（![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**）                                                                                                                                              | 每次受击的物理伤害降低      |
 
 你在选择徽记的同一位置选择该部件的符文：点击人形图上的部件。
 

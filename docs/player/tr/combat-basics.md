@@ -4,18 +4,18 @@
 
 500 **Can** ve 50 **Enerji** ile başlarsın; rünler ve moral ikisini de
 değiştirir. Beceriler Enerji harcar ve Enerji kendiliğinden, yavaşça
-geri gelir. Warrior'lar ve Paragon'lar onu en yavaş, Ranger'lar biraz
+geri gelir. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior'lar** ve ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon'lar** onu en yavaş, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger'lar** biraz
 daha hızlı, diğer herkes en hızlı geri kazanır.
 
 Çubuklarındaki oklar **pip**'lerdir: her biri, her saniye biraz geri
-gelen ya da akıp giden Can veya Enerjidir. Bleeding, Burning ve Poison
+gelen ya da akıp giden Can veya Enerjidir. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** ve ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**
 Can akıtır; Regeneration ve iyileştirme büyüleri Can ekler. 5 saniye
 dövüşün dışında kalırsan Can'ın kendiliğinden geri gelmeye başlar,
 dışarıda ne kadar uzun kalırsan o kadar hızlı.
 
 ## Adrenalin
 
-Warrior'ların, Paragon'ların ve başkalarının Enerji yerine
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior'ların**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon'ların** ve başkalarının Enerji yerine
 **adrenalin** harcayan becerileri vardır. Böyle her beceri kendi başına
 dolar: isabet ettirdiğin her silah vuruşu her birine bir vuruşluk dolum
 verir, büyük bir darbe almak da öyle. Birini kullanmak onu boşaltır ve
@@ -28,7 +28,7 @@ Bir becerinin **yapım**'ı bir an sürebilir, sonra tekrar kullanabilmen
 için **dolum** süresi gerekir. Hedefin menzil dışındaysa önce ona
 yürürsün. Hareket etmek ya da Esc bir yapımı iptal eder: Enerji gider,
 ama beceri dolmaya geçmez. Yapım süresi olan her beceriden sonra,
-saldırı becerileri hariç, hiçbir şey yapamadığın kısa bir duraklama
+![Saldırı becerisi](../../../apps/web/public/icons/skill-type/attack.svg) **saldırı becerileri** hariç, hiçbir şey yapamadığın kısa bir duraklama
 olur.
 
 Başka bir beceriyi kullanırken ya da o duraklamada bastığın bir beceri
@@ -36,7 +36,7 @@ Başka bir beceriyi kullanırken ya da o duraklamada bastığın bir beceri
 söner. Yalnızca biri bekler; başka birine basmak onun yerini alır.
 Hareket etmek, Esc, bir kesinti ya da yere düşme onu düşürür.
 
-**Haykırışlar ve duruşlar** asla sıraya alınmaz: başka bir beceri
+![Haykırış](../../../apps/web/public/icons/skill-type/shout.svg) **Haykırışlar** ve ![Duruş](../../../apps/web/public/icons/skill-type/stance.svg) **duruşlar** asla sıraya alınmaz: başka bir beceri
 yaparken, o duraklamada ya da yere düşmüşken bile hemen gerçekleşir.
 Yapım devam eder. Bu şekilde kullanıldıklarında seni hedefe yürütmezler:
 menzil dışındaysa reddedilirler.
@@ -54,11 +54,11 @@ darbe asla isabet etmez ve savuruş baştan başlar. Hâlâ hedefine
 yürüyen bir düşmanda kesilecek bir şey yoktur. Kartında "a skill" ya da
 "a spell" yazan bir kesinti sıradan saldırıya dokunmaz.
 
-Mantra of Concentration gibi bazı duruşlar sana yöneltilen bir kesintiyi
+Mantra of Concentration gibi bazı ![Duruş](../../../apps/web/public/icons/skill-type/stance.svg) **duruşlar** sana yöneltilen bir kesintiyi
 durdurur. Hiçbiri yere düşmeyi durdurmaz.
 
 **Yere düştün** mü, bir an hareket edemez, saldıramaz ya da beceri
-kullanamazsın, haykırış ya da duruş hariç; süren bir yapım da başarısız
+kullanamazsın, ![Haykırış](../../../apps/web/public/icons/skill-type/shout.svg) **haykırış** ya da duruş hariç; süren bir yapım da başarısız
 olur.
 
 ## Rahatsızlıklar, lanetler ve tılsımlar
@@ -66,20 +66,20 @@ olur.
 **Rahatsızlıklar** süreleri dolana ya da kaldırılana kadar sana zarar
 verir:
 
-| Rahatsızlık   | Ne yapar                                               |
-| ------------- | ------------------------------------------------------ |
-| Bleeding      | Can akıtır                                             |
-| Burning       | Can'ı hızlı akıtır                                     |
-| Poison        | Can akıtır                                             |
-| Disease       | Can akıtır ve yanındaki herkese yayılır                |
-| Crippled      | yarı hızda hareket edersin                             |
-| Blind         | saldırılarının çoğu ıskalar                            |
-| Weakness      | silahın çok daha zayıf vurur                           |
-| Cracked Armor | daha az zırh                                           |
-| Deep Wound    | daha az en yüksek Can ve iyileştirme daha az işe yarar |
-| Dazed         | büyüler yavaş yapılır; her saldırı onları keser        |
+| Rahatsızlık                                                                                 | Ne yapar                                               |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | Can akıtır                                             |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | Can'ı hızlı akıtır                                     |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | Can akıtır                                             |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | Can akıtır ve yanındaki herkese yayılır                |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | yarı hızda hareket edersin                             |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | saldırılarının çoğu ıskalar                            |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | silahın çok daha zayıf vurur                           |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | daha az zırh                                           |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | daha az en yüksek Can ve iyileştirme daha az işe yarar |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | büyüler yavaş yapılır; her saldırı onları keser        |
 
-**Lanetler** sana düşmanlar tarafından yapılır; **tılsımlar** ise
+![Lanet](../../../apps/web/public/icons/skill-type/hex.svg) **Lanetler** sana düşmanlar tarafından yapılır; ![Tılsım](../../../apps/web/public/icons/skill-type/enchantment.svg) **tılsımlar** ise
 kendin ya da müttefiklerin tarafından. Her biri kendi türünden bir
 beceriyle kaldırılır. Bazı tılsımlar **sürdürülür**: sen bitirene kadar
 sürerler ve sürdükleri boyunca bir Enerji pip'ine mal olurlar. Birini
@@ -92,8 +92,8 @@ kadar kesin şekilde birini tüketir.
 
 ## Zırh ve hasar
 
-Warrior'lar ve Paragon'lar en çok zırhı giyer; Ranger'lar, Assassin'ler
-ve Dervish'ler daha azını; büyücüler en azını. Zırh silah, elementel,
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior'lar** ve ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon'lar** en çok zırhı giyer; ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger'lar**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin'ler**
+ve ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish'ler** daha azını; büyücüler en azını. Zırh silah, elementel,
 kaos ve karanlık hasarı küçültür. Kutsal, gölge ve türsüz hasar, Can
 akıtmaları ve can çalma onu yok sayar. Yalnızca silah vuruşları kritik
 olabilir. Bazı tılsımlar taşıyıcısını kritik vuruşlara karşı bağışık

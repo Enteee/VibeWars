@@ -6,8 +6,8 @@ menu utama, atau **Karakter baru**.
 
 ## Profesi
 
-Ada sepuluh: Warrior, Ranger, Monk, Necromancer, Mesmer,
-Elementalist, Assassin, Ritualist, Paragon dan Dervish. Profesi **utama**-mu
+Ada sepuluh: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**,
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** dan ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Profesi **utama**-mu
 adalah jati dirimu: skill-skillnya, dan **atribut utama**-nya
 (ditandai ★), yang hanya didapat profesi utama. Profesi **kedua**-mu meminjamkan
 skill-skillnya, tapi tidak atribut utamanya.
@@ -18,11 +18,11 @@ Bar punya **delapan slot**. Hanya satu skill **elite** (bingkai emas) yang muat 
 satu bar: pasang yang kedua dan ia menggantikan yang pertama. Tekan **×** di sebuah slot untuk
 mengosongkannya.
 
-**Flash enchantment** (Dervish) bersifat instan: memakainya tidak menghentikan
+![Flash enchantment](../../../apps/web/public/icons/skill-type/enchantment.svg) **Flash enchantment** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) bersifat instan: memakainya tidak menghentikan
 ayunan dan langkahmu, jadi kamu bisa menyelipkannya di antara pukulan. Masing-masing
 mematikan flash enchantment-mu yang lain selama 1 detik.
 
-**Wujud** (lima Avatar Dervish: Balthazar, Dwayna, Grenth, Lyssa
+![Wujud](../../../apps/web/public/icons/skill-type/form.svg) **Wujud** (lima Avatar Dervish: Balthazar, Dwayna, Grenth, Lyssa
 dan Melandru) mengubahmu selama lebih dari satu menit. Wujud
 bukan berkah, jadi tak ada yang bisa melucutinya, dan kamu hanya bisa dalam satu wujud
 pada satu waktu. Memakai satu wujud menonaktifkannya selama 45 detik. Saat wujud berakhir, kamu
@@ -31,7 +31,7 @@ kamu aktifkan. Tekan tombol gerak lagi untuk terus berjalan.
 
 **Sebagian tembakan menonaktifkan serangan-seranganmu yang lain.** Focused Shot dan Needling
 Shot melesat lebih cepat dari seharusnya sebuah anak panah, tapi masing-masing yang kena mematikan
-skill seranganmu yang lain selama beberapa detik. Mantra tidak terpengaruh.
+![Skill serangan](../../../apps/web/public/icons/skill-type/attack.svg) **skill seranganmu** yang lain selama beberapa detik. ![Mantra](../../../apps/web/public/icons/skill-type/spell.svg) **Mantra** tidak terpengaruh.
 
 ## Atribut
 
@@ -43,10 +43,10 @@ atribut yang dipakai sebuah skill membuatnya lebih kuat: angka yang tumbuh bersa
 atribut ditampilkan hijau dan tebal, pada peringkatmu saat ini termasuk
 rune dan pelindung kepala.
 
-Dalam pertarungan, peringkatmu bisa berubah untuk sementara. Weakness mengurangi satu dari
-masing-masing. Sebagian kutukan membuat atribut musuh menjadi 0, dan Master of Magic membuat
+Dalam pertarungan, peringkatmu bisa berubah untuk sementara. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** mengurangi satu dari
+masing-masing. Sebagian ![Kutukan](../../../apps/web/public/icons/skill-type/hex.svg) **kutukan** membuat atribut musuh menjadi 0, dan Master of Magic membuat
 atribut elemenmu menjadi 13: peringkat yang ditetapkan dengan cara ini mengalahkan rune maupun
-Weakness. Signet of Illusions membuat mantra-mantramu berikutnya dari atribut lain
+Weakness. Signet of Illusions membuat ![Mantra](../../../apps/web/public/icons/skill-type/spell.svg) **mantra-mantramu** berikutnya dari atribut lain
 memakai peringkat Illusion Magic-mu. Sebagian skill menaikkan
 atributmu untuk sementara atau untuk mantra-mantramu berikutnya, seperti Glyph of Elemental
 Power dan Ritual Lord, bahkan atribut yang kamu biarkan di 0; peringkat yang ditetapkan, seperti milik Master
@@ -54,19 +54,19 @@ of Magic, mengalahkan dorongan semacam itu.
 
 ## Echo
 
-**Echo** milik Paragon adalah buff panjang pada satu sekutu. **Refrain** diperbarui
-ke durasi penuhnya, dan **finale** berlaku, setiap kali chant atau
-teriakan berakhir pada sekutu itu. Chant atau teriakan yang dipasang ulang sebelum berakhir belum
+![Echo](../../../apps/web/public/icons/skill-type/echo.svg) **Echo** milik ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** adalah buff panjang pada satu sekutu. **Refrain** diperbarui
+ke durasi penuhnya, dan **finale** berlaku, setiap kali ![Chant](../../../apps/web/public/icons/skill-type/chant.svg) **chant** atau
+![Teriakan](../../../apps/web/public/icons/skill-type/shout.svg) **teriakan** berakhir pada sekutu itu. Chant atau teriakan yang dipasang ulang sebelum berakhir belum
 berakhir. Tak ada yang bisa menghapus echo: echo berakhir saat habis atau saat pemakainya
 mati. Kebanyakan tidak bisa menargetkan roh.
 
 ## Skill yang menjadi skill lain
 
-Sebagian skill Mesmer menaruh skill lain di slotnya sendiri untuk sementara.
-Arcane Echo dan Echo menyalin skill berikutnya yang kamu pakai. **Inspired
+Sebagian skill ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** menaruh skill lain di slotnya sendiri untuk sementara.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** dan ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** menyalin skill berikutnya yang kamu pakai. **Inspired
 Enchantment** dan **Inspired Hex** menjadi skill yang merapal
-berkah atau kutukan yang mereka hapus, selama 20 detik. **Arcane Thievery**
-menjadi mantra yang dinonaktifkannya pada musuhmu, selama penonaktifan itu
+![Berkah](../../../apps/web/public/icons/skill-type/enchantment.svg) **berkah** atau ![Kutukan](../../../apps/web/public/icons/skill-type/hex.svg) **kutukan** yang mereka hapus, selama 20 detik. **Arcane Thievery**
+menjadi ![Mantra](../../../apps/web/public/icons/skill-type/spell.svg) **mantra** yang dinonaktifkannya pada musuhmu, selama penonaktifan itu
 berlangsung. Salinannya punya cooldown sendiri. Saat salinan berakhir, skill aslinya
 kembali dan memulai cooldown-nya sendiri, dan rapalan salinan yang masih
 berjalan gagal. Status yang dipasang oleh roh atau oleh status lain tidak bisa
@@ -74,10 +74,10 @@ disalin, meski menghapusnya tetap memberimu Energi.
 
 ## Well dan glyph
 
-**Well** milik Necromancer memanfaatkan mayat terdekat. Kalau tak ada mayat di dekatmu,
+![Well](../../../apps/web/public/icons/skill-type/well.svg) **Well** milik ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** memanfaatkan mayat terdekat. Kalau tak ada mayat di dekatmu,
 well mengorbankan 66% Darah-mu sebagai gantinya dan muncul di tempat kamu berdiri.
 
-**Glyph** milik Elementalist mengubah mantra berikutnya: mantra itu tidak bisa
+![Glyph](../../../apps/web/public/icons/skill-type/glyph.svg) **Glyph** milik ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** mengubah ![Mantra](../../../apps/web/public/icons/skill-type/spell.svg) **mantra** berikutnya: mantra itu tidak bisa
 diinterupsi, langsung terapal, langsung pulih dari cooldown, atau lebih murah. Glyph
 baru menggantikan glyph yang kamu punya.
 
@@ -86,9 +86,9 @@ baru menggantikan glyph yang kamu punya.
 Skill yang bereaksi pada "the next time damage drops Health below N%"
 bereaksi pada pukulan atau pencurian nyawa apa pun yang membuatmu tetap hidup dan di bawah
 batas itu, bahkan kalau kamu sudah di bawahnya sebelum pukulan itu, dan tidak pernah pada
-Darah yang kamu korbankan atau yang hilang karena degenerasi. Perlindungan dari damage mematikan, seperti Judge's Intervention,
-membuang seluruh pukulan pembunuh: tanpa damage, tanpa kematian. Faithful Intervention
-dan Illusion of Weakness tidak punya durasi: keduanya bertahan sampai damage, pelucutan
+Darah yang kamu korbankan atau yang hilang karena degenerasi. Perlindungan dari damage mematikan, seperti ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**,
+membuang seluruh pukulan pembunuh: tanpa damage, tanpa kematian. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention**
+dan ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** tidak punya durasi: keduanya bertahan sampai damage, pelucutan
 atau kematian mengakhirinya, dan menyembuhkanmu selama berjalan.
 
 ## Perpustakaan
@@ -114,19 +114,19 @@ dan penyembuhan dari roh, minion dan pet-mu sebagai milikmu.
 
 ## Mantra item
 
-**Mantra item** milik Ritualist menaruh **abu** roh di tanganmu: bonus selama
+![Mantra item](../../../apps/web/public/icons/skill-type/item-spell.svg) **Mantra item** milik ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** menaruh **abu** roh di tanganmu: bonus selama
 kamu memegangnya, dan **efek jatuh** saat abu itu jatuh. Abu jatuh saat habis,
 saat kamu mati, saat kamu menekan **Jatuhkan abu** di atas
 bar Darah-mu, merapal mantra item lain, melakukan shadow step, mengganti senjata atau
 mengangkat bendera atau relik. Tanganmu penuh selama memegangnya: tanpa
-serangan dan tanpa skill serangan, tapi kamu berjalan dengan kecepatan penuh dan tetap bisa merapal
-mantra. Tak ada yang bisa menghapus abu; setiap akhir adalah jatuhnya abu.
+serangan dan tanpa ![Skill serangan](../../../apps/web/public/icons/skill-type/attack.svg) **skill serangan**, tapi kamu berjalan dengan kecepatan penuh dan tetap bisa merapal
+![Mantra](../../../apps/web/public/icons/skill-type/spell.svg) **mantra**. Tak ada yang bisa menghapus abu; setiap akhir adalah jatuhnya abu.
 
 ## Shadow step
 
 **Shadow step** memindahkanmu seketika, tanpa berjalan di antaranya. Kebanyakan memindahkanmu ke
 targetmu; sebagian membawamu kembali ke tempat kamu merapalnya saat efeknya berakhir, seperti
-Shadow of Haste dan Shadow Walk. **Recall** memindahkanmu ke sekutunya hanya
+Shadow of Haste dan Shadow Walk. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** memindahkanmu ke sekutunya hanya
 saat efeknya berakhir, dan menonaktifkan semua skill-mu selama 3 detik. **Swap** bertukar
 tempat dengan salah satu roh atau minion di pihakmu.
 

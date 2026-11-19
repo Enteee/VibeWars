@@ -7,7 +7,7 @@ clique em uma para equipar. A armadura é escolhida na figura, abaixo.
 ## Conjuntos de armas
 
 Você leva até **quatro conjuntos de armas**, cada um com uma arma e, se a
-arma deixar uma mão livre, uma mão secundária, como um escudo ou um foco.
+arma deixar uma mão livre, uma mão secundária, como um ![Escudo](../../../apps/web/public/icons/offhand/shield.svg) **escudo** ou um ![Foco](../../../apps/web/public/icons/offhand/focus.svg) **foco**.
 O conjunto 1 é o inicial; os outros podem ficar vazios.
 
 Em uma partida, troque de conjunto com **1 a 4** (**F1 a F4** nas teclas
@@ -17,8 +17,8 @@ ataques, as habilidades que precisam de certa arma e sua energia máxima
 seguem o conjunto em mãos.
 
 Uma arma precisa de nível 9 no atributo dela: abaixo disso, ela causa um
-terço do dano, e o editor avisa em vermelho. Uma espada é sempre
-Swordsmanship, mas um cajado, uma varinha, um escudo ou um foco é feito
+terço do dano, e o editor avisa em vermelho. Uma ![Espada](../../../apps/web/public/icons/weapon/sword.svg) **espada** é sempre
+Swordsmanship, mas um ![Cajado](../../../apps/web/public/icons/weapon/staff.svg) **cajado**, uma ![Varinha](../../../apps/web/public/icons/weapon/wand.svg) **varinha**, um escudo ou um foco é feito
 para um atributo que você escolhe: clique na mão correspondente na figura
 (**6** para a arma, **7** para a mão secundária) e escolha um.
 
@@ -26,40 +26,40 @@ para um atributo que você escolhe: clique na mão correspondente na figura
 
 Toda arma e mão secundária tem espaços para mods: um **Prefixo**, um
 **Sufixo** e uma **Inscrição**. Clique na mão na figura, ou na linha dela
-ao lado, para escolher; cada um diz o que faz. Varinha, escudo e foco não
+ao lado, para escolher; cada um diz o que faz. ![Varinha](../../../apps/web/public/icons/weapon/wand.svg) **Varinha**, ![Escudo](../../../apps/web/public/icons/offhand/shield.svg) **escudo** e ![Foco](../../../apps/web/public/icons/offhand/focus.svg) **foco** não
 aceitam prefixo; mãos vazias também não. Um mod sempre tem seu melhor
 valor, e cada conjunto de armas usa os seus, então trocar de conjunto
 troca os mods também: vida e energia máximas acompanham o conjunto em
 mãos. Trocar de arma mantém os mods que ainda servem e diz quais foram
 descartados.
 
-| Mod                       | Espaço    | Serve em                                    | Efeito                                       |
-| ------------------------- | --------- | ------------------------------------------- | -------------------------------------------- |
-| Defensive                 | Prefixo   | Cajado                                      | Armadura +5                                  |
-| Hale                      | Prefixo   | Cajado                                      | +30 de vida                                  |
-| Insightful                | Prefixo   | Cajado                                      | Energia +5                                   |
-| of Defense                | Sufixo    | qualquer arma marcial, Cajado               | Armadura +5                                  |
-| of Fortitude              | Sufixo    | qualquer arma marcial, Cajado, Escudo, Foco | +30 de vida                                  |
-| of Shelter                | Sufixo    | qualquer arma marcial, Cajado               | Armadura +7 (contra dano físico)             |
-| of Warding                | Sufixo    | qualquer arma marcial, Cajado               | Armadura +7 (contra dano elemental)          |
-| "Cast Out the Unclean"    | Inscrição | Escudo, Foco                                | Reduz em 20% a duração de Disease em você    |
-| "Fear Cuts Deeper"        | Inscrição | Escudo, Foco                                | Reduz em 20% a duração de Bleeding em você   |
-| "I Can See Clearly Now"   | Inscrição | Escudo, Foco                                | Reduz em 20% a duração de Blinded em você    |
-| "I have the power!"       | Inscrição | qualquer arma marcial                       | Energia +5                                   |
-| "Leaf on the Wind"        | Inscrição | Escudo, Foco                                | Armadura +10 (contra dano de gelo)           |
-| "Like a Rolling Stone"    | Inscrição | Escudo, Foco                                | Armadura +10 (contra dano de terra)          |
-| "Live for Today"          | Inscrição | Foco                                        | Energia +15, regeneração de energia -1       |
-| "Not the face!"           | Inscrição | Escudo, Foco                                | Armadura +10 (contra dano contundente)       |
-| "Only the Strong Survive" | Inscrição | Escudo, Foco                                | Reduz em 20% a duração de Weakness em você   |
-| "Pure of Heart"           | Inscrição | Escudo, Foco                                | Reduz em 20% a duração de Poison em você     |
-| "Riders on the Storm"     | Inscrição | Escudo, Foco                                | Armadura +10 (contra dano de raio)           |
-| "Seize the Day"           | Inscrição | Cajado, Varinha                             | Energia +15, regeneração de energia -1       |
-| "Sleep Now in the Fire"   | Inscrição | Escudo, Foco                                | Armadura +10 (contra dano de fogo)           |
-| "Soundness of Mind"       | Inscrição | Escudo, Foco                                | Reduz em 20% a duração de Dazed em você      |
-| "Strength of Body"        | Inscrição | Escudo, Foco                                | Reduz em 20% a duração de Deep Wound em você |
-| "Swift as the Wind"       | Inscrição | Escudo, Foco                                | Reduz em 20% a duração de Crippled em você   |
-| "The Riddle of Steel"     | Inscrição | Escudo, Foco                                | Armadura +10 (contra dano cortante)          |
-| "Through Thick and Thin"  | Inscrição | Escudo, Foco                                | Armadura +10 (contra dano perfurante)        |
+| Mod                       | Espaço    | Serve em                                                              | Efeito                                                                                                               |
+| ------------------------- | --------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Prefixo   | ![Cajado](../../../apps/web/public/icons/weapon/staff.svg) **Cajado** | Armadura +5                                                                                                          |
+| Hale                      | Prefixo   | Cajado                                                                | +30 de vida                                                                                                          |
+| Insightful                | Prefixo   | Cajado                                                                | Energia +5                                                                                                           |
+| of Defense                | Sufixo    | qualquer arma marcial, Cajado                                         | Armadura +5                                                                                                          |
+| of Fortitude              | Sufixo    | qualquer arma marcial, Cajado, Escudo, Foco                           | +30 de vida                                                                                                          |
+| of Shelter                | Sufixo    | qualquer arma marcial, Cajado                                         | Armadura +7 (contra dano físico)                                                                                     |
+| of Warding                | Sufixo    | qualquer arma marcial, Cajado                                         | Armadura +7 (contra dano elemental)                                                                                  |
+| "Cast Out the Unclean"    | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** em você          |
+| "Fear Cuts Deeper"        | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** em você       |
+| "I Can See Clearly Now"   | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** em você            |
+| "I have the power!"       | Inscrição | qualquer arma marcial                                                 | Energia +5                                                                                                           |
+| "Leaf on the Wind"        | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de gelo)                                                                                   |
+| "Like a Rolling Stone"    | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de terra)                                                                                  |
+| "Live for Today"          | Inscrição | Foco                                                                  | Energia +15, regeneração de energia -1                                                                               |
+| "Not the face!"           | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano contundente)                                                                               |
+| "Only the Strong Survive" | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** em você       |
+| "Pure of Heart"           | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** em você             |
+| "Riders on the Storm"     | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de raio)                                                                                   |
+| "Seize the Day"           | Inscrição | Cajado, Varinha                                                       | Energia +15, regeneração de energia -1                                                                               |
+| "Sleep Now in the Fire"   | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de fogo)                                                                                   |
+| "Soundness of Mind"       | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** em você                |
+| "Strength of Body"        | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** em você |
+| "Swift as the Wind"       | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** em você       |
+| "The Riddle of Steel"     | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano cortante)                                                                                  |
+| "Through Thick and Thin"  | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano perfurante)                                                                                |
 
 ### Prefixos marciais ao acertar
 
@@ -155,16 +155,16 @@ mods.
 
 ## Runas
 
-| Runa                                   | O que dá                                 |
-| -------------------------------------- | ---------------------------------------- |
-| Runa de atributo Minor                 | +1 em um atributo                        |
-| Runa de atributo Major                 | +2 em um atributo, -35 de vida           |
-| Runa de atributo Superior              | +3 em um atributo, -75 de vida           |
-| Vigor                                  | mais vida (+30, +41 ou +50)              |
-| Vitae                                  | +10 de vida                              |
-| Attunement                             | mais energia (+3, +6 ou +9)              |
-| Clarity, Purity, Recovery, Restoration | duas condições cada acabam 20% mais cedo |
-| Absorption (Warrior)                   | menos dano físico de cada golpe          |
+| Runa                                                                                                                                                                                                                                                                                                           | O que dá                                 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Runa de atributo Minor                                                                                                                                                                                                                                                                                         | +1 em um atributo                        |
+| Runa de atributo Major                                                                                                                                                                                                                                                                                         | +2 em um atributo, -35 de vida           |
+| Runa de atributo Superior                                                                                                                                                                                                                                                                                      | +3 em um atributo, -75 de vida           |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | mais vida (+30, +41 ou +50)              |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 de vida                              |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mais energia (+3, +6 ou +9)              |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | duas condições cada acabam 20% mais cedo |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | menos dano físico de cada golpe          |
 
 Você escolhe a runa de uma peça no mesmo lugar da insígnia: clique na
 peça na figura.
