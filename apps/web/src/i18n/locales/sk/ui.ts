@@ -1422,7 +1422,6 @@ export default {
   "teamPlay.edit": "Upraviť",
   "teamPlay.loadLine": "kód tímu na načítanie",
   "teamPlay.loadPlaceholder": "Vlož zdieľaný kód tímu",
-  "teamPlay.loadTeam": "Načítať tím",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Nový tímový build",
   "teamPlay.noTeamBuilds": "Zatiaľ žiadne tímové buildy {size}.",

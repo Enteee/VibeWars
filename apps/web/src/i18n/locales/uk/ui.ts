@@ -1425,7 +1425,6 @@ export default {
   "teamPlay.edit": "Змінити",
   "teamPlay.loadLine": "код команди для завантаження",
   "teamPlay.loadPlaceholder": "Встав надісланий код команди",
-  "teamPlay.loadTeam": "Завантажити команду",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Новий командний білд",
   "teamPlay.noTeamBuilds": "Командних білдів {size} ще немає.",

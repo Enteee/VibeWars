@@ -168,16 +168,16 @@ Az **Esc** mentés nélkül lép ki, és előbb rákérdez, ha bármit
 módosítottál. A **Megoszt**, a **GW1-kód betöltése**, a **Másolat** és a
 **Törlés** a **⋯** alatt van.
 
-A csapatkódot ehelyett a **Csapatszerkesztőben** kell betölteni: nyomd meg a
-**Csapat betöltése** gombot, illeszd be a kódot, és nyomd meg a **Betölt**
-gombot, vagy illeszd be bárhová a Csapatszerkesztőben.
+A csapatkódot ehelyett a **Csapatszerkesztőben** kell betölteni: illeszd be bárhová
+ott, vagy nyiss meg egy csapatbuildet, és használd a **⋯** → **Csapat betöltése**
+lehetőségét.
 
 ## Csapatbuildek
 
 A **csapatbuild** egy csapat a saját karaktereiből, amelyet a
 **Csapatszerkesztőben** készítesz, és a saját karaktereidtől elkülönítve
 tárolódik. Mindegyik egy kártya ott, és csak ott: az **Új csapatbuild**
-készít egyet, a **Csapat betöltése** betölt egy veled megosztottat, egy kártyára kattintás vagy a **Szerk.** gombja pedig
+készít egyet, az oda beillesztett csapatkód betölt egy veled megosztottat, egy kártyára kattintás vagy a **Szerk.** gombja pedig
 megnyitja. Egyet a [Csapatlobbiban](modes.md#csapatlobbi) javasolhatsz.
 
 Minden csapatbuildnek van mérete, 2v2, 4v4 vagy 8v8 (1v1-es csapatbuild nincs): az oldalsáv

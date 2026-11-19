@@ -1308,7 +1308,6 @@ export default {
   "teamPlay.edit": "Düzenle",
   "teamPlay.loadLine": "yüklenecek takım kodu",
   "teamPlay.loadPlaceholder": "Paylaşılan bir takım kodu yapıştır",
-  "teamPlay.loadTeam": "Takım yükle",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Yeni takım dizilimi",
   "teamPlay.noTeamBuilds": "Henüz {size} Takım Dizilimi yok.",

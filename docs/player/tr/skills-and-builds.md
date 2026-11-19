@@ -158,16 +158,16 @@ Dizilim, **Kaydet**'e bastığında senin olur.
 **Esc** kaydetmeden çıkar, bir şey değiştirdiysen önce sorar.
 **Paylaş**, **GW1 kodu yükle**, **Çoğalt** ve **Sil** **⋯** altındadır.
 
-Takım kodu ise **Takım Oluşturucu**'da yüklenir: **Takım yükle**'ye bas, kodu
-yapıştır ve **Yükle**'ye bas ya da kodu Takım Oluşturucu'da herhangi bir yere
-yapıştır.
+Takım kodu ise **Takım Oluşturucu**'da yüklenir: kodu orada herhangi bir yere
+yapıştır ya da bir takım dizilimi aç ve onun **⋯** → **Takım yükle**'sini
+kullan.
 
 ## Takım Dizilimleri
 
 Bir **takım dizilimi**, kendi karakterlerinden oluşan, **Takım
 Oluşturucu**'da yapılan ve senin karakterlerinden ayrı tutulan bir
 takımdır. Her biri orada, yalnızca orada, bir karttır: **Yeni takım
-dizilimi** bir tane yapar, **Takım yükle** seninle paylaşılan birini
+dizilimi** bir tane yapar, oraya yapıştırılan bir takım kodu seninle paylaşılan birini
 yükler, bir karta ya da onun **Düzenle**'sine tıklamak
 onu açar. Birini [Takım Lobisi](modes.md#takım-lobisi)'nde önerirsin.
 
