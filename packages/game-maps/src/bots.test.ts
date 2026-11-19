@@ -518,6 +518,26 @@ describe("The Brazen Causeway (#3435)", () => {
     });
   });
 
+  // #3532: a bot set on a lever throws it, though the gain falls as it nears the foes; each
+  // team climbs its own stair to its lever (#3549), so the lever bots no longer meet there.
+  it.each(["brazen-causeway-gates", "brazen-causeway-gates-2", "brazen-causeway-gates-3"])(
+    "opens both gates before the time limit in a bot-vs-bot match (seed %s)",
+    (seed) => {
+      const sim = match(seed);
+      for (
+        let t = 0;
+        t <= ANNIHILATION_MATCH_RULES.timeLimitSeconds &&
+        sim.phase !== "finished" &&
+        !sim.gates.every((gate) => gate.open);
+        t += DT
+      ) {
+        sim.step(DT);
+      }
+      expect(sim.gates.map((gate) => gate.open)).toEqual([true, true]);
+    },
+    120_000,
+  );
+
   it("leaves a way from base to base with both gates closed", () => {
     const closed = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
     const finder = layeredFinder(closed, RULESET.collision.playerRadius);

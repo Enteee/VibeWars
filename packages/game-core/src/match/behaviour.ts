@@ -289,6 +289,21 @@ export interface BehaviourCursor {
     | undefined;
   /** `play-build`: the match second from which it may duck again (#3369). */
   duckReadyAt: number;
+  /**
+   * `play-build`: the lever it set out to throw (#3532), the lever's
+   * `flippedAt` then, the match second it set out, the one it gives up at
+   * and the one it last found a route to it; `undefined` while it is set
+   * on none.
+   */
+  lever:
+    | {
+        readonly targetId: string;
+        readonly flippedAt: number;
+        readonly since: number;
+        readonly until: number;
+        readonly routedAt: number;
+      }
+    | undefined;
 }
 
 export interface BehaviourContext {
@@ -339,6 +354,8 @@ export interface BehaviourContext {
   readonly cover: readonly HighGroundSpot[];
   /** How far `self` walks to `to` on `layer` (#3141), stairs and ramps included: Infinity with no route. */
   routeLength(to: Vec2, layer: number): number;
+  /** The living bot of `self`'s team, `self` included, set on throwing lever `targetId` (#3532), if any. */
+  leverHolder(targetId: string): string | undefined;
 }
 
 /** A human who has given no command for this many seconds is idle (#3489): bots do not wait for them. */
@@ -453,6 +470,7 @@ export function createCursor(): BehaviourCursor {
     healthMarks: [],
     duck: undefined,
     duckReadyAt: 0,
+    lever: undefined,
   };
 }
 

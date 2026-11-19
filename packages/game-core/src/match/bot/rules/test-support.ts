@@ -146,6 +146,7 @@ export function contextFor(
     highGround: [],
     cover: [],
     routeLength: (to) => distance(self.position, to),
+    leverHolder: () => undefined,
     ...extra,
   };
 }
