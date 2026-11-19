@@ -17,7 +17,8 @@ import { fromPlayerBuild, toPlayerBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import { newCharacter } from "./build-editor.js";
 import { FIGURE_SIZE, characterAppearance, figureBody, paintFigure } from "./character-figure.js";
-import { CAPE_BAND_CASING, type Painter, type StandingBody } from "../render/body-painter.js";
+import { type Painter, type StandingBody } from "../render/body-painter.js";
+import { CAPE_BAND_CASING } from "../render/cape-motion.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 

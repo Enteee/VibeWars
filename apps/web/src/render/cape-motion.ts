@@ -157,6 +157,11 @@ export interface CapeShape {
 
 /** How far out of the rim the band's centre line runs. */
 const BAND_OUT = 0.9;
+/** The band on the rim and its casing, as the motion study draws them (#1699). */
+export const CAPE_BAND_WIDTH = 1.5;
+export const CAPE_BAND_CASING = 3;
+/** How far out of the rim the band's casing reaches: the emblem starts past it. */
+export const CAPE_BAND_REACH = BAND_OUT + CAPE_BAND_CASING / 2;
 /** The band's half span, folded, and how much of it the tab takes. */
 const BAND_SPAN = (52 * Math.PI) / 180;
 const BAND_SPAN_TAKEN = (22 * Math.PI) / 180;
@@ -165,17 +170,17 @@ const EMBLEM_NOTCH_GAP = 0.5;
 
 /**
  * The largest emblem, up to `EMBLEM_SIZE`, whose far edge stops `EMBLEM_NOTCH_GAP`
- * short of the notch `notch` along the tab and whose near corners clear the
- * disc of radius `r` (#3627): the near edge at `notch - size` and its corners
- * `size / 2` aside, `(notch - size)^2 + (size / 2)^2 >= r^2`. None when the
- * cloth has not cleared the disc.
+ * short of the notch `notch` along the tab and whose near corners lie `clear`
+ * or more from the body's centre (#3627): the near edge at `far - size`, its
+ * corners `size / 2` aside, `(far - size)^2 + (size / 2)^2 >= clear^2`. None
+ * while the cloth is under the disc and the band.
  */
-function emblemFit(notch: number, r: number): number {
+function emblemFit(notch: number, clear: number): number {
   const far = notch - EMBLEM_NOTCH_GAP;
-  if (far <= r) {
+  if (far <= clear) {
     return 0;
   }
-  const room = 5 * r * r - far * far;
+  const room = 5 * clear * clear - far * far;
   return room <= 0 ? EMBLEM_SIZE : Math.min(EMBLEM_SIZE, (2 * far - Math.sqrt(room)) / 2.5);
 }
 
@@ -207,7 +212,7 @@ export function capeMotionShape(
   const notch = at(notchAlong, 0);
   const hemRight = at(len, width);
   const span = BAND_SPAN - BAND_SPAN_TAKEN * u;
-  const emblemSize = emblemFit(notchAlong, r);
+  const emblemSize = emblemFit(notchAlong, r + CAPE_BAND_REACH);
   const emblemAlong = notchAlong - EMBLEM_NOTCH_GAP - emblemSize / 2;
   return {
     band: { x, y, radius: r + BAND_OUT, from: angle - span, to: angle + span },

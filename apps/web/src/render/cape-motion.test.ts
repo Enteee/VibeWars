@@ -3,6 +3,7 @@ import { EMBLEM_GRID, packEmblem } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
+  CAPE_BAND_REACH,
   CAPE_LENGTH,
   capeJumped,
   capeMotionShape,
@@ -149,11 +150,11 @@ describe("the cape's emblem (#3627)", () => {
     const { cloth, emblem } = capeMotionShape(state, { x: 0, y: 0, r: R }, FULL);
     for (const point of emblem.flatMap((part) => part.points)) {
       expect(inside(point, cloth)).toBe(true);
-      expect(Math.hypot(point.x, point.y)).toBeGreaterThanOrEqual(R - 1e-9);
+      expect(Math.hypot(point.x, point.y)).toBeGreaterThanOrEqual(R + CAPE_BAND_REACH - 1e-9);
     }
   }
 
-  it("lies wholly on the cloth and off the disc, however far it has unfolded", () => {
+  it("lies wholly on the cloth, past the disc and its band, however far it has unfolded", () => {
     for (const unfold of [0.25, 0.5, 1]) {
       expectOnCloth(rested(unfold));
     }
@@ -173,9 +174,9 @@ describe("the cape's emblem (#3627)", () => {
     }
   });
 
-  it("is twice the old 5.5 across, unfolded", () => {
+  it("is at least 1.5 times the old 5.5 across, unfolded", () => {
     const [part] = capeMotionShape(rested(1), { x: 0, y: 0, r: R }, FULL).emblem;
     const [a, b] = part?.points ?? [];
-    expect(Math.hypot((b?.x ?? 0) - (a?.x ?? 0), (b?.y ?? 0) - (a?.y ?? 0))).toBeCloseTo(11);
+    expect(Math.hypot((b?.x ?? 0) - (a?.x ?? 0), (b?.y ?? 0) - (a?.y ?? 0))).toBeCloseTo(9);
   });
 });
