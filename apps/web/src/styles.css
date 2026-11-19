@@ -4907,7 +4907,7 @@ body:has(> .splash) #menu-background::after {
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -8035,7 +8035,7 @@ body:has(#screens[style*="none"]) .now-playing {
   max-height: 12rem;
   overflow-y: auto;
   padding: 0.3rem 0.5rem;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .chat-lines:empty {
@@ -8504,7 +8504,7 @@ body:has(#screens[style*="none"]) .now-playing {
 }
 
 .touch-notice-url {
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   color: var(--ink);
 }
 
