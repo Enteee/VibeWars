@@ -3842,6 +3842,53 @@ body:has(> .splash) #menu-background::after {
   max-width: 100%;
 }
 
+/* A game icon in prose (#3556): a line high, centred on the text. */
+.doc-icon {
+  height: 1.4em;
+  width: auto;
+  vertical-align: middle;
+}
+
+/* An icon and its name, as the effects bar shows a status: the icon's own
+   plate, then the label, on a dark pill. Never wider than the page. */
+.doc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  max-width: 100%;
+  padding-block: 0.1em;
+  padding-inline: 0.15em 0.6em;
+  vertical-align: middle;
+  white-space: nowrap;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.doc-chip > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+
+/* A diagram on its own line (#3556), captioned by its alt text. */
+.doc-figure {
+  margin: 0.8rem 0;
+}
+
+.doc-figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+}
+
+.doc-figure figcaption {
+  margin-top: 0.3rem;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
 /* --- keys (#309) -------------------------------------------------------- */
 
 .keys-screen {

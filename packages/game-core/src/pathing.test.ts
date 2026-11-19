@@ -912,6 +912,23 @@ describe("harmful zones (#3026)", () => {
     expect(length(path)).toBeLessThan(400 + 200);
   });
 
+  it("puts no node in a zone's notch, only off its convex corners (#3521)", () => {
+    // An L: five convex corners, and a concave one at (350, 400).
+    const zone = [
+      vec2(250, 300),
+      vec2(450, 300),
+      vec2(450, 400),
+      vec2(350, 400),
+      vec2(350, 600),
+      vec2(250, 600),
+    ];
+    const { nodes } = buildNavGraph([], FIELD, 14, [harmful(zone)]);
+    expect(nodes).toHaveLength(5);
+    for (const node of nodes) {
+      expect(distance(node, vec2(350, 400))).toBeGreaterThan(30);
+    }
+  });
+
   it("crosses a strip when the way round is far longer, at its cost", () => {
     const zone = strip(100, 900);
     const path = createPathFinder(buildNavGraph([], FIELD, 14, [harmful(zone)])).find(from, to);

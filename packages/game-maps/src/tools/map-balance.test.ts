@@ -19,6 +19,7 @@ import {
   highGround,
   playBuildBot,
   runMapBalance,
+  walkSecondsByRoute,
   walksByRoute,
   walksTo,
   walksToCentre,
@@ -827,6 +828,67 @@ describe("walks and high ground (#3070)", () => {
         ),
         0.1,
       );
+    });
+
+    // #3521: reed flats across each marsh and mire banked against the causeway make the marsh
+    // the slow way, so a lever is worth throwing. Walk time counts the water at 75 % pace.
+    describe("walk time (#3521)", () => {
+      const spawns = [
+        { x: 500, y: 1765 },
+        { x: 5124, y: 1019 },
+      ];
+      const foeSpawns = [spawns[1] ?? centre, spawns[0] ?? centre];
+      /** Each team's own walk time to `to[team]` by `route(team)`. */
+      const seconds = (
+        on: MapData,
+        to: readonly Vec2[],
+        layer: number,
+        route: (team: number) => Route,
+      ): number[] =>
+        [0, 1].map(
+          (team) =>
+            walkSecondsByRoute(on, to[team] ?? centre, layer, (each) =>
+              each === team ? route(team) : { through: [] },
+            )[team] ?? 0,
+        );
+      // Up the causeway's near end, down its far end on the side of `to`.
+      const causeway = (down: readonly string[]) => (team: number) =>
+        only([team === 0 ? "west-end-south-stair" : "east-end-north-stair", down[team] ?? ""]);
+      const marsh = () => only([]);
+
+      it.each([
+        ["foe's spawn", foeSpawns, ["east-end-north-stair", "west-end-south-stair"]],
+        ["foe's shrine", foes, ["east-end-south-stair", "west-end-north-stair"]],
+      ] as const)(
+        "makes the marsh to the %s at least 2.5 s slower than the causeway, gates open, each within 10 %",
+        (_, to, down) => {
+          const along = seconds(map, to, 1, causeway(down));
+          const across = seconds(map, to, 1, marsh);
+          within(along, 0.1);
+          within(across, 0.1);
+          for (const team of [0, 1]) {
+            expect((across[team] ?? 0) - (along[team] ?? 0)).toBeGreaterThanOrEqual(2.5);
+          }
+        },
+      );
+
+      it("keeps the causeway the fastest way to the centre, and every marsh way there under 25 s", () => {
+        const along = seconds(map, [centre, centre], 2, (team) =>
+          only([team === 0 ? "west-end-south-stair" : "east-end-north-stair"]),
+        );
+        const near = seconds(shut, [centre, centre], 2, (team) =>
+          only([team === 0 ? "centre-south-stair" : "centre-north-stair"]),
+        );
+        const far = seconds({ ...shut, tunnels: [], pits: [] }, [centre, centre], 2, (team) =>
+          only([team === 0 ? "centre-north-stair" : "centre-south-stair"]),
+        );
+        for (const team of [0, 1]) {
+          for (const marshWay of [near, far]) {
+            expect(along[team] ?? 0).toBeLessThan(marshWay[team] ?? 0);
+            expect(marshWay[team] ?? 0).toBeLessThan(25);
+          }
+        }
+      });
     });
 
     it("walks each priest from its shrine to the centre within 10 % of the other", () => {
