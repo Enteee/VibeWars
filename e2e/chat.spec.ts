@@ -84,6 +84,9 @@ test("keys typed into chat never cast or move (#479)", async ({ page }) => {
 test("in a match a click under the panel walks, and the box shows only while open (#479)", async ({
   page,
 }) => {
+  // A bar with no pet: a random starter can bring one, and it arrives just
+  // east of the hero, where a held east key then never gets past it (#3632).
+  await bringStarter(page, "Warrior/Monk");
   await page.goto("./");
   await startSoloMatch(page);
   // The follow camera (#721) moves only when the hero does. Ember Pits'
