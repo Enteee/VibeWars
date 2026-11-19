@@ -19,7 +19,7 @@ Predvolená predvoľba je **Klasické**, pre ruky zvyknuté na GW1. **VibeWars**
 | Ďalší nepriateľ (Shift: predošlý)    | Tab                 | Tab              |
 | Najbližší nepriateľ                  | C                   | C                |
 | Nepriateľ určený tvojím tímom        | T                   | T                |
-| Ty sám                               | G                   | G                |
+| Ty sám                               | F alebo G           | G                |
 | Zobraziť mená (podržať)              | Shift               | Shift            |
 | Stlmiť                               | M                   | M                |
 | Položiť vlajku, relikviu alebo popol | žiadny              | žiadny           |

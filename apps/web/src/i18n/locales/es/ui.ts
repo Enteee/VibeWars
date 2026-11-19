@@ -980,6 +980,7 @@ export default {
   "queue.matchFoundTitle": "¡Partida encontrada!",
   "queue.nextMatchIn": "Siguiente partida en {seconds} s",
   "queue.now": "Ya",
+  "queue.playBotsIn": "Jugar contra bots ({seconds} s)",
   "queue.queueAgain": "Otra vez",
   "queue.randomArena": "Arena aleatoria {size}",
   "queue.searchingCount": "{searching} buscando · faltan {needed}",

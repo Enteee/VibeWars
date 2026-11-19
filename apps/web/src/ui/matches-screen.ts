@@ -22,7 +22,7 @@ import { lookOfCharacter, teamFigureCard, type TeamFigureMember } from "./charac
 import { professionLabel } from "./character-preview.js";
 import { formatClock } from "./hud.js";
 import { professionIcon } from "./icons.js";
-import { button, h, screenBar, syncList } from "./kit.js";
+import { button, h, screenBar, syncList, wordmark } from "./kit.js";
 import { MATCH_KINDS, MATCH_SIZES, matchesFilter, sessionFilter } from "./matches-filter.js";
 import {
   SIGNET_HEADING_PX,
@@ -401,7 +401,7 @@ export function renderMatchesScreen(
   root: HTMLElement,
   options: MatchesScreenOptions,
 ): MatchesScreen {
-  screenBar({ crumbs: ["VibeWars"], status: [], actions: [], join: true });
+  screenBar({ crumbs: [wordmark("topbar-wordmark")], status: [], actions: [], join: true });
   const body = railScreen(root, "matches", options.onSwitch);
   const hall = body.appendChild(h("section", "matches-hall"));
   hall.hidden = true;

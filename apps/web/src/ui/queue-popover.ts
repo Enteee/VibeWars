@@ -14,6 +14,9 @@ import { isVaultRound, vaultLines } from "./vault-screen.js";
  * where they like; the icon says so and its flyout leaves it.
  */
 
+/** How long a host's team-mode queue waits before it may play bots instead (Q191). */
+export const PLAY_BOTS_AFTER_MS = 10_000;
+
 /** The queue this tab is in, as the flyout shows it. */
 export type QueueStatusInput =
   | {
@@ -35,6 +38,8 @@ export type QueueStatusInput =
       /** Teams the queue last heard searching; `undefined` until it says. */
       readonly teams: number | undefined;
       readonly isHost: boolean;
+      /** Whether this host may play bots in this mode instead of waiting. */
+      readonly playBots: boolean;
       /** Who holds the Hall of Heroes (#2701), as the Vault says; `undefined` for nobody. */
       readonly hallHolder: SignedName | undefined;
     };
@@ -49,6 +54,8 @@ export interface QueueStatus {
   readonly detail?: string | SignedLine;
   /** Leave Queue, or a guest's word that only the host can. */
   readonly leave: "button" | "host-only";
+  /** Play against bots, for a host who may: seconds until it is enabled, 0 once it is. */
+  readonly playBots?: { readonly inSeconds: number };
 }
 
 /** The flyout for `input` at `now`; none without a queue. */
@@ -74,6 +81,20 @@ export function queueStatus(
     const vault = vaultLines(now, input.hallHolder);
     return { title: vault.title, waited: vault.countdown, detail: vault.holder, leave };
   }
+  const status = teamStatus(input, waited, leave);
+  if (!input.isHost || !input.playBots) {
+    return status;
+  }
+  const inSeconds = Math.max(0, Math.ceil((PLAY_BOTS_AFTER_MS - (now - input.since)) / 1000));
+  return { ...status, playBots: { inSeconds } };
+}
+
+/** A team mode's flyout outside the Vault, without its bots button. */
+function teamStatus(
+  input: Extract<QueueStatusInput, { kind: "team" }>,
+  waited: string,
+  leave: QueueStatus["leave"],
+): QueueStatus {
   switch (input.mode) {
     case "team-arena": {
       const title = t("queue.teamArena", {
@@ -123,9 +144,14 @@ export interface QueueButton {
 
 /**
  * The queue icon, its flyout dropping into `parent`: the queue, the time
- * waited, ticking, and Leave Queue, which `onLeave` does.
+ * waited, ticking, Play against bots for a host, which `onPlayBots` does,
+ * and Leave Queue, which `onLeave` does.
  */
-export function queueButton(parent: HTMLElement, onLeave: () => void): QueueButton {
+export function queueButton(
+  parent: HTMLElement,
+  onLeave: () => void,
+  onPlayBots: () => void,
+): QueueButton {
   const element = document.createElement("button");
   element.type = "button";
   element.className = "topbar-queue";
@@ -143,12 +169,16 @@ export function queueButton(parent: HTMLElement, onLeave: () => void): QueueButt
     const title = h("h3", "queue-window-title");
     const waited = h("div", "queue-window-waited");
     const detail = h("div", "queue-window-detail");
+    const playBots = button(t("lobby.playBots"), "primary queue-play-bots", () => {
+      close();
+      onPlayBots();
+    });
     const hostOnly = h("p", "queue-window-host-only", t("queue.hostOnly"));
     const leave = button(t("queue.leaveQueue"), "", () => {
       close();
       onLeave();
     });
-    panel.append(title, waited, detail, hostOnly, leave);
+    panel.append(title, waited, playBots, detail, hostOnly, leave);
     paint = () => {
       const status = queueStatus(input, Date.now());
       if (status === undefined) {
@@ -158,6 +188,13 @@ export function queueButton(parent: HTMLElement, onLeave: () => void): QueueButt
       waited.textContent = status.waited;
       paintDetail(detail, status.detail);
       detail.hidden = status.detail === undefined;
+      playBots.hidden = status.playBots === undefined;
+      if (status.playBots !== undefined) {
+        const { inSeconds } = status.playBots;
+        playBots.disabled = inSeconds > 0;
+        playBots.textContent =
+          inSeconds > 0 ? t("queue.playBotsIn", { seconds: inSeconds }) : t("lobby.playBots");
+      }
       hostOnly.hidden = status.leave !== "host-only";
       leave.hidden = status.leave !== "button";
     };

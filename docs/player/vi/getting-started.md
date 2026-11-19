@@ -166,8 +166,8 @@ phòng sẽ đưa tổ đội ra khỏi hàng chờ ngay lập tức. Khi một 
 độ đang xếp hàng xuất hiện, các bạn đấu với họ trên một bản đồ của chế độ đó,
 mỗi bên với build riêng, rồi quay về sảnh của mình sau đó. Chủ phòng có thể
 rời hàng chờ từ cửa sổ của vòng xoay bất cứ lúc nào; khách rời đi sẽ kéo cả
-tổ đội ra khỏi hàng chờ. Nếu sau một phút không có đội nào khác, chủ phòng
-cũng có thể nhấn **Đấu với bot**: một trận trong chính sảnh của bạn với một
+tổ đội ra khỏi hàng chờ. Sau 10 giây trong hàng chờ, chủ phòng
+cũng có thể nhấn **Đấu với bot** trong cửa sổ của vòng xoay: một trận trong chính sảnh của bạn với một
 đội bot có sẵn ngẫu nhiên, trừ ở [Đỉnh Anh Hùng](modes.md#đỉnh-anh-hùng),
 nơi bạn chờ một đội ở cùng vòng với bạn.
 

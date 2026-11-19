@@ -1,20 +1,29 @@
-import { BIOMES, DECK_LOOKS, TRANSITION_LOOKS } from "@vibewars/game-maps/schema";
+import {
+  ASCENT_ACTS,
+  type AscentAct,
+  type Biome,
+  BIOMES,
+  DECK_LOOKS,
+  TRANSITION_LOOKS,
+} from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
 import {
+  ACT_TONES,
   arenaPalette,
   BIOME,
   BREAKABLE_WALL_LOOK,
   breakableLook,
+  materialsOf,
   pitFloor,
   pitWall,
   shade,
 } from "./arena-palette.js";
 import { HAND, SIGNALS, wheelDistance } from "./signal-hues.test-support.js";
 
-/** Every colour of a biome's materials. */
-function coloursOf(biome: (typeof BIOMES)[number]): number[] {
-  const { palette, deck, transition } = BIOME[biome];
+/** Every colour of a biome's materials, under an Ascent act's if it has one. */
+function coloursOf(biome: Biome, ascentAct: AscentAct | null = null): number[] {
+  const { palette, deck, transition } = materialsOf({ biome, ascentAct });
   return [palette, ...Object.values(deck), ...Object.values(transition)].flatMap((colours) =>
     Object.values(colours).filter((colour): colour is number => typeof colour === "number"),
   );
@@ -22,7 +31,7 @@ function coloursOf(biome: (typeof BIOMES)[number]): number[] {
 
 describe("arenaPalette", () => {
   it("leaves a map of one layer as it was", () => {
-    expect(arenaPalette({ layerCount: 1, biome: "hall" })).toMatchObject({
+    expect(arenaPalette({ layerCount: 1, biome: "hall", ascentAct: null })).toMatchObject({
       floor: undefined,
       grid: 0x1a212c,
       wallTop: 0x202836,
@@ -30,7 +39,7 @@ describe("arenaPalette", () => {
   });
 
   it("gives a layered map direction D", () => {
-    expect(arenaPalette({ layerCount: 3, biome: "hall" })).toMatchObject({
+    expect(arenaPalette({ layerCount: 3, biome: "hall", ascentAct: null })).toMatchObject({
       floor: 0x26303f,
       grid: 0x34415a,
       deckTop: 0xa0b2c7,
@@ -79,8 +88,11 @@ describe("BIOME", () => {
     });
   });
 
-  it("draws the heights in the hall's materials", () => {
-    expect(BIOME.heights).toEqual(BIOME.hall);
+  it("draws the heights in the hall's materials, under their own ground marks", () => {
+    const { dressing: heightsDressing, ...heights } = BIOME.heights;
+    const { dressing: hallDressing, ...hall } = BIOME.hall;
+    expect(heights).toEqual(hall);
+    expect(heightsDressing.grain).toEqual(hallDressing.grain);
   });
 
   it("gives every biome every deck and transition look", () => {
@@ -175,6 +187,47 @@ describe("BIOME", () => {
   );
 });
 
+describe("materialsOf (#3618)", () => {
+  it("leaves a map off the Ascent in its biome's materials", () => {
+    for (const biome of BIOMES) {
+      expect(materialsOf({ biome, ascentAct: null })).toBe(BIOME[biome]);
+    }
+  });
+
+  it("lays each act's ground and rock over every biome", () => {
+    for (const biome of BIOMES) {
+      for (const act of ASCENT_ACTS) {
+        const { palette } = materialsOf({ biome, ascentAct: act });
+        expect(palette.floor, `${biome} ${act}`).toBe(ACT_TONES[act].ground);
+        expect(palette.wallTop, `${biome} ${act}`).toBe(ACT_TONES[act].rock);
+      }
+    }
+    expect(BIOME.hall.palette.floor).not.toBe(ACT_TONES.heavenly.ground);
+  });
+
+  it("lays the heavenly marble as one sheet, and keeps the grid under the other acts", () => {
+    expect(materialsOf({ biome: "hall", ascentAct: "heavenly" }).palette.grid).toBeUndefined();
+    expect(materialsOf({ biome: "hall", ascentAct: "underworld" }).palette.grid).toBeTypeOf(
+      "number",
+    );
+  });
+
+  it.each(BIOMES.flatMap((biome) => ASCENT_ACTS.map((act) => [biome, act] as const)))(
+    "keeps every %s tone under the %s act a hand's width from every signal",
+    (biome, act) => {
+      const hall = new Set(coloursOf("hall"));
+      for (const tone of coloursOf(biome, act).filter((colour) => !hall.has(colour))) {
+        for (const signal of SIGNALS) {
+          expect(
+            wheelDistance(tone, signal),
+            `#${tone.toString(16)} near #${signal.toString(16)}`,
+          ).toBeGreaterThan(HAND);
+        }
+      }
+    },
+  );
+});
+
 describe("shade", () => {
   it("moves each channel toward black", () => {
     expect(shade(0x804020, 0.5)).toBe(0x402010);
@@ -185,7 +238,7 @@ describe("breakableLook (#3370)", () => {
   it("makes each listed biome's breakable wall its own material, not the stone", () => {
     const looks = (
       ["volcanic", "desert", "snow", "wilds", "marsh", "jungle", "coast"] as const
-    ).map((biome) => breakableLook({ layerCount: 2, biome }));
+    ).map((biome) => breakableLook({ layerCount: 2, biome, ascentAct: null }));
     for (const look of looks) {
       expect(look).not.toEqual(BREAKABLE_WALL_LOOK);
     }
@@ -202,17 +255,37 @@ describe("breakableLook (#3370)", () => {
   });
 
   it("glows only in the volcanic, and keeps the stone in the hall and heights", () => {
-    expect(breakableLook({ layerCount: 2, biome: "volcanic" }).glow).toBeDefined();
+    expect(breakableLook({ layerCount: 2, biome: "volcanic", ascentAct: null }).glow).toBeDefined();
     for (const biome of ["desert", "snow", "wilds", "hall"] as const) {
-      expect(breakableLook({ layerCount: 2, biome }).glow).toBeUndefined();
+      expect(breakableLook({ layerCount: 2, biome, ascentAct: null }).glow).toBeUndefined();
     }
-    expect(breakableLook({ layerCount: 2, biome: "hall" })).toBe(BREAKABLE_WALL_LOOK);
-    expect(breakableLook({ layerCount: 2, biome: "heights" })).toBe(BREAKABLE_WALL_LOOK);
+    expect(breakableLook({ layerCount: 2, biome: "hall", ascentAct: null })).toEqual(
+      BREAKABLE_WALL_LOOK,
+    );
+    expect(breakableLook({ layerCount: 2, biome: "heights", ascentAct: null })).toEqual(
+      BREAKABLE_WALL_LOOK,
+    );
+  });
+
+  it("is a patch of the act's rock on an Ascent map (#3618)", () => {
+    for (const biome of ["hall", "marsh"] as const) {
+      const look = breakableLook({ layerCount: 2, biome, ascentAct: "heavenly" });
+      expect(look, biome).toEqual(materialsOf({ biome, ascentAct: "heavenly" }).breakable);
+      expect(look.face, biome).not.toBe(
+        breakableLook({ layerCount: 2, biome, ascentAct: null }).face,
+      );
+    }
+    const hall = breakableLook({ layerCount: 2, biome: "hall", ascentAct: "heavenly" });
+    // The hall's stone, tinted from its rock to the act's pale one.
+    const sum = (colour: number): number =>
+      ((colour >> 16) & 0xff) + ((colour >> 8) & 0xff) + (colour & 0xff);
+    expect(sum(hall.face)).toBeGreaterThan(sum(BREAKABLE_WALL_LOOK.face));
+    expect(hall.courses).toBe(BREAKABLE_WALL_LOOK.courses);
   });
 
   it("is the stone on a map of one layer, whatever its biome", () => {
     for (const biome of BIOMES) {
-      expect(breakableLook({ layerCount: 1, biome })).toBe(BREAKABLE_WALL_LOOK);
+      expect(breakableLook({ layerCount: 1, biome, ascentAct: null })).toBe(BREAKABLE_WALL_LOOK);
     }
   });
 });

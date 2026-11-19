@@ -920,6 +920,7 @@ export default {
   "queue.matchFoundTitle": "Meccs megvan!",
   "queue.nextMatchIn": "Következő meccs {seconds} mp múlva",
   "queue.now": "Most",
+  "queue.playBotsIn": "Játék botok ellen ({seconds} mp)",
   "queue.queueAgain": "Újra sorba",
   "queue.randomArena": "Véletlen Aréna {size}",
   "queue.searchingCount": "{searching} keres · {needed} kell",

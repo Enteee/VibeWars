@@ -19,7 +19,7 @@ Standardforvalget er **Klassisk**, til GW1-hænder. **VibeWars** kaster med vens
 | Næste fjende (Shift: forrige)  | Tab                      | Tab              |
 | Nærmeste fjende                | C                        | C                |
 | Dit holds udpegede fjende      | T                        | T                |
-| Dig selv                       | G                        | G                |
+| Dig selv                       | F eller G                | G                |
 | Vis navne (hold)               | Shift                    | Shift            |
 | Lyd fra                        | M                        | M                |
 | Slip flag, relikvie eller aske | ingen                    | ingen            |

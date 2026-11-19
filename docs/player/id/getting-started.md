@@ -171,8 +171,8 @@ host langsung mengeluarkan party dari antrean. Saat ada tim lain
 dari mode yang sama di antrean, kalian melawan mereka di salah satu peta
 mode itu, masing-masing sisi dengan build-nya sendiri, lalu kembali ke lobi
 sesudahnya. Host bisa keluar dari jendela cincin kapan saja; tamu yang keluar membawa seluruh
-party keluar dari antrean. Kalau tak ada tim lain setelah satu menit, host juga bisa
-menekan **Lawan bot**: laga di lobimu sendiri melawan
+party keluar dari antrean. Setelah 10 detik dalam antrean, host juga bisa
+menekan **Lawan bot** di jendela cincin: laga di lobimu sendiri melawan
 tim bot preset acak,
 kecuali di [Pendakian Pahlawan](modes.md#pendakian-pahlawan), yang menunggu
 tim di ronde yang sama denganmu.

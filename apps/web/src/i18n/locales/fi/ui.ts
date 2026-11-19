@@ -929,6 +929,7 @@ export default {
   "queue.matchFoundTitle": "Ottelu löytyi!",
   "queue.nextMatchIn": "Seuraava ottelu: {seconds} s",
   "queue.now": "Nyt",
+  "queue.playBotsIn": "Pelaa botteja vastaan ({seconds} s)",
   "queue.queueAgain": "Jonota uudelleen",
   "queue.randomArena": "Satunnaisareena {size}",
   "queue.searchingCount": "{searching} etsii · {needed} tarvitaan",
