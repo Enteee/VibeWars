@@ -5,6 +5,7 @@ import {
   MatchSimulation,
   STARTER_BUILDS,
   createLayeredPathFinder,
+  switchTargetId,
   vec2,
   type Vec2,
 } from "@vibewars/game-core";
@@ -1870,6 +1871,59 @@ describe("walks and high ground (#3070)", () => {
     it("gives the teams high ground within 25 % of each other", () => {
       within(highGround(map), 0.25);
     }, 60_000);
+
+    // A body on a ramp collides only with its own layer's walls, so a portcullis on the stair would
+    // let a keyboard walk through it shut; pathing cannot catch that (#3446).
+    describe("by keyboard up each undercroft's west steps", () => {
+      const build = STARTER_BUILDS[0];
+      if (build === undefined) {
+        throw new Error("no built-in builds");
+      }
+      /** Each team's walker at the foot of its own steps, and a puller on each lever. */
+      const sim = (pull: boolean): MatchSimulation => {
+        const body = (id: string, team: number, position: Vec2, layer: number) => ({
+          ...playBuildBot(build, id, team, { position, layer }, 0),
+          behaviour: undefined,
+        });
+        const levers = map.switches ?? [];
+        const match = new MatchSimulation({
+          seed: "portcullis",
+          matchRules: mapMatchRules(map, map.mode),
+          teamCount: map.teams,
+          ...mapSimulationFields(map, map.teams),
+          participants: [
+            ...[0, 1].map((team) =>
+              body(`walker-${String(team)}`, team, at(team, vec2(1600, 680)), 0),
+            ),
+            ...levers.map(({ id, position, layer }, team) => body(id, team, position, layer)),
+          ],
+        });
+        if (pull) {
+          for (const { id } of levers) match.requestAttack(id, switchTargetId(id));
+          for (let t = 0; t < 2; t += 0.05) match.step(0.05);
+          expect(match.gates.every(({ open }) => open)).toBe(true);
+        }
+        match.setInputDirection("walker-0", vec2(0, 1));
+        match.setInputDirection("walker-1", vec2(0, -1));
+        for (let t = 0; t < 4; t += 0.05) match.step(0.05);
+        return match;
+      };
+      /** How far past its portcullis's near edge each walker got: north y 810, south y 1590. */
+      const past = (match: MatchSimulation): number[] => [
+        (match.get("walker-0")?.position.y ?? 0) - 810,
+        1590 - (match.get("walker-1")?.position.y ?? map.height),
+      ];
+
+      it("stops each team at its shut portcullis", () => {
+        for (const beyond of past(sim(false))) expect(beyond).toBeLessThan(0);
+      });
+
+      it("lets each team through once the levers open them", () => {
+        const open = sim(true);
+        for (const beyond of past(open)) expect(beyond).toBeGreaterThan(100);
+        expect([open.get("walker-0")?.layer, open.get("walker-1")?.layer]).toEqual([1, 1]);
+      });
+    });
   });
 
   // Threefold Keep (#3443): one piece turned by 120° for three teams, its stairs fitted anew to each

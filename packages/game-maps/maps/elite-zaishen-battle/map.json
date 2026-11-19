@@ -1067,7 +1067,7 @@
       "wall": {
         "kind": "rect",
         "x": 1540,
-        "y": 796,
+        "y": 810,
         "width": 120,
         "height": 14,
         "layer": 1
@@ -1083,7 +1083,7 @@
       "wall": {
         "kind": "rect",
         "x": 3740,
-        "y": 1590,
+        "y": 1576,
         "width": 120,
         "height": 14,
         "layer": 1
