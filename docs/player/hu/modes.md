@@ -442,13 +442,16 @@ vezetője, vagy a céhjele, ha az osztag több mint felének ugyanaz.
 
 Minden út az **Elite Zaishen Battle**-lel kezdődik, sor nélkül: az
 osztagod hat, botok által játszott Zaishen ellen (2 Monk, egy
-Elementalist és 3 másik). Az óra akkor indul, amikor valamelyikőtök
-átlépi a rajtvonalat, vagy meghal az első Zaishen, amelyik előbb
-történik. Öld meg mind a hatot 30 másodpercen belül, és az osztag +10%
-morállal kezdi az utat; 60 alatt +8%; 80 alatt +6%; 100 alatt +4%; 120
-alatt +2%; lassabban semmi. Ha nyersz, az osztagod magától sorba áll az
-első pályájára. Ha elsöpörnek, vagy a 8 perces korlát elérésekor még él
-egy Zaishen, az útnak vége.
+Elementalist és 3 másik). Egy ünnepélyes arénában zajlik (8v8,
+5400x2400): lépcsőzetes lelátók északon és délen, szobrok talapzaton a
+süllyesztett küzdőtéren, és minden lelátó alatt egy pince, amelynek
+csapórácsát a túlsó lelátón lévő kar nyitja ki. Az óra akkor indul,
+amikor valamelyikőtök átlépi a rajtvonalat az aréna közepén, vagy meghal
+az első Zaishen, amelyik előbb történik. Öld meg mind a hatot 30
+másodpercen belül, és az osztag +10% morállal kezdi az utat; 60 alatt
++8%; 80 alatt +6%; 100 alatt +4%; 120 alatt +2%; lassabban semmi. Ha
+nyersz, az osztagod magától sorba áll az első pályájára. Ha elsöpörnek,
+vagy a 8 perces korlát elérésekor még él egy Zaishen, az útnak vége.
 
 Az út minden győzelme **hírnevet** hoz: 1, 2, 3, 4, 6, 8, 12, 16, 20,
 24, 28, 32, 36 az első tizenháromért, aztán 40-et mindegyik, naponta

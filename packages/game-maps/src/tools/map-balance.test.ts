@@ -5,6 +5,7 @@ import {
   MatchSimulation,
   STARTER_BUILDS,
   createLayeredPathFinder,
+  switchTargetId,
   vec2,
   type Vec2,
 } from "@vibewars/game-core";
@@ -1819,6 +1820,172 @@ describe("walks and high ground (#3070)", () => {
     it("gives the teams high ground within 25 % of each other", () => {
       within(highGround(map), 0.25);
     }, 60_000);
+  });
+
+  // The Elite Zaishen Battle (#3446): team 1's half is team 0's turned 180° about the start line.
+  // To the start line three ways: across the sunken floor, over the team's own stand (up its west
+  // stair, down its middle one), or through the undercroft under it, its portcullis open.
+  describe("The Elite Zaishen Battle", () => {
+    const map = loadMap("elite-zaishen-battle");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const line = { x: 2700, y: 1200 };
+    /** Team `team`'s own `id`, named as team 0's: team 1's is its turn, west for east, north for south. */
+    const own = (team: number, id: string): string =>
+      team === 0
+        ? id
+        : id
+            .replace(/west/g, "@")
+            .replace(/east/g, "west")
+            .replace(/@/g, "east")
+            .replace(/north/g, "@")
+            .replace(/south/g, "north")
+            .replace(/@/g, "south");
+    /** Team 0's point, or its turn for team 1. */
+    const at = (team: number, point: Vec2): Vec2 =>
+      team === 0 ? point : { x: map.width - point.x, y: map.height - point.y };
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Through the team's own `ids`, every other transition shut. */
+    const only =
+      (ids: readonly string[]) =>
+      (team: number): Route => {
+        const through = ids.map((id) => own(team, id));
+        return {
+          through,
+          shut: map.transitions.map(({ id }) => id).filter((id) => !through.includes(id)),
+        };
+      };
+    /** `on` with each team's one spawn at its own `point` on `layer`. */
+    const from = (on: MapData, point: Vec2, layer: number): MapData => ({
+      ...on,
+      spawnPoints: [0, 1].map((team) => ({ team, layer, position: at(team, point) })),
+    });
+    /** Each team's walk to its own `point`, by `route`. */
+    const toOwn = (on: MapData, point: Vec2, layer: number, route: (team: number) => Route) =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, at(team, point), layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    /** As loaded: both portcullises shut, both statue screens standing. */
+    const shut: MapData = {
+      ...map,
+      walls: [
+        ...map.walls,
+        ...map.gates.map(({ wall }) => wall),
+        ...(map.breakables ?? []).map(({ wall }) => wall),
+      ],
+    };
+    const onStand = { x: 1500, y: 620 };
+    const inUndercroft = { x: 1900, y: 640 };
+    const sum = (a: readonly number[], b: readonly number[]): number[] =>
+      [0, 1].map((team) => (a[team] ?? 0) + (b[team] ?? 0));
+    const routes = [
+      ["the floor", () => walksByRoute(shut, line, 1, only([]))],
+      [
+        "the stand",
+        () =>
+          sum(
+            toOwn(shut, onStand, 2, only(["north-tier-1-west-stair"])),
+            walksByRoute(from(shut, onStand, 2), line, 1, only(["north-tier-1-middle-stair"])),
+          ),
+      ],
+      [
+        "the undercroft",
+        () =>
+          sum(
+            toOwn(map, inUndercroft, 0, only(["north-undercroft-west-steps"])),
+            walksByRoute(
+              from(map, inUndercroft, 0),
+              line,
+              1,
+              only(["north-undercroft-east-steps"]),
+            ),
+          ),
+      ],
+    ] as const;
+
+    it.each(routes)(
+      "walks each team to the start line by %s within 10 % of the other, in under 25 s",
+      (_, walks) => {
+        const both = walks();
+        within(both, 0.1);
+        for (const walk of both) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it("walks each team to the foe's spawn across the floor, as loaded, within 10 % of the other", () => {
+      const spawn = { x: 5050, y: 1200 };
+      within(
+        toOwn(shut, spawn, 1, () => ({ through: [] })),
+        0.1,
+      );
+    });
+
+    it("keeps the walk to the start line within 10 % with the portcullises open and the screens broken", () => {
+      const broken = (map.breakables ?? []).map(({ id }) => id);
+      within(walksByRoute(map, line, 1, { through: [], broken }), 0.1);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+
+    // A body on a ramp collides only with its own layer's walls, so a portcullis on the stair would
+    // let a keyboard walk through it shut; pathing cannot catch that (#3446).
+    describe("by keyboard up each undercroft's west steps", () => {
+      const build = STARTER_BUILDS[0];
+      if (build === undefined) {
+        throw new Error("no built-in builds");
+      }
+      /** Each team's walker at the foot of its own steps, and a puller on each lever. */
+      const sim = (pull: boolean): MatchSimulation => {
+        const body = (id: string, team: number, position: Vec2, layer: number) => ({
+          ...playBuildBot(build, id, team, { position, layer }, 0),
+          behaviour: undefined,
+        });
+        const levers = map.switches ?? [];
+        const match = new MatchSimulation({
+          seed: "portcullis",
+          matchRules: mapMatchRules(map, map.mode),
+          teamCount: map.teams,
+          ...mapSimulationFields(map, map.teams),
+          participants: [
+            ...[0, 1].map((team) =>
+              body(`walker-${String(team)}`, team, at(team, vec2(1600, 680)), 0),
+            ),
+            ...levers.map(({ id, position, layer }, team) => body(id, team, position, layer)),
+          ],
+        });
+        if (pull) {
+          for (const { id } of levers) match.requestAttack(id, switchTargetId(id));
+          for (let t = 0; t < 2; t += 0.05) match.step(0.05);
+          expect(match.gates.every(({ open }) => open)).toBe(true);
+        }
+        match.setInputDirection("walker-0", vec2(0, 1));
+        match.setInputDirection("walker-1", vec2(0, -1));
+        for (let t = 0; t < 4; t += 0.05) match.step(0.05);
+        return match;
+      };
+      /** How far past its portcullis's near edge each walker got: north y 810, south y 1590. */
+      const past = (match: MatchSimulation): number[] => [
+        (match.get("walker-0")?.position.y ?? 0) - 810,
+        1590 - (match.get("walker-1")?.position.y ?? map.height),
+      ];
+
+      it("stops each team at its shut portcullis", () => {
+        for (const beyond of past(sim(false))) expect(beyond).toBeLessThan(0);
+      });
+
+      it("lets each team through once the levers open them", () => {
+        const open = sim(true);
+        for (const beyond of past(open)) expect(beyond).toBeGreaterThan(100);
+        expect([open.get("walker-0")?.layer, open.get("walker-1")?.layer]).toEqual([1, 1]);
+      });
+    });
   });
 
   // Threefold Keep (#3443): one piece turned by 120° for three teams, its stairs fitted anew to each
