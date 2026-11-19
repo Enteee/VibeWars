@@ -234,6 +234,30 @@ describe("the bench's reference map", () => {
 });
 
 /**
+ * The render bench's flat baseline (#3444), which the tutorial's e2e also
+ * walks, is in no list a player sees either.
+ */
+describe("the bench's flat map", () => {
+  const map = validateMapData(
+    JSON.parse(
+      readFileSync(fileURLToPath(new URL("../bench/flat-map.json", import.meta.url)), "utf8"),
+    ),
+  );
+
+  it("is valid and flat: one layer, its ground, no pit, tunnel, deck or transition, no act", () => {
+    expect(map.id).toBe("bench-flat");
+    expect(map.layers).toBe(1);
+    expect(map.groundLayer).toBe(0);
+    expect(map.pits).toEqual([]);
+    expect(map.tunnels).toEqual([]);
+    expect(map.decks).toEqual([]);
+    expect(map.transitions).toEqual([]);
+    expect(map.ascentAct).toBeNull();
+    expect(map.teams).toBe(2);
+  });
+});
+
+/**
  * The training arenas (#2 §4.4) are not in `maps/`, so `loadAllMaps` never
  * sees them; this is what validates them instead.
  */

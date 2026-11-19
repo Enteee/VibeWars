@@ -93,6 +93,10 @@ export const DRESSING: Record<Biome, readonly Scatter[]> = {
     { kind: "pebble", tone: "mark", count: 10, size: [4, 8] },
     { kind: "ripple", tone: "accent", count: 8, size: [12, 16] },
   ],
+  cavern: [
+    { kind: "pebble", tone: "mark", count: 10, size: [4, 9] },
+    { kind: "grit", tone: "accent", count: 14, size: [2, 3] },
+  ],
 };
 
 /** The texture a map's tile is kept under: one per biome, and per Ascent act on it. */

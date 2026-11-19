@@ -51,13 +51,13 @@ function sizesOf(id: string): readonly number[] {
   return map.teamSizes;
 }
 
-/** Every map JSON the client can bundle: arenas, training, tutorial and the bench's reference. */
+/** Every map JSON the client can bundle: arenas, training, tutorial and the bench's. */
 const BUNDLED: Readonly<Record<string, unknown>> = import.meta.glob<unknown>(
   [
     "../../../../packages/game-maps/maps/*/map.json",
     "../../../../packages/game-maps/training/*/map.json",
     "../../../../packages/game-maps/tutorial/*/map.json",
-    "../../../../packages/game-maps/bench/reference-map.json",
+    "../../../../packages/game-maps/bench/*.json",
   ],
   { eager: true, import: "default" },
 );
@@ -79,16 +79,18 @@ describe("the bundled maps, which the page does not validate (#3679)", () => {
   });
 });
 
-describe("the render bench's reference map (#3255)", () => {
-  it("is in no list of a build without VIBEWARS_BENCH_REFERENCE", () => {
-    const REFERENCE = "bench-reference";
-    expect(ARENA_MAPS.map((map) => map.id)).not.toContain(REFERENCE);
-    expect(arenaIds()).not.toContain(REFERENCE);
-    for (const size of [1, 2, 4, 8]) {
-      expect(teamArenaMapIds(size)).not.toContain(REFERENCE);
-    }
-    expect(Object.values(modeMapIds()).flat()).not.toContain(REFERENCE);
-  });
+describe("the render bench's maps (#3255, #3444)", () => {
+  it.each(["bench-reference", "bench-flat"])(
+    "%s is in no list of a build without VIBEWARS_BENCH_REFERENCE",
+    (bench) => {
+      expect(ARENA_MAPS.map((map) => map.id)).not.toContain(bench);
+      expect(arenaIds()).not.toContain(bench);
+      for (const size of [1, 2, 4, 8]) {
+        expect(teamArenaMapIds(size)).not.toContain(bench);
+      }
+      expect(Object.values(modeMapIds()).flat()).not.toContain(bench);
+    },
+  );
 });
 
 describe("the wire and the map schema (#2698)", () => {

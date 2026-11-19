@@ -572,6 +572,24 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     /** Dry olive: green would be nature's. */
     plant: 0x6d6a3e,
   },
+  /**
+   * A cavern under a thin ceiling (#3444, docs/art/3077-hollow-deep.md): cold
+   * slate, its only colour the violet glow of its pools, which is light, not
+   * a tone. Every tone is low chroma, well away from the friend blue, the foe
+   * red, the nature green and the magic violet.
+   */
+  cavern: {
+    ground: 0x232a33,
+    rock: 0x4a5260,
+    /** Dressed slate: the shelves, the dais and the stairs. */
+    stone: 0x8a909c,
+    /** Old rope-bridge timber, grey with damp. */
+    wood: 0x6a6052,
+    /** Cave silt. */
+    earth: 0x403428,
+    /** Lichen: a dull violet grey, the glow's ghost. */
+    plant: 0x4f4a5c,
+  },
 };
 
 /**
@@ -787,6 +805,7 @@ const TILED_GROUND: Record<Biome, boolean> = {
   marsh: true,
   jungle: true,
   coast: true,
+  cavern: true,
 };
 
 /** A biome's ground grain and the marks scattered on it (#3484), from its own tones. */
@@ -834,6 +853,8 @@ const GROUND_MARKS: Record<Biome, (tones: BiomeTones) => readonly [mark: number,
     jungle: (tones) => [mix(tones.plant, tones.ground, 0.3), mix(tones.ground, tones.earth, 0.6)],
     // Shells and pebbles of the sea rock, and tide ripples.
     coast: (tones) => [mix(tones.ground, tones.rock, 0.55), mix(tones.ground, tones.earth, 0.6)],
+    // Fallen stone chips and silt grit.
+    cavern: (tones) => [mix(tones.ground, tones.rock, 0.55), mix(tones.ground, tones.earth, 0.6)],
   };
 
 function biomeMaterials(biome: Biome, tones: BiomeTones, tiled: boolean): BiomeMaterials {
@@ -860,6 +881,7 @@ export const BIOME: Record<Biome, BiomeMaterials> = {
   marsh: biomeMaterials("marsh", BIOME_TONES.marsh, TILED_GROUND.marsh),
   jungle: biomeMaterials("jungle", BIOME_TONES.jungle, TILED_GROUND.jungle),
   coast: biomeMaterials("coast", BIOME_TONES.coast, TILED_GROUND.coast),
+  cavern: biomeMaterials("cavern", BIOME_TONES.cavern, TILED_GROUND.cavern),
 };
 
 /** What a map is drawn in: its biome, and the Ascent act laid over it (#3618). */
@@ -978,6 +1000,23 @@ function breakableLookOf(biome: Biome, tones: BiomeTones): BreakableLook {
         rubble: mix(tones.rock, tones.stone, 0.3),
         rubbleFace: shade(tones.rock, 0.25),
         dust: mix(tones.ground, tones.stone, 0.5),
+        shadow: BREAKABLE_WALL_LOOK.shadow,
+      };
+    case "cavern":
+      // A stalagmite wall: the slate in rough blocks, no moss, no glow.
+      return {
+        courses: "blocks",
+        top: mix(tones.rock, tones.stone, 0.22),
+        face: shade(tones.rock, 0.1),
+        lit: mix(tones.rock, tones.stone, 0.6),
+        mortar: shade(tones.rock, 0.6),
+        edge: shade(tones.rock, 0.8),
+        crack: shade(tones.rock, 0.85),
+        glow: undefined,
+        moss: undefined,
+        rubble: mix(tones.rock, tones.stone, 0.15),
+        rubbleFace: shade(tones.rock, 0.4),
+        dust: mix(tones.ground, tones.stone, 0.45),
         shadow: BREAKABLE_WALL_LOOK.shadow,
       };
     case "hall":

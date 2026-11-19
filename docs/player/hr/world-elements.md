@@ -11,11 +11,11 @@ Stani na jedno od ovih područja i ono djeluje na tebe; učinak traje još
 kratko nakon što izađeš. Na neprijatelje i saveznike djeluje jednako kao i
 na tebe.
 
-- **Spaljeno tlo** daje ti Burning. Pougljenjena zemlja sa žarom koji tinja
+- **Spaljeno tlo** daje ti Gorenje. Pougljenjena zemlja sa žarom koji tinja
   i narančastim rubom.
-- **Lava** ti daje Burning i Crippled. Tamna kora ispucala tekućim,
+- **Lava** ti daje Gorenje i Osakaćenost. Tamna kora ispucala tekućim,
   užarenim pukotinama koje trepere.
-- **Otrovna magla** daje ti Poison. Kiselozeleni oblačići koji lebde i kroz
+- **Otrovna magla** daje ti Otrov. Kiselozeleni oblačići koji lebde i kroz
   koje se vidi. Zeleno na tlu uvijek znači otrov.
 - **Glib** te usporava, a svaki napad ili vještina koju ondje upotrijebiš
   košta te energije. Smeđe blato s lokvama i sporim mjehurićima.
@@ -35,10 +35,10 @@ na tebe.
 One udaraju iznova i iznova na svom mjestu i pogađaju svakoga tko ondje
 stoji kad udare.
 
-- **Vatreni otvor** izbacuje stup plamena koji ti daje Burning. Između
+- **Vatreni otvor** izbacuje stup plamena koji ti daje Gorenje. Između
   udaraca to je kameni prsten koji tinja.
-- **Plinski gejzir** ispušta zeleni plin koji ti daje Poison.
-- **Odron** obara kamenje koje ti daje Crippled. Neko pada na jednom mjestu,
+- **Plinski gejzir** ispušta zeleni plin koji ti daje Otrov.
+- **Odron** obara kamenje koje ti daje Osakaćenost. Neko pada na jednom mjestu,
   a neko se kotrlja stazom tamo i natrag.
 
 Svaka te upozori tik prije udarca: prsten na njezinu rubu nabubri u njezinoj

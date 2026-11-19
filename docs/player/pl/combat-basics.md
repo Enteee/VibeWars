@@ -3,18 +3,18 @@
 ## Zdrowie i energia
 
 Zaczynasz z 500 **Zdrowia** i 50 **Energii**; runy i morale zmieniają obie
-wartości. Umiejętności kosztują Energię, a ta wraca sama, powoli. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**
-i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** odzyskują ją najwolniej, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** trochę szybciej, a wszyscy pozostali
+wartości. Umiejętności kosztują Energię, a ta wraca sama, powoli. ![Wojownik](../../../apps/web/public/icons/profession/warrior.svg) **Wojownik**
+i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** odzyskują ją najwolniej, ![Łowca](../../../apps/web/public/icons/profession/ranger.svg) **Łowca** trochę szybciej, a wszyscy pozostali
 najszybciej.
 
 Strzałki na twoich paskach to **pipy**: każda oznacza Zdrowie lub Energię, które
-co sekundę trochę wracają albo ubywają. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** i ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** odbierają
+co sekundę trochę wracają albo ubywają. ![Krwawienie](../../../apps/web/public/icons/status/bleeding.svg) **Krwawienie**, ![Podpalenie](../../../apps/web/public/icons/status/burning.svg) **Podpalenie** i ![Zatrucie](../../../apps/web/public/icons/status/poison.svg) **Zatrucie** odbierają
 Zdrowie; Regeneracja i czary leczące je dodają. Po 5 sekundach poza walką Zdrowie
 zaczyna wracać samo, tym szybciej, im dłużej pozostajesz poza walką.
 
 ## Adrenalina
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** i inne profesje mają umiejętności, które zamiast Energii
+![Wojownik](../../../apps/web/public/icons/profession/warrior.svg) **Wojownik**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** i inne profesje mają umiejętności, które zamiast Energii
 kosztują **adrenalinę**. Każda taka umiejętność ładuje się osobno: każde
 trafienie bronią daje każdej z nich jedno uderzenie, tak samo jak przyjęcie
 mocnego ciosu. Użycie jednej opróżnia ją i zabiera uderzenie pozostałym. Po 25
@@ -60,18 +60,18 @@ poza ![Okrzyk](../../../apps/web/public/icons/skill-type/shout.svg) **okrzykiem*
 
 **Dolegliwości** szkodzą ci, dopóki nie miną lub nie zostaną usunięte:
 
-| Dolegliwość                                                                                 | Działanie                                             |
-| ------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | odbiera Zdrowie                                       |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | szybko odbiera Zdrowie                                |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | odbiera Zdrowie                                       |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | odbiera Zdrowie i przenosi się na każdego obok ciebie |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | poruszasz się z połową prędkości                      |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | większość twoich ataków chybia                        |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | twoja broń trafia znacznie słabiej                    |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | mniej pancerza                                        |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | mniej maksymalnego Zdrowia i słabsze leczenie         |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | czary rzucane są wolno; każdy atak je przerywa        |
+| Dolegliwość                                                                                       | Działanie                                             |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| ![Krwawienie](../../../apps/web/public/icons/status/bleeding.svg) **Krwawienie**                  | odbiera Zdrowie                                       |
+| ![Podpalenie](../../../apps/web/public/icons/status/burning.svg) **Podpalenie**                   | szybko odbiera Zdrowie                                |
+| ![Zatrucie](../../../apps/web/public/icons/status/poison.svg) **Zatrucie**                        | odbiera Zdrowie                                       |
+| ![Choroba](../../../apps/web/public/icons/status/disease.svg) **Choroba**                         | odbiera Zdrowie i przenosi się na każdego obok ciebie |
+| ![Okaleczenie](../../../apps/web/public/icons/status/crippled.svg) **Okaleczenie**                | poruszasz się z połową prędkości                      |
+| ![Oślepienie](../../../apps/web/public/icons/status/blind.svg) **Oślepienie**                     | większość twoich ataków chybia                        |
+| ![Słabość](../../../apps/web/public/icons/status/weakness.svg) **Słabość**                        | twoja broń trafia znacznie słabiej                    |
+| ![Pęknięty Pancerz](../../../apps/web/public/icons/status/cracked-armor.svg) **Pęknięty Pancerz** | mniej pancerza                                        |
+| ![Głęboka Rana](../../../apps/web/public/icons/status/deep-wound.svg) **Głęboka Rana**            | mniej maksymalnego Zdrowia i słabsze leczenie         |
+| ![Oszołomienie](../../../apps/web/public/icons/status/dazed.svg) **Oszołomienie**                 | czary rzucane są wolno; każdy atak je przerywa        |
 
 ![Klątwa](../../../apps/web/public/icons/skill-type/hex.svg) **Klątwy** rzucają na ciebie wrogowie; ![Zaczarowanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **zaczarowania** ty sam lub twoi
 sojusznicy. Każde z nich usuwa własny rodzaj umiejętności. Niektóre zaczarowania
@@ -85,7 +85,7 @@ trafienie.
 
 ## Pancerz i obrażenia
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** noszą najwięcej pancerza; ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin** i ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish** mniej;
+![Wojownik](../../../apps/web/public/icons/profession/warrior.svg) **Wojownik** i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** noszą najwięcej pancerza; ![Łowca](../../../apps/web/public/icons/profession/ranger.svg) **Łowca**, ![Skrytobójca](../../../apps/web/public/icons/profession/assassin.svg) **Skrytobójca** i ![Derwisz](../../../apps/web/public/icons/profession/dervish.svg) **Derwisz** mniej;
 rzucający czary najmniej. Pancerz zmniejsza obrażenia od broni, żywiołów, chaosu
 i mroku. Obrażenia święte, cienia i bez typu, odbieranie Zdrowia oraz kradzież
 życia go ignorują. Tylko trafienia bronią mogą być krytyczne.

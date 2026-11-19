@@ -6,8 +6,8 @@ menu alebo cez **Nová postava**.
 
 ## Povolania
 
-Je ich desať: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**,
-![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** a ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Tvoje **hlavné**
+Je ich desať: ![Bojovník](../../../apps/web/public/icons/profession/warrior.svg) **Bojovník**, ![Hraničiar](../../../apps/web/public/icons/profession/ranger.svg) **Hraničiar**, ![Mních](../../../apps/web/public/icons/profession/monk.svg) **Mních**, ![Nekromant](../../../apps/web/public/icons/profession/necromancer.svg) **Nekromant**, ![Hypnotizér](../../../apps/web/public/icons/profession/mesmer.svg) **Hypnotizér**,
+![Elementalista](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalista**, ![Vrah](../../../apps/web/public/icons/profession/assassin.svg) **Vrah**, ![Ritualista](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualista**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** a ![Derviš](../../../apps/web/public/icons/profession/dervish.svg) **Derviš**. Tvoje **hlavné**
 povolanie je to, čím si: jeho schopnosti a jeho **hlavný atribút**
 (označený ★), ktorý má len hlavné povolanie. Tvoje **vedľajšie** ti požičia
 svoje schopnosti, ale nie svoj hlavný atribút.
@@ -18,11 +18,11 @@ Lišta má **osem pozícií**. Na lištu sa zmestí len jedna **elitná** schopn
 (zlatý rám): ak vybavíš druhú, nahradí prvú. Stlačením **×** na pozícii ju
 vyprázdniš.
 
-![Očarovanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **Bleskové očarovania** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) sú okamžité: ich použitím si zachováš
+![Očarovanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **Bleskové očarovania** (![Derviš](../../../apps/web/public/icons/profession/dervish.svg) **Derviš**) sú okamžité: ich použitím si zachováš
 švih aj krok, takže ich môžeš vkladať medzi údery. Každé z nich vypne tvoje
 ostatné bleskové očarovania na 1 sekundu.
 
-![Forma](../../../apps/web/public/icons/skill-type/form.svg) **Formy** (päť Dervishových Avatarov: Balthazar, Dwayna, Grenth, Lyssa
+![Forma](../../../apps/web/public/icons/skill-type/form.svg) **Formy** (päť Dervišových Avatarov: Balthazar, Dwayna, Grenth, Lyssa
 a Melandru) ťa zmenia na viac než minútu. Forma nie je
 očarovanie, takže ti ju nikto nemôže strhnúť, a naraz môžeš byť len v jednej
 forme. Použitím sa forma na 45 sekúnd zablokuje. Keď forma skončí, prestaneš s
@@ -43,9 +43,9 @@ atribútu, ktorý schopnosť používa, ju posilní: čísla, ktoré rastú s
 atribútom, sú zobrazené zeleným tučným písmom, pri tvojich aktuálnych
 hodnostiach vrátane rún a pokrývky hlavy.
 
-V boji sa tvoje hodnosti môžu na čas zmeniť. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** uberie z každej jednu.
+V boji sa tvoje hodnosti môžu na čas zmeniť. ![Slabosť](../../../apps/web/public/icons/status/weakness.svg) **Slabosť** uberie z každej jednu.
 Niektoré ![Kliatba](../../../apps/web/public/icons/skill-type/hex.svg) **kliatby** nastavia atribúty nepriateľa na 0 a Master of Magic nastaví
-tvoje elementálne na 13: takto nastavená hodnosť prebije runy aj Weakness.
+tvoje elementálne na 13: takto nastavená hodnosť prebije runy aj Slabosť.
 Signet of Illusions umožní tvojim ďalším ![Kúzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kúzlam** iných atribútov použiť
 tvoju hodnosť Illusion Magic. Niektoré schopnosti zvyšujú tvoje atribúty na
 čas alebo pre tvoje ďalšie kúzla, ako to robia Glyph of Elemental Power a
@@ -62,7 +62,7 @@ Väčšina nemôže zamerať ducha.
 
 ## Schopnosti, ktoré sa menia na inú schopnosť
 
-Niektoré schopnosti ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmera** na čas vložia do svojej pozície inú schopnosť.
+Niektoré schopnosti ![Hypnotizér](../../../apps/web/public/icons/profession/mesmer.svg) **Hypnotizéra** na čas vložia do svojej pozície inú schopnosť.
 ![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** a ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** skopírujú ďalšiu schopnosť, ktorú použiješ. **Inspired
 Enchantment** a **Inspired Hex** sa na 20 sekúnd stanú schopnosťou, ktorá
 zoslala ![Očarovanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarovanie** alebo ![Kliatba](../../../apps/web/public/icons/skill-type/hex.svg) **kliatbu**, ktorú odstránili. **Arcane Thievery**
@@ -74,11 +74,11 @@ odstránenie ti energiu stále dá.
 
 ## Studne a glyfy
 
-![Studňa](../../../apps/web/public/icons/skill-type/well.svg) **Studne** ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancera** využívajú najbližšiu mŕtvolu. Ak žiadna nie je
+![Studňa](../../../apps/web/public/icons/skill-type/well.svg) **Studne** ![Nekromant](../../../apps/web/public/icons/profession/necromancer.svg) **Nekromanta** využívajú najbližšiu mŕtvolu. Ak žiadna nie je
 blízko, studňa namiesto toho obetuje 66 % tvojho zdravia a objaví sa tam, kde
 stojíš.
 
-![Glyf](../../../apps/web/public/icons/skill-type/glyph.svg) **Glyfy** ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalistu** menia tvoje ďalšie ![Kúzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kúzlo**: nedá sa prerušiť,
+![Glyf](../../../apps/web/public/icons/skill-type/glyph.svg) **Glyfy** ![Elementalista](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalistu** menia tvoje ďalšie ![Kúzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kúzlo**: nedá sa prerušiť,
 zošle sa okamžite, hneď sa dobije alebo stojí menej. Nový
 glyf nahradí ten, ktorý si mal.
 
@@ -89,7 +89,7 @@ reaguje na každý úder alebo kradnutie života, po ktorom zostaneš nažive a
 pod hranicou, aj keď si pod ňou bol už pred zásahom, a nikdy nie na
 zdravie, ktoré obetuješ alebo stratíš degeneráciou. Ochrana pred smrteľným
 poškodením, ako ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, zruší celý smrteľný úder: žiadne
-poškodenie, žiadna smrť. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** a ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** nemajú
+poškodenie, žiadna smrť. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** a ![Ilúzia slabosti](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Ilúzia slabosti** nemajú
 trvanie: trvajú, kým ich neukončí poškodenie, strhnutie alebo smrť, a
 priebežne ťa liečia.
 
@@ -116,7 +116,7 @@ počíta poškodenie a liečenie tvojich duchov, prisluhovačov a zvieraťa ako 
 
 ## Kúzla predmetov
 
-![Kúzlo predmetu](../../../apps/web/public/icons/skill-type/item-spell.svg) **Kúzla predmetov** ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualistu** ti dajú do rúk **popol** ducha: bonus, kým ho
+![Kúzlo predmetu](../../../apps/web/public/icons/skill-type/item-spell.svg) **Kúzla predmetov** ![Ritualista](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualistu** ti dajú do rúk **popol** ducha: bonus, kým ho
 držíš, a **efekt pri položení**, keď padne. Popol sa položí, keď vyprší, keď
 zomrieš, keď stlačíš **Položiť popol** nad lištou zdravia, zošleš iné kúzlo
 predmetu, urobíš tieňový krok, vymeníš zbrane alebo zdvihneš vlajku či

@@ -429,8 +429,7 @@ kuuloetäisyydellä olevaan viholliseen 50 salamavahinkoa 2,5 sekunnin välein,
 kunnes toinen tiimi pystyttää lippunsa sinne. Jokainen isku on salama
 majakasta osumakohteeseen, ja se näkyy molemmille tiimeille.
 
-Kolme Nousun areenaa on myös Isännöidyn pelin valintoja: **The Hollow Deep** (8v8-Tuho, kolme
-mutkittelevaa tunnelia keskeisen kallion ympärillä),
+Kolme Nousun areenaa on myös Isännöidyn pelin valintoja: **The Hollow Deep** (8v8-Tuho, 6200x2400, pimeässä luolassa: ylitä köysisilta rotkon yli, kiipeä keskimmäisen kielekkeen yli tai kulje sen alla olevan holvikäytävän läpi, kun kalliohyllyn vipu avaa sen portin),
 **Blackwater Ford** (8v8, 5200x2800, Pappituho
 tummalla joen kahlaamolla: yli pääsee kahlaamalla matalan kahlaamon, myllyn yllä pilareillaan seisovaa
 rikkinäistä siltaa pitkin tai sillan alla olevan rummun kautta, kun myllyn vipu avaa sen portin; pappi herättää

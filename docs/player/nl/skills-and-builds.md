@@ -6,8 +6,8 @@ het hoofdmenu, of **Nieuw personage**.
 
 ## Klassen
 
-Er zijn er tien: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**,
-![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** en ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Je **primaire** klasse is wat je bent:
+Er zijn er tien: ![Krijger](../../../apps/web/public/icons/profession/warrior.svg) **Krijger**, ![Jager](../../../apps/web/public/icons/profession/ranger.svg) **Jager**, ![Monnik](../../../apps/web/public/icons/profession/monk.svg) **Monnik**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**,
+![Sluipmoordenaar](../../../apps/web/public/icons/profession/assassin.svg) **Sluipmoordenaar**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** en ![Derwisj](../../../apps/web/public/icons/profession/dervish.svg) **Derwisj**. Je **primaire** klasse is wat je bent:
 de skills ervan, en het **primaire attribuut** (gemarkeerd met ★), dat alleen
 een primaire klasse krijgt. Je **secundaire** klasse leent je zijn skills, maar
 niet zijn primaire attribuut.
@@ -18,11 +18,11 @@ De balk heeft **acht vakken**. Er past maar één **elite**-skill (gouden rand) 
 een balk: rust je een tweede uit, dan vervangt die de eerste. Druk op **×** op
 een vak om het leeg te maken.
 
-![Betovering](../../../apps/web/public/icons/skill-type/enchantment.svg) **Flash-betoveringen** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) zijn direct: als je er een gebruikt, behoud je
+![Betovering](../../../apps/web/public/icons/skill-type/enchantment.svg) **Flash-betoveringen** (![Derwisj](../../../apps/web/public/icons/profession/dervish.svg) **Derwisj**) zijn direct: als je er een gebruikt, behoud je
 je zwaai en je pas, dus je kunt ze tussen je klappen door gebruiken. Elke zet
 je andere flash-betoveringen 1 seconde uit.
 
-![Vorm](../../../apps/web/public/icons/skill-type/form.svg) **Vormen** (de vijf Dervish-Avatars: Balthazar, Dwayna, Grenth, Lyssa en
+![Vorm](../../../apps/web/public/icons/skill-type/form.svg) **Vormen** (de vijf Derwisj-Avatars: Balthazar, Dwayna, Grenth, Lyssa en
 Melandru) veranderen je voor meer dan een minuut. Een vorm is geen betovering,
 dus niemand kan hem wegstrippen, en je kunt in één vorm tegelijk zijn. Eén
 gebruiken schakelt hem 45 seconden uit. Als een vorm eindigt, stop je met wat
@@ -42,10 +42,10 @@ bovenop doen; zie [Uitrusting](equipment.md). Het attribuut verhogen dat een
 skill gebruikt, maakt die sterker: getallen die met het attribuut meegroeien,
 staan groen en vet, bij je huidige rangen inclusief runen en hoofddeksels.
 
-In een gevecht kunnen je rangen een tijdje veranderen. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** haalt er van
+In een gevecht kunnen je rangen een tijdje veranderen. ![Zwakte](../../../apps/web/public/icons/status/weakness.svg) **Zwakte** haalt er van
 elk één af. Sommige ![Vloek](../../../apps/web/public/icons/skill-type/hex.svg) **vloeken** zetten de attributen van een vijand op 0, en
 Master of Magic zet je elementaire op 13: een zo gezette rang gaat boven runen
-en Weakness. Met Signet of Illusions gebruiken je volgende ![Spreuk](../../../apps/web/public/icons/skill-type/spell.svg) **spreuken** van andere
+en Zwakte. Met Signet of Illusions gebruiken je volgende ![Spreuk](../../../apps/web/public/icons/skill-type/spell.svg) **spreuken** van andere
 attributen je Illusion Magic-rang. Sommige skills verhogen je attributen een
 tijdje of voor je volgende spreuken, zoals Glyph of Elemental Power en Ritual
 Lord doen, zelfs een die je op 0 liet staan; een gezette rang, zoals die van
@@ -90,7 +90,7 @@ brengt" reageert op elke klap of levensdiefstal die je levend en onder de grens
 laat, zelfs als je er voor de treffer al onder zat, en nooit op gezondheid die
 je offert of verliest aan degeneratie. Bescherming tegen dodelijke schade, zoals
 ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, laat de hele fatale klap wegvallen: geen schade, geen
-dood. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** en ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** hebben geen duur: ze duren
+dood. ![Trouwe tussenkomst](../../../apps/web/public/icons/status/faithful-intervention.svg) **Trouwe tussenkomst** en ![Illusie van zwakte](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusie van zwakte** hebben geen duur: ze duren
 tot schade, een strip of de dood ze beëindigt, en genezen je ondertussen.
 
 ## De bibliotheek

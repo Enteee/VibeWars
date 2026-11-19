@@ -436,10 +436,11 @@ export interface LightMapCells {
  * `LIGHT_MAP_CELL` (#3524). On a software renderer a textured pixel
  * costs many flat ones, and far from every light the map is one colour:
  * a cell nothing marks but the base tint is drawn as a flat fill. What
- * marks a cell is decided from the same shapes the map is drawn from, by
- * their boxes grown by `MARK_MARGIN`: a light's reach, steady or
+ * marks a cell is decided from the same shapes the map is drawn from,
+ * grown by `MARK_MARGIN`: a light's reach, by its box, steady or
  * flickering (so nothing redrawn after the build lands in a flat cell),
- * a sun shadow, the indoors, a roof, and the edge of what is erased.
+ * and, by their outlines (#3660), a sun shadow, the indoors, a roof, and
+ * the edge of what is erased.
  * In doubt, a cell is textured.
  */
 export function lightMapCells(
@@ -478,21 +479,26 @@ export function lightMapCells(
   );
   const casters = stageShadows(stage) ? shadowCasters(walls, structure, layer) : [];
   const ground = layer === structure.ground;
-  const marks = [
-    ...reach,
-    ...[
-      ...layerSunShadows(lighting, casters),
-      ...lighting.indoor.map(shapeOutline),
-      ...roofedOver(structure, layer),
-      // The ground's pits are erased; the rest is erased off any other layer.
-      ...(ground ? groundHoles(structure) : []),
-    ]
-      .filter((outline) => outline.length > 0)
-      .map((outline) => boxOf(inMap(outline))),
-  ];
+  const shapes = [
+    ...layerSunShadows(lighting, casters),
+    ...lighting.indoor.map(shapeOutline),
+    ...roofedOver(structure, layer),
+    // The ground's pits are erased; the rest is erased off any other layer.
+    ...(ground ? groundHoles(structure) : []),
+  ]
+    .filter((outline) => outline.length > 0)
+    .map((shape) => {
+      const outline = inMap(shape);
+      return { outline, box: boxOf(outline) };
+    });
   const surfaces = ground ? [] : layerSurfaces(structure, layer).map(inMap);
+  // A shape marks only the cells it meets, not all its box does (#3660): a
+  // long shadow across the map has a box of half of it.
   const plain = (box: LightMapBox): boolean =>
-    !marks.some((mark) => overlaps(mark, box)) &&
+    !reach.some((mark) => overlaps(mark, box)) &&
+    !shapes.some(
+      (shape) => overlaps(shape.box, box) && boxMeets(shape.outline, box, MARK_MARGIN),
+    ) &&
     (ground || surfaces.some((outline) => boxUnder(outline, box, MARK_MARGIN)));
   const split = (box: LightMapBox, shows: (cell: LightMapBox) => boolean): readonly LightMapBox[] =>
     coverBoxes(box.width, box.height, LIGHT_MAP_CELL, (cell) =>
@@ -560,14 +566,20 @@ export function regionsInView(
   lift: number,
   view: Box,
 ): readonly FlickerRegion[] {
+  return regions.filter(({ box }) => boxInView(box, extent, lift, view));
+}
+
+/**
+ * Whether `box` of a light map with `extent`, drawn `lift` world units up,
+ * meets the camera's `view`. An image of it off screen is hidden (#3660):
+ * a software renderer pays for every quad it is handed, shown or not.
+ */
+export function boxInView(box: LightMapBox, extent: LightMapBox, lift: number, view: Box): boolean {
   const left = view.left * LIGHT_MAP_SCALE - extent.x;
   const top = (view.top + lift) * LIGHT_MAP_SCALE - extent.y;
   const right = view.right * LIGHT_MAP_SCALE - extent.x;
   const bottom = (view.bottom + lift) * LIGHT_MAP_SCALE - extent.y;
-  return regions.filter(
-    ({ box }) =>
-      box.x < right && left < box.x + box.width && box.y < bottom && top < box.y + box.height,
-  );
+  return box.x < right && left < box.x + box.width && box.y < bottom && top < box.y + box.height;
 }
 
 /**
@@ -589,8 +601,11 @@ interface LayerMap {
   readonly base: Phaser.Textures.DynamicTexture;
   readonly shownKey: string;
   readonly shown: Phaser.Textures.DynamicTexture;
-  /** The map shown, one image per box of it a surface is in (#3162). */
-  readonly images: readonly Phaser.GameObjects.Image[];
+  /** The map shown, one image per box of it a surface is in (#3162), with its box. */
+  readonly images: readonly {
+    readonly image: Phaser.GameObjects.Image;
+    readonly box: LightMapBox;
+  }[];
   /** The map where it is one colour, as a flat fill (#3524). */
   readonly flat: Phaser.GameObjects.Graphics;
   /** Of the ground's, the images over each tunnel's cover, by tunnel (#3329). */
@@ -690,9 +705,12 @@ export class LightingPass {
     }
   }
 
-  /** Redraws what flickers in the camera's `view`, when it is due. */
+  /** Shows what of the maps the camera's `view` meets; redraws what flickers in it, when due. */
   public update(nowMs: number, view: Box): void {
     for (const map of this.layers) {
+      for (const { image, box } of map.images) {
+        image.setVisible(boxInView(box, map.extent, map.lift, view));
+      }
       if (flickerRedrawDue(map.flickering, map.drawnAt, nowMs)) {
         const started = performance.now();
         this.drawFlicker(map, nowMs, regionsInView(map.flickerRegions, map.extent, map.lift, view));
@@ -709,7 +727,7 @@ export class LightingPass {
   private drop(): void {
     const textures = this.scene.textures;
     for (const map of this.layers) {
-      for (const image of map.images) {
+      for (const { image } of map.images) {
         image.destroy();
       }
       map.flat.destroy();
@@ -844,10 +862,12 @@ export class LightingPass {
       : undefined;
 
     const lift = elevationOf(layer, structure.ground);
+    const shownImages: { image: Phaser.GameObjects.Image; box: LightMapBox }[] = [];
     const imageOf =
       (key: string, blendMode: Phaser.BlendModes) =>
-      ({ x, y, width, height }: LightMapBox): Phaser.GameObjects.Image =>
-        this.scene.add
+      (box: LightMapBox): Phaser.GameObjects.Image => {
+        const { x, y, width, height } = box;
+        const image = this.scene.add
           .image(
             (extent.x + x) / LIGHT_MAP_SCALE,
             (extent.y + y) / LIGHT_MAP_SCALE - lift,
@@ -858,6 +878,9 @@ export class LightingPass {
           .setScale(1 / LIGHT_MAP_SCALE)
           .setBlendMode(blendMode)
           .setDepth(renderOrder({ kind: "lighting", layer }));
+        shownImages.push({ image, box });
+        return image;
+      };
     const image = imageOf(shownKey, Phaser.BlendModes.MULTIPLY);
     const cells = lightMapCells(lighting, structure, this.walls, layer, extent, this.stage);
     // Where the map is one colour, that colour multiplied flat, untextured (#3524).
@@ -876,10 +899,10 @@ export class LightingPass {
     }
     // The warm pools add over the lit floor, so they are made after it (#3350);
     // where no light reaches they are black, and add nothing.
-    const images = [
-      ...cells.textured.map(image),
-      ...(glowKey === undefined ? [] : cells.lit.map(imageOf(glowKey, Phaser.BlendModes.ADD))),
-    ];
+    cells.textured.forEach(image);
+    if (glowKey !== undefined) {
+      cells.lit.forEach(imageOf(glowKey, Phaser.BlendModes.ADD));
+    }
     // The ground's light over a tunnel fades with its cover (#3329).
     const tunnels = new Map(
       layer === structure.ground
@@ -892,7 +915,7 @@ export class LightingPass {
       base,
       shownKey,
       shown,
-      images: [...images, ...[...tunnels.values()].flat()],
+      images: shownImages,
       flat,
       tunnels,
       outsideKey,

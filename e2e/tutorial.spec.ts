@@ -6,9 +6,10 @@ import { professionField } from "./helpers/professions.js";
 
 /**
  * A map whose ground is layer 0, and one whose ground is layer 1 (#3248):
- * the tutorial walks on either.
+ * the tutorial walks on either. No player map is flat (#3444), so the flat
+ * one is the bench's frozen flat map, which the e2e build offers.
  */
-const FLAT_MAP = "hollow-deep";
+const FLAT_MAP = "bench-flat";
 const RAISED_MAP = "arena-crossroads";
 /** Where the pair arrives in the canyon (#3247), its first map's arrival pad. */
 const CANYON_ARRIVAL = { x: 1000, y: 1800 };

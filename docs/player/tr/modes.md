@@ -459,7 +459,7 @@ yıldırım hasarıyla çarpar. Her çarpma, işaretten vurduğu kişiye uzanan,
 iki takımın da gördüğü bir şimşektir.
 
 Üç Yükseliş arenası da Özel Oyun'da seçilebilir: **The Hollow Deep**
-(8v8 İmha, merkezi bir kayanın çevresinde üç kıvrımlı tünel),
+(8v8 İmha, 6200x2400, karanlık bir mağarada: bir uçurumun üstündeki halat köprüden geç, ortadaki çıkıntının üstünden tırman ya da bir kaya rafındaki kol kapısını açınca altındaki mahzenden geç),
 **Blackwater Ford** (8v8, 5200x2800, karanlık bir nehir sığlığında Rahip İmhası: sığ geçitten yürüyerek,
 değirmenin üstünde ayakları üzerinde duran yıkık köprüden ya da değirmendeki bir kol kapısını açınca
 köprünün altındaki menfezden geçilir; rahip ölülerini her 2 dakikada bir diriltir) ve

@@ -12,9 +12,9 @@ Tiens-toi dans l'une de ces zones et elle agit sur toi ; son effet dure
 encore un court moment après que tu en es sorti. Ennemis et alliés sont
 touchés de la même façon que toi.
 
-- Le **sol calciné** te donne Burning. De la terre carbonisée avec des
+- Le **sol calciné** t'inflige Brûlure. De la terre carbonisée avec des
   braises rougeoyantes et un bord orange.
-- La **lave** te donne Burning et Crippled. Une croûte sombre fendue de
+- La **lave** t'inflige Brûlure et Infirmité. Une croûte sombre fendue de
   fissures qui coulent, rougeoient et vacillent.
 - La **brume toxique** te donne Poison. Des bouffées vert acide qui dérivent
   et à travers lesquelles tu vois. Du vert au sol veut toujours dire poison.
@@ -39,10 +39,10 @@ touchés de la même façon que toi.
 Ils frappent encore et encore au même endroit, et touchent quiconque s'y
 trouve à ce moment-là.
 
-- Un **évent de feu** projette une colonne de flammes qui te donne Burning.
+- Un **évent de feu** projette une colonne de flammes qui t'inflige Brûlure.
   Entre deux coups, c'est un collier de pierre qui fume.
 - Un **jet de gaz** crache un gaz vert qui te donne Poison.
-- Un **éboulement** fait tomber des rochers qui te donnent Crippled.
+- Un **éboulement** fait tomber des rochers qui t'infligent Infirmité.
   Certains tombent toujours au même endroit, d'autres roulent le long d'un
   chemin, aller et retour.
 

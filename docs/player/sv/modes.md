@@ -411,8 +411,7 @@ hörhåll med 50 blixtskada var 2,5:e sekund, tills det andra laget
 sätter sin flagga där. Varje nedslag är en blixt från fyren till den
 den träffade, synlig för båda lagen.
 
-Tre Ascent-arenor kan också väljas i ett eget spel: **The Hollow Deep** (8v8 Förintelse, tre
-slingrande tunnlar runt en klippa i mitten),
+Tre Ascent-arenor kan också väljas i ett eget spel: **The Hollow Deep** (8v8 Förintelse, 6200x2400, i en mörk grotta: gå över en repbro över en klyfta, klättra över en avsats i mitten, eller ta kryptan under den när en spak på en klipphylla öppnar dess port),
 **Blackwater Ford** (8v8, 5200x2800,
 Prästförintelse vid ett mörkt vadställe i en flod: man vadar över ett grunt vadställe, går över den trasiga
 bron på sina pelare ovanför kvarnen eller tar en kulvert under bron när en spak på kvarnen öppnar dess galler;
