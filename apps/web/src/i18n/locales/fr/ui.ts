@@ -1600,6 +1600,25 @@ export default {
   "tutorial.menu.spec.title": "Change ta spécialisation.",
   "tutorial.menu.spec.weapons": "Choisis dans la liste une arme pour ton set d'armes.",
   "tutorial.menu.spec.weaponsDone": "Change une arme",
+  "tutorial.menu.team.build":
+    "Le nom d'un membre ouvre son build dans l'éditeur de build. Au retour, tes changements restent, non sauvés.",
+  "tutorial.menu.team.character":
+    "Glisse ton personnage depuis Mes personnages sur un membre. Le membre en devient une copie.",
+  "tutorial.menu.team.characterDone": "Mets ton personnage dans l'équipe",
+  "tutorial.menu.team.fill":
+    "Donne un build à chaque membre, jusqu'à ce que l'équipe n'ait plus de problème.",
+  "tutorial.menu.team.fillDone": "Complète l'équipe",
+  "tutorial.menu.team.members":
+    "Une équipe a toujours autant de membres que sa taille. Tu n'ajoutes jamais de membre : tu en remplaces un.",
+  "tutorial.menu.team.new": "Règle la taille d'équipe sur 2v2, puis crée un nouveau build.",
+  "tutorial.menu.team.newDone": "Lance une équipe de 2",
+  "tutorial.menu.team.open": "Ouvre Équipes, où sont tes builds d'équipe.",
+  "tutorial.menu.team.openDone": "Ouvre Équipes",
+  "tutorial.menu.team.problems":
+    "Sauver enregistre toujours l'équipe. Son indice nomme la première chose qui empêche de jouer l'équipe.",
+  "tutorial.menu.team.save": "Sauve ton équipe.",
+  "tutorial.menu.team.saveDone": "Sauver",
+  "tutorial.menu.team.title": "Bâtis une équipe pour réussir.",
   "tutorial.gate.hint": "Dans la brume, derrière moi.",
   "tutorial.gate.how": "Clic gauche sur le sol, ou marche avec {keys}.",
   "tutorial.gate.intro": "Notre équipe se bat de l'autre côté de la brume. Suis-moi.",

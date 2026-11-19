@@ -1581,6 +1581,25 @@ export default {
   "tutorial.menu.spec.title": "Mude sua especialização.",
   "tutorial.menu.spec.weapons": "Escolha na lista uma arma para seu conjunto de armas.",
   "tutorial.menu.spec.weaponsDone": "Troque uma arma",
+  "tutorial.menu.team.build":
+    "O nome de um membro abre a build dele no editor de builds. Ao voltar, o que você mudou continua lá, sem salvar.",
+  "tutorial.menu.team.character":
+    "Arraste seu personagem de Meus personagens para um membro. O membro vira uma cópia dele.",
+  "tutorial.menu.team.characterDone": "Coloque seu personagem na equipe",
+  "tutorial.menu.team.fill": "Dê uma build a cada membro, até a equipe não ter mais problemas.",
+  "tutorial.menu.team.fillDone": "Complete a equipe",
+  "tutorial.menu.team.members":
+    "Uma equipe sempre tem tantos membros quanto seu tamanho. Você nunca adiciona um membro: substitui um.",
+  "tutorial.menu.team.new":
+    "Defina o tamanho da equipe como 2v2 e depois crie uma nova build de equipe.",
+  "tutorial.menu.team.newDone": "Comece uma equipe de 2",
+  "tutorial.menu.team.open": "Abra Equipes, onde ficam suas builds de equipe.",
+  "tutorial.menu.team.openDone": "Abra Equipes",
+  "tutorial.menu.team.problems":
+    "Salvar sempre guarda a equipe. A dica dele aponta a primeira coisa que impede a equipe de jogar.",
+  "tutorial.menu.team.save": "Salve sua equipe.",
+  "tutorial.menu.team.saveDone": "Salvar",
+  "tutorial.menu.team.title": "Monte uma equipe para ter sucesso.",
   "tutorial.gate.hint": "Para a névoa, atrás de mim.",
   "tutorial.gate.how": "Clique com o botão esquerdo no chão, ou ande com {keys}.",
   "tutorial.gate.intro": "A nossa equipa luta para lá da névoa. Segue-me.",

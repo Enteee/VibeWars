@@ -1512,6 +1512,24 @@ export default {
   "tutorial.menu.spec.title": "Смени специализацията си.",
   "tutorial.menu.spec.weapons": "Избери оръжие за оръжейния си комплект от списъка.",
   "tutorial.menu.spec.weaponsDone": "Смени оръжие",
+  "tutorial.menu.team.build":
+    "Името на член отваря билда му в редактора на билдове. Като се върнеш, промените ти остават, незапазени.",
+  "tutorial.menu.team.character":
+    "Плъзни героя си от „Моите герои“ върху член. Членът става негово копие.",
+  "tutorial.menu.team.characterDone": "Сложи героя си в отбора",
+  "tutorial.menu.team.fill": "Дай билд на всеки член, докато в отбора не останат проблеми.",
+  "tutorial.menu.team.fillDone": "Попълни отбора",
+  "tutorial.menu.team.members":
+    "Отборът винаги има толкова членове, колкото е размерът му. Никога не добавяш член: заменяш един.",
+  "tutorial.menu.team.new": "Задай размер на отбора 2v2, после направи нов отборен билд.",
+  "tutorial.menu.team.newDone": "Започни отбор от 2",
+  "tutorial.menu.team.open": "Отвори „Отбори“, където са отборните ти билдове.",
+  "tutorial.menu.team.openDone": "Отвори „Отбори“",
+  "tutorial.menu.team.problems":
+    "„Запази“ винаги съхранява отбора. Подсказката му назовава първото, което пречи отборът да се играе.",
+  "tutorial.menu.team.save": "Запази отбора си.",
+  "tutorial.menu.team.saveDone": "Запази",
+  "tutorial.menu.team.title": "Изгради отбор, за да успееш.",
   "tutorial.gate.hint": "Към мъглата, след мен.",
   "tutorial.gate.how": "Кликни с левия бутон по земята или върви с {keys}.",
   "tutorial.gate.intro": "Отборът ни се бие отвъд мъглата. Следвай ме.",

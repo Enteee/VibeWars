@@ -1636,6 +1636,24 @@ export default {
   "tutorial.menu.spec.title": "Zmień swoją specjalizację.",
   "tutorial.menu.spec.weapons": "Wybierz z listy broń do swojego zestawu broni.",
   "tutorial.menu.spec.weaponsDone": "Zmień broń",
+  "tutorial.menu.team.build":
+    "Imię członka otwiera jego build w edytorze buildów. Po powrocie zmiany zostają, niezapisane.",
+  "tutorial.menu.team.character":
+    "Przeciągnij swoją postać z Moje postacie na członka. Członek staje się jej kopią.",
+  "tutorial.menu.team.characterDone": "Wstaw swoją postać do drużyny",
+  "tutorial.menu.team.fill": "Daj każdemu członkowi build, aż drużynie nie zostaną żadne problemy.",
+  "tutorial.menu.team.fillDone": "Uzupełnij drużynę",
+  "tutorial.menu.team.members":
+    "Drużyna zawsze ma tylu członków, ile wynosi jej rozmiar. Nigdy nie dodajesz członka: zastępujesz jednego.",
+  "tutorial.menu.team.new": "Ustaw rozmiar drużyny na 2v2, potem utwórz nowy build drużyny.",
+  "tutorial.menu.team.newDone": "Zacznij drużynę 2-osobową",
+  "tutorial.menu.team.open": "Otwórz Drużyny, gdzie są twoje buildy drużyn.",
+  "tutorial.menu.team.openDone": "Otwórz Drużyny",
+  "tutorial.menu.team.problems":
+    "Zapisz zawsze zapisuje drużynę. Jego podpowiedź wskazuje pierwszą rzecz, która nie pozwala grać drużyną.",
+  "tutorial.menu.team.save": "Zapisz swoją drużynę.",
+  "tutorial.menu.team.saveDone": "Zapisz",
+  "tutorial.menu.team.title": "Zbuduj drużynę, by odnieść sukces.",
   "tutorial.gate.hint": "W mgłę, za mną.",
   "tutorial.gate.how": "Kliknij lewym przyciskiem ziemię albo idź klawiszami {keys}.",
   "tutorial.gate.intro": "Nasza drużyna walczy za mgłą. Za mną.",

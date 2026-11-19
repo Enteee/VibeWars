@@ -1531,6 +1531,26 @@ export default {
   "tutorial.menu.spec.title": "Άλλαξε την ειδίκευσή σου.",
   "tutorial.menu.spec.weapons": "Διάλεξε από τη λίστα ένα όπλο για το σετ όπλων σου.",
   "tutorial.menu.spec.weaponsDone": "Άλλαξε ένα όπλο",
+  "tutorial.menu.team.build":
+    "Το όνομα ενός μέλους ανοίγει το build του στον επεξεργαστή build. Όταν επιστρέψεις, οι αλλαγές σου μένουν, χωρίς αποθήκευση.",
+  "tutorial.menu.team.character":
+    "Σύρε τον χαρακτήρα σου από το «Οι χαρακτήρες μου» σε ένα μέλος. Το μέλος γίνεται αντίγραφό του.",
+  "tutorial.menu.team.characterDone": "Βάλε τον χαρακτήρα σου στην ομάδα",
+  "tutorial.menu.team.fill":
+    "Δώσε build σε κάθε μέλος, μέχρι να μη μείνει κανένα πρόβλημα στην ομάδα.",
+  "tutorial.menu.team.fillDone": "Συμπλήρωσε την ομάδα",
+  "tutorial.menu.team.members":
+    "Μια ομάδα έχει πάντα τόσα μέλη όσο το μέγεθός της. Ποτέ δεν προσθέτεις μέλος: αντικαθιστάς ένα.",
+  "tutorial.menu.team.new":
+    "Όρισε το μέγεθος ομάδας σε 2v2 και μετά φτιάξε μια νέα σύνθεση ομάδας.",
+  "tutorial.menu.team.newDone": "Ξεκίνα μια ομάδα των 2",
+  "tutorial.menu.team.open": "Άνοιξε τις Ομάδες, όπου είναι οι συνθέσεις ομάδων σου.",
+  "tutorial.menu.team.openDone": "Άνοιξε τις Ομάδες",
+  "tutorial.menu.team.problems":
+    "Η Αποθήκευση αποθηκεύει πάντα την ομάδα. Η υπόδειξή της ονομάζει το πρώτο που εμποδίζει την ομάδα να παίξει.",
+  "tutorial.menu.team.save": "Αποθήκευσε την ομάδα σου.",
+  "tutorial.menu.team.saveDone": "Αποθήκευση",
+  "tutorial.menu.team.title": "Φτιάξε μια ομάδα για να πετύχεις.",
   "tutorial.gate.hint": "Μέσα στην ομίχλη, πίσω μου.",
   "tutorial.gate.how": "Αριστερό κλικ στο έδαφος, ή περπάτα με {keys}.",
   "tutorial.gate.intro": "Η ομάδα μας μάχεται πέρα από την ομίχλη. Ακολούθησέ με.",

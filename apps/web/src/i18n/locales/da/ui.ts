@@ -1504,6 +1504,24 @@ export default {
   "tutorial.menu.spec.title": "Skift din spec.",
   "tutorial.menu.spec.weapons": "Vælg et våben til dit våbensæt fra listen.",
   "tutorial.menu.spec.weaponsDone": "Skift et våben",
+  "tutorial.menu.team.build":
+    "Et medlems navn åbner dets build i build-editoren. Når du kommer tilbage, er dine ændringer der stadig, ikke gemt.",
+  "tutorial.menu.team.character":
+    "Træk din figur fra Mine figurer over på et medlem. Medlemmet bliver en kopi af den.",
+  "tutorial.menu.team.characterDone": "Sæt din figur på holdet",
+  "tutorial.menu.team.fill": "Giv hvert medlem et build, indtil holdet ikke har flere problemer.",
+  "tutorial.menu.team.fillDone": "Fyld holdet",
+  "tutorial.menu.team.members":
+    "Et hold har altid lige så mange medlemmer som sin størrelse. Du tilføjer aldrig et medlem: du erstatter et.",
+  "tutorial.menu.team.new": "Sæt holdstørrelsen til 2v2, og lav så et nyt holdbuild.",
+  "tutorial.menu.team.newDone": "Start et hold på 2",
+  "tutorial.menu.team.open": "Åbn Hold, hvor dine holdbuilds er.",
+  "tutorial.menu.team.openDone": "Åbn Hold",
+  "tutorial.menu.team.problems":
+    "Gem gemmer altid holdet. Dets tip nævner det første, der forhindrer holdet i at blive spillet.",
+  "tutorial.menu.team.save": "Gem dit hold.",
+  "tutorial.menu.team.saveDone": "Gem",
+  "tutorial.menu.team.title": "Byg et hold for at få succes.",
   "tutorial.gate.hint": "Ind i tågen, efter mig.",
   "tutorial.gate.how": "Venstreklik på jorden, eller gå med {keys}.",
   "tutorial.gate.intro": "Vores hold kæmper på den anden side af tågen. Følg mig.",

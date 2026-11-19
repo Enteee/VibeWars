@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
-import type { StoredCharacter } from "../storage/schema.js";
+import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import { newCharacter } from "../ui/build-editor.js";
+import { teamCharacter, teamOf } from "../ui/team-builder.js";
 
 import type { CoachView } from "./coach-overlay.js";
 import { startMenuQuest } from "./menu-quest-session.js";
@@ -83,7 +84,7 @@ describe("the menu quest session", () => {
     expect(onEnd).not.toHaveBeenCalled();
   });
 
-  it("follows the spec step from the editor events, then saves done and goes (#3541)", () => {
+  it("follows the spec step from the editor events, then saves the team step and points on (#3541, #3542)", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
     const quest = startMenuQuest({ from: "spec", coach, onEnd });
@@ -126,6 +127,48 @@ describe("the menu quest session", () => {
     quest.event({ kind: "build-draft", before: armed, draft: dressed });
     expect(shown.at(-1)?.target).toBe("save");
     quest.event({ kind: "character-saved", before: undefined, after: dressed });
+    // On to the team step (#3542), saved for a launch to resume at.
+    expect(items.get(KEY)).toBe("menu:team");
+    expect(shown.at(-1)?.target).toBe("rail-teams");
+    expect(removed()).toBe(false);
+    expect(onEnd).not.toHaveBeenCalled();
+  });
+
+  it("follows the team step from the team editor's events, then saves done and goes (#3542)", () => {
+    const { coach, shown, removed } = fakeCoach();
+    const onEnd = vi.fn();
+    const quest = startMenuQuest({ from: "team", coach, onEnd });
+    expect(items.get(KEY)).toBe("menu:team");
+    expect(shown.at(-1)?.target).toBe("rail-teams");
+    quest.event({ kind: "screen-shown", screen: "teams" });
+    expect(shown.at(-1)?.target).toBe("team-new");
+    const mine: StoredCharacter = {
+      ...newCharacter("c1"),
+      secondaryProfession: "monk",
+      attributes: [{ attributeId: "warrior.tactics", rank: 8 }],
+      skillBar: ["warrior.sprint", "monk.orison-of-healing", null, null, null, null, null, null],
+    };
+    const blank = (id: string) => teamCharacter(newCharacter(id), id);
+    const opened = teamOf("t1", 2, [blank("m1"), blank("m2")]);
+    const draft = (team: StoredTeam) =>
+      quest.event({ kind: "team-draft", draft: team, isNew: true, characters: [mine] });
+    draft(opened);
+    expect(shown.at(-1)?.target).toBe("team-members");
+    gotIt(shown.at(-1));
+    expect(shown.at(-1)?.target).toBe("team-member-build");
+    gotIt(shown.at(-1));
+    expect(shown.at(-1)?.target).toBe("team-problems");
+    gotIt(shown.at(-1));
+    expect(shown.at(-1)?.target).toBe("team-character");
+    const copied = teamOf("t1", 2, [teamCharacter(mine, "m1"), blank("m2")]);
+    draft(copied);
+    expect(shown.at(-1)?.line).toBe(
+      "Give every member a build, until the team has no problems left.",
+    );
+    const filled = teamOf("t1", 2, [teamCharacter(mine, "m1"), teamCharacter(mine, "m2")]);
+    draft(filled);
+    expect(shown.at(-1)?.target).toBe("team-save");
+    quest.event({ kind: "team-saved", team: filled, isNew: true });
     expect(items.get(KEY)).toBe("done");
     expect(removed()).toBe(true);
     expect(onEnd).toHaveBeenCalledWith("done");

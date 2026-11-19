@@ -1631,6 +1631,24 @@ export default {
   "tutorial.menu.spec.title": "Зміни спеціалізацію.",
   "tutorial.menu.spec.weapons": "Вибери зі списку зброю для свого набору зброї.",
   "tutorial.menu.spec.weaponsDone": "Зміни зброю",
+  "tutorial.menu.team.build":
+    "Ім'я учасника відкриває його білд у редакторі білдів. Коли повернешся, зміни залишаться незбереженими.",
+  "tutorial.menu.team.character":
+    "Перетягни свого персонажа з «Мої персонажі» на учасника. Учасник стане його копією.",
+  "tutorial.menu.team.characterDone": "Постав персонажа в команду",
+  "tutorial.menu.team.fill": "Дай білд кожному учаснику, доки в команди не залишиться проблем.",
+  "tutorial.menu.team.fillDone": "Заповни команду",
+  "tutorial.menu.team.members":
+    "У команді завжди стільки учасників, який її розмір. Учасника не додають: його замінюють.",
+  "tutorial.menu.team.new": "Встанови розмір команди 2v2, потім створи новий командний білд.",
+  "tutorial.menu.team.newDone": "Почни команду з 2",
+  "tutorial.menu.team.open": "Відкрий «Команди», де твої командні білди.",
+  "tutorial.menu.team.openDone": "Відкрий «Команди»",
+  "tutorial.menu.team.problems":
+    "«Зберегти» завжди зберігає команду. Підказка кнопки називає перше, що заважає грати командою.",
+  "tutorial.menu.team.save": "Збережи команду.",
+  "tutorial.menu.team.saveDone": "Зберегти",
+  "tutorial.menu.team.title": "Збери команду, щоб перемагати.",
   "tutorial.gate.hint": "У туман, за мною.",
   "tutorial.gate.how": "Клацни лівою кнопкою по землі або йди клавішами {keys}.",
   "tutorial.gate.intro": "Наша команда б'ється за туманом. За мною.",

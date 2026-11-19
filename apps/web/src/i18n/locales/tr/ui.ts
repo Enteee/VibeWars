@@ -1509,6 +1509,24 @@ export default {
   "tutorial.menu.spec.title": "Uzmanlığını değiştir.",
   "tutorial.menu.spec.weapons": "Listeden silah setin için bir silah seç.",
   "tutorial.menu.spec.weaponsDone": "Bir silahı değiştir",
+  "tutorial.menu.team.build":
+    "Bir üyenin adı, yapısını yapı düzenleyicide açar. Geri döndüğünde değişikliklerin kaydedilmemiş olarak kalır.",
+  "tutorial.menu.team.character":
+    "Karakterini Karakterlerim'den bir üyenin üzerine sürükle. Üye onun bir kopyası olur.",
+  "tutorial.menu.team.characterDone": "Karakterini takıma koy",
+  "tutorial.menu.team.fill": "Takımda hiç sorun kalmayana kadar her üyeye bir yapı ver.",
+  "tutorial.menu.team.fillDone": "Takımı doldur",
+  "tutorial.menu.team.members":
+    "Bir takımın her zaman boyutu kadar üyesi olur. Asla üye eklemezsin: birini değiştirirsin.",
+  "tutorial.menu.team.new": "Takım boyutunu 2v2 yap, sonra yeni bir takım dizilimi oluştur.",
+  "tutorial.menu.team.newDone": "2 kişilik bir takım başlat",
+  "tutorial.menu.team.open": "Takım dizilimlerinin bulunduğu Takımlar'ı aç.",
+  "tutorial.menu.team.openDone": "Takımlar'ı aç",
+  "tutorial.menu.team.problems":
+    "Kaydet takımı her zaman saklar. İpucu, takımın oynanmasını engelleyen ilk şeyi söyler.",
+  "tutorial.menu.team.save": "Takımını kaydet.",
+  "tutorial.menu.team.saveDone": "Kaydet",
+  "tutorial.menu.team.title": "Başarılı olmak için bir takım kur.",
   "tutorial.gate.hint": "Sisin içine, peşimden.",
   "tutorial.gate.how": "Zemine sol tıkla ya da {keys} ile yürü.",
   "tutorial.gate.intro": "Takımımız sisin ötesinde savaşıyor. Beni takip et.",

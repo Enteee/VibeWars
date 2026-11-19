@@ -1626,6 +1626,24 @@ export default {
   "tutorial.menu.spec.title": "Zmeň svoju špecializáciu.",
   "tutorial.menu.spec.weapons": "Vyber zo zoznamu zbraň pre svoju sadu zbraní.",
   "tutorial.menu.spec.weaponsDone": "Zmeň zbraň",
+  "tutorial.menu.team.build":
+    "Meno člena otvorí jeho build v editore buildov. Po návrate ti zmeny zostanú, neuložené.",
+  "tutorial.menu.team.character":
+    "Pretiahni svoju postavu z Moje postavy na člena. Člen sa stane jej kópiou.",
+  "tutorial.menu.team.characterDone": "Daj svoju postavu do tímu",
+  "tutorial.menu.team.fill": "Daj každému členovi build, kým v tíme nezostanú žiadne problémy.",
+  "tutorial.menu.team.fillDone": "Doplň tím",
+  "tutorial.menu.team.members":
+    "Tím má vždy toľko členov, koľko je jeho veľkosť. Člena nikdy nepridávaš: nahrádzaš ho.",
+  "tutorial.menu.team.new": "Nastav veľkosť tímu na 2v2 a potom vytvor nový tímový build.",
+  "tutorial.menu.team.newDone": "Založ tím pre 2",
+  "tutorial.menu.team.open": "Otvor Tímy, kde sú tvoje tímové buildy.",
+  "tutorial.menu.team.openDone": "Otvor Tímy",
+  "tutorial.menu.team.problems":
+    "Uložiť tím vždy uloží. Jeho nápoveda menuje prvú vec, ktorá bráni hraniu tímu.",
+  "tutorial.menu.team.save": "Ulož svoj tím.",
+  "tutorial.menu.team.saveDone": "Uložiť",
+  "tutorial.menu.team.title": "Postav tím, aby si uspel.",
   "tutorial.gate.hint": "Do hmly, za mnou.",
   "tutorial.gate.how": "Klikni ľavým tlačidlom na zem, alebo choď pomocou {keys}.",
   "tutorial.gate.intro": "Náš tím bojuje za hmlou. Poď za mnou.",

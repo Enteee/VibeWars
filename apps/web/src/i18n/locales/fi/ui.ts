@@ -1522,6 +1522,25 @@ export default {
   "tutorial.menu.spec.title": "Vaihda erikoistumisesi.",
   "tutorial.menu.spec.weapons": "Valitse listasta ase asesarjaasi.",
   "tutorial.menu.spec.weaponsDone": "Vaihda ase",
+  "tutorial.menu.team.build":
+    "Jäsenen nimi avaa sen buildin buildieditorissa. Kun palaat, muutoksesi säilyvät tallentamattomina.",
+  "tutorial.menu.team.character":
+    "Vedä hahmosi kohdasta Omat hahmot jäsenen päälle. Jäsenestä tulee sen kopio.",
+  "tutorial.menu.team.characterDone": "Laita hahmosi tiimiin",
+  "tutorial.menu.team.fill":
+    "Anna jokaiselle jäsenelle build, kunnes tiimissä ei ole enää ongelmia.",
+  "tutorial.menu.team.fillDone": "Täytä tiimi",
+  "tutorial.menu.team.members":
+    "Tiimissä on aina yhtä monta jäsentä kuin sen koko. Et koskaan lisää jäsentä: vaihdat yhden.",
+  "tutorial.menu.team.new": "Aseta tiimin kooksi 2v2 ja tee sitten uusi tiimibuildi.",
+  "tutorial.menu.team.newDone": "Aloita 2 hengen tiimi",
+  "tutorial.menu.team.open": "Avaa Tiimit, jossa tiimibuildisi ovat.",
+  "tutorial.menu.team.openDone": "Avaa Tiimit",
+  "tutorial.menu.team.problems":
+    "Tallenna tallentaa tiimin aina. Sen vihje nimeää ensimmäisen asian, joka estää tiimin pelaamisen.",
+  "tutorial.menu.team.save": "Tallenna tiimisi.",
+  "tutorial.menu.team.saveDone": "Tallenna",
+  "tutorial.menu.team.title": "Rakenna tiimi menestyäksesi.",
   "tutorial.gate.hint": "Sumuun, perässäni.",
   "tutorial.gate.how": "Napsauta maata vasemmalla, tai kävele näppäimillä {keys}.",
   "tutorial.gate.intro": "Joukkueemme taistelee sumun takana. Seuraa minua.",

@@ -1515,6 +1515,24 @@ export default {
   "tutorial.menu.spec.title": "Verander je specialisatie.",
   "tutorial.menu.spec.weapons": "Kies uit de lijst een wapen voor je wapenset.",
   "tutorial.menu.spec.weaponsDone": "Wissel een wapen",
+  "tutorial.menu.team.build":
+    "De naam van een lid opent zijn build in de build-editor. Als je terugkomt, blijft wat je veranderde, niet opgeslagen.",
+  "tutorial.menu.team.character":
+    "Sleep je personage uit Mijn personages naar een lid. Het lid wordt er een kopie van.",
+  "tutorial.menu.team.characterDone": "Zet je personage in het team",
+  "tutorial.menu.team.fill": "Geef elk lid een build, tot het team geen problemen meer heeft.",
+  "tutorial.menu.team.fillDone": "Vul het team",
+  "tutorial.menu.team.members":
+    "Een team heeft altijd zoveel leden als zijn grootte. Je voegt nooit een lid toe: je vervangt er een.",
+  "tutorial.menu.team.new": "Zet de teamgrootte op 2v2 en maak dan een nieuwe teambuild.",
+  "tutorial.menu.team.newDone": "Begin een team van 2",
+  "tutorial.menu.team.open": "Open Teams, waar je teambuilds staan.",
+  "tutorial.menu.team.openDone": "Open Teams",
+  "tutorial.menu.team.problems":
+    "Opslaan slaat het team altijd op. De hint noemt het eerste wat het team tegenhoudt om gespeeld te worden.",
+  "tutorial.menu.team.save": "Sla je team op.",
+  "tutorial.menu.team.saveDone": "Opslaan",
+  "tutorial.menu.team.title": "Bouw een team om te slagen.",
   "tutorial.gate.hint": "De mist in, achter mij aan.",
   "tutorial.gate.how": "Klik met links op de grond, of loop met {keys}.",
   "tutorial.gate.intro": "Ons team vecht voorbij de mist. Volg mij.",

@@ -115,6 +115,8 @@ export interface TeamEditorCallbacks {
   readonly onOpenMember: (memberId: string, state: TeamEditorState) => void;
   /** Open a pasted team, unsaved (#577). */
   readonly onImportTeam: (team: StoredTeam) => void;
+  /** The draft on opening and after every edit (#3542), for the menu quest. */
+  readonly onDraft: ((draft: StoredTeam) => void) | undefined;
 }
 
 export interface TeamEditorView {
@@ -439,6 +441,7 @@ export function mountTeamEditor(
   });
 
   const chip = problemsChip([]);
+  chip.element.setAttribute("data-tutorial", "team-problems");
   const unsaved = h("span", "editor-unsaved", t("teamEditor.unsaved"));
 
   // Save is the way out (#1902): it stores, then leaves as Esc would.
@@ -466,6 +469,7 @@ export function mountTeamEditor(
       },
     );
   });
+  save.setAttribute("data-tutorial", "team-problems team-save");
   // A loaded or pasted team opens in place of this one (#577, #3181);
   // edits here are only discarded once the player says so.
   const openLoaded = (loaded: StoredTeam): void => {
@@ -601,6 +605,7 @@ export function mountTeamEditor(
     tooltip.hide();
   });
   const list = h("div", "team-grid team-members");
+  list.setAttribute("data-tutorial", "team-members team-character");
   list.setAttribute("role", "list");
   gridScroll.appendChild(list);
   body.appendChild(gridScroll);
@@ -692,6 +697,7 @@ export function mountTeamEditor(
     gearOwner: () => (openMember === undefined ? undefined : openHost),
   });
   picker.element.classList.add("team-picker");
+  picker.element.setAttribute("data-tutorial", "team-character");
   panel.appendChild(body);
 
   // What is being dragged: a row, to reorder; or one of my characters, to
@@ -821,12 +827,14 @@ export function mountTeamEditor(
     // The top attribute ranks go under the professions, leaving the
     // width to the eight cells.
     const who = h("span", "team-row-character");
+    const name = button("", "team-row-name", () => {
+      asking?.dismiss();
+      callbacks.onOpenMember(characterId, { opened, team, stored: isStored });
+    });
+    name.setAttribute("data-tutorial", "team-member-build");
     who.append(
       h("span", "team-row-dot"),
-      button("", "team-row-name", () => {
-        asking?.dismiss();
-        callbacks.onOpenMember(characterId, { opened, team, stored: isStored });
-      }),
+      name,
       h("span", "team-row-professions"),
       h("span", "team-row-attributes"),
     );
@@ -1187,9 +1195,11 @@ export function mountTeamEditor(
     picker.dropUndo();
     team = next;
     update();
+    callbacks.onDraft?.(team);
   }
 
   update();
+  callbacks.onDraft?.(team);
 
   // A press anywhere else puts the problem list, ⋯ and Share away.
   const onPointerDown = (event: PointerEvent): void => {
