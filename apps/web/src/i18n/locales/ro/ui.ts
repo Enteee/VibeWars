@@ -1580,7 +1580,7 @@ export default {
   "tutorial.menu.spec.save": "Salvează personajul ca să păstrezi noul build.",
   "tutorial.menu.spec.saveDone": "Salvează",
   "tutorial.menu.spec.skills":
-    "Umple bara de abilități cu abilități din listă. Opt locuri: alege ce se potrivește planului tău.",
+    "Deschide un grup din listă, apoi trage o abilitate pe un loc din bara ta ca să o schimbi.",
   "tutorial.menu.spec.skillsDone": "Pune o abilitate pe bară",
   "tutorial.menu.spec.title": "Schimbă-ți specializarea.",
   "tutorial.menu.spec.weapons": "Alege din listă o armă pentru setul tău de arme.",

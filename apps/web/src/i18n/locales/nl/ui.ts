@@ -1507,7 +1507,7 @@ export default {
   "tutorial.menu.spec.save": "Sla je personage op om de nieuwe build te houden.",
   "tutorial.menu.spec.saveDone": "Opslaan",
   "tutorial.menu.spec.skills":
-    "Vul je skillbalk met vaardigheden uit de lijst. Acht plekken: kies wat bij je plan past.",
+    "Open een groep in de lijst en sleep dan een vaardigheid naar een plek in je balk om hem te wisselen.",
   "tutorial.menu.spec.skillsDone": "Zet een vaardigheid op je balk",
   "tutorial.menu.spec.title": "Verander je specialisatie.",
   "tutorial.menu.spec.weapons": "Kies uit de lijst een wapen voor je wapenset.",

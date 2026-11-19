@@ -1592,7 +1592,7 @@ export default {
   "tutorial.menu.spec.save": "Sauve ton personnage pour garder le nouveau build.",
   "tutorial.menu.spec.saveDone": "Sauver",
   "tutorial.menu.spec.skills":
-    "Remplis ta barre de compétences avec la liste. Huit emplacements : choisis ce qui sert ton plan.",
+    "Ouvre un groupe de la liste, puis fais glisser une compétence sur un emplacement de ta barre pour l'échanger.",
   "tutorial.menu.spec.skillsDone": "Mets une compétence dans ta barre",
   "tutorial.menu.spec.title": "Change ta spécialisation.",
   "tutorial.menu.spec.weapons": "Choisis dans la liste une arme pour ton set d'armes.",

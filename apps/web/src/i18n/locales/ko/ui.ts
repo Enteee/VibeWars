@@ -1416,7 +1416,7 @@ export default {
   "tutorial.menu.spec.professionsDone": "직업 바꾸기",
   "tutorial.menu.spec.save": "새 빌드를 유지하려면 캐릭터를 저장하세요.",
   "tutorial.menu.spec.saveDone": "저장",
-  "tutorial.menu.spec.skills": "목록의 스킬로 스킬 바를 채우세요. 8칸: 계획에 맞는 것을 고르세요.",
+  "tutorial.menu.spec.skills": "목록에서 그룹을 연 뒤, 스킬을 바의 칸으로 끌어다 놓아 바꾸세요.",
   "tutorial.menu.spec.skillsDone": "바에 스킬 넣기",
   "tutorial.menu.spec.title": "스펙을 바꾸세요.",
   "tutorial.menu.spec.weapons": "목록에서 무기 세트에 쓸 무기를 고르세요.",

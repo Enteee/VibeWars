@@ -1498,7 +1498,7 @@ export default {
   "tutorial.menu.spec.save": "شخصیتت را ذخیره کن تا بیلد تازه بماند.",
   "tutorial.menu.spec.saveDone": "ذخیره",
   "tutorial.menu.spec.skills":
-    "نوار مهارتت را با مهارت‌های فهرست پر کن. هشت جا: آنچه با نقشه‌ات جور است را انتخاب کن.",
+    "یک گروه را در فهرست باز کن، سپس مهارتی را روی یک جای نوارت بکش تا جایگزین شود.",
   "tutorial.menu.spec.skillsDone": "یک مهارت روی نوارت بگذار",
   "tutorial.menu.spec.title": "تخصصت را عوض کن.",
   "tutorial.menu.spec.weapons": "از فهرست سلاحی برای ست سلاحت انتخاب کن.",

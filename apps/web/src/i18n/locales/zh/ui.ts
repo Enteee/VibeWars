@@ -1384,7 +1384,7 @@ export default {
   "tutorial.menu.spec.professionsDone": "切换职业",
   "tutorial.menu.spec.save": "保存角色，保留新的配置。",
   "tutorial.menu.spec.saveDone": "保存",
-  "tutorial.menu.spec.skills": "从列表中选技能填满技能栏。共八格：选适合你计划的。",
+  "tutorial.menu.spec.skills": "在列表中展开一个分组，然后把技能拖到技能栏的格子里替换。",
   "tutorial.menu.spec.skillsDone": "把技能放上技能栏",
   "tutorial.menu.spec.title": "更改你的专精。",
   "tutorial.menu.spec.weapons": "从列表中为你的武器组选一把武器。",

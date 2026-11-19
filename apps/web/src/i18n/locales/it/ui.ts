@@ -1580,7 +1580,7 @@ export default {
   "tutorial.menu.spec.save": "Salva il personaggio per tenere la nuova build.",
   "tutorial.menu.spec.saveDone": "Salva",
   "tutorial.menu.spec.skills":
-    "Riempi la barra abilità con abilità dalla lista. Otto slot: scegli ciò che serve al tuo piano.",
+    "Apri un gruppo nella lista, poi trascina un'abilità su uno slot della barra per scambiarla.",
   "tutorial.menu.spec.skillsDone": "Metti un'abilità nella barra",
   "tutorial.menu.spec.title": "Cambia la tua specializzazione.",
   "tutorial.menu.spec.weapons": "Scegli dalla lista un'arma per il tuo set di armi.",

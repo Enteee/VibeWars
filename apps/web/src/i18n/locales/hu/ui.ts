@@ -1509,7 +1509,7 @@ export default {
   "tutorial.menu.spec.save": "Mentsd el a karaktered, hogy megmaradjon az új build.",
   "tutorial.menu.spec.saveDone": "Mentés",
   "tutorial.menu.spec.skills":
-    "Töltsd fel a készségsávot a lista képességeivel. Nyolc hely: válaszd, ami illik a tervedhez.",
+    "Nyiss meg egy csoportot a listában, majd húzz egy képességet a sávod egy helyére, hogy becseréld.",
   "tutorial.menu.spec.skillsDone": "Tegyél egy képességet a sávodra",
   "tutorial.menu.spec.title": "Változtasd meg a specializációdat.",
   "tutorial.menu.spec.weapons": "Válassz a listából fegyvert a fegyverkészletedhez.",

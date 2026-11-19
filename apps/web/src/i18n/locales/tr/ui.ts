@@ -1501,7 +1501,7 @@ export default {
   "tutorial.menu.spec.save": "Yeni yapıyı korumak için karakterini kaydet.",
   "tutorial.menu.spec.saveDone": "Kaydet",
   "tutorial.menu.spec.skills":
-    "Beceri çubuğunu listedeki becerilerle doldur. Sekiz yuva: planına uyanı seç.",
+    "Listede bir grubu aç, sonra bir beceriyi değiştirmek için çubuğundaki bir yuvaya sürükle.",
   "tutorial.menu.spec.skillsDone": "Çubuğuna bir beceri koy",
   "tutorial.menu.spec.title": "Uzmanlığını değiştir.",
   "tutorial.menu.spec.weapons": "Listeden silah setin için bir silah seç.",

@@ -1614,7 +1614,7 @@ export default {
   "tutorial.menu.spec.save": "Ulož postavu, aby ti nový build zůstal.",
   "tutorial.menu.spec.saveDone": "Uložit",
   "tutorial.menu.spec.skills":
-    "Naplň lištu dovedností dovednostmi ze seznamu. Osm slotů: vyber, co sedí tvému plánu.",
+    "Otevři skupinu v seznamu a přetáhni dovednost na slot své lišty, ať ji vyměníš.",
   "tutorial.menu.spec.skillsDone": "Dej dovednost na lištu",
   "tutorial.menu.spec.title": "Změň svou specializaci.",
   "tutorial.menu.spec.weapons": "Vyber ze seznamu zbraň pro svou sadu zbraní.",

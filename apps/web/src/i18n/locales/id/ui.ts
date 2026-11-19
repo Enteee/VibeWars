@@ -1429,7 +1429,7 @@ export default {
   "tutorial.menu.spec.save": "Simpan karaktermu agar build baru tetap ada.",
   "tutorial.menu.spec.saveDone": "Simpan",
   "tutorial.menu.spec.skills":
-    "Isi bar skill dengan skill dari daftar. Delapan slot: pilih yang cocok dengan rencanamu.",
+    "Buka satu grup di daftar, lalu seret skill ke slot di bar-mu untuk menukarnya.",
   "tutorial.menu.spec.skillsDone": "Pasang skill di bar-mu",
   "tutorial.menu.spec.title": "Ganti spesialisasimu.",
   "tutorial.menu.spec.weapons": "Pilih senjata dari daftar untuk set senjatamu.",

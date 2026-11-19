@@ -1628,7 +1628,7 @@ export default {
   "tutorial.menu.spec.save": "Zapisz postać, by zachować nowy build.",
   "tutorial.menu.spec.saveDone": "Zapisz",
   "tutorial.menu.spec.skills":
-    "Wypełnij pasek umiejętności umiejętnościami z listy. Osiem miejsc: wybierz, co pasuje do twojego planu.",
+    "Otwórz grupę na liście, a potem przeciągnij umiejętność na miejsce na pasku, żeby ją podmienić.",
   "tutorial.menu.spec.skillsDone": "Daj umiejętność na pasek",
   "tutorial.menu.spec.title": "Zmień swoją specjalizację.",
   "tutorial.menu.spec.weapons": "Wybierz z listy broń do swojego zestawu broni.",

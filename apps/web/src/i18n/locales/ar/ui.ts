@@ -1685,8 +1685,7 @@ export default {
   "tutorial.menu.spec.professionsDone": "بدّل مهنة",
   "tutorial.menu.spec.save": "احفظ شخصيتك لتحتفظ بالبنية الجديدة.",
   "tutorial.menu.spec.saveDone": "حفظ",
-  "tutorial.menu.spec.skills":
-    "املأ شريط المهارات بمهارات من القائمة. ثماني خانات: اختر ما يناسب خطتك.",
+  "tutorial.menu.spec.skills": "افتح مجموعة في القائمة، ثم اسحب مهارة إلى خانة في شريطك لتستبدلها.",
   "tutorial.menu.spec.skillsDone": "ضع مهارة على شريطك",
   "tutorial.menu.spec.title": "غيّر تخصصك.",
   "tutorial.menu.spec.weapons": "اختر سلاحًا لمجموعة أسلحتك من القائمة.",

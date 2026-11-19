@@ -1514,7 +1514,7 @@ export default {
   "tutorial.menu.spec.save": "Tallenna hahmosi, niin uusi build säilyy.",
   "tutorial.menu.spec.saveDone": "Tallenna",
   "tutorial.menu.spec.skills":
-    "Täytä taitopalkkisi listan taidoilla. Kahdeksan paikkaa: valitse, mikä sopii suunnitelmaasi.",
+    "Avaa listasta ryhmä ja vedä taito palkkisi paikalle vaihtaaksesi sen.",
   "tutorial.menu.spec.skillsDone": "Laita taito palkkiisi",
   "tutorial.menu.spec.title": "Vaihda erikoistumisesi.",
   "tutorial.menu.spec.weapons": "Valitse listasta ase asesarjaasi.",

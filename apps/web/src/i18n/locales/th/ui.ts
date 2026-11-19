@@ -1404,8 +1404,7 @@ export default {
   "tutorial.menu.spec.professionsDone": "สลับอาชีพ",
   "tutorial.menu.spec.save": "บันทึกตัวละครเพื่อเก็บบิลด์ใหม่ไว้",
   "tutorial.menu.spec.saveDone": "บันทึก",
-  "tutorial.menu.spec.skills":
-    "เติมแถบสกิลด้วยสกิลจากรายการ มีแปดช่อง: เลือกสิ่งที่เข้ากับแผนของคุณ",
+  "tutorial.menu.spec.skills": "เปิดกลุ่มในรายการ แล้วลากสกิลไปวางบนช่องในแถบเพื่อสลับเข้า",
   "tutorial.menu.spec.skillsDone": "ใส่สกิลลงแถบ",
   "tutorial.menu.spec.title": "เปลี่ยนสเปกของคุณ",
   "tutorial.menu.spec.weapons": "เลือกอาวุธจากรายการสำหรับชุดอาวุธของคุณ",

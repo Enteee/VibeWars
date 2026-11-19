@@ -1522,7 +1522,7 @@ export default {
   "tutorial.menu.spec.save": "Speichere deinen Charakter, um den neuen Build zu behalten.",
   "tutorial.menu.spec.saveDone": "Speichern",
   "tutorial.menu.spec.skills":
-    "Füll deine Skill-Leiste mit Fertigkeiten aus der Liste. Acht Plätze: Wähle, was zu deinem Plan passt.",
+    "Öffne eine Gruppe in der Liste und zieh dann eine Fertigkeit auf einen Platz deiner Leiste, um sie einzuwechseln.",
   "tutorial.menu.spec.skillsDone": "Lege eine Fertigkeit auf deine Leiste",
   "tutorial.menu.spec.title": "Ändere deine Spezialisierung.",
   "tutorial.menu.spec.weapons": "Wähle aus der Liste eine Waffe für dein Waffenset.",

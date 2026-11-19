@@ -1618,7 +1618,7 @@ export default {
   "tutorial.menu.spec.save": "Ulož postavu, aby ti nový build zostal.",
   "tutorial.menu.spec.saveDone": "Uložiť",
   "tutorial.menu.spec.skills":
-    "Naplň lištu schopností schopnosťami zo zoznamu. Osem slotov: vyber, čo sedí tvojmu plánu.",
+    "Otvor skupinu v zozname a potiahni schopnosť na slot svojej lišty, aby si ju vymenil.",
   "tutorial.menu.spec.skillsDone": "Daj schopnosť na lištu",
   "tutorial.menu.spec.title": "Zmeň svoju špecializáciu.",
   "tutorial.menu.spec.weapons": "Vyber zo zoznamu zbraň pre svoju sadu zbraní.",

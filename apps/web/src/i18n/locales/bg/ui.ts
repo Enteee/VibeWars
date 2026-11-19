@@ -1504,7 +1504,7 @@ export default {
   "tutorial.menu.spec.save": "Запази героя си, за да остане новият билд.",
   "tutorial.menu.spec.saveDone": "Запази",
   "tutorial.menu.spec.skills":
-    "Напълни лентата с умения от списъка. Осем места: избери каквото пасва на плана ти.",
+    "Отвори група в списъка, после плъзни умение върху място в лентата си, за да го смениш.",
   "tutorial.menu.spec.skillsDone": "Сложи умение в лентата",
   "tutorial.menu.spec.title": "Смени специализацията си.",
   "tutorial.menu.spec.weapons": "Избери оръжие за оръжейния си комплект от списъка.",

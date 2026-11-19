@@ -1501,7 +1501,7 @@ export const en = {
   "tutorial.menu.spec.save": "Save your character to keep the new build.",
   "tutorial.menu.spec.saveDone": "Save",
   "tutorial.menu.spec.skills":
-    "Fill your skill bar with skills from the list. Eight slots: choose what fits your plan.",
+    "Open a group in the list, then drag a skill onto a slot of your bar to swap it in.",
   "tutorial.menu.spec.skillsDone": "Put a skill on your bar",
   "tutorial.menu.spec.title": "Change your spec.",
   "tutorial.menu.spec.weapons": "Pick a weapon for your weapon set from the list.",

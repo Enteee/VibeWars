@@ -1573,7 +1573,7 @@ export default {
   "tutorial.menu.spec.save": "Salve seu personagem para manter a nova build.",
   "tutorial.menu.spec.saveDone": "Salvar",
   "tutorial.menu.spec.skills":
-    "Preencha sua barra de habilidades com habilidades da lista. Oito espaços: escolha o que combina com seu plano.",
+    "Abra um grupo na lista e arraste uma habilidade para um espaço da sua barra para trocá-la.",
   "tutorial.menu.spec.skillsDone": "Coloque uma habilidade na barra",
   "tutorial.menu.spec.title": "Mude sua especialização.",
   "tutorial.menu.spec.weapons": "Escolha na lista uma arma para seu conjunto de armas.",

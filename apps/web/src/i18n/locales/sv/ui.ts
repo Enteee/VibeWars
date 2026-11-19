@@ -1497,7 +1497,7 @@ export default {
   "tutorial.menu.spec.save": "Spara din karaktär för att behålla det nya buildet.",
   "tutorial.menu.spec.saveDone": "Spara",
   "tutorial.menu.spec.skills":
-    "Fyll din förmågerad med färdigheter från listan. Åtta platser: välj det som passar din plan.",
+    "Öppna en grupp i listan och dra sedan en färdighet till en plats i din rad för att byta in den.",
   "tutorial.menu.spec.skillsDone": "Lägg en färdighet på din rad",
   "tutorial.menu.spec.title": "Byt din spec.",
   "tutorial.menu.spec.weapons": "Välj ett vapen till ditt vapenset från listan.",

@@ -1429,7 +1429,7 @@ export default {
   "tutorial.menu.spec.save": "キャラクターを保存して、新しいビルドを残そう。",
   "tutorial.menu.spec.saveDone": "保存",
   "tutorial.menu.spec.skills":
-    "リストのスキルでスキルバーを埋めよう。枠は8つ：作戦に合うものを選ぼう。",
+    "リストのグループを開き、スキルをバーの枠へドラッグして入れ替えよう。",
   "tutorial.menu.spec.skillsDone": "スキルをバーに置く",
   "tutorial.menu.spec.title": "スペックを変えよう。",
   "tutorial.menu.spec.weapons": "リストから武器セット用の武器を選ぼう。",

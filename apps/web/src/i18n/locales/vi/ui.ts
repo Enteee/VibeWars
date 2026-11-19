@@ -1412,7 +1412,7 @@ export default {
   "tutorial.menu.spec.save": "Lưu nhân vật để giữ build mới.",
   "tutorial.menu.spec.saveDone": "Lưu",
   "tutorial.menu.spec.skills":
-    "Lấp đầy thanh kỹ năng bằng kỹ năng trong danh sách. Tám ô: chọn thứ hợp với kế hoạch của bạn.",
+    "Mở một nhóm trong danh sách, rồi kéo kỹ năng vào một ô trên thanh để đổi vào.",
   "tutorial.menu.spec.skillsDone": "Đặt một kỹ năng lên thanh",
   "tutorial.menu.spec.title": "Đổi chuyên môn của bạn.",
   "tutorial.menu.spec.weapons": "Chọn từ danh sách một vũ khí cho bộ vũ khí của bạn.",

@@ -1559,7 +1559,7 @@ export default {
   "tutorial.menu.spec.save": "שמרו את הדמות כדי לשמור את הבילד החדש.",
   "tutorial.menu.spec.saveDone": "שמור",
   "tutorial.menu.spec.skills":
-    "מלאו את סרגל המיומנויות במיומנויות מהרשימה. שמונה משבצות: בחרו מה שמתאים לתוכנית.",
+    "פתחו קבוצה ברשימה, ואז גררו מיומנות אל משבצת בסרגל כדי להחליף אותה.",
   "tutorial.menu.spec.skillsDone": "שימו מיומנות בסרגל",
   "tutorial.menu.spec.title": "שנו את ההתמחות שלכם.",
   "tutorial.menu.spec.weapons": "בחרו מהרשימה נשק לסט הנשק שלכם.",

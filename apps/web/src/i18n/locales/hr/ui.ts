@@ -1572,7 +1572,7 @@ export default {
   "tutorial.menu.spec.save": "Spremi lik da zadržiš novi build.",
   "tutorial.menu.spec.saveDone": "Spremi",
   "tutorial.menu.spec.skills":
-    "Popuni traku vještina vještinama s popisa. Osam mjesta: odaberi što odgovara tvom planu.",
+    "Otvori skupinu na popisu, pa povuci vještinu na mjesto u svojoj traci da je zamijeniš.",
   "tutorial.menu.spec.skillsDone": "Stavi vještinu na traku",
   "tutorial.menu.spec.title": "Promijeni svoju specijalizaciju.",
   "tutorial.menu.spec.weapons": "S popisa odaberi oružje za svoj komplet oružja.",

@@ -1496,7 +1496,7 @@ export default {
   "tutorial.menu.spec.save": "Gem din figur for at beholde det nye build.",
   "tutorial.menu.spec.saveDone": "Gem",
   "tutorial.menu.spec.skills":
-    "Fyld din evnebjælke med færdigheder fra listen. Otte pladser: vælg det, der passer til din plan.",
+    "Åbn en gruppe i listen, og træk så en færdighed hen på en plads i din bjælke for at bytte den ind.",
   "tutorial.menu.spec.skillsDone": "Sæt en færdighed på din bjælke",
   "tutorial.menu.spec.title": "Skift din spec.",
   "tutorial.menu.spec.weapons": "Vælg et våben til dit våbensæt fra listen.",
