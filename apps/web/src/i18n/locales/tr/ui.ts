@@ -855,6 +855,7 @@ export default {
   "pips.title": { one: "{sign}{count} birim", other: "{sign}{count} birim" },
 
   "player.cape": "Pelerin",
+  "player.capePreview": "Önizleme",
   "player.colourBlack": "siyah",
   "player.colourGold": "altın",
   "player.colourLime": "limon",

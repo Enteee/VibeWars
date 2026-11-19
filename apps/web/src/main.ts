@@ -183,6 +183,7 @@ import {
   playerGuild,
   playerGuildTag,
   sameTypedGuild,
+  setCapeWearers,
 } from "./ui/player-section.js";
 import { isAlone, partyOf } from "./ui/lobby-window.js";
 import {
@@ -490,6 +491,8 @@ async function main(): Promise<void> {
     notices.add(t("app.framedRelayLink"));
   }
   const characters = new CharacterRepository(store);
+  // Options' cape designer dresses the menu's character (#3551).
+  setCapeWearers(async () => (await characters.list()).characters);
   // The last matches' replays (#3572), for a dispute later; nothing shows them yet.
   const replays = new ReplayStore(store);
   const keepReplay = (recorded: RecordedReplay): void => {

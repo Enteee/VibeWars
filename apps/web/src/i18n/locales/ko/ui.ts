@@ -808,6 +808,7 @@ export default {
   "pips.title": { other: "{sign}{count}핍" },
 
   "player.cape": "망토",
+  "player.capePreview": "미리 보기",
   "player.colourBlack": "검정",
   "player.colourGold": "금색",
   "player.colourLime": "라임",

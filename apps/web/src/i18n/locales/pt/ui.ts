@@ -901,6 +901,7 @@ export default {
   },
 
   "player.cape": "Capa",
+  "player.capePreview": "Pré-visualização",
   "player.colourBlack": "preto",
   "player.colourGold": "dourado",
   "player.colourLime": "verde-limão",

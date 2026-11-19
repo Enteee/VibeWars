@@ -853,6 +853,7 @@ export default {
   "pips.title": { one: "{sign}{count} pips", other: "{sign}{count} pips" },
 
   "player.cape": "Kappe",
+  "player.capePreview": "Forhåndsvisning",
   "player.colourBlack": "sort",
   "player.colourGold": "guld",
   "player.colourLime": "lime",

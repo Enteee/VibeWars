@@ -858,6 +858,7 @@ export default {
   "pips.title": { one: "{sign}{count} نقطه", other: "{sign}{count} نقطه" },
 
   "player.cape": "شنل",
+  "player.capePreview": "پیش‌نمایش",
   "player.colourBlack": "مشکی",
   "player.colourGold": "طلایی",
   "player.colourLime": "لیمویی",

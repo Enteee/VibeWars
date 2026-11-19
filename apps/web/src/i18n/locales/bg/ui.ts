@@ -857,6 +857,7 @@ export default {
   "pips.title": { one: "{sign}{count} деление", other: "{sign}{count} деления" },
 
   "player.cape": "Наметало",
+  "player.capePreview": "Преглед",
   "player.colourBlack": "черно",
   "player.colourGold": "златно",
   "player.colourLime": "лайм",

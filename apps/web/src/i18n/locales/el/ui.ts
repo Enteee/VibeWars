@@ -864,6 +864,7 @@ export default {
   "pips.title": { one: "{sign}{count} ένδειξη", other: "{sign}{count} ενδείξεις" },
 
   "player.cape": "Κάπα",
+  "player.capePreview": "Προεπισκόπηση",
   "player.colourBlack": "μαύρο",
   "player.colourGold": "χρυσό",
   "player.colourLime": "λάιμ",

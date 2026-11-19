@@ -907,6 +907,7 @@ export default {
   },
 
   "player.cape": "Mantello",
+  "player.capePreview": "Anteprima",
   "player.colourBlack": "nero",
   "player.colourGold": "oro",
   "player.colourLime": "lime",

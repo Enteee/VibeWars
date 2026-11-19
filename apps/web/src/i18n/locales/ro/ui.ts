@@ -909,6 +909,7 @@ export default {
   },
 
   "player.cape": "Pelerină",
+  "player.capePreview": "Previzualizare",
   "player.colourBlack": "negru",
   "player.colourGold": "auriu",
   "player.colourLime": "verde lime",

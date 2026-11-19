@@ -805,6 +805,7 @@ export default {
   "pips.title": { other: "{sign}{count} vạch" },
 
   "player.cape": "Áo choàng",
+  "player.capePreview": "Xem trước",
   "player.colourBlack": "đen",
   "player.colourGold": "vàng",
   "player.colourLime": "xanh chanh",

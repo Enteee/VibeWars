@@ -943,6 +943,7 @@ export default {
   },
 
   "player.cape": "Плащ",
+  "player.capePreview": "Попередній перегляд",
   "player.colourBlack": "чорний",
   "player.colourGold": "золотий",
   "player.colourLime": "лаймовий",

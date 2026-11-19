@@ -993,6 +993,7 @@ export default {
   },
 
   "player.cape": "العباءة",
+  "player.capePreview": "معاينة",
   "player.colourBlack": "أسود",
   "player.colourGold": "ذهبي",
   "player.colourLime": "ليموني",

@@ -182,7 +182,7 @@ công cụ thiết kế **Áo choàng Bang** xuất hiện bên dưới: chọn 
 màu viền và một biểu tượng, và cơ thể bạn sẽ khoác áo choàng trong mọi trận:
 nó gấp lại thành một dải mỏng trên vành của bạn khi bạn đứng yên và tung bay
 phía sau khi bạn di chuyển. Nhân vật của bạn trong menu cũng hiển thị nó.
-**Không áo choàng** cởi nó ra.
+**Không áo choàng** cởi nó ra. Một hình nhân cho thấy áo choàng đúng như trong trò chơi.
 
 Thay đổi được áp dụng ngay cho sảnh bạn đang ở.
 

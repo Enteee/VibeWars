@@ -909,6 +909,7 @@ export default {
   },
 
   "player.cape": "Plašt",
+  "player.capePreview": "Pregled",
   "player.colourBlack": "crna",
   "player.colourGold": "zlatna",
   "player.colourLime": "limeta",
