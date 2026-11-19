@@ -1559,18 +1559,6 @@
     ],
     "lights": [
       {
-        "id": "west-ghost-glow",
-        "position": {
-          "x": 520,
-          "y": 420
-        },
-        "layer": 1,
-        "radius": 240,
-        "colour": 9072585,
-        "intensity": 1,
-        "flicker": 0
-      },
-      {
         "id": "west-camp-glow",
         "position": {
           "x": 560,
@@ -1578,18 +1566,6 @@
         },
         "layer": 1,
         "radius": 520,
-        "colour": 9072585,
-        "intensity": 1,
-        "flicker": 0
-      },
-      {
-        "id": "west-spring-glow",
-        "position": {
-          "x": 1100,
-          "y": 800
-        },
-        "layer": 1,
-        "radius": 240,
         "colour": 9072585,
         "intensity": 1,
         "flicker": 0
@@ -1643,18 +1619,6 @@
         "flicker": 0.2
       },
       {
-        "id": "east-ghost-glow",
-        "position": {
-          "x": 5680,
-          "y": 1980
-        },
-        "layer": 1,
-        "radius": 240,
-        "colour": 9072585,
-        "intensity": 1,
-        "flicker": 0
-      },
-      {
         "id": "east-camp-glow",
         "position": {
           "x": 5640,
@@ -1662,18 +1626,6 @@
         },
         "layer": 1,
         "radius": 520,
-        "colour": 9072585,
-        "intensity": 1,
-        "flicker": 0
-      },
-      {
-        "id": "east-spring-glow",
-        "position": {
-          "x": 5100,
-          "y": 1600
-        },
-        "layer": 1,
-        "radius": 240,
         "colour": 9072585,
         "intensity": 1,
         "flicker": 0
@@ -1736,6 +1688,54 @@
         "radius": 260,
         "colour": 9072585,
         "intensity": 0.85,
+        "flicker": 0
+      },
+      {
+        "id": "west-ghost-glow",
+        "position": {
+          "x": 560,
+          "y": 520
+        },
+        "layer": 1,
+        "radius": 380,
+        "colour": 9072585,
+        "intensity": 1,
+        "flicker": 0
+      },
+      {
+        "id": "east-ghost-glow",
+        "position": {
+          "x": 5640,
+          "y": 1880
+        },
+        "layer": 1,
+        "radius": 380,
+        "colour": 9072585,
+        "intensity": 1,
+        "flicker": 0
+      },
+      {
+        "id": "west-lobe-cold-light",
+        "position": {
+          "x": 820,
+          "y": 1560
+        },
+        "layer": 1,
+        "radius": 560,
+        "colour": 5231029,
+        "intensity": 0.75,
+        "flicker": 0
+      },
+      {
+        "id": "east-lobe-cold-light",
+        "position": {
+          "x": 5380,
+          "y": 840
+        },
+        "layer": 1,
+        "radius": 560,
+        "colour": 5231029,
+        "intensity": 0.75,
         "flicker": 0
       }
     ]
@@ -2099,7 +2099,7 @@
     {
       "id": "west-camp-flags",
       "layer": 1,
-      "look": "flagstones",
+      "look": "cobbles",
       "area": {
         "kind": "polygon",
         "points": [
@@ -2145,7 +2145,7 @@
     {
       "id": "east-camp-flags",
       "layer": 1,
-      "look": "flagstones",
+      "look": "cobbles",
       "area": {
         "kind": "polygon",
         "points": [
@@ -2191,7 +2191,7 @@
     {
       "id": "west-ghost-path",
       "layer": 1,
-      "look": "dirt",
+      "look": "cobbles",
       "area": {
         "kind": "polygon",
         "points": [
@@ -2225,7 +2225,7 @@
     {
       "id": "east-ghost-path",
       "layer": 1,
-      "look": "dirt",
+      "look": "cobbles",
       "area": {
         "kind": "polygon",
         "points": [
@@ -2259,7 +2259,7 @@
     {
       "id": "west-spring-path",
       "layer": 1,
-      "look": "dirt",
+      "look": "cobbles",
       "area": {
         "kind": "polygon",
         "points": [
@@ -2293,7 +2293,7 @@
     {
       "id": "east-spring-path",
       "layer": 1,
-      "look": "dirt",
+      "look": "cobbles",
       "area": {
         "kind": "polygon",
         "points": [
@@ -2320,6 +2320,374 @@
           {
             "x": 5490,
             "y": 1340
+          }
+        ]
+      }
+    },
+    {
+      "id": "west-outcrop-south",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1150,
+            "y": 1780
+          },
+          {
+            "x": 1091,
+            "y": 1840
+          },
+          {
+            "x": 1012,
+            "y": 1899
+          },
+          {
+            "x": 904,
+            "y": 1866
+          },
+          {
+            "x": 812,
+            "y": 1820
+          },
+          {
+            "x": 852,
+            "y": 1750
+          },
+          {
+            "x": 895,
+            "y": 1685
+          },
+          {
+            "x": 1007,
+            "y": 1680
+          },
+          {
+            "x": 1121,
+            "y": 1704
+          }
+        ]
+      }
+    },
+    {
+      "id": "east-outcrop-south",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 5050,
+            "y": 620
+          },
+          {
+            "x": 5109,
+            "y": 560
+          },
+          {
+            "x": 5188,
+            "y": 501
+          },
+          {
+            "x": 5296,
+            "y": 534
+          },
+          {
+            "x": 5388,
+            "y": 580
+          },
+          {
+            "x": 5348,
+            "y": 650
+          },
+          {
+            "x": 5305,
+            "y": 715
+          },
+          {
+            "x": 5193,
+            "y": 720
+          },
+          {
+            "x": 5079,
+            "y": 696
+          }
+        ]
+      }
+    },
+    {
+      "id": "west-outcrop-west",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 360,
+            "y": 1500
+          },
+          {
+            "x": 322,
+            "y": 1587
+          },
+          {
+            "x": 271,
+            "y": 1673
+          },
+          {
+            "x": 201,
+            "y": 1625
+          },
+          {
+            "x": 141,
+            "y": 1557
+          },
+          {
+            "x": 167,
+            "y": 1456
+          },
+          {
+            "x": 195,
+            "y": 1361
+          },
+          {
+            "x": 268,
+            "y": 1355
+          },
+          {
+            "x": 341,
+            "y": 1389
+          }
+        ]
+      }
+    },
+    {
+      "id": "east-outcrop-west",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 5840,
+            "y": 900
+          },
+          {
+            "x": 5878,
+            "y": 813
+          },
+          {
+            "x": 5929,
+            "y": 727
+          },
+          {
+            "x": 5999,
+            "y": 775
+          },
+          {
+            "x": 6059,
+            "y": 843
+          },
+          {
+            "x": 6033,
+            "y": 944
+          },
+          {
+            "x": 6005,
+            "y": 1039
+          },
+          {
+            "x": 5932,
+            "y": 1045
+          },
+          {
+            "x": 5859,
+            "y": 1011
+          }
+        ]
+      }
+    },
+    {
+      "id": "west-outcrop-north",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 450,
+            "y": 760
+          },
+          {
+            "x": 408,
+            "y": 842
+          },
+          {
+            "x": 353,
+            "y": 922
+          },
+          {
+            "x": 276,
+            "y": 877
+          },
+          {
+            "x": 212,
+            "y": 814
+          },
+          {
+            "x": 240,
+            "y": 719
+          },
+          {
+            "x": 270,
+            "y": 630
+          },
+          {
+            "x": 349,
+            "y": 624
+          },
+          {
+            "x": 429,
+            "y": 656
+          }
+        ]
+      }
+    },
+    {
+      "id": "east-outcrop-north",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 5750,
+            "y": 1640
+          },
+          {
+            "x": 5792,
+            "y": 1558
+          },
+          {
+            "x": 5847,
+            "y": 1478
+          },
+          {
+            "x": 5924,
+            "y": 1523
+          },
+          {
+            "x": 5988,
+            "y": 1586
+          },
+          {
+            "x": 5960,
+            "y": 1681
+          },
+          {
+            "x": 5930,
+            "y": 1770
+          },
+          {
+            "x": 5851,
+            "y": 1776
+          },
+          {
+            "x": 5771,
+            "y": 1744
+          }
+        ]
+      }
+    },
+    {
+      "id": "west-outcrop-mid",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 1200,
+            "y": 1350
+          },
+          {
+            "x": 1148,
+            "y": 1405
+          },
+          {
+            "x": 1079,
+            "y": 1458
+          },
+          {
+            "x": 983,
+            "y": 1428
+          },
+          {
+            "x": 902,
+            "y": 1386
+          },
+          {
+            "x": 937,
+            "y": 1323
+          },
+          {
+            "x": 975,
+            "y": 1263
+          },
+          {
+            "x": 1074,
+            "y": 1259
+          },
+          {
+            "x": 1174,
+            "y": 1281
+          }
+        ]
+      }
+    },
+    {
+      "id": "east-outcrop-mid",
+      "layer": 1,
+      "look": "flagstones",
+      "area": {
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 5000,
+            "y": 1050
+          },
+          {
+            "x": 5052,
+            "y": 995
+          },
+          {
+            "x": 5121,
+            "y": 942
+          },
+          {
+            "x": 5217,
+            "y": 972
+          },
+          {
+            "x": 5298,
+            "y": 1014
+          },
+          {
+            "x": 5263,
+            "y": 1077
+          },
+          {
+            "x": 5225,
+            "y": 1137
+          },
+          {
+            "x": 5126,
+            "y": 1141
+          },
+          {
+            "x": 5026,
+            "y": 1119
           }
         ]
       }
