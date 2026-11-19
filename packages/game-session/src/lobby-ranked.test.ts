@@ -235,6 +235,8 @@ interface Seat {
   readonly receipts: { readonly receipt: RankedReceipt; readonly partial: boolean }[];
   /** Each result it signed, as the partial receipt it handed on that round. */
   readonly signed: RankedReceipt[];
+  /** The round each of `signed` was handed on with. */
+  readonly rounds: number[];
   cancelled: number;
 }
 
@@ -270,13 +272,17 @@ async function joinSeat(
   const key = testPlayerKey();
   const receipts: Seat["receipts"] = [];
   const signed: RankedReceipt[] = [];
+  const rounds: number[] = [];
   const play: RankedPlay = {
     characterId: `char-${String(n)}`,
     prev: ZERO_HASH,
     buildHash: BUILD,
     crypto: testReceiptCrypto,
     onReceipt: (receipt, partial) => receipts.push({ receipt, partial }),
-    onResultSigned: (partial) => signed.push(partial),
+    onResultSigned: (partial, round) => {
+      signed.push(partial);
+      rounds.push(round);
+    },
     onCancel: () => {
       seat.cancelled += 1;
     },
@@ -295,7 +301,7 @@ async function joinSeat(
     queued: { group, key: keyOf(seatKey(n)), verifyTicketSig, ascentMorale: 0 },
     ...(ranked ? { ranked: play } : {}),
   });
-  const seat: Seat = { key, connection, transport, receipts, signed, cancelled: 0 };
+  const seat: Seat = { key, connection, transport, receipts, signed, rounds, cancelled: 0 };
   return seat;
 }
 
@@ -651,6 +657,8 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     for (const [n, seat] of ranked.seats.entries()) {
       // Seat 2 holds its round-one partial: the evidence that it signed.
       expect(seat.signed).toHaveLength(n === 2 ? 1 : 2);
+      // Each round's partial has its own round, so neither replaces the other.
+      expect(seat.rounds).toEqual(n === 2 ? [0] : [0, 1]);
       const last = seat.signed.at(-1);
       if (last === undefined) {
         throw new Error("no partial");

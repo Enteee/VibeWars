@@ -194,8 +194,11 @@ export interface RankedPlay {
    * start signature, that result and this player's signature alone. Every
    * round it signs, at once, for the app to publish: should a later round
    * name this player a leaver, it is the evidence that it did sign.
+   * `round` counts the results this player signed for the match, from 0,
+   * so the app can publish each partial under its own address: a later
+   * round must not replace an earlier one's evidence.
    */
-  readonly onResultSigned: (partial: RankedReceipt) => void;
+  readonly onResultSigned: (partial: RankedReceipt, round: number) => void;
   /** The host cancelled the match before it began: some seat never signed its start. */
   readonly onCancel: () => void;
 }
@@ -402,6 +405,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   let endedWinner: WireTeam | null | undefined;
   /** The last ranked result the host sent, signed or not: a re-round's is compared with it. */
   let lastResult: RankedResult | undefined;
+  /** How many results this player signed: the next partial's round. */
+  let resultsSigned = 0;
 
   /** Note the seats `state` lists away, or no longer lists, as gone. */
   const noteGone = (state: WireLobbyState): void => {
@@ -1200,12 +1205,16 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           sig: options.playerKey.signRankedResult(said.result),
         };
         transport.send("ranked-result-sig", reply, from);
-        rankedPlay?.onResultSigned({
-          start: signed.start,
-          startSigs: signed.startSigs,
-          result: said.result,
-          resultSigs: { [options.playerKey.pubkey]: reply.sig },
-        });
+        rankedPlay?.onResultSigned(
+          {
+            start: signed.start,
+            startSigs: signed.startSigs,
+            result: said.result,
+            resultSigs: { [options.playerKey.pubkey]: reply.sig },
+          },
+          resultsSigned,
+        );
+        resultsSigned += 1;
       }),
       // How the ranked match ended, as the host told this player: a result
       // naming another winner is not signed.
