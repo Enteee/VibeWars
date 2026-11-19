@@ -6,8 +6,8 @@ Hauptmenü oder mit **Neuer Charakter**.
 
 ## Klassen
 
-Es gibt zehn: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**,
-![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** und ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Deine **Primärklasse** ist das, was du bist: ihre
+Es gibt zehn: ![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger**, ![Waldläufer](../../../apps/web/public/icons/profession/ranger.svg) **Waldläufer**, ![Mönch](../../../apps/web/public/icons/profession/monk.svg) **Mönch**, ![Nekromant](../../../apps/web/public/icons/profession/necromancer.svg) **Nekromant**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementarmagier](../../../apps/web/public/icons/profession/elementalist.svg) **Elementarmagier**, ![Assassine](../../../apps/web/public/icons/profession/assassin.svg) **Assassine**,
+![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** und ![Derwisch](../../../apps/web/public/icons/profession/dervish.svg) **Derwisch**. Deine **Primärklasse** ist das, was du bist: ihre
 Skills und ihr **Primärattribut** (markiert mit ★), das nur eine Primärklasse
 bekommt. Deine **Sekundärklasse** leiht dir ihre Skills, aber nicht ihr
 Primärattribut.
@@ -18,11 +18,11 @@ Die Leiste hat **acht Felder**. Nur ein **Elite**-Skill (goldener Rahmen) passt 
 eine Leiste: Rüstest du einen zweiten aus, ersetzt er den ersten. Drück **×** auf
 einem Feld, um es zu leeren.
 
-![Verzauberung](../../../apps/web/public/icons/skill-type/enchantment.svg) **Blitzverzauberungen** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) sind sofort da: Wer eine nutzt, behält Schlag und
+![Verzauberung](../../../apps/web/public/icons/skill-type/enchantment.svg) **Blitzverzauberungen** (![Derwisch](../../../apps/web/public/icons/profession/dervish.svg) **Derwisch**) sind sofort da: Wer eine nutzt, behält Schlag und
 Schritt, sodass du sie zwischen die Schläge weben kannst. Jede schaltet deine
 anderen Blitzverzauberungen für 1 Sekunde ab.
 
-![Form](../../../apps/web/public/icons/skill-type/form.svg) **Formen** (die fünf Dervish-Avatare: Balthazar, Dwayna, Grenth, Lyssa und
+![Form](../../../apps/web/public/icons/skill-type/form.svg) **Formen** (die fünf Derwisch-Avatare: Balthazar, Dwayna, Grenth, Lyssa und
 Melandru) verändern dich für über eine Minute. Eine Form ist keine Verzauberung,
 also kann sie niemand entfernen, und du kannst immer nur in einer Form sein. Nutzt
 du eine, ist sie 45 Sekunden gesperrt. Endet eine Form, hörst du auf mit dem, was
@@ -42,10 +42,10 @@ geben; siehe [Ausrüstung](equipment.md). Steigerst du das Attribut, das ein Ski
 nutzt, wird er stärker: Zahlen, die mit dem Attribut wachsen, sind grün und fett
 und gelten für deine aktuellen Ränge samt Runen und Kopfschutz.
 
-Im Kampf können sich deine Ränge eine Weile ändern. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** nimmt jedem einen weg.
+Im Kampf können sich deine Ränge eine Weile ändern. ![Schwäche](../../../apps/web/public/icons/status/weakness.svg) **Schwäche** nimmt jedem einen weg.
 Manche ![Verhexung](../../../apps/web/public/icons/skill-type/hex.svg) **Verhexungen** setzen die Attribute eines Gegners auf 0, und Master of Magic
 setzt deine Elementarattribute auf 13: Ein so gesetzter Rang überschreibt Runen und
-Weakness gleichermaßen. Signet of Illusions lässt deine nächsten ![Zauber](../../../apps/web/public/icons/skill-type/spell.svg) **Zauber** anderer
+Schwäche gleichermaßen. Signet of Illusions lässt deine nächsten ![Zauber](../../../apps/web/public/icons/skill-type/spell.svg) **Zauber** anderer
 Attribute deinen Illusion-Magic-Rang nutzen. Manche Skills erhöhen deine Attribute
 für eine Zeit oder deine nächsten Zauber, etwa Glyph of Elemental Power und Ritual
 Lord, sogar eines, das du auf 0 gelassen hast; ein gesetzter Rang, wie der von
@@ -74,10 +74,10 @@ nicht kopiert werden, aber das Entfernen gibt dir trotzdem die Energie.
 
 ## Brunnen und Glyphen
 
-Die ![Brunnen](../../../apps/web/public/icons/skill-type/well.svg) **Brunnen** eines ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** nutzen die nächste Leiche. Ist keine in der Nähe,
+Die ![Brunnen](../../../apps/web/public/icons/skill-type/well.svg) **Brunnen** eines ![Nekromant](../../../apps/web/public/icons/profession/necromancer.svg) **Nekromanten** nutzen die nächste Leiche. Ist keine in der Nähe,
 opfert ein Brunnen stattdessen 66 % deines Lebens und erscheint dort, wo du stehst.
 
-Die ![Glyphe](../../../apps/web/public/icons/skill-type/glyph.svg) **Glyphen** eines ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** verändern deinen nächsten ![Zauber](../../../apps/web/public/icons/skill-type/spell.svg) **Zauber**: Er kann nicht
+Die ![Glyphe](../../../apps/web/public/icons/skill-type/glyph.svg) **Glyphen** eines ![Elementarmagier](../../../apps/web/public/icons/profession/elementalist.svg) **Elementarmagiers** verändern deinen nächsten ![Zauber](../../../apps/web/public/icons/skill-type/spell.svg) **Zauber**: Er kann nicht
 unterbrochen werden, wirkt sofort, lädt sich sofort auf oder kostet weniger. Eine
 neue Glyphe ersetzt die alte.
 
@@ -88,7 +88,7 @@ reagiert, reagiert auf jeden Treffer oder Lebensraub, der dich am Leben und unte
 der Grenze lässt, auch wenn du schon vor dem Treffer darunter warst, und nie auf
 Leben, das du opferst oder durch Degeneration verlierst. Schutz vor tödlichem
 Schaden, etwa ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, fängt den ganzen tödlichen Treffer ab: kein
-Schaden, kein Tod. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** und ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** haben keine Dauer:
+Schaden, kein Tod. ![Gläubiges Eingreifen](../../../apps/web/public/icons/status/faithful-intervention.svg) **Gläubiges Eingreifen** und ![Illusion der Schwäche](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion der Schwäche** haben keine Dauer:
 Sie halten, bis Schaden, Entfernen oder der Tod sie beendet, und heilen dich dabei.
 
 ## Die Bibliothek

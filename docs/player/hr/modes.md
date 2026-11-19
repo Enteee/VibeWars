@@ -374,7 +374,7 @@ Tim bira jednom, u Timskoj sobi svoje prve karte, i zadržava svoj
 timski sastav i mjesta do kraja uspona: nakon pobjede ponovno ulazi u
 red bez glasanja i uzimanja. Tko ode usred uspona oslobađa svoje
 mjesto, ali ne i njegov sastav. Pridošlica u grupu između karata dobiva
-uzimanje samo praznih mjesta (**Slobodno: sastav Monk**) i igra sastav tog
+uzimanje samo praznih mjesta (**Slobodno: sastav Redovnik**) i igra sastav tog
 mjesta; prazno mjesto koje nitko ne uzme pripada botu. Poraz počinje
 iznova: sljedeći uspon opet glasa. Isto vrijedi za slijeđenje domaćina u drugu
 grupu, čiji domaćin ne može jamčiti za stari uspon. Rundu pamti

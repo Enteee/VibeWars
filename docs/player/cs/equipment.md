@@ -14,33 +14,33 @@ Zbraň vyžaduje hodnost 9 ve svém atributu: pod ní zasahuje za třetinu svéh
 
 Každá zbraň a věc do druhé ruky má pozice pro vylepšení: **předponu**, **příponu** a **nápis**. Vyber je kliknutím na ruku na figuríně nebo na její řádek vedle; každé říká, co dělá. ![Hůlka](../../../apps/web/public/icons/weapon/wand.svg) **Hůlka**, ![Štít](../../../apps/web/public/icons/offhand/shield.svg) **štít** a ![Fokus](../../../apps/web/public/icons/offhand/focus.svg) **fokus** nemají předponu; holé ruce také ne. Vylepšení má vždy svou nejlepší hodnotu a každá sada zbraní má svá vlastní, takže výměnou sad se vymění i jejich vylepšení: maximální zdraví a energie se mění se sadou v ruce. Výměna zbraně ponechá vylepšení, která na ni stále pasují, a řekne ti, která zahodila.
 
-| Vylepšení                 | Pozice   | Pasuje na                                                       | Účinek                                                                                                     |
-| ------------------------- | -------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Defensive                 | Předpona | ![Hůl](../../../apps/web/public/icons/weapon/staff.svg) **Hůl** | Brnění +5                                                                                                  |
-| Hale                      | Předpona | Hůl                                                             | +30 zdraví                                                                                                 |
-| Insightful                | Předpona | Hůl                                                             | Energie +5                                                                                                 |
-| of Defense                | Přípona  | jakákoli bojová zbraň, Hůl                                      | Brnění +5                                                                                                  |
-| of Fortitude              | Přípona  | jakákoli bojová zbraň, Hůl, Štít, Fokus                         | +30 zdraví                                                                                                 |
-| of Shelter                | Přípona  | jakákoli bojová zbraň, Hůl                                      | Brnění +7 (proti fyzickému poškození)                                                                      |
-| of Warding                | Přípona  | jakákoli bojová zbraň, Hůl                                      | Brnění +7 (proti elementálnímu poškození)                                                                  |
-| "Cast Out the Unclean"    | Nápis    | Štít, Fokus                                                     | Zkracuje ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** na tobě o 20 %          |
-| "Fear Cuts Deeper"        | Nápis    | Štít, Fokus                                                     | Zkracuje ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** na tobě o 20 %       |
-| "I Can See Clearly Now"   | Nápis    | Štít, Fokus                                                     | Zkracuje ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** na tobě o 20 %            |
-| "I have the power!"       | Nápis    | jakákoli bojová zbraň                                           | Energie +5                                                                                                 |
-| "Leaf on the Wind"        | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti chladu)                                                                                  |
-| "Like a Rolling Stone"    | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti zemi)                                                                                    |
-| "Live for Today"          | Nápis    | Fokus                                                           | Energie +15, regenerace energie -1                                                                         |
-| "Not the face!"           | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti drtivému poškození)                                                                      |
-| "Only the Strong Survive" | Nápis    | Štít, Fokus                                                     | Zkracuje ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** na tobě o 20 %       |
-| "Pure of Heart"           | Nápis    | Štít, Fokus                                                     | Zkracuje ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** na tobě o 20 %             |
-| "Riders on the Storm"     | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti blesku)                                                                                  |
-| "Seize the Day"           | Nápis    | Hůl, Hůlka                                                      | Energie +15, regenerace energie -1                                                                         |
-| "Sleep Now in the Fire"   | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti ohni)                                                                                    |
-| "Soundness of Mind"       | Nápis    | Štít, Fokus                                                     | Zkracuje ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** na tobě o 20 %                |
-| "Strength of Body"        | Nápis    | Štít, Fokus                                                     | Zkracuje ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** na tobě o 20 % |
-| "Swift as the Wind"       | Nápis    | Štít, Fokus                                                     | Zkracuje ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** na tobě o 20 %       |
-| "The Riddle of Steel"     | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti sečnému poškození)                                                                       |
-| "Through Thick and Thin"  | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti bodnému poškození)                                                                       |
+| Vylepšení                 | Pozice   | Pasuje na                                                       | Účinek                                                                                                          |
+| ------------------------- | -------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Předpona | ![Hůl](../../../apps/web/public/icons/weapon/staff.svg) **Hůl** | Brnění +5                                                                                                       |
+| Hale                      | Předpona | Hůl                                                             | +30 zdraví                                                                                                      |
+| Insightful                | Předpona | Hůl                                                             | Energie +5                                                                                                      |
+| of Defense                | Přípona  | jakákoli bojová zbraň, Hůl                                      | Brnění +5                                                                                                       |
+| of Fortitude              | Přípona  | jakákoli bojová zbraň, Hůl, Štít, Fokus                         | +30 zdraví                                                                                                      |
+| of Shelter                | Přípona  | jakákoli bojová zbraň, Hůl                                      | Brnění +7 (proti fyzickému poškození)                                                                           |
+| of Warding                | Přípona  | jakákoli bojová zbraň, Hůl                                      | Brnění +7 (proti elementálnímu poškození)                                                                       |
+| "Cast Out the Unclean"    | Nápis    | Štít, Fokus                                                     | Zkracuje ![Nemoc](../../../apps/web/public/icons/status/disease.svg) **Nemoc** na tobě o 20 %                   |
+| "Fear Cuts Deeper"        | Nápis    | Štít, Fokus                                                     | Zkracuje ![Krvácení](../../../apps/web/public/icons/status/bleeding.svg) **Krvácení** na tobě o 20 %            |
+| "I Can See Clearly Now"   | Nápis    | Štít, Fokus                                                     | Zkracuje ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** na tobě o 20 %                 |
+| "I have the power!"       | Nápis    | jakákoli bojová zbraň                                           | Energie +5                                                                                                      |
+| "Leaf on the Wind"        | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti chladu)                                                                                       |
+| "Like a Rolling Stone"    | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti zemi)                                                                                         |
+| "Live for Today"          | Nápis    | Fokus                                                           | Energie +15, regenerace energie -1                                                                              |
+| "Not the face!"           | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti drtivému poškození)                                                                           |
+| "Only the Strong Survive" | Nápis    | Štít, Fokus                                                     | Zkracuje ![Slabost](../../../apps/web/public/icons/status/weakness.svg) **Slabost** na tobě o 20 %              |
+| "Pure of Heart"           | Nápis    | Štít, Fokus                                                     | Zkracuje ![Otrava](../../../apps/web/public/icons/status/poison.svg) **Otravu** na tobě o 20 %                  |
+| "Riders on the Storm"     | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti blesku)                                                                                       |
+| "Seize the Day"           | Nápis    | Hůl, Hůlka                                                      | Energie +15, regenerace energie -1                                                                              |
+| "Sleep Now in the Fire"   | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti ohni)                                                                                         |
+| "Soundness of Mind"       | Nápis    | Štít, Fokus                                                     | Zkracuje ![Omámení](../../../apps/web/public/icons/status/dazed.svg) **Omámení** na tobě o 20 %                 |
+| "Strength of Body"        | Nápis    | Štít, Fokus                                                     | Zkracuje ![Hluboká rána](../../../apps/web/public/icons/status/deep-wound.svg) **Hlubokou ránu** na tobě o 20 % |
+| "Swift as the Wind"       | Nápis    | Štít, Fokus                                                     | Zkracuje ![Ochromení](../../../apps/web/public/icons/status/crippled.svg) **Ochromení** na tobě o 20 %          |
+| "The Riddle of Steel"     | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti sečnému poškození)                                                                            |
+| "Through Thick and Thin"  | Nápis    | Štít, Fokus                                                     | Brnění +10 (proti bodnému poškození)                                                                            |
 
 ### Bojové předpony při zásahu
 
@@ -50,10 +50,10 @@ Každá zbraň a věc do druhé ruky má pozice pro vylepšení: **předponu**, 
 | Zealous                      | jakákoli bojová zbraň        | získá 1 energii; -1 regen energie                               |
 | Sundering                    | jakákoli bojová zbraň        | 20% šance na +20 % průrazu brnění                               |
 | Furious                      | bojové, kromě luků           | 10% šance na dvojnásobný adrenalin                              |
-| Barbed, Crippling, Poisonous | bojové, kromě kladiva        | Bleeding, Crippled, Poison, které způsobíš, trvají o 33 % déle  |
-| Cruel                        | bojové, kromě luků           | Deep Wound, který způsobíš, trvá o 33 % déle                    |
-| Heavy                        | sekera, kladivo, kosa, oštěp | Weakness, který způsobíš, trvá o 33 % déle                      |
-| Silencing                    | dýky, oštěp, luky            | Dazed, který způsobíš, trvá o 33 % déle                         |
+| Barbed, Crippling, Poisonous | bojové, kromě kladiva        | Krvácení, Ochromení, Otrava, které způsobíš, trvají o 33 % déle |
+| Cruel                        | bojové, kromě luků           | Hluboká rána, kterou způsobíš, trvá o 33 % déle                 |
+| Heavy                        | sekera, kladivo, kosa, oštěp | Slabost, kterou způsobíš, trvá o 33 % déle                      |
+| Silencing                    | dýky, oštěp, luky            | Omámení, které způsobíš, trvá o 33 % déle                       |
 | Ebon, Fiery, Icy, Shocking   | jakákoli bojová zbraň        | její poškození se změní na zemní, ohnivé, chladné nebo bleskové |
 
 "Při zásahu" znamená zásah útokem nebo útočnou dovedností, který dopadl: zablokovaný nebo minutý neudělá nic. Prodlouženým stavem se rozumí stav, který způsobí tvoje útočná dovednost.
@@ -129,7 +129,7 @@ V editoru je brnění figurína. Klikni na očíslovaný kus nebo na jeho řáde
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 zdraví                                |
 | ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | víc energie (+3, +6 nebo +9)              |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | dva stavy vyprší každý o 20 % dříve       |
-| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | méně fyzického poškození z každého zásahu |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Válečník](../../../apps/web/public/icons/profession/warrior.svg) **Válečník**)                                                                                                                                             | méně fyzického poškození z každého zásahu |
 
 Runu kusu vybíráš na stejném místě jako jeho insignii: klikni na kus na figuríně.
 

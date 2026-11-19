@@ -380,7 +380,7 @@ A equipe escolhe uma vez, na Sala de Equipe do primeiro mapa, e mantém sua
 Build de Equipe e seus assentos no resto da campanha: depois de uma
 vitória, volta à fila sem votação nem escolha. Quem sai no meio da
 campanha libera o assento, mas não a build dele. Quem entra no grupo entre
-mapas só escolhe entre os assentos vagos (**Livre: build de Monk**) e joga
+mapas só escolhe entre os assentos vagos (**Livre: build de Monge**) e joga
 a build desse assento; um assento vago que ninguém pegar é de um bot. Uma
 derrota recomeça do zero: a próxima campanha vota de novo. O mesmo vale
 para seguir seu host até outro grupo, cujo host não pode garantir a

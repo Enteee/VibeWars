@@ -11,12 +11,12 @@ Stań na jednym z tych obszarów, a zacznie na ciebie działać; efekt utrzymuje
 się jeszcze chwilę po zejściu. Wrogowie i sojusznicy są nim objęci tak samo
 jak ty.
 
-- **Spalona ziemia** nakłada na ciebie Burning. Zwęglona ziemia z żarzącymi
+- **Spalona ziemia** nakłada na ciebie Podpalenie. Zwęglona ziemia z żarzącymi
   się węgielkami i pomarańczową krawędzią.
-- **Lawa** nakłada Burning i Crippled. Ciemna skorupa poprzecinana płynącymi,
+- **Lawa** nakłada Podpalenie i Okaleczenie. Ciemna skorupa poprzecinana płynącymi,
   świecącymi szczelinami, które migoczą.
-- **Trująca mgła** nakłada Poison. Dryfujące, kwaśnozielone kłęby, przez które
-  widać. Zieleń na ziemi zawsze oznacza Poison.
+- **Trująca mgła** nakłada Zatrucie. Dryfujące, kwaśnozielone kłęby, przez które
+  widać. Zieleń na ziemi zawsze oznacza Zatrucie.
 - **Bagno** spowalnia cię, a każdy atak lub umiejętność użyte tam kosztują cię
   Energię. Brązowe błoto z kałużami i powolnymi bąblami.
 - **Brudna woda** obniża twoją regenerację Zdrowia. Mętna, ciemnoturkusowa
@@ -35,10 +35,10 @@ jak ty.
 
 Uderzają raz za razem w swoim miejscu i trafiają każdego, kto tam akurat stoi.
 
-- **Szczelina** wyrzuca słup ognia, który nakłada Burning. Między wybuchami
+- **Szczelina** wyrzuca słup ognia, który nakłada Podpalenie. Między wybuchami
   to tlący się kamienny kołnierz.
-- **Gazowy wylot** wypuszcza zielony gaz, który nakłada Poison.
-- **Obryw skalny** zrzuca kamienie, które nakładają Crippled. Niektóre spadają
+- **Gazowy wylot** wypuszcza zielony gaz, który nakłada Zatrucie.
+- **Obryw skalny** zrzuca kamienie, które nakładają Okaleczenie. Niektóre spadają
   w jednym miejscu, inne toczą się po ścieżce tam i z powrotem.
 
 Każda z nich ostrzega cię tuż przed uderzeniem: pierścień na jej krawędzi

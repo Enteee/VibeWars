@@ -381,7 +381,7 @@ L'équipe choisit une fois, dans le Salon d'équipe de sa première carte, et ga
 son Build d'équipe et ses places pour le reste de la course : après une victoire,
 elle repart en file sans vote ni choix de places. Celui qui part en pleine course
 libère sa place mais pas son build. Un nouveau venu dans le groupe entre deux
-cartes ne choisit que parmi les places vacantes (**Libre : build Monk**), et joue
+cartes ne choisit que parmi les places vacantes (**Libre : build Moine**), et joue
 le build de cette place ; une place vacante que personne ne prend revient à un
 bot. Une défaite fait tout recommencer : la course suivante revote. Pareil si tu
 suis ton hôte dans un autre groupe, dont l'hôte ne peut pas répondre de l'ancienne

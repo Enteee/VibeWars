@@ -10,12 +10,12 @@ página diz o que cada uma faz com você e como reconhecê-la no chão.
 Fique numa dessas áreas e ela age sobre você; o efeito dura um pouco depois
 que você sai. Inimigos e aliados são afetados do mesmo jeito que você.
 
-- **Chão chamuscado** aplica Burning em você. Terra carbonizada com brasas
+- **Chão chamuscado** aplica Queimadura em você. Terra carbonizada com brasas
   acesas e uma borda laranja.
-- **Lava** aplica Burning e Crippled. Uma crosta escura cortada por rachaduras
+- **Lava** aplica Queimadura e Aleijado. Uma crosta escura cortada por rachaduras
   brilhantes que correm e tremeluzem.
-- **Névoa tóxica** aplica Poison. Nuvens verde-ácido à deriva, através das
-  quais dá para ver. Verde no chão sempre significa Poison.
+- **Névoa tóxica** aplica Veneno. Nuvens verde-ácido à deriva, através das
+  quais dá para ver. Verde no chão sempre significa Veneno.
 - **Lamaçal** deixa você mais lento, e cada ataque ou habilidade que você usa
   ali custa energia. Lama marrom com poças e bolhas lentas.
 - **Água suja** reduz sua regeneração de vida. Água turva, verde-azulada
@@ -34,10 +34,10 @@ que você sai. Inimigos e aliados são afetados do mesmo jeito que você.
 Estes atacam de novo e de novo no seu ponto e acertam quem estiver ali na
 hora.
 
-- **Um respiradouro** lança uma coluna de fogo que aplica Burning. Entre um
+- **Um respiradouro** lança uma coluna de fogo que aplica Queimadura. Entre um
   ataque e outro, é um anel de pedra fumegante.
-- **Um jato de gás** solta gás verde que aplica Poison.
-- **Desmoronamento** derruba pedras que aplicam Crippled. Algumas caem num só
+- **Um jato de gás** solta gás verde que aplica Veneno.
+- **Desmoronamento** derruba pedras que aplicam Aleijado. Algumas caem num só
   lugar, outras rolam por um caminho, indo e voltando.
 
 Cada um avisa você pouco antes de atacar: o anel da borda incha na sua cor, e

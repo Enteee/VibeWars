@@ -3,19 +3,19 @@
 ## Zdravlje i energija
 
 Počinješ s 500 **zdravlja** i 50 **energije**; rune i moral mijenjaju
-oboje. Vještine troše energiju, a ona se vraća sama od sebe, polako. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriori**
-i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** obnavljaju je najsporije, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangeri** malo brže, svi ostali
+oboje. Vještine troše energiju, a ona se vraća sama od sebe, polako. ![Ratnik](../../../apps/web/public/icons/profession/warrior.svg) **Ratnici**
+i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** obnavljaju je najsporije, ![Lovac](../../../apps/web/public/icons/profession/ranger.svg) **Lovci** malo brže, svi ostali
 najbrže.
 
 Strelice na tvojim trakama su **pipovi**: svaka je zdravlje ili energija koji se
-vraćaju ili odlaze, po malo svake sekunde. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** i
-![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** oduzimaju zdravlje; Regeneration i čarolije liječenja ga dodaju. Nakon 5
+vraćaju ili odlaze, po malo svake sekunde. ![Krvarenje](../../../apps/web/public/icons/status/bleeding.svg) **Krvarenje**, ![Gorenje](../../../apps/web/public/icons/status/burning.svg) **Gorenje** i
+![Otrov](../../../apps/web/public/icons/status/poison.svg) **Otrov** oduzimaju zdravlje; Regeneration i čarolije liječenja ga dodaju. Nakon 5
 sekundi izvan borbe zdravlje ti se počinje vraćati samo od sebe, sve brže
 što dulje ostaješ izvan nje.
 
 ## Adrenalin
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriori**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** i drugi imaju vještine koje umjesto energije troše
+![Ratnik](../../../apps/web/public/icons/profession/warrior.svg) **Ratnici**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** i drugi imaju vještine koje umjesto energije troše
 **adrenalin**. Svaka takva vještina puni se zasebno: svaki pogodak oružjem
 koji zadaš daje svakoj od njih jedan udarac, a isto vrijedi i kad primiš velik pogodak. Korištenje
 jedne prazni je i oduzima po jedan udarac ostalima. Nakon 25 sekundi
@@ -60,18 +60,18 @@ osim ![Povik](../../../apps/web/public/icons/skill-type/shout.svg) **povika** il
 
 **Stanja** ti štete dok ne isteknu ili se ne uklone:
 
-| Stanje                                                                                      | Što radi                                         |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | oduzima zdravlje                                 |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | brzo oduzima zdravlje                            |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | oduzima zdravlje                                 |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | oduzima zdravlje i širi se na one do tebe        |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | krećeš se upola sporije                          |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | većina tvojih napada promaši                     |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | tvoje oružje udara znatno slabije                |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | manje oklopa                                     |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | manje najvećeg zdravlja i slabije liječenje      |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | čarolije se bacaju sporo; svaki ih napad prekida |
+| Stanje                                                                                        | Što radi                                         |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| ![Krvarenje](../../../apps/web/public/icons/status/bleeding.svg) **Krvarenje**                | oduzima zdravlje                                 |
+| ![Gorenje](../../../apps/web/public/icons/status/burning.svg) **Gorenje**                     | brzo oduzima zdravlje                            |
+| ![Otrov](../../../apps/web/public/icons/status/poison.svg) **Otrov**                          | oduzima zdravlje                                 |
+| ![Bolest](../../../apps/web/public/icons/status/disease.svg) **Bolest**                       | oduzima zdravlje i širi se na one do tebe        |
+| ![Osakaćenost](../../../apps/web/public/icons/status/crippled.svg) **Osakaćenost**            | krećeš se upola sporije                          |
+| ![Zaslijepljenost](../../../apps/web/public/icons/status/blind.svg) **Zaslijepljenost**       | većina tvojih napada promaši                     |
+| ![Slabost](../../../apps/web/public/icons/status/weakness.svg) **Slabost**                    | tvoje oružje udara znatno slabije                |
+| ![Napuknut oklop](../../../apps/web/public/icons/status/cracked-armor.svg) **Napuknut oklop** | manje oklopa                                     |
+| ![Duboka rana](../../../apps/web/public/icons/status/deep-wound.svg) **Duboka rana**          | manje najvećeg zdravlja i slabije liječenje      |
+| ![Omamljenost](../../../apps/web/public/icons/status/dazed.svg) **Omamljenost**               | čarolije se bacaju sporo; svaki ih napad prekida |
 
 ![Urok](../../../apps/web/public/icons/skill-type/hex.svg) **Uroke** na tebe bacaju neprijatelji, a ![Začaranje](../../../apps/web/public/icons/skill-type/enchantment.svg) **začaranja** ti sam ili tvoji
 saveznici. Svako uklanja vlastita vrsta vještine. Neka su začaranja
@@ -84,8 +84,8 @@ napad, pa promašaj ili blokada troše jedan jednako kao i pogodak.
 
 ## Oklop i šteta
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriori** i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** nose najviše oklopa; ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangeri**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassini** i
-![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervishi** manje; bacači čarolija najmanje. Oklop smanjuje štetu od oružja, elementarnu, chaos
+![Ratnik](../../../apps/web/public/icons/profession/warrior.svg) **Ratnici** i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** nose najviše oklopa; ![Lovac](../../../apps/web/public/icons/profession/ranger.svg) **Lovci**, ![Asasin](../../../apps/web/public/icons/profession/assassin.svg) **Asasini** i
+![Derviš](../../../apps/web/public/icons/profession/dervish.svg) **Derviši** manje; bacači čarolija najmanje. Oklop smanjuje štetu od oružja, elementarnu, chaos
 i dark štetu. Holy, shadow i šteta bez vrste, oduzimanje zdravlja i krađa
 života zaobilaze ga. Samo pogoci oružjem mogu biti kritični.
 Neka začaranja svog nositelja čine imunim na kritične pogotke.
