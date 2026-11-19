@@ -1055,6 +1055,7 @@ export default {
   "queue.matchFoundTitle": "عُثر على مباراة!",
   "queue.nextMatchIn": "المباراة التالية بعد {seconds} ث",
   "queue.now": "الآن",
+  "queue.playBotsIn": "العب ضد البوتات ({seconds} ث)",
   "queue.queueAgain": "طابور مجددًا",
   "queue.randomArena": "الساحة العشوائية {size}",
   "queue.searchingCount": "{searching} يبحثون · المطلوب {needed}",

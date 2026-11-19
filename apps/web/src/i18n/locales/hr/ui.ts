@@ -971,6 +971,7 @@ export default {
   "queue.matchFoundTitle": "Meč pronađen!",
   "queue.nextMatchIn": "Sljedeći meč za {seconds} s",
   "queue.now": "Sad",
+  "queue.playBotsIn": "Igraj protiv botova ({seconds} s)",
   "queue.queueAgain": "Opet u red",
   "queue.randomArena": "Nasumična arena {size}",
   "queue.searchingCount": "traži: {searching} · treba: {needed}",

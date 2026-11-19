@@ -915,6 +915,7 @@ export default {
   "queue.matchFoundTitle": "Kamp fundet!",
   "queue.nextMatchIn": "Næste kamp om {seconds} s",
   "queue.now": "Nu",
+  "queue.playBotsIn": "Spil mod bots ({seconds} s)",
   "queue.queueAgain": "I kø igen",
   "queue.randomArena": "Tilfældig arena {size}",
   "queue.searchingCount": "{searching} søger · {needed} mangler",

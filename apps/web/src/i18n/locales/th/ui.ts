@@ -868,6 +868,7 @@ export default {
   "queue.matchFoundTitle": "พบแมตช์แล้ว!",
   "queue.nextMatchIn": "แมตช์ถัดไปใน {seconds} วิ",
   "queue.now": "ตอนนี้",
+  "queue.playBotsIn": "เล่นกับบอต ({seconds} วิ)",
   "queue.queueAgain": "เข้าคิวอีกครั้ง",
   "queue.randomArena": "อารีนาสุ่ม {size}",
   "queue.searchingCount": "กำลังค้นหา {searching} · ต้องการ {needed}",

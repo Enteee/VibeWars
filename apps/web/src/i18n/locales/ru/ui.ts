@@ -1002,6 +1002,7 @@ export default {
   "queue.matchFoundTitle": "Матч найден!",
   "queue.nextMatchIn": "Следующий матч через {seconds} с",
   "queue.now": "Сейчас",
+  "queue.playBotsIn": "Играть с ботами ({seconds} с)",
   "queue.queueAgain": "Ещё раз",
   "queue.randomArena": "Случайная арена {size}",
   "queue.searchingCount": "В поиске: {searching} · нужно: {needed}",

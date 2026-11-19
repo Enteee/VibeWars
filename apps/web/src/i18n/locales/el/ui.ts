@@ -927,6 +927,7 @@ export default {
   "queue.matchFoundTitle": "Βρέθηκε αγώνας!",
   "queue.nextMatchIn": "Επόμενος αγώνας σε {seconds} δ",
   "queue.now": "Τώρα",
+  "queue.playBotsIn": "Παίξε με bots ({seconds} δ)",
   "queue.queueAgain": "Ξανά στην ουρά",
   "queue.randomArena": "Τυχαία Αρένα {size}",
   "queue.searchingCount": "{searching} ψάχνουν · χρειάζονται {needed}",

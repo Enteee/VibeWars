@@ -876,6 +876,7 @@ export default {
   "queue.matchFoundTitle": "マッチ成立!",
   "queue.nextMatchIn": "{seconds}秒後に次のマッチ",
   "queue.now": "今すぐ",
+  "queue.playBotsIn": "ボットと対戦（{seconds}秒）",
   "queue.queueAgain": "再度キュー",
   "queue.randomArena": "ランダムアリーナ {size}",
   "queue.searchingCount": "{searching}人検索中 · {needed}人必要",

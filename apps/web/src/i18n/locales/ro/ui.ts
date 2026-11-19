@@ -971,6 +971,7 @@ export default {
   "queue.matchFoundTitle": "Meci găsit!",
   "queue.nextMatchIn": "Următorul meci în {seconds} s",
   "queue.now": "Acum",
+  "queue.playBotsIn": "Joacă contra boților ({seconds} s)",
   "queue.queueAgain": "Din nou în coadă",
   "queue.randomArena": "Arenă aleatorie {size}",
   "queue.searchingCount": "{searching} caută · {needed} necesari",

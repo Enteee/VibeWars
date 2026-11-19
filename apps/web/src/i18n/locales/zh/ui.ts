@@ -864,6 +864,7 @@ export default {
   "queue.matchFoundTitle": "已找到对局！",
   "queue.nextMatchIn": "下一场对局 {seconds} 秒后开始",
   "queue.now": "现在",
+  "queue.playBotsIn": "对战机器人（{seconds} 秒）",
   "queue.queueAgain": "再次排队",
   "queue.randomArena": "随机竞技场 {size}",
   "queue.searchingCount": "{searching} 人搜索中 · 需要 {needed} 人",

@@ -920,6 +920,7 @@ export default {
   "queue.matchFoundTitle": "مسابقه پیدا شد!",
   "queue.nextMatchIn": "مسابقهٔ بعد تا {seconds} ثانیه دیگر",
   "queue.now": "الان",
+  "queue.playBotsIn": "بازی با بات‌ها ({seconds} ثانیه)",
   "queue.queueAgain": "صف دوباره",
   "queue.randomArena": "آرنای تصادفی {size}",
   "queue.searchingCount": "{searching} در جستجو · {needed} لازم",

@@ -870,6 +870,7 @@ export default {
   "queue.matchFoundTitle": "매치를 찾았어요!",
   "queue.nextMatchIn": "{seconds}초 후 다음 매치",
   "queue.now": "지금",
+  "queue.playBotsIn": "봇과 대전 ({seconds}초)",
   "queue.queueAgain": "다시 대기",
   "queue.randomArena": "랜덤 아레나 {size}",
   "queue.searchingCount": "{searching}명 찾는 중 · {needed}명 필요",

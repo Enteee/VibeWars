@@ -1004,6 +1004,7 @@ export default {
   "queue.matchFoundTitle": "Zápas nájdený!",
   "queue.nextMatchIn": "Ďalší zápas o {seconds} s",
   "queue.now": "Teraz",
+  "queue.playBotsIn": "Hrať proti botom ({seconds} s)",
   "queue.queueAgain": "Znova do fronty",
   "queue.randomArena": "Náhodná aréna {size}",
   "queue.searchingCount": "hľadá: {searching} · treba: {needed}",

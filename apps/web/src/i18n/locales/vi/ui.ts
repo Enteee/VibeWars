@@ -867,6 +867,7 @@ export default {
   "queue.matchFoundTitle": "Tìm thấy trận!",
   "queue.nextMatchIn": "Trận tiếp theo sau {seconds} s",
   "queue.now": "Ngay",
+  "queue.playBotsIn": "Đấu với bot ({seconds} s)",
   "queue.queueAgain": "Xếp lại",
   "queue.randomArena": "Đấu trường ngẫu nhiên {size}",
   "queue.searchingCount": "{searching} đang tìm · cần {needed}",

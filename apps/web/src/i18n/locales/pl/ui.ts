@@ -1008,6 +1008,7 @@ export default {
   "queue.matchFoundTitle": "Znaleziono mecz!",
   "queue.nextMatchIn": "Następny mecz za {seconds} s",
   "queue.now": "Teraz",
+  "queue.playBotsIn": "Graj z botami ({seconds} s)",
   "queue.queueAgain": "Szukaj ponownie",
   "queue.randomArena": "Arena losowa {size}",
   "queue.searchingCount": "Szuka: {searching} · potrzeba: {needed}",

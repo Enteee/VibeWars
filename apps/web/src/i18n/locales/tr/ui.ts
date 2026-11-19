@@ -917,6 +917,7 @@ export default {
   "queue.matchFoundTitle": "Maç bulundu!",
   "queue.nextMatchIn": "{seconds} sn sonra sonraki maç",
   "queue.now": "Şimdi",
+  "queue.playBotsIn": "Botlara karşı oyna ({seconds} sn)",
   "queue.queueAgain": "Yeniden sıraya gir",
   "queue.randomArena": "Rastgele Arena {size}",
   "queue.searchingCount": "{searching} arıyor · {needed} gerekli",
