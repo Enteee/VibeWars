@@ -357,12 +357,14 @@ export default {
   "controls.targetCalled": "כוון לאויב שנקרא",
   "controls.targetClosest": "כוון לאויב הקרוב",
   "controls.targetNext": "המטרה הבאה",
+  "controls.targetPrevious": "המטרה הקודמת",
   "controls.targetSelf": "כוון לעצמך",
   "controls.weaponSet1": "סט נשק 1",
   "controls.weaponSet2": "סט נשק 2",
   "controls.weaponSet3": "סט נשק 3",
   "controls.weaponSet4": "סט נשק 4",
   "controls.weaponSets": "סטים של נשק",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "חולדה",
 
   "echo.secondsLeft": {

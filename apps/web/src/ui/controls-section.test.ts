@@ -167,6 +167,21 @@ describe("KeysEditor (#309)", () => {
   });
 });
 
+describe("KeysEditor's Previous target (#3630)", () => {
+  it("reads Shift with each Next target key, and no key where Shift cannot go", () => {
+    const { editor: keys } = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": ["Tab", "KeyX"] });
+    expect(keys.previousTargetText(0)).toBe(t("controls.withShift", { key: "Tab" }));
+    expect(keys.previousTargetText(1)).toBe(t("controls.withShift", { key: "X" }));
+
+    const one = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": ["Tab"] }).editor;
+    expect(one.previousTargetText(1)).toBe("");
+    const none = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": [] }).editor;
+    expect(none.previousTargetText(0)).toBe(t("controls.noKey"));
+    const shift = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": ["ShiftLeft"] }).editor;
+    expect(shift.previousTargetText(0)).toBe(t("controls.noKey"));
+  });
+});
+
 describe("noKeyWarning (#309)", () => {
   it("warns on a skill or move with no key, and says how to move without one", () => {
     const empty: Keymap = { ...DEFAULT_KEYMAP, "skill-3": [], "move-up": [], mute: [] };
@@ -215,6 +230,63 @@ describe("Options > Controls (#3631)", () => {
     expect(container.all("keys-table")).toHaveLength(1);
     expect(container.all("keys-preset")).toHaveLength(1);
     expect(loose(container)).toEqual([]);
+    unmount();
+  });
+
+  /** `value`, which the test needs to be there. */
+  const present = <T>(value: T | undefined): T => {
+    if (value === undefined) {
+      throw new Error("missing");
+    }
+    return value;
+  };
+
+  /** The keys table's rows, each as its action's name and its cells' text. */
+  const rows = (container: FakeElement): string[][] =>
+    container
+      .all("keys-action")
+      .map((name) => [
+        name.textContent,
+        ...(name.parent?.children ?? [])
+          .filter((cell) => cell.classList.contains("key-cell"))
+          .map((cell) => cell.textContent),
+      ]);
+
+  it("shows Previous target under Next target, as Shift with its key, and it follows a rebind (#3630)", () => {
+    const container = new FakeElement();
+    const unmount = controlsSection.mount(container as unknown as HTMLElement);
+    const names = rows(container).map(([name]) => name);
+    const next = names.indexOf(t("controls.targetNext"));
+    expect(names[next + 1]).toBe(t("controls.targetPrevious"));
+    const previous = (): string[] | undefined => rows(container)[next + 1];
+    expect(previous()).toEqual([
+      t("controls.targetPrevious"),
+      t("controls.withShift", { key: "Tab" }),
+      "",
+    ]);
+    // Not a key of its own: no capture buttons, and a click starts nothing.
+    const row = present(present(container.all("keys-action")[next + 1]).parent);
+    expect(row.classList.contains("is-fixed")).toBe(true);
+    expect(row.all("key-cell").every((cell) => cell.dataset.action === undefined)).toBe(true);
+    row.click();
+    expect(container.all("is-capturing")).toEqual([]);
+
+    // Next target rebound to X: the row says Shift + X at once.
+    const nextButton = present(
+      container
+        .all("key-cell")
+        .find((cell) => cell.dataset.action === "target-next" && cell.dataset.index === "0"),
+    );
+    nextButton.click();
+    const [keydown] = present(container.all("keys-screen")[0]).listeners.get("keydown") ?? [];
+    present(keydown)({
+      ...key("KeyX"),
+      key: "x",
+      target: nextButton,
+      preventDefault: () => undefined,
+      stopPropagation: () => undefined,
+    });
+    expect(previous()?.[1]).toBe(t("controls.withShift", { key: "X" }));
     unmount();
   });
 });

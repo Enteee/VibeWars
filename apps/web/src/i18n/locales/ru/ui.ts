@@ -370,12 +370,14 @@ export default {
   "controls.targetCalled": "Цель: отмеченный враг",
   "controls.targetClosest": "Цель: ближайший враг",
   "controls.targetNext": "Следующая цель",
+  "controls.targetPrevious": "Предыдущая цель",
   "controls.targetSelf": "Цель: ты сам",
   "controls.weaponSet1": "Набор оружия 1",
   "controls.weaponSet2": "Набор оружия 2",
   "controls.weaponSet3": "Набор оружия 3",
   "controls.weaponSet4": "Набор оружия 4",
   "controls.weaponSets": "Наборы оружия",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Крыса",
 
   "echo.secondsLeft": {

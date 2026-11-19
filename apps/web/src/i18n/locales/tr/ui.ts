@@ -339,12 +339,14 @@ export default {
   "controls.targetCalled": "Bildirilen düşmanı hedef al",
   "controls.targetClosest": "En yakın düşmanı hedef al",
   "controls.targetNext": "Sonraki hedef",
+  "controls.targetPrevious": "Önceki hedef",
   "controls.targetSelf": "Kendini hedef al",
   "controls.weaponSet1": "Silah seti 1",
   "controls.weaponSet2": "Silah seti 2",
   "controls.weaponSet3": "Silah seti 3",
   "controls.weaponSet4": "Silah seti 4",
   "controls.weaponSets": "Silah setleri",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Sıçan",
 
   "echo.secondsLeft": {

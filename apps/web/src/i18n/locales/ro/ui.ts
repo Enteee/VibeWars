@@ -361,12 +361,14 @@ export default {
   "controls.targetCalled": "Țintește inamicul anunțat",
   "controls.targetClosest": "Țintește cel mai apropiat inamic",
   "controls.targetNext": "Ținta următoare",
+  "controls.targetPrevious": "Ținta anterioară",
   "controls.targetSelf": "Țintește-te pe tine",
   "controls.weaponSet1": "Set de arme 1",
   "controls.weaponSet2": "Set de arme 2",
   "controls.weaponSet3": "Set de arme 3",
   "controls.weaponSet4": "Set de arme 4",
   "controls.weaponSets": "Seturi de arme",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Șobolan",
 
   "echo.secondsLeft": {

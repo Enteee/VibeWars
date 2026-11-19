@@ -373,12 +373,14 @@ export default {
   "controls.targetCalled": "Wybierz wskazanego wroga",
   "controls.targetClosest": "Wybierz najbliższego wroga",
   "controls.targetNext": "Następny cel",
+  "controls.targetPrevious": "Poprzedni cel",
   "controls.targetSelf": "Wybierz siebie",
   "controls.weaponSet1": "Zestaw broni 1",
   "controls.weaponSet2": "Zestaw broni 2",
   "controls.weaponSet3": "Zestaw broni 3",
   "controls.weaponSet4": "Zestaw broni 4",
   "controls.weaponSets": "Zestawy broni",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Szczur",
 
   "echo.secondsLeft": {

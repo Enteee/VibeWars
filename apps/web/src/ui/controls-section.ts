@@ -131,6 +131,21 @@ export class KeysEditor {
     return code === undefined ? "-" : this.label(code);
   }
 
+  /**
+   * What a Previous target cell shows (#3630): Shift with that Next target
+   * key, which cycles backwards. With no first key, "no key"; a Shift key
+   * cannot be held with itself, so it reads "no key" too.
+   */
+  previousTargetText(index: 0 | 1): string {
+    const code = this.#map["target-next"][index];
+    if (code === undefined) {
+      return index === 0 ? t("controls.noKey") : "";
+    }
+    return code === "ShiftLeft" || code === "ShiftRight"
+      ? t("controls.noKey")
+      : t("controls.withShift", { key: this.label(code) });
+  }
+
   choosePreset(name: keyof typeof KEYMAP_PRESETS): void {
     this.#capturing = undefined;
     this.#flashed = undefined;
@@ -274,6 +289,7 @@ function mountControls(container: HTMLElement): () => void {
 
   const cells: { readonly cell: KeyCell; readonly button: HTMLButtonElement }[] = [];
   const warnings: { readonly action: KeyAction; readonly node: HTMLElement }[] = [];
+  const previousTarget: { readonly index: 0 | 1; readonly node: HTMLElement }[] = [];
   const same = (a: KeyCell | undefined, b: KeyCell): boolean =>
     a?.action === b.action && a.index === b.index;
 
@@ -312,6 +328,20 @@ function mountControls(container: HTMLElement): () => void {
     warnings.push({ action, node: warning });
     row.appendChild(warning);
     body.appendChild(row);
+    if (action === "target-next") {
+      // Shift with Next target goes back (#3630): it follows Next target's
+      // keys and is not bound on its own.
+      const previous = document.createElement("tr");
+      previous.className = "is-fixed";
+      previous.appendChild(h("th", "keys-action", t("controls.targetPrevious")));
+      for (const index of [0, 1] as const) {
+        const node = h("td", "key-cell is-fixed");
+        previousTarget.push({ index, node });
+        previous.appendChild(node);
+      }
+      previous.appendChild(h("td"));
+      body.appendChild(previous);
+    }
   }
   for (const [name, key] of [
     [t("controls.cancelAction"), t("controls.esc")],
@@ -344,6 +374,9 @@ function mountControls(container: HTMLElement): () => void {
       } else if (flash !== undefined || editor.flashed === undefined) {
         button.classList.remove("is-flashing");
       }
+    }
+    for (const { index, node } of previousTarget) {
+      node.textContent = editor.previousTargetText(index);
     }
     for (const { action, node } of warnings) {
       node.textContent = noKeyWarning(editor.map, action);
