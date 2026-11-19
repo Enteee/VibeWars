@@ -434,7 +434,29 @@ leaning back when up and lying right when thrown, in `SWITCH_MARK_LOOK`, a
 small brass glow round the knob while up. A flip plays a quarter-second
 throw (`leverThrown`); under reduced motion it snaps.
 
-Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
+### Portcullis, up and down
+
+**Down** is an iron grid filling the gap, its bars spiked at the camera's
+side. **Up** is a dark gap between stone jambs with no bars in it, only
+their bottom ends showing at the lintel side, so a player sees where it
+drops. Both read from the gate's own footprint on its layer, also where a
+tunnel's cover hides its face and the raised grid. Shape differs, not
+only colour.
+
+![portcullis](visual-style/portcullis.svg)
+
+Recipe (#3068, #3644): `gate-mark.ts` `GATE_ART`. Down, the wall pass
+draws the dark of the arch as a wall box, bars down its front face, and a
+grid over its top in `GATE_PORTCULLIS_LOOK` iron `#3b4759`; on its layer's
+ground the grid also fills the footprint, bars across it `BAR_EVERY` apart,
+an iron frame, a lit camera-facing edge (`litStructurePalette`) and
+`SPIKE`d tips. Up, `drawGate` lays the dark gap with jamb lines at its
+ends, a `STUB` of bars a quarter of its depth at its north or west side,
+and hangs the grid above the lintel; on a flat map that grid is left out,
+so nothing of it lands in the gap. The study SVG is made by
+`scripts/assets/portcullis-svg.sh`.
+
+Every other SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
 `node scripts/assets/visual-style.mjs`.
 
 ## 8. Review checklist
