@@ -25,6 +25,7 @@ import {
   parseWireRankedResult,
   parseWireRankedStart,
   parseWireRankedStartSigs,
+  parseWireEnded,
   teamQueueModeOf,
   type JsonValue,
   type LobbyRefusal,
@@ -46,6 +47,7 @@ import {
   type PeerRelayOffers,
   type PeerRankedResultSig,
   type PeerRankedStartSig,
+  type WireTeam,
 } from "@vibewars/game-protocol";
 import {
   ZERO_HASH,
@@ -381,6 +383,48 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     | undefined;
   /** This player's ranked match is over for it: a receipt was handed on, or the match cancelled. */
   let rankedOver = false;
+  /**
+   * The seats of the ranked match this player saw go once it signed the
+   * start (ADR-0055), by pubkey: a peer that left the room, a member the
+   * lobby listed away, or one it stopped listing. A result naming any
+   * other leaver is not signed, unless a re-round named it (see
+   * `rankedLeaversHold`).
+   */
+  const seenGone = new Set<string>();
+  /** The winner the host's `ended` told this player, once it came: what a result must say. */
+  let endedWinner: WireTeam | null | undefined;
+  /** The last ranked result the host sent, signed or not: a re-round's is compared with it. */
+  let lastResult: RankedResult | undefined;
+
+  /** Note the seats `state` lists away, or no longer lists, as gone. */
+  const noteGone = (state: WireLobbyState): void => {
+    if (ranked === undefined) {
+      return;
+    }
+    const listed = new Map(state.players.map((player) => [player.playerPubkey, player]));
+    for (const seat of ranked.start.teams.flat()) {
+      const player = listed.get(seat.pubkey);
+      const wasListed = latest?.players.some((each) => each.playerPubkey === seat.pubkey) === true;
+      if (player?.away === true || (player === undefined && wasListed)) {
+        seenGone.add(seat.pubkey);
+      }
+    }
+  };
+
+  /**
+   * Whether `result`'s leavers are ones this player may sign for
+   * (ADR-0055, "What a host decides"): each it saw go, or, in a re-round,
+   * one the previous result did not name, which the host says did not
+   * sign it. Refusing to sign is leaving, and nobody else can see a
+   * refusal, so a re-round's is taken on the host's word; the consent
+   * rule keeps that from winning a host's team a match alone.
+   */
+  const rankedLeaversHold = (result: RankedResult): boolean => {
+    const earlier = lastResult === undefined ? undefined : new Set(lastResult.leavers);
+    return result.leavers.every(
+      (pubkey) => seenGone.has(pubkey) || (earlier !== undefined && !earlier.has(pubkey)),
+    );
+  };
 
   /**
    * The host went mid-match, its start signed by every seat (ADR-0055): the
@@ -862,6 +906,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           resolve(connection);
           return;
         }
+        noteGone(state);
         latest = state;
         forgetProposals(state);
         noteQueueing(state);
@@ -1129,9 +1174,16 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           signed?.startSigs === undefined ||
           rankedOver ||
           said.result.startHash !== signed.hash ||
-          said.result.endReason === "host-left" ||
-          said.result.leavers.includes(options.playerKey.pubkey)
+          said.result.endReason === "host-left"
         ) {
+          return;
+        }
+        const holds =
+          !said.result.leavers.includes(options.playerKey.pubkey) &&
+          said.result.winningTeam === endedWinner &&
+          rankedLeaversHold(said.result);
+        lastResult = said.result;
+        if (!holds) {
           return;
         }
         const reply: PeerRankedResultSig = {
@@ -1139,6 +1191,18 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           sig: options.playerKey.signRankedResult(said.result),
         };
         transport.send("ranked-result-sig", reply, from);
+      }),
+      // How the ranked match ended, as the host told this player: a result
+      // naming another winner is not signed.
+      transport.on("ended", (data, from) => {
+        const signed = ranked;
+        if (from !== hostId || signed?.startSigs === undefined || endedWinner !== undefined) {
+          return;
+        }
+        const ended = parseWireEnded(data, signed.start.teams.length === 3 ? 3 : 2);
+        if (ended !== undefined && ended.endReason !== "host-left") {
+          endedWinner = ended.winningTeam;
+        }
       }),
       // The receipt: handed on only if it is of this start and valid.
       transport.on("ranked-receipt", (data, from) => {
@@ -1217,6 +1281,11 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         sendJoin(hostId);
       }),
       transport.onPeerLeave((peerId) => {
+        // A seat of the ranked match gone from the room, as this player saw it.
+        const gone = latest?.players.find((player) => player.id === peerId)?.playerPubkey;
+        if (ranked !== undefined && peerId !== hostId && gone !== undefined && gone !== null) {
+          seenGone.add(gone);
+        }
         // A blip, in the lobby or a match (#1764): a host that goes on
         // purpose says `host-left` first, and that closes at once.
         if (peerId !== hostId || droppedAt !== undefined) {

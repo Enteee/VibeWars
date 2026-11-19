@@ -1,4 +1,11 @@
-import { teamSizeOf, type Channel, type QueueMode } from "@vibewars/game-protocol";
+import {
+  parseWireRankedResult,
+  teamSizeOf,
+  type Channel,
+  type QueueMode,
+  type WireEnded,
+  type WireRankedResult,
+} from "@vibewars/game-protocol";
 import {
   ZERO_HASH,
   mergeReceipts,
@@ -80,8 +87,10 @@ function rankedGroup(mode: QueueMode): FormedGroup {
   };
 }
 
-/** A match the test ends by hand. */
+/** A match the test ends by hand, telling its players the winner as a real one does. */
 interface FakeMatch extends MatchHost {
+  /** Its room: `finish` says `ended` on it. */
+  room: Transport | undefined;
   finish(winningTeam: 0 | 1 | null, leavers?: readonly string[]): void;
 }
 
@@ -91,6 +100,7 @@ function fakeMatch(): FakeMatch {
   let ending: MatchEnding | null = null;
   let replay: RecordedReplay | null = null;
   return {
+    room: undefined,
     advance: () => undefined,
     get phase() {
       return phase;
@@ -110,6 +120,13 @@ function fakeMatch(): FakeMatch {
     retire: () => undefined,
     close: () => Promise.resolve(),
     finish(winningTeam, leavers = []) {
+      const ended: WireEnded = {
+        winningTeam,
+        endReason: "annihilation",
+        summary: [],
+        clearSeconds: null,
+      };
+      this.room?.send("ended", ended);
       phase = "finished";
       winner = winningTeam;
       ending = { endReason: "annihilation", durationSeconds: 300, leavers };
@@ -160,6 +177,56 @@ function holding(
   };
 }
 
+/**
+ * A host room that rewrites every `ranked-result` it sends its guests with
+ * `lie`, handed the seats' pubkeys in order: the host's own player, on its
+ * local link, still hears the truth.
+ */
+function lyingHost(
+  lie: (result: WireRankedResult["result"], seats: readonly string[]) => WireRankedResult["result"],
+): (transport: Transport) => Transport {
+  return (transport) => ({
+    ...transport,
+    selfId: transport.selfId,
+    send(channel, data, to) {
+      const said = channel === "ranked-result" ? parseWireRankedResult(data) : undefined;
+      if (said === undefined) {
+        transport.send(channel, data, to);
+        return;
+      }
+      const seats = lyingSeats.map((seat) => seat.key.pubkey);
+      transport.send(channel, { result: lie(said.result, seats) } satisfies WireRankedResult, to);
+    },
+  });
+}
+
+/** The seats a lying host's lie names, set once they have joined. */
+let lyingSeats: readonly Seat[] = [];
+
+/** How many result signatures each seat sent, its room wrapped to count them. */
+function countingSigs(): {
+  wrap: (n: number, transport: Transport) => Transport;
+  sent: () => number[];
+} {
+  const counts: number[] = [];
+  return {
+    wrap: (n, transport) => {
+      counts[n] = 0;
+      return {
+        ...transport,
+        selfId: transport.selfId,
+        send(channel, data, to) {
+          if (channel === "ranked-result-sig") {
+            counts[n] = (counts[n] ?? 0) + 1;
+          }
+          transport.send(channel, data, to);
+        },
+      };
+    },
+    sent: () => [...counts],
+  };
+}
+
 /** One seat's player: its lobby, key and what its ranked play handed on. */
 interface Seat {
   readonly key: PlayerKey;
@@ -188,6 +255,8 @@ interface RankedLobbyOptions {
   readonly unranked?: readonly number[];
   /** Each seat's room, wrapped as the test likes. */
   readonly wrap?: (n: number, transport: Transport) => Transport;
+  /** The host's room, wrapped: a lying host's, to its guests. */
+  readonly host?: (transport: Transport) => Transport;
 }
 
 async function joinSeat(
@@ -234,7 +303,7 @@ async function openRanked(mode: QueueMode, options: RankedLobbyOptions = {}): Pr
   const fellThrough: (readonly string[])[] = [];
   const receipts: RankedReceipt[] = [];
   const lobby = createLobbyHost({
-    transport: network.join("host"),
+    transport: (options.host ?? ((room: Transport) => room))(network.join("host")),
     code: group.groupId,
     proofKey: null,
     mapIds: MAP_IDS,
@@ -247,6 +316,7 @@ async function openRanked(mode: QueueMode, options: RankedLobbyOptions = {}): Pr
     verifyPlayerProof: verifyTestProof,
     startMatch(plan) {
       plans.push(plan);
+      match.room = plan.transport;
       return match;
     },
     queued: {
@@ -276,6 +346,7 @@ async function openRanked(mode: QueueMode, options: RankedLobbyOptions = {}): Pr
     seats.push(await joinSeat(group, n, wrap(n, room), !unranked.has(n)));
   }
   await settle();
+  lyingSeats = seats;
   return {
     network,
     lobby,
@@ -361,6 +432,9 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     const ranked = await openRanked("random-arena-2v2");
     await startRanked(ranked);
     const leaver = pubkeys(ranked)[3] ?? "";
+    // Every other seat sees it go.
+    await ranked.seats[3]?.transport.leave();
+    await settle();
     ranked.match.finish(0, [leaver]);
     await ranked.step(1);
     await until(() => ranked.receipts.length === 1);
@@ -508,5 +582,46 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     expect(bytes(sigs[0])).toBeLessThanOrEqual(8 * 1024);
     // The whole receipt holds 32 signatures and 16 seats: it fits a message, not 8 KB.
     expect(bytes({ receipt })).toBeLessThanOrEqual(16 * 1024 - 36);
+  });
+
+  it("is refused a result naming a leaver nobody saw go: the refusers leave, and nobody is rated", async () => {
+    const sigs = countingSigs();
+    const ranked = await openRanked("random-arena-2v2", {
+      wrap: sigs.wrap,
+      host: lyingHost((result, seats) =>
+        // The first round only: the re-round names the refusers itself.
+        result.leavers.length === 0 ? { ...result, leavers: [seats[3] ?? ""] } : result,
+      ),
+    });
+    await startRanked(ranked);
+    ranked.match.finish(0);
+    await ranked.step(1);
+    // No guest signed the lie: seat 3 is named, and seats 1 and 2 never saw
+    // it go. The host's own player heard the truth, and signed that.
+    expect(sigs.sent()).toEqual([1, 0, 0, 0]);
+    await ranked.step(RANKED_RESULT_TIMEOUT_MS / 1000);
+    await until(() => ranked.receipts.length === 1);
+    const receipt = receiptOf(ranked);
+    expect(receipt.result.leavers).toEqual(pubkeys(ranked).slice(1));
+    // The host's own signature alone: valid, and void, so it rates nobody.
+    expect(Object.keys(receipt.resultSigs)).toEqual([pubkeys(ranked)[0]]);
+    expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: true });
+  });
+
+  it("is refused a result naming another winner than the match told the players", async () => {
+    const sigs = countingSigs();
+    const ranked = await openRanked("random-arena-2v2", {
+      wrap: sigs.wrap,
+      host: lyingHost((result) => ({ ...result, winningTeam: 0 })),
+    });
+    await startRanked(ranked);
+    ranked.match.finish(1);
+    await ranked.step(1);
+    expect(sigs.sent()).toEqual([1, 0, 0, 0]);
+    await ranked.step(RANKED_RESULT_TIMEOUT_MS / 1000);
+    await until(() => ranked.receipts.length === 1);
+    const receipt = receiptOf(ranked);
+    expect(receipt.result.leavers).toEqual(pubkeys(ranked).slice(1));
+    expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: true });
   });
 });
