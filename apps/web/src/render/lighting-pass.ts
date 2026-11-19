@@ -974,22 +974,16 @@ export class LightingPass {
     fillCells(cells.shaded, sunShadowTint(lighting));
     fillCells(cells.indoors, baseTint(lighting, true));
     fillCells(cells.flat, baseTint(lighting, false));
-    // An edge piece is convex, so filled as a fan of triangles: Phaser
-    // earcuts a `fillPoints` path again on every frame it renders (#1353).
-    flat.fillStyle(baseTint(lighting, false), 1);
     for (const piece of cells.edges) {
-      const at = ({ x, y }: Vec2): Vec2 => ({
-        x: (extent.x + x) / LIGHT_MAP_SCALE,
-        y: (extent.y + y) / LIGHT_MAP_SCALE - lift,
-      });
-      const [first, ...rest] = piece.map(at);
-      for (let k = 0; first !== undefined && k + 1 < rest.length; k++) {
-        const b = rest[k];
-        const c = rest[k + 1];
-        if (b !== undefined && c !== undefined) {
-          flat.fillTriangle(first.x, first.y, b.x, b.y, c.x, c.y);
-        }
-      }
+      fillOutline(
+        flat,
+        piece.map(({ x, y }) => ({
+          x: (extent.x + x) / LIGHT_MAP_SCALE,
+          y: (extent.y + y) / LIGHT_MAP_SCALE,
+        })),
+        0,
+        -lift,
+      );
     }
     // The warm pools add over the lit floor, so they are made after it (#3350);
     // where no light reaches they are black, and add nothing.
