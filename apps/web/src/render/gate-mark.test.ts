@@ -150,7 +150,8 @@ describe("portcullis and secret passage (#3068)", () => {
     const open = draw(GATE_ART.open.portcullis, DOOR, STONE);
     expect(open.fills).toEqual([{ shape: DOOR, colour: GATE_PORTCULLIS_LOOK.dark, alpha: 1 }]);
     expect(open.columns).toEqual([]);
-    expect(open.strokes).toEqual([DOOR]);
+    // Its grid hung above, framed: the door's north end, as deep as the lift.
+    expect(open.strokes).toEqual([{ ...DOOR, height: 28 * 1.6 }]);
   });
 
   it("has no shut art for a secret passage, which is drawn as its wall, and opens it dark", () => {
@@ -167,16 +168,20 @@ describe("a portcullis reads up or down from its footprint, also under a cover (
     line: 1,
     palette: arenaPalette({ layerCount: 3, biome: "hall", ascentAct: null }),
   };
-  // A 14 u strip across an east-west tunnel, and a wide gate across a north-south way.
+  // A 14 u strip across an east-west tunnel, one longer than the open grid's
+  // lift, and a wide gate across a north-south way.
   const STRIP = { kind: "rect", x: 300, y: 500, width: 14, height: 60 } as const;
+  const LONG = { kind: "rect", x: 300, y: 500, width: 14, height: 110 } as const;
   const WIDE = { kind: "rect", x: 200, y: 400, width: 120, height: 14 } as const;
-  const shapes = [
+  type Wall = typeof STRIP | typeof LONG | typeof WIDE;
+  const shapes: readonly { name: string; wall: Wall; depth: number }[] = [
     { name: "a 14 u strip", wall: STRIP, depth: STRIP.width },
+    { name: "a 110 u strip", wall: LONG, depth: LONG.width },
     { name: "a wide gate", wall: WIDE, depth: WIDE.height },
   ];
 
   /** Its iron, drawn on its layer (not lifted) and within its footprint. */
-  function ironInFootprint(drawn: Drawn, wall: typeof STRIP | typeof WIDE): readonly Segment[] {
+  function ironInFootprint(drawn: Drawn, wall: Wall): readonly Segment[] {
     const inside = ({ x, y }: { x: number; y: number }): boolean =>
       x >= wall.x && x <= wall.x + wall.width && y >= wall.y && y <= wall.y + wall.height;
     return drawn.segments.filter(
@@ -223,9 +228,15 @@ describe("a portcullis reads up or down from its footprint, also under a cover (
         for (const bar of iron) {
           expect(reach(bar)).toBeLessThanOrEqual(depth / 4);
         }
-        // Nothing lifted lands back on its footprint, on a flat map either.
+        // Nothing lifted lands back on its footprint, on a flat map either:
+        // where it shows, every hung line lies on or north of the lintel.
         const lifted = open.segments.filter((segment) => segment.lift > 0);
         expect(lifted.length > 0).toBe(height > 0);
+        for (const segment of lifted) {
+          for (const end of [segment.from, segment.to]) {
+            expect(end.y - segment.lift).toBeLessThanOrEqual(wall.y);
+          }
+        }
       });
     }
   }
