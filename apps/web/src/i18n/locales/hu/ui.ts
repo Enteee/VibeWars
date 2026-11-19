@@ -1497,6 +1497,26 @@ export default {
     "A Csapatokban karaktereket raksz össze egy csapatba a csapatharcokhoz.",
   "tutorial.menu.menu.title": "A továbblépéshez meg kell változtatnod a specializációdat.",
   "tutorial.menu.skipAsk": "Kihagyod az oktatóanyag hátralévő részét?",
+  "tutorial.menu.spec.attributes":
+    "Oszd el a tulajdonságpontjaidat. Minden szint erősebbé teszi az adott tulajdonság képességeit.",
+  "tutorial.menu.spec.attributesDone": "Változtass egy tulajdonságot",
+  "tutorial.menu.spec.gear":
+    "Páncél, rúnák és jelvények: válassz egy darabot a figurán, aztán hogy mi kerüljön rá.",
+  "tutorial.menu.spec.gearDone": "Cserélj egy felszerelésdarabot",
+  "tutorial.menu.spec.open":
+    "Nyisd meg a Karaktereket, majd egy karaktert, hogy módosítsd a buildjét.",
+  "tutorial.menu.spec.openDone": "Nyiss meg egy karaktert",
+  "tutorial.menu.spec.professions":
+    "Az elsődleges kasztod adja a tulajdonságaidat és képességeidet; a másodlagos a saját képességeit is kölcsönadja.",
+  "tutorial.menu.spec.professionsDone": "Válts kasztot",
+  "tutorial.menu.spec.save": "Mentsd el a karaktered, hogy megmaradjon az új build.",
+  "tutorial.menu.spec.saveDone": "Mentés",
+  "tutorial.menu.spec.skills":
+    "Nyiss meg egy csoportot a listában, majd húzz egy képességet a sávod egy helyére, hogy becseréld.",
+  "tutorial.menu.spec.skillsDone": "Tegyél egy képességet a sávodra",
+  "tutorial.menu.spec.title": "Változtasd meg a specializációdat.",
+  "tutorial.menu.spec.weapons": "Válassz a listából fegyvert a fegyverkészletedhez.",
+  "tutorial.menu.spec.weaponsDone": "Cserélj fegyvert",
   "tutorial.gate.hint": "Be a ködbe, utánam.",
   "tutorial.gate.how": "Kattints a földre bal gombbal, vagy járj ezekkel: {keys}.",
   "tutorial.gate.intro": "A csapatunk a ködön túl harcol. Kövess!",

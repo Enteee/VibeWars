@@ -1511,6 +1511,26 @@ export default {
     "Στις Ομάδες βάζεις χαρακτήρες μαζί σε μια ομάδα για τις ομαδικές μάχες.",
   "tutorial.menu.menu.title": "Για να συνεχίσεις, πρέπει να αλλάξεις την ειδίκευσή σου.",
   "tutorial.menu.skipAsk": "Παράλειψη του υπόλοιπου οδηγού;",
+  "tutorial.menu.spec.attributes":
+    "Μοίρασε τους πόντους χαρακτηριστικών. Κάθε βαθμίδα δυναμώνει τις ικανότητες του χαρακτηριστικού.",
+  "tutorial.menu.spec.attributesDone": "Άλλαξε ένα χαρακτηριστικό",
+  "tutorial.menu.spec.gear":
+    "Πανοπλία, ρούνοι και διακριτικά: διάλεξε ένα κομμάτι στη φιγούρα, μετά τι μπαίνει πάνω του.",
+  "tutorial.menu.spec.gearDone": "Άλλαξε ένα κομμάτι εξοπλισμού",
+  "tutorial.menu.spec.open":
+    "Άνοιξε τους Χαρακτήρες και μετά έναν χαρακτήρα για να αλλάξεις το build του.",
+  "tutorial.menu.spec.openDone": "Άνοιξε έναν χαρακτήρα",
+  "tutorial.menu.spec.professions":
+    "Το κύριο επάγγελμα σου δίνει χαρακτηριστικά και ικανότητες· το δευτερεύον σου δανείζει κι αυτό τις ικανότητές του.",
+  "tutorial.menu.spec.professionsDone": "Άλλαξε ένα επάγγελμα",
+  "tutorial.menu.spec.save": "Αποθήκευσε τον χαρακτήρα σου για να κρατήσεις το νέο build.",
+  "tutorial.menu.spec.saveDone": "Αποθήκευση",
+  "tutorial.menu.spec.skills":
+    "Άνοιξε μια ομάδα στη λίστα και σύρε μια ικανότητα σε μια θέση της μπάρας σου για να την αλλάξεις.",
+  "tutorial.menu.spec.skillsDone": "Βάλε μια ικανότητα στη μπάρα σου",
+  "tutorial.menu.spec.title": "Άλλαξε την ειδίκευσή σου.",
+  "tutorial.menu.spec.weapons": "Διάλεξε από τη λίστα ένα όπλο για το σετ όπλων σου.",
+  "tutorial.menu.spec.weaponsDone": "Άλλαξε ένα όπλο",
   "tutorial.gate.hint": "Μέσα στην ομίχλη, πίσω μου.",
   "tutorial.gate.how": "Αριστερό κλικ στο έδαφος, ή περπάτα με {keys}.",
   "tutorial.gate.intro": "Η ομάδα μας μάχεται πέρα από την ομίχλη. Ακολούθησέ με.",

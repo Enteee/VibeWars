@@ -1496,6 +1496,25 @@ export default {
     "Bij Teams zet je personages samen in een team voor de teamgevechten.",
   "tutorial.menu.menu.title": "Om verder te gaan, moet je je specialisatie veranderen.",
   "tutorial.menu.skipAsk": "De rest van de tutorial overslaan?",
+  "tutorial.menu.spec.attributes":
+    "Besteed je attribuutpunten. Elke rang maakt de vaardigheden van dat attribuut sterker.",
+  "tutorial.menu.spec.attributesDone": "Wijzig een attribuut",
+  "tutorial.menu.spec.gear":
+    "Pantser, runes en insignes: kies een stuk op de figuur, dan wat erop komt.",
+  "tutorial.menu.spec.gearDone": "Wissel een uitrustingsstuk",
+  "tutorial.menu.spec.open": "Open Personages en dan een personage om de build te wijzigen.",
+  "tutorial.menu.spec.openDone": "Open een personage",
+  "tutorial.menu.spec.professions":
+    "Je primaire klasse geeft je attributen en vaardigheden; je secundaire leent je ook zijn vaardigheden.",
+  "tutorial.menu.spec.professionsDone": "Wissel een klasse",
+  "tutorial.menu.spec.save": "Sla je personage op om de nieuwe build te houden.",
+  "tutorial.menu.spec.saveDone": "Opslaan",
+  "tutorial.menu.spec.skills":
+    "Open een groep in de lijst en sleep dan een vaardigheid naar een plek in je balk om hem te wisselen.",
+  "tutorial.menu.spec.skillsDone": "Zet een vaardigheid op je balk",
+  "tutorial.menu.spec.title": "Verander je specialisatie.",
+  "tutorial.menu.spec.weapons": "Kies uit de lijst een wapen voor je wapenset.",
+  "tutorial.menu.spec.weaponsDone": "Wissel een wapen",
   "tutorial.gate.hint": "De mist in, achter mij aan.",
   "tutorial.gate.how": "Klik met links op de grond, of loop met {keys}.",
   "tutorial.gate.intro": "Ons team vecht voorbij de mist. Volg mij.",

@@ -1487,6 +1487,25 @@ export default {
     "در «تیم‌ها» شخصیت‌ها را برای نبردهای تیمی در یک تیم کنار هم می‌گذاری.",
   "tutorial.menu.menu.title": "برای ادامه، باید تخصصت را عوض کنی.",
   "tutorial.menu.skipAsk": "بقیهٔ آموزش رد شود؟",
+  "tutorial.menu.spec.attributes":
+    "امتیازهای ویژگی‌ات را خرج کن. هر رتبه مهارت‌های آن ویژگی را قوی‌تر می‌کند.",
+  "tutorial.menu.spec.attributesDone": "یک ویژگی را تغییر بده",
+  "tutorial.menu.spec.gear":
+    "زره، رون‌ها و نشان‌ها: تکه‌ای را روی پیکر انتخاب کن، بعد آنچه رویش می‌رود.",
+  "tutorial.menu.spec.gearDone": "یک تکه از تجهیزات را عوض کن",
+  "tutorial.menu.spec.open": "«شخصیت‌ها» را باز کن، بعد یک شخصیت را باز کن تا بیلدش را تغییر دهی.",
+  "tutorial.menu.spec.openDone": "یک شخصیت را باز کن",
+  "tutorial.menu.spec.professions":
+    "حرفهٔ اصلی‌ات ویژگی‌ها و مهارت‌هایت را می‌دهد؛ حرفهٔ دوم هم مهارت‌هایش را به تو قرض می‌دهد.",
+  "tutorial.menu.spec.professionsDone": "یک حرفه را عوض کن",
+  "tutorial.menu.spec.save": "شخصیتت را ذخیره کن تا بیلد تازه بماند.",
+  "tutorial.menu.spec.saveDone": "ذخیره",
+  "tutorial.menu.spec.skills":
+    "یک گروه را در فهرست باز کن، سپس مهارتی را روی یک جای نوارت بکش تا جایگزین شود.",
+  "tutorial.menu.spec.skillsDone": "یک مهارت روی نوارت بگذار",
+  "tutorial.menu.spec.title": "تخصصت را عوض کن.",
+  "tutorial.menu.spec.weapons": "از فهرست سلاحی برای ست سلاحت انتخاب کن.",
+  "tutorial.menu.spec.weaponsDone": "یک سلاح را عوض کن",
   "tutorial.gate.hint": "به درون مه، پشت سر من.",
   "tutorial.gate.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
   "tutorial.gate.intro": "تیم ما آن سوی مه می‌جنگد. دنبالم بیا.",

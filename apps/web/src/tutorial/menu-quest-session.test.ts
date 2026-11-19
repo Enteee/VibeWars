@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
+import type { StoredCharacter } from "../storage/schema.js";
+import { newCharacter } from "../ui/build-editor.js";
 
 import type { CoachView } from "./coach-overlay.js";
 import { startMenuQuest } from "./menu-quest-session.js";
@@ -65,7 +67,7 @@ describe("the menu quest session", () => {
     expect(shown.at(-1)?.objectives).toEqual([]);
   });
 
-  it("walks rail, Characters and Teams on Got it, then saves done and goes", () => {
+  it("walks rail, Characters and Teams on Got it, then saves the spec step and points on", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
     startMenuQuest({ from: "menu", coach, onEnd });
@@ -74,6 +76,56 @@ describe("the menu quest session", () => {
     gotIt(shown.at(-1));
     expect(shown.at(-1)?.target).toBe("rail-teams");
     gotIt(shown.at(-1));
+    expect(items.get(KEY)).toBe("menu:spec");
+    expect(shown.at(-1)?.target).toBe("rail-characters");
+    expect(shown.at(-1)?.gotIt).toBeUndefined();
+    expect(removed()).toBe(false);
+    expect(onEnd).not.toHaveBeenCalled();
+  });
+
+  it("follows the spec step from the editor events, then saves done and goes (#3541)", () => {
+    const { coach, shown, removed } = fakeCoach();
+    const onEnd = vi.fn();
+    const quest = startMenuQuest({ from: "spec", coach, onEnd });
+    quest.event({ kind: "screen-shown", screen: "characters" });
+    expect(shown.at(-1)?.target).toBe("character-open");
+    quest.event({ kind: "screen-shown", screen: "character-builder" });
+    expect(shown.at(-1)?.target).toBe("professions");
+    const start = newCharacter("c1");
+    const ranger: StoredCharacter = { ...start, secondaryProfession: "ranger" };
+    quest.event({ kind: "build-draft", before: start, draft: ranger });
+    expect(shown.at(-1)?.target).toBe("attributes");
+    expect(items.get(KEY)).toBe("menu:spec");
+    const ranked: StoredCharacter = {
+      ...ranger,
+      attributes: [{ attributeId: "ranger.marksmanship", rank: 9 }],
+    };
+    quest.event({ kind: "build-draft", before: ranger, draft: ranked });
+    expect(shown.at(-1)?.target).toBe("skills");
+    const skilled: StoredCharacter = {
+      ...ranked,
+      skillBar: ["ranger.barrage", ...ranked.skillBar.slice(1)],
+    };
+    quest.event({ kind: "build-draft", before: ranked, draft: skilled });
+    expect(shown.at(-1)?.target).toBe("weapons");
+    const [set1, , set3, set4] = skilled.equipment.weaponSets;
+    const armed: StoredCharacter = {
+      ...skilled,
+      equipment: { ...skilled.equipment, weaponSets: [set1, set1, set3, set4] },
+    };
+    quest.event({ kind: "build-draft", before: skilled, draft: armed });
+    expect(shown.at(-1)?.target).toBe("gear");
+    const { armor } = armed.equipment;
+    const dressed: StoredCharacter = {
+      ...armed,
+      equipment: {
+        ...armed.equipment,
+        armor: { ...armor, head: { ...armor.head, headgearAttributeId: "warrior.tactics" } },
+      },
+    };
+    quest.event({ kind: "build-draft", before: armed, draft: dressed });
+    expect(shown.at(-1)?.target).toBe("save");
+    quest.event({ kind: "character-saved", before: undefined, after: dressed });
     expect(items.get(KEY)).toBe("done");
     expect(removed()).toBe(true);
     expect(onEnd).toHaveBeenCalledWith("done");

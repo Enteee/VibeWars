@@ -1490,6 +1490,25 @@ export const en = {
     "Teams is where you put characters together into a team for the team fights.",
   "tutorial.menu.menu.title": "To go on, you must change your spec.",
   "tutorial.menu.skipAsk": "Skip the rest of the tutorial?",
+  "tutorial.menu.spec.attributes":
+    "Spend your attribute points. Each rank makes that attribute's skills stronger.",
+  "tutorial.menu.spec.attributesDone": "Change an attribute",
+  "tutorial.menu.spec.gear":
+    "Armor, runes and insignias: pick a piece on the figure, then what goes on it.",
+  "tutorial.menu.spec.gearDone": "Change a piece of gear",
+  "tutorial.menu.spec.open": "Open Characters, then open a character to change its build.",
+  "tutorial.menu.spec.openDone": "Open a character",
+  "tutorial.menu.spec.professions":
+    "Your primary profession gives your attributes and skills; your secondary lends you its skills too.",
+  "tutorial.menu.spec.professionsDone": "Switch a profession",
+  "tutorial.menu.spec.save": "Save your character to keep the new build.",
+  "tutorial.menu.spec.saveDone": "Save",
+  "tutorial.menu.spec.skills":
+    "Open a group in the list, then drag a skill onto a slot of your bar to swap it in.",
+  "tutorial.menu.spec.skillsDone": "Put a skill on your bar",
+  "tutorial.menu.spec.title": "Change your spec.",
+  "tutorial.menu.spec.weapons": "Pick a weapon for your weapon set from the list.",
+  "tutorial.menu.spec.weaponsDone": "Change a weapon",
   "tutorial.gate.hint": "Into the mist, after me.",
   "tutorial.gate.how": "Left click the ground, or walk with {keys}.",
   "tutorial.gate.intro": "Our team fights beyond the mist. Follow me.",

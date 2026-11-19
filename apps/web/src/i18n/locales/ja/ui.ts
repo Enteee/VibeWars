@@ -1418,6 +1418,25 @@ export default {
   "tutorial.menu.menu.teams": "「チーム」では、キャラクターを集めてチーム戦用のチームを組む。",
   "tutorial.menu.menu.title": "先へ進むには、スペックを変えなければならない。",
   "tutorial.menu.skipAsk": "チュートリアルの残りをスキップしますか？",
+  "tutorial.menu.spec.attributes":
+    "属性ポイントを振ろう。ランクが上がるほど、その属性のスキルが強くなる。",
+  "tutorial.menu.spec.attributesDone": "属性を変える",
+  "tutorial.menu.spec.gear":
+    "防具、ルーン、インシグニア：フィギュアの部位を選び、次にそこへ付けるものを選ぶ。",
+  "tutorial.menu.spec.gearDone": "装備を1つ変える",
+  "tutorial.menu.spec.open": "「キャラクター」を開き、キャラクターを開いてビルドを変えよう。",
+  "tutorial.menu.spec.openDone": "キャラクターを開く",
+  "tutorial.menu.spec.professions":
+    "メイン職業が属性とスキルを決める。サブ職業もスキルを貸してくれる。",
+  "tutorial.menu.spec.professionsDone": "職業を切り替える",
+  "tutorial.menu.spec.save": "キャラクターを保存して、新しいビルドを残そう。",
+  "tutorial.menu.spec.saveDone": "保存",
+  "tutorial.menu.spec.skills":
+    "リストのグループを開き、スキルをバーの枠へドラッグして入れ替えよう。",
+  "tutorial.menu.spec.skillsDone": "スキルをバーに置く",
+  "tutorial.menu.spec.title": "スペックを変えよう。",
+  "tutorial.menu.spec.weapons": "リストから武器セット用の武器を選ぼう。",
+  "tutorial.menu.spec.weaponsDone": "武器を変える",
   "tutorial.gate.hint": "霧の中へ、私に続いて。",
   "tutorial.gate.how": "地面を左クリック、または {keys} で歩く。",
   "tutorial.gate.intro": "味方は霧の向こうで戦っている。ついて来て。",

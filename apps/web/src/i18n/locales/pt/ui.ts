@@ -1562,6 +1562,25 @@ export default {
     "Em Equipes você junta personagens numa equipe para as lutas em equipe.",
   "tutorial.menu.menu.title": "Para continuar, você precisa mudar sua especialização.",
   "tutorial.menu.skipAsk": "Pular o resto do tutorial?",
+  "tutorial.menu.spec.attributes":
+    "Gaste seus pontos de atributo. Cada nível deixa as habilidades desse atributo mais fortes.",
+  "tutorial.menu.spec.attributesDone": "Mude um atributo",
+  "tutorial.menu.spec.gear":
+    "Armadura, runas e insígnias: escolha uma peça na figura e depois o que vai nela.",
+  "tutorial.menu.spec.gearDone": "Troque uma peça de equipamento",
+  "tutorial.menu.spec.open": "Abra Personagens e depois um personagem para mudar a build dele.",
+  "tutorial.menu.spec.openDone": "Abra um personagem",
+  "tutorial.menu.spec.professions":
+    "Sua profissão primária dá seus atributos e habilidades; a secundária também empresta as habilidades dela.",
+  "tutorial.menu.spec.professionsDone": "Troque uma profissão",
+  "tutorial.menu.spec.save": "Salve seu personagem para manter a nova build.",
+  "tutorial.menu.spec.saveDone": "Salvar",
+  "tutorial.menu.spec.skills":
+    "Abra um grupo na lista e arraste uma habilidade para um espaço da sua barra para trocá-la.",
+  "tutorial.menu.spec.skillsDone": "Coloque uma habilidade na barra",
+  "tutorial.menu.spec.title": "Mude sua especialização.",
+  "tutorial.menu.spec.weapons": "Escolha na lista uma arma para seu conjunto de armas.",
+  "tutorial.menu.spec.weaponsDone": "Troque uma arma",
   "tutorial.gate.hint": "Para a névoa, atrás de mim.",
   "tutorial.gate.how": "Clique com o botão esquerdo no chão, ou ande com {keys}.",
   "tutorial.gate.intro": "A nossa equipa luta para lá da névoa. Segue-me.",
