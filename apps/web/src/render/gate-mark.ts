@@ -1,3 +1,4 @@
+import type { Vec2 } from "@vibewars/game-core";
 import type { GateLook } from "@vibewars/game-maps/schema";
 
 import type { ArenaPalette } from "./arena-palette.js";
@@ -71,17 +72,26 @@ function doorAxis(
     : { along: "x", length: wall.width, across: wall.height };
 }
 
-/** Lines across `wall`'s top at `shares` of its length: the iron bands, or the planks' seams. */
-function across(painter: GatePainter, wall: RenderableShape, shares: readonly number[]): void {
+/**
+ * Lines across `wall`'s top at `shares` of its length: the iron bands, or
+ * the planks' seams. `reach` is how far across they run from its north or
+ * west side, as a share of its width.
+ */
+function across(
+  painter: GatePainter,
+  wall: RenderableShape,
+  shares: readonly number[],
+  reach = 1,
+): void {
   if (wall.kind !== "rect") {
     return;
   }
   const { x, y, width, height } = wall;
   for (const share of shares) {
     if (height >= width) {
-      painter.lineBetween(x, y + height * share, x + width, y + height * share);
+      painter.lineBetween(x, y + height * share, x + width * reach, y + height * share);
     } else {
-      painter.lineBetween(x + width * share, y, x + width * share, y + height);
+      painter.lineBetween(x + width * share, y, x + width * share, y + height * reach);
     }
   }
 }
@@ -213,50 +223,112 @@ function grid(painter: GatePainter, wall: RenderableShape, line: number): void {
   painter.strokeShape(wall);
 }
 
+/** How long a shut portcullis' spiked tips are; how far into the gap an open one's bars hang. */
+const SPIKE = 3;
+const STUB = 0.25;
+
+/** Points `BAR_EVERY` apart along `wall`'s camera-facing edges, their ends left out. */
+function alongFront(wall: RenderableShape): readonly Vec2[] {
+  const points: Vec2[] = [];
+  for (const { from, to } of southFacingEdges(wall)) {
+    const length = Math.hypot(to.x - from.x, to.y - from.y);
+    const count = Math.max(2, Math.floor(length / BAR_EVERY));
+    for (let at = 1; at < count; at += 1) {
+      points.push({
+        x: from.x + ((to.x - from.x) * at) / count,
+        y: from.y + ((to.y - from.y) * at) / count,
+      });
+    }
+  }
+  return points;
+}
+
 /**
  * Down: the dark through the arch, and the iron grid in it, its bars
- * running down the front face to spiked tips.
+ * running down the front face to spiked tips. The grid fills its
+ * footprint on its layer too (#3644), framed and lit, so it reads shut
+ * where a tunnel's cover hides its face and top.
  */
 const portcullisShut: GateArt = (painter, wall, { height, line, palette }) => {
   if (height > 0) {
     painter.fillColumn(wall, height, GATE_PORTCULLIS_LOOK.dark);
     painter.lineStyle(line * FRAME_WIDTH, GATE_PORTCULLIS_LOOK.iron, 1);
+    for (const { x, y } of alongFront(wall)) {
+      painter.lineBetween(x, y - height, x, y - line * 2);
+    }
     for (const { from, to } of southFacingEdges(wall)) {
-      const length = Math.hypot(to.x - from.x, to.y - from.y);
-      const count = Math.max(2, Math.floor(length / BAR_EVERY));
-      for (let at = 1; at < count; at += 1) {
-        const x = from.x + ((to.x - from.x) * at) / count;
-        const y = from.y + ((to.y - from.y) * at) / count;
-        painter.lineBetween(x, y - height, x, y - line * 2);
-      }
       for (const share of [0.3, 0.7]) {
         painter.lineBetween(from.x, from.y - height * share, to.x, to.y - height * share);
       }
     }
+  }
+  painter.lineStyle(line * FRAME_WIDTH, GATE_PORTCULLIS_LOOK.iron, 1);
+  across(painter, wall, bars(wall));
+  painter.strokeShape(wall);
+  painter.lineStyle(line * LIT_WIDTH, palette.wallLit, 1);
+  for (const { from, to } of southFacingEdges(wall)) {
+    painter.lineBetween(from.x, from.y, to.x, to.y);
+  }
+  painter.fillStyle(GATE_PORTCULLIS_LOOK.iron, 1);
+  for (const { x, y } of alongFront(wall)) {
+    painter.fillShape({
+      kind: "polygon",
+      points: [
+        { x: x - SPIKE / 2, y: y - SPIKE },
+        { x: x + SPIKE / 2, y: y - SPIKE },
+        { x, y },
+      ],
+    });
+  }
+  if (height === 0) {
+    return;
   }
   painter.save();
   painter.translateCanvas(0, -height);
   painter.fillStyle(GATE_PORTCULLIS_LOOK.dark, 1);
   painter.fillShape(wall);
   grid(painter, wall, line);
-  if (height > 0) {
-    painter.lineStyle(line * LIT_WIDTH, palette.wallLit, 1);
-    for (const { from, to } of southFacingEdges(wall)) {
-      painter.lineBetween(from.x, from.y, to.x, to.y);
-    }
+  painter.lineStyle(line * LIT_WIDTH, palette.wallLit, 1);
+  for (const { from, to } of southFacingEdges(wall)) {
+    painter.lineBetween(from.x, from.y, to.x, to.y);
   }
   painter.restore();
 };
 
-/** Up: a dark opening, stone jambs at its ends, and the grid hung above the lintel. */
+/**
+ * The part of `wall` that, lifted `lift` up the screen, lies north of
+ * its own footprint (#3644): all of it for a gate shallower than the
+ * lift, the north end of a strip deeper than it. A polygon is lifted
+ * whole.
+ */
+function hungAbove(wall: RenderableShape, lift: number): RenderableShape {
+  if (wall.kind !== "rect") {
+    return wall;
+  }
+  return { ...wall, height: Math.min(wall.height, lift) };
+}
+
+/**
+ * Up: a dark opening in a lit stone frame, its jambs and sills, and
+ * the grid hung above the lintel. In the gap only its bars' bottom ends
+ * show, a stub on its north or west side (#3644), and none of the hung
+ * grid falls back on it, so its footprint alone reads open, and where
+ * it drops.
+ */
 const portcullisOpen: GateArt = (painter, wall, { height, line, palette }) => {
   painter.fillStyle(GATE_PORTCULLIS_LOOK.dark, 1);
   painter.fillShape(wall);
-  painter.lineStyle(line * FRAME_WIDTH, palette.wallStroke, 1);
-  across(painter, wall, [0, 1]);
+  painter.lineStyle(line * FRAME_WIDTH, GATE_PORTCULLIS_LOOK.iron, 1);
+  across(painter, wall, bars(wall), STUB);
+  painter.lineStyle(line * LIT_WIDTH, palette.wallLit, 1);
+  painter.strokeShape(wall);
+  if (height === 0) {
+    return;
+  }
+  const lift = height * (1 + RAISED);
   painter.save();
-  painter.translateCanvas(0, -height * (1 + RAISED));
-  grid(painter, wall, line);
+  painter.translateCanvas(0, -lift);
+  grid(painter, hungAbove(wall, lift), line);
   painter.restore();
 };
 
