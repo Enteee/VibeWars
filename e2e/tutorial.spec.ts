@@ -843,7 +843,9 @@ test.describe("the menu quest (#3540)", () => {
     ).click();
 
     await expect(target("attributes").first()).toHaveClass(/tutorial-pulse/);
-    await page.locator(".editor-attribute").last().locator('.attribute-pip[data-pip="3"]').click();
+    // Points may all be spent: a refund always goes through. The last lit pip
+    // is some attribute's own rank, and clicking it lowers that rank by one.
+    await page.locator(".editor-attribute .attribute-pip.is-on").last().click();
 
     await expect(target("skills").first()).toHaveClass(/tutorial-pulse/);
     await openLibraryGroup(page);
