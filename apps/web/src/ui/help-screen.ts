@@ -138,7 +138,7 @@ function helpPanel(
       pane.replaceChildren(...renderPlayerDoc(page.markdown, targets).map(toDom));
     }
     picker.value = id;
-    panel.scrollTop = 0;
+    pane.scrollTop = 0;
   };
   picker.addEventListener("change", () => {
     show(picker.value);

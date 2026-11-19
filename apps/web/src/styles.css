@@ -3765,6 +3765,13 @@ body:has(> .splash) #menu-background::after {
   letter-spacing: normal;
 }
 
+/* The page scrolls between the picker and the foot, which stay put. */
+.help-window .help-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 /* Clear of the × at the window's top right. */
 .help-picker {
   align-self: flex-start;
