@@ -1759,6 +1759,119 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // The Elite Zaishen Battle (#3446): team 1's half is team 0's turned 180° about the start line.
+  // To the start line three ways: across the sunken floor, over the team's own stand (up its west
+  // stair, down its middle one), or through the undercroft under it, its portcullis open.
+  describe("The Elite Zaishen Battle", () => {
+    const map = loadMap("elite-zaishen-battle");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const line = { x: 2700, y: 1200 };
+    /** Team `team`'s own `id`, named as team 0's: team 1's is its turn, west for east, north for south. */
+    const own = (team: number, id: string): string =>
+      team === 0
+        ? id
+        : id
+            .replace(/west/g, "@")
+            .replace(/east/g, "west")
+            .replace(/@/g, "east")
+            .replace(/north/g, "@")
+            .replace(/south/g, "north")
+            .replace(/@/g, "south");
+    /** Team 0's point, or its turn for team 1. */
+    const at = (team: number, point: Vec2): Vec2 =>
+      team === 0 ? point : { x: map.width - point.x, y: map.height - point.y };
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Through the team's own `ids`, every other transition shut. */
+    const only =
+      (ids: readonly string[]) =>
+      (team: number): Route => {
+        const through = ids.map((id) => own(team, id));
+        return {
+          through,
+          shut: map.transitions.map(({ id }) => id).filter((id) => !through.includes(id)),
+        };
+      };
+    /** `on` with each team's one spawn at its own `point` on `layer`. */
+    const from = (on: MapData, point: Vec2, layer: number): MapData => ({
+      ...on,
+      spawnPoints: [0, 1].map((team) => ({ team, layer, position: at(team, point) })),
+    });
+    /** Each team's walk to its own `point`, by `route`. */
+    const toOwn = (on: MapData, point: Vec2, layer: number, route: (team: number) => Route) =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, at(team, point), layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    /** As loaded: both portcullises shut, both statue screens standing. */
+    const shut: MapData = {
+      ...map,
+      walls: [
+        ...map.walls,
+        ...map.gates.map(({ wall }) => wall),
+        ...(map.breakables ?? []).map(({ wall }) => wall),
+      ],
+    };
+    const onStand = { x: 1500, y: 620 };
+    const inUndercroft = { x: 1900, y: 640 };
+    const sum = (a: readonly number[], b: readonly number[]): number[] =>
+      [0, 1].map((team) => (a[team] ?? 0) + (b[team] ?? 0));
+    const routes = [
+      ["the floor", () => walksByRoute(shut, line, 1, only([]))],
+      [
+        "the stand",
+        () =>
+          sum(
+            toOwn(shut, onStand, 2, only(["north-tier-1-west-stair"])),
+            walksByRoute(from(shut, onStand, 2), line, 1, only(["north-tier-1-middle-stair"])),
+          ),
+      ],
+      [
+        "the undercroft",
+        () =>
+          sum(
+            toOwn(map, inUndercroft, 0, only(["north-undercroft-west-steps"])),
+            walksByRoute(
+              from(map, inUndercroft, 0),
+              line,
+              1,
+              only(["north-undercroft-east-steps"]),
+            ),
+          ),
+      ],
+    ] as const;
+
+    it.each(routes)(
+      "walks each team to the start line by %s within 10 % of the other, in under 25 s",
+      (_, walks) => {
+        const both = walks();
+        within(both, 0.1);
+        for (const walk of both) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it("walks each team to the foe's spawn across the floor, as loaded, within 10 % of the other", () => {
+      const spawn = { x: 5050, y: 1200 };
+      within(
+        toOwn(shut, spawn, 1, () => ({ through: [] })),
+        0.1,
+      );
+    });
+
+    it("keeps the walk to the start line within 10 % with the portcullises open and the screens broken", () => {
+      const broken = (map.breakables ?? []).map(({ id }) => id);
+      within(walksByRoute(map, line, 1, { through: [], broken }), 0.1);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });
