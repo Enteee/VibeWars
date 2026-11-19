@@ -408,13 +408,16 @@ paylaşıyorsa o etiketi.
 
 Her tırmanış sırasız bir **Elite Zaishen Battle** ile başlar: grubun,
 botların oynadığı altı Zaishen'e karşı (2 Monk, bir Elementalist ve 3
-diğer). Saat, biriniz başlangıç çizgisini geçtiğinde ya da ilk Zaishen
-öldüğünde, hangisi önce olursa, başlar. Altısını 30 saniyenin altında
-öldürürsen grup tırmanışa +%10 moralle başlar; 60'ın altında +%8; 80'in
-altında +%6; 100'ün altında +%4; 120'nin altında +%2; daha yavaşsa
-hiçbir şey. Kazanırsan grubun ilk haritası için kendiliğinden sıraya
-girer. Silinirsen ya da 8 dakikalık sınıra ulaşıldığında hâlâ yaşayan bir
-Zaishen varsa tırmanış biter.
+diğer). Savaş bir tören arenasında geçer (8v8, 5400x2400): kuzeyde ve
+güneyde basamaklı tribünler, çukur zeminde kaideler üzerinde heykeller
+ve her tribünün altında, parmaklıklı kapısı karşı tribündeki bir kolla
+açılan bir mahzen. Saat, biriniz arenanın ortasındaki başlangıç
+çizgisini geçtiğinde ya da ilk Zaishen öldüğünde, hangisi önce olursa,
+başlar. Altısını 30 saniyenin altında öldürürsen grup tırmanışa +%10
+moralle başlar; 60'ın altında +%8; 80'in altında +%6; 100'ün altında
++%4; 120'nin altında +%2; daha yavaşsa hiçbir şey. Kazanırsan grubun ilk
+haritası için kendiliğinden sıraya girer. Silinirsen ya da 8 dakikalık
+sınıra ulaşıldığında hâlâ yaşayan bir Zaishen varsa tırmanış biter.
 
 Bir tırmanıştaki her galibiyet **Şöhret** kazandırır: ilk on üç için 1,
 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36, sonra her biri 40, günde en

@@ -374,12 +374,15 @@ așteaptă și el. Când un grup câștigă Sala, fiecare joc deschis spune cine
 liderul lui sau tagul de breaslă, când îl au mai mult de jumătate din grup.
 
 Fiecare cursă începe cu **Elite Zaishen Battle**, fără coadă: grupul tău contra a șase
-Zaishen jucați de boți (2 Monk, un Elementalist și alți 3). Ceasul pornește când unul
-dintre voi trece linia de start sau când moare primul Zaishen, oricare vine primul.
-Ucide-i pe toți șase în mai puțin de 30 de secunde și grupul începe cursa cu +10% moral;
-sub 60, +8%; sub 80, +6%; sub 100, +4%; sub 120, +2%; mai lent, nimic. Dacă ai câștigat,
-grupul tău intră singur la coadă pentru prima hartă. Dacă sunteți eliminați sau mai e un
-Zaishen viu când se atinge limita de 8 minute, cursa s-a încheiat.
+Zaishen jucați de boți (2 Monk, un Elementalist și alți 3). Se dă într-o arenă
+ceremonială (8v8, 5400x2400): tribune în trepte la nord și la sud, statui pe socluri pe
+podeaua coborâtă și o criptă sub fiecare tribună, al cărei grilaj se deschide cu o
+manetă din tribuna opusă. Ceasul pornește când unul dintre voi trece linia de start din
+mijlocul arenei sau când moare primul Zaishen, oricare vine primul. Ucide-i pe toți șase
+în mai puțin de 30 de secunde și grupul începe cursa cu +10% moral; sub 60, +8%; sub 80,
++6%; sub 100, +4%; sub 120, +2%; mai lent, nimic. Dacă ai câștigat, grupul tău intră
+singur la coadă pentru prima hartă. Dacă sunteți eliminați sau mai e un Zaishen viu când
+se atinge limita de 8 minute, cursa s-a încheiat.
 
 Fiecare victorie dintr-o cursă aduce **faimă**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32,
 36 pentru primele treisprezece, apoi câte 40, cel mult 300 pe zi (ziua se schimbă la
