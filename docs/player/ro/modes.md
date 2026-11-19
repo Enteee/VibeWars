@@ -421,8 +421,7 @@ Trei arene ale Ascensiunii pot fi alese și la un Joc găzduit: **The Hollow Dee
 Anihilare, trei tuneluri întortocheate în jurul unei stânci centrale), **Blackwater Ford**
 (8v8, 5200x2800, Anihilare cu preot la un vad întunecat de râu: treci prin apa mică a vadului, pe podul rupt
 sprijinit pe pilonii săi deasupra morii sau printr-un podeț de sub pod, după ce o pârghie de pe moară îi deschide
-poarta; preotul își ridică morții la fiecare 2 minute) și **Mosslit Cairns** (8v8 Capturare de puncte,
-cinci movile de pietre într-un zig-zag ușor între baze). A patra este **The Brazen
+poarta; preotul își ridică morții la fiecare 2 minute) și **Mosslit Cairns** (8v8, 5400x3000, Capturare de puncte pe cinci dealuri cu movile de pietre ce strălucesc de mușchi în amurg: urci pe o movilă pe scările ei, ții movila mare din mijloc sau iei tunelul de rădăcini de sub dealurile din sud după ce o pârghie de pe o movilă din nord îi deschide porțile; zidurile de rădăcini pot fi sparte). A patra este **The Brazen
 Causeway** (8v8, 5600x2800, Anihilare cu preot pe un drum de piatră înălțat deasupra unei mlaștini, în amurg: mărșăluiești pe drum după ce o pârghie din turnul porții de departe îi deschide poarta de bronz, traversezi mlaștina până la scările de la mijlocul lui sau te strecori printr-un podeț de sub el; preotul își ridică morții la fiecare 2 minute).
 
 O hartă poate avea **porți**: ziduri care opresc corpurile, proiectilele și vederea cât

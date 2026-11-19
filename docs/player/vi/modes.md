@@ -399,8 +399,7 @@ Ba đấu trường của Đỉnh cũng là lựa chọn của Trận tự tạo
 **Blackwater Ford** (Diệt tư tế 8v8, 5200x2800, tại một khúc sông cạn tối tăm: lội qua chỗ nước nông, băng qua cây cầu gãy
 đứng trên các trụ phía trên cối xay, hoặc đi qua cống dưới cầu khi cần gạt trên cối xay mở cổng của nó;
 tư tế hồi sinh người chết của đội mỗi 2 phút) và
-**Mosslit Cairns** (Chiếm điểm 8v8, năm ụ đá xếp zig-zag nông giữa hai căn
-cứ). Đấu trường thứ tư là **The Brazen Causeway** (Diệt tư tế 8v8, 5600x2800, trên một con đường đắp bằng đá nhô cao giữa đầm lầy lúc hoàng hôn: hành quân dọc con đường khi cần gạt trong tháp cổng phía xa mở cổng đồng thau của nó, băng qua đầm lầy tới bậc thang ở giữa đường, hoặc lẻn qua cống bên dưới; tư tế hồi sinh người chết của đội mỗi 2 phút).
+**Mosslit Cairns** (Chiếm điểm 8v8, 5400x3000, trên năm đồi ụ đá phát sáng nhờ rêu lúc hoàng hôn: leo lên một ụ đá bằng bậc thang của nó, giữ ụ đá lớn ở giữa, hoặc đi đường hầm rễ cây dưới các đồi phía nam khi cần gạt trên một ụ đá phía bắc mở cổng của nó; tường rễ cây có thể bị phá vỡ). Đấu trường thứ tư là **The Brazen Causeway** (Diệt tư tế 8v8, 5600x2800, trên một con đường đắp bằng đá nhô cao giữa đầm lầy lúc hoàng hôn: hành quân dọc con đường khi cần gạt trong tháp cổng phía xa mở cổng đồng thau của nó, băng qua đầm lầy tới bậc thang ở giữa đường, hoặc lẻn qua cống bên dưới; tư tế hồi sinh người chết của đội mỗi 2 phút).
 
 Bản đồ có thể có **cổng**: những bức tường chặn cơ thể, đạn và tầm nhìn khi
 đóng. Đứng trên tấm nén của cổng để mở nó. Cổng đóng lại khi không còn ai trên

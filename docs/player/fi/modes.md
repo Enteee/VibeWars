@@ -436,8 +436,7 @@ mutkittelevaa tunnelia keskeisen kallion ympärillä),
 tummalla joen kahlaamolla: yli pääsee kahlaamalla matalan kahlaamon, myllyn yllä pilareillaan seisovaa
 rikkinäistä siltaa pitkin tai sillan alla olevan rummun kautta, kun myllyn vipu avaa sen portin; pappi herättää
 kuolleensa joka 2. minuutti) ja
-**Mosslit Cairns** (8v8-Valtauspisteet, viisi kiviröykkiötä matalassa siksakissa
-tukikohtien välillä). Neljäs on **The Brazen Causeway** (8v8, 5600x2800, Pappituho kohotetulla kivipengertiellä suon yllä hämärässä: pengertietä voi marssia pitkin, kun kaukaisen porttitornin vipu avaa sen pronssiportin, suon yli voi kulkea pengertien keskellä oleville portaille tai livahtaa sen alla olevan rummun kautta; pappi herättää kuolleensa joka 2. minuutti).
+**Mosslit Cairns** (8v8, 5400x3000, Valtauspisteet viidellä kiviröykkiökukkulalla, jotka hehkuvat sammalesta hämärässä: röykkiölle voi kiivetä sen portaita, suuren keskiröykkiön voi pitää hallussaan tai eteläisten kukkuloiden alla olevan juuritunnelin voi ottaa, kun pohjoisen röykkiön vipu avaa sen portit; juurimuurit voi rikkoa). Neljäs on **The Brazen Causeway** (8v8, 5600x2800, Pappituho kohotetulla kivipengertiellä suon yllä hämärässä: pengertietä voi marssia pitkin, kun kaukaisen porttitornin vipu avaa sen pronssiportin, suon yli voi kulkea pengertien keskellä oleville portaille tai livahtaa sen alla olevan rummun kautta; pappi herättää kuolleensa joka 2. minuutti).
 
 Kartalla voi olla **portteja**: muureja, jotka pysäyttävät vartalot,
 ammukset ja näkyvyyden suljettuina. Seiso portin painelaatalla avataksesi

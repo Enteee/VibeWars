@@ -397,8 +397,7 @@ terowongan berkelok di sekeliling batu di tengah),
 Pendeta 8v8, 5200x2800, di sebuah arungan sungai yang gelap: arungi arungan yang dangkal, seberangi jembatan rusak di atas
 kincir yang bertumpu pada pilar-pilarnya, atau lewati gorong-gorong di bawah jembatan setelah tuas di kincir membuka
 gerbangnya; pendeta menghidupkan kembali yang mati setiap 2 menit) dan
-**Mosslit Cairns** (Rebut Titik 8v8, lima tumpukan batu dalam zig-zag dangkal
-di antara markas-markas). Yang keempat adalah **The Brazen Causeway** (Pemusnahan Pendeta 8v8, 5600x2800, di jalan lintas batu yang ditinggikan di atas rawa saat senja: berbaris menyusuri jalan lintas itu setelah tuas di rumah gerbang di ujung sana membuka gerbang perunggunya, seberangi rawa menuju tangga di tengahnya, atau menyelinap lewat gorong-gorong di bawahnya; pendeta menghidupkan kembali yang mati setiap 2 menit).
+**Mosslit Cairns** (Rebut Titik 8v8, 5400x3000, di lima bukit tumpukan batu yang berpendar oleh lumut saat senja: panjat tumpukan batu lewat tangganya, kuasai tumpukan batu besar di tengah, atau ambil terowongan akar di bawah bukit-bukit selatan setelah tuas di tumpukan batu utara membuka gerbangnya; dinding akar bisa dihancurkan). Yang keempat adalah **The Brazen Causeway** (Pemusnahan Pendeta 8v8, 5600x2800, di jalan lintas batu yang ditinggikan di atas rawa saat senja: berbaris menyusuri jalan lintas itu setelah tuas di rumah gerbang di ujung sana membuka gerbang perunggunya, seberangi rawa menuju tangga di tengahnya, atau menyelinap lewat gorong-gorong di bawahnya; pendeta menghidupkan kembali yang mati setiap 2 menit).
 
 Sebuah peta bisa punya **gerbang**: tembok yang menghentikan tubuh, tembakan dan pandangan selagi
 tertutup. Berdirilah di pelat penekan sebuah gerbang untuk membukanya. Gerbang menutup saat
