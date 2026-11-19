@@ -335,9 +335,13 @@ function mountControls(container: HTMLElement): () => void {
       previous.className = "is-fixed";
       previous.appendChild(h("th", "keys-action", t("controls.targetPrevious")));
       for (const index of [0, 1] as const) {
-        const node = h("td", "key-cell is-fixed");
+        // The box on a span, as the editable rows' is on their button: a td
+        // made inline-block leaves the table's columns.
+        const td = document.createElement("td");
+        const node = h("span", "key-cell is-fixed");
         previousTarget.push({ index, node });
-        previous.appendChild(node);
+        td.appendChild(node);
+        previous.appendChild(td);
       }
       previous.appendChild(h("td"));
       body.appendChild(previous);
@@ -377,6 +381,7 @@ function mountControls(container: HTMLElement): () => void {
     }
     for (const { index, node } of previousTarget) {
       node.textContent = editor.previousTargetText(index);
+      node.hidden = node.textContent === "";
     }
     for (const { action, node } of warnings) {
       node.textContent = noKeyWarning(editor.map, action);

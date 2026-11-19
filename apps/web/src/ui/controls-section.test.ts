@@ -247,9 +247,7 @@ describe("Options > Controls (#3631)", () => {
       .all("keys-action")
       .map((name) => [
         name.textContent,
-        ...(name.parent?.children ?? [])
-          .filter((cell) => cell.classList.contains("key-cell"))
-          .map((cell) => cell.textContent),
+        ...(name.parent?.all("key-cell") ?? []).map((cell) => cell.textContent),
       ]);
 
   it("shows Previous target under Next target, as Shift with its key, and it follows a rebind (#3630)", () => {
@@ -268,6 +266,9 @@ describe("Options > Controls (#3631)", () => {
     const row = present(present(container.all("keys-action")[next + 1]).parent);
     expect(row.classList.contains("is-fixed")).toBe(true);
     expect(row.all("key-cell").every((cell) => cell.dataset.action === undefined)).toBe(true);
+    // Each in a column of its own, as Next target's are, and no empty box.
+    expect(row.all("key-cell").map((cell) => cell.parent?.parent)).toEqual([row, row]);
+    expect(row.all("key-cell").map((cell) => cell.hidden)).toEqual([false, true]);
     row.click();
     expect(container.all("is-capturing")).toEqual([]);
 
