@@ -637,3 +637,61 @@ describe("Guard, Fight and Heel (#1110)", () => {
     expect(pet.creature?.mode).toBe("guard");
   });
 });
+
+describe("a pet and its owner (#3649)", () => {
+  const GAP = RULES.collision.playerRadius + RULES.collision.creatureRadius;
+  const SPEED = RULES.movement.maxSpeedUnitsPerSecond;
+  const DIRECTIONS = [vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1)];
+
+  it("never holds up its owner's walk, in any direction, over five seeds", () => {
+    for (const seed of ["a", "b", "c", "d", "e"]) {
+      for (const direction of DIRECTIONS) {
+        const sim = match([ranger()], undefined, seed);
+        stepFor(sim, DT);
+        sim.setInputDirection("r", direction);
+        stepFor(sim, 2);
+        expect(distance(get(sim, "r").position, vec2(0, 0))).toBeGreaterThanOrEqual(
+          0.8 * SPEED * 2,
+        );
+      }
+    }
+  });
+
+  it("arrives behind its owner, away from the centre, on both teams", () => {
+    const sim = new MatchSimulation({
+      seed: "pets",
+      bounds: { width: 1000, height: 600 },
+      participants: [
+        ranger(),
+        spec("r2", 1, vec2(900, 300), {
+          skillBar: [CHARM],
+          attributeRanks: new Map([[BEAST_MASTERY, 12]]),
+        }),
+      ].map((each) => (each.id === "r" ? { ...each, spawn: vec2(100, 300) } : each)),
+    });
+    expect(wolf(sim).position.x).toBeCloseTo(100 - GAP, 0);
+    expect(wolf(sim).position.y).toBeCloseTo(300, 0);
+    expect(wolf(sim, "r2").position.x).toBeCloseTo(900 + GAP, 0);
+    expect(wolf(sim, "r2").position.y).toBeCloseTo(300, 0);
+  });
+
+  it("arrives south of an owner on the centre", () => {
+    const sim = match([ranger()]);
+    expect(distance(wolf(sim).position, vec2(0, GAP))).toBeLessThan(1);
+  });
+
+  it("still blocks a foe and an ally that walk at it", () => {
+    for (const [id, team] of [
+      ["f", 1],
+      ["a", 0],
+    ] as const) {
+      const sim = match([ranger(), spec(id, team, vec2(300, 200))]);
+      stepFor(sim, DT);
+      const pet = wolf(sim);
+      get(sim, id).position = vec2(pet.position.x + GAP + 30, pet.position.y);
+      sim.setInputDirection(id, vec2(-1, 0));
+      stepFor(sim, 0.5);
+      expect(get(sim, id).position.x).toBeGreaterThan(wolf(sim).position.x);
+    }
+  });
+});
