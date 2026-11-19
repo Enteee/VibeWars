@@ -541,6 +541,90 @@ describe("body blocking at a doorway (#291)", () => {
   });
 });
 
+describe("sliding past a body (#3676)", () => {
+  const R = RULES.collision.playerRadius;
+  const SPEED = RULES.movement.maxSpeedUnitsPerSecond;
+  const STILL = vec2(300, 300);
+  const SECONDS = 2;
+
+  /**
+   * Walks `mover` for two seconds; every tick it must move and stay out
+   * of every other body. Returns how far it got along `tangent`.
+   */
+  function slide(sim: MatchSimulation, direction: Vec2, tangent: Vec2): number {
+    const start = participant(sim, "mover").position;
+    sim.setInputDirection("mover", direction);
+    for (let tick = 0; tick < SECONDS / DT; tick += 1) {
+      const before = participant(sim, "mover").position;
+      sim.step(DT);
+      const after = participant(sim, "mover").position;
+      expect(after).not.toEqual(before);
+      for (const other of sim.participants()) {
+        if (other.id !== "mover") {
+          expect(distance(after, other.position)).toBeGreaterThanOrEqual(2 * R - 1e-6);
+        }
+      }
+    }
+    const end = participant(sim, "mover").position;
+    return (end.x - start.x) * tangent.x + (end.y - start.y) * tangent.y;
+  }
+
+  /**
+   * A mover touching one still body of `team` where walking +x pushes it
+   * `degrees` into it, and the body's tangent there.
+   */
+  function brushing(degrees: number, team: number, walls: ReturnType<typeof segment>[] = []) {
+    const angle = (degrees * Math.PI) / 180;
+    const sim = new MatchSimulation({
+      seed: "slide",
+      walls,
+      participants: [
+        spec(
+          "mover",
+          0,
+          vec2(STILL.x - 2 * R * Math.sin(angle), STILL.y - 2 * R * Math.cos(angle)),
+        ),
+        spec("still", team, STILL),
+      ],
+    });
+    const bound = 0.9 * SPEED * Math.cos(angle) * SECONDS;
+    return { sim, bound, tangent: vec2(Math.cos(angle), -Math.sin(angle)) };
+  }
+
+  for (const degrees of [5, 15, 25, 45]) {
+    it(`slides along an ally it is pushed ${String(degrees)}° into`, () => {
+      const { sim, bound, tangent } = brushing(degrees, 0);
+      expect(slide(sim, vec2(1, 0), tangent)).toBeGreaterThanOrEqual(bound);
+    });
+  }
+
+  it("slides along a foe the same way", () => {
+    const { sim, bound, tangent } = brushing(15, 1);
+    expect(slide(sim, vec2(1, 0), tangent)).toBeGreaterThanOrEqual(bound);
+  });
+
+  it("slides along an ally with a wall a body's width beyond it", () => {
+    const wallY = STILL.y + R + 2 * R;
+    const wall = segment(vec2(-500, wallY), vec2(1500, wallY));
+    const { sim, bound, tangent } = brushing(15, 0, [wall]);
+    expect(slide(sim, vec2(1, 0), tangent)).toBeGreaterThanOrEqual(bound);
+  });
+
+  it("slides along two allies standing touching in a line", () => {
+    const angle = (10 * Math.PI) / 180;
+    const sim = new MatchSimulation({
+      seed: "slide-line",
+      participants: [
+        spec("mover", 0, vec2(STILL.x - 2 * R, STILL.y - 2 * R)),
+        spec("first", 0, STILL),
+        spec("second", 0, vec2(STILL.x + 2 * R, STILL.y)),
+      ],
+    });
+    const along = slide(sim, vec2(Math.cos(angle), Math.sin(angle)), vec2(1, 0));
+    expect(along).toBeGreaterThanOrEqual(0.9 * SPEED * Math.cos(angle) * SECONDS);
+  });
+});
+
 describe("the map's edge (#244)", () => {
   const R = RULES.collision.playerRadius;
   // Arena Alpha's size, no walls.
