@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
 import { DEFAULT_KEYMAP, KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
 
-import { KeysEditor, noKeyWarning, type KeyPress } from "./controls-section.js";
+import { controlsSection, KeysEditor, noKeyWarning, type KeyPress } from "./controls-section.js";
+import { FakeElement } from "./fake-dom.test-support.js";
 
 function key(code: string, held: Partial<Omit<KeyPress, "code">> = {}): KeyPress {
   return { code, ctrlKey: false, altKey: false, metaKey: false, ...held };
@@ -132,14 +133,25 @@ describe("KeysEditor (#309)", () => {
     keys.press(key("KeyZ"));
     expect(keys.preset).toBe("custom");
 
-    // "Reset to VibeWars" goes to that preset, not to the default.
-    keys.reset();
+    // Picking the preset again is how its keys come back (#3631).
+    keys.choosePreset("vibewars");
     expect(keys.map).toBe(KEYMAP_PRESETS.vibewars);
     expect(save.mock.calls.map(([map]) => map)).toEqual([
       KEYMAP_PRESETS.vibewars,
       expect.objectContaining({ "skill-1": ["KeyZ"] }),
       KEYMAP_PRESETS.vibewars,
     ]);
+  });
+
+  it("brings Classic back from a custom map by picking it (#3631)", () => {
+    const { editor: keys } = editor(KEYMAP_PRESETS.classic);
+    keys.startCapture(SKILL_1);
+    keys.press(key("KeyZ"));
+    expect(keys.preset).toBe("custom");
+
+    keys.choosePreset("classic");
+    expect(keys.map).toBe(KEYMAP_PRESETS.classic);
+    expect(keys.preset).toBe("classic");
   });
 
   it("ignores keys while no cell waits", () => {
@@ -162,5 +174,47 @@ describe("noKeyWarning (#309)", () => {
     expect(noKeyWarning(empty, "move-up")).toBe(t("controls.noKeyWalk"));
     expect(noKeyWarning(empty, "mute")).toBe("");
     expect(noKeyWarning(empty, "skill-1")).toBe("");
+  });
+});
+
+describe("Options > Controls (#3631)", () => {
+  /** A fake element that remembers which tag made it. */
+  class TaggedElement extends FakeElement {
+    readonly tag: string;
+    constructor(tag: string) {
+      super();
+      this.tag = tag;
+    }
+  }
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement: (tag: string) => new TaggedElement(tag) });
+    vi.stubGlobal("localStorage", {
+      getItem: () => null,
+      setItem: () => undefined,
+      removeItem: () => undefined,
+    });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** Every button under `element` that is not inside the keys table. */
+  const loose = (element: FakeElement): FakeElement[] =>
+    element.children.flatMap((child) =>
+      child.classList.contains("keys-table")
+        ? []
+        : [
+            ...(child instanceof TaggedElement && child.tag === "button" ? [child] : []),
+            ...loose(child),
+          ],
+    );
+
+  it("has no reset button: the preset picker is the only way back to a preset", () => {
+    const container = new FakeElement();
+    const unmount = controlsSection.mount(container as unknown as HTMLElement);
+    expect(container.all("keys-table")).toHaveLength(1);
+    expect(container.all("keys-preset")).toHaveLength(1);
+    expect(loose(container)).toEqual([]);
+    unmount();
   });
 });

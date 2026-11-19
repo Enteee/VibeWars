@@ -2454,21 +2454,14 @@ body:has(> .splash) #menu-background::after {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-/* New and Load team (#3181) are no card of yours: dashed, centred. */
-.screen .play-card-new,
-.screen .play-card-load {
+/* New team build is no card of yours: dashed, centred. */
+.screen .play-card-new {
   align-items: center;
   justify-content: center;
   min-height: 8.5rem;
   border-style: dashed;
   color: var(--accent);
   text-align: center;
-}
-
-/* Load team's line hangs below its card. */
-.team-play-load {
-  position: relative;
-  display: grid;
 }
 
 .play-card-head {
@@ -3918,6 +3911,25 @@ body:has(> .splash) #menu-background::after {
   align-items: center;
   gap: 0.6rem;
   white-space: nowrap;
+}
+
+/* Ready and Start match at the bar's end, before the lobby's code and
+   the icons (#3626): one auto margin, so the free space is not split.
+   A phone's bar keeps its ⋯ where it is. */
+@media (width > 45rem) {
+  #topbar:has(.topbar-status .lobby-map) .topbar-screen-actions {
+    margin-inline-start: auto;
+  }
+
+  #topbar:has(.topbar-status .lobby-map) :is(.topbar-join, .topbar-queue-action),
+  #topbar:has(.topbar-status .lobby-map) .topbar-queue-action:empty + .topbar-actions {
+    margin-inline-start: 0;
+  }
+}
+
+/* The host's picker reads "Map:", as a guest's map does. */
+#topbar .lobby-map .field-label {
+  text-transform: none;
 }
 
 .lobby-code-label {
