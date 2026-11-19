@@ -813,6 +813,8 @@ test.describe("the menu quest (#3540)", () => {
   });
 
   test("changes the spec in the builder, one locked target at a time (#3541)", async ({ page }) => {
+    // A walk through the whole builder: ~50 s on a loaded runner, past the default.
+    test.setTimeout(180_000);
     await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=spec`);
     const panel = page.locator(".coach-panel");
     await expect(panel).toContainText("Change your spec.");
