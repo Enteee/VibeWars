@@ -1558,6 +1558,25 @@ export default {
   "tutorial.menu.menu.teams": "U Timovima slažeš likove u tim za timske borbe.",
   "tutorial.menu.menu.title": "Da bi nastavio, moraš promijeniti svoju specijalizaciju.",
   "tutorial.menu.skipAsk": "Preskočiti ostatak vodiča?",
+  "tutorial.menu.spec.attributes":
+    "Rasporedi bodove atributa. Svaki rang jača vještine tog atributa.",
+  "tutorial.menu.spec.attributesDone": "Promijeni atribut",
+  "tutorial.menu.spec.gear":
+    "Oklop, rune i insignije: odaberi dio na liku, a zatim što ide na njega.",
+  "tutorial.menu.spec.gearDone": "Promijeni dio opreme",
+  "tutorial.menu.spec.open": "Otvori Likove, zatim otvori lik da mu promijeniš build.",
+  "tutorial.menu.spec.openDone": "Otvori lik",
+  "tutorial.menu.spec.professions":
+    "Primarna profesija daje ti atribute i vještine; sekundarna ti posuđuje i svoje vještine.",
+  "tutorial.menu.spec.professionsDone": "Promijeni profesiju",
+  "tutorial.menu.spec.save": "Spremi lik da zadržiš novi build.",
+  "tutorial.menu.spec.saveDone": "Spremi",
+  "tutorial.menu.spec.skills":
+    "Popuni traku vještina vještinama s popisa. Osam mjesta: odaberi što odgovara tvom planu.",
+  "tutorial.menu.spec.skillsDone": "Stavi vještinu na traku",
+  "tutorial.menu.spec.title": "Promijeni svoju specijalizaciju.",
+  "tutorial.menu.spec.weapons": "S popisa odaberi oružje za svoj komplet oružja.",
+  "tutorial.menu.spec.weaponsDone": "Promijeni oružje",
   "tutorial.gate.hint": "U maglu, za mnom.",
   "tutorial.gate.how": "Lijevi klik na tlo, ili hodaj s {keys}.",
   "tutorial.gate.intro": "Naš tim se bori iza magle. Prati me.",

@@ -1604,6 +1604,25 @@ export default {
   "tutorial.menu.menu.teams": "В «Командах» ты собираешь персонажей в команду для командных боёв.",
   "tutorial.menu.menu.title": "Чтобы идти дальше, нужно сменить специализацию.",
   "tutorial.menu.skipAsk": "Пропустить остаток обучения?",
+  "tutorial.menu.spec.attributes":
+    "Распредели очки характеристик. Каждый ранг усиливает навыки этой характеристики.",
+  "tutorial.menu.spec.attributesDone": "Измени характеристику",
+  "tutorial.menu.spec.gear":
+    "Броня, руны и инсигнии: выбери часть на фигуре, потом что на неё надеть.",
+  "tutorial.menu.spec.gearDone": "Смени часть снаряжения",
+  "tutorial.menu.spec.open": "Открой «Персонажи», затем персонажа, чтобы изменить его билд.",
+  "tutorial.menu.spec.openDone": "Открой персонажа",
+  "tutorial.menu.spec.professions":
+    "Основная профессия даёт характеристики и навыки; вторая тоже одалживает свои навыки.",
+  "tutorial.menu.spec.professionsDone": "Смени профессию",
+  "tutorial.menu.spec.save": "Сохрани персонажа, чтобы новый билд остался.",
+  "tutorial.menu.spec.saveDone": "Сохранить",
+  "tutorial.menu.spec.skills":
+    "Заполни панель навыков навыками из списка. Восемь ячеек: выбери то, что подходит твоему плану.",
+  "tutorial.menu.spec.skillsDone": "Поставь навык на панель",
+  "tutorial.menu.spec.title": "Смени специализацию.",
+  "tutorial.menu.spec.weapons": "Выбери из списка оружие для своего набора оружия.",
+  "tutorial.menu.spec.weaponsDone": "Смени оружие",
   "tutorial.gate.hint": "В туман, за мной.",
   "tutorial.gate.how": "Щёлкни левой кнопкой по земле или иди клавишами {keys}.",
   "tutorial.gate.intro": "Наша команда сражается за туманом. За мной.",

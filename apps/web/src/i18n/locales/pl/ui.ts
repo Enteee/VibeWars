@@ -1614,6 +1614,25 @@ export default {
   "tutorial.menu.menu.teams": "W Drużynach łączysz postacie w drużynę do walk drużynowych.",
   "tutorial.menu.menu.title": "Aby iść dalej, musisz zmienić swoją specjalizację.",
   "tutorial.menu.skipAsk": "Pominąć resztę samouczka?",
+  "tutorial.menu.spec.attributes":
+    "Rozdaj punkty atrybutów. Każda ranga wzmacnia umiejętności tego atrybutu.",
+  "tutorial.menu.spec.attributesDone": "Zmień atrybut",
+  "tutorial.menu.spec.gear":
+    "Pancerz, runy i insygnia: wybierz część na postaci, potem co na nią trafi.",
+  "tutorial.menu.spec.gearDone": "Zmień część ekwipunku",
+  "tutorial.menu.spec.open": "Otwórz Postacie, a potem postać, by zmienić jej build.",
+  "tutorial.menu.spec.openDone": "Otwórz postać",
+  "tutorial.menu.spec.professions":
+    "Główna profesja daje ci atrybuty i umiejętności; druga pożycza ci też swoje umiejętności.",
+  "tutorial.menu.spec.professionsDone": "Zmień profesję",
+  "tutorial.menu.spec.save": "Zapisz postać, by zachować nowy build.",
+  "tutorial.menu.spec.saveDone": "Zapisz",
+  "tutorial.menu.spec.skills":
+    "Wypełnij pasek umiejętności umiejętnościami z listy. Osiem miejsc: wybierz, co pasuje do twojego planu.",
+  "tutorial.menu.spec.skillsDone": "Daj umiejętność na pasek",
+  "tutorial.menu.spec.title": "Zmień swoją specjalizację.",
+  "tutorial.menu.spec.weapons": "Wybierz z listy broń do swojego zestawu broni.",
+  "tutorial.menu.spec.weaponsDone": "Zmień broń",
   "tutorial.gate.hint": "W mgłę, za mną.",
   "tutorial.gate.how": "Kliknij lewym przyciskiem ziemię albo idź klawiszami {keys}.",
   "tutorial.gate.intro": "Nasza drużyna walczy za mgłą. Za mną.",

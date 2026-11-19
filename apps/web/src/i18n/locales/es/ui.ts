@@ -1575,6 +1575,25 @@ export default {
     "En Equipos juntas personajes en un equipo para los combates por equipos.",
   "tutorial.menu.menu.title": "Para seguir, tienes que cambiar tu especialización.",
   "tutorial.menu.skipAsk": "¿Saltar el resto del tutorial?",
+  "tutorial.menu.spec.attributes":
+    "Reparte tus puntos de atributo. Cada rango hace más fuertes las habilidades de ese atributo.",
+  "tutorial.menu.spec.attributesDone": "Cambia un atributo",
+  "tutorial.menu.spec.gear":
+    "Armadura, runas e insignias: elige una pieza en la figura y luego qué lleva.",
+  "tutorial.menu.spec.gearDone": "Cambia una pieza de equipo",
+  "tutorial.menu.spec.open": "Abre Personajes y luego un personaje para cambiar su build.",
+  "tutorial.menu.spec.openDone": "Abre un personaje",
+  "tutorial.menu.spec.professions":
+    "Tu profesión principal te da atributos y habilidades; la secundaria también te presta sus habilidades.",
+  "tutorial.menu.spec.professionsDone": "Cambia una profesión",
+  "tutorial.menu.spec.save": "Guarda tu personaje para conservar el nuevo build.",
+  "tutorial.menu.spec.saveDone": "Guardar",
+  "tutorial.menu.spec.skills":
+    "Llena tu barra de habilidades con habilidades de la lista. Ocho huecos: elige lo que encaje con tu plan.",
+  "tutorial.menu.spec.skillsDone": "Pon una habilidad en tu barra",
+  "tutorial.menu.spec.title": "Cambia tu especialización.",
+  "tutorial.menu.spec.weapons": "Elige de la lista un arma para tu set de armas.",
+  "tutorial.menu.spec.weaponsDone": "Cambia un arma",
   "tutorial.gate.hint": "A la niebla, detrás de mí.",
   "tutorial.gate.how": "Haz clic izquierdo en el suelo o camina con {keys}.",
   "tutorial.gate.intro": "Nuestro equipo lucha más allá de la niebla. Sígueme.",

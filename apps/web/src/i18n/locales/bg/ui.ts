@@ -1490,6 +1490,25 @@ export default {
   "tutorial.menu.menu.teams": "В „Отбори“ събираш герои в отбор за отборните битки.",
   "tutorial.menu.menu.title": "За да продължиш, трябва да смениш специализацията си.",
   "tutorial.menu.skipAsk": "Да пропуснеш ли остатъка от обучението?",
+  "tutorial.menu.spec.attributes":
+    "Разпредели точките за атрибути. Всеки ранг засилва уменията на този атрибут.",
+  "tutorial.menu.spec.attributesDone": "Промени атрибут",
+  "tutorial.menu.spec.gear":
+    "Броня, руни и инсигнии: избери част на фигурата, после какво да сложиш на нея.",
+  "tutorial.menu.spec.gearDone": "Смени част от екипировката",
+  "tutorial.menu.spec.open": "Отвори „Герои“, после отвори герой, за да промениш билда му.",
+  "tutorial.menu.spec.openDone": "Отвори герой",
+  "tutorial.menu.spec.professions":
+    "Основната професия дава атрибутите и уменията ти; втората ти дава и своите умения.",
+  "tutorial.menu.spec.professionsDone": "Смени професия",
+  "tutorial.menu.spec.save": "Запази героя си, за да остане новият билд.",
+  "tutorial.menu.spec.saveDone": "Запази",
+  "tutorial.menu.spec.skills":
+    "Напълни лентата с умения от списъка. Осем места: избери каквото пасва на плана ти.",
+  "tutorial.menu.spec.skillsDone": "Сложи умение в лентата",
+  "tutorial.menu.spec.title": "Смени специализацията си.",
+  "tutorial.menu.spec.weapons": "Избери оръжие за оръжейния си комплект от списъка.",
+  "tutorial.menu.spec.weaponsDone": "Смени оръжие",
   "tutorial.gate.hint": "Към мъглата, след мен.",
   "tutorial.gate.how": "Кликни с левия бутон по земята или върви с {keys}.",
   "tutorial.gate.intro": "Отборът ни се бие отвъд мъглата. Следвай ме.",

@@ -1566,6 +1566,25 @@ export default {
     "In Squadre metti insieme personaggi in una squadra per i combattimenti a squadre.",
   "tutorial.menu.menu.title": "Per andare avanti, devi cambiare la tua specializzazione.",
   "tutorial.menu.skipAsk": "Saltare il resto del tutorial?",
+  "tutorial.menu.spec.attributes":
+    "Spendi i punti attributo. Ogni grado rende più forti le abilità di quell'attributo.",
+  "tutorial.menu.spec.attributesDone": "Cambia un attributo",
+  "tutorial.menu.spec.gear":
+    "Armatura, rune e insegne: scegli un pezzo sulla figura, poi cosa metterci.",
+  "tutorial.menu.spec.gearDone": "Cambia un pezzo di equipaggiamento",
+  "tutorial.menu.spec.open": "Apri Personaggi, poi apri un personaggio per cambiarne la build.",
+  "tutorial.menu.spec.openDone": "Apri un personaggio",
+  "tutorial.menu.spec.professions":
+    "La professione primaria ti dà attributi e abilità; la secondaria ti presta anche le sue abilità.",
+  "tutorial.menu.spec.professionsDone": "Cambia una professione",
+  "tutorial.menu.spec.save": "Salva il personaggio per tenere la nuova build.",
+  "tutorial.menu.spec.saveDone": "Salva",
+  "tutorial.menu.spec.skills":
+    "Riempi la barra abilità con abilità dalla lista. Otto slot: scegli ciò che serve al tuo piano.",
+  "tutorial.menu.spec.skillsDone": "Metti un'abilità nella barra",
+  "tutorial.menu.spec.title": "Cambia la tua specializzazione.",
+  "tutorial.menu.spec.weapons": "Scegli dalla lista un'arma per il tuo set di armi.",
+  "tutorial.menu.spec.weaponsDone": "Cambia un'arma",
   "tutorial.gate.hint": "Nella nebbia, dietro di me.",
   "tutorial.gate.how": "Clic sinistro sul terreno, o cammina con {keys}.",
   "tutorial.gate.intro": "La nostra squadra combatte oltre la nebbia. Seguimi.",

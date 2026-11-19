@@ -1203,7 +1203,14 @@ async function main(): Promise<void> {
     leaveScreen();
     music().menu("character-builder");
     const editorCallbacks = {
-      onSave: (saved: StoredCharacter) => characters.save(saved),
+      onSave: async (saved: StoredCharacter) => {
+        const before = await characters.load(saved.id);
+        await characters.save(saved);
+        menuQuest?.event({ kind: "character-saved", before, after: saved });
+      },
+      onDraft: (before: StoredCharacter, draft: StoredCharacter) => {
+        menuQuest?.event({ kind: "build-draft", before, draft });
+      },
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
@@ -1225,6 +1232,7 @@ async function main(): Promise<void> {
     teamEditor?.dispose();
     teamEditor = undefined;
     openEditor(character, editorCallbacks);
+    menuQuest?.event({ kind: "screen-shown", screen: "character-builder" });
   };
 
   /**
@@ -1669,6 +1677,7 @@ async function main(): Promise<void> {
           team = replaceMember(left.team, character);
           return Promise.resolve();
         },
+        onDraft: undefined,
         onDelete: undefined,
         onDuplicate: undefined,
         onClose: () => {

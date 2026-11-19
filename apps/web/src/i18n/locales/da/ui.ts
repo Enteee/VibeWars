@@ -1482,6 +1482,25 @@ export default {
   "tutorial.menu.menu.teams": "I Hold sætter du figurer sammen til et hold til holdkampene.",
   "tutorial.menu.menu.title": "For at komme videre skal du ændre din spec.",
   "tutorial.menu.skipAsk": "Spring resten af vejledningen over?",
+  "tutorial.menu.spec.attributes":
+    "Brug dine attributpoint. Hvert trin gør attributtens færdigheder stærkere.",
+  "tutorial.menu.spec.attributesDone": "Ændr en attribut",
+  "tutorial.menu.spec.gear":
+    "Rustning, runer og insignier: vælg en del på figuren og så hvad der skal på den.",
+  "tutorial.menu.spec.gearDone": "Skift en del af udstyret",
+  "tutorial.menu.spec.open": "Åbn Figurer, og åbn så en figur for at ændre dens build.",
+  "tutorial.menu.spec.openDone": "Åbn en figur",
+  "tutorial.menu.spec.professions":
+    "Din primære klasse giver dine attributter og færdigheder; din sekundære låner dig også sine færdigheder.",
+  "tutorial.menu.spec.professionsDone": "Skift en klasse",
+  "tutorial.menu.spec.save": "Gem din figur for at beholde det nye build.",
+  "tutorial.menu.spec.saveDone": "Gem",
+  "tutorial.menu.spec.skills":
+    "Fyld din evnebjælke med færdigheder fra listen. Otte pladser: vælg det, der passer til din plan.",
+  "tutorial.menu.spec.skillsDone": "Sæt en færdighed på din bjælke",
+  "tutorial.menu.spec.title": "Skift din spec.",
+  "tutorial.menu.spec.weapons": "Vælg et våben til dit våbensæt fra listen.",
+  "tutorial.menu.spec.weaponsDone": "Skift et våben",
   "tutorial.gate.hint": "Ind i tågen, efter mig.",
   "tutorial.gate.how": "Venstreklik på jorden, eller gå med {keys}.",
   "tutorial.gate.intro": "Vores hold kæmper på den anden side af tågen. Følg mig.",

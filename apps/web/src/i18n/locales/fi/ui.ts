@@ -1500,6 +1500,25 @@ export default {
   "tutorial.menu.menu.teams": "Joukkueissa kokoat hahmot joukkueeksi joukkuetaisteluihin.",
   "tutorial.menu.menu.title": "Jatkaaksesi sinun on vaihdettava erikoistumisesi.",
   "tutorial.menu.skipAsk": "Ohitetaanko loput opastuksesta?",
+  "tutorial.menu.spec.attributes":
+    "Käytä ominaisuuspisteesi. Jokainen taso vahvistaa sen ominaisuuden taitoja.",
+  "tutorial.menu.spec.attributesDone": "Muuta ominaisuutta",
+  "tutorial.menu.spec.gear":
+    "Panssari, riimut ja arvomerkit: valitse osa hahmosta ja sitten mitä siihen tulee.",
+  "tutorial.menu.spec.gearDone": "Vaihda varusteen osa",
+  "tutorial.menu.spec.open": "Avaa Hahmot ja sitten hahmo muuttaaksesi sen buildia.",
+  "tutorial.menu.spec.openDone": "Avaa hahmo",
+  "tutorial.menu.spec.professions":
+    "Pääammattisi antaa ominaisuutesi ja taitosi; sivuammatti lainaa sinulle myös omia taitojaan.",
+  "tutorial.menu.spec.professionsDone": "Vaihda ammatti",
+  "tutorial.menu.spec.save": "Tallenna hahmosi, niin uusi build säilyy.",
+  "tutorial.menu.spec.saveDone": "Tallenna",
+  "tutorial.menu.spec.skills":
+    "Täytä taitopalkkisi listan taidoilla. Kahdeksan paikkaa: valitse, mikä sopii suunnitelmaasi.",
+  "tutorial.menu.spec.skillsDone": "Laita taito palkkiisi",
+  "tutorial.menu.spec.title": "Vaihda erikoistumisesi.",
+  "tutorial.menu.spec.weapons": "Valitse listasta ase asesarjaasi.",
+  "tutorial.menu.spec.weaponsDone": "Vaihda ase",
   "tutorial.gate.hint": "Sumuun, perässäni.",
   "tutorial.gate.how": "Napsauta maata vasemmalla, tai kävele näppäimillä {keys}.",
   "tutorial.gate.intro": "Joukkueemme taistelee sumun takana. Seuraa minua.",

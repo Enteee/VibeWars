@@ -1609,6 +1609,25 @@ export default {
   "tutorial.menu.menu.teams": "У «Командах» ти збираєш персонажів у команду для командних боїв.",
   "tutorial.menu.menu.title": "Щоб іти далі, треба змінити спеціалізацію.",
   "tutorial.menu.skipAsk": "Пропустити решту навчання?",
+  "tutorial.menu.spec.attributes":
+    "Розподіли очки атрибутів. Кожен ранг посилює навички цього атрибута.",
+  "tutorial.menu.spec.attributesDone": "Зміни атрибут",
+  "tutorial.menu.spec.gear":
+    "Броня, руни й відзнаки: вибери частину на фігурі, потім що на неї вдягнути.",
+  "tutorial.menu.spec.gearDone": "Зміни частину спорядження",
+  "tutorial.menu.spec.open": "Відкрий «Персонажі», потім персонажа, щоб змінити його білд.",
+  "tutorial.menu.spec.openDone": "Відкрий персонажа",
+  "tutorial.menu.spec.professions":
+    "Основна професія дає атрибути й навички; додаткова теж позичає свої навички.",
+  "tutorial.menu.spec.professionsDone": "Зміни професію",
+  "tutorial.menu.spec.save": "Збережи персонажа, щоб новий білд залишився.",
+  "tutorial.menu.spec.saveDone": "Зберегти",
+  "tutorial.menu.spec.skills":
+    "Заповни панель вмінь навичками зі списку. Вісім місць: вибери те, що пасує твоєму плану.",
+  "tutorial.menu.spec.skillsDone": "Постав навичку на панель",
+  "tutorial.menu.spec.title": "Зміни спеціалізацію.",
+  "tutorial.menu.spec.weapons": "Вибери зі списку зброю для свого набору зброї.",
+  "tutorial.menu.spec.weaponsDone": "Зміни зброю",
   "tutorial.gate.hint": "У туман, за мною.",
   "tutorial.gate.how": "Клацни лівою кнопкою по землі або йди клавішами {keys}.",
   "tutorial.gate.intro": "Наша команда б'ється за туманом. За мною.",

@@ -342,7 +342,7 @@ export function renderCharacterBuilder(
   const starter = loadStarterCharacterId();
   const worn = wornCape();
   const cards = h("div", "play-cards");
-  for (const character of rosterOrder(characters, starter)) {
+  for (const [index, character] of rosterOrder(characters, starter).entries()) {
     const edit = (): void => {
       callbacks.onEditCharacter(character.id);
     };
@@ -353,7 +353,7 @@ export function renderCharacterBuilder(
       clone.disabled = true;
       callbacks.onCloneStarter(character.id);
     });
-    cards.appendChild(
+    const card = cards.appendChild(
       characterCard(
         { character, starter, worn },
         character.id === starter
@@ -368,6 +368,10 @@ export function renderCharacterBuilder(
           : { onOpen: edit, actions: [button(t("menu.edit"), "roster-edit", edit)] },
       ),
     );
+    // The menu quest's character to open (#3541): the first one shown.
+    if (index === 0) {
+      card.setAttribute("data-tutorial", "character-open");
+    }
   }
   if (characters.length > 0) {
     cards.appendChild(
@@ -376,9 +380,11 @@ export function renderCharacterBuilder(
   }
   body.appendChild(cards);
   if (characters.length === 0) {
-    body.appendChild(
-      emptyState(t("menu.noCharacters"), t("menu.newCharacter"), callbacks.onNewCharacter),
-    );
+    body
+      .appendChild(
+        emptyState(t("menu.noCharacters"), t("menu.newCharacter"), callbacks.onNewCharacter),
+      )
+      .setAttribute("data-tutorial", "character-open");
   }
 
   if (rerolled) {

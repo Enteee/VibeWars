@@ -1507,6 +1507,26 @@ export default {
     "Unter Teams stellst du Charaktere zu einem Team für die Teamkämpfe zusammen.",
   "tutorial.menu.menu.title": "Um weiterzukommen, musst du deine Spezialisierung ändern.",
   "tutorial.menu.skipAsk": "Den Rest des Tutorials überspringen?",
+  "tutorial.menu.spec.attributes":
+    "Verteile deine Attributpunkte. Jeder Rang stärkt die Fertigkeiten dieses Attributs.",
+  "tutorial.menu.spec.attributesDone": "Ändere ein Attribut",
+  "tutorial.menu.spec.gear":
+    "Rüstung, Runen und Insignien: Wähle ein Teil an der Figur, dann, was darauf kommt.",
+  "tutorial.menu.spec.gearDone": "Ändere ein Ausrüstungsteil",
+  "tutorial.menu.spec.open":
+    "Öffne Charaktere und dann einen Charakter, um seinen Build zu ändern.",
+  "tutorial.menu.spec.openDone": "Öffne einen Charakter",
+  "tutorial.menu.spec.professions":
+    "Deine Primärklasse gibt dir Attribute und Fertigkeiten; deine Sekundärklasse leiht dir ihre Fertigkeiten dazu.",
+  "tutorial.menu.spec.professionsDone": "Wechsle eine Klasse",
+  "tutorial.menu.spec.save": "Speichere deinen Charakter, um den neuen Build zu behalten.",
+  "tutorial.menu.spec.saveDone": "Speichern",
+  "tutorial.menu.spec.skills":
+    "Füll deine Skill-Leiste mit Fertigkeiten aus der Liste. Acht Plätze: Wähle, was zu deinem Plan passt.",
+  "tutorial.menu.spec.skillsDone": "Lege eine Fertigkeit auf deine Leiste",
+  "tutorial.menu.spec.title": "Ändere deine Spezialisierung.",
+  "tutorial.menu.spec.weapons": "Wähle aus der Liste eine Waffe für dein Waffenset.",
+  "tutorial.menu.spec.weaponsDone": "Ändere eine Waffe",
   "tutorial.gate.hint": "In den Nebel, mir nach.",
   "tutorial.gate.how": "Linksklick auf den Boden, oder geh mit {keys}.",
   "tutorial.gate.intro": "Unser Team kämpft jenseits des Nebels. Folge mir.",
