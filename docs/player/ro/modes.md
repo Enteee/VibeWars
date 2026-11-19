@@ -169,9 +169,8 @@ Cinder Sanctum (8v8, 5600x2800) îl joacă: un templu pe coasta unui vulcan, în
 **Condu-ți Eroul Fantomatic pe altar și ține-l.** Fiecare echipă are un **Erou
 Fantomatic** în bază, o fantomă care luptă cu un topor și pe care nu o joacă nimeni.
 **Altarul** se află în centru, la același drum de ambele baze. Pe **Threefold Keep**,
-trei echipe (două când nu e liberă a treia) luptă pentru el într-o fortăreață
-împrejmuită. Ușile ei se deschid doar din interior, printr-o placă dinăuntru: ocolește
-până la un colț deschis ca să intri. Cel mult 12 puncte pe echipă, iar dacă fiecare
+trei echipe (două când nu e liberă a treia) luptă pentru el pe turnul unei
+fortărețe împrejmuite. Cel mult 12 puncte pe echipă, iar dacă fiecare
 inamic e la -60% moral, câștigi imediat. **Sala Eroilor**, harta de Regele dealului
 care încheie Ascensiunea Eroilor, îl ridică pe un podium împrejmuit la vest și est,
 la capătul unei urcări dinspre nord sau sud mărginită de coloane. Țintește-ți fantoma
@@ -224,7 +223,7 @@ inamic care ajunge la distanță de vrajă. Cât timp echipa ta nu deține altar
 bot ucide mai întâi Eroul Fantomatic al celeilalte echipe după ce ajunge pe altar în
 raza lor: este singurul inamic care îți împiedică fantoma să-l revendice.
 
-Se joacă pe Threefold Keep.
+Se joacă pe Threefold Keep (4v4 și 8v8, 5000x4400): o fortăreață pe un deal din ținuturile înalte, pentru trei echipe. Urcă pe drumul de strajă al zidului pe scările de lângă poarta ta și traversează un dig până la deal, apoi urcă la altarul de pe turn. O pârghie din fiecare curte deschide toate cele patru porți: pasajul porții tale pe sub zid, și cripta, drumul lung pe sub deal.
 
 ## Capturare de puncte
 
@@ -421,8 +420,7 @@ Trei arene ale Ascensiunii pot fi alese și la un Joc găzduit: **The Hollow Dee
 Anihilare, trei tuneluri întortocheate în jurul unei stânci centrale), **Blackwater Ford**
 (8v8, 5200x2800, Anihilare cu preot la un vad întunecat de râu: treci prin apa mică a vadului, pe podul rupt
 sprijinit pe pilonii săi deasupra morii sau printr-un podeț de sub pod, după ce o pârghie de pe moară îi deschide
-poarta; preotul își ridică morții la fiecare 2 minute) și **Mosslit Cairns** (8v8 Capturare de puncte,
-cinci movile de pietre într-un zig-zag ușor între baze). A patra este **The Brazen
+poarta; preotul își ridică morții la fiecare 2 minute) și **Mosslit Cairns** (8v8, 5400x3000, Capturare de puncte pe cinci dealuri cu movile de pietre ce strălucesc de mușchi în amurg: urci pe o movilă pe scările ei, ții movila mare din mijloc sau iei tunelul de rădăcini de sub dealurile din sud după ce o pârghie de pe o movilă din nord îi deschide porțile; zidurile de rădăcini pot fi sparte). A patra este **The Brazen
 Causeway** (8v8, 5600x2800, Anihilare cu preot pe un drum de piatră înălțat deasupra unei mlaștini, în amurg: mărșăluiești pe drum după ce o pârghie din turnul porții de departe îi deschide poarta de bronz, traversezi mlaștina până la scările de la mijlocul lui sau te strecori printr-un podeț de sub el; preotul își ridică morții la fiecare 2 minute).
 
 O hartă poate avea **porți**: ziduri care opresc corpurile, proiectilele și vederea cât

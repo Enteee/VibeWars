@@ -157,16 +157,15 @@ emplacement vide. Le build est à toi une fois que tu appuies sur **Sauver**.
 enregistrer, et demande d'abord si tu as changé quelque chose. **Partager**,
 **Charger code GW1**, **Dupliquer** et **Supprimer** sont sous **⋯**.
 
-Un code d'équipe se charge plutôt dans l'**Atelier d'équipes** : appuie sur
-**Charger une équipe**, colle le code et appuie sur **Charger**, ou colle-le
-n'importe où dans l'Atelier d'équipes.
+Un code d'équipe se charge plutôt dans l'**Atelier d'équipes** : colle-le n'importe où
+là-bas, ou ouvre un build d'équipe et utilise son **⋯** → **Charger une équipe**.
 
 ## Builds d'équipe
 
 Un **Build d'équipe** est une équipe de ses propres personnages, créée dans
 l'**Atelier d'équipes** et gardée à part de tes personnages. Chacun est une
 carte là-bas, et seulement là-bas : **Nouveau build** en crée un,
-**Charger une équipe** en charge un qu'on t'a partagé, et un clic
+un code d'équipe collé là-bas en charge un qu'on t'a partagé, et un clic
 sur une carte, ou son **Éditer**, l'ouvre. Tu en proposes un dans le
 [Salon d'équipe](modes.md#salon-déquipe).
 

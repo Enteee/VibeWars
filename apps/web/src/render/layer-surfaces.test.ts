@@ -46,6 +46,7 @@ import {
 } from "./layer-surfaces.js";
 import { mapStructure } from "../net/maps.js";
 
+import { atRest } from "./pick.test-support.js";
 import { ELEVATION_STEP } from "./render-order.js";
 
 const bridge = { kind: "rect", x: 100, y: 100, width: 200, height: 100 } as const;
@@ -566,13 +567,17 @@ describe("clicking a character on a layered map (#2831)", () => {
   });
 
   it("finds a body on a deck where it is drawn", () => {
-    const arena = { ...EMPTY_SNAPSHOT, structure: BRIDGE, actors: [actor("up", 150, 1)] };
+    const arena = atRest({ ...EMPTY_SNAPSHOT, structure: BRIDGE, actors: [actor("up", 150, 1)] });
     expect(actorAtPoint(arena, { x: 200, y: 150 - ELEVATION_STEP })?.id).toBe("up");
     expect(actorAtPoint(arena, { x: 200, y: 150 })).toBeUndefined();
   });
 
   it("finds a body under a deck through its outline", () => {
-    const arena = { ...EMPTY_SNAPSHOT, structure: BRIDGE, actors: [actor("under", 150, 0)] };
+    const arena = atRest({
+      ...EMPTY_SNAPSHOT,
+      structure: BRIDGE,
+      actors: [actor("under", 150, 0)],
+    });
     expect(actorAtPoint(arena, { x: 205, y: 150 })?.id).toBe("under");
   });
 });

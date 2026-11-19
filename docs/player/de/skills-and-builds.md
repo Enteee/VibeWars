@@ -146,14 +146,14 @@ hat, kommt als leeres Feld an. Der Build gehört dir, sobald du **Speichern** dr
 **Esc** geht ohne Speichern und fragt vorher, wenn du etwas geändert hast.
 **Teilen**, **GW1-Code laden**, **Duplizieren** und **Löschen** liegen unter **⋯**.
 
-Einen Team-Code lädst du stattdessen im **Team-Editor**: drück **Team laden**, füge
-den Code ein und drück **Laden**, oder füge ihn irgendwo im Team-Editor ein.
+Einen Team-Code lädst du stattdessen im **Team-Editor**: füge ihn dort irgendwo ein, oder
+öffne einen Team-Build und nutze sein **⋯** → **Team laden**.
 
 ## Team-Builds
 
 Ein **Team-Build** ist ein Team mit eigenen Charakteren, erstellt im **Team-Editor**
 und getrennt von deinen eigenen Charakteren. Jeder ist dort eine Karte, und nur dort:
-**Neuer Team-Build** erstellt einen, **Team laden** lädt einen, der mit dir geteilt
+**Neuer Team-Build** erstellt einen, ein dort eingefügter Team-Code lädt einen, der mit dir geteilt
 wurde, und ein Klick auf eine Karte oder ihr **Ändern** öffnet ihn. Du schlägst einen in der [Team-Lobby](modes.md#team-lobby) vor.
 
 Jeder Team-Build hat eine Größe, 2v2, 4v4 oder 8v8 (es gibt keine 1v1-Team-Builds):

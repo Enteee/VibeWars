@@ -1241,7 +1241,6 @@ export default {
   "teamPlay.edit": "Edit",
   "teamPlay.loadLine": "kode tim untuk dimuat",
   "teamPlay.loadPlaceholder": "Tempel kode tim yang dibagikan",
-  "teamPlay.loadTeam": "Muat tim",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Build tim baru",
   "teamPlay.noTeamBuilds": "Belum ada Build Tim {size}.",

@@ -150,14 +150,14 @@ dán mã ở bất kỳ đâu trong trình sửa mà không phải ô nhập ch�
 không lưu, và hỏi trước nếu bạn đã thay đổi gì. **Chia sẻ**, **Nạp mã GW1**,
 **Nhân bản** và **Xóa** nằm dưới **⋯**.
 
-Mã đội thì được tải ở **Tạo Đội**: nhấn **Tải đội**, dán mã và nhấn **Tải**,
-hoặc dán nó ở bất kỳ đâu trong Tạo Đội.
+Mã đội thì được tải ở **Tạo Đội**: dán nó ở bất kỳ đâu tại đó, hoặc mở
+một build đội và dùng **⋯** → **Tải đội** của nó.
 
 ## Build đội
 
 **Build đội** là một đội gồm các nhân vật riêng của nó, được tạo ở **Tạo
 Đội** và tách biệt với nhân vật của bạn. Mỗi build đội là một thẻ ở đó, và
-chỉ ở đó: **Build đội mới** tạo một build, **Tải đội**
+chỉ ở đó: **Build đội mới** tạo một build, mã đội dán vào đó
 tải một build được chia sẻ với bạn, và nhấn vào thẻ, hoặc nút **Sửa**
 của nó, sẽ mở nó. Bạn đề xuất một build trong
 [Sảnh Đội](modes.md#sảnh-đội).

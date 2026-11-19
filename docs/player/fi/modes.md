@@ -193,8 +193,7 @@ Cinder Sanctum (8v8, 5600x2800) pelaa sitä: temppeli tulivuoren rinteellä kahd
 kukaan ei pelaa. **Alttari** on keskellä, yhtä pitkän kävelyn päässä
 kummastakin tukikohdasta. **Threefold Keepissä** kolme tiimiä (kaksi, jos
 kolmatta ei ole vapaana) taistelee siitä muurien ympäröimän linnakkeen
-sisällä. Sen ovet aukeavat vain sisältä, sisäpuolella olevasta laatasta:
-kävele ympäri avoimeen kulmaan päästäksesi sisään. Enintään 12 pistettä
+tornilla. Enintään 12 pistettä
 tiimiä kohden, ja jos jokaisen vihollisen moraali on -60 %, voitat heti.
 **Sankarien sali**, Kukkulan kuningas -kartta, joka päättää Sankarien
 nousun, nostaa sen korokkeelle, jota muurit rajaavat lännessä ja
@@ -257,7 +256,7 @@ alttaria, jokainen botti tappaa ensin toisen tiimin aavesankarin, kun
 se seisoo alttarilla niiden kantaman sisällä: se on se yksi vihollinen,
 joka estää aavettasi valtaamasta sitä.
 
-Sitä pelaa Threefold Keep.
+Sitä pelaa Threefold Keep (4v4 ja 8v8, 5000x4400): linnake kukkulalla ylängöllä, kolmelle tiimille. Nouse muurikäytävälle porttisi vieressä olevia portaita ja ylitä pengertie kukkulalle, kiipeä sitten alttarille tornin huipulle. Vipu jokaisella pihalla avaa kaikki neljä porttia: porttikäytäväsi muurin alla sekä holvikellarin, pitkän tien kukkulan alta.
 
 ## Valtauspisteet
 
@@ -436,8 +435,7 @@ mutkittelevaa tunnelia keskeisen kallion ympärillä),
 tummalla joen kahlaamolla: yli pääsee kahlaamalla matalan kahlaamon, myllyn yllä pilareillaan seisovaa
 rikkinäistä siltaa pitkin tai sillan alla olevan rummun kautta, kun myllyn vipu avaa sen portin; pappi herättää
 kuolleensa joka 2. minuutti) ja
-**Mosslit Cairns** (8v8-Valtauspisteet, viisi kiviröykkiötä matalassa siksakissa
-tukikohtien välillä). Neljäs on **The Brazen Causeway** (8v8, 5600x2800, Pappituho kohotetulla kivipengertiellä suon yllä hämärässä: pengertietä voi marssia pitkin, kun kaukaisen porttitornin vipu avaa sen pronssiportin, suon yli voi kulkea pengertien keskellä oleville portaille tai livahtaa sen alla olevan rummun kautta; pappi herättää kuolleensa joka 2. minuutti).
+**Mosslit Cairns** (8v8, 5400x3000, Valtauspisteet viidellä kiviröykkiökukkulalla, jotka hehkuvat sammalesta hämärässä: röykkiölle voi kiivetä sen portaita, suuren keskiröykkiön voi pitää hallussaan tai eteläisten kukkuloiden alla olevan juuritunnelin voi ottaa, kun pohjoisen röykkiön vipu avaa sen portit; juurimuurit voi rikkoa). Neljäs on **The Brazen Causeway** (8v8, 5600x2800, Pappituho kohotetulla kivipengertiellä suon yllä hämärässä: pengertietä voi marssia pitkin, kun kaukaisen porttitornin vipu avaa sen pronssiportin, suon yli voi kulkea pengertien keskellä oleville portaille tai livahtaa sen alla olevan rummun kautta; pappi herättää kuolleensa joka 2. minuutti).
 
 Kartalla voi olla **portteja**: muureja, jotka pysäyttävät vartalot,
 ammukset ja näkyvyyden suljettuina. Seiso portin painelaatalla avataksesi

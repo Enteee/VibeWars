@@ -1383,7 +1383,6 @@ export default {
   "teamPlay.edit": "Editează",
   "teamPlay.loadLine": "cod de echipă de încărcat",
   "teamPlay.loadPlaceholder": "Lipește un cod de echipă primit",
-  "teamPlay.loadTeam": "Încarcă echipa",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Build de echipă nou",
   "teamPlay.noTeamBuilds": "Niciun build de echipă de {size} încă.",

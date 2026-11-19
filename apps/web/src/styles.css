@@ -2454,21 +2454,14 @@ body:has(> .splash) #menu-background::after {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-/* New and Load team (#3181) are no card of yours: dashed, centred. */
-.screen .play-card-new,
-.screen .play-card-load {
+/* New team build is no card of yours: dashed, centred. */
+.screen .play-card-new {
   align-items: center;
   justify-content: center;
   min-height: 8.5rem;
   border-style: dashed;
   color: var(--accent);
   text-align: center;
-}
-
-/* Load team's line hangs below its card. */
-.team-play-load {
-  position: relative;
-  display: grid;
 }
 
 .play-card-head {

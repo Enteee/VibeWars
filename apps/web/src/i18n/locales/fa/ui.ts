@@ -1305,7 +1305,6 @@ export default {
   "teamPlay.edit": "ویرایش",
   "teamPlay.loadLine": "کد تیم برای بارگذاری",
   "teamPlay.loadPlaceholder": "یک کد تیم اشتراکی بچسبان",
-  "teamPlay.loadTeam": "بارگذاری تیم",
   "teamPlay.memberLabel": "{name}، {professions}",
   "teamPlay.newTeamBuild": "بیلد تیمی جدید",
   "teamPlay.noTeamBuilds": "هنوز بیلد تیمی {size} نفره‌ای نیست.",

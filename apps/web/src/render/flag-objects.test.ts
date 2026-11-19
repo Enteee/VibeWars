@@ -1,21 +1,52 @@
 import { describe, expect, it } from "vitest";
 import { vec2, type FlagField, type RelicField } from "@vibewars/game-core";
 import type { PlayerSnapshot } from "@vibewars/game-session";
+import type { Vec2 } from "@vibewars/game-core";
 
 import {
   FLAG_PICK_RADIUS,
   STAND_RADIUS,
-  flagObjectAtPoint,
   renderableCapturePoints,
   renderableGates,
   renderableSwitches,
   renderableTeleports,
   SWITCH_PICK_RADIUS,
-  switchAtPoint,
   renderableFlags,
   renderableRelics,
   renderableStand,
+  recordFlag,
+  recordStand,
+  recordSwitch,
+  type RenderableFlag,
+  type RenderableStand,
+  type RenderableSwitch,
 } from "./flag-objects.js";
+import { pickAt, type DrawnClickable } from "./pick.js";
+
+/** What a right click picks among `flags` and `stand` drawn on the ground, a flag over the stand. */
+function flagObjectAtPoint(
+  flags: readonly RenderableFlag[],
+  stand: RenderableStand | undefined,
+  point: Vec2,
+): string | undefined {
+  const drawn: DrawnClickable[] = [];
+  if (stand !== undefined) {
+    recordStand(drawn, stand, 0, 0);
+  }
+  for (const flag of flags) {
+    recordFlag(drawn, flag, 0, 1);
+  }
+  return pickAt(drawn, point)?.id;
+}
+
+/** What a right click picks among `switches` drawn on the ground. */
+function switchAtPoint(switches: readonly RenderableSwitch[], point: Vec2): string | undefined {
+  const drawn: DrawnClickable[] = [];
+  for (const lever of switches) {
+    recordSwitch(drawn, lever, 0, 0);
+  }
+  return pickAt(drawn, point)?.id;
+}
 
 /** The Guild Battle's flags as the arena draws and picks them (#1225). */
 
@@ -28,7 +59,7 @@ const FIELD: FlagField = {
   ],
 };
 
-const carrier = { sessionId: "x", x: 1200, y: 900 } as PlayerSnapshot;
+const carrier = { sessionId: "x", x: 1200, y: 900, layer: 1 } as PlayerSnapshot;
 
 describe("renderableFlags", () => {
   it("draws each flag where it is, in its side's colour from your team", () => {
@@ -42,8 +73,22 @@ describe("renderableFlags", () => {
       1,
     );
     expect(flags).toEqual([
-      { id: "flag/0", side: "enemy", position: vec2(560, 1000), carried: false, onStand: false },
-      { id: "flag/1", side: "ally", position: vec2(1200, 900), carried: true, onStand: false },
+      {
+        id: "flag/0",
+        side: "enemy",
+        position: vec2(560, 1000),
+        layer: 0,
+        carried: false,
+        onStand: false,
+      },
+      {
+        id: "flag/1",
+        side: "ally",
+        position: vec2(1200, 900),
+        layer: 1,
+        carried: true,
+        onStand: false,
+      },
     ]);
   });
 
@@ -51,15 +96,16 @@ describe("renderableFlags", () => {
     const flags = renderableFlags(
       [
         { team: 0, place: { kind: "stand" } },
-        { team: 1, place: { kind: "ground", position: vec2(10, 20), layer: 0 } },
+        { team: 1, place: { kind: "ground", position: vec2(10, 20), layer: 2 } },
       ],
-      FIELD,
+      { ...FIELD, standLayer: 1 },
       [],
       0,
     );
-    expect(flags.map((flag) => [flag.position, flag.onStand])).toEqual([
-      [FIELD.stand, true],
-      [vec2(10, 20), false],
+    // Each on its own layer (#3634), so it is drawn and picked lifted.
+    expect(flags.map((flag) => [flag.position, flag.layer, flag.onStand])).toEqual([
+      [FIELD.stand, 1, true],
+      [vec2(10, 20), 2, false],
     ]);
   });
 
@@ -78,6 +124,9 @@ describe("renderableStand", () => {
     expect(renderableStand({ holder: 1, heldSeconds: 4 }, FIELD, 0)?.holder).toBe("enemy");
     expect(renderableStand({ holder: 1, heldSeconds: 4 }, FIELD, 1)?.holder).toBe("ally");
     expect(renderableStand(undefined, undefined, 0)).toBeUndefined();
+    expect(
+      renderableStand({ holder: undefined, heldSeconds: 0 }, { ...FIELD, standLayer: 2 }, 0)?.layer,
+    ).toBe(2);
   });
 });
 
@@ -104,8 +153,22 @@ describe("renderableRelics (#1374)", () => {
       0,
     );
     expect(relics).toEqual([
-      { id: "relic/0", side: "ally", position: vec2(600, 400), carried: false, onStand: false },
-      { id: "relic/1", side: "enemy", position: vec2(1200, 900), carried: true, onStand: false },
+      {
+        id: "relic/0",
+        side: "ally",
+        position: vec2(600, 400),
+        layer: 0,
+        carried: false,
+        onStand: false,
+      },
+      {
+        id: "relic/1",
+        side: "enemy",
+        position: vec2(1200, 900),
+        layer: 1,
+        carried: true,
+        onStand: false,
+      },
     ]);
     expect(flagObjectAtPoint(relics, undefined, vec2(605, 400))).toBe("relic/0");
     expect(renderableRelics([{ team: 0, place: { kind: "spawn" } }], undefined, [], 0)).toEqual([]);
