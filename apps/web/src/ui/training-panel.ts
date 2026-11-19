@@ -1070,6 +1070,7 @@ export function createTrainingPanel(): TrainingPanel {
           created.pointerWorld(),
           nameReveal.held(),
           created.scene.nameTagBoxes(),
+          created.scene.drawnClickables(),
         ),
         connection.getCalls(),
       );
