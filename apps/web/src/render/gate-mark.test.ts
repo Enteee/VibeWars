@@ -71,7 +71,7 @@ const DOOR: RenderableShape = { kind: "rect", x: 244, y: 680, width: 16, height:
 const FRAME: GateFrame = {
   height: 28,
   line: 1,
-  palette: doorPalette(arenaPalette({ layerCount: 3, biome: "hall" })),
+  palette: doorPalette(arenaPalette({ layerCount: 3, biome: "hall", ascentAct: null })),
 };
 
 describe("gate doors (#3061, #3053)", () => {
@@ -132,7 +132,7 @@ describe("portcullis and secret passage (#3068)", () => {
   const STONE: GateFrame = {
     height: 28,
     line: 1,
-    palette: arenaPalette({ layerCount: 3, biome: "hall" }),
+    palette: arenaPalette({ layerCount: 3, biome: "hall", ascentAct: null }),
   };
 
   it("draws a shut portcullis as the dark of its arch behind an iron grid", () => {
