@@ -309,7 +309,7 @@ function hungAbove(wall: RenderableShape, lift: number): RenderableShape {
 }
 
 /**
- * Up: a dark opening, lit stone jambs at its ends and a lit sill, and
+ * Up: a dark opening in a lit stone frame, its jambs and sills, and
  * the grid hung above the lintel. In the gap only its bars' bottom ends
  * show, a stub on its north or west side (#3644), and none of the hung
  * grid falls back on it, so its footprint alone reads open, and where
@@ -321,10 +321,7 @@ const portcullisOpen: GateArt = (painter, wall, { height, line, palette }) => {
   painter.lineStyle(line * FRAME_WIDTH, GATE_PORTCULLIS_LOOK.iron, 1);
   across(painter, wall, bars(wall), STUB);
   painter.lineStyle(line * LIT_WIDTH, palette.wallLit, 1);
-  across(painter, wall, [0, 1]);
-  for (const { from, to } of southFacingEdges(wall)) {
-    painter.lineBetween(from.x, from.y, to.x, to.y);
-  }
+  painter.strokeShape(wall);
   if (height === 0) {
     return;
   }

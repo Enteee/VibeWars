@@ -452,10 +452,12 @@ draws the dark of the arch as a wall box, bars down its front face, and a
 grid over its top in `GATE_PORTCULLIS_LOOK` iron `#3b4759`; on its layer's
 ground the grid also fills the footprint, bars across it `BAR_EVERY` apart,
 an iron frame, a lit camera-facing edge (`litStructurePalette`) and
-`SPIKE`d tips. Up, `drawGate` lays the dark gap with jamb lines at its
-ends, a `STUB` of bars a quarter of its depth at its north or west side,
-and hangs the grid above the lintel; on a flat map that grid is left out,
-so nothing of it lands in the gap. The study SVG is made by
+`SPIKE`d tips. Up, `drawGate` lays the dark gap in a lit frame, its jambs
+and sills, a `STUB` of bars a quarter of its depth at its north
+or west side, and hangs the grid above the lintel: only the part of it
+that lands north of the footprint is drawn, so a strip deeper than the
+lift shows its top end and nothing of it lands in the gap. On a flat map
+the hung grid is left out. The study SVG is made by
 `scripts/assets/portcullis-svg.sh`.
 
 Every other SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with

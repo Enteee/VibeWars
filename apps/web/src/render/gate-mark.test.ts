@@ -150,8 +150,9 @@ describe("portcullis and secret passage (#3068)", () => {
     const open = draw(GATE_ART.open.portcullis, DOOR, STONE);
     expect(open.fills).toEqual([{ shape: DOOR, colour: GATE_PORTCULLIS_LOOK.dark, alpha: 1 }]);
     expect(open.columns).toEqual([]);
-    // Its grid hung above, framed: the door's north end, as deep as the lift.
-    expect(open.strokes).toEqual([{ ...DOOR, height: 28 * 1.6 }]);
+    // The gap's lit frame, and its grid hung above: the door's north end,
+    // as deep as the lift.
+    expect(open.strokes).toEqual([DOOR, { ...DOOR, height: 28 * 1.6 }]);
   });
 
   it("has no shut art for a secret passage, which is drawn as its wall, and opens it dark", () => {
