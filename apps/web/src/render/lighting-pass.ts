@@ -322,11 +322,11 @@ export function lightMapExtent(
 
 /**
  * The boxes of a light map with `extent` that are shown (#3162), in its own
- * pixels. Of the ground's, the cells no raised deck stands over: the deck
- * draws over them opaque, so they would be lit for nothing. Of any other
- * layer, only the cells its surfaces are in: elsewhere it is erased. Either
- * way leaving the rest out shows the same, and a deck spread over the
- * arena does not cost a light map a full screen.
+ * pixels: the cells no deck drawn over the layer stands over (#3671), as
+ * the deck draws over them opaque, so they would be lit for nothing. Of
+ * any layer but the ground, only those its surfaces are in: elsewhere it
+ * is erased. Either way leaving the rest out shows the same, and a deck
+ * spread over the arena does not cost a light map a full screen.
  */
 export function lightMapCover(
   structure: MapStructure,
@@ -339,20 +339,25 @@ export function lightMapCover(
       x: x * LIGHT_MAP_SCALE - extent.x,
       y: y * LIGHT_MAP_SCALE - extent.y,
     }));
+  // A deck's cover is where it is drawn; the map is drawn lifted whole.
+  const lift = elevationOf(layer, structure.ground);
+  const decks = deckCovers(structure, walls, renderOrder({ kind: "lighting", layer })).map(
+    (outline) => inMap(outline.map(({ x, y }) => ({ x, y: y + lift }))),
+  );
+  const open = (box: LightMapBox): boolean => !decks.some((outline) => boxUnder(outline, box, 2));
   if (layer === structure.ground) {
-    const decks = deckCovers(structure, walls, renderOrder({ kind: "lighting", layer })).map(inMap);
     const tunnels = tunnelLightCover(structure, extent).flatMap(({ boxes }) => boxes);
-    return coverBoxes(
-      extent.width,
-      extent.height,
-      LIGHT_MAP_CELL,
-      (box) => !decks.some((outline) => boxUnder(outline, box, 2)),
-    ).flatMap((box) => boxesWithout(box, tunnels));
+    return coverBoxes(extent.width, extent.height, LIGHT_MAP_CELL, open).flatMap((box) =>
+      boxesWithout(box, tunnels),
+    );
   }
   const surfaces = layerSurfaces(structure, layer).map(inMap);
   // A few pixels past each surface, for its smoothed edge.
-  return coverBoxes(extent.width, extent.height, LIGHT_MAP_CELL, (box) =>
-    surfaces.some((outline) => boxMeets(outline, box, 3)),
+  return coverBoxes(
+    extent.width,
+    extent.height,
+    LIGHT_MAP_CELL,
+    (box) => open(box) && surfaces.some((outline) => boxMeets(outline, box, 3)),
   );
 }
 

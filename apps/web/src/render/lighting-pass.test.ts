@@ -424,6 +424,27 @@ describe("layerSurfaces", () => {
       expect(box.y + box.height).toBeLessThanOrEqual(extent.height);
     }
   });
+
+  it("lights none of a raised layer a deck above it covers (#3671)", () => {
+    const stacked: MapStructure = {
+      ...HEIGHTS,
+      decks: [deck(1, 420, 250, 360, 200), deck(2, 500, 300, 160, 100)],
+      transitions: [ramp(0, 1, [300, 250, 140, 200], "e")],
+    };
+    const extent = lightMapExtent(stacked, 1, 1200, 800);
+    // A point of the layer's map, unlifted, at the half scale it is drawn at.
+    const at = (x: number, y: number) => ({ x: x / 2 - extent.x, y: y / 2 - extent.y });
+    const lit = (cover: readonly LightMapBox[], x: number, y: number) => {
+      const p = at(x, y);
+      return cover.some((box) => holds(box, p.x, p.y));
+    };
+    const under = lightMapCover(stacked, [], 1, extent);
+    const open = lightMapCover({ ...stacked, decks: [deck(1, 420, 250, 360, 200)] }, [], 1, extent);
+    // The upper deck's middle, drawn a step above the layer's map.
+    expect(lit(open, 580, 350 - ELEVATION_STEP)).toBe(true);
+    expect(lit(under, 580, 350 - ELEVATION_STEP)).toBe(false);
+    expect(lit(under, 440, 430)).toBe(true);
+  });
 });
 
 describe("flickerRegions (#3157, #3254)", () => {
