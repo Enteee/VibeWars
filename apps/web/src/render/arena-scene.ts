@@ -398,7 +398,7 @@ import {
   pavingTunnelPieces,
 } from "./paving-painter.js";
 import { withZoneLights } from "./zone-light.js";
-import { insideRuns, shownFill } from "./cell-cover.js";
+import { insideRuns, shownBoxes, shownFill } from "./cell-cover.js";
 import {
   AtmosphereParticles,
   fogArtOf,
@@ -4831,28 +4831,41 @@ export class ArenaScene extends Phaser.Scene {
 
   /**
    * The ground's grain and dressing (#3484), over the floor and its grid:
-   * one sprite tiled from the world's origin with the biome's tile, and
-   * on a map with a ground outline (#3066) a stencil round it, so it
-   * stays inside. A map of one layer draws flat, so it has none. Built
-   * once per map.
+   * sprites tiled from the world's origin with the biome's tile, over the
+   * boxes no deck that is up draws over opaque (#3671), and on a map with
+   * a ground outline (#3066) a stencil round them, so they stay inside. A
+   * map of one layer draws flat, so it has none. Built again when the map
+   * or the decks that are up change.
    */
   private drawGrain(structure: MapStructure, palette: ArenaPalette): void {
     const { bounds } = structure;
     const tile = groundTileKey(structure);
-    if (this.grain?.bounds === bounds && this.grain.tile === tile) {
+    const { width, height } = this.arena;
+    const boxes = shownBoxes(
+      width,
+      height,
+      SHOWN_FILL_CELL,
+      deckCovers(structure, this.snapshot.walls, GRAIN_DEPTH),
+      SHOWN_FILL_MARGIN,
+    );
+    const cover = boxes.map(({ x, y, width: w, height: h }) => [x, y, w, h].join(",")).join(" ");
+    if (this.grain?.bounds === bounds && this.grain.tile === tile && this.grain.cover === cover) {
       return;
     }
     this.dropGrain();
     if (palette.floor === undefined) {
       return;
     }
-    const { width, height } = this.arena;
-    const sprite = this.add
-      .tileSprite(0, 0, width, height, this.groundTile(structure))
-      .setOrigin(0, 0)
-      .setDepth(GRAIN_DEPTH);
+    const key = this.groundTile(structure);
+    const sprites = boxes.map(({ x, y, width: w, height: h }) =>
+      this.add
+        .tileSprite(x, y, w, h, key)
+        .setOrigin(0, 0)
+        .setTilePosition(x, y)
+        .setDepth(GRAIN_DEPTH),
+    );
     if (bounds.kind !== "outline") {
-      this.grain = { bounds, tile, objects: [sprite] };
+      this.grain = { bounds, tile, cover, objects: sprites };
       return;
     }
     // One stencil blocks the land outside the outline; after the grain, a
@@ -4868,7 +4881,7 @@ export class ArenaScene extends Phaser.Scene {
     const release = this.add
       .stencil(0, 0, [], { stencilLayerMode: "clear" })
       .setDepth(GRAIN_RELEASE_DEPTH);
-    this.grain = { bounds, tile, objects: [stencil, sprite, release] };
+    this.grain = { bounds, tile, cover, objects: [stencil, ...sprites, release] };
   }
 
   /** The map's ground tile (#3484), painted once per game. */
@@ -5531,6 +5544,8 @@ interface GroundGrain {
   readonly bounds: MapBounds;
   /** The ground tile it is laid with. */
   readonly tile: string;
+  /** The boxes it is laid over, as text: built again when they change. */
+  readonly cover: string;
   readonly objects: readonly Phaser.GameObjects.GameObject[];
 }
 
