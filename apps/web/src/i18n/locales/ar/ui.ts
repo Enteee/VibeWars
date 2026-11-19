@@ -393,12 +393,14 @@ export default {
   "controls.targetCalled": "استهداف العدو المُنادى عليه",
   "controls.targetClosest": "استهداف أقرب عدو",
   "controls.targetNext": "الهدف التالي",
+  "controls.targetPrevious": "الهدف السابق",
   "controls.targetSelf": "استهدف نفسك",
   "controls.weaponSet1": "مجموعة الأسلحة 1",
   "controls.weaponSet2": "مجموعة الأسلحة 2",
   "controls.weaponSet3": "مجموعة الأسلحة 3",
   "controls.weaponSet4": "مجموعة الأسلحة 4",
   "controls.weaponSets": "مجموعات الأسلحة",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "جرذ",
 
   "echo.secondsLeft": {

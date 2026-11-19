@@ -3870,6 +3870,11 @@ body:has(> .splash) #menu-background::after {
   background: var(--panel);
 }
 
+/* Previous target's second cell, with no second Next target key (#3630). */
+.key-cell.is-fixed[hidden] {
+  display: none;
+}
+
 .screen button.key-cell.is-capturing {
   border-color: var(--accent);
   color: var(--accent);

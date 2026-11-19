@@ -360,12 +360,14 @@ export default {
   "controls.targetCalled": "Mirar no inimigo anunciado",
   "controls.targetClosest": "Mirar no inimigo mais próximo",
   "controls.targetNext": "Próximo alvo",
+  "controls.targetPrevious": "Alvo anterior",
   "controls.targetSelf": "Mirar em si",
   "controls.weaponSet1": "Conjunto de armas 1",
   "controls.weaponSet2": "Conjunto de armas 2",
   "controls.weaponSet3": "Conjunto de armas 3",
   "controls.weaponSet4": "Conjunto de armas 4",
   "controls.weaponSets": "Conjuntos de armas",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Rato",
 
   "echo.secondsLeft": {

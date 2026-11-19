@@ -360,12 +360,14 @@ export default {
   "controls.targetCalled": "Apuntar al enemigo marcado",
   "controls.targetClosest": "Apuntar al enemigo más cercano",
   "controls.targetNext": "Siguiente objetivo",
+  "controls.targetPrevious": "Objetivo anterior",
   "controls.targetSelf": "Apuntarte a ti",
   "controls.weaponSet1": "Set de armas 1",
   "controls.weaponSet2": "Set de armas 2",
   "controls.weaponSet3": "Set de armas 3",
   "controls.weaponSet4": "Set de armas 4",
   "controls.weaponSets": "Sets de armas",
+  "controls.withShift": "Mayús + {key}",
   "creature.rat": "Rata",
 
   "echo.secondsLeft": {

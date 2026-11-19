@@ -362,12 +362,14 @@ export default {
   "controls.targetCalled": "Bersaglia il nemico segnalato",
   "controls.targetClosest": "Bersaglia il nemico più vicino",
   "controls.targetNext": "Prossimo bersaglio",
+  "controls.targetPrevious": "Bersaglio precedente",
   "controls.targetSelf": "Bersaglia te stesso",
   "controls.weaponSet1": "Set di armi 1",
   "controls.weaponSet2": "Set di armi 2",
   "controls.weaponSet3": "Set di armi 3",
   "controls.weaponSet4": "Set di armi 4",
   "controls.weaponSets": "Set di armi",
+  "controls.withShift": "Maiusc + {key}",
   "creature.rat": "Ratto",
 
   "echo.secondsLeft": {

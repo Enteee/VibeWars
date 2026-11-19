@@ -371,12 +371,14 @@ export default {
   "controls.targetCalled": "Zamerať ohláseného nepriateľa",
   "controls.targetClosest": "Zamerať najbližšieho nepriateľa",
   "controls.targetNext": "Ďalší cieľ",
+  "controls.targetPrevious": "Predchádzajúci cieľ",
   "controls.targetSelf": "Zamerať seba",
   "controls.weaponSet1": "Sada zbraní 1",
   "controls.weaponSet2": "Sada zbraní 2",
   "controls.weaponSet3": "Sada zbraní 3",
   "controls.weaponSet4": "Sada zbraní 4",
   "controls.weaponSets": "Sady zbraní",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Potkan",
 
   "echo.secondsLeft": {
