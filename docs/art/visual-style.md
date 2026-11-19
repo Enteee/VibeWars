@@ -434,7 +434,19 @@ leaning back when up and lying right when thrown, in `SWITCH_MARK_LOOK`, a
 small brass glow round the knob while up. A flip plays a quarter-second
 throw (`leverThrown`); under reduced motion it snaps.
 
-Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
+### Portcullis, up and down
+
+**Down** is a row of iron bars from the lintel to the sill, tips pointing
+at the ground. **Up** is the bars drawn raised under the lintel, with a
+dark open gap beneath, so the state reads from the gate's own footprint,
+also under a tunnel cover. Shape differs, not only colour.
+
+![portcullis](visual-style/portcullis.svg)
+
+Study only (#3644): the SVG is made by `scripts/assets/portcullis-svg.sh`;
+the in-game drawing is `gate-mark.ts`.
+
+Every other SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
 `node scripts/assets/visual-style.mjs`.
 
 ## 8. Review checklist
