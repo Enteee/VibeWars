@@ -51,7 +51,7 @@ In **Arena a squadre** (2, 4 o 8 per lato, la **Dim. squadra** dell'host), **Asc
 
 ## Nome, tag di gilda e mantello
 
-Apri **Opzioni** con la ⚙ nella barra superiore: la sezione **giocatore** contiene ciò che è tuo qualunque cosa giochi. Alla prima visita il gioco ti dà un **Nome**, come `AshenWolf`; scrivici sopra per cambiarlo. Se lo lasci vuoto, giochi come `Giocatore`. Scrivi accanto un **Tag gilda** di 2-4 lettere o cifre, e tutti lo vedranno dopo il tuo nome, come `Ente [VIBE]`. Con un tag impostato, sotto compare il designer di **Mantello gilda**: scegli il colore del mantello, quello del bordo e un emblema, e il tuo corpo porterà il mantello in ogni partita: quando sei fermo si ripiega in una sottile fascia sul bordo, e ondeggia dietro di te quando ti muovi. Lo mostrano anche i tuoi personaggi nel menu. **Nessun mantello** lo toglie.
+Apri **Opzioni** con la ⚙ nella barra superiore: la sezione **giocatore** contiene ciò che è tuo qualunque cosa giochi. Alla prima visita il gioco ti dà un **Nome**, come `AshenWolf`; scrivici sopra per cambiarlo. Se lo lasci vuoto, giochi come `Giocatore`. Scrivi accanto un **Tag gilda** di 2-4 lettere o cifre, e tutti lo vedranno dopo il tuo nome, come `Ente [VIBE]`. Con un tag impostato, sotto compare il designer di **Mantello gilda**: scegli il colore del mantello, quello del bordo e un emblema, e il tuo corpo porterà il mantello in ogni partita: quando sei fermo si ripiega in una sottile fascia sul bordo, e ondeggia dietro di te quando ti muovi. Lo mostrano anche i tuoi personaggi nel menu. **Nessun mantello** lo toglie. Una figura mostra il mantello così come appare nel gioco.
 
 Una modifica vale subito per la lobby in cui sei.
 

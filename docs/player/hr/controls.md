@@ -69,7 +69,8 @@ Izvan meča gornja traka sadrži **[?]** (ova Pomoć), **⚙** (Opcije),
 osim Sobe, gore desno na zaslonu. U uskom prozoru te se ikone i
 ostali gumbi zaslona sklapaju u **⋯**; vani ostaje samo glavni gumb.
 ⚙ otvara Opcije kao prozor ispod trake, a zaslon ostaje iza njega; zatvaraju ga Esc, × ili klik izvan njega. Pod **Prikaz**, **Osvjetljenje** uključuje ili isključuje svjetlo i sjenu osvijetljene mape, odmah, i usred meča.
-Pomoć se zatvara s × gore desno, s Esc ili ponovnim pritiskom na [?].
+[?] otvara Pomoć na isti način, kao prozor ispod njega s biračem stranica na vrhu; meč se iza njega nastavlja.
+Pomoć se zatvara svojim ×, s Esc, klikom izvan nje ili ponovnim pritiskom na [?].
 
 **Podijeli ritam sa sobom.** U uređivaču ritma (♪, zatim **Uredi**),
 **Podijeli sa sobom** šalje ono što si upisao, spremljeno ili ne, svima

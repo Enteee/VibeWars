@@ -942,6 +942,7 @@ export default {
   },
 
   "player.cape": "Plášť",
+  "player.capePreview": "Náhľad",
   "player.colourBlack": "čierna",
   "player.colourGold": "zlatá",
   "player.colourLime": "limetková",
@@ -1607,6 +1608,24 @@ export default {
   "tutorial.menu.menu.teams": "V Tímoch skladáš postavy do tímu na tímové boje.",
   "tutorial.menu.menu.title": "Aby si mohol pokračovať, musíš zmeniť svoju špecializáciu.",
   "tutorial.menu.skipAsk": "Preskočiť zvyšok návodu?",
+  "tutorial.menu.spec.attributes":
+    "Rozdeľ body atribútov. Každý stupeň posilní schopnosti daného atribútu.",
+  "tutorial.menu.spec.attributesDone": "Zmeň atribút",
+  "tutorial.menu.spec.gear": "Brnenie, runy a insígnie: vyber kus na postave, potom čo naň patrí.",
+  "tutorial.menu.spec.gearDone": "Zmeň kus výstroja",
+  "tutorial.menu.spec.open": "Otvor Postavy a potom postavu, aby si zmenil jej build.",
+  "tutorial.menu.spec.openDone": "Otvor postavu",
+  "tutorial.menu.spec.professions":
+    "Hlavné povolanie ti dáva atribúty a schopnosti; vedľajšie ti požičia aj svoje schopnosti.",
+  "tutorial.menu.spec.professionsDone": "Prepni povolanie",
+  "tutorial.menu.spec.save": "Ulož postavu, aby ti nový build zostal.",
+  "tutorial.menu.spec.saveDone": "Uložiť",
+  "tutorial.menu.spec.skills":
+    "Otvor skupinu v zozname a potiahni schopnosť na slot svojej lišty, aby si ju vymenil.",
+  "tutorial.menu.spec.skillsDone": "Daj schopnosť na lištu",
+  "tutorial.menu.spec.title": "Zmeň svoju špecializáciu.",
+  "tutorial.menu.spec.weapons": "Vyber zo zoznamu zbraň pre svoju sadu zbraní.",
+  "tutorial.menu.spec.weaponsDone": "Zmeň zbraň",
   "tutorial.gate.hint": "Do hmly, za mnou.",
   "tutorial.gate.how": "Klikni ľavým tlačidlom na zem, alebo choď pomocou {keys}.",
   "tutorial.gate.intro": "Náš tím bojuje za hmlou. Poď za mnou.",

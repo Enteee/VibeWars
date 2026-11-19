@@ -640,12 +640,12 @@ describe("screenBar in the top bar (#578, #1272)", () => {
       back: { label: "Close", onBack: onClose },
       actions: [],
       overlay: true,
-      own: "help",
+      own: "music",
     });
     expect(slots.crumbs.text).toBe("VibeWars > Help");
     expect(shown.at(-1)).toEqual({
       place: "VibeWars / Help",
-      own: "help",
+      own: "music",
       overlay: true,
       join: false,
     });

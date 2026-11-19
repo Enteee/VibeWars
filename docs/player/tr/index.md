@@ -1,7 +1,7 @@
 # Yardım
 
-Oyun içi Yardım ekranının sayfaları, ekranın listelediği sırayla. Bu
-dizindeki her sayfa burada tam olarak bir kez listelenir.
+Oyun içi Yardım penceresinin sayfaları, sayfa seçicisinin listelediği sırayla.
+Bu dizindeki her sayfa burada tam olarak bir kez listelenir.
 
 - [Başlarken](getting-started.md)
 - [Kontroller](controls.md)

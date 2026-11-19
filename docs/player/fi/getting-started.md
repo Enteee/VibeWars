@@ -193,7 +193,7 @@ perässä, kuten `Ente [VIBE]`. Kun tunnus on asetettu, sen alle ilmestyy
 **Kiltaviitta**-suunnittelija: valitse viitan väri, reunuksen väri ja
 tunnus, ja hahmosi kantaa viittaa jokaisessa ottelussa: se taittuu
 ohueksi nauhaksi reunallesi, kun seisot, ja liehuu perässäsi, kun
-liikut. Myös valikon hahmosi näyttävät sen. **Ei viittaa** riisuu sen.
+liikut. Myös valikon hahmosi näyttävät sen. **Ei viittaa** riisuu sen. Hahmo näyttää viitan sellaisena kuin se näkyy pelissä.
 
 Muutos tulee voimaan heti siinä aulassa, jossa olet.
 

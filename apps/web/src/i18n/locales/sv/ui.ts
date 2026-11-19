@@ -854,6 +854,7 @@ export default {
   "pips.title": { one: "{sign}{count} pip", other: "{sign}{count} pip" },
 
   "player.cape": "Mantel",
+  "player.capePreview": "Förhandsvisning",
   "player.colourBlack": "svart",
   "player.colourGold": "guld",
   "player.colourLime": "lime",
@@ -1485,6 +1486,25 @@ export default {
   "tutorial.menu.menu.teams": "I Lag sätter du ihop karaktärer till ett lag för lagstriderna.",
   "tutorial.menu.menu.title": "För att gå vidare måste du byta din spec.",
   "tutorial.menu.skipAsk": "Hoppa över resten av guiden?",
+  "tutorial.menu.spec.attributes":
+    "Fördela dina attributpoäng. Varje rang gör attributets färdigheter starkare.",
+  "tutorial.menu.spec.attributesDone": "Ändra ett attribut",
+  "tutorial.menu.spec.gear":
+    "Rustning, runor och insignier: välj en del på figuren, sedan vad som ska sitta på den.",
+  "tutorial.menu.spec.gearDone": "Byt en del av utrustningen",
+  "tutorial.menu.spec.open": "Öppna Karaktärer och sedan en karaktär för att ändra dess build.",
+  "tutorial.menu.spec.openDone": "Öppna en karaktär",
+  "tutorial.menu.spec.professions":
+    "Ditt primära yrke ger dina attribut och färdigheter; ditt sekundära lånar dig också sina färdigheter.",
+  "tutorial.menu.spec.professionsDone": "Byt ett yrke",
+  "tutorial.menu.spec.save": "Spara din karaktär för att behålla det nya buildet.",
+  "tutorial.menu.spec.saveDone": "Spara",
+  "tutorial.menu.spec.skills":
+    "Öppna en grupp i listan och dra sedan en färdighet till en plats i din rad för att byta in den.",
+  "tutorial.menu.spec.skillsDone": "Lägg en färdighet på din rad",
+  "tutorial.menu.spec.title": "Byt din spec.",
+  "tutorial.menu.spec.weapons": "Välj ett vapen till ditt vapenset från listan.",
+  "tutorial.menu.spec.weaponsDone": "Byt ett vapen",
   "tutorial.gate.hint": "In i dimman, efter mig.",
   "tutorial.gate.how": "Vänsterklicka på marken, eller gå med {keys}.",
   "tutorial.gate.intro": "Vårt lag strider bortom dimman. Följ mig.",

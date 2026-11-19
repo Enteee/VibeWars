@@ -197,7 +197,7 @@ Avec un tag, le créateur de **Cape de guilde** apparaît en dessous : choisis l
 couleur de la cape, celle de la bordure et un emblème, et ton corps porte la
 cape dans chaque match : elle se replie en une fine bande sur ton bord quand tu
 es immobile et flotte derrière toi quand tu bouges. Tes personnages dans le
-menu la montrent aussi. **Sans cape** la retire.
+menu la montrent aussi. **Sans cape** la retire. Une figurine montre la cape telle qu'elle apparaît en jeu.
 
 Un changement s'applique tout de suite au salon où tu es.
 
