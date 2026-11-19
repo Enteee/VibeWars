@@ -174,8 +174,7 @@ Cinder Sanctum (8v8, 5600x2800) ga igra: hram na obronku vulkana između dviju r
 **Sablasnog heroja** u svojoj bazi, sablast koja se bori sjekirom i koju
 nitko ne igra. **Oltar** je u središtu, jednako udaljen od obje
 baze. Na **Threefold Keepu** tri tima (dva kad treći nije slobodan) bore se za njega
-unutar ograđene utvrde. Njezina se vrata otvaraju samo iznutra, pločom unutra: obiđi
-do otvorenog ugla da uđeš. Najviše 12 bodova po timu, a ako svi neprijatelji
+na kuli ograđene utvrde. Najviše 12 bodova po timu, a ako svi neprijatelji
 stoje na -60% morala, odmah pobjeđuješ. **Hall of
 Heroes**, karta Kralja brda koja završava Uspon heroja, diže
 ga na podij ograđen sa zapada i istoka, do kojeg se stiže sjevernim ili južnim prilazom
@@ -231,7 +230,7 @@ domet čarolije. Dok tvoj tim ne drži oltar, svaki bot prvo ubija Sablasnog her
 drugog tima kad stoji na oltaru u njihovu dometu:
 on je jedini neprijatelj koji sprečava tvoju sablast da ga zauzme.
 
-Threefold Keep ga igra.
+Threefold Keep ga igra (4v4 i 8v8, 5000x4400): utvrda na brdu u visoravni, za tri tima. Popni se na bedemsku stazu stubama pokraj svojih vrata i prijeđi nasip do brda, zatim se popni do oltara na kuli. Poluga u svakom dvorištu otvara sva četiri vrata: prolaz tvojih vrata ispod zida, i podrum, dugi put ispod brda.
 
 ## Zauzimanje točaka
 

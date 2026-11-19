@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) spelar det: ett tempel på en vulkans sluttning 
 **spökhjälte** i sin bas, ett spöke som slåss med yxa och som ingen
 spelar. **Altaret** står i mitten, lika långt från båda baserna. På
 **Threefold Keep** slåss tre lag (två när inget tredje är ledigt) om det
-inne i en muromgärdad borg. Dess dörrar öppnas bara inifrån, med en platta
-på insidan: gå runt till ett öppet hörn för att komma in. Högst 12 poäng
+på tornet i en muromgärdad borg. Högst 12 poäng
 per lag, och om varje fiende står på -60 % moral vinner du direkt.
 **Hjältarnas sal**, King of the Hill-kartan som avslutar Heroes' Ascent,
 höjer det på en estrad med murar i väster och öster, uppför en norra
@@ -245,7 +244,7 @@ dödar varje bot först det andra lagets spökhjälte när den står på
 altaret inom deras räckhåll: det är den enda fienden som hindrar ert
 spöke från att ta det.
 
-Threefold Keep spelar det.
+Threefold Keep spelar det (4v4 och 8v8, 5000x4400): en borg på en kulle i höglandet, för tre lag. Gå upp på vallgången via trappan bredvid din port och korsa en vägbank till kullen, och klättra sedan upp till altaret på tornet. En spak på varje borggård öppnar alla fyra portar: din portgång under muren, och kryptan, den långa vägen under kullen.
 
 ## Erövringspunkter
 

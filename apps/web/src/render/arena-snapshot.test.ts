@@ -35,6 +35,7 @@ import {
   placeFloatingText,
   teamColour,
   markedForTeam,
+  recordBody,
   teamSide,
   toRenderableGroundEffect,
   type ArenaSnapshot,
@@ -44,6 +45,18 @@ import {
 } from "./arena-snapshot.js";
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import { LYING_WIDTH } from "./lying-pose.js";
+import { recordBreakable } from "./breakable-objects.js";
+import {
+  FLAG_PICK_RADIUS,
+  STAND_RADIUS,
+  SWITCH_PICK_RADIUS,
+  recordFlag,
+  recordStand,
+  recordSwitch,
+} from "./flag-objects.js";
+import { pickAt, type DrawnClickable } from "./pick.js";
+import { atRest } from "./pick.test-support.js";
+import { ELEVATION_STEP, elevationOf } from "./render-order.js";
 
 describe("beaconBoltPoints (#2694)", () => {
   it("starts and ends exactly on its ends, and keeps its shape", () => {
@@ -230,7 +243,7 @@ describe("toRenderableGroundEffect (#1087, #3283)", () => {
 
 describe("actorAtPoint", () => {
   it("returns undefined when there are no actors", () => {
-    const snapshot: ArenaSnapshot = {
+    const snapshot: ArenaSnapshot = atRest({
       actors: [],
       walls: [],
       structure: FLAT_STRUCTURE,
@@ -255,13 +268,13 @@ describe("actorAtPoint", () => {
       pings: [],
       strokes: [],
       goals: [],
-    };
-    expect(actorAtPoint(snapshot, vec2(0, 0))).toBeUndefined();
+    });
+    expect(actorAtPoint(atRest(snapshot), vec2(0, 0))).toBeUndefined();
   });
 
   it("hits an actor when the point is within its radius", () => {
     const self = actor("a", 100, 100, 14);
-    const snapshot: ArenaSnapshot = {
+    const snapshot: ArenaSnapshot = atRest({
       actors: [self],
       walls: [],
       structure: FLAT_STRUCTURE,
@@ -286,13 +299,13 @@ describe("actorAtPoint", () => {
       pings: [],
       strokes: [],
       goals: [],
-    };
-    expect(actorAtPoint(snapshot, vec2(105, 100))?.id).toBe("a");
+    });
+    expect(actorAtPoint(atRest(snapshot), vec2(105, 100))?.id).toBe("a");
   });
 
   it("misses when the point is outside every actor's radius", () => {
     const self = actor("a", 100, 100, 14);
-    const snapshot: ArenaSnapshot = {
+    const snapshot: ArenaSnapshot = atRest({
       actors: [self],
       walls: [],
       structure: FLAT_STRUCTURE,
@@ -317,13 +330,13 @@ describe("actorAtPoint", () => {
       pings: [],
       strokes: [],
       goals: [],
-    };
-    expect(actorAtPoint(snapshot, vec2(200, 200))).toBeUndefined();
+    });
+    expect(actorAtPoint(atRest(snapshot), vec2(200, 200))).toBeUndefined();
   });
 
   it("hits exactly at the radius boundary", () => {
     const self = actor("a", 0, 0, 10);
-    const snapshot: ArenaSnapshot = {
+    const snapshot: ArenaSnapshot = atRest({
       actors: [self],
       walls: [],
       structure: FLAT_STRUCTURE,
@@ -348,14 +361,14 @@ describe("actorAtPoint", () => {
       pings: [],
       strokes: [],
       goals: [],
-    };
-    expect(actorAtPoint(snapshot, vec2(10, 0))?.id).toBe("a");
+    });
+    expect(actorAtPoint(atRest(snapshot), vec2(10, 0))?.id).toBe("a");
   });
 
   it("picks the closest actor when two overlap the point", () => {
     const near = actor("near", 100, 100, 20);
     const far = actor("far", 110, 100, 20);
-    const snapshot: ArenaSnapshot = {
+    const snapshot: ArenaSnapshot = atRest({
       actors: [far, near],
       walls: [],
       structure: FLAT_STRUCTURE,
@@ -380,8 +393,8 @@ describe("actorAtPoint", () => {
       pings: [],
       strokes: [],
       goals: [],
-    };
-    expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("near");
+    });
+    expect(actorAtPoint(atRest(snapshot), vec2(100, 100))?.id).toBe("near");
   });
 });
 
@@ -389,7 +402,7 @@ describe("actorAtPoint and the dead", () => {
   it("skips a dead actor so a click selects whoever is behind the corpse", () => {
     const corpse = actor("corpse", 100, 100, 20, { dead: true });
     const living = actor("living", 105, 100, 20);
-    const snapshot: ArenaSnapshot = {
+    const snapshot: ArenaSnapshot = atRest({
       actors: [corpse, living],
       walls: [],
       structure: FLAT_STRUCTURE,
@@ -414,13 +427,13 @@ describe("actorAtPoint and the dead", () => {
       pings: [],
       strokes: [],
       goals: [],
-    };
-    expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("living");
+    });
+    expect(actorAtPoint(atRest(snapshot), vec2(100, 100))?.id).toBe("living");
   });
 
   it("returns undefined when the only actor under the point is a dead foe", () => {
     const corpse = actor("corpse", 100, 100, 20, { team: "enemy", dead: true });
-    const snapshot: ArenaSnapshot = {
+    const snapshot: ArenaSnapshot = atRest({
       actors: [corpse],
       walls: [],
       structure: FLAT_STRUCTURE,
@@ -445,8 +458,8 @@ describe("actorAtPoint and the dead", () => {
       pings: [],
       strokes: [],
       goals: [],
-    };
-    expect(actorAtPoint(snapshot, vec2(100, 100))).toBeUndefined();
+    });
+    expect(actorAtPoint(atRest(snapshot), vec2(100, 100))).toBeUndefined();
   });
 });
 
@@ -458,19 +471,19 @@ describe("actorAtPoint and an ally's corpse (#812)", () => {
 
   it("picks an ally's corpse when nobody living is under the point", () => {
     const corpse = actor("corpse", 100, 100, 20, { dead: true });
-    expect(actorAtPoint(arena([corpse]), vec2(100, 100))?.id).toBe("corpse");
+    expect(actorAtPoint(atRest(arena([corpse])), vec2(100, 100))?.id).toBe("corpse");
   });
 
   it("still prefers the living, even farther from the point", () => {
     const corpse = actor("corpse", 100, 100, 20, { dead: true });
     const living = actor("living", 115, 100, 20, { team: "enemy" });
-    expect(actorAtPoint(arena([corpse, living]), vec2(100, 100))?.id).toBe("living");
+    expect(actorAtPoint(atRest(arena([corpse, living])), vec2(100, 100))?.id).toBe("living");
   });
 
   it("never picks a foe's corpse or your own", () => {
     const foe = actor("foe", 100, 100, 20, { team: "enemy", dead: true });
     const me = actor("me", 100, 100, 20, { team: "self", dead: true });
-    expect(actorAtPoint(arena([foe, me]), vec2(100, 100))).toBeUndefined();
+    expect(actorAtPoint(atRest(arena([foe, me])), vec2(100, 100))).toBeUndefined();
   });
 });
 
@@ -490,18 +503,18 @@ describe("actorAtPoint with name tags (#2738)", () => {
   const tags = new Map([["foe", box(80, 60, 120, 76)]]);
 
   it("hits on the tag with the boxes, and misses without", () => {
-    expect(actorAtPoint(arena([foe]), vec2(115, 65), tags)?.id).toBe("foe");
-    expect(actorAtPoint(arena([foe]), vec2(115, 65))).toBeUndefined();
+    expect(actorAtPoint(atRest(arena([foe])), vec2(115, 65), tags)?.id).toBe("foe");
+    expect(actorAtPoint(atRest(arena([foe])), vec2(115, 65))).toBeUndefined();
   });
 
   it("hits between the tag and the body", () => {
-    expect(actorAtPoint(arena([foe]), vec2(100, 80), tags)?.id).toBe("foe");
-    expect(actorAtPoint(arena([foe]), vec2(100, 80))).toBeUndefined();
+    expect(actorAtPoint(atRest(arena([foe])), vec2(100, 80), tags)?.id).toBe("foe");
+    expect(actorAtPoint(atRest(arena([foe])), vec2(100, 80))).toBeUndefined();
   });
 
   it("misses beside the column and below the body", () => {
-    expect(actorAtPoint(arena([foe]), vec2(125, 70), tags)).toBeUndefined();
-    expect(actorAtPoint(arena([foe]), vec2(100, 115), tags)).toBeUndefined();
+    expect(actorAtPoint(atRest(arena([foe])), vec2(125, 70), tags)).toBeUndefined();
+    expect(actorAtPoint(atRest(arena([foe])), vec2(100, 115), tags)).toBeUndefined();
   });
 
   it("lets a body under the point beat a nearer tag column", () => {
@@ -509,7 +522,7 @@ describe("actorAtPoint with name tags (#2738)", () => {
     // A small body whose wide tag column covers the point, centre nearer it.
     const small = actor("small", 113, 108, 5, { team: "enemy" });
     const both = new Map([["small", box(90, 90, 160, 100)]]);
-    expect(actorAtPoint(arena([body, small]), vec2(113, 100), both)?.id).toBe("body");
+    expect(actorAtPoint(atRest(arena([body, small])), vec2(113, 100), both)?.id).toBe("body");
   });
 
   it("picks the nearest body when two tag columns hold the point", () => {
@@ -519,20 +532,22 @@ describe("actorAtPoint with name tags (#2738)", () => {
       ["left", box(70, 60, 160, 76)],
       ["right", box(70, 60, 160, 76)],
     ]);
-    expect(actorAtPoint(arena([left, right]), vec2(125, 65), overlapping)?.id).toBe("right");
-    expect(actorAtPoint(arena([left, right]), vec2(105, 65), overlapping)?.id).toBe("left");
+    expect(actorAtPoint(atRest(arena([left, right])), vec2(125, 65), overlapping)?.id).toBe(
+      "right",
+    );
+    expect(actorAtPoint(atRest(arena([left, right])), vec2(105, 65), overlapping)?.id).toBe("left");
   });
 
   it("never picks a foe's corpse through its tag, but an ally's", () => {
     const foeCorpse = actor("foe", 100, 100, 14, { team: "enemy", dead: true });
     const allyCorpse = actor("foe", 100, 100, 14, { team: "ally", dead: true });
-    expect(actorAtPoint(arena([foeCorpse]), vec2(100, 65), tags)).toBeUndefined();
-    expect(actorAtPoint(arena([allyCorpse]), vec2(100, 65), tags)?.id).toBe("foe");
+    expect(actorAtPoint(atRest(arena([foeCorpse])), vec2(100, 65), tags)).toBeUndefined();
+    expect(actorAtPoint(atRest(arena([allyCorpse])), vec2(100, 65), tags)?.id).toBe("foe");
   });
 
   it("prefers a living actor's tag to an ally's corpse under the point", () => {
     const corpse = actor("corpse", 100, 70, 10, { team: "ally", dead: true });
-    expect(actorAtPoint(arena([corpse, foe]), vec2(100, 70), tags)?.id).toBe("foe");
+    expect(actorAtPoint(atRest(arena([corpse, foe])), vec2(100, 70), tags)?.id).toBe("foe");
   });
 
   it("gives the same hit at any zoom, the boxes being world units", () => {
@@ -540,7 +555,7 @@ describe("actorAtPoint with name tags (#2738)", () => {
     for (const zoom of [0.5, 2]) {
       const tag = nameTagBox(monk, 40, 14, zoom, false);
       const onTag = vec2((tag.left + tag.right) / 2, (tag.top + tag.bottom) / 2);
-      expect(actorAtPoint(arena([monk]), onTag, new Map([["monk", tag]]))?.id).toBe("monk");
+      expect(actorAtPoint(atRest(arena([monk])), onTag, new Map([["monk", tag]]))?.id).toBe("monk");
     }
   });
 });
@@ -788,22 +803,28 @@ describe("nameShown (#253)", () => {
 describe("withNames (#253)", () => {
   const enemy = actor("enemy", 100, 100, 14, { team: "enemy" });
   const corpse = actor("corpse", 300, 100, 14, { team: "enemy", dead: true });
-  const base: ArenaSnapshot = { ...EMPTY_SNAPSHOT, actors: [enemy, corpse] };
+  const base: ArenaSnapshot = atRest({ ...EMPTY_SNAPSHOT, actors: [enemy, corpse] });
 
   it("hovers the living body under the cursor, as a click would target it", () => {
-    expect(withNames(base, vec2(105, 100), false, new Map()).hoverId).toBe("enemy");
-    expect(withNames(base, vec2(300, 100), false, new Map()).hoverId).toBeUndefined();
-    expect(withNames(base, vec2(500, 500), false, new Map()).hoverId).toBeUndefined();
+    expect(withNames(base, vec2(105, 100), false, new Map(), atRest(base).drawn).hoverId).toBe(
+      "enemy",
+    );
+    expect(
+      withNames(base, vec2(300, 100), false, new Map(), atRest(base).drawn).hoverId,
+    ).toBeUndefined();
+    expect(
+      withNames(base, vec2(500, 500), false, new Map(), atRest(base).drawn).hoverId,
+    ).toBeUndefined();
   });
 
   it("hovers a body by its name while Show names is held (#2738)", () => {
     const tags = new Map([["enemy", { left: 80, top: 60, right: 120, bottom: 76 }]]);
-    expect(withNames(base, vec2(115, 65), true, tags).hoverId).toBe("enemy");
-    expect(withNames(base, vec2(115, 65), false, tags).hoverId).toBeUndefined();
+    expect(withNames(base, vec2(115, 65), true, tags, atRest(base).drawn).hoverId).toBe("enemy");
+    expect(withNames(base, vec2(115, 65), false, tags, atRest(base).drawn).hoverId).toBeUndefined();
   });
 
   it("hovers nothing once the cursor has left, and carries Ctrl through", () => {
-    const named = withNames(base, undefined, true, new Map());
+    const named = withNames(base, undefined, true, new Map(), atRest(base).drawn);
     expect(named.hoverId).toBeUndefined();
     expect(named.showAllNames).toBe(true);
     expect(named.actors).toBe(base.actors);
@@ -1071,5 +1092,100 @@ describe("bodyGlyphLayout (#1037)", () => {
     expect(
       bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: "beast", dead: true })),
     ).toMatchObject({ glyph: { kind: "creature", look: "beast" }, tint: DEAD_COLOUR, alpha: 1 });
+  });
+});
+
+describe("picked where drawn, on every layer (#3634)", () => {
+  // Ground on layer 1, so layer 0 is a tunnel under it, drawn lower.
+  const GROUND = 1;
+  const at = vec2(500, 500);
+  interface Row {
+    readonly kind: string;
+    readonly radius: number;
+    /** Record it on `layer` as the draw code does; the lift it is drawn by. */
+    readonly record: (out: DrawnClickable[], layer: number) => number;
+  }
+  const rows: readonly Row[] = [
+    {
+      kind: "switch",
+      radius: SWITCH_PICK_RADIUS,
+      record: (out, layer) =>
+        recordSwitch(
+          out,
+          { id: "switch", mark: "west", position: at, layer, up: true, targets: [] },
+          GROUND,
+          0,
+        ),
+    },
+    {
+      kind: "flag",
+      radius: FLAG_PICK_RADIUS,
+      record: (out, layer) =>
+        recordFlag(
+          out,
+          { id: "flag", side: "ally", position: at, layer, carried: false, onStand: false },
+          GROUND,
+          0,
+        ),
+    },
+    {
+      kind: "stand",
+      radius: STAND_RADIUS,
+      record: (out, layer) =>
+        recordStand(out, { id: "stand", position: at, layer, holder: undefined }, GROUND, 0),
+    },
+    {
+      kind: "body",
+      radius: 14,
+      record: (out, layer) => {
+        // The scene draws a settled body lifted by its layer's height.
+        const lift = elevationOf(layer, GROUND);
+        recordBody(out, actor("body", at.x, at.y - lift), 0);
+        return lift;
+      },
+    },
+  ];
+  for (const { kind, radius, record } of rows) {
+    for (const layer of [0, 1, 2, 3]) {
+      it(`picks a ${kind} on layer ${String(layer)} at its drawn centre, not its ground point`, () => {
+        const drawn: DrawnClickable[] = [];
+        const lift = record(drawn, layer);
+        expect(lift).toBe((layer - GROUND) * ELEVATION_STEP);
+        expect(pickAt(drawn, { x: at.x, y: at.y - lift })?.id).toBe(kind);
+        if (Math.abs(lift) >= radius) {
+          expect(pickAt(drawn, at)).toBeUndefined();
+        }
+      });
+    }
+  }
+
+  it("picks a breakable wall on a deck by its lifted top, not its footprint", () => {
+    const structure = { ground: 0, layerCount: 2 };
+    const outline = [vec2(0, 100), vec2(60, 100), vec2(60, 116), vec2(0, 116)];
+    const drawn: DrawnClickable[] = [];
+    recordBreakable(
+      drawn,
+      {
+        id: "wall",
+        layer: 1,
+        outline,
+        health: 10,
+        maxHealth: 10,
+        wall: { kind: "rect", x: 0, y: 100, width: 60, height: 16 },
+      },
+      structure,
+      0,
+    );
+    expect(pickAt(drawn, vec2(30, 108 - ELEVATION_STEP))?.id).toBe("wall");
+    expect(pickAt(drawn, vec2(30, 108))).toBeUndefined();
+  });
+
+  it("follows a body mid-climb: the eased lift it is drawn with, not its layer's", () => {
+    // Halfway up to a deck, drawn 28 above its point.
+    const drawn: DrawnClickable[] = [];
+    recordBody(drawn, actor("climber", 500, 500 - ELEVATION_STEP / 2), 0);
+    expect(pickAt(drawn, vec2(500, 500 - ELEVATION_STEP / 2))?.id).toBe("climber");
+    expect(pickAt(drawn, vec2(500, 500 - ELEVATION_STEP))).toBeUndefined();
+    expect(pickAt(drawn, vec2(500, 500))).toBeUndefined();
   });
 });
