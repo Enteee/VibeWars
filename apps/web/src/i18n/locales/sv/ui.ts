@@ -1486,6 +1486,18 @@ export default {
   "tutorial.menu.menu.teams": "I Lag sätter du ihop karaktärer till ett lag för lagstriderna.",
   "tutorial.menu.menu.title": "För att gå vidare måste du byta din spec.",
   "tutorial.menu.skipAsk": "Hoppa över resten av guiden?",
+  "tutorial.menu.modes.gvg":
+    "GvG är gille mot gille, 8 mot 8, på Guild Hall Isle. Dräp fiendens gillesherre för att vinna, och håll din egen vid liv.",
+  "tutorial.menu.modes.heroesAscent":
+    "Heroes' Ascent är en rad kartor, 8 mot 8, mot lag i din omgång. Vinner du går du vidare till nästa karta, ända upp till Hjältarnas sal; förlorar du börjar du om.",
+  "tutorial.menu.modes.hostedGame":
+    "Ett eget spel är din egen lobby: skicka inbjudningslänken till vänner och välj karta och lagstorlek. Bottar spelar varje plats som ingen tar.",
+  "tutorial.menu.modes.open": "Öppna det tända spelsättet längs sidan.",
+  "tutorial.menu.modes.randomArena":
+    "Slumparena är den snabbaste striden: din egen karaktär, i ett lag av främlingar, 1v1, 2v2 eller 4v4. Kartan lottas åt dig, och varje plats är en riktig spelare.",
+  "tutorial.menu.modes.teamArena":
+    "Lagarena är din grupp och en lagbuild mot ett annat lag, 2v2, 4v4 eller 8v8, i den storlek du väljer. Bottar tar varje ledig plats, och varje match lottar sin karta.",
+  "tutorial.menu.modes.title": "Vet var du ska slåss.",
   "tutorial.menu.spec.attributes":
     "Fördela dina attributpoäng. Varje rang gör attributets färdigheter starkare.",
   "tutorial.menu.spec.attributesDone": "Ändra ett attribut",

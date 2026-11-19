@@ -134,7 +134,7 @@ describe("the menu quest session", () => {
     expect(onEnd).not.toHaveBeenCalled();
   });
 
-  it("follows the team step from the team editor's events, then saves done and goes (#3542)", () => {
+  it("follows the team step from the team editor's events, then on to the modes (#3542)", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
     const quest = startMenuQuest({ from: "team", coach, onEnd });
@@ -169,6 +169,46 @@ describe("the menu quest session", () => {
     draft(filled);
     expect(shown.at(-1)?.target).toBe("team-save");
     quest.event({ kind: "team-saved", team: filled, isNew: true });
+    expect(items.get(KEY)).toBe("menu:modes");
+    expect(shown.at(-1)?.target).toBe("rail-random-arena");
+    expect(removed()).toBe(false);
+    expect(onEnd).not.toHaveBeenCalled();
+  });
+
+  it("opens and explains each mode, ticking its list, then saves done and goes (#3543)", () => {
+    const { coach, shown, removed } = fakeCoach();
+    const onEnd = vi.fn();
+    const quest = startMenuQuest({ from: "modes", coach, onEnd });
+    expect(items.get(KEY)).toBe("menu:modes");
+    quest.event({ kind: "screen-shown", screen: "teams" });
+    expect(shown.at(-1)?.target).toBe("rail-random-arena");
+    expect(shown.at(-1)?.objectives.map(({ done }) => done)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    quest.event({ kind: "screen-shown", screen: "random-arena" });
+    expect(shown.at(-1)?.target).toBe("mode-random-arena");
+    expect(shown.at(-1)?.line).toBe(
+      "Random Arena is the quickest fight: your own character, in a team of strangers, 1v1, 2v2 or 4v4. The map is drawn for you, and every place is a real player.",
+    );
+    expect(shown.at(-1)?.objectives.map(({ done }) => done)).toEqual([
+      true,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    gotIt(shown.at(-1));
+    expect(shown.at(-1)?.target).toBe("rail-team-arena");
+    for (const mode of ["team-arena", "heroes-ascent", "gvg", "hosted-game"] as const) {
+      quest.event({ kind: "screen-shown", screen: mode });
+      expect(shown.at(-1)?.target).toBe(`mode-${mode}`);
+      expect(removed()).toBe(false);
+      gotIt(shown.at(-1));
+    }
     expect(items.get(KEY)).toBe("done");
     expect(removed()).toBe(true);
     expect(onEnd).toHaveBeenCalledWith("done");
