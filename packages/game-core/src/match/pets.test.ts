@@ -5,7 +5,7 @@ import type { MatchRules } from "../match-rules.js";
 import { copyKey } from "../skills/cast-state.js";
 import { weaponAttributeMultiplier } from "../skills/damage.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { distance, vec2, type Vec2 } from "../vec2.js";
+import { distance, normalize, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
@@ -638,22 +638,55 @@ describe("Guard, Fight and Heel (#1110)", () => {
   });
 });
 
-describe("a pet and its owner (#3649)", () => {
+describe("a pet and its owner (#3649, #3666)", () => {
   const GAP = RULES.collision.playerRadius + RULES.collision.creatureRadius;
   const SPEED = RULES.movement.maxSpeedUnitsPerSecond;
-  const DIRECTIONS = [vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1)];
+  // East, west and north are free from spawn. South, through the pet, it
+  // is held like any ally; slanting past it, it slides round. Nearer
+  // dead-on than ~25°, the slide is too slow to count (#291's push-outs).
+  const DIRECTIONS = [vec2(1, 0), vec2(-1, 0), vec2(0, -1), vec2(1, 1), vec2(-1, 1)];
+  const SEEDS = ["0", "1", "2", "3", "4"];
+  /** How far a push-out may leave two bodies overlapping, a tick. */
+  const TOLERANCE = 1;
 
-  it("never holds up its owner's walk, in any direction, over five seeds", () => {
-    for (const seed of ["a", "b", "c", "d", "e"]) {
+  it("blocks its owner walking straight into it, over five seeds", () => {
+    for (const seed of SEEDS) {
+      const sim = match([ranger()], undefined, seed);
+      stepFor(sim, DT);
+      // South, from the centre, is straight through it.
+      expect(wolf(sim).position.y).toBeGreaterThan(0);
+      sim.setInputDirection("r", vec2(0, 1));
+      for (let tick = 0; tick < Math.round(1 / DT); tick += 1) {
+        sim.step(DT);
+        expect(distance(get(sim, "r").position, wolf(sim).position)).toBeGreaterThanOrEqual(
+          GAP - TOLERANCE,
+        );
+      }
+    }
+  });
+
+  it("never wedges its owner: away from it, or slanting past it, it walks on, over five seeds", () => {
+    for (const seed of SEEDS) {
       for (const direction of DIRECTIONS) {
         const sim = match([ranger()], undefined, seed);
         stepFor(sim, DT);
-        sim.setInputDirection("r", direction);
-        stepFor(sim, 2);
+        sim.setInputDirection("r", normalize(direction));
+        stepFor(sim, 3);
         expect(distance(get(sim, "r").position, vec2(0, 0))).toBeGreaterThanOrEqual(
-          0.8 * SPEED * 2,
+          0.6 * SPEED * 3,
         );
       }
+    }
+  });
+
+  it("is walked round by an owner ordered to a point past it, over five seeds", () => {
+    for (const seed of SEEDS) {
+      const sim = match([ranger()], undefined, seed);
+      stepFor(sim, DT);
+      const goal = vec2(0, wolf(sim).position.y + 200);
+      sim.walkTo("r", goal);
+      stepFor(sim, 4);
+      expect(distance(get(sim, "r").position, goal)).toBeLessThan(GAP);
     }
   });
 
