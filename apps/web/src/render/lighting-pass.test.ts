@@ -424,6 +424,53 @@ describe("layerSurfaces", () => {
       expect(box.y + box.height).toBeLessThanOrEqual(extent.height);
     }
   });
+
+  it("lights none of a raised layer a deck above it covers (#3671)", () => {
+    const stacked: MapStructure = {
+      ...HEIGHTS,
+      decks: [deck(1, 420, 250, 360, 200), deck(2, 500, 300, 160, 100)],
+      transitions: [ramp(0, 1, [300, 250, 140, 200], "e")],
+    };
+    const extent = lightMapExtent(stacked, 1, 1200, 800);
+    // A point of the layer's map, unlifted, at the half scale it is drawn at.
+    const at = (x: number, y: number) => ({ x: x / 2 - extent.x, y: y / 2 - extent.y });
+    const lit = (cover: readonly LightMapBox[], x: number, y: number) => {
+      const p = at(x, y);
+      return cover.some((box) => holds(box, p.x, p.y));
+    };
+    const under = lightMapCover(stacked, [], 1, extent);
+    const open = lightMapCover({ ...stacked, decks: [deck(1, 420, 250, 360, 200)] }, [], 1, extent);
+    // The upper deck's middle, drawn a step above the layer's map.
+    expect(lit(open, 580, 350 - ELEVATION_STEP)).toBe(true);
+    expect(lit(under, 580, 350 - ELEVATION_STEP)).toBe(false);
+    expect(lit(under, 440, 430)).toBe(true);
+    // An arch fades over whoever walks under it, so what it stands over stays lit.
+    const arch = { ...deck(2, 500, 300, 160, 100), look: "arch" as const };
+    const arched = lightMapCover(
+      { ...stacked, decks: [deck(1, 420, 250, 360, 200), arch] },
+      [],
+      1,
+      extent,
+    );
+    expect(lit(arched, 580, 350 - ELEVATION_STEP)).toBe(true);
+  });
+
+  it("lights a tunnel's floor under a deck over it, seen once it is cut away (#3671)", () => {
+    const tunnel = { kind: "rect" as const, x: 200, y: 600, width: 400, height: 80 };
+    const walled: MapStructure = {
+      ...HEIGHTS,
+      ground: 1,
+      decks: [deck(2, 180, 560, 440, 160)],
+      tunnels: [{ footprint: tunnel }],
+      transitions: [ramp(0, 1, [300, 560, 60, 100], "n")],
+    };
+    const extent = lightMapExtent(walled, 0, 1200, 800);
+    const cover = lightMapCover(walled, [], 0, extent);
+    const lit = (x: number, y: number): boolean =>
+      cover.some((box) => holds(box, x * 0.5 - extent.x, y * 0.5 - extent.y));
+    expect(lit(450, 640)).toBe(true);
+    expect(lit(250, 620)).toBe(true);
+  });
 });
 
 describe("flickerRegions (#3157, #3254)", () => {
