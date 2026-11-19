@@ -11,6 +11,14 @@ import type { LanguageCode } from "../i18n/languages.js";
  * attributes that tag may carry, and everything else, raw HTML first, is
  * dropped. A link goes to another page, out to the web in a new tab, or
  * nowhere: its text stays, as text.
+ *
+ * Images come from two places, by the path that also works on GitHub: a
+ * game icon, `../../apps/web/public/icons/<path>.svg` (one `../` more from
+ * a language folder), drawn from the game's own file, and a diagram,
+ * `img/<file>` (`../img/<file>`). An icon in prose is a chip-sized
+ * `doc-icon`, and with bold text right after it a `doc-chip`, as the
+ * effects bar shows a status; a paragraph of only a diagram is a figure,
+ * captioned by its alt text. An image without alt text is not shown.
  */
 
 /** Every tag a page can produce. */
@@ -38,7 +46,13 @@ export type DocTag =
   | "hr"
   | "br"
   | "a"
-  | "img";
+  | "img"
+  | "span"
+  | "figure"
+  | "figcaption";
+
+/** The only classes a page can produce; none comes from the Markdown. */
+export type DocClass = "doc-icon" | "doc-chip" | "doc-figure";
 
 export type DocNode =
   | { readonly kind: "text"; readonly text: string }
@@ -64,7 +78,7 @@ export interface DocTargets {
   readonly pages: ReadonlySet<string>;
   /** `img/<file>` to its bundled URL. */
   readonly images: ReadonlyMap<string, string>;
-  /** Where `/icons/...` lives in this build. */
+  /** Where the game's `icons/...` live in this build. */
   readonly base: string;
 }
 
@@ -183,8 +197,14 @@ function element(
   tag: DocTag,
   children: readonly DocNode[],
   attrs: Readonly<Record<string, string>> = {},
+  className?: DocClass,
 ): DocNode {
-  return { kind: "element", tag, attrs, children };
+  return {
+    kind: "element",
+    tag,
+    attrs: className === undefined ? attrs : { ...attrs, class: className },
+    children,
+  };
 }
 
 function text(value: string): DocNode {
@@ -228,10 +248,13 @@ function block(token: Token, targets: DocTargets): DocNode[] {
     case "heading": {
       const heading = token as Tokens.Heading;
       const tag = (["h1", "h2", "h3", "h4"] as const)[Math.min(heading.depth, 4) - 1] ?? "h4";
-      return [element(tag, inline(heading.tokens, targets))];
+      // A heading's icon stays an icon: a chip would compete with its text.
+      return [element(tag, inline(heading.tokens, targets, false))];
     }
-    case "paragraph":
-      return [element("p", inline((token as Tokens.Paragraph).tokens, targets))];
+    case "paragraph": {
+      const paragraph = token as Tokens.Paragraph;
+      return [figure(paragraph.tokens, targets) ?? element("p", inline(paragraph.tokens, targets))];
+    }
     case "list": {
       const list = token as Tokens.List;
       const items = list.items.map((item) => element("li", blocks(item.tokens, targets)));
@@ -271,34 +294,57 @@ function block(token: Token, targets: DocTargets): DocNode[] {
   }
 }
 
-function inline(tokens: readonly Token[], targets: DocTargets): DocNode[] {
-  return tokens.flatMap((token): DocNode[] => {
-    switch (token.type) {
-      case "text": {
-        const run = token as Tokens.Text;
-        return run.tokens === undefined ? [prose(run.text)] : inline(run.tokens, targets);
-      }
-      case "escape":
-        return [text((token as Tokens.Escape).text)];
-      case "strong":
-        return [element("strong", inline((token as Tokens.Strong).tokens, targets))];
-      case "em":
-        return [element("em", inline((token as Tokens.Em).tokens, targets))];
-      case "del":
-        return [element("del", inline((token as Tokens.Del).tokens, targets))];
-      case "codespan":
-        return [element("code", [text((token as Tokens.Codespan).text)])];
-      case "br":
-        return [element("br", [])];
-      case "link":
-        return link(token as Tokens.Link, targets);
-      case "image":
-        return image(token as Tokens.Image, targets);
-      default:
-        // Raw HTML: `<script>`, `<b onclick>` and the rest never get in.
-        return [];
+/**
+ * Inline tokens as nodes. With `chips`, an icon with bold text right after
+ * it, a space between at most, is one `doc-chip`.
+ */
+function inline(tokens: readonly Token[], targets: DocTargets, chips = true): DocNode[] {
+  const nodes: DocNode[] = [];
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    if (token === undefined) {
+      continue;
     }
-  });
+    const icon = token.type === "image" ? image(token as Tokens.Image, targets) : [];
+    const gap = tokens[i + 1];
+    const spaced = gap?.type === "text" && /^[ \t]+$/.test(gap.raw);
+    const label = tokens[spaced ? i + 2 : i + 1];
+    if (chips && isIcon(icon) && label?.type === "strong") {
+      nodes.push(element("span", [...icon, ...inlineToken(label, targets, chips)], {}, "doc-chip"));
+      i += spaced ? 2 : 1;
+    } else {
+      nodes.push(...inlineToken(token, targets, chips));
+    }
+  }
+  return nodes;
+}
+
+function inlineToken(token: Token, targets: DocTargets, chips: boolean): DocNode[] {
+  switch (token.type) {
+    case "text": {
+      const run = token as Tokens.Text;
+      return run.tokens === undefined ? [prose(run.text)] : inline(run.tokens, targets, chips);
+    }
+    case "escape":
+      return [text((token as Tokens.Escape).text)];
+    case "strong":
+      return [element("strong", inline((token as Tokens.Strong).tokens, targets, chips))];
+    case "em":
+      return [element("em", inline((token as Tokens.Em).tokens, targets, chips))];
+    case "del":
+      return [element("del", inline((token as Tokens.Del).tokens, targets, chips))];
+    case "codespan":
+      return [element("code", [text((token as Tokens.Codespan).text)])];
+    case "br":
+      return [element("br", [])];
+    case "link":
+      return link(token as Tokens.Link, targets);
+    case "image":
+      return image(token as Tokens.Image, targets);
+    default:
+      // Raw HTML: `<script>`, `<b onclick>` and the rest never get in.
+      return [];
+  }
 }
 
 /** Another page, the web in a new tab, or, for anything else, just its text. */
@@ -315,17 +361,58 @@ function link(token: Tokens.Link, targets: DocTargets): DocNode[] {
   return children;
 }
 
-/** An image from `docs/player/img/` or the game's own icons; nothing else. */
+/**
+ * A game icon's path from a page, `../../apps/web/public/icons/<path>.svg`
+ * or, from a language folder, `../../../...`: its `<path>` under `icons/`.
+ */
+const ICON_PATH = /^(?:\.\.\/){2,3}apps\/web\/public\/icons\/([a-z0-9/._-]+\.svg)$/;
+
+/** A diagram's path from a page, `img/<file>` or, from a language folder, `../img/<file>`. */
+const DIAGRAM_PATH = /^(?:\.\.\/)?(img\/[^/]+)$/;
+
+/** Whether `nodes` is one game icon. */
+function isIcon(nodes: readonly DocNode[]): boolean {
+  const [node] = nodes;
+  return nodes.length === 1 && node?.kind === "element" && node.attrs.class === "doc-icon";
+}
+
+/**
+ * A game icon, chip-sized, or a diagram from `docs/player/img/`; nothing
+ * else, and nothing without alt text.
+ */
 function image(token: Tokens.Image, targets: DocTargets): DocNode[] {
   const href = token.href.trim();
-  const bundled = targets.images.get(href);
-  const src =
-    bundled ??
-    (/^\/icons\/[a-z0-9/._-]+\.svg$/.test(href) && !href.includes("..")
-      ? `${targets.base}${href.slice(1)}`
-      : undefined);
-  if (src === undefined) {
+  const alt = token.text.trim();
+  const icon = ICON_PATH.exec(href)?.[1];
+  const diagram = DIAGRAM_PATH.exec(href)?.[1];
+  const bundled = diagram === undefined ? undefined : targets.images.get(diagram);
+  if (alt === "") {
     return [];
   }
-  return [element("img", [], { src, alt: token.text })];
+  if (icon !== undefined && !icon.split("/").some((part) => part === "." || part === "..")) {
+    return [
+      element("img", [], { src: `${targets.base}icons/${icon}`, alt, title: alt }, "doc-icon"),
+    ];
+  }
+  return bundled === undefined ? [] : [element("img", [], { src: bundled, alt })];
+}
+
+/** A paragraph of only a diagram, as a figure its alt text captions. */
+function figure(tokens: readonly Token[], targets: DocTargets): DocNode | undefined {
+  const [only, ...rest] = tokens.filter(
+    (token) => !(token.type === "text" && token.raw.trim() === ""),
+  );
+  if (only?.type !== "image" || rest.length > 0) {
+    return undefined;
+  }
+  const img = image(only as Tokens.Image, targets);
+  if (img.length === 0 || isIcon(img)) {
+    return undefined;
+  }
+  return element(
+    "figure",
+    [...img, element("figcaption", [prose((only as Tokens.Image).text.trim())])],
+    {},
+    "doc-figure",
+  );
 }

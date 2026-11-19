@@ -85,6 +85,7 @@ import {
   type RouteWaypoint,
   HARMFUL_ZONE_COST,
   shallowWaterZones,
+  walkCost,
   walkIsClear,
 } from "../pathing.js";
 import {
@@ -1387,6 +1388,22 @@ function walkLength(from: Vec2, route: readonly RouteWaypoint[]): number {
   let at: RouteWaypoint | undefined;
   for (const next of route) {
     total += at?.teleport === true ? 0 : distance(at ?? from, next);
+    at = next;
+  }
+  return total;
+}
+
+/** What walking `route` from `from` costs (#3521): `walkLength`, with each leg priced by its layer's cost zones as the path finder prices it. */
+function walkCostOf(
+  from: Vec2,
+  route: readonly RouteWaypoint[],
+  graphs: readonly NavGraph[],
+): number {
+  let total = 0;
+  let at: RouteWaypoint | undefined;
+  for (const next of route) {
+    total +=
+      at?.teleport === true ? 0 : walkCost(graphs[next.layer]?.zones ?? [], at ?? from, next);
     at = next;
   }
   return total;
@@ -4921,7 +4938,7 @@ export class MatchSimulation {
   /**
    * Each lever (#3138) and standing breakable wall (#3140) as bots read
    * it, and what throwing the lever or felling the wall now would win
-   * each team: how much shorter its way to the foes gets. A team's way
+   * each team: how much cheaper its way to the foes gets to walk. A team's way
    * runs from its living player nearest its centroid to the foe nearest
    * the foes' centroid, each on its own layer, so both ends stand on
    * ground. A pricing begins at most once a match second, and again after
@@ -4973,7 +4990,7 @@ export class MatchSimulation {
     return {
       ways,
       before: ways.map((way) =>
-        way === undefined ? Number.POSITIVE_INFINITY : this.#wayLength(now, way),
+        way === undefined ? Number.POSITIVE_INFINITY : this.#wayCost(now, way),
       ),
       reached: [],
       best: [],
@@ -4988,14 +5005,14 @@ export class MatchSimulation {
   #priceBotWays(pricing: BotWaysPricing): void {
     const { ways, before, reached, best } = pricing;
     const now = this.#currentWallSet();
-    // How much shorter `after` makes the way of each team `asked` names:
+    // How much cheaper `after` makes the way of each team `asked` names:
     // 0 for the rest, and with no way either way.
     const shorter = (after: WallSet, asked: readonly boolean[]): number[] =>
       ways.map((way, team) => {
         if (way === undefined || asked[team] !== true) {
           return 0;
         }
-        const gain = (before[team] ?? Number.POSITIVE_INFINITY) - this.#wayLength(after, way);
+        const gain = (before[team] ?? Number.POSITIVE_INFINITY) - this.#wayCost(after, way);
         return Number.isNaN(gain) ? 0 : gain;
       });
     // Whether each team can walk to `reach` on `layer` now: one search per
@@ -5149,10 +5166,12 @@ export class MatchSimulation {
     return from === undefined || to === undefined ? undefined : { from, to };
   }
 
-  /** How far `way` walks under `walls` (#3138): Infinity with no route. */
-  #wayLength(walls: WallSet, { from, to }: Way): number {
+  /** What `way` costs to walk under `walls` (#3138, #3521): Infinity with no route. */
+  #wayCost(walls: WallSet, { from, to }: Way): number {
     const route = walls.paths.find(from.position, from.layer, to.position, to.layer);
-    return route === undefined ? Number.POSITIVE_INFINITY : walkLength(from.position, route);
+    return route === undefined
+      ? Number.POSITIVE_INFINITY
+      : walkCostOf(from.position, route, walls.graphs);
   }
 
   /** Put a behaviour's intent through the same calls a player's messages make. */
