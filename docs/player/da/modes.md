@@ -123,7 +123,7 @@ på fjendens herre. Under den nævner en linje den, der bærer et flag. Et
 løft dukker op som "Moralløft! +10%" eller "Fjendens moralløft". På
 kompasset markerer ♛ hver Laugsherre, ⚑ hvert flag og ◎ standen.
 
-Guild Hall Isle spiller den.
+Guild Hall Isle (8v8, 6000x2600) spiller den: en ø i havet. Hver Guild Lord står oven på en hal bag en ringmur; vejen ud går gennem porthuset, over muren eller langs en mole. En portdør åbnes med et håndtag på fjendens mur. Flagstanden står på en forhøjning i midten.
 
 ## Relikvieløb
 
@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) spiller det: et tempel på en vulkans skråning 
 **Spøgelseshelt** i sin base, et spøgelse, der kæmper med økse, og som
 ingen spiller. **Alteret** står i midten, samme gåtur fra begge baser.
 På **Threefold Keep** kæmper tre hold (to, når intet tredje er ledigt) om
-det inde i en indmuret borg. Dens døre åbner kun indefra, med en plade
-indenfor: gå rundt til et åbent hjørne for at komme ind. Højst 12 point
+det på tårnet i en indmuret borg. Højst 12 point
 pr. hold, og står alle fjender på -60 % moral, vinder du med det samme.
 **Heltenes Hal**, den Kongen af bakken-bane, der afslutter Heltenes
 opstigning, hæver det på en forhøjning med mure mod vest og øst, op ad en
@@ -245,7 +244,7 @@ alteret, dræber hver bot først det andet holds Spøgelseshelt, så snart
 den står på alteret inden for deres rækkevidde: den er den ene fjende,
 der forhindrer dit spøgelse i at gøre krav på det.
 
-Threefold Keep spiller den.
+Threefold Keep (4v4 og 8v8, 5000x4400) spiller den: en borg på en bakke i højlandet, for tre hold. Gå op på murgangen ad trappen ved din port og kryds en dæmning til bakken, og klatr så op til alteret på tårnet. Et håndtag i hver gård åbner alle fire porte: din portgang under muren, og krypten, den lange vej under bakken.
 
 ## Erobring
 
@@ -289,6 +288,8 @@ trækker dem ikke væk: de træder op på en helligdom inden for rækkevidde og
 kæmper derfra.
 
 Scarred Earth (4v4 og 8v8, 5400x2800) spiller den: en kraterfyldt slagmark i skumringen. Helligdommene står på ødelagte belejringstårne, den midterste på det store tårns dæk, hver ved siden af et krater; håndtag på tårnene åbner to skyttegrave under marken, og ødelagte palisader kan slås ned.
+
+I Heltenes opstigning spiller The Warden's Gallery (8v8, 5200x2500) den: et solbeskinnet skulpturgalleri under ovenlysvinduer. Den midterste helligdom står på toppen af den store sokkel, og hvert hold har tre nær sin forhal, én på en sokkel; håndtag på den store sokkel åbner to krypter under gulvet, og væltede statuer kan slås ned.
 
 ## Holdlobby
 
@@ -428,8 +429,7 @@ snoede tunneler rundt om en klippe i midten),
 Præsteudslettelse ved et mørkt vadested i en flod: man vader over et lavvandet vadested, går over den
 ødelagte bro på sine piller over møllen eller tager en kulvert under broen, når et håndtag på møllen
 åbner dens port; præsten genopliver sine døde hvert 2. minut) og
-**Mosslit Cairns** (8v8 Erobring, fem varder i en flad zigzag mellem
-baserne). En fjerde er **The Brazen Causeway** (8v8, 5600x2800, Præsteudslettelse på en hævet stendæmning over en marsk i skumringen: man marcherer ad dæmningen, når et håndtag i det fjerne porthus åbner dens bronzeport, krydser marsken til trappen midt på den eller smutter gennem en kulvert under den; præsten genopliver sine døde hvert 2. minut).
+**Mosslit Cairns** (8v8, 5400x3000, Erobring på fem varde-høje, der gløder af mos i skumringen: man klatrer op på en varde ad dens trapper, holder den store varde i midten eller tager rodtunnelen under de sydlige høje, når et håndtag på en nordlig varde åbner dens porte; rodmure kan brydes ned). En fjerde er **The Brazen Causeway** (8v8, 5600x2800, Præsteudslettelse på en hævet stendæmning over en marsk i skumringen: man marcherer ad dæmningen, når et håndtag i det fjerne porthus åbner dens bronzeport, krydser marsken til trappen midt på den eller smutter gennem en kulvert under den; præsten genopliver sine døde hvert 2. minut).
 
 En bane kan have **porte**: mure, der stopper kroppe, skud og udsyn, mens
 de er lukkede. Stå på en ports trykplade for at åbne den. Den lukker, når

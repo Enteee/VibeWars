@@ -141,15 +141,15 @@ nie ma, pojawia się jako puste miejsce. Build jest twój, gdy naciśniesz **Zap
 zapisywania, a jeśli coś zmieniłeś, najpierw pyta.
 **Udostępnij**, **Wczytaj kod GW1**, **Duplikuj** i **Usuń** są pod **⋯**.
 
-Kod drużyny wczytuje się natomiast w **Kreatorze drużyn**: naciśnij
-**Wczytaj drużynę**, wklej kod i naciśnij **Wczytaj** albo wklej go w dowolnym
-miejscu Kreatora drużyn.
+Kod drużyny wczytuje się natomiast w **Kreatorze drużyn**: wklej go
+tam w dowolnym miejscu albo otwórz build drużyny i użyj jego **⋯** →
+**Wczytaj drużynę**.
 
 ## Buildy drużyn
 
 **Build drużyny** to drużyna z własnych postaci, tworzona w **Kreatorze drużyn**
 i przechowywana osobno od twoich postaci. Każda jest tam kartą, i tylko tam:
-**Nowy build drużyny** tworzy nowy, **Wczytaj drużynę** wczytuje build
+**Nowy build drużyny** tworzy nowy, wklejony tam kod drużyny wczytuje build
 udostępniony ci przez kogoś, a kliknięcie karty albo jej **Edytuj** go otwiera. Proponujesz go w [Lobby drużyny](modes.md#lobby-drużyny).
 
 Każdy build drużyny ma rozmiar, 2v2, 4v4 lub 8v8 (nie ma buildów drużyn 1v1):

@@ -115,7 +115,7 @@ musuh. Di bawahnya, sebaris teks menyebut siapa pun yang membawa bendera. Dorong
 "Dorongan Moral! +10%", atau "Dorongan Moral musuh". Di kompas, ♛ menandai
 setiap Penguasa Guild, ⚑ setiap bendera dan ◎ tiangnya.
 
-Guild Hall Isle memainkannya.
+Guild Hall Isle (8v8, 6000x2600) memainkannya: sebuah pulau di laut. Setiap Guild Lord berdiri di atas aula, di balik benteng; jalan keluar lewat gerbang, melewati atas benteng, atau menyusuri dermaga. Pintu gerbang dibuka oleh tuas di benteng lawan. Tiang bendera ada di panggung di tengah.
 
 ## Lari Relik
 
@@ -172,8 +172,7 @@ Cinder Sanctum (8v8, 5600x2800) memainkannya: sebuah kuil di lereng gunung berap
 **Pahlawan Hantu** di markasnya, hantu yang bertarung dengan kapak dan yang
 tidak dimainkan siapa pun. **Altar** ada di tengah, sama jauhnya dari kedua
 markas. Di **Threefold Keep**, tiga tim (dua kalau tak ada tim ketiga yang tersedia) memperebutkannya
-di dalam sebuah keep bertembok. Pintu-pintunya hanya bisa dibuka dari dalam, lewat sebuah pelat di dalamnya: jalan
-memutar ke sudut yang terbuka untuk masuk. Paling banyak 12 poin per tim, dan kalau setiap musuh
+di atas menara sebuah keep bertembok. Paling banyak 12 poin per tim, dan kalau setiap musuh
 berada di moral -60% kamu langsung menang. **Aula
 Pahlawan**, peta Raja Bukit yang mengakhiri Pendakian Pahlawan, meninggikan
 altar di atas panggung bertembok di barat dan timur, naik lewat jalan utara atau selatan
@@ -229,7 +228,7 @@ jangkauan mantra. Selama timmu tidak menguasai altar, setiap bot membunuh Pahlaw
 tim lawan lebih dulu begitu hantu itu berdiri di altar dalam jangkauan mereka:
 dialah satu-satunya musuh yang mencegah hantumu merebutnya.
 
-Threefold Keep memainkannya.
+Threefold Keep memainkannya (4v4 dan 8v8, 5000x4400): sebuah keep di atas bukit di dataran tinggi, untuk tiga tim. Naiki jalan di atas tembok lewat tangga di samping gerbangmu lalu seberangi jalan lintas ke bukit, kemudian naik ke altar di atas menara. Sebuah tuas di tiap pelataran membuka keempat gerbang: lorong gerbangmu di bawah tembok, dan ruang bawah tanah, jalan panjang di bawah bukit.
 
 ## Rebut Titik
 
@@ -266,6 +265,8 @@ di sana sampai kuil itu direbut. Musuh dalam jangkauan mantra tidak memancing me
 pergi: mereka naik ke kuil yang terjangkau dan bertarung dari sana.
 
 Scarred Earth (4v4 dan 8v8, 5400x2800) memainkannya: medan perang penuh kawah saat senja. Kuil-kuilnya berdiri di atas menara pengepungan yang hancur, yang di tengah di geladak menara besar, masing-masing di samping kawah; tuas di menara membuka dua parit di bawah medan, dan pagar kayu yang hancur bisa dirobohkan.
+
+Di Pendakian Pahlawan, The Warden's Gallery (8v8, 5200x2500) memainkannya: galeri patung bermandikan cahaya matahari di bawah jendela atap. Kuil tengah berdiri di puncak alas besar, dan tiap tim punya tiga di dekat serambinya, satu di atas alas; tuas di alas besar membuka dua ruang bawah tanah di bawah lantai, dan patung yang roboh bisa dihancurkan.
 
 ## Lobi Tim
 
@@ -395,8 +396,7 @@ terowongan berkelok di sekeliling batu di tengah),
 Pendeta 8v8, 5200x2800, di sebuah arungan sungai yang gelap: arungi arungan yang dangkal, seberangi jembatan rusak di atas
 kincir yang bertumpu pada pilar-pilarnya, atau lewati gorong-gorong di bawah jembatan setelah tuas di kincir membuka
 gerbangnya; pendeta menghidupkan kembali yang mati setiap 2 menit) dan
-**Mosslit Cairns** (Rebut Titik 8v8, lima tumpukan batu dalam zig-zag dangkal
-di antara markas-markas). Yang keempat adalah **The Brazen Causeway** (Pemusnahan Pendeta 8v8, 5600x2800, di jalan lintas batu yang ditinggikan di atas rawa saat senja: berbaris menyusuri jalan lintas itu setelah tuas di rumah gerbang di ujung sana membuka gerbang perunggunya, seberangi rawa menuju tangga di tengahnya, atau menyelinap lewat gorong-gorong di bawahnya; pendeta menghidupkan kembali yang mati setiap 2 menit).
+**Mosslit Cairns** (Rebut Titik 8v8, 5400x3000, di lima bukit tumpukan batu yang berpendar oleh lumut saat senja: panjat tumpukan batu lewat tangganya, kuasai tumpukan batu besar di tengah, atau ambil terowongan akar di bawah bukit-bukit selatan setelah tuas di tumpukan batu utara membuka gerbangnya; dinding akar bisa dihancurkan). Yang keempat adalah **The Brazen Causeway** (Pemusnahan Pendeta 8v8, 5600x2800, di jalan lintas batu yang ditinggikan di atas rawa saat senja: berbaris menyusuri jalan lintas itu setelah tuas di rumah gerbang di ujung sana membuka gerbang perunggunya, seberangi rawa menuju tangga di tengahnya, atau menyelinap lewat gorong-gorong di bawahnya; pendeta menghidupkan kembali yang mati setiap 2 menit).
 
 Sebuah peta bisa punya **gerbang**: tembok yang menghentikan tubuh, tembakan dan pandangan selagi
 tertutup. Berdirilah di pelat penekan sebuah gerbang untuk membukanya. Gerbang menutup saat

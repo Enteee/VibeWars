@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { FLAT_STRUCTURE } from "./arena-snapshot.js";
+import { FLAT_STRUCTURE, type MapStructure } from "./arena-snapshot.js";
 import {
-  breakableAtPoint,
+  recordBreakable,
   breakableSeed,
   CRACK_GROW_SECONDS,
   crackReveal,
@@ -11,6 +11,21 @@ import {
   renderableBreakables,
   type RenderableBreakable,
 } from "./breakable-objects.js";
+
+import { pickAt, type DrawnClickable } from "./pick.js";
+
+/** The standing wall a right click picks at `point`, as recorded where it is drawn. */
+function breakableAtPoint(
+  breakables: readonly RenderableBreakable[],
+  point: { readonly x: number; readonly y: number },
+  structure: Pick<MapStructure, "ground" | "layerCount">,
+): string | undefined {
+  const drawn: DrawnClickable[] = [];
+  for (const breakable of breakables) {
+    recordBreakable(drawn, breakable, structure, 0);
+  }
+  return pickAt(drawn, point)?.id;
+}
 
 const wall = { kind: "rect", x: 100, y: 100, width: 60, height: 16 } as const;
 const descriptor = { id: "gap", layer: 0, wall, maxHealth: 300 };

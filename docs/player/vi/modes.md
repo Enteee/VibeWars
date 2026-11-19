@@ -117,7 +117,7 @@ Bên dưới, một dòng ghi tên ai đang mang cờ. Lần tăng sĩ khí hi�
 "Tăng sĩ khí! +10%", hoặc "Địch tăng sĩ khí". Trên la bàn, ♛ đánh dấu mỗi
 Lãnh chúa Bang, ⚑ mỗi lá cờ và ◎ bệ cờ.
 
-Guild Hall Isle chơi chế độ này.
+Guild Hall Isle (8v8, 6000x2600) chơi chế độ này: một hòn đảo giữa biển. Mỗi Guild Lord đứng trên đỉnh một sảnh, sau một bức tường thành; lối ra là qua cổng thành, vượt lên tường thành hoặc dọc theo một cầu tàu. Cửa cổng thành mở bằng một cần gạt trên tường thành của đối phương. Giá cắm cờ nằm trên một bục ở giữa.
 
 ## Vận chuyển thánh tích
 
@@ -172,9 +172,8 @@ Cinder Sanctum (8v8, 5600x2800) chơi chế độ này: một ngôi đền trên
 **Dẫn Anh hùng Ma của bạn lên tế đàn, và giữ nó.** Mỗi đội có một **Anh hùng
 Ma** trong căn cứ, một con ma chiến đấu bằng rìu mà không ai điều khiển.
 **Tế đàn** ở trung tâm, quãng đường từ hai căn cứ như nhau. Trên **Threefold
-Keep**, ba đội (hai đội khi không có đội thứ ba rảnh) tranh giành nó bên
-trong một pháo đài có tường bao. Cửa của nó chỉ mở từ bên trong, bằng một tấm
-nén bên trong: đi vòng tới một góc mở để vào. Tối đa 12 điểm mỗi đội, và nếu
+Keep**, ba đội (hai đội khi không có đội thứ ba rảnh) tranh giành nó trên
+tháp của một pháo đài có tường bao. Tối đa 12 điểm mỗi đội, và nếu
 mọi địch đều ở mức -60% sĩ khí thì bạn thắng ngay lập tức. **Đại sảnh Anh
 hùng**, bản đồ Vua đồi kết thúc Đỉnh Anh Hùng, đặt tế đàn trên một bục có
 tường ở phía tây và phía đông, lên bằng lối phía bắc hoặc phía nam có hàng
@@ -226,7 +225,7 @@ Phép. Khi đội bạn không giữ tế đàn, mọi bot hạ Anh hùng Ma c�
 tiên một khi nó đứng trên tế đàn trong tầm của chúng: đó là kẻ địch duy nhất
 ngăn con ma của bạn chiếm tế đàn.
 
-Threefold Keep chơi chế độ này.
+Threefold Keep chơi chế độ này (4v4 và 8v8, 5000x4400): một pháo đài trên ngọn đồi ở vùng cao, cho ba đội. Leo lên lối đi trên tường thành bằng cầu thang cạnh cổng của bạn và băng qua một con đê tới ngọn đồi, rồi leo lên tế đàn trên tháp. Một cần gạt ở mỗi sân mở cả bốn cổng: lối qua cổng của bạn dưới tường thành, và hầm mộ, đường vòng dài dưới ngọn đồi.
 
 ## Chiếm điểm
 
@@ -266,6 +265,8 @@ Bot tản ra các đền mà đội bạn chưa sở hữu và đứng trên đ�
 trong tầm và đánh từ đó.
 
 Scarred Earth (4v4 và 8v8, 5400x2800) chơi chế độ này: một chiến trường đầy hố bom lúc chạng vạng. Các đền nằm trên những tháp công thành đổ nát, đền giữa trên sàn của tháp lớn, mỗi đền cạnh một hố; cần gạt trên các tháp mở hai chiến hào dưới chiến trường, và hàng rào cọc đổ nát có thể phá được.
+
+Trong Đỉnh Anh Hùng, The Warden's Gallery (8v8, 5200x2500) chơi chế độ này: một phòng trưng bày tượng ngập nắng dưới các giếng trời. Đền giữa nằm trên đỉnh bệ lớn, và mỗi đội có ba đền gần tiền sảnh của mình, một đền trên bệ; cần gạt trên bệ lớn mở hai hầm ngầm dưới sàn, và những bức tượng đổ có thể phá được.
 
 ## Sảnh Đội
 
@@ -397,8 +398,7 @@ Ba đấu trường của Đỉnh cũng là lựa chọn của Trận tự tạo
 **Blackwater Ford** (Diệt tư tế 8v8, 5200x2800, tại một khúc sông cạn tối tăm: lội qua chỗ nước nông, băng qua cây cầu gãy
 đứng trên các trụ phía trên cối xay, hoặc đi qua cống dưới cầu khi cần gạt trên cối xay mở cổng của nó;
 tư tế hồi sinh người chết của đội mỗi 2 phút) và
-**Mosslit Cairns** (Chiếm điểm 8v8, năm ụ đá xếp zig-zag nông giữa hai căn
-cứ). Đấu trường thứ tư là **The Brazen Causeway** (Diệt tư tế 8v8, 5600x2800, trên một con đường đắp bằng đá nhô cao giữa đầm lầy lúc hoàng hôn: hành quân dọc con đường khi cần gạt trong tháp cổng phía xa mở cổng đồng thau của nó, băng qua đầm lầy tới bậc thang ở giữa đường, hoặc lẻn qua cống bên dưới; tư tế hồi sinh người chết của đội mỗi 2 phút).
+**Mosslit Cairns** (Chiếm điểm 8v8, 5400x3000, trên năm đồi ụ đá phát sáng nhờ rêu lúc hoàng hôn: leo lên một ụ đá bằng bậc thang của nó, giữ ụ đá lớn ở giữa, hoặc đi đường hầm rễ cây dưới các đồi phía nam khi cần gạt trên một ụ đá phía bắc mở cổng của nó; tường rễ cây có thể bị phá vỡ). Đấu trường thứ tư là **The Brazen Causeway** (Diệt tư tế 8v8, 5600x2800, trên một con đường đắp bằng đá nhô cao giữa đầm lầy lúc hoàng hôn: hành quân dọc con đường khi cần gạt trong tháp cổng phía xa mở cổng đồng thau của nó, băng qua đầm lầy tới bậc thang ở giữa đường, hoặc lẻn qua cống bên dưới; tư tế hồi sinh người chết của đội mỗi 2 phút).
 
 Bản đồ có thể có **cổng**: những bức tường chặn cơ thể, đạn và tầm nhìn khi
 đóng. Đứng trên tấm nén của cổng để mở nó. Cổng đóng lại khi không còn ai trên

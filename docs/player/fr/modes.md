@@ -129,7 +129,7 @@ drapeau. Un bonus s'affiche « Bonus de moral ! +10% », ou « Bonus de moral
 ennemi ». Sur la boussole, ♛ marque chaque Seigneur de guilde, ⚑ chaque drapeau
 et ◎ le socle.
 
-Guild Hall Isle le joue.
+Guild Hall Isle (8v8, 6000x2600) le joue : une île en mer. Chaque Guild Lord se tient au sommet d'une salle, derrière un rempart ; on sort par la porterie, par-dessus le rempart ou le long d'un ponton. Une porte de porterie s'ouvre par un levier sur le rempart ennemi. Le support du drapeau est sur une estrade au centre.
 
 ## Course aux reliques
 
@@ -179,8 +179,7 @@ Cinder Sanctum (8v8, 5600x2800) le joue : un temple au flanc d'un volcan entre d
 **Héros fantomatique** dans sa base, un fantôme qui se bat à la hache et que
 personne ne joue. L'**autel** est au centre, à la même distance des deux bases.
 Sur **Threefold Keep**, trois équipes (deux si aucune troisième n'est libre) se le
-disputent dans un donjon muré. Ses portes ne s'ouvrent que de l'intérieur, par
-une plaque : pour entrer, contourne-le jusqu'à un coin ouvert. Au plus 12 points
+disputent sur la tour d'un donjon muré. Au plus 12 points
 par équipe, et si tous les adversaires sont à -60 % de moral, tu gagnes aussitôt. Le **Hall of Heroes**, la
 carte de Roi de la colline qui clôt l'Ascension des héros, le dresse sur une
 estrade murée à l'ouest et à l'est, par une approche nord ou sud bordée de
@@ -238,7 +237,7 @@ qui arrive à portée de sort. Tant que ton équipe ne tient pas l'autel, chaque
 tue d'abord le Héros fantomatique adverse dès qu'il se tient sur l'autel à sa
 portée : c'est le seul ennemi qui empêche ton fantôme de le prendre.
 
-Threefold Keep le joue.
+Threefold Keep le joue (4v4 et 8v8, 5000x4400) : un donjon sur une colline des hauteurs, pour trois équipes. Monte sur le chemin de ronde par l'escalier à côté de ta porte et traverse une chaussée jusqu'à la colline, puis grimpe jusqu'à l'autel sur la tour. Un levier dans chaque cour ouvre les quatre portes : le passage de ta porte sous le rempart, et la crypte, le long chemin sous la colline.
 
 ## Points de capture
 
@@ -280,6 +279,8 @@ s'y tiennent jusqu'à leur prise. Un ennemi à portée de sort ne les attire pas
 ils montent sur un sanctuaire à portée et combattent depuis celui-ci.
 
 Scarred Earth (4v4 et 8v8, 5400x2800) le joue : un champ de bataille criblé de cratères au crépuscule. Les sanctuaires se dressent sur des tours de siège détruites, celui du centre sur la plate-forme de la grande tour, chacun près d'un cratère ; des leviers sur les tours ouvrent deux tranchées sous le champ, et les palissades détruites peuvent être brisées.
+
+Dans l'Ascension des héros, The Warden's Gallery (8v8, 5200x2500) le joue : une galerie de sculptures ensoleillée sous des verrières. Le sanctuaire du centre se dresse au sommet du grand socle, et chaque équipe en a trois près de son vestibule, dont un sur un socle ; des leviers sur le grand socle ouvrent deux cryptes sous le sol, et les statues renversées peuvent être brisées.
 
 ## Salon d'équipe
 
@@ -396,8 +397,7 @@ Trois arènes d'Ascension se choisissent aussi en Partie hébergée : **The Holl
 8v8, trois tunnels sinueux autour d'un rocher central), **Blackwater Ford**
 (Annihilation de prêtre 8v8, 5200x2800, à un sombre gué de rivière : on traverse un haut-fond à gué, on franchit
 le pont brisé sur ses piles au-dessus du moulin, ou on prend un ponceau sous le pont une fois qu'un levier sur le
-moulin en ouvre la herse ; le prêtre relève ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de
-capture 8v8, cinq cairns en léger zigzag entre les bases). La quatrième est **The Brazen Causeway** (Annihilation de prêtre 8v8, 5600x2800, sur une chaussée de pierre surélevée au-dessus d'un marais au crépuscule : on marche le long de la chaussée une fois qu'un levier dans le châtelet du fond en ouvre la porte de bronze, on traverse le marais jusqu'aux escaliers en son milieu, ou on se glisse par un ponceau en dessous ; le prêtre relève ses morts toutes les 2 minutes).
+moulin en ouvre la herse ; le prêtre relève ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de capture 8v8, 5400x3000, sur cinq collines à cairns luisantes de mousse au crépuscule : on gravit un cairn par ses escaliers, on tient le grand cairn du milieu, ou on prend le tunnel de racines sous les collines du sud une fois qu'un levier sur un cairn du nord en ouvre les portes ; les murs de racines peuvent être brisés). La quatrième est **The Brazen Causeway** (Annihilation de prêtre 8v8, 5600x2800, sur une chaussée de pierre surélevée au-dessus d'un marais au crépuscule : on marche le long de la chaussée une fois qu'un levier dans le châtelet du fond en ouvre la porte de bronze, on traverse le marais jusqu'aux escaliers en son milieu, ou on se glisse par un ponceau en dessous ; le prêtre relève ses morts toutes les 2 minutes).
 
 Une carte peut avoir des **portes** : des murs qui arrêtent les corps, les tirs et
 la vue quand ils sont fermés. Tiens-toi sur la plaque de pression d'une porte pour

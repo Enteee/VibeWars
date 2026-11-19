@@ -149,14 +149,14 @@ ešte nemá, príde ako prázdna pozícia. Build je tvoj, keď stlačíš
 **Esc** odíde bez uloženia, a ak si niečo zmenil, najprv sa opýta.
 **Zdieľať**, **Načítať kód GW1**, **Duplikovať** a **Zmazať** sú pod **⋯**.
 
-Tímový kód sa namiesto toho načítava v **Tvorba tímov**: stlač **Načítať tím**,
-vlož kód a stlač **Načítať**, alebo ho vlož kamkoľvek v **Tvorba tímov**.
+Tímový kód sa namiesto toho načítava v **Tvorba tímov**: vlož ho tam kamkoľvek,
+alebo otvor tímový build a použi jeho **⋯** → **Načítať tím**.
 
 ## Tímové buildy
 
 **Tímový build** je tím s vlastnými postavami, vytvorený v **Tvorba
 tímov** a oddelený od tvojich vlastných postáv. Každý z nich je tam karta,
-a len tam: **Nový tímový build** ho vytvorí, **Načítať tím**
+a len tam: **Nový tímový build** ho vytvorí, tímový kód vložený tam
 načíta ten, ktorý s tebou niekto zdieľal, a kliknutie na kartu alebo na jej **Upraviť** ho otvorí. Navrhuješ ho v
 [tímovom lobby](modes.md#tímové-lobby).
 

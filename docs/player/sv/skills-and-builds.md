@@ -155,14 +155,14 @@ plats. Builden är din när du trycker på **Spara**.
 **Esc** lämnar utan att spara, och frågar först om du har ändrat något.
 **Dela**, **Ladda GW1-kod**, **Duplicera** och **Radera** finns under **⋯**.
 
-En lagkod laddas i stället i **Lagbyggare**: tryck på **Ladda lag**, klistra in
-koden och tryck på **Ladda**, eller klistra in den var som helst i Lagbyggare.
+En lagkod laddas i stället i **Lagbyggare**: klistra in den var som helst där,
+eller öppna en lagbuild och använd dess **⋯** → **Ladda lag**.
 
 ## Lagbuilds
 
 En **lagbuild** är ett lag med egna karaktärer, skapat i **Lagbyggare**
 och hållet åtskilt från dina egna karaktärer. Var och en är ett kort
-där, och bara där: **Ny lagbuild** skapar en, **Ladda lag**
+där, och bara där: **Ny lagbuild** skapar en, en lagkod inklistrad där
 laddar en som delats med dig, och ett klick på ett kort, eller dess **Ändra**, öppnar den. Du föreslår en i
 [laglobbyn](modes.md#laglobby).
 

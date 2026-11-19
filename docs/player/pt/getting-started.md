@@ -83,6 +83,15 @@ espera tira você da fila na hora.
 Quando a partida acaba, você pode usar **Entrar de novo** ou **Ficar
 juntos** com a equipe com que acabou de jogar.
 
+Ao lado das pontuações, dois gráficos contam a partida ao longo do tempo.
+**Tu** mostra seu dano causado, dano recebido, cura e Energia; **Equipas**
+mostra a reserva de vida de cada equipe acima do seu dano total. Marcas abaixo
+do eixo do tempo indicam abates, mortes, interrupções, capturas e
+ressurreições: aponte para uma, ou chegue a ela com Tab, para ler o que
+aconteceu. Pressione um item da legenda para ocultar ou mostrar sua linha. No
+celular, os gráficos ficam abaixo das pontuações, que mostram você e mais dois
+até **Mostrar tudo**.
+
 ## Hospedar ou entrar em uma partida
 
 Você está sempre em uma sala: desde que a página abre, ela hospeda uma
@@ -169,9 +178,9 @@ incluindo a sua: `2 equipes
 buscando`. Só o host tem **Sair da fila** ali. Fechar a aba do host tira
 o grupo da fila na hora. Quando aparece outra equipe na fila do mesmo
 modo, vocês jogam em um dos mapas do modo, cada lado com suas builds, e
-voltam à sua sala depois. O host pode sair da fila pela janela do anel a qualquer momento; um convidado que sai tira todo o grupo dela. Se depois
-de um minuto não houver outra equipe, o host também pode pressionar
-**Jogar contra bots**: uma partida na sua própria sala contra uma equipe
+voltam à sua sala depois. O host pode sair da fila pela janela do anel a qualquer momento; um convidado que sai tira todo o grupo dela. Depois
+de 10 s na fila, o host também pode pressionar
+**Jogar contra bots** na janela do anel: uma partida na sua própria sala contra uma equipe
 predefinida aleatória de bots, exceto em
 [Ascensão dos Heróis](modes.md#ascensão-dos-heróis), que espera uma
 equipe da sua rodada.

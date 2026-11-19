@@ -1,6 +1,5 @@
 import {
   FLAG_STAND_ID,
-  Vec,
   flagId,
   relicId,
   switchTargetId,
@@ -18,6 +17,8 @@ import type { GateDescriptor, SwitchDescriptor, TeleportDescriptor } from "@vibe
 import type { GateLook } from "@vibewars/game-maps/schema";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 import type { RenderableShape } from "./arena-snapshot.js";
+import type { DrawnClickable } from "./pick.js";
+import { elevationOf } from "./render-order.js";
 import type { SwitchTarget } from "./switch-link.js";
 
 /**
@@ -41,6 +42,8 @@ export interface RenderableFlag {
   readonly side: FlagSide;
   /** Its foot: the carrier's position while carried. */
   readonly position: Vec2;
+  /** The layer it lies on, or its carrier stands on (ADR-0051): drawn lifted by it. */
+  readonly layer: number;
   /** On a carrier, drawn over the head; nowhere to pick. */
   readonly carried: boolean;
   /** On the stand: the stand is what a click picks. */
@@ -50,6 +53,8 @@ export interface RenderableFlag {
 export interface RenderableStand {
   readonly id: string;
   readonly position: Vec2;
+  /** The layer it stands on (ADR-0051): drawn lifted by it. */
+  readonly layer: number;
   /** Whose flag is on it; `undefined`, neutral grey, for nobody's. */
   readonly holder: FlagSide | undefined;
 }
@@ -74,14 +79,15 @@ export function renderableFlags(
     return [];
   }
   return flags.flatMap(({ team, place }) => {
-    const position = flagFoot(field.spawns, field.stand, team, place, players);
-    return position === undefined
+    const stand = { position: field.stand, layer: field.standLayer };
+    const foot = flagFoot(field.spawns, stand, team, place, players);
+    return foot === undefined
       ? []
       : [
           {
             id: flagId(team),
             side: sideOf(team, selfTeam),
-            position,
+            ...foot,
             carried: place.kind === "carried",
             onStand: place.kind === "stand",
           },
@@ -103,14 +109,14 @@ export function renderableRelics(
     return [];
   }
   return relics.flatMap(({ team, place }) => {
-    const position = flagFoot(field.spawns, undefined, team, place, players);
-    return position === undefined
+    const foot = flagFoot(field.spawns, undefined, team, place, players);
+    return foot === undefined
       ? []
       : [
           {
             id: relicId(team),
             side: sideOf(team, selfTeam),
-            position,
+            ...foot,
             carried: place.kind === "carried",
             onStand: false,
           },
@@ -118,24 +124,34 @@ export function renderableRelics(
   });
 }
 
+/** A point on a layer (ADR-0051). */
+interface FlagFoot {
+  readonly position: Vec2;
+  readonly layer: number;
+}
+
 /** Where a flag or relic stands, or its carrier, from the map's spawns and stand. */
 function flagFoot(
   spawns: readonly CarriedSpawn[],
-  stand: Vec2 | undefined,
+  stand: FlagFoot | undefined,
   team: number,
   place: FlagPlace,
   players: readonly PlayerSnapshot[],
-): Vec2 | undefined {
+): FlagFoot | undefined {
   switch (place.kind) {
-    case "spawn":
-      return spawns.find((spawn) => spawn.team === team)?.position;
+    case "spawn": {
+      const spawn = spawns.find((at) => at.team === team);
+      return spawn === undefined ? undefined : { position: spawn.position, layer: spawn.layer };
+    }
     case "ground":
-      return place.position;
+      return { position: place.position, layer: place.layer };
     case "stand":
       return stand;
     case "carried": {
       const carrier = players.find((player) => player.sessionId === place.carrierId);
-      return carrier === undefined ? undefined : { x: carrier.x, y: carrier.y };
+      return carrier === undefined
+        ? undefined
+        : { position: { x: carrier.x, y: carrier.y }, layer: carrier.layer };
     }
   }
 }
@@ -152,31 +168,52 @@ export function renderableStand(
   return {
     id: FLAG_STAND_ID,
     position: field.stand,
+    layer: field.standLayer,
     holder: stand.holder === undefined ? undefined : sideOf(stand.holder, selfTeam),
   };
 }
 
 /**
- * The flag or the stand under `point`, for a right click to target, as
- * a body is: a flag lying at its spawn or on the ground first, then the
- * stand. A carried flag is its carrier's to click.
+ * Draw `flag` lifted by what this returns (#3634), which records it in
+ * `out` for a right click to target as a body is, where it shows: a flag
+ * lying at its spawn or on the ground. A carried flag is its carrier's to
+ * click, and one on the stand the stand's.
  */
-export function flagObjectAtPoint(
-  flags: readonly RenderableFlag[],
-  stand: RenderableStand | undefined,
-  point: Vec2,
-): string | undefined {
-  const lying = flags
-    .filter((flag) => !flag.carried && !flag.onStand)
-    .map((flag) => ({ id: flag.id, d: Vec.distance(flag.position, point) }))
-    .filter(({ d }) => d <= FLAG_PICK_RADIUS)
-    .sort((a, b) => a.d - b.d)[0];
-  if (lying !== undefined) {
-    return lying.id;
+export function recordFlag(
+  out: DrawnClickable[],
+  flag: RenderableFlag,
+  ground: number,
+  depth: number,
+): number {
+  const lift = elevationOf(flag.layer, ground);
+  if (!flag.carried && !flag.onStand) {
+    const { x, y } = flag.position;
+    out.push({
+      kind: "flag",
+      id: flag.id,
+      hit: { circle: { x, y: y - lift, r: FLAG_PICK_RADIUS } },
+      depth,
+    });
   }
-  return stand !== undefined && Vec.distance(stand.position, point) <= STAND_RADIUS
-    ? stand.id
-    : undefined;
+  return lift;
+}
+
+/** Draw the stand lifted by what this returns (#3634), which records it in `out` where it shows. */
+export function recordStand(
+  out: DrawnClickable[],
+  stand: RenderableStand,
+  ground: number,
+  depth: number,
+): number {
+  const lift = elevationOf(stand.layer, ground);
+  const { x, y } = stand.position;
+  out.push({
+    kind: "stand",
+    id: stand.id,
+    hit: { circle: { x, y: y - lift, r: STAND_RADIUS } },
+    depth,
+  });
+  return lift;
 }
 
 /**
@@ -322,15 +359,25 @@ export function renderableTeleports(
   }));
 }
 
-/** The switch under `point`, for a right click to target as a bundle is (#3025). */
-export function switchAtPoint(
-  switches: readonly RenderableSwitch[],
-  point: Vec2,
-): string | undefined {
-  return switches
-    .map((lever) => ({ id: lever.id, d: Vec.distance(lever.position, point) }))
-    .filter(({ d }) => d <= SWITCH_PICK_RADIUS)
-    .sort((a, b) => a.d - b.d)[0]?.id;
+/**
+ * Draw `lever` lifted by what this returns (#3634), which records it in
+ * `out` for a right click to target as a bundle is (#3025), where it shows.
+ */
+export function recordSwitch(
+  out: DrawnClickable[],
+  lever: RenderableSwitch,
+  ground: number,
+  depth: number,
+): number {
+  const lift = elevationOf(lever.layer, ground);
+  const { x, y } = lever.position;
+  out.push({
+    kind: "switch",
+    id: lever.id,
+    hit: { circle: { x, y: y - lift, r: SWITCH_PICK_RADIUS } },
+    depth,
+  });
+  return lift;
 }
 
 /** Every shrine, from your side's view; `[]` on a map without them. */

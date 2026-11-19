@@ -77,6 +77,15 @@ Khi tìm thấy trận, bạn được đưa tới màn hình đối đầu củ
 Khi trận kết thúc, bạn có thể **Xếp lại**, hoặc **Ở cùng nhau** với đội bạn
 vừa chơi cùng.
 
+Bên cạnh điểm số, hai biểu đồ kể lại trận đấu theo thời gian. **Bạn** vẽ sát
+thương bạn gây ra, sát thương bạn nhận, lượng hồi máu và Năng lượng;
+**Các đội** vẽ tổng máu của mỗi đội phía trên tổng sát thương của đội đó. Các
+dấu dưới trục thời gian cho thấy hạ gục, cái chết, ngắt chiêu, chiếm giữ và hồi
+sinh: trỏ vào một dấu, hoặc dùng Tab để đến nó, để đọc chuyện gì đã xảy ra.
+Nhấn một mục chú giải để ẩn hoặc hiện đường của nó. Trên điện thoại, biểu đồ
+nằm dưới điểm số, nơi hiện bạn và hai người khác cho đến khi bạn nhấn
+**Hiện tất cả**.
+
 ## Tạo hoặc vào trận
 
 Bạn luôn ở trong một sảnh: ngay từ lúc trang mở ra, nó đã tạo một sảnh của
@@ -157,8 +166,8 @@ phòng sẽ đưa tổ đội ra khỏi hàng chờ ngay lập tức. Khi một 
 độ đang xếp hàng xuất hiện, các bạn đấu với họ trên một bản đồ của chế độ đó,
 mỗi bên với build riêng, rồi quay về sảnh của mình sau đó. Chủ phòng có thể
 rời hàng chờ từ cửa sổ của vòng xoay bất cứ lúc nào; khách rời đi sẽ kéo cả
-tổ đội ra khỏi hàng chờ. Nếu sau một phút không có đội nào khác, chủ phòng
-cũng có thể nhấn **Đấu với bot**: một trận trong chính sảnh của bạn với một
+tổ đội ra khỏi hàng chờ. Sau 10 giây trong hàng chờ, chủ phòng
+cũng có thể nhấn **Đấu với bot** trong cửa sổ của vòng xoay: một trận trong chính sảnh của bạn với một
 đội bot có sẵn ngẫu nhiên, trừ ở [Đỉnh Anh Hùng](modes.md#đỉnh-anh-hùng),
 nơi bạn chờ một đội ở cùng vòng với bạn.
 

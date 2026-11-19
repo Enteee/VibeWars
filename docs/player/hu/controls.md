@@ -21,7 +21,7 @@ Az alapértelmezett előbeállítás a **Klasszikus**, a GW1-hez szokott kezekne
 | Következő ellenség (Shift: előző)    | Tab                          | Tab              |
 | Legközelebbi ellenség                | C                            | C                |
 | A csapatod bemondott ellensége       | T                            | T                |
-| Saját magad                          | G                            | G                |
+| Saját magad                          | F vagy G                     | G                |
 | Nevek mutatása (nyomva tartva)       | Shift                        | Shift            |
 | Némítás                              | M                            | M                |
 | Zászló, ereklye vagy hamvak eldobása | nincs                        | nincs            |

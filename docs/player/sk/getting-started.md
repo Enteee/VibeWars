@@ -80,6 +80,14 @@ Zatvorením karty počas čakania okamžite opustíš frontu.
 Keď sa zápas skončí, môžeš zvoliť **Znova do fronty** alebo **Zostať spolu**
 s tímom, s ktorým si práve hral.
 
+Vedľa skóre rozprávajú dva grafy priebeh zápasu v čase. **Ty** kreslí tvoje
+spôsobené poškodenie, prijaté poškodenie, liečenie a Energiu; **Tímy** kreslí
+zásobu zdravia každého tímu nad jeho celkovým poškodením. Značky pod časovou
+osou ukazujú zabitia, smrti, prerušenia, obsadenia a oživenia: ukáž na jednu
+alebo na ňu prejdi klávesom Tab a prečítaš si, čo sa stalo. Stlačením položky
+legendy skryješ alebo zobrazíš jej čiaru. Na telefóne sú grafy pod skóre, ktoré
+ukazuje teba a dvoch ďalších, kým nestlačíš **Zobraziť všetko**.
+
 ## Hostiť zápas alebo sa pripojiť
 
 Vždy si v lobby: od chvíle, keď sa stránka otvorí, hostí jedno
@@ -160,8 +168,8 @@ Tímovej aréne aj počtom hľadajúcich tímov vrátane tvojho: `2 tímy hľada
 **Opustiť frontu** tam má len hostiteľ. Zatvorením karty hostiteľa družina
 okamžite opustí frontu. Keď sa objaví iný tím vo fronte toho istého režimu,
 hráte proti nemu na jednej z máp režimu, každá strana so svojimi buildmi, a
-potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek opustiť frontu v okne krúžku; hosť, ktorý odíde, vyradí z fronty celú družinu. Ak sa
-do minúty neobjaví žiadny iný tím, hostiteľ môže stlačiť aj
+potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek opustiť frontu v okne krúžku; hosť, ktorý odíde, vyradí z fronty celú družinu. Po
+10 s vo fronte môže hostiteľ v okne krúžku stlačiť aj
 **Hrať proti botom**: zápas vo vlastnom lobby proti náhodnému
 prednastavenému tímu botov,
 okrem [Výstupu hrdinov](modes.md#výstup-hrdinov), ktorý čaká na tím

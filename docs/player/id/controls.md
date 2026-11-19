@@ -19,7 +19,7 @@ Preset bawaan adalah **Klasik**, untuk tangan yang terbiasa GW1. **VibeWars** me
 | Musuh berikutnya (Shift: sebelumnya) | Tab                        | Tab              |
 | Musuh terdekat                       | C                          | C                |
 | Musuh yang diumumkan timmu           | T                          | T                |
-| Diri sendiri                         | G                          | G                |
+| Diri sendiri                         | F atau G                   | G                |
 | Tampilkan nama (tahan)               | Shift                      | Shift            |
 | Bisu                                 | M                          | M                |
 | Jatuhkan bendera, relik, atau abu    | tidak ada                  | tidak ada        |

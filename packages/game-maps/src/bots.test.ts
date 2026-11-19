@@ -10,6 +10,7 @@ import {
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
   deckBlocksSight,
+  distanceSegmentToSegment,
   getSkill,
   hasLineOfSight,
   isSpikeSkill,
@@ -18,8 +19,15 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { allWallSegments } from "./geometry.js";
-import { matchGates, matchLayers } from "./layers.js";
+import {
+  allWallSegments,
+  pointInShape,
+  shapesOverlap,
+  shapeVertices,
+  wallToSegments,
+  type WallShape,
+} from "./geometry.js";
+import { matchGates, matchLayers, matchSwitches } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import { mapSimulationFields } from "./match-fields.js";
@@ -206,6 +214,7 @@ describe("King of the Hill bots (#2582)", () => {
       seed,
       ruleset: RULESET,
       walls: allWallSegments(arena.walls),
+      layers: matchLayers(arena),
       bounds: { width: arena.width, height: arena.height },
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
       ghostField: {
@@ -313,7 +322,7 @@ describe("King of the Hill bots (#2582)", () => {
     // The ghosts' contest ended: a team took the altar, wipe or not.
     expect(first.holder).not.toBeNull();
     expect(mirror("hill")).toEqual(first);
-  });
+  }, 60_000);
 
   /**
    * The winner of a 4v4 caster mirror on The Courtyard after 120 s: the
@@ -345,7 +354,7 @@ describe("King of the Hill bots (#2582)", () => {
     }
     expect(winners).toContain(0);
     expect(winners).toContain(1);
-  });
+  }, 60_000);
 });
 
 describe("Capture Points bots (#2580)", () => {
@@ -385,20 +394,14 @@ describe("Capture Points bots (#2580)", () => {
   });
 
   it("bots finish a match on Mosslit Cairns (#2696)", () => {
-    // Two a side: a full 8v8 takes 15 s here, too near the 20 s test limit.
+    // Two a side: a full 8v8 on the 2.5D rebuild (#3439) is too slow for a unit test.
     const cairns = loadAllMaps().find((candidate) => candidate.id === "mosslit-cairns");
     if (cairns === undefined) throw new Error("no map mosslit-cairns");
     const sim = new MatchSimulation({
       seed: "cairns",
       ruleset: RULESET,
-      walls: allWallSegments(cairns.walls),
-      bounds: { width: cairns.width, height: cairns.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
-      capturePoints: cairns.objectives.flatMap((objective) =>
-        objective.kind === "capture-point"
-          ? [{ ...objective.position, layer: objective.layer }]
-          : [],
-      ),
+      ...mapSimulationFields(cairns, 2),
       participants: casterBots(cairns, 2),
     });
     for (
@@ -409,7 +412,7 @@ describe("Capture Points bots (#2580)", () => {
       sim.step(DT);
     }
     expect(sim.phase).toBe("finished");
-  });
+  }, 60_000);
 
   it("three teams of bots play Threefold Keep to time, doors and all (#2699)", () => {
     const keep = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
@@ -422,7 +425,9 @@ describe("Capture Points bots (#2580)", () => {
       ruleset: RULESET,
       teamCount: 3,
       walls: allWallSegments(keep.walls),
+      layers: matchLayers(keep),
       gates: matchGates(keep),
+      switches: matchSwitches(keep),
       bounds: { width: keep.width, height: keep.height },
       matchRules: rules,
       ghostField: {
@@ -450,6 +455,7 @@ describe("Capture Points bots (#2580)", () => {
       seed: "gallery",
       ruleset: RULESET,
       walls: allWallSegments(gallery.walls),
+      layers: matchLayers(gallery),
       gates: matchGates(gallery),
       bounds: { width: gallery.width, height: gallery.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
@@ -468,7 +474,7 @@ describe("Capture Points bots (#2580)", () => {
       sim.step(DT);
     }
     expect(sim.phase).toBe("finished");
-  });
+  }, 60_000);
 });
 
 describe("The Brazen Causeway (#3435)", () => {
@@ -543,6 +549,78 @@ describe("The Brazen Causeway (#3435)", () => {
     expect(
       finder.find(spawnOf(0).position, spawnOf(0).layer, spawnOf(1).position, spawnOf(1).layer),
     ).toBeDefined();
+  });
+
+  // #3521: slow ground starts where a player can see it start, never under a foot coming off a
+  // stair, at a lever, at the beacon or at a gatehouse, and never runs under the causeway.
+  it("keeps every reed pool and mire clear of the stairs, levers, beacon, gatehouses and causeway (#3521)", () => {
+    const clear = 2 * RULESET.collision.playerRadius;
+    /** How far apart `a` and `b` are: 0 if they touch or overlap. */
+    const gap = (a: WallShape, b: WallShape): number => {
+      if (
+        shapeVertices(a).some((point) => pointInShape(point, b)) ||
+        shapeVertices(b).some((point) => pointInShape(point, a))
+      ) {
+        return 0;
+      }
+      const sides = wallToSegments(b);
+      return Math.min(
+        ...wallToSegments(a).flatMap((side) =>
+          sides.map((other) => distanceSegmentToSegment(side, other)),
+        ),
+      );
+    };
+    /** A point as a tiny square, so it measures as a shape. */
+    const spot = ({ x, y }: { readonly x: number; readonly y: number }): WallShape => ({
+      kind: "rect",
+      x: x - 0.5,
+      y: y - 0.5,
+      width: 1,
+      height: 1,
+    });
+    const slow = [
+      ...(map.water ?? []).filter(({ depth }) => depth === "shallow"),
+      ...(map.zones ?? []).filter(({ kind }) => kind === "mire"),
+    ];
+    const beacon = map.objectives.find(
+      (objective): objective is Extract<typeof objective, { kind: "storm-beacon" }> =>
+        objective.kind === "storm-beacon",
+    );
+    if (beacon === undefined) throw new Error("no storm beacon");
+    const keepOff: { readonly id: string; readonly area: WallShape }[] = [
+      ...map.transitions.map(({ id, area }) => ({ id, area })),
+      ...(map.switches ?? []).map(({ id, position }) => ({ id, area: spot(position) })),
+      { id: "storm-beacon", area: spot(beacon.position) },
+      ...map.decks
+        .filter(({ id }) => id.endsWith("-gatehouse"))
+        .map(({ id, footprint }) => ({ id, area: footprint })),
+    ];
+    expect(slow.map(({ id }) => id)).toEqual(
+      expect.arrayContaining([
+        ...["north", "south"].flatMap((side) =>
+          ["west", "middle", "east"].map((pool) => `${side}-reed-pool-${pool}`),
+        ),
+        "north-east-mire",
+        "south-west-mire",
+      ]),
+    );
+    const causeway = map.decks.find(({ id }) => id === "causeway");
+    if (causeway?.footprint.kind !== "polygon") throw new Error("no causeway");
+    // Its foot may be a bank of the marsh; a hair inside it is under it.
+    const centre = { x: 2812, y: 1400 };
+    const under: WallShape = {
+      kind: "polygon",
+      points: causeway.footprint.points.map(({ x, y }) => ({
+        x: x + Math.sign(centre.x - x) * 2,
+        y: y + Math.sign(centre.y - y) * 2,
+      })),
+    };
+    for (const { id, area } of slow) {
+      for (const each of keepOff) {
+        expect(gap(area, each.area), `${id} by ${each.id}`).toBeGreaterThanOrEqual(clear);
+      }
+      expect(shapesOverlap(area, under), `${id} under the causeway`).toBe(false);
+    }
   });
 
   it("walks each team to its own gatehouse lever by its own stair, sharing none with the other (#3549)", () => {

@@ -82,6 +82,15 @@ instante.
 Cuando termina la partida puedes pulsar **Otra vez** o **Seguir juntos** con
 el equipo con el que acabas de jugar.
 
+Junto a las puntuaciones, dos gráficos cuentan la partida a lo largo del
+tiempo. **Tú** traza tu daño infligido, daño recibido, curación y Energía;
+**Equipos** traza la reserva de salud de cada equipo sobre su daño total. Las
+marcas bajo el eje del tiempo muestran bajas, muertes, interrupciones, capturas
+y resurrecciones: señala una, o llega a ella con Tab, para leer qué pasó. Pulsa
+una entrada de la leyenda para ocultar o mostrar su línea. En el móvil los
+gráficos quedan bajo las puntuaciones, que te muestran a ti y a otros dos hasta
+que pulses **Mostrar todo**.
+
 ## Alojar o unirse a una partida
 
 Siempre estás en una sala: desde que se abre la página aloja una propia. La
@@ -164,8 +173,8 @@ buscando`. Ahí solo el anfitrión tiene **Salir de la cola**. Si se cierra la
 pestaña del anfitrión, el grupo sale de la cola al instante. Cuando aparece
 otro equipo en cola del mismo modo, jugáis contra él en uno de los mapas del
 modo, cada bando con sus builds, y luego volvéis a tu sala. El anfitrión puede salir desde la ventana del anillo en cualquier momento; un invitado que se va saca
-de la cola a todo el grupo. Si tras un minuto no hay otro equipo, el anfitrión
-también puede pulsar **Jugar contra bots**: una partida en tu propia sala
+de la cola a todo el grupo. Tras 10 s en la cola, el anfitrión también puede
+pulsar **Jugar contra bots** en la ventana del anillo: una partida en tu propia sala
 contra un equipo predefinido de bots al azar, excepto en
 [Ascenso de los Héroes](modes.md#ascenso-de-los-héroes), que espera a un
 equipo de tu ronda.

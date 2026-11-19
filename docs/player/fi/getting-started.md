@@ -82,6 +82,15 @@ oletkin. Välilehden sulkeminen odottaessa poistaa sinut jonosta heti.
 Kun ottelu päättyy, voit valita **Jonota uudelleen** tai **Pysykää yhdessä**
 juuri kanssasi pelanneen tiimin kanssa.
 
+Pisteiden vieressä kaksi kaaviota kertoo ottelun kulun ajan mittaan. **Sinä**
+piirtää tekemäsi vahingon, saamasi vahingon, parannuksen ja Energian;
+**Joukkueet** piirtää kunkin joukkueen terveysvarannon sen kokonaisvahingon
+yläpuolelle. Aika-akselin alla olevat merkit näyttävät tapot, kuolemat,
+keskeytykset, valtaukset ja herätykset: osoita merkkiä tai siirry siihen
+Tabilla lukeaksesi, mitä tapahtui. Paina selitteen kohtaa piilottaaksesi tai
+näyttääksesi sen viivan. Puhelimessa kaaviot ovat pisteiden alla, ja pisteet
+näyttävät sinut ja kaksi muuta, kunnes painat **Näytä kaikki**.
+
 ## Isännöi ottelu tai liity siihen
 
 Olet aina aulassa: siitä hetkestä, kun sivu avautuu, se isännöi omaa
@@ -167,8 +176,8 @@ omasi mukaan lukien: `2 tiimiä etsii`. Vain isännällä on siellä
 heti. Kun toinen saman pelitilan jonottava tiimi ilmaantuu, pelaatte sitä
 vastaan yhdellä pelitilan kartoista, kumpikin puoli omilla
 buildeillaan, ja palaatte sen jälkeen aulaasi. Isäntä voi poistua renkaan ikkunasta milloin tahansa; vieras, joka poistuu, vie koko
-ryhmän pois jonosta. Jos muuta tiimiä ei löydy minuutissa, isäntä voi
-myös painaa **Pelaa botteja vastaan**: ottelu omassa aulassasi
+ryhmän pois jonosta. Kun jonossa on oltu 10 s, isäntä voi myös painaa
+renkaan ikkunasta **Pelaa botteja vastaan**: ottelu omassa aulassasi
 satunnaista valmista bottitiimiä vastaan,
 paitsi [Sankarien nousussa](modes.md#sankarien-nousu), joka odottaa
 tiimiä sinun kierrokseltasi.

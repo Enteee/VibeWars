@@ -125,7 +125,7 @@ kişinin adını verir. Bir artış "Moral Artışı! +%10" ya da "Düşmana Mor
 Artışı" olarak belirir. Pusulada ♛ her Lonca Lordu'nu, ⚑ her bayrağı, ◎
 da direği işaretler.
 
-Guild Hall Isle bunu oynatır.
+Guild Hall Isle (8v8, 6000x2600) bunu oynatır: denizde bir ada. Her Guild Lord bir surun ardında, bir salonun tepesinde durur; dışarı kapı kulesinden, surun üstünden ya da bir iskele boyunca çıkılır. Kapı kulesinin kapısı, düşmanın surundaki bir kolla açılır. Bayrak sehpası ortadaki bir kürsünün üstündedir.
 
 ## Kalıntı Koşusu
 
@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) bunu oynatır: iki lav nehri arasında, bir yana
 bir **Hayalet Kahraman** vardır: baltayla dövüşen ve kimsenin oynamadığı
 bir hayalet. **Sunak** merkezdedir, iki üsten de aynı yürüme
 mesafesinde. **Threefold Keep**'te üç takım (üçüncüsü boşta değilse iki)
-duvarlı bir kalenin içinde onun için dövüşür. Kapıları yalnızca içeriden,
-içerideki bir plakayla açılır: içeri girmek için açık bir köşeye dolan.
+duvarlı bir kalenin kulesinde onun için dövüşür.
 Takım başına en fazla 12 puan; her düşman -%60 moraldeyse hemen
 kazanırsın. Kahramanların Yükselişi'ni bitiren Tepenin Kralı haritası
 **Kahramanlar Salonu**, sunağı batıda ve doğuda duvarlı, sütunlarla
@@ -241,7 +240,7 @@ Takımın sunağı tutmuyorken, her bot diğer takımın Hayalet Kahramanını,
 menzillerinde sunağa çıktığı an ilk olarak öldürür: hayaletinin onu ele
 geçirmesini engelleyen tek düşman odur.
 
-Threefold Keep bunu oynatır.
+Threefold Keep bunu oynatır (4v4 ve 8v8, 5000x4400): yaylalarda bir tepenin üstünde, üç takım için bir kale. Kapının yanındaki merdivenlerden sur yoluna çık ve bir geçit yolundan tepeye geç, sonra kulenin üstündeki sunağa tırman. Her avludaki bir kol dört kapının hepsini açar: surun altındaki kendi kapı geçidin ve tepenin altından uzun yol olan mahzen.
 
 ## Nokta Ele Geçirme
 
@@ -283,6 +282,8 @@ kadar üstlerinde durur. Büyü menzilindeki bir düşman onları oradan
 çekmez: erişebildikleri bir tapınağa çıkar ve oradan dövüşürler.
 
 Scarred Earth (4v4 ve 8v8, 5400x2800) bunu oynatır: alacakaranlıkta kraterlerle dolu bir savaş alanı. Tapınaklar yıkık kuşatma kulelerinin üstünde durur, ortadaki büyük kulenin güvertesinde, her biri bir kraterin yanında; kulelerdeki kollar alanın altındaki iki siperi açar ve yıkık çit duvarları kırılabilir.
+
+Kahramanların Yükselişi'nde The Warden's Gallery (8v8, 5200x2500) bunu oynatır: tavan pencerelerinin altında güneşli bir heykel galerisi. Ortadaki tapınak büyük kaidenin tepesinde durur ve her takımın giriş holünün yakınında üç tapınağı vardır, biri bir kaidenin üstünde; büyük kaidedeki kollar zeminin altındaki iki mahzeni açar ve devrilmiş heykeller kırılabilir.
 
 ## Takım Lobisi
 
@@ -459,8 +460,7 @@ iki takımın da gördüğü bir şimşektir.
 **Blackwater Ford** (8v8, 5200x2800, karanlık bir nehir sığlığında Rahip İmhası: sığ geçitten yürüyerek,
 değirmenin üstünde ayakları üzerinde duran yıkık köprüden ya da değirmendeki bir kol kapısını açınca
 köprünün altındaki menfezden geçilir; rahip ölülerini her 2 dakikada bir diriltir) ve
-**Mosslit Cairns** (8v8 Nokta Ele Geçirme, üsler arasında sığ bir
-zikzak çizen beş taş yığını). Dördüncüsü **The Brazen Causeway**'dir
+**Mosslit Cairns** (8v8, 5400x3000, alacakaranlıkta yosunla parlayan beş taş yığını tepesinde Nokta Ele Geçirme: bir taş yığınına merdivenlerinden çıkılır, ortadaki büyük taş yığını tutulur ya da kuzeydeki bir taş yığınının üstündeki kol kapılarını açınca güney tepelerin altındaki kök tüneline girilir; kök duvarları kırılabilir). Dördüncüsü **The Brazen Causeway**'dir
 (8v8, 5600x2800, alacakaranlıkta bir bataklığın üzerinde yükseltilmiş taş bir set yolunda Rahip İmhası: uzaktaki kapı kulesindeki bir kol tunç kapısını açınca set yolu boyunca yürünür, bataklık geçilerek ortasındaki merdivenlere varılır ya da altındaki menfezden sızılır; rahip ölülerini her 2 dakikada bir diriltir).
 
 Bir haritada **kapılar** olabilir: kapalıyken bedenleri, atışları ve

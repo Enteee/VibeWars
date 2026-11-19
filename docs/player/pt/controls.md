@@ -19,7 +19,7 @@ O perfil padrão é **Clássico**, para mãos acostumadas ao GW1. **VibeWars** u
 | Próximo inimigo (Shift: anterior)   | Tab               | Tab              |
 | Inimigo mais próximo                | C                 | C                |
 | Inimigo anunciado da equipe         | T                 | T                |
-| Você mesmo                          | G                 | G                |
+| Você mesmo                          | F ou G            | G                |
 | Mostrar nomes (segurar)             | Shift             | Shift            |
 | Mudo                                | M                 | M                |
 | Largar bandeira, relíquia ou cinzas | sem tecla         | sem tecla        |

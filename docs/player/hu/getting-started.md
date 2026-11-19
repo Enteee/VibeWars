@@ -87,6 +87,16 @@ Amikor a meccs véget ér, választhatod az **Újra sorba** lehetőséget,
 vagy azt, hogy **Együtt maradunk** azzal a csapattal, amellyel épp
 játszottál.
 
+Az eredmények mellett két diagram meséli el a meccs menetét. A **Te** a
+kiosztott sebzésedet, az elszenvedett sebzést, a gyógyítást és az Energiát
+rajzolja; a **Csapatok** minden csapat életerő-készletét rajzolja az
+összesített sebzése fölé. Az időtengely alatti jelek az öléseket, halálokat,
+megszakításokat, foglalásokat és feltámasztásokat mutatják: mutass rá egyre,
+vagy lépj rá Tabbal, hogy elolvasd, mi történt. Nyomj meg egy
+jelmagyarázat-elemet a vonala elrejtéséhez vagy megjelenítéséhez. Telefonon a
+diagramok az eredmények alatt vannak, amelyek téged és két másik játékost
+mutatnak, amíg meg nem nyomod az **Összes mutatása** gombot.
+
 ## Meccs indítása vagy csatlakozás
 
 Mindig egy lobbiban vagy: attól a pillanattól, hogy az oldal megnyílik,
@@ -181,7 +191,7 @@ ugyanabban a módban sorban álló csapat, a mód valamelyik pályáján
 játszotok ellenük, mindkét oldal a saját buildjeivel, utána pedig
 visszatértek a lobbitokba. A házigazda bármikor kiléphet a sorból a
 gyűrű ablakából; a vendég, aki kilép, az egész osztagot kiveszi a
-sorból. Ha egy perc után sincs másik csapat, a házigazda megnyomhatja a
+sorból. 10 mp sorban állás után a házigazda a gyűrű ablakában megnyomhatja a
 **Játék botok ellen** gombot is: egy meccs a saját lobbidban egy
 véletlen előre beállított botcsapat ellen, kivéve a
 [Hősök Útját](modes.md#hősök-útja), amely egy, a te körödben lévő

@@ -35,7 +35,7 @@ import type {
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import type { AttackCast, SpellCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
-import { breakableAtPoint, type RenderableBreakable } from "./breakable-objects.js";
+import type { RenderableBreakable } from "./breakable-objects.js";
 import type { CapeLook } from "./cape-shape.js";
 import type { RenderablePing } from "./call-marks.js";
 import type {
@@ -46,12 +46,11 @@ import type {
   RenderableFlag,
   RenderableStand,
 } from "./flag-objects.js";
-import { switchAtPoint } from "./flag-objects.js";
 import type { GoalMark } from "./goal-mark.js";
 import { harmsViewer } from "./ground-effect-look.js";
 import { LYING_WIDTH } from "./lying-pose.js";
+import { pickAt, type ClickableKind, type DrawnClickable } from "./pick.js";
 import type { RenderableProjectile } from "./projectiles.js";
-import { liftAt } from "./layer-surfaces.js";
 import { screenPx } from "./screen-text.js";
 
 /**
@@ -646,6 +645,11 @@ export interface ArenaSnapshot {
    * `showAllNames`, a click on a name hits its actor.
    */
   readonly nameBoxes: ReadonlyMap<string, Rect>;
+  /**
+   * Every clickable the scene drew last frame (#3634), where it showed:
+   * what a click or hover picks. Empty before the first frame.
+   */
+  readonly drawn: readonly DrawnClickable[];
   /** The foe your team has called (#443): a chevron over it. */
   readonly calledId: string | undefined;
   /** Your team's pings on the floor (#443). */
@@ -684,6 +688,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   hoverId: undefined,
   showAllNames: false,
   nameBoxes: new Map(),
+  drawn: [],
   calledId: undefined,
   pings: [],
   strokes: [],
@@ -756,45 +761,65 @@ export function teamColour(team: RenderableActor["team"]): number {
   return TEAM_COLOURS[team];
 }
 
+/** Record `actor` in `out` as drawn this frame (#3634): where it shows, lifted and eased. */
+export function recordBody(out: DrawnClickable[], actor: RenderableActor, depth: number): void {
+  const { x, y } = actor.position;
+  out.push({ kind: "body", id: actor.id, hit: { circle: { x, y, r: hitRadius(actor) } }, depth });
+}
+
 /**
- * Hit-test a point against actors; used by click-to-target (brief §5).
+ * What a click at `point` picks among what was drawn there (#3634): the
+ * one on top among living bodies and the `objects` kinds. A body `under`
+ * them (yours, #1299: you stand on the stand to plant) never hides them,
+ * but is picked when nothing else is. With nothing living, an ally's
+ * corpse is picked, so a resurrection has something to aim at (#812). A
+ * foe's corpse never is.
  *
- * The living come first: clicking a corpse selects whoever is standing
- * behind it. With nobody living under the point, an ally's corpse is
- * picked, so a resurrection has something to aim at (#812). A foe's
- * corpse never is.
- *
- * With `tagBoxes` (#2738: while Show names is held), an actor is also hit
- * anywhere in the column from its name tag's top down to its body's
- * bottom, as wide as the wider of the two. A body under the point still
- * wins; among columns, the nearest body centre does.
+ * With `tagBoxes` (#2738: while Show names is held), a body is also hit
+ * anywhere in the column from its name tag's top down to its drawn
+ * body's bottom, as wide as the wider of the two. A body or object under
+ * the point still wins; among columns, the nearest body centre does.
  */
+export function clickableAt(
+  snapshot: ArenaSnapshot,
+  point: Vec2,
+  {
+    objects = [],
+    under,
+    tagBoxes,
+  }: {
+    readonly objects?: readonly ClickableKind[];
+    readonly under?: string | undefined;
+    readonly tagBoxes?: ReadonlyMap<string, Rect> | undefined;
+  } = {},
+): DrawnClickable | undefined {
+  const actors = new Map(snapshot.actors.map((actor) => [actor.id, actor]));
+  const living = (clickable: DrawnClickable): boolean =>
+    clickable.kind === "body" && actors.get(clickable.id)?.dead === false;
+  const allyCorpse = (clickable: DrawnClickable): boolean => {
+    const actor = clickable.kind === "body" ? actors.get(clickable.id) : undefined;
+    return actor?.dead === true && actor.team === "ally";
+  };
+  const { drawn } = snapshot;
+  const over = (clickable: DrawnClickable): boolean =>
+    (living(clickable) && clickable.id !== under) || objects.includes(clickable.kind);
+  return (
+    pickAt(drawn, point, over) ??
+    inColumn(drawn, point, over, tagBoxes) ??
+    pickAt(drawn, point, living) ??
+    pickAt(drawn, point, allyCorpse) ??
+    inColumn(drawn, point, allyCorpse, tagBoxes)
+  );
+}
+
+/** The body `clickableAt` picks at `point`, nothing else: click-to-target (brief §5). */
 export function actorAtPoint(
   snapshot: ArenaSnapshot,
   point: Vec2,
   tagBoxes?: ReadonlyMap<string, Rect>,
 ): RenderableActor | undefined {
-  const living = (actor: RenderableActor): boolean => !actor.dead;
-  const allyCorpse = (actor: RenderableActor): boolean => actor.dead && actor.team === "ally";
-  // A body on a deck is drawn lifted (ADR-0051): a click finds it there.
-  const actors =
-    snapshot.structure.layerCount === 1
-      ? snapshot.actors
-      : snapshot.actors.map((actor) => ({
-          ...actor,
-          position: {
-            x: actor.position.x,
-            y:
-              actor.position.y -
-              liftAt(snapshot.structure, snapshot.lifts, actor.position, actor.layer),
-          },
-        }));
-  return (
-    nearestUnder(actors, point, living) ??
-    nearestInColumn(actors, point, living, tagBoxes) ??
-    nearestUnder(actors, point, allyCorpse) ??
-    nearestInColumn(actors, point, allyCorpse, tagBoxes)
-  );
+  const hit = clickableAt(snapshot, point, { tagBoxes });
+  return hit === undefined ? undefined : snapshot.actors.find((actor) => actor.id === hit.id);
 }
 
 /** An axis-aligned box, in world units. */
@@ -806,36 +831,35 @@ export interface Rect {
 }
 
 /**
- * The actor among `actors` that `accepts` whose name-and-body column
- * holds `point`, nearest by body centre; nothing without `tagBoxes`, or
- * for an actor with no tag drawn (yourself).
+ * The drawn body that `accepts` whose name-and-body column holds
+ * `point`, nearest by body centre; nothing without `tagBoxes`, or for an
+ * actor with no tag drawn (yourself).
  */
-function nearestInColumn(
-  actors: readonly RenderableActor[],
+function inColumn(
+  drawn: readonly DrawnClickable[],
   point: Vec2,
-  accepts: (actor: RenderableActor) => boolean,
+  accepts: (clickable: DrawnClickable) => boolean,
   tagBoxes: ReadonlyMap<string, Rect> | undefined,
-): RenderableActor | undefined {
+): DrawnClickable | undefined {
   if (tagBoxes === undefined) {
     return undefined;
   }
-  let best: RenderableActor | undefined;
+  let best: DrawnClickable | undefined;
   let bestDistance = Number.POSITIVE_INFINITY;
-  for (const actor of actors) {
-    const tag = tagBoxes.get(actor.id);
-    if (tag === undefined || !accepts(actor)) {
+  for (const clickable of drawn) {
+    const tag = tagBoxes.get(clickable.id);
+    if (tag === undefined || !("circle" in clickable.hit) || !accepts(clickable)) {
       continue;
     }
-    const { x, y } = actor.position;
-    const r = hitRadius(actor);
+    const { x, y, r } = clickable.hit.circle;
     const inside =
       point.x >= Math.min(tag.left, x - r) &&
       point.x <= Math.max(tag.right, x + r) &&
       point.y >= tag.top &&
       point.y <= y + r;
-    const d = Vec.distance(actor.position, point);
+    const d = Vec.distance({ x, y }, point);
     if (inside && d < bestDistance) {
-      best = actor;
+      best = clickable;
       bestDistance = d;
     }
   }
@@ -853,47 +877,31 @@ export function hitRadius(actor: RenderableActor): number {
   return actor.formed ? actor.radius / FORM_SCALE : actor.radius;
 }
 
-/** The actor among `actors` that `accepts` nearest `point`, within its hit radius. */
-function nearestUnder(
-  actors: readonly RenderableActor[],
-  point: Vec2,
-  accepts: (actor: RenderableActor) => boolean,
-): RenderableActor | undefined {
-  let best: RenderableActor | undefined;
-  let bestDistance = Number.POSITIVE_INFINITY;
-  for (const actor of actors) {
-    if (!accepts(actor)) {
-      continue;
-    }
-    const d = Vec.distance(actor.position, point);
-    if (d <= hitRadius(actor) && d < bestDistance) {
-      best = actor;
-      bestDistance = d;
-    }
-  }
-  return best;
-}
-
 /**
  * `snapshot` with whose names show this frame (#253): the body under
  * `pointer` (in world units, `undefined` once the cursor left the
  * arena), hit-tested like a click, so a foe's corpse is never picked, and
  * every name while `showAllNames`. Then a name is part of the hit
- * (#2738): `nameBoxes` are the tags the scene drew last frame.
+ * (#2738): `nameBoxes` are the tags the scene drew last frame, and
+ * `drawn` what it drew to be picked (#3634): a switch or a breakable
+ * wall drawn over a body is the one hovered.
  */
 export function withNames(
   snapshot: ArenaSnapshot,
   pointer: Vec2 | undefined,
   showAllNames: boolean,
   nameBoxes: ReadonlyMap<string, Rect>,
+  drawn: readonly DrawnClickable[],
 ): ArenaSnapshot {
+  const picked = { ...snapshot, drawn };
   const hoverId =
     pointer === undefined
       ? undefined
-      : (actorAtPoint(snapshot, pointer, showAllNames ? nameBoxes : undefined)?.id ??
-        switchAtPoint(snapshot.switches, pointer) ??
-        breakableAtPoint(snapshot.breakables, pointer, snapshot.structure));
-  return { ...snapshot, hoverId, showAllNames, nameBoxes };
+      : clickableAt(picked, pointer, {
+          objects: ["switch", "breakable"],
+          tagBoxes: showAllNames ? nameBoxes : undefined,
+        })?.id;
+  return { ...picked, hoverId, showAllNames, nameBoxes };
 }
 
 /**

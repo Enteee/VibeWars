@@ -81,6 +81,14 @@ direkt.
 När matchen är slut kan du **Köa igen**, eller **Håll ihop** med laget
 du just spelade med.
 
+Bredvid poängen berättar två diagram matchen över tid. **Du** ritar din
+utdelade skada, mottagna skada, helning och Energi; **Lag** ritar varje lags
+hälsopool ovanför dess totala skada. Markeringar under tidsaxeln visar
+dödanden, dödsfall, avbrott, erövringar och återupplivningar: peka på en, eller
+gå till den med Tab, för att läsa vad som hände. Tryck på en post i
+förklaringen för att dölja eller visa dess linje. På en telefon ligger
+diagrammen under poängen, som visar dig och två andra tills **Visa alla**.
+
 ## Var värd för eller gå med i en match
 
 Du är alltid i en lobby: från det att sidan öppnas är du värd för en egen.
@@ -163,8 +171,8 @@ hur många lag som söker, ert inräknat: `2 lag söker`. Bara värden har
 ett annat köande lag i samma läge dyker upp spelar ni mot dem på en av
 lägets kartor, varje sida med sina egna builds, och kommer sedan tillbaka
 till er lobby. Värden kan lämna från ringens fönster när som helst; en
-gäst som lämnar tar hela gruppen ur kön. Finns inget annat lag efter en
-minut kan värden också trycka på **Spela mot bottar**: en match i er
+gäst som lämnar tar hela gruppen ur kön. Efter 10 s i kön kan värden
+också trycka på **Spela mot bottar** i ringens fönster: en match i er
 egen lobby mot ett slumpat förvalt lag av bottar,
 utom i [Heroes' Ascent](modes.md#heroes-ascent), som väntar på ett
 lag i er runda.

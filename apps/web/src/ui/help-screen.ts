@@ -1,7 +1,7 @@
 import { versionLine } from "../build-info.js";
 import { t } from "../i18n/index.js";
 import { SOURCE_URL } from "../source.js";
-import { h, overlayClose, screenBar } from "./kit.js";
+import { h, overlayClose, screenBar, wordmark } from "./kit.js";
 import { mountLicences } from "./licences-section.js";
 import { helpDocPages, playerDocTargets, renderPlayerDoc, type DocNode } from "./player-docs.js";
 
@@ -46,7 +46,7 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
 
   const crumb = h("span");
   const { release } = screenBar({
-    crumbs: ["VibeWars", t("help.label"), crumb],
+    crumbs: [wordmark("topbar-wordmark"), t("help.label"), crumb],
     escape: closeHelpOverlay,
     actions: [],
     overlay: true,

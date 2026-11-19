@@ -148,14 +148,14 @@ je op **Opslaan** drukt.
 **Esc** vertrekt zonder op te slaan, en vraagt eerst als je iets gewijzigd hebt.
 **Delen**, **GW1-code laden**, **Kopiëren** en **Wissen** staan onder **⋯**.
 
-Een teamcode laad je in plaats daarvan op **Teambouwer**: druk op **Team laden**,
-plak de code en druk op **Laden**, of plak hem ergens op Teambouwer.
+Een teamcode laad je in plaats daarvan op **Teambouwer**: plak hem daar ergens, of
+open een teambuild en gebruik zijn **⋯** → **Team laden**.
 
 ## Teambuilds
 
 Een **teambuild** is een team met eigen personages, gemaakt op **Teambouwer** en
 apart gehouden van je eigen personages. Elk is daar een kaart, en alleen daar:
-**Nieuwe teambuild** maakt er een, **Team laden** laadt er een die met je is
+**Nieuwe teambuild** maakt er een, een daar geplakte teamcode laadt er een die met je is
 gedeeld, en een klik op een kaart, of op **Bewerken**, opent die. Je stelt er een voor in de [Teamlobby](modes.md#teamlobby).
 
 Elke teambuild heeft een grootte, 2v2, 4v4 of 8v8 (er zijn geen 1v1-teambuilds):

@@ -48,7 +48,7 @@ Tým, jehož Pán cechu zemře, okamžitě prohrává, stejně jako tým, jehož
 
 Výsledková tabule ukazuje zdraví každého Pána cechu, tvého jako prvního, kdo drží stojan a za jak dlouho přijde jeho zvýšení, kdy svatyně příště vrátí mrtvé a v posledních 3 minutách poškození každého týmu nepřátelskému pánovi. Pod ní řádek jmenuje každého, kdo nese vlajku. Zvýšení vyskočí jako "Zvýšení morálky! +10 %" nebo "Zvýšení morálky nepřátel". Na kompasu ♛ značí každého Pána cechu, ⚑ každou vlajku a ◎ stojan.
 
-Hraje ho Guild Hall Isle.
+Hraje ho Guild Hall Isle (8v8, 6000x2600): ostrov v moři. Každý Guild Lord stojí na vrcholu síně za hradbou; ven se jde branou, přes hradbu nebo po molu. Dveře brány otevírá páka na nepřátelské hradbě. Stojan na vlajku je na pódiu uprostřed.
 
 ## Běh s relikvií
 
@@ -70,7 +70,7 @@ Cinder Sanctum (8v8, 5600x2800) ho hraje: chrám na úbočí sopky mezi dvěma l
 
 ## Král kopce
 
-**Doveď svého Přízračného hrdinu na oltář a udrž ho.** Každý tým má ve své základně **Přízračného hrdinu**, ducha bojujícího sekerou, kterého nikdo nehraje. **Oltář** je uprostřed, stejně daleko z obou základen. Na **Threefold Keep** o něj bojují tři týmy (dva, když není třetí volný) uvnitř opevněné tvrze. Její dveře se otevírají jen zevnitř, plošinou uvnitř: dostaneš se dovnitř obejitím k otevřenému rohu. Nejvýše 12 bodů na tým, a pokud všichni nepřátelé stojí na -60 % morálky, okamžitě vyhráváš. **Síň hrdinů**, mapa Krále kopce, kterou Výstup hrdinů končí, ho zvedá na pódium obezděné na západě a východě, přístupné severní nebo jižní cestou lemovanou sloupy. Zaměř svého ducha **kliknutím pravým** a stiskni **Space**, abys mu řekl, ať tě následuje: jde s tebou a bojuje s tím, s čím bojuješ ty. Další Space na něm a zůstane stát, kde je, a bojuje s každým nepřítelem, který se přiblíží. Když zemřeš nebo odejdeš, zůstane. Se zaměřeným duchem jeho rámeček říká, koho následuje, nebo že zůstává. Oznámení řekne, koho tvůj Přízračný hrdina následuje, kdykoli se to změní, a jméno nad jeho hlavou ukazuje jeho vůdce.
+**Doveď svého Přízračného hrdinu na oltář a udrž ho.** Každý tým má ve své základně **Přízračného hrdinu**, ducha bojujícího sekerou, kterého nikdo nehraje. **Oltář** je uprostřed, stejně daleko z obou základen. Na **Threefold Keep** o něj bojují tři týmy (dva, když není třetí volný) na věži opevněné tvrze. Nejvýše 12 bodů na tým, a pokud všichni nepřátelé stojí na -60 % morálky, okamžitě vyhráváš. **Síň hrdinů**, mapa Krále kopce, kterou Výstup hrdinů končí, ho zvedá na pódium obezděné na západě a východě, přístupné severní nebo jižní cestou lemovanou sloupy. Zaměř svého ducha **kliknutím pravým** a stiskni **Space**, abys mu řekl, ať tě následuje: jde s tebou a bojuje s tím, s čím bojuješ ty. Další Space na něm a zůstane stát, kde je, a bojuje s každým nepřítelem, který se přiblíží. Když zemřeš nebo odejdeš, zůstane. Se zaměřeným duchem jeho rámeček říká, koho následuje, nebo že zůstává. Oznámení řekne, koho tvůj Přízračný hrdina následuje, kdykoli se to změní, a jméno nad jeho hlavou ukazuje jeho vůdce.
 
 Tvůj duch má 640 zdraví a máchá sekerou s **Cyclone Axe**, **Disrupting Chop** a **Swift Chop**, ať následuje, nebo zůstává. Je tím silnější, čím výš ve Výstupu jsi: úroveň 24 na Threefold Keep, 28 v Síni hrdinů. **Zabij ducha druhého týmu** a každý člen tvého týmu dostane **zvýšení morálky o +10 %**, které nejdřív smaže postih za smrt a nikdy nepřesáhne +10 %. Zabij ho znovu, až vstane, a dostaneš ho znovu.
 
@@ -84,7 +84,7 @@ Výsledková tabule ukazuje body, tvoje jako první, a pak oltář: `▲` a čas
 
 I boti jdou po oltáři: když ho tvůj tým nedrží, tvého Přízračného hrdinu převezme ten nejbližší, pokud ho nejdeš převzít sám; léčitel nebo těžce zraněný bot jde, jen když nemůže nikdo jiný. Dovede ducha na oltář a řekne mu, ať tam zůstane, a ostatní čekají u oltáře. Bot vedoucí ducha se cestou nezastavuje kvůli boji; ostatní oltář opustí jen kvůli boji s nepřítelem, který se dostane na dostřel kouzla. Když tvůj tým oltář nedrží, každý bot nejdřív zabije Přízračného hrdinu druhého týmu, jakmile stojí na oltáři v jejich dosahu: je to jediný nepřítel, který brání tvému duchovi si ho nárokovat.
 
-Hraje ho Threefold Keep.
+Hraje ho Threefold Keep (4v4 a 8v8, 5000x4400): tvrz na kopci ve vysočině, pro tři týmy. Vystup po schodech vedle své brány na ochoz hradby a přejdi po hrázi na kopec, pak vyšplhej k oltáři na věži. Páka na každém nádvoří otevře všechny čtyři brány: průchod tvou bránou pod hradbou a podzemí, dlouhou cestu pod kopcem.
 
 ## Dobývání bodů
 
@@ -97,6 +97,8 @@ Každá svatyně je kruh na zemi v barvě vlastníka, šedý, když ji nikdo nev
 Boti se rozptýlí po svatyních, které tvůj tým ještě nevlastní, a stojí na nich, dokud nejsou dobyté. Nepřítel na dostřel kouzla je neodláká: vstoupí na svatyni v dosahu a bojují z ní.
 
 Hraje ho Scarred Earth (4v4 a 8v8, 5400x2800): bojiště poseté krátery za soumraku. Svatyně stojí na rozbitých obléhacích věžích, prostřední na plošině velké věže, každá vedle kráteru; páky na věžích otevírají dva zákopy pod bojištěm a rozbité palisády lze zbořit.
+
+Ve Výstupu hrdinů ho hraje The Warden's Gallery (8v8, 5200x2500): slunná galerie soch pod světlíky. Prostřední svatyně stojí na vrcholu velkého podstavce a každý tým má tři u svého vestibulu, jednu na podstavci; páky na velkém podstavci otevírají dvě krypty pod podlahou a povalené sochy lze rozbít.
 
 ## Týmové lobby
 
@@ -130,7 +132,7 @@ Skupina s méně než 8 hráči jde do fronty s boty na prázdných místech, s 
 
 **Barrow Field** (8v8, 5400x2600) je aréna Výstupu a dá se vybrat i ve Vlastní hře: Vyhlazení s knězem na vřesovišti plném hrobových mohyl za soumraku, kněz oživuje své mrtvé každé 2 minuty. Vylez na mohylu pro vyvýšené místo, nebo projdi mohylovou chodbou pod ní, jakmile páka na vzdálené mohyle otevře její bránu. Odnes svou vlajku na **Bouřný maják** uprostřed a ten každých 2,5 sekundy zasáhne jednoho náhodného nepřítele v doslechu za 50 bleskového poškození, dokud tam svou vlajku nezasadí druhý tým. Každý úder je blesk od majáku k zasaženému, viditelný pro oba týmy.
 
-Tři arény Výstupu se dají vybrat i ve Vlastní hře: **The Hollow Deep** (Vyhlazení 8v8, tři klikaté tunely kolem centrální skály), **Blackwater Ford** (Vyhlazení s knězem 8v8, 5200x2800, u temného říčního brodu: dá se přebrodit mělký brod, přejít rozbitý most na pilířích nad mlýnem, nebo projít propustí pod mostem, jakmile páka na mlýně otevře její bránu; kněz oživuje své mrtvé každé 2 minuty) a **Mosslit Cairns** (Dobývání bodů 8v8, pět mohyl v mělkém cik-caku mezi základnami). Čtvrtá je **The Brazen Causeway** (Vyhlazení s knězem 8v8, 5600x2800, na vyvýšené kamenné hrázi nad močálem za soumraku: dá se pochodovat po hrázi, jakmile páka ve vzdálené vrátnici otevře její bronzovou bránu, přejít močál ke schodům uprostřed hráze, nebo proklouznout propustí pod ní; kněz oživuje své mrtvé každé 2 minuty).
+Tři arény Výstupu se dají vybrat i ve Vlastní hře: **The Hollow Deep** (Vyhlazení 8v8, tři klikaté tunely kolem centrální skály), **Blackwater Ford** (Vyhlazení s knězem 8v8, 5200x2800, u temného říčního brodu: dá se přebrodit mělký brod, přejít rozbitý most na pilířích nad mlýnem, nebo projít propustí pod mostem, jakmile páka na mlýně otevře její bránu; kněz oživuje své mrtvé každé 2 minuty) a **Mosslit Cairns** (Dobývání bodů 8v8, 5400x3000, na pěti mohylových kopcích zářících za soumraku mechem: dá se vystoupat na mohylu po jejích schodech, držet velkou mohylu uprostřed, nebo projít kořenovým tunelem pod jižními kopci, jakmile páka na severní mohyle otevře jeho brány; kořenové zdi lze rozbít). Čtvrtá je **The Brazen Causeway** (Vyhlazení s knězem 8v8, 5600x2800, na vyvýšené kamenné hrázi nad močálem za soumraku: dá se pochodovat po hrázi, jakmile páka ve vzdálené vrátnici otevře její bronzovou bránu, přejít močál ke schodům uprostřed hráze, nebo proklouznout propustí pod ní; kněz oživuje své mrtvé každé 2 minuty).
 
 Mapa může mít **brány**: zdi, které v zavřeném stavu zastaví těla, střely i výhled. Bránu otevřeš tím, že se postavíš na její nášlapnou plošinu. Zavře se, když na plošině nikdo nezůstane, odstrčí každého ve dveřích na bližší stranu, zastaví střely právě letící skrz a půl sekundy ji nelze znovu otevřít. Plošina v barvě týmu reaguje jen na daný tým. Boti stojí na plošině svého týmu, když poblíž není žádný nepřítel.
 

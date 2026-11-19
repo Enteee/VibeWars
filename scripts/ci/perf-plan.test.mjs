@@ -14,6 +14,11 @@ describe("planPerf", () => {
     expect(maps).toEqual([...REFERENCE_MAPS, "frozen-crossing"]);
   });
 
+  it("benches a three-team map when its file is touched", () => {
+    const { maps } = planPerf(["packages/game-maps/maps/threefold-keep/map.json"], benchable);
+    expect(maps).toEqual([...REFERENCE_MAPS, "threefold-keep"]);
+  });
+
   it("lists a map once, even when it is a reference or touched twice", () => {
     const { maps } = planPerf(
       [
@@ -41,8 +46,8 @@ describe("benchable", () => {
     expect(benchable("arena-canyon")).toBe(true);
   });
 
-  it("refuses a three-team map: the menu background never fights it", () => {
-    expect(benchable("hall-of-heroes-king")).toBe(false);
+  it("accepts a three-team map: the menu background fights it too", () => {
+    expect(benchable("threefold-keep")).toBe(true);
   });
 
   it("refuses a map with no folder", () => {

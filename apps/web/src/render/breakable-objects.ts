@@ -1,14 +1,9 @@
-import {
-  breakableTargetId,
-  pointInPolygon,
-  polygonCentre,
-  segmentsIntersect,
-  type Vec2,
-} from "@vibewars/game-core";
+import { breakableTargetId, polygonCentre, type Vec2 } from "@vibewars/game-core";
 import type { BreakableDescriptor } from "@vibewars/game-protocol";
 
 import type { MapStructure, RenderableShape } from "./arena-snapshot.js";
 import { shapeOutline, WALL_HEIGHT } from "./layer-surfaces.js";
+import type { DrawnClickable } from "./pick.js";
 import { elevationOf } from "./render-order.js";
 
 /**
@@ -96,36 +91,26 @@ function drawnRise(
 }
 
 /**
- * The standing breakable wall drawn under `point`, for a right click to
+ * Record a standing breakable wall in `out` (#3634), for a right click to
  * target as a switch is (#3025): its top or its front face, as the wall
  * stands lifted on its layer. Rubble is nothing to click.
  */
-export function breakableAtPoint(
-  breakables: readonly RenderableBreakable[],
-  point: Vec2,
+export function recordBreakable(
+  out: DrawnClickable[],
+  breakable: RenderableBreakable,
   structure: Pick<MapStructure, "ground" | "layerCount">,
-): string | undefined {
-  return breakables.find((breakable) => {
-    if (breakable.health <= 0) {
-      return false;
-    }
-    // What is drawn at `point` is the footprint lifted by base..base+rise:
-    // the footprint points straight below it, down that far.
-    const { base, rise } = drawnRise(breakable.layer, structure);
-    const low = { x: point.x, y: point.y + base };
-    const high = { x: point.x, y: point.y + base + rise };
-    const { outline } = breakable;
-    return (
-      pointInPolygon(low, outline) ||
-      pointInPolygon(high, outline) ||
-      outline.some((corner, at) =>
-        segmentsIntersect(
-          { a: low, b: high },
-          { a: corner, b: outline[(at + 1) % outline.length] ?? corner },
-        ),
-      )
-    );
-  })?.id;
+  depth: number,
+): void {
+  if (breakable.health <= 0) {
+    return;
+  }
+  const { base, rise } = drawnRise(breakable.layer, structure);
+  out.push({
+    kind: "breakable",
+    id: breakable.id,
+    hit: { column: { outline: breakable.outline, low: base, high: base + rise } },
+    depth,
+  });
 }
 
 /** How long a hit's new crack takes to draw in, seconds (#3370). */
