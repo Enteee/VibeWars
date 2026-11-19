@@ -118,7 +118,6 @@ import {
   type BuildEditorCallbacks,
   type BuildEditorView,
 } from "./ui/build-editor.js";
-import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
 import { setLanguageBusy } from "./ui/language-section.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
@@ -908,9 +907,6 @@ async function main(): Promise<void> {
   const topbarView = mountTopbar(
     topbar,
     {
-      onHelp: () => {
-        openHelpOverlay(app);
-      },
       onOptionsClosed: () => {
         // Closed over the menu, its characters wear the cape just picked in
         // Options (#1513). Not when a match starting closed it, which leaves
@@ -949,7 +945,6 @@ async function main(): Promise<void> {
       // From the bar, over a lobby whose match just started: it goes with
       // the screens.
       closeTopbarPopover();
-      closeHelpOverlay();
     }
     // In a match the viewport has the whole height; the HUD has the bar's
     // buttons (#454).
