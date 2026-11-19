@@ -6,7 +6,8 @@ import {
   shrinesOf,
   type MapShrine,
 } from "@vibewars/game-maps/match-fields";
-import { validateMapData, type GateLook, type MapData } from "@vibewars/game-maps/schema";
+import type { GateLook, MapData } from "@vibewars/game-maps/schema";
+import { bundledMaps } from "./bundled-maps.js";
 import { linkTargets, type SwitchTarget } from "../render/switch-link.js";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
@@ -68,10 +69,9 @@ import { TUTORIAL_CANYON } from "../tutorial/canyon-map.js";
  * builds them: the server used to load these from disk and serve the list
  * at `/api/maps`.
  *
- * Vite inlines the JSON, and it is validated here, at module load, as
- * `training/maps.ts` does for the training arenas.
+ * Vite inlines the JSON; CI validates it, not the page (`bundledMaps`, #3679).
  */
-export const ARENA_MAPS: readonly MapData[] = [
+export const ARENA_MAPS: readonly MapData[] = bundledMaps([
   // Kill Count's and Priest Annihilation's, then the Annihilation arenas, smallest first.
   emberPits,
   jungleRuins,
@@ -117,7 +117,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   ...(typeof __VIBEWARS_BENCH_REFERENCE__ !== "undefined" && __VIBEWARS_BENCH_REFERENCE__
     ? [benchReference, tutorialCanyon1, tutorialCanyon2]
     : []),
-].map((raw) => validateMapData(raw));
+]);
 
 /** The arena a new lobby starts on, the server's default before (#403). */
 /** The arena `mapId` names, `undefined` for none. */
