@@ -28,5 +28,8 @@
     "@vibewars/game-core": "workspace:*",
     "@vibewars/game-protocol": "workspace:*",
     "@vibewars/ranking": "workspace:*"
+  },
+  "devDependencies": {
+    "@noble/hashes": "2.4.0"
   }
 }

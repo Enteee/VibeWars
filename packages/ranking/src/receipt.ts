@@ -352,6 +352,15 @@ export function parseReceipt(json: string): RankedReceipt | undefined {
   } catch {
     return undefined;
   }
+  return parseRankedReceipt(value);
+}
+
+/**
+ * The receipt `value` encodes, or `undefined`: `parseReceipt` of a value
+ * already parsed, as a lobby message carries it (#3573). Its size is the
+ * caller's to bound.
+ */
+export function parseRankedReceipt(value: unknown): RankedReceipt | undefined {
   if (!isRecord(value)) {
     return undefined;
   }

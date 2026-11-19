@@ -183,6 +183,13 @@ export {
   parseWireMatchStart,
   parseWireCape,
   isTicketId,
+  parseWireRankedStart,
+  parsePeerRankedStartSig,
+  parseWireRankedStartSigs,
+  parseWireRankedResult,
+  parsePeerRankedResultSig,
+  parseWireRankedReceipt,
+  parseWireRankedCancel,
 } from "./p2p.js";
 
 export type {
@@ -279,6 +286,14 @@ export type {
   WireAdmission,
   LobbyRefusal,
   WireMatchStart,
+  WireRankedJoin,
+  WireRankedStart,
+  PeerRankedStartSig,
+  WireRankedStartSigs,
+  WireRankedResult,
+  PeerRankedResultSig,
+  WireRankedReceipt,
+  WireRankedCancel,
 } from "./p2p.js";
 
 export {
@@ -296,6 +311,7 @@ export {
   inPartyOrder,
   parseQueueTicket,
   soloQueueTicket,
+  UNLISTED_CLAIM,
   teamQueueModeOf,
   lobbyModeOfQueue,
   teamSizeOf,
