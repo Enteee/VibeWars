@@ -689,7 +689,7 @@ export default {
   "lobby.joinTeamLabel": "Είσοδος στην ομάδα {team}",
   "lobby.leaveTeam": "Έξοδος",
   "lobby.leaveTeamLabel": "Έξοδος από την ομάδα {team}",
-  "lobby.map": "Χάρτης",
+  "lobby.map": "Χάρτης:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Χάρτης: τυχαίος (Αρένα Ομάδων)",
   "lobby.mapShown": "Χάρτης: {map}",

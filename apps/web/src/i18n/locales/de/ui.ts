@@ -687,7 +687,7 @@ export default {
   "lobby.joinTeamLabel": "Team {team} beitreten",
   "lobby.leaveTeam": "Verlassen",
   "lobby.leaveTeamLabel": "Team {team} verlassen",
-  "lobby.map": "Karte",
+  "lobby.map": "Karte:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Karte: zufällig (Teamarena)",
   "lobby.mapShown": "Karte: {map}",

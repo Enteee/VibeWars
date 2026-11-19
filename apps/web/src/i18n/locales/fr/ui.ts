@@ -720,7 +720,7 @@ export default {
   "lobby.joinTeamLabel": "Rejoindre l'équipe {team}",
   "lobby.leaveTeam": "Quitter",
   "lobby.leaveTeamLabel": "Quitter l'équipe {team}",
-  "lobby.map": "Carte",
+  "lobby.map": "Carte :",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Carte : aléatoire (Arène d'équipe)",
   "lobby.mapShown": "Carte : {map}",

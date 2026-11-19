@@ -3920,6 +3920,25 @@ body:has(> .splash) #menu-background::after {
   white-space: nowrap;
 }
 
+/* Ready and Start match at the bar's end, before the lobby's code and
+   the icons (#3626): one auto margin, so the free space is not split.
+   A phone's bar keeps its ⋯ where it is. */
+@media (width > 45rem) {
+  #topbar:has(.topbar-status .lobby-map) .topbar-screen-actions {
+    margin-inline-start: auto;
+  }
+
+  #topbar:has(.topbar-status .lobby-map) :is(.topbar-join, .topbar-queue-action),
+  #topbar:has(.topbar-status .lobby-map) .topbar-queue-action:empty + .topbar-actions {
+    margin-inline-start: 0;
+  }
+}
+
+/* The host's picker reads "Map:", as a guest's map does. */
+#topbar .lobby-map .field-label {
+  text-transform: none;
+}
+
 .lobby-code-label {
   color: var(--ink-dim);
   text-transform: uppercase;

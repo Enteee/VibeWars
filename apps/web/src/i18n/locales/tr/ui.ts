@@ -682,7 +682,7 @@ export default {
   "lobby.joinTeamLabel": "{team} takımına katıl",
   "lobby.leaveTeam": "Ayrıl",
   "lobby.leaveTeamLabel": "{team} takımından ayrıl",
-  "lobby.map": "Harita",
+  "lobby.map": "Harita:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Harita: rastgele (Takım Arenası)",
   "lobby.mapShown": "Harita: {map}",

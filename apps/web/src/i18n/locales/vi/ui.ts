@@ -635,7 +635,7 @@ export default {
   "lobby.joinTeamLabel": "Vào đội {team}",
   "lobby.leaveTeam": "Rời",
   "lobby.leaveTeamLabel": "Rời đội {team}",
-  "lobby.map": "Bản đồ",
+  "lobby.map": "Bản đồ:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Bản đồ: ngẫu nhiên (Đấu trường đội)",
   "lobby.mapShown": "Bản đồ: {map}",

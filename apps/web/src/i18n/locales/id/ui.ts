@@ -639,7 +639,7 @@ export default {
   "lobby.joinTeamLabel": "Gabung ke tim {team}",
   "lobby.leaveTeam": "Keluar",
   "lobby.leaveTeamLabel": "Keluar dari tim {team}",
-  "lobby.map": "Peta",
+  "lobby.map": "Peta:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Peta: acak (Arena Tim)",
   "lobby.mapShown": "Peta: {map}",

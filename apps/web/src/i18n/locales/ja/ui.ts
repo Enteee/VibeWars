@@ -642,7 +642,7 @@ export default {
   "lobby.joinTeamLabel": "チーム{team}に参加",
   "lobby.leaveTeam": "離脱",
   "lobby.leaveTeamLabel": "チーム{team}を離脱",
-  "lobby.map": "マップ",
+  "lobby.map": "マップ:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "マップ: ランダム (チームアリーナ)",
   "lobby.mapShown": "マップ: {map}",

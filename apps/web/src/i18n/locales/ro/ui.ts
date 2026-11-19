@@ -722,7 +722,7 @@ export default {
   "lobby.joinTeamLabel": "Intră în echipa {team}",
   "lobby.leaveTeam": "Ieși",
   "lobby.leaveTeamLabel": "Ieși din echipa {team}",
-  "lobby.map": "Hartă",
+  "lobby.map": "Hartă:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Hartă: aleatorie (Arenă de echipe)",
   "lobby.mapShown": "Hartă: {map}",

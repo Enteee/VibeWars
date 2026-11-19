@@ -681,7 +681,7 @@ export default {
   "lobby.joinTeamLabel": "پیوستن به تیم {team}",
   "lobby.leaveTeam": "خروج",
   "lobby.leaveTeamLabel": "خروج از تیم {team}",
-  "lobby.map": "نقشه",
+  "lobby.map": "نقشه:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "نقشه: تصادفی (آرنای تیمی)",
   "lobby.mapShown": "نقشه: {map}",

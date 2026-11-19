@@ -691,7 +691,7 @@ export default {
   "lobby.joinTeamLabel": "Liity tiimiin {team}",
   "lobby.leaveTeam": "Poistu",
   "lobby.leaveTeamLabel": "Poistu tiimistä {team}",
-  "lobby.map": "Kartta",
+  "lobby.map": "Kartta:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Kartta: satunnainen (tiimiareena)",
   "lobby.mapShown": "Kartta: {map}",

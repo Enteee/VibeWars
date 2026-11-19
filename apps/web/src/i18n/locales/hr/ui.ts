@@ -714,7 +714,7 @@ export default {
   "lobby.joinTeamLabel": "Uđi u tim {team}",
   "lobby.leaveTeam": "Izađi",
   "lobby.leaveTeamLabel": "Izađi iz tima {team}",
-  "lobby.map": "Karta",
+  "lobby.map": "Karta:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Karta: nasumična (Timska arena)",
   "lobby.mapShown": "Karta: {map}",

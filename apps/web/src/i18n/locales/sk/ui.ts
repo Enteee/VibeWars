@@ -741,7 +741,7 @@ export default {
   "lobby.joinTeamLabel": "Pridať sa k tímu {team}",
   "lobby.leaveTeam": "Odísť",
   "lobby.leaveTeamLabel": "Opustiť tím {team}",
-  "lobby.map": "Mapa",
+  "lobby.map": "Mapa:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Mapa: náhodná (Tímová aréna)",
   "lobby.mapShown": "Mapa: {map}",

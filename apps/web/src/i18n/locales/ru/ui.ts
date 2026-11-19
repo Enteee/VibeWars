@@ -740,7 +740,7 @@ export default {
   "lobby.joinTeamLabel": "Войти в команду {team}",
   "lobby.leaveTeam": "Выйти",
   "lobby.leaveTeamLabel": "Выйти из команды {team}",
-  "lobby.map": "Карта",
+  "lobby.map": "Карта:",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Карта: случайная (Командная арена)",
   "lobby.mapShown": "Карта: {map}",
