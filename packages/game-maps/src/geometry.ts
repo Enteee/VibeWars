@@ -94,6 +94,56 @@ export function shapesOverlap(first: WallShape, second: WallShape): boolean {
   );
 }
 
+/** Whether two segments cross, touching at an end not counted: a ramp may run along the edge. */
+export function segmentsCross(first: Segment, second: Segment): boolean {
+  const side = (point: Vec2, { a, b }: Segment): number =>
+    Math.sign((b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x));
+  return (
+    side(first.a, second) * side(first.b, second) < 0 &&
+    side(second.a, first) * side(second.b, first) < 0
+  );
+}
+
+/** How far off an outline a point may be and still count as on it: a distance's rounding, not a reach. */
+const ON_OUTLINE = 1e-6;
+
+/** Whether `point` is inside `shape` and not on its outline. */
+function pointInsideShape(point: Vec2, shape: WallShape): boolean {
+  return (
+    pointInShape(point, shape) &&
+    wallToSegments(shape).every((side) => distancePointToSegment(point, side) > ON_OUTLINE)
+  );
+}
+
+/** The points of a shape that tell whether it reaches into another: corners, mid-sides, centre. */
+function probePoints(shape: WallShape): Vec2[] {
+  const sides = wallToSegments(shape);
+  const corners = sides.map((side) => side.a);
+  const centre: Vec2 = {
+    x: corners.reduce((sum, { x }) => sum + x, 0) / corners.length,
+    y: corners.reduce((sum, { y }) => sum + y, 0) / corners.length,
+  };
+  return [
+    ...corners,
+    ...sides.map(({ a, b }) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 })),
+    centre,
+  ];
+}
+
+/**
+ * Whether two shapes share more than an outline (#3665): a side crosses the
+ * other's, or a corner, mid-side or centre of one lies strictly inside the
+ * other. Shapes that only touch along an edge or at a corner do not.
+ */
+export function shapesOverlapInterior(first: WallShape, second: WallShape): boolean {
+  const sides = wallToSegments(second);
+  return (
+    wallToSegments(first).some((side) => sides.some((other) => segmentsCross(side, other))) ||
+    probePoints(first).some((point) => pointInsideShape(point, second)) ||
+    probePoints(second).some((point) => pointInsideShape(point, first))
+  );
+}
+
 /** Whether all of `shape` is inside a map of this size. */
 export function shapeInBounds(shape: WallShape, width: number, height: number): boolean {
   return shapeVertices(shape).every(({ x, y }) => x >= 0 && y >= 0 && x <= width && y <= height);
