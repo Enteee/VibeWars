@@ -1,4 +1,5 @@
 import type { BotLever } from "../../behaviour.js";
+import { distance } from "../../../vec2.js";
 import { countsForTeam } from "../../simulation.js";
 import { nearestTo, NOTHING, pressed } from "./shared.js";
 import type { BotRule } from "./types.js";
@@ -16,8 +17,10 @@ export const LEVER_GIVE_UP_SECONDS = 5;
  * Levers (#3138): with no foe near, the bot of its team nearest the lever
  * that shortens the team's way to the foes most walks to it and throws it,
  * as a player clicking it does. Opening a gate and turning on a teleport
- * both count: either way the route gets shorter. After `gates`, so a foe
- * in reach and a team's own plate both come first.
+ * both count: either way the route gets shorter. Of two levers that win
+ * the same, the team takes the one nearer its bots (#3532): on a mirrored
+ * map, each team its own. After `gates`, so a foe in reach and a team's
+ * own plate both come first.
  *
  * Setting out, it commits (#3532): `keep-lever` walks it on from then,
  * and no other bot of its team takes that lever while it does.
@@ -31,20 +34,28 @@ const levers: BotRule = {
       return undefined;
     }
     const team = self.combatant.team;
+    const bots = allies.filter((ally) => countsForTeam(ally) && context.isBot(ally.id));
+    /** How far `lever` is from the team's bot nearest it. */
+    const reach = (lever: BotLever): number => {
+      const nearest = nearestTo(lever.position, bots);
+      return nearest === undefined
+        ? Number.POSITIVE_INFINITY
+        : distance(nearest.position, lever.position);
+    };
     let best: BotLever | undefined;
     for (const lever of context.objectives.levers) {
       const gain = lever.gain[team] ?? 0;
+      const bestGain = best?.gain[team] ?? 0;
       if (
         gain >= LEVER_WORTH_UNITS &&
         context.now >= lever.readyAt &&
         context.now - lever.flippedAt >= LEVER_SETTLE_SECONDS &&
         context.leverHolder(lever.targetId) === undefined &&
-        (best === undefined || gain > (best.gain[team] ?? 0))
+        (best === undefined || gain > bestGain || (gain === bestGain && reach(lever) < reach(best)))
       ) {
         best = lever;
       }
     }
-    const bots = allies.filter((ally) => countsForTeam(ally) && context.isBot(ally.id));
     if (best === undefined || nearestTo(best.position, bots) !== self) {
       return undefined;
     }

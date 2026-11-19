@@ -85,6 +85,12 @@ describe("levers (#3138)", () => {
     expect(think(sim, "near", list)?.attackTargetId).toBe(other);
   });
 
+  it("takes the nearer of two levers worth the same, though the farther comes first (#3532)", () => {
+    const other = switchTargetId("other");
+    const list = [lever(400, vec2(900, 400)), lever(400, vec2(320, 400), other)];
+    expect(think(sim, "near", list)?.attackTargetId).toBe(other);
+  });
+
   it("leaves a lever thrown 3 s ago alone, and takes one thrown 7 s ago", () => {
     const thrown = (ago: number): BotLever => ({ ...lever(1000), flippedAt: 10 - ago });
     expect(think(sim, "near", [thrown(3)])).toBeUndefined();
