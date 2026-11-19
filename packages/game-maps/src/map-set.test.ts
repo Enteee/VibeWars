@@ -65,6 +65,7 @@ const REBUILT = new Set([
   "brazen-causeway",
   "cinder-sanctum",
   "broken-tower",
+  "hollow-deep",
   "mosslit-cairns",
   "scarred-earth",
   "wardens-gallery",

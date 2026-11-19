@@ -392,8 +392,7 @@ dosegu s 50 štete od munje, dok drugi tim ne
 postavi svoju zastavu tamo. Svaki udarac je munja od svjetionika do onoga koga je pogodila,
 vidljiva obama timovima.
 
-Tri arene Uspona može odabrati i Igra s domaćinom: **The Hollow Deep** (8v8 Uništenje, tri
-vijugava tunela oko središnje stijene),
+Tri arene Uspona može odabrati i Igra s domaćinom: **The Hollow Deep** (8v8 Uništenje, 6200x2400, u mračnoj špilji: prijeđi viseći most preko ponora, popni se preko srednje izbočine ili prođi podzemnim hodnikom ispod nje kad poluga na stjenovitoj polici otvori njegova vrata),
 **Blackwater Ford** (8v8, 5200x2800, Uništenje sa
 svećenikom na tamnom riječnom gazu: prelazi se gazeći plitki gaz, slomljenim mostom na stupovima iznad mlina
 ili kroz propust ispod mosta kad poluga na mlinu otvori njegovu rešetku; svećenik diže
