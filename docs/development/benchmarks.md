@@ -217,9 +217,9 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
   `hollow-deep` baseline (7.87, sandstone-steps, #3436) times 1.15, rounded
   up. The baseline moved to `bench-flat` with #3444: an edit to
   `flat-map.json` re-derives the gate in the same pull request, as an edit
-  to the reference map does. Against `bench-flat`, walked 8v8 on a local
-  run of seven maps, the highest was 6.34 (guild-hall-isle), so 6.34 x
-  1.15 rounds up to 8. A breach is a perf card, not a raise.
+  to the reference map does. Against `bench-flat`, in CI's green run on
+  #3444, the highest was 8.60 (sandstone-steps), so 8.60 x 1.15 rounds up
+  to 10 again. A breach is a perf card, not a raise.
 
 The follow case measures the page through `?frametiming`
 (`render/frame-timing.ts`), which any client takes: open a match with
