@@ -1437,6 +1437,24 @@ export default {
   "tutorial.menu.spec.title": "Ganti spesialisasimu.",
   "tutorial.menu.spec.weapons": "Pilih senjata dari daftar untuk set senjatamu.",
   "tutorial.menu.spec.weaponsDone": "Ganti senjata",
+  "tutorial.menu.team.build":
+    "Nama anggota membuka build-nya di editor build. Saat kembali, perubahanmu tetap ada, belum disimpan.",
+  "tutorial.menu.team.character":
+    "Seret karaktermu dari Karakterku ke seorang anggota. Anggota itu menjadi salinannya.",
+  "tutorial.menu.team.characterDone": "Masukkan karaktermu ke tim",
+  "tutorial.menu.team.fill": "Beri setiap anggota build, sampai tim tidak punya masalah lagi.",
+  "tutorial.menu.team.fillDone": "Lengkapi tim",
+  "tutorial.menu.team.members":
+    "Tim selalu punya anggota sebanyak ukurannya. Kamu tidak pernah menambah anggota: kamu menggantinya.",
+  "tutorial.menu.team.new": "Atur ukuran tim ke 2v2, lalu buat build tim baru.",
+  "tutorial.menu.team.newDone": "Mulai tim berisi 2",
+  "tutorial.menu.team.open": "Buka Tim, tempat build timmu berada.",
+  "tutorial.menu.team.openDone": "Buka Tim",
+  "tutorial.menu.team.problems":
+    "Simpan selalu menyimpan tim. Petunjuknya menyebut hal pertama yang membuat tim belum bisa dimainkan.",
+  "tutorial.menu.team.save": "Simpan timmu.",
+  "tutorial.menu.team.saveDone": "Simpan",
+  "tutorial.menu.team.title": "Bangun tim untuk sukses.",
   "tutorial.gate.hint": "Masuk ke kabut, ikuti aku.",
   "tutorial.gate.how": "Klik kiri tanah, atau berjalan dengan {keys}.",
   "tutorial.gate.intro": "Tim kita bertarung di balik kabut. Ikuti aku.",

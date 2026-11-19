@@ -1597,6 +1597,25 @@ export default {
   "tutorial.menu.spec.title": "Cambia tu especialización.",
   "tutorial.menu.spec.weapons": "Elige de la lista un arma para tu set de armas.",
   "tutorial.menu.spec.weaponsDone": "Cambia un arma",
+  "tutorial.menu.team.build":
+    "El nombre de un miembro abre su build en el editor de builds. Al volver, conservas lo que cambiaste, sin guardar.",
+  "tutorial.menu.team.character":
+    "Arrastra tu personaje desde Mis personajes a un miembro. El miembro se convierte en una copia de él.",
+  "tutorial.menu.team.characterDone": "Pon tu personaje en el equipo",
+  "tutorial.menu.team.fill":
+    "Dale una build a cada miembro, hasta que el equipo no tenga problemas.",
+  "tutorial.menu.team.fillDone": "Completa el equipo",
+  "tutorial.menu.team.members":
+    "Un equipo siempre tiene tantos miembros como su tamaño. Nunca añades un miembro: reemplazas uno.",
+  "tutorial.menu.team.new": "Pon el tamaño del equipo en 2v2 y luego crea una nueva build.",
+  "tutorial.menu.team.newDone": "Empieza un equipo de 2",
+  "tutorial.menu.team.open": "Abre Equipos, donde están las builds de tus equipos.",
+  "tutorial.menu.team.openDone": "Abre Equipos",
+  "tutorial.menu.team.problems":
+    "Guardar siempre guarda el equipo. Su pista nombra lo primero que impide jugar con el equipo.",
+  "tutorial.menu.team.save": "Guarda tu equipo.",
+  "tutorial.menu.team.saveDone": "Guardar",
+  "tutorial.menu.team.title": "Arma un equipo para triunfar.",
   "tutorial.gate.hint": "A la niebla, detrás de mí.",
   "tutorial.gate.how": "Haz clic izquierdo en el suelo o camina con {keys}.",
   "tutorial.gate.intro": "Nuestro equipo lucha más allá de la niebla. Sígueme.",

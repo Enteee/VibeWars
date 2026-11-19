@@ -365,6 +365,9 @@ export function buildNavGraph(
 /** How far a point must be from another area's side to count as inside it. */
 const OUTLINE_EPSILON = 1e-6;
 
+/** How much nearer than its clearance to a wall a body may stand, for rounding (#3596). */
+const CLEARANCE_EPSILON = 1e-6;
+
 function insideArea(point: Vec2, area: Polygon): boolean {
   return (
     pointInPolygon(point, area) &&
@@ -824,6 +827,11 @@ export function navGraphFor(gated: GatedNavGraph, closed: number): NavGraph {
  * cells round the point, and every side the ray crosses is in the
  * point's row of cells, from its column to the grid's edge, since the
  * crossing lies in that side's box. The ray walks that row.
+ *
+ * A body a wall pushed out stands exactly `clearance` from it, which
+ * rounds a hair under or over by where on the map it is (#3596): within
+ * `CLEARANCE_EPSILON` of it, it is clear, so a spot and its mirror image
+ * agree.
  */
 export function isStandable(graph: NavGraph, point: Vec2): boolean {
   const { bounds, clearance, walkable, outlineWalls } = graph;
@@ -853,7 +861,10 @@ export function isStandable(graph: NavGraph, point: Vec2): boolean {
         }
         grid.stamp[index] = near;
         const wall = grid.walls[index];
-        if (wall !== undefined && distancePointToSegment(point, wall) < clearance) {
+        if (
+          wall !== undefined &&
+          distancePointToSegment(point, wall) < clearance - CLEARANCE_EPSILON
+        ) {
           return false;
         }
       }
@@ -1171,6 +1182,8 @@ const ZERO_POINT: Vec2 = { x: 0, y: 0 };
 class AStar implements LayeredPathFinder {
   readonly #graphs: readonly NavGraph[];
   readonly #grids: readonly WallGrid[];
+  /** The middle of the map, which a mirrored map mirrors about; none on an unbounded one. */
+  readonly #centre: Vec2 | undefined;
   /** Vertices are every layer's nodes then portals, in layer order, then `from`, then `to`. */
   readonly #points: Vec2[] = [];
   readonly #layerOf: Uint8Array;
@@ -1234,6 +1247,8 @@ class AStar implements LayeredPathFinder {
   ) {
     this.#graphs = graphs;
     this.#grids = graphs.map(gridOf);
+    const bounds = graphs[0]?.bounds;
+    this.#centre = bounds === undefined ? undefined : vec2(bounds.width / 2, bounds.height / 2);
     const clearance = graphs[0]?.clearance ?? 0;
     const links = transitions.flatMap((transition) =>
       rampIsLinked(graphs, transition)
@@ -1560,11 +1575,27 @@ class AStar implements LayeredPathFinder {
     this.#siftUp(this.#openCount - 1);
   }
 
-  /** Whether open vertex `a` comes out of the heap before `b`. */
+  /**
+   * Whether open vertex `a` comes out of the heap before `b`. Of two
+   * as good, as a way round a wall either side of it, the one nearer the
+   * map's centre (#3596): that mirrors with the map, so a route's mirror
+   * image goes round its own wall the same way. Then the first opened.
+   */
   #before(a: number, b: number): boolean {
     const ea = this.#estimated[a] ?? Number.POSITIVE_INFINITY;
     const eb = this.#estimated[b] ?? Number.POSITIVE_INFINITY;
-    return ea < eb || (ea === eb && (this.#openedAt[a] ?? 0) < (this.#openedAt[b] ?? 0));
+    if (ea !== eb) {
+      return ea < eb;
+    }
+    const centre = this.#centre;
+    if (centre !== undefined) {
+      const ca = distance(this.#point(a), centre);
+      const cb = distance(this.#point(b), centre);
+      if (ca !== cb) {
+        return ca < cb;
+      }
+    }
+    return (this.#openedAt[a] ?? 0) < (this.#openedAt[b] ?? 0);
   }
 
   #place(at: number, i: number): void {

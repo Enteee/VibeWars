@@ -1505,6 +1505,24 @@ export default {
   "tutorial.menu.spec.title": "Byt din spec.",
   "tutorial.menu.spec.weapons": "Välj ett vapen till ditt vapenset från listan.",
   "tutorial.menu.spec.weaponsDone": "Byt ett vapen",
+  "tutorial.menu.team.build":
+    "En medlems namn öppnar dess build i buildredigeraren. När du kommer tillbaka finns ändringarna kvar, osparade.",
+  "tutorial.menu.team.character":
+    "Dra din karaktär från Mina karaktärer till en medlem. Medlemmen blir en kopia av den.",
+  "tutorial.menu.team.characterDone": "Sätt din karaktär i laget",
+  "tutorial.menu.team.fill": "Ge varje medlem ett build, tills laget inte har några problem kvar.",
+  "tutorial.menu.team.fillDone": "Fyll laget",
+  "tutorial.menu.team.members":
+    "Ett lag har alltid lika många medlemmar som sin storlek. Du lägger aldrig till en medlem: du byter ut en.",
+  "tutorial.menu.team.new": "Sätt lagstorleken till 2v2 och skapa sedan en ny lagbuild.",
+  "tutorial.menu.team.newDone": "Starta ett lag på 2",
+  "tutorial.menu.team.open": "Öppna Lag, där dina lagbuilds finns.",
+  "tutorial.menu.team.openDone": "Öppna Lag",
+  "tutorial.menu.team.problems":
+    "Spara sparar alltid laget. Dess tips nämner det första som hindrar laget från att spelas.",
+  "tutorial.menu.team.save": "Spara ditt lag.",
+  "tutorial.menu.team.saveDone": "Spara",
+  "tutorial.menu.team.title": "Bygg ett lag för att lyckas.",
   "tutorial.gate.hint": "In i dimman, efter mig.",
   "tutorial.gate.how": "Vänsterklicka på marken, eller gå med {keys}.",
   "tutorial.gate.intro": "Vårt lag strider bortom dimman. Följ mig.",

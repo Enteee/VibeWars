@@ -38,6 +38,9 @@ import {
 
 const BENCH = process.env.BENCH_BALANCE !== undefined;
 
+/** Seeds of Scarred Earth 8v8 played from each side (#3596): 4 × SIDE_SEEDS matches. */
+const SIDE_SEEDS = 10;
+
 const percent = (share: number): string => (share * 100).toFixed(1);
 
 function result(wins: readonly number[], draws = 0): MapBalanceResult {
@@ -2381,5 +2384,26 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
     },
     // Every map at every size: hours, not minutes.
     24 * 3_600_000,
+  );
+
+  it(
+    "wins Scarred Earth 8v8 as often from the east as from the west (#3596)",
+    () => {
+      const map = loadMap("scarred-earth");
+      const seeds = SIDE_SEEDS;
+      const asSeated = runMapBalance({ map, size: 8, seeds });
+      const swapped = runMapBalance({ map, size: 8, seeds, swapSides: true });
+      // Team 0 is seated west, then east: the same teams, so only the side differs.
+      const west = (asSeated.wins[0] ?? 0) + (swapped.wins[1] ?? 0);
+      const east = (asSeated.wins[1] ?? 0) + (swapped.wins[0] ?? 0);
+      const bySide = {
+        ...asSeated,
+        wins: [west, east],
+        draws: asSeated.draws + swapped.draws,
+      };
+      console.log(`scarred-earth 8v8 by side, west / east: ${String(west)} / ${String(east)}`);
+      expect(balanceVerdict(bySide)).toEqual({ pass: true });
+    },
+    3 * 3_600_000,
   );
 });

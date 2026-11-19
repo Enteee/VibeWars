@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { newCharacter } from "../ui/build-editor.js";
-import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
+import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
+import { teamCharacter, teamOf } from "../ui/team-builder.js";
 
 import {
   MENU_QUEST_STEPS,
@@ -221,5 +222,87 @@ describe("the spec step (#3541)", () => {
     expect(at(refused)).toBe(6);
     const saved = foldMenuQuestEvent(all, { kind: "character-saved", before: START, after: START });
     expect(at(saved)).toBe("past");
+  });
+});
+
+/** The team step from `events`: where it is, or done with it. */
+function teamAfter(state: MenuQuestState, gotIt = false): number | "past" {
+  let cursor = advanceMenuQuest(resumeMenuQuest("team"), state, false);
+  // The three explanations are read: Got it on each.
+  while (gotIt && cursor !== "done" && currentBeat(cursor).kind === "explain") {
+    cursor = advanceMenuQuest(cursor, state, true);
+  }
+  return cursor !== "done" && cursor.step === "team" ? cursor.beat : "past";
+}
+
+describe("the team step (#3542)", () => {
+  const blank = (id: string): TeamCharacter => teamCharacter(newCharacter(id), id);
+  const opened = teamOf("t1", 2, [blank("m1"), blank("m2")]);
+  const copied = teamOf("t1", 2, [teamCharacter(START, "m1"), blank("m2")]);
+  const filled = teamOf("t1", 2, [teamCharacter(START, "m1"), teamCharacter(START, "m2")]);
+  const teams: MenuQuestEvent = { kind: "screen-shown", screen: "teams" };
+  const draft = (team: StoredTeam, isNew = true): MenuQuestEvent => ({
+    kind: "team-draft",
+    draft: team,
+    isNew,
+    characters: [START],
+  });
+
+  it("follows the spec step", () => {
+    expect(MENU_QUEST_STEPS.map(({ id }) => id)).toEqual(["menu", "spec", "team"]);
+  });
+
+  it("opens Teams, then a new team of two", () => {
+    expect(teamAfter(NO_MENU_QUEST_EVENTS)).toBe(0);
+    expect(teamAfter(fold([teams]))).toBe(1);
+    expect(teamAfter(fold([teams, draft(opened)]))).toBe(2);
+  });
+
+  it("never takes a team of another size, nor one already stored", () => {
+    const four = teamOf("t1", 4, [blank("m1"), blank("m2"), blank("m3"), blank("m4")]);
+    expect(teamAfter(fold([teams, draft(four)]))).toBe(1);
+    expect(teamAfter(fold([teams, draft(opened, false)]))).toBe(1);
+  });
+
+  it("explains the editor, then waits for the character in the team", () => {
+    expect(teamAfter(fold([teams, draft(opened)]), true)).toBe(5);
+    expect(teamAfter(fold([teams, draft(opened), draft(copied)]), true)).toBe(6);
+  });
+
+  it("takes the character saved in the spec step over the player's others", () => {
+    const other = { ...START, id: "c2", secondaryProfession: "ranger" as const };
+    const saved = fold([
+      { kind: "character-saved", before: undefined, after: other },
+      teams,
+      draft(opened),
+      draft(copied),
+    ]);
+    expect(saved.characterInTeam).toBe(false);
+    expect(fold([teams, draft(opened), draft(copied)]).characterInTeam).toBe(true);
+  });
+
+  it("keeps the character ticked once in, even if replaced later", () => {
+    const state = fold([teams, draft(opened), draft(copied), draft(opened)]);
+    expect(state.characterInTeam).toBe(true);
+    expect(teamAfter(state, true)).toBe(6);
+  });
+
+  it("is filled only with every member built and no problem", () => {
+    expect(teamAfter(fold([teams, draft(opened), draft(filled)]), true)).toBe(7);
+    const unnamed = { ...filled, name: " " };
+    expect(teamAfter(fold([teams, draft(opened), draft(copied), draft(unnamed)]), true)).toBe(6);
+  });
+
+  it("completes Save on the new team saved, playable, and remembers its id", () => {
+    const ready = fold([teams, draft(opened), draft(filled)]);
+    const unnamed = { ...filled, name: "" };
+    const refused = foldMenuQuestEvent(ready, { kind: "team-saved", team: unnamed, isNew: true });
+    expect(teamAfter(refused, true)).toBe(7);
+    expect(refused.questTeamId).toBeUndefined();
+    const old = foldMenuQuestEvent(ready, { kind: "team-saved", team: filled, isNew: false });
+    expect(teamAfter(old, true)).toBe(7);
+    const saved = foldMenuQuestEvent(ready, { kind: "team-saved", team: filled, isNew: true });
+    expect(teamAfter(saved, true)).toBe("past");
+    expect(saved.questTeamId).toBe("t1");
   });
 });

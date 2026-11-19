@@ -1509,6 +1509,24 @@ export const en = {
   "tutorial.menu.spec.title": "Change your spec.",
   "tutorial.menu.spec.weapons": "Pick a weapon for your weapon set from the list.",
   "tutorial.menu.spec.weaponsDone": "Change a weapon",
+  "tutorial.menu.team.build":
+    "A member's name opens its build in the build editor. Coming back keeps what you changed, unsaved.",
+  "tutorial.menu.team.character":
+    "Drag your character from My characters onto a member. The member becomes a copy of it.",
+  "tutorial.menu.team.characterDone": "Put your character in the team",
+  "tutorial.menu.team.fill": "Give every member a build, until the team has no problems left.",
+  "tutorial.menu.team.fillDone": "Fill the team",
+  "tutorial.menu.team.members":
+    "A team always has as many members as its size. You never add a member: you replace one.",
+  "tutorial.menu.team.new": "Set the team size to 2v2, then make a new team build.",
+  "tutorial.menu.team.newDone": "Start a team of 2",
+  "tutorial.menu.team.open": "Open Teams, where your team builds are.",
+  "tutorial.menu.team.openDone": "Open Teams",
+  "tutorial.menu.team.problems":
+    "Save always stores the team. Its hint names the first thing that keeps the team from being played.",
+  "tutorial.menu.team.save": "Save your team.",
+  "tutorial.menu.team.saveDone": "Save",
+  "tutorial.menu.team.title": "Build a team to be successful.",
   "tutorial.gate.hint": "Into the mist, after me.",
   "tutorial.gate.how": "Left click the ground, or walk with {keys}.",
   "tutorial.gate.intro": "Our team fights beyond the mist. Follow me.",

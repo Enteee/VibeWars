@@ -1437,6 +1437,24 @@ export default {
   "tutorial.menu.spec.title": "スペックを変えよう。",
   "tutorial.menu.spec.weapons": "リストから武器セット用の武器を選ぼう。",
   "tutorial.menu.spec.weaponsDone": "武器を変える",
+  "tutorial.menu.team.build":
+    "メンバーの名前を押すと、そのビルドがビルドエディタで開く。戻っても変更は未保存のまま残る。",
+  "tutorial.menu.team.character":
+    "「マイキャラクター」から自分のキャラクターをメンバーへドラッグしよう。メンバーはそのコピーになる。",
+  "tutorial.menu.team.characterDone": "キャラクターをチームに入れる",
+  "tutorial.menu.team.fill": "チームの問題がなくなるまで、全メンバーにビルドを与えよう。",
+  "tutorial.menu.team.fillDone": "チームを埋める",
+  "tutorial.menu.team.members":
+    "チームのメンバー数は常にチーム人数と同じ。メンバーは追加せず、入れ替える。",
+  "tutorial.menu.team.new": "チーム人数を2v2にして、新規チームビルドを作ろう。",
+  "tutorial.menu.team.newDone": "2人のチームを始める",
+  "tutorial.menu.team.open": "チームビルドがある「チーム」を開こう。",
+  "tutorial.menu.team.openDone": "「チーム」を開く",
+  "tutorial.menu.team.problems":
+    "「保存」は常にチームを保存する。そのヒントが、チームをプレイできない最初の理由を示す。",
+  "tutorial.menu.team.save": "チームを保存しよう。",
+  "tutorial.menu.team.saveDone": "保存",
+  "tutorial.menu.team.title": "チームを組んで勝利をつかもう。",
   "tutorial.gate.hint": "霧の中へ、私に続いて。",
   "tutorial.gate.how": "地面を左クリック、または {keys} で歩く。",
   "tutorial.gate.intro": "味方は霧の向こうで戦っている。ついて来て。",

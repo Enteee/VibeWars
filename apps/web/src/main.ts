@@ -1735,7 +1735,18 @@ async function main(): Promise<void> {
     // The sidebar comes back at the build's size, to its list (#2109).
     saveTeamSize("teams", state.team.size);
     teamEditor = mountTeamEditor(screenRoot, state, available, {
-      onSave: (saved) => teams.save(saved),
+      onSave: async (saved) => {
+        await teams.save(saved);
+        menuQuest?.event({ kind: "team-saved", team: saved, isNew: !state.stored });
+      },
+      onDraft: (draft) => {
+        menuQuest?.event({
+          kind: "team-draft",
+          draft,
+          isNew: !state.stored,
+          characters: available,
+        });
+      },
       onDuplicate: (source) => {
         void (async () => {
           await teams.save(duplicateTeam(source, crypto.randomUUID()));
