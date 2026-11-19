@@ -55,7 +55,7 @@ The new package `packages/ranking` holds the types, the canonical encoding and t
 
 Each signs it and publishes a partial receipt. The job merges result signatures over identical result bytes. The host takes a loss. A `host-left` result rates nobody else.
 
-A **receipt** holds the start, all start signatures, the result and every signature on the result. It is about 1 KB at 8v8.
+A **receipt** holds the start, all start signatures, the result and every signature on the result. It is about 11 KB at 8v8.
 
 It is valid when:
 
