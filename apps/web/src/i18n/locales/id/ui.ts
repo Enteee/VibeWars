@@ -811,6 +811,7 @@ export default {
   "pips.title": { other: "{sign}{count} pip" },
 
   "player.cape": "Jubah",
+  "player.capePreview": "Pratinjau",
   "player.colourBlack": "hitam",
   "player.colourGold": "emas",
   "player.colourLime": "limau",
@@ -1417,6 +1418,25 @@ export default {
     "Di Tim kamu menggabungkan karakter menjadi satu tim untuk pertarungan tim.",
   "tutorial.menu.menu.title": "Untuk lanjut, kamu harus mengganti spesialisasimu.",
   "tutorial.menu.skipAsk": "Lewati sisa tutorial?",
+  "tutorial.menu.spec.attributes":
+    "Bagikan poin atributmu. Tiap rank membuat skill atribut itu lebih kuat.",
+  "tutorial.menu.spec.attributesDone": "Ubah sebuah atribut",
+  "tutorial.menu.spec.gear":
+    "Armor, rune, dan insignia: pilih bagian pada figur, lalu apa yang dipasang di sana.",
+  "tutorial.menu.spec.gearDone": "Ganti satu perlengkapan",
+  "tutorial.menu.spec.open": "Buka Karakter, lalu buka satu karakter untuk mengubah build-nya.",
+  "tutorial.menu.spec.openDone": "Buka karakter",
+  "tutorial.menu.spec.professions":
+    "Profesi utamamu memberi atribut dan skill; profesi keduamu juga meminjamkan skill-nya.",
+  "tutorial.menu.spec.professionsDone": "Ganti profesi",
+  "tutorial.menu.spec.save": "Simpan karaktermu agar build baru tetap ada.",
+  "tutorial.menu.spec.saveDone": "Simpan",
+  "tutorial.menu.spec.skills":
+    "Buka satu grup di daftar, lalu seret skill ke slot di bar-mu untuk menukarnya.",
+  "tutorial.menu.spec.skillsDone": "Pasang skill di bar-mu",
+  "tutorial.menu.spec.title": "Ganti spesialisasimu.",
+  "tutorial.menu.spec.weapons": "Pilih senjata dari daftar untuk set senjatamu.",
+  "tutorial.menu.spec.weaponsDone": "Ganti senjata",
   "tutorial.gate.hint": "Masuk ke kabut, ikuti aku.",
   "tutorial.gate.how": "Klik kiri tanah, atau berjalan dengan {keys}.",
   "tutorial.gate.intro": "Tim kita bertarung di balik kabut. Ikuti aku.",

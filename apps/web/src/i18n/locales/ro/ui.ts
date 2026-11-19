@@ -909,6 +909,7 @@ export default {
   },
 
   "player.cape": "Pelerină",
+  "player.capePreview": "Previzualizare",
   "player.colourBlack": "negru",
   "player.colourGold": "auriu",
   "player.colourLime": "verde lime",
@@ -1568,6 +1569,25 @@ export default {
     "La Echipe pui personaje laolaltă într-o echipă pentru luptele pe echipe.",
   "tutorial.menu.menu.title": "Ca să mergi mai departe, trebuie să-ți schimbi specializarea.",
   "tutorial.menu.skipAsk": "Sari peste restul tutorialului?",
+  "tutorial.menu.spec.attributes":
+    "Împarte punctele de atribut. Fiecare rang face mai puternice abilitățile acelui atribut.",
+  "tutorial.menu.spec.attributesDone": "Schimbă un atribut",
+  "tutorial.menu.spec.gear":
+    "Armură, rune și însemne: alege o piesă pe figurină, apoi ce pui pe ea.",
+  "tutorial.menu.spec.gearDone": "Schimbă o piesă de echipament",
+  "tutorial.menu.spec.open": "Deschide Personaje, apoi un personaj ca să-i schimbi build-ul.",
+  "tutorial.menu.spec.openDone": "Deschide un personaj",
+  "tutorial.menu.spec.professions":
+    "Clasa principală îți dă atributele și abilitățile; cea secundară îți împrumută și ea abilitățile ei.",
+  "tutorial.menu.spec.professionsDone": "Schimbă o clasă",
+  "tutorial.menu.spec.save": "Salvează personajul ca să păstrezi noul build.",
+  "tutorial.menu.spec.saveDone": "Salvează",
+  "tutorial.menu.spec.skills":
+    "Deschide un grup din listă, apoi trage o abilitate pe un loc din bara ta ca să o schimbi.",
+  "tutorial.menu.spec.skillsDone": "Pune o abilitate pe bară",
+  "tutorial.menu.spec.title": "Schimbă-ți specializarea.",
+  "tutorial.menu.spec.weapons": "Alege din listă o armă pentru setul tău de arme.",
+  "tutorial.menu.spec.weaponsDone": "Schimbă o armă",
   "tutorial.gate.hint": "În ceață, după mine.",
   "tutorial.gate.how": "Clic stânga pe teren sau mergi cu {keys}.",
   "tutorial.gate.intro": "Echipa noastră luptă dincolo de ceață. Urmează-mă.",

@@ -188,7 +188,7 @@ verschijnt daaronder de ontwerper voor je **Gildecape**: kies de capekleur, de
 randkleur en een embleem, en je lichaam draagt de cape in elke match: hij vouwt
 tot een dunne band op je rand als je stilstaat en wappert achter je aan als je
 beweegt. Ook je personages in het menu laten hem zien. **Geen cape** doet hem
-af.
+af. Een figuur toont de cape zoals die er in het spel uitziet.
 
 Een wijziging geldt meteen voor de lobby waar je in zit.
 

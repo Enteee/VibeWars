@@ -1,6 +1,6 @@
 # Bantuan
 
-Halaman-halaman layar Bantuan di dalam game, sesuai urutan yang ditampilkannya. Setiap
+Halaman-halaman jendela Bantuan di dalam game, sesuai urutan yang ditampilkan pemilih halamannya. Setiap
 halaman di direktori ini tercantum di sini tepat satu kali.
 
 - [Memulai](getting-started.md)

@@ -160,10 +160,10 @@ afterEach(() => {
 function popover(
   parent: FakeElement,
   holdsOpen?: () => boolean,
-): { trigger: FakeElement; disposed: number[] } {
+): { trigger: FakeElement; disposed: number[]; open: () => void } {
   const trigger = new FakeElement("button");
   const disposed: number[] = [];
-  attachTopbarPopover(
+  const { open } = attachTopbarPopover(
     trigger as unknown as HTMLButtonElement,
     parent as unknown as HTMLElement,
     () => {
@@ -176,7 +176,7 @@ function popover(
       };
     },
   );
-  return { trigger, disposed };
+  return { trigger, disposed, open };
 }
 
 describe("a top-bar popover (#2385)", () => {
@@ -251,6 +251,17 @@ describe("a top-bar popover (#2385)", () => {
     expect(isTopbarPopoverOpen()).toBe(true);
     trigger.fire("click");
     expect(isTopbarPopoverOpen()).toBe(false);
+  });
+
+  it("opens from code as from its button, and stays open if it is (#3552)", () => {
+    const parent = new FakeElement("div");
+    const { trigger, disposed, open } = popover(parent);
+    open();
+    expect(parent.children).toHaveLength(1);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    open();
+    expect(parent.children).toHaveLength(1);
+    expect(disposed).toHaveLength(0);
   });
 
   it("shuts for Help or a match without taking the focus they want", () => {

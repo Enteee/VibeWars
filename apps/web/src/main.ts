@@ -118,7 +118,6 @@ import {
   type BuildEditorCallbacks,
   type BuildEditorView,
 } from "./ui/build-editor.js";
-import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
 import { setLanguageBusy } from "./ui/language-section.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
@@ -183,6 +182,7 @@ import {
   playerGuild,
   playerGuildTag,
   sameTypedGuild,
+  setCapeWearers,
 } from "./ui/player-section.js";
 import { isAlone, partyOf } from "./ui/lobby-window.js";
 import {
@@ -490,6 +490,8 @@ async function main(): Promise<void> {
     notices.add(t("app.framedRelayLink"));
   }
   const characters = new CharacterRepository(store);
+  // Options' cape designer dresses the menu's character (#3551).
+  setCapeWearers(async () => (await characters.list()).characters);
   // The last matches' replays (#3572), for a dispute later; nothing shows them yet.
   const replays = new ReplayStore(store);
   const keepReplay = (recorded: RecordedReplay): void => {
@@ -908,9 +910,6 @@ async function main(): Promise<void> {
   const topbarView = mountTopbar(
     topbar,
     {
-      onHelp: () => {
-        openHelpOverlay(app);
-      },
       onOptionsClosed: () => {
         // Closed over the menu, its characters wear the cape just picked in
         // Options (#1513). Not when a match starting closed it, which leaves
@@ -949,7 +948,6 @@ async function main(): Promise<void> {
       // From the bar, over a lobby whose match just started: it goes with
       // the screens.
       closeTopbarPopover();
-      closeHelpOverlay();
     }
     // In a match the viewport has the whole height; the HUD has the bar's
     // buttons (#454).
@@ -1203,7 +1201,14 @@ async function main(): Promise<void> {
     leaveScreen();
     music().menu("character-builder");
     const editorCallbacks = {
-      onSave: (saved: StoredCharacter) => characters.save(saved),
+      onSave: async (saved: StoredCharacter) => {
+        const before = await characters.load(saved.id);
+        await characters.save(saved);
+        menuQuest?.event({ kind: "character-saved", before, after: saved });
+      },
+      onDraft: (before: StoredCharacter, draft: StoredCharacter) => {
+        menuQuest?.event({ kind: "build-draft", before, draft });
+      },
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
@@ -1225,6 +1230,7 @@ async function main(): Promise<void> {
     teamEditor?.dispose();
     teamEditor = undefined;
     openEditor(character, editorCallbacks);
+    menuQuest?.event({ kind: "screen-shown", screen: "character-builder" });
   };
 
   /**
@@ -1669,6 +1675,7 @@ async function main(): Promise<void> {
           team = replaceMember(left.team, character);
           return Promise.resolve();
         },
+        onDraft: undefined,
         onDelete: undefined,
         onDuplicate: undefined,
         onClose: () => {

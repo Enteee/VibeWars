@@ -1,7 +1,8 @@
 # Ayuda
 
-Las páginas de la pantalla de Ayuda del juego, en el orden en que las
-muestra. Cada página de este directorio aparece aquí exactamente una vez.
+Las páginas de la ventana de Ayuda del juego, en el orden en que las
+muestra su selector de página. Cada página de este directorio aparece aquí
+exactamente una vez.
 
 - [Primeros pasos](getting-started.md)
 - [Controles](controls.md)

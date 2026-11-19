@@ -855,6 +855,7 @@ export default {
   "pips.title": { one: "{sign}{count} birim", other: "{sign}{count} birim" },
 
   "player.cape": "Pelerin",
+  "player.capePreview": "Önizleme",
   "player.colourBlack": "siyah",
   "player.colourGold": "altın",
   "player.colourLime": "limon",
@@ -1489,6 +1490,25 @@ export default {
     "Takımlar'da karakterleri takım dövüşleri için bir takımda toplarsın.",
   "tutorial.menu.menu.title": "Devam etmek için uzmanlığını değiştirmelisin.",
   "tutorial.menu.skipAsk": "Eğitimin geri kalanı atlansın mı?",
+  "tutorial.menu.spec.attributes":
+    "Nitelik puanlarını harca. Her kademe o niteliğin becerilerini güçlendirir.",
+  "tutorial.menu.spec.attributesDone": "Bir niteliği değiştir",
+  "tutorial.menu.spec.gear":
+    "Zırh, rünler ve nişanlar: figürde bir parça seç, sonra üstüne ne geleceğini.",
+  "tutorial.menu.spec.gearDone": "Bir teçhizat parçasını değiştir",
+  "tutorial.menu.spec.open": "Karakterler'i aç, sonra yapısını değiştirmek için bir karakter aç.",
+  "tutorial.menu.spec.openDone": "Bir karakter aç",
+  "tutorial.menu.spec.professions":
+    "Ana mesleğin niteliklerini ve becerilerini verir; ikincil mesleğin de becerilerini ödünç verir.",
+  "tutorial.menu.spec.professionsDone": "Bir meslek değiştir",
+  "tutorial.menu.spec.save": "Yeni yapıyı korumak için karakterini kaydet.",
+  "tutorial.menu.spec.saveDone": "Kaydet",
+  "tutorial.menu.spec.skills":
+    "Listede bir grubu aç, sonra bir beceriyi değiştirmek için çubuğundaki bir yuvaya sürükle.",
+  "tutorial.menu.spec.skillsDone": "Çubuğuna bir beceri koy",
+  "tutorial.menu.spec.title": "Uzmanlığını değiştir.",
+  "tutorial.menu.spec.weapons": "Listeden silah setin için bir silah seç.",
+  "tutorial.menu.spec.weaponsDone": "Bir silahı değiştir",
   "tutorial.gate.hint": "Sisin içine, peşimden.",
   "tutorial.gate.how": "Zemine sol tıkla ya da {keys} ile yürü.",
   "tutorial.gate.intro": "Takımımız sisin ötesinde savaşıyor. Beni takip et.",

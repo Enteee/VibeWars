@@ -70,7 +70,8 @@ Außerhalb eines Matches liegen oben **[?]** (diese Hilfe), **⚙** (Optionen),
 außer Lobby, oben rechts am Bildschirm. In einem schmalen Fenster klappen diese Symbole und die
 übrigen Knöpfe des Bildschirms unter **⋯** ein; nur sein Hauptknopf bleibt draußen.
 ⚙ öffnet die Optionen als Fenster unter der Leiste, mit dem Bildschirm dahinter; Esc, × oder ein Klick daneben schließt es. Unter **Anzeige** schaltet **Beleuchtung** Licht und Schatten einer beleuchteten Karte ein oder aus, sofort, auch im Match.
-Die Hilfe schließt mit dem × oben rechts, Esc oder einem weiteren Druck auf [?].
+[?] öffnet die Hilfe genauso, als Fenster darunter mit einer Seitenauswahl oben; ein Match läuft dahinter weiter.
+Die Hilfe schließt mit ihrem ×, Esc, einem Klick daneben oder einem weiteren Druck auf [?].
 
 **Teile einen Beat mit deiner Lobby.** Im Beat-Editor (♪, dann **Ändern**) sendet
 **Mit Lobby teilen** das, was du getippt hast, gespeichert oder nicht, an alle

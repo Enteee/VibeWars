@@ -174,7 +174,7 @@ twojej nazwie, jak `Ente [VIBE]`. Gdy masz tag, pod nim pojawia się projektant
 **Peleryna gildii**: wybierz kolor peleryny, kolor obszycia i emblemat, a twoje ciało
 nosi pelerynę w każdym meczu: składa się w cienki pas przy krawędzi, gdy stoisz, i
 powiewa za tobą, gdy się ruszasz. Pokazują ją też twoje postacie w menu. **Bez
-peleryny** ją zdejmuje.
+peleryny** ją zdejmuje. Postać pokazuje pelerynę tak, jak wygląda w grze.
 
 Zmiana działa od razu w lobby, w którym jesteś.
 

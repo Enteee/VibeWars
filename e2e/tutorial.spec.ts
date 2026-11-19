@@ -1,6 +1,8 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { projection } from "./camera.js";
+import { openLibraryGroup } from "./helpers/library.js";
+import { professionField } from "./helpers/professions.js";
 
 /**
  * A map whose ground is layer 0, and one whose ground is layer 1 (#3248):
@@ -775,8 +777,11 @@ test.describe("the menu quest (#3540)", () => {
     await bubble.getByRole("button", { name: "Got it" }).click();
     await expect(teams).toHaveClass(/tutorial-pulse/);
     await bubble.getByRole("button", { name: "Got it" }).click();
-    await expect(page.locator(".coach")).toHaveCount(0);
+    // On to the spec step (#3541): a thing to do, with no Got it.
+    await expect(panel).toContainText("Change your spec.");
     await expect(teams).not.toHaveClass(/tutorial-pulse/);
+    await expect(characters).toHaveClass(/tutorial-pulse/);
+    await expect(bubble.getByRole("button", { name: "Got it" })).toBeHidden();
   });
 
   test("at 800x600 the docked panel never covers the bubble or the cut-out", async ({ page }) => {
@@ -805,7 +810,72 @@ test.describe("the menu quest (#3540)", () => {
       // A real click, not forced: nothing may sit on top of Got it.
       await bubble.getByRole("button", { name: "Got it" }).click();
     }
+    await expect(panel).toContainText("Change your spec.");
+  });
+
+  test("changes the spec in the builder, one locked target at a time (#3541)", async ({ page }) => {
+    // A walk through the whole builder: ~50 s on a loaded runner, past the default.
+    test.setTimeout(180_000);
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=spec`);
+    const panel = page.locator(".coach-panel");
+    await expect(panel).toContainText("Change your spec.");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+
+    await expect(target("rail-characters")).toHaveClass(/tutorial-pulse/);
+    await target("rail-characters").click();
+    const card = target("character-open");
+    await expect(card).toHaveClass(/tutorial-pulse/);
+    // Teams is dimmed: a click on it never reaches the menu.
+    await target("rail-teams").click({ force: true });
+    await expect(page.locator(".screen-teams")).toHaveCount(0);
+    // The starter is cloned to be changed; any other is edited.
+    await card.locator(".roster-clone, .roster-edit").first().click();
+
+    await expect(target("professions")).toHaveClass(/tutorial-pulse/);
+    await expect(panel).toContainText("Switch a profession");
+    // Save is dimmed until its beat: a click on it saves nothing.
+    await target("save").click({ force: true });
+    await expect(page.locator(".editor-professions")).toBeVisible();
+    // The starter is random: one with a secondary drops it, one without takes one.
+    await professionField(page, "secondary").click();
+    const cells = target("professions").locator(".profession-grid .profession-cell");
+    const none = cells.and(page.locator('[data-profession="none"]'));
+    const hasSecondary = (await professionField(page, "secondary").textContent()) !== "(none)";
+    await (
+      hasSecondary ? none : cells.and(page.locator(':not([data-profession="none"])')).first()
+    ).click();
+
+    await expect(target("attributes").first()).toHaveClass(/tutorial-pulse/);
+    // Points may all be spent: a refund always goes through. The last lit pip
+    // is some attribute's own rank, and clicking it lowers that rank by one.
+    await page.locator(".editor-attribute .attribute-pip.is-on").last().click();
+
+    await expect(target("skills").first()).toHaveClass(/tutorial-pulse/);
+    await openLibraryGroup(page);
+    const slot = page.locator(".skill-slot").last();
+    await page.locator(".skill-library .skill-box").first().dragTo(slot);
+
+    await expect(target("weapons").first()).toHaveClass(/tutorial-pulse/);
+    const weapon = page.locator(".gear-slot").first();
+    const held = (await weapon.textContent()) ?? "";
+    await weapon.click();
+    await page
+      .locator(".gear-box")
+      .filter({ hasText: held.includes("Hammer") ? "Axe" : "Hammer" })
+      .first()
+      .click();
+
+    await expect(target("gear").first()).toHaveClass(/tutorial-pulse/);
+    await page.locator('.paper-doll-hotspot[data-slot="head"]').click();
+    const popover = page.locator(".paper-doll-popover");
+    await popover.locator('.paper-doll-choice[aria-selected="false"]').first().click();
+    await page.keyboard.press("Escape");
+
+    await expect(target("save")).toHaveClass(/tutorial-pulse/);
+    await target("save").click();
+    // The last step so far: the quest is done, and the builder is left.
     await expect(page.locator(".coach")).toHaveCount(0);
+    await expect(page.locator(".editor-professions")).toHaveCount(0);
   });
 
   test("Skip tutorial, confirmed, ends it for good", async ({ page }) => {

@@ -97,8 +97,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
   const walls = allWallSegments(map.walls);
   const bounds = { width: map.width, height: map.height };
 
-  // The Elite Zaishen Battle (#2692) is a party's run at six NPCs, not a fair fight.
-  it.skipIf(map.id === "elite-zaishen-battle" || REBUILT.has(map.id))(
+  it.skipIf(REBUILT.has(map.id))(
     "is the same map turned half round its centre: walls, spawns and shrines, the teams swapped",
     () => {
       for (const wall of walls) {
