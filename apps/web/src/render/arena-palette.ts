@@ -1,4 +1,5 @@
 import type {
+  AscentAct,
   Biome,
   DeckLook,
   OverhangLook,
@@ -69,11 +70,8 @@ const GRAPHIC_LAYERS: ArenaPalette = {
 };
 
 /** The colours of a map: a map of one layer is drawn flat whatever its biome. */
-export function arenaPalette(map: {
-  readonly layerCount: number;
-  readonly biome: Biome;
-}): ArenaPalette {
-  return map.layerCount > 1 ? BIOME[map.biome].palette : FLAT;
+export function arenaPalette(map: MapLook & { readonly layerCount: number }): ArenaPalette {
+  return map.layerCount > 1 ? materialsOf(map).palette : FLAT;
 }
 
 export const DECK_SHADOW = { colour: 0x080b10, alpha: 0.55, offset: 32 };
@@ -453,7 +451,7 @@ const TRANSITION_LOOK: Record<TransitionLook, TransitionLookColours> = {
 };
 
 /** A biome's base tones (#3172, docs/art/visual-style.md §1). */
-interface BiomeTones {
+export interface BiomeTones {
   readonly ground: number;
   /** Walls, cliffs, ledges: rock as it stands. */
   readonly rock: number;
@@ -592,6 +590,19 @@ const BIOME_TONES: Record<Biome, BiomeTones> = {
     /** Lichen: a dull violet grey, the glow's ghost. */
     plant: 0x4f4a5c,
   },
+};
+
+/**
+ * Each act's ground and wall rock (#3618, §1b), laid over the biome's own
+ * tones: the rest of a map's materials are tinted from them as from a biome's.
+ */
+export const ACT_TONES: Record<AscentAct, Pick<BiomeTones, "ground" | "rock">> = {
+  /** Basalt crust. */
+  volcanic: { ground: 0x2b2320, rock: 0x4a4340 },
+  /** Slate. */
+  underworld: { ground: 0x1f2428, rock: 0x38424a },
+  /** Pale stone: the one pale floor. */
+  heavenly: { ground: 0xe8dfc8, rock: 0xb9ad92 },
 };
 
 /** What each colour of the arena is made of. */
@@ -760,6 +771,8 @@ export interface BiomeMaterials {
   readonly transition: Record<TransitionLook, TransitionLookColours>;
   readonly paving: Record<StonePavingLook, PavingLookColours>;
   readonly overhang: Record<OverhangLook, OverhangLookColours>;
+  readonly dressing: GroundDressingTones;
+  readonly breakable: BreakableLook;
 }
 
 function lookColours<
@@ -795,31 +808,6 @@ const TILED_GROUND: Record<Biome, boolean> = {
   cavern: true,
 };
 
-function biomeMaterials(tones: BiomeTones, tiled: boolean): BiomeMaterials {
-  const palette = tintAll(GRAPHIC_LAYERS, (slot) => PALETTE_MATERIAL[slot], tones);
-  return {
-    palette: tiled ? palette : { ...palette, grid: undefined },
-    deck: lookColours(DECK_LOOK, DECK_MATERIAL, tones),
-    transition: lookColours(TRANSITION_LOOK, TRANSITION_MATERIAL, tones),
-    paving: pavingColours(tones),
-    overhang: overhangColours(tones),
-  };
-}
-
-/** Each biome's materials (#3172), tinted from the hall's by its tones. */
-export const BIOME: Record<Biome, BiomeMaterials> = {
-  hall: biomeMaterials(BIOME_TONES.hall, TILED_GROUND.hall),
-  heights: biomeMaterials(BIOME_TONES.heights, TILED_GROUND.heights),
-  wilds: biomeMaterials(BIOME_TONES.wilds, TILED_GROUND.wilds),
-  desert: biomeMaterials(BIOME_TONES.desert, TILED_GROUND.desert),
-  volcanic: biomeMaterials(BIOME_TONES.volcanic, TILED_GROUND.volcanic),
-  snow: biomeMaterials(BIOME_TONES.snow, TILED_GROUND.snow),
-  marsh: biomeMaterials(BIOME_TONES.marsh, TILED_GROUND.marsh),
-  jungle: biomeMaterials(BIOME_TONES.jungle, TILED_GROUND.jungle),
-  coast: biomeMaterials(BIOME_TONES.coast, TILED_GROUND.coast),
-  cavern: biomeMaterials(BIOME_TONES.cavern, TILED_GROUND.cavern),
-};
-
 /** A biome's ground grain and the marks scattered on it (#3484), from its own tones. */
 export interface GroundDressingTones {
   /** The grain's two ends, either side of the ground's own tone. */
@@ -842,81 +830,110 @@ function dressingTones(tones: BiomeTones, mark: number, accent: number): GroundD
 }
 
 /**
- * Each biome's ground dressing (#3484, visual-style §4): its grain and
- * its marks, all near its ground, so none reads as a signal, a pickup
- * or a zone.
+ * Each biome's two marks (#3484, visual-style §4), from its tones: both
+ * near its ground, so none reads as a signal, a pickup or a zone.
  */
-export const GROUND_DRESSING: Record<Biome, GroundDressingTones> = {
-  // Cracked flags and grit.
-  hall: dressingTones(
-    HALL_TONES,
-    shade(HALL_TONES.ground, 0.4),
-    mix(HALL_TONES.ground, HALL_TONES.rock, 0.5),
-  ),
-  // Pebbles of the rock, and its chips.
-  heights: dressingTones(
-    BIOME_TONES.heights,
-    mix(BIOME_TONES.heights.ground, BIOME_TONES.heights.rock, 0.55),
-    shade(BIOME_TONES.heights.rock, 0.25),
-  ),
-  // Grass tufts and field stones.
-  wilds: dressingTones(
-    BIOME_TONES.wilds,
-    mix(BIOME_TONES.wilds.plant, BIOME_TONES.wilds.ground, 0.25),
-    mix(BIOME_TONES.wilds.ground, BIOME_TONES.wilds.rock, 0.55),
-  ),
-  // Pebbles, and ripple lines the wind leaves.
-  desert: dressingTones(
-    BIOME_TONES.desert,
-    mix(BIOME_TONES.desert.ground, BIOME_TONES.desert.rock, 0.55),
-    mix(BIOME_TONES.desert.ground, BIOME_TONES.desert.stone, 0.22),
-  ),
-  // Cinders and cracks in the crust: cold, never an ember.
-  volcanic: dressingTones(
-    BIOME_TONES.volcanic,
-    mix(BIOME_TONES.volcanic.ground, BIOME_TONES.volcanic.stone, 0.3),
-    shade(BIOME_TONES.volcanic.ground, 0.5),
-  ),
-  // Drift ridges on the ice, and its frost.
-  snow: dressingTones(
-    BIOME_TONES.snow,
-    mix(BIOME_TONES.snow.ground, BIOME_TONES.snow.stone, 0.6),
-    shade(BIOME_TONES.snow.ground, 0.12),
-  ),
-  // Dry reed tufts and silt patches.
-  marsh: dressingTones(
-    BIOME_TONES.marsh,
-    mix(BIOME_TONES.marsh.plant, BIOME_TONES.marsh.ground, 0.3),
-    mix(BIOME_TONES.marsh.ground, BIOME_TONES.marsh.earth, 0.6),
-  ),
-  // Vine leaves and clay crumbs.
-  jungle: dressingTones(
-    BIOME_TONES.jungle,
-    mix(BIOME_TONES.jungle.plant, BIOME_TONES.jungle.ground, 0.3),
-    mix(BIOME_TONES.jungle.ground, BIOME_TONES.jungle.earth, 0.6),
-  ),
-  // Shells and pebbles of the sea rock, and tide ripples.
-  coast: dressingTones(
-    BIOME_TONES.coast,
-    mix(BIOME_TONES.coast.ground, BIOME_TONES.coast.rock, 0.55),
-    mix(BIOME_TONES.coast.ground, BIOME_TONES.coast.earth, 0.6),
-  ),
-  // Fallen stone chips and silt grit.
-  cavern: dressingTones(
-    BIOME_TONES.cavern,
-    mix(BIOME_TONES.cavern.ground, BIOME_TONES.cavern.rock, 0.55),
-    mix(BIOME_TONES.cavern.ground, BIOME_TONES.cavern.earth, 0.6),
-  ),
+const GROUND_MARKS: Record<Biome, (tones: BiomeTones) => readonly [mark: number, accent: number]> =
+  {
+    // Cracked flags and grit.
+    hall: (tones) => [shade(tones.ground, 0.4), mix(tones.ground, tones.rock, 0.5)],
+    // Pebbles of the rock, and its chips.
+    heights: (tones) => [mix(tones.ground, tones.rock, 0.55), shade(tones.rock, 0.25)],
+    // Grass tufts and field stones.
+    wilds: (tones) => [mix(tones.plant, tones.ground, 0.25), mix(tones.ground, tones.rock, 0.55)],
+    // Pebbles, and ripple lines the wind leaves.
+    desert: (tones) => [mix(tones.ground, tones.rock, 0.55), mix(tones.ground, tones.stone, 0.22)],
+    // Cinders and cracks in the crust: cold, never an ember.
+    volcanic: (tones) => [mix(tones.ground, tones.stone, 0.3), shade(tones.ground, 0.5)],
+    // Drift ridges on the ice, and its frost.
+    snow: (tones) => [mix(tones.ground, tones.stone, 0.6), shade(tones.ground, 0.12)],
+    // Dry reed tufts and silt patches.
+    marsh: (tones) => [mix(tones.plant, tones.ground, 0.3), mix(tones.ground, tones.earth, 0.6)],
+    // Vine leaves and clay crumbs.
+    jungle: (tones) => [mix(tones.plant, tones.ground, 0.3), mix(tones.ground, tones.earth, 0.6)],
+    // Shells and pebbles of the sea rock, and tide ripples.
+    coast: (tones) => [mix(tones.ground, tones.rock, 0.55), mix(tones.ground, tones.earth, 0.6)],
+    // Fallen stone chips and silt grit.
+    cavern: (tones) => [mix(tones.ground, tones.rock, 0.55), mix(tones.ground, tones.earth, 0.6)],
+  };
+
+function biomeMaterials(biome: Biome, tones: BiomeTones, tiled: boolean): BiomeMaterials {
+  const palette = tintAll(GRAPHIC_LAYERS, (slot) => PALETTE_MATERIAL[slot], tones);
+  return {
+    palette: tiled ? palette : { ...palette, grid: undefined },
+    deck: lookColours(DECK_LOOK, DECK_MATERIAL, tones),
+    transition: lookColours(TRANSITION_LOOK, TRANSITION_MATERIAL, tones),
+    paving: pavingColours(tones),
+    overhang: overhangColours(tones),
+    dressing: dressingTones(tones, ...GROUND_MARKS[biome](tones)),
+    breakable: breakableLookOf(biome, tones),
+  };
+}
+
+/** Each biome's materials (#3172), tinted from the hall's by its tones. */
+export const BIOME: Record<Biome, BiomeMaterials> = {
+  hall: biomeMaterials("hall", BIOME_TONES.hall, TILED_GROUND.hall),
+  heights: biomeMaterials("heights", BIOME_TONES.heights, TILED_GROUND.heights),
+  wilds: biomeMaterials("wilds", BIOME_TONES.wilds, TILED_GROUND.wilds),
+  desert: biomeMaterials("desert", BIOME_TONES.desert, TILED_GROUND.desert),
+  volcanic: biomeMaterials("volcanic", BIOME_TONES.volcanic, TILED_GROUND.volcanic),
+  snow: biomeMaterials("snow", BIOME_TONES.snow, TILED_GROUND.snow),
+  marsh: biomeMaterials("marsh", BIOME_TONES.marsh, TILED_GROUND.marsh),
+  jungle: biomeMaterials("jungle", BIOME_TONES.jungle, TILED_GROUND.jungle),
+  coast: biomeMaterials("coast", BIOME_TONES.coast, TILED_GROUND.coast),
+  cavern: biomeMaterials("cavern", BIOME_TONES.cavern, TILED_GROUND.cavern),
 };
+
+/** What a map is drawn in: its biome, and the Ascent act laid over it (#3618). */
+export interface MapLook {
+  readonly biome: Biome;
+  readonly ascentAct: AscentAct | null;
+}
+
+/**
+ * Whether an act's ground takes the tile grid. The grid is lighter than
+ * its floor, and nothing is lighter than the heavenly marble: tinted that
+ * pale, it clips to white, so that floor is laid as one sheet.
+ */
+const ACT_TILED: Record<AscentAct, boolean> = {
+  volcanic: true,
+  underworld: true,
+  heavenly: false,
+};
+
+const ACT_MATERIALS = new Map<string, BiomeMaterials>();
+
+/**
+ * A map's materials (#3618): its biome's, or on the Heroes' Ascent its
+ * biome's tones with its act's ground and rock laid over them, so each
+ * act's floor and walls are the same whatever biome it stands on.
+ */
+export function materialsOf(map: MapLook): BiomeMaterials {
+  const { biome, ascentAct } = map;
+  if (ascentAct === null) {
+    return BIOME[biome];
+  }
+  const key = `${biome}/${ascentAct}`;
+  const known = ACT_MATERIALS.get(key);
+  if (known !== undefined) {
+    return known;
+  }
+  const materials = biomeMaterials(
+    biome,
+    { ...BIOME_TONES[biome], ...ACT_TONES[ascentAct] },
+    TILED_GROUND[biome] && ACT_TILED[ascentAct],
+  );
+  ACT_MATERIALS.set(key, materials);
+  return materials;
+}
 
 /**
  * Each biome's breakable wall (#3370): a weaker patch of its own walls,
  * tinted from its tones. Basalt with embers in its cracks, mud brick with
  * straw-pale mortar, blue-white ice that cracks white, mossy field stone;
- * the chiselled stone elsewhere.
+ * the chiselled stone elsewhere, in its rock.
  */
-function breakableLookOf(biome: Biome): BreakableLook {
-  const tones = BIOME_TONES[biome];
+function breakableLookOf(biome: Biome, tones: BiomeTones): BreakableLook {
   switch (biome) {
     case "volcanic":
       return {
@@ -1003,30 +1020,19 @@ function breakableLookOf(biome: Biome): BreakableLook {
         shadow: BREAKABLE_WALL_LOOK.shadow,
       };
     case "hall":
-    case "heights":
-      return BREAKABLE_WALL_LOOK;
+    case "heights": {
+      const { courses, glow, moss, ...colours } = BREAKABLE_WALL_LOOK;
+      return { courses, glow, moss, ...tintAll(colours, () => "rock", tones) };
+    }
   }
 }
 
-const BREAKABLE_LOOK: Record<Biome, BreakableLook> = {
-  hall: breakableLookOf("hall"),
-  heights: breakableLookOf("heights"),
-  wilds: breakableLookOf("wilds"),
-  desert: breakableLookOf("desert"),
-  volcanic: breakableLookOf("volcanic"),
-  snow: breakableLookOf("snow"),
-  marsh: breakableLookOf("marsh"),
-  jungle: breakableLookOf("jungle"),
-  coast: breakableLookOf("coast"),
-  cavern: breakableLookOf("cavern"),
-};
-
-/** The material a map's breakable walls are (#3370): a map of one layer's are stone whatever its biome. */
-export function breakableLook(map: {
-  readonly layerCount: number;
-  readonly biome: Biome;
-}): BreakableLook {
-  return map.layerCount > 1 ? BREAKABLE_LOOK[map.biome] : BREAKABLE_WALL_LOOK;
+/**
+ * The material a map's breakable walls are (#3370), under its Ascent act's
+ * rock (#3618): a map of one layer's are stone whatever its biome.
+ */
+export function breakableLook(map: MapLook & { readonly layerCount: number }): BreakableLook {
+  return map.layerCount > 1 ? materialsOf(map).breakable : BREAKABLE_WALL_LOOK;
 }
 
 /** Paving on a map of one layer (#3210): laid in the flat palette's tones, on the scene's background. */
@@ -1040,9 +1046,8 @@ const FLAT_PAVING = pavingColours({
 });
 
 /** The colours a map's paving is drawn in: a map of one layer's are flat whatever its biome. */
-export function pavingPalette(map: {
-  readonly layerCount: number;
-  readonly biome: Biome;
-}): Record<StonePavingLook, PavingLookColours> {
-  return map.layerCount > 1 ? BIOME[map.biome].paving : FLAT_PAVING;
+export function pavingPalette(
+  map: MapLook & { readonly layerCount: number },
+): Record<StonePavingLook, PavingLookColours> {
+  return map.layerCount > 1 ? materialsOf(map).paving : FLAT_PAVING;
 }

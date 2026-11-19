@@ -159,7 +159,7 @@ szukających drużyn, wliczając twoją: `2 drużyny szukają`. Tylko host ma ta
 **Opuść kolejkę**. Zamknięcie karty hosta natychmiast usuwa grupę z kolejki. Gdy
 pojawi się inna drużyna w kolejce tego samego trybu, gracie przeciw niej na jednej
 z map trybu, każda strona ze swoimi buildami, a potem wracacie do lobby. Host może opuścić kolejkę w oknie pierścienia w dowolnej chwili; gość, który wychodzi, zabiera z niej
-całą grupę. Jeśli po minucie nie ma innej drużyny, host może też nacisnąć **Graj z
+całą grupę. Po 10 s w kolejce host może też nacisnąć w oknie pierścienia **Graj z
 botami**: mecz we własnym lobby przeciw losowej gotowej drużynie botów,
 oprócz [Szczytu Bohaterów](modes.md#szczyt-bohaterów), który czeka na drużynę na twojej
 rundzie.

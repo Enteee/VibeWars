@@ -173,8 +173,8 @@ buscando`. Ahí solo el anfitrión tiene **Salir de la cola**. Si se cierra la
 pestaña del anfitrión, el grupo sale de la cola al instante. Cuando aparece
 otro equipo en cola del mismo modo, jugáis contra él en uno de los mapas del
 modo, cada bando con sus builds, y luego volvéis a tu sala. El anfitrión puede salir desde la ventana del anillo en cualquier momento; un invitado que se va saca
-de la cola a todo el grupo. Si tras un minuto no hay otro equipo, el anfitrión
-también puede pulsar **Jugar contra bots**: una partida en tu propia sala
+de la cola a todo el grupo. Tras 10 s en la cola, el anfitrión también puede
+pulsar **Jugar contra bots** en la ventana del anillo: una partida en tu propia sala
 contra un equipo predefinido de bots al azar, excepto en
 [Ascenso de los Héroes](modes.md#ascenso-de-los-héroes), que espera a un
 equipo de tu ronda.

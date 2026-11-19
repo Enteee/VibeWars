@@ -103,6 +103,8 @@ copy of any GW1 level, and it is render-only: play stays symmetric.
 | Underworld | `#1f2428` | `#38424a`   | `#4fd1b5` | `#2a3a44`, 0.25 to 0.4      | none, or weak moonlike  | `#3d5560` banks | none or rain  |
 | Heavenly   | `#e8dfc8` | `#b9ad92`   | `#ffcc4d` | `#fff1cc`, 0.7 to 0.9       | strong, high, `#fff4d6` | thin gold haze  | motes, shafts |
 
+The act's ground and wall / rock override the biome's; every other material of the map, its decks, stairs, paving, dressing and breakable walls, is tinted from them (#3618).
+
 - **Volcanic.** Basalt crust lit from below. Lava is the warm rim light; embers
   rise over the view as small, slow, flickering points, never larger than a
   body's hand and always fainter than a strike edge.

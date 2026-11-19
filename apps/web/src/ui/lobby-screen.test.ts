@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { t } from "../i18n/index.js";
 import { ASCENT_PROGRESSION } from "../net/maps.js";
 import {
-  PLAY_BOTS_AFTER_MS,
   hostMaps,
   inviteUrl,
   lobbyControls,
@@ -508,14 +507,10 @@ describe("matchmakingButtons (#1766)", () => {
     queuedMs,
     groupMapId: undefined,
     onFindMatch: () => pressed.push("find"),
-    onPlayBots: () => pressed.push("bots"),
   });
   const buttons = (queuedMs: number | null, phase: LobbySnapshot["phase"] = "waiting") => {
     const shown = matchmakingButtons(matchmaking(queuedMs), lobbyControls(snapshot(phase)));
-    return {
-      queueAction: shown.queueAction as unknown as FakeElement | undefined,
-      actions: shown.actions as unknown as FakeElement[],
-    };
+    return { queueAction: shown.queueAction as unknown as FakeElement | undefined };
   };
 
   beforeEach(() => {
@@ -531,28 +526,15 @@ describe("matchmakingButtons (#1766)", () => {
     const waiting = buttons(null);
     expect(waiting.queueAction?.textContent).toBe("Find a match");
     expect(waiting.queueAction?.disabled).toBe(false);
-    expect(waiting.actions).toEqual([]);
     expect(buttons(null, "team-lobby").queueAction?.disabled).toBe(true);
     waiting.queueAction?.click();
     expect(pressed).toEqual(["find"]);
   });
 
-  it("offers no Find a match and no way out once queued, and Play against bots only after a minute alone (Q191, #2980)", () => {
-    for (const queuedMs of [0, PLAY_BOTS_AFTER_MS - 1]) {
-      expect(buttons(queuedMs)).toEqual({ queueAction: undefined, actions: [] });
+  it("offers nothing once queued: the queue's flyout holds Leave and Play against bots (#2980, #3547)", () => {
+    for (const queuedMs of [0, 10_000, 3_600_000]) {
+      expect(buttons(queuedMs)).toEqual({ queueAction: undefined });
     }
-    const late = buttons(PLAY_BOTS_AFTER_MS);
-    expect(late.queueAction).toBeUndefined();
-    expect(late.actions.map((shown) => shown.textContent)).toEqual(["Play against bots"]);
-    late.actions[0]?.click();
-    expect(pressed).toEqual(["bots"]);
-  });
-  it("never offers Heroes' Ascent bots: it waits for a side (#1996)", () => {
-    const shown = matchmakingButtons(
-      { ...matchmaking(10 * PLAY_BOTS_AFTER_MS), onPlayBots: undefined },
-      lobbyControls(snapshot("waiting")),
-    );
-    expect(shown.actions).toEqual([]);
   });
 });
 
@@ -595,6 +577,21 @@ describe("lobbyPanel: the map (#1994)", () => {
 
   it("lets only a Hosted Game's host pick it", () => {
     expect(selects(mapPart("hosted-game"))).toHaveLength(1);
+  });
+
+  it("labels the host's picker Map:, as a guest's map reads (#3626)", () => {
+    const [label] = mapPart("hosted-game").children;
+    expect(label?.textContent).toBe(t("lobby.map"));
+    expect(t("lobby.map")).toBe("Map:");
+  });
+
+  it("gives the host Ready, then Start match (#3626)", () => {
+    const { actions } = lobbyPanel(snapshot("waiting"), callbacks, undefined, maps);
+    expect(actions.map((action) => action.className)).toEqual([
+      expect.stringContaining("screen-ready"),
+      "primary",
+    ]);
+    expect(actions[1]?.textContent).toBe(t("lobby.startMatch"));
   });
 
   it("lists only the maps made for a Hosted Game's team size (#2104)", () => {
@@ -684,7 +681,6 @@ describe("lobbyPanel: the map (#1994)", () => {
     const matchmaking = {
       queuedMs: 70_000,
       onFindMatch: () => undefined,
-      onPlayBots: undefined,
     };
     const shown = (groupMapId: string | undefined): string | null | undefined =>
       (
