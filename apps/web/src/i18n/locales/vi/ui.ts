@@ -1420,6 +1420,24 @@ export default {
   "tutorial.menu.spec.title": "Đổi chuyên môn của bạn.",
   "tutorial.menu.spec.weapons": "Chọn từ danh sách một vũ khí cho bộ vũ khí của bạn.",
   "tutorial.menu.spec.weaponsDone": "Đổi một vũ khí",
+  "tutorial.menu.team.build":
+    "Tên của một thành viên mở build của họ trong trình sửa build. Khi quay lại, thay đổi vẫn còn, chưa lưu.",
+  "tutorial.menu.team.character":
+    "Kéo nhân vật của bạn từ Nhân vật của tôi vào một thành viên. Thành viên đó trở thành bản sao của nó.",
+  "tutorial.menu.team.characterDone": "Đưa nhân vật vào đội",
+  "tutorial.menu.team.fill": "Cho mỗi thành viên một build, đến khi đội không còn vấn đề nào.",
+  "tutorial.menu.team.fillDone": "Lấp đầy đội",
+  "tutorial.menu.team.members":
+    "Một đội luôn có số thành viên bằng cỡ đội. Bạn không bao giờ thêm thành viên: bạn thay một người.",
+  "tutorial.menu.team.new": "Đặt cỡ đội là 2v2, rồi tạo build đội mới.",
+  "tutorial.menu.team.newDone": "Lập đội 2 người",
+  "tutorial.menu.team.open": "Mở Đội, nơi có các build đội của bạn.",
+  "tutorial.menu.team.openDone": "Mở Đội",
+  "tutorial.menu.team.problems":
+    "Lưu luôn lưu đội. Gợi ý của nó nêu điều đầu tiên khiến đội chưa chơi được.",
+  "tutorial.menu.team.save": "Lưu đội của bạn.",
+  "tutorial.menu.team.saveDone": "Lưu",
+  "tutorial.menu.team.title": "Xây một đội để thành công.",
   "tutorial.gate.hint": "Vào màn sương, theo sau ta.",
   "tutorial.gate.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",
   "tutorial.gate.intro": "Đội ta đang chiến đấu bên kia màn sương. Theo ta.",

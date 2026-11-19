@@ -1580,6 +1580,24 @@ export default {
   "tutorial.menu.spec.title": "Promijeni svoju specijalizaciju.",
   "tutorial.menu.spec.weapons": "S popisa odaberi oružje za svoj komplet oružja.",
   "tutorial.menu.spec.weaponsDone": "Promijeni oružje",
+  "tutorial.menu.team.build":
+    "Ime člana otvara njegov build u uređivaču buildova. Kad se vratiš, promjene ostaju, nespremljene.",
+  "tutorial.menu.team.character":
+    "Povuci svoj lik iz Moji likovi na člana. Član postaje njegova kopija.",
+  "tutorial.menu.team.characterDone": "Stavi svoj lik u tim",
+  "tutorial.menu.team.fill": "Daj svakom članu build, dok tim ne ostane bez problema.",
+  "tutorial.menu.team.fillDone": "Popuni tim",
+  "tutorial.menu.team.members":
+    "Tim uvijek ima onoliko članova kolika mu je veličina. Nikad ne dodaješ člana: zamjenjuješ jednog.",
+  "tutorial.menu.team.new": "Postavi veličinu tima na 2v2, zatim napravi novi timski sastav.",
+  "tutorial.menu.team.newDone": "Započni tim od 2",
+  "tutorial.menu.team.open": "Otvori Timove, gdje su tvoji timski sastavi.",
+  "tutorial.menu.team.openDone": "Otvori Timove",
+  "tutorial.menu.team.problems":
+    "Spremi uvijek sprema tim. Njegov savjet navodi prvu stvar koja sprječava igranje tima.",
+  "tutorial.menu.team.save": "Spremi svoj tim.",
+  "tutorial.menu.team.saveDone": "Spremi",
+  "tutorial.menu.team.title": "Složi tim da uspiješ.",
   "tutorial.gate.hint": "U maglu, za mnom.",
   "tutorial.gate.how": "Lijevi klik na tlo, ili hodaj s {keys}.",
   "tutorial.gate.intro": "Naš tim se bori iza magle. Prati me.",

@@ -1588,6 +1588,24 @@ export default {
   "tutorial.menu.spec.title": "Cambia la tua specializzazione.",
   "tutorial.menu.spec.weapons": "Scegli dalla lista un'arma per il tuo set di armi.",
   "tutorial.menu.spec.weaponsDone": "Cambia un'arma",
+  "tutorial.menu.team.build":
+    "Il nome di un membro apre la sua build nell'editor di build. Tornando, le modifiche restano, non salvate.",
+  "tutorial.menu.team.character":
+    "Trascina il tuo personaggio da I miei personaggi su un membro. Il membro ne diventa una copia.",
+  "tutorial.menu.team.characterDone": "Metti il tuo personaggio nella squadra",
+  "tutorial.menu.team.fill": "Dai una build a ogni membro, finché la squadra non ha più problemi.",
+  "tutorial.menu.team.fillDone": "Completa la squadra",
+  "tutorial.menu.team.members":
+    "Una squadra ha sempre tanti membri quanto la sua dimensione. Non aggiungi mai un membro: ne sostituisci uno.",
+  "tutorial.menu.team.new": "Imposta la dimensione della squadra su 2v2, poi crea una nuova build.",
+  "tutorial.menu.team.newDone": "Inizia una squadra da 2",
+  "tutorial.menu.team.open": "Apri Squadre, dove sono le build delle tue squadre.",
+  "tutorial.menu.team.openDone": "Apri Squadre",
+  "tutorial.menu.team.problems":
+    "Salva memorizza sempre la squadra. Il suo suggerimento indica la prima cosa che impedisce di giocare la squadra.",
+  "tutorial.menu.team.save": "Salva la tua squadra.",
+  "tutorial.menu.team.saveDone": "Salva",
+  "tutorial.menu.team.title": "Costruisci una squadra per avere successo.",
   "tutorial.gate.hint": "Nella nebbia, dietro di me.",
   "tutorial.gate.how": "Clic sinistro sul terreno, o cammina con {keys}.",
   "tutorial.gate.intro": "La nostra squadra combatte oltre la nebbia. Seguimi.",

@@ -2,13 +2,13 @@
 
 ## Salute ed Energia
 
-Inizi con 500 di **Salute** e 50 di **Energia**; rune e morale modificano entrambe. Le abilità costano Energia, che torna da sola, lentamente. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** e ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** la recuperano più lentamente, i ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** un po' più in fretta, tutti gli altri più velocemente.
+Inizi con 500 di **Salute** e 50 di **Energia**; rune e morale modificano entrambe. Le abilità costano Energia, che torna da sola, lentamente. I ![Guerriero](../../../apps/web/public/icons/profession/warrior.svg) **Guerrieri** e i ![Campione](../../../apps/web/public/icons/profession/paragon.svg) **Campioni** la recuperano più lentamente, i ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** un po' più in fretta, tutti gli altri più velocemente.
 
-Le frecce sulle barre sono i **pip**: ognuno è Salute o Energia che torna, o che cala, un po' ogni secondo. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** e ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** tolgono Salute; Regeneration e gli incantesimi di cura la aggiungono. Fuori dallo scontro per 5 secondi, la tua Salute inizia a tornare da sola, tanto più in fretta quanto più resti fuori.
+Le frecce sulle barre sono i **pip**: ognuno è Salute o Energia che torna, o che cala, un po' ogni secondo. ![Sanguinamento](../../../apps/web/public/icons/status/bleeding.svg) **Sanguinamento**, ![Bruciatura](../../../apps/web/public/icons/status/burning.svg) **Bruciatura** e ![Veleno](../../../apps/web/public/icons/status/poison.svg) **Veleno** tolgono Salute; Regeneration e gli incantesimi di cura la aggiungono. Fuori dallo scontro per 5 secondi, la tua Salute inizia a tornare da sola, tanto più in fretta quanto più resti fuori.
 
 ## Adrenalina
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** e altri hanno abilità che costano **adrenalina** invece di Energia. Ognuna si carica per conto suo: ogni colpo d'arma che metti a segno dà a ciascuna un colpo di carica, e lo stesso vale se subisci un colpo forte. Usarne una la svuota e toglie un colpo di carica alle altre. Fuori dallo scontro per 25 secondi, si svuotano tutte.
+I ![Guerriero](../../../apps/web/public/icons/profession/warrior.svg) **Guerrieri**, i ![Campione](../../../apps/web/public/icons/profession/paragon.svg) **Campioni** e altri hanno abilità che costano **adrenalina** invece di Energia. Ognuna si carica per conto suo: ogni colpo d'arma che metti a segno dà a ciascuna un colpo di carica, e lo stesso vale se subisci un colpo forte. Usarne una la svuota e toglie un colpo di carica alle altre. Fuori dallo scontro per 25 secondi, si svuotano tutte.
 
 ## Usare un'abilità
 
@@ -34,18 +34,18 @@ Alcune ![Posizione](../../../apps/web/public/icons/skill-type/stance.svg) **posi
 
 Le **condizioni** ti danneggiano finché non svaniscono o non vengono rimosse:
 
-| Condizione                                                                                  | Effetto                                                           |
-| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | toglie Salute                                                     |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | toglie Salute in fretta                                           |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | toglie Salute                                                     |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | toglie Salute e si diffonde a chi ti sta accanto                  |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | ti muovi a metà velocità                                          |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | la maggior parte dei tuoi attacchi manca il bersaglio             |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | i tuoi colpi d'arma sono molto più deboli                         |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | meno armatura                                                     |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | meno Salute massima, e le cure funzionano meno                    |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | lanci lentamente gli incantesimi; qualsiasi attacco li interrompe |
+| Condizione                                                                                            | Effetto                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| ![Sanguinamento](../../../apps/web/public/icons/status/bleeding.svg) **Sanguinamento**                | toglie Salute                                                     |
+| ![Bruciatura](../../../apps/web/public/icons/status/burning.svg) **Bruciatura**                       | toglie Salute in fretta                                           |
+| ![Veleno](../../../apps/web/public/icons/status/poison.svg) **Veleno**                                | toglie Salute                                                     |
+| ![Malattia](../../../apps/web/public/icons/status/disease.svg) **Malattia**                           | toglie Salute e si diffonde a chi ti sta accanto                  |
+| ![Azzoppato](../../../apps/web/public/icons/status/crippled.svg) **Azzoppato**                        | ti muovi a metà velocità                                          |
+| ![Cecità](../../../apps/web/public/icons/status/blind.svg) **Cecità**                                 | la maggior parte dei tuoi attacchi manca il bersaglio             |
+| ![Debolezza](../../../apps/web/public/icons/status/weakness.svg) **Debolezza**                        | i tuoi colpi d'arma sono molto più deboli                         |
+| ![Armatura incrinata](../../../apps/web/public/icons/status/cracked-armor.svg) **Armatura incrinata** | meno armatura                                                     |
+| ![Ferita profonda](../../../apps/web/public/icons/status/deep-wound.svg) **Ferita profonda**          | meno Salute massima, e le cure funzionano meno                    |
+| ![Stordimento](../../../apps/web/public/icons/status/dazed.svg) **Stordimento**                       | lanci lentamente gli incantesimi; qualsiasi attacco li interrompe |
 
 I ![Maleficio](../../../apps/web/public/icons/skill-type/hex.svg) **malefici** sono lanciati su di te dai nemici; gli ![Incantamento](../../../apps/web/public/icons/skill-type/enchantment.svg) **incantamenti** da te o dai tuoi alleati. Ognuno viene rimosso da un suo tipo di abilità. Alcuni incantamenti sono **mantenuti**: durano finché non li termini, e consumano un pip di Energia finché sono attivi. Fai doppio clic sull'icona per terminarne uno.
 
@@ -53,7 +53,7 @@ Alcune abilità smettono di funzionare mentre sei incantato, e riprendono quando
 
 ## Armatura e danni
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** e ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** indossano l'armatura più pesante; ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin** e ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish** meno; gli incantatori meno di tutti. L'armatura riduce i danni da arma, elementali, di caos e oscuri. I danni sacri, d'ombra e senza tipo, le perdite di Salute e il furto di vita la ignorano. Solo i colpi d'arma possono essere critici. Alcuni incantamenti rendono chi li porta immune ai colpi critici.
+I ![Guerriero](../../../apps/web/public/icons/profession/warrior.svg) **Guerrieri** e i ![Campione](../../../apps/web/public/icons/profession/paragon.svg) **Campioni** indossano l'armatura più pesante; i ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, gli ![Assassino](../../../apps/web/public/icons/profession/assassin.svg) **Assassini** e i ![Derviscio](../../../apps/web/public/icons/profession/dervish.svg) **Dervisci** meno; gli incantatori meno di tutti. L'armatura riduce i danni da arma, elementali, di caos e oscuri. I danni sacri, d'ombra e senza tipo, le perdite di Salute e il furto di vita la ignorano. Solo i colpi d'arma possono essere critici. Alcuni incantamenti rendono chi li porta immune ai colpi critici.
 
 ## Morte, resurrezione e morale
 

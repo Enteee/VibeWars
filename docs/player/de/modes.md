@@ -307,7 +307,7 @@ beginnt bei 0. Dein eigener Tab merkt sie sich, bis du ihn schließt.
 Das Team wählt einmal, in der Team-Lobby seiner ersten Karte, und behält seinen Team-Build und seine Plätze für den Rest
 des Laufs: Nach einem Sieg meldet es sich ohne Abstimmung und ohne Nehmen wieder an. Wer mitten im Lauf geht, gibt seinen
 Platz frei, aber nicht dessen Build. Wer zwischen den Karten neu zur Gruppe stößt, kann nur die freien Plätze nehmen
-(**Frei: Monk-Build**) und spielt den Build dieses Platzes; einen freien Platz, den niemand nimmt, spielt ein Bot. Eine
+(**Frei: Mönch-Build**) und spielt den Build dieses Platzes; einen freien Platz, den niemand nimmt, spielt ein Bot. Eine
 Niederlage beginnt von vorn: Der nächste Lauf stimmt neu ab. Das Gleiche gilt, wenn du deinem Host in eine andere Gruppe
 folgst, deren Host für den alten Lauf nicht bürgen kann. Die Runde merkt sich der Host deiner Gruppe, und nur, bis du den
 Tab schließt. Eine Lobby des Aufstiegs der Helden, der per Code beigetreten wurde, spielt die Karte von Runde 1.
@@ -316,7 +316,7 @@ Eine Gruppe mit weniger als 8 Spielern geht mit Bots auf den freien Plätzen in 
 
 **Barrow Field** (8v8, 5400x2600) ist eine Arena des Aufstiegs, die du auch in einem Gehosteten Spiel wählen kannst: Priestervernichtung auf einem Moor voller Hügelgräber in der Abenddämmerung, und der Priester erweckt alle 2 Minuten seine Toten. Steig auf ein Hügelgrab, um die Anhöhe zu halten, oder geh den Gräberweg darunter, sobald ein Hebel auf dem fernen Hügelgrab sein Tor öffnet. Trage deine Flagge auf das **Storm Beacon** in der Mitte, und es trifft alle 2,5 Sekunden einen zufälligen Gegner in Hörweite mit 50 Blitzschaden, bis das andere Team dort seine Flagge pflanzt. Jeder Einschlag ist ein Blitz vom Beacon zum Getroffenen, für beide Teams sichtbar.
 
-Drei Aufstiegs-Arenen kannst du auch in einem Gehosteten Spiel wählen: **The Hollow Deep** (8v8 Vernichtung, drei gewundene Tunnel um einen zentralen Felsen), **Blackwater
+Drei Aufstiegs-Arenen kannst du auch in einem Gehosteten Spiel wählen: **The Hollow Deep** (8v8, 6200x2400, Vernichtung in einer dunklen Höhle: Man überquert eine Hängebrücke über einer Schlucht, klettert über einen mittleren Felsabsatz oder nimmt die Gruft darunter, sobald ein Hebel auf einem Felsband ihr Tor öffnet), **Blackwater
 Ford** (8v8, 5200x2800, Priestervernichtung an einer dunklen Flussfurt: Man watet durch eine seichte Furt, überquert die zerbrochene
 Brücke auf ihren Pfeilern über der Mühle oder nimmt einen Durchlass unter der Brücke, sobald ein Hebel an der Mühle
 sein Tor öffnet; der Priester holt alle 2 Minuten seine Toten zurück) und **Mosslit Cairns** (8v8, 5400x3000, Punkte erobern auf fünf Steinhügeln, die in der Abenddämmerung vor Moos leuchten: Man erklimmt einen Steinhügel über seine Treppen, hält den großen Steinhügel in der Mitte oder nimmt den Wurzeltunnel unter den südlichen Hügeln, sobald ein Hebel auf einem nördlichen Steinhügel seine Tore öffnet; Wurzelwände lassen sich zerschlagen). Dazu kommt als vierte **The Brazen Causeway** (8v8, 5600x2800, Priestervernichtung auf einem erhöhten Steindamm über einem Sumpf in der Abenddämmerung: Man marschiert über den Damm, sobald ein Hebel im fernen Torhaus sein Bronzetor öffnet, durchquert den Sumpf bis zur Treppe in seiner Mitte oder schlüpft durch einen Durchlass darunter; der Priester holt alle 2 Minuten seine Toten zurück).

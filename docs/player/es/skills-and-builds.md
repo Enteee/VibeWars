@@ -6,8 +6,8 @@ habilidades y los puntos de atributo que las respaldan. Abre una con
 
 ## Profesiones
 
-Hay diez: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**,
-![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** y ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Tu profesión **principal** es lo que eres: sus
+Hay diez: ![Guerrero](../../../apps/web/public/icons/profession/warrior.svg) **Guerrero**, ![Guardabosques](../../../apps/web/public/icons/profession/ranger.svg) **Guardabosques**, ![Monje](../../../apps/web/public/icons/profession/monk.svg) **Monje**, ![Nigromante](../../../apps/web/public/icons/profession/necromancer.svg) **Nigromante**, ![Hipnotizador](../../../apps/web/public/icons/profession/mesmer.svg) **Hipnotizador**, ![Elementalista](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalista**, ![Asesino](../../../apps/web/public/icons/profession/assassin.svg) **Asesino**,
+![Ritualista](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualista**, ![Paragón](../../../apps/web/public/icons/profession/paragon.svg) **Paragón** y ![Derviche](../../../apps/web/public/icons/profession/dervish.svg) **Derviche**. Tu profesión **principal** es lo que eres: sus
 habilidades y su **atributo principal** (marcado con ★), que solo tiene la
 principal. Tu **secundaria** te presta sus habilidades, pero no su atributo
 principal.
@@ -18,11 +18,11 @@ La barra tiene **ocho huecos**. Solo cabe una habilidad de **élite** (marco
 dorado) por barra: si equipas una segunda, sustituye a la primera. Pulsa
 **×** en un hueco para vaciarlo.
 
-Los ![Encantamiento](../../../apps/web/public/icons/skill-type/enchantment.svg) **encantamientos flash** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) son instantáneos: usar uno no
+Los ![Encantamiento](../../../apps/web/public/icons/skill-type/enchantment.svg) **encantamientos flash** (![Derviche](../../../apps/web/public/icons/profession/dervish.svg) **Derviche**) son instantáneos: usar uno no
 interrumpe tu golpe ni tu paso, así que puedes intercalarlos entre golpes.
 Cada uno desactiva tus otros encantamientos flash durante 1 segundo.
 
-Las ![Forma](../../../apps/web/public/icons/skill-type/form.svg) **formas** (los cinco Avatares de Dervish: Balthazar, Dwayna, Grenth,
+Las ![Forma](../../../apps/web/public/icons/skill-type/form.svg) **formas** (los cinco Avatares de Derviche: Balthazar, Dwayna, Grenth,
 Lyssa y Melandru) te transforman durante más de un minuto. Una forma no es un
 encantamiento, así que nadie puede quitártela, y solo puedes estar en una a la
 vez. Usar una la desactiva durante 45 segundos. Cuando termina una forma,
@@ -44,10 +44,10 @@ cuatro rangos más; consulta [Equipo](equipment.md). Subir el atributo que usa
 una habilidad la hace más fuerte: los números que crecen con el atributo se
 muestran en verde y negrita, con tus rangos actuales, incluidos runas y casco.
 
-En combate tus rangos pueden cambiar un tiempo. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** quita uno de cada
+En combate tus rangos pueden cambiar un tiempo. ![Debilidad](../../../apps/web/public/icons/status/weakness.svg) **Debilidad** quita uno de cada
 atributo. Algunos ![Maleficio](../../../apps/web/public/icons/skill-type/hex.svg) **maleficios** ponen a 0 los atributos de un enemigo, y Master
 of Magic pone a 13 los tuyos elementales: un rango fijado así anula por igual
-runas y Weakness. Signet of Illusions hace que tus próximos ![Hechizo](../../../apps/web/public/icons/skill-type/spell.svg) **hechizos** de otros
+runas y Debilidad. Signet of Illusions hace que tus próximos ![Hechizo](../../../apps/web/public/icons/skill-type/spell.svg) **hechizos** de otros
 atributos usen tu rango de Illusion Magic. Algunas habilidades suben tus
 atributos un tiempo o para tus próximos hechizos, como Glyph of Elemental Power
 y Ritual Lord, incluso uno que dejaste en 0; un rango fijado, como el de Master
@@ -55,7 +55,7 @@ of Magic, se impone a ese aumento.
 
 ## Ecos
 
-Los ![Eco](../../../apps/web/public/icons/skill-type/echo.svg) **ecos** de un ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** son mejoras largas sobre un aliado. Un **estribillo**
+Los ![Eco](../../../apps/web/public/icons/skill-type/echo.svg) **ecos** de un ![Paragón](../../../apps/web/public/icons/profession/paragon.svg) **Paragón** son mejoras largas sobre un aliado. Un **estribillo**
 se renueva a su duración completa, y un **final** hace efecto, cada vez que
 termina un ![Cántico](../../../apps/web/public/icons/skill-type/chant.svg) **cántico** o un ![Grito](../../../apps/web/public/icons/skill-type/shout.svg) **grito** sobre ese aliado. Un cántico o grito que se
 vuelve a aplicar antes de terminar no ha terminado. Nada elimina un eco:
@@ -64,7 +64,7 @@ dirigirse a un espíritu.
 
 ## Habilidades que se convierten en otra
 
-Algunas habilidades de ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** ponen otra habilidad en su propio hueco durante
+Algunas habilidades de ![Hipnotizador](../../../apps/web/public/icons/profession/mesmer.svg) **Hipnotizador** ponen otra habilidad en su propio hueco durante
 un tiempo. ![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** y ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** copian la siguiente habilidad que uses.
 **Inspired Enchantment** e **Inspired Hex** se convierten en la habilidad que
 lanzó el ![Encantamiento](../../../apps/web/public/icons/skill-type/enchantment.svg) **encantamiento** o ![Maleficio](../../../apps/web/public/icons/skill-type/hex.svg) **maleficio** que eliminaron, durante 20 segundos.
@@ -76,11 +76,11 @@ por otro estado no se puede copiar, aunque eliminarlo sigue dándote la energía
 
 ## Pozos y glifos
 
-Los ![Pozo](../../../apps/web/public/icons/skill-type/well.svg) **pozos** de un ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** aprovechan el cadáver más cercano. Si no hay
+Los ![Pozo](../../../apps/web/public/icons/skill-type/well.svg) **pozos** de un ![Nigromante](../../../apps/web/public/icons/profession/necromancer.svg) **Nigromante** aprovechan el cadáver más cercano. Si no hay
 ninguno cerca, un pozo sacrifica en su lugar el 66% de tu salud y aparece donde
 estás.
 
-Los ![Glifo](../../../apps/web/public/icons/skill-type/glyph.svg) **glifos** de un ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** cambian tu próximo ![Hechizo](../../../apps/web/public/icons/skill-type/spell.svg) **hechizo**: no se puede
+Los ![Glifo](../../../apps/web/public/icons/skill-type/glyph.svg) **glifos** de un ![Elementalista](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalista** cambian tu próximo ![Hechizo](../../../apps/web/public/icons/skill-type/spell.svg) **hechizo**: no se puede
 interrumpir, se lanza al instante, se recarga enseguida o cuesta menos. Un
 glifo nuevo sustituye al que tenías.
 
@@ -91,7 +91,7 @@ debajo del N%" responde a cualquier golpe o robo de vida que te deje vivo y por
 debajo de ese límite, aunque ya estuvieras por debajo antes del golpe, y nunca
 a la salud que sacrificas o pierdes por degeneración. La protección contra daño
 mortal, como ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, anula todo el golpe mortal: sin daño, sin
-muerte. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** e ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** no tienen duración: duran
+muerte. ![Intervención fiel](../../../apps/web/public/icons/status/faithful-intervention.svg) **Intervención fiel** e ![Ilusión de debilidad](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Ilusión de debilidad** no tienen duración: duran
 hasta que el daño, una eliminación o la muerte las terminan, y te curan
 mientras tanto.
 
@@ -119,7 +119,7 @@ mascota.
 
 ## Hechizos de objeto
 
-Los ![Hechizo de objeto](../../../apps/web/public/icons/skill-type/item-spell.svg) **hechizos de objeto** de un ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** ponen las **cenizas** de un espíritu
+Los ![Hechizo de objeto](../../../apps/web/public/icons/skill-type/item-spell.svg) **hechizos de objeto** de un ![Ritualista](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualista** ponen las **cenizas** de un espíritu
 en tus manos: una bonificación mientras las sostienes, y un **efecto al
 soltar** cuando caen. Caen cuando se agotan, cuando mueres, cuando pulsas
 **Soltar cenizas** sobre tu barra de salud, lanzas otro hechizo de objeto, usas

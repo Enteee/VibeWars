@@ -1567,6 +1567,24 @@ export default {
   "tutorial.menu.spec.title": "שנו את ההתמחות שלכם.",
   "tutorial.menu.spec.weapons": "בחרו מהרשימה נשק לסט הנשק שלכם.",
   "tutorial.menu.spec.weaponsDone": "החליפו נשק",
+  "tutorial.menu.team.build":
+    "שם של חבר פותח את הבילד שלו בעורך הבילדים. כשחוזרים, השינויים נשארים, לא שמורים.",
+  "tutorial.menu.team.character":
+    "גררו את הדמות מתוך הדמויות שלי אל חבר בקבוצה. החבר הופך לעותק שלה.",
+  "tutorial.menu.team.characterDone": "הכניסו את הדמות שלכם לקבוצה",
+  "tutorial.menu.team.fill": "תנו בילד לכל חבר, עד שלא יישארו בקבוצה בעיות.",
+  "tutorial.menu.team.fillDone": "מלאו את הקבוצה",
+  "tutorial.menu.team.members":
+    "בקבוצה יש תמיד כמה חברים כגודלה. אף פעם לא מוסיפים חבר: מחליפים אחד.",
+  "tutorial.menu.team.new": "קבעו את גודל הקבוצה ל-2v2, ואז צרו מבנה קבוצה חדש.",
+  "tutorial.menu.team.newDone": "התחילו קבוצה של 2",
+  "tutorial.menu.team.open": "פתחו את קבוצות, שם נמצאים מבני הקבוצות שלכם.",
+  "tutorial.menu.team.openDone": "פתחו את קבוצות",
+  "tutorial.menu.team.problems":
+    "שמור תמיד שומר את הקבוצה. הרמז שלו מציין את הדבר הראשון שמונע לשחק בקבוצה.",
+  "tutorial.menu.team.save": "שמרו את הקבוצה שלכם.",
+  "tutorial.menu.team.saveDone": "שמור",
+  "tutorial.menu.team.title": "בנו קבוצה כדי להצליח.",
   "tutorial.gate.hint": "אל תוך הערפל, אחריי.",
   "tutorial.gate.how": "לחץ לחיצה שמאלית על הקרקע, או לך עם {keys}.",
   "tutorial.gate.intro": "הקבוצה שלנו נלחמת מעבר לערפל. בוא אחריי.",

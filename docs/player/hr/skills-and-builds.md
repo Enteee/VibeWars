@@ -6,8 +6,8 @@ glavnom izborniku ili s **Novi lik**.
 
 ## Profesije
 
-Ima ih deset: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**,
-![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** i ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Tvoja **primarna**
+Ima ih deset: ![Ratnik](../../../apps/web/public/icons/profession/warrior.svg) **Ratnik**, ![Lovac](../../../apps/web/public/icons/profession/ranger.svg) **Lovac**, ![Redovnik](../../../apps/web/public/icons/profession/monk.svg) **Redovnik**, ![Nekromant](../../../apps/web/public/icons/profession/necromancer.svg) **Nekromant**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**,
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Asasin](../../../apps/web/public/icons/profession/assassin.svg) **Asasin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** i ![Derviš](../../../apps/web/public/icons/profession/dervish.svg) **Derviš**. Tvoja **primarna**
 profesija je ono što jesi: njezine vještine i njezin **primarni atribut**
 (označen ★), koji dobiva samo primarna. Tvoja **sekundarna** ti posuđuje svoje
 vještine, ali ne i svoj primarni atribut.
@@ -18,7 +18,7 @@ Traka ima **osam mjesta**. Na traku stane samo jedna **elitna** vještina (zlatn
 stavi drugu i ona zamjenjuje prvu. Pritisni **×** na mjestu da ga
 ispražniš.
 
-![Začaranje](../../../apps/web/public/icons/skill-type/enchantment.svg) **Bljesna začaranja** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) su trenutna: korištenje jednog čuva tvoj
+![Začaranje](../../../apps/web/public/icons/skill-type/enchantment.svg) **Bljesna začaranja** (![Derviš](../../../apps/web/public/icons/profession/dervish.svg) **Derviš**) su trenutna: korištenje jednog čuva tvoj
 zamah i korak, pa ih možeš umetati između udaraca. Svako
 isključuje tvoja ostala bljesna začaranja na 1 sekundu.
 
@@ -43,10 +43,10 @@ atributa koji vještina koristi jača je: brojevi koji rastu s
 atributom prikazani su zeleno i podebljano, na tvojim trenutnim razinama uključujući
 rune i kacigu.
 
-U borbi ti se razine mogu nakratko promijeniti. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** skida po jednu sa
+U borbi ti se razine mogu nakratko promijeniti. ![Slabost](../../../apps/web/public/icons/status/weakness.svg) **Slabost** skida po jednu sa
 svake. Neki ![Urok](../../../apps/web/public/icons/skill-type/hex.svg) **uroci** postavljaju neprijateljeve atribute na 0, a Master of Magic
 postavlja tvoje elementarne na 13: razina postavljena na taj način ima prednost pred runama
-i Weakness. Signet of Illusions omogućuje tvojim sljedećim ![Čarolija](../../../apps/web/public/icons/skill-type/spell.svg) **čarolijama** drugih
+i Slabošću. Signet of Illusions omogućuje tvojim sljedećim ![Čarolija](../../../apps/web/public/icons/skill-type/spell.svg) **čarolijama** drugih
 atributa da koriste tvoju razinu Illusion Magic. Neke vještine podižu tvoje
 atribute na neko vrijeme ili za tvoje sljedeće čarolije, kao Glyph of Elemental
 Power i Ritual Lord, čak i onaj koji si ostavio na 0; postavljena razina, kao kod Master
@@ -74,7 +74,7 @@ se kopirati, iako njegovo uklanjanje i dalje daje energiju.
 
 ## Zdenci i glifovi
 
-![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancerovi** ![Zdenac](../../../apps/web/public/icons/skill-type/well.svg) **zdenci** iskorištavaju najbliži leš. Ako nijedan nije blizu,
+![Nekromant](../../../apps/web/public/icons/profession/necromancer.svg) **Nekromantovi** ![Zdenac](../../../apps/web/public/icons/skill-type/well.svg) **zdenci** iskorištavaju najbliži leš. Ako nijedan nije blizu,
 zdenac umjesto toga žrtvuje 66% tvog zdravlja i pojavljuje se tamo gdje stojiš.
 
 ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalistovi** ![Glif](../../../apps/web/public/icons/skill-type/glyph.svg) **glifovi** mijenjaju tvoju sljedeću ![Čarolija](../../../apps/web/public/icons/skill-type/spell.svg) **čaroliju**: ne može se
@@ -88,7 +88,7 @@ odgovara na svaki udarac ili krađu života koji te ostave živa i ispod
 granice, čak i kad si već prije pogotka bio ispod nje, a nikad na
 zdravlje koje žrtvuješ ili gubiš degeneracijom. Zaštita od smrtonosne štete, kao ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**,
 poništava cijeli smrtonosni udarac: bez štete, bez smrti. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention**
-i ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** nemaju trajanje: traju dok ih šteta, skidanje
+i ![Iluzija slabosti](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Iluzija slabosti** nemaju trajanje: traju dok ih šteta, skidanje
 ili smrt ne prekinu, i usput te liječe.
 
 ## Biblioteka

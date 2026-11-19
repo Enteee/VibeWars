@@ -1412,6 +1412,24 @@ export default {
   "tutorial.menu.spec.title": "เปลี่ยนสเปกของคุณ",
   "tutorial.menu.spec.weapons": "เลือกอาวุธจากรายการสำหรับชุดอาวุธของคุณ",
   "tutorial.menu.spec.weaponsDone": "เปลี่ยนอาวุธ",
+  "tutorial.menu.team.build":
+    "ชื่อสมาชิกจะเปิดบิลด์ของสมาชิกนั้นในตัวแก้ไขบิลด์ เมื่อกลับมา สิ่งที่คุณเปลี่ยนยังอยู่ แต่ยังไม่บันทึก",
+  "tutorial.menu.team.character":
+    "ลากตัวละครของคุณจากตัวละครของฉันไปวางบนสมาชิก สมาชิกนั้นจะกลายเป็นสำเนาของตัวละคร",
+  "tutorial.menu.team.characterDone": "ใส่ตัวละครของคุณในทีม",
+  "tutorial.menu.team.fill": "ให้บิลด์แก่สมาชิกทุกคน จนกว่าทีมจะไม่มีปัญหาเหลืออยู่",
+  "tutorial.menu.team.fillDone": "เติมทีมให้เต็ม",
+  "tutorial.menu.team.members":
+    "ทีมมีสมาชิกเท่ากับขนาดทีมเสมอ คุณไม่เคยเพิ่มสมาชิก แต่จะเปลี่ยนตัวแทน",
+  "tutorial.menu.team.new": "ตั้งขนาดทีมเป็น 2v2 แล้วสร้างทีมบิลด์ใหม่",
+  "tutorial.menu.team.newDone": "เริ่มทีม 2 คน",
+  "tutorial.menu.team.open": "เปิดทีม ซึ่งเก็บทีมบิลด์ของคุณไว้",
+  "tutorial.menu.team.openDone": "เปิดทีม",
+  "tutorial.menu.team.problems":
+    "บันทึกจะเก็บทีมไว้เสมอ คำแนะนำของปุ่มจะบอกสิ่งแรกที่ทำให้ยังเล่นทีมนี้ไม่ได้",
+  "tutorial.menu.team.save": "บันทึกทีมของคุณ",
+  "tutorial.menu.team.saveDone": "บันทึก",
+  "tutorial.menu.team.title": "สร้างทีมเพื่อความสำเร็จ",
   "tutorial.gate.hint": "เข้าไปในหมอก ตามฉันมา",
   "tutorial.gate.how": "คลิกซ้ายที่พื้น หรือเดินด้วย {keys}",
   "tutorial.gate.intro": "ทีมของเรากำลังสู้อยู่หลังม่านหมอก ตามฉันมา",

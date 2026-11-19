@@ -32,33 +32,33 @@ i njihove modifikacije: najveće zdravlje i energija prate komplet u ruci.
 Promjena oružja zadržava modifikacije koje mu i dalje pristaju i kaže koje je
 izbacila.
 
-| Modifikacija              | Mjesto  | Pristaje                                                            | Učinak                                                                                                              |
-| ------------------------- | ------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Defensive                 | Prefiks | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Oklop +5                                                                                                            |
-| Hale                      | Prefiks | Staff                                                               | +30 zdravlja                                                                                                        |
-| Insightful                | Prefiks | Staff                                                               | Energija +5                                                                                                         |
-| of Defense                | Sufiks  | svako borilačko oružje, Staff                                       | Oklop +5                                                                                                            |
-| of Fortitude              | Sufiks  | svako borilačko oružje, Staff, Shield, Focus                        | +30 zdravlja                                                                                                        |
-| of Shelter                | Sufiks  | svako borilačko oružje, Staff                                       | Oklop +7 (protiv fizičke štete)                                                                                     |
-| of Warding                | Sufiks  | svako borilačko oružje, Staff                                       | Oklop +7 (protiv elementarne štete)                                                                                 |
-| "Cast Out the Unclean"    | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** na tebi za 20%          |
-| "Fear Cuts Deeper"        | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** na tebi za 20%       |
-| "I Can See Clearly Now"   | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** na tebi za 20%            |
-| "I have the power!"       | Natpis  | svako borilačko oružje                                              | Energija +5                                                                                                         |
-| "Leaf on the Wind"        | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv štete od hladnoće)                                                                                |
-| "Like a Rolling Stone"    | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv štete od zemlje)                                                                                  |
-| "Live for Today"          | Natpis  | Focus                                                               | Energija +15, obnavljanje energije -1                                                                               |
-| "Not the face!"           | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv tupe štete)                                                                                       |
-| "Only the Strong Survive" | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** na tebi za 20%       |
-| "Pure of Heart"           | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** na tebi za 20%             |
-| "Riders on the Storm"     | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv štete od munje)                                                                                   |
-| "Seize the Day"           | Natpis  | Staff, Wand                                                         | Energija +15, obnavljanje energije -1                                                                               |
-| "Sleep Now in the Fire"   | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv štete od vatre)                                                                                   |
-| "Soundness of Mind"       | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** na tebi za 20%                |
-| "Strength of Body"        | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** na tebi za 20% |
-| "Swift as the Wind"       | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** na tebi za 20%       |
-| "The Riddle of Steel"     | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv sječne štete)                                                                                     |
-| "Through Thick and Thin"  | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv probojne štete)                                                                                   |
+| Modifikacija              | Mjesto  | Pristaje                                                            | Učinak                                                                                                                |
+| ------------------------- | ------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Prefiks | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Oklop +5                                                                                                              |
+| Hale                      | Prefiks | Staff                                                               | +30 zdravlja                                                                                                          |
+| Insightful                | Prefiks | Staff                                                               | Energija +5                                                                                                           |
+| of Defense                | Sufiks  | svako borilačko oružje, Staff                                       | Oklop +5                                                                                                              |
+| of Fortitude              | Sufiks  | svako borilačko oružje, Staff, Shield, Focus                        | +30 zdravlja                                                                                                          |
+| of Shelter                | Sufiks  | svako borilačko oružje, Staff                                       | Oklop +7 (protiv fizičke štete)                                                                                       |
+| of Warding                | Sufiks  | svako borilačko oružje, Staff                                       | Oklop +7 (protiv elementarne štete)                                                                                   |
+| "Cast Out the Unclean"    | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Bolest](../../../apps/web/public/icons/status/disease.svg) **Bolesti** na tebi za 20%             |
+| "Fear Cuts Deeper"        | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Krvarenje](../../../apps/web/public/icons/status/bleeding.svg) **Krvarenja** na tebi za 20%       |
+| "I Can See Clearly Now"   | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** na tebi za 20%              |
+| "I have the power!"       | Natpis  | svako borilačko oružje                                              | Energija +5                                                                                                           |
+| "Leaf on the Wind"        | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv štete od hladnoće)                                                                                  |
+| "Like a Rolling Stone"    | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv štete od zemlje)                                                                                    |
+| "Live for Today"          | Natpis  | Focus                                                               | Energija +15, obnavljanje energije -1                                                                                 |
+| "Not the face!"           | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv tupe štete)                                                                                         |
+| "Only the Strong Survive" | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Slabost](../../../apps/web/public/icons/status/weakness.svg) **Slabosti** na tebi za 20%          |
+| "Pure of Heart"           | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Otrov](../../../apps/web/public/icons/status/poison.svg) **Otrova** na tebi za 20%                |
+| "Riders on the Storm"     | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv štete od munje)                                                                                     |
+| "Seize the Day"           | Natpis  | Staff, Wand                                                         | Energija +15, obnavljanje energije -1                                                                                 |
+| "Sleep Now in the Fire"   | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv štete od vatre)                                                                                     |
+| "Soundness of Mind"       | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Omamljenost](../../../apps/web/public/icons/status/dazed.svg) **Omamljenosti** na tebi za 20%     |
+| "Strength of Body"        | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Duboka rana](../../../apps/web/public/icons/status/deep-wound.svg) **Duboke rane** na tebi za 20% |
+| "Swift as the Wind"       | Natpis  | Shield, Focus                                                       | Skraćuje trajanje ![Osakaćenost](../../../apps/web/public/icons/status/crippled.svg) **Osakaćenosti** na tebi za 20%  |
+| "The Riddle of Steel"     | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv sječne štete)                                                                                       |
+| "Through Thick and Thin"  | Natpis  | Shield, Focus                                                       | Oklop +10 (protiv probojne štete)                                                                                     |
 
 ### Borilački prefiksi pri pogotku
 
@@ -68,10 +68,10 @@ izbacila.
 | Zealous                      | svako borilačko oružje     | daje 1 energiju; -1 obnavljanje energije                              |
 | Sundering                    | svako borilačko oružje     | 20% šanse za +20% probijanja oklopa                                   |
 | Furious                      | borilačko, ne bows         | 10% šanse za dvostruki adrenalin                                      |
-| Barbed, Crippling, Poisonous | borilačko, ne hammer       | Bleeding, Crippled, Poison koje uzrokuješ traju 33% dulje             |
-| Cruel                        | borilačko, ne bows         | Deep Wound koji uzrokuješ traje 33% dulje                             |
-| Heavy                        | axe, hammer, scythe, spear | Weakness koji uzrokuješ traje 33% dulje                               |
-| Silencing                    | daggers, spear, bows       | Dazed koji uzrokuješ traje 33% dulje                                  |
+| Barbed, Crippling, Poisonous | borilačko, ne hammer       | Krvarenje, Osakaćenost, Otrov koje uzrokuješ traju 33% dulje          |
+| Cruel                        | borilačko, ne bows         | Duboka rana koju uzrokuješ traje 33% dulje                            |
+| Heavy                        | axe, hammer, scythe, spear | Slabost koju uzrokuješ traje 33% dulje                                |
+| Silencing                    | daggers, spear, bows       | Omamljenost koju uzrokuješ traje 33% dulje                            |
 | Ebon, Fiery, Icy, Shocking   | svako borilačko oružje     | njegova šteta postaje od zemlje, vatre, hladnoće ili munje            |
 
 "Pri pogotku" znači pogodak napada ili vještine napada koji je sjeo: blokiran
@@ -160,7 +160,7 @@ drži oružja kompleta koji gledaš, s njihovim modifikacijama.
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 zdravlja                          |
 | ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | više energije (+3, +6 ili +9)         |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | po dva stanja nestaju 20% brže        |
-| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | manje fizičke štete od svakog pogotka |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Ratnik](../../../apps/web/public/icons/profession/warrior.svg) **Ratnik**)                                                                                                                                                 | manje fizičke štete od svakog pogotka |
 
 Runu dijela biraš na istom mjestu kao i njegovu insigniju: klikni dio
 na figuri.

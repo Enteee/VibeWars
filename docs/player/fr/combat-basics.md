@@ -4,18 +4,18 @@
 
 Tu commences avec 500 de **santé** et 50 d'**énergie** ; les runes et le
 moral modifient les deux. Les compétences coûtent de l'énergie, qui revient
-toute seule, lentement. Les ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriors** et les ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** la récupèrent le plus
-lentement, les ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangers** un peu plus vite, tous les autres le plus vite.
+toute seule, lentement. Les ![Guerrier](../../../apps/web/public/icons/profession/warrior.svg) **Guerriers** et les ![Parangon](../../../apps/web/public/icons/profession/paragon.svg) **Parangons** la récupèrent le plus
+lentement, les ![Rôdeur](../../../apps/web/public/icons/profession/ranger.svg) **Rôdeurs** un peu plus vite, tous les autres le plus vite.
 
 Les flèches sur tes barres sont des **pips** : chacune est de la santé ou de
-l'énergie qui revient, ou qui s'écoule, un peu chaque seconde. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**,
-![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** et ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** drainent la santé ; Regeneration et les sorts de soin en
+l'énergie qui revient, ou qui s'écoule, un peu chaque seconde. ![Saignement](../../../apps/web/public/icons/status/bleeding.svg) **Saignement**,
+![Brûlure](../../../apps/web/public/icons/status/burning.svg) **Brûlure** et ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** drainent la santé ; Regeneration et les sorts de soin en
 ajoutent. Hors combat pendant 5 secondes, ta santé commence à revenir toute
 seule, d'autant plus vite que tu restes hors combat.
 
 ## Adrénaline
 
-Les ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriors**, les ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** et d'autres ont des compétences qui coûtent de
+Les ![Guerrier](../../../apps/web/public/icons/profession/warrior.svg) **Guerriers**, les ![Parangon](../../../apps/web/public/icons/profession/paragon.svg) **Parangons** et d'autres ont des compétences qui coûtent de
 l'**adrénaline** au lieu de l'énergie. Chacune se charge de son côté :
 chaque coup d'arme que tu portes leur donne à toutes un coup d'adrénaline,
 et recevoir un gros coup aussi. En utiliser une la vide et retire un coup
@@ -65,18 +65,18 @@ pendant un moment, sauf un ![Cri](../../../apps/web/public/icons/skill-type/shou
 Les **altérations** te font du mal jusqu'à ce qu'elles expirent ou soient
 retirées :
 
-| Altération                                                                                  | Effet                                                     |
-| ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | draine la santé                                           |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | draine la santé rapidement                                |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | draine la santé                                           |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | draine la santé, et se propage à tes voisins              |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | tu avances à mi-vitesse                                   |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | la plupart de tes attaques ratent                         |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | tes coups d'arme sont bien plus faibles                   |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | moins d'armure                                            |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | moins de santé maximale, et les soins marchent moins bien |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | sorts lents à lancer ; toute attaque les interrompt       |
+| Altération                                                                                       | Effet                                                     |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| ![Saignement](../../../apps/web/public/icons/status/bleeding.svg) **Saignement**                 | draine la santé                                           |
+| ![Brûlure](../../../apps/web/public/icons/status/burning.svg) **Brûlure**                        | draine la santé rapidement                                |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                           | draine la santé                                           |
+| ![Maladie](../../../apps/web/public/icons/status/disease.svg) **Maladie**                        | draine la santé, et se propage à tes voisins              |
+| ![Infirmité](../../../apps/web/public/icons/status/crippled.svg) **Infirmité**                   | tu avances à mi-vitesse                                   |
+| ![Cécité](../../../apps/web/public/icons/status/blind.svg) **Cécité**                            | la plupart de tes attaques ratent                         |
+| ![Faiblesse](../../../apps/web/public/icons/status/weakness.svg) **Faiblesse**                   | tes coups d'arme sont bien plus faibles                   |
+| ![Armure fissurée](../../../apps/web/public/icons/status/cracked-armor.svg) **Armure fissurée**  | moins d'armure                                            |
+| ![Blessure profonde](../../../apps/web/public/icons/status/deep-wound.svg) **Blessure profonde** | moins de santé maximale, et les soins marchent moins bien |
+| ![Hébétude](../../../apps/web/public/icons/status/dazed.svg) **Hébétude**                        | sorts lents à lancer ; toute attaque les interrompt       |
 
 Les ![Maléfice](../../../apps/web/public/icons/skill-type/hex.svg) **maléfices** sont lancés sur toi par les ennemis ; les ![Enchantement](../../../apps/web/public/icons/skill-type/enchantment.svg) **enchantements**
 par toi ou tes alliés. Chacun est retiré par son propre type de compétence.
@@ -91,8 +91,8 @@ consomme une autant qu'un coup réussi.
 
 ## Armure et dégâts
 
-Les ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriors** et les ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** portent le plus d'armure ; les ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangers**, les
-![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassins** et les ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervishes** moins ; les lanceurs de sorts le moins. L'armure
+Les ![Guerrier](../../../apps/web/public/icons/profession/warrior.svg) **Guerriers** et les ![Parangon](../../../apps/web/public/icons/profession/paragon.svg) **Parangons** portent le plus d'armure ; les ![Rôdeur](../../../apps/web/public/icons/profession/ranger.svg) **Rôdeurs**, les
+![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassins** et les ![Derviche](../../../apps/web/public/icons/profession/dervish.svg) **Derviches** moins ; les lanceurs de sorts le moins. L'armure
 réduit les dégâts d'arme, élémentaires, de chaos et de ténèbres. Les dégâts
 sacrés, d'ombre et sans type, les drains de santé et les vols de vie
 l'ignorent. Seuls les coups d'arme peuvent être critiques.

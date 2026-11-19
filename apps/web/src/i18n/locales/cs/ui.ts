@@ -1622,6 +1622,24 @@ export default {
   "tutorial.menu.spec.title": "Změň svou specializaci.",
   "tutorial.menu.spec.weapons": "Vyber ze seznamu zbraň pro svou sadu zbraní.",
   "tutorial.menu.spec.weaponsDone": "Změň zbraň",
+  "tutorial.menu.team.build":
+    "Jméno člena otevře jeho build v editoru buildů. Po návratu ti změny zůstanou, neuložené.",
+  "tutorial.menu.team.character":
+    "Přetáhni svou postavu z Moje postavy na člena. Člen se stane její kopií.",
+  "tutorial.menu.team.characterDone": "Dej svou postavu do týmu",
+  "tutorial.menu.team.fill": "Dej každému členovi build, dokud v týmu nezůstanou žádné problémy.",
+  "tutorial.menu.team.fillDone": "Doplň tým",
+  "tutorial.menu.team.members":
+    "Tým má vždy tolik členů, kolik je jeho velikost. Člena nikdy nepřidáváš: nahrazuješ ho.",
+  "tutorial.menu.team.new": "Nastav velikost týmu na 2v2 a pak vytvoř nový týmový build.",
+  "tutorial.menu.team.newDone": "Založ tým pro 2",
+  "tutorial.menu.team.open": "Otevři Týmy, kde jsou tvé týmové buildy.",
+  "tutorial.menu.team.openDone": "Otevři Týmy",
+  "tutorial.menu.team.problems":
+    "Uložit tým vždy uloží. Jeho nápověda jmenuje první věc, která brání hraní týmu.",
+  "tutorial.menu.team.save": "Ulož svůj tým.",
+  "tutorial.menu.team.saveDone": "Uložit",
+  "tutorial.menu.team.title": "Postav tým, abys uspěl.",
   "tutorial.gate.hint": "Do mlhy, za mnou.",
   "tutorial.gate.how": "Klikni levým tlačítkem na zem, nebo choď pomocí {keys}.",
   "tutorial.gate.intro": "Náš tým bojuje za mlhou. Pojď za mnou.",

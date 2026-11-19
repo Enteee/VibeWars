@@ -164,6 +164,10 @@ export function teamSizeStepper(
   const sizes = TEAM_SIZES_BY_ENTRY[entry];
   const stepper = h("div", "mode-rail-stepper");
   stepper.setAttribute("data-entry", "team-size");
+  // Team Builder's size is the new team's (#3542): the menu quest points at it.
+  if (entry === "teams") {
+    stepper.setAttribute("data-tutorial", "team-new");
+  }
   stepper.setAttribute("role", "group");
   stepper.setAttribute("aria-label", t("rail.teamSize"));
   let shown = value;
