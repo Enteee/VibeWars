@@ -854,6 +854,7 @@ export default {
   "pips.title": { one: "{sign}{count} pip", other: "{sign}{count} pip" },
 
   "player.cape": "Mantel",
+  "player.capePreview": "Förhandsvisning",
   "player.colourBlack": "svart",
   "player.colourGold": "guld",
   "player.colourLime": "lime",

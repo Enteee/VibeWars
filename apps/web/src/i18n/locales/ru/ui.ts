@@ -940,6 +940,7 @@ export default {
   },
 
   "player.cape": "Плащ",
+  "player.capePreview": "Предпросмотр",
   "player.colourBlack": "чёрный",
   "player.colourGold": "золотой",
   "player.colourLime": "лаймовый",

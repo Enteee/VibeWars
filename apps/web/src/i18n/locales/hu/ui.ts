@@ -857,6 +857,7 @@ export default {
   "pips.title": { one: "{sign}{count} csík", other: "{sign}{count} csík" },
 
   "player.cape": "Köpeny",
+  "player.capePreview": "Előnézet",
   "player.colourBlack": "fekete",
   "player.colourGold": "arany",
   "player.colourLime": "limezöld",

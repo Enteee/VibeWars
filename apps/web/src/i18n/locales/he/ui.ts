@@ -912,6 +912,7 @@ export default {
   },
 
   "player.cape": "גלימה",
+  "player.capePreview": "תצוגה מקדימה",
   "player.colourBlack": "שחור",
   "player.colourGold": "זהב",
   "player.colourLime": "ליים",

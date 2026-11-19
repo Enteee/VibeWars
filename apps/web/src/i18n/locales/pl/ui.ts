@@ -945,6 +945,7 @@ export default {
   },
 
   "player.cape": "Peleryna",
+  "player.capePreview": "Podgląd",
   "player.colourBlack": "czarny",
   "player.colourGold": "złoty",
   "player.colourLime": "limonkowy",

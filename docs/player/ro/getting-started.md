@@ -180,7 +180,7 @@ Scrie lângă el un **Tag de breaslă** de 2 până la 4 litere sau cifre și to
 creatorul de **Pelerină de breaslă**: alege culoarea pelerinei, culoarea marginii și
 o emblemă, iar corpul tău poartă pelerina în fiecare meci: se strânge într-o bandă
 subțire pe margine când stai și flutură în spatele tău când te miști. O arată și
-personajele tale din meniu. **Fără pelerină** o scoate.
+personajele tale din meniu. **Fără pelerină** o scoate. O figurină arată pelerina așa cum apare în joc.
 
 O schimbare se aplică imediat lobby-ului în care ești.
 

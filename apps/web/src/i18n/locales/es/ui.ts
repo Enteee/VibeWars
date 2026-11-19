@@ -916,6 +916,7 @@ export default {
   },
 
   "player.cape": "Capa",
+  "player.capePreview": "Vista previa",
   "player.colourBlack": "negro",
   "player.colourGold": "dorado",
   "player.colourLime": "lima",

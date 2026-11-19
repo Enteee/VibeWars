@@ -866,6 +866,7 @@ export default {
   "pips.title": { one: "{sign}{count} pykälä", other: "{sign}{count} pykälää" },
 
   "player.cape": "Viitta",
+  "player.capePreview": "Esikatselu",
   "player.colourBlack": "musta",
   "player.colourGold": "kulta",
   "player.colourLime": "limetti",

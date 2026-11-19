@@ -813,6 +813,7 @@ export default {
   "pips.title": { other: "{sign}{count}ピップ" },
 
   "player.cape": "ケープ",
+  "player.capePreview": "プレビュー",
   "player.colourBlack": "黒",
   "player.colourGold": "金",
   "player.colourLime": "ライム",

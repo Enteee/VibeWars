@@ -811,6 +811,7 @@ export default {
   "pips.title": { other: "{sign}{count} pip" },
 
   "player.cape": "Jubah",
+  "player.capePreview": "Pratinjau",
   "player.colourBlack": "hitam",
   "player.colourGold": "emas",
   "player.colourLime": "limau",

@@ -855,6 +855,7 @@ export default {
   "pips.title": { one: "{sign}{count} pips", other: "{sign}{count} pips" },
 
   "player.cape": "Cape",
+  "player.capePreview": "Voorbeeld",
   "player.colourBlack": "zwart",
   "player.colourGold": "goud",
   "player.colourLime": "limoen",

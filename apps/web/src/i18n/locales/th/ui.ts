@@ -806,6 +806,7 @@ export default {
   "pips.title": { other: "{sign}{count} pip" },
 
   "player.cape": "ผ้าคลุม",
+  "player.capePreview": "ตัวอย่าง",
   "player.colourBlack": "ดำ",
   "player.colourGold": "ทอง",
   "player.colourLime": "เขียวมะนาว",

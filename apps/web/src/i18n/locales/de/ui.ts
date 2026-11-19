@@ -863,6 +863,7 @@ export default {
   "pips.title": { one: "{sign}{count} Pip", other: "{sign}{count} Pips" },
 
   "player.cape": "Umhang",
+  "player.capePreview": "Vorschau",
   "player.colourBlack": "schwarz",
   "player.colourGold": "gold",
   "player.colourLime": "hellgrün",

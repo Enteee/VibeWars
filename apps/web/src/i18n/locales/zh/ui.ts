@@ -802,6 +802,7 @@ export default {
   "pips.title": { other: "{sign}{count} 格" },
 
   "player.cape": "披风",
+  "player.capePreview": "预览",
   "player.colourBlack": "黑色",
   "player.colourGold": "金色",
   "player.colourLime": "青柠色",

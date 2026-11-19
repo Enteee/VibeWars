@@ -1,10 +1,14 @@
+import { defaultBuildEquipment } from "@vibewars/game-core";
 import { sanitizeName } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EMBLEM_PRESET_NAMES, presetEmblem } from "../render/cape-shape.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
+import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
+import { saveActiveCharacterId, saveStarterCharacterId } from "./menu.js";
 import {
   FIRST_CAPE,
+  capeWearer,
   isInvalidGuildTag,
   loadGuildCape,
   loadGuildTag,
@@ -16,6 +20,7 @@ import {
   playerSection,
   saveGuildCape,
   saveGuildTag,
+  setCapeWearers,
   showsCapeDesigner,
 } from "./player-section.js";
 import { SIGNET_HEADING_PX, signetUrl } from "./player-label.js";
@@ -186,6 +191,11 @@ class FakeElement {
     }
   }
 
+  replaceChildren(...children: FakeElement[]): void {
+    this.children.length = 0;
+    this.append(...children);
+  }
+
   remove(): void {
     // Detached by the container's owner; nothing to do here.
   }
@@ -216,8 +226,9 @@ describe("the Player section of Options (#1513)", () => {
       setItem: (key: string, value: string) => stored.set(key, value),
       removeItem: (key: string) => stored.delete(key),
     });
-    vi.stubGlobal("window", { devicePixelRatio: 1 });
+    vi.stubGlobal("window", { devicePixelRatio: 1, matchMedia: () => ({ matches: false }) });
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
+    setCapeWearers(() => Promise.resolve([]));
   });
 
   afterEach(() => {
@@ -287,7 +298,7 @@ describe("the Player section of Options (#1513)", () => {
     edit?.click();
     const editor = cape.all().find((node) => node.className === "emblem-editor");
     expect(editor).toBeDefined();
-    expect(cape.all().find((node) => node.className === "player-cape-picks")?.hidden).toBe(true);
+    expect(cape.all().find((node) => node.className === "player-cape-body")?.hidden).toBe(true);
     // Done keeps the grid it opened with: the sample's.
     editor
       ?.all()
@@ -305,6 +316,43 @@ describe("the Player section of Options (#1513)", () => {
     expect(gold?.attributes.get("aria-pressed")).toBe("true");
     shown.find((node) => node.textContent === "No cape")?.click();
     expect(loadGuildCape()).toBeNull();
+  });
+
+  /** The cape designer's figure, the one shown now. */
+  function figureIn(cape: FakeElement): FakeElement | undefined {
+    return cape.all().find((node) => node.className === "character-figure");
+  }
+
+  it("dresses a figure in the cape being designed, redrawn on every pick (#3551)", () => {
+    stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
+    const { cape, shown } = mount();
+    const first = figureIn(cape);
+    expect(first?.tagName).toBe("canvas");
+    // Nothing saved yet: no cape.
+    expect(first?.dataset.cape).toBeUndefined();
+    shown.find((node) => node.dataset.colour === "gold")?.click();
+    const second = figureIn(cape);
+    expect(second).not.toBe(first);
+    expect(second?.dataset.cape).toBe(`gold.${FIRST_CAPE.trim}.${FIRST_CAPE.emblem}`);
+    shown.find((node) => node.textContent === "No cape")?.click();
+    expect(figureIn(cape)?.dataset.cape).toBeUndefined();
+    expect(cape.all().filter((node) => node.className === "character-figure")).toHaveLength(1);
+  });
+
+  it("shows no figure without a valid tag (#3551)", () => {
+    const { cape } = mount();
+    expect(cape.hidden).toBe(true);
+  });
+
+  it("dresses the menu's character once the roster is read, else the bare body (#3551)", async () => {
+    stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
+    setCapeWearers(() => Promise.resolve([pyro()]));
+    saveActiveCharacterId("a");
+    const { cape } = mount();
+    expect(figureIn(cape)?.attributes.get("aria-label")).toContain("Warrior");
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(figureIn(cape)?.attributes.get("aria-label")).toContain("Elementalist");
   });
 
   it("sets each starting emblem's grid in the trim colour, and marks it picked (#3554)", () => {
@@ -339,6 +387,53 @@ describe("the Player section of Options (#1513)", () => {
     });
     tag.typeIn("V!");
     expect(copy?.hidden).toBe(true);
+  });
+});
+
+/** A playable character, as saved. */
+function pyro(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
+  return {
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
+    id: "a",
+    name: "Pyro",
+    primaryProfession: "elementalist",
+    secondaryProfession: "monk",
+    attributes: [],
+    skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
+    equipment: defaultBuildEquipment("elementalist"),
+    updatedAt: 1,
+    ...overrides,
+  };
+}
+
+describe("capeWearer (#3551)", () => {
+  beforeEach(() => {
+    const stored = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => stored.set(key, value),
+      removeItem: (key: string) => stored.delete(key),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const illegal = pyro({
+    id: "b",
+    skillBar: ["no.such-skill", null, null, null, null, null, null, null],
+  });
+  const starter = pyro({ id: "c" });
+
+  it("is the active character when it is playable, else the starter, else none", () => {
+    expect(capeWearer([pyro(), starter])).toBeUndefined();
+    saveStarterCharacterId("c");
+    expect(capeWearer([pyro(), starter])?.id).toBe("c");
+    saveActiveCharacterId("a");
+    expect(capeWearer([pyro(), starter])?.id).toBe("a");
+    saveActiveCharacterId("b");
+    expect(capeWearer([illegal, starter])?.id).toBe("c");
   });
 });
 
