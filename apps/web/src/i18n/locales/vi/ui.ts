@@ -805,6 +805,7 @@ export default {
   "pips.title": { other: "{sign}{count} vạch" },
 
   "player.cape": "Áo choàng",
+  "player.capePreview": "Xem trước",
   "player.colourBlack": "đen",
   "player.colourGold": "vàng",
   "player.colourLime": "xanh chanh",
@@ -1400,6 +1401,25 @@ export default {
   "tutorial.menu.menu.teams": "Ở Đội, bạn ghép các nhân vật thành một đội cho các trận đấu đội.",
   "tutorial.menu.menu.title": "Để đi tiếp, bạn phải đổi chuyên môn của mình.",
   "tutorial.menu.skipAsk": "Bỏ qua phần còn lại của hướng dẫn?",
+  "tutorial.menu.spec.attributes":
+    "Phân điểm thuộc tính của bạn. Mỗi bậc làm kỹ năng của thuộc tính đó mạnh hơn.",
+  "tutorial.menu.spec.attributesDone": "Đổi một thuộc tính",
+  "tutorial.menu.spec.gear":
+    "Giáp, rune và huy hiệu: chọn một món trên hình nhân, rồi chọn thứ gắn lên nó.",
+  "tutorial.menu.spec.gearDone": "Đổi một món trang bị",
+  "tutorial.menu.spec.open": "Mở Nhân vật, rồi mở một nhân vật để đổi build.",
+  "tutorial.menu.spec.openDone": "Mở một nhân vật",
+  "tutorial.menu.spec.professions":
+    "Lớp chính cho bạn thuộc tính và kỹ năng; lớp phụ cũng cho bạn mượn kỹ năng của nó.",
+  "tutorial.menu.spec.professionsDone": "Đổi một lớp",
+  "tutorial.menu.spec.save": "Lưu nhân vật để giữ build mới.",
+  "tutorial.menu.spec.saveDone": "Lưu",
+  "tutorial.menu.spec.skills":
+    "Mở một nhóm trong danh sách, rồi kéo kỹ năng vào một ô trên thanh để đổi vào.",
+  "tutorial.menu.spec.skillsDone": "Đặt một kỹ năng lên thanh",
+  "tutorial.menu.spec.title": "Đổi chuyên môn của bạn.",
+  "tutorial.menu.spec.weapons": "Chọn từ danh sách một vũ khí cho bộ vũ khí của bạn.",
+  "tutorial.menu.spec.weaponsDone": "Đổi một vũ khí",
   "tutorial.gate.hint": "Vào màn sương, theo sau ta.",
   "tutorial.gate.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",
   "tutorial.gate.intro": "Đội ta đang chiến đấu bên kia màn sương. Theo ta.",

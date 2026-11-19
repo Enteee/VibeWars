@@ -4,6 +4,7 @@ import type { CoachOverlay } from "./coach-overlay.js";
 import {
   NO_MENU_QUEST_EVENTS,
   advanceMenuQuest,
+  beatTarget,
   currentBeat,
   foldMenuQuestEvent,
   menuQuestStep,
@@ -55,7 +56,7 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
     coach.show({
       title: t(step.title),
       line: t(beat.line),
-      target: beat.target,
+      target: beatTarget(beat, state),
       objectives:
         beat.kind === "do"
           ? beat.objectives.map(({ label, done }) => ({ label: t(label), done: done(state) }))

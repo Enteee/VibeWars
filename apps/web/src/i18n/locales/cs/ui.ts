@@ -941,6 +941,7 @@ export default {
   },
 
   "player.cape": "Plášť",
+  "player.capePreview": "Náhled",
   "player.colourBlack": "černá",
   "player.colourGold": "zlatá",
   "player.colourLime": "limetková",
@@ -1603,6 +1604,24 @@ export default {
   "tutorial.menu.menu.teams": "V Týmech skládáš postavy do týmu pro týmové boje.",
   "tutorial.menu.menu.title": "Abys mohl pokračovat, musíš změnit svou specializaci.",
   "tutorial.menu.skipAsk": "Přeskočit zbytek výuky?",
+  "tutorial.menu.spec.attributes":
+    "Rozděl body atributů. Každý stupeň posílí dovednosti daného atributu.",
+  "tutorial.menu.spec.attributesDone": "Změň atribut",
+  "tutorial.menu.spec.gear": "Brnění, runy a insignie: vyber kus na postavě, pak co na něj patří.",
+  "tutorial.menu.spec.gearDone": "Změň kus výbavy",
+  "tutorial.menu.spec.open": "Otevři Postavy a pak otevři postavu, abys změnil její build.",
+  "tutorial.menu.spec.openDone": "Otevři postavu",
+  "tutorial.menu.spec.professions":
+    "Primární povolání ti dává atributy a dovednosti; sekundární ti propůjčí i své dovednosti.",
+  "tutorial.menu.spec.professionsDone": "Přepni povolání",
+  "tutorial.menu.spec.save": "Ulož postavu, aby ti nový build zůstal.",
+  "tutorial.menu.spec.saveDone": "Uložit",
+  "tutorial.menu.spec.skills":
+    "Otevři skupinu v seznamu a přetáhni dovednost na slot své lišty, ať ji vyměníš.",
+  "tutorial.menu.spec.skillsDone": "Dej dovednost na lištu",
+  "tutorial.menu.spec.title": "Změň svou specializaci.",
+  "tutorial.menu.spec.weapons": "Vyber ze seznamu zbraň pro svou sadu zbraní.",
+  "tutorial.menu.spec.weaponsDone": "Změň zbraň",
   "tutorial.gate.hint": "Do mlhy, za mnou.",
   "tutorial.gate.how": "Klikni levým tlačítkem na zem, nebo choď pomocí {keys}.",
   "tutorial.gate.intro": "Náš tým bojuje za mlhou. Pojď za mnou.",

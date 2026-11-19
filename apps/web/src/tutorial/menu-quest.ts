@@ -1,6 +1,7 @@
 import type { QueueMode } from "@vibewars/game-protocol";
 
 import type { MessageKey } from "../i18n/index.js";
+import { validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import type { RailEntry } from "../ui/rail.js";
 
@@ -11,9 +12,18 @@ import type { RailEntry } from "../ui/rail.js";
  * menu did, and asks it where the player is.
  */
 
+/** A screen the quest can point into: a rail screen, or the build editor. */
+export type MenuQuestScreen = RailEntry | "character-builder";
+
 /** Something the menu did that an objective may be waiting for. */
 export type MenuQuestEvent =
-  | { readonly kind: "screen-shown"; readonly screen: RailEntry }
+  | { readonly kind: "screen-shown"; readonly screen: MenuQuestScreen }
+  /** One edit in the build editor (#3541): the draft before it, and after. */
+  | {
+      readonly kind: "build-draft";
+      readonly before: StoredCharacter;
+      readonly draft: StoredCharacter;
+    }
   | {
       readonly kind: "character-saved";
       readonly before: StoredCharacter | undefined;
@@ -24,10 +34,25 @@ export type MenuQuestEvent =
   | { readonly kind: "team-picked"; readonly teamId: string }
   | { readonly kind: "queue-joined"; readonly mode: QueueMode; readonly size: number };
 
+/**
+ * What the player has changed in the build editor (#3541), each once
+ * done for good: a change undone later stays done. An edit that switches
+ * profession resets attributes, skills and weapons, and counts only as
+ * the switch; attributes and skills count only after one.
+ */
+export interface BuildChanges {
+  readonly professions: boolean;
+  readonly attributes: boolean;
+  readonly skills: boolean;
+  readonly weapons: boolean;
+  readonly gear: boolean;
+}
+
 /** Every event so far, folded: what the objectives ask about. */
 export interface MenuQuestState {
-  readonly screen: RailEntry | undefined;
-  readonly screensShown: readonly RailEntry[];
+  readonly screen: MenuQuestScreen | undefined;
+  readonly screensShown: readonly MenuQuestScreen[];
+  readonly buildChanged: BuildChanges;
   readonly charactersSaved: readonly {
     readonly before: StoredCharacter | undefined;
     readonly after: StoredCharacter;
@@ -46,14 +71,20 @@ export interface Objective {
 }
 
 /**
- * One beat, pointing at the control with `data-tutorial="<target>"`:
- * an explanation the player reads and dismisses, or a thing to do.
+ * The `data-tutorial` id a beat points at, or, for a beat whose control
+ * depends on the screen, the id for what the events so far showed.
+ */
+export type MenuTarget = string | ((state: MenuQuestState) => string);
+
+/**
+ * One beat, pointing at the controls whose `data-tutorial` holds its
+ * target: an explanation the player reads and dismisses, or a thing to do.
  */
 export type MenuBeat =
-  | { readonly kind: "explain"; readonly target: string; readonly line: MessageKey }
+  | { readonly kind: "explain"; readonly target: MenuTarget; readonly line: MessageKey }
   | {
       readonly kind: "do";
-      readonly target: string;
+      readonly target: MenuTarget;
       readonly line: MessageKey;
       readonly objectives: readonly Objective[];
     };
@@ -73,6 +104,99 @@ export const MENU_QUEST_STEPS = [
       { kind: "explain", target: "rail", line: "tutorial.menu.menu.rail" },
       { kind: "explain", target: "rail-characters", line: "tutorial.menu.menu.characters" },
       { kind: "explain", target: "rail-teams", line: "tutorial.menu.menu.teams" },
+    ],
+  },
+  {
+    id: "spec",
+    title: "tutorial.menu.spec.title",
+    beats: [
+      {
+        kind: "do",
+        // The Characters entry, then, on its screen, the character to open.
+        target: (state) => (state.screen === "characters" ? "character-open" : "rail-characters"),
+        line: "tutorial.menu.spec.open",
+        objectives: [
+          {
+            id: "open",
+            label: "tutorial.menu.spec.openDone",
+            done: (state) => state.screensShown.includes("character-builder"),
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "professions",
+        line: "tutorial.menu.spec.professions",
+        objectives: [
+          {
+            id: "professions",
+            label: "tutorial.menu.spec.professionsDone",
+            done: (state) => state.buildChanged.professions,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "attributes",
+        line: "tutorial.menu.spec.attributes",
+        objectives: [
+          {
+            id: "attributes",
+            label: "tutorial.menu.spec.attributesDone",
+            done: (state) => state.buildChanged.attributes,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "skills",
+        line: "tutorial.menu.spec.skills",
+        objectives: [
+          {
+            id: "skills",
+            label: "tutorial.menu.spec.skillsDone",
+            done: (state) => state.buildChanged.skills,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "weapons",
+        line: "tutorial.menu.spec.weapons",
+        objectives: [
+          {
+            id: "weapons",
+            label: "tutorial.menu.spec.weaponsDone",
+            done: (state) => state.buildChanged.weapons,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "gear",
+        line: "tutorial.menu.spec.gear",
+        objectives: [
+          {
+            id: "gear",
+            label: "tutorial.menu.spec.gearDone",
+            done: (state) => state.buildChanged.gear,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "save",
+        line: "tutorial.menu.spec.save",
+        objectives: [
+          {
+            id: "save",
+            label: "tutorial.menu.spec.saveDone",
+            // The check that blocks Save itself: a build it refuses never ticks.
+            done: (state) =>
+              state.charactersSaved.some(({ after }) => validateBuild(after).length === 0),
+          },
+        ],
+      },
     ],
   },
 ] as const satisfies readonly MenuQuestStep[];
@@ -97,12 +221,54 @@ export function menuQuestStep(id: MenuQuestStepId): MenuQuestStep {
 export const NO_MENU_QUEST_EVENTS: MenuQuestState = {
   screen: undefined,
   screensShown: [],
+  buildChanged: {
+    professions: false,
+    attributes: false,
+    skills: false,
+    weapons: false,
+    gear: false,
+  },
   charactersSaved: [],
   teamsSaved: [],
   teamSize: undefined,
   teamPicked: undefined,
   queueJoined: undefined,
 };
+
+function sameJson(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** `changes`, and what the one edit from `before` to `draft` changed. */
+export function foldBuildDraft(
+  changes: BuildChanges,
+  before: StoredCharacter,
+  draft: StoredCharacter,
+): BuildChanges {
+  if (
+    before.primaryProfession !== draft.primaryProfession ||
+    before.secondaryProfession !== draft.secondaryProfession
+  ) {
+    return { ...changes, professions: true };
+  }
+  const ranks = (character: StoredCharacter): ReadonlyMap<string, number> =>
+    new Map(character.attributes.map(({ attributeId, rank }) => [attributeId, rank]));
+  const was = ranks(before);
+  const now = ranks(draft);
+  const attributes = [...new Set([...was.keys(), ...now.keys()])].some(
+    (id) => (was.get(id) ?? 0) !== (now.get(id) ?? 0),
+  );
+  const skills = draft.skillBar.some(
+    (skill, slot) => skill !== null && skill !== before.skillBar[slot],
+  );
+  return {
+    professions: changes.professions,
+    attributes: changes.attributes || (changes.professions && attributes),
+    skills: changes.skills || (changes.professions && skills),
+    weapons: changes.weapons || !sameJson(before.equipment.weaponSets, draft.equipment.weaponSets),
+    gear: changes.gear || !sameJson(before.equipment.armor, draft.equipment.armor),
+  };
+}
 
 export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent): MenuQuestState {
   switch (event.kind) {
@@ -113,6 +279,11 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
         screensShown: state.screensShown.includes(event.screen)
           ? state.screensShown
           : [...state.screensShown, event.screen],
+      };
+    case "build-draft":
+      return {
+        ...state,
+        buildChanged: foldBuildDraft(state.buildChanged, event.before, event.draft),
       };
     case "character-saved":
       return {
@@ -142,6 +313,11 @@ export interface MenuQuestCursor {
 /** A launch with `menu:<id>` resumes at the start of that step, never mid-way. */
 export function resumeMenuQuest(step: MenuQuestStepId): MenuQuestCursor {
   return { step, beat: 0 };
+}
+
+/** The `data-tutorial` id `beat` points at, after `state`. */
+export function beatTarget(beat: MenuBeat, state: MenuQuestState): string {
+  return typeof beat.target === "string" ? beat.target : beat.target(state);
 }
 
 export function currentBeat(cursor: MenuQuestCursor): MenuBeat {
