@@ -233,6 +233,8 @@ interface Seat {
   readonly connection: LobbyConnection;
   readonly transport: Transport;
   readonly receipts: { readonly receipt: RankedReceipt; readonly partial: boolean }[];
+  /** Each result it signed, as the partial receipt it handed on that round. */
+  readonly signed: RankedReceipt[];
   cancelled: number;
 }
 
@@ -267,12 +269,14 @@ async function joinSeat(
 ): Promise<Seat> {
   const key = testPlayerKey();
   const receipts: Seat["receipts"] = [];
+  const signed: RankedReceipt[] = [];
   const play: RankedPlay = {
     characterId: `char-${String(n)}`,
     prev: ZERO_HASH,
     buildHash: BUILD,
     crypto: testReceiptCrypto,
     onReceipt: (receipt, partial) => receipts.push({ receipt, partial }),
+    onResultSigned: (partial) => signed.push(partial),
     onCancel: () => {
       seat.cancelled += 1;
     },
@@ -291,7 +295,7 @@ async function joinSeat(
     queued: { group, key: keyOf(seatKey(n)), verifyTicketSig, ascentMorale: 0 },
     ...(ranked ? { ranked: play } : {}),
   });
-  const seat: Seat = { key, connection, transport, receipts, cancelled: 0 };
+  const seat: Seat = { key, connection, transport, receipts, signed, cancelled: 0 };
   return seat;
 }
 
@@ -623,5 +627,43 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     const receipt = receiptOf(ranked);
     expect(receipt.result.leavers).toEqual(pubkeys(ranked).slice(1));
     expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: true });
+  });
+
+  it("hands on a partial receipt each round a seat signs, and re-rounds only its non-signers", async () => {
+    const ranked = await openRanked("random-arena-2v2", {
+      wrap: (n, transport) =>
+        n === 2 ? holding(transport, "ranked-result-sig").transport : transport,
+    });
+    await startRanked(ranked);
+    ranked.match.finish(1);
+    await ranked.step(1);
+    // Round one: every seat signed, and handed on its own signature alone.
+    for (const seat of ranked.seats) {
+      expect(seat.signed).toHaveLength(1);
+      expect(Object.keys(seat.signed[0]?.resultSigs ?? {})).toEqual([seat.key.pubkey]);
+      expect(seat.signed[0]?.result.leavers).toEqual([]);
+    }
+    await ranked.step(RANKED_RESULT_TIMEOUT_MS / 1000);
+    await until(() => ranked.receipts.length === 1);
+    const receipt = receiptOf(ranked);
+    // Seat 2's signature never reached the host: it alone is added.
+    expect(receipt.result.leavers).toEqual([pubkeys(ranked)[2]]);
+    for (const [n, seat] of ranked.seats.entries()) {
+      // Seat 2 holds its round-one partial: the evidence that it signed.
+      expect(seat.signed).toHaveLength(n === 2 ? 1 : 2);
+      const last = seat.signed.at(-1);
+      if (last === undefined) {
+        throw new Error("no partial");
+      }
+      expect(last.result).toEqual(n === 2 ? { ...receipt.result, leavers: [] } : receipt.result);
+      expect(validateReceipt(last, testReceiptCrypto)).toEqual({
+        ok: false,
+        reason: "result-signature",
+      });
+      // Its one signature merges into the full receipt unchanged.
+      if (n !== 2) {
+        expect(receipt.resultSigs[seat.key.pubkey]).toBe(last.resultSigs[seat.key.pubkey]);
+      }
+    }
   });
 });

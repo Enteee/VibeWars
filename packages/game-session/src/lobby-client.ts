@@ -189,6 +189,13 @@ export interface RankedPlay {
    * At most once a lobby.
    */
   readonly onReceipt: (receipt: RankedReceipt, partial: boolean) => void;
+  /**
+   * This player signed `partial`'s result, a round of it: the start, every
+   * start signature, that result and this player's signature alone. Every
+   * round it signs, at once, for the app to publish: should a later round
+   * name this player a leaver, it is the evidence that it did sign.
+   */
+  readonly onResultSigned: (partial: RankedReceipt) => void;
   /** The host cancelled the match before it began: some seat never signed its start. */
   readonly onCancel: () => void;
 }
@@ -416,8 +423,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
    * (ADR-0055, "What a host decides"): each it saw go, or, in a re-round,
    * one the previous result did not name, which the host says did not
    * sign it. Refusing to sign is leaving, and nobody else can see a
-   * refusal, so a re-round's is taken on the host's word; the consent
-   * rule keeps that from winning a host's team a match alone.
+   * refusal, so a re-round's is taken on the host's word. A host that
+   * names a seat that did sign is caught by that seat's published
+   * signature of the earlier round (`onResultSigned`), and the consent
+   * rule keeps it from winning a host's team a match alone.
    */
   const rankedLeaversHold = (result: RankedResult): boolean => {
     const earlier = lastResult === undefined ? undefined : new Set(lastResult.leavers);
@@ -1191,6 +1200,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           sig: options.playerKey.signRankedResult(said.result),
         };
         transport.send("ranked-result-sig", reply, from);
+        rankedPlay?.onResultSigned({
+          start: signed.start,
+          startSigs: signed.startSigs,
+          result: said.result,
+          resultSigs: { [options.playerKey.pubkey]: reply.sig },
+        });
       }),
       // How the ranked match ended, as the host told this player: a result
       // naming another winner is not signed.
