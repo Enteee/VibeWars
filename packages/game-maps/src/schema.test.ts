@@ -1484,6 +1484,83 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     );
   });
 
+  describe("walls inside a ramp (#3665)", () => {
+    // ramp-1 climbs east from layer 0 to the bridge on 1, over x 350-520, y 300-500.
+    const across = (x: number, layer: number) => ({
+      kind: "rect",
+      layer,
+      x,
+      y: 300,
+      width: 14,
+      height: 200,
+    });
+    const gate = (x: number) => ({
+      id: "door",
+      wall: across(x, 1),
+      opener: { kind: "plate", plate: { x: 650, y: 330 }, team: null },
+      blocks: "bodies-and-shots",
+      look: "door",
+    });
+
+    it("refuses a gate inside a ramp on its upper layer", () => {
+      refuses(
+        { gates: [gate(430)] },
+        /gates\.0\.wall: layer-test: gate door stands inside transition ramp-1 on its layer 1/,
+      );
+    });
+
+    it("refuses a plain wall inside a ramp on its lower layer", () => {
+      refuses(
+        {
+          walls: [
+            ...layerTest.walls,
+            { kind: "rect", layer: 0, x: 400, y: 380, width: 40, height: 40 },
+          ],
+        },
+        /walls\.2: layer-test: wall 2 stands inside transition ramp-1 on its layer 0/,
+      );
+    });
+
+    it("refuses a breakable inside a ramp", () => {
+      refuses(
+        { breakables: [{ id: "crack", wall: across(450, 0), health: 800 }] },
+        /breakables\.0\.wall: layer-test: breakable crack stands inside transition ramp-1/,
+      );
+    });
+
+    it("accepts a gate across the ramp's top edge", () => {
+      accepts({ gates: [gate(520)] });
+    });
+
+    it("accepts walls along the ramp's long edges", () => {
+      accepts({
+        walls: [
+          ...layerTest.walls,
+          { kind: "rect", layer: 0, x: 350, y: 280, width: 170, height: 20 },
+          { kind: "rect", layer: 0, x: 350, y: 500, width: 170, height: 20 },
+        ],
+      });
+    });
+
+    it("accepts a wall under a ramp on a layer it does not join", () => {
+      accepts({
+        layers: 3,
+        decks: [
+          ...layerTest.decks,
+          {
+            ...deck("top", 2),
+            footprint: { kind: "rect", x: 700, y: 300, width: 200, height: 200 },
+          },
+        ],
+        transitions: [...layerTest.transitions, ramp(1, 2, 530)],
+        walls: [
+          ...layerTest.walls,
+          { kind: "rect", layer: 0, x: 600, y: 380, width: 40, height: 40 },
+        ],
+      });
+    });
+  });
+
   it("refuses a deck on the ground, a duplicate id, and a deck no transition reaches", () => {
     refuses({ decks: [...layerTest.decks, deck("ground", 0)] }, /decks\.1\.layer: deck ground/);
     refuses({ decks: [...layerTest.decks, deck("bridge", 1)] }, /decks\.1\.id: deck id bridge/);
