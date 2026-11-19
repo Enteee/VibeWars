@@ -234,9 +234,9 @@ describe("Symbiotic Bond (#1108)", () => {
 describe("Revive Animal (#1108)", () => {
   it("raises every dead allied pet within 81 at 77%, skipping one at 82 and a foe's", () => {
     const sim = match([
-      ranger("s", 0, vec2(0, 0)),
-      ranger("t", 0, vec2(0, 0)),
-      ranger("e", 1, vec2(0, 0)),
+      ranger("s", 0, vec2(0, 200)),
+      ranger("t", 0, vec2(0, -200)),
+      ranger("e", 1, vec2(200, 200)),
     ]);
     const mine = wolf(sim, "r");
     const theirs = wolf(sim, "s");
