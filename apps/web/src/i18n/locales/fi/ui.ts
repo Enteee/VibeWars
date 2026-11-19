@@ -348,12 +348,14 @@ export default {
   "controls.targetCalled": "Kohdista ilmoitettuun viholliseen",
   "controls.targetClosest": "Kohdista lähimpään viholliseen",
   "controls.targetNext": "Seuraava kohde",
+  "controls.targetPrevious": "Edellinen kohde",
   "controls.targetSelf": "Kohdista itseesi",
   "controls.weaponSet1": "Asesarja 1",
   "controls.weaponSet2": "Asesarja 2",
   "controls.weaponSet3": "Asesarja 3",
   "controls.weaponSet4": "Asesarja 4",
   "controls.weaponSets": "Asesarjat",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Rotta",
 
   "echo.secondsLeft": {

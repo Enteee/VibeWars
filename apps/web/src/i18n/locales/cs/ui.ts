@@ -371,12 +371,14 @@ export default {
   "controls.targetCalled": "Zaměřit ohlášeného nepřítele",
   "controls.targetClosest": "Zaměřit nejbližšího nepřítele",
   "controls.targetNext": "Další cíl",
+  "controls.targetPrevious": "Předchozí cíl",
   "controls.targetSelf": "Zaměřit sebe",
   "controls.weaponSet1": "Sada zbraní 1",
   "controls.weaponSet2": "Sada zbraní 2",
   "controls.weaponSet3": "Sada zbraní 3",
   "controls.weaponSet4": "Sada zbraní 4",
   "controls.weaponSets": "Sady zbraní",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Krysa",
 
   "echo.secondsLeft": {

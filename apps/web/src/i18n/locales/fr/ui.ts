@@ -362,12 +362,14 @@ export default {
   "controls.targetCalled": "Cibler l'ennemi annoncé",
   "controls.targetClosest": "Cibler l'ennemi le plus proche",
   "controls.targetNext": "Cible suivante",
+  "controls.targetPrevious": "Cible précédente",
   "controls.targetSelf": "Te cibler",
   "controls.weaponSet1": "Set d'armes 1",
   "controls.weaponSet2": "Set d'armes 2",
   "controls.weaponSet3": "Set d'armes 3",
   "controls.weaponSet4": "Set d'armes 4",
   "controls.weaponSets": "Sets d'armes",
+  "controls.withShift": "Maj + {key}",
   "creature.rat": "Rat",
 
   "echo.secondsLeft": {

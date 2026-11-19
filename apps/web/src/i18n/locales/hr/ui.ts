@@ -361,12 +361,14 @@ export default {
   "controls.targetCalled": "Ciljaj označenog neprijatelja",
   "controls.targetClosest": "Ciljaj najbližeg neprijatelja",
   "controls.targetNext": "Sljedeća meta",
+  "controls.targetPrevious": "Prethodna meta",
   "controls.targetSelf": "Ciljaj sebe",
   "controls.weaponSet1": "Komplet oružja 1",
   "controls.weaponSet2": "Komplet oružja 2",
   "controls.weaponSet3": "Komplet oružja 3",
   "controls.weaponSet4": "Komplet oružja 4",
   "controls.weaponSets": "Kompleti oružja",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Štakor",
 
   "echo.secondsLeft": {
