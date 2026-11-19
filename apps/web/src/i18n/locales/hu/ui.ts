@@ -340,12 +340,14 @@ export default {
   "controls.targetCalled": "Bemondott ellenség célzása",
   "controls.targetClosest": "Legközelebbi ellenség célzása",
   "controls.targetNext": "Következő célpont",
+  "controls.targetPrevious": "Előző célpont",
   "controls.targetSelf": "Saját magad célzása",
   "controls.weaponSet1": "1. fegyverkészlet",
   "controls.weaponSet2": "2. fegyverkészlet",
   "controls.weaponSet3": "3. fegyverkészlet",
   "controls.weaponSet4": "4. fegyverkészlet",
   "controls.weaponSets": "Fegyverkészletek",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Patkány",
 
   "echo.secondsLeft": {

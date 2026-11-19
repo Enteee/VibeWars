@@ -121,6 +121,33 @@ test("(3) Space binds and stays bound: its keyup does not click the cell again",
   await expect(cell(page, "attack")).toHaveText("-");
 });
 
+test("Previous target sits under Next target as Shift + its key, in Next target's columns (#3630)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await openKeys(page);
+  const next = page.locator('tr:has(.key-cell[data-action="target-next"])');
+  const previous = next.locator("xpath=following-sibling::tr[1]");
+  await expect(previous.locator(".keys-action")).toHaveText("Previous target");
+  await expect(previous.locator(".key-cell").first()).toHaveText(`Shift + ${label("target-next")}`);
+  // One key on Next target: the second cell is blank, not an empty box.
+  await expect(previous.locator(".key-cell").nth(1)).toBeHidden();
+
+  await cell(page, "target-next", 1).click();
+  await page.keyboard.press("x");
+  await expect(previous.locator(".key-cell").nth(1)).toHaveText("Shift + X");
+  // Each under its own Next target cell, and the row no taller than its neighbour.
+  for (const index of [0, 1]) {
+    const above = await cell(page, "target-next", index).boundingBox();
+    const below = await previous.locator(".key-cell").nth(index).boundingBox();
+    expect(Math.abs((below?.x ?? 0) - (above?.x ?? -100))).toBeLessThan(2);
+  }
+  const nextBox = await next.boundingBox();
+  const previousBox = await previous.boundingBox();
+  expect(previousBox?.height ?? 0).toBeLessThanOrEqual((nextBox?.height ?? 0) + 1);
+});
+
 test("(4) Back leaves Options for the menu; on a narrow screen the sections sit above", async ({
   page,
 }) => {
