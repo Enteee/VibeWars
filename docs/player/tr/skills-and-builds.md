@@ -6,8 +6,8 @@ menüdeki **Düzenle** ile ya da **Yeni karakter** ile aç.
 
 ## Meslekler
 
-On tane vardır: Warrior, Ranger, Monk, Necromancer, Mesmer,
-Elementalist, Assassin, Ritualist, Paragon ve Dervish. **Ana**
+On tane vardır: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**,
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ve ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. **Ana**
 mesleğin, ne olduğundur: onun becerileri ve yalnızca ana mesleğin
 aldığı **ana niteliği** (★ ile işaretli). **İkincil** mesleğin sana
 becerilerini ödünç verir, ama ana niteliğini vermez.
@@ -18,11 +18,11 @@ becerilerini ödünç verir, ama ana niteliğini vermez.
 (altın çerçeve) sığar: ikincisini takarsan ilkinin yerini alır. Bir
 yuvayı boşaltmak için üzerindeki **×**'e bas.
 
-**Flaş tılsımlar** (Dervish) anlıktır: birini kullanmak savuruşunu ve
+![Tılsım](../../../apps/web/public/icons/skill-type/enchantment.svg) **Flaş tılsımlar** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) anlıktır: birini kullanmak savuruşunu ve
 adımını bozmaz, böylece onları darbelerin arasına serpiştirebilirsin.
 Her biri diğer flaş tılsımlarını 1 saniye kapatır.
 
-**Formlar** (beş Dervish Avatarı: Balthazar, Dwayna, Grenth, Lyssa ve
+![Form](../../../apps/web/public/icons/skill-type/form.svg) **Formlar** (beş Dervish Avatarı: Balthazar, Dwayna, Grenth, Lyssa ve
 Melandru) seni bir dakikadan uzun süre değiştirir. Form bir tılsım
 değildir, bu yüzden kimse onu söküp alamaz, ve aynı anda tek bir formda
 olabilirsin. Birini kullanmak onu 45 saniye devre dışı bırakır. Bir
@@ -32,7 +32,7 @@ tuşuna tekrar bas.
 
 **Bazı atışlar diğer saldırılarını devre dışı bırakır.** Focused Shot
 ve Needling Shot bir oktan beklenenden hızlı uçar, ama isabet eden her
-biri diğer saldırı becerilerini birkaç saniye kapatır. Büyüler bundan
+biri diğer ![Saldırı becerisi](../../../apps/web/public/icons/skill-type/attack.svg) **saldırı becerilerini** birkaç saniye kapatır. ![Büyü](../../../apps/web/public/icons/skill-type/spell.svg) **Büyüler** bundan
 etkilenmez.
 
 ## Nitelikler
@@ -45,11 +45,11 @@ gösterir. On iki, on iki ve üç, hepsini harcar. Rünler ve başlık bunun
 onu güçlendirir: nitelikle büyüyen sayılar, rünler ve başlık dahil
 mevcut seviyelerinle, yeşil ve kalın gösterilir.
 
-Dövüşte seviyelerin bir süre değişebilir. Weakness her birinden bir
-seviye düşer. Bazı lanetler bir düşmanın niteliklerini 0'a ayarlar,
+Dövüşte seviyelerin bir süre değişebilir. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** her birinden bir
+seviye düşer. Bazı ![Lanet](../../../apps/web/public/icons/skill-type/hex.svg) **lanetler** bir düşmanın niteliklerini 0'a ayarlar,
 Master of Magic ise senin elementel niteliklerini 13'e: bu şekilde
 ayarlanan bir seviye rünleri de Weakness'ı da geçersiz kılar. Signet of
-Illusions, sonraki başka nitelikli büyülerinin senin Illusion Magic
+Illusions, sonraki başka nitelikli ![Büyü](../../../apps/web/public/icons/skill-type/spell.svg) **büyülerinin** senin Illusion Magic
 seviyeni kullanmasını sağlar. Bazı beceriler, Glyph of Elemental Power
 ve Ritual Lord gibi, niteliklerini bir süreliğine ya da sonraki
 büyülerin için yükseltir, 0'da bıraktığın birini bile; Master of
@@ -57,21 +57,21 @@ Magic'inki gibi ayarlanmış bir seviye böyle bir artışı yener.
 
 ## Yankılar
 
-Bir Paragon'un **yankıları** (echoes), tek bir müttefik üzerindeki
+Bir ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon'un** ![Yankı](../../../apps/web/public/icons/skill-type/echo.svg) **yankıları** (echoes), tek bir müttefik üzerindeki
 uzun güçlendirmelerdir. Bir **nakarat** (refrain) tam süresine yenilenir,
 bir **final** (finale) ise etkisini gösterir; ne zaman ki o müttefik
-üzerindeki bir ilahi ya da haykırış biter. Bitmeden yeniden uygulanan
+üzerindeki bir ![İlahi](../../../apps/web/public/icons/skill-type/chant.svg) **ilahi** ya da ![Haykırış](../../../apps/web/public/icons/skill-type/shout.svg) **haykırış** biter. Bitmeden yeniden uygulanan
 bir ilahi ya da haykırış bitmiş sayılmaz. Hiçbir şey bir yankıyı
 kaldırmaz: süresi dolunca ya da taşıyıcısı ölünce biter. Çoğu bir ruhu
 hedef alamaz.
 
 ## Başka bir beceriye dönüşen beceriler
 
-Bazı Mesmer becerileri bir süreliğine kendi yuvalarına başka bir beceri
-koyar. Arcane Echo ve Echo kullandığın sonraki beceriyi kopyalar.
-**Inspired Enchantment** ve **Inspired Hex**, kaldırdıkları tılsımı ya
-da laneti yapan beceriye 20 saniyeliğine dönüşür. **Arcane Thievery**,
-düşmanında devre dışı bıraktığı büyüye, devre dışılık sürdüğü müddetçe
+Bazı ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** becerileri bir süreliğine kendi yuvalarına başka bir beceri
+koyar. ![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** ve ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** kullandığın sonraki beceriyi kopyalar.
+**Inspired Enchantment** ve **Inspired Hex**, kaldırdıkları ![Tılsım](../../../apps/web/public/icons/skill-type/enchantment.svg) **tılsımı** ya
+da ![Lanet](../../../apps/web/public/icons/skill-type/hex.svg) **laneti** yapan beceriye 20 saniyeliğine dönüşür. **Arcane Thievery**,
+düşmanında devre dışı bıraktığı ![Büyü](../../../apps/web/public/icons/skill-type/spell.svg) **büyüye**, devre dışılık sürdüğü müddetçe
 dönüşür. Kopyanın kendi dolumu vardır. Bitince asıl beceri geri gelir
 ve kendi dolumunu başlatır; kopyanın hâlâ süren bir yapımı da başarısız
 olur. Bir ruhun ya da başka bir durumun koyduğu bir durum
@@ -79,11 +79,11 @@ kopyalanamaz, ama onu kaldırmak yine de sana Enerjiyi verir.
 
 ## Kuyular ve glifler
 
-Bir Necromancer'ın **kuyuları** (wells) en yakın cesetten yararlanır.
+Bir ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer'ın** ![Kuyu](../../../apps/web/public/icons/skill-type/well.svg) **kuyuları** (wells) en yakın cesetten yararlanır.
 Yakında ceset yoksa kuyu bunun yerine Can'ının %66'sını feda eder ve
 durduğun yerde belirir.
 
-Bir Elementalist'in **glifleri** (glyphs) sonraki büyünü değiştirir:
+Bir ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist'in** ![Glif](../../../apps/web/public/icons/skill-type/glyph.svg) **glifleri** (glyphs) sonraki ![Büyü](../../../apps/web/public/icons/skill-type/spell.svg) **büyünü** değiştirir:
 kesilemez, anında yapılır, hemen dolar ya da daha az tutar. Yeni bir
 glif, sahip olduğunun yerini alır.
 
@@ -92,10 +92,10 @@ glif, sahip olduğunun yerini alır.
 "Hasar Can'ı bir dahaki sefer %N'nin altına düşürdüğünde" yanıt veren
 bir beceri, seni hayatta ve çizginin altında bırakan her darbeye ya da
 can çalmaya yanıt verir, darbeden önce zaten altında olsan bile; feda
-ettiğin ya da can kaybına kaptırdığın Can'a ise asla. Judge's
-Intervention gibi ölümcül hasar koruması öldürücü darbenin tamamını
-düşürür: hasar yok, ölüm yok. Faithful Intervention ve Illusion of
-Weakness'ın süresi yoktur: hasar, bir sökme ya da ölüm onları bitirene
+ettiğin ya da can kaybına kaptırdığın Can'a ise asla. ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**
+gibi ölümcül hasar koruması öldürücü darbenin tamamını
+düşürür: hasar yok, ölüm yok. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** ve
+![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness'ın** süresi yoktur: hasar, bir sökme ya da ölüm onları bitirene
 kadar sürer ve giderken seni iyileştirir.
 
 ## Kütüphane
@@ -123,20 +123,20 @@ ve iyileştirmesini senin olarak sayar.
 
 ## Eşya büyüleri
 
-Bir Ritualist'in **eşya büyüleri** (item spells) bir ruhun **küllerini**
+Bir ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist'in** ![Eşya büyüsü](../../../apps/web/public/icons/skill-type/item-spell.svg) **eşya büyüleri** (item spells) bir ruhun **küllerini**
 ellerine koyar: tuttuğun sürece bir bonus, düştüklerinde de bir **düşme
 etkisi**. Süreleri dolunca, ölünce, Can çubuğunun üstündeki **Külleri
 bırak**'a basınca, başka bir eşya büyüsü yapınca, gölge adımı atınca,
 silah değiştirince ya da bir bayrak veya kalıntı alınca düşerler.
-Onları tutarken ellerin doludur: saldırı yok, saldırı becerisi yok, ama
-tam hızda yürür ve büyü yapmaya devam edersin. Hiçbir şey külleri
+Onları tutarken ellerin doludur: saldırı yok, ![Saldırı becerisi](../../../apps/web/public/icons/skill-type/attack.svg) **saldırı becerisi** yok, ama
+tam hızda yürür ve ![Büyü](../../../apps/web/public/icons/skill-type/spell.svg) **büyü** yapmaya devam edersin. Hiçbir şey külleri
 kaldırmaz; her son bir düşmedir.
 
 ## Gölge adımları
 
 Bir **gölge adımı** (shadow step) seni anında, arada yürümeden taşır.
 Çoğu seni hedefine götürür; bazıları, Shadow of Haste ve Shadow Walk
-gibi, bitince seni onları yaptığın yere geri götürür. **Recall** seni
+gibi, bitince seni onları yaptığın yere geri götürür. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** seni
 müttefikine yalnızca bitince taşır ve 3 saniye boyunca tüm becerilerini
 devre dışı bırakır. **Swap** tarafının ruhlarından ya da uşaklarından
 biriyle yer değiştirir.

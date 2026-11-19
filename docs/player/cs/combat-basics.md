@@ -2,21 +2,21 @@
 
 ## Zdraví a energie
 
-Začínáš s 500 **zdraví** a 50 **energie**; runy a morálka mění obojí. Dovednosti stojí energii a ta se sama pomalu vrací. Warrior a Paragon ji získávají nejpomaleji, Ranger o něco rychleji, všichni ostatní nejrychleji.
+Začínáš s 500 **zdraví** a 50 **energie**; runy a morálka mění obojí. Dovednosti stojí energii a ta se sama pomalu vrací. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ji získávají nejpomaleji, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** o něco rychleji, všichni ostatní nejrychleji.
 
-Šipky na tvých ukazatelích jsou **pipy**: každá znamená zdraví nebo energii, která se každou sekundu trochu vrací nebo ubývá. Bleeding, Burning a Poison ubírají zdraví; Regeneration a léčivá kouzla ho přidávají. Když jsi 5 sekund mimo boj, začne se ti zdraví vracet samo, tím rychleji, čím déle mimo boj zůstaneš.
+Šipky na tvých ukazatelích jsou **pipy**: každá znamená zdraví nebo energii, která se každou sekundu trochu vrací nebo ubývá. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** a ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** ubírají zdraví; Regeneration a léčivá kouzla ho přidávají. Když jsi 5 sekund mimo boj, začne se ti zdraví vracet samo, tím rychleji, čím déle mimo boj zůstaneš.
 
 ## Adrenalin
 
-Warrior, Paragon a další mají dovednosti, které místo energie stojí **adrenalin**. Každá taková dovednost se nabíjí sama: každý zásah zbraní dá každé z nich jeden stupeň, stejně jako když schytáš velký zásah. Použití jedné ji vyprázdní a ostatním vezme jeden stupeň. Po 25 sekundách mimo boj se vyprázdní všechny.
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** a další mají dovednosti, které místo energie stojí **adrenalin**. Každá taková dovednost se nabíjí sama: každý zásah zbraní dá každé z nich jeden stupeň, stejně jako když schytáš velký zásah. Použití jedné ji vyprázdní a ostatním vezme jeden stupeň. Po 25 sekundách mimo boj se vyprázdní všechny.
 
 ## Používání dovednosti
 
-Dovednost může chvíli trvat **seslat** a pak potřebuje čas na **obnovu**, než ji půjde použít znovu. Pokud je cíl mimo dosah, nejdřív k němu dojdeš. Pohyb nebo Esc sesílání zruší: energie je pryč, ale dovednost se neobnovuje. Po každé dovednosti s dobou sesílání, kromě útočné dovednosti, následuje krátká pauza, ve které nemůžeš jednat.
+Dovednost může chvíli trvat **seslat** a pak potřebuje čas na **obnovu**, než ji půjde použít znovu. Pokud je cíl mimo dosah, nejdřív k němu dojdeš. Pohyb nebo Esc sesílání zruší: energie je pryč, ale dovednost se neobnovuje. Po každé dovednosti s dobou sesílání, kromě ![Útočná dovednost](../../../apps/web/public/icons/skill-type/attack.svg) **útočné dovednosti**, následuje krátká pauza, ve které nemůžeš jednat.
 
 Dovednost stisknutá během používání jiné nebo během té pauzy se **zařadí do fronty**: přijde na řadu jako další a její pozice do té doby pulzuje. Čekat může jen jedna; stisknutí jiné ji nahradí. Pohyb, Esc, přerušení nebo sražení ji zahodí.
 
-**Pokřiky a postoje** se nikdy neřadí do fronty: spustí se okamžitě, i když sesíláš jinou dovednost, během té pauzy nebo když ležíš sražený. Sesílání pokračuje dál. Takto použité tě k cíli nedovedou: mimo dosah jsou odmítnuté.
+![Pokřik](../../../apps/web/public/icons/skill-type/shout.svg) **Pokřiky** a ![Postoj](../../../apps/web/public/icons/skill-type/stance.svg) **postoje** se nikdy neřadí do fronty: spustí se okamžitě, i když sesíláš jinou dovednost, během té pauzy nebo když ležíš sražený. Sesílání pokračuje dál. Takto použité tě k cíli nedovedou: mimo dosah jsou odmítnuté.
 
 ## Přerušení a sražení
 
@@ -26,34 +26,34 @@ Sesílání každé profese má vlastní zvuk; poslouchej zvuk svého cíle.
 
 Většina přerušení zastaví i obyčejný útok uprostřed máchnutí: rána nedopadne a máchnutí začíná znovu. Nepřítel, který k cíli teprve jde, nemá co přerušit. Přerušení, jehož karta říká "a skill" nebo "a spell", obyčejný útok nechá být.
 
-Některé postoje, například Mantra of Concentration, zastaví přerušení mířené na tebe. Žádný z nich nezastaví sražení.
+Některé ![Postoj](../../../apps/web/public/icons/skill-type/stance.svg) **postoje**, například Mantra of Concentration, zastaví přerušení mířené na tebe. Žádný z nich nezastaví sražení.
 
-Když jsi **sražený**, chvíli se nemůžeš hýbat, útočit ani použít dovednost, s výjimkou pokřiku nebo postoje, a probíhající sesílání selže.
+Když jsi **sražený**, chvíli se nemůžeš hýbat, útočit ani použít dovednost, s výjimkou ![Pokřik](../../../apps/web/public/icons/skill-type/shout.svg) **pokřiku** nebo postoje, a probíhající sesílání selže.
 
 ## Stavy, prokletí a očarování
 
 **Stavy** ti škodí, dokud nevyprší nebo je někdo neodstraní:
 
-| Stav          | Co dělá                                          |
-| ------------- | ------------------------------------------------ |
-| Bleeding      | ubírá zdraví                                     |
-| Burning       | rychle ubírá zdraví                              |
-| Poison        | ubírá zdraví                                     |
-| Disease       | ubírá zdraví a šíří se na každého vedle tebe     |
-| Crippled      | pohybuješ se poloviční rychlostí                 |
-| Blind         | většina tvých útoků mine                         |
-| Weakness      | tvoje zbraň zasahuje mnohem slaběji              |
-| Cracked Armor | méně brnění                                      |
-| Deep Wound    | méně maximálního zdraví a léčení funguje méně    |
-| Dazed         | kouzla se sesílají pomalu; každý útok je přeruší |
+| Stav                                                                                        | Co dělá                                          |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | ubírá zdraví                                     |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | rychle ubírá zdraví                              |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | ubírá zdraví                                     |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | ubírá zdraví a šíří se na každého vedle tebe     |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | pohybuješ se poloviční rychlostí                 |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | většina tvých útoků mine                         |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | tvoje zbraň zasahuje mnohem slaběji              |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | méně brnění                                      |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | méně maximálního zdraví a léčení funguje méně    |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | kouzla se sesílají pomalu; každý útok je přeruší |
 
-**Prokletí** na tebe sesílají nepřátelé, **očarování** ty sám nebo tvoji spojenci. Každé odstraňuje vlastní druh dovedností. Některá očarování jsou **udržovaná**: trvají, dokud je neukončíš, a za jejich běhu stojí jeden pip energie. Ukončíš ho dvojklikem na jeho ikonu.
+![Prokletí](../../../apps/web/public/icons/skill-type/hex.svg) **Prokletí** na tebe sesílají nepřátelé, ![Očarování](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarování** ty sám nebo tvoji spojenci. Každé odstraňuje vlastní druh dovedností. Některá očarování jsou **udržovaná**: trvají, dokud je neukončíš, a za jejich běhu stojí jeden pip energie. Ukončíš ho dvojklikem na jeho ikonu.
 
 Několik dovedností přestane fungovat, když jsi pod očarováním, a začne znovu, jakmile nejsi. Dovednost trvající na "dalších N útoků" počítá každý útok, takže minutí nebo blok spotřebuje jeden útok stejně jako zásah.
 
 ## Brnění a poškození
 
-Warrior a Paragon nosí nejvíc brnění; Ranger, Assassin a Dervish méně; sesilatelé nejméně. Brnění snižuje poškození zbraněmi, elementální, chaos a temné poškození. Svaté a stínové poškození, poškození bez typu, odsávání zdraví a kradení života ho ignorují. Kritické mohou být jen zásahy zbraní. Některá očarování činí svého nositele imunním vůči kritickým zásahům.
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** nosí nejvíc brnění; ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin** a ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish** méně; sesilatelé nejméně. Brnění snižuje poškození zbraněmi, elementální, chaos a temné poškození. Svaté a stínové poškození, poškození bez typu, odsávání zdraví a kradení života ho ignorují. Kritické mohou být jen zásahy zbraní. Některá očarování činí svého nositele imunním vůči kritickým zásahům.
 
 ## Smrt, vzkříšení a morálka
 

@@ -6,8 +6,8 @@ Hauptmenü oder mit **Neuer Charakter**.
 
 ## Klassen
 
-Es gibt zehn: Warrior, Ranger, Monk, Necromancer, Mesmer, Elementalist, Assassin,
-Ritualist, Paragon und Dervish. Deine **Primärklasse** ist das, was du bist: ihre
+Es gibt zehn: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**,
+![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** und ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Deine **Primärklasse** ist das, was du bist: ihre
 Skills und ihr **Primärattribut** (markiert mit ★), das nur eine Primärklasse
 bekommt. Deine **Sekundärklasse** leiht dir ihre Skills, aber nicht ihr
 Primärattribut.
@@ -18,11 +18,11 @@ Die Leiste hat **acht Felder**. Nur ein **Elite**-Skill (goldener Rahmen) passt 
 eine Leiste: Rüstest du einen zweiten aus, ersetzt er den ersten. Drück **×** auf
 einem Feld, um es zu leeren.
 
-**Blitzverzauberungen** (Dervish) sind sofort da: Wer eine nutzt, behält Schlag und
+![Verzauberung](../../../apps/web/public/icons/skill-type/enchantment.svg) **Blitzverzauberungen** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) sind sofort da: Wer eine nutzt, behält Schlag und
 Schritt, sodass du sie zwischen die Schläge weben kannst. Jede schaltet deine
 anderen Blitzverzauberungen für 1 Sekunde ab.
 
-**Formen** (die fünf Dervish-Avatare: Balthazar, Dwayna, Grenth, Lyssa und
+![Form](../../../apps/web/public/icons/skill-type/form.svg) **Formen** (die fünf Dervish-Avatare: Balthazar, Dwayna, Grenth, Lyssa und
 Melandru) verändern dich für über eine Minute. Eine Form ist keine Verzauberung,
 also kann sie niemand entfernen, und du kannst immer nur in einer Form sein. Nutzt
 du eine, ist sie 45 Sekunden gesperrt. Endet eine Form, hörst du auf mit dem, was
@@ -31,7 +31,7 @@ Drück eine Bewegungstaste, um weiterzulaufen.
 
 **Manche Schüsse sperren deine anderen Angriffe.** Focused Shot und Needling Shot
 fliegen schneller, als ein Pfeil sollte, aber jeder Treffer schaltet deine anderen
-Angriffs-Skills für ein paar Sekunden ab. Zauber sind nicht betroffen.
+![Angriffs-Skill](../../../apps/web/public/icons/skill-type/attack.svg) **Angriffs-Skills** für ein paar Sekunden ab. ![Zauber](../../../apps/web/public/icons/skill-type/spell.svg) **Zauber** sind nicht betroffen.
 
 ## Attribute
 
@@ -42,10 +42,10 @@ geben; siehe [Ausrüstung](equipment.md). Steigerst du das Attribut, das ein Ski
 nutzt, wird er stärker: Zahlen, die mit dem Attribut wachsen, sind grün und fett
 und gelten für deine aktuellen Ränge samt Runen und Kopfschutz.
 
-Im Kampf können sich deine Ränge eine Weile ändern. Weakness nimmt jedem einen weg.
-Manche Verhexungen setzen die Attribute eines Gegners auf 0, und Master of Magic
+Im Kampf können sich deine Ränge eine Weile ändern. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** nimmt jedem einen weg.
+Manche ![Verhexung](../../../apps/web/public/icons/skill-type/hex.svg) **Verhexungen** setzen die Attribute eines Gegners auf 0, und Master of Magic
 setzt deine Elementarattribute auf 13: Ein so gesetzter Rang überschreibt Runen und
-Weakness gleichermaßen. Signet of Illusions lässt deine nächsten Zauber anderer
+Weakness gleichermaßen. Signet of Illusions lässt deine nächsten ![Zauber](../../../apps/web/public/icons/skill-type/spell.svg) **Zauber** anderer
 Attribute deinen Illusion-Magic-Rang nutzen. Manche Skills erhöhen deine Attribute
 für eine Zeit oder deine nächsten Zauber, etwa Glyph of Elemental Power und Ritual
 Lord, sogar eines, das du auf 0 gelassen hast; ein gesetzter Rang, wie der von
@@ -53,20 +53,20 @@ Master of Magic, schlägt einen solchen Bonus.
 
 ## Echos
 
-Die **Echos** eines Paragon sind lange Buffs auf einem Verbündeten. Ein **Refrain**
+Die ![Echo](../../../apps/web/public/icons/skill-type/echo.svg) **Echos** eines ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** sind lange Buffs auf einem Verbündeten. Ein **Refrain**
 erneuert sich auf seine volle Dauer und ein **Finale** tritt in Kraft, wann immer
-ein Gesang oder Schrei auf diesem Verbündeten endet. Ein Gesang oder Schrei, der vor
+ein ![Gesang](../../../apps/web/public/icons/skill-type/chant.svg) **Gesang** oder ![Schrei](../../../apps/web/public/icons/skill-type/shout.svg) **Schrei** auf diesem Verbündeten endet. Ein Gesang oder Schrei, der vor
 dem Ende neu gewirkt wird, ist nicht beendet. Nichts entfernt ein Echo: Es endet,
 wenn es ausläuft oder sein Träger stirbt. Die meisten können keinen Geist als Ziel
 nehmen.
 
 ## Skills, die zu einem anderen Skill werden
 
-Manche Mesmer-Skills legen eine Weile einen anderen Skill in ihr eigenes Feld.
-Arcane Echo und Echo kopieren den nächsten Skill, den du nutzt. **Inspired
+Manche ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**-Skills legen eine Weile einen anderen Skill in ihr eigenes Feld.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** und ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** kopieren den nächsten Skill, den du nutzt. **Inspired
 Enchantment** und **Inspired Hex** werden 20 Sekunden lang zu dem Skill, der die
-entfernte Verzauberung oder Verhexung gewirkt hat. **Arcane Thievery** wird zu dem
-Zauber, den es bei deinem Gegner gesperrt hat, so lange wie die Sperre dauert. Die
+entfernte ![Verzauberung](../../../apps/web/public/icons/skill-type/enchantment.svg) **Verzauberung** oder ![Verhexung](../../../apps/web/public/icons/skill-type/hex.svg) **Verhexung** gewirkt hat. **Arcane Thievery** wird zu dem
+![Zauber](../../../apps/web/public/icons/skill-type/spell.svg) **Zauber**, den es bei deinem Gegner gesperrt hat, so lange wie die Sperre dauert. Die
 Kopie hat ihre eigene Aufladung. Wenn sie endet, kehrt der ursprüngliche Skill
 zurück und beginnt seine eigene Aufladung, und ein laufendes Wirken der Kopie
 schlägt fehl. Ein Status, den ein Geist oder ein anderer Status gesetzt hat, kann
@@ -74,10 +74,10 @@ nicht kopiert werden, aber das Entfernen gibt dir trotzdem die Energie.
 
 ## Brunnen und Glyphen
 
-Die **Brunnen** eines Necromancer nutzen die nächste Leiche. Ist keine in der Nähe,
+Die ![Brunnen](../../../apps/web/public/icons/skill-type/well.svg) **Brunnen** eines ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** nutzen die nächste Leiche. Ist keine in der Nähe,
 opfert ein Brunnen stattdessen 66 % deines Lebens und erscheint dort, wo du stehst.
 
-Die **Glyphen** eines Elementalist verändern deinen nächsten Zauber: Er kann nicht
+Die ![Glyphe](../../../apps/web/public/icons/skill-type/glyph.svg) **Glyphen** eines ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** verändern deinen nächsten ![Zauber](../../../apps/web/public/icons/skill-type/spell.svg) **Zauber**: Er kann nicht
 unterbrochen werden, wirkt sofort, lädt sich sofort auf oder kostet weniger. Eine
 neue Glyphe ersetzt die alte.
 
@@ -87,8 +87,8 @@ Ein Skill, der auf „das nächste Mal, wenn Schaden dein Leben unter N % drück
 reagiert, reagiert auf jeden Treffer oder Lebensraub, der dich am Leben und unter
 der Grenze lässt, auch wenn du schon vor dem Treffer darunter warst, und nie auf
 Leben, das du opferst oder durch Degeneration verlierst. Schutz vor tödlichem
-Schaden, etwa Judge's Intervention, fängt den ganzen tödlichen Treffer ab: kein
-Schaden, kein Tod. Faithful Intervention und Illusion of Weakness haben keine Dauer:
+Schaden, etwa ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, fängt den ganzen tödlichen Treffer ab: kein
+Schaden, kein Tod. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** und ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** haben keine Dauer:
 Sie halten, bis Schaden, Entfernen oder der Tod sie beendet, und heilen dich dabei.
 
 ## Die Bibliothek
@@ -114,12 +114,12 @@ Heilung deiner Geister, Diener und Tiergefährten als deine.
 
 ## Gegenstandszauber
 
-Die **Gegenstandszauber** eines Ritualist legen die **Asche** eines Geistes in deine
+Die ![Gegenstandszauber](../../../apps/web/public/icons/skill-type/item-spell.svg) **Gegenstandszauber** eines ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** legen die **Asche** eines Geistes in deine
 Hände: ein Bonus, solange du sie hältst, und ein **Ablage-Effekt**, wenn sie fällt.
 Sie fällt, wenn sie ausläuft, wenn du stirbst, wenn du **Asche ablegen** über deiner
 Lebensleiste drückst, einen anderen Gegenstandszauber wirkst, einen Schattenschritt
 machst, die Waffe wechselst oder eine Flagge oder ein Relikt aufnimmst. Deine Hände
-sind voll, solange du sie hältst: keine Angriffe und keine Angriffs-Skills, aber du
+sind voll, solange du sie hältst: keine Angriffe und keine ![Angriffs-Skill](../../../apps/web/public/icons/skill-type/attack.svg) **Angriffs-Skills**, aber du
 läufst mit voller Geschwindigkeit und kannst weiter zaubern. Nichts entfernt Asche;
 jedes Ende ist ein Ablegen.
 
@@ -127,7 +127,7 @@ jedes Ende ist ein Ablegen.
 
 Ein **Schattenschritt** bewegt dich sofort, ohne Weg dazwischen. Die meisten bringen
 dich zu deinem Ziel; manche bringen dich zurück dorthin, wo du sie gewirkt hast,
-wenn sie enden, etwa Shadow of Haste und Shadow Walk. **Recall** bringt dich erst
+wenn sie enden, etwa Shadow of Haste und Shadow Walk. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** bringt dich erst
 beim Ende zu seinem Verbündeten und sperrt alle deine Skills für 3 Sekunden. **Swap**
 tauscht die Plätze mit einem Geist oder Diener deiner Seite.
 

@@ -7,7 +7,7 @@ memasangnya. Armor dipilih pada figur, di bawah.
 ## Set senjata
 
 Kamu membawa sampai **empat set senjata**, masing-masing berisi satu senjata dan, kalau senjata itu
-menyisakan satu tangan bebas, tangan kedua seperti perisai atau focus. Set 1 adalah
+menyisakan satu tangan bebas, tangan kedua seperti ![Perisai](../../../apps/web/public/icons/offhand/shield.svg) **perisai** atau ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **focus**. Set 1 adalah
 set yang kamu pakai di awal; yang lain boleh dibiarkan kosong.
 
 Dalam laga, ganti set dengan **1 sampai 4** (**F1 sampai F4** di tombol Klasik).
@@ -16,8 +16,8 @@ langsung mengganti. Tidak ada cooldown. Seranganmu, skill yang butuh
 senjata tertentu, dan Energi maksimummu semuanya mengikuti set yang sedang dipegang.
 
 Sebuah senjata butuh peringkat 9 di atributnya: di bawah itu, pukulannya hanya sepertiga
-damage-nya, dan editor menyatakannya dengan warna merah. Pedang selalu
-Swordsmanship, tapi staff, wand, perisai atau focus dibuat untuk
+damage-nya, dan editor menyatakannya dengan warna merah. ![Pedang](../../../apps/web/public/icons/weapon/sword.svg) **Pedang** selalu
+Swordsmanship, tapi ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **staff**, ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **wand**, perisai atau focus dibuat untuk
 atribut pilihanmu: klik tangannya pada figur (**6** untuk senjata,
 **7** untuk tangan kedua) lalu pilih satu.
 
@@ -25,40 +25,40 @@ atribut pilihanmu: klik tangannya pada figur (**6** untuk senjata,
 
 Setiap senjata dan tangan kedua punya slot untuk mod: **prefiks**, **sufiks**
 dan **inskripsi**. Klik tangan pada figur, atau barisnya di
-sampingnya, untuk memilihnya; masing-masing menjelaskan efeknya. Wand, perisai
-dan focus tidak menerima prefiks; tangan kosong tidak menerima apa pun. Mod selalu bernilai
+sampingnya, untuk memilihnya; masing-masing menjelaskan efeknya. ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, ![Perisai](../../../apps/web/public/icons/offhand/shield.svg) **perisai**
+dan ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **focus** tidak menerima prefiks; tangan kosong tidak menerima apa pun. Mod selalu bernilai
 terbaik, dan setiap set senjata memakai mod-nya sendiri, jadi mengganti set juga mengganti
 mod-nya: Darah dan Energi maksimum ikut berpindah bersama set yang dipegang.
 Mengganti senjata mempertahankan mod yang masih cocok dan memberi tahu mana yang
 dibuang.
 
-| Mod                       | Slot      | Cocok untuk                                   | Efek                                   |
-| ------------------------- | --------- | --------------------------------------------- | -------------------------------------- |
-| Defensive                 | Prefiks   | Staff                                         | Armor +5                               |
-| Hale                      | Prefiks   | Staff                                         | +30 Darah                              |
-| Insightful                | Prefiks   | Staff                                         | Energi +5                              |
-| of Defense                | Sufiks    | senjata martial apa pun, Staff                | Armor +5                               |
-| of Fortitude              | Sufiks    | senjata martial apa pun, Staff, Shield, Focus | +30 Darah                              |
-| of Shelter                | Sufiks    | senjata martial apa pun, Staff                | Armor +7 (vs. damage fisik)            |
-| of Warding                | Sufiks    | senjata martial apa pun, Staff                | Armor +7 (vs. damage elemen)           |
-| "Cast Out the Unclean"    | Inskripsi | Shield, Focus                                 | Durasi Disease padamu berkurang 20%    |
-| "Fear Cuts Deeper"        | Inskripsi | Shield, Focus                                 | Durasi Bleeding padamu berkurang 20%   |
-| "I Can See Clearly Now"   | Inskripsi | Shield, Focus                                 | Durasi Blinded padamu berkurang 20%    |
-| "I have the power!"       | Inskripsi | senjata martial apa pun                       | Energi +5                              |
-| "Leaf on the Wind"        | Inskripsi | Shield, Focus                                 | Armor +10 (vs. damage cold)            |
-| "Like a Rolling Stone"    | Inskripsi | Shield, Focus                                 | Armor +10 (vs. damage earth)           |
-| "Live for Today"          | Inskripsi | Focus                                         | Energi +15, regenerasi Energi -1       |
-| "Not the face!"           | Inskripsi | Shield, Focus                                 | Armor +10 (vs. damage blunt)           |
-| "Only the Strong Survive" | Inskripsi | Shield, Focus                                 | Durasi Weakness padamu berkurang 20%   |
-| "Pure of Heart"           | Inskripsi | Shield, Focus                                 | Durasi Poison padamu berkurang 20%     |
-| "Riders on the Storm"     | Inskripsi | Shield, Focus                                 | Armor +10 (vs. damage lightning)       |
-| "Seize the Day"           | Inskripsi | Staff, Wand                                   | Energi +15, regenerasi Energi -1       |
-| "Sleep Now in the Fire"   | Inskripsi | Shield, Focus                                 | Armor +10 (vs. damage fire)            |
-| "Soundness of Mind"       | Inskripsi | Shield, Focus                                 | Durasi Dazed padamu berkurang 20%      |
-| "Strength of Body"        | Inskripsi | Shield, Focus                                 | Durasi Deep Wound padamu berkurang 20% |
-| "Swift as the Wind"       | Inskripsi | Shield, Focus                                 | Durasi Crippled padamu berkurang 20%   |
-| "The Riddle of Steel"     | Inskripsi | Shield, Focus                                 | Armor +10 (vs. damage slashing)        |
-| "Through Thick and Thin"  | Inskripsi | Shield, Focus                                 | Armor +10 (vs. damage piercing)        |
+| Mod                       | Slot      | Cocok untuk                                                         | Efek                                                                                                           |
+| ------------------------- | --------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Prefiks   | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Armor +5                                                                                                       |
+| Hale                      | Prefiks   | Staff                                                               | +30 Darah                                                                                                      |
+| Insightful                | Prefiks   | Staff                                                               | Energi +5                                                                                                      |
+| of Defense                | Sufiks    | senjata martial apa pun, Staff                                      | Armor +5                                                                                                       |
+| of Fortitude              | Sufiks    | senjata martial apa pun, Staff, Shield, Focus                       | +30 Darah                                                                                                      |
+| of Shelter                | Sufiks    | senjata martial apa pun, Staff                                      | Armor +7 (vs. damage fisik)                                                                                    |
+| of Warding                | Sufiks    | senjata martial apa pun, Staff                                      | Armor +7 (vs. damage elemen)                                                                                   |
+| "Cast Out the Unclean"    | Inskripsi | Shield, Focus                                                       | Durasi ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** padamu berkurang 20%          |
+| "Fear Cuts Deeper"        | Inskripsi | Shield, Focus                                                       | Durasi ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** padamu berkurang 20%       |
+| "I Can See Clearly Now"   | Inskripsi | Shield, Focus                                                       | Durasi ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** padamu berkurang 20%            |
+| "I have the power!"       | Inskripsi | senjata martial apa pun                                             | Energi +5                                                                                                      |
+| "Leaf on the Wind"        | Inskripsi | Shield, Focus                                                       | Armor +10 (vs. damage cold)                                                                                    |
+| "Like a Rolling Stone"    | Inskripsi | Shield, Focus                                                       | Armor +10 (vs. damage earth)                                                                                   |
+| "Live for Today"          | Inskripsi | Focus                                                               | Energi +15, regenerasi Energi -1                                                                               |
+| "Not the face!"           | Inskripsi | Shield, Focus                                                       | Armor +10 (vs. damage blunt)                                                                                   |
+| "Only the Strong Survive" | Inskripsi | Shield, Focus                                                       | Durasi ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** padamu berkurang 20%       |
+| "Pure of Heart"           | Inskripsi | Shield, Focus                                                       | Durasi ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** padamu berkurang 20%             |
+| "Riders on the Storm"     | Inskripsi | Shield, Focus                                                       | Armor +10 (vs. damage lightning)                                                                               |
+| "Seize the Day"           | Inskripsi | Staff, Wand                                                         | Energi +15, regenerasi Energi -1                                                                               |
+| "Sleep Now in the Fire"   | Inskripsi | Shield, Focus                                                       | Armor +10 (vs. damage fire)                                                                                    |
+| "Soundness of Mind"       | Inskripsi | Shield, Focus                                                       | Durasi ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** padamu berkurang 20%                |
+| "Strength of Body"        | Inskripsi | Shield, Focus                                                       | Durasi ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** padamu berkurang 20% |
+| "Swift as the Wind"       | Inskripsi | Shield, Focus                                                       | Durasi ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** padamu berkurang 20%       |
+| "The Riddle of Steel"     | Inskripsi | Shield, Focus                                                       | Armor +10 (vs. damage slashing)                                                                                |
+| "Through Thick and Thin"  | Inskripsi | Shield, Focus                                                       | Armor +10 (vs. damage piercing)                                                                                |
 
 ### Prefiks martial saat kena
 
@@ -151,16 +151,16 @@ memegang senjata dari set yang sedang kamu lihat, beserta mod-nya.
 
 ## Rune
 
-| Rune                                   | Yang diberikan                                   |
-| -------------------------------------- | ------------------------------------------------ |
-| Rune atribut Minor                     | +1 ke sebuah atribut                             |
-| Rune atribut Major                     | +2 ke sebuah atribut, -35 Darah                  |
-| Rune atribut Superior                  | +3 ke sebuah atribut, -75 Darah                  |
-| Vigor                                  | Darah lebih banyak (+30, +41 atau +50)           |
-| Vitae                                  | +10 Darah                                        |
-| Attunement                             | Energi lebih banyak (+3, +6 atau +9)             |
-| Clarity, Purity, Recovery, Restoration | masing-masing dua kondisi hilang 20% lebih cepat |
-| Absorption (Warrior)                   | damage fisik dari setiap pukulan lebih kecil     |
+| Rune                                                                                                                                                                                                                                                                                                           | Yang diberikan                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Rune atribut Minor                                                                                                                                                                                                                                                                                             | +1 ke sebuah atribut                             |
+| Rune atribut Major                                                                                                                                                                                                                                                                                             | +2 ke sebuah atribut, -35 Darah                  |
+| Rune atribut Superior                                                                                                                                                                                                                                                                                          | +3 ke sebuah atribut, -75 Darah                  |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | Darah lebih banyak (+30, +41 atau +50)           |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Darah                                        |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | Energi lebih banyak (+3, +6 atau +9)             |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | masing-masing dua kondisi hilang 20% lebih cepat |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | damage fisik dari setiap pukulan lebih kecil     |
 
 Kamu memilih rune sebuah bagian di tempat yang sama dengan insignia-nya: klik bagian itu
 pada figur.

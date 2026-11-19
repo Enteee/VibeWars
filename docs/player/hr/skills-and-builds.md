@@ -6,8 +6,8 @@ glavnom izborniku ili s **Novi lik**.
 
 ## Profesije
 
-Ima ih deset: Warrior, Ranger, Monk, Necromancer, Mesmer,
-Elementalist, Assassin, Ritualist, Paragon i Dervish. Tvoja **primarna**
+Ima ih deset: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**,
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** i ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Tvoja **primarna**
 profesija je ono što jesi: njezine vještine i njezin **primarni atribut**
 (označen ★), koji dobiva samo primarna. Tvoja **sekundarna** ti posuđuje svoje
 vještine, ali ne i svoj primarni atribut.
@@ -18,11 +18,11 @@ Traka ima **osam mjesta**. Na traku stane samo jedna **elitna** vještina (zlatn
 stavi drugu i ona zamjenjuje prvu. Pritisni **×** na mjestu da ga
 ispražniš.
 
-**Bljesna začaranja** (Dervish) su trenutna: korištenje jednog čuva tvoj
+![Začaranje](../../../apps/web/public/icons/skill-type/enchantment.svg) **Bljesna začaranja** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) su trenutna: korištenje jednog čuva tvoj
 zamah i korak, pa ih možeš umetati između udaraca. Svako
 isključuje tvoja ostala bljesna začaranja na 1 sekundu.
 
-**Oblici** (pet Dervishevih Avatara: Balthazar, Dwayna, Grenth, Lyssa
+![Oblik](../../../apps/web/public/icons/skill-type/form.svg) **Oblici** (pet Dervishevih Avatara: Balthazar, Dwayna, Grenth, Lyssa
 i Melandru) mijenjaju te na više od minute. Oblik nije
 začaranje, pa ti ga nitko ne može skinuti, a možeš biti samo u jednom obliku
 odjednom. Korištenje ga onemogućuje na 45 sekundi. Kad oblik završi,
@@ -31,7 +31,7 @@ aktivirao. Ponovno pritisni tipku za kretanje da nastaviš hodati.
 
 **Neki hici isključuju tvoje ostale napade.** Focused Shot i Needling
 Shot lete brže nego što bi strijela trebala, ali svaki koji pogodi isključuje tvoje
-ostale vještine napada na nekoliko sekundi. Na čarolije to ne utječe.
+ostale ![Vještina napada](../../../apps/web/public/icons/skill-type/attack.svg) **vještine napada** na nekoliko sekundi. Na ![Čarolija](../../../apps/web/public/icons/skill-type/spell.svg) **čarolije** to ne utječe.
 
 ## Atributi
 
@@ -43,10 +43,10 @@ atributa koji vještina koristi jača je: brojevi koji rastu s
 atributom prikazani su zeleno i podebljano, na tvojim trenutnim razinama uključujući
 rune i kacigu.
 
-U borbi ti se razine mogu nakratko promijeniti. Weakness skida po jednu sa
-svake. Neki uroci postavljaju neprijateljeve atribute na 0, a Master of Magic
+U borbi ti se razine mogu nakratko promijeniti. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** skida po jednu sa
+svake. Neki ![Urok](../../../apps/web/public/icons/skill-type/hex.svg) **uroci** postavljaju neprijateljeve atribute na 0, a Master of Magic
 postavlja tvoje elementarne na 13: razina postavljena na taj način ima prednost pred runama
-i Weakness. Signet of Illusions omogućuje tvojim sljedećim čarolijama drugih
+i Weakness. Signet of Illusions omogućuje tvojim sljedećim ![Čarolija](../../../apps/web/public/icons/skill-type/spell.svg) **čarolijama** drugih
 atributa da koriste tvoju razinu Illusion Magic. Neke vještine podižu tvoje
 atribute na neko vrijeme ili za tvoje sljedeće čarolije, kao Glyph of Elemental
 Power i Ritual Lord, čak i onaj koji si ostavio na 0; postavljena razina, kao kod Master
@@ -54,19 +54,19 @@ of Magic, jača je od takvog pojačanja.
 
 ## Jeke
 
-Paragonove **jeke** su dugotrajna pojačanja na jednom savezniku. **Refren** se obnavlja
-na punu duljinu, a **finale** se aktivira, kad god pjev ili
-povik završi na tom savezniku. Pjev ili povik ponovno primijenjen prije kraja nije
+![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragonove** ![Jeka](../../../apps/web/public/icons/skill-type/echo.svg) **jeke** su dugotrajna pojačanja na jednom savezniku. **Refren** se obnavlja
+na punu duljinu, a **finale** se aktivira, kad god ![Pjev](../../../apps/web/public/icons/skill-type/chant.svg) **pjev** ili
+![Povik](../../../apps/web/public/icons/skill-type/shout.svg) **povik** završi na tom savezniku. Pjev ili povik ponovno primijenjen prije kraja nije
 završio. Ništa ne uklanja jeku: završava kad istekne ili njezin nositelj
 umre. Većina ne može ciljati duha.
 
 ## Vještine koje postaju druga vještina
 
-Neke vještine Mesmera na neko vrijeme stavljaju drugu vještinu na svoje mjesto.
-Arcane Echo i Echo kopiraju sljedeću vještinu koju upotrijebiš. **Inspired
+Neke vještine ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmera** na neko vrijeme stavljaju drugu vještinu na svoje mjesto.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** i ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** kopiraju sljedeću vještinu koju upotrijebiš. **Inspired
 Enchantment** i **Inspired Hex** postaju vještina koja je bacila
-začaranje ili urok koji su uklonili, na 20 sekundi. **Arcane Thievery**
-postaje čarolija koju je onemogućila tvom neprijatelju, dok god onemogućavanje
+![Začaranje](../../../apps/web/public/icons/skill-type/enchantment.svg) **začaranje** ili ![Urok](../../../apps/web/public/icons/skill-type/hex.svg) **urok** koji su uklonili, na 20 sekundi. **Arcane Thievery**
+postaje ![Čarolija](../../../apps/web/public/icons/skill-type/spell.svg) **čarolija** koju je onemogućila tvom neprijatelju, dok god onemogućavanje
 traje. Kopija ima vlastito obnavljanje. Kad završi, izvorna vještina
 vraća se i počinje vlastito obnavljanje, a bacanje kopije još u
 tijeku ne uspijeva. Status koji je postavio duh ili drugi status ne može
@@ -74,10 +74,10 @@ se kopirati, iako njegovo uklanjanje i dalje daje energiju.
 
 ## Zdenci i glifovi
 
-Necromancerovi **zdenci** iskorištavaju najbliži leš. Ako nijedan nije blizu,
+![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancerovi** ![Zdenac](../../../apps/web/public/icons/skill-type/well.svg) **zdenci** iskorištavaju najbliži leš. Ako nijedan nije blizu,
 zdenac umjesto toga žrtvuje 66% tvog zdravlja i pojavljuje se tamo gdje stojiš.
 
-Elementalistovi **glifovi** mijenjaju tvoju sljedeću čaroliju: ne može se
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalistovi** ![Glif](../../../apps/web/public/icons/skill-type/glyph.svg) **glifovi** mijenjaju tvoju sljedeću ![Čarolija](../../../apps/web/public/icons/skill-type/spell.svg) **čaroliju**: ne može se
 prekinuti, baca se trenutačno, odmah se obnavlja ili manje stoji. Novi
 glif zamjenjuje onaj koji si imao.
 
@@ -86,9 +86,9 @@ glif zamjenjuje onaj koji si imao.
 Vještina koja odgovara na "sljedeći put kad šteta spusti zdravlje ispod N%"
 odgovara na svaki udarac ili krađu života koji te ostave živa i ispod
 granice, čak i kad si već prije pogotka bio ispod nje, a nikad na
-zdravlje koje žrtvuješ ili gubiš degeneracijom. Zaštita od smrtonosne štete, kao Judge's Intervention,
-poništava cijeli smrtonosni udarac: bez štete, bez smrti. Faithful Intervention
-i Illusion of Weakness nemaju trajanje: traju dok ih šteta, skidanje
+zdravlje koje žrtvuješ ili gubiš degeneracijom. Zaštita od smrtonosne štete, kao ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**,
+poništava cijeli smrtonosni udarac: bez štete, bez smrti. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention**
+i ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** nemaju trajanje: traju dok ih šteta, skidanje
 ili smrt ne prekinu, i usput te liječe.
 
 ## Biblioteka
@@ -114,19 +114,19 @@ i liječenje tvojih duhova, sluga i ljubimca kao tvoje.
 
 ## Čarolije predmeta
 
-Ritualistove **čarolije predmeta** stavljaju **pepeo** duha u tvoje ruke:
+![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualistove** ![Čarolija predmeta](../../../apps/web/public/icons/skill-type/item-spell.svg) **čarolije predmeta** stavljaju **pepeo** duha u tvoje ruke:
 bonus dok ga držiš i **učinak pri ispuštanju** kad padne. Pada
 kad istekne, kad umreš, kad pritisneš **Ispusti pepeo** iznad
 trake zdravlja, baciš drugu čaroliju predmeta, napraviš korak sjene, zamijeniš oružje ili
 podigneš zastavu ili relikviju. Dok ga držiš, ruke su ti pune: bez
-napada i vještina napada, ali hodaš punom brzinom i i dalje baciš
-čarolije. Ništa ne uklanja pepeo; svaki kraj je ispuštanje.
+napada i ![Vještina napada](../../../apps/web/public/icons/skill-type/attack.svg) **vještina napada**, ali hodaš punom brzinom i i dalje baciš
+![Čarolija](../../../apps/web/public/icons/skill-type/spell.svg) **čarolije**. Ništa ne uklanja pepeo; svaki kraj je ispuštanje.
 
 ## Koraci sjene
 
 **Korak sjene** te odmah premješta, bez hodanja između. Većina te vodi do
 mete; neki te vraćaju tamo gdje si ih bacio kad završe, kao
-Shadow of Haste i Shadow Walk. **Recall** te vodi do svog saveznika tek
+Shadow of Haste i Shadow Walk. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** te vodi do svog saveznika tek
 kad završi i onemogućuje sve tvoje vještine na 3 sekunde. **Swap** mijenja
 mjesto s jednim od duhova ili sluga tvoje strane.
 

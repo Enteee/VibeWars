@@ -6,8 +6,8 @@
 
 ## מקצועות
 
-יש עשרה: Warrior, Ranger, Monk, Necromancer, Mesmer,
-Elementalist, Assassin, Ritualist, Paragon ו-Dervish. המקצוע **הראשי**
+יש עשרה: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**,
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ו-![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. המקצוע **הראשי**
 שלך הוא מה שאתה: המיומנויות שלו, וה**תכונה הראשית** שלו (מסומנת ★),
 שרק מקצוע ראשי מקבל. המקצוע **המשני** שלך משאיל לך את המיומנויות שלו,
 אבל לא את התכונה הראשית שלו.
@@ -18,11 +18,11 @@ Elementalist, Assassin, Ritualist, Paragon ו-Dervish. המקצוע **הראשי
 לסרגל: צייד שנייה והיא מחליפה את הראשונה. לחץ על **×** במשבצת כדי
 לרוקן אותה.
 
-**הקסמי הבזק** (Dervish) הם מיידיים: שימוש באחד שומר על התנופה ועל
+![הקסם הבזק](../../../apps/web/public/icons/skill-type/enchantment.svg) **הקסמי הבזק** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) הם מיידיים: שימוש באחד שומר על התנופה ועל
 הצעד שלך, כך שאפשר לשלב אותם בין המכות. כל אחד מהם מכבה את שאר הקסמי
 ההבזק שלך לשנייה אחת.
 
-**צורות** (חמשת ה-Avatars של ה-Dervish: Balthazar, Dwayna, Grenth, Lyssa
+![צורה](../../../apps/web/public/icons/skill-type/form.svg) **צורות** (חמשת ה-Avatars של ה-Dervish: Balthazar, Dwayna, Grenth, Lyssa
 ו-Melandru) משנות אותך ליותר מדקה. צורה אינה הקסם, כך שאף אחד לא יכול
 להסיר אותה, ואתה יכול להיות בצורה אחת בכל פעם. שימוש באחת משבית אותה
 ל-45 שניות. כשצורה נגמרת, אתה מפסיק את מה שעשית: את ההתקפה, את ההליכה
@@ -30,7 +30,7 @@ Elementalist, Assassin, Ritualist, Paragon ו-Dervish. המקצוע **הראשי
 
 **חלק מהיריות משביתות את ההתקפות האחרות שלך.** Focused Shot ו-Needling
 Shot עפות מהר יותר ממה שחץ אמור, אבל כל אחת שפוגעת מכבה את שאר
-מיומנויות ההתקפה שלך לכמה שניות. לחשים אינם מושפעים.
+![מיומנות התקפה](../../../apps/web/public/icons/skill-type/attack.svg) **מיומנויות ההתקפה** שלך לכמה שניות. ![לחש](../../../apps/web/public/icons/skill-type/spell.svg) **לחשים** אינם מושפעים.
 
 ## תכונות
 
@@ -41,10 +41,10 @@ Shot עפות מהר יותר ממה שחץ אמור, אבל כל אחת שפו�
 מספרים שגדלים עם התכונה מוצגים בירוק ומודגשים, לפי הדרגות הנוכחיות שלך
 כולל רונות וכיסוי ראש.
 
-בקרב הדרגות שלך יכולות להשתנות לזמן מה. Weakness מוריד אחת מכל אחת.
-חלק מהקללות מאפסות את התכונות של אויב ל-0, ו-Master of Magic מעמיד את
+בקרב הדרגות שלך יכולות להשתנות לזמן מה. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** מוריד אחת מכל אחת.
+חלק מה![קללה](../../../apps/web/public/icons/skill-type/hex.svg) **קללות** מאפסות את התכונות של אויב ל-0, ו-Master of Magic מעמיד את
 התכונות היסודיות שלך על 13: דרגה שנקבעה כך גוברת גם על רונות וגם על
-Weakness. Signet of Illusions נותן ללחשים הבאים שלך מתכונות אחרות
+Weakness. Signet of Illusions נותן ל![לחש](../../../apps/web/public/icons/skill-type/spell.svg) **לחשים** הבאים שלך מתכונות אחרות
 להשתמש בדרגת ה-Illusion Magic שלך. חלק מהמיומנויות מעלות את התכונות שלך
 לזמן מה או ללחשים הבאים שלך, כמו Glyph of Elemental Power ו-Ritual Lord,
 אפילו תכונה שהשארת על 0; דרגה קבועה, כמו של Master of Magic, גוברת על
@@ -52,18 +52,18 @@ Weakness. Signet of Illusions נותן ללחשים הבאים שלך מתכונ
 
 ## הדים
 
-**הדים** של Paragon הם חיזוקים ארוכים על בן ברית אחד. **פזמון** מתחדש
-לאורכו המלא, ו**סיום** נכנס לתוקף, בכל פעם שמזמור או קריאה מסתיימים על
+![הד](../../../apps/web/public/icons/skill-type/echo.svg) **הדים** של ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** הם חיזוקים ארוכים על בן ברית אחד. **פזמון** מתחדש
+לאורכו המלא, ו**סיום** נכנס לתוקף, בכל פעם ש![מזמור](../../../apps/web/public/icons/skill-type/chant.svg) **מזמור** או ![קריאה](../../../apps/web/public/icons/skill-type/shout.svg) **קריאה** מסתיימים על
 בן הברית הזה. מזמור או קריאה שהוחלו מחדש לפני שהסתיימו לא הסתיימו. שום
 דבר לא מסיר הד: הוא נגמר כשהוא פג או כשנושאו מת. רובם לא יכולים לכוון
 לרוח.
 
 ## מיומנויות שהופכות למיומנות אחרת
 
-חלק ממיומנויות ה-Mesmer שמות מיומנות אחרת במשבצת שלהן לזמן מה.
-Arcane Echo ו-Echo מעתיקות את המיומנות הבאה שאתה משתמש בה. **Inspired
-Enchantment** ו-**Inspired Hex** הופכות למיומנות שהטילה את ההקסם או
-הקללה שהן הסירו, ל-20 שניות. **Arcane Thievery** הופכת ללחש שהיא השביתה
+חלק ממיומנויות ה-![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** שמות מיומנות אחרת במשבצת שלהן לזמן מה.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** ו-![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** מעתיקות את המיומנות הבאה שאתה משתמש בה. **Inspired
+Enchantment** ו-**Inspired Hex** הופכות למיומנות שהטילה את ה![הקסם](../../../apps/web/public/icons/skill-type/enchantment.svg) **הקסם** או
+ה![קללה](../../../apps/web/public/icons/skill-type/hex.svg) **קללה** שהן הסירו, ל-20 שניות. **Arcane Thievery** הופכת ל![לחש](../../../apps/web/public/icons/skill-type/spell.svg) **לחש** שהיא השביתה
 אצל האויב שלך, כל עוד ההשבתה נמשכת. לעותק יש טעינה משלו. כשהוא נגמר,
 המיומנות המקורית חוזרת ומתחילה את הטעינה שלה, והטלה של העותק שעדיין
 בעיצומה נכשלת. מצב שהוטל על ידי רוח או על ידי מצב אחר אי אפשר להעתיק,
@@ -71,10 +71,10 @@ Enchantment** ו-**Inspired Hex** הופכות למיומנות שהטילה א�
 
 ## בארות וגליפים
 
-**הבארות** של Necromancer מנצלות את הגופה הקרובה ביותר. כשאין אחת
+![באר](../../../apps/web/public/icons/skill-type/well.svg) **הבארות** של ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** מנצלות את הגופה הקרובה ביותר. כשאין אחת
 בקרבת מקום, באר מקריבה במקום זאת 66% מהחיים שלך ומופיעה איפה שאתה עומד.
 
-**הגליפים** של Elementalist משנים את הלחש הבא שלך: אי אפשר לקטוע אותו,
+![גליף](../../../apps/web/public/icons/skill-type/glyph.svg) **הגליפים** של ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** משנים את ה![לחש](../../../apps/web/public/icons/skill-type/spell.svg) **לחש** הבא שלך: אי אפשר לקטוע אותו,
 הוא מוטל מיד, נטען מיד, או עולה פחות. גליף חדש מחליף את זה שהיה לך.
 
 ## התערבויות
@@ -82,8 +82,8 @@ Enchantment** ו-**Inspired Hex** הופכות למיומנות שהטילה א�
 מיומנות שמגיבה ל"פעם הבאה שנזק מוריד את החיים מתחת ל-N%" מגיבה לכל מכה
 או גניבת חיים שמשאירות אותך בחיים ומתחת לקו, גם כשכבר היית מתחתיו לפני
 הפגיעה, ואף פעם לא לחיים שאתה מקריב או מאבד להתנוונות. הגנה מנזק קטלני,
-כמו Judge's Intervention, מבטלת את כל המכה ההורגת: אין נזק, אין מוות.
-Faithful Intervention ו-Illusion of Weakness הן ללא משך: הן נמשכות עד
+כמו ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, מבטלת את כל המכה ההורגת: אין נזק, אין מוות.
+![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** ו-![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** הן ללא משך: הן נמשכות עד
 שנזק, הסרה או מוות מסיימים אותן, ומרפאות אותך תוך כדי.
 
 ## הספרייה
@@ -108,18 +108,18 @@ Faithful Intervention ו-Illusion of Weakness הן ללא משך: הן נמשכ�
 
 ## לחשי פריט
 
-**לחשי הפריט** של Ritualist שמים את **האפר** של רוח בידיים שלך: בונוס כל
+![לחש פריט](../../../apps/web/public/icons/skill-type/item-spell.svg) **לחשי הפריט** של ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** שמים את **האפר** של רוח בידיים שלך: בונוס כל
 עוד אתה מחזיק בו, ו**השפעת הפלה** כשהוא נופל. הוא נופל כשהוא נגמר, כשאתה
 מת, כשאתה לוחץ על **הפל אפר** מעל פס החיים שלך, מטיל לחש פריט אחר, עושה
 צעד צל, מחליף נשקים או מרים דגל או שריד. הידיים שלך מלאות כל עוד אתה
-מחזיק בו: אין התקפות ואין מיומנויות התקפה, אבל אתה הולך במהירות מלאה
-ועדיין מטיל לחשים. שום דבר לא מסיר אפר; כל סיום הוא הפלה.
+מחזיק בו: אין התקפות ואין ![מיומנות התקפה](../../../apps/web/public/icons/skill-type/attack.svg) **מיומנויות התקפה**, אבל אתה הולך במהירות מלאה
+ועדיין מטיל ![לחש](../../../apps/web/public/icons/skill-type/spell.svg) **לחשים**. שום דבר לא מסיר אפר; כל סיום הוא הפלה.
 
 ## צעדי צל
 
 **צעד צל** מזיז אותך מיד, בלי הליכה באמצע. רובם מעבירים אותך אל המטרה
 שלך; חלקם מחזירים אותך למקום שבו הטלת אותם כשהם נגמרים, כמו Shadow of
-Haste ו-Shadow Walk. **Recall** מעביר אותך אל בן הברית שלו רק כשהוא
+Haste ו-Shadow Walk. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** מעביר אותך אל בן הברית שלו רק כשהוא
 נגמר, ומשבית את כל המיומנויות שלך ל-3 שניות. **Swap** מחליף מקומות עם
 אחת הרוחות או אחד המשרתים של הצד שלך.
 

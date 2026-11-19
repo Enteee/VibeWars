@@ -9,7 +9,7 @@ lent.
 
 Legfeljebb **négy fegyverkészletet** hordhatsz, mindegyik egy fegyver,
 és ha a fegyver szabadon hagy egy kezet, egy mellékkéz, például egy
-pajzs vagy egy fókusz. Az 1. készlettel kezdesz; a többi üresen is
+![Pajzs](../../../apps/web/public/icons/offhand/shield.svg) **pajzs** vagy egy ![Fókusz](../../../apps/web/public/icons/offhand/focus.svg) **fókusz**. Az 1. készlettel kezdesz; a többi üresen is
 maradhat.
 
 Meccsen az **1–4** billentyűkkel váltasz készletet (a Klasszikus
@@ -21,7 +21,7 @@ kézben lévő készletet követik.
 
 Egy fegyverhez 9-es szint kell a tulajdonságában: ez alatt a
 sebzésének csak harmadával talál, és a szerkesztő ezt pirossal jelzi.
-A kard mindig Swordsmanship, de a varázsbot, a pálca, a pajzs vagy a
+A ![Kard](../../../apps/web/public/icons/weapon/sword.svg) **kard** mindig Swordsmanship, de a ![Varázsbot](../../../apps/web/public/icons/weapon/staff.svg) **varázsbot**, a ![Pálca](../../../apps/web/public/icons/weapon/wand.svg) **pálca**, a pajzs vagy a
 fókusz egy általad választott tulajdonsághoz készül: kattints a
 figurán a kezére (**6** a fegyverhez, **7** a mellékkézhez), és
 válassz egyet.
@@ -31,7 +31,7 @@ válassz egyet.
 Minden fegyvernek és mellékkéznek vannak módosítóhelyei: egy
 **előtag**, egy **utótag** és egy **felirat**. Kattints a figurán a
 kézre, vagy a mellette lévő sorára, hogy kiválaszd őket; mindegyik
-kiírja, mit csinál. A pálca, a pajzs és a fókusz nem kap előtagot; a
+kiírja, mit csinál. A ![Pálca](../../../apps/web/public/icons/weapon/wand.svg) **pálca**, a ![Pajzs](../../../apps/web/public/icons/offhand/shield.svg) **pajzs** és a ![Fókusz](../../../apps/web/public/icons/offhand/focus.svg) **fókusz** nem kap előtagot; a
 puszta kéz semmit sem kap. A módosító mindig a legjobb értékén van, és
 minden fegyverkészlet a sajátjait viseli, így a készletváltás a
 módosítóikat is váltja: a maximális Életerő és Energia a kézben lévő
@@ -39,33 +39,33 @@ készlettel együtt mozog. Fegyvercserénél megmaradnak azok a
 módosítók, amelyek továbbra is illenek rá, és a játék kiírja, melyeket
 dobta el.
 
-| Módosító                  | Hely    | Illik                                       | Hatás                                             |
-| ------------------------- | ------- | ------------------------------------------- | ------------------------------------------------- |
-| Defensive                 | Előtag  | Staff                                       | Páncél +5                                         |
-| Hale                      | Előtag  | Staff                                       | +30 Életerő                                       |
-| Insightful                | Előtag  | Staff                                       | Energia +5                                        |
-| of Defense                | Utótag  | bármely harci fegyver, Staff                | Páncél +5                                         |
-| of Fortitude              | Utótag  | bármely harci fegyver, Staff, Shield, Focus | +30 Életerő                                       |
-| of Shelter                | Utótag  | bármely harci fegyver, Staff                | Páncél +7 (fizikai sebzés ellen)                  |
-| of Warding                | Utótag  | bármely harci fegyver, Staff                | Páncél +7 (elemi sebzés ellen)                    |
-| "Cast Out the Unclean"    | Felirat | Shield, Focus                               | 20%-kal csökkenti rajtad a Disease időtartamát    |
-| "Fear Cuts Deeper"        | Felirat | Shield, Focus                               | 20%-kal csökkenti rajtad a Bleeding időtartamát   |
-| "I Can See Clearly Now"   | Felirat | Shield, Focus                               | 20%-kal csökkenti rajtad a Blinded időtartamát    |
-| "I have the power!"       | Felirat | bármely harci fegyver                       | Energia +5                                        |
-| "Leaf on the Wind"        | Felirat | Shield, Focus                               | Páncél +10 (hidegsebzés ellen)                    |
-| "Like a Rolling Stone"    | Felirat | Shield, Focus                               | Páncél +10 (földsebzés ellen)                     |
-| "Live for Today"          | Felirat | Focus                                       | Energia +15, Energia-regeneráció -1               |
-| "Not the face!"           | Felirat | Shield, Focus                               | Páncél +10 (zúzó sebzés ellen)                    |
-| "Only the Strong Survive" | Felirat | Shield, Focus                               | 20%-kal csökkenti rajtad a Weakness időtartamát   |
-| "Pure of Heart"           | Felirat | Shield, Focus                               | 20%-kal csökkenti rajtad a Poison időtartamát     |
-| "Riders on the Storm"     | Felirat | Shield, Focus                               | Páncél +10 (villámsebzés ellen)                   |
-| "Seize the Day"           | Felirat | Staff, Wand                                 | Energia +15, Energia-regeneráció -1               |
-| "Sleep Now in the Fire"   | Felirat | Shield, Focus                               | Páncél +10 (tűzsebzés ellen)                      |
-| "Soundness of Mind"       | Felirat | Shield, Focus                               | 20%-kal csökkenti rajtad a Dazed időtartamát      |
-| "Strength of Body"        | Felirat | Shield, Focus                               | 20%-kal csökkenti rajtad a Deep Wound időtartamát |
-| "Swift as the Wind"       | Felirat | Shield, Focus                               | 20%-kal csökkenti rajtad a Crippled időtartamát   |
-| "The Riddle of Steel"     | Felirat | Shield, Focus                               | Páncél +10 (vágó sebzés ellen)                    |
-| "Through Thick and Thin"  | Felirat | Shield, Focus                               | Páncél +10 (szúró sebzés ellen)                   |
+| Módosító                  | Hely    | Illik                                                               | Hatás                                                                                                                     |
+| ------------------------- | ------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Előtag  | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Páncél +5                                                                                                                 |
+| Hale                      | Előtag  | Staff                                                               | +30 Életerő                                                                                                               |
+| Insightful                | Előtag  | Staff                                                               | Energia +5                                                                                                                |
+| of Defense                | Utótag  | bármely harci fegyver, Staff                                        | Páncél +5                                                                                                                 |
+| of Fortitude              | Utótag  | bármely harci fegyver, Staff, Shield, Focus                         | +30 Életerő                                                                                                               |
+| of Shelter                | Utótag  | bármely harci fegyver, Staff                                        | Páncél +7 (fizikai sebzés ellen)                                                                                          |
+| of Warding                | Utótag  | bármely harci fegyver, Staff                                        | Páncél +7 (elemi sebzés ellen)                                                                                            |
+| "Cast Out the Unclean"    | Felirat | Shield, Focus                                                       | 20%-kal csökkenti rajtad a ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** időtartamát          |
+| "Fear Cuts Deeper"        | Felirat | Shield, Focus                                                       | 20%-kal csökkenti rajtad a ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** időtartamát       |
+| "I Can See Clearly Now"   | Felirat | Shield, Focus                                                       | 20%-kal csökkenti rajtad a ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** időtartamát            |
+| "I have the power!"       | Felirat | bármely harci fegyver                                               | Energia +5                                                                                                                |
+| "Leaf on the Wind"        | Felirat | Shield, Focus                                                       | Páncél +10 (hidegsebzés ellen)                                                                                            |
+| "Like a Rolling Stone"    | Felirat | Shield, Focus                                                       | Páncél +10 (földsebzés ellen)                                                                                             |
+| "Live for Today"          | Felirat | Focus                                                               | Energia +15, Energia-regeneráció -1                                                                                       |
+| "Not the face!"           | Felirat | Shield, Focus                                                       | Páncél +10 (zúzó sebzés ellen)                                                                                            |
+| "Only the Strong Survive" | Felirat | Shield, Focus                                                       | 20%-kal csökkenti rajtad a ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** időtartamát       |
+| "Pure of Heart"           | Felirat | Shield, Focus                                                       | 20%-kal csökkenti rajtad a ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** időtartamát             |
+| "Riders on the Storm"     | Felirat | Shield, Focus                                                       | Páncél +10 (villámsebzés ellen)                                                                                           |
+| "Seize the Day"           | Felirat | Staff, Wand                                                         | Energia +15, Energia-regeneráció -1                                                                                       |
+| "Sleep Now in the Fire"   | Felirat | Shield, Focus                                                       | Páncél +10 (tűzsebzés ellen)                                                                                              |
+| "Soundness of Mind"       | Felirat | Shield, Focus                                                       | 20%-kal csökkenti rajtad a ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** időtartamát                |
+| "Strength of Body"        | Felirat | Shield, Focus                                                       | 20%-kal csökkenti rajtad a ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** időtartamát |
+| "Swift as the Wind"       | Felirat | Shield, Focus                                                       | 20%-kal csökkenti rajtad a ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** időtartamát       |
+| "The Riddle of Steel"     | Felirat | Shield, Focus                                                       | Páncél +10 (vágó sebzés ellen)                                                                                            |
+| "Through Thick and Thin"  | Felirat | Shield, Focus                                                       | Páncél +10 (szúró sebzés ellen)                                                                                           |
 
 ### Harci előtagok találatkor
 
@@ -161,16 +161,16 @@ tartja a nézett készlet fegyvereit, a módosítóikkal együtt.
 
 ## Rúnák
 
-| Rúna                                   | Mit ad                                    |
-| -------------------------------------- | ----------------------------------------- |
-| Kisebb tulajdonság-rúna                | +1 egy tulajdonsághoz                     |
-| Nagyobb tulajdonság-rúna               | +2 egy tulajdonsághoz, -35 Életerő        |
-| Kiváló tulajdonság-rúna                | +3 egy tulajdonsághoz, -75 Életerő        |
-| Vigor                                  | több Életerő (+30, +41 vagy +50)          |
-| Vitae                                  | +10 Életerő                               |
-| Attunement                             | több Energia (+3, +6 vagy +9)             |
-| Clarity, Purity, Recovery, Restoration | két-két kór 20%-kal hamarabb jár le       |
-| Absorption (Warrior)                   | kevesebb fizikai sebzés minden találattól |
+| Rúna                                                                                                                                                                                                                                                                                                           | Mit ad                                    |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Kisebb tulajdonság-rúna                                                                                                                                                                                                                                                                                        | +1 egy tulajdonsághoz                     |
+| Nagyobb tulajdonság-rúna                                                                                                                                                                                                                                                                                       | +2 egy tulajdonsághoz, -35 Életerő        |
+| Kiváló tulajdonság-rúna                                                                                                                                                                                                                                                                                        | +3 egy tulajdonsághoz, -75 Életerő        |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | több Életerő (+30, +41 vagy +50)          |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Életerő                               |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | több Energia (+3, +6 vagy +9)             |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | két-két kór 20%-kal hamarabb jár le       |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | kevesebb fizikai sebzés minden találattól |
 
 Egy darab rúnáját ugyanott választod ki, ahol a jelvényét: kattints a
 figurán a darabra.

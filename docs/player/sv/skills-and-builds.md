@@ -6,8 +6,8 @@ huvudmenyn, eller **Ny karaktär**.
 
 ## Yrken
 
-Det finns tio: Warrior, Ranger, Monk, Necromancer, Mesmer,
-Elementalist, Assassin, Ritualist, Paragon och Dervish. Ditt **primära**
+Det finns tio: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**,
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** och ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Ditt **primära**
 yrke är det du är: dess förmågor, och dess **primära attribut**
 (märkt ★), som bara ett primärt yrke får. Ditt **sekundära** lånar ut
 sina förmågor till dig, men inte sitt primära attribut.
@@ -18,11 +18,11 @@ Raden har **åtta platser**. Bara en **elitförmåga** (guldram) får plats
 på en rad: utrustar du en andra ersätter den den första. Tryck på **×**
 på en plats för att tömma den.
 
-**Blixtförtrollningar** (Dervish) är omedelbara: att använda en behåller
+![Förtrollning](../../../apps/web/public/icons/skill-type/enchantment.svg) **Blixtförtrollningar** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) är omedelbara: att använda en behåller
 din sving och ditt steg, så du kan väva in dem mellan slagen. Var och en
 stänger av dina andra blixtförtrollningar i 1 sekund.
 
-**Former** (Dervishens fem avatarer: Balthazar, Dwayna, Grenth, Lyssa
+![Form](../../../apps/web/public/icons/skill-type/form.svg) **Former** (Dervishens fem avatarer: Balthazar, Dwayna, Grenth, Lyssa
 och Melandru) förändrar dig i över en minut. En form är
 ingen förtrollning, så ingen kan ta bort den, och du kan vara i en form
 åt gången. Att använda en spärrar den i 45 sekunder. När en form tar
@@ -32,7 +32,7 @@ för att gå vidare.
 
 **Vissa skott spärrar dina andra attacker.** Focused Shot och Needling
 Shot flyger snabbare än en pil borde, men varje som träffar stänger av
-dina andra attackförmågor i några sekunder. Besvärjelser påverkas inte.
+dina andra ![Attackförmåga](../../../apps/web/public/icons/skill-type/attack.svg) **attackförmågor** i några sekunder. ![Besvärjelse](../../../apps/web/public/icons/skill-type/spell.svg) **Besvärjelser** påverkas inte.
 
 ## Attribut
 
@@ -44,31 +44,31 @@ Att höja attributet en förmåga använder gör den starkare: siffror som
 växer med attributet visas i grönt och fetstil, vid dina nuvarande
 ranger inklusive runor och huvudbonad.
 
-I en strid kan dina ranger ändras en stund. Weakness tar bort en från
-varje. Vissa förbannelser sätter en fiendes attribut till 0, och Master
+I en strid kan dina ranger ändras en stund. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** tar bort en från
+varje. Vissa ![Förbannelse](../../../apps/web/public/icons/skill-type/hex.svg) **förbannelser** sätter en fiendes attribut till 0, och Master
 of Magic sätter dina elementattribut till 13: en rang som sätts så går
 före både runor och Weakness. Signet of Illusions låter dina nästa
-besvärjelser av andra attribut använda din rang i Illusion Magic. Vissa
+![Besvärjelse](../../../apps/web/public/icons/skill-type/spell.svg) **besvärjelser** av andra attribut använda din rang i Illusion Magic. Vissa
 förmågor höjer dina attribut en tid eller för dina nästa besvärjelser,
 som Glyph of Elemental Power och Ritual Lord gör, även ett du lämnade på
 0; en satt rang, som Master of Magics, slår en sådan förstärkning.
 
 ## Ekon
 
-En Paragons **ekon** är långa förstärkningar på en allierad. En
+En ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** ![Eko](../../../apps/web/public/icons/skill-type/echo.svg) **ekon** är långa förstärkningar på en allierad. En
 **refrain** förnyas till sin fulla längd, och en **finale** verkar, varje
-gång en mässning eller ett rop tar slut på den allierade. En mässning
+gång en ![Mässning](../../../apps/web/public/icons/skill-type/chant.svg) **mässning** eller ett ![Rop](../../../apps/web/public/icons/skill-type/shout.svg) **rop** tar slut på den allierade. En mässning
 eller ett rop som läggs på igen innan det tar slut har inte tagit slut.
 Inget tar bort ett eko: det slutar när det tar slut eller dess bärare
 dör. De flesta kan inte ha en ande som mål.
 
 ## Förmågor som blir en annan förmåga
 
-Vissa Mesmer-förmågor lägger en annan förmåga på sin egen plats en stund.
-Arcane Echo och Echo kopierar nästa förmåga du använder. **Inspired
+Vissa ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**-förmågor lägger en annan förmåga på sin egen plats en stund.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** och ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** kopierar nästa förmåga du använder. **Inspired
 Enchantment** och **Inspired Hex** blir förmågan som kastade
-förtrollningen eller förbannelsen de tog bort, i 20 sekunder. **Arcane
-Thievery** blir besvärjelsen den spärrade hos din fiende, så länge
+![Förtrollning](../../../apps/web/public/icons/skill-type/enchantment.svg) **förtrollningen** eller ![Förbannelse](../../../apps/web/public/icons/skill-type/hex.svg) **förbannelsen** de tog bort, i 20 sekunder. **Arcane
+Thievery** blir ![Besvärjelse](../../../apps/web/public/icons/skill-type/spell.svg) **besvärjelsen** den spärrade hos din fiende, så länge
 spärren varar. Kopian har sin egen återladdning. När den tar slut kommer
 originalförmågan tillbaka och börjar sin egen återladdning, och en
 kastning av kopian som fortfarande pågår misslyckas. En status som en
@@ -77,11 +77,11 @@ bort den ger dig ändå energin.
 
 ## Brunnar och glyfer
 
-En Necromancers **brunnar** utnyttjar närmaste lik. Finns inget i
+En ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancers** ![Brunn](../../../apps/web/public/icons/skill-type/well.svg) **brunnar** utnyttjar närmaste lik. Finns inget i
 närheten offrar en brunn i stället 66 % av din hälsa och dyker upp där du
 står.
 
-En Elementalists **glyfer** ändrar din nästa besvärjelse: den kan inte
+En ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalists** ![Glyf](../../../apps/web/public/icons/skill-type/glyph.svg) **glyfer** ändrar din nästa ![Besvärjelse](../../../apps/web/public/icons/skill-type/spell.svg) **besvärjelse**: den kan inte
 avbrytas, kastas direkt, återladdas på en gång eller kostar mindre. En ny
 glyf ersätter den du hade.
 
@@ -91,8 +91,8 @@ En förmåga som svarar på "nästa gång skada sänker hälsan under N %"
 svarar på varje slag eller livsstöld som lämnar dig vid liv och under
 gränsen, även när du redan var under den före träffen, och aldrig på
 hälsa du offrar eller förlorar genom degeneration. Skydd mot dödlig skada,
-som Judge's Intervention, stoppar hela det dödande slaget: ingen skada,
-ingen död. Faithful Intervention och Illusion of Weakness har ingen
+som ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, stoppar hela det dödande slaget: ingen skada,
+ingen död. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** och ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** har ingen
 varaktighet: de varar tills skada, en borttagning eller döden avslutar
 dem, och helar dig på vägen.
 
@@ -120,20 +120,20 @@ och helandet från dina andar, hantlangare och ditt husdjur som ditt.
 
 ## Föremålsbesvärjelser
 
-En Ritualists **föremålsbesvärjelser** lägger en andes **aska** i dina
+En ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualists** ![Föremålsbesvärjelse](../../../apps/web/public/icons/skill-type/item-spell.svg) **föremålsbesvärjelser** lägger en andes **aska** i dina
 händer: en bonus medan du håller den, och en **släppeffekt** när den
 faller. Den släpps när den tar slut, när du dör, när du trycker på
 **Släpp aska** ovanför din hälsomätare, kastar en annan
 föremålsbesvärjelse, skuggstegar, byter vapen eller tar upp en flagga
 eller relik. Dina händer är upptagna medan du håller den: inga attacker
-och inga attackförmågor, men du går i full fart och kan fortfarande
-kasta besvärjelser. Inget tar bort aska; varje slut är ett släpp.
+och inga ![Attackförmåga](../../../apps/web/public/icons/skill-type/attack.svg) **attackförmågor**, men du går i full fart och kan fortfarande
+kasta ![Besvärjelse](../../../apps/web/public/icons/skill-type/spell.svg) **besvärjelser**. Inget tar bort aska; varje slut är ett släpp.
 
 ## Skuggsteg
 
 Ett **skuggsteg** flyttar dig direkt, utan någon promenad emellan. De
 flesta flyttar dig till ditt mål; vissa tar dig tillbaka dit du kastade
-dem när de tar slut, som Shadow of Haste och Shadow Walk gör. **Recall**
+dem när de tar slut, som Shadow of Haste och Shadow Walk gör. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall**
 flyttar dig till sin allierade först när den tar slut, och spärrar alla
 dina förmågor i 3 sekunder. **Swap** byter plats med en av din sidas
 andar eller hantlangare.
