@@ -13,6 +13,14 @@ import {
   type PlatePainter,
 } from "./gate-mark.js";
 
+/** A line drawn, in its layer's coordinates: `lift` is how far up it was translated. */
+interface Segment {
+  readonly from: { readonly x: number; readonly y: number };
+  readonly to: { readonly x: number; readonly y: number };
+  readonly lift: number;
+  readonly colour: number;
+}
+
 interface Drawn {
   readonly fills: {
     readonly shape: RenderableShape;
@@ -22,31 +30,41 @@ interface Drawn {
   readonly columns: { readonly height: number; readonly colour: number }[];
   readonly strokes: RenderableShape[];
   readonly lines: number;
+  readonly segments: readonly Segment[];
 }
 
 function draw(art: GateArt, wall: RenderableShape, frame: GateFrame): Drawn {
   let fill = { colour: 0, alpha: 0 };
+  let stroke = 0;
+  let lift = 0;
+  const saved: number[] = [];
   const fills: Drawn["fills"] = [];
   const columns: Drawn["columns"] = [];
   const strokes: RenderableShape[] = [];
-  let lines = 0;
+  const segments: Segment[] = [];
   const painter: GatePainter = {
-    save: () => undefined,
-    restore: () => undefined,
-    translateCanvas: () => undefined,
+    save: () => saved.push(lift),
+    restore: () => {
+      lift = saved.pop() ?? 0;
+    },
+    translateCanvas: (_, y) => {
+      lift -= y;
+    },
     fillStyle: (colour, alpha) => {
       fill = { colour, alpha };
     },
-    lineStyle: () => undefined,
+    lineStyle: (_, colour) => {
+      stroke = colour;
+    },
     fillShape: (shape) => fills.push({ shape, ...fill }),
     strokeShape: (shape) => strokes.push(shape),
     fillColumn: (_, height, colour) => columns.push({ height, colour }),
-    lineBetween: () => {
-      lines += 1;
+    lineBetween: (x1, y1, x2, y2) => {
+      segments.push({ from: { x: x1, y: y1 }, to: { x: x2, y: y2 }, lift, colour: stroke });
     },
   };
   art(painter, wall, frame);
-  return { fills, columns, strokes, lines };
+  return { fills, columns, strokes, lines: segments.length, segments };
 }
 
 const DOOR: RenderableShape = { kind: "rect", x: 244, y: 680, width: 16, height: 80 };
@@ -120,8 +138,11 @@ describe("portcullis and secret passage (#3068)", () => {
   it("draws a shut portcullis as the dark of its arch behind an iron grid", () => {
     const shut = draw(GATE_ART.shut.portcullis, DOOR, STONE);
     expect(shut.columns).toEqual([{ height: 28, colour: GATE_PORTCULLIS_LOOK.dark }]);
-    expect(shut.fills).toEqual([{ shape: DOOR, colour: GATE_PORTCULLIS_LOOK.dark, alpha: 1 }]);
-    expect(shut.strokes).toEqual([DOOR]);
+    expect(shut.fills.filter((fill) => fill.shape.kind === "rect")).toEqual([
+      { shape: DOOR, colour: GATE_PORTCULLIS_LOOK.dark, alpha: 1 },
+    ]);
+    // Framed round its footprint, and its grid's top.
+    expect(shut.strokes).toEqual([DOOR, DOOR]);
     expect(shut.lines).toBeGreaterThan(10);
   });
 
@@ -129,7 +150,9 @@ describe("portcullis and secret passage (#3068)", () => {
     const open = draw(GATE_ART.open.portcullis, DOOR, STONE);
     expect(open.fills).toEqual([{ shape: DOOR, colour: GATE_PORTCULLIS_LOOK.dark, alpha: 1 }]);
     expect(open.columns).toEqual([]);
-    expect(open.strokes).toEqual([DOOR]);
+    // The gap's lit frame, and its grid hung above: the door's north end,
+    // as deep as the lift.
+    expect(open.strokes).toEqual([DOOR, { ...DOOR, height: 28 * 1.6 }]);
   });
 
   it("has no shut art for a secret passage, which is drawn as its wall, and opens it dark", () => {
@@ -138,6 +161,86 @@ describe("portcullis and secret passage (#3068)", () => {
     expect(open.fills).toEqual([{ shape: DOOR, colour: GATE_PORTCULLIS_LOOK.dark, alpha: 1 }]);
     expect(open.columns).toEqual([]);
   });
+});
+
+describe("a portcullis reads up or down from its footprint, also under a cover (#3644)", () => {
+  const STONE: GateFrame = {
+    height: 28,
+    line: 1,
+    palette: arenaPalette({ layerCount: 3, biome: "hall", ascentAct: null }),
+  };
+  // A 14 u strip across an east-west tunnel, one longer than the open grid's
+  // lift, and a wide gate across a north-south way.
+  const STRIP = { kind: "rect", x: 300, y: 500, width: 14, height: 60 } as const;
+  const LONG = { kind: "rect", x: 300, y: 500, width: 14, height: 110 } as const;
+  const WIDE = { kind: "rect", x: 200, y: 400, width: 120, height: 14 } as const;
+  type Wall = typeof STRIP | typeof LONG | typeof WIDE;
+  const shapes: readonly { name: string; wall: Wall; depth: number }[] = [
+    { name: "a 14 u strip", wall: STRIP, depth: STRIP.width },
+    { name: "a 110 u strip", wall: LONG, depth: LONG.width },
+    { name: "a wide gate", wall: WIDE, depth: WIDE.height },
+  ];
+
+  /** Its iron, drawn on its layer (not lifted) and within its footprint. */
+  function ironInFootprint(drawn: Drawn, wall: Wall): readonly Segment[] {
+    const inside = ({ x, y }: { x: number; y: number }): boolean =>
+      x >= wall.x && x <= wall.x + wall.width && y >= wall.y && y <= wall.y + wall.height;
+    return drawn.segments.filter(
+      (segment) =>
+        segment.colour === GATE_PORTCULLIS_LOOK.iron &&
+        segment.lift === 0 &&
+        inside(segment.from) &&
+        inside(segment.to),
+    );
+  }
+
+  /** How far across its footprint a segment reaches. */
+  const reach = (segment: Segment): number =>
+    Math.hypot(segment.to.x - segment.from.x, segment.to.y - segment.from.y);
+
+  for (const { name, wall, depth } of shapes) {
+    for (const height of [28, 0]) {
+      it(`shut, ${name} fills its footprint with bars across it, at height ${String(height)}`, () => {
+        const shut = draw(GATE_ART.shut.portcullis, wall, { ...STONE, height });
+        const across = ironInFootprint(shut, wall).filter((bar) => reach(bar) === depth);
+        // One at every bar, `BAR_EVERY` (6 u) apart along it.
+        const along = wall.height >= wall.width ? "y" : "x";
+        const length = Math.max(wall.width, wall.height);
+        const count = Math.floor(length / 6);
+        const at = new Set(across.map((bar) => bar.from[along]));
+        for (let bar = 1; bar < count; bar += 1) {
+          expect(at).toContain(wall[along] + (length * bar) / count);
+        }
+        // Its spiked tips, on its camera-facing edge.
+        const spikes = shut.fills.filter((fill) => fill.shape.kind === "polygon");
+        expect(spikes.length).toBeGreaterThan(0);
+        for (const { shape } of spikes) {
+          if (shape.kind !== "polygon") {
+            throw new Error("a spike is a polygon");
+          }
+          expect(Math.max(...shape.points.map((point) => point.y))).toBe(wall.y + wall.height);
+        }
+      });
+
+      it(`open, ${name} has no bars in its footprint beyond a stub, at height ${String(height)}`, () => {
+        const open = draw(GATE_ART.open.portcullis, wall, { ...STONE, height });
+        const iron = ironInFootprint(open, wall);
+        expect(iron.length).toBeGreaterThan(0);
+        for (const bar of iron) {
+          expect(reach(bar)).toBeLessThanOrEqual(depth / 4);
+        }
+        // Nothing lifted lands back on its footprint, on a flat map either:
+        // where it shows, every hung line lies on or north of the lintel.
+        const lifted = open.segments.filter((segment) => segment.lift > 0);
+        expect(lifted.length > 0).toBe(height > 0);
+        for (const segment of lifted) {
+          for (const end of [segment.from, segment.to]) {
+            expect(end.y - segment.lift).toBeLessThanOrEqual(wall.y);
+          }
+        }
+      });
+    }
+  }
 });
 
 describe("a gate's pressure plate (#3053)", () => {
