@@ -7,6 +7,8 @@ import {
   canonicalBytes,
   MAX_RECEIPT_BYTES,
   mergeReceipts,
+  parseRankedResult,
+  parseRankedStart,
   parseReceipt,
   receiptHash,
   resultDigest,
@@ -220,6 +222,24 @@ describe("parseReceipt", () => {
     ).toBeUndefined();
     const padded = JSON.stringify({ ...good, pad: "x".repeat(MAX_RECEIPT_BYTES) });
     expect(parseReceipt(padded)).toBeUndefined();
+  });
+});
+
+describe("parseRankedStart and parseRankedResult", () => {
+  it("read a start and a result alone, as the wire carries them (#3573)", () => {
+    const { start, receipt: original } = fullReceipt();
+    expect(parseRankedStart(JSON.parse(JSON.stringify(start)))).toEqual(start);
+    expect(parseRankedResult(JSON.parse(JSON.stringify(original.result)))).toEqual(
+      original.result,
+    );
+  });
+
+  it("refuse a start with one team and a result with an unknown reason", () => {
+    const { start, receipt: original } = fullReceipt();
+    expect(parseRankedStart({ ...start, teams: [start.teams[0]] })).toBeUndefined();
+    expect(parseRankedResult({ ...original.result, endReason: "boredom" })).toBeUndefined();
+    expect(parseRankedStart("start")).toBeUndefined();
+    expect(parseRankedResult(null)).toBeUndefined();
   });
 });
 
