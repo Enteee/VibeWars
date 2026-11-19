@@ -291,7 +291,15 @@ export function mountCoachOverlay(
 
   const place = (): void => {
     const viewport = { width: window.innerWidth, height: window.innerHeight };
-    const box = unionBox(targets.map((target) => target.getBoundingClientRect()));
+    // A target's own popover, as the profession grid, may hang out of its
+    // box: the cut-out takes it in, so the bubble never sits on it.
+    const box = unionBox(
+      targets.flatMap((target) =>
+        [target, ...target.querySelectorAll(ABOVE_THE_LOCK)].map((node) =>
+          node.getBoundingClientRect(),
+        ),
+      ),
+    );
     const next = box === undefined ? undefined : cutOut(box);
     if (!stale && sameRect(next, shownHole) && !hole.hidden === (next !== undefined)) {
       return;
