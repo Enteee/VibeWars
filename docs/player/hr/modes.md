@@ -374,7 +374,7 @@ Tim bira jednom, u Timskoj sobi svoje prve karte, i zadržava svoj
 timski sastav i mjesta do kraja uspona: nakon pobjede ponovno ulazi u
 red bez glasanja i uzimanja. Tko ode usred uspona oslobađa svoje
 mjesto, ali ne i njegov sastav. Pridošlica u grupu između karata dobiva
-uzimanje samo praznih mjesta (**Slobodno: sastav Monk**) i igra sastav tog
+uzimanje samo praznih mjesta (**Slobodno: sastav Redovnik**) i igra sastav tog
 mjesta; prazno mjesto koje nitko ne uzme pripada botu. Poraz počinje
 iznova: sljedeći uspon opet glasa. Isto vrijedi za slijeđenje domaćina u drugu
 grupu, čiji domaćin ne može jamčiti za stari uspon. Rundu pamti
@@ -392,8 +392,7 @@ dosegu s 50 štete od munje, dok drugi tim ne
 postavi svoju zastavu tamo. Svaki udarac je munja od svjetionika do onoga koga je pogodila,
 vidljiva obama timovima.
 
-Tri arene Uspona može odabrati i Igra s domaćinom: **The Hollow Deep** (8v8 Uništenje, tri
-vijugava tunela oko središnje stijene),
+Tri arene Uspona može odabrati i Igra s domaćinom: **The Hollow Deep** (8v8 Uništenje, 6200x2400, u mračnoj špilji: prijeđi viseći most preko ponora, popni se preko srednje izbočine ili prođi podzemnim hodnikom ispod nje kad poluga na stjenovitoj polici otvori njegova vrata),
 **Blackwater Ford** (8v8, 5200x2800, Uništenje sa
 svećenikom na tamnom riječnom gazu: prelazi se gazeći plitki gaz, slomljenim mostom na stupovima iznad mlina
 ili kroz propust ispod mosta kad poluga na mlinu otvori njegovu rešetku; svećenik diže

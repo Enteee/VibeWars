@@ -4,43 +4,43 @@
 
 ## 武器セット
 
-**武器セットは4つ**まで持てます。それぞれ武器1つと、武器が片手を空けるなら、盾やフォーカスなどのオフハンド1つです。セット1が最初に持っているセットで、ほかは空のままでも構いません。
+**武器セットは4つ**まで持てます。それぞれ武器1つと、武器が片手を空けるなら、![盾](../../../apps/web/public/icons/offhand/shield.svg) **盾**や![フォーカス](../../../apps/web/public/icons/offhand/focus.svg) **フォーカス**などのオフハンド1つです。セット1が最初に持っているセットで、ほかは空のままでも構いません。
 
 マッチ中は、**1～4**（クラシックのキーでは**F1～F4**）でセットを切り替えます。切り替えは、進行中の詠唱や攻撃の振りが終わるのを待ちます。移動するかEscを押すと、すぐに切り替わります。クールダウンはありません。攻撃、特定の武器を必要とするスキル、最大エナジーは、すべて手に持っているセットに従います。
 
-武器には、その属性のランク9が必要です。それより低いと、ダメージの3分の1しか与えられず、エディターが赤字でそれを知らせます。剣は常にSwordsmanshipですが、杖、ワンド、盾、フォーカスは選んだ属性用に作られます。フィギュアのその手（武器は**6**、オフハンドは**7**）をクリックして、属性を選んでください。
+武器には、その属性のランク9が必要です。それより低いと、ダメージの3分の1しか与えられず、エディターが赤字でそれを知らせます。![剣](../../../apps/web/public/icons/weapon/sword.svg) **剣**は常にSwordsmanshipですが、![杖](../../../apps/web/public/icons/weapon/staff.svg) **杖**、![ワンド](../../../apps/web/public/icons/weapon/wand.svg) **ワンド**、盾、フォーカスは選んだ属性用に作られます。フィギュアのその手（武器は**6**、オフハンドは**7**）をクリックして、属性を選んでください。
 
 ## 武器の強化
 
-すべての武器とオフハンドには、強化用のスロットがあります: **プレフィックス**、**サフィックス**、**銘刻**。フィギュアの手か、その横の行をクリックして選びます。それぞれ効果が表示されます。ワンド、盾、フォーカスにはプレフィックスが付けられず、素手には何も付けられません。強化は常に最良の値で、武器セットごとに別々に付くので、セットを切り替えると強化も切り替わります。最大ヘルスと最大エナジーは、手に持っているセットに合わせて変わります。武器を変えると、まだ合う強化は残り、外れたものが知らされます。
+すべての武器とオフハンドには、強化用のスロットがあります: **プレフィックス**、**サフィックス**、**銘刻**。フィギュアの手か、その横の行をクリックして選びます。それぞれ効果が表示されます。![ワンド](../../../apps/web/public/icons/weapon/wand.svg) **ワンド**、![盾](../../../apps/web/public/icons/offhand/shield.svg) **盾**、![フォーカス](../../../apps/web/public/icons/offhand/focus.svg) **フォーカス**にはプレフィックスが付けられず、素手には何も付けられません。強化は常に最良の値で、武器セットごとに別々に付くので、セットを切り替えると強化も切り替わります。最大ヘルスと最大エナジーは、手に持っているセットに合わせて変わります。武器を変えると、まだ合う強化は残り、外れたものが知らされます。
 
-| 強化                      | スロット       | 対象                                       | 効果                                  |
-| ------------------------- | -------------- | ------------------------------------------ | ------------------------------------- |
-| Defensive                 | プレフィックス | 杖                                         | 防御力 +5                             |
-| Hale                      | プレフィックス | 杖                                         | ヘルス +30                            |
-| Insightful                | プレフィックス | 杖                                         | エナジー +5                           |
-| of Defense                | サフィックス   | すべての近接・射撃武器、杖                 | 防御力 +5                             |
-| of Fortitude              | サフィックス   | すべての近接・射撃武器、杖、盾、フォーカス | ヘルス +30                            |
-| of Shelter                | サフィックス   | すべての近接・射撃武器、杖                 | 防御力 +7（物理ダメージに対して）     |
-| of Warding                | サフィックス   | すべての近接・射撃武器、杖                 | 防御力 +7（元素ダメージに対して）     |
-| "Cast Out the Unclean"    | 銘刻           | 盾、フォーカス                             | 自分へのDiseaseの持続時間を20%短縮    |
-| "Fear Cuts Deeper"        | 銘刻           | 盾、フォーカス                             | 自分へのBleedingの持続時間を20%短縮   |
-| "I Can See Clearly Now"   | 銘刻           | 盾、フォーカス                             | 自分へのBlindedの持続時間を20%短縮    |
-| "I have the power!"       | 銘刻           | すべての近接・射撃武器                     | エナジー +5                           |
-| "Leaf on the Wind"        | 銘刻           | 盾、フォーカス                             | 防御力 +10（冷気ダメージに対して）    |
-| "Like a Rolling Stone"    | 銘刻           | 盾、フォーカス                             | 防御力 +10（地ダメージに対して）      |
-| "Live for Today"          | 銘刻           | フォーカス                                 | エナジー +15、エナジー回復 -1         |
-| "Not the face!"           | 銘刻           | 盾、フォーカス                             | 防御力 +10（打撃ダメージに対して）    |
-| "Only the Strong Survive" | 銘刻           | 盾、フォーカス                             | 自分へのWeaknessの持続時間を20%短縮   |
-| "Pure of Heart"           | 銘刻           | 盾、フォーカス                             | 自分へのPoisonの持続時間を20%短縮     |
-| "Riders on the Storm"     | 銘刻           | 盾、フォーカス                             | 防御力 +10（雷ダメージに対して）      |
-| "Seize the Day"           | 銘刻           | 杖、ワンド                                 | エナジー +15、エナジー回復 -1         |
-| "Sleep Now in the Fire"   | 銘刻           | 盾、フォーカス                             | 防御力 +10（火ダメージに対して）      |
-| "Soundness of Mind"       | 銘刻           | 盾、フォーカス                             | 自分へのDazedの持続時間を20%短縮      |
-| "Strength of Body"        | 銘刻           | 盾、フォーカス                             | 自分へのDeep Woundの持続時間を20%短縮 |
-| "Swift as the Wind"       | 銘刻           | 盾、フォーカス                             | 自分へのCrippledの持続時間を20%短縮   |
-| "The Riddle of Steel"     | 銘刻           | 盾、フォーカス                             | 防御力 +10（斬撃ダメージに対して）    |
-| "Through Thick and Thin"  | 銘刻           | 盾、フォーカス                             | 防御力 +10（刺突ダメージに対して）    |
+| 強化                      | スロット       | 対象                                                          | 効果                                                                                                          |
+| ------------------------- | -------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | プレフィックス | ![杖](../../../apps/web/public/icons/weapon/staff.svg) **杖** | 防御力 +5                                                                                                     |
+| Hale                      | プレフィックス | 杖                                                            | ヘルス +30                                                                                                    |
+| Insightful                | プレフィックス | 杖                                                            | エナジー +5                                                                                                   |
+| of Defense                | サフィックス   | すべての近接・射撃武器、杖                                    | 防御力 +5                                                                                                     |
+| of Fortitude              | サフィックス   | すべての近接・射撃武器、杖、盾、フォーカス                    | ヘルス +30                                                                                                    |
+| of Shelter                | サフィックス   | すべての近接・射撃武器、杖                                    | 防御力 +7（物理ダメージに対して）                                                                             |
+| of Warding                | サフィックス   | すべての近接・射撃武器、杖                                    | 防御力 +7（元素ダメージに対して）                                                                             |
+| "Cast Out the Unclean"    | 銘刻           | 盾、フォーカス                                                | 自分への![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**の持続時間を20%短縮          |
+| "Fear Cuts Deeper"        | 銘刻           | 盾、フォーカス                                                | 自分への![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**の持続時間を20%短縮       |
+| "I Can See Clearly Now"   | 銘刻           | 盾、フォーカス                                                | 自分への![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded**の持続時間を20%短縮            |
+| "I have the power!"       | 銘刻           | すべての近接・射撃武器                                        | エナジー +5                                                                                                   |
+| "Leaf on the Wind"        | 銘刻           | 盾、フォーカス                                                | 防御力 +10（冷気ダメージに対して）                                                                            |
+| "Like a Rolling Stone"    | 銘刻           | 盾、フォーカス                                                | 防御力 +10（地ダメージに対して）                                                                              |
+| "Live for Today"          | 銘刻           | フォーカス                                                    | エナジー +15、エナジー回復 -1                                                                                 |
+| "Not the face!"           | 銘刻           | 盾、フォーカス                                                | 防御力 +10（打撃ダメージに対して）                                                                            |
+| "Only the Strong Survive" | 銘刻           | 盾、フォーカス                                                | 自分への![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**の持続時間を20%短縮       |
+| "Pure of Heart"           | 銘刻           | 盾、フォーカス                                                | 自分への![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**の持続時間を20%短縮             |
+| "Riders on the Storm"     | 銘刻           | 盾、フォーカス                                                | 防御力 +10（雷ダメージに対して）                                                                              |
+| "Seize the Day"           | 銘刻           | 杖、ワンド                                                    | エナジー +15、エナジー回復 -1                                                                                 |
+| "Sleep Now in the Fire"   | 銘刻           | 盾、フォーカス                                                | 防御力 +10（火ダメージに対して）                                                                              |
+| "Soundness of Mind"       | 銘刻           | 盾、フォーカス                                                | 自分への![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**の持続時間を20%短縮                |
+| "Strength of Body"        | 銘刻           | 盾、フォーカス                                                | 自分への![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**の持続時間を20%短縮 |
+| "Swift as the Wind"       | 銘刻           | 盾、フォーカス                                                | 自分への![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**の持続時間を20%短縮       |
+| "The Riddle of Steel"     | 銘刻           | 盾、フォーカス                                                | 防御力 +10（斬撃ダメージに対して）                                                                            |
+| "Through Thick and Thin"  | 銘刻           | 盾、フォーカス                                                | 防御力 +10（刺突ダメージに対して）                                                                            |
 
 ### 命中時に効く近接・射撃武器のプレフィックス
 
@@ -120,16 +120,16 @@
 
 ## ルーン
 
-| ルーン                                 | 効果                                 |
-| -------------------------------------- | ------------------------------------ |
-| Minor attribute rune                   | 属性1つに+1                          |
-| Major attribute rune                   | 属性1つに+2、ヘルス -35              |
-| Superior attribute rune                | 属性1つに+3、ヘルス -75              |
-| Vigor                                  | ヘルス上昇（+30、+41、+50）          |
-| Vitae                                  | ヘルス +10                           |
-| Attunement                             | エナジー上昇（+3、+6、+9）           |
-| Clarity, Purity, Recovery, Restoration | それぞれ2つの状態異常が20%早く消える |
-| Absorption (Warrior)                   | 攻撃ごとに受ける物理ダメージが減る   |
+| ルーン                                                                                                                                                                                                                                                                                                         | 効果                                 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Minor attribute rune                                                                                                                                                                                                                                                                                           | 属性1つに+1                          |
+| Major attribute rune                                                                                                                                                                                                                                                                                           | 属性1つに+2、ヘルス -35              |
+| Superior attribute rune                                                                                                                                                                                                                                                                                        | 属性1つに+3、ヘルス -75              |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | ヘルス上昇（+30、+41、+50）          |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | ヘルス +10                           |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | エナジー上昇（+3、+6、+9）           |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | それぞれ2つの状態異常が20%早く消える |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | 攻撃ごとに受ける物理ダメージが減る   |
 
 部位のルーンは、インシグニアと同じ場所で選びます。フィギュアの部位をクリックしてください。
 

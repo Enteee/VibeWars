@@ -3,19 +3,19 @@
 ## Gezondheid en energie
 
 Je begint met 500 **Gezondheid** en 50 **Energie**; runen en moraal veranderen
-beide. Skills kosten Energie, en die komt vanzelf langzaam terug. Warriors en
-Paragons krijgen hem het traagst terug, Rangers iets sneller, alle anderen het
+beide. Skills kosten Energie, en die komt vanzelf langzaam terug. ![Krijger](../../../apps/web/public/icons/profession/warrior.svg) **Krijgers** en
+![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** krijgen hem het traagst terug, ![Jager](../../../apps/web/public/icons/profession/ranger.svg) **Jagers** iets sneller, alle anderen het
 snelst.
 
 De pijlen op je balken zijn **pips**: elk is Gezondheid of Energie die elke
-seconde een beetje terugkomt of wegvloeit. Bleeding, Burning en Poison
+seconde een beetje terugkomt of wegvloeit. ![Bloeding](../../../apps/web/public/icons/status/bleeding.svg) **Bloeding**, ![Brandend](../../../apps/web/public/icons/status/burning.svg) **Brandend** en ![Vergif](../../../apps/web/public/icons/status/poison.svg) **Vergif**
 onttrekken Gezondheid; Regeneration en genezingsspreuken voegen die toe. Ben je
 5 seconden buiten gevecht, dan komt je Gezondheid vanzelf terug, sneller
 naarmate je langer buiten gevecht blijft.
 
 ## Adrenaline
 
-Warriors, Paragons en anderen hebben skills die **adrenaline** kosten in plaats
+![Krijger](../../../apps/web/public/icons/profession/warrior.svg) **Krijgers**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** en anderen hebben skills die **adrenaline** kosten in plaats
 van Energie. Zo'n skill laadt zichzelf op: elke wapentreffer die je plaatst,
 geeft elk van die skills een streepje, en een zware klap krijgen ook. Gebruik
 je er een, dan loopt die leeg en verliezen de andere een streepje. Ben je
@@ -27,14 +27,14 @@ Een skill kan even nodig hebben om te **casten**, en moet daarna
 **opladen** voordat je hem weer kunt gebruiken. Is je doelwit buiten bereik,
 dan loop je er eerst heen. Bewegen, of Esc, annuleert een cast: de Energie is
 weg, maar de skill laadt niet op. Na elke skill met een casttijd, behalve een
-aanvalsskill, volgt een korte pauze waarin je niets kunt doen.
+![Aanvalsskill](../../../apps/web/public/icons/skill-type/attack.svg) **aanvalsskill**, volgt een korte pauze waarin je niets kunt doen.
 
 Een skill die je indrukt terwijl je een andere gebruikt, of in die pauze, staat
 in de **wachtrij**: hij gaat als volgende, en zijn vak pulseert tot het zover
 is. Er wacht er maar één; een andere indrukken vervangt hem. Bewegen, Esc, een
 onderbreking of neergeslagen worden gooit hem weg.
 
-**Kreten en houdingen** komen nooit in de wachtrij: ze gaan meteen af, zelfs
+![Kreet](../../../apps/web/public/icons/skill-type/shout.svg) **Kreten** en ![Houding](../../../apps/web/public/icons/skill-type/stance.svg) **houdingen** komen nooit in de wachtrij: ze gaan meteen af, zelfs
 terwijl je een andere skill cast, in die pauze of neergeslagen. De cast gaat
 gewoon door. Zo gebruikt laten ze je niet ernaartoe lopen: buiten bereik
 worden ze geweigerd.
@@ -52,30 +52,30 @@ klap komt nooit aan en de zwaai begint opnieuw. Een vijand die nog naar zijn
 doelwit loopt, heeft niets om te onderbreken. Een onderbreking waarvan op de
 kaart "a skill" of "a spell" staat, laat een gewone aanval met rust.
 
-Sommige houdingen, zoals Mantra of Concentration, stoppen een onderbreking die
+Sommige ![Houding](../../../apps/web/public/icons/skill-type/stance.svg) **houdingen**, zoals Mantra of Concentration, stoppen een onderbreking die
 op jou gericht is. Geen enkele stopt neergeslagen worden.
 
 **Neergeslagen** kun je even niet bewegen, aanvallen of een skill gebruiken,
-behalve een kreet of een houding, en een lopende cast mislukt.
+behalve een ![Kreet](../../../apps/web/public/icons/skill-type/shout.svg) **kreet** of een houding, en een lopende cast mislukt.
 
 ## Condities, vloeken en betoveringen
 
 **Condities** doen je pijn tot ze aflopen of verwijderd worden:
 
-| Conditie      | Wat het doet                                               |
-| ------------- | ---------------------------------------------------------- |
-| Bleeding      | onttrekt Gezondheid                                        |
-| Burning       | onttrekt snel Gezondheid                                   |
-| Poison        | onttrekt Gezondheid                                        |
-| Disease       | onttrekt Gezondheid, en springt over op wie naast je staat |
-| Crippled      | je beweegt op halve snelheid                               |
-| Blind         | de meeste aanvallen missen                                 |
-| Weakness      | je wapen slaat veel zwakker                                |
-| Cracked Armor | minder pantser                                             |
-| Deep Wound    | minder maximale Gezondheid, en genezing werkt minder       |
-| Dazed         | spreuken casten traag; elke aanval onderbreekt ze          |
+| Conditie                                                                                            | Wat het doet                                               |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| ![Bloeding](../../../apps/web/public/icons/status/bleeding.svg) **Bloeding**                        | onttrekt Gezondheid                                        |
+| ![Brandend](../../../apps/web/public/icons/status/burning.svg) **Brandend**                         | onttrekt snel Gezondheid                                   |
+| ![Vergif](../../../apps/web/public/icons/status/poison.svg) **Vergif**                              | onttrekt Gezondheid                                        |
+| ![Ziekte](../../../apps/web/public/icons/status/disease.svg) **Ziekte**                             | onttrekt Gezondheid, en springt over op wie naast je staat |
+| ![Verlamd](../../../apps/web/public/icons/status/crippled.svg) **Verlamd**                          | je beweegt op halve snelheid                               |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                                 | de meeste aanvallen missen                                 |
+| ![Zwakte](../../../apps/web/public/icons/status/weakness.svg) **Zwakte**                            | je wapen slaat veel zwakker                                |
+| ![Gebarsten pantser](../../../apps/web/public/icons/status/cracked-armor.svg) **Gebarsten pantser** | minder pantser                                             |
+| ![Diepe wond](../../../apps/web/public/icons/status/deep-wound.svg) **Diepe wond**                  | minder maximale Gezondheid, en genezing werkt minder       |
+| ![Versuft](../../../apps/web/public/icons/status/dazed.svg) **Versuft**                             | spreuken casten traag; elke aanval onderbreekt ze          |
 
-**Vloeken** worden door vijanden op je gecast; **betoveringen** door jezelf of
+![Vloek](../../../apps/web/public/icons/skill-type/hex.svg) **Vloeken** worden door vijanden op je gecast; ![Betovering](../../../apps/web/public/icons/skill-type/enchantment.svg) **betoveringen** door jezelf of
 je bondgenoten. Elk wordt verwijderd door een eigen soort skill. Sommige
 betoveringen worden **onderhouden**: ze duren tot jij ze beëindigt, en kosten
 een Energie-pip zolang ze lopen. Dubbelklik op het pictogram om er een te
@@ -87,7 +87,7 @@ aanval, dus een misser of een blokkade kost er net zo goed een als een treffer.
 
 ## Pantser en schade
 
-Warriors en Paragons dragen het meeste pantser; Rangers, Assassins en Dervishes
+![Krijger](../../../apps/web/public/icons/profession/warrior.svg) **Krijgers** en ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** dragen het meeste pantser; ![Jager](../../../apps/web/public/icons/profession/ranger.svg) **Jagers**, ![Sluipmoordenaar](../../../apps/web/public/icons/profession/assassin.svg) **Sluipmoordenaars** en ![Derwisj](../../../apps/web/public/icons/profession/dervish.svg) **Derwisjen**
 minder; casters het minst. Pantser maakt wapen-, elementaire, chaos- en dark-schade
 kleiner. Heilige, schaduw- en typeloze schade, Gezondheid-onttrekking en
 levensdiefstal negeren het. Alleen wapentreffers kunnen kritiek zijn.

@@ -24,6 +24,7 @@ import {
   lightsByStability,
   litStructurePalette,
   regionsInView,
+  boxInView,
   roofedOver,
   shownStage,
   stageShadows,
@@ -519,6 +520,24 @@ describe("regionsInView (#3499)", () => {
   });
 });
 
+describe("boxInView (#3660)", () => {
+  const extent = { x: 100, y: 50, width: 200, height: 100 };
+  // In the arena, 200..300 by 100..200.
+  const box = { x: 0, y: 0, width: 50, height: 50 };
+
+  it("meets a view over the box and misses one beside it", () => {
+    expect(boxInView(box, extent, 0, { left: 250, top: 150, right: 400, bottom: 400 })).toBe(true);
+    expect(boxInView(box, extent, 0, { left: 300, top: 100, right: 400, bottom: 200 })).toBe(false);
+    expect(boxInView(box, extent, 0, { left: 0, top: 0, right: 200, bottom: 1000 })).toBe(false);
+  });
+
+  it("finds a raised map's box where it is drawn, lifted", () => {
+    const view = { left: 200, top: -200, right: 300, bottom: -120 };
+    expect(boxInView(box, extent, 300, view)).toBe(true);
+    expect(boxInView(box, extent, 0, view)).toBe(false);
+  });
+});
+
 describe("LightingPass", () => {
   /**
    * A scene whose light maps, as Phaser 4's DynamicTexture does, queue a
@@ -528,7 +547,7 @@ describe("LightingPass", () => {
   function fakeScene() {
     const destroyed = new Set<object>();
     const drawn: { colour: number; alive: boolean }[] = [];
-    const images: { key: string; alpha: number; blendMode: number }[] = [];
+    const images: { key: string; alpha: number; blendMode: number; visible: boolean }[] = [];
     const flats: { colour: number; blendMode: number; rects: number }[] = [];
     const graphics = () => {
       const painter = {
@@ -604,7 +623,12 @@ describe("LightingPass", () => {
             key,
             alpha: 1,
             blendMode: -1,
+            visible: true,
             setOrigin: () => image,
+            setVisible(visible: boolean) {
+              image.visible = visible;
+              return image;
+            },
             setScale: () => image,
             setDepth: () => image,
             setBlendMode(mode: number) {
@@ -670,6 +694,24 @@ describe("LightingPass", () => {
     ]);
     expect(flats[0]?.rects).toBeGreaterThan(0);
     expect(images.length).toBeGreaterThan(0);
+  });
+
+  it("hides the images the camera's view misses, and shows them again in view (#3660)", () => {
+    const { scene, images } = fakeScene();
+    const lit: MapLighting = {
+      ...SUNLIT,
+      lights: [
+        { ...light("near", 0, 0), position: { x: 50, y: 50 } },
+        { ...light("far", 0, 0), position: { x: 350, y: 350 } },
+      ],
+    };
+    const pass = new LightingPass(scene);
+    pass.show(lit, STRUCTURE, [], 400, 400, false);
+    pass.update(0, { left: 0, top: 0, right: 100, bottom: 100 });
+    expect(images.some(({ visible }) => visible)).toBe(true);
+    expect(images.some(({ visible }) => !visible)).toBe(true);
+    pass.update(0, { left: 0, top: 0, right: 400, bottom: 400 });
+    expect(images.every(({ visible }) => visible)).toBe(true);
   });
 
   describe("a tunnel's lights (#3350)", () => {
@@ -786,6 +828,35 @@ describe("lightMapCells (#3524)", () => {
     expect(cells.lit.length).toBeGreaterThan(0);
     expect(cells.lit.every((cell) => meets(cell, box))).toBe(true);
     expect(area(cells.lit)).toBeLessThan(area(lightMapCover(TUNNELLED, [], 0, extent)));
+  });
+
+  it("marks only the cells a shape meets, not every cell in its box", () => {
+    const extent = lightMapExtent(TUNNELLED, 1, ARENA, ARENA);
+    // A thin diagonal hall across the arena: its box is all of it.
+    const diagonal: MapLighting = {
+      ...LIT,
+      lights: [],
+      indoor: [
+        {
+          kind: "polygon",
+          points: [
+            { x: 0, y: 0 },
+            { x: 60, y: 0 },
+            { x: 1000, y: 940 },
+            { x: 1000, y: 1000 },
+            { x: 940, y: 1000 },
+            { x: 0, y: 60 },
+          ],
+        },
+      ],
+    };
+    const cells = lightMapCells(diagonal, TUNNELLED, [], 1, extent, "full");
+    // Far off the diagonal, inside its box: flat. On it: textured.
+    const off = { x: 400 - extent.x, y: 50 - extent.y, width: 25, height: 25 };
+    const on = { x: 250 - extent.x, y: 250 - extent.y, width: 5, height: 5 };
+    expect(cells.flat.some((cell) => meets(cell, off))).toBe(true);
+    expect(cells.textured.some((cell) => meets(cell, on))).toBe(true);
+    expect(cells.flat.some((cell) => meets(cell, on))).toBe(false);
   });
 
   it("textures a cell the indoors or a sun shadow marks", () => {

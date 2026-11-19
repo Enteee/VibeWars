@@ -7,7 +7,7 @@ nó. Giáp được chọn trên hình nhân, bên dưới.
 ## Bộ vũ khí
 
 Bạn mang tối đa **bốn bộ vũ khí**, mỗi bộ gồm một vũ khí và, nếu vũ khí để
-trống một tay, một món tay phụ như Shield hoặc Focus. Bộ 1 là bộ bạn dùng
+trống một tay, một món tay phụ như ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** hoặc ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus**. Bộ 1 là bộ bạn dùng
 khi bắt đầu; các bộ khác có thể để trống.
 
 Trong trận, đổi bộ bằng **1 đến 4** (**F1 đến F4** với phím Classic). Việc
@@ -17,8 +17,8 @@ cần một loại vũ khí nhất định, và Năng lượng tối đa của b
 cầm trên tay.
 
 Vũ khí cần cấp 9 ở thuộc tính của nó: dưới mức đó, nó chỉ gây một phần ba
-sát thương, và trình sửa báo điều này bằng chữ đỏ. Sword luôn thuộc
-Swordsmanship, nhưng Staff, Wand, Shield hay Focus được làm cho một thuộc
+sát thương, và trình sửa báo điều này bằng chữ đỏ. ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** luôn thuộc
+Swordsmanship, nhưng ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff**, ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, Shield hay Focus được làm cho một thuộc
 tính bạn chọn: nhấn vào tay tương ứng trên hình nhân (**6** cho vũ khí,
 **7** cho tay phụ) và chọn một thuộc tính.
 
@@ -26,39 +26,39 @@ tính bạn chọn: nhấn vào tay tương ứng trên hình nhân (**6** cho v
 
 Mỗi vũ khí và món tay phụ có các ô cho mod: một **tiền tố**, một **hậu tố**
 và một **khắc chữ**. Nhấn vào tay trên hình nhân, hoặc hàng của nó bên cạnh,
-để chọn; mỗi mod đều ghi tác dụng của nó. Wand, Shield và Focus không nhận
+để chọn; mỗi mod đều ghi tác dụng của nó. ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** và ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus** không nhận
 tiền tố; tay không thì không nhận mod nào. Mod luôn ở giá trị tốt nhất, và
 mỗi bộ vũ khí mang mod riêng, nên đổi bộ cũng đổi mod của chúng: Máu và Năng
 lượng tối đa thay đổi theo bộ đang cầm. Đổi vũ khí sẽ giữ những mod vẫn còn
 hợp với nó và báo cho bạn mod nào đã bị bỏ.
 
-| Mod                       | Ô        | Hợp với                             | Tác dụng                                |
-| ------------------------- | -------- | ----------------------------------- | --------------------------------------- |
-| Defensive                 | Tiền tố  | Staff                               | Giáp +5                                 |
-| Hale                      | Tiền tố  | Staff                               | +30 Máu                                 |
-| Insightful                | Tiền tố  | Staff                               | Năng lượng +5                           |
-| of Defense                | Hậu tố   | mọi vũ khí võ, Staff                | Giáp +5                                 |
-| of Fortitude              | Hậu tố   | mọi vũ khí võ, Staff, Shield, Focus | +30 Máu                                 |
-| of Shelter                | Hậu tố   | mọi vũ khí võ, Staff                | Giáp +7 (chống sát thương vật lý)       |
-| of Warding                | Hậu tố   | mọi vũ khí võ, Staff                | Giáp +7 (chống sát thương nguyên tố)    |
-| "Cast Out the Unclean"    | Khắc chữ | Shield, Focus                       | Giảm 20% thời lượng Disease trên bạn    |
-| "Fear Cuts Deeper"        | Khắc chữ | Shield, Focus                       | Giảm 20% thời lượng Bleeding trên bạn   |
-| "I Can See Clearly Now"   | Khắc chữ | Shield, Focus                       | Giảm 20% thời lượng Blinded trên bạn    |
-| "I have the power!"       | Khắc chữ | mọi vũ khí võ                       | Năng lượng +5                           |
-| "Leaf on the Wind"        | Khắc chữ | Shield, Focus                       | Giáp +10 (chống sát thương băng)        |
-| "Like a Rolling Stone"    | Khắc chữ | Shield, Focus                       | Giáp +10 (chống sát thương đất)         |
-| "Live for Today"          | Khắc chữ | Focus                               | Năng lượng +15, hồi Năng lượng -1       |
-| "Not the face!"           | Khắc chữ | Shield, Focus                       | Giáp +10 (chống sát thương va đập)      |
-| "Only the Strong Survive" | Khắc chữ | Shield, Focus                       | Giảm 20% thời lượng Weakness trên bạn   |
-| "Pure of Heart"           | Khắc chữ | Shield, Focus                       | Giảm 20% thời lượng Poison trên bạn     |
-| "Riders on the Storm"     | Khắc chữ | Shield, Focus                       | Giáp +10 (chống sát thương sét)         |
-| "Seize the Day"           | Khắc chữ | Staff, Wand                         | Năng lượng +15, hồi Năng lượng -1       |
-| "Sleep Now in the Fire"   | Khắc chữ | Shield, Focus                       | Giáp +10 (chống sát thương lửa)         |
-| "Soundness of Mind"       | Khắc chữ | Shield, Focus                       | Giảm 20% thời lượng Dazed trên bạn      |
-| "Strength of Body"        | Khắc chữ | Shield, Focus                       | Giảm 20% thời lượng Deep Wound trên bạn |
-| "Swift as the Wind"       | Khắc chữ | Shield, Focus                       | Giảm 20% thời lượng Crippled trên bạn   |
-| "The Riddle of Steel"     | Khắc chữ | Shield, Focus                       | Giáp +10 (chống sát thương chém)        |
-| "Through Thick and Thin"  | Khắc chữ | Shield, Focus                       | Giáp +10 (chống sát thương xuyên)       |
+| Mod                       | Ô        | Hợp với                                                             | Tác dụng                                                                                                        |
+| ------------------------- | -------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Tiền tố  | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Giáp +5                                                                                                         |
+| Hale                      | Tiền tố  | Staff                                                               | +30 Máu                                                                                                         |
+| Insightful                | Tiền tố  | Staff                                                               | Năng lượng +5                                                                                                   |
+| of Defense                | Hậu tố   | mọi vũ khí võ, Staff                                                | Giáp +5                                                                                                         |
+| of Fortitude              | Hậu tố   | mọi vũ khí võ, Staff, Shield, Focus                                 | +30 Máu                                                                                                         |
+| of Shelter                | Hậu tố   | mọi vũ khí võ, Staff                                                | Giáp +7 (chống sát thương vật lý)                                                                               |
+| of Warding                | Hậu tố   | mọi vũ khí võ, Staff                                                | Giáp +7 (chống sát thương nguyên tố)                                                                            |
+| "Cast Out the Unclean"    | Khắc chữ | Shield, Focus                                                       | Giảm 20% thời lượng ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** trên bạn          |
+| "Fear Cuts Deeper"        | Khắc chữ | Shield, Focus                                                       | Giảm 20% thời lượng ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** trên bạn       |
+| "I Can See Clearly Now"   | Khắc chữ | Shield, Focus                                                       | Giảm 20% thời lượng ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** trên bạn            |
+| "I have the power!"       | Khắc chữ | mọi vũ khí võ                                                       | Năng lượng +5                                                                                                   |
+| "Leaf on the Wind"        | Khắc chữ | Shield, Focus                                                       | Giáp +10 (chống sát thương băng)                                                                                |
+| "Like a Rolling Stone"    | Khắc chữ | Shield, Focus                                                       | Giáp +10 (chống sát thương đất)                                                                                 |
+| "Live for Today"          | Khắc chữ | Focus                                                               | Năng lượng +15, hồi Năng lượng -1                                                                               |
+| "Not the face!"           | Khắc chữ | Shield, Focus                                                       | Giáp +10 (chống sát thương va đập)                                                                              |
+| "Only the Strong Survive" | Khắc chữ | Shield, Focus                                                       | Giảm 20% thời lượng ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** trên bạn       |
+| "Pure of Heart"           | Khắc chữ | Shield, Focus                                                       | Giảm 20% thời lượng ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** trên bạn             |
+| "Riders on the Storm"     | Khắc chữ | Shield, Focus                                                       | Giáp +10 (chống sát thương sét)                                                                                 |
+| "Seize the Day"           | Khắc chữ | Staff, Wand                                                         | Năng lượng +15, hồi Năng lượng -1                                                                               |
+| "Sleep Now in the Fire"   | Khắc chữ | Shield, Focus                                                       | Giáp +10 (chống sát thương lửa)                                                                                 |
+| "Soundness of Mind"       | Khắc chữ | Shield, Focus                                                       | Giảm 20% thời lượng ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** trên bạn                |
+| "Strength of Body"        | Khắc chữ | Shield, Focus                                                       | Giảm 20% thời lượng ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** trên bạn |
+| "Swift as the Wind"       | Khắc chữ | Shield, Focus                                                       | Giảm 20% thời lượng ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** trên bạn       |
+| "The Riddle of Steel"     | Khắc chữ | Shield, Focus                                                       | Giáp +10 (chống sát thương chém)                                                                                |
+| "Through Thick and Thin"  | Khắc chữ | Shield, Focus                                                       | Giáp +10 (chống sát thương xuyên)                                                                               |
 
 ### Tiền tố vũ khí võ khi đánh trúng
 
@@ -153,16 +153,16 @@ của bộ bạn đang xem, cùng các mod của chúng.
 
 ## Rune
 
-| Rune                                   | Cho bạn                                   |
-| -------------------------------------- | ----------------------------------------- |
-| Rune thuộc tính Minor                  | +1 cho một thuộc tính                     |
-| Rune thuộc tính Major                  | +2 cho một thuộc tính, -35 Máu            |
-| Rune thuộc tính Superior               | +3 cho một thuộc tính, -75 Máu            |
-| Vigor                                  | thêm Máu (+30, +41 hoặc +50)              |
-| Vitae                                  | +10 Máu                                   |
-| Attunement                             | thêm Năng lượng (+3, +6 hoặc +9)          |
-| Clarity, Purity, Recovery, Restoration | mỗi rune làm hai Dị trạng hết sớm hơn 20% |
-| Absorption (Warrior)                   | giảm sát thương vật lý từ mỗi đòn         |
+| Rune                                                                                                                                                                                                                                                                                                           | Cho bạn                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Rune thuộc tính Minor                                                                                                                                                                                                                                                                                          | +1 cho một thuộc tính                     |
+| Rune thuộc tính Major                                                                                                                                                                                                                                                                                          | +2 cho một thuộc tính, -35 Máu            |
+| Rune thuộc tính Superior                                                                                                                                                                                                                                                                                       | +3 cho một thuộc tính, -75 Máu            |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | thêm Máu (+30, +41 hoặc +50)              |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Máu                                   |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | thêm Năng lượng (+3, +6 hoặc +9)          |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | mỗi rune làm hai Dị trạng hết sớm hơn 20% |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | giảm sát thương vật lý từ mỗi đòn         |
 
 Bạn chọn rune của một món ở cùng chỗ với huy hiệu của nó: nhấn vào món đó
 trên hình nhân.

@@ -6,8 +6,8 @@
 
 ## อาชีพ
 
-มีสิบอาชีพ: Warrior, Ranger, Monk, Necromancer, Mesmer,
-Elementalist, Assassin, Ritualist, Paragon และ Dervish อาชีพ **หลัก**
+มีสิบอาชีพ: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**,
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** และ ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish** อาชีพ **หลัก**
 ของคุณคือสิ่งที่คุณเป็น: สกิลของมัน และ **ค่าสถานะหลัก** ของมัน
 (มีเครื่องหมาย ★) ซึ่งมีแต่อาชีพหลักเท่านั้นที่ได้ อาชีพ **รอง** ให้คุณยืม
 สกิลของมันได้ แต่ไม่ให้ค่าสถานะหลักของมัน
@@ -18,11 +18,11 @@ Elementalist, Assassin, Ritualist, Paragon และ Dervish อาชีพ **�
 แถบ: ถ้าติดตั้งสกิลที่สอง มันจะแทนที่สกิลแรก กด **×** บนช่องเพื่อ
 ล้างช่องนั้น
 
-**Flash enchantment** (Dervish) ทำงานทันที: การใช้มันจะไม่ขัด
+![มนตร์เสริม](../../../apps/web/public/icons/skill-type/enchantment.svg) **Flash enchantment** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) ทำงานทันที: การใช้มันจะไม่ขัด
 การเหวี่ยงและการก้าวเดินของคุณ คุณจึงสอดมันไว้ระหว่างการโจมตีได้ แต่ละอัน
 จะปิด flash enchantment อื่นๆ ของคุณไว้ 1 วินาที
 
-**ร่าง** (Avatar ทั้งห้าของ Dervish: Balthazar, Dwayna, Grenth, Lyssa
+![ร่าง](../../../apps/web/public/icons/skill-type/form.svg) **ร่าง** (Avatar ทั้งห้าของ Dervish: Balthazar, Dwayna, Grenth, Lyssa
 และ Melandru) เปลี่ยนร่างคุณนานกว่าหนึ่งนาที ร่าง
 ไม่ใช่มนตร์เสริม จึงไม่มีใครลอกมันออกได้ และคุณอยู่ในร่างได้ทีละหนึ่งร่าง
 การใช้ร่างหนึ่งจะปิดร่างนั้นไว้ 45 วินาที เมื่อร่างสิ้นสุด คุณจะ
@@ -31,7 +31,7 @@ Elementalist, Assassin, Ritualist, Paragon และ Dervish อาชีพ **�
 
 **ลูกธนูบางแบบปิดการโจมตีอื่นของคุณ** Focused Shot และ Needling
 Shot พุ่งเร็วกว่าลูกธนูปกติ แต่ทุกครั้งที่โดนจะปิด
-สกิลโจมตีอื่นๆ ของคุณไว้ไม่กี่วินาที เวทไม่ได้รับผลกระทบ
+![สกิลโจมตี](../../../apps/web/public/icons/skill-type/attack.svg) **สกิลโจมตี** อื่นๆ ของคุณไว้ไม่กี่วินาที ![เวท](../../../apps/web/public/icons/skill-type/spell.svg) **เวท** ไม่ได้รับผลกระทบ
 
 ## ค่าสถานะ
 
@@ -43,10 +43,10 @@ Shot พุ่งเร็วกว่าลูกธนูปกติ แต�
 ค่าสถานะจะแสดงเป็นสีเขียวตัวหนา ตามระดับปัจจุบันของคุณซึ่งรวม
 รูนและหมวกแล้ว
 
-ในการต่อสู้ ระดับของคุณอาจเปลี่ยนไปชั่วคราว Weakness ลดลงหนึ่งระดับ
-ทุกค่า คำสาปบางอย่างตั้งค่าสถานะของศัตรูเป็น 0 และ Master of Magic ตั้ง
+ในการต่อสู้ ระดับของคุณอาจเปลี่ยนไปชั่วคราว ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** ลดลงหนึ่งระดับ
+ทุกค่า ![คำสาป](../../../apps/web/public/icons/skill-type/hex.svg) **คำสาป** บางอย่างตั้งค่าสถานะของศัตรูเป็น 0 และ Master of Magic ตั้ง
 ค่าสถานะธาตุของคุณเป็น 13: ระดับที่ถูกตั้งแบบนี้จะมีผลเหนือรูนและ
-Weakness เหมือนกัน Signet of Illusions ทำให้เวทถัดไปของคุณที่ใช้ค่าสถานะ
+Weakness เหมือนกัน Signet of Illusions ทำให้ ![เวท](../../../apps/web/public/icons/skill-type/spell.svg) **เวท** ถัดไปของคุณที่ใช้ค่าสถานะ
 อื่นใช้ระดับ Illusion Magic ของคุณ สกิลบางอย่างเพิ่ม
 ค่าสถานะของคุณชั่วคราวหรือสำหรับเวทถัดไป อย่างที่ Glyph of Elemental
 Power และ Ritual Lord ทำ แม้แต่ค่าที่คุณปล่อยไว้ที่ 0 ระดับที่ถูกตั้งไว้ อย่างของ Master
@@ -54,19 +54,19 @@ of Magic จะชนะการเพิ่มแบบนี้
 
 ## เอคโค
 
-**เอคโค** ของ Paragon คือบัฟระยะยาวบนพันธมิตรหนึ่งคน **refrain** จะต่อเวลา
-จนเต็ม และ **finale** จะเกิดผล ทุกครั้งที่บทสวดหรือ
-เสียงตะโกนบนพันธมิตรคนนั้นสิ้นสุดลง บทสวดหรือเสียงตะโกนที่ถูกใส่ซ้ำก่อนหมดเวลาถือว่ายังไม่
+![เอคโค](../../../apps/web/public/icons/skill-type/echo.svg) **เอคโค** ของ ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** คือบัฟระยะยาวบนพันธมิตรหนึ่งคน **refrain** จะต่อเวลา
+จนเต็ม และ **finale** จะเกิดผล ทุกครั้งที่ ![บทสวด](../../../apps/web/public/icons/skill-type/chant.svg) **บทสวด** หรือ
+![เสียงตะโกน](../../../apps/web/public/icons/skill-type/shout.svg) **เสียงตะโกน** บนพันธมิตรคนนั้นสิ้นสุดลง บทสวดหรือเสียงตะโกนที่ถูกใส่ซ้ำก่อนหมดเวลาถือว่ายังไม่
 สิ้นสุด ไม่มีอะไรลบเอคโคได้: มันจะสิ้นสุดเมื่อหมดเวลาหรือเมื่อผู้ที่มีมัน
 ตาย เอคโคส่วนใหญ่เล็งวิญญาณไม่ได้
 
 ## สกิลที่กลายเป็นสกิลอื่น
 
-สกิล Mesmer บางสกิลจะใส่สกิลอื่นไว้ในช่องของตัวเองชั่วคราว
-Arcane Echo และ Echo คัดลอกสกิลถัดไปที่คุณใช้ **Inspired
+สกิล ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** บางสกิลจะใส่สกิลอื่นไว้ในช่องของตัวเองชั่วคราว
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** และ ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** คัดลอกสกิลถัดไปที่คุณใช้ **Inspired
 Enchantment** และ **Inspired Hex** จะกลายเป็นสกิลที่ร่าย
-มนตร์เสริมหรือคำสาปที่มันลบออก เป็นเวลา 20 วินาที **Arcane Thievery**
-จะกลายเป็นเวทที่มันปิดไว้บนศัตรูของคุณ ตราบเท่าที่การปิดนั้น
+![มนตร์เสริม](../../../apps/web/public/icons/skill-type/enchantment.svg) **มนตร์เสริม** หรือ ![คำสาป](../../../apps/web/public/icons/skill-type/hex.svg) **คำสาป** ที่มันลบออก เป็นเวลา 20 วินาที **Arcane Thievery**
+จะกลายเป็น ![เวท](../../../apps/web/public/icons/skill-type/spell.svg) **เวท** ที่มันปิดไว้บนศัตรูของคุณ ตราบเท่าที่การปิดนั้น
 ยังอยู่ สำเนามีคูลดาวน์ของตัวเอง เมื่อมันสิ้นสุด สกิลเดิม
 จะกลับมาและเริ่มคูลดาวน์ของตัวเอง และการร่ายสำเนาที่ยังทำอยู่
 จะล้มเหลว สถานะที่ใส่โดยวิญญาณหรือโดยสถานะอื่นคัดลอก
@@ -74,10 +74,10 @@ Enchantment** และ **Inspired Hex** จะกลายเป็นสกิ
 
 ## บ่อและกลิฟ
 
-**บ่อ** ของ Necromancer ใช้ศพที่ใกล้ที่สุด ถ้าไม่มีศพอยู่ใกล้
+![บ่อ](../../../apps/web/public/icons/skill-type/well.svg) **บ่อ** ของ ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** ใช้ศพที่ใกล้ที่สุด ถ้าไม่มีศพอยู่ใกล้
 บ่อจะสังเวยพลังชีวิต 66% ของคุณแทน และปรากฏตรงที่คุณยืนอยู่
 
-**กลิฟ** ของ Elementalist เปลี่ยนเวทถัดไปของคุณ: มันจะ
+![กลิฟ](../../../apps/web/public/icons/skill-type/glyph.svg) **กลิฟ** ของ ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** เปลี่ยน ![เวท](../../../apps/web/public/icons/skill-type/spell.svg) **เวท** ถัดไปของคุณ: มันจะ
 ถูกขัดจังหวะไม่ได้ ร่ายทันที คูลดาวน์เสร็จทันที หรือใช้พลังงานน้อยลง กลิฟ
 ใหม่จะแทนที่กลิฟที่คุณมีอยู่
 
@@ -86,9 +86,9 @@ Enchantment** และ **Inspired Hex** จะกลายเป็นสกิ
 สกิลที่ตอบสนอง "the next time damage drops Health below N%"
 จะตอบสนองต่อการโจมตีหรือการขโมยพลังชีวิตใดๆ ที่ทำให้คุณยังมีชีวิตอยู่และต่ำกว่า
 เส้นนั้น แม้ว่าคุณจะต่ำกว่าเส้นอยู่แล้วก่อนโดนตี และไม่ตอบสนองต่อ
-พลังชีวิตที่คุณสังเวยหรือเสียไปจากการลดลงต่อเนื่อง การป้องกันความเสียหายถึงตาย เช่น Judge's Intervention
-จะลบการโจมตีที่ถึงตายทั้งหมด: ไม่มีความเสียหาย ไม่ตาย Faithful Intervention
-และ Illusion of Weakness ไม่มีระยะเวลา: มันอยู่จนกว่าความเสียหาย การ
+พลังชีวิตที่คุณสังเวยหรือเสียไปจากการลดลงต่อเนื่อง การป้องกันความเสียหายถึงตาย เช่น ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**
+จะลบการโจมตีที่ถึงตายทั้งหมด: ไม่มีความเสียหาย ไม่ตาย ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention**
+และ ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** ไม่มีระยะเวลา: มันอยู่จนกว่าความเสียหาย การ
 ลอก หรือความตายจะทำให้มันสิ้นสุด และรักษาคุณไปพร้อมกัน
 
 ## คลังสกิล
@@ -114,19 +114,19 @@ Enchantment** และ **Inspired Hex** จะกลายเป็นสกิ
 
 ## เวทไอเท็ม
 
-**เวทไอเท็ม** ของ Ritualist จะใส่ **เถ้า** ของวิญญาณไว้ในมือคุณ:
+![เวทไอเท็ม](../../../apps/web/public/icons/skill-type/item-spell.svg) **เวทไอเท็ม** ของ ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** จะใส่ **เถ้า** ของวิญญาณไว้ในมือคุณ:
 ได้โบนัสขณะถือไว้ และได้ **ผลเมื่อวาง** เมื่อมันตกลง มัน
 จะตกเมื่อหมดเวลา เมื่อคุณตาย เมื่อคุณกด **วางเถ้า** เหนือ
 แถบพลังชีวิต ร่ายเวทไอเท็มอื่น ชาโดว์สเต็ป สลับอาวุธ หรือ
 หยิบธงหรือเรลิก มือของคุณเต็มขณะถือมัน: ไม่มีการ
-โจมตีและสกิลโจมตี แต่คุณเดินด้วยความเร็วเต็มที่และยังร่าย
-เวทได้ ไม่มีอะไรลบเถ้าได้ ทุกการสิ้นสุดคือการวาง
+โจมตีและ ![สกิลโจมตี](../../../apps/web/public/icons/skill-type/attack.svg) **สกิลโจมตี** แต่คุณเดินด้วยความเร็วเต็มที่และยังร่าย
+![เวท](../../../apps/web/public/icons/skill-type/spell.svg) **เวท** ได้ ไม่มีอะไรลบเถ้าได้ ทุกการสิ้นสุดคือการวาง
 
 ## ชาโดว์สเต็ป
 
 **ชาโดว์สเต็ป** ย้ายคุณทันที ไม่ต้องเดินระหว่างทาง ส่วนใหญ่จะพาคุณไปที่
 เป้าหมาย บางอย่างพาคุณกลับไปยังที่ที่คุณร่ายมันเมื่อมันสิ้นสุด อย่างที่
-Shadow of Haste และ Shadow Walk ทำ **Recall** พาคุณไปหาพันธมิตรของมันเฉพาะ
+Shadow of Haste และ Shadow Walk ทำ ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** พาคุณไปหาพันธมิตรของมันเฉพาะ
 ตอนที่มันสิ้นสุด และปิดสกิลทั้งหมดของคุณไว้ 3 วินาที **Swap** สลับ
 ที่กับวิญญาณหรือมินเนียนตัวหนึ่งของฝั่งคุณ
 

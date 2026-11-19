@@ -380,7 +380,7 @@ A equipe escolhe uma vez, na Sala de Equipe do primeiro mapa, e mantém sua
 Build de Equipe e seus assentos no resto da campanha: depois de uma
 vitória, volta à fila sem votação nem escolha. Quem sai no meio da
 campanha libera o assento, mas não a build dele. Quem entra no grupo entre
-mapas só escolhe entre os assentos vagos (**Livre: build de Monk**) e joga
+mapas só escolhe entre os assentos vagos (**Livre: build de Monge**) e joga
 a build desse assento; um assento vago que ninguém pegar é de um bot. Uma
 derrota recomeça do zero: a próxima campanha vota de novo. O mesmo vale
 para seguir seu host até outro grupo, cujo host não pode garantir a
@@ -392,8 +392,7 @@ Um grupo com menos de 8 entra na fila com bots nos lugares vazios, usando sua Bu
 
 **Barrow Field** (8v8, 5400x2600) é uma arena da Ascensão que você também pode escolher em uma Partida Hospedada: Aniquilação de Sacerdotes em um charco de túmulos ao entardecer, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Suba em um túmulo para ter o terreno alto, ou siga a passagem dos túmulos por baixo dele quando uma alavanca no túmulo distante abrir o portão. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
 
-Três arenas da Ascensão também podem ser escolhidas em uma Partida Hospedada: **The Hollow Deep** (8v8 de Aniquilação, três túneis sinuosos
-em volta de uma rocha central),
+Três arenas da Ascensão também podem ser escolhidas em uma Partida Hospedada: **The Hollow Deep** (8v8 de Aniquilação, 6200x2400, numa caverna escura: atravesse uma ponte de cordas sobre um abismo, suba por uma saliência central ou pegue a cripta por baixo dela quando uma alavanca numa plataforma de rocha abrir seu portão),
 **Blackwater Ford** (8v8, 5200x2800, de Aniquilação de Sacerdotes em um vau escuro de rio:
 dá para atravessar a pé um vau raso, cruzar a ponte quebrada sobre o moinho, apoiada em seus pilares,
 ou pegar um bueiro sob a ponte assim que uma alavanca no moinho abre o portão dele; o sacerdote traz os mortos a cada 2
