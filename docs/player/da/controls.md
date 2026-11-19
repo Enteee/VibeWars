@@ -71,7 +71,8 @@ Uden for en kamp rummer topbjælken **[?]** (denne Hjælp), **⚙** (Valg),
 undtagen Lobby, øverst til højre på skærmen. I et smalt vindue foldes disse ikoner og
 skærmens andre knapper ind i **⋯**; kun dens hovedknap bliver ude.
 ⚙ åbner Valg som et vindue under bjælken, med skærmen stadig bagved; Esc, × eller et klik udenfor lukker det. Under **Visning** slår **Belysning** en oplyst banes lys og skygge til eller fra, med det samme, også i en kamp.
-Hjælp lukkes med × øverst til højre, Esc eller endnu et tryk på [?].
+[?] åbner Hjælp på samme måde, som et vindue under den med en sidevælger øverst; en kamp kører videre bagved.
+Hjælp lukkes med vinduets ×, Esc, et klik udenfor eller endnu et tryk på [?].
 
 **Del et beat med din lobby.** I beat-editoren (♪, derefter **Ret**)
 sender **Del med lobby** det, du har skrevet, gemt eller ej, til alle

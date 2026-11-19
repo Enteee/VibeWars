@@ -1,7 +1,7 @@
 # Hilfe
 
-Die Seiten der Hilfe im Spiel, in der Reihenfolge, in der sie dort stehen.
-Jede Seite in diesem Verzeichnis ist hier genau einmal aufgeführt.
+Die Seiten des Hilfe-Fensters im Spiel, in der Reihenfolge, in der die Seitenauswahl
+sie aufführt. Jede Seite in diesem Verzeichnis ist hier genau einmal aufgeführt.
 
 - [Erste Schritte](getting-started.md)
 - [Steuerung](controls.md)

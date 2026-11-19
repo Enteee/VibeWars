@@ -1,6 +1,6 @@
 # Nápověda
 
-Stránky obrazovky Nápověda ve hře, v pořadí, v jakém je uvádí. Každá
+Stránky okna Nápověda ve hře, v pořadí, v jakém je uvádí výběr stránky. Každá
 stránka v této složce je tu uvedena právě jednou.
 
 - [Začínáme](getting-started.md)

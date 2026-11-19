@@ -1,6 +1,6 @@
 # Help
 
-The pages of the in-game Help screen, in the order it lists them. Every
+The pages of the in-game Help window, in the order its page picker lists them. Every
 page in this directory is listed here exactly once.
 
 - [Getting started](getting-started.md)
