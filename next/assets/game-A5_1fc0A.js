@@ -1,0 +1,2 @@
+import{X as e}from"./main-48lxIjTk.js";var t=e;export{t as default};
+//# sourceMappingURL=game-A5_1fc0A.js.map
