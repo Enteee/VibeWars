@@ -8,6 +8,7 @@ import {
   loadoutSpec,
   nearestStandable,
   resolveLoadout,
+  teamIds,
   vec2,
   type NavGraph,
   type ParticipantSpec,
@@ -37,13 +38,19 @@ const OFFSCREEN_MARGIN = 80;
 const SPAWN_SPACING = 70;
 /** As a body stands in a map: the sim's own walkable query needs one. */
 const SPAWN_CLEARANCE = 24;
+/** Each team faces into the view from where it enters: right, left, up. */
+const FACING = [0, Math.PI, -Math.PI / 2];
 /** A long frame is not caught up on: a hidden tab costs nothing. */
 const MAX_STEP_SECONDS = 0.1;
 /** Behind the menus it never draws faster (#3119); matches are not capped. */
 const FPS_LIMIT = 30;
-/** Nobody wins and the clock never runs out. */
+/**
+ * Nobody wins and the clock never runs out: the dead respawn, so no side is
+ * ever wiped out. Annihilation, not kill-count, so that a three-team map
+ * fights too (#3633).
+ */
 export const SPLASH_RULES = {
-  victory: "kill-count",
+  victory: "annihilation",
   scoreToWin: 1_000_000,
   timeLimitSeconds: 1_000_000,
   deathRule: "respawn",
@@ -72,9 +79,10 @@ function pick<T>(from: readonly T[], random: () => number): T {
 
 /**
  * Where body `index` of `team` starts: just outside the view box on its
- * side, or at the map's edge when the map is smaller than the view, at
- * the nearest place it can stand. A respawn comes back here, off camera.
- * A `still` fight never walks in, so it stands just inside the view.
+ * side (left, right, a third team below), or at the map's edge when the
+ * map is smaller than the view, at the nearest place it can stand. A
+ * respawn comes back here, off camera. A `still` fight never walks in, so
+ * it stands just inside the view.
  */
 export function splashSpawn(
   graph: NavGraph,
@@ -86,9 +94,14 @@ export function splashSpawn(
   const { width, height } = map.descriptor;
   const reach =
     (VIEW_HEIGHT * VIEW_ASPECT) / 2 + (fight.still ? -OFFSCREEN_MARGIN : OFFSCREEN_MARGIN);
+  const along = (index - (fight.teamSize - 1) / 2) * SPAWN_SPACING;
+  if (team === 2) {
+    // A three-team map's third side comes in from below (#3633).
+    const below = VIEW_HEIGHT / 2 + (fight.still ? -OFFSCREEN_MARGIN : OFFSCREEN_MARGIN);
+    return nearestStandable(graph, vec2(width / 2 + along, height / 2 + below));
+  }
   const x = width / 2 + (team === 0 ? -reach : reach);
-  const y = height / 2 + (index - (fight.teamSize - 1) / 2) * SPAWN_SPACING;
-  return nearestStandable(graph, vec2(x, y));
+  return nearestStandable(graph, vec2(x, height / 2 + along));
 }
 
 /** Where a body can stand on `map`, for its spawn. */
@@ -104,8 +117,8 @@ export interface SplashBots {
 }
 
 /**
- * The bots of both sides, `fight.teamSize` each, walking in from their
- * spawns, on builds picked from `buildsOf` their team by `random`.
+ * The bots of every side the map seats, `fight.teamSize` each, walking in
+ * from their spawns, on builds picked from `buildsOf` their team by `random`.
  */
 export function splashParticipants(
   map: SplashMap,
@@ -115,7 +128,7 @@ export function splashParticipants(
   random: () => number = Math.random,
 ): SplashBots {
   const professions = new Map<string, Professions>();
-  const participants = [0, 1].flatMap((team) =>
+  const participants = teamIds(map.descriptor.teamCount).flatMap((team) =>
     Array.from({ length: fight.teamSize }, (_, index) => {
       const loadout = loadoutOf(pick(buildsOf(team), random));
       const resolved = resolveLoadout(
@@ -138,7 +151,7 @@ export function splashParticipants(
         skillBar: loadout.skillBar,
         ...loadoutSpec(resolved),
         spawn: splashSpawn(graph, map, fight, team, index),
-        facing: team === 0 ? 0 : Math.PI,
+        facing: FACING[team] ?? 0,
         behaviour: { kind: "play-build", reaction: BOT_REACTION },
       } satisfies ParticipantSpec;
     }),
