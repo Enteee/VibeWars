@@ -160,8 +160,24 @@ const BAND_OUT = 0.9;
 /** The band's half span, folded, and how much of it the tab takes. */
 const BAND_SPAN = (52 * Math.PI) / 180;
 const BAND_SPAN_TAKEN = (22 * Math.PI) / 180;
-/** The study draws its chevron 1.1 times the cape emblem's size. */
-const EMBLEM_SCALE = 1.1;
+/** How far short of the notch the emblem stops, so it never touches the hem. */
+const EMBLEM_NOTCH_GAP = 0.5;
+
+/**
+ * The largest emblem, up to `EMBLEM_SIZE`, whose far edge stops `EMBLEM_NOTCH_GAP`
+ * short of the notch `notch` along the tab and whose near corners clear the
+ * disc of radius `r` (#3627): the near edge at `notch - size` and its corners
+ * `size / 2` aside, `(notch - size)^2 + (size / 2)^2 >= r^2`. None when the
+ * cloth has not cleared the disc.
+ */
+function emblemFit(notch: number, r: number): number {
+  const far = notch - EMBLEM_NOTCH_GAP;
+  if (far <= r) {
+    return 0;
+  }
+  const room = 5 * r * r - far * far;
+  return room <= 0 ? EMBLEM_SIZE : Math.min(EMBLEM_SIZE, (2 * far - Math.sqrt(room)) / 2.5);
+}
 
 /**
  * The cape on `body` as `state` has it: the study's `shapeA`, a tab from
@@ -187,19 +203,25 @@ export function capeMotionShape(
   const width = 3 + 4.5 * u;
   const rootHalf = (3 + 5 * u) * 1.4;
   const hemLeft = at(len, -width);
-  const notch = at(len - 4.5 * u, 0);
+  const notchAlong = len - 4.5 * u;
+  const notch = at(notchAlong, 0);
   const hemRight = at(len, width);
   const span = BAND_SPAN - BAND_SPAN_TAKEN * u;
+  const emblemSize = emblemFit(notchAlong, r);
+  const emblemAlong = notchAlong - EMBLEM_NOTCH_GAP - emblemSize / 2;
   return {
     band: { x, y, radius: r + BAND_OUT, from: angle - span, to: angle + span },
     cloth: [at(r - 3, -rootHalf), hemLeft, notch, hemRight, at(r - 3, rootHalf)],
     trim: [hemLeft, notch, hemRight],
     // Its up is the tab's left side, as the study turns it.
-    emblem: emblemShape(
-      emblem,
-      { x: x + dx * (r + 4 * u), y: y + dy * (r + 4 * u) },
-      angle + Math.PI / 2,
-      EMBLEM_SIZE * EMBLEM_SCALE,
-    ),
+    emblem:
+      emblemSize > 0
+        ? emblemShape(
+            emblem,
+            { x: x + dx * emblemAlong, y: y + dy * emblemAlong },
+            angle + Math.PI / 2,
+            emblemSize,
+          )
+        : [],
   };
 }

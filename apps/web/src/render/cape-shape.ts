@@ -46,8 +46,8 @@ export function capeLook(cape: WireCape): CapeLook {
   };
 }
 
-/** How wide an emblem is on a cape. */
-export const EMBLEM_SIZE = 5;
+/** How wide an emblem is on a fully unfolded cape: twice the old 5.5 (#3627). */
+export const EMBLEM_SIZE = 11;
 
 /** The starting emblems (#3554), in the order the cape designer shows them. */
 export const EMBLEM_PRESET_NAMES = [
