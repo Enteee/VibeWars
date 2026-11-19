@@ -1066,11 +1066,11 @@
       "id": "north-portcullis",
       "wall": {
         "kind": "rect",
-        "x": 1662,
-        "y": 580,
-        "width": 14,
-        "height": 120,
-        "layer": 0
+        "x": 1540,
+        "y": 796,
+        "width": 120,
+        "height": 14,
+        "layer": 1
       },
       "opener": {
         "kind": "switch"
@@ -1082,11 +1082,11 @@
       "id": "south-portcullis",
       "wall": {
         "kind": "rect",
-        "x": 3724,
-        "y": 1700,
-        "width": 14,
-        "height": 120,
-        "layer": 0
+        "x": 3740,
+        "y": 1590,
+        "width": 120,
+        "height": 14,
+        "layer": 1
       },
       "opener": {
         "kind": "switch"
