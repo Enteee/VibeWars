@@ -635,6 +635,32 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: true });
   });
 
+  it("never takes a result it refused for the round a re-round adds leavers to", async () => {
+    const sigs = countingSigs();
+    const ranked = await openRanked("random-arena-2v2", {
+      wrap: sigs.wrap,
+      host: lyingHost((result, seats) =>
+        // A first round nobody can sign, then a re-round with the true
+        // winner naming one opponent alone a leaver: no guest signed a
+        // round before it, so none has evidence against it.
+        result.leavers.length === 0
+          ? { ...result, winningTeam: 0 }
+          : { ...result, leavers: [seats[3] ?? ""] },
+      ),
+    });
+    await startRanked(ranked);
+    ranked.match.finish(1);
+    await ranked.step(1);
+    expect(sigs.sent()).toEqual([1, 0, 0, 0]);
+    await ranked.step(RANKED_RESULT_TIMEOUT_MS / 1000);
+    await until(() => ranked.receipts.length === 1);
+    // Seat 3 never saw itself named, and seats 1 and 2 never saw it go.
+    expect(sigs.sent()).toEqual([2, 0, 0, 0]);
+    const receipt = receiptOf(ranked);
+    expect(receipt.result.leavers).toEqual(pubkeys(ranked).slice(1));
+    expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: true });
+  });
+
   it("hands on a partial receipt each round a seat signs, and re-rounds only its non-signers", async () => {
     const ranked = await openRanked("random-arena-2v2", {
       wrap: (n, transport) =>

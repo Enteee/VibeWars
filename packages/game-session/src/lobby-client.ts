@@ -403,8 +403,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const seenGone = new Set<string>();
   /** The winner the host's `ended` told this player, once it came: what a result must say. */
   let endedWinner: WireTeam | null | undefined;
-  /** The last ranked result the host sent, signed or not: a re-round's is compared with it. */
-  let lastResult: RankedResult | undefined;
+  /** The last ranked result this player signed: a re-round's is compared with it. */
+  let signedResult: RankedResult | undefined;
   /** How many results this player signed: the next partial's round. */
   let resultsSigned = 0;
 
@@ -425,18 +425,26 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
 
   /**
    * Whether `result`'s leavers are ones this player may sign for
-   * (ADR-0055, "What a host decides"): each it saw go, or, in a re-round,
-   * one the previous result did not name, which the host says did not
-   * sign it. Refusing to sign is leaving, and nobody else can see a
-   * refusal, so a re-round's is taken on the host's word. A host that
-   * names a seat that did sign is caught by that seat's published
-   * signature of the earlier round (`onResultSigned`), and the consent
-   * rule keeps it from winning a host's team a match alone.
+   * (ADR-0055, "What a host decides"). Before it signed any, each must be
+   * one it saw go. After, only a re-round of the result it signed: that
+   * result with more leavers, which the host says did not sign it, and
+   * nothing else changed. Refusing to sign is leaving, and nobody else can
+   * see a refusal, so the new ones are taken on the host's word. A host
+   * that names a seat that did sign is caught by that seat's published
+   * signature of the earlier round (`onResultSigned`); a result this
+   * player refused is never an earlier round, so it can leave none.
    */
   const rankedLeaversHold = (result: RankedResult): boolean => {
-    const earlier = lastResult === undefined ? undefined : new Set(lastResult.leavers);
-    return result.leavers.every(
-      (pubkey) => seenGone.has(pubkey) || (earlier !== undefined && !earlier.has(pubkey)),
+    if (signedResult === undefined) {
+      return result.leavers.every((pubkey) => seenGone.has(pubkey));
+    }
+    const leavers = new Set(result.leavers);
+    return (
+      signedResult.leavers.every((pubkey) => leavers.has(pubkey)) &&
+      result.winningTeam === signedResult.winningTeam &&
+      result.endReason === signedResult.endReason &&
+      result.durationSeconds === signedResult.durationSeconds &&
+      result.replayHash === signedResult.replayHash
     );
   };
 
@@ -1196,10 +1204,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           !said.result.leavers.includes(options.playerKey.pubkey) &&
           said.result.winningTeam === endedWinner &&
           rankedLeaversHold(said.result);
-        lastResult = said.result;
         if (!holds) {
           return;
         }
+        signedResult = said.result;
         const reply: PeerRankedResultSig = {
           startHash: signed.hash,
           sig: options.playerKey.signRankedResult(said.result),
