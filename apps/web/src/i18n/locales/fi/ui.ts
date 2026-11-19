@@ -1502,6 +1502,18 @@ export default {
     "Tämä on päävalikko. Sivussa ovat pelitavat: valitse yksi avataksesi sen.",
   "tutorial.menu.menu.teams": "Joukkueissa kokoat hahmot joukkueeksi joukkuetaisteluihin.",
   "tutorial.menu.menu.title": "Jatkaaksesi sinun on vaihdettava erikoistumisesi.",
+  "tutorial.menu.modes.gvg":
+    "GvG on oma kiltasi toista vastaan, 8 vastaan 8, Guild Hall Islella. Surmaa vihollisen killanherra tukikohtansa perällä muurien ja vartijoiden takana, niin voitat.",
+  "tutorial.menu.modes.heroesAscent":
+    "Sankarien nousu on sarja karttoja, 8 vastaan 8, aina Sankarien saliin asti. Voita kierros päästäksesi seuraavalle kartalle; kohtaat vain oman kierroksesi tiimejä.",
+  "tutorial.menu.modes.hostedGame":
+    "Isännöity peli on oma aulasi. Kutsu ystäviä sen linkillä ja valitse itse kartta, tiimin koko ja asetukset.",
+  "tutorial.menu.modes.open": "Avaa sivussa korostettu pelitapa.",
+  "tutorial.menu.modes.randomArena":
+    "Satunnaisareena laittaa valitsemasi hahmon oikeiden pelaajien tiimiin toista tiimiä vastaan satunnaisella kartalla. Valitse 1v1, 2v2 tai 4v4: nopein tie taisteluun.",
+  "tutorial.menu.modes.teamArena":
+    "Tiimiareena on ryhmäsi tallennetulla tiimibuildilla toista tiimiä vastaan, 2v2, 4v4 tai 8v8 valintasi mukaan. Botit ottavat paikat, joita kukaan ei vie, ja jokaiseen otteluun arvotaan kartta.",
+  "tutorial.menu.modes.title": "Tiedä, missä taistella.",
   "tutorial.menu.skipAsk": "Ohitetaanko loput opastuksesta?",
   "tutorial.menu.spec.attributes":
     "Käytä ominaisuuspisteesi. Jokainen taso vahvistaa sen ominaisuuden taitoja.",

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { newCharacter } from "../ui/build-editor.js";
 import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
+import { RAIL, type RailEntry } from "../ui/rail.js";
 import { teamCharacter, teamOf } from "../ui/team-builder.js";
 
 import {
@@ -12,6 +13,8 @@ import {
   currentBeat,
   foldMenuQuestEvent,
   isMenuQuestStepId,
+  menuQuestStep,
+  modeBeats,
   resumeMenuQuest,
   stepComplete,
   type MenuQuestEvent,
@@ -249,7 +252,7 @@ describe("the team step (#3542)", () => {
   });
 
   it("follows the spec step", () => {
-    expect(MENU_QUEST_STEPS.map(({ id }) => id)).toEqual(["menu", "spec", "team"]);
+    expect(MENU_QUEST_STEPS.map(({ id }) => id).slice(0, 3)).toEqual(["menu", "spec", "team"]);
   });
 
   it("opens Teams, then a new team of two", () => {
@@ -304,5 +307,86 @@ describe("the team step (#3542)", () => {
     const saved = foldMenuQuestEvent(ready, { kind: "team-saved", team: filled, isNew: true });
     expect(teamAfter(saved, true)).toBe("past");
     expect(saved.questTeamId).toBe("t1");
+  });
+});
+
+describe("the modes step (#3543)", () => {
+  const MODES: readonly RailEntry[] = [
+    "random-arena",
+    "team-arena",
+    "heroes-ascent",
+    "gvg",
+    "hosted-game",
+  ];
+  const shown = (screen: RailEntry): MenuQuestEvent => ({ kind: "screen-shown", screen });
+
+  it("follows the team step, and is the last", () => {
+    expect(MENU_QUEST_STEPS.map(({ id }) => id)).toEqual(["menu", "spec", "team", "modes"]);
+    expect(advanceMenuQuest(resumeMenuQuest("team"), NO_MENU_QUEST_EVENTS, false)).toEqual({
+      step: "team",
+      beat: 0,
+    });
+  });
+
+  it("opens each mode in rail order, then explains it on its screen, then is done", () => {
+    let state = fold([shown("teams")]);
+    let cursor = advanceMenuQuest(resumeMenuQuest("modes"), state, false);
+    const targets: string[] = [];
+    for (const mode of MODES) {
+      if (cursor === "done") {
+        throw new Error("done early");
+      }
+      targets.push(beatTarget(currentBeat(cursor), state));
+      // Got it on the rail entry does nothing: it is a thing to do.
+      expect(advanceMenuQuest(cursor, state, true)).toEqual(cursor);
+      state = foldMenuQuestEvent(state, shown(mode));
+      cursor = advanceMenuQuest(cursor, state, false);
+      if (cursor === "done") {
+        throw new Error("done early");
+      }
+      targets.push(beatTarget(currentBeat(cursor), state));
+      expect(currentBeat(cursor).kind).toBe("explain");
+      cursor = advanceMenuQuest(cursor, state, true);
+    }
+    expect(targets).toEqual(MODES.flatMap((mode) => [`rail-${mode}`, `screen-${mode}`]));
+    expect(cursor).toBe("done");
+  });
+
+  it("waits on a mode's entry until that mode is the screen shown", () => {
+    const cursor = { step: "modes", beat: 2 } as const;
+    expect(advanceMenuQuest(cursor, fold([shown("random-arena"), shown("gvg")]), false)).toEqual(
+      cursor,
+    );
+    expect(
+      advanceMenuQuest(cursor, fold([shown("random-arena"), shown("team-arena")]), false),
+    ).toEqual({
+      step: "modes",
+      beat: 3,
+    });
+  });
+
+  it("lists the modes opened so far and the one to open, ticking each opened", () => {
+    const beat = menuQuestStep("modes").beats[2];
+    if (beat?.kind !== "do") {
+      throw new Error("not a thing to do");
+    }
+    const state = fold([shown("random-arena")]);
+    expect(beat.objectives.map(({ id, done }) => [id, done(state)])).toEqual([
+      ["random-arena", true],
+      ["team-arena", false],
+    ]);
+    expect(beat.objectives.map(({ label }) => label)).toEqual([
+      "rail.randomArena",
+      "rail.teamArena",
+    ]);
+  });
+
+  it("skips a mode the rail does not show", () => {
+    const beats = modeBeats(RAIL.filter(({ entry }) => entry !== "gvg"));
+    expect(beats.map((beat) => beatTarget(beat, NO_MENU_QUEST_EVENTS))).toEqual(
+      MODES.filter((mode) => mode !== "gvg").flatMap((mode) => [`rail-${mode}`, `screen-${mode}`]),
+    );
+    const last = beats.at(-2);
+    expect(last?.kind === "do" ? last.objectives.map(({ id }) => id) : []).not.toContain("gvg");
   });
 });

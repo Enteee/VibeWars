@@ -1489,6 +1489,18 @@ export default {
   "tutorial.menu.menu.teams":
     "Takımlar'da karakterleri takım dövüşleri için bir takımda toplarsın.",
   "tutorial.menu.menu.title": "Devam etmek için uzmanlığını değiştirmelisin.",
+  "tutorial.menu.modes.gvg":
+    "GvG, loncanın başka bir loncaya karşı 8'e 8 dövüştüğü moddur ve Guild Hall Isle'da oynanır. Kazanmak için düşman Lonca Lordu'nu, üssünün en arkasında surların ve muhafızların ardında, öldür.",
+  "tutorial.menu.modes.heroesAscent":
+    "Kahramanların Yükselişi, Kahramanlar Salonu'na kadar uzanan 8'e 8 bir harita dizisidir. Sonraki haritaya geçmek için bir tur kazan; yalnızca kendi turundaki takımlarla karşılaşırsın.",
+  "tutorial.menu.modes.hostedGame":
+    "Özel Oyun senin kendi lobin. Arkadaşlarını bağlantısıyla davet et; haritayı, takım boyutunu ve ayarları kendin seç.",
+  "tutorial.menu.modes.open": "Yanda yanan modu aç.",
+  "tutorial.menu.modes.randomArena":
+    "Rastgele Arena, seçtiğin karakteri gerçek oyunculardan oluşan bir takıma koyar ve rastgele bir haritada başka bir takımla karşılaştırır. 1v1, 2v2 ya da 4v4 seç: dövüşe girmenin en hızlı yolu.",
+  "tutorial.menu.modes.teamArena":
+    "Takım Arenası, kayıtlı bir takım dizilimiyle grubunun başka bir takıma karşı oynadığı moddur; 2v2, 4v4 ya da 8v8, nasıl seçersen. Kimsenin almadığı yerleri botlar alır ve her maç için bir harita çekilir.",
+  "tutorial.menu.modes.title": "Nerede dövüşeceğini bil.",
   "tutorial.menu.skipAsk": "Eğitimin geri kalanı atlansın mı?",
   "tutorial.menu.spec.attributes":
     "Nitelik puanlarını harca. Her kademe o niteliğin becerilerini güçlendirir.",

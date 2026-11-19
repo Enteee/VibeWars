@@ -1,9 +1,9 @@
-import type { QueueMode } from "@vibewars/game-protocol";
+import type { LobbyMode, QueueMode } from "@vibewars/game-protocol";
 
 import type { MessageKey } from "../i18n/index.js";
 import { validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
-import type { RailEntry } from "../ui/rail.js";
+import { RAIL, isModeEntry, type RailEntry, type RailItem } from "../ui/rail.js";
 import { validateTeam } from "../ui/team-builder.js";
 
 /**
@@ -110,6 +110,40 @@ export interface MenuQuestStep {
   readonly id: string;
   readonly title: MessageKey;
   readonly beats: readonly MenuBeat[];
+}
+
+/** What each mode is, as the modes step explains it on the mode's screen (#3543). */
+const MODE_LINES: Readonly<Record<LobbyMode, MessageKey>> = {
+  "random-arena": "tutorial.menu.modes.randomArena",
+  "team-arena": "tutorial.menu.modes.teamArena",
+  "heroes-ascent": "tutorial.menu.modes.heroesAscent",
+  gvg: "tutorial.menu.modes.gvg",
+  "hosted-game": "tutorial.menu.modes.hostedGame",
+};
+
+/**
+ * The modes step's beats (#3543): for each mode `rail` shows, in its
+ * order, open its entry, then read what it is on its screen. A mode the
+ * rail does not show is not explained. The checklist lists the modes
+ * opened so far and the one to open, each ticked once opened.
+ */
+export function modeBeats(rail: readonly RailItem[]): MenuBeat[] {
+  const modes = rail.flatMap(({ entry, label }) => (isModeEntry(entry) ? [{ entry, label }] : []));
+  return modes.flatMap(({ entry }, index): MenuBeat[] => [
+    {
+      kind: "do",
+      target: `rail-${entry}`,
+      line: "tutorial.menu.modes.open",
+      objectives: modes.slice(0, index + 1).map((mode) => ({
+        id: mode.entry,
+        label: mode.label,
+        // The one to open now is open; the ones before were.
+        done: (state: MenuQuestState) =>
+          mode.entry === entry ? state.screen === entry : state.screensShown.includes(mode.entry),
+      })),
+    },
+    { kind: "explain", target: `screen-${entry}`, line: MODE_LINES[entry] },
+  ]);
 }
 
 /** The steps, in order. The step cards of #3538 add theirs after the menu's. */
@@ -286,6 +320,7 @@ export const MENU_QUEST_STEPS = [
       },
     ],
   },
+  { id: "modes", title: "tutorial.menu.modes.title", beats: modeBeats(RAIL) },
 ] as const satisfies readonly MenuQuestStep[];
 
 export type MenuQuestStepId = (typeof MENU_QUEST_STEPS)[number]["id"];

@@ -412,7 +412,10 @@ export function railScreen(
   teamSizeListener = undefined;
   const panel = h("div", `screen screen-rail screen-${active}`);
   const body = h("div", "rail-body");
-  body.append(h("h2", "rail-title", railLabel(active)));
+  const title = body.appendChild(h("h2", "rail-title", railLabel(active)));
+  // What the menu quest's modes step explains a mode beside (#3543): its
+  // heading, so the screen under it stays locked.
+  title.setAttribute("data-tutorial", `screen-${active}`);
   panel.append(modeRail(active, onSwitch), body);
   root.replaceChildren(panel);
   return body;

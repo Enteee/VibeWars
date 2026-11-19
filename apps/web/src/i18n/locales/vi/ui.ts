@@ -1400,6 +1400,18 @@ export default {
   "tutorial.menu.menu.rail": "Đây là menu chính. Bên cạnh là các cách chơi: chọn một để mở.",
   "tutorial.menu.menu.teams": "Ở Đội, bạn ghép các nhân vật thành một đội cho các trận đấu đội.",
   "tutorial.menu.menu.title": "Để đi tiếp, bạn phải đổi chuyên môn của mình.",
+  "tutorial.menu.modes.gvg":
+    "GvG là bang của bạn đấu với một bang khác, 8 đấu 8, trên Guild Hall Isle. Hạ Lãnh chúa Bang của địch, ở cuối căn cứ sau tường thành và lính gác, để thắng.",
+  "tutorial.menu.modes.heroesAscent":
+    "Đỉnh Anh Hùng là một chuỗi bản đồ, 8 đấu 8, lên tới Đại sảnh Anh hùng. Thắng một vòng để sang bản đồ tiếp theo; bạn chỉ gặp các đội cùng vòng.",
+  "tutorial.menu.modes.hostedGame":
+    "Trận tự tạo là sảnh của riêng bạn. Mời bạn bè bằng link của nó, rồi tự chọn bản đồ, cỡ đội và thiết lập.",
+  "tutorial.menu.modes.open": "Mở chế độ đang sáng ở bên cạnh.",
+  "tutorial.menu.modes.randomArena":
+    "Đấu trường ngẫu nhiên đưa nhân vật bạn chọn vào một đội người chơi thật, đấu với một đội khác trên bản đồ ngẫu nhiên. Chọn 1v1, 2v2 hoặc 4v4: cách nhanh nhất để vào trận.",
+  "tutorial.menu.modes.teamArena":
+    "Đấu trường đội là tổ đội của bạn với một build đội đã lưu, đấu với một đội khác, 2v2, 4v4 hoặc 8v8 tùy bạn chọn. Bot lấp các chỗ không ai nhận, và mỗi trận được bốc thăm một bản đồ.",
+  "tutorial.menu.modes.title": "Biết nơi để chiến đấu.",
   "tutorial.menu.skipAsk": "Bỏ qua phần còn lại của hướng dẫn?",
   "tutorial.menu.spec.attributes":
     "Phân điểm thuộc tính của bạn. Mỗi bậc làm kỹ năng của thuộc tính đó mạnh hơn.",

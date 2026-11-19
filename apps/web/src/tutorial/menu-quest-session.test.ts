@@ -134,7 +134,7 @@ describe("the menu quest session", () => {
     expect(onEnd).not.toHaveBeenCalled();
   });
 
-  it("follows the team step from the team editor's events, then saves done and goes (#3542)", () => {
+  it("follows the team step from the team editor's events, then the modes step (#3542)", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
     const quest = startMenuQuest({ from: "team", coach, onEnd });
@@ -169,6 +169,26 @@ describe("the menu quest session", () => {
     draft(filled);
     expect(shown.at(-1)?.target).toBe("team-save");
     quest.event({ kind: "team-saved", team: filled, isNew: true });
+    expect(items.get(KEY)).toBe("menu:modes");
+    expect(shown.at(-1)?.target).toBe("rail-random-arena");
+    expect(removed()).toBe(false);
+    expect(onEnd).not.toHaveBeenCalled();
+  });
+
+  it("opens and explains every mode, then saves done and goes (#3543)", () => {
+    const { coach, shown, removed } = fakeCoach();
+    const onEnd = vi.fn();
+    const quest = startMenuQuest({ from: "modes", coach, onEnd });
+    expect(items.get(KEY)).toBe("menu:modes");
+    quest.event({ kind: "screen-shown", screen: "teams" });
+    const modes = ["random-arena", "team-arena", "heroes-ascent", "gvg", "hosted-game"] as const;
+    for (const [index, mode] of modes.entries()) {
+      expect(shown.at(-1)?.target).toBe(`rail-${mode}`);
+      expect(shown.at(-1)?.objectives).toHaveLength(index + 1);
+      quest.event({ kind: "screen-shown", screen: mode });
+      expect(shown.at(-1)?.target).toBe(`screen-${mode}`);
+      gotIt(shown.at(-1));
+    }
     expect(items.get(KEY)).toBe("done");
     expect(removed()).toBe(true);
     expect(onEnd).toHaveBeenCalledWith("done");

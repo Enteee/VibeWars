@@ -1496,6 +1496,18 @@ export default {
   "tutorial.menu.menu.teams":
     "A Csapatokban karaktereket raksz össze egy csapatba a csapatharcokhoz.",
   "tutorial.menu.menu.title": "A továbblépéshez meg kell változtatnod a specializációdat.",
+  "tutorial.menu.modes.gvg":
+    "A GvG a céhed egy másik ellen, 8 a 8 ellen, a Guild Hall Isle-on. Öld meg az ellenséges Céhurat bázisa hátsó részén, falak és őrök mögött, és nyersz.",
+  "tutorial.menu.modes.heroesAscent":
+    "A Hősök Útja pályák sora, 8 a 8 ellen, egészen a Hősök Csarnokáig. Nyerj meg egy kört, hogy a következő pályára juss; csak a saját körödben lévő csapatokkal találkozol.",
+  "tutorial.menu.modes.hostedGame":
+    "A Saját játék a saját lobbid. Hívd meg a barátaidat a linkjével, és válaszd ki magad a pályát, a csapatméretet és a beállításokat.",
+  "tutorial.menu.modes.open": "Nyisd meg az oldalt kivilágított játékmódot.",
+  "tutorial.menu.modes.randomArena":
+    "A Véletlen Aréna az általad választott karaktert valódi játékosokból álló csapatba teszi, egy másik csapat ellen egy véletlen pályán. Válassz 1v1, 2v2 vagy 4v4 közül: a leggyorsabb út a harcba.",
+  "tutorial.menu.modes.teamArena":
+    "A Csapataréna az osztagod egy mentett csapatbuilddel egy másik csapat ellen, 2v2, 4v4 vagy 8v8, ahogy választod. A senki által el nem foglalt helyeket botok veszik át, és minden meccshez pályát sorsolnak.",
+  "tutorial.menu.modes.title": "Tudd, hol harcolj.",
   "tutorial.menu.skipAsk": "Kihagyod az oktatóanyag hátralévő részét?",
   "tutorial.menu.spec.attributes":
     "Oszd el a tulajdonságpontjaidat. Minden szint erősebbé teszi az adott tulajdonság képességeit.",

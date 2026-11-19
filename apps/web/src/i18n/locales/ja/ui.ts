@@ -1417,6 +1417,18 @@ export default {
     "これがメインメニュー。横に並んでいるのが遊び方だ。ひとつ選んで開こう。",
   "tutorial.menu.menu.teams": "「チーム」では、キャラクターを集めてチーム戦用のチームを組む。",
   "tutorial.menu.menu.title": "先へ進むには、スペックを変えなければならない。",
+  "tutorial.menu.modes.gvg":
+    "GvGは自分のギルドと別のギルドの8対8の戦い。舞台はGuild Hall Isle。壁と衛兵に守られた拠点の奥にいる敵のギルドロードを倒せば勝ちだ。",
+  "tutorial.menu.modes.heroesAscent":
+    "ヒーローズアセントは8対8でマップを勝ち進み、英雄の間を目指す。ラウンドに勝てば次のマップへ進める。当たるのは同じラウンドのチームだけだ。",
+  "tutorial.menu.modes.hostedGame":
+    "ホストゲームは自分だけのロビー。リンクでフレンドを招待し、マップもチーム人数も設定も自分で決めよう。",
+  "tutorial.menu.modes.open": "横で光っているモードを開こう。",
+  "tutorial.menu.modes.randomArena":
+    "ランダムアリーナでは、選んだキャラが本物のプレイヤーのチームに入り、ランダムなマップで別のチームと戦う。1v1、2v2、4v4から選ぼう。いちばん手早く戦える。",
+  "tutorial.menu.modes.teamArena":
+    "チームアリーナは、保存したチームビルドでパーティーを組み、別のチームと戦う。2v2、4v4、8v8から選べる。誰も取らない枠にはボットが入り、マップは試合ごとに抽選される。",
+  "tutorial.menu.modes.title": "どこで戦うかを知ろう。",
   "tutorial.menu.skipAsk": "チュートリアルの残りをスキップしますか？",
   "tutorial.menu.spec.attributes":
     "属性ポイントを振ろう。ランクが上がるほど、その属性のスキルが強くなる。",

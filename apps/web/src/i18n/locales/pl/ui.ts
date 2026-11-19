@@ -1616,6 +1616,18 @@ export default {
     "To jest menu główne. Z boku są sposoby gry: wybierz jeden, aby go otworzyć.",
   "tutorial.menu.menu.teams": "W Drużynach łączysz postacie w drużynę do walk drużynowych.",
   "tutorial.menu.menu.title": "Aby iść dalej, musisz zmienić swoją specjalizację.",
+  "tutorial.menu.modes.gvg":
+    "GvG to twoja gildia przeciw innej, 8 na 8, na Wyspie Siedziby Gildii. Zabij wrogiego Lorda Gildii, na tyłach jego bazy za murami i strażnikami, aby wygrać.",
+  "tutorial.menu.modes.heroesAscent":
+    "Szczyt Bohaterów to seria map, 8 na 8, aż do Sali Bohaterów. Wygraj rundę, aby przejść na następną mapę; spotykasz tylko drużyny ze swojej rundy.",
+  "tutorial.menu.modes.hostedGame":
+    "Gra prywatna to twoje własne lobby. Zaproś znajomych jej linkiem i sam wybierz mapę, rozmiar drużyny i ustawienia.",
+  "tutorial.menu.modes.open": "Otwórz podświetlony tryb z boku.",
+  "tutorial.menu.modes.randomArena":
+    "Arena losowa wstawia wybraną przez ciebie postać do drużyny prawdziwych graczy, przeciw innej drużynie na losowej mapie. Wybierz 1v1, 2v2 lub 4v4: najszybsza droga do walki.",
+  "tutorial.menu.modes.teamArena":
+    "Arena drużynowa to twoja grupa z zapisanym buildem drużyny przeciw innej drużynie, 2v2, 4v4 lub 8v8, jak wybierzesz. Boty zajmują miejsca, których nikt nie weźmie, a na każdy mecz losowana jest mapa.",
+  "tutorial.menu.modes.title": "Wiedz, gdzie walczyć.",
   "tutorial.menu.skipAsk": "Pominąć resztę samouczka?",
   "tutorial.menu.spec.attributes":
     "Rozdaj punkty atrybutów. Każda ranga wzmacnia umiejętności tego atrybutu.",

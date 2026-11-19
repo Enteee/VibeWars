@@ -1603,6 +1603,18 @@ export default {
     "Toto je hlavní nabídka. Na straně jsou způsoby hry: vyber jeden a otevři ho.",
   "tutorial.menu.menu.teams": "V Týmech skládáš postavy do týmu pro týmové boje.",
   "tutorial.menu.menu.title": "Abys mohl pokračovat, musíš změnit svou specializaci.",
+  "tutorial.menu.modes.gvg":
+    "GvG je tvůj cech proti jinému, 8 proti 8, na Ostrově cechovní síně. Zabij nepřátelského Pána cechu, vzadu v jeho základně za hradbami a strážemi, a vyhraješ.",
+  "tutorial.menu.modes.heroesAscent":
+    "Výstup hrdinů je série map, 8 proti 8, až do Síně hrdinů. Vyhraj kolo a postoupíš na další mapu; potkáváš jen týmy ze svého kola.",
+  "tutorial.menu.modes.hostedGame":
+    "Vlastní hra je tvoje vlastní lobby. Pozvi přátele jejím odkazem a mapu, velikost týmu i nastavení si vyber sám.",
+  "tutorial.menu.modes.open": "Otevři rozsvícený režim na straně.",
+  "tutorial.menu.modes.randomArena":
+    "Náhodná aréna dá postavu, kterou vybereš, do týmu skutečných hráčů proti jinému týmu na náhodné mapě. Vyber 1v1, 2v2 nebo 4v4: nejrychlejší cesta do boje.",
+  "tutorial.menu.modes.teamArena":
+    "Týmová aréna je tvoje skupina s uloženým týmovým buildem proti jinému týmu, 2v2, 4v4 nebo 8v8 podle tvé volby. Místa, která nikdo neobsadí, zaberou boti, a pro každý zápas se losuje mapa.",
+  "tutorial.menu.modes.title": "Věz, kde bojovat.",
   "tutorial.menu.skipAsk": "Přeskočit zbytek výuky?",
   "tutorial.menu.spec.attributes":
     "Rozděl body atributů. Každý stupeň posílí dovednosti daného atributu.",

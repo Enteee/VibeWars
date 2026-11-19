@@ -1484,6 +1484,18 @@ export default {
     "Dette er hovedmenuen. I siden er måderne at spille på: vælg en for at åbne den.",
   "tutorial.menu.menu.teams": "I Hold sætter du figurer sammen til et hold til holdkampene.",
   "tutorial.menu.menu.title": "For at komme videre skal du ændre din spec.",
+  "tutorial.menu.modes.gvg":
+    "GvG er dit laug mod et andet, 8 mod 8, på Guild Hall Isle. Dræb fjendens laugsherre, bagerst i basen bag mure og vagter, for at vinde.",
+  "tutorial.menu.modes.heroesAscent":
+    "Heltenes opstigning er en række baner, 8 mod 8, op til Heltenes Hal. Vind en runde for at gå videre til næste bane; du møder kun hold i din egen runde.",
+  "tutorial.menu.modes.hostedGame":
+    "Et værtsspil er din egen lobby. Inviter venner med dets link, og vælg selv banen, holdstørrelsen og indstillingerne.",
+  "tutorial.menu.modes.open": "Åbn den oplyste spilform i siden.",
+  "tutorial.menu.modes.randomArena":
+    "Tilfældig arena sætter den figur, du vælger, på et hold af rigtige spillere mod et andet hold på en tilfældig bane. Vælg 1v1, 2v2 eller 4v4: den hurtigste vej ind i en kamp.",
+  "tutorial.menu.modes.teamArena":
+    "Holdarena er din gruppe med et gemt holdbuild mod et andet hold, 2v2, 4v4 eller 8v8, som du vælger. Bots tager de pladser, ingen tager, og der trækkes en bane til hver kamp.",
+  "tutorial.menu.modes.title": "Ved, hvor du skal kæmpe.",
   "tutorial.menu.skipAsk": "Spring resten af vejledningen over?",
   "tutorial.menu.spec.attributes":
     "Brug dine attributpoint. Hvert trin gør attributtens færdigheder stærkere.",

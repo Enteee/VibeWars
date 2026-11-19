@@ -922,9 +922,36 @@ test.describe("the menu quest (#3540)", () => {
 
     await expect(save).toHaveClass(/tutorial-pulse/);
     await save.click();
-    // The last step so far: the quest is done, and the editor is left.
-    await expect(page.locator(".coach")).toHaveCount(0);
+    // On to the modes step (#3543), and the editor is left.
+    await expect(panel).toContainText("Know where to fight.");
     await expect(page.locator(".team-grid")).toHaveCount(0);
+  });
+
+  test("opens and explains the five modes in rail order (#3543)", async ({ page }) => {
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=modes`);
+    const panel = page.locator(".coach-panel");
+    const bubble = page.locator(".coach-bubble");
+    await expect(panel).toContainText("Know where to fight.");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+    // The menu opens on Random Arena, so its entry is already open: its
+    // explanation shows at once.
+    await expect(target("screen-random-arena")).toHaveClass(/tutorial-pulse/);
+
+    // Find a match is dimmed: a click on it never queues.
+    const find = page.locator("#topbar .lobby-find");
+    await find.click({ force: true });
+    await expect(find).toHaveText("Find a match");
+
+    await bubble.getByRole("button", { name: "Got it" }).click();
+    for (const mode of ["team-arena", "heroes-ascent", "gvg", "hosted-game"]) {
+      await expect(target(`rail-${mode}`)).toHaveClass(/tutorial-pulse/);
+      await target(`rail-${mode}`).click();
+      await expect(page.locator(`.screen-${mode}`)).toBeVisible();
+      await expect(target(`screen-${mode}`)).toHaveClass(/tutorial-pulse/);
+      await bubble.getByRole("button", { name: "Got it" }).click();
+    }
+    // The last step so far: the quest is done.
+    await expect(page.locator(".coach")).toHaveCount(0);
   });
 
   test("Skip tutorial, confirmed, ends it for good", async ({ page }) => {

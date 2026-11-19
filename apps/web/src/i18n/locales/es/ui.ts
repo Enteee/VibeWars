@@ -1577,6 +1577,18 @@ export default {
   "tutorial.menu.menu.teams":
     "En Equipos juntas personajes en un equipo para los combates por equipos.",
   "tutorial.menu.menu.title": "Para seguir, tienes que cambiar tu especialización.",
+  "tutorial.menu.modes.gvg":
+    "El GvG es tu gremio contra otro, 8 contra 8, en la Isla del gremio. Mata al Señor del Gremio enemigo, al fondo de su base tras muros y guardias, para ganar.",
+  "tutorial.menu.modes.heroesAscent":
+    "El Ascenso de los Héroes es una serie de mapas, 8 contra 8, hasta el Salón de los héroes. Gana una ronda para pasar al siguiente mapa; solo te enfrentas a equipos de tu ronda.",
+  "tutorial.menu.modes.hostedGame":
+    "Una partida alojada es tu propia sala. Invita a tus amigos con su enlace y elige tú el mapa, el tamaño del equipo y los ajustes.",
+  "tutorial.menu.modes.open": "Abre el modo iluminado en el lateral.",
+  "tutorial.menu.modes.randomArena":
+    "La Arena aleatoria pone al personaje que elijas en un equipo de jugadores reales, contra otro equipo en un mapa al azar. Elige 1v1, 2v2 o 4v4: la forma más rápida de entrar en combate.",
+  "tutorial.menu.modes.teamArena":
+    "La Arena por equipos es tu grupo con una build de equipo guardada contra otro equipo, 2v2, 4v4 u 8v8, como elijas. Los bots ocupan los puestos que nadie reclama, y se sortea un mapa para cada partida.",
+  "tutorial.menu.modes.title": "Sabe dónde luchar.",
   "tutorial.menu.skipAsk": "¿Saltar el resto del tutorial?",
   "tutorial.menu.spec.attributes":
     "Reparte tus puntos de atributo. Cada rango hace más fuertes las habilidades de ese atributo.",

@@ -1560,6 +1560,18 @@ export default {
     "Ovo je glavni izbornik. Sa strane su načini igre: odaberi jedan da ga otvoriš.",
   "tutorial.menu.menu.teams": "U Timovima slažeš likove u tim za timske borbe.",
   "tutorial.menu.menu.title": "Da bi nastavio, moraš promijeniti svoju specijalizaciju.",
+  "tutorial.menu.modes.gvg":
+    "GvG je tvoj ceh protiv drugog, 8 protiv 8, na Otoku ceha. Ubij neprijateljskog Gospodara ceha, na dnu njegove baze iza zidina i straža, da pobijediš.",
+  "tutorial.menu.modes.heroesAscent":
+    "Uspon heroja je niz mapa, 8 protiv 8, sve do Dvorane junaka. Pobijedi u rundi da prijeđeš na sljedeću mapu; susrećeš samo timove iz svoje runde.",
+  "tutorial.menu.modes.hostedGame":
+    "Igra s domaćinom tvoja je vlastita soba. Pozovi prijatelje njezinom poveznicom i sam odaberi mapu, veličinu tima i postavke.",
+  "tutorial.menu.modes.open": "Otvori osvijetljeni način igre sa strane.",
+  "tutorial.menu.modes.randomArena":
+    "Nasumična arena stavlja lika kojeg odabereš u tim stvarnih igrača, protiv drugog tima na nasumičnoj mapi. Odaberi 1v1, 2v2 ili 4v4: najbrži put do borbe.",
+  "tutorial.menu.modes.teamArena":
+    "Timska arena je tvoja grupa sa spremljenim timskim sastavom protiv drugog tima, 2v2, 4v4 ili 8v8, kako odabereš. Botovi zauzimaju mjesta koja nitko ne uzme, a za svaki meč izvlači se mapa.",
+  "tutorial.menu.modes.title": "Znaj gdje se boriti.",
   "tutorial.menu.skipAsk": "Preskočiti ostatak vodiča?",
   "tutorial.menu.spec.attributes":
     "Rasporedi bodove atributa. Svaki rang jača vještine tog atributa.",
