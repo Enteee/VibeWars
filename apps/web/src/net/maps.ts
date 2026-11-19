@@ -182,10 +182,17 @@ const ASCENT_ONLY: readonly string[] = [
 ];
 
 /**
- * The render bench's maps (#3255, #3444), in its build only: the Hosted lobby
- * offers them, which is how the bench picks one, but no draw ever does.
+ * The render bench's maps (#3255, #3444), and the tutorial canyons it
+ * measures, in its build only: the Hosted lobby offers them, which is how the
+ * bench picks one, but no draw ever does. The e2e build is a bench build too,
+ * so a Random Arena there draws from the player's pool.
  */
-const BENCH_ONLY: readonly string[] = ["bench-reference", "bench-flat"];
+const BENCH_ONLY: readonly string[] = [
+  "bench-reference",
+  "bench-flat",
+  "tutorial-canyon-1",
+  "tutorial-canyon-2",
+];
 
 /**
  * Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them: a
