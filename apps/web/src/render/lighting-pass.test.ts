@@ -34,7 +34,6 @@ import {
   tunnelLightCover,
   type LightMapBox,
 } from "./lighting-pass.js";
-import { layerSunShadows, shadowCasters } from "./shadow-geometry.js";
 import { shapeOutline } from "./layer-surfaces.js";
 import { ELEVATION_STEP } from "./render-order.js";
 
@@ -871,70 +870,6 @@ describe("lightMapCells (#3524)", () => {
     const box = { x: 200 - extent.x, y: 400 - extent.y, width: 50, height: 50 };
     expect(cells.flat.some((cell) => meets(cell, box))).toBe(false);
     expect(cells.textured.some((cell) => meets(cell, box))).toBe(true);
-  });
-
-  describe("a cell wholly in one colour the map paints (#3660)", () => {
-    const centre = (cell: LightMapBox, extent: LightMapBox): Vec2 => ({
-      x: (extent.x + cell.x + cell.width / 2) * 2,
-      y: (extent.y + cell.y + cell.height / 2) * 2,
-    });
-
-    it("draws a cell wholly indoors, where no light reaches, flat", () => {
-      const extent = lightMapExtent(TUNNELLED, 1, ARENA, ARENA);
-      const hall = { kind: "rect" as const, x: 200, y: 200, width: 600, height: 600 };
-      const lamp = { ...LAMP, position: { x: 500, y: 500 } };
-      const cells = lightMapCells(
-        { ...LIT, lights: [lamp], indoor: [hall] },
-        TUNNELLED,
-        [],
-        1,
-        extent,
-        "full",
-      );
-      expect(cells.indoors.length).toBeGreaterThan(0);
-      for (const cell of cells.indoors) {
-        const { x, y } = centre(cell, extent);
-        expect(x > 200 && x < 800 && y > 200 && y < 800).toBe(true);
-      }
-      expect(cells.indoors.some((cell) => meets(cell, reach(lamp, extent)))).toBe(false);
-      expect(
-        cells.flat.some((cell) =>
-          meets(cell, { ...hall, x: 150 - extent.x, y: 150 - extent.y, width: 250, height: 250 }),
-        ),
-      ).toBe(false);
-    });
-
-    it("draws a cell wholly in a sun shadow flat, but not one the indoors meets", () => {
-      const extent = lightMapExtent(TUNNELLED, 1, ARENA, ARENA);
-      const tower = { kind: "rect" as const, x: 300, y: 300, width: 300, height: 300, layer: 1 };
-      const sunlit: MapLighting = {
-        ...LIT,
-        lights: [],
-        sun: { directionDeg: 0, elevationDeg: 10, colour: 0xffffff, intensity: 0.4 },
-      };
-      const shadows = layerSunShadows(sunlit, shadowCasters([tower], TUNNELLED, 1));
-      const cells = lightMapCells(sunlit, TUNNELLED, [tower], 1, extent, "full");
-      expect(cells.shaded.length).toBeGreaterThan(0);
-      for (const cell of cells.shaded) {
-        expect(shadows.some((shadow) => pointInPolygon(centre(cell, extent), shadow))).toBe(true);
-      }
-      // A small hall in a shaded cell: the indoors is painted over the shadow there.
-      const [first] = cells.shaded;
-      if (first === undefined) throw new Error("no shaded cell");
-      const at = centre({ ...first, width: 32, height: 32 }, extent);
-      const hall = { kind: "rect" as const, x: at.x - 4, y: at.y - 4, width: 8, height: 8 };
-      const indoors = lightMapCells(
-        { ...sunlit, indoor: [hall] },
-        TUNNELLED,
-        [tower],
-        1,
-        extent,
-        "full",
-      );
-      const spot = { x: at.x / 2 - extent.x, y: at.y / 2 - extent.y, width: 1, height: 1 };
-      expect(indoors.shaded.some((cell) => meets(cell, spot))).toBe(false);
-      expect(indoors.textured.some((cell) => meets(cell, spot))).toBe(true);
-    });
   });
 
   describe("on a layer above the ground (#3660)", () => {
