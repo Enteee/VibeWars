@@ -874,6 +874,7 @@ export default {
   "queue.matchFoundTitle": "Lawan ditemukan!",
   "queue.nextMatchIn": "Pertandingan berikutnya dalam {seconds} s",
   "queue.now": "Kini",
+  "queue.playBotsIn": "Lawan bot ({seconds} s)",
   "queue.queueAgain": "Antre lagi",
   "queue.randomArena": "Arena Acak {size}",
   "queue.searchingCount": "{searching} mencari · butuh {needed}",

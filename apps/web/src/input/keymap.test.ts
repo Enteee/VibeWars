@@ -104,6 +104,19 @@ describe("the keymap presets (#302)", () => {
     expect(action("ShiftLeft")).toBe("show-names");
     expect(action("KeyQ")).toBeUndefined();
   });
+
+  it("targets yourself on F as in GW1, and on G, in Classic only (#3629)", () => {
+    expect(KEYMAP_PRESETS.classic["target-self"]).toEqual(["KeyF", "KeyG"]);
+    expect(actionForCode(KEYMAP_PRESETS.classic, "KeyF")).toBe("target-self");
+    expect(actionForCode(KEYMAP_PRESETS.classic, "KeyG")).toBe("target-self");
+    expect(actionForCode(KEYMAP_PRESETS.vibewars, "KeyF")).toBe("skill-8");
+    expect(actionForCode(KEYMAP_PRESETS.vibewars, "KeyG")).toBe("target-self");
+  });
+
+  it.each(presets)("%s binds every code to one action at most", (_, map) => {
+    const codes = Object.values(map).flat();
+    expect(new Set(codes).size).toBe(codes.length);
+  });
 });
 
 describe("parseKeymap", () => {

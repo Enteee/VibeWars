@@ -19,7 +19,7 @@ Presetarea implicită este **Clasic**, pentru mâinile obișnuite cu GW1. **Vibe
 | Ținta următoare (Shift: anterioara) | Tab                | Tab              |
 | Cel mai apropiat inamic             | C                  | C                |
 | Inamicul anunțat de echipa ta       | T                  | T                |
-| Tu însuți                           | G                  | G                |
+| Tu însuți                           | F sau G            | G                |
 | Arată nume (ține)                   | Shift              | Shift            |
 | Fără sunet                          | M                  | M                |
 | Lasă steagul, relicva sau cenușa    | fără tastă         | fără tastă       |

@@ -919,6 +919,7 @@ export const en = {
   "queue.matchFoundTitle": "Match found!",
   "queue.nextMatchIn": "Next match in {seconds} s",
   "queue.now": "Now",
+  "queue.playBotsIn": "Play against bots ({seconds} s)",
   "queue.queueAgain": "Queue again",
   "queue.randomArena": "Random Arena {size}",
   "queue.searchingCount": "{searching} searching · {needed} needed",

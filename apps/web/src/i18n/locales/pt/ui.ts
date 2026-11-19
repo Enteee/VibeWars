@@ -965,6 +965,7 @@ export default {
   "queue.matchFoundTitle": "Partida encontrada!",
   "queue.nextMatchIn": "Próxima partida em {seconds} s",
   "queue.now": "Agora",
+  "queue.playBotsIn": "Jogar contra bots ({seconds} s)",
   "queue.queueAgain": "Entrar de novo",
   "queue.randomArena": "Arena Aleatória {size}",
   "queue.searchingCount": "{searching} buscando · {needed} necessários",

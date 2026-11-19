@@ -7,7 +7,7 @@ import { looksLikeBuild } from "../storage/build-transfer.js";
 import { importTeam, looksLikeTeam, type TeamImportResult } from "../storage/team-transfer.js";
 import { lookOfCharacter, teamFigureCard } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
-import { button, h, listenForPaste, screenBar, toast } from "./kit.js";
+import { button, h, listenForPaste, screenBar, toast, wordmark } from "./kit.js";
 import { mapLabel, type LobbyMap, type LobbyPanel } from "./lobby-screen.js";
 import {
   loadTeamBuildSize,
@@ -252,7 +252,7 @@ function teamScreen(
   panel?: LobbyPanel,
 ): HTMLElement {
   screenBar({
-    crumbs: ["VibeWars"],
+    crumbs: [wordmark("topbar-wordmark")],
     status: panel?.status ?? [],
     actions: panel?.actions ?? [],
     ...(panel?.queueAction === undefined ? {} : { queueAction: panel.queueAction }),

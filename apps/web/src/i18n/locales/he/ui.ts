@@ -975,6 +975,7 @@ export default {
   "queue.matchFoundTitle": "נמצא משחק!",
   "queue.nextMatchIn": "המשחק הבא בעוד {seconds} שנ׳",
   "queue.now": "עכשיו",
+  "queue.playBotsIn": "שחק נגד בוטים ({seconds} שנ׳)",
   "queue.queueAgain": "שוב לתור",
   "queue.randomArena": "זירה אקראית {size}",
   "queue.searchingCount": "{searching} מחפשים · חסרים {needed}",

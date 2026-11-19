@@ -148,7 +148,6 @@ import {
   type TeamEndAction,
 } from "./ui/queue-screen.js";
 import {
-  PLAY_BOTS_AFTER_MS,
   hostMaps,
   lobbyPanel,
   type LobbyMap,
@@ -661,8 +660,6 @@ async function main(): Promise<void> {
           | undefined;
         /** The party lobby closed while out of sight: what to say back on the menu. */
         partyClosed: string | undefined;
-        /** Whether the screen offers *Play against bots* yet. */
-        playBotsShown: boolean;
         /** Teams its queue last heard searching (#1881); `undefined` until it says, or while it can't. */
         teams: number | undefined;
         /** Its match is over: whoever leaves it first is no news. */
@@ -831,6 +828,8 @@ async function main(): Promise<void> {
       since: team.since,
       teams: team.teams,
       isHost: snapshot.isHost,
+      // Heroes' Ascent waits for a side at its round, never for bots (#1996).
+      playBots: snapshot.isHost && snapshot.mode !== "heroes-ascent",
       hallHolder: hallWatch.holder(),
     };
   };
@@ -936,6 +935,9 @@ async function main(): Promise<void> {
       },
       onLeaveQueue: () => {
         leaveAnyQueue();
+      },
+      onPlayBots: () => {
+        lobby?.playAgainstBots();
       },
     },
     ownSignet,
@@ -1538,13 +1540,6 @@ async function main(): Promise<void> {
       onFindMatch: () => {
         lobby?.findMatch(roundFor(entry));
       },
-      // Heroes' Ascent waits for a side at its round, never for bots (#1996).
-      onPlayBots:
-        entry === "heroes-ascent"
-          ? undefined
-          : () => {
-              lobby?.playAgainstBots();
-            },
     };
   };
 
@@ -2090,22 +2085,17 @@ async function main(): Promise<void> {
       ? Date.now() - teamQueue.since
       : null;
 
-  /** The party's wait, each second; the screen again once Play against bots is offered. */
+  /** The party's wait, each second. */
   const tickTeamQueue = (): void => {
     const current = teamQueue;
     if (current === undefined || current.parked !== undefined || lobby !== current.party) {
       return;
     }
     const snapshot = current.party.getSnapshot();
-    const queuedMs = queuedMsOf(snapshot);
-    if (queuedMs === null) {
+    if (queuedMsOf(snapshot) === null) {
       return;
     }
     syncParty(snapshot);
-    if (!current.playBotsShown && queuedMs >= PLAY_BOTS_AFTER_MS) {
-      current.playBotsShown = true;
-      redrawRail();
-    }
   };
 
   /**
@@ -2139,7 +2129,6 @@ async function main(): Promise<void> {
       place: undefined,
       parked: undefined,
       partyClosed: undefined,
-      playBotsShown: false,
       teams: undefined,
       finished: false,
       ascentRound: snapshot.ascentRound,

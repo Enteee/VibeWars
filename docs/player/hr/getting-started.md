@@ -168,7 +168,7 @@ kartice domaćina odmah izbacuje grupu iz reda. Kad se pojavi drugi
 tim istog načina u redu, igraš protiv njega na jednoj od
 karata tog načina, svaka strana sa svojim sastavima, a poslije se vraćaš u svoju
 sobu. Domaćin može napustiti red iz prozora prstena u bilo kojem trenutku; gost koji ode izvodi cijelu
-grupu iz njega. Ako nakon minute nema drugog tima, domaćin može
+grupu iz njega. Nakon 10 s u redu domaćin može u prozoru prstena
 pritisnuti i **Igraj protiv botova**: meč u tvojoj vlastitoj sobi protiv
 nasumičnog unaprijed zadanog tima botova,
 osim u [Usponu heroja](modes.md#uspon-heroja), koji čeka

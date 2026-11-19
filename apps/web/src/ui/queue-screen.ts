@@ -7,7 +7,7 @@ import { ASCENT_PROGRESSION, ascentMapId } from "../net/maps.js";
 import { teamColour } from "../render/arena-snapshot.js";
 import { cssColour } from "./character-preview.js";
 import { RANDOM_ARENA_MODES } from "./menu.js";
-import { button, h, screenBar } from "./kit.js";
+import { button, h, screenBar, wordmark } from "./kit.js";
 import { SIGNET_ROW_PX, playerLabelElement, signetElement, signetOf } from "./player-label.js";
 import { chartRoster, renderMatchCharts } from "./match-charts.js";
 import { renderSummary, type SummaryTable } from "./match-summary.js";
@@ -440,7 +440,7 @@ export function mountQueueScreen(
   root.replaceChildren();
   const panel = h("div", "screen screen-queue");
   screenBar({
-    crumbs: ["VibeWars", queueTitle(options.mode, options.characterName)],
+    crumbs: [wordmark("topbar-wordmark"), queueTitle(options.mode, options.characterName)],
     actions: [],
   });
   const status = h("div", "queue-status");

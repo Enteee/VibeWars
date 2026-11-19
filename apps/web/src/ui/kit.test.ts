@@ -16,6 +16,7 @@ import {
   setTopbarSlots,
   syncList,
   toast,
+  wordmark,
   type ShownBar,
   type TopbarSlots,
 } from "./kit.js";
@@ -156,6 +157,10 @@ class FakeNode {
 
   constructor(tag = "") {
     this.tag = tag;
+  }
+
+  get tagName(): string {
+    return this.tag.toUpperCase();
   }
 
   get parentElement(): FakeNode | null {
@@ -518,6 +523,32 @@ describe("screenBar in the top bar (#578, #1272)", () => {
     });
     return { onBack, back: bar.back as unknown as FakeNode };
   }
+
+  it("names the game in its two colours, read as one word, left to right (#3636)", () => {
+    const name = wordmark("topbar-wordmark") as unknown as FakeNode;
+    expect(name.className).toBe("wordmark topbar-wordmark");
+    expect(name.attributes.get("dir")).toBe("ltr");
+    expect(name.children.map((part) => [part.className, part.textContent])).toEqual([
+      ["wordmark-vibe", "Vibe"],
+      ["wordmark-wars", "Wars"],
+    ]);
+    expect(name.text).toBe("VibeWars");
+  });
+
+  it("makes the wordmark the screen's heading when it is the place, and a field never (#3636)", () => {
+    const name = wordmark("topbar-wordmark");
+    screenBar({ crumbs: [name], actions: [] });
+    const place = name as unknown as FakeNode;
+    expect(place.attributes.get("role")).toBe("heading");
+    expect(place.attributes.get("aria-level")).toBe("1");
+    expect(place.classes.has("is-place")).toBe(true);
+    const field = new FakeNode("input");
+    screenBar({
+      crumbs: [wordmark("topbar-wordmark"), field as unknown as HTMLElement],
+      actions: [],
+    });
+    expect(field.attributes.has("role")).toBe(false);
+  });
 
   it("fills the top bar: the crumbs, Back, the status and the screen's buttons", () => {
     const name = new FakeNode("input");

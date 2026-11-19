@@ -1007,6 +1007,7 @@ export default {
   "queue.matchFoundTitle": "Матч знайдено!",
   "queue.nextMatchIn": "Наступний матч за {seconds} с",
   "queue.now": "Зараз",
+  "queue.playBotsIn": "Грати проти ботів ({seconds} с)",
   "queue.queueAgain": "Знову в чергу",
   "queue.randomArena": "Випадкова арена {size}",
   "queue.searchingCount": "шукають: {searching} · потрібно: {needed}",
