@@ -165,7 +165,7 @@ describe("a portcullis reads up or down from its footprint, also under a cover (
   const STONE: GateFrame = {
     height: 28,
     line: 1,
-    palette: arenaPalette({ layerCount: 3, biome: "hall" }),
+    palette: arenaPalette({ layerCount: 3, biome: "hall", ascentAct: null }),
   };
   // A 14 u strip across an east-west tunnel, and a wide gate across a north-south way.
   const STRIP = { kind: "rect", x: 300, y: 500, width: 14, height: 60 } as const;
