@@ -44,7 +44,10 @@ const FRAME = liftFrame(
   STRUCTURE,
   LIFT,
   1,
-  transitionPalette(arenaPalette({ layerCount: 2, biome: "hall" }), BIOME.hall.transition.lift),
+  transitionPalette(
+    arenaPalette({ layerCount: 2, biome: "hall", ascentAct: null }),
+    BIOME.hall.transition.lift,
+  ),
 );
 const TOP = elevationOf(1, 0);
 

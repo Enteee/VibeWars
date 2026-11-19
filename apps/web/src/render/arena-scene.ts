@@ -1,12 +1,6 @@
 import Phaser from "phaser";
 
-import type {
-  Biome,
-  MapAtmosphere,
-  MapBounds,
-  MapLighting,
-  MapPaving,
-} from "@vibewars/game-maps/schema";
+import type { MapAtmosphere, MapBounds, MapLighting, MapPaving } from "@vibewars/game-maps/schema";
 
 import {
   ALTAR_REACH_UNITS,
@@ -76,7 +70,6 @@ import {
 } from "./render-order.js";
 import {
   ARENA_BACKGROUND,
-  BIOME,
   DECK_LIP,
   pitFloor,
   pitWall,
@@ -86,6 +79,8 @@ import {
   type ArenaPalette,
   breakableLook,
   type BreakableLook,
+  type MapLook,
+  materialsOf,
   pavingPalette,
   type PavingLookColours,
   type StonePavingLook,
@@ -3615,7 +3610,7 @@ export class ArenaScene extends Phaser.Scene {
     const palette = arenaPalette(next.structure);
     const { ground } = next.structure;
     this.drawFloor(palette, line);
-    this.drawGrain(next.structure.bounds, next.structure.biome, palette);
+    this.drawGrain(next.structure, palette);
     this.drawOutside(next.structure.bounds, next.lighting);
     this.drawPaving(next.structure);
     paintDeckShadows(
@@ -3668,7 +3663,7 @@ export class ArenaScene extends Phaser.Scene {
     const lifts: { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
     for (const transition of next.structure.transitions) {
       const lit = litStructurePalette(
-        transitionPalette(palette, BIOME[next.structure.biome].transition[transition.look]),
+        transitionPalette(palette, materialsOf(next.structure).transition[transition.look]),
         next.lighting,
         transition.area,
         transition.from,
@@ -3801,7 +3796,7 @@ export class ArenaScene extends Phaser.Scene {
         next.walls,
         line,
         litStructurePalette(
-          deckPalette(palette, BIOME[next.structure.biome].deck[deck.look]),
+          deckPalette(palette, materialsOf(next.structure).deck[deck.look]),
           next.lighting,
           deck.footprint,
           deck.layer,
@@ -4066,7 +4061,7 @@ export class ArenaScene extends Phaser.Scene {
         overhang.look,
         overhang.footprint,
         litOverhangColours(
-          BIOME[structure.biome].overhang[overhang.look],
+          materialsOf(structure).overhang[overhang.look],
           lighting,
           overhang.footprint,
           overhang.layer,
@@ -4566,7 +4561,7 @@ export class ArenaScene extends Phaser.Scene {
     const [left, top] = [Math.min(...xs), Math.min(...ys)];
     const [width, height] = [Math.max(...xs) - left, Math.max(...ys) - top];
     return this.add
-      .tileSprite(left, top, width, height, this.groundTile(structure.biome))
+      .tileSprite(left, top, width, height, this.groundTile(structure))
       .setOrigin(0, 0)
       .setTilePosition(left, top)
       .setDepth(renderOrder({ kind, deckLayer: structure.ground, part: "grain" }));
@@ -4841,8 +4836,10 @@ export class ArenaScene extends Phaser.Scene {
    * stays inside. A map of one layer draws flat, so it has none. Built
    * once per map.
    */
-  private drawGrain(bounds: MapBounds, biome: Biome, palette: ArenaPalette): void {
-    if (this.grain?.bounds === bounds && this.grain.biome === biome) {
+  private drawGrain(structure: MapStructure, palette: ArenaPalette): void {
+    const { bounds } = structure;
+    const tile = groundTileKey(structure);
+    if (this.grain?.bounds === bounds && this.grain.tile === tile) {
       return;
     }
     this.dropGrain();
@@ -4851,11 +4848,11 @@ export class ArenaScene extends Phaser.Scene {
     }
     const { width, height } = this.arena;
     const sprite = this.add
-      .tileSprite(0, 0, width, height, this.groundTile(biome))
+      .tileSprite(0, 0, width, height, this.groundTile(structure))
       .setOrigin(0, 0)
       .setDepth(GRAIN_DEPTH);
     if (bounds.kind !== "outline") {
-      this.grain = { bounds, biome, objects: [sprite] };
+      this.grain = { bounds, tile, objects: [sprite] };
       return;
     }
     // One stencil blocks the land outside the outline; after the grain, a
@@ -4871,23 +4868,23 @@ export class ArenaScene extends Phaser.Scene {
     const release = this.add
       .stencil(0, 0, [], { stencilLayerMode: "clear" })
       .setDepth(GRAIN_RELEASE_DEPTH);
-    this.grain = { bounds, biome, objects: [stencil, sprite, release] };
+    this.grain = { bounds, tile, objects: [stencil, sprite, release] };
   }
 
-  /** The biome's ground tile (#3484), painted once per game. */
-  private groundTile(biome: Biome): string {
-    const key = groundTileKey(biome);
+  /** The map's ground tile (#3484), painted once per game. */
+  private groundTile(look: MapLook): string {
+    const key = groundTileKey(look);
     if (!this.textures.exists(key)) {
       const texture = this.textures.createCanvas(key, GROUND_TILE, GROUND_TILE);
       if (texture === null) {
         throw new Error("ground: could not create a ground tile");
       }
       texture.context.putImageData(
-        new ImageData(grainPixels(biome), GROUND_TILE, GROUND_TILE),
+        new ImageData(grainPixels(look), GROUND_TILE, GROUND_TILE),
         0,
         0,
       );
-      paintDressing(texture.context, biome);
+      paintDressing(texture.context, look);
       texture.refresh();
     }
     return key;
@@ -5532,7 +5529,8 @@ type OutlineBounds = Extract<MapBounds, { readonly kind: "outline" }>;
 /** The ground's grain (#3484): one tiled sprite, and on a map with an outline the stencil that keeps it inside. */
 interface GroundGrain {
   readonly bounds: MapBounds;
-  readonly biome: Biome;
+  /** The ground tile it is laid with. */
+  readonly tile: string;
   readonly objects: readonly Phaser.GameObjects.GameObject[];
 }
 
