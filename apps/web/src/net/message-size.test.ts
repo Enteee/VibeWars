@@ -2,6 +2,7 @@ import {
   ALL_INSIGNIAS,
   ALL_OFFHANDS,
   ALL_WEAPONS,
+  EVENT_CAPS,
   IMPLEMENTED_SKILLS,
   MOD_SLOTS,
   PROFESSIONS,
@@ -723,5 +724,10 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       expect(messageBytes(part)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
     }
     expect(joinMatchChart(parts)).toEqual(whole);
+  });
+
+  it("match charts: the host's per-kind event caps fill the wire's MAX_CHART_EVENTS exactly (#3565)", () => {
+    const total = Object.values(EVENT_CAPS).reduce((sum, cap) => sum + cap, 0);
+    expect(total).toBe(MAX_CHART_EVENTS);
   });
 });

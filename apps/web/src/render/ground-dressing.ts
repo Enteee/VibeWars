@@ -1,7 +1,7 @@
 import type { Vec2 } from "@vibewars/game-core";
 import { BIOMES, type Biome } from "@vibewars/game-maps/schema";
 
-import { GROUND_DRESSING, type GroundDressingTones } from "./arena-palette.js";
+import { type GroundDressingTones, type MapLook, materialsOf } from "./arena-palette.js";
 import { hash } from "./hazard-marks.js";
 import { OUTSIDE_TILE, wrapped } from "./outside-land.js";
 
@@ -89,11 +89,15 @@ export const DRESSING: Record<Biome, readonly Scatter[]> = {
     { kind: "tuft", tone: "mark", count: 14, size: [8, 14] },
     { kind: "pebble", tone: "accent", count: 7, size: [5, 10] },
   ],
+  coast: [
+    { kind: "pebble", tone: "mark", count: 10, size: [4, 8] },
+    { kind: "ripple", tone: "accent", count: 8, size: [12, 16] },
+  ],
 };
 
-/** The texture a biome's tile is kept under. */
-export function groundTileKey(biome: Biome): string {
-  return `ground-dressing-${biome}`;
+/** The texture a map's tile is kept under: one per biome, and per Ascent act on it. */
+export function groundTileKey({ biome, ascentAct }: MapLook): string {
+  return `ground-dressing-${biome}-${ascentAct ?? "none"}`;
 }
 
 /** The seed a biome's tile is painted from: the same on every peer and every frame. */
@@ -139,9 +143,9 @@ function octave(seed: number, cells: number, x: number, y: number): number {
  * value noise between its dark and light grain tones, at `GRAIN_ALPHA`
  * all over, so it lies over the floor's own fill.
  */
-export function grainPixels(biome: Biome): Uint8ClampedArray<ArrayBuffer> {
-  const seed = seedOf(biome);
-  const [dark, light] = GROUND_DRESSING[biome].grain.map(channels);
+export function grainPixels(look: MapLook): Uint8ClampedArray<ArrayBuffer> {
+  const seed = seedOf(look.biome);
+  const [dark, light] = materialsOf(look).dressing.grain.map(channels);
   const pixels = new Uint8ClampedArray(GROUND_TILE * GROUND_TILE * 4);
   const alpha = Math.round(GRAIN_ALPHA * 255);
   for (let y = 0; y < GROUND_TILE; y += 1) {
@@ -236,8 +240,9 @@ function paintMark(
  * scatter a jittered sprinkle in its tone, outlined, a copy over each
  * edge it crosses, so the tile repeats without a seam.
  */
-export function paintDressing(canvas: DressingCanvas, biome: Biome): void {
-  const tones: GroundDressingTones = GROUND_DRESSING[biome];
+export function paintDressing(canvas: DressingCanvas, look: MapLook): void {
+  const { biome } = look;
+  const tones: GroundDressingTones = materialsOf(look).dressing;
   const seed = seedOf(biome);
   canvas.lineCap = "round";
   DRESSING[biome].forEach(({ kind, tone, count, size: [min, max] }, scatter) => {

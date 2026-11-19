@@ -132,7 +132,7 @@ megnevezi, ki visz zászlót. A növelés „Morálnövelés! +10%” vagy
 „Ellenséges morálnövelés” felirattal ugrik fel. Az iránytűn ♛ jelöl
 minden Céhurat, ⚑ minden zászlót és ◎ a tartót.
 
-A Guild Hall Isle játssza.
+A Guild Hall Isle (8v8, 6000x2600) játssza: egy sziget a tengerben. Minden Guild Lord egy csarnok tetején áll, sánc mögött; kifelé a kaputornyon át, a sáncon át vagy egy móló mentén vezet az út. A kapu ajtaját az ellenfél sáncán lévő kar nyitja. A zászlótartó egy emelvényen áll középen.
 
 ## Ereklyefutam
 
@@ -195,8 +195,7 @@ csapatnak van egy **Kísértethőse** a bázisán, egy baltával harcoló
 kísértet, akit senki sem irányít. Az **oltár** középen van, mindkét
 bázistól ugyanakkora sétára. A **Threefold Keep** pályán három csapat
 (kettő, ha nincs szabad harmadik) harcol érte egy fallal körülvett
-várban. Az ajtói csak belülről nyílnak, egy belső lappal: sétálj körbe
-egy nyitott sarokig, hogy bejuss. Csapatonként legfeljebb 12 pont, és
+vár tornyán. Csapatonként legfeljebb 12 pont, és
 ha minden ellenség -60% morálon áll, azonnal nyersz. A **Hősök
 Csarnoka**, A domb ura pálya, amely a Hősök Útját zárja, egy nyugatról
 és keletről fallal határolt emelvényre emeli, amelyre egy északi vagy
@@ -260,7 +259,7 @@ először a másik csapat Kísértethősét öli meg, amint az az oltáron áll 
 hatótávjukon belül: ez az egyetlen ellenség, amely megakadályozza, hogy
 a kísértetetek elfoglalja.
 
-A Threefold Keep játssza.
+A Threefold Keep játssza (4v4 és 8v8, 5000x4400): egy vár egy dombon a hegyvidéken, három csapatnak. Menj fel a kapud melletti lépcsőn a gyilokjáróra, és kelj át egy töltésúton a dombra, aztán mássz fel a torony tetején álló oltárhoz. Minden udvarban egy kar mind a négy kaput kinyitja: a saját kapuátjáródat a fal alatt, és az altemplomot, a hosszú utat a domb alatt.
 
 ## Pontfoglalás
 
@@ -307,6 +306,8 @@ belüli ellenség nem csalja el őket: fellépnek egy elérhető szentélyre,
 és onnan harcolnak.
 
 A Scarred Earth (4v4 és 8v8, 5400x2800) játssza: kráterekkel szabdalt csatatér alkonyatkor. A szentélyek összetört ostromtornyokon állnak, a középső a nagy torony fedélzetén, mindegyik egy kráter mellett; a tornyokon lévő karok két lövészárkot nyitnak a mező alatt, a rommá lett cölöpkerítések pedig szétverhetők.
+
+A Hősök Útján a The Warden's Gallery (8v8, 5200x2500) játssza: napfényes szoborcsarnok tetőablakok alatt. A középső szentély a nagy talapzat tetején áll, és minden csapatnak három van az előcsarnoka közelében, egy közülük talapzaton; a nagy talapzaton lévő karok két kriptát nyitnak a padló alatt, a ledőlt szobrok pedig szétverhetők.
 
 ## Csapatlobbi
 
@@ -495,8 +496,7 @@ a **The Hollow Deep** (8v8 Megsemmisítés, három kanyargós alagút egy
 központi szikla körül), a **Blackwater Ford** (8v8, 5200x2800, Papirtás egy sötét
 folyami gázlónál: át lehet gázolni egy sekély gázlón, át lehet kelni a malom fölött a pillérein álló romos hídon,
 vagy a híd alatti áteresszel, miután a malmon lévő kar kinyitja a kapuját; a pap 2 percenként
-feltámasztja a halottait) és a **Mosslit Cairns** (8v8 Pontfoglalás, öt
-kőhalom sekély cikcakkban a bázisok között). A negyedik a **The Brazen
+feltámasztja a halottait) és a **Mosslit Cairns** (8v8, 5400x3000, Pontfoglalás öt kőhalmos dombon, amelyek alkonyatkor mohától izzanak: fel lehet mászni egy kőhalomra a lépcsőin, meg lehet tartani a középső nagy kőhalmot, vagy át lehet jutni a déli dombok alatti gyökéralagúton, miután egy északi kőhalmon lévő kar kinyitja a kapuit; a gyökérfalak összetörhetők). A negyedik a **The Brazen
 Causeway** (8v8, 5600x2800, Papirtás egy mocsár fölé emelt kőtöltésen alkonyatkor: lehet menetelni a töltésen, miután a túlsó kapuház karja kinyitja a bronzkapuját, át lehet kelni a mocsáron a közepén lévő lépcsőhöz, vagy át lehet osonni az alatta lévő áteresszel; a pap 2 percenként feltámasztja a halottait).
 
 Egy pályán lehetnek **kapuk**: falak, amelyek zárva megállítják a

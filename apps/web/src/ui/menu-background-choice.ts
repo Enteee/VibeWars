@@ -19,12 +19,13 @@ export const FIRST_CHOICE: MenuBackgroundChoice = { mapId: RANDOM_MAP, teamSize:
 /**
  * The first choice of a page whose `search` pins the map with
  * `?menu-background=<mapId>` (#3248), so an e2e fights on a known map, at
- * the largest size it seats. Bare `?menu-background`, or a map that does
- * not seat two sides, which is wrong data, is `FIRST_CHOICE`.
+ * the largest size it seats, two sides or three (#3633). Bare
+ * `?menu-background`, or a map it does not know, which is wrong data, is
+ * `FIRST_CHOICE`.
  */
 export function pinnedChoice(search: string): MenuBackgroundChoice {
   const map = arenaMap(new URLSearchParams(search).get("menu-background") ?? "");
-  return map?.teams === 2 && map.teamSizes.length > 0
+  return map !== undefined && map.teamSizes.length > 0
     ? { mapId: map.id, teamSize: Math.max(...map.teamSizes) }
     : FIRST_CHOICE;
 }
@@ -51,16 +52,16 @@ export function sameChoice(shown: MenuBackgroundChoice, wanted: MenuBackgroundCh
 
 /**
  * The map and size a fight for `choice` is drawn on. `RANDOM_MAP` draws
- * from Team Arena's maps at its size with `rng`; so does a map that does
- * not seat two sides of that size, which is wrong data. A size no Team
- * Arena seats is 8.
+ * from Team Arena's maps at its size with `rng`; so does a map it does not
+ * know or one that does not seat that size, which is wrong data. A map of
+ * three teams is fought on as it is (#3633). A size no Team Arena seats is 8.
  */
 export function menuBackgroundMap(
   choice: MenuBackgroundChoice,
   rng: () => number,
 ): { readonly mapId: string; readonly teamSize: number } {
   const map = arenaMap(choice.mapId);
-  if (map?.teams === 2 && map.teamSizes.some((size) => size === choice.teamSize)) {
+  if (map?.teamSizes.some((size) => size === choice.teamSize)) {
     return { mapId: map.id, teamSize: choice.teamSize };
   }
   const sized = teamArenaMapIds(choice.teamSize);

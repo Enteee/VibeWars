@@ -124,7 +124,7 @@ flagga. En höjning visas som "Moralhöjning! +10 %", eller "Fiendens
 moralhöjning". På kompassen markerar ♛ varje gillesherre, ⚑ varje
 flagga och ◎ stället.
 
-Guild Hall Isle spelar det.
+Guild Hall Isle (8v8, 6000x2600) spelar det: en ö i havet. Varje Guild Lord står uppe på en hall, bakom en vall; vägen ut går genom porthuset, över vallen eller längs en brygga. En portdörr öppnas med en spak på fiendens vall. Flaggstället står på en upphöjning i mitten.
 
 ## Reliklöpning
 
@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) spelar det: ett tempel på en vulkans sluttning 
 **spökhjälte** i sin bas, ett spöke som slåss med yxa och som ingen
 spelar. **Altaret** står i mitten, lika långt från båda baserna. På
 **Threefold Keep** slåss tre lag (två när inget tredje är ledigt) om det
-inne i en muromgärdad borg. Dess dörrar öppnas bara inifrån, med en platta
-på insidan: gå runt till ett öppet hörn för att komma in. Högst 12 poäng
+på tornet i en muromgärdad borg. Högst 12 poäng
 per lag, och om varje fiende står på -60 % moral vinner du direkt.
 **Hjältarnas sal**, King of the Hill-kartan som avslutar Heroes' Ascent,
 höjer det på en estrad med murar i väster och öster, uppför en norra
@@ -245,7 +244,7 @@ dödar varje bot först det andra lagets spökhjälte när den står på
 altaret inom deras räckhåll: det är den enda fienden som hindrar ert
 spöke från att ta det.
 
-Threefold Keep spelar det.
+Threefold Keep spelar det (4v4 och 8v8, 5000x4400): en borg på en kulle i höglandet, för tre lag. Gå upp på vallgången via trappan bredvid din port och korsa en vägbank till kullen, och klättra sedan upp till altaret på tornet. En spak på varje borggård öppnar alla fyra portar: din portgång under muren, och kryptan, den långa vägen under kullen.
 
 ## Erövringspunkter
 
@@ -282,6 +281,8 @@ på dem tills de är tagna. En fiende inom besvärjelseräckhåll lockar inte
 bort dem: de kliver upp på en helgedom inom räckhåll och slåss därifrån.
 
 Scarred Earth (4v4 och 8v8, 5400x2800) spelar det: ett kraterfyllt slagfält i skymningen. Helgedomarna står på förstörda belägringstorn, den mittersta på det stora tornets däck, var och en bredvid en krater; spakar på tornen öppnar två skyttegravar under fältet, och förstörda palissader går att slå sönder.
+
+I Heroes' Ascent spelar The Warden's Gallery (8v8, 5200x2500) det: ett solbelyst skulpturgalleri under takfönster. Den mittersta helgedomen står på toppen av den stora sockeln, och varje lag har tre nära sin vestibul, en på en sockel; spakar på den stora sockeln öppnar två kryptor under golvet, och vältade statyer går att slå sönder.
 
 ## Laglobby
 
@@ -416,8 +417,7 @@ slingrande tunnlar runt en klippa i mitten),
 Prästförintelse vid ett mörkt vadställe i en flod: man vadar över ett grunt vadställe, går över den trasiga
 bron på sina pelare ovanför kvarnen eller tar en kulvert under bron när en spak på kvarnen öppnar dess galler;
 prästen återupplivar sina döda var 2:a minut) och
-**Mosslit Cairns** (8v8 Erövringspunkter, fem stenrösen i ett grunt
-sicksack mellan baserna). En fjärde är **The Brazen Causeway** (8v8, 5600x2800, Prästförintelse på en upphöjd vägbank av sten över ett kärr i skymningen: man marscherar längs vägbanken när en spak i det bortre porthuset öppnar dess bronsport, korsar kärret till trappan mitt på den eller slinker genom en kulvert under den; prästen återupplivar sina döda var 2:a minut).
+**Mosslit Cairns** (8v8, 5400x3000, Erövringspunkter på fem röseskullar som lyser av mossa i skymningen: man klättrar upp på ett röse via dess trappor, håller det stora röset i mitten eller tar rottunneln under de södra kullarna när en spak på ett norra röse öppnar dess portar; rotmurar kan brytas ner). En fjärde är **The Brazen Causeway** (8v8, 5600x2800, Prästförintelse på en upphöjd vägbank av sten över ett kärr i skymningen: man marscherar längs vägbanken när en spak i det bortre porthuset öppnar dess bronsport, korsar kärret till trappan mitt på den eller slinker genom en kulvert under den; prästen återupplivar sina döda var 2:a minut).
 
 En karta kan ha **portar**: murar som stoppar kroppar, skott och sikt när
 de är stängda. Stå på en ports tryckplatta för att öppna den. Den stängs

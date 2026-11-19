@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
 import { DEFAULT_KEYMAP, KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
 
-import { KeysEditor, noKeyWarning, type KeyPress } from "./controls-section.js";
+import { controlsSection, KeysEditor, noKeyWarning, type KeyPress } from "./controls-section.js";
+import { FakeElement } from "./fake-dom.test-support.js";
 
 function key(code: string, held: Partial<Omit<KeyPress, "code">> = {}): KeyPress {
   return { code, ctrlKey: false, altKey: false, metaKey: false, ...held };
@@ -132,14 +133,25 @@ describe("KeysEditor (#309)", () => {
     keys.press(key("KeyZ"));
     expect(keys.preset).toBe("custom");
 
-    // "Reset to VibeWars" goes to that preset, not to the default.
-    keys.reset();
+    // Picking the preset again is how its keys come back (#3631).
+    keys.choosePreset("vibewars");
     expect(keys.map).toBe(KEYMAP_PRESETS.vibewars);
     expect(save.mock.calls.map(([map]) => map)).toEqual([
       KEYMAP_PRESETS.vibewars,
       expect.objectContaining({ "skill-1": ["KeyZ"] }),
       KEYMAP_PRESETS.vibewars,
     ]);
+  });
+
+  it("brings Classic back from a custom map by picking it (#3631)", () => {
+    const { editor: keys } = editor(KEYMAP_PRESETS.classic);
+    keys.startCapture(SKILL_1);
+    keys.press(key("KeyZ"));
+    expect(keys.preset).toBe("custom");
+
+    keys.choosePreset("classic");
+    expect(keys.map).toBe(KEYMAP_PRESETS.classic);
+    expect(keys.preset).toBe("classic");
   });
 
   it("ignores keys while no cell waits", () => {
@@ -155,6 +167,21 @@ describe("KeysEditor (#309)", () => {
   });
 });
 
+describe("KeysEditor's Previous target (#3630)", () => {
+  it("reads Shift with each Next target key, and no key where Shift cannot go", () => {
+    const { editor: keys } = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": ["Tab", "KeyX"] });
+    expect(keys.previousTargetText(0)).toBe(t("controls.withShift", { key: "Tab" }));
+    expect(keys.previousTargetText(1)).toBe(t("controls.withShift", { key: "X" }));
+
+    const one = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": ["Tab"] }).editor;
+    expect(one.previousTargetText(1)).toBe("");
+    const none = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": [] }).editor;
+    expect(none.previousTargetText(0)).toBe(t("controls.noKey"));
+    const shift = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": ["ShiftLeft"] }).editor;
+    expect(shift.previousTargetText(0)).toBe(t("controls.noKey"));
+  });
+});
+
 describe("noKeyWarning (#309)", () => {
   it("warns on a skill or move with no key, and says how to move without one", () => {
     const empty: Keymap = { ...DEFAULT_KEYMAP, "skill-3": [], "move-up": [], mute: [] };
@@ -162,5 +189,105 @@ describe("noKeyWarning (#309)", () => {
     expect(noKeyWarning(empty, "move-up")).toBe(t("controls.noKeyWalk"));
     expect(noKeyWarning(empty, "mute")).toBe("");
     expect(noKeyWarning(empty, "skill-1")).toBe("");
+  });
+});
+
+describe("Options > Controls (#3631)", () => {
+  /** A fake element that remembers which tag made it. */
+  class TaggedElement extends FakeElement {
+    readonly tag: string;
+    constructor(tag: string) {
+      super();
+      this.tag = tag;
+    }
+  }
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement: (tag: string) => new TaggedElement(tag) });
+    vi.stubGlobal("localStorage", {
+      getItem: () => null,
+      setItem: () => undefined,
+      removeItem: () => undefined,
+    });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** Every button under `element` that is not inside the keys table. */
+  const loose = (element: FakeElement): FakeElement[] =>
+    element.children.flatMap((child) =>
+      child.classList.contains("keys-table")
+        ? []
+        : [
+            ...(child instanceof TaggedElement && child.tag === "button" ? [child] : []),
+            ...loose(child),
+          ],
+    );
+
+  it("has no reset button: the preset picker is the only way back to a preset", () => {
+    const container = new FakeElement();
+    const unmount = controlsSection.mount(container as unknown as HTMLElement);
+    expect(container.all("keys-table")).toHaveLength(1);
+    expect(container.all("keys-preset")).toHaveLength(1);
+    expect(loose(container)).toEqual([]);
+    unmount();
+  });
+
+  /** `value`, which the test needs to be there. */
+  const present = <T>(value: T | undefined): T => {
+    if (value === undefined) {
+      throw new Error("missing");
+    }
+    return value;
+  };
+
+  /** The keys table's rows, each as its action's name and its cells' text. */
+  const rows = (container: FakeElement): string[][] =>
+    container
+      .all("keys-action")
+      .map((name) => [
+        name.textContent,
+        ...(name.parent?.all("key-cell") ?? []).map((cell) => cell.textContent),
+      ]);
+
+  it("shows Previous target under Next target, as Shift with its key, and it follows a rebind (#3630)", () => {
+    const container = new FakeElement();
+    const unmount = controlsSection.mount(container as unknown as HTMLElement);
+    const names = rows(container).map(([name]) => name);
+    const next = names.indexOf(t("controls.targetNext"));
+    expect(names[next + 1]).toBe(t("controls.targetPrevious"));
+    const previous = (): string[] | undefined => rows(container)[next + 1];
+    expect(previous()).toEqual([
+      t("controls.targetPrevious"),
+      t("controls.withShift", { key: "Tab" }),
+      "",
+    ]);
+    // Not a key of its own: no capture buttons, and a click starts nothing.
+    const row = present(present(container.all("keys-action")[next + 1]).parent);
+    expect(row.classList.contains("is-fixed")).toBe(true);
+    expect(row.all("key-cell").every((cell) => cell.dataset.action === undefined)).toBe(true);
+    // Each in a column of its own, as Next target's are, and no empty box.
+    expect(row.all("key-cell").map((cell) => cell.parent?.parent)).toEqual([row, row]);
+    expect(row.all("key-cell").map((cell) => cell.hidden)).toEqual([false, true]);
+    row.click();
+    expect(container.all("is-capturing")).toEqual([]);
+
+    // Next target rebound to X: the row says Shift + X at once.
+    const nextButton = present(
+      container
+        .all("key-cell")
+        .find((cell) => cell.dataset.action === "target-next" && cell.dataset.index === "0"),
+    );
+    nextButton.click();
+    const [keydown] = present(container.all("keys-screen")[0]).listeners.get("keydown") ?? [];
+    present(keydown)({
+      ...key("KeyX"),
+      key: "x",
+      target: nextButton,
+      preventDefault: () => undefined,
+      stopPropagation: () => undefined,
+    });
+    expect(previous()?.[1]).toBe(t("controls.withShift", { key: "X" }));
+    unmount();
   });
 });

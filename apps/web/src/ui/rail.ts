@@ -326,6 +326,8 @@ export function railIconUrl(entry: RailEntry): string {
 export function modeRail(active: RailEntry, onSwitch: (entry: RailEntry) => void): HTMLElement {
   const rail = h("nav", "mode-rail");
   rail.setAttribute("aria-label", t("rail.modes"));
+  // What the menu quest points at (#3540): the rail, and each of its entries.
+  rail.setAttribute("data-tutorial", "rail");
   const guest = shownParty !== undefined && !shownParty.isHost;
   for (const { entry, label, short } of RAIL) {
     if (entry === FIRST_BUILDER) {
@@ -353,6 +355,7 @@ export function modeRail(active: RailEntry, onSwitch: (entry: RailEntry) => void
       choice.setAttribute("aria-disabled", "true");
     }
     choice.setAttribute("data-entry", entry);
+    choice.setAttribute("data-tutorial", `rail-${entry}`);
     rail.appendChild(choice);
   }
   return rail;

@@ -79,6 +79,14 @@ zaslon sučeljavanja s bilo kojeg mjesta. Zatvaranje kartice dok
 Kad meč završi, možeš **Opet u red** ili **Ostanite zajedno** s
 timom s kojim si upravo igrao.
 
+Uz rezultate dva grafikona pričaju tijek meča kroz vrijeme. **Ti** crta tvoju
+nanesenu štetu, primljenu štetu, liječenje i Energiju; **Timovi** crta zalihu
+zdravlja svakog tima iznad njegove ukupne štete. Oznake ispod vremenske osi
+prikazuju ubojstva, smrti, prekide, osvajanja i uskrsnuća: pokaži na jednu ili
+dođi do nje tipkom Tab da pročitaš što se dogodilo. Pritisni stavku legende da
+sakriješ ili prikažeš njezinu liniju. Na mobitelu su grafikoni ispod rezultata,
+koji prikazuju tebe i još dvoje dok ne pritisneš **Prikaži sve**.
+
 ## Budi domaćin ili se pridruži meču
 
 Uvijek si u sobi: od trenutka kad se stranica otvori vodi jednu
@@ -160,7 +168,7 @@ kartice domaćina odmah izbacuje grupu iz reda. Kad se pojavi drugi
 tim istog načina u redu, igraš protiv njega na jednoj od
 karata tog načina, svaka strana sa svojim sastavima, a poslije se vraćaš u svoju
 sobu. Domaćin može napustiti red iz prozora prstena u bilo kojem trenutku; gost koji ode izvodi cijelu
-grupu iz njega. Ako nakon minute nema drugog tima, domaćin može
+grupu iz njega. Nakon 10 s u redu domaćin može u prozoru prstena
 pritisnuti i **Igraj protiv botova**: meč u tvojoj vlastitoj sobi protiv
 nasumičnog unaprijed zadanog tima botova,
 osim u [Usponu heroja](modes.md#uspon-heroja), koji čeka

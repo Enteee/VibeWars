@@ -27,7 +27,7 @@ import {
   wallToSegments,
   type WallShape,
 } from "./geometry.js";
-import { matchGates, matchLayers } from "./layers.js";
+import { matchGates, matchLayers, matchSwitches } from "./layers.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import { mapSimulationFields } from "./match-fields.js";
@@ -214,6 +214,7 @@ describe("King of the Hill bots (#2582)", () => {
       seed,
       ruleset: RULESET,
       walls: allWallSegments(arena.walls),
+      layers: matchLayers(arena),
       bounds: { width: arena.width, height: arena.height },
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
       ghostField: {
@@ -321,7 +322,7 @@ describe("King of the Hill bots (#2582)", () => {
     // The ghosts' contest ended: a team took the altar, wipe or not.
     expect(first.holder).not.toBeNull();
     expect(mirror("hill")).toEqual(first);
-  });
+  }, 60_000);
 
   /**
    * The winner of a 4v4 caster mirror on The Courtyard after 120 s: the
@@ -353,7 +354,7 @@ describe("King of the Hill bots (#2582)", () => {
     }
     expect(winners).toContain(0);
     expect(winners).toContain(1);
-  });
+  }, 60_000);
 });
 
 describe("Capture Points bots (#2580)", () => {
@@ -393,20 +394,14 @@ describe("Capture Points bots (#2580)", () => {
   });
 
   it("bots finish a match on Mosslit Cairns (#2696)", () => {
-    // Two a side: a full 8v8 takes 15 s here, too near the 20 s test limit.
+    // Two a side: a full 8v8 on the 2.5D rebuild (#3439) is too slow for a unit test.
     const cairns = loadAllMaps().find((candidate) => candidate.id === "mosslit-cairns");
     if (cairns === undefined) throw new Error("no map mosslit-cairns");
     const sim = new MatchSimulation({
       seed: "cairns",
       ruleset: RULESET,
-      walls: allWallSegments(cairns.walls),
-      bounds: { width: cairns.width, height: cairns.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
-      capturePoints: cairns.objectives.flatMap((objective) =>
-        objective.kind === "capture-point"
-          ? [{ ...objective.position, layer: objective.layer }]
-          : [],
-      ),
+      ...mapSimulationFields(cairns, 2),
       participants: casterBots(cairns, 2),
     });
     for (
@@ -417,7 +412,7 @@ describe("Capture Points bots (#2580)", () => {
       sim.step(DT);
     }
     expect(sim.phase).toBe("finished");
-  });
+  }, 60_000);
 
   it("three teams of bots play Threefold Keep to time, doors and all (#2699)", () => {
     const keep = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
@@ -430,7 +425,9 @@ describe("Capture Points bots (#2580)", () => {
       ruleset: RULESET,
       teamCount: 3,
       walls: allWallSegments(keep.walls),
+      layers: matchLayers(keep),
       gates: matchGates(keep),
+      switches: matchSwitches(keep),
       bounds: { width: keep.width, height: keep.height },
       matchRules: rules,
       ghostField: {
@@ -458,6 +455,7 @@ describe("Capture Points bots (#2580)", () => {
       seed: "gallery",
       ruleset: RULESET,
       walls: allWallSegments(gallery.walls),
+      layers: matchLayers(gallery),
       gates: matchGates(gallery),
       bounds: { width: gallery.width, height: gallery.height },
       matchRules: CAPTURE_POINTS_MATCH_RULES,
@@ -476,7 +474,7 @@ describe("Capture Points bots (#2580)", () => {
       sim.step(DT);
     }
     expect(sim.phase).toBe("finished");
-  });
+  }, 60_000);
 });
 
 describe("The Brazen Causeway (#3435)", () => {

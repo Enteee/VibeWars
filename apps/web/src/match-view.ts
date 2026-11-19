@@ -467,6 +467,7 @@ export function toArenaSnapshot(
     hoverId: undefined,
     showAllNames: false,
     nameBoxes: new Map(),
+    drawn: [],
     // Your team's calls are the caller's (`withCalls`, #443).
     calledId: undefined,
     pings: [],
@@ -1202,6 +1203,7 @@ export async function startMatchView(
       viewport?.pointerWorld(),
       nameReveal.held(),
       viewport?.scene.nameTagBoxes() ?? EMPTY_SNAPSHOT.nameBoxes,
+      viewport?.scene.drawnClickables() ?? EMPTY_SNAPSHOT.drawn,
     );
     // A watcher has no team, so nobody's calls.
     latestArena = seat === undefined ? arena : withCalls(arena, seat.getCalls());

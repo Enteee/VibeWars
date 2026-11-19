@@ -1,12 +1,6 @@
 import Phaser from "phaser";
 
-import type {
-  Biome,
-  MapAtmosphere,
-  MapBounds,
-  MapLighting,
-  MapPaving,
-} from "@vibewars/game-maps/schema";
+import type { MapAtmosphere, MapBounds, MapLighting, MapPaving } from "@vibewars/game-maps/schema";
 
 import {
   ALTAR_REACH_UNITS,
@@ -61,6 +55,7 @@ import {
   type SwingFlash,
   isDoor,
   isBreakableWall,
+  recordBody,
   selfLayer,
 } from "./arena-snapshot.js";
 import {
@@ -75,7 +70,6 @@ import {
 } from "./render-order.js";
 import {
   ARENA_BACKGROUND,
-  BIOME,
   DECK_LIP,
   pitFloor,
   pitWall,
@@ -85,6 +79,8 @@ import {
   type ArenaPalette,
   breakableLook,
   type BreakableLook,
+  type MapLook,
+  materialsOf,
   pavingPalette,
   type PavingLookColours,
   type StonePavingLook,
@@ -239,6 +235,9 @@ import {
 import {
   FLAG_PICK_RADIUS,
   STAND_RADIUS,
+  recordFlag,
+  recordStand,
+  recordSwitch,
   type RenderableCapturePoint,
   type RenderableGate,
   type RenderableSwitch,
@@ -363,8 +362,10 @@ import {
   crackReveal,
   drawnReveal,
   observeBreakable,
+  recordBreakable,
   type RenderableBreakable,
 } from "./breakable-objects.js";
+import type { DrawnClickable } from "./pick.js";
 import {
   BODY_LIGHT_FLOOR,
   bodyTintOf,
@@ -788,6 +789,10 @@ export class ArenaScene extends Phaser.Scene {
     | undefined;
   /** `snapshot.actors` where they draw this frame: lifted by their layers. */
   private drawnActors: readonly RenderableActor[] = [];
+  /** What this frame drew to be clicked (#3634), as it draws it. */
+  private recording: DrawnClickable[] = [];
+  /** What the last frame drew to be clicked (#3634). */
+  private clickables: readonly DrawnClickable[] = [];
   /** Each body's lift now, while it eases to its layer's. */
   private readonly elevations = new Map<string, number>();
   /** Each body's layer last frame: a step down beside a drop-off is a fall (#3069). */
@@ -983,6 +988,15 @@ export class ArenaScene extends Phaser.Scene {
     return this.nameBoxes;
   }
 
+  /**
+   * Every body, lever, flag, stand and breakable wall the last frame drew
+   * (#3634), where it showed and at the depth it drew: what a click or
+   * hover picks. Empty before the first frame.
+   */
+  public drawnClickables(): readonly DrawnClickable[] {
+    return this.clickables;
+  }
+
   /** Replace the snapshot to draw on the next frame. */
   public setSnapshot(snapshot: ArenaSnapshot): void {
     this.snapshot = snapshot;
@@ -1103,9 +1117,10 @@ export class ArenaScene extends Phaser.Scene {
     }
     effects.clear();
     this.barrierGraphics?.clear();
-    const { body: g, marks } = floor;
+    const { body: g } = floor;
     this.now = time / 1000;
     this.reducedMotion = prefersReducedMotion();
+    this.recording = [];
     this.drawnActors = this.reactActors(this.liftActors(dt), dt);
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
@@ -1145,7 +1160,7 @@ export class ArenaScene extends Phaser.Scene {
       this.drawPing(g, ping);
     }
     this.drawGoals();
-    this.drawStand(g, marks);
+    this.drawStand();
     this.drawAltar(g);
     for (const point of this.snapshot.capturePoints) {
       this.drawCapturePoint(g, point);
@@ -1184,6 +1199,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
       if (band !== undefined) {
+        recordBody(this.recording, actor, band.body.depth);
         this.drawActor(band, actor);
       }
     }
@@ -1229,6 +1245,7 @@ export class ArenaScene extends Phaser.Scene {
     this.updateNameLabels();
     this.updateFloatingTexts(dt);
     this.updateEdgeMarkers();
+    this.clickables = this.recording;
   }
 
   /** The graphics pair a body on `layer` draws into. */
@@ -1470,6 +1487,7 @@ export class ArenaScene extends Phaser.Scene {
         };
         this.breakableDrawings.set(breakable.id, drawing);
       }
+      recordBreakable(this.recording, breakable, this.snapshot.structure, drawing.graphics.depth);
       const seen = observeBreakable(drawing.seen, breakable, this.now);
       if (seen !== drawing.seen) {
         drawing.seen = seen;
@@ -1608,8 +1626,9 @@ export class ArenaScene extends Phaser.Scene {
       at === undefined ? undefined : this.now - at,
       this.reducedMotion,
     );
+    const lift = recordSwitch(this.recording, lever, this.snapshot.structure.ground, g.depth);
     g.save();
-    g.translateCanvas(0, -elevationOf(lever.layer, this.snapshot.structure.ground));
+    g.translateCanvas(0, -lift);
     SWITCH_MARK_ART[switchMarkKey(lever.mark)](g, lever.position, thrown);
     g.restore();
   }
@@ -1744,12 +1763,17 @@ export class ArenaScene extends Phaser.Scene {
    * The flag stand (#1225): a ring on the ground in its holder's colour,
    * neutral grey with none, round a pole; the target ring when selected.
    */
-  private drawStand(g: Phaser.GameObjects.Graphics, marks: Phaser.GameObjects.Graphics): void {
+  private drawStand(): void {
     const stand = this.snapshot.stand;
-    if (stand === undefined) {
+    const band = stand === undefined ? undefined : this.bandOf(stand.layer);
+    if (stand === undefined || band === undefined) {
       return;
     }
-    const { x, y } = stand.position;
+    // On its layer's band, lifted as a lever is (#3634).
+    const { body: g, marks } = band;
+    const lift = recordStand(this.recording, stand, this.snapshot.structure.ground, g.depth);
+    const { x } = stand.position;
+    const y = stand.position.y - lift;
     const colour = stand.holder === undefined ? STAND_NEUTRAL : teamColour(stand.holder);
     g.fillStyle(colour, 0.18);
     g.fillCircle(x, y, STAND_RADIUS);
@@ -1772,8 +1796,10 @@ export class ArenaScene extends Phaser.Scene {
    * at its foot, or on its carrier's head; the target ring when selected.
    */
   private drawFlag(marks: Phaser.GameObjects.Graphics, flag: RenderableFlag): void {
+    const lift = recordFlag(this.recording, flag, this.snapshot.structure.ground, marks.depth);
     const x = flag.position.x;
-    const foot = flag.position.y - (flag.carried ? FLAG_CARRIED_LIFT : 0);
+    const y = flag.position.y - lift;
+    const foot = y - (flag.carried ? FLAG_CARRIED_LIFT : 0);
     const top = foot - FLAG_POLE;
     marks.lineStyle(3, BODY_EDGE, 1);
     marks.lineBetween(x, foot, x, top);
@@ -1799,7 +1825,7 @@ export class ArenaScene extends Phaser.Scene {
     );
     if (flag.id === this.snapshot.targetId && !flag.carried && !flag.onStand) {
       marks.lineStyle(2, TARGET_RING, 1);
-      marks.strokeCircle(x, flag.position.y, FLAG_PICK_RADIUS);
+      marks.strokeCircle(x, y, FLAG_PICK_RADIUS);
     }
   }
 
@@ -3584,7 +3610,7 @@ export class ArenaScene extends Phaser.Scene {
     const palette = arenaPalette(next.structure);
     const { ground } = next.structure;
     this.drawFloor(palette, line);
-    this.drawGrain(next.structure.bounds, next.structure.biome, palette);
+    this.drawGrain(next.structure, palette);
     this.drawOutside(next.structure.bounds, next.lighting);
     this.drawPaving(next.structure);
     paintDeckShadows(
@@ -3637,7 +3663,7 @@ export class ArenaScene extends Phaser.Scene {
     const lifts: { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
     for (const transition of next.structure.transitions) {
       const lit = litStructurePalette(
-        transitionPalette(palette, BIOME[next.structure.biome].transition[transition.look]),
+        transitionPalette(palette, materialsOf(next.structure).transition[transition.look]),
         next.lighting,
         transition.area,
         transition.from,
@@ -3770,7 +3796,7 @@ export class ArenaScene extends Phaser.Scene {
         next.walls,
         line,
         litStructurePalette(
-          deckPalette(palette, BIOME[next.structure.biome].deck[deck.look]),
+          deckPalette(palette, materialsOf(next.structure).deck[deck.look]),
           next.lighting,
           deck.footprint,
           deck.layer,
@@ -4035,7 +4061,7 @@ export class ArenaScene extends Phaser.Scene {
         overhang.look,
         overhang.footprint,
         litOverhangColours(
-          BIOME[structure.biome].overhang[overhang.look],
+          materialsOf(structure).overhang[overhang.look],
           lighting,
           overhang.footprint,
           overhang.layer,
@@ -4535,7 +4561,7 @@ export class ArenaScene extends Phaser.Scene {
     const [left, top] = [Math.min(...xs), Math.min(...ys)];
     const [width, height] = [Math.max(...xs) - left, Math.max(...ys) - top];
     return this.add
-      .tileSprite(left, top, width, height, this.groundTile(structure.biome))
+      .tileSprite(left, top, width, height, this.groundTile(structure))
       .setOrigin(0, 0)
       .setTilePosition(left, top)
       .setDepth(renderOrder({ kind, deckLayer: structure.ground, part: "grain" }));
@@ -4810,8 +4836,10 @@ export class ArenaScene extends Phaser.Scene {
    * stays inside. A map of one layer draws flat, so it has none. Built
    * once per map.
    */
-  private drawGrain(bounds: MapBounds, biome: Biome, palette: ArenaPalette): void {
-    if (this.grain?.bounds === bounds && this.grain.biome === biome) {
+  private drawGrain(structure: MapStructure, palette: ArenaPalette): void {
+    const { bounds } = structure;
+    const tile = groundTileKey(structure);
+    if (this.grain?.bounds === bounds && this.grain.tile === tile) {
       return;
     }
     this.dropGrain();
@@ -4820,11 +4848,11 @@ export class ArenaScene extends Phaser.Scene {
     }
     const { width, height } = this.arena;
     const sprite = this.add
-      .tileSprite(0, 0, width, height, this.groundTile(biome))
+      .tileSprite(0, 0, width, height, this.groundTile(structure))
       .setOrigin(0, 0)
       .setDepth(GRAIN_DEPTH);
     if (bounds.kind !== "outline") {
-      this.grain = { bounds, biome, objects: [sprite] };
+      this.grain = { bounds, tile, objects: [sprite] };
       return;
     }
     // One stencil blocks the land outside the outline; after the grain, a
@@ -4840,23 +4868,23 @@ export class ArenaScene extends Phaser.Scene {
     const release = this.add
       .stencil(0, 0, [], { stencilLayerMode: "clear" })
       .setDepth(GRAIN_RELEASE_DEPTH);
-    this.grain = { bounds, biome, objects: [stencil, sprite, release] };
+    this.grain = { bounds, tile, objects: [stencil, sprite, release] };
   }
 
-  /** The biome's ground tile (#3484), painted once per game. */
-  private groundTile(biome: Biome): string {
-    const key = groundTileKey(biome);
+  /** The map's ground tile (#3484), painted once per game. */
+  private groundTile(look: MapLook): string {
+    const key = groundTileKey(look);
     if (!this.textures.exists(key)) {
       const texture = this.textures.createCanvas(key, GROUND_TILE, GROUND_TILE);
       if (texture === null) {
         throw new Error("ground: could not create a ground tile");
       }
       texture.context.putImageData(
-        new ImageData(grainPixels(biome), GROUND_TILE, GROUND_TILE),
+        new ImageData(grainPixels(look), GROUND_TILE, GROUND_TILE),
         0,
         0,
       );
-      paintDressing(texture.context, biome);
+      paintDressing(texture.context, look);
       texture.refresh();
     }
     return key;
@@ -5501,7 +5529,8 @@ type OutlineBounds = Extract<MapBounds, { readonly kind: "outline" }>;
 /** The ground's grain (#3484): one tiled sprite, and on a map with an outline the stencil that keeps it inside. */
 interface GroundGrain {
   readonly bounds: MapBounds;
-  readonly biome: Biome;
+  /** The ground tile it is laid with. */
+  readonly tile: string;
   readonly objects: readonly Phaser.GameObjects.GameObject[];
 }
 

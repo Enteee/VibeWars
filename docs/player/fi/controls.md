@@ -20,7 +20,7 @@ käyttää taitoja vasemmalla kädellä ja liikkuu nuolinäppäimillä.
 | Seuraava vihollinen (Shift: edellinen) | Tab                        | Tab              |
 | Lähin vihollinen                       | C                          | C                |
 | Tiimisi ilmoittama vihollinen          | T                          | T                |
-| Sinä itse                              | G                          | G                |
+| Sinä itse                              | F tai G                    | G                |
 | Näytä nimet (pidä pohjassa)            | Shift                      | Shift            |
 | Mykistä                                | M                          | M                |
 | Pudota lippu, reliikki tai tuhkat      | ei näppäintä               | ei näppäintä     |

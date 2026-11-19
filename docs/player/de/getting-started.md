@@ -79,6 +79,15 @@ sofort aus der Warteschlange.
 Wenn das Match endet, kannst du **Nochmal** wählen oder mit dem Team von eben
 **Zusammenbleiben**.
 
+Neben den Punkten erzählen zwei Diagramme das Match im Zeitverlauf. **Du**
+zeigt deinen verursachten Schaden, erlittenen Schaden, deine Heilung und
+Energie; **Teams** zeigt den Lebenspool jedes Teams über seinem Gesamtschaden.
+Markierungen unter der Zeitachse zeigen Kills, Tode, Unterbrechungen,
+Eroberungen und Wiederbelebungen: Zeig auf eine oder spring mit Tab zu ihr, um
+zu lesen, was passiert ist. Drück auf einen Legendeneintrag, um seine Linie
+aus- oder einzublenden. Auf dem Handy stehen die Diagramme unter den Punkten,
+die dich und zwei andere zeigen, bis du **Alle zeigen** drückst.
+
 ## Match hosten oder beitreten
 
 Du bist immer in einer Lobby: Ab dem Moment, in dem die Seite öffnet, hostet sie eine
@@ -153,7 +162,7 @@ suchen, deines eingeschlossen: `2 Teams suchen`. Nur der Host hat dort **Abmelde
 der Host den Tab, ist die Gruppe sofort aus der Warteschlange. Taucht ein anderes wartendes
 Team desselben Modus auf, spielt ihr auf einer der Karten des Modus gegeneinander, jede Seite
 mit ihren eigenen Builds, und kommt danach in eure Lobby zurück. Der Host kann die Warteschlange jederzeit im Fenster des Rings verlassen; ein Gast, der geht, nimmt die ganze Gruppe aus der
-Warteschlange. Ist nach einer Minute kein anderes Team da, kann der Host auch **Gegen Bots
+Warteschlange. Nach 10 s in der Warteschlange kann der Host auch im Fenster des Rings **Gegen Bots
 spielen** drücken: ein Match in deiner eigenen Lobby gegen ein zufälliges vorgefertigtes
 Team aus Bots, außer im [Aufstieg der Helden](modes.md#aufstieg-der-helden), der auf ein Team
 in deiner Runde wartet.

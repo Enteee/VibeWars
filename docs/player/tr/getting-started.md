@@ -81,6 +81,15 @@ götürülürsün. Beklerken sekmeyi kapatmak seni hemen sıradan çıkarır.
 Maç bitince **Yeniden sıraya gir** diyebilir ya da az önce oynadığın
 takımla **Birlikte kal** diyebilirsin.
 
+Skorların yanında iki grafik maçı zaman içinde anlatır. **Sen** verdiğin
+hasarı, aldığın hasarı, iyileştirmeyi ve Enerjiyi çizer; **Takımlar** her
+takımın can havuzunu toplam hasarının üstünde çizer. Zaman ekseninin altındaki
+işaretler öldürmeleri, ölümleri, kesintileri, ele geçirmeleri ve dirilişleri
+gösterir: ne olduğunu okumak için birinin üzerine gel ya da Tab ile ona git.
+Çizgisini gizlemek ya da göstermek için bir gösterge girdisine bas. Telefonda
+grafikler skorların altında durur; skorlar **Tümünü göster** basılana kadar
+seni ve iki kişiyi daha gösterir.
+
 ## Maç kur ya da katıl
 
 Her zaman bir lobidesin: sayfa açıldığı andan itibaren kendine ait bir
@@ -168,8 +177,8 @@ sekmesini kapatmak grubu hemen sıradan çıkarır. Aynı modda sıradaki
 başka bir takım çıkınca, onlarla modun haritalarından birinde, her taraf
 kendi dizilimleriyle oynarsın ve ardından lobine dönersin. Kurucu
 halkanın penceresinden istediği an çıkabilir; çıkan bir misafir bütün
-grubu sıradan çıkarır. Bir dakika sonra başka takım yoksa kurucu
-**Botlara karşı oyna**'ya da basabilir: kendi lobinde rastgele hazır bir
+grubu sıradan çıkarır. Sırada 10 sn geçtikten sonra kurucu halkanın
+penceresinde **Botlara karşı oyna**'ya da basabilir: kendi lobinde rastgele hazır bir
 bot takımına karşı bir maç; ancak senin turundaki bir takımı bekleyen
 [Kahramanların Yükselişi](modes.md#kahramanların-yükselişi) hariç.
 

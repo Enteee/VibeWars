@@ -120,7 +120,7 @@ vijandelijke heer. Daaronder noemt een regel wie een vlag draagt. Een boost
 verschijnt als "Moraalboost! +10%", of "Moraalboost vijand". Op het kompas markeert
 ♛ elke Gildeheer, ⚑ elke vlag en ◎ de standaard.
 
-Guild Hall Isle speelt het.
+Guild Hall Isle (8v8, 6000x2600) speelt het: een eiland in zee. Elke Guild Lord staat boven op een hal, achter een wal; naar buiten gaat door het poortgebouw, over de wal of langs een steiger. Een poortdeur gaat open met een hendel op de wal van de vijand. De vlaggenstandaard staat op een podium in het midden.
 
 ## Relic Run
 
@@ -175,9 +175,8 @@ Cinder Sanctum (8v8, 5600x2800) speelt het: een tempel op de flank van een vulka
 **Leid je Spookheld op het altaar, en houd het vast.** Elk team heeft een
 **Spookheld** in zijn basis, een geest die met een bijl vecht en die niemand speelt.
 Het **altaar** staat in het midden, even ver van beide basissen. Op **Threefold
-Keep** vechten drie teams (twee als er geen derde vrij is) erom binnen een ommuurde
-burcht. De deuren gaan alleen van binnenuit open, met een plaat aan de binnenkant:
-loop om naar een open hoek om binnen te komen. Maximaal 12 punten per team, en als
+Keep** vechten drie teams (twee als er geen derde vrij is) erom op de toren van een
+ommuurde burcht. Maximaal 12 punten per team, en als
 elke vijand op -60% moraal staat, win je meteen. De **Hall of Heroes**, de King of
 the Hill-map die de Heroes' Ascent afsluit, tilt het op een podium met muren aan
 west- en oostkant, via een noordelijke of zuidelijke toegang met pilaren. Kies je
@@ -231,7 +230,7 @@ houdt, doodt elke bot eerst de Spookheld van het andere team zodra die binnen hu
 bereik op het altaar staat: dat is de enige vijand die je geest ervan weerhoudt het
 te claimen.
 
-Threefold Keep speelt het.
+Threefold Keep speelt het (4v4 en 8v8, 5000x4400): een burcht op een heuvel in het hoogland, voor drie teams. Klim via de trap naast je poort de weergang op en steek over een dam naar de heuvel over, en klim dan naar het altaar op de toren. Een hendel op elk binnenhof opent alle vier de poorten: je poortgang onder de muur, en de crypte, de lange weg onder de heuvel.
 
 ## Capture Points
 
@@ -263,6 +262,8 @@ staan tot ze zijn ingenomen. Een vijand binnen spreukbereik trekt ze er niet van
 ze stappen op een schrijn binnen bereik en vechten van daaruit.
 
 Scarred Earth (4v4 en 8v8, 5400x2800) speelt het: een met kraters bezaaid slagveld in de schemering. De schrijnen staan op verwoeste belegeringstorens, het middelste op het dek van de grote toren, elk naast een krater; hendels op de torens openen twee loopgraven onder het veld, en verwoeste palissaden kun je kapotslaan.
+
+In de Heroes' Ascent speelt The Warden's Gallery (8v8, 5200x2500) het: een zonnige beeldengalerij onder daklichten. Het middelste schrijn staat boven op de grote sokkel, en elk team heeft er drie bij zijn vestibule, één op een sokkel; hendels op de grote sokkel openen twee crypten onder de vloer, en omgevallen beelden kun je kapotslaan.
 
 ## Teamlobby
 
@@ -301,7 +302,7 @@ Een groep met minder dan 8 spelers gaat in de wachtrij met bots op de lege stoel
 
 **Barrow Field** (8v8, 5400x2600) is een Ascent-arena, en ook een keuze bij een Gehost spel: Priest Annihilation op een heide vol grafheuvels in de schemering, met de priester die zijn doden elke 2 minuten reanimeert. Klim op een grafheuvel voor de hoogte, of loop de grafgang eronder zodra een hendel op de verre grafheuvel zijn poort opent. Draag je vlag op de **Storm Beacon** in het midden en hij treft elke 2,5 seconden een willekeurige vijand binnen gehoorsafstand met 50 bliksemschade, tot het andere team er zijn vlag plant. Elke inslag is een bliksemschicht van het baken naar wie geraakt is, zichtbaar voor beide teams.
 
-Drie Ascent-arena's zijn ook een keuze bij een Gehost spel: **The Hollow Deep** (8v8 Annihilation, drie kronkelende tunnels rond een centrale rots), **Blackwater Ford** (8v8, 5200x2800, Priest Annihilation bij een donkere doorwaadbare plek in de rivier: je waadt door het ondiepe water, steekt de kapotte brug op haar pijlers boven de molen over, of neemt een duiker onder de brug zodra een hendel op de molen het hek ervan opent; de priester reanimeert zijn doden elke 2 minuten) en **Mosslit Cairns** (8v8 Capture Points, vijf cairns in een ondiepe zigzag tussen de basissen). Een vierde is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation op een verhoogde stenen dam boven een moeras in de schemering: je marcheert over de dam zodra een hendel in het verre poortgebouw de bronzen poort ervan opent, steekt het moeras over naar de trappen in het midden, of glipt door een duiker eronder; de priester reanimeert zijn doden elke 2 minuten).
+Drie Ascent-arena's zijn ook een keuze bij een Gehost spel: **The Hollow Deep** (8v8 Annihilation, drie kronkelende tunnels rond een centrale rots), **Blackwater Ford** (8v8, 5200x2800, Priest Annihilation bij een donkere doorwaadbare plek in de rivier: je waadt door het ondiepe water, steekt de kapotte brug op haar pijlers boven de molen over, of neemt een duiker onder de brug zodra een hendel op de molen het hek ervan opent; de priester reanimeert zijn doden elke 2 minuten) en **Mosslit Cairns** (8v8, 5400x3000, Capture Points op vijf cairnheuvels die in de schemering gloeien van het mos: je beklimt een cairn via de trappen, houdt de grote cairn in het midden, of neemt de wortelgang onder de zuidelijke heuvels zodra een hendel op een noordelijke cairn de poorten ervan opent; wortelmuren kunnen worden gebroken). Een vierde is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation op een verhoogde stenen dam boven een moeras in de schemering: je marcheert over de dam zodra een hendel in het verre poortgebouw de bronzen poort ervan opent, steekt het moeras over naar de trappen in het midden, of glipt door een duiker eronder; de priester reanimeert zijn doden elke 2 minuten).
 
 Een map kan **poorten** hebben: muren die lichamen, schoten en zicht tegenhouden als ze dicht zijn. Ga op de drukplaat van een poort staan om die te openen. Hij sluit als er niemand meer op de plaat staat, duwt iedereen in de deuropening naar de dichtstbijzijnde kant en stopt schoten die nog onderweg zijn, en kan een halve seconde niet opnieuw geopend worden. Een plaat in de kleur van een team reageert alleen op dat team. Bots staan op de plaat van hun eigen team als er geen vijand in de buurt is.
 

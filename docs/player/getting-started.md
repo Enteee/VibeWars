@@ -80,6 +80,14 @@ wait takes you out of the queue at once.
 When the match ends you can **Queue again**, or **Stay together** with
 the team you just played with.
 
+Beside the scores, two charts tell the match over time. **You** draws your
+damage dealt, damage taken, healing and Energy; **Teams** draws each team's
+health pool above its total damage. Marks under the time axis show kills,
+deaths, interrupts, captures and resurrections: point at one, or Tab to it,
+to read what happened. Press a legend entry to hide or show its line. On a
+phone the charts sit under the scores, which show you and two others until
+**Show all**.
+
 ## Host or join a match
 
 You are always in a lobby: from the moment the page opens it hosts one
@@ -162,8 +170,8 @@ host's tab takes the party out of the queue at once. When another
 queued team of the same mode turns up, you play them on one of the
 mode's maps, each side with its own builds, and come back to your lobby
 afterwards. The host can leave from the ring's window at any time; a guest who leaves takes the whole
-party out of it. With no other team after a minute, the host can also
-press **Play against bots**: a match in your own lobby against a
+party out of it. After 10 s in the queue, the host can also press
+**Play against bots** in the ring's window: a match in your own lobby against a
 random preset team of bots,
 except in [Heroes' Ascent](modes.md#heroes-ascent), which waits for a
 team at your round.

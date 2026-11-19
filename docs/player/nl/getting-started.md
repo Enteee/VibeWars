@@ -80,6 +80,15 @@ wachtrij.
 Als de match afloopt, kun je **Opnieuw zoeken**, of **Bij elkaar** blijven met
 het team waarmee je net speelde.
 
+Naast de scores vertellen twee grafieken het verloop van de match. **Jij**
+tekent je toegebrachte schade, ontvangen schade, genezing en Energie; **Teams**
+tekent de levenspool van elk team boven zijn totale schade. Markeringen onder
+de tijdas tonen kills, doden, onderbrekingen, veroveringen en
+wederopstandingen: wijs er een aan, of ga er met Tab naartoe, om te lezen wat
+er gebeurde. Druk op een legenda-item om de lijn te verbergen of te tonen. Op
+een telefoon staan de grafieken onder de scores, die jou en twee anderen tonen
+tot **Alles tonen**.
+
 ## Een match hosten of meedoen
 
 Je zit altijd in een lobby: vanaf het moment dat de pagina opent, host hij er
@@ -163,8 +172,8 @@ tabblad, dan gaat de groep meteen uit de wachtrij. Als er een ander team van
 dezelfde modus in de wachtrij opduikt, speel je tegen hen op een van de maps
 van de modus, elke kant met zijn eigen builds, en kom je daarna terug in je
 lobby. De host kan op elk moment de wachtrij verlaten via het venster van de ring; een gast die
-vertrekt, haalt de hele groep eruit. Is er na een minuut geen ander team, dan
-kan de host ook op **Tegen bots spelen** drukken: een match in je eigen lobby
+vertrekt, haalt de hele groep eruit. Na 10 s in de wachtrij kan de host ook
+in het venster van de ring op **Tegen bots spelen** drukken: een match in je eigen lobby
 tegen een willekeurig kant-en-klaar team van bots, behalve in
 [Heroes' Ascent](modes.md#heroes-ascent), dat wacht op een team van jouw ronde.
 

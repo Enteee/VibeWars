@@ -20,6 +20,22 @@ export function h(tag: string, className?: string, text?: string): HTMLElement {
   return node;
 }
 
+/** The game's name, in its two colours: not translated. */
+const NAME_VIBE = "Vibe";
+const NAME_WARS = "Wars";
+
+/**
+ * The game's name as the splash shows it (#3636): Vibe in the friend's
+ * blue, Wars in the foe's red, left to right in every locale, and read
+ * as one word.
+ */
+export function wordmark(className: string): HTMLElement {
+  const node = h("span", `wordmark ${className}`);
+  node.setAttribute("dir", "ltr");
+  node.append(h("span", "wordmark-vibe", NAME_VIBE), h("span", "wordmark-wars", NAME_WARS));
+  return node;
+}
+
 export function button(label: string, className: string, onClick: () => void): HTMLButtonElement {
   const node = document.createElement("button");
   node.type = "button";
@@ -299,8 +315,9 @@ function crumbNodes(crumbs: readonly (string | HTMLElement)[]): HTMLElement[] {
     const node = typeof crumb === "string" ? h("span", "", crumb) : crumb;
     node.classList.add("topbar-crumb");
     node.classList.toggle("is-place", place);
-    // The place is the screen's heading, as its title was.
-    if (place && typeof crumb === "string") {
+    // The place is the screen's heading, as its title was; a name being
+    // edited is a field, not a heading.
+    if (place && node.tagName !== "INPUT") {
       node.setAttribute("role", "heading");
       node.setAttribute("aria-level", "1");
     }

@@ -64,11 +64,11 @@ Převzetí provedeš volbou **Načíst kód GW1** pod **⋯**, vložením kódu 
 
 **Uložit** tvůj build uchová a vrátí tě tam, odkud jsi přišel. **Esc** odejde bez uložení a pokud jsi něco změnil, nejdřív se zeptá. **Sdílet**, **Načíst kód GW1**, **Duplikovat** a **Smazat** jsou pod **⋯**.
 
-Kód týmu se místo toho načítá v **Tvůrci týmů**: stiskni **Načíst tým**, vlož kód a stiskni **Načíst**, nebo ho vlož kamkoli v Tvůrci týmů.
+Kód týmu se místo toho načítá v **Tvůrci týmů**: vlož ho tam kamkoli, nebo otevři týmový build a použij jeho **⋯** → **Načíst tým**.
 
 ## Týmové buildy
 
-**Týmový build** je tým vlastních postav vytvořený v **Tvůrci týmů** a uchovávaný odděleně od tvých vlastních postav. Každý z nich je tam kartou, a jen tam: **Nový týmový build** vytvoří nový, **Načíst tým** načte ten, který s tebou někdo sdílel, a kliknutí na kartu nebo její **Upravit** ho otevře. Navrhuješ ho v [Týmovém lobby](modes.md#týmové-lobby).
+**Týmový build** je tým vlastních postav vytvořený v **Tvůrci týmů** a uchovávaný odděleně od tvých vlastních postav. Každý z nich je tam kartou, a jen tam: **Nový týmový build** vytvoří nový, kód týmu vložený tam načte ten, který s tebou někdo sdílel, a kliknutí na kartu nebo její **Upravit** ho otevře. Navrhuješ ho v [Týmovém lobby](modes.md#týmové-lobby).
 
 Každý týmový build má velikost, 2v2, 4v4 nebo 8v8 (týmové buildy 1v1 neexistují): **Velikost týmu** v postranním panelu. Tvůrce týmů uvádí týmové buildy vybrané velikosti a **Nový týmový build** vytvoří build této velikosti. Velikost týmového buildu je pevná: editor ji ukazuje uzamčenou a pro hru v jiné velikosti si vytvoříš jiný týmový build. Vložený tým si velikost zachová a postranní panel se na ni přepne.
 

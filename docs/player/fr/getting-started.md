@@ -85,6 +85,16 @@ aussitôt de la file.
 Quand le match se termine, tu peux **Relancer la file**, ou **Rester ensemble**
 avec l'équipe avec laquelle tu viens de jouer.
 
+À côté des scores, deux graphiques racontent le match dans le temps. **Vous**
+trace tes dégâts infligés, tes dégâts subis, tes soins et ton Énergie ;
+**Équipes** trace la réserve de santé de chaque équipe au-dessus de ses dégâts
+totaux. Des repères sous l'axe du temps montrent les éliminations, les morts,
+les interruptions, les captures et les résurrections : pointe sur l'un d'eux,
+ou atteins-le avec Tab, pour lire ce qui s'est passé. Appuie sur une entrée de
+la légende pour masquer ou afficher sa courbe. Sur téléphone, les graphiques se
+placent sous les scores, qui te montrent avec deux autres joueurs jusqu'à
+**Tout afficher**.
+
 ## Héberger ou rejoindre un match
 
 Tu es toujours dans un salon : dès que la page s'ouvre, elle en héberge un à
@@ -170,8 +180,8 @@ Arène d'équipe combien d'équipes cherchent, la tienne comprise :
 de l'hôte retire aussitôt le groupe de la file. Quand une autre équipe en file
 du même mode arrive, vous jouez sur l'une des cartes du mode, chaque camp avec
 ses propres builds, puis vous revenez à votre salon. L'hôte peut quitter la file depuis la fenêtre de l'anneau à tout moment ; un invité qui part retire tout le groupe de
-la file. Sans autre équipe au bout d'une minute, l'hôte peut aussi appuyer sur
-**Jouer contre des bots** : un match dans ton propre salon contre une équipe
+la file. Après 10 s dans la file, l'hôte peut aussi appuyer sur
+**Jouer contre des bots** depuis la fenêtre de l'anneau : un match dans ton propre salon contre une équipe
 préréglée de bots au hasard, sauf en
 [Ascension des héros](modes.md#ascension-des-héros), qui attend une équipe de
 ta manche.

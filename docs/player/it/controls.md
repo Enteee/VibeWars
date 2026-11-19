@@ -15,7 +15,7 @@ Il preset predefinito è **Classico**, per chi viene da GW1. **VibeWars** lancia
 | Prossimo nemico (Shift: precedente) | Tab                      | Tab              |
 | Nemico più vicino                   | C                        | C                |
 | Nemico segnalato dalla tua squadra  | T                        | T                |
-| Te stesso                           | G                        | G                |
+| Te stesso                           | F o G                    | G                |
 | Nomi (tieni premuto)                | Shift                    | Shift            |
 | Silenzia                            | M                        | M                |
 | Lascia bandiera, reliquia o ceneri  | nessun tasto             | nessun tasto     |

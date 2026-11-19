@@ -2148,7 +2148,7 @@ export class MatchSimulation {
     // order and the ids are the same every run.
     if (spec.creature === undefined) {
       for (const skill of companionSkills(spec.skillBar)) {
-        this.#summon(record, skill.id, skill.companion, 1, record.position, true);
+        this.#summon(record, skill.id, skill.companion, 1, this.#companionSpawn(record), true);
       }
     }
     return record;
@@ -2276,6 +2276,20 @@ export class MatchSimulation {
         this.#logFired(fireCreationTriggers(owner.combatant, id, this.#triggerContext()));
       }
     }
+  }
+
+  /**
+   * Where `owner`'s companion arrives (#3649): one body's width behind
+   * it, on the side away from the map's centre, where its team came
+   * from; south when it stands on the centre. Not on its feet, where the
+   * push-out would always shove the pet due east.
+   */
+  #companionSpawn(owner: ParticipantRecord): Vec2 {
+    const bounds = this.#bounds;
+    const centre = bounds === undefined ? ZERO : vec2(bounds.width / 2, bounds.height / 2);
+    const away = normalize(sub(owner.position, centre));
+    const gap = this.#ruleset.collision.playerRadius + this.#ruleset.collision.creatureRadius;
+    return add(owner.position, scale(away === ZERO ? vec2(0, 1) : away, gap));
   }
 
   /**
@@ -3303,7 +3317,7 @@ export class MatchSimulation {
     }
     for (const skill of wanted) {
       if (this.#companionOf(record, skill.id) === undefined) {
-        this.#summon(record, skill.id, skill.companion, 1, record.position, true);
+        this.#summon(record, skill.id, skill.companion, 1, this.#companionSpawn(record), true);
       }
     }
   }
@@ -10768,12 +10782,15 @@ export class MatchSimulation {
 
   /**
    * Whether `mover` walks through `other` rather than round it: its own
-   * team's spirit, or any of its own team while it carries a relic
-   * (#2581), so an escort on its route never holds the run up.
+   * team's spirit, its own pet or its pet's owner (#3649), or any of its
+   * own team while it carries a relic (#2581), so an escort on its route
+   * never holds the run up.
    */
   #walksThrough(mover: ParticipantRecord, other: ParticipantRecord): boolean {
     return (
       this.#ownSpirit(mover, other) ||
+      (other.creature?.kind === "pet" && other.creature.ownerId === mover.id) ||
+      (mover.creature?.kind === "pet" && mover.creature.ownerId === other.id) ||
       (other.combatant.team === mover.combatant.team &&
         carriedRelic(this.relics, mover.id) !== undefined)
     );
@@ -10781,7 +10798,7 @@ export class MatchSimulation {
 
   /**
    * One pass of push-outs for `mover`, a body of `radius` at `position`:
-   * bodies, bar its own team's spirits and those in `passing`, then
+   * bodies, bar those it walks through and those in `passing`, then
    * walls, then the edge.
    */
   #pushOut(

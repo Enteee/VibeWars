@@ -4,8 +4,9 @@ import { FOG_COLOUR, FOG_CROWN, type FogTint } from "./atmosphere.js";
 
 /**
  * The Heroes' Ascent's three-act look (#3589, docs/art/visual-style.md §1b).
- * The act sets only its fog's tint: everything else, light, particles and
- * shafts, is the map's own `lighting` and `atmosphere`, authored to the act.
+ * The act sets its ground, its walls and its fog's tint: everything else,
+ * light, particles and shafts, is the map's own `lighting` and
+ * `atmosphere`, authored to the act.
  */
 const ACT_FOG: Record<AscentAct, FogTint> = {
   /** Ash haze over the basalt, warm grey. */
