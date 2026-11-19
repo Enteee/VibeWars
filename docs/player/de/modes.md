@@ -307,7 +307,7 @@ beginnt bei 0. Dein eigener Tab merkt sie sich, bis du ihn schließt.
 Das Team wählt einmal, in der Team-Lobby seiner ersten Karte, und behält seinen Team-Build und seine Plätze für den Rest
 des Laufs: Nach einem Sieg meldet es sich ohne Abstimmung und ohne Nehmen wieder an. Wer mitten im Lauf geht, gibt seinen
 Platz frei, aber nicht dessen Build. Wer zwischen den Karten neu zur Gruppe stößt, kann nur die freien Plätze nehmen
-(**Frei: Monk-Build**) und spielt den Build dieses Platzes; einen freien Platz, den niemand nimmt, spielt ein Bot. Eine
+(**Frei: Mönch-Build**) und spielt den Build dieses Platzes; einen freien Platz, den niemand nimmt, spielt ein Bot. Eine
 Niederlage beginnt von vorn: Der nächste Lauf stimmt neu ab. Das Gleiche gilt, wenn du deinem Host in eine andere Gruppe
 folgst, deren Host für den alten Lauf nicht bürgen kann. Die Runde merkt sich der Host deiner Gruppe, und nur, bis du den
 Tab schließt. Eine Lobby des Aufstiegs der Helden, der per Code beigetreten wurde, spielt die Karte von Runde 1.

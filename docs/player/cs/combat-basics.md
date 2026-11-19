@@ -2,13 +2,13 @@
 
 ## Zdraví a energie
 
-Začínáš s 500 **zdraví** a 50 **energie**; runy a morálka mění obojí. Dovednosti stojí energii a ta se sama pomalu vrací. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ji získávají nejpomaleji, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** o něco rychleji, všichni ostatní nejrychleji.
+Začínáš s 500 **zdraví** a 50 **energie**; runy a morálka mění obojí. Dovednosti stojí energii a ta se sama pomalu vrací. ![Válečník](../../../apps/web/public/icons/profession/warrior.svg) **Válečník** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ji získávají nejpomaleji, ![Hraničář](../../../apps/web/public/icons/profession/ranger.svg) **Hraničář** o něco rychleji, všichni ostatní nejrychleji.
 
-Šipky na tvých ukazatelích jsou **pipy**: každá znamená zdraví nebo energii, která se každou sekundu trochu vrací nebo ubývá. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** a ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** ubírají zdraví; Regeneration a léčivá kouzla ho přidávají. Když jsi 5 sekund mimo boj, začne se ti zdraví vracet samo, tím rychleji, čím déle mimo boj zůstaneš.
+Šipky na tvých ukazatelích jsou **pipy**: každá znamená zdraví nebo energii, která se každou sekundu trochu vrací nebo ubývá. ![Krvácení](../../../apps/web/public/icons/status/bleeding.svg) **Krvácení**, ![Hoření](../../../apps/web/public/icons/status/burning.svg) **Hoření** a ![Otrava](../../../apps/web/public/icons/status/poison.svg) **Otrava** ubírají zdraví; Regeneration a léčivá kouzla ho přidávají. Když jsi 5 sekund mimo boj, začne se ti zdraví vracet samo, tím rychleji, čím déle mimo boj zůstaneš.
 
 ## Adrenalin
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** a další mají dovednosti, které místo energie stojí **adrenalin**. Každá taková dovednost se nabíjí sama: každý zásah zbraní dá každé z nich jeden stupeň, stejně jako když schytáš velký zásah. Použití jedné ji vyprázdní a ostatním vezme jeden stupeň. Po 25 sekundách mimo boj se vyprázdní všechny.
+![Válečník](../../../apps/web/public/icons/profession/warrior.svg) **Válečník**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** a další mají dovednosti, které místo energie stojí **adrenalin**. Každá taková dovednost se nabíjí sama: každý zásah zbraní dá každé z nich jeden stupeň, stejně jako když schytáš velký zásah. Použití jedné ji vyprázdní a ostatním vezme jeden stupeň. Po 25 sekundách mimo boj se vyprázdní všechny.
 
 ## Používání dovednosti
 
@@ -34,18 +34,18 @@ Když jsi **sražený**, chvíli se nemůžeš hýbat, útočit ani použít dov
 
 **Stavy** ti škodí, dokud nevyprší nebo je někdo neodstraní:
 
-| Stav                                                                                        | Co dělá                                          |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | ubírá zdraví                                     |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | rychle ubírá zdraví                              |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | ubírá zdraví                                     |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | ubírá zdraví a šíří se na každého vedle tebe     |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | pohybuješ se poloviční rychlostí                 |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | většina tvých útoků mine                         |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | tvoje zbraň zasahuje mnohem slaběji              |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | méně brnění                                      |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | méně maximálního zdraví a léčení funguje méně    |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | kouzla se sesílají pomalu; každý útok je přeruší |
+| Stav                                                                                                | Co dělá                                          |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| ![Krvácení](../../../apps/web/public/icons/status/bleeding.svg) **Krvácení**                        | ubírá zdraví                                     |
+| ![Hoření](../../../apps/web/public/icons/status/burning.svg) **Hoření**                             | rychle ubírá zdraví                              |
+| ![Otrava](../../../apps/web/public/icons/status/poison.svg) **Otrava**                              | ubírá zdraví                                     |
+| ![Nemoc](../../../apps/web/public/icons/status/disease.svg) **Nemoc**                               | ubírá zdraví a šíří se na každého vedle tebe     |
+| ![Ochromení](../../../apps/web/public/icons/status/crippled.svg) **Ochromení**                      | pohybuješ se poloviční rychlostí                 |
+| ![Slepota](../../../apps/web/public/icons/status/blind.svg) **Slepota**                             | většina tvých útoků mine                         |
+| ![Slabost](../../../apps/web/public/icons/status/weakness.svg) **Slabost**                          | tvoje zbraň zasahuje mnohem slaběji              |
+| ![Popraskané brnění](../../../apps/web/public/icons/status/cracked-armor.svg) **Popraskané brnění** | méně brnění                                      |
+| ![Hluboká rána](../../../apps/web/public/icons/status/deep-wound.svg) **Hluboká rána**              | méně maximálního zdraví a léčení funguje méně    |
+| ![Omámení](../../../apps/web/public/icons/status/dazed.svg) **Omámení**                             | kouzla se sesílají pomalu; každý útok je přeruší |
 
 ![Prokletí](../../../apps/web/public/icons/skill-type/hex.svg) **Prokletí** na tebe sesílají nepřátelé, ![Očarování](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarování** ty sám nebo tvoji spojenci. Každé odstraňuje vlastní druh dovedností. Některá očarování jsou **udržovaná**: trvají, dokud je neukončíš, a za jejich běhu stojí jeden pip energie. Ukončíš ho dvojklikem na jeho ikonu.
 
@@ -53,7 +53,7 @@ Několik dovedností přestane fungovat, když jsi pod očarováním, a začne z
 
 ## Brnění a poškození
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** nosí nejvíc brnění; ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin** a ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish** méně; sesilatelé nejméně. Brnění snižuje poškození zbraněmi, elementální, chaos a temné poškození. Svaté a stínové poškození, poškození bez typu, odsávání zdraví a kradení života ho ignorují. Kritické mohou být jen zásahy zbraní. Některá očarování činí svého nositele imunním vůči kritickým zásahům.
+![Válečník](../../../apps/web/public/icons/profession/warrior.svg) **Válečník** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** nosí nejvíc brnění; ![Hraničář](../../../apps/web/public/icons/profession/ranger.svg) **Hraničář**, ![Zabiják](../../../apps/web/public/icons/profession/assassin.svg) **Zabiják** a ![Derviš](../../../apps/web/public/icons/profession/dervish.svg) **Derviš** méně; sesilatelé nejméně. Brnění snižuje poškození zbraněmi, elementální, chaos a temné poškození. Svaté a stínové poškození, poškození bez typu, odsávání zdraví a kradení života ho ignorují. Kritické mohou být jen zásahy zbraní. Některá očarování činí svého nositele imunním vůči kritickým zásahům.
 
 ## Smrt, vzkříšení a morálka
 

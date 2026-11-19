@@ -6,8 +6,8 @@ oito habilidades e os pontos de atributo por trás delas. Abra uma com
 
 ## Profissões
 
-São dez: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**,
-![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** e ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Sua profissão **primária** é o que
+São dez: ![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiro**, ![Patrulheiro](../../../apps/web/public/icons/profession/ranger.svg) **Patrulheiro**, ![Monge](../../../apps/web/public/icons/profession/monk.svg) **Monge**, ![Necromante](../../../apps/web/public/icons/profession/necromancer.svg) **Necromante**, ![Hipnotizador](../../../apps/web/public/icons/profession/mesmer.svg) **Hipnotizador**, ![Elementalista](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalista**,
+![Assassino](../../../apps/web/public/icons/profession/assassin.svg) **Assassino**, ![Ritualista](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualista**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** e ![Dervixe](../../../apps/web/public/icons/profession/dervish.svg) **Dervixe**. Sua profissão **primária** é o que
 você é: as habilidades dela e seu **atributo primário** (marcado com ★),
 que só uma primária recebe. Sua **secundária** empresta as habilidades
 dela, mas não o atributo primário.
@@ -18,11 +18,11 @@ A barra tem **oito espaços**. Só uma habilidade de **elite** (moldura
 dourada) cabe em uma barra: equipe uma segunda e ela substitui a
 primeira. Pressione **×** em um espaço para esvaziá-lo.
 
-![Encantamento](../../../apps/web/public/icons/skill-type/enchantment.svg) **Encantamentos relâmpago** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) são instantâneos: usar um mantém seu
+![Encantamento](../../../apps/web/public/icons/skill-type/enchantment.svg) **Encantamentos relâmpago** (![Dervixe](../../../apps/web/public/icons/profession/dervish.svg) **Dervixe**) são instantâneos: usar um mantém seu
 golpe e seu passo, então você pode encaixá-los entre os golpes. Cada um
 desliga seus outros encantamentos relâmpago por 1 segundo.
 
-![Forma](../../../apps/web/public/icons/skill-type/form.svg) **Formas** (os cinco Avatares de Dervish: Balthazar, Dwayna, Grenth, Lyssa
+![Forma](../../../apps/web/public/icons/skill-type/form.svg) **Formas** (os cinco Avatares de Dervixe: Balthazar, Dwayna, Grenth, Lyssa
 e Melandru) transformam você por mais de um minuto. Uma forma não é um
 encantamento, então ninguém pode removê-la, e você só pode estar em uma
 forma por vez. Usar uma a desativa por 45 segundos. Quando uma forma
@@ -45,10 +45,10 @@ uma habilidade usa a deixa mais forte: números que crescem com o atributo
 aparecem em verde e negrito, nos seus níveis atuais, incluindo runas e
 capacete.
 
-Em uma luta, seus níveis podem mudar por um tempo. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** tira um de
+Em uma luta, seus níveis podem mudar por um tempo. ![Fraqueza](../../../apps/web/public/icons/status/weakness.svg) **Fraqueza** tira um de
 cada. Algumas ![Maldição](../../../apps/web/public/icons/skill-type/hex.svg) **maldições** zeram os atributos de um inimigo, e Master of
 Magic coloca os seus elementais em 13: um nível definido assim prevalece
-sobre runas e Weakness. Signet of Illusions faz seus próximos ![Feitiço](../../../apps/web/public/icons/skill-type/spell.svg) **feitiços** de
+sobre runas e Fraqueza. Signet of Illusions faz seus próximos ![Feitiço](../../../apps/web/public/icons/skill-type/spell.svg) **feitiços** de
 outros atributos usarem seu nível de Illusion Magic. Algumas habilidades
 aumentam seus atributos por um tempo ou para seus próximos feitiços, como
 Glyph of Elemental Power e Ritual Lord, mesmo um que você deixou em 0; um
@@ -65,7 +65,7 @@ como alvo.
 
 ## Habilidades que viram outra habilidade
 
-Algumas habilidades de ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** colocam outra habilidade no próprio espaço
+Algumas habilidades de ![Hipnotizador](../../../apps/web/public/icons/profession/mesmer.svg) **Hipnotizador** colocam outra habilidade no próprio espaço
 por um tempo. ![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** e ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** copiam a próxima habilidade que você usa.
 **Inspired Enchantment** e **Inspired Hex** viram a habilidade que
 conjurou o ![Encantamento](../../../apps/web/public/icons/skill-type/enchantment.svg) **encantamento** ou a ![Maldição](../../../apps/web/public/icons/skill-type/hex.svg) **maldição** que removeram, por 20 segundos.
@@ -78,11 +78,11 @@ energia.
 
 ## Poços e glifos
 
-Os ![Poço](../../../apps/web/public/icons/skill-type/well.svg) **poços** de um ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** exploram o cadáver mais próximo. Sem
+Os ![Poço](../../../apps/web/public/icons/skill-type/well.svg) **poços** de um ![Necromante](../../../apps/web/public/icons/profession/necromancer.svg) **Necromante** exploram o cadáver mais próximo. Sem
 nenhum por perto, o poço sacrifica 66% da sua vida e aparece onde você
 está.
 
-Os ![Glifo](../../../apps/web/public/icons/skill-type/glyph.svg) **glifos** de um ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** mudam seu próximo ![Feitiço](../../../apps/web/public/icons/skill-type/spell.svg) **feitiço**: ele não pode
+Os ![Glifo](../../../apps/web/public/icons/skill-type/glyph.svg) **glifos** de um ![Elementalista](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalista** mudam seu próximo ![Feitiço](../../../apps/web/public/icons/skill-type/spell.svg) **feitiço**: ele não pode
 ser interrompido, sai instantâneo, recarrega na hora ou custa menos. Um
 novo glifo substitui o que você tinha.
 
@@ -93,8 +93,8 @@ abaixo de N%" responde a qualquer golpe ou roubo de vida que deixe você
 vivo e abaixo da linha, mesmo que você já estivesse abaixo antes do
 golpe, e nunca a vida que você sacrifica ou perde por degeneração. A
 proteção contra dano fatal, como ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, anula todo o
-golpe mortal: sem dano, sem morte. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** e ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of
-Weakness** não têm duração: duram até que dano, uma remoção ou a morte as
+golpe mortal: sem dano, sem morte. ![Intervenção Fiel](../../../apps/web/public/icons/status/faithful-intervention.svg) **Intervenção Fiel** e ![Ilusão de Fraqueza](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Ilusão de
+Fraqueza** não têm duração: duram até que dano, uma remoção ou a morte as
 encerre, e curam você enquanto duram.
 
 ## A biblioteca
@@ -122,7 +122,7 @@ mascote como seus.
 
 ## Feitiços de item
 
-Os ![Feitiço de item](../../../apps/web/public/icons/skill-type/item-spell.svg) **feitiços de item** de um ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** colocam as **cinzas** de um
+Os ![Feitiço de item](../../../apps/web/public/icons/skill-type/item-spell.svg) **feitiços de item** de um ![Ritualista](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualista** colocam as **cinzas** de um
 espírito nas suas mãos: um bônus enquanto você as segura e um **efeito ao
 largar** quando elas caem. Elas caem quando acabam, quando você morre,
 quando pressiona **Largar cinzas** acima da barra de vida, conjura outro

@@ -33,33 +33,33 @@ troca os mods também: vida e energia máximas acompanham o conjunto em
 mãos. Trocar de arma mantém os mods que ainda servem e diz quais foram
 descartados.
 
-| Mod                       | Espaço    | Serve em                                                              | Efeito                                                                                                               |
-| ------------------------- | --------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Defensive                 | Prefixo   | ![Cajado](../../../apps/web/public/icons/weapon/staff.svg) **Cajado** | Armadura +5                                                                                                          |
-| Hale                      | Prefixo   | Cajado                                                                | +30 de vida                                                                                                          |
-| Insightful                | Prefixo   | Cajado                                                                | Energia +5                                                                                                           |
-| of Defense                | Sufixo    | qualquer arma marcial, Cajado                                         | Armadura +5                                                                                                          |
-| of Fortitude              | Sufixo    | qualquer arma marcial, Cajado, Escudo, Foco                           | +30 de vida                                                                                                          |
-| of Shelter                | Sufixo    | qualquer arma marcial, Cajado                                         | Armadura +7 (contra dano físico)                                                                                     |
-| of Warding                | Sufixo    | qualquer arma marcial, Cajado                                         | Armadura +7 (contra dano elemental)                                                                                  |
-| "Cast Out the Unclean"    | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** em você          |
-| "Fear Cuts Deeper"        | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** em você       |
-| "I Can See Clearly Now"   | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** em você            |
-| "I have the power!"       | Inscrição | qualquer arma marcial                                                 | Energia +5                                                                                                           |
-| "Leaf on the Wind"        | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de gelo)                                                                                   |
-| "Like a Rolling Stone"    | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de terra)                                                                                  |
-| "Live for Today"          | Inscrição | Foco                                                                  | Energia +15, regeneração de energia -1                                                                               |
-| "Not the face!"           | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano contundente)                                                                               |
-| "Only the Strong Survive" | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** em você       |
-| "Pure of Heart"           | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** em você             |
-| "Riders on the Storm"     | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de raio)                                                                                   |
-| "Seize the Day"           | Inscrição | Cajado, Varinha                                                       | Energia +15, regeneração de energia -1                                                                               |
-| "Sleep Now in the Fire"   | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de fogo)                                                                                   |
-| "Soundness of Mind"       | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** em você                |
-| "Strength of Body"        | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** em você |
-| "Swift as the Wind"       | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** em você       |
-| "The Riddle of Steel"     | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano cortante)                                                                                  |
-| "Through Thick and Thin"  | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano perfurante)                                                                                |
+| Mod                       | Espaço    | Serve em                                                              | Efeito                                                                                                                         |
+| ------------------------- | --------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Defensive                 | Prefixo   | ![Cajado](../../../apps/web/public/icons/weapon/staff.svg) **Cajado** | Armadura +5                                                                                                                    |
+| Hale                      | Prefixo   | Cajado                                                                | +30 de vida                                                                                                                    |
+| Insightful                | Prefixo   | Cajado                                                                | Energia +5                                                                                                                     |
+| of Defense                | Sufixo    | qualquer arma marcial, Cajado                                         | Armadura +5                                                                                                                    |
+| of Fortitude              | Sufixo    | qualquer arma marcial, Cajado, Escudo, Foco                           | +30 de vida                                                                                                                    |
+| of Shelter                | Sufixo    | qualquer arma marcial, Cajado                                         | Armadura +7 (contra dano físico)                                                                                               |
+| of Warding                | Sufixo    | qualquer arma marcial, Cajado                                         | Armadura +7 (contra dano elemental)                                                                                            |
+| "Cast Out the Unclean"    | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Doença](../../../apps/web/public/icons/status/disease.svg) **Doença** em você                      |
+| "Fear Cuts Deeper"        | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Sangramento](../../../apps/web/public/icons/status/bleeding.svg) **Sangramento** em você           |
+| "I Can See Clearly Now"   | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** em você                      |
+| "I have the power!"       | Inscrição | qualquer arma marcial                                                 | Energia +5                                                                                                                     |
+| "Leaf on the Wind"        | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de gelo)                                                                                             |
+| "Like a Rolling Stone"    | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de terra)                                                                                            |
+| "Live for Today"          | Inscrição | Foco                                                                  | Energia +15, regeneração de energia -1                                                                                         |
+| "Not the face!"           | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano contundente)                                                                                         |
+| "Only the Strong Survive" | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Fraqueza](../../../apps/web/public/icons/status/weakness.svg) **Fraqueza** em você                 |
+| "Pure of Heart"           | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Veneno](../../../apps/web/public/icons/status/poison.svg) **Veneno** em você                       |
+| "Riders on the Storm"     | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de raio)                                                                                             |
+| "Seize the Day"           | Inscrição | Cajado, Varinha                                                       | Energia +15, regeneração de energia -1                                                                                         |
+| "Sleep Now in the Fire"   | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano de fogo)                                                                                             |
+| "Soundness of Mind"       | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Atordoado](../../../apps/web/public/icons/status/dazed.svg) **Atordoado** em você                  |
+| "Strength of Body"        | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Ferida Profunda](../../../apps/web/public/icons/status/deep-wound.svg) **Ferida Profunda** em você |
+| "Swift as the Wind"       | Inscrição | Escudo, Foco                                                          | Reduz em 20% a duração de ![Aleijado](../../../apps/web/public/icons/status/crippled.svg) **Aleijado** em você                 |
+| "The Riddle of Steel"     | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano cortante)                                                                                            |
+| "Through Thick and Thin"  | Inscrição | Escudo, Foco                                                          | Armadura +10 (contra dano perfurante)                                                                                          |
 
 ### Prefixos marciais ao acertar
 
@@ -69,10 +69,10 @@ descartados.
 | Zealous                      | qualquer arma marcial          | ganha 1 de energia; -1 de regeneração de energia                        |
 | Sundering                    | qualquer arma marcial          | 20% de chance de +20% de penetração de armadura                         |
 | Furious                      | marciais, exceto arcos         | 10% de chance de adrenalina em dobro                                    |
-| Barbed, Crippling, Poisonous | marciais, exceto martelo       | Bleeding, Crippled, Poison que você causa duram 33% mais                |
-| Cruel                        | marciais, exceto arcos         | Deep Wound que você causa dura 33% mais                                 |
-| Heavy                        | machado, martelo, foice, lança | Weakness que você causa dura 33% mais                                   |
-| Silencing                    | adagas, lança, arcos           | Dazed que você causa dura 33% mais                                      |
+| Barbed, Crippling, Poisonous | marciais, exceto martelo       | Sangramento, Aleijado e Veneno que você causa duram 33% mais            |
+| Cruel                        | marciais, exceto arcos         | Ferida Profunda que você causa dura 33% mais                            |
+| Heavy                        | machado, martelo, foice, lança | Fraqueza que você causa dura 33% mais                                   |
+| Silencing                    | adagas, lança, arcos           | Atordoado que você causa dura 33% mais                                  |
 | Ebon, Fiery, Icy, Shocking   | qualquer arma marcial          | o dano dela vira de terra, fogo, gelo ou raio                           |
 
 "Ao acertar" significa um acerto de um ataque ou de uma habilidade de
@@ -164,7 +164,7 @@ mods.
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 de vida                              |
 | ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mais energia (+3, +6 ou +9)              |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | duas condições cada acabam 20% mais cedo |
-| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | menos dano físico de cada golpe          |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiro**)                                                                                                                                           | menos dano físico de cada golpe          |
 
 Você escolhe a runa de uma peça no mesmo lugar da insígnia: clique na
 peça na figura.

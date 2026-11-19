@@ -6,8 +6,8 @@ głównym albo **Nowa postać**.
 
 ## Profesje
 
-Jest ich dziesięć: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**,
-![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** i ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Twoja **główna** profesja to to, kim
+Jest ich dziesięć: ![Wojownik](../../../apps/web/public/icons/profession/warrior.svg) **Wojownik**, ![Łowca](../../../apps/web/public/icons/profession/ranger.svg) **Łowca**, ![Mnich](../../../apps/web/public/icons/profession/monk.svg) **Mnich**, ![Nekromanta](../../../apps/web/public/icons/profession/necromancer.svg) **Nekromanta**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalista](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalista**,
+![Skrytobójca](../../../apps/web/public/icons/profession/assassin.svg) **Skrytobójca**, ![Rytualista](../../../apps/web/public/icons/profession/ritualist.svg) **Rytualista**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** i ![Derwisz](../../../apps/web/public/icons/profession/dervish.svg) **Derwisz**. Twoja **główna** profesja to to, kim
 jesteś: jej umiejętności i jej **główny atrybut** (oznaczony ★), który otrzymuje
 tylko główna profesja. **Druga** użycza ci swoich umiejętności, ale nie głównego
 atrybutu.
@@ -18,7 +18,7 @@ Pasek ma **osiem miejsc**. Na pasku mieści się tylko jedna umiejętność
 **elitarna** (złota ramka): założenie drugiej zastępuje pierwszą. Naciśnij **×**
 na miejscu, aby je opróżnić.
 
-![Zaczarowanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **Błyskawiczne zaczarowania** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) działają natychmiast: użycie jednego nie
+![Zaczarowanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **Błyskawiczne zaczarowania** (![Derwisz](../../../apps/web/public/icons/profession/dervish.svg) **Derwisz**) działają natychmiast: użycie jednego nie
 przerywa zamachu ani kroku, więc możesz wplatać je między ciosy. Każde z nich
 wyłącza twoje pozostałe błyskawiczne zaczarowania na 1 sekundę.
 
@@ -41,10 +41,10 @@ i trzy wydaje wszystko. Runy i hełm mogą dodać do czterech kolejnych rang; zo
 wzmacnia ją: liczby rosnące wraz z atrybutem są pokazane na zielono i pogrubione,
 przy twoich obecnych rangach, wliczając runy i hełm.
 
-W walce twoje rangi mogą się na jakiś czas zmienić. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** odejmuje po jednej od
+W walce twoje rangi mogą się na jakiś czas zmienić. ![Słabość](../../../apps/web/public/icons/status/weakness.svg) **Słabość** odejmuje po jednej od
 każdej. Niektóre ![Klątwa](../../../apps/web/public/icons/skill-type/hex.svg) **klątwy** ustawiają atrybuty wroga na 0, a Master of Magic ustawia
 twoje atrybuty żywiołów na 13: ranga ustawiona w ten sposób ma pierwszeństwo przed
-runami i Weakness. Signet of Illusions sprawia, że twoje następne ![Czar](../../../apps/web/public/icons/skill-type/spell.svg) **czary** innych
+runami i Słabością. Signet of Illusions sprawia, że twoje następne ![Czar](../../../apps/web/public/icons/skill-type/spell.svg) **czary** innych
 atrybutów używają twojej rangi Illusion Magic. Niektóre umiejętności podnoszą twoje
 atrybuty na pewien czas lub na następne czary, jak Glyph of Elemental Power i Ritual
 Lord, nawet taki, który zostawiono na 0; ustawiona ranga, jak w Master of Magic,
@@ -72,10 +72,10 @@ wciąż daje Energię.
 
 ## Studnie i glify
 
-![Studnia](../../../apps/web/public/icons/skill-type/well.svg) **Studnie** ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancera** wykorzystują najbliższe zwłoki. Gdy żadnych nie ma w pobliżu, studnia
+![Studnia](../../../apps/web/public/icons/skill-type/well.svg) **Studnie** ![Nekromanta](../../../apps/web/public/icons/profession/necromancer.svg) **Nekromanty** wykorzystują najbliższe zwłoki. Gdy żadnych nie ma w pobliżu, studnia
 poświęca 66% twojego Zdrowia i pojawia się tam, gdzie stoisz.
 
-![Glif](../../../apps/web/public/icons/skill-type/glyph.svg) **Glify** ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalisty** zmieniają twój następny ![Czar](../../../apps/web/public/icons/skill-type/spell.svg) **czar**: nie można go przerwać, rzuca
+![Glif](../../../apps/web/public/icons/skill-type/glyph.svg) **Glify** ![Elementalista](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalisty** zmieniają twój następny ![Czar](../../../apps/web/public/icons/skill-type/spell.svg) **czar**: nie można go przerwać, rzuca
 się natychmiast, odnawia od razu albo kosztuje mniej. Nowy glif zastępuje poprzedni.
 
 ## Interwencje
@@ -85,7 +85,7 @@ odpowiada na każdy cios lub kradzież życia, po których pozostajesz żywy i p
 progu, nawet jeśli byłeś poniżej już przed trafieniem, i nigdy na Zdrowie, które
 poświęcasz lub tracisz przez degenerację. Ochrona przed śmiertelnymi obrażeniami,
 jak ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, usuwa cały śmiertelny cios: bez obrażeń, bez śmierci.
-![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** i ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** nie mają czasu trwania: działają,
+![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** i ![Iluzja Słabości](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Iluzja Słabości** nie mają czasu trwania: działają,
 dopóki nie zakończą ich obrażenia, zdjęcie lub śmierć, i leczą cię po drodze.
 
 ## Biblioteka
@@ -110,7 +110,7 @@ duchów, sług i zwierzaka jako twoje.
 
 ## Czary przedmiotowe
 
-![Czar przedmiotowy](../../../apps/web/public/icons/skill-type/item-spell.svg) **Czary przedmiotowe** ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualisty** umieszczają w twoich rękach **prochy** ducha:
+![Czar przedmiotowy](../../../apps/web/public/icons/skill-type/item-spell.svg) **Czary przedmiotowe** ![Rytualista](../../../apps/web/public/icons/profession/ritualist.svg) **Rytualisty** umieszczają w twoich rękach **prochy** ducha:
 premia, dopóki je trzymasz, i **efekt upuszczenia**, gdy spadną. Spadają, gdy się
 wyczerpią, gdy zginiesz, gdy naciśniesz **Upuść prochy** nad paskiem Zdrowia,
 rzucisz inny czar przedmiotowy, wykonasz krok cienia, zmienisz broń lub podniesiesz

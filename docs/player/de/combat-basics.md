@@ -3,19 +3,19 @@
 ## Leben und Energie
 
 Du startest mit 500 **Leben** und 50 **Energie**; Runen und Moral verändern
-beides. Skills kosten Energie, und sie kommt langsam von selbst zurück. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**
-und ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** regenerieren sie am langsamsten, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** etwas schneller, alle anderen
+beides. Skills kosten Energie, und sie kommt langsam von selbst zurück. ![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger**
+und ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** regenerieren sie am langsamsten, ![Waldläufer](../../../apps/web/public/icons/profession/ranger.svg) **Waldläufer** etwas schneller, alle anderen
 am schnellsten.
 
 Die Pfeile auf deinen Leisten sind **Pips**: Jeder steht für Leben oder Energie,
-die jede Sekunde ein wenig zurückkommen oder abfließen. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** und
-![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** ziehen Leben ab; Regeneration und Heilzauber geben es dir. Bist du
+die jede Sekunde ein wenig zurückkommen oder abfließen. ![Blutung](../../../apps/web/public/icons/status/bleeding.svg) **Blutung**, ![Brennen](../../../apps/web/public/icons/status/burning.svg) **Brennen** und
+![Vergiftung](../../../apps/web/public/icons/status/poison.svg) **Vergiftung** ziehen Leben ab; Regeneration und Heilzauber geben es dir. Bist du
 5 Sekunden aus dem Kampf, kommt dein Leben von selbst zurück, und zwar umso
 schneller, je länger du draußen bleibst.
 
 ## Adrenalin
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** und andere haben Skills, die **Adrenalin** statt Energie kosten.
+![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** und andere haben Skills, die **Adrenalin** statt Energie kosten.
 Jeder dieser Skills lädt sich einzeln auf: Jeder Waffentreffer, den du landest,
 gibt jedem von ihnen einen Schlag, und ein großer Treffer, den du einsteckst,
 ebenso. Benutzt du einen, leert er sich und nimmt den anderen einen Schlag. Bist
@@ -62,18 +62,18 @@ außer einem ![Schrei](../../../apps/web/public/icons/skill-type/shout.svg) **Sc
 
 **Zustände** schaden dir, bis sie auslaufen oder entfernt werden:
 
-| Zustand                                                                                     | Was er tut                                           |
-| ------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | zieht Leben ab                                       |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | zieht schnell Leben ab                               |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | zieht Leben ab                                       |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | zieht Leben ab und steckt jeden neben dir an         |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | du läufst halb so schnell                            |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | die meisten deiner Angriffe verfehlen                |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | deine Waffentreffer sind viel schwächer              |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | weniger Rüstung                                      |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | weniger maximales Leben, und Heilung wirkt schwächer |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | Zauber wirken langsam; jeder Angriff unterbricht sie |
+| Zustand                                                                                         | Was er tut                                           |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| ![Blutung](../../../apps/web/public/icons/status/bleeding.svg) **Blutung**                      | zieht Leben ab                                       |
+| ![Brennen](../../../apps/web/public/icons/status/burning.svg) **Brennen**                       | zieht schnell Leben ab                               |
+| ![Vergiftung](../../../apps/web/public/icons/status/poison.svg) **Vergiftung**                  | zieht Leben ab                                       |
+| ![Krankheit](../../../apps/web/public/icons/status/disease.svg) **Krankheit**                   | zieht Leben ab und steckt jeden neben dir an         |
+| ![Verkrüppelt](../../../apps/web/public/icons/status/crippled.svg) **Verkrüppelt**              | du läufst halb so schnell                            |
+| ![Blindheit](../../../apps/web/public/icons/status/blind.svg) **Blindheit**                     | die meisten deiner Angriffe verfehlen                |
+| ![Schwäche](../../../apps/web/public/icons/status/weakness.svg) **Schwäche**                    | deine Waffentreffer sind viel schwächer              |
+| ![Rissige Rüstung](../../../apps/web/public/icons/status/cracked-armor.svg) **Rissige Rüstung** | weniger Rüstung                                      |
+| ![Tiefe Wunde](../../../apps/web/public/icons/status/deep-wound.svg) **Tiefe Wunde**            | weniger maximales Leben, und Heilung wirkt schwächer |
+| ![Benommen](../../../apps/web/public/icons/status/dazed.svg) **Benommen**                       | Zauber wirken langsam; jeder Angriff unterbricht sie |
 
 ![Verhexung](../../../apps/web/public/icons/skill-type/hex.svg) **Verhexungen** wirken Gegner auf dich, ![Verzauberung](../../../apps/web/public/icons/skill-type/enchantment.svg) **Verzauberungen** du selbst oder deine
 Verbündeten. Jede wird durch ihre eigene Art von Skill entfernt. Manche
@@ -87,7 +87,7 @@ Treffer.
 
 ## Rüstung und Schaden
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** und ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** tragen die meiste Rüstung, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin** und ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**
+![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger** und ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** tragen die meiste Rüstung, ![Waldläufer](../../../apps/web/public/icons/profession/ranger.svg) **Waldläufer**, ![Assassine](../../../apps/web/public/icons/profession/assassin.svg) **Assassine** und ![Derwisch](../../../apps/web/public/icons/profession/dervish.svg) **Derwisch**
 weniger, Zauberwirker am wenigsten. Rüstung verringert Waffen-, Element-, Chaos-
 und Dunkelschaden. Heiliger Schaden, Schattenschaden und typloser Schaden,
 Lebensentzug und Lebensraub ignorieren sie. Nur Waffentreffer können kritisch

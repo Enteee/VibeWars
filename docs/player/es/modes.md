@@ -362,7 +362,7 @@ El equipo elige una vez, en la Sala de equipo de su primer mapa, y conserva su b
 de equipo y sus asientos el resto del recorrido: tras una victoria vuelve a la cola
 sin votar ni reclamar. Quien se va a mitad libera su asiento pero no su build. Quien
 llega nuevo al grupo entre mapas solo reclama los asientos vacantes (**Libre: build
-Monk**), y juega la build de ese asiento; un asiento vacante que nadie reclama es de
+Monje**), y juega la build de ese asiento; un asiento vacante que nadie reclama es de
 un bot. Una derrota lo reinicia: el siguiente recorrido vota de nuevo. También si
 sigues a tu anfitrión a otro grupo, cuyo anfitrión no puede responder del recorrido
 anterior. La ronda la recuerda el anfitrión de tu grupo, y solo hasta que cierres la

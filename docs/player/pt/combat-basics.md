@@ -4,18 +4,18 @@
 
 Você começa com 500 de **vida** e 50 de **energia**; runas e moral mudam
 as duas. Habilidades custam energia, e ela volta sozinha, devagar.
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriors** e ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** recuperam mais devagar, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangers** um pouco mais rápido,
+![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiros** e ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** recuperam mais devagar, ![Patrulheiro](../../../apps/web/public/icons/profession/ranger.svg) **Patrulheiros** um pouco mais rápido,
 e todos os outros mais rápido ainda.
 
 As setas nas suas barras são **pips**: cada uma é vida ou energia
-voltando, ou sendo drenada, um pouco a cada segundo. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** e
-![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** drenam vida; Regeneration e feitiços de cura adicionam. Fora da
+voltando, ou sendo drenada, um pouco a cada segundo. ![Sangramento](../../../apps/web/public/icons/status/bleeding.svg) **Sangramento**, ![Queimadura](../../../apps/web/public/icons/status/burning.svg) **Queimadura** e
+![Veneno](../../../apps/web/public/icons/status/poison.svg) **Veneno** drenam vida; Regeneration e feitiços de cura adicionam. Fora da
 luta por 5 segundos, sua vida começa a voltar sozinha, mais rápido
 quanto mais tempo você ficar fora.
 
 ## Adrenalina
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriors**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** e outros têm habilidades que custam **adrenalina** em
+![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiros**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** e outros têm habilidades que custam **adrenalina** em
 vez de energia. Cada uma dessas habilidades carrega por conta própria:
 cada golpe de arma que você acerta dá um impulso a cada uma delas, e
 levar um golpe forte também. Usar uma a esvazia e tira um impulso das
@@ -65,18 +65,18 @@ falha.
 
 **Condições** machucam você até acabarem ou serem removidas:
 
-| Condição                                                                                    | O que faz                                            |
-| ------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | drena vida                                           |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | drena vida rápido                                    |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | drena vida                                           |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | drena vida e passa para quem estiver ao seu lado     |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | você anda na metade da velocidade                    |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | a maioria dos seus ataques erra                      |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | seus golpes de arma ficam bem mais fracos            |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | menos armadura                                       |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | menos vida máxima, e as curas funcionam menos        |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | feitiços saem devagar; qualquer ataque os interrompe |
+| Condição                                                                                          | O que faz                                            |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| ![Sangramento](../../../apps/web/public/icons/status/bleeding.svg) **Sangramento**                | drena vida                                           |
+| ![Queimadura](../../../apps/web/public/icons/status/burning.svg) **Queimadura**                   | drena vida rápido                                    |
+| ![Veneno](../../../apps/web/public/icons/status/poison.svg) **Veneno**                            | drena vida                                           |
+| ![Doença](../../../apps/web/public/icons/status/disease.svg) **Doença**                           | drena vida e passa para quem estiver ao seu lado     |
+| ![Aleijado](../../../apps/web/public/icons/status/crippled.svg) **Aleijado**                      | você anda na metade da velocidade                    |
+| ![Cegueira](../../../apps/web/public/icons/status/blind.svg) **Cegueira**                         | a maioria dos seus ataques erra                      |
+| ![Fraqueza](../../../apps/web/public/icons/status/weakness.svg) **Fraqueza**                      | seus golpes de arma ficam bem mais fracos            |
+| ![Armadura Rachada](../../../apps/web/public/icons/status/cracked-armor.svg) **Armadura Rachada** | menos armadura                                       |
+| ![Ferida Profunda](../../../apps/web/public/icons/status/deep-wound.svg) **Ferida Profunda**      | menos vida máxima, e as curas funcionam menos        |
+| ![Atordoado](../../../apps/web/public/icons/status/dazed.svg) **Atordoado**                       | feitiços saem devagar; qualquer ataque os interrompe |
 
 ![Maldição](../../../apps/web/public/icons/skill-type/hex.svg) **Maldições** são conjuradas em você por inimigos; ![Encantamento](../../../apps/web/public/icons/skill-type/enchantment.svg) **encantamentos**, por
 você ou por aliados. Cada um é removido pelo seu próprio tipo de
@@ -91,7 +91,7 @@ quanto um acerto.
 
 ## Armadura e dano
 
-![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriors** e ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** usam mais armadura; ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangers**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassins** e ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervishes**,
+![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiros** e ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** usam mais armadura; ![Patrulheiro](../../../apps/web/public/icons/profession/ranger.svg) **Patrulheiros**, ![Assassino](../../../apps/web/public/icons/profession/assassin.svg) **Assassinos** e ![Dervixe](../../../apps/web/public/icons/profession/dervish.svg) **Dervixes**,
 menos; conjuradores, menos ainda. A armadura reduz dano de arma,
 elemental, de caos e sombrio. Dano sagrado, de sombra e sem tipo, drenos
 de vida e roubo de vida a ignoram. Só golpes de arma podem ser críticos.
