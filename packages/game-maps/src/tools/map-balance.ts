@@ -4,8 +4,10 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   STARTER_BUILDS,
   costZone,
+  distancePointToSegment,
   loadoutOf,
   loadoutSpec,
+  pointInPolygon,
   resolveLoadout,
   segment,
   segmentsIntersect,
@@ -15,6 +17,7 @@ import {
   type LayeredPathFinder,
   type ParticipantSpec,
   type RouteWaypoint,
+  type Segment,
   type PlayerBuild,
   type Vec2,
 } from "@vibewars/game-core";
@@ -23,6 +26,7 @@ import { pointInShape, wallToSegments } from "../geometry.js";
 import { matchLayers } from "../layers.js";
 import { layeredFinder } from "../layered-finder.test-support.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
+import { mapNavGraphs } from "../nav-graphs.js";
 import type { MapData, Shape, SpawnPoint, Transition } from "../schema.js";
 import { StuckMeter, topStuckCells, type StuckCell, type StuckTotals } from "./stuck-meter.js";
 
@@ -448,6 +452,103 @@ export function transitionsWalked(map: MapData, to: readonly Vec2[], layer: numb
     const path = pathTo(map, finder, team, point, layer, "");
     return map.transitions.filter(({ area }) => crosses(path, area)).map(({ id }) => id);
   });
+}
+
+/** How far apart the points are that `narrowestWalks` measures a walk's width at. */
+const WIDTH_STEP = 16;
+
+/** The narrowest place on a team's walk (#3688): how wide the way is there, and where. */
+export interface Narrowest {
+  readonly width: number;
+  readonly at: RouteWaypoint;
+}
+
+/**
+ * The narrowest place on each team's shortest walk from its home spawn to
+ * `to` on `layer` (#3688), by team, along `route` if given, as
+ * `walksByRoute` walks it. Every `WIDTH_STEP` along the walk the
+ * way is measured across it, wall to wall on the walk's layer: the walk
+ * hugs every corner it turns, so its distance to the nearest wall says
+ * how close it cuts, not how wide the way is. On a leg from one layer
+ * onto another, the wider of the two counts. A stair or ramp is as wide
+ * as it was built, the same for every team, so the walk on it, and a
+ * body's width either side of it, is not measured: the ground between
+ * them is.
+ */
+export function narrowestWalks(
+  map: MapData,
+  to: Vec2,
+  layer: number,
+  route?: Route | ((team: number) => Route),
+): Narrowest[] {
+  const radius = RULESET.collision.playerRadius;
+  const finder = layeredFinder(map, radius);
+  const graphs = mapNavGraphs(map, radius);
+  const corners = [
+    { x: 0, y: 0 },
+    { x: map.width, y: 0 },
+    { x: map.width, y: map.height },
+    { x: 0, y: map.height },
+  ];
+  const edges = corners.map((corner, at) => segment(corner, corners[(at + 1) % 4] ?? corner));
+  const across = (point: Vec2, direction: Vec2, on: number): number => {
+    const graph = graphs[on];
+    if (graph === undefined) return 0;
+    if (graph.walkable.length > 0 && !graph.walkable.some((area) => pointInPolygon(point, area)))
+      return 0;
+    const side = { x: -direction.y, y: direction.x };
+    const reach = (sign: number): number =>
+      Math.min(...[...graph.walls, ...edges].map((wall) => rayToSegment(point, side, sign, wall)));
+    return reach(1) + reach(-1);
+  };
+  const stairs = map.transitions.map(({ area }) => ({ area, sides: wallToSegments(area) }));
+  const onStair = (point: Vec2): boolean =>
+    stairs.some(
+      ({ area, sides }) =>
+        pointInShape(point, area) ||
+        sides.some((side) => distancePointToSegment(point, side) < 2 * radius),
+    );
+  return Array.from({ length: map.teams }, (_, team) => {
+    const path =
+      route === undefined
+        ? pathTo(map, finder, team, to, layer, "")
+        : pathByRoute(map, team, to, layer, route, false);
+    let narrowest: Narrowest | undefined;
+    path.forEach((point, index) => {
+      const from = path[index - 1];
+      if (from === undefined) return;
+      const length = Math.hypot(point.x - from.x, point.y - from.y);
+      if (length === 0) return;
+      const direction = { x: (point.x - from.x) / length, y: (point.y - from.y) / length };
+      for (let walked = 0; walked < length; walked += WIDTH_STEP) {
+        const at = { x: from.x + direction.x * walked, y: from.y + direction.y * walked };
+        if (onStair(at)) continue;
+        const width = Math.max(
+          across(at, direction, from.layer),
+          across(at, direction, point.layer),
+        );
+        if (narrowest === undefined || width < narrowest.width)
+          narrowest = {
+            width,
+            at: { ...at, layer: walked < length / 2 ? from.layer : point.layer },
+          };
+      }
+    });
+    if (narrowest === undefined) throw new Error(`${map.id}: team ${String(team)} walks nowhere`);
+    return narrowest;
+  });
+}
+
+/** How far from `point` along `direction` × `sign` the ray meets `wall`; `Infinity` if it never does. */
+function rayToSegment(point: Vec2, direction: Vec2, sign: number, wall: Segment): number {
+  const ray = { x: direction.x * sign, y: direction.y * sign };
+  const along = { x: wall.b.x - wall.a.x, y: wall.b.y - wall.a.y };
+  const denominator = ray.x * along.y - ray.y * along.x;
+  if (denominator === 0) return Infinity;
+  const offset = { x: wall.a.x - point.x, y: wall.a.y - point.y };
+  const distance = (offset.x * along.y - offset.y * along.x) / denominator;
+  const share = (offset.x * ray.y - offset.y * ray.x) / denominator;
+  return distance >= 0 && share >= 0 && share <= 1 ? distance : Infinity;
 }
 
 /** `team`'s path from its home spawn to `to` on `layer`, the spawn first; throws if there is none. */

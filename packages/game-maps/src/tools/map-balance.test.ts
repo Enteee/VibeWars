@@ -18,6 +18,7 @@ import type { MapData } from "../schema.js";
 import {
   balanceVerdict,
   highGround,
+  narrowestWalks,
   playBuildBot,
   runMapBalance,
   walkSecondsByRoute,
@@ -2239,11 +2240,89 @@ describe("walks and high ground (#3070)", () => {
         0.25,
       );
     }, 60_000);
+
+    // #3688: the undercroft's bay cut into the hill's east side left team 1 a 66 px strip
+    // beside the tower on its way to the east stair, where team 2's way to the west was open.
+    it.each(["east", "south", "west"])(
+      "brings each team up its ward stair and over the hill to the tower's %s stair, two bodies abreast all the way",
+      (tower) => {
+        const towers = ["east", "south", "west"];
+        const wards = teams.map((team) => `${team}-ward-stair`);
+        const route = (team: number): Route => ({
+          through: [wards[team] ?? "", `tower-${tower}-stair`],
+          shut: [
+            ...wallWalks,
+            "undercroft-stair",
+            ...wards.filter((_, other) => other !== team),
+            ...towers.filter((other) => other !== tower).map((other) => `tower-${other}-stair`),
+          ],
+        });
+        for (const { width } of narrowestWalks(map, altar, 3, route))
+          expect(width).toBeGreaterThanOrEqual(160);
+      },
+      60_000,
+    );
   });
 
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });
+});
+
+describe("the width of each team's way in (#3688)", () => {
+  /** Where a map without a shared objective is fought over: the point its walk tests walk to. */
+  const FOUGHT_OVER: Readonly<Record<string, { readonly at: Vec2; readonly layer: number }>> = {
+    "ashen-courtyard": { at: { x: 2320, y: 2000 }, layer: 0 },
+    "canthan-terraces": { at: { x: 1200, y: 1050 }, layer: 1 },
+    "cinder-sanctum": { at: { x: 2812, y: 1400 }, layer: 3 },
+    "elonian-plateau": { at: { x: 2270, y: 820 }, layer: 2 },
+    "hollow-deep": { at: { x: 3100, y: 1200 }, layer: 3 },
+    "moss-vale": { at: { x: 2500, y: 1300 }, layer: 2 },
+    "shiverpeak-pass": { at: { x: 2635, y: 1260 }, layer: 2 },
+    "sunken-bastion": { at: { x: 1350, y: 905 }, layer: 2 },
+  };
+  /**
+   * The maps whose teams' narrowest ways in were further apart than 25 % when
+   * #3688 measured them, each to be fixed on a card of its own. One that is
+   * fixed leaves this list.
+   */
+  const UNEVEN: readonly string[] = [
+    "arena-canyon",
+    "barrow-field",
+    "ember-pits",
+    "frozen-crossing",
+    "hall-of-heroes-capture",
+    "hall-of-heroes-king",
+    "hall-of-heroes-relic",
+  ];
+
+  /** Where `map` is fought over: its own point, else its shared objective nearest the centre, else its centre. */
+  const foughtOver = (map: MapData): { readonly at: Vec2; readonly layer: number } => {
+    const own = FOUGHT_OVER[map.id];
+    if (own !== undefined) return own;
+    const centre = vec2(map.width / 2, map.height / 2);
+    const away = (point: Vec2): number => Math.hypot(point.x - centre.x, point.y - centre.y);
+    const [shared] = map.objectives
+      .flatMap((objective) =>
+        "team" in objective || !("position" in objective)
+          ? []
+          : [{ at: objective.position, layer: objective.layer }],
+      )
+      .sort((a, b) => away(a.at) - away(b.at));
+    return shared ?? { at: centre, layer: map.groundLayer };
+  };
+
+  it.each(loadAllMaps().map((map) => [map.id, map] as const))(
+    "%s: the teams' narrowest ways to where the map is fought over are within 25 % of each other",
+    (id, map) => {
+      const { at, layer } = foughtOver(map);
+      const widths = narrowestWalks(map, at, layer).map(({ width }) => width);
+      const spread = (Math.max(...widths) - Math.min(...widths)) / Math.max(...widths);
+      if (UNEVEN.includes(id)) expect(spread).toBeGreaterThan(0.25);
+      else expect(spread).toBeLessThanOrEqual(0.25);
+    },
+    60_000,
+  );
 });
 
 describe("walks by route (#3415)", () => {
