@@ -268,7 +268,12 @@ describe("toArenaSnapshot", () => {
       durationSeconds: 10,
       casterId: "me",
     };
-    const cape = { main: "violet", trim: "white", emblem: packEmblem([0, 1, 2]) } as const;
+    const cape = {
+      main: "a078e0",
+      trim: "f2f2f2",
+      emblemColours: ["f2f2f2", "e6c04a"],
+      emblem: packEmblem([0, 1, 2]),
+    } as const;
     const formed = {
       ...player("formed", 0),
       x: 0,

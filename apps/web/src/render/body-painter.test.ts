@@ -1,3 +1,4 @@
+import { packEmblem } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import { REST_FRAME } from "./attack-clock.js";
@@ -56,9 +57,10 @@ const BODY: StandingBody = {
 };
 
 const LOOK: CapeLook = capeLook({
-  main: "violet",
-  trim: "white",
-  emblem: presetEmblem("diamond", "white"),
+  main: "a078e0",
+  trim: "f2f2f2",
+  emblemColours: ["f2f2f2"],
+  emblem: packEmblem(presetEmblem("diamond")),
 });
 
 function paint(body: StandingBody): string[] {

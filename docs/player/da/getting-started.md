@@ -191,14 +191,14 @@ første besøg, som `AshenWolf`; skriv oven i det for at ændre det. Lader
 du det stå tomt, spiller du som `Spiller`. Skriv et **Laugsmærke** på 2 til
 4 bogstaver eller cifre ved siden af, så ser alle det efter dit navn,
 som `Ente [VIBE]`. Med et mærke sat dukker **Laugskappe**-designeren op
-under det: vælg kappens farve, kantens farve og et emblem, så bærer din
+under det: vælg en hvilken som helst farve til kappe og kant, tegn et emblem, så bærer din
 krop kappen i hver kamp: den foldes til et tyndt bånd på din kant, når du
 står stille, og flagrer bag dig, når du bevæger dig. Dine figurer i
-menuen viser den også. **Ingen kappe** tager den af. En figur viser kappen, som den ser ud i spillet.
+menuen viser den også. **Ingen kappe** tager den af. En figur viser kappen, som den ser ud i spillet. En farve for tæt på dit holds blå eller dine fjenders røde drejes lidt væk fra den, når den tegnes, så ingen kappe ligner et hold; figuren viser den, som alle vil se den.
 
 En ændring gælder med det samme for den lobby, du er i.
 
-**Tegn dit eget emblem.** **Rediger emblem** under start-emblemerne åbner et gitter på 16×16 i deres sted. Vælg en farve eller **Tom**, og tegn med **Blyant**, visk ud med **Viskelæder** eller farv et område med **Udfyld**. **Spejl** maler venstre og højre halvdel på én gang. **Ryd** tømmer gitteret, og **Fortryd** går et skridt tilbage. Den lille visning ved siden af gitteret viser emblemet så stort som i en kamp. **Færdig** beholder det, **Annuller** smider tegningen væk. Piletaster og mellemrum tegner også med tastaturet.
+**Tegn dit emblem.** Emblemets gitter på 16×16 står altid under kappens og kantens farver. Vælg en farve eller **Tom**, og tegn med **Blyant**, visk ud med **Viskelæder** eller farv et område med **Udfyld**. **Tilføj farve** giver emblemet en farve mere, op til 15, og farvevælgeren ved siden af dem ændrer den valgte farve sammen med alt, der er tegnet i den. **Start fra** lægger en af otte former på gitteret i den valgte farve. **Spejl** maler venstre og højre halvdel på én gang. **Ryd** tømmer gitteret, og **Fortryd** går et skridt tilbage. Den lille visning ved siden af gitteret viser emblemet så stort som i en kamp. Hvert strøg gemmes, når du afslutter det. Piletaster og mellemrum tegner også med tastaturet.
 
 **Kopiér laugslink** under kappedesigneren kopierer et link med dit mærke og din kappe. Den, der åbner det, bliver spurgt **Bliv medlem af lauget [VIBE]?**: **Bliv medlem** giver vedkommende dit mærke og din kappe, **Nej** ændrer intet. Alle kan sende sådan et link, og ingen ejer et mærke, så spillet spørger altid først.
 

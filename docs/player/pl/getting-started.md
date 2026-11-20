@@ -175,14 +175,14 @@ twoje niezależnie od tego, czym grasz. Gra nadaje ci **Nazwę** przy pierwszej 
 na przykład `AshenWolf`; wpisz nową, aby ją zmienić. Puste pole oznacza grę jako
 `Gracz`. Wpisz obok **Tag gildii** z 2 do 4 liter lub cyfr, a każdy zobaczy go po
 twojej nazwie, jak `Ente [VIBE]`. Gdy masz tag, pod nim pojawia się projektant
-**Peleryna gildii**: wybierz kolor peleryny, kolor obszycia i emblemat, a twoje ciało
+**Peleryna gildii**: wybierz dowolny kolor peleryny i obszycia, narysuj emblemat, a twoje ciało
 nosi pelerynę w każdym meczu: składa się w cienki pas przy krawędzi, gdy stoisz, i
 powiewa za tobą, gdy się ruszasz. Pokazują ją też twoje postacie w menu. **Bez
-peleryny** ją zdejmuje. Postać pokazuje pelerynę tak, jak wygląda w grze.
+peleryny** ją zdejmuje. Postać pokazuje pelerynę tak, jak wygląda w grze. Kolor zbyt bliski niebieskiemu twojej drużyny lub czerwonemu twoich wrogów jest przy rysowaniu nieco od niego odsuwany, żeby żadna peleryna nie wyglądała jak drużyna; postać pokazuje ją tak, jak zobaczą ją wszyscy.
 
 Zmiana działa od razu w lobby, w którym jesteś.
 
-**Narysuj własny emblemat.** **Edytuj emblemat** pod emblematami startowymi otwiera w ich miejscu siatkę 16×16. Wybierz kolor lub **Puste**, a potem rysuj narzędziem **Ołówek**, ścieraj narzędziem **Gumka** albo zalej obszar narzędziem **Wypełnij**. **Lustro** maluje jednocześnie lewą i prawą połowę. **Wyczyść** opróżnia siatkę, a **Cofnij** wraca o krok. Mały podgląd obok siatki pokazuje emblemat tak duży jak w meczu. **Gotowe** go zachowuje, **Anuluj** wyrzuca rysunek. Strzałki i spacja rysują też z klawiatury.
+**Narysuj swój emblemat.** Siatka emblematu 16×16 jest zawsze pod kolorami peleryny i obszycia. Wybierz kolor lub **Puste**, a potem rysuj narzędziem **Ołówek**, ścieraj narzędziem **Gumka** albo zalej obszar narzędziem **Wypełnij**. **Dodaj kolor** daje emblematowi kolejny kolor, do 15, a selektor koloru obok zmienia wybrany kolor razem ze wszystkim, co nim narysowano. **Zacznij od** kładzie na siatce jeden z ośmiu kształtów w wybranym kolorze. **Lustro** maluje jednocześnie lewą i prawą połowę. **Wyczyść** opróżnia siatkę, a **Cofnij** wraca o krok. Mały podgląd obok siatki pokazuje emblemat tak duży jak w meczu. Każde pociągnięcie zostaje zapisane, gdy je skończysz. Strzałki i spacja rysują też z klawiatury.
 
 **Kopiuj link gildii**, pod projektantem peleryny, kopiuje link z twoim tagiem i peleryną. Kto go otworzy, zobaczy pytanie **Dołączyć do gildii [VIBE]?**: **Dołącz** daje mu twój tag i pelerynę, **Nie** niczego nie zmienia. Każdy może wysłać taki link i nikt nie jest właścicielem tagu, więc gra zawsze najpierw pyta.
 

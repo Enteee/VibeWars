@@ -1624,28 +1624,21 @@ body:has(> .splash) #menu-background::after {
   font-size: 0.8rem;
 }
 
-.screen .player-cape-swatch,
-.screen .player-cape-emblem {
-  display: grid;
-  place-items: center;
-  width: 24px;
+/* CAPE and TRIM (#3628): one native colour picker each, any colour. */
+.screen .player-cape-colour,
+.screen .emblem-editor-recolour {
+  width: 32px;
   height: 24px;
   padding: 0;
+  background: none;
   border: 1px solid var(--line);
   border-radius: 3px;
+  cursor: pointer;
 }
 
-.screen .player-cape-swatch {
-  background: var(--swatch);
-}
-
-.screen .player-cape-emblem {
-  background: var(--bg);
-}
-
-.screen .player-cape-swatch[aria-pressed="true"],
-.screen .player-cape-emblem[aria-pressed="true"] {
-  border: 2px solid var(--ink);
+.screen .emblem-editor-recolour:disabled {
+  cursor: default;
+  opacity: 0.4;
 }
 
 .screen .player-cape-none {
@@ -1692,17 +1685,12 @@ body:has(> .splash) #menu-background::after {
   }
 }
 
-.screen .player-cape-edit {
-  align-self: flex-start;
-  padding: 0.15rem 0.6rem;
-}
-
 /*
- * The emblem editor (#3555), in place of the cape designer's rows: the
- * 16x16 grid on the cape's cloth, the emblem at game size beside it, the
- * palette, the tools, Done and Cancel. Picks are ringed in ink, as above.
- * On a phone the cells shrink to the pane and the preview wraps under the
- * grid, so nothing scrolls sideways.
+ * The emblem editor (#3555), always under the cape designer's pickers
+ * (#3628): the 16x16 grid on the cape's cloth, the emblem at game size
+ * beside it, the palette, the tools and Start from. Picks are ringed in
+ * ink. On a phone the cells shrink to the pane and the preview wraps
+ * under the grid, so nothing scrolls sideways.
  */
 .emblem-editor {
   display: flex;
@@ -1813,17 +1801,26 @@ body:has(> .splash) #menu-background::after {
 }
 
 .screen .emblem-editor-tool,
-.screen .emblem-editor-done,
-.screen .emblem-editor-cancel {
+.screen .emblem-editor-start {
   padding: 0.15rem 0.6rem;
 }
 
-.screen .emblem-editor-tool[aria-pressed="true"] {
-  border-color: var(--accent);
-  color: var(--accent);
+.screen .emblem-editor-start {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
 }
 
-.screen .emblem-editor-done {
+.emblem-editor-swatches {
+  display: contents;
+}
+
+.screen .emblem-editor-tool[aria-pressed="true"] {
   border-color: var(--accent);
   color: var(--accent);
 }

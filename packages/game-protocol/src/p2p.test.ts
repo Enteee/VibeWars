@@ -55,6 +55,9 @@ import {
   parseWireCapes,
   packEmblem,
   unpackEmblem,
+  canonicalEmblem,
+  parseWireCape,
+  MAX_EMBLEM_COLOURS,
   EMBLEM_GRID,
   parseWireChatLine,
   parseWireSharedTrack,
@@ -121,6 +124,7 @@ import type {
   WireSnapshotPart,
   PeerLobbyJoin,
   WireLobbyState,
+  WireCape,
 } from "./p2p.js";
 import { MAX_LOBBY_PLAYERS, MAX_TEAM_LOBBY_SIDE } from "./protocol.js";
 import type { CastRefusedMessage, RechargeMessage } from "./protocol.js";
@@ -131,12 +135,13 @@ import { ASCENT_ROUNDS } from "./queue.js";
 const parseWireSnapshotPart = (value: unknown) => parseWireSnapshotPartOf(value, 2);
 const parseWireEnded = (value: unknown) => parseWireEndedOf(value, 2);
 
-/** A guild cape (#1422), as the designer makes one. */
-const CAPE = {
-  main: "violet",
-  trim: "white",
+/** A guild cape (#1422), as the designer makes one: eight colours, in order of first use (#3628). */
+const CAPE: WireCape = {
+  main: "a078e0",
+  trim: "f2f2f2",
+  emblemColours: ["e6c04a", "a078e0", "f2f2f2", "23272e", "9bd445", "f0963c", "2fb8a0", "e86fb4"],
   emblem: packEmblem(Array.from({ length: EMBLEM_GRID * EMBLEM_GRID }, (_, index) => index % 9)),
-} as const;
+};
 
 const hello: PeerHello = {
   protocolVersion: PROTOCOL_VERSION,
@@ -3336,12 +3341,12 @@ describe("the match's charts (#3564)", () => {
 describe("packEmblem and unpackEmblem (#3554)", () => {
   const PIXELS = EMBLEM_GRID * EMBLEM_GRID;
 
-  /** A grid of pixels 0 to 8 from a small linear congruential sequence, so a failure reproduces. */
+  /** A grid of pixels 0 to 15 from a small linear congruential sequence, so a failure reproduces. */
   function grid(seed: number): number[] {
     let state = seed;
     return Array.from({ length: PIXELS }, () => {
       state = (state * 1103515245 + 12345) % 2147483648;
-      return state % 9;
+      return state % 16;
     });
   }
 
@@ -3349,29 +3354,77 @@ describe("packEmblem and unpackEmblem (#3554)", () => {
     const packed = packEmblem(grid(seed));
     expect(packed).toHaveLength(171);
     expect(packed).toMatch(/^[A-Za-z0-9_-]+$/);
-    expect(unpackEmblem(packed)).toEqual(grid(seed));
+    expect(unpackEmblem(packed, MAX_EMBLEM_COLOURS)).toEqual(grid(seed));
   });
 
   it("round trip an empty grid and a grid all of the last colour", () => {
-    for (const pixel of [0, 8]) {
+    for (const pixel of [0, 15]) {
       const pixels = new Array<number>(PIXELS).fill(pixel);
-      expect(unpackEmblem(packEmblem(pixels))).toEqual(pixels);
+      expect(unpackEmblem(packEmblem(pixels), MAX_EMBLEM_COLOURS)).toEqual(pixels);
     }
   });
 
-  it("refuse a wrong length, a bad character, a nibble of 9 and stray trailing bits", () => {
-    const packed = packEmblem(grid(1));
-    expect(unpackEmblem(packed.slice(1))).toBeUndefined();
-    expect(unpackEmblem(`${packed}A`)).toBeUndefined();
-    expect(unpackEmblem("")).toBeUndefined();
-    expect(unpackEmblem(`=${packed.slice(1)}`)).toBeUndefined();
-    expect(unpackEmblem(`.${packed.slice(1)}`)).toBeUndefined();
-    // "o" is 0b101000: the first pixel 10, past CAPE_COLOURS.
-    expect(unpackEmblem(`o${packed.slice(1)}`)).toBeUndefined();
-    // "kA" sets the first pixel to 9: 0b100100 0b000000.
-    expect(unpackEmblem(`kA${packed.slice(2)}`)).toBeUndefined();
+  it("refuse a wrong length, a bad character, a pixel past its colours and stray trailing bits", () => {
+    const packed = packEmblem(grid(1).map((pixel) => pixel % 9));
+    expect(unpackEmblem(packed, 8)).toBeDefined();
+    expect(unpackEmblem(packed.slice(1), 8)).toBeUndefined();
+    expect(unpackEmblem(`${packed}A`, 8)).toBeUndefined();
+    expect(unpackEmblem("", 8)).toBeUndefined();
+    expect(unpackEmblem(`=${packed.slice(1)}`, 8)).toBeUndefined();
+    expect(unpackEmblem(`.${packed.slice(1)}`, 8)).toBeUndefined();
+    // "kA" sets the first pixel to 9: 0b100100 0b000000, past 8 colours, not 9.
+    expect(unpackEmblem(`kA${packed.slice(2)}`, 8)).toBeUndefined();
+    expect(unpackEmblem(`kA${packed.slice(2)}`, 9)).toBeDefined();
     // The last character carries 4 bits of the last byte and 2 bits beyond it.
-    expect(unpackEmblem(`${packed.slice(0, -1)}B`)).toBeUndefined();
+    expect(unpackEmblem(`${packed.slice(0, -1)}B`, 8)).toBeUndefined();
+  });
+});
+
+describe("a cape's colours (#3628)", () => {
+  const PIXELS = EMBLEM_GRID * EMBLEM_GRID;
+  /** 15 colours, each its own: `0000NN`. */
+  const FIFTEEN = Array.from({ length: 15 }, (_, index) =>
+    (index + 1).toString(16).padStart(6, "0"),
+  );
+  /** Pixel `i` in colour `i % 16`: every colour used, in order of first use. */
+  const ALL = Array.from({ length: PIXELS }, (_, index) => index % 16);
+  const cape = (emblemColours: readonly unknown[], pixels: readonly number[]): unknown => ({
+    main: "a078e0",
+    trim: "f2f2f2",
+    emblemColours,
+    emblem: packEmblem(pixels),
+  });
+
+  it("round trip a cape of 15 colours, and a blank one", () => {
+    const fifteen = cape(FIFTEEN, ALL);
+    expect(parseWireCape(fifteen)).toEqual(fifteen);
+    const blank = cape([], new Array<number>(PIXELS).fill(0));
+    expect(parseWireCape(blank)).toEqual(blank);
+  });
+
+  it.each<[string, unknown]>([
+    ["16 colours", cape([...FIFTEEN, "ffffff"], ALL)],
+    ["an upper-case colour", cape(["A078E0"], [1])],
+    ["a colour with a #", cape(["#a078e0"], [1])],
+    ["a short colour", cape(["a078e"], [1])],
+    ["a colour that is no string", cape([0xa078e0], [1])],
+    ["a cloth in a name", { ...(cape([], []) as object), main: "violet" }],
+    ["a pixel past the colours", cape(["a078e0"], [1, 2])],
+    ["a colour no pixel uses", cape(["a078e0", "f2f2f2"], [1])],
+    ["colours out of first use", cape(["a078e0", "f2f2f2"], [2, 1])],
+    ["no colour list", { main: "a078e0", trim: "f2f2f2", emblem: packEmblem([]) }],
+  ])("refuse %s", (_, value) => {
+    expect(parseWireCape(value)).toBeUndefined();
+  });
+
+  it("canonicalEmblem drops the unused colours and numbers the rest by first use", () => {
+    expect(canonicalEmblem([0, 3, 1, 3, 0], ["aaaaaa", "bbbbbb", "cccccc"])).toEqual({
+      pixels: [0, 1, 2, 1, 0],
+      colours: ["cccccc", "aaaaaa"],
+    });
+    expect(canonicalEmblem([0, 0], ["aaaaaa"])).toEqual({ pixels: [0, 0], colours: [] });
+    // A pixel naming no colour is empty.
+    expect(canonicalEmblem([2], ["aaaaaa"])).toEqual({ pixels: [0], colours: [] });
   });
 });
 
