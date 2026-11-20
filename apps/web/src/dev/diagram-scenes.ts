@@ -66,16 +66,16 @@ export const DIAGRAM_SCENES: readonly DiagramScene[] = [
   },
   {
     id: "world-lever-gate",
-    map: "canthan-terraces",
-    camera: { x: 1280, y: 1060, zoom: 1.1 },
-    actors: [{ profession: "elementalist", team: 0, x: 1280, y: 1010, layer: 1 }],
+    map: "arena-crossroads",
+    camera: { x: 2200, y: 470, zoom: 1.3 },
+    actors: [{ profession: "elementalist", team: 0, x: 2260, y: 530, layer: 1 }],
     markers: [],
   },
   {
     id: "world-wall-mire",
     map: "canthan-terraces",
-    camera: { x: 1080, y: 1760, zoom: 0.9 },
-    actors: [{ profession: "warrior", team: 0, x: 1150, y: 1700, layer: 1 }],
+    camera: { x: 1110, y: 1740, zoom: 1 },
+    actors: [{ profession: "warrior", team: 0, x: 1120, y: 1780, layer: 1 }],
     markers: [],
   },
 ];

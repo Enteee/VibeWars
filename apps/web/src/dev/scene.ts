@@ -7,9 +7,10 @@ import {
   resolveLoadout,
   type ParticipantSpec,
 } from "@vibewars/game-core";
+import { allWallSegments } from "@vibewars/game-maps/geometry";
 import { NO_GUILD } from "@vibewars/game-session";
 
-import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
+import { gateWalls, toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import { hostMap, mapStructure } from "../net/maps.js";
 import { createArenaViewport } from "../render/arena-viewport.js";
 import { NO_COVER } from "../render/camera-rig.js";
@@ -116,8 +117,19 @@ export async function showScene(parent: HTMLElement, scene: DiagramScene): Promi
   document.querySelector<HTMLElement>("#screens")?.style.setProperty("display", "none");
   document.querySelector<HTMLElement>("#topbar")?.style.setProperty("display", "none");
   const viewport = await createArenaViewport(parent);
-  const { structure, wallLayers } = mapStructure(map.descriptor.id);
-  const walls = map.descriptor.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
+  const { structure, wallLayers, gateLayers, gateLooks, switchTargets } = mapStructure(
+    map.descriptor.id,
+  );
+  // Gates, levers and breakable walls drawn as the match starts: shut, up, whole.
+  const blocking = gateWalls(
+    map.descriptor.gates,
+    gateLayers,
+    gateLooks,
+    map.descriptor.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0)),
+    allWallSegments(map.descriptor.walls),
+    map.descriptor.breakables,
+  );
+  const gated = { ...map.descriptor, gateLayers, gateLooks, switchTargets };
   viewport.setArenaBounds(map.descriptor.width, map.descriptor.height);
   viewport.scene.setFixedMarkers(scene.markers);
   let framesSince = -1;
@@ -133,14 +145,15 @@ export async function showScene(parent: HTMLElement, scene: DiagramScene): Promi
       return;
     }
     viewport.setCamera(scene.camera, NO_COVER);
+    const match = connection.getSnapshot();
     viewport.scene.setSnapshot(
       toArenaSnapshot(
-        connection.getSnapshot(),
-        walls,
+        match,
+        blocking(match.gates, match.breakables).walls,
         [],
         undefined,
         undefined,
-        undefined,
+        gated,
         structure,
       ),
     );
