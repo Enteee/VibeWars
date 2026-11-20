@@ -193,15 +193,17 @@ contient ce qui est à toi quoi que tu joues. Le jeu te donne un **Nom** à ta
 première visite, comme `AshenWolf` ; écris par-dessus pour le changer. Vide, tu
 joues sous le nom `Joueur`. Tape un **Tag de guilde** de 2 à 4 lettres ou
 chiffres à côté, et tout le monde le voit après ton nom, comme `Ente [VIBE]`.
-Avec un tag, le créateur de **Cape de guilde** apparaît en dessous : choisis la
-couleur de la cape, celle de la bordure et un emblème, et ton corps porte la
+Avec un tag, le créateur de **Cape de guilde** apparaît en dessous : choisis
+n'importe quelle couleur pour la cape et sa bordure, dessine un emblème, et ton corps porte la
 cape dans chaque match : elle se replie en une fine bande sur ton bord quand tu
 es immobile et flotte derrière toi quand tu bouges. Tes personnages dans le
 menu la montrent aussi. **Sans cape** la retire. Une figurine montre la cape telle qu'elle apparaît en jeu.
+Une couleur proche du bleu allié ou du rouge ennemi y est un peu plus
+décalée, pour qu'aucune cape ne ressemble à une équipe.
 
 Un changement s'applique tout de suite au salon où tu es.
 
-**Dessine ton propre emblème.** **Modifier l'emblème**, sous les emblèmes de départ, ouvre à leur place une grille de 16×16. Choisis une couleur ou **Vide**, puis dessine au **Crayon**, efface à la **Gomme** ou colore une zone avec **Remplir**. **Miroir** peint les moitiés gauche et droite à la fois. **Tout effacer** vide la grille et **Défaire** revient d'un pas. La petite vue à côté de la grille montre l'emblème à sa taille en match. **OK** le garde, **Annuler** jette le dessin. Les flèches et Espace dessinent aussi au clavier.
+**Dessine ton propre emblème.** L'éditeur d'emblème, une grille de 16×16, est toujours sous les deux couleurs. Choisis une des couleurs de l'emblème ou **Vide**, puis dessine au **Crayon**, efface à la **Gomme** ou colore une zone avec **Remplir**. **Ajouter une couleur** donne une couleur de plus à l'emblème, jusqu'à 15, et le sélecteur de couleur à côté d'elles change la couleur choisie partout où elle est dessinée. **Partir de** remplit la grille avec une de huit formes dans la couleur choisie. **Miroir** peint les moitiés gauche et droite à la fois. **Tout effacer** vide la grille et **Défaire** revient d'un pas. Chaque changement est gardé aussitôt. La petite vue à côté de la grille montre l'emblème à sa taille en match. Les flèches et Espace dessinent aussi au clavier.
 
 **Copier le lien de guilde**, sous le créateur de cape, copie un lien qui porte ton tag et ta cape. Qui l'ouvre voit **Rejoindre la guilde [VIBE] ?** : **Rejoindre** lui donne ton tag et ta cape, **Non** ne change rien. N'importe qui peut envoyer un tel lien et personne ne possède un tag, donc le jeu demande toujours d'abord.
 

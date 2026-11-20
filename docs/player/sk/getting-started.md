@@ -183,13 +183,15 @@ je tvoje bez ohľadu na to, čo hráš. Hra ti pri prvej návšteve dá
 prázdne, hráš ako `Hráč`. Vedľa zadaj **Značku cechu** s 2 až 4 písmenami
 alebo číslicami a každý ju uvidí za tvojím menom, napríklad
 `Ente [VIBE]`. So zadanou značkou sa pod ňou objaví návrhár **Cechový plášť**:
-vyber farbu plášťa, farbu lemu a znak a tvoje telo bude plášť nosiť v každom
+vyber ľubovoľnú farbu plášťa aj jeho lemu, nakresli znak a tvoje telo bude plášť nosiť v každom
 zápase: keď stojíš, zloží sa do tenkého pásu na okraji, a keď sa pohybuješ,
 veje za tebou. Ukazujú ho aj tvoje postavy v menu. **Bez plášťa** ho zloží. Postava ukazuje plášť tak, ako vyzerá v hre.
+Farba blízka modrej spojencov alebo červenej nepriateľov sa tam od nej o kúsok
+odsunie, aby žiadny plášť nevyzeral ako tím.
 
 Zmena platí okamžite pre lobby, v ktorom si.
 
-**Nakresli si vlastný znak.** **Upraviť znak** pod východiskovými znakmi otvorí na ich mieste mriežku 16×16. Vyber farbu alebo **Prázdne** a kresli nástrojom **Ceruzka**, gumuj nástrojom **Guma** alebo vyfarbi plochu nástrojom **Výplň**. **Zrkadliť** maľuje ľavú a pravú polovicu naraz. **Vymazať** mriežku vyprázdni a **Späť** vráti krok. Malý náhľad vedľa mriežky ukazuje znak taký veľký ako v zápase. **Hotovo** ho ponechá, **Zrušiť** kresbu zahodí. Šípky a medzerník kreslia aj z klávesnice.
+**Nakresli si vlastný znak.** Editor znaku, mriežka 16×16, je vždy pod oboma farbami. Vyber jednu z farieb znaku alebo **Prázdne** a kresli nástrojom **Ceruzka**, gumuj nástrojom **Guma** alebo vyfarbi plochu nástrojom **Výplň**. **Pridať farbu** dá znaku ďalšiu farbu, až 15, a výber farby vedľa nich zmení vybranú farbu všade, kde je nakreslená. **Začať od** vyplní mriežku jedným z ôsmich tvarov vo vybranej farbe. **Zrkadliť** maľuje ľavú a pravú polovicu naraz. **Vymazať** mriežku vyprázdni a **Späť** vráti krok. Každá zmena sa uloží hneď. Malý náhľad vedľa mriežky ukazuje znak taký veľký ako v zápase. Šípky a medzerník kreslia aj z klávesnice.
 
 **Kopírovať odkaz na cech** pod návrhárom plášťa skopíruje odkaz s tvojou značkou a plášťom. Kto ho otvorí, dostane otázku **Pridať sa do cechu [VIBE]?**: **Pridať sa** mu dá tvoju značku a plášť, **Nie** nič nezmení. Taký odkaz môže poslať ktokoľvek a značku nikto nevlastní, preto sa hra vždy najprv opýta.
 

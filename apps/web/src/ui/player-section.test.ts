@@ -1,8 +1,9 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
+import { packEmblem } from "@vibewars/game-protocol";
 import { sanitizeName } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { EMBLEM_PRESET_NAMES, presetEmblem } from "../render/cape-shape.js";
+import { presetEmblem } from "../render/cape-shape.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import { saveActiveCharacterId, saveStarterCharacterId } from "./menu.js";
@@ -92,18 +93,19 @@ describe("the cape designer (#1422)", () => {
   });
 
   it("starts a first pick from the sample, changes one part a pick, and No cape clears it", () => {
-    const gold = pickCape(null, { part: "main", colour: "gold" });
-    expect(gold).toEqual({ ...FIRST_CAPE, main: "gold" });
-    expect(pickCape(gold, { part: "trim", colour: "gold" })).toEqual({
+    const gold = pickCape(null, { part: "main", colour: "e6c04a" });
+    expect(gold).toEqual({ ...FIRST_CAPE, main: "e6c04a" });
+    // The trim no longer drives the emblem's colours (#3628).
+    expect(pickCape(gold, { part: "trim", colour: "e6c04a" })).toEqual({
       ...FIRST_CAPE,
-      main: "gold",
-      trim: "gold",
-      emblem: presetEmblem("diamond", "gold"),
+      main: "e6c04a",
+      trim: "e6c04a",
     });
-    expect(pickCape(gold, { part: "emblem", preset: "ring" })).toEqual({
+    const ring = { emblemColours: ["2fb8a0"], emblem: packEmblem(presetEmblem("ring")) };
+    expect(pickCape(gold, { part: "emblem", emblem: ring })).toEqual({
       ...FIRST_CAPE,
-      main: "gold",
-      emblem: presetEmblem("ring", "white"),
+      main: "e6c04a",
+      ...ring,
     });
     expect(pickCape(gold, { part: "none" })).toBeNull();
   });
@@ -124,7 +126,7 @@ describe("the cape designer (#1422)", () => {
     expect(loadGuildCape()).toBeNull();
   });
 
-  it("replaces anything stored that is no cape, a shape emblem's too, with the sample (#3554)", () => {
+  it("replaces anything stored that is no cape, an older shape's too, with the sample (#3554, #3628)", () => {
     const stored = storage();
     for (const corrupt of [
       "{",
@@ -132,6 +134,8 @@ describe("the cape designer (#1422)", () => {
       '"violet"',
       JSON.stringify({ ...FIRST_CAPE, main: "red" }),
       JSON.stringify({ main: "violet", trim: "white", emblem: "diamond" }),
+      // One from before a cape had colours of its own (#3628).
+      JSON.stringify({ main: "violet", trim: "white", emblem: FIRST_CAPE.emblem }),
     ]) {
       stored.set(`${STORAGE_NAMESPACE}.guildCape`, corrupt);
       expect(loadGuildCape()).toEqual(FIRST_CAPE);
@@ -288,34 +292,56 @@ describe("the Player section of Options (#1513)", () => {
     expect(tag.attributes.get("aria-invalid")).toBe("true");
   });
 
-  it("opens the emblem editor from Edit emblem, shown only with the cape designer (#3555)", () => {
+  it("always shows the emblem editor under CAPE and TRIM, with no emblem row and no Edit emblem (#3628)", () => {
     const { tag, cape, shown } = mount();
-    const edit = shown.find((node) => node.textContent === "Edit emblem");
-    expect(edit).toBeDefined();
-    expect(cape.hidden).toBe(true);
+    expect(shown.some((node) => node.textContent === "Edit emblem")).toBe(false);
+    expect(shown.some((node) => node.className === "player-cape-emblem")).toBe(false);
     tag.typeIn("VIBE");
-    expect(cape.hidden).toBe(false);
-    edit?.click();
-    const editor = cape.all().find((node) => node.className === "emblem-editor");
+    const parts = cape.all();
+    const pickers = parts.filter((node) => node.className === "player-cape-colour");
+    expect(pickers.map((node) => [node.type, node.dataset.part])).toEqual([
+      ["color", "main"],
+      ["color", "trim"],
+    ]);
+    const editor = parts.find((node) => node.className === "emblem-editor");
     expect(editor).toBeDefined();
-    expect(cape.all().find((node) => node.className === "player-cape-body")?.hidden).toBe(true);
-    // Done keeps the grid it opened with: the sample's.
-    editor
-      ?.all()
-      .find((node) => node.textContent === "Done")
-      ?.click();
-    expect(loadGuildCape()).toEqual(FIRST_CAPE);
+    expect(parts.indexOf(editor ?? cape)).toBeGreaterThan(parts.indexOf(pickers[1] ?? cape));
   });
 
-  it("saves a cape on every pick", () => {
+  /** The designer's colour picker for `part`. */
+  function pickerOf(shown: readonly FakeElement[], part: "main" | "trim"): FakeElement {
+    const picker = shown.find(
+      (node) => node.className === "player-cape-colour" && node.dataset.part === part,
+    );
+    if (picker === undefined) {
+      throw new Error(`no ${part} picker`);
+    }
+    return picker;
+  }
+
+  it("saves a cape on every pick, any colour, as 6 lowercase hex digits", () => {
     stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
     const { shown } = mount();
-    const gold = shown.find((node) => node.dataset.colour === "gold");
-    gold?.click();
-    expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, main: "gold" });
-    expect(gold?.attributes.get("aria-pressed")).toBe("true");
+    const main = pickerOf(shown, "main");
+    expect(main.value).toBe(`#${FIRST_CAPE.main}`);
+    main.typeIn("#12AB56");
+    expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, main: "12ab56" });
+    pickerOf(shown, "trim").typeIn("#000001");
+    expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, main: "12ab56", trim: "000001" });
     shown.find((node) => node.textContent === "No cape")?.click();
     expect(loadGuildCape()).toBeNull();
+  });
+
+  it("applies the emblem editor's every action to the saved cape at once (#3628)", () => {
+    stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
+    const { shown } = mount();
+    shown.find((node) => node.dataset.emblem === "ring")?.click();
+    expect(loadGuildCape()).toEqual({
+      ...FIRST_CAPE,
+      emblem: packEmblem(presetEmblem("ring")),
+    });
+    shown.find((node) => node.textContent === "Clear")?.click();
+    expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, emblemColours: [], emblem: packEmblem([]) });
   });
 
   /** The cape designer's figure, the one shown now. */
@@ -330,10 +356,12 @@ describe("the Player section of Options (#1513)", () => {
     expect(first?.tagName).toBe("canvas");
     // Nothing saved yet: no cape.
     expect(first?.dataset.cape).toBeUndefined();
-    shown.find((node) => node.dataset.colour === "gold")?.click();
+    pickerOf(shown, "main").typeIn("#e6c04a");
     const second = figureIn(cape);
     expect(second).not.toBe(first);
-    expect(second?.dataset.cape).toBe(`gold.${FIRST_CAPE.trim}.${FIRST_CAPE.emblem}`);
+    expect(second?.dataset.cape).toBe(
+      `e6c04a.${FIRST_CAPE.trim}.${FIRST_CAPE.emblem}.${FIRST_CAPE.emblemColours.join("")}`,
+    );
     shown.find((node) => node.textContent === "No cape")?.click();
     expect(figureIn(cape)?.dataset.cape).toBeUndefined();
     expect(cape.all().filter((node) => node.className === "character-figure")).toHaveLength(1);
@@ -355,17 +383,6 @@ describe("the Player section of Options (#1513)", () => {
     expect(figureIn(cape)?.attributes.get("aria-label")).toContain("Elementalist");
   });
 
-  it("sets each starting emblem's grid in the trim colour, and marks it picked (#3554)", () => {
-    stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
-    const { shown } = mount();
-    for (const name of EMBLEM_PRESET_NAMES) {
-      const preset = shown.find((node) => node.dataset.emblem === name);
-      preset?.click();
-      expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, emblem: presetEmblem(name, "white") });
-      expect(preset?.attributes.get("aria-pressed")).toBe("true");
-    }
-  });
-
   it("offers the guild link only with a valid tag, and copies the tag and cape (#3167)", async () => {
     stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VW");
     stored.set(`${STORAGE_NAMESPACE}.guildCape`, JSON.stringify(FIRST_CAPE));
@@ -382,7 +399,7 @@ describe("the Player section of Options (#1513)", () => {
     copy?.click();
     await vi.waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(
-        `https://vibewars.example/#guild=VW.violet.white.${FIRST_CAPE.emblem}`,
+        `https://vibewars.example/#guild=VW.a078e0.f2f2f2.${FIRST_CAPE.emblem}.f2f2f2`,
       );
     });
     tag.typeIn("V!");

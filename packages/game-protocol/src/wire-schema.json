@@ -752,6 +752,7 @@
     "MAX_CHART_PARTS": { "literal": 16 },
     "MAX_CHART_SAMPLES": { "literal": 120 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
+    "MAX_EMBLEM_COLOURS": { "literal": 15 },
     "MAX_HERO_RANK": { "literal": 15 },
     "MAX_LOBBY_PLAYERS": { "literal": 24 },
     "MAX_RELAY_PEER_ID": { "literal": 64 },
@@ -6151,38 +6152,9 @@
               {
                 "properties": [
                   { "name": "emblem", "optional": false, "type": "string" },
-                  {
-                    "name": "main",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "black" },
-                        { "literal": "gold" },
-                        { "literal": "lime" },
-                        { "literal": "orange" },
-                        { "literal": "pink" },
-                        { "literal": "teal" },
-                        { "literal": "violet" },
-                        { "literal": "white" }
-                      ]
-                    }
-                  },
-                  {
-                    "name": "trim",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "black" },
-                        { "literal": "gold" },
-                        { "literal": "lime" },
-                        { "literal": "orange" },
-                        { "literal": "pink" },
-                        { "literal": "teal" },
-                        { "literal": "violet" },
-                        { "literal": "white" }
-                      ]
-                    }
-                  }
+                  { "name": "emblemColours", "optional": false, "type": { "array": "string" } },
+                  { "name": "main", "optional": false, "type": "string" },
+                  { "name": "trim", "optional": false, "type": "string" }
                 ]
               }
             ]
@@ -6235,38 +6207,9 @@
               {
                 "properties": [
                   { "name": "emblem", "optional": false, "type": "string" },
-                  {
-                    "name": "main",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "black" },
-                        { "literal": "gold" },
-                        { "literal": "lime" },
-                        { "literal": "orange" },
-                        { "literal": "pink" },
-                        { "literal": "teal" },
-                        { "literal": "violet" },
-                        { "literal": "white" }
-                      ]
-                    }
-                  },
-                  {
-                    "name": "trim",
-                    "optional": false,
-                    "type": {
-                      "union": [
-                        { "literal": "black" },
-                        { "literal": "gold" },
-                        { "literal": "lime" },
-                        { "literal": "orange" },
-                        { "literal": "pink" },
-                        { "literal": "teal" },
-                        { "literal": "violet" },
-                        { "literal": "white" }
-                      ]
-                    }
-                  }
+                  { "name": "emblemColours", "optional": false, "type": { "array": "string" } },
+                  { "name": "main", "optional": false, "type": "string" },
+                  { "name": "trim", "optional": false, "type": "string" }
                 ]
               }
             ]
@@ -7433,38 +7376,9 @@
     "WireCape": {
       "properties": [
         { "name": "emblem", "optional": false, "type": "string" },
-        {
-          "name": "main",
-          "optional": false,
-          "type": {
-            "union": [
-              { "literal": "black" },
-              { "literal": "gold" },
-              { "literal": "lime" },
-              { "literal": "orange" },
-              { "literal": "pink" },
-              { "literal": "teal" },
-              { "literal": "violet" },
-              { "literal": "white" }
-            ]
-          }
-        },
-        {
-          "name": "trim",
-          "optional": false,
-          "type": {
-            "union": [
-              { "literal": "black" },
-              { "literal": "gold" },
-              { "literal": "lime" },
-              { "literal": "orange" },
-              { "literal": "pink" },
-              { "literal": "teal" },
-              { "literal": "violet" },
-              { "literal": "white" }
-            ]
-          }
-        }
+        { "name": "emblemColours", "optional": false, "type": { "array": "string" } },
+        { "name": "main", "optional": false, "type": "string" },
+        { "name": "trim", "optional": false, "type": "string" }
       ]
     },
     "WireCapes": {
@@ -7481,38 +7395,9 @@
                   "type": {
                     "properties": [
                       { "name": "emblem", "optional": false, "type": "string" },
-                      {
-                        "name": "main",
-                        "optional": false,
-                        "type": {
-                          "union": [
-                            { "literal": "black" },
-                            { "literal": "gold" },
-                            { "literal": "lime" },
-                            { "literal": "orange" },
-                            { "literal": "pink" },
-                            { "literal": "teal" },
-                            { "literal": "violet" },
-                            { "literal": "white" }
-                          ]
-                        }
-                      },
-                      {
-                        "name": "trim",
-                        "optional": false,
-                        "type": {
-                          "union": [
-                            { "literal": "black" },
-                            { "literal": "gold" },
-                            { "literal": "lime" },
-                            { "literal": "orange" },
-                            { "literal": "pink" },
-                            { "literal": "teal" },
-                            { "literal": "violet" },
-                            { "literal": "white" }
-                          ]
-                        }
-                      }
+                      { "name": "emblemColours", "optional": false, "type": { "array": "string" } },
+                      { "name": "main", "optional": false, "type": "string" },
+                      { "name": "trim", "optional": false, "type": "string" }
                     ]
                   }
                 },
@@ -8069,38 +7954,9 @@
                   {
                     "properties": [
                       { "name": "emblem", "optional": false, "type": "string" },
-                      {
-                        "name": "main",
-                        "optional": false,
-                        "type": {
-                          "union": [
-                            { "literal": "black" },
-                            { "literal": "gold" },
-                            { "literal": "lime" },
-                            { "literal": "orange" },
-                            { "literal": "pink" },
-                            { "literal": "teal" },
-                            { "literal": "violet" },
-                            { "literal": "white" }
-                          ]
-                        }
-                      },
-                      {
-                        "name": "trim",
-                        "optional": false,
-                        "type": {
-                          "union": [
-                            { "literal": "black" },
-                            { "literal": "gold" },
-                            { "literal": "lime" },
-                            { "literal": "orange" },
-                            { "literal": "pink" },
-                            { "literal": "teal" },
-                            { "literal": "violet" },
-                            { "literal": "white" }
-                          ]
-                        }
-                      }
+                      { "name": "emblemColours", "optional": false, "type": { "array": "string" } },
+                      { "name": "main", "optional": false, "type": "string" },
+                      { "name": "trim", "optional": false, "type": "string" }
                     ]
                   }
                 ]
@@ -9242,38 +9098,9 @@
           "type": {
             "properties": [
               { "name": "emblem", "optional": false, "type": "string" },
-              {
-                "name": "main",
-                "optional": false,
-                "type": {
-                  "union": [
-                    { "literal": "black" },
-                    { "literal": "gold" },
-                    { "literal": "lime" },
-                    { "literal": "orange" },
-                    { "literal": "pink" },
-                    { "literal": "teal" },
-                    { "literal": "violet" },
-                    { "literal": "white" }
-                  ]
-                }
-              },
-              {
-                "name": "trim",
-                "optional": false,
-                "type": {
-                  "union": [
-                    { "literal": "black" },
-                    { "literal": "gold" },
-                    { "literal": "lime" },
-                    { "literal": "orange" },
-                    { "literal": "pink" },
-                    { "literal": "teal" },
-                    { "literal": "violet" },
-                    { "literal": "white" }
-                  ]
-                }
-              }
+              { "name": "emblemColours", "optional": false, "type": { "array": "string" } },
+              { "name": "main", "optional": false, "type": "string" },
+              { "name": "trim", "optional": false, "type": "string" }
             ]
           }
         },

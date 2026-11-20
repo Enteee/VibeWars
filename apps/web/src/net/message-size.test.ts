@@ -18,6 +18,7 @@ import {
 import {
   MAX_CHART_EVENTS,
   packEmblem,
+  MAX_EMBLEM_COLOURS,
   type WireCapes,
   MAX_CHART_PARTS,
   MAX_CHART_SAMPLES,
@@ -103,8 +104,15 @@ const PEER_ID = "abcdefghijklmnopqrst/local";
 const NAME = sanitizeName("👩‍🚀".repeat(40), "player");
 /** A guild tag as long as `sanitizeGuildTag` lets through (#1406). */
 const GUILD_TAG = sanitizeGuildTag("WWWW");
-/** A cape of the longest colour names (#1422); every emblem is as long (#3554). */
-const CAPE: WireCape = { main: "violet", trim: "orange", emblem: packEmblem([]) };
+/** A cape of the most colours (#3628), each used; every emblem is as long (#3554). */
+const CAPE: WireCape = {
+  main: "a078e0",
+  trim: "f0963c",
+  emblemColours: Array.from({ length: MAX_EMBLEM_COLOURS }, (_, index) =>
+    (index * 0x111111).toString(16).padStart(6, "0"),
+  ),
+  emblem: packEmblem(Array.from({ length: MAX_EMBLEM_COLOURS }, (_, index) => index + 1)),
+};
 
 const SKILL_IDS = IMPLEMENTED_SKILLS.map((skill) => skill.id);
 const STATUS_IDS = Object.keys(STATUS_DEFINITIONS);

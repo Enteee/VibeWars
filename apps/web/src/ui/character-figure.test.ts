@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { packEmblem } from "@vibewars/game-protocol";
 
 import {
   NO_UPGRADES,
@@ -130,9 +131,10 @@ describe("figureBody (#1250)", () => {
 
   it("wears a cape folded, and fits its band and the weapon's tip inside its box (#1422, #1699)", () => {
     const cape = capeLook({
-      main: "violet",
-      trim: "white",
-      emblem: presetEmblem("diamond", "white"),
+      main: "a078e0",
+      trim: "f2f2f2",
+      emblemColours: ["f2f2f2"],
+      emblem: packEmblem(presetEmblem("diamond")),
     });
     const body = figureBody({ weaponId: "sword", offhandId: "shield" }, cape);
     const xs: number[] = [];

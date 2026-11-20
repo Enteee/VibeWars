@@ -185,14 +185,15 @@ sebuah **Nama** saat kunjungan pertamamu, misalnya `AshenWolf`; ketik di atasnya
 menggantinya. Kalau dikosongkan, kamu bermain sebagai `Player`. Ketik **Tag guild** berisi 2 sampai 4 huruf
 atau angka di sebelahnya, dan semua orang melihatnya setelah namamu, misalnya
 `Ente [VIBE]`. Begitu tag diisi, perancang **Jubah guild** muncul di
-bawahnya: pilih warna jubah, warna pinggiran dan sebuah lambang, dan tubuhmu
+bawahnya: pilih warna apa saja untuk jubah dan pinggirannya, gambar sebuah lambang, dan tubuhmu
 memakai jubah itu di setiap laga: jubah terlipat menjadi pita tipis di tepi tubuhmu saat
 kamu berdiri dan berkibar di belakangmu saat kamu bergerak. Karakter-karaktermu di
 menu juga menampilkannya. **Tanpa jubah** melepasnya. Sebuah figur menampilkan jubah seperti tampilannya di dalam game.
+Warna yang dekat dengan biru kawan atau merah lawan digeser sedikit lebih jauh darinya di sana, supaya tidak ada jubah yang tampak seperti sebuah tim.
 
 Perubahan langsung berlaku di lobi tempat kamu berada.
 
-**Gambar lambangmu sendiri.** **Sunting lambang**, di bawah lambang awal, membuka kisi 16×16 di tempatnya. Pilih warna atau **Kosong**, lalu gambar dengan **Pensil**, hapus dengan **Penghapus**, atau warnai satu area dengan **Isi**. **Cermin** mewarnai belahan kiri dan kanan sekaligus. **Bersihkan** mengosongkan kisi dan **Urung** mundur satu langkah. Tampilan kecil di samping kisi menunjukkan lambang sebesar di dalam pertandingan. **Beres** menyimpannya, **Batal** membuang gambarnya. Tombol panah dan Spasi juga menggambar dari keyboard.
+**Gambar lambangmu sendiri.** Editor lambang, kisi 16×16, selalu ada di bawah kedua warna. Pilih salah satu warna lambang atau **Kosong**, lalu gambar dengan **Pensil**, hapus dengan **Penghapus**, atau warnai satu area dengan **Isi**. **Tambah warna** memberi lambang satu warna lagi, hingga 15, dan pemilih warna di sampingnya mengganti warna yang dipilih di semua tempat warna itu digambar. **Mulai dari** mengisi kisi dengan salah satu dari delapan bentuk dalam warna yang dipilih. **Cermin** mewarnai belahan kiri dan kanan sekaligus. **Bersihkan** mengosongkan kisi dan **Urung** mundur satu langkah. Setiap perubahan langsung disimpan. Tampilan kecil di samping kisi menunjukkan lambang sebesar di dalam pertandingan. Tombol panah dan Spasi juga menggambar dari keyboard.
 
 **Salin link guild**, di bawah perancang jubah, menyalin link yang membawa tag dan jubahmu. Siapa pun yang membukanya akan ditanya **Gabung ke guild [VIBE]?**: **Gabung** memberinya tag dan jubahmu, **Tidak** tidak mengubah apa pun. Siapa saja bisa mengirim link seperti itu dan tidak ada yang memiliki sebuah tag, jadi game selalu bertanya dulu.
 

@@ -38,6 +38,7 @@ import type { ConditionCue } from "./body-conditions.js";
 import type { RenderableBreakable } from "./breakable-objects.js";
 import type { CapeLook } from "./cape-shape.js";
 import type { RenderablePing } from "./call-marks.js";
+import { FOE_COLOUR, FRIEND_COLOUR } from "./colour-wheel.js";
 import type {
   RenderableCapturePoint,
   RenderableGate,
@@ -722,9 +723,9 @@ export function withCalls(snapshot: ArenaSnapshot, calls: CallsSnapshot): ArenaS
  * (simulated ΔE76 ≥ 45, #2755), and its tags carry a ◆ as well (`teamMark`).
  */
 const TEAM_COLOURS: Record<RenderableActor["team"], number> = {
-  self: 0x59c2ff,
-  ally: 0x59c2ff,
-  enemy: 0xff7b72,
+  self: FRIEND_COLOUR,
+  ally: FRIEND_COLOUR,
+  enemy: FOE_COLOUR,
   third: 0xf0ff40,
 };
 

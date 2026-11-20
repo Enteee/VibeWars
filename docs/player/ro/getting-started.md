@@ -177,14 +177,16 @@ indiferent cu ce joci. Jocul îți dă un **Nume** la prima vizită, de exemplu
 `AshenWolf`; scrie peste el ca să-l schimbi. Dacă îl lași gol, joci ca `Jucător`.
 Scrie lângă el un **Tag de breaslă** de 2 până la 4 litere sau cifre și toată lumea
 îl vede după numele tău, de exemplu `Ente [VIBE]`. Cu un tag setat, sub el apare
-creatorul de **Pelerină de breaslă**: alege culoarea pelerinei, culoarea marginii și
-o emblemă, iar corpul tău poartă pelerina în fiecare meci: se strânge într-o bandă
+creatorul de **Pelerină de breaslă**: alege orice culoare pentru pelerină și marginea ei,
+desenează o emblemă, iar corpul tău poartă pelerina în fiecare meci: se strânge într-o bandă
 subțire pe margine când stai și flutură în spatele tău când te miști. O arată și
 personajele tale din meniu. **Fără pelerină** o scoate. O figurină arată pelerina așa cum apare în joc.
+O culoare apropiată de albastrul aliaților sau de roșul adversarilor e mutată acolo
+puțin mai departe de el, ca nicio pelerină să nu semene cu o echipă.
 
 O schimbare se aplică imediat lobby-ului în care ești.
 
-**Desenează-ți propria emblemă.** **Editează emblema**, sub emblemele de pornire, deschide în locul lor o grilă de 16×16. Alege o culoare sau **Gol**, apoi desenează cu **Creion**, șterge cu **Radieră** sau umple o zonă cu **Umplere**. **Oglindă** pictează deodată jumătatea stângă și cea dreaptă. **Golește** golește grila, iar **Înapoi** revine cu un pas. Vederea mică de lângă grilă arată emblema la fel de mare ca într-un meci. **Gata** o păstrează, **Anulează** aruncă desenul. Săgețile și Spațiu desenează și de la tastatură.
+**Desenează-ți propria emblemă.** Editorul de emblemă, o grilă de 16×16, e mereu sub cele două culori. Alege una dintre culorile emblemei sau **Gol**, apoi desenează cu **Creion**, șterge cu **Radieră** sau umple o zonă cu **Umplere**. **Adaugă culoare** dă emblemei încă o culoare, până la 15, iar selectorul de culoare de lângă ele schimbă culoarea aleasă peste tot unde e desenată. **Pornește de la** umple grila cu una dintre opt forme în culoarea aleasă. **Oglindă** pictează deodată jumătatea stângă și cea dreaptă. **Golește** golește grila, iar **Înapoi** revine cu un pas. Orice schimbare se păstrează imediat. Vederea mică de lângă grilă arată emblema la fel de mare ca într-un meci. Săgețile și Spațiu desenează și de la tastatură.
 
 **Copiază linkul breslei**, sub designerul de pelerină, copiază un link cu tagul și pelerina ta. Cine îl deschide e întrebat **Te alături breslei [VIBE]?**: **Alătură-te** îi dă tagul și pelerina ta, **Nu** nu schimbă nimic. Oricine poate trimite un astfel de link și nimeni nu deține un tag, așa că jocul întreabă mereu întâi.
 

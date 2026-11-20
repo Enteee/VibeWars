@@ -17,7 +17,12 @@ function pyro() {
   return setSkill(character, 0, "elementalist.fireball");
 }
 
-const CAPE: WireCape = { main: "violet", trim: "white", emblem: packEmblem([0, 1, 2]) };
+const CAPE: WireCape = {
+  main: "a078e0",
+  trim: "f2f2f2",
+  emblemColours: ["e6c04a", "a078e0"],
+  emblem: packEmblem([0, 1, 2]),
+};
 
 function targetDummy(character = pyro()) {
   const scenario = getTrainingScenario("target-dummy");

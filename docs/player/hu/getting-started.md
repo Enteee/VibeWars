@@ -205,14 +205,16 @@ látogatásodkor ad egy **Nevet**, például `AshenWolf`; írd felül, hogy
 megváltoztasd. Üresen hagyva `Játékos` néven játszol. Írj mellé egy
 2–4 betűből vagy számjegyből álló **Céhjelet**, és mindenki látja a
 neved után, például `Ente [VIBE]`. Ha van céhjeled, alatta megjelenik a
-**Céhköpeny** tervező: válaszd ki a köpeny színét, a szegély színét és
-egy címert, és a tested minden meccsen viseli a köpenyt: álló helyzetben
+**Céhköpeny** tervező: válassz bármilyen színt a köpenynek és a
+szegélyének, rajzolj egy címert, és a tested minden meccsen viseli a köpenyt: álló helyzetben
 vékony csíkká hajtódik a peremeden, mozgás közben pedig mögötted lobog.
 A menüben a karaktereid is mutatják. A **Nincs köpeny** leveszi. Egy alak mutatja a köpenyt úgy, ahogy a játékban kinéz.
+A szövetségesek kékjéhez vagy az ellenfelek pirosához közeli színt ott a
+játék kicsit messzebb tolja tőle, hogy egy köpeny se tűnjön csapatnak.
 
 A módosítás azonnal érvényes abban a lobbiban, amelyikben vagy.
 
-**Rajzold meg a saját emblémádat.** A kezdő emblémák alatti **Embléma szerkesztése** a helyükön megnyit egy 16×16-os rácsot. Válassz színt vagy **Üres** mezőt, majd rajzolj a **Ceruza** eszközzel, radírozz a **Radír** eszközzel, vagy színezz ki egy területet a **Kitöltés** eszközzel. A **Tükrözés** egyszerre festi a bal és a jobb felet. A **Törlés** kiüríti a rácsot, a **Vissza** egy lépést visszalép. A rács melletti kis nézet akkorának mutatja az emblémát, mint egy meccsen. A **Kész** megtartja, a **Mégse** eldobja a rajzot. A nyilak és a szóköz billentyűzetről is rajzolnak.
+**Rajzold meg a saját emblémádat.** Az emblémaszerkesztő, egy 16×16-os rács, mindig a két szín alatt van. Válaszd az embléma egyik színét vagy az **Üres** mezőt, majd rajzolj a **Ceruza** eszközzel, radírozz a **Radír** eszközzel, vagy színezz ki egy területet a **Kitöltés** eszközzel. A **Szín hozzáadása** még egy színt ad az emblémának, legfeljebb 15-ig, a mellettük lévő színválasztó pedig mindenhol megváltoztatja a kiválasztott színt, ahol rajzolva van. A **Kiindulás** a nyolc forma egyikével tölti ki a rácsot a kiválasztott színnel. A **Tükrözés** egyszerre festi a bal és a jobb felet. A **Törlés** kiüríti a rácsot, a **Vissza** egy lépést visszalép. Minden változás azonnal megmarad. A rács melletti kis nézet akkorának mutatja az emblémát, mint egy meccsen. A nyilak és a szóköz billentyűzetről is rajzolnak.
 
 A köpenytervező alatti **Céhlink másolása** egy linket másol, amely a céhjeledet és a köpenyedet viszi. Aki megnyitja, ezt a kérdést kapja: **Csatlakozol a(z) [VIBE] céhhez?**: a **Csatlakozás** megadja neki a céhjeledet és a köpenyedet, a **Nem** semmit sem változtat. Bárki küldhet ilyen linket, és senkié sem egy céhjel, ezért a játék mindig előbb kérdez.
 

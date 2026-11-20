@@ -184,15 +184,17 @@ jou is, wat je ook speelt. Het spel geeft je bij je eerste bezoek een **Naam**,
 zoals `AshenWolf`; typ eroverheen om hem te wijzigen. Laat je hem leeg, dan
 speel je als `Speler`. Typ ernaast een **Gildetag** van 2 tot 4 letters of
 cijfers, en iedereen ziet die achter je naam, zoals `Ente [VIBE]`. Met een tag
-verschijnt daaronder de ontwerper voor je **Gildecape**: kies de capekleur, de
-randkleur en een embleem, en je lichaam draagt de cape in elke match: hij vouwt
+verschijnt daaronder de ontwerper voor je **Gildecape**: kies elke kleur die je
+wilt voor de cape en de rand, teken een embleem, en je lichaam draagt de cape in elke match: hij vouwt
 tot een dunne band op je rand als je stilstaat en wappert achter je aan als je
 beweegt. Ook je personages in het menu laten hem zien. **Geen cape** doet hem
 af. Een figuur toont de cape zoals die er in het spel uitziet.
+Een kleur dicht bij het blauw van vrienden of het rood van vijanden wordt daar
+wat verder ervan af geschoven, zodat geen cape op een team lijkt.
 
 Een wijziging geldt meteen voor de lobby waar je in zit.
 
-**Teken je eigen embleem.** **Embleem bewerken**, onder de start-emblemen, opent op hun plek een raster van 16×16. Kies een kleur of **Leeg** en teken met het **Potlood**, gum uit met de **Gum** of kleur een vlak met **Vullen**. **Spiegelen** schildert de linker- en rechterhelft tegelijk. **Wissen** maakt het raster leeg en **Ongedaan** gaat een stap terug. Het kleine beeld naast het raster toont het embleem zo groot als in een match. **Klaar** houdt het, **Annuleren** gooit de tekening weg. Pijltjestoetsen en spatie tekenen ook met het toetsenbord.
+**Teken je eigen embleem.** De embleem-editor, een raster van 16×16, staat altijd onder de twee kleuren. Kies een van de kleuren van het embleem of **Leeg** en teken met het **Potlood**, gum uit met de **Gum** of kleur een vlak met **Vullen**. **Kleur toevoegen** geeft het embleem nog een kleur, tot 15, en de kleurkiezer ernaast verandert de gekozen kleur overal waar die getekend is. **Begin met** vult het raster met een van acht vormen in de gekozen kleur. **Spiegelen** schildert de linker- en rechterhelft tegelijk. **Wissen** maakt het raster leeg en **Ongedaan** gaat een stap terug. Elke wijziging wordt meteen bewaard. Het kleine beeld naast het raster toont het embleem zo groot als in een match. Pijltjestoetsen en spatie tekenen ook met het toetsenbord.
 
 **Gildelink kopiëren**, onder de capeontwerper, kopieert een link met je tag en cape. Wie hem opent, krijgt de vraag **Lid worden van gilde [VIBE]?**: **Lid worden** geeft diegene je tag en cape, **Nee** verandert niets. Iedereen kan zo'n link sturen en niemand is eigenaar van een tag, dus het spel vraagt het altijd eerst.
 

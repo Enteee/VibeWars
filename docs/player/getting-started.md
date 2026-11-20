@@ -184,15 +184,16 @@ a **Name** on your first visit, like `AshenWolf`; type over it to change
 it. Left empty, you play as `Player`. Type a **Guild tag** of 2 to 4 letters
 or digits beside it, and everyone sees it after your name, like
 `Ente [VIBE]`. With a tag set, the **Guild cape** designer appears under
-it: pick the cape colour, the trim colour and an emblem, and your body
-wears the cape in every match: it folds to a thin band on your rim when
-you stand and streams out behind you when you move. Your characters in
-the menu show it too. **No cape** takes it off. A figure shows the cape as
-it looks in the game.
+it: pick any colour for the cape and its trim, draw an emblem, and your
+body wears the cape in every match: it folds to a thin band on your rim
+when you stand and streams out behind you when you move. Your characters
+in the menu show it too. **No cape** takes it off. A figure shows the cape
+as it looks in the game. A colour close to the friend blue or the foe red
+is turned a little further off it there, so no cape looks like a team.
 
 A change applies at once to the lobby you are in.
 
-**Draw your own emblem.** **Edit emblem**, under the starting emblems, opens a 16×16 grid in their place. Pick a colour or **Empty**, then draw with the **Pencil**, rub out with the **Eraser**, or flood an area with **Fill**. **Mirror** paints the left and right halves at once. **Clear** empties the grid and **Undo** goes back a step. The small view beside the grid shows the emblem as big as in a match. **Done** keeps it, **Cancel** throws the drawing away. Arrow keys and Space draw from the keyboard too.
+**Draw your own emblem.** The emblem editor, a 16×16 grid, is always under the two colours. Pick one of the emblem's colours or **Empty**, then draw with the **Pencil**, rub out with the **Eraser**, or flood an area with **Fill**. **Add colour** gives the emblem another colour, up to 15, and the colour picker beside them changes the picked colour everywhere it is drawn. **Start from** fills the grid with one of eight shapes in the picked colour. **Mirror** paints the left and right halves at once. **Clear** empties the grid and **Undo** goes back a step. Every change is kept at once. The small view beside the grid shows the emblem as big as in a match. Arrow keys and Space draw from the keyboard too.
 
 **Copy guild link**, under the cape designer, copies a link that carries
 your tag and cape. Whoever opens it is asked **Join guild [VIBE]?**:

@@ -193,14 +193,16 @@ visita, como `AshenWolf`; digite por cima para mudar. Se ficar vazio, você
 joga como `Jogador`. Digite ao lado uma **Tag da guilda** de 2 a 4 letras
 ou dígitos, e todos a veem depois do seu nome, como `Ente [VIBE]`. Com
 uma tag definida, o criador de **Capa da guilda** aparece embaixo: escolha
-a cor da capa, a cor da barra e um emblema, e seu corpo usa a capa em toda
+qualquer cor para a capa e sua barra, desenhe um emblema, e seu corpo usa a capa em toda
 partida: ela se dobra em uma faixa fina na borda quando você para e
 esvoaça atrás de você quando anda. Seus personagens no menu também a
 mostram. **Sem capa** a remove. Uma figura mostra a capa como ela aparece no jogo.
+Uma cor próxima do azul aliado ou do vermelho inimigo é desviada um pouco mais
+para longe dele no jogo, para que nenhuma capa pareça um time.
 
 Uma mudança vale na hora para a sala em que você está.
 
-**Desenhe seu próprio emblema.** **Editar emblema**, abaixo dos emblemas iniciais, abre no lugar deles uma grade de 16×16. Escolha uma cor ou **Vazio**, depois desenhe com o **Lápis**, apague com a **Borracha** ou pinte uma área com **Preencher**. **Espelhar** pinta as metades esquerda e direita ao mesmo tempo. **Limpar** esvazia a grade e **Desfazer** volta um passo. A pequena vista ao lado da grade mostra o emblema do tamanho que ele tem numa partida. **Concluir** fica com ele, **Cancelar** descarta o desenho. As setas e o Espaço também desenham pelo teclado.
+**Desenhe seu próprio emblema.** O editor de emblema, uma grade de 16×16, fica sempre abaixo das duas cores. Escolha uma das cores do emblema ou **Vazio**, depois desenhe com o **Lápis**, apague com a **Borracha** ou pinte uma área com **Preencher**. **Adicionar cor** dá ao emblema mais uma cor, até 15, e o seletor de cor ao lado delas muda a cor escolhida em todo lugar onde ela está desenhada. **Começar com** preenche a grade com uma de oito formas na cor escolhida. **Espelhar** pinta as metades esquerda e direita ao mesmo tempo. **Limpar** esvazia a grade e **Desfazer** volta um passo. Toda mudança é guardada na hora. A pequena vista ao lado da grade mostra o emblema do tamanho que ele tem numa partida. As setas e o Espaço também desenham pelo teclado.
 
 **Copiar link da guilda**, abaixo do designer de capa, copia um link com sua tag e sua capa. Quem abrir verá **Entrar na guilda [VIBE]?**: **Entrar** dá a essa pessoa sua tag e sua capa, **Não** não muda nada. Qualquer pessoa pode enviar um link assim e ninguém é dono de uma tag, por isso o jogo sempre pergunta antes.
 

@@ -190,14 +190,16 @@ ensimmäisellä käynnillä **Nimen**, kuten `AshenWolf`; kirjoita sen päälle
 vaihtaaksesi sen. Tyhjänä pelaat nimellä `Player`. Kirjoita viereen
 **Kiltatunnus**, 2–4 kirjainta tai numeroa, ja kaikki näkevät sen nimesi
 perässä, kuten `Ente [VIBE]`. Kun tunnus on asetettu, sen alle ilmestyy
-**Kiltaviitta**-suunnittelija: valitse viitan väri, reunuksen väri ja
-tunnus, ja hahmosi kantaa viittaa jokaisessa ottelussa: se taittuu
+**Kiltaviitta**-suunnittelija: valitse viitalle ja sen reunukselle mikä
+tahansa väri, piirrä tunnus, ja hahmosi kantaa viittaa jokaisessa ottelussa: se taittuu
 ohueksi nauhaksi reunallesi, kun seisot, ja liehuu perässäsi, kun
 liikut. Myös valikon hahmosi näyttävät sen. **Ei viittaa** riisuu sen. Hahmo näyttää viitan sellaisena kuin se näkyy pelissä.
+Oman puolen sinistä tai vihollisen punaista lähellä oleva väri käännetään
+siellä hieman kauemmas siitä, jottei mikään viitta näytä joukkueelta.
 
 Muutos tulee voimaan heti siinä aulassa, jossa olet.
 
-**Piirrä oma tunnuksesi.** **Muokkaa tunnusta** aloitustunnusten alla avaa niiden tilalle 16×16-ruudukon. Valitse väri tai **Tyhjä**, ja piirrä työkalulla **Kynä**, pyyhi työkalulla **Pyyhekumi** tai täytä alue työkalulla **Täyttö**. **Peilaus** maalaa vasemman ja oikean puolen yhtä aikaa. **Tyhjennä** tyhjentää ruudukon ja **Kumoa** palaa askeleen taaksepäin. Pieni näkymä ruudukon vieressä näyttää tunnuksen yhtä suurena kuin ottelussa. **Valmis** pitää sen, **Peruuta** heittää piirroksen pois. Nuolinäppäimet ja välilyönti piirtävät myös näppäimistöllä.
+**Piirrä oma tunnuksesi.** Tunnuseditori, 16×16-ruudukko, on aina kahden värin alla. Valitse jokin tunnuksen väreistä tai **Tyhjä**, ja piirrä työkalulla **Kynä**, pyyhi työkalulla **Pyyhekumi** tai täytä alue työkalulla **Täyttö**. **Lisää väri** antaa tunnukselle uuden värin, enintään 15, ja niiden vieressä oleva värinvalitsin vaihtaa valitun värin kaikkialla, mihin sitä on piirretty. **Aloita pohjasta** täyttää ruudukon yhdellä kahdeksasta muodosta valitulla värillä. **Peilaus** maalaa vasemman ja oikean puolen yhtä aikaa. **Tyhjennä** tyhjentää ruudukon ja **Kumoa** palaa askeleen taaksepäin. Jokainen muutos tallentuu heti. Pieni näkymä ruudukon vieressä näyttää tunnuksen yhtä suurena kuin ottelussa. Nuolinäppäimet ja välilyönti piirtävät myös näppäimistöllä.
 
 Viittasuunnittelijan alla oleva **Kopioi kiltalinkki** kopioi linkin, jossa on tunnuksesi ja viittasi. Sen avaajalta kysytään **Liitytäänkö kiltaan [VIBE]?**: **Liity** antaa hänelle tunnuksesi ja viittasi, **Ei** ei muuta mitään. Kuka tahansa voi lähettää tällaisen linkin, eikä kukaan omista tunnusta, joten peli kysyy aina ensin.
 

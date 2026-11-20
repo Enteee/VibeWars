@@ -186,15 +186,17 @@ lo que es tuyo juegues a lo que juegues. El juego te da un **Nombre** en tu
 primera visita, como `AshenWolf`; escribe encima para cambiarlo. Si lo dejas
 vacío, juegas como `Jugador`. Escribe una **Etiqueta de gremio** de 2 a 4 letras
 o dígitos al lado, y todos la verán tras tu nombre, como `Ente [VIBE]`. Con una
-etiqueta puesta, aparece debajo el diseñador de **Capa de gremio**: elige el
-color de la capa, el del ribete y un emblema, y tu cuerpo llevará la capa en
+etiqueta puesta, aparece debajo el diseñador de **Capa de gremio**: elige
+cualquier color para la capa y su ribete, dibuja un emblema, y tu cuerpo llevará la capa en
 cada partida: se pliega en una banda fina en tu borde cuando estás quieto y
 ondea detrás de ti cuando te mueves. Tus personajes del menú también la
 muestran. **Sin capa** te la quita. Una figura muestra la capa tal como se ve en el juego.
+Un color cercano al azul aliado o al rojo enemigo se aparta allí un poco más de
+él, para que ninguna capa parezca un equipo.
 
 Un cambio se aplica al instante a la sala en la que estás.
 
-**Dibuja tu propio emblema.** **Editar emblema**, bajo los emblemas iniciales, abre en su lugar una cuadrícula de 16×16. Elige un color o **Vacío**, y dibuja con el **Lápiz**, borra con el **Borrador** o rellena una zona con **Rellenar**. **Espejo** pinta a la vez la mitad izquierda y la derecha. **Borrar todo** vacía la cuadrícula y **Deshacer** retrocede un paso. La vista pequeña junto a la cuadrícula muestra el emblema tan grande como en una partida. **Listo** lo guarda, **Cancelar** descarta el dibujo. Las flechas y Espacio también dibujan con el teclado.
+**Dibuja tu propio emblema.** El editor de emblemas, una cuadrícula de 16×16, está siempre bajo los dos colores. Elige uno de los colores del emblema o **Vacío**, y dibuja con el **Lápiz**, borra con el **Borrador** o rellena una zona con **Rellenar**. **Añadir color** da al emblema otro color, hasta 15, y el selector de color junto a ellos cambia el color elegido en todas partes donde está dibujado. **Empezar con** llena la cuadrícula con una de ocho formas en el color elegido. **Espejo** pinta a la vez la mitad izquierda y la derecha. **Borrar todo** vacía la cuadrícula y **Deshacer** retrocede un paso. Cada cambio se guarda al momento. La vista pequeña junto a la cuadrícula muestra el emblema tan grande como en una partida. Las flechas y Espacio también dibujan con el teclado.
 
 **Copiar enlace del gremio**, bajo el diseñador de capa, copia un enlace con tu etiqueta y tu capa. Quien lo abra verá **¿Unirte al gremio [VIBE]?**: **Unirme** le da tu etiqueta y tu capa, **No** no cambia nada. Cualquiera puede enviar un enlace así y nadie es dueño de una etiqueta, por eso el juego siempre pregunta antes.
 

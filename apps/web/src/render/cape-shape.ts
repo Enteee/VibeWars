@@ -1,48 +1,40 @@
 import {
-  CAPE_COLOURS,
   EMBLEM_GRID,
-  packEmblem,
+  MAX_EMBLEM_COLOURS,
   unpackEmblem,
   type WireCape,
 } from "@vibewars/game-protocol";
 
+import { nudgeFromTeams } from "./colour-wheel.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
- * The guild cape's look (#1422): its palette and the emblem grid on it
+ * The guild cape's look (#1422): its colours and the emblem grid on it
  * (#3554). How it moves and the shape it takes are `cape-motion.ts` (#1699).
  */
 
-export type CapeColour = (typeof CAPE_COLOURS)[number];
+/** A cape colour as the wire carries it (6 lowercase hex digits) as 0xRRGGBB. */
+export function capeColour(hex: string): number {
+  return Number.parseInt(hex, 16);
+}
 
-/** The study's palette (`docs/art/art-direction.md`), as 0xRRGGBB. */
-export const CAPE_PALETTE: Readonly<Record<CapeColour, number>> = {
-  gold: 0xe6c04a,
-  violet: 0xa078e0,
-  white: 0xf2f2f2,
-  black: 0x23272e,
-  lime: 0x9bd445,
-  orange: 0xf0963c,
-  teal: 0x2fb8a0,
-  pink: 0xe86fb4,
-};
-
-/** A cape as it is drawn: its colours as 0xRRGGBB. */
+/** A cape as it is drawn: its colours as 0xRRGGBB, each kept off the team colours (#3628). */
 export interface CapeLook {
   readonly main: number;
   readonly trim: number;
   /** The emblem grid, packed as the wire carries it. */
   readonly emblem: string;
-  /** What each emblem pixel `i` is drawn in, at `i - 1`: `CAPE_COLOURS`' palette, or toned. */
+  /** What each emblem pixel `i` is drawn in, at `i - 1`. */
   readonly palette: readonly number[];
 }
 
 export function capeLook(cape: WireCape): CapeLook {
+  const drawn = (hex: string): number => nudgeFromTeams(capeColour(hex));
   return {
-    main: CAPE_PALETTE[cape.main],
-    trim: CAPE_PALETTE[cape.trim],
+    main: drawn(cape.main),
+    trim: drawn(cape.trim),
     emblem: cape.emblem,
-    palette: CAPE_COLOURS.map((colour) => CAPE_PALETTE[colour]),
+    palette: cape.emblemColours.map(drawn),
   };
 }
 
@@ -214,25 +206,11 @@ const PRESET_MASKS: Readonly<Record<EmblemPresetName, readonly string[]>> = {
   ],
 };
 
-/** The preset `name` drawn in `colour`, packed as a cape carries it. */
-export function presetEmblem(name: EmblemPresetName, colour: CapeColour): string {
-  const pixel = CAPE_COLOURS.indexOf(colour) + 1;
-  return packEmblem(
-    PRESET_MASKS[name].flatMap((row) =>
-      Array.from({ length: EMBLEM_GRID }, (_, column) => (row[column] === "#" ? pixel : 0)),
-    ),
+/** The preset `name`'s pixels, row-major, each 1 for drawn and 0 for empty. */
+export function presetEmblem(name: EmblemPresetName): number[] {
+  return PRESET_MASKS[name].flatMap((row) =>
+    Array.from({ length: EMBLEM_GRID }, (_, column) => (row[column] === "#" ? 1 : 0)),
   );
-}
-
-/** `emblem` with every pixel in `from` turned to `to`, packed again; others as they were. */
-export function recolourEmblem(emblem: string, from: CapeColour, to: CapeColour): string {
-  const pixels = unpackEmblem(emblem);
-  if (pixels === undefined) {
-    return emblem;
-  }
-  const before = CAPE_COLOURS.indexOf(from) + 1;
-  const after = CAPE_COLOURS.indexOf(to) + 1;
-  return packEmblem(pixels.map((pixel) => (pixel === before ? after : pixel)));
 }
 
 /** One rectangle of same-coloured pixels, in grid cells, its end exclusive. */
@@ -262,7 +240,7 @@ export function emblemRects(emblem: string): readonly EmblemRect[] {
     emblemCache.set(emblem, cached);
     return cached;
   }
-  const pixels = unpackEmblem(emblem) ?? [];
+  const pixels = unpackEmblem(emblem, MAX_EMBLEM_COLOURS) ?? [];
   const at = (row: number, column: number): number => pixels[row * EMBLEM_GRID + column] ?? 0;
   const taken = new Set<number>();
   const free = (row: number, column: number, pixel: number): boolean =>
@@ -306,7 +284,7 @@ export function emblemRects(emblem: string): readonly EmblemRect[] {
   return rects;
 }
 
-/** An emblem part: one filled quad of the pixel colour `pixel`, 1 to 8. */
+/** An emblem part: one filled quad of the pixel colour `pixel`, 1 to 15. */
 export interface EmblemPart {
   readonly pixel: number;
   readonly points: readonly Point[];
