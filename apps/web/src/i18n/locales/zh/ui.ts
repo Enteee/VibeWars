@@ -1376,7 +1376,8 @@ export default {
   "tutorial.menu.arena.findDone": "寻找对局",
   "tutorial.menu.arena.open": "打开侧边的团队竞技场。",
   "tutorial.menu.arena.openDone": "打开团队竞技场",
-  "tutorial.menu.arena.propose": "为你的队伍报名：打开你的队伍配置，提议你保存的那一个。它必须是两人队伍，即你排队时的人数。通过你的邀请链接加入的好友会占一个席位，其余由机器人来打。",
+  "tutorial.menu.arena.propose":
+    "为你的队伍报名：打开你的队伍配置，提议你保存的那一个。它必须是两人队伍，即你排队时的人数。通过你的邀请链接加入的好友会占一个席位，其余由机器人来打。",
   "tutorial.menu.arena.proposeDone": "提议你的队伍",
   "tutorial.menu.arena.seat": "就座：选择你要操作的角色。你一就座，排队就开始。",
   "tutorial.menu.arena.seatDone": "就座",

@@ -1483,18 +1483,22 @@ export default {
   "tutorial.front.end": "Artık temelleri biliyorsun. Orada görüşürüz!",
   "tutorial.front.menu": "Menüye dön",
   "tutorial.menu.arena.farewell": "Sıradasın. Bol şans.",
-  "tutorial.menu.arena.find": "Maç bul. Grubun önce kendi tarafına ait bir Takım Lobisi alır ve oynayacağı dizilimi seçer.",
+  "tutorial.menu.arena.find":
+    "Maç bul. Grubun önce kendi tarafına ait bir Takım Lobisi alır ve oynayacağı dizilimi seçer.",
   "tutorial.menu.arena.findDone": "Maç bul",
   "tutorial.menu.arena.open": "Yandaki Takım Arenası'nı aç.",
   "tutorial.menu.arena.openDone": "Takım Arenası'nı aç",
-  "tutorial.menu.arena.propose": "Takımını kaydet: Takım Dizilimlerin'i aç ve kaydettiğin dizilimi öner. İki kişilik bir takım olmalı, sıraya girdiğin boyutta. Davet bağlantınla katılan bir arkadaş yerlerinden birini alır; kalanını botlar oynar.",
+  "tutorial.menu.arena.propose":
+    "Takımını kaydet: Takım Dizilimlerin'i aç ve kaydettiğin dizilimi öner. İki kişilik bir takım olmalı, sıraya girdiğin boyutta. Davet bağlantınla katılan bir arkadaş yerlerinden birini alır; kalanını botlar oynar.",
   "tutorial.menu.arena.proposeDone": "Takımını öner",
   "tutorial.menu.arena.seat": "Bir yere otur: oynadığın karakter. Oturduğun anda sıra başlar.",
   "tutorial.menu.arena.seatDone": "Otur",
-  "tutorial.menu.arena.size": "Takım boyutunu 2v2 yap. Boyut kiminle karşılaşacağını belirler: yalnızca aynı boyuttaki takımlar.",
+  "tutorial.menu.arena.size":
+    "Takım boyutunu 2v2 yap. Boyut kiminle karşılaşacağını belirler: yalnızca aynı boyuttaki takımlar.",
   "tutorial.menu.arena.sizeDone": "2v2'yi seç",
   "tutorial.menu.arena.title": "Takımını 2v2 bir Takım Arenası maçında kanıtla.",
-  "tutorial.menu.arena.vote": "Takımına oy ver: kartına tıkla. En çok oyu alan, tarafının oynadığıdır.",
+  "tutorial.menu.arena.vote":
+    "Takımına oy ver: kartına tıkla. En çok oyu alan, tarafının oynadığıdır.",
   "tutorial.menu.arena.voteDone": "Takımına oy ver",
   "tutorial.menu.gotIt": "Anladım",
   "tutorial.menu.menu.characters":
